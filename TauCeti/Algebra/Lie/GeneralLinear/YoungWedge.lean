@@ -98,7 +98,7 @@ variable {ι : Type*} [Fintype ι] [LinearOrder ι]
 variable {κ : Type*} [Fintype κ] [LinearOrder κ]
 
 /-- The local lexicographic order fixes the order of the wedge factors. -/
-local instance : LinearOrder (ι × κ) :=
+local instance cellLinearOrder : LinearOrder (ι × κ) :=
   LinearOrder.lift' (⇑(toLex : (ι × κ) ≃ ι ×ₗ κ)) (Equiv.injective _)
 
 open CellDiagram
@@ -142,7 +142,7 @@ variable {R : Type*} [CommRing R]
 variable {ι : Type*} [Fintype ι] [LinearOrder ι]
 
 /-- The local lexicographic order fixes the order of the wedge factors. -/
-local instance {m : ℕ} : LinearOrder (ι × Fin m) :=
+local instance cellFinLinearOrder {m : ℕ} : LinearOrder (ι × Fin m) :=
   LinearOrder.lift' (⇑(toLex : (ι × Fin m) ≃ ι ×ₗ Fin m)) (Equiv.injective _)
 
 open CellDiagram
