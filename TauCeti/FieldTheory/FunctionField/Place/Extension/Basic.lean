@@ -30,10 +30,18 @@ that are independent over `F_P`, multiplied by the powers `t^j` of a prime eleme
 `0 ≤ j < e`, are independent over `F`, because the orders of the resulting blocks are pairwise
 distinct modulo `e`.
 
+The file also records the action of the valuation ring `𝒪_P` of a place `P` of `F / k` on the
+extension field `F'`, through `F`.  That action is not a global instance — for `F' = F` it would
+compete with the action of a valuation subring on its own field — so it, and the scalar tower it
+sits in, are provided to be reinstalled by consumers with `attribute [local instance 10]`.
+
 ## Main definitions
 
 * `TauCeti.Place.constantsEquiv`: the places of `F' / k` are the places of `F' / k'`, for `k'`
   integral over `k`; enlarging the constants by an algebraic extension changes nothing.
+* `TauCeti.Place.algebraIntegersExtension` and `TauCeti.Place.isScalarTowerIntegersExtension`: the
+  action of the valuation ring of a place of `F / k` on an extension field `F'`, to be installed
+  with `attribute [local instance 10]`.
 * `TauCeti.Place.restrict`: the place of `F / k` that a place of `F' / k'` lies over.
 * `TauCeti.Place.ramificationIdx`: the ramification index `e(P' | P)`.
 * `TauCeti.Place.relativeDegree`: the relative degree `f(P' | P) = [F'_{P'} : F_P]`.
@@ -83,6 +91,44 @@ variable {k : Type u} {k' : Type u'} {F : Type v} {F' : Type v'}
 variable [Field k] [Field k'] [Field F] [Field F']
 variable [Algebra k k'] [Algebra k F] [Algebra k' F'] [Algebra F F'] [Algebra k F']
 variable [IsScalarTower k k' F'] [IsScalarTower k F F']
+
+section LocalModel
+
+omit [Field k'] [Algebra k k'] [Algebra k' F'] [Algebra k F'] [IsScalarTower k k' F']
+  [IsScalarTower k F F']
+
+variable (F') (P : Place k F)
+
+/-- **The valuation ring of a place of `F / k` acts on an extension field `F'`**, through `F`.
+
+This is not a global instance: for `F' = F` it would compete with the action of a valuation
+subring on its own field.  Install it, together with
+`TauCeti.Place.isScalarTowerIntegersExtension`, with `attribute [local instance 10]` in any file
+that works with the local model of the extension at `P` — at low priority, so that the case
+`F' = F` still resolves to the valuation subring's own action, as the fraction-field instances
+expect. -/
+@[instance_reducible]
+noncomputable def algebraIntegersExtension : Algebra (P.integers) F' :=
+  ((algebraMap F F').comp (algebraMap (P.integers) F)).toAlgebra
+
+attribute [local instance 10] algebraIntegersExtension
+
+/-- The action of `TauCeti.Place.algebraIntegersExtension` on `F'` factors through `F`. -/
+theorem isScalarTowerIntegersExtension : IsScalarTower (P.integers) F F' :=
+  .of_algebraMap_eq fun _ ↦ rfl
+
+attribute [local instance 10] isScalarTowerIntegersExtension
+
+theorem algebraMap_integersExtension_injective :
+    Function.Injective (algebraMap (P.integers) F') := by
+  rw [IsScalarTower.algebraMap_eq (P.integers) F F', RingHom.coe_comp]
+  exact (algebraMap F F').injective.comp (FaithfulSMul.algebraMap_injective (P.integers) F)
+
+instance isTorsionFree_integersExtension : Module.IsTorsionFree (P.integers) F' :=
+  Module.isTorsionFree_iff_algebraMap_injective.mpr
+    (algebraMap_integersExtension_injective F' P)
+
+end LocalModel
 
 section Constants
 

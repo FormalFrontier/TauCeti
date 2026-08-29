@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.RingTheory.DedekindDomain.Different
+public import TauCeti.FieldTheory.FunctionField.AffineModel.Extension
 public import TauCeti.FieldTheory.FunctionField.Place.Extension.IntegralBasis
 
 /-!
@@ -24,12 +25,15 @@ The complementary module `C_P = {z | Tr_{F'/F} (z · 𝒪'_P) ⊆ 𝒪_P}` is an
 for a generator `t` of `C_P` is the multiplicity of the centre of `P'` on `𝒪'_P` in that ideal.
 That multiplicity is the definition used here, and no complementary module is rebuilt.
 
-The local model `𝒪_P ⊆ 𝒪'_P` is constructed in
-`TauCeti/FieldTheory/FunctionField/Place/Extension/IntegralBasis.lean`, the smallest one that sees
-`P`: `𝒪_P` is a discrete valuation ring with fraction field `F`, and `𝒪'_P` is a Dedekind domain,
-module-finite over it, with fraction field `F'`.  The identification of the extension-theoretic
-data of `P'` with the ideal-theoretic data of its centre on `𝒪'_P` is then the affine-model
-dictionary of `TauCeti/FieldTheory/FunctionField/AffineModel/Extension.lean`.
+The local model `𝒪_P ⊆ 𝒪'_P` is a pair of affine models in the sense of
+`TauCeti/FieldTheory/FunctionField/AffineModel/`, the smallest one that sees `P`: `𝒪_P` is a
+discrete valuation ring with fraction field `F`, and `𝒪'_P` is a Dedekind domain, module-finite
+over it, with fraction field `F'`.  It is constructed in
+`TauCeti/FieldTheory/FunctionField/Place/Extension/IntegralBasis.lean`; the action of `𝒪_P` on `F'`
+and the scalar tower it sits in are deliberately not global instances, so they are reinstalled
+here as `local` instances.  The identification of the extension-theoretic data of `P'` with the
+ideal-theoretic data of its centre on `𝒪'_P` is then the affine-model dictionary of
+`TauCeti/FieldTheory/FunctionField/AffineModel/Extension.lean`.
 
 Separability of `F' / F` is the hypothesis of record for the different: without it the
 complementary module degenerates.  Nothing here needs an exactness hypothesis on the constant
