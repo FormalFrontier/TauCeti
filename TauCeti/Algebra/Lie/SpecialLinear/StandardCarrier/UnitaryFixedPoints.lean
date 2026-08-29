@@ -26,9 +26,9 @@ is that condition wherever the `q`-power map is an involution. At the generality
 `q`-power map is only a ring endomorphism: the Frobenius of a ring of exponential characteristic
 `p` need not square to the identity, and on `(ZMod p)[X]` it does not. It is an involution on the
 subring fixed by the `q ^ 2`-power Frobenius, and every entry of a fixed point lies in that
-subring by `TauCeti.SlStd.mem_frobeniusFixedSubring_of_twistedFrobenius_eq_self`.
-`TauCeti.SlStd.mem_map_subtype_fixedSubgroup_twistedFrobenius_iff` states the description as a
-membership criterion inside `GL_{r+1}(A)`.
+subring by `TauCeti.SlStd.mem_frobeniusFixedSubring_of_twistedFrobenius_eq_self`. To read the
+fixed group inside `GL_{r+1}(A)`, rewrite with `TauCeti.map_subtype_fixedSubgroup_of_coe_eq` and
+`TauCeti.SlStd.coe_twistedFrobenius` and then with the equivalence below.
 
 For `p` prime, `0 < k`, `2 ≤ r`, and `A` an algebraic closure of `ZMod p`, that subring is the
 field of `q ^ 2` elements and the equation here is the usual unitary equation of the twisted
@@ -49,8 +49,6 @@ than the identity.
 * `TauCeti.SlStd.twistedFrobenius_eq_self_iff` and
   `TauCeti.SlStd.twistedFrobenius_eq_self_iff_transpose`: a carrier point is fixed by the
   graph-twisted Frobenius exactly when it preserves the pinned `q`-power-semilinear form.
-* `TauCeti.SlStd.mem_map_subtype_fixedSubgroup_twistedFrobenius_iff`: the same description of the
-  fixed group as a subgroup of the ambient general linear group.
 
 ## References
 
@@ -124,29 +122,6 @@ theorem twistedFrobenius_eq_self_iff_transpose (g : points r A) :
           (typeAGraphConjugator r A : Matrix (Fin (r + 1)) (Fin (r + 1)) A) := by
   rw [Subtype.ext_iff, coe_twistedFrobenius, typeAGraphAutomorphism_eq_iff_transpose,
     coe_map_iterateFrobenius]
-
-/-- **The graph-twisted Frobenius-fixed points of the full-weight type-`A_r` carrier are the
-carrier points preserving the pinned `q`-power-semilinear form.** Read inside the ambient general
-linear group, membership in the fixed group is carrier membership together with the invariance
-equation of `TauCeti.SlStd.twistedFrobenius_eq_self_iff`.
-
-This is not a `simp` lemma: `simp` already reduces its left-hand side, through
-`Subgroup.mem_map`, `TauCeti.SlStd.mem_points_iff` and the `simp` lemma above, so tagging it makes
-the `simpNF` linter fail. -/
-theorem mem_map_subtype_fixedSubgroup_twistedFrobenius_iff
-    (g : Matrix.GeneralLinearGroup (Fin (r + 1)) A) :
-    g ∈ (fixedSubgroup (twistedFrobenius r p k A)).map (points r A).subtype ↔
-      g ∈ points r A ∧
-        (g : Matrix (Fin (r + 1)) (Fin (r + 1)) A) *
-              (typeAGraphConjugator r A : Matrix (Fin (r + 1)) (Fin (r + 1)) A) *
-              ((g : Matrix (Fin (r + 1)) (Fin (r + 1)) A).map (· ^ p ^ k)).transpose =
-            (typeAGraphConjugator r A : Matrix (Fin (r + 1)) (Fin (r + 1)) A) := by
-  rw [TauCeti.map_subtype_fixedSubgroup_of_coe_eq (twistedFrobenius r p k A)
-      ((typeAGraphAutomorphism r A).toMonoidHom.comp
-        (Matrix.GeneralLinearGroup.map (iterateFrobenius A p k)))
-      (coe_twistedFrobenius r p k A),
-    Subgroup.mem_inf, mem_fixedSubgroup, MonoidHom.comp_apply, MulEquiv.coe_toMonoidHom,
-    typeAGraphAutomorphism_eq_iff, coe_map_iterateFrobenius]
 
 end
 

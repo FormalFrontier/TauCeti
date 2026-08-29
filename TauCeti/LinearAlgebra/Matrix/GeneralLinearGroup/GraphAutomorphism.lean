@@ -97,13 +97,6 @@ theorem coe_inverseTranspose (g : GL n A) :
     (inverseTranspose g : Matrix n n A) = ((g⁻¹ : GL n A) : Matrix n n A).transpose :=
   (rfl)
 
-/-- The matrix of the inverse of the inverse transpose of `g` is the transpose of the matrix of
-`g`. Inverse transpose is a group automorphism, whereas transpose alone is anti-multiplicative, so
-this is the shape in which the transpose of an invertible matrix is available inside `GL n A`. -/
-theorem coe_inv_inverseTranspose (g : GL n A) :
-    (((inverseTranspose g)⁻¹ : GL n A) : Matrix n n A) = (g : Matrix n n A).transpose := by
-  rw [← map_inv, coe_inverseTranspose, inv_inv]
-
 /-- Inverse transpose is an involution. -/
 @[simp]
 theorem inverseTranspose_inverseTranspose (g : GL n A) :
@@ -271,7 +264,7 @@ theorem typeAGraphAutomorphism_eq_iff (r : ℕ) (g h : GL (Fin (r + 1)) A) :
             (g : Matrix (Fin (r + 1)) (Fin (r + 1)) A).transpose =
           (typeAGraphConjugator r A : Matrix (Fin (r + 1)) (Fin (r + 1)) A) := by
   rw [typeAGraphAutomorphism_eq_iff_gl, ← Units.val_inj]
-  simp only [Units.val_mul, Matrix.GeneralLinearGroup.coe_inv_inverseTranspose]
+  simp only [Units.val_mul, ← map_inv, Matrix.GeneralLinearGroup.coe_inverseTranspose, inv_inv]
 
 -- The square of the signed reversal matrix is a scalar, hence central, so the two outer factors of
 -- an invariance equation may be exchanged.
@@ -310,7 +303,7 @@ theorem typeAGraphAutomorphism_eq_iff_transpose (r : ℕ) (g h : GL (Fin (r + 1)
   rw [typeAGraphAutomorphism_eq_iff_gl]
   refine Iff.trans ⟨mul_typeAGraphConjugator_mul_swap r, mul_typeAGraphConjugator_mul_swap r⟩ ?_
   rw [← Units.val_inj]
-  simp only [Units.val_mul, Matrix.GeneralLinearGroup.coe_inv_inverseTranspose]
+  simp only [Units.val_mul, ← map_inv, Matrix.GeneralLinearGroup.coe_inverseTranspose, inv_inv]
 
 /-- Applying the pinned type-`A` graph automorphism twice is the identity. -/
 @[simp]
