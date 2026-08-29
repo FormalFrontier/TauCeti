@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.BigOperators.Group.Finset.Basic
+public import Mathlib.Data.Fintype.Fin
 public import Mathlib.Data.Fintype.Prod
 public import Mathlib.Order.Monotone.Defs
 
@@ -17,22 +18,23 @@ public section
 A finite set `D : Finset (ι × κ)` of **cells** has its rows indexed by `ι` and its columns indexed
 by `κ`. This file counts the cells of `D` one row at a time (`TauCeti.CellDiagram.rowLen`), imposes
 the shape condition that makes such a set look like a Young diagram
-(`TauCeti.CellDiagram.IsRowLowerClosed`: with every cell, `D` contains the cells directly above it),
+(`TauCeti.CellDiagram.IsRowLowerSet`: with every cell, `D` contains the cells directly above it),
 and builds the set of cells lying under a prescribed tuple of row lengths
 (`TauCeti.CellDiagram.ofRowLens`).
 
 ## Main definitions
 
 * `TauCeti.CellDiagram.rowLen`: the number of cells of a set lying in a given row.
-* `TauCeti.CellDiagram.IsRowLowerClosed`: closure of a set of cells in the row direction.
+* `TauCeti.CellDiagram.IsRowLowerSet`: the lower-set property in the row direction.
 * `TauCeti.CellDiagram.ofRowLens`: the cells lying under a tuple of row lengths.
 
 ## Main results
 
-* `TauCeti.CellDiagram.isRowLowerClosed_ofRowLens`: the cells under a weakly decreasing tuple of
+* `TauCeti.CellDiagram.isRowLowerSet_ofRowLens`: the cells under a weakly decreasing tuple of
   row lengths are closed in the row direction.
 * `TauCeti.CellDiagram.rowLen_ofRowLens` and `TauCeti.CellDiagram.card_ofRowLens`: the rows of
-  those cells have the prescribed lengths, and there are `∑ i, a i` cells in all.
+  those cells have lengths `min (a i) m`, and there are `∑ i, min (a i) m` cells in all. When
+  `∀ i, a i ≤ m`, the corresponding `of_le` corollaries give the prescribed row lengths and total.
 
 ## Implementation notes
 
@@ -85,16 +87,16 @@ end RowLen
 
 /-! ### Closure in the row direction -/
 
-/-- A set of cells is **row lower closed** when with every cell it contains all the cells directly
+/-- A set of cells is a **row lower set** when with every cell it contains all the cells directly
 above it: if `(j, c)` is a cell and `i < j`, then `(i, c)` is a cell. In other words `D` is a lower
 set in its row index. This is the shape condition on a Young diagram. -/
-def IsRowLowerClosed [LT ι] (D : Finset (ι × κ)) : Prop :=
+def IsRowLowerSet [LT ι] (D : Finset (ι × κ)) : Prop :=
   ∀ p ∈ D, ∀ i : ι, i < p.1 → (i, p.2) ∈ D
 
-/-- `TauCeti.CellDiagram.IsRowLowerClosed` unfolded. The definition is not exposed, so this is how
+/-- `TauCeti.CellDiagram.IsRowLowerSet` unfolded. The definition is not exposed, so this is how
 the condition is introduced and eliminated outside this file. -/
-theorem isRowLowerClosed_iff [LT ι] {D : Finset (ι × κ)} :
-    IsRowLowerClosed D ↔ ∀ p ∈ D, ∀ i : ι, i < p.1 → (i, p.2) ∈ D :=
+theorem isRowLowerSet_iff [LT ι] {D : Finset (ι × κ)} :
+    IsRowLowerSet D ↔ ∀ p ∈ D, ∀ i : ι, i < p.1 → (i, p.2) ∈ D :=
   Iff.rfl
 
 /-! ### The cells under a tuple of row lengths -/
@@ -115,40 +117,43 @@ theorem mem_ofRowLens_iff {a : ι → ℕ} {m : ℕ} {p : ι × Fin m} :
   simp [ofRowLens]
 
 /-- The cells under a weakly decreasing tuple of row lengths are closed in the row direction. -/
-theorem isRowLowerClosed_ofRowLens [Preorder ι] {a : ι → ℕ} (ha : Antitone a) (m : ℕ) :
-    IsRowLowerClosed (ofRowLens a m) := by
+theorem isRowLowerSet_ofRowLens [Preorder ι] {a : ι → ℕ} (ha : Antitone a) (m : ℕ) :
+    IsRowLowerSet (ofRowLens a m) := by
   intro p hp i hi
   exact mem_ofRowLens_iff.2 ((mem_ofRowLens_iff.1 hp).trans_le (ha hi.le))
 
 variable [DecidableEq ι]
 
-/-- The rows of the cells under `a` have the lengths `a` prescribes, as soon as there are enough
-columns to hold them. -/
-theorem rowLen_ofRowLens {a : ι → ℕ} {m : ℕ} (hm : ∀ i, a i ≤ m) (i : ι) :
+/-- A row of the cells under `a` has the requested length, truncated to the available width `m`. -/
+@[simp]
+theorem rowLen_ofRowLens (a : ι → ℕ) (m : ℕ) (i : ι) :
+    rowLen (ofRowLens a m) i = min (a i) m := by
+  rw [rowLen_eq_card_filter_mem]
+  simpa [mem_ofRowLens_iff, min_comm] using (Fin.card_filter_val_lt (n := m) (m := a i))
+
+/-- The rows of the cells under `a` have the lengths `a` prescribes when there are enough columns
+to hold them. -/
+theorem rowLen_ofRowLens_of_le {a : ι → ℕ} {m : ℕ} (hm : ∀ i, a i ≤ m) (i : ι) :
     rowLen (ofRowLens a m) i = a i := by
-  have himage : (ofRowLens a m).filter (fun p => p.1 = i)
-      = Finset.univ.image fun c : Fin (a i) => ((i, Fin.castLE (hm i) c) : ι × Fin m) := by
-    refine Finset.ext fun p => ?_
-    simp only [Finset.mem_filter, Finset.mem_image, Finset.mem_univ, true_and, mem_ofRowLens_iff]
-    refine ⟨?_, ?_⟩
-    · rintro ⟨hlt, rfl⟩
-      exact ⟨⟨p.2, hlt⟩, by simp⟩
-    · rintro ⟨c, rfl⟩
-      exact ⟨c.isLt, rfl⟩
-  rw [rowLen_eq_card_filter, himage, Finset.card_image_of_injective _ (fun c d h =>
-      Fin.val_injective (congrArg (fun p : ι × Fin m => (p.2 : ℕ)) h)),
-    Finset.card_univ, Fintype.card_fin]
+  simp [hm i]
 
 omit [DecidableEq ι] in
-/-- The cells under `a` are one for each unit of each row length, as soon as there are enough
-columns to hold them. -/
-theorem card_ofRowLens {a : ι → ℕ} {m : ℕ} (hm : ∀ i, a i ≤ m) :
-    (ofRowLens a m).card = ∑ i, a i := by
+/-- The number of cells under `a` is the sum of the row lengths truncated to width `m`. -/
+@[simp]
+theorem card_ofRowLens (a : ι → ℕ) (m : ℕ) :
+    (ofRowLens a m).card = ∑ i, min (a i) m := by
   classical
   rw [Finset.card_eq_sum_card_fiberwise (f := fun p : ι × Fin m => p.1) (t := Finset.univ)
     fun _ _ => Finset.mem_univ _]
   exact Finset.sum_congr rfl fun i _ =>
-    (rowLen_eq_card_filter (ofRowLens a m) i).symm.trans (rowLen_ofRowLens hm i)
+    (rowLen_eq_card_filter (ofRowLens a m) i).symm.trans (rowLen_ofRowLens a m i)
+
+omit [DecidableEq ι] in
+/-- The cells under `a` are one for each unit of each row length when there are enough columns to
+hold them. -/
+theorem card_ofRowLens_of_le {a : ι → ℕ} {m : ℕ} (hm : ∀ i, a i ≤ m) :
+    (ofRowLens a m).card = ∑ i, a i := by
+  simp [hm]
 
 end OfRowLens
 

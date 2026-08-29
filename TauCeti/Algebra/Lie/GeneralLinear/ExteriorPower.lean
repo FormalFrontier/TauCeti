@@ -31,8 +31,9 @@ makes the wedge of the first `d` standard basis vectors in `Kⁿ` a highest-weig
 
 ## Main results
 
-* `exteriorPower.lie_single_self_basisWedge` and `exteriorPower.lie_single_basisWedge_of_ne`: how a
-  matrix unit acts on the wedge of a set of standard basis vectors.
+* `exteriorPower.lie_single_self_basisWedge` and
+  `exteriorPower.lie_single_basisWedge_eq_zero_of_ne_of_mem_imp_mem`: how a matrix unit acts on the
+  wedge of a set of standard basis vectors.
 * `exteriorPower.isGlHighestWeightVector_firstBasisWedge`: over a nontrivial ring, the first basis
   wedge is a highest-weight vector when `d ≤ n`.
 
@@ -132,13 +133,6 @@ private theorem exists_orderEmbOfFin_eq {S : Finset n} (h : S.card = N) {p : n} 
     exact Finset.mem_coe.2 hp
   exact hrange
 
-omit [LinearOrder n] in
-private theorem single_mulVec_single (i j p : n) :
-    Matrix.single i j (1 : K) *ᵥ (Pi.single p 1 : n → K) =
-      if j = p then Pi.single i 1 else 0 := by
-  rw [Matrix.single_mulVec_eq, Pi.single_apply]
-  by_cases hjp : j = p <;> simp [hjp]
-
 /-- The diagonal matrix unit `Eᵢᵢ` fixes the factors of a wedge of standard basis vectors that lie
 in direction `i` and kills the others, so it scales the wedge by one when `i` is one of its indices
 and annihilates it otherwise. -/
@@ -146,20 +140,21 @@ theorem lie_single_self_basisWedge (S : Finset n) (h : S.card = N) (i : n) :
     ⁅Matrix.single i i (1 : K), basisWedge K S h⁆ =
       (if i ∈ S then (1 : K) else 0) • basisWedge K S h := by
   rw [basisWedge_eq_ιMulti, gl_lie_def, glLieMap_apply_ιMulti]
-  simp only [single_mulVec_single]
+  simp only [Matrix.single_mulVec_eq, Pi.single_apply, one_mul, ite_smul, one_smul, zero_smul,
+    eq_comm]
   by_cases hiS : i ∈ S
   · obtain ⟨k₀, hk₀⟩ := exists_orderEmbOfFin_eq h hiS
-    rw [ite_eq_left hiS, one_smul, Finset.sum_eq_single k₀]
+    rw [ite_eq_left hiS, Finset.sum_eq_single k₀]
     · rw [ite_eq_left hk₀.symm, ← hk₀]
-      exact congrArg (ιMulti K N) (Function.update_eq_self k₀ _)
+      exact (congrArg (ιMulti K N) (Function.update_eq_self k₀ _)).symm
     · intro k _ hk
       have hik : ¬i = S.orderEmbOfFin h k := fun hik =>
         hk ((S.orderEmbOfFin h).injective (hk₀.trans hik)).symm
       rw [ite_eq_right hik]
       exact (ιMulti K N).map_update_zero _ _
     · exact fun hk => absurd (Finset.mem_univ k₀) hk
-  · rw [ite_eq_right hiS, zero_smul]
-    refine Finset.sum_eq_zero fun k _ => ?_
+  · rw [ite_eq_right hiS]
+    refine (Finset.sum_eq_zero fun k _ => ?_).symm
     have hik : ¬i = S.orderEmbOfFin h k := by
       intro hik
       exact hiS (by rw [hik]; exact Finset.orderEmbOfFin_mem S h k)
@@ -169,12 +164,13 @@ theorem lie_single_self_basisWedge (S : Finset n) (h : S.card = N) (i : n) :
 /-- A matrix unit `Eᵢⱼ` with `i ≠ j` annihilates the wedge of the standard basis vectors indexed by
 `S`, as soon as `S` contains `i` whenever it contains `j`: the `j`-th factor is carried to a factor
 already present, so every summand of the Leibniz expansion has a repeated factor. -/
-theorem lie_single_basisWedge_of_ne (S : Finset n) (h : S.card = N) {i j : n} (hij : i ≠ j)
-    (hS : j ∈ S → i ∈ S) :
+theorem lie_single_basisWedge_eq_zero_of_ne_of_mem_imp_mem (S : Finset n) (h : S.card = N)
+    {i j : n} (hij : i ≠ j) (hS : j ∈ S → i ∈ S) :
     ⁅Matrix.single i j (1 : K), basisWedge K S h⁆ = 0 := by
   rw [basisWedge_eq_ιMulti, gl_lie_def, glLieMap_apply_ιMulti]
-  refine Finset.sum_eq_zero fun k _ => ?_
-  simp only [single_mulVec_single]
+  simp only [Matrix.single_mulVec_eq, Pi.single_apply, one_mul, ite_smul, one_smul, zero_smul,
+    eq_comm]
+  refine (Finset.sum_eq_zero fun k _ => ?_).symm
   by_cases hjk : j = S.orderEmbOfFin h k
   · have hjS : j ∈ S := by rw [hjk]; exact Finset.orderEmbOfFin_mem S h k
     obtain ⟨l, hl⟩ := exists_orderEmbOfFin_eq h (hS hjS)
@@ -275,7 +271,7 @@ theorem isGlHighestWeightVector_firstBasisWedge [Nontrivial K] (d n : ℕ) (h : 
     ⟨basisWedge_ne_zero _ _, fun i => ?_, fun i j hij => ?_⟩
   · rw [lie_single_self_basisWedge, fundamentalWeight_apply]
     simp only [mem_firstBasisSet]
-  · exact lie_single_basisWedge_of_ne _ _ hij.ne fun hj =>
+  · exact lie_single_basisWedge_eq_zero_of_ne_of_mem_imp_mem _ _ hij.ne fun hj =>
       (mem_firstBasisSet d n h i).2
         ((Fin.lt_def.1 hij).trans ((mem_firstBasisSet d n h j).1 hj))
 
