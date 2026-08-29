@@ -66,39 +66,41 @@ section Normed
 variable {𝕂 A B : Type*} [NontriviallyNormedField 𝕂] [CharZero 𝕂]
 variable [ContinuousSMul ℚ≥0 𝕂]
 variable [NormedRing A] [NormedAlgebra 𝕂 A]
-variable [NormedRing B] [NormedAlgebra 𝕂 B]
+variable [NormedRing B] [Algebra 𝕂 B]
 variable [CompleteSpace A]
 
 /-- Continuous ring homomorphisms commute with `logOneAdd` on the open unit ball. -/
-theorem map_logOneAdd {F : Type*} [FunLike F A B] [RingHomClass F A B]
-    (f : F) (hf : Continuous f) {u : A} (hu : ‖u‖ < 1) :
+theorem map_logOneAdd {F : Type*} [FunLike F A B] [ContinuousMapClass F A B]
+    [RingHomClass F A B] (f : F) {u : A} (hu : ‖u‖ < 1) :
     f (logOneAdd 𝕂 A u) = logOneAdd 𝕂 B (f u) := by
   rw [logOneAdd_eq_tsum, logOneAdd_eq_tsum]
   calc
     f (∑' n : ℕ, ((-1 : 𝕂) ^ (n + 1) / n) • u ^ n) =
         ∑' n : ℕ, f (((-1 : 𝕂) ^ (n + 1) / n) • u ^ n) := by
-      exact ((summable_logOneAdd 𝕂 A hu).hasSum.map f hf).tsum_eq.symm
+      exact ((summable_logOneAdd 𝕂 A hu).hasSum.map f (map_continuous f)).tsum_eq.symm
     _ = ∑' n : ℕ, ((-1 : 𝕂) ^ (n + 1) / n) • (f u) ^ n := by
       apply tsum_congr
       intro n
-      simpa [Rat.cast_div, Rat.cast_pow, map_pow] using
-        (map_ratCast_smul f 𝕂 𝕂 ((-1 : ℚ) ^ (n + 1) / n) (u ^ n))
+      simpa only [logOneAddSeries_apply, List.ofFn_const, List.prod_replicate,
+        Function.comp_def] using
+        map_logOneAddSeries_apply (𝕂 := 𝕂) f (fun _ : Fin n ↦ u)
 
 /-- A continuous ring homomorphism commutes with `logOneAdd` near the origin. -/
-theorem eventually_map_logOneAdd {F : Type*} [FunLike F A B] [RingHomClass F A B]
-    (f : F) (hf : Continuous f) :
+theorem eventually_map_logOneAdd {F : Type*} [FunLike F A B] [ContinuousMapClass F A B]
+    [RingHomClass F A B] (f : F) :
     ∀ᶠ u in 𝓝 (0 : A), f (logOneAdd 𝕂 A u) = logOneAdd 𝕂 B (f u) := by
   filter_upwards [Metric.ball_mem_nhds (0 : A) zero_lt_one] with u hu
-  exact map_logOneAdd (𝕂 := 𝕂) f hf (by simpa [Metric.mem_ball, dist_zero_right] using hu)
+  exact map_logOneAdd (𝕂 := 𝕂) f (by simpa [Metric.mem_ball, dist_zero_right] using hu)
 
 /-- Continuous ring homomorphisms commute with the germ of `logOneAdd` at the origin. -/
-theorem map_logOneAdd_germ {F : Type*} [FunLike F A B] [RingHomClass F A B]
-    (f : F) (hf : Continuous f) :
+@[simp high]
+theorem map_logOneAdd_germ {F : Type*} [FunLike F A B] [ContinuousMapClass F A B]
+    [RingHomClass F A B] (f : F) :
     (↑(logOneAdd 𝕂 A) : Germ (𝓝 (0 : A)) A).map f =
       (↑(logOneAdd 𝕂 B) : Germ (𝓝 (0 : B)) B).compTendsto f (by
-        exact hf.tendsto' 0 0 (map_zero f)) := by
+        exact (map_continuous f).tendsto' 0 0 (map_zero f)) := by
   rw [Germ.map_coe, Germ.coe_compTendsto, Germ.coe_eq]
-  filter_upwards [eventually_map_logOneAdd (𝕂 := 𝕂) f hf] with u hu
+  filter_upwards [eventually_map_logOneAdd (𝕂 := 𝕂) f] with u hu
   exact hu
 
 end Normed
