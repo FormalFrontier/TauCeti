@@ -119,6 +119,7 @@ theorem pbwAssociatedGradedMap_apply_homogeneous (n : ℕ) (p : homogeneousSubmo
 
 /-- The degree-`n` component map sends a product of `n` symmetric-algebra generators to the class
 of the corresponding word of Lie generators. -/
+@[simp]
 theorem pbwHomogeneousComponentMap_prod_map_ι (l : List L) :
     pbwHomogeneousComponentMap R L l.length
         ⟨(l.map (SymmetricAlgebra.ι R L)).prod,

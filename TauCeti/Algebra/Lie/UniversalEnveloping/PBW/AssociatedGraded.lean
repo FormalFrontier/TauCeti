@@ -222,6 +222,7 @@ theorem pbwAssociatedGradedMap_ι (x : L) :
 
 /-- A product of degree-one PBW classes is the class of the corresponding word of canonical Lie
 generators, in the degree given by the length of the word. -/
+@[simp]
 theorem prod_map_pbwGradedGenerator (l : List L) :
     (l.map (pbwGradedGenerator R L)).prod =
       DirectSum.of (PBWGradedPiece R L) l.length
@@ -256,6 +257,7 @@ theorem prod_map_pbwGradedGenerator (l : List L) :
 
 /-- The canonical map sends a product of symmetric-algebra generators to the class of the
 corresponding word of Lie generators, in the degree given by the length of the word. -/
+@[simp]
 theorem pbwAssociatedGradedMap_prod_map_ι (l : List L) :
     pbwAssociatedGradedMap R L (l.map (SymmetricAlgebra.ι R L)).prod =
       DirectSum.of (PBWGradedPiece R L) l.length
