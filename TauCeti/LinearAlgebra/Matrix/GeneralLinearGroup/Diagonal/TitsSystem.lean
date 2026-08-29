@@ -195,7 +195,7 @@ def gl2TitsSystem : TitsSystem (GL (Fin 2) k) where
   subgroupN := GL2DiagonalNormalizer k
   closure_subgroupB_union_subgroupN := gl2_borel_normalizer_closure k
   intersection_normal := by
-    rw [gl2_borel_comap_normalizer_eq_diagonal]
+    rw [← Subgroup.comap_subtype, gl2_borel_comap_normalizer_eq_diagonal]
     exact Subgroup.normal_in_normalizer
   simple := {QuotientGroup.mk (gl2WeylNormalizer k)}
   closure_simple := by
@@ -241,7 +241,7 @@ def gl2TitsSystem : TitsSystem (GL (Fin 2) k) where
   exists_simpleRep_sq_mem s hs := by
     rw [Set.mem_singleton_iff] at hs
     refine ⟨gl2WeylNormalizer k, hs.symm, ?_⟩
-    rw [Subgroup.mem_comap, map_mul]
+    rw [← Subgroup.comap_subtype, Subgroup.mem_comap, map_mul]
     simp only [Subgroup.subtype_apply, gl2WeylNormalizer]
     rw [gl2WeylElement_mul_self]
     exact (GL2Borel k).one_mem
