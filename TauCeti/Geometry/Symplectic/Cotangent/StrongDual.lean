@@ -111,7 +111,6 @@ lemma strongDualCotangentEquiv_symm_apply (q : V) (p : Module.Dual ℝ V) :
 
 /-- The finite-dimensional identification of cotangent models preserves their canonical
 symplectic forms. -/
-@[simp]
 lemma cotangentSymplecticForm_strongDualCotangentEquiv_apply
     (x y : V × StrongDual ℝ V) :
     cotangentSymplecticForm (strongDualCotangentEquiv x) (strongDualCotangentEquiv y) =
