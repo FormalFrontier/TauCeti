@@ -47,8 +47,10 @@ hand: the trivial coset `B` and, for a split semisimple element, the coset of th
 `w = !![0, 1; 1, 0]`. Conjugating `diag(a, b)` by `w` swaps the two entries, which is where the
 second summand `α(b) β(a)` comes from.
 
-Only the central value uses the finiteness of `F` for more than the definition of the principal
-series, through the index `q + 1` of the Borel subgroup; the other three values are `q`-free.
+Only the central formula contains `q`, as the index `q + 1` of the Borel subgroup, and it is the
+one whose fixed-coset count `TauCeti.GL2Borel.natCard_fixedCosets_scalar` is about a finite field.
+The other three counts hold over any field; all four proofs still need `F` finite, because the
+coset sum they run on is the one of a finite-index subgroup.
 
 ## Main results
 
@@ -115,8 +117,12 @@ private theorem indTerm_character_GL2BorelRep_eq (a b : Fˣ) {g x : GL (Fin 2) F
     (h1 : ((c : GL (Fin 2) F) : Matrix (Fin 2) (Fin 2) F) 1 1 = (b : F)) :
     indTerm (GL2BorelRep F α β).character g x = (α a : ℂ) * (β b : ℂ) := by
   have hmem : x⁻¹ * g * x ∈ GL2Borel F := hc ▸ c.2
-  rw [indTerm_of_mem _ hmem, show (⟨x⁻¹ * g * x, hmem⟩ : GL2Borel F) = c from Subtype.ext hc,
-    character_GL2BorelRep_eq α β c h0 h1]
+  -- After the case split, the summand is the Borel character at the *subgroup* element
+  -- `⟨x⁻¹ * g * x, hmem⟩`, whereas `hc` equates underlying matrices.  Rewriting by `hc` there
+  -- would have to move the membership proof `hmem` along with it, so it is the equality of
+  -- subgroup elements, obtained from `hc` by `Subtype.ext`, that rewrites.
+  have hsub : (⟨x⁻¹ * g * x, hmem⟩ : GL2Borel F) = c := Subtype.ext hc
+  rw [indTerm_apply, dite_eq_left hmem, hsub, character_GL2BorelRep_eq α β c h0 h1]
 
 /-- The character of the Borel representation is a class function, so its summands depend only on
 the coset of their representative. -/

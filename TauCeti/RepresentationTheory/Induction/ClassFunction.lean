@@ -32,7 +32,7 @@ and to deduce `TauCeti.character_ind` from `TauCeti.indClassFun_eq_natCard_inv_m
   when `x⁻¹ g x` lies in the subgroup and `0` otherwise.  It is the summand of the
   induced-character formula too, which the character file uses at `f = ρ.character`, together
   with the coset-invariance lemma `TauCeti.indTerm_eq_of_mk_eq` and the evaluations
-  `TauCeti.indTerm_of_mem`, `TauCeti.indTerm_conj` and `TauCeti.indTerm_one`.
+  `TauCeti.indTerm_conj` and `TauCeti.indTerm_one`.
 * `TauCeti.indClassFun S f`: the function `G → k` obtained from `f : S → k` by summing `f` over
   those left coset representatives that conjugate `g` into `S`.  There is no division by `|S|`,
   so it needs no invertibility hypothesis and no more than an additive commutative monoid of
@@ -107,12 +107,6 @@ open scoped Classical in
 theorem indTerm_apply (f : S → k) (g x : G) :
     indTerm f g x = if h : x⁻¹ * g * x ∈ S then f ⟨x⁻¹ * g * x, h⟩ else 0 :=
   (rfl)
-
-/-- The value of the summand at a representative that does conjugate `g` into the subgroup. -/
-theorem indTerm_of_mem (f : S → k) {g x : G} (h : x⁻¹ * g * x ∈ S) :
-    indTerm f g x = f ⟨x⁻¹ * g * x, h⟩ := by
-  classical
-  rw [indTerm, dite_eq_left h]
 
 /-- **A summand vanishes unless `g` fixes the coset of its representative.**  The conjugate
 `x⁻¹ g x` lies in `S` exactly when `g • xS = xS`, so only the fixed cosets contribute to
