@@ -24,9 +24,8 @@ For a chosen square root `y² = d` in an abelian extension `L / ℚ`, the predic
   its chosen square root to `y`.
 
 The last clause is the maximality in the classical definition. It is stated by a universal
-property, rather than by choosing a maximal element of a collection of fields, so it is invariant
-under root-preserving `ℚ`-algebra equivalence. The theorem `IsGenusField.nonempty_algEquiv` makes
-that uniqueness explicit.
+property, rather than by choosing a maximal element of a collection of fields. The theorem
+`IsGenusField.exists_algEquiv_apply_eq` makes the resulting root-preserving uniqueness explicit.
 
 For squarefree negative `d`, `isGenusField_candidateGenusField` assembles the existing arithmetic
 and archimedean inputs. The finite-prime theorem is `isUnramifiedIn_candidateGenusField`, the
@@ -78,11 +77,12 @@ structure IsGenusField (d : ℤ) (L : Type u) [Field L] [NumberField L] (y : L) 
   maximal :
     ∀ {M : Type v} [Field M] [NumberField M] [IsAbelianGalois ℚ M] {z : M},
       z ^ 2 = algebraMap ℤ M d →
-      Module.finrank ℚ (adjoin ℚ {z} : IntermediateField ℚ M) = 2 →
       (∀ q : Ideal (𝓞 (adjoin ℚ {z} : IntermediateField ℚ M)),
         q.IsPrime → q ≠ ⊥ → Algebra.IsUnramifiedIn (𝓞 M) q) →
       IsUnramifiedAtInfinitePlaces (adjoin ℚ {z} : IntermediateField ℚ M) M →
       ∃ φ : M →ₐ[ℚ] L, φ z = y
+
+attribute [simp] IsGenusField.root_sq IsGenusField.finrank_adjoin
 
 namespace IsGenusField
 
@@ -92,18 +92,15 @@ variable {M : Type v} [Field M] [NumberField M]
 variable {y : L} {z : M}
 
 /-- Any two genus fields for the same radicand are isomorphic as `ℚ`-algebras by an equivalence
-carrying one chosen square root to the other.
-
-Each universal property supplies an embedding in one direction. Finite-dimensionality turns the
-two resulting degree inequalities into equality, after which either embedding is surjective. -/
-theorem nonempty_algEquiv (hL : IsGenusField.{u, v} d L y)
+carrying one chosen square root to the other. -/
+theorem exists_algEquiv_apply_eq (hL : IsGenusField.{u, v} d L y)
     (hM : IsGenusField.{v, u} d M z) :
     ∃ e : L ≃ₐ[ℚ] M, e y = z := by
   let _ : IsAbelianGalois ℚ L := hL.isAbelianGalois
   let _ : IsAbelianGalois ℚ M := hM.isAbelianGalois
-  obtain ⟨φ, hφ⟩ := hM.maximal hL.root_sq hL.finrank_adjoin
+  obtain ⟨φ, hφ⟩ := hM.maximal hL.root_sq
     hL.isUnramifiedAtFinitePlaces hL.isUnramifiedAtInfinitePlaces
-  obtain ⟨ψ, _⟩ := hL.maximal hM.root_sq hM.finrank_adjoin
+  obtain ⟨ψ, _⟩ := hL.maximal hM.root_sq
     hM.isUnramifiedAtFinitePlaces hM.isUnramifiedAtInfinitePlaces
   have hLM : Module.finrank ℚ L ≤ Module.finrank ℚ M :=
     LinearMap.finrank_le_finrank_of_injective (f := φ.toLinearMap) φ.injective
@@ -167,7 +164,7 @@ theorem isGenusField_candidateGenusField {d : ℤ} (hd : Squarefree d) (hneg : d
     exact fun q hq _ ↦ isUnramifiedIn_candidateGenusField hd hnsq q
   · rw [← candidateGenusFieldBase_def hd]
     exact isUnramifiedAtInfinitePlaces_candidateGenusField hd hneg
-  · intro M _ _ _ z hz _ hfinite _
+  · intro M _ _ _ z hz hfinite _
     apply exists_algHom_apply_eq_of_sq_eq
       (by
         rw [candidateGenusFieldBaseRoot_sq hd, IsScalarTower.algebraMap_apply ℤ ℚ]

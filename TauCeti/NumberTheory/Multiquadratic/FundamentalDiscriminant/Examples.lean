@@ -17,7 +17,8 @@ discriminant `-84` and genus field `ℚ(√-1, √-3, √-7)`. This file establi
 fundamental-discriminant component of those examples: each discriminant is derived as a product
 of prime discriminants through
 `isFundamentalDiscriminant_mul_prod_oddPrimeDiscriminant_of_isEvenPrimeDiscriminant`, rather than
-by unfolding the definition. The class-group and genus-field claims remain for later work.
+by unfolding the definition. Their genus-field claims follow from
+`isGenusField_candidateGenusField`; the class-group identifications remain future work.
 
 ## Main results
 

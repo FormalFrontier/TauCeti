@@ -22,7 +22,8 @@ The product root squares to `-21`, so its simple extension is the copy of `ℚ(�
 inside the candidate genus field. The relative-degree calculation then specializes
 `TauCeti.Multiquadratic.finrank_top_over_intermediateField_of_finrank_eq_two`.
 This supplies the field-degree part of the roadmap's `ℚ(√-21)` acceptance example;
-identifying the ambient compositum as the maximal unramified abelian extension is later work.
+the general theorem `isGenusField_candidateGenusField` identifies the ambient compositum as the
+maximal unramified abelian extension.
 
 The prime-discriminant description follows D. A. Cox, *Primes of the Form x² + ny²*,
 and F. Lemmermeyer's *Reciprocity Laws*.
