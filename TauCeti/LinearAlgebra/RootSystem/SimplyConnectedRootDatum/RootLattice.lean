@@ -7,6 +7,7 @@ module
 
 public import Mathlib.LinearAlgebra.Matrix.NonsingularInverse
 public import Mathlib.LinearAlgebra.Matrix.ToLin
+public import TauCeti.LinearAlgebra.IntegralLattice.RootLattice.TypeD.SimpleRoots
 public import TauCeti.LinearAlgebra.Matrix.Cartan.Classical
 public import TauCeti.LinearAlgebra.Matrix.Cartan.TypeA
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.Assembly
@@ -64,7 +65,7 @@ public section
 
 namespace TauCeti.DynkinType
 
-open Set Submodule
+open Set _root_.Submodule
 
 /-- The simple roots of the pinned datum, read off the Bourbaki-numbered base, are exactly the rows
 of its Cartan matrix. -/
@@ -95,8 +96,8 @@ theorem span_range_root_eq_top_iff_isUnit_det (t : DynkinType) (ht : t.Valid) :
     Matrix.isUnit_iff_isUnit_det]
 
 /-- **The Cartan matrix of a valid Dynkin type is unimodular precisely in types `E₈`, `F₄` and
-`G₂`.** The determinant of `A n` is `n + 1`, those of `B n`, `C n` and `D n` are even, and those of
-`E₆` and `E₇` are `3` and `2`. -/
+`G₂`.** The determinant of `A n` is `n + 1`, those of `B n` and `C n` are even, and those of
+`D n`, `E₆` and `E₇` are `4`, `3` and `2`. -/
 theorem isUnit_det_cartanMatrix_iff (t : DynkinType) (ht : t.Valid) :
     IsUnit t.cartanMatrix.det ↔ t = E8 ∨ t = F4 ∨ t = G2 := by
   cases t with
@@ -126,11 +127,11 @@ theorem isUnit_det_cartanMatrix_iff (t : DynkinType) (ht : t.Valid) :
     · rcases h with h | h | h <;> simp at h
   | D n =>
     have hn : 4 ≤ n := valid_D.mp ht
-    obtain ⟨c, hc⟩ : (2 : ℤ) ∣ (D n).cartanMatrix.det := by
-      rw [cartanMatrix_D]; exact CartanMatrix.two_dvd_det_D (by omega)
+    have hdet : (D n).cartanMatrix.det = 4 := by
+      rw [cartanMatrix_D]; exact CartanMatrix.D_det (by omega)
     refine ⟨fun h => absurd h ?_, fun h => ?_⟩
-    · rw [Int.isUnit_iff, hc]
-      omega
+    · rw [hdet, Int.isUnit_iff]
+      decide
     · rcases h with h | h | h <;> simp at h
   | E6 =>
     have hdet : E6.cartanMatrix.det = 3 := by rw [cartanMatrix_E6]; exact CartanMatrix.E₆_det
