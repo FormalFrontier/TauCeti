@@ -444,15 +444,15 @@ theorem irreducibleQuotientMk_surjective : Function.Surjective (irreducibleQuoti
 /-- **The canonical generator of `L(lam)`**, the class of the canonical generator of `M(lam)`.
 It is a highest weight vector of weight `lam` as soon as `M(lam)` is nonzero
 (`TauCeti.isHighestWeightVector_irreducibleQuotientGenerator`), and it is the introduction rule
-through which `L(lam)` is populated without unfolding the quotient. Its defining equation is
-exposed as `TauCeti.irreducibleQuotientMk_vermaGenerator`. -/
-@[expose] noncomputable def irreducibleQuotientGenerator : irreducibleQuotient b lam :=
+through which `L(lam)` is populated without unfolding the quotient. The body is not exposed: the
+public equation is `TauCeti.irreducibleQuotientMk_vermaGenerator`. -/
+noncomputable def irreducibleQuotientGenerator : irreducibleQuotient b lam :=
   irreducibleQuotientMk b lam (vermaGenerator b lam)
 
 @[simp]
 theorem irreducibleQuotientMk_vermaGenerator :
     irreducibleQuotientMk b lam (vermaGenerator b lam) = irreducibleQuotientGenerator b lam :=
-  rfl
+  (rfl)
 
 /-- **The canonical generator generates `L(lam)`**, the canonical generator of `M(lam)` generating
 `M(lam)` and the projection being surjective. So `L(lam)` is a highest weight module of weight
