@@ -158,8 +158,7 @@ theorem typeBSimpleCorootGenerator_lie_negativeRoot_castSucc (i : Fin (n + 1)) (
 private theorem typeBSimpleCorootCoordinate_last_eq_cartan_transpose (i : Fin (n + 1)) :
     typeBSimpleCorootCoordinate (K := K) i (Fin.last n) =
       ((CartanMatrix.B (n + 1)).transpose i (Fin.last n) : ℤ) := by
-  change typeBSimpleCorootCoordinate (K := K) i (Fin.last n) =
-    (CartanMatrix.B (n + 1) (Fin.last n) i : ℤ)
+  rw [Matrix.transpose_apply]
   refine Fin.lastCases ?_ (fun i₀ => ?_) i
   · simp [CartanMatrix.B, Matrix.of_apply]
   · rw [typeBSimpleCorootCoordinate_castSucc]
@@ -173,9 +172,7 @@ private theorem typeBSimpleCorootCoordinate_sub_eq_cartan_transpose
     typeBSimpleCorootCoordinate (K := K) i j.castSucc -
         typeBSimpleCorootCoordinate i j.succ =
       ((CartanMatrix.B (n + 1)).transpose i j.castSucc : ℤ) := by
-  change typeBSimpleCorootCoordinate (K := K) i j.castSucc -
-      typeBSimpleCorootCoordinate i j.succ =
-    (CartanMatrix.B (n + 1) j.castSucc i : ℤ)
+  rw [Matrix.transpose_apply]
   refine Fin.lastCases ?_ (fun i₀ => ?_) i
   · rw [typeBSimpleCorootCoordinate_last]
     rcases j with ⟨j, hj⟩
@@ -192,6 +189,7 @@ private theorem typeBSimpleCorootCoordinate_sub_eq_cartan_transpose
     all_goals omega
 
 /-- The Cartan action on positive simple-root generators, in Serre's integral convention. -/
+@[simp]
 theorem typeBSimpleCorootGenerator_lie_root_cartan_transpose (i j : Fin (n + 1)) :
     ⁅typeBSimpleCorootGenerator (K := K) i, typeBSimpleRootGenerator (K := K) j⁆ =
       (CartanMatrix.B (n + 1)).transpose i j • typeBSimpleRootGenerator j := by
@@ -202,6 +200,7 @@ theorem typeBSimpleCorootGenerator_lie_root_cartan_transpose (i j : Fin (n + 1))
       typeBSimpleCorootCoordinate_sub_eq_cartan_transpose, Int.cast_smul_eq_zsmul]
 
 /-- The Cartan action on negative simple-root generators, in Serre's integral convention. -/
+@[simp]
 theorem typeBSimpleCorootGenerator_lie_negativeRoot_cartan_transpose (i j : Fin (n + 1)) :
     ⁅typeBSimpleCorootGenerator (K := K) i,
       typeBSimpleNegativeRootGenerator (K := K) j⁆ =
