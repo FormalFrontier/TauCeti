@@ -163,6 +163,68 @@ theorem exists_finite_compl_fixedBy_apply_eq {ι β : Type*} [Finite ι] (f g : 
   obtain ⟨σ, hsub, hval⟩ := exists_compl_fixedBy_subset_apply_eq f g
   exact ⟨σ, ((Set.finite_range f).union (Set.finite_range g)).subset hsub, hval⟩
 
+/-- A permutation can be matched on a finite set by a finitely supported permutation. -/
+theorem exists_finite_compl_fixedBy_apply_eq_on_finset {β : Type*} (π : Equiv.Perm β)
+    (s : Finset β) :
+    ∃ σ : Equiv.Perm β, (MulAction.fixedBy β σ)ᶜ.Finite ∧ ∀ b ∈ s, σ b = π b := by
+  let f : ↥s ↪ β := Function.Embedding.subtype _
+  let g : ↥s ↪ β := f.trans π.toEmbedding
+  obtain ⟨σ, hσ, hval⟩ := exists_finite_compl_fixedBy_apply_eq f g
+  exact ⟨σ, hσ, fun b hb => hval ⟨b, hb⟩⟩
+
+/-- A row-wise family has finite total support exactly when its product shear belongs to the
+finitary symmetric group on the product. -/
+theorem mem_finitary_prodShear_iff {ι β : Type*} {τ : ι → Equiv.Perm β} :
+    Equiv.prodShear (Equiv.refl ι) τ ∈ finitary (ι × β) ↔
+      {p : ι × β | τ p.1 p.2 ≠ p.2}.Finite := by
+  rw [mem_finitary]
+  have hset : (MulAction.fixedBy (ι × β) (Equiv.prodShear (Equiv.refl ι) τ))ᶜ =
+      {p : ι × β | τ p.1 p.2 ≠ p.2} := by
+    ext ⟨a, b⟩
+    simp [MulAction.mem_fixedBy, Equiv.Perm.smul_def]
+  rw [hset]
+
+/-- A family supported on finitely many rows, with finite support in each row, has finite total
+support on the product. -/
+theorem finite_setOf_family_ne {ι β : Type*} {τ : ι → Equiv.Perm β}
+    (hrows : {a | τ a ≠ 1}.Finite) (hsupp : ∀ a, τ a ∈ finitary β) :
+    {p : ι × β | τ p.1 p.2 ≠ p.2}.Finite := by
+  let S : Set (ι × β) := ⋃ a ∈ {a | τ a ≠ 1},
+    Prod.mk a '' (MulAction.fixedBy β (τ a))ᶜ
+  have hS : S.Finite := hrows.biUnion fun a _ =>
+    (mem_finitary.mp (hsupp a)).image (Prod.mk a)
+  refine hS.subset fun p hp => ?_
+  have hrow : τ p.1 ≠ 1 := by
+    intro hτ
+    simp [hτ] at hp
+  refine Set.mem_iUnion.2 ⟨p.1, Set.mem_iUnion.2 ⟨hrow, p.2, ?_, rfl⟩⟩
+  simpa [MulAction.mem_fixedBy, Equiv.Perm.smul_def] using hp
+
+/-- Finite total support of a row-wise family implies finite support in every row. -/
+theorem mem_finitary_of_finite_setOf_family_ne {ι β : Type*} {τ : ι → Equiv.Perm β}
+    (hτ : {p : ι × β | τ p.1 p.2 ≠ p.2}.Finite) (a : ι) : τ a ∈ finitary β := by
+  rw [mem_finitary]
+  have himage : (Prod.mk a '' {b : β | τ a b ≠ b}).Finite := hτ.subset fun x hx => by
+    rcases hx with ⟨b, hb, hbx⟩
+    subst x
+    exact hb
+  have hne : {b : β | τ a b ≠ b}.Finite :=
+    himage.of_finite_image (Set.injOn_of_injective fun _ _ h => Prod.mk.inj h |>.2)
+  simpa [MulAction.fixedBy, Equiv.Perm.smul_def, Set.compl_ofPred] using hne
+
+/-- Finite total support of a row-wise family implies that only finitely many rows are
+nontrivial. -/
+theorem finite_setOf_ne_one_of_finite_setOf_family_ne {ι β : Type*}
+    {τ : ι → Equiv.Perm β} (hτ : {p : ι × β | τ p.1 p.2 ≠ p.2}.Finite) :
+    {a | τ a ≠ 1}.Finite := by
+  classical
+  refine (hτ.image Prod.fst).subset fun a ha => ?_
+  by_contra hnot
+  apply ha
+  ext b
+  by_contra hb
+  exact hnot ⟨(a, b), hb, rfl⟩
+
 /-- **A family of permutations can be matched on finitely many indexed points by a family with
 finite total support.** Given `π : ι → Equiv.Perm β` and finitely many pairs `(i, b)`, there is a
 family `τ` agreeing with `π` at every listed pair and moving only finitely many pairs altogether.
@@ -172,25 +234,19 @@ each remaining fibre it is obtained by extending the two finite embeddings `b �
 `b ↦ π i b`. -/
 theorem exists_finite_support_family_apply_eq_on_finset {ι β : Type*}
     (π : ι → Equiv.Perm β) (F : Finset (ι × β)) :
-    ∃ τ : ι → Equiv.Perm β, {p : ι × β | τ p.1 p.2 ≠ p.2}.Finite ∧
+    ∃ τ : ι → Equiv.Perm β,
+      Equiv.prodShear (Equiv.refl ι) τ ∈ finitary (ι × β) ∧
       ∀ p ∈ F, τ p.1 p.2 = π p.1 p.2 := by
   classical
   let rows : Finset ι := F.image Prod.fst
   have hexists : ∀ a : ι, ∃ σ : Equiv.Perm β,
       (MulAction.fixedBy β σ)ᶜ.Finite ∧
-        ∀ b : ↥((F.filter fun q => q.1 = a).image Prod.snd), σ b.1 = π a b.1 := by
+        ∀ b ∈ (F.filter fun q => q.1 = a).image Prod.snd, σ b = π a b := by
     intro a
-    let f : ↥((F.filter fun q => q.1 = a).image Prod.snd) ↪ β :=
-      Function.Embedding.subtype _
-    let g : ↥((F.filter fun q => q.1 = a).image Prod.snd) ↪ β :=
-      f.trans (π a).toEmbedding
-    obtain ⟨σ, hσ, hval⟩ := exists_finite_compl_fixedBy_apply_eq f g
-    refine ⟨σ, hσ, fun p => by
-      simpa only [f, g, Function.Embedding.coeFn_mk, Function.Embedding.trans_apply,
-        Function.Embedding.subtype_apply, Equiv.coe_toEmbedding] using hval p⟩
+    exact exists_finite_compl_fixedBy_apply_eq_on_finset (π a) _
   choose σ hσ using hexists
   let τ : ι → Equiv.Perm β := fun a => if a ∈ rows then σ a else 1
-  refine ⟨τ, ?_, ?_⟩
+  refine ⟨τ, mem_finitary_prodShear_iff.mpr ?_, ?_⟩
   · let S : Set (ι × β) := ⋃ a ∈ (rows : Set ι),
         Prod.mk a '' (MulAction.fixedBy β (σ a))ᶜ
     have hS : S.Finite := rows.finite_toSet.biUnion fun a _ =>
@@ -207,6 +263,6 @@ theorem exists_finite_support_family_apply_eq_on_finset {ι β : Type*}
     have hpfilter : p ∈ F.filter fun q => q.1 = p.1 := Finset.mem_filter.2 ⟨hp, rfl⟩
     have hmem : p.2 ∈ (F.filter fun q => q.1 = p.1).image Prod.snd :=
       Finset.mem_image.2 ⟨p, hpfilter, rfl⟩
-    simpa [τ, hrow] using (hσ p.1).2 ⟨p.2, hmem⟩
+    simpa [τ, hrow] using (hσ p.1).2 p.2 hmem
 
 end Equiv.Perm

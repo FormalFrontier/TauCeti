@@ -7,8 +7,7 @@ module
 
 public import TauCeti.Probability.DeFinetti.Theorem
 public import TauCeti.Probability.Exchangeability.FullyExchangeable
--- Non-public: finite-support approximation is used to reduce the defining symmetry.
-import TauCeti.Algebra.GroupAction.FiniteSupportPerm
+public import TauCeti.Algebra.GroupAction.FiniteSupportPerm
 -- Non-public: evaluating a random probability measure at a fixed measurable set is measurable.
 import TauCeti.MeasureTheory.Measure.ProbabilityMeasure.Ext
 -- Non-public: equality of process laws is reduced to their finite-dimensional laws.
@@ -152,7 +151,8 @@ Mathlib's finite-dimensional-law uniqueness then gives equality of the full arra
 theorem rowExchangeable_iff_forall_finite_support [IsFiniteMeasure μ]
     (hY : ∀ p, AEMeasurable (Y p) μ) :
     RowExchangeable μ Y ↔
-      ∀ π : ι → Equiv.Perm ℕ, {p : ι × ℕ | π p.1 p.2 ≠ p.2}.Finite →
+      ∀ π : ι → Equiv.Perm ℕ,
+        Equiv.prodShear (Equiv.refl ι) π ∈ Equiv.Perm.finitary (ι × ℕ) →
         (μ.map fun ω (p : ι × ℕ) => Y (p.1, π p.1 p.2) ω) =
           μ.map fun ω (p : ι × ℕ) => Y p ω := by
   constructor
@@ -169,18 +169,14 @@ theorem rowExchangeable_iff_forall_finite_support [IsFiniteMeasure μ]
     intro F
     obtain ⟨τ, hτfin, hτ⟩ :=
       Equiv.Perm.exists_finite_support_family_apply_eq_on_finset π F
-    have hmap := h τ hτfin
-    have hrestrict : Measurable fun y : ι × ℕ → α => F.restrict y :=
-      Finset.measurable_restrict F
-    have hmap' := congrArg (fun ρ : Measure (ι × ℕ → α) => ρ.map (F.restrict ·)) hmap
-    rw [AEMeasurable.map_map_of_aemeasurable hrestrict.aemeasurable
-          (aemeasurable_pi_lambda _ fun p => hY (p.1, τ p.1 p.2)),
-      AEMeasurable.map_map_of_aemeasurable hrestrict.aemeasurable hright] at hmap'
+    have hτmap := (ProbabilityTheory.map_eq_iff_forall_finset_map_restrict_eq
+      (aemeasurable_pi_lambda _ fun p => hY (p.1, τ p.1 p.2)) hright).mp (h τ hτfin) F
     have heq : (fun ω => F.restrict fun p : ι × ℕ => Y (p.1, τ p.1 p.2) ω) =
         fun ω => F.restrict fun p : ι × ℕ => Y (p.1, π p.1 p.2) ω := by
       funext ω p
-      exact congrArg (fun k => Y (p.1.1, k) ω) (hτ p.1 p.2)
-    simpa only [Function.comp_def, heq] using hmap'
+      obtain ⟨q, hq⟩ := p
+      exact congrArg (fun k => Y (q.1, k) ω) (hτ q hq)
+    rwa [heq] at hτmap
 
 /-- Every column of an array with a.e. measurable entries is a.e. measurable. -/
 theorem aemeasurable_arrayColumn (hY : ∀ p, AEMeasurable (Y p) μ) (k : ℕ) :
