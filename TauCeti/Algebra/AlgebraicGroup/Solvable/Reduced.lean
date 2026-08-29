@@ -189,25 +189,10 @@ homomorphism. -/
   | zero => rfl
   | succ n ih =>
       rw [derivedWordArgumentsOfAlgHom_succ, derivedWordEvaluation_node]
-      apply Algebra.TensorProduct.ext'
-      intro a b
-      rw [Algebra.TensorProduct.productMap_apply_tmul, ih, ih]
-      simp only [AlgHom.comp_apply, BialgHom.coe_toAlgHom,
-        Bialgebra.TensorProduct.includeLeft_apply,
-        Bialgebra.TensorProduct.includeRight_apply]
-      rw [← map_mul,
-        Algebra.TensorProduct.tmul_mul_tmul, mul_one, one_mul]
-
-/-- Evaluating after a tensor map is the product map of the two composites. -/
-private theorem productMap_comp_map {A B C D : Type v} {E : Type u}
-    [CommRing A] [CommRing B] [CommRing C] [CommRing D] [CommRing E]
-    [Algebra k A] [Algebra k B] [Algebra k C] [Algebra k D] [Algebra k E]
-    (f : A →ₐ[k] C) (g : B →ₐ[k] D) (q : C →ₐ[k] E) (r : D →ₐ[k] E) :
-    (Algebra.TensorProduct.productMap q r).comp (Algebra.TensorProduct.map f g) =
-      Algebra.TensorProduct.productMap (q.comp f) (r.comp g) := by
-  apply Algebra.TensorProduct.ext'
-  intro a b
-  simp [Algebra.TensorProduct.productMap_apply_tmul]
+      rw [ih, ih]
+      simpa only [Bialgebra.TensorProduct.includeLeft_toAlgHom,
+        Bialgebra.TensorProduct.includeRight_toAlgHom] using
+        AffineGroup.Product.productMap_restrict q
 
 /-- Evaluating the universal point at a tree of points gives the corresponding derived word. -/
 @[simp] private theorem mapValue_universalDerivedWord {A : Type u} [CommRing A] [Algebra k A]
@@ -237,7 +222,10 @@ private theorem productMap_comp_map {A B C D : Type v} {E : Type u}
             simpa only [ofConv_toConv] using congrArg WithConv.ofConv (ih y)
           simp only [universalDerivedWord_succ,
             ofConv_toConv, derivedWord_node]
-          rw [← AlgHom.comp_assoc, productMap_comp_map, ihx, ihy]
+          rw [← AlgHom.comp_assoc, Algebra.TensorProduct.productMap_eq_comp_map,
+            AlgHom.comp_assoc (Algebra.TensorProduct.lmul' k),
+            ← Algebra.TensorProduct.map_comp,
+            ← Algebra.TensorProduct.productMap_eq_comp_map, ihx, ihy]
           exact TauCeti.HopfAlgebra.productMap_comp_commutatorAlgHom _ _
 
 variable {H K : CommHopfAlgCat.{v} k}
