@@ -200,6 +200,28 @@ noncomputable def gradedAlgebraGradeQuot (hI : I.IsHomogeneous 𝒜) :
     GradedAlgebra (gradeQuot 𝒜 I) :=
   DirectSum.IsInternal.gradedAlgebra (isInternal_gradeQuot 𝒜 I hI)
 
+/-- Homogeneous projection in the quotient commutes with the quotient map. -/
+@[simp]
+theorem decompose_gradeQuot_mk [GradedAlgebra (gradeQuot 𝒜 I)] (i : ι) (a : A) :
+    (DirectSum.decompose (gradeQuot 𝒜 I) (Ideal.Quotient.mk I a) i : A ⧸ I) =
+      Ideal.Quotient.mk I (DirectSum.decompose 𝒜 a i) := by
+  induction a using DirectSum.Decomposition.inductionOn 𝒜 with
+  | zero => simp
+  | @homogeneous j x =>
+    have hx : (x : A) ∈ 𝒜 j := x.2
+    have hqx : Ideal.Quotient.mk I (x : A) ∈ gradeQuot 𝒜 I j :=
+      mk_mem_gradeQuot 𝒜 I hx
+    by_cases hij : i = j
+    · subst hij
+      rw [DirectSum.decompose_of_mem_same (gradeQuot 𝒜 I) hqx,
+        DirectSum.decompose_of_mem_same 𝒜 hx]
+    · rw [DirectSum.decompose_of_mem_ne (gradeQuot 𝒜 I) hqx (Ne.symm hij),
+        DirectSum.decompose_of_mem_ne 𝒜 hx (Ne.symm hij), map_zero]
+  | add x y hx hy =>
+    rw [map_add, DirectSum.decompose_add, DirectSum.decompose_add, DFinsupp.add_apply,
+      DFinsupp.add_apply, Submodule.coe_add, hx, hy]
+    exact ((Ideal.Quotient.mkₐ R I).map_add _ _).symm
+
 end Internal
 
 end GradedAlgebra
