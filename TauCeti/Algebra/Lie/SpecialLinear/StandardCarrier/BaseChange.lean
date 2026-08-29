@@ -21,10 +21,8 @@ of the integral carrier coordinate ring. The numbered root-subgroup and weight-t
 maps base-change with the carrier and factor through that quotient, so the pinning is transported
 rather than chosen again after changing the base.
 
-The transported defining ideal is only proved to be contained in the common kernel of the
-transported generators. Over a non-flat base, a common-kernel construction performed after base
-change can acquire new equations, so the reverse inclusion is not asserted. Nor does this file
-identify the carrier with `SL_{r+1}` or assert reductivity or maximality of its torus.
+This file does not identify the carrier with `SL_{r+1}` or assert reductivity or maximality of
+its torus.
 
 ## Main declarations
 
@@ -36,9 +34,6 @@ identify the carrier with `SL_{r+1}` or assert reductivity or maximality of its 
   factored through the base-changed carrier.
 * `TauCeti.SlStd.weightTorusToBaseChangeCoordinateMap`: the transported weight torus factored
   through the base-changed carrier.
-* `TauCeti.SlStd.baseChangeDefiningIdeal_le_commonKernel`: the subgroup generated after base
-  change is a closed subgroup of the transported integral carrier.
-
 ## References
 
 * R. W. Carter, *Simple Groups of Lie Type*, §§4.4 and 7.1.
@@ -209,53 +204,6 @@ theorem mkQuotient_comp_weightTorusToBaseChangeCoordinateMap :
     (rootGenerator r) (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
     (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv)
     (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) A
-
-/-- Every transported numbered root-subgroup map kills the defining ideal of the base-changed
-type `A_r` carrier. -/
-theorem baseChangeDefiningIdeal_toIdeal_le_root_ker (i : Fin r ⊕ Fin r) :
-    (baseChangeDefiningIdeal r A).toIdeal ≤
-      RingHom.ker
-        (rootSubgroupBaseChangeCoordinateMap r A i).hom.toAlgHom.toRingHom := by
-  simpa only [baseChangeDefiningIdeal, rootSubgroupBaseChangeCoordinateMap] using
-    kostantToralBaseChangePresentationIdeal_toIdeal_le_root_ker
-      (rootGenerator r) (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
-      (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv)
-      (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) A i
-
-/-- The transported weight-torus map kills the defining ideal of the base-changed type `A_r`
-carrier. -/
-theorem baseChangeDefiningIdeal_toIdeal_le_torus_ker :
-    (baseChangeDefiningIdeal r A).toIdeal ≤
-      RingHom.ker (weightTorusBaseChangeCoordinateMap r A).hom.toAlgHom.toRingHom := by
-  simpa only [baseChangeDefiningIdeal, weightTorusBaseChangeCoordinateMap] using
-    kostantToralBaseChangePresentationIdeal_toIdeal_le_torus_ker
-      (rootGenerator r) (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
-      (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv)
-      (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) A
-
-/-- The transported type `A_r` carrier contains the closed subgroup generated over `A` by the
-transported numbered root subgroups and weight torus. -/
-theorem baseChangeDefiningIdeal_le_commonKernel :
-    let K : Sum (Fin r ⊕ Fin r) Unit → CommHopfAlgCat A
-      | .inl _ => AdditiveGroup.coordinateHopfAlgebra A
-      | .inr _ =>
-          (DiagonalizableGroup.coordinateRing A (SplitTorus.characterGroup (Fin r))).obj
-    baseChangeDefiningIdeal r A ≤
-      CommHopfAlgCat.commonKernelHopfIdeal (K := K)
-        (fun j => match j with
-          | .inl i => rootSubgroupBaseChangeCoordinateMap r A i
-          | .inr _ => weightTorusBaseChangeCoordinateMap r A) := by
-  dsimp only
-  rw [CommHopfAlgCat.le_commonKernelHopfIdeal_iff]
-  rintro (i | _)
-  · exact kostantToralBaseChangePresentationIdeal_toIdeal_le_root_ker
-      (rootGenerator r) (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
-      (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv)
-      (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) A i
-  · exact kostantToralBaseChangePresentationIdeal_toIdeal_le_torus_ker
-      (rootGenerator r) (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
-      (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv)
-      (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) A
 
 end
 
