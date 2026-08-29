@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.Generated.NumberedSymmetry
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Basic
+public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Points
 import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Rigidity
 import TauCeti.CategoryTheory.Aut.Basic
 
@@ -31,6 +32,11 @@ with the original one. On the represented generators the resulting automorphism 
 
 and it has order dividing any `m` for which `σ` iterates and `τ` powers to the identity.
 
+The invariance of the defining Hopf ideal that makes all of this work also says that conjugation by
+the numbered-symmetry matrix preserves the algebra-valued points of the toral closure. That form of
+the statement is proved here too, since it is the one a consumer working with a point group rather
+than with the group scheme needs, and it rests on the same ideal computation.
+
 Both hypotheses hold for the coordinate permutation that a Dynkin-diagram symmetry induces on
 Geck's lattice: it permutes the coordinate basis by the induced permutation of the Cartan
 coordinates and of the roots, and it permutes the Geck weights contragrediently.
@@ -52,6 +58,9 @@ an admissible lattice, or that the carrier is reductive.
 * `kostantGeneratedToToral_comp_numberedSymmetryIso_hom`: the generated and toral symmetries agree
   along the canonical closed immersion.
 * `kostantToralNumberedSymmetryIso_pow_eq_one`: the order relation.
+* `conj_kostantNumberedSymmetryMatrix_mem_kostantToralPointsSubgroup_iff` and
+  `map_kostantToralPointsSubgroup_conj_numberedSymmetryMatrix`: conjugation by the numbered-symmetry
+  matrix preserves the algebra-valued points of the toral closure.
 
 All of these live in the `TauCeti.UniversalEnvelopingAlgebra` namespace.
 
@@ -444,5 +453,94 @@ theorem kostantToralNumberedSymmetryIso_pow_eq_one (m : ℕ)
     change _ = _ ≫ (Iso.refl _).hom
     rw [Iso.refl_hom, Category.comp_id]
 
+/-! ## The symmetry on algebra-valued points -/
+
+include hθe hσ hbasis hwt in
+/-- The coordinate automorphism attached to a numbered symmetry preserves the toral defining Hopf
+ideal in both directions. -/
+private theorem mem_kostantToralDefiningIdeal_numberedSymmetryCoordinateIso_iff
+    (x : GeneralLinear.coordinateHopfAlgebra ℤ n) :
+    (kostantNumberedSymmetryCoordinateIso M b θ hθM).hom.hom x ∈
+        kostantToralDefiningIdeal e h ρ M hM hnil b wt ↔
+      x ∈ kostantToralDefiningIdeal e h ρ M hM hnil b wt := by
+  conv_rhs => rw [← kostantToralDefiningIdeal_comapOfSurjective_numberedSymmetryCoordinateIso
+    e h ρ M hM hnil b wt σ θ hθM hθe hσ basisPerm hbasis torusPerm hwt]
+  rw [HopfIdeal.mem_comapOfSurjective]
+
+include hθe hσ hbasis hwt in
+/-- **Conjugating by the matrix of a numbered symmetry preserves the algebra-valued points of the
+toral closure**, in both directions. The symmetry permutes the represented root subgroups and
+carries the represented weight torus to itself, so it preserves the Hopf ideal cut out by them and
+hence the matrices which kill that ideal. -/
+theorem conj_kostantNumberedSymmetryMatrix_mem_kostantToralPointsSubgroup_iff
+    (A : Type) [CommRing A] (g : Matrix.GeneralLinearGroup (Fin n) A) :
+    kostantNumberedSymmetryMatrix M b θ hθM A * g *
+          (kostantNumberedSymmetryMatrix M b θ hθM A)⁻¹ ∈
+        kostantToralPointsSubgroup e h ρ M hM hnil b wt A ↔
+      g ∈ kostantToralPointsSubgroup e h ρ M hM hnil b wt A := by
+  have hsurj : Function.Surjective
+      (kostantNumberedSymmetryCoordinateIso M b θ hθM).hom.hom :=
+    (ConcreteCategory.bijective_of_isIso
+      (kostantNumberedSymmetryCoordinateIso M b θ hθM).hom).2
+  have hpoint : (GeneralLinear.pointsMulEquiv (R := ℤ) n).symm
+      (kostantNumberedSymmetryMatrix M b θ hθM A * g *
+        (kostantNumberedSymmetryMatrix M b θ hθM A)⁻¹) =
+      (CommHopfAlgCat.mapPointsFunctor
+          (kostantNumberedSymmetryCoordinateIso M b θ hθM).hom).app (CommAlgCat.of ℤ A)
+        ((GeneralLinear.pointsMulEquiv (R := ℤ) n).symm g) := by
+    refine (GeneralLinear.pointsMulEquiv (R := ℤ) n).symm_apply_eq.mpr
+      (Eq.trans ?_ (pointsMulEquiv_mapPointsFunctor_kostantNumberedSymmetryCoordinateIso
+        M b θ hθM (CommAlgCat.of ℤ A)
+        ((GeneralLinear.pointsMulEquiv (R := ℤ) n).symm g)).symm)
+    exact congrArg
+      (fun z => kostantNumberedSymmetryMatrix M b θ hθM A * z *
+        (kostantNumberedSymmetryMatrix M b θ hθM A)⁻¹)
+      (MulEquiv.apply_symm_apply (GeneralLinear.pointsMulEquiv (R := ℤ) n) g).symm
+  -- The conjugated point is the original one precomposed with the coordinate automorphism. The
+  -- two sides live over `A` and over `CommAlgCat.of ℤ A`, which `rw` will not identify, so the
+  -- consequence is transported by `congrArg` rather than by rewriting.
+  have hval : ∀ x, ((GeneralLinear.pointsMulEquiv (R := ℤ) n).symm
+        (kostantNumberedSymmetryMatrix M b θ hθM A * g *
+          (kostantNumberedSymmetryMatrix M b θ hθM A)⁻¹)).ofConv x =
+      ((GeneralLinear.pointsMulEquiv (R := ℤ) n).symm g).ofConv
+        ((kostantNumberedSymmetryCoordinateIso M b θ hθM).hom.hom x) := fun x =>
+    (congrArg (fun q : HopfAlgebra.points (R := ℤ)
+        (H := GeneralLinear.coordinateHopfAlgebra ℤ n) (CommAlgCat.of ℤ A) =>
+      WithConv.ofConv q x) hpoint).trans
+      (CommHopfAlgCat.mapPointsFunctor_app_apply_apply
+        (kostantNumberedSymmetryCoordinateIso M b θ hθM).hom (CommAlgCat.of ℤ A) _ x)
+  rw [mem_kostantToralPointsSubgroup_iff, mem_kostantToralPointsSubgroup_iff]
+  constructor
+  · intro hall x hx
+    obtain ⟨y, rfl⟩ := hsurj x
+    exact (hval y).symm.trans (hall y
+      ((mem_kostantToralDefiningIdeal_numberedSymmetryCoordinateIso_iff
+        e h ρ M hM hnil b wt σ θ hθM hθe hσ basisPerm hbasis torusPerm hwt y).1 hx))
+  · intro hall x hx
+    exact (hval x).trans (hall _
+      ((mem_kostantToralDefiningIdeal_numberedSymmetryCoordinateIso_iff
+        e h ρ M hM hnil b wt σ θ hθM hθe hσ basisPerm hbasis torusPerm hwt x).2 hx))
+
+include hθe hσ hbasis hwt in
+/-- **The matrix of a numbered symmetry normalizes the algebra-valued points of the toral
+closure.** This is the form in which conjugation by that matrix restricts to an automorphism of the
+point group. -/
+theorem map_kostantToralPointsSubgroup_conj_numberedSymmetryMatrix (A : Type) [CommRing A] :
+    (kostantToralPointsSubgroup e h ρ M hM hnil b wt A).map
+        (MulAut.conj (kostantNumberedSymmetryMatrix M b θ hθM A)).toMonoidHom =
+      kostantToralPointsSubgroup e h ρ M hM hnil b wt A := by
+  ext g
+  rw [Subgroup.mem_map_equiv, MulAut.conj_symm_apply]
+  have hg : kostantNumberedSymmetryMatrix M b θ hθM A *
+        ((kostantNumberedSymmetryMatrix M b θ hθM A)⁻¹ * g *
+          kostantNumberedSymmetryMatrix M b θ hθM A) *
+      (kostantNumberedSymmetryMatrix M b θ hθM A)⁻¹ = g := by
+    group
+  refine Iff.symm (Iff.trans ?_
+    (conj_kostantNumberedSymmetryMatrix_mem_kostantToralPointsSubgroup_iff
+      e h ρ M hM hnil b wt σ θ hθM hθe hσ basisPerm hbasis torusPerm hwt A
+      ((kostantNumberedSymmetryMatrix M b θ hθM A)⁻¹ * g *
+        kostantNumberedSymmetryMatrix M b θ hθM A)))
+  rw [hg]
 
 end TauCeti.UniversalEnvelopingAlgebra
