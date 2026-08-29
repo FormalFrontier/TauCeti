@@ -98,7 +98,7 @@ theorem bruhatCell_mk (n : T.subgroupN) :
       DoubleCoset.doubleCoset (n : G) T.subgroupB T.subgroupB :=
   Quotient.liftOn'_mk'' _ _ _
 
-/-- Membership in a Weyl-indexed Bruhat cell is witnessed by any representative in `N`. -/
+/-- Membership in a Weyl-indexed Bruhat cell is witnessed by some representative in `N`. -/
 theorem mem_bruhatCell_iff {g : G} {w : T.WeylGroup} :
     g ∈ T.bruhatCell w ↔
       ∃ n : T.subgroupN, QuotientGroup.mk n = w ∧
