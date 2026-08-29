@@ -172,8 +172,8 @@ theorem cyclicGroupTwo_centralCharacterSearch :
     simpa using
       (isModularEigenrow_cyclicGroupTwoCentralCharacterTable_int i).map
         (Int.castRingHom (ZMod 3))
-  · change cyclicGroupTwoModularCentralRows.card = 2
-    exact card_cyclicGroupTwoModularCentralRows
+  · simpa only [cyclicGroupTwoModularCentralRows, numClasses_cyclicClassData] using
+      card_cyclicGroupTwoModularCentralRows
 
 /-- **Signed least representatives modulo `3` recover every entry of the integral
 central-character table.** -/
