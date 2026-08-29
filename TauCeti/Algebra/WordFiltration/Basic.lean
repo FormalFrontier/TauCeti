@@ -96,33 +96,19 @@ open Pointwise in
 theorem span_prod_map_eq_range_pow (n : ℕ) :
     Submodule.span R {a | ∃ l : List M, l.length = n ∧ (l.map f).prod = a} =
       LinearMap.range f ^ n := by
-  induction n with
-  | zero =>
-      have hset : {a : A | ∃ l : List M, l.length = 0 ∧ (l.map f).prod = a} = {1} := by
-        ext a
-        constructor
-        · rintro ⟨l, hl, rfl⟩
-          rw [List.length_eq_zero_iff] at hl
-          simp [hl]
-        · rintro rfl
-          exact ⟨[], rfl, by simp⟩
-      rw [hset, pow_zero, ← Submodule.one_eq_span]
-  | succ n ih =>
-      have hrange : Submodule.span R (Set.range f) = LinearMap.range f := by
-        rw [← LinearMap.coe_range, Submodule.span_eq]
-      have hset : Set.range f * {a : A | ∃ l : List M, l.length = n ∧ (l.map f).prod = a} =
-          {a : A | ∃ l : List M, l.length = n + 1 ∧ (l.map f).prod = a} := by
-        ext a
-        constructor
-        · rintro ⟨_, ⟨m, rfl⟩, _, ⟨l, hl, rfl⟩, rfl⟩
-          exact ⟨m :: l, by simp [hl], by simp⟩
-        · rintro ⟨l, hl, rfl⟩
-          cases l with
-          | nil => simp at hl
-          | cons m l =>
-              simp only [List.map_cons, List.prod_cons]
-              exact Set.mul_mem_mul ⟨m, rfl⟩ ⟨l, by simpa using hl, rfl⟩
-      rw [pow_succ', ← ih, ← hrange, Submodule.span_mul_span, hset]
+  rw [Submodule.pow_eq_span_pow_set]
+  congr 1
+  ext a
+  simp only [Set.mem_ofPred_eq, Set.mem_pow]
+  constructor
+  · rintro ⟨l, rfl, rfl⟩
+    exact ⟨fun i => ⟨f l[(i : ℕ)], LinearMap.mem_range_self f _⟩,
+      congrArg List.prod (List.ofFn_getElem_eq_map l f)⟩
+  · rintro ⟨g, rfl⟩
+    choose m hm using fun i => LinearMap.mem_range.mp (g i).2
+    exact ⟨List.ofFn m, List.length_ofFn, by
+      rw [List.map_ofFn]
+      simp [Function.comp_def, hm]⟩
 
 /-- A word of length at most `k` belongs to the `k`-th word-filtration step. -/
 theorem prod_map_mem_wordFiltration {k : ℕ} {l : List M} (hl : l.length ≤ k) :

@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.Algebra.DirectSum.Internal
 public import Mathlib.LinearAlgebra.SymmetricAlgebra.Basic
 public import TauCeti.Algebra.WordFiltration.Basic
 
@@ -60,14 +61,7 @@ theorem homogeneousSubmodule_eq_span (n : ℕ) :
 
 /-- The homogeneous submodules form a graded monoid: the unit is homogeneous of degree zero, and
 multiplication adds degrees. -/
-instance instGradedMonoid : SetLike.GradedMonoid (homogeneousSubmodule R M) where
-  one_mem := by
-    have hzero : homogeneousSubmodule R M 0 = 1 := by
-      rw [homogeneousSubmodule_def, pow_zero]
-    rw [hzero]
-    exact Submodule.one_le.1 le_rfl
-  mul_mem := fun {i j _ _} hx hy => by
-    rw [homogeneousSubmodule_def, pow_add]
-    exact Submodule.mul_mem_mul hx hy
+instance instGradedMonoid : SetLike.GradedMonoid (homogeneousSubmodule R M) :=
+  Submodule.nat_power_gradedMonoid (LinearMap.range (SymmetricAlgebra.ι R M))
 
 end TauCeti.SymmetricAlgebra
