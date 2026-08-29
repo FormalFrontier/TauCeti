@@ -33,7 +33,7 @@ into the standard type-`B` representation.
 
 ## Main results
 
-* `TauCeti.typeBSimpleRootGenerator_lie_negativeRoot_of_ne`: distinct positive and negative
+* `TauCeti.typeBSimpleRootGenerator_lie_negative_of_ne`: distinct positive and negative
   simple-root generators commute.
 * `TauCeti.ad_pow_lie_typeBSimpleRootGenerator_typeBSimpleRootGenerator`: the higher positive
   Serre relations.
@@ -88,13 +88,41 @@ private theorem lie_typeBSimpleRootMatrix_typeBSimpleNegativeRootMatrix_of_ne
 
 /-- Positive and negative simple-root generators at distinct Bourbaki nodes commute. -/
 @[simp]
-theorem typeBSimpleRootGenerator_lie_negativeRoot_of_ne
+theorem typeBSimpleRootGenerator_lie_negative_of_ne
     (i j : Fin (n + 1)) (hij : i ≠ j) :
     ⁅typeBSimpleRootGenerator (K := K) i, typeBSimpleNegativeRootGenerator (K := K) j⁆ = 0 := by
   apply Subtype.ext
   simpa only [coe_typeBSimpleRootGenerator, coe_typeBSimpleNegativeRootGenerator,
     LieSubalgebra.coe_bracket, ZeroMemClass.coe_zero] using
       lie_typeBSimpleRootMatrix_typeBSimpleNegativeRootMatrix_of_ne (K := K) i j hij
+
+private theorem lie_typeBSimpleRootMatrix_castSucc_of_nonadjacent
+    (i j : Fin n) (hij : i.val + 1 ≠ j.val) (hji : j.val + 1 ≠ i.val) :
+    ⁅typeBSimpleRootMatrix (K := K) i.castSucc,
+      typeBSimpleRootMatrix (K := K) j.castSucc⁆ = 0 := by
+  have hij' : i.val ≠ j.val + 1 := by omega
+  have hji' : j.val ≠ i.val + 1 := by omega
+  simp only [typeBSimpleRootMatrix_castSucc]
+  simp [typeBLongRootMatrix_def, lie_sub, sub_lie, lie_single_single,
+    Fin.ext_iff, hij, hji, hij', hji']
+
+private theorem lie_lie_typeBSimpleRootMatrix_castSucc_of_adjacent
+    (i j : Fin n) (hij : i.val + 1 = j.val ∨ j.val + 1 = i.val) :
+    ⁅typeBSimpleRootMatrix (K := K) i.castSucc,
+      ⁅typeBSimpleRootMatrix (K := K) i.castSucc,
+        typeBSimpleRootMatrix (K := K) j.castSucc⁆⁆ = 0 := by
+  simp only [typeBSimpleRootMatrix_castSucc]
+  rcases hij with hij | hji
+  · have hne : i.val ≠ j.val := by omega
+    have hne' : j.val ≠ i.val := hne.symm
+    have hreverse : j.val + 1 ≠ i.val := by omega
+    have hreverse' : i.val ≠ j.val + 1 := by omega
+    simp [typeBLongRootMatrix_def, lie_sub, sub_lie, lie_single_single,
+      Fin.ext_iff, hij, hne, hne', hreverse, hreverse']
+  · have hreverse : i.val + 1 ≠ j.val := by omega
+    have hreverse' : j.val ≠ i.val + 1 := by omega
+    simp [typeBLongRootMatrix_def, lie_sub, sub_lie, lie_single_single,
+      Fin.ext_iff, hji, hreverse, hreverse']
 
 /- The four `Fin.lastCases` branches separate ordinary long-root nodes from the terminal short-root
 node. Only the positive orientation is computed: the sign-reindexing below transports it to the
@@ -127,23 +155,37 @@ private theorem ad_pow_lie_typeBSimpleRootMatrix (i j : Fin (n + 1)) :
       split_ifs <;> simp_all [LieAlgebra.ad_apply, lie_sub, sub_lie,
         lie_single_single, Fin.ext_iff] <;>
         omega
-    · simp only [typeBSimpleRootMatrix_castSucc]
-      simp_rw [typeBLongRootMatrix_def]
-      rcases i₀ with ⟨i, hi⟩
+    · rcases i₀ with ⟨i, hi⟩
       rcases j₀ with ⟨j, hj⟩
-      simp only [Fin.castSucc_mk, CartanMatrix.B, Matrix.of_apply]
-      split_ifs <;> simp only [Fin.succ_mk, map_sub, Int.reduceNeg, neg_neg,
-        Int.reduceToNat, Int.toNat_one, pow_one, neg_zero, Int.toNat_zero, pow_zero,
-        lie_sub, sub_lie, lie_single_single, Sum.inr.injEq, Sum.inl.injEq,
-        Fin.mk.injEq, mul_one, reduceCtorEq, ↓reduceIte, sub_self, sub_zero, zero_sub,
-        neg_sub, LinearMap.sub_apply, LieAlgebra.ad_apply, Module.End.one_apply] <;>
-        (first | omega | split_ifs) <;>
-        try simp only [lie_zero, lie_single_single, Sum.inr.injEq, Sum.inl.injEq,
-          Fin.mk.injEq, mul_one, Nat.add_eq_left, one_ne_zero, ↓reduceIte, sub_zero,
-          zero_sub, reduceCtorEq, sub_self, Nat.left_eq_add, sub_neg_eq_add, zero_add] <;>
-        simp only [Fin.ext_iff] at * <;>
-        (first | omega | (split_ifs; simp))
-      all_goals omega
+      by_cases hij : i = j
+      · subst j
+        simp only [lie_self, map_zero]
+      · by_cases hij' : i + 1 = j
+        · have hpow :
+              (-CartanMatrix.B (n + 1) (⟨j, hj⟩ : Fin n).castSucc
+                (⟨i, hi⟩ : Fin n).castSucc).toNat = 1 := by
+            simp [CartanMatrix.B, Matrix.of_apply, Fin.ext_iff]
+            omega
+          rw [hpow, pow_one, LieAlgebra.ad_apply]
+          exact lie_lie_typeBSimpleRootMatrix_castSucc_of_adjacent
+            (K := K) ⟨i, hi⟩ ⟨j, hj⟩ (Or.inl hij')
+        · by_cases hji' : j + 1 = i
+          · have hpow :
+                (-CartanMatrix.B (n + 1) (⟨j, hj⟩ : Fin n).castSucc
+                  (⟨i, hi⟩ : Fin n).castSucc).toNat = 1 := by
+              simp [CartanMatrix.B, Matrix.of_apply, Fin.ext_iff]
+              omega
+            rw [hpow, pow_one, LieAlgebra.ad_apply]
+            exact lie_lie_typeBSimpleRootMatrix_castSucc_of_adjacent
+              (K := K) ⟨i, hi⟩ ⟨j, hj⟩ (Or.inr hji')
+          · have hpow :
+                (-CartanMatrix.B (n + 1) (⟨j, hj⟩ : Fin n).castSucc
+                  (⟨i, hi⟩ : Fin n).castSucc).toNat = 0 := by
+              simp [CartanMatrix.B, Matrix.of_apply, Fin.ext_iff]
+              omega
+            rw [hpow, pow_zero, Module.End.one_apply]
+            exact lie_typeBSimpleRootMatrix_castSucc_of_nonadjacent
+              (K := K) ⟨i, hi⟩ ⟨j, hj⟩ hij' hji'
 
 /-- The coordinate equivalence that fixes the middle coordinate and swaps the signed blocks. -/
 private def typeBSignEquiv (ι : Type*) : Unit ⊕ ι ⊕ ι ≃ Unit ⊕ ι ⊕ ι :=
@@ -179,8 +221,8 @@ private theorem ad_pow_lie_typeBSimpleNegativeRootMatrix (i j : Fin (n + 1)) :
   have he (k : Fin (n + 1)) :
       e.toLieHom (typeBSimpleRootMatrix (K := K) k) =
         -typeBSimpleNegativeRootMatrix (K := K) k := by
-    change e (typeBSimpleRootMatrix (K := K) k) = _
-    simpa [e] using typeBSignReindex_typeBSimpleRootMatrix (K := K) k
+    simpa only [LieEquiv.coe_toLieHom, e] using
+      typeBSignReindex_typeBSimpleRootMatrix (K := K) k
   rw [map_zero, LieHom.map_ad_pow, LieHom.map_lie,
     he i, he j] at h
   simp only [neg_lie, lie_neg, neg_neg] at h
