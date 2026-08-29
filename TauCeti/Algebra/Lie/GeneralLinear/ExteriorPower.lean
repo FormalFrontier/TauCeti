@@ -85,7 +85,6 @@ noncomputable scoped instance glLieModule (d : ℕ) {n : Type*} [DecidableEq n] 
   LieModule.compLieHom _ (glLieMap d)
 
 /-- The scoped Lie action is the action represented by `glLieMap`. -/
-@[simp]
 theorem gl_lie_def (d : ℕ) {n : Type*} [DecidableEq n] [Fintype n]
     (A : Matrix n n K) (x : ⋀[K]^d (n → K)) :
     letI : LieRingModule (Matrix n n K) (⋀[K]^d (n → K)) :=
@@ -136,6 +135,7 @@ private theorem exists_orderEmbOfFin_eq {S : Finset n} (h : S.card = N) {p : n} 
 /-- The diagonal matrix unit `Eᵢᵢ` fixes the factors of a wedge of standard basis vectors that lie
 in direction `i` and kills the others, so it scales the wedge by one when `i` is one of its indices
 and annihilates it otherwise. -/
+@[simp]
 theorem lie_single_self_basisWedge (S : Finset n) (h : S.card = N) (i : n) :
     ⁅Matrix.single i i (1 : K), basisWedge K S h⁆ =
       (if i ∈ S then (1 : K) else 0) • basisWedge K S h := by
