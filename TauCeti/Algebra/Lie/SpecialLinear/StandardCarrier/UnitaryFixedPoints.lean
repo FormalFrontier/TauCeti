@@ -65,9 +65,10 @@ than the identity.
 
 ## Main results
 
-* `TauCeti.SlStd.twistedFrobenius_eq_self_iff` and
-  `TauCeti.SlStd.twistedFrobenius_eq_self_iff_transpose`: a carrier point is fixed by the
-  graph-twisted Frobenius exactly when it is an isometry of the pinned `q`-power-semilinear form.
+* `TauCeti.SlStd.twistedFrobenius_eq_self_iff_mul_conjugator_mul_transpose_eq` and
+  `TauCeti.SlStd.twistedFrobenius_eq_self_iff_transpose_mul_conjugator_mul_eq`: a carrier point is
+  fixed by the graph-twisted Frobenius exactly when it is an isometry of the pinned
+  `q`-power-semilinear form.
 
 ## References
 
@@ -96,7 +97,7 @@ variable (r p k : ℕ) (A : Type) [CommRing A] [ExpChar A p]
 /-! ## The fixed points as isometries of the pinned semilinear form -/
 
 -- The point-level Frobenius is entrywise exponentiation; this is the form the invariance equation
--- of `TauCeti.typeAGraphAutomorphism_eq_iff` is stated in.
+-- of `TauCeti.typeAGraphAutomorphism_eq_iff_mul_conjugator_mul_transpose_eq` is stated in.
 private theorem coe_map_iterateFrobenius (g : Matrix.GeneralLinearGroup (Fin (r + 1)) A) :
     ((Matrix.GeneralLinearGroup.map (iterateFrobenius A p k) g :
           Matrix.GeneralLinearGroup (Fin (r + 1)) A) :
@@ -113,7 +114,7 @@ matrix `TauCeti.typeAGraphConjugator`.
 points over the `q ^ 2`-power Frobenius-fixed subring and claims no reverse containment; the
 equation here says exactly which carrier points are fixed. -/
 @[simp]
-theorem twistedFrobenius_eq_self_iff (g : points r A) :
+theorem twistedFrobenius_eq_self_iff_mul_conjugator_mul_transpose_eq (g : points r A) :
     twistedFrobenius r p k A g = g ↔
       ((g : Matrix.GeneralLinearGroup (Fin (r + 1)) A) :
               Matrix (Fin (r + 1)) (Fin (r + 1)) A) *
@@ -121,8 +122,8 @@ theorem twistedFrobenius_eq_self_iff (g : points r A) :
             (((g : Matrix.GeneralLinearGroup (Fin (r + 1)) A) :
                 Matrix (Fin (r + 1)) (Fin (r + 1)) A).map (· ^ p ^ k)).transpose =
           (typeAGraphConjugator r A : Matrix (Fin (r + 1)) (Fin (r + 1)) A) := by
-  rw [Subtype.ext_iff, coe_twistedFrobenius, typeAGraphAutomorphism_eq_iff,
-    coe_map_iterateFrobenius]
+  rw [Subtype.ext_iff, coe_twistedFrobenius,
+    typeAGraphAutomorphism_eq_iff_mul_conjugator_mul_transpose_eq, coe_map_iterateFrobenius]
 
 /-- **A type-`A_r` carrier point is fixed by the graph-twisted Frobenius exactly when it is an
 isometry of the pinned `q`-power-semilinear form**, `q = p ^ k`: writing `g*` for the transpose of
@@ -132,9 +133,10 @@ This is the shape in which the classical unitarity condition is written, `g ↦ 
 adjoint where the `q`-power map is an involution; since `Qᵀ = (-1) ^ r • Q`, the form there is
 Hermitian for even `r` and skew-Hermitian for odd `r`, the latter being Hermitian too where
 `-1 = 1`, as the module documentation records.
-`TauCeti.SlStd.twistedFrobenius_eq_self_iff` is the same condition with the two outer factors
-exchanged, which is the form the graph automorphism produces directly. -/
-theorem twistedFrobenius_eq_self_iff_transpose (g : points r A) :
+`TauCeti.SlStd.twistedFrobenius_eq_self_iff_mul_conjugator_mul_transpose_eq` is the same condition
+with the two outer factors exchanged, which is the form the graph automorphism produces
+directly. -/
+theorem twistedFrobenius_eq_self_iff_transpose_mul_conjugator_mul_eq (g : points r A) :
     twistedFrobenius r p k A g = g ↔
       (((g : Matrix.GeneralLinearGroup (Fin (r + 1)) A) :
                 Matrix (Fin (r + 1)) (Fin (r + 1)) A).map (· ^ p ^ k)).transpose *
@@ -142,8 +144,8 @@ theorem twistedFrobenius_eq_self_iff_transpose (g : points r A) :
             ((g : Matrix.GeneralLinearGroup (Fin (r + 1)) A) :
               Matrix (Fin (r + 1)) (Fin (r + 1)) A) =
           (typeAGraphConjugator r A : Matrix (Fin (r + 1)) (Fin (r + 1)) A) := by
-  rw [Subtype.ext_iff, coe_twistedFrobenius, typeAGraphAutomorphism_eq_iff_transpose,
-    coe_map_iterateFrobenius]
+  rw [Subtype.ext_iff, coe_twistedFrobenius,
+    typeAGraphAutomorphism_eq_iff_transpose_mul_conjugator_mul_eq, coe_map_iterateFrobenius]
 
 end
 

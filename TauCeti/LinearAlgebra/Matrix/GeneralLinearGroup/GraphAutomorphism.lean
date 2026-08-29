@@ -36,9 +36,9 @@ carrier.
 
 ## Main results
 
-* `TauCeti.typeAGraphAutomorphism_eq_iff` and
-  `TauCeti.typeAGraphAutomorphism_eq_iff_transpose`: the automorphism carries `g` to `h` exactly
-  when `h * Q * gᵀ = Q`, equivalently when `gᵀ * Q * h = Q`.
+* `TauCeti.typeAGraphAutomorphism_eq_iff_mul_conjugator_mul_transpose_eq` and
+  `TauCeti.typeAGraphAutomorphism_eq_iff_transpose_mul_conjugator_mul_eq`: the automorphism carries
+  `g` to `h` exactly when `h * Q * gᵀ = Q`, equivalently when `gᵀ * Q * h = Q`.
 * `TauCeti.typeAGraphAutomorphism_transvectionUnit`: the sign-free equation on every positive
   simple-root subgroup.
 * `TauCeti.typeAGraphAutomorphism_transvectionUnit_lower`: the corresponding equation on every
@@ -254,13 +254,14 @@ carries `g` to `h` exactly when `h * Q * gᵀ = Q`, with `Q` the signed reversal
 
 Composing with an entrywise ring endomorphism `σ` and taking `g = σ h` reads the equation as the
 invariance of the `σ`-sesquilinear form of Gram matrix `Q` under `h`, in the transposed form
-recorded by `TauCeti.typeAGraphAutomorphism_eq_iff_transpose`. That is the shape of a unitarity
-condition, but not yet that condition: `σ` is only assumed to be a ring endomorphism, and `Q` is
-the reversal matrix with alternating signs, so `Qᵀ = (-1) ^ r • Q`. Even `r` therefore makes the
-form Hermitian; odd `r` makes it skew-Hermitian, which is again Hermitian exactly where `-1 = 1`,
-as in characteristic two. -/
+recorded by `TauCeti.typeAGraphAutomorphism_eq_iff_transpose_mul_conjugator_mul_eq`. That is the
+shape of a unitarity condition, but not yet that condition: `σ` is only assumed to be a ring
+endomorphism, and `Q` is the reversal matrix with alternating signs, so `Qᵀ = (-1) ^ r • Q`. Even
+`r` therefore makes the form Hermitian; odd `r` makes it skew-Hermitian, which is again Hermitian
+exactly where `-1 = 1`, as in characteristic two. -/
 @[simp]
-theorem typeAGraphAutomorphism_eq_iff (r : ℕ) (g h : GL (Fin (r + 1)) A) :
+theorem typeAGraphAutomorphism_eq_iff_mul_conjugator_mul_transpose_eq (r : ℕ)
+    (g h : GL (Fin (r + 1)) A) :
     typeAGraphAutomorphism r A g = h ↔
       (h : Matrix (Fin (r + 1)) (Fin (r + 1)) A) *
             (typeAGraphConjugator r A : Matrix (Fin (r + 1)) (Fin (r + 1)) A) *
@@ -292,15 +293,17 @@ private theorem mul_typeAGraphConjugator_mul_swap (r : ℕ) {a b : GL (Fin (r + 
 /-- **The invariance equation of the pinned type-`A` graph automorphism, transposed.** The
 automorphism carries `g` to `h` exactly when `gᵀ * Q * h = Q`.
 
-The two outer factors of `TauCeti.typeAGraphAutomorphism_eq_iff` may be exchanged because the
-square of the signed reversal matrix is a scalar. Composing with an entrywise ring endomorphism
-`σ` and taking `g = σ h`, this is the equation `h* * Q * h = Q` saying that `h` is an isometry of
-the `σ`-sesquilinear form of Gram matrix `Q`, with `h* = (σ h)ᵀ`. It is the classical unitarity
-condition only where that form is Hermitian, which needs `σ` an involution, not assumed here, and
-needs `Qᵀ = Q`: since `Qᵀ = (-1) ^ r • Q`, even `r` gives that outright, while odd `r` gives a
-skew-Hermitian form, again Hermitian exactly where `-1 = 1`, as in characteristic two. For `σ` the
-identity the form is bilinear, symmetric for even `r` and alternating for odd `r`. -/
-theorem typeAGraphAutomorphism_eq_iff_transpose (r : ℕ) (g h : GL (Fin (r + 1)) A) :
+The two outer factors of `TauCeti.typeAGraphAutomorphism_eq_iff_mul_conjugator_mul_transpose_eq`
+may be exchanged because the square of the signed reversal matrix is a scalar. Composing with an
+entrywise ring endomorphism `σ` and taking `g = σ h`, this is the equation `h* * Q * h = Q` saying
+that `h` is an isometry of the `σ`-sesquilinear form of Gram matrix `Q`, with `h* = (σ h)ᵀ`. It is
+the classical unitarity condition only where that form is Hermitian, which needs `σ` an involution,
+not assumed here, and needs `Qᵀ = Q`: since `Qᵀ = (-1) ^ r • Q`, even `r` gives that outright,
+while odd `r` gives a skew-Hermitian form, again Hermitian exactly where `-1 = 1`, as in
+characteristic two. For `σ` the identity the form is bilinear, symmetric for even `r` and
+alternating for odd `r`. -/
+theorem typeAGraphAutomorphism_eq_iff_transpose_mul_conjugator_mul_eq (r : ℕ)
+    (g h : GL (Fin (r + 1)) A) :
     typeAGraphAutomorphism r A g = h ↔
       (g : Matrix (Fin (r + 1)) (Fin (r + 1)) A).transpose *
             (typeAGraphConjugator r A : Matrix (Fin (r + 1)) (Fin (r + 1)) A) *
