@@ -393,8 +393,13 @@ theorem sum_mul_det_vandermonde_update_sub_one {R : Type*} [CommRing R] {m : ℕ
       simp only [hNdef, Matrix.of_apply, Pi.smul_apply, smul_eq_mul, Pi.sub_apply]
       rw [← hleft, hright]
       ring
-    rw [det_vandermonde_update_sub_one, ← Matrix.det_updateRow_smul, hrow,
-      Matrix.det_updateRow_sub, Matrix.det_updateRow_smul, Matrix.updateRow_eq_self]
+    -- the determinant is alternating in the rows, so the difference of rows splits it in two
+    have hsplit : (N.updateRow i ((y i • N i) - fun j : Fin m => ((j : ℕ) : R) * N i j)).det
+        = (N.updateRow i (y i • N i)).det
+          - (N.updateRow i fun j : Fin m => ((j : ℕ) : R) * N i j).det :=
+      Matrix.detRowAlternating.map_update_sub N i _ _
+    rw [det_vandermonde_update_sub_one, ← Matrix.det_updateRow_smul, hrow, hsplit,
+      Matrix.det_updateRow_smul, Matrix.updateRow_eq_self]
   rw [Finset.sum_congr rfl fun i _ => key i, Finset.sum_sub_distrib, ← Finset.sum_mul,
     Matrix.sum_det_updateRow_mul_row, hdet]
   ring

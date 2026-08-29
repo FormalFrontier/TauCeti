@@ -28,11 +28,10 @@ here is that every top-degree alternating form is a multiple of `b.det`
 makes the converse available for a form supplied by something other than a basis, such as a
 pairing.
 
-The file also records two identities for the determinant of a matrix with one row replaced,
-alongside Mathlib's `Matrix.det_updateRow_add` and `Matrix.det_updateRow_smul`: replacing the row
-by a difference of vectors subtracts the two determinants, and — Jacobi's formula in row form —
-rescaling one row entry by entry along a fixed vector of factors and summing the results over the
-rows multiplies the determinant by the total of the factors.
+The file also records one identity for the determinant of a matrix with one row replaced,
+alongside Mathlib's `Matrix.det_updateRow_add` and `Matrix.det_updateRow_smul`: Jacobi's formula
+in row form, that rescaling one row entry by entry along a fixed vector of factors and summing the
+results over the rows multiplies the determinant by the total of the factors.
 
 ## Main results
 
@@ -44,8 +43,6 @@ rows multiplies the determinant by the total of the factors.
   same two statements for an alternating bilinear form on a module of rank two.
 * `TauCeti.Matrix.detRowAlternating_mulVec`: multiplication by a square matrix scales the
   standard-basis determinant form by the matrix determinant.
-* `Matrix.det_updateRow_sub`: replacing a row by a difference of vectors subtracts the two
-  determinants.
 * `Matrix.sum_det_updateRow_mul_row`: Jacobi's formula for a determinant, in row form.
 
 ## Implementation notes
@@ -210,16 +207,6 @@ end Matrix
 end TauCeti
 
 namespace Matrix
-
-/-- Replacing a row of a matrix by a difference of two vectors subtracts the two determinants.
-This is the companion of Mathlib's `Matrix.det_updateRow_add` for subtraction. -/
-theorem det_updateRow_sub {ι : Type*} [DecidableEq ι] [Fintype ι] {R : Type*} [CommRing R]
-    (M : Matrix ι ι R) (i : ι) (u v : ι → R) :
-    (M.updateRow i (u - v)).det = (M.updateRow i u).det - (M.updateRow i v).det :=
-  eq_sub_of_add_eq <| by
-    have h := Matrix.det_updateRow_add M i (u - v) v
-    rw [sub_add_cancel] at h
-    exact h.symm
 
 /-- **Jacobi's formula for a determinant, in row form.**  Rescale one row of a matrix entry by
 entry along a fixed vector of factors, and sum the resulting determinants over the rows: the
