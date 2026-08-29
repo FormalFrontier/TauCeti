@@ -12,8 +12,6 @@ public import TauCeti.Algebra.Lie.Presentation.Serre
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.CoordinateLattice
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Torus.Basic
 public import TauCeti.Algebra.Lie.UniversalEnveloping.MatrixRepresentation
-public import TauCeti.Algebra.Module.Rat
-public import TauCeti.LinearAlgebra.CoordinateLattice
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.C.Datum
 import TauCeti.Algebra.Lie.GeneralLinear.Basic
 import TauCeti.Algebra.Lie.GeneralLinear.DiagonalCartan
@@ -470,8 +468,8 @@ private theorem lie_cartanGeneratorMatrix_positiveRootMatrix (i j : Fin (n + 1))
       lie_cartanGeneratorMatrix_single, hupper, hlower, smul_sub]
 
 /-- The matrix commutator of a Cartan generator with a lowering generator, read off from the
-raising case by transposing: the Cartan matrix is symmetric and the lowering root character is the
-negative of the raising one. -/
+raising case by transposing: the diagonal matrix `cartanGeneratorMatrix` is invariant under
+transposition and the lowering root character is the negative of the raising one. -/
 private theorem lie_cartanGeneratorMatrix_negativeRootMatrix (i j : Fin (n + 1)) :
     ⁅cartanGeneratorMatrix n j, negativeRootMatrix n i⁆ =
       ((rootGeneratorWeight n (.inr i) j : ℤ) : ℚ) • negativeRootMatrix n i := by

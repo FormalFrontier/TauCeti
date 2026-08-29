@@ -13,8 +13,6 @@ public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Schem
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Relations
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Torus
 public import TauCeti.Algebra.Lie.UniversalEnveloping.MatrixRepresentation
-public import TauCeti.LinearAlgebra.CoordinateLattice
-public import TauCeti.LinearAlgebra.Eigenspace.Binomial
 import TauCeti.Algebra.Lie.GeneralLinear.DiagonalCartan
 import TauCeti.CategoryTheory.Comma.Over
 

@@ -5,13 +5,9 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Algebra.Module.Lattice
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.CoordinateLattice
-public import TauCeti.LinearAlgebra.CoordinateLattice
-public import TauCeti.LinearAlgebra.Eigenspace.Binomial
 public import TauCeti.LinearAlgebra.RootSystem.GeckConstruction.DividedPower
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.KostantForm
-public import TauCeti.RingTheory.Binomial
 
 /-!
 # The coordinate lattice in the pinned Geck module
