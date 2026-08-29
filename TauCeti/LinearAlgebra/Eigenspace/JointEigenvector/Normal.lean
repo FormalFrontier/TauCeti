@@ -135,6 +135,7 @@ def nonzeroJointWeightAction (N : Subgroup G) [N.Normal]
           (fun χ ↦ iInf_eigenspace_unitHom_conjNormal_ne_bot_iff N ρ g₁ χ)
           (fun χ ↦ iInf_eigenspace_unitHom_conjNormal_ne_bot_iff N ρ g₂ χ)).symm
 
+/-- The underlying character of the permutation action is obtained by conjugating with `g`. -/
 @[simp]
 theorem nonzeroJointWeightAction_apply_coe (N : Subgroup G) [N.Normal]
     (ρ : G →* Module.End K V) (g : G)
