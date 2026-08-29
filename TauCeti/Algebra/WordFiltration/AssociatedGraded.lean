@@ -554,7 +554,7 @@ homogeneous product. -/
 
 /-- The degree-`k` class of a filtered element depends only on its value in the ambient algebra.
 In particular two different membership proofs give the same class. -/
-theorem gradedPiece_mk_eq_mk (f : M →ₗ[R] A) {k : ℕ} {a b : A}
+private theorem gradedPiece_mk_eq_mk (f : M →ₗ[R] A) {k : ℕ} {a b : A}
     (ha : a ∈ wordFiltration f k) (hb : b ∈ wordFiltration f k) (hab : a = b) :
     (Submodule.Quotient.mk ⟨a, ha⟩ : GradedPiece f k) = Submodule.Quotient.mk ⟨b, hb⟩ :=
   congrArg Submodule.Quotient.mk (Subtype.ext hab)
