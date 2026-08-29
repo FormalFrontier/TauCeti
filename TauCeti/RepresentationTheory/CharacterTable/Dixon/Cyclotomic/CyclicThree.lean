@@ -146,24 +146,21 @@ def cyclicGroupThreeExactCharacterTable :
      1, Cyclotomic.zeta 3, Cyclotomic.zeta 3 ^ 2;
      1, Cyclotomic.zeta 3 ^ 2, Cyclotomic.zeta 3]
 
-/-- The entries of the exact `C₃` character table. -/
+/-- **The entries of the exact `C₃` character table in closed form**: the entry in row `i` and
+column `j` is `ζ ^ (i * j)`, the value of the `i`-th linear character at `Multiplicative.ofAdd j`.
+This is the characteristic property of the displayed matrix; downstream reasoning uses it instead
+of the matrix literal. -/
 @[simp]
 theorem cyclicGroupThreeExactCharacterTable_apply (i j : CyclicGroupThreeClassIndex) :
-    cyclicGroupThreeExactCharacterTable i j =
-      !![1, 1, 1;
-         1, Cyclotomic.zeta 3, Cyclotomic.zeta 3 ^ 2;
-         1, Cyclotomic.zeta 3 ^ 2, Cyclotomic.zeta 3] i j := by
-  rfl
+    cyclicGroupThreeExactCharacterTable i j = Cyclotomic.zeta 3 ^ ((i : ℕ) * (j : ℕ)) := by
+  fin_cases i <;> fin_cases j <;> decide
 
 private theorem cyclicGroupThreeExactCharacterTable_apply_reindex (i j : Fin 3) :
     cyclicGroupThreeExactCharacterTable
         (cyclicGroupThreeClassIndexEquiv.symm i)
         (cyclicGroupThreeClassIndexEquiv.symm j) =
-      !![1, 1, 1;
-         1, Cyclotomic.zeta 3, Cyclotomic.zeta 3 ^ 2;
-         1, Cyclotomic.zeta 3 ^ 2, Cyclotomic.zeta 3] i j := by
+      Cyclotomic.zeta 3 ^ ((i : ℕ) * (j : ℕ)) := by
   rw [cyclicGroupThreeExactCharacterTable_apply]
-  simp only [cyclicGroupThreeClassIndexEquiv_symm_apply]
   rfl
 
 /-- Every exact row is normalized at the identity class. -/
@@ -314,28 +311,14 @@ private theorem cyclicGroupThreeComplexCharacterTable_row_orthonormal
   have hgeom : 1 + Cyclotomic.complexRoot 3 + Cyclotomic.complexRoot 3 ^ 2 = 0 := by
     simpa [Finset.sum_range_succ] using
       (Cyclotomic.isPrimitiveRoot_complexRoot (e := 3)).geom_sum_eq_zero (by norm_num)
-  have hcube : Cyclotomic.complexRoot 3 ^ 3 = 1 :=
-    Cyclotomic.isPrimitiveRoot_complexRoot.pow_eq_one
-  -- Evaluate the displayed entries, push the embedding onto `ζ` and rewrite each conjugated
-  -- entry as a power of `ζ`.  The nine remaining goals are polynomial identities in `ζ`, each
-  -- following from the vanishing geometric sum `hgeom` after reducing exponents with `hcube`.
-  fin_cases i <;> fin_cases j <;>
-    simp only [Fin.isValue, Fin.zero_eta, Fin.mk_one, Fin.reduceFinMk, Fin.reduceEq,
-      of_apply, cons_val', cons_val, cons_val_zero, cons_val_one, cons_val_fin_one,
-      map_one, map_pow, Cyclotomic.complexEmbedding_zeta, RCLike.star_def, star_one, star_pow,
-      Cyclotomic.conj_complexRoot_eq_pow_sub_one, Nat.add_one_sub_one, one_mul, mul_one,
-      zero_ne_one, one_ne_zero, ↓reduceIte, Nat.cast_ofNat, CharP.cast_eq_zero]
-  · norm_num
-  · linear_combination hgeom + Cyclotomic.complexRoot 3 * hcube
-  · linear_combination hgeom + Cyclotomic.complexRoot 3 * hcube
-  · linear_combination hgeom
-  · linear_combination (Cyclotomic.complexRoot 3 ^ 3 + 2) * hcube
-  · linear_combination hgeom +
-      (Cyclotomic.complexRoot 3 ^ 2 + Cyclotomic.complexRoot 3) * hcube
-  · linear_combination hgeom
-  · linear_combination hgeom +
-      (Cyclotomic.complexRoot 3 ^ 2 + Cyclotomic.complexRoot 3) * hcube
-  · linear_combination (Cyclotomic.complexRoot 3 ^ 3 + 2) * hcube
+  have hred (n : ℕ) : Cyclotomic.complexRoot 3 ^ (n + 3) = Cyclotomic.complexRoot 3 ^ n := by
+    rw [pow_add, Cyclotomic.isPrimitiveRoot_complexRoot.pow_eq_one, mul_one]
+  -- Push the embedding onto `ζ` and rewrite each conjugated entry as a power of `ζ`, so that each
+  -- summand becomes a single power.  Reducing those exponents below `3` with `hred` leaves, in
+  -- each of the nine cases, either `1 + 1 + 1 = 3` or the vanishing geometric sum `hgeom`.
+  simp only [map_pow, Cyclotomic.complexEmbedding_zeta, RCLike.star_def, star_pow,
+    Cyclotomic.conj_complexRoot_eq_pow_sub_one, ← pow_mul, ← pow_add]
+  fin_cases i <;> fin_cases j <;> norm_num [hred] <;> linear_combination hgeom
 
 /-- The embedded exact `C₃` table satisfies the character-table specification and therefore is
 the complex character table up to a permutation of rows. -/
