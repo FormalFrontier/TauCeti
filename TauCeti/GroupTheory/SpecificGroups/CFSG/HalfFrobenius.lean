@@ -227,7 +227,12 @@ scaling separating the two fixes every index. -/
 
 /-- **The rescaling exponents of the Steinberg map** are those of the special isogeny multiplied by
 `p ^ m`. At a numbered simple root the exponent of the special isogeny is the squared length of
-that node, so this is `p ^ m` at a short simple root and `p ^ (m + 1)` at a long one. -/
+that node, so this is `p ^ m` at a short simple root and `p ^ (m + 1)` at a long one.
+
+The `exponent` field is indexed by the source of the character map, which is the image node of the
+group-scheme isogeny, so this indexing is the one exchanged against the simple-root relation below:
+the factor there is `TauCeti.SuzukiReeIndex.exponent i`, the squared length of the node paired with
+`i`, and is therefore `p ^ m` at a long node and `p ^ (m + 1)` at a short one. -/
 @[simp] theorem datumSteinberg_exponent (e : SuzukiReeIndex)
     (i : Fin e.1.dynkinType.numRoots) :
     e.datumSteinberg.exponent i =
@@ -266,10 +271,11 @@ theorem datumSteinberg_weightMap_root_simpleIndex (e : SuzukiReeIndex) (i : Fin 
       ((e.exponent i : ℤ) * (e.1.characteristic : ℤ) ^ e.halfExponent) •
         (e.1.dynkinType.simplyConnectedRootDatum e.1.dynkinType_valid).root
           (e.1.dynkinType.simpleIndex e.1.dynkinType_valid i) := by
-  rw [e.datumSteinberg.root_weightMap, datumSteinberg_indexEquiv,
-    datumSpecialIsogeny_indexEquiv_simpleIndex, lengthPerm_lengthPerm, datumSteinberg_exponent,
-    datumSpecialIsogeny_exponent_simpleIndex, rootLength_lengthPerm]
-  simp only [Int.cast_id]
+  -- The relation for the special isogeny is already proved; the Steinberg map only rescales it.
+  rw [datumSteinberg_weightMap, LinearMap.smul_apply,
+    e.datumSpecialIsogeny_weightMap_root_simpleIndex i]
+  match_scalars
+  ring
 
 /-- **The relation defining the Steinberg map on the simple coroots.** Dually to
 `TauCeti.SuzukiReeIndex.datumSteinberg_weightMap_root_simpleIndex`, the cocharacter map runs the
@@ -282,12 +288,10 @@ theorem datumSteinberg_coweightMap_coroot_simpleIndex (e : SuzukiReeIndex) (i : 
       ((e.exponent i : ℤ) * (e.1.characteristic : ℤ) ^ e.halfExponent) •
         (e.1.dynkinType.simplyConnectedRootDatum e.1.dynkinType_valid).coroot
           (e.1.dynkinType.simpleIndex e.1.dynkinType_valid (e.lengthPerm i)) := by
-  have h := e.datumSteinberg.coroot_coweightMap
-    (e.1.dynkinType.simpleIndex e.1.dynkinType_valid (e.lengthPerm i))
-  rw [datumSteinberg_indexEquiv, datumSpecialIsogeny_indexEquiv_simpleIndex,
-    lengthPerm_lengthPerm] at h
-  rw [h, datumSteinberg_exponent, datumSpecialIsogeny_exponent_simpleIndex, rootLength_lengthPerm]
-  simp only [Int.cast_id]
+  rw [datumSteinberg_coweightMap, LinearMap.smul_apply,
+    e.datumSpecialIsogeny_coweightMap_coroot_simpleIndex i]
+  match_scalars
+  ring
 
 end SuzukiReeIndex
 
