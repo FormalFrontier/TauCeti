@@ -35,9 +35,10 @@ This is the planar-separation step of the `ConformalMapping` roadmap (L5).
 
 ## Main results
 
-* `TauCeti.exists_mem_image_inter_ball_and_image_sdiff_closedBall` — **the transversal
+* `TauCeti.exists_pos_forall_mem_image_inter_ball_and_image_sdiff_closedBall` — **the transversal
   segment through a point of the image crosscut, with near side and far side on opposite sides.**
-* `TauCeti.mem_closure_image_inter_sphere_inter_setOf_im_pos_and_im_neg` — **the image crosscut is
+* `TauCeti.mem_closure_image_inter_sphere_inter_setOf_im_pos_and_mem_closure_inter_setOf_im_neg`
+  — **the image crosscut is
   adherent to each of its points from both sides of the transversal.**
 * `TauCeti.image_inter_ball_subset_filledHull_or_image_sdiff_closedBall_subset_filledHull` —
   **one of the two image pieces lies in the filled hull of a closed bounded set through the image
@@ -88,7 +89,7 @@ private theorem hasDerivAt_invFunOn_comp_segment {f : ℂ → ℂ} {U : Set ℂ}
 
 /-- **The transversal segment through a point of the image crosscut.** For small negative `t` the
 segment lies in the image of the near side, and for small positive `t` in the far side. -/
-theorem exists_mem_image_inter_ball_and_image_sdiff_closedBall {U : Set ℂ}
+theorem exists_pos_forall_mem_image_inter_ball_and_image_sdiff_closedBall {U : Set ℂ}
     (hf : DifferentiableOn ℂ f U) (hU : IsOpen U) (hinj : InjOn f U)
     (hz₀ : z₀ ∈ U ∩ sphere ζ ρ) (hρ : 0 < ρ) :
     ∃ η : ℝ, 0 < η ∧
@@ -176,7 +177,8 @@ theorem exists_mem_image_inter_ball_and_image_sdiff_closedBall {U : Set ℂ}
 
 /-- **The image crosscut is adherent from both sides of the transversal segment.** In the
 transversal coordinate the crosscut has velocity `i` at the crossing point. -/
-theorem mem_closure_image_inter_sphere_inter_setOf_im_pos_and_im_neg {U : Set ℂ}
+theorem mem_closure_image_inter_sphere_inter_setOf_im_pos_and_mem_closure_inter_setOf_im_neg
+    {U : Set ℂ}
     (hf : DifferentiableOn ℂ f U) (hU : IsOpen U)
     (hinj : InjOn f U) (hz₀ : z₀ ∈ U ∩ sphere ζ ρ) (hρ : 0 < ρ) :
     f z₀ ∈ closure (f '' (U ∩ sphere ζ ρ) ∩
@@ -296,9 +298,10 @@ theorem image_inter_ball_subset_filledHull_or_image_sdiff_closedBall_subset_fill
     mul_ne_zero (deriv_ne_zero_of_injOn hf hUo hinj hz₀.1)
       (sub_ne_zero.mpr (Metric.ne_of_mem_sphere hz₀.2 hρ.ne'))
   obtain ⟨η, hη, hnear, hfar⟩ :=
-    exists_mem_image_inter_ball_and_image_sdiff_closedBall hf hUo hinj hz₀ hρ
+    exists_pos_forall_mem_image_inter_ball_and_image_sdiff_closedBall hf hUo hinj hz₀ hρ
   obtain ⟨hleft, hright⟩ :=
-    mem_closure_image_inter_sphere_inter_setOf_im_pos_and_im_neg hf hUo hinj hz₀ hρ
+    mem_closure_image_inter_sphere_inter_setOf_im_pos_and_mem_closure_inter_setOf_im_neg
+      hf hUo hinj hz₀ hρ
   -- neither image piece meets `K`
   have hnearK : Disjoint (f '' (U ∩ ball ζ ρ)) K :=
     disjoint_image_of_subset_closure_image_inter_sphere_union_frontier_image
