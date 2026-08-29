@@ -107,16 +107,13 @@ variable {K : Set ℂ} {a b : ℂ}
 
 /-! ## The winding obstruction on a circle -/
 
-/-- **A circle carries no continuous logarithm of the map to its centre.** If `exp (h z) = z - a`
-along `sphere a r`, then `t ↦ h (a + r * exp (t * I)) - t * I - Real.log r` is a continuous
-logarithm of `1` on the connected line `ℝ`, hence constant by
-`TauCeti.eq_of_isPreconnected_of_forall_exp_eq_one`; comparing its values at `0` and at `2 * π`,
-where the circle has returned to its starting point, forces `2 * π * I = 0`.
-
-This is the winding number of the boundary circle of a disc about its centre, in the only form the
-separation argument needs. -/
-theorem not_hasContinuousLogOn_sub_sphere {r : ℝ} (hr : 0 < r) (a : ℂ) :
+/-- **A circle carries no continuous logarithm of the map to its centre.** This is the winding
+obstruction used in the plane-separation argument. -/
+theorem not_hasContinuousLogOn_sub_sphere {r : ℝ} (hr : 0 ≤ r) (a : ℂ) :
     ¬ HasContinuousLogOn (fun z => z - a) (sphere a r) := by
+  rcases hr.eq_or_lt with rfl | hr
+  · intro hlog
+    exact (hlog.ne_zero (by simp : a ∈ sphere a 0)) (sub_self a)
   rw [hasContinuousLogOn_iff]
   rintro ⟨h, hcont, heq⟩
   set γ : ℝ → ℂ := circleMap a r with hγdef
@@ -217,7 +214,7 @@ private theorem not_hasContinuousLogOn_of_isBounded_connectedComponentIn (hK : I
       hΦc.continuousOn (by rintro ⟨z, -, hz⟩; exact hΦ0 z hz)
     exact hasContinuousLogOn_iff.mpr
       ⟨h, hcont, fun z hz => by simpa only [Function.comp_apply] using heq hz⟩
-  exact not_hasContinuousLogOn_sub_sphere hR a
+  exact not_hasContinuousLogOn_sub_sphere hR.le a
     ((hΦlog.mono (subset_univ _)).congr hsphere)
 
 /-- **Borsuk's separation theorem.** If the Borsuk map `z ↦ (z - a) / (z - b)` of two points
@@ -260,12 +257,7 @@ theorem hasContinuousLogOn_sub_div_sub_iff (hK : IsClosed K) (hKb : IsBounded K)
 /-! ## Janiszewski's theorem -/
 
 /-- **Janiszewski's theorem.** If two bounded closed subsets `S`, `T` of the plane have preconnected
-intersection and neither separates `a` from `b`, then their union does not separate them either.
-
-The proof is the Borsuk criterion run three times: a logarithm of the Borsuk map exists on `S` and
-on `T` because neither separates the pair, the two glue over the preconnected overlap
-(`TauCeti.HasContinuousLogOn.union`), and the logarithm on `S ∪ T` says that the union does not
-separate. -/
+intersection and neither separates `a` from `b`, then their union does not separate them either. -/
 theorem janiszewski {S T : Set ℂ} (hS : IsClosed S) (hT : IsClosed T) (hSb : IsBounded S)
     (hTb : IsBounded T) (hST : IsPreconnected (S ∩ T))
     (hSsep : b ∈ connectedComponentIn Sᶜ a) (hTsep : b ∈ connectedComponentIn Tᶜ a) :

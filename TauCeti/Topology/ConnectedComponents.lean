@@ -45,12 +45,8 @@ theorem Homeomorph.image_connectedComponent {Y : Type*} [TopologicalSpace Y]
   simpa only [connectedComponentIn_univ, Set.image_univ_of_surjective e.surjective] using
     e.image_connectedComponentIn (s := Set.univ) (x := x) (Set.mem_univ x)
 
-/-- **The frontier of a connected component of an open set misses the set.** In a locally
-connected space a component `C` of an open `F` is itself open, and a point `y ∈ F` in the closure
-of `C` has its own component of `F` as an open neighbourhood, which therefore meets `C`; two
-components that meet are equal, so `y ∈ C` — and an open set is disjoint from its frontier.
-
-Equivalently, `frontier (connectedComponentIn F x) ∩ F = ∅`: the component is clopen in `F`. -/
+/-- **The frontier of a connected component of an open set misses the set.** Equivalently,
+`frontier (connectedComponentIn F x) ∩ F = ∅`: the component is clopen in `F`. -/
 theorem frontier_connectedComponentIn_subset_compl [LocallyConnectedSpace X] {F : Set X}
     (hF : IsOpen F) (x : X) : frontier (connectedComponentIn F x) ⊆ Fᶜ := by
   intro y hy hyF
