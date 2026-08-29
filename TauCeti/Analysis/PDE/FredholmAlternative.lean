@@ -121,7 +121,11 @@ theorem isWeakSolutionDirichletMassShift_iff (kappa : ℝ)
           ∫ x in Omega, f x * W1p.value (v : W1p mu Omega 2) x ∂mu := by
   simp only [IsWeakSolutionDirichletMassShift, dirichletForcing_apply_eq_setIntegral]
 
-/-- A zero mass shift recovers the unshifted Dirichlet weak equation. -/
+/-- A zero mass shift recovers the unshifted Dirichlet weak equation.
+
+This named specialization is not a simp lemma because
+`isWeakSolutionDirichletMassShift_iff` already reduces its left-hand side; registering both
+lemmas would violate the `simpNF` linter. -/
 theorem isWeakSolutionDirichletMassShift_zero_iff (f : Lp ℝ 2 (mu.restrict Omega))
     (u : W1p0 mu Omega 2) :
     IsWeakSolutionDirichletMassShift a b c 0 f u ↔ IsWeakSolutionDirichlet a b c f u := by
