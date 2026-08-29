@@ -34,6 +34,8 @@ its torus.
   factored through the base-changed carrier.
 * `TauCeti.SlStd.weightTorusToBaseChangeCoordinateMap`: the transported weight torus factored
   through the base-changed carrier.
+* `TauCeti.SlStd.baseChangeDefiningIdeal_le_commonKernel`: the transported ideal lies in the
+  common kernel of the numbered root-subgroup and weight-torus maps.
 ## References
 
 * R. W. Carter, *Simple Groups of Lie Type*, §§4.4 and 7.1.
@@ -204,6 +206,30 @@ theorem mkQuotient_comp_weightTorusToBaseChangeCoordinateMap :
     (rootGenerator r) (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
     (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv)
     (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) A
+
+/-- The transported defining ideal lies in the common kernel of the numbered root-subgroup and
+weight-torus maps over `A`. -/
+theorem baseChangeDefiningIdeal_le_commonKernel :
+    let K : Sum (Fin r ⊕ Fin r) Unit → CommHopfAlgCat A
+      | .inl _ => AdditiveGroup.coordinateHopfAlgebra A
+      | .inr _ =>
+          (DiagonalizableGroup.coordinateRing A (SplitTorus.characterGroup (Fin r))).obj
+    baseChangeDefiningIdeal r A ≤
+      CommHopfAlgCat.commonKernelHopfIdeal (K := K)
+        (fun j => match j with
+          | .inl i => rootSubgroupBaseChangeCoordinateMap r A i
+          | .inr _ => weightTorusBaseChangeCoordinateMap r A) := by
+  have h := kostantToralBaseChangePresentationIdeal_le_commonKernelHopfIdeal
+      (rootGenerator r) (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
+      (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv)
+      (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) A
+  dsimp only at h ⊢
+  rw [CommHopfAlgCat.le_commonKernelHopfIdeal_iff] at h ⊢
+  rintro (i | _)
+  · simpa only [baseChangeDefiningIdeal_def, rootSubgroupBaseChangeCoordinateMap_def] using
+      h (.inl i)
+  · simpa only [baseChangeDefiningIdeal_def, weightTorusBaseChangeCoordinateMap_def] using
+      h (.inr ())
 
 end
 
