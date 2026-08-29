@@ -100,23 +100,33 @@ theorem coe_pointsMap_apply (f : A →+* B) (g : points n A)
 /-- The identity homomorphism induces the identity on type-C carrier points. -/
 @[simp]
 theorem pointsMap_id : pointsMap n (RingHom.id A) = MonoidHom.id _ := by
-  refine MonoidHom.ext fun g ↦ Subtype.ext (Matrix.GeneralLinearGroup.ext fun i j ↦ ?_)
-  rw [coe_pointsMap_apply, MonoidHom.id_apply, RingHom.id_apply]
+  have hid : (RingHom.id A).toIntAlgHom = AlgHom.id ℤ A :=
+    AlgHom.ext fun _ ↦ rfl
+  rw [pointsMap, hid,
+    GeneralLinear.mapHopfIdealPointsSubgroup_id]
+  apply MonoidHom.ext
+  intro g
+  exact (MulEquiv.subgroupCongr (points_def n A)).symm_apply_apply g
 
 /-- The induced maps on type-C carrier points compose. -/
 @[simp]
 theorem pointsMap_comp {C : Type*} [CommRing C] (f : A →+* B) (g : B →+* C) :
     pointsMap n (g.comp f) = (pointsMap n g).comp (pointsMap n f) := by
-  refine MonoidHom.ext fun x ↦ Subtype.ext (Matrix.GeneralLinearGroup.ext fun i j ↦ ?_)
-  rw [coe_pointsMap_apply, MonoidHom.comp_apply, coe_pointsMap_apply,
-    coe_pointsMap_apply, RingHom.comp_apply]
+  have hcomp : (g.comp f).toIntAlgHom = g.toIntAlgHom.comp f.toIntAlgHom :=
+    AlgHom.ext fun _ ↦ rfl
+  apply MonoidHom.ext
+  intro x
+  simp only [pointsMap, MonoidHom.comp_apply, MulEquiv.coe_toMonoidHom, hcomp,
+    GeneralLinear.mapHopfIdealPointsSubgroup_comp, MulEquiv.apply_symm_apply]
 
 /-- An injective homomorphism of value rings induces an injective map on type-C carrier points. -/
 theorem pointsMap_injective {f : A →+* B} (hf : Function.Injective f) :
     Function.Injective (pointsMap n f) := by
-  intro x y hxy
-  refine Subtype.ext (Matrix.GeneralLinearGroup.ext fun i j ↦ hf ?_)
-  rw [← coe_pointsMap_apply, ← coe_pointsMap_apply, hxy]
+  rw [pointsMap]
+  exact (MulEquiv.subgroupCongr (points_def n B)).symm.injective.comp
+    ((GeneralLinear.mapHopfIdealPointsSubgroup_injective
+      ((n + 1) + (n + 1)) (definingIdeal n) hf).comp
+        (MulEquiv.subgroupCongr (points_def n A)).injective)
 
 /-- The induced map carries a numbered root-subgroup parameter along the homomorphism of value
 rings. -/
