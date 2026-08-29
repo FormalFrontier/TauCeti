@@ -47,6 +47,8 @@ elementary matrices against the diagonal torus.
 * `TauCeti.transvectionUnit`: a transvection at a pair of distinct indices, as an element of
   `GL n A`, namely `Matrix.SpecialLinearGroup.transvection` along
   `Matrix.SpecialLinearGroup.toGL`.
+* `TauCeti.toGL_transvection_eq_transvectionUnit`: the defining equality relating the
+  special-linear and general-linear transvection APIs.
 * `TauCeti.transvectionHom`: the resulting homomorphism from the additive group of `A`.
 * `TauCeti.commutingTransvectionPairHom`: the product of two commuting transvection
   homomorphisms, with a shared parameter.
@@ -120,6 +122,16 @@ def transvectionUnit (hij : i ≠ j) (c : A) : GL n A :=
 theorem coe_transvectionUnit (hij : i ≠ j) (c : A) :
     (transvectionUnit hij c : Matrix n n A) = transvection i j c :=
   (rfl)
+
+/-- Viewing a special-linear transvection in the general linear group gives
+`TauCeti.transvectionUnit`. -/
+theorem toGL_transvection_eq_transvectionUnit (hij : i ≠ j) (c : A) :
+    SpecialLinearGroup.toGL (SpecialLinearGroup.transvection hij c) =
+      transvectionUnit hij c := by
+  apply GeneralLinearGroup.ext
+  intro p q
+  rw [SpecialLinearGroup.coe_GL_coe_matrix, coe_transvectionUnit]
+  rfl
 
 /-- The transvection of parameter zero is the identity. -/
 @[simp]
