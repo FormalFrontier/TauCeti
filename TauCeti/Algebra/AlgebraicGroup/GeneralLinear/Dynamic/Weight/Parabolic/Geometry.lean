@@ -5,11 +5,9 @@ Authors: Codex
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.Connected.Product
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Dynamic.Weight.Levi.DiagonalTorus
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Dynamic.Weight.Levi.SemidirectProduct
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Weight.Unipotent.Geometry
-public import TauCeti.Algebra.AlgebraicGroup.Smooth.Product
 public import TauCeti.Algebra.AlgebraicGroup.Torus.SmoothConnected
 
 /-!
@@ -26,9 +24,10 @@ shows that its weight parabolic is smooth and geometrically connected over every
 
 ## Main declarations
 
-* `TauCeti.GeneralLinear.smooth_weightParabolicCoordinateHopfAlgebra`: smoothness of an
-  injective-weight parabolic.
-* `TauCeti.GeneralLinear.geometricallyConnected_weightParabolicCoordinateHopfAlgebra`:
+* `TauCeti.GeneralLinear.smoothCommHopfAlgProperty_weightParabolicCoordinateHopfAlgebra`:
+  smoothness of an injective-weight parabolic.
+* `TauCeti.GeneralLinear.
+  geometricallyConnectedCommHopfAlgProperty_weightParabolicCoordinateHopfAlgebra`:
   geometric connectedness of an injective-weight parabolic.
 
 ## References
@@ -42,7 +41,7 @@ This advances the dynamic approach to parabolics and Levi decomposition in Layer
 
 public section
 
-open CategoryTheory
+open CategoryTheory TauCeti.GeneralLinear.Dynamic
 
 namespace TauCeti.GeneralLinear
 
@@ -73,27 +72,28 @@ private theorem geometricallyConnected_weightLeviCoordinateHopfAlgebra
     ((SplitTorus.splitTorus_coordinateRing k (ULift.{u} (Fin N))).torus)
 
 /-- The coordinate Hopf algebra of an injective-weight parabolic is smooth over every field. -/
-theorem smooth_weightParabolicCoordinateHopfAlgebra
+theorem smoothCommHopfAlgProperty_weightParabolicCoordinateHopfAlgebra
     (k : Type u) [Field k] (w : Fin N → ℤ) (hw : Function.Injective w) :
     smoothCommHopfAlgProperty k (weightParabolicCoordinateHopfAlgebra k w) := by
   apply (smoothCommHopfAlgProperty k).prop_of_iso
     (Dynamic.weightParabolicSemidirectProductCoordinateIso k w).symm
-  apply Dynamic.smooth_weightParabolicSemidirectProductCoordinateHopfAlgebra
+  apply Dynamic.smoothCommHopfAlgProperty_weightParabolicSemidirectProductCoordinateHopfAlgebra
   · rw [smoothCommHopfAlgProperty_iff]
     infer_instance
   · exact smooth_weightLeviCoordinateHopfAlgebra k w hw
 
 /-- The coordinate Hopf algebra of an injective-weight parabolic is geometrically connected
 over every field. -/
-theorem geometricallyConnected_weightParabolicCoordinateHopfAlgebra
+theorem geometricallyConnectedCommHopfAlgProperty_weightParabolicCoordinateHopfAlgebra
     (k : Type u) [Field k] (w : Fin N → ℤ) (hw : Function.Injective w) :
     geometricallyConnectedCommHopfAlgProperty k
       (weightParabolicCoordinateHopfAlgebra k w) := by
   apply (geometricallyConnectedCommHopfAlgProperty k).prop_of_iso
     (Dynamic.weightParabolicSemidirectProductCoordinateIso k w).symm
-  exact Dynamic.geometricallyConnected_weightParabolicSemidirectProductCoordinateHopfAlgebra
-    k w (geometricallyConnectedCommHopfAlgProperty_weightUnipotentCoordinateHopfAlgebra k w)
-    (geometricallyConnected_weightLeviCoordinateHopfAlgebra k w hw)
+  exact
+    geometricallyConnectedCommHopfAlgProperty_weightParabolicSemidirectProductCoordinateHopfAlgebra
+      k w (geometricallyConnectedCommHopfAlgProperty_weightUnipotentCoordinateHopfAlgebra k w)
+      (geometricallyConnected_weightLeviCoordinateHopfAlgebra k w hw)
 
 end
 

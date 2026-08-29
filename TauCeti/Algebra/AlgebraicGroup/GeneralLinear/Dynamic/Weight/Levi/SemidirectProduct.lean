@@ -35,10 +35,11 @@ comparison of the two conjugation actions, and then applies the pointwise decomp
   semidirect-product points are equivalent to the represented parabolic points.
 * `TauCeti.GeneralLinear.Dynamic.weightParabolicSemidirectProductCoordinateIso`: multiplication
   identifies the coordinate Hopf algebra of `U(w) ⋊ L(w)` with that of `P(w)`.
-* `TauCeti.GeneralLinear.Dynamic.smooth_weightParabolicSemidirectProductCoordinateHopfAlgebra`:
+* `TauCeti.GeneralLinear.Dynamic.
+  smoothCommHopfAlgProperty_weightParabolicSemidirectProductCoordinateHopfAlgebra`:
   smoothness transfers from `U(w)` and `L(w)` to their represented semidirect product.
 * `TauCeti.GeneralLinear.Dynamic.
-  geometricallyConnected_weightParabolicSemidirectProductCoordinateHopfAlgebra`:
+  geometricallyConnectedCommHopfAlgProperty_weightParabolicSemidirectProductCoordinateHopfAlgebra`:
   geometric connectedness transfers from `U(w)` and `L(w)` to their represented semidirect
   product.
 
@@ -444,27 +445,28 @@ theorem weightParabolicSemidirectProductCoordinateIso_hom (w : Fin N → ℤ) :
 
 /-- Smoothness of the weight-unipotent and weight-Levi factors implies smoothness of their
 represented semidirect product. -/
-theorem smooth_weightParabolicSemidirectProductCoordinateHopfAlgebra
-    (k : Type u) [Field k] (w : Fin N → ℤ)
-    (hU : smoothCommHopfAlgProperty k (weightUnipotentCoordinateHopfAlgebra k w))
-    (hL : smoothCommHopfAlgProperty k (weightLeviCoordinateHopfAlgebra k w)) :
-    smoothCommHopfAlgProperty k
-      (weightParabolicSemidirectProductCoordinateHopfAlgebra k w) := by
+theorem smoothCommHopfAlgProperty_weightParabolicSemidirectProductCoordinateHopfAlgebra
+    (R : Type u) [CommRing R] (w : Fin N → ℤ)
+    (hU : smoothCommHopfAlgProperty R (weightUnipotentCoordinateHopfAlgebra R w))
+    (hL : smoothCommHopfAlgProperty R (weightLeviCoordinateHopfAlgebra R w)) :
+    smoothCommHopfAlgProperty R
+      (weightParabolicSemidirectProductCoordinateHopfAlgebra R w) := by
   let A := CommHopfAlgCat.quotientNormalConjugation
-    (weightParabolicCoordinateHopfAlgebra k w)
-    (weightUnipotentInParabolicHopfIdeal k w)
-    (weightLeviInParabolicHopfIdeal k w)
-    (isNormal_weightUnipotentInParabolicHopfIdeal k w)
+    (weightParabolicCoordinateHopfAlgebra R w)
+    (weightUnipotentInParabolicHopfIdeal R w)
+    (weightLeviInParabolicHopfIdeal R w)
+    (isNormal_weightUnipotentInParabolicHopfIdeal R w)
   unfold weightParabolicSemidirectProductCoordinateHopfAlgebra
   apply smoothCommHopfAlgProperty.semidirectProduct _ _ A
-  · exact (smoothCommHopfAlgProperty k).prop_of_iso
-      (weightUnipotentInParabolicCoordinateIso k w) hU
-  · exact (smoothCommHopfAlgProperty k).prop_of_iso
-      (weightLeviInParabolicCoordinateIso k w) hL
+  · exact (smoothCommHopfAlgProperty R).prop_of_iso
+      (weightUnipotentInParabolicCoordinateIso R w) hU
+  · exact (smoothCommHopfAlgProperty R).prop_of_iso
+      (weightLeviInParabolicCoordinateIso R w) hL
 
 /-- Geometric connectedness of the weight-unipotent and weight-Levi factors implies geometric
 connectedness of their represented semidirect product. -/
-theorem geometricallyConnected_weightParabolicSemidirectProductCoordinateHopfAlgebra
+theorem
+    geometricallyConnectedCommHopfAlgProperty_weightParabolicSemidirectProductCoordinateHopfAlgebra
     (k : Type u) [Field k] (w : Fin N → ℤ)
     (hU : geometricallyConnectedCommHopfAlgProperty k
       (weightUnipotentCoordinateHopfAlgebra k w))

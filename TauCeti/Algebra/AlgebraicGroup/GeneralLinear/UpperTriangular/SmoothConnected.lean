@@ -56,14 +56,15 @@ private theorem weights_injective : Function.Injective (weights n) := by
 theorem smoothCommHopfAlgProperty_coordinateHopfAlgebra
     (k : Type u) [Field k] :
     smoothCommHopfAlgProperty k (coordinateHopfAlgebra k n) :=
-  smooth_weightParabolicCoordinateHopfAlgebra k (weights n) (weights_injective n)
+  smoothCommHopfAlgProperty_weightParabolicCoordinateHopfAlgebra
+    k (weights n) (weights_injective n)
 
 /-- **The standard upper-triangular subgroup of `GL_n` is geometrically connected over every
 field.** -/
 theorem geometricallyConnectedCommHopfAlgProperty_coordinateHopfAlgebra
     (k : Type u) [Field k] :
     geometricallyConnectedCommHopfAlgProperty k (coordinateHopfAlgebra k n) :=
-  geometricallyConnected_weightParabolicCoordinateHopfAlgebra
+  geometricallyConnectedCommHopfAlgProperty_weightParabolicCoordinateHopfAlgebra
     k (weights n) (weights_injective n)
 
 end UpperTriangular
