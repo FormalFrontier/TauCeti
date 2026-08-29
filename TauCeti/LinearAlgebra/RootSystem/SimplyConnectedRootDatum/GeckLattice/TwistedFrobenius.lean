@@ -92,11 +92,14 @@ theorem geckGraphAutPoints_comp_geckFrobenius :
   exact (t.geckPointsMap_comp_geckGraphAutPoints ht hsigma (iterateFrobenius A p k)).symm
 
 /-- **The graph-twisted `p ^ k`-power Frobenius on the points of the pinned Geck carrier**, the
-graph automorphism attached to a diagram symmetry composed with the Frobenius endomorphism.
+graph automorphism attached to a diagram symmetry composed with the Frobenius endomorphism. The
+two factors commute, so composing them in the other order gives the same map.
 
-For `p` prime, `0 < k`, `A` an algebraic closure of `ZMod p` and `σ` an involution or a triality of
-the diagram, this is the Steinberg endomorphism whose fixed points cut out a twisted finite group
-of Lie type. The two factors commute, so composing them in the other order gives the same map. -/
+This is the composite on the carrier and nothing more: no fixed-point subgroup is computed and no
+finiteness is asserted. Its intended application is the twisted branches of a finite group of Lie
+type, where `p` is prime, `0 < k`, `A` is an algebraic closure of `ZMod p` and `σ` is an involution
+or a triality of the diagram; reading it as the Steinberg endomorphism of such a group first
+requires identifying this carrier with the simply connected group, which is not done here. -/
 def geckTwistedFrobenius : t.geckPoints ht A →* t.geckPoints ht A :=
   (t.geckGraphAutPoints ht hsigma A).toMonoidHom.comp (t.geckFrobenius ht p k A)
 
@@ -146,14 +149,7 @@ theorem geckTwistedFrobenius_geckTorusMatrix (s : Fin t.rank → Aˣ) :
       ⟨t.geckTorusMatrix ht fun j => (s (sigma⁻¹ j)) ^ p ^ k,
         t.geckTorusMatrix_mem_geckPoints ht A _⟩ := by
   rw [geckTwistedFrobenius, MonoidHom.comp_apply, geckFrobenius_geckTorusMatrix,
-    MulEquiv.coe_toMonoidHom]
-  rw [show (⟨t.geckTorusMatrix ht (s ^ p ^ k), t.geckTorusMatrix_mem_geckPoints ht A _⟩ :
-        t.geckPoints ht A) =
-      ⟨diagGL fun i => torusCharacter (s ^ p ^ k) (t.geckWeightFin ht i), by
-        simpa only [TauCeti.UniversalEnvelopingAlgebra.kostantTorusMatrix_apply] using
-          t.geckTorusMatrix_mem_geckPoints ht A (s ^ p ^ k)⟩ from
-      Subtype.ext (TauCeti.UniversalEnvelopingAlgebra.kostantTorusMatrix_apply _ _ _ _)]
-  rw [geckGraphAutPoints_geckTorusMatrix]
+    MulEquiv.coe_toMonoidHom, geckPoints_mk_geckTorusMatrix, geckGraphAutPoints_geckTorusMatrix]
   exact Subtype.ext (congrArg (t.geckTorusMatrix ht) (funext fun j => Pi.pow_apply s (p ^ k) _))
 
 end
