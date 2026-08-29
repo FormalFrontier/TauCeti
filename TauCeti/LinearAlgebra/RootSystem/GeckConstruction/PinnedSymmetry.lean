@@ -238,16 +238,6 @@ def diagramRootGeneratorPerm (sigma : Equiv.Perm (Fin t.rank)) :
     Equiv.Perm (Fin t.rank ⊕ Fin t.rank) :=
   Equiv.sumCongr sigma sigma
 
-/-- The permutation of the numbered generator indices is the diagonal value of the bundled
-homomorphism `Equiv.Perm.sumCongrHom`, so it obeys that homomorphism's laws. The body of
-`TauCeti.DynkinType.diagramRootGeneratorPerm` is not exposed, so consumers in other modules need
-this equation to reach them. -/
-theorem diagramRootGeneratorPerm_eq_sumCongrHom (tau : Equiv.Perm (Fin t.rank)) :
-    diagramRootGeneratorPerm tau =
-      Equiv.Perm.sumCongrHom (Fin t.rank) (Fin t.rank) (tau, tau) := by
-  rw [diagramRootGeneratorPerm]
-  rfl
-
 /-- The diagram permutation acts on a raising-generator index through `sigma`. -/
 @[simp]
 theorem diagramRootGeneratorPerm_apply_inl (i : Fin t.rank) :
@@ -261,6 +251,18 @@ theorem diagramRootGeneratorPerm_apply_inr (i : Fin t.rank) :
     diagramRootGeneratorPerm sigma (Sum.inr i) = Sum.inr (sigma i) := by
   rw [diagramRootGeneratorPerm]
   rfl
+
+/-- **A relation satisfied by a diagram symmetry is satisfied by the permutation it induces on the
+numbered generator indices.** The induced permutation is the diagonal value of the bundled
+homomorphism `Equiv.Perm.sumCongrHom`, so it inherits that homomorphism's power law. -/
+theorem diagramRootGeneratorPerm_pow_eq_one {m : ℕ} (hm : sigma ^ m = 1) :
+    diagramRootGeneratorPerm sigma ^ m = 1 := by
+  have hsum : diagramRootGeneratorPerm sigma =
+      Equiv.Perm.sumCongrHom (Fin t.rank) (Fin t.rank) (sigma, sigma) :=
+    Equiv.ext fun i => by cases i <;> simp
+  have hpair : ((sigma, sigma) : Equiv.Perm (Fin t.rank) × Equiv.Perm (Fin t.rank)) ^ m = 1 :=
+    Prod.ext hm hm
+  rw [hsum, ← map_pow, hpair, map_one]
 
 /-- **The pinned Geck-module symmetry intertwines every represented simple root generator with
 the generator carrying the permuted number.** This is exactly the additive pinning equation

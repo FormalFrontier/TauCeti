@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.NumberedSymmetry
+public import TauCeti.CategoryTheory.Aut.Basic
 public import TauCeti.LinearAlgebra.RootSystem.GeckConstruction.PinnedSymmetry
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.GeckLattice.GroupScheme
 
@@ -109,8 +110,8 @@ def geckGraphAut (hsigma : sigma ∈ t.diagramSymmetry) : Aut (t.geckGroupScheme
 private theorem geckGraphAut_hom (hsigma : sigma ∈ t.diagramSymmetry) :
     (t.geckGraphAut ht hsigma).hom =
       eqToHom (t.geckGroupScheme_def ht) ≫ (toralGraphAut ht hsigma).hom ≫
-        eqToHom (t.geckGroupScheme_def ht).symm :=
-  rfl
+        eqToHom (t.geckGroupScheme_def ht).symm := by
+  rw [geckGraphAut, TauCeti.CategoryTheory.autMulEquivOfIso_hom, eqToIso.inv, eqToIso.hom]
 
 /-- The graph automorphism renumbers every pinned raising and lowering root subgroup by the diagram
 symmetry, without changing its additive parameter. -/
@@ -145,7 +146,8 @@ theorem geckWeightTorus_comp_geckGraphAut_hom (hsigma : sigma ∈ t.diagramSymme
     TauCeti.UniversalEnvelopingAlgebra.kostantWeightTorusToToral_comp_numberedSymmetryIso_hom,
     Category.assoc]
 
-/-- The inverse graph automorphism relabels the weight torus by the inverse symmetry. -/
+/-- The inverse graph automorphism relabels the coordinates of the weight torus by `σ` itself,
+undoing the relabelling by `σ⁻¹` that the forward automorphism performs. -/
 @[reassoc (attr := simp)]
 theorem geckWeightTorus_comp_geckGraphAut_inv (hsigma : sigma ∈ t.diagramSymmetry) :
     t.geckWeightTorus ht ≫ (t.geckGraphAut ht hsigma).inv =
@@ -168,10 +170,7 @@ the numbered diagram therefore gives `γ ^ 2 = 1`, and the triality of `D₄` gi
 @[simp]
 theorem geckGraphAut_pow_eq_one (hsigma : sigma ∈ t.diagramSymmetry) {m : ℕ}
     (hm : sigma ^ m = 1) : t.geckGraphAut ht hsigma ^ m = 1 := by
-  have hpair : ((sigma, sigma) : Equiv.Perm (Fin t.rank) × Equiv.Perm (Fin t.rank)) ^ m = 1 :=
-    Prod.ext hm hm
-  have hgen : diagramRootGeneratorPerm sigma ^ m = 1 := by
-    rw [diagramRootGeneratorPerm_eq_sumCongrHom, ← map_pow, hpair, map_one]
+  have hgen : diagramRootGeneratorPerm sigma ^ m = 1 := diagramRootGeneratorPerm_pow_eq_one hm
   have htoral : toralGraphAut ht hsigma ^ m = 1 :=
     TauCeti.UniversalEnvelopingAlgebra.kostantToralNumberedSymmetryIso_pow_eq_one _ _ _ _ _ _ _ _
       _ _ _ _ _ _ _ _ _ m (by rw [← Equiv.Perm.coe_pow, hgen]; rfl) hm
