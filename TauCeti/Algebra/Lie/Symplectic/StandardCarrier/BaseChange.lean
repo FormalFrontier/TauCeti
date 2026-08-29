@@ -103,38 +103,8 @@ theorem baseChangeDefiningIdeal_def :
         (isNilpotent_rep_rootGenerator n) (latticeBasis n) (basisWeight n) A := by
   rw [baseChangeDefiningIdeal]
 
-/-- Base-changing quotient maps commutes with transporting the defining ideal along an equality.
-This isolates the dependent equality transport used by `TauCeti.SpStd.baseChangeCoordinateIso`. -/
-private theorem baseChangeMap_mkQuotient_comp_eqToIso
-    {I J : HopfIdeal ℤ (GeneralLinear.coordinateHopfAlgebra ℤ ((n + 1) + (n + 1)))}
-    (hIJ : I = J) :
-    CommHopfAlgCat.baseChangeMap (K := A)
-          (CommHopfAlgCat.mkQuotient
-            (GeneralLinear.coordinateHopfAlgebra ℤ ((n + 1) + (n + 1))) I) ≫
-        (eqToIso (congrArg
-          (fun K => CommHopfAlgCat.baseChange (K := A)
-            (CommHopfAlgCat.quotient
-              (GeneralLinear.coordinateHopfAlgebra ℤ ((n + 1) + (n + 1))) K)) hIJ)).hom =
-      CommHopfAlgCat.baseChangeMap
-        (CommHopfAlgCat.mkQuotient
-          (GeneralLinear.coordinateHopfAlgebra ℤ ((n + 1) + (n + 1))) J) := by
-  subst J
-  simp
-
-/-- Quotient maps commute with transporting their defining ideal along an equality. -/
-private theorem mkQuotient_comp_eqToIso
-    {I J : HopfIdeal A (GeneralLinear.coordinateHopfAlgebra A ((n + 1) + (n + 1)))}
-    (hIJ : I = J) :
-    CommHopfAlgCat.mkQuotient (GeneralLinear.coordinateHopfAlgebra A ((n + 1) + (n + 1))) I ≫
-        (eqToIso (congrArg
-          (CommHopfAlgCat.quotient
-            (GeneralLinear.coordinateHopfAlgebra A ((n + 1) + (n + 1)))) hIJ)).hom =
-      CommHopfAlgCat.mkQuotient (GeneralLinear.coordinateHopfAlgebra A ((n + 1) + (n + 1))) J := by
-  subst J
-  simp
-
-/-- The equality identifying the named type-`C_(n+1)` defining ideal with its generic Kostant
-spelling, transported through quotient formation and scalar extension. -/
+/-- The scalar extension of the identification of the named type-`C_(n+1)` defining ideal with its
+generic Kostant spelling, read on quotients. -/
 private noncomputable def integralCoordinateTransportIso :
     CommHopfAlgCat.baseChange (K := A)
         (CommHopfAlgCat.quotient (GeneralLinear.coordinateHopfAlgebra ℤ ((n + 1) + (n + 1)))
@@ -144,11 +114,10 @@ private noncomputable def integralCoordinateTransportIso :
       CommHopfAlgCat.baseChange (K := A)
         (CommHopfAlgCat.quotient (GeneralLinear.coordinateHopfAlgebra ℤ ((n + 1) + (n + 1)))
           (definingIdeal n)) :=
-  eqToIso (congrArg
-    (fun K => CommHopfAlgCat.baseChange (K := A)
-      (CommHopfAlgCat.quotient
-        (GeneralLinear.coordinateHopfAlgebra ℤ ((n + 1) + (n + 1))) K))
-    (definingIdeal_def n).symm)
+  (CommHopfAlgCat.baseChangeFunctor (K := A)).mapIso
+    (eqToIso (congrArg
+      (CommHopfAlgCat.quotient (GeneralLinear.coordinateHopfAlgebra ℤ ((n + 1) + (n + 1))))
+      (definingIdeal_def n).symm))
 
 /-- The coordinate Hopf algebra cut out over `A` by the transported type-`C_(n+1)` defining ideal
 is canonically the scalar extension of the integral coordinate Hopf algebra. -/
@@ -177,11 +146,12 @@ theorem mkQuotient_comp_baseChangeCoordinateIso_hom :
         CommHopfAlgCat.baseChangeMap
           (CommHopfAlgCat.mkQuotient
             (GeneralLinear.coordinateHopfAlgebra ℤ ((n + 1) + (n + 1))) (definingIdeal n)) := by
-  rw [baseChangeCoordinateIso, Iso.trans_hom, Iso.trans_hom, ← Category.assoc,
-    mkQuotient_comp_eqToIso n A (baseChangeDefiningIdeal_def n A),
+  rw [baseChangeCoordinateIso, Iso.trans_hom, Iso.trans_hom, eqToIso.hom, ← Category.assoc,
+    CommHopfAlgCat.mkQuotient_comp_eqToHom (baseChangeDefiningIdeal_def n A).symm,
     ← Category.assoc, mkQuotient_comp_kostantToralBaseChangePresentationIso_hom, Category.assoc,
-    integralCoordinateTransportIso,
-    baseChangeMap_mkQuotient_comp_eqToIso n A (definingIdeal_def n).symm]
+    integralCoordinateTransportIso, Functor.mapIso_hom, eqToIso.hom,
+    ← CommHopfAlgCat.baseChangeFunctor_map, ← Functor.map_comp,
+    CommHopfAlgCat.mkQuotient_comp_eqToHom (definingIdeal_def n)]
 
 /-! ## The transported root subgroups -/
 
@@ -281,10 +251,10 @@ theorem baseChangeCoordinateIso_hom_comp_rootSubgroupBaseChangeMap
         (CommHopfAlgCat.mkQuotient
           (GeneralLinear.coordinateHopfAlgebra ℤ ((n + 1) + (n + 1))) (definingIdeal n))),
     ← (CommHopfAlgCat.baseChangeFunctor (K := A)).map_comp,
-    rootSubgroupIntegralCoordinateMap, ← Category.assoc
+    rootSubgroupIntegralCoordinateMap, eqToIso.hom, ← Category.assoc
       (CommHopfAlgCat.mkQuotient
         (GeneralLinear.coordinateHopfAlgebra ℤ ((n + 1) + (n + 1))) (definingIdeal n)),
-    mkQuotient_comp_eqToIso n ℤ (definingIdeal_def n),
+    CommHopfAlgCat.mkQuotient_comp_eqToHom (definingIdeal_def n).symm,
     mkQuotient_comp_kostantRootSubgroupToralCoordinateMap,
     mkQuotient_comp_rootSubgroupToBaseChangeCoordinateMap,
     rootSubgroupBaseChangeCoordinateMap]
@@ -391,10 +361,10 @@ theorem baseChangeCoordinateIso_hom_comp_weightTorusBaseChangeMap :
         (CommHopfAlgCat.mkQuotient
           (GeneralLinear.coordinateHopfAlgebra ℤ ((n + 1) + (n + 1))) (definingIdeal n))),
     ← (CommHopfAlgCat.baseChangeFunctor (K := A)).map_comp,
-    weightTorusIntegralCoordinateMap, ← Category.assoc
+    weightTorusIntegralCoordinateMap, eqToIso.hom, ← Category.assoc
       (CommHopfAlgCat.mkQuotient
         (GeneralLinear.coordinateHopfAlgebra ℤ ((n + 1) + (n + 1))) (definingIdeal n)),
-    mkQuotient_comp_eqToIso n ℤ (definingIdeal_def n),
+    CommHopfAlgCat.mkQuotient_comp_eqToHom (definingIdeal_def n).symm,
     mkQuotient_comp_kostantWeightTorusToralCoordinateMap,
     mkQuotient_comp_weightTorusToBaseChangeCoordinateMap,
     weightTorusBaseChangeCoordinateMap]
@@ -418,17 +388,18 @@ theorem baseChangeDefiningIdeal_le_commonKernel :
         (fun j => match j with
           | .inl k => rootSubgroupBaseChangeCoordinateMap n A k
           | .inr _ => weightTorusBaseChangeCoordinateMap n A) := by
-  dsimp only
-  rw [CommHopfAlgCat.le_commonKernelHopfIdeal_iff]
+  have h := kostantToralBaseChangePresentationIdeal_le_commonKernelHopfIdeal (rootGenerator n)
+    (cartanGenerator n) (rep n) (lattice n).toAddSubgroup
+    (fun _ hu _ hv => rep_kostantForm_mem_lattice n hu hv)
+    (isNilpotent_rep_rootGenerator n) (latticeBasis n) (basisWeight n) A
+  -- The generic containment indexes its generators by a `match` of its own, and neither that
+  -- matcher nor `CommHopfAlgCat.commonKernelHopfIdeal` is exposed for unfolding, so the two
+  -- families are compared branchwise on a constructor rather than by a single `exact`.
+  dsimp only at h ⊢
+  rw [CommHopfAlgCat.le_commonKernelHopfIdeal_iff] at h ⊢
   rintro (k | _)
-  · exact kostantToralBaseChangePresentationIdeal_toIdeal_le_root_ker (rootGenerator n)
-      (cartanGenerator n) (rep n) (lattice n).toAddSubgroup
-      (fun _ hu _ hv => rep_kostantForm_mem_lattice n hu hv)
-      (isNilpotent_rep_rootGenerator n) (latticeBasis n) (basisWeight n) A k
-  · exact kostantToralBaseChangePresentationIdeal_toIdeal_le_torus_ker (rootGenerator n)
-      (cartanGenerator n) (rep n) (lattice n).toAddSubgroup
-      (fun _ hu _ hv => rep_kostantForm_mem_lattice n hu hv)
-      (isNilpotent_rep_rootGenerator n) (latticeBasis n) (basisWeight n) A
+  · exact h (.inl k)
+  · exact h (.inr ())
 
 end
 
