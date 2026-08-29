@@ -10,7 +10,7 @@ public import TauCeti.Analysis.Semigroups.GrowthBound
 /-!
 # Strongly continuous one-parameter groups
 
-A **C₀-group** on a Banach space `X` is a family `U : ℝ → X →L[ℝ] X` indexed by *all* of `ℝ`
+A **C₀-group** on a real normed space `X` is a family `U : ℝ → X →L[ℝ] X` indexed by *all* of `ℝ`
 with `U 0 = 1`, `U (s + t) = U s ∘ U t`, and `t ↦ U t x` continuous at `0`. It is not reached by
 the C₀-semigroup API: the two-sided law makes every `U t` invertible, with inverse `U (-t)`, and
 forces the orbits to be continuous on the whole line rather than only on `[0, ∞)`. The unitary
@@ -65,10 +65,11 @@ namespace TauCeti.Semigroups
 
 variable (X : Type*) [NormedAddCommGroup X] [NormedSpace ℝ X]
 
-/-- A strongly continuous one-parameter group (C₀-group) on a Banach space.
+/-- A strongly continuous one-parameter group (C₀-group) on a real normed space.
 
 The family is indexed by all of `ℝ`; the axioms are `U 0 = Id`, `U (s + t) = U s ∘ U t` at every
-pair of real times, and strong continuity at `0`. -/
+pair of real times, and strong continuity at `0`. Completeness is imposed separately on results
+that require it, such as `existsGrowthBound`. -/
 structure StronglyContinuousGroup where
   /-- The group operator at time `t : ℝ`. -/
   toFun : ℝ → X →L[ℝ] X
@@ -294,7 +295,7 @@ theorem existsGrowthBound (U : StronglyContinuousGroup X) :
       (Real.exp_nonneg _) (le_trans zero_le_one (le_max_of_le_left hb₁.one_le)))
     exact mul_le_mul_of_nonneg_right (le_max_left _ _) ht
   · have hnt : 0 ≤ -t := by linarith
-    rw [show t = -(-t) by ring, ← U.reflect_toSemigroup_realOperator hnt, abs_neg,
+    rw [← neg_neg t, ← U.reflect_toSemigroup_realOperator hnt, abs_neg,
       abs_of_nonneg hnt]
     refine (hb₂.bound (-t) hnt).trans (mul_le_mul (le_max_right _ _) (Real.exp_le_exp.mpr ?_)
       (Real.exp_nonneg _) (le_trans zero_le_one (le_max_of_le_left hb₁.one_le)))

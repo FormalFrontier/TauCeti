@@ -60,19 +60,17 @@ variable {X : Type*} [NormedAddCommGroup X] [NormedSpace ℝ X]
 
 /-- The domain `D(A)` of the generator of a C₀-group: the generator domain of its forward
 semigroup. -/
-@[expose]
 def domain (U : StronglyContinuousGroup X) : Submodule ℝ X := U.toSemigroup.domain
 
 /-- The infinitesimal generator of a C₀-group, as an unbounded operator: the generator of its
 forward semigroup. The two-sided law makes the defining limit two-sided as well
 (`TauCeti.Semigroups.StronglyContinuousGroup.hasDerivAt`). -/
-@[expose]
 def generator (U : StronglyContinuousGroup X) : X →ₗ.[ℝ] X := U.toSemigroup.generator
 
-theorem domain_eq (U : StronglyContinuousGroup X) : U.domain = U.toSemigroup.domain := rfl
+theorem domain_eq (U : StronglyContinuousGroup X) : U.domain = U.toSemigroup.domain := (rfl)
 
 theorem generator_eq (U : StronglyContinuousGroup X) :
-    U.generator = U.toSemigroup.generator := rfl
+    U.generator = U.toSemigroup.generator := (rfl)
 
 @[simp]
 theorem generator_domain (U : StronglyContinuousGroup X) : U.generator.domain = U.domain := by
@@ -301,7 +299,7 @@ theorem ofBounded_reflect (A : X →L[ℝ] X) : (ofBounded A).reflect = ofBounde
 
 /-- The generator domain of `ofBounded A` is the whole space. -/
 @[simp]
-theorem ofBounded_domain (A : X →L[ℝ] X) : (ofBounded A).domain = ⊤ := by
+theorem ofBounded_domain_eq_top (A : X →L[ℝ] X) : (ofBounded A).domain = ⊤ := by
   rw [domain_eq, ofBounded_toSemigroup, StronglyContinuousSemigroup.ofBounded_domain_eq_top]
 
 /-- The generator of `ofBounded A` is `A` itself, viewed as a total unbounded operator. -/
