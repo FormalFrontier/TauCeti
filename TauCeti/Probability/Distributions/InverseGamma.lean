@@ -10,16 +10,15 @@ public import TauCeti.Probability.Distributions.Gamma.Cdf
 public import TauCeti.Probability.Distributions.Measurability
 public import Mathlib.Probability.Moments.Variance
 import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
-import Mathlib.Analysis.SpecialFunctions.Pow.Asymptotics
 import Mathlib.MeasureTheory.Function.JacobianOneDim
 import TauCeti.Probability.Distributions.PDFInstances
 
 /-!
 # The inverse-gamma distribution
 
-The inverse-gamma law with shape `a` and rate `r` is the law of `X⁻¹` for
-`X ∼ gammaMeasure a r`.  This file defines that pushforward for positive parameters and uses
-the zero measure otherwise.  It derives the density
+The inverse-gamma law with shape `a` and scale `r` is the law of `X⁻¹` for
+`X ∼ gammaMeasure a r`, where `r` is the rate of the Gamma law.  This file defines that pushforward
+for positive parameters and uses the zero measure otherwise.  It derives the density
 
 `r ^ a / Gamma a * x ^ (-a - 1) * exp (-r / x)`
 
@@ -66,10 +65,10 @@ variable {a r x t : ℝ}
 
 /-! ### Definition and boundary behavior -/
 
-/-- The inverse-gamma law with shape `a` and rate `r`.
+/-- The inverse-gamma law with shape `a` and scale `r`.
 
-For positive parameters it is the pushforward of `gammaMeasure a r` by inversion.  It is the zero
-measure if either parameter is nonpositive. -/
+For positive parameters it is the pushforward of `gammaMeasure a r` by inversion, where `r` is the
+rate of the Gamma law.  It is the zero measure if either parameter is nonpositive. -/
 def inverseGammaMeasure (a r : ℝ) : Measure ℝ :=
   if 0 < a ∧ 0 < r then (gammaMeasure a r).map Inv.inv else 0
 
@@ -78,7 +77,7 @@ theorem inverseGammaMeasure_of_pos (ha : 0 < a) (hr : 0 < r) :
     inverseGammaMeasure a r = (gammaMeasure a r).map Inv.inv := by
   rw [inverseGammaMeasure, ite_eq_left ⟨ha, hr⟩]
 
-/-- If the shape or rate is nonpositive, the inverse-gamma law is the zero measure. -/
+/-- If the shape or scale is nonpositive, the inverse-gamma law is the zero measure. -/
 @[simp]
 theorem inverseGammaMeasure_of_not_pos (h : ¬ (0 < a ∧ 0 < r)) :
     inverseGammaMeasure a r = 0 := by
@@ -92,19 +91,11 @@ theorem isProbabilityMeasure_inverseGammaMeasure (ha : 0 < a) (hr : 0 < r) :
   exact Measure.isProbabilityMeasure_map measurable_inv.aemeasurable
 
 /-- A valid Gamma law gives no mass to the nonpositive half-line. -/
-private theorem gammaMeasure_Iic_zero (ha : 0 < a) (hr : 0 < r) :
+private theorem gammaMeasure_Iic_zero :
     gammaMeasure a r (Iic 0) = 0 := by
-  let _ := isProbabilityMeasure_gammaMeasure ha hr
-  have hreal : (gammaMeasure a r).real (Iic 0) = 0 := by
-    rw [measureReal_Iic_gammaMeasure ha hr 0,
-      regularizedGamma_eq_zero_of_nonpos_right a (by simp)]
-  rw [measureReal_def] at hreal
-  exact ((ENNReal.toReal_eq_zero_iff _).mp hreal).resolve_right (measure_lt_top _ _).ne
-
-/-- A Gamma law has no atoms. -/
-private theorem gammaMeasure_singleton (a r y : ℝ) : gammaMeasure a r {y} = 0 := by
-  rw [gammaMeasure, withDensity_apply _ (measurableSet_singleton y)]
-  exact setLIntegral_measure_zero _ _ (measure_singleton y)
+  rw [gammaMeasure, withDensity_apply _ measurableSet_Iic,
+    ← setLIntegral_congr Iio_ae_eq_Iic]
+  exact lintegral_gammaPDF_of_nonpos le_rfl
 
 /-- The inverse-gamma law assigns no mass to the nonpositive half-line. -/
 @[simp]
@@ -115,7 +106,7 @@ theorem inverseGammaMeasure_Iic_zero (ha : 0 < a) (hr : 0 < r) :
     ext y
     simp only [mem_preimage, mem_Iic]
     exact inv_nonpos
-  rw [hpre, gammaMeasure_Iic_zero ha hr]
+  rw [hpre, gammaMeasure_Iic_zero]
 
 /-- A variable with a valid inverse-gamma law is almost surely positive. -/
 theorem ae_pos_inverseGammaMeasure (ha : 0 < a) (hr : 0 < r) :
@@ -264,15 +255,11 @@ theorem inverseGammaMeasure_eq_withDensity (ha : 0 < a) (hr : 0 < r) :
               gammaMeasure, withDensity_apply _ (measurable_inv hs)]
     _ = ∫⁻ y in u, gammaPDF a r y := by
           have hpre : MeasurableSet (Inv.inv ⁻¹' s) := measurable_inv hs
-          have hzero : ∀ᵐ y : ℝ ∂volume, y ≠ 0 := by
-            rw [ae_iff]
-            simpa only [not_ne_iff, Set.ofPred_eq_eq_singleton] using
-              (measure_singleton (μ := (volume : Measure ℝ)) (0 : ℝ))
           calc
             ∫⁻ y in Inv.inv ⁻¹' s, gammaPDF a r y =
                 ∫⁻ y in Inv.inv ⁻¹' s, (Ioi 0).indicator (gammaPDF a r) y := by
               apply setLIntegral_congr_fun_ae hpre
-              filter_upwards [hzero] with y hy _
+              filter_upwards [volume.ae_ne (0 : ℝ)] with y hy _
               rcases lt_or_gt_of_ne hy with hy | hy
               · have hymem : y ∉ Ioi (0 : ℝ) := by simpa using not_lt.mpr hy.le
                 rw [gammaPDF_of_neg hy, indicator_apply, ite_eq_right hymem]
@@ -316,43 +303,6 @@ theorem rnDeriv_inverseGammaMeasure (ha : 0 < a) (hr : 0 < r) :
   exact Measure.rnDeriv_withDensity volume (measurable_inverseGammaPDF a r)
 
 /-! ### Moments -/
-
-/-- An integral against a valid Gamma law, restricted to the positive half-line. -/
-private lemma integral_gammaMeasure_eq (ha : 0 < a) (hr : 0 < r) (f : ℝ → ℝ) :
-    ∫ x, f x ∂gammaMeasure a r =
-      ∫ x in Ioi 0, r ^ a / Real.Gamma a * x ^ (a - 1) * Real.exp (-(r * x)) * f x := by
-  have hcompl : ∀ x ∉ Ici (0 : ℝ), gammaPDFReal a r x * f x = 0 := by
-    intro x hx
-    rw [gammaPDFReal, ite_eq_right (by simpa using hx), zero_mul]
-  rw [gammaMeasure, integral_withDensity_eq_integral_toReal_smul
-    (Probability.measurable_gammaPDF a r)
-      (ae_of_all _ fun _ ↦ ENNReal.ofReal_lt_top) f]
-  simp_rw [gammaPDF, ENNReal.toReal_ofReal (gammaPDFReal_nonneg ha hr _), smul_eq_mul]
-  rw [← setIntegral_eq_integral_of_forall_compl_eq_zero hcompl, integral_Ici_eq_integral_Ioi]
-  exact setIntegral_congr_fun measurableSet_Ioi fun x hx ↦ by
-    rw [gammaPDFReal, ite_eq_left hx.le]
-
-/-- Integrability against a valid Gamma law, restricted to the positive half-line. -/
-private lemma integrable_gammaMeasure_iff (ha : 0 < a) (hr : 0 < r) (f : ℝ → ℝ) :
-    Integrable f (gammaMeasure a r) ↔
-      IntegrableOn
-        (fun x ↦ r ^ a / Real.Gamma a * x ^ (a - 1) * Real.exp (-(r * x)) * f x)
-        (Ioi 0) := by
-  have hpos : ∀ x ∈ Ioi (0 : ℝ), f x * gammaPDFReal a r x =
-      r ^ a / Real.Gamma a * x ^ (a - 1) * Real.exp (-(r * x)) * f x := fun x hx ↦ by
-    rw [gammaPDFReal, ite_eq_left hx.le]
-    ring
-  have hneg : IntegrableOn (fun x ↦ f x * gammaPDFReal a r x) (Iio 0) := by
-    refine integrableOn_zero.congr_fun (fun x hx ↦ ?_) measurableSet_Iio
-    rw [gammaPDFReal, ite_eq_right (not_le.mpr hx), mul_zero]
-  rw [gammaMeasure, integrable_withDensity_iff
-    (Probability.measurable_gammaPDF a r)
-      (ae_of_all _ fun _ ↦ ENNReal.ofReal_lt_top)]
-  simp_rw [gammaPDF, ENNReal.toReal_ofReal (gammaPDFReal_nonneg ha hr _)]
-  rw [← integrableOn_univ, ← Iio_union_Ici (a := (0 : ℝ)), integrableOn_union,
-    integrableOn_Ici_iff_integrableOn_Ioi]
-  exact ⟨fun h ↦ h.2.congr_fun hpos measurableSet_Ioi,
-    fun h ↦ ⟨hneg, h.congr_fun (fun x hx ↦ (hpos x hx).symm) measurableSet_Ioi⟩⟩
 
 /-- Multiplying a Gamma density by the `n`th power of inversion lowers its shape by `n`. -/
 private lemma gammaWeight_mul_inv_pow (n : ℕ)
@@ -439,13 +389,12 @@ theorem integral_pow_inverseGammaMeasure (ha : 0 < a) (hr : 0 < r) (n : ℕ)
       r ^ n * Real.Gamma (a - n) / Real.Gamma a := by
   rw [inverseGammaMeasure_of_pos ha hr,
     integral_map measurable_inv.aemeasurable (by fun_prop)]
-  rw [integral_gammaMeasure_eq ha hr,
+  rw [TauCeti.integral_gammaMeasure_eq ha hr,
     setIntegral_congr_fun measurableSet_Ioi (fun x hx ↦ gammaWeight_mul_inv_pow n hx)]
   have han : 0 < a - (n : ℝ) := sub_pos.mpr hn
-  rw [integral_const_mul, Real.integral_rpow_mul_exp_neg_mul_Ioi han hr]
+  rw [TauCeti.integral_const_mul_gammaKernel _ _ _ han hr]
   have hGa : Real.Gamma a ≠ 0 := (Real.Gamma_pos_of_pos ha).ne'
-  rw [one_div, Real.inv_rpow hr.le, div_eq_mul_inv, Real.rpow_sub hr,
-    Real.rpow_natCast]
+  rw [Real.rpow_sub hr, Real.rpow_natCast]
   field_simp
 
 /-- The mean of an inverse-gamma law is `r / (a - 1)` when `1 < a`. -/
@@ -534,51 +483,11 @@ theorem integrable_exp_mul_inverseGammaMeasure (ha : 0 < a) (hr : 0 < r) (ht : t
 /-- **Positive exponential moments of a valid inverse-gamma law do not exist.** -/
 theorem not_integrable_exp_mul_inverseGammaMeasure (ha : 0 < a) (hr : 0 < r) (ht : 0 < t) :
     ¬ Integrable (fun x : ℝ ↦ Real.exp (t * x)) (inverseGammaMeasure a r) := by
-  rw [inverseGammaMeasure_eq_withDensity ha hr,
-    integrable_withDensity_iff (measurable_inverseGammaPDF a r)
-      (ae_of_all _ fun _ ↦ ENNReal.ofReal_lt_top)]
   intro hint
-  simp only [inverseGammaPDF,
-    ENNReal.toReal_ofReal (inverseGammaPDFReal_nonneg a r _)] at hint
-  have hC : 0 < r ^ a / Real.Gamma a := by positivity
-  have hD : 0 < r ^ a / Real.Gamma a * Real.exp (-r) := mul_pos hC (Real.exp_pos _)
-  have hgrowth : Tendsto
-      (fun x : ℝ ↦ (r ^ a / Real.Gamma a * Real.exp (-r)) *
-        (Real.exp (t * x) / x ^ (a + 1))) atTop atTop :=
-    (tendsto_exp_mul_div_rpow_atTop (a + 1) t ht).const_mul_atTop hD
-  have hev : ∀ᶠ x in atTop,
-      (1 : ℝ) ≤ Real.exp (t * x) * inverseGammaPDFReal a r x := by
-    filter_upwards [hgrowth.eventually_ge_atTop 1, eventually_ge_atTop (1 : ℝ)]
-      with x hxgrowth hx
-    have hxpos : 0 < x := zero_lt_one.trans_le hx
-    have hexp : Real.exp (-r) ≤ Real.exp (-r / x) := by
-      refine Real.exp_le_exp.mpr ?_
-      have hdiv : r / x ≤ r := (div_le_iff₀ hxpos).2 (by nlinarith [hr])
-      rw [neg_div]
-      exact neg_le_neg hdiv
-    have hpow : x ^ (-a - 1) = 1 / x ^ (a + 1) := by
-      rw [one_div, ← Real.rpow_neg hxpos.le]
-      congr 1
-      ring
-    rw [inverseGammaPDFReal_of_pos ha hr hxpos, hpow]
-    calc
-      (1 : ℝ) ≤ (r ^ a / Real.Gamma a * Real.exp (-r)) *
-          (Real.exp (t * x) / x ^ (a + 1)) := hxgrowth
-      _ = (r ^ a / Real.Gamma a * Real.exp (t * x) / x ^ (a + 1)) *
-          Real.exp (-r) := by ring
-      _ ≤ (r ^ a / Real.Gamma a * Real.exp (t * x) / x ^ (a + 1)) *
-          Real.exp (-r / x) :=
-        mul_le_mul_of_nonneg_left hexp (by positivity)
-      _ = Real.exp (t * x) *
-          (r ^ a / Real.Gamma a * (1 / x ^ (a + 1)) * Real.exp (-r / x)) := by ring
-  obtain ⟨b, hb⟩ := eventually_atTop.mp hev
-  have hone : IntegrableOn (fun _ : ℝ ↦ (1 : ℝ)) (Ioi b) volume := by
-    refine Integrable.mono' hint.integrableOn (by fun_prop) ?_
-    filter_upwards [ae_restrict_mem measurableSet_Ioi] with x hx
-    rw [Real.norm_eq_abs, abs_one]
-    exact hb x hx.le
-  rw [integrableOn_const_iff] at hone
-  simp [Real.volume_Ioi] at hone
+  have hpow := integrable_pow_of_integrable_exp_mul ht.ne' hint
+    (integrable_exp_mul_inverseGammaMeasure ha hr (by linarith : -t ≤ 0)) ⌈a⌉₊
+  exact (not_lt_of_ge (Nat.le_ceil a))
+    ((integrable_pow_inverseGammaMeasure_iff ha hr ⌈a⌉₊).1 hpow)
 
 /-- **The exact exponential-integrability domain of a valid inverse-gamma law** is the
 nonpositive half-line. -/
@@ -621,14 +530,11 @@ theorem cdf_inverseGammaMeasure_eq (ha : 0 < a) (hr : 0 < r) (x : ℝ) :
     have hdisj : Disjoint (Iic (0 : ℝ)) (Ici x⁻¹) := Set.disjoint_left.2 fun y hy0 hy ↦
       (not_lt_of_ge hy0) ((inv_pos.mpr hxpos).trans_le hy)
     rw [hpre, measure_union hdisj measurableSet_Ici,
-      gammaMeasure_Iic_zero ha hr, zero_add]
-    have hsets : Ici x⁻¹ =ᵐ[gammaMeasure a r] Ioi x⁻¹ := by
-      rw [ae_eq_set]
-      constructor
-      · have hdiff : Ici x⁻¹ \ Ioi x⁻¹ = {x⁻¹} := by ext y; simp [le_antisymm_iff]
-        rw [hdiff]
-        exact gammaMeasure_singleton a r _
-      · simp
+      gammaMeasure_Iic_zero, zero_add]
+    have hsets : Ici x⁻¹ =ᵐ[gammaMeasure a r] Ioi x⁻¹ :=
+      (Ioi_ae_eq_Ici' (μ := gammaMeasure a r) (by
+        rw [gammaMeasure]
+        exact measure_singleton _)).symm
     rw [measure_congr hsets, ← measureReal_def, measureReal_Ioi_gammaMeasure ha hr x⁻¹]
     congr 2
 

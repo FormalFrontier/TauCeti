@@ -73,13 +73,13 @@ variable {a r : ℝ}
 /-! ### Reduction to the positive half-line -/
 
 /-- On the positive half-line the gamma density is given by its closed formula. -/
-private lemma gammaPDFReal_of_pos {x : ℝ} (hx : 0 < x) :
+lemma gammaPDFReal_of_pos {x : ℝ} (hx : 0 < x) :
     gammaPDFReal a r x = r ^ a / Real.Gamma a * x ^ (a - 1) * exp (-(r * x)) := by
   rw [gammaPDFReal, ite_eq_left hx.le]
 
 /-- An integral against the gamma law is the set integral of the weighted integrand over
 `(0, ∞)`. -/
-private lemma integral_gammaMeasure_eq (ha : 0 < a) (hr : 0 < r) (f : ℝ → ℝ) :
+lemma integral_gammaMeasure_eq (ha : 0 < a) (hr : 0 < r) (f : ℝ → ℝ) :
     ∫ x, f x ∂gammaMeasure a r =
       ∫ x in Ioi 0, r ^ a / Real.Gamma a * x ^ (a - 1) * exp (-(r * x)) * f x := by
   have hcompl : ∀ x ∉ Ici (0 : ℝ), gammaPDFReal a r x * f x = 0 := by
@@ -93,7 +93,7 @@ private lemma integral_gammaMeasure_eq (ha : 0 < a) (hr : 0 < r) (f : ℝ → �
 
 /-- Integrability against the gamma law is integrability of the weighted integrand over
 `(0, ∞)`. -/
-private lemma integrable_gammaMeasure_iff (ha : 0 < a) (hr : 0 < r) (f : ℝ → ℝ) :
+lemma integrable_gammaMeasure_iff (ha : 0 < a) (hr : 0 < r) (f : ℝ → ℝ) :
     Integrable f (gammaMeasure a r) ↔
       IntegrableOn
         (fun x ↦ r ^ a / Real.Gamma a * x ^ (a - 1) * exp (-(r * x)) * f x) (Ioi 0) := by
@@ -112,7 +112,7 @@ private lemma integrable_gammaMeasure_iff (ha : 0 < a) (hr : 0 < r) (f : ℝ →
     fun h ↦ ⟨hneg, h.congr_fun (fun x hx ↦ (hpos x hx).symm) measurableSet_Ioi⟩⟩
 
 /-- A constant multiple of Euler's Gamma integral, in quotient form. -/
-private lemma integral_const_mul_gammaKernel (C s b : ℝ) (hs : 0 < s) (hb : 0 < b) :
+lemma integral_const_mul_gammaKernel (C s b : ℝ) (hs : 0 < s) (hb : 0 < b) :
     ∫ x in Ioi 0, C * (x ^ (s - 1) * exp (-(b * x))) = C * Real.Gamma s / b ^ s := by
   rw [integral_const_mul, Real.integral_rpow_mul_exp_neg_mul_Ioi hs hb, one_div,
     Real.inv_rpow hb.le, div_eq_mul_inv]
