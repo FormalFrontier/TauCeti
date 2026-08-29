@@ -44,6 +44,10 @@ open Bornology Metric Set TauCeti.SetLike
 
 namespace AbstractSimplicialComplex
 
+/-- Decide equality on `Fin n` classically, at high priority, throughout this file.  The
+realization of a complex is indexed by a `DecidableEq` instance on its vertex type, and the
+arguments below combine terms whose instances would otherwise be the syntactically different
+`instDecidableEqFin`; forcing a single classical instance keeps them definitionally equal. -/
 local instance (priority := 2000) finDecidableEq (n : ℕ) : DecidableEq (Fin n) :=
   Classical.decEq _
 
