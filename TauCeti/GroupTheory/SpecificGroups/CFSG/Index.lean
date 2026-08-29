@@ -489,7 +489,7 @@ theorem one_lt_fieldOrder (d : LieTypeIndex) : 1 < d.fieldOrder := by
 /-- The Frobenius parameter as a positive natural number, packaging `one_lt_fieldOrder`. This is
 the form taken by the later constructions that scale by `q` and need it to be positive. -/
 def fieldOrderPNat (d : LieTypeIndex) : ℕ+ :=
-  ⟨d.fieldOrder, Nat.zero_lt_one.trans d.one_lt_fieldOrder⟩
+  d.fieldOrder.toPNat (Nat.zero_lt_one.trans d.one_lt_fieldOrder)
 
 @[simp] theorem coe_fieldOrderPNat (d : LieTypeIndex) : (d.fieldOrderPNat : ℕ) = d.fieldOrder := by
   rw [fieldOrderPNat]

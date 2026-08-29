@@ -34,7 +34,7 @@ from the general naturality of scaling among isogenies,
 The graph factor is `TauCeti.GraphTwistedIndex.datumGraphAut` itself and not its inverse, so the
 weight map of `datumSteinberg` carries the root at each index to `q` times the root at the image of
 that index under the index's *own* diagram permutation `TauCeti.GraphTwistedIndex.diagramPerm`,
-which is `TauCeti.GraphTwistedIndex.datumSteinberg_root_simpleIndex`. What that records is
+which is `TauCeti.GraphTwistedIndex.datumSteinberg_root_weightMap_simpleIndex`. What that records is
 the motion of the pinned root subgroups: the uniform rescaling by `q` of the Frobenius together
 with the permutation `σ` by which the graph automorphism moves the pinned indices in
 `γ (x_{α_i}(t)) = x_{α_{σ i}}(t)`.
@@ -73,10 +73,11 @@ degenerates to its Frobenius exactly on the nine untwisted families, so `²Aₙ(
 * `TauCeti.RootPairingIsogeny.comp_smulId` (in the isogeny file): every isogeny intertwines scaling
   on its source with scaling on its target, which is the general form of the required relation.
 * `TauCeti.GraphTwistedIndex.datumSteinberg_eq_datumFrobenius_comp`: `γ ∘ Frob_q = Frob_q ∘ γ`.
-* `TauCeti.GraphTwistedIndex.datumSteinberg_root` and
-  `TauCeti.GraphTwistedIndex.datumSteinberg_root_simpleIndex`: the Steinberg map multiplies the
-  root at each index by `q` and moves it along `TauCeti.DynkinType.diagramRootPerm`, which on a
-  Bourbaki-numbered simple root is the index's own pinned diagram permutation.
+* `TauCeti.GraphTwistedIndex.datumSteinberg_root_weightMap` and
+  `TauCeti.GraphTwistedIndex.datumSteinberg_root_weightMap_simpleIndex`: the Steinberg map
+  multiplies the root at each index by `q` and moves it along
+  `TauCeti.DynkinType.diagramRootPerm`, which on a Bourbaki-numbered simple root is the index's
+  own pinned diagram permutation.
 * `TauCeti.GraphTwistedIndex.datumSteinberg_eq_datumFrobenius_iff` and
   `TauCeti.GraphTwistedIndex.datumSteinberg_eq_datumFrobenius_iff_twistOrder`: it is the plain
   Frobenius exactly on the untwisted families, equivalently exactly when the twist order is one.
@@ -208,7 +209,7 @@ roots without rescaling them, so the composite has the constant exponent of the 
 `k` under the induced permutation of the root enumeration. That permutation is the motion of the
 pinned root indices in `γ (Frob_q (x_α(t))) = x_{γ α}(t ^ q)`, read in the orientation the module
 docstring fixes. -/
-theorem datumSteinberg_root (k : Fin d.1.dynkinType.numRoots) :
+theorem datumSteinberg_root_weightMap (k : Fin d.1.dynkinType.numRoots) :
     d.datumSteinberg.weightMap
         ((d.1.dynkinType.simplyConnectedRootDatum d.1.dynkinType_valid).root k) =
       (d.1.fieldOrder : ℤ) •
@@ -221,18 +222,18 @@ theorem datumSteinberg_root (k : Fin d.1.dynkinType.numRoots) :
 /-- **The Steinberg map on the Bourbaki-numbered simple roots**, where the induced permutation of
 the root enumeration is the index's own pinned diagram permutation. Milestone L1 states the
 graph-twisted convention in this form, as the motion of the pinned simple root subgroups. -/
-theorem datumSteinberg_root_simpleIndex (i : Fin d.1.rank) :
+theorem datumSteinberg_root_weightMap_simpleIndex (i : Fin d.1.rank) :
     d.datumSteinberg.weightMap
         ((d.1.dynkinType.simplyConnectedRootDatum d.1.dynkinType_valid).root
           (d.1.dynkinType.simpleIndex d.1.dynkinType_valid i)) =
       (d.1.fieldOrder : ℤ) •
         (d.1.dynkinType.simplyConnectedRootDatum d.1.dynkinType_valid).root
           (d.1.dynkinType.simpleIndex d.1.dynkinType_valid (d.diagramPerm i)) := by
-  rw [datumSteinberg_root, DynkinType.diagramRootPerm_simpleIndex]
+  rw [datumSteinberg_root_weightMap, DynkinType.diagramRootPerm_simpleIndex]
 
 /-- **The Steinberg map on coroots**, the transpose statement of
-`TauCeti.GraphTwistedIndex.datumSteinberg_root`. -/
-theorem datumSteinberg_coroot (k : Fin d.1.dynkinType.numRoots) :
+`TauCeti.GraphTwistedIndex.datumSteinberg_root_weightMap`. -/
+theorem datumSteinberg_coroot_coweightMap (k : Fin d.1.dynkinType.numRoots) :
     d.datumSteinberg.coweightMap
         ((d.1.dynkinType.simplyConnectedRootDatum d.1.dynkinType_valid).coroot
           (DynkinType.diagramRootPerm d.1.dynkinType_valid
