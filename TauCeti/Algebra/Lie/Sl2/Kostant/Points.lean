@@ -58,7 +58,7 @@ local notation "e" => ![slFinTwoBasis ℚ 0, slFinTwoBasis ℚ 1]
 local notation "h" => ![slFinTwoBasis ℚ 2]
 /-- The standard two-dimensional representation of the enveloping algebra of `sl₂`. -/
 local notation "ρ" => repEnveloping ℚ 1
-/-- The standard basis of the rank-one integral lattice. -/
+/-- The coordinate basis of the integral lattice in the standard two-dimensional representation. -/
 local notation "b" => integralLatticeAddSubgroupBasis 1
 
 private theorem kostantRootSubgroupMatrix_apply_rankOne {A : Type*} [CommRing A]

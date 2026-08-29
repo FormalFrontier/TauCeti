@@ -18,6 +18,8 @@ its inverse in two distinct diagonal positions. This generalizes Mathlib's field
 
 * `Matrix.SpecialLinearGroup.diag2nUnit`: the two-coordinate diagonal matrix attached to a unit.
 * `Matrix.SpecialLinearGroup.map_diag2nUnit`: naturality under a ring homomorphism.
+* `Matrix.SpecialLinearGroup.diag2n_decompose`: a two-coordinate diagonal matrix over a field is
+  a product of six transvections.
 
 ## References
 
@@ -84,6 +86,31 @@ theorem _root_.Matrix.SpecialLinearGroup.diag2nUnit_mk0 {K : Type u} [Field K]
   apply Subtype.ext
   simp [Matrix.SpecialLinearGroup.diag2nUnit_coe, Matrix.SpecialLinearGroup.diag2n_coe,
     Units.val_mk0, Units.val_inv_eq_inv_val]
+
+/-- A two-coordinate diagonal matrix over a field is a product of six transvections.
+The factorization and proof generalize and are adapted from Mathlib's
+`Matrix.SpecialLinearGroup.diag2_decompose`. -/
+theorem _root_.Matrix.SpecialLinearGroup.diag2n_decompose {K : Type u} [Field K]
+    {m : Type v} [Fintype m] [DecidableEq m] {i j : m} (hij : i ≠ j)
+    (a : K) (ha : a ≠ 0) :
+    Matrix.SpecialLinearGroup.diag2n hij a ha =
+      Matrix.SpecialLinearGroup.transvection hij a *
+        Matrix.SpecialLinearGroup.transvection hij.symm (-a⁻¹) *
+        Matrix.SpecialLinearGroup.transvection hij a *
+        Matrix.SpecialLinearGroup.transvection hij (-1) *
+        Matrix.SpecialLinearGroup.transvection hij.symm 1 *
+        Matrix.SpecialLinearGroup.transvection hij (-1) := by
+  apply Subtype.ext
+  simp only [Matrix.SpecialLinearGroup.coe_mul, Matrix.SpecialLinearGroup.diag2n_coe,
+    Matrix.SpecialLinearGroup.transvection_coe]
+  ext p q
+  simp only [Matrix.mul_add, mul_one, Matrix.add_mul, one_mul, Matrix.single_mul_single_same,
+    mul_neg, mul_inv_cancel₀ ha, Matrix.single_mul_single_of_ne _ _ _ _ hij.symm, add_zero,
+    neg_mul, inv_mul_cancel₀ ha, neg_neg, ne_eq, hij, not_false_eq_true,
+    Matrix.single_mul_single_of_ne, Matrix.add_apply]
+  by_cases hpi : p = i <;> by_cases hpj : p = j <;>
+    by_cases hqi : q = i <;> by_cases hqj : q = j
+  all_goals simp_all [Matrix.one_apply, Matrix.single_apply, Matrix.diagonal_apply, eq_comm]
 
 end
 
