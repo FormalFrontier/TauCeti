@@ -178,7 +178,8 @@ theorem ad_pow_succ_toNat_eq_zero_of_hasPrimitiveVectorWith
   exact P.pow_toEnd_f_eq_zero_of_eq_nat hk
 
 /-- The higher-string relation supplied by an `sl₂`-triple: if `m` has integral weight `a` for
-`h` and is killed by `f`, then `1 - a` applications of `e` kill `m`. -/
+`h` and is killed by `f`, then one bracket with `e` followed by `(-a).toNat` further adjoint
+applications vanishes. -/
 theorem ad_pow_lie_eq_zero_of_isSl2Triple {h e f m : L} {a : ℤ}
     (ht : IsSl2Triple h e f)
     (hhm : ⁅h, m⁆ = ((a : ℤ) : K) • m) (hfm : ⁅f, m⁆ = 0) :
