@@ -193,8 +193,7 @@ private theorem typeBSimpleCorootCoordinate_sub_eq_cartan_transpose
 theorem typeBSimpleCorootGenerator_lie_root (i j : Fin (n + 1)) :
     ⁅typeBSimpleCorootGenerator (K := K) i, typeBSimpleRootGenerator (K := K) j⁆ =
       CartanMatrix.B (n + 1) j i • typeBSimpleRootGenerator j := by
-  change ⁅typeBSimpleCorootGenerator (K := K) i, typeBSimpleRootGenerator (K := K) j⁆ =
-    (CartanMatrix.B (n + 1)).transpose i j • typeBSimpleRootGenerator j
+  rw [← (CartanMatrix.B (n + 1)).transpose_apply i j]
   refine Fin.lastCases ?_ (fun j₀ => ?_) j
   · rw [typeBSimpleRootGenerator_last, typeBSimpleCorootGenerator_lie_root_last,
       typeBSimpleCorootCoordinate_last_eq_cartan_transpose, Int.cast_smul_eq_zsmul]
@@ -207,9 +206,7 @@ theorem typeBSimpleCorootGenerator_lie_negativeRoot (i j : Fin (n + 1)) :
     ⁅typeBSimpleCorootGenerator (K := K) i,
       typeBSimpleNegativeRootGenerator (K := K) j⁆ =
         -(CartanMatrix.B (n + 1) j i • typeBSimpleNegativeRootGenerator j) := by
-  change ⁅typeBSimpleCorootGenerator (K := K) i,
-      typeBSimpleNegativeRootGenerator (K := K) j⁆ =
-    -((CartanMatrix.B (n + 1)).transpose i j • typeBSimpleNegativeRootGenerator j)
+  rw [← (CartanMatrix.B (n + 1)).transpose_apply i j]
   refine Fin.lastCases ?_ (fun j₀ => ?_) j
   · rw [typeBSimpleNegativeRootGenerator_last,
       typeBSimpleCorootGenerator_lie_negativeRoot_last,
