@@ -40,7 +40,7 @@ and F. Lemmermeyer, *Reciprocity Laws: From Euler to Eisenstein*, §2.2.
   on the norms of two ideals related by a coprime, totally positive principal ratio.
 -/
 
-@[expose] public section
+public section
 
 open Polynomial
 open scoped NumberField nonZeroDivisors
@@ -68,16 +68,8 @@ private theorem genusCharFun_natAbs_norm_eq {s t : Finset ℤ}
     exact hcopx.mul_left hcopy
   have hcharxy := genusCharFun_norm_eq_one hs heven hprod hmin hgen hsf hts (x * y) hcopxy
   rw [map_mul, genusCharFun_mul_right] at hcharxy
-  have hcharx := genusCharFun_eq_one_or_eq_neg_one (fun P hP => hs P (hts hP)) hcopx
-  have hchary := genusCharFun_eq_one_or_eq_neg_one (fun P hP => hs P (hts hP)) hcopy
-  have hchar : genusCharFun t (Algebra.norm ℤ x) = genusCharFun t (Algebra.norm ℤ y) := by
-    rcases hcharx with hxchar | hxchar <;> rcases hchary with hychar | hychar
-    · rw [hxchar, hychar]
-    · rw [hxchar, hychar] at hcharxy
-      norm_num at hcharxy
-    · rw [hxchar, hychar] at hcharxy
-      norm_num at hcharxy
-    · rw [hxchar, hychar]
+  have hchar : genusCharFun t (Algebra.norm ℤ x) = genusCharFun t (Algebra.norm ℤ y) :=
+    Int.eq_of_mul_eq_one hcharxy
   have hnormpos : 0 < Algebra.norm ℤ x * Algebra.norm ℤ y := by
     have hxK : (x : K) ≠ 0 := by simpa using hx
     have hyK : (y : K) ≠ 0 := by simpa using hy
@@ -138,7 +130,9 @@ theorem genusCharFun_absNorm_eq_of_span_mul_eq_span_mul {s t : Finset ℤ}
   have hcopAbsY : IsCoprime ((Algebra.norm ℤ y).natAbs : ℤ) (∏ P ∈ t, P) := by
     rw [Int.natCast_natAbs]
     exact hcopy.abs_left
-  rcases genusCharFun_eq_one_or_eq_neg_one (fun P hP => hs P (hts hP)) hcopAbsY with h | h <;>
-    rw [h] at hchar <;> simpa using hchar
+  have hcharY_ne : genusCharFun t ((Algebra.norm ℤ y).natAbs : ℤ) ≠ 0 := by
+    intro hzero
+    exact ((genusCharFun_eq_zero_iff (fun P hP => hs P (hts hP))).mp hzero) hcopAbsY
+  exact mul_left_cancel₀ hcharY_ne hchar
 
 end TauCeti.Multiquadratic
