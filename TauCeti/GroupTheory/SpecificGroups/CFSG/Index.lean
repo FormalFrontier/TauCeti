@@ -481,6 +481,11 @@ theorem fieldExponent_pos (d : LieTypeIndex) : 0 < d.fieldExponent := by
     simp only [fieldExponent] <;>
     first | exact PrimePower.exponent_pos _ | positivity
 
+/-- The Frobenius parameter is a positive power of a prime, hence at least two. -/
+theorem one_lt_fieldOrder (d : LieTypeIndex) : 1 < d.fieldOrder := by
+  rw [d.fieldOrder_eq_characteristic_pow]
+  exact Nat.one_lt_pow d.fieldExponent_pos.ne' d.characteristic_prime.one_lt
+
 end LieTypeIndex
 
 /-- A Lie-type index satisfying its rank, field, and preferred-representative conditions. Later
@@ -539,6 +544,10 @@ theorem fieldOrder_eq_characteristic_pow (d : ValidLieTypeIndex) :
 /-- The field exponent of a valid index is positive. -/
 theorem fieldExponent_pos (d : ValidLieTypeIndex) : 0 < d.fieldExponent :=
   d.1.fieldExponent_pos
+
+/-- The Frobenius parameter of a valid index is at least two. -/
+theorem one_lt_fieldOrder (d : ValidLieTypeIndex) : 1 < d.fieldOrder :=
+  d.1.one_lt_fieldOrder
 
 end ValidLieTypeIndex
 

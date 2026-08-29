@@ -490,6 +490,16 @@ variable {ι₄ M₄ N₄ : Type*} [AddCommGroup M₄] [Module R M₄]
     (f : RootPairingIsogeny P Q) : comp (comp h g) f = comp h (comp g f) := by
   ext <;> simp [comp, mul_assoc]
 
+/-- **Scaling is central**: multiplying by a positive integer commutes with every isogeny. Since
+`TauCeti.RootPairingIsogeny.smulId` at a prime power `q` is the root-datum shadow of the `q`-power
+Frobenius, this is the root-datum form of the fact that a Frobenius commutes with every isogeny. -/
+theorem comp_smulId [Module.Free ℤ M] [Module.Finite ℤ M] [Module.Free ℤ N] [Module.Finite ℤ N]
+    [Module.Free ℤ M₂] [Module.Finite ℤ M₂] [Module.Free ℤ N₂] [Module.Finite ℤ N₂]
+    {P : RootPairing ι ℤ M N} {Q : RootPairing ι₂ ℤ M₂ N₂}
+    (f : RootPairingIsogeny P Q) (c : ℕ+) :
+    comp f (smulId P c) = comp (smulId Q c) f := by
+  ext <;> simp [mul_comm]
+
 end RootPairingIsogeny
 
 end TauCeti
