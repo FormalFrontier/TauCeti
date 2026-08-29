@@ -542,6 +542,19 @@ theorem fieldExponent_pos (d : ValidLieTypeIndex) : 0 < d.fieldExponent :=
 
 end ValidLieTypeIndex
 
+namespace SuzukiReeIndex
+
+/-- The field exponent of a Suzuki--Ree index is odd. It is `2 * m + 1` on the three uniform
+families and `1` on the Tits branch. -/
+theorem odd_fieldExponent (e : SuzukiReeIndex) : Odd e.1.fieldExponent := by
+  obtain ⟨⟨d, hvalid⟩, hhalf⟩ := e
+  cases d <;> try simp at hhalf
+  all_goals simp [ValidLieTypeIndex.fieldExponent, LieTypeIndex.fieldExponent_suzuki,
+    LieTypeIndex.fieldExponent_reeG2, LieTypeIndex.fieldExponent_reeF4,
+    LieTypeIndex.fieldExponent_tits]
+
+end SuzukiReeIndex
+
 /-! ## Executable checks for the range conventions -/
 
 private def q2 : PrimePower := ⟨2, 1, by decide, by decide⟩

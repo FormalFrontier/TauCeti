@@ -59,15 +59,6 @@ namespace SuzukiReeIndex
 
 variable (e : SuzukiReeIndex)
 
-/-- The field exponent of a Suzuki--Ree index is odd. It is `2 * m + 1` on the three uniform
-families and `1` on the Tits branch. -/
-theorem fieldExponent_odd : Odd e.1.fieldExponent := by
-  obtain ⟨⟨d, hvalid⟩, hhalf⟩ := e
-  cases d <;> try simp at hhalf
-  all_goals simp [ValidLieTypeIndex.fieldExponent, LieTypeIndex.fieldExponent_suzuki,
-    LieTypeIndex.fieldExponent_reeG2, LieTypeIndex.fieldExponent_reeF4,
-    LieTypeIndex.fieldExponent_tits]
-
 noncomputable section
 
 /-- **The root-datum Steinberg map of a Suzuki--Ree index**: the odd power of the selected special
@@ -119,7 +110,7 @@ isogeny itself. -/
 @[simp] theorem datumSteinberg_indexEquiv :
     e.datumSteinberg.indexEquiv = e.datumSpecialIsogeny.indexEquiv := by
   simpa only [datumSteinberg,
-    Nat.two_mul_div_two_add_one_of_odd e.fieldExponent_odd] using
+    Nat.two_mul_div_two_add_one_of_odd e.odd_fieldExponent] using
       RootPairingIsogeny.indexEquiv_pow_two_mul_add_one
         (e.1.dynkinType.simplyConnectedRootDatum e.1.dynkinType_valid)
         e.datumSpecialIsogeny_comp_self (e.1.fieldExponent / 2)
@@ -142,7 +133,7 @@ to the selected special isogeny. -/
         (e.1.characteristic : ℤ) ^ (e.1.fieldExponent / 2) := by
   rw [datumSteinberg]
   conv_lhs =>
-    rw [← Nat.two_mul_div_two_add_one_of_odd e.fieldExponent_odd]
+    rw [← Nat.two_mul_div_two_add_one_of_odd e.odd_fieldExponent]
   rw [RootPairingIsogeny.exponent_pow_two_mul_add_one _ e.datumSpecialIsogeny_comp_self,
     datumSpecialIsogeny_exponent_simpleIndex]
   norm_cast
@@ -201,7 +192,8 @@ positive-natural scalar on the right with `e.1.fieldOrder`. -/
       RootPairingIsogeny.smulId _
         (⟨e.1.characteristic, e.1.characteristic_prime.pos⟩ ^ e.1.fieldExponent) := by
   calc
-    e.datumSteinberg.comp e.datumSteinberg = e.datumSteinberg * e.datumSteinberg := rfl
+    e.datumSteinberg.comp e.datumSteinberg = e.datumSteinberg * e.datumSteinberg :=
+      (RootPairingIsogeny.mul_def _ _).symm
     _ = RootPairingIsogeny.smulId _
         (⟨e.1.characteristic, e.1.characteristic_prime.pos⟩ ^ e.1.fieldExponent) := by
       rw [datumSteinberg]
