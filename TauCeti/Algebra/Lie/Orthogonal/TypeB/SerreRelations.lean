@@ -5,9 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.LinearAlgebra.Matrix.Cartan
 public import TauCeti.Algebra.Lie.Orthogonal.TypeB.GeneratorRelations
-public import TauCeti.Algebra.Lie.Presentation.Basic
 import TauCeti.Algebra.Lie.GeneralLinear.Basic
 import TauCeti.Algebra.Lie.Presentation.Serre
 
