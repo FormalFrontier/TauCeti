@@ -96,6 +96,7 @@ theorem _root_.Equiv.Perm.count_parts_partition_of_ne_one (σ : Equiv.Perm α) {
 
 /-- The number of parts of `Equiv.Perm.partition` is the number of cycles of `σ` of length at
 least two together with its fixed points. -/
+@[simp]
 theorem _root_.Equiv.Perm.card_parts_partition (σ : Equiv.Perm α) :
     Multiset.card σ.partition.parts =
       Multiset.card σ.cycleType + (Fintype.card α - σ.support.card) := by
