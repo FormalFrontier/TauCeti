@@ -94,6 +94,7 @@ theorem charFun_gammaMeasure (ha : 0 < a) (hr : 0 < r) (t : ℝ) :
   have hAnalyticFormula : AnalyticOnNhd ℂ (gammaComplexMGF a r) U := by
     simpa only [U] using analyticOnNhd_gammaComplexMGF (a := a) hr
   have hUPreconnected : IsPreconnected U := by
+    -- Expose the literal linear preimage; `simp` does not reduce `Complex.reLm z` to `z.re`.
     change IsPreconnected (Complex.reLm ⁻¹' Iio r)
     exact ((convex_Iio r).linear_preimage Complex.reLm).isPreconnected
   have hzeroU : (0 : ℂ) ∈ U := by
