@@ -43,7 +43,8 @@ def _root_.MonoidHom.conjNormal {N : Subgroup G} [N.Normal]
 theorem _root_.MonoidHom.conjNormal_apply {N : Subgroup G} [N.Normal] (g : G)
     (χ : N →* A) (n : N) :
     MonoidHom.conjNormal g χ n = χ ((MulAut.conjNormal g).symm n) := by
-  rfl
+  change χ ((MulAut.conjNormal g⁻¹) n) = _
+  rw [MulAut.conjNormal_inv]
 
 @[simp]
 theorem _root_.MonoidHom.conjNormal_one {N : Subgroup G} [N.Normal] (χ : N →* A) :
