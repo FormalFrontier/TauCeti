@@ -131,18 +131,23 @@ private theorem sum_block_ne_zero_and_ord_le (P' : Place k' F') {ι : Type*} [Fi
     _ = ((l₀ : ℕ) : ℤ) := by
         rw [hT, P'.ord_mul hA₀ne (pow_ne_zero _ ht0), P'.ord_pow, hA₀ord, ht, mul_one, zero_add]
 
-/-- **The family `w i j * τ i ^ l` is `F`-linearly independent.** Given, at each place `Q i` over
-`P`, a uniformizer `τ i` that is a unit at the other places of the family, and lifts `w i j` of an
-`F`-linearly independent family of residues, of order at least `[F' : F]` at the other places,
-the `e(Q i ∣ P) · f(Q i ∣ P)` products `w i j * τ i ^ l` are linearly independent over `F`.
-Counting them is what gives the fundamental inequality. -/
+/-- **The products `w i j * τ i ^ l` are `F`-linearly independent across the whole fibre.** Given,
+at each place `Q i` over `P`, a prime element `τ i` for `Q i` that is integral at the other places
+of the family, and lifts `w i j` of a family of residues independent over the residue field of `P`,
+each of order at least `e(Q m ∣ P)` at every other place `Q m`, the `e(Q i ∣ P) · f(Q i ∣ P)`
+products `w i j * τ i ^ l` are linearly independent over `F` **jointly over all of `i`** — which is
+what distinguishes this from the one-place
+`TauCeti.Place.linearIndependent_mul_pow_of_linearIndependent_residue` in `Extension/Basic.lean`.
+Counting the resulting `∑ i, e(Q i ∣ P) · f(Q i ∣ P)` products is what gives the fundamental
+inequality. -/
 private theorem linearIndependent_mul_pow_of_forall_linearIndependent_residue {ι : Type*}
-    [Finite ι] [DecidableEq ι] {Q : ι → Place k' F'} {P : Place k F}
+    [Finite ι] {Q : ι → Place k' F'} {P : Place k F}
     (hQP : ∀ i, (Q i).restrict k F = P)
-    {τ : ι → F'} (hτ : ∀ i m, (Q m).ord (τ i) = if m = i then 1 else 0)
+    {τ : ι → F'} (hτone : ∀ i, (Q i).ord (τ i) = 1)
+    (hτint : ∀ i m, m ≠ i → 0 ≤ (Q m).ord (τ i))
     {w : ∀ i, Fin (relativeDegree k F (Q i)) → F'} (hwmem : ∀ i j, w i j ∈ (Q i).integers)
     (hwN : ∀ (i : ι) (j : Fin (relativeDegree k F (Q i))) (m : ι), m ≠ i →
-      (Module.finrank F F' : ℤ) ≤ (Q m).ord (w i j))
+      (ramificationIdx F (Q m) : ℤ) ≤ (Q m).ord (w i j))
     (hindres : ∀ i, LinearIndependent ((Q i).restrict k F).ResidueField
       fun j ↦ IsLocalRing.residue (Q i).integers (⟨w i j, hwmem i j⟩ : (Q i).integers)) :
     LinearIndependent F
@@ -150,10 +155,6 @@ private theorem linearIndependent_mul_pow_of_forall_linearIndependent_residue {�
         w p.1 p.2.1 * τ p.1 ^ (p.2.2 : ℕ)) := by
   classical
   have _ : Fintype ι := Fintype.ofFinite ι
-  set N : ℕ := Module.finrank F F'
-  have hN1 : 1 ≤ N := Module.finrank_pos
-  have hτone : ∀ i, (Q i).ord (τ i) = 1 := fun i ↦ by simpa using hτ i i
-  have hτ0 : ∀ i, τ i ≠ 0 := fun i h ↦ by simpa [h] using hτone i
   set V : (Σ i : ι, Fin (relativeDegree k F (Q i)) × Fin (ramificationIdx F (Q i))) → F' :=
     fun p ↦ w p.1 p.2.1 * τ p.1 ^ (p.2.2 : ℕ) with hV
   rw [Fintype.linearIndependent_iff]
@@ -176,7 +177,7 @@ private theorem linearIndependent_mul_pow_of_forall_linearIndependent_residue {�
       have := hp₀min p (by simp [hS, h])
       omega
   set b : (Σ i : ι, Fin (relativeDegree k F (Q i)) × Fin (ramificationIdx F (Q i))) →
-    ((Q i₀).restrict k F).integers := fun p ↦ ⟨g p / g ⟨i₀, j₀, l₀⟩, hbmem p⟩ with hb
+    ((Q i₀).restrict k F).integers := fun p ↦ ⟨g p / g ⟨i₀, j₀, l₀⟩, hbmem p⟩
   have hbcoe : ∀ p, ((b p : F)) = g p / g ⟨i₀, j₀, l₀⟩ := fun _ ↦ rfl
   have hb₀ : b ⟨i₀, j₀, l₀⟩ = 1 := Subtype.ext (by simp [hbcoe, div_self hg₀])
   -- The relation splits into one block per place of the family, and the blocks sum to zero.
@@ -196,14 +197,16 @@ private theorem linearIndependent_mul_pow_of_forall_linearIndependent_residue {�
           simp only [hZ]
           rw [Finset.sum_sigma', Finset.univ_sigma_univ]
       _ = 0 := hgsum
-  -- The block at `i₀` is nonzero of order less than the ramification index there; the type
-  -- ascription is what identifies `Z i₀` with the sum the block lemma speaks about.
-  obtain ⟨hZne, hZord⟩ : Z i₀ ≠ 0 ∧ (Q i₀).ord (Z i₀) ≤ ((l₀ : ℕ) : ℤ) :=
-    sum_block_ne_zero_and_ord_le k F (Q i₀)
+  -- The block at `i₀` is nonzero of order less than the ramification index there. Unfolding `Z`
+  -- and `V` is what puts it in the shape the block lemma speaks about.
+  obtain ⟨hZne, hZord⟩ : Z i₀ ≠ 0 ∧ (Q i₀).ord (Z i₀) ≤ ((l₀ : ℕ) : ℤ) := by
+    have hblock := sum_block_ne_zero_and_ord_le k F (Q i₀)
       (fun j ↦ (⟨w i₀ j, hwmem i₀ j⟩ : (Q i₀).integers)) (hindres i₀)
       (fun q ↦ b ⟨i₀, q⟩) (j₀ := j₀) (l₀ := l₀) (hb₀ ▸ isUnit_one) (hτone i₀)
-  -- Every other block has order at least `[F' : F]` at `Q i₀`.
-  have hZm : ∀ m, m ≠ i₀ → (Q i₀).valuation (Z m) ≤ WithZero.exp (-(N : ℤ)) := by
+    simpa only [hZ, hV] using hblock
+  -- Every other block has order at least `e(Q i₀ ∣ P)` at `Q i₀`.
+  have hZm : ∀ m, m ≠ i₀ →
+      (Q i₀).valuation (Z m) ≤ WithZero.exp (-(ramificationIdx F (Q i₀) : ℤ)) := by
     intro m hm
     simp only [hZ]
     refine Valuation.map_sum_le _ fun q _ ↦ ?_
@@ -212,20 +215,23 @@ private theorem linearIndependent_mul_pow_of_forall_linearIndependent_residue {�
       rw [ord_algebraMap_restrict k F (Q i₀) ((b ⟨m, q⟩ : F))]
       exact mul_nonneg (by positivity)
         (((Q i₀).restrict k F).mem_integers_iff_ord_nonneg.mp (b ⟨m, q⟩).2)
-    have hwval : (Q i₀).valuation (w m q.1) ≤ WithZero.exp (-(N : ℤ)) := by
+    have hwval : (Q i₀).valuation (w m q.1) ≤
+        WithZero.exp (-(ramificationIdx F (Q i₀) : ℤ)) := by
       have hne : w m q.1 ≠ 0 := by
         intro h
         have hh := hwN m q.1 i₀ (Ne.symm hm)
+        have he := ramificationIdx_pos (F := F) (Q i₀)
         rw [h, ord_zero] at hh
         omega
       rw [(Q i₀).valuation_eq_exp_neg_ord hne]
       exact WithZero.exp_le_exp.2 (neg_le_neg (hwN m q.1 i₀ (Ne.symm hm)))
-    have hτval : (Q i₀).valuation (τ m ^ (q.2 : ℕ)) = 1 := by
-      rw [map_pow, (Q i₀).valuation_eq_exp_neg_ord (hτ0 m), hτ m i₀]
-      simp [Ne.symm hm]
+    have hτval : (Q i₀).valuation (τ m ^ (q.2 : ℕ)) ≤ 1 := by
+      rw [map_pow]
+      exact pow_le_one' ((Q i₀).mem_integers_iff.mp
+        ((Q i₀).mem_integers_iff_ord_nonneg.mpr (hτint m i₀ (Ne.symm hm)))) _
     simp only [hV]
-    rw [map_mul, map_mul, hτval, mul_one]
-    exact (mul_le_of_le_one_left' hb1).trans hwval
+    rw [map_mul, map_mul]
+    exact (mul_le_of_le_one_left' hb1).trans ((mul_le_of_le_one_right' hτval).trans hwval)
   -- The strict triangle inequality contradicts `∑ i, Z i = 0`.
   have hlt : ∀ m ∈ (Finset.univ : Finset ι) \ {i₀},
       (Q i₀).valuation (Z m) < (Q i₀).valuation (Z i₀) := by
@@ -234,8 +240,6 @@ private theorem linearIndependent_mul_pow_of_forall_linearIndependent_residue {�
     refine lt_of_le_of_lt (hZm m hmem.2) ?_
     rw [(Q i₀).valuation_eq_exp_neg_ord hZne, WithZero.exp_lt_exp]
     have hl₀ : (l₀ : ℕ) < ramificationIdx F (Q i₀) := l₀.2
-    have hle : ramificationIdx F (Q i₀) ≤ Module.finrank F F' :=
-      ramificationIdx_le_finrank F (Q i₀)
     omega
   have hval := (Q i₀).valuation.map_sum_eq_of_lt (Finset.mem_univ i₀) hlt
   rw [hZsum, map_zero] at hval
@@ -290,8 +294,11 @@ private theorem sum_relativeDegree_mul_ramificationIdx_le_finrank {ι : Type*} [
     simpa only [hwres] using hz i
   -- The candidate independent family: `e(Q i ∣ P) · f(Q i ∣ P)` functions for each `i`.
   have hind :=
-    linearIndependent_mul_pow_of_forall_linearIndependent_residue k F hQP hτ hwmem
-      (fun i j m hm ↦ (hwN i j m hm).ge) hindres
+    linearIndependent_mul_pow_of_forall_linearIndependent_residue k F hQP
+      (fun i ↦ by simpa using hτ i i) (fun i m hm ↦ by simp [hτ i m, hm]) hwmem
+      (fun i j m hm ↦ by
+        rw [hwN i j m hm, hNdef]
+        exact_mod_cast ramificationIdx_le_finrank F (Q m)) hindres
   simpa [Fintype.card_sigma, Fintype.card_prod] using hind.fintype_card_le_finrank
 
 /-- **The fundamental inequality** (Stichtenoth, Theorem 3.1.11): the ramification indices and
