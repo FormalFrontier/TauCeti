@@ -29,8 +29,8 @@ have the same finrank.
 
 * `LieModule.isotypicMultiplicity_eq_finrank_linearMap_of_ι_smul`: the invariant is the
   finrank of the space of `U(L)`-linear maps.
-* `LieModule.isotypicMultiplicity_eq_natCard_of_linearEquiv_pi`: for a decomposition of `M` into
-  simple `U(L)`-modules, the multiplicity is the ring-level count of
+* `LieModule.isotypicMultiplicity_eq_natCard_of_linearEquiv_pi`: for a finite decomposition of `M`
+  into simple `U(L)`-modules, the multiplicity is the ring-level count of
   `TauCeti.finrank_linearMap_eq_natCard_of_linearEquiv_pi`.
 
 ## Roadmap

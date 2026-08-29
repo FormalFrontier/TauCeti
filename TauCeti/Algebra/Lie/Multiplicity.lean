@@ -16,8 +16,9 @@ public section
 `LieModule.isotypicMultiplicity R L M S` is the finrank of the space `S →ₗ⁅R,L⁆ M` of morphisms
 from a Lie module `S` to a Lie module `M`. This file proves that when `S` is finite-dimensional and
 irreducible over an algebraically closed field, this number counts
-the summands equivalent to `S` in any decomposition of `M` into irreducible Lie submodules, and is
-therefore independent of the decomposition chosen: it is the **multiplicity** of `S` in `M`.
+the summands equivalent to `S` in any *finite* decomposition of `M` into irreducible Lie
+submodules, and is therefore independent of which such decomposition is chosen: it is the
+**multiplicity** of `S` in `M`.
 
 ## The argument
 
@@ -30,13 +31,13 @@ decomposition of `M` by Lie submodules.
 
 The per-summand contribution is Schur's lemma in the dimension form of
 `TauCeti/Algebra/Lie/Schur.lean`: for irreducible `S` and `Nᵢ` over an algebraically closed field,
-`dim_K (S →ₗ⁅K,L⁆ Nᵢ)` is `1` when `Nᵢ ≃ S` and `0` otherwise. Summing gives the count. Since the
-left-hand side never mentions the decomposition, two decompositions of the same module have the
-same number of summands equivalent to `S`; this is the uniqueness statement that makes "the
-multiplicity of `S` in `M`" well defined.
+`dim_K (S →ₗ⁅K,L⁆ Nᵢ)` is `1` when `Nᵢ ≃ S` and `0` otherwise. Summing over the finite index type
+gives the count. Since the left-hand side never mentions the decomposition, two finite
+decompositions of the same module have the same number of summands equivalent to `S`; this is the
+uniqueness statement that makes "the multiplicity of `S` in `M`" well defined.
 
-Nothing here needs complete reducibility: the counting theorem is stated for a decomposition it is
-handed. Complete reducibility is what *produces* such a decomposition, through
+Nothing here needs complete reducibility: the counting theorem is stated for a finite decomposition
+it is handed. Complete reducibility is what *produces* such a decomposition, through
 `TauCeti.exists_isInternal_isIrreducible` of `TauCeti/Algebra/Lie/Submodule/Decomposition.lean`,
 which a consumer combines with the counting theorem below.
 
@@ -60,14 +61,14 @@ enveloping-algebra dictionary lives,
 ## Main results
 
 * `TauCeti.LieModule.finrank_lieModuleHom_eq_sum_of_isInternal`: **additivity of the morphism space
-  over a decomposition of `M` into Lie submodules.**
+  over a finite decomposition of `M` into Lie submodules.**
 * `LieModule.isotypicMultiplicity_eq_of_lieModuleEquiv` and
   `LieModule.isotypicMultiplicity_eq_of_lieModuleEquiv_type`: the multiplicity depends only on the
   equivalence classes of `M` and of `S`.
 * `LieModule.isotypicMultiplicity_eq_ncard_of_isInternal`: **the multiplicity counts the summands
-  equivalent to `S`** in a decomposition of `M` into irreducibles.
-* `LieModule.ncard_setOf_nonempty_lieModuleEquiv_eq`: **the count is independent of the
-  decomposition.**
+  equivalent to `S`** in a finite decomposition of `M` into irreducibles.
+* `LieModule.ncard_setOf_nonempty_lieModuleEquiv_eq`: **the count is independent of which finite
+  decomposition is taken.**
 
 ## Roadmap
 
@@ -215,9 +216,9 @@ theorem isotypicMultiplicity_eq_ncard_of_isInternal :
 
 end Count
 
-/-- **The number of summands equivalent to a given irreducible does not depend on the
-decomposition.** Both counts compute the same multiplicity, which is defined without reference to
-any decomposition. -/
+/-- **The number of summands equivalent to a given irreducible does not depend on which finite
+decomposition is taken.** Both counts compute the same multiplicity, which is defined without
+reference to any decomposition. -/
 theorem ncard_setOf_nonempty_lieModuleEquiv_eq
     {ι : Type w₂} [DecidableEq ι] [Finite ι] {ι' : Type w₃} [DecidableEq ι'] [Finite ι']
     (N : ι → LieSubmodule K L M) (h : DirectSum.IsInternal fun i ↦ (N i).toSubmodule)
