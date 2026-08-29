@@ -61,6 +61,12 @@ variable (e : SuzukiReeIndex)
 
 noncomputable section
 
+/-- The special-isogeny square, stated in the multiplication form used by the odd-power API. -/
+private theorem datumSpecialIsogeny_mul_self :
+    e.datumSpecialIsogeny * e.datumSpecialIsogeny =
+      RootPairingIsogeny.smulId _ ⟨e.1.characteristic, e.1.characteristic_prime.pos⟩ := by
+  simpa only [RootPairingIsogeny.mul_def] using e.datumSpecialIsogeny_comp_self
+
 /-- **The root-datum Steinberg map of a Suzuki--Ree index**: the odd power of the selected special
 isogeny. The exponent is `2 * m + 1` for the Suzuki and Ree constructors, and `1` for the Tits
 constructor. -/
@@ -113,7 +119,7 @@ isogeny itself. -/
     Nat.two_mul_div_two_add_one_of_odd e.odd_fieldExponent] using
       RootPairingIsogeny.indexEquiv_pow_two_mul_add_one
         (e.1.dynkinType.simplyConnectedRootDatum e.1.dynkinType_valid)
-        e.datumSpecialIsogeny_comp_self (e.1.fieldExponent / 2)
+        e.datumSpecialIsogeny_mul_self (e.1.fieldExponent / 2)
 
 /-- The Steinberg map carries the numbered simple-root index `i` to its pinned length-exchanged
 partner. -/
@@ -134,7 +140,7 @@ to the selected special isogeny. -/
   rw [datumSteinberg]
   conv_lhs =>
     rw [← Nat.two_mul_div_two_add_one_of_odd e.odd_fieldExponent]
-  rw [RootPairingIsogeny.exponent_pow_two_mul_add_one _ e.datumSpecialIsogeny_comp_self,
+  rw [RootPairingIsogeny.exponent_pow_two_mul_add_one _ e.datumSpecialIsogeny_mul_self,
     datumSpecialIsogeny_exponent_simpleIndex]
   norm_cast
 
@@ -199,7 +205,7 @@ positive-natural scalar on the right with `e.1.fieldOrder`. -/
       rw [datumSteinberg]
       exact RootPairingIsogeny.pow_mul_self_eq_smulId
         (e.1.dynkinType.simplyConnectedRootDatum e.1.dynkinType_valid)
-        e.datumSpecialIsogeny_comp_self e.1.fieldExponent
+        e.datumSpecialIsogeny_mul_self e.1.fieldExponent
 
 end
 
