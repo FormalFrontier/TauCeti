@@ -9,6 +9,7 @@ public import Mathlib.RingTheory.Polynomial.Basic
 public import Mathlib.RingTheory.Polynomial.Vieta
 public import Mathlib.FieldTheory.IsAlgClosed.Basic
 public import TauCeti.Data.Sym.Basic
+public import TauCeti.RingTheory.MvPolynomial.Symmetric.Substitution
 public import TauCeti.RingTheory.Polynomial.MonicOfCoeff
 import Mathlib.Data.Fin.VecNotation
 
@@ -57,6 +58,9 @@ are separate later steps.
 * `TauCeti.Sym.toMonic_ofFn` and `TauCeti.Sym.coeffEquiv_ofFn_apply`: read on an ordered tuple
   `f : Fin n → R` through `TauCeti.Sym.ofFn`, the monic polynomial is the product
   `∏ i, (X - C (f i))` of linear factors and the chart reads off its coefficients.
+* `TauCeti.Sym.exists_coeffEquiv_map_eval_coeffEquiv_symm_eq_eval`: applying a univariate
+  polynomial to every point acts by multivariate polynomials in the chart coordinates, including
+  at tuples where points collide.
 
 Lane F4.1 of the analytic Heegaard Floer roadmap opens with "`Sym^g(Σ)` geometry: smooth complex
 structure (elementary symmetric functions), the totally real tori `T_α`, `T_β`, …", after
@@ -345,6 +349,134 @@ theorem coeffEquiv_two_apply {s : Sym K 2} {a b : K} (hs : (s : Multiset K) = {a
   fin_cases i <;> rw [coeffEquiv_apply, hs] <;> simp
 
 end AlgClosed
+
+/-! ### The action of a polynomial map in coefficient coordinates -/
+
+section PolynomialMapAlg
+
+open _root_.MvPolynomial Finset
+
+variable {K : Type*} [CommRing K] {n : ℕ}
+
+/-- The `j`-th variable of a fundamental-theorem polynomial, read in elementary symmetric
+coefficients: the `(j+1)`-st elementary symmetric function of a root tuple is `(-1) ^ (j+1)` times
+coefficient `j.rev`, by Vieta's formulas. -/
+private noncomputable def esymmInCoeff (j : Fin n) : MvPolynomial (Fin n) K :=
+  MvPolynomial.C ((-1 : K) ^ ((j : ℕ) + 1)) * MvPolynomial.X j.rev
+
+/-- Substituting the signed coefficient coordinates for the elementary symmetric polynomials. -/
+private noncomputable def coeffSubst :
+    MvPolynomial (Fin n) K →ₐ[K] MvPolynomial (Fin n) K :=
+  MvPolynomial.aeval esymmInCoeff
+
+/-- Evaluating the coefficient substitution reads a fundamental-theorem polynomial in the signed
+coefficient coordinates. -/
+private theorem aeval_coeffSubst (c : Fin n → K) (p : MvPolynomial (Fin n) K) :
+    MvPolynomial.aeval c (coeffSubst p) =
+      MvPolynomial.aeval
+        (fun j : Fin n => (-1 : K) ^ ((j : ℕ) + 1) * c j.rev) p := by
+  rw [coeffSubst, MvPolynomial.comp_aeval_apply]
+  refine congrArg (fun g => MvPolynomial.aeval g p) (funext fun j => ?_)
+  rw [MvPolynomial.aeval_eq_eval]
+  simp only [esymmInCoeff, MvPolynomial.eval_mul, MvPolynomial.eval_C,
+    MvPolynomial.eval_X]
+
+end PolynomialMapAlg
+
+section PolynomialMap
+
+open _root_.MvPolynomial Finset
+
+variable {K : Type*} [Field K] [IsAlgClosed K] {n : ℕ}
+
+/-- The `(j+1)`-st elementary symmetric function of a tuple equals its corresponding signed
+coefficient coordinate. -/
+private theorem multiset_esymm_succ_eq_neg_one_pow_mul_coeffEquiv_ofFn
+    (v : Fin n → K) (j : Fin n) :
+    (univ.val.map v).esymm ((j : ℕ) + 1) =
+      (-1 : K) ^ ((j : ℕ) + 1) * coeffEquiv K n (ofFn v) j.rev := by
+  rw [coeffEquiv_apply, Sym.coe_ofFn, Fin.univ_val_map, Fin.val_rev,
+    Nat.sub_sub_self (by have := j.isLt; omega)]
+  have hsign : (-1 : K) ^ ((j : ℕ) + 1) * (-1 : K) ^ ((j : ℕ) + 1) = 1 := by
+    rw [← pow_add, ← Nat.two_mul, pow_mul]
+    norm_num
+  rw [← mul_assoc, hsign, one_mul]
+
+/-- **Applying a polynomial to a tuple acts polynomially in elementary symmetric
+coefficients.** For every coefficient tuple `c`, including those representing colliding points,
+the coefficients after applying `q` pointwise are evaluations of multivariate polynomials `Q`. -/
+theorem exists_coeffEquiv_map_eval_coeffEquiv_symm_eq_eval (q : K[X]) :
+    ∃ Q : Fin n → MvPolynomial (Fin n) K, ∀ c : Fin n → K,
+      coeffEquiv K n (Sym.map (fun z => eval z q) ((coeffEquiv K n).symm c)) =
+        fun i => eval c (Q i) := by
+  classical
+  have hftsf : ∀ k : ℕ, ∃ W : MvPolynomial (Fin n) K,
+      MvPolynomial.aeval (fun j : Fin n => esymm (Fin n) K ((j : ℕ) + 1)) W =
+        MvPolynomial.bind₁ (fun i : Fin n => Polynomial.aeval (MvPolynomial.X i) q)
+          (esymm (Fin n) K k) := fun k =>
+    TauCeti.MvPolynomial.IsSymmetric.exists_aeval_esymm_eq_bind₁_aeval_X
+      (esymm_isSymmetric (Fin n) K k) q
+  choose W hW using hftsf
+  refine ⟨fun i => MvPolynomial.C ((-1 : K) ^ (n - (i : ℕ))) *
+    coeffSubst (W (n - (i : ℕ))), fun c => ?_⟩
+  obtain ⟨v, hv⟩ := ofFn_surjective ((coeffEquiv K n).symm c)
+  have hvc : coeffEquiv K n (ofFn v) = c := (Equiv.eq_symm_apply _).1 hv
+  funext i
+  have hesymm :
+      (univ.val.map (fun j => Polynomial.eval (v j) q)).esymm (n - (i : ℕ)) =
+        MvPolynomial.aeval
+          (fun j : Fin n => (-1 : K) ^ ((j : ℕ) + 1) * c j.rev)
+          (W (n - (i : ℕ))) := by
+    calc
+      (univ.val.map (fun j => Polynomial.eval (v j) q)).esymm (n - (i : ℕ)) =
+          MvPolynomial.aeval (fun j => Polynomial.eval (v j) q)
+            (esymm (Fin n) K (n - (i : ℕ))) := by
+        rw [MvPolynomial.aeval_esymm_eq_multiset_esymm]
+      _ = MvPolynomial.aeval (fun j => Polynomial.aeval (v j) q)
+            (esymm (Fin n) K (n - (i : ℕ))) := by
+        refine congrArg (fun g => MvPolynomial.aeval g (esymm (Fin n) K (n - (i : ℕ))))
+          (funext fun j => (congrFun (Polynomial.coe_aeval_eq_eval (v j)) q).symm)
+      _ = MvPolynomial.aeval v
+            (MvPolynomial.bind₁ (fun j : Fin n => Polynomial.aeval (MvPolynomial.X j) q)
+              (esymm (Fin n) K (n - (i : ℕ)))) := by
+        rw [MvPolynomial.aeval_bind₁]
+        refine congrArg (fun g => MvPolynomial.aeval g (esymm (Fin n) K (n - (i : ℕ))))
+          (funext fun j => ?_)
+        calc
+          Polynomial.aeval (v j) q =
+              Polynomial.aeval (MvPolynomial.aeval v (MvPolynomial.X j)) q := by
+            rw [MvPolynomial.aeval_X]
+          _ = MvPolynomial.aeval v (Polynomial.aeval (MvPolynomial.X j) q) :=
+            Polynomial.aeval_algHom_apply (MvPolynomial.aeval v) (MvPolynomial.X j) q
+      _ = MvPolynomial.aeval v
+            (MvPolynomial.aeval (fun j : Fin n => esymm (Fin n) K ((j : ℕ) + 1))
+              (W (n - (i : ℕ)))) := by
+        rw [hW]
+      _ = MvPolynomial.aeval
+            (fun j : Fin n => (-1 : K) ^ ((j : ℕ) + 1) * c j.rev)
+            (W (n - (i : ℕ))) := by
+        rw [MvPolynomial.comp_aeval_apply]
+        refine congrArg (fun g => MvPolynomial.aeval g (W (n - (i : ℕ)))) (funext fun j => ?_)
+        rw [MvPolynomial.aeval_esymm_eq_multiset_esymm,
+          multiset_esymm_succ_eq_neg_one_pow_mul_coeffEquiv_ofFn, hvc]
+  calc
+    coeffEquiv K n (Sym.map (fun z => eval z q) ((coeffEquiv K n).symm c)) i =
+        coeffEquiv K n (ofFn ((fun z => Polynomial.eval z q) ∘ v)) i := by
+      rw [← hv, Sym.map_ofFn]
+    _ = coeffEquiv K n (ofFn (fun j => Polynomial.eval (v j) q)) i := rfl
+    _ = (-1 : K) ^ (n - (i : ℕ)) *
+        (univ.val.map (fun j => Polynomial.eval (v j) q)).esymm (n - (i : ℕ)) := by
+      rw [coeffEquiv_apply, Sym.coe_ofFn, Fin.univ_val_map]
+    _ = (-1 : K) ^ (n - (i : ℕ)) *
+        MvPolynomial.aeval
+          (fun j : Fin n => (-1 : K) ^ ((j : ℕ) + 1) * c j.rev)
+          (W (n - (i : ℕ))) := congrArg ((-1 : K) ^ (n - (i : ℕ)) * ·) hesymm
+    _ = MvPolynomial.eval c
+        (MvPolynomial.C ((-1 : K) ^ (n - (i : ℕ))) * coeffSubst (W (n - (i : ℕ)))) := by
+      rw [MvPolynomial.eval_mul, MvPolynomial.eval_C, ← MvPolynomial.aeval_eq_eval,
+        ← aeval_coeffSubst]
+
+end PolynomialMap
 
 end Sym
 
