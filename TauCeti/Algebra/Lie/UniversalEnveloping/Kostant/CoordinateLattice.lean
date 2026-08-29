@@ -19,8 +19,6 @@ vector is a Cartan weight vector with integral weights.
 
 ## Main results
 
-* `TauCeti.UniversalEnvelopingAlgebra.dividedPower_apply_mem_of_pow_two_eq_zero`: the divided
-  powers of a square-zero root operator preserve any invariant `ℤ`-submodule.
 * `TauCeti.UniversalEnvelopingAlgebra.ringChoose_apply_mem_coordinateLattice`: the Cartan
   binomial operators preserve the coordinate lattice.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantForm_apply_mem_coordinateLattice`: the whole Kostant
@@ -44,18 +42,6 @@ universe u v w
 variable {L : Type u} [LieRing L] [LieAlgebra ℚ L] {κ : Type v} {ν : Type w}
 
 attribute [local instance] TauCeti.moduleNNRat
-
-/-- Every divided power of a square-zero root operator preserves an invariant `ℤ`-submodule:
-only the zeroth and first divided powers are nonzero. -/
-theorem dividedPower_apply_mem_of_pow_two_eq_zero {V : Type*} [AddCommGroup V] [Module ℚ V]
-    (ρ : _root_.UniversalEnvelopingAlgebra ℚ L →ₐ[ℚ] Module.End ℚ V) (N : Submodule ℤ V) (x : L)
-    (hsq : ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ x) ^ 2 = 0)
-    (hstab : ∀ v ∈ N, ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ x) v ∈ N)
-    (m : ℕ) {v : V} (hv : v ∈ N) :
-    ρ (Associative.dividedPower m (_root_.UniversalEnvelopingAlgebra.ι ℚ x)) v ∈ N := by
-  rw [Associative.map_dividedPower]
-  exact Associative.dividedPower_apply_mem_of_pow_two_eq_zero _ _ hsq
-    (fun hw => hstab _ hw) m hv
 
 variable {ι : Type*} [Finite ι] [DecidableEq ι]
 
@@ -88,7 +74,10 @@ theorem kostantForm_apply_mem_coordinateLattice (e : ν → L) (h : κ → L)
     {v : ι → ℚ} (hv : v ∈ TauCeti.coordinateLattice ι) :
     ρ u v ∈ TauCeti.coordinateLattice ι :=
   kostantForm_apply_mem e h ρ (TauCeti.coordinateLattice ι)
-    (fun k m _ hw => dividedPower_apply_mem_of_pow_two_eq_zero ρ _ (e k) (hsq k) (hstab k) m hw)
+    (fun k m _ hw => by
+      rw [Associative.map_dividedPower]
+      exact Associative.dividedPower_apply_mem_of_pow_two_eq_zero _ _ (hsq k)
+        (fun hw' => hstab k _ hw') m hw)
     (fun i m _ hw => ringChoose_apply_mem_coordinateLattice h ρ hwt i m hw) u hu hv
 
 end TauCeti.UniversalEnvelopingAlgebra

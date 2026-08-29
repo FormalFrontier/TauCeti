@@ -73,11 +73,7 @@ theorem definingIdeal_def :
 
 /-- The full-weight Chevalley carrier of type `C_(n+1)`, obtained as the smallest closed subgroup
 of the standard general linear group containing its numbered root subgroups and weight torus. -/
--- The body is exposed because `carrierι`, `rootSubgroup` and `weightTorus` below are morphisms
--- into `groupScheme n` whose values the generic construction supplies as morphisms into
--- `kostantToralGroupScheme ...`; those types only agree once this body unfolds. The generic
--- `kostantToralGroupScheme` and the type-`A` carrier are `abbrev`s for the same reason.
-@[expose] noncomputable def groupScheme : Grp (Over (Spec (CommRingCat.of ℤ))) :=
+noncomputable abbrev groupScheme : Grp (Over (Spec (CommRingCat.of ℤ))) :=
   TauCeti.UniversalEnvelopingAlgebra.kostantToralGroupScheme (rootGenerator n)
     (cartanGenerator n) (rep n) (lattice n).toAddSubgroup
     (fun _ hu _ hv => rep_kostantForm_mem_lattice n hu hv)
