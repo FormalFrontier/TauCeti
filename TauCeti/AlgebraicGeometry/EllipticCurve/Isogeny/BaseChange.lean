@@ -60,7 +60,7 @@ with it the invariance of the separable and inseparable degrees, is its own deve
 * `TauCeti.Isogeny.map_fieldPullback`: the pointwise commuting square at the level of function
   fields, where an isogeny is usually met; `map_fieldPullback_comp_map` is its homomorphism-level
   companion.
-* `TauCeti.Isogeny.id_map`, `TauCeti.Isogeny.comp_map`: base change is a functor — it preserves
+* `TauCeti.Isogeny.map_id`, `TauCeti.Isogeny.map_comp`: base change is a functor — it preserves
   the identity isogeny and composition.
 * `TauCeti.Isogeny.map_id_eq`, `TauCeti.Isogeny.map_map`: functoriality in the base map itself.
 
@@ -124,6 +124,7 @@ theorem map_root (φ : CoordinatePullback W₁ W₂) (f : F →+* K) :
 
 /-- **The defining commuting square of the base change.** Carrying a function of `W₂` along `f`
 and then pulling it back is pulling it back and then carrying it along `f`. -/
+@[simp]
 theorem map_coordinateRingMap (φ : CoordinatePullback W₁ W₂) (f : F →+* K)
     (z : W₂.CoordinateRing) :
     φ.map f (CoordinateRing.map W₂ f z) = FunctionField.map W₁ f (φ z) := by
@@ -146,7 +147,7 @@ theorem map_comp_coordinateRingMap (φ : CoordinatePullback W₁ W₂) (f : F �
 
 /-- **Base change fixes the identity coordinate pullback.** -/
 @[simp]
-theorem id_map (W : WeierstrassCurve.Affine F) (f : F →+* K) :
+theorem map_id (W : WeierstrassCurve.Affine F) (f : F →+* K) :
     (id W).map f = id (W.map f) := by
   apply ext_coords
   · rw [map_of_X, id_apply, id_apply, ← AdjoinRoot.algebraMap_eq,
@@ -234,7 +235,7 @@ theorem map_fieldPullback_comp_map (φ : Isogeny W₁ W₂) (f : F →+* K) :
       (FunctionField.map W₁ f).comp (φ.fieldPullback : W₂.FunctionField →+* W₁.FunctionField) :=
   IsFractionRing.ringHom_ext (A := W₂.CoordinateRing) fun z ↦ by
     rw [RingHom.comp_apply, RingHom.comp_apply, FunctionField.map_algebraMap_coordinateRing]
-    simpa using CoordinatePullback.map_coordinateRingMap φ.pullback f z
+    simp
 
 /-- **The pointwise commuting square at the level of function fields.** -/
 @[simp]
@@ -245,14 +246,15 @@ theorem map_fieldPullback (φ : Isogeny W₁ W₂) (f : F →+* K) (z : W₂.Fun
 
 /-- **Base change fixes the identity isogeny.** -/
 @[simp]
-theorem id_map (W : WeierstrassCurve.Affine F) (f : F →+* K) :
+theorem map_id (W : WeierstrassCurve.Affine F) (f : F →+* K) :
     (Isogeny.id W).map f = Isogeny.id (W.map f) := by
   apply Isogeny.ext
   rw [map_pullback, id_pullback, id_pullback]
-  exact CoordinatePullback.id_map W f
+  exact CoordinatePullback.map_id W f
 
 /-- **Base change respects composition.** -/
-theorem comp_map (ψ : Isogeny W₂ W₃) (φ : Isogeny W₁ W₂) (f : F →+* K) :
+@[simp]
+theorem map_comp (ψ : Isogeny W₂ W₃) (φ : Isogeny W₁ W₂) (f : F →+* K) :
     (ψ.comp φ).map f = (ψ.map f).comp (φ.map f) := by
   refine Isogeny.ext (CoordinatePullback.ext_coords ?_ ?_) <;>
   · simp only [map_pullback, comp_pullback, AlgHom.comp_apply,
