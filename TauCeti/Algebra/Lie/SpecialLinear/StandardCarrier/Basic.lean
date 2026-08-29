@@ -227,7 +227,8 @@ def weight (k : Fin (r + 1)) (i : Fin r) : ℤ :=
   (if k = i.castSucc then 1 else 0) - (if k = i.succ then 1 else 0)
 
 /-- The standard-module weight in Kronecker-delta form. -/
-theorem weight_apply (k : Fin (r + 1)) (i : Fin r) :
+@[simp]
+theorem weight_def (k : Fin (r + 1)) (i : Fin r) :
     weight r k i =
       (if k = i.castSucc then 1 else 0) - (if k = i.succ then 1 else 0) :=
   by rw [weight]
