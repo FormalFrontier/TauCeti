@@ -10,7 +10,6 @@ public import Mathlib.Algebra.Lie.Sl2
 public import Mathlib.LinearAlgebra.Matrix.Cartan
 public import TauCeti.Algebra.Lie.Presentation.Serre
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.CoordinateLattice
-public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Torus.Basic
 public import TauCeti.Algebra.Lie.UniversalEnveloping.MatrixRepresentation
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.C.Datum
 import TauCeti.Algebra.Lie.GeneralLinear.Basic
