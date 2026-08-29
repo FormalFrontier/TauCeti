@@ -70,7 +70,6 @@ theorem stieltjesBernsteinTransform_apply (mu : Measure NNReal) (a b : NNReal) (
   rw [stieltjesBernsteinTransform]
 
 /-- The Stieltjes--Bernstein transform takes the value `a` at zero. -/
-@[simp]
 theorem stieltjesBernsteinTransform_zero (mu : Measure NNReal) (a b : NNReal) :
     stieltjesBernsteinTransform mu a b 0 = a := by
   simp
