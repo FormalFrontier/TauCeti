@@ -51,7 +51,7 @@ verifies for the standard triple of `sl (Fin 2) K`.
 * `TauCeti.hasPrimitiveVectorWith_symm_of_ne_zero_of_lie_h_eq_smul_of_lie_f_eq_zero`: a nonzero
   weight vector killed by the lowering element is primitive for the symmetric triple, at the
   negated scalar weight.
-* `TauCeti.pow_toEnd_f_succ_toNat_eq_zero_of_hasPrimitiveVectorWith`: the endpoint of an
+* `TauCeti.pow_toEnd_f_toNat_add_one_eq_zero_of_hasPrimitiveVectorWith`: the endpoint of an
   integral-weight string in a torsion-free Noetherian module, with
   `TauCeti.ad_pow_lie_eq_zero_of_isSl2Triple_of_lie_h_eq_smul_of_lie_f_eq_zero` as the
   consumer-facing adjoint consequence.
@@ -208,7 +208,7 @@ variable {h e f : L} {t : IsSl2Triple h e f} {m : M}
 
 /-- The string below a primitive vector of integer eigenvalue `n` stops after `n.toNat` lowering
 steps in any torsion-free Noetherian module. -/
-theorem pow_toEnd_f_succ_toNat_eq_zero_of_hasPrimitiveVectorWith
+theorem pow_toEnd_f_toNat_add_one_eq_zero_of_hasPrimitiveVectorWith
     {n : ℤ} (P : t.HasPrimitiveVectorWith (M := M) m ((n : ℤ) : K)) :
     ((LieModule.toEnd K L M f) ^ (n.toNat + 1)) m = 0 := by
   obtain ⟨k, hk⟩ := P.exists_nat
@@ -238,7 +238,7 @@ theorem ad_pow_lie_eq_zero_of_isSl2Triple_of_lie_h_eq_smul_of_lie_f_eq_zero
       simpa only [Int.cast_neg] using
         (hasPrimitiveVectorWith_symm_of_ne_zero_of_lie_h_eq_smul_of_lie_f_eq_zero
           (K := K) ht hm hhm hfm)
-    have h0 := pow_toEnd_f_succ_toNat_eq_zero_of_hasPrimitiveVectorWith (K := K) P
+    have h0 := pow_toEnd_f_toNat_add_one_eq_zero_of_hasPrimitiveVectorWith (K := K) P
     rw [pow_succ, Module.End.mul_apply, LieModule.toEnd_apply_apply] at h0
     exact h0
 
