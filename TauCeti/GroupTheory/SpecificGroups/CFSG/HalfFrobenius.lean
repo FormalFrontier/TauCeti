@@ -151,10 +151,10 @@ theorem odd_fieldExponent (e : SuzukiReeIndex) : Odd e.1.fieldExponent :=
   ⟨e.halfExponent, e.fieldExponent_eq_two_mul_halfExponent_add_one⟩
 
 /-- **The odd-power parameter vanishes exactly on the Tits index.** The three Suzuki--Ree families
-start at `m = 1`: their `m = 0` members are the nonsimple `²B₂(2)`, the duplicate `²G₂(3)`, which
-the list carries as `A₁(8)`, and `²F₄(2)`, whose derived subgroup the list carries under the
-separate Tits name. So the Tits index is the only half-Frobenius index whose Steinberg map is the
-special isogeny itself. -/
+start at `m = 1`: their `m = 0` members are the nonsimple `²B₂(2)`, the likewise nonsimple
+`²G₂(3)`, whose derived subgroup is the group the list carries as `A₁(8)`, and `²F₄(2)`, whose
+derived subgroup the list carries under the separate Tits name. So the Tits index is the only
+half-Frobenius index whose Steinberg map is the special isogeny itself. -/
 theorem halfExponent_eq_zero_iff (e : SuzukiReeIndex) :
     e.halfExponent = 0 ↔ e.1.1 = .tits := by
   obtain ⟨⟨d, hvalid⟩, hhalf⟩ := e
@@ -183,17 +183,13 @@ noncomputable def datumSteinberg (e : SuzukiReeIndex) :
       (e.1.dynkinType.simplyConnectedRootDatum e.1.dynkinType_valid) :=
   e.datumSpecialIsogeny ^ e.1.fieldExponent
 
-/-- The Steinberg map is the `fieldExponent`-th power of the selected special isogeny. -/
-theorem datumSteinberg_eq_pow (e : SuzukiReeIndex) :
-    e.datumSteinberg = e.datumSpecialIsogeny ^ e.1.fieldExponent := (rfl)
-
 /-- **The Steinberg map is a scaling times the special isogeny**, by `p ^ m`. Every computation
 below is read off this decomposition. -/
 theorem datumSteinberg_eq_smulId_mul (e : SuzukiReeIndex) :
     e.datumSteinberg =
       RootPairingIsogeny.smulId _ (⟨e.1.characteristic, e.1.characteristic_prime.pos⟩ ^
         e.halfExponent) * e.datumSpecialIsogeny := by
-  rw [datumSteinberg_eq_pow, fieldExponent_eq_two_mul_halfExponent_add_one]
+  rw [datumSteinberg, fieldExponent_eq_two_mul_halfExponent_add_one]
   exact RootPairingIsogeny.pow_two_mul_add_one_eq_smulId_mul _ e.datumSpecialIsogeny_mul_self _
 
 /-- On the Tits index the Steinberg map is the special isogeny of `F₄` itself, the `m = 0` case of
@@ -203,7 +199,7 @@ the odd power. -/
       datumSpecialIsogeny ⟨⟨.tits, by simp⟩, by simp⟩ := by
   have h : ValidLieTypeIndex.fieldExponent ⟨LieTypeIndex.tits, by simp⟩ = 1 :=
     LieTypeIndex.fieldExponent_tits
-  rw [datumSteinberg_eq_pow, h, pow_one]
+  rw [datumSteinberg, h, pow_one]
 
 /-! ### The square relation -/
 
@@ -211,11 +207,10 @@ the odd power. -/
 root-datum form of `steinberg (m) ^ 2 = Frob_(p ^ (2 * m + 1))`: squaring the odd power of the
 half-Frobenius returns the Frobenius of the field the index names, `2 ^ (2 * m + 1)` for the Suzuki
 and Ree `F₄` families, `3 ^ (2 * m + 1)` for Ree `G₂`, and `2` for the Tits index. -/
-theorem datumSteinberg_mul_self (e : SuzukiReeIndex) :
+@[simp] theorem datumSteinberg_mul_self (e : SuzukiReeIndex) :
     e.datumSteinberg * e.datumSteinberg =
       RootPairingIsogeny.smulId _ ⟨e.1.fieldOrder, e.1.fieldOrder_pos⟩ := by
-  rw [datumSteinberg_eq_pow,
-    RootPairingIsogeny.pow_mul_self_eq_smulId _ e.datumSpecialIsogeny_mul_self]
+  rw [datumSteinberg, RootPairingIsogeny.pow_mul_self_eq_smulId _ e.datumSpecialIsogeny_mul_self]
   -- The two scalings differ only in how their common value `p ^ (2 * m + 1)` is written, so all
   -- that is left is the numeric identity between the field order and that power.
   congr 1
@@ -227,7 +222,7 @@ theorem datumSteinberg_mul_self (e : SuzukiReeIndex) :
 scaling separating the two fixes every index. -/
 @[simp] theorem datumSteinberg_indexEquiv (e : SuzukiReeIndex) :
     e.datumSteinberg.indexEquiv = e.datumSpecialIsogeny.indexEquiv := by
-  rw [datumSteinberg_eq_pow, fieldExponent_eq_two_mul_halfExponent_add_one]
+  rw [datumSteinberg, fieldExponent_eq_two_mul_halfExponent_add_one]
   exact RootPairingIsogeny.indexEquiv_pow_two_mul_add_one _ e.datumSpecialIsogeny_mul_self _
 
 /-- **The rescaling exponents of the Steinberg map** are those of the special isogeny multiplied by
@@ -237,21 +232,21 @@ that node, so this is `p ^ m` at a short simple root and `p ^ (m + 1)` at a long
     (i : Fin e.1.dynkinType.numRoots) :
     e.datumSteinberg.exponent i =
       e.datumSpecialIsogeny.exponent i * (e.1.characteristic : ℤ) ^ e.halfExponent := by
-  rw [datumSteinberg_eq_pow, fieldExponent_eq_two_mul_halfExponent_add_one]
+  rw [datumSteinberg, fieldExponent_eq_two_mul_halfExponent_add_one]
   exact RootPairingIsogeny.exponent_pow_two_mul_add_one _ e.datumSpecialIsogeny_mul_self _ i
 
 /-- **The character map of the Steinberg map** is `p ^ m` times that of the special isogeny. -/
 @[simp] theorem datumSteinberg_weightMap (e : SuzukiReeIndex) :
     e.datumSteinberg.weightMap =
       (e.1.characteristic ^ e.halfExponent) • e.datumSpecialIsogeny.weightMap := by
-  rw [datumSteinberg_eq_pow, fieldExponent_eq_two_mul_halfExponent_add_one]
+  rw [datumSteinberg, fieldExponent_eq_two_mul_halfExponent_add_one]
   exact RootPairingIsogeny.weightMap_pow_two_mul_add_one _ e.datumSpecialIsogeny_mul_self _
 
 /-- **The cocharacter map of the Steinberg map** is `p ^ m` times that of the special isogeny. -/
 @[simp] theorem datumSteinberg_coweightMap (e : SuzukiReeIndex) :
     e.datumSteinberg.coweightMap =
       (e.1.characteristic ^ e.halfExponent) • e.datumSpecialIsogeny.coweightMap := by
-  rw [datumSteinberg_eq_pow, fieldExponent_eq_two_mul_halfExponent_add_one]
+  rw [datumSteinberg, fieldExponent_eq_two_mul_halfExponent_add_one]
   exact RootPairingIsogeny.coweightMap_pow_two_mul_add_one _ e.datumSpecialIsogeny_mul_self _
 
 /-! ### The defining relations on the numbered simple roots -/
