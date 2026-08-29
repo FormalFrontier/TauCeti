@@ -84,7 +84,7 @@ private theorem genQuot_eventuallyEq (U : StronglyContinuousGroup X) (x : X) :
     (fun t : ℝ => (1 / t) • (U.toSemigroup.realOperator t x - x))
       =ᶠ[𝓝[>] (0 : ℝ)] fun t : ℝ => (1 / t) • (U t x - x) := by
   filter_upwards [self_mem_nhdsWithin] with t ht
-  rw [U.toSemigroup_realOperator (le_of_lt ht)]
+  rw [U.toSemigroup_realOperator_of_nonneg (le_of_lt ht)]
 
 /-- A vector lies in the generator domain iff its difference quotient `(U t x - x)/t` converges
 as `t → 0⁺`. -/
@@ -266,11 +266,12 @@ theorem eq_of_generator_eq {U V : StronglyContinuousGroup X} (h : U.generator = 
     StronglyContinuousSemigroup.eq_of_generator_eq hrefl
   refine ext fun t => ?_
   rcases le_or_gt 0 t with ht | ht
-  · rw [← U.toSemigroup_realOperator ht, ← V.toSemigroup_realOperator ht, hfwd]
+  · rw [← U.toSemigroup_realOperator_of_nonneg ht,
+      ← V.toSemigroup_realOperator_of_nonneg ht, hfwd]
   · have hnt : (0 : ℝ) ≤ -t := by linarith
     have hst := congrArg (fun S : StronglyContinuousSemigroup X => S.realOperator (-t)) hbwd
-    simpa only [U.reflect_toSemigroup_realOperator hnt, V.reflect_toSemigroup_realOperator hnt,
-      neg_neg] using hst
+    simpa only [U.reflect_toSemigroup_realOperator_of_nonneg hnt,
+      V.reflect_toSemigroup_realOperator_of_nonneg hnt, neg_neg] using hst
 
 /-- Injectivity form of `TauCeti.Semigroups.StronglyContinuousGroup.eq_of_generator_eq`. -/
 theorem generator_injective :
@@ -299,12 +300,14 @@ theorem ofBounded_apply (A : X →L[ℝ] X) (t : ℝ) : ofBounded A t = exp (t �
   rfl
 
 /-- The forward semigroup of `ofBounded A` is the bounded-generator semigroup of `A`. -/
+@[simp]
 theorem ofBounded_toSemigroup (A : X →L[ℝ] X) :
     (ofBounded A).toSemigroup = StronglyContinuousSemigroup.ofBounded A := by
   ext t
   rw [toSemigroup_apply, ofBounded_apply, StronglyContinuousSemigroup.ofBounded_apply]
 
 /-- Time reversal of `ofBounded A` is the group of `-A`. -/
+@[simp]
 theorem ofBounded_reflect (A : X →L[ℝ] X) : (ofBounded A).reflect = ofBounded (-A) := by
   ext t
   rw [reflect_apply, ofBounded_apply, ofBounded_apply, neg_smul, smul_neg]

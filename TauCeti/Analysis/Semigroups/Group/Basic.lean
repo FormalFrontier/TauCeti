@@ -23,8 +23,9 @@ This file sets up the object and the two ways of viewing it through the existing
 * the **time reversal** `U.reflect`, the C₀-group `t ↦ U (-t)`, whose forward semigroup is the
   backward half of `U`.
 
-Statements that need the backward semigroup -- the growth bound and generator uniqueness -- are
-obtained by applying a semigroup statement to `U.reflect`.
+The growth bound is obtained by applying semigroup results to both halves. The generator API in
+`TauCeti.Analysis.Semigroups.Group.Generator`, including generator uniqueness, similarly uses
+`U.reflect` for the backward half.
 
 ## Main definitions
 
@@ -214,14 +215,16 @@ theorem toSemigroup_apply (U : StronglyContinuousGroup X) (t : ℝ≥0) :
 
 /-- At a nonnegative real time the forward semigroup's real-time shim is the group operator. -/
 @[simp]
-theorem toSemigroup_realOperator (U : StronglyContinuousGroup X) {t : ℝ} (ht : 0 ≤ t) :
+theorem toSemigroup_realOperator_of_nonneg (U : StronglyContinuousGroup X) {t : ℝ} (ht : 0 ≤ t) :
     U.toSemigroup.realOperator t = U t := by
   rw [StronglyContinuousSemigroup.realOperator_def, toSemigroup_apply, Real.coe_toNNReal t ht]
 
 /-- At a nonnegative real time the reversed group's forward semigroup runs `U` backwards. -/
-theorem reflect_toSemigroup_realOperator (U : StronglyContinuousGroup X) {t : ℝ} (ht : 0 ≤ t) :
+@[simp]
+theorem reflect_toSemigroup_realOperator_of_nonneg
+    (U : StronglyContinuousGroup X) {t : ℝ} (ht : 0 ≤ t) :
     U.reflect.toSemigroup.realOperator t = U (-t) := by
-  rw [U.reflect.toSemigroup_realOperator ht, reflect_apply]
+  rw [U.reflect.toSemigroup_realOperator_of_nonneg ht, reflect_apply]
 
 /-! ## Two-sided growth bounds -/
 
@@ -273,7 +276,7 @@ theorem hasGrowthBound_of_bound {U : StronglyContinuousGroup X} {ω M : ℝ} (hM
 theorem HasGrowthBound.toSemigroup {U : StronglyContinuousGroup X} {ω M : ℝ}
     (hb : U.HasGrowthBound ω M) : U.toSemigroup.HasGrowthBound ω M := by
   refine StronglyContinuousSemigroup.hasGrowthBound_of_bound hb.one_le fun t ht => ?_
-  rw [U.toSemigroup_realOperator ht]
+  rw [U.toSemigroup_realOperator_of_nonneg ht]
   simpa [abs_of_nonneg ht] using hb.bound t
 
 /-- A two-sided growth bound is invariant under time reversal. -/
@@ -319,10 +322,10 @@ theorem existsGrowthBound (U : StronglyContinuousGroup X) :
   have hb₂' := hb₂.mono (le_max_right ω₁ ω₂) (le_max_right M₁ M₂)
   refine ⟨max ω₁ ω₂, max M₁ M₂, le_max_of_le_left hb₁.one_le, fun t => ?_⟩
   rcases le_or_gt 0 t with ht | ht
-  · rw [← U.toSemigroup_realOperator ht, abs_of_nonneg ht]
+  · rw [← U.toSemigroup_realOperator_of_nonneg ht, abs_of_nonneg ht]
     exact hb₁'.bound t ht
   · have hnt : 0 ≤ -t := by linarith
-    rw [← neg_neg t, ← U.reflect_toSemigroup_realOperator hnt, abs_neg,
+    rw [← neg_neg t, ← U.reflect_toSemigroup_realOperator_of_nonneg hnt, abs_neg,
       abs_of_nonneg hnt]
     exact hb₂'.bound (-t) hnt
 
@@ -350,7 +353,7 @@ theorem tendsto_apply {ι : Type*} {l : Filter ι} (U : StronglyContinuousGroup 
   -- The time moves: this is continuity of the orbit of the fixed vector `z`.
   have h2 : Tendsto (fun i => U (f i) z) l (𝓝 (U r z)) :=
     ((U.continuous_orbit z).tendsto r).comp hf
-  exact tendsto_apply_of_eventually_norm_le hbound h2 hg
+  exact TauCeti.ContinuousLinearMap.tendsto_apply_of_eventually_norm_le hbound h2 hg
 
 end StronglyContinuousGroup
 
