@@ -166,6 +166,7 @@ noncomputable def preprojectiveGrade (n : ℕ) : Submodule k (preprojectiveAlgeb
   TauCeti.GradedAlgebra.gradeQuot (grade k (Symmetrify Q)) (preprojectiveIdeal k Q).asIdeal n
 
 /-- A homogeneous element lands in the piece its degree names. -/
+@[simp]
 theorem preprojectiveMk_mem_preprojectiveGrade {n : ℕ} {y : pathAlgebra k (Symmetrify Q)}
     (hy : y ∈ grade k (Symmetrify Q) n) :
     preprojectiveMk k Q y ∈ preprojectiveGrade k Q n := by
@@ -210,25 +211,6 @@ noncomputable def preprojectiveGradedAlgebra : GradedAlgebra (preprojectiveGrade
 
 /-! ### The concrete pieces -/
 
-/-- The descended piece is spanned by the images of any spanning family of the original piece:
-a member of the descended degree-`n` piece lies in the span of `T` as soon as the image under
-`preprojectiveMk` of every generator of the original piece does. Private helper for the
-computations of the concrete pieces below. -/
-private theorem mem_span_of_mem_preprojectiveGrade {n : ℕ}
-    {S : Set (pathAlgebra k (Symmetrify Q))}
-    (hs : grade k (Symmetrify Q) n = Submodule.span k S)
-    {T : Set (preprojectiveAlgebra k Q)}
-    (hmem : ∀ z ∈ S, preprojectiveMk k Q z ∈ Submodule.span k T)
-    {w : preprojectiveAlgebra k Q} (hw : w ∈ preprojectiveGrade k Q n) :
-    w ∈ Submodule.span k T := by
-  have heq := TauCeti.GradedAlgebra.gradeQuot_eq_span_image
-    (grade k (Symmetrify Q)) (preprojectiveIdeal k Q).asIdeal (i := n) hs
-  rw [preprojectiveGrade, heq] at hw
-  refine (Submodule.span_le.2 ?_) hw
-  rintro u ⟨z, hz, rfl⟩
-  rw [← preprojectiveMk_apply k Q z]
-  exact hmem z hz
-
 /-- **Degree zero is spanned by the vertex idempotent classes**: the images under `preprojectiveMk`
 of the vertex idempotents of the doubled quiver, that is, of the `TauCeti.doubledVertexIdempotent`s
 at the vertices of `Q`. -/
@@ -238,9 +220,11 @@ theorem preprojectiveGrade_zero_eq_span_range_vertexIdempotent :
         preprojectiveMk k Q (vertexIdempotent k v)) := by
   refine le_antisymm ?_ ?_
   · intro w hw
-    refine mem_span_of_mem_preprojectiveGrade k Q
+    refine TauCeti.GradedAlgebra.mem_span_of_mem_gradeQuot
+      (grade k (Symmetrify Q)) (preprojectiveIdeal k Q).asIdeal (i := 0)
       (PathAlgebra.grade_zero_eq_span_range_vertexIdempotent k (Symmetrify Q)) ?_ hw
     rintro z ⟨v, rfl⟩
+    rw [← preprojectiveMk_apply k Q]
     exact Submodule.subset_span ⟨v, rfl⟩
   · rw [Submodule.span_le]
     rintro z ⟨v, rfl⟩
@@ -255,9 +239,11 @@ theorem preprojectiveGrade_one_eq_span_range_ofArrow :
         preprojectiveMk k Q (PathAlgebra.ofArrow e.2.2)) := by
   refine le_antisymm ?_ ?_
   · intro w hw
-    refine mem_span_of_mem_preprojectiveGrade k Q
+    refine TauCeti.GradedAlgebra.mem_span_of_mem_gradeQuot
+      (grade k (Symmetrify Q)) (preprojectiveIdeal k Q).asIdeal (i := 1)
       PathAlgebra.grade_one_eq_span_range_ofArrow ?_ hw
     rintro z ⟨⟨a, b, e⟩, rfl⟩
+    rw [← preprojectiveMk_apply k Q]
     exact Submodule.subset_span
       ⟨(⟨a, b, e⟩ : Σ a' b' : Symmetrify Q, (a' ⟶ b')), rfl⟩
   · rw [Submodule.span_le]
@@ -274,9 +260,11 @@ theorem preprojectiveGrade_eq_span_range_ofPath (n : ℕ) :
           preprojectiveMk k Q (PathAlgebra.ofPath x.1)) := by
   refine le_antisymm ?_ ?_
   · intro w hw
-    refine mem_span_of_mem_preprojectiveGrade k Q
+    refine TauCeti.GradedAlgebra.mem_span_of_mem_gradeQuot
+      (grade k (Symmetrify Q)) (preprojectiveIdeal k Q).asIdeal (i := n)
       (PathAlgebra.grade_eq_span_range k (Symmetrify Q) n) ?_ hw
     rintro z ⟨x, rfl⟩
+    rw [← preprojectiveMk_apply k Q]
     exact Submodule.subset_span ⟨x, rfl⟩
   · rw [Submodule.span_le]
     rintro z ⟨x, rfl⟩
