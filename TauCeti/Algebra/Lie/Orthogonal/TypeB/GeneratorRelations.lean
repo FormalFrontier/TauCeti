@@ -35,8 +35,8 @@ subsequent steps.
 * `TauCeti.typeBSimpleCorootGenerator_lie_negativeRoot_last` and
   `TauCeti.typeBSimpleCorootGenerator_lie_negativeRoot_castSucc`: Cartan action on negative
   generators.
-* `TauCeti.typeBSimpleCorootGenerator_lie_root_cartan_transpose` and
-  `TauCeti.typeBSimpleCorootGenerator_lie_negativeRoot_cartan_transpose`: the uniform integral
+* `TauCeti.typeBSimpleCorootGenerator_lie_root` and
+  `TauCeti.typeBSimpleCorootGenerator_lie_negativeRoot`: the uniform integral
   Cartan-action relations.
 
 ## References
@@ -190,7 +190,7 @@ private theorem typeBSimpleCorootCoordinate_sub_eq_cartan_transpose
 
 /-- The Cartan action on positive simple-root generators, in Serre's integral convention. -/
 @[simp]
-theorem typeBSimpleCorootGenerator_lie_root_cartan_transpose (i j : Fin (n + 1)) :
+theorem typeBSimpleCorootGenerator_lie_root (i j : Fin (n + 1)) :
     ⁅typeBSimpleCorootGenerator (K := K) i, typeBSimpleRootGenerator (K := K) j⁆ =
       (CartanMatrix.B (n + 1)).transpose i j • typeBSimpleRootGenerator j := by
   refine Fin.lastCases ?_ (fun j₀ => ?_) j
@@ -201,7 +201,7 @@ theorem typeBSimpleCorootGenerator_lie_root_cartan_transpose (i j : Fin (n + 1))
 
 /-- The Cartan action on negative simple-root generators, in Serre's integral convention. -/
 @[simp]
-theorem typeBSimpleCorootGenerator_lie_negativeRoot_cartan_transpose (i j : Fin (n + 1)) :
+theorem typeBSimpleCorootGenerator_lie_negativeRoot (i j : Fin (n + 1)) :
     ⁅typeBSimpleCorootGenerator (K := K) i,
       typeBSimpleNegativeRootGenerator (K := K) j⁆ =
         -((CartanMatrix.B (n + 1)).transpose i j • typeBSimpleNegativeRootGenerator j) := by
