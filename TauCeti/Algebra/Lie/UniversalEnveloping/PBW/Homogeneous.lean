@@ -11,8 +11,9 @@ public import TauCeti.LinearAlgebra.SymmetricAlgebra.Homogeneous
 /-!
 # Homogeneous pieces of the PBW map
 
-The degree-`n` homogeneous part of a symmetric algebra is the `n`-th power of the range of its
-canonical generator map. For a Lie algebra `L` over a commutative ring `R`, the canonical map
+The degree-`n` piece of a symmetric algebra is defined to be the `n`-th power of the range of its
+canonical generator map; no direct-sum decomposition into those pieces is proven. For a Lie algebra
+`L` over a commutative ring `R`, the canonical map
 
 `SymmetricAlgebra R L →ₐ[R] gr U(L)`
 
@@ -24,7 +25,8 @@ product of degree-one classes. A shorter word represents zero in the `n`-th succ
 Consequently every class in that quotient has a homogeneous symmetric representative of degree
 `n`.
 
-Injectivity of these component maps is the remaining linear-independence half of the
+Under the standard hypotheses ensuring PBW over a commutative ring, such as projectivity of `L` as
+an `R`-module, injectivity of these component maps is the remaining linear-independence half of the
 Poincaré--Birkhoff--Witt theorem. Thus the componentwise surjections isolate the next obstruction
 degree by degree, while retaining the global associated-graded map.
 
@@ -65,29 +67,15 @@ attribute [local instance 100] LieRing.ofAssociativeRing
 
 local notation "U" => _root_.UniversalEnvelopingAlgebra R L
 
-private theorem pbwMap_isHomogeneous (n : ℕ) (p : homogeneousSubmodule R L n) :
-    ∃ x : PBWGradedPiece R L n,
-      pbwAssociatedGradedMap R L p = DirectSum.of (PBWGradedPiece R L) n x := by
-  have hp : (p : SymmetricAlgebra R L) ∈
-      Submodule.span R {q | ∃ l : List L, l.length = n ∧
-        (l.map (SymmetricAlgebra.ι R L)).prod = q} := by
-    rw [← homogeneousSubmodule_eq_span]
-    exact p.property
-  refine Submodule.span_induction (p := fun a _ ↦
-    ∃ x : PBWGradedPiece R L n,
-      pbwAssociatedGradedMap R L a = DirectSum.of (PBWGradedPiece R L) n x)
-      ?_ ?_ ?_ ?_ hp
-  · rintro a ⟨l, hl, rfl⟩
-    subst n
-    exact ⟨_, pbwAssociatedGradedMap_prod_map_ι R L l⟩
-  · exact ⟨0, by simp⟩
-  · rintro a b _ _ ⟨x, hx⟩ ⟨y, hy⟩
-    refine ⟨x + y, ?_⟩
-    rw [map_add, hx, hy, map_add]
-  · rintro r a _ ⟨x, hx⟩
-    refine ⟨r • x, ?_⟩
-    rw [map_smul, hx]
-    exact (DirectSum.of_smul R (M := PBWGradedPiece R L) n r x).symm
+/-- The canonical map sends the degree-`n` homogeneous submodule into the degree-`n` summand of
+the associated graded. The target is a submodule, so only the spanning words need checking. -/
+private theorem homogeneousSubmodule_le_comap_range_lof (n : ℕ) :
+    homogeneousSubmodule R L n ≤
+      (LinearMap.range (DirectSum.lof R ℕ (PBWGradedPiece R L) n)).comap
+        (pbwAssociatedGradedMap R L).toLinearMap := by
+  rw [homogeneousSubmodule_eq_span, Submodule.span_le]
+  rintro _ ⟨l, rfl, rfl⟩
+  exact ⟨_, (pbwAssociatedGradedMap_prod_map_ι R L l).symm⟩
 
 /-- The degree-`n` component of the canonical PBW map. Its source is the homogeneous symmetric
 submodule, and its target is the `n`-th PBW graded quotient. -/
@@ -112,8 +100,9 @@ component. -/
 theorem pbwAssociatedGradedMap_apply_homogeneous (n : ℕ) (p : homogeneousSubmodule R L n) :
     pbwAssociatedGradedMap R L p =
       DirectSum.of (PBWGradedPiece R L) n (pbwHomogeneousComponentMap R L n p) := by
-  obtain ⟨x, hx⟩ := pbwMap_isHomogeneous R L n p
-  rw [pbwHomogeneousComponentMap_apply, hx]
+  obtain ⟨x, hx⟩ := homogeneousSubmodule_le_comap_range_lof R L n p.property
+  rw [DirectSum.lof_eq_of, AlgHom.toLinearMap_apply] at hx
+  rw [pbwHomogeneousComponentMap_apply, ← hx]
   apply congrArg (DirectSum.of (PBWGradedPiece R L) n)
   exact (DirectSum.of_eq_same (β := PBWGradedPiece R L) n x).symm
 

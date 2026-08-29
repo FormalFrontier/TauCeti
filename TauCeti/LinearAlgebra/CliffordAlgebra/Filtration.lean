@@ -369,17 +369,13 @@ product, so the top piece of the successor filtration also consists of leading t
 private theorem ι_range_pow_le_map_leadingTermPreimage (k : ℕ) :
     LinearMap.range (ι Q) ^ (k + 1) ≤
       (leadingTermPreimage Q k).map (filtration Q (k + 1)).subtype := by
-  rw [Submodule.pow_eq_span_pow_set, Submodule.span_le]
-  rintro x hx
-  obtain ⟨f, rfl⟩ := Set.mem_pow.1 hx
-  choose v hv using fun i => LinearMap.mem_range.1 (f i).property
-  have hprod : (List.ofFn fun i => (f i : CliffordAlgebra Q)).prod =
-      (List.ofFn ((ι Q) ∘ v)).prod := by
-    apply congrArg List.prod
-    apply congrArg List.ofFn
-    funext i
-    exact (hv i).symm
-  rw [hprod]
+  rw [← TauCeti.Algebra.span_prod_map_eq_range_pow (ι Q) (k + 1), Submodule.span_le]
+  rintro _ ⟨l, hl, rfl⟩
+  obtain ⟨v, rfl⟩ : ∃ v : Fin (k + 1) → M, List.ofFn v = l := by
+    refine ⟨fun i => l[(i : ℕ)]'(by rw [hl]; exact i.isLt),
+      List.ext_getElem (by rw [List.length_ofFn, hl]) fun i h₁ h₂ => ?_⟩
+    simp only [List.getElem_ofFn]
+  rw [List.map_ofFn]
   refine Submodule.mem_map.2 ⟨⟨(List.ofFn ((ι Q) ∘ v)).prod, ?_⟩, ?_, rfl⟩
   · rw [← List.map_ofFn]
     exact prod_map_ι_mem_filtration Q (l := List.ofFn v) (by simp)
