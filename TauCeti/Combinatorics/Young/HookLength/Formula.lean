@@ -75,21 +75,9 @@ public section
 
 namespace YoungDiagram
 
-variable {μ : YoungDiagram} {c : ℕ × ℕ} {r i : ℕ}
+variable {μ : YoungDiagram} {r i : ℕ}
 
 /-! ### Corners and beta-numbers -/
-
-/-- The beta-number of the row of an erased corner, as a special case of
-`YoungDiagram.IsCorner.betaNumber_erase`. -/
-private theorem IsCorner.betaNumber_erase_self (h : IsCorner μ c) (r : ℕ) :
-    (μ.erase c).betaNumber r c.1 = μ.betaNumber r c.1 - 1 := by
-  simp [h.betaNumber_erase]
-
-/-- The beta-numbers of the other rows of an erased corner, as a special case of
-`YoungDiagram.IsCorner.betaNumber_erase`. -/
-private theorem IsCorner.betaNumber_erase_of_ne (h : IsCorner μ c) (r : ℕ) (hi : c.1 ≠ i) :
-    (μ.erase c).betaNumber r i = μ.betaNumber r i := by
-  simp [h.betaNumber_erase, hi]
 
 /-- A row inside the bound that carries no corner and whose beta-number is nonzero is followed,
 still inside the bound, by a row whose beta-number is one smaller: either the row is empty and
@@ -234,9 +222,9 @@ private theorem standardCount_mul_prod_factorial_betaNumber_aux (n : ℕ) :
               ((μ.betaNumber r c.1 : ℤ) - 1) i := by
         intro i
         rcases eq_or_ne c.1 i with rfl | h
-        · rw [hcc.betaNumber_erase_self, Function.update_self]
+        · rw [hcc.betaNumber_erase r c.1, ite_eq_left rfl, Function.update_self]
           omega
-        · rw [hcc.betaNumber_erase_of_ne r h, Function.update_of_ne (Ne.symm h)]
+        · rw [hcc.betaNumber_erase r i, ite_eq_right h, Function.update_of_ne (Ne.symm h)]
       -- `βᵢ ! = βᵢ * (βᵢ - 1) !` at the corner's row, and nothing changes elsewhere
       have hmem : c.1 ∈ range r := mem_range.mpr (hcc.fst_lt_colLen_zero.trans_le hr)
       have hfact : (μ.betaNumber r c.1 : ℤ) *
@@ -246,8 +234,9 @@ private theorem standardCount_mul_prod_factorial_betaNumber_aux (n : ℕ) :
           ← Finset.mul_prod_erase (range r) (fun i => ((μ.betaNumber r i) ! : ℤ)) hmem,
           ← mul_assoc]
         refine congrArg₂ (· * ·) ?_ (Finset.prod_congr rfl fun i hi => ?_)
-        · rw [hcc.betaNumber_erase_self, ← Nat.cast_mul, Nat.mul_factorial_pred (by omega)]
-        · rw [hcc.betaNumber_erase_of_ne r (Ne.symm (Finset.ne_of_mem_erase hi))]
+        · rw [hcc.betaNumber_erase r c.1, ite_eq_left rfl, ← Nat.cast_mul,
+            Nat.mul_factorial_pred (by omega)]
+        · rw [hcc.betaNumber_erase r i, ite_eq_right (Ne.symm (Finset.ne_of_mem_erase hi))]
       rw [← hfact, ← mul_assoc, mul_comm ((standardCount (μ.erase c) : ℤ)), mul_assoc,
         ih (μ.erase c) r hcard' hr', ← mul_assoc, mul_comm ((μ.betaNumber r c.1 : ℤ)), mul_assoc]
       exact congrArg _ (congrArg _ (Finset.prod_congr rfl fun k _ =>

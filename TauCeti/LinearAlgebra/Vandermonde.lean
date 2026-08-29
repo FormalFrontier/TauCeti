@@ -432,14 +432,13 @@ compared to.  A sign is such a factor over any commutative ring, where it need n
 in the sense of `mul_left_cancel₀`. -/
 private theorem mul_self_cancel_sum {ι : Type*} [Fintype ι] {R : Type*} [CommRing R] {c : R}
     (hc : c * c = 1) {f g : ι → R} {a p : R} (h : ∑ i, f i * (c * g i) = a * (c * p)) :
-    (∑ i, f i * g i) = a * p :=
-  calc (∑ i, f i * g i)
-      = c * ∑ i, f i * (c * g i) := by
-        rw [Finset.mul_sum]
-        exact Finset.sum_congr rfl fun i _ => by
-          rw [show c * (f i * (c * g i)) = c * c * (f i * g i) by ring, hc, one_mul]
-    _ = c * (a * (c * p)) := by rw [h]
-    _ = a * p := by rw [show c * (a * (c * p)) = c * c * (a * p) by ring, hc, one_mul]
+    (∑ i, f i * g i) = a * p := by
+  have hsum : ∑ i, f i * (c * g i) = c * ∑ i, f i * g i := by
+    rw [Finset.mul_sum]
+    exact Finset.sum_congr rfl fun i _ => by ring
+  have key : c * c * ∑ i, f i * g i = c * c * (a * p) := by
+    rw [mul_assoc, ← hsum, h]; ring
+  rwa [hc, one_mul, one_mul] at key
 
 /-- **The lowering identity, unwound.**  For a sequence in a commutative ring, the product of the
 differences over the ordered pairs below a bound, with one term of the sequence lowered by one and
@@ -471,9 +470,10 @@ theorem sum_mul_prod_sub_update_sub_one {R : Type*} [CommRing R] (m : ℕ) (b : 
   have key := sum_mul_det_vandermonde_update_sub_one fun i : Fin m => b i
   rw [Finset.sum_congr rfl fun i _ => by rw [hterm i], det_vandermonde_eq_prod_range m b] at key
   -- both sides now carry the same sign, which cancels
-  have hcancel := mul_self_cancel_sum
-    (show ((-1 : R) ^ (∑ i : Fin m, (Finset.Ioi i).card)) * (-1) ^ _ = 1 by
-      rw [← mul_pow]; norm_num) key
+  have hsign : ((-1 : R) ^ (∑ i : Fin m, (Finset.Ioi i).card))
+      * ((-1 : R) ^ (∑ i : Fin m, (Finset.Ioi i).card)) = 1 := by
+    rw [← mul_pow]; norm_num
+  have hcancel := mul_self_cancel_sum hsign key
   rw [Fin.sum_univ_eq_sum_range (fun i : ℕ => b i * ∏ k ∈ Finset.range m,
       ∏ l ∈ Finset.Ico (k + 1) m,
         (Function.update b i (b i - 1) k - Function.update b i (b i - 1) l)) m,
