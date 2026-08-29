@@ -29,11 +29,13 @@ representation only when its carrier already lies there. A module-finite carrier
 neither the dimension nor the character. Only the character transfer needs `k` to be a field, `k`
 being a commutative ring throughout otherwise.
 
-Finally it records the two structural properties of the character that Mathlib's
+Finally it records the structural properties of the character that Mathlib's
 `RepresentationTheory/Character.lean` leaves out beside `FDRep.char_iso` and `FDRep.char_tensor`:
-the character is **additive on biproducts**, and the character of the **tensor unit** is the
-constant function `1`. Those are what is still missing before the character can be read as a ring
-homomorphism out of the representation ring, `TauCeti.repRingCharacter`.
+the character is **additive on biproducts**, the character of the **tensor unit** is the constant
+function `1`, and the character is **constant on the cosets of its kernel**. The first two are what
+is still missing before the character can be read as a ring homomorphism out of the representation
+ring, `TauCeti.repRingCharacter`; the last is the elementary half of the kernel API whose analytic
+half, over `ℂ`, is `TauCeti/RepresentationTheory/CharacterTable/Kernel.lean`.
 
 ## Main definitions
 
@@ -52,6 +54,7 @@ homomorphism out of the representation ring, `TauCeti.repRingCharacter`.
   `FDRep.finrank_ofShrink` and `FDRep.character_ofShrink`.
 * `FDRep.char_biprod`: the character is additive on biproducts.
 * `FDRep.char_tensorUnit`: the character of the tensor unit is the constant function `1`.
+* `FDRep.char_mul_of_mem_ker_left`: the character is constant on the cosets of its kernel.
 -/
 
 public section
@@ -229,5 +232,18 @@ theorem char_tensorUnit (k : Type u) (G : Type v) [Field k] [Monoid G] :
   rw [hunit, Pi.one_apply, character_of_trivial]
 
 end TensorUnit
+
+section Kernel
+
+variable {k : Type u} {G : Type v} [Field k] [Group G]
+
+/-- **A character is constant on the cosets of its kernel**: an element acting as the identity may
+be deleted from a character value. This is an algebraic identity, so it holds over any field. The
+right-handed form is this one composed with `FDRep.char_mul_comm`. -/
+theorem char_mul_of_mem_ker_left (V : FDRep k G) {g : G} (hg : g ∈ V.ρ.ker) (h : G) :
+    V.character (g * h) = V.character h := by
+  simp only [character, map_mul, MonoidHom.mem_ker.1 hg, one_mul]
+
+end Kernel
 
 end FDRep
