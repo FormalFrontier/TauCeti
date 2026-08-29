@@ -288,9 +288,14 @@ theorem centralizer_centralizer_of_isSemisimpleModule [Module.Finite K N]
     { toFun := x
       map_add' := x.map_add
       map_smul' := fun g m => by
+        -- Evaluating the commutation of `x` with `g.restrictScalars K` at `m` gives
+        -- `x (g m) = g (x m)`, which is the required `A'`-linearity once the scalar action of
+        -- `Module.End ↥A N` on `N` is `Module.End.smul_def` and the restriction of scalars is
+        -- `LinearMap.coe_restrictScalars`.
         have h := congrArg (fun t : Module.End K N => t m)
           (hx _ (restrictScalars_mem_centralizer A g))
-        simpa using h.symm }
+        simpa only [Module.End.smul_def, RingHom.id_apply, Module.End.mul_apply,
+          LinearMap.coe_restrictScalars] using h.symm }
   obtain ⟨a, ha⟩ := Module.Finite.toModuleEnd_moduleEnd_surjective (R := A) (M := N) f
   have hx' : x = (a : Module.End K N) := by
     ext m

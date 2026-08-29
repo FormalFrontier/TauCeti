@@ -148,6 +148,7 @@ in the other direction, this says that the symmetric-group image and the span of
 operators are each other's commutants. The general linear group acts through the invertible
 `g^{⊗d}`, which are among the `f^{⊗d}`; that they span the same subalgebra, and hence that the
 commutant here is the commutant of the image of `k[GLₙ]`, is not proved here. -/
+@[simp]
 theorem centralizer_span_range_map_const_eq_range_permTensorActionAlgHom :
     Subalgebra.centralizer k
         (Submodule.span k (Set.range fun f : (Fin n → k) →ₗ[k] (Fin n → k) =>
