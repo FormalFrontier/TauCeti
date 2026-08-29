@@ -325,22 +325,16 @@ private theorem ad_pow_lie_typeBSimpleRootMatrix (i j : Fin (n + 1)) :
 private def typeBSignEquiv (ι : Type*) : Unit ⊕ ι ⊕ ι ≃ Unit ⊕ ι ⊕ ι :=
   Equiv.sumCongr (Equiv.refl Unit) (Equiv.sumComm ι ι)
 
-/-- Reindexing matrices along `typeBSignEquiv`, as an equivalence of Lie algebras. -/
-private def typeBSignReindex (ι : Type*) [DecidableEq ι] [Fintype ι] :
-    Matrix (Unit ⊕ ι ⊕ ι) (Unit ⊕ ι ⊕ ι) K ≃ₗ⁅K⁆
-      Matrix (Unit ⊕ ι ⊕ ι) (Unit ⊕ ι ⊕ ι) K :=
-  (Matrix.reindexAlgEquiv K K (typeBSignEquiv ι)).toLieEquiv
-
 private theorem typeBSignReindex_typeBSimpleRootMatrix (i : Fin (n + 1)) :
-    typeBSignReindex (K := K) (Fin (n + 1)) (typeBSimpleRootMatrix (K := K) i) =
-      -typeBSimpleNegativeRootMatrix (K := K) i := by
+    Matrix.reindexLieEquiv (R := K) (typeBSignEquiv (Fin (n + 1)))
+        (typeBSimpleRootMatrix (K := K) i) = -typeBSimpleNegativeRootMatrix (K := K) i := by
   refine Fin.lastCases ?_ (fun i₀ ↦ ?_) i
   · simp only [typeBSimpleRootMatrix_last, typeBSimpleNegativeRootMatrix_last]
-    simp [typeBSignReindex, typeBSignEquiv, Matrix.reindex_apply,
+    simp [typeBSignEquiv, Matrix.reindex_apply,
       Matrix.submatrix_sub, Matrix.submatrix_single_equiv, typeBShortRootMatrix_def,
       typeBShortNegativeRootMatrix_def]
   · simp only [typeBSimpleRootMatrix_castSucc, typeBSimpleNegativeRootMatrix_castSucc]
-    simp [typeBSignReindex, typeBSignEquiv, Matrix.reindex_apply,
+    simp [typeBSignEquiv, Matrix.reindex_apply,
       Matrix.submatrix_sub, Matrix.submatrix_single_equiv, typeBLongRootMatrix_def]
 
 private theorem ad_pow_lie_typeBSimpleNegativeRootMatrix (i j : Fin (n + 1)) :
@@ -350,7 +344,7 @@ private theorem ad_pow_lie_typeBSimpleNegativeRootMatrix (i j : Fin (n + 1)) :
       (-CartanMatrix.B (n + 1) j i).toNat)
         ⁅typeBSimpleNegativeRootMatrix (K := K) i,
           typeBSimpleNegativeRootMatrix (K := K) j⁆ = 0 := by
-  let e := typeBSignReindex (K := K) (Fin (n + 1))
+  let e := Matrix.reindexLieEquiv (R := K) (typeBSignEquiv (Fin (n + 1)))
   have h := congrArg e.toLieHom (ad_pow_lie_typeBSimpleRootMatrix (K := K) i j)
   have he (k : Fin (n + 1)) :
       e.toLieHom (typeBSimpleRootMatrix (K := K) k) =
