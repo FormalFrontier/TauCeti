@@ -73,13 +73,17 @@ abbrev GridChainHat (R : Type*) [CommSemiring R] {n : ℕ} (_G : KnotGridDiagram
 every other variable. -/
 noncomputable def blockVariable (R : Type*) [CommSemiring R] {n : ℕ} (i : Fin n) :
     MvPolynomial (Fin n) R →ₐ[R] MvPolynomial (SimplyBlockedVariable i) R :=
-  MvPolynomial.aeval fun c => if h : c = i then 0 else MvPolynomial.X ⟨c, h⟩
+  MvPolynomial.killCompl (f := Subtype.val) Subtype.val_injective
 
 /-- The variable belonging to the blocked column specializes to zero. -/
 @[simp]
 theorem blockVariable_X_self (R : Type*) [CommSemiring R] {n : ℕ} (i : Fin n) :
     blockVariable R i (MvPolynomial.X i) = 0 := by
-  simp [blockVariable]
+  rw [MvPolynomial.X, blockVariable]
+  exact MvPolynomial.killCompl_monomial_eq_zero_of_notMem_range
+    (f := Subtype.val) (s := Finsupp.single i 1) (a := i) Subtype.val_injective (1 : R)
+    (by simp)
+    (by rintro ⟨c, hc⟩; exact c.property hc)
 
 /-- A variable outside the blocked column is retained, with its proof-carrying index in the
 smaller coefficient ring. -/
@@ -87,7 +91,9 @@ smaller coefficient ring. -/
 theorem blockVariable_X_of_ne (R : Type*) [CommSemiring R] {n : ℕ} (i c : Fin n) (h : c ≠ i) :
     blockVariable R i (MvPolynomial.X c) =
       MvPolynomial.X (⟨c, h⟩ : SimplyBlockedVariable i) := by
-  simp [blockVariable, h]
+  simpa [blockVariable] using MvPolynomial.killCompl_rename_app
+    (R := R) (f := Subtype.val) Subtype.val_injective
+    (MvPolynomial.X (⟨c, h⟩ : SimplyBlockedVariable i))
 
 namespace GridDiagram
 
@@ -98,18 +104,18 @@ variable (R : Type*) [CommSemiring R]
 rectangle covers the blocked `O`-marking. -/
 theorem blockVariable_OMonomial_eq_zero {i : Fin n} {r : GridRectangle n}
     (hi : i ∈ G.OColumns r) : blockVariable R i (G.OMonomial R r) = 0 := by
-  rw [G.OMonomial_eq_monomial R, blockVariable, MvPolynomial.aeval_monomial]
-  simp only [map_one, one_mul, Finsupp.prod]
+  rw [G.OMonomial_eq_monomial R, blockVariable]
   have hexp : (∑ c ∈ G.OColumns r, Finsupp.single c 1) i = 1 := by
     rw [Finsupp.finsetSum_apply, Finset.sum_eq_single i]
     · simp
     · intro c _ hci
       simp [hci]
     · exact fun h => (h hi).elim
-  apply Finset.prod_eq_zero (i := i)
-  · rw [Finsupp.mem_support_iff, hexp]
-    exact one_ne_zero
-  · simp [hexp]
+  exact MvPolynomial.killCompl_monomial_eq_zero_of_notMem_range
+    (f := Subtype.val) (s := ∑ c ∈ G.OColumns r, Finsupp.single c 1) (a := i)
+    Subtype.val_injective (1 : R)
+    (by rw [Finsupp.mem_support_iff, hexp]; exact one_ne_zero)
+    (by rintro ⟨c, hc⟩; exact c.property hc)
 
 /-- The rectangles counted after blocking column `i`: unblocked rectangles which do not cover
 the `O`-marking in column `i`. -/
