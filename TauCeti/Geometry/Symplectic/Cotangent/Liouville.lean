@@ -8,7 +8,7 @@ module
 public import Mathlib.Analysis.Calculus.DifferentialForm.Basic
 public import TauCeti.Geometry.Symplectic.Cotangent.Basic
 
-import Mathlib.Topology.Algebra.Module.FiniteDimensionBilinear
+public import Mathlib.Topology.Algebra.Module.FiniteDimensionBilinear
 import TauCeti.Geometry.Symplectic.SymplecticTransport
 
 /-!
@@ -31,13 +31,14 @@ Section 3.2.
 
 ## Main declarations
 
-* `TauCeti.cotangentLiouvilleForm`: the tautological one-form on `V × V*`.
+* `TauCeti.cotangentLiouvilleForm`: the tautological one-form on `V × StrongDual ℝ V`.
 * `TauCeti.cotangentLiouvilleForm_apply`: its evaluation formula.
 * `TauCeti.differentiableAt_cotangentLiouvilleForm`: differentiability of the form-valued map.
 * `TauCeti.strongDualCotangentSymplecticForm`: the canonical symplectic form on `V × V'`.
 * `TauCeti.extDeriv_cotangentLiouvilleForm_apply`: the coordinate formula for the exterior
   derivative.
-* `TauCeti.neg_extDeriv_cotangentLiouvilleForm_apply`: the exactness identity `ω = -dλ`.
+* `TauCeti.neg_extDeriv_cotangentLiouvilleForm`: the exactness identity `ω = -dλ`, and
+  `TauCeti.neg_extDeriv_cotangentLiouvilleForm_apply`, its evaluation on a pair of vectors.
 -/
 
 public section
@@ -140,6 +141,18 @@ noncomputable def strongDualCotangentEquiv :
     (V × StrongDual ℝ V) ≃ₗ[ℝ] (V × Module.Dual ℝ V) :=
   (LinearEquiv.refl ℝ V).prodCongr LinearMap.toContinuousLinearMap.symm
 
+/-- The identification of cotangent models forgets the continuity of the covector. -/
+@[simp]
+lemma strongDualCotangentEquiv_apply (q : V) (p : StrongDual ℝ V) :
+    strongDualCotangentEquiv (q, p) = (q, (p : Module.Dual ℝ V)) := by
+  simp [strongDualCotangentEquiv]
+
+/-- The inverse identification of cotangent models promotes a covector to a continuous one. -/
+@[simp]
+lemma strongDualCotangentEquiv_symm_apply (q : V) (p : Module.Dual ℝ V) :
+    strongDualCotangentEquiv.symm (q, p) = (q, LinearMap.toContinuousLinearMap p) := by
+  simp [strongDualCotangentEquiv]
+
 /-- The canonical symplectic form on a finite-dimensional normed linear cotangent space. This
 is the algebraic canonical form transported from `V × Module.Dual ℝ V` to
 `V × StrongDual ℝ V`. -/
@@ -161,6 +174,16 @@ lemma neg_extDeriv_cotangentLiouvilleForm_apply (x : V × StrongDual ℝ V)
   rw [extDeriv_cotangentLiouvilleForm_apply,
     strongDualCotangentSymplecticForm_apply]
   ring
+
+/-- Exactness with no tangent vectors supplied: at every base point, the negative exterior
+derivative of the Liouville form is the canonical symplectic form as a form on the tangent
+space. -/
+lemma neg_extDeriv_cotangentLiouvilleForm (x : V × StrongDual ℝ V) :
+    (fun v w ↦ -extDeriv cotangentLiouvilleForm x ![v, w]) =
+      ⇑(strongDualCotangentSymplecticForm (V := V)) := by
+  funext v w
+  rw [neg_extDeriv_cotangentLiouvilleForm_apply]
+  simp
 
 end FiniteDimensional
 
