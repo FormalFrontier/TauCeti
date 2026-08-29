@@ -5,9 +5,9 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-import Mathlib.RepresentationTheory.Basic
+import TauCeti.RepresentationTheory.Induction.Conjugate
+public import TauCeti.Algebra.Group.Subgroup.Character
 public import TauCeti.LinearAlgebra.Eigenspace.JointEigenvector.Basic
-public import Mathlib.GroupTheory.GroupAction.ConjAct
 
 /-!
 # Joint eigenspaces for normal subgroups
@@ -44,75 +44,6 @@ noncomputable section
 
 namespace TauCeti
 
-variable {G A : Type*} [Group G] [Monoid A]
-
-/-- Precomposition by inverse conjugation gives the action of an ambient group element on
-characters of a normal subgroup. Thus `(conjNormal g χ) n = χ (g⁻¹ * n * g)`.
-
-The inverse in the definition is the convention for which a representation operator `ρ g`
-sends the `χ`-weight space to the `conjNormal g χ`-weight space. -/
-def _root_.MonoidHom.conjNormal {N : Subgroup G} [N.Normal]
-    (g : G) (χ : N →* A) : N →* A :=
-  χ.comp (MulAut.conjNormal g⁻¹).toMonoidHom
-
-@[simp]
-theorem _root_.MonoidHom.conjNormal_apply {N : Subgroup G} [N.Normal] (g : G)
-    (χ : N →* A) (n : N) :
-    MonoidHom.conjNormal g χ n = χ ((MulAut.conjNormal g).symm n) := by
-  rfl
-
-@[simp]
-theorem _root_.MonoidHom.conjNormal_one {N : Subgroup G} [N.Normal] (χ : N →* A) :
-    MonoidHom.conjNormal 1 χ = χ := by
-  ext n
-  simp [MonoidHom.conjNormal]
-
-/-- Conjugating characters is a left action: `g₁ * g₂` first acts by `g₂`, then by `g₁`. -/
-theorem _root_.MonoidHom.conjNormal_mul {N : Subgroup G} [N.Normal]
-    (g₁ g₂ : G) (χ : N →* A) :
-    MonoidHom.conjNormal (g₁ * g₂) χ =
-      MonoidHom.conjNormal g₁ (MonoidHom.conjNormal g₂ χ) := by
-  ext n
-  simp only [MonoidHom.conjNormal_apply]
-  apply congrArg χ
-  apply Subtype.ext
-  simp only [MulAut.conjNormal_symm_apply]
-  group
-
-@[simp]
-theorem _root_.MonoidHom.conjNormal_inv_apply_conjNormal {N : Subgroup G} [N.Normal]
-    (g : G) (χ : N →* A) :
-    MonoidHom.conjNormal g⁻¹ (MonoidHom.conjNormal g χ) = χ := by
-  simp only [← MonoidHom.conjNormal_mul, inv_mul_cancel, MonoidHom.conjNormal_one]
-
-@[simp]
-theorem _root_.MonoidHom.conjNormal_apply_inv_conjNormal {N : Subgroup G} [N.Normal]
-    (g : G) (χ : N →* A) :
-    MonoidHom.conjNormal g (MonoidHom.conjNormal g⁻¹ χ) = χ := by
-  simp only [← MonoidHom.conjNormal_mul, mul_inv_cancel, MonoidHom.conjNormal_one]
-
-/-- Conjugation by `g` is an equivalence of the character set of a normal subgroup, with
-inverse given by conjugation by `g⁻¹`. -/
-def _root_.MonoidHom.conjNormalEquiv (N : Subgroup G) [N.Normal]
-    (A : Type*) [Monoid A] (g : G) :
-    (N →* A) ≃ (N →* A) where
-  toFun := MonoidHom.conjNormal g
-  invFun := MonoidHom.conjNormal g⁻¹
-  left_inv := MonoidHom.conjNormal_inv_apply_conjNormal g
-  right_inv := MonoidHom.conjNormal_apply_inv_conjNormal g
-
-@[simp]
-theorem _root_.MonoidHom.conjNormalEquiv_apply {N : Subgroup G} [N.Normal]
-    (g : G) (χ : N →* A) :
-    MonoidHom.conjNormalEquiv N A g χ = MonoidHom.conjNormal g χ :=
-  by simp [MonoidHom.conjNormalEquiv]
-
-@[simp]
-theorem _root_.MonoidHom.conjNormalEquiv_symm {N : Subgroup G} [N.Normal] (g : G) :
-    (MonoidHom.conjNormalEquiv N A g).symm = MonoidHom.conjNormalEquiv N A g⁻¹ := by
-  ext χ n
-  simp [MonoidHom.conjNormalEquiv]
-
 variable {G K V : Type*} [Group G] [CommRing K] [AddCommGroup V] [Module K V]
 
 private theorem map_iInf_eigenspace_unitHom_le_conjNormal (N : Subgroup G) [N.Normal]
@@ -122,18 +53,17 @@ private theorem map_iInf_eigenspace_unitHom_le_conjNormal (N : Subgroup G) [N.No
   rintro _ ⟨v, hv, rfl⟩
   refine (Submodule.mem_iInf _).mpr fun n ↦ ?_
   have hvn := (Submodule.mem_iInf _).mp hv
-  let m : N := (MulAut.conjNormal g).symm n
   rw [Module.End.mem_eigenspace_iff]
   calc
-    ρ n (ρ g v) = ρ (n * g) v := by rw [map_mul, Module.End.mul_apply]
-    _ = ρ (g * m) v := by
-      congr 2
-      simp [m, mul_assoc]
-    _ = ρ g (ρ m v) := by rw [map_mul, Module.End.mul_apply]
-    _ = ρ g ((χ m : K) • v) := by
-      rw [Module.End.mem_eigenspace_iff.mp (hvn m)]
-    _ = (χ m : K) • ρ g v := by rw [map_smul]
+    ρ n (ρ g v) = ρ g (ρ (MulAut.conjNormal g⁻¹ n) v) :=
+      (Representation.apply_conjNormal_inv ρ g n v).symm
+    _ = ρ g ((χ (MulAut.conjNormal g⁻¹ n) : K) • v) := by
+      rw [Module.End.mem_eigenspace_iff.mp (hvn (MulAut.conjNormal g⁻¹ n))]
+    _ = (χ (MulAut.conjNormal g⁻¹ n) : K) • ρ g v := by rw [map_smul]
     _ = (MonoidHom.conjNormal g χ n : K) • ρ g v := by
+      rw [show MulAut.conjNormal g⁻¹ n = (MulAut.conjNormal g).symm n by
+        apply Subtype.ext
+        simp]
       rw [MonoidHom.conjNormal_apply]
 
 /-- Let `N` be a normal subgroup of `G`. For a representation `ρ` of `G`, the operator `ρ g`
@@ -178,8 +108,9 @@ def nonzeroJointWeightEquiv (N : Subgroup G) [N.Normal]
     (ρ : G →* Module.End K V) (g : G) :
     {χ : N →* Kˣ // (⨅ n : N, (ρ n).eigenspace (χ n)) ≠ ⊥} ≃
       {χ : N →* Kˣ // (⨅ n : N, (ρ n).eigenspace (χ n)) ≠ ⊥} :=
-  (MonoidHom.conjNormalEquiv N Kˣ g).subtypeEquiv fun χ ↦
-    (iInf_eigenspace_unitHom_conjNormal_ne_bot_iff N ρ g χ).symm
+  (MonoidHom.conjNormalEquiv N Kˣ g).subtypeEquiv fun χ ↦ by
+    simpa only [MonoidHom.conjNormalEquiv_apply] using
+      (iInf_eigenspace_unitHom_conjNormal_ne_bot_iff N ρ g χ).symm
 
 @[simp]
 theorem nonzeroJointWeightEquiv_apply_coe (N : Subgroup G) [N.Normal]
@@ -188,7 +119,8 @@ theorem nonzeroJointWeightEquiv_apply_coe (N : Subgroup G) [N.Normal]
     ((nonzeroJointWeightEquiv N ρ g χ :
       {χ : N →* Kˣ // (⨅ n : N, (ρ n).eigenspace (χ n)) ≠ ⊥}) : N →* Kˣ) =
         MonoidHom.conjNormal g χ := by
-  rfl
+  change MonoidHom.conjNormalEquiv N Kˣ g χ = MonoidHom.conjNormal g χ
+  rw [MonoidHom.conjNormalEquiv_apply]
 
 /-- The ambient group acts by permutations on the nonzero joint character weight spaces of a
 normal subgroup. This is the abstract group action underlying the finite permutation
@@ -201,15 +133,14 @@ def nonzeroJointWeightAction (N : Subgroup G) [N.Normal]
     apply Equiv.ext
     intro χ
     apply Subtype.ext
-    change MonoidHom.conjNormal 1 (χ : N →* Kˣ) = χ
-    exact MonoidHom.conjNormal_one (χ : N →* Kˣ)
+    simpa only [Equiv.Perm.one_apply, nonzeroJointWeightEquiv_apply_coe] using
+      MonoidHom.conjNormal_one (χ : N →* Kˣ)
   map_mul' g₁ g₂ := by
     apply Equiv.ext
     intro χ
     apply Subtype.ext
-    change MonoidHom.conjNormal (g₁ * g₂) (χ : N →* Kˣ) =
-      MonoidHom.conjNormal g₁ (MonoidHom.conjNormal g₂ χ)
-    exact MonoidHom.conjNormal_mul g₁ g₂ (χ : N →* Kˣ)
+    simpa only [Equiv.Perm.mul_apply, nonzeroJointWeightEquiv_apply_coe] using
+      MonoidHom.conjNormal_mul g₁ g₂ (χ : N →* Kˣ)
 
 @[simp]
 theorem nonzeroJointWeightAction_apply_coe (N : Subgroup G) [N.Normal]
@@ -218,7 +149,9 @@ theorem nonzeroJointWeightAction_apply_coe (N : Subgroup G) [N.Normal]
     (((nonzeroJointWeightAction N ρ g) χ :
       {χ : N →* Kˣ // (⨅ n : N, (ρ n).eigenspace (χ n)) ≠ ⊥}) : N →* Kˣ) =
         MonoidHom.conjNormal g χ := by
-  rfl
+  change ((nonzeroJointWeightEquiv N ρ g χ :
+    {χ : N →* Kˣ // (⨅ n : N, (ρ n).eigenspace (χ n)) ≠ ⊥}) : N →* Kˣ) = _
+  exact nonzeroJointWeightEquiv_apply_coe N ρ g χ
 
 end TauCeti
 

@@ -75,6 +75,8 @@ irreducible ones is not carved out here.
 * `TauCeti.conjNormalRep_one`, `TauCeti.conjNormalRep_mul` and their `FDRep` counterparts: for a
   normal subgroup that coherence becomes a genuine left action of `G`, recorded as `MulAction`
   instances.
+* `TauCeti.Representation.apply_conjNormal_inv`: the basic intertwining identity between an
+  ambient representation operator and the action of a normal subgroup.
 * `TauCeti.res_conjRep`, `TauCeti.res_conjFDRep`: the normal-subgroup conjugation is the general
   conjugate representation, read through `MulAut.conj g • N = N`.
 * `TauCeti.isIrreducible_conjRep_iff`, `TauCeti.isIrreducible_conjFDRep_iff`: conjugation
@@ -514,6 +516,22 @@ a `MulAction` instance.  This is the action of `G` on `Rep k N` that Clifford th
 section Normal
 
 variable {N : Subgroup G} [hN : N.Normal]
+
+namespace Representation
+
+variable [Semiring k] [AddCommMonoid V] [Module k V] (ρ : _root_.Representation k G V)
+
+/-- Acting by `g` and then by `n ∈ N` is the same as acting by the conjugate `g⁻¹ n g` and then by
+`g`. This conjugation identity underlies both translated normal-subgroup subrepresentations and
+the transport of normal-subgroup weight spaces. -/
+theorem apply_conjNormal_inv (g : G) (n : N) (v : V) :
+    ρ g (ρ (MulAut.conjNormal g⁻¹ n : G) v) = ρ (n : G) (ρ g v) := by
+  have hg : g * (MulAut.conjNormal g⁻¹ n : G) = (n : G) * g := by
+    rw [MulAut.conjNormal_apply]
+    group
+  rw [← Module.End.mul_apply, ← Module.End.mul_apply, ← map_mul, ← map_mul, hg]
+
+end Representation
 
 /-- Conjugating a normal subgroup by `1` is the identity automorphism.  The `MulAut.conjNormal`
 form of `conj_one_smul`. -/
