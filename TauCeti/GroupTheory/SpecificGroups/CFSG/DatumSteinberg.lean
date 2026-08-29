@@ -16,39 +16,47 @@ The Steinberg endomorphism attached to a Lie-type index that is not of Suzuki--R
 automorphism realizing the pinned diagram permutation. This file builds the shadow that composite
 casts on the pinned simply connected root datum, where both factors are already available:
 `TauCeti.RootPairingIsogeny.smulId` at the Frobenius parameter is the root-datum image of `Frob_q`,
-and `TauCeti.GraphTwistedIndex.datumGraphAut` is the root-datum image of `γ`.
+and `TauCeti.GraphTwistedIndex.datumGraphAut` is the root-datum image of `γ` in the orientation
+fixed below.
 
 Two things are worth being precise about. First, this is the root-datum layer and not the group
 layer: nothing here mentions a group scheme, its points, or a finite group, and the equations below
-are the root-datum images of the equations milestone L1 states about root subgroups, not those
-equations themselves. Second, the composite is *defined* in the order `γ ∘ Frob_q` and then proved
-to agree with `Frob_q ∘ γ`. That agreement,
-`TauCeti.GraphTwistedIndex.datumSteinberg_eq_datumFrobenius_comp`,
-is the root-datum form of the relation "`γ` commutes with `Frob_q`" which L1 requires of the
-graph-twisted families, and it comes from the general naturality of scaling among isogenies,
+record on the root datum, in the orientation fixed in the next section, what milestone L1 states
+about root subgroups, rather than being those equations themselves. Second, the composite is
+*defined* in the order `γ ∘ Frob_q` and then proved to agree with `Frob_q ∘ γ`. That agreement,
+`TauCeti.GraphTwistedIndex.datumSteinberg_eq_datumFrobenius_comp`, is the root-datum form of the
+relation "`γ` commutes with `Frob_q`" which L1 requires of the graph-twisted families, and it comes
+from the general naturality of scaling among isogenies,
 `TauCeti.RootPairingIsogeny.comp_smulId`, at the endo-isogenies of a single datum.
 
 ## The orientation of the graph factor
 
-The shadow is read covariantly on the character lattice: the weight map of `datumSteinberg` carries
-the root at each index to `q` times the root at the image of that index under the index's *own*
-diagram permutation `TauCeti.GraphTwistedIndex.diagramPerm`, which is
-`TauCeti.GraphTwistedIndex.datumSteinberg_root_simpleIndex` and is the root-datum image of the
-equation `γ (x_α(t)) = x_{γ α}(t)` that milestone L1 pins on the simple root subgroups. That
-reading is not chosen here but inherited: `TauCeti.DynkinType.diagramAut` sends a node permutation
-`σ` to the datum automorphism whose root enumeration moves by `σ` and not by `σ⁻¹`, which is
-`TauCeti.DynkinType.diagramRootPerm_simpleIndex`, and
-`TauCeti.GraphTwistedIndex.datumGraphAut` is that automorphism at `σ = d.diagramPerm`.
+The graph factor is `TauCeti.GraphTwistedIndex.datumGraphAut` itself and not its inverse, so the
+weight map of `datumSteinberg` carries the root at each index to `q` times the root at the image of
+that index under the index's *own* diagram permutation `TauCeti.GraphTwistedIndex.diagramPerm`,
+which is `TauCeti.GraphTwistedIndex.datumSteinberg_root_simpleIndex`. What that records is
+the motion of the pinned root subgroups: the uniform rescaling by `q` of the Frobenius together
+with the permutation `σ` by which the graph automorphism moves the pinned indices in
+`γ (x_{α_i}(t)) = x_{α_{σ i}}(t)`.
 
-Reading a group endomorphism through its pullback on characters instead would replace `σ` by `σ⁻¹`
-throughout, and the commutation above does not make the two readings agree: it is about the order
-of the two factors, not about the orientation of the graph factor, and it holds under either
-reading. They differ only on `³D₄`, the one family whose diagram permutation has order greater than
-two, where they name the two trialities, and even there the choice is not observable downstream:
-an order-two symmetry of the `D₄` diagram conjugates one three-cycle to the other and commutes with
-the scaling, so it conjugates one composite to the other.
+This orientation is not chosen here but inherited. `TauCeti.DynkinType.diagramAut` sends a node
+permutation `σ` to the datum automorphism whose root enumeration moves by `σ` and not by `σ⁻¹`,
+which is `TauCeti.DynkinType.diagramRootPerm_simpleIndex`; that is the covariant identification of
+the pinned automorphism group with the automorphism group of the datum, the one under which
+`TauCeti.DynkinType.diagramAutHom` is a homomorphism rather than an antihomomorphism, and under
+which the weight map attached to a pinned `γ` is the *inverse* of the pullback `χ ↦ χ ∘ γ` on
+characters. `TauCeti.GraphTwistedIndex.datumGraphAut` is that automorphism at `σ = d.diagramPerm`.
 
-The construction is faithful in the sense that matters for the classification list: by
+Nothing here is asserted to be the pullback on characters of a pinned group endomorphism. That
+pullback is the opposite reading: it carries the root at an index to `q` times the root at the
+image of that index under `σ⁻¹`, and it is the composite formed from `datumGraphAut⁻¹` in place of
+`datumGraphAut`. The two readings agree on `²Aₙ`, `²Dₙ` and `²E₆`, whose diagram permutation
+is an involution, and differ on `³D₄`, where they name the two trialities. Those two are conjugate
+in the symmetry group of the `D₄` diagram, but conjugacy does not identify them as pinned maps, so
+the orientation is a genuine choice; it is the one `datumGraphAut` already fixes, and every
+statement below is stated in it.
+
+The construction separates the families in the way the classification list needs: by
 `TauCeti.GraphTwistedIndex.datumSteinberg_eq_datumFrobenius_iff` the Steinberg map of an index
 degenerates to its Frobenius exactly on the nine untwisted families, so `²Aₙ(q)`, `²Dₙ(q)`,
 `²E₆(q)` and `³D₄(q)` receive maps that no untwisted index receives.
@@ -144,8 +152,9 @@ noncomputable section
 /-- **The root-datum Steinberg map of a graph-twisted index**: the root-datum shadow of
 `γ ∘ Frob_q`, the pinned graph automorphism after the `q`-power Frobenius. The graph factor is
 `TauCeti.GraphTwistedIndex.datumGraphAut` itself and not its inverse, so the root enumeration moves
-by the index's own diagram permutation; the module docstring records that orientation convention
-and what changes under the opposite one. On the nine untwisted families the graph automorphism is
+by the index's own diagram permutation; the module docstring fixes that orientation and describes
+the opposite, pullback reading, which is the composite formed from `datumGraphAut⁻¹` and differs
+from this one on `³D₄`. On the nine untwisted families the graph automorphism is
 trivial and this is the Frobenius itself, by
 `TauCeti.GraphTwistedIndex.datumSteinberg_eq_datumFrobenius_iff`. -/
 def datumSteinberg :
@@ -196,8 +205,9 @@ roots without rescaling them, so the composite has the constant exponent of the 
     ValidLieTypeIndex.datumFrobenius_exponent, RootPairingIsogeny.ofEquiv_exponent, mul_one]
 
 /-- **The Steinberg map on roots**: it sends the root at `k` to `q` times the root at the image of
-`k` under the induced permutation of the root enumeration. This is the root-datum shadow of
-`γ (Frob_q (x_α(t))) = x_{γ α}(t ^ q)`. -/
+`k` under the induced permutation of the root enumeration. That permutation is the motion of the
+pinned root indices in `γ (Frob_q (x_α(t))) = x_{γ α}(t ^ q)`, read in the orientation the module
+docstring fixes. -/
 theorem datumSteinberg_root (k : Fin d.1.dynkinType.numRoots) :
     d.datumSteinberg.weightMap
         ((d.1.dynkinType.simplyConnectedRootDatum d.1.dynkinType_valid).root k) =
@@ -209,8 +219,8 @@ theorem datumSteinberg_root (k : Fin d.1.dynkinType.numRoots) :
     Int.cast_id]
 
 /-- **The Steinberg map on the Bourbaki-numbered simple roots**, where the induced permutation of
-the root enumeration is the index's own pinned diagram permutation. This is the form in which
-milestone L1 states the graph-twisted convention. -/
+the root enumeration is the index's own pinned diagram permutation. Milestone L1 states the
+graph-twisted convention in this form, as the motion of the pinned simple root subgroups. -/
 theorem datumSteinberg_root_simpleIndex (i : Fin d.1.rank) :
     d.datumSteinberg.weightMap
         ((d.1.dynkinType.simplyConnectedRootDatum d.1.dynkinType_valid).root
