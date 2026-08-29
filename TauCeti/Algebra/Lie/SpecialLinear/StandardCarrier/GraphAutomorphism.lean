@@ -598,10 +598,9 @@ carrier itself. -/
 @[simp]
 theorem graphAutomorphismPoints_graphAutomorphismPoints {A : Type} [CommRing A]
     (g : points r A) :
-    graphAutomorphismPoints r A (graphAutomorphismPoints r A g) = g := by
-  apply Subtype.ext
-  rw [coe_graphAutomorphismPoints, coe_graphAutomorphismPoints]
-  exact TauCeti.typeAGraphAutomorphism_typeAGraphAutomorphism r _
+    graphAutomorphismPoints r A (graphAutomorphismPoints r A g) = g :=
+  -- the equivalence is its own inverse, so this is the left inverse law it already stores
+  (graphAutomorphismPoints r A).symm_apply_apply g
 
 /-- The point-group graph automorphism reverses the numbered root subgroups. -/
 @[simp]

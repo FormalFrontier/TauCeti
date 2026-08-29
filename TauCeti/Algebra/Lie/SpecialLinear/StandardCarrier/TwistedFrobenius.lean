@@ -159,8 +159,8 @@ theorem twistedFrobenius_weightTorusPoints (s : Fin r → Aˣ) :
 /-! ## The square relation -/
 
 /-- **Applying the twisted Frobenius twice raises every matrix entry to its `p ^ (2 * k)`-th
-power.** This is what makes the twisted map a Steinberg endomorphism: a power of it is a
-Frobenius. -/
+power.** This is the relation a Steinberg map of the twisted family is required to satisfy, that a
+power of it is a Frobenius; no such structure is asserted here. -/
 @[simp]
 theorem twistedFrobenius_twistedFrobenius (g : points r A) :
     twistedFrobenius r p k A (twistedFrobenius r p k A g) = frobenius r p (2 * k) A g := by
@@ -186,9 +186,10 @@ theorem fixedSubgroup_twistedFrobenius_le_fixedSubgroup_frobenius :
 
 /-- **Every matrix entry of a point fixed by the twisted Frobenius lies in the subring fixed by the
 `p ^ (2 * k)`-power Frobenius.** For `p` prime, `0 < k`, and `A` an algebraic closure of `ZMod p`
-that subring is the field of `p ^ (2 * k)` elements, so the twisted family at Frobenius parameter
-`q = p ^ k` is realized by matrices over `𝔽_{q ^ 2}`. Without those hypotheses the subring need not
-be a finite field; at `k = 0` it is all of `A`. -/
+that subring is the field of `p ^ (2 * k)` elements; if moreover `2 ≤ r`, so that the type-`A`
+diagram has a nontrivial symmetry and a twisted family exists, this is the statement that the
+twisted family at Frobenius parameter `q = p ^ k` is realized by matrices over `𝔽_{q ^ 2}`. Without
+those hypotheses the subring need not be a finite field; at `k = 0` it is all of `A`. -/
 theorem mem_frobeniusFixedSubring_of_twistedFrobenius_eq_self {g : points r A}
     (hg : twistedFrobenius r p k A g = g) (i j : Fin (r + 1)) :
     ((g : Matrix.GeneralLinearGroup (Fin (r + 1)) A) :
