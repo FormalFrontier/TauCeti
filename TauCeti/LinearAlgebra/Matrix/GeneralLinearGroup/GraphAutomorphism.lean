@@ -332,6 +332,7 @@ private theorem typeAGraphSign_succ_mul_neg_mul_inv_castSucc (i : Fin r) (c : A)
     simp
   rw [hsucc, hs_inv]
   simp only [Units.val_neg]
+  -- Coercing the sign units to `A` exposes the scalar identity proved below.
   change (-(s : A)) * (-c) * (s : A) = c
   have hneg : (-(s : A)) * (-c) * (s : A) = (s : A) * c * (s : A) := by ring
   rw [hneg]
@@ -351,6 +352,7 @@ theorem typeAGraphAutomorphism_transvectionUnit_lower (r : ℕ) (i : Fin r) (c :
   let p : GL (Fin (r + 1)) A := permutationGL (k := A) Fin.revPerm
   let hpos : i.castSucc ≠ i.succ := (Fin.castSucc_lt_succ (i := i)).ne
   let hneg : i.rev.succ ≠ i.rev.castSucc := (Fin.castSucc_lt_succ (i := i.rev)).ne'
+  -- Normalize the conjugator and the two index inequalities to their local names.
   change (d * p) * transvectionUnit hpos (-c) * (d * p)⁻¹ = _
   calc
     _ = d * (p * transvectionUnit hpos (-c) * p⁻¹) * d⁻¹ := by group
@@ -394,6 +396,7 @@ theorem typeAGraphAutomorphism_diagGL (r : ℕ) (d : Fin (r + 1) → Aˣ) :
     simpa only [p, Equiv.Perm.inv_def, Fin.revPerm_symm, Fin.revPerm_apply] using
       permutationGL_mul_diagGL_mul_inv (k := A)
         (Fin.revPerm : Equiv.Perm (Fin (r + 1))) (fun i => (d i)⁻¹)
+  -- Normalize the public conjugator definition to the local signed diagonal and reversal.
   change (diagGL s * p) * diagGL (fun i => (d i)⁻¹) * (diagGL s * p)⁻¹ = _
   calc
     _ = diagGL s * (p * diagGL (fun i => (d i)⁻¹) * p⁻¹) * (diagGL s)⁻¹ := by

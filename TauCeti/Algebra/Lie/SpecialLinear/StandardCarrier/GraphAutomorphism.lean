@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.Yoneda
-public import TauCeti.Algebra.Lie.SpecialLinear.StandardCarrier.DeterminantOne
+public import TauCeti.Algebra.Lie.SpecialLinear.StandardCarrier.Basic
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Rigidity
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.GraphAutomorphism
 
@@ -27,6 +27,9 @@ gives the desired group-scheme automorphism.
 
 * `TauCeti.SlStd.graphRootPerm`: reversal on the positive and negative simple-root indices.
 * `TauCeti.SlStd.graphAutomorphism`: the pinned graph automorphism of the standard carrier.
+* `TauCeti.SlStd.schemePointsMulEquiv_comp_graphAutomorphism`: its signed
+  reverse-inverse-transpose formula on arbitrary carrier points.
+* `TauCeti.SlStd.graphAutomorphism_hom_comp_hom`: its involutivity.
 * `TauCeti.SlStd.rootSubgroup_comp_graphAutomorphism_hom`: its action on root subgroups.
 * `TauCeti.SlStd.weightTorus_comp_graphAutomorphism_hom`: its action on the split torus.
 
@@ -87,6 +90,8 @@ private theorem torusCharacter_weight_rev {A : Type*} [CommRing A]
     _ = TauCeti.torusCharacter (fun i => s i.rev) (weight r k) := by
       have h := (TauCeti.torusCharacter_mulEquivArrowCongr
         (Fin.revPerm : Equiv.Perm (Fin r)) s (weight r k)).symm
+      -- The arrow-congruence API packages reindexing as a bundled `MulEquiv`; expose its
+      -- definitionally equal function action to compare it with `fun i => s i.rev`.
       change TauCeti.torusCharacter s (weight r k ∘ Fin.revPerm) =
         TauCeti.torusCharacter
           ((MulEquiv.arrowCongr Fin.revPerm (MulEquiv.refl Aˣ)) s) (weight r k) at h
@@ -163,11 +168,15 @@ private noncomputable def generalLinearPointsGraphNatIso :
       apply MonoidHom.ext
       intro f
       rw [GrpCat.comp_apply, GrpCat.comp_apply]
+      -- The points functor presents its object values by an equality; after cancelling those
+      -- transports, its action is definitionally `HopfAlgebra.mapPoints`.
       change generalLinearPointsGraphMulEquiv r B (HopfAlgebra.mapPoints φ f) =
         HopfAlgebra.mapPoints φ (generalLinearPointsGraphMulEquiv r A f)
       apply (GeneralLinear.pointsMulEquiv (R := ℤ) (A := B) (r + 1)).injective
       simp only [HopfAlgebra.mapPoints]
       rw [pointsMulEquiv_generalLinearPointsGraphMulEquiv]
+      -- The general-linear points equivalence reads `AlgHom.mapValue` entrywise; this
+      -- definitional presentation is the input expected by its naturality theorem.
       change TauCeti.typeAGraphAutomorphism r B
           (GeneralLinear.pointsMulEquiv (r + 1) (AlgHom.mapValue φ.hom f)) =
         GeneralLinear.pointsMulEquiv (r + 1)
@@ -198,10 +207,14 @@ private theorem pointsMulEquiv_mapPointsFunctor_ambientGraphCoordinateIso
   have hcoordinate : (ambientGraphCoordinateIso r).hom.op =
       (CommHopfAlgCat.pointsFunctor (R := ℤ)).preimage
         (generalLinearPointsGraphNatIso r).hom := rfl
+  -- `ambientGraphCoordinateIso` is obtained by fully faithful preimage, so its mapped points
+  -- functor is definitionally the expression exposed by `hmap`.
   change GeneralLinear.pointsMulEquiv (r + 1)
       (((CommHopfAlgCat.pointsFunctor (R := ℤ)).map
         (ambientGraphCoordinateIso r).hom.op).app A f) = _
   rw [hcoordinate, happ]
+  -- The component of `generalLinearPointsGraphNatIso` retains the object-presentation
+  -- transports; cancelling them leaves the underlying pointwise equivalence.
   change GeneralLinear.pointsMulEquiv (r + 1) (generalLinearPointsGraphMulEquiv r A f) = _
   exact pointsMulEquiv_generalLinearPointsGraphMulEquiv r A f
 
@@ -229,7 +242,23 @@ private theorem typeAGraphAutomorphism_kostantRootSubgroupMatrix
         (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
         (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv) (graphRootPerm r k)
         (isNilpotent_rep_rootGenerator r (graphRootPerm r k)) (latticeBasis r) q := by
-  rw [kostantRootSubgroupMatrix_eq_transvection, kostantRootSubgroupMatrix_eq_transvection]
+  have hk :=
+    TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupMatrix_eq_transvectionUnit_of_action
+      (rootGenerator r) (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
+      (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv) k
+      (isNilpotent_rep_rootGenerator r k) (latticeBasis r) (rootSource r k)
+      (rootTarget r k) (rootTarget_ne_rootSource r k)
+      (nilpotencyClass_rep_rootGenerator r k) (rep_rootGenerator_latticeBasis_apply r k) q
+  have hgraph :=
+    TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupMatrix_eq_transvectionUnit_of_action
+      (rootGenerator r) (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
+      (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv) (graphRootPerm r k)
+      (isNilpotent_rep_rootGenerator r (graphRootPerm r k)) (latticeBasis r)
+      (rootSource r (graphRootPerm r k)) (rootTarget r (graphRootPerm r k))
+      (rootTarget_ne_rootSource r (graphRootPerm r k))
+      (nilpotencyClass_rep_rootGenerator r (graphRootPerm r k))
+      (rep_rootGenerator_latticeBasis_apply r (graphRootPerm r k)) q
+  rw [hk, hgraph]
   cases k with
   | inl i =>
       simpa only [graphRootPerm_inl, rootTarget_inl, rootSource_inl] using
@@ -239,6 +268,17 @@ private theorem typeAGraphAutomorphism_kostantRootSubgroupMatrix
       simpa only [graphRootPerm_inr, rootTarget_inr, rootSource_inr] using
         TauCeti.typeAGraphAutomorphism_transvectionUnit_lower r i
           (Multiplicative.toAdd (AdditiveGroup.gaPointsMulEquiv q))
+
+/-- Two coordinate Hopf maps are equal if they agree on the universal point of their target. -/
+private theorem hom_eq_of_universalPoint_eq
+    {H K : _root_.CommHopfAlgCat.{0} ℤ} (f g : H ⟶ K)
+    (h : toConv ((AlgHom.id ℤ K).comp f.hom.toAlgHom) =
+      toConv ((AlgHom.id ℤ K).comp g.hom.toAlgHom)) : f = g := by
+  apply _root_.CommHopfAlgCat.hom_ext
+  ext z
+  have hz := congrArg (fun p => p.ofConv z) h
+  simp only [AlgHom.id_apply, AlgHom.comp_apply] at hz
+  exact hz
 
 private theorem ambientGraphCoordinateIso_hom_comp_rootSubgroupCoordinateMap
     (k : Fin r ⊕ Fin r) :
@@ -260,8 +300,7 @@ private theorem ambientGraphCoordinateIso_hom_comp_rootSubgroupCoordinateMap
     (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
     (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv) (graphRootPerm r k)
     (isNilpotent_rep_rootGenerator r (graphRootPerm r k)) (latticeBasis r)
-  apply _root_.CommHopfAlgCat.hom_ext
-  ext z
+  apply hom_eq_of_universalPoint_eq
   let q : WithConv (AdditiveGroup.coordinateHopfAlgebra ℤ →ₐ[ℤ]
       AdditiveGroup.coordinateHopfAlgebra ℤ) :=
     toConv (AlgHom.id ℤ (AdditiveGroup.coordinateHopfAlgebra ℤ))
@@ -303,10 +342,9 @@ private theorem ambientGraphCoordinateIso_hom_comp_rootSubgroupCoordinateMap
       (CommAlgCat.of ℤ (AdditiveGroup.coordinateHopfAlgebra ℤ))) hx
     exact hleft.trans ((typeAGraphAutomorphism_kostantRootSubgroupMatrix
       (A := CommAlgCat.of ℤ (AdditiveGroup.coordinateHopfAlgebra ℤ)) r k q).trans hy.symm)
-  have hz := congrArg (fun p => p.ofConv z) hp
-  simp only [f, g, q, AlgHom.id_apply, AlgHom.comp_apply] at hz
-  rw [_root_.CommHopfAlgCat.comp_apply]
-  exact hz
+  convert hp using 1
+  · ext z
+    rfl
 
 private theorem ambientGraphCoordinateIso_hom_comp_weightTorusCoordinateMap :
     (ambientGraphCoordinateIso r).hom ≫
@@ -318,8 +356,7 @@ private theorem ambientGraphCoordinateIso_hom_comp_weightTorusCoordinateMap :
   let y := GeneralLinear.weightTorusCoordinateMap (R := ℤ)
     (fun i => weight r i ∘ Fin.revPerm)
   have hxy : c ≫ x = y := by
-    apply _root_.CommHopfAlgCat.hom_ext
-    refine DFunLike.ext _ _ fun z => ?_
+    apply hom_eq_of_universalPoint_eq
     let T := MonoidAlgebra ℤ (SplitTorus.characterGroup (Fin r))
     let q : WithConv (T →ₐ[ℤ] T) := toConv (AlgHom.id ℤ T)
     let f : HopfAlgebra.points
@@ -355,15 +392,16 @@ private theorem ambientGraphCoordinateIso_hom_comp_weightTorusCoordinateMap :
       congr 1
       funext i
       exact torusCharacter_weight_rev_reindex r (SplitTorus.pointsMulEquiv q) i
-    have hz := congrArg (fun p => p.ofConv z) hp
-    simp only [f, g, q, AlgHom.id_apply, AlgHom.comp_apply] at hz
-    rw [_root_.CommHopfAlgCat.comp_apply]
-    exact hz
+    convert hp using 1
+    · ext z
+      rfl
   calc
     (ambientGraphCoordinateIso r).hom ≫
         GeneralLinear.weightTorusCoordinateMap (R := ℤ) (weight r) = y := hxy
     _ = GeneralLinear.weightTorusCoordinateMap (R := ℤ) (weight r) ≫
         SplitTorus.relabelCoordinateMap ℤ Fin.revPerm := by
+      -- Reindexing the weights is definitionally composition with `Fin.revPerm`; spelling that
+      -- family explicitly lets the public coordinate-map reindexing theorem apply.
       change GeneralLinear.weightTorusCoordinateMap (R := ℤ)
           (fun i => weight r i ∘ Fin.revPerm) = _
       have h := GeneralLinear.weightTorusCoordinateMap_reindex
@@ -381,6 +419,10 @@ private noncomputable abbrev definingIdeal :=
     (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
     (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv)
     (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r)
+
+/-- The quotient coordinate Hopf algebra underlying the standard carrier. -/
+private noncomputable abbrev carrierCoordinateHopfAlgebra :=
+  CommHopfAlgCat.quotient (GeneralLinear.coordinateHopfAlgebra ℤ (r + 1)) (definingIdeal r)
 
 private theorem definingIdeal_comap_ambientGraphCoordinateIso_hom_le :
     (definingIdeal r).comapOfSurjective (ambientGraphCoordinateIso r).hom.hom
@@ -511,6 +553,7 @@ private theorem graphCoordinateIso_hom_comp_torusMap :
           (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv)
           (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) hz)
     rw [RingHom.mem_ker]
+    -- The composite Hopf morphism acts by the underlying composed bialgebra homomorphism.
     change (GeneralLinear.weightTorusCoordinateMap (R := ℤ) (weight r) ≫
       SplitTorus.relabelCoordinateMap ℤ Fin.revPerm).hom z = 0
     rw [_root_.CommHopfAlgCat.hom_comp, BialgHom.comp_apply, hzero, map_zero]
@@ -536,6 +579,101 @@ private theorem graphCoordinateIso_hom_comp_torusMap :
 /-- **The pinned graph automorphism of the full-weight type-`A_r` standard carrier.** -/
 noncomputable def graphAutomorphism : Aut (groupScheme r) :=
   (AlgebraicGeometry.hopfSpec (CommRingCat.of ℤ)).mapIso (graphCoordinateIso r).op
+
+/-- The standard carrier is represented by its quotient coordinate Hopf algebra. -/
+private theorem groupScheme_eq_hopfSpec :
+    groupScheme r =
+      (AlgebraicGeometry.hopfSpec (CommRingCat.of ℤ)).obj
+        (Opposite.op (carrierCoordinateHopfAlgebra r)) := rfl
+
+/-- Algebra-valued points of the carrier, transported to scheme-valued points. -/
+private noncomputable def groupSchemePointMulEquiv (A : Type) [CommRing A] :
+    WithConv (carrierCoordinateHopfAlgebra r →ₐ[ℤ] A) ≃*
+      ((Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of ℤ)) ⟶ (groupScheme r).X) :=
+  CommHopfAlgCat.mapMulEquivOfPresentation (carrierCoordinateHopfAlgebra r) A
+    (groupScheme_eq_hopfSpec r)
+
+private theorem groupSchemePointMulEquiv_apply_left {A : Type} [CommRing A]
+    (q : WithConv (carrierCoordinateHopfAlgebra r →ₐ[ℤ] A)) :
+    (groupSchemePointMulEquiv r A q).left =
+      Spec.map (CommRingCat.ofHom q.ofConv.toRingHom) ≫
+        eqToHom (congrArg
+          (fun K : Grp (Over (Spec (CommRingCat.of ℤ))) => K.X.left)
+          (groupScheme_eq_hopfSpec r)).symm := by
+  simpa only [groupSchemePointMulEquiv] using
+    CommHopfAlgCat.mapMulEquivOfPresentation_apply_left
+      (carrierCoordinateHopfAlgebra r) A (groupScheme_eq_hopfSpec r)
+      (congrArg (fun K : Grp (Over (Spec (CommRingCat.of ℤ))) => K.X.left)
+        (groupScheme_eq_hopfSpec r)) q
+
+private theorem groupSchemePointMulEquiv_comp_graphAutomorphism
+    {A : Type} [CommRing A]
+    (q : WithConv (carrierCoordinateHopfAlgebra r →ₐ[ℤ] A)) :
+    groupSchemePointMulEquiv r A q ≫ (graphAutomorphism r).hom.hom.hom =
+      groupSchemePointMulEquiv r A
+        ((CommHopfAlgCat.mapPointsFunctor (graphCoordinateIso r).hom).app
+          (CommAlgCat.of ℤ A) q) := by
+  rw [graphAutomorphism, Functor.mapIso_hom, Iso.op_hom]
+  exact CommHopfAlgCat.pointMulEquivOfPresentation_mapDomain
+    (R := ℤ) A (groupScheme_eq_hopfSpec r) (groupScheme_eq_hopfSpec r)
+      (groupSchemePointMulEquiv r A) (groupSchemePointMulEquiv r A)
+      (groupSchemePointMulEquiv_apply_left r) (groupSchemePointMulEquiv_apply_left r)
+      (graphCoordinateIso r).hom q
+
+private theorem groupSchemePointMulEquiv_comp_carrierι
+    {A : Type} [CommRing A]
+    (q : WithConv (carrierCoordinateHopfAlgebra r →ₐ[ℤ] A)) :
+    groupSchemePointMulEquiv r A q ≫ (carrierι r).hom.hom =
+      GeneralLinear.groupSchemePointMulEquiv (r + 1) A
+        ((CommHopfAlgCat.mapPointsFunctor
+          (CommHopfAlgCat.mkQuotient (GeneralLinear.coordinateHopfAlgebra ℤ (r + 1))
+            (definingIdeal r))).app (CommAlgCat.of ℤ A) q) := by
+  rw [carrierι_def, kostantToralGroupSchemeι_def, CommHopfAlgCat.quotientSpecι_def]
+  exact CommHopfAlgCat.pointMulEquivOfPresentation_mapDomain
+    (R := ℤ) A (GeneralLinear.groupScheme_def ℤ (r + 1)) rfl
+      (GeneralLinear.groupSchemePointMulEquiv (r + 1) A) (groupSchemePointMulEquiv r A)
+      (GeneralLinear.groupSchemePointMulEquiv_apply_left (r + 1) A)
+      (groupSchemePointMulEquiv_apply_left r)
+      (CommHopfAlgCat.mkQuotient (GeneralLinear.coordinateHopfAlgebra ℤ (r + 1))
+        (definingIdeal r)) q
+
+/-- On every algebra-valued carrier point, the graph automorphism is signed
+reverse-inverse-transpose after the canonical inclusion into `GL_{r+1}`. -/
+theorem schemePointsMulEquiv_comp_graphAutomorphism {A : Type} [CommRing A]
+    (p : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of ℤ)) ⟶ (groupScheme r).X) :
+    GeneralLinear.schemePointsMulEquiv (r + 1) A
+        ((p ≫ (graphAutomorphism r).hom.hom.hom) ≫ (carrierι r).hom.hom) =
+      TauCeti.typeAGraphAutomorphism r A
+        (GeneralLinear.schemePointsMulEquiv (r + 1) A (p ≫ (carrierι r).hom.hom)) := by
+  obtain ⟨q, rfl⟩ := (groupSchemePointMulEquiv r A).surjective p
+  have hgraph := groupSchemePointMulEquiv_comp_graphAutomorphism r q
+  have hinclusion := groupSchemePointMulEquiv_comp_carrierι r q
+  have hgraphCarrier := congrArg (fun f => f ≫ (carrierι r).hom.hom) hgraph
+  have hinclusionGraph := groupSchemePointMulEquiv_comp_carrierι (A := A) r
+    ((CommHopfAlgCat.mapPointsFunctor (graphCoordinateIso r).hom).app (CommAlgCat.of ℤ A) q)
+  rw [hgraphCarrier, hinclusionGraph,
+    CommHopfAlgCat.mapPointsFunctor_app_apply, CommHopfAlgCat.mapPointsFunctor_app_apply,
+    GeneralLinear.schemePointsMulEquiv_groupSchemePointMulEquiv,
+    hinclusion, CommHopfAlgCat.mapPointsFunctor_app_apply,
+    GeneralLinear.schemePointsMulEquiv_groupSchemePointMulEquiv,
+    WithConv.ofConv_toConv]
+  let qambient : HopfAlgebra.points
+      (R := ℤ) (H := GeneralLinear.coordinateHopfAlgebra ℤ (r + 1)) (CommAlgCat.of ℤ A) :=
+    toConv (q.ofConv.comp
+      (CommHopfAlgCat.mkQuotient (GeneralLinear.coordinateHopfAlgebra ℤ (r + 1))
+        (definingIdeal r)).hom.toAlgHom)
+  have hpoint :
+      toConv ((q.ofConv.comp (graphCoordinateIso r).hom.hom.toAlgHom).comp
+        (CommHopfAlgCat.mkQuotient (GeneralLinear.coordinateHopfAlgebra ℤ (r + 1))
+          (definingIdeal r)).hom.toAlgHom) =
+        toConv (qambient.ofConv.comp (ambientGraphCoordinateIso r).hom.hom.toAlgHom) := by
+    apply WithConv.ofConv_injective
+    ext z
+    have hz := congrArg (fun f => q.ofConv (f.hom z))
+      (mkQuotient_comp_graphCoordinateIso_hom r)
+    exact hz
+  rw [hpoint]
+  convert pointsMulEquiv_comp_ambientGraphCoordinateIso r (CommAlgCat.of ℤ A) qambient using 1
 
 /-- The graph automorphism reverses the Bourbaki numbering of every positive and negative simple
 root subgroup, without changing its additive parameter. -/
@@ -564,5 +702,49 @@ theorem weightTorus_comp_graphAutomorphism_hom :
     ← Functor.map_comp, ← op_comp, graphCoordinateIso_hom_comp_torusMap, op_comp,
     Functor.map_comp, SplitTorus.relabel_def]
   simp only [Category.assoc, eqToHom_trans_assoc, eqToHom_refl, Category.id_comp]
+
+/-- Applying the graph automorphism twice is the identity on the standard carrier. -/
+@[simp]
+theorem graphAutomorphism_hom_comp_hom :
+    (graphAutomorphism r).hom ≫ (graphAutomorphism r).hom = 𝟙 (groupScheme r) := by
+  apply TauCeti.UniversalEnvelopingAlgebra.kostantToralGroupScheme_hom_ext
+    (rootGenerator r) (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
+    (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv)
+    (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r)
+  · intro k
+    rw [← rootSubgroup_def]
+    have h₁ := rootSubgroup_comp_graphAutomorphism_hom r k
+    have h₂ := rootSubgroup_comp_graphAutomorphism_hom r (graphRootPerm r k)
+    calc
+      rootSubgroup r k ≫ ((graphAutomorphism r).hom ≫ (graphAutomorphism r).hom) =
+          (rootSubgroup r k ≫ (graphAutomorphism r).hom) ≫
+            (graphAutomorphism r).hom := (Category.assoc _ _ _).symm
+      _ = rootSubgroup r (graphRootPerm r k) ≫ (graphAutomorphism r).hom := by rw [h₁]
+      _ = rootSubgroup r (graphRootPerm r (graphRootPerm r k)) := h₂
+      _ = rootSubgroup r k := by rw [graphRootPerm_apply_apply]
+      _ = rootSubgroup r k ≫ 𝟙 (groupScheme r) := (Category.comp_id _).symm
+  · rw [← weightTorus_def]
+    have htorus := weightTorus_comp_graphAutomorphism_hom r
+    calc
+      weightTorus r ≫ ((graphAutomorphism r).hom ≫ (graphAutomorphism r).hom) =
+          (weightTorus r ≫ (graphAutomorphism r).hom) ≫
+            (graphAutomorphism r).hom := (Category.assoc _ _ _).symm
+      _ = (SplitTorus.relabel ℤ Fin.revPerm ≫ weightTorus r) ≫
+          (graphAutomorphism r).hom := by rw [htorus]
+      _ = SplitTorus.relabel ℤ Fin.revPerm ≫
+          (weightTorus r ≫ (graphAutomorphism r).hom) := Category.assoc _ _ _
+      _ = SplitTorus.relabel ℤ Fin.revPerm ≫
+          (SplitTorus.relabel ℤ Fin.revPerm ≫ weightTorus r) := by rw [htorus]
+      _ = (SplitTorus.relabel ℤ Fin.revPerm ≫ SplitTorus.relabel ℤ Fin.revPerm) ≫
+          weightTorus r := (Category.assoc _ _ _).symm
+      _ = SplitTorus.relabel ℤ
+            ((Fin.revPerm : Equiv.Perm (Fin r)) * Fin.revPerm) ≫ weightTorus r := by
+        rw [SplitTorus.relabel_comp]
+      _ = weightTorus r := by
+        have hrev : (Fin.revPerm : Equiv.Perm (Fin r)) * Fin.revPerm = 1 := by
+          ext i
+          simp
+        rw [hrev, SplitTorus.relabel_one, Category.id_comp]
+      _ = weightTorus r ≫ 𝟙 (groupScheme r) := (Category.comp_id _).symm
 
 end TauCeti.SlStd
