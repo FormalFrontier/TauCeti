@@ -47,7 +47,7 @@ variable {X : Type*} [NormedAddCommGroup X] [NormedSpace ℝ X]
 
 /-- The exponential of a real scalar multiple of a bounded operator satisfies
 `‖exp (t A)‖ ≤ exp (‖A‖ |t|)`. -/
-theorem norm_exp_smul_le [CompleteSpace X] (A : X →L[ℝ] X) (t : ℝ) :
+theorem norm_exp_smul_le (A : X →L[ℝ] X) (t : ℝ) :
     ‖exp (t • A)‖ ≤ Real.exp (‖A‖ * |t|) := by
   let +nondep : NormedAlgebra ℚ (X →L[ℝ] X) := .restrictScalars ℚ ℝ _
   calc
