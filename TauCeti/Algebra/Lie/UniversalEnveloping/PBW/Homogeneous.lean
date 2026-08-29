@@ -6,17 +6,18 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Lie.UniversalEnveloping.PBW.AssociatedGraded
+public import TauCeti.LinearAlgebra.SymmetricAlgebra.Homogeneous
 
 /-!
 # Homogeneous pieces of the PBW map
 
-The degree-`n` homogeneous part of a symmetric algebra is the span of products of exactly `n`
-canonical generators. For a Lie algebra `L` over a commutative ring `R`, the canonical map
+The degree-`n` homogeneous part of a symmetric algebra is the `n`-th power of the range of its
+canonical generator map. For a Lie algebra `L` over a commutative ring `R`, the canonical map
 
 `SymmetricAlgebra R L →ₐ[R] gr U(L)`
 
-sends this submodule into the `n`-th PBW graded piece. This file packages the resulting
-degreewise linear map and proves that it is surjective.
+sends this submodule into the `n`-th PBW graded piece. This file packages the resulting degreewise
+linear map, proves that it is surjective, and deduces surjectivity of the ambient map.
 
 The proof uses the spanning half of PBW. A word of length exactly `n` maps to the corresponding
 product of degree-one classes. A shorter word represents zero in the `n`-th successive quotient.
@@ -29,13 +30,13 @@ degree by degree, while retaining the global associated-graded map.
 
 ## Main definitions and results
 
-* `TauCeti.UniversalEnvelopingAlgebra.symmetricHomogeneousSubmodule`: the span of products of
-  exactly `n` symmetric-algebra generators, for a module over a commutative semiring.
 * `TauCeti.UniversalEnvelopingAlgebra.pbwHomogeneousComponentMap`: the degreewise PBW map.
 * `TauCeti.UniversalEnvelopingAlgebra.pbwAssociatedGradedMap_apply_homogeneous`: a homogeneous
   element maps to the corresponding direct-sum component.
 * `TauCeti.UniversalEnvelopingAlgebra.pbwHomogeneousComponentMap_surjective`: every PBW graded
   piece has a homogeneous symmetric representative of the same degree.
+* `TauCeti.UniversalEnvelopingAlgebra.pbwAssociatedGradedMap_surjective`: the canonical map is
+  onto.
 
 ## References
 
@@ -54,34 +55,9 @@ namespace TauCeti.UniversalEnvelopingAlgebra
 
 open TauCeti.Algebra
 open TauCeti.Algebra.wordFiltration
+open TauCeti.SymmetricAlgebra
 
 universe u v
-
-section Symmetric
-
-variable (R : Type u) (L : Type v) [CommSemiring R] [AddCommMonoid L] [Module R L]
-
-/-- The degree-`n` homogeneous part of `SymmetricAlgebra R L`: the span of products of exactly
-`n` canonical generators. -/
-noncomputable def symmetricHomogeneousSubmodule (n : ℕ) :
-    Submodule R (SymmetricAlgebra R L) :=
-  Submodule.span R {p | ∃ l : List L, l.length = n ∧
-    (l.map (SymmetricAlgebra.ι R L)).prod = p}
-
-/-- The degree-`n` homogeneous submodule is the span of the products of `n` generators. -/
-theorem symmetricHomogeneousSubmodule_def (n : ℕ) :
-    symmetricHomogeneousSubmodule R L n =
-      Submodule.span R {p | ∃ l : List L, l.length = n ∧
-        (l.map (SymmetricAlgebra.ι R L)).prod = p} := (rfl)
-
-/-- A product of `n` symmetric-algebra generators belongs to the degree-`n` homogeneous
-submodule. -/
-theorem prod_map_ι_mem_symmetricHomogeneousSubmodule (l : List L) :
-    (l.map (SymmetricAlgebra.ι R L)).prod ∈
-      symmetricHomogeneousSubmodule R L l.length :=
-  Submodule.subset_span ⟨l, rfl, rfl⟩
-
-end Symmetric
 
 variable (R : Type u) (L : Type v) [CommRing R] [LieRing L] [LieAlgebra R L]
 
@@ -89,35 +65,13 @@ attribute [local instance 100] LieRing.ofAssociativeRing
 
 local notation "U" => _root_.UniversalEnvelopingAlgebra R L
 
-/-- The canonical map sends a product of symmetric-algebra generators to the class of the
-corresponding word of Lie generators, in the degree given by the length of the word. -/
-theorem pbwAssociatedGradedMap_prod_map_ι (l : List L) :
-    pbwAssociatedGradedMap R L (l.map (SymmetricAlgebra.ι R L)).prod =
-      DirectSum.of (PBWGradedPiece R L) l.length
-        (Submodule.Quotient.mk
-          (⟨(l.map (_root_.UniversalEnvelopingAlgebra.ι R)).prod,
-            prod_map_mem_wordFiltration
-              (_root_.UniversalEnvelopingAlgebra.ι R (L := L)).toLinearMap le_rfl⟩ :
-            wordFiltration
-              (_root_.UniversalEnvelopingAlgebra.ι R (L := L)).toLinearMap l.length)) := by
-  rw [map_list_prod]
-  have hlist : List.map (pbwAssociatedGradedMap R L)
-        (l.map (SymmetricAlgebra.ι R L)) =
-      l.map (pbwGradedGenerator R L) := by
-    rw [List.map_map]
-    apply List.map_congr_left
-    intro x _
-    exact pbwAssociatedGradedMap_ι R L x
-  rw [hlist, prod_map_pbwGradedGenerator]
-
-private theorem pbwMap_isHomogeneous (n : ℕ)
-    (p : symmetricHomogeneousSubmodule R L n) :
+private theorem pbwMap_isHomogeneous (n : ℕ) (p : homogeneousSubmodule R L n) :
     ∃ x : PBWGradedPiece R L n,
       pbwAssociatedGradedMap R L p = DirectSum.of (PBWGradedPiece R L) n x := by
   have hp : (p : SymmetricAlgebra R L) ∈
       Submodule.span R {q | ∃ l : List L, l.length = n ∧
         (l.map (SymmetricAlgebra.ι R L)).prod = q} := by
-    rw [← symmetricHomogeneousSubmodule_def]
+    rw [← homogeneousSubmodule_eq_span]
     exact p.property
   refine Submodule.span_induction (p := fun a _ ↦
     ∃ x : PBWGradedPiece R L n,
@@ -138,17 +92,16 @@ private theorem pbwMap_isHomogeneous (n : ℕ)
 /-- The degree-`n` component of the canonical PBW map. Its source is the homogeneous symmetric
 submodule, and its target is the `n`-th PBW graded quotient. -/
 noncomputable def pbwHomogeneousComponentMap (n : ℕ) :
-    symmetricHomogeneousSubmodule R L n →ₗ[R] PBWGradedPiece R L n :=
+    homogeneousSubmodule R L n →ₗ[R] PBWGradedPiece R L n :=
   (DirectSum.component R ℕ (PBWGradedPiece R L) n).comp <|
     (pbwAssociatedGradedMap R L).toLinearMap.comp
-      (symmetricHomogeneousSubmodule R L n).subtype
+      (homogeneousSubmodule R L n).subtype
 
 /-- The degree-`n` component map is the `n`-th direct-sum component of the canonical PBW map.
 
 This is not a `simp` lemma: together with `pbwAssociatedGradedMap_apply_homogeneous`, which
 rewrites in the opposite direction, it would cycle. -/
-theorem pbwHomogeneousComponentMap_apply (n : ℕ)
-    (p : symmetricHomogeneousSubmodule R L n) :
+theorem pbwHomogeneousComponentMap_apply (n : ℕ) (p : homogeneousSubmodule R L n) :
     pbwHomogeneousComponentMap R L n p =
       DirectSum.component R ℕ (PBWGradedPiece R L) n
         (pbwAssociatedGradedMap R L p) := (rfl)
@@ -156,8 +109,7 @@ theorem pbwHomogeneousComponentMap_apply (n : ℕ)
 /-- A homogeneous symmetric element maps to the direct-sum inclusion of its degreewise PBW
 component. -/
 @[simp]
-theorem pbwAssociatedGradedMap_apply_homogeneous (n : ℕ)
-    (p : symmetricHomogeneousSubmodule R L n) :
+theorem pbwAssociatedGradedMap_apply_homogeneous (n : ℕ) (p : homogeneousSubmodule R L n) :
     pbwAssociatedGradedMap R L p =
       DirectSum.of (PBWGradedPiece R L) n (pbwHomogeneousComponentMap R L n p) := by
   obtain ⟨x, hx⟩ := pbwMap_isHomogeneous R L n p
@@ -170,7 +122,7 @@ of the corresponding word of Lie generators. -/
 theorem pbwHomogeneousComponentMap_prod_map_ι (l : List L) :
     pbwHomogeneousComponentMap R L l.length
         ⟨(l.map (SymmetricAlgebra.ι R L)).prod,
-          prod_map_ι_mem_symmetricHomogeneousSubmodule R L l⟩ =
+          prod_map_ι_mem_homogeneousSubmodule R L l⟩ =
       Submodule.Quotient.mk
         (⟨(l.map (_root_.UniversalEnvelopingAlgebra.ι R)).prod,
           prod_map_mem_wordFiltration
@@ -186,16 +138,28 @@ theorem pbwHomogeneousComponentMap_surjective (n : ℕ) :
     Function.Surjective (pbwHomogeneousComponentMap R L n) := by
   intro x
   have hx : x ∈ (pbwHomogeneousComponentMap R L n).range := by
-    induction x using pbwGradedPiece_induction_on with
+    induction x using gradedPiece_induction_on with
     | word l hl =>
-        rcases hl.eq_or_lt with hl | hl
-        · subst n
-          exact ⟨_, pbwHomogeneousComponentMap_prod_map_ι R L l⟩
-        · rw [mk_prod_map_ι_eq_zero_of_length_lt R L hl]
-          exact (pbwHomogeneousComponentMap R L n).range.zero_mem
+        subst n
+        exact ⟨_, pbwHomogeneousComponentMap_prod_map_ι R L l⟩
     | zero => exact (pbwHomogeneousComponentMap R L n).range.zero_mem
     | add x y hx hy => exact (pbwHomogeneousComponentMap R L n).range.add_mem hx hy
     | smul r x hx => exact (pbwHomogeneousComponentMap R L n).range.smul_mem r hx
+  exact hx
+
+/-- The canonical map from the symmetric algebra onto the PBW associated graded is surjective. It
+is enough to hit each homogeneous generator of the direct sum, which is the degreewise statement. -/
+theorem pbwAssociatedGradedMap_surjective :
+    Function.Surjective (pbwAssociatedGradedMap R L) := by
+  intro x
+  have hx : x ∈ (pbwAssociatedGradedMap R L).range := by
+    induction x using DirectSum.induction_on with
+    | zero => exact (pbwAssociatedGradedMap R L).range.zero_mem
+    | of n y =>
+        obtain ⟨p, rfl⟩ := pbwHomogeneousComponentMap_surjective R L n y
+        exact ⟨(p : SymmetricAlgebra R L),
+          pbwAssociatedGradedMap_apply_homogeneous R L n p⟩
+    | add x y hx hy => exact (pbwAssociatedGradedMap R L).range.add_mem hx hy
   exact hx
 
 end TauCeti.UniversalEnvelopingAlgebra

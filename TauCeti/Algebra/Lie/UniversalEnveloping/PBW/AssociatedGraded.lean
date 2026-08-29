@@ -23,9 +23,10 @@ classes factors through `SymmetricAlgebra R L`. This file constructs the resulti
 
 `SymmetricAlgebra R L →ₐ[R] gr U(L)`
 
-and proves that it is surjective. Surjectivity is the spanning half of PBW read in the associated
-graded: every filtered word of degree strictly below its ambient graded piece vanishes, while a
-word of exact degree is a product of degree-one classes.
+and computes it on products of generators: a product of `n` symmetric generators is the degree-`n`
+class of the corresponding word of Lie generators. That computation is the spanning half of PBW
+read in the associated graded; it is turned into surjectivity, degree by degree, in
+`TauCeti.Algebra.Lie.UniversalEnveloping.PBW.Homogeneous`.
 
 Under the standard hypotheses ensuring PBW over a commutative ring, such as projectivity of `L` as
 an `R`-module, injectivity of this map is the remaining PBW theorem. Once established in the
@@ -44,10 +45,8 @@ decomposition and the construction of Verma modules.
   map to `gr U(L)`.
 * `TauCeti.UniversalEnvelopingAlgebra.prod_map_pbwGradedGenerator`: a product of degree-one
   classes is the class of the corresponding word.
-* `TauCeti.UniversalEnvelopingAlgebra.pbwGradedPiece_induction_on`: the classes of words of
-  length at most `k` span the degree-`k` graded piece.
-* `TauCeti.UniversalEnvelopingAlgebra.pbwAssociatedGradedMap_surjective`: the canonical map is
-  onto.
+* `TauCeti.UniversalEnvelopingAlgebra.pbwAssociatedGradedMap_prod_map_ι`: the canonical map sends
+  a product of symmetric generators to the class of the corresponding word.
 
 ## References
 
@@ -255,100 +254,25 @@ theorem prod_map_pbwGradedGenerator (l : List L) :
         sub_self]
       exact Submodule.zero_mem _
 
-/-- A word of length strictly below `k` has zero class in the degree-`k` PBW graded piece. -/
-theorem mk_prod_map_ι_eq_zero_of_length_lt {k : ℕ} {l : List L} (hl : l.length < k) :
-    (Submodule.Quotient.mk
-        (⟨(l.map (_root_.UniversalEnvelopingAlgebra.ι R)).prod,
-          prod_map_mem_wordFiltration
-            (_root_.UniversalEnvelopingAlgebra.ι R : L →ₗ⁅R⁆ U).toLinearMap hl.le⟩ :
-          wordFiltration
-            (_root_.UniversalEnvelopingAlgebra.ι R : L →ₗ⁅R⁆ U).toLinearMap k) :
-        PBWGradedPiece R L k) = 0 := by
-  rw [Submodule.Quotient.mk_eq_zero, mem_previousRestricted_iff,
-    ← pbwFiltrationPrevious_def R L]
-  cases k with
-  | zero => omega
-  | succ k =>
-      rw [pbwFiltrationPrevious_succ]
-      exact prod_map_ι_mem_pbwFiltration R L (Nat.lt_succ_iff.mp hl)
-
-/-- **Words span the PBW graded pieces.** To prove a statement about every element of the
-degree-`k` PBW graded piece it suffices to treat the classes of words of length at most `k`, and
-to check that the statement is closed under zero, addition and scalar multiplication. -/
-@[elab_as_elim]
-theorem pbwGradedPiece_induction_on {k : ℕ} {motive : PBWGradedPiece R L k → Prop}
-    (x : PBWGradedPiece R L k)
-    (word : ∀ (l : List L) (hl : l.length ≤ k),
-      motive (Submodule.Quotient.mk
-        (⟨(l.map (_root_.UniversalEnvelopingAlgebra.ι R)).prod,
-          prod_map_mem_wordFiltration
-            (_root_.UniversalEnvelopingAlgebra.ι R : L →ₗ⁅R⁆ U).toLinearMap hl⟩ :
-          wordFiltration
-            (_root_.UniversalEnvelopingAlgebra.ι R : L →ₗ⁅R⁆ U).toLinearMap k)))
-    (zero : motive 0) (add : ∀ x y, motive x → motive y → motive (x + y))
-    (smul : ∀ (r : R) x, motive x → motive (r • x)) : motive x := by
-  induction x using Submodule.Quotient.induction_on with
-  | _ x =>
-      let f : L →ₗ[R] U :=
-        (_root_.UniversalEnvelopingAlgebra.ι R : L →ₗ⁅R⁆ U).toLinearMap
-      let s : Submodule R U := Submodule.span R {a | ∃ l : List L, l.length ≤ k ∧
-        (l.map fun z => f z).prod = a}
-      have hid : Submodule.span R (Set.range (id : L → L)) = ⊤ := by
-        rw [Set.range_id, Submodule.span_univ]
-      have hs : s = wordFiltration f k := by
-        simpa only [id_eq] using span_prod_map_eq_wordFiltration f id hid k
-      -- The word span and the filtration step agree, so it is enough to induct on the span.
-      have key : ∀ (a : U) (ha : a ∈ s),
-          motive (Submodule.Quotient.mk (⟨a, hs ▸ ha⟩ : wordFiltration f k)) := by
-        intro a ha
-        refine Submodule.span_induction (p := fun a ha =>
-          motive (Submodule.Quotient.mk (⟨a, hs ▸ ha⟩ : wordFiltration f k))) ?_ ?_ ?_ ?_ ha
-        · rintro a ⟨l, hl, rfl⟩
-          exact word l hl
-        · exact zero
-        · exact fun a b _ _ ha hb => add _ _ ha hb
-        · exact fun r a _ ha => smul r _ ha
-      have hx : (x : U) ∈ s := by
-        rw [hs]
-        exact x.property
-      exact key (x : U) hx
-
-/-- The canonical map from the symmetric algebra onto the PBW associated graded is surjective. -/
-theorem pbwAssociatedGradedMap_surjective :
-    Function.Surjective (pbwAssociatedGradedMap R L) := by
-  intro x
-  have hx : x ∈ (pbwAssociatedGradedMap R L).range := by
-    induction x using DirectSum.induction_on with
-    | zero => exact (pbwAssociatedGradedMap R L).range.zero_mem
-    | of k x =>
-        induction x using pbwGradedPiece_induction_on with
-        | word l hl =>
-            rcases hl.eq_or_lt with hl | hl
-            · subst k
-              refine ⟨(l.map (SymmetricAlgebra.ι R L)).prod, ?_⟩
-              rw [map_list_prod]
-              have hlist : List.map (pbwAssociatedGradedMap R L).toRingHom
-                    (l.map (SymmetricAlgebra.ι R L)) =
-                  l.map (pbwGradedGenerator R L) := by
-                rw [List.map_map]
-                apply List.map_congr_left
-                intro z _
-                exact pbwAssociatedGradedMap_ι R L z
-              rw [hlist, prod_map_pbwGradedGenerator]
-            · rw [mk_prod_map_ι_eq_zero_of_length_lt R L hl, map_zero]
-              exact (pbwAssociatedGradedMap R L).range.zero_mem
-        | zero =>
-            rw [map_zero]
-            exact (pbwAssociatedGradedMap R L).range.zero_mem
-        | add x y hx hy =>
-            rw [map_add]
-            exact (pbwAssociatedGradedMap R L).range.add_mem hx hy
-        | smul r x hx =>
-            have hof : DirectSum.of (PBWGradedPiece R L) k (r • x) =
-                r • DirectSum.of (PBWGradedPiece R L) k x := DirectSum.of_smul R k r x
-            rw [hof]
-            exact (pbwAssociatedGradedMap R L).range.smul_mem hx r
-    | add x y hx hy => exact (pbwAssociatedGradedMap R L).range.add_mem hx hy
-  exact hx
+/-- The canonical map sends a product of symmetric-algebra generators to the class of the
+corresponding word of Lie generators, in the degree given by the length of the word. -/
+theorem pbwAssociatedGradedMap_prod_map_ι (l : List L) :
+    pbwAssociatedGradedMap R L (l.map (SymmetricAlgebra.ι R L)).prod =
+      DirectSum.of (PBWGradedPiece R L) l.length
+        (Submodule.Quotient.mk
+          (⟨(l.map (_root_.UniversalEnvelopingAlgebra.ι R)).prod,
+            prod_map_mem_wordFiltration
+              (_root_.UniversalEnvelopingAlgebra.ι R : L →ₗ⁅R⁆ U).toLinearMap le_rfl⟩ :
+            wordFiltration
+              (_root_.UniversalEnvelopingAlgebra.ι R : L →ₗ⁅R⁆ U).toLinearMap l.length)) := by
+  rw [map_list_prod]
+  have hlist : List.map (pbwAssociatedGradedMap R L)
+        (l.map (SymmetricAlgebra.ι R L)) =
+      l.map (pbwGradedGenerator R L) := by
+    rw [List.map_map]
+    apply List.map_congr_left
+    intro x _
+    exact pbwAssociatedGradedMap_ι R L x
+  rw [hlist, prod_map_pbwGradedGenerator]
 
 end TauCeti.UniversalEnvelopingAlgebra

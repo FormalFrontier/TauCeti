@@ -46,6 +46,10 @@ Its graded-algebra packaging adapts the pattern in Mathlib's
   `gradedGMonoid`, `gradedGRing`, `gradedGSemiring` and
   `gradedGAlgebra`, culminating in
   `TauCeti.Algebra.wordFiltration.associatedGradedRing`, the ring structure on the direct sum.
+* `TauCeti.Algebra.wordFiltration.mk_prod_map_eq_zero_of_length_lt`: a word of length strictly
+  below `k` has zero class in degree `k`.
+* `TauCeti.Algebra.wordFiltration.gradedPiece_induction_on`: the classes of words of length
+  exactly `k` span the degree-`k` graded piece.
 
 ## Roadmap
 
@@ -547,5 +551,69 @@ homogeneous product. -/
     (DirectSum.of (GradedPiece f) i x * DirectSum.of (GradedPiece f) j y : AssociatedGraded f) =
       DirectSum.of (GradedPiece f) (i + j) (gradedMul f i j x y) := by
   rw [DirectSum.of_mul_of, gradedGMul_mul]
+
+/-- The degree-`k` class of a filtered element depends only on its value in the ambient algebra.
+In particular two different membership proofs give the same class. -/
+theorem gradedPiece_mk_eq_mk (f : M →ₗ[R] A) {k : ℕ} {a b : A}
+    (ha : a ∈ wordFiltration f k) (hb : b ∈ wordFiltration f k) (hab : a = b) :
+    (Submodule.Quotient.mk ⟨a, ha⟩ : GradedPiece f k) = Submodule.Quotient.mk ⟨b, hb⟩ :=
+  congrArg Submodule.Quotient.mk (Subtype.ext hab)
+
+/-- A word of length strictly below `k` has zero class in the degree-`k` graded piece. -/
+theorem mk_prod_map_eq_zero_of_length_lt (f : M →ₗ[R] A) {k : ℕ} {l : List M}
+    (hl : l.length < k) :
+    (Submodule.Quotient.mk
+        (⟨(l.map f).prod, prod_map_mem_wordFiltration f hl.le⟩ : wordFiltration f k) :
+      GradedPiece f k) = 0 := by
+  rw [Submodule.Quotient.mk_eq_zero, mem_previousRestricted_iff]
+  cases k with
+  | zero => omega
+  | succ k =>
+      rw [wordFiltrationPrevious_succ]
+      exact prod_map_mem_wordFiltration f (Nat.lt_succ_iff.mp hl)
+
+/-- **Words span the graded pieces.** To prove a statement about every element of the degree-`k`
+graded piece of a word filtration it suffices to treat the classes of words of length exactly `k`,
+and to check that the statement is closed under zero, addition and scalar multiplication. Shorter
+words are covered by the zero case, since their classes vanish in degree `k`. -/
+@[elab_as_elim]
+theorem gradedPiece_induction_on (f : M →ₗ[R] A) {k : ℕ}
+    {motive : GradedPiece f k → Prop} (x : GradedPiece f k)
+    (word : ∀ (l : List M) (hl : l.length = k),
+      motive (Submodule.Quotient.mk
+        (⟨(l.map f).prod, prod_map_mem_wordFiltration f hl.le⟩ : wordFiltration f k)))
+    (zero : motive 0) (add : ∀ x y, motive x → motive y → motive (x + y))
+    (smul : ∀ (r : R) x, motive x → motive (r • x)) : motive x := by
+  induction x using Submodule.Quotient.induction_on with
+  | _ x =>
+      let s : Submodule R A :=
+        Submodule.span R {a | ∃ l : List M, l.length ≤ k ∧ (l.map f).prod = a}
+      have hid : Submodule.span R (Set.range (id : M → M)) = ⊤ := by
+        rw [Set.range_id, Submodule.span_univ]
+      have hs : s = wordFiltration f k := by
+        simpa only [id_eq] using span_prod_map_eq_wordFiltration f id hid k
+      -- The word span and the filtration step agree, so it is enough to induct on the span.
+      have key : ∀ (a : A) (ha : a ∈ s),
+          motive (Submodule.Quotient.mk (⟨a, hs ▸ ha⟩ : wordFiltration f k)) := by
+        intro a ha
+        refine Submodule.span_induction (p := fun a ha =>
+          motive (Submodule.Quotient.mk (⟨a, hs ▸ ha⟩ : wordFiltration f k))) ?_ ?_ ?_ ?_ ha
+        · rintro a ⟨l, hl, rfl⟩
+          -- Replace the transported membership proof by the one the hypotheses are stated with.
+          rw [gradedPiece_mk_eq_mk f _ (prod_map_mem_wordFiltration f hl) rfl]
+          rcases hl.eq_or_lt with hlen | hlen
+          · exact word l hlen
+          · rw [gradedPiece_mk_eq_mk f _ (prod_map_mem_wordFiltration f hlen.le) rfl,
+              mk_prod_map_eq_zero_of_length_lt f hlen]
+            exact zero
+        · exact zero
+        · exact fun a b _ _ ha hb => add _ _ ha hb
+        · exact fun r a _ ha => smul r _ ha
+      have hx : (x : A) ∈ s := by
+        rw [hs]
+        exact x.property
+      have hmotive := key (x : A) hx
+      -- The reassembled representative is the original one, by eta for the filtration subtype.
+      rwa [Subtype.coe_eta] at hmotive
 
 end TauCeti.Algebra.wordFiltration
