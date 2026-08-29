@@ -376,7 +376,8 @@ theorem f4SpecialIsogeny_comp_self :
 
 /-- **The powers of the special isogeny of `F₄` square to the powers of two.** At `n = 2 * m + 1`
 this is the root-datum form of the square relation satisfied by the Steinberg endomorphism whose
-fixed points are the Ree group `²F₄(2 ^ (2 * m + 1))`; at `n = 1` it belongs to the Tits group. -/
+fixed points are the Ree group `²F₄(2 ^ (2 * m + 1))`; at `n = 1` it underlies `²F₄(2)`, whose
+derived subgroup is the Tits group. -/
 theorem f4SpecialIsogeny_pow_mul_self (n : ℕ) :
     f4SpecialIsogeny ^ n * f4SpecialIsogeny ^ n =
       RootPairingIsogeny.smulId f4SimplyConnectedRootDatum (2 ^ n) :=

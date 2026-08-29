@@ -30,9 +30,11 @@ of `steinberg (m) ^ 2 = Frob_(p ^ (2 * m + 1))` for `steinberg (m) = τ ^ (2 * m
 for every `n`, since the restriction to odd exponents belongs to the finite-group construction and
 not to this identity.
 
-The weight map and the index bijection are monoid homomorphisms out of this monoid; the coweight
-map is only an anti-homomorphism, since `comp` reverses on that component, but its powers still
-follow the weight map's, because the two factors of `f ^ n` are the same map.
+All three of the weight map, the coweight map and the index bijection are monoid homomorphisms out
+of this monoid, the coweight map into the opposite endomorphism monoid because `comp` reverses on
+that component. This is the same shape as `RootPairing.Hom.weightHom`,
+`RootPairing.Hom.coweightHom` and `RootPairing.Hom.indexHom` for the endomorphism monoid of a root
+pairing, and the powers of all three components are `map_pow`.
 
 The same hypothesis also splits the powers themselves: an even power is a scaling, and an odd power
 is a scaling times `f`, so an odd power permutes the roots exactly as `f` does while multiplying
@@ -45,8 +47,9 @@ come from.
 
 * `TauCeti.RootPairingIsogeny.instMonoid`: the composition monoid of isogenies of a root pairing
   with itself.
-* `TauCeti.RootPairingIsogeny.weightHom` and `TauCeti.RootPairingIsogeny.indexHom`: the weight map
-  and the index bijection as monoid homomorphisms.
+* `TauCeti.RootPairingIsogeny.weightHom`, `TauCeti.RootPairingIsogeny.coweightHom` and
+  `TauCeti.RootPairingIsogeny.indexHom`: the weight map, the coweight map and the index bijection
+  as monoid homomorphisms, the coweight map into the opposite endomorphism monoid.
 * `TauCeti.RootPairingIsogeny.smulIdHom`: the scalings, as a monoid homomorphism out of `ℕ+`.
 
 ## Main results
@@ -123,7 +126,7 @@ theorem one_def : (1 : RootPairingIsogeny P P) = id P := (rfl)
 @[simp] theorem exponent_one (i : ι) : (1 : RootPairingIsogeny P P).exponent i = 1 :=
   id_exponent P i
 
-/-! ## The two multiplicative components -/
+/-! ## The multiplicative components -/
 
 /-- **The weight map of an isogeny, as a monoid homomorphism** into the endomorphism monoid of the
 weight space. -/
@@ -140,15 +143,25 @@ def weightHom (P : RootPairing ι R M N) : RootPairingIsogeny P P →* Module.En
     (f ^ n).weightMap = f.weightMap ^ n :=
   map_pow (weightHom P) f n
 
-/-- The coweight map of a power of an isogeny is the corresponding power of its coweight map.
-Composition reverses on the coweight component, so this is not an instance of a monoid
-homomorphism; but the two factors of `f ^ (n + 1)` are the same map, so the reversal is
-immaterial. -/
+/-- **The coweight map of an isogeny, as a monoid homomorphism** into the opposite of the
+endomorphism monoid of the coweight space. Composition reverses on this component, exactly as for
+`RootPairing.Hom.coweightHom`. -/
+def coweightHom (P : RootPairing ι R M N) : RootPairingIsogeny P P →* (Module.End R N)ᵐᵒᵖ where
+  toFun f := MulOpposite.op f.coweightMap
+  map_one' := by simp only [MulOpposite.op_eq_one_iff, coweightMap_one, Module.End.one_eq_id]
+  map_mul' f g := by
+    simp only [← MulOpposite.op_mul, coweightMap_mul, Module.End.mul_eq_comp]
+
+@[simp] theorem coweightHom_apply (f : RootPairingIsogeny P P) :
+    coweightHom P f = MulOpposite.op f.coweightMap := (rfl)
+
+/-- The coweight map of a power of an isogeny is the corresponding power of its coweight map. The
+reversal in `TauCeti.RootPairingIsogeny.coweightHom` is immaterial here, since the two factors of
+`f ^ (n + 1)` are the same map. -/
 @[simp] theorem coweightMap_pow (f : RootPairingIsogeny P P) (n : ℕ) :
-    (f ^ n).coweightMap = f.coweightMap ^ n := by
-  induction n with
-  | zero => simp [Module.End.one_eq_id]
-  | succ n ih => rw [pow_succ, coweightMap_mul, ih, pow_succ', Module.End.mul_eq_comp]
+    (f ^ n).coweightMap = f.coweightMap ^ n :=
+  MulOpposite.op_injective <| by
+    rw [MulOpposite.op_pow, ← coweightHom_apply, ← coweightHom_apply, map_pow]
 
 /-- **The index bijection of an isogeny, as a monoid homomorphism** into the permutation group of
 the index set. -/
