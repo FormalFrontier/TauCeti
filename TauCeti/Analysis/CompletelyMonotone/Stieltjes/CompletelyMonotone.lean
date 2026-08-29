@@ -116,8 +116,11 @@ theorem integrable_zpow_neg_one_sub_add (hμ : Integrable stieltjesWeight μ) (n
 
 private lemma integrable_stieltjesDerivKernel (hμ : Integrable stieltjesWeight μ) (n : ℕ)
     {t : ℝ} (ht : 0 < t) : Integrable (stieltjesDerivKernel n t) μ := by
-  change Integrable (fun x : ℝ≥0 =>
-    ((-1 : ℝ) ^ n * n.factorial) * (t + (x : ℝ)) ^ (-1 - (n : ℤ))) μ
+  have hkernel : stieltjesDerivKernel n t = fun x : ℝ≥0 =>
+      ((-1 : ℝ) ^ n * n.factorial) * (t + (x : ℝ)) ^ (-1 - (n : ℤ)) := by
+    funext x
+    simp only [stieltjesDerivKernel]
+  rw [hkernel]
   exact (integrable_zpow_neg_one_sub_add hμ n ht).const_mul
     ((-1 : ℝ) ^ n * n.factorial)
 
@@ -129,7 +132,8 @@ private lemma norm_stieltjesDerivKernel_le (n : ℕ) (x : ℝ≥0) {r t : ℝ}
   have htx : 0 < t + (x : ℝ) := lt_of_lt_of_le hrx hrtx
   have hbase : (t + (x : ℝ)) ^ (-1 - (n : ℤ)) ≤
       (r + (x : ℝ)) ^ (-1 - (n : ℤ)) := by
-    rw [show -1 - (n : ℤ) = -((n + 1 : ℕ) : ℤ) by omega]
+    have hexp : -1 - (n : ℤ) = -((n + 1 : ℕ) : ℤ) := by omega
+    rw [hexp]
     exact zpow_neg_le_zpow_neg hrx hrtx (n + 1)
   simp only [stieltjesDerivKernel, Real.norm_eq_abs, abs_mul,
     abs_of_pos (zpow_pos htx _), abs_of_pos (zpow_pos hrx _)]
@@ -261,6 +265,7 @@ namespace IsStieltjesFunction
 variable {f : ℝ → ℝ}
 
 /-- Every Stieltjes function is completely monotone on `(0, ∞)`. -/
+@[grind =>]
 lemma isCompletelyMonotoneOnIoi (hf : IsStieltjesFunction f) :
     IsCompletelyMonotoneOnIoi f := by
   rw [isStieltjesFunction_iff] at hf
