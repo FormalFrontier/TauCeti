@@ -55,6 +55,8 @@ combination of the simple coroots.
   weight.
 * `TauCeti.IsHighestWeightVector.map` and `TauCeti.IsHighestWeightVector.congr`: morphisms with
   nonzero image, and in particular equivalences, preserve highest weight vectors and their weights.
+* `TauCeti.isHighestWeightVector_coe_iff`: a vector of a Lie submodule is a highest weight vector
+  there exactly when it is one in the ambient module.
 * `TauCeti.IsHighestWeightVector.mem_genWeightSpace` and
   `TauCeti.IsHighestWeightVector.weight`: a highest weight vector really does exhibit `lam` as a
   weight of `M`, so the vocabulary is not vacuous.
@@ -175,6 +177,22 @@ theorem unique (hv : IsHighestWeightVector b lam v) (hw : IsHighestWeightVector 
   exact sub_eq_zero.mp ((smul_eq_zero.mp h).resolve_right hv.ne_zero)
 
 end IsHighestWeightVector
+
+/-! ### Highest weight vectors of a Lie submodule -/
+
+/-- A vector of a Lie submodule is a highest weight vector of that submodule exactly when it is one
+of the ambient module: both defining conditions are read off the ambient bracket. -/
+@[simp]
+theorem isHighestWeightVector_coe_iff {lam : Dual K H} {P : LieSubmodule K L M} {w : P} :
+    IsHighestWeightVector b lam (w : M) ↔ IsHighestWeightVector b lam w := by
+  constructor
+  · intro h
+    refine isHighestWeightVector_iff.mpr ⟨fun h0 => h.ne_zero (by simp [h0]), fun x => ?_,
+      fun x hx => ?_⟩
+    · exact Subtype.ext (by simpa using h.lie_eq_smul x)
+    · exact Subtype.ext (by simpa using h.lie_eq_zero_of_mem_positiveNilradical hx)
+  · intro h
+    exact h.map P.incl (by simpa using h.ne_zero)
 
 /-! ### Recognising a highest weight vector on the root spaces -/
 

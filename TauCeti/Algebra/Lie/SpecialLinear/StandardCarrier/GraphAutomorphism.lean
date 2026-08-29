@@ -30,7 +30,9 @@ invariant. The automorphism therefore descends to the quotient.
   points.
 * `TauCeti.SlStd.generalLinearSchemePointsMulEquiv_graphAutomorphism_comp_carrierι`: its signed
   reverse-inverse-transpose formula on arbitrary carrier points.
-* `TauCeti.SlStd.graphAutomorphism_hom_comp_self`: its involutivity.
+* `TauCeti.SlStd.graphAutomorphism_hom_comp_self` and
+  `TauCeti.SlStd.graphAutomorphismPoints_graphAutomorphismPoints`: its involutivity, on the carrier
+  and on points.
 * `TauCeti.SlStd.rootSubgroup_comp_graphAutomorphism_hom`: its action on root subgroups.
 * `TauCeti.SlStd.weightTorus_comp_graphAutomorphism_hom`: its action on the split torus.
 
@@ -589,6 +591,16 @@ theorem coe_graphAutomorphismPoints {A : Type} [CommRing A] (g : points r A) :
       TauCeti.typeAGraphAutomorphism r A g := by
   unfold graphAutomorphismPoints
   rfl
+
+/-- **The point-group graph automorphism is an involution.** This is the relation `γ² = 1` read on
+algebra-valued points, where `TauCeti.SlStd.graphAutomorphism_hom_comp_self` reads it on the
+carrier itself. -/
+@[simp]
+theorem graphAutomorphismPoints_graphAutomorphismPoints {A : Type} [CommRing A]
+    (g : points r A) :
+    graphAutomorphismPoints r A (graphAutomorphismPoints r A g) = g :=
+  -- the equivalence is its own inverse, so this is the left inverse law it already stores
+  (graphAutomorphismPoints r A).symm_apply_apply g
 
 /-- The point-group graph automorphism reverses the numbered root subgroups. -/
 @[simp]

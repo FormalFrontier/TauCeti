@@ -5,12 +5,9 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Algebra.Module.Lattice
-public import TauCeti.LinearAlgebra.CoordinateLattice
-public import TauCeti.LinearAlgebra.Eigenspace.Binomial
+public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.CoordinateLattice
 public import TauCeti.LinearAlgebra.RootSystem.GeckConstruction.DividedPower
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.KostantForm
-public import TauCeti.RingTheory.Binomial
 
 /-!
 # The coordinate lattice in the pinned Geck module
@@ -297,14 +294,9 @@ theorem geckRepresentation_ringChoose_lieBasis_h_mem_geckCoordinateLattice
         (Ring.choose (_root_.UniversalEnvelopingAlgebra.ι ℚ ((t.lieBasis ht).h i)) n) v ∈
       t.geckCoordinateLattice ht := by
   rw [geckCoordinateLattice] at hv ⊢
-  rw [Ring.map_choose]
-  refine TauCeti.ringChoose_end_apply_mem_coordinateLattice_of_apply_eq_intCast_smul
-    (t.GeckIndex ht) (weight := fun x => t.geckWeight ht x i) ?_ n hv
-  intro x
-  rw [Pi.basisFun_apply]
-  exact (UniversalEnvelopingAlgebra.isCartanWeightVector_iff
-    (h := (t.lieBasis ht).h) (ρ := t.geckRepresentation ht)).1
-      (t.isCartanWeightVector_geckRepresentation_single ht x) i
+  exact UniversalEnvelopingAlgebra.ringChoose_apply_mem_coordinateLattice (t.lieBasis ht).h
+    (t.geckRepresentation ht) (wt := t.geckWeight ht)
+    (t.isCartanWeightVector_geckRepresentation_single ht) i n hv
 
 /-! ## Divided powers of the numbered root generators -/
 

@@ -35,6 +35,8 @@ the toral carrier.
 * `TauCeti.DynkinType.geckDiagramIndexEquiv`: the coordinate permutation of the pinned Geck
   module.
 * `TauCeti.DynkinType.geckDiagramModuleEquiv`: the resulting rational linear equivalence.
+* `TauCeti.DynkinType.geckDiagramFinPerm`: the same coordinate permutation in the finite-ordinal
+  indexing used by the group-scheme construction.
 * `TauCeti.DynkinType.diagramRootGeneratorPerm`: the induced permutation of the simple raising and
   lowering indices.
 
@@ -44,6 +46,9 @@ the toral carrier.
   permutation preserves the pinned integral lattice in both directions.
 * `TauCeti.DynkinType.geckWeight_geckDiagramIndexEquiv`: the weights are permuted
   contragrediently.
+* `TauCeti.DynkinType.geckDiagramModuleEquiv_geckCoordinateBasisFin` and
+  `TauCeti.DynkinType.geckWeightFin_geckDiagramFinPerm`: the finite-ordinal basis and weight
+  equations consumed by the Kostant toral-closure symmetry construction.
 * `TauCeti.DynkinType.geckDiagramModuleEquiv_geckRepresentation_rootGenerator`: the defining
   representation intertwines every numbered root generator with its permuted generator.
 
@@ -182,6 +187,51 @@ theorem geckWeight_geckDiagramIndexEquiv (hsigma : sigma ∈ t.diagramSymmetry)
           pairingIn_indexEquiv ℤ (t.rationalDiagramAut ht hsigma).toHom x
             (t.simpleSupportEquiv ht i)
 
+/-! ## The coordinate permutation in the finite-ordinal indexing -/
+
+/-- **The coordinate permutation of a diagram symmetry, in the finite-ordinal indexing.** The
+group-scheme construction indexes the Geck coordinate basis by `Fin (t.geckDim ht)` through
+`Fintype.equivFin`; this is `TauCeti.DynkinType.geckDiagramIndexEquiv` transported along that
+reindexing. -/
+def geckDiagramFinPerm (hsigma : sigma ∈ t.diagramSymmetry) :
+    Equiv.Perm (Fin (t.geckDim ht)) :=
+  (Fintype.equivFin (t.GeckIndex ht)).permCongr (t.geckDiagramIndexEquiv ht hsigma)
+
+@[simp]
+theorem equivFin_symm_geckDiagramFinPerm (hsigma : sigma ∈ t.diagramSymmetry)
+    (i : Fin (t.geckDim ht)) :
+    (Fintype.equivFin (t.GeckIndex ht)).symm (t.geckDiagramFinPerm ht hsigma i) =
+      t.geckDiagramIndexEquiv ht hsigma ((Fintype.equivFin (t.GeckIndex ht)).symm i) := by
+  simp [geckDiagramFinPerm, Equiv.permCongr_apply]
+
+/-- The pinned Geck-module symmetry permutes the finite-ordinal coordinate basis. This is the
+basis-permutation hypothesis of the Kostant toral-closure symmetry construction.
+
+This is deliberately not a `simp` lemma: `TauCeti.DynkinType.coe_geckCoordinateBasisFin` and
+`TauCeti.DynkinType.geckDiagramModuleEquiv_single` are themselves `simp`, so both sides are
+already rewritten to the same standard coordinate vector and `simp` proves this statement
+outright. -/
+theorem geckDiagramModuleEquiv_geckCoordinateBasisFin (hsigma : sigma ∈ t.diagramSymmetry)
+    (i : Fin (t.geckDim ht)) :
+    t.geckDiagramModuleEquiv ht hsigma
+        ((t.geckCoordinateBasisFin ht i : (t.geckCoordinateLattice ht).toAddSubgroup) :
+          t.GeckIndex ht → ℚ) =
+      ((t.geckCoordinateBasisFin ht (t.geckDiagramFinPerm ht hsigma i) :
+          (t.geckCoordinateLattice ht).toAddSubgroup) : t.GeckIndex ht → ℚ) := by
+  rw [coe_geckCoordinateBasisFin, coe_geckCoordinateBasisFin, geckDiagramModuleEquiv_single,
+    equivFin_symm_geckDiagramFinPerm]
+
+/-- The finite-ordinal Geck weights are equivariant for the coordinate permutation and the node
+permutation. This is the weight hypothesis of the Kostant toral-closure symmetry construction, and
+it is what makes the same permutation intertwine the represented split torus with relabelling. -/
+@[simp]
+theorem geckWeightFin_geckDiagramFinPerm (hsigma : sigma ∈ t.diagramSymmetry)
+    (i : Fin (t.geckDim ht)) (k : Fin t.rank) :
+    t.geckWeightFin ht (t.geckDiagramFinPerm ht hsigma i) (sigma k) = t.geckWeightFin ht i k := by
+  simp only [geckWeightFin, equivFin_symm_geckDiagramFinPerm, geckWeight_geckDiagramIndexEquiv]
+
+/-! ## The permutation of the numbered generators -/
+
 /-- The permutation of the simple raising and lowering indices induced by a diagram symmetry. The
 same node permutation acts on both halves. -/
 def diagramRootGeneratorPerm (sigma : Equiv.Perm (Fin t.rank)) :
@@ -201,6 +251,18 @@ theorem diagramRootGeneratorPerm_apply_inr (i : Fin t.rank) :
     diagramRootGeneratorPerm sigma (Sum.inr i) = Sum.inr (sigma i) := by
   rw [diagramRootGeneratorPerm]
   rfl
+
+/-- **A relation satisfied by a diagram symmetry is satisfied by the permutation it induces on the
+numbered generator indices.** The induced permutation is the diagonal value of the bundled
+homomorphism `Equiv.Perm.sumCongrHom`, so it inherits that homomorphism's power law. -/
+theorem diagramRootGeneratorPerm_pow_eq_one {m : ℕ} (hm : sigma ^ m = 1) :
+    diagramRootGeneratorPerm sigma ^ m = 1 := by
+  have hsum : diagramRootGeneratorPerm sigma =
+      Equiv.Perm.sumCongrHom (Fin t.rank) (Fin t.rank) (sigma, sigma) :=
+    Equiv.ext fun i => by cases i <;> simp
+  have hpair : ((sigma, sigma) : Equiv.Perm (Fin t.rank) × Equiv.Perm (Fin t.rank)) ^ m = 1 :=
+    Prod.ext hm hm
+  rw [hsum, ← map_pow, hpair, map_one]
 
 /-- **The pinned Geck-module symmetry intertwines every represented simple root generator with
 the generator carrying the permuted number.** This is exactly the additive pinning equation
