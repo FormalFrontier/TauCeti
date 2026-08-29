@@ -59,7 +59,7 @@ field distinct weights stay distinct (`TauCeti.weightChar_injective`).
   evaluation of the reflected character.
 * `TauCeti.weightChar_injective`: over an infinite field, distinct weights give distinct
   characters of the torus.
-* `TauCeti.eq_of_torusCharacter_eq_of_span_eq_top`: dually, weights generating the whole character
+* `TauCeti.eq_of_span_eq_top_of_torusCharacter_eq`: dually, weights generating the whole character
   lattice separate the points of the torus, over any coefficient ring.
 * `TauCeti.basisDiagonalHom_injective` and `TauCeti.basisWeightTorus_injective`: a diagonal
   automorphism determines its scaling units, so spanning weights make the represented weight torus
@@ -340,7 +340,7 @@ the same value are equal.
 This and `TauCeti.weightChar_injective` separate in opposite variables, and their hypotheses are
 not comparable: here the family of weights is asked to be plentiful and the coefficient ring is
 arbitrary, there a single pair of weights is separated at the cost of an infinite field. -/
-theorem eq_of_torusCharacter_eq_of_span_eq_top {wt : ι → κ → ℤ}
+theorem eq_of_span_eq_top_of_torusCharacter_eq {wt : ι → κ → ℤ}
     (hwt : Submodule.span ℤ (Set.range wt) = ⊤) {s t : κ → Rˣ}
     (h : ∀ i, torusCharacter s (wt i) = torusCharacter t (wt i)) : s = t := by
   classical
@@ -360,7 +360,7 @@ theorem eq_of_torusCharacter_eq_of_span_eq_top {wt : ι → κ → ℤ}
 theorem torusCharacterHom_injective {wt : ι → κ → ℤ}
     (hwt : Submodule.span ℤ (Set.range wt) = ⊤) :
     Function.Injective (torusCharacterHom (R := R) wt) := fun _ _ hst =>
-  eq_of_torusCharacter_eq_of_span_eq_top hwt fun i => congrFun hst i
+  eq_of_span_eq_top_of_torusCharacter_eq hwt fun i => congrFun hst i
 
 end TorusCharacter
 

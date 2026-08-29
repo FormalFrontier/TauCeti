@@ -74,6 +74,7 @@ noncomputable section
 variable (t : DynkinType) (ht : t.Valid)
 
 /-- Reindexing the Geck weights by a finite ordinal does not change the set of weights. -/
+@[simp]
 theorem range_geckWeightFin :
     Set.range (t.geckWeightFin ht) = Set.range (t.geckWeight ht) :=
   EquivLike.range_comp (t.geckWeight ht) (Fintype.equivFin (t.GeckIndex ht)).symm
