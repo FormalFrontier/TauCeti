@@ -26,8 +26,27 @@ to agree with `Frob_q ∘ γ`. That agreement,
 `TauCeti.GraphTwistedIndex.datumSteinberg_eq_datumFrobenius_comp`,
 is the root-datum form of the relation "`γ` commutes with `Frob_q`" which L1 requires of the
 graph-twisted families, and it comes from the general fact that scaling is central among isogenies,
-`TauCeti.RootPairingIsogeny.comp_smulId`. Because the two orders agree, nothing below depends on
-whether the map a group endomorphism induces on characters is read covariantly or contravariantly.
+`TauCeti.RootPairingIsogeny.comp_smulId`.
+
+## The orientation of the graph factor
+
+The shadow is read covariantly on the character lattice: the weight map of `datumSteinberg` carries
+the root at each index to `q` times the root at the image of that index under the index's *own*
+diagram permutation `TauCeti.GraphTwistedIndex.diagramPerm`, which is
+`TauCeti.GraphTwistedIndex.datumSteinberg_root_simpleIndex` and is the root-datum image of the
+equation `γ (x_α(t)) = x_{γ α}(t)` that milestone L1 pins on the simple root subgroups. That
+reading is not chosen here but inherited: `TauCeti.DynkinType.diagramAut` sends a node permutation
+`σ` to the datum automorphism whose root enumeration moves by `σ` and not by `σ⁻¹`, which is
+`TauCeti.DynkinType.diagramRootPerm_simpleIndex`, and
+`TauCeti.GraphTwistedIndex.datumGraphAut` is that automorphism at `σ = d.diagramPerm`.
+
+Reading a group endomorphism through its pullback on characters instead would replace `σ` by `σ⁻¹`
+throughout, and the commutation above does not make the two readings agree: it is about the order
+of the two factors, not about the orientation of the graph factor, and it holds under either
+reading. They differ only on `³D₄`, the one family whose diagram permutation has order greater than
+two, where they name the two trialities, and even there the choice is not observable downstream:
+an order-two symmetry of the `D₄` diagram conjugates one three-cycle to the other and commutes with
+the scaling, so it conjugates one composite to the other.
 
 The construction is faithful in the sense that matters for the classification list: by
 `TauCeti.GraphTwistedIndex.datumSteinberg_eq_datumFrobenius_iff` the Steinberg map of an index
@@ -132,8 +151,11 @@ variable (d : GraphTwistedIndex)
 noncomputable section
 
 /-- **The root-datum Steinberg map of a graph-twisted index**: the root-datum shadow of
-`γ ∘ Frob_q`, the pinned graph automorphism after the `q`-power Frobenius. On the nine untwisted
-families the graph automorphism is trivial and this is the Frobenius itself, by
+`γ ∘ Frob_q`, the pinned graph automorphism after the `q`-power Frobenius. The graph factor is
+`TauCeti.GraphTwistedIndex.datumGraphAut` itself and not its inverse, so the root enumeration moves
+by the index's own diagram permutation; the module docstring records that orientation convention
+and what changes under the opposite one. On the nine untwisted families the graph automorphism is
+trivial and this is the Frobenius itself, by
 `TauCeti.GraphTwistedIndex.datumSteinberg_eq_datumFrobenius_iff`. -/
 def datumSteinberg :
     RootPairingIsogeny (d.1.dynkinType.simplyConnectedRootDatum d.1.dynkinType_valid)
