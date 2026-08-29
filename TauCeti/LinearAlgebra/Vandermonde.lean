@@ -111,7 +111,8 @@ theorem sum_Icc_descPochhammer_eval (m : ℕ) {p q : ℤ} (h : p ≤ q) :
       = (descPochhammer ℤ (m + 1)).eval q - (descPochhammer ℤ (m + 1)).eval p := by
   have htel :=
     sum_Icc_sub_telescope (fun t => (descPochhammer ℤ (m + 1)).eval t) p (q - 1) (by omega)
-  rw [show q - 1 + 1 = q by ring] at htel
+  have hq : q - 1 + 1 = q := by omega
+  rw [hq] at htel
   rw [Finset.mul_sum, ← htel]
   exact Finset.sum_congr rfl fun t _ => (descPochhammer_eval_add_one_sub m t).symm
 

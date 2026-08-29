@@ -23,8 +23,10 @@ This is `TauCeti.GTPattern.card_topRow_eq_weylDimension`, and its `DominantWeigh
 `TauCeti.RepresentationTheory.ClassicalGroups.WeylDimension`.  What is proved here is that they
 agree, so that the two candidate dimensions for the irreducible rational representation of `GL n`
 of highest weight `λ` — the number of Gelfand-Tsetlin patterns, and the Weyl product formula —
-are the same natural number.  Neither the representation nor the basis is used; this is an
-identity between a lattice-point count and a product formula.
+are the same natural number.  That either of them *is* the dimension of a representation is not
+proved here and cannot yet be stated: no representation and no Gelfand-Tsetlin basis is
+constructed, and none is used.  This is an identity between a lattice-point count and a product
+formula.
 
 ## The proof
 
@@ -35,10 +37,9 @@ satisfies the same recursion, `∑_{μ ≺ λ} dim V_μ = dim V_λ`.
 
 In the shifted coordinates `xₖ = k - λₖ`, which turn a weakly decreasing sequence into a weakly
 increasing one, the Weyl numerator `∏_{i<j} (λᵢ - λⱼ + j - i)` is the Vandermonde determinant of
-`x` (`TauCeti.prod_Ioi_eq_det_vandermonde`), and the interlacing condition becomes the box
-`xᵢ ≤ yᵢ ≤ xᵢ₊₁ - 1`.  The recursion is then exactly the box-sum identity
-`TauCeti.factorial_mul_sum_det_vandermonde`, the factor `n !` being the ratio of the two
-superfactorial denominators.
+`x`, and the interlacing condition becomes the box `xᵢ ≤ yᵢ ≤ xᵢ₊₁ - 1`.  The recursion is then
+exactly the box-sum identity `TauCeti.factorial_mul_sum_det_vandermonde`, the factor `n !` being
+the ratio of the two superfactorial denominators.
 
 ## Main results
 
@@ -173,10 +174,16 @@ private theorem card_topRow_mul_superFactorial :
 weakly decreasing sequence `λ` are counted by the Weyl dimension formula
 `∏_{i < j} (λᵢ - λⱼ + j - i) / (j - i)`.
 
-Both sides are the dimension of the irreducible rational representation of `GL n` with highest
-weight `λ`, but neither that representation nor the Gelfand-Tsetlin basis enters the proof: this
-is the identity of a lattice-point count with a product formula, obtained by checking that both
-satisfy the branching recursion of `GL (n + 1) ↓ GL n`. -/
+Both sides are candidates for the dimension of the irreducible rational representation of `GL n`
+with highest weight `λ`, but that representation and the Gelfand-Tsetlin basis are not built here
+and do not enter the proof: what is proved is the identity of a lattice-point count with a product
+formula, obtained by checking that both satisfy the branching recursion of `GL (n + 1) ↓ GL n`.
+
+This is deliberately not a `simp` lemma: `{P : GTPattern n // P.topRow = l}` carries a `Fintype`
+instance, so `Nat.card_eq_fintype_card` rewrites the left-hand side first and the `simpNF` linter
+rejects the tag.  The `DominantWeight`-indexed
+`TauCeti.GTPattern.card_topWeight_eq_weylDimension` below, whose subtype has no such instance, is
+the `simp` form. -/
 theorem card_topRow_eq_weylDimension {n : ℕ} (l : DominantWeight n) :
     Nat.card {P : GTPattern n // P.topRow = (l : Fin n → ℤ)} = weylDimension l := by
   have hsf : ((n - 1).superFactorial : ℤ) ≠ 0 := by
@@ -191,6 +198,7 @@ theorem card_topRow_eq_weylDimension {n : ℕ} (l : DominantWeight n) :
 
 /-- **The Gelfand-Tsetlin dimension formula, indexed by a dominant weight.**  The form the
 downstream representation theory consumes: fixing the top weight rather than the top row. -/
+@[simp]
 theorem card_topWeight_eq_weylDimension {n : ℕ} (l : DominantWeight n) :
     Nat.card {P : GTPattern n // P.topWeight = l} = weylDimension l :=
   (card_topWeight_eq_card_topRow l).trans (card_topRow_eq_weylDimension l)
