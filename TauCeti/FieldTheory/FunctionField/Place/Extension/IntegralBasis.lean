@@ -213,11 +213,11 @@ its coordinates in the `𝒪_P`-basis of `𝒪'_P`. -/
 @[simp]
 theorem localIntegralBasis_repr_algebraMap (x : integralClosure (P.integers) F')
     (i : Fin (Module.finrank F F')) :
-    (localIntegralBasis F' P).repr
-        (algebraMap (integralClosure (P.integers) F') F' x) i =
-      algebraMap (P.integers) F ((integralClosureFinBasis F' P).repr x i) :=
-  Basis.localizationLocalization_repr_algebraMap F (P.integers)⁰ F'
-    (integralClosureFinBasis F' P) x i
+    (localIntegralBasis F' P).repr (x : F') i =
+      algebraMap (P.integers) F ((integralClosureFinBasis F' P).repr x i) := by
+  simpa only [localIntegralBasis, Subalgebra.algebraMap_apply] using
+    Basis.localizationLocalization_repr_algebraMap F (P.integers)⁰ F'
+      (integralClosureFinBasis F' P) x i
 
 /-- **The chosen `localIntegralBasis` is an integral basis at `P`**: its `𝒪_P`-span is exactly
 the local integral closure `𝒪'_P`.  This is the existence statement of Stichtenoth,
