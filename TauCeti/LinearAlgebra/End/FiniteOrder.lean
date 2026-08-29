@@ -60,6 +60,10 @@ All the results are stated of `Module.End`, so they sit in the `End` namespace u
   `j`-th power.
 * `TauCeti.End.conj_trace_eq_trace_pow_sub_one`: over `ℂ`, the conjugate of the trace of an
   endomorphism of finite order `n` is the trace of its inverse `f ^ (n - 1)`.
+* `TauCeti.End.trace_eq_finrank_iff`: over `ℂ`, an endomorphism of finite order has trace equal to
+  the dimension **exactly when it is the identity**. The trace is the sum of `finrank ℂ V` many
+  roots of unity, each of real part at most `1`, so the value `finrank ℂ V` is attained only when
+  every eigenvalue is `1`, and such a diagonalizable endomorphism is the identity.
 -/
 
 public section
@@ -200,6 +204,85 @@ theorem conj_trace_eq_trace_pow_sub_one {f : End ℂ V} {n : ℕ} (hn : n ≠ 0)
     rw [← Complex.inv_eq_conj (Complex.norm_eq_one_of_pow_eq_one hμ hn)]
     exact inv_eq_of_mul_eq_one_right
       (by rw [← pow_succ', Nat.sub_add_cancel (Nat.one_le_iff_ne_zero.2 hn), hμ])
+
+/-- A root of unity whose real part is `1` is `1`: it has norm `1`, so its real part already
+exhausts that norm and its imaginary part vanishes. -/
+private theorem eq_one_of_pow_eq_one_of_re_eq_one {μ : ℂ} {n : ℕ} (hn : n ≠ 0) (hμ : μ ^ n = 1)
+    (hre : μ.re = 1) : μ = 1 := by
+  have hnorm : ‖μ‖ = 1 := Complex.norm_eq_one_of_pow_eq_one hμ hn
+  have him : μ.im = 0 := Complex.abs_re_eq_norm.mp (by rw [hre, hnorm, abs_one])
+  exact Complex.ext (by simpa using hre) (by simpa using him)
+
+/-- **An endomorphism of finite order with trace the dimension is the identity.** The eigenvalues
+of `f` are `n`-th roots of unity, so each has real part at most `1`; the trace is the sum of the
+eigenvalues weighted by the dimensions of the eigenspaces, and those dimensions add up to
+`finrank ℂ V`. Comparing real parts, the value `finrank ℂ V` is attained only when every eigenvalue
+has real part `1`, hence is `1`, and `f` is diagonalizable, so it is the identity there.
+
+Only `ℂ` is used, for the inequality `Re μ ≤ ‖μ‖` on the eigenvalues; over a general algebraically
+closed field of characteristic zero there is no such comparison to make without first choosing an
+embedding. -/
+theorem eq_one_of_trace_eq_finrank {f : End ℂ V} {n : ℕ} (hn : n ≠ 0) (hf : f ^ n = 1)
+    (h : LinearMap.trace ℂ V f = (finrank ℂ V : ℂ)) : f = 1 := by
+  classical
+  have hn' : (n : ℂ) ≠ 0 := Nat.cast_ne_zero.2 hn
+  set E := (End.finite_hasEigenvalue f).toFinset
+  -- the dimensions of the eigenspaces add up to the dimension: the case `m = 0` of the trace
+  -- formula, where `f ^ 0 = 1` has trace `finrank ℂ V`
+  have hdim : ∑ μ ∈ E, (finrank ℂ (f.eigenspace μ) : ℂ) = (finrank ℂ V : ℂ) := by
+    simpa using (trace_pow_eq_sum_eigenvalue_pow hn' hf 0).symm
+  -- the trace is the weighted sum of the eigenvalues: the case `m = 1`
+  have htrace : ∑ μ ∈ E, (finrank ℂ (f.eigenspace μ) : ℂ) * μ = (finrank ℂ V : ℂ) := by
+    simpa using (trace_pow_eq_sum_eigenvalue_pow hn' hf 1).symm.trans h
+  -- so the eigenvalues, weighted by dimension, differ from `1` by nothing
+  have hcomplex : ∑ μ ∈ E, (finrank ℂ (f.eigenspace μ) : ℂ) * (1 - μ) = 0 := by
+    simp only [mul_sub, mul_one, Finset.sum_sub_distrib, hdim, htrace, sub_self]
+  have hreal : ∑ μ ∈ E, (finrank ℂ (f.eigenspace μ) : ℝ) * (1 - μ.re) = 0 := by
+    have := congrArg Complex.re hcomplex
+    simpa [Complex.re_sum, Complex.mul_re] using this
+  -- every summand is nonnegative, an eigenvalue having real part at most its norm, which is `1`
+  have hnonneg : ∀ μ ∈ E, 0 ≤ (finrank ℂ (f.eigenspace μ) : ℝ) * (1 - μ.re) := by
+    intro μ hμ
+    have hpow : μ ^ n = 1 :=
+      pow_eq_one_of_hasEigenvalue hf ((End.finite_hasEigenvalue f).mem_toFinset.1 hμ)
+    have : μ.re ≤ 1 := (Complex.re_le_norm μ).trans_eq (Complex.norm_eq_one_of_pow_eq_one hpow hn)
+    exact mul_nonneg (Nat.cast_nonneg _) (by linarith)
+  -- hence each vanishes, and the dimension factor does not
+  have hone : ∀ μ ∈ E, μ = 1 := by
+    intro μ hμ
+    have hev : f.HasEigenvalue μ := (End.finite_hasEigenvalue f).mem_toFinset.1 hμ
+    have hzero := (Finset.sum_eq_zero_iff_of_nonneg hnonneg).1 hreal μ hμ
+    have hdpos : (finrank ℂ (f.eigenspace μ) : ℝ) ≠ 0 := by
+      have : f.eigenspace μ ≠ ⊥ := hev
+      simpa [Submodule.finrank_eq_zero] using this
+    refine eq_one_of_pow_eq_one_of_re_eq_one hn
+      (pow_eq_one_of_hasEigenvalue hf hev) ?_
+    have := mul_eq_zero.1 hzero
+    rcases this with h' | h'
+    · exact absurd h' hdpos
+    · linarith
+  -- the eigenspaces exhaust the space and only the eigenvalue `1` contributes
+  have htop : f.eigenspace 1 = ⊤ := by
+    refine top_le_iff.1 ?_
+    rw [← (isSemisimple_of_pow_eq_one hn' hf).iSup_eigenspace_eq_top]
+    refine iSup_le fun μ => ?_
+    by_cases hμ : f.HasEigenvalue μ
+    · rw [hone μ ((End.finite_hasEigenvalue f).mem_toFinset.2 hμ)]
+    · have hbot : f.eigenspace μ = ⊥ := by
+        by_contra hc
+        exact hμ hc
+      rw [hbot]
+      exact bot_le
+  refine LinearMap.ext fun x => ?_
+  have hx : x ∈ f.eigenspace 1 := htop ▸ Submodule.mem_top
+  simpa using End.mem_eigenspace_iff.1 hx
+
+/-- **An endomorphism of finite order has trace the dimension exactly when it is the identity.**
+The forward direction is `TauCeti.End.eq_one_of_trace_eq_finrank`; the converse is
+`LinearMap.trace_one`. -/
+theorem trace_eq_finrank_iff {f : End ℂ V} {n : ℕ} (hn : n ≠ 0) (hf : f ^ n = 1) :
+    LinearMap.trace ℂ V f = (finrank ℂ V : ℂ) ↔ f = 1 :=
+  ⟨eq_one_of_trace_eq_finrank hn hf, fun h => by rw [h, LinearMap.trace_one]⟩
 
 end Complex
 
