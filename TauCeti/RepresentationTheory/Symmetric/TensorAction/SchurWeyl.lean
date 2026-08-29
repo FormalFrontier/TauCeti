@@ -10,7 +10,7 @@ public import TauCeti.RepresentationTheory.Symmetric.TensorAction.Centralizer
 public import TauCeti.RingTheory.Semisimple.DoubleCentralizer
 
 /-!
-# Schur-Weyl duality: the two image algebras are each other's commutants
+# Schur-Weyl duality: the symmetric-group image and the diagonal span are mutual commutants
 
 The symmetric group `S_d` acts on `(kⁿ)^{⊗d}` by permuting the tensor factors, the diagonal
 operators `f^{⊗d}` act by applying one endomorphism of `kⁿ` in every factor, and the two actions
@@ -38,9 +38,15 @@ The distinction between `k[S_d]` and its image is not cosmetic: the algebra map
 the *image* of `k[S_d]` and not `k[S_d]` itself. The statements below are accordingly about
 `AlgHom.range`.
 
-The general linear group enters through the span of the diagonal operators `f^{⊗d}` taken over
-*all* `f : kⁿ →ₗ[k] kⁿ`, matching the half already proved; that this span is also the span of the
-`g^{⊗d}` over the invertible `g` alone is a separate statement, not proved here.
+## What is not proved here
+
+Every statement below takes the span of the diagonal operators `f^{⊗d}` over *all*
+`f : kⁿ →ₗ[k] kⁿ`, matching the half already proved. The general linear group acts through the
+subfamily of `g^{⊗d}` with `g` invertible, so the image of `k[GLₙ]` is contained in this span, but
+the reverse inclusion -- that the invertible `g^{⊗d}` already span everything -- is a separate
+statement and is not proved here. Nothing below is therefore a statement about the image of
+`k[GLₙ]`, and the mutual-commutant results are between the symmetric-group image and the span of
+*all* diagonal operators.
 
 ## Main results
 
@@ -58,7 +64,8 @@ The general linear group enters through the span of the diagonal operators `f^{�
 ## References
 
 * [Schur--Weyl roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/SchurWeyl/README.md),
-  Layer 8, "The double centralizer (image-level)".
+  Layer 8, "The double centralizer (image-level)", of which this file proves the form with all
+  diagonal operators in place of the image of `k[GLₙ]`.
 * W. Fulton and J. Harris, *Representation Theory: A First Course*, Lecture 6 and Appendix B.1.
 * C. Procesi, *Lie Groups: An Approach through Invariants and Representations*, Chapter 9.
 -/
@@ -133,11 +140,14 @@ section Field
 variable {k : Type*} {n d : ℕ} [Field k] [NeZero (d ! : k)]
 
 /-- **Schur-Weyl duality.** Over a field in which `d !` is nonzero, the commutant of the diagonal
-operators `f^{⊗d}` on `(kⁿ)^{⊗d}`, through which the general linear group acts, is exactly the
-image of the group algebra `k[S_d]` acting by permuting the tensor factors.
+operators `f^{⊗d}` on `(kⁿ)^{⊗d}`, taken over all endomorphisms `f` of `kⁿ`, is exactly the image
+of the group algebra `k[S_d]` acting by permuting the tensor factors.
 
 Together with `TauCeti.coe_centralizer_range_permTensorActionAlgHom`, which computes the commutant
-in the other direction, this says that the two image algebras are each other's commutants. -/
+in the other direction, this says that the symmetric-group image and the span of the diagonal
+operators are each other's commutants. The general linear group acts through the invertible
+`g^{⊗d}`, which are among the `f^{⊗d}`; that they span the same subalgebra, and hence that the
+commutant here is the commutant of the image of `k[GLₙ]`, is not proved here. -/
 theorem centralizer_span_range_map_const_eq_range_permTensorActionAlgHom :
     Subalgebra.centralizer k
         (Submodule.span k (Set.range fun f : (Fin n → k) →ₗ[k] (Fin n → k) =>
