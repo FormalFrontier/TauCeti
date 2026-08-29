@@ -10,9 +10,9 @@ module
 -- `Mathlib.Algebra.Quaternion`, hence the `ℍ[·]` notation and the division ring structure on
 -- `ℍ[ℝ]`, which is why neither is imported again here.
 public import Mathlib.Analysis.Quaternion
--- `Mathlib.LinearAlgebra.Complex.Module` is imported publicly for `Complex.algHom_ext` and
--- `Complex.liftAux`, the universal property saying that an `ℝ`-algebra map out of `ℂ` is exactly a
--- square root of `-1`, and for `Complex.conjAe`, the conjugation this file realizes by `j`.
+-- `Mathlib.LinearAlgebra.Complex.Module` is imported publicly for `Complex.lift`, the universal
+-- property saying that an `ℝ`-algebra map out of `ℂ` is exactly a square root of `-1`, and for
+-- `Complex.conjAe`, the conjugation this file realizes by `j`.
 public import Mathlib.LinearAlgebra.Complex.Module
 
 /-!
@@ -50,9 +50,9 @@ the witness the roadmap names.
 ## Main statements
 
 * `TauCeti.Quaternion.conj_jUnit_ofComplex_I`: conjugation by `j` negates `i`.
-* `TauCeti.Quaternion.exists_units_conj_of_mul_self_eq_neg_one`: any two square roots of `-1` in
+* `TauCeti.Quaternion.exists_unit_conj_of_mul_self_eq_neg_one`: any two square roots of `-1` in
   `ℍ[ℝ]` are conjugate by a unit.
-* `TauCeti.Quaternion.exists_units_conj_complexAlgHom`: **noncentral Skolem-Noether for
+* `TauCeti.Quaternion.exists_unit_conj_complexAlgHom`: **noncentral Skolem-Noether for
   `ℂ ⊆ ℍ[ℝ]`** -- any two `ℝ`-algebra maps `ℂ →ₐ[ℝ] ℍ[ℝ]` are conjugate by a unit of `ℍ[ℝ]`.
 * `TauCeti.Quaternion.ofComplex_conjAe`: **complex conjugation on `ℂ ⊆ ℍ[ℝ]` is conjugation by
   `j`**, the roadmap's statement, with the explicit witness.
@@ -61,11 +61,19 @@ the witness the roadmap names.
 
 Squares are written `u * u = -1` rather than `u ^ 2 = -1`, matching the subtype
 `{I' // I' * I' = -1}` that Mathlib's `Complex.lift` is stated over, so that no `sq`/`pow`
-translation is needed where the universal property is used.
+translation is needed where the universal property is used. That universal property is consumed
+rather than restated: the square relation is `(Complex.lift.symm f).prop`, and the coordinate
+formula for an `ℝ`-algebra map out of `ℂ` is `Complex.lift.apply_symm_apply` followed by
+`Complex.liftAux_apply`.
+
+Two steps of the argument are stated as `private` lemmas because they are wanted only here, and in
+a generality -- any division ring for the conjugacy of the square roots of `-1`, any `ℝ`-algebra
+for the detection of a conjugacy on `Complex.I` -- that no statement of this file uses.
 
 `TauCeti.Quaternion.jUnit` carries its inverse as data rather than being built with `Units.mk0`
 from a nonvanishing proof: `↑jUnit⁻¹` is then a quaternion literal definitionally, which turns the
-one coordinate computation of the file into a rewrite rather than a division.
+one coordinate computation of the file into a rewrite rather than a division. The body is not
+exposed, so the two coercion lemmas below are proved `(rfl)` rather than `rfl`.
 
 The two coordinate identities are stated with the type ascriptions written out, `(⟨0, 0, 1, 0⟩ :
 ℍ[ℝ]) * …`, and are consumed by `exact`/`rw` rather than being inlined into the proofs that need
@@ -94,24 +102,19 @@ namespace Quaternion
 
 /-- **The quaternion `j`, as a unit** of the division ring `ℍ[ℝ]`. Its inverse `-j` is supplied as
 data, so that `↑jUnit⁻¹` reduces to a quaternion literal without a division. -/
-@[expose]
 def jUnit : ℍ[ℝ]ˣ where
   val := ⟨0, 0, 1, 0⟩
   inv := ⟨0, 0, -1, 0⟩
   val_inv := (by ext <;> simp : (⟨0, 0, 1, 0⟩ : ℍ[ℝ]) * (⟨0, 0, -1, 0⟩ : ℍ[ℝ]) = 1)
   inv_val := (by ext <;> simp : (⟨0, 0, -1, 0⟩ : ℍ[ℝ]) * (⟨0, 0, 1, 0⟩ : ℍ[ℝ]) = 1)
 
-theorem coe_jUnit : (jUnit : ℍ[ℝ]) = ⟨0, 0, 1, 0⟩ := rfl
+theorem coe_jUnit : (jUnit : ℍ[ℝ]) = ⟨0, 0, 1, 0⟩ := (rfl)
 
-theorem coe_inv_jUnit : ((jUnit⁻¹ : ℍ[ℝ]ˣ) : ℍ[ℝ]) = ⟨0, 0, -1, 0⟩ := rfl
+theorem coe_inv_jUnit : ((jUnit⁻¹ : ℍ[ℝ]ˣ) : ℍ[ℝ]) = ⟨0, 0, -1, 0⟩ := (rfl)
 
 /-- The coordinates of `i`: the image of `Complex.I` under the standard embedding. -/
 theorem ofComplex_I : _root_.Quaternion.ofComplex Complex.I = (⟨0, 1, 0, 0⟩ : ℍ[ℝ]) := by
   ext <;> simp [_root_.Quaternion.coe_ofComplex, _root_.Quaternion.coeComplex]
-
-/-- The image of `Complex.I` under any `ℝ`-algebra map `ℂ →ₐ[ℝ] ℍ[ℝ]` squares to `-1`. -/
-theorem mul_self_complexAlgHom_I (f : ℂ →ₐ[ℝ] ℍ[ℝ]) : f Complex.I * f Complex.I = -1 := by
-  rw [← map_mul, Complex.I_mul_I, map_neg, map_one]
 
 /-- **Conjugation by `j` negates `i`.** This is the one computation with quaternion coordinates
 that the file needs: `j` anticommutes with `i`. -/
@@ -127,7 +130,7 @@ theorem conj_jUnit_ofComplex_I :
 conjugating element is `1 - u * x`: it satisfies `(1 - u * x) * x = u * (1 - u * x)`, both sides
 being `x + u`, and it is nonzero exactly by the hypothesis `u * x ≠ 1`, which says `u ≠ -x`
 because `x⁻¹ = -x`. -/
-theorem exists_units_conj_of_mul_ne_one {x u : ℍ[ℝ]} (hx : x * x = -1) (hu : u * u = -1)
+private theorem exists_unit_conj_of_mul_ne_one {x u : ℍ[ℝ]} (hx : x * x = -1) (hu : u * u = -1)
     (h : u * x ≠ 1) :
     ∃ w : ℍ[ℝ]ˣ, u = (w : ℍ[ℝ]) * x * ((w⁻¹ : ℍ[ℝ]ˣ) : ℍ[ℝ]) := by
   have hw : (1 : ℍ[ℝ]) - u * x ≠ 0 := fun hz => h (by rw [sub_eq_zero] at hz; exact hz.symm)
@@ -139,45 +142,36 @@ theorem exists_units_conj_of_mul_ne_one {x u : ℍ[ℝ]} (hx : x * x = -1) (hu :
   refine ⟨Units.mk0 _ hw, ?_⟩
   rw [Units.val_inv_eq_inv_val, Units.val_mk0, key, mul_assoc, mul_inv_cancel₀ hw, mul_one]
 
-/-- **Every square root of `-1` in `ℍ[ℝ]` is conjugate to `i`.** The generic case is
-`TauCeti.Quaternion.exists_units_conj_of_mul_ne_one`; the one element it excludes is `-i`, which
-`j` conjugates `i` to. -/
-theorem exists_units_conj_ofComplex_I {u : ℍ[ℝ]} (hu : u * u = -1) :
+/-- **Every square root of `-1` in `ℍ[ℝ]` is conjugate to `i`.** In the generic case the
+conjugating unit is `1 - u * i`; the one element that excludes is `-i`, which `j` conjugates `i`
+to. -/
+theorem exists_unit_conj_ofComplex_I {u : ℍ[ℝ]} (hu : u * u = -1) :
     ∃ w : ℍ[ℝ]ˣ,
       u = (w : ℍ[ℝ]) * _root_.Quaternion.ofComplex Complex.I * ((w⁻¹ : ℍ[ℝ]ˣ) : ℍ[ℝ]) := by
   have hx : _root_.Quaternion.ofComplex Complex.I * _root_.Quaternion.ofComplex Complex.I = -1 :=
-    mul_self_complexAlgHom_I _
+    (Complex.lift.symm _root_.Quaternion.ofComplex).prop
   by_cases h : u * _root_.Quaternion.ofComplex Complex.I = 1
   · have h2 : -u = _root_.Quaternion.ofComplex Complex.I := by
       have h3 : u * _root_.Quaternion.ofComplex Complex.I * _root_.Quaternion.ofComplex Complex.I
           = 1 * _root_.Quaternion.ofComplex Complex.I := by rw [h]
       rwa [mul_assoc, hx, mul_neg_one, one_mul] at h3
     exact ⟨jUnit, by rw [conj_jUnit_ofComplex_I, ← h2, neg_neg]⟩
-  · exact exists_units_conj_of_mul_ne_one hx hu h
+  · exact exists_unit_conj_of_mul_ne_one hx hu h
 
 /-- **Any two square roots of `-1` in `ℍ[ℝ]` are conjugate** by a unit of `ℍ[ℝ]`: both are
 conjugate to `i`. -/
-theorem exists_units_conj_of_mul_self_eq_neg_one {u v : ℍ[ℝ]} (hu : u * u = -1) (hv : v * v = -1) :
+theorem exists_unit_conj_of_mul_self_eq_neg_one {u v : ℍ[ℝ]} (hu : u * u = -1) (hv : v * v = -1) :
     ∃ w : ℍ[ℝ]ˣ, v = (w : ℍ[ℝ]) * u * ((w⁻¹ : ℍ[ℝ]ˣ) : ℍ[ℝ]) := by
-  obtain ⟨a, ha⟩ := exists_units_conj_ofComplex_I hu
-  obtain ⟨b, hb⟩ := exists_units_conj_ofComplex_I hv
+  obtain ⟨a, ha⟩ := exists_unit_conj_ofComplex_I hu
+  obtain ⟨b, hb⟩ := exists_unit_conj_ofComplex_I hv
   refine ⟨b * a⁻¹, ?_⟩
   rw [ha, hb]
   simp only [Units.val_mul, mul_inv_rev, inv_inv, mul_assoc, Units.inv_mul_cancel_left]
 
-/-- **An `ℝ`-algebra map out of `ℂ` is determined by the image of `Complex.I`**, in the explicit
-form `z ↦ z.re + z.im • f i`. This is Mathlib's `Complex.lift` read as a formula. -/
-theorem complexAlgHom_apply (f : ℂ →ₐ[ℝ] ℍ[ℝ]) (z : ℂ) :
-    f z = algebraMap ℝ ℍ[ℝ] z.re + z.im • f Complex.I := by
-  conv_lhs => rw [Complex.algHom_ext (f := f)
-    (g := Complex.liftAux (f Complex.I) (mul_self_complexAlgHom_I f))
-    (Complex.liftAux_apply_I _ _).symm]
-  rw [Complex.liftAux_apply]
-
 /-- **Conjugation of an `ℝ`-algebra map out of `ℂ` is detected on `Complex.I`.** If `g` agrees with
-the `w`-conjugate of `f` at `i` then it agrees with it everywhere: both maps are determined by
-their value at `i`, and conjugation fixes the scalars. -/
-theorem conj_units_complexAlgHom_apply (w : ℍ[ℝ]ˣ) (f g : ℂ →ₐ[ℝ] ℍ[ℝ])
+the `w`-conjugate of `f` at `i` then it agrees with it everywhere: both maps are read off their
+value at `i` through `Complex.lift`, and conjugation fixes the scalars. -/
+private theorem conj_unit_complexAlgHom_apply (w : ℍ[ℝ]ˣ) (f g : ℂ →ₐ[ℝ] ℍ[ℝ])
     (h : g Complex.I = (w : ℍ[ℝ]) * f Complex.I * ((w⁻¹ : ℍ[ℝ]ˣ) : ℍ[ℝ])) (z : ℂ) :
     g z = (w : ℍ[ℝ]) * f z * ((w⁻¹ : ℍ[ℝ]ˣ) : ℍ[ℝ]) := by
   have hA : (w : ℍ[ℝ]) * algebraMap ℝ ℍ[ℝ] z.re * ((w⁻¹ : ℍ[ℝ]ˣ) : ℍ[ℝ])
@@ -186,28 +180,32 @@ theorem conj_units_complexAlgHom_apply (w : ℍ[ℝ]ˣ) (f g : ℂ →ₐ[ℝ] �
   have hB : (w : ℍ[ℝ]) * (z.im • f Complex.I) * ((w⁻¹ : ℍ[ℝ]ˣ) : ℍ[ℝ])
       = z.im • ((w : ℍ[ℝ]) * f Complex.I * ((w⁻¹ : ℍ[ℝ]ˣ) : ℍ[ℝ])) := by
     rw [mul_smul_comm, smul_mul_assoc]
-  rw [complexAlgHom_apply g z, complexAlgHom_apply f z, h, mul_add, add_mul, hA, hB]
+  conv_lhs => rw [← Complex.lift.apply_symm_apply g]
+  conv_rhs => rw [← Complex.lift.apply_symm_apply f]
+  simp only [Complex.lift_apply, Complex.liftAux_apply, Complex.lift_symm_apply_coe]
+  rw [h, mul_add, add_mul, hA, hB]
 
 /-- **Noncentral Skolem-Noether for `ℂ ⊆ ℍ[ℝ]`**: any two `ℝ`-algebra maps `ℂ →ₐ[ℝ] ℍ[ℝ]` are
 conjugate by a unit of `ℍ[ℝ]`. The source `ℂ` is simple but **not** central over `ℝ`, so
 `TauCeti.skolemNoether` does not apply and the conjugating unit is produced directly, from the
 conjugacy of the square roots of `-1`. -/
-theorem exists_units_conj_complexAlgHom (f g : ℂ →ₐ[ℝ] ℍ[ℝ]) :
+theorem exists_unit_conj_complexAlgHom (f g : ℂ →ₐ[ℝ] ℍ[ℝ]) :
     ∃ w : ℍ[ℝ]ˣ, ∀ z : ℂ, g z = (w : ℍ[ℝ]) * f z * ((w⁻¹ : ℍ[ℝ]ˣ) : ℍ[ℝ]) := by
-  obtain ⟨w, hw⟩ := exists_units_conj_of_mul_self_eq_neg_one (mul_self_complexAlgHom_I f)
-    (mul_self_complexAlgHom_I g)
-  exact ⟨w, conj_units_complexAlgHom_apply w f g hw⟩
+  have hf : f Complex.I * f Complex.I = -1 := (Complex.lift.symm f).prop
+  have hg : g Complex.I * g Complex.I = -1 := (Complex.lift.symm g).prop
+  obtain ⟨w, hw⟩ := exists_unit_conj_of_mul_self_eq_neg_one hf hg
+  exact ⟨w, conj_unit_complexAlgHom_apply w f g hw⟩
 
 /-- **Complex conjugation on `ℂ ⊆ ℍ[ℝ]` is conjugation by `j`**, the roadmap's statement, with the
 explicit witness in place of the existential of
-`TauCeti.Quaternion.exists_units_conj_complexAlgHom`. -/
+`TauCeti.Quaternion.exists_unit_conj_complexAlgHom`. -/
 theorem ofComplex_conjAe (z : ℂ) :
     _root_.Quaternion.ofComplex (Complex.conjAe z)
       = (jUnit : ℍ[ℝ]) * _root_.Quaternion.ofComplex z * ((jUnit⁻¹ : ℍ[ℝ]ˣ) : ℍ[ℝ]) := by
-  refine conj_units_complexAlgHom_apply jUnit _root_.Quaternion.ofComplex
+  refine conj_unit_complexAlgHom_apply jUnit _root_.Quaternion.ofComplex
     (_root_.Quaternion.ofComplex.comp Complex.conjAe.toAlgHom) ?_ z
-  rw [AlgHom.comp_apply, AlgEquiv.coe_toAlgHom, show Complex.conjAe Complex.I = -Complex.I by simp,
-    map_neg, conj_jUnit_ofComplex_I]
+  rw [AlgHom.comp_apply, AlgEquiv.coe_toAlgHom, Complex.conjAe_coe, Complex.conj_I, map_neg,
+    conj_jUnit_ofComplex_I]
 
 end Quaternion
 

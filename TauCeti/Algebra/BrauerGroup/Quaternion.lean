@@ -14,11 +14,11 @@ module
 -- and with the order results Mathlib's `orderOf`, which occurs in the statement of the order
 -- computation below; that is why `Mathlib.GroupTheory.OrderOfElement` is not imported again here.
 public import TauCeti.Algebra.BrauerGroup.Splitting
--- `TauCeti.Algebra.CentralSimple.Quaternion.Basic` is imported publicly because `ℍ[ℝ]` occurs in
--- every statement below; it re-exports `Mathlib.Algebra.Quaternion`, hence the `ℍ[·]` notation and
+-- `TauCeti.Algebra.CentralSimple.Quaternion` is imported publicly because `ℍ[ℝ]` occurs in every
+-- statement below; it re-exports `Mathlib.Algebra.Quaternion`, hence the `ℍ[·]` notation and
 -- quaternion conjugation `Quaternion.starAe`, and `TauCeti.Quaternion.instIsCentral`, which is what
 -- puts `ℍ[ℝ]` in the scope of the Brauer-group API at all.
-public import TauCeti.Algebra.CentralSimple.Quaternion.Basic
+public import TauCeti.Algebra.CentralSimple.Quaternion
 -- Non-public: the base-change homomorphism and the fundamental theorem of algebra are used only by
 -- the worked examples closing the file, so downstream importers do not pay for them.
 import Mathlib.Analysis.Complex.Polynomial.Basic
@@ -50,8 +50,8 @@ algebras with centre `ℝ` -- only `ℝ` and `ℍ[ℝ]` occur -- which is a sepa
 This is the Brauer-group half of the Hamilton-quaternion worked example of the
 [semisimple algebras roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/SemisimpleAlgebras/README.md)
 ("`ℍ[ℝ] ⊗_ℝ ℍ[ℝ] ≃ M₄(ℝ)`, so `[ℍ]` has order 2"), whose algebra half is
-`TauCeti/Algebra/CentralSimple/Quaternion/Basic.lean`. See P. Gille, T. Szamuely, *Central Simple
-Algebras and Galois Cohomology*, CUP (2006), §1.1 and §2.4.
+`TauCeti/Algebra/CentralSimple/Quaternion.lean`. See P. Gille, T. Szamuely, *Central Simple Algebras
+and Galois Cohomology*, CUP (2006), §1.1 and §2.4.
 -/
 
 public section

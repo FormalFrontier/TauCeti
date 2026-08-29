@@ -94,7 +94,7 @@ semiring `K` and semiring `A` that `IsAzumaya` itself is defined over. Only the 
 field, to read the isomorphism off a basis.
 
 The real quaternions run all of this concretely in
-`TauCeti/Algebra/CentralSimple/Quaternion/Basic.lean`.
+`TauCeti/Algebra/CentralSimple/Quaternion.lean`.
 
 ## Implementation notes
 

@@ -9,7 +9,7 @@ public import TauCeti.LinearAlgebra.CliffordAlgebra.EightPeriodicity
 
 import Mathlib.RingTheory.TensorProduct.Pi
 import Mathlib.Analysis.Complex.Polynomial.Basic
-import TauCeti.Algebra.CentralSimple.Quaternion.Basic
+import TauCeti.Algebra.CentralSimple.Quaternion
 import TauCeti.Algebra.CentralSimple.Splitting
 import TauCeti.LinearAlgebra.Matrix.TensorProduct
 
