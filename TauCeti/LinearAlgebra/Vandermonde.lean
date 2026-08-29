@@ -40,8 +40,8 @@ discrete antiderivative, `TauCeti.sum_Icc_descPochhammer_eval`.
 
 *Multilinearity.*  A determinant is multilinear in its rows and the box constrains the rows
 independently, so the sum of the determinants over the box is the determinant of the matrix of
-row sums (`TauCeti.det_sum_rows`).  Evaluating those row sums, and clearing the denominators
-`1, 2, …, n` by a column scaling, produces the matrix of differences
+row sums (`MultilinearMap.map_sum_finset`).  Evaluating those row sums, and clearing the
+denominators `1, 2, …, n` by a column scaling, produces the matrix of differences
 `(descPochhammer ℤ (j+1)).eval (xᵢ₊₁) - (descPochhammer ℤ (j+1)).eval (xᵢ)`, whose determinant is
 `n !` times the sum.
 
@@ -55,8 +55,6 @@ so the two determinants agree.
 ## Main results
 
 * `TauCeti.sum_Icc_descPochhammer_eval`: the discrete antiderivative of a falling factorial.
-* `TauCeti.det_sum_rows`: a determinant whose rows are independent sums expands as a sum of
-  determinants.
 * `TauCeti.factorial_mul_sum_det_vandermonde`: **the box-sum identity for Vandermonde
   determinants.**
 -/
@@ -116,23 +114,6 @@ theorem sum_Icc_descPochhammer_eval (m : ℕ) {p q : ℤ} (h : p ≤ q) :
   rw [show q - 1 + 1 = q by ring] at htel
   rw [Finset.mul_sum, ← htel]
   exact Finset.sum_congr rfl fun t _ => (descPochhammer_eval_add_one_sub m t).symm
-
-/-! ### Determinants of matrices whose rows are sums -/
-
-/-- **A determinant whose rows are independent sums expands as a sum of determinants.**  This is
-multilinearity of the determinant in the rows, used in every row at once: a term of the expansion
-is a choice of one summand in each row, so the terms are indexed by the choice functions. -/
-theorem det_sum_rows {ι : Type*} [DecidableEq ι] [Fintype ι] {R : Type*} [CommRing R]
-    {α : Type*} (A : ι → Finset α) (g : ι → α → ι → R) :
-    (Matrix.of fun i j => ∑ t ∈ A i, g i t j).det
-      = ∑ y ∈ Fintype.piFinset A, (Matrix.of fun i j => g i (y i) j).det := by
-  have key := (Matrix.detRowAlternating (R := R) (n := ι)).toMultilinearMap.map_sum_finset
-    (g := g) (A := A)
-  have hrow : (fun i : ι => ∑ t ∈ A i, g i t) = fun i : ι => fun j : ι => ∑ t ∈ A i, g i t j := by
-    funext i j
-    exact Finset.sum_apply j (A i) (g i)
-  rw [hrow] at key
-  exact key
 
 /-! ### The box-sum identity -/
 
@@ -279,13 +260,29 @@ theorem factorial_mul_sum_det_vandermonde {n : ℕ} (x : Fin (n + 1) → ℤ)
           (Matrix.vandermonde y).det
       = (Matrix.vandermonde x).det := by
   classical
+  -- Multilinearity of the determinant in the rows, used in every row at once: a term of the
+  -- expansion is a choice of one summand in each row, so the terms are indexed by the box.
+  have hbox : (Matrix.of fun i j : Fin n =>
+        ∑ t ∈ Finset.Icc (x i.castSucc) (x i.succ - 1), (descPochhammer ℤ (j : ℕ)).eval t).det
+      = ∑ y ∈ Fintype.piFinset fun i : Fin n => Finset.Icc (x i.castSucc) (x i.succ - 1),
+          (Matrix.of fun i j : Fin n => (descPochhammer ℤ (j : ℕ)).eval (y i)).det := by
+    have key := (Matrix.detRowAlternating (R := ℤ) (n := Fin n)).toMultilinearMap.map_sum_finset
+      (A := fun i : Fin n => Finset.Icc (x i.castSucc) (x i.succ - 1))
+      (g := fun (_ : Fin n) (t : ℤ) (j : Fin n) => (descPochhammer ℤ (j : ℕ)).eval t)
+    have hrow : (fun i : Fin n => ∑ t ∈ Finset.Icc (x i.castSucc) (x i.succ - 1),
+          fun j : Fin n => (descPochhammer ℤ (j : ℕ)).eval t)
+        = fun i j : Fin n =>
+          ∑ t ∈ Finset.Icc (x i.castSucc) (x i.succ - 1), (descPochhammer ℤ (j : ℕ)).eval t := by
+      funext i j
+      exact Finset.sum_apply j _ _
+    rw [hrow] at key
+    exact key
   have hsum : (∑ y ∈ Finset.Icc (fun i : Fin n => x i.castSucc) (fun i : Fin n => x i.succ - 1),
       (Matrix.vandermonde y).det)
       = (Matrix.of fun i j : Fin n =>
           ∑ t ∈ Finset.Icc (x i.castSucc) (x i.succ - 1),
             (descPochhammer ℤ (j : ℕ)).eval t).det := by
-    rw [det_sum_rows (fun i : Fin n => Finset.Icc (x i.castSucc) (x i.succ - 1))
-      fun i t j => (descPochhammer ℤ (j : ℕ)).eval t]
+    rw [hbox]
     exact Finset.sum_congr rfl fun y _ => det_vandermonde_eq_det_descPochhammer n y
   have hscale : (Matrix.of fun i j : Fin n =>
         (descPochhammer ℤ ((j : ℕ) + 1)).eval (x i.succ)
