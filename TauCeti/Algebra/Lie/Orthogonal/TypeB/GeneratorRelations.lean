@@ -35,8 +35,6 @@ subsequent steps.
 * `TauCeti.typeBSimpleCorootGenerator_lie_negativeRoot_last` and
   `TauCeti.typeBSimpleCorootGenerator_lie_negativeRoot_castSucc`: Cartan action on negative
   generators.
-* `TauCeti.typeBSimpleRootCoefficient_eq_cartan_transpose`: identification of every action
-  coefficient with the transposed type-`B` Cartan matrix.
 * `TauCeti.typeBSimpleCorootGenerator_lie_root_cartan_transpose` and
   `TauCeti.typeBSimpleCorootGenerator_lie_negativeRoot_cartan_transpose`: the uniform integral
   Cartan-action relations.
@@ -157,91 +155,63 @@ theorem typeBSimpleCorootGenerator_lie_negativeRoot_castSucc (i : Fin (n + 1)) (
       (typeBSimpleCorootCoordinate (K := K) i) j.succ j.castSucc
         (ne_of_gt j.castSucc_lt_succ))
 
-/-- The scalar by which the `i`th standard simple coroot acts on the `j`th standard positive-root
-generator. At a long node it is the difference of the two adjacent diagonal coordinates; at the
-terminal short node it is the final coordinate. -/
-def typeBSimpleRootCoefficient (i j : Fin (n + 1)) : K :=
-  Fin.lastCases (typeBSimpleCorootCoordinate i (Fin.last n))
-    (fun j₀ => typeBSimpleCorootCoordinate i j₀.castSucc -
-      typeBSimpleCorootCoordinate i j₀.succ) j
-
-@[simp]
-theorem typeBSimpleRootCoefficient_last (i : Fin (n + 1)) :
-    typeBSimpleRootCoefficient (K := K) i (Fin.last n) =
-      typeBSimpleCorootCoordinate i (Fin.last n) := by
-  simp [typeBSimpleRootCoefficient]
-
-@[simp]
-theorem typeBSimpleRootCoefficient_castSucc (i : Fin (n + 1)) (j : Fin n) :
-    typeBSimpleRootCoefficient (K := K) i j.castSucc =
-      typeBSimpleCorootCoordinate i j.castSucc - typeBSimpleCorootCoordinate i j.succ := by
-  simp [typeBSimpleRootCoefficient]
-
-/-- The standard simple-coroot action is the transpose of the Bourbaki type-`B` Cartan matrix.
-The transpose reflects Serre's convention that the coroot index comes first in `⁅hᵢ, eⱼ⁆`. -/
-theorem typeBSimpleRootCoefficient_eq_cartan_transpose (i j : Fin (n + 1)) :
-    typeBSimpleRootCoefficient (K := K) i j =
-      ((CartanMatrix.B (n + 1)).transpose i j : ℤ) := by
-  change typeBSimpleRootCoefficient (K := K) i j =
-    (CartanMatrix.B (n + 1) j i : ℤ)
+private theorem typeBSimpleCorootCoordinate_last_eq_cartan_transpose (i : Fin (n + 1)) :
+    typeBSimpleCorootCoordinate (K := K) i (Fin.last n) =
+      ((CartanMatrix.B (n + 1)).transpose i (Fin.last n) : ℤ) := by
+  change typeBSimpleCorootCoordinate (K := K) i (Fin.last n) =
+    (CartanMatrix.B (n + 1) (Fin.last n) i : ℤ)
   refine Fin.lastCases ?_ (fun i₀ => ?_) i
-  · refine Fin.lastCases ?_ (fun j₀ => ?_) j
-    · simp [CartanMatrix.B, Matrix.of_apply]
-    · rw [typeBSimpleRootCoefficient_castSucc, typeBSimpleCorootCoordinate_last]
-      rcases j₀ with ⟨j, hj⟩
-      simp only [Fin.castSucc_mk, Fin.succ_mk, CartanMatrix.B,
-        Matrix.of_apply, Fin.ext_iff]
-      split_ifs <;> simp_all [Pi.single_apply, Fin.ext_iff]
-      all_goals omega
-  · refine Fin.lastCases ?_ (fun j₀ => ?_) j
-    · rw [typeBSimpleRootCoefficient_last, typeBSimpleCorootCoordinate_castSucc]
-      rcases i₀ with ⟨i, hi⟩
-      simp [CartanMatrix.B, Matrix.of_apply]
-      split_ifs <;> simp_all [Pi.single_apply, Fin.ext_iff]
-      all_goals omega
-    · rw [typeBSimpleRootCoefficient_castSucc, typeBSimpleCorootCoordinate_castSucc]
-      rcases i₀ with ⟨i, hi⟩
-      rcases j₀ with ⟨j, hj⟩
-      simp only [Fin.castSucc_mk, Fin.succ_mk, Pi.sub_apply, CartanMatrix.B,
-        Matrix.of_apply, Fin.ext_iff]
-      split_ifs <;> simp_all [Pi.single_apply, Fin.ext_iff, one_add_one_eq_two]
-      all_goals omega
+  · simp [CartanMatrix.B, Matrix.of_apply]
+  · rw [typeBSimpleCorootCoordinate_castSucc]
+    rcases i₀ with ⟨i, hi⟩
+    simp [CartanMatrix.B, Matrix.of_apply]
+    split_ifs <;> simp_all [Pi.single_apply, Fin.ext_iff]
+    all_goals omega
 
-/-- A standard simple coroot acts diagonally on every standard positive simple-root generator. -/
-theorem typeBSimpleCorootGenerator_lie_root (i j : Fin (n + 1)) :
-    ⁅typeBSimpleCorootGenerator (K := K) i, typeBSimpleRootGenerator (K := K) j⁆ =
-      typeBSimpleRootCoefficient (K := K) i j • typeBSimpleRootGenerator j := by
-  refine Fin.lastCases ?_ (fun j₀ => ?_) j
-  · simpa only [typeBSimpleRootGenerator_last, typeBSimpleRootCoefficient_last] using
-      typeBSimpleCorootGenerator_lie_root_last (K := K) i
-  · simpa only [typeBSimpleRootGenerator_castSucc, typeBSimpleRootCoefficient_castSucc] using
-      typeBSimpleCorootGenerator_lie_root_castSucc (K := K) i j₀
-
-/-- A standard simple coroot acts diagonally on every standard negative simple-root generator. -/
-theorem typeBSimpleCorootGenerator_lie_negativeRoot (i j : Fin (n + 1)) :
-    ⁅typeBSimpleCorootGenerator (K := K) i,
-      typeBSimpleNegativeRootGenerator (K := K) j⁆ =
-        -(typeBSimpleRootCoefficient (K := K) i j) • typeBSimpleNegativeRootGenerator j := by
-  refine Fin.lastCases ?_ (fun j₀ => ?_) j
-  · simpa only [typeBSimpleNegativeRootGenerator_last, typeBSimpleRootCoefficient_last] using
-      typeBSimpleCorootGenerator_lie_negativeRoot_last (K := K) i
-  · simpa only [typeBSimpleNegativeRootGenerator_castSucc,
-      typeBSimpleRootCoefficient_castSucc, neg_sub] using
-      typeBSimpleCorootGenerator_lie_negativeRoot_castSucc (K := K) i j₀
+private theorem typeBSimpleCorootCoordinate_sub_eq_cartan_transpose
+    (i : Fin (n + 1)) (j : Fin n) :
+    typeBSimpleCorootCoordinate (K := K) i j.castSucc -
+        typeBSimpleCorootCoordinate i j.succ =
+      ((CartanMatrix.B (n + 1)).transpose i j.castSucc : ℤ) := by
+  change typeBSimpleCorootCoordinate (K := K) i j.castSucc -
+      typeBSimpleCorootCoordinate i j.succ =
+    (CartanMatrix.B (n + 1) j.castSucc i : ℤ)
+  refine Fin.lastCases ?_ (fun i₀ => ?_) i
+  · rw [typeBSimpleCorootCoordinate_last]
+    rcases j with ⟨j, hj⟩
+    simp only [Fin.castSucc_mk, Fin.succ_mk, CartanMatrix.B,
+      Matrix.of_apply, Fin.ext_iff]
+    split_ifs <;> simp_all [Pi.single_apply, Fin.ext_iff]
+    all_goals omega
+  · rw [typeBSimpleCorootCoordinate_castSucc]
+    rcases i₀ with ⟨i, hi⟩
+    rcases j with ⟨j, hj⟩
+    simp only [Fin.castSucc_mk, Fin.succ_mk, Pi.sub_apply, CartanMatrix.B,
+      Matrix.of_apply, Fin.ext_iff]
+    split_ifs <;> simp_all [Pi.single_apply, Fin.ext_iff, one_add_one_eq_two]
+    all_goals omega
 
 /-- The Cartan action on positive simple-root generators, in Serre's integral convention. -/
 theorem typeBSimpleCorootGenerator_lie_root_cartan_transpose (i j : Fin (n + 1)) :
     ⁅typeBSimpleCorootGenerator (K := K) i, typeBSimpleRootGenerator (K := K) j⁆ =
       (CartanMatrix.B (n + 1)).transpose i j • typeBSimpleRootGenerator j := by
-  rw [typeBSimpleCorootGenerator_lie_root (K := K),
-    typeBSimpleRootCoefficient_eq_cartan_transpose, Int.cast_smul_eq_zsmul]
+  refine Fin.lastCases ?_ (fun j₀ => ?_) j
+  · rw [typeBSimpleRootGenerator_last, typeBSimpleCorootGenerator_lie_root_last,
+      typeBSimpleCorootCoordinate_last_eq_cartan_transpose, Int.cast_smul_eq_zsmul]
+  · rw [typeBSimpleRootGenerator_castSucc, typeBSimpleCorootGenerator_lie_root_castSucc,
+      typeBSimpleCorootCoordinate_sub_eq_cartan_transpose, Int.cast_smul_eq_zsmul]
 
 /-- The Cartan action on negative simple-root generators, in Serre's integral convention. -/
 theorem typeBSimpleCorootGenerator_lie_negativeRoot_cartan_transpose (i j : Fin (n + 1)) :
     ⁅typeBSimpleCorootGenerator (K := K) i,
       typeBSimpleNegativeRootGenerator (K := K) j⁆ =
         -((CartanMatrix.B (n + 1)).transpose i j • typeBSimpleNegativeRootGenerator j) := by
-  rw [typeBSimpleCorootGenerator_lie_negativeRoot (K := K),
-    typeBSimpleRootCoefficient_eq_cartan_transpose, neg_smul, Int.cast_smul_eq_zsmul]
+  refine Fin.lastCases ?_ (fun j₀ => ?_) j
+  · rw [typeBSimpleNegativeRootGenerator_last,
+      typeBSimpleCorootGenerator_lie_negativeRoot_last,
+      typeBSimpleCorootCoordinate_last_eq_cartan_transpose, neg_smul, Int.cast_smul_eq_zsmul]
+  · rw [typeBSimpleNegativeRootGenerator_castSucc,
+      typeBSimpleCorootGenerator_lie_negativeRoot_castSucc, ← neg_sub,
+      typeBSimpleCorootCoordinate_sub_eq_cartan_transpose, neg_smul, Int.cast_smul_eq_zsmul]
 
 end TauCeti
