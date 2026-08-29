@@ -31,8 +31,8 @@ compute the complementary module away from finitely many places.
 
 * `TauCeti.Place.finite_setOf_not_isIntegral`: an element of an algebraic extension is integral over
   the valuation rings of all but finitely many places.
-* `TauCeti.Place.IsIntegralBasis.of_isIntegral_traceDual`: a basis and its trace dual being
-  integral at a place is sufficient for the basis to be an integral basis there.
+* `TauCeti.Place.IsIntegralBasis.of_isIntegral_of_isIntegral_traceDual`: a basis and its trace
+  dual being integral at a place is sufficient for the basis to be an integral basis there.
 * `TauCeti.Place.finite_setOf_not_isIntegralBasis`: every basis is an integral basis at all but
   finitely many places (Stichtenoth, Theorem 3.3.6).
 
@@ -85,10 +85,8 @@ theorem finite_setOf_not_isIntegral (hF : IsFunctionField k F) [Algebra.IsAlgebr
     (Polynomial.monic_toSubring p P.integers.toSubring hcoeff).mpr
       (minpoly.monic hx), ?_⟩
   have hmap : (p.toSubring P.integers.toSubring hcoeff).map
-      (algebraMap P.integers F) = p := by
-    ext n
-    rw [Polynomial.coeff_map, ValuationSubring.algebraMap_apply,
-      Polynomial.coeff_toSubring]
+      (algebraMap P.integers F) = p :=
+    Polynomial.map_toSubring p P.integers.toSubring hcoeff
   rw [IsScalarTower.algebraMap_eq P.integers F F', ← Polynomial.eval₂_map, hmap]
   exact minpoly.aeval F x
 
@@ -100,8 +98,9 @@ an integral basis at `P`.
 Integrality of the original basis gives containment of its span in the integral closure.
 The coordinates in the original basis are traces against its trace-dual basis. Products and
 traces of integral elements are integral, and the valuation ring is integrally closed. -/
-theorem IsIntegralBasis.of_isIntegral_traceDual {ι : Type*} [Finite ι] [DecidableEq ι]
-    [FiniteDimensional F F'] [Algebra.IsSeparable F F'] (P : Place k F) (b : Basis ι F F')
+theorem IsIntegralBasis.of_isIntegral_of_isIntegral_traceDual {ι : Type*} [Finite ι]
+    [DecidableEq ι] [FiniteDimensional F F'] [Algebra.IsSeparable F F'] (P : Place k F)
+    (b : Basis ι F F')
     (hb : ∀ i, IsIntegral P.integers (b i))
     (hbdual : ∀ i, IsIntegral P.integers (b.traceDual i)) :
     P.IsIntegralBasis F' b := by
@@ -135,10 +134,11 @@ theorem IsIntegralBasis.of_isIntegral_traceDual {ι : Type*} [Finite ι] [Decida
 
 /-- **Every basis of a finite separable extension is an integral basis at all but finitely many
 places** (Stichtenoth, Theorem 3.3.6). -/
-theorem finite_setOf_not_isIntegralBasis (hF : IsFunctionField k F) {ι : Type*} [Finite ι]
+theorem finite_setOf_not_isIntegralBasis (hF : IsFunctionField k F) {ι : Type*}
     [FiniteDimensional F F'] [Algebra.IsSeparable F F'] (b : Basis ι F F') :
     {P : Place k F | ¬ P.IsIntegralBasis F' b}.Finite := by
   classical
+  let _ := FiniteDimensional.fintypeBasisIndex b
   have hb : (⋃ i, {P : Place k F | ¬ IsIntegral P.integers (b i)}).Finite :=
     Set.finite_iUnion fun i ↦ finite_setOf_not_isIntegral hF (b i)
   have hbdual : (⋃ i, {P : Place k F | ¬ IsIntegral P.integers (b.traceDual i)}).Finite :=
@@ -146,7 +146,7 @@ theorem finite_setOf_not_isIntegralBasis (hF : IsFunctionField k F) {ι : Type*}
   refine (hb.union hbdual).subset fun P hP ↦ ?_
   by_contra hPmem
   apply hP
-  apply IsIntegralBasis.of_isIntegral_traceDual P b
+  apply IsIntegralBasis.of_isIntegral_of_isIntegral_traceDual P b
   · intro i
     by_contra hi
     exact hPmem (Or.inl (Set.mem_iUnion_of_mem i hi))
