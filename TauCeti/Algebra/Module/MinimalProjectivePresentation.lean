@@ -43,11 +43,14 @@ is conditional on a presentation being given, and
 `TauCeti.IsProjectiveCover.isMinimalProjectivePresentation` is the step that turns two covers into
 one presentation.
 
-The coefficients are a ring rather than a semiring, unlike the parts of
-`TauCeti/Algebra/Module/ProjectiveCover.lean` that only need a semiring. That is forced by the
-syzygy: `ker p₀` is a submodule, and a submodule of a module over a semiring carries only an
-`AddCommMonoid`, while the uniqueness statements about projective covers -- and hence everything
-below -- are available exactly for a covered module that is an additive group.
+The file is layered by the coefficients each part needs, as
+`TauCeti/Algebra/Module/ProjectiveCover.lean` is. The predicate itself and the two cover-form
+readings of it need only a semiring and additive monoids. The degeneration over a projective
+module needs the presented module to be an additive group, that being what uniqueness of covers
+needs. The comparison and uniqueness theorems need a ring, which the syzygy forces rather than the
+proofs choosing it: `ker p₀` is a submodule, a submodule of a module over a semiring carries only
+an `AddCommMonoid`, and the cover statements applied to it are available exactly for a covered
+module that is an additive group.
 
 ## Main definitions
 
@@ -96,9 +99,11 @@ namespace TauCeti
 
 universe u v w w' x x'
 
+section Semiring
+
 variable {R : Type u} {M : Type v} {P₀ : Type w} {P₁ : Type w'}
-  [Ring R] [AddCommGroup M] [Module R M] [AddCommGroup P₀] [Module R P₀]
-  [AddCommGroup P₁] [Module R P₁]
+  [Semiring R] [AddCommMonoid M] [Module R M] [AddCommMonoid P₀] [Module R P₀]
+  [AddCommMonoid P₁] [Module R P₁]
 
 /-- A **minimal projective presentation** `P₁ → P₀ → M → 0` of `M`: the sequence is exact at `P₀`
 and at `M`, both sources are projective, and both maps are minimal — `p₀` is a projective cover of
@@ -172,14 +177,61 @@ theorem IsProjectiveCover.isMinimalProjectivePresentation {p₀ : P₀ →ₗ[R]
     rw [hker]
     exact h₁.isSuperfluous_ker
 
+end Semiring
+
+section Projective
+
+variable {R : Type u} {M : Type v} {P₀ : Type w} {P₁ : Type w'}
+  [Semiring R] [AddCommGroup M] [Module R M] [AddCommGroup P₀] [Module R P₀]
+  [AddCommMonoid P₁] [Module R P₁]
+
+namespace IsMinimalProjectivePresentation
+
+variable {p₁ : P₁ →ₗ[R] P₀} {p₀ : P₀ →ₗ[R] M} [Module.Projective R M]
+
+/-- **A projective module presents itself.** In a minimal projective presentation of a projective
+module the presenting map is already an isomorphism, being a projective cover of a module that
+covers itself. -/
+theorem bijective_of_projective (h : IsMinimalProjectivePresentation p₁ p₀) :
+    Function.Bijective p₀ :=
+  h.isProjectiveCover.bijective_of_comp_eq isProjectiveCover_id (LinearMap.id_comp p₀)
+
+/-- The syzygy of a projective module vanishes, so the left-hand map of a minimal projective
+presentation of it is zero. -/
+theorem eq_zero_of_projective (h : IsMinimalProjectivePresentation p₁ p₀) : p₁ = 0 := by
+  have hker : LinearMap.ker p₀ = ⊥ :=
+    LinearMap.ker_eq_bot'.mpr fun m hm => h.bijective_of_projective.injective (by simpa using hm)
+  have hrange : LinearMap.range p₁ = ⊥ := by rw [h.range_eq_ker, hker]
+  exact LinearMap.range_eq_bot.mp hrange
+
+/-- Minimality forces the left-hand source of a minimal projective presentation of a projective
+module to vanish as well, not merely the map out of it. -/
+theorem subsingleton_of_projective (h : IsMinimalProjectivePresentation p₁ p₀) :
+    Subsingleton P₁ := by
+  have hker : LinearMap.ker p₁ = ⊤ := by
+    rw [h.eq_zero_of_projective]
+    exact LinearMap.ker_zero
+  have hsup := h.isSuperfluous_ker
+  rw [hker] at hsup
+  exact isSuperfluous_top_iff.mp hsup
+
+end IsMinimalProjectivePresentation
+
+end Projective
+
+section Ring
+
+variable {R : Type u} {M : Type v} {P₀ : Type w} {P₁ : Type w'}
+  [Ring R] [AddCommGroup M] [Module R M] [AddCommGroup P₀] [Module R P₀]
+  [AddCommGroup P₁] [Module R P₁]
+
 namespace IsMinimalProjectivePresentation
 
 variable {p₁ : P₁ →ₗ[R] P₀} {p₀ : P₀ →ₗ[R] M}
 
 section Comparison
 
-variable {Q₀ : Type x} {Q₁ : Type x'} [AddCommGroup Q₀] [Module R Q₀]
-  [AddCommGroup Q₁] [Module R Q₁]
+variable {Q₀ : Type x} {Q₁ : Type x'}
 
 /-- **A minimal projective presentation is a quotient of every projective presentation.** If
 `Q₁ →ₗ Q₀ ↠ M` is any projective presentation of `M` — projective sources, exact at `Q₀`, onto `M`
@@ -189,7 +241,8 @@ commuting with both maps.
 Both surjectivities are the minimality of the target: the first is that a projective cover receives
 every projective presentation by a surjection, and the second is the same statement for the induced
 map on syzygies, which is onto because the first one is. -/
-theorem exists_surjective [Module.Projective R Q₀] [Module.Projective R Q₁]
+theorem exists_surjective [AddCommMonoid Q₀] [Module R Q₀] [Module.Projective R Q₀]
+    [AddCommMonoid Q₁] [Module R Q₁] [Module.Projective R Q₁]
     (h : IsMinimalProjectivePresentation p₁ p₀) {q₁ : Q₁ →ₗ[R] Q₀} {q₀ : Q₀ →ₗ[R] M}
     (hq₀ : Function.Surjective q₀) (hq : LinearMap.range q₁ = LinearMap.ker q₀) :
     ∃ (f₀ : Q₀ →ₗ[R] P₀) (f₁ : Q₁ →ₗ[R] P₁),
@@ -217,6 +270,8 @@ theorem exists_surjective [Module.Projective R Q₀] [Module.Projective R Q₁]
   refine ⟨f₀, f₁, hf₀, LinearMap.ext fun z => ?_, hf₀surj, hf₁surj⟩
   have hval := congrArg Subtype.val (LinearMap.congr_fun hf₁ z)
   simpa using hval.symm
+
+variable [AddCommGroup Q₀] [Module R Q₀] [AddCommGroup Q₁] [Module R Q₁]
 
 /-- **Uniqueness of the minimal projective presentation.** Two minimal projective presentations of
 the same module are isomorphic as diagrams: there are linear equivalences of both sources
@@ -289,38 +344,6 @@ theorem nonempty_linearEquiv_ker {q₁ : Q₁ →ₗ[R] Q₀} {q₀ : Q₀ →�
 
 end Comparison
 
-section Projective
-
-variable [Module.Projective R M]
-
-/-- **A projective module presents itself.** In a minimal projective presentation of a projective
-module the presenting map is already an isomorphism, being a projective cover of a module that
-covers itself. -/
-theorem bijective_of_projective (h : IsMinimalProjectivePresentation p₁ p₀) :
-    Function.Bijective p₀ :=
-  h.isProjectiveCover.bijective_of_comp_eq isProjectiveCover_id (LinearMap.id_comp p₀)
-
-/-- The syzygy of a projective module vanishes, so the left-hand map of a minimal projective
-presentation of it is zero. -/
-theorem eq_zero_of_projective (h : IsMinimalProjectivePresentation p₁ p₀) : p₁ = 0 := by
-  have hker : LinearMap.ker p₀ = ⊥ :=
-    LinearMap.ker_eq_bot.mpr h.bijective_of_projective.injective
-  have hrange : LinearMap.range p₁ = ⊥ := by rw [h.range_eq_ker, hker]
-  exact LinearMap.range_eq_bot.mp hrange
-
-/-- Minimality forces the left-hand source of a minimal projective presentation of a projective
-module to vanish as well, not merely the map out of it. -/
-theorem subsingleton_of_projective (h : IsMinimalProjectivePresentation p₁ p₀) :
-    Subsingleton P₁ := by
-  have hker : LinearMap.ker p₁ = ⊤ := by
-    rw [h.eq_zero_of_projective]
-    exact LinearMap.ker_zero
-  have hsup := h.isSuperfluous_ker
-  rw [hker] at hsup
-  exact isSuperfluous_top_iff.mp hsup
-
-end Projective
-
 section Radical
 
 /-- **Minimality, quantitatively, on the right**: the image of the left-hand map — equivalently the
@@ -339,5 +362,7 @@ theorem ker_le_jacobson (h : IsMinimalProjectivePresentation p₁ p₀) :
 end Radical
 
 end IsMinimalProjectivePresentation
+
+end Ring
 
 end TauCeti
