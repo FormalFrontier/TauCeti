@@ -79,6 +79,7 @@ theorem valuation_lt_iff {x y : ℚ_[p]} :
 
 /-- An element of `ℚ_[p]` lies in the integer ring `𝒪[ℚ_[p]]` of the valuative relation exactly
 when its norm is at most one, i.e. when it is a `p`-adic integer. -/
+@[simp]
 theorem mem_integer_iff_norm_le_one (x : ℚ_[p]) : x ∈ 𝒪[ℚ_[p]] ↔ ‖x‖ ≤ 1 := by
   have key : ∀ y : ℚ_[p], mulValuation y ≤ 1 ↔ ‖y‖ ≤ 1 := by
     intro y
