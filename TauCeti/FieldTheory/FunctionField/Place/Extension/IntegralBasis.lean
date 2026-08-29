@@ -22,12 +22,9 @@ basis of that module and extending scalars from `𝒪_P` to its fraction field `
 `F' / F` consisting of elements integral over `𝒪_P`.  This is the local integral basis of
 Stichtenoth, *Algebraic Function Fields and Codes*, 2nd ed., Corollary 3.3.5.
 
-This file also owns the local model `𝒪_P ⊆ 𝒪'_P` that the later layers work with: on top of the
-action of `𝒪_P` on `F'` supplied by
-`TauCeti/FieldTheory/FunctionField/Place/Extension/Basic.lean` it records that `F'` is the
-fraction field — indeed the localization at `(𝒪_P)⁰` — of `𝒪'_P`, that `𝒪'_P` is a Dedekind domain
-and module-finite over `𝒪_P`, and it transports separability to the canonical fraction fields over
-which Mathlib states the different.
+The local model `𝒪_P ⊆ 𝒪'_P` and its fraction-field, localization, Dedekind, finiteness, and
+separability infrastructure are supplied by
+`TauCeti/FieldTheory/FunctionField/Place/Extension/Basic.lean`.
 
 The freeness and rank calculation are specializations of Mathlib's generic integral-closure
 theorems `IsIntegralClosure.module_free` and `IsIntegralClosure.rank`.  The point of this file is
@@ -58,8 +55,8 @@ The basis material is the place-local analogue of Mathlib's `NumberField.integra
 * `TauCeti.Place.IsIntegralBasis.isIntegral` and
   `TauCeti.Place.IsIntegralBasis.mem_span_iff_isIntegral`: what an integral basis at `P` gives —
   integral vectors, and an integral span that detects integrality.
-* `TauCeti.Place.isLocalization_integralClosure`: `F'` is the localization of `𝒪'_P` at the
-  nonzero divisors of `𝒪_P`.
+* `TauCeti.Place.isIntegralBasis_iff_isIntegral_iff_repr_mem`: an arbitrary basis is integral
+  exactly when integrality is detected coordinatewise over `𝒪_P`.
 * `TauCeti.Place.finrank_integralClosure`: `rank_{𝒪_P} 𝒪'_P = [F' : F]`.
 * `TauCeti.Place.isIntegralBasis_localizationLocalization`: extending any `𝒪_P`-basis of `𝒪'_P`
   to the fraction fields gives an integral basis at `P`.
@@ -106,12 +103,20 @@ integral closure `𝒪'_P` inside `F'` (Stichtenoth, Section III.3). -/
 def IsIntegralBasis {ι : Type*} (b : Basis ι F F') : Prop :=
   Submodule.span (P.integers) (Set.range b) = (integralClosure (P.integers) F').toSubmodule
 
-/-- An `F`-basis of `F'` is an integral basis at `P` exactly when its `𝒪_P`-span is the local
-integral closure `𝒪'_P`. -/
-theorem isIntegralBasis_iff {ι : Type*} (b : Basis ι F F') :
+/-- A basis is an integral basis at `P` exactly when integrality over `𝒪_P` is equivalent to all
+of its coordinates lying in `𝒪_P`. -/
+theorem isIntegralBasis_iff_isIntegral_iff_repr_mem {ι : Type*} (b : Basis ι F F') :
     P.IsIntegralBasis F' b ↔
-      Submodule.span (P.integers) (Set.range b) =
-        (integralClosure (P.integers) F').toSubmodule := Iff.rfl
+      ∀ x, IsIntegral (P.integers) x ↔ ∀ i, b.repr x i ∈ P.integers := by
+  rw [IsIntegralBasis, Submodule.ext_iff]
+  apply forall_congr'
+  intro x
+  rw [Basis.mem_span_iff_repr_mem, Subalgebra.mem_toSubmodule,
+    mem_integralClosure_iff]
+  have hmem (y : F) :
+      y ∈ Set.range (algebraMap (P.integers) F) ↔ y ∈ P.integers :=
+    ⟨fun ⟨r, hr⟩ ↦ hr ▸ r.2, fun hy ↦ ⟨⟨y, hy⟩, rfl⟩⟩
+  simp only [hmem, iff_comm]
 
 /-- Every vector of an integral basis at `P` is integral over `𝒪_P`. -/
 theorem IsIntegralBasis.isIntegral {ι : Type*} {b : Basis ι F F'} (hb : P.IsIntegralBasis F' b)
@@ -127,21 +132,17 @@ theorem IsIntegralBasis.mem_span_iff_isIntegral {ι : Type*} {b : Basis ι F F'}
   rw [hb, Subalgebra.mem_toSubmodule]
   exact mem_integralClosure_iff (P.integers) F'
 
+/-- Integrality over `𝒪_P`, expressed in the coordinate normal form supplied by an integral
+basis at `P`. -/
+@[simp]
+theorem IsIntegralBasis.isIntegral_iff_repr_mem {ι : Type*} {b : Basis ι F F'}
+    (hb : P.IsIntegralBasis F' b) {x : F'} :
+    IsIntegral (P.integers) x ↔ ∀ i, b.repr x i ∈ P.integers :=
+  (isIntegralBasis_iff_isIntegral_iff_repr_mem F' P b).mp hb x
+
 /-! ### The local integral closure -/
 
 variable [FiniteDimensional F F']
-
-/-- The local model `𝒪'_P` — the integral closure of `𝒪_P` in `F'` — has fraction field `F'`. -/
-instance isFractionRing_integralClosure :
-    IsFractionRing (integralClosure (P.integers) F') F' :=
-  IsIntegralClosure.isFractionRing_of_finite_extension (P.integers) F F' _
-
-/-- More precisely, `F'` is the localization of the local model `𝒪'_P` at the nonzero divisors
-of `𝒪_P`.  This is the form in which the `Basis.localizationLocalization` API consumes it. -/
-theorem isLocalization_integralClosure :
-    IsLocalization
-      (Algebra.algebraMapSubmonoid (integralClosure (P.integers) F') (P.integers)⁰) F' :=
-  IsIntegralClosure.isLocalization (P.integers) F F' _
 
 attribute [local instance] isLocalization_integralClosure
 
@@ -150,35 +151,11 @@ an integral basis at `P`.  This is Stichtenoth, Corollary 3.3.5. -/
 theorem isIntegralBasis_localizationLocalization {ι : Type*}
     (c : Basis ι (P.integers) (integralClosure (P.integers) F')) :
     P.IsIntegralBasis F' (c.localizationLocalization F (P.integers)⁰ F') := by
-  rw [isIntegralBasis_iff, Basis.localizationLocalization_span F (P.integers)⁰ F']
+  rw [IsIntegralBasis, Basis.localizationLocalization_span F (P.integers)⁰ F']
   ext x
   simp
 
 variable [Algebra.IsSeparable F F']
-
-/-- The local model `𝒪'_P` is a Dedekind domain. -/
-instance isDedekindDomain_integralClosure :
-    IsDedekindDomain (integralClosure (P.integers) F') :=
-  integralClosure.isDedekindDomain (A := P.integers) (K := F) (L := F')
-
-/-- The local model `𝒪'_P` is module-finite over `𝒪_P`. -/
-instance moduleFinite_integralClosure :
-    Module.Finite (P.integers) (integralClosure (P.integers) F') :=
-  IsIntegralClosure.finite (A := P.integers) (K := F) (L := F') _
-
-/-- Separability of `F' / F`, transported to the canonical fraction fields used by the
-integral-closure API. -/
-instance isSeparable_fractionRing_integralClosure :
-    Algebra.IsSeparable (FractionRing (P.integers))
-      (FractionRing (integralClosure (P.integers) F')) := by
-  refine Algebra.IsSeparable.of_equiv_equiv (FractionRing.algEquiv (P.integers) F).symm.toRingEquiv
-    (FractionRing.algEquiv (integralClosure (P.integers) F') F').symm.toRingEquiv ?_
-  apply IsLocalization.ringHom_ext (P.integers)⁰
-  ext a
-  simp only [RingHom.coe_comp, Function.comp_apply, RingHom.coe_coe, AlgEquiv.coe_ringEquiv,
-    AlgEquiv.commutes, ← IsScalarTower.algebraMap_apply]
-  rw [IsScalarTower.algebraMap_apply (P.integers) (integralClosure (P.integers) F') F',
-    AlgEquiv.commutes, ← IsScalarTower.algebraMap_apply]
 
 /-- The rank of the local integral closure is the degree of the field extension:
 `rank_{𝒪_P} 𝒪'_P = [F' : F]`. -/
@@ -231,10 +208,7 @@ integral basis lie in `𝒪_P`** (Stichtenoth, Corollary 3.3.5). -/
 theorem isIntegral_iff_repr_mem {x : F'} :
     IsIntegral (P.integers) x ↔
       ∀ i, (localIntegralBasis F' P).repr x i ∈ P.integers := by
-  rw [← (isIntegralBasis_localIntegralBasis F' P).mem_span_iff_isIntegral,
-    Basis.mem_span_iff_repr_mem (P.integers) (localIntegralBasis F' P) x]
-  exact forall_congr' fun _ ↦
-    ⟨fun ⟨r, hr⟩ ↦ hr ▸ r.2, fun hy ↦ ⟨⟨_, hy⟩, rfl⟩⟩
+  exact (isIntegralBasis_localIntegralBasis F' P).isIntegral_iff_repr_mem
 
 end Place
 

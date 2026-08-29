@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.RingTheory.Valuation.Extension
+public import Mathlib.RingTheory.DedekindDomain.IntegralClosure
 public import TauCeti.FieldTheory.FunctionField.Place.Basic
 public import TauCeti.RingTheory.Valuation.Discrete.Normalize
 
@@ -34,6 +35,10 @@ The file also records the action of the valuation ring `𝒪_P` of a place `P` o
 extension field `F'`, through `F`.  That action is not a global instance — for `F' = F` it would
 compete with the action of a valuation subring on its own field — so it, and the scalar tower it
 sits in, are provided to be reinstalled by consumers with `attribute [local instance 10]`.
+For a finite extension, it also records the standard local integral-closure model
+`𝒪_P ⊆ 𝒪'_P`: `F'` is the fraction field and the localization of `𝒪'_P` at `(𝒪_P)⁰`; for a
+separable extension, `𝒪'_P` is Dedekind and module-finite over `𝒪_P`, and separability transports
+to the canonical fraction fields used by Mathlib's different API.
 
 ## Main definitions
 
@@ -70,6 +75,12 @@ sits in, are provided to be reinstalled by consumers with `attribute [local inst
 * `TauCeti.Place.finrank_mul_degree_eq_relativeDegree_mul_degree_restrict`:
   `[k' : k] · deg P' = f(P' ∣ P) · deg P`, the comparison of the degrees of `P'` and of the place
   it lies over.
+* `TauCeti.Place.isFractionRing_integralClosure`,
+  `TauCeti.Place.isLocalization_integralClosure`,
+  `TauCeti.Place.isDedekindDomain_integralClosure`,
+  `TauCeti.Place.moduleFinite_integralClosure`, and
+  `TauCeti.Place.isSeparable_fractionRing_integralClosure`: the fraction-field, localization,
+  Dedekind, finiteness, and separability properties of the local integral closure `𝒪'_P`.
 
 ## References
 
@@ -79,7 +90,12 @@ sits in, are provided to be reinstalled by consumers with `attribute [local inst
 
 public section
 
+open IsDedekindDomain
+
 open scoped WithZero
+open scoped nonZeroDivisors
+
+attribute [local instance] FractionRing.liftAlgebra FractionRing.isScalarTower_liftAlgebra
 
 namespace TauCeti
 
@@ -129,6 +145,57 @@ instance isTorsionFree_integersExtension : Module.IsTorsionFree (P.integers) F' 
     (algebraMap_integersExtension_injective F' P)
 
 end LocalModel
+
+section LocalIntegralClosure
+
+omit [Field k'] [Algebra k k'] [Algebra k' F'] [Algebra k F'] [IsScalarTower k k' F']
+  [IsScalarTower k F F']
+
+variable (F') (P : Place k F)
+
+attribute [local instance 10] algebraIntegersExtension isScalarTowerIntegersExtension
+
+variable [FiniteDimensional F F']
+
+/-- The local model `𝒪'_P` — the integral closure of `𝒪_P` in `F'` — has fraction field `F'`. -/
+instance isFractionRing_integralClosure :
+    IsFractionRing (integralClosure (P.integers) F') F' :=
+  IsIntegralClosure.isFractionRing_of_finite_extension (P.integers) F F' _
+
+/-- More precisely, `F'` is the localization of the local model `𝒪'_P` at the nonzero divisors
+of `𝒪_P`. -/
+theorem isLocalization_integralClosure :
+    IsLocalization
+      (Algebra.algebraMapSubmonoid (integralClosure (P.integers) F') (P.integers)⁰) F' :=
+  IsIntegralClosure.isLocalization (P.integers) F F' _
+
+variable [Algebra.IsSeparable F F']
+
+/-- The local model `𝒪'_P` is a Dedekind domain. -/
+instance isDedekindDomain_integralClosure :
+    IsDedekindDomain (integralClosure (P.integers) F') :=
+  integralClosure.isDedekindDomain (A := P.integers) (K := F) (L := F')
+
+/-- The local model `𝒪'_P` is module-finite over `𝒪_P`. -/
+instance moduleFinite_integralClosure :
+    Module.Finite (P.integers) (integralClosure (P.integers) F') :=
+  IsIntegralClosure.finite (A := P.integers) (K := F) (L := F') _
+
+/-- Separability of `F' / F`, transported to the canonical fraction fields used by the
+integral-closure API. -/
+instance isSeparable_fractionRing_integralClosure :
+    Algebra.IsSeparable (FractionRing (P.integers))
+      (FractionRing (integralClosure (P.integers) F')) := by
+  refine Algebra.IsSeparable.of_equiv_equiv (FractionRing.algEquiv (P.integers) F).symm.toRingEquiv
+    (FractionRing.algEquiv (integralClosure (P.integers) F') F').symm.toRingEquiv ?_
+  apply IsLocalization.ringHom_ext (P.integers)⁰
+  ext a
+  simp only [RingHom.coe_comp, Function.comp_apply, RingHom.coe_coe, AlgEquiv.coe_ringEquiv,
+    AlgEquiv.commutes, ← IsScalarTower.algebraMap_apply]
+  rw [IsScalarTower.algebraMap_apply (P.integers) (integralClosure (P.integers) F') F',
+    AlgEquiv.commutes, ← IsScalarTower.algebraMap_apply]
+
+end LocalIntegralClosure
 
 section Constants
 

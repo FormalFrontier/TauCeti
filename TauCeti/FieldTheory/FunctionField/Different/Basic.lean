@@ -7,7 +7,6 @@ module
 
 public import Mathlib.RingTheory.DedekindDomain.Different
 public import TauCeti.FieldTheory.FunctionField.AffineModel.Extension
-public import TauCeti.FieldTheory.FunctionField.Place.Extension.IntegralBasis
 
 /-!
 # The different exponent of a place
@@ -29,7 +28,7 @@ The local model `𝒪_P ⊆ 𝒪'_P` is a pair of affine models in the sense of
 `TauCeti/FieldTheory/FunctionField/AffineModel/`, the smallest one that sees `P`: `𝒪_P` is a
 discrete valuation ring with fraction field `F`, and `𝒪'_P` is a Dedekind domain, module-finite
 over it, with fraction field `F'`.  It is constructed in
-`TauCeti/FieldTheory/FunctionField/Place/Extension/IntegralBasis.lean`; the action of `𝒪_P` on `F'`
+`TauCeti/FieldTheory/FunctionField/Place/Extension/Basic.lean`; the action of `𝒪_P` on `F'`
 and the scalar tower it sits in are deliberately not global instances, so they are reinstalled
 here as `local` instances.  The identification of the extension-theoretic data of `P'` with the
 ideal-theoretic data of its centre on `𝒪'_P` is then the affine-model dictionary of

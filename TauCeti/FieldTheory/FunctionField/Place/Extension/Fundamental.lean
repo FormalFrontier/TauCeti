@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.FieldTheory.FunctionField.AffineModel.Extension
-public import TauCeti.FieldTheory.FunctionField.Place.Extension.IntegralBasis
 
 /-!
 # The fundamental identity at an arbitrary place
@@ -30,7 +29,7 @@ affine-model reconciliation consumes.  No separability-free finiteness of a norm
 available, so the unconditional form of Stichtenoth's Theorem 3.1.11 waits on one.
 
 That local model is the one set up in
-`TauCeti/FieldTheory/FunctionField/Place/Extension/IntegralBasis.lean`; the action of `𝒪_P` on `F'`
+`TauCeti/FieldTheory/FunctionField/Place/Extension/Basic.lean`; the action of `𝒪_P` on `F'`
 and the scalar tower it sits in are not global instances, so they are reinstalled here.
 
 ## Main result
