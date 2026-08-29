@@ -5,9 +5,9 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.LinearAlgebra.Vandermonde
 public import TauCeti.RepresentationTheory.ClassicalGroups.GelfandTsetlin.Count
 public import TauCeti.RepresentationTheory.ClassicalGroups.WeylDimension
+import TauCeti.LinearAlgebra.Vandermonde
 
 /-!
 # The Gelfand-Tsetlin dimension formula

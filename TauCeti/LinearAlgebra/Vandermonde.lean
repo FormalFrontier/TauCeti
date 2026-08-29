@@ -8,9 +8,9 @@ module
 public import Mathlib.Data.Int.Interval
 public import Mathlib.Data.Nat.Factorial.BigOperators
 public import Mathlib.Data.Pi.Interval
-public import Mathlib.LinearAlgebra.Matrix.Block
 public import Mathlib.LinearAlgebra.Vandermonde
 public import Mathlib.RingTheory.Polynomial.Pochhammer
+import Mathlib.LinearAlgebra.Matrix.Block
 
 /-!
 # Summing Vandermonde determinants over a box of nested integer intervals
