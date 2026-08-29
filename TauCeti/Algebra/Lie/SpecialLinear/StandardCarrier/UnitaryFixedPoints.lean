@@ -20,23 +20,41 @@ point is fixed exactly when
 g * Q * (g^{(q)})ᵀ = Q,      equivalently      (g^{(q)})ᵀ * Q * g = Q,
 ```
 
-the second being the invariance of the `q`-power-semilinear form of Gram matrix `Q`, written
-`g* Q g = Q` with `g* = (g^{(q)})ᵀ`. That is the shape of the classical unitarity condition, and
-is that condition wherever the `q`-power map is an involution. At the generality assumed here the
-`q`-power map is only a ring endomorphism: the Frobenius of a ring of exponential characteristic
-`p` need not square to the identity, and on `(ZMod p)[X]` it does not. It is an involution on the
-subring fixed by the `q ^ 2`-power Frobenius, and every entry of a fixed point lies in that
-subring by `TauCeti.SlStd.mem_frobeniusFixedSubring_of_twistedFrobenius_eq_self`. To read the
-fixed group inside `GL_{r+1}(A)`, rewrite with `TauCeti.map_subtype_fixedSubgroup_of_coe_eq` and
-`TauCeti.SlStd.coe_twistedFrobenius` and then with either equivalence below.
+the second saying that `g` is an isometry of the `q`-power-semilinear form of Gram matrix `Q`,
+written `g* Q g = Q` with `g* = (g^{(q)})ᵀ`. That is the shape of the classical unitarity
+condition, but two things are needed before it may be called that condition, and the generality
+assumed here supplies neither.
+
+First, the `q`-power map is only a ring endomorphism: the Frobenius of a ring of exponential
+characteristic `p` need not square to the identity, and on `(ZMod p)[X]` it does not. It is an
+involution on the subring fixed by the `q ^ 2`-power Frobenius, and every entry of a fixed point
+lies in that subring by `TauCeti.SlStd.mem_frobeniusFixedSubring_of_twistedFrobenius_eq_self`.
+
+Second, the pinned Gram matrix has a parity. `Q` is the reversal matrix with alternating signs, so
+transposing it reverses the sign pattern: `Qᵀ = (-1) ^ r • Q`, equivalently `Qᵀ = Q⁻¹` together
+with `Q * Q = (-1) ^ r`, which is `TauCeti.typeAGraphConjugator_mul_self`. Where the `q`-power map
+is an involution the form is therefore Hermitian for even `r` and skew-Hermitian for odd `r`; and
+where the `q`-power map is the identity, as on `ZMod p` with `q = p`, the form is bilinear,
+symmetric for even `r` and alternating for odd `r`, so that the equation is then the symplectic
+condition (for `r = 3`, `A = ZMod 3` and `q = 3` it is exactly `gᵀ * Q * g = Q` for a
+nondegenerate alternating form). So involutivity alone does not make the equation a unitary one.
+
+To read the fixed group inside `GL_{r+1}(A)`, rewrite with
+`TauCeti.map_subtype_fixedSubgroup_of_coe_eq` and `TauCeti.SlStd.coe_twistedFrobenius` and then
+with either equivalence below.
 
 For `p` prime, `0 < k`, `2 ≤ r`, and `A` an algebraic closure of `ZMod p`, that subring is the
-field of `q ^ 2` elements and the equation here is the usual unitary equation of the twisted
-family `²A_r(q)` over it. Identifying the fixed group with that family is not done here and does
-not follow from what is proved: it would need the carrier identified with `SL_{r+1}` and the
-derived subgroup and central quotient taken. None of those hypotheses are assumed below, and
-nothing here asserts that the fixed group is finite, is perfect, or is simple, nor that it agrees
-with any other construction of a unitary group.
+field `F` of `q ^ 2` elements, on which the `q`-power map is the involution fixing the field of
+`q` elements, and the equation here is the isometry equation over `F` of the Hermitian form `Q`
+for even `r` and of the skew-Hermitian form `Q` for odd `r`. In the odd case the isometries are
+still those of a Hermitian form: choosing `c` in `F` with `c ^ q = -c` (take `c = 1` when `q` is
+even) makes `c • Q` Hermitian, and rescaling the invertible Gram matrix by a unit does not change
+which matrices satisfy the equation. That is the usual unitary equation of the twisted family
+`²A_r(q)`. Identifying the fixed group with that family is not done here and does not follow from
+what is proved: it would need the carrier identified with `SL_{r+1}` and the derived subgroup and
+central quotient taken. None of those hypotheses are assumed below, and nothing here asserts that
+the fixed group is finite, is perfect, or is simple, nor that it agrees with any other
+construction of a unitary group.
 
 Mathlib's `Matrix.unitaryGroup` is not the object described here: it is the unitary group of the
 conjugate-transpose involution supplied by a `StarRing` structure on the coefficients, whereas the
@@ -48,7 +66,7 @@ than the identity.
 
 * `TauCeti.SlStd.twistedFrobenius_eq_self_iff` and
   `TauCeti.SlStd.twistedFrobenius_eq_self_iff_transpose`: a carrier point is fixed by the
-  graph-twisted Frobenius exactly when it preserves the pinned `q`-power-semilinear form.
+  graph-twisted Frobenius exactly when it is an isometry of the pinned `q`-power-semilinear form.
 
 ## References
 
@@ -74,7 +92,7 @@ noncomputable section
 
 variable (r p k : ℕ) (A : Type) [CommRing A] [ExpChar A p]
 
-/-! ## The unitary description of the fixed points -/
+/-! ## The fixed points as isometries of the pinned semilinear form -/
 
 -- The point-level Frobenius is entrywise exponentiation; this is the form the invariance equation
 -- of `TauCeti.typeAGraphAutomorphism_eq_iff` is stated in.
@@ -105,11 +123,13 @@ theorem twistedFrobenius_eq_self_iff (g : points r A) :
   rw [Subtype.ext_iff, coe_twistedFrobenius, typeAGraphAutomorphism_eq_iff,
     coe_map_iterateFrobenius]
 
-/-- **A type-`A_r` carrier point is fixed by the graph-twisted Frobenius exactly when it satisfies
-the unitary equation of the pinned `q`-power-semilinear form**, `q = p ^ k`: writing `g*` for the
-transpose of the entrywise `q`-th power of `g`, the condition is `g* * Q * g = Q`.
+/-- **A type-`A_r` carrier point is fixed by the graph-twisted Frobenius exactly when it is an
+isometry of the pinned `q`-power-semilinear form**, `q = p ^ k`: writing `g*` for the transpose of
+the entrywise `q`-th power of `g`, the condition is `g* * Q * g = Q`.
 
-This is the classical form of the condition, an involution being what makes `g ↦ g*` an adjoint;
+This is the shape in which the classical unitarity condition is written, `g ↦ g*` being an
+adjoint where the `q`-power map is an involution; since `Qᵀ = (-1) ^ r • Q`, the form there is
+Hermitian for even `r` and skew-Hermitian for odd `r`, as the module documentation records.
 `TauCeti.SlStd.twistedFrobenius_eq_self_iff` is the same condition with the two outer factors
 exchanged, which is the form the graph automorphism produces directly. -/
 theorem twistedFrobenius_eq_self_iff_transpose (g : points r A) :
