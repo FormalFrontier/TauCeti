@@ -27,7 +27,7 @@ double cosets satisfy the Tits multiplication and nondegeneracy axioms.
 
 ## References
 
-* J. E. Humphreys, *Linear Algebraic Groups* (1975), Section 28.1.
+* J. E. Humphreys, *Linear Algebraic Groups* (1975), Sections 29.1--29.2.
 * T. A. Springer, *Linear Algebraic Groups*, second edition (1998), Section 8.3.
 -/
 
