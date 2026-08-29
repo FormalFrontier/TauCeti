@@ -123,6 +123,8 @@ theorem _root_.Equiv.Perm.parts_partition_eq_cycleType {σ : Equiv.Perm α}
 
 /-! ### Special values -/
 
+/-- The parts of the identity permutation are all one, with one part for each element of the
+underlying finite type. -/
 @[simp]
 theorem _root_.Equiv.Perm.parts_partition_one :
     (1 : Equiv.Perm α).partition.parts = Multiset.replicate (Fintype.card α) 1 := by
@@ -173,6 +175,7 @@ theorem _root_.Equiv.Perm.parts_partition_conj (g σ : Equiv.Perm α) :
     (g * σ * g⁻¹).partition.parts = σ.partition.parts :=
   congrArg Nat.Partition.parts (partition_eq_of_isConj.1 (isConj_iff.2 ⟨g, rfl⟩)).symm
 
+/-- Inverting a permutation does not change the parts of its partition. -/
 @[simp]
 theorem _root_.Equiv.Perm.parts_partition_inv (σ : Equiv.Perm α) :
     σ⁻¹.partition.parts = σ.partition.parts := by
@@ -196,6 +199,7 @@ theorem _root_.Equiv.Perm.lcm_parts_partition (σ : Equiv.Perm α) :
   rw [parts_partition, Multiset.lcm_add, lcm_cycleType, lcm_replicate_one]
   simp
 
+/-- Every part of a permutation's partition divides the order of the permutation. -/
 theorem _root_.Equiv.Perm.dvd_of_mem_parts_partition {σ : Equiv.Perm α} {n : ℕ}
     (hn : n ∈ σ.partition.parts) : n ∣ orderOf σ := by
   rw [← lcm_parts_partition]
