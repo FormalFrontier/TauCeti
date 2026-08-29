@@ -40,9 +40,11 @@ maps are holomorphic, is the next step of Lane F4.1 and is not done here; so are
 tori `T_α`, `T_β`. What is available towards that holomorphy is the analytic ingredient for a
 single coordinate patch at a multiplicity-free coefficient tuple,
 `TauCeti.Sym.analyticAt_coeffEquiv_map_coeffEquiv_symm` in
-`TauCeti/Analysis/Polynomial/SimpleRoots.lean`; assembling it across the blocks that a chart below
-splits a tuple into, along the regrouping `e`, is not done, and neither is the case of colliding
-points — which is where the degree-`m i` elementary symmetric coordinates genuinely appear.
+`TauCeti/Analysis/Polynomial/SimpleRoots/Basic.lean`. Its assembly across the blocks that a chart
+below splits a tuple into, along the regrouping `e`, is
+`TauCeti.Sym.analyticAt_piSigmaConstHomeomorph_coeffEquiv_map_coeffEquiv_symm` in
+`TauCeti/Analysis/Polynomial/SimpleRoots/Family.lean`. The case of colliding points is not done;
+there the degree-`m i` elementary symmetric coordinates genuinely appear.
 
 ## Main declarations
 

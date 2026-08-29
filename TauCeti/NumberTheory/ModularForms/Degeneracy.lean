@@ -45,6 +45,8 @@ the lower level. The `q`-expansion results go up only.
 * `TauCeti.ModularForm.levelRaise_apply`: `(V_d f) τ = f (d τ)`, the defining formula from which
   the algebraic properties (`levelRaise_one_apply`, `ModularForm.levelRaise_one`,
   `levelRaise_levelRaise`, `levelRaise_injective`) all follow by `ext`.
+* `TauCeti.slash_mapGL_eq_self_of_mem_Gamma1_div`: a function whose level-raise carries a
+  nebentypus that factors through `N / l` is invariant under all of `Γ₁(N / l)`.
 * `TauCeti.Gamma1_map_le_conjAct_scaleGL`, `TauCeti.Gamma0_map_le_conjAct_scaleGL`: the level
   transport, `Γ₁(dM) ≤ diag(d,1)⁻¹ Γ₁(M) diag(d,1)` and likewise for `Γ₀`, which is what makes
   `V_d` a map `M_k(Γ₁(M)) → M_k(Γ₁(dM))`.
@@ -684,7 +686,7 @@ lemma exists_conjScale_mem_Gamma0 (d M : ℕ) (γ : ↥(Gamma0 (d * M))) :
   have hc : (γ : SL(2, ℤ)) 1 0 = d * ((M : ℤ) * t) := by rw [ht]; push_cast; ring
   refine ⟨_, hc, Gamma0_mem.mpr (by simp), ?_⟩
   ext
-  simp [Gamma0Map, ZMod.unitsMap_def]
+  simp [Gamma0Map_apply, ZMod.unitsMap_def]
 
 /-- The `diag(d, 1)`-conjugate of a matrix of `Γ₀(N)` lies in `Γ₀(M)` whenever `d * M ∣ N`, and
 the conjugation leaves the lower-right entry alone: the diamond label of `γ` is read along the
@@ -768,6 +770,60 @@ theorem CuspForm.levelRaise_mem_cuspFormCharSpace (M d : ℕ) [NeZero d]
     levelRaise d (Gamma1_map_le_conjAct_scaleGL M d) f ∈
       cuspFormCharSpace k (χ.comp (ZMod.unitsMap (Dvd.intro_left d rfl : M ∣ d * M))) :=
   levelRaise_mem_cuspFormCharSpace_of_dvd dvd_rfl χ hf
+
+/-- **Γ₁(N/l)-invariance from a nebentypus of level `N` that factors through `N / l`.**
+
+If the level-raise `f ∣[k] V_l` is an eigenvector of every `γ ∈ Γ₀(N)` with eigenvalue the
+character value `χ` reads off `γ`, if `f` is `T`-periodic, and if `χ` is trivial on the kernel of
+the reduction `(ZMod N)ˣ → (ZMod (N/l))ˣ`, then `f` is invariant under all of `Γ₁(N / l)`.
+
+This is the step that converts a nebentypus into honest invariance, and it is where the conductor
+drops: a form whose character already factors through `N / l` is invariant under all of
+`Γ₁(N / l)`, the larger congruence subgroup at the lower level, which is what the conductor
+argument turns into a statement about newforms.
+
+Adapted from `conductor_slash_eq_self_of_mem_Gamma1_div` in AINTLIB
+(`Eigenforms/ConductorTheorem.lean`:217, Chris Birkbeck, Apache-2.0, commit
+`2baa76f742bdb4fb8ee323fabba41203bd390e08`). The source states it over its own `levelRaiseFun`
+and a `DirichletCharacter`, and routes through a conductor-specific helper; here it is stated over
+`scaleGL` and a units-valued character, and assembled from
+`exists_eq_T_zpow_mul_conjScale_mul_T_zpow`,
+`slash_zpow_mul_mul_zpow_eq_smul` and
+`slash_conjScale_eq_smul_of_slash_scaleGL`. -/
+theorem slash_mapGL_eq_self_of_mem_Gamma1_div (l N : ℕ) [NeZero l] (hlN : l ∣ N)
+    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
+    (hχ : ∀ u : (ZMod N)ˣ, ZMod.unitsMap (Nat.div_dvd_of_dvd hlN) u = 1 → χ u = 1) (f : ℍ → ℂ)
+    (hnb : ∀ (γ : SL(2, ℤ)) (hγ : γ ∈ Gamma0 N),
+      (f ∣[k] scaleGL l) ∣[k] mapGL ℝ γ =
+        (χ ((Gamma0Map N).toHomUnits ⟨γ, hγ⟩) : ℂ) • (f ∣[k] scaleGL l))
+    (hT : f ∣[k] (mapGL ℝ ModularGroup.T : GL (Fin 2) ℝ) = f)
+    (δ : SL(2, ℤ)) (hδ : δ ∈ Gamma1 (N / l)) :
+    f ∣[k] (mapGL ℝ δ : GL (Fin 2) ℝ) = f := by
+  obtain ⟨i, j, c, γ, hc, hγ, hfactor, hdiag⟩ :=
+    exists_eq_T_zpow_mul_conjScale_mul_T_zpow l N hlN δ (Gamma1_in_Gamma0 _ hδ)
+  have hdet := det_pos_of_mem_slGL (MonoidHom.mem_range.mpr ⟨ModularGroup.T, rfl⟩)
+  have hconj := slash_conjScale_eq_smul_of_slash_scaleGL (k := k) f γ hc (hnb γ hγ)
+  -- the character value is `1`: `γ 1 1` is congruent to `δ 1 1 ≡ 1` modulo `N / l`
+  have hchar : (χ ((Gamma0Map N).toHomUnits ⟨γ, hγ⟩) : ℂ) = 1 := by
+    obtain ⟨-, hd, hcz⟩ := (Gamma1_mem _ _).mp hδ
+    have hγ' : γ ∈ Gamma0 (N / l) := Gamma0_le_Gamma0_of_dvd (Nat.div_dvd_of_dvd hlN) hγ
+    -- Mathlib builds `Gamma0Map` as a bare `MonoidHom.mk` and provides no lemma for its value,
+    -- so reading it as the lower-right entry is a definitional step that cannot be avoided; the
+    -- one lemma naming it, `gamma0Map_apply` in `Fricke/Conjugation.lean`, is `private` there and
+    -- so unavailable here. Naming it once keeps the rest of the proof independent of that
+    -- representation.
+    have hentry : Gamma0Map (N / l) ⟨γ, hγ'⟩ = ((γ 1 1 : ℤ) : ZMod (N / l)) := rfl
+    have hlabel : Gamma0Map (N / l) ⟨γ, hγ'⟩ = 1 := by
+      rw [hentry, hdiag]
+      push_cast
+      rw [hd, hcz, zero_mul, sub_zero]
+    have hred : ZMod.unitsMap (Nat.div_dvd_of_dvd hlN)
+        ((Gamma0Map N).toHomUnits ⟨γ, hγ⟩) = 1 := by
+      rw [← Gamma0Map_toHomUnits_of_dvd (Nat.div_dvd_of_dvd hlN) ⟨γ, hγ⟩ hγ']
+      exact Units.ext hlabel
+    rw [hχ _ hred, Units.val_one]
+  rw [hfactor, map_mul, map_mul, map_zpow, map_zpow,
+    slash_zpow_mul_mul_zpow_eq_smul k f hdet hT hconj i j, hchar, one_smul]
 
 end Nebentypus
 

@@ -10,6 +10,7 @@ public import Mathlib.Topology.Algebra.Nonarchimedean.AdicTopology
 public import TauCeti.AlgebraicGeometry.EllipticCurve.FormalGroup.Inverse
 public import TauCeti.AlgebraicGeometry.EllipticCurve.FormalGroup.WExpansion
 public import TauCeti.RingTheory.MvPowerSeries.Evaluation
+public import TauCeti.RingTheory.MvPowerSeries.Substitution
 public import TauCeti.Topology.Algebra.Nonarchimedean.AdicTopology
 public import TauCeti.Topology.Algebra.Nonarchimedean.GeometricSeries
 
@@ -23,11 +24,12 @@ evaluations, the identities they inherit from the series, and their membership, 
 non-vanishing properties.
 
 Two hypotheses appear here, and they do different work. `PowerSeries.HasEval t` is what evaluation
-itself requires, and it is all the algebraic identities require: each of them is the image of an
-identity of series under the ring homomorphism `PowerSeries.eval₂Hom`. Membership in a power of an
-ideal requires more — the ideal `I`, and that the ambient topology is its adic one — because it
-comes from `MvPowerSeries.eval₂_mem_pow`, which sums the monomial estimates inside the closed set
-`I ^ k`.
+itself requires, and it is what almost every result here asks for: the algebraic identities are
+each the image of an identity of series under the ring homomorphism `PowerSeries.eval₂Hom`, and
+`formalWEval_mem` and `formalInverseEval_mem` read their memberships off those identities, so
+neither takes an adic hypothesis. Exactly one result needs more — `formalUEval_sub_one_mem`, which
+also takes the ideal `I` and that the ambient topology is its adic one, being the file's one appeal
+to `MvPowerSeries.eval₂_mem_pow`, which sums the monomial estimates inside the closed set `I ^ k`.
 
 Only two of the five values are confined to `I ^ k`, and neither needs that estimate: `w(t)` and
 `ι(t)` factor as `t ^ 3 * u(t)` and `-(t * d(t)⁻¹)`, so a parameter in `I ^ k` carries them there.
@@ -61,6 +63,10 @@ ideal at all: the series identity `mul_invOfUnit_formalInverseDenom` evaluates t
 * `WeierstrassCurve.formalWEval_wEquation` : the `w`-equation at a parameter.
 * `WeierstrassCurve.formalWEval_ne_zero`, `WeierstrassCurve.formalInverseEval_ne_zero` : the two
   non-vanishing statements.
+* `WeierstrassCurve.formalInverseEval_formalInverseEval` : the involution `ι(ι(t)) = t`, and
+  `WeierstrassCurve.formalWEval_formalInverseEval` : `w(ι(t)) = -(w(t) * d(t)⁻¹)`. Both ask only
+  that `t` and `ι(t)` admit evaluation; `WeierstrassCurve.hasEval_formalInverseEval` supplies the
+  second from an adic ideal when that is how a consumer holds it.
 
 ## Implementation notes
 
@@ -90,7 +96,8 @@ Adapted from Michael Stoll's `EllipticCurves` project
 `EllipticCurves/WeierstrassFormalGroup/Eval.lean` — its evaluation layer down to the formal
 inverse, declarations `wEval`, `vEval`, `wEval_mem`, `wEval_eq`, `wEval_eq_cube_mul`,
 `vEval_sub_one_mem`, `isUnit_vEval`, `uEval`, `duEval`, `iotaEval`, `uEval_eq`,
-`uEval_mul_duEval`, `isUnit_uEval`, `iotaEval_eq` and `iotaEval_mem`.
+`uEval_mul_duEval`, `isUnit_uEval`, `iotaEval_eq`, `iotaEval_mem`, `wEval_iotaEval` and
+`iotaEval_iotaEval`.
 
 Four things are spelled differently here.
 
@@ -108,6 +115,11 @@ Four things are spelled differently here.
 * The source's `wPoly` is this repository's `WeierstrassCurve.wEquationRHS`, which is generic over
   an algebra, so evaluating it at `O` gives the element-level equation without a second
   definition.
+* The source's private `eval_subst_single` is not ported. It is `MvPSeries.eval_subst`
+  specialised, and this repository's `PowerSeries.aeval_subst` already states that fact without
+  the `DiscreteUniformity` hypotheses Mathlib's `MvPowerSeries.eval₂_subst` carries — which a
+  general adic ring does not supply, coefficients and values here being the same such ring. The
+  two involution proofs call it directly.
 
 The adic hypothesis is carried as an explicit `IsAdic I` argument for the reason given under
 implementation notes above.
@@ -303,5 +315,57 @@ theorem formalInverseEval_ne_zero {t : O} (ht : PowerSeries.HasEval t) (ht0 : t 
     W.formalInverseEval t ≠ 0 := by
   rw [W.formalInverseEval_eq ht, neg_ne_zero]
   exact fun h ↦ ht0 ((W.isUnit_formalInverseDenomInvEval ht).mul_left_eq_zero.mp h)
+
+/-! ### The involution
+
+`ι` is an involution on the series (`subst_formalInverse_self`), and evaluating that identity at a
+parameter needs evaluation of a substitution. Mathlib's `MvPowerSeries.eval₂_subst` is not
+applicable at this generality: it carries `[DiscreteUniformity R] [DiscreteUniformity S]`, and a
+general adic ring supplies no such instance. These two therefore go through
+`PowerSeries.aeval_subst`, which is the same statement with an arbitrary uniform structure on the
+coefficients.
+-/
+
+/-- **`ι(t)` admits evaluation** when `t` is drawn from an ideal carrying the ambient topology:
+`formalInverseEval_mem` puts it in the same ideal. This is the adic route to the second hypothesis
+of the two identities below, which do not themselves need an ideal. -/
+theorem hasEval_formalInverseEval {I : Ideal O} (hI : IsAdic I) {t : O} (ht : t ∈ I) :
+    PowerSeries.HasEval (W.formalInverseEval t) :=
+  hI.isTopologicallyNilpotent_of_mem <| by
+    simpa using W.formalInverseEval_mem (k := 1)
+      (hI.isTopologicallyNilpotent_of_mem ht) (by simpa using ht)
+
+/-- **The `w`-expansion at an inverted parameter**: `w(ι(t)) = -(w(t) * d(t)⁻¹)`, the evaluation of
+the series identity `subst_formalInverse_formalW`. -/
+theorem formalWEval_formalInverseEval {t : O} (hE : PowerSeries.HasEval t)
+    (hV : PowerSeries.HasEval (W.formalInverseEval t)) :
+    W.formalWEval (W.formalInverseEval t) =
+      -(W.formalWEval t * W.formalInverseDenomInvEval t) := by
+  have hcoe : ∀ f : PowerSeries O, PowerSeries.aeval hE f = eval₂ (RingHom.id O) t f :=
+    congrFun (PowerSeries.coe_aeval hE)
+  have hsub : PowerSeries.aeval hE W.formalInverse = W.formalInverseEval t := by
+    rw [hcoe, ← W.formalInverseEval_def]
+  have hV' : PowerSeries.HasEval (PowerSeries.aeval hE W.formalInverse) := hsub ▸ hV
+  have h := PowerSeries.aeval_subst W.hasSubst_formalInverse
+    (PowerSeries.continuous_aeval hE) hV' W.formalW
+  rw [W.subst_formalInverse_formalW, map_neg, map_mul,
+    congrFun (PowerSeries.coe_aeval hV') W.formalW, hsub] at h
+  simpa [hcoe, formalWEval, formalInverseEval, formalInverseDenomInvEval] using h.symm
+
+/-- **The formal inverse is an involution at a parameter**: `ι(ι(t)) = t`. This is `-(-P) = P` for
+the group law near the origin, evaluated at `t`. -/
+theorem formalInverseEval_formalInverseEval {t : O} (hE : PowerSeries.HasEval t)
+    (hV : PowerSeries.HasEval (W.formalInverseEval t)) :
+    W.formalInverseEval (W.formalInverseEval t) = t := by
+  have hcoe : ∀ f : PowerSeries O, PowerSeries.aeval hE f = eval₂ (RingHom.id O) t f :=
+    congrFun (PowerSeries.coe_aeval hE)
+  have hsub : PowerSeries.aeval hE W.formalInverse = W.formalInverseEval t := by
+    rw [hcoe, ← W.formalInverseEval_def]
+  have hV' : PowerSeries.HasEval (PowerSeries.aeval hE W.formalInverse) := hsub ▸ hV
+  have h := PowerSeries.aeval_subst W.hasSubst_formalInverse
+    (PowerSeries.continuous_aeval hE) hV' W.formalInverse
+  rw [W.subst_formalInverse_self,
+    congrFun (PowerSeries.coe_aeval hV') W.formalInverse, hsub] at h
+  simpa [hcoe, formalInverseEval, PowerSeries.eval₂_X] using h.symm
 
 end WeierstrassCurve

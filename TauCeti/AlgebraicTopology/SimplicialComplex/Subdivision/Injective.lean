@@ -21,8 +21,8 @@ belongs to no smaller face in the chain; evaluating there recovers its coefficie
 greatest face and inducting proves uniqueness of all the coefficients.
 
 This is the second bijectivity step in the subdivision-realization milestone in Layer 11 of the
-GeometricTopology roadmap. Continuity of the inverse remains to package the resulting bijection as
-a homeomorphism.
+GeometricTopology roadmap. `Subdivision.Homeomorph` proves continuity of the inverse and packages
+the resulting bijection as a homeomorphism.
 
 The argument follows the standard uniqueness proof for barycentric subdivision in
 Rourke--Sanderson, *Introduction to Piecewise-Linear Topology*, Chapter 2, "Derived Subdivisions".

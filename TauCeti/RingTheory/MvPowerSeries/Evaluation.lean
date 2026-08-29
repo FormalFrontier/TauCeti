@@ -18,16 +18,19 @@ confined to `I ^ k` as soon as the arguments are and `φ` sends the constant ter
 confinement improves when the series vanishes in low total degree or when `φ` sends every
 coefficient into a power of `I`.
 
-Two further results serve the same arguments from either side. Arguments drawn from `I` satisfy
+Three further results serve the same arguments from either side. Over finitely many variables a
+pointwise topologically nilpotent family admits evaluation; arguments drawn from `I` satisfy
 `MvPowerSeries.HasEval` in the first place, so that the value is defined at all; and the value is
 congruent to the image of the constant term modulo `I`.
 
-They are proved differently. `hasEval_of_mem` does not use the estimates above at all: each
-argument is topologically nilpotent because it lies in `I`, and over finitely many variables the
-decay condition at infinity is vacuous. `eval₂_sub_constantCoeff_mem` is the one that reduces to
-them — subtracting the constant term kills the constant monomial and every surviving monomial
-carries an argument, so the difference is the `k = 1` case of `eval₂_mem_pow` applied to
-`f - C (constantCoeff f)`.
+They are proved differently. `hasEval_of_finite_of_isTopologicallyNilpotent` does not use the
+estimates above at all: over
+finitely many variables the decay condition at infinity is vacuous, so topological nilpotence
+of each argument is the whole content. `hasEval_of_mem` is its corollary, obtained by supplying
+that nilpotence from membership in `I` through `IsAdic.isTopologicallyNilpotent_of_mem`.
+`eval₂_sub_constantCoeff_mem` is the one that reduces to them — subtracting the constant term
+kills the constant monomial and every surviving monomial carries an argument, so the difference
+is the `k = 1` case of `eval₂_mem_pow` applied to `f - C (constantCoeff f)`.
 
 The three bounds have the same one-line mechanism. `MvPowerSeries.hasSum_eval₂` writes the value
 as the sum of its monomial values `φ (coeff d f) * ∏ s, a s ^ d s`; each such monomial is checked
@@ -43,8 +46,10 @@ type need not be finite, because the summation argument uses only the `Tendsto a
 already carried by `HasEval`. Taking `I` to be `IsLocalRing.maximalIdeal S` and `φ` to be
 `RingHom.id S` recovers the source statements.
 
-Finiteness of `σ` survives in `hasEval_of_mem` alone, where it is what makes the decay condition
-of `HasEval` vacuous; that is the one place the hypothesis does work rather than being inherited.
+Finiteness of `σ` survives in `hasEval_of_finite_of_isTopologicallyNilpotent`, where it is what
+makes the decay condition of
+`HasEval` vacuous; that is the one place the hypothesis does work, and `hasEval_of_mem` inherits
+it from there.
 
 ## Main results
 
@@ -54,6 +59,9 @@ of `HasEval` vacuous; that is the one place the hypothesis does work rather than
   arguments of `I ^ j`, takes values in `I ^ (c * j)`.
 * `MvPowerSeries.eval₂_mem_pow_add_mul` : if moreover `φ` sends every coefficient into `I ^ k`,
   the value lies in `I ^ (k + c * j)`.
+* `MvPowerSeries.hasEval_of_finite_of_isTopologicallyNilpotent` : finitely many topologically
+  nilpotent arguments are an
+  admissible evaluation point.
 * `MvPowerSeries.hasEval_of_mem` : a family of finitely many arguments drawn from `I` is an
   admissible evaluation point.
 * `MvPowerSeries.eval₂_sub_constantCoeff_mem` : the value and the image of the constant term
@@ -168,15 +176,6 @@ theorem eval₂_mem_pow_mul (hφ : Continuous φ) (ha : HasEval a) (hI : IsAdic 
     eval₂ φ a f ∈ I ^ (c * j) := by
   simpa using eval₂_mem_pow_add_mul (k := 0) hφ ha hI hmem f (fun _ ↦ by simp) hcoeff
 
-omit [IsUniformAddGroup S] [CompleteSpace S] [T2Space S] [IsTopologicalRing S]
-  [IsLinearTopology S S] in
-/-- **A family drawn from an adic ideal can be substituted into a power series.** For an index
-type with finitely many variables, lying in `I` is the only condition the arguments need: it
-already gives them the `HasEval` property that evaluation requires. -/
-theorem hasEval_of_mem [Finite σ] (hI : IsAdic I) (hmem : ∀ i, a i ∈ I) : HasEval a where
-  hpow s := hI.isTopologicallyNilpotent_of_mem (hmem s)
-  tendsto_zero := by simp [Filter.cofinite_eq_bot]
-
 /-- **The value differs from the image of the constant term by an element of `I`.** Equivalently,
 for arguments drawn from `I` the value of `f` is congruent to the image of its constant term
 modulo `I`. -/
@@ -192,5 +191,27 @@ theorem eval₂_sub_constantCoeff_mem (hφ : Continuous φ) (ha : HasEval a)
   rwa [hsplit] at key
 
 end Eval
+
+section HasEval
+
+-- Neither result below needs the uniform structure the evaluation bounds require: `HasEval` is
+-- a condition on a topological ring alone.
+variable {σ : Type*} {S : Type*} [CommRing S] [TopologicalSpace S] {a : σ → S} {I : Ideal S}
+
+/-- **Finitely many topologically nilpotent arguments can be substituted into a power series.**
+Over finitely many variables the decay condition `HasEval` asks for at infinity is vacuous, so
+pointwise topological nilpotence is the whole of it. -/
+theorem hasEval_of_finite_of_isTopologicallyNilpotent [Finite σ]
+    (h : ∀ i, IsTopologicallyNilpotent (a i)) : HasEval a where
+  hpow := h
+  tendsto_zero := by simp [Filter.cofinite_eq_bot]
+
+/-- **A family drawn from an adic ideal can be substituted into a power series.** For an index
+type with finitely many variables, lying in `I` is the only condition the arguments need: it
+already gives them the `HasEval` property that evaluation requires. -/
+theorem hasEval_of_mem [Finite σ] (hI : IsAdic I) (hmem : ∀ i, a i ∈ I) : HasEval a :=
+  hasEval_of_finite_of_isTopologicallyNilpotent fun s ↦ hI.isTopologicallyNilpotent_of_mem (hmem s)
+
+end HasEval
 
 end MvPowerSeries

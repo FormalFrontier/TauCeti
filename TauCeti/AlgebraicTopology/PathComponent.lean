@@ -7,7 +7,7 @@ module
 
 public import TauCeti.AlgebraicTopology.FundamentalGroup.Basic
 public import TauCeti.AlgebraicTopology.SemilocallySimplyConnected.Basic
-public import TauCeti.Topology.PathComponent
+public import TauCeti.Topology.ConnectedComponents
 
 /-!
 # The algebraic topology of a path component
@@ -52,6 +52,16 @@ instance instSemilocallySimplyConnectedSpaceSubtypePathComponent
     apply homotopic_pathComponent_of_map_subtypeVal_homotopic x₀
     rw [Path.map_refl]
     exact hloop (γ.map continuous_subtype_val) (by simpa using hγ)⟩
+
+/-- A fibre of the quotient to connected components is semilocally simply connected when the
+ambient space is locally path-connected and semilocally simply connected. -/
+instance instSemilocallySimplyConnectedSpaceConnectedComponentsFiber
+    [LocallyPathConnectedSpace X] [SemilocallySimplyConnectedSpace X]
+    (C : ConnectedComponents X) :
+    SemilocallySimplyConnectedSpace (ConnectedComponents.mk ⁻¹' {C} : Set X) := by
+  obtain ⟨x, rfl⟩ := ConnectedComponents.surjective_coe C
+  rw [connectedComponents_preimage_singleton, ← pathComponent_eq_connectedComponent]
+  infer_instance
 
 /-- **The path component of `x₀` carries the ambient fundamental group at each of its
 points.** Loops at such a point and their homotopies never leave the path component. -/

@@ -32,6 +32,9 @@ That series is `formalAdd`, and it is the series underlying the elliptic formal 
   `FormalGroup` carries this as its `zero_constantCoeff` field.
 * `WeierstrassCurve.rename_swap_formalAdd`: `F(z₂, z₁) = F(z₁, z₂)`. The chord does not depend
   on the order of its two points, so the group law is commutative.
+* `WeierstrassCurve.map_formalAdd`: `F` commutes with base change along a ring homomorphism,
+  completing the base-change block that `Chord.lean` and `Inverse.lean` already carry for the
+  two series `F` is built from.
 
 ## Implementation notes
 
@@ -55,7 +58,8 @@ Adapted from Michael Stoll's `EllipticCurves` project
 (`github.com/MichaelStollBayreuth/EllipticCurves`, Apache-2.0, pinned by
 `TauCetiRoadmap/EllipticCurves/README.md` at `66889eada51a`),
 `EllipticCurves/WeierstrassFormalGroup/Chord.lean` — declarations `addSeries`,
-`hasSubst_thirdRootSeries`, `constantCoeff_addSeries` and `rename_swap_addSeries`.
+`hasSubst_thirdRootSeries`, `constantCoeff_addSeries`, `rename_swap_addSeries` and
+`map_addSeries`.
 
 The source's `addSeries` is named `formalAdd` here, continuing the renaming this repository
 already applies to the rest of that file: the source's `wSeries`, `vSeries`, `slopeSeries`,
@@ -106,5 +110,21 @@ theorem rename_swap_formalAdd : rename Sum.swap (formalAdd W) = formalAdd W := b
   congr 1
   funext u
   rw [← rename_eq_subst, rename_swap_formalThirdRoot W]
+
+section BaseChange
+
+variable {S : Type*} [CommRing S] (φ : R →+* S)
+
+/-- **The addition series commutes with base change.** -/
+@[simp]
+theorem map_formalAdd :
+    formalAdd (W.map φ) = MvPowerSeries.map φ (formalAdd W) := by
+  rw [formalAdd_def, formalAdd_def, MvPowerSeries.map_subst (hasSubst_formalThirdRoot W)]
+  congr 1
+  · funext _
+    exact map_formalThirdRoot W φ
+  · exact map_formalInverse W φ
+
+end BaseChange
 
 end WeierstrassCurve

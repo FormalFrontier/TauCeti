@@ -61,8 +61,10 @@ is any group here claimed to be finite or simple.
 * `TauCeti.SlStd.lattice` and `TauCeti.SlStd.latticeBasis`: the standard admissible lattice and its
   coordinate basis.
 * `TauCeti.SlStd.groupScheme`, `TauCeti.SlStd.carrierι`, `TauCeti.SlStd.rootSubgroup`,
-  `TauCeti.SlStd.weightTorus` and `TauCeti.SlStd.points`: the carrier, its closed immersion into
-  `GL_{r+1}`, its pinned generating morphisms, and its matrix points.
+  `TauCeti.SlStd.weightTorus`, `TauCeti.SlStd.points`, `TauCeti.SlStd.rootSubgroupPoints`, and
+  `TauCeti.SlStd.weightTorusPoints`: the carrier, its closed immersion into `GL_{r+1}`, its pinned
+  generating morphisms, its matrix points, and the parametrized root subgroups and split torus
+  inside those points.
 
 ## Main results
 
@@ -102,6 +104,8 @@ therefore cannot use the adjoint Geck carrier of
 public section
 
 namespace TauCeti.SlStd
+
+universe v
 
 open LieAlgebra.SpecialLinear
 open scoped Matrix TensorProduct
@@ -201,6 +205,19 @@ theorem isNilpotent_rep_rootGenerator (k : Fin r ⊕ Fin r) :
     IsNilpotent (rep r (_root_.UniversalEnvelopingAlgebra.ι ℚ (rootGenerator r k))) :=
   ⟨2, pow_two_rep_rootGenerator_eq_zero r k⟩
 
+/-- Every numbered root generator has nilpotency class exactly two in the standard
+representation. -/
+theorem nilpotencyClass_rep_rootGenerator (k : Fin r ⊕ Fin r) :
+    nilpotencyClass
+        (rep r (_root_.UniversalEnvelopingAlgebra.ι ℚ (rootGenerator r k))) = 2 := by
+  refine nilpotencyClass_eq_succ_iff.mpr ⟨pow_two_rep_rootGenerator_eq_zero r k, ?_⟩
+  rw [pow_one]
+  intro hzero
+  have h := DFunLike.congr_fun hzero (Pi.single (rootSource r k) 1)
+  rw [rep_rootGenerator_single_source] at h
+  have := congrFun h (rootTarget r k)
+  simp at this
+
 /-! ## Weights and roots -/
 
 /-- The integral weight of the `k`-th standard coordinate vector on the numbered Cartan
@@ -208,6 +225,11 @@ generators. These are the weights `ε₀, …, ε_r` of the standard module, wri
 fundamental weights. -/
 def weight (k : Fin (r + 1)) (i : Fin r) : ℤ :=
   (if k = i.castSucc then 1 else 0) - (if k = i.succ then 1 else 0)
+
+/-- The weights of the standard representation sum to zero. -/
+theorem sum_weight_eq_zero : ∑ k, weight r k = 0 := by
+  funext i
+  simp [weight]
 
 /-- The root of a numbered raising or lowering generator, as an integral character of the
 numbered Cartan generators: the `i`-th row of the type `A` Cartan matrix on a raising generator
@@ -460,6 +482,16 @@ noncomputable def carrierι : groupScheme r ⟶ TauCeti.GeneralLinear.groupSchem
     (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv)
     (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r)
 
+/-- The ambient inclusion of the type `A_r` carrier is the inclusion supplied by the generic
+Kostant toral-closure construction. -/
+theorem carrierι_def :
+    carrierι r =
+      TauCeti.UniversalEnvelopingAlgebra.kostantToralGroupSchemeι (rootGenerator r)
+        (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
+        (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv)
+        (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) := by
+  rw [carrierι]
+
 /-- **The type `A_r` carrier is a closed subgroup scheme of `GL_{r+1}`.** -/
 instance isClosedImmersion_carrierι : IsClosedImmersion (carrierι r).hom.hom.left := by
   rw [carrierι]
@@ -502,17 +534,70 @@ theorem weightTorus_comp_carrierι :
     TauCeti.UniversalEnvelopingAlgebra.kostantWeightTorusToToral_comp_ι]
 
 /-- The `A`-valued points of the type `A_r` carrier, as matrices. -/
-noncomputable def points (A : Type) [CommRing A] :
+noncomputable def points (A : Type v) [CommRing A] :
     Subgroup (Matrix.GeneralLinearGroup (Fin (r + 1)) A) :=
   TauCeti.UniversalEnvelopingAlgebra.kostantToralPointsSubgroup (rootGenerator r)
     (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
     (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv)
     (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) A
 
+/-- **The parametrized numbered root subgroup inside the type-`A_r` carrier points.** The
+parameter is read through the canonical multiplicative copy of the additive group of `A`. -/
+noncomputable def rootSubgroupPoints (i : Fin r ⊕ Fin r) (A : Type v) [CommRing A] :
+    Multiplicative A →* points r A :=
+  MonoidHom.codRestrict
+    ((TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupMatrix (rootGenerator r)
+      (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
+      (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv) i
+      (isNilpotent_rep_rootGenerator r i) (latticeBasis r)).comp
+        (AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm.toMonoidHom)
+    (points r A) fun u => by
+      rw [points]
+      exact TauCeti.UniversalEnvelopingAlgebra.kostantGeneratedPointsSubgroup_le_toralPoints
+        (rootGenerator r) (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
+        (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv)
+        (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) A
+        (TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupMatrix_mem_generatedPoints
+          (rootGenerator r) (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
+          (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv)
+          (isNilpotent_rep_rootGenerator r) (latticeBasis r) A i _)
+
+/-- The numbered root subgroup point is the corresponding divided-power exponential matrix. -/
+@[simp]
+theorem coe_rootSubgroupPoints (i : Fin r ⊕ Fin r) (A : Type v) [CommRing A]
+    (u : Multiplicative A) :
+    (rootSubgroupPoints r i A u : Matrix.GeneralLinearGroup (Fin (r + 1)) A) =
+      TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupMatrix (rootGenerator r)
+        (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
+        (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv) i
+        (isNilpotent_rep_rootGenerator r i) (latticeBasis r)
+        ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm u) := (rfl)
+
+/-- **The split weight torus inside the type-`A_r` carrier points.** -/
+noncomputable def weightTorusPoints (A : Type v) [CommRing A] :
+    (Fin r → Aˣ) →* points r A :=
+  MonoidHom.codRestrict
+    (TauCeti.UniversalEnvelopingAlgebra.kostantTorusMatrix
+      (lattice r).toAddSubgroup (latticeBasis r) (weight r))
+    (points r A) fun s => by
+      rw [points]
+      exact TauCeti.UniversalEnvelopingAlgebra.kostantTorusMatrix_mem_toralPoints
+        (rootGenerator r) (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
+        (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv)
+        (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) A s
+
+/-- A split-torus point is the diagonal matrix whose entries are its values on the standard-module
+weights. -/
+@[simp]
+theorem coe_weightTorusPoints (A : Type v) [CommRing A] (s : Fin r → Aˣ) :
+    (weightTorusPoints r A s : Matrix.GeneralLinearGroup (Fin (r + 1)) A) =
+      TauCeti.UniversalEnvelopingAlgebra.kostantTorusMatrix
+        (lattice r).toAddSubgroup (latticeBasis r) (weight r) s := (rfl)
+
 /-- A matrix is a point of the type `A_r` carrier exactly when the associated convolution point
 kills its toral defining Hopf ideal. -/
 @[simp]
-theorem mem_points_iff (A : Type) [CommRing A]
+theorem mem_points_iff (A : Type v) [CommRing A]
     (g : Matrix.GeneralLinearGroup (Fin (r + 1)) A) :
     g ∈ points r A ↔
       ∀ x ∈ TauCeti.UniversalEnvelopingAlgebra.kostantToralDefiningIdeal (rootGenerator r)
@@ -527,6 +612,20 @@ theorem mem_points_iff (A : Type) [CommRing A]
 
 /-! ## The pinning -/
 
+/-- A numbered root generator sends its source lattice vector to its target lattice vector and
+annihilates every other lattice basis vector. -/
+theorem rep_rootGenerator_latticeBasis_apply (k : Fin r ⊕ Fin r) (s : Fin (r + 1)) :
+    rep r (_root_.UniversalEnvelopingAlgebra.ι ℚ (rootGenerator r k))
+        ((latticeBasis r s : (lattice r).toAddSubgroup) : Fin (r + 1) → ℚ) =
+      if s = rootSource r k then
+        ((latticeBasis r (rootTarget r k) : (lattice r).toAddSubgroup) : Fin (r + 1) → ℚ)
+      else 0 := by
+  rw [coe_latticeBasis, rep_rootGenerator_apply]
+  split_ifs with hs
+  · subst hs
+    rw [Pi.single_eq_same, one_smul, coe_latticeBasis]
+  · simp [hs]
+
 /-- A numbered root generator carries the coordinate basis vector at its source to the one at its
 target. This is the root step that makes the root subgroup a closed copy of `𝔾ₐ`. -/
 theorem rep_rootGenerator_latticeBasis (k : Fin r ⊕ Fin r) :
@@ -534,7 +633,7 @@ theorem rep_rootGenerator_latticeBasis (k : Fin r ⊕ Fin r) :
         ((latticeBasis r (rootSource r k) : (lattice r).toAddSubgroup) : Fin (r + 1) → ℚ) =
       (1 : ℤ) • ((latticeBasis r (rootTarget r k) : (lattice r).toAddSubgroup) :
         Fin (r + 1) → ℚ) := by
-  rw [coe_latticeBasis, coe_latticeBasis, rep_rootGenerator_single_source, one_smul]
+  rw [rep_rootGenerator_latticeBasis_apply, ite_eq_left rfl, one_smul]
 
 /-- The coordinate morphism of a numbered root subgroup is surjective before factoring through
 the carrier. -/

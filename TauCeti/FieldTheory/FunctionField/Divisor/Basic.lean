@@ -148,6 +148,36 @@ lemma degree_eq_zero_iff (hF : IsFunctionField k F) {D : Divisor k F} (hD : 0 �
   simpa only [degree] using
     hD'.weightedDegree_eq_zero_iff_of_pos (degree_pos_of_isFunctionField hF)
 
+/-- The contribution of one place to the degree of an effective divisor is at most the whole
+degree, every other contribution being nonnegative. -/
+private lemma coeff_mul_degree_le_degree {D : Divisor k F} (hD : 0 ≤ D) (P : Place k F) :
+    D.coeff P * P.degree ≤ degree D := by
+  rcases eq_or_ne (D.coeff P) 0 with h | h
+  · rw [h, zero_mul]
+    exact degree_nonneg hD
+  rw [degree_eq_sum_support]
+  exact Finset.single_le_sum
+    (fun Q _ ↦ mul_nonneg (WeilDivisor.coeff_le_coeff hD Q) (Int.natCast_nonneg _))
+    (WeilDivisor.mem_support_iff.mpr h)
+
+/-- A place carrying a nonzero coefficient in an effective divisor has degree at most the degree
+of that divisor. -/
+lemma degree_le_degree_of_coeff_ne_zero {D : Divisor k F} (hD : 0 ≤ D) {P : Place k F}
+    (hP : D.coeff P ≠ 0) : (P.degree : ℤ) ≤ degree D := by
+  have hone : 1 ≤ D.coeff P := lt_of_le_of_ne (WeilDivisor.coeff_le_coeff hD P) (Ne.symm hP)
+  calc (P.degree : ℤ) = 1 * P.degree := (one_mul _).symm
+    _ ≤ D.coeff P * P.degree := mul_le_mul_of_nonneg_right hone (Int.natCast_nonneg _)
+    _ ≤ degree D := coeff_mul_degree_le_degree hD P
+
+/-- The coefficients of an effective divisor of a function field are bounded by its degree. -/
+lemma coeff_le_degree (hF : IsFunctionField k F) {D : Divisor k F} (hD : 0 ≤ D)
+    (P : Place k F) : D.coeff P ≤ degree D := by
+  have hone : 1 ≤ (P.degree : ℤ) := mod_cast P.one_le_degree_of_isFunctionField hF
+  calc D.coeff P = D.coeff P * 1 := (mul_one _).symm
+    _ ≤ D.coeff P * P.degree :=
+        mul_le_mul_of_nonneg_left hone (WeilDivisor.coeff_le_coeff hD P)
+    _ ≤ degree D := coeff_mul_degree_le_degree hD P
+
 /-- Equality of degrees under a coefficientwise inequality forces equality of divisors. -/
 lemma eq_of_le_of_degree_eq (hF : IsFunctionField k F) {D E : Divisor k F} (hDE : D ≤ E)
     (hdeg : degree D = degree E) : D = E := by

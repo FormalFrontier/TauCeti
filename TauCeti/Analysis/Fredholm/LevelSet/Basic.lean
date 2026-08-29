@@ -247,6 +247,15 @@ theorem mem_levelSetChart_target (hf : HasStrictFDerivAt f f' a) (hf' : f'.range
   levelSetChart_apply_self hf hf' hker ha ▸
     (levelSetChart hf hf' hker ha).map_source (mem_levelSetChart_source hf hf' hker ha)
 
+/-- The inverse of the chart of a level set is normalised at its base point: it sends the origin
+of `ker f'` back to `a`. -/
+@[simp]
+theorem levelSetChart_symm_zero (hf : HasStrictFDerivAt f f' a) (hf' : f'.range = ⊤)
+    (hker : f'.ker.ClosedComplemented) (ha : f a = c) :
+    (levelSetChart hf hf' hker ha).symm 0 = ⟨a, ha⟩ := by
+  rw [← levelSetChart_apply_self hf hf' hker ha]
+  exact (levelSetChart hf hf' hker ha).left_inv (mem_levelSetChart_source hf hf' hker ha)
+
 /-! ### The chart in the model space -/
 
 section Model

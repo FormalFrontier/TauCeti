@@ -56,8 +56,10 @@ surface identifies a neighbourhood in `Sym^g(Σ)` with an open subset of `Sym^g(
 below is what makes that a chart on a topological manifold; the charted structure is assembled
 from it in `TauCeti/Geometry/Manifold/SymmetricPower.lean`. Away from the diagonal the continuity
 proved here is upgraded to analyticity in
-`TauCeti/Analysis/Polynomial/SimpleRoots.lean`. The complex structure itself, and the totally real
-tori `T_α`, `T_β`, are separate later steps.
+`TauCeti/Analysis/Polynomial/SimpleRoots/Basic.lean`, and its assembly across the blocks of an
+elementary-symmetric chart is in `TauCeti/Analysis/Polynomial/SimpleRoots/Family.lean`. The complex
+structure itself, including transition maps at colliding tuples, and the totally real tori
+`T_α`, `T_β`, are separate later steps.
 -/
 
 public section

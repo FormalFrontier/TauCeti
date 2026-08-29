@@ -79,11 +79,11 @@ surface identifies a neighbourhood in `Sym^g(Σ)` with an open subset of `Sym^g(
 `TauCeti.Sym.analyticAt_coeffEquiv_map_coeffEquiv_symm` says that changing that coordinate acts
 analytically on the elementary symmetric coordinates of one such patch, at multiplicity-free
 tuples. That is the analytic ingredient for the transition maps of the atlas of
-`TauCeti/Geometry/Manifold/SymmetricPower.lean`, not those transition maps themselves: a chart
-there splits a tuple into the factors lying in `k` disjoint patches, of degrees `m 1, …, m k`, and
-regroups the resulting blocks of coefficients along a bijection `(Σ i, Fin (m i)) ≃ Fin n`.
-Neither that assembly across blocks nor the diagonal, where the points of a tuple collide, is
-treated here.
+`TauCeti/Geometry/Manifold/SymmetricPower.lean`. A chart there splits a tuple into the factors
+lying in `k` disjoint patches, of degrees `m 1, …, m k`, and regroups the resulting blocks of
+coefficients along a bijection `(Σ i, Fin (m i)) ≃ Fin n`; that assembly is carried out in
+`TauCeti/Analysis/Polynomial/SimpleRoots/Family.lean`. The diagonal, where the points of a tuple
+collide, is not treated here.
 
 Everything is stated over an `RCLike` field, so it covers the real as well as the complex case,
 except for the elementary polynomial calculus, which needs only a nontrivially normed field; only

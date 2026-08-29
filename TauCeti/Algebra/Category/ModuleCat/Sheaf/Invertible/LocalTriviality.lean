@@ -30,8 +30,8 @@ trivializing isomorphisms. The two formulations are equivalent:
 This supplies the local-triviality interface for
 `TauCetiRoadmap/JacobianChallenge/README.md`, Layer A, item "Invertible sheaves on a scheme; the
 Picard group `Pic X` under `⊗`". It is the form needed to prove that tensor products and duals
-of invertible sheaves remain invertible. The construction reuses Mathlib's free-sheaf functor
-and `LocalGeneratorsData`; no formalization is vendored.
+of invertible sheaves remain invertible. The construction reuses Mathlib's free-sheaf functor and
+`LocalGeneratorsData`; no formalization is vendored.
 -/
 
 public section

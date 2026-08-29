@@ -208,6 +208,15 @@ def exitCapWindows (γ : ℝ → ℂ) (s : ℂ) (T : Finset ℝ) (δ ε : ℝ)
     (L_R L_L : ℝ → ℂ) : List CircularCapWindow :=
   (T.sort (· ≤ ·)).map fun t ↦ exitCapWindow γ s t δ ε (L_R t) (L_L t)
 
+/-- Summing a function over the ordered exit-window list is the same as summing its value on
+the canonical window of each crossing. -/
+theorem sum_exitCapWindows {M : Type*} [AddCommMonoid M] (f : CircularCapWindow → M)
+    (γ : ℝ → ℂ) (s : ℂ) (T : Finset ℝ) (δ ε : ℝ) (L_R L_L : ℝ → ℂ) :
+    ((exitCapWindows γ s T δ ε L_R L_L).map f).sum =
+      ∑ t ∈ T, f (exitCapWindow γ s t δ ε (L_R t) (L_L t)) := by
+  rw [exitCapWindows, List.map_map, ← List.sum_toFinset _ (T.sort_nodup (· ≤ ·))]
+  simp
+
 /-- Membership in `exitCapWindows` means being the exit-time window of a listed crossing. -/
 @[simp] theorem mem_exitCapWindows_iff {γ : ℝ → ℂ} {s : ℂ} {T : Finset ℝ} {δ ε : ℝ}
     {L_R L_L : ℝ → ℂ} {W : CircularCapWindow} :

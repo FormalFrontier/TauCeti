@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.HopfIdealPoints.Functor
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Root.Subgroup
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Weight.Parabolic
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.UpperTriangular.Basic
 
@@ -25,6 +26,10 @@ The pointwise identifications are assembled into a natural isomorphism of group-
   the group `TauCeti.upperTriangularGroup (Fin n) A`.
 * `TauCeti.GeneralLinear.UpperTriangular.pointsNatIso`: the corresponding natural isomorphism of
   group-valued functors.
+* `TauCeti.GeneralLinear.UpperTriangular.rootSubgroup`: the positive root subgroup `x_ij` factored
+  through the upper-triangular subgroup scheme for `i < j`.
+* `TauCeti.GeneralLinear.UpperTriangular.rootSubgroup_comp_inclusion`: this factorization recovers
+  the ambient root subgroup of `GL_n`.
 
 ## References
 
@@ -34,6 +39,8 @@ The pointwise identifications are assembled into a natural isomorphism of group-
 * The quotient-points equivalence and functor proofs follow the pattern of
   `TauCeti.Algebra.AlgebraicGroup.SpecialLinear.Basic`;
   `TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Borel` is their rank-two specialization.
+* The root-subgroup declarations generalize the rank-two construction formerly in
+  `TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Borel` under the `GL2Borel` API.
 
 This advances Layer 5, "Lie--Kolchin; solvable groups", of the ReductiveGroups roadmap. It
 constructs the general-rank group scheme whose abstract point groups were already proved solvable.
@@ -107,6 +114,14 @@ noncomputable abbrev coordinateHopfAlgebra : _root_.CommHopfAlgCat.{u} R :=
 noncomputable abbrev coordinateMap :
     GeneralLinear.coordinateHopfAlgebra R n ⟶ coordinateHopfAlgebra R n :=
   GeneralLinear.weightParabolicCoordinateMap R (weights n)
+
+/-- The upper-triangular coordinate morphism is the canonical quotient morphism. -/
+theorem coordinateMap_def :
+    coordinateMap R n =
+      CommHopfAlgCat.mkQuotient (GeneralLinear.coordinateHopfAlgebra R n)
+        (definingHopfIdeal R n) := by
+  ext h
+  exact GeneralLinear.weightParabolicCoordinateMap_apply R (weights n) h
 
 /-- The upper-triangular coordinate morphism sends an ambient coordinate to its quotient
 class. -/
@@ -452,5 +467,169 @@ theorem pointsNatIso_inv_app_apply (A : CommAlgCat.{w} R)
   rfl
 
 end Functor
+
+end TauCeti.GeneralLinear.UpperTriangular
+
+namespace TauCeti.GeneralLinear.UpperTriangular
+
+universe u w
+
+noncomputable section
+
+variable (R : Type u) [CommRing R] {n : ℕ} {i j : Fin n}
+
+/-- A root subgroup indexed by `i < j` consists of upper-triangular matrices, so its points lie
+in the standard upper-triangular closed subgroup. -/
+theorem rootSubgroupPoints_mem (hij : i < j)
+    {A : Type w} [CommRing A] [Algebra R A]
+    (f : HopfAlgebra.points
+      (R := R) (H := AdditiveGroup.coordinateHopfAlgebra R) (CommAlgCat.of R A)) :
+    GeneralLinear.rootSubgroupPoints hij.ne f ∈
+      CommHopfAlgCat.quotientPointsSubgroup
+        (GeneralLinear.coordinateHopfAlgebra R n) (definingHopfIdeal R n)
+        (CommAlgCat.of R A) := by
+  rw [mem_definingPointsSubgroup_iff, GeneralLinear.pointsMulEquiv_rootSubgroupPoints,
+    UpperTriangularGroup.mem_iff]
+  intro a b hba
+  simp only [id_eq] at hba
+  have hab : a ≠ b := hba.ne.symm
+  have hroot : ¬ (i = a ∧ j = b) := by
+    rintro ⟨rfl, rfl⟩
+    exact lt_asymm hij hba
+  rw [coe_transvectionUnit, Matrix.transvection]
+  simp [Matrix.add_apply, hab, hroot]
+
+/-- The coordinate morphism of the root subgroup `x_ij`, for `i < j`, into the standard
+upper-triangular coordinate Hopf algebra. -/
+noncomputable def rootSubgroupCoordinateMap (hij : i < j) :
+    coordinateHopfAlgebra R n ⟶ AdditiveGroup.coordinateHopfAlgebra R :=
+  CommHopfAlgCat.liftQuotient (definingHopfIdeal R n)
+    (GeneralLinear.rootSubgroupCoordinateMap hij.ne) (by
+      rw [definingHopfIdeal_toIdeal, Ideal.span_le]
+      intro x hx
+      rw [mem_definingRelationSet_iff] at hx
+      obtain ⟨a, b, hba, rfl⟩ := hx
+      rw [SetLike.mem_coe, RingHom.mem_ker]
+      let q : HopfAlgebra.points
+          (R := R) (H := AdditiveGroup.coordinateHopfAlgebra R)
+          (CommAlgCat.of R (AdditiveGroup.coordinateHopfAlgebra R)) :=
+        toConv (AlgHom.id R (AdditiveGroup.coordinateHopfAlgebra R))
+      have hmem := rootSubgroupPoints_mem R hij q
+      rw [CommHopfAlgCat.mem_quotientPointsSubgroup_iff] at hmem
+      have hzero := hmem
+        (GeneralLinear.coordinateHopfAlgebraAlgEquiv R n
+          (GeneralLinear.coordinateRingMap R n (MvPolynomial.X (a, b))))
+        (HopfIdeal.mem_toIdeal.mp
+          (definingHopfIdeal_toIdeal R n ▸ Ideal.subset_span
+            ((mem_definingRelationSet_iff R n _).2 ⟨a, b, hba, rfl⟩)))
+      have hpoint :
+          GeneralLinear.rootSubgroupPoints hij.ne q =
+            (CommHopfAlgCat.mapPointsFunctor
+              (GeneralLinear.rootSubgroupCoordinateMap hij.ne)).app
+              (CommAlgCat.of R (AdditiveGroup.coordinateHopfAlgebra R)) q := by
+        rw [GeneralLinear.mapPointsFunctor_rootSubgroupCoordinateMap_app]
+      rw [hpoint, CommHopfAlgCat.mapPointsFunctor_app_apply] at hzero
+      exact hzero)
+
+/-- Precomposing a factored positive-root coordinate morphism with the upper-triangular quotient
+map recovers the ambient general-linear root-subgroup coordinate morphism. -/
+@[simp]
+theorem coordinateMap_comp_rootSubgroupCoordinateMap (hij : i < j) :
+    coordinateMap R n ≫ rootSubgroupCoordinateMap R hij =
+      GeneralLinear.rootSubgroupCoordinateMap hij.ne := by
+  rw [coordinateMap_def, rootSubgroupCoordinateMap]
+  exact CommHopfAlgCat.mkQuotient_comp_liftQuotient _ _ _
+
+/-- Under the upper-triangular and general-linear point equivalences, the factored positive-root
+coordinate morphism gives the same transvection as the ambient root-subgroup morphism. -/
+@[simp]
+theorem pointsMulEquiv_rootSubgroupCoordinateMap (hij : i < j)
+    {A : Type w} [CommRing A] [Algebra R A]
+    (f : HopfAlgebra.points
+      (R := R) (H := AdditiveGroup.coordinateHopfAlgebra R) (CommAlgCat.of R A)) :
+    ((pointsMulEquiv (R := R) (n := n) (A := A)
+        (toConv (f.ofConv.comp (rootSubgroupCoordinateMap R hij).hom)) :
+      upperTriangularGroup (Fin n) A) : GL (Fin n) A) =
+      GeneralLinear.pointsMulEquiv n
+        (GeneralLinear.rootSubgroupPoints hij.ne f) := by
+  have hcoe := pointsMulEquiv_coe (R := R) (n := n) (A := A)
+    (toConv (f.ofConv.comp (rootSubgroupCoordinateMap R hij).hom))
+  rw [← hcoe, GeneralLinear.pointsMulEquiv_apply]
+  congr 1
+  rw [CommHopfAlgCat.quotientPointsHom_apply]
+  rw [ofConv_toConv, AlgHom.comp_assoc, ← coordinateMap_def R n,
+    ← BialgHom.comp_toAlgHom, ← CommHopfAlgCat.hom_comp,
+    coordinateMap_comp_rootSubgroupCoordinateMap]
+  let id_pt :
+      WithConv
+        (AdditiveGroup.coordinateHopfAlgebra R →ₐ[R]
+          AdditiveGroup.coordinateHopfAlgebra R) :=
+    toConv (AlgHom.id R (AdditiveGroup.coordinateHopfAlgebra R))
+  have hcomp_alg :
+      (GeneralLinear.rootSubgroupCoordinateMap hij.ne).hom.toAlgHom =
+        (GeneralLinear.rootSubgroupPoints hij.ne id_pt).ofConv := by
+    have hmap := GeneralLinear.mapPointsFunctor_rootSubgroupCoordinateMap_app (R := R)
+      hij.ne (CommAlgCat.of R (AdditiveGroup.coordinateHopfAlgebra R)) id_pt
+    rw [CommHopfAlgCat.mapPointsFunctor_app_apply] at hmap
+    exact congrArg WithConv.ofConv hmap
+  rw [hcomp_alg]
+  rw [← AlgHom.mapValue_apply]
+  have hid_pt : AlgHom.mapValue f.ofConv id_pt = f := by
+    apply WithConv.ext
+    exact AlgHom.comp_id f.ofConv
+  have hcoe_ring (x : AdditiveGroup.coordinateHopfAlgebra R) :
+      f.ofConv.toRingHom x = f.ofConv x :=
+    congrFun (AlgHom.coe_toRingHom f.ofConv) x
+  apply (GeneralLinear.pointsMulEquiv (R := R) (A := A) n).injective
+  rw [GeneralLinear.pointsMulEquiv_mapValue,
+    GeneralLinear.pointsMulEquiv_rootSubgroupPoints, map_transvectionUnit,
+    hcoe_ring,
+    ← AdditiveGroup.toAdd_gaPointsMulEquiv_mapValue f.ofConv id_pt,
+    hid_pt,
+    GeneralLinear.pointsMulEquiv_rootSubgroupPoints]
+
+/-- The positive root subgroup `x_ij : 𝔾ₐ → B_n` inside the standard upper-triangular
+subgroup scheme, for an ordered pair `i < j`. -/
+noncomputable def rootSubgroup (hij : i < j) :
+    AdditiveGroup.groupScheme R ⟶ groupScheme R n :=
+  eqToHom (AdditiveGroup.groupScheme_def R) ≫
+    (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
+      (rootSubgroupCoordinateMap R hij).op ≫
+    eqToHom (groupScheme_def R n).symm
+
+/-- The upper-triangular root subgroup is relative spectrum applied contravariantly to its
+coordinate morphism, transported across the named presentations. -/
+theorem rootSubgroup_def (hij : i < j) :
+    rootSubgroup R hij =
+      eqToHom (AdditiveGroup.groupScheme_def R) ≫
+        (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
+          (rootSubgroupCoordinateMap R hij).op ≫
+        eqToHom (groupScheme_def R n).symm := by
+  rfl
+
+/-- Composing a positive root subgroup of the standard upper-triangular group with its inclusion
+into `GL_n` recovers the ambient root subgroup `x_ij`. -/
+@[simp]
+theorem rootSubgroup_comp_inclusion (hij : i < j) :
+    rootSubgroup R hij ≫ inclusion R n = GeneralLinear.rootSubgroup hij.ne := by
+  rw [rootSubgroup_def, inclusion, GeneralLinear.rootSubgroup_def,
+    GeneralLinear.weightParabolicInclusion_def]
+  simp only [Category.assoc, eqToHom_refl, Category.id_comp]
+  rw [CommHopfAlgCat.quotientSpecι_def]
+  have hmap :
+      (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
+          (rootSubgroupCoordinateMap R hij).op ≫
+        (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
+          (CommHopfAlgCat.mkQuotient (GeneralLinear.coordinateHopfAlgebra R n)
+            (definingHopfIdeal R n)).op =
+        (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
+          (GeneralLinear.rootSubgroupCoordinateMap hij.ne).op := by
+    rw [← Functor.map_comp, ← op_comp, ← coordinateMap_def R n,
+      coordinateMap_comp_rootSubgroupCoordinateMap]
+  congr 1
+  rw [← Category.assoc, hmap]
+  rfl
+
+end
 
 end TauCeti.GeneralLinear.UpperTriangular
