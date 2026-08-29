@@ -449,7 +449,7 @@ variable {K : Type*} [Field K] [IsAlgClosed K] {n : ℕ}
 
 /-- The `(j+1)`-st elementary symmetric function of a tuple equals its corresponding signed
 coefficient coordinate. -/
-private theorem esymm_succ_eq_neg_one_pow_mul_coeffEquiv (s : Sym K n) (j : Fin n) :
+private theorem _root_.Sym.esymm_succ_eq_neg_one_pow_mul_coeffEquiv (s : Sym K n) (j : Fin n) :
     (s : Multiset K).esymm ((j : ℕ) + 1) =
       (-1 : K) ^ ((j : ℕ) + 1) * coeffEquiv K n s j.rev := by
   rw [coeffEquiv_apply, Fin.val_rev, Nat.sub_sub_self (by have := j.isLt; omega)]
@@ -473,7 +473,7 @@ theorem exists_coeffEquiv_map_eval_coeffEquiv_symm_eq_eval (q : K[X]) :
   have hsymm : ∀ j : Fin n, ((coeffEquiv K n).symm c : Multiset K).esymm ((j : ℕ) + 1) =
       (-1 : K) ^ ((j : ℕ) + 1) * c j.rev := by
     intro j
-    rw [esymm_succ_eq_neg_one_pow_mul_coeffEquiv, Equiv.apply_symm_apply]
+    rw [Sym.esymm_succ_eq_neg_one_pow_mul_coeffEquiv, Equiv.apply_symm_apply]
   calc
     coeffEquiv K n (Sym.map (fun z => eval z q) ((coeffEquiv K n).symm c)) i =
         (-1 : K) ^ (n - (i : ℕ)) *
