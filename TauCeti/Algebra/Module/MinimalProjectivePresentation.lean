@@ -24,7 +24,7 @@ carrying its corestriction around in the definition would make every consumer co
 in the corestricted form, and `TauCeti.IsProjectiveCover.isMinimalProjectivePresentation` builds a
 minimal presentation from a pair of covers, so the two readings are interchangeable.
 
-The theorem the notion exists for is that a minimal projective presentation is a *retract* of every
+The theorem the notion exists for is that a minimal projective presentation is a *quotient* of every
 projective presentation: given any projective presentation of the same module there are
 **surjections** from it onto the minimal one commuting with both maps
 (`TauCeti.IsMinimalProjectivePresentation.exists_surjective`). Applying that to a second minimal
@@ -36,10 +36,12 @@ the cokernel of `Hom(−, A)` applied to a minimal projective presentation of `M
 because of it.
 
 *Existence* is a separate matter, exactly as for projective covers: it is a condition on the ring
-(over a semiperfect algebra every finitely generated module has a projective cover, and iterating
-gives a minimal presentation). Nothing here assumes it; every statement is conditional on a
-presentation being given, and `TauCeti.IsProjectiveCover.isMinimalProjectivePresentation` is the
-step that turns two covers into one presentation.
+(over a semiperfect ring every finitely generated module has a projective cover, and over an Artin
+algebra, where finitely generated modules are noetherian and so the syzygy is again finitely
+generated, iterating that gives a minimal presentation). Nothing here assumes it; every statement
+is conditional on a presentation being given, and
+`TauCeti.IsProjectiveCover.isMinimalProjectivePresentation` is the step that turns two covers into
+one presentation.
 
 The coefficients are a ring rather than a semiring, unlike the parts of
 `TauCeti/Algebra/Module/ProjectiveCover.lean` that only need a semiring. That is forced by the
@@ -62,7 +64,7 @@ below -- are available exactly for a covered module that is an additive group.
   is a quotient of every projective presentation**, by a pair of surjections commuting with the
   maps.
 * `TauCeti.IsMinimalProjectivePresentation.exists_linearEquiv`: **uniqueness**, as an isomorphism
-  of the whole diagram; `TauCeti.IsMinimalProjectivePresentation.exists_linearEquiv_ker` records
+  of the whole diagram; `TauCeti.IsMinimalProjectivePresentation.nonempty_linearEquiv_ker` records
   the resulting isomorphism of syzygies.
 * `TauCeti.IsMinimalProjectivePresentation.bijective_of_projective`,
   `TauCeti.IsMinimalProjectivePresentation.eq_zero_of_projective` and
@@ -266,7 +268,7 @@ theorem exists_linearEquiv {q₁ : Q₁ →ₗ[R] Q₀} {q₀ : Q₀ →ₗ[R] M
 /-- **The syzygy of a minimal projective presentation is well defined.** The right-hand equivalence
 of `TauCeti.IsMinimalProjectivePresentation.exists_linearEquiv` carries one syzygy onto the
 other. -/
-theorem exists_linearEquiv_ker {q₁ : Q₁ →ₗ[R] Q₀} {q₀ : Q₀ →ₗ[R] M}
+theorem nonempty_linearEquiv_ker {q₁ : Q₁ →ₗ[R] Q₀} {q₀ : Q₀ →ₗ[R] M}
     (h : IsMinimalProjectivePresentation p₁ p₀)
     (h' : IsMinimalProjectivePresentation q₁ q₀) :
     Nonempty (LinearMap.ker p₀ ≃ₗ[R] LinearMap.ker q₀) := by
