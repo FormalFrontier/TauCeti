@@ -13,7 +13,7 @@ import Mathlib.RingTheory.Ideal.Quotient.HasFiniteQuotients.Basic
 import Mathlib.RingTheory.Ideal.Quotient.HasFiniteQuotients.Norm
 
 /-!
-# Local factors and finite Euler products for ideal arithmetic functions
+# Canonical local factors and formal Euler products for ideal arithmetic functions
 
 This file develops the Euler-product layer for arithmetic functions on nonzero ideals. It builds
 the canonical formal power series at each height-one prime and sends that series into Mathlib's
@@ -23,13 +23,9 @@ prime-power values and vanishes away from powers of the prime-ideal norm.
 It then restricts an ideal arithmetic function to the nonzero ideals whose prime factors lie in a
 prescribed set of height-one primes, and proves that for a *finite* set of primes the norm
 coefficients of that restriction are exactly the product of the local factors, taken in Mathlib's
-Dirichlet convolution of arithmetic functions. Everything here is a formal identity of
-coefficients: no convergence hypothesis enters, and the passage to an infinite product of analytic
-functions is a later step.
-
-The richer `EulerProductData` package required by Layer 3.1 is not defined here: it must also carry
-a finite bad set and the hypotheses that transport an ideal product through `normCoeff`. The
-canonical factors developed here are prerequisites for that package, not a substitute for it.
+Dirichlet convolution of arithmetic functions. Passing to Mathlib's formal Euler product gives the
+norm coefficients of the original function. Everything here is a formal identity of coefficients:
+no analytic convergence hypothesis enters.
 
 ## Main definitions
 
@@ -46,6 +42,8 @@ canonical factors developed here are prerequisites for that package, not a subst
 * `TauCeti.IdealArithmeticFunction.normCoeff_supportedPart`: the **finite Euler product**
   `normCoeff (supportedPart f S) = ∏ P ∈ S, localArithmeticFactor f P` for a multiplicative `f`
   and a finite set `S` of height-one primes.
+* `TauCeti.IdealArithmeticFunction.normCoeff_eq_eulerProduct`: regrouping a multiplicative ideal
+  arithmetic function by norm gives Mathlib's formal Euler product of its canonical local factors.
 
 ## Implementation notes
 
@@ -66,12 +64,11 @@ definition. Hence `supportedPart` is a plain ideal arithmetic function.
 
 ## Roadmap role
 
-This is the canonical-local-factor prerequisite for Layer **3.1** and the whole of Layer **3.2**
+This is the canonical-local-factor foundation for Layer **3.1** and the whole of Layer **3.2**
 ("Finite products first") of `TauCetiRoadmap/ArithmeticDirichletSeries/README.md`; the local series
-is derived here rather than stored. The remaining Layer 3.1 target defines `EulerProductData` with
-its finite bad set and `normCoeff` transport hypotheses, supplies extensionality, and constructs
-restriction, product, conjugation, trivial-weight, and general multiplicative-weight operations.
-Layer 3.3 then passes to the directed limit of finite prime sets under absolute convergence.
+is derived here rather than stored. `EulerProduct/Data.lean` bundles this canonical information
+with its finite bad-prime condition. Layer 3.3 then evaluates the formal factors as analytic
+functions and passes to their infinite product under absolute convergence.
 
 ## References
 
@@ -413,6 +410,46 @@ theorem normCoeff_supportedPart (hf : f.IsMultiplicative)
   | insert P S hPS ih =>
       rw [Finset.coe_insert, supportedPart_insert hf (by simpa using hPS), normCoeff_convolution,
         ih, normCoeff_supportedPart_singleton, Finset.prod_insert hPS, mul_comm]
+
+/-- For a fixed nonzero ideal, restriction to a growing finite set of height-one primes eventually
+does nothing. -/
+theorem eventually_supportedPart_apply_eq (f : IdealArithmeticFunction K)
+    (A : (Ideal (𝓞 K))⁰) :
+    ∀ᶠ S : Finset (HeightOneSpectrum (𝓞 K)) in Filter.atTop,
+      supportedPart f (S : Set (HeightOneSpectrum (𝓞 K))) A = f A := by
+  obtain ⟨T, e, hA⟩ := Ideal.exists_eq_prod_pow (nonZeroDivisors.coe_ne_zero A)
+  filter_upwards [Filter.eventually_ge_atTop T] with S hTS
+  apply supportedPart_apply_of_isPrimeTo_compl
+  rw [hA, Ideal.isPrimeTo_prod_iff]
+  intro P hPT
+  exact (Ideal.isPrimeTo_asIdeal_iff.mpr (Set.notMem_compl_iff.mpr (hTS hPT))).pow (e P)
+
+/-- At each norm coefficient, restriction to a growing finite set of height-one primes eventually
+does nothing. -/
+theorem eventually_normCoeff_supportedPart_apply_eq (f : IdealArithmeticFunction K) (n : ℕ) :
+    ∀ᶠ S : Finset (HeightOneSpectrum (𝓞 K)) in Filter.atTop,
+      normCoeff K (supportedPart f (S : Set (HeightOneSpectrum (𝓞 K)))) n = normCoeff K f n := by
+  have h : ∀ᶠ S : Finset (HeightOneSpectrum (𝓞 K)) in Filter.atTop,
+      ∀ A ∈ normFiber K n,
+        supportedPart f (S : Set (HeightOneSpectrum (𝓞 K))) A = f A := by
+    rw [Finset.eventually_all (normFiber K n)]
+    exact fun A _ ↦ eventually_supportedPart_apply_eq f A
+  filter_upwards [h] with S hS
+  rw [normCoeff_eq_sum_normFiber, normCoeff_eq_sum_normFiber]
+  exact Finset.sum_congr rfl hS
+
+/-- **The formal Euler product.** Regrouping a multiplicative ideal arithmetic function by
+absolute norm gives Mathlib's formal Euler product of its canonical local arithmetic factors. -/
+theorem normCoeff_eq_eulerProduct (hf : f.IsMultiplicative) :
+    normCoeff K f = ArithmeticFunction.eulerProduct f.localArithmeticFactor := by
+  ext n
+  have hleft : ∀ᶠ S : Finset (HeightOneSpectrum (𝓞 K)) in Filter.atTop,
+      (∏ P ∈ S, localArithmeticFactor f P) n = normCoeff K f n := by
+    filter_upwards [eventually_normCoeff_supportedPart_apply_eq f n] with S hS
+    rw [← normCoeff_supportedPart hf S, hS]
+  obtain ⟨S, hleftS, hrightS⟩ :=
+    (hleft.and (tendsTo_eulerProduct_localArithmeticFactor f hf.map_one n)).exists
+  exact hleftS.symm.trans hrightS
 
 end IdealArithmeticFunction
 
