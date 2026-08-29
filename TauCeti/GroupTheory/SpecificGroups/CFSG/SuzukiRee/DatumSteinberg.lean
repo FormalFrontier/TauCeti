@@ -130,7 +130,7 @@ isogeny itself. -/
 
 /-- The Steinberg map carries the numbered simple-root index `i` to its pinned length-exchanged
 partner. -/
-@[simp] theorem datumSteinberg_indexEquiv_simpleIndex (i : Fin e.1.rank) :
+theorem datumSteinberg_indexEquiv_simpleIndex (i : Fin e.1.rank) :
     e.datumSteinberg.indexEquiv
         (e.1.dynkinType.simpleIndex e.1.dynkinType_valid i) =
       e.1.dynkinType.simpleIndex e.1.dynkinType_valid (e.lengthPerm i) := by
