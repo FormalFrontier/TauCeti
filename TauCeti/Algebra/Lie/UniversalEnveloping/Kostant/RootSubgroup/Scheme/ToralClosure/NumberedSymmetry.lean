@@ -35,7 +35,9 @@ and it has order dividing any `m` for which `σ` iterates and `τ` powers to the
 The invariance of the defining Hopf ideal that makes all of this work also says that conjugation by
 the numbered-symmetry matrix preserves the algebra-valued points of the toral closure. That form of
 the statement is proved here too, since it is the one a consumer working with a point group rather
-than with the group scheme needs, and it rests on the same ideal computation.
+than with the group scheme needs, and it rests on the same ideal computation. The two are compared:
+on an algebra-valued point of the carrier, composing with the automorphism of the group scheme and
+including into `GLₙ` is that same matrix conjugation.
 
 Both hypotheses hold for the coordinate permutation that a Dynkin-diagram symmetry induces on
 Geck's lattice: it permutes the coordinate basis by the induced permutation of the Cartan
@@ -61,6 +63,8 @@ an admissible lattice, or that the carrier is reductive.
 * `conj_kostantNumberedSymmetryMatrix_mem_kostantToralPointsSubgroup_iff` and
   `map_kostantToralPointsSubgroup_conj_numberedSymmetryMatrix`: conjugation by the numbered-symmetry
   matrix preserves the algebra-valued points of the toral closure.
+* `schemePointsMulEquiv_kostantToralNumberedSymmetryIso`: on algebra-valued points the automorphism
+  of the group scheme is that same conjugation.
 
 All of these live in the `TauCeti.UniversalEnvelopingAlgebra` namespace.
 
@@ -542,5 +546,156 @@ theorem map_kostantToralPointsSubgroup_conj_numberedSymmetryMatrix (A : Type) [C
       ((kostantNumberedSymmetryMatrix M b θ hθM A)⁻¹ * g *
         kostantNumberedSymmetryMatrix M b θ hθM A)))
   rw [hg]
+
+/-! ## The symmetry on scheme-valued points -/
+
+open scoped CategoryTheory.MonObj
+
+/-- The toral closure is represented by its quotient coordinate Hopf algebra. -/
+private theorem kostantToralGroupScheme_eq_hopfSpec :
+    kostantToralGroupScheme e h ρ M hM hnil b wt =
+      (AlgebraicGeometry.hopfSpec (CommRingCat.of ℤ)).obj (Opposite.op
+        (CommHopfAlgCat.quotient (GeneralLinear.coordinateHopfAlgebra ℤ n)
+          (kostantToralDefiningIdeal e h ρ M hM hnil b wt))) :=
+  (rfl)
+
+/-- Algebra-valued points of the toral closure, transported to scheme-valued points. -/
+private noncomputable def kostantToralSchemePointMulEquiv (A : Type) [CommRing A] :
+    WithConv (CommHopfAlgCat.quotient (GeneralLinear.coordinateHopfAlgebra ℤ n)
+        (kostantToralDefiningIdeal e h ρ M hM hnil b wt) →ₐ[ℤ] A) ≃*
+      ((Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of ℤ)) ⟶
+        (kostantToralGroupScheme e h ρ M hM hnil b wt).X) :=
+  CommHopfAlgCat.mapMulEquivOfPresentation _ A
+    (kostantToralGroupScheme_eq_hopfSpec e h ρ M hM hnil b wt)
+
+private theorem kostantToralSchemePointMulEquiv_apply_left (A : Type) [CommRing A]
+    (q : WithConv (CommHopfAlgCat.quotient (GeneralLinear.coordinateHopfAlgebra ℤ n)
+      (kostantToralDefiningIdeal e h ρ M hM hnil b wt) →ₐ[ℤ] A)) :
+    (kostantToralSchemePointMulEquiv e h ρ M hM hnil b wt A q).left =
+      Spec.map (CommRingCat.ofHom q.ofConv.toRingHom) ≫
+        eqToHom (congrArg (fun K : Grp (Over (Spec (CommRingCat.of ℤ))) => K.X.left)
+          (kostantToralGroupScheme_eq_hopfSpec e h ρ M hM hnil b wt)).symm := by
+  simpa only [kostantToralSchemePointMulEquiv] using
+    CommHopfAlgCat.mapMulEquivOfPresentation_apply_left _ A
+      (kostantToralGroupScheme_eq_hopfSpec e h ρ M hM hnil b wt)
+      (congrArg (fun K : Grp (Over (Spec (CommRingCat.of ℤ))) => K.X.left)
+        (kostantToralGroupScheme_eq_hopfSpec e h ρ M hM hnil b wt)) q
+
+include hθe hσ hbasis hwt in
+/-- Composing a scheme-valued point with the toral symmetry precomposes its algebra point with the
+quotient coordinate automorphism. -/
+private theorem kostantToralSchemePointMulEquiv_comp_numberedSymmetryIso (A : Type) [CommRing A]
+    (q : WithConv (CommHopfAlgCat.quotient (GeneralLinear.coordinateHopfAlgebra ℤ n)
+      (kostantToralDefiningIdeal e h ρ M hM hnil b wt) →ₐ[ℤ] A)) :
+    kostantToralSchemePointMulEquiv e h ρ M hM hnil b wt A q ≫
+        (kostantToralNumberedSymmetryIso e h ρ M hM hnil b wt σ θ hθM hθe hσ basisPerm hbasis
+          torusPerm hwt).hom.hom.hom =
+      kostantToralSchemePointMulEquiv e h ρ M hM hnil b wt A
+        ((CommHopfAlgCat.mapPointsFunctor
+          (kostantToralCoordinateNumberedSymmetryIso e h ρ M hM hnil b wt σ θ hθM hθe hσ basisPerm
+            hbasis torusPerm hwt).hom).app (CommAlgCat.of ℤ A) q) := by
+  rw [kostantToralNumberedSymmetryIso, Functor.mapIso_hom, Iso.op_hom]
+  exact CommHopfAlgCat.pointMulEquivOfPresentation_mapDomain (R := ℤ) A
+    (kostantToralGroupScheme_eq_hopfSpec e h ρ M hM hnil b wt)
+    (kostantToralGroupScheme_eq_hopfSpec e h ρ M hM hnil b wt)
+    (kostantToralSchemePointMulEquiv e h ρ M hM hnil b wt A)
+    (kostantToralSchemePointMulEquiv e h ρ M hM hnil b wt A)
+    (kostantToralSchemePointMulEquiv_apply_left e h ρ M hM hnil b wt A)
+    (kostantToralSchemePointMulEquiv_apply_left e h ρ M hM hnil b wt A)
+    (kostantToralCoordinateNumberedSymmetryIso e h ρ M hM hnil b wt σ θ hθM hθe hσ basisPerm
+      hbasis torusPerm hwt).hom q
+
+/-- Including a scheme-valued point of the toral closure into `GLₙ` precomposes its algebra point
+with the quotient coordinate map. -/
+private theorem kostantToralSchemePointMulEquiv_comp_toralGroupSchemeι (A : Type) [CommRing A]
+    (q : WithConv (CommHopfAlgCat.quotient (GeneralLinear.coordinateHopfAlgebra ℤ n)
+      (kostantToralDefiningIdeal e h ρ M hM hnil b wt) →ₐ[ℤ] A)) :
+    kostantToralSchemePointMulEquiv e h ρ M hM hnil b wt A q ≫
+        (kostantToralGroupSchemeι e h ρ M hM hnil b wt).hom.hom =
+      GeneralLinear.groupSchemePointMulEquiv n A
+        ((CommHopfAlgCat.mapPointsFunctor
+          (CommHopfAlgCat.mkQuotient (GeneralLinear.coordinateHopfAlgebra ℤ n)
+            (kostantToralDefiningIdeal e h ρ M hM hnil b wt))).app (CommAlgCat.of ℤ A) q) := by
+  rw [kostantToralGroupSchemeι_def, CommHopfAlgCat.quotientSpecι_def]
+  exact CommHopfAlgCat.pointMulEquivOfPresentation_mapDomain (R := ℤ) A
+    (GeneralLinear.groupScheme_def ℤ n)
+    (kostantToralGroupScheme_eq_hopfSpec e h ρ M hM hnil b wt)
+    (GeneralLinear.groupSchemePointMulEquiv n A)
+    (kostantToralSchemePointMulEquiv e h ρ M hM hnil b wt A)
+    (GeneralLinear.groupSchemePointMulEquiv_apply_left n A)
+    (kostantToralSchemePointMulEquiv_apply_left e h ρ M hM hnil b wt A)
+    (CommHopfAlgCat.mkQuotient (GeneralLinear.coordinateHopfAlgebra ℤ n)
+      (kostantToralDefiningIdeal e h ρ M hM hnil b wt)) q
+
+/-- The matrix of an included scheme-valued point of the toral closure is the matrix of its algebra
+point, read in the ambient coordinate Hopf algebra. -/
+private theorem schemePointsMulEquiv_kostantToralSchemePointMulEquiv_comp_toralGroupSchemeι
+    (A : Type) [CommRing A]
+    (q : WithConv (CommHopfAlgCat.quotient (GeneralLinear.coordinateHopfAlgebra ℤ n)
+      (kostantToralDefiningIdeal e h ρ M hM hnil b wt) →ₐ[ℤ] A)) :
+    GeneralLinear.schemePointsMulEquiv n A
+        (kostantToralSchemePointMulEquiv e h ρ M hM hnil b wt A q ≫
+          (kostantToralGroupSchemeι e h ρ M hM hnil b wt).hom.hom) =
+      GeneralLinear.pointsMulEquiv n
+        ((CommHopfAlgCat.mapPointsFunctor
+          (CommHopfAlgCat.mkQuotient (GeneralLinear.coordinateHopfAlgebra ℤ n)
+            (kostantToralDefiningIdeal e h ρ M hM hnil b wt))).app (CommAlgCat.of ℤ A) q) := by
+  rw [kostantToralSchemePointMulEquiv_comp_toralGroupSchemeι]
+  -- The quotient point carries the coercion of a `GrpCat` element, which `rw` will not identify
+  -- with the plain convolution point the general-linear comparison is stated for.
+  exact GeneralLinear.schemePointsMulEquiv_groupSchemePointMulEquiv (R := ℤ) n A _
+
+include hθe hσ hbasis hwt in
+/-- **On every algebra-valued point of the toral closure, the numbered-symmetry automorphism of the
+group scheme is conjugation by the numbered-symmetry matrix.** This identifies the automorphism
+`kostantToralNumberedSymmetryIso` of the carrier with the matrix conjugation that
+`conj_kostantNumberedSymmetryMatrix_mem_kostantToralPointsSubgroup_iff` shows preserves the point
+group: the two constructions, one through the defining Hopf ideal and one through the coordinate
+automorphism, agree. -/
+theorem schemePointsMulEquiv_kostantToralNumberedSymmetryIso (A : Type) [CommRing A]
+    (p : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of ℤ)) ⟶
+      (kostantToralGroupScheme e h ρ M hM hnil b wt).X) :
+    GeneralLinear.schemePointsMulEquiv n A
+        (p ≫ (kostantToralNumberedSymmetryIso e h ρ M hM hnil b wt σ θ hθM hθe hσ basisPerm hbasis
+              torusPerm hwt).hom.hom.hom ≫
+          (kostantToralGroupSchemeι e h ρ M hM hnil b wt).hom.hom) =
+      kostantNumberedSymmetryMatrix M b θ hθM A *
+          GeneralLinear.schemePointsMulEquiv n A
+            (p ≫ (kostantToralGroupSchemeι e h ρ M hM hnil b wt).hom.hom) *
+        (kostantNumberedSymmetryMatrix M b θ hθM A)⁻¹ := by
+  obtain ⟨q, rfl⟩ := (kostantToralSchemePointMulEquiv e h ρ M hM hnil b wt A).surjective p
+  have hsym := kostantToralSchemePointMulEquiv_comp_numberedSymmetryIso
+    e h ρ M hM hnil b wt σ θ hθM hθe hσ basisPerm hbasis torusPerm hwt A q
+  have hsymι := congrArg
+    (fun f => f ≫ (kostantToralGroupSchemeι e h ρ M hM hnil b wt).hom.hom) hsym
+  have hincl := schemePointsMulEquiv_kostantToralSchemePointMulEquiv_comp_toralGroupSchemeι
+    e h ρ M hM hnil b wt A q
+  have hinclSym := schemePointsMulEquiv_kostantToralSchemePointMulEquiv_comp_toralGroupSchemeι
+    e h ρ M hM hnil b wt A
+    ((CommHopfAlgCat.mapPointsFunctor
+      (kostantToralCoordinateNumberedSymmetryIso e h ρ M hM hnil b wt σ θ hθM hθe hσ basisPerm
+        hbasis torusPerm hwt).hom).app (CommAlgCat.of ℤ A) q)
+  rw [← Category.assoc, hsymι, hinclSym, hincl]
+  -- The quotient coordinate automorphism is induced by the ambient one, so precomposing a point
+  -- with it and then with the quotient map is precomposing with the ambient automorphism.
+  have hpoint : (CommHopfAlgCat.mapPointsFunctor
+        (CommHopfAlgCat.mkQuotient (GeneralLinear.coordinateHopfAlgebra ℤ n)
+          (kostantToralDefiningIdeal e h ρ M hM hnil b wt))).app (CommAlgCat.of ℤ A)
+        ((CommHopfAlgCat.mapPointsFunctor
+          (kostantToralCoordinateNumberedSymmetryIso e h ρ M hM hnil b wt σ θ hθM hθe hσ basisPerm
+            hbasis torusPerm hwt).hom).app (CommAlgCat.of ℤ A) q) =
+      (CommHopfAlgCat.mapPointsFunctor
+        (kostantNumberedSymmetryCoordinateIso M b θ hθM).hom).app (CommAlgCat.of ℤ A)
+        ((CommHopfAlgCat.mapPointsFunctor
+          (CommHopfAlgCat.mkQuotient (GeneralLinear.coordinateHopfAlgebra ℤ n)
+            (kostantToralDefiningIdeal e h ρ M hM hnil b wt))).app (CommAlgCat.of ℤ A) q) := by
+    apply WithConv.ofConv_injective
+    ext z
+    exact congrArg (fun f => q.ofConv (f.hom z))
+      (mkQuotient_comp_kostantToralCoordinateNumberedSymmetryIso_hom
+        e h ρ M hM hnil b wt σ θ hθM hθe hσ basisPerm hbasis torusPerm hwt)
+  rw [hpoint]
+  exact pointsMulEquiv_mapPointsFunctor_kostantNumberedSymmetryCoordinateIso M b θ hθM
+    (CommAlgCat.of ℤ A) _
 
 end TauCeti.UniversalEnvelopingAlgebra
