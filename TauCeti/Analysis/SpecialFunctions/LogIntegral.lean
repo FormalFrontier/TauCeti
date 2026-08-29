@@ -34,6 +34,8 @@ the remaining integral is `o (x / log x)`. Splitting that integral at `√x` bou
 * `TauCeti.Real.logIntegral_eq_div_log_sub_add` — the antiderivative identity above.
 * `TauCeti.Real.logIntegral_isEquivalent_div_log` — `Li x ~ x / log x` at infinity, with the
   quotient form `TauCeti.Real.tendsto_logIntegral_mul_log_div_atTop`.
+* `TauCeti.Real.isLittleO_integral_div_mul_log_sq` — for `f` interval integrable above `2` and of
+  at most linear growth, `∫ t in 2..x, f t / (t * log t ^ 2)` is `o (x / log x)`.
 
 The auxiliary bounds `TauCeti.Real.integral_inv_log_pow_le` and
 `TauCeti.Real.le_integral_inv_log_pow` estimate `∫ t in a..b, ((log t) ^ n)⁻¹` by monotonicity of
@@ -45,11 +47,17 @@ while `Li` itself is the case `n = 1`.
 This is the analytic half of Layer **6.2** of `TauCetiRoadmap/ArithmeticDirichletSeries/README.md`,
 which asks for `Li` together with `Li(x) ∼ x/log x` on the way to the transfer
 `ϑ(x) ∼ δx ⟹ π(x) ∼ δ Li(x)` that Layer 10.3 exports as `primeCount_asymptotic_of_primeTheta`.
+The weighted-remainder estimate `isLittleO_integral_div_mul_log_sq` is the analytic input to that
+transfer: it is what absorbs the integral produced by Abel summation.
 
 ## References
 
 * H. Davenport, *Multiplicative Number Theory*, Chapter 1.
 * G. Tenenbaum, *Introduction to Analytic and Probabilistic Number Theory*, Chapter I.
+
+Mathlib's `Mathlib/NumberTheory/Chebyshev.lean` carries out this estimate for the rational
+Chebyshev function, in `Chebyshev.integral_theta_div_log_sq_isLittleO`; the argument for a general
+integrand below follows the same split into a bounded initial segment and a linearly bounded tail.
 -/
 
 public section
@@ -267,5 +275,130 @@ theorem logIntegral_isEquivalent_div_log :
   · refine tendsto_logIntegral_mul_log_div_atTop.congr' ?_
     filter_upwards [eventually_gt_atTop (2 : ℝ)] with x _
     rw [Pi.div_apply, div_div_eq_mul_div]
+
+/-! ### A weighted remainder integral
+
+The integral `∫ t in 2..x, f t / (t * log t ^ 2)` is what Abel summation leaves behind when a
+logarithmically weighted counting function is converted into an unweighted one.  It is negligible
+on the scale `x / log x` as soon as `f` grows at most linearly. -/
+
+/-- **The Chebyshev scale `x / log x` diverges.**  Equivalently, a constant is `o (x / log x)`. -/
+theorem tendsto_div_log_atTop : Tendsto (fun x : ℝ ↦ x / Real.log x) atTop atTop := by
+  have hlog := Real.isLittleO_log_id_atTop.tendsto_div_nhds_zero
+  simp only [id_eq] at hlog
+  have h : Tendsto (fun x : ℝ ↦ Real.log x / x) atTop (𝓝[>] 0) := by
+    refine tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within _ hlog ?_
+    filter_upwards [eventually_gt_atTop (1 : ℝ)] with x hx
+    exact div_pos (Real.log_pos hx) (by linarith)
+  exact h.inv_tendsto_nhdsGT_zero.congr fun x ↦ inv_div _ _
+
+/-- A constant is `o (x / log x)`, because that scale diverges. -/
+theorem isLittleO_const_div_log (c : ℝ) :
+    (fun _ : ℝ ↦ c) =o[atTop] fun x : ℝ ↦ x / Real.log x :=
+  isLittleO_const_left.mpr <| Or.inr <|
+    (tendsto_abs_atTop_atTop.comp tendsto_div_log_atTop).congr fun _ ↦ (Real.norm_eq_abs _).symm
+
+/-- `∫ t in 2..x, (log t ^ 2)⁻¹` is `o (x / log x)`; this is
+`TauCeti.Real.tendsto_integral_inv_log_sq_mul_log_div_atTop` read as an `IsLittleO`. -/
+theorem isLittleO_integral_inv_log_sq :
+    (fun x : ℝ ↦ ∫ t in (2 : ℝ)..x, (Real.log t ^ 2)⁻¹) =o[atTop] fun x : ℝ ↦ x / Real.log x := by
+  refine (isLittleO_iff_tendsto' ?_).mpr ?_
+  · filter_upwards [eventually_gt_atTop (2 : ℝ)] with x hx hzero
+    exact absurd hzero (div_pos (by linarith) (Real.log_pos (by linarith))).ne'
+  · exact tendsto_integral_inv_log_sq_mul_log_div_atTop.congr fun x ↦
+      (div_div_eq_mul_div _ _ _).symm
+
+/-- The weight `(t * log t ^ 2)⁻¹` is continuous to the right of `1`, so it preserves interval
+integrability there. -/
+theorem intervalIntegrable_div_mul_log_sq {f : ℝ → ℝ} {a b : ℝ} (ha : 1 < a) (hb : 1 < b)
+    (hf : IntervalIntegrable f volume a b) :
+    IntervalIntegrable (fun t ↦ f t / (t * Real.log t ^ 2)) volume a b := by
+  simp_rw [div_eq_mul_inv]
+  refine hf.mul_continuousOn fun t ht ↦ ?_
+  rw [mem_uIcc] at ht
+  have h1 : 1 < t := by rcases ht with h | h; exacts [ha.trans_le h.1, hb.trans_le h.1]
+  have h0 : t ≠ 0 := by linarith
+  have hne : t * Real.log t ^ 2 ≠ 0 :=
+    (mul_pos (by linarith) (pow_pos (Real.log_pos h1) 2)).ne'
+  fun_prop
+
+/-- Splitting at a cutoff `T` beyond which `|f t| ≤ c t`, the weighted integral of `f` is bounded
+by its own initial segment plus `c` times the integral of `(log t ^ 2)⁻¹`. -/
+private theorem abs_integral_div_mul_log_sq_le {f : ℝ → ℝ} {c T x : ℝ} (hT2 : 2 ≤ T) (hTx : T ≤ x)
+    (hc0 : 0 ≤ c) (hf_int : ∀ y, 2 ≤ y → IntervalIntegrable f volume 2 y)
+    (hbound : ∀ t, T ≤ t → |f t| ≤ c * t) :
+    |∫ t in (2 : ℝ)..x, f t / (t * Real.log t ^ 2)| ≤
+      |∫ t in (2 : ℝ)..T, f t / (t * Real.log t ^ 2)| +
+        c * ∫ t in (2 : ℝ)..x, (Real.log t ^ 2)⁻¹ := by
+  have h2x : (2 : ℝ) ≤ x := hT2.trans hTx
+  have hint : IntervalIntegrable f volume T x := (hf_int x h2x).mono_set <| by
+    rw [uIcc_of_le hTx, uIcc_of_le h2x]; exact Icc_subset_Icc hT2 le_rfl
+  have htail : |∫ t in T..x, f t / (t * Real.log t ^ 2)| ≤
+      c * ∫ t in T..x, (Real.log t ^ 2)⁻¹ := by
+    calc |∫ t in T..x, f t / (t * Real.log t ^ 2)|
+        ≤ ∫ t in T..x, |f t / (t * Real.log t ^ 2)| :=
+          intervalIntegral.abs_integral_le_integral_abs hTx
+      _ ≤ ∫ t in T..x, c * (Real.log t ^ 2)⁻¹ := by
+          refine intervalIntegral.integral_mono_on hTx
+            (intervalIntegrable_div_mul_log_sq (by linarith) (by linarith) hint).abs
+            ((intervalIntegrable_inv_log_pow 2 (by linarith) (by linarith)).const_mul c)
+            fun t ht ↦ ?_
+          have h2t : (2 : ℝ) ≤ t := hT2.trans ht.1
+          have hpos : 0 < t * Real.log t ^ 2 :=
+            mul_pos (by linarith) (pow_pos (Real.log_pos (by linarith)) 2)
+          rw [abs_div, abs_of_pos hpos, div_le_iff₀ hpos]
+          have hrw : c * (Real.log t ^ 2)⁻¹ * (t * Real.log t ^ 2) = c * t := by
+            have : Real.log t ≠ 0 := (Real.log_pos (by linarith)).ne'
+            field_simp
+          rw [hrw]
+          exact hbound t ht.1
+      _ = c * ∫ t in T..x, (Real.log t ^ 2)⁻¹ := intervalIntegral.integral_const_mul _ _
+  have hJ : (∫ t in T..x, (Real.log t ^ 2)⁻¹) ≤ ∫ t in (2 : ℝ)..x, (Real.log t ^ 2)⁻¹ := by
+    linarith [integral_inv_log_pow_nonneg 2 one_lt_two hT2,
+      intervalIntegral.integral_add_adjacent_intervals
+        (a := (2 : ℝ)) (b := T) (c := x) (f := fun t : ℝ ↦ (Real.log t ^ 2)⁻¹)
+        (intervalIntegrable_inv_log_pow 2 one_lt_two (by linarith))
+        (intervalIntegrable_inv_log_pow 2 (by linarith) (by linarith))]
+  rw [← intervalIntegral.integral_add_adjacent_intervals
+    (intervalIntegrable_div_mul_log_sq one_lt_two (by linarith) (hf_int T hT2))
+    (intervalIntegrable_div_mul_log_sq (by linarith) (by linarith) hint)]
+  calc |(∫ t in (2 : ℝ)..T, f t / (t * Real.log t ^ 2)) +
+          ∫ t in T..x, f t / (t * Real.log t ^ 2)|
+      ≤ |∫ t in (2 : ℝ)..T, f t / (t * Real.log t ^ 2)| +
+          |∫ t in T..x, f t / (t * Real.log t ^ 2)| := abs_add_le _ _
+    _ ≤ _ := by gcongr; exact htail.trans (mul_le_mul_of_nonneg_left hJ hc0)
+
+/-- **A linearly bounded integrand leaves a negligible remainder.**  If `f` is interval integrable
+above `2` and satisfies `f = O(x)`, then `∫ t in 2..x, f t / (t * log t ^ 2)` is `o (x / log x)`.
+
+For the rational Chebyshev function this is `Chebyshev.integral_theta_div_log_sq_isLittleO`. -/
+theorem isLittleO_integral_div_mul_log_sq {f : ℝ → ℝ}
+    (hf_int : ∀ x, 2 ≤ x → IntervalIntegrable f volume 2 x) (hf : f =O[atTop] id) :
+    (fun x : ℝ ↦ ∫ t in (2 : ℝ)..x, f t / (t * Real.log t ^ 2)) =o[atTop]
+      fun x : ℝ ↦ x / Real.log x := by
+  -- Choose a cutoff `T ≥ 2` beyond which `|f t| ≤ c * t`.
+  obtain ⟨c, hc⟩ := hf.bound
+  obtain ⟨T, hT⟩ := eventually_atTop.mp (hc.and (eventually_ge_atTop (2 : ℝ)))
+  have hT2 : (2 : ℝ) ≤ T := (hT T le_rfl).2
+  have hbound : ∀ t, T ≤ t → |f t| ≤ c * t := fun t ht ↦ by
+    have h2t : (2 : ℝ) ≤ t := (hT t ht).2
+    simpa [Real.norm_eq_abs, abs_of_nonneg (by linarith : (0 : ℝ) ≤ t)] using (hT t ht).1
+  have hc0 : 0 ≤ c := by nlinarith [hbound T le_rfl, abs_nonneg (f T)]
+  -- Both summands of `abs_integral_div_mul_log_sq_le` are `o (x / log x)`.
+  have hconst := isLittleO_const_div_log |∫ t in (2 : ℝ)..T, f t / (t * Real.log t ^ 2)|
+  have hrem : (fun x : ℝ ↦ c * ∫ t in (2 : ℝ)..x, (Real.log t ^ 2)⁻¹) =o[atTop]
+      fun x : ℝ ↦ x / Real.log x := isLittleO_integral_inv_log_sq.const_mul_left c
+  rw [isLittleO_iff]
+  intro ε hε
+  filter_upwards [eventually_ge_atTop T, hconst.bound (half_pos hε), hrem.bound (half_pos hε)]
+    with x hx h1 h2
+  rw [Real.norm_eq_abs, abs_of_nonneg (abs_nonneg _)] at h1
+  rw [Real.norm_eq_abs, abs_of_nonneg
+    (mul_nonneg hc0 (integral_inv_log_pow_nonneg 2 one_lt_two (hT2.trans hx)))] at h2
+  calc ‖∫ t in (2 : ℝ)..x, f t / (t * Real.log t ^ 2)‖
+      = |∫ t in (2 : ℝ)..x, f t / (t * Real.log t ^ 2)| := Real.norm_eq_abs _
+    _ ≤ _ := abs_integral_div_mul_log_sq_le hT2 hx hc0 hf_int hbound
+    _ ≤ ε / 2 * ‖x / Real.log x‖ + ε / 2 * ‖x / Real.log x‖ := add_le_add h1 h2
+    _ = ε * ‖x / Real.log x‖ := by ring
 
 end TauCeti.Real

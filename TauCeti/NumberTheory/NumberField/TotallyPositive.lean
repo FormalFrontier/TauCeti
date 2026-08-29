@@ -176,15 +176,15 @@ omit [NumberField K] in
     totallyPositiveIntegerUnits (K := K) = ⊤ := by
   ext u; simp
 
-/-- **The norm of a totally positive element is nonnegative.**
-
-Over a totally complex field the hypothesis is vacuous (`not_isReal_of_isTotallyComplex`), so the
-conclusion holds for every `x` there, including `x = 0` whose norm is `0`. -/
-theorem norm_nonneg_of_isTotallyPositive {x : K} (hpos : IsTotallyPositive x) :
-    0 ≤ Algebra.norm ℚ x := by
+/-- **The signed product formula at a totally positive element.** For a totally positive `x` the
+product of `w x ^ mult w` over the infinite places is the norm itself, and not merely its absolute
+value as in `InfinitePlace.prod_eq_abs_norm`: at a real place total positivity identifies `w x`
+with the value of the corresponding real embedding, and a complex place contributes a conjugate
+pair, whose product is a square. -/
+private theorem norm_eq_prod_of_isTotallyPositive {x : K} (hpos : IsTotallyPositive x) :
+    ((Algebra.norm ℚ x : ℚ) : ℝ) = ∏ w : InfinitePlace K, w x ^ mult w := by
   classical
-  -- Compare in `ℂ`, where the norm is the product over all the embeddings, then descend to `ℝ`;
-  -- against `prod_eq_abs_norm` this says the absolute value there costs nothing.
+  -- Compare in `ℂ`, where the norm is the product over all the embeddings, then descend to `ℝ`.
   have key : ((Algebra.norm ℚ x : ℚ) : ℂ) =
       ((∏ w : InfinitePlace K, w x ^ mult w : ℝ) : ℂ) := by
     rw [← eq_ratCast (algebraMap ℚ ℂ) (Algebra.norm ℚ x), Algebra.norm_eq_prod_embeddings ℚ ℂ x,
@@ -223,8 +223,16 @@ theorem norm_nonneg_of_isTotallyPositive {x : K} (hpos : IsTotallyPositive x) :
         Finset.prod_pair hne, ComplexEmbedding.conjugate_coe_eq, Complex.mul_conj,
         Complex.normSq_eq_norm_sq, norm_embedding_eq,
         (not_isReal_iff_isComplex.mp hw).mult_eq_two]
-  have hreal : ((Algebra.norm ℚ x : ℚ) : ℝ) = ∏ w : InfinitePlace K, w x ^ mult w := by
-    exact_mod_cast key
+  exact_mod_cast key
+
+/-- **The norm of a totally positive element is nonnegative.**
+
+Over a totally complex field the hypothesis is vacuous (`not_isReal_of_isTotallyComplex`), so the
+conclusion holds for every `x` there, including `x = 0` whose norm is `0`. -/
+theorem norm_nonneg_of_isTotallyPositive {x : K} (hpos : IsTotallyPositive x) :
+    0 ≤ Algebra.norm ℚ x := by
+  -- Against `prod_eq_abs_norm`, the signed product formula says the absolute value costs nothing.
+  have hreal := norm_eq_prod_of_isTotallyPositive hpos
   rw [InfinitePlace.prod_eq_abs_norm] at hreal
   have habs : |Algebra.norm ℚ x| = Algebra.norm ℚ x := by exact_mod_cast hreal.symm
   exact abs_eq_self.mp habs

@@ -51,9 +51,9 @@ sends `N ∩ f ⁻¹' L` into a compact box; being anti-Lipschitz, it reflects t
 
 Lane F0 of the analytic Heegaard Floer roadmap asks for the package "a moduli space is the zero
 set of a Fredholm section, and at a regular point a manifold of dimension the index", of which
-`TauCeti.Analysis.Fredholm.LevelSet` supplies the charts; local properness is the complementary
-topological half, and it is what will make the critical values of a Fredholm map locally closed
-in the Sard--Smale argument.
+`TauCeti.Analysis.Fredholm.LevelSet.Basic` supplies the charts. Local properness is the
+complementary topological half, and it is what will make the critical values of a Fredholm map
+locally closed in the Sard--Smale argument.
 -/
 
 public section

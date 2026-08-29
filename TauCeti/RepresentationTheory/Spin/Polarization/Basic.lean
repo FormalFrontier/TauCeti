@@ -31,6 +31,7 @@ giving `dim W = l` both in dimension `2l` (type `Dₗ`) and in dimension `2l + 1
 * `TauCeti.SpinPolarizationData` records the decomposition and its consumer-facing coordinates.
 * `TauCeti.SpinPolarizationData.dualVector`: given a basis of the first isotropic summand, the
   vector of the second summand matching a coordinate functional of that basis.
+* `TauCeti.SpinPolarizationData.dualBasis`: the resulting basis of the second isotropic summand.
 
 ## Main results
 
@@ -39,6 +40,8 @@ giving `dim W = l` both in dimension `2l` (type `Dₗ`) and in dimension `2l + 1
   summand.
 * `TauCeti.SpinPolarizationData.polar_dualVector`: the dual vectors pair with the chosen basis by
   the Kronecker delta.
+* `TauCeti.SpinPolarizationData.dualBasis_apply`: the dual basis has `dualVector` as its underlying
+  family.
 * `TauCeti.SpinPolarizationData.finrank_eq_two_mul_finrank_W_add_finrank_line` and
   `TauCeti.SpinPolarizationData.finrank_line_le_one` give the dimension bookkeeping of a
   finite-dimensional polarization.
@@ -183,6 +186,23 @@ omit [DecidableEq ι] in
 @[simp]
 theorem pairingEquiv_dualVector (i : ι) : P.pairingEquiv (P.dualVector b i) = b.coord i :=
   P.pairingEquiv.apply_symm_apply _
+
+section DualBasis
+
+variable [Finite ι]
+
+/-- The basis of the second isotropic summand dual to `b` under the polarization pairing. -/
+noncomputable def dualBasis : Module.Basis ι K P.W' :=
+  b.dualBasis.map P.pairingEquiv.symm
+
+@[simp]
+theorem dualBasis_apply (i : ι) : P.dualBasis b i = P.dualVector b i := by
+  rw [dualBasis, Module.Basis.map_apply]
+  apply P.pairingEquiv.injective
+  rw [P.pairingEquiv.apply_symm_apply, P.pairingEquiv_dualVector]
+  exact congrFun b.coe_dualBasis i
+
+end DualBasis
 
 /-- The dual vectors pair with the basis of `W` by the Kronecker delta. -/
 @[simp]

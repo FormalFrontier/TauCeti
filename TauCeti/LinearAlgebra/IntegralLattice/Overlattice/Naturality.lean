@@ -105,7 +105,7 @@ def intermediateCarrierEquiv (e : Isometry L M) :
 /-- The carrier transported along an isometry is the image of the original carrier. -/
 theorem intermediateCarrierEquiv_apply_coe (e : Isometry L M) (P : L.IntermediateCarrier) :
     (e.intermediateCarrierEquiv P).1 = P.1.map e.ambientEquiv.toLinearMap :=
-  -- Mathlib's `OrderIso.Icc` and `OrderIso.setCongr` both act by the underlying map on the
+  -- Mathlib's `OrderIso.Icc` and `OrderIso.Set.congr` both act by the underlying map on the
   -- coerced element, and `⇑e.ambientEquiv` is `⇑e.ambientEquiv.toLinearMap`, so both sides are
   -- definitionally the same submodule. The parentheses keep `intermediateCarrierEquiv` sealed.
   (rfl)

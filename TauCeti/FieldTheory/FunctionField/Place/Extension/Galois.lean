@@ -8,7 +8,7 @@ module
 public import Mathlib.FieldTheory.Galois.Basic
 public import Mathlib.RingTheory.Norm.Transitivity
 public import Mathlib.RingTheory.Valuation.RamificationGroup
-public import TauCeti.FieldTheory.FunctionField.Place.Extension.Fibre
+public import TauCeti.FieldTheory.FunctionField.Place.Extension.Fundamental
 
 /-!
 # The Galois action on the places lying over a place
@@ -29,10 +29,10 @@ because on `F` the order at a place of `F'` is a positive multiple of the order 
 below.
 
 Consequently the ramification index and the relative degree are constant on a fibre, and the
-fundamental inequality of `TauCeti/FieldTheory/FunctionField/Place/Extension/Fibre.lean` takes
-the product form `r · e · f ≤ [F' : F]` (Stichtenoth, Corollary 3.7.2; the equality is the
-fundamental identity, which is not proved here). The stabilizer of a place is the decomposition
-group, and is identified with Mathlib's `ValuationSubring.decompositionSubgroup`.
+fundamental identity of `TauCeti/FieldTheory/FunctionField/Place/Extension/Fundamental.lean` —
+which applies because a Galois extension is separable — takes the product form
+`r · e · f = [F' : F]` (Stichtenoth, Corollary 3.7.2). The stabilizer of a place is the
+decomposition group, and is identified with Mathlib's `ValuationSubring.decompositionSubgroup`.
 
 ## Main definitions
 
@@ -51,8 +51,8 @@ group, and is identified with Mathlib's `ValuationSubring.decompositionSubgroup`
   `TauCeti.Place.setOf_restrict_eq_eq_orbit` restating a fibre as an orbit.
 * `TauCeti.Place.ramificationIdx_eq_of_restrict_eq` and
   `TauCeti.Place.relativeDegree_eq_of_restrict_eq`: `e` and `f` are constant on a fibre, whence
-  `TauCeti.Place.ncard_mul_ramificationIdx_mul_relativeDegree_le_finrank`, the product form
-  `r · e · f ≤ [F' : F]` of the fundamental inequality (Stichtenoth, Corollary 3.7.2).
+  `TauCeti.Place.ncard_mul_ramificationIdx_mul_relativeDegree_eq_finrank`, the product form
+  `r · e · f = [F' : F]` of the fundamental identity (Stichtenoth, Corollary 3.7.2).
 * `TauCeti.Place.stabilizer_eq_decompositionSubgroup`: the stabilizer of a place is the
   decomposition group of its valuation ring.
 
@@ -279,20 +279,20 @@ theorem relativeDegree_eq_of_restrict_eq {P Q : Place k F'}
   obtain ⟨σ, rfl⟩ := exists_smul_eq_of_restrict_eq h
   rw [relativeDegree_smul]
 
-/-- **The fundamental inequality in product form** (Stichtenoth, Corollary 3.7.2): for a Galois
-extension the `r` places over a place all share one ramification index `e` and one relative
-degree `f`, and `r · e · f ≤ [F' : F]`.
+/-- **The fundamental identity in product form** (Stichtenoth, Corollary 3.7.2): for a finite
+Galois extension the `r` places over a place all share one ramification index `e` and one relative
+degree `f`, and `r · e · f = [F' : F]`.
 
-The reverse inequality — hence `r · e · f = [F' : F]` — is the fundamental identity, which is
-not proved here. -/
-theorem ncard_mul_ramificationIdx_mul_relativeDegree_le_finrank (P : Place k F') :
+A Galois extension is separable, so the fundamental identity applies with no further
+hypothesis. -/
+theorem ncard_mul_ramificationIdx_mul_relativeDegree_eq_finrank (P : Place k F') :
     {Q : Place k F' | Q.restrict k F = P.restrict k F}.ncard *
-        (ramificationIdx F P * relativeDegree k F P) ≤ Module.finrank F F' := by
+        (ramificationIdx F P * relativeDegree k F P) = Module.finrank F F' := by
   have hfin := finite_setOf_restrict_eq (k' := k) (F' := F') k F (P.restrict k F)
-  have hle := sum_ramificationIdx_mul_relativeDegree_le_finrank k F (P.restrict k F)
-    hfin.toFinset fun Q hQ ↦ hfin.mem_toFinset.mp hQ
-  rw [Finset.sum_congr rfl fun Q hQ ↦ ?_] at hle
-  · rwa [Finset.sum_const, smul_eq_mul, ← Set.ncard_eq_toFinset_card _ hfin] at hle
+  have heq := sum_ramificationIdx_mul_relativeDegree_eq_finrank_of_isSeparable k F
+    (P.restrict k F) (s := hfin.toFinset) fun Q ↦ hfin.mem_toFinset
+  rw [Finset.sum_congr rfl fun Q hQ ↦ ?_] at heq
+  · rwa [Finset.sum_const, smul_eq_mul, ← Set.ncard_eq_toFinset_card _ hfin] at heq
   · rw [← ramificationIdx_eq_of_restrict_eq (hfin.mem_toFinset.mp hQ),
       ← relativeDegree_eq_of_restrict_eq (hfin.mem_toFinset.mp hQ)]
 
