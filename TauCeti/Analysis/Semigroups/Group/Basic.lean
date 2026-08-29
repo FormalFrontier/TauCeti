@@ -23,8 +23,8 @@ This file sets up the object and the two ways of viewing it through the existing
 * the **time reversal** `U.reflect`, the C₀-group `t ↦ U (-t)`, whose forward semigroup is the
   backward half of `U`.
 
-Every statement about negative times is obtained by applying a semigroup statement to
-`U.reflect`, so no half of the theory is developed twice.
+Statements that need the backward semigroup -- the growth bound and generator uniqueness -- are
+obtained by applying a semigroup statement to `U.reflect`.
 
 ## Main definitions
 
@@ -38,11 +38,11 @@ Every statement about negative times is obtained by applying a semigroup stateme
 
 ## Main results
 
-* `TauCeti.Semigroups.StronglyContinuousGroup.continuous_apply`: the orbits of a C₀-group are
+* `TauCeti.Semigroups.StronglyContinuousGroup.continuous_orbit`: the orbits of a C₀-group are
   continuous on all of `ℝ`, not merely at `0`.
 * `TauCeti.Semigroups.StronglyContinuousGroup.existsGrowthBound`: every C₀-group has a finite
   two-sided exponential growth bound.
-* `TauCeti.Semigroups.StronglyContinuousGroup.isometry_of_norm_le_one`: a C₀-group that
+* `TauCeti.Semigroups.StronglyContinuousGroup.isometry_of_forall_norm_le_one`: a C₀-group that
   contracts in both time directions is a group of isometries.
 * `TauCeti.Semigroups.StronglyContinuousGroup.tendsto_apply`: joint strong continuity
   `U (f i) (g i) → U r z`, at every real time and without a sign restriction.
@@ -117,6 +117,11 @@ theorem map_add_apply (U : StronglyContinuousGroup X) (s t : ℝ) (x : X) :
   rw [U.map_add]
   rfl
 
+/-- Operators at different times commute. -/
+theorem map_comm (U : StronglyContinuousGroup X) (s t : ℝ) (x : X) :
+    U s (U t x) = U t (U s x) := by
+  rw [← U.map_add_apply, add_comm, U.map_add_apply]
+
 /-! ## Invertibility -/
 
 /-- `U (-t)` is a left inverse of `U t`. -/
@@ -157,7 +162,7 @@ theorem bijective (U : StronglyContinuousGroup X) (t : ℝ) : Function.Bijective
 
 /-- **The orbits of a C₀-group are continuous on all of `ℝ`.** The two-sided group law turns the
 increment at `t₀` into an increment at `0`, where continuity is assumed. -/
-theorem continuous_apply (U : StronglyContinuousGroup X) (x : X) :
+theorem continuous_orbit (U : StronglyContinuousGroup X) (x : X) :
     Continuous fun t : ℝ => U t x := by
   rw [continuous_iff_continuousAt]
   intro t₀
@@ -236,6 +241,28 @@ theorem HasGrowthBound.bound {U : StronglyContinuousGroup X} {ω M : ℝ}
     (hb : U.HasGrowthBound ω M) (t : ℝ) : ‖U t‖ ≤ M * Real.exp (ω * |t|) :=
   hb.2 t
 
+/-- A two-sided growth bound can be weakened by increasing both the exponential rate and the
+multiplicative constant. -/
+theorem HasGrowthBound.mono {U : StronglyContinuousGroup X} {ω M ω' M' : ℝ}
+    (hb : U.HasGrowthBound ω M) (hω : ω ≤ ω') (hM : M ≤ M') :
+    U.HasGrowthBound ω' M' := by
+  refine ⟨hb.one_le.trans hM, fun t => ?_⟩
+  have hM_nonneg : 0 ≤ M := zero_le_one.trans hb.one_le
+  have hexp : Real.exp (ω * |t|) ≤ Real.exp (ω' * |t|) :=
+    Real.exp_le_exp.mpr (mul_le_mul_of_nonneg_right hω (abs_nonneg t))
+  exact (hb.bound t).trans
+    (mul_le_mul hM hexp (Real.exp_nonneg _) (hM_nonneg.trans hM))
+
+/-- A two-sided growth bound can be weakened by increasing the exponential rate. -/
+theorem HasGrowthBound.mono_omega {U : StronglyContinuousGroup X} {ω M ω' : ℝ}
+    (hb : U.HasGrowthBound ω M) (hω : ω ≤ ω') : U.HasGrowthBound ω' M :=
+  hb.mono hω le_rfl
+
+/-- A two-sided growth bound can be weakened by increasing the multiplicative constant. -/
+theorem HasGrowthBound.mono_const {U : StronglyContinuousGroup X} {ω M M' : ℝ}
+    (hb : U.HasGrowthBound ω M) (hM : M ≤ M') : U.HasGrowthBound ω M' :=
+  hb.mono le_rfl hM
+
 /-- Constructor for a two-sided growth bound from the multiplicative lower bound and the
 operator-norm estimate. -/
 theorem hasGrowthBound_of_bound {U : StronglyContinuousGroup X} {ω M : ℝ} (hM : 1 ≤ M)
@@ -266,18 +293,18 @@ theorem hasGrowthBound_zero_one_iff (U : StronglyContinuousGroup X) :
 /-- **A C₀-group that contracts in both time directions preserves norms.** A strict contraction
 at time `t` would have to be undone by an expansion at time `-t`, which contractivity forbids.
 This is the norm preservation behind unitary groups such as `e^{itH}`. -/
-theorem norm_map_apply_eq_of_norm_le_one (U : StronglyContinuousGroup X)
-    (h : ∀ t : ℝ, ‖U t‖ ≤ 1) (t : ℝ) (x : X) : ‖U t x‖ = ‖x‖ := by
-  have key : ∀ (s : ℝ) (y : X), ‖U s y‖ ≤ ‖y‖ := fun s y =>
-    ((U s).le_opNorm y).trans (mul_le_of_le_one_left (norm_nonneg y) (h s))
-  refine le_antisymm (key t x) ?_
+theorem norm_map_apply_eq_of_norm_le_one (U : StronglyContinuousGroup X) (t : ℝ)
+    (ht : ‖U t‖ ≤ 1) (ht' : ‖U (-t)‖ ≤ 1) (x : X) : ‖U t x‖ = ‖x‖ := by
+  have key (s : ℝ) (hs : ‖U s‖ ≤ 1) (y : X) : ‖U s y‖ ≤ ‖y‖ :=
+    ((U s).le_opNorm y).trans (mul_le_of_le_one_left (norm_nonneg y) hs)
+  refine le_antisymm (key t ht x) ?_
   calc ‖x‖ = ‖U (-t) (U t x)‖ := by rw [U.map_neg_apply_map_apply]
-    _ ≤ ‖U t x‖ := key (-t) _
+    _ ≤ ‖U t x‖ := key (-t) ht' _
 
 /-- Every operator of a contractive C₀-group is an isometry. -/
-theorem isometry_of_norm_le_one (U : StronglyContinuousGroup X) (h : ∀ t : ℝ, ‖U t‖ ≤ 1)
-    (t : ℝ) : Isometry (U t) :=
-  AddMonoidHomClass.isometry_of_norm _ (U.norm_map_apply_eq_of_norm_le_one h t)
+theorem isometry_of_forall_norm_le_one (U : StronglyContinuousGroup X)
+    (h : ∀ t : ℝ, ‖U t‖ ≤ 1) (t : ℝ) : Isometry (U t) :=
+  AddMonoidHomClass.isometry_of_norm _ (U.norm_map_apply_eq_of_norm_le_one t (h t) (h (-t)))
 
 variable [CompleteSpace X]
 
@@ -288,18 +315,16 @@ theorem existsGrowthBound (U : StronglyContinuousGroup X) :
     ∃ ω M : ℝ, U.HasGrowthBound ω M := by
   obtain ⟨ω₁, M₁, hb₁⟩ := U.toSemigroup.existsGrowthBound
   obtain ⟨ω₂, M₂, hb₂⟩ := U.reflect.toSemigroup.existsGrowthBound
+  have hb₁' := hb₁.mono (le_max_left ω₁ ω₂) (le_max_left M₁ M₂)
+  have hb₂' := hb₂.mono (le_max_right ω₁ ω₂) (le_max_right M₁ M₂)
   refine ⟨max ω₁ ω₂, max M₁ M₂, le_max_of_le_left hb₁.one_le, fun t => ?_⟩
   rcases le_or_gt 0 t with ht | ht
   · rw [← U.toSemigroup_realOperator ht, abs_of_nonneg ht]
-    refine (hb₁.bound t ht).trans (mul_le_mul (le_max_left _ _) (Real.exp_le_exp.mpr ?_)
-      (Real.exp_nonneg _) (le_trans zero_le_one (le_max_of_le_left hb₁.one_le)))
-    exact mul_le_mul_of_nonneg_right (le_max_left _ _) ht
+    exact hb₁'.bound t ht
   · have hnt : 0 ≤ -t := by linarith
     rw [← neg_neg t, ← U.reflect_toSemigroup_realOperator hnt, abs_neg,
       abs_of_nonneg hnt]
-    refine (hb₂.bound (-t) hnt).trans (mul_le_mul (le_max_right _ _) (Real.exp_le_exp.mpr ?_)
-      (Real.exp_nonneg _) (le_trans zero_le_one (le_max_of_le_left hb₁.one_le)))
-    exact mul_le_mul_of_nonneg_right (le_max_right _ _) hnt
+    exact hb₂'.bound (-t) hnt
 
 /-- **Joint strong continuity of a C₀-group**: if `f i → r` and `g i → z`, then
 `U (f i) (g i) → U r z`.
@@ -322,20 +347,10 @@ theorem tendsto_apply {ι : Type*} {l : Filter ι} (U : StronglyContinuousGroup 
     refine (hb.bound (f i)).trans (mul_le_mul_of_nonneg_left (Real.exp_le_exp.mpr ?_) hM.le)
     calc ω * |f i| ≤ |ω| * |f i| := mul_le_mul_of_nonneg_right (le_abs_self ω) (abs_nonneg _)
       _ ≤ |ω| * (|r| + 1) := mul_le_mul_of_nonneg_left habs (abs_nonneg ω)
-  -- The vector moves: uniformly bounded operators send a vanishing increment to `0`.
-  have h1 : Tendsto (fun i => U (f i) (g i - z)) l (𝓝 0) := by
-    refine squeeze_zero_norm' (a := fun i => M * Real.exp (|ω| * (|r| + 1)) * ‖g i - z‖) ?_ ?_
-    · filter_upwards [hbound] with i hi
-      exact (ContinuousLinearMap.le_opNorm _ _).trans
-        (mul_le_mul_of_nonneg_right hi (norm_nonneg _))
-    · simpa using
-        (tendsto_iff_norm_sub_tendsto_zero.mp hg).const_mul (M * Real.exp (|ω| * (|r| + 1)))
   -- The time moves: this is continuity of the orbit of the fixed vector `z`.
   have h2 : Tendsto (fun i => U (f i) z) l (𝓝 (U r z)) :=
-    ((U.continuous_apply z).tendsto r).comp hf
-  have hsplit : ∀ i, U (f i) (g i) = U (f i) (g i - z) + U (f i) z := fun i => by
-    rw [← ContinuousLinearMap.map_add, sub_add_cancel]
-  simpa using (h1.add h2).congr fun i => (hsplit i).symm
+    ((U.continuous_orbit z).tendsto r).comp hf
+  exact tendsto_apply_of_eventually_norm_le hbound h2 hg
 
 end StronglyContinuousGroup
 

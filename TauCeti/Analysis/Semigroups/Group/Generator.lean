@@ -36,7 +36,8 @@ forward half directly and the backward half through `U.reflect`.
 * `TauCeti.Semigroups.StronglyContinuousGroup.eq_of_generator_eq`: a C₀-group is determined by
   its generator.
 * `TauCeti.Semigroups.StronglyContinuousGroup.ofBounded`: the C₀-group `t ↦ exp (t • A)` of a
-  bounded operator, with generator `A`; every C₀-group with a bounded generator is of this form.
+  bounded operator, with generator `A`; every C₀-group whose generator is `A` on all of `X` is of
+  this form.
 
 ## References
 
@@ -67,14 +68,14 @@ forward semigroup. The two-sided law makes the defining limit two-sided as well
 (`TauCeti.Semigroups.StronglyContinuousGroup.hasDerivAt`). -/
 def generator (U : StronglyContinuousGroup X) : X →ₗ.[ℝ] X := U.toSemigroup.generator
 
-theorem domain_eq (U : StronglyContinuousGroup X) : U.domain = U.toSemigroup.domain := (rfl)
+theorem domain_def (U : StronglyContinuousGroup X) : U.domain = U.toSemigroup.domain := (rfl)
 
-theorem generator_eq (U : StronglyContinuousGroup X) :
+theorem generator_def (U : StronglyContinuousGroup X) :
     U.generator = U.toSemigroup.generator := (rfl)
 
 @[simp]
 theorem generator_domain (U : StronglyContinuousGroup X) : U.generator.domain = U.domain := by
-  rw [generator_eq, domain_eq, StronglyContinuousSemigroup.generator_domain]
+  rw [generator_def, domain_def, StronglyContinuousSemigroup.generator_domain]
 
 /-! ## The defining limit -/
 
@@ -90,7 +91,7 @@ as `t → 0⁺`. -/
 theorem mem_domain_iff_tendsto (U : StronglyContinuousGroup X) (x : X) :
     x ∈ U.domain ↔ ∃ y, Tendsto (fun t : ℝ => (1 / t) • (U t x - x))
       (𝓝[>] (0 : ℝ)) (𝓝 y) := by
-  rw [domain_eq, U.toSemigroup.mem_domain_iff_tendsto]
+  rw [domain_def, U.toSemigroup.mem_domain_iff_tendsto]
   exact exists_congr fun y => tendsto_congr' (U.genQuot_eventuallyEq x)
 
 /-- Characteristic property of the generator: for `x ∈ D(A)` the difference quotient converges
@@ -107,8 +108,34 @@ theorem generator_eq_of_tendsto (U : StronglyContinuousGroup X) {x : X} (hx : x 
     U.generator ⟨x, by rw [U.generator_domain]; exact hx⟩ = y :=
   U.toSemigroup.generator_eq_of_tendsto hx ((tendsto_congr' (U.genQuot_eventuallyEq x)).mpr h)
 
-/-- The difference quotient at `0` extracted from a two-sided derivative of an orbit. -/
-private theorem tendsto_genQuot_of_hasDerivAt (U : StronglyContinuousGroup X) {y c : X}
+/-- The difference quotient based at `U r x` is `U r` applied to the difference quotient based
+at `x`. -/
+private theorem tendsto_genQuot_map (U : StronglyContinuousGroup X) (r : ℝ) {x y : X}
+    (h : Tendsto (fun t : ℝ => (1 / t) • (U t x - x)) (𝓝[>] (0 : ℝ)) (𝓝 y)) :
+    Tendsto (fun t : ℝ => (1 / t) • (U t (U r x) - U r x))
+      (𝓝[>] (0 : ℝ)) (𝓝 (U r y)) := by
+  refine ((U r).continuous.continuousAt.tendsto.comp h).congr' ?_
+  filter_upwards with t
+  simp only [Function.comp_apply, U.map_comm t r x, map_smul, map_sub]
+
+/-- **The generator domain is invariant under the whole group**, at negative times as well as
+positive ones. -/
+theorem map_mem_domain (U : StronglyContinuousGroup X) (x : U.domain) (t : ℝ) :
+    U t (x : X) ∈ U.domain := by
+  obtain ⟨y, hy⟩ := (U.mem_domain_iff_tendsto (x : X)).mp x.property
+  exact (U.mem_domain_iff_tendsto _).mpr ⟨U t y, U.tendsto_genQuot_map t hy⟩
+
+/-- **The generator commutes with the group.** -/
+theorem generator_map (U : StronglyContinuousGroup X) (x : U.domain) (t : ℝ) :
+    U.generator ⟨U t (x : X), by
+      rw [U.generator_domain]; exact U.map_mem_domain x t⟩
+      = U t (U.generator ⟨(x : X), by rw [U.generator_domain]; exact x.property⟩) :=
+  U.generator_eq_of_tendsto (U.map_mem_domain x t)
+    (U.tendsto_genQuot_map t (U.generator_tendsto x))
+
+/-- The positive-time difference quotient at `0` extracted from a two-sided derivative of an
+orbit. -/
+theorem generator_tendsto_of_hasDerivAt_zero (U : StronglyContinuousGroup X) {y c : X}
     (h : HasDerivAt (fun s : ℝ => U s y) c 0) :
     Tendsto (fun t : ℝ => (1 / t) • (U t y - y)) (𝓝[>] (0 : ℝ)) (𝓝 c) := by
   rw [hasDerivAt_iff_tendsto_slope] at h
@@ -116,13 +143,25 @@ private theorem tendsto_genQuot_of_hasDerivAt (U : StronglyContinuousGroup X) {y
   refine (h.mono_left hmono).congr fun t => ?_
   rw [slope_def_module, sub_zero, U.map_zero_apply, one_div]
 
+/-- A vector whose orbit is differentiable at `0` belongs to the generator domain. -/
+theorem mem_domain_of_hasDerivAt_zero (U : StronglyContinuousGroup X) {x y : X}
+    (h : HasDerivAt (fun t : ℝ => U t x) y 0) : x ∈ U.domain :=
+  (U.mem_domain_iff_tendsto x).mpr ⟨y, U.generator_tendsto_of_hasDerivAt_zero h⟩
+
+/-- The generator value is the derivative at `0` of the orbit. -/
+theorem generator_eq_of_hasDerivAt_zero (U : StronglyContinuousGroup X) {x y : X}
+    (h : HasDerivAt (fun t : ℝ => U t x) y 0) :
+    U.generator ⟨x, by rw [U.generator_domain]; exact U.mem_domain_of_hasDerivAt_zero h⟩ = y :=
+  U.generator_eq_of_tendsto (U.mem_domain_of_hasDerivAt_zero h)
+    (U.generator_tendsto_of_hasDerivAt_zero h)
+
 variable [CompleteSpace X]
 
 /-! ## Time reversal -/
 
 /-- The difference quotient of the time-reversed group converges to the negative of the limit
-for `U`: on positive times the two quotients differ by the operator `U (-t)`, which converges
-strongly to the identity. -/
+for `U`: on positive times the two quotients differ by the operator `U (-t)` and a sign, while the
+operator converges strongly to the identity. -/
 private theorem tendsto_reflect_genQuot (U : StronglyContinuousGroup X) {x y : X}
     (h : Tendsto (fun t : ℝ => (1 / t) • (U t x - x)) (𝓝[>] (0 : ℝ)) (𝓝 y)) :
     Tendsto (fun t : ℝ => (1 / t) • (U.reflect t x - x)) (𝓝[>] (0 : ℝ)) (𝓝 (-y)) := by
@@ -136,6 +175,7 @@ private theorem tendsto_reflect_genQuot (U : StronglyContinuousGroup X) {x y : X
     U.map_neg_apply_map_apply, ← smul_neg, neg_sub]
 
 /-- **The generator domain is invariant under time reversal.** -/
+@[simp]
 theorem reflect_domain (U : StronglyContinuousGroup X) : U.reflect.domain = U.domain := by
   have key : ∀ V : StronglyContinuousGroup X, ∀ x ∈ V.domain, x ∈ V.reflect.domain := by
     intro V x hx
@@ -151,6 +191,7 @@ theorem reflect_domain (U : StronglyContinuousGroup X) : U.reflect.domain = U.do
 /-- **The generator of the time-reversed group is the negative of the generator**, on the same
 domain. This is the two-sided statement that makes the backward half of a C₀-group accessible
 to the semigroup API. -/
+@[simp]
 theorem reflect_generator (U : StronglyContinuousGroup X) :
     U.reflect.generator = -U.generator := by
   refine LinearPMap.ext ?_ ?_
@@ -164,8 +205,9 @@ theorem reflect_generator (U : StronglyContinuousGroup X) :
 /-! ## Two-sided differentiability of the orbits -/
 
 /-- For a domain vector the difference quotient converges from the left as well, to the same
-limit: the left quotient is the reversed group's right quotient, which converges to `-A x`. -/
-theorem tendsto_genQuot_nhdsLT (U : StronglyContinuousGroup X) (x : U.domain) :
+limit: the left quotient is minus the reversed group's right quotient, which converges to
+`-A x`. -/
+theorem generator_tendsto_nhdsLT (U : StronglyContinuousGroup X) (x : U.domain) :
     Tendsto (fun t : ℝ => (1 / t) • (U t (x : X) - (x : X))) (𝓝[<] (0 : ℝ))
       (𝓝 (U.generator ⟨(x : X), by rw [U.generator_domain]; exact x.property⟩)) := by
   have hneg : Tendsto (fun t : ℝ => -t) (𝓝[<] (0 : ℝ)) (𝓝[>] (0 : ℝ)) := by
@@ -189,7 +231,7 @@ theorem hasDerivAt_zero (U : StronglyContinuousGroup X) (x : U.domain) :
     funext t
     rw [slope_def_module, sub_zero, U.map_zero_apply, one_div]
   rw [hslope, ← nhdsLT_sup_nhdsGT, tendsto_sup]
-  exact ⟨U.tendsto_genQuot_nhdsLT x, U.generator_tendsto x⟩
+  exact ⟨U.generator_tendsto_nhdsLT x, U.generator_tendsto x⟩
 
 /-- **The abstract Cauchy problem on the whole line.** For `x ∈ D(A)` the orbit `t ↦ U t x` is
 differentiable at every real time, with derivative `U t (A x)`. -/
@@ -208,36 +250,6 @@ theorem hasDerivAt (U : StronglyContinuousGroup X) (x : U.domain) (t : ℝ) :
     rw [Function.comp_apply, ← U.map_add_apply, hts]
   rw [hfun]
   exact h
-
-/-! ## Invariance of the domain -/
-
-/-- The orbit of a domain vector, restarted at time `t`, is again differentiable at `0`. -/
-private theorem hasDerivAt_zero_map (U : StronglyContinuousGroup X) (x : U.domain) (t : ℝ) :
-    HasDerivAt (fun s : ℝ => U s (U t (x : X)))
-      (U t (U.generator ⟨(x : X), by rw [U.generator_domain]; exact x.property⟩)) 0 := by
-  have hadd : HasDerivAt (fun s : ℝ => s + t) 1 (0 : ℝ) := (hasDerivAt_id (0 : ℝ)).add_const t
-  have h := (U.hasDerivAt x t).scomp_of_eq (0 : ℝ) hadd (zero_add t).symm
-  have hfun : (fun s : ℝ => U s (U t (x : X)))
-      = (fun s : ℝ => U s (x : X)) ∘ fun s : ℝ => s + t := by
-    funext s
-    rw [Function.comp_apply, ← U.map_add_apply]
-  rw [hfun]
-  simpa using h
-
-/-- **The generator domain is invariant under the whole group**, at negative times as well as
-positive ones. -/
-theorem map_mem_domain (U : StronglyContinuousGroup X) (x : U.domain) (t : ℝ) :
-    U t (x : X) ∈ U.domain :=
-  (U.mem_domain_iff_tendsto _).mpr
-    ⟨_, U.tendsto_genQuot_of_hasDerivAt (U.hasDerivAt_zero_map x t)⟩
-
-/-- **The generator commutes with the group.** -/
-theorem generator_map (U : StronglyContinuousGroup X) (x : U.domain) (t : ℝ) :
-    U.generator ⟨U t (x : X), by
-      rw [U.generator_domain]; exact U.map_mem_domain x t⟩
-      = U t (U.generator ⟨(x : X), by rw [U.generator_domain]; exact x.property⟩) :=
-  U.generator_eq_of_tendsto (U.map_mem_domain x t)
-    (U.tendsto_genQuot_of_hasDerivAt (U.hasDerivAt_zero_map x t))
 
 /-! ## Uniqueness -/
 
@@ -300,22 +312,19 @@ theorem ofBounded_reflect (A : X →L[ℝ] X) : (ofBounded A).reflect = ofBounde
 /-- The generator domain of `ofBounded A` is the whole space. -/
 @[simp]
 theorem ofBounded_domain_eq_top (A : X →L[ℝ] X) : (ofBounded A).domain = ⊤ := by
-  rw [domain_eq, ofBounded_toSemigroup, StronglyContinuousSemigroup.ofBounded_domain_eq_top]
+  rw [domain_def, ofBounded_toSemigroup, StronglyContinuousSemigroup.ofBounded_domain_eq_top]
 
 /-- The generator of `ofBounded A` is `A` itself, viewed as a total unbounded operator. -/
 @[simp]
 theorem ofBounded_generator (A : X →L[ℝ] X) :
     (ofBounded A).generator = (A : X →ₗ[ℝ] X).toPMap ⊤ := by
-  rw [generator_eq, ofBounded_toSemigroup, StronglyContinuousSemigroup.ofBounded_generator]
+  rw [generator_def, ofBounded_toSemigroup, StronglyContinuousSemigroup.ofBounded_generator]
 
 /-- `ofBounded A` has the two-sided growth bound `(‖A‖, 1)`: `‖exp (t • A)‖ ≤ e^{‖A‖ |t|}`. -/
 theorem ofBounded_hasGrowthBound (A : X →L[ℝ] X) : (ofBounded A).HasGrowthBound ‖A‖ 1 := by
-  let +nondep : NormedAlgebra ℚ (X →L[ℝ] X) := .restrictScalars ℚ ℝ _
   refine hasGrowthBound_of_bound le_rfl fun t => ?_
   rw [one_mul, ofBounded_apply]
-  calc ‖exp (t • A)‖ ≤ Real.exp ‖t • A‖ :=
-        TauCeti.norm_exp_le_exp_norm ContinuousLinearMap.norm_id_le _
-    _ = Real.exp (‖A‖ * |t|) := by rw [norm_smul, Real.norm_eq_abs, mul_comm]
+  exact TauCeti.norm_exp_smul_le A t
 
 /-- A C₀-group whose generator is the bounded operator `A`, defined on all of `X`, is the
 operator exponential `t ↦ exp (t • A)`. -/

@@ -100,13 +100,9 @@ theorem ofBounded_realOperator_continuousOn_Ici (A : X →L[ℝ] X) :
 
 /-- The semigroup `ofBounded A` has the growth bound `(‖A‖, 1)`: `‖exp (t • A)‖ ≤ e^{‖A‖ t}`. -/
 theorem ofBounded_hasGrowthBound (A : X →L[ℝ] X) : (ofBounded A).HasGrowthBound ‖A‖ 1 := by
-  let +nondep : NormedAlgebra ℚ (X →L[ℝ] X) := .restrictScalars ℚ ℝ _
   refine hasGrowthBound_of_bound le_rfl (fun t ht => ?_)
   rw [one_mul, ofBounded_realOperator_of_nonneg A ht]
-  calc ‖exp (t • A)‖ ≤ Real.exp ‖t • A‖ :=
-        TauCeti.norm_exp_le_exp_norm ContinuousLinearMap.norm_id_le _
-    _ = Real.exp (‖A‖ * t) := by
-        rw [norm_smul, Real.norm_eq_abs, abs_of_nonneg ht, mul_comm]
+  simpa only [abs_of_nonneg ht] using TauCeti.norm_exp_smul_le A t
 
 /-- The difference quotient `(exp (t • A) x - x)/t` tends to `A x` as `t → 0⁺`: the strong
 derivative of `ofBounded A` at time `0` is `A`. -/

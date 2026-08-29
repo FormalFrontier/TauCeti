@@ -201,6 +201,23 @@ theorem StronglyContinuousSemigroup.existsGrowthBound_ge
 
 /-! ## Joint strong continuity -/
 
+omit [CompleteSpace X] in
+/-- A uniformly bounded family of continuous linear maps is jointly continuous along convergent
+operator evaluations and arguments. -/
+theorem tendsto_apply_of_eventually_norm_le {ι : Type*} {l : Filter ι}
+    {T : ι → X →L[ℝ] X} {C : ℝ} {g : ι → X} {z w : X}
+    (hT : ∀ᶠ i in l, ‖T i‖ ≤ C) (hz : Filter.Tendsto (fun i => T i z) l (𝓝 w))
+    (hg : Filter.Tendsto g l (𝓝 z)) : Filter.Tendsto (fun i => T i (g i)) l (𝓝 w) := by
+  have hmove : Filter.Tendsto (fun i => T i (g i - z)) l (𝓝 0) := by
+    refine squeeze_zero_norm' (a := fun i => C * ‖g i - z‖) ?_ ?_
+    · filter_upwards [hT] with i hi
+      exact (ContinuousLinearMap.le_opNorm _ _).trans
+        (mul_le_mul_of_nonneg_right hi (norm_nonneg _))
+    · simpa using (tendsto_iff_norm_sub_tendsto_zero.mp hg).const_mul C
+  have hsplit : ∀ i, T i (g i) = T i (g i - z) + T i z := fun i => by
+    rw [← ContinuousLinearMap.map_add, sub_add_cancel]
+  simpa using (hmove.add hz).congr fun i => (hsplit i).symm
+
 /-- **Joint strong continuity**: if `f i → r` through nonnegative values and `g i → z`, then
 `S (f i) (g i) → S r z`.
 
@@ -221,24 +238,12 @@ theorem StronglyContinuousSemigroup.tendsto_realOperator_apply {ι : Type*} {l :
     refine mul_le_mul_of_nonneg_left (Real.exp_le_exp.mpr ?_) hM.le
     calc omega * f i ≤ |omega| * f i := mul_le_mul_of_nonneg_right (le_abs_self omega) hi0
       _ ≤ |omega| * (r + 1) := mul_le_mul_of_nonneg_left hi1.le (abs_nonneg omega)
-  -- The argument moves: the operator norms are uniformly bounded, so this contribution vanishes.
-  have h1 : Filter.Tendsto (fun i => S.realOperator (f i) (g i - z)) l (𝓝 0) := by
-    refine squeeze_zero_norm' (a := fun i => M * Real.exp (|omega| * (r + 1)) * ‖g i - z‖) ?_ ?_
-    · filter_upwards [hbound] with i hi
-      exact (ContinuousLinearMap.le_opNorm _ _).trans
-        (mul_le_mul_of_nonneg_right hi (norm_nonneg _))
-    · simpa using
-        (tendsto_iff_norm_sub_tendsto_zero.mp hg).const_mul (M * Real.exp (|omega| * (r + 1)))
   -- The time moves: this is strong continuity of the orbit of the fixed vector `z`.
   have h2 : Filter.Tendsto (fun i => S.realOperator (f i) z) l (𝓝 (S.realOperator r z)) := by
     have hfw : Filter.Tendsto f l (𝓝[Set.Ici 0] r) :=
       tendsto_nhdsWithin_iff.mpr ⟨hf, hf0⟩
     simpa [Function.comp_def] using (S.realOperator_continuousWithinAt z r hr).tendsto.comp hfw
-  have hsplit : ∀ i, S.realOperator (f i) (g i)
-      = S.realOperator (f i) (g i - z) + S.realOperator (f i) z := by
-    intro i
-    rw [← ContinuousLinearMap.map_add, sub_add_cancel]
-  simpa using (h1.add h2).congr fun i => (hsplit i).symm
+  exact tendsto_apply_of_eventually_norm_le hbound h2 hg
 
 /-- The `ContinuousOn` form of joint strong continuity: a continuous nonnegative time
 reparametrization applied to a continuous vector-valued map gives a continuous orbit. -/
