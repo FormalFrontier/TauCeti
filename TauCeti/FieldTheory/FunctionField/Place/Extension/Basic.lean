@@ -587,19 +587,8 @@ private theorem exists_ord_sum_eq_mul {ι : Type*} [Fintype ι] (s : ι → P'.i
     (c : ι → F) {i₁ : ι} (hi₁ : c i₁ ≠ 0) :
     (∑ i, algebraMap F F' (c i) * (s i : F')) ≠ 0 ∧
       ∃ m : ℤ, P'.ord (∑ i, algebraMap F F' (c i) * (s i : F')) = ramificationIdx F P' * m := by
-  classical
-  set P := P'.restrict k F with hP
-  set S : Finset ι := {i | c i ≠ 0} with hS
-  have hSne : S.Nonempty := ⟨i₁, by simp [hS, hi₁]⟩
-  obtain ⟨i₀, hi₀S, hi₀⟩ := S.exists_min_image (fun i ↦ P.ord (c i)) hSne
-  have hd : c i₀ ≠ 0 := by simpa [hS] using hi₀S
-  have hb : ∀ i, c i / c i₀ ∈ P.integers := by
-    intro i
-    rcases eq_or_ne (c i) 0 with h | h
-    · simp [h]
-    · rw [P.mem_integers_iff_ord_nonneg, P.ord_div h hd]
-      have := hi₀ i (by simp [hS, h])
-      omega
+  set P := P'.restrict k F
+  obtain ⟨i₀, hd, hb⟩ := P.exists_ne_zero_forall_div_mem_integers c hi₁
   set b : ι → P.integers := fun i ↦ ⟨c i / c i₀, hb i⟩ with hbdef
   have hb₀ : IsUnit (b i₀) := by
     have hb_eq_one : b i₀ = 1 := Subtype.ext (by simp [hbdef, div_self hd])

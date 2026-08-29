@@ -162,20 +162,10 @@ private theorem linearIndependent_mul_pow_of_forall_linearIndependent_residue {�
   by_contra hex
   obtain ⟨p₁, hp₁⟩ := not_forall.mp hex
   -- Pick a coefficient of least order at `P` among the nonzero ones and divide by it.
-  set S : Finset (Σ i : ι, Fin (relativeDegree k F (Q i)) × Fin (ramificationIdx F (Q i))) :=
-    {p | g p ≠ 0} with hS
-  obtain ⟨p₀, hp₀S, hp₀min⟩ :=
-    S.exists_min_image (fun p ↦ P.ord (g p)) ⟨p₁, by simp [hS, hp₁]⟩
-  obtain ⟨i₀, j₀, l₀⟩ := p₀
-  have hg₀ : g ⟨i₀, j₀, l₀⟩ ≠ 0 := by simpa [hS] using hp₀S
-  have hbmem : ∀ p, g p / g ⟨i₀, j₀, l₀⟩ ∈ ((Q i₀).restrict k F).integers := by
-    intro p
-    rw [hQP i₀, P.mem_integers_iff_ord_nonneg]
-    rcases eq_or_ne (g p) 0 with h | h
-    · simp [h]
-    · rw [P.ord_div h hg₀]
-      have := hp₀min p (by simp [hS, h])
-      omega
+  obtain ⟨⟨i₀, j₀, l₀⟩, hg₀, hbP⟩ := P.exists_ne_zero_forall_div_mem_integers g hp₁
+  have hbmem : ∀ p, g p / g ⟨i₀, j₀, l₀⟩ ∈ ((Q i₀).restrict k F).integers := fun p ↦ by
+    rw [hQP i₀]
+    exact hbP p
   set b : (Σ i : ι, Fin (relativeDegree k F (Q i)) × Fin (ramificationIdx F (Q i))) →
     ((Q i₀).restrict k F).integers := fun p ↦ ⟨g p / g ⟨i₀, j₀, l₀⟩, hbmem p⟩
   have hbcoe : ∀ p, ((b p : F)) = g p / g ⟨i₀, j₀, l₀⟩ := fun _ ↦ rfl
