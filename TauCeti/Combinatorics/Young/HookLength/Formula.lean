@@ -26,7 +26,7 @@ follows from it because the hook lengths are positive, is simply not stated here
 ## The route
 
 Fix a bound `r` on the number of rows and write `βᵢ = μ.rowLen i + (r - 1 - i)` for the
-beta-numbers of `TauCeti/Combinatorics/Young/BetaNumbers.lean`, which strictly decrease across
+beta-numbers `YoungDiagram.betaNumber μ r i`, which strictly decrease across
 `i < j < r`. The hook lengths are already related to them by
 `YoungDiagram.prod_hookLength_mul_prod_betaNumber_sub_eq_prod_factorial`:
 
