@@ -226,6 +226,13 @@ fundamental weights. -/
 def weight (k : Fin (r + 1)) (i : Fin r) : ℤ :=
   (if k = i.castSucc then 1 else 0) - (if k = i.succ then 1 else 0)
 
+/-- The standard-module weight in Kronecker-delta form. -/
+@[simp]
+theorem weight_def (k : Fin (r + 1)) (i : Fin r) :
+    weight r k i =
+      (if k = i.castSucc then 1 else 0) - (if k = i.succ then 1 else 0) :=
+  by rw [weight]
+
 /-- The weights of the standard representation sum to zero. -/
 theorem sum_weight_eq_zero : ∑ k, weight r k = 0 := by
   funext i
@@ -505,6 +512,15 @@ noncomputable def rootSubgroup (k : Fin r ⊕ Fin r) :
     (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv)
     (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) k
 
+/-- The root subgroup is the one supplied by the generic Kostant toral-closure construction. -/
+theorem rootSubgroup_def (k : Fin r ⊕ Fin r) :
+    rootSubgroup r k =
+      TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupToToral (rootGenerator r)
+        (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
+        (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv)
+        (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) k := by
+  rw [rootSubgroup]
+
 /-- The rank-`r` split weight torus `T → G` of the type `A_r` carrier. Maximality is not
 asserted here; see the scope disclaimer in the module documentation. -/
 noncomputable def weightTorus : SplitTorus.groupScheme ℤ (Fin r) ⟶ groupScheme r :=
@@ -512,6 +528,15 @@ noncomputable def weightTorus : SplitTorus.groupScheme ℤ (Fin r) ⟶ groupSche
     (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
     (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv)
     (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r)
+
+/-- The weight torus is the one supplied by the generic Kostant toral-closure construction. -/
+theorem weightTorus_def :
+    weightTorus r =
+      TauCeti.UniversalEnvelopingAlgebra.kostantWeightTorusToToral (rootGenerator r)
+        (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
+        (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv)
+        (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) := by
+  rw [weightTorus]
 
 /-- Including a numbered root subgroup of the type `A_r` carrier into `GL_{r+1}` recovers the
 Kostant root subgroup of the numbered generator. -/
