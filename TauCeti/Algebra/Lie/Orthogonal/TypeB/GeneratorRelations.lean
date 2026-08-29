@@ -98,42 +98,56 @@ theorem typeBSimpleCorootGenerator_lie_eq_zero (i j : Fin (n + 1)) :
 @[simp]
 theorem typeBSimpleCorootGenerator_lie_root_last (i : Fin (n + 1)) :
     ⁅typeBSimpleCorootGenerator (K := K) i,
-      typeBSimpleRootGenerator (K := K) (Fin.last n)⁆ =
+      typeBShortRootGenerator (K := K) (Fin.last n)⁆ =
         typeBSimpleCorootCoordinate (K := K) i (Fin.last n) •
-          typeBSimpleRootGenerator (K := K) (Fin.last n) := by
-  rw [typeBSimpleCorootGenerator_eq_diagonal, typeBSimpleRootGenerator_last]
-  exact typeBDiagonalEquiv_lie_shortRootGenerator _ _
+          typeBShortRootGenerator (K := K) (Fin.last n) := by
+  rw [typeBSimpleCorootGenerator_eq_diagonal]
+  simpa only [coe_typeBDiagonalEquiv_apply] using
+    (typeBDiagonalEquiv_lie_shortRootGenerator
+      (typeBSimpleCorootCoordinate (K := K) i) (Fin.last n))
 
 /-- The action of a simple coroot on a positive generator at a long node. -/
 @[simp]
 theorem typeBSimpleCorootGenerator_lie_root_castSucc (i : Fin (n + 1)) (j : Fin n) :
     ⁅typeBSimpleCorootGenerator (K := K) i,
-      typeBSimpleRootGenerator (K := K) j.castSucc⁆ =
+      typeBLongRootGenerator (K := K) j.castSucc j.succ
+        (ne_of_lt j.castSucc_lt_succ)⁆ =
         (typeBSimpleCorootCoordinate (K := K) i j.castSucc -
           typeBSimpleCorootCoordinate (K := K) i j.succ) •
-            typeBSimpleRootGenerator (K := K) j.castSucc := by
-  rw [typeBSimpleCorootGenerator_eq_diagonal, typeBSimpleRootGenerator_castSucc]
-  exact typeBDiagonalEquiv_lie_longRootGenerator _ _ _ _
+            typeBLongRootGenerator (K := K) j.castSucc j.succ
+              (ne_of_lt j.castSucc_lt_succ) := by
+  rw [typeBSimpleCorootGenerator_eq_diagonal]
+  simpa only [coe_typeBDiagonalEquiv_apply] using
+    (typeBDiagonalEquiv_lie_longRootGenerator
+      (typeBSimpleCorootCoordinate (K := K) i) j.castSucc j.succ
+        (ne_of_lt j.castSucc_lt_succ))
 
 /-- The action of a simple coroot on the negative generator at the final short node. -/
 @[simp]
 theorem typeBSimpleCorootGenerator_lie_negativeRoot_last (i : Fin (n + 1)) :
     ⁅typeBSimpleCorootGenerator (K := K) i,
-      typeBSimpleNegativeRootGenerator (K := K) (Fin.last n)⁆ =
+      typeBShortNegativeRootGenerator (K := K) (Fin.last n)⁆ =
         -(typeBSimpleCorootCoordinate (K := K) i (Fin.last n)) •
-          typeBSimpleNegativeRootGenerator (K := K) (Fin.last n) := by
-  rw [typeBSimpleCorootGenerator_eq_diagonal, typeBSimpleNegativeRootGenerator_last]
-  exact typeBDiagonalEquiv_lie_shortNegativeRootGenerator _ _
+          typeBShortNegativeRootGenerator (K := K) (Fin.last n) := by
+  rw [typeBSimpleCorootGenerator_eq_diagonal]
+  simpa only [coe_typeBDiagonalEquiv_apply] using
+    (typeBDiagonalEquiv_lie_shortNegativeRootGenerator
+      (typeBSimpleCorootCoordinate (K := K) i) (Fin.last n))
 
 /-- The action of a simple coroot on a negative generator at a long node. -/
 @[simp]
 theorem typeBSimpleCorootGenerator_lie_negativeRoot_castSucc (i : Fin (n + 1)) (j : Fin n) :
     ⁅typeBSimpleCorootGenerator (K := K) i,
-      typeBSimpleNegativeRootGenerator (K := K) j.castSucc⁆ =
+      typeBLongRootGenerator (K := K) j.succ j.castSucc
+        (ne_of_gt j.castSucc_lt_succ)⁆ =
         (typeBSimpleCorootCoordinate (K := K) i j.succ -
           typeBSimpleCorootCoordinate (K := K) i j.castSucc) •
-            typeBSimpleNegativeRootGenerator (K := K) j.castSucc := by
-  rw [typeBSimpleCorootGenerator_eq_diagonal, typeBSimpleNegativeRootGenerator_castSucc]
-  exact typeBDiagonalEquiv_lie_longRootGenerator _ _ _ _
+            typeBLongRootGenerator (K := K) j.succ j.castSucc
+              (ne_of_gt j.castSucc_lt_succ) := by
+  rw [typeBSimpleCorootGenerator_eq_diagonal]
+  simpa only [coe_typeBDiagonalEquiv_apply] using
+    (typeBDiagonalEquiv_lie_longRootGenerator
+      (typeBSimpleCorootCoordinate (K := K) i) j.succ j.castSucc
+        (ne_of_gt j.castSucc_lt_succ))
 
 end TauCeti
