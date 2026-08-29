@@ -104,24 +104,16 @@ theorem iInf_eigenspace_unitHom_conjNormal_ne_bot_iff (N : Subgroup G) [N.Normal
     apply hinjective
     simpa using hmapped
 
-/-- An ambient group element permutes the characters whose joint weight space for the normal
-subgroup is nonzero. The underlying permutation sends `χ` to `n ↦ χ (g⁻¹ * n * g)`. -/
-def nonzeroJointWeightEquiv (N : Subgroup G) [N.Normal]
+/-- The permutation induced by an ambient group element on the characters whose joint weight space
+for the normal subgroup is nonzero. This is the pointwise construction underlying
+`nonzeroJointWeightAction`. -/
+private def nonzeroJointWeightEquiv (N : Subgroup G) [N.Normal]
     (ρ : G →* Module.End K V) (g : G) :
     {χ : N →* Kˣ // (⨅ n : N, (ρ n).eigenspace (χ n)) ≠ ⊥} ≃
       {χ : N →* Kˣ // (⨅ n : N, (ρ n).eigenspace (χ n)) ≠ ⊥} :=
   Equiv.Perm.subtypePerm
     ((MulAut.conjNormal g).monoidHomCongrLeftEquiv : Equiv.Perm (N →* Kˣ))
       fun χ ↦ iInf_eigenspace_unitHom_conjNormal_ne_bot_iff N ρ g χ
-
-@[simp]
-theorem nonzeroJointWeightEquiv_apply_coe (N : Subgroup G) [N.Normal]
-    (ρ : G →* Module.End K V) (g : G)
-    (χ : {χ : N →* Kˣ // (⨅ n : N, (ρ n).eigenspace (χ n)) ≠ ⊥}) :
-    ((nonzeroJointWeightEquiv N ρ g χ :
-      {χ : N →* Kˣ // (⨅ n : N, (ρ n).eigenspace (χ n)) ≠ ⊥}) : N →* Kˣ) =
-        (MulAut.conjNormal g).monoidHomCongrLeftEquiv χ := by
-  rfl
 
 /-- The ambient group acts by permutations on the characters having nonzero joint weight space for
 a normal subgroup. This is the abstract permutation action used in the Lie--Kolchin argument. -/
