@@ -671,25 +671,13 @@ theorem rootSubgroupCoordinateMap_surjective (k : Fin r ⊕ Fin r) :
 /-- **Every numbered root subgroup of the type `A_r` carrier is a closed immersion.** -/
 instance isClosedImmersion_rootSubgroup (k : Fin r ⊕ Fin r) :
     IsClosedImmersion (rootSubgroup r k).hom.hom.left := by
-  have hdef := TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupToToral_def (rootGenerator r)
-    (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
-    (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv)
-    (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) k
-  let e₁ := (eqToHom (AdditiveGroup.groupScheme_def ℤ)).hom.hom.left
-  let c := ((AlgebraicGeometry.hopfSpec (CommRingCat.of ℤ)).map
-    (TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupToralCoordinateMap (rootGenerator r)
-      (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
+  rw [rootSubgroup]
+  exact
+    TauCeti.UniversalEnvelopingAlgebra.isClosedImmersion_kostantRootSubgroupToToral_of_surjective
+      (rootGenerator r) (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
       (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv)
-      (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) k).op).hom.hom.left
-  have hc : IsClosedImmersion c :=
-    (CommHopfAlgCat.isClosedImmersion_hopfSpec_map_iff _).2
+      (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) k
       (rootSubgroupCoordinateMap_surjective r k)
-  have he₁c : IsClosedImmersion (e₁ ≫ c) :=
-    (MorphismProperty.cancel_left_of_respectsIso _ e₁ c).2 hc
-  unfold rootSubgroup
-  rw [hdef]
-  simp only [Grp.comp', Mon.comp_hom', Over.comp_left]
-  exact he₁c
 
 /-- **The split torus of the type `A_r` carrier is a closed immersion.** This is exactly where the
 full-weight property is used: the weights of the standard module generate the whole character
