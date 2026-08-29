@@ -6,9 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.Homology.ShortComplex.Exact
-public import Mathlib.CategoryTheory.Limits.Shapes.BinaryBiproducts
-public import Mathlib.CategoryTheory.Preadditive.Biproducts
-public import Mathlib.CategoryTheory.Simple
 public import TauCeti.CategoryTheory.IrreducibleMorphism
 
 /-!
@@ -43,6 +40,9 @@ what ties the sequence to the arrows of the Auslander-Reiten quiver.
 * `TauCeti.IsRightAlmostSplit` and `TauCeti.IsLeftAlmostSplit`: the definitions, with
   `TauCeti.isRightAlmostSplit_iff` and `TauCeti.isLeftAlmostSplit_iff` as the introduction rules
   and the projections `not_isSplitEpi` / `not_isSplitMono` and `factors`.
+* `TauCeti.isRightAlmostSplit_op_iff` and `TauCeti.isLeftAlmostSplit_op_iff`: **the two notions are
+  exchanged by passage to the opposite category**, so every result about one transports to the
+  other.
 * `TauCeti.IsRightAlmostSplit.indecomposable`: **the target of a right almost split morphism is
   indecomposable**, and `TauCeti.IsLeftAlmostSplit.indecomposable`: the source of a left almost
   split morphism is indecomposable.
@@ -58,14 +58,6 @@ what ties the sequence to the arrows of the Auslander-Reiten quiver.
   `TauCeti.isRightAlmostSplit_comp_iso_iff`, `TauCeti.isRightAlmostSplit_iso_comp_iff` and their
   left-hand analogues, so the notions descend to a skeleton.
 
-Mathlib's `CategoryTheory.Biprod.isIso_inl_iff_isZero` says that an invertible `biprod.inl`
-forces the other summand to vanish, and remarks that the three variations on it "are likely not
-separately useful". The indecomposability arguments below consume all four structure maps, so the
-three remaining cases are recorded here as transports of the Mathlib lemma —
-`TauCeti.isZero_of_isIso_biprod_inr` along `CategoryTheory.Limits.biprod.braiding`, and
-`TauCeti.isZero_of_isIso_biprod_fst`, `TauCeti.isZero_of_isIso_biprod_snd` by inverting
-`biprod.inl ≫ biprod.fst = 𝟙` and `biprod.inr ≫ biprod.snd = 𝟙`.
-
 ## Implementation notes
 
 The definitions are conjunctions rather than structures, matching the shape of
@@ -79,10 +71,10 @@ finite-dimensional algebra that is the intended reading: the ambient category th
 finite-dimensional one, as it already is for `TauCeti.IsIrreducibleMorphism`. The distinction is
 not cosmetic — quantifying an almost-split sequence's lifting properties over a category of
 representations with no finiteness restriction states a strictly stronger condition, and the
-existence theorem for such sequences is false in that form (Paquette, *A note on almost split
-sequences*, arXiv:1104.1195, exhibits infinite-dimensional indecomposable representations of the
-Kronecker quiver that end no almost-split sequence). Instantiating `C` at the finite-dimensional
-subcategory is what recovers the intended notion.
+existence theorem for such sequences is false in that form (Paquette, *A non-existence theorem for
+almost split sequences*, arXiv:1104.1195, exhibits infinite-dimensional indecomposable
+representations of the Kronecker quiver that end no almost-split sequence). Instantiating `C` at
+the finite-dimensional subcategory is what recovers the intended notion.
 
 A right almost split morphism may well be zero: over a field, the map `0 ⟶ k` is right almost
 split, every non-split-epi into the simple projective `k` being zero. So there is no analogue here
@@ -90,10 +82,11 @@ of `TauCeti.IsIrreducibleMorphism.ne_zero`, and this is not an oversight — it 
 of a projective target, where the almost split morphism is the inclusion of the radical.
 
 Indecomposability of the target is proved directly from the definition rather than through
-endomorphism rings, so it needs no finiteness and no field: given `Y ≅ A ⊞ B` with both summands
-nonzero, neither inclusion `A ⟶ Y` nor `B ⟶ Y` is a split epimorphism (a split mono that is a
-split epi is invertible, and an invertible `biprod.inl` kills `B`), so both factor through `f`, and
-`CategoryTheory.Limits.biprod.total` assembles the two factorizations into a section of `f`.
+endomorphism rings, so it needs no additivity, no finiteness and no field: given `Y ≅ A ⊞ B` with
+both summands nonzero, neither inclusion `A ⟶ Y` nor `B ⟶ Y` is a split epimorphism (a section of
+one of them retracts `A ⊞ B` onto that summand along its inclusion, and the two complementary
+structure maps then compose to `0`, collapsing the other summand), so both factor through `f`, and
+`CategoryTheory.Limits.biprod.desc` assembles the two factorizations into a section of `f`.
 
 ## References
 
@@ -105,6 +98,7 @@ non-splitness, which that layer lists as separate requirements on the sequence.
 * M. Auslander, I. Reiten, S. Smalø, *Representation Theory of Artin Algebras*, CUP (1995), V.1.
 * I. Assem, D. Simson, A. Skowroński, *Elements of the Representation Theory of Associative
   Algebras, Vol. 1*, LMS Student Texts 65, CUP (2006), IV.1.
+* C. Paquette, *A non-existence theorem for almost split sequences*, arXiv:1104.1195 (2011).
 -/
 
 public section
@@ -116,41 +110,6 @@ open CategoryTheory CategoryTheory.Limits
 universe v u
 
 variable {C : Type u} [Category.{v} C]
-
-/-! ### Invertible structure maps of a binary biproduct -/
-
-section Biproduct
-
-variable [Preadditive C] [HasBinaryBiproducts C] (A B : C)
-
-/-- **If the second inclusion of a binary biproduct is invertible, the first summand is zero**:
-`CategoryTheory.Biprod.isIso_inl_iff_isZero` transported along the braiding, which carries
-`biprod.inr : B ⟶ A ⊞ B` to `biprod.inl : B ⟶ B ⊞ A`. -/
-theorem isZero_of_isIso_biprod_inr [IsIso (biprod.inr : B ⟶ A ⊞ B)] : IsZero A := by
-  have h : (biprod.inr : B ⟶ A ⊞ B) ≫ (biprod.braiding A B).hom = biprod.inl := by
-    apply biprod.hom_ext <;> simp [biprod.braiding]
-  have : IsIso (biprod.inl : B ⟶ B ⊞ A) := by rw [← h]; infer_instance
-  exact (Biprod.isIso_inl_iff_isZero B A).mp this
-
-/-- **If the first projection of a binary biproduct is invertible, the second summand is zero**:
-`biprod.inl ≫ biprod.fst = 𝟙` makes `biprod.inl` the inverse of `biprod.fst`, so
-`CategoryTheory.Biprod.isIso_inl_iff_isZero` applies. -/
-theorem isZero_of_isIso_biprod_fst [IsIso (biprod.fst : A ⊞ B ⟶ A)] : IsZero B := by
-  have h : inv (biprod.fst : A ⊞ B ⟶ A) = biprod.inl :=
-    IsIso.inv_eq_of_inv_hom_id biprod.inl_fst
-  have : IsIso (biprod.inl : A ⟶ A ⊞ B) := by rw [← h]; infer_instance
-  exact (Biprod.isIso_inl_iff_isZero A B).mp this
-
-/-- **If the second projection of a binary biproduct is invertible, the first summand is zero**:
-`biprod.inr ≫ biprod.snd = 𝟙` makes `biprod.inr` the inverse of `biprod.snd`, so
-`TauCeti.isZero_of_isIso_biprod_inr` applies. -/
-theorem isZero_of_isIso_biprod_snd [IsIso (biprod.snd : A ⊞ B ⟶ B)] : IsZero A := by
-  have h : inv (biprod.snd : A ⊞ B ⟶ B) = biprod.inr :=
-    IsIso.inv_eq_of_inv_hom_id biprod.inr_snd
-  have : IsIso (biprod.inr : B ⟶ A ⊞ B) := by rw [← h]; infer_instance
-  exact isZero_of_isIso_biprod_inr A B
-
-end Biproduct
 
 /-! ### The definitions -/
 
@@ -166,7 +125,8 @@ def IsRightAlmostSplit {X Y : C} (f : X ⟶ Y) : Prop :=
 
 /-- **A left almost split morphism**: one that is not a split monomorphism, and through which
 every morphism out of its source that is not a split monomorphism factors. This is the condition
-of `TauCeti.IsRightAlmostSplit` read in the opposite category. -/
+of `TauCeti.IsRightAlmostSplit` read in the opposite category
+(`TauCeti.isRightAlmostSplit_op_iff`). -/
 def IsLeftAlmostSplit {X Y : C} (f : X ⟶ Y) : Prop :=
   ¬ IsSplitMono f ∧ ∀ (Z : C) (g : X ⟶ Z), ¬ IsSplitMono g → ∃ h : Y ⟶ Z, f ≫ h = g
 
@@ -221,6 +181,48 @@ theorem not_isRightAlmostSplit_id (X : C) : ¬ IsRightAlmostSplit (𝟙 X) :=
 @[simp]
 theorem not_isLeftAlmostSplit_id (X : C) : ¬ IsLeftAlmostSplit (𝟙 X) :=
   fun hf => hf.not_isIso inferInstance
+
+/-! ### Duality -/
+
+-- Mathlib supplies the two instances `[IsSplitMono g] → IsSplitEpi g.op` and
+-- `[IsSplitEpi g] → IsSplitMono g.op`; their converses, needed to move the negative clauses of the
+-- two predicates across the duality, are not stated there.
+private theorem isSplitMono_of_isSplitEpi_op {Z W : C} (g : Z ⟶ W) [IsSplitEpi g.op] :
+    IsSplitMono g :=
+  IsSplitMono.mk' ⟨(section_ g.op).unop, Quiver.Hom.op_inj (IsSplitEpi.id g.op)⟩
+
+private theorem isSplitEpi_of_isSplitMono_op {Z W : C} (g : Z ⟶ W) [IsSplitMono g.op] :
+    IsSplitEpi g :=
+  IsSplitEpi.mk' ⟨(retraction g.op).unop, Quiver.Hom.op_inj (IsSplitMono.id g.op)⟩
+
+/-- **The opposite of a left almost split morphism is right almost split**, and conversely: the
+two notions are exchanged by passage to the opposite category. -/
+@[simp]
+theorem isRightAlmostSplit_op_iff : IsRightAlmostSplit f.op ↔ IsLeftAlmostSplit f := by
+  constructor
+  · refine fun hf => ⟨fun hs => hf.not_isSplitEpi inferInstance, fun Z g hg => ?_⟩
+    have hg' : ¬ IsSplitEpi g.op := fun hs => hg (isSplitMono_of_isSplitEpi_op g)
+    obtain ⟨h, hh⟩ := hf.factors (Opposite.op Z) g.op hg'
+    exact ⟨h.unop, Quiver.Hom.op_inj (by simpa using hh)⟩
+  · refine fun hf => ⟨fun hs => hf.not_isSplitMono (isSplitMono_of_isSplitEpi_op f),
+      fun Z g hg => ?_⟩
+    have hg' : ¬ IsSplitMono g.unop := fun hs => hg (inferInstanceAs (IsSplitEpi g.unop.op))
+    obtain ⟨h, hh⟩ := hf.factors Z.unop g.unop hg'
+    exact ⟨h.op, Quiver.Hom.unop_inj (by simpa using hh)⟩
+
+/-- **The opposite of a right almost split morphism is left almost split**, and conversely. -/
+@[simp]
+theorem isLeftAlmostSplit_op_iff : IsLeftAlmostSplit f.op ↔ IsRightAlmostSplit f := by
+  constructor
+  · refine fun hf => ⟨fun hs => hf.not_isSplitMono inferInstance, fun Z g hg => ?_⟩
+    have hg' : ¬ IsSplitMono g.op := fun hs => hg (isSplitEpi_of_isSplitMono_op g)
+    obtain ⟨h, hh⟩ := hf.factors (Opposite.op Z) g.op hg'
+    exact ⟨h.unop, Quiver.Hom.op_inj (by simpa using hh)⟩
+  · refine fun hf => ⟨fun hs => hf.not_isSplitEpi (isSplitEpi_of_isSplitMono_op f),
+      fun Z g hg => ?_⟩
+    have hg' : ¬ IsSplitEpi g.unop := fun hs => hg (inferInstanceAs (IsSplitMono g.unop.op))
+    obtain ⟨h, hh⟩ := hf.factors Z.unop g.unop hg'
+    exact ⟨h.op, Quiver.Hom.unop_inj (by simpa using hh)⟩
 
 /-! ### Invariance under isomorphisms of the source and the target -/
 
@@ -316,9 +318,6 @@ theorem IsLeftAlmostSplit.mono_of_mono (hf : IsLeftAlmostSplit f) {Z : C} (g : X
 
 /-- **An irreducible morphism into the target of a right almost split morphism factors through it
 by a split monomorphism**, so its source is a retract of the source of the almost split morphism.
-Indeed the factorization exists because an irreducible morphism is not a split epimorphism, and
-then irreducibility applied to that very factorization forces the first factor to split, the
-second factor being the almost split morphism, which is not a split epimorphism either.
 
 This is why the middle term of an almost-split sequence receives all the irreducible morphisms
 into its right-hand end. -/
@@ -341,85 +340,80 @@ theorem IsLeftAlmostSplit.exists_isSplitEpi_of_isIrreducibleMorphism (hf : IsLef
 
 section Indecomposable
 
-variable [Preadditive C] [HasBinaryBiproducts C]
+variable [HasZeroMorphisms C] [HasBinaryBiproducts C]
 
-/-- **The target of a right almost split morphism is indecomposable.**
-
-It is nonzero, since a morphism to a zero object always splits. And if `Y ≅ A ⊞ B` with both
-summands nonzero then neither inclusion `A ⟶ Y` nor `B ⟶ Y` is a split epimorphism — each is a
-split monomorphism, so a splitting epimorphism would make it invertible, and an invertible
-`biprod.inl` forces `B` to vanish. Both inclusions therefore factor through `f`, and
-`CategoryTheory.Limits.biprod.total` glues the two factorizations into a section of `f`,
-contradicting that `f` does not split. -/
+/-- **The target of a right almost split morphism is indecomposable.** So the indecomposability of
+the right-hand end of an almost-split sequence is a consequence of its lifting property rather
+than a hypothesis on it. -/
 theorem IsRightAlmostSplit.indecomposable (hf : IsRightAlmostSplit f) : Indecomposable Y := by
   refine ⟨fun hY => hf.not_isSplitEpi (IsSplitEpi.mk' ⟨0, hY.eq_of_src _ _⟩), fun A B e => ?_⟩
   by_contra hcon
   rw [not_or] at hcon
   obtain ⟨hA, hB⟩ := hcon
+  -- A section of an inclusion `A ⟶ Y` retracts `A ⊞ B` onto `A` along `biprod.inl`, and
+  -- `biprod.inl ≫ biprod.snd = 0` then collapses `B`; symmetrically for the other inclusion.
   have hiA : ¬ IsSplitEpi (biprod.inl ≫ e.inv : A ⟶ Y) := by
-    intro _
-    have : IsSplitMono (biprod.inl ≫ e.inv : A ⟶ Y) :=
-      IsSplitMono.mk' ⟨e.hom ≫ biprod.fst, by simp⟩
-    have : IsIso (biprod.inl ≫ e.inv : A ⟶ Y) := isIso_of_mono_of_isSplitEpi _
-    have hinl : IsIso (biprod.inl : A ⟶ A ⊞ B) := by
-      have hh : (biprod.inl ≫ e.inv) ≫ e.hom = (biprod.inl : A ⟶ A ⊞ B) := by simp
-      rw [← hh]
-      infer_instance
-    exact hB ((Biprod.isIso_inl_iff_isZero A B).mp hinl)
+    intro h
+    obtain ⟨s, hs⟩ := h.exists_splitEpi.some
+    have h₁ : s ≫ biprod.inl = e.hom := by
+      rw [← cancel_mono e.inv, e.hom_inv_id, Category.assoc]; exact hs
+    refine hB ?_
+    rw [IsZero.iff_id_eq_zero]
+    calc 𝟙 B = biprod.inr ≫ (e.inv ≫ s ≫ biprod.inl) ≫ biprod.snd := by
+          rw [h₁, e.inv_hom_id, Category.id_comp, biprod.inr_snd]
+      _ = 0 := by simp
   have hiB : ¬ IsSplitEpi (biprod.inr ≫ e.inv : B ⟶ Y) := by
-    intro _
-    have : IsSplitMono (biprod.inr ≫ e.inv : B ⟶ Y) :=
-      IsSplitMono.mk' ⟨e.hom ≫ biprod.snd, by simp⟩
-    have : IsIso (biprod.inr ≫ e.inv : B ⟶ Y) := isIso_of_mono_of_isSplitEpi _
-    have hinr : IsIso (biprod.inr : B ⟶ A ⊞ B) := by
-      have hh : (biprod.inr ≫ e.inv) ≫ e.hom = (biprod.inr : B ⟶ A ⊞ B) := by simp
-      rw [← hh]
-      infer_instance
-    exact hA (isZero_of_isIso_biprod_inr A B)
+    intro h
+    obtain ⟨s, hs⟩ := h.exists_splitEpi.some
+    have h₁ : s ≫ biprod.inr = e.hom := by
+      rw [← cancel_mono e.inv, e.hom_inv_id, Category.assoc]; exact hs
+    refine hA ?_
+    rw [IsZero.iff_id_eq_zero]
+    calc 𝟙 A = biprod.inl ≫ (e.inv ≫ s ≫ biprod.inr) ≫ biprod.fst := by
+          rw [h₁, e.inv_hom_id, Category.id_comp, biprod.inl_fst]
+      _ = 0 := by simp
   obtain ⟨u, hu⟩ := hf.factors A _ hiA
   obtain ⟨v, hv⟩ := hf.factors B _ hiB
-  refine hf.not_isSplitEpi (IsSplitEpi.mk' ⟨e.hom ≫ (biprod.fst ≫ u + biprod.snd ≫ v), ?_⟩)
-  have key : (biprod.fst ≫ u + biprod.snd ≫ v) ≫ f
-      = (biprod.fst ≫ biprod.inl + biprod.snd ≫ biprod.inr) ≫ e.inv := by
-    simp only [Preadditive.add_comp, Category.assoc, hu, hv]
-  rw [Category.assoc, key, biprod.total, Category.id_comp, e.hom_inv_id]
+  refine hf.not_isSplitEpi (IsSplitEpi.mk' ⟨e.hom ≫ biprod.desc u v, ?_⟩)
+  have key : biprod.desc u v ≫ f = e.inv := by
+    apply biprod.hom_ext' <;> simp [hu, hv]
+  rw [Category.assoc, key, e.hom_inv_id]
 
 /-- **The source of a left almost split morphism is indecomposable**, dually to
-`TauCeti.IsRightAlmostSplit.indecomposable`: the two projections of a nontrivial decomposition of
-the source are not split monomorphisms, so both factor through `f`, and the two factorizations
-glue into a retraction of `f`. -/
+`TauCeti.IsRightAlmostSplit.indecomposable`. -/
 theorem IsLeftAlmostSplit.indecomposable (hf : IsLeftAlmostSplit f) : Indecomposable X := by
   refine ⟨fun hX => hf.not_isSplitMono (IsSplitMono.mk' ⟨0, hX.eq_of_src _ _⟩), fun A B e => ?_⟩
   by_contra hcon
   rw [not_or] at hcon
   obtain ⟨hA, hB⟩ := hcon
+  -- Dually, a retraction of a projection `X ⟶ A` sections `A ⊞ B` off `A` along `biprod.fst`,
+  -- and `biprod.inr ≫ biprod.fst = 0` then collapses `B`.
   have hpA : ¬ IsSplitMono (e.hom ≫ biprod.fst : X ⟶ A) := by
-    intro _
-    have : IsSplitEpi (e.hom ≫ biprod.fst : X ⟶ A) :=
-      IsSplitEpi.mk' ⟨biprod.inl ≫ e.inv, by simp⟩
-    have : IsIso (e.hom ≫ biprod.fst : X ⟶ A) := isIso_of_mono_of_isSplitEpi _
-    have hfst : IsIso (biprod.fst : A ⊞ B ⟶ A) := by
-      have hh : e.inv ≫ (e.hom ≫ biprod.fst) = (biprod.fst : A ⊞ B ⟶ A) := by simp
-      rw [← hh]
-      infer_instance
-    exact hB (isZero_of_isIso_biprod_fst A B)
+    intro h
+    obtain ⟨r, hr⟩ := h.exists_splitMono.some
+    have h₁ : biprod.fst ≫ r = e.inv := by
+      rw [← cancel_epi e.hom, e.hom_inv_id, ← Category.assoc]; exact hr
+    refine hB ?_
+    rw [IsZero.iff_id_eq_zero]
+    calc 𝟙 B = biprod.inr ≫ ((biprod.fst ≫ r) ≫ e.hom) ≫ biprod.snd := by
+          rw [h₁, e.inv_hom_id, Category.id_comp, biprod.inr_snd]
+      _ = 0 := by simp
   have hpB : ¬ IsSplitMono (e.hom ≫ biprod.snd : X ⟶ B) := by
-    intro _
-    have : IsSplitEpi (e.hom ≫ biprod.snd : X ⟶ B) :=
-      IsSplitEpi.mk' ⟨biprod.inr ≫ e.inv, by simp⟩
-    have : IsIso (e.hom ≫ biprod.snd : X ⟶ B) := isIso_of_mono_of_isSplitEpi _
-    have hsnd : IsIso (biprod.snd : A ⊞ B ⟶ B) := by
-      have hh : e.inv ≫ (e.hom ≫ biprod.snd) = (biprod.snd : A ⊞ B ⟶ B) := by simp
-      rw [← hh]
-      infer_instance
-    exact hA (isZero_of_isIso_biprod_snd A B)
+    intro h
+    obtain ⟨r, hr⟩ := h.exists_splitMono.some
+    have h₁ : biprod.snd ≫ r = e.inv := by
+      rw [← cancel_epi e.hom, e.hom_inv_id, ← Category.assoc]; exact hr
+    refine hA ?_
+    rw [IsZero.iff_id_eq_zero]
+    calc 𝟙 A = biprod.inl ≫ ((biprod.snd ≫ r) ≫ e.hom) ≫ biprod.fst := by
+          rw [h₁, e.inv_hom_id, Category.id_comp, biprod.inl_fst]
+      _ = 0 := by simp
   obtain ⟨u, hu⟩ := hf.factors A _ hpA
   obtain ⟨v, hv⟩ := hf.factors B _ hpB
-  refine hf.not_isSplitMono (IsSplitMono.mk' ⟨(u ≫ biprod.inl + v ≫ biprod.inr) ≫ e.inv, ?_⟩)
-  have key : f ≫ (u ≫ biprod.inl + v ≫ biprod.inr)
-      = e.hom ≫ (biprod.fst ≫ biprod.inl + biprod.snd ≫ biprod.inr) := by
-    simp only [Preadditive.comp_add, ← Category.assoc, hu, hv]
-  rw [← Category.assoc, key, biprod.total, Category.comp_id, e.hom_inv_id]
+  refine hf.not_isSplitMono (IsSplitMono.mk' ⟨biprod.lift u v ≫ e.inv, ?_⟩)
+  have key : f ≫ biprod.lift u v = e.hom := by
+    apply biprod.hom_ext <;> simp [hu, hv]
+  rw [← Category.assoc, key, e.hom_inv_id]
 
 end Indecomposable
 
