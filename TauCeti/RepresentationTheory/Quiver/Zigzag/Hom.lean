@@ -379,7 +379,6 @@ noncomputable def zigzagProjectiveTargetShiftHom (i j : V) (d : ℤ) :
 
 /-- A map `P_i → P_j{d}` is degree zero precisely when its underlying map has signed degree
 `-d`. -/
-@[simp]
 theorem mem_zigzagProjectiveTargetShiftHom_iff_isHomogeneous {i j : V} {d : ℤ}
     {φ : zigzagProjective k G i →ₗ[nonisolatedZigzagQuotient k G]
       zigzagProjective k G j} :
