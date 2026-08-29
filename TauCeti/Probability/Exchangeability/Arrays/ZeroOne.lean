@@ -5,8 +5,9 @@ Authors: Claude
 -/
 module
 
--- Public: dissociation is the hypothesis of every zero-one statement here.
+-- Public: dissociation and process tail σ-algebras appear in theorem statements here.
 public import TauCeti.Probability.Exchangeability.Arrays.Dissociated
+public import TauCeti.Probability.Process.Tail.Basic
 -- Non-public: the zero-one law for a self-independent event is used only inside a proof.
 import Mathlib.Probability.Independence.ZeroOne
 

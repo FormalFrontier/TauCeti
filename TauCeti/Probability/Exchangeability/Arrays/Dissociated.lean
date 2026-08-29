@@ -7,7 +7,9 @@ module
 
 public import TauCeti.Probability.Exchangeability.Arrays.Block
 public import TauCeti.Probability.Independence.DisjointBlocks
--- Non-public: the zero-one law for a self-independent event is used only inside a proof.
+-- Non-public: contractability bridges and the zero-one law for a self-independent event are used
+-- only inside proofs.
+import TauCeti.Probability.Exchangeability.Contractability
 import Mathlib.Probability.Independence.ZeroOne
 
 /-!
