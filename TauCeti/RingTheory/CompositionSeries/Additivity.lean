@@ -163,7 +163,10 @@ theorem jordanHolderMultiplicity_eq_add_of_exact [IsNoetherian R M] [IsArtinian 
       ((Submodule.quotEquivOfEq _ _ (LinearMap.exact_iff.mp hfg).symm).trans
         (g.quotKerEquivOfSurjective hg)) S]
 
-/-- A module that embeds in `M` contributes at most `M`'s multiplicity. -/
+/-- A module that embeds in `M` contributes at most `M`'s multiplicity.  As for
+`TauCeti.jordanHolderMultiplicity_eq_add_of_exact`, the finiteness of `A` follows from that of `M`
+and is a binder only because `jordanHolderMultiplicity R A S` — which already occurs in the
+statement a caller is trying to prove — does not elaborate without it. -/
 theorem jordanHolderMultiplicity_le_of_injective [IsNoetherian R M] [IsArtinian R M]
     {A : Type w} [AddCommGroup A] [Module R A] [IsNoetherian R A] [IsArtinian R A]
     (f : A →ₗ[R] M) (hf : Function.Injective f) :
@@ -172,7 +175,10 @@ theorem jordanHolderMultiplicity_le_of_injective [IsNoetherian R M] [IsArtinian 
     (Submodule.mkQ_surjective _) (LinearMap.exact_map_mkQ_range f)]
   exact Nat.le_add_right _ _
 
-/-- A quotient of `M` contributes at most `M`'s multiplicity. -/
+/-- A quotient of `M` contributes at most `M`'s multiplicity.  As for
+`TauCeti.jordanHolderMultiplicity_eq_add_of_exact`, the finiteness of `B` follows from that of `M`
+and is a binder only because `jordanHolderMultiplicity R B S` — which already occurs in the
+statement a caller is trying to prove — does not elaborate without it. -/
 theorem jordanHolderMultiplicity_le_of_surjective [IsNoetherian R M] [IsArtinian R M]
     {B : Type w'} [AddCommGroup B] [Module R B] [IsNoetherian R B] [IsArtinian R B]
     (g : M →ₗ[R] B) (hg : Function.Surjective g) :
