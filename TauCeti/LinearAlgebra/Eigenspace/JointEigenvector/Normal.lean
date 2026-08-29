@@ -19,8 +19,8 @@ character `χ` onto the joint eigenspace of the conjugated character
 `n ↦ χ (g⁻¹ * n * g)`.
 
 This is the representation-theoretic bridge used in the Lie--Kolchin argument. The derived
-subgroup supplies finitely many character weight spaces; normality makes the ambient group
-permute those spaces, and connectedness can then force that permutation to be trivial.
+subgroup supplies character weight spaces; normality makes the ambient group permute those spaces,
+and connectedness can then force that permutation to be trivial.
 
 ## Main declarations
 
@@ -123,8 +123,7 @@ theorem nonzeroJointWeightEquiv_apply_coe (N : Subgroup G) [N.Normal]
   rfl
 
 /-- The ambient group acts by permutations on the nonzero joint character weight spaces of a
-normal subgroup. This is the abstract group action underlying the finite permutation
-representation in the Lie--Kolchin argument. -/
+normal subgroup. This is the abstract permutation action used in the Lie--Kolchin argument. -/
 def nonzeroJointWeightAction (N : Subgroup G) [N.Normal]
     (ρ : G →* Module.End K V) :
     G →* Equiv.Perm {χ : N →* Kˣ // (⨅ n : N, (ρ n).eigenspace (χ n)) ≠ ⊥} where
@@ -143,14 +142,6 @@ def nonzeroJointWeightAction (N : Subgroup G) [N.Normal]
           (fun χ ↦ iInf_eigenspace_unitHom_conjNormal_ne_bot_iff N ρ g₁ χ)
           (fun χ ↦ iInf_eigenspace_unitHom_conjNormal_ne_bot_iff N ρ g₂ χ)).symm
 
-theorem nonzeroJointWeightAction_apply (N : Subgroup G) [N.Normal]
-    (ρ : G →* Module.End K V) (g : G)
-    (χ : {χ : N →* Kˣ // (⨅ n : N, (ρ n).eigenspace (χ n)) ≠ ⊥}) :
-    nonzeroJointWeightAction N ρ g χ = nonzeroJointWeightEquiv N ρ g χ := by
-  -- Package the monoid-hom constructor's definitional projection as a stable application rule.
-  change nonzeroJointWeightEquiv N ρ g χ = nonzeroJointWeightEquiv N ρ g χ
-  rfl
-
 @[simp]
 theorem nonzeroJointWeightAction_apply_coe (N : Subgroup G) [N.Normal]
     (ρ : G →* Module.End K V) (g : G)
@@ -158,8 +149,7 @@ theorem nonzeroJointWeightAction_apply_coe (N : Subgroup G) [N.Normal]
     (((nonzeroJointWeightAction N ρ g) χ :
       {χ : N →* Kˣ // (⨅ n : N, (ρ n).eigenspace (χ n)) ≠ ⊥}) : N →* Kˣ) =
         (MulAut.conjNormal g).monoidHomCongrLeftEquiv χ := by
-  rw [nonzeroJointWeightAction_apply]
-  exact nonzeroJointWeightEquiv_apply_coe N ρ g χ
+  rfl
 
 end TauCeti
 
