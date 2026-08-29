@@ -121,6 +121,14 @@ theorem isWeakSolutionDirichletMassShift_iff (kappa : ℝ)
           ∫ x in Omega, f x * W1p.value (v : W1p mu Omega 2) x ∂mu := by
   simp only [IsWeakSolutionDirichletMassShift, dirichletForcing_apply_eq_setIntegral]
 
+/-- A zero mass shift recovers the unshifted Dirichlet weak equation. -/
+@[simp]
+theorem isWeakSolutionDirichletMassShift_zero_iff (f : Lp ℝ 2 (mu.restrict Omega))
+    (u : W1p0 mu Omega 2) :
+    IsWeakSolutionDirichletMassShift a b c 0 f u ↔ IsWeakSolutionDirichlet a b c f u := by
+  rw [isWeakSolutionDirichletMassShift_iff, isWeakSolutionDirichlet_iff]
+  simp only [zero_mul, sub_zero]
+
 /-- The mass-shifted weak equation written as an operator equation on `H¹₀(Ω)`. -/
 theorem isWeakSolutionDirichletMassShift_iff_operator_eq
     (hcoeff : MemLp (fun x => energyIntegrand (a x) (b x) (c x)) ⊤ (mu.restrict Omega))
@@ -130,11 +138,25 @@ theorem isWeakSolutionDirichletMassShift_iff_operator_eq
       (1 - kappa • dirichletMassOperator hcoeff hcoercive :
           W1p0 mu Omega 2 →L[ℝ] W1p0 mu Omega 2) u =
         weakSolutionDirichlet hcoeff hcoercive f := by
-  rw [weakSolutionDirichlet_def]
-  simpa only [dirichletMassOperator, IsWeakSolutionDirichletMassShift,
-    energyFormH1L0_apply, W1p0.valueL_apply] using
-    (hcoercive.one_sub_smul_formPerturbationOperator_apply_eq_iff_functional
-      (W1p0.valueL (mu := mu) (Omega := Omega) (p := 2)) kappa (dirichletForcing f) u).symm
+  have habstract :
+      IsWeakSolutionDirichletMassShift a b c kappa f u ↔
+        (1 - kappa • dirichletMassOperator hcoeff hcoercive :
+            W1p0 mu Omega 2 →L[ℝ] W1p0 mu Omega 2) u =
+          hcoercive.solutionOfFunctional (dirichletForcing f) := by
+    simpa only [dirichletMassOperator, IsWeakSolutionDirichletMassShift,
+      energyFormH1L0_apply, W1p0.valueL_apply] using
+      (hcoercive.one_sub_smul_formPerturbationOperator_apply_eq_iff_functional
+        (W1p0.valueL (mu := mu) (Omega := Omega) (p := 2)) kappa (dirichletForcing f) u).symm
+  have hsolution :
+      weakSolutionDirichlet hcoeff hcoercive f =
+        hcoercive.solutionOfFunctional (dirichletForcing f) :=
+    hcoercive.eq_solutionOfFunctional fun v => by
+    rw [energyFormH1L0_apply, dirichletForcing_apply_eq_setIntegral]
+    exact (isWeakSolutionDirichlet_iff f _).mp
+      (isWeakSolutionDirichlet_weakSolutionDirichlet hcoeff hcoercive f) v
+  constructor
+  · exact fun h => (habstract.mp h).trans hsolution.symm
+  · exact fun h => habstract.mpr (h.trans hsolution)
 
 /-- The homogeneous solution space of a scalar mass shift of a coercive Dirichlet form is finite
 dimensional on a bounded domain. -/

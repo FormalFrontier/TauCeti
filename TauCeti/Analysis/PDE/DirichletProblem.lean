@@ -219,14 +219,6 @@ def weakSolutionDirichlet
     W1p0 mu Omega 2 :=
   hcoercive.solutionOfFunctional (dirichletForcing f)
 
-/-- The Dirichlet weak solution is the Lax--Milgram solution of its forcing functional. -/
-theorem weakSolutionDirichlet_def
-    (hcoeff : MemLp (fun x => energyIntegrand (a x) (b x) (c x)) ⊤ (mu.restrict Omega))
-    (hcoercive : IsCoercive (energyFormH1L0 hcoeff)) (f : Lp ℝ 2 (mu.restrict Omega)) :
-    weakSolutionDirichlet hcoeff hcoercive f =
-      hcoercive.solutionOfFunctional (dirichletForcing f) :=
-  (rfl)
-
 /-- The Lax--Milgram solution is a weak solution of the Dirichlet problem. -/
 theorem isWeakSolutionDirichlet_weakSolutionDirichlet
     (hcoeff : MemLp (fun x => energyIntegrand (a x) (b x) (c x)) ⊤ (mu.restrict Omega))
