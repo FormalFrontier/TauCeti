@@ -181,7 +181,7 @@ theorem isModularEigenrow_cyclicGroupThreeExactCharacterTable
 /-- The displayed exact rows reduced at the chosen primitive cube root modulo `7`. -/
 def cyclicGroupThreeModularCentralRows :
     Finset (CyclicGroupThreeClassIndex → ZMod 7) :=
-  (cyclicClassData 3).modularCentralRows
+  (cyclicClassData 3).rowsOfMap
     (Cyclotomic.reduce 7 cyclicGroupThreeDixonPrimeData.root)
     cyclicGroupThreeExactCharacterTable
 
@@ -213,7 +213,7 @@ theorem cyclicGroupThree_centralCharacterSearch :
     (cyclicClassData 3).centralCharacterSearch (F := ZMod 7) =
       cyclicGroupThreeModularCentralRows := by
   rw [cyclicGroupThreeModularCentralRows]
-  apply (cyclicClassData 3).centralCharacterSearch_eq_modularCentralRows_of_isGoodDixonPrime
+  apply (cyclicClassData 3).centralCharacterSearch_eq_rowsOfMap_of_isGoodDixonPrime
     isGoodDixonPrime_cyclicGroup_three_seven
     (Cyclotomic.reduce 7 cyclicGroupThreeDixonPrimeData.root)
     cyclicGroupThreeExactCharacterTable

@@ -16,9 +16,9 @@ the Dixon--Schneider character-table computation: recovering a displayed integra
 with `ZMod.valMinAbs`, once the modular search is known to return exactly the reductions of its
 rows and every entry lies in the signed least-residue range.
 
-The earlier steps live upstream: the reduced candidate rows themselves are
-`TauCeti.ClassData.modularCentralRows`, and
-`TauCeti.ClassData.centralCharacterSearch_eq_modularCentralRows_of_isGoodDixonPrime` identifies
+The earlier steps live upstream: the reduced candidate rows are collected by
+`TauCeti.ClassData.rowsOfMap`, and
+`TauCeti.ClassData.centralCharacterSearch_eq_rowsOfMap_of_isGoodDixonPrime` identifies
 them with the complete modular search at a good Dixon prime; both are in
 `TauCeti.RepresentationTheory.CharacterTable.Dixon.ClassData.CentralCharacterCount`, and the
 hypothesis of the theorem below is stated in terms of them.
@@ -67,10 +67,10 @@ theorem liftedCentralRows_eq_image_of_centralCharacterSearch_eq
     {p : ℕ} [Fact p.Prime]
     (M : Matrix (Fin d.numClasses) (Fin d.numClasses) ℤ)
     (hsearch : d.centralCharacterSearch (F := ZMod p) =
-      d.modularCentralRows (fun x : ℤ => (x : ZMod p)) M)
+      d.rowsOfMap (fun x : ℤ => (x : ZMod p)) M)
     (hbound : ∀ i j, 2 * (M i j).natAbs < p) :
     d.liftedCentralRows p = Finset.univ.image fun i => M i := by
-  rw [liftedCentralRows, hsearch, modularCentralRows, Finset.image_image]
+  rw [liftedCentralRows, hsearch, rowsOfMap, Finset.image_image]
   apply Finset.image_congr
   intro i _
   funext j

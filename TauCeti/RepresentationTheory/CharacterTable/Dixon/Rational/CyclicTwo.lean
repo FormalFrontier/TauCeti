@@ -123,7 +123,7 @@ theorem cyclicGroupTwoCentralCharacterTable_apply (i j : CyclicGroupTwoClassInde
 /-- The displayed central-character rows reduced modulo the certified Dixon prime `3`. -/
 def cyclicGroupTwoModularCentralRows :
     Finset (CyclicGroupTwoClassIndex → ZMod 3) :=
-  (cyclicClassData 2).modularCentralRows (fun x : ℤ => (x : ZMod 3))
+  (cyclicClassData 2).rowsOfMap (fun x : ℤ => (x : ZMod 3))
     cyclicGroupTwoCentralCharacterTable
 
 /-- A modular row is displayed exactly when it is the reduction of a row of the integral table. -/
@@ -163,7 +163,7 @@ theorem cyclicGroupTwo_centralCharacterSearch :
     (cyclicClassData 2).centralCharacterSearch (F := ZMod 3) =
       cyclicGroupTwoModularCentralRows := by
   rw [cyclicGroupTwoModularCentralRows]
-  apply (cyclicClassData 2).centralCharacterSearch_eq_modularCentralRows_of_isGoodDixonPrime
+  apply (cyclicClassData 2).centralCharacterSearch_eq_rowsOfMap_of_isGoodDixonPrime
     isGoodDixonPrime_cyclicGroup_two_three (fun x : ℤ => (x : ZMod 3))
     cyclicGroupTwoCentralCharacterTable
   · intro i
@@ -197,7 +197,7 @@ theorem cyclicGroupTwo_liftedCentralRows :
     cyclicGroupTwoLiftedCentralRows =
       Finset.univ.image fun i => cyclicGroupTwoCentralCharacterTable i := by
   rw [cyclicGroupTwoLiftedCentralRows, cyclicGroupTwo_centralCharacterSearch,
-    cyclicGroupTwoModularCentralRows, ClassData.modularCentralRows, Finset.image_image]
+    cyclicGroupTwoModularCentralRows, ClassData.rowsOfMap, Finset.image_image]
   apply Finset.image_congr
   intro i _
   funext j
