@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.LinearAlgebra.FiniteDimensional.Basic
 public import TauCeti.Algebra.Lie.Basic
 public import TauCeti.Algebra.Lie.Weights.Central
 
@@ -27,17 +26,19 @@ transporting along an equivalence gives the same for `M → N`. Together:
 
 `dim_K (M →ₗ⁅K,L⁆ N) = 1` if `M ≃ₗ⁅K,L⁆ N`, and `0` otherwise.
 
-That dichotomy is what makes `dim_K (S →ₗ⁅K,L⁆ M)` a *multiplicity*: it is `1` for each summand of
-a decomposition of `M` equivalent to `S` and `0` for every other summand, so the count does not
-depend on the decomposition chosen.
+That dichotomy is the input a *multiplicity* count needs: in a decomposition of `M` into
+irreducibles, each summand contributes `1` to `dim_K (S →ₗ⁅K,L⁆ M)` when it is equivalent to `S`
+and `0` when it is not. Reading the multiplicity off `dim_K (S →ₗ⁅K,L⁆ M)` needs one further
+ingredient, additivity of the morphism space over a direct sum, which is not proved here; this
+file goes no further than the two-irreducible dimension count.
 
 ## Main results
 
 * `TauCeti.LieModule.bijective_of_ne_zero`: **a nonzero morphism between irreducible Lie modules
   is bijective**, over an arbitrary commutative ring.
 * `TauCeti.LieModule.eq_zero_of_isEmpty_lieModuleEquiv` and
-  `TauCeti.LieModule.subsingleton_lieModuleHom`: inequivalent irreducible Lie modules admit only
-  the zero morphism.
+  `TauCeti.LieModule.subsingleton_lieModuleHom_of_isEmpty_lieModuleEquiv`: inequivalent irreducible
+  Lie modules admit only the zero morphism.
 * `TauCeti.LieModule.nonempty_lieModuleEquiv_iff_exists_ne_zero`: two irreducible Lie modules are
   equivalent exactly when some morphism between them is nonzero.
 * `TauCeti.LieModule.finrank_lieModuleHom_self`: **the endomorphisms of a finite-dimensional
@@ -62,7 +63,9 @@ This is the uniqueness input for the multiplicity `m_λ = dim Hom_L(L(λ), M)` o
 toolkit in Layer 6 of `TauCetiRoadmap/RepresentationTheory/LieHighestWeight/README.md`
 (the `isotypicMultiplicity` target of its `Suggested.lean`, whose "`Hom` definition is the one that
 makes uniqueness automatic"): the morphism space between irreducibles has dimension `1` or `0`
-according as they are equivalent, so counting with it counts summands.
+according as they are equivalent. The multiplicity theorem itself is not proved here; it needs, in
+addition, additivity of the morphism space over a direct-sum decomposition, and for the
+`L(λ)`-indexed form the irreducible quotient `L(λ)`.
 
 ## References
 
@@ -118,7 +121,7 @@ theorem eq_zero_of_isEmpty_lieModuleEquiv (h : IsEmpty (M ≃ₗ⁅R,L⁆ N)) (f
   by_contra fun hf ↦ (nonempty_lieModuleEquiv_of_ne_zero hf).elim h.elim
 
 /-- The morphism space between inequivalent irreducible Lie modules is trivial. -/
-theorem subsingleton_lieModuleHom (h : IsEmpty (M ≃ₗ⁅R,L⁆ N)) :
+theorem subsingleton_lieModuleHom_of_isEmpty_lieModuleEquiv (h : IsEmpty (M ≃ₗ⁅R,L⁆ N)) :
     Subsingleton (M →ₗ⁅R,L⁆ N) :=
   ⟨fun f g ↦ by
     rw [eq_zero_of_isEmpty_lieModuleEquiv h f, eq_zero_of_isEmpty_lieModuleEquiv h g]⟩
@@ -172,7 +175,7 @@ omit [IsAlgClosed K] [_root_.LieModule K L M] [FiniteDimensional K M] in
 /-- Inequivalent irreducible Lie modules have a zero-dimensional morphism space. -/
 theorem finrank_lieModuleHom_eq_zero_of_isEmpty_lieModuleEquiv (h : IsEmpty (M ≃ₗ⁅K,L⁆ N)) :
     finrank K (M →ₗ⁅K,L⁆ N) = 0 :=
-  have := subsingleton_lieModuleHom h
+  have := subsingleton_lieModuleHom_of_isEmpty_lieModuleEquiv h
   Module.finrank_zero_of_subsingleton
 
 /-- **The morphism space of two finite-dimensional irreducible Lie modules is one-dimensional
@@ -204,8 +207,9 @@ theorem finrank_lieModuleHom_le_one : finrank K (M →ₗ⁅K,L⁆ N) ≤ 1 := b
 open scoped Classical in
 /-- **Schur's lemma for finite-dimensional irreducible Lie modules over an algebraically closed
 field, in its dimension form**: the morphism space is a line for equivalent modules and zero for
-inequivalent ones. This is what makes `dim_K (S →ₗ⁅K,L⁆ M)` count the summands of `M` equivalent
-to `S`. -/
+inequivalent ones. This is the per-summand contribution that a multiplicity count of `S` in `M`
+reads off `dim_K (S →ₗ⁅K,L⁆ M)`, once additivity of the morphism space over a decomposition of `M`
+is available. -/
 theorem finrank_lieModuleHom :
     finrank K (M →ₗ⁅K,L⁆ N) = if Nonempty (M ≃ₗ⁅K,L⁆ N) then 1 else 0 := by
   split
