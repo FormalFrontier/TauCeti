@@ -78,10 +78,6 @@ def datumSteinberg :
       (e.1.dynkinType.simplyConnectedRootDatum e.1.dynkinType_valid) :=
   e.datumSpecialIsogeny ^ e.1.fieldExponent
 
-/-- The root-datum Steinberg map is the power recorded by the index's field exponent. -/
-theorem datumSteinberg_def :
-    e.datumSteinberg = e.datumSpecialIsogeny ^ e.1.fieldExponent := (rfl)
-
 /-! ### Branch equations -/
 
 /-- The Suzuki Steinberg map is the `(2 * m + 1)`-st power of the `B₂` special isogeny selected
@@ -89,7 +85,7 @@ by the index. -/
 @[simp] theorem datumSteinberg_suzuki (m : ℕ) (hvalid : (LieTypeIndex.suzuki m).Valid) :
     datumSteinberg ⟨⟨.suzuki m, hvalid⟩, by simp⟩ =
       datumSpecialIsogeny ⟨⟨.suzuki m, hvalid⟩, by simp⟩ ^ (2 * m + 1) := by
-  rw [datumSteinberg_def]
+  rw [datumSteinberg]
   simp only [ValidLieTypeIndex.fieldExponent, LieTypeIndex.fieldExponent_suzuki]
 
 /-- The Ree `G₂` Steinberg map is the `(2 * m + 1)`-st power of the selected `G₂` special
@@ -97,7 +93,7 @@ isogeny. -/
 @[simp] theorem datumSteinberg_reeG2 (m : ℕ) (hvalid : (LieTypeIndex.reeG2 m).Valid) :
     datumSteinberg ⟨⟨.reeG2 m, hvalid⟩, by simp⟩ =
       datumSpecialIsogeny ⟨⟨.reeG2 m, hvalid⟩, by simp⟩ ^ (2 * m + 1) := by
-  rw [datumSteinberg_def]
+  rw [datumSteinberg]
   simp only [ValidLieTypeIndex.fieldExponent, LieTypeIndex.fieldExponent_reeG2]
 
 /-- The Ree `F₄` Steinberg map is the `(2 * m + 1)`-st power of the selected `F₄` special
@@ -105,7 +101,7 @@ isogeny. -/
 @[simp] theorem datumSteinberg_reeF4 (m : ℕ) (hvalid : (LieTypeIndex.reeF4 m).Valid) :
     datumSteinberg ⟨⟨.reeF4 m, hvalid⟩, by simp⟩ =
       datumSpecialIsogeny ⟨⟨.reeF4 m, hvalid⟩, by simp⟩ ^ (2 * m + 1) := by
-  rw [datumSteinberg_def]
+  rw [datumSteinberg]
   simp only [ValidLieTypeIndex.fieldExponent, LieTypeIndex.fieldExponent_reeF4]
 
 /-- The Tits Steinberg map is the selected `F₄` special isogeny itself, corresponding to
@@ -113,7 +109,7 @@ isogeny. -/
 @[simp] theorem datumSteinberg_tits :
     datumSteinberg ⟨⟨.tits, by simp⟩, by simp⟩ =
       datumSpecialIsogeny ⟨⟨.tits, by simp⟩, by simp⟩ := by
-  rw [datumSteinberg_def]
+  rw [datumSteinberg]
   simp only [ValidLieTypeIndex.fieldExponent, LieTypeIndex.fieldExponent_tits, pow_one]
 
 /-! ### The odd-power relations -/
@@ -122,7 +118,7 @@ isogeny. -/
 isogeny itself. -/
 @[simp] theorem datumSteinberg_indexEquiv :
     e.datumSteinberg.indexEquiv = e.datumSpecialIsogeny.indexEquiv := by
-  simpa only [datumSteinberg_def,
+  simpa only [datumSteinberg,
     Nat.two_mul_div_two_add_one_of_odd e.fieldExponent_odd] using
       RootPairingIsogeny.indexEquiv_pow_two_mul_add_one
         (e.1.dynkinType.simplyConnectedRootDatum e.1.dynkinType_valid)
@@ -144,7 +140,7 @@ to the selected special isogeny. -/
         (e.1.dynkinType.simpleIndex e.1.dynkinType_valid i) =
       e.1.dynkinType.rootLength i *
         (e.1.characteristic : ℤ) ^ (e.1.fieldExponent / 2) := by
-  rw [datumSteinberg_def]
+  rw [datumSteinberg]
   conv_lhs =>
     rw [← Nat.two_mul_div_two_add_one_of_odd e.fieldExponent_odd]
   rw [RootPairingIsogeny.exponent_pow_two_mul_add_one _ e.datumSpecialIsogeny_comp_self,
@@ -196,17 +192,10 @@ theorem datumSteinberg_coweightMap_coroot_simpleIndex (i : Fin e.1.rank) :
     datumSteinberg_exponent_simpleIndex, rootLength_lengthPerm, Int.cast_id] at h
   exact h
 
-/-- The positive-natural scalar `p ^ fieldExponent` underlying the Steinberg square has value the
-field order recorded by the index. -/
-theorem coe_characteristic_pow_fieldExponent :
-    (((⟨e.1.characteristic, e.1.characteristic_prime.pos⟩ : ℕ+) ^
-      e.1.fieldExponent : ℕ+) : ℕ) = e.1.fieldOrder := by
-  exact e.1.fieldOrder_eq_characteristic_pow.symm
-
 /-- **The square of the Suzuki--Ree root-datum Steinberg map is the field-order Frobenius
 scaling.** This is `steinberg(m) ^ 2 = Frob_(p ^ (2 * m + 1))`, including the Tits value `m = 0`.
-The preceding theorem identifies the positive-natural scalar on the right with
-`e.1.fieldOrder`. -/
+The existing `ValidLieTypeIndex.fieldOrder_eq_characteristic_pow` identifies the
+positive-natural scalar on the right with `e.1.fieldOrder`. -/
 @[simp] theorem datumSteinberg_comp_self :
     e.datumSteinberg.comp e.datumSteinberg =
       RootPairingIsogeny.smulId _
@@ -215,7 +204,7 @@ The preceding theorem identifies the positive-natural scalar on the right with
     e.datumSteinberg.comp e.datumSteinberg = e.datumSteinberg * e.datumSteinberg := rfl
     _ = RootPairingIsogeny.smulId _
         (⟨e.1.characteristic, e.1.characteristic_prime.pos⟩ ^ e.1.fieldExponent) := by
-      rw [datumSteinberg_def]
+      rw [datumSteinberg]
       exact RootPairingIsogeny.pow_mul_self_eq_smulId
         (e.1.dynkinType.simplyConnectedRootDatum e.1.dynkinType_valid)
         e.datumSpecialIsogeny_comp_self e.1.fieldExponent
