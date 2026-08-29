@@ -63,6 +63,15 @@ theorem sectionCoord_add (W' : ∀ t, V (γ t)) (x : M) :
   funext t
   exact map_add _ _ _
 
+/-- Coordinate reading commutes with finite sums of sections along a curve. -/
+@[simp]
+theorem sectionCoord_sum {ι : Type*} (A : Finset ι) (U : ι → ∀ t, V (γ t)) (x : M) :
+    sectionCoord (F := F) γ (fun t ↦ ∑ i ∈ A, U i t) x =
+      fun t ↦ ∑ i ∈ A, sectionCoord (F := F) γ (U i) x t := by
+  classical
+  funext t
+  simp only [sectionCoord_apply, map_sum]
+
 /-- Coordinate reading commutes with pointwise scalar multiplication of a section along a curve. -/
 @[simp]
 theorem sectionCoord_smul (f : 𝕜 → 𝕜) (x : M) :

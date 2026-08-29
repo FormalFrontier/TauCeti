@@ -18,8 +18,8 @@ cocharacter `t ↦ diag(t ^ w i)`. On points, both descriptions say exactly that
 entry vanishes whenever `w i ≠ w j`.
 
 The construction and its naturality follow the representing interface for the weight parabolic
-in `TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Dynamic.Weight.Parabolic`, with the Levi cut out
-as the intersection of the two opposite weight parabolics.
+in `TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Dynamic.Weight.Parabolic.Basic`, with the Levi
+cut out as the intersection of the two opposite weight parabolics.
 
 ## Main declarations
 

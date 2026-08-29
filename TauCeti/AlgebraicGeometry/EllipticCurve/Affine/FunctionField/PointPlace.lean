@@ -91,67 +91,46 @@ noncomputable def infinity : Place F W.FunctionField where
 theorem valuation_infinity : (infinity W).valuation = W.infinityPlace := by
   rw [infinity]
 
+/-- Subtracting a suitable constant takes a rational function of non-positive `intDegree` to one
+of strictly negative `intDegree` — or to `0`, whose `intDegree` is `0` rather than `-∞`, which is
+why the conclusion is a disjunction. Equivalently, the residue of `A` at the infinite place of
+`F(X)` is a constant: it is the Euclidean quotient of `A.num` by the monic `A.denom`, and what is
+left over is the Euclidean remainder. -/
 private theorem exists_sub_C_eq_zero_or_intDegree_neg (A : RatFunc F)
     (hA : A.intDegree ≤ 0) :
     ∃ c : F, A - RatFunc.C c = 0 ∨ (A - RatFunc.C c).intDegree < 0 := by
-  classical
-  by_cases hA0 : A = 0
-  · exact ⟨0, by simp [hA0]⟩
-  have hnum0 : A.num ≠ 0 := RatFunc.num_ne_zero hA0
-  have hden0 : A.denom ≠ 0 := A.denom_ne_zero
-  have hdegree : A.num.natDegree ≤ A.denom.natDegree := by
+  have hden : A.denom.Monic := A.monic_denom
+  have hdenMap0 : algebraMap F[X] (RatFunc F) A.denom ≠ 0 := by simpa using A.denom_ne_zero
+  -- `A.intDegree ≤ 0` bounds the numerator's degree by the denominator's, so the Euclidean
+  -- quotient of `A.num` by the monic `A.denom` is a constant `c`.
+  obtain ⟨c, hc⟩ : ∃ c : F, A.num /ₘ A.denom = Polynomial.C c := by
+    refine ⟨_, Polynomial.eq_C_of_natDegree_eq_zero ?_⟩
+    rw [Polynomial.natDegree_divByMonic _ hden]
     rw [RatFunc.intDegree] at hA
     omega
-  -- A strictly smaller numerator already has zero residue.  In the equal-degree case,
-  -- subtract the quotient of leading coefficients to cancel the leading term.
-  rcases hdegree.lt_or_eq with hdegree | hdegree
-  · refine ⟨0, Or.inr ?_⟩
-    have hdegreeInt : (A.num.natDegree : ℤ) - A.denom.natDegree < 0 := by omega
-    simpa [hA0, RatFunc.intDegree] using hdegreeInt
-  · let c := A.num.leadingCoeff / A.denom.leadingCoeff
-    refine ⟨c, ?_⟩
-    by_cases hsub : A - RatFunc.C c = 0
-    · exact Or.inl hsub
-    · right
-      have hc0 : c ≠ 0 := div_ne_zero (Polynomial.leadingCoeff_ne_zero.mpr hnum0)
-        (Polynomial.leadingCoeff_ne_zero.mpr hden0)
-      have hdenMap0 : algebraMap F[X] (RatFunc F) A.denom ≠ 0 := by
-        simpa using hden0
-      have hquotient : A - RatFunc.C c =
-          algebraMap F[X] (RatFunc F) (A.num - Polynomial.C c * A.denom) /
-            algebraMap F[X] (RatFunc F) A.denom := calc
-        A - RatFunc.C c =
-            algebraMap F[X] (RatFunc F) A.num /
-              algebraMap F[X] (RatFunc F) A.denom - RatFunc.C c :=
-          congrArg (fun z ↦ z - RatFunc.C c) (RatFunc.num_div_denom A).symm
-        _ = algebraMap F[X] (RatFunc F) (A.num - Polynomial.C c * A.denom) /
-              algebraMap F[X] (RatFunc F) A.denom := by
-          rw [← RatFunc.algebraMap_C, map_sub, map_mul]
-          field_simp [hdenMap0]
-      have hpoly0 : A.num - Polynomial.C c * A.denom ≠ 0 := by
-        intro h
-        apply hsub
-        rw [hquotient, h, map_zero, zero_div]
-      have hdegrees : A.num.degree = A.denom.degree := by
-        rw [Polynomial.degree_eq_natDegree hnum0, Polynomial.degree_eq_natDegree hden0, hdegree]
-      have hleading : A.num.leadingCoeff =
-          (Polynomial.C c * A.denom).leadingCoeff := by
-        rw [Polynomial.leadingCoeff_mul, Polynomial.leadingCoeff_C]
-        dsimp [c]
-        field_simp [Polynomial.leadingCoeff_ne_zero.mpr hden0]
-      -- The cancellation makes the new numerator have smaller degree than the denominator.
-      have hdegreeSub :
-          (A.num - Polynomial.C c * A.denom).natDegree < A.denom.natDegree :=
-        (Polynomial.natDegree_lt_natDegree_iff hpoly0).mpr <| by
-          apply (Polynomial.degree_sub_lt_left
-            (hdegrees.trans (Polynomial.degree_C_mul hc0).symm) hnum0 hleading).trans_eq
-          exact hdegrees
-      have hpolyMap0 :
-          algebraMap F[X] (RatFunc F) (A.num - Polynomial.C c * A.denom) ≠ 0 :=
-        (map_ne_zero_iff _ (FaithfulSMul.algebraMap_injective F[X] (RatFunc F))).mpr hpoly0
-      rw [hquotient, RatFunc.intDegree_div hpolyMap0 (by simpa),
-        RatFunc.intDegree_polynomial, RatFunc.intDegree_polynomial]
-      omega
+  refine ⟨c, ?_⟩
+  -- Subtracting `c` leaves exactly the Euclidean remainder over the denominator.
+  have hnum : A.num %ₘ A.denom = A.num - Polynomial.C c * A.denom := by
+    have h := Polynomial.modByMonic_add_div A.num A.denom
+    rw [hc] at h
+    linear_combination h
+  -- `A.num = A * A.denom` in the function field: the defining property of `num` and `denom`,
+  -- taken as a term so the identity below is closed by `ring` rather than by ordered rewriting.
+  have hnumA : algebraMap F[X] (RatFunc F) A.num = A * algebraMap F[X] (RatFunc F) A.denom :=
+    (div_eq_iff hdenMap0).mp (RatFunc.num_div_denom A)
+  have key : A - RatFunc.C c = algebraMap F[X] (RatFunc F) (A.num %ₘ A.denom) /
+      algebraMap F[X] (RatFunc F) A.denom := by
+    rw [eq_div_iff hdenMap0, hnum]
+    simp only [map_sub, map_mul, RatFunc.algebraMap_C, hnumA]
+    ring
+  rw [key]
+  rcases eq_or_ne (A.num %ₘ A.denom) 0 with h0 | h0
+  · exact Or.inl (by simp [h0])
+  · refine Or.inr ?_
+    rw [RatFunc.intDegree_div (by simpa using h0) hdenMap0, RatFunc.intDegree_polynomial,
+      RatFunc.intDegree_polynomial]
+    have h := Polynomial.natDegree_lt_natDegree h0 (Polynomial.degree_modByMonic_lt A.num hden)
+    omega
 
 variable {W}
 

@@ -40,6 +40,9 @@ of `G`.
   additive subgroup of `A` is open, and
   `UniformSpace.Completion.isOpen_topologicalClosure_map_coeRingHom` says the same of an open
   subring.
+* `UniformSpace.Completion.preimage_closure_image_coe`: for an *open* subgroup `G`, the preimage
+  under `A → Â` of the closure of the image of `G` is `G` itself. With the openness result above
+  this is the bijection of Wedhorn's Example 5.33 between the open subgroups of `A` and of `Â`.
 * `UniformSpace.Completion.ker_coeRingHom`: the kernel of `A → Â` is the closure of `⊥`.
 * `UniformSpace.Completion.isIntegrallyClosedIn_topologicalClosure_map_coeRingHom`:
   Huber's Lemma 2.4.3(iv), the closure in `Â` of the image of an open subring of `A` integrally
@@ -75,6 +78,19 @@ theorem isOpen_closure_image_coe {G : AddSubgroup A} (hG : IsOpen (G : Set A)) :
   have hmem := Completion.isDenseInducing_coe.closure_image_mem_nhds (hG.mem_nhds G.zero_mem)
   rw [Completion.coe_zero] at hmem
   exact AddSubgroup.isOpen_of_mem_nhds ((G.map Completion.toCompl).topologicalClosure) hmem
+
+/-- **An open additive subgroup is recovered from the closure of its image.** For `G` open, the
+preimage under `A → Â` of the closure of the image of `G` is `G` itself.
+
+This is the injectivity half of the bijection `G ↦ closure (ι '' G)` between the open subgroups of
+`A` and those of `Â` (Wedhorn, Example 5.33); `isOpen_closure_image_coe` says the map lands in open
+subgroups. Note it holds without assuming `A` separated: the kernel of `A → Â` is the closure of
+`⊥`, which lies in every neighbourhood of `0` and hence in the open `G`. -/
+theorem preimage_closure_image_coe {G : AddSubgroup A} (hG : IsOpen (G : Set A)) :
+    ((↑) : A → Completion A) ⁻¹' closure (((↑) : A → Completion A) '' (G : Set A))
+      = (G : Set A) := by
+  rw [← Completion.isDenseInducing_coe.isInducing.closure_eq_preimage_closure_image]
+  exact (AddSubgroup.isClosed_of_isOpen G hG).closure_eq
 
 end AddGroup
 

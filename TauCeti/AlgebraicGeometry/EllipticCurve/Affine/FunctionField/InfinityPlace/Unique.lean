@@ -8,6 +8,11 @@ module
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.FunctionField.InfinityPlace.Basic
 -- Proof-only: Mathlib's evaluation of a valuation of `F(x)` with `v X > 1` is used inside
 -- `val_algebraMap_eq_zpow_intDegree`; no statement here mentions Ostrowski's theorem.
+-- Proof-only: `CoordinateRing.mk_C_eq_algebraMap`, used in one rewrite below. NOT `public` — a
+-- public import would re-export `TauCeti.WeierstrassCurve.Affine` to downstream files, and any of
+-- them that `open WeierstrassCurve.Affine` inside `namespace TauCeti` would then resolve the open
+-- ambiguously and silently lose `_root_.WeierstrassCurve.Affine`.
+import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.CoordinateRing
 import Mathlib.NumberTheory.RatFunc.Ostrowski
 
 /-!
@@ -167,13 +172,6 @@ section Relation
 
 variable (W)
 
-/-- `AdjoinRoot.mk_C` in the `algebraMap` spelling the rewrite below wants. (`CoordinateRing.lean`
-carries a private lemma of the same shape; neither file exports one, and importing that file here
-for a one-line wrapper around a Mathlib lemma would pull in the Dedekind development.) -/
-private theorem coordinateRing_mk_C (p : F[X]) :
-    CoordinateRing.mk W (Polynomial.C p) = algebraMap F[X] W.CoordinateRing p :=
-  AdjoinRoot.mk_C p
-
 /-- **The Weierstrass equation, in the function field**:
 `y * (y + (a₁X + a₃)) = X³ + a₂X² + a₄X + a₆`. Grouping the two left-hand terms as a product is
 what makes the valuation of the left-hand side a product of two values, which is how the pole
@@ -189,7 +187,8 @@ theorem mk_Y_mul_add_eq :
       + algebraMap F[X] W.CoordinateRing (Polynomial.C W.a₁ * Polynomial.X + Polynomial.C W.a₃))
       = algebraMap F[X] W.CoordinateRing (Polynomial.X ^ 3 + Polynomial.C W.a₂ * Polynomial.X ^ 2
           + Polynomial.C W.a₄ * Polynomial.X + Polynomial.C W.a₆) := by
-    rw [← coordinateRing_mk_C, ← coordinateRing_mk_C, ← map_add, ← map_mul]
+    rw [← TauCeti.WeierstrassCurve.Affine.CoordinateRing.mk_C_eq_algebraMap,
+      ← TauCeti.WeierstrassCurve.Affine.CoordinateRing.mk_C_eq_algebraMap, ← map_add, ← map_mul]
     exact AdjoinRoot.mk_eq_mk.mpr ⟨1, by rw [polynomial]; ring1⟩
   rw [IsScalarTower.algebraMap_apply F[X] W.CoordinateRing W.FunctionField,
     IsScalarTower.algebraMap_apply F[X] W.CoordinateRing W.FunctionField, ← map_add, ← map_mul, hY]

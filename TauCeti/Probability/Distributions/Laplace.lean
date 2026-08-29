@@ -1,16 +1,21 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Claude
+Authors: Claude, Codex
 -/
 module
 
 public import TauCeti.Probability.Density
 public import Mathlib.Probability.CDF
+public import Mathlib.MeasureTheory.Measure.CharacteristicFunction.Basic
+public import Mathlib.Probability.Moments.Basic
+public import Mathlib.Probability.Moments.IntegrableExpMul
 public import Mathlib.Probability.Moments.Variance
+import TauCeti.Analysis.Fourier.ExpNegAbs
 import Mathlib.Analysis.SpecialFunctions.Gaussian.GaussianIntegral
 import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
 import Mathlib.MeasureTheory.Integral.Gamma
+import Mathlib.MeasureTheory.Function.JacobianOneDim
 import Mathlib.MeasureTheory.Measure.Lebesgue.Integral
 
 /-!
@@ -20,7 +25,8 @@ The Laplace law with location `μ` and scale `b` is the two-sided exponential la
 `(2 * b)⁻¹ * exp (-|x - μ| / b)`. This file defines it, proves it is a probability measure for
 `0 < b`, identifies it as a `MeasureTheory.HasPDF` law with that density, and computes the cdf,
 every absolute central moment, the mean, and the variance. The variance is derived from the second
-absolute central moment.
+absolute central moment. It also identifies the exact exponential-integrability domain and computes
+the moment-generating, cumulant-generating, and characteristic functions.
 
 **Boundary.** The scale must be positive for the two-sided exponential formula to normalize to a
 probability density, so both
@@ -44,6 +50,11 @@ hypothesis.
 * `integral_pow_abs_sub_laplaceMeasure` — the absolute central moments are `n ! * b ^ n`;
 * `integral_id_laplaceMeasure` — the mean is `μ`;
 * `variance_id_laplaceMeasure` — the variance is `2 * b ^ 2`;
+* `laplaceMeasure_map_add_const` — translation adds to the location parameter;
+* `integrableExpSet_id_laplaceMeasure` — exponential moments are finite exactly on
+  `(-b⁻¹, b⁻¹)`;
+* `mgf_id_laplaceMeasure`, `cgf_id_laplaceMeasure`, and `charFun_laplaceMeasure` — the three
+  standard transforms;
 * `measurable_laplaceMeasure` — the family is measurable in its two parameters, so it can be used
   as a kernel.
 
@@ -63,11 +74,7 @@ invariance of Lebesgue measure, and the variance is the second absolute central 
 
 ## References
 
-* Roadmap: `TauCetiRoadmap/StandardDistributions/README.md`, Layer 3, the **Laplace** target —
-  the measure and its density for `0 < b`, its vanishing for `b ≤ 0`, the mean `μ`, the variance
-  `2 * b ^ 2` and the cdf — together with the Laplace case of the items 1–4 required of every
-  family in "What every distribution must provide". The exponential-integrability domain, the mgf,
-  the cgf and the characteristic function of that same target are not proved here.
+* Roadmap: `TauCetiRoadmap/StandardDistributions/README.md`, Layer 3, the **Laplace** target.
 * Formal declaration scaffold: `TauCetiRoadmap/StandardDistributions/Suggested.lean`, Layer 3.
 * N. L. Johnson, S. Kotz, N. Balakrishnan, *Continuous Univariate Distributions*, vol. 2, 2nd ed.,
   Wiley (1995), ch. 24.
@@ -487,6 +494,232 @@ theorem variance_id_laplaceMeasure (hb : 0 < b) (μ : ℝ) :
   simp only [sq_abs] at h
   rw [h]
   norm_num
+
+private theorem laplaceMeasure_apply_eq_integral (μ b : ℝ) {s : Set ℝ} (hs : MeasurableSet s) :
+    laplaceMeasure μ b s = ENNReal.ofReal (∫ x in s, laplacePDFReal μ b x) := by
+  rw [laplaceMeasure_eq_withDensity]
+  rw [withDensity_apply _ hs]
+  simp_rw [laplacePDF_eq_ofReal]
+  rw [
+    ← ofReal_integral_eq_lintegral_ofReal (integrable_laplacePDFReal μ).integrableOn
+      (.of_forall fun x ↦ (laplacePDFReal_nonneg μ b x))]
+
+/-- Translating a Laplace distribution adds the translation to its location parameter. -/
+@[simp]
+theorem laplaceMeasure_map_add_const (μ y b : ℝ) :
+    (laplaceMeasure μ b).map (· + y) = laplaceMeasure (μ + y) b := by
+  by_cases hb : 0 < b
+  · let e : ℝ ≃ᵐ ℝ := (Homeomorph.addRight y).symm.toMeasurableEquiv
+    have he' : ∀ x, HasDerivAt e ((fun _ ↦ 1) x) x := fun x ↦ (hasDerivAt_id x).sub_const y
+    have he_symm : e.symm = (fun x : ℝ ↦ x + y) := by
+      ext x
+      simp [e, Homeomorph.addRight]
+    rw [← he_symm]
+    ext s hs
+    have hpdf : laplacePDF μ b = fun x ↦ ENNReal.ofReal (laplacePDFReal μ b x) := by
+      funext x
+      rw [laplacePDF_eq_ofReal]
+    rw [laplaceMeasure_eq_withDensity, hpdf]
+    rw [e.withDensity_ofReal_map_symm_apply_eq_integral_abs_deriv_mul' hs he'
+      (.of_forall fun x ↦ laplacePDFReal_nonneg μ b x) (integrable_laplacePDFReal μ),
+      laplaceMeasure_apply_eq_integral (μ + y) b hs]
+    simp only [abs_one, one_mul]
+    congr 2 with x
+    dsimp [e, Homeomorph.addRight]
+    rw [laplacePDFReal_of_pos hb, laplacePDFReal_of_pos hb]
+    congr 3
+    ring_nf
+  · simp [laplaceMeasure_of_nonpos (not_lt.mp hb)]
+
+/-! ### Exponential moments and transforms -/
+
+private lemma laplacePDFReal_mul_exp_eq_left (hb : 0 < b) {y : ℝ} (hy : y ≤ μ) (t : ℝ) :
+    Real.exp (t * y) * laplacePDFReal μ b y =
+      ((2 * b)⁻¹ * Real.exp (-(μ / b))) * Real.exp ((t + b⁻¹) * y) := by
+  rw [laplacePDFReal_eq_left hb hy]
+  calc
+    Real.exp (t * y) * ((2 * b)⁻¹ * Real.exp (-(μ / b)) * Real.exp (b⁻¹ * y)) =
+        ((2 * b)⁻¹ * Real.exp (-(μ / b))) *
+          (Real.exp (b⁻¹ * y) * Real.exp (t * y)) := by ring
+    _ = ((2 * b)⁻¹ * Real.exp (-(μ / b))) * Real.exp ((t + b⁻¹) * y) := by
+      rw [← Real.exp_add]
+      congr 2
+      ring
+
+private lemma laplacePDFReal_mul_exp_eq_right (hb : 0 < b) {y : ℝ} (hy : μ ≤ y) (t : ℝ) :
+    Real.exp (t * y) * laplacePDFReal μ b y =
+      ((2 * b)⁻¹ * Real.exp (μ / b)) * Real.exp ((t - b⁻¹) * y) := by
+  rw [laplacePDFReal_eq_right hb hy]
+  calc
+    Real.exp (t * y) * ((2 * b)⁻¹ * Real.exp (μ / b) * Real.exp (-b⁻¹ * y)) =
+        ((2 * b)⁻¹ * Real.exp (μ / b)) *
+          (Real.exp (-b⁻¹ * y) * Real.exp (t * y)) := by ring
+    _ = ((2 * b)⁻¹ * Real.exp (μ / b)) * Real.exp ((t - b⁻¹) * y) := by
+      rw [← Real.exp_add]
+      congr 2
+      ring
+
+/-- **The exact exponential-integrability threshold for a Laplace law.** For positive scale `b`,
+`exp (t * x)` is integrable exactly when `-b⁻¹ < t < b⁻¹`. -/
+@[simp]
+lemma integrable_exp_mul_laplaceMeasure_iff (hb : 0 < b) (μ t : ℝ) :
+    Integrable (fun x : ℝ => Real.exp (t * x)) (laplaceMeasure μ b) ↔
+      t ∈ Set.Ioo (-b⁻¹) b⁻¹ := by
+  rw [laplaceMeasure_eq_withDensity,
+    integrable_withDensity_iff (measurable_laplacePDF μ b)
+      (ae_of_all _ fun y => ENNReal.ofReal_lt_top)]
+  simp only [toReal_laplacePDF]
+  have hc_left : (2 * b)⁻¹ * Real.exp (-(μ / b)) ≠ 0 :=
+    (mul_pos (inv_pos.mpr (mul_pos (by norm_num) hb)) (Real.exp_pos _)).ne'
+  have hc_right : (2 * b)⁻¹ * Real.exp (μ / b) ≠ 0 :=
+    (mul_pos (inv_pos.mpr (mul_pos (by norm_num) hb)) (Real.exp_pos _)).ne'
+  constructor
+  · intro h
+    have hl := h.integrableOn.congr_fun
+      (fun y hy => laplacePDFReal_mul_exp_eq_left hb hy t) measurableSet_Iic
+    have hr := h.integrableOn.congr_fun
+      (fun y hy => laplacePDFReal_mul_exp_eq_right hb (mem_Ioi.mp hy).le t) measurableSet_Ioi
+    have hl' : IntegrableOn (fun y : ℝ => Real.exp ((t + b⁻¹) * y)) (Iic μ) :=
+      (integrable_const_mul_iff (isUnit_iff_ne_zero.mpr hc_left) _).mp hl
+    have hr' : IntegrableOn (fun y : ℝ => Real.exp ((t - b⁻¹) * y)) (Ioi μ) :=
+      (integrable_const_mul_iff (isUnit_iff_ne_zero.mpr hc_right) _).mp hr
+    exact ⟨by have := integrableOn_exp_mul_Iic_iff.mp hl'; linarith,
+      by have := integrableOn_exp_mul_Ioi_iff.mp hr'; linarith⟩
+  · rintro ⟨ht_lower, ht_upper⟩
+    have hl' : IntegrableOn (fun y : ℝ => Real.exp ((t + b⁻¹) * y)) (Iic μ) :=
+      integrableOn_exp_mul_Iic_iff.mpr (by linarith)
+    have hr' : IntegrableOn (fun y : ℝ => Real.exp ((t - b⁻¹) * y)) (Ioi μ) :=
+      integrableOn_exp_mul_Ioi_iff.mpr (by linarith)
+    have hl : IntegrableOn (fun y : ℝ => Real.exp (t * y) * laplacePDFReal μ b y)
+        (Iic μ) :=
+      IntegrableOn.congr_fun (hl'.const_mul ((2 * b)⁻¹ * Real.exp (-(μ / b))))
+        (fun y hy => (laplacePDFReal_mul_exp_eq_left hb hy t).symm) measurableSet_Iic
+    have hr : IntegrableOn (fun y : ℝ => Real.exp (t * y) * laplacePDFReal μ b y)
+        (Ioi μ) :=
+      IntegrableOn.congr_fun (hr'.const_mul ((2 * b)⁻¹ * Real.exp (μ / b)))
+        (fun y hy => (laplacePDFReal_mul_exp_eq_right hb (mem_Ioi.mp hy).le t).symm)
+        measurableSet_Ioi
+    rw [← integrableOn_univ, ← Iic_union_Ioi (a := μ)]
+    exact hl.union hr
+
+/-- **The exact exponential-integrability domain** of a Laplace law with positive scale `b` is
+`(-b⁻¹, b⁻¹)`. -/
+@[simp]
+theorem integrableExpSet_id_laplaceMeasure (hb : 0 < b) (μ : ℝ) :
+    integrableExpSet id (laplaceMeasure μ b) = Set.Ioo (-b⁻¹) b⁻¹ := by
+  ext t
+  simpa [integrableExpSet] using integrable_exp_mul_laplaceMeasure_iff hb μ t
+
+/-- **The moment-generating function of a Laplace law** with location `μ` and positive scale `b`,
+on its exact finiteness domain. -/
+@[simp]
+theorem mgf_id_laplaceMeasure (hb : 0 < b) (μ : ℝ) {t : ℝ}
+    (ht : t ∈ Set.Ioo (-b⁻¹) b⁻¹) :
+    mgf id (laplaceMeasure μ b) t = Real.exp (μ * t) / (1 - b ^ 2 * t ^ 2) := by
+  have hmeasure : Integrable (fun y : ℝ => Real.exp (t * y)) (laplaceMeasure μ b) :=
+    (integrable_exp_mul_laplaceMeasure_iff hb μ t).2 ht
+  have hint : Integrable
+      (fun y : ℝ => laplacePDFReal μ b y * Real.exp (t * y)) := by
+    rw [laplaceMeasure_eq_withDensity,
+      integrable_withDensity_iff (measurable_laplacePDF μ b)
+        (ae_of_all _ fun y => ENNReal.ofReal_lt_top)] at hmeasure
+    simpa only [toReal_laplacePDF, smul_eq_mul, mul_comm] using hmeasure
+  rw [mgf, laplaceMeasure_eq_withDensity, integral_withDensity_eq_integral_toReal_smul
+    (measurable_laplacePDF μ b) (ae_of_all _ fun y => ENNReal.ofReal_lt_top)]
+  simp only [id_eq, toReal_laplacePDF, smul_eq_mul]
+  rw [← intervalIntegral.integral_Iic_add_Ioi hint.integrableOn hint.integrableOn,
+    setIntegral_congr_fun measurableSet_Iic (fun y hy => by
+      calc
+        laplacePDFReal μ b y * Real.exp (t * y) =
+            Real.exp (t * y) * laplacePDFReal μ b y := mul_comm _ _
+        _ = _ := laplacePDFReal_mul_exp_eq_left hb hy t),
+    setIntegral_congr_fun measurableSet_Ioi (fun y hy => by
+      calc
+        laplacePDFReal μ b y * Real.exp (t * y) =
+            Real.exp (t * y) * laplacePDFReal μ b y := mul_comm _ _
+        _ = _ := laplacePDFReal_mul_exp_eq_right hb (mem_Ioi.mp hy).le t),
+    integral_const_mul, integral_exp_mul_Iic (by linarith [ht.1]) μ,
+    integral_const_mul, integral_exp_mul_Ioi (by linarith [ht.2]) μ]
+  have hb_inv : b * b⁻¹ = 1 := by field_simp
+  have hplus : 0 < 1 + b * t := by
+    nlinarith [mul_pos hb (show 0 < t + b⁻¹ by linarith [ht.1])]
+  have hminus : 0 < 1 - b * t := by
+    nlinarith [mul_pos hb (show 0 < b⁻¹ - t by linarith [ht.2])]
+  have hden : 1 - b ^ 2 * t ^ 2 ≠ 0 := by
+    have : 0 < (1 - b * t) * (1 + b * t) := mul_pos hminus hplus
+    nlinarith
+  have hleft : t + b⁻¹ ≠ 0 := ne_of_gt (by linarith [ht.1])
+  have hright : t - b⁻¹ ≠ 0 := ne_of_lt (by linarith [ht.2])
+  have hplus_ne : b * t + 1 ≠ 0 := by nlinarith
+  have hminus_ne : b * t - 1 ≠ 0 := by nlinarith
+  have hexp_left :
+      Real.exp (-(μ / b)) * Real.exp (μ * (b * t + 1) / b) = Real.exp (μ * t) := by
+    rw [← Real.exp_add]
+    congr 1
+    field_simp
+    ring
+  have hexp_right :
+      Real.exp (μ / b) * Real.exp (μ * (b * t - 1) / b) = Real.exp (μ * t) := by
+    rw [← Real.exp_add]
+    congr 1
+    field_simp
+    ring
+  field_simp
+  rw [hexp_left, mul_assoc (b * t + 1), hexp_right]
+  ring
+
+/-- **The cumulant-generating function of a Laplace law** is the real logarithm of its mgf on
+the exact finiteness domain. -/
+@[simp]
+theorem cgf_id_laplaceMeasure (hb : 0 < b) (μ : ℝ) {t : ℝ}
+    (ht : t ∈ Set.Ioo (-b⁻¹) b⁻¹) :
+    cgf id (laplaceMeasure μ b) t =
+      Real.log (Real.exp (μ * t) / (1 - b ^ 2 * t ^ 2)) := by
+  rw [cgf, mgf_id_laplaceMeasure hb μ ht]
+
+private theorem charFun_laplaceMeasure_zero_loc (hb : 0 < b) (t : ℝ) :
+    charFun (laplaceMeasure 0 b) t = ((1 / (1 + b ^ 2 * t ^ 2) : ℝ) : ℂ) := by
+  have hpair := integral_exp_mul_I_mul_exp_neg_mul_abs (inv_pos.mpr hb) t
+  rw [charFun_apply_real, laplaceMeasure_eq_withDensity,
+    integral_withDensity_eq_integral_toReal_smul (measurable_laplacePDF 0 b)
+      (ae_of_all _ fun x => ENNReal.ofReal_lt_top)]
+  simp_rw [toReal_laplacePDF]
+  calc
+    (∫ x : ℝ, laplacePDFReal 0 b x •
+          Complex.exp ((t : ℂ) * x * Complex.I)) =
+        (((2 * b)⁻¹ : ℝ) : ℂ) *
+          ∫ x : ℝ, Complex.exp ((t : ℂ) * x * Complex.I) *
+            (Real.exp (-(b⁻¹ * |x|)) : ℂ) := by
+      rw [← integral_const_mul]
+      refine integral_congr_ae (.of_forall fun x ↦ ?_)
+      dsimp only
+      rw [Complex.real_smul, laplacePDFReal_of_pos hb]
+      simp only [sub_zero]
+      have hdecay : -|x| / b = -(b⁻¹ * |x|) := by
+        field_simp
+      rw [hdecay, Complex.ofReal_exp]
+      push_cast
+      ring
+    _ = (((2 * b)⁻¹ : ℝ) : ℂ) *
+        ((2 * b⁻¹ / (b⁻¹ ^ 2 + t ^ 2) : ℝ) : ℂ) := by rw [hpair]
+    _ = ((1 / (1 + b ^ 2 * t ^ 2) : ℝ) : ℂ) := by
+      norm_cast
+      have hb0 : b ≠ 0 := hb.ne'
+      have hden : b⁻¹ ^ 2 + t ^ 2 ≠ 0 := by positivity
+      field_simp
+
+/-- **The characteristic function of a Laplace law** with location `μ` and positive scale `b` is
+`exp (i μ t) / (1 + b²t²)`. -/
+@[simp]
+theorem charFun_laplaceMeasure (hb : 0 < b) (μ t : ℝ) :
+    charFun (laplaceMeasure μ b) t =
+      Complex.exp (Complex.I * μ * t) / (1 + b ^ 2 * t ^ 2) := by
+  have hmap := laplaceMeasure_map_add_const 0 μ b
+  simp only [zero_add] at hmap
+  rw [← hmap, charFun_map_add_const, charFun_laplaceMeasure_zero_loc hb]
+  simp only [RCLike.inner_apply, conj_trivial]
+  push_cast
+  ring_nf
 
 /-! ### Measurability in the parameters -/
 

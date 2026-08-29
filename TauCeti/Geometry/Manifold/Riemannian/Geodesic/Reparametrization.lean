@@ -85,13 +85,9 @@ theorem IsGeodesicCurveOn.comp_affine (h : IsGeodesicCurveOn I γ s) (a b : ℝ)
         (h.mdifferentiableOn (φ t) (hmaps ht)))).differentiableWithinAt
     have hsection : DifferentiableWithinAt ℝ
         (sectionCoord (F := E) γ (curveVelocityWithin I γ s) (γ (φ t))) s (φ t) := by
-      let _ : IsManifold I ((1 : ℕ∞ω) + 1) M := IsManifold.of_le (n := 2) (by norm_num)
-      have hγ : ContMDiffOn 𝓘(ℝ, ℝ) I ((1 : ℕ∞ω) + 1) γ s := by
-        norm_num
-        exact h.contMDiffOn
-      exact (contDiffWithinAt_sectionCoord_curveVelocityWithin γ h.uniqueDiffOn hγ (hmaps ht)
-        (FiberBundle.mem_baseSet_trivializationAt E (TangentSpace I)
-          (γ (φ t)))).differentiableWithinAt (by norm_num)
+      exact differentiableWithinAt_sectionCoord_curveVelocityWithin γ h.uniqueDiffOn
+        h.contMDiffOn (hmaps ht) (FiberBundle.mem_baseSet_trivializationAt E (TangentSpace I)
+          (γ (φ t)))
     have hvelocity (r : ℝ) (hr : r ∈ u) :
         curveVelocityWithin I (γ ∘ φ) u r =
           a • curveVelocityWithin I γ s (φ r) :=

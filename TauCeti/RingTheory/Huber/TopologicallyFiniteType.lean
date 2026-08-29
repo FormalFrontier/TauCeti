@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.Topology.Algebra.Ring.Ideal
 public import TauCeti.RingTheory.Huber.WeightedRestrictedSeries.Completion
 
 /-!
@@ -69,6 +70,15 @@ it.
   topologically of finite type implies topologically of finite type, by the trivial weight family.
 * `TauCeti.Huber.IsTopologicallyFiniteType.continuous`: such a `φ` is continuous, since it factors
   through the presenting algebra's structure map.
+* `TauCeti.Huber.IsStrictlyTopologicallyFiniteType.comp_isOpenQuotientMap` and
+  `TauCeti.Huber.IsTopologicallyFiniteType.comp_isOpenQuotientMap`: both notions are stable under
+  composing with a further open quotient map.
+* `TauCeti.Huber.IsStrictlyTopologicallyFiniteType.quotientMk` and
+  `TauCeti.Huber.IsTopologicallyFiniteType.quotientMk`: in particular, stable under passing to a
+  quotient by an ideal.
+* `TauCeti.Huber.isStrictlyTopologicallyFiniteType_quotientMk_algebraMap`: every quotient of
+  `A⟨X₁, …, Xₖ⟩` is strictly topologically of finite type over `A` — the shape of every Laurent
+  and rational presentation.
 
 ## References
 
@@ -139,5 +149,62 @@ theorem IsTopologicallyFiniteType.continuous {φ : A →+* B} (h : IsTopological
   obtain ⟨k, T, _, hT, π, hπ, hcomm⟩ := h
   rw [← hcomm]
   exact hπ.continuous.comp (continuous_algebraMap_completion_weightedRestrictedSubring k A hT)
+
+/-! ### Stability under a further open quotient
+
+Wedhorn presents an algebra topologically of finite type as an open quotient of a restricted
+power-series ring, so composing that presentation with another open quotient map is again a
+presentation of the same shape. This is what lets a *quotient* of `A⟨X₁, …, Xₖ⟩` — the form every
+rational localisation and Laurent presentation takes — inherit finite type without exhibiting a
+fresh presentation by hand.
+-/
+
+section OpenQuotient
+
+variable {C : Type*} [CommRing C] [TopologicalSpace C]
+
+/-- **A strict presentation pushes along an open quotient map.** If `φ : A → B` is strictly
+topologically of finite type and `ψ : B → C` is an open quotient map, then so is `ψ ∘ φ`: compose
+the presenting `A⟨X₁, …, Xₖ⟩ ↠ B` with `ψ`, and use that open quotient maps compose. -/
+theorem IsStrictlyTopologicallyFiniteType.comp_isOpenQuotientMap {φ : A →+* B} {ψ : B →+* C}
+    (h : IsStrictlyTopologicallyFiniteType φ) (hψ : IsOpenQuotientMap ψ) :
+    IsStrictlyTopologicallyFiniteType (ψ.comp φ) := by
+  obtain ⟨k, π, hπ, hcomm⟩ := h
+  exact ⟨k, ψ.comp π, hψ.comp hπ, by rw [RingHom.comp_assoc, hcomm]⟩
+
+/-- **A presentation pushes along an open quotient map**, the weighted form of
+`TauCeti.Huber.IsStrictlyTopologicallyFiniteType.comp_isOpenQuotientMap`. The weight family is
+carried across unchanged; only the presenting map moves. -/
+theorem IsTopologicallyFiniteType.comp_isOpenQuotientMap {φ : A →+* B} {ψ : B →+* C}
+    (h : IsTopologicallyFiniteType φ) (hψ : IsOpenQuotientMap ψ) :
+    IsTopologicallyFiniteType (ψ.comp φ) := by
+  obtain ⟨k, T, hTfin, hT, π, hπ, hcomm⟩ := h
+  exact ⟨k, T, hTfin, hT, ψ.comp π, hψ.comp hπ, by rw [RingHom.comp_assoc, hcomm]⟩
+
+variable [IsTopologicalRing B]
+
+/-- **Strict finite type passes to a quotient by an ideal.** The quotient map of a topological
+ring is an open quotient map, so this is the previous lemma at `ψ = Ideal.Quotient.mk I`. -/
+theorem IsStrictlyTopologicallyFiniteType.quotientMk {φ : A →+* B}
+    (h : IsStrictlyTopologicallyFiniteType φ) (I : Ideal B) :
+    IsStrictlyTopologicallyFiniteType ((Ideal.Quotient.mk I).comp φ) :=
+  h.comp_isOpenQuotientMap (QuotientRing.isOpenQuotientMap_mk I)
+
+/-- **Finite type passes to a quotient by an ideal.** -/
+theorem IsTopologicallyFiniteType.quotientMk {φ : A →+* B} (h : IsTopologicallyFiniteType φ)
+    (I : Ideal B) : IsTopologicallyFiniteType ((Ideal.Quotient.mk I).comp φ) :=
+  h.comp_isOpenQuotientMap (QuotientRing.isOpenQuotientMap_mk I)
+
+/-- **Every quotient of `A⟨X₁, …, Xₖ⟩` is strictly topologically of finite type over `A`.** This is
+the form every Laurent and rational presentation takes — Wedhorn's Examples 6.38 and 6.39 exhibit
+their rings this way — so it is the statement those examples reduce to once the presenting ideal
+is named. -/
+theorem isStrictlyTopologicallyFiniteType_quotientMk_algebraMap (k : ℕ)
+    (I : Ideal (restrictedMvPowerSeriesCompletion k A)) :
+    IsStrictlyTopologicallyFiniteType
+      ((Ideal.Quotient.mk I).comp (algebraMap A (restrictedMvPowerSeriesCompletion k A))) :=
+  (isStrictlyTopologicallyFiniteType_algebraMap k).quotientMk I
+
+end OpenQuotient
 
 end TauCeti.Huber

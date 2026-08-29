@@ -44,6 +44,8 @@ needed in Layer 2 of the ReductiveGroups roadmap.
   vanishing means that the defining ideal has no linear term at the identity.
 * `TauCeti.HopfIdeal.finrank_quotientLie_add_finrank_conormal`: the resulting dimension formula.
 * `TauCeti.HopfIdeal.finrank_quotientLie_le`: the resulting closed-subgroup dimension bound.
+* `TauCeti.HopfIdeal.exists_maximal_finrank_quotientLie`: every nonempty family of closed
+  subgroups contains one of maximal Lie dimension.
 * `TauCeti.HopfIdeal.finrank_quotientLie_antitone`: inclusion of closed subgroups cannot increase
   Lie dimension.
 
@@ -391,6 +393,44 @@ theorem finrank_quotientLie_le (I : HopfIdeal k H)
         (Derivation k H (Bialgebra.CounitAlgebra k H k)) := by
   have h := finrank_quotientLie_add_finrank_conormal I
   omega
+
+/-- Every nonempty family of closed affine subgroups contains one of maximal Lie dimension.
+
+The family is specified by a predicate on its defining Hopf ideals. Its attained dimensions lie
+in the finite interval from zero to the Lie dimension of the ambient group, so a maximum exists
+without any finiteness assumption on the family itself. -/
+theorem exists_maximal_finrank_quotientLie
+    [FiniteDimensional k (Bialgebra.CotangentSpace k H)]
+    (P : HopfIdeal k H → Prop) (hP : ∃ I, P I) :
+    ∃ I : HopfIdeal k H, P I ∧
+      ∀ J : HopfIdeal k H, P J →
+        Module.finrank k
+            (Derivation k (H ⧸ J.toIdeal)
+              (Bialgebra.CounitAlgebra k (H ⧸ J.toIdeal) k)) ≤
+          Module.finrank k
+            (Derivation k (H ⧸ I.toIdeal)
+              (Bialgebra.CounitAlgebra k (H ⧸ I.toIdeal) k)) := by
+  let dimensions : Set ℕ := {n | ∃ I : HopfIdeal k H, P I ∧
+    Module.finrank k
+      (Derivation k (H ⧸ I.toIdeal)
+        (Bialgebra.CounitAlgebra k (H ⧸ I.toIdeal) k)) = n}
+  have hdimensions_finite : dimensions.Finite := by
+    apply (Set.finite_Iic
+      (Module.finrank k (Derivation k H (Bialgebra.CounitAlgebra k H k)))).subset
+    rintro n ⟨I, _, rfl⟩
+    exact finrank_quotientLie_le I
+  have hdimensions_nonempty : dimensions.Nonempty := by
+    obtain ⟨I, hI⟩ := hP
+    exact ⟨_, I, hI, rfl⟩
+  obtain ⟨n, hn, hnmax⟩ :=
+    Set.exists_max_image dimensions id hdimensions_finite hdimensions_nonempty
+  obtain ⟨I, hI, hIn⟩ := hn
+  refine ⟨I, hI, fun J hJ ↦ ?_⟩
+  have hJmem : Module.finrank k
+      (Derivation k (H ⧸ J.toIdeal)
+        (Bialgebra.CounitAlgebra k (H ⧸ J.toIdeal) k)) ∈ dimensions :=
+    ⟨J, hJ, rfl⟩
+  simpa only [id_eq, hIn] using hnmax _ hJmem
 
 /-- Lie dimension is antitone in the defining Hopf ideal: if `I ≤ J`, then the closed subgroup
 cut out by `J` is contained in the one cut out by `I`, so its Lie dimension is no larger. -/

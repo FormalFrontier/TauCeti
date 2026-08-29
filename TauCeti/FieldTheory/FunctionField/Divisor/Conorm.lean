@@ -8,7 +8,7 @@ module
 public import TauCeti.AlgebraicGeometry.WeilDivisor.FiniteSum
 public import TauCeti.FieldTheory.FunctionField.Divisor.Principal
 public import TauCeti.FieldTheory.FunctionField.Place.Extension.Existence
-public import TauCeti.FieldTheory.FunctionField.Place.Extension.Fibre
+public import TauCeti.FieldTheory.FunctionField.Place.Extension.Fundamental
 public import TauCeti.FieldTheory.FunctionField.Place.Extension.Tower
 
 /-!
@@ -29,9 +29,11 @@ The conorm carries the divisor of a function `z` to the divisor of its image in 
 `F` the order function at `P'` is `e(P' ∣ P)` times the order function at `P`.  Hence it descends
 to a homomorphism of divisor class groups.
 
-The degree identity `[k' : k] · deg (Con D) = [F' : F] · deg D` is **not** proved here: it needs
-the fundamental identity `∑_{P' ∣ P} e(P' ∣ P) f(P' ∣ P) = [F' : F]`, of which only the
-inequality (`TauCeti.Place.sum_ramificationIdx_mul_relativeDegree_le_finrank`) is available.
+The degree identity `[k' : k] · deg (Con D) = [F' : F] · deg D` is proved here from the
+fundamental identity `∑_{P' ∣ P} e(P' ∣ P) f(P' ∣ P) = [F' : F]`, so it carries that identity's
+separability hypothesis on `F' / F`.  It is stated cross-multiplied, since the divisibility
+`[k' : k] ∣ [F' : F]` that would turn it into `deg (Con D) = ([F' : F] / [k' : k]) · deg D` is
+itself a theorem, available when `F` and `k'` are linearly disjoint over `k`.
 
 ## Main definitions
 
@@ -50,6 +52,8 @@ inequality (`TauCeti.Place.sum_ramificationIdx_mul_relativeDegree_le_finrank`) i
 * `TauCeti.Divisor.conorm_principal`: the conorm of `div z` is the divisor of the image of `z`
   (Stichtenoth, Proposition 3.1.9).
 * `TauCeti.Divisor.conorm_injective`: the conorm is injective.
+* `TauCeti.Divisor.finrank_mul_degree_conorm`: **the degree of a conorm**,
+  `[k' : k] · deg (Con D) = [F' : F] · deg D` (Stichtenoth, Corollary 3.1.14).
 
 ## Implementation notes
 
@@ -173,6 +177,60 @@ theorem conorm_injective [Algebra.IsIntegral k k'] (hF' : IsFunctionField k' F')
   have he : (Place.ramificationIdx F P' : ℤ) ≠ 0 :=
     Nat.cast_ne_zero.mpr (Place.ramificationIdx_pos F P').ne'
   exact mul_left_cancel₀ he hP'
+
+/-! ### The degree of a conorm -/
+
+section Degree
+
+variable [Algebra.IsIntegral k k'] [Algebra.IsSeparable F F']
+
+/-- The degree of the conorm of a place: `[k' : k] · deg (Con P) = [F' : F] · deg P`.  The
+fundamental identity sums the products `e(P' ∣ P) · f(P' ∣ P)` over the fibre, and
+`TauCeti.Place.finrank_mul_degree_eq_relativeDegree_mul_degree_restrict` turns each residue degree
+`f(P' ∣ P)` into the ratio of the degrees of `P'` and `P`.  This is the case from which the
+general identity follows by additivity. -/
+private theorem finrank_mul_degree_conorm_ofPoint (P : Place k F) :
+    (Module.finrank k k' : ℤ) * degree (conorm k' F' (WeilDivisor.ofPoint P)) =
+      (Module.finrank F F' : ℤ) * P.degree := by
+  classical
+  set s := (Place.finite_setOf_restrict_eq (k' := k') (F' := F') k F P).toFinset with hsdef
+  have hs : ∀ P' : Place k' F', P' ∈ s ↔ P'.restrict k F = P := fun _ ↦ Set.Finite.mem_toFinset _
+  have hdeg : degree (conorm k' F' (WeilDivisor.ofPoint P)) =
+      ∑ P' ∈ s, (Place.ramificationIdx F P' : ℤ) * P'.degree := by
+    rw [conorm_ofPoint, ← hsdef, WeilDivisor.ofFinsetWithMultiplicity_eq_sum, map_sum]
+    exact Finset.sum_congr rfl fun P' _ ↦ by rw [degree_zsmul, degree_ofPoint]
+  have hterm : ∀ P' ∈ s,
+      (Module.finrank k k' : ℤ) * ((Place.ramificationIdx F P' : ℤ) * P'.degree) =
+        ((Place.ramificationIdx F P' * Place.relativeDegree k F P' : ℕ) : ℤ) * P.degree := by
+    intro P' hP'
+    have hrel := Place.finrank_mul_degree_eq_relativeDegree_mul_degree_restrict k F P'
+    rw [(hs P').mp hP'] at hrel
+    have hrel' : (Module.finrank k k' : ℤ) * (P'.degree : ℤ) =
+        (Place.relativeDegree k F P' : ℤ) * (P.degree : ℤ) := by exact_mod_cast hrel
+    push_cast
+    linear_combination (Place.ramificationIdx F P' : ℤ) * hrel'
+  rw [hdeg, Finset.mul_sum, Finset.sum_congr rfl hterm, ← Finset.sum_mul, ← Nat.cast_sum,
+    Place.sum_ramificationIdx_mul_relativeDegree_eq_finrank_of_isSeparable k F P hs]
+
+/-- **The degree of a conorm** (Stichtenoth, Corollary 3.1.14): the conorm multiplies degrees by
+the geometric degree of the extension.  The identity is stated cross-multiplied, as
+`[k' : k] · deg (Con D) = [F' : F] · deg D`: the divisibility `[k' : k] ∣ [F' : F]` needed to
+divide through is a separate theorem, available when `F` and `k'` are linearly disjoint
+over `k`.
+
+The separability hypothesis is the one carried by
+`TauCeti.Place.sum_ramificationIdx_mul_relativeDegree_eq_finrank_of_isSeparable`. -/
+theorem finrank_mul_degree_conorm (D : Divisor k F) :
+    (Module.finrank k k' : ℤ) * degree (conorm k' F' D) = (Module.finrank F F' : ℤ) * degree D := by
+  induction D using Finsupp.induction_linear with
+  | zero => simp
+  | add D E hD hE => simp only [map_add, mul_add, hD, hE]
+  | single P n =>
+    rw [WeilDivisor.single_eq_zsmul_ofPoint, map_zsmul, degree_zsmul, degree_zsmul,
+      degree_ofPoint]
+    linear_combination (n : ℤ) * finrank_mul_degree_conorm_ofPoint k' F' P
+
+end Degree
 
 /-! ### Principal divisors and divisor classes -/
 

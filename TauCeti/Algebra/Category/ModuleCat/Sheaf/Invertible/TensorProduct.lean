@@ -6,19 +6,19 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Category.ModuleCat.Sheaf.Invertible.Basic
+public import TauCeti.Algebra.Category.ModuleCat.Sheaf.Free
 public import TauCeti.Algebra.Category.ModuleCat.Sheaf.TensorProduct
 
 /-!
 # Tensor products with trivial invertible sheaves
 
 For a sheaf of commutative rings `R` on a site, the free sheaf of `R`-modules on one generator
-is canonically isomorphic to the tensor unit. Consequently, tensoring an invertible sheaf with a
-globally trivial rank-one sheaf preserves invertibility.
+is canonically isomorphic to the tensor unit by `SheafOfModules.freePUnitIsoUnit`, defined in
+`TauCeti/Algebra/Category/ModuleCat/Sheaf/Free.lean`. This file uses that comparison to show that
+tensoring an invertible sheaf with a globally trivial rank-one sheaf preserves invertibility.
 
 ## Main declarations
 
-* `SheafOfModules.freePUnitIsoUnit` identifies the standard free rank-one sheaf with the sheaf
-  of rings;
 * `SheafOfModules.tensorProductFreePUnitIsoLeft` and
   `SheafOfModules.tensorProductFreePUnitIsoRight` identify tensoring with that standard sheaf
   with the identity;
@@ -33,8 +33,8 @@ the standard free rank-one sheaf there. This advances
 Picard group `Pic X` under `⊗`". The common-refinement and restriction compatibility needed for
 the full closure theorem remain subsequent work.
 
-No formalization is vendored. The construction reuses Mathlib's
-`CategoryTheory.Limits.coproductUniqueIso` and Tau Ceti's sheafified tensor-unit isomorphisms.
+No formalization is vendored. The construction reuses Tau Ceti's generic free-rank-one/unit
+comparison and sheafified tensor-unit isomorphisms.
 -/
 
 public section
@@ -53,11 +53,6 @@ variable [∀ Y : C, HasWeakSheafify (J.over Y) AddCommGrpCat.{u}]
 variable [∀ Y : C, (J.over Y).WEqualsLocallyBijective AddCommGrpCat.{u}]
 
 namespace SheafOfModules
-
-/-- The free sheaf on one generator is canonically isomorphic to the tensor unit. -/
-def freePUnitIsoUnit (S : Sheaf J RingCat.{u}) :
-    _root_.SheafOfModules.free (R := S) PUnit ≅ _root_.SheafOfModules.unit S :=
-  coproductUniqueIso (fun _ : PUnit ↦ _root_.SheafOfModules.unit S)
 
 variable (R : Sheaf J CommRingCat.{u})
 

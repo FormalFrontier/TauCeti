@@ -30,6 +30,8 @@ off from residues.
 
 ## Main results
 
+* `NumberField.ncard_primesOver_eq_finrank_iff_of_isGalois`: the relative criterion over an
+  arbitrary Dedekind base.
 * `NumberField.ncard_primesOver_eq_finrank_iff`: the rational-prime specialization.
 * `NumberField.bijective_algebraMap_quotient_of_ncard_primesOver_eq_finrank`:
   complete splitting makes each residue field the prime field.
@@ -58,7 +60,10 @@ namespace NumberField
 variable (K L : Type*) [Field K] [Field L] [NumberField K] [NumberField L] [Algebra K L]
   [IsGalois K L]
 
-private theorem ncard_primesOver_eq_finrank_iff_of_isGalois {A : Type*} [CommRing A]
+/-- In a Galois extension of number fields, the number of primes over a maximal ideal of a
+Dedekind base equals the relative degree iff the common ramification index and inertia degree
+are both `1`. -/
+theorem ncard_primesOver_eq_finrank_iff_of_isGalois {A : Type*} [CommRing A]
     [IsDedekindDomain A] [Algebra A (𝓞 L)] [Module.Finite A (𝓞 L)]
     [IsTorsionFree A (𝓞 L)] [IsGaloisGroup Gal(L/K) A (𝓞 L)] (P : Ideal A) [P.IsMaximal] :
     (primesOver P (𝓞 L)).ncard = finrank K L ↔
