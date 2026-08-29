@@ -8,7 +8,7 @@ module
 public import TauCeti.Analysis.Normed.Module.FilledHull
 import Mathlib.Analysis.Calculus.Deriv.Slope
 import Mathlib.MeasureTheory.Integral.CircleIntegral
-import TauCeti.Analysis.Complex.Conformal.Crosscut.Basic
+import TauCeti.Analysis.Complex.Conformal.Crosscut.Endpoints
 public import TauCeti.Analysis.Complex.Conformal.Crosscut.Image
 import TauCeti.Analysis.Complex.Conformal.InverseFunction
 import TauCeti.Analysis.Contour.Winding.Separation
