@@ -68,12 +68,10 @@ private theorem p_pow_ne_zero (p : ℕ) [h : Fact p.Prime] (n : ℕ) :
 /-! ### Elementary values of the `p`-adic valuations -/
 
 /-- The `p`-adic valuation of `p ^ n` is `n`. -/
-@[simp]
 theorem valuation_p_pow (n : ℕ) : ((p : ℚ_[p]) ^ n).valuation = n := by
   rw [valuation_pow, valuation_p, mul_one]
 
 /-- The multiplicative `p`-adic valuation of `p ^ n` is `exp (-(n : ℤ))`. -/
-@[simp]
 theorem mulValuation_p_pow (n : ℕ) :
     mulValuation ((p : ℚ_[p]) ^ n) = exp (-(n : ℤ)) := by
   have hp0 := p_pow_ne_zero p n
