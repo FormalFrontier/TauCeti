@@ -28,7 +28,7 @@ is that condition wherever the `q`-power map is an involution. At the generality
 subring fixed by the `q ^ 2`-power Frobenius, and every entry of a fixed point lies in that
 subring by `TauCeti.SlStd.mem_frobeniusFixedSubring_of_twistedFrobenius_eq_self`. To read the
 fixed group inside `GL_{r+1}(A)`, rewrite with `TauCeti.map_subtype_fixedSubgroup_of_coe_eq` and
-`TauCeti.SlStd.coe_twistedFrobenius` and then with the equivalence below.
+`TauCeti.SlStd.coe_twistedFrobenius` and then with either equivalence below.
 
 For `p` prime, `0 < k`, `2 ≤ r`, and `A` an algebraic closure of `ZMod p`, that subring is the
 field of `q ^ 2` elements and the equation here is the usual unitary equation of the twisted
