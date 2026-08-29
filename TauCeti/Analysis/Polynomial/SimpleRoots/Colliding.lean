@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Analysis.RCLike.Basic
 public import Mathlib.FieldTheory.IsAlgClosed.Basic
 import Mathlib.Algebra.MvPolynomial.Monad
 public import Mathlib.RingTheory.MvPolynomial.Symmetric.FundamentalTheorem
@@ -13,21 +12,21 @@ public import TauCeti.Analysis.Polynomial.SymmetricPower
 import Mathlib.Analysis.Analytic.Polynomial
 
 /-!
-# Polynomial coordinate changes on the symmetric-power chart at colliding tuples
+# Polynomial maps on the symmetric-power chart at colliding tuples
 
 The elementary symmetric chart `TauCeti.Sym.coeffEquiv` presents the `n`-th symmetric power of an
 algebraically closed field as the affine space `Fin n → 𝕜` of lower coefficients. Postcomposing
-the points of a tuple with a map `φ : 𝕜 → 𝕜` induces a coordinate change on the chart, and at a
-tuple whose points are pairwise distinct that change is analytic whenever `φ` is
+the points of a tuple with a map `φ : 𝕜 → 𝕜` induces a map on the chart, and at a tuple whose
+points are pairwise distinct that map is analytic whenever `φ` is
 (`TauCeti.Sym.analyticAt_coeffEquiv_map_coeffEquiv_symm`), by parametrizing the roots one by one
 with the implicit function theorem. At a tuple where points collide that parametrization breaks
-down, and this file settles the case that remains accessible by algebra: a coordinate change
-given by a univariate polynomial `q`. The induced coordinate change is then not merely analytic
-but *polynomial* in the chart coordinates, at every tuple, colliding or not.
+down, and this file settles the case that remains accessible by algebra: the map induced by a
+univariate polynomial `q`. Its coordinate representation is then not merely analytic but
+*polynomial* in the chart coordinates, at every tuple, colliding or not.
 
 The mechanism is the fundamental theorem of symmetric polynomials. Substituting `q` into every
-variable of the `(k + 1)`-st elementary symmetric polynomial (`MvPolynomial.substVar`) preserves
-symmetry (`MvPolynomial.IsSymmetric.substVar`), so by Mathlib's fundamental theorem
+variable of the `(k + 1)`-st elementary symmetric polynomial using `MvPolynomial.bind₁` preserves
+symmetry, so by Mathlib's fundamental theorem
 (`MvPolynomial.esymmAlgHom_fin_bijective`) it is the substitution of the elementary symmetric
 polynomials into a polynomial `W k`. Evaluating at a tuple `v` turns the left side into the
 `(k+1)`-st elementary symmetric function of the `q`-images of the points of `v`
@@ -36,29 +35,26 @@ functions of `v` into chart coordinates is Vieta's formula (`Multiset.prod_X_sub
 Reading the fundamental-theorem polynomials in the chart coordinates gives polynomials `Q` with
 `coeffEquiv 𝕜 n (Sym.map (fun z => eval z q) ((coeffEquiv 𝕜 n).symm c)) i = eval c (Q i)`
 for every coefficient tuple `c` (`TauCeti.Sym.exists_coeffEquiv_map_coeffEquiv_symm_eq_eval`),
-whence analyticity at every tuple
-(`TauCeti.Sym.analyticAt_coeffEquiv_map_coeffEquiv_symm_polynomial`).
+whence analyticity everywhere
+(`TauCeti.Sym.analyticOnNhd_coeffEquiv_map_coeffEquiv_symm_polynomial`).
 
 Lane F4.1 of the analytic Heegaard Floer roadmap opens with "`Sym^g(Σ)` geometry: smooth complex
 structure (elementary symmetric functions)", after Ozsváth--Szabó
 ([arXiv:math/0101206](https://arxiv.org/abs/math/0101206), §2.1). The transition maps of the
-elementary-symmetric atlas on `Sym^g(Σ)` are exactly such coordinate changes, read for the
-holomorphic coordinate changes of the surface: the multiplicity-free case of their analyticity is
+elementary-symmetric atlas on `Sym^g(Σ)` are read in the holomorphic coordinates of the surface:
+the multiplicity-free case of their analyticity is
 `TauCeti/Analysis/Polynomial/SimpleRoots/Basic.lean`, its blockwise assembly across the disjoint
 coordinate patches of a chart is `TauCeti/Analysis/Polynomial/SimpleRoots/Family.lean`, and this
-file removes the distinctness hypothesis when the coordinate change is polynomial. For a general
+file removes the distinctness hypothesis when the induced map is polynomial. For a general
 holomorphic coordinate change an analytic approximation argument on top of the polynomial case is
 still needed before the atlas can be packaged as a complex manifold.
 
 ## Main declarations
 
-* `MvPolynomial.substVar`: substitute a univariate polynomial into every variable.
-* `MvPolynomial.aeval_substVar`: evaluation commutes with the substitution.
-* `MvPolynomial.IsSymmetric.substVar`: the substitution preserves symmetry.
 * `TauCeti.Sym.exists_coeffEquiv_map_coeffEquiv_symm_eq_eval`: the coordinate action of a
   polynomial map is polynomial in the chart coordinates, at every tuple.
-* `TauCeti.Sym.analyticAt_coeffEquiv_map_coeffEquiv_symm_polynomial`: consequently it is analytic
-  at every tuple, colliding or not.
+* `TauCeti.Sym.analyticOnNhd_coeffEquiv_map_coeffEquiv_symm_polynomial`: consequently its
+  coordinate representation is analytic everywhere, colliding or not.
 -/
 
 public section
@@ -66,56 +62,6 @@ public section
 open Polynomial
 
 namespace TauCeti
-
-/-! ### Substituting a univariate polynomial into every variable -/
-
-section SubstVar
-
-variable {R : Type*} [CommSemiring R] {σ τ : Type*}
-
-/-- Substitute the univariate polynomial `q` into every variable of a multivariate polynomial:
-the variable `X i` is replaced by `q` evaluated at `X i`. This is the ring-theoretic shadow of
-postcomposing the points of a tuple with the polynomial function of `q`. -/
-noncomputable def _root_.MvPolynomial.substVar (q : R[X]) :
-    MvPolynomial σ R →ₐ[R] MvPolynomial σ R :=
-  MvPolynomial.bind₁ fun i => Polynomial.aeval (MvPolynomial.X i) q
-
-/-- Evaluating a substituted polynomial at a point of an `R`-algebra is the evaluation of the
-original polynomial at the point with `q` substituted into each coordinate. -/
-theorem _root_.MvPolynomial.aeval_substVar {S : Type*} [CommSemiring S] [Algebra R S]
-    (q : R[X]) (t : σ → S) (p : MvPolynomial σ R) :
-    MvPolynomial.aeval t (MvPolynomial.substVar q p)
-      = MvPolynomial.aeval (fun i => Polynomial.aeval (t i) q) p := by
-  rw [MvPolynomial.substVar, MvPolynomial.aeval_bind₁]
-  refine congrArg (fun g => MvPolynomial.aeval g p) (funext fun i => ?_)
-  calc MvPolynomial.aeval t (Polynomial.aeval (MvPolynomial.X i) q)
-      = Polynomial.aeval (MvPolynomial.aeval t (MvPolynomial.X i)) q :=
-        (Polynomial.aeval_algHom_apply (MvPolynomial.aeval t) (MvPolynomial.X i) q).symm
-    _ = Polynomial.aeval (t i) q := by rw [MvPolynomial.aeval_X]
-
-/-- Substituting a univariate polynomial into every variable preserves symmetry. -/
-theorem _root_.MvPolynomial.IsSymmetric.substVar {p : MvPolynomial σ R} (hp : p.IsSymmetric)
-    (q : R[X]) : (MvPolynomial.substVar q p).IsSymmetric := by
-  intro e
-  calc
-    MvPolynomial.rename e (MvPolynomial.substVar q p) =
-        MvPolynomial.bind₁
-          (fun i => MvPolynomial.rename e (Polynomial.aeval (MvPolynomial.X i) q)) p := by
-      rw [MvPolynomial.substVar, MvPolynomial.rename_bind₁]
-    _ = MvPolynomial.bind₁
-          ((fun i => Polynomial.aeval (MvPolynomial.X i) q) ∘ e) p := by
-      apply congrArg (fun f => MvPolynomial.bind₁ f p)
-      funext i
-      calc MvPolynomial.rename e (Polynomial.aeval (MvPolynomial.X i) q)
-          = Polynomial.aeval (MvPolynomial.rename e (MvPolynomial.X i)) q :=
-            (Polynomial.aeval_algHom_apply (MvPolynomial.rename e) (MvPolynomial.X i) q).symm
-        _ = Polynomial.aeval (MvPolynomial.X (e i)) q := by rw [MvPolynomial.rename_X]
-    _ = MvPolynomial.bind₁ (fun i => Polynomial.aeval (MvPolynomial.X i) q)
-          (MvPolynomial.rename e p) := by
-      rw [MvPolynomial.bind₁_rename]
-    _ = MvPolynomial.bind₁ (fun i => Polynomial.aeval (MvPolynomial.X i) q) p := by rw [hp e]
-
-end SubstVar
 
 /-! ### The coordinate action of a polynomial map on the chart -/
 
@@ -184,12 +130,40 @@ theorem Sym.exists_coeffEquiv_map_coeffEquiv_symm_eq_eval (q : 𝕜[X]) :
   -- the fundamental theorem of symmetric polynomials, applied to the substituted esymms
   have hftsf : ∀ k : Fin n, ∃ W : MvPolynomial (Fin n) 𝕜,
       MvPolynomial.aeval (fun j : Fin n => esymm (Fin n) 𝕜 ((j : ℕ) + 1)) W
-        = MvPolynomial.substVar q (esymm (Fin n) 𝕜 ((k : ℕ) + 1)) := by
+        = MvPolynomial.bind₁ (fun i : Fin n => Polynomial.aeval (MvPolynomial.X i) q)
+          (esymm (Fin n) 𝕜 ((k : ℕ) + 1)) := by
     intro k
+    have hsymm :
+        (MvPolynomial.bind₁ (fun i : Fin n => Polynomial.aeval (MvPolynomial.X i) q)
+          (esymm (Fin n) 𝕜 ((k : ℕ) + 1))).IsSymmetric := by
+      intro e
+      calc
+        MvPolynomial.rename e
+            (MvPolynomial.bind₁ (fun i : Fin n => Polynomial.aeval (MvPolynomial.X i) q)
+              (esymm (Fin n) 𝕜 ((k : ℕ) + 1))) =
+            MvPolynomial.bind₁
+              (fun i => MvPolynomial.rename e (Polynomial.aeval (MvPolynomial.X i) q))
+              (esymm (Fin n) 𝕜 ((k : ℕ) + 1)) := by
+          rw [MvPolynomial.rename_bind₁]
+        _ = MvPolynomial.bind₁
+              ((fun i : Fin n => Polynomial.aeval (MvPolynomial.X i) q) ∘ e)
+              (esymm (Fin n) 𝕜 ((k : ℕ) + 1)) := by
+          apply congrArg (fun f => MvPolynomial.bind₁ f (esymm (Fin n) 𝕜 ((k : ℕ) + 1)))
+          funext i
+          calc
+            MvPolynomial.rename e (Polynomial.aeval (MvPolynomial.X i) q) =
+                Polynomial.aeval (MvPolynomial.rename e (MvPolynomial.X i)) q :=
+              (Polynomial.aeval_algHom_apply (MvPolynomial.rename e) (MvPolynomial.X i) q).symm
+            _ = Polynomial.aeval (MvPolynomial.X (e i)) q := by rw [MvPolynomial.rename_X]
+        _ = MvPolynomial.bind₁ (fun i : Fin n => Polynomial.aeval (MvPolynomial.X i) q)
+              (MvPolynomial.rename e (esymm (Fin n) 𝕜 ((k : ℕ) + 1))) := by
+          rw [MvPolynomial.bind₁_rename]
+        _ = MvPolynomial.bind₁ (fun i : Fin n => Polynomial.aeval (MvPolynomial.X i) q)
+              (esymm (Fin n) 𝕜 ((k : ℕ) + 1)) := by
+          rw [esymm_isSymmetric]
     obtain ⟨W, hW⟩ := (esymmAlgHom_fin_bijective 𝕜 n).surjective
-      (⟨MvPolynomial.substVar q (esymm (Fin n) 𝕜 ((k : ℕ) + 1)),
-        MvPolynomial.IsSymmetric.substVar
-          (esymm_isSymmetric (Fin n) 𝕜 ((k : ℕ) + 1)) q⟩ :
+      (⟨MvPolynomial.bind₁ (fun i : Fin n => Polynomial.aeval (MvPolynomial.X i) q)
+          (esymm (Fin n) 𝕜 ((k : ℕ) + 1)), hsymm⟩ :
         symmetricSubalgebra (Fin n) 𝕜)
     refine ⟨W, ?_⟩
     simpa [MvPolynomial.esymmAlgHom_apply] using
@@ -206,7 +180,8 @@ theorem Sym.exists_coeffEquiv_map_coeffEquiv_symm_eq_eval (q : 𝕜[X]) :
     omega
   have hW' : MvPolynomial.aeval (fun j : Fin n => esymm (Fin n) 𝕜 ((j : ℕ) + 1))
       (W (⟨n - ((i : ℕ) + 1), by have := i.isLt; omega⟩ : Fin n))
-      = MvPolynomial.substVar q (esymm (Fin n) 𝕜 (n - (i : ℕ))) := by
+      = MvPolynomial.bind₁ (fun j : Fin n => Polynomial.aeval (MvPolynomial.X j) q)
+          (esymm (Fin n) 𝕜 (n - (i : ℕ))) := by
     rw [hW (⟨n - ((i : ℕ) + 1), by have := i.isLt; omega⟩ : Fin n), hm]
   calc Sym.coeffEquiv 𝕜 n (Sym.map (fun z => eval z q) ((Sym.coeffEquiv 𝕜 n).symm c)) i
       = Sym.coeffEquiv 𝕜 n (Sym.ofFn ((fun z => Polynomial.eval z q) ∘ v)) i := by
@@ -226,8 +201,18 @@ theorem Sym.exists_coeffEquiv_map_coeffEquiv_symm_eq_eval (q : 𝕜[X]) :
           * MvPolynomial.aeval g (esymm (Fin n) 𝕜 (n - (i : ℕ))))
           (funext fun j => (congrFun (Polynomial.coe_aeval_eq_eval (v j)) q).symm)
     _ = (-1 : 𝕜) ^ (n - (i : ℕ))
-        * MvPolynomial.aeval v (MvPolynomial.substVar q (esymm (Fin n) 𝕜 (n - (i : ℕ)))) := by
-        rw [← MvPolynomial.aeval_substVar]
+        * MvPolynomial.aeval v
+            (MvPolynomial.bind₁ (fun j : Fin n => Polynomial.aeval (MvPolynomial.X j) q)
+              (esymm (Fin n) 𝕜 (n - (i : ℕ)))) := by
+        rw [MvPolynomial.aeval_bind₁]
+        refine congrArg (fun g => (-1 : 𝕜) ^ (n - (i : ℕ)) *
+          MvPolynomial.aeval g (esymm (Fin n) 𝕜 (n - (i : ℕ)))) (funext fun j => ?_)
+        calc
+          Polynomial.aeval (v j) q =
+              Polynomial.aeval (MvPolynomial.aeval v (MvPolynomial.X j)) q := by
+            rw [MvPolynomial.aeval_X]
+          _ = MvPolynomial.aeval v (Polynomial.aeval (MvPolynomial.X j) q) :=
+            Polynomial.aeval_algHom_apply (MvPolynomial.aeval v) (MvPolynomial.X j) q
     _ = (-1 : 𝕜) ^ (n - (i : ℕ))
         * MvPolynomial.aeval v
             (MvPolynomial.aeval (fun j : Fin n => esymm (Fin n) 𝕜 ((j : ℕ) + 1))
@@ -253,19 +238,22 @@ section Analytic
 
 open _root_.MvPolynomial Finset
 
-variable {𝕜 : Type*} [RCLike 𝕜] [IsAlgClosed 𝕜] {n : ℕ}
+variable {𝕜 : Type*} [NontriviallyNormedField 𝕜] [IsAlgClosed 𝕜] {n : ℕ}
 
-/-- **The coordinate action of a polynomial map on the elementary symmetric chart is analytic at
-every tuple.** Postcomposing the points of a tuple with the polynomial function of `q` induces a
-coordinate change on the chart that is analytic at every coefficient tuple; in particular no
+/-- **The coordinate action of a polynomial map on the elementary symmetric chart is analytic
+everywhere.** Postcomposing the points of a tuple with the polynomial function of `q` induces a
+map whose coordinate representation is analytic on the whole chart; in particular no
 distinctness of the tuple's points is assumed, so this covers the tuples where points collide. -/
-theorem Sym.analyticAt_coeffEquiv_map_coeffEquiv_symm_polynomial (q : 𝕜[X]) (c₀ : Fin n → 𝕜) :
-    AnalyticAt 𝕜 (fun c => Sym.coeffEquiv 𝕜 n
-      (Sym.map (fun z => eval z q) ((Sym.coeffEquiv 𝕜 n).symm c))) c₀ := by
+theorem Sym.analyticOnNhd_coeffEquiv_map_coeffEquiv_symm_polynomial (q : 𝕜[X]) :
+    AnalyticOnNhd 𝕜 (fun c => Sym.coeffEquiv 𝕜 n
+      (Sym.map (fun z => eval z q) ((Sym.coeffEquiv 𝕜 n).symm c))) Set.univ := by
   obtain ⟨Q, hQ⟩ := Sym.exists_coeffEquiv_map_coeffEquiv_symm_eq_eval (𝕜 := 𝕜) (n := n) q
-  refine AnalyticAt.congr (f := fun c i => MvPolynomial.eval c (Q i))
-    (AnalyticAt.pi fun i =>
-      AnalyticOnNhd.eval_mvPolynomial (Q i) c₀ (Set.mem_univ _)) ?_
+  refine fun c _ => AnalyticAt.congr (f := fun c i => MvPolynomial.eval c (Q i))
+    (AnalyticAt.pi fun i => ?_) ?_
+  · have hproj : ∀ i : Fin n, AnalyticAt 𝕜 (fun c : Fin n → 𝕜 => c i) c := fun i =>
+      (ContinuousLinearMap.proj (R := 𝕜) (φ := fun _ : Fin n => 𝕜) i).analyticAt _
+    simpa only [MvPolynomial.aeval_eq_eval] using
+      (AnalyticAt.aeval_mvPolynomial hproj (Q i))
   · filter_upwards with c using (hQ c).symm
 
 end Analytic
