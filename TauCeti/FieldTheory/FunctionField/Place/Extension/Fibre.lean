@@ -133,7 +133,7 @@ private theorem sum_block_ne_zero_and_ord_le (P' : Place k' F') {ι : Type*} [Fi
 
 /-- **The family `w i j * τ i ^ l` is `F`-linearly independent.** Given, at each place `Q i` over
 `P`, a uniformizer `τ i` that is a unit at the other places of the family, and lifts `w i j` of an
-`F`-linearly independent family of residues that are as small as `[F' : F]` at the other places,
+`F`-linearly independent family of residues, of order at least `[F' : F]` at the other places,
 the `e(Q i ∣ P) · f(Q i ∣ P)` products `w i j * τ i ^ l` are linearly independent over `F`.
 Counting them is what gives the fundamental inequality. -/
 private theorem linearIndependent_mul_pow_of_forall_linearIndependent_residue {ι : Type*}
@@ -142,7 +142,7 @@ private theorem linearIndependent_mul_pow_of_forall_linearIndependent_residue {�
     {τ : ι → F'} (hτ : ∀ i m, (Q m).ord (τ i) = if m = i then 1 else 0)
     {w : ∀ i, Fin (relativeDegree k F (Q i)) → F'} (hwmem : ∀ i j, w i j ∈ (Q i).integers)
     (hwN : ∀ (i : ι) (j : Fin (relativeDegree k F (Q i))) (m : ι), m ≠ i →
-      (Q m).ord (w i j) = (Module.finrank F F' : ℤ))
+      (Module.finrank F F' : ℤ) ≤ (Q m).ord (w i j))
     (hindres : ∀ i, LinearIndependent ((Q i).restrict k F).ResidueField
       fun j ↦ IsLocalRing.residue (Q i).integers (⟨w i j, hwmem i j⟩ : (Q i).integers)) :
     LinearIndependent F
@@ -212,19 +212,20 @@ private theorem linearIndependent_mul_pow_of_forall_linearIndependent_residue {�
       rw [ord_algebraMap_restrict k F (Q i₀) ((b ⟨m, q⟩ : F))]
       exact mul_nonneg (by positivity)
         (((Q i₀).restrict k F).mem_integers_iff_ord_nonneg.mp (b ⟨m, q⟩).2)
-    have hwval : (Q i₀).valuation (w m q.1) = WithZero.exp (-(N : ℤ)) := by
+    have hwval : (Q i₀).valuation (w m q.1) ≤ WithZero.exp (-(N : ℤ)) := by
       have hne : w m q.1 ≠ 0 := by
         intro h
         have hh := hwN m q.1 i₀ (Ne.symm hm)
         rw [h, ord_zero] at hh
         omega
-      rw [(Q i₀).valuation_eq_exp_neg_ord hne, hwN m q.1 i₀ (Ne.symm hm)]
+      rw [(Q i₀).valuation_eq_exp_neg_ord hne]
+      exact WithZero.exp_le_exp.2 (neg_le_neg (hwN m q.1 i₀ (Ne.symm hm)))
     have hτval : (Q i₀).valuation (τ m ^ (q.2 : ℕ)) = 1 := by
       rw [map_pow, (Q i₀).valuation_eq_exp_neg_ord (hτ0 m), hτ m i₀]
       simp [Ne.symm hm]
     simp only [hV]
-    rw [map_mul, map_mul, hwval, hτval, mul_one]
-    exact mul_le_of_le_one_left' hb1
+    rw [map_mul, map_mul, hτval, mul_one]
+    exact (mul_le_of_le_one_left' hb1).trans hwval
   -- The strict triangle inequality contradicts `∑ i, Z i = 0`.
   have hlt : ∀ m ∈ (Finset.univ : Finset ι) \ {i₀},
       (Q i₀).valuation (Z m) < (Q i₀).valuation (Z i₀) := by
@@ -289,7 +290,8 @@ private theorem sum_relativeDegree_mul_ramificationIdx_le_finrank {ι : Type*} [
     simpa only [hwres] using hz i
   -- The candidate independent family: `e(Q i ∣ P) · f(Q i ∣ P)` functions for each `i`.
   have hind :=
-    linearIndependent_mul_pow_of_forall_linearIndependent_residue k F hQP hτ hwmem hwN hindres
+    linearIndependent_mul_pow_of_forall_linearIndependent_residue k F hQP hτ hwmem
+      (fun i j m hm ↦ (hwN i j m hm).ge) hindres
   simpa [Fintype.card_sigma, Fintype.card_prod] using hind.fintype_card_le_finrank
 
 /-- **The fundamental inequality** (Stichtenoth, Theorem 3.1.11): the ramification indices and
