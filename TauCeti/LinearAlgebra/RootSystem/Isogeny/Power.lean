@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.LinearAlgebra.RootSystem.Isogeny.Special
+public import TauCeti.LinearAlgebra.RootSystem.Isogeny.Basic
 
 /-!
 # Powers of an isogeny of a root pairing with itself
@@ -31,20 +31,22 @@ for every `n`, since the restriction to odd exponents belongs to the finite-grou
 not to this identity.
 
 The weight map and the index bijection are monoid homomorphisms out of this monoid; the coweight
-map is an anti-homomorphism, since `comp` reverses on that component, and is therefore left as the
-existing `TauCeti.RootPairingIsogeny.comp_coweightMap`.
+map is only an anti-homomorphism, since `comp` reverses on that component, but its powers still
+follow the weight map's, because the two factors of `f ^ n` are the same map.
 
 The same hypothesis also splits the powers themselves: an even power is a scaling, and an odd power
 is a scaling times `f`, so an odd power permutes the roots exactly as `f` does while multiplying
-its exponents and its weight map by `c ^ m`. The three special isogenies of `B₂`, `G₂` and `F₄` are
-the instance the file exists for, and their power relations close it.
+its exponents and its weight and coweight maps by `c ^ m`. The three special isogenies of `B₂`,
+`G₂` and `F₄` are the instance this exists for; their power relations are in
+`TauCeti/LinearAlgebra/RootSystem/Isogeny/Special.lean`, where they join the square relations they
+come from.
 
 ## Main definitions
 
 * `TauCeti.RootPairingIsogeny.instMonoid`: the composition monoid of isogenies of a root pairing
   with itself.
-* `TauCeti.RootPairingIsogeny.weightMapHom` and `TauCeti.RootPairingIsogeny.indexEquivHom`: the
-  weight map and the index bijection as monoid homomorphisms.
+* `TauCeti.RootPairingIsogeny.weightHom` and `TauCeti.RootPairingIsogeny.indexHom`: the weight map
+  and the index bijection as monoid homomorphisms.
 * `TauCeti.RootPairingIsogeny.smulIdHom`: the scalings, as a monoid homomorphism out of `ℕ+`.
 
 ## Main results
@@ -54,12 +56,11 @@ the instance the file exists for, and their power relations close it.
 * `TauCeti.RootPairingIsogeny.pow_two_mul_eq_smulId` and
   `TauCeti.RootPairingIsogeny.pow_two_mul_add_one_eq_smulId_mul`: such an isogeny has scalings for
   its even powers, and a scaling times itself for its odd ones.
-* `TauCeti.RootPairingIsogeny.pow_two_mul_add_one_indexEquiv`,
-  `TauCeti.RootPairingIsogeny.pow_two_mul_add_one_exponent` and
-  `TauCeti.RootPairingIsogeny.pow_two_mul_add_one_weightMap`: an odd power permutes the roots as
-  the isogeny does and multiplies its exponents and weight map by `c ^ m`.
-* `TauCeti.DynkinType.b2SpecialIsogeny_pow_mul_self`, and its `G₂` and `F₄` counterparts: the
-  powers of the three special isogenies square to the powers of the defining characteristic.
+* `TauCeti.RootPairingIsogeny.indexEquiv_pow_two_mul_add_one`,
+  `TauCeti.RootPairingIsogeny.exponent_pow_two_mul_add_one`,
+  `TauCeti.RootPairingIsogeny.weightMap_pow_two_mul_add_one` and
+  `TauCeti.RootPairingIsogeny.coweightMap_pow_two_mul_add_one`: an odd power permutes the roots as
+  the isogeny does and multiplies its exponents and its two lattice maps by `c ^ m`.
 
 ## References
 
@@ -98,67 +99,77 @@ theorem mul_def (f g : RootPairingIsogeny P P) : f * g = comp f g := (rfl)
 
 theorem one_def : (1 : RootPairingIsogeny P P) = id P := (rfl)
 
-@[simp] theorem mul_weightMap (f g : RootPairingIsogeny P P) :
+@[simp] theorem weightMap_mul (f g : RootPairingIsogeny P P) :
     (f * g).weightMap = f.weightMap ∘ₗ g.weightMap := comp_weightMap f g
 
-@[simp] theorem mul_coweightMap (f g : RootPairingIsogeny P P) :
+@[simp] theorem coweightMap_mul (f g : RootPairingIsogeny P P) :
     (f * g).coweightMap = g.coweightMap ∘ₗ f.coweightMap := comp_coweightMap f g
 
-@[simp] theorem mul_indexEquiv (f g : RootPairingIsogeny P P) :
+@[simp] theorem indexEquiv_mul (f g : RootPairingIsogeny P P) :
     (f * g).indexEquiv = g.indexEquiv.trans f.indexEquiv := comp_indexEquiv f g
 
-@[simp] theorem mul_exponent (f g : RootPairingIsogeny P P) (i : ι) :
+@[simp] theorem exponent_mul (f g : RootPairingIsogeny P P) (i : ι) :
     (f * g).exponent i = g.exponent i * f.exponent (g.indexEquiv i) := comp_exponent f g i
 
-@[simp] theorem one_weightMap : (1 : RootPairingIsogeny P P).weightMap = LinearMap.id :=
+@[simp] theorem weightMap_one : (1 : RootPairingIsogeny P P).weightMap = LinearMap.id :=
   id_weightMap P
 
-@[simp] theorem one_coweightMap : (1 : RootPairingIsogeny P P).coweightMap = LinearMap.id :=
+@[simp] theorem coweightMap_one : (1 : RootPairingIsogeny P P).coweightMap = LinearMap.id :=
   id_coweightMap P
 
-@[simp] theorem one_indexEquiv : (1 : RootPairingIsogeny P P).indexEquiv = Equiv.refl ι :=
+@[simp] theorem indexEquiv_one : (1 : RootPairingIsogeny P P).indexEquiv = Equiv.refl ι :=
   id_indexEquiv P
 
-@[simp] theorem one_exponent (i : ι) : (1 : RootPairingIsogeny P P).exponent i = 1 :=
+@[simp] theorem exponent_one (i : ι) : (1 : RootPairingIsogeny P P).exponent i = 1 :=
   id_exponent P i
 
 /-! ## The two multiplicative components -/
 
 /-- **The weight map of an isogeny, as a monoid homomorphism** into the endomorphism monoid of the
 weight space. -/
-def weightMapHom (P : RootPairing ι R M N) : RootPairingIsogeny P P →* Module.End R M where
+def weightHom (P : RootPairing ι R M N) : RootPairingIsogeny P P →* Module.End R M where
   toFun f := f.weightMap
-  map_one' := one_weightMap
-  map_mul' := mul_weightMap
+  map_one' := weightMap_one
+  map_mul' := weightMap_mul
 
-@[simp] theorem weightMapHom_apply (f : RootPairingIsogeny P P) :
-    weightMapHom P f = f.weightMap := (rfl)
+@[simp] theorem weightHom_apply (f : RootPairingIsogeny P P) :
+    weightHom P f = f.weightMap := (rfl)
 
 /-- The weight map of a power of an isogeny is the corresponding power of its weight map. -/
-@[simp] theorem pow_weightMap (f : RootPairingIsogeny P P) (n : ℕ) :
+@[simp] theorem weightMap_pow (f : RootPairingIsogeny P P) (n : ℕ) :
     (f ^ n).weightMap = f.weightMap ^ n :=
-  map_pow (weightMapHom P) f n
+  map_pow (weightHom P) f n
+
+/-- The coweight map of a power of an isogeny is the corresponding power of its coweight map.
+Composition reverses on the coweight component, so this is not an instance of a monoid
+homomorphism; but the two factors of `f ^ (n + 1)` are the same map, so the reversal is
+immaterial. -/
+@[simp] theorem coweightMap_pow (f : RootPairingIsogeny P P) (n : ℕ) :
+    (f ^ n).coweightMap = f.coweightMap ^ n := by
+  induction n with
+  | zero => simp [Module.End.one_eq_id]
+  | succ n ih => rw [pow_succ, coweightMap_mul, ih, pow_succ', Module.End.mul_eq_comp]
 
 /-- **The index bijection of an isogeny, as a monoid homomorphism** into the permutation group of
 the index set. -/
-def indexEquivHom (P : RootPairing ι R M N) : RootPairingIsogeny P P →* Equiv.Perm ι where
+def indexHom (P : RootPairing ι R M N) : RootPairingIsogeny P P →* Equiv.Perm ι where
   toFun f := f.indexEquiv
-  map_one' := one_indexEquiv
-  map_mul' := mul_indexEquiv
+  map_one' := indexEquiv_one
+  map_mul' := indexEquiv_mul
 
-@[simp] theorem indexEquivHom_apply (f : RootPairingIsogeny P P) :
-    indexEquivHom P f = f.indexEquiv := (rfl)
+@[simp] theorem indexHom_apply (f : RootPairingIsogeny P P) :
+    indexHom P f = f.indexEquiv := (rfl)
 
 /-- The index bijection of a power of an isogeny is the corresponding power of its index
 bijection. -/
-@[simp] theorem pow_indexEquiv (f : RootPairingIsogeny P P) (n : ℕ) :
+@[simp] theorem indexEquiv_pow (f : RootPairingIsogeny P P) (n : ℕ) :
     (f ^ n).indexEquiv = f.indexEquiv ^ n :=
-  map_pow (indexEquivHom P) f n
+  map_pow (indexHom P) f n
 
 /-- The exponent of a power of an isogeny, in terms of the exponents of the lower power. -/
-theorem pow_succ_exponent (f : RootPairingIsogeny P P) (n : ℕ) (i : ι) :
+theorem exponent_pow_succ (f : RootPairingIsogeny P P) (n : ℕ) (i : ι) :
     (f ^ (n + 1)).exponent i = f.exponent i * (f ^ n).exponent (f.indexEquiv i) := by
-  rw [pow_succ, mul_exponent]
+  rw [pow_succ, exponent_mul]
 
 /-! ## The scalings -/
 
@@ -209,9 +220,9 @@ theorem pow_two_mul_add_one_eq_smulId_mul (h : f * f = smulId P c) (m : ℕ) :
 
 /-- **An odd power of an isogeny whose square is a scaling permutes the roots exactly as the
 isogeny does**, since a scaling fixes every index. -/
-theorem pow_two_mul_add_one_indexEquiv (h : f * f = smulId P c) (m : ℕ) :
+theorem indexEquiv_pow_two_mul_add_one (h : f * f = smulId P c) (m : ℕ) :
     (f ^ (2 * m + 1)).indexEquiv = f.indexEquiv := by
-  rw [pow_two_mul_add_one_eq_smulId_mul P h, mul_indexEquiv, smulId_indexEquiv, Equiv.trans_refl]
+  rw [pow_two_mul_add_one_eq_smulId_mul P h, indexEquiv_mul, smulId_indexEquiv, Equiv.trans_refl]
 
 /-- **The rescaling exponents of an odd power** are those of the isogeny times `c ^ m`.
 
@@ -219,51 +230,30 @@ Read at a special isogeny in characteristic `p`, so at `c = p`: the `exponent` f
 the source of the character map, and is `1` at a short simple root and `p` at a long one
 (`TauCeti.DynkinType.b2SpecialIsogeny_exponent_typeBSimpleIndex_eq_one_iff`), so the odd power has
 exponent `p ^ m` at a short simple root and `p ^ (m + 1)` at a long one. -/
-theorem pow_two_mul_add_one_exponent (h : f * f = smulId P c) (m : ℕ) (i : ι) :
+theorem exponent_pow_two_mul_add_one (h : f * f = smulId P c) (m : ℕ) (i : ι) :
     (f ^ (2 * m + 1)).exponent i = f.exponent i * (c : ℤ) ^ m := by
-  rw [pow_two_mul_add_one_eq_smulId_mul P h, mul_exponent, smulId_exponent]
+  rw [pow_two_mul_add_one_eq_smulId_mul P h, exponent_mul, smulId_exponent]
   push_cast [PNat.pow_coe]
   ring
 
 /-- **The weight map of an odd power** is `c ^ m` times that of the isogeny. -/
-theorem pow_two_mul_add_one_weightMap (h : f * f = smulId P c) (m : ℕ) :
+theorem weightMap_pow_two_mul_add_one (h : f * f = smulId P c) (m : ℕ) :
     (f ^ (2 * m + 1)).weightMap = ((c : ℕ) ^ m) • f.weightMap := by
-  rw [pow_two_mul_add_one_eq_smulId_mul P h, mul_weightMap, smulId_weightMap]
+  rw [pow_two_mul_add_one_eq_smulId_mul P h, weightMap_mul, smulId_weightMap]
   ext x
   simp [PNat.pow_coe]
+
+/-- **The coweight map of an odd power** is `c ^ m` times that of the isogeny. Composition reverses
+on this component, but a scaling is central, so the formula is the same as for the weight map. -/
+theorem coweightMap_pow_two_mul_add_one (h : f * f = smulId P c) (m : ℕ) :
+    (f ^ (2 * m + 1)).coweightMap = ((c : ℕ) ^ m) • f.coweightMap := by
+  rw [pow_two_mul_add_one_eq_smulId_mul P h, coweightMap_mul, smulId_coweightMap]
+  ext x
+  simp only [LinearMap.comp_apply, LinearMap.smul_apply, LinearMap.id_apply, map_nsmul,
+    PNat.pow_coe]
 
 end Scaling
 
 end RootPairingIsogeny
-
-/-! ## The three special isogenies -/
-
-namespace DynkinType
-
-open RootPairingIsogeny
-
-/-- **The powers of the special isogeny of `B₂` square to the powers of two.** At `n = 2 * m + 1`
-this is the root-datum form of the square relation satisfied by the Steinberg endomorphism whose
-fixed points are the Suzuki group `²B₂(2 ^ (2 * m + 1))`. -/
-theorem b2SpecialIsogeny_pow_mul_self (n : ℕ) :
-    b2SpecialIsogeny ^ n * b2SpecialIsogeny ^ n =
-      smulId (typeBSimplyConnectedRootDatum 2) (2 ^ n) :=
-  pow_mul_self_eq_smulId _ b2SpecialIsogeny_comp_self n
-
-/-- **The powers of the special isogeny of `G₂` square to the powers of three.** At `n = 2 * m + 1`
-this is the root-datum form of the square relation satisfied by the Steinberg endomorphism whose
-fixed points are the Ree group `²G₂(3 ^ (2 * m + 1))`. -/
-theorem g2SpecialIsogeny_pow_mul_self (n : ℕ) :
-    g2SpecialIsogeny ^ n * g2SpecialIsogeny ^ n = smulId g2SimplyConnectedRootDatum (3 ^ n) :=
-  pow_mul_self_eq_smulId _ g2SpecialIsogeny_comp_self n
-
-/-- **The powers of the special isogeny of `F₄` square to the powers of two.** At `n = 2 * m + 1`
-this is the root-datum form of the square relation satisfied by the Steinberg endomorphism whose
-fixed points are the Ree group `²F₄(2 ^ (2 * m + 1))`; at `n = 1` it belongs to the Tits group. -/
-theorem f4SpecialIsogeny_pow_mul_self (n : ℕ) :
-    f4SpecialIsogeny ^ n * f4SpecialIsogeny ^ n = smulId f4SimplyConnectedRootDatum (2 ^ n) :=
-  pow_mul_self_eq_smulId _ f4SpecialIsogeny_comp_self n
-
-end DynkinType
 
 end TauCeti
