@@ -33,8 +33,10 @@ into the standard type-`B` representation.
 
 * `TauCeti.typeBSimpleRootGenerator_lie_negativeRoot_of_ne`: distinct positive and negative
   simple-root generators commute.
-* `TauCeti.ad_pow_lie_typeBSimpleRootGenerator`: the higher positive Serre relations.
-* `TauCeti.ad_pow_lie_typeBSimpleNegativeRootGenerator`: the higher negative Serre relations.
+* `TauCeti.ad_pow_lie_typeBSimpleRootGenerator_typeBSimpleRootGenerator`: the higher positive
+  Serre relations.
+* `TauCeti.ad_pow_lie_typeBSimpleNegativeRootGenerator_typeBSimpleNegativeRootGenerator`: the
+  higher negative Serre relations.
 
 ## References
 
@@ -92,19 +94,15 @@ theorem typeBSimpleRootGenerator_lie_negativeRoot_of_ne
     LieSubalgebra.coe_bracket, ZeroMemClass.coe_zero] using
       lie_typeBSimpleRootMatrix_typeBSimpleNegativeRootMatrix_of_ne (K := K) i j hij
 
-/-- The higher Serre relation for the positive simple-root generators of the standard split
-type-`B` Lie algebra. The reversed Cartan-matrix indices match the coroot-first convention in the
-Cartan-action relations. -/
-@[simp]
-theorem ad_pow_lie_typeBSimpleRootGenerator (i j : Fin (n + 1)) :
-    (ad K (LieAlgebra.Orthogonal.typeB (Fin (n + 1)) K)
-        (typeBSimpleRootGenerator (K := K) i) ^
+/- The four `Fin.lastCases` branches separate ordinary long-root nodes from the terminal short-root
+node. Only the positive orientation is computed: the sign-reindexing below transports it to the
+negative orientation. -/
+private theorem ad_pow_lie_typeBSimpleRootMatrix (i j : Fin (n + 1)) :
+    (ad K (Matrix (Unit ⊕ Fin (n + 1) ⊕ Fin (n + 1))
+        (Unit ⊕ Fin (n + 1) ⊕ Fin (n + 1)) K)
+        (typeBSimpleRootMatrix (K := K) i) ^
       (-CartanMatrix.B (n + 1) j i).toNat)
-        ⁅typeBSimpleRootGenerator (K := K) i, typeBSimpleRootGenerator (K := K) j⁆ = 0 := by
-  apply Subtype.ext
-  rw [LieSubalgebra.coe_ad_pow, LieSubalgebra.coe_bracket,
-    coe_typeBSimpleRootGenerator, coe_typeBSimpleRootGenerator]
-  simp only [ZeroMemClass.coe_zero]
+        ⁅typeBSimpleRootMatrix (K := K) i, typeBSimpleRootMatrix (K := K) j⁆ = 0 := by
   refine Fin.lastCases ?_ (fun i₀ ↦ ?_) i
   · refine Fin.lastCases ?_ (fun j₀ ↦ ?_) j
     · simp
@@ -145,10 +143,85 @@ theorem ad_pow_lie_typeBSimpleRootGenerator (i j : Fin (n + 1)) :
         (first | omega | (split_ifs; simp))
       all_goals omega
 
+/-- The coordinate equivalence that fixes the middle coordinate and swaps the signed blocks. -/
+private def typeBSignEquiv (ι : Type*) : Unit ⊕ ι ⊕ ι ≃ Unit ⊕ ι ⊕ ι :=
+  Equiv.sumCongr (Equiv.refl Unit) (Equiv.sumComm ι ι)
+
+/-- Reindexing matrices along `typeBSignEquiv`, as an equivalence of Lie algebras. -/
+private def typeBSignReindex (ι : Type*) [DecidableEq ι] [Fintype ι] :
+    Matrix (Unit ⊕ ι ⊕ ι) (Unit ⊕ ι ⊕ ι) K ≃ₗ⁅K⁆
+      Matrix (Unit ⊕ ι ⊕ ι) (Unit ⊕ ι ⊕ ι) K :=
+  (Matrix.reindexAlgEquiv K K (typeBSignEquiv ι)).toLieEquiv
+
+private theorem typeBSignReindex_typeBSimpleRootMatrix (i : Fin (n + 1)) :
+    typeBSignReindex (K := K) (Fin (n + 1)) (typeBSimpleRootMatrix (K := K) i) =
+      -typeBSimpleNegativeRootMatrix (K := K) i := by
+  refine Fin.lastCases ?_ (fun i₀ ↦ ?_) i
+  · simp only [typeBSimpleRootMatrix_last, typeBSimpleNegativeRootMatrix_last]
+    ext (a | (a | a)) (b | (b | b)) <;>
+      simp [typeBSignReindex, typeBSignEquiv, Matrix.reindex_apply,
+        typeBShortRootMatrix_def, typeBShortNegativeRootMatrix_def, Matrix.single_apply]
+  · simp only [typeBSimpleRootMatrix_castSucc, typeBSimpleNegativeRootMatrix_castSucc]
+    ext (a | (a | a)) (b | (b | b)) <;>
+      simp [typeBSignReindex, typeBSignEquiv, Matrix.reindex_apply,
+        typeBLongRootMatrix_def, Matrix.single_apply]
+
+private theorem LieEquiv.map_ad_pow {L L' : Type*} [LieRing L] [LieAlgebra K L]
+    [LieRing L'] [LieAlgebra K L'] (e : L ≃ₗ⁅K⁆ L') (x y : L) (m : ℕ) :
+    e (((ad K L x) ^ m) y) = ((ad K L' (e x)) ^ m) (e y) := by
+  induction m with
+  | zero => simp
+  | succ m ih =>
+      rw [pow_succ', Module.End.mul_apply, LieAlgebra.ad_apply, e.map_lie, ih,
+        pow_succ', Module.End.mul_apply, LieAlgebra.ad_apply]
+
+private theorem ad_pow_lie_typeBSimpleNegativeRootMatrix (i j : Fin (n + 1)) :
+    (ad K (Matrix (Unit ⊕ Fin (n + 1) ⊕ Fin (n + 1))
+        (Unit ⊕ Fin (n + 1) ⊕ Fin (n + 1)) K)
+        (typeBSimpleNegativeRootMatrix (K := K) i) ^
+      (-CartanMatrix.B (n + 1) j i).toNat)
+        ⁅typeBSimpleNegativeRootMatrix (K := K) i,
+          typeBSimpleNegativeRootMatrix (K := K) j⁆ = 0 := by
+  let e := typeBSignReindex (K := K) (Fin (n + 1))
+  have h := congrArg e (ad_pow_lie_typeBSimpleRootMatrix (K := K) i j)
+  rw [map_zero, LieEquiv.map_ad_pow, e.map_lie,
+    typeBSignReindex_typeBSimpleRootMatrix,
+    typeBSignReindex_typeBSimpleRootMatrix] at h
+  simp only [neg_lie, lie_neg, neg_neg] at h
+  have had :
+      ad K (Matrix (Unit ⊕ Fin (n + 1) ⊕ Fin (n + 1))
+        (Unit ⊕ Fin (n + 1) ⊕ Fin (n + 1)) K)
+          (-typeBSimpleNegativeRootMatrix (K := K) i) =
+        -ad K (Matrix (Unit ⊕ Fin (n + 1) ⊕ Fin (n + 1))
+          (Unit ⊕ Fin (n + 1) ⊕ Fin (n + 1)) K)
+            (typeBSimpleNegativeRootMatrix (K := K) i) := by
+    exact map_neg (ad K _) _
+  rw [had] at h
+  rcases Nat.even_or_odd (-CartanMatrix.B (n + 1) j i).toNat with he | ho
+  · simpa only [he.neg_pow] using h
+  · simpa only [ho.neg_pow, LinearMap.neg_apply, neg_eq_zero] using h
+
+/-- The higher Serre relation for the positive simple-root generators of the standard split
+type-`B` Lie algebra. The reversed Cartan-matrix indices match the coroot-first convention in the
+Cartan-action relations. -/
+@[simp]
+theorem ad_pow_lie_typeBSimpleRootGenerator_typeBSimpleRootGenerator
+    (i j : Fin (n + 1)) :
+    (ad K (LieAlgebra.Orthogonal.typeB (Fin (n + 1)) K)
+        (typeBSimpleRootGenerator (K := K) i) ^
+      (-CartanMatrix.B (n + 1) j i).toNat)
+        ⁅typeBSimpleRootGenerator (K := K) i, typeBSimpleRootGenerator (K := K) j⁆ = 0 := by
+  apply Subtype.ext
+  rw [LieSubalgebra.coe_ad_pow, LieSubalgebra.coe_bracket,
+    coe_typeBSimpleRootGenerator, coe_typeBSimpleRootGenerator]
+  simp only [ZeroMemClass.coe_zero]
+  exact ad_pow_lie_typeBSimpleRootMatrix i j
+
 /-- The higher Serre relation for the negative simple-root generators of the standard split
 type-`B` Lie algebra. -/
 @[simp]
-theorem ad_pow_lie_typeBSimpleNegativeRootGenerator (i j : Fin (n + 1)) :
+theorem ad_pow_lie_typeBSimpleNegativeRootGenerator_typeBSimpleNegativeRootGenerator
+    (i j : Fin (n + 1)) :
     (ad K (LieAlgebra.Orthogonal.typeB (Fin (n + 1)) K)
         (typeBSimpleNegativeRootGenerator (K := K) i) ^
       (-CartanMatrix.B (n + 1) j i).toNat)
@@ -158,46 +231,6 @@ theorem ad_pow_lie_typeBSimpleNegativeRootGenerator (i j : Fin (n + 1)) :
   rw [LieSubalgebra.coe_ad_pow, LieSubalgebra.coe_bracket,
     coe_typeBSimpleNegativeRootGenerator, coe_typeBSimpleNegativeRootGenerator]
   simp only [ZeroMemClass.coe_zero]
-  refine Fin.lastCases ?_ (fun i₀ ↦ ?_) i
-  · refine Fin.lastCases ?_ (fun j₀ ↦ ?_) j
-    · simp
-    · simp only [typeBSimpleNegativeRootMatrix_last,
-        typeBSimpleNegativeRootMatrix_castSucc]
-      simp_rw [typeBShortNegativeRootMatrix_def, typeBLongRootMatrix_def]
-      rcases j₀ with ⟨j, hj⟩
-      have hjn : j ≠ n := by omega
-      have hnj : n ≠ j := hjn.symm
-      simp only [Fin.castSucc_mk, CartanMatrix.B, Matrix.of_apply]
-      split_ifs <;> simp_all [LieAlgebra.ad_apply, lie_sub, sub_lie,
-        lie_single_single, Fin.ext_iff, pow_two, Module.End.mul_apply] <;>
-        omega
-  · refine Fin.lastCases ?_ (fun j₀ ↦ ?_) j
-    · simp only [typeBSimpleNegativeRootMatrix_castSucc,
-        typeBSimpleNegativeRootMatrix_last]
-      simp_rw [typeBLongRootMatrix_def, typeBShortNegativeRootMatrix_def]
-      rcases i₀ with ⟨i, hi⟩
-      have hin : i ≠ n := by omega
-      have hni : n ≠ i := hin.symm
-      simp only [Fin.castSucc_mk, CartanMatrix.B, Matrix.of_apply]
-      split_ifs <;> simp_all [LieAlgebra.ad_apply, lie_sub, sub_lie,
-        lie_single_single, Fin.ext_iff] <;>
-        omega
-    · simp only [typeBSimpleNegativeRootMatrix_castSucc]
-      simp_rw [typeBLongRootMatrix_def]
-      rcases i₀ with ⟨i, hi⟩
-      rcases j₀ with ⟨j, hj⟩
-      simp only [Fin.castSucc_mk, CartanMatrix.B, Matrix.of_apply]
-      split_ifs <;> simp only [Fin.succ_mk, map_sub, Int.reduceNeg, neg_neg,
-        Int.reduceToNat, Int.toNat_one, pow_one, neg_zero, Int.toNat_zero, pow_zero,
-        lie_sub, sub_lie, lie_single_single, Sum.inr.injEq, Sum.inl.injEq,
-        Fin.mk.injEq, mul_one, reduceCtorEq, ↓reduceIte, sub_self, sub_zero, zero_sub,
-        neg_sub, LinearMap.sub_apply, LieAlgebra.ad_apply, Module.End.one_apply] <;>
-        (first | omega | split_ifs) <;>
-        try simp only [lie_zero, lie_single_single, Sum.inr.injEq, Sum.inl.injEq,
-          Fin.mk.injEq, mul_one, Nat.add_eq_left, one_ne_zero, ↓reduceIte, sub_zero,
-          zero_sub, reduceCtorEq, sub_self, Nat.left_eq_add, sub_neg_eq_add, zero_add] <;>
-        simp only [Fin.ext_iff] at * <;>
-        (first | omega | (split_ifs; simp))
-      all_goals omega
+  exact ad_pow_lie_typeBSimpleNegativeRootMatrix i j
 
 end TauCeti
