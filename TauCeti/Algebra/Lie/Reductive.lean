@@ -57,9 +57,9 @@ the vanishing of `H²` of a semisimple Lie algebra, equivalently to Weyl's compl
 theorem applied to the adjoint action of `L` on itself, and the complete reducibility available in
 `TauCeti/Algebra/Lie/HighestWeight/CompleteReducibility.lean` is stated for a Lie algebra with
 *nondegenerate* Killing form over an algebraically closed field, which a reductive `L` is not. The
-spanning half proved here is what the classification of the irreducible modules needs; for the
-concrete `gl n`, where the sum really is direct, that stronger statement is available as
-`TauCeti.isCompl_center_derivedSeries_one_matrix`.
+spanning half proved here supplies data needed for the eventual classification of irreducible
+modules; for the concrete `gl n`, where the sum really is direct, that stronger statement is
+available as `TauCeti.isCompl_center_derivedSeries_one_matrix`.
 
 ## Main results
 
@@ -74,8 +74,8 @@ concrete `gl n`, where the sum really is direct, that stronger statement is avai
   elementwise form.
 * `TauCeti.lie_derivedSeries_derivedSeries_eq_self`: **the derived ideal is perfect.**
 * `TauCeti.map_lie_of_forall_center_of_forall_derivedSeries` and
-  `TauCeti.lieModuleEquivOfDerivedSeries`: a linear map equivariant for the centre and for the
-  derived ideal is equivariant for `L`, so a derived-ideal equivalence between modules on which
+  `TauCeti.lieModuleEquivOfCenterOfDerivedSeries`: a linear map equivariant for the centre and for
+  the derived ideal is equivariant for `L`, so a derived-ideal equivalence between modules on which
   the centre acts by the same scalars is an `L`-equivalence.
 * `TauCeti.isIrreducible_restrict_derivedSeries`: **a finite-dimensional irreducible module over a
   reductive Lie algebra restricts to an irreducible module over the derived ideal**, over an
@@ -88,8 +88,8 @@ acts irreducibly" target of Layer 9 of
 `TauCetiRoadmap/RepresentationTheory/LieHighestWeight/README.md`, whose pinned names are
 `hasCentralRadical_iff_isCompl_center_derivedSeries` and `isIrreducible_restrict_derivedSeries`.
 Together with `TauCeti.exists_centralWeight_of_isIrreducible` of
-`TauCeti/Algebra/Lie/Weights/Central.lean` it classifies the finite-dimensional irreducibles of a
-reductive Lie algebra as an irreducible of the derived ideal together with a central weight.
+`TauCeti/Algebra/Lie/Weights/Central.lean`, it shows that every finite-dimensional irreducible of a
+reductive Lie algebra determines an irreducible restricted module and a central weight.
 
 ## References
 
@@ -101,13 +101,13 @@ namespace TauCeti
 
 open LieAlgebra LieModule Module
 
-universe u v w
+universe u v w w'
 
 /-! ### The centre is its own normalizer -/
 
 section Normalizer
 
-variable (K : Type u) (L : Type v) [Field K] [LieRing L] [LieAlgebra K L]
+variable (K : Type u) (L : Type v) [CommRing K] [LieRing L] [LieAlgebra K L]
 
 /-- The elements `x` for which `⁅y, x⁆` is central for every `y` — that is, the normalizer of the
 centre — form a **solvable** ideal: its derived ideal is central, hence abelian. -/
@@ -285,7 +285,7 @@ section Modules
 variable (K : Type u) (L : Type v) [Field K] [CharZero K] [LieRing L] [LieAlgebra K L]
   [FiniteDimensional K L] [LieAlgebra.HasCentralRadical K L]
 variable {M : Type w} [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M]
-variable {N : Type w} [AddCommGroup N] [Module K N] [LieRingModule L N] [LieModule K L N]
+variable {N : Type w'} [AddCommGroup N] [Module K N] [LieRingModule L N] [LieModule K L N]
 
 omit [LieModule K L M] [LieModule K L N] in
 /-- **Equivariance is tested on the centre and on the derived ideal.** A linear map between
@@ -303,7 +303,7 @@ theorem map_lie_of_forall_center_of_forall_derivedSeries (f : M →ₗ[K] N)
 equivalence of `L`-modules. This is the dictionary through which the representation theory of the
 derived ideal — the semisimple part — reaches `L`: the centre contributes only the scalars recorded
 by `TauCeti.centralWeight`. -/
-def lieModuleEquivOfDerivedSeries (e : M ≃ₗ[K] N)
+def lieModuleEquivOfCenterOfDerivedSeries (e : M ≃ₗ[K] N)
     (hZ : ∀ z ∈ LieAlgebra.center K L, ∀ m : M, e ⁅z, m⁆ = ⁅z, e m⁆)
     (hD : ∀ d ∈ derivedSeries K L 1, ∀ m : M, e ⁅d, m⁆ = ⁅d, e m⁆) :
     M ≃ₗ⁅K, L⁆ N where
@@ -313,10 +313,18 @@ def lieModuleEquivOfDerivedSeries (e : M ≃ₗ[K] N)
 
 omit [LieModule K L M] [LieModule K L N] in
 @[simp]
-theorem lieModuleEquivOfDerivedSeries_apply (e : M ≃ₗ[K] N)
+theorem lieModuleEquivOfCenterOfDerivedSeries_apply (e : M ≃ₗ[K] N)
     (hZ : ∀ z ∈ LieAlgebra.center K L, ∀ m : M, e ⁅z, m⁆ = ⁅z, e m⁆)
     (hD : ∀ d ∈ derivedSeries K L 1, ∀ m : M, e ⁅d, m⁆ = ⁅d, e m⁆) (m : M) :
-    lieModuleEquivOfDerivedSeries K L e hZ hD m = e m :=
+    lieModuleEquivOfCenterOfDerivedSeries K L e hZ hD m = e m :=
+  (rfl)
+
+omit [LieModule K L M] [LieModule K L N] in
+@[simp]
+theorem lieModuleEquivOfCenterOfDerivedSeries_symm_apply (e : M ≃ₗ[K] N)
+    (hZ : ∀ z ∈ LieAlgebra.center K L, ∀ m : M, e ⁅z, m⁆ = ⁅z, e m⁆)
+    (hD : ∀ d ∈ derivedSeries K L 1, ∀ m : M, e ⁅d, m⁆ = ⁅d, e m⁆) (n : N) :
+    (lieModuleEquivOfCenterOfDerivedSeries K L e hZ hD).symm n = e.symm n :=
   (rfl)
 
 variable (M) [IsAlgClosed K] [FiniteDimensional K M] [LieModule.IsIrreducible K L M]
@@ -331,8 +339,9 @@ ideal is already a submodule for `L`. Algebraic closedness is essential and not 
 `ℝ` the one-dimensional abelian Lie algebra acting on `ℝ²` by the rotation generator is
 irreducible, is its own centre, and has zero derived ideal.
 
-Together with the central weight this classifies the finite-dimensional irreducibles of a reductive
-Lie algebra as an irreducible of the derived ideal together with a functional on the centre. -/
+Together with the central weight, this shows that every finite-dimensional irreducible determines
+an irreducible restricted module and a functional on the centre; reconstruction and uniqueness are
+not asserted here. -/
 theorem isIrreducible_restrict_derivedSeries :
     LieModule.IsIrreducible K (derivedSeries K L 1) M :=
   isIrreducible_of_sup_center_eq_top K L M (derivedSeries K L 1) <| by

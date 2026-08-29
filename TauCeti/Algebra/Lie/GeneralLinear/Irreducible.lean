@@ -33,9 +33,9 @@ scalar by which the identity matrix acts, which is the central weight of
 * `TauCeti.isIrreducible_slIdeal_of_isIrreducible_matrix`: **a finite-dimensional irreducible
   `gl n K`-module is irreducible over `sl n K`**, for `K` algebraically closed of characteristic
   zero.
-* `TauCeti.map_lie_matrix_of_forall_mem_slIdeal`: an `sl n K`-equivariant linear map between
-  `gl n K`-modules on which `1` acts by the same scalar is `gl n K`-equivariant, with
-  `TauCeti.lieModuleEquivOfSlEquiv` the packaged equivalence.
+* `TauCeti.map_lie_matrix_of_one_lie_eq_smul_of_forall_mem_slIdeal`: an `sl n K`-equivariant linear
+  map between `gl n K`-modules on which `1` acts by the same scalar is `gl n K`-equivariant, with
+  `TauCeti.lieModuleEquivOfOneLieEqSmulOfSlEquiv` the packaged equivalence.
 
 ## Roadmap
 
@@ -49,7 +49,7 @@ namespace TauCeti
 
 open LieAlgebra LieModule Module
 
-universe u w
+universe u w w'
 
 -- The commutator Lie ring structure of an associative ring is a local instance in Mathlib, to
 -- avoid a diamond; it is what makes `Matrix n n K` the Lie algebra `gl n K`.
@@ -58,13 +58,14 @@ attribute [local instance 100] LieRing.ofAssociativeRing
 variable {n : Type*} [DecidableEq n] [Fintype n]
 variable (K : Type u) [Field K] [CharZero K]
 variable {M : Type w} [AddCommGroup M] [Module K M] [LieRingModule (Matrix n n K) M]
-variable {N : Type w} [AddCommGroup N] [Module K N] [LieRingModule (Matrix n n K) N]
+variable {N : Type w'} [AddCommGroup N] [Module K N] [LieRingModule (Matrix n n K) N]
 
 /-- **An `sl n K`-equivariant map between `gl n K`-modules on which the identity matrix acts by the
 same scalar is `gl n K`-equivariant.** `gl n K` is spanned by its centre, the scalar matrices, and
 its derived ideal `sl n K` (`TauCeti.sup_center_derivedSeries_eq_top`), so equivariance need only
 be checked on those two. -/
-theorem map_lie_matrix_of_forall_mem_slIdeal [LieModule K (Matrix n n K) M]
+theorem map_lie_matrix_of_one_lie_eq_smul_of_forall_mem_slIdeal
+    [LieModule K (Matrix n n K) M]
     [LieModule K (Matrix n n K) N] (f : M →ₗ[K] N) {c : K}
     (hM : ∀ m : M, ⁅(1 : Matrix n n K), m⁆ = c • m)
     (hN : ∀ m : N, ⁅(1 : Matrix n n K), m⁆ = c • m)
@@ -78,10 +79,11 @@ theorem map_lie_matrix_of_forall_mem_slIdeal [LieModule K (Matrix n n K) M]
   · rw [derivedSeries_one_eq_slIdeal]
     exact hsl
 
-/-- The packaged form of `TauCeti.map_lie_matrix_of_forall_mem_slIdeal`: an `sl n K`-equivariant
-linear equivalence between `gl n K`-modules on which the identity matrix acts by the same scalar is
-an equivalence of `gl n K`-modules. -/
-def lieModuleEquivOfSlEquiv [LieModule K (Matrix n n K) M] [LieModule K (Matrix n n K) N]
+/-- The packaged form of `TauCeti.map_lie_matrix_of_one_lie_eq_smul_of_forall_mem_slIdeal`: an
+`sl n K`-equivariant linear equivalence between `gl n K`-modules on which the identity matrix acts
+by the same scalar is an equivalence of `gl n K`-modules. -/
+def lieModuleEquivOfOneLieEqSmulOfSlEquiv [LieModule K (Matrix n n K) M]
+    [LieModule K (Matrix n n K) N]
     (e : M ≃ₗ[K] N) {c : K}
     (hM : ∀ m : M, ⁅(1 : Matrix n n K), m⁆ = c • m)
     (hN : ∀ m : N, ⁅(1 : Matrix n n K), m⁆ = c • m)
@@ -89,15 +91,25 @@ def lieModuleEquivOfSlEquiv [LieModule K (Matrix n n K) M] [LieModule K (Matrix 
     M ≃ₗ⁅K, Matrix n n K⁆ N where
   __ := e
   map_lie' {A m} :=
-    map_lie_matrix_of_forall_mem_slIdeal K (e : M →ₗ[K] N) hM hN hsl A m
+    map_lie_matrix_of_one_lie_eq_smul_of_forall_mem_slIdeal K
+      (e : M →ₗ[K] N) hM hN hsl A m
 
 @[simp]
-theorem lieModuleEquivOfSlEquiv_apply [LieModule K (Matrix n n K) M]
+theorem lieModuleEquivOfOneLieEqSmulOfSlEquiv_apply [LieModule K (Matrix n n K) M]
     [LieModule K (Matrix n n K) N] (e : M ≃ₗ[K] N) {c : K}
     (hM : ∀ m : M, ⁅(1 : Matrix n n K), m⁆ = c • m)
     (hN : ∀ m : N, ⁅(1 : Matrix n n K), m⁆ = c • m)
     (hsl : ∀ A ∈ slIdeal K n, ∀ m : M, e ⁅A, m⁆ = ⁅A, e m⁆) (m : M) :
-    lieModuleEquivOfSlEquiv K e hM hN hsl m = e m :=
+    lieModuleEquivOfOneLieEqSmulOfSlEquiv K e hM hN hsl m = e m :=
+  (rfl)
+
+@[simp]
+theorem lieModuleEquivOfOneLieEqSmulOfSlEquiv_symm_apply [LieModule K (Matrix n n K) M]
+    [LieModule K (Matrix n n K) N] (e : M ≃ₗ[K] N) {c : K}
+    (hM : ∀ m : M, ⁅(1 : Matrix n n K), m⁆ = c • m)
+    (hN : ∀ m : N, ⁅(1 : Matrix n n K), m⁆ = c • m)
+    (hsl : ∀ A ∈ slIdeal K n, ∀ m : M, e ⁅A, m⁆ = ⁅A, e m⁆) (n : N) :
+    (lieModuleEquivOfOneLieEqSmulOfSlEquiv K e hM hN hsl).symm n = e.symm n :=
   (rfl)
 
 variable (M) [IsAlgClosed K] [LieModule K (Matrix n n K) M] [FiniteDimensional K M]
