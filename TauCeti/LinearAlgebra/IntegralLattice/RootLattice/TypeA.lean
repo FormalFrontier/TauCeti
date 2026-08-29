@@ -63,6 +63,10 @@ lattice to the model.
   `q(ω₁) = n / (2 (n + 1))`.
 * `TauCeti.IntegralLattice.discriminantPairing_typeAFundamentalWeightClass`:
   `b(ω₁, ω₁) = n / (n + 1)`.
+* `TauCeti.IntegralLattice.discriminantQuadraticMap_zsmul_typeAFundamentalWeightClass`: the
+  quadratic value on every multiple of `ω₁`.
+* `TauCeti.IntegralLattice.discriminantPairing_zsmul_typeAFundamentalWeightClass`: the pairing on
+  every pair of multiples of `ω₁`.
 * `TauCeti.IntegralLattice.typeAStandardQuadraticModule`: the cyclic model on `ℤ/(n+1)`.
 * `TauCeti.IntegralLattice.typeADiscriminantQuadraticIsometry`: the model is the discriminant
   quadratic module of the `Aₙ` root lattice.
@@ -373,51 +377,22 @@ theorem typeADiscriminantGroupEquiv_apply_one :
     typeADiscriminantGroupEquiv n 1 = typeAFundamentalWeightClass n :=
   zmodAddEquivOfGenerator_apply_one _ _
 
-/-- **The discriminant quadratic value of the first fundamental weight is `n / (2 (n + 1))`**, in
-the half-norm convention. -/
-@[simp]
-theorem discriminantQuadraticMap_typeAFundamentalWeightClass :
-    (typeARootLattice n).discriminantQuadraticMap (isEven_typeARootLattice n)
-        (typeAFundamentalWeightClass n) =
-      (((n : ℚ) / (2 * ((n : ℚ) + 1)) : ℚ) : AddCircle (1 : ℚ)) := by
-  have hn : ((n : ℚ) + 1) ≠ 0 := natCast_add_one_ne_zero
-  rw [typeAFundamentalWeightClass, discriminantQuadraticMap_mk]
-  congr 1
-  rw [coe_typeAFundamentalWeightDual, form_typeAFundamentalWeight_self]
-  field_simp
-
-/-- **The discriminant bilinear value of the first fundamental weight is `n / (n + 1)`**, which is
-twice the half-norm value, as the polar identity demands. -/
-@[simp]
-theorem discriminantPairing_typeAFundamentalWeightClass :
-    (typeARootLattice n).discriminantPairing (typeAFundamentalWeightClass n)
-        (typeAFundamentalWeightClass n) =
-      (((n : ℚ) / ((n : ℚ) + 1) : ℚ) : AddCircle (1 : ℚ)) := by
-  rw [typeAFundamentalWeightClass, discriminantPairing_mk, coe_typeAFundamentalWeightDual,
-    form_typeAFundamentalWeight_self]
-
 /-! ## The discriminant form on every class
 
 The class of `ω₁` generates, so the two computations below give the discriminant form on the whole
 of `A_{Aₙ}` rather than only on the generator. -/
 
-/-- The ambient pairing of two rational multiples of the first fundamental weight. -/
-theorem form_zsmul_typeAFundamentalWeight (j k : ℤ) :
-    (typeARootLattice n).form (j • typeAFundamentalWeight n) (k • typeAFundamentalWeight n) =
-      (j : ℚ) * (k : ℚ) * (n : ℚ) / ((n : ℚ) + 1) := by
-  rw [← Int.cast_smul_eq_zsmul ℚ j, ← Int.cast_smul_eq_zsmul ℚ k]
-  simp only [map_smul, LinearMap.smul_apply, smul_eq_mul, form_typeAFundamentalWeight_self]
-  ring
-
 /-- **The discriminant quadratic value of the `k`-th multiple of the class of `ω₁` is
 `k² n / (2 (n + 1))`.** -/
+@[simp]
 theorem discriminantQuadraticMap_zsmul_typeAFundamentalWeightClass (k : ℤ) :
     (typeARootLattice n).discriminantQuadraticMap (isEven_typeARootLattice n)
         (k • typeAFundamentalWeightClass n) =
       ((((k : ℚ) * (k : ℚ) * (n : ℚ)) / (2 * ((n : ℚ) + 1)) : ℚ) : AddCircle (1 : ℚ)) := by
   have hn : ((n : ℚ) + 1) ≠ 0 := natCast_add_one_ne_zero
   rw [typeAFundamentalWeightClass, ← Submodule.Quotient.mk_smul, discriminantQuadraticMap_mk,
-    SetLike.val_smul, coe_typeAFundamentalWeightDual, form_zsmul_typeAFundamentalWeight]
+    SetLike.val_smul, coe_typeAFundamentalWeightDual, ← Int.cast_smul_eq_zsmul ℚ k]
+  simp only [map_smul, LinearMap.smul_apply, smul_eq_mul, form_typeAFundamentalWeight_self]
   congr 1
   field_simp
 
@@ -429,7 +404,27 @@ theorem discriminantPairing_zsmul_typeAFundamentalWeightClass (j k : ℤ) :
       ((((j : ℚ) * (k : ℚ) * (n : ℚ)) / ((n : ℚ) + 1) : ℚ) : AddCircle (1 : ℚ)) := by
   rw [typeAFundamentalWeightClass, ← Submodule.Quotient.mk_smul, ← Submodule.Quotient.mk_smul,
     discriminantPairing_mk, SetLike.val_smul, SetLike.val_smul, coe_typeAFundamentalWeightDual,
-    form_zsmul_typeAFundamentalWeight]
+    ← Int.cast_smul_eq_zsmul ℚ j, ← Int.cast_smul_eq_zsmul ℚ k]
+  simp only [map_smul, LinearMap.smul_apply, smul_eq_mul, form_typeAFundamentalWeight_self]
+  ring_nf
+
+/-- **The discriminant quadratic value of the first fundamental weight is `n / (2 (n + 1))`**, in
+the half-norm convention. -/
+@[simp]
+theorem discriminantQuadraticMap_typeAFundamentalWeightClass :
+    (typeARootLattice n).discriminantQuadraticMap (isEven_typeARootLattice n)
+        (typeAFundamentalWeightClass n) =
+      (((n : ℚ) / (2 * ((n : ℚ) + 1)) : ℚ) : AddCircle (1 : ℚ)) := by
+  simpa using discriminantQuadraticMap_zsmul_typeAFundamentalWeightClass n 1
+
+/-- **The discriminant bilinear value of the first fundamental weight is `n / (n + 1)`**, which is
+twice the half-norm value, as the polar identity demands. -/
+@[simp]
+theorem discriminantPairing_typeAFundamentalWeightClass :
+    (typeARootLattice n).discriminantPairing (typeAFundamentalWeightClass n)
+        (typeAFundamentalWeightClass n) =
+      (((n : ℚ) / ((n : ℚ) + 1) : ℚ) : AddCircle (1 : ℚ)) := by
+  simpa using discriminantPairing_zsmul_typeAFundamentalWeightClass n 1 1
 
 /-! ## The cyclic model of the discriminant quadratic module -/
 
@@ -460,13 +455,41 @@ the first condition depends on the parity of `n`, so it is produced from
       push_cast
       field_simp)
 
+/-- The quadratic value on the reduction of any integer in the cyclic model. -/
+@[simp]
+theorem typeAStandardQuadraticModule_quadratic_intCast (k : ℤ) :
+    (typeAStandardQuadraticModule n).quadratic (k : ZMod (n + 1)) =
+      ((((k : ℚ) * (k : ℚ) * (n : ℚ)) / (2 * ((n : ℚ) + 1)) : ℚ) :
+        AddCircle (1 : ℚ)) := by
+  unfold typeAStandardQuadraticModule
+  rw [FiniteQuadraticModule.cyclic_quadratic, FiniteQuadraticModule.cyclicMap_intCast,
+    ← AddCircle.coe_zsmul]
+  congr 1
+  rw [zsmul_eq_mul]
+  push_cast
+  ring
+
+/-- The pairing on the reductions of any two integers in the cyclic model. -/
+@[simp]
+theorem typeAStandardQuadraticModule_pairing_intCast (j k : ℤ) :
+    (typeAStandardQuadraticModule n).toFiniteBilinearModule.pairing
+        (j : ZMod (n + 1)) (k : ZMod (n + 1)) =
+      ((((j : ℚ) * (k : ℚ) * (n : ℚ)) / ((n : ℚ) + 1) : ℚ) : AddCircle (1 : ℚ)) := by
+  have hn : ((n : ℚ) + 1) ≠ 0 := natCast_add_one_ne_zero
+  unfold typeAStandardQuadraticModule
+  rw [FiniteQuadraticModule.cyclic_pairing, FiniteQuadraticModule.polar_cyclicMap_intCast,
+    ← AddCircle.coe_zsmul]
+  congr 1
+  rw [zsmul_eq_mul]
+  push_cast
+  field_simp
+
 /-- The generator of the cyclic model has quadratic value `n / (2 (n + 1))`. -/
 @[simp]
 theorem typeAStandardQuadraticModule_quadratic_one :
     (typeAStandardQuadraticModule n).quadratic (1 : ZMod (n + 1)) =
       (((n : ℚ) / (2 * ((n : ℚ) + 1)) : ℚ) : AddCircle (1 : ℚ)) := by
-  unfold typeAStandardQuadraticModule
-  rw [FiniteQuadraticModule.cyclic_quadratic, FiniteQuadraticModule.cyclicMap_one]
+  simpa using typeAStandardQuadraticModule_quadratic_intCast n 1
 
 /-- The generator of the cyclic model has self-pairing `n / (n + 1)`. -/
 @[simp]
@@ -474,14 +497,7 @@ theorem typeAStandardQuadraticModule_pairing_one_one :
     (typeAStandardQuadraticModule n).toFiniteBilinearModule.pairing
         (1 : ZMod (n + 1)) (1 : ZMod (n + 1)) =
       (((n : ℚ) / ((n : ℚ) + 1) : ℚ) : AddCircle (1 : ℚ)) := by
-  have hn : ((n : ℚ) + 1) ≠ 0 := natCast_add_one_ne_zero
-  unfold typeAStandardQuadraticModule
-  rw [FiniteQuadraticModule.cyclic_pairing, QuadraticMap.polar_self,
-    FiniteQuadraticModule.cyclicMap_one, ← AddCircle.coe_nsmul]
-  congr 1
-  rw [nsmul_eq_mul]
-  push_cast
-  field_simp
+  simpa using typeAStandardQuadraticModule_pairing_intCast n 1 1
 
 /-- **The cyclic model is isometric to the discriminant quadratic module of the type `Aₙ` root
 lattice**, by the identification carrying `1` to the class of the first fundamental weight.
