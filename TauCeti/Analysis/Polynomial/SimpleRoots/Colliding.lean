@@ -7,6 +7,7 @@ module
 
 public import Mathlib.Analysis.RCLike.Basic
 public import Mathlib.FieldTheory.IsAlgClosed.Basic
+import Mathlib.Algebra.MvPolynomial.Monad
 public import Mathlib.RingTheory.MvPolynomial.Symmetric.FundamentalTheorem
 public import TauCeti.Analysis.Polynomial.SymmetricPower
 import Mathlib.Analysis.Analytic.Polynomial
@@ -77,13 +78,7 @@ the variable `X i` is replaced by `q` evaluated at `X i`. This is the ring-theor
 postcomposing the points of a tuple with the polynomial function of `q`. -/
 noncomputable def _root_.MvPolynomial.substVar (q : R[X]) :
     MvPolynomial σ R →ₐ[R] MvPolynomial σ R :=
-  MvPolynomial.aeval fun i => Polynomial.aeval (MvPolynomial.X i) q
-
-/-- Over the base ring itself, the algebraic evaluation `aeval` of a univariate polynomial agrees
-with its plain evaluation. -/
-theorem Polynomial.aeval_eq_eval (x : R) (p : R[X]) :
-    Polynomial.aeval x p = Polynomial.eval x p := by
-  rw [Polynomial.aeval_def, Algebra.algebraMap_self, Polynomial.eval₂_id]
+  MvPolynomial.bind₁ fun i => Polynomial.aeval (MvPolynomial.X i) q
 
 /-- Evaluating a substituted polynomial at a point of an `R`-algebra is the evaluation of the
 original polynomial at the point with `q` substituted into each coordinate. -/
@@ -91,7 +86,7 @@ theorem _root_.MvPolynomial.aeval_substVar {S : Type*} [CommSemiring S] [Algebra
     (q : R[X]) (t : σ → S) (p : MvPolynomial σ R) :
     MvPolynomial.aeval t (MvPolynomial.substVar q p)
       = MvPolynomial.aeval (fun i => Polynomial.aeval (t i) q) p := by
-  rw [MvPolynomial.substVar, MvPolynomial.comp_aeval_apply]
+  rw [MvPolynomial.substVar, MvPolynomial.aeval_bind₁]
   refine congrArg (fun g => MvPolynomial.aeval g p) (funext fun i => ?_)
   calc MvPolynomial.aeval t (Polynomial.aeval (MvPolynomial.X i) q)
       = Polynomial.aeval (MvPolynomial.aeval t (MvPolynomial.X i)) q :=
@@ -102,16 +97,23 @@ theorem _root_.MvPolynomial.aeval_substVar {S : Type*} [CommSemiring S] [Algebra
 theorem _root_.MvPolynomial.IsSymmetric.substVar {p : MvPolynomial σ R} (hp : p.IsSymmetric)
     (q : R[X]) : (MvPolynomial.substVar q p).IsSymmetric := by
   intro e
-  have h : (MvPolynomial.rename e).comp (MvPolynomial.substVar q)
-      = (MvPolynomial.substVar q).comp (MvPolynomial.rename e) := by
-    refine MvPolynomial.algHom_ext fun i => ?_
-    simp only [AlgHom.comp_apply, MvPolynomial.substVar, MvPolynomial.aeval_X,
-      MvPolynomial.rename_X]
-    calc MvPolynomial.rename e (Polynomial.aeval (MvPolynomial.X i) q)
-        = Polynomial.aeval (MvPolynomial.rename e (MvPolynomial.X i)) q :=
-          (Polynomial.aeval_algHom_apply (MvPolynomial.rename e) (MvPolynomial.X i) q).symm
-      _ = Polynomial.aeval (MvPolynomial.X (e i)) q := by rw [MvPolynomial.rename_X]
-  rw [← AlgHom.comp_apply, h, AlgHom.comp_apply, hp e]
+  calc
+    MvPolynomial.rename e (MvPolynomial.substVar q p) =
+        MvPolynomial.bind₁
+          (fun i => MvPolynomial.rename e (Polynomial.aeval (MvPolynomial.X i) q)) p := by
+      rw [MvPolynomial.substVar, MvPolynomial.rename_bind₁]
+    _ = MvPolynomial.bind₁
+          ((fun i => Polynomial.aeval (MvPolynomial.X i) q) ∘ e) p := by
+      apply congrArg (fun f => MvPolynomial.bind₁ f p)
+      funext i
+      calc MvPolynomial.rename e (Polynomial.aeval (MvPolynomial.X i) q)
+          = Polynomial.aeval (MvPolynomial.rename e (MvPolynomial.X i)) q :=
+            (Polynomial.aeval_algHom_apply (MvPolynomial.rename e) (MvPolynomial.X i) q).symm
+        _ = Polynomial.aeval (MvPolynomial.X (e i)) q := by rw [MvPolynomial.rename_X]
+    _ = MvPolynomial.bind₁ (fun i => Polynomial.aeval (MvPolynomial.X i) q)
+          (MvPolynomial.rename e p) := by
+      rw [MvPolynomial.bind₁_rename]
+    _ = MvPolynomial.bind₁ (fun i => Polynomial.aeval (MvPolynomial.X i) q) p := by rw [hp e]
 
 end SubstVar
 
@@ -122,20 +124,6 @@ section ChartAlg
 open _root_.MvPolynomial Finset
 
 variable {𝕜 : Type*} [CommRing 𝕜] {n : ℕ}
-
-/-- Vieta's formula for the chart coordinates: the `k`-th coefficient of the product of the
-linear factors of an ordered tuple is the signed elementary symmetric function of the tuple. -/
-private theorem prod_X_sub_C_coeff' (f : Fin n → 𝕜) (i : Fin n) :
-    (∏ j, (Polynomial.X - Polynomial.C (f j))).coeff (i : ℕ)
-      = (-1 : 𝕜) ^ (n - (i : ℕ)) * (univ.val.map f).esymm (n - (i : ℕ)) := by
-  have hcard : (univ.val.map f).card = n := by simp
-  have hk' : (i : ℕ) ≤ (univ.val.map f).card := by rw [hcard]; have := i.isLt; omega
-  have h := Multiset.prod_X_sub_C_coeff (s := univ.val.map f) (k := (i : ℕ)) hk'
-  rw [hcard] at h
-  rw [← h]
-  congr 1
-  rw [Multiset.map_map, Finset.prod_eq_multiset_prod]
-  rfl
 
 /-- The `j`-th variable of a fundamental-theorem polynomial, read in the elementary symmetric
 chart: the `(j+1)`-st elementary symmetric function of a root tuple is `(-1) ^ (j+1)` times the
@@ -159,14 +147,8 @@ private theorem aeval_chartSubst (c : Fin n → 𝕜) (p : MvPolynomial (Fin n) 
             * c (⟨n - ((j : ℕ) + 1), by have := j.isLt; omega⟩ : Fin n)) p := by
   rw [chartSubst, MvPolynomial.comp_aeval_apply]
   refine congrArg (fun g => MvPolynomial.aeval g p) (funext fun j => ?_)
-  rw [aeval_eq_eval]
+  rw [MvPolynomial.aeval_eq_eval]
   simp only [esymmInChart, MvPolynomial.eval_mul, MvPolynomial.eval_C, MvPolynomial.eval_X]
-
-/-- Over the base ring, the algebraic evaluation `aeval` of a multivariate polynomial agrees
-with its plain evaluation. -/
-private theorem aeval_eq_eval (t : Fin n → 𝕜) (p : MvPolynomial (Fin n) 𝕜) :
-    MvPolynomial.aeval t p = eval t p := by
-  rw [MvPolynomial.aeval_def, Algebra.algebraMap_self, MvPolynomial.eval₂_id]
 
 end ChartAlg
 
@@ -174,7 +156,7 @@ section Chart
 
 open _root_.MvPolynomial Finset
 
-variable {𝕜 : Type*} [RCLike 𝕜] [IsAlgClosed 𝕜] {n : ℕ}
+variable {𝕜 : Type*} [Field 𝕜] [IsAlgClosed 𝕜] {n : ℕ}
 
 /-- The `(j+1)`-st elementary symmetric function of a tuple, read in the elementary symmetric
 chart of the tuple itself, with the signs folded into the coordinates. -/
@@ -183,12 +165,12 @@ private theorem multiset_esymm_succ_eq_chart (v : Fin n → 𝕜) (j : Fin n) :
       = (-1 : 𝕜) ^ ((j : ℕ) + 1)
         * Sym.coeffEquiv 𝕜 n (Sym.ofFn v)
             (⟨n - ((j : ℕ) + 1), by have := j.isLt; omega⟩ : Fin n) := by
+  rw [Sym.coeffEquiv_apply, Sym.coe_ofFn, Fin.univ_val_map,
+    Nat.sub_sub_self (by have := j.isLt; omega)]
   have hsign : (-1 : 𝕜) ^ ((j : ℕ) + 1) * (-1 : 𝕜) ^ ((j : ℕ) + 1) = 1 := by
-    have h2 : (-1 : 𝕜) ^ 2 = 1 := by norm_num
-    rw [← pow_add, ← Nat.two_mul, pow_mul, h2, one_pow]
-  rw [Sym.coeffEquiv_ofFn_apply,
-    prod_X_sub_C_coeff' v ⟨n - ((j : ℕ) + 1), by have := j.isLt; omega⟩,
-    Nat.sub_sub_self (by have := j.isLt; omega), ← mul_assoc, hsign, one_mul]
+    rw [← pow_add, ← Nat.two_mul, pow_mul]
+    norm_num
+  rw [← mul_assoc, hsign, one_mul]
 
 /-- **The coordinate action of a polynomial map on the elementary symmetric chart is polynomial.**
 Postcomposing the points of a tuple with the polynomial function of `q` acts on the chart
@@ -230,11 +212,9 @@ theorem Sym.exists_coeffEquiv_map_coeffEquiv_symm_eq_eval (q : 𝕜[X]) :
       = Sym.coeffEquiv 𝕜 n (Sym.ofFn ((fun z => Polynomial.eval z q) ∘ v)) i := by
         rw [← hv, Sym.map_ofFn]
     _ = Sym.coeffEquiv 𝕜 n (Sym.ofFn (fun j => Polynomial.eval (v j) q)) i := rfl
-    _ = (∏ j, (Polynomial.X - Polynomial.C (Polynomial.eval (v j) q))).coeff i :=
-        Sym.coeffEquiv_ofFn_apply _ _
     _ = (-1 : 𝕜) ^ (n - (i : ℕ))
-        * (univ.val.map (fun j => Polynomial.eval (v j) q)).esymm (n - (i : ℕ)) :=
-        prod_X_sub_C_coeff' (fun j => Polynomial.eval (v j) q) i
+        * (univ.val.map (fun j => Polynomial.eval (v j) q)).esymm (n - (i : ℕ)) := by
+        rw [Sym.coeffEquiv_apply, Sym.coe_ofFn, Fin.univ_val_map]
     _ = (-1 : 𝕜) ^ (n - (i : ℕ))
         * MvPolynomial.aeval (fun j => Polynomial.eval (v j) q)
             (esymm (Fin n) 𝕜 (n - (i : ℕ))) := by
@@ -244,7 +224,7 @@ theorem Sym.exists_coeffEquiv_map_coeffEquiv_symm_eq_eval (q : 𝕜[X]) :
             (esymm (Fin n) 𝕜 (n - (i : ℕ))) := by
         refine congrArg (fun g => (-1 : 𝕜) ^ (n - (i : ℕ))
           * MvPolynomial.aeval g (esymm (Fin n) 𝕜 (n - (i : ℕ))))
-          (funext fun j => (Polynomial.aeval_eq_eval (v j) q).symm)
+          (funext fun j => (congrFun (Polynomial.coe_aeval_eq_eval (v j)) q).symm)
     _ = (-1 : 𝕜) ^ (n - (i : ℕ))
         * MvPolynomial.aeval v (MvPolynomial.substVar q (esymm (Fin n) 𝕜 (n - (i : ℕ)))) := by
         rw [← MvPolynomial.aeval_substVar]
@@ -264,7 +244,16 @@ theorem Sym.exists_coeffEquiv_map_coeffEquiv_symm_eq_eval (q : 𝕜[X]) :
         rw [MvPolynomial.aeval_esymm_eq_multiset_esymm, multiset_esymm_succ_eq_chart, hvc]
     _ = MvPolynomial.eval c (MvPolynomial.C ((-1 : 𝕜) ^ (n - (i : ℕ)))
           * chartSubst (W (⟨n - ((i : ℕ) + 1), by have := i.isLt; omega⟩ : Fin n))) := by
-        rw [MvPolynomial.eval_mul, MvPolynomial.eval_C, ← aeval_eq_eval, ← aeval_chartSubst]
+        rw [MvPolynomial.eval_mul, MvPolynomial.eval_C, ← MvPolynomial.aeval_eq_eval,
+          ← aeval_chartSubst]
+
+end Chart
+
+section Analytic
+
+open _root_.MvPolynomial Finset
+
+variable {𝕜 : Type*} [RCLike 𝕜] [IsAlgClosed 𝕜] {n : ℕ}
 
 /-- **The coordinate action of a polynomial map on the elementary symmetric chart is analytic at
 every tuple.** Postcomposing the points of a tuple with the polynomial function of `q` induces a
@@ -274,14 +263,11 @@ theorem Sym.analyticAt_coeffEquiv_map_coeffEquiv_symm_polynomial (q : 𝕜[X]) (
     AnalyticAt 𝕜 (fun c => Sym.coeffEquiv 𝕜 n
       (Sym.map (fun z => eval z q) ((Sym.coeffEquiv 𝕜 n).symm c))) c₀ := by
   obtain ⟨Q, hQ⟩ := Sym.exists_coeffEquiv_map_coeffEquiv_symm_eq_eval (𝕜 := 𝕜) (n := n) q
-  have hcoord : ∀ i : Fin n, AnalyticAt 𝕜 (fun c : Fin n → 𝕜 => c i) c₀ :=
-    fun i => (ContinuousLinearMap.proj (R := 𝕜) (φ := fun _ : Fin n => 𝕜) i).analyticAt c₀
   refine AnalyticAt.congr (f := fun c i => MvPolynomial.eval c (Q i))
-    (AnalyticAt.pi fun i => ?_) ?_
-  · refine (AnalyticAt.aeval_mvPolynomial (f := fun c : Fin n → 𝕜 => c) hcoord (Q i)).congr ?_
-    filter_upwards with c using aeval_eq_eval c (Q i)
+    (AnalyticAt.pi fun i =>
+      AnalyticOnNhd.eval_mvPolynomial (Q i) c₀ (Set.mem_univ _)) ?_
   · filter_upwards with c using (hQ c).symm
 
-end Chart
+end Analytic
 
 end TauCeti
