@@ -5,19 +5,18 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.Connected.CommHopfAlgCat
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Normal.Product.Properties
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.SmoothContainment
 import TauCeti.Algebra.AlgebraicGroup.Tangent.Dimension
 import TauCeti.Algebra.AlgebraicGroup.Tangent.FiniteType
 
 /-!
-# Maximal-dimensional families of normal closed subgroups
+# Maximal-dimensional families of closed subgroups
 
 Let `H` be the coordinate Hopf algebra of a finite-type affine group over a field, and let
-`P` be a family of normal closed subgroups that are smooth and connected. Suppose
-that `P` is closed under scheme-theoretic multiplication images. Then any member of `P` of
-maximal Lie dimension contains every other member.
+`P` be a family of smooth connected closed subgroups. Suppose a normal member `I` of `P` has
+maximal Lie dimension and the scheme-theoretic product of `I` with each member of `P` remains in
+`P`. Then `I` contains every other member.
 
 Indeed, multiplying a maximal-dimensional member `I` by another member `J` gives a member that
 contains `I`. Dimension maximality and monotonicity force the two tangent spaces to have the same
@@ -30,8 +29,8 @@ radical.
 
 ## Main declaration
 
-* `TauCeti.HopfIdeal.le_of_product_of_finrank_maximal`: a maximal-dimensional member of a
-  product-closed family of smooth connected normal closed subgroups is greatest.
+* `TauCeti.HopfIdeal.le_of_product_of_finrank_maximal`: a normal maximal-dimensional member of a
+  family of smooth connected closed subgroups, closed under its products, is greatest.
 
 ## References
 
@@ -55,21 +54,21 @@ namespace HopfIdeal
 variable {k : Type u} [Field k]
 variable {H : FiniteTypeCommHopfAlgCat.{u, u} k} {I J : HopfIdeal k H}
 
-/-- A maximal-dimensional member of a product-closed family of smooth connected
-normal closed subgroups contains every member of the family.
+/-- A normal maximal-dimensional member of a family of smooth connected closed subgroups contains
+every member when its product with each family member remains in the family.
 
 The order on Hopf ideals reverses inclusion of represented closed subgroups, so the conclusion
 `I ≤ J` says that the subgroup cut out by `I` contains the one cut out by `J`. -/
 theorem le_of_product_of_finrank_maximal
     (P : HopfIdeal k H → Prop)
-    (normal : ∀ {K : HopfIdeal k H}, P K → K.IsNormal)
+    (hI_normal : I.IsNormal)
     (connected : ∀ {K : HopfIdeal k H}, P K →
       ConnectedSpace (PrimeSpectrum (H ⧸ K.toIdeal)))
     (smooth : ∀ {K : HopfIdeal k H}, P K →
       Algebra.Smooth k (FiniteTypeCommHopfAlgCat.quotient H K))
-    (product : ∀ {K L : HopfIdeal k H} (hK : P K), P L →
+    (product : ∀ {L : HopfIdeal k H}, P L →
       P (HopfIdeal.ker
-        (CommHopfAlgCat.productMapOfNormal H.obj K L (normal hK)).hom))
+        (CommHopfAlgCat.productMapOfNormal H.obj I L hI_normal).hom))
     (hI : P I)
     (hmax : ∀ K : HopfIdeal k H, P K →
       Module.finrank k
@@ -79,10 +78,9 @@ theorem le_of_product_of_finrank_maximal
           (Derivation k (H ⧸ I.toIdeal)
             (Bialgebra.CounitAlgebra k (H ⧸ I.toIdeal) k)))
     (hJ : P J) : I ≤ J := by
-  let hI_normal := normal hI
   let K : HopfIdeal k H :=
     HopfIdeal.ker (CommHopfAlgCat.productMapOfNormal H.obj I J hI_normal).hom
-  have hK : P K := product hI hJ
+  have hK : P K := product hJ
   have hKI : K ≤ I :=
     CommHopfAlgCat.ker_productMapOfNormal_le_left H.obj I J hI_normal
   have hfinrank :

@@ -64,13 +64,13 @@ theorem le_of_finrank_maximal
     (hJ : IsUnipotentRadicalCandidate H J) : I ≤ J := by
   apply HopfIdeal.le_of_product_of_finrank_maximal
       (IsUnipotentRadicalCandidate H)
-      (fun hK ↦ hK.isNormal)
+      hI.isNormal
       (fun hK ↦
         geometricallyConnectedCommHopfAlgProperty.connectedSpace k _ hK.geometricallyConnected)
       (fun hK ↦
         ((smoothUnipotentCommHopfAlgProperty_iff k
           (FiniteTypeCommHopfAlgCat.quotient H _)).mp hK.smoothUnipotent).1)
-      (fun hK hL ↦ hK.productOfNormal hL)
+      (fun hK ↦ hI.productOfNormal hK)
       hI hmax hJ
 
 end HopfIdeal.IsUnipotentRadicalCandidate
