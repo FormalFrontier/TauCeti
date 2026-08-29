@@ -110,6 +110,48 @@ private theorem transvectionUnit_mem_points_of_eq_succ {i j : Fin (r + 1)}
   simpa only [rootTarget_inr, rootSource_inr, hi, hj] using
     rootTransvection_mem_points (A := A) r (.inr k) c
 
+private theorem exists_intermediate_index {i j : Fin (r + 1)}
+    (hij : i ≠ j) (hforward : i.val + 1 ≠ j.val) (hbackward : j.val + 1 ≠ i.val) :
+    ∃ k : Fin (r + 1), i ≠ k ∧ k ≠ j ∧
+      Nat.dist i.val k.val < Nat.dist i.val j.val ∧
+      Nat.dist k.val j.val < Nat.dist i.val j.val := by
+  let k : Fin (r + 1) := if h : i.val < j.val then
+    ⟨i.val + 1, by omega⟩ else ⟨i.val - 1, by omega⟩
+  refine ⟨k, ?_, ?_, ?_, ?_⟩
+  · intro h
+    have hval := Fin.ext_iff.mp h
+    by_cases hlt : i.val < j.val
+    · simp [k, hlt] at hval
+    · simp [k, hlt] at hval
+      omega
+  · intro h
+    have hval := Fin.ext_iff.mp h
+    by_cases hlt : i.val < j.val
+    · simp [k, hlt] at hval
+      omega
+    · simp [k, hlt] at hval
+      omega
+  · by_cases hlt : i.val < j.val
+    · rw [Nat.dist_eq_sub_of_le hlt.le,
+        Nat.dist_eq_sub_of_le (by simp [k, hlt])]
+      simp [k, hlt]
+      omega
+    · have hjilt : j.val < i.val := by omega
+      rw [Nat.dist_eq_sub_of_le_right hjilt.le,
+        Nat.dist_eq_sub_of_le_right (by simp [k, hlt])]
+      simp [k, hlt]
+      omega
+  · by_cases hlt : i.val < j.val
+    · rw [Nat.dist_eq_sub_of_le hlt.le,
+        Nat.dist_eq_sub_of_le (by simp [k, hlt])]
+      simp [k, hlt]
+      omega
+    · have hjilt : j.val < i.val := by omega
+      rw [Nat.dist_eq_sub_of_le_right hjilt.le,
+        Nat.dist_eq_sub_of_le_right (by simp [k, hlt]; omega)]
+      simp [k, hlt]
+      omega
+
 private theorem commutatorElement_mem_points
     {x y : Matrix.GeneralLinearGroup (Fin (r + 1)) A}
     (hx : x ∈ points r A) (hy : y ∈ points r A) :
@@ -136,47 +178,9 @@ theorem transvectionUnit_mem_points {i j : Fin (r + 1)} (hij : i ≠ j) (c : A) 
       · exact transvectionUnit_mem_points_of_succ_eq (A := A) r hij hforward c
       by_cases hbackward : j.val + 1 = i.val
       · exact transvectionUnit_mem_points_of_eq_succ (A := A) r hij hbackward c
-      let k : Fin (r + 1) := if h : i.val < j.val then
-        ⟨i.val + 1, by omega⟩ else ⟨i.val - 1, by omega⟩
-      have hik : i ≠ k := by
-        intro h
-        have hval := Fin.ext_iff.mp h
-        by_cases hlt : i.val < j.val
-        · simp [k, hlt] at hval
-        · simp [k, hlt] at hval
-          omega
-      have hkj : k ≠ j := by
-        intro h
-        have hval := Fin.ext_iff.mp h
-        by_cases hlt : i.val < j.val
-        · simp [k, hlt] at hval
-          omega
-        · simp [k, hlt] at hval
-          omega
-      have hdist_ik : Nat.dist i.val k.val < d := by
-        rw [← hdist]
-        by_cases hlt : i.val < j.val
-        · rw [Nat.dist_eq_sub_of_le hlt.le,
-            Nat.dist_eq_sub_of_le (by simp [k, hlt])]
-          simp [k, hlt]
-          omega
-        · have hjilt : j.val < i.val := by omega
-          rw [Nat.dist_eq_sub_of_le_right hjilt.le,
-            Nat.dist_eq_sub_of_le_right (by simp [k, hlt])]
-          simp [k, hlt]
-          omega
-      have hdist_kj : Nat.dist k.val j.val < d := by
-        rw [← hdist]
-        by_cases hlt : i.val < j.val
-        · rw [Nat.dist_eq_sub_of_le hlt.le,
-            Nat.dist_eq_sub_of_le (by simp [k, hlt])]
-          simp [k, hlt]
-          omega
-        · have hjilt : j.val < i.val := by omega
-          rw [Nat.dist_eq_sub_of_le_right hjilt.le,
-            Nat.dist_eq_sub_of_le_right (by simp [k, hlt]; omega)]
-          simp [k, hlt]
-          omega
+      obtain ⟨k, hik, hkj, hdist_ik, hdist_kj⟩ :=
+        exists_intermediate_index r hij hforward hbackward
+      rw [hdist] at hdist_ik hdist_kj
       have hik_mem := ih (Nat.dist i.val k.val) hdist_ik i k hik rfl c
       have hkj_mem := ih (Nat.dist k.val j.val) hdist_kj k j hkj rfl 1
       rw [← mul_one c,
