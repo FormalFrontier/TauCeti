@@ -24,7 +24,7 @@ preserves the Cartan matrix, and the root-datum construction consumes exactly a 
 symmetry group `TauCeti.DynkinType.diagramSymmetry` of that matrix. That reading is
 `TauCeti.GraphTwistedIndex.diagramPerm_mem_diagramSymmetry`, and it is essentially the only thing
 this file adds to the general construction: with it and the defining equation
-`TauCeti.GraphTwistedIndex.datumGraphAut_eq_diagramAut` in hand a consumer applies the
+`TauCeti.GraphTwistedIndex.datumGraphAut_def` in hand a consumer applies the
 `TauCeti.DynkinType` lemmas about `diagramAut` directly, so none of them is restated here. The
 order relation of the resulting automorphism is the image of
 `TauCeti.GraphTwistedIndex.diagramPerm_pow_twistOrder`, so `γ ^ 2 = 1` on `²Aₙ`, `²Dₙ` and `²E₆`
@@ -37,7 +37,7 @@ family the permutation is the identity and so is the automorphism.
   is a symmetry of the Cartan matrix of its Dynkin type.
 * `TauCeti.GraphTwistedIndex.datumGraphAut`: the resulting automorphism of the pinned simply
   connected root datum.
-* `TauCeti.GraphTwistedIndex.datumGraphAut_eq_diagramAut`: its defining equation, which is how a
+* `TauCeti.GraphTwistedIndex.datumGraphAut_def`: its defining equation, which is how a
   consumer reaches the general lemmas below.
 * `TauCeti.GraphTwistedIndex.datumGraphAut_pow_twistOrder`: its order relation.
 
@@ -75,7 +75,7 @@ def datumGraphAut :
 /-- **The defining equation of the root-datum graph automorphism.** The body of `datumGraphAut` is
 not exposed, so this is what lets a consumer rewrite it into `TauCeti.DynkinType.diagramAut` and
 then apply the general lemmas about that construction at `σ = d.diagramPerm`. -/
-theorem datumGraphAut_eq_diagramAut : d.datumGraphAut =
+theorem datumGraphAut_def : d.datumGraphAut =
     DynkinType.diagramAut d.1.dynkinType_valid d.diagramPerm_mem_diagramSymmetry := by
   rw [datumGraphAut]
 

@@ -72,6 +72,10 @@ isogeny, which is what makes `f.comp f = smulId P p` the root-datum form of the 
 
 * `TauCeti.RootPairingIsogeny.exponent_mul_pairing`: the exponents intertwine the two Cartan
   matrices.
+* `TauCeti.RootPairingIsogeny.comp_smulId`: every isogeny intertwines scaling on its source with
+  scaling on its target, so scaling is central among the endo-isogenies of one pairing.
+* `TauCeti.RootPairingIsogeny.comp_ofEquiv_smulId_eq_iff`: an automorphism composed with a scaling
+  is that scaling exactly when the automorphism is trivial.
 
 ## References
 
@@ -501,6 +505,31 @@ theorem comp_smulId [Module.Free ℤ M] [Module.Finite ℤ M] [Module.Free ℤ N
     (f : RootPairingIsogeny P Q) (c : ℕ+) :
     comp f (smulId P c) = comp (smulId Q c) f := by
   ext <;> simp [mul_comm]
+
+/-- **Scaling cancels an automorphism factor**: composing an automorphism of a finite free
+`ℤ`-root pairing with multiplication by a positive integer returns that multiplication exactly when
+the automorphism is trivial. Multiplication by `c` is injective on a torsion-free weight lattice, so
+it cancels, and an automorphism of a root pairing is determined by its weight map. -/
+theorem comp_ofEquiv_smulId_eq_iff [Module.Free ℤ M] [Module.Finite ℤ M]
+    [Module.Free ℤ N] [Module.Finite ℤ N] {P : RootPairing ι ℤ M N}
+    (f : RootPairing.Equiv P P) (c : ℕ+) :
+    comp (ofEquiv f) (smulId P c) = smulId P c ↔ f = 1 := by
+  constructor
+  · intro h
+    -- Read the equality with the scaling outermost, where its injectivity on the weight lattice
+    -- cancels it.
+    rw [comp_smulId] at h
+    have hw := congrArg weightMap h
+    rw [comp_weightMap, ofEquiv_weightMap] at hw
+    have hx : ∀ x, f.toHom.weightMap x = x := fun x =>
+      (smulId P c).weightMap_injective (LinearMap.congr_fun hw x)
+    -- An automorphism of a root pairing is determined by its weight map.
+    apply RootPairing.Equiv.weightHom_injective P
+    apply LinearEquiv.toLinearMap_injective
+    exact LinearMap.ext fun x => by simpa using hx x
+  · rintro rfl
+    have hone : ofEquiv (1 : RootPairing.Equiv P P) = id P := by ext <;> simp
+    rw [hone, comp_id]
 
 end RootPairingIsogeny
 
