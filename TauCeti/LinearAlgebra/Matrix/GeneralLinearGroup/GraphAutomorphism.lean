@@ -259,9 +259,11 @@ private theorem typeAGraphAutomorphism_eq_iff_gl (r : ℕ) (g h : GL (Fin (r + 1
 /-- **The pinned type-`A` graph automorphism, read as an invariance equation.** The automorphism
 carries `g` to `h` exactly when `h * Q * gᵀ = Q`, with `Q` the signed reversal matrix.
 
-Composing with an entrywise ring endomorphism `σ` turns this into a unitarity condition: taking
-`g = σ h`, the equation says that `h` preserves the `σ`-sesquilinear form of Gram matrix `Q`, in
-the transposed form recorded by `TauCeti.typeAGraphAutomorphism_eq_iff_transpose`. -/
+Composing with an entrywise ring endomorphism `σ` and taking `g = σ h` reads the equation as the
+invariance of the `σ`-semilinear form of Gram matrix `Q` under `h`, in the transposed form
+recorded by `TauCeti.typeAGraphAutomorphism_eq_iff_transpose`. That is the shape of a unitarity
+condition, and is one when `σ` is an involution; `σ` is only assumed to be a ring endomorphism
+here. -/
 theorem typeAGraphAutomorphism_eq_iff (r : ℕ) (g h : GL (Fin (r + 1)) A) :
     typeAGraphAutomorphism r A g = h ↔
       (h : Matrix (Fin (r + 1)) (Fin (r + 1)) A) *
@@ -296,8 +298,9 @@ automorphism carries `g` to `h` exactly when `gᵀ * Q * h = Q`.
 
 The two outer factors of `TauCeti.typeAGraphAutomorphism_eq_iff` may be exchanged because the
 square of the signed reversal matrix is a scalar. Composing with an entrywise ring endomorphism
-`σ` and taking `g = σ h`, this is the classical unitarity condition `h* * Q * h = Q` for the
-`σ`-sesquilinear form of Gram matrix `Q`, with `h* = (σ h)ᵀ`. -/
+`σ` and taking `g = σ h`, this is the equation `h* * Q * h = Q` for the `σ`-semilinear form of
+Gram matrix `Q`, with `h* = (σ h)ᵀ`: the classical unitarity condition when `σ` is an involution,
+which is not assumed here. -/
 theorem typeAGraphAutomorphism_eq_iff_transpose (r : ℕ) (g h : GL (Fin (r + 1)) A) :
     typeAGraphAutomorphism r A g = h ↔
       (g : Matrix (Fin (r + 1)) (Fin (r + 1)) A).transpose *

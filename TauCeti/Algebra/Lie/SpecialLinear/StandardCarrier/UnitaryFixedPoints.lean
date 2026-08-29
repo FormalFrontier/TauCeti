@@ -20,40 +20,37 @@ point is fixed exactly when
 g * Q * (g^{(q)})ᵀ = Q,      equivalently      (g^{(q)})ᵀ * Q * g = Q,
 ```
 
-the second being the classical unitarity condition `g* Q g = Q` for the `q`-power-sesquilinear
-form of Gram matrix `Q`, with `g* = (g^{(q)})ᵀ`. So the fixed group is the group of `Q`-unitary
-carrier points, and `TauCeti.SlStd.mem_map_subtype_fixedSubgroup_twistedFrobenius_iff` states that
-description as a membership criterion inside `GL_{r+1}(A)`.
+the second being the invariance of the `q`-power-semilinear form of Gram matrix `Q`, written
+`g* Q g = Q` with `g* = (g^{(q)})ᵀ`. That is the shape of the classical unitarity condition, and
+is that condition wherever the `q`-power map is an involution. At the generality assumed here the
+`q`-power map is only a ring endomorphism: the Frobenius of a ring of exponential characteristic
+`p` need not square to the identity, and on `(ZMod p)[X]` it does not. It is an involution on the
+subring fixed by the `q ^ 2`-power Frobenius, and every entry of a fixed point lies in that
+subring by `TauCeti.SlStd.mem_frobeniusFixedSubring_of_twistedFrobenius_eq_self`.
+`TauCeti.SlStd.mem_map_subtype_fixedSubgroup_twistedFrobenius_iff` states the description as a
+membership criterion inside `GL_{r+1}(A)`.
 
-For `p` prime, `0 < k`, `2 ≤ r`, and `A` an algebraic closure of `ZMod p`, that is the usual
-matrix realization of the twisted family `²A_r(q)`: the already available
-`TauCeti.SlStd.mem_frobeniusFixedSubring_of_twistedFrobenius_eq_self` puts the entries of a fixed
-point in the field of `q ^ 2` elements, and the equation here is unitarity with respect to the
-`q`-power involution of that field. None of those hypotheses are assumed below, and nothing here
-asserts that the fixed group is finite, is perfect, or is simple, nor that it agrees with any other
-construction of a unitary group.
+For `p` prime, `0 < k`, `2 ≤ r`, and `A` an algebraic closure of `ZMod p`, that subring is the
+field of `q ^ 2` elements and the equation here is the usual unitary equation of the twisted
+family `²A_r(q)` over it. Identifying the fixed group with that family is not done here and does
+not follow from what is proved: it would need the carrier identified with `SL_{r+1}` and the
+derived subgroup and central quotient taken. None of those hypotheses are assumed below, and
+nothing here asserts that the fixed group is finite, is perfect, or is simple, nor that it agrees
+with any other construction of a unitary group.
 
-Mathlib's `Matrix.unitaryGroup` is not the object described here and is not available for it: it is
-the unitary group of the conjugate-transpose involution supplied by a `StarRing` structure on the
-coefficients, whereas the involution here is the `q`-power ring endomorphism of a ring of
-exponential characteristic `p`, which carries no such structure, and the Gram matrix is the pinned
-`Q` rather than the identity.
-
-The last two results record that the pinned generators of the carrier lie in the fixed group under
-the expected numerical conditions, so the group is not described vacuously: a torus point is fixed
-when its coordinates are exchanged by the `q`-power map along the reversal of the Bourbaki
-numbering, and a root-subgroup point is fixed when it sits at a node fixed by that reversal and its
-parameter is fixed by the `q`-power map.
+Mathlib's `Matrix.unitaryGroup` is not the object described here: it is the unitary group of the
+conjugate-transpose involution supplied by a `StarRing` structure on the coefficients, whereas the
+map here is the `q`-power ring endomorphism of a ring of exponential characteristic `p`, no
+compatible `StarRing` structure on `A` is assumed, and the Gram matrix is the pinned `Q` rather
+than the identity.
 
 ## Main results
 
 * `TauCeti.SlStd.twistedFrobenius_eq_self_iff` and
   `TauCeti.SlStd.twistedFrobenius_eq_self_iff_transpose`: a carrier point is fixed by the
-  graph-twisted Frobenius exactly when it is unitary for the pinned `q`-power-sesquilinear form.
+  graph-twisted Frobenius exactly when it preserves the pinned `q`-power-semilinear form.
 * `TauCeti.SlStd.mem_map_subtype_fixedSubgroup_twistedFrobenius_iff`: the same description of the
   fixed group as a subgroup of the ambient general linear group.
-* `TauCeti.SlStd.twistedFrobenius_weightTorusPoints_eq_self` and
-  `TauCeti.SlStd.twistedFrobenius_rootSubgroupPoints_eq_self`: pinned points of the fixed group.
 
 ## References
 
@@ -87,10 +84,12 @@ private theorem coe_map_iterateFrobenius (g : Matrix.GeneralLinearGroup (Fin (r 
     ((Matrix.GeneralLinearGroup.map (iterateFrobenius A p k) g :
           Matrix.GeneralLinearGroup (Fin (r + 1)) A) :
         Matrix (Fin (r + 1)) (Fin (r + 1)) A) =
-      (g : Matrix (Fin (r + 1)) (Fin (r + 1)) A).map (· ^ p ^ k) := (rfl)
+      (g : Matrix (Fin (r + 1)) (Fin (r + 1)) A).map (· ^ p ^ k) := by
+  ext i j
+  rw [Matrix.GeneralLinearGroup.map_apply, Matrix.map_apply, iterateFrobenius_def]
 
 /-- **A type-`A_r` carrier point is fixed by the graph-twisted Frobenius exactly when it preserves
-the pinned `q`-power-sesquilinear form**, `q = p ^ k`, whose Gram matrix is the signed reversal
+the pinned `q`-power-semilinear form**, `q = p ^ k`, whose Gram matrix is the signed reversal
 matrix `TauCeti.typeAGraphConjugator`.
 
 `TauCeti.SlStd.map_subtype_fixedSubgroup_twistedFrobenius_le` places a fixed point among the
@@ -108,13 +107,13 @@ theorem twistedFrobenius_eq_self_iff (g : points r A) :
   rw [Subtype.ext_iff, coe_twistedFrobenius, typeAGraphAutomorphism_eq_iff,
     coe_map_iterateFrobenius]
 
-/-- **A type-`A_r` carrier point is fixed by the graph-twisted Frobenius exactly when it is
-unitary for the pinned `q`-power-sesquilinear form**, `q = p ^ k`: writing `g*` for the transpose
-of the entrywise `q`-th power of `g`, the condition is `g* * Q * g = Q`.
+/-- **A type-`A_r` carrier point is fixed by the graph-twisted Frobenius exactly when it satisfies
+the unitary equation of the pinned `q`-power-semilinear form**, `q = p ^ k`: writing `g*` for the
+transpose of the entrywise `q`-th power of `g`, the condition is `g* * Q * g = Q`.
 
-This is the classical form of the condition; `TauCeti.SlStd.twistedFrobenius_eq_self_iff` is the
-same condition with the two outer factors exchanged, which is the form the graph automorphism
-produces directly. -/
+This is the classical form of the condition, an involution being what makes `g ↦ g*` an adjoint;
+`TauCeti.SlStd.twistedFrobenius_eq_self_iff` is the same condition with the two outer factors
+exchanged, which is the form the graph automorphism produces directly. -/
 theorem twistedFrobenius_eq_self_iff_transpose (g : points r A) :
     twistedFrobenius r p k A g = g ↔
       (((g : Matrix.GeneralLinearGroup (Fin (r + 1)) A) :
@@ -127,9 +126,13 @@ theorem twistedFrobenius_eq_self_iff_transpose (g : points r A) :
     coe_map_iterateFrobenius]
 
 /-- **The graph-twisted Frobenius-fixed points of the full-weight type-`A_r` carrier are the
-`Q`-unitary carrier points.** Read inside the ambient general linear group, membership in the fixed
-group is carrier membership together with the invariance equation of
-`TauCeti.SlStd.twistedFrobenius_eq_self_iff`. -/
+carrier points preserving the pinned `q`-power-semilinear form.** Read inside the ambient general
+linear group, membership in the fixed group is carrier membership together with the invariance
+equation of `TauCeti.SlStd.twistedFrobenius_eq_self_iff`.
+
+This is not a `simp` lemma: `simp` already reduces its left-hand side, through
+`Subgroup.mem_map`, `TauCeti.SlStd.mem_points_iff` and the `simp` lemma above, so tagging it makes
+the `simpNF` linter fail. -/
 theorem mem_map_subtype_fixedSubgroup_twistedFrobenius_iff
     (g : Matrix.GeneralLinearGroup (Fin (r + 1)) A) :
     g ∈ (fixedSubgroup (twistedFrobenius r p k A)).map (points r A).subtype ↔
@@ -138,32 +141,12 @@ theorem mem_map_subtype_fixedSubgroup_twistedFrobenius_iff
               (typeAGraphConjugator r A : Matrix (Fin (r + 1)) (Fin (r + 1)) A) *
               ((g : Matrix (Fin (r + 1)) (Fin (r + 1)) A).map (· ^ p ^ k)).transpose =
             (typeAGraphConjugator r A : Matrix (Fin (r + 1)) (Fin (r + 1)) A) := by
-  constructor
-  · rintro ⟨x, hx, rfl⟩
-    exact ⟨x.2, (twistedFrobenius_eq_self_iff r p k A x).mp (mem_fixedSubgroup.mp hx)⟩
-  · rintro ⟨hmem, heq⟩
-    exact ⟨⟨g, hmem⟩,
-      mem_fixedSubgroup.mpr ((twistedFrobenius_eq_self_iff r p k A ⟨g, hmem⟩).mpr heq), rfl⟩
-
-/-! ## Pinned points of the fixed group -/
-
-/-- **A pinned torus point is fixed by the graph-twisted Frobenius when the `q`-power map exchanges
-its coordinates along the reversal of the Bourbaki numbering.** -/
-theorem twistedFrobenius_weightTorusPoints_eq_self {s : Fin r → Aˣ}
-    (hs : ∀ i, s i.rev ^ p ^ k = s i) :
-    twistedFrobenius r p k A (weightTorusPoints r A s) = weightTorusPoints r A s := by
-  rw [twistedFrobenius_weightTorusPoints]
-  exact congrArg (weightTorusPoints r A) (funext hs)
-
-/-- **A pinned root-subgroup point is fixed by the graph-twisted Frobenius when its node is fixed
-by the reversal of the Bourbaki numbering and its parameter is fixed by the `q`-power map.** For
-`0 < r` such a node exists exactly when `r` is odd, the middle node of the diagram. -/
-theorem twistedFrobenius_rootSubgroupPoints_eq_self {i : Fin r ⊕ Fin r} {u : Multiplicative A}
-    (hi : graphRootPerm r i = i)
-    (hu : Multiplicative.toAdd u ^ p ^ k = Multiplicative.toAdd u) :
-    twistedFrobenius r p k A (rootSubgroupPoints r i A u) = rootSubgroupPoints r i A u := by
-  rw [twistedFrobenius_rootSubgroupPoints, hi, hu]
-  rfl
+  rw [TauCeti.map_subtype_fixedSubgroup_of_coe_eq (twistedFrobenius r p k A)
+      ((typeAGraphAutomorphism r A).toMonoidHom.comp
+        (Matrix.GeneralLinearGroup.map (iterateFrobenius A p k)))
+      (coe_twistedFrobenius r p k A),
+    Subgroup.mem_inf, mem_fixedSubgroup, MonoidHom.comp_apply, MulEquiv.coe_toMonoidHom,
+    typeAGraphAutomorphism_eq_iff, coe_map_iterateFrobenius]
 
 end
 
