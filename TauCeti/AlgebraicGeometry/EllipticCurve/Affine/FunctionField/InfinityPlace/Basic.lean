@@ -271,6 +271,20 @@ theorem infinityPlace.algebraMap_eq_sq (r : RatFunc F) :
   rw [infinityPlace_apply, Algebra.norm_algebraMap, finrank_functionField, map_pow]
 
 open scoped Classical in
+/-- **The valuation at infinity of a polynomial in `x`** is `exp` of twice its degree.
+
+The polynomial case of `infinityPlace.algebraMap_eq_sq`, composed with Mathlib's valuation of a
+nonzero polynomial at its degree: the extension `F(W)/F(x)` is quadratic, so the exponent
+doubles. `infinityPlace.X` is the case `p = X`. -/
+theorem infinityPlace_algebraMap_polynomial {p : F[X]} (hp : p ≠ 0) :
+    infinityPlace W (algebraMap F[X] W.FunctionField p) =
+      WithZero.exp (2 * (p.natDegree : ℤ)) := by
+  rw [IsScalarTower.algebraMap_apply F[X] (RatFunc F) W.FunctionField,
+    infinityPlace.algebraMap_eq_sq, RatFunc.inftyValuation_apply,
+    RatFunc.inftyValuation.polynomial F hp, ← WithZero.exp_nsmul]
+  ring_nf
+
+open scoped Classical in
 /-- **The valuation is trivial on the base field**: a nonzero constant has value `1`, so `v_∞`
 restricted to `F` is trivial. The analogue of `RatFunc.inftyValuation.C`. -/
 theorem infinityPlace.C {c : F} (hc : c ≠ 0) :

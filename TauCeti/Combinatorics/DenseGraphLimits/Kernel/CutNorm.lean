@@ -78,13 +78,6 @@ variable {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω)
 
 namespace SymmKernel
 
-/-- A bounded symmetric kernel is integrable on the product of two finite copies of its measure. -/
-theorem integrable_uncurry [IsFiniteMeasure μ] (K : SymmKernel Ω μ) :
-    Integrable (fun p : Ω × Ω => K p.1 p.2) (μ.prod μ) := by
-  obtain ⟨C, hC⟩ := K.exists_bound
-  refine Integrable.of_bound K.measurable.aestronglyMeasurable C (ae_of_all _ fun p => ?_)
-  simpa [Function.uncurry_apply_pair, Real.norm_eq_abs] using hC p.1 p.2
-
 /-- The integral of a symmetric kernel over the rectangle `S × T`. -/
 noncomputable def rectIntegral (K : SymmKernel Ω μ) (S T : Set Ω) : ℝ :=
   ∫ p in S ×ˢ T, K p.1 p.2 ∂(μ.prod μ)

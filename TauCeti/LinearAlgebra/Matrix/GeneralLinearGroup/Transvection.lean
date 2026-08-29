@@ -8,7 +8,7 @@ module
 -- `Matrix.transvection` and its product law are the subject of this file.
 public import TauCeti.LinearAlgebra.Matrix.SpecialLinearGroup.Transvection
 -- `TauCeti.diagGL` occurs in the conjugation statement below.
-public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal
+public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal.Basic
 -- `MonoidHom.noncommCoprod` packages products of commuting one-parameter subgroups.
 public import Mathlib.GroupTheory.NoncommCoprod
 -- Non-public: the diagonal-matrix-unit product law is used only in a proof below.

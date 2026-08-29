@@ -7,6 +7,7 @@ module
 
 public import TauCeti.NumberTheory.ModularForms.HeckeSlash.Diagonal.QExpansion
 public import TauCeti.NumberTheory.ModularForms.HeckeSlash.Prime
+public import TauCeti.NumberTheory.ModularForms.HeckeSlash.UpperTri.QExpansion
 
 /-!
 # The Fourier-coefficient recurrence for `Tₚ`, at every prime
@@ -31,8 +32,7 @@ and on a nebentypus space `M_k(N, χ)` with `p ∤ N`, where the diamond acts by
 divides the level: `a_{m/p}` is read as an explicit `if p ∣ m`, and at `p ∣ N` the zero-extended
 diamond `⟨p⟩` of `DiamondOperators.lean` vanishes, so the recurrence degenerates to
 `aₘ(Tₚ f) = a_{p m}(f)` — the operator modern papers write `Uₚ`. Following Miyake,
-Diamond–Shurman and Shimura, `Uₚ` is not a second operator, only this case of `Tₚ`; it appears
-here as `qExpansion_coeff_heckeSlashGamma1ModularFormEnd_diagCosetGamma1_of_dvd_level`.
+Diamond–Shurman and Shimura, `Uₚ` is not a second operator, only this case of `Tₚ`.
 
 The `Nat` division in `a_{m/p}` is guarded by that `if`: without it, `m / p` would silently
 round down at indices `p ∤ m` and name a coefficient the recurrence does not contain.
@@ -46,8 +46,6 @@ round down at indices `p ∤ m` and name a coefficient the recurrence does not c
   `χ(p)` in place of the diamond.
 * `HeckeRing.GL2.qExpansion_heckeSlashGamma1ModularFormEnd_diagCosetGamma1_of_prime`: the same
   identity between power series, the diamond term appearing as a `PowerSeries.expand`.
-* `HeckeRing.GL2.qExpansion_coeff_heckeSlashGamma1ModularFormEnd_diagCosetGamma1_of_dvd_level`:
-  the degenerate `p ∣ N` case, `aₘ(Tₚ f) = a_{p m}(f)`.
 * `HeckeRing.GL2.qExpansion_coeff_one_heckeSlashGamma1ModularFormEnd_diagCosetGamma1`:
   `a₁(Tₚ f) = a_p(f)`, and
   `HeckeRing.GL2.eq_qExpansion_coeff_of_heckeSlashGamma1ModularFormEnd_diagCosetGamma1_eq_smul`:
@@ -216,26 +214,6 @@ theorem qExpansion_heckeSlashGamma1CuspFormEnd_diagCosetGamma1_of_prime
     rw [qExpansion_coeff_heckeSlashGamma1CuspFormEnd_diagCosetGamma1_of_prime k hp f m,
       map_add, PowerSeries.coeff_mk, map_smul, PowerSeries.coeff_expand, smul_eq_mul]
     split_ifs <;> simp
-
-/-- **The coefficient formula at any divisor of the level**: for `p ∣ N`,
-`aₘ(Tₚ f) = a_{p m}(f)` with no second term. When `p` is prime, this is the operator modern
-papers write `Uₚ`; following Miyake, Diamond–Shurman and Shimura it is not a separate object,
-only the `p ∣ N` case of `Tₚ`. -/
-theorem qExpansion_coeff_heckeSlashGamma1ModularFormEnd_diagCosetGamma1_of_dvd_level
-    (hpN : p ∣ N) (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) (m : ℕ) :
-    (qExpansion 1 (heckeSlashGamma1ModularFormEnd k (diagCosetGamma1 N p) f)).coeff m =
-      (qExpansion 1 f).coeff (p * m) := by
-  rw [heckeSlashGamma1ModularFormEnd_diagCosetGamma1 k hpN]
-  exact qExpansion_coeff_heckeSlashUpperTriModularFormEnd k hpN f m
-
-/-- **The coefficient formula at any divisor of the level, on cusp forms**:
-`aₘ(Tₚ f) = a_{p m}(f)` for `p ∣ N`. -/
-theorem qExpansion_coeff_heckeSlashGamma1CuspFormEnd_diagCosetGamma1_of_dvd_level
-    (hpN : p ∣ N) (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) (m : ℕ) :
-    (qExpansion 1 (heckeSlashGamma1CuspFormEnd k (diagCosetGamma1 N p) f)).coeff m =
-      (qExpansion 1 f).coeff (p * m) := by
-  rw [heckeSlashGamma1CuspFormEnd_diagCosetGamma1 k hpN]
-  exact qExpansion_coeff_heckeSlashUpperTriCuspFormEnd k hpN f m
 
 /-- **The first coefficient of `Tₚ f` is the `p`-th coefficient of `f`**, at every prime and
 every level: `p ∤ 1`, so the diamond term of the recurrence is absent. This is what turns a

@@ -121,6 +121,36 @@ theorem homDensity_eq_of_iso (φ : F₁ ≃g F₂) (W : Graphon Ω μ) :
     exact congrArg x (φ.toEquiv.symm_apply_apply v)
   exact Finset.prod_congr rfl fun c _ => by rw [edgeFactor_map, hcomp]
 
+/-- **Edge factors split over a disjoint union.** The edges of `F₁ ⊕g F₂` are those of the two
+summands tagged by `Sum.inl` and `Sum.inr`, so the product of the edge factors of an assignment
+`z` on the sum is the product over `F₁` of the factors of `z ∘ Sum.inl` times the product over
+`F₂` of the factors of `z ∘ Sum.inr`. -/
+private theorem prod_edgeFactor_sum (W : Graphon Ω μ) (z : V₁ ⊕ V₂ → Ω) :
+    (∏ d ∈ (F₁ ⊕g F₂).edgeFinset, edgeFactor W z d)
+      = (∏ c ∈ F₁.edgeFinset, edgeFactor W (z ∘ Sum.inl) c)
+        * ∏ c ∈ F₂.edgeFinset, edgeFactor W (z ∘ Sum.inr) c := by
+  have key : ∀ s : F₁.edgeSet ⊕ F₂.edgeSet,
+      Sum.elim (fun c : F₁.edgeSet => edgeFactor W (z ∘ Sum.inl) (c : Sym2 V₁))
+          (fun c : F₂.edgeSet => edgeFactor W (z ∘ Sum.inr) (c : Sym2 V₂)) s
+        = edgeFactor W z ((edgeSetSumEquiv.symm s : (F₁ ⊕g F₂).edgeSet) : Sym2 (V₁ ⊕ V₂)) := by
+    rintro (c | c)
+    · rw [edgeSetSumEquiv_symm_inl, edgeFactor_map]
+      rfl
+    · rw [edgeSetSumEquiv_symm_inr, edgeFactor_map]
+      rfl
+  calc ∏ d ∈ (F₁ ⊕g F₂).edgeFinset, edgeFactor W z d
+      = ∏ d : (F₁ ⊕g F₂).edgeSet, edgeFactor W z (d : Sym2 (V₁ ⊕ V₂)) :=
+        Finset.prod_subtype _ (fun _ ↦ SimpleGraph.mem_edgeFinset) _
+    _ = ∏ s : F₁.edgeSet ⊕ F₂.edgeSet,
+          Sum.elim (fun c : F₁.edgeSet => edgeFactor W (z ∘ Sum.inl) (c : Sym2 V₁))
+            (fun c : F₂.edgeSet => edgeFactor W (z ∘ Sum.inr) (c : Sym2 V₂)) s :=
+        (Fintype.prod_equiv edgeSetSumEquiv.symm _ _ key).symm
+    _ = (∏ c : F₁.edgeSet, edgeFactor W (z ∘ Sum.inl) (c : Sym2 V₁))
+          * ∏ c : F₂.edgeSet, edgeFactor W (z ∘ Sum.inr) (c : Sym2 V₂) :=
+        Fintype.prod_sum_type ..
+    _ = _ := by
+        congr 1 <;> exact (Finset.prod_subtype _ (fun _ ↦ SimpleGraph.mem_edgeFinset) _).symm
+
 /-- **Multiplicativity over disjoint unions.** `t(F₁ ⊕g F₂, W) = t(F₁, W) · t(F₂, W)`.
 
 An assignment of vertices of the disjoint sum is a *pair* of assignments, one for each summand, and
@@ -134,35 +164,6 @@ theorem homDensity_sum (W : Graphon Ω μ) :
       ((Measure.pi fun _ : V₁ => μ).prod (Measure.pi fun _ : V₂ => μ))
       (Measure.pi fun _ : V₁ ⊕ V₂ => μ) :=
     measurePreserving_sumPiEquivProdPi_symm fun _ : V₁ ⊕ V₂ => μ
-  -- The combinatorial half, stated for an arbitrary assignment `z` on the sum: the edges of a
-  -- disjoint sum are those of the two summands tagged by `Sum.inl` and `Sum.inr`, so the product
-  -- over them splits, each factor read in the assignment restricted to its own summand.
-  have hedge : ∀ z : V₁ ⊕ V₂ → Ω,
-      (∏ d ∈ (F₁ ⊕g F₂).edgeFinset, edgeFactor W z d)
-        = (∏ c ∈ F₁.edgeFinset, edgeFactor W (z ∘ Sum.inl) c)
-          * ∏ c ∈ F₂.edgeFinset, edgeFactor W (z ∘ Sum.inr) c := by
-    intro z
-    have key : ∀ s : F₁.edgeSet ⊕ F₂.edgeSet,
-        Sum.elim (fun c : F₁.edgeSet => edgeFactor W (z ∘ Sum.inl) (c : Sym2 V₁))
-            (fun c : F₂.edgeSet => edgeFactor W (z ∘ Sum.inr) (c : Sym2 V₂)) s
-          = edgeFactor W z ((edgeSetSumEquiv.symm s : (F₁ ⊕g F₂).edgeSet) : Sym2 (V₁ ⊕ V₂)) := by
-      rintro (c | c)
-      · rw [edgeSetSumEquiv_symm_inl, edgeFactor_map]
-        rfl
-      · rw [edgeSetSumEquiv_symm_inr, edgeFactor_map]
-        rfl
-    calc ∏ d ∈ (F₁ ⊕g F₂).edgeFinset, edgeFactor W z d
-        = ∏ d : (F₁ ⊕g F₂).edgeSet, edgeFactor W z (d : Sym2 (V₁ ⊕ V₂)) :=
-          Finset.prod_subtype _ (fun _ ↦ SimpleGraph.mem_edgeFinset) _
-      _ = ∏ s : F₁.edgeSet ⊕ F₂.edgeSet,
-            Sum.elim (fun c : F₁.edgeSet => edgeFactor W (z ∘ Sum.inl) (c : Sym2 V₁))
-              (fun c : F₂.edgeSet => edgeFactor W (z ∘ Sum.inr) (c : Sym2 V₂)) s :=
-          (Fintype.prod_equiv edgeSetSumEquiv.symm _ _ key).symm
-      _ = (∏ c : F₁.edgeSet, edgeFactor W (z ∘ Sum.inl) (c : Sym2 V₁))
-            * ∏ c : F₂.edgeSet, edgeFactor W (z ∘ Sum.inr) (c : Sym2 V₂) :=
-          Fintype.prod_sum_type ..
-      _ = _ := by
-          congr 1 <;> exact (Finset.prod_subtype _ (fun _ ↦ SimpleGraph.mem_edgeFinset) _).symm
   -- The analytic half: an assignment on the sum is a pair of assignments, one per summand, so the
   -- integrand becomes a product of a function of the first and a function of the second.
   have hsplit : ∀ p : (V₁ → Ω) × (V₂ → Ω),
@@ -181,7 +182,7 @@ theorem homDensity_sum (W : Graphon Ω μ) :
       funext v
       rw [Function.comp_apply, MeasurableEquiv.coe_sumPiEquivProdPi_symm,
         Equiv.sumPiEquivProdPi_symm_apply]
-    rw [hedge, hleft, hright]
+    rw [prod_edgeFactor_sum, hleft, hright]
   rw [homDensity_def, ← hmp.integral_comp' fun z : (V₁ ⊕ V₂) → Ω =>
       ∏ d ∈ (F₁ ⊕g F₂).edgeFinset, edgeFactor W z d]
   simp_rw [hsplit]

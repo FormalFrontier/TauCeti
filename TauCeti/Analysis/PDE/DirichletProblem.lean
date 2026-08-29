@@ -106,18 +106,7 @@ variable {ι : Type*} [Fintype ι] {mu : Measure (EuclideanSpace ℝ ι)} [mu.Is
   {a : EuclideanSpace ℝ ι → Matrix ι ι ℝ} {b : EuclideanSpace ℝ ι → EuclideanSpace ℝ ι}
   {c : EuclideanSpace ℝ ι → ℝ} {C : ℝ}
 
-/-- Shortcut seminormed group instance on `H¹₀(Ω)`. The norm is inherited through two nested
-closed subspaces of an `L²` space of jets, which instance search does not find on its own; the
-same shortcut is used in `TauCeti/Analysis/PDE/EnergyForm/Sobolev.lean`. -/
-noncomputable local instance instSeminormedAddCommGroupH1Zero :
-    SeminormedAddCommGroup (W1p0 mu Omega 2) := inferInstance
-
-/-- Shortcut normed space instance on `H¹₀(Ω)`, needed to talk about operator norms of
-functionals on it. -/
-noncomputable local instance instNormedSpaceH1Zero :
-    NormedSpace ℝ (W1p0 mu Omega 2) := inferInstance
-
-/-- Shortcut normed group instance on `H¹₀(Ω)`, the separated form of the seminorm above; the
+/-- Shortcut normed group instance on `H¹₀(Ω)`, the separated form of the seminorm; the
 inner-product shortcut below needs it and does not find it on its own. -/
 noncomputable local instance instNormedAddCommGroupH1Zero :
     NormedAddCommGroup (W1p0 mu Omega 2) := inferInstance
@@ -131,16 +120,15 @@ noncomputable local instance instInnerProductSpaceH1Zero :
 
 /-- The **right-hand side of the Dirichlet problem** as a continuous linear functional on
 `H¹₀(Ω)`: an `L²(Ω)` function `f` acts by `v ↦ ∫_Ω f v`, pairing against the value component of
-the Sobolev jet. Continuity is automatic from the construction, the value projection
-`TauCeti.W1p.valueL` being continuous and the pairing being the `L²` inner product. -/
+the Sobolev jet. Continuity is automatic from the construction, the value map
+`TauCeti.W1p0.valueL` being continuous and the pairing being the `L²` inner product. -/
 def dirichletForcing (f : Lp ℝ 2 (mu.restrict Omega)) : StrongDual ℝ (W1p0 mu Omega 2) :=
-  (innerSL ℝ f).comp (W1p.valueL.comp (w1p0Submodule mu Omega 2).toSubmodule.subtypeL)
+  (innerSL ℝ f).comp W1p0.valueL
 
 /-- The forcing functional is the `L²` inner product against the value component. -/
 @[simp] theorem dirichletForcing_apply (f : Lp ℝ 2 (mu.restrict Omega)) (v : W1p0 mu Omega 2) :
     dirichletForcing f v = ⟪f, W1p.value (v : W1p mu Omega 2)⟫_ℝ := by
-  rw [dirichletForcing, ContinuousLinearMap.comp_apply, ContinuousLinearMap.comp_apply,
-    Submodule.subtypeL_apply, innerSL_apply_apply, W1p.valueL_apply]
+  rw [dirichletForcing, ContinuousLinearMap.comp_apply, innerSL_apply_apply, W1p0.valueL_apply]
 
 /-- The forcing functional written as the integral `∫_Ω f v` it names. -/
 theorem dirichletForcing_apply_eq_setIntegral (f : Lp ℝ 2 (mu.restrict Omega))

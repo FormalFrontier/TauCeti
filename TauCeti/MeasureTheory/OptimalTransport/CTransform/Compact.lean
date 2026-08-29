@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.MeasureTheory.OptimalTransport.CTransform
+public import TauCeti.MeasureTheory.OptimalTransport.CTransform.Basic
 public import TauCeti.Topology.Semicontinuity.CompactInfimum
 
 /-!
@@ -22,7 +22,7 @@ semicontinuous cost section and an upper semicontinuous real-valued potential, a
 makes the transform real-valued and the `c`-superdifferential meet every vertical fibre. Borel
 measurability of the transform is recorded as a corollary. The
 measurability corollaries of the opposite, upper semicontinuous regime need no compactness and
-live with that regime in `TauCeti.MeasureTheory.OptimalTransport.CTransform`.
+live with that regime in `TauCeti.MeasureTheory.OptimalTransport.CTransform.Basic`.
 
 The integrand of the transform is `x ↦ (c (x, y) : EReal) - φ x`, and the hypotheses below are
 stated on it rather than on `c` and `φ` separately, since the extended-real subtraction is what a

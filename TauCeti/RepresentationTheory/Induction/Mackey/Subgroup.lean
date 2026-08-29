@@ -5,7 +5,9 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.Algebra.Group.Subgroup.Finite
 public import Mathlib.GroupTheory.Index
+public import Mathlib.GroupTheory.SpecificGroups.Cyclic.Basic
 public import TauCeti.Algebra.Group.Subgroup.Pointwise
 public import TauCeti.GroupTheory.DoubleCoset.Orbits
 public import TauCeti.GroupTheory.QuotientGroup.Basic
@@ -75,6 +77,12 @@ roadmap-specific subgroup the induction and restriction of that layer run along.
   `|KsH| · |K ⊓ sHs⁻¹| = |K| · |H|`.
 * `TauCeti.stabilizer_smul_eq_mackeySubgroup_subgroupOf`: the same stabilizer description for an
   arbitrary `G`-set, at a translate `s • p`.
+* `TauCeti.mackeySubgroup_eq_bot_or_conj_smul_le_of_prime_card`: for `H` of prime order the Mackey
+  subgroup is `⊥` unless the whole conjugate `sHs⁻¹` lies in `K`.
+* `TauCeti.mackeySubgroup_self_eq_bot_or_conj_smul_eq_self_of_prime_card`: at `K = H` that
+  dichotomy reads: `H` meets each of its conjugates in `⊥` or in itself.
+* `TauCeti.exists_notMem_mackeySubgroup_eq_bot_of_prime_card_of_not_normal`: a non-normal subgroup
+  of prime order therefore has a conjugate meeting it trivially.
 
 ## References
 
@@ -368,5 +376,52 @@ theorem stabilizer_smul_eq_mackeySubgroup_subgroupOf (s : G) (Γ : Subgroup G) (
 end Translate
 
 end Orbit
+
+section PrimeCard
+
+/-- Conjugation preserves the number of elements of a subgroup. -/
+private theorem card_conj_smul_eq (s : G) (H : Subgroup G) :
+    Nat.card (MulAut.conj s • H : Subgroup G) = Nat.card H :=
+  Nat.card_congr (Subgroup.equivSMul (MulAut.conj s) H).toEquiv.symm
+
+/-- **A subgroup of prime order either meets `K` trivially after conjugation, or is carried inside
+`K` altogether.** The Mackey subgroup `K ⊓ sHs⁻¹` sits inside the conjugate `sHs⁻¹`, a group of
+prime order `Nat.card H`, so read inside `sHs⁻¹` it is `⊥` or `⊤`. -/
+theorem mackeySubgroup_eq_bot_or_conj_smul_le_of_prime_card (hp : (Nat.card H).Prime) (s : G)
+    (K : Subgroup G) :
+    mackeySubgroup s H K = ⊥ ∨ (MulAut.conj s • H : Subgroup G) ≤ K := by
+  have _ : Fact (Nat.card (MulAut.conj s • H : Subgroup G)).Prime :=
+    ⟨by rw [card_conj_smul_eq]; exact hp⟩
+  rcases Subgroup.eq_bot_or_eq_top_of_prime_card
+      ((mackeySubgroup s H K).subgroupOf (MulAut.conj s • H)) with h | h
+  · exact Or.inl ((Subgroup.subgroupOf_eq_bot.mp h).eq_bot_of_le mackeySubgroup_le_conj)
+  · exact Or.inr ((Subgroup.subgroupOf_eq_top.mp h).trans mackeySubgroup_le_right)
+
+/-- **A subgroup of prime order meets each of its conjugates in `⊥` or in itself.** This is
+`TauCeti.mackeySubgroup_eq_bot_or_conj_smul_le_of_prime_card` at `K = H`: the containment
+`sHs⁻¹ ≤ H` it produces is an equality because conjugate subgroups have the same finite order. -/
+theorem mackeySubgroup_self_eq_bot_or_conj_smul_eq_self_of_prime_card (hp : (Nat.card H).Prime)
+    (s : G) : mackeySubgroup s H H = ⊥ ∨ (MulAut.conj s • H : Subgroup G) = H := by
+  have _ : Finite H := Nat.finite_of_card_ne_zero hp.ne_zero
+  refine (mackeySubgroup_eq_bot_or_conj_smul_le_of_prime_card hp s H).imp id fun hle => ?_
+  exact Subgroup.eq_of_le_of_card_ge hle (card_conj_smul_eq s H).ge
+
+/-- **A non-normal subgroup of prime order has a conjugate meeting it trivially.** If every
+conjugate of `H` were `H` itself, `H` would be normal; so some conjugate is different, and by
+`TauCeti.mackeySubgroup_self_eq_bot_or_conj_smul_eq_self_of_prime_card` it then meets `H`
+trivially. The conjugating element lies outside `H`, since conjugating by an element of `H`
+preserves `H`. -/
+theorem exists_notMem_mackeySubgroup_eq_bot_of_prime_card_of_not_normal
+    (hp : (Nat.card H).Prime) (hH : ¬ H.Normal) : ∃ s ∉ H, mackeySubgroup s H H = ⊥ := by
+  by_contra hcon
+  push Not at hcon
+  refine hH (Subgroup.Normal.of_conjugate_fixed fun g => ?_)
+  by_cases hg : g ∈ H
+  · exact Subgroup.conj_smul_eq_self_of_mem hg
+  · -- At an element outside `H` the Mackey subgroup is not `⊥`, so the conjugate is `H` itself.
+    exact (mackeySubgroup_self_eq_bot_or_conj_smul_eq_self_of_prime_card hp g).resolve_left
+      (hcon g hg)
+
+end PrimeCard
 
 end TauCeti

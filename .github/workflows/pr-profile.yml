@@ -2,11 +2,11 @@ name: pr-performance
 
 # Required, base-branch-defined performance gate for untrusted Lean changes.
 #
-# Security boundary: GitHub/API resolution, perf, threshold evaluation, status
-# posting, and report rendering run as trusted host steps. The PR contributes
-# only TauCeti/ sources (plus forward-bump-validated pins). Every command that
-# can elaborate those sources runs offline under landrun with the same mounts
-# and environment allowlist as pr-build. Host perf wraps the landrun process;
+# Security boundary: GitHub/API resolution, config attestation, perf, threshold evaluation,
+# status posting, and report rendering run as trusted host steps. Both comparison trees are
+# exact immutable commits: merge base versus PR head, or queue base versus combined merge-group
+# head. A workflow-pinned harness attests Lake config before every command that can elaborate
+# candidate sources runs offline under landrun. Host perf wraps the landrun process;
 # its raw counter files live in RUNNER_TEMP, which is not mounted in landrun, so
 # PR code cannot forge or erase its measurements. No token enters the sandbox.
 #
@@ -113,6 +113,11 @@ jobs:
             MB=$(gh api "repos/$TARGET_REPO/compare/$BASE_SHA...$OWNER:$SHA" \
               --jq .merge_base_commit.sha)
           fi
+          if [ "$NUM" = merge-group ]; then
+            COMPARISON_BASE="$BASE_SHA"
+          else
+            COMPARISON_BASE="$MB"
+          fi
           {
             echo "num=$NUM"
             echo "sha=$SHA"
@@ -120,9 +125,10 @@ jobs:
             echo "base_sha=$BASE_SHA"
             echo "status_sha=$STATUS_SHA"
             echo "mergebase=$MB"
+            echo "comparison_base=$COMPARISON_BASE"
             echo "author=$AUTHOR"
           } >> "$GITHUB_OUTPUT"
-          echo "Performance gate for $NUM: $BASE_SHA -> $SHA (merge-base $MB)"
+          echo "Performance gate for $NUM: exact $COMPARISON_BASE -> exact $SHA (policy base $BASE_SHA)"
 
       - name: Post pending perf status
         env:
@@ -131,7 +137,7 @@ jobs:
         run: |
           gh api -X POST "repos/${{ github.repository }}/statuses/$SHA" \
             -f state=pending -f context=perf \
-            -f description='measuring Lean wall time and module cost' \
+            -f description='comparing exact base/head Lean module cost' \
             -f target_url='${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
 
       - name: Fetch trusted changed-file metadata
@@ -163,100 +169,89 @@ jobs:
           persist-credentials: false
           fetch-depth: 1
 
-      - name: Checkout immutable base (trusted)
+      # Current main is policy input only: a bump must move forward from it. The measured base is
+      # the PR's merge base (or the immutable queue base), checked out separately below.
+      - name: Checkout current policy base (trusted)
         uses: actions/checkout@v4
         with:
           ref: ${{ steps.pr.outputs.base_sha }}
+          path: policy
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Checkout exact comparison base with complete cache ancestry
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.pr.outputs.comparison_base }}
           path: base
           persist-credentials: false
-          fetch-depth: 100
+          fetch-depth: 0
 
-      - name: Checkout base again for the head overlay (trusted config)
+      - name: Checkout exact candidate head with complete cache ancestry
         uses: actions/checkout@v4
         with:
-          ref: ${{ steps.pr.outputs.base_sha }}
-          path: head
-          persist-credentials: false
-          fetch-depth: 1
-
-      - name: Checkout merge-base config (trusted ancestor)
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ steps.pr.outputs.mergebase }}
-          path: mergebase
-          persist-credentials: false
-          fetch-depth: 1
-
-      - name: Checkout candidate head (untrusted, no credentials)
-        uses: actions/checkout@v4
-        with:
-          # pull_request_target intentionally fetches untrusted source for a
-          # data-only overlay; it is executed only later, offline in landrun.
           allow-unsafe-pr-checkout: true
           repository: ${{ steps.pr.outputs.head_repo }}
           ref: ${{ steps.pr.outputs.sha }}
-          path: pr
+          path: head
           persist-credentials: false
+          fetch-depth: 0
 
-      - name: Stage workflow-pinned performance tooling into trusted trees
-        run: |
-          set -euo pipefail
-          for tree in base head; do
-            rm -rf "$tree/scripts/perf"
-            cp -a gate/scripts/perf "$tree/scripts/perf"
-            cp -a gate/scripts/profile/measure.sh "$tree/scripts/profile/measure.sh"
-            cp -a gate/scripts/profile/render.py "$tree/scripts/profile/render.py"
-          done
-
-      - name: Validate optional Lake-pin bump with trusted base validator
-        id: pins
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Classify Lake configuration changes from trusted metadata
+        id: config
         run: |
           set -euo pipefail
           if jq -e '.[] | select(.filename == "lakefile.toml" or .filename == "lakefile.lean")' \
                "$RUNNER_TEMP/files.json" >/dev/null; then
-            # Lakefiles are human-owned and are never executed here. Measure
-            # any TauCeti/ delta against the trusted base config, as pr-build does.
-            echo 'changed=0' >> "$GITHUB_OUTPUT"
-            echo '::notice::candidate changes a human-owned lakefile; performance uses trusted base config'
-          elif jq -e '.[] | select(.filename == "lake-manifest.json" or .filename == "lean-toolchain")' \
-               "$RUNNER_TEMP/files.json" >/dev/null; then
-            echo 'changed=1' >> "$GITHUB_OUTPUT"
-            bash base/scripts/check-bump.sh base mergebase pr
+            echo 'lakefile-changed=1' >> "$GITHUB_OUTPUT"
           else
-            echo 'changed=0' >> "$GITHUB_OUTPUT"
+            echo 'lakefile-changed=0' >> "$GITHUB_OUTPUT"
+          fi
+          if jq -e '.[] | select(.filename == "lake-manifest.json" or .filename == "lean-toolchain")' \
+               "$RUNNER_TEMP/files.json" >/dev/null; then
+            echo 'pins-changed=1' >> "$GITHUB_OUTPUT"
+          else
+            echo 'pins-changed=0' >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Overlay only candidate TauCeti sources and validated pins
+      - name: Attest exact-head Lake configuration before executing Lake
+        id: attest
         run: |
-          set -euo pipefail
-          if find pr/TauCeti -type l -print | grep -q .; then
-            echo '::error::symlinks are not allowed under TauCeti/'
-            exit 1
-          fi
-          test -d pr/TauCeti && test ! -L pr/TauCeti
-          rm -rf head/TauCeti
-          cp -a pr/TauCeti head/TauCeti
-          if [ -e pr/TauCeti.lean ]; then
-            test ! -L pr/TauCeti.lean
-            cp -a pr/TauCeti.lean head/TauCeti.lean
-          fi
-          if [ '${{ steps.pins.outputs.changed }}' = 1 ]; then
-            for file in lake-manifest.json lean-toolchain; do
-              test ! -L "pr/$file"
-              [ ! -e "pr/$file" ] || cp -a "pr/$file" "head/$file"
-            done
-          fi
+          bash gate/scripts/attest-pr-config.sh \
+            base head '${{ steps.pr.outputs.sha }}' '${{ github.event_name }}' 1 \
+            '${{ steps.config.outputs.pins-changed }}'
+
+      - name: Validate an optional forward Lake-pin bump
+        id: bump
+        if: ${{ steps.config.outputs.pins-changed == '1' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash gate/scripts/check-bump.sh policy base head
 
       - name: Prepare safe performance manifest (trusted)
         id: manifest
         run: |
           set -euo pipefail
-          python3 gate/scripts/perf/manifest.py \
-            --files "$RUNNER_TEMP/files.json" --base base --head head \
-            --output "$RUNNER_TEMP/perf-manifest.json"
-          count=$(jq '[.[] | select(.kind != "removed")] | length' "$RUNNER_TEMP/perf-manifest.json")
+          if [ '${{ steps.config.outputs.pins-changed }}' = 1 ]; then
+            # Cross-toolchain/module-cost ratios do not compare like with like. pr-build remains
+            # the required watchdog-backed compilation; this workflow records an advisory skip.
+            printf '[]\n' > "$RUNNER_TEMP/perf-manifest.json"
+            count=0
+            echo 'skipped=pins' >> "$GITHUB_OUTPUT"
+            printf '%s\n' \
+              '<!-- lean-performance-comment -->' \
+              '## Lean performance' \
+              '' \
+              'Performance ratios were not compared because this PR changes the Mathlib and/or Lean' \
+              'pin. The required exact-head build still compiles under the universal Lean watchdog.' \
+              > performance.md
+          else
+            python3 gate/scripts/perf/manifest.py \
+              --files "$RUNNER_TEMP/files.json" --base base --head head \
+              --output "$RUNNER_TEMP/perf-manifest.json"
+            count=$(jq '[.[] | select(.kind != "removed")] | length' "$RUNNER_TEMP/perf-manifest.json")
+            echo 'skipped=' >> "$GITHUB_OUTPUT"
+          fi
           echo "count=$count" >> "$GITHUB_OUTPUT"
           printf '[]\n' > "$RUNNER_TEMP/base-results.json"
           printf '[]\n' > "$RUNNER_TEMP/head-results.json"
@@ -303,6 +298,7 @@ jobs:
 
       - name: Select and prove the host performance metric before candidate code
         id: metric
+        if: ${{ steps.config.outputs.pins-changed != '1' }}
         run: |
           set -euo pipefail
           if perf stat -j -e instructions:u -o "$RUNNER_TEMP/perf-probe.json" -- true \
@@ -328,65 +324,32 @@ jobs:
           ( cd base && lake exe cache get ) 2>&1 | tee "$RUNNER_TEMP/base-cache.log"
           mkdir -p base/.lake/tmp
 
-      - name: Fetch immutable-base Tau Ceti oleans (network, no candidate code)
+      - name: Fetch immutable-base Tau Ceti oleans through the shared cache client
         id: tauceti_cache
         if: ${{ steps.manifest.outputs.count != '0' }}
         env:
           PUBLIC_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT_PUBLIC }}
           PUBLIC_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT_PUBLIC }}
+          LAKE_CACHE_MAX_REVS: "0"
         run: |
           set -euo pipefail
           if [ -z "$PUBLIC_ARTIFACT_ENDPOINT" ] || [ -z "$PUBLIC_REVISION_ENDPOINT" ]; then
             echo 'enabled=0' >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          config="$RUNNER_TEMP/lake-cache.toml"
-          cat > "$config" <<TOML
-          cache.defaultService = "tauceti-public"
-          [[cache.service]]
-          name = "tauceti-public"
-          kind = "s3"
-          artifactEndpoint = "$PUBLIC_ARTIFACT_ENDPOINT"
-          revisionEndpoint = "$PUBLIC_REVISION_ENDPOINT"
-          TOML
-          cache_dir="$PWD/base/.lake/cache"
-          fail_re='failed to download|output lookup failed|curl exited with code|downloaded artifact hash mismatch'
-          discard_cache() {
-            [ -e "$cache_dir" ] || return 0
-            if mv "$cache_dir" "$cache_dir.discard.$$" 2>/dev/null; then
-              rm -rf "$cache_dir.discard.$$" 2>/dev/null || true
-            else
-              rm -rf "$cache_dir" 2>/dev/null || true
-            fi
-            return 0
-          }
-          clean=0
-          for attempt in 1 2 3 4 5 6; do
-            discard_cache
-            log="$RUNNER_TEMP/tauceti-cache-$attempt.log"
-            rc=0
-            ( cd base && LAKE_CONFIG="$config" LAKE_CACHE_DIR="$cache_dir" \
-                lake cache get --service tauceti-public --repo TauCetiProject/TauCeti ) \
-                >"$log" 2>&1 || rc=$?
-            cat "$log"
-            if [ "$rc" = 0 ] && ! grep -qE "$fail_re" "$log"; then
-              clean=1
-              break
-            fi
-            [ "$attempt" = 6 ] || sleep 10
-          done
-          if [ "$clean" = 1 ]; then
+          export LAKE_CACHE_DIR="$PWD/base/.lake/cache"
+          bash gate/scripts/lake-cache-get.sh base
+          if [ -d "$LAKE_CACHE_DIR/artifacts" ]; then
             {
               echo 'enabled=1'
-              echo "dir=$cache_dir"
+              echo "dir=$LAKE_CACHE_DIR"
             } >> "$GITHUB_OUTPUT"
             {
               echo 'LAKE_ARTIFACT_CACHE=true'
               echo 'LAKE_RESTORE_ARTIFACTS=true'
-              echo "LAKE_CACHE_DIR=$cache_dir"
+              echo "LAKE_CACHE_DIR=$LAKE_CACHE_DIR"
             } >> "$GITHUB_ENV"
           else
-            discard_cache
             echo 'enabled=0' >> "$GITHUB_OUTPUT"
             echo '::warning::Tau Ceti artifact cache unavailable; measuring from source'
           fi
@@ -424,24 +387,13 @@ jobs:
         run: |
           set -euo pipefail
           rm -rf head/.lake
-          if [ '${{ steps.pins.outputs.changed }}' = 1 ]; then
-            ( cd head && lake exe cache get ) 2>&1 | tee "$RUNNER_TEMP/head-cache.log"
-            mkdir -p head/.lake/tmp
-            {
-              echo 'LAKE_ARTIFACT_CACHE=false'
-              echo 'LAKE_RESTORE_ARTIFACTS=false'
-              echo 'LAKE_CACHE_DIR='
-            } >> "$GITHUB_ENV"
-          else
-            # Base measurements are complete and base/.lake is never trusted or
-            # executed again. A hardlink clone therefore reuses its large public
-            # artifact set without a multi-minute copy. Candidate writes may
-            # affect those retired base-cache inodes, but cannot reach the raw
-            # base result in RUNNER_TEMP or any trusted scripts/config.
-            cp -al base/.lake head/.lake
-            if [ '${{ steps.tauceti_cache.outputs.enabled }}' = 1 ]; then
-              echo "LAKE_CACHE_DIR=$PWD/head/.lake/cache" >> "$GITHUB_ENV"
-            fi
+          # Pin-changing comparisons are skipped above, so the attested exact head and base use
+          # the same Lake configuration. Base measurements are complete and base/.lake is never
+          # executed again. A hardlink clone reuses its public artifact set without a multi-minute
+          # copy; candidate writes cannot reach trusted scripts or raw base results in RUNNER_TEMP.
+          cp -al base/.lake head/.lake
+          if [ '${{ steps.tauceti_cache.outputs.enabled }}' = 1 ]; then
+            echo "LAKE_CACHE_DIR=$PWD/head/.lake/cache" >> "$GITHUB_ENV"
           fi
 
       - name: Prepare candidate read-only Lean watchdog toolchain
@@ -484,6 +436,7 @@ jobs:
 
       - name: Evaluate required performance budgets (trusted, fail closed)
         id: report
+        if: ${{ steps.config.outputs.pins-changed != '1' }}
         continue-on-error: true
         run: |
           python3 gate/scripts/perf/report.py \
@@ -508,9 +461,9 @@ jobs:
           landrun --rox /usr --rox /etc \
             --rw /dev/null --rox /dev/zero --rox /dev/urandom --rox /dev/random \
             --rox "$HOME/.elan" --rox "$WATCHDOG_TOOLCHAIN" \
-            --rox "$PWD/head" --rw "$PWD/head/.lake" \
+            --rox "$PWD/head" --rw "$PWD/head/.lake" --rox "$PWD/gate" \
             --env PATH --env HOME --env CI --env LAKE_NO_CACHE --env WATCHDOG_TOOLCHAIN \
-            -- bash -euo pipefail -c 'cd head && exec bash scripts/profile/measure.sh .lake/tmp/profile'
+            -- bash -euo pipefail -c 'cd head && exec bash ../gate/scripts/profile/measure.sh .lake/tmp/profile'
 
       - name: Safely collect heartbeat logs from the untrusted writable tree
         id: collect_heartbeats
@@ -559,13 +512,25 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           SHA: ${{ steps.pr.outputs.status_sha }}
           FILE_COUNT: ${{ steps.manifest.outputs.count }}
+          ATTEST_OUTCOME: ${{ steps.attest.outcome }}
+          PINS_CHANGED: ${{ steps.config.outputs.pins-changed }}
+          BUMP_OUTCOME: ${{ steps.bump.outcome }}
           BASE_OUTCOME: ${{ steps.base_perf.outcome }}
           HEAD_OUTCOME: ${{ steps.head_perf.outcome }}
           REPORT_OUTCOME: ${{ steps.report.outcome }}
           METRIC: ${{ steps.metric.outputs.mode }}
         run: |
           set -uo pipefail
-          if [ "$FILE_COUNT" = 0 ] && [ "$REPORT_OUTCOME" = success ]; then
+          if [ "$ATTEST_OUTCOME" != success ]; then
+            state=failure
+            description='exact-head Lake configuration attestation failed'
+          elif [ "$PINS_CHANGED" = 1 ] && [ "$BUMP_OUTCOME" = success ]; then
+            state=success
+            description='validated pin/toolchain bump; cost ratio intentionally skipped'
+          elif [ "$PINS_CHANGED" = 1 ]; then
+            state=failure
+            description='Lake pin change failed trusted forward-bump validation'
+          elif [ "$FILE_COUNT" = 0 ] && [ "$REPORT_OUTCOME" = success ]; then
             state=success
             description='no added or modified TauCeti Lean files'
           elif [ "$BASE_OUTCOME" = success ] && [ "$HEAD_OUTCOME" = success ] && [ "$REPORT_OUTCOME" = success ]; then

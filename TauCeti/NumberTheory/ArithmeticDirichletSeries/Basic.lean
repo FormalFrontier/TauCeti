@@ -8,6 +8,7 @@ module
 public import Mathlib.Data.Complex.Basic
 public import Mathlib.NumberTheory.NumberField.Basic
 public import Mathlib.RingTheory.DedekindDomain.Ideal.Lemmas
+import TauCeti.RingTheory.DedekindDomain.Ideal
 
 /-!
 # Arithmetic functions on nonzero ideals
@@ -25,6 +26,13 @@ the arithmetic-Dirichlet-series roadmap, parameterized over an arbitrary field:
   ideals;
 * `TauCeti.IdealArithmeticFunction.map` and `TauCeti.IdealArithmeticFunction.mapEquiv`:
   functoriality under an isomorphism `K ≃+* L` of the ambient fields.
+
+It also carries the multiplicativity predicate
+`TauCeti.IdealArithmeticFunction.IsMultiplicative` — value `1` at the unit ideal, multiplicative on
+relatively prime nonzero ideals — together with its two factorization consequences:
+`IsMultiplicative.map_prod` for a pairwise relatively prime finite product, and, over a number
+field, `IsMultiplicative.map_prod_pow` for a prime-power factorization of a nonzero ideal, the
+factorizations themselves being supplied by `Ideal.exists_eq_prod_pow`.
 
 The two operations are inverse precisely on functions vanishing at the zero ideal. The resulting
 existence-and-uniqueness API is recorded without exposing the implementation of `zeroExtend`:
@@ -72,6 +80,87 @@ abbrev IdealArithmeticFunction := (Ideal (𝓞 K))⁰ → ℂ
 namespace IdealArithmeticFunction
 
 variable {K}
+
+/-- An ideal arithmetic function is multiplicative when it takes the unit ideal to `1` and
+respects products of relatively prime nonzero ideals. This is weaker than the complete
+multiplicativity carried by `MultiplicativeIdealWeight`. -/
+structure IsMultiplicative (f : IdealArithmeticFunction K) : Prop where
+  /-- A multiplicative ideal arithmetic function takes the unit ideal to `1`. -/
+  map_one : f 1 = 1
+  /-- A multiplicative ideal arithmetic function respects products of relatively prime ideals. -/
+  map_mul_of_isRelPrime {I J : (Ideal (𝓞 K))⁰}
+    (hIJ : IsRelPrime (I : Ideal (𝓞 K)) (J : Ideal (𝓞 K))) : f (I * J) = f I * f J
+
+/-- The everywhere-one ideal arithmetic function is multiplicative. -/
+theorem isMultiplicative_one : IsMultiplicative (1 : IdealArithmeticFunction K) := by
+  constructor <;> simp
+
+/-- Pointwise products of multiplicative ideal arithmetic functions are multiplicative. -/
+theorem IsMultiplicative.mul {f g : IdealArithmeticFunction K}
+    (hf : f.IsMultiplicative) (hg : g.IsMultiplicative) : (f * g).IsMultiplicative := by
+  refine ⟨by simp [hf.map_one, hg.map_one], fun hIJ ↦ ?_⟩
+  rw [Pi.mul_apply, Pi.mul_apply, Pi.mul_apply, hf.map_mul_of_isRelPrime hIJ,
+    hg.map_mul_of_isRelPrime hIJ]
+  ring
+
+/-- Complex conjugation preserves multiplicativity of ideal arithmetic functions. -/
+theorem IsMultiplicative.star {f : IdealArithmeticFunction K} (hf : f.IsMultiplicative) :
+    (star f).IsMultiplicative := by
+  refine ⟨by simp [hf.map_one], fun hIJ ↦ ?_⟩
+  simp only [Pi.star_apply, hf.map_mul_of_isRelPrime hIJ, star_mul']
+
+section Factorization
+
+open IsDedekindDomain (HeightOneSpectrum)
+
+variable {f : IdealArithmeticFunction K}
+
+/-- **A multiplicative ideal arithmetic function factors over pairwise relatively prime
+products.** This is the ideal analogue of Mathlib's
+`ArithmeticFunction.IsMultiplicative.map_prod`.
+
+Passing from a pairwise hypothesis to relative primality against the whole product is exactly
+Mathlib's `IsRelPrime.prod_right`, which needs `DecompositionMonoid (Ideal (𝓞 K))`; that is all
+the ambient arithmetic this statement uses, and `[NumberField K]` supplies it. -/
+theorem IsMultiplicative.map_prod [DecompositionMonoid (Ideal (𝓞 K))] (hf : f.IsMultiplicative)
+    {ι : Type*} (g : ι → (Ideal (𝓞 K))⁰)
+    (s : Finset ι) (hs : (s : Set ι).Pairwise fun i j ↦ IsRelPrime (g i : Ideal (𝓞 K)) (g j)) :
+    f (∏ i ∈ s, g i) = ∏ i ∈ s, f (g i) := by
+  classical
+  induction s using Finset.induction_on with
+  | empty => simpa using hf.map_one
+  | insert i s hi ih =>
+      have hrel : IsRelPrime ((g i : Ideal (𝓞 K)))
+          ((∏ j ∈ s, g j : (Ideal (𝓞 K))⁰) : Ideal (𝓞 K)) := by
+        rw [Submonoid.coe_finsetProd]
+        exact IsRelPrime.prod_right fun j hj ↦
+          hs (by simp) (by simp [hj]) (by rintro rfl; exact hi hj)
+      rw [Finset.prod_insert hi, Finset.prod_insert hi, hf.map_mul_of_isRelPrime hrel,
+        ih (hs.mono (by rw [Finset.coe_insert]; exact Set.subset_insert i s))]
+
+variable [NumberField K]
+
+/-- **A multiplicative ideal arithmetic function factors over a prime-power factorization.**
+Unique factorization writes every nonzero ideal as a product `∏ P ∈ S, P ^ e P` over a finite set
+of height-one primes (`Ideal.exists_eq_prod_pow`), and a multiplicative `f` takes such a product to
+the product of its values on the prime powers. -/
+theorem IsMultiplicative.map_prod_pow (hf : f.IsMultiplicative)
+    (S : Finset (HeightOneSpectrum (𝓞 K))) (e : HeightOneSpectrum (𝓞 K) → ℕ)
+    (A : (Ideal (𝓞 K))⁰) (hA : (A : Ideal (𝓞 K)) = ∏ P ∈ S, P.asIdeal ^ e P) :
+    f A = ∏ P ∈ S,
+      f ⟨P.asIdeal ^ e P, mem_nonZeroDivisors_of_ne_zero (pow_ne_zero _ P.ne_bot)⟩ := by
+  -- The hypothesis is an equality of ideals; `Subtype.ext` turns it into one of nonzero ideals.
+  have hAeq : A = ∏ P ∈ S,
+      (⟨P.asIdeal ^ e P, mem_nonZeroDivisors_of_ne_zero (pow_ne_zero _ P.ne_bot)⟩ :
+        (Ideal (𝓞 K))⁰) :=
+    Subtype.ext (by rw [hA, Submonoid.coe_finsetProd])
+  rw [hAeq]
+  -- Powers of distinct height-one primes are relatively prime.
+  refine hf.map_prod _ S fun P _ Q _ hPQ ↦ ?_
+  exact ((Ideal.isPrimeTo_asIdeal_iff.mpr (by simpa using hPQ)).pow (e P)).isRelPrime
+    (Ideal.isPrimeTo_compl_singleton_iff.mpr ⟨e Q, rfl⟩)
+
+end Factorization
 
 /-- Extend an ideal arithmetic function to all integral ideals by assigning zero to `⊥`.
 
