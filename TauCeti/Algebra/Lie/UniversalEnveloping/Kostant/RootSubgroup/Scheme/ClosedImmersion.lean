@@ -53,10 +53,11 @@ left to the caller in the general construction.
   the class-two exponential formula for an operator with one nonzero basis column.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupMatrix_eq_transvectionUnit_of_action`:
   a class-two root operator with one nonzero basis column exponentiates to a transvection.
-* `TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupMatrix_eq_one_add_smul` and
-  `TauCeti.UniversalEnvelopingAlgebra.exists_map_genericMatrix_kostantRootSubgroupCoordinateMap`:
-  without the rank-one hypothesis a class-two root operator still exponentiates to `1 + t X`, on a
-  point and on the generic matrix respectively.
+* `TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupMatrix_eq_one_add_smul` and, in the same
+  namespace,
+  `exists_map_genericMatrix_kostantRootSubgroupCoordinateMap_eq_one_add_smul`:
+  without the single-column hypothesis a square-zero root operator still exponentiates to
+  `1 + t X`, on a point and on the generic matrix respectively.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupPoints_injective`: the root subgroup is
   faithfully parametrized by `𝔾ₐ`.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupCoordinateMap_surjective`: the coordinate
@@ -433,16 +434,16 @@ variable (hnil : IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)
 variable {η : Type*} [Fintype η] [DecidableEq η] (b : Module.Basis η ℤ M)
 
 include hnil in
-/-- **The matrix of a class-two root subgroup is `1 + t X`.** When the root operator squares to
+/-- **The matrix of a square-zero root subgroup is `1 + t X`.** When the root operator squares to
 zero its divided-power exponential stops after the linear term, so the root-subgroup matrix at
 parameter `t` is the identity plus `t` times the integral matrix `X` of the operator itself.
 Unlike `TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupMatrix_eq_transvectionUnit_of_action`
-this does not assume the operator has rank one, so it also covers the root generators of the
-multiply-laced families, which move two basis vectors. -/
+this does not assume the operator has a single nonzero basis column, so it also covers operators
+with several nonzero columns, such as the nonfinal root generators of type `C`. -/
 theorem kostantRootSubgroupMatrix_eq_one_add_smul {A : Type*} [CommRing A]
     (X : Matrix η η ℤ)
     (hclass : nilpotencyClass
-      (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) = 2)
+      (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) ≤ 2)
     (haction : ∀ s, ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) (b s : V) =
       ∑ r, X r s • (b r : V))
     (f : WithConv (SymmetricAlgebra ℤ ℤ →ₐ[ℤ] A)) :
@@ -460,16 +461,24 @@ theorem kostantRootSubgroupMatrix_eq_one_add_smul {A : Type*} [CommRing A]
       haction]
     push_cast
     simp
-  have hzero : ∀ s : η, integralDividedPower
-      (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) M 0
-      (fun _ hv => dividedPower_apply_mem_of_kostantForm_apply_mem e h ρ hM i 0 hv)
-      (b s) = b s := by
-    intro s
-    rw [integralDividedPower_zero]
-    rfl
   ext r s
-  rw [kostantRootSubgroupMatrix_apply, repr_kostantRootSubgroupPoints_baseChange, hclass,
-    Finset.sum_range_succ, Finset.sum_range_one, hzero, hone, map_sum]
+  -- Past the nilpotency class the divided powers vanish, so the exponential sum may be padded
+  -- out to the two terms that the square-zero truncation leaves.
+  have hpad : ∑ k ∈ Finset.range
+        (nilpotencyClass (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)))),
+      b.repr (integralDividedPower (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) M k
+          (fun _ hv => dividedPower_apply_mem_of_kostantForm_apply_mem e h ρ hM i k hv)
+          (b s)) r • Multiplicative.toAdd (AdditiveGroup.gaPointsMulEquiv f) ^ k =
+      ∑ k ∈ Finset.range 2,
+        b.repr (integralDividedPower (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) M k
+            (fun _ hv => dividedPower_apply_mem_of_kostantForm_apply_mem e h ρ hM i k hv)
+            (b s)) r • Multiplicative.toAdd (AdditiveGroup.gaPointsMulEquiv f) ^ k := by
+    refine Finset.sum_subset (Finset.range_subset_range.2 hclass) fun k _ hk => ?_
+    rw [Finset.mem_range, not_lt] at hk
+    rw [integralDividedPower_eq_zero_of_le _ _ _ _ (pow_nilpotencyClass hnil) hk]
+    simp
+  rw [kostantRootSubgroupMatrix_apply, repr_kostantRootSubgroupPoints_baseChange, hpad,
+    Finset.sum_range_succ, Finset.sum_range_one, integralDividedPower_zero_apply, hone, map_sum]
   simp only [Finsupp.coe_finsetSum, Finset.sum_apply, map_zsmul, Module.Basis.repr_self,
     Finsupp.smul_single, smul_eq_mul, mul_one, Finsupp.single_apply, pow_zero, pow_one,
     Matrix.add_apply, Matrix.one_apply, Matrix.smul_apply, Matrix.map_apply, zsmul_eq_mul,
@@ -495,15 +504,15 @@ variable (hnil : IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)
 variable {N : ℕ} (bb : Module.Basis (Fin N) ℤ M)
 
 include hnil in
-/-- **The generic matrix of a class-two root subgroup is `1 + t X`.** This is
+/-- **The generic matrix of a square-zero root subgroup is `1 + t X`.** This is
 `TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupMatrix_eq_one_add_smul` read on the
 coordinate morphism rather than on a point: the entries of the generic matrix of `GL N` are carried
 to those of `1 + t X` for the parameter `t` of the universal point of `𝔾ₐ`. A consumer that has to
 check a matrix equation on every algebra-valued point at once evaluates it here instead. -/
-theorem exists_map_genericMatrix_kostantRootSubgroupCoordinateMap
+theorem exists_map_genericMatrix_kostantRootSubgroupCoordinateMap_eq_one_add_smul
     (X : Matrix (Fin N) (Fin N) ℤ)
     (hclass : nilpotencyClass
-      (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) = 2)
+      (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) ≤ 2)
     (haction : ∀ s, ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) (bb s : V) =
       ∑ r, X r s • (bb r : V)) :
     ∃ t : AdditiveGroup.coordinateHopfAlgebra ℤ,
