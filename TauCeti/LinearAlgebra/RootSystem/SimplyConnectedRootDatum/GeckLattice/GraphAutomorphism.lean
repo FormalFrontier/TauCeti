@@ -240,11 +240,10 @@ symmetry satisfies.** -/
 theorem geckGraphAutMatrix_pow_eq_one (hsigma : sigma ∈ t.diagramSymmetry) (A : Type) [CommRing A]
     {m : ℕ} (hm : sigma ^ m = 1) : t.geckGraphAutMatrix ht hsigma A ^ m = 1 := by
   refine Units.ext ?_
-  rw [Units.val_pow_eq_pow_val, Units.val_one, coe_geckGraphAutMatrix]
-  have hhom : (t.geckDiagramFinPerm ht hsigma)⁻¹.permMatrix A =
-      Matrix.permMatrixHom (n := Fin (t.geckDim ht)) (R := A)
-        (t.geckDiagramFinPerm ht hsigma) := rfl
-  rw [hhom, ← map_pow, geckDiagramFinPerm_pow_eq_one ht hsigma hm, map_one]
+  -- Permutation matrices multiply contravariantly, so `Matrix.permMatrixHom` is the permutation
+  -- matrix of the inverse permutation; that is the matrix `coe_geckGraphAutMatrix` produces.
+  rw [Units.val_pow_eq_pow_val, Units.val_one, coe_geckGraphAutMatrix,
+    ← Matrix.permMatrixHom_apply, ← map_pow, geckDiagramFinPerm_pow_eq_one ht hsigma hm, map_one]
 
 /-- The points of the pinned Geck carrier are the points of the Kostant toral closure of the
 pinned Geck data. -/

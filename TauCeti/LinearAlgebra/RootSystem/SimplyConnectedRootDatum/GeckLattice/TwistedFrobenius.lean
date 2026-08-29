@@ -88,8 +88,10 @@ of Lie type are required to satisfy. -/
 theorem geckGraphAutPoints_comp_geckFrobenius :
     (t.geckGraphAutPoints ht hsigma A).toMonoidHom.comp (t.geckFrobenius ht p k A) =
       (t.geckFrobenius ht p k A).comp (t.geckGraphAutPoints ht hsigma A).toMonoidHom := by
-  rw [geckFrobenius_def]
-  exact (t.geckPointsMap_comp_geckGraphAutPoints ht hsigma (iterateFrobenius A p k)).symm
+  refine MonoidHom.ext fun g => Subtype.ext ?_
+  rw [MonoidHom.comp_apply, MonoidHom.comp_apply, MulEquiv.coe_toMonoidHom,
+    coe_geckGraphAutPoints, coe_geckFrobenius, coe_geckFrobenius, coe_geckGraphAutPoints,
+    map_mul, map_mul, map_inv, map_geckGraphAutMatrix]
 
 /-- **The graph-twisted `p ^ k`-power Frobenius on the points of the pinned Geck carrier**, the
 graph automorphism attached to a diagram symmetry composed with the Frobenius endomorphism. The

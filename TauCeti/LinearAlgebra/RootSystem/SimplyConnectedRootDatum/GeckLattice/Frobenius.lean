@@ -45,7 +45,6 @@ subgroup appearing in it is finite, is simple, or is a named finite group.
 
 ## Main results
 
-* `TauCeti.DynkinType.geckFrobenius_def`: it is the map induced by the Frobenius of the value ring.
 * `TauCeti.DynkinType.coe_geckFrobenius`: the endomorphism acts by the entrywise Frobenius.
 * `TauCeti.DynkinType.geckFrobenius_zero` and `TauCeti.DynkinType.geckFrobenius_add`: the iteration
   laws.
@@ -102,11 +101,6 @@ For `p` prime, `0 < k` and `A` an algebraic closure of `ZMod p` this is the untw
 endomorphism of the carrier; for `k = 0`, or in characteristic zero, it is the identity. -/
 def geckFrobenius : t.geckPoints ht A →* t.geckPoints ht A :=
   t.geckPointsMap ht (iterateFrobenius A p k)
-
-/-- The Frobenius endomorphism of the points of the pinned Geck carrier is the map induced by the
-`p ^ k`-power Frobenius of the value ring. -/
-theorem geckFrobenius_def :
-    t.geckFrobenius ht p k A = t.geckPointsMap ht (iterateFrobenius A p k) := (rfl)
 
 /-- The Frobenius endomorphism of the points of the pinned Geck carrier acts by the entrywise
 Frobenius. -/

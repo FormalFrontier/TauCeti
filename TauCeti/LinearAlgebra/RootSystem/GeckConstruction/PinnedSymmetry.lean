@@ -236,8 +236,9 @@ theorem geckWeightFin_geckDiagramFinPerm (hsigma : sigma ∈ t.diagramSymmetry)
 /-! ## The order of the coordinate permutation -/
 
 /-- The coordinate permutation of the pinned Geck module is multiplicative in the node
-permutation. -/
-theorem geckDiagramIndexEquiv_mul {tau : Equiv.Perm (Fin t.rank)}
+permutation. This and the unit law below only build the homomorphism behind the order statements
+that follow, which are what consumers use. -/
+private theorem geckDiagramIndexEquiv_mul {tau : Equiv.Perm (Fin t.rank)}
     (hsigma : sigma ∈ t.diagramSymmetry) (htau : tau ∈ t.diagramSymmetry) :
     t.geckDiagramIndexEquiv ht (t.diagramSymmetry.mul_mem hsigma htau) =
       t.geckDiagramIndexEquiv ht hsigma * t.geckDiagramIndexEquiv ht htau := by
@@ -253,7 +254,7 @@ theorem geckDiagramIndexEquiv_mul {tau : Equiv.Perm (Fin t.rank)}
         geckDiagramIndexEquiv_apply_inr, diagramRootPerm_mul, Equiv.Perm.mul_apply]
 
 /-- The identity node permutation induces the identity coordinate permutation. -/
-theorem geckDiagramIndexEquiv_one :
+private theorem geckDiagramIndexEquiv_one :
     t.geckDiagramIndexEquiv ht t.diagramSymmetry.one_mem = 1 := by
   ext x
   cases x with
