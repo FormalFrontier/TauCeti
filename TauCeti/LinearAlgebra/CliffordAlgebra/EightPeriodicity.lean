@@ -7,7 +7,7 @@ module
 
 public import TauCeti.LinearAlgebra.CliffordAlgebra.NegativePlane
 
-import TauCeti.Algebra.CentralSimple.Quaternion
+import TauCeti.Algebra.CentralSimple.Quaternion.Basic
 
 /-!
 # Eight-step periodicity for real Clifford algebras
