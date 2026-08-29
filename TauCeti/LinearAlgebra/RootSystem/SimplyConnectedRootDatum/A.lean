@@ -393,15 +393,13 @@ theorem pairing_typeASimplyConnectedRootDatum_comm (k l : Fin (n * (n + 1))) :
 
 /-- The `i`-th simple root of type `Aₙ` sits at root index `i`, the Bourbaki node `i + 1`. -/
 def typeASimpleIndex (n : ℕ) (i : Fin n) : Fin (n * (n + 1)) :=
-  ⟨i, lt_of_lt_of_le i.isLt (Nat.le_mul_of_pos_right n n.succ_pos)⟩
+  Fin.castLE (Nat.le_mul_of_pos_right n n.succ_pos) i
 
-@[simp] lemma typeASimpleIndex_val (i : Fin n) : (typeASimpleIndex n i : ℕ) = i := (rfl)
+@[simp] lemma typeASimpleIndex_val (i : Fin n) : (typeASimpleIndex n i : ℕ) = i := by
+  simp [typeASimpleIndex]
 
-lemma typeASimpleIndex_injective : Injective (typeASimpleIndex n) := by
-  intro i j h
-  have := congrArg Fin.val h
-  simp only [typeASimpleIndex_val] at this
-  exact Fin.ext this
+lemma typeASimpleIndex_injective : Injective (typeASimpleIndex n) :=
+  Fin.castLE_injective (Nat.le_mul_of_pos_right n n.succ_pos)
 
 private lemma typeAIndexEquiv_symm_typeASimpleIndex (i : Fin n) :
     (typeAIndexEquiv n).symm (typeASimpleIndex n i) =

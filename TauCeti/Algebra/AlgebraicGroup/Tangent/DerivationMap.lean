@@ -208,6 +208,29 @@ theorem derivationComp_comp {A'' : Type*} [CommSemiring A''] [Bialgebra R A'']
   -- The residual is the definitional identification of the coefficient indexings.
   rfl
 
+/-- **Precomposition along a section undoes precomposition along its retraction.** If
+`φ.comp χ` is the identity — so `χ` is a section of `φ` — then `derivationComp χ` undoes
+`derivationComp φ`. -/
+theorem derivationComp_derivationComp_eq_self_of_comp_eq_id (φ : A' →ₐc[R] A) (χ : A →ₐc[R] A')
+    (h : φ.comp χ = BialgHom.id R A)
+    (d : Derivation R A (Bialgebra.CounitAlgebra R A B)) :
+    derivationComp (B := B) χ (derivationComp (B := B) φ d) = d := by
+  rw [← LinearMap.comp_apply, ← derivationComp_comp, h, derivationComp_id, LinearMap.id_apply]
+
+/-- **A composite landing in the base kills every derivation.** If `φ ∘ χ` sends each element to
+the scalar multiple of `1` given by its counit, then precomposing along `χ` after `φ` annihilates
+derivations. -/
+theorem derivationComp_derivationComp_eq_zero_of_comp_eq_counit_smul_one {A'' : Type*}
+    [CommSemiring A''] [Bialgebra R A''] (φ : A' →ₐc[R] A) (χ : A'' →ₐc[R] A')
+    (hcomp : ∀ a : A'', (φ : A' →ₐ[R] A) ((χ : A'' →ₐ[R] A') a) = counit (R := R) a • 1)
+    (d : Derivation R A (Bialgebra.CounitAlgebra R A B)) :
+    derivationComp (B := B) χ (derivationComp (B := B) φ d) = 0 := by
+  ext a
+  simp only [derivationComp_apply, hcomp, Derivation.map_smul, Derivation.map_one_eq_zero,
+    smul_zero]
+  -- Both sides are zero in exposed counit-coefficient synonyms.
+  rfl
+
 end DerivationMap
 
 end TauCeti

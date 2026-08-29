@@ -7,6 +7,7 @@ module
 
 public import Mathlib.RingTheory.PowerSeries.Inverse
 public import TauCeti.AlgebraicGeometry.EllipticCurve.FormalGroup.WExpansion
+public import TauCeti.RingTheory.MvPowerSeries.Inverse
 
 /-!
 # The formal inverse of a Weierstrass curve
@@ -124,24 +125,6 @@ theorem hasSubst_formalInverse : PowerSeries.HasSubst (formalInverse W) :=
 
 /-! ### Substituting the formal inverse -/
 
-/-- Substitution along `ι` fixes `1`. -/
-private theorem subst_formalInverse_one :
-    PowerSeries.subst (formalInverse W) (1 : PowerSeries R) = 1 := by
-  rw [← PowerSeries.coe_substAlgHom (hasSubst_formalInverse W), map_one]
-
-/-- Substitution along `ι` carries `invOfUnit` to the `invOfUnit` of the image. -/
-private theorem subst_formalInverse_invOfUnit {D : PowerSeries R}
-    (hD : PowerSeries.constantCoeff D = 1)
-    (hD' : PowerSeries.constantCoeff (PowerSeries.subst (formalInverse W) D) = 1) :
-    PowerSeries.subst (formalInverse W) (PowerSeries.invOfUnit D 1) =
-      PowerSeries.invOfUnit (PowerSeries.subst (formalInverse W) D) 1 := by
-  have hmul : PowerSeries.subst (formalInverse W) D *
-      PowerSeries.invOfUnit (PowerSeries.subst (formalInverse W) D) 1 = 1 :=
-    PowerSeries.mul_invOfUnit _ 1 (by rw [hD']; rfl)
-  refine (IsUnit.of_mul_eq_one _ hmul).mul_left_cancel ?_
-  rw [hmul, ← PowerSeries.subst_mul (hasSubst_formalInverse W),
-    PowerSeries.mul_invOfUnit _ 1 (by rw [hD]; rfl), subst_formalInverse_one W]
-
 /-- Composing the `w`-expansion with the formal inverse gives `-w / (1 - a₁ z - a₃ w)`, the
 `w`-coordinate of the negative point.
 
@@ -182,9 +165,12 @@ This is the formal-series form of `-(-P) = P` for the group law near the origin.
 theorem subst_formalInverse_self :
     PowerSeries.subst (formalInverse W) (formalInverse W) = PowerSeries.X := by
   have hu := mul_invOfUnit_formalInverseDenom W
-  have hinv := subst_formalInverse_invOfUnit W (D := formalInverseDenom W) (by simp)
-    (by rw [subst_formalInverse_formalInverseDenom W]
-        simp [PowerSeries.constantCoeff_invOfUnit])
+  have hinv := PowerSeries.ringHom_invOfUnit
+    (PowerSeries.substAlgHom (hasSubst_formalInverse W)) (D := formalInverseDenom W)
+    (u := 1) (v := 1) (constantCoeff_formalInverseDenom W)
+    (by rw [PowerSeries.coe_substAlgHom, subst_formalInverse_formalInverseDenom W]
+        exact PowerSeries.constantCoeff_invOfUnit _ _)
+  rw [PowerSeries.coe_substAlgHom] at hinv
   have hdouble : PowerSeries.invOfUnit (PowerSeries.invOfUnit (formalInverseDenom W) 1) 1 =
       formalInverseDenom W := by
     have h2 : PowerSeries.invOfUnit (formalInverseDenom W) 1 *
@@ -206,5 +192,32 @@ theorem subst_formalInverse_self :
       PowerSeries.substAlgHom_X (hasSubst_formalInverse W)]
   rw [hexp, hinv, subst_formalInverse_formalInverseDenom W, hdouble, formalInverse_def]
   linear_combination (PowerSeries.X : PowerSeries R) * hu
+
+/-! ### Base change -/
+
+section BaseChange
+
+variable {S : Type*} [CommRing S] (φ : R →+* S)
+
+/-- The denominator of the formal inverse commutes with base change. -/
+@[simp]
+theorem map_formalInverseDenom :
+    formalInverseDenom (W.map φ) = PowerSeries.map φ (formalInverseDenom W) := by
+  simp only [formalInverseDenom_def, map_sub, map_one, map_mul, PowerSeries.map_C,
+    PowerSeries.map_X, map_formalW W φ, WeierstrassCurve.map_a₁, WeierstrassCurve.map_a₃]
+
+/-- **The formal inverse commutes with base change.** -/
+@[simp]
+theorem map_formalInverse :
+    formalInverse (W.map φ) = PowerSeries.map φ (formalInverse W) := by
+  have hinv := PowerSeries.ringHom_invOfUnit (PowerSeries.map φ) (D := formalInverseDenom W)
+    (u := 1) (v := 1) (constantCoeff_formalInverseDenom W)
+    (by rw [show (PowerSeries.map φ (formalInverseDenom W) : PowerSeries S) =
+          formalInverseDenom (W.map φ) from (map_formalInverseDenom W φ).symm]
+        exact constantCoeff_formalInverseDenom (W.map φ))
+  rw [formalInverse_def, formalInverse_def, map_neg, map_mul, PowerSeries.map_X, hinv,
+    map_formalInverseDenom W φ]
+
+end BaseChange
 
 end WeierstrassCurve

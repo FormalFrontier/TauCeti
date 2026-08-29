@@ -5,7 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.NumberTheory.ModularForms.HeckeSlash.Gamma1
+public import TauCeti.NumberTheory.ModularForms.HeckeSlash.CuspRing
+public import TauCeti.NumberTheory.ModularForms.HeckeSlash.Ring
 
 /-!
 # Composing the slash sums of two double cosets
@@ -52,8 +53,10 @@ if the product set is a *single* double coset `Γ₁ δ₃ Γ₃` and the pairs 
 its right cosets exactly once, then the composite operator is the operator of `Γ₁ δ₃ Γ₃`. At
 `Γ₁ = Γ₂ = Γ₃ = Γ₁(N)` this is `heckeSlashGamma1ModularFormEnd_mul_of_doubleCoset_eq_mul` and
 its cusp-form companion. The criterion is formally analogous to the ring-side
-single-basis-element criterion `HeckeCosetModule.mul_single_single_of_mulMap_eq`, but no
-identification with that criterion is made here.
+single-basis-element criterion `HeckeCosetModule.mul_single_single_of_mulMap_eq`, and the two
+are identified here: `heckeSlashGamma1RingModularFormLinearMap_mul_single_single` and its
+cusp-form companion apply both criteria at once, so the ring product of two basis elements maps
+to the composite of their operators.
 
 ⚠ The general multiplicity-weighted statement — the composite as `∑_D m(D₁, D₂; D) · T_D`, and
 with it the ring homomorphism `𝕋 → Module.End` — is **not** proved here. It needs, beyond this
@@ -72,6 +75,10 @@ representatives while the slash sum runs over right cosets.
 * `HeckeRing.GL2.heckeSlashSum_heckeSlashSum_eq_heckeSlashSum`: the composite is the slash sum of
   a third double coset, when the product set is that coset and the pairs are in bijection with
   its right cosets.
+* `HeckeRing.GL2.heckeSlashGamma1RingModularFormLinearMap_mul_single_single` and
+  `HeckeRing.GL2.heckeSlashGamma1CuspRingLinearMap_mul_single_single`: the ring-level reading of
+  those two — the Hecke ring acts multiplicatively on basis elements whose product is a single
+  double coset. The map is an *anti*-homomorphism there, since `Module.End` composes.
 * `HeckeRing.GL2.heckeSlashGamma1ModularFormEnd_mul_of_doubleCoset_eq_mul` and
   `HeckeRing.GL2.heckeSlashGamma1CuspFormEnd_mul_of_doubleCoset_eq_mul`: the same criterion for
   the Hecke operators of level `Γ₁(N)`, as an equation between endomorphisms.
@@ -247,6 +254,65 @@ theorem heckeSlashGamma1CuspFormEnd_mul_of_doubleCoset_eq_mul :
   have := heckeSlashSum_heckeSlashSum_eq_heckeSlashSum k D₁ D₂ a b hcover₁ hinj₁ hcover₂ hinj₂
     D₃ hD₃ hinj₃ ⇑f hf
   simpa [coe_heckeSlashGamma1CuspFormEnd] using congrFun this τ
+
+/-- **The Hecke ring acts multiplicatively on modular forms, where the product of two double
+cosets is again a single double coset.** The modular-form half of the pair; see
+`heckeSlashGamma1CuspRingLinearMap_mul_single_single` for cusp forms.
+
+The two are parallel rather than one specialising the other: the operators live in
+`Module.End ℂ (ModularForm ..)` and `Module.End ℂ (CuspForm ..)` respectively, so neither
+equation transports to the other, and each is proved from its own composition theorem. -/
+theorem heckeSlashGamma1RingModularFormLinearMap_mul_single_single
+    (hmulMap : ∀ p, HeckeCoset.mulMap ((Gamma1 N).map (mapGL ℚ)) ((Gamma1 N).map (mapGL ℚ))
+      ((Gamma1 N).map (mapGL ℚ)) D₁.rep D₂.rep p = D₃)
+    (hmul : multiplicity ((Gamma1 N).map (mapGL ℚ))
+      ((Gamma1 N).map (mapGL ℚ)) ((Gamma1 N).map (mapGL ℚ))
+      (D₁.rep : GL (Fin 2) ℚ) (D₂.rep : GL (Fin 2) ℚ) (D₃.rep : GL (Fin 2) ℚ) ≤ 1) :
+    heckeSlashGamma1RingModularFormLinearMap k
+        (HeckeCosetModule.single ℤ D₁ 1 * HeckeCosetModule.single ℤ D₂ 1) =
+      heckeSlashGamma1RingModularFormLinearMap k (HeckeCosetModule.single ℤ D₂ 1) *
+        heckeSlashGamma1RingModularFormLinearMap k (HeckeCosetModule.single ℤ D₁ 1) := by
+  have hprod : HeckeCosetModule.single ℤ D₁ 1 * HeckeCosetModule.single ℤ D₂ 1
+      = HeckeCosetModule.single ℤ D₃ 1 :=
+    HeckeCosetModule.mul_single_single_of_mulMap_eq ℤ D₁ D₂ D₃ hmulMap hmul
+  rw [hprod, heckeSlashGamma1RingModularFormLinearMap_single,
+    heckeSlashGamma1RingModularFormLinearMap_single,
+    heckeSlashGamma1RingModularFormLinearMap_single, one_smul, one_smul, one_smul]
+  exact (heckeSlashGamma1ModularFormEnd_mul_of_doubleCoset_eq_mul k D₁ D₂ D₃ a b
+    hcover₁ hinj₁ hcover₂ hinj₂ hD₃ hinj₃).symm
+
+/-- **The Hecke ring acts multiplicatively on cusp forms, where the product of two double cosets
+is again a single double coset.** This is the ring-level reading of
+`heckeSlashGamma1CuspFormEnd_mul_of_doubleCoset_eq_mul`: the two criteria line up, one on each
+side, with `mul_single_single_of_mulMap_eq` supplying the product in the Hecke ring and the
+composition theorem supplying it in `Module.End`.
+
+Note the order. `Module.End` multiplies by composition and the slash acts on the right, so the
+basis element `D₁` of the *left* factor becomes the operator applied *first*: the map is an
+anti-homomorphism on these elements, not a homomorphism.
+
+Full multiplicativity (Shimura, Proposition 3.37) is not available — it needs the structure
+constants of a product that spreads over several double cosets with multiplicity, whereas both
+criteria used here assume the product collapses to the single coset `D₃`. This lemma is the part
+that is provable from what is on hand. -/
+theorem heckeSlashGamma1CuspRingLinearMap_mul_single_single
+    (hmulMap : ∀ p, HeckeCoset.mulMap ((Gamma1 N).map (mapGL ℚ)) ((Gamma1 N).map (mapGL ℚ))
+      ((Gamma1 N).map (mapGL ℚ)) D₁.rep D₂.rep p = D₃)
+    (hmul : multiplicity ((Gamma1 N).map (mapGL ℚ))
+      ((Gamma1 N).map (mapGL ℚ)) ((Gamma1 N).map (mapGL ℚ))
+      (D₁.rep : GL (Fin 2) ℚ) (D₂.rep : GL (Fin 2) ℚ) (D₃.rep : GL (Fin 2) ℚ) ≤ 1) :
+    heckeSlashGamma1CuspRingLinearMap k
+        (HeckeCosetModule.single ℤ D₁ 1 * HeckeCosetModule.single ℤ D₂ 1) =
+      heckeSlashGamma1CuspRingLinearMap k (HeckeCosetModule.single ℤ D₂ 1) *
+        heckeSlashGamma1CuspRingLinearMap k (HeckeCosetModule.single ℤ D₁ 1) := by
+  have hprod : HeckeCosetModule.single ℤ D₁ 1 * HeckeCosetModule.single ℤ D₂ 1
+      = HeckeCosetModule.single ℤ D₃ 1 :=
+    HeckeCosetModule.mul_single_single_of_mulMap_eq ℤ D₁ D₂ D₃ hmulMap hmul
+  rw [hprod, heckeSlashGamma1CuspRingLinearMap_single,
+    heckeSlashGamma1CuspRingLinearMap_single, heckeSlashGamma1CuspRingLinearMap_single,
+    one_smul, one_smul, one_smul]
+  exact (heckeSlashGamma1CuspFormEnd_mul_of_doubleCoset_eq_mul k D₁ D₂ D₃ a b
+    hcover₁ hinj₁ hcover₂ hinj₂ hD₃ hinj₃).symm
 
 end Gamma1
 

@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.RingTheory.DedekindDomain.SelmerGroup
+public import TauCeti.RingTheory.DedekindDomain.ValuationOfNeZero
 
 import Mathlib.RingTheory.DedekindDomain.FiniteAdeleRing
 
@@ -23,8 +24,6 @@ a representative.
 
 ## Main results
 
-* `IsDedekindDomain.HeightOneSpectrum.valuationOfNeZero_eq_one_iff`: a unit has trivial `v`-adic
-  `valuationOfNeZero` exactly when its `v`-adic `valuation` is `1`.
 * `IsDedekindDomain.HeightOneSpectrum.valuationOfNeZeroMod_mk_eq_one_iff`: the class of a unit
   has trivial `v`-adic `valuationOfNeZeroMod n` exactly when `n` divides its `v`-adic valuation.
 * `IsDedekindDomain.HeightOneSpectrum.dvd_toAdd_valuationOfNeZero`: if the `v`-adic valuation of
@@ -36,7 +35,9 @@ Michael Stoll's elliptic-curves formalisation
 (`github.com/MichaelStollBayreuth/EllipticCurves`, at the `EllipticCurves` roadmap's pin
 `66889eada51a`, Apache 2.0, by Michael Stoll) reaches for a
 `HeightOneSpectrum.valuationOfNeZero_eq_iff` in this role; no such lemma exists at our Mathlib
-pin, so it is supplied here, with `valuationOfNeZero_eq_one_iff` as its `m = 1` case.
+pin, so it and its `m = 1` case `valuationOfNeZero_eq_one_iff` are supplied in
+`TauCeti/RingTheory/DedekindDomain/ValuationOfNeZero.lean`, which this file imports — they are
+generic, and the completion API needs them without needing the Selmer groups below.
 `valuationOfNeZeroMod_mk_eq_one_iff`, `dvd_toAdd_valuationOfNeZero` and
 `finite_setOfPred_valuation_ne_one` are adapted from that source's
 `EllipticCurves/Mathlib/Basic.lean`. Following this repository's convention for adapted material,
@@ -49,19 +50,6 @@ namespace IsDedekindDomain.HeightOneSpectrum
 
 variable {R : Type*} [CommRing R] [IsDedekindDomain R]
   {K : Type*} [Field K] [Algebra R K] [IsFractionRing R K]
-
-/-- The `Multiplicative ℤ`-valued valuation of a unit is determined by the `ℤᵐ⁰`-valued one.
-Mathlib carries only the coerced form `valuationOfNeZero_eq`, which this complements. -/
-theorem valuationOfNeZero_eq_iff (v : HeightOneSpectrum R) (u : Kˣ) (m : Multiplicative ℤ) :
-    v.valuationOfNeZero u = m ↔ v.valuation K (u : K) = (m : WithZero (Multiplicative ℤ)) := by
-  rw [← WithZero.coe_inj, valuationOfNeZero_eq]
-
-/-- A unit has trivial `v`-adic `valuationOfNeZero` iff its `v`-adic valuation is `1`, the case
-`m = 1` of `valuationOfNeZero_eq_iff`. -/
-@[simp]
-theorem valuationOfNeZero_eq_one_iff (v : HeightOneSpectrum R) (x : Kˣ) :
-    v.valuationOfNeZero x = 1 ↔ v.valuation K (x : K) = 1 := by
-  simpa using valuationOfNeZero_eq_iff v x 1
 
 /-- The class of a unit `u` in `Kˣ ⧸ (Kˣ)ⁿ` has trivial `v`-adic valuation mod `n` exactly when
 `n` divides the `v`-adic valuation of `u`. Membership in `IsDedekindDomain.selmerGroup` is the

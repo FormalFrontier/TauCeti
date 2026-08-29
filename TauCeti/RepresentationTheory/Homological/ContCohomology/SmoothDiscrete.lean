@@ -43,6 +43,9 @@ unrestricted construction is larger than the smooth discrete subcategory.
   `TopRep R G`, read off from its operators.
 * `TauCeti.ofDiscreteModuleMap`: a `G`-equivariant `R`-linear map of discrete modules as a
   morphism of `TopRep R G`.
+* `TauCeti.ofDiscreteModulePair`: a compatible pair `(φ : H →* G, f : M →ₗ[R] N)` as the morphism
+  `TopRep.res φ (ofDiscreteModule R G M) ⟶ ofDiscreteModule R H N` that
+  `ContinuousCohomology.map` consumes.
 * `TauCeti.SmoothDiscreteTopRep`, `TauCeti.smoothDiscreteι`: the smooth discrete objects as a full
   subcategory of `TopRep R G`, and its inclusion functor.
 * `TauCeti.DiscreteRep`: the discrete `G`-modules with continuous `G`-action as a category, the
@@ -64,6 +67,10 @@ unrestricted construction is larger than the smooth discrete subcategory.
   underlying module.
 * `TauCeti.ofDiscreteModuleHomAddEquiv`: morphisms between objects in the image are exactly the
   `G`-equivariant `R`-linear maps.
+* `TauCeti.ofDiscreteModulePair_eq_of_hom_apply`: the compatible pair is the only morphism with its
+  underlying map, which is how statements phrased with it are specialised.
+* `TauCeti.res_ofDiscreteModule`: the dictionary commutes with restriction to a subgroup, on the
+  nose.
 * `TauCeti.IsSmoothDiscrete.res`: smoothness is inherited by restriction along a continuous
   homomorphism.
 * `TauCeti.discreteRepEquivSmoothTopRep`: the two translations are an equivalence of categories
@@ -445,6 +452,77 @@ variable {R G M N}
     ((ofDiscreteModuleHomAddEquiv R G M N).symm f).hom m = f m := (rfl)
 
 end Dictionary
+
+/-! ### The dictionary on compatible pairs -/
+
+section DictionaryPair
+
+variable {R : Type u} [Ring R] [TopologicalSpace R] {G : Type v} [Group G]
+  {H : Type*} [Monoid H]
+  {M : Type w} [AddCommGroup M] [Module R M] [TopologicalSpace M] [DiscreteTopology M]
+  [DistribMulAction G M] [SMulCommClass G R M] [ContinuousSMul R M]
+  {N : Type w} [AddCommGroup N] [Module R N] [TopologicalSpace N] [DiscreteTopology N]
+  [DistribMulAction H N] [SMulCommClass H R N] [ContinuousSMul R N]
+
+/-- The canonical-side coefficient morphism of a **compatible pair**: a monoid homomorphism
+`φ : H →* G` together with an `f : M →ₗ[R] N` satisfying `f (φ h • m) = h • f m` becomes a
+morphism `TopRep.res φ (ofDiscreteModule R G M) ⟶ ofDiscreteModule R H N`, which is what
+`ContinuousCohomology.map` consumes. Continuity of `f` is automatic, the source being discrete.
+`TauCeti.ofDiscreteModuleMap` is the case `φ = MonoidHom.id G`, by
+`TauCeti.ofDiscreteModulePair_id`. -/
+def ofDiscreteModulePair (φ : H →* G) (f : M →ₗ[R] N)
+    (hf : ∀ (h : H) (m : M), f (φ h • m) = h • f m) :
+    TopRep.res φ (ofDiscreteModule R G M) ⟶ ofDiscreteModule R H N :=
+  TopRep.ofHom
+    { toContinuousLinearMap := ⟨f, continuous_of_discreteTopology (α := M) (β := N)⟩
+      isIntertwining' h := by ext m; exact hf h m }
+
+@[simp] lemma ofDiscreteModulePair_hom_apply (φ : H →* G) (f : M →ₗ[R] N)
+    (hf : ∀ (h : H) (m : M), f (φ h • m) = h • f m) (m : M) :
+    (ofDiscreteModulePair φ f hf).hom m = f m := (rfl)
+
+/-- **The compatible pair is determined by its underlying map**: any morphism
+`TopRep.res φ (ofDiscreteModule R G M) ⟶ ofDiscreteModule R H N` whose underlying function is `f`
+*is* the compatible pair, morphisms of `TopRep` being determined by their underlying functions.
+This is how a statement phrased with `TauCeti.ofDiscreteModulePair` is specialised to a morphism
+presented some other way — as an identity morphism, or as `TauCeti.ofDiscreteModuleMap` — without
+its body having to be unfolded at the use site. -/
+lemma ofDiscreteModulePair_eq_of_hom_apply (φ : H →* G) (f : M →ₗ[R] N)
+    (hf : ∀ (h : H) (m : M), f (φ h • m) = h • f m)
+    (ψ : TopRep.res φ (ofDiscreteModule R G M) ⟶ ofDiscreteModule R H N)
+    (hψ : ∀ m : M, ψ.hom m = f m) :
+    ofDiscreteModulePair φ f hf = ψ := by
+  ext (m : M); exact (hψ m).symm
+
+end DictionaryPair
+
+section DictionaryPairId
+
+variable {R : Type u} [Ring R] [TopologicalSpace R] {G : Type v} [Group G]
+  {M : Type w} [AddCommGroup M] [Module R M] [TopologicalSpace M] [DiscreteTopology M]
+  [DistribMulAction G M] [SMulCommClass G R M] [ContinuousSMul R M]
+  {N : Type w} [AddCommGroup N] [Module R N] [TopologicalSpace N] [DiscreteTopology N]
+  [DistribMulAction G N] [SMulCommClass G R N] [ContinuousSMul R N]
+
+/-- At the identity homomorphism the compatible pair is the coefficient morphism
+`TauCeti.ofDiscreteModuleMap`; restricting an object along the identity leaves it unchanged. -/
+-- Not `@[simp]`: the two sides live in defeq but syntactically different hom-types, so rewriting
+-- with it inside a larger term is not type-correct on the nose.
+lemma ofDiscreteModulePair_id (f : M →ₗ[R] N)
+    (hf : ∀ (g : G) (m : M), f (g • m) = g • f m) :
+    ofDiscreteModulePair (MonoidHom.id G) f hf = ofDiscreteModuleMap f hf := (rfl)
+
+/-- **The dictionary commutes with restriction to a subgroup**: restricting the canonical object of
+a discrete `G`-module along `S ↪ G` is the canonical object of the same module over `S`, on the
+nose rather than up to isomorphism. Without this identification the restriction of a canonical
+object and the canonical object of the restriction are two unrelated terms, and no transport square
+along a subgroup inclusion can be typed. -/
+-- Not `@[simp]`: this is an equation between objects, used to type the statements that mention
+-- both sides rather than to rewrite inside them.
+lemma res_ofDiscreteModule (S : Subgroup G) :
+    TopRep.res (S.subtype : S →* G) (ofDiscreteModule R G M) = ofDiscreteModule R S M := (rfl)
+
+end DictionaryPairId
 
 /-! ### The two coefficient categories -/
 

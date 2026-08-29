@@ -53,15 +53,19 @@ subsets avoids having to choose one.
 The presheaf built here is **not identified with Wedhorn's `𝒪_X`**, and is named for what it is
 rather than for what it is expected to become. Wedhorn indexes by rational *subsets* `U ⊆ V`, which
 presupposes that `𝒪_X(U)` is well defined; here the index is presentations, so the value depends a
-priori on presentation data. Two results, neither proved in this repository, close the gap:
+priori on presentation data. Two results close the gap, and neither is yet available outright:
 
 * refinement maps between two presentations of the *same* rational subset are isomorphisms, so that
-  `p ↦ A⟨p.num / p.den⟩` descends to a function of the subset; and
+  `p ↦ A⟨p.num / p.den⟩` descends to a function of the subset. The isomorphism is supplied by
+  `TauCeti.ValuationSpectrum.presentationRingEquivOfEq`, but only for coordinate rings whose
+  denominators are invertible in each other's coordinate ring and whose plus subrings are open —
+  Wedhorn asks for neither, so the descent is not yet unconditional; and
 * the presentation index is then cofinal in the subset index, so the two limits agree.
 
-Until both exist, no result here may be read as computing `𝒪_X(V)`, and in particular nothing here
-shows the value on a rational open `U` is `A_U`. What *is* established is self-contained: the limit
-exists, restriction along a containment is reindexing, and the two functor laws hold.
+Until both are available unconditionally, no result here may be read as computing `𝒪_X(V)`, and
+in particular nothing here shows the value on a rational open `U` is `A_U`. What *is* established
+is self-contained: the limit exists, restriction along a containment is reindexing, and the two
+functor laws hold.
 
 ## References
 

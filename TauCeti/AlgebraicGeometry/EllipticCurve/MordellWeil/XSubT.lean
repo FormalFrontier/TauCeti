@@ -91,7 +91,8 @@ a forward port.
 Two changes were made against the source. Stoll defines the square classes through a local
 abbreviation `Units.modPow`; here they are the quotient by `(powMonoidHom 2).range` directly, so
 that TauCeti carries a single spelling of square classes. In the kernel proofs this replaces the
-source's `Units.modPow.unit_eq_one_iff` step by `TauCeti.mk_eq_one_iff_exists_pow`, which says
+source's `Units.modPow.unit_eq_one_iff` step by
+`TauCeti.powMonoidHom_range_mk_eq_one_iff_exists_pow`, which says
 the same thing about this spelling, for any commutative monoid. `norm_mk_C_sub_X_add_fCofactor`
 is the source's Step 5 opening, `WeakMordellWeil.lean` lines 284-313, specialised here from the
 general `AdjoinRoot.norm_mk_C_sub_X_add`, which carries that attribution. The rest of that step —
@@ -386,15 +387,28 @@ the norm condition on the image of the map is read off from its norm, which is a
 computation is `AdjoinRoot.norm_mk_C_sub_X_add`, stated there for any monic polynomial split off
 a linear factor; here it is specialised to `f = fCofactor x * (X - C x)`. The other value the
 condition needs, the norm of `x - T` itself on the branch where that is already a unit, is
-`AdjoinRoot.norm_mk_C_sub_X W.monic_f x`.
+`AdjoinRoot.norm_algebraMap_sub_root W.monic_f x`.
 -/
 
 /-- **At a root of `f` the norm of the corrected representative is a square.** If `x` is a root
 of `f` then `x - T + fCofactor x` — the element `μX` uses on that branch — has norm `(f' x) ^ 2`,
-where `f' x = 3 * x ^ 2 + 2 * W.a₂ * x + W.a₄` is `derivative_f` evaluated at `x`. Being a square
-makes that *norm* trivial in the square classes of `K`, which is the condition Step 5 puts on the
-image of `μ`. It does not make the class of `x - T + fCofactor x` itself trivial in `W.M`: that
-would say the element is a square in `W.Aˣ`, which is a different and stronger statement. -/
+where `f' x = 3 * x ^ 2 + 2 * W.a₂ * x + W.a₄` is `derivative_f` evaluated at `x`. The statement
+is exactly that: the norm is a square.
+
+It does **not** by itself say the norm is trivial in the square classes of `K` — that needs
+`f' x ≠ 0`, and a vanishing norm is not a class in `Kˣ ⧸ (Kˣ)²` at all. Under
+`[W.IsElliptic] [W.IsCharNeTwoNF]` that non-vanishing is `deriv_f_ne_zero hx`, which every
+consumer of this lemma has and which this statement deliberately does not assume.
+
+Nor does it make the class of `x - T + fCofactor x` itself trivial in `W.M`: that would say the
+element is a square in `W.Aˣ`, which is a different and stronger statement.
+
+Deliberately **not** `@[simp]`, as its general form `AdjoinRoot.norm_mk_C_sub_X_add` is not
+either, but for a different reason. There the obstruction is the side conditions: `hgq` and `hq`
+are rigid goals the default discharger would have to prove. Here they are already discharged, and
+the obstruction is the left-hand side itself: `simp` expands `W.fCofactor x` as well as pushing
+`mk` through the sum, so the normalised form is the full nine-term expression in `of` and `root`,
+which is not a statement worth stating. Use it by explicit `rw`. -/
 theorem norm_mk_C_sub_X_add_fCofactor {x : K} (hx : W.f.eval x = 0) :
     Algebra.norm K (AdjoinRoot.mk W.f (C x - X + W.fCofactor x))
       = (3 * x ^ 2 + 2 * W.a₂ * x + W.a₄) ^ 2 := by
@@ -536,7 +550,7 @@ lemma M.mk_mul_mk_mul_mk_eq_one_iff {a b c : W.A} (ha : IsUnit a) (hb : IsUnit b
     (ha.unit : W.M) * hb.unit * hc.unit = 1 ↔ ∃ z, z ^ 2 = a * b * c := by
   simp only [← QuotientGroup.mk_mul, ← IsUnit.unit_mul]
   simpa only [IsUnit.unit_spec] using
-    TauCeti.mk_eq_one_iff_exists_pow 2 ((ha.mul hb).mul hc).unit
+    TauCeti.powMonoidHom_range_mk_eq_one_iff_exists_pow 2 ((ha.mul hb).mul hc).unit
 
 @[simp]
 lemma M.sq_eq_one (m : W.M) : m ^ 2 = 1 := by
@@ -914,7 +928,8 @@ include h
 private lemma eq_two_smul_of_μ_eq_one_of_ne (hμ : (μ <| .ofAdd <| .some x y h) = 1)
     (hx : W.f.eval x ≠ 0) : ∃ P : W.Point, .some x y h = 2 • P := by
   rw [exists_eq_two_smul_iff']
-  rw [μ_apply, μ₀_some, μX_of_eval_f_ne_zero hx, TauCeti.mk_eq_one_iff_exists_pow,
+  rw [μ_apply, μ₀_some, μX_of_eval_f_ne_zero hx,
+    TauCeti.powMonoidHom_range_mk_eq_one_iff_exists_pow,
     IsUnit.unit_spec] at hμ
   obtain ⟨z, hz⟩ := hμ
   obtain ⟨r, s, t, hrst⟩ := W.exists_mk_quadratic_eq z
@@ -940,7 +955,8 @@ private lemma eq_two_smul_of_μ_eq_one_of_ne (hμ : (μ <| .ofAdd <| .some x y h
 private lemma eq_two_smul_of_μ_eq_one_of_eq (hμ : (μ <| .ofAdd <| .some x y h) = 1)
     (hx : W.f.eval x = 0) : ∃ P : W.Point, .some x y h = 2 • P := by
   rw [exists_eq_two_smul_iff']
-  rw [μ_apply, μ₀_some, μX_of_eval_f_eq_zero hx, TauCeti.mk_eq_one_iff_exists_pow,
+  rw [μ_apply, μ₀_some, μX_of_eval_f_eq_zero hx,
+    TauCeti.powMonoidHom_range_mk_eq_one_iff_exists_pow,
     IsUnit.unit_spec] at hμ
   obtain ⟨z, hz⟩ := hμ
   obtain ⟨p, hp⟩ := AdjoinRoot.mk_surjective z
@@ -1024,13 +1040,13 @@ omit [DecidableEq K] in
 representative is `(f' x) ^ 2`. -/
 lemma normM_μX_eq_one {x y : K} (h : W.Equation x y) : W.normM (W.μX x) = 1 := by
   rcases eq_or_ne (W.f.eval x) 0 with hx | hx
-  · rw [μX_of_eval_f_eq_zero hx, normM_mk, TauCeti.mk_eq_one_iff_exists_pow]
+  · rw [μX_of_eval_f_eq_zero hx, normM_mk, TauCeti.powMonoidHom_range_mk_eq_one_iff_exists_pow]
     exact ⟨3 * x ^ 2 + 2 * W.a₂ * x + W.a₄, by
       simpa using (W.norm_mk_C_sub_X_add_fCofactor hx).symm⟩
-  · rw [μX_of_eval_f_ne_zero hx, normM_mk, TauCeti.mk_eq_one_iff_exists_pow]
+  · rw [μX_of_eval_f_ne_zero hx, normM_mk, TauCeti.powMonoidHom_range_mk_eq_one_iff_exists_pow]
     refine ⟨y, ?_⟩
     simpa using ((equation_iff_eval_f_eq_sq W x y).mp h).symm.trans
-      (AdjoinRoot.norm_mk_C_sub_X W.monic_f x).symm
+      (AdjoinRoot.norm_algebraMap_sub_root W.monic_f x).symm
 
 omit [DecidableEq K] in
 @[simp]

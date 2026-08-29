@@ -42,6 +42,8 @@ everything it feeds.
 
 * `TauCeti.GridRectangle.interior_subset_coveredSquares`: every grid point strictly inside a
   rectangle names a square the rectangle covers.
+* `TauCeti.GridRectangle.disjoint_coveredSquares_iff`: two covered-square domains are disjoint
+  exactly when their covered columns or their covered rows are disjoint.
 * `TauCeti.GridRectangle.card_coveredSquares`: the number of covered squares is the product of the
   two arc lengths.
 
@@ -67,10 +69,18 @@ from the initial vertical side to the terminal one. -/
 noncomputable def coveredColumns : Finset (Fin n) :=
   Grid.cIco R.left R.right
 
+/-- The covered columns are the half-open cyclic interval between the vertical sides. -/
+theorem coveredColumns_def : R.coveredColumns = Grid.cIco R.left R.right :=
+  (rfl)
+
 /-- The rows of squares covered by a toroidal grid rectangle: the clockwise half-open arc from
 the initial horizontal side to the terminal one. -/
 noncomputable def coveredRows : Finset (Fin n) :=
   Grid.cIco R.bottom R.top
+
+/-- The covered rows are the half-open cyclic interval between the horizontal sides. -/
+theorem coveredRows_def : R.coveredRows = Grid.cIco R.bottom R.top :=
+  (rfl)
 
 /-- Membership in the covered columns is membership in the corresponding half-open circular
 interval. -/
@@ -128,6 +138,14 @@ theorem coveredSquares_def : R.coveredSquares = R.coveredColumns ×ˢ R.coveredR
 theorem mem_coveredSquares (p : Fin n × Fin n) :
     p ∈ R.coveredSquares ↔ p.1 ∈ R.coveredColumns ∧ p.2 ∈ R.coveredRows := by
   simp [coveredSquares]
+
+/-- Two rectangles have disjoint covered-square domains exactly when their covered columns or
+their covered rows are disjoint. -/
+theorem disjoint_coveredSquares_iff (R S : GridRectangle n) :
+    Disjoint R.coveredSquares S.coveredSquares ↔
+      Disjoint R.coveredColumns S.coveredColumns ∨ Disjoint R.coveredRows S.coveredRows := by
+  rw [coveredSquares_def, coveredSquares_def]
+  exact Finset.disjoint_product
 
 /-- Every grid point strictly inside a rectangle names a square that the rectangle covers. -/
 theorem interior_subset_coveredSquares : R.interior ⊆ R.coveredSquares :=

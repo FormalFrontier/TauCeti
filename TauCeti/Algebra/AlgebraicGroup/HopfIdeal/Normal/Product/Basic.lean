@@ -67,6 +67,40 @@ an action of affine group objects. -/
   letI : IsMonHom.Normal i := (quotientGrpObjInclusion_normal_iff H I).2 hI
   exact GrpObj.Action.normalConjugation i j
 
+/-- Evaluating quotient normal conjugation on points and including into the ambient group
+gives conjugation by the included acting point. -/
+theorem quotientPointsHom_quotientNormalConjugation_apply
+    (H : _root_.CommHopfAlgCat.{u} R) (I J : HopfIdeal R H) (hI : I.IsNormal)
+    (A : CommAlgCat.{u} R)
+    (z : HopfAlgebra.points (R := R) (H := quotient H J) A)
+    (g : HopfAlgebra.points (R := R) (H := quotient H I) A) :
+    quotientPointsHom H I A
+        (grpObjPointsMulEquiv (quotient H I) (op A)
+          ((quotientNormalConjugation H I J hI).act
+            ((grpObjPointsMulEquiv (quotient H J) (op A)).symm z)
+            ((grpObjPointsMulEquiv (quotient H I) (op A)).symm g))) =
+      quotientPointsHom H J A z * quotientPointsHom H I A g *
+        (quotientPointsHom H J A z)⁻¹ := by
+  let i := quotientGrpObjInclusion H I
+  let j := quotientGrpObjInclusion H J
+  let z' := (grpObjPointsMulEquiv (quotient H J) (op A)).symm z
+  let g' := (grpObjPointsMulEquiv (quotient H I) (op A)).symm g
+  let _ : IsMonHom.Normal i := (quotientGrpObjInclusion_normal_iff H I).2 hI
+  have hact :
+      (quotientNormalConjugation H I J hI).act z' g' ≫ i =
+        (z' ≫ j) * (g' ≫ i) * (z' ≫ j)⁻¹ := by
+    -- Unfold the exposed quotient action to categorical normal conjugation so its
+    -- pointwise action lemma applies to the chosen quotient inclusions.
+    change (GrpObj.Action.normalConjugation i j).act z' g' ≫ i = _
+    rw [GrpObj.Action.normalConjugation_act, Category.assoc]
+    exact TauCeti.lift_normalConjugation_comp i (z' ≫ j) g'
+  have hpoints := congrArg (grpObjPointsMulEquiv H (op A)) hact
+  simp only [i, j, z', g', map_mul, map_inv] at hpoints
+  rw [grpObjPointsMulEquiv_comp_quotientGrpObjInclusion,
+    grpObjPointsMulEquiv_comp_quotientGrpObjInclusion,
+    grpObjPointsMulEquiv_comp_quotientGrpObjInclusion] at hpoints
+  simpa only [MulEquiv.apply_symm_apply] using hpoints
+
 /-- The coordinate Hopf algebra of the semidirect product of a normal closed affine subgroup
 and another closed affine subgroup. Its underlying commutative algebra is
 `(H / I) ⊗[ R ] (H / J)`, and its Hopf structure records conjugation of the second subgroup

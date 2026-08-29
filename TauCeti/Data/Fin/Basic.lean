@@ -6,9 +6,15 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.BigOperators.Fin
+public import Mathlib.Algebra.Group.End
+
+import Mathlib.Tactic.FinCases
 
 /-!
-# Indicator sums over `Fin n` keyed by a natural number
+# Basic results about finite ordinal types
+
+This file collects elementary facts about finite ordinal types, including the classification of
+permutations of `Fin 2` and indicator sums indexed by `Fin n`.
 
 `Fintype.sum_ite_eq` evaluates a sum whose indicator compares two elements of the index type.
 When the comparison is instead between a natural number and the `Fin.val` of the index — as it is
@@ -17,6 +23,8 @@ range, so the value is a `dite` rather than a plain application.
 
 ## Main results
 
+* `TauCeti.perm_fin_two_eq_one_or_swap`: every permutation of `Fin 2` is the identity or the
+  transposition.
 * `TauCeti.sum_ite_val_add`: a sum against the indicator of `b = k + j` picks out the summand at
   `b - j`, or vanishes when there is no such index.
 -/
@@ -24,6 +32,30 @@ range, so the value is a `dite` rather than a plain application.
 public section
 
 namespace TauCeti
+
+/-- A permutation of `Fin 2` is either the identity or the transposition. -/
+theorem perm_fin_two_eq_one_or_swap (e : Equiv.Perm (Fin 2)) :
+    e = 1 ∨ e = Equiv.swap 0 1 := by
+  by_cases h0 : e 0 = 0
+  · left
+    apply Equiv.ext
+    intro i
+    fin_cases i
+    · exact h0
+    · apply Fin.eq_one_of_ne_zero
+      intro h1
+      exact Fin.zero_ne_one (e.injective (h1.trans h0.symm)).symm
+  · right
+    have h0' : e 0 = 1 := Fin.eq_one_of_ne_zero _ h0
+    apply Equiv.ext
+    intro i
+    fin_cases i
+    · simpa using h0'
+    · have h1 : e 1 = 0 := by
+        by_contra h
+        have h1' : e 1 = 1 := Fin.eq_one_of_ne_zero _ h
+        exact Fin.zero_ne_one (e.injective (h1'.trans h0'.symm)).symm
+      simpa using h1
 
 /-- **A shifted indicator picks out one summand.** Summing `f` over `Fin n` against the indicator
 of `b = k + j` gives `f` at the index `b - j` when that is a valid index and `j ≤ b`, and `0`

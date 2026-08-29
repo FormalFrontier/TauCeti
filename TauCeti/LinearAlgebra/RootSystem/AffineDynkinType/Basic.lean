@@ -78,8 +78,8 @@ number, which reduces connectedness to a single induction. Explicitly:
 
 * `TauCeti.AffineDynkinType.graph_connected`: every valid affine simply-laced diagram is
   connected.
-* `TauCeti.AffineDynkinType.graph_D_adj`, `.graph_E6_adj`, `.graph_E7_adj`, `.graph_E8_adj`:
-  adjacency in each diagram, as a condition on node numbers.
+* `TauCeti.AffineDynkinType.graph_A_adj`, `.graph_D_adj`, `.graph_E6_adj`, `.graph_E7_adj`,
+  `.graph_E8_adj`: adjacency in each diagram, as a condition on node numbers.
 * `TauCeti.AffineDynkinType.cartanMatrix_eq_graphCartanMatrix`: outside `A₁` the Cartan matrix is
   the matrix `2I - A` of the underlying graph, `TauCeti.graphCartanMatrix`.
 * `TauCeti.AffineDynkinType.graph_eq_diagramGraph_cartanMatrix`: the graph is the diagram of the
@@ -250,6 +250,31 @@ instance : (t : AffineDynkinType) → DecidableRel t.graph.Adj
   | .E8 => inferInstanceAs (DecidableRel (SimpleGraph.fromRel fun i j : Fin 9 ↦
       (i, j) ∈ [((0 : Fin 9), (1 : Fin 9)), (0, 2), (2, 3), (0, 4), (4, 5), (5, 6), (6, 7),
         (7, 8)]).Adj)
+
+/-- The node number of a difference in `Fin (n + 1)` is `1` exactly when the two node numbers are
+consecutive or wrap around the whole cycle. This is the arithmetic behind
+`TauCeti.AffineDynkinType.graph_A_adj`. -/
+private lemma sub_val_eq_one_iff {n : ℕ} (hn : 1 ≤ n) (u v : Fin (n + 1)) :
+    ((u - v : Fin (n + 1)) : ℕ) = 1 ↔ (v : ℕ) + 1 = (u : ℕ) ∨ ((u : ℕ) = 0 ∧ (v : ℕ) = n) := by
+  have hu : (u : ℕ) < n + 1 := u.isLt
+  have hv : (v : ℕ) < n + 1 := v.isLt
+  rcases le_or_gt v u with h | h
+  · rw [Fin.coe_sub_iff_le.2 h]
+    rw [Fin.le_def] at h
+    omega
+  · rw [Fin.coe_sub_iff_lt.2 h]
+    rw [Fin.lt_def] at h
+    omega
+
+/-- **Adjacency in the cycle `Ãₙ`**, as a condition on node numbers: consecutive numbers, together
+with the edge joining the two ends `0` and `n`. -/
+lemma graph_A_adj {n : ℕ} (hn : 1 ≤ n) (i j : Fin (A n).nodes) :
+    (A n).graph.Adj i j ↔ (i : ℕ) + 1 = (j : ℕ) ∨ (j : ℕ) + 1 = (i : ℕ) ∨
+      ((i : ℕ) = 0 ∧ (j : ℕ) = n) ∨ ((j : ℕ) = 0 ∧ (i : ℕ) = n) := by
+  have hcycle : (A n).graph.Adj i j ↔ (SimpleGraph.cycleGraph (n + 1)).Adj i j := by rw [graph_A]
+  rw [hcycle, SimpleGraph.cycleGraph_adj' (n := n + 1) (u := i) (v := j),
+    sub_val_eq_one_iff hn i j, sub_val_eq_one_iff hn j i]
+  tauto
 
 /-- **Adjacency in `Dₙ`**, as a condition on node numbers: consecutive numbers along the path
 `0 - 1 - ⋯ - (n-2)`, the leaf `n - 1` at node `1`, and the leaf `n` at node `n - 3`, each in both

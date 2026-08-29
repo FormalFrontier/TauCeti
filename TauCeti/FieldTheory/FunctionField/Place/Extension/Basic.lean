@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.RingTheory.Valuation.Extension
+public import Mathlib.RingTheory.DedekindDomain.IntegralClosure
 public import TauCeti.FieldTheory.FunctionField.Place.Basic
 public import TauCeti.RingTheory.Valuation.Discrete.Normalize
 
@@ -20,13 +21,32 @@ constants and — because `F'` is algebraic over `F`, so that a valuation ring o
 is the **ramification index** `e(P' | P)`. The residue field of `P` embeds in the residue field
 of `P'`, and the degree of that extension is the **relative degree** `f(P' | P)`.
 
+The constant field may grow along with `F`: if `k'` is integral over `k` then a valuation of `F'`
+is trivial on `k` exactly when it is trivial on `k'`, so the places of `F' / k` and of `F' / k'`
+are literally the same objects. That is `TauCeti.Place.constantsEquiv`, which lets a place of
+`F' / k'` be produced from data that only sees the smaller constant field `k`.
+
 The main theorem is the bound `e(P' | P) · f(P' | P) ≤ [F' : F]`: residues of elements of `𝒪_{P'}`
 that are independent over `F_P`, multiplied by the powers `t^j` of a prime element for `P'` with
 `0 ≤ j < e`, are independent over `F`, because the orders of the resulting blocks are pairwise
 distinct modulo `e`.
 
+The file also records the action of the valuation ring `𝒪_P` of a place `P` of `F / k` on the
+extension field `F'`, through `F`.  That action is not a global instance — for `F' = F` it would
+compete with the action of a valuation subring on its own field — so it, and the scalar tower it
+sits in, are provided to be reinstalled by consumers with `attribute [local instance 10]`.
+For a finite extension, it also records the standard local integral-closure model
+`𝒪_P ⊆ 𝒪'_P`: `F'` is the fraction field and the localization of `𝒪'_P` at `(𝒪_P)⁰`; for a
+separable extension, `𝒪'_P` is Dedekind and module-finite over `𝒪_P`, and separability transports
+to the canonical fraction fields used by Mathlib's different API.
+
 ## Main definitions
 
+* `TauCeti.Place.constantsEquiv`: the places of `F' / k` are the places of `F' / k'`, for `k'`
+  integral over `k`; enlarging the constants by an algebraic extension changes nothing.
+* `TauCeti.Place.algebraIntegersExtension` and `TauCeti.Place.isScalarTowerIntegersExtension`: the
+  action of the valuation ring of a place of `F / k` on an extension field `F'`, to be installed
+  with `attribute [local instance 10]`.
 * `TauCeti.Place.restrict`: the place of `F / k` that a place of `F' / k'` lies over.
 * `TauCeti.Place.ramificationIdx`: the ramification index `e(P' | P)`.
 * `TauCeti.Place.relativeDegree`: the relative degree `f(P' | P) = [F'_{P'} : F_P]`.
@@ -52,6 +72,15 @@ distinct modulo `e`.
 * `TauCeti.Place.finiteDimensional_residueField_restrict`: the relative degree is finite, so it
   is not the junk value of `Module.finrank`; `TauCeti.Place.one_le_relativeDegree` and
   `TauCeti.Place.ramificationIdx_pos` are the matching lower bounds.
+* `TauCeti.Place.finrank_mul_degree_eq_relativeDegree_mul_degree_restrict`:
+  `[k' : k] · deg P' = f(P' ∣ P) · deg P`, the comparison of the degrees of `P'` and of the place
+  it lies over.
+* `TauCeti.Place.isFractionRing_integralClosure`,
+  `TauCeti.Place.isLocalization_integralClosure`,
+  `TauCeti.Place.isDedekindDomain_integralClosure`,
+  `TauCeti.Place.moduleFinite_integralClosure`, and
+  `TauCeti.Place.isSeparable_fractionRing_integralClosure`: the fraction-field, localization,
+  Dedekind, finiteness, and separability properties of the local integral closure `𝒪'_P`.
 
 ## References
 
@@ -61,7 +90,12 @@ distinct modulo `e`.
 
 public section
 
+open IsDedekindDomain
+
 open scoped WithZero
+open scoped nonZeroDivisors
+
+attribute [local instance] FractionRing.liftAlgebra FractionRing.isScalarTower_liftAlgebra
 
 namespace TauCeti
 
@@ -73,6 +107,142 @@ variable {k : Type u} {k' : Type u'} {F : Type v} {F' : Type v'}
 variable [Field k] [Field k'] [Field F] [Field F']
 variable [Algebra k k'] [Algebra k F] [Algebra k' F'] [Algebra F F'] [Algebra k F']
 variable [IsScalarTower k k' F'] [IsScalarTower k F F']
+
+section LocalModel
+
+omit [Field k'] [Algebra k k'] [Algebra k' F'] [Algebra k F'] [IsScalarTower k k' F']
+  [IsScalarTower k F F']
+
+variable (F') (P : Place k F)
+
+/-- **The valuation ring of a place of `F / k` acts on an extension field `F'`**, through `F`.
+
+This is not a global instance: for `F' = F` it would compete with the action of a valuation
+subring on its own field.  Install it, together with
+`TauCeti.Place.isScalarTowerIntegersExtension`, with `attribute [local instance 10]` in any file
+that works with the local model of the extension at `P` — at low priority, so that the case
+`F' = F` still resolves to the valuation subring's own action, as the fraction-field instances
+expect. -/
+@[instance_reducible]
+noncomputable def algebraIntegersExtension : Algebra (P.integers) F' :=
+  ((algebraMap F F').comp (algebraMap (P.integers) F)).toAlgebra
+
+attribute [local instance 10] algebraIntegersExtension
+
+/-- The action of `TauCeti.Place.algebraIntegersExtension` on `F'` factors through `F`. -/
+theorem isScalarTowerIntegersExtension : IsScalarTower (P.integers) F F' :=
+  .of_algebraMap_eq fun _ ↦ rfl
+
+attribute [local instance 10] isScalarTowerIntegersExtension
+
+theorem algebraMap_integersExtension_injective :
+    Function.Injective (algebraMap (P.integers) F') := by
+  rw [IsScalarTower.algebraMap_eq (P.integers) F F', RingHom.coe_comp]
+  exact (algebraMap F F').injective.comp (FaithfulSMul.algebraMap_injective (P.integers) F)
+
+instance isTorsionFree_integersExtension : Module.IsTorsionFree (P.integers) F' :=
+  Module.isTorsionFree_iff_algebraMap_injective.mpr
+    (algebraMap_integersExtension_injective F' P)
+
+end LocalModel
+
+section LocalIntegralClosure
+
+omit [Field k'] [Algebra k k'] [Algebra k' F'] [Algebra k F'] [IsScalarTower k k' F']
+  [IsScalarTower k F F']
+
+variable (F') (P : Place k F)
+
+attribute [local instance 10] algebraIntegersExtension isScalarTowerIntegersExtension
+
+variable [FiniteDimensional F F']
+
+/-- The local model `𝒪'_P` — the integral closure of `𝒪_P` in `F'` — has fraction field `F'`. -/
+instance isFractionRing_integralClosure :
+    IsFractionRing (integralClosure (P.integers) F') F' :=
+  IsIntegralClosure.isFractionRing_of_finite_extension (P.integers) F F' _
+
+/-- More precisely, `F'` is the localization of the local model `𝒪'_P` at the nonzero divisors
+of `𝒪_P`. -/
+theorem isLocalization_integralClosure :
+    IsLocalization
+      (Algebra.algebraMapSubmonoid (integralClosure (P.integers) F') (P.integers)⁰) F' :=
+  IsIntegralClosure.isLocalization (P.integers) F F' _
+
+variable [Algebra.IsSeparable F F']
+
+/-- The local model `𝒪'_P` is a Dedekind domain. -/
+instance isDedekindDomain_integralClosure :
+    IsDedekindDomain (integralClosure (P.integers) F') :=
+  integralClosure.isDedekindDomain (A := P.integers) (K := F) (L := F')
+
+/-- The local model `𝒪'_P` is module-finite over `𝒪_P`. -/
+instance moduleFinite_integralClosure :
+    Module.Finite (P.integers) (integralClosure (P.integers) F') :=
+  IsIntegralClosure.finite (A := P.integers) (K := F) (L := F') _
+
+/-- Separability of `F' / F`, transported to the canonical fraction fields used by the
+integral-closure API. -/
+instance isSeparable_fractionRing_integralClosure :
+    Algebra.IsSeparable (FractionRing (P.integers))
+      (FractionRing (integralClosure (P.integers) F')) := by
+  refine Algebra.IsSeparable.of_equiv_equiv (FractionRing.algEquiv (P.integers) F).symm.toRingEquiv
+    (FractionRing.algEquiv (integralClosure (P.integers) F') F').symm.toRingEquiv ?_
+  apply IsLocalization.ringHom_ext (P.integers)⁰
+  ext a
+  simp only [RingHom.coe_comp, Function.comp_apply, RingHom.coe_coe, AlgEquiv.coe_ringEquiv,
+    AlgEquiv.commutes, ← IsScalarTower.algebraMap_apply]
+  rw [IsScalarTower.algebraMap_apply (P.integers) (integralClosure (P.integers) F') F',
+    AlgEquiv.commutes, ← IsScalarTower.algebraMap_apply]
+
+end LocalIntegralClosure
+
+section Constants
+
+variable (k k' F') [Algebra.IsIntegral k k']
+
+/-- **Enlarging an algebraic constant field does not change the places**: a valuation of `F'` is
+trivial on `k` exactly when it is trivial on `k'`, because every nonzero element of `k'` is
+algebraic over `k` and every nonzero element of `k` is one of `k'`.  So the places of `F' / k` and
+the places of `F' / k'` are the same, with the same valuations. -/
+def constantsEquiv : Place k F' ≃ Place k' F' where
+  toFun Q :=
+    { valuation := Q.valuation
+      valuation_surjective := Q.valuation_surjective
+      isTrivialOn := ⟨fun c hc ↦ Q.valuation_eq_one_of_isAlgebraic
+        (IsIntegral.algebraMap (Algebra.IsIntegral.isIntegral (R := k) c)).isAlgebraic
+        fun h ↦ hc ((algebraMap k' F').injective (by rw [h, map_zero]))⟩ }
+  invFun Q :=
+    { valuation := Q.valuation
+      valuation_surjective := Q.valuation_surjective
+      isTrivialOn := ⟨fun c hc ↦ by
+        rw [IsScalarTower.algebraMap_apply k k' F']
+        exact Q.isTrivialOn.eq_one _ fun h ↦
+          hc ((algebraMap k k').injective (by rw [h, map_zero]))⟩ }
+  left_inv _ := rfl
+  right_inv _ := rfl
+
+variable {k k' F'}
+
+@[simp]
+theorem valuation_constantsEquiv (Q : Place k F') :
+    (constantsEquiv k k' F' Q).valuation = Q.valuation := (rfl)
+
+@[simp]
+theorem valuation_constantsEquiv_symm (Q : Place k' F') :
+    ((constantsEquiv k k' F').symm Q).valuation = Q.valuation := (rfl)
+
+@[simp]
+theorem integers_constantsEquiv (Q : Place k F') :
+    (constantsEquiv k k' F' Q).integers = Q.integers :=
+  SetLike.ext fun x ↦ by rw [mem_integers_iff, mem_integers_iff, valuation_constantsEquiv]
+
+@[simp]
+theorem integers_constantsEquiv_symm (Q : Place k' F') :
+    ((constantsEquiv k k' F').symm Q).integers = Q.integers :=
+  SetLike.ext fun x ↦ by rw [mem_integers_iff, mem_integers_iff, valuation_constantsEquiv_symm]
+
+end Constants
 
 section Restrict
 
@@ -276,6 +446,29 @@ noncomputable def relativeDegree : ℕ :=
 theorem relativeDegree_def :
     relativeDegree k F P' = Module.finrank (P'.restrict k F).ResidueField P'.ResidueField := by
   rw [relativeDegree]
+
+/-- **The degree of a place and the degree of the place below it** (Stichtenoth, Section III.1):
+the residue field `F'_{P'}` sits in the two towers `k ⊆ k' ⊆ F'_{P'}` and `k ⊆ F_P ⊆ F'_{P'}`,
+whose successive degrees are `[k' : k]`, `deg P'` and `deg P`, `f(P' ∣ P)`.  Comparing them gives
+`[k' : k] · deg P' = f(P' ∣ P) · deg P`.
+
+The factor `[k' : k]` is mandatory and the identity is stated cross-multiplied: when the constant
+field grows, `deg P'` falls short of `f(P' ∣ P) · deg P` by exactly that factor. -/
+theorem finrank_mul_degree_eq_relativeDegree_mul_degree_restrict :
+    Module.finrank k k' * P'.degree = relativeDegree k F P' * (P'.restrict k F).degree := by
+  -- The residue field of `P'` is a `k`-algebra through the constants `k'` of `F'`.  This is a
+  -- local instance: for `k = k'` it would compete with the constant-field algebra of `P'`.
+  let _ : Algebra k P'.integers := ((algebraMap k' P'.integers).comp (algebraMap k k')).toAlgebra
+  have : IsScalarTower k k' P'.integers := .of_algebraMap_eq fun _ ↦ rfl
+  have : IsScalarTower k (P'.restrict k F).integers P'.integers := by
+    refine .of_algebraMap_eq fun c ↦ Subtype.ext ?_
+    rw [coe_algebraMap_integers, coe_algebraMap_constants, ← IsScalarTower.algebraMap_apply k F F']
+    exact (P'.coe_algebraMap_constants (algebraMap k k' c)).trans
+      (IsScalarTower.algebraMap_apply k k' F' c).symm
+  rw [degree_eq_finrank, degree_eq_finrank, relativeDegree_def,
+    Module.finrank_mul_finrank k k' P'.ResidueField,
+    mul_comm (Module.finrank (P'.restrict k F).ResidueField P'.ResidueField),
+    Module.finrank_mul_finrank k (P'.restrict k F).ResidueField P'.ResidueField]
 
 end ResidueField
 

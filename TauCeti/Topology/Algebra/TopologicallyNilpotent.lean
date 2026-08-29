@@ -25,6 +25,8 @@ parity `n` has.
 * `IsTopologicallyNilpotent.neg` : the negation of a topologically nilpotent element is
   topologically nilpotent.
 * `isTopologicallyNilpotent_neg` : the same fact as a `simp` iff, mirroring `isPowerBounded_neg`.
+* `eventually_mul_pow_mem_of_isTopologicallyNilpotent`, and its `.exists` form: a topologically
+  nilpotent element absorbs any fixed element into any open subring.
 
 ## Provenance
 
@@ -68,5 +70,32 @@ theorem IsTopologicallyNilpotent.neg {a : R} (ha : IsTopologicallyNilpotent a) :
 theorem isTopologicallyNilpotent_neg {a : R} :
     IsTopologicallyNilpotent (-a) ↔ IsTopologicallyNilpotent a :=
   ⟨fun h ↦ by simpa using h.neg, IsTopologicallyNilpotent.neg⟩
+
+
+section Absorb
+
+variable {A : Type*} [Ring A] [TopologicalSpace A] [ContinuousMul A]
+
+/-- **A topologically nilpotent element absorbs any element into any open subring.** For `s`
+topologically nilpotent and `B` open, `a * s ^ n` lies in `B` for all large `n`.
+
+Multiplication by `a` is continuous, so `B` pulls back to a neighbourhood of `0`, and the powers
+of `s` converge to `0`. Neither commutativity nor continuity of addition is used — only
+`ContinuousMul` — and no Huber structure enters, which is why this sits here rather than beside
+the ring-of-definition form it generalises,
+`TauCeti.Huber.PairOfDefinition.exists_pow_idealOfDefinition_mul_mem`. -/
+theorem eventually_mul_pow_mem_of_isTopologicallyNilpotent {s : A}
+    (hs : IsTopologicallyNilpotent s) {B : Subring A} (hB : IsOpen (B : Set A)) (a : A) :
+    ∀ᶠ n : ℕ in atTop, a * s ^ n ∈ B :=
+  hs ((hB.preimage (continuous_const_mul a)).mem_nhds (by simp))
+
+/-- The existential form of `eventually_mul_pow_mem_of_isTopologicallyNilpotent`: some power of a
+topologically nilpotent element carries `a` into an open subring. -/
+theorem exists_mul_pow_mem_of_isTopologicallyNilpotent {s : A}
+    (hs : IsTopologicallyNilpotent s) {B : Subring A} (hB : IsOpen (B : Set A)) (a : A) :
+    ∃ n : ℕ, a * s ^ n ∈ B :=
+  (eventually_mul_pow_mem_of_isTopologicallyNilpotent hs hB a).exists
+
+end Absorb
 
 end
