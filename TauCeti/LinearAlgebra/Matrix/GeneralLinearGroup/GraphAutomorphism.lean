@@ -36,6 +36,9 @@ carrier.
 
 ## Main results
 
+* `TauCeti.typeAGraphAutomorphism_eq_iff` and
+  `TauCeti.typeAGraphAutomorphism_eq_iff_transpose`: the automorphism carries `g` to `h` exactly
+  when `h * Q * gᵀ = Q`, equivalently when `gᵀ * Q * h = Q`.
 * `TauCeti.typeAGraphAutomorphism_transvectionUnit`: the sign-free equation on every positive
   simple-root subgroup.
 * `TauCeti.typeAGraphAutomorphism_transvectionUnit_lower`: the corresponding equation on every
@@ -93,6 +96,13 @@ def inverseTranspose : GL n A ≃* GL n A where
 theorem coe_inverseTranspose (g : GL n A) :
     (inverseTranspose g : Matrix n n A) = ((g⁻¹ : GL n A) : Matrix n n A).transpose :=
   (rfl)
+
+/-- The matrix of the inverse of the inverse transpose of `g` is the transpose of the matrix of
+`g`. Inverse transpose is a group automorphism, whereas transpose alone is anti-multiplicative, so
+this is the shape in which the transpose of an invertible matrix is available inside `GL n A`. -/
+theorem coe_inv_inverseTranspose (g : GL n A) :
+    (((inverseTranspose g)⁻¹ : GL n A) : Matrix n n A) = (g : Matrix n n A).transpose := by
+  rw [← map_inv, coe_inverseTranspose, inv_inv]
 
 /-- Inverse transpose is an involution. -/
 @[simp]
@@ -238,6 +248,66 @@ theorem typeAGraphConjugator_mul_self (r : ℕ) :
       apply Units.ext
       rw [diagGL_coe, Matrix.GeneralLinearGroup.coe_scalar]
       rw [Matrix.scalar_apply]
+
+private theorem typeAGraphAutomorphism_eq_iff_gl (r : ℕ) (g h : GL (Fin (r + 1)) A) :
+    typeAGraphAutomorphism r A g = h ↔
+      h * typeAGraphConjugator r A * (Matrix.GeneralLinearGroup.inverseTranspose g)⁻¹ =
+        typeAGraphConjugator r A := by
+  rw [typeAGraphAutomorphism_apply, mul_inv_eq_iff_eq_mul, mul_inv_eq_iff_eq_mul]
+  exact eq_comm
+
+/-- **The pinned type-`A` graph automorphism, read as an invariance equation.** The automorphism
+carries `g` to `h` exactly when `h * Q * gᵀ = Q`, with `Q` the signed reversal matrix.
+
+Composing with an entrywise ring endomorphism `σ` turns this into a unitarity condition: taking
+`g = σ h`, the equation says that `h` preserves the `σ`-sesquilinear form of Gram matrix `Q`, in
+the transposed form recorded by `TauCeti.typeAGraphAutomorphism_eq_iff_transpose`. -/
+theorem typeAGraphAutomorphism_eq_iff (r : ℕ) (g h : GL (Fin (r + 1)) A) :
+    typeAGraphAutomorphism r A g = h ↔
+      (h : Matrix (Fin (r + 1)) (Fin (r + 1)) A) *
+            (typeAGraphConjugator r A : Matrix (Fin (r + 1)) (Fin (r + 1)) A) *
+            (g : Matrix (Fin (r + 1)) (Fin (r + 1)) A).transpose =
+          (typeAGraphConjugator r A : Matrix (Fin (r + 1)) (Fin (r + 1)) A) := by
+  rw [typeAGraphAutomorphism_eq_iff_gl, ← Units.val_inj]
+  simp only [Units.val_mul, Matrix.GeneralLinearGroup.coe_inv_inverseTranspose]
+
+-- The square of the signed reversal matrix is a scalar, hence central, so the two outer factors of
+-- an invariance equation may be exchanged.
+private theorem mul_typeAGraphConjugator_mul_swap (r : ℕ) {a b : GL (Fin (r + 1)) A}
+    (h : a * typeAGraphConjugator r A * b = typeAGraphConjugator r A) :
+    b * typeAGraphConjugator r A * a = typeAGraphConjugator r A := by
+  have hb : b = (a * typeAGraphConjugator r A)⁻¹ * typeAGraphConjugator r A :=
+    eq_inv_mul_iff_mul_eq.mpr h
+  subst hb
+  calc (a * typeAGraphConjugator r A)⁻¹ * typeAGraphConjugator r A *
+        typeAGraphConjugator r A * a
+      = (a * typeAGraphConjugator r A)⁻¹ *
+          (typeAGraphConjugator r A * typeAGraphConjugator r A) * a := by group
+    _ = (a * typeAGraphConjugator r A)⁻¹ *
+          (Matrix.GeneralLinearGroup.scalar (Fin (r + 1)) ((-1 : Aˣ) ^ r) * a) := by
+        rw [typeAGraphConjugator_mul_self, mul_assoc]
+    _ = (a * typeAGraphConjugator r A)⁻¹ *
+          (a * (typeAGraphConjugator r A * typeAGraphConjugator r A)) := by
+        rw [Matrix.GeneralLinearGroup.scalar_commute, typeAGraphConjugator_mul_self]
+    _ = typeAGraphConjugator r A := by group
+
+/-- **The invariance equation of the pinned type-`A` graph automorphism, transposed.** The
+automorphism carries `g` to `h` exactly when `gᵀ * Q * h = Q`.
+
+The two outer factors of `TauCeti.typeAGraphAutomorphism_eq_iff` may be exchanged because the
+square of the signed reversal matrix is a scalar. Composing with an entrywise ring endomorphism
+`σ` and taking `g = σ h`, this is the classical unitarity condition `h* * Q * h = Q` for the
+`σ`-sesquilinear form of Gram matrix `Q`, with `h* = (σ h)ᵀ`. -/
+theorem typeAGraphAutomorphism_eq_iff_transpose (r : ℕ) (g h : GL (Fin (r + 1)) A) :
+    typeAGraphAutomorphism r A g = h ↔
+      (g : Matrix (Fin (r + 1)) (Fin (r + 1)) A).transpose *
+            (typeAGraphConjugator r A : Matrix (Fin (r + 1)) (Fin (r + 1)) A) *
+            (h : Matrix (Fin (r + 1)) (Fin (r + 1)) A) =
+          (typeAGraphConjugator r A : Matrix (Fin (r + 1)) (Fin (r + 1)) A) := by
+  rw [typeAGraphAutomorphism_eq_iff_gl]
+  refine Iff.trans ⟨mul_typeAGraphConjugator_mul_swap r, mul_typeAGraphConjugator_mul_swap r⟩ ?_
+  rw [← Units.val_inj]
+  simp only [Units.val_mul, Matrix.GeneralLinearGroup.coe_inv_inverseTranspose]
 
 /-- Applying the pinned type-`A` graph automorphism twice is the identity. -/
 @[simp]
