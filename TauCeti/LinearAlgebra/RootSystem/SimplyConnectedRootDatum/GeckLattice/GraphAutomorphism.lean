@@ -36,9 +36,11 @@ alone. The order of `γ` divides that of `σ`, so an involution of the diagram g
 the triality of `D₄` gives `γ ^ 3 = 1`; on the identity symmetry `γ` is the identity.
 
 The same coordinate permutation acts on the algebra-valued points of the carrier, by conjugation by
-its permutation matrix `TauCeti.DynkinType.geckGraphAutMatrix`. That is the matrix conjugation by
-which is the action on points of the coordinate automorphism of the ambient `GLₙ`; the two pinning
-equations displayed above, and the order relation, all hold in the same form on points. The points
+`TauCeti.DynkinType.geckGraphAutMatrix`, its image under `Matrix.permMatrixHom`, which is the
+permutation matrix of the inverse permutation because permutation matrices multiply
+contravariantly. That is the matrix conjugation by which is the action on points of the coordinate
+automorphism of the ambient `GLₙ`; the two pinning equations displayed above, and the order
+relation, all hold in the same form on points. The points
 of the carrier are read directly off its defining Hopf ideal rather than through the scheme-level
 automorphism, so the two constructions are compared rather than defined in terms of each other:
 `TauCeti.DynkinType.schemePointsMulEquiv_geckGraphAut_comp_geckGroupSchemeι` says that composing an
@@ -54,8 +56,8 @@ reductivity, maximality of the weight torus, or any finiteness or simplicity sta
 ## Main definitions
 
 * `TauCeti.DynkinType.geckGraphAut`: the graph automorphism of the pinned Geck carrier.
-* `TauCeti.DynkinType.geckGraphAutMatrix`: the permutation matrix of the pinned coordinate
-  permutation.
+* `TauCeti.DynkinType.geckGraphAutMatrix`: the matrix of the pinned coordinate permutation, its
+  image under `Matrix.permMatrixHom`.
 * `TauCeti.DynkinType.geckGraphAutPoints`: the graph automorphism on the algebra-valued points of
   the carrier.
 
@@ -105,6 +107,23 @@ noncomputable section
 
 variable {t : DynkinType} (ht : t.Valid) {sigma : Equiv.Perm (Fin t.rank)}
 
+/-- The pinned Geck-module symmetry intertwines the represented simple root generators, stated
+through `UniversalEnvelopingAlgebra.ι` as the numbered Kostant symmetry constructions take that
+hypothesis. -/
+private theorem geckDiagramModuleEquiv_ι_geckRepresentation_rootGenerator
+    (hsigma : sigma ∈ t.diagramSymmetry) :
+    ∀ (i : Fin t.rank ⊕ Fin t.rank) (v : t.GeckIndex ht → ℚ),
+      t.geckDiagramModuleEquiv ht hsigma
+          (t.geckRepresentation ht
+            (_root_.UniversalEnvelopingAlgebra.ι ℚ ((t.lieBasis ht).rootGenerator i)) v) =
+        t.geckRepresentation ht
+            (_root_.UniversalEnvelopingAlgebra.ι ℚ
+              ((t.lieBasis ht).rootGenerator (diagramRootGeneratorPerm sigma i)))
+          (t.geckDiagramModuleEquiv ht hsigma v) :=
+  fun i v => by
+    simpa only [_root_.UniversalEnvelopingAlgebra.ι_apply] using
+      t.geckDiagramModuleEquiv_geckRepresentation_rootGenerator ht hsigma i v
+
 /-- The Kostant toral-closure symmetry of the pinned Geck data. -/
 private def toralGraphAut (hsigma : sigma ∈ t.diagramSymmetry) :
     Aut (TauCeti.UniversalEnvelopingAlgebra.kostantToralGroupScheme
@@ -121,9 +140,7 @@ private def toralGraphAut (hsigma : sigma ∈ t.diagramSymmetry) :
     (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht)
     ⇑(diagramRootGeneratorPerm sigma) (t.geckDiagramModuleEquiv ht hsigma)
     (t.geckDiagramModuleEquiv_mem_geckCoordinateLattice_iff ht hsigma)
-    (fun i v => by
-      simpa only [_root_.UniversalEnvelopingAlgebra.ι_apply] using
-        t.geckDiagramModuleEquiv_geckRepresentation_rootGenerator ht hsigma i v)
+    (geckDiagramModuleEquiv_ι_geckRepresentation_rootGenerator ht hsigma)
     (diagramRootGeneratorPerm sigma).surjective
     (t.geckDiagramFinPerm ht hsigma)
     (t.geckDiagramModuleEquiv_geckCoordinateBasisFin ht hsigma)
@@ -212,9 +229,10 @@ theorem geckGraphAut_one : t.geckGraphAut ht t.diagramSymmetry.one_mem = 1 := by
 /-! ## The graph automorphism on algebra-valued points -/
 
 /-- **The matrix of the pinned Geck coordinate permutation** attached to a symmetry of the
-Bourbaki-numbered Dynkin diagram. It is the permutation matrix of
-`TauCeti.DynkinType.geckDiagramFinPerm`, and conjugation by it is the action on points of the
-coordinate automorphism of the ambient `GLₙ` which descends to
+Bourbaki-numbered Dynkin diagram. It is the image of `TauCeti.DynkinType.geckDiagramFinPerm` under
+`Matrix.permMatrixHom`, that is, the permutation matrix of the inverse coordinate permutation,
+since permutation matrices multiply contravariantly. Conjugation by it is the action on points of
+the coordinate automorphism of the ambient `GLₙ` which descends to
 `TauCeti.DynkinType.geckGraphAut` on the carrier. -/
 def geckGraphAutMatrix (hsigma : sigma ∈ t.diagramSymmetry) (A : Type v) [CommRing A] :
     Matrix.GeneralLinearGroup (Fin (t.geckDim ht)) A :=
@@ -282,13 +300,19 @@ theorem map_geckPoints_conj_geckGraphAutMatrix (hsigma : sigma ∈ t.diagramSymm
     (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht)
     ⇑(diagramRootGeneratorPerm sigma) (t.geckDiagramModuleEquiv ht hsigma)
     (t.geckDiagramModuleEquiv_mem_geckCoordinateLattice_iff ht hsigma)
-    (fun i v => by
-      simpa only [_root_.UniversalEnvelopingAlgebra.ι_apply] using
-        t.geckDiagramModuleEquiv_geckRepresentation_rootGenerator ht hsigma i v)
+    (geckDiagramModuleEquiv_ι_geckRepresentation_rootGenerator ht hsigma)
     (diagramRootGeneratorPerm sigma).surjective
     (t.geckDiagramFinPerm ht hsigma)
     (t.geckDiagramModuleEquiv_geckCoordinateBasisFin ht hsigma)
     sigma (t.geckWeightFin_geckDiagramFinPerm ht hsigma) A
+
+/-- The matrix of the pinned coordinate permutation, as an element of the normalizer of the points
+of the Geck carrier. -/
+private def geckGraphAutNormalizer (hsigma : sigma ∈ t.diagramSymmetry) (A : Type v) [CommRing A] :
+    Subgroup.normalizer
+      (t.geckPoints ht A : Set (Matrix.GeneralLinearGroup (Fin (t.geckDim ht)) A)) :=
+  ⟨t.geckGraphAutMatrix ht hsigma A, Subgroup.mem_normalizer_iff_map_conj_eq.mpr
+    (t.map_geckPoints_conj_geckGraphAutMatrix ht hsigma A)⟩
 
 /-- **The graph automorphism on the algebra-valued points of the pinned Geck carrier**, namely
 conjugation by the matrix of the pinned coordinate permutation. It renumbers the pinned root
@@ -296,8 +320,7 @@ subgroups by the diagram symmetry without changing their parameters, and relabel
 of a pinned weight-torus point. -/
 def geckGraphAutPoints (hsigma : sigma ∈ t.diagramSymmetry) (A : Type v) [CommRing A] :
     MulAut (t.geckPoints ht A) :=
-  ((MulAut.conj (t.geckGraphAutMatrix ht hsigma A)).subgroupMap (t.geckPoints ht A)).trans
-    (MulEquiv.subgroupCongr (t.map_geckPoints_conj_geckGraphAutMatrix ht hsigma A))
+  (t.geckPoints ht A).normalizerMonoidHom (geckGraphAutNormalizer ht hsigma A)
 
 /-- The graph automorphism on points is conjugation by the matrix of the pinned coordinate
 permutation. -/
@@ -354,9 +377,7 @@ theorem schemePointsMulEquiv_geckGraphAut_comp_geckGroupSchemeι
       (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht)
       ⇑(diagramRootGeneratorPerm sigma) (t.geckDiagramModuleEquiv ht hsigma)
       (t.geckDiagramModuleEquiv_mem_geckCoordinateLattice_iff ht hsigma)
-      (fun i v => by
-        simpa only [_root_.UniversalEnvelopingAlgebra.ι_apply] using
-          t.geckDiagramModuleEquiv_geckRepresentation_rootGenerator ht hsigma i v)
+      (geckDiagramModuleEquiv_ι_geckRepresentation_rootGenerator ht hsigma)
       (diagramRootGeneratorPerm sigma).surjective
       (t.geckDiagramFinPerm ht hsigma)
       (t.geckDiagramModuleEquiv_geckCoordinateBasisFin ht hsigma)
@@ -386,9 +407,7 @@ theorem geckGraphAutPoints_geckRootSubgroupMatrix (hsigma : sigma ∈ t.diagramS
       (t.geckCoordinateBasisFin ht) ⇑(diagramRootGeneratorPerm sigma)
       (t.geckDiagramModuleEquiv ht hsigma)
       (t.geckDiagramModuleEquiv_mem_geckCoordinateLattice_iff ht hsigma)
-      (fun j v => by
-        simpa only [_root_.UniversalEnvelopingAlgebra.ι_apply] using
-          t.geckDiagramModuleEquiv_geckRepresentation_rootGenerator ht hsigma j v)
+      (geckDiagramModuleEquiv_ι_geckRepresentation_rootGenerator ht hsigma)
       A i _)
 
 /-- **The graph automorphism relabels the coordinates of a pinned weight-torus point** by the
@@ -439,31 +458,17 @@ theorem geckPointsMap_comp_geckGraphAutPoints (hsigma : sigma ∈ t.diagramSymme
     MulEquiv.coe_toMonoidHom, coe_geckPointsMap, coe_geckGraphAutPoints, coe_geckGraphAutPoints,
     coe_geckPointsMap, map_mul, map_mul, map_inv, map_geckGraphAutMatrix]
 
-/-- Iterating the graph automorphism on points conjugates by the corresponding power of the matrix
-of the pinned coordinate permutation. -/
-private theorem coe_geckGraphAutPoints_pow (hsigma : sigma ∈ t.diagramSymmetry) (A : Type v)
-    [CommRing A] (m : ℕ) (g : t.geckPoints ht A) :
-    ((t.geckGraphAutPoints ht hsigma A ^ m) g :
-        Matrix.GeneralLinearGroup (Fin (t.geckDim ht)) A) =
-      t.geckGraphAutMatrix ht hsigma A ^ m * g * (t.geckGraphAutMatrix ht hsigma A ^ m)⁻¹ := by
-  induction m generalizing g with
-  | zero => simp
-  | succ n ih =>
-      have happ : (t.geckGraphAutPoints ht hsigma A ^ (n + 1)) g =
-          (t.geckGraphAutPoints ht hsigma A ^ n) (t.geckGraphAutPoints ht hsigma A g) := by
-        rw [pow_succ, MulAut.mul_apply]
-      rw [happ, ih, coe_geckGraphAutPoints, pow_succ]
-      group
-
 /-- **The order of the graph automorphism on points divides that of the diagram symmetry.** An
 involution of the numbered diagram therefore gives `γ ^ 2 = 1` on points, and the triality of `D₄`
 gives `γ ^ 3 = 1`. -/
 @[simp]
 theorem geckGraphAutPoints_pow_eq_one (hsigma : sigma ∈ t.diagramSymmetry) (A : Type v) [CommRing A]
     {m : ℕ} (hm : sigma ^ m = 1) : t.geckGraphAutPoints ht hsigma A ^ m = 1 := by
-  refine MulEquiv.ext fun g => Subtype.ext ?_
-  rw [coe_geckGraphAutPoints_pow ht hsigma A m g, geckGraphAutMatrix_pow_eq_one ht hsigma A hm]
-  simp
+  have hX : geckGraphAutNormalizer ht hsigma A ^ m = 1 :=
+    Subtype.ext (by
+      rw [Subgroup.coe_pow]
+      exact geckGraphAutMatrix_pow_eq_one ht hsigma A hm)
+  rw [geckGraphAutPoints, ← map_pow, hX, map_one]
 
 /-- The identity symmetry gives the identity automorphism of the points of the Geck carrier. -/
 @[simp]

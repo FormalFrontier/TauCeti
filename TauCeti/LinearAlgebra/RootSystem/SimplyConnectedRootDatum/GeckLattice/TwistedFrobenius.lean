@@ -28,10 +28,11 @@ defining relation of a graph-twisted Steinberg endomorphism on the simple root s
 parameter is raised to the `q`-th power and the numbering is permuted by the diagram symmetry,
 with no sign or scaling attached, which is what a pinning normalizes away.
 
-Commutation is immediate from the shape of the two maps: the Frobenius is entrywise, and the graph
-automorphism is conjugation by a permutation matrix whose entries are `0` and `1` and which is
-therefore fixed entrywise by the Frobenius. That is
-`TauCeti.DynkinType.map_geckGraphAutMatrix`, read at the iterated Frobenius.
+Commutation is a special case of naturality: the Frobenius endomorphism is the map on points
+induced by the iterated Frobenius of the value ring, and the graph automorphism is natural in that
+ring because it is conjugation by a permutation matrix whose entries are `0` and `1`, and which is
+therefore fixed entrywise by any ring map. So the commutation is
+`TauCeti.DynkinType.geckPointsMap_comp_geckGraphAutPoints`, read at the iterated Frobenius.
 
 Two limitations carry over from the two factors. This is the twisted Frobenius of the *carrier*,
 not of the elementary subgroup its root subgroups generate, and the Geck weights span the root
@@ -90,10 +91,11 @@ of Lie type are required to satisfy. -/
 theorem geckGraphAutPoints_comp_geckFrobenius :
     (t.geckGraphAutPoints ht hsigma A).toMonoidHom.comp (t.geckFrobenius ht p k A) =
       (t.geckFrobenius ht p k A).comp (t.geckGraphAutPoints ht hsigma A).toMonoidHom := by
-  refine MonoidHom.ext fun g => Subtype.ext ?_
-  rw [MonoidHom.comp_apply, MonoidHom.comp_apply, MulEquiv.coe_toMonoidHom,
-    coe_geckGraphAutPoints, coe_geckFrobenius, coe_geckFrobenius, coe_geckGraphAutPoints,
-    map_mul, map_mul, map_inv, map_geckGraphAutMatrix]
+  have hF : t.geckFrobenius ht p k A = t.geckPointsMap ht (iterateFrobenius A p k) :=
+    MonoidHom.ext fun g => Subtype.ext
+      ((t.coe_geckFrobenius ht p k A g).trans (t.coe_geckPointsMap ht _ g).symm)
+  rw [hF]
+  exact (t.geckPointsMap_comp_geckGraphAutPoints ht hsigma (iterateFrobenius A p k)).symm
 
 /-- **The graph-twisted `p ^ k`-power Frobenius on the points of the pinned Geck carrier**, the
 graph automorphism attached to a diagram symmetry composed with the Frobenius endomorphism. The
