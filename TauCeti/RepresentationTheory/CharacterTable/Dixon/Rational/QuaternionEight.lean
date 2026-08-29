@@ -92,7 +92,8 @@ theorem quaternionGroupTwoCentralCharacterTable_apply
 /-- The five central-character rows reduced modulo the certified Dixon prime `5`. -/
 def quaternionGroupTwoModularCentralRows :
     Finset (QuaternionGroupTwoClassIndex → ZMod 5) :=
-  Finset.univ.image fun i j => (quaternionGroupTwoCentralCharacterTable i j : ZMod 5)
+  (quaternionClassData 2).rowsOfMap (fun x : ℤ => (x : ZMod 5))
+    quaternionGroupTwoCentralCharacterTable
 
 /-- A modular row is displayed exactly when it is the reduction of a row of the integral table. -/
 @[simp]
@@ -139,16 +140,15 @@ the five displayed reductions.** -/
 theorem quaternionGroupTwo_centralCharacterSearch :
     (quaternionClassData 2).centralCharacterSearch (F := ZMod 5) =
       quaternionGroupTwoModularCentralRows := by
-  symm
-  apply Finset.eq_of_subset_of_card_le
-  · rw [quaternionGroupTwoModularCentralRows, Finset.image_subset_iff]
-    intro i _
-    rw [(quaternionClassData 2).mem_centralCharacterSearch]
-    exact ⟨by fin_cases i <;> decide,
-      isModularEigenrow_quaternionGroupTwoCentralCharacterTable_zmod i⟩
-  · rw [(quaternionClassData 2).card_centralCharacterSearch_of_isGoodDixonPrime
-      isGoodDixonPrime_quaternionGroup_two_five,
-      card_quaternionGroupTwoModularCentralRows, numClasses_quaternionClassData_two]
+  rw [quaternionGroupTwoModularCentralRows]
+  apply (quaternionClassData 2).centralCharacterSearch_eq_rowsOfMap_of_isGoodDixonPrime
+    isGoodDixonPrime_quaternionGroup_two_five (fun x : ℤ => (x : ZMod 5))
+    quaternionGroupTwoCentralCharacterTable
+  · intro i
+    fin_cases i <;> decide
+  · exact isModularEigenrow_quaternionGroupTwoCentralCharacterTable_zmod
+  · simpa only [quaternionGroupTwoModularCentralRows, numClasses_quaternionClassData_two] using
+      card_quaternionGroupTwoModularCentralRows
 
 /-- **Signed least representatives modulo `5` recover the integral central-character table.** -/
 theorem quaternionGroupTwo_valMinAbs_centralCharacterTable
@@ -171,7 +171,7 @@ theorem quaternionGroupTwo_liftedCentralRows :
     quaternionGroupTwoLiftedCentralRows =
       Finset.univ.image fun i => quaternionGroupTwoCentralCharacterTable i := by
   rw [quaternionGroupTwoLiftedCentralRows, quaternionGroupTwo_centralCharacterSearch,
-    quaternionGroupTwoModularCentralRows, Finset.image_image]
+    quaternionGroupTwoModularCentralRows, ClassData.rowsOfMap, Finset.image_image]
   apply Finset.image_congr
   intro i _
   funext j

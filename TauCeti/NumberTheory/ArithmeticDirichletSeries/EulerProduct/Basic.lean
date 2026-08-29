@@ -42,8 +42,9 @@ no analytic convergence hypothesis enters.
 * `TauCeti.IdealArithmeticFunction.normCoeff_supportedPart`: the **finite Euler product**
   `normCoeff (supportedPart f S) = ∏ P ∈ S, localArithmeticFactor f P` for a multiplicative `f`
   and a finite set `S` of height-one primes.
-* `TauCeti.IdealArithmeticFunction.normCoeff_eq_eulerProduct`: regrouping a multiplicative ideal
-  arithmetic function by norm gives Mathlib's formal Euler product of its canonical local factors.
+* `TauCeti.IdealArithmeticFunction.normCoeff_eq_eulerProduct`: the norm coefficients of a
+  multiplicative ideal arithmetic function are Mathlib's formal Euler product of its canonical
+  local factors.
 
 ## Implementation notes
 
@@ -424,11 +425,12 @@ theorem eventually_supportedPart_apply_eq (f : IdealArithmeticFunction K)
   intro P hPT
   exact (Ideal.isPrimeTo_asIdeal_iff.mpr (Set.notMem_compl_iff.mpr (hTS hPT))).pow (e P)
 
-/-- At each norm coefficient, restriction to a growing finite set of height-one primes eventually
-does nothing. -/
-theorem eventually_normCoeff_supportedPart_apply_eq (f : IdealArithmeticFunction K) (n : ℕ) :
+/-- At a fixed coefficient, restricting to a sufficiently large finite set of prime ideals does
+not change the norm coefficient. -/
+theorem eventually_normCoeff_supportedPart_eq (f : IdealArithmeticFunction K) (n : ℕ) :
     ∀ᶠ S : Finset (HeightOneSpectrum (𝓞 K)) in Filter.atTop,
-      normCoeff K (supportedPart f (S : Set (HeightOneSpectrum (𝓞 K)))) n = normCoeff K f n := by
+      normCoeff K (supportedPart f (S : Set (HeightOneSpectrum (𝓞 K)))) n =
+        normCoeff K f n := by
   have h : ∀ᶠ S : Finset (HeightOneSpectrum (𝓞 K)) in Filter.atTop,
       ∀ A ∈ normFiber K n,
         supportedPart f (S : Set (HeightOneSpectrum (𝓞 K))) A = f A := by
@@ -438,18 +440,17 @@ theorem eventually_normCoeff_supportedPart_apply_eq (f : IdealArithmeticFunction
   rw [normCoeff_eq_sum_normFiber, normCoeff_eq_sum_normFiber]
   exact Finset.sum_congr rfl hS
 
-/-- **The formal Euler product.** Regrouping a multiplicative ideal arithmetic function by
-absolute norm gives Mathlib's formal Euler product of its canonical local arithmetic factors. -/
+/-- **The formal Euler product of norm coefficients.** The norm coefficients of a multiplicative
+ideal arithmetic function are Mathlib's `ArithmeticFunction.eulerProduct` of the canonical local
+arithmetic factors. This is an equality of arithmetic functions; the analytic infinite product
+obtained after evaluating their `LSeries` is the separate absolute-convergence step of Layer 3.3. -/
 theorem normCoeff_eq_eulerProduct (hf : f.IsMultiplicative) :
     normCoeff K f = ArithmeticFunction.eulerProduct f.localArithmeticFactor := by
   ext n
-  have hleft : ∀ᶠ S : Finset (HeightOneSpectrum (𝓞 K)) in Filter.atTop,
-      (∏ P ∈ S, localArithmeticFactor f P) n = normCoeff K f n := by
-    filter_upwards [eventually_normCoeff_supportedPart_apply_eq f n] with S hS
-    rw [← normCoeff_supportedPart hf S, hS]
-  obtain ⟨S, hleftS, hrightS⟩ :=
-    (hleft.and (tendsTo_eulerProduct_localArithmeticFactor f hf.map_one n)).exists
-  exact hleftS.symm.trans hrightS
+  obtain ⟨S, hcoeff, hprod⟩ := ((eventually_normCoeff_supportedPart_eq f n).and
+    (tendsTo_eulerProduct_localArithmeticFactor f hf.map_one n)).exists
+  rw [normCoeff_supportedPart hf S] at hcoeff
+  exact hcoeff.symm.trans hprod
 
 end IdealArithmeticFunction
 

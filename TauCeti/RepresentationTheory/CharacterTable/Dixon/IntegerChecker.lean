@@ -128,8 +128,7 @@ classes and its columns by the conjugacy classes themselves. -/
 noncomputable def complexTableOfInteger
     (table : Matrix (Fin d.numClasses) (Fin d.numClasses) ℤ) :
     Matrix (Fin (Nat.card (ConjClasses G))) (ConjClasses G) ℂ :=
-  (table.map (Int.cast : ℤ → ℂ)).submatrix
-    (finCongr d.numClasses_eq_card_conjClasses).symm d.equivConjClasses.symm
+  d.reindexTableOfMap (Int.cast : ℤ → ℂ) table
 
 /-- The cast-and-reindexed integer table, evaluated at arbitrary row and column indices. -/
 @[simp]
@@ -139,20 +138,14 @@ theorem complexTableOfInteger_apply
     d.complexTableOfInteger table i C =
       (table ((finCongr d.numClasses_eq_card_conjClasses).symm i)
         (d.equivConjClasses.symm C) : ℂ) :=
-  (rfl)
+  d.reindexTableOfMap_apply _ table i C
 
 /-- The cast-and-reindexed integer table evaluated at a numbered row and numbered class. -/
 theorem complexTableOfInteger_apply_classOf
     (table : Matrix (Fin d.numClasses) (Fin d.numClasses) ℤ) (i j : Fin d.numClasses) :
     d.complexTableOfInteger table (finCongr d.numClasses_eq_card_conjClasses i) (d.classOf j) =
-      (table i j : ℂ) := by
-  rw [d.complexTableOfInteger_apply]
-  have hi : (finCongr d.numClasses_eq_card_conjClasses).symm
-      (finCongr d.numClasses_eq_card_conjClasses i) = i :=
-    (finCongr d.numClasses_eq_card_conjClasses).symm_apply_apply i
-  have hj : d.equivConjClasses.symm (d.classOf j) = j := by
-    rw [← d.equivConjClasses_apply j, Equiv.symm_apply_apply]
-  rw [hi, hj]
+      (table i j : ℂ) :=
+  d.reindexTableOfMap_apply_classOf _ table i j
 
 namespace IsIntegerCharacterTableSpec
 
