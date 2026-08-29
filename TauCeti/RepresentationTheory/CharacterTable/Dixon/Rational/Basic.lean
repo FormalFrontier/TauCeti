@@ -11,11 +11,17 @@ public import TauCeti.RepresentationTheory.CharacterTable.Dixon.ClassData.Centra
 /-!
 # Rational lifting of modular central-character rows
 
-This file contains the group-independent bookkeeping used by rational instances of the
-Dixon--Schneider character-table computation. A displayed integral matrix supplies candidate
-rows. They are reduced modulo a good Dixon prime, identified with the complete modular search by
-the good-prime count, and then recovered entrywise with `ZMod.valMinAbs` when every entry lies in
-the signed least-residue range.
+This file contains the group-independent bookkeeping for the last step of the rational instances of
+the Dixon--Schneider character-table computation: recovering a displayed integral matrix entrywise
+with `ZMod.valMinAbs`, once the modular search is known to return exactly the reductions of its
+rows and every entry lies in the signed least-residue range.
+
+The earlier steps live upstream: the reduced candidate rows themselves are
+`TauCeti.ClassData.modularCentralRows`, and
+`TauCeti.ClassData.centralCharacterSearch_eq_modularCentralRows_of_isGoodDixonPrime` identifies
+them with the complete modular search at a good Dixon prime; both are in
+`TauCeti.RepresentationTheory.CharacterTable.Dixon.ClassData.CentralCharacterCount`, and the
+hypothesis of the theorem below is stated in terms of them.
 
 ## Main definitions
 
@@ -61,7 +67,7 @@ theorem liftedCentralRows_eq_image_of_centralCharacterSearch_eq
     {p : ℕ} [Fact p.Prime]
     (M : Matrix (Fin d.numClasses) (Fin d.numClasses) ℤ)
     (hsearch : d.centralCharacterSearch (F := ZMod p) =
-      d.modularCentralRows p (fun x : ℤ => (x : ZMod p)) M)
+      d.modularCentralRows (fun x : ℤ => (x : ZMod p)) M)
     (hbound : ∀ i j, 2 * (M i j).natAbs < p) :
     d.liftedCentralRows p = Finset.univ.image fun i => M i := by
   rw [liftedCentralRows, hsearch, modularCentralRows, Finset.image_image]

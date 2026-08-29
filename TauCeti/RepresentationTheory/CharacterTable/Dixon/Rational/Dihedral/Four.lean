@@ -121,8 +121,7 @@ theorem isModularEigenrow_dihedralGroupFourCentralCharacterTable_zmod
 /-- The explicit set of modular rows has five elements. -/
 @[simp]
 theorem card_dihedralGroupFourModularCentralRows :
-    ((dihedralClassData 4).modularCentralRows 5
-      (fun x : ℤ => (x : ZMod 5))
+    ((dihedralClassData 4).modularCentralRows (fun x : ℤ => (x : ZMod 5))
       dihedralGroupFourCentralCharacterTable).card = (dihedralClassData 4).numClasses := by
   decide
 
@@ -131,7 +130,7 @@ five reductions in `TauCeti.dihedralGroupFourCentralCharacterTable`.** -/
 theorem dihedralGroupFour_centralCharacterSearch :
     (dihedralClassData 4).centralCharacterSearch
         (F := ZMod dihedralGroupFourDixonPrimeData.p) =
-      (dihedralClassData 4).modularCentralRows dihedralGroupFourDixonPrimeData.p
+      (dihedralClassData 4).modularCentralRows
         (fun x : ℤ => (x : ZMod dihedralGroupFourDixonPrimeData.p))
         dihedralGroupFourCentralCharacterTable :=
   (dihedralClassData 4).centralCharacterSearch_eq_modularCentralRows_of_isGoodDixonPrime

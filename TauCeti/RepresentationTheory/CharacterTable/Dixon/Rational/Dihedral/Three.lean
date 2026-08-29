@@ -111,8 +111,7 @@ theorem isModularEigenrow_dihedralGroupThreeCentralCharacterTable_zmod
 /-- The explicit set of modular rows has three elements. -/
 @[simp]
 theorem card_dihedralGroupThreeModularCentralRows :
-    ((dihedralClassData 3).modularCentralRows 7
-      (fun x : ℤ => (x : ZMod 7))
+    ((dihedralClassData 3).modularCentralRows (fun x : ℤ => (x : ZMod 7))
       dihedralGroupThreeCentralCharacterTable).card = (dihedralClassData 3).numClasses := by
   decide
 
@@ -121,7 +120,7 @@ theorem card_dihedralGroupThreeModularCentralRows :
 theorem dihedralGroupThree_centralCharacterSearch :
     (dihedralClassData 3).centralCharacterSearch
         (F := ZMod dihedralGroupThreeDixonPrimeData.p) =
-      (dihedralClassData 3).modularCentralRows dihedralGroupThreeDixonPrimeData.p
+      (dihedralClassData 3).modularCentralRows
         (fun x : ℤ => (x : ZMod dihedralGroupThreeDixonPrimeData.p))
         dihedralGroupThreeCentralCharacterTable :=
   (dihedralClassData 3).centralCharacterSearch_eq_modularCentralRows_of_isGoodDixonPrime

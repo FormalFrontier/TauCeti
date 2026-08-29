@@ -181,18 +181,9 @@ theorem isModularEigenrow_cyclicGroupThreeExactCharacterTable
 /-- The displayed exact rows reduced at the chosen primitive cube root modulo `7`. -/
 def cyclicGroupThreeModularCentralRows :
     Finset (CyclicGroupThreeClassIndex → ZMod 7) :=
-  (cyclicClassData 3).modularCentralRows 7
+  (cyclicClassData 3).modularCentralRows
     (Cyclotomic.reduce 7 cyclicGroupThreeDixonPrimeData.root)
     cyclicGroupThreeExactCharacterTable
-
-/-- A modular row is displayed exactly when it is the reduction of an exact row. -/
-@[simp]
-theorem mem_cyclicGroupThreeModularCentralRows_iff
-    {a : CyclicGroupThreeClassIndex → ZMod 7} :
-    a ∈ cyclicGroupThreeModularCentralRows ↔
-      ∃ i, (fun j => Cyclotomic.reduce 7 cyclicGroupThreeDixonPrimeData.root
-        (cyclicGroupThreeExactCharacterTable i j)) = a := by
-  simp [cyclicGroupThreeModularCentralRows]
 
 /-- Reduction at the chosen root preserves the exact eigenrow equations. -/
 theorem isModularEigenrow_cyclicGroupThreeExactCharacterTable_zmod
@@ -264,7 +255,7 @@ theorem cyclicGroupThreeExactCharacterTable_lift_conjugateResidues
 noncomputable def cyclicGroupThreeComplexCharacterTable :
     Matrix (Fin (Nat.card (ConjClasses (Multiplicative (ZMod 3)))))
       (ConjClasses (Multiplicative (ZMod 3))) ℂ :=
-  (cyclicClassData 3).complexTableOfMap Cyclotomic.complexEmbedding
+  (cyclicClassData 3).reindexTableOfMap Cyclotomic.complexEmbedding
     cyclicGroupThreeExactCharacterTable
 
 /-- The embedded table evaluated at arbitrary row and conjugacy-class indices. -/
@@ -277,7 +268,7 @@ theorem cyclicGroupThreeComplexCharacterTable_apply
         (cyclicGroupThreeExactCharacterTable
           ((finCongr (cyclicClassData 3).numClasses_eq_card_conjClasses).symm i)
           ((cyclicClassData 3).equivConjClasses.symm C)) := by
-  exact (cyclicClassData 3).complexTableOfMap_apply _ _ _ _
+  exact (cyclicClassData 3).reindexTableOfMap_apply _ _ _ _
 
 /-- The embedded table evaluated at a numbered row and numbered conjugacy class. -/
 theorem cyclicGroupThreeComplexCharacterTable_apply_classOf
@@ -287,7 +278,7 @@ theorem cyclicGroupThreeComplexCharacterTable_apply_classOf
         ((cyclicClassData 3).classOf j) =
       Cyclotomic.complexEmbedding (cyclicGroupThreeExactCharacterTable i j) := by
   rw [cyclicGroupThreeComplexCharacterTable,
-    (cyclicClassData 3).complexTableOfMap_apply_classOf]
+    (cyclicClassData 3).reindexTableOfMap_apply_classOf]
 
 private theorem cyclicGroupThreeComplexCharacterTable_row_orthonormal
     (i j : Fin (Nat.card (ConjClasses (Multiplicative (ZMod 3))))) :
@@ -311,29 +302,21 @@ private theorem cyclicGroupThreeComplexCharacterTable_row_orthonormal
   simp only [Equiv.apply_eq_iff_eq]
   rw [← cyclicGroupThreeClassIndexEquiv.symm.sum_comp, Fin.sum_univ_three]
   simp only [cyclicGroupThreeExactCharacterTable_apply_reindex]
-  have hpow_three : Cyclotomic.complexRoot 3 ^ 3 = 1 :=
-    Cyclotomic.isPrimitiveRoot_complexRoot.pow_eq_one
-  have hpow_four : Cyclotomic.complexRoot 3 ^ 4 = Cyclotomic.complexRoot 3 := by
-    calc
-      Cyclotomic.complexRoot 3 ^ 4 = Cyclotomic.complexRoot 3 ^ 3 *
-          Cyclotomic.complexRoot 3 := by ring
-      _ = Cyclotomic.complexRoot 3 := by rw [hpow_three, one_mul]
-  have hpow_five : Cyclotomic.complexRoot 3 ^ 5 = Cyclotomic.complexRoot 3 ^ 2 := by
-    calc
-      Cyclotomic.complexRoot 3 ^ 5 = Cyclotomic.complexRoot 3 ^ 3 *
-          Cyclotomic.complexRoot 3 ^ 2 := by ring
-      _ = Cyclotomic.complexRoot 3 ^ 2 := by rw [hpow_three, one_mul]
-  have hpow_six : Cyclotomic.complexRoot 3 ^ 6 = 1 := by
-    calc
-      Cyclotomic.complexRoot 3 ^ 6 = (Cyclotomic.complexRoot 3 ^ 3) ^ 2 := by ring
-      _ = 1 := by rw [hpow_three, one_pow]
-  fin_cases i <;> fin_cases j <;>
-    (simp [-Cyclotomic.star_complexRoot, Cyclotomic.star_complexRoot_eq_pow];
-      ring_nf <;>
-      (first | simp only [hpow_three, hpow_four, hpow_five, hpow_six] | skip) <;>
-      first
-      | linear_combination Cyclotomic.complexRoot_three_sq_add_self_add_one_eq_zero
-      | norm_num)
+  have hgeom : 1 + Cyclotomic.complexRoot 3 + Cyclotomic.complexRoot 3 ^ 2 = 0 := by
+    simpa [Finset.sum_range_succ] using
+      (Cyclotomic.isPrimitiveRoot_complexRoot (e := 3)).geom_sum_eq_zero (by norm_num)
+  -- `simp` evaluates the displayed entries, pushes the embedding onto `ζ` and rewrites each
+  -- conjugate as `ζ²`, leaving nine polynomial identities in `ζ` modulo `1 + ζ + ζ²`.
+  fin_cases i <;> fin_cases j <;> simp
+  · norm_num
+  · linear_combination (Cyclotomic.complexRoot 3 ^ 2 - Cyclotomic.complexRoot 3 + 1) * hgeom
+  · linear_combination (Cyclotomic.complexRoot 3 ^ 2 - Cyclotomic.complexRoot 3 + 1) * hgeom
+  · linear_combination hgeom
+  · linear_combination (Cyclotomic.complexRoot 3 - 1) * (Cyclotomic.complexRoot 3 ^ 3 + 2) * hgeom
+  · linear_combination (Cyclotomic.complexRoot 3 ^ 3 - Cyclotomic.complexRoot 3 + 1) * hgeom
+  · linear_combination hgeom
+  · linear_combination (Cyclotomic.complexRoot 3 ^ 3 - Cyclotomic.complexRoot 3 + 1) * hgeom
+  · linear_combination (Cyclotomic.complexRoot 3 - 1) * (Cyclotomic.complexRoot 3 ^ 3 + 2) * hgeom
 
 /-- The embedded exact `C₃` table satisfies the character-table specification and therefore is
 the complex character table up to a permutation of rows. -/

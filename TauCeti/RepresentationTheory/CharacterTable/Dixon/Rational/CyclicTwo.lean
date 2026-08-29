@@ -123,7 +123,7 @@ theorem cyclicGroupTwoCentralCharacterTable_apply (i j : CyclicGroupTwoClassInde
 /-- The displayed central-character rows reduced modulo the certified Dixon prime `3`. -/
 def cyclicGroupTwoModularCentralRows :
     Finset (CyclicGroupTwoClassIndex → ZMod 3) :=
-  (cyclicClassData 2).modularCentralRows 3 (fun x : ℤ => (x : ZMod 3))
+  (cyclicClassData 2).modularCentralRows (fun x : ℤ => (x : ZMod 3))
     cyclicGroupTwoCentralCharacterTable
 
 /-- A modular row is displayed exactly when it is the reduction of a row of the integral table. -/
