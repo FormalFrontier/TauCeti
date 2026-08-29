@@ -6,7 +6,8 @@ Authors: The Tau Ceti contributors
 module
 
 import TauCeti.RepresentationTheory.Induction.Conjugate
-public import TauCeti.Algebra.Group.Subgroup.Character
+public import Mathlib.Algebra.Group.End
+public import Mathlib.GroupTheory.GroupAction.ConjAct
 public import TauCeti.LinearAlgebra.Eigenspace.JointEigenvector.Basic
 
 /-!
@@ -23,8 +24,6 @@ permute those spaces, and connectedness can then force that permutation to be tr
 
 ## Main declarations
 
-* `MonoidHom.conjNormalEquiv`: conjugation by an ambient element as an equivalence of the
-  character set of a normal subgroup.
 * `map_iInf_eigenspace_unitHom_eq_conjNormal`: an ambient representation operator maps a
   normal subgroup's `χ`-weight space onto the conjugated-character weight space.
 * `iInf_eigenspace_unitHom_conjNormal_ne_bot_iff`: conjugation preserves which character
@@ -49,7 +48,8 @@ variable {G K V : Type*} [Group G] [CommRing K] [AddCommGroup V] [Module K V]
 private theorem map_iInf_eigenspace_unitHom_le_conjNormal (N : Subgroup G) [N.Normal]
     (ρ : G →* Module.End K V) (g : G) (χ : N →* Kˣ) :
     (⨅ n : N, (ρ n).eigenspace (χ n)).map (ρ g) ≤
-      ⨅ n : N, (ρ n).eigenspace (MonoidHom.conjNormal g χ n) := by
+      ⨅ n : N, (ρ n).eigenspace
+        ((MulAut.conjNormal g).monoidHomCongrLeftEquiv χ n) := by
   rintro _ ⟨v, hv, rfl⟩
   refine (Submodule.mem_iInf _).mpr fun n ↦ ?_
   have hvn := (Submodule.mem_iInf _).mp hv
@@ -60,9 +60,10 @@ private theorem map_iInf_eigenspace_unitHom_le_conjNormal (N : Subgroup G) [N.No
     _ = ρ g ((χ (MulAut.conjNormal g⁻¹ n) : K) • v) := by
       rw [Module.End.mem_eigenspace_iff.mp (hvn (MulAut.conjNormal g⁻¹ n))]
     _ = (χ (MulAut.conjNormal g⁻¹ n) : K) • ρ g v := by rw [map_smul]
-    _ = (MonoidHom.conjNormal g χ n : K) • ρ g v := by
-      rw [MulAut.conjNormal_inv]
-      rw [MonoidHom.conjNormal_apply]
+    _ = ((MulAut.conjNormal g).monoidHomCongrLeftEquiv χ n : K) • ρ g v := by
+      change (χ (MulAut.conjNormal g⁻¹ n) : K) • ρ g v =
+        (χ ((MulAut.conjNormal g).symm n) : K) • ρ g v
+      rw [map_inv (MulAut.conjNormal (H := N)) g, MulAut.inv_def]
 
 /-- Let `N` be a normal subgroup of `G`. For a representation `ρ` of `G`, the operator `ρ g`
 maps the joint `N`-eigenspace of `χ` exactly onto the joint eigenspace of the conjugated
@@ -72,14 +73,15 @@ No field, finite-dimensionality, commutativity of `N`, or semisimplicity hypothe
 theorem map_iInf_eigenspace_unitHom_eq_conjNormal (N : Subgroup G) [N.Normal]
     (ρ : G →* Module.End K V) (g : G) (χ : N →* Kˣ) :
     (⨅ n : N, (ρ n).eigenspace (χ n)).map (ρ g) =
-      ⨅ n : N, (ρ n).eigenspace (MonoidHom.conjNormal g χ n) := by
+      ⨅ n : N, (ρ n).eigenspace
+        ((MulAut.conjNormal g).monoidHomCongrLeftEquiv χ n) := by
   apply le_antisymm (map_iInf_eigenspace_unitHom_le_conjNormal N ρ g χ)
   intro v hv
   have hpreimage : ρ g⁻¹ v ∈ ⨅ n : N, (ρ n).eigenspace (χ n) := by
     have h := map_iInf_eigenspace_unitHom_le_conjNormal N ρ g⁻¹
-      (MonoidHom.conjNormal g χ)
+      ((MulAut.conjNormal g).monoidHomCongrLeftEquiv χ)
     have hmapped := h ⟨v, hv, rfl⟩
-    simpa using hmapped
+    simpa [map_inv, MulAut.inv_def] using hmapped
   refine ⟨ρ g⁻¹ v, hpreimage, ?_⟩
   simp [← Module.End.mul_apply, ← map_mul]
 
@@ -87,7 +89,8 @@ theorem map_iInf_eigenspace_unitHom_eq_conjNormal (N : Subgroup G) [N.Normal]
 space for the normal subgroup is nonzero. -/
 theorem iInf_eigenspace_unitHom_conjNormal_ne_bot_iff (N : Subgroup G) [N.Normal]
     (ρ : G →* Module.End K V) (g : G) (χ : N →* Kˣ) :
-    (⨅ n : N, (ρ n).eigenspace (MonoidHom.conjNormal g χ n)) ≠ ⊥ ↔
+    (⨅ n : N, (ρ n).eigenspace
+      ((MulAut.conjNormal g).monoidHomCongrLeftEquiv χ n)) ≠ ⊥ ↔
       (⨅ n : N, (ρ n).eigenspace (χ n)) ≠ ⊥ := by
   rw [← map_iInf_eigenspace_unitHom_eq_conjNormal N ρ g χ]
   have hinjective : Function.Injective
@@ -106,9 +109,9 @@ def nonzeroJointWeightEquiv (N : Subgroup G) [N.Normal]
     (ρ : G →* Module.End K V) (g : G) :
     {χ : N →* Kˣ // (⨅ n : N, (ρ n).eigenspace (χ n)) ≠ ⊥} ≃
       {χ : N →* Kˣ // (⨅ n : N, (ρ n).eigenspace (χ n)) ≠ ⊥} :=
-  (MonoidHom.conjNormalEquiv N Kˣ g).subtypeEquiv fun χ ↦ by
-    simpa only [MonoidHom.conjNormalEquiv_apply] using
-      (iInf_eigenspace_unitHom_conjNormal_ne_bot_iff N ρ g χ).symm
+  Equiv.Perm.subtypePerm
+    ((MulAut.conjNormal g).monoidHomCongrLeftEquiv : Equiv.Perm (N →* Kˣ))
+      fun χ ↦ iInf_eigenspace_unitHom_conjNormal_ne_bot_iff N ρ g χ
 
 @[simp]
 theorem nonzeroJointWeightEquiv_apply_coe (N : Subgroup G) [N.Normal]
@@ -116,9 +119,8 @@ theorem nonzeroJointWeightEquiv_apply_coe (N : Subgroup G) [N.Normal]
     (χ : {χ : N →* Kˣ // (⨅ n : N, (ρ n).eigenspace (χ n)) ≠ ⊥}) :
     ((nonzeroJointWeightEquiv N ρ g χ :
       {χ : N →* Kˣ // (⨅ n : N, (ρ n).eigenspace (χ n)) ≠ ⊥}) : N →* Kˣ) =
-        MonoidHom.conjNormal g χ := by
-  simp only [nonzeroJointWeightEquiv, Equiv.subtypeEquiv_apply,
-    MonoidHom.conjNormalEquiv_apply]
+        (MulAut.conjNormal g).monoidHomCongrLeftEquiv χ := by
+  rfl
 
 /-- The ambient group acts by permutations on the nonzero joint character weight spaces of a
 normal subgroup. This is the abstract group action underlying the finite permutation
@@ -128,17 +130,18 @@ def nonzeroJointWeightAction (N : Subgroup G) [N.Normal]
     G →* Equiv.Perm {χ : N →* Kˣ // (⨅ n : N, (ρ n).eigenspace (χ n)) ≠ ⊥} where
   toFun := nonzeroJointWeightEquiv N ρ
   map_one' := by
-    apply Equiv.ext
-    intro χ
-    apply Subtype.ext
-    simpa only [Equiv.Perm.one_apply, nonzeroJointWeightEquiv_apply_coe] using
-      MonoidHom.conjNormal_one (χ : N →* Kˣ)
+    simpa only [nonzeroJointWeightEquiv, map_one, MulAut.one_def,
+      MulEquiv.monoidHomCongrLeftEquiv_refl, Equiv.Perm.one_def] using
+        Equiv.Perm.subtypePerm_one
+          (fun χ : N →* Kˣ ↦ (⨅ n : N, (ρ n).eigenspace (χ n)) ≠ ⊥)
   map_mul' g₁ g₂ := by
-    apply Equiv.ext
-    intro χ
-    apply Subtype.ext
-    simpa only [Equiv.Perm.mul_apply, nonzeroJointWeightEquiv_apply_coe] using
-      MonoidHom.conjNormal_mul g₁ g₂ (χ : N →* Kˣ)
+    simpa only [nonzeroJointWeightEquiv, map_mul, MulAut.mul_def,
+      MulEquiv.monoidHomCongrLeftEquiv_trans, Equiv.Perm.mul_def] using
+        (Equiv.Perm.subtypePerm_mul
+          ((MulAut.conjNormal g₁).monoidHomCongrLeftEquiv : Equiv.Perm (N →* Kˣ))
+          ((MulAut.conjNormal g₂).monoidHomCongrLeftEquiv : Equiv.Perm (N →* Kˣ))
+          (fun χ ↦ iInf_eigenspace_unitHom_conjNormal_ne_bot_iff N ρ g₁ χ)
+          (fun χ ↦ iInf_eigenspace_unitHom_conjNormal_ne_bot_iff N ρ g₂ χ)).symm
 
 theorem nonzeroJointWeightAction_apply (N : Subgroup G) [N.Normal]
     (ρ : G →* Module.End K V) (g : G)
@@ -154,7 +157,7 @@ theorem nonzeroJointWeightAction_apply_coe (N : Subgroup G) [N.Normal]
     (χ : {χ : N →* Kˣ // (⨅ n : N, (ρ n).eigenspace (χ n)) ≠ ⊥}) :
     (((nonzeroJointWeightAction N ρ g) χ :
       {χ : N →* Kˣ // (⨅ n : N, (ρ n).eigenspace (χ n)) ≠ ⊥}) : N →* Kˣ) =
-        MonoidHom.conjNormal g χ := by
+        (MulAut.conjNormal g).monoidHomCongrLeftEquiv χ := by
   rw [nonzeroJointWeightAction_apply]
   exact nonzeroJointWeightEquiv_apply_coe N ρ g χ
 
