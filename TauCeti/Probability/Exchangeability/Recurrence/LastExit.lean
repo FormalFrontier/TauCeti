@@ -145,16 +145,6 @@ theorem eventually_lastExitAdmissible_of_recurrent {π : α → Equiv.Perm ℕ} 
   · exact (ha.ne' hzero).elim
   · exact hlt
 
-/-- Pointwise existence form of
-`TauCeti.eventually_lastExitAdmissible_of_recurrent`: beyond every prescribed time there is an
-adapted prefix. -/
-theorem exists_ge_lastExitAdmissible_of_recurrent {π : α → Equiv.Perm ℕ} {x : ℕ → α}
-    (hrec : ∀ k : ℕ, {n | x n = x k}.Infinite)
-    (hπ : {p : α × ℕ | π p.1 p.2 ≠ p.2}.Finite) (N : ℕ) :
-    ∃ m, N ≤ m ∧ LastExitAdmissible π x m := by
-  obtain ⟨M, hM⟩ := eventually_atTop.1 (eventually_lastExitAdmissible_of_recurrent hrec hπ)
-  exact ⟨max N M, le_max_left _ _, hM _ (le_max_right _ _)⟩
-
 namespace Probability
 
 variable {Ω : Type*} [MeasurableSpace Ω] {μ : Measure Ω} {X : ℕ → Ω → α}
@@ -167,15 +157,6 @@ theorem Recurrent.ae_eventually_lastExitAdmissible (h : Recurrent μ X)
     ∀ᵐ ω ∂μ, ∀ᶠ m in atTop, LastExitAdmissible π (fun n => X n ω) m := by
   filter_upwards [h.ae_infinite_setOf_eq] with ω hω
   exact eventually_lastExitAdmissible_of_recurrent hω hπ
-
-/-- Beyond every deterministic time, a recurrent process almost surely has a prefix adapted to a
-given finite-support family of successor-row permutations. -/
-theorem Recurrent.ae_exists_ge_lastExitAdmissible (h : Recurrent μ X)
-    (π : α → Equiv.Perm ℕ) (hπ : {p : α × ℕ | π p.1 p.2 ≠ p.2}.Finite) (N : ℕ) :
-    ∀ᵐ ω ∂μ, ∃ m, N ≤ m ∧ LastExitAdmissible π (fun n => X n ω) m := by
-  filter_upwards [h.ae_eventually_lastExitAdmissible π hπ] with ω hω
-  obtain ⟨M, hM⟩ := eventually_atTop.1 hω
-  exact ⟨max N M, le_max_left _ _, hM _ (le_max_right _ _)⟩
 
 end Probability
 
