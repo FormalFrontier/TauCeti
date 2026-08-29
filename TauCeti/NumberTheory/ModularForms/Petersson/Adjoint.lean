@@ -164,10 +164,12 @@ theorem integrableOn_petersson_sl_smul_fd {F F' : Type*} [FunLike F ℍ ℂ] [Fu
     [CuspFormClass F 𝒢 k] [ModularFormClass F' 𝒢 k]
     (f : F) (f' : F') (γ : SL(2, ℤ)) :
     IntegrableOn (petersson k ⇑f ⇑f') (γ • fd) volume := by
-  rw [sl_smul_set, integrableOn_smul_set_iff]
+  rw [sl_smul_set, ← Set.image_smul,
+    (measurePreserving_smul (γ : GL (Fin 2) ℝ) volume).integrableOn_image
+      (measurableEmbedding_const_smul (γ : GL (Fin 2) ℝ))]
   refine (integrableOn_petersson_slash k 𝒢 f f' γ).congr_fun (fun τ _ ↦ ?_)
     isClosed_fd.measurableSet
-  simp only [petersson_slash_SL, ModularGroup.sl_moeb]
+  simp only [Function.comp_apply, petersson_slash_SL, ModularGroup.sl_moeb]
 
 end UpperHalfPlane
 
