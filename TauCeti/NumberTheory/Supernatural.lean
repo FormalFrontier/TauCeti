@@ -1,7 +1,16 @@
-import Mathlib.Data.ENat.Lattice
-import Mathlib.Data.ENat.Monoid
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
+-/
+module
+
+public import Mathlib.Algebra.Notation.Support
+public import Mathlib.Data.ENat.Lattice
+public import Mathlib.Data.ENat.Monoid
+public import Mathlib.Data.Nat.MaxPowDiv
+public import Mathlib.Data.PNat.Prime
 import Mathlib.Data.Nat.Factorization.Basic
-import Mathlib.Data.PNat.Prime
 
 /-!
 # Supernatural numbers
@@ -27,6 +36,8 @@ The definitions and terminology follow Ribes--Zalesskii, *Profinite Groups*, Sec
 * `Supernatural.primeToPart`: the prime-to-`p` part of a supernatural number.
 * `Supernatural.IsNatural`: the predicate that a supernatural number comes from `ofNat`.
 -/
+
+@[expose] public section
 
 namespace TauCeti
 
@@ -279,10 +290,12 @@ theorem mem_support {n : Supernatural} {p : Nat.Primes} : p ∈ support n ↔ n 
 private theorem finite_support_ofNat (n : ℕ+) : (support (ofNat n)).Finite := by
   refine ((n : ℕ).primeFactors.finite_toSet.preimage Subtype.val_injective.injOn).subset ?_
   intro p hp
+  dsimp [support, Function.support, ofNat] at hp
   simp only [Set.mem_preimage, Finset.mem_coe]
   rw [← Nat.support_factorization, Finsupp.mem_support_iff, Nat.factorization_def _ p.prop]
-  change (padicValNat (p : ℕ) n : ℕ∞) ≠ 0 at hp
-  exact fun h ↦ hp (congr_arg ((↑) : ℕ → ℕ∞) h)
+  intro h
+  apply hp
+  simp [h]
 
 private theorem finite_values_ofNat (n : ℕ+) (p : Nat.Primes) : ofNat n p ≠ ⊤ := by
   simp [ofNat]
@@ -297,7 +310,12 @@ theorem isNatural_iff {n : Supernatural} :
   · rintro ⟨hsupport, hfinite⟩
     have htoNatSupport :
         (Function.support fun p : Nat.Primes ↦ ENat.toNat (n p)).Finite :=
-      hsupport.subset fun p hp hzero ↦ hp (by simp [hzero])
+      hsupport.subset fun p hp ↦ by
+        rw [mem_support]
+        intro hzero
+        rw [Function.mem_support] at hp
+        apply hp
+        simp [hzero]
     let f : Nat.Primes →₀ ℕ :=
       Finsupp.ofSupportFinite (fun p ↦ ENat.toNat (n p)) htoNatSupport
     let g : ℕ →₀ ℕ := f.mapDomain ((↑) : Nat.Primes → ℕ)
