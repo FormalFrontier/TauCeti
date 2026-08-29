@@ -67,6 +67,17 @@ noncomputable def weightParabolicSemidirectProductCoordinateHopfAlgebra (w : Fin
     (weightLeviInParabolicHopfIdeal R w)
     (isNormal_weightUnipotentInParabolicHopfIdeal R w)).coordinateHopfAlgebra
 
+/-- The represented weight-parabolic semidirect-product coordinate Hopf algebra is canonically
+identified with the coordinate Hopf algebra supplied by the quotient conjugation action. -/
+noncomputable def weightParabolicSemidirectProductActionCoordinateIso (w : Fin N → ℤ) :
+    weightParabolicSemidirectProductCoordinateHopfAlgebra R w ≅
+      (CommHopfAlgCat.quotientNormalConjugation
+        (weightParabolicCoordinateHopfAlgebra R w)
+        (weightUnipotentInParabolicHopfIdeal R w)
+        (weightLeviInParabolicHopfIdeal R w)
+        (isNormal_weightUnipotentInParabolicHopfIdeal R w)).coordinateHopfAlgebra := by
+  rw [weightParabolicSemidirectProductCoordinateHopfAlgebra]
+
 /-- The coordinate Hopf-algebra morphism dual to multiplication
 `U(w) ⋊ L(w) → P(w)`. -/
 noncomputable def weightParabolicSemidirectProductCoordinateMap (w : Fin N → ℤ) :
