@@ -117,10 +117,8 @@ variable {G : Type u} [Group G]
 character**: `g` acts as the identity exactly when the character takes at `g` the value it takes at
 the identity. -/
 theorem mem_ker_iff_character_eq [Finite G] (V : FDRep ℂ G) (g : G) :
-    g ∈ V.ρ.ker ↔ V.character g = V.character 1 := by
-  rw [MonoidHom.mem_ker, char_one]
-  exact (TauCeti.End.trace_eq_finrank_iff (orderOf_pos g).ne'
-    (by rw [← map_pow, pow_orderOf_eq_one g, map_one])).symm
+    g ∈ V.ρ.ker ↔ V.character g = V.character 1 :=
+  Representation.mem_ker_iff_character_eq V.ρ g
 
 /-- **The kernel of a finite-dimensional complex representation of a finite group, as the set of
 elements at which the character takes its value at the identity.** -/
@@ -133,16 +131,22 @@ theorem character_eq_finrank_iff [Finite G] (V : FDRep ℂ G) (g : G) :
     V.character g = (finrank ℂ V : ℂ) ↔ g ∈ V.ρ.ker := by
   rw [mem_ker_iff_character_eq V g, char_one]
 
+section Field
+
+variable {k : Type*} [Field k]
+
 /-- **A character is constant on the cosets of its kernel**: an element acting as the identity may
-be deleted from a character value. -/
-theorem character_mul_of_mem_ker (V : FDRep ℂ G) {g : G} (hg : g ∈ V.ρ.ker) (h : G) :
+be deleted from a character value. This is an algebraic identity, so it holds over any field. -/
+theorem character_mul_of_mem_ker (V : FDRep k G) {g : G} (hg : g ∈ V.ρ.ker) (h : G) :
     V.character (g * h) = V.character h := by
   simp only [character, map_mul, MonoidHom.mem_ker.1 hg, one_mul]
 
 /-- The right-handed form of `FDRep.character_mul_of_mem_ker`. -/
-theorem character_mul_of_mem_ker' (V : FDRep ℂ G) (h : G) {g : G} (hg : g ∈ V.ρ.ker) :
+theorem character_mul_of_mem_ker_right (V : FDRep k G) (h : G) {g : G} (hg : g ∈ V.ρ.ker) :
     V.character (h * g) = V.character h := by
   simp only [character, map_mul, MonoidHom.mem_ker.1 hg, mul_one]
+
+end Field
 
 /-- **Representations with the same character have the same kernel.** The kernel depends on the
 representation only through its character, being cut out by the character values. -/
