@@ -58,9 +58,10 @@ theorem lieSpan_singleton_eq_top_of_ne_zero [LieModule.IsIrreducible R L M]
 spanned by a single vector `m`, then that vector, read inside `N`, spans the whole of `N`.
 Otherwise the Lie submodule of `N` it spans would map to a Lie submodule strictly below `N`
 (`LieSubmodule.map_incl_lt_iff_lt_top`), which nonetheless still contains `m`. -/
-theorem lieSpan_singleton_eq_top_of_lieSpan_eq {N : LieSubmodule R L M} {m : M} (hm : m ∈ N)
+theorem lieSpan_singleton_eq_top_of_lieSpan_eq {N : LieSubmodule R L M} {m : M}
     (h : LieSubmodule.lieSpan R L {m} = N) :
-    LieSubmodule.lieSpan R L {(⟨m, hm⟩ : N)} = ⊤ := by
+    LieSubmodule.lieSpan R L {(⟨m, h ▸ LieSubmodule.subset_lieSpan rfl⟩ : N)} = ⊤ := by
+  have hm : m ∈ N := h ▸ LieSubmodule.subset_lieSpan rfl
   by_contra hne
   have hlt : (LieSubmodule.lieSpan R L {(⟨m, hm⟩ : N)}).map N.incl < N :=
     LieSubmodule.map_incl_lt_iff_lt_top.mpr (lt_top_iff_ne_top.mpr hne)
