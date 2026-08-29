@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.Homology.DerivedCategory.Ext.ExactSequences
+public import Mathlib.Algebra.Homology.DerivedCategory.Ext.EnoughInjectives
 public import Mathlib.Algebra.Homology.DerivedCategory.Ext.Linear
 
 /-!
@@ -16,6 +17,8 @@ This file collects general `Ext` API that Mathlib does not state in this form:
 * the transport of `Extⁿ(X, Y)` along isomorphisms `X ≅ X'` and `Y ≅ Y'`, additively as
   `TauCeti.extAddEquivOfIso` and `R`-linearly as `TauCeti.extLinearEquivOfIso`;
 * the vanishing of `Extⁿ(X, Y)` when either of the two objects is a zero object;
+* short exact cokernel sequences, the cokernel sequence of the chosen embedding into an injective
+  object, and a dimension-shift criterion for vanishing of the next `Ext` group;
 * Mathlib's long exact `Ext` sequences of a short exact sequence `S`, repackaged as
   `Function.Exact` statements about the composition maps: `TauCeti.exact_postcomp` and
   `TauCeti.exact_precomp` for `CategoryTheory.Abelian.Ext.postcomp` and
@@ -96,6 +99,59 @@ theorem subsingleton_ext_of_isZero_right (X : C) (hY : IsZero Y) (n : ℕ) :
     Subsingleton (Ext.{w} X Y n) := by
   refine subsingleton_of_forall_eq 0 fun x ↦ ?_
   rw [← Ext.comp_mk₀_id x, hY.eq_of_src (𝟙 Y) 0, Ext.mk₀_zero, Ext.comp_zero]
+
+/-! ### Dimension shifting along an injective embedding -/
+
+section DimensionShift
+
+/-- The first map in the cokernel sequence of a monomorphism is a monomorphism. -/
+instance mono_cokernelSequence_f {X Y : C} (f : X ⟶ Y) [Mono f] :
+    Mono (ShortComplex.cokernelSequence f).f :=
+  (inferInstance : Mono f)
+
+/-- The middle object in a cokernel sequence is injective when the target of its first map is. -/
+instance injective_cokernelSequence_X₂ {X Y : C} (f : X ⟶ Y) [Injective Y] :
+    Injective (ShortComplex.cokernelSequence f).X₂ :=
+  (inferInstance : Injective Y)
+
+omit [HasExt C] in
+/-- The cokernel sequence of a monomorphism is short exact. -/
+lemma cokernelSequence_shortExact {X Y : C} (f : X ⟶ Y) [Mono f] :
+    (ShortComplex.cokernelSequence f).ShortExact :=
+  { exact := ShortComplex.cokernelSequence_exact _ }
+
+/-- A dimension-shift criterion along a short exact sequence with injective middle term: if
+composition with its extension class vanishes, then the next `Ext` group is subsingleton. -/
+lemma subsingleton_ext_succ_of_comp_extClass_eq_zero {S : ShortComplex C}
+    (hS : S.ShortExact) [Injective S.X₂] (X : C) (n : ℕ)
+    (hzero : ∀ x₃ : Ext X S.X₃ n, x₃.comp hS.extClass rfl = 0) :
+    Subsingleton (Ext X S.X₁ (n + 1)) := by
+  refine subsingleton_of_forall_eq 0 fun y => ?_
+  obtain ⟨x₃, rfl⟩ := Ext.covariant_sequence_exact₁ X hS y
+    (Ext.eq_zero_of_injective _) rfl
+  exact hzero x₃
+
+variable [EnoughInjectives C]
+
+/-- The cokernel sequence of the chosen embedding of an object into an injective object. -/
+noncomputable abbrev injectiveCokernelSequence (Y : C) : ShortComplex C :=
+  ShortComplex.cokernelSequence (Injective.ι Y)
+
+omit [HasExt C] in
+/-- The cokernel sequence of the chosen embedding into an injective object is short exact. -/
+lemma injectiveCokernelSequence_shortExact (Y : C) :
+    (injectiveCokernelSequence Y).ShortExact :=
+  cokernelSequence_shortExact _
+
+/-- The dimension-shift criterion specialised to the chosen embedding into an injective object. -/
+lemma subsingleton_ext_succ_of_injectiveCokernelSequence (X Y : C) (n : ℕ)
+    (hzero : ∀ x₃ : Ext X (injectiveCokernelSequence Y).X₃ n,
+      x₃.comp (injectiveCokernelSequence_shortExact Y).extClass rfl = 0) :
+    Subsingleton (Ext X Y (n + 1)) :=
+  subsingleton_ext_succ_of_comp_extClass_eq_zero
+    (injectiveCokernelSequence_shortExact Y) X n hzero
+
+end DimensionShift
 
 /-! ### The long exact sequences as `Function.Exact` statements -/
 

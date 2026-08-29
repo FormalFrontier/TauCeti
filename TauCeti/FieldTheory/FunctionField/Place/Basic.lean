@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.FieldTheory.AlgebraicClosure
+public import Mathlib.RingTheory.DiscreteValuationRing.TFAE
 public import Mathlib.RingTheory.Valuation.Integral
 public import Mathlib.RingTheory.Valuation.IsTrivialOn
 public import TauCeti.RingTheory.Valuation.Discrete.Order
@@ -343,30 +344,13 @@ theorem integers_injective : Function.Injective (integers : Place k F → Valuat
 /-- **The valuation ring of a place is a maximal proper subring of `F`** (Stichtenoth,
 Theorem 1.1.13(d)), in the form used to recognize a place from a containment of valuation
 rings: a place whose valuation ring contains the valuation ring of another place is that
-place. -/
-theorem eq_of_integers_le {P Q : Place k F} (h : P.integers ≤ Q.integers) : P = Q := by
-  refine integers_injective (le_antisymm h ?_)
-  by_contra hle
-  obtain ⟨f, hfQ, hfP⟩ := SetLike.not_le_iff_exists.mp hle
-  rw [mem_integers_iff_ord_nonneg] at hfQ
-  rw [mem_integers_iff_ord_nonneg, not_le] at hfP
-  have hf0 : f ≠ 0 := by rintro rfl; simp at hfP
-  have hgP : 0 < P.ord f⁻¹ := by rw [ord_inv]; omega
-  have hgQ : 0 ≤ Q.ord f⁻¹ := by
-    rw [← mem_integers_iff_ord_nonneg]
-    exact h (P.mem_integers_iff_ord_nonneg.mpr hgP.le)
-  have hgQ0 : Q.ord f⁻¹ = 0 := by rw [ord_inv] at hgQ ⊢; omega
-  refine Q.integers_ne_top (top_unique fun y _ ↦ ?_)
-  rcases eq_or_ne y 0 with rfl | hy0
-  · exact zero_mem _
-  set n := (max 0 (-P.ord y)).toNat with hn
-  have hmem : y * f⁻¹ ^ n ∈ P.integers := by
-    rw [mem_integers_iff_ord_nonneg, ord_mul _ hy0 (pow_ne_zero _ (inv_ne_zero hf0)), ord_pow]
-    have : (1 : ℤ) ≤ P.ord f⁻¹ := hgP
-    nlinarith [Int.toNat_of_nonneg (le_max_left 0 (-P.ord y)), le_max_right 0 (-P.ord y)]
-  have := Q.mem_integers_iff_ord_nonneg.mp (h hmem)
-  rw [ord_mul _ hy0 (pow_ne_zero _ (inv_ne_zero hf0)), ord_pow, hgQ0] at this
-  exact Q.mem_integers_iff_ord_nonneg.mpr (by omega)
+place.
+
+This is Mathlib's `ValuationSubring.eq_of_le_of_ne_top` for `𝒪_P`, which applies because a
+discrete valuation ring has Krull dimension at most one; properness of `𝒪_Q` is what rules out
+the other case. -/
+theorem eq_of_integers_le {P Q : Place k F} (h : P.integers ≤ Q.integers) : P = Q :=
+  integers_injective (P.integers.eq_of_le_of_ne_top h Q.integers_ne_top)
 
 /-- The valuation ring of a place is integrally closed in `F`: an element of `F` integral over a
 `k`-algebra whose image lies in `𝒪_P` lies in `𝒪_P`. -/

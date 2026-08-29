@@ -7,6 +7,7 @@ module
 
 public import TauCeti.AlgebraicGeometry.GroupScheme.ClosedSubgroup
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.Basic
+public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Transvection
 import TauCeti.CategoryTheory.Comma.Over
 
 /-!
@@ -48,6 +49,10 @@ left to the caller in the general construction.
   makes one coordinate equal to the parameter, scaled by the unit `c`.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupMatrix_apply_of_isRootStep`: the same
   statement read as a matrix entry.
+* `TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupPoints_apply_baseChange_basis_of_action`:
+  the class-two exponential formula for an operator with one nonzero basis column.
+* `TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupMatrix_eq_transvectionUnit_of_action`:
+  a class-two root operator with one nonzero basis column exponentiates to a transvection.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupPoints_injective`: the root subgroup is
   faithfully parametrized by `𝔾ₐ`.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupCoordinateMap_surjective`: the coordinate
@@ -230,6 +235,58 @@ theorem kostantRootSubgroupMatrix_apply_of_isRootStep {A : Type*} [CommRing A]
       c • Multiplicative.toAdd (AdditiveGroup.gaPointsMulEquiv f) := by
   rw [kostantRootSubgroupMatrix_apply,
     repr_kostantRootSubgroupPoints_of_isRootStep e h ρ M hM i hnil b hc hstep hsq]
+
+omit [Fintype η] in
+include hnil in
+/-- A class-two root operator with one nonzero basis column acts by adding the parameter times
+that column after base change. -/
+theorem kostantRootSubgroupPoints_apply_baseChange_basis_of_action
+    {A : Type*} [CommRing A] (source target : η)
+    (hclass : nilpotencyClass
+      (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) = 2)
+    (haction : ∀ s, ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) (b s : V) =
+      if s = source then (b target : V) else 0)
+    (f : WithConv (SymmetricAlgebra ℤ ℤ →ₐ[ℤ] A)) (s : η) :
+    (kostantRootSubgroupPoints e h ρ M hM i hnil f).val (b.baseChange A s) =
+      b.baseChange A s + if s = source then
+        Multiplicative.toAdd (AdditiveGroup.gaPointsMulEquiv f) • b.baseChange A target else 0 := by
+  have hone :
+      integralDividedPower (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) M 1
+          (fun _ hv => dividedPower_apply_mem_of_kostantForm_apply_mem e h ρ hM i 1 hv)
+          (b s) = if s = source then b target else 0 := by
+    apply Subtype.ext
+    rw [coe_integralDividedPower_apply, Associative.dividedPower_one, Module.End.smul_def,
+      haction]
+    split <;> rfl
+  rw [Module.Basis.baseChange_apply, kostantRootSubgroupPoints_tmul, hclass,
+    Finset.sum_range_succ, Finset.sum_range_one, integralDividedPower_zero, hone]
+  split <;> simp [smul_tmul']
+
+include hnil in
+/-- A class-two root operator that sends one basis vector to another and kills all remaining
+basis vectors exponentiates to the corresponding elementary transvection. -/
+theorem kostantRootSubgroupMatrix_eq_transvectionUnit_of_action
+    {A : Type*} [CommRing A] (source target : η) (hne : target ≠ source)
+    (hclass : nilpotencyClass
+      (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) = 2)
+    (haction : ∀ s, ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) (b s : V) =
+      if s = source then (b target : V) else 0)
+    (f : WithConv (SymmetricAlgebra ℤ ℤ →ₐ[ℤ] A)) :
+    kostantRootSubgroupMatrix e h ρ M hM i hnil b f =
+      TauCeti.transvectionUnit hne
+        (Multiplicative.toAdd (AdditiveGroup.gaPointsMulEquiv f)) := by
+  apply Matrix.GeneralLinearGroup.ext
+  intro row col
+  rw [kostantRootSubgroupMatrix_apply,
+    kostantRootSubgroupPoints_apply_baseChange_basis_of_action e h ρ M hM i hnil b source
+      target hclass haction f,
+    TauCeti.coe_transvectionUnit]
+  simp only [map_add, Module.Basis.repr_self, Finsupp.add_apply, Matrix.transvection,
+    Matrix.add_apply, Matrix.one_apply, Matrix.single_apply, Finsupp.single_apply]
+  by_cases hcol : source = col
+  · subst col
+    simp [Module.Basis.repr_self, Finsupp.single_apply, eq_comm]
+  · simp [hcol, Ne.symm hcol, eq_comm]
 
 end Coordinates
 

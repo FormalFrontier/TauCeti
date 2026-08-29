@@ -618,6 +618,13 @@ noncomputable def quotientIsoOfIso (e : H ≅ K) (I : HopfIdeal R K) :
       ((forget₂ (FiniteTypeCommHopfAlgCat.{u, v} R)
         (_root_.CommHopfAlgCat.{v} R)).mapIso e) I
 
+/-- Transporting a finite-type quotient object along an equality of Hopf ideals transports its
+quotient morphism. -/
+theorem mkQuotient_comp_eqToHom {I J : HopfIdeal R H} (hIJ : I = J) :
+    mkQuotient H J ≫ eqToHom (congrArg (quotient H) hIJ.symm) = mkQuotient H I := by
+  subst J
+  rfl
+
 /-- The forward finite-type quotient isomorphism commutes with the quotient morphisms. -/
 @[simp]
 lemma mkQuotient_comp_quotientIsoOfIso_hom (e : H ≅ K) (I : HopfIdeal R K) :

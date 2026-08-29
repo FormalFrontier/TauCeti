@@ -43,6 +43,13 @@ exponent is `1` exactly on the primes themselves, which is `TauCeti.primePowerEx
 prime-power carrier, and `TauCeti.primePowerSummatory_eq_primeSummatory` uses it to read a
 prime-power sum concentrated on the exponent-one part as a sum over primes.
 
+Two lemmas move a summatory function between the three carriers.
+`TauCeti.idealSummatory_eq_primePowerSummatory` reads an ideal weight vanishing off the prime
+powers as a prime-power weight, and `TauCeti.idealSummatory_eq_sum_range_normFiber` regroups an
+ideal summatory function into the partial sum, over `n ≤ ⌊x⌋₊`, of the total mass on the norm
+fibre at `n`.  Together they present a sum over prime powers as a partial sum of an
+`ArithmeticFunction`, which is the shape a Tauberian theorem consumes.
+
 For `0 ≤ x`, a real cutoff and its floor select the same indices, so
 `TauCeti.normLE_eq_normLE_natFloor` and `TauCeti.summatory_eq_summatory_natFloor` convert between
 the real and natural conventions. The small-cutoff cases are degenerate for a reason worth
@@ -172,12 +179,37 @@ theorem primePowerBase_asIdeal_eq {A : IdealPrimePower K} {P : Ideal (𝓞 K)} (
   eq_of_prime_pow_eq (prime_primePowerBase A) hP (primePowerExponent_pos A)
     ((primePowerBase_pow_primePowerExponent A).trans hpow.symm)
 
+/-- **The prime base is the only height-one prime dividing a prime-power ideal.** -/
+@[simp]
+theorem dvd_iff_eq_primePowerBase {v : HeightOneSpectrum (𝓞 K)} {A : IdealPrimePower K} :
+    v.asIdeal ∣ (A : Ideal (𝓞 K)) ↔ v = primePowerBase A := by
+  refine ⟨fun hdvd ↦ HeightOneSpectrum.ext ?_, fun hv ↦ ?_⟩
+  · rw [← primePowerBase_pow_primePowerExponent A] at hdvd
+    have hle : (primePowerBase A).asIdeal ≤ v.asIdeal :=
+      Ideal.dvd_iff_le.mp
+        ((Ideal.prime_of_isPrime v.ne_bot v.isPrime).dvd_of_dvd_pow hdvd)
+    exact ((Ideal.IsPrime.isMaximal (primePowerBase A).isPrime
+      (primePowerBase A).ne_bot).eq_of_le v.isPrime.ne_top hle).symm
+  · rw [hv, ← primePowerBase_pow_primePowerExponent A]
+    exact dvd_pow_self _ (primePowerExponent_pos A).ne'
+
 /-- The absolute norm of a prime-power ideal is the corresponding power of the norm of its
 prime base. -/
 theorem absNorm_eq_absNorm_primePowerBase_pow (A : IdealPrimePower K) :
     Ideal.absNorm (A : Ideal (𝓞 K)) =
       Ideal.absNorm (primePowerBase A).asIdeal ^ primePowerExponent A := by
   rw [← primePowerBase_pow_primePowerExponent A, map_pow]
+
+/-- The absolute norm of a prime-power ideal is a prime power: `N(𝔭 ^ k) = p ^ (f k)` for the
+rational prime `p` below `𝔭` and the residue degree `f`. -/
+theorem isPrimePow_absNorm (A : IdealPrimePower K) :
+    IsPrimePow (Ideal.absNorm (A : Ideal (𝓞 K))) := by
+  have : ((primePowerBase A).asIdeal).IsMaximal :=
+    Ideal.IsPrime.isMaximal (primePowerBase A).isPrime (primePowerBase A).ne_bot
+  obtain ⟨p, m, hm, -, hp, hnorm⟩ :=
+    Ideal.exists_prime_and_absNorm_eq_pow (primePowerBase A).asIdeal
+  refine ⟨p, m * primePowerExponent A, hp.prime, Nat.mul_pos hm (primePowerExponent_pos A), ?_⟩
+  rw [pow_mul, ← hnorm, ← absNorm_eq_absNorm_primePowerBase_pow]
 
 /-- The exponent is determined by any factorization of `A` as a power of a prime. -/
 theorem primePowerExponent_eq {A : IdealPrimePower K} {P : Ideal (𝓞 K)} (hP : Prime P)
@@ -406,6 +438,64 @@ theorem idealSummatory_eq_zero_of_lt_one {M : Type*} [AddCommMonoid M]
 theorem idealSummatory_one {M : Type*} [AddCommMonoid M] (w : (Ideal (𝓞 K))⁰ → M) :
     idealSummatory K w 1 = w 1 := by
   rw [idealSummatory_apply, idealsLE_one, Finset.sum_singleton]
+
+open Classical in
+/-- The ideals of absolute norm at most `x` and of absolute norm exactly `n` are the whole norm
+fibre at `n`, as soon as `n` is at most `⌊x⌋₊`. -/
+private theorem idealsLE_filter_absNorm_eq {n : ℕ} {x : ℝ} (hn : n ≤ ⌊x⌋₊) (hx : 0 ≤ x) :
+    (idealsLE K x).filter (fun I : (Ideal (𝓞 K))⁰ ↦ Ideal.absNorm (I : Ideal (𝓞 K)) = n) =
+      normFiber K n := by
+  ext I
+  simp only [Finset.mem_filter, mem_normLE, mem_normFiber]
+  refine ⟨fun hI ↦ hI.2, fun hI ↦ ⟨?_, hI⟩⟩
+  rw [hI]
+  exact (Nat.cast_le.mpr hn).trans (Nat.floor_le hx)
+
+/-- **Regrouping an ideal summatory function by absolute norm.** The inclusive sum of a weight over
+the nonzero integral ideals of absolute norm at most `x` is the sum, over the natural numbers
+`n ≤ ⌊x⌋₊`, of the total mass of the weight on the norm fibre at `n`.
+
+This is the finite form of the Layer 1 regrouping: it reads a summatory function over ideals as a
+partial sum of the `ArithmeticFunction` obtained from the same weight by `TauCeti.normCoeff`. -/
+theorem idealSummatory_eq_sum_range_normFiber {M : Type*} [AddCommMonoid M]
+    (w : (Ideal (𝓞 K))⁰ → M) (x : ℝ) :
+    idealSummatory K w x = ∑ n ∈ Finset.range (⌊x⌋₊ + 1), ∑ I ∈ normFiber K n, w I := by
+  classical
+  rcases lt_or_ge x 1 with hx | hx
+  · rw [idealSummatory_eq_zero_of_lt_one K w hx, Nat.floor_eq_zero.mpr hx]
+    simp
+  · rw [idealSummatory_apply,
+      ← Finset.sum_fiberwise_of_maps_to
+        (g := fun I : (Ideal (𝓞 K))⁰ ↦ Ideal.absNorm (I : Ideal (𝓞 K)))
+        (t := Finset.range (⌊x⌋₊ + 1))
+        (fun I hI ↦ Finset.mem_range_succ_iff.mpr (Nat.le_floor (by simpa using hI))) w]
+    exact Finset.sum_congr rfl fun n hn ↦ by
+      rw [idealsLE_filter_absNorm_eq K (Finset.mem_range_succ_iff.mp hn) (zero_le_one.trans hx)]
+
+/-- **An ideal weight concentrated on the prime powers, read as a prime-power weight.** An ideal
+weight vanishing off the prime-power ideals has the same summatory function as its restriction to
+the prime-power carrier.  This is the ideal-level counterpart of
+`TauCeti.primePowerSummatory_eq_primeSummatory`. -/
+theorem idealSummatory_eq_primePowerSummatory {M : Type*} [AddCommMonoid M]
+    (v : (Ideal (𝓞 K))⁰ → M) (w : IdealPrimePower K → M)
+    (hvw : ∀ A : IdealPrimePower K, v (A : (Ideal (𝓞 K))⁰) = w A)
+    (hv : ∀ I : (Ideal (𝓞 K))⁰, ¬ IsPrimePow (I : Ideal (𝓞 K)) → v I = 0) (x : ℝ) :
+    idealSummatory K v x = primePowerSummatory K w x := by
+  classical
+  have hmem {I : (Ideal (𝓞 K))⁰} :
+      I ∈ (primePowersLE K x).image (fun A : IdealPrimePower K ↦ (A : (Ideal (𝓞 K))⁰)) ↔
+        IsPrimePow (I : Ideal (𝓞 K)) ∧ (Ideal.absNorm (I : Ideal (𝓞 K)) : ℝ) ≤ x := by
+    simp only [Finset.mem_image, mem_normLE]
+    exact ⟨fun ⟨A, hA, hAI⟩ ↦ ⟨hAI ▸ A.2, hAI ▸ hA⟩, fun ⟨h, hI⟩ ↦ ⟨⟨I, h⟩, hI, rfl⟩⟩
+  rw [idealSummatory_apply, primePowerSummatory_apply]
+  calc ∑ I ∈ idealsLE K x, v I
+      = ∑ I ∈ (primePowersLE K x).image
+          (fun A : IdealPrimePower K ↦ (A : (Ideal (𝓞 K))⁰)), v I := by
+        refine (Finset.sum_subset (fun I hI ↦ by simpa using (hmem.mp hI).2)
+          fun I hI hI' ↦ hv I fun h ↦ hI' (hmem.mpr ⟨h, by simpa using hI⟩)).symm
+    _ = ∑ A ∈ primePowersLE K x, v (A : (Ideal (𝓞 K))⁰) :=
+        Finset.sum_image fun _ _ _ _ h ↦ Subtype.ext h
+    _ = ∑ A ∈ primePowersLE K x, w A := Finset.sum_congr rfl fun A _ ↦ hvw A
 
 /-! ### The weighted prime counts -/
 

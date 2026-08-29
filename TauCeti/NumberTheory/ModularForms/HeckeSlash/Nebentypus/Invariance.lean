@@ -42,6 +42,9 @@ conclusion asserts.
   representative carries the same weighted slash as the chosen one.
 * `HeckeRing.GL2.twistedHeckeSlashSum_mem_functionCharSpace`: **the twisted slash sum of a
   `χ`-invariant function is `χ`-invariant.**
+* `HeckeRing.GL2.twistedHeckeSlashSumCharEnd`, `HeckeRing.GL2.coe_twistedHeckeSlashSumCharEnd`: the
+  operator restricted to that invariant subspace, which is the carrier the composition
+  results of `Nebentypus/Composition.lean` state their multiplicativity on.
 
 ## Provenance
 
@@ -238,6 +241,26 @@ theorem twistedHeckeSlashSum_mem_functionCharSpace (f : ℍ → ℂ)
     Finset.smul_sum]
   exact Fintype.sum_equiv (MulAction.toPerm (⟨_, hmem⟩ : ↥((Gamma0 N).map (mapGL ℚ)))⁻¹) _ _
     fun v ↦ by simpa only [MulAction.toPerm_apply] using hperm v
+
+/-- **The twisted slash sum as an endomorphism of the character space.** `twistedHeckeSlashSumEnd`
+is an endomorphism of *all* of `ℍ → ℂ`, and its own docstring records that this is the wrong
+carrier: the point of the weighting is that the twisted sum preserves the `χ`-eigenspace. It does,
+by `twistedHeckeSlashSum_mem_functionCharSpace`, so it restricts — and on this carrier, unlike on
+`ℍ → ℂ`, the operators multiply. -/
+noncomputable def twistedHeckeSlashSumCharEnd
+    (D : HeckeCoset (Delta0 N) ((Gamma0 N).map (mapGL ℚ)) ((Gamma0 N).map (mapGL ℚ))) :
+    Module.End ℂ (functionCharSpace k χ) :=
+  (twistedHeckeSlashSumEnd k χ D).restrict fun f hf ↦ by
+    simpa using twistedHeckeSlashSum_mem_functionCharSpace k χ D f hf
+
+/-- The restricted endomorphism is the twisted slash sum on underlying functions. -/
+@[simp] lemma coe_twistedHeckeSlashSumCharEnd
+    (D : HeckeCoset (Delta0 N) ((Gamma0 N).map (mapGL ℚ)) ((Gamma0 N).map (mapGL ℚ)))
+    (f : functionCharSpace k χ) :
+    (twistedHeckeSlashSumCharEnd k χ D f : ℍ → ℂ) = twistedHeckeSlashSum k χ D f := by
+  -- `twistedHeckeSlashSumEnd`'s body is sealed to this module, so the coercion is unfolded through
+  -- its own interface lemma rather than by `rfl`.
+  simp [twistedHeckeSlashSumCharEnd]
 
 end HeckeRing.GL2
 

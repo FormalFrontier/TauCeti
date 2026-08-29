@@ -224,7 +224,8 @@ theorem weightedMapCompletionEquiv_apply (e : A ≃+* B) (he : Continuous e)
     (hTS : ∀ i, (e : A →+* B) '' T i ⊆ S i) (hST : ∀ i, (e.symm : B →+* A) '' S i ⊆ T i)
     (x : UniformSpace.Completion (weightedRestrictedSubring T hT)) :
     weightedMapCompletionEquiv e he he' hT hS hTS hST x
-      = weightedMapCompletion (φ := (e : A →+* B)) he hT hS hTS x := (rfl)
+      = weightedMapCompletion (φ := (e : A →+* B)) he hT hS hTS x := by
+  simp only [weightedMapCompletionEquiv, RingEquiv.ofRingHom_apply]
 
 /-- **The inverse direction of `TauCeti.Huber.weightedMapCompletionEquiv`** is the map induced by
 `e.symm`. -/
@@ -234,7 +235,8 @@ theorem weightedMapCompletionEquiv_symm_apply (e : A ≃+* B) (he : Continuous e
     (hTS : ∀ i, (e : A →+* B) '' T i ⊆ S i) (hST : ∀ i, (e.symm : B →+* A) '' S i ⊆ T i)
     (y : UniformSpace.Completion (weightedRestrictedSubring S hS)) :
     (weightedMapCompletionEquiv e he he' hT hS hTS hST).symm y
-      = weightedMapCompletion (φ := (e.symm : B →+* A)) he' hS hT hST y := (rfl)
+      = weightedMapCompletion (φ := (e.symm : B →+* A)) he' hS hT hST y := by
+  simp only [weightedMapCompletionEquiv, RingEquiv.ofRingHom_symm_apply]
 
 end Functoriality
 
