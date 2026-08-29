@@ -79,7 +79,8 @@ theorem apply_formPerturbationOperator (hB : IsCoercive B) (J : V →L[ℝ] H) (
   rw [formPerturbationOperator_apply, apply_solutionOfInner_eq_inner,
     ContinuousLinearMap.adjoint_inner_left]
 
-/-- If the embedding `J` is compact, so is the operator representing its inner-product form. -/
+/-- If the continuous linear map `J` is compact, so is the operator representing its
+inner-product form. -/
 theorem isCompactOperator_formPerturbationOperator (hB : IsCoercive B) {J : V →L[ℝ] H}
     (hJ : IsCompactOperator J) : IsCompactOperator (hB.formPerturbationOperator J) := by
   rw [formPerturbationOperator]
@@ -125,9 +126,9 @@ theorem finiteDimensional_ker_one_sub_smul_formPerturbationOperator (hB : IsCoer
   exact TauCeti.IsCompactOperator.finiteDimensional_ker_one_sub
     ((hB.isCompactOperator_formPerturbationOperator hJ).smul kappa)
 
-/-- **The variational Fredholm alternative.**  For a compact embedding `J`, either the homogeneous
-perturbation of `B` by `κ ⟪J ·, J ·⟫` has a nonzero solution, or every represented forcing has a
-unique solution. -/
+/-- **The variational Fredholm alternative.**  For a compact continuous linear map `J`, either the
+homogeneous perturbation of `B` by `κ ⟪J ·, J ·⟫` has a nonzero solution, or every represented
+forcing has a unique solution. -/
 theorem fredholmAlternative_formPerturbation (hB : IsCoercive B) {J : V →L[ℝ] H}
     (hJ : IsCompactOperator J) (kappa : ℝ) :
     (∃ u : V, u ≠ 0 ∧ ∀ v : V, B u v - kappa * ⟪J u, J v⟫_ℝ = 0) ∨

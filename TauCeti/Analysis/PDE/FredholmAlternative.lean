@@ -30,8 +30,9 @@ form to a coercive form by adding a sufficiently large constant.
 
 ## Main declarations
 
-* `TauCeti.PDE.dirichletMassOperator`: the compact operator representing the `L²` mass form
-  relative to the coercive energy form.
+* `TauCeti.PDE.dirichletMassOperator`: the operator representing the `L²` mass form relative to
+  the coercive energy form; `TauCeti.PDE.isCompactOperator_dirichletMassOperator` proves it compact
+  on bounded domains.
 * `TauCeti.PDE.IsWeakSolutionDirichletMassShift`: the weak equation with scalar mass shift.
 * `TauCeti.PDE.finiteDimensional_ker_one_sub_smul_dirichletMassOperator`: finite dimensionality
   of its homogeneous solution space.
@@ -108,8 +109,20 @@ def IsWeakSolutionDirichletMassShift (a : EuclideanSpace ℝ ι → Matrix ι ι
         kappa * ⟪W1p.value (u : W1p mu Omega 2), W1p.value (v : W1p mu Omega 2)⟫_ℝ =
       dirichletForcing f v
 
+/-- Being a mass-shifted weak solution, written out as the integral identity
+`B(u, v) - κ⟪u, v⟫_{L²} = ∫_Ω f v`. -/
+@[simp]
+theorem isWeakSolutionDirichletMassShift_iff (kappa : ℝ)
+    (f : Lp ℝ 2 (mu.restrict Omega)) (u : W1p0 mu Omega 2) :
+    IsWeakSolutionDirichletMassShift a b c kappa f u ↔
+      ∀ v : W1p0 mu Omega 2,
+        energyFormH1 a b c (u : W1p mu Omega 2) (v : W1p mu Omega 2) -
+            kappa * ⟪W1p.value (u : W1p mu Omega 2), W1p.value (v : W1p mu Omega 2)⟫_ℝ =
+          ∫ x in Omega, f x * W1p.value (v : W1p mu Omega 2) x ∂mu := by
+  simp only [IsWeakSolutionDirichletMassShift, dirichletForcing_apply_eq_setIntegral]
+
 /-- The mass-shifted weak equation written as an operator equation on `H¹₀(Ω)`. -/
-theorem isWeakSolutionDirichletMassShift_iff
+theorem isWeakSolutionDirichletMassShift_iff_operator_eq
     (hcoeff : MemLp (fun x => energyIntegrand (a x) (b x) (c x)) ⊤ (mu.restrict Omega))
     (hcoercive : IsCoercive (energyFormH1L0 hcoeff)) (kappa : ℝ)
     (f : Lp ℝ 2 (mu.restrict Omega)) (u : W1p0 mu Omega 2) :
