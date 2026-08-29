@@ -5,8 +5,9 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Topology.Algebra.Module.FiniteDimensionBilinear
+public import Mathlib.Topology.Algebra.Module.FiniteDimension
 public import TauCeti.Geometry.Symplectic.Cotangent.Basic
+public import TauCeti.Geometry.Symplectic.SymplecticTransport
 
 import Mathlib.Analysis.LocallyConvex.SeparatingDual
 
@@ -18,8 +19,10 @@ the canonical symplectic form
 
 `ω((v, α), (w, β)) = β(v) - α(w)`.
 
-This file constructs the form directly and, in finite dimension, identifies the continuous-dual
-model with the algebraic cotangent model `V × Module.Dual ℝ V`.
+The form is obtained by restricting `TauCeti.cotangentSymplecticForm` along the coercion of the
+continuous dual into the algebraic dual, which is why the two models agree by construction; only
+nondegeneracy is new, and it comes from Hahn--Banach rather than from a basis. In finite
+dimension the two models are moreover identified as symplectic vector spaces.
 
 ## Main declarations
 
@@ -27,8 +30,8 @@ model with the algebraic cotangent model `V × Module.Dual ℝ V`.
   `V × StrongDual ℝ V`.
 * `TauCeti.strongDualCotangentEquiv`: the finite-dimensional identification with
   `V × Module.Dual ℝ V`.
-* `TauCeti.cotangentSymplecticForm_strongDualCotangentEquiv_apply`: the identification
-  preserves the canonical symplectic forms.
+* `TauCeti.isSymplectomorphism_strongDualCotangentEquiv`: that identification is a
+  symplectomorphism.
 -/
 
 public section
@@ -99,24 +102,23 @@ noncomputable def strongDualCotangentEquiv :
 
 /-- The identification of cotangent models forgets the continuity of the covector. -/
 @[simp]
-lemma strongDualCotangentEquiv_apply (q : V) (p : StrongDual ℝ V) :
-    strongDualCotangentEquiv (q, p) = (q, (p : Module.Dual ℝ V)) := by
+lemma strongDualCotangentEquiv_apply (x : V × StrongDual ℝ V) :
+    strongDualCotangentEquiv x = (x.1, (x.2 : Module.Dual ℝ V)) := by
   simp [strongDualCotangentEquiv]
 
 /-- The inverse identification of cotangent models promotes a covector to a continuous one. -/
 @[simp]
-lemma strongDualCotangentEquiv_symm_apply (q : V) (p : Module.Dual ℝ V) :
-    strongDualCotangentEquiv.symm (q, p) = (q, LinearMap.toContinuousLinearMap p) := by
+lemma strongDualCotangentEquiv_symm_apply (x : V × Module.Dual ℝ V) :
+    strongDualCotangentEquiv.symm x = (x.1, LinearMap.toContinuousLinearMap x.2) := by
   simp [strongDualCotangentEquiv]
 
-/-- The finite-dimensional identification of cotangent models preserves their canonical
-symplectic forms. -/
-lemma cotangentSymplecticForm_strongDualCotangentEquiv_apply
-    (x y : V × StrongDual ℝ V) :
-    cotangentSymplecticForm (strongDualCotangentEquiv x) (strongDualCotangentEquiv y) =
-      strongDualCotangentSymplecticForm x y := by
-  rcases x with ⟨q, p⟩
-  rcases y with ⟨r, s⟩
+/-- The finite-dimensional identification of cotangent models is a symplectomorphism from the
+continuous-dual model to the algebraic one. -/
+lemma isSymplectomorphism_strongDualCotangentEquiv :
+    SymplecticForm.IsSymplectomorphism (strongDualCotangentSymplecticForm (V := V))
+      (cotangentSymplecticForm (V := V)) (strongDualCotangentEquiv (V := V)) := by
+  rw [SymplecticForm.isSymplectomorphism_iff]
+  intro x y
   simp
 
 end FiniteDimensional
