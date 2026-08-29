@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.Lie.Basis.Basic
-public import TauCeti.Algebra.Lie.Sl2.Basic
+public import TauCeti.Algebra.Lie.Sl2.WeightString
 public import TauCeti.Algebra.Lie.Presentation.Serre
 
 /-!
