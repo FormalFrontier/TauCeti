@@ -7,10 +7,7 @@ module
 
 public import Mathlib.Algebra.CharP.Invertible
 public import TauCeti.Algebra.Lie.HighestWeight.Basic
-public import TauCeti.Algebra.Lie.UniversalEnveloping.Casimir
 public import TauCeti.Algebra.Lie.Weights.Casimir
-public import TauCeti.Algebra.Lie.Weights.InvariantForm
-public import TauCeti.Algebra.Lie.Weights.Projection
 public import TauCeti.LinearAlgebra.RootSystem.Weyl.Vector
 
 import TauCeti.Algebra.Lie.UniversalEnveloping.Module
