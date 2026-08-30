@@ -288,14 +288,6 @@ private theorem mem_cIoo_swap_of_notMem_pair {a b u c d v : Fin n} (hab : a ≠ 
   ((Grid.mem_cIoo_or_mem_cIoo_swap_iff hab).mpr ⟨hua, hub⟩).resolve_left
     fun hu => hout ⟨hu, hv⟩
 
-/-- The same opposite-arc resolution when the excluded coordinate is the second member of the
-paired condition. -/
-private theorem mem_cIoo_swap_of_notMem_pair_right {a b u c d v : Fin n} (hab : a ≠ b)
-    (hua : u ≠ a) (hub : u ≠ b) (hout : ¬(v ∈ Grid.cIoo c d ∧ u ∈ Grid.cIoo a b))
-    (hv : v ∈ Grid.cIoo c d) : u ∈ Grid.cIoo b a :=
-  ((Grid.mem_cIoo_or_mem_cIoo_swap_iff hab).mpr ⟨hua, hub⟩).resolve_left
-    fun hu => hout ⟨hv, hu⟩
-
 /-- Cyclic separation in two coordinates puts the latter endpoint pair inside the rectangle
 spanned by the former pair. -/
 private theorem pair_mem_cIoo_of_separation {a b c d a' b' c' d' : Fin n}
@@ -313,24 +305,8 @@ private theorem mem_interior_second_iff (D : GridRectangleDecomposition x z)
     p ∈ D.second.toGridRectangle.interior ↔
       p.1 ∈ Grid.cIoo D.second.left D.second.right ∧
         p.2 ∈ Grid.cIoo (x D.second.left) (x D.second.right) := by
-  obtain ⟨hll, hlr, hrl, hrr⟩ := D.hasDisjointSides_iff.mp h
-  have hleft : D.middle D.second.left = x D.second.left :=
-    D.first.map_of_ne _ hll.symm hrl.symm
-  have hright : D.middle D.second.right = x D.second.right :=
-    D.first.map_of_ne _ hlr.symm hrr.symm
-  simpa only [hleft, hright] using D.second.mem_toGridRectangle_interior p
-
-/-- The intermediate state of a decomposition occupies the initial side column of the first
-rectangle in the terminal row. -/
-private theorem first_left_mem_middle_pointSet (D : GridRectangleDecomposition x z) :
-    (D.first.left, x D.first.right) ∈ D.middle.pointSet :=
-  (D.middle.mk_mem_pointSet _ _).mpr D.first.map_left
-
-/-- The intermediate state of a decomposition occupies the terminal side column of the first
-rectangle in the initial row. -/
-private theorem first_right_mem_middle_pointSet (D : GridRectangleDecomposition x z) :
-    (D.first.right, x D.first.left) ∈ D.middle.pointSet :=
-  (D.middle.mk_mem_pointSet _ _).mpr D.first.map_right
+  rw [← D.commute_first_toGridRectangle h]
+  simpa using (D.commute h).first.mem_toGridRectangle_interior p
 
 /-- Reordering two empty rectangles with disjoint side columns leaves the new first rectangle
 empty.
@@ -342,18 +318,19 @@ would put a source point inside the first domain instead. -/
 theorem isEmpty_commute_first (D : GridRectangleDecomposition x z) (h : D.HasDisjointSides)
     (h₁ : D.first.IsEmpty) (h₂ : D.second.IsEmpty) : (D.commute h).first.IsEmpty := by
   obtain ⟨hll, hlr, hrl, hrr⟩ := D.hasDisjointSides_iff.mp h
-  have hxcd : x D.second.left ≠ x D.second.right :=
-    fun hx => D.second.left_ne_right (x.toPerm.injective hx)
+  have hxcd : x D.second.left ≠ x D.second.right := by
+    simpa only [GridRectangleBetween.bottom_def, GridRectangleBetween.top_def,
+      commute_first_left, commute_first_right] using (D.commute h).first.bottom_ne_top
   -- the two intermediate-state points off the second pair of side columns
   have hmid₁ := D.mem_interior_second_iff h (D.first.left, x D.first.right)
   have hmid₂ := D.mem_interior_second_iff h (D.first.right, x D.first.left)
   have hout₁ : ¬((D.first.left ∈ Grid.cIoo D.second.left D.second.right) ∧
       x D.first.right ∈ Grid.cIoo (x D.second.left) (x D.second.right)) :=
-    fun hc => D.second.not_mem_interior_of_isEmpty h₂ D.first_left_mem_middle_pointSet
+    fun hc => D.second.not_mem_interior_of_isEmpty h₂ D.first.left_top_mem_target
       (hmid₁.mpr hc)
   have hout₂ : ¬((D.first.right ∈ Grid.cIoo D.second.left D.second.right) ∧
       x D.first.left ∈ Grid.cIoo (x D.second.left) (x D.second.right)) :=
-    fun hc => D.second.not_mem_interior_of_isEmpty h₂ D.first_right_mem_middle_pointSet
+    fun hc => D.second.not_mem_interior_of_isEmpty h₂ D.first.right_bottom_mem_target
       (hmid₂.mpr hc)
   rw [GridRectangleBetween.isEmpty_iff]
   intro p hp hmem
@@ -368,8 +345,8 @@ theorem isEmpty_commute_first (D : GridRectangleDecomposition x z) (h : D.HasDis
       mem_cIoo_swap_of_notMem_pair D.second.left_ne_right hrl hrr hout₂ hrow
     have hxb : x D.first.right ∈
         Grid.cIoo (x D.second.right) (x D.second.left) :=
-      mem_cIoo_swap_of_notMem_pair_right hxcd (x.toPerm.injective.ne hrl)
-        (x.toPerm.injective.ne hrr) hout₁ hcol
+      mem_cIoo_swap_of_notMem_pair hxcd (x.toPerm.injective.ne hrl)
+        (x.toPerm.injective.ne hrr) (fun h => hout₁ ⟨h.2, h.1⟩) hcol
     exact D.first.not_mem_interior_of_isEmpty h₁
       ((x.mk_mem_pointSet D.second.right (x D.second.right)).mpr rfl)
       ((D.first.mem_toGridRectangle_interior _).mpr
@@ -382,8 +359,8 @@ theorem isEmpty_commute_first (D : GridRectangleDecomposition x z) (h : D.HasDis
       mem_cIoo_swap_of_notMem_pair D.second.left_ne_right hll hlr hout₁ hrow
     have hxa : x D.first.left ∈
         Grid.cIoo (x D.second.right) (x D.second.left) :=
-      mem_cIoo_swap_of_notMem_pair_right hxcd (x.toPerm.injective.ne hll)
-        (x.toPerm.injective.ne hlr) hout₂ hcol
+      mem_cIoo_swap_of_notMem_pair hxcd (x.toPerm.injective.ne hll)
+        (x.toPerm.injective.ne hlr) (fun h => hout₂ ⟨h.2, h.1⟩) hcol
     exact D.first.not_mem_interior_of_isEmpty h₁
       ((x.mk_mem_pointSet D.second.left (x D.second.left)).mpr rfl)
       ((D.first.mem_toGridRectangle_interior _).mpr
@@ -403,8 +380,9 @@ would put an intermediate-state point inside the second domain instead. -/
 theorem isEmpty_commute_second (D : GridRectangleDecomposition x z) (h : D.HasDisjointSides)
     (h₁ : D.first.IsEmpty) (h₂ : D.second.IsEmpty) : (D.commute h).second.IsEmpty := by
   obtain ⟨hll, hlr, hrl, hrr⟩ := D.hasDisjointSides_iff.mp h
-  have hxab : x D.first.left ≠ x D.first.right :=
-    fun hx => D.first.left_ne_right (x.toPerm.injective hx)
+  have hxab : x D.first.left ≠ x D.first.right := by
+    simpa only [GridRectangleBetween.bottom_def, GridRectangleBetween.top_def] using
+      D.first.bottom_ne_top
   -- the two source points on the second pair of side columns
   have hout₁ : ¬((D.second.left ∈ Grid.cIoo D.first.left D.first.right) ∧
       x D.second.left ∈ Grid.cIoo (x D.first.left) (x D.first.right)) :=
@@ -431,9 +409,9 @@ theorem isEmpty_commute_second (D : GridRectangleDecomposition x z) (h : D.HasDi
     have hd : D.second.right ∈ Grid.cIoo D.first.right D.first.left :=
       mem_cIoo_swap_of_notMem_pair D.first.left_ne_right hlr.symm hrr.symm hout₂ hrow
     have hxc : x D.second.left ∈ Grid.cIoo (x D.first.right) (x D.first.left) :=
-      mem_cIoo_swap_of_notMem_pair_right hxab (x.toPerm.injective.ne hll.symm)
-        (x.toPerm.injective.ne hrl.symm) hout₁ hcol
-    exact D.second.not_mem_interior_of_isEmpty h₂ D.first_right_mem_middle_pointSet
+      mem_cIoo_swap_of_notMem_pair hxab (x.toPerm.injective.ne hll.symm)
+        (x.toPerm.injective.ne hrl.symm) (fun h => hout₁ ⟨h.2, h.1⟩) hcol
+    exact D.second.not_mem_interior_of_isEmpty h₂ D.first.right_bottom_mem_target
       ((D.mem_interior_second_iff h _).mpr
         (pair_mem_cIoo_of_separation hcol hd hxc hrow))
   by_cases hpright : p.1 = D.second.right
@@ -444,9 +422,9 @@ theorem isEmpty_commute_second (D : GridRectangleDecomposition x z) (h : D.HasDi
     have hc : D.second.left ∈ Grid.cIoo D.first.right D.first.left :=
       mem_cIoo_swap_of_notMem_pair D.first.left_ne_right hll.symm hrl.symm hout₁ hrow
     have hxd : x D.second.right ∈ Grid.cIoo (x D.first.right) (x D.first.left) :=
-      mem_cIoo_swap_of_notMem_pair_right hxab (x.toPerm.injective.ne hlr.symm)
-        (x.toPerm.injective.ne hrr.symm) hout₂ hcol
-    exact D.second.not_mem_interior_of_isEmpty h₂ D.first_left_mem_middle_pointSet
+      mem_cIoo_swap_of_notMem_pair hxab (x.toPerm.injective.ne hlr.symm)
+        (x.toPerm.injective.ne hrr.symm) (fun h => hout₂ ⟨h.2, h.1⟩) hcol
+    exact D.second.not_mem_interior_of_isEmpty h₂ D.first.left_top_mem_target
       ((D.mem_interior_second_iff h _).mpr
         (pair_mem_cIoo_of_separation hc hcol hrow hxd))
   · -- away from the second pair of side columns the two states agree

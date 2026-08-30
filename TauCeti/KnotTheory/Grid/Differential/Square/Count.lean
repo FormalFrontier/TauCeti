@@ -26,7 +26,7 @@ The same shared decomposition construction also reindexes the matrix entries of 
 differential square as weighted sums over pairs of empty, `X`-avoiding rectangles. This is the
 counting form used by the disjoint and one-common-side cases.
 
-*Which region carries a marking.* Every statement below is relative to the ambient
+*Which region carries a marking.* Every fully blocked statement below is relative to the ambient
 `GridDiagram.fullyBlockedRectangles`, and none of them unfolds the marking condition: they relate
 two objects assembled from that one finite set. The marking region is fixed upstream by
 `GridRectangle.AvoidsMarkings`, which still tests the open grid-line interior rather than the
@@ -121,6 +121,7 @@ noncomputable def decompositionWeight {x z : GridState n}
   G.OMonomial R D.first.toGridRectangle * G.OMonomial R D.second.toGridRectangle
 
 /-- The weight of a two-step decomposition is the product of its rectangle weights. -/
+@[simp]
 theorem decompositionWeight_def {x z : GridState n} (D : GridRectangleDecomposition x z) :
     G.decompositionWeight R D =
       G.OMonomial R D.first.toGridRectangle * G.OMonomial R D.second.toGridRectangle := by
