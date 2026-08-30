@@ -22,7 +22,7 @@ dimension of every intertwiner space. The reconstruction theorem in
 
 ## Main results
 
-* `TauCeti.Representation.nonempty_equiv_of_character_eq_of_charZero`: equal characters determine
+* `Representation.nonempty_equiv_of_character_eq_of_charZero`: equal characters determine
   equivalent finite-dimensional representations.
 * `FDRep.nonempty_iso_of_character_eq`: the bundled `FDRep` form.
 
@@ -69,7 +69,7 @@ variable {V W : Type w} [AddCommGroup V] [Module k V] [FiniteDimensional k V]
 
 /-- **For a finite group over an algebraically closed field of characteristic zero,
 finite-dimensional representations are determined by their characters.** -/
-theorem nonempty_equiv_of_character_eq_of_charZero (ρ : Representation k G V)
+theorem _root_.Representation.nonempty_equiv_of_character_eq_of_charZero (ρ : Representation k G V)
     (σ : Representation k G W) (hchar : ρ.character = σ.character) :
     Nonempty (ρ.Equiv σ) := by
   let _ : Fintype G := Fintype.ofFinite G

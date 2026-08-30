@@ -41,7 +41,7 @@ below uses them.
   irreducible representations are linearly independent**, as class functions and as functions
   on `G`; `TauCeti.ClassFunction.linearIndependent_ofFDRep` and
   `TauCeti.ClassFunction.linearIndependent_character_fdRep` are the `FDRep` mirrors.
-* `TauCeti.Representation.nonempty_equiv_of_character_eq_of_isIrreducible` and
+* `Representation.nonempty_equiv_of_character_eq_of_isIrreducible` and
   `FDRep.nonempty_iso_of_character_eq_of_simple`: **an irreducible representation is
   determined by its character**.
 * `TauCeti.ClassFunction.card_le_card_conjClasses` and
@@ -159,7 +159,7 @@ variable {k : Type u} {G : Type v} [Field k] [Group G] [Finite G] [IsAlgClosed k
 
 /-- **An irreducible representation is determined by its character**: two irreducible
 representations with the same character are equivalent. -/
-theorem nonempty_equiv_of_character_eq_of_isIrreducible
+theorem _root_.Representation.nonempty_equiv_of_character_eq_of_isIrreducible
     (ρ : Representation k G V) (σ : Representation k G W)
     [ρ.IsIrreducible] [σ.IsIrreducible] (h : ρ.character = σ.character) :
     Nonempty (σ.Equiv ρ) := by
