@@ -97,7 +97,7 @@ theorem coe_toMultiCoupling [∀ i, MeasurableSpace (X i)]
 section Independent
 
 variable [Fintype ι] [∀ i, Fintype (X i)]
-local instance : DecidableEq ι := Classical.decEq ι
+attribute [local instance] Classical.decEq
 
 /-- The independent finite multi-marginal coupling. -/
 def independent (μ : ∀ i, PMF (X i)) : FiniteMultiCoupling μ := by
@@ -226,7 +226,7 @@ end DualFeasible
 section Finite
 
 variable [Fintype ι] [∀ i, Fintype (X i)]
-local instance : DecidableEq ι := Classical.decEq ι
+attribute [local instance] Classical.decEq
 
 /-- Integrating the sum of the coordinate potentials against a coupling gives their dual value.
 This is the finite change-of-variables identity behind multi-marginal weak duality. -/
