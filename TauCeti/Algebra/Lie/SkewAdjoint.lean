@@ -121,6 +121,9 @@ theorem mem_skewAdjointMatricesLieSubalgebra_toMatrix_iff (b : Module.Basis n R 
     rw [← hJ]
     exact Matrix.toLinearMap₂_toMatrix₂ b b B
   rw [mem_skewAdjointMatricesLieSubalgebra, mem_skewAdjointMatricesSubmodule]
+  -- The rewrites expose matrix skew-adjointness, but membership in the bundled endomorphism Lie
+  -- subalgebra is definitionally membership in the underlying skew-adjoint submodule. Cross that
+  -- wrapper so the explicit membership lemma below can rewrite the predicate.
   change J.IsSkewAdjoint (LinearMap.toMatrix b b f) ↔
     f ∈ B.skewAdjointSubmodule
   rw [LinearMap.mem_skewAdjointSubmodule, Matrix.IsSkewAdjoint, LinearMap.IsSkewAdjoint]
@@ -138,6 +141,9 @@ noncomputable def skewAdjointLieEquivOfBasis (b : Module.Basis n R M) (B : Bilin
   LieEquiv.ofSubalgebras _ _ (Matrix.toLinAlgEquiv b).toLieEquiv <| by
     ext f
     simp only [Submodule.mem_map_equiv, LieSubalgebra.mem_map_submodule]
+    -- The map-membership lemmas leave the inverse basis transport bundled; definitionally its
+    -- underlying endomorphism has matrix `LinearMap.toMatrix b b f`. Expose that matrix so the
+    -- shared membership theorem applies directly.
     change LinearMap.toMatrix b b f ∈ skewAdjointMatricesLieSubalgebra J ↔
       f ∈ skewAdjointLieSubalgebra B
     exact mem_skewAdjointMatricesLieSubalgebra_toMatrix_iff b B hJ f

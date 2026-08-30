@@ -20,7 +20,7 @@ the Clifford algebra.
 
 The normalization is fixed by `LieAlgebra.Orthogonal.JB`: the distinguished remainder vector has
 quadratic norm `1` and polar self-pairing `2`, while the two isotropic families pair by the identity
-matrix. The coordinate equivalence absorbs either possible sign of its internal coordinate.
+matrix. The coordinate equivalence absorbs its arbitrary square-one internal coordinate.
 
 ## Main definitions
 
@@ -67,8 +67,8 @@ variable {K : Type u} [CommRing K] {V : Type v} [AddCommGroup V] [Module K V]
   (z : P.line) (hz : Q (z : V) = 1)
 
 /-- A quadratic-unit remainder vector identifies the remainder with the scalar line. The factor
-`lineCoordinate z` makes the chosen vector itself correspond to `1`, regardless of its coordinate
-sign. -/
+`lineCoordinate z` makes the chosen vector itself correspond to `1`, regardless of which
+square-one coordinate it has. -/
 private noncomputable def lineEquiv : P.line ≃ₗ[K] K := by
   have hzz : P.lineCoordinate z * P.lineCoordinate z = 1 := by
     rw [P.lineCoordinate_sq, hz]
