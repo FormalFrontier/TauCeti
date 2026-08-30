@@ -16,8 +16,8 @@ This file gives the linear dual of a finitely generated internally graded module
 grading. A functional has degree `p` when it is supported on the original degree `-p` piece.
 Consequently, evaluation can be nonzero only on degrees summing to zero.
 
-Finite generation is exactly what makes the algebraic dual a direct *sum* of its homogeneous
-pieces: an internally graded finitely generated module has only finitely many nonzero degrees.
+Finite generation ensures that the algebraic dual is a direct *sum* of its homogeneous pieces:
+an internally graded finitely generated module has only finitely many nonzero degrees.
 No projectivity is needed for this decomposition. Later tensor-duality comparisons may add the
 finite-projectivity hypotheses needed to identify duals of tensor products.
 
@@ -80,7 +80,11 @@ end FiniteSupport
 
 section Dual
 
-variable {R : Type u} {M : Type v} [CommRing R] [AddCommGroup M] [Module R M]
+variable {R : Type u} {M : Type v}
+
+section DualPiece
+
+variable [CommSemiring R] [AddCommMonoid M] [Module R M]
 
 /-- The degree-`p` part of the graded dual consists of the functionals vanishing on every
 homogeneous piece except degree `-p`. -/
@@ -89,10 +93,25 @@ def dualPiece (G : InternalGrading R M) (p : ℤ) : Submodule R (Module.Dual R M
 
 /-- A functional belongs to degree `p` of the graded dual exactly when it vanishes on every
 original degree other than `-p`. -/
+@[simp]
 theorem mem_dualPiece_iff (G : InternalGrading R M) (p : ℤ) (φ : Module.Dual R M) :
     φ ∈ G.dualPiece p ↔ ∀ q (x : M), x ∈ G.piece q → q ≠ -p → φ x = 0 := by
   simp only [dualPiece, Submodule.mem_iInf, Submodule.mem_dualAnnihilator]
   aesop
+
+/-- A functional in dual degree `p` vanishes on an original homogeneous vector of degree `q`
+unless `p + q = 0`. -/
+@[grind]
+theorem apply_eq_zero_of_mem_dualPiece_of_add_ne_zero (G : InternalGrading R M) {p q : ℤ}
+    {φ : Module.Dual R M} {x : M} (hφ : φ ∈ G.dualPiece p) (hx : x ∈ G.piece q)
+    (hpq : p + q ≠ 0) : φ x = 0 :=
+  (mem_dualPiece_iff G p φ).mp hφ q x hx (by omega)
+
+end DualPiece
+
+section Construction
+
+variable [CommRing R] [AddCommGroup M] [Module R M]
 
 private noncomputable def projection (G : InternalGrading R M) (p : ℤ) : M →ₗ[R] M :=
   (G.piece p).subtype ∘ₗ
@@ -203,12 +222,7 @@ theorem dual_piece (G : InternalGrading R M) [Module.Finite R M] (p : ℤ) :
     G.dual.piece p = G.dualPiece p :=
   (rfl)
 
-/-- A functional in dual degree `p` vanishes on an original homogeneous vector of degree `q`
-unless `p + q = 0`. -/
-theorem apply_eq_zero_of_mem_dualPiece_of_add_ne_zero (G : InternalGrading R M) {p q : ℤ}
-    {φ : Module.Dual R M} {x : M} (hφ : φ ∈ G.dualPiece p) (hx : x ∈ G.piece q)
-    (hpq : p + q ≠ 0) : φ x = 0 :=
-  (mem_dualPiece_iff G p φ).mp hφ q x hx (by omega)
+end Construction
 
 end Dual
 
