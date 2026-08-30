@@ -389,7 +389,10 @@ theorem finSumFinEquiv_inr_ne_inl (i j : Fin m) :
     finSumFinEquiv (Sum.inr i) ≠ finSumFinEquiv (Sum.inl j) :=
   finSumFinEquiv.injective.ne Sum.inr_ne_inl
 
-private theorem reindexGL_transvectionUnit (i j : Fin m ⊕ Fin m) (hij : i ≠ j) (c : R) :
+/-- Reindexing a transvection from `Fin (m + m)` coordinates to sum coordinates recovers the
+transvection at the corresponding sum indices. -/
+@[simp]
+theorem reindexGL_transvectionUnit (i j : Fin m ⊕ Fin m) (hij : i ≠ j) (c : R) :
     reindexGL m R
         (transvectionUnit (finSumFinEquiv.injective.ne hij) c) =
       transvectionUnit hij c := by
@@ -541,6 +544,24 @@ theorem differenceShortRoot_second_indices_ne {i j : Fin m} (hij : i ≠ j) :
   (finSumFinEquiv : Fin m ⊕ Fin m ≃ Fin (m + m)).injective.ne
     (Sum.inr_injective.ne hij.symm)
 
+/-- In sum coordinates, the two elementary matrices defining a difference-root element form a
+block-diagonal pair of transvections. -/
+theorem coe_differenceShortRootTransvectionUnits {i j : Fin m} (hij : i ≠ j) (c : R) :
+    ((transvectionUnit (Sum.inl_injective.ne hij) c *
+        transvectionUnit (Sum.inr_injective.ne hij.symm) (-c) :
+          GL (Fin m ⊕ Fin m) R) : Matrix (Fin m ⊕ Fin m) (Fin m ⊕ Fin m) R) =
+      Matrix.fromBlocks (Matrix.transvection i j c) 0 0
+        (Matrix.transvection j i (-c)) := by
+  simp only [Units.val_mul, coe_transvectionUnit, Matrix.transvection, Matrix.mul_add,
+    Matrix.add_mul, Matrix.one_mul, Matrix.mul_one]
+  rw [Matrix.single_mul_single_of_ne _ _ _ _ Sum.inl_ne_inr]
+  ext a b
+  cases a <;> cases b <;>
+    simp only [Matrix.fromBlocks_apply₁₁, Matrix.fromBlocks_apply₁₂,
+      Matrix.fromBlocks_apply₂₁, Matrix.fromBlocks_apply₂₂, Matrix.add_apply,
+      Matrix.one_apply, Matrix.single_apply, Matrix.zero_apply, Sum.inl.injEq, Sum.inr.injEq,
+      Sum.inl_ne_inr, Sum.inr_ne_inl, and_false, false_and, ite_false, add_zero]
+
 private theorem differenceShortRoot_mem {i j : Fin m} (hij : i ≠ j) (c : R) :
     transvectionUnit (differenceShortRoot_first_indices_ne hij) c *
         transvectionUnit (differenceShortRoot_second_indices_ne hij) (-c) ∈
@@ -553,19 +574,7 @@ private theorem differenceShortRoot_mem {i j : Fin m} (hij : i ≠ j) (c : R) :
   have hsecond := reindexGL_transvectionUnit (R := R)
     (Sum.inr j) (Sum.inr i) (Sum.inr_injective.ne hij.symm) (-c)
   rw [hfirst, hsecond, GLSymplectic.mem_iff_mem_symplecticGroup]
-  have hmatrix :
-      ((transvectionUnit (Sum.inl_injective.ne hij) c *
-          transvectionUnit (Sum.inr_injective.ne hij.symm) (-c) :
-            GL (Fin m ⊕ Fin m) R) : Matrix (Fin m ⊕ Fin m) (Fin m ⊕ Fin m) R) =
-        Matrix.fromBlocks (Matrix.transvection i j c) 0 0
-          (Matrix.transvection j i (-c)) := by
-    simp only [Units.val_mul, coe_transvectionUnit, Matrix.transvection, Matrix.mul_add,
-      Matrix.add_mul, Matrix.one_mul, Matrix.mul_one]
-    rw [Matrix.single_mul_single_of_ne _ _ _ _ Sum.inl_ne_inr]
-    ext a b
-    cases a <;> cases b <;>
-      simp [Matrix.single, Matrix.fromBlocks, Matrix.one_apply]
-  rw [hmatrix]
+  rw [coe_differenceShortRootTransvectionUnits hij c]
   apply GLSymplectic.fromBlocks_diagonal_mem
   simp only [Matrix.transvection, Matrix.transpose_add, Matrix.transpose_one,
     Matrix.transpose_single, Matrix.mul_add, Matrix.add_mul, Matrix.one_mul, Matrix.mul_one]
@@ -963,6 +972,26 @@ def short (family : ShortRootFamily) (i j : Fin m) (hij : i ≠ j) :
   | .negativeSum =>
       if h : i < j then .negativeSum i j h
       else .negativeSum j i (lt_of_le_of_ne (le_of_not_gt h) hij.symm)
+
+/-- The canonical short-root index leaves a difference root ordered. -/
+@[simp]
+theorem short_difference (i j : Fin m) (hij : i ≠ j) :
+    short .difference i j hij = .difference i j hij := by
+  rw [short]
+
+/-- Increasing indices are already the canonical order for a positive sum root. -/
+@[simp]
+theorem short_positiveSum_of_lt (i j : Fin m) (hij : i < j) :
+    short .positiveSum i j hij.ne = .positiveSum i j hij := by
+  rw [short]
+  simp only [hij, ↓reduceDIte]
+
+/-- Increasing indices are already the canonical order for a negative sum root. -/
+@[simp]
+theorem short_negativeSum_of_lt (i j : Fin m) (hij : i < j) :
+    short .negativeSum i j hij.ne = .negativeSum i j hij := by
+  rw [short]
+  simp only [hij, ↓reduceDIte]
 
 /-- Swapping the inputs gives the same canonical positive-sum root index. -/
 theorem short_positiveSum_swap (i j : Fin m) (hij : i ≠ j) :

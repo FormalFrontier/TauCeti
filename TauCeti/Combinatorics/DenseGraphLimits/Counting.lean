@@ -100,6 +100,40 @@ private theorem abs_integral_le_cutNorm_of_factors (K : SymmKernel Ω μ) {a b :
     (μ := Measure.pi fun _ : V => μ) (ae_of_all _ hbound)
   simpa [Real.norm_eq_abs] using h
 
+omit [Fintype V] in
+/-- The edge-factor product over the edges other than `s(a, b)`, at an assignment whose `a`- and
+`b`-coordinates have been refreshed, splits into the edges missing `b`, read at the refreshed
+`a`-coordinate, times the edges containing `b` (hence missing `a`), read at the refreshed
+`b`-coordinate. -/
+private theorem prod_edgeFactor_erase_update_update (E : Finset (Sym2 V))
+    (G : Sym2 V → Graphon Ω μ) {a b : V} (hab : a ≠ b) (z : V → Ω) (u t : Ω) :
+    (∏ e ∈ E.erase s(a, b), edgeFactor (G e) (update (update z a u) b t) e)
+      = (∏ e ∈ (E.erase s(a, b)).filter (fun e => b ∉ e), edgeFactor (G e) (update z a u) e)
+        * ∏ e ∈ (E.erase s(a, b)).filter (fun e => ¬ b ∉ e), edgeFactor (G e) (update z b t) e := by
+  -- the edges other than `s(a, b)`, split by whether they contain `b`
+  have hmem_b : ∀ e ∈ (E.erase s(a, b)).filter (fun e => b ∉ e), b ∉ e := by
+    intro e he
+    exact (Finset.mem_filter.1 he).2
+  have hmem_a : ∀ e ∈ (E.erase s(a, b)).filter (fun e => ¬ b ∉ e), a ∉ e := by
+    intro e he
+    obtain ⟨heE, hb⟩ := Finset.mem_filter.1 he
+    rw [not_not] at hb
+    intro ha
+    exact Finset.ne_of_mem_erase heE ((Sym2.mem_and_mem_iff hab).1 ⟨ha, hb⟩)
+  rw [← Finset.prod_filter_mul_prod_filter_not (E.erase s(a, b)) (fun e => b ∉ e)]
+  refine congrArg₂ (· * ·) (Finset.prod_congr rfl fun e he => ?_)
+    (Finset.prod_congr rfl fun e he => ?_)
+  · refine edgeFactor_congr (G e) fun v hv => ?_
+    have hvb' : v ≠ b := by rintro rfl; exact hmem_b e he hv
+    exact update_of_ne hvb' t (update z a u)
+  · refine edgeFactor_congr (G e) fun v hv => ?_
+    have hva' : v ≠ a := by rintro rfl; exact hmem_a e he hv
+    by_cases hvb' : v = b
+    · subst hvb'
+      rw [update_self, update_self]
+    · rw [update_of_ne hvb' t (update z a u), update_of_ne hva' u z,
+        update_of_ne hvb' t z]
+
 /-- **The single-edge bound, with the edge spelled out.** The difference of two graphons at the edge
 `s(a, b)`, weighted by edge factors over any finite family of *other* edges, integrates to at most
 the cut norm of the difference.
@@ -112,16 +146,6 @@ private theorem abs_integral_prod_mul_sub_le_aux (E : Finset (Sym2 V)) (G : Sym2
     |∫ x, (∏ e ∈ E.erase s(a, b), edgeFactor (G e) x e)
         * (U (x a) (x b) - W (x a) (x b)) ∂(Measure.pi fun _ : V => μ)|
       ≤ cutNorm μ (U.toSymmKernel - W.toSymmKernel) := by
-  -- the edges other than `s(a, b)`, split by whether they contain `b`
-  have hmem_b : ∀ e ∈ (E.erase s(a, b)).filter (fun e => b ∉ e), b ∉ e := by
-    intro e he
-    exact (Finset.mem_filter.1 he).2
-  have hmem_a : ∀ e ∈ (E.erase s(a, b)).filter (fun e => ¬ b ∉ e), a ∉ e := by
-    intro e he
-    obtain ⟨heE, hb⟩ := Finset.mem_filter.1 he
-    rw [not_not] at hb
-    intro ha
-    exact Finset.ne_of_mem_erase heE ((Sym2.mem_and_mem_iff hab).1 ⟨ha, hb⟩)
   refine abs_integral_le_cutNorm_of_factors (U.toSymmKernel - W.toSymmKernel) hab _ ?_
     (fun z u => ∏ e ∈ (E.erase s(a, b)).filter (fun e => b ∉ e),
       edgeFactor (G e) (update z a u) e)
@@ -148,28 +172,10 @@ private theorem abs_integral_prod_mul_sub_le_aux (E : Finset (Sym2 V)) (G : Sym2
     have hva : update (update z a u) b t a = u := by
       rw [update_of_ne hab t (update z a u), update_self a u z]
     have hvb : update (update z a u) b t b = t := update_self b t (update z a u)
-    have hsplit : (∏ e ∈ E.erase s(a, b), edgeFactor (G e) (update (update z a u) b t) e)
-        = (∏ e ∈ (E.erase s(a, b)).filter (fun e => b ∉ e),
-            edgeFactor (G e) (update z a u) e)
-          * ∏ e ∈ (E.erase s(a, b)).filter (fun e => ¬ b ∉ e),
-              edgeFactor (G e) (update z b t) e := by
-      rw [← Finset.prod_filter_mul_prod_filter_not (E.erase s(a, b)) (fun e => b ∉ e)]
-      refine congrArg₂ (· * ·) (Finset.prod_congr rfl fun e he => ?_)
-        (Finset.prod_congr rfl fun e he => ?_)
-      · refine edgeFactor_congr (G e) fun v hv => ?_
-        have hvb' : v ≠ b := by rintro rfl; exact hmem_b e he hv
-        exact update_of_ne hvb' t (update z a u)
-      · refine edgeFactor_congr (G e) fun v hv => ?_
-        have hva' : v ≠ a := by rintro rfl; exact hmem_a e he hv
-        by_cases hvb' : v = b
-        · subst hvb'
-          rw [update_self, update_self]
-        · rw [update_of_ne hvb' t (update z a u), update_of_ne hva' u z,
-            update_of_ne hvb' t z]
     -- `(U - W) u t` is the pointwise difference, by construction of the kernel module structure
     have hK : (U.toSymmKernel - W.toSymmKernel) u t = U u t - W u t := by
       simp [SymmKernel.coe_sub]
-    rw [hsplit, hva, hvb, hK]
+    rw [prod_edgeFactor_erase_update_update E G hab z u t, hva, hvb, hK]
 
 /-- **The single-edge bound.** The same statement with the swapped edge given as a non-diagonal
 `Sym2` element, which is how the telescope below meets it. -/

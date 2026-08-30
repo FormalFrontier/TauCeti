@@ -25,7 +25,7 @@ Jordan block, whose endomorphism algebra is `k[X]/(Xⁿ⁺¹)`.
 The other half of that indecomposability argument -- that an endomorphism of the Jordan block *is*
 multiplication by an element of `k[X]/(Xⁿ⁺¹)` -- needs nothing about `Xⁿ⁺¹` beyond monicity, so it
 is stated for an arbitrary monic relator and lives with the rest of the general `AdjoinRoot`
-material, as `AdjoinRoot.eq_mulRight_of_root_mul` in `TauCeti.RingTheory.AdjoinRoot`.
+material, as `AdjoinRoot.eq_mulRight_of_root_mul` in `TauCeti.RingTheory.AdjoinRoot.Basic`.
 
 ## Main results
 

@@ -12,7 +12,7 @@ public import TauCeti.Algebra.AlgebraicGroup.Tangent.Adjoint
 -- Points valued in the counit algebra, where the conjugating point lives, are the `B`-points.
 public import TauCeti.Algebra.AlgebraicGroup.Tangent.CounitPoints
 -- The diagonal torus supplies the points whose adjoint action is diagonalized.
-public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.DiagonalTorus
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.DiagonalTorus.Basic
 -- Non-public: the diagonal-matrix-unit product law is used only in a proof below.
 import TauCeti.LinearAlgebra.Matrix.Diagonal
 

@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Order.Preorder.Chain
+public import Mathlib.Order.Fin.Basic
 public import TauCeti.AlgebraicTopology.SimplicialComplex.Basic
 public import TauCeti.AlgebraicTopology.SimplicialComplex.Maps
 
@@ -480,4 +481,3 @@ theorem offDiagonalPair_notMem_orderedProd_finTwo :
   simp [IsChain, Set.pairwise_insert] at hchain
 
 end AbstractSimplicialComplex
-

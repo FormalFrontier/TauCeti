@@ -79,22 +79,10 @@ lemma quotientLieHom_apply_apply (I : HopfIdeal R H)
 
 /-- The differential of a closed-subgroup inclusion is injective. -/
 theorem quotientLieHom_injective (I : HopfIdeal R H) :
-    Function.Injective (quotientLieHom (B := B) I) := by
-  intro d e hde
-  apply Derivation.ext
-  intro q
-  obtain ⟨x, rfl⟩ := Ideal.Quotient.mkₐ_surjective R I.toIdeal q
-  apply (Bialgebra.CounitAlgebra.algEquivSelf R (H ⧸ I.toIdeal) B).injective
-  have hx := congrArg
-    (fun f => Bialgebra.CounitAlgebra.algEquivSelf R H B (f x)) hde
-  simp only [quotientLieHom_apply_apply] at hx
-  rw [Bialgebra.CounitAlgebra.algEquivSelf_apply R H B
-      (Bialgebra.CounitAlgebra.algEquivSelf R (H ⧸ I.toIdeal) B
-        (d (Ideal.Quotient.mkₐ R I.toIdeal x))),
-    Bialgebra.CounitAlgebra.algEquivSelf_apply R H B
-      (Bialgebra.CounitAlgebra.algEquivSelf R (H ⧸ I.toIdeal) B
-        (e (Ideal.Quotient.mkₐ R I.toIdeal x)))] at hx
-  exact hx
+    Function.Injective (quotientLieHom (B := B) I) :=
+  derivationCompLieHom_injective_of_surjective
+    (Bialgebra.Quotient.mkBialgHom (R := R) I.toIdeal)
+    Ideal.Quotient.mk_surjective
 
 /-- The Lie subalgebra of the ambient tangent Lie algebra cut out by a Hopf ideal.
 

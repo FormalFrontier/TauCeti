@@ -37,6 +37,14 @@ disjointness conditions read `Disjoint (Set.range e) (Set.range e')` and
 `Disjoint (Set.range f) (Set.range f')`. Ranges of maps `ℕ → ℕ` are exactly the nonempty sets of
 indices, and a block over an empty set of indices carries no information, so nothing is lost.
 
+The same disjoint-block device that turns joint exchangeability into separate exchangeability also
+transfers dissociation. If `e` and `f` are injections with disjoint ranges, every rectangular block
+of `arrayBlock X e f` reads a square block of `X` on the union of its selected row and column
+indices. Thus joint dissociation of `X` makes this block separately dissociated
+(`JointlyDissociated.separatelyDissociated_arrayBlock`), including the pair-valued version that
+retains both orientations. This is the bridge from the ergodic jointly exchangeable branch to the
+separate Aldous--Hoover branch.
+
 Dissociation is a restriction on the array and not a consequence of any exchangeability: an array
 all of whose entries are one common random variable is separately exchangeable, but dissociating it
 forces that variable to be almost surely trivial
@@ -62,6 +70,9 @@ These results advance the exchangeable-arrays milestone of
 * `TauCeti.Probability.SeparatelyDissociated.arrayBlock` and
   `TauCeti.Probability.JointlyDissociated.arrayBlock_diag` — dissociation passes to blocks along
   injective index maps;
+* `TauCeti.Probability.JointlyDissociated.separatelyDissociated_arrayBlock` and
+  `TauCeti.Probability.JointlyDissociated.separatelyDissociated_arrayBlockPair` — a block along two
+  injections with disjoint ranges converts joint dissociation to separate dissociation;
 * `TauCeti.Probability.SeparatelyDissociated.map_values` and
   `TauCeti.Probability.JointlyDissociated.map_values` — dissociation is preserved by a measurable
   coordinatewise pushforward;
@@ -228,6 +239,96 @@ theorem JointlyDissociated.arrayBlock_diag (h : JointlyDissociated μ X) {e : �
   simp only [arrayBlock_apply]
   exact jointlyDissociated_iff.mp h (e ∘ e₁) (e ∘ e₂)
     (by simpa only [Set.range_comp] using Set.disjoint_image_of_injective he h₁)
+
+private def mergeIndexMaps (a b : ℕ → ℕ) : ℕ → ℕ :=
+  Sum.elim a b ∘ Equiv.natSumNatEquivNat.symm
+
+private theorem range_mergeIndexMaps (a b : ℕ → ℕ) :
+    Set.range (mergeIndexMaps a b) = Set.range a ∪ Set.range b := by
+  rw [mergeIndexMaps, Equiv.natSumNatEquivNat.symm.surjective.range_comp,
+    Set.Sum.elim_range]
+
+/-- **A two-orientation block of a jointly dissociated array is separately dissociated.** The row
+and column injections must have disjoint ranges. Each rectangular block of the pair-valued array
+then reads a square block of the original array on the union of its row and column indices; the
+two unions are disjoint when both pairs of rectangular index sets are disjoint. -/
+theorem JointlyDissociated.separatelyDissociated_arrayBlockPair
+    (h : JointlyDissociated μ X) {e f : ℕ → ℕ}
+    (he : Function.Injective e) (hf : Function.Injective f)
+    (hd : Disjoint (Set.range e) (Set.range f)) :
+    SeparatelyDissociated μ (TauCeti.Probability.arrayBlockPair X e f) := by
+  refine separatelyDissociated_iff.mpr fun e₁ f₁ e₂ f₂ he₁₂ hf₁₂ => ?_
+  let g₁ := mergeIndexMaps (e ∘ e₁) (f ∘ f₁)
+  let g₂ := mergeIndexMaps (e ∘ e₂) (f ∘ f₂)
+  have he_disjoint : Disjoint (Set.range (e ∘ e₁)) (Set.range (e ∘ e₂)) := by
+    simpa only [Set.range_comp] using Set.disjoint_image_of_injective he he₁₂
+  have hf_disjoint : Disjoint (Set.range (f ∘ f₁)) (Set.range (f ∘ f₂)) := by
+    simpa only [Set.range_comp] using Set.disjoint_image_of_injective hf hf₁₂
+  have hef_disjoint : Disjoint (Set.range (e ∘ e₁)) (Set.range (f ∘ f₂)) :=
+    hd.mono (Set.range_comp_subset_range e₁ e) (Set.range_comp_subset_range f₂ f)
+  have hfe_disjoint : Disjoint (Set.range (f ∘ f₁)) (Set.range (e ∘ e₂)) :=
+    hd.symm.mono (Set.range_comp_subset_range f₁ f) (Set.range_comp_subset_range e₂ e)
+  have hg_disjoint : Disjoint (Set.range g₁) (Set.range g₂) := by
+    simp only [g₁, g₂, range_mergeIndexMaps]
+    exact (he_disjoint.union_right hef_disjoint).union_left
+      (hfe_disjoint.union_right hf_disjoint)
+  have hindep := jointlyDissociated_iff.mp h g₁ g₂ hg_disjoint
+  let read : (ℕ × ℕ → α) → (ℕ × ℕ → α × α) := fun x p =>
+    (x (Equiv.natSumNatEquivNat (Sum.inl p.1),
+        Equiv.natSumNatEquivNat (Sum.inr p.2)),
+      x (Equiv.natSumNatEquivNat (Sum.inr p.2),
+        Equiv.natSumNatEquivNat (Sum.inl p.1)))
+  have hread : Measurable read :=
+    measurable_pi_lambda _ fun p => (measurable_pi_apply _).prodMk (measurable_pi_apply _)
+  have hleft :
+      read ∘ (fun ω p => X (g₁ p.1, g₁ p.2) ω) =
+        fun ω p => arrayBlockPair X e f (e₁ p.1, f₁ p.2) ω := by
+    funext ω p
+    simp only [read, g₁, mergeIndexMaps, Function.comp_apply, Equiv.symm_apply_apply,
+      Sum.elim_inl, Sum.elim_inr, arrayBlockPair_apply]
+  have hright :
+      read ∘ (fun ω p => X (g₂ p.1, g₂ p.2) ω) =
+        fun ω p => arrayBlockPair X e f (e₂ p.1, f₂ p.2) ω := by
+    funext ω p
+    simp only [read, g₂, mergeIndexMaps, Function.comp_apply, Equiv.symm_apply_apply,
+      Sum.elim_inl, Sum.elim_inr, arrayBlockPair_apply]
+  have hcomp := hindep.comp hread hread
+  rw [hleft, hright] at hcomp
+  exact hcomp
+
+/-- **A rectangular block of a jointly dissociated array is separately dissociated** when its
+row and column injections have disjoint ranges. This is the one-orientation consequence of
+`JointlyDissociated.separatelyDissociated_arrayBlockPair`. -/
+theorem JointlyDissociated.separatelyDissociated_arrayBlock
+    (h : JointlyDissociated μ X) {e f : ℕ → ℕ}
+    (he : Function.Injective e) (hf : Function.Injective f)
+    (hd : Disjoint (Set.range e) (Set.range f)) :
+    SeparatelyDissociated μ (TauCeti.Probability.arrayBlock X e f) := by
+  have hfun :
+      (fun p ω => Prod.fst (arrayBlockPair X e f p ω)) = arrayBlock X e f := by
+    funext p ω
+    simp only [arrayBlockPair_apply, arrayBlock_apply]
+  rw [← hfun]
+  exact (h.separatelyDissociated_arrayBlockPair he hf hd).map_values measurable_fst
+
+/-! ## The canonical block, along the even and the odd indices -/
+
+/-- **The canonical separately dissociated block of a jointly dissociated array**: read the rows
+along the even indices and the columns along the odd ones. -/
+theorem JointlyDissociated.separatelyDissociated_arrayBlock_evenOdd
+    (h : JointlyDissociated μ X) :
+    SeparatelyDissociated μ (arrayBlock X (fun i => 2 * i) fun j => 2 * j + 1) :=
+  h.separatelyDissociated_arrayBlock (mul_right_injective₀ two_ne_zero)
+    ((add_left_injective 1).comp (mul_right_injective₀ two_ne_zero)) (by
+      simp [Set.disjoint_left])
+
+/-- **The canonical separately dissociated block of pairs of a jointly dissociated array.** -/
+theorem JointlyDissociated.separatelyDissociated_arrayBlockPair_evenOdd
+    (h : JointlyDissociated μ X) :
+    SeparatelyDissociated μ (arrayBlockPair X (fun i => 2 * i) fun j => 2 * j + 1) :=
+  h.separatelyDissociated_arrayBlockPair (mul_right_injective₀ two_ne_zero)
+    ((add_left_injective 1).comp (mul_right_injective₀ two_ne_zero)) (by
+      simp [Set.disjoint_left])
 
 end Stability
 

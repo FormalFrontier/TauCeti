@@ -7,6 +7,9 @@ module
 
 public import TauCeti.NumberTheory.ModularForms.HeckeSlash.Diagonal.QExpansion
 public import TauCeti.NumberTheory.ModularForms.HeckeSlash.Prime
+public import TauCeti.NumberTheory.ModularForms.HeckeSlash.UpperTri.QExpansion
+
+import TauCeti.NumberTheory.ModularForms.Cusps.Basic
 
 /-!
 # The Fourier-coefficient recurrence for `Tₚ`, at every prime
@@ -31,8 +34,7 @@ and on a nebentypus space `M_k(N, χ)` with `p ∤ N`, where the diamond acts by
 divides the level: `a_{m/p}` is read as an explicit `if p ∣ m`, and at `p ∣ N` the zero-extended
 diamond `⟨p⟩` of `DiamondOperators.lean` vanishes, so the recurrence degenerates to
 `aₘ(Tₚ f) = a_{p m}(f)` — the operator modern papers write `Uₚ`. Following Miyake,
-Diamond–Shurman and Shimura, `Uₚ` is not a second operator, only this case of `Tₚ`; it appears
-here as `qExpansion_coeff_heckeSlashGamma1ModularFormEnd_diagCosetGamma1_of_dvd_level`.
+Diamond–Shurman and Shimura, `Uₚ` is not a second operator, only this case of `Tₚ`.
 
 The `Nat` division in `a_{m/p}` is guarded by that `if`: without it, `m / p` would silently
 round down at indices `p ∤ m` and name a coefficient the recurrence does not contain.
@@ -46,8 +48,6 @@ round down at indices `p ∤ m` and name a coefficient the recurrence does not c
   `χ(p)` in place of the diamond.
 * `HeckeRing.GL2.qExpansion_heckeSlashGamma1ModularFormEnd_diagCosetGamma1_of_prime`: the same
   identity between power series, the diamond term appearing as a `PowerSeries.expand`.
-* `HeckeRing.GL2.qExpansion_coeff_heckeSlashGamma1ModularFormEnd_diagCosetGamma1_of_dvd_level`:
-  the degenerate `p ∣ N` case, `aₘ(Tₚ f) = a_{p m}(f)`.
 * `HeckeRing.GL2.qExpansion_coeff_one_heckeSlashGamma1ModularFormEnd_diagCosetGamma1`:
   `a₁(Tₚ f) = a_p(f)`, and
   `HeckeRing.GL2.eq_qExpansion_coeff_of_heckeSlashGamma1ModularFormEnd_diagCosetGamma1_eq_smul`:
@@ -97,8 +97,8 @@ private theorem qExpansion_coeff_add_slash_scaleRep [NeZero p]
       (qExpansion 1 f).coeff (p * m) +
         if p ∣ m then (p : ℂ) ^ (k - 1) * (qExpansion 1 g).coeff (m / p) else 0 := by
   have hp : 0 < p := Nat.pos_of_ne_zero (NeZero.ne p)
-  have hΓ : (1 : ℝ) ∈ ((Gamma1 N).map (mapGL ℝ)).strictPeriods := by
-    simp [CongruenceSubgroup.strictPeriods_Gamma1]
+  have hΓ : (1 : ℝ) ∈ ((Gamma1 N).map (mapGL ℝ)).strictPeriods :=
+    TauCeti.one_mem_strictPeriods_Gamma1_map N
   let _ : Fact (IsCusp OnePoint.infty ((Gamma1 N).map (mapGL ℝ))) :=
     ⟨((Gamma1 N).map (mapGL ℝ)).isCusp_of_mem_strictPeriods one_pos hΓ⟩
   have hU : AnalyticAt ℂ (cuspFunction 1 (heckeSlashUpperTri k p ⇑f)) 0 :=
@@ -132,8 +132,8 @@ theorem qExpansion_coeff_heckeSlashGamma1ModularFormEnd_diagCosetGamma1_of_prime
         if p ∣ m then (p : ℂ) ^ (k - 1) * (qExpansion 1 (diamondOpNat k p f)).coeff (m / p)
         else 0 := by
   have _ : NeZero p := ⟨hp.ne_zero⟩
-  have hΓ : (1 : ℝ) ∈ ((Gamma1 N).map (mapGL ℝ)).strictPeriods := by
-    simp [CongruenceSubgroup.strictPeriods_Gamma1]
+  have hΓ : (1 : ℝ) ∈ ((Gamma1 N).map (mapGL ℝ)).strictPeriods :=
+    TauCeti.one_mem_strictPeriods_Gamma1_map N
   have hSum := ModularFormClass.analyticAt_cuspFunction_zero
     (heckeSlashGamma1ModularFormEnd k (diagCosetGamma1 N p) f) one_pos hΓ
   rw [coe_heckeSlashGamma1ModularFormEnd_diagCosetGamma1_of_prime k hp f] at hSum
@@ -149,8 +149,8 @@ theorem qExpansion_coeff_heckeSlashGamma1CuspFormEnd_diagCosetGamma1_of_prime
         if p ∣ m then (p : ℂ) ^ (k - 1) * (qExpansion 1 (diamondOpCuspNat k p f)).coeff (m / p)
         else 0 := by
   have _ : NeZero p := ⟨hp.ne_zero⟩
-  have hΓ : (1 : ℝ) ∈ ((Gamma1 N).map (mapGL ℝ)).strictPeriods := by
-    simp [CongruenceSubgroup.strictPeriods_Gamma1]
+  have hΓ : (1 : ℝ) ∈ ((Gamma1 N).map (mapGL ℝ)).strictPeriods :=
+    TauCeti.one_mem_strictPeriods_Gamma1_map N
   have hSum := ModularFormClass.analyticAt_cuspFunction_zero
     (heckeSlashGamma1CuspFormEnd k (diagCosetGamma1 N p) f) one_pos hΓ
   rw [coe_heckeSlashGamma1CuspFormEnd_diagCosetGamma1_of_prime k hp f] at hSum
@@ -172,7 +172,7 @@ theorem qExpansion_coeff_heckeSlashGamma1ModularFormEnd_diagCosetGamma1_of_mem_m
   rw [qExpansion_coeff_heckeSlashGamma1ModularFormEnd_diagCosetGamma1_of_prime k hp f m,
     diamondOpNat_of_coprime k h, diamondOp_apply_of_mem_modFormCharSpace k χ _ hf,
     FunLike.coe_smul, ModularForm.qExpansion_smul one_pos
-      (by simp [CongruenceSubgroup.strictPeriods_Gamma1])]
+      (TauCeti.one_mem_strictPeriods_Gamma1_map _)]
   refine congrArg _ (if_congr Iff.rfl ?_ rfl)
   rw [map_smul, smul_eq_mul]
   ring
@@ -188,7 +188,7 @@ theorem qExpansion_coeff_heckeSlashGamma1CuspFormEnd_diagCosetGamma1_of_mem_cusp
   rw [qExpansion_coeff_heckeSlashGamma1CuspFormEnd_diagCosetGamma1_of_prime k hp f m,
     diamondOpCuspNat_of_coprime k h, diamondOpCusp_apply_of_mem_cuspFormCharSpace k χ _ hf,
     FunLike.coe_smul, ModularForm.qExpansion_smul one_pos
-      (by simp [CongruenceSubgroup.strictPeriods_Gamma1])]
+      (TauCeti.one_mem_strictPeriods_Gamma1_map _)]
   refine congrArg _ (if_congr Iff.rfl ?_ rfl)
   rw [map_smul, smul_eq_mul]
   ring
@@ -216,26 +216,6 @@ theorem qExpansion_heckeSlashGamma1CuspFormEnd_diagCosetGamma1_of_prime
     rw [qExpansion_coeff_heckeSlashGamma1CuspFormEnd_diagCosetGamma1_of_prime k hp f m,
       map_add, PowerSeries.coeff_mk, map_smul, PowerSeries.coeff_expand, smul_eq_mul]
     split_ifs <;> simp
-
-/-- **The coefficient formula at any divisor of the level**: for `p ∣ N`,
-`aₘ(Tₚ f) = a_{p m}(f)` with no second term. When `p` is prime, this is the operator modern
-papers write `Uₚ`; following Miyake, Diamond–Shurman and Shimura it is not a separate object,
-only the `p ∣ N` case of `Tₚ`. -/
-theorem qExpansion_coeff_heckeSlashGamma1ModularFormEnd_diagCosetGamma1_of_dvd_level
-    (hpN : p ∣ N) (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k) (m : ℕ) :
-    (qExpansion 1 (heckeSlashGamma1ModularFormEnd k (diagCosetGamma1 N p) f)).coeff m =
-      (qExpansion 1 f).coeff (p * m) := by
-  rw [heckeSlashGamma1ModularFormEnd_diagCosetGamma1 k hpN]
-  exact qExpansion_coeff_heckeSlashUpperTriModularFormEnd k hpN f m
-
-/-- **The coefficient formula at any divisor of the level, on cusp forms**:
-`aₘ(Tₚ f) = a_{p m}(f)` for `p ∣ N`. -/
-theorem qExpansion_coeff_heckeSlashGamma1CuspFormEnd_diagCosetGamma1_of_dvd_level
-    (hpN : p ∣ N) (f : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) (m : ℕ) :
-    (qExpansion 1 (heckeSlashGamma1CuspFormEnd k (diagCosetGamma1 N p) f)).coeff m =
-      (qExpansion 1 f).coeff (p * m) := by
-  rw [heckeSlashGamma1CuspFormEnd_diagCosetGamma1 k hpN]
-  exact qExpansion_coeff_heckeSlashUpperTriCuspFormEnd k hpN f m
 
 /-- **The first coefficient of `Tₚ f` is the `p`-th coefficient of `f`**, at every prime and
 every level: `p ∤ 1`, so the diamond term of the recurrence is absent. This is what turns a
@@ -266,7 +246,7 @@ theorem eq_qExpansion_coeff_of_heckeSlashGamma1ModularFormEnd_diagCosetGamma1_eq
     (h1 : (qExpansion 1 f).coeff 1 = 1) : c = (qExpansion 1 f).coeff p := by
   have h := qExpansion_coeff_one_heckeSlashGamma1ModularFormEnd_diagCosetGamma1 k hp f
   rwa [hc, FunLike.coe_smul, ModularForm.qExpansion_smul one_pos
-      (by simp [CongruenceSubgroup.strictPeriods_Gamma1]),
+      (TauCeti.one_mem_strictPeriods_Gamma1_map _),
     map_smul, smul_eq_mul, h1, mul_one] at h
 
 /-- **The Hecke eigenvalue of a normalized eigenvector, on cusp forms.** -/
@@ -276,7 +256,7 @@ theorem eq_qExpansion_coeff_of_heckeSlashGamma1CuspFormEnd_diagCosetGamma1_eq_sm
     (h1 : (qExpansion 1 f).coeff 1 = 1) : c = (qExpansion 1 f).coeff p := by
   have h := qExpansion_coeff_one_heckeSlashGamma1CuspFormEnd_diagCosetGamma1 k hp f
   rwa [hc, FunLike.coe_smul, ModularForm.qExpansion_smul one_pos
-      (by simp [CongruenceSubgroup.strictPeriods_Gamma1]),
+      (TauCeti.one_mem_strictPeriods_Gamma1_map _),
     map_smul, smul_eq_mul, h1, mul_one] at h
 
 end HeckeRing.GL2

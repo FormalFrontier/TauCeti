@@ -334,6 +334,14 @@ noncomputable def localPreprojectiveRelator (v : Q) : pathAlgebra k (Symmetrify 
   (∑ i : Q, ∑ a : (i ⟶ v), headBacktrackElem k a) -
     ∑ j : Q, ∑ a : (v ⟶ j), tailBacktrackElem k a
 
+/-- The local preprojective relator at a vertex, by its defining sum. This is the defining
+equation, exposed for use outside this module. -/
+theorem localPreprojectiveRelator_def (v : Q) :
+    localPreprojectiveRelator k v =
+      (∑ i : Q, ∑ a : (i ⟶ v), headBacktrackElem k a) -
+        ∑ j : Q, ∑ a : (v ⟶ j), tailBacktrackElem k a := by
+  rw [localPreprojectiveRelator]
+
 /-- **The global relator is the sum of the local ones**: each arrow contributes its head backtrack
 to the relator at its head, and its tail backtrack to the relator at its tail. -/
 theorem sum_localPreprojectiveRelator :

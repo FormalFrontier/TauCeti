@@ -113,6 +113,49 @@ private theorem log_sub_log_ofReal_of_neg {c d : ℝ} (hc : c < 0) (hd : d < 0) 
   simp only [Real.log_neg_eq_log, ofReal_sub]
   ring
 
+/-- **The winding number formula for a real reference point beyond the far endpoint.** Both
+`Complex.log` terms share the branch offset `πi`, which cancels in the difference, and the
+integral is a real logarithmic integral. -/
+private theorem windingNumber_segment_of_max_lt (hv : v ≠ 0) {r : ℝ} (hgt : max a b < r) :
+    windingNumber (fun t : ℝ => v * (t : ℂ) + z₀) a b (v * (r : ℂ) + z₀)
+      = (2 * (Real.pi : ℂ) * Complex.I)⁻¹ * (log ((b : ℂ) - r) - log ((a : ℂ) - r)) := by
+  have hne_real : ∀ t ∈ uIcc a b, (t : ℝ) ≠ r := fun t ht h => by
+    rcases Set.mem_uIcc.mp ht with ⟨-, h2⟩ | ⟨-, h2⟩ <;>
+      linarith [le_max_left a b, le_max_right a b]
+  have hne_sub : ∀ t ∈ uIcc a b, (t : ℂ) - (r : ℂ) ≠ 0 := by
+    intro t ht
+    simp only [ne_eq, sub_eq_zero]
+    exact_mod_cast hne_real t ht
+  rw [windingNumber_eq_integral_inv_sub hv hne_sub]
+  congr 1
+  have h_neg_b : (b : ℝ) - r < 0 := by linarith only [hgt, le_max_right a b]
+  have h_neg_a : (a : ℝ) - r < 0 := by linarith only [hgt, le_max_left a b]
+  have hb_cast : (b : ℂ) - (r : ℂ) = ((b - r : ℝ) : ℂ) := by push_cast; ring
+  have ha_cast : (a : ℂ) - (r : ℂ) = ((a - r : ℝ) : ℂ) := by push_cast; ring
+  rw [hb_cast, ha_cast, log_sub_log_ofReal_of_neg h_neg_b h_neg_a]
+  have h_real_eq : ∀ t ∈ Set.uIcc a b,
+      ((t : ℂ) - (r : ℂ))⁻¹ = ((((t - r)⁻¹ : ℝ) : ℂ)) := by
+    intro t _
+    push_cast
+    ring
+  rw [intervalIntegral.integral_congr h_real_eq, intervalIntegral.integral_ofReal]
+  congr 1
+  have hne_real' : ∀ t ∈ uIcc a b, t - r ≠ 0 := fun t ht =>
+    sub_ne_zero.mpr (hne_real t ht)
+  have h_deriv : ∀ t ∈ uIcc a b,
+      HasDerivAt (fun s => Real.log (s - r)) (t - r)⁻¹ t := by
+    intro t ht
+    have h1 : HasDerivAt (fun s => s - r) 1 t := (hasDerivAt_id t).sub_const r
+    have h2 : HasDerivAt Real.log (t - r)⁻¹ (t - r) :=
+      Real.hasDerivAt_log (hne_real' t ht)
+    have h3 := h2.comp t h1
+    simp only [mul_one] at h3
+    exact h3
+  have h_intble_real : IntervalIntegrable (fun t => (t - r)⁻¹) volume a b := by
+    refine ContinuousOn.intervalIntegrable ?_
+    exact ContinuousOn.inv₀ (continuousOn_id.sub continuousOn_const) hne_real'
+  exact intervalIntegral.integral_eq_sub_of_hasDerivAt h_deriv h_intble_real
+
 /-- **The winding number formula under the natural avoidance hypothesis.** The formula
 `(2πi)⁻¹ (log (b - q) - log (a - q))` holds whenever the affine-parametrised reference point
 avoids the segment, with no restriction to the slit plane. For nonreal `q` the slit-plane
@@ -141,38 +184,6 @@ theorem windingNumber_segment_of_ne (hv : v ≠ 0)
       rcases le_or_gt q.re (max a b) with h | h
       · exact absurd (hne_real q.re ⟨hab, h⟩) (not_not.mpr rfl)
       · exact h
-    have hne_sub : ∀ t ∈ uIcc a b, (t : ℂ) - (q.re : ℂ) ≠ 0 := by
-      intro t ht
-      simp only [ne_eq, sub_eq_zero]
-      exact_mod_cast hne_real t ht
-    rw [windingNumber_eq_integral_inv_sub hv hne_sub]
-    congr 1
-    have h_neg_b : (b : ℝ) - q.re < 0 := by linarith only [hgt, le_max_right a b]
-    have h_neg_a : (a : ℝ) - q.re < 0 := by linarith only [hgt, le_max_left a b]
-    have hb_cast : (b : ℂ) - (q.re : ℂ) = ((b - q.re : ℝ) : ℂ) := by push_cast; ring
-    have ha_cast : (a : ℂ) - (q.re : ℂ) = ((a - q.re : ℝ) : ℂ) := by push_cast; ring
-    rw [hb_cast, ha_cast, log_sub_log_ofReal_of_neg h_neg_b h_neg_a]
-    have h_real_eq : ∀ t ∈ Set.uIcc a b,
-        ((t : ℂ) - (q.re : ℂ))⁻¹ = ((((t - q.re)⁻¹ : ℝ) : ℂ)) := by
-      intro t _
-      push_cast
-      ring
-    rw [intervalIntegral.integral_congr h_real_eq, intervalIntegral.integral_ofReal]
-    congr 1
-    have hne_real' : ∀ t ∈ uIcc a b, t - q.re ≠ 0 := fun t ht =>
-      sub_ne_zero.mpr (hne_real t ht)
-    have h_deriv : ∀ t ∈ uIcc a b,
-        HasDerivAt (fun s => Real.log (s - q.re)) (t - q.re)⁻¹ t := by
-      intro t ht
-      have h1 : HasDerivAt (fun s => s - q.re) 1 t := (hasDerivAt_id t).sub_const q.re
-      have h2 : HasDerivAt Real.log (t - q.re)⁻¹ (t - q.re) :=
-        Real.hasDerivAt_log (hne_real' t ht)
-      have h3 := h2.comp t h1
-      simp only [mul_one] at h3
-      exact h3
-    have h_intble_real : IntervalIntegrable (fun t => (t - q.re)⁻¹) volume a b := by
-      refine ContinuousOn.intervalIntegrable ?_
-      exact ContinuousOn.inv₀ (continuousOn_id.sub continuousOn_const) hne_real'
-    exact intervalIntegral.integral_eq_sub_of_hasDerivAt h_deriv h_intble_real
+    exact windingNumber_segment_of_max_lt hv hgt
 
 end TauCeti.Contour

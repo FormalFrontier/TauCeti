@@ -118,6 +118,18 @@ theorem centerPointwiseQuotientMk_surjective :
   exact pointwiseQuotientMk_surjective H (centerDefiningIdeal H)
     (isNormal_centerDefiningIdeal H) A
 
+/-- Extension of scalars sends a center-quotient class to the class of the extended point. -/
+@[simp]
+theorem mapPointwiseQuotient_centerPointwiseQuotientMk
+    {A B : CommAlgCat.{v} k} (φ : A ⟶ B)
+    (g : HopfAlgebra.points (R := k) (H := H) A) :
+    mapPointwiseQuotient H (centerDefiningIdeal H) (isNormal_centerDefiningIdeal H) φ
+        (centerPointwiseQuotientMk H A g) =
+      centerPointwiseQuotientMk H B (HopfAlgebra.mapPoints (H := H) φ g) := by
+  rw [centerPointwiseQuotientMk, centerPointwiseQuotientMk]
+  exact mapPointwiseQuotient_mk H (centerDefiningIdeal H)
+    (isNormal_centerDefiningIdeal H) φ g
+
 end Pointwise
 
 /-- The fppf sheaf quotient `G / Z(G)` of an affine group by its center.

@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.NumberTheory.RamificationInertia.Unramified
+public import Mathlib.RingTheory.RamificationInertia.Basic
 
 /-!
 # Ramification indices in finite flat towers

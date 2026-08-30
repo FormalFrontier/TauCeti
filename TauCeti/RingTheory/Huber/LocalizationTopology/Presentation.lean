@@ -55,9 +55,9 @@ is a single application of one of them.
 * `TauCeti.Huber.PairOfDefinition.presentationRingEquiv_coe` and
   `…_symm_coe`: the characteristic equations — the isomorphism is the forward map it was
   built from, and its inverse is the backward one, so it introduces nothing new.
-* `TauCeti.Huber.PairOfDefinition.continuous_presentationRingEquiv` and
-  `…_coe_comp_toCompletionLoc`: it is continuous, and compatible with the structure maps
-  from `A` — the property that determines it.
+* `TauCeti.Huber.PairOfDefinition.continuous_presentationRingEquiv`, its `…_symm`
+  counterpart, and `…_coe_comp_toCompletionLoc`: it is an isomorphism of topological rings,
+  and compatible with the structure maps from `A` — the property that determines it.
 
 ## What this file does not do
 
@@ -263,7 +263,10 @@ each composite fixes a structure map and is therefore the identity.
 
 This is the *canonical* half of presentation independence: it says the comparison is an
 isomorphism and is determined by compatibility, not that the compatibility hypotheses hold for
-two presentations of the same rational subset. Supplying those is a separate step. -/
+two presentations of the same rational subset. Supplying those is a separate step, and it is not
+taken unconditionally anywhere: `TauCeti.ValuationSpectrum.presentationRingEquivOfEq` derives
+them from an equality of rational subsets through Wedhorn's Proposition 8.2(1), but only for
+coordinate rings in which the denominators are invertible and whose plus subrings are open. -/
 noncomputable def presentationRingEquiv [IsTopologicalRing A]
     (P : PairOfDefinition A) (T : Finset A) (s : A)
     (S : Type*) [CommRing S] [Algebra A S] [IsLocalization.Away s S]
@@ -413,6 +416,30 @@ theorem continuous_presentationRingEquiv [IsTopologicalRing A]
       Continuous (presentationRingEquiv P T s S hden T' s' S' hden' g h hg hh hgc hhc) := by
   intro g h hg hh hgc hhc
   exact hg
+
+/-- The comparison isomorphism has a continuous inverse, being `h`. With
+`continuous_presentationRingEquiv` this makes it an isomorphism of topological rings. -/
+theorem continuous_presentationRingEquiv_symm [IsTopologicalRing A]
+    (P : PairOfDefinition A) (T : Finset A) (s : A)
+    (S : Type*) [CommRing S] [Algebra A S] [IsLocalization.Away s S]
+    (hden : HasDenominatorPower P T s S)
+    (T' : Finset A) (s' : A)
+    (S' : Type*) [CommRing S'] [Algebra A S'] [IsLocalization.Away s' S']
+    (hden' : HasDenominatorPower P T' s' S') :
+    letI := locUniformSpace P T s S hden
+    letI := isUniformAddGroup_locUniformSpace P T s S hden
+    letI := isTopologicalRing_locUniformSpace P T s S hden
+    letI := locUniformSpace P T' s' S' hden'
+    letI := isUniformAddGroup_locUniformSpace P T' s' S' hden'
+    letI := isTopologicalRing_locUniformSpace P T' s' S' hden'
+    ∀ (g : UniformSpace.Completion S →+* UniformSpace.Completion S')
+      (h : UniformSpace.Completion S' →+* UniformSpace.Completion S)
+      (hg : Continuous g) (hh : Continuous h)
+      (hgc : g.comp (toCompletionLoc P T s S hden) = toCompletionLoc P T' s' S' hden')
+      (hhc : h.comp (toCompletionLoc P T' s' S' hden') = toCompletionLoc P T s S hden),
+      Continuous (presentationRingEquiv P T s S hden T' s' S' hden' g h hg hh hgc hhc).symm := by
+  intro g h hg hh hgc hhc
+  exact hh
 
 /-- The comparison isomorphism is compatible with the structure maps from `A`, which is the
 property that determines it. -/

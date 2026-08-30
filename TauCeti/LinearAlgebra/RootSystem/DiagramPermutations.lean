@@ -155,6 +155,9 @@ theorem graphPermD_ne_one (n : ℕ) (hn : 2 ≤ n) : graphPermD n hn ≠ 1 := by
 /-- Applying the `E₆` graph permutation twice is the identity. -/
 @[simp] theorem graphPermE6_sq : graphPermE6 ^ 2 = 1 := by decide
 
+/-- The `E₆` graph permutation is its own inverse. -/
+@[simp] lemma graphPermE6_symm : graphPermE6.symm = graphPermE6 := by decide
+
 /-- The `E₆` graph permutation has order exactly two. -/
 @[simp] theorem orderOf_graphPermE6 : orderOf graphPermE6 = 2 :=
   orderOf_eq_prime graphPermE6_sq (by decide)

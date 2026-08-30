@@ -6,116 +6,92 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.RepresentationTheory.Character
-public import TauCeti.RepresentationTheory.Irreducible
-public import TauCeti.RepresentationTheory.Simple.Basic
 
 /-!
-# One-dimensional representations, and the linear characters that name them
+# One-dimensional representations from linear characters
 
-A **linear character** of a monoid `G` over a commutative ring `k` is a homomorphism
-`ψ : G →* kˣ`. It carries a representation on `k` itself, with `g` acting by multiplication by
-`ψ g`; conversely every representation on a line is of that shape. This file builds that
-representation, computes its character — which is `ψ` again, read in `k` — and records that over a
-field it is irreducible, hence a simple object of `FDRep k G`.
+A multiplicative character `χ : G →* kˣ` acts on the one-dimensional `k`-module `k` by scalar
+multiplication. This file packages that action as `Representation.ofLinearCharacter χ` and records
+the character, functoriality, and injectivity statements that let later constructions reason from
+`χ` rather than unfold the representation.
 
-These are the smallest representations there are, and they are how the smallest constituents of a
-character table are written down: the trivial representation, the sign of a permutation, a
-faithful character of a cyclic group. Mathlib has `Representation.trivial` but no construction
-from a general `ψ`, so the one below fills that gap.
-
-Note that `ψ` is valued in the **units** `kˣ`, not in `k`: a homomorphism to the multiplicative
-monoid of `k` would allow `ψ g = 0`, and the resulting `ρ g` would then not be invertible.
+The construction is the common core of the linear characters of the Borel subgroup and of
+`GL₂`; keeping it here avoids separate scalar-action implementations for each group.
 
 ## Main definitions
 
-* `TauCeti.Representation.ofLinearChar`: the one-dimensional representation of a linear character.
+* `Representation.ofLinearCharacter`: the one-dimensional representation associated to a
+  unit-valued multiplicative character.
 
-## Main statements
+## Main results
 
-* `TauCeti.Representation.character_ofLinearChar`: its character is the linear character itself.
-* `TauCeti.Representation.isIrreducible_ofLinearChar`, `TauCeti.Representation.simple_ofLinearChar`:
-  it is irreducible, being a line, hence a simple object of `FDRep k G`.
-* `TauCeti.Representation.eq_of_nonempty_iso_ofLinearChar`: two linear characters whose
-  representations are isomorphic are equal, so a linear character is recovered from the
-  isomorphism class of the object it names.
-
-## References
-
-Linear characters are the degree-one rows of a character table; see
-[the character-theory roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CharacterTheory/README.md).
+* `Representation.ofLinearCharacter_apply`: the action is multiplication by the character value.
+* `Representation.ofLinearCharacter_comp`: restriction of the representation is precomposition of
+  the character.
+* `Representation.ofLinearCharacter_injective`: the representation remembers its character.
+* `Representation.char_ofLinearCharacter`: the trace character is the original character, coerced
+  into the coefficient field.
 -/
 
 public section
 
-open CategoryTheory
-
-namespace TauCeti
+universe u v
 
 namespace Representation
 
-section Def
+variable {k : Type u} {G : Type v}
 
-variable {k : Type*} [CommRing k] {G : Type*} [Monoid G]
+/-- **The one-dimensional representation associated to a multiplicative character.** An element
+`g : G` acts on the line `k` by multiplication by the unit `χ g`. -/
+def ofLinearCharacter [CommSemiring k] [Monoid G] (χ : G →* kˣ) : Representation k G k where
+  toFun g := LinearMap.lsmul k k (χ g : k)
+  map_one' := by
+    apply LinearMap.ext
+    intro x
+    simp
+  map_mul' g h := by
+    apply LinearMap.ext
+    intro x
+    simp only [map_mul, Units.val_mul, LinearMap.lsmul_apply, smul_eq_mul,
+      Module.End.mul_apply]
+    rw [mul_assoc]
 
-/-- **The one-dimensional representation of a linear character** `ψ : G →* kˣ`: the representation
-of `G` on `k` in which `g` acts by multiplication by `ψ g`. -/
-def ofLinearChar (ψ : G →* kˣ) : _root_.Representation k G k where
-  toFun g := (ψ g : k) • LinearMap.id
-  map_one' := LinearMap.ext fun x => by simp
-  map_mul' g h := LinearMap.ext fun x => by
-    simp only [map_mul, Units.val_mul, Module.End.mul_apply, LinearMap.smul_apply,
-      LinearMap.id_coe, id_eq, smul_eq_mul]
-    ring
-
+/-- The representation associated to `χ` acts by multiplication by `χ`. -/
 @[simp]
-theorem ofLinearChar_apply (ψ : G →* kˣ) (g : G) (x : k) :
-    ofLinearChar ψ g x = (ψ g : k) * x := by
-  change ((ψ g : k) • LinearMap.id) x = _
-  simp
-
-/-- Precomposing the representation of a linear character with a homomorphism is the
-representation of the precomposed linear character. -/
-theorem ofLinearChar_comp {G' : Type*} [Monoid G'] (ψ : G →* kˣ) (f : G' →* G) :
-    (ofLinearChar ψ).comp f = ofLinearChar (ψ.comp f) :=
+theorem ofLinearCharacter_apply [CommSemiring k] [Monoid G] (χ : G →* kˣ) (g : G) (x : k) :
+    ofLinearCharacter χ g x = (χ g : k) * x :=
   (rfl)
 
-end Def
-
-section Field
-
-variable {k : Type*} [Field k] {G : Type*} [Monoid G]
-
-/-- **The character of a linear character is itself**, read in `k`: the trace of multiplication
-by `ψ g` on the line `k`. -/
+/-- **Restricting a one-dimensional representation is precomposition of its character.** -/
 @[simp]
-theorem character_ofLinearChar (ψ : G →* kˣ) (g : G) :
-    (FDRep.of (ofLinearChar ψ)).character g = ψ g := by
-  change LinearMap.trace k k (ofLinearChar ψ g) = _
-  rw [show ofLinearChar ψ g = (ψ g : k) • LinearMap.id from rfl,
-    map_smul, LinearMap.trace_id, Module.finrank_self]
-  simp
+theorem ofLinearCharacter_comp [CommSemiring k] [Monoid G] {H : Type*} [Monoid H]
+    (χ : G →* kˣ) (f : H →* G) :
+    (ofLinearCharacter χ).comp f = ofLinearCharacter (χ.comp f) := by
+  apply MonoidHom.ext
+  intro h
+  apply LinearMap.ext
+  intro x
+  rfl
 
-/-- **A linear character is irreducible**: it is carried by a line. -/
-instance isIrreducible_ofLinearChar (ψ : G →* kˣ) : (ofLinearChar ψ).IsIrreducible :=
-  isIrreducible_of_finrank_eq_one _ (Module.finrank_self k)
+/-- **The one-dimensional representation remembers its multiplicative character.** -/
+theorem ofLinearCharacter_injective [CommSemiring k] [Monoid G] :
+    Function.Injective (ofLinearCharacter : (G →* kˣ) → Representation k G k) := by
+  intro χ ψ h
+  apply MonoidHom.ext
+  intro g
+  apply Units.ext
+  have := congrArg (fun ρ : Representation k G k => ρ g 1) h
+  simpa using this
 
-/-- The finite-dimensional object carrying a linear character is a simple object of
-`FDRep k G`. -/
-instance simple_ofLinearChar (ψ : G →* kˣ) : Simple (FDRep.of (ofLinearChar ψ)) := by
-  rw [FDRep.simple_iff_isIrreducible]
-  exact isIrreducible_ofLinearChar ψ
-
-/-- **Isomorphic linear characters are equal.** An isomorphism of the two one-dimensional
-representations identifies their characters, and the character of `ofLinearChar ψ` is `ψ`. -/
-theorem eq_of_nonempty_iso_ofLinearChar {ψ φ : G →* kˣ}
-    (h : Nonempty (FDRep.of (ofLinearChar ψ) ≅ FDRep.of (ofLinearChar φ))) : ψ = φ := by
-  obtain ⟨e⟩ := h
-  have hchar := FDRep.char_iso e
-  ext g
-  simpa using congrFun hchar g
-
-end Field
+/-- **The trace character of a one-dimensional representation is its multiplicative character.** -/
+@[simp]
+theorem char_ofLinearCharacter [Field k] [Monoid G] (χ : G →* kˣ) (g : G) :
+    (ofLinearCharacter χ).character g = (χ g : k) := by
+  rw [character]
+  have h : ofLinearCharacter χ g = LinearMap.id.smulRight (χ g : k) := by
+    apply LinearMap.ext
+    intro x
+    simp [mul_comm]
+  rw [h, LinearMap.trace_smulRight, LinearMap.id_apply]
 
 end Representation
-
-end TauCeti

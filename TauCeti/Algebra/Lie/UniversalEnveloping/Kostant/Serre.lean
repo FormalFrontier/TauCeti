@@ -252,6 +252,47 @@ end Diagram
 
 /-! ## The Chevalley involution -/
 
+/-- The Serre Kostant form lies in the Kostant form of the families obtained by applying the
+Chevalley involution: the divided powers are unchanged up to sign, and the negated Cartan
+binomial coefficients are integral combinations of the original ones. -/
+private theorem serreKostantForm_le_kostantForm_serreChevalleyInvolution :
+    serreKostantForm CM ≤ kostantForm
+      (fun i => serreChevalleyInvolution ℚ CM (serreRootGenerator CM i))
+      (fun i => serreChevalleyInvolution ℚ CM (serreH ℚ CM i)) := by
+  rw [serreKostantForm_le_iff]
+  refine ⟨fun i n => ?_, fun i n => ?_, fun i n => ?_⟩
+  · apply (dividedPower_neg_mem_iff CM
+      (kostantForm
+        (fun i => serreChevalleyInvolution ℚ CM (serreRootGenerator CM i))
+        (fun i => serreChevalleyInvolution ℚ CM (serreH ℚ CM i))) _ n).1
+    simpa only [serreRootGenerator_inr, serreChevalleyInvolution_serreF, map_neg]
+      using dividedPower_mem_kostantForm
+        (fun i => serreChevalleyInvolution ℚ CM (serreRootGenerator CM i))
+        (fun i => serreChevalleyInvolution ℚ CM (serreH ℚ CM i)) (.inr i) n
+  · apply (dividedPower_neg_mem_iff CM
+      (kostantForm
+        (fun i => serreChevalleyInvolution ℚ CM (serreRootGenerator CM i))
+        (fun i => serreChevalleyInvolution ℚ CM (serreH ℚ CM i))) _ n).1
+    simpa only [serreRootGenerator_inl, serreChevalleyInvolution_serreE, map_neg]
+      using dividedPower_mem_kostantForm
+        (fun i => serreChevalleyInvolution ℚ CM (serreRootGenerator CM i))
+        (fun i => serreChevalleyInvolution ℚ CM (serreH ℚ CM i)) (.inl i) n
+  · have hneg : ∀ k, Ring.choose
+        (-(_root_.UniversalEnvelopingAlgebra.ι ℚ (serreH ℚ CM i))) k ∈
+          kostantForm
+            (fun i => serreChevalleyInvolution ℚ CM (serreRootGenerator CM i))
+            (fun i => serreChevalleyInvolution ℚ CM (serreH ℚ CM i)) := fun k => by
+      simpa only [serreChevalleyInvolution_serreH, map_neg]
+        using ringChoose_mem_kostantForm
+          (fun i => serreChevalleyInvolution ℚ CM (serreRootGenerator CM i))
+          (fun i => serreChevalleyInvolution ℚ CM (serreH ℚ CM i)) i k
+    simpa only [neg_neg] using Ring.choose_neg_mem
+      (A := kostantForm
+        (fun i => serreChevalleyInvolution ℚ CM (serreRootGenerator CM i))
+        (fun i => serreChevalleyInvolution ℚ CM (serreH ℚ CM i)))
+      (r := -(_root_.UniversalEnvelopingAlgebra.ι ℚ (serreH ℚ CM i))) (n := n)
+      (fun k _ => hneg k)
+
 /-- The families obtained by applying the Chevalley involution generate the original Serre
 Kostant form. The divided powers are unchanged up to sign, while the negated Cartan binomial
 coefficients are integral combinations of the original ones. -/
@@ -260,7 +301,7 @@ theorem kostantForm_serreChevalleyInvolution_eq :
         (fun i => serreChevalleyInvolution ℚ CM (serreRootGenerator CM i))
         (fun i => serreChevalleyInvolution ℚ CM (serreH ℚ CM i)) =
       serreKostantForm CM := by
-  apply le_antisymm
+  refine le_antisymm ?_ (serreKostantForm_le_kostantForm_serreChevalleyInvolution CM)
   · rw [kostantForm_le_iff]
     constructor
     · rintro (i | i) n
@@ -278,39 +319,6 @@ theorem kostantForm_serreChevalleyInvolution_eq :
       simp only [serreChevalleyInvolution_serreH]
       rw [map_neg]
       exact Ring.choose_neg_mem fun k _ => ringChoose_serreH_mem CM i k
-  · rw [serreKostantForm_le_iff]
-    refine ⟨fun i n => ?_, fun i n => ?_, fun i n => ?_⟩
-    · apply (dividedPower_neg_mem_iff CM
-        (kostantForm
-          (fun i => serreChevalleyInvolution ℚ CM (serreRootGenerator CM i))
-          (fun i => serreChevalleyInvolution ℚ CM (serreH ℚ CM i))) _ n).1
-      simpa only [serreRootGenerator_inr, serreChevalleyInvolution_serreF, map_neg]
-        using dividedPower_mem_kostantForm
-          (fun i => serreChevalleyInvolution ℚ CM (serreRootGenerator CM i))
-          (fun i => serreChevalleyInvolution ℚ CM (serreH ℚ CM i)) (.inr i) n
-    · apply (dividedPower_neg_mem_iff CM
-        (kostantForm
-          (fun i => serreChevalleyInvolution ℚ CM (serreRootGenerator CM i))
-          (fun i => serreChevalleyInvolution ℚ CM (serreH ℚ CM i))) _ n).1
-      simpa only [serreRootGenerator_inl, serreChevalleyInvolution_serreE, map_neg]
-        using dividedPower_mem_kostantForm
-          (fun i => serreChevalleyInvolution ℚ CM (serreRootGenerator CM i))
-          (fun i => serreChevalleyInvolution ℚ CM (serreH ℚ CM i)) (.inl i) n
-    · have hneg : ∀ k, Ring.choose
-          (-(_root_.UniversalEnvelopingAlgebra.ι ℚ (serreH ℚ CM i))) k ∈
-            kostantForm
-              (fun i => serreChevalleyInvolution ℚ CM (serreRootGenerator CM i))
-              (fun i => serreChevalleyInvolution ℚ CM (serreH ℚ CM i)) := fun k => by
-        simpa only [serreChevalleyInvolution_serreH, map_neg]
-          using ringChoose_mem_kostantForm
-            (fun i => serreChevalleyInvolution ℚ CM (serreRootGenerator CM i))
-            (fun i => serreChevalleyInvolution ℚ CM (serreH ℚ CM i)) i k
-      simpa only [neg_neg] using Ring.choose_neg_mem
-        (A := kostantForm
-          (fun i => serreChevalleyInvolution ℚ CM (serreRootGenerator CM i))
-          (fun i => serreChevalleyInvolution ℚ CM (serreH ℚ CM i)))
-        (r := -(_root_.UniversalEnvelopingAlgebra.ι ℚ (serreH ℚ CM i))) (n := n)
-        (fun k _ => hneg k)
 
 /-- The Chevalley involution of the Serre presentation restricted to its Kostant integral form. -/
 noncomputable def serreChevalleyKostantEquiv :

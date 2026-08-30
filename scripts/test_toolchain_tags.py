@@ -302,6 +302,43 @@ class Digest(unittest.TestCase):
         self.assertEqual(tt.state_digest(self.ROWS), tt.state_digest(worded))
 
 
+class AheadOfMain(unittest.TestCase):
+    """A release mathlib has tagged but main has not reached is not `unreachable`.
+
+    `unreachable` reads as permanent and the report files it under "no tag is possible".
+    For a release ahead of main that is the opposite of the truth, and it is the normal
+    state for days or weeks after mathlib cuts one, so it was the commonest thing the
+    report said and it was wrong."""
+
+    def test_a_release_ahead_of_main_is_ahead_not_unreachable(self):
+        row = tt._unreachable_row("v4.34.0-rc2", {}, newest_era="v4.34.0-rc1")
+        self.assertEqual(row["status"], "ahead")
+        self.assertIn("still on v4.34.0-rc1", row["reason"])
+
+    def test_a_release_main_stepped_over_is_still_unreachable(self):
+        # v4.33.1 is BEHIND v4.34.0-rc1, so main went past without stopping.
+        row = tt._unreachable_row("v4.33.1", {}, newest_era="v4.34.0-rc1")
+        self.assertEqual(row["status"], "unreachable")
+
+    def test_every_kind_of_later_release_counts_as_ahead(self):
+        for release in ("v4.34.0-rc2", "v4.34.0", "v4.35.0-rc1"):
+            with self.subTest(release=release):
+                row = tt._unreachable_row(release, {}, newest_era="v4.34.0-rc1")
+                self.assertEqual(row["status"], "ahead")
+
+    def test_the_report_separates_it_from_no_tag_is_possible(self):
+        rows = [tt._unreachable_row("v4.34.0-rc2", {}, newest_era="v4.34.0-rc1")]
+        text = tt.render(rows, include_policy=False)
+        self.assertIn("Ahead of main", text)
+        self.assertNotIn("No tag is possible", text)
+
+    def test_ahead_alone_is_not_worth_posting(self):
+        # Otherwise every mathlib release cut would post, whether or not main can act on it.
+        base = [{"release": "v4.34.0-rc1", "status": "tagged"}]
+        plus = base + [{"release": "v4.34.0-rc2", "status": "ahead"}]
+        self.assertEqual(tt.state_digest(base), tt.state_digest(plus))
+
+
 class DigestCause(unittest.TestCase):
     """A blocked release whose CAUSE changes must repost, or the visible reason stays wrong."""
 
@@ -326,7 +363,7 @@ class PostContent(unittest.TestCase):
 
     def test_it_carries_the_command_and_the_output(self):
         content = tt.post_content(self.ROWS, "0" * 16)
-        self.assertIn("python3 scripts/toolchain_tags.py", content)
+        self.assertIn(tt.SHELL_FENCE, content)
         self.assertIn("v4.34.0", content)
         self.assertEqual(content.count("```"), 4, "two fenced blocks")
 
@@ -347,8 +384,9 @@ class PostContent(unittest.TestCase):
         # command while displaying output with the policy stripped and rows collapsed,
         # which no run of that command would produce.
         content = tt.post_content(self.ROWS, "0" * 16)
-        command = content.split("```")[1].strip()
-        self.assertEqual(command, "python3 scripts/toolchain_tags.py --brief")
+        command = content.split("```shell\n")[1].split("\n```")[0].strip()
+        self.assertEqual(command, tt.BRIEF_COMMAND)
+        self.assertEqual(tt.BRIEF_COMMAND, "python3 scripts/toolchain_tags.py --brief")
         shown = content.split("```text")[1].split("```")[0].strip()
         produced = tt.render(self.ROWS, include_policy=False, collapse_old=True).strip()
         self.assertEqual(shown, produced)
@@ -359,6 +397,7 @@ class FakeZulip:
         self.messages = list(messages or [])
         self.bot_id = bot_id
         self.sent = []
+        self.updated = []
 
     def my_user_id(self):
         return self.bot_id
@@ -368,6 +407,9 @@ class FakeZulip:
 
     def send_message(self, content):
         self.sent.append(content)
+
+    def update_message(self, message_id, content):
+        self.updated.append((message_id, content))
 
 
 class PostIfChanged(unittest.TestCase):
@@ -385,10 +427,9 @@ class PostIfChanged(unittest.TestCase):
             self.addCleanup(lambda n=name, o=old:
                             os.environ.__setitem__(n, o) if o else os.environ.pop(n, None))
 
-    def _message(self, digest, sender=7):
+    def _message(self, digest, sender=7, content=None):
         return {"id": 1, "sender_id": sender,
-                "content": ("whatever\n"
-                            f"<!--toolchain-tags:v1 {digest}-->")}
+                "content": content or tt.post_content(self.ROWS, digest)}
 
     def test_it_posts_when_nothing_has_been_posted(self):
         fake = FakeZulip()
@@ -402,11 +443,40 @@ class PostIfChanged(unittest.TestCase):
         self._zulip(fake)
         self.assertFalse(tt.post_if_changed(self.ROWS))
         self.assertEqual(fake.sent, [])
+        self.assertEqual(fake.updated, [])
+
+    def test_it_repairs_the_old_fence_when_the_state_is_unchanged(self):
+        digest = tt.state_digest(self.ROWS)
+        old = tt.post_content(self.ROWS, digest).replace(tt.SHELL_FENCE, tt.OLD_FENCE, 1)
+        fake = FakeZulip([self._message(digest, content=old)])
+        self._zulip(fake)
+        self.assertFalse(tt.post_if_changed(self.ROWS))
+        self.assertEqual(fake.sent, [])
+        self.assertEqual(fake.updated, [(1, tt.post_content(self.ROWS, digest))])
+
+    def test_it_does_not_rewrite_other_content_when_the_state_is_unchanged(self):
+        digest = tt.state_digest(self.ROWS)
+        older_rows = [dict(row, reason="older wording") for row in self.ROWS]
+        old = tt.post_content(older_rows, digest)
+        self.assertNotEqual(old, tt.post_content(self.ROWS, digest))
+        fake = FakeZulip([self._message(digest, content=old)])
+        self._zulip(fake)
+        self.assertFalse(tt.post_if_changed(self.ROWS))
+        self.assertEqual(fake.sent, [])
+        self.assertEqual(fake.updated, [])
 
     def test_it_posts_when_the_state_changed(self):
         fake = FakeZulip([self._message("0" * 16)])
         self._zulip(fake)
         self.assertTrue(tt.post_if_changed(self.ROWS))
+
+    def test_it_corrects_the_old_fence_before_posting_a_new_state(self):
+        old = tt.post_content(self.ROWS, "0" * 16).replace(tt.SHELL_FENCE, tt.OLD_FENCE, 1)
+        fake = FakeZulip([self._message("0" * 16, content=old)])
+        self._zulip(fake)
+        self.assertTrue(tt.post_if_changed(self.ROWS))
+        self.assertEqual(fake.updated, [(1, old.replace(tt.OLD_FENCE, tt.SHELL_FENCE, 1))])
+        self.assertEqual(fake.sent, [tt.post_content(self.ROWS, tt.state_digest(self.ROWS))])
 
     def test_it_ignores_messages_from_other_accounts(self):
         # A human replying in the topic must not be mistaken for the last report.

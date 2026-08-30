@@ -156,6 +156,10 @@ theorem moebius_mul_of_isRelPrime {A B : (Ideal (𝓞 K))⁰}
   push_cast
   ring
 
+/-- The ideal Möbius function is multiplicative on relatively prime ideals. -/
+theorem isMultiplicative_moebius : (moebius : IdealArithmeticFunction K).IsMultiplicative :=
+  ⟨moebius_one, moebius_mul_of_isRelPrime⟩
+
 end IdealArithmeticFunction
 
 /-! ### The divisor sum of the Möbius function -/

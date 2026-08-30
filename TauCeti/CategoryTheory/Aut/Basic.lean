@@ -16,6 +16,8 @@ This file contains general bookkeeping lemmas for automorphisms of objects in a 
 
 * `TauCeti.CategoryTheory.comp_aut_pow_hom_of_comp`: iterating an automorphism that reindexes a
   family of morphisms reindexes that family by the corresponding function iterate.
+* `TauCeti.CategoryTheory.autMulEquivOfIso_hom`: the forward component of an automorphism
+  transported along an isomorphism.
 -/
 
 public section
@@ -27,6 +29,14 @@ open _root_.CategoryTheory
 universe v u
 
 variable {C : Type u} [Category.{v} C] {X Y : C} {iota : Type*}
+
+/-- The forward component of an automorphism transported along an isomorphism is the conjugate of
+its forward component. `Aut.autMulEquivOfIso` is not equipped with `@[simps]`, so this is the
+characterization its consumers use instead of its constructor. -/
+@[simp]
+theorem autMulEquivOfIso_hom (h : X ≅ Y) (a : Aut X) :
+    (Aut.autMulEquivOfIso h a).hom = h.inv ≫ a.hom ≫ h.hom :=
+  rfl
 
 /-- Iterating an automorphism which reindexes a family of morphisms reindexes that family by the
 corresponding function iterate. -/

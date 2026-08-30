@@ -40,6 +40,9 @@ directions before taking products.
 * `TauCeti.Grid.mem_cIco`: membership in the clockwise half-open arc.
 * `TauCeti.Grid.card_cIco`: the length of a half-open arc in standard representatives.
 * `TauCeti.Grid.cIco_union_swap`: opposite nondegenerate half-open arcs partition the grid.
+* `TauCeti.Grid.cIco_union_cIco_eq_cIco_of_mem_cIoo`: an interior point cuts a half-open arc
+  into two adjacent half-open arcs.
+* `TauCeti.Grid.disjoint_cIco_cIco_of_mem_cIoo`: the two pieces of such a cut are disjoint.
 * `TauCeti.Grid.Noninterleaving`: two endpoint pairs lie on the same cyclic side of each other.
 * `TauCeti.Grid.noninterleaving_rev`: non-interleaving is preserved by reversing every endpoint
   with `Fin.rev`, exchanging the two endpoints within each pair.
@@ -378,6 +381,25 @@ theorem mem_cIoo_or_mem_cIoo_swap_iff {a b x : Fin n} (h : a ≠ b) :
       · exact Or.inl ((mem_cIoo a b x).mpr ⟨h, by
           have hxb : x.val < b.val := Nat.lt_of_le_of_ne (Nat.le_of_not_gt hbx) (by omega)
           simp [hab, hxb]⟩)
+
+/-- A point strictly between two endpoints cuts their half-open cyclic interval into two
+adjacent half-open intervals. -/
+theorem cIco_union_cIco_eq_cIco_of_mem_cIoo {a b c : Fin n} (h : b ∈ cIoo a c) :
+    cIco a b ∪ cIco b c = cIco a c := by
+  ext x
+  rw [Finset.mem_union, mem_cIco, mem_cIco, mem_cIco]
+  rw [mem_cIoo] at h
+  split_ifs at h ⊢ <;> omega
+
+/-- The two pieces obtained by cutting a half-open cyclic interval at an interior point are
+disjoint. -/
+theorem disjoint_cIco_cIco_of_mem_cIoo {a b c : Fin n} (h : b ∈ cIoo a c) :
+    Disjoint (cIco a b) (cIco b c) := by
+  rw [Finset.disjoint_left]
+  intro x hxab hxbc
+  rw [mem_cIco] at hxab hxbc
+  rw [mem_cIoo] at h
+  split_ifs at h hxab hxbc <;> omega
 
 /-- A point outside the clockwise interval from `a` to `b` is either an endpoint or lies in
 the opposite clockwise interval. -/

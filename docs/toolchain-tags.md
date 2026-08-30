@@ -23,8 +23,10 @@ the recorded CI result and the published cache; neither needs a rebuild.
 
 ## What it does not cover
 
-The tool tags only commits on `main`, and reports a release `main` never ran on as
-`unreachable`. Two things cause that, and they differ in what can be done about them: the
+The tool tags only commits on `main`. A release mathlib has tagged but `main` has not
+reached yet is reported `ahead`: nothing is wrong, the bump has not got there, and it will
+be tagged like any other release when it does. A release `main` went past without stopping
+is reported `unreachable`. Two things cause that, and they differ in what can be done about them: the
 daily bump stepped over the release's window on Mathlib master, which a later bump could
 avoid, or Mathlib cut the release on its `stable` branch, which `check-bump.sh` will not let
 this repository pin at all.
@@ -45,7 +47,9 @@ never lower it.
 release becomes taggable or turns out not to be taggable. It runs on a push to `main` that
 changes `lean-toolchain`, waits for `ci.yml` to conclude on that commit, and then posts only
 if the state has changed since its last message. It reads that state from a marker in the
-message, so it stores nothing, and it never creates a tag.
+message, so it stores nothing, and it never creates a tag. Before comparing that marker,
+the bot repairs the missing `shell` language on its own newest old-style command fence;
+that one-time edit leaves the report body unchanged.
 
 The wait matters: the push lands 40 to 70 minutes before the release is taggable, because
 `ci.yml` coalesces bursts of `main` pushes and then takes 20 to 30 minutes, publishing the
