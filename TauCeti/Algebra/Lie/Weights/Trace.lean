@@ -49,8 +49,6 @@ recursion, by the normalization `⟨λ, α^∨⟩⟨α, α⟩ = 2⟨λ, α⟩` o
 
 ## Main definitions
 
-* `TauCeti.rootVectorMap`: the action of a root vector of weight `α`, as a linear map from the
-  `χ`-weight space to the `(α + χ)`-weight space.
 * `TauCeti.raiseLowerEnd`: acting by a root vector of weight `α` and then by one of weight `-α`, as
   an endomorphism of the `χ`-weight space.
 
@@ -88,39 +86,19 @@ variable {K : Type u} {L : Type v} {M : Type w} [CommRing K] [LieRing L] [LieAlg
   [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M]
 
 variable (M) in
-/-- The action of a root vector `x` of weight `α`, as a map from the `χ`-weight space of `M` to the
-`ψ`-weight space, for `ψ = α + χ`.  This is Mathlib's `LieAlgebra.rootSpaceWeightSpaceProductAux`
-evaluated at `x`, packaged so that the root vector enters as a membership hypothesis rather than as
-an element of `rootSpace H α`. -/
-def rootVectorMap {α χ ψ : H → K} {x : L} (hx : x ∈ rootSpace H α) (hψ : α + χ = ψ) :
-    genWeightSpace M χ →ₗ[K] genWeightSpace M ψ :=
-  rootSpaceWeightSpaceProductAux K L H M hψ ⟨x, hx⟩
-
-@[simp]
-theorem coe_rootVectorMap_apply {α χ ψ : H → K} {x : L} (hx : x ∈ rootSpace H α)
-    (hψ : α + χ = ψ) (m : genWeightSpace M χ) :
-    (rootVectorMap M hx hψ m : M) = ⁅x, (m : M)⁆ :=
-  (rfl)
-
-/-- The action of a root vector on weight spaces is the restriction of its action on all of `M`. -/
-theorem rootVectorMap_eq_restrict {α χ ψ : H → K} {x : L} (hx : x ∈ rootSpace H α)
-    (hψ : α + χ = ψ) :
-    rootVectorMap M hx hψ = (toEnd K L M x).restrict fun _ hm =>
-      hψ ▸ mapsTo_toEnd_genWeightSpace_add_of_mem_rootSpace K L H M α χ hx hm :=
-  (rfl)
-
-variable (M) in
 /-- Acting by a root vector `x` of weight `α` and then by a root vector `y` of weight `-α`, as an
 endomorphism of the `χ`-weight space of `M`. -/
 def raiseLowerEnd {α : H → K} {x y : L} (hx : x ∈ rootSpace H α)
     (hy : y ∈ rootSpace H (-α)) (χ : H → K) : Module.End K (genWeightSpace M χ) :=
-  rootVectorMap M hy (neg_add_cancel_left α χ) ∘ₗ rootVectorMap M hx rfl
+  rootSpaceWeightSpaceProductAux K L H M (neg_add_cancel_left α χ) ⟨y, hy⟩ ∘ₗ
+    rootSpaceWeightSpaceProductAux K L H M rfl ⟨x, hx⟩
 
 /-- `raiseLowerEnd` is the composite of the two root-vector actions, in that order. -/
 theorem raiseLowerEnd_def {α : H → K} {x y : L} (hx : x ∈ rootSpace H α)
     (hy : y ∈ rootSpace H (-α)) (χ : H → K) :
     raiseLowerEnd M hx hy χ
-      = rootVectorMap M hy (neg_add_cancel_left α χ) ∘ₗ rootVectorMap M hx rfl :=
+      = rootSpaceWeightSpaceProductAux K L H M (neg_add_cancel_left α χ) ⟨y, hy⟩ ∘ₗ
+        rootSpaceWeightSpaceProductAux K L H M rfl ⟨x, hx⟩ :=
   (rfl)
 
 @[simp]
@@ -131,18 +109,24 @@ theorem coe_raiseLowerEnd_apply {α : H → K} {x y : L} (hx : x ∈ rootSpace H
 
 /-- **The Leibniz identity, read on a weight space.**  Lowering and then raising differs from
 raising and then lowering by the action of `⁅x, y⁆`. -/
-theorem rootVectorMap_comp_rootVectorMap_sub_raiseLowerEnd_eq_toEnd
+theorem rootSpaceWeightSpaceProductAux_comp_sub_raiseLowerEnd_eq_toEnd
     {α : H → K} {x y : L} {z : H}
     (hx : x ∈ rootSpace H α) (hy : y ∈ rootSpace H (-α)) (hz : ⁅x, y⁆ = (z : L)) (χ : H → K) :
-    rootVectorMap M hx (rfl : α + χ = α + χ) ∘ₗ rootVectorMap M hy (neg_add_cancel_left α χ)
+    rootSpaceWeightSpaceProductAux K L H M (rfl : α + χ = α + χ) ⟨x, hx⟩ ∘ₗ
+        rootSpaceWeightSpaceProductAux K L H M (neg_add_cancel_left α χ) ⟨y, hy⟩
         - raiseLowerEnd M hx hy (α + χ)
       = toEnd K H (genWeightSpace M (α + χ)) z := by
   ext m
   have h := leibniz_lie x y (m : M)
+  have hxy :
+      ((rootSpaceWeightSpaceProductAux K L H M (rfl : α + χ = α + χ) ⟨x, hx⟩
+          (rootSpaceWeightSpaceProductAux K L H M (neg_add_cancel_left α χ) ⟨y, hy⟩ m) :
+          genWeightSpace M (α + χ)) : M) = ⁅x, ⁅y, (m : M)⁆⁆ :=
+    rfl
   simp only [LinearMap.sub_apply, LinearMap.coe_comp, Function.comp_apply,
-    AddSubgroupClass.coe_sub, coe_rootVectorMap_apply, coe_raiseLowerEnd_apply,
-    toEnd_apply_apply, LieSubmodule.coe_bracket, LieSubalgebra.coe_bracket_of_module, ← hz]
-  rw [h]
+    AddSubgroupClass.coe_sub, coe_raiseLowerEnd_apply, toEnd_apply_apply,
+    LieSubmodule.coe_bracket, LieSubalgebra.coe_bracket_of_module, ← hz]
+  rw [hxy, h]
   abel
 
 /-- On a trivial weight space the raise-lower endomorphism vanishes. -/
@@ -171,10 +155,11 @@ theorem trace_raiseLowerEnd_eq_trace_add_nsmul (hx : x ∈ rootSpace H α)
     trace K _ (raiseLowerEnd M hx hy χ)
       = trace K _ (raiseLowerEnd M hx hy (α + χ))
         + finrank K (genWeightSpace M (α + χ)) • (α + χ) z := by
-  have hswap := LinearMap.trace_comp_comm' (R := K) (rootVectorMap M hx (rfl : α + χ = α + χ))
-    (rootVectorMap M hy (neg_add_cancel_left α χ))
+  have hswap := LinearMap.trace_comp_comm' (R := K)
+    (rootSpaceWeightSpaceProductAux K L H M (rfl : α + χ = α + χ) ⟨x, hx⟩)
+    (rootSpaceWeightSpaceProductAux K L H M (neg_add_cancel_left α χ) ⟨y, hy⟩)
   have hcomm := congrArg (trace K (genWeightSpace M (α + χ)))
-    (rootVectorMap_comp_rootVectorMap_sub_raiseLowerEnd_eq_toEnd (M := M) hx hy hz χ)
+    (rootSpaceWeightSpaceProductAux_comp_sub_raiseLowerEnd_eq_toEnd (M := M) hx hy hz χ)
   rw [map_sub, trace_toEnd_genWeightSpace, sub_eq_iff_eq_add'] at hcomm
   -- `raiseLowerEnd_def` exposes the two factors that `hswap` exchanges.
   rw [raiseLowerEnd_def, hswap, hcomm]
