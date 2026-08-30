@@ -65,8 +65,6 @@ measure computation has just identified.
 * `ContRepresentation.schur_orthogonality_self_sum` and
   `ContRepresentation.schur_orthogonality_sum`: **the two Schur orthogonality relations as finite
   averages** of matrix coefficients.
-* `ContRepresentation.card_inv_mul_sum_character_mul_eq_finrank_contIntertwiningMap`: **the finite
-  character sum counts the intertwiners**, in Mathlib's `χ_π(g⁻¹) · χ_ρ(g)` shape.
 * `ContRepresentation.character_orthonormal_self_sum` and
   `ContRepresentation.character_orthonormal_distinct_sum`: **the two character orthogonality
   relations as finite averages**.
@@ -74,8 +72,12 @@ measure computation has just identified.
 The counting identity `|G|⁻¹ ∑ g, χ_π g = dim V^G` that the compact-group character integral
 generalizes then costs one rewrite. It is not given a name: Mathlib already proves it, as
 `Representation.card_inv_mul_sum_char_eq_finrank`, and that lemma closes the `ContRepresentation`
-statement outright, so only the route through the compact theory is new. The route is exhibited by
-an anonymous `example`, as is the agreement of `character_orthonormal_self_sum` with the diagonal
+statement outright, so only the route through the compact theory is new. The intertwiner count
+`|G|⁻¹ ∑ g, χ_π(g⁻¹) · χ_ρ(g) = dim Hom_G(V, W)` is unnamed for the same reason: Mathlib proves it
+as `Representation.card_inv_mul_sum_char_mul_char_eq_finrank`, for the algebraic intertwiner space
+`Representation.IntertwiningMap`, which in finite dimensions is the continuous one because every
+linear map out of a finite-dimensional normed space is continuous. Both routes are exhibited by
+anonymous `example`s, as is the agreement of `character_orthonormal_self_sum` with the diagonal
 half of Mathlib's `Representation.char_orthonormal`.
 
 ## Implementation notes
@@ -417,15 +419,19 @@ theorem inner_characterLp_eq_inv_mul_sum :
   rw [characterLp_def, characterLp_def, inner_toLp_eq_inv_mul_sum]
 
 omit [NormedSpace ℝ V] [SMulCommClass ℝ 𝕜 V] in
-/-- **The finite character sum counts the intertwiners**:
-`|G|⁻¹ ∑ g, χ_π(g⁻¹) · χ_ρ(g) = dim Hom_G(V, W)`.
+/- **The finite character sum counts the intertwiners**:
+`|G|⁻¹ ∑ g, χ_π(g⁻¹) · χ_ρ(g) = dim Hom_G(V, W)`, the specialization of
+`ContRepresentation.integral_character_mul_eq_finrank_contIntertwiningMap` to a finite discrete
+group. No unitarity is needed: the inverse in the first factor is what the compact statement
+carries, and only for a unitary representation does it become a complex conjugate.
 
-This is `ContRepresentation.integral_character_mul_eq_finrank_contIntertwiningMap` specialized to a
-finite discrete group, and it is exactly the shape of Mathlib's
-`Representation.card_inv_mul_sum_char_mul_char_eq_finrank`. No unitarity is needed: the inverse in
-the first factor is what the compact statement carries, and only for a unitary representation does
-it become a complex conjugate. -/
-theorem card_inv_mul_sum_character_mul_eq_finrank_contIntertwiningMap :
+No name is claimed, for the same reason as in the counting identity above: Mathlib proves this
+identity as `Representation.card_inv_mul_sum_char_mul_char_eq_finrank`, stated for the algebraic
+intertwiner space `Representation.IntertwiningMap π.toRepresentation ρ.toRepresentation`, which in
+finite dimensions is the continuous one. What the compact theory contributes is the derivation
+below, in which the count is the Haar integral read off by
+`TauCeti.integral_haarProb_eq_inv_mul_sum`. -/
+example :
     (Nat.card G : 𝕜)⁻¹ * ∑ g, character π hπ g⁻¹ * character ρ hρ g
       = (Module.finrank 𝕜 (ContIntertwiningMap π ρ) : 𝕜) := by
   rw [← integral_character_mul_eq_finrank_contIntertwiningMap π ρ hπ hρ,
