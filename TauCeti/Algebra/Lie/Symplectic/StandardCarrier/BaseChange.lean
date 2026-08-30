@@ -48,6 +48,10 @@ constructed symplectic group scheme.
 * `TauCeti.SpStd.mkQuotient_comp_rootSubgroupIntegralCoordinateMap` and
   `TauCeti.SpStd.mkQuotient_comp_weightTorusIntegralCoordinateMap`: over `ℤ`, each integral
   generator map recovers the coordinate map it factors, and so is determined by it.
+* `TauCeti.SpStd.hopfSpec_map_rootSubgroupIntegralCoordinateMap_op` and
+  `TauCeti.SpStd.hopfSpec_map_weightTorusIntegralCoordinateMap_op`: those integral generator maps
+  represent the carrier's existing pinning morphisms `TauCeti.SpStd.rootSubgroup` and
+  `TauCeti.SpStd.weightTorus`.
 * `TauCeti.SpStd.baseChangeDefiningIdeal_le_commonKernel`: the transported carrier contains the
   subgroup generated after base change by those maps.
 
@@ -204,6 +208,23 @@ theorem mkQuotient_comp_rootSubgroupIntegralCoordinateMap (k : Fin (n + 1) ⊕ F
     (fun _ hu _ hv => rep_kostantForm_mem_lattice n hu hv)
     (isNilpotent_rep_rootGenerator n) (latticeBasis n) (basisWeight n) (definingIdeal_def n) k
 
+/-- The integral factored root-subgroup coordinate map represents the carrier's `k`th numbered
+root subgroup: its spectrum is `TauCeti.SpStd.rootSubgroup`, read through the quotient-spectrum
+presentation of the carrier. -/
+-- Not a `simp` lemma: `simp` rewrites `hopfSpec` to `algSpec.mapGrp` composed with the
+-- Hopf-algebra/cogroup equivalence, so no equation whose sides mention `hopfSpec.map` has a
+-- left-hand side in `simp` normal form.
+theorem hopfSpec_map_rootSubgroupIntegralCoordinateMap_op (k : Fin (n + 1) ⊕ Fin (n + 1)) :
+    (AlgebraicGeometry.hopfSpec (CommRingCat.of ℤ)).map
+        (rootSubgroupIntegralCoordinateMap n k).op =
+      eqToHom (AdditiveGroup.groupScheme_def ℤ).symm ≫
+        rootSubgroup n k ≫ eqToHom (groupScheme_def n) := by
+  rw [rootSubgroupIntegralCoordinateMap, rootSubgroup_def]
+  exact hopfSpec_map_kostantRootSubgroupToralCoordinateMapOfEq_op (rootGenerator n)
+    (cartanGenerator n) (rep n) (lattice n).toAddSubgroup
+    (fun _ hu _ hv => rep_kostantForm_mem_lattice n hu hv)
+    (isNilpotent_rep_rootGenerator n) (latticeBasis n) (basisWeight n) (definingIdeal_def n) k
+
 /-- The base-changed `k`th root-subgroup coordinate map factored through the transported
 type-`C_(n+1)` carrier. -/
 noncomputable def rootSubgroupToBaseChangeCoordinateMap (k : Fin (n + 1) ⊕ Fin (n + 1)) :
@@ -286,6 +307,21 @@ theorem mkQuotient_comp_weightTorusIntegralCoordinateMap :
       GeneralLinear.weightTorusCoordinateMap (basisWeight n) := by
   rw [weightTorusIntegralCoordinateMap]
   exact mkQuotient_comp_kostantWeightTorusToralCoordinateMapOfEq (rootGenerator n)
+    (cartanGenerator n) (rep n) (lattice n).toAddSubgroup
+    (fun _ hu _ hv => rep_kostantForm_mem_lattice n hu hv)
+    (isNilpotent_rep_rootGenerator n) (latticeBasis n) (basisWeight n) (definingIdeal_def n)
+
+/-- The integral factored weight-torus coordinate map represents the carrier's weight torus: its
+spectrum is `TauCeti.SpStd.weightTorus`, read through the quotient-spectrum presentation of the
+carrier. -/
+theorem hopfSpec_map_weightTorusIntegralCoordinateMap_op :
+    (AlgebraicGeometry.hopfSpec (CommRingCat.of ℤ)).map
+        (weightTorusIntegralCoordinateMap n).op =
+      eqToHom (DiagonalizableGroup.groupScheme_def ℤ
+          (SplitTorus.characterGroup (Fin (n + 1)))).symm ≫
+        weightTorus n ≫ eqToHom (groupScheme_def n) := by
+  rw [weightTorusIntegralCoordinateMap, weightTorus_def]
+  exact hopfSpec_map_kostantWeightTorusToralCoordinateMapOfEq_op (rootGenerator n)
     (cartanGenerator n) (rep n) (lattice n).toAddSubgroup
     (fun _ hu _ hv => rep_kostantForm_mem_lattice n hu hv)
     (isNilpotent_rep_rootGenerator n) (latticeBasis n) (basisWeight n) (definingIdeal_def n)

@@ -59,6 +59,9 @@ torus maps lies in the base change of the integral toral carrier; equality is no
   the same identification and integral generator maps, read through a named spelling `J` of the
   integral defining ideal. A carrier that names its own defining ideal specializes these rather
   than replaying the equality transport.
+* `hopfSpec_map_kostantRootSubgroupToralCoordinateMapOfEq_op` and
+  `hopfSpec_map_kostantWeightTorusToralCoordinateMapOfEq_op`: those integral generator maps
+  represent the carrier's root-subgroup and weight-torus morphisms.
 
 ## References
 
@@ -374,6 +377,36 @@ theorem mkQuotient_comp_kostantWeightTorusToralCoordinateMapOfEq
   rw [kostantWeightTorusToralCoordinateMapOfEq, ← Category.assoc,
     CommHopfAlgCat.mkQuotient_comp_eqToHom hJ.symm,
     mkQuotient_comp_kostantWeightTorusToralCoordinateMap]
+
+/-- The spectrum of the integral factored `i`th root-subgroup coordinate map is the represented
+root-subgroup morphism into the toral carrier, transported to the named spelling `J`. -/
+-- Not a `simp` lemma: `simp` rewrites `hopfSpec` to `algSpec.mapGrp` composed with the
+-- Hopf-algebra/cogroup equivalence, so no equation whose sides mention `hopfSpec.map` has a
+-- left-hand side in `simp` normal form. The sibling `kostantRootSubgroupToToral_def` is stated
+-- without the attribute for the same reason.
+theorem hopfSpec_map_kostantRootSubgroupToralCoordinateMapOfEq_op
+    (hJ : J = kostantToralDefiningIdeal e h ρ M hM hnil b wt) (i : I) :
+    (AlgebraicGeometry.hopfSpec (CommRingCat.of ℤ)).map
+        (kostantRootSubgroupToralCoordinateMapOfEq e h ρ M hM hnil b wt hJ i).op =
+      eqToHom (AdditiveGroup.groupScheme_def ℤ).symm ≫
+        kostantRootSubgroupToToral e h ρ M hM hnil b wt i ≫
+          eqToHom (congrArg
+            (CommHopfAlgCat.quotientSpec (GeneralLinear.coordinateHopfAlgebra ℤ n)) hJ.symm) := by
+  subst hJ
+  simp [kostantRootSubgroupToralCoordinateMapOfEq, kostantRootSubgroupToToral_def]
+
+/-- The spectrum of the integral factored weight-torus coordinate map is the represented
+weight-torus morphism into the toral carrier, transported to the named spelling `J`. -/
+theorem hopfSpec_map_kostantWeightTorusToralCoordinateMapOfEq_op
+    (hJ : J = kostantToralDefiningIdeal e h ρ M hM hnil b wt) :
+    (AlgebraicGeometry.hopfSpec (CommRingCat.of ℤ)).map
+        (kostantWeightTorusToralCoordinateMapOfEq e h ρ M hM hnil b wt hJ).op =
+      eqToHom (DiagonalizableGroup.groupScheme_def ℤ (SplitTorus.characterGroup κ)).symm ≫
+        kostantWeightTorusToToral e h ρ M hM hnil b wt ≫
+          eqToHom (congrArg
+            (CommHopfAlgCat.quotientSpec (GeneralLinear.coordinateHopfAlgebra ℤ n)) hJ.symm) := by
+  subst hJ
+  simp [kostantWeightTorusToralCoordinateMapOfEq, kostantWeightTorusToToral_def]
 
 /-- Under the transported identification, the factored `i`th root-subgroup map over `A` is the
 scalar extension of its integral coordinate map. -/
