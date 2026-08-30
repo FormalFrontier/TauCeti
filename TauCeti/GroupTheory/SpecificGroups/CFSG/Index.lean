@@ -33,8 +33,9 @@ order `p ^ (2 * m + 1)`.
 * `TauCeti.PrimePower`: a prime and positive exponent, retaining the data needed for a finite field.
 * `TauCeti.LieTypeIndex` and `TauCeti.LieTypeIndex.Valid`: the Lie families and their preferred
   parameter range.
-* `TauCeti.ValidLieTypeIndex`, `TauCeti.SuzukiReeIndex`, and `TauCeti.GraphTwistedIndex`: the
-  restricted domains consumed by later carrier and endomorphism constructions.
+* `TauCeti.ValidLieTypeIndex`, `TauCeti.SuzukiReeIndex`, `TauCeti.GraphTwistedIndex`, and
+  `TauCeti.TypeCLieIndex`: the restricted domains consumed by later carrier and endomorphism
+  constructions.
 * `TauCeti.SporadicName`: the conventional twenty-six sporadic names.
 * `TauCeti.CFSGIndex`: cyclic, alternating, Lie-type, and sporadic entries in the classification
   list.
@@ -214,6 +215,29 @@ def UsesHalfFrobenius : LieTypeIndex → Prop
 
 instance : DecidablePred UsesHalfFrobenius := fun d => by
   cases d <;> rw [usesHalfFrobenius_iff] <;> infer_instance
+
+/-- Whether a Lie-type index belongs to the untwisted family `C_r(q)`.
+
+This is a constructor selector, not a mathematical property of a group. The rank, field, and
+preferred-representative restrictions come from the enclosing `TauCeti.ValidLieTypeIndex`. -/
+def IsTypeC : LieTypeIndex → Prop
+  | .C _ _ => True
+  | _ => False
+
+/-- Characterization of the untwisted type-C constructor. -/
+@[simp] theorem isTypeC_iff (d : LieTypeIndex) : d.IsTypeC ↔
+    match d with
+    | .C _ _ => True
+    | _ => False :=
+  Iff.rfl
+
+instance : DecidablePred IsTypeC := fun d => by
+  cases d <;> rw [isTypeC_iff] <;> infer_instance
+
+/-- The untwisted type-C family does not use a half-Frobenius. -/
+theorem not_usesHalfFrobenius_of_isTypeC {d : LieTypeIndex} (h : d.IsTypeC) :
+    ¬ d.UsesHalfFrobenius := by
+  cases d <;> simp_all [usesHalfFrobenius_iff]
 
 /-- The underlying untwisted Dynkin diagram. Twisted types map to the diagram from which they are
 constructed, so all later root indices use the root-systems roadmap's Bourbaki numbering.
@@ -565,6 +589,45 @@ theorem fieldOrder_pos (d : ValidLieTypeIndex) : 0 < d.fieldOrder :=
   d.1.fieldOrder_pos
 
 end ValidLieTypeIndex
+
+/-- A validated index in the untwisted type-`C` family `C_r(q)`.
+
+In particular, its rank is at least three and its characteristic is not two. -/
+abbrev TypeCLieIndex : Type _ := {d : ValidLieTypeIndex // d.1.IsTypeC}
+
+namespace TypeCLieIndex
+
+open LieTypeIndex (inStandardRange_iff valid_iff)
+
+/-- Introduce a valid type-`C` index. -/
+abbrev ofC (rank : ℕ) (q : PrimePower) (hvalid : (LieTypeIndex.C rank q).Valid) :
+    TypeCLieIndex :=
+  ⟨⟨.C rank q, hvalid⟩, (LieTypeIndex.isTypeC_iff _).mpr trivial⟩
+
+/-- Every type-C index is an introduction form `ofC rank q hvalid`. -/
+theorem exists_eq_ofC (d : TypeCLieIndex) :
+    ∃ (rank : ℕ) (q : PrimePower) (hvalid : (LieTypeIndex.C rank q).Valid),
+      d = ofC rank q hvalid := by
+  obtain ⟨⟨d, hvalid⟩, hC⟩ := d
+  revert hvalid hC
+  cases d
+  case C rank q => exact fun hvalid _ => ⟨rank, q, hvalid, rfl⟩
+  all_goals exact fun _ hC => ((LieTypeIndex.isTypeC_iff _).mp hC).elim
+
+/-- The rank of a validated type-`C` index is at least three. -/
+theorem three_le_rank (d : TypeCLieIndex) : 3 ≤ d.1.rank := by
+  obtain ⟨rank, q, hvalid, rfl⟩ := d.exists_eq_ofC
+  simpa only [ValidLieTypeIndex.rank, ValidLieTypeIndex.dynkinType,
+    LieTypeIndex.dynkinType_C, DynkinType.rank_C] using
+      ((inStandardRange_iff _).mp ((valid_iff _).mp hvalid).1).1
+
+/-- A validated type-`C` index has characteristic different from two. -/
+theorem characteristic_ne_two (d : TypeCLieIndex) : d.1.characteristic ≠ 2 := by
+  obtain ⟨rank, q, hvalid, rfl⟩ := d.exists_eq_ofC
+  simpa only [ValidLieTypeIndex.characteristic, LieTypeIndex.characteristic_C] using
+    ((inStandardRange_iff _).mp ((valid_iff _).mp hvalid).1).2
+
+end TypeCLieIndex
 
 /-! ## Executable checks for the range conventions -/
 
