@@ -19,14 +19,16 @@ this is already available as
 
 This file upgrades that equality inside `GLₙ(A)` to an isomorphism of the point groups themselves.
 The forward map is entrywise inclusion from the fixed subring into `A`; injectivity is inherited
-from that inclusion, and surjectivity is exactly the existing subgroup equality. When `A` is a
-field of characteristic `p` and `k` is nonzero, its fixed subring is the finite Frobenius-fixed
-subfield. It follows that the Frobenius-fixed point group is finite.
+from that inclusion, and surjectivity is exactly the existing subgroup equality. Consequently, the
+fixed-point group is finite whenever the fixed subring is finite. When `A` is a field of
+characteristic `p` and `k` is nonzero, its fixed subring is the finite Frobenius-fixed subfield.
 
 ## Main declarations
 
 * `TauCeti.UniversalEnvelopingAlgebra.kostantToralPointsFixedSubringMulEquiv`: the points over the
   Frobenius-fixed subring are isomorphic to the Frobenius-fixed points over `A`.
+* `TauCeti.UniversalEnvelopingAlgebra.finite_fixedSubgroup_kostantToralFrobenius`: finiteness of the
+  fixed subring implies finiteness of the fixed-point group.
 * `TauCeti.UniversalEnvelopingAlgebra.finite_fixedSubgroup_kostantToralFrobenius_of_charP`: over a
   field of characteristic `p`, a nonzero Frobenius iterate has a finite fixed subgroup.
 
@@ -74,6 +76,12 @@ private theorem generalLinearMap_frobeniusFixedSubring_injective :
       (Matrix.GeneralLinearGroup.map (n := Fin n) (frobeniusFixedSubring A p k).subtype) :=
   Units.map_injective (Matrix.map_injective Subtype.val_injective)
 
+private theorem coe_equivMapOfInjective_symm_apply {G N : Type*} [Group G] [Group N]
+    (H : Subgroup G) (f : G →* N) (hf : Function.Injective f) (x : H.map f) :
+    f ((H.equivMapOfInjective f hf).symm x) = x := by
+  rw [← Subgroup.coe_equivMapOfInjective_apply H f hf]
+  exact congrArg Subtype.val ((H.equivMapOfInjective f hf).apply_symm_apply x)
+
 /-- **Points of a Kostant toral closure over the Frobenius-fixed subring are isomorphic to the
 Frobenius-fixed points over the ambient ring.**
 
@@ -113,28 +121,46 @@ theorem coe_kostantToralPointsFixedSubringMulEquiv
     Matrix.GeneralLinearGroup.map (n := Fin n) (frobeniusFixedSubring A p k).subtype
   let sourceEquiv := source.equivMapOfInjective fixedRingMap
     (generalLinearMap_frobeniusFixedSubring_injective (n := n) p k A)
-  let targetImage := target.map
-    (kostantToralPointsSubgroup e h ρ M hM hnil b wt A).subtype
   let targetEquiv := target.equivMapOfInjective
     (kostantToralPointsSubgroup e h ρ M hM hnil b wt A).subtype
     (kostantToralPointsSubgroup e h ρ M hM hnil b wt A).subtype_injective
   let middle := MulEquiv.subgroupCongr
     (map_subtype_fixedSubgroup_kostantToralFrobenius_eq
       e h ρ M hM hnil b wt p k A).symm
-  -- The composite crosses subgroups of three different ambient groups. Exposing the named
-  -- factors here lets `apply_symm_apply` state the inverse law without unfolding their bodies.
-  change (((targetEquiv.symm (middle (sourceEquiv g)) : target) :
-      kostantToralPointsSubgroup e h ρ M hM hnil b wt A) :
-        Matrix.GeneralLinearGroup (Fin n) A) = fixedRingMap g
-  have hrecover := targetEquiv.apply_symm_apply (middle (sourceEquiv g))
-  have hrecover' := congrArg
-    (fun x : targetImage => (x : Matrix.GeneralLinearGroup (Fin n) A)) hrecover
-  -- Restate the two explicit subgroup maps as their coercions; they are definitionally equal but
-  -- not syntactically identical through the local abbreviations above.
-  change (((targetEquiv.symm (middle (sourceEquiv g)) : target) :
-      kostantToralPointsSubgroup e h ρ M hM hnil b wt A) :
-        Matrix.GeneralLinearGroup (Fin n) A) = fixedRingMap g at hrecover'
-  exact hrecover'
+  exact calc
+    (((targetEquiv.symm (middle (sourceEquiv g)) : target) :
+        kostantToralPointsSubgroup e h ρ M hM hnil b wt A) :
+          Matrix.GeneralLinearGroup (Fin n) A) = middle (sourceEquiv g) :=
+      coe_equivMapOfInjective_symm_apply target
+        (kostantToralPointsSubgroup e h ρ M hM hnil b wt A).subtype
+        (kostantToralPointsSubgroup e h ρ M hM hnil b wt A).subtype_injective _
+    _ = sourceEquiv g := MulEquiv.subgroupCongr_apply _ _
+    _ = fixedRingMap g := Subgroup.coe_equivMapOfInjective_apply _ _ _ _
+
+/-- Re-including the fixed-subring point recovered by the inverse fixed-point isomorphism gives
+the original Frobenius-fixed point. -/
+@[simp]
+theorem coe_kostantToralPointsFixedSubringMulEquiv_symm
+    (g : fixedSubgroup (kostantToralFrobenius e h ρ M hM hnil b wt p k A)) :
+    Matrix.GeneralLinearGroup.map (frobeniusFixedSubring A p k).subtype
+        ((kostantToralPointsFixedSubringMulEquiv e h ρ M hM hnil b wt p k A).symm g) =
+      ((g : kostantToralPointsSubgroup e h ρ M hM hnil b wt A) :
+        Matrix.GeneralLinearGroup (Fin n) A) := by
+  rw [← coe_kostantToralPointsFixedSubringMulEquiv]
+  exact congrArg (fun x : fixedSubgroup
+      (kostantToralFrobenius e h ρ M hM hnil b wt p k A) ↦
+        ((x : kostantToralPointsSubgroup e h ρ M hM hnil b wt A) :
+          Matrix.GeneralLinearGroup (Fin n) A))
+      ((kostantToralPointsFixedSubringMulEquiv e h ρ M hM hnil b wt p k A).apply_symm_apply g)
+
+/-- If the Frobenius-fixed subring is finite, then the Frobenius-fixed subgroup of every Kostant
+toral closure is finite. -/
+theorem finite_fixedSubgroup_kostantToralFrobenius
+    [Finite ↥(frobeniusFixedSubring A p k)] :
+    Finite ↥(fixedSubgroup (kostantToralFrobenius e h ρ M hM hnil b wt p k A)) :=
+  Finite.of_equiv
+    ↥(kostantToralPointsSubgroup e h ρ M hM hnil b wt ↥(frobeniusFixedSubring A p k))
+    (kostantToralPointsFixedSubringMulEquiv e h ρ M hM hnil b wt p k A).toEquiv
 
 end FixedPoints
 
@@ -157,9 +183,7 @@ theorem finite_fixedSubgroup_kostantToralFrobenius_of_charP (hk : k ≠ 0) :
     finite_frobeniusFixedSubfield K p k hk
   let _ : Finite ↥(frobeniusFixedSubring K p k) :=
     Finite.of_equiv ↥(frobeniusFixedSubfield K p k) (Equiv.setCongr hfixed)
-  exact Finite.of_equiv
-    ↥(kostantToralPointsSubgroup e h ρ M hM hnil b wt ↥(frobeniusFixedSubring K p k))
-    (kostantToralPointsFixedSubringMulEquiv e h ρ M hM hnil b wt p k K).toEquiv
+  exact finite_fixedSubgroup_kostantToralFrobenius e h ρ M hM hnil b wt p k K
 
 end FiniteFixedPoints
 
