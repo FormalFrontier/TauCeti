@@ -83,7 +83,6 @@ private noncomputable def gradedExtEulerRightInvariant
     have hS' : (S.map Q.ι).ShortExact := (ExactStructure.abelian_conflation _).mp hc
     exact gradedExtEuler_shortExact₂ hS' X.obj
       (h.isGradedEulerAdmissible X.property S.X₁.property)
-      (h.isGradedEulerAdmissible X.property S.X₂.property)
       (h.isGradedEulerAdmissible X.property S.X₃.property)
 
 /-- For a fixed object in `P`, the graded Ext-Euler characteristic descends in the second
@@ -134,7 +133,6 @@ private theorem gradedExtEulerRight_conflation
   have hS' : (S.map P.ι).ShortExact := (ExactStructure.abelian_conflation _).mp hc
   exact gradedExtEuler_shortExact₁ hS' Y.obj
     (h.isGradedEulerAdmissible S.X₁.property Y.property)
-    (h.isGradedEulerAdmissible S.X₂.property Y.property)
     (h.isGradedEulerAdmissible S.X₃.property Y.property)
 
 private noncomputable def gradedExtEulerLeftInvariant

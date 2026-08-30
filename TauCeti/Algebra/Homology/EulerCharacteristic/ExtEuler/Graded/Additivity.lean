@@ -161,30 +161,32 @@ theorem coeff_gradedExtEuler_eq_extEuler {X Y : C}
 variable. -/
 theorem gradedExtEuler_shortExact₂ (hS : S.ShortExact) (X : C)
     (h₁ : IsGradedEulerAdmissible.{w} k e X S.X₁)
-    (h₂ : IsGradedEulerAdmissible.{w} k e X S.X₂)
     (h₃ : IsGradedEulerAdmissible.{w} k e X S.X₃) :
-    gradedExtEuler k e h₂ = gradedExtEuler k e h₁ + gradedExtEuler k e h₃ := by
+    gradedExtEuler k e (h₁.of_shortExact₂ hS h₃) =
+      gradedExtEuler k e h₁ + gradedExtEuler k e h₃ := by
   ext j
   rw [AddMonoidAlgebra.coeff_add, Finsupp.add_apply,
     coeff_gradedExtEuler_eq_extEuler h₁,
-    coeff_gradedExtEuler_eq_extEuler h₂, coeff_gradedExtEuler_eq_extEuler h₃]
+    coeff_gradedExtEuler_eq_extEuler (h₁.of_shortExact₂ hS h₃),
+    coeff_gradedExtEuler_eq_extEuler h₃]
   exact extEuler_shortExact₂ (hS.map_of_exact (e ^ (-j)).functor) X
-    (h₁.isEulerAdmissible (-j)) (h₂.isEulerAdmissible (-j))
+    (h₁.isEulerAdmissible (-j)) ((h₁.of_shortExact₂ hS h₃).isEulerAdmissible (-j))
     (h₃.isEulerAdmissible (-j))
 
 /-- The graded Ext-Euler characteristic is additive on a short exact sequence in its first
 variable. -/
 theorem gradedExtEuler_shortExact₁ (hS : S.ShortExact) (Y : C)
     (h₁ : IsGradedEulerAdmissible.{w} k e S.X₁ Y)
-    (h₂ : IsGradedEulerAdmissible.{w} k e S.X₂ Y)
     (h₃ : IsGradedEulerAdmissible.{w} k e S.X₃ Y) :
-    gradedExtEuler k e h₂ = gradedExtEuler k e h₁ + gradedExtEuler k e h₃ := by
+    gradedExtEuler k e (h₁.of_shortExact₂' hS h₃) =
+      gradedExtEuler k e h₁ + gradedExtEuler k e h₃ := by
   ext j
   rw [AddMonoidAlgebra.coeff_add, Finsupp.add_apply,
     coeff_gradedExtEuler_eq_extEuler h₁,
-    coeff_gradedExtEuler_eq_extEuler h₂, coeff_gradedExtEuler_eq_extEuler h₃]
+    coeff_gradedExtEuler_eq_extEuler (h₁.of_shortExact₂' hS h₃),
+    coeff_gradedExtEuler_eq_extEuler h₃]
   exact extEuler_shortExact₁ hS ((e ^ (-j)).functor.obj Y)
-    (h₁.isEulerAdmissible (-j)) (h₂.isEulerAdmissible (-j))
+    (h₁.isEulerAdmissible (-j)) ((h₁.of_shortExact₂' hS h₃).isEulerAdmissible (-j))
     (h₃.isEulerAdmissible (-j))
 
 end TauCeti
