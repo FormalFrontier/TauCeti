@@ -90,6 +90,17 @@ def independent (μ : ∀ i, PMF (X i)) : FiniteMultiCoupling μ := by
   rw [Measure.toPMF_toMeasure]
   exact π.2.marginal_eq i
 
+/-- The point mass of the independent coupling is the product of its marginal point masses. -/
+@[simp]
+theorem independent_apply (μ : ∀ i, PMF (X i)) (x : ∀ i, X i) :
+    (independent μ).1 x = ∏ i, μ i (x i) := by
+  simp only [independent, Measure.toPMF_apply]
+  let _ : ∀ i, MeasurableSpace (X i) := fun _ ↦ ⊤
+  erw [MultiCoupling.coe_pi]
+  change Measure.pi (fun i ↦ (μ i).toMeasure) {x} = _
+  rw [Measure.pi_singleton]
+  simp
+
 end Independent
 
 /-- Every finite family of probability mass functions has a finite multi-marginal coupling. -/
