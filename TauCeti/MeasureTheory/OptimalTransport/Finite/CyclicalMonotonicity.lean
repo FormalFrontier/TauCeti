@@ -70,7 +70,7 @@ theorem isCyclicallyMonotone_toPMF_support_of_forall_cost_le (A : TransportMatri
     (hA : ∀ B : TransportMatrix μ ν, A.cost c ≤ B.cost c) :
     IsCyclicallyMonotone (fun q ↦ ENNReal.ofReal (c q)) A.toPMF.support := by
   obtain ⟨φ, ψ, hfeas, hsupp⟩ :=
-    (A.forall_cost_le_iff_exists_dualFeasible_and_support_subset_contactSet c).1 hA
+    (A.forall_cost_le_iff_exists_forall_add_le_and_support_subset_contactSet c).1 hA
   have hdual : DualFeasible (fun q ↦ ENNReal.ofReal (c q)) φ ψ :=
     (dualFeasible_ofReal_iff hc φ ψ).2 hfeas
   have hsupp' : A.toPMF.support ⊆

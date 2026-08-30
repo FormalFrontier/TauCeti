@@ -62,7 +62,7 @@ codomain: the inner supremum is `⊤` at a plan whose marginals are wrong.
   lives on the contact set of the pair, and
   `TauCeti.TransportMatrix.forall_cost_le_and_forall_finiteDualValue_le_iff_mem_contactSet` —
   the same certificate read through `TauCeti.contactSet`;
-* `TauCeti.TransportMatrix.forall_cost_le_iff_exists_dualFeasible_and_support_subset_contactSet`
+* `TauCeti.TransportMatrix.forall_cost_le_iff_exists_forall_add_le_and_support_subset_contactSet`
   — existential complementary slackness, with finite dual attainment supplying the potentials;
 * `TauCeti.finiteDualValue_eq_kantorovichDualValue`,
   `TauCeti.TransportMatrix.cost_eq_integral` and
@@ -733,7 +733,7 @@ theorem TransportMatrix.toPMF_support_subset_contactSet_coe_iff (A : TransportMa
 matrix minimizes a real cost exactly when there is a dual-feasible pair of potentials whose
 contact set contains the support of the matrix. Finite Kantorovich duality supplies the
 potentials, so they need not be selected in advance. -/
-theorem TransportMatrix.forall_cost_le_iff_exists_dualFeasible_and_support_subset_contactSet
+theorem TransportMatrix.forall_cost_le_iff_exists_forall_add_le_and_support_subset_contactSet
     (A : TransportMatrix μ ν) (c : ι × κ → ℝ) :
     (∀ B : TransportMatrix μ ν, A.cost c ≤ B.cost c) ↔
       ∃ φ : ι → ℝ, ∃ ψ : κ → ℝ, (∀ i j, φ i + ψ j ≤ c (i, j)) ∧
