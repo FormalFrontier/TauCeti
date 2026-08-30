@@ -118,13 +118,9 @@ lemma transitionUnit_self (D : CartierDivisor X) {U : X.Opens}
   symm
   apply transitionUnit_eq_of_spec D f f hf hf
   rw [sub_self]
-  -- The component of `toRationalUnitSheaf` is definitionally an additive hom.
-  change ((toRationalUnitSheaf X).hom.app (op (U ⊓ U))).hom 0 =
-    (0 : Additive (((rationalFunctionsRing X).presheaf.obj (op (U ⊓ U)))ˣ))
-  exact AddMonoidHom.map_zero _
+  exact AddMonoidHom.map_zero ((toRationalUnitSheaf X).hom.app (op (U ⊓ U))).hom
 
 /-- Reversing two local equations inverts their transition unit on every common refinement. -/
-@[simp]
 lemma transitionUnit_symm_restrict (D : CartierDivisor X) {U V W : X.Opens}
     (f : Additive (((rationalFunctionsRing X).presheaf.obj (op U))ˣ))
     (g : Additive (((rationalFunctionsRing X).presheaf.obj (op V))ˣ))
