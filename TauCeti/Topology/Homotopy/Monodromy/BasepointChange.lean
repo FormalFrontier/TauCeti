@@ -35,6 +35,8 @@ namespace TauCeti
 variable {E X : Type*} [TopologicalSpace E] [TopologicalSpace X]
   {p : E → X} {x₀ x₁ : X}
 
+namespace IsCoveringMap
+
 /-- The subgroup recovered at the endpoint of a lifted path is the basepoint transport of the
 subgroup recovered at its starting point. -/
 theorem range_mapOfEq_monodromy_path (hp : IsCoveringMap p) (γ : Path x₀ x₁)
@@ -59,7 +61,7 @@ theorem range_mapOfEq_monodromy_path (hp : IsCoveringMap p) (γ : Path x₀ x₁
         f.symm g = Path.Homotopic.Quotient.trans γq
           (Path.Homotopic.Quotient.trans g γq.symm) := by
       simpa only [f, γq] using
-        TauCeti.fundamentalGroupMulEquivOfPath_symm_apply γ g
+        TauCeti.FundamentalGroup.fundamentalGroupMulEquivOfPath_symm_apply γ g
     rw [← htrans]
     rw [hf]
     have hback : hp.monodromy γq.symm (hp.monodromy γq e₀) = e₀ := by
@@ -94,5 +96,7 @@ theorem range_mapOfEq_monodromy_path (hp : IsCoveringMap p) (γ : Path x₀ x₁
     FundamentalGroup.mem_basepointChangeSubgroup_iff,
     ← IsCoveringMap.monodromy_eq_self_iff_mem_range hp e₀]
   exact hmon g
+
+end IsCoveringMap
 
 end TauCeti
