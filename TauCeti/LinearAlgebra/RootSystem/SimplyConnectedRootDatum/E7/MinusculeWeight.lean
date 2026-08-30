@@ -153,6 +153,22 @@ theorem e7MinusculeReflection_apply_apply (i : Fin 7) (a : Fin 56) :
     e7MinusculeReflection i (e7MinusculeReflection i a) = a :=
   e7MinusculeReflectionIndex_involutive i a
 
+/-- A distinguished minuscule weight on which each simple raising operator acts nontrivially,
+together with the index of the resulting weight. -/
+theorem e7MinusculeWeight_distinguished_neg_one_step (i : Fin 7) :
+    e7MinusculeWeight (![8, 5, 6, 4, 3, 2, 1] i) i = -1 ∧
+      e7MinusculeReflection i (![8, 5, 6, 4, 3, 2, 1] i) =
+        ![6, 4, 4, 3, 2, 1, 0] i := by
+  fin_cases i <;> decide
+
+/-- A distinguished minuscule weight on which each simple lowering operator acts nontrivially,
+together with the index of the resulting weight. -/
+theorem e7MinusculeWeight_distinguished_one_step (i : Fin 7) :
+    e7MinusculeWeight (![6, 4, 4, 3, 2, 1, 0] i) i = 1 ∧
+      e7MinusculeReflection i (![6, 4, 4, 3, 2, 1, 0] i) =
+        ![8, 5, 6, 4, 3, 2, 1] i := by
+  fin_cases i <;> decide
+
 private theorem e7MinusculeWeight_reflection_table (i : Fin 7) (a : Fin 56) :
     e7MinusculeWeight (e7MinusculeReflection i a) =
       e7MinusculeWeight a - e7MinusculeWeight a i • CartanMatrix.E 7 i := by
