@@ -5,26 +5,23 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Probability.ProbabilityMassFunction.Integrals
-public import TauCeti.MeasureTheory.OptimalTransport.MultiMarginal.Basic
-public import TauCeti.Probability.ProbabilityMassFunction.Finite
+public import TauCeti.MeasureTheory.OptimalTransport.MultiMarginal.Finite.Basic
 
 /-!
-# Finite multi-marginal transport and complementary slackness
+# Finite multi-marginal duality and complementary slackness
 
-For finitely many finite spaces, a multi-marginal transport plan is a probability mass function
-on the dependent product whose coordinate pushforwards are prescribed.  This file packages that
-finite model, its real-valued primal cost, and the dual problem with one potential per marginal.
+For finitely many finite spaces, the multi-marginal dual problem has one real-valued potential
+per marginal, constrained so that their pointwise sum never exceeds the cost.
 
-The basic identity is the multi-marginal analogue of the transportation-matrix gap formula: the
-difference between the cost of a plan and the value of a family of potentials is the expectation
-of the pointwise dual gap.  It gives weak duality and complementary slackness without topology or
-linear-programming infrastructure.  In particular, a feasible plan and feasible potentials are
-simultaneously optimal as soon as every configuration carrying mass saturates the dual constraint.
+The basic identity in this file is the multi-marginal analogue of the transportation-matrix gap
+formula: the difference between the cost of a plan and the value of a family of potentials is the
+expectation of the pointwise dual gap. It gives weak duality and complementary slackness without
+topology or linear-programming infrastructure. In particular, a feasible plan and feasible
+potentials are simultaneously optimal as soon as every configuration carrying mass saturates the
+dual constraint.
 
-`TauCeti.FiniteMultiCoupling.toMultiCoupling` connects the finite model to the measurable
-`TauCeti.MultiCoupling` API.  Thus later finite multi-marginal duality can be transferred to the
-measure-theoretic definitions without maintaining a second notion of marginal.
+The finite coupling model and its bridge to the measure-theoretic `TauCeti.MultiCoupling` API live
+in `TauCeti.MeasureTheory.OptimalTransport.MultiMarginal.Finite.Basic`.
 
 This is the algebraic and certificate slice of Layer 2, item 6 of the optimal-transport roadmap.
 Strong duality and dual attainment are the remaining finite linear-programming step.
@@ -49,109 +46,6 @@ namespace TauCeti
 universe u v
 
 variable {ι : Type u} {X : ι → Type v} {μ : ∀ i, PMF (X i)}
-
-/-- A finite multi-marginal coupling is a probability mass function on the dependent product
-whose pushforward by each coordinate evaluation is the prescribed marginal. -/
-abbrev FiniteMultiCoupling (μ : ∀ i, PMF (X i)) :=
-  {π : PMF (∀ i, X i) // ∀ i, π.map (Function.eval i) = μ i}
-
-namespace FiniteMultiCoupling
-
-/-- Two finite multi-marginal couplings are equal when their point masses agree. -/
-@[ext]
-theorem ext {π σ : FiniteMultiCoupling μ} (h : ∀ x, π.1 x = σ.1 x) : π = σ := by
-  apply Subtype.ext
-  exact PMF.ext h
-
-/-- Every point mass of a finite multi-marginal coupling is finite. -/
-theorem apply_ne_top (π : FiniteMultiCoupling μ) (x : ∀ i, X i) : π.1 x ≠ ⊤ :=
-  π.1.apply_ne_top x
-
-/-- The marginal condition, in its canonical pushforward form. -/
-@[simp]
-theorem map_eval (π : FiniteMultiCoupling μ) (i : ι) : π.1.map (Function.eval i) = μ i :=
-  π.2 i
-
-/-- The measure of a finite multi-marginal coupling is a measure-theoretic multi-coupling of the
-measures associated to its marginals. -/
-theorem isMultiCoupling_toMeasure [∀ i, MeasurableSpace (X i)] (π : FiniteMultiCoupling μ) :
-    Measure.IsMultiCoupling π.1.toMeasure (fun i ↦ (μ i).toMeasure) := by
-  constructor
-  intro i
-  rw [PMF.toMeasure_map (Function.eval i) π.1 (measurable_pi_apply i), π.map_eval i]
-
-/-- A finite multi-marginal coupling, regarded as the bundled measure-theoretic coupling of the
-probability measures associated to its marginals. -/
-def toMultiCoupling [∀ i, MeasurableSpace (X i)]
-    (π : FiniteMultiCoupling μ) :
-    MultiCoupling (fun i ↦ (⟨(μ i).toMeasure, inferInstance⟩ : ProbabilityMeasure (X i))) :=
-  ⟨⟨π.1.toMeasure, inferInstance⟩, π.isMultiCoupling_toMeasure⟩
-
-/-- The measure underlying the bundled coupling associated to a finite coupling is the measure
-of its probability mass function. -/
-@[simp]
-theorem coe_toMultiCoupling [∀ i, MeasurableSpace (X i)]
-    (π : FiniteMultiCoupling μ) :
-    (π.toMultiCoupling : ProbabilityMeasure (∀ i, X i)).toMeasure = π.1.toMeasure := (rfl)
-
-section Independent
-
-variable [Fintype ι] [∀ i, Fintype (X i)]
-attribute [local instance] Classical.decEq
-
-/-- The independent finite multi-marginal coupling. -/
-def independent (μ : ∀ i, PMF (X i)) : FiniteMultiCoupling μ := by
-  let _ : ∀ i, MeasurableSpace (X i) := fun _ ↦ ⊤
-  let ν : ∀ i, ProbabilityMeasure (X i) := fun i ↦ ⟨(μ i).toMeasure, inferInstance⟩
-  let π : PMF (∀ i, X i) := (ProbabilityMeasure.pi ν).toMeasure.toPMF
-  refine ⟨π, fun i ↦ ?_⟩
-  rw [← PMF.toMeasure_inj]
-  rw [← PMF.toMeasure_map (Function.eval i) π (measurable_pi_apply i)]
-  dsimp only [π]
-  rw [Measure.toPMF_toMeasure]
-  exact (measurePreserving_eval (fun i ↦ (ν i).toMeasure) i).map_eq
-
-end Independent
-
-/-- Every finite family of probability mass functions has a finite multi-marginal coupling. -/
-instance instNonempty [Finite ι] [∀ i, Finite (X i)] :
-    Nonempty (FiniteMultiCoupling μ) := by
-  let _ := Fintype.ofFinite ι
-  let _ : ∀ i, Fintype (X i) := fun _ ↦ Fintype.ofFinite _
-  let _ := Fintype.ofFinite (∀ i, X i)
-  exact ⟨independent μ⟩
-
-section Cost
-
-variable [Fintype (∀ i, X i)]
-
-/-- The real cost of a finite multi-marginal coupling. -/
-def cost (c : (∀ i, X i) → ℝ) (π : FiniteMultiCoupling μ) : ℝ :=
-  ∑ x, c x * (π.1 x).toReal
-
-/-- The defining finite-sum formula for the cost of a multi-marginal coupling. -/
-theorem cost_def (c : (∀ i, X i) → ℝ) (π : FiniteMultiCoupling μ) :
-    π.cost c = ∑ x, c x * (π.1 x).toReal := (rfl)
-
-/-- Adding a constant to the cost adds that constant to every plan's cost. -/
-@[simp]
-theorem cost_add_const (c : (∀ i, X i) → ℝ) (π : FiniteMultiCoupling μ) (a : ℝ) :
-    π.cost (fun x ↦ c x + a) = π.cost c + a := by
-  rw [cost_def, cost_def]
-  simp only [add_mul, Finset.sum_add_distrib]
-  rw [← Finset.mul_sum, PMF.sum_toReal_eq_one, mul_one]
-
-/-- The finite-sum cost is the integral of the cost against the measure associated to the
-coupling. -/
-theorem cost_eq_integral [∀ i, MeasurableSpace (X i)]
-    [MeasurableSingletonClass (∀ i, X i)] (π : FiniteMultiCoupling μ)
-    (c : (∀ i, X i) → ℝ) : π.cost c = ∫ x, c x ∂π.1.toMeasure := by
-  rw [PMF.integral_eq_sum, cost_def]
-  simp only [smul_eq_mul, mul_comm]
-
-end Cost
-
-end FiniteMultiCoupling
 
 section DualValue
 
@@ -283,7 +177,7 @@ theorem FiniteMultiCoupling.cost_eq_finiteMultiDualValue_iff (π : FiniteMultiCo
     · linarith
     · rcases (ENNReal.toReal_eq_zero_iff (π.1 x)).1 hmass with hzero | htop
       · exact (hx hzero).elim
-      · exact (π.apply_ne_top x htop).elim
+      · exact (π.1.apply_ne_top x htop).elim
   · intro h x _
     by_cases hx : π.1 x = 0
     · simp [hx]
@@ -291,9 +185,9 @@ theorem FiniteMultiCoupling.cost_eq_finiteMultiDualValue_iff (π : FiniteMultiCo
 
 /-- A complementary-slackness pair is simultaneously primal- and dual-optimal among all finite
 multi-marginal plans and all feasible families of potentials. -/
-theorem FiniteMultiCoupling.isMin_and_isMax_of_eq (π : FiniteMultiCoupling μ)
-    {c : (∀ i, X i) → ℝ} {φ : ∀ i, X i → ℝ} (hφ : FiniteMultiDualFeasible c φ)
-    (heq : π.cost c = finiteMultiDualValue μ φ) :
+theorem FiniteMultiCoupling.forall_cost_le_and_forall_finiteMultiDualValue_le_of_eq
+    (π : FiniteMultiCoupling μ) {c : (∀ i, X i) → ℝ} {φ : ∀ i, X i → ℝ}
+    (hφ : FiniteMultiDualFeasible c φ) (heq : π.cost c = finiteMultiDualValue μ φ) :
     (∀ σ : FiniteMultiCoupling μ, π.cost c ≤ σ.cost c) ∧
       ∀ ψ, FiniteMultiDualFeasible c ψ → finiteMultiDualValue μ ψ ≤ finiteMultiDualValue μ φ := by
   constructor
