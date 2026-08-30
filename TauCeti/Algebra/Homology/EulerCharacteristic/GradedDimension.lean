@@ -31,8 +31,12 @@ explicit bounding finset, while coefficient lemmas characterize the resulting La
 ## Main definitions
 
 * `TauCeti.HasFiniteLaurentSupport`: termwise finite-dimensionality and finite support.
+* `TauCeti.HasFiniteLaurentSupport.reindex_add`: translation of the internal degree preserves
+  finite Laurent support.
 * `TauCeti.gradedDimension`: the Laurent polynomial with coefficient `dim_k(V j)` at `j`.
 * `TauCeti.targetShiftGradedDimension`: the target-shift convention with exponent `-j`.
+* `TauCeti.targetShiftGradedDimension_reindex_add`: translation of the family multiplies this
+  polynomial by the corresponding Laurent monomial.
 
 The predicate is closed under degreewise exact sequences, and both dimension conventions are
 additive on degreewise short exact sequences.
@@ -140,6 +144,18 @@ theorem of_exact
     let _ := hsU j hj.1
     let _ := hsW j hj.2
     exact subsingleton_of_exact (hfg j) (map_zero (f j))
+
+/-- A finite Laurent support is preserved by translating the degree index. -/
+theorem reindex_add (h : HasFiniteLaurentSupport k V) (r : ℤ) :
+    HasFiniteLaurentSupport k (fun j => V (j + r)) := by
+  obtain ⟨s, hs⟩ := h.exists_finset
+  refine of_finset (fun j => h.finiteDimensional (j + r))
+    (s.image fun j => j - r) ?_
+  intro j hj
+  apply hs (j + r)
+  intro hmem
+  apply hj
+  exact Finset.mem_image.mpr ⟨j + r, hmem, by omega⟩
 
 end HasFiniteLaurentSupport
 
@@ -262,6 +278,34 @@ piece indexed by `-j`. -/
 theorem coeff_targetShiftGradedDimension (h : HasFiniteLaurentSupport k V) (j : ℤ) :
     (targetShiftGradedDimension k V h).coeff j = Module.finrank k (V (-j)) := by
   simp [targetShiftGradedDimension]
+
+/-- The target-shift dimension of a translated family is multiplied by the corresponding Laurent
+variable.  This is the coefficient-level reindexing used by graded Euler forms. -/
+theorem targetShiftGradedDimension_reindex_add (h : HasFiniteLaurentSupport k V) (r : ℤ) :
+    targetShiftGradedDimension k (fun j => V (j + r)) (h.reindex_add r) =
+      T r * targetShiftGradedDimension k V h := by
+  ext j
+  rw [coeff_targetShiftGradedDimension]
+  rw [AddMonoidAlgebra.coeff_mul]
+  simp only [T, AddMonoidAlgebra.coeff_single]
+  -- `coeff_mul` leaves a nested finitely supported sum; the change exposes its single summand.
+  change _ = (Finsupp.single r 1).sum
+      (fun m₁ r₁ => (targetShiftGradedDimension k V h).coeff.sum
+        fun m₂ r₂ => if m₁ + m₂ = j then r₁ * r₂ else 0)
+  rw [Finsupp.sum_single_index (h_zero := by simp)]
+  simp only [Finsupp.sum]
+  rw [Finset.sum_eq_single (j - r)]
+  · simp only [add_sub_cancel, ↓reduceIte, coeff_targetShiftGradedDimension, one_mul,
+      Nat.cast_inj]
+    rw [show -j + r = -(j - r) by ring]
+  · intro b _ hbr
+    by_cases h' : r + b = j
+    · exact (hbr (by omega)).elim
+    · simp [h']
+  · intro h'
+    by_contra hn
+    apply h'
+    exact Finsupp.mem_support_iff.mpr (by simpa using hn)
 
 /-- The support of the target-shift graded dimension is the negation of the set of degrees with
 nonzero dimension. -/
