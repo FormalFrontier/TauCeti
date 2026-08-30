@@ -40,6 +40,8 @@ pinned group; and its order is the superscript in the printed family name, recor
   in the family name.
 * `TauCeti.TypeALieIndex.toGraphTwistedIndex`: the two type-A families, `Aₙ(q)` and `²Aₙ(q)`, as
   indices of that subtype, so that the permutations above are attached to them.
+* `TauCeti.TypeCLieIndex.toGraphTwistedIndex`: the untwisted type-C family as an index of that
+  subtype.
 
 ## Main results
 
@@ -332,5 +334,24 @@ abbrev toGraphTwistedIndex (d : TypeALieIndex) : GraphTwistedIndex :=
   ⟨d.1, not_usesHalfFrobenius_of_isTypeA d.2⟩
 
 end TypeALieIndex
+
+/-! ### The type-C family as graph-twisted indices -/
+
+namespace TypeCLieIndex
+
+open LieTypeIndex (not_usesHalfFrobenius_of_isTypeC)
+
+/-- A type-`C` index, regarded as an ordinary-or-graph-twisted index. The untwisted family does
+not use a half-Frobenius and its diagram permutation is the identity. -/
+abbrev toGraphTwistedIndex (d : TypeCLieIndex) : GraphTwistedIndex :=
+  ⟨d.1, not_usesHalfFrobenius_of_isTypeC d.2⟩
+
+/-- The diagram permutation of an untwisted type-`C` index is the identity. -/
+@[simp]
+theorem diagramPerm_eq_one (d : TypeCLieIndex) : d.toGraphTwistedIndex.diagramPerm = 1 := by
+  obtain ⟨rank, q, hvalid, rfl⟩ := d.exists_eq_ofC
+  simpa only [toGraphTwistedIndex] using GraphTwistedIndex.diagramPerm_C hvalid
+
+end TypeCLieIndex
 
 end TauCeti

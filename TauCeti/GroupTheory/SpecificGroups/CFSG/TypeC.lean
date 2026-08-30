@@ -65,47 +65,7 @@ public section
 
 namespace TauCeti
 
-namespace LieTypeIndex
-
-/-- Whether a Lie-type index belongs to the untwisted family `C_r(q)`.
-
-This is only a constructor selector. The enclosing `ValidLieTypeIndex` supplies the rank, field,
-and preferred-representative restrictions. -/
-abbrev IsTypeC : LieTypeIndex → Prop
-  | .C _ _ => True
-  | _ => False
-
-instance : DecidablePred IsTypeC := fun d => by
-  cases d <;> infer_instance
-
-end LieTypeIndex
-
-/-- A validated index in the untwisted type-`C` family `C_r(q)`.
-
-In particular, its rank is at least three and its characteristic is odd. -/
-abbrev TypeCLieIndex : Type := {d : ValidLieTypeIndex // d.1.IsTypeC}
-
 namespace TypeCLieIndex
-
-open LieTypeIndex (inStandardRange_iff usesHalfFrobenius_iff valid_iff)
-
-/-- Introduce a valid type-`C` index. -/
-abbrev ofC (rank : ℕ) (q : PrimePower) (hvalid : (LieTypeIndex.C rank q).Valid) :
-    TypeCLieIndex :=
-  ⟨⟨.C rank q, hvalid⟩, trivial⟩
-
-/-- The rank of a validated type-`C` index is at least three. -/
-theorem three_le_rank (d : TypeCLieIndex) : 3 ≤ d.1.rank := by
-  obtain ⟨⟨d, hvalid⟩, hC⟩ := d
-  -- Destructuring the nested subtype leaves its coercion in `hC`; expose the raw-index
-  -- proposition so constructor reduction can eliminate every non-`C` branch.
-  change d.IsTypeC at hC
-  cases d <;> try contradiction
-  case C rank q =>
-    -- Once the constructor selector has removed every other branch, the rank projection of
-    -- `LieTypeIndex.C rank q` reduces to `rank`.
-    change 3 ≤ rank
-    exact (inStandardRange_iff _).mp ((valid_iff _).mp hvalid).1 |>.1
 
 /-- The parameter used by `SpStd`: its value `n` denotes Dynkin type `C_(n+1)`. -/
 abbrev carrierParameter (d : TypeCLieIndex) : ℕ := d.1.rank - 1
@@ -119,27 +79,6 @@ theorem carrierParameter_add_one (d : TypeCLieIndex) : d.carrierParameter + 1 = 
 private abbrev rootIndex (d : TypeCLieIndex) (i : Fin d.1.rank) :
     Fin (d.carrierParameter + 1) :=
   Fin.cast d.carrierParameter_add_one.symm i
-
-/-- A type-`C` index, regarded as an ordinary-or-graph-twisted index. Its diagram permutation is
-the identity. -/
-abbrev toGraphTwistedIndex (d : TypeCLieIndex) : GraphTwistedIndex :=
-  ⟨d.1, by
-    obtain ⟨⟨d, _⟩, hC⟩ := d
-    -- Both hypotheses and target retain projections through the two subtype layers. Expose the
-    -- raw index before eliminating the constructors excluded by `IsTypeC`.
-    change d.IsTypeC at hC
-    change ¬d.UsesHalfFrobenius
-    cases d <;> simp_all [LieTypeIndex.IsTypeC, usesHalfFrobenius_iff]⟩
-
-/-- The diagram permutation of an untwisted type-`C` index is the identity. -/
-@[simp]
-theorem diagramPerm_eq_one (d : TypeCLieIndex) : d.toGraphTwistedIndex.diagramPerm = 1 := by
-  obtain ⟨⟨d, hvalid⟩, hC⟩ := d
-  -- As in `three_le_rank`, expose the raw selector after destructuring the nested subtype.
-  change d.IsTypeC at hC
-  cases d <;> try contradiction
-  case C rank q =>
-    simpa only [toGraphTwistedIndex] using GraphTwistedIndex.diagramPerm_C hvalid
 
 /-- The algebraic-closure-valued points of the explicit full-weight type-`C` Chevalley carrier. -/
 noncomputable abbrev AmbientGroup (d : TypeCLieIndex) : Type :=
@@ -161,13 +100,19 @@ theorem simpleRootSubgroup_def (d : TypeCLieIndex) (i : Fin d.1.rank) :
 
 /-- **The Steinberg endomorphism of a validated type-`C` index:** entrywise `q`-power
 Frobenius on the full-weight symplectic carrier. -/
-noncomputable abbrev steinberg (d : TypeCLieIndex) : d.AmbientGroup →* d.AmbientGroup :=
+noncomputable def steinberg (d : TypeCLieIndex) : d.AmbientGroup →* d.AmbientGroup :=
   SpStd.frobenius d.carrierParameter d.1.characteristic d.1.fieldExponent d.1.Closure
 
+/-- The indexed Steinberg endomorphism is the symplectic carrier's entrywise Frobenius. -/
+theorem steinberg_def (d : TypeCLieIndex) :
+    d.steinberg =
+      SpStd.frobenius d.carrierParameter d.1.characteristic d.1.fieldExponent d.1.Closure :=
+  (rfl)
+
 /-- Entrywise, the indexed Steinberg endomorphism raises every matrix coefficient to the recorded
-field order. This is not a simp lemma: because `steinberg` is transparent,
-`TauCeti.SpStd.coe_frobenius_apply` already supplies the canonical simp normal form in terms of the
-characteristic and field exponent; this theorem provides the CFSG index's `fieldOrder` spelling. -/
+field order. The opaque `steinberg` definition keeps this indexed equation as the canonical simp
+normal form rather than exposing the carrier's characteristic-and-exponent spelling. -/
+@[simp]
 theorem coe_steinberg_apply (d : TypeCLieIndex) (g : d.AmbientGroup)
     (i j : Fin ((d.carrierParameter + 1) + (d.carrierParameter + 1))) :
     ((d.steinberg g : Matrix.GeneralLinearGroup
@@ -179,7 +124,7 @@ theorem coe_steinberg_apply (d : TypeCLieIndex) (g : d.AmbientGroup)
         Matrix (Fin ((d.carrierParameter + 1) + (d.carrierParameter + 1)))
           (Fin ((d.carrierParameter + 1) + (d.carrierParameter + 1))) d.1.Closure) i j ^
         d.1.fieldOrder := by
-  rw [ValidLieTypeIndex.fieldOrder_eq_characteristic_pow]
+  rw [steinberg_def, ValidLieTypeIndex.fieldOrder_eq_characteristic_pow]
   exact SpStd.coe_frobenius_apply d.carrierParameter d.1.characteristic d.1.fieldExponent
     d.1.Closure g i j
 
@@ -192,7 +137,7 @@ theorem steinberg_simpleRootSubgroup (d : TypeCLieIndex) (i : Fin d.1.rank)
       d.simpleRootSubgroup (d.toGraphTwistedIndex.diagramPerm i)
         (Multiplicative.ofAdd (Multiplicative.toAdd u ^ d.1.fieldOrder)) := by
   simp only [diagramPerm_eq_one, Equiv.Perm.coe_one, id_eq]
-  rw [steinberg, simpleRootSubgroup_def,
+  rw [steinberg_def, simpleRootSubgroup_def,
     SpStd.frobenius_rootSubgroupPoints,
     ValidLieTypeIndex.fieldOrder_eq_characteristic_pow]
 
