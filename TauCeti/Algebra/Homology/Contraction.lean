@@ -121,12 +121,6 @@ theorem diff_comp_diff :
       p (p + 1) q (by lia) (by lia),
     Cochain.diff_v, Cochain.diff_v, Cochain.zero_v, HomologicalComplex.d_comp_d]
 
-variable (F) in
-/-- The differential cochain is a cocycle. -/
-@[simp]
-theorem δ_diff : δ 1 2 (Cochain.diff F) = 0 := by
-  simpa using (Cocycle.diff F).δ_eq_zero 2
-
 end CochainAux
 
 /-- A **contraction** of a cochain complex `K` onto a cochain complex `L`: an inclusion `incl`,
@@ -293,10 +287,11 @@ theorem homotopy₂_eq_sub :
 /-- The second normalization step preserves the contracting homotopy property: the correction is
 the differential composed with a cocycle, so it is annihilated by `δ`. -/
 @[simp] theorem δ_homotopy₂ : δ (-1) 0 c.homotopy₂ = Cochain.ofHom c.idemCompl := by
+  have hd : δ 1 2 (Cochain.diff K) = 0 := by simpa using (Cocycle.diff K).δ_eq_zero 2
   rw [homotopy₂_eq_sub, δ_sub,
     δ_comp (Cochain.diff K) c.homotopySq (show (1 : ℤ) + (-2) = -1 by lia)
       2 (-1) 0 (by lia) (by lia) (by lia),
-    c.δ_homotopySq, δ_diff, Cochain.comp_zero, Cochain.zero_comp, smul_zero, add_zero, sub_zero,
+    c.δ_homotopySq, hd, Cochain.comp_zero, Cochain.zero_comp, smul_zero, add_zero, sub_zero,
     c.δ_homotopy₁]
 
 @[simp] theorem incl_comp_homotopy₂ :
