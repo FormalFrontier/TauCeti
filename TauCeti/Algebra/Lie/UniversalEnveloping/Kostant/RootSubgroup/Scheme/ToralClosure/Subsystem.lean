@@ -44,8 +44,9 @@ over a general value ring and is not asserted here.
 * R. W. Carter, *Simple Groups of Lie Type*, §§4.4, 8.2, and 8.5.
 
 This advances the pinning and explicit Chevalley--Demazure construction targets in Layer 9 of
-`TauCetiRoadmap/ReductiveGroups/README.md`. A positive-root specialization supplies the compatible
-Borel carrier required by the pinning consumed in milestone L0 of the CFSGStatement roadmap.
+`TauCetiRoadmap/ReductiveGroups/README.md`. A positive-root specialization supplies a candidate
+carrier for the Borel required by the pinning consumed in milestone L0 of the CFSGStatement
+roadmap; its Borel and pinning-compatibility properties remain to be proved.
 -/
 
 public section
@@ -114,7 +115,7 @@ theorem le_kostantToralSubsystemDefiningIdeal_iff (S : Set I)
 
 /-- Enlarging the selected set can only shrink its common-kernel defining ideal. Equivalently,
 the associated closed subgroup scheme grows with the selected root set. -/
-theorem kostantToralSubsystemDefiningIdeal_antitone {S T : Set I} (hST : S ⊆ T) :
+theorem kostantToralSubsystemDefiningIdeal_le_of_subset {S T : Set I} (hST : S ⊆ T) :
     kostantToralSubsystemDefiningIdeal e h ρ M hM hnil b wt T ≤
       kostantToralSubsystemDefiningIdeal e h ρ M hM hnil b wt S := by
   rw [le_kostantToralSubsystemDefiningIdeal_iff]
@@ -194,7 +195,7 @@ noncomputable def kostantToralSubsystemMapOfSubset {S T : Set I} (hST : S ⊆ T)
     kostantToralSubsystemGroupScheme e h ρ M hM hnil b wt S ⟶
       kostantToralSubsystemGroupScheme e h ρ M hM hnil b wt T :=
   CommHopfAlgCat.quotientSpecMapOfLe (GeneralLinear.coordinateHopfAlgebra ℤ n)
-    (kostantToralSubsystemDefiningIdeal_antitone e h ρ M hM hnil b wt hST)
+    (kostantToralSubsystemDefiningIdeal_le_of_subset e h ρ M hM hnil b wt hST)
 
 /-- The map induced by inclusion of selected root sets is a closed immersion. -/
 instance isClosedImmersion_kostantToralSubsystemMapOfSubset {S T : Set I} (hST : S ⊆ T) :
@@ -250,6 +251,17 @@ theorem kostantToralSubsystemToToral_comp_ι (S : Set I) :
     kostantToralSubsystemGroupSchemeι, ← Category.assoc,
     CommHopfAlgCat.quotientSpecMapOfLe_comp_quotientSpecι]
 
+/-- The map induced by `S ⊆ T`, followed by the inclusion of the `T`-carrier into the full
+toral closure, is the inclusion of the `S`-carrier. -/
+@[simp]
+theorem kostantToralSubsystemMapOfSubset_comp_kostantToralSubsystemToToral
+    {S T : Set I} (hST : S ⊆ T) :
+    kostantToralSubsystemMapOfSubset e h ρ M hM hnil b wt hST ≫
+        kostantToralSubsystemToToral e h ρ M hM hnil b wt T =
+      kostantToralSubsystemToToral e h ρ M hM hnil b wt S := by
+  rw [kostantToralSubsystemMapOfSubset, kostantToralSubsystemToToral,
+    kostantToralSubsystemToToral, CommHopfAlgCat.quotientSpecMapOfLe_comp]
+
 /-- A toral-subsystem carrier, regarded as a closed subgroup scheme of the full toral closure. -/
 noncomputable def kostantToralSubsystemClosedSubgroup (S : Set I) :
     ClosedSubgroupScheme (kostantToralGroupScheme e h ρ M hM hnil b wt) :=
@@ -261,6 +273,19 @@ theorem coe_kostantToralSubsystemClosedSubgroup (S : Set I) :
     (kostantToralSubsystemClosedSubgroup e h ρ M hM hnil b wt S).1 =
       Subobject.mk (kostantToralSubsystemToToral e h ρ M hM hnil b wt S) :=
   ClosedSubgroupScheme.coe_mk _
+
+/-- Inclusion of selected root sets gives inclusion of the corresponding closed subgroup
+schemes of the full toral closure. -/
+theorem kostantToralSubsystemClosedSubgroup_le_of_subset {S T : Set I} (hST : S ⊆ T) :
+    kostantToralSubsystemClosedSubgroup e h ρ M hM hnil b wt S ≤
+      kostantToralSubsystemClosedSubgroup e h ρ M hM hnil b wt T := by
+  change (kostantToralSubsystemClosedSubgroup e h ρ M hM hnil b wt S).1 ≤
+    (kostantToralSubsystemClosedSubgroup e h ρ M hM hnil b wt T).1
+  rw [coe_kostantToralSubsystemClosedSubgroup, coe_kostantToralSubsystemClosedSubgroup]
+  exact Subobject.mk_le_mk_of_comm
+    (kostantToralSubsystemMapOfSubset e h ρ M hM hnil b wt hST)
+    (kostantToralSubsystemMapOfSubset_comp_kostantToralSubsystemToToral
+      e h ρ M hM hnil b wt hST)
 
 /-- The coordinate map through which a selected root subgroup factors into its subsystem
 carrier. -/
