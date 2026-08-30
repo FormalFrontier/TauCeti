@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Combinatorics.Young.Diagram
 public import TauCeti.RepresentationTheory.Symmetric.Specht.Module
 
 /-!
@@ -43,7 +42,8 @@ The sets `X` the relation is applied to are the **Garnir sets** `TauCeti.YoungTa
 j`: the labels of `t` in column `j` from row `i` downwards together with those in column `j + 1`
 from row `i` upwards.  As soon as `(i, j + 1)` is a cell of `μ` there are `μ.colLen j + 1` of them
 (`TauCeti.YoungTableau.card_garnirSet`) while they occupy only the `μ.colLen j` rows of column `j`,
-so the relation applies (`TauCeti.YoungTableau.asAlgebraHom_antisymmetrizerOn_garnirSet_eq_zero`).
+so the relation applies
+(`TauCeti.YoungTableau.asAlgebraHom_antisymmetrizerOn_garnirSet_polytabloid_eq_zero`).
 Those are the sets the straightening algorithm uses at a cell `(i, j)` where the rows of the
 tableau fail to increase.
 
@@ -71,8 +71,8 @@ relation is proved, and stated, for the whole of `A_X`.
   vanishing of a signed sum of polytabloids.
 * `TauCeti.YoungTableau.card_garnirSet`: a Garnir set has one more element than the column it
   straddles has cells.
-* `TauCeti.YoungTableau.asAlgebraHom_antisymmetrizerOn_garnirSet_eq_zero`: the Garnir relation at a
-  Garnir set.
+* `TauCeti.YoungTableau.asAlgebraHom_antisymmetrizerOn_garnirSet_polytabloid_eq_zero`: the Garnir
+  relation at a Garnir set.
 
 ## References
 
@@ -249,7 +249,7 @@ theorem card_garnirSet (t : YoungTableau μ) {i j : ℕ} (h : (i, j + 1) ∈ μ)
 
 /-- **The Garnir relation at a Garnir set.**  If `(i, j + 1)` is a cell of `μ`, the antisymmetrizer
 of the Garnir set of `t` at `(i, j)` annihilates the polytabloid of `t`. -/
-theorem asAlgebraHom_antisymmetrizerOn_garnirSet_eq_zero (t : YoungTableau μ) {i j : ℕ}
+theorem asAlgebraHom_antisymmetrizerOn_garnirSet_polytabloid_eq_zero (t : YoungTableau μ) {i j : ℕ}
     (h : (i, j + 1) ∈ μ) :
     (permutationModule (shapePartition μ)).ρ.asAlgebraHom (antisymmetrizerOn (garnirSet t i j))
         (polytabloid t) = 0 :=

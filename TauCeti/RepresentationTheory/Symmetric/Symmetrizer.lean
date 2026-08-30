@@ -10,7 +10,6 @@ public import Mathlib.Algebra.Group.Subgroup.Finite
 public import Mathlib.GroupTheory.GroupAction.FixingSubgroup
 public import Mathlib.GroupTheory.Perm.Sign
 public import Mathlib.RepresentationTheory.Basic
-public import TauCeti.Algebra.MonoidAlgebra.SubgroupCharSum
 public import TauCeti.RepresentationTheory.SubgroupCharSum
 public import TauCeti.RepresentationTheory.Symmetric.RowColumnSubgroup
 
