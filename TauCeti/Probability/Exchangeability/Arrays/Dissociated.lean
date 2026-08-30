@@ -7,9 +7,7 @@ module
 
 public import TauCeti.Probability.Exchangeability.Arrays.Block
 public import TauCeti.Probability.Independence.DisjointBlocks
--- Non-public: contractability bridges and the zero-one law for a self-independent event are used
--- only inside proofs.
-import TauCeti.Probability.Exchangeability.Contractability
+-- Non-public: the zero-one law for a self-independent event is used only inside a proof.
 import Mathlib.Probability.Independence.ZeroOne
 
 /-!
@@ -73,9 +71,6 @@ These results advance the exchangeable-arrays milestone of
   `TauCeti.Probability.JointlyDissociated.indepFun_arrayDiag` — entries in different rows and
   different columns are independent, so in particular the diagonal entries of a jointly dissociated
   array are pairwise independent;
-* `TauCeti.Probability.JointlyDissociated.iIndepFun_arrayDiag` and
-  `TauCeti.Probability.JointlyDissociated.exists_mixedIIDWith_const_arrayDiag` — the diagonal of a
-  jointly dissociated array is independent, and joint exchangeability makes it i.i.d.;
 * `TauCeti.Probability.JointlyDissociated.measure_preimage_eq_zero_or_one_of_const` — a dissociated
   array with all entries equal has an almost surely trivial entry;
 * `TauCeti.Probability.SeparatelyDissociated.measure_preimage_eq_zero_or_one_of_symm` — a symmetric
@@ -241,47 +236,6 @@ theorem JointlyDissociated.indepFun_arrayDiag (h : JointlyDissociated μ X) {i i
   rw [arrayDiag_apply, arrayDiag_apply]
   exact (jointlyDissociated_iff.mp h (fun _ => i) (fun _ => i') (by simpa using hi)).comp
     (measurable_pi_apply (0, 0)) (measurable_pi_apply (0, 0))
-
-/-- **The diagonal entries of a jointly dissociated array are independent.** A diagonal entry is
-independent of the square block over any finite set of other indices, which gives the finite-family
-criterion for mutual independence. -/
-theorem JointlyDissociated.iIndepFun_arrayDiag [IsProbabilityMeasure μ]
-    (h : JointlyDissociated μ X) : iIndepFun (arrayDiag X) μ := by
-  rw [iIndepFun_iff]
-  intro s f hf
-  induction s using Finset.induction_on with
-  | empty => simp
-  | @insert i s hi ih =>
-      have hdisj : Disjoint ({i} : Set ℕ) (s : Set ℕ) := by
-        simpa [Set.disjoint_left] using hi
-      have hindep := h.indep_blockSigma_prod (S := {i}) (T := (s : Set ℕ)) hdisj
-      have hfi' := hf i (Finset.mem_insert_self i s)
-      rw [arrayDiag_apply] at hfi'
-      have hfi : MeasurableSet[blockSigma X (({i} : Set ℕ) ×ˢ {i})] (f i) :=
-        (measurable_blockSigma_of_mem (Z := X) (by simp)).comap_le _ hfi'
-      have hrest : MeasurableSet[blockSigma X ((s : Set ℕ) ×ˢ (s : Set ℕ))]
-          (⋂ j ∈ s, f j) := by
-        refine s.measurableSet_biInter fun j hj => ?_
-        have hfj := hf j (Finset.mem_insert_of_mem hj)
-        rw [arrayDiag_apply] at hfj
-        exact (measurable_blockSigma_of_mem (Z := X) (by simp [hj])).comap_le _ hfj
-      rw [Finset.prod_insert hi, ← ih fun j hj => hf j (Finset.mem_insert_of_mem hj)]
-      simpa only [Finset.set_biInter_insert] using
-        (Indep_iff _ _ _).mp hindep _ _ hfi hrest
-
-/-- **The diagonal of a jointly exchangeable, jointly dissociated array is i.i.d.**, with its common
-law named: there is a probability measure `P` with `fun _ => P` a mixing representative of the
-diagonal, so the diagonal entries are independent with common law `P`. Dissociation supplies
-independence, while joint exchangeability supplies the common law. -/
-theorem JointlyDissociated.exists_mixedIIDWith_const_arrayDiag [IsProbabilityMeasure μ]
-    (h : JointlyDissociated μ X) (hexch : JointlyExchangeable μ X)
-    (hX : ∀ p, AEMeasurable (X p) μ) :
-    ∃ P : ProbabilityMeasure α, MixedIIDWith μ (arrayDiag X) fun _ => P := by
-  have hdiag : ∀ i, AEMeasurable (arrayDiag X i) μ := fun i => by
-    simpa only [arrayDiag_apply] using hX (i, i)
-  have hident : ∀ i, IdentDistrib (arrayDiag X i) (arrayDiag X 0) μ μ := fun i =>
-    ((hexch.exchangeable_arrayDiag hX).contractable hdiag).identDistrib_coord (hdiag i) (hdiag 0)
-  exact ⟨_, MixedIIDWith.of_iIndepFun_identDistrib h.iIndepFun_arrayDiag hident⟩
 
 /-- A random variable independent of itself generates an almost surely trivial σ-algebra. -/
 private theorem measure_preimage_eq_zero_or_one_of_indepFun_self [IsProbabilityMeasure μ]
