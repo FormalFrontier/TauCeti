@@ -5,8 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.GroupAction.FixingSubgroup
-public import TauCeti.RepresentationTheory.AsAlgebraHom
+public import TauCeti.Combinatorics.Young.Diagram
 public import TauCeti.RepresentationTheory.Symmetric.Specht.Module
 
 /-!
@@ -18,7 +17,8 @@ straightening algorithm rewrites an arbitrary polytabloid with are the **Garnir 
 this file proves them.
 
 Write `A_X` for the signed sum `∑ sgn(σ) σ` over the permutations `σ` fixing every label outside a
-finite set `X` (`TauCeti.antisymmetrizerOn`).  The Garnir relation is
+finite set `X` (`TauCeti.antisymmetrizerOn`, defined with the other signed sums in
+`TauCeti/RepresentationTheory/Symmetric/Symmetrizer.lean`).  The Garnir relation is
 
 `A_X · e_t = 0`
 
@@ -26,14 +26,13 @@ whenever `X` is too large to be spread over the rows available to it: all the la
 columns of `μ` of length at most `r`, and `X` has more than `r` elements
 (`TauCeti.YoungTableau.asAlgebraHom_antisymmetrizerOn_polytabloid_eq_zero`).  Applied to the
 polytabloid it reads as the vanishing of a signed sum of the polytabloids `e_{σt}`
-(`TauCeti.YoungTableau.sum_signChar_smul_polytabloid_relabel_eq_zero`).
+(`TauCeti.YoungTableau.sum_sign_smul_polytabloid_relabel_eq_zero`).
 
 Two facts drive the proof.
 
-* **A signed sum kills whatever an odd permutation in it fixes.**  If `σ ↦ sgn(σ) σ` is summed over
-  a subgroup containing a transposition `τ`, then reindexing by `τ` on the right turns the sum into
-  its own negative, so it annihilates every vector fixed by `τ`
-  (`TauCeti.asAlgebraHom_antisymmetrizerOn_apply_eq_zero`).
+* **A signed sum kills whatever an odd permutation in it fixes.**  Absorbing an odd permutation
+  supported in `X` turns `A_X` into its own negative, so `A_X` annihilates every vector that
+  permutation fixes (`TauCeti.asAlgebraHom_antisymmetrizerOn_apply_eq_zero`).
 * **Pigeonhole in the columns.**  A column permutation `q` of `t` moves a label only within its own
   column, so in the tabloid `q · {t}` the labels of `X` still lie in columns of length at most `r`,
   that is, in `r` rows.  As `X` has more than `r` elements, two of them share a row of `q · {t}`,
@@ -60,19 +59,15 @@ relation is proved, and stated, for the whole of `A_X`.
 
 ## Main definitions
 
-* `TauCeti.antisymmetrizerOn`: the signed sum `∑ sgn(σ) σ` over the permutations supported in a
-  finite set.
 * `TauCeti.YoungTableau.garnirSet`: the Garnir set of a tableau at a row and a column.
 
 ## Main results
 
-* `TauCeti.asAlgebraHom_antisymmetrizerOn_apply_eq_zero`: the signed sum annihilates a vector fixed
-  by a transposition of two of its points.
 * `TauCeti.YoungTableau.exists_ne_rowIndex_relabel_eq`: the pigeonhole step, two labels of an
   oversized set share a row after any column permutation.
 * `TauCeti.YoungTableau.asAlgebraHom_antisymmetrizerOn_polytabloid_eq_zero`: **the Garnir
   relation**.
-* `TauCeti.YoungTableau.sum_signChar_smul_polytabloid_relabel_eq_zero`: the relation as the
+* `TauCeti.YoungTableau.sum_sign_smul_polytabloid_relabel_eq_zero`: the relation as the
   vanishing of a signed sum of polytabloids.
 * `TauCeti.YoungTableau.card_garnirSet`: a Garnir set has one more element than the column it
   straddles has cells.
@@ -92,91 +87,6 @@ public section
 namespace TauCeti
 
 open scoped BigOperators
-
-/-- Classical decidability of membership in the subgroup of permutations fixing everything outside
-a finite set, used to form its finite sum. -/
-noncomputable local instance decidablePredMemFixingSubgroupCompl {α : Type*} (X : Finset α) :
-    DecidablePred (· ∈ fixingSubgroup (Equiv.Perm α) ((X : Set α)ᶜ)) :=
-  Classical.decPred _
-
-/-! ## The signed sum over the permutations supported in a set -/
-
-section Antisymmetrizer
-
-variable {α : Type*} [DecidableEq α] [Fintype α]
-
-/-- The **antisymmetrizer** of a finite set `X` of points: the signed sum `∑ sgn(σ) σ`, in the
-rational group algebra of `Equiv.Perm α`, over the permutations `σ` fixing every point outside `X`.
-
-For `X` the labels lying in one column of a Young tableau this is the factor of that tableau's
-column antisymmetrizer belonging to that column; the relations it satisfies on the polytabloids of
-a tableau are the Garnir relations. -/
-noncomputable def antisymmetrizerOn (X : Finset α) : MonoidAlgebra ℚ (Equiv.Perm α) :=
-  subgroupCharSum YoungTableau.signChar
-    (fixingSubgroup (Equiv.Perm α) ((X : Set α)ᶜ))
-
-theorem antisymmetrizerOn_def (X : Finset α) :
-    antisymmetrizerOn X =
-      subgroupCharSum YoungTableau.signChar
-        (fixingSubgroup (Equiv.Perm α) ((X : Set α)ᶜ)) :=
-  (rfl)
-
-/-- The coefficient of a permutation in `TauCeti.antisymmetrizerOn X` is its sign if it is
-supported in `X`, and zero otherwise. -/
-@[simp]
-theorem antisymmetrizerOn_coeff (X : Finset α) (σ : Equiv.Perm α) :
-    (antisymmetrizerOn X).coeff σ =
-      if ∀ k ∉ X, σ k = k then ((Equiv.Perm.sign σ : ℤ) : ℚ) else 0 := by
-  classical
-  rw [antisymmetrizerOn_def, subgroupCharSum_coeff]
-  simp [mem_fixingSubgroup_iff]
-
-/-- The permutations summed over by `TauCeti.antisymmetrizerOn X`, as a `Finset`. -/
-private theorem mem_filter_forall_notMem_iff (X : Finset α)
-    [DecidablePred fun σ : Equiv.Perm α => ∀ k ∉ X, σ k = k] (σ : Equiv.Perm α) :
-    σ ∈ ({σ : Equiv.Perm α | ∀ k ∉ X, σ k = k} : Finset (Equiv.Perm α)) ↔
-      σ ∈ fixingSubgroup (Equiv.Perm α) ((X : Set α)ᶜ) := by
-  simp [mem_fixingSubgroup_iff]
-
-/-- The antisymmetrizer of a set, acting on a representation of the symmetric group, is the signed
-sum of the actions of the permutations fixing everything outside that set.
-
-The decidability of the summation range is an instance argument rather than a synthesized one, so
-that the equation rewrites a sum however its own filter was built. -/
-theorem asAlgebraHom_antisymmetrizerOn_apply {M : Type*} [AddCommGroup M] [Module ℚ M]
-    (V : Representation ℚ (Equiv.Perm α) M) (X : Finset α)
-    [DecidablePred fun σ : Equiv.Perm α => ∀ k ∉ X, σ k = k] (v : M) :
-    V.asAlgebraHom (antisymmetrizerOn X) v =
-      ∑ σ ∈ {σ : Equiv.Perm α | ∀ k ∉ X, σ k = k}, YoungTableau.signChar σ • V σ v := by
-  rw [Finset.sum_subtype _ (mem_filter_forall_notMem_iff X)
-      (fun σ => YoungTableau.signChar σ • V σ v),
-    antisymmetrizerOn_def, subgroupCharSum_def, map_sum, LinearMap.sum_apply]
-  exact Finset.sum_congr rfl fun σ _ => by
-    rw [map_smul, LinearMap.smul_apply, MonoidAlgebra.of_apply,
-      Representation.asAlgebraHom_single_one]
-
-/-- Right multiplication by the transposition of two points of `X` negates the antisymmetrizer of
-`X`, since the antisymmetrizer absorbs it up to its sign. -/
-theorem antisymmetrizerOn_mul_single_swap {X : Finset α} {x y : α} (hx : x ∈ X) (hy : y ∈ X)
-    (hxy : x ≠ y) :
-    antisymmetrizerOn X * MonoidAlgebra.single (Equiv.swap x y) (1 : ℚ) = -antisymmetrizerOn X := by
-  rw [antisymmetrizerOn_def,
-    subgroupCharSum_mul_single _ _ ⟨Equiv.swap x y, swap_mem_fixingSubgroup_compl_coe hx hy⟩,
-    Equiv.swap_inv, YoungTableau.signChar_apply, Equiv.Perm.sign_swap hxy]
-  simp
-
-/-- **A signed sum annihilates whatever an odd permutation in it fixes.**  If two distinct points
-of `X` are swapped by a transposition fixing `v`, then the antisymmetrizer of `X` kills `v`:
-absorbing that transposition negates the sum while leaving `v` alone. -/
-theorem asAlgebraHom_antisymmetrizerOn_apply_eq_zero {M : Type*} [AddCommGroup M] [Module ℚ M]
-    (V : Representation ℚ (Equiv.Perm α) M) {X : Finset α} {x y : α} (hx : x ∈ X) (hy : y ∈ X)
-    (hxy : x ≠ y) {v : M} (hv : V (Equiv.swap x y) v = v) :
-    V.asAlgebraHom (antisymmetrizerOn X) v = 0 :=
-  have : IsAddTorsionFree M := .of_module_rat _
-  Representation.asAlgebraHom_eq_zero_of_mul_single_eq_neg
-    (nsmul_right_injective two_ne_zero) _ hv (antisymmetrizerOn_mul_single_swap hx hy hxy)
-
-end Antisymmetrizer
 
 namespace YoungTableau
 
@@ -212,7 +122,9 @@ private theorem asAlgebraHom_antisymmetrizerOn_single_smul_tabloid_eq_zero (t : 
     (permutationModule (shapePartition μ)).ρ.asAlgebraHom (antisymmetrizerOn X)
         (MonoidAlgebra.single (q • tabloid t) (1 : ℚ)) = 0 := by
   obtain ⟨x, hx, y, hy, hxy, hrow⟩ := exists_ne_rowIndex_relabel_eq t hX hcard hq
-  refine asAlgebraHom_antisymmetrizerOn_apply_eq_zero _ hx hy hxy ?_
+  refine asAlgebraHom_antisymmetrizerOn_apply_eq_zero _
+    (fun k hk => Equiv.swap_apply_of_ne_of_ne (fun h => hk (h ▸ hx)) fun h => hk (h ▸ hy))
+    (Equiv.Perm.sign_swap hxy) ?_
   rw [Representation.ofMulAction_single, ← tabloid_relabel]
   exact congrArg (MonoidAlgebra.single · (1 : ℚ))
     (smul_tabloid_eq_self_iff.mpr (swap_mem_rowSubgroup hrow))
@@ -236,11 +148,12 @@ theorem asAlgebraHom_antisymmetrizerOn_polytabloid_eq_zero (t : YoungTableau μ)
 /-- **The Garnir relation, as a signed sum of polytabloids.**  Under the hypotheses of
 `TauCeti.YoungTableau.asAlgebraHom_antisymmetrizerOn_polytabloid_eq_zero`, the signed sum of the
 polytabloids of the relabelings `σt`, over the permutations `σ` supported in `X`, vanishes. -/
-theorem sum_signChar_smul_polytabloid_relabel_eq_zero (t : YoungTableau μ)
+theorem sum_sign_smul_polytabloid_relabel_eq_zero (t : YoungTableau μ)
     {X : Finset (Fin μ.card)} {r : ℕ} (hX : ∀ k ∈ X, μ.colLen (colIndex t k) ≤ r)
-    (hcard : r < X.card) :
+    (hcard : r < X.card)
+    [DecidablePred fun σ : Equiv.Perm (Fin μ.card) => ∀ k ∉ X, σ k = k] :
     ∑ σ ∈ {σ : Equiv.Perm (Fin μ.card) | ∀ k ∉ X, σ k = k},
-        signChar σ • polytabloid (relabel σ t) = 0 := by
+        ((Equiv.Perm.sign σ : ℤ) : ℚ) • polytabloid (relabel σ t) = 0 := by
   rw [← asAlgebraHom_antisymmetrizerOn_polytabloid_eq_zero t hX hcard,
     asAlgebraHom_antisymmetrizerOn_apply]
   simp only [polytabloid_relabel]
@@ -265,8 +178,8 @@ theorem mem_garnirSet {t : YoungTableau μ} {i j : ℕ} {k : Fin μ.card} :
 
 /-- Every label of a Garnir set at column `j` lies in a column with at most as many cells as column
 `j` has, since columns of a Young diagram shorten to the right. -/
-theorem colLen_colIndex_le_of_mem_garnirSet {t : YoungTableau μ} {i j : ℕ} {k : Fin μ.card}
-    (hk : k ∈ garnirSet t i j) : μ.colLen (colIndex t k) ≤ μ.colLen j := by
+theorem colLen_colIndex_le_colLen_of_mem_garnirSet {t : YoungTableau μ} {i j : ℕ}
+    {k : Fin μ.card} (hk : k ∈ garnirSet t i j) : μ.colLen (colIndex t k) ≤ μ.colLen j := by
   rcases mem_garnirSet.mp hk with ⟨hcol, -⟩ | ⟨hcol, -⟩
   · rw [hcol]
   · rw [hcol]
@@ -285,31 +198,29 @@ private theorem image_rowIndex_colIndex_garnirSet (t : YoungTableau μ) (i j : �
   · rintro ⟨hmem, hc⟩
     refine ⟨t ⟨c, hmem⟩, ?_, ?_⟩ <;> simp [hc]
 
-/-- The cells of column `j` from row `i` down. -/
-private theorem filter_cells_col (i j : ℕ) :
-    {c ∈ μ.cells | c.2 = j ∧ i ≤ c.1} = (Finset.Ico i (μ.colLen j)).image (fun a => (a, j)) := by
-  ext ⟨a, b⟩
-  simp only [Finset.mem_filter, Finset.mem_image, Finset.mem_Ico, Prod.mk.injEq,
-    YoungDiagram.mem_cells]
-  constructor
-  · rintro ⟨hmem, rfl, hi⟩
-    exact ⟨a, ⟨hi, YoungDiagram.mem_iff_lt_colLen.mp hmem⟩, rfl, rfl⟩
-  · rintro ⟨a', ⟨hi, ha⟩, rfl, rfl⟩
-    exact ⟨YoungDiagram.mem_iff_lt_colLen.mpr ha, rfl, hi⟩
+/-- The cells of column `j` from row `i` down are those of the whole column that the first `i`
+rows leave over. -/
+private theorem card_filter_cells_col (i j : ℕ) :
+    {c ∈ μ.cells | c.2 = j ∧ i ≤ c.1}.card = μ.colLen j - i := by
+  have htop : {c ∈ μ.col j | c.1 < i} = {c ∈ {c ∈ μ.cells | c.1 < i} | c.2 = j} := by
+    simp [YoungDiagram.col, Finset.filter_filter, and_comm]
+  have hbot : {c ∈ μ.col j | ¬ c.1 < i} = {c ∈ μ.cells | c.2 = j ∧ i ≤ c.1} := by
+    simp [YoungDiagram.col, Finset.filter_filter]
+  have hsplit := Finset.card_filter_add_card_filter_not (s := μ.col j)
+    (p := fun c : ℕ × ℕ => c.1 < i)
+  rw [htop, hbot, YoungDiagram.card_filter_fst_lt_filter_snd_eq, ← μ.colLen_eq_card] at hsplit
+  omega
 
-/-- The cells of column `j + 1` from row `i` up, when `(i, j + 1)` is a cell. -/
-private theorem filter_cells_col_succ {i j : ℕ} (h : (i, j + 1) ∈ μ) :
-    {c ∈ μ.cells | c.2 = j + 1 ∧ c.1 ≤ i} =
-      (Finset.range (i + 1)).image (fun a => (a, j + 1)) := by
+/-- The cells of column `j + 1` from row `i` up are those of that column in the first `i + 1`
+rows, and `(i, j + 1) ∈ μ` says the column reaches that far. -/
+private theorem card_filter_cells_col_succ {i j : ℕ} (h : (i, j + 1) ∈ μ) :
+    {c ∈ μ.cells | c.2 = j + 1 ∧ c.1 ≤ i}.card = i + 1 := by
   have hlt : i < μ.colLen (j + 1) := YoungDiagram.mem_iff_lt_colLen.mp h
-  ext ⟨a, b⟩
-  simp only [Finset.mem_filter, Finset.mem_image, Finset.mem_range, Prod.mk.injEq,
-    YoungDiagram.mem_cells]
-  constructor
-  · rintro ⟨-, rfl, hi⟩
-    exact ⟨a, by omega, rfl, rfl⟩
-  · rintro ⟨a', ha, rfl, rfl⟩
-    exact ⟨YoungDiagram.mem_iff_lt_colLen.mpr (by omega), rfl, by omega⟩
+  have hcard := YoungDiagram.card_filter_fst_lt_filter_snd_eq μ (i + 1) (j + 1)
+  rw [show {c ∈ {c ∈ μ.cells | c.1 < i + 1} | c.2 = j + 1} =
+      {c ∈ μ.cells | c.2 = j + 1 ∧ c.1 ≤ i} from by
+    simp [Finset.filter_filter, and_comm]] at hcard
+  omega
 
 /-- **A Garnir set is one bigger than the column it straddles.**  Column `j` contributes its cells
 from row `i` down and column `j + 1` its cells from row `i` up, and `(i, j + 1) ∈ μ` makes both
@@ -329,10 +240,8 @@ theorem card_garnirSet (t : YoungTableau μ) {i j : ℕ} (h : (i, j + 1) ∈ μ)
     rintro c h₁ h₂
     simp only [Finset.mem_filter] at h₁ h₂
     omega
-  rw [← hcard, Finset.filter_or, Finset.card_union_of_disjoint hdisj, filter_cells_col,
-    filter_cells_col_succ h, Finset.card_image_of_injective _ (Prod.mk_left_injective j),
-    Finset.card_image_of_injective _ (Prod.mk_left_injective (j + 1)), Nat.card_Ico,
-    Finset.card_range]
+  rw [← hcard, Finset.filter_or, Finset.card_union_of_disjoint hdisj, card_filter_cells_col,
+    card_filter_cells_col_succ h]
   omega
 
 /-- **The Garnir relation at a Garnir set.**  If `(i, j + 1)` is a cell of `μ`, the antisymmetrizer
@@ -342,7 +251,7 @@ theorem asAlgebraHom_antisymmetrizerOn_garnirSet_eq_zero (t : YoungTableau μ) {
     (permutationModule (shapePartition μ)).ρ.asAlgebraHom (antisymmetrizerOn (garnirSet t i j))
         (polytabloid t) = 0 :=
   asAlgebraHom_antisymmetrizerOn_polytabloid_eq_zero t
-    (fun _ hk => colLen_colIndex_le_of_mem_garnirSet hk)
+    (fun _ hk => colLen_colIndex_le_colLen_of_mem_garnirSet hk)
     (by rw [card_garnirSet t h]; exact Nat.lt_succ_self _)
 
 end YoungTableau

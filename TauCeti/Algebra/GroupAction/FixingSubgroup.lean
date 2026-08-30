@@ -5,17 +5,12 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Algebra.Group.Action.End
-public import Mathlib.Data.Finset.Basic
 public import Mathlib.GroupTheory.GroupAction.FixingSubgroup
-public import Mathlib.Logic.Equiv.Basic
 
 /-!
 # Pointwise fixing subgroups
 
-This file records small generic additions to Mathlib's `fixingSubgroup` API, including the
-permutations of a type that fix everything outside a finite set: the subgroup they form is the
-one the signed sums of the Garnir relations range over.
+This file records small generic additions to Mathlib's `fixingSubgroup` API.
 -/
 
 public section
@@ -31,12 +26,5 @@ theorem fixingSubgroup_univ {G α : Type*} [Group G] [MulAction G α] [FaithfulS
   refine ⟨fun hg => ?_, fun hg x _ => by rw [hg, one_smul]⟩
   exact FaithfulSMul.eq_of_smul_eq_smul fun x =>
     (hg x (Set.mem_univ x)).trans (one_smul G x).symm
-
-/-- The transposition of two points of `X` fixes the complement of `X` pointwise. -/
-theorem swap_mem_fixingSubgroup_compl_coe {α : Type*} [DecidableEq α] {X : Finset α} {x y : α}
-    (hx : x ∈ X) (hy : y ∈ X) :
-    Equiv.swap x y ∈ _root_.fixingSubgroup (Equiv.Perm α) ((X : Set α)ᶜ) :=
-  (_root_.mem_fixingSubgroup_iff _).mpr fun _ hk =>
-    Equiv.swap_apply_of_ne_of_ne (fun h => hk (h ▸ hx)) fun h => hk (h ▸ hy)
 
 end TauCeti
