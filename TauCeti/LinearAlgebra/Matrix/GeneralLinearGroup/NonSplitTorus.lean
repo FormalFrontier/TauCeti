@@ -62,6 +62,8 @@ choice, following the convention of
 * `TauCeti.GL2NonSplitTorus`: its range, the non-split torus.
 * `TauCeti.GL2NonSplitTorus.unitsEquiv`: the resulting multiplicative equivalence `Eˣ ≃*` the
   torus.
+* `TauCeti.GL2NonSplitTorus.normUnitsHom`: the field norm on units, used to state determinant
+  character values without choosing a nonvanishing proof.
 
 ## Main results
 
@@ -163,6 +165,26 @@ theorem trace_gl2NonSplitTorusHom (x : Eˣ) :
     Matrix.trace (GL2NonSplitTorusHom F E hE x : Matrix (Fin 2) (Fin 2) F) =
       Algebra.trace F E (x : E) :=
   trace_unitsLeftMulMatrix _ x
+
+/-- **The field norm on units of a quadratic extension.** The explicit degree hypothesis supplies
+the finite-dimensional instance needed by `Algebra.norm`; packaging the result as a homomorphism
+to `Fˣ` avoids exposing a choice of proof that each norm is nonzero. -/
+noncomputable def normUnitsHom : Eˣ →* Fˣ :=
+  have := Module.finite_of_finrank_eq_succ (n := 1) hE
+  Units.map (Algebra.norm F : E →* F)
+
+/-- The value underlying the norm of a unit is the ordinary field norm. -/
+@[simp]
+theorem coe_normUnitsHom (x : Eˣ) :
+    (normUnitsHom hE x : F) = Algebra.norm F (x : E) := by
+  simp [normUnitsHom]
+
+/-- **The determinant of a non-split-torus element is its field norm, as an equality of units.** -/
+theorem det_gl2NonSplitTorusHom (x : Eˣ) :
+    Matrix.GeneralLinearGroup.det (GL2NonSplitTorusHom F E hE x) = normUnitsHom hE x := by
+  apply Units.ext
+  rw [coe_normUnitsHom]
+  exact val_det_gl2NonSplitTorusHom hE x
 
 /-- A unit of `F` is sent to the corresponding scalar matrix. -/
 @[simp, grind =]
