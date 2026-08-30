@@ -108,7 +108,10 @@ theorem finrank_GL2Linear (α : Fˣ →* ℂˣ) :
 @[simp]
 theorem character_GL2Linear (α : Fˣ →* ℂˣ) (g : GL (Fin 2) F) :
     (GL2Linear F α).character g = (α (Matrix.GeneralLinearGroup.det g) : ℂ) := by
-  exact Representation.char_ofLinearCharacter (GL2LinearChar α) g
+  rw [GL2Linear_def, GL2LinearRep_def]
+  -- the carrier of `FDRep.of ρ` is the module that `ρ` acts on, here `ℂ` itself
+  simpa only [FDRep.character, FDRep.of_ρ', Representation.character, GL2LinearChar_apply] using
+    Representation.char_ofLinearCharacter (GL2LinearChar α) g
 
 /-- **Determinant characters of `GL₂` remember their parameter.** Surjectivity of the determinant
 shows that precomposition with it is injective. -/
@@ -193,8 +196,9 @@ section FiniteField
 
 variable [Fintype F]
 
-/-- **The Steinberg representation twisted by `α ∘ det`.** These are the degree-`q` boundary
-constituents of the principal series. -/
+/-- **The Steinberg representation twisted by `α ∘ det`.** These are the expected degree-`q`
+boundary constituents of the principal series; that constituent relation is not proved here, only
+the dimension and the character values below. -/
 noncomputable def GL2SteinbergTwist (F : Type u) [Field F] [Fintype F] (α : Fˣ →* ℂˣ) :
     FDRep ℂ (GL (Fin 2) F) :=
   GL2Linear F α ⊗ GL2Steinberg F

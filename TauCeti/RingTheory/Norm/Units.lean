@@ -16,7 +16,7 @@ statement about the norm of an invertible element wants: the value is a unit by 
 no choice of proof that it is nonzero has to be carried alongside it.
 
 No finiteness hypothesis is needed here, because `Algebra.norm` itself has none: it is the
-determinant of multiplication, which is `1` when `S` is not a finite free `R`-module
+determinant of multiplication, which is `1` when `S` is not module-finite over `R`
 (`Algebra.norm_eq_one_of_not_module_finite`). A consumer that cares about the value — for instance
 the non-split torus of `GL₂` in
 `TauCeti/LinearAlgebra/Matrix/GeneralLinearGroup/NonSplitTorus.lean` — supplies its own
