@@ -142,7 +142,6 @@ theorem complexOperator_apply (hU : U.IsUnitary) (t : ℝ) (x : H) :
     hU.complexOperator t x = U t x := (rfl)
 
 /-- The complex operator underlying a unitary group preserves the inner product. -/
-@[simp]
 theorem complexOperator_inner_map_map (hU : U.IsUnitary) (t : ℝ) (x y : H) :
     ⟪hU.complexOperator t x, hU.complexOperator t y⟫_ℂ = ⟪x, y⟫_ℂ :=
   hU.inner_map_map t x y
