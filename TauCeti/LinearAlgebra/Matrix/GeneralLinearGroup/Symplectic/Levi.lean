@@ -122,15 +122,6 @@ theorem coe_leviHom (A : GL l R) :
   rw [leviHom]
   exact coe_leviElement A
 
-/-- Entrywise, the Levi embedding has upper-left block `A`, lower-right block `(A⁻¹)ᵀ`, and
-zero off-diagonal blocks. -/
-theorem coe_leviHom_apply (A : GL l R) (i j : l ⊕ l) :
-    (((leviHom A : GLSymplectic l R) : GL (l ⊕ l) R) :
-        Matrix (l ⊕ l) (l ⊕ l) R) i j =
-      Matrix.fromBlocks (A : Matrix l l R) 0 0
-        ((A⁻¹ : GL l R) : Matrix l l R)ᵀ i j := by
-  rw [coe_leviHom]
-
 /-- The general-linear Levi homomorphism is injective. -/
 theorem leviHom_injective : Function.Injective (leviHom : GL l R → GLSymplectic l R) := by
   intro A B hAB
@@ -139,7 +130,7 @@ theorem leviHom_injective : Function.Injective (leviHom : GL l R → GLSymplecti
   have h := congrArg
     (fun M : GLSymplectic l R =>
       (((M : GL (l ⊕ l) R) : Matrix (l ⊕ l) (l ⊕ l) R) (Sum.inl i) (Sum.inl j))) hAB
-  simpa only [coe_leviHom_apply, Matrix.fromBlocks_apply₁₁] using h
+  simpa only [coe_leviHom, Matrix.fromBlocks_apply₁₁] using h
 
 /-- The Levi embedding commutes with extension of the value ring. -/
 @[simp]
@@ -149,8 +140,7 @@ theorem map_leviHom {S : Type*} [CommRing S] (f : R →+* S) (A : GL l R) :
   apply Subtype.ext
   apply Matrix.GeneralLinearGroup.ext
   intro i j
-  rw [coe_map, Matrix.GeneralLinearGroup.map_apply, coe_leviHom_apply,
-    coe_leviHom_apply]
+  rw [coe_map, Matrix.GeneralLinearGroup.map_apply, coe_leviHom, coe_leviHom]
   have hinv := congrArg
     (fun g : GL l S => (g : Matrix l l S))
     (Matrix.GeneralLinearGroup.map_inverseTranspose f A)
@@ -247,7 +237,7 @@ theorem leviHom_transvection {i j : Fin m} (hij : i ≠ j) (c : R) :
   rw [coe_mulEquivGLSymplectic, coe_differenceShortRootUnit, map_mul, hfirst, hsecond]
   apply Matrix.GeneralLinearGroup.ext
   intro a b
-  rw [GLSymplectic.coe_leviHom_apply]
+  rw [GLSymplectic.coe_leviHom]
   have hinv :
       Matrix.GeneralLinearGroup.inverseTranspose
           (transvectionUnit hij c) = transvectionUnit hij.symm (-c) :=
