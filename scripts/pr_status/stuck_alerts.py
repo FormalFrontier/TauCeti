@@ -472,10 +472,8 @@ def detect_stranded_prs():
         ready_since = min(hours_since(updated), hours_since(applied))
         if ready_since < STRANDED_HOURS:
             continue
-        # This detector deliberately uses the repo-associated scoreboard selected by the status
-        # sinks. Auto-merge instead reads the newest marked scoreboard from any author, so an
-        # external review may merge without this detector ever considering it approved. That makes
-        # the alert best-effort but cannot cause a wrong merge or close.
+        # Use the same newest-any-author scoreboard as the ready-to-merge label and auto-merge. This
+        # detector only alerts; unlike housekeeping, it performs no destructive PR action.
         if core.review_state(core.scoreboard_meta(pr["number"]), head) != "approved":
             continue
         # Filenames are bare strings, not JSON -- gh_lines, not gh_stream.

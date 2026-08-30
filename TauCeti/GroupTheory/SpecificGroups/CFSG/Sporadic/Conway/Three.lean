@@ -13,7 +13,9 @@ public import TauCeti.GroupTheory.Presentation.GroupPresentation
 This file carries the `Co₃` row of the sporadic presentation data required by milestone S1 of
 `TauCetiRoadmap/CFSGStatement/README.md`. It records Đoković's Coxeter-type presentation of the
 third Conway group on seven involutions as a `TauCeti.GroupPresentation`, together with its exact
-source, generator convention, transcription notes, expected counts, and decidable count check.
+source, generator convention, transcription notes, expected counts, and decidable checks on the
+transcription: the two counts, the per-relator and total letter counts of the compiled words, and
+their cyclic reducedness.
 
 The twenty-four defining relators are
 
@@ -37,9 +39,35 @@ from that image to AtlasRep 2.1.9's independent 276-point permutation group for 
 transcription provenance rather than a Lean theorem: the file asserts no order, finiteness,
 simplicity, or identification result.
 
-## Main definition
+The row is a sealed definition, so it publishes an equation for each of its fields: the transcribed
+relator expressions with their generator indices written out, and the provenance a manifest row
+exists to record. Together with `TauCeti.GroupPresentation.relators_def` and
+`TauCeti.GroupPresentation.mem_relatorSet_iff` the first of those determines the compiled words and
+the relations defining the presented group, so a consumer reasons about the row without unfolding
+it.
+
+Three decidable checks accompany those equations, and here they check the transcription against a
+published figure. The twenty-four compiled words have `150` letters in total, so with one separator
+for each relator they have the length `174` that presentation (13.1) states. Đoković measures a
+relator by its freely reduced length, so what makes that comparison legitimate is that every
+compiled word is cyclically reduced and hence, by `FreeGroup.IsCyclicallyReduced.isReduced`, already
+freely reduced: its letter count is the reduced length the source counts. The individual lengths
+locate any discrepancy in the total.
+
+These field equations and the checks beside them follow the shape that the
+`TauCeti.GroupTheory.SpecificGroups.CFSG.Sporadic.Janko` modules established for a manifest row.
+
+## Main definitions and results
 
 * `TauCeti.Sporadic.co3Presentation`: Đoković's finite presentation of `Co₃`.
+* `TauCeti.Sporadic.co3Presentation_transcribed` and the equations for the remaining fields: the
+  characterization of the sealed row.
+* `TauCeti.Sporadic.co3Presentation_map_length_relators`,
+  `TauCeti.Sporadic.co3Presentation_totalLength` and
+  `TauCeti.Sporadic.co3Presentation_relatorsCyclicallyReduced`: the three checks on the compiled
+  words, the second of which gives their `150`-letter total.
+* `TauCeti.Sporadic.co3Presentation_totalLength_add_length_transcribed`: that total together with
+  one separator for each relator, the length `174` that presentation (13.1) states.
 
 ## References
 
@@ -118,8 +146,151 @@ def co3Presentation : GroupPresentation where
       .pow (b ⬝ c ⬝ f ⬝ c ⬝ f) 3,
       e ⬝ .pow (a ⬝ b ⬝ c ⬝ f) 7 ]
 
+/-- The generator names recorded for `Co₃`. The row's body is sealed, so this is what lets a
+consumer see that it is a seven-generator presentation. -/
+@[simp]
+theorem co3Presentation_generatorNames :
+    co3Presentation.generatorNames = ["a", "b", "c", "d", "e", "f", "g"] := by
+  simp [co3Presentation]
+
+/-- The source recorded for `Co₃`. The row's body is sealed, so this equation is what publishes the
+citation itself, rather than only the row's name, to a downstream audit. -/
+@[simp]
+theorem co3Presentation_source :
+    co3Presentation.source = "Dragomir Z. Djokovic, Presentations of some finite simple groups, \
+      Journal of the Australian Mathematical Society Series A 45 (1988), 143-168" := by
+  simp [co3Presentation]
+
+/-- The locator recorded for `Co₃`, pointing at the presentation inside its source. -/
+@[simp]
+theorem co3Presentation_sourceLocator :
+    co3Presentation.sourceLocator = "presentation (13.1), p. 162, \
+      https://doi.org/10.1017/S1446788700030068" := by
+  simp [co3Presentation]
+
+/-- The generator convention recorded for `Co₃`, fixing which involution each relator index names
+and how a power binds against an adjacent factor. -/
+@[simp]
+theorem co3Presentation_generatorConvention :
+    co3Presentation.generatorConvention = "The seven involutory generators a, b, c, d, e, f, and \
+      g in presentation (13.1), in that order, so indices 0 through 6 carry those names. Products \
+      are read left to right, juxtaposition denotes multiplication, and powers bind before an \
+      adjacent factor: for example, f(ag)^3 is f multiplied by the third power of ag." := by
+  simp [co3Presentation]
+
+/-- The transcription notes recorded for `Co₃`, including the source length that
+`TauCeti.Sporadic.co3Presentation_totalLength` is checked against. -/
+@[simp]
+theorem co3Presentation_transcriptionNotes :
+    co3Presentation.transcriptionNotes = "Transcribe the twenty-four defining relators in \
+      presentation (13.1), excluding the twelve words listed separately as consequences. Their \
+      source length is 174. GAP 4.15.1 reproduces the reported index 170775 for the subgroup \
+      generated by a,b,c,e,f,g; the resulting simple coset-action image has order 495766656000 \
+      and GAP identifies it with AtlasRep 2.1.9's independent 276-point Co3 permutation \
+      group." := by
+  simp [co3Presentation]
+
+/-- The generator count `Co₃`'s source states. With
+`TauCeti.Sporadic.co3Presentation_generatorNames` this is what makes
+`TauCeti.Sporadic.co3Presentation_matchesMetadata` an equation between two visible numbers. -/
+@[simp]
+theorem co3Presentation_expectedGeneratorCount : co3Presentation.expectedGeneratorCount = 7 := by
+  simp [co3Presentation]
+
+/-- The relator count `Co₃`'s source states; see
+`TauCeti.Sporadic.co3Presentation_expectedGeneratorCount`. -/
+@[simp]
+theorem co3Presentation_expectedRelatorCount : co3Presentation.expectedRelatorCount = 24 := by
+  simp [co3Presentation]
+
+/-- The relator expressions transcribed for `Co₃`, with their generator indices written out.
+
+The row's body is sealed, so this is the equation that characterizes it: with
+`TauCeti.GroupPresentation.relators_def` it determines the compiled words, and with
+`TauCeti.GroupPresentation.mem_relatorSet_iff` it determines the relations defining
+`TauCeti.GroupPresentation.Group`, so a consumer never has to unfold the row. Indices `0` through
+`6` are the involutions `a` through `g` of presentation (13.1), and the bounds come from
+`TauCeti.Sporadic.co3Presentation_generatorNames`. -/
+@[simp]
+theorem co3Presentation_transcribed :
+    co3Presentation.transcribed =
+      [ -- a², b², c², d², e², f², g²
+        .pow (.gen ⟨0, by simp⟩) 2,
+        .pow (.gen ⟨1, by simp⟩) 2,
+        .pow (.gen ⟨2, by simp⟩) 2,
+        .pow (.gen ⟨3, by simp⟩) 2,
+        .pow (.gen ⟨4, by simp⟩) 2,
+        .pow (.gen ⟨5, by simp⟩) 2,
+        .pow (.gen ⟨6, by simp⟩) 2,
+        -- (ac)², (ad)², (ae)², (bd)², (ce)², (dg)², (eg)²
+        .pow (.gen ⟨0, by simp⟩ ⬝ .gen ⟨2, by simp⟩) 2,
+        .pow (.gen ⟨0, by simp⟩ ⬝ .gen ⟨3, by simp⟩) 2,
+        .pow (.gen ⟨0, by simp⟩ ⬝ .gen ⟨4, by simp⟩) 2,
+        .pow (.gen ⟨1, by simp⟩ ⬝ .gen ⟨3, by simp⟩) 2,
+        .pow (.gen ⟨2, by simp⟩ ⬝ .gen ⟨4, by simp⟩) 2,
+        .pow (.gen ⟨3, by simp⟩ ⬝ .gen ⟨6, by simp⟩) 2,
+        .pow (.gen ⟨4, by simp⟩ ⬝ .gen ⟨6, by simp⟩) 2,
+        -- (ab)³, (cd)³, (de)³
+        .pow (.gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩) 3,
+        .pow (.gen ⟨2, by simp⟩ ⬝ .gen ⟨3, by simp⟩) 3,
+        .pow (.gen ⟨3, by simp⟩ ⬝ .gen ⟨4, by simp⟩) 3,
+        -- f(ag)³, g(bf)³, (cfg)³
+        .gen ⟨5, by simp⟩ ⬝ .pow (.gen ⟨0, by simp⟩ ⬝ .gen ⟨6, by simp⟩) 3,
+        .gen ⟨6, by simp⟩ ⬝ .pow (.gen ⟨1, by simp⟩ ⬝ .gen ⟨5, by simp⟩) 3,
+        .pow (.gen ⟨2, by simp⟩ ⬝ .gen ⟨5, by simp⟩ ⬝ .gen ⟨6, by simp⟩) 3,
+        -- e(abc)³, e(acg)⁴, (bcfcf)³, e(abcf)⁷
+        .gen ⟨4, by simp⟩ ⬝
+          .pow (.gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩ ⬝ .gen ⟨2, by simp⟩) 3,
+        .gen ⟨4, by simp⟩ ⬝
+          .pow (.gen ⟨0, by simp⟩ ⬝ .gen ⟨2, by simp⟩ ⬝ .gen ⟨6, by simp⟩) 4,
+        .pow (.gen ⟨1, by simp⟩ ⬝ .gen ⟨2, by simp⟩ ⬝ .gen ⟨5, by simp⟩ ⬝ .gen ⟨2, by simp⟩ ⬝
+          .gen ⟨5, by simp⟩) 3,
+        .gen ⟨4, by simp⟩ ⬝
+          .pow (.gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩ ⬝ .gen ⟨2, by simp⟩ ⬝
+            .gen ⟨5, by simp⟩) 7 ] := by
+  simp [co3Presentation]
+
 /-- The generator and relator counts recorded for `Co₃` agree with the transcribed data. -/
-theorem matchesMetadata_co3Presentation : co3Presentation.matchesMetadata := by
+theorem co3Presentation_matchesMetadata : co3Presentation.matchesMetadata := by
+  decide
+
+/-- The lengths of the twenty-four compiled relator words for `Co₃`, in the order of presentation
+(13.1).
+
+Reading the counts off one relator at a time is what lets a reviewer locate a discrepancy against
+the source, rather than only observe one in the total of
+`TauCeti.Sporadic.co3Presentation_totalLength`. -/
+theorem co3Presentation_map_length_relators :
+    co3Presentation.relators.map List.length =
+      [2, 2, 2, 2, 2, 2, 2, 4, 4, 4, 4, 4, 4, 4, 6, 6, 6, 7, 7, 9, 10, 13, 15, 29] := by
+  simp [GroupPresentation.relators_def, co3Presentation]
+
+/-- The compiled relator words for `Co₃` have `150` letters in total.
+
+This is the check against the source's stated figure. Đoković measures the length of a presentation
+as the sum of the freely reduced lengths of its relators together with one separator for each of
+them, so the twenty-four relators here give `150 + 24 = 174`, which is the length presentation
+(13.1) states. -/
+theorem co3Presentation_totalLength : co3Presentation.totalLength = 150 := by
+  rw [GroupPresentation.totalLength_def, co3Presentation_map_length_relators]
+  decide
+
+/-- The source's stated length of presentation (13.1), recovered from the transcribed data: the
+letters of the compiled relator words together with one separator for each relator. -/
+theorem co3Presentation_totalLength_add_length_transcribed :
+    co3Presentation.totalLength + co3Presentation.transcribed.length = 174 := by
+  rw [co3Presentation_totalLength]
+  simp
+
+/-- Every compiled relator word for `Co₃` is cyclically reduced, hence by
+`FreeGroup.IsCyclicallyReduced.isReduced` freely reduced. This is what makes the letter count of
+`TauCeti.Sporadic.co3Presentation_totalLength` comparable with the length stated by presentation
+(13.1), which measures each relator by its freely reduced length. -/
+theorem co3Presentation_relatorsCyclicallyReduced :
+    co3Presentation.relatorsCyclicallyReduced := by
+  simp only [GroupPresentation.relatorsCyclicallyReduced_iff, GroupPresentation.relators_def,
+    co3Presentation, List.map_cons, List.map_nil, Relator.toWord_mul, Relator.toWord_pow,
+    Relator.toWord_gen]
   decide
 
 end TauCeti.Sporadic
