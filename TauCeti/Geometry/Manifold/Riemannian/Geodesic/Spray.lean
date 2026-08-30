@@ -44,9 +44,8 @@ this law in the continuation of the Hopf--Rinow roadmap target "The geodesic spr
 * `TauCeti.CovariantDerivative.contDiffOn_tangentCoordChange` and
   `TauCeti.CovariantDerivative.contMDiffAt_tangentCoordChange`: smoothness of tangent coordinate
   changes on the intersection of the two chart sources.
-* `TauCeti.CovariantDerivative.localFrameCoeff_continuousLinearMapAt` and
-  `TauCeti.CovariantDerivative.continuousLinearMapAt_symmL_coordChange`: the frame coefficients of
-  a section, and the coordinate change, read through the trivialization maps.
+* `TauCeti.CovariantDerivative.continuousLinearMapAt_symmL_coordChange`: the coordinate change
+  read through the trivialization maps.
 * `TauCeti.CovariantDerivative.christoffelMap_trans`: the Christoffel transformation law under a
   change of trivialization.
 
@@ -155,34 +154,10 @@ variable
   {H : Type*} [TopologicalSpace H] {I : ModelWithCorners 𝕜 E H}
   {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I 1 M]
   [ContMDiffVectorBundle 1 E (TangentSpace I : M → Type _) I]
-  {ι : Type*} [Finite ι] (b : Basis ι 𝕜 E)
+  {ι : Type*} (b : Basis ι 𝕜 E)
   {e : Trivialization E (TotalSpace.proj : TangentBundle I M → M)} [MemTrivializationAtlas e]
   {x x₀ y : M}
   {cov : (Π z : M, TangentSpace I z) → (Π z : M, TangentSpace I z →L[𝕜] TangentSpace I z)}
-
-omit [CompleteSpace 𝕜] [FiniteDimensional 𝕜 E] in
-/-- The frame coefficient functionals of a linear trivialization compute the model coordinates. -/
-theorem localFrameCoeff_continuousLinearMapAt (i : ι) (hx : x ∈ e.baseSet)
-    (v : TangentSpace I x) :
-    e.localFrameCoeff I b i x v = b.coord i (e.continuousLinearMapAt 𝕜 x v) := by
-  classical
-  have : Fintype ι := Fintype.ofFinite ι
-  have hsum : v = ∑ j, e.localFrameCoeff I b j x v • e.localFrame b j x := by
-    have h := e.eq_sum_localFrameCoeff_smul (I := I) (b := b)
-      (s := FiberBundle.extend E v) hx
-    rw [FiberBundle.extend_apply_self E v] at h
-    exact h
-  have hclm : e.continuousLinearMapAt 𝕜 x v = ∑ j, e.localFrameCoeff I b j x v • b j := by
-    rw [congrArg (e.continuousLinearMapAt 𝕜 x) hsum, map_sum]
-    refine Finset.sum_congr rfl fun j _ ↦ ?_
-    rw [map_smul, continuousLinearMapAt_localFrame b hx j]
-  rw [hclm]
-  simp only [map_sum, map_smul]
-  rw [Finset.sum_eq_single i]
-  · simp [Basis.coord_apply]
-  · intro j _ hj
-    simp [Basis.coord_apply, Ne.symm hj]
-  · simp
 
 omit [CompleteSpace 𝕜] [FiniteDimensional 𝕜 E]
   [ContMDiffVectorBundle 1 E (TangentSpace I : M → Type _) I] in
@@ -247,14 +222,18 @@ theorem christoffelMap_trans [Fintype ι] [IsManifold I 2 M] (hx₀ : x ∈ (ext
   have hcoeff₀ (i : ι) : (fun z => e₀.localFrameCoeff I b i z (σ z))
       =ᶠ[nhds x] (fun z => b.coord i (tangentCoordChange I x x₀ z V)) := by
     filter_upwards [hopen₀, hopen₁] with z hz₀ hz₁
-    rw [localFrameCoeff_continuousLinearMapAt b i hz₀ _]
+    rw [e₀.localFrameCoeff_eq_coeff (b := b) hz₀,
+      ← Bundle.Trivialization.continuousLinearMapAt_apply_of_mem (R := 𝕜) e₀ hz₀]
+    change b.coord i (e₀.continuousLinearMapAt 𝕜 z (σ z)) = _
     simp only [hσdef]
     rw [continuousLinearMapAt_symmL_coordChange (I := I) (x := x) (x₀ := x₀) (y := z)
       hz₁ hz₀ V]
   have hcoeff₁ (i : ι) : (fun z => e₁.localFrameCoeff I b i z (σ z))
       =ᶠ[nhds x] (fun _ => b.coord i V) := by
     filter_upwards [hopen₁] with z hz
-    rw [localFrameCoeff_continuousLinearMapAt b i hz _]
+    rw [e₁.localFrameCoeff_eq_coeff (b := b) hz,
+      ← Bundle.Trivialization.continuousLinearMapAt_apply_of_mem (R := 𝕜) e₁ hz]
+    change b.coord i (e₁.continuousLinearMapAt 𝕜 z (σ z)) = b.coord i V
     simp only [hσdef]
     exact congrArg (b.coord i) (e₁.continuousLinearMapAt_symmL (R := 𝕜) hz V)
   -- the family of coordinate changes is differentiable; write its derivative as `A`
