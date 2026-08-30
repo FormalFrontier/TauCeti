@@ -53,6 +53,8 @@ statement is conditional on a cover being given.
 * `TauCeti.IsProjectiveCover.bijective_of_comp_eq` and
   `TauCeti.IsProjectiveCover.exists_linearEquiv`: **uniqueness**, first as bijectivity of any
   comparison map between two covers and then as the existence of an isomorphism over `M`.
+* `TauCeti.IsProjectiveCover.nonempty_linearEquiv_ker`: uniqueness read on the kernels — the syzygy
+  cut out by a projective cover of `M` is independent of the cover.
 * `TauCeti.IsProjectiveCover.comp`: composing a projective cover with a surjection that itself
   has superfluous kernel again gives a projective cover.
 * `TauCeti.IsProjectiveCover.ker_le_jacobson`: the kernel of a projective cover lies in the radical
@@ -167,6 +169,17 @@ theorem IsProjectiveCover.exists_linearEquiv {P' : Type*} [AddCommGroup P'] [Mod
   refine ⟨LinearEquiv.ofBijective h (hf.bijective_of_comp_eq hf' hh), ?_⟩
   ext p
   simpa using LinearMap.congr_fun hh p
+
+/-- **The kernel of a projective cover is well defined.** The equivalence of covering modules of
+`TauCeti.IsProjectiveCover.exists_linearEquiv` carries the kernel of one cover onto the kernel of
+the other, so the syzygy that a projective cover of `M` cuts out does not depend on the cover. -/
+theorem IsProjectiveCover.nonempty_linearEquiv_ker {P' : Type*} [AddCommGroup P'] [Module R P']
+    {f : P →ₗ[R] M} {f' : P' →ₗ[R] M} (hf : IsProjectiveCover f) (hf' : IsProjectiveCover f') :
+    Nonempty (LinearMap.ker f ≃ₗ[R] LinearMap.ker f') := by
+  obtain ⟨e, hcomp⟩ := hf.exists_linearEquiv hf'
+  have hmap : (LinearMap.ker f).map (e : P →ₗ[R] P') = LinearMap.ker f' := by
+    rw [← hcomp, LinearMap.ker_comp, Submodule.map_comap_eq_of_surjective e.surjective]
+  exact ⟨e.ofSubmodules (LinearMap.ker f) (LinearMap.ker f') hmap⟩
 
 /-- Composing a projective cover with a surjection whose kernel is superfluous again gives a
 projective cover. -/
