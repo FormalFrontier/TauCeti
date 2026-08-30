@@ -29,7 +29,7 @@ coefficient is already the value of the exponent at zero.
   combining the drift atom and the coordinate-weighted Levy measure.
 * `TauCeti.bernsteinLevyKhintchineExponent_eqOn_iff`: two admissible Levy--Khintchine exponents
   agree on `[0, infinity)` exactly when their three parameters agree.
-* `TauCeti.IsBernsteinFunction.exists_unique_bernsteinLevyKhintchineExponent`: every Bernstein
+* `TauCeti.IsBernsteinFunction.existsUnique_bernsteinLevyKhintchineExponent`: every Bernstein
   function has a unique Levy--Khintchine triplet.
 
 ## References
@@ -55,13 +55,19 @@ noncomputable def bernsteinLevyKhintchineDerivativeMeasure
     (b : ℝ) (μ : Measure ℝ≥0) : Measure ℝ≥0 :=
   b.toNNReal • Measure.dirac 0 + μ.withDensity fun x => (x : ℝ≥0∞)
 
+/-- The derivative measure is the sum of the drift atom and the coordinate-weighted Levy
+measure. -/
+theorem bernsteinLevyKhintchineDerivativeMeasure_def (b : ℝ) (μ : Measure ℝ≥0) :
+    bernsteinLevyKhintchineDerivativeMeasure b μ =
+      b.toNNReal • Measure.dirac 0 + μ.withDensity fun x => (x : ℝ≥0∞) := (rfl)
+
 private lemma integrable_exp_neg_mul_bernsteinLevyKhintchineDerivativeMeasure
     {b : ℝ} {μ : Measure ℝ≥0}
     (hμ : Integrable (fun x : ℝ≥0 => min 1 (x : ℝ)) μ)
     {t : ℝ} (ht : 0 < t) :
     Integrable (fun x : ℝ≥0 => Real.exp (-(t * (x : ℝ))))
       (bernsteinLevyKhintchineDerivativeMeasure b μ) := by
-  rw [bernsteinLevyKhintchineDerivativeMeasure]
+  rw [bernsteinLevyKhintchineDerivativeMeasure_def]
   apply Integrable.add_measure
   · exact (integrable_dirac' (by fun_prop) (by simp)).smul_measure (by simp)
   · rw [integrable_withDensity_iff (by fun_prop) (by simp)]
@@ -73,7 +79,7 @@ private lemma laplaceTransform_bernsteinLevyKhintchineDerivativeMeasure
     (hμ : Integrable (fun x : ℝ≥0 => min 1 (x : ℝ)) μ) {t : ℝ} (ht : 0 < t) :
     laplaceTransform (bernsteinLevyKhintchineDerivativeMeasure b μ) t =
       b + ∫ x : ℝ≥0, (x : ℝ) * Real.exp (-(t * (x : ℝ))) ∂μ := by
-  rw [bernsteinLevyKhintchineDerivativeMeasure, laplaceTransform_add_measure]
+  rw [bernsteinLevyKhintchineDerivativeMeasure_def, laplaceTransform_add_measure]
   · rw [laplaceTransform_apply, integral_smul_nnreal_measure, integral_dirac,
       laplaceTransform_apply,
       integral_withDensity_eq_integral_toReal_smul (by fun_prop) (by simp)]
@@ -101,13 +107,9 @@ private lemma withDensity_coordinate_injective
     (h : μ.withDensity (fun x => (x : ℝ≥0∞)) =
       ν.withDensity fun x => (x : ℝ≥0∞)) : μ = ν := by
   have hμ_ne_zero : ∀ᵐ x : ℝ≥0 ∂μ, (x : ℝ≥0∞) ≠ 0 := by
-    apply ae_iff.mpr
-    change μ {x : ℝ≥0 | ¬(x : ℝ≥0∞) ≠ 0} = 0
-    rw [show {x : ℝ≥0 | ¬(x : ℝ≥0∞) ≠ 0} = {0} by ext x; simp, hμ]
+    simpa [ae_iff] using hμ
   have hν_ne_zero : ∀ᵐ x : ℝ≥0 ∂ν, (x : ℝ≥0∞) ≠ 0 := by
-    apply ae_iff.mpr
-    change ν {x : ℝ≥0 | ¬(x : ℝ≥0∞) ≠ 0} = 0
-    rw [show {x : ℝ≥0 | ¬(x : ℝ≥0∞) ≠ 0} = {0} by ext x; simp, hν]
+    simpa [ae_iff] using hν
   calc
     μ = (μ.withDensity fun x => (x : ℝ≥0∞)).withDensity
         (fun x => ((x : ℝ≥0∞))⁻¹) := by
@@ -128,11 +130,11 @@ private lemma drift_eq_of_derivativeMeasure_eq
   have hzero : (b.toNNReal : ℝ≥0∞) = (d.toNNReal : ℝ≥0∞) := by
     calc
       (b.toNNReal : ℝ≥0∞) = bernsteinLevyKhintchineDerivativeMeasure b μ {0} := by
-        simp [bernsteinLevyKhintchineDerivativeMeasure, hμ_zero]
+        simp [bernsteinLevyKhintchineDerivativeMeasure_def, hμ_zero]
       _ = bernsteinLevyKhintchineDerivativeMeasure d ν {0} :=
         congrArg (fun σ : Measure ℝ≥0 => σ {0}) h
       _ = (d.toNNReal : ℝ≥0∞) := by
-        simp [bernsteinLevyKhintchineDerivativeMeasure, hν_zero]
+        simp [bernsteinLevyKhintchineDerivativeMeasure_def, hν_zero]
   exact (Real.toNNReal_eq_toNNReal_iff hb hd).mp (ENNReal.coe_injective hzero)
 
 private lemma levyMeasure_eq_of_derivativeMeasure_eq
@@ -142,8 +144,8 @@ private lemma levyMeasure_eq_of_derivativeMeasure_eq
       bernsteinLevyKhintchineDerivativeMeasure d ν) : μ = ν := by
   have hbd := drift_eq_of_derivativeMeasure_eq hb hd h
   subst d
-  rw [bernsteinLevyKhintchineDerivativeMeasure,
-    bernsteinLevyKhintchineDerivativeMeasure] at h
+  rw [bernsteinLevyKhintchineDerivativeMeasure_def,
+    bernsteinLevyKhintchineDerivativeMeasure_def] at h
   have hweighted : μ.withDensity (fun x => (x : ℝ≥0∞)) =
       ν.withDensity fun x => (x : ℝ≥0∞) :=
     (Measure.add_right_inj (b.toNNReal • Measure.dirac 0) _ _).mp h
@@ -180,18 +182,18 @@ theorem bernsteinLevyKhintchineExponent_eqOn_iff
 /-- Every Bernstein function has a Levy--Khintchine triplet, and any other admissible triplet
 representing it on the nonnegative half-line has the same killing coefficient, drift coefficient,
 and Levy measure. -/
-theorem IsBernsteinFunction.exists_unique_bernsteinLevyKhintchineExponent
+theorem IsBernsteinFunction.existsUnique_bernsteinLevyKhintchineExponent
     {f : ℝ → ℝ} (hf : IsBernsteinFunction f) :
     ∃ a b : ℝ, ∃ μ : Measure ℝ≥0,
       0 ≤ a ∧ 0 ≤ b ∧ IsBernsteinLevyMeasure μ ∧
         EqOn f (bernsteinLevyKhintchineExponent a b μ) (Ici 0) ∧
         ∀ c d : ℝ, ∀ ν : Measure ℝ≥0,
-          0 ≤ c → 0 ≤ d → IsBernsteinLevyMeasure ν →
+          0 ≤ d → IsBernsteinLevyMeasure ν →
           EqOn f (bernsteinLevyKhintchineExponent c d ν) (Ici 0) →
           c = a ∧ d = b ∧ ν = μ := by
   obtain ⟨a, b, μ, ha, hb, hμ, hrep⟩ :=
     hf.exists_eqOn_bernsteinLevyKhintchineExponent
-  refine ⟨a, b, μ, ha, hb, hμ, hrep, fun c d ν _hc hd hν hrep' => ?_⟩
+  refine ⟨a, b, μ, ha, hb, hμ, hrep, fun c d ν hd hν hrep' => ?_⟩
   have hexponent : EqOn (bernsteinLevyKhintchineExponent c d ν)
       (bernsteinLevyKhintchineExponent a b μ) (Ici 0) := hrep'.symm.trans hrep
   exact (bernsteinLevyKhintchineExponent_eqOn_iff hd hb hν hμ).mp hexponent
