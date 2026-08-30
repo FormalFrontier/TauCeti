@@ -58,12 +58,8 @@ variable {ι : Type*} [DecidableEq ι] [Fintype ι]
 
 /-! ### Long roots -/
 
-/- The explicit matrix bodies in this file are exposed because downstream representation
-comparisons compute their action on the standard basis. -/
-
 /-- The ambient root matrix for the long type-`B` root `εᵢ - εⱼ`; the inequality witness
 excludes the degenerate zero-weight case. -/
-@[expose]
 def typeBLongRootMatrix (i j : ι) (_hij : i ≠ j) :
     Matrix (Unit ⊕ ι ⊕ ι) (Unit ⊕ ι ⊕ ι) K :=
   single (.inr (.inl i)) (.inr (.inl j)) 1 -
@@ -94,6 +90,23 @@ theorem coe_typeBLongRootGenerator (i j : ι) (hij : i ≠ j) :
     (typeBLongRootGenerator (K := K) i j hij :
       Matrix (Unit ⊕ ι ⊕ ι) (Unit ⊕ ι ⊕ ι) K) = typeBLongRootMatrix i j hij :=
   (rfl)
+
+/-- The long-root matrix action on a vector of an indexed basis. -/
+@[simp]
+theorem typeBLongRootMatrix_toLinAlgEquiv_apply {M : Type*} [AddCommGroup M] [Module K M]
+    (B : Module.Basis (Unit ⊕ ι ⊕ ι) K M) (i j : ι) (hij : i ≠ j) (k : Unit ⊕ ι ⊕ ι) :
+    Matrix.toLinAlgEquiv B (typeBLongRootMatrix (K := K) i j hij) (B k) =
+      match k with
+      | .inl _ => 0
+      | .inr (.inl k) => if k = j then B (.inr (.inl i)) else 0
+      | .inr (.inr k) => if k = i then -B (.inr (.inr j)) else 0 := by
+  rw [Matrix.toLinAlgEquiv_self]
+  rcases k with k | k | k
+  · simp [typeBLongRootMatrix]
+  · by_cases h : j = k <;>
+      simp [typeBLongRootMatrix, Matrix.single_apply, h, eq_comm]
+  · by_cases h : i = k <;>
+      simp [typeBLongRootMatrix, Matrix.single_apply, h, eq_comm]
 
 /-- The diagonal coroot matrix paired with the long root `εᵢ - εⱼ`; the inequality witness
 excludes the degenerate zero-weight case. -/
@@ -152,12 +165,10 @@ theorem typeBLongRootMatrix_sq (i j : ι) (hij : i ≠ j) :
 
 /-- The ambient root matrix for the short type-`B` root `εᵢ`, with the integral Chevalley
 normalization adapted to the middle coefficient `2` in `LieAlgebra.Orthogonal.JB`. -/
-@[expose]
 def typeBShortRootMatrix (i : ι) : Matrix (Unit ⊕ ι ⊕ ι) (Unit ⊕ ι ⊕ ι) K :=
   single (.inr (.inl i)) (.inl ()) 2 - single (.inl ()) (.inr (.inr i)) 1
 
 /-- The ambient root matrix for the opposite short root `-εᵢ`. -/
-@[expose]
 def typeBShortNegativeRootMatrix (i : ι) : Matrix (Unit ⊕ ι ⊕ ι) (Unit ⊕ ι ⊕ ι) K :=
   single (.inl ()) (.inr (.inl i)) 1 - single (.inr (.inr i)) (.inl ()) 2
 
@@ -204,6 +215,38 @@ theorem coe_typeBShortNegativeRootGenerator (i : ι) :
     (typeBShortNegativeRootGenerator (K := K) i :
       Matrix (Unit ⊕ ι ⊕ ι) (Unit ⊕ ι ⊕ ι) K) = typeBShortNegativeRootMatrix i :=
   (rfl)
+
+/-- The positive short-root matrix action on a vector of an indexed basis. -/
+@[simp]
+theorem typeBShortRootMatrix_toLinAlgEquiv_apply {M : Type*} [AddCommGroup M] [Module K M]
+    (B : Module.Basis (Unit ⊕ ι ⊕ ι) K M) (i : ι) (k : Unit ⊕ ι ⊕ ι) :
+    Matrix.toLinAlgEquiv B (typeBShortRootMatrix (K := K) i) (B k) =
+      match k with
+      | .inl _ => (2 : K) • B (.inr (.inl i))
+      | .inr (.inl _) => 0
+      | .inr (.inr k) => if k = i then -B (.inl ()) else 0 := by
+  rw [Matrix.toLinAlgEquiv_self]
+  rcases k with k | k | k
+  · simp [typeBShortRootMatrix, Matrix.single_apply]
+  · simp [typeBShortRootMatrix]
+  · by_cases h : i = k <;>
+      simp [typeBShortRootMatrix, Matrix.single_apply, h, eq_comm]
+
+/-- The negative short-root matrix action on a vector of an indexed basis. -/
+@[simp]
+theorem typeBShortNegativeRootMatrix_toLinAlgEquiv_apply {M : Type*} [AddCommGroup M]
+    [Module K M] (B : Module.Basis (Unit ⊕ ι ⊕ ι) K M) (i : ι) (k : Unit ⊕ ι ⊕ ι) :
+    Matrix.toLinAlgEquiv B (typeBShortNegativeRootMatrix (K := K) i) (B k) =
+      match k with
+      | .inl _ => -((2 : K) • B (.inr (.inr i)))
+      | .inr (.inl k) => if k = i then B (.inl ()) else 0
+      | .inr (.inr _) => 0 := by
+  rw [Matrix.toLinAlgEquiv_self]
+  rcases k with k | k | k
+  · simp [typeBShortNegativeRootMatrix, Matrix.single_apply]
+  · by_cases h : i = k <;>
+      simp [typeBShortNegativeRootMatrix, Matrix.single_apply, h, eq_comm]
+  · simp [typeBShortNegativeRootMatrix]
 
 /-! ### Diagonal action on root generators -/
 
