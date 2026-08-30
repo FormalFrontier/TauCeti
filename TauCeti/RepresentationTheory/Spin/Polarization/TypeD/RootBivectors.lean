@@ -7,16 +7,16 @@ module
 
 public import TauCeti.LinearAlgebra.RootSystem.ClassicalTypeD
 public import TauCeti.RepresentationTheory.Spin.IntegralLattice
-public import TauCeti.RepresentationTheory.Spin.Polarization.TypeD.Basic
+public import TauCeti.RepresentationTheory.Spin.Weight
 
 /-!
 # Simple-root bivectors for the type-D spin representation
 
-Let `P` be a polarization of a rational quadratic space and let `b` be a basis of its first
-isotropic summand, indexed by `Fin n`. The span of `b` and its polar dual is a split quadratic
-subspace of rank `2 * n`, so its quadratic Lie subalgebra is a copy of `Dₙ` inside the quadratic
-Lie algebra of `Q`. This file gives integral Clifford representatives of the positive and negative
-Bourbaki simple roots of that `Dₙ`. For a chain root `eᵢ - eᵢ₊₁` they are
+Let `P` be a polarization of a quadratic space over a commutative ring and let `b` be a basis of
+its first isotropic summand, indexed by `Fin n`. The span of `b` and its polar dual is a split
+quadratic subspace of rank `2 * n`, so its quadratic Lie subalgebra is a copy of `Dₙ` inside the
+quadratic Lie algebra of `Q`. This file gives integral Clifford representatives of the positive and
+negative Bourbaki simple roots of that `Dₙ`. For a chain root `eᵢ - eᵢ₊₁` they are
 
 ```text
 Eᵢ = ι(bᵢ) ι(b'ᵢ₊₁),        Fᵢ = ι(bᵢ₊₁) ι(b'ᵢ),
@@ -29,14 +29,19 @@ Eₙ₋₁ = ι(bₙ₋₂) ι(bₙ₋₁),    Fₙ₋₁ = ι(b'ₙ₋₁) ι(b
 ```
 
 Here `b'` is polar-dual to `b`. Orthogonality makes each displayed product equal to the
-half-normalized Clifford bivector of its two factors. Consequently the representatives belong to
-the quadratic Lie subalgebra. Their brackets with the diagonal bivectors have exactly the
-coordinates of `TauCeti.DynkinType.typeDSimpleRoot`, fixing both the Bourbaki numbering and the
-sign convention.
+half-normalized Clifford bivector of its two factors, once `2` is invertible. Consequently the
+representatives belong to the quadratic Lie subalgebra. Their brackets with the diagonal bivectors
+have exactly the coordinates of `TauCeti.DynkinType.typeDSimpleRoot`, fixing both the Bourbaki
+numbering and the sign convention.
 
-Each representative is a product of integral creation or annihilation operators, so its spin
-action preserves the coordinate integral lattice. It also squares to zero, and hence acts by a
-square-zero endomorphism on the rational spinor module.
+Each representative squares to zero, and hence acts by a square-zero endomorphism on the spinor
+module. Over `ℚ` it is moreover a product of integral creation or annihilation operators, so its
+spin action preserves the coordinate integral lattice.
+
+Both branches of the definition only need the last two coordinates to be distinct, so the
+representatives and every algebraic identity about them are stated under `2 ≤ n`. The classification
+bound `4 ≤ n` enters only where `TauCeti.DynkinType.typeDSimpleRoot` does, that is in the two weight
+theorems that name the Bourbaki simple roots.
 
 Nothing here needs the polarization to be even: the representatives, their weights and their
 Chevalley bracket are the same whatever the orthogonal remainder `P.line` is. What the remainder
@@ -47,31 +52,35 @@ generate a `Dₙ` subalgebra of the larger, type-`Bₙ` algebra of `Q`.
 
 ## Main definitions and results
 
-* `TauCeti.SpinPolarizationData.typeDPositiveSimpleRootBivector` and
-  `TauCeti.SpinPolarizationData.typeDNegativeSimpleRootBivector`: the integral Clifford
+* `TauCeti.SpinPolarizationData.typeDSimpleRootBivector` and
+  `TauCeti.SpinPolarizationData.typeDSimpleNegativeRootBivector`: the integral Clifford
   representatives.
-* `TauCeti.SpinPolarizationData.lie_diagonalBivector_typeDPositiveSimpleRootBivector` and
-  `TauCeti.SpinPolarizationData.lie_diagonalBivector_typeDNegativeSimpleRootBivector`: their
-  Bourbaki simple-root weights.
-* The positive/negative bracket theorem gives the Chevalley normalization.
-* `TauCeti.SpinPolarizationData.typeDPositiveSimpleRootBivector_mem_integralSpinActionSubring`
-  and its negative analogue: preservation of the integral spinor lattice.
-* `TauCeti.SpinPolarizationData.spinAction_typeDPositiveSimpleRootBivector_sq` and its negative
+* `TauCeti.SpinPolarizationData.spinAction_typeDSimpleRootBivector_sq` and its negative
   analogue: square-zero action.
+* `TauCeti.SpinPolarizationData.lie_diagonalBivector_typeDSimpleRootBivector` and
+  `TauCeti.SpinPolarizationData.lie_diagonalBivector_typeDSimpleNegativeRootBivector`: their
+  Bourbaki simple-root weights.
+* `TauCeti.SpinPolarizationData.lie_typeDSimpleRootBivector_typeDSimpleNegativeRootBivector`:
+  the Chevalley normalization.
+* `TauCeti.SpinPolarizationData.typeDSimpleRootBivector_mem_integralSpinActionSubring`
+  and its negative analogue: preservation of the integral spinor lattice.
 
 ## Roadmap
 
-This is the simple-root Clifford prerequisite for the type-`D` Chevalley carrier in Layer 9 of
-`TauCetiRoadmap/ReductiveGroups/README.md`, which instantiates it at an even polarization. The
-remaining carrier step is to identify these
-elements with the standard type-`D` matrix root generators and package the resulting integral
-pinned representation. That carrier is consumed by milestone L0 of
-`TauCetiRoadmap/CFSGStatement/README.md`.
+This supplies the simple-root half of "a split Cartan and Borel, matched to the abstract root
+datum" in Layer 5 of `TauCetiRoadmap/RepresentationTheory/SpinRepresentations/README.md`: the
+Cartan subalgebra spanned by the bivectors of dual isotropic pairs is
+`TauCeti.SpinPolarizationData.diagonalBivector`, and the theorems below identify the roots of the
+elements above with the abstract `Dₙ` simple roots. The remaining step of that bullet is to exhibit
+the matching Borel and to compare the fundamental weights computed on the spinor module with the
+abstract fundamental weights.
 
 ## References
 
 * N. Bourbaki, *Groupes et algèbres de Lie*, Chapters 4--6, Plate IV.
 * C. Chevalley, *The Algebraic Theory of Spinors*, Chapter II.
+* [Spin-representations roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/SpinRepresentations/README.md),
+  Layer 5, "A split Cartan and Borel, matched to the abstract root datum".
 -/
 
 public section
@@ -82,15 +91,20 @@ namespace TauCeti.SpinPolarizationData
 
 attribute [local instance 100] LieRing.ofAssociativeRing
 
-variable {V : Type*} [AddCommGroup V] [Module ℚ V]
-variable {Q : QuadraticForm ℚ V} (P : SpinPolarizationData Q)
-variable {n : ℕ} (b : Module.Basis (Fin n) ℚ P.W)
+section CommRing
+
+variable {K : Type*} [CommRing K]
+variable {V : Type*} [AddCommGroup V] [Module K V]
+variable {Q : QuadraticForm K V} (P : SpinPolarizationData Q)
+variable {n : ℕ} (b : Module.Basis (Fin n) K P.W)
+
+/-! ### The representatives -/
 
 /-- The positive integral Clifford representative of the `i`-th Bourbaki simple root of the `Dₙ`
 carried by the polarization basis `b`, which is all of the quadratic Lie algebra of `Q` exactly
 when `P` is even. For a chain node it is creation at `i` followed by annihilation at `i + 1`; at
 the fork node it is creation at each of the last two coordinates. -/
-noncomputable def typeDPositiveSimpleRootBivector (hn : 4 ≤ n) (i : Fin n) :
+noncomputable def typeDSimpleRootBivector (hn : 2 ≤ n) (i : Fin n) :
     CliffordAlgebra Q :=
   if h : (i : ℕ) + 1 < n then
     ι Q (b i : V) * ι Q (P.dualVector b ⟨(i : ℕ) + 1, h⟩ : V)
@@ -100,7 +114,7 @@ noncomputable def typeDPositiveSimpleRootBivector (hn : 4 ≤ n) (i : Fin n) :
 /-- The negative integral Clifford representative of the `i`-th Bourbaki simple root of the `Dₙ`
 carried by the polarization basis `b`, paired with the `i`-th positive representative. The
 reversed order at the fork fixes the standard Chevalley sign convention. -/
-noncomputable def typeDNegativeSimpleRootBivector (hn : 4 ≤ n) (i : Fin n) :
+noncomputable def typeDSimpleNegativeRootBivector (hn : 2 ≤ n) (i : Fin n) :
     CliffordAlgebra Q :=
   if h : (i : ℕ) + 1 < n then
     ι Q (b ⟨(i : ℕ) + 1, h⟩ : V) * ι Q (P.dualVector b i : V)
@@ -108,182 +122,246 @@ noncomputable def typeDNegativeSimpleRootBivector (hn : 4 ≤ n) (i : Fin n) :
     ι Q (P.dualVector b ⟨n - 1, by omega⟩ : V) *
       ι Q (P.dualVector b ⟨n - 2, by omega⟩ : V)
 
-/-- The positive simple-root representative, exposed as the corresponding Clifford bivector. -/
-theorem typeDPositiveSimpleRootBivector_eq (hn : 4 ≤ n) (i : Fin n) :
-    P.typeDPositiveSimpleRootBivector b hn i =
+/-- The defining creation/annihilation product of a positive simple-root representative. -/
+theorem typeDSimpleRootBivector_def (hn : 2 ≤ n) (i : Fin n) :
+    P.typeDSimpleRootBivector b hn i =
       if h : (i : ℕ) + 1 < n then
-        bivector Q (b i : V) (P.dualVector b ⟨(i : ℕ) + 1, h⟩ : V)
+        ι Q (b i : V) * ι Q (P.dualVector b ⟨(i : ℕ) + 1, h⟩ : V)
       else
-        bivector Q (b ⟨n - 2, by omega⟩ : V) (b ⟨n - 1, by omega⟩ : V) := by
-  rw [typeDPositiveSimpleRootBivector]
-  by_cases h : (i : ℕ) + 1 < n
-  · simp only [dite_eq_left h]
-    rw [ι_mul_ι_eq_bivector_add, P.polar_dualVector]
-    simp [Fin.ext_iff]
-  · simp only [dite_eq_right h]
-    rw [ι_mul_ι_eq_bivector_add, P.polar_W_eq_zero]
-    simp
+        ι Q (b ⟨n - 2, by omega⟩ : V) * ι Q (b ⟨n - 1, by omega⟩ : V) :=
+  -- `(rfl)`, not `rfl`: the body of `typeDSimpleRootBivector` is not `@[expose]`d.
+  (rfl)
 
-/-- The negative simple-root representative, exposed as the corresponding Clifford bivector. -/
-theorem typeDNegativeSimpleRootBivector_eq (hn : 4 ≤ n) (i : Fin n) :
-    P.typeDNegativeSimpleRootBivector b hn i =
+/-- The defining creation/annihilation product of a negative simple-root representative. -/
+theorem typeDSimpleNegativeRootBivector_def (hn : 2 ≤ n) (i : Fin n) :
+    P.typeDSimpleNegativeRootBivector b hn i =
       if h : (i : ℕ) + 1 < n then
-        bivector Q (b ⟨(i : ℕ) + 1, h⟩ : V) (P.dualVector b i : V)
+        ι Q (b ⟨(i : ℕ) + 1, h⟩ : V) * ι Q (P.dualVector b i : V)
       else
-        bivector Q (P.dualVector b ⟨n - 1, by omega⟩ : V)
-          (P.dualVector b ⟨n - 2, by omega⟩ : V) := by
-  rw [typeDNegativeSimpleRootBivector]
+        ι Q (P.dualVector b ⟨n - 1, by omega⟩ : V) *
+          ι Q (P.dualVector b ⟨n - 2, by omega⟩ : V) :=
+  -- `(rfl)`, not `rfl`: the body of `typeDSimpleNegativeRootBivector` is not `@[expose]`d.
+  (rfl)
+
+/-! ### Square-zero -/
+
+private theorem ι_mul_ι_mul_self_eq_zero {x y : V} (hx : Q x = 0) (hxy : polar Q x y = 0) :
+    ι Q x * ι Q y * (ι Q x * ι Q y) = 0 := by
+  have h : Q.IsOrtho y x :=
+    isOrtho_polarBilin.mp (by rw [polarBilin_apply_apply, polar_comm]; exact hxy)
+  rw [mul_ι_mul_ι_mul_comm_of_isOrtho (ι Q x) h (ι Q y), ι_sq_scalar, hx, map_zero, zero_mul,
+    neg_zero]
+
+/-- Every positive type-`D` simple-root representative squares to zero in the Clifford algebra:
+its two isotropic factors are orthogonal, so they anticommute and each squares to zero. -/
+theorem typeDSimpleRootBivector_sq (hn : 2 ≤ n) (i : Fin n) :
+    P.typeDSimpleRootBivector b hn i * P.typeDSimpleRootBivector b hn i = 0 := by
   by_cases h : (i : ℕ) + 1 < n
-  · simp only [dite_eq_left h]
-    rw [ι_mul_ι_eq_bivector_add, P.polar_dualVector]
+  · rw [typeDSimpleRootBivector_def, dite_eq_left h]
+    refine ι_mul_ι_mul_self_eq_zero (P.isotropic_W _) ?_
+    rw [P.polar_dualVector]
     simp [Fin.ext_iff]
-  · simp only [dite_eq_right h]
-    rw [ι_mul_ι_eq_bivector_add, P.polar_W'_eq_zero]
+  · rw [typeDSimpleRootBivector_def, dite_eq_right h]
+    exact ι_mul_ι_mul_self_eq_zero (P.isotropic_W _) (P.polar_W_eq_zero _ _)
+
+/-- Every negative type-`D` simple-root representative squares to zero in the Clifford algebra. -/
+theorem typeDSimpleNegativeRootBivector_sq (hn : 2 ≤ n) (i : Fin n) :
+    P.typeDSimpleNegativeRootBivector b hn i * P.typeDSimpleNegativeRootBivector b hn i = 0 := by
+  by_cases h : (i : ℕ) + 1 < n
+  · rw [typeDSimpleNegativeRootBivector_def, dite_eq_left h]
+    refine ι_mul_ι_mul_self_eq_zero (P.isotropic_W _) ?_
+    rw [P.polar_dualVector]
+    simp [Fin.ext_iff]
+  · rw [typeDSimpleNegativeRootBivector_def, dite_eq_right h]
+    exact ι_mul_ι_mul_self_eq_zero (P.isotropic_W' _) (P.polar_W'_eq_zero _ _)
+
+/-- A positive type-`D` simple-root representative acts by a square-zero endomorphism on
+spinors. -/
+theorem spinAction_typeDSimpleRootBivector_sq (hn : 2 ≤ n) (i : Fin n) :
+    spinAction Q P (P.typeDSimpleRootBivector b hn i) *
+        spinAction Q P (P.typeDSimpleRootBivector b hn i) = 0 := by
+  rw [← map_mul, P.typeDSimpleRootBivector_sq b hn i, map_zero]
+
+/-- A negative type-`D` simple-root representative acts by a square-zero endomorphism on
+spinors. -/
+theorem spinAction_typeDSimpleNegativeRootBivector_sq (hn : 2 ≤ n) (i : Fin n) :
+    spinAction Q P (P.typeDSimpleNegativeRootBivector b hn i) *
+        spinAction Q P (P.typeDSimpleNegativeRootBivector b hn i) = 0 := by
+  rw [← map_mul, P.typeDSimpleNegativeRootBivector_sq b hn i, map_zero]
+
+/-! ### The eigenvectors of the diagonal rotations
+
+Bracketing with the `k`-th diagonal bivector rotates a generator by
+`x ↦ polar Q (b' k) x • b k - polar Q (b k) x • b' k`. The two isotropic summands are its
+eigenspaces, with eigenvalue `±1` at the index `k` and `0` elsewhere; the two lemmas here record
+that, and they are the only input to every weight computation below. -/
+
+private theorem cartanRotation_basis (k i : Fin n) :
+    polar Q (P.dualVector b k : V) (b i : V) • (b k : V) -
+        polar Q (b k : V) (b i : V) • (P.dualVector b k : V) =
+      (if k = i then (1 : K) else 0) • (b i : V) := by
+  have h1 : polar Q (P.dualVector b k : V) (b i : V) = if i = k then (1 : K) else 0 := by
+    rw [polar_comm]
+    exact P.polar_dualVector b k i
+  have h2 : polar Q (b k : V) (b i : V) = 0 := P.polar_W_eq_zero _ _
+  rw [h1, h2]
+  by_cases h : k = i
+  · subst h
     simp
+  · simp [h, Ne.symm h]
+
+private theorem cartanRotation_dualVector (k i : Fin n) :
+    polar Q (P.dualVector b k : V) (P.dualVector b i : V) • (b k : V) -
+        polar Q (b k : V) (P.dualVector b i : V) • (P.dualVector b k : V) =
+      (if k = i then (-1 : K) else 0) • (P.dualVector b i : V) := by
+  have h1 : polar Q (P.dualVector b k : V) (P.dualVector b i : V) = 0 := P.polar_W'_eq_zero _ _
+  have h2 : polar Q (b k : V) (P.dualVector b i : V) = if k = i then (1 : K) else 0 :=
+    P.polar_dualVector b i k
+  rw [h1, h2]
+  by_cases h : k = i
+  · subst h
+    simp
+  · simp [h]
+
+variable [Invertible (2 : K)]
+
+/-! ### The bivector form -/
+
+/-- At a chain node the positive representative is the Clifford bivector of the `i`-th basis
+vector and the dual of the next one: the two factors are orthogonal, so their product has no
+scalar part. -/
+@[simp]
+theorem typeDSimpleRootBivector_of_add_one_lt (hn : 2 ≤ n) {i : Fin n} (h : (i : ℕ) + 1 < n) :
+    P.typeDSimpleRootBivector b hn i =
+      bivector Q (b i : V) (P.dualVector b ⟨(i : ℕ) + 1, h⟩ : V) := by
+  rw [typeDSimpleRootBivector_def, dite_eq_left h, ι_mul_ι_eq_bivector_add, P.polar_dualVector]
+  simp [Fin.ext_iff]
+
+/-- At the fork node the positive representative is the Clifford bivector of the last two basis
+vectors, which are orthogonal because the first isotropic summand is. -/
+@[simp]
+theorem typeDSimpleRootBivector_of_not_add_one_lt (hn : 2 ≤ n) {i : Fin n}
+    (h : ¬(i : ℕ) + 1 < n) :
+    P.typeDSimpleRootBivector b hn i =
+      bivector Q (b ⟨n - 2, by omega⟩ : V) (b ⟨n - 1, by omega⟩ : V) := by
+  rw [typeDSimpleRootBivector_def, dite_eq_right h, ι_mul_ι_eq_bivector_add, P.polar_W_eq_zero]
+  simp
+
+/-- At a chain node the negative representative is the Clifford bivector of the `i + 1`-st basis
+vector and the dual of the `i`-th one. -/
+@[simp]
+theorem typeDSimpleNegativeRootBivector_of_add_one_lt (hn : 2 ≤ n) {i : Fin n}
+    (h : (i : ℕ) + 1 < n) :
+    P.typeDSimpleNegativeRootBivector b hn i =
+      bivector Q (b ⟨(i : ℕ) + 1, h⟩ : V) (P.dualVector b i : V) := by
+  rw [typeDSimpleNegativeRootBivector_def, dite_eq_left h, ι_mul_ι_eq_bivector_add,
+    P.polar_dualVector]
+  simp [Fin.ext_iff]
+
+/-- At the fork node the negative representative is the Clifford bivector of the duals of the last
+two basis vectors, taken in the reversed order. -/
+@[simp]
+theorem typeDSimpleNegativeRootBivector_of_not_add_one_lt (hn : 2 ≤ n) {i : Fin n}
+    (h : ¬(i : ℕ) + 1 < n) :
+    P.typeDSimpleNegativeRootBivector b hn i =
+      bivector Q (P.dualVector b ⟨n - 1, by omega⟩ : V)
+        (P.dualVector b ⟨n - 2, by omega⟩ : V) := by
+  rw [typeDSimpleNegativeRootBivector_def, dite_eq_right h, ι_mul_ι_eq_bivector_add,
+    P.polar_W'_eq_zero]
+  simp
 
 /-- Positive type-`D` simple-root representatives are quadratic Clifford elements. -/
-theorem typeDPositiveSimpleRootBivector_mem_quadraticLieSubalgebra
-    (hn : 4 ≤ n) (i : Fin n) :
-    P.typeDPositiveSimpleRootBivector b hn i ∈ quadraticLieSubalgebra Q := by
-  rw [P.typeDPositiveSimpleRootBivector_eq b hn i]
-  split <;> exact bivector_mem_quadraticLieSubalgebra Q _ _
+theorem typeDSimpleRootBivector_mem_quadraticLieSubalgebra (hn : 2 ≤ n) (i : Fin n) :
+    P.typeDSimpleRootBivector b hn i ∈ quadraticLieSubalgebra Q := by
+  by_cases h : (i : ℕ) + 1 < n
+  · rw [P.typeDSimpleRootBivector_of_add_one_lt b hn h]
+    exact bivector_mem_quadraticLieSubalgebra Q _ _
+  · rw [P.typeDSimpleRootBivector_of_not_add_one_lt b hn h]
+    exact bivector_mem_quadraticLieSubalgebra Q _ _
 
 /-- Negative type-`D` simple-root representatives are quadratic Clifford elements. -/
-theorem typeDNegativeSimpleRootBivector_mem_quadraticLieSubalgebra
-    (hn : 4 ≤ n) (i : Fin n) :
-    P.typeDNegativeSimpleRootBivector b hn i ∈ quadraticLieSubalgebra Q := by
-  rw [P.typeDNegativeSimpleRootBivector_eq b hn i]
-  split <;> exact bivector_mem_quadraticLieSubalgebra Q _ _
+theorem typeDSimpleNegativeRootBivector_mem_quadraticLieSubalgebra (hn : 2 ≤ n) (i : Fin n) :
+    P.typeDSimpleNegativeRootBivector b hn i ∈ quadraticLieSubalgebra Q := by
+  by_cases h : (i : ℕ) + 1 < n
+  · rw [P.typeDSimpleNegativeRootBivector_of_add_one_lt b hn h]
+    exact bivector_mem_quadraticLieSubalgebra Q _ _
+  · rw [P.typeDSimpleNegativeRootBivector_of_not_add_one_lt b hn h]
+    exact bivector_mem_quadraticLieSubalgebra Q _ _
 
-private theorem lie_diagonalBivector_bivector_basis_dualVector (k i j : Fin n) :
-    ⁅P.diagonalBivector b k, bivector Q (b i : V) (P.dualVector b j : V)⁆ =
-      ((if k = i then (1 : ℚ) else 0) - if k = j then 1 else 0) •
-        bivector Q (b i : V) (P.dualVector b j : V) := by
-  have h1 : polar Q (P.dualVector b k : V) (b i : V) = if k = i then 1 else 0 := by
-    rw [polar_comm, P.polar_dualVector]
-    simp [eq_comm]
-  have h2 : polar Q (b k : V) (b i : V) = 0 := P.polar_W_eq_zero _ _
-  have h3 : polar Q (P.dualVector b k : V) (P.dualVector b j : V) = 0 :=
-    P.polar_W'_eq_zero _ _
-  have h4 : polar Q (b k : V) (P.dualVector b j : V) = if k = j then 1 else 0 := by
-    rw [P.polar_dualVector]
-  rw [P.diagonalBivector_def b, lie_bivector_bivector, h1, h2, h3, h4]
-  by_cases hki : k = i
-  · subst i
-    by_cases hkj : k = j
-    · subst j
-      simp [bivector_def]
-      module
-    · simp [hkj, bivector_def]
-  · by_cases hkj : k = j
-    · subst j
-      simp [hki, bivector_def]
-      module
-    · simp [hki, hkj, bivector_def]
+/-! ### The Cartan weights -/
 
-private theorem lie_diagonalBivector_bivector_basis_basis (k i j : Fin n) :
-    ⁅P.diagonalBivector b k, bivector Q (b i : V) (b j : V)⁆ =
-      ((if k = i then (1 : ℚ) else 0) + if k = j then 1 else 0) •
-        bivector Q (b i : V) (b j : V) := by
-  have h1 : polar Q (P.dualVector b k : V) (b i : V) = if k = i then 1 else 0 := by
-    rw [polar_comm, P.polar_dualVector]
-    simp [eq_comm]
-  have h2 : polar Q (b k : V) (b i : V) = 0 := P.polar_W_eq_zero _ _
-  have h3 : polar Q (P.dualVector b k : V) (b j : V) = if k = j then 1 else 0 := by
-    rw [polar_comm, P.polar_dualVector]
-    simp [eq_comm]
-  have h4 : polar Q (b k : V) (b j : V) = 0 := P.polar_W_eq_zero _ _
-  rw [P.diagonalBivector_def b, lie_bivector_bivector, h1, h2, h3, h4]
-  by_cases hki : k = i
-  · subst i
-    by_cases hkj : k = j
-    · subst j
-      simp
-    · simp [hkj, bivector_def]
-  · by_cases hkj : k = j
-    · subst j
-      simp [hki, bivector_def]
-    · simp [hki, hkj, bivector_def]
-
-private theorem lie_diagonalBivector_bivector_dualVector_dualVector (k i j : Fin n) :
-    ⁅P.diagonalBivector b k, bivector Q (P.dualVector b i : V) (P.dualVector b j : V)⁆ =
-      -((if k = i then (1 : ℚ) else 0) + if k = j then 1 else 0) •
-        bivector Q (P.dualVector b i : V) (P.dualVector b j : V) := by
-  have h1 : polar Q (P.dualVector b k : V) (P.dualVector b i : V) = 0 :=
-    P.polar_W'_eq_zero _ _
-  have h2 : polar Q (b k : V) (P.dualVector b i : V) = if k = i then 1 else 0 := by
-    rw [P.polar_dualVector]
-  have h3 : polar Q (P.dualVector b k : V) (P.dualVector b j : V) = 0 :=
-    P.polar_W'_eq_zero _ _
-  have h4 : polar Q (b k : V) (P.dualVector b j : V) = if k = j then 1 else 0 := by
-    rw [P.polar_dualVector]
-  rw [P.diagonalBivector_def b, lie_bivector_bivector, h1, h2, h3, h4]
-  by_cases hki : k = i
-  · subst i
-    by_cases hkj : k = j
-    · subst j
-      simp [bivector_def]
-    · simp [hkj, bivector_def]
-      module
-  · by_cases hkj : k = j
-    · subst j
-      simp [hki, bivector_def]
-      module
-    · simp [hki, hkj, bivector_def]
+/-- The bracket of a diagonal bivector with a Clifford bivector both of whose factors are
+eigenvectors of the corresponding infinitesimal rotation: the weight is the sum of the two
+eigenvalues. This is the single computation behind the four weight branches below. -/
+private theorem lie_diagonalBivector_bivector {k : Fin n} {x y : V} {cx cy : K}
+    (hx : polar Q (P.dualVector b k : V) x • (b k : V) -
+      polar Q (b k : V) x • (P.dualVector b k : V) = cx • x)
+    (hy : polar Q (P.dualVector b k : V) y • (b k : V) -
+      polar Q (b k : V) y • (P.dualVector b k : V) = cy • y) :
+    ⁅P.diagonalBivector b k, bivector Q x y⁆ = (cx + cy) • bivector Q x y := by
+  rw [P.diagonalBivector_def b, lie_bivector_bivector, hx, hy]
+  simp only [bivector_def, map_smul, smul_mul_assoc, mul_smul_comm, smul_sub, smul_smul]
+  module
 
 /-- The diagonal Cartan bivectors act on a positive simple-root representative with the
 corresponding coordinate of the Bourbaki simple root. -/
-theorem lie_diagonalBivector_typeDPositiveSimpleRootBivector
-    (hn : 4 ≤ n) (i k : Fin n) :
-    ⁅P.diagonalBivector b k, P.typeDPositiveSimpleRootBivector b hn i⁆ =
-      algebraMap ℤ ℚ (DynkinType.typeDSimpleRoot n hn i k) •
-        P.typeDPositiveSimpleRootBivector b hn i := by
-  rw [P.typeDPositiveSimpleRootBivector_eq b hn i]
+theorem lie_diagonalBivector_typeDSimpleRootBivector (hn : 4 ≤ n) (i k : Fin n) :
+    ⁅P.diagonalBivector b k, P.typeDSimpleRootBivector b (by omega) i⁆ =
+      algebraMap ℤ K (DynkinType.typeDSimpleRoot n hn i k) •
+        P.typeDSimpleRootBivector b (by omega) i := by
   by_cases h : (i : ℕ) + 1 < n
-  · simp only [dite_eq_left h]
-    rw [lie_diagonalBivector_bivector_basis_dualVector,
-      DynkinType.typeDSimpleRoot_of_add_one_lt hn h]
-    simp [Pi.sub_apply, Pi.single_apply]
-  · simp only [dite_eq_right h]
-    rw [lie_diagonalBivector_bivector_basis_basis,
-      DynkinType.typeDSimpleRoot_of_not_add_one_lt hn h]
-    simp [Pi.add_apply, Pi.single_apply]
+  · rw [DynkinType.typeDSimpleRoot_of_add_one_lt hn h,
+      P.typeDSimpleRootBivector_of_add_one_lt b _ h,
+      P.lie_diagonalBivector_bivector b (P.cartanRotation_basis b k i)
+        (P.cartanRotation_dualVector b k ⟨(i : ℕ) + 1, h⟩)]
+    congr 1
+    rw [Pi.sub_apply, Pi.single_apply, Pi.single_apply]
+    split_ifs <;> norm_num
+  · rw [DynkinType.typeDSimpleRoot_of_not_add_one_lt hn h,
+      P.typeDSimpleRootBivector_of_not_add_one_lt b _ h,
+      P.lie_diagonalBivector_bivector b (P.cartanRotation_basis b k ⟨n - 2, by omega⟩)
+        (P.cartanRotation_basis b k ⟨n - 1, by omega⟩)]
+    congr 1
+    rw [Pi.add_apply, Pi.single_apply, Pi.single_apply]
+    split_ifs <;> norm_num
 
 /-- The diagonal Cartan bivectors act on a negative simple-root representative with the negative
 of the corresponding Bourbaki simple-root coordinate. -/
-theorem lie_diagonalBivector_typeDNegativeSimpleRootBivector
-    (hn : 4 ≤ n) (i k : Fin n) :
-    ⁅P.diagonalBivector b k, P.typeDNegativeSimpleRootBivector b hn i⁆ =
-      -algebraMap ℤ ℚ (DynkinType.typeDSimpleRoot n hn i k) •
-        P.typeDNegativeSimpleRootBivector b hn i := by
-  rw [P.typeDNegativeSimpleRootBivector_eq b hn i]
+theorem lie_diagonalBivector_typeDSimpleNegativeRootBivector (hn : 4 ≤ n) (i k : Fin n) :
+    ⁅P.diagonalBivector b k, P.typeDSimpleNegativeRootBivector b (by omega) i⁆ =
+      -algebraMap ℤ K (DynkinType.typeDSimpleRoot n hn i k) •
+        P.typeDSimpleNegativeRootBivector b (by omega) i := by
   by_cases h : (i : ℕ) + 1 < n
-  · simp only [dite_eq_left h]
-    rw [lie_diagonalBivector_bivector_basis_dualVector,
-      DynkinType.typeDSimpleRoot_of_add_one_lt hn h]
-    simp [Pi.sub_apply, Pi.single_apply]
-  · simp only [dite_eq_right h]
-    rw [lie_diagonalBivector_bivector_dualVector_dualVector,
-      DynkinType.typeDSimpleRoot_of_not_add_one_lt hn h]
-    simp [Pi.add_apply, Pi.single_apply]
-    module
+  · rw [DynkinType.typeDSimpleRoot_of_add_one_lt hn h,
+      P.typeDSimpleNegativeRootBivector_of_add_one_lt b _ h,
+      P.lie_diagonalBivector_bivector b (P.cartanRotation_basis b k ⟨(i : ℕ) + 1, h⟩)
+        (P.cartanRotation_dualVector b k i)]
+    congr 1
+    rw [Pi.sub_apply, Pi.single_apply, Pi.single_apply]
+    split_ifs <;> norm_num
+  · rw [DynkinType.typeDSimpleRoot_of_not_add_one_lt hn h,
+      P.typeDSimpleNegativeRootBivector_of_not_add_one_lt b _ h,
+      P.lie_diagonalBivector_bivector b (P.cartanRotation_dualVector b k ⟨n - 1, by omega⟩)
+        (P.cartanRotation_dualVector b k ⟨n - 2, by omega⟩)]
+    congr 1
+    rw [Pi.add_apply, Pi.single_apply, Pi.single_apply]
+    split_ifs <;> norm_num
+
+/-! ### The Chevalley normalization -/
 
 /-- The positive and negative representatives have the standard type-`D` Chevalley
 normalization. Their bracket is the simple coroot: `Hᵢ - Hᵢ₊₁` along the chain and
 `Hₙ₋₂ + Hₙ₋₁` at the fork. -/
-theorem lie_typeDPositiveSimpleRootBivector_typeDNegativeSimpleRootBivector
-    (hn : 4 ≤ n) (i : Fin n) :
-    ⁅P.typeDPositiveSimpleRootBivector b hn i,
-        P.typeDNegativeSimpleRootBivector b hn i⁆ =
+theorem lie_typeDSimpleRootBivector_typeDSimpleNegativeRootBivector (hn : 2 ≤ n) (i : Fin n) :
+    ⁅P.typeDSimpleRootBivector b hn i, P.typeDSimpleNegativeRootBivector b hn i⁆ =
       if h : (i : ℕ) + 1 < n then
         P.diagonalBivector b i - P.diagonalBivector b ⟨(i : ℕ) + 1, h⟩
       else
         P.diagonalBivector b ⟨n - 2, by omega⟩ +
           P.diagonalBivector b ⟨n - 1, by omega⟩ := by
-  rw [P.typeDPositiveSimpleRootBivector_eq b hn i,
-    P.typeDNegativeSimpleRootBivector_eq b hn i]
   by_cases h : (i : ℕ) + 1 < n
-  · simp only [dite_eq_left h]
+  · rw [P.typeDSimpleRootBivector_of_add_one_lt b hn h,
+      P.typeDSimpleNegativeRootBivector_of_add_one_lt b hn h, dite_eq_left h]
     have h1 : polar Q (P.dualVector b ⟨(i : ℕ) + 1, h⟩ : V)
         (b ⟨(i : ℕ) + 1, h⟩ : V) = 1 := by
       rw [polar_comm, P.polar_dualVector_self]
@@ -295,9 +373,10 @@ theorem lie_typeDPositiveSimpleRootBivector_typeDNegativeSimpleRootBivector
       P.polar_dualVector_self b i
     rw [lie_bivector_bivector, h1, h2, h3, h4, P.diagonalBivector_def,
       P.diagonalBivector_def]
-    simp [bivector_def]
+    simp only [one_smul, zero_smul, sub_zero, zero_sub, bivector_def, map_neg, mul_neg, neg_mul]
     module
-  · simp only [dite_eq_right h]
+  · rw [P.typeDSimpleRootBivector_of_not_add_one_lt b hn h,
+      P.typeDSimpleNegativeRootBivector_of_not_add_one_lt b hn h, dite_eq_right h]
     have hpell : (⟨n - 2, by omega⟩ : Fin n) ≠ ⟨n - 1, by omega⟩ := by
       intro heq
       have := congrArg Fin.val heq
@@ -319,85 +398,39 @@ theorem lie_typeDPositiveSimpleRootBivector_typeDNegativeSimpleRootBivector
       P.polar_dualVector_self b _
     rw [lie_bivector_bivector, h1, h2, h3, h4, P.diagonalBivector_def,
       P.diagonalBivector_def]
-    simp [bivector_def]
+    simp only [one_smul, zero_smul, sub_zero, zero_sub, bivector_def, map_neg, mul_neg, neg_mul]
     module
 
-/-- Positive simple-root bivectors preserve the coordinate integral spinor lattice. -/
-theorem typeDPositiveSimpleRootBivector_mem_integralSpinActionSubring
-    (hn : 4 ≤ n) (i : Fin n) :
-    P.typeDPositiveSimpleRootBivector b hn i ∈ P.integralSpinActionSubring b := by
-  rw [typeDPositiveSimpleRootBivector]
+end CommRing
+
+/-! ### Integrality over the rationals -/
+
+section Rat
+
+variable {V : Type*} [AddCommGroup V] [Module ℚ V]
+variable {Q : QuadraticForm ℚ V} (P : SpinPolarizationData Q)
+variable {n : ℕ} (b : Module.Basis (Fin n) ℚ P.W)
+
+/-- Positive simple-root representatives preserve the coordinate integral spinor lattice. -/
+theorem typeDSimpleRootBivector_mem_integralSpinActionSubring (hn : 2 ≤ n) (i : Fin n) :
+    P.typeDSimpleRootBivector b hn i ∈ P.integralSpinActionSubring b := by
+  rw [typeDSimpleRootBivector_def]
   split
   · exact mul_mem (P.ι_basis_mem_integralSpinActionSubring b _)
       (P.ι_dualVector_mem_integralSpinActionSubring b _)
   · exact mul_mem (P.ι_basis_mem_integralSpinActionSubring b _)
       (P.ι_basis_mem_integralSpinActionSubring b _)
 
-/-- Negative simple-root bivectors preserve the coordinate integral spinor lattice. -/
-theorem typeDNegativeSimpleRootBivector_mem_integralSpinActionSubring
-    (hn : 4 ≤ n) (i : Fin n) :
-    P.typeDNegativeSimpleRootBivector b hn i ∈ P.integralSpinActionSubring b := by
-  rw [typeDNegativeSimpleRootBivector]
+/-- Negative simple-root representatives preserve the coordinate integral spinor lattice. -/
+theorem typeDSimpleNegativeRootBivector_mem_integralSpinActionSubring (hn : 2 ≤ n) (i : Fin n) :
+    P.typeDSimpleNegativeRootBivector b hn i ∈ P.integralSpinActionSubring b := by
+  rw [typeDSimpleNegativeRootBivector_def]
   split
   · exact mul_mem (P.ι_basis_mem_integralSpinActionSubring b _)
       (P.ι_dualVector_mem_integralSpinActionSubring b _)
   · exact mul_mem (P.ι_dualVector_mem_integralSpinActionSubring b _)
       (P.ι_dualVector_mem_integralSpinActionSubring b _)
 
-private theorem ι_mul_ι_mul_self_eq_zero {x y : V} (hx : Q x = 0)
-    (hxy : polar Q x y = 0) :
-    (ι Q x * ι Q y) * (ι Q x * ι Q y) = 0 := by
-  have hyx : polar Q y x = 0 := by simpa [polar_comm] using hxy
-  calc
-    (ι Q x * ι Q y) * (ι Q x * ι Q y) =
-        ι Q x * (ι Q y * ι Q x) * ι Q y := by simp only [mul_assoc]
-    _ = ι Q x * (-(ι Q x * ι Q y)) * ι Q y := by
-      rw [ι_mul_ι_comm (Q := Q) y x, hyx, map_zero, zero_sub]
-    _ = -(ι Q x * ι Q x) * (ι Q y * ι Q y) := by noncomm_ring
-    _ = 0 := by rw [ι_sq_scalar, hx, map_zero, neg_zero, zero_mul]
-
-/-- Every positive type-`D` simple-root bivector squares to zero in the Clifford algebra. -/
-theorem typeDPositiveSimpleRootBivector_sq (hn : 4 ≤ n) (i : Fin n) :
-    P.typeDPositiveSimpleRootBivector b hn i *
-        P.typeDPositiveSimpleRootBivector b hn i = 0 := by
-  rw [typeDPositiveSimpleRootBivector]
-  by_cases h : (i : ℕ) + 1 < n
-  · simp only [dite_eq_left h]
-    apply ι_mul_ι_mul_self_eq_zero
-    · exact P.isotropic_W _
-    · rw [P.polar_dualVector]
-      simp [Fin.ext_iff]
-  · simp only [dite_eq_right h]
-    apply ι_mul_ι_mul_self_eq_zero
-    · exact P.isotropic_W _
-    · exact P.polar_W_eq_zero _ _
-
-/-- Every negative type-`D` simple-root bivector squares to zero in the Clifford algebra. -/
-theorem typeDNegativeSimpleRootBivector_sq (hn : 4 ≤ n) (i : Fin n) :
-    P.typeDNegativeSimpleRootBivector b hn i *
-        P.typeDNegativeSimpleRootBivector b hn i = 0 := by
-  rw [typeDNegativeSimpleRootBivector]
-  by_cases h : (i : ℕ) + 1 < n
-  · simp only [dite_eq_left h]
-    apply ι_mul_ι_mul_self_eq_zero
-    · exact P.isotropic_W _
-    · rw [P.polar_dualVector]
-      simp [Fin.ext_iff]
-  · simp only [dite_eq_right h]
-    apply ι_mul_ι_mul_self_eq_zero
-    · exact P.isotropic_W' _
-    · exact P.polar_W'_eq_zero _ _
-
-/-- A positive type-`D` simple-root bivector acts by a square-zero endomorphism on spinors. -/
-theorem spinAction_typeDPositiveSimpleRootBivector_sq (hn : 4 ≤ n) (i : Fin n) :
-    spinAction Q P (P.typeDPositiveSimpleRootBivector b hn i) *
-        spinAction Q P (P.typeDPositiveSimpleRootBivector b hn i) = 0 := by
-  rw [← map_mul, P.typeDPositiveSimpleRootBivector_sq b hn i, map_zero]
-
-/-- A negative type-`D` simple-root bivector acts by a square-zero endomorphism on spinors. -/
-theorem spinAction_typeDNegativeSimpleRootBivector_sq (hn : 4 ≤ n) (i : Fin n) :
-    spinAction Q P (P.typeDNegativeSimpleRootBivector b hn i) *
-        spinAction Q P (P.typeDNegativeSimpleRootBivector b hn i) = 0 := by
-  rw [← map_mul, P.typeDNegativeSimpleRootBivector_sq b hn i, map_zero]
+end Rat
 
 end TauCeti.SpinPolarizationData
