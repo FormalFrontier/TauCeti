@@ -69,6 +69,8 @@ it.
   <https://doris.tudelft.nl/~rlindenbergh/GPL/gpl.g>.
 * C. E. Praeger and L. H. Soicher, *Low Rank Representations and Graphs for Sporadic Groups*,
   Cambridge University Press, 1997, Chapter 4, doi:10.1017/CBO9780511526039.005.
+* The presentation-row characterization and audit theorem scaffold is adapted from the Janko-row
+  formalization in <https://github.com/TauCetiProject/TauCeti/pull/5283>.
 -/
 
 public section

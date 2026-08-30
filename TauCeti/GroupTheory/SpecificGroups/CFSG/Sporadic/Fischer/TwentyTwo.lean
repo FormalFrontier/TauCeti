@@ -72,6 +72,8 @@ checking it against a recorded number.
 * The relator list and its reduction to the proved `2·Fi₂₂` presentation are recorded in
   <https://brauer.maths.qmul.ac.uk/Atlas/spor/F22/mag/F22G1-P1.M> and
   <https://brauer.maths.qmul.ac.uk/Atlas/spor/F22/mag/2F22G1-P1.M>.
+* The presentation-row characterization and audit theorem scaffold is adapted from the Janko-row
+  formalization in <https://github.com/TauCetiProject/TauCeti/pull/5283>.
 -/
 
 public section
