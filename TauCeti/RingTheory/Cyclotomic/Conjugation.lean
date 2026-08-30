@@ -28,10 +28,10 @@ Burnside--Dixon--Schneider character-table solver.
 
 ## Main results
 
-* `TauCeti.Cyclotomic.conj_zeta`: conjugation sends `ζ_e` to `ζ_e ^ (e - 1)`.
-* `TauCeti.Cyclotomic.complexEmbedding_conj`: the distinguished complex embedding intertwines
+* `TauCeti.Cyclotomic.star_zeta`: conjugation sends `ζ_e` to `ζ_e ^ (e - 1)`.
+* `TauCeti.Cyclotomic.complexEmbedding_star`: the distinguished complex embedding intertwines
   exact and complex conjugation.
-* `TauCeti.Cyclotomic.reduce_star`: reducing a conjugate at a primitive root `r` is reduction of
+* `TauCeti.Cyclotomic.reduce_star`: reducing a conjugate at a cyclotomic root `r` is reduction of
   the original exact integer at `r ^ (e - 1)`.
 
 ## References
@@ -70,7 +70,7 @@ private theorem complexEmbedding_eq_evalCoeffs (x : Cyclotomic e) :
 
 /-- **The distinguished complex embedding intertwines exact conjugation with complex
 conjugation.** -/
-theorem complexEmbedding_conj (x : Cyclotomic e) :
+private theorem complexEmbedding_conj (x : Cyclotomic e) :
     complexEmbedding (conj x) = star (complexEmbedding x) := by
   calc
     complexEmbedding (conj x) =
@@ -96,7 +96,7 @@ theorem complexEmbedding_conj (x : Cyclotomic e) :
 /-- Exact cyclotomic conjugation sends the distinguished generator to its inverse power
 `ζ_e ^ (e - 1)`. -/
 @[simp]
-theorem conj_zeta : conj (zeta e) = zeta e ^ (e - 1) := by
+private theorem conj_zeta : conj (zeta e) = zeta e ^ (e - 1) := by
   apply complexEmbedding_injective
   rw [complexEmbedding_conj, ← starRingEnd_apply, complexEmbedding_zeta,
     conj_complexRoot_eq_pow_sub_one, map_pow, complexEmbedding_zeta]
@@ -145,16 +145,26 @@ instance instStarRing : StarRing (Cyclotomic e) where
 theorem star_zeta : star (zeta e) = zeta e ^ (e - 1) :=
   conj_zeta
 
-/-- **Reduction intertwines conjugation with inversion of the chosen primitive root.** Reducing
-`star x` at `r` is the same as reducing `x` at `r ^ (e - 1) = r⁻¹`. This is the exact relation
-between conjugate cyclotomic entries and the residue tuples used by the Dixon lift. -/
-theorem reduce_star (p : ℕ) [Fact p.Prime] (r : ZMod p) (hr : IsPrimitiveRoot r e)
-    (x : Cyclotomic e) :
-    reduce p r (star x) = reduce p (r ^ (e - 1)) x := by
-  rw [star_eq_conj, conj_def, ← reduceRingHom_apply p r hr, map_evalCoeffs]
+omit [NeZero e] in
+/-- Evaluation at a cyclotomic root intertwines `star` with substituting the inverse power of
+that root. -/
+theorem evalRingHom_star {R : Type*} [CommRing R] (f : ℤ →+* R) (r : R)
+    (hr : (Polynomial.cyclotomic e ℤ).eval₂ f r = 0) (x : Cyclotomic e) :
+    evalRingHom f r hr (star x) = evalCoeffs f (r ^ (e - 1)) x := by
+  rw [star_eq_conj, conj_def, map_evalCoeffs]
   congr 1
   · exact RingHom.ext_int _ _
-  · rw [map_pow, reduceRingHom_apply, reduce_zeta p r hr]
+  · rw [map_pow, evalRingHom_zeta]
+
+omit [NeZero e] in
+/-- **Reduction intertwines conjugation with inversion of the chosen cyclotomic root.** Reducing
+`star x` at `r` is the same as reducing `x` at `r ^ (e - 1)`. This is the exact relation between
+conjugate cyclotomic entries and the residue tuples used by the Dixon lift. -/
+theorem reduce_star (p : ℕ) (r : ZMod p)
+    (hr : (Polynomial.cyclotomic e ℤ).eval₂ (Int.castRingHom (ZMod p)) r = 0)
+    (x : Cyclotomic e) :
+    reduce p r (star x) = reduce p (r ^ (e - 1)) x := by
+  rw [reduce, evalCoeffs_eq_eval₂, ← evalRingHom_apply _ _ hr, evalRingHom_star, reduce]
 
 /-! The exact operation reduces in the kernel. -/
 
