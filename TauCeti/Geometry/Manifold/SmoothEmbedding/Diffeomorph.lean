@@ -5,49 +5,44 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Geometry.Manifold.ContMDiff.Atlas
-public import Mathlib.Topology.OpenPartialHomeomorph.Composition
 public import TauCeti.Geometry.Diffeomorphism.Group
+public import TauCeti.Geometry.Manifold.Immersion
 public import TauCeti.Geometry.Manifold.SmoothEmbedding.Basic
 
 /-!
 # Composing smooth embeddings with diffeomorphisms
 
-Mathlib defines `Manifold.IsImmersion` by a normal form in charts — `f` looks like `u ↦ (u, 0)`
-for suitable charts of the source and the target — and `Manifold.IsSmoothEmbedding` as an immersion
-that is also a topological embedding. Composition is left open there: `IsImmersion.comp` and
-`Diffeomorph.isSmoothEmbedding` are both listed as `TODO`s in
-`Mathlib/Geometry/Manifold/Immersion.lean` and `Mathlib/Geometry/Manifold/SmoothEmbedding.lean`,
-because a general composite has to combine two complements and needs the differential to split.
+Mathlib defines `Manifold.IsSmoothEmbedding` as an immersion that is also a topological embedding,
+and lists `Diffeomorph.isSmoothEmbedding` as a `TODO` in
+`Mathlib/Geometry/Manifold/SmoothEmbedding.lean`, because a general composite of immersions has to
+combine two complements.
 
-This file settles the special case that is elementary and that the geometric-topology roadmap
-consumes everywhere: composing with a **diffeomorphism** on either side. Nothing has to be
-recombined, because a diffeomorphism carries charts to charts: if `φ` is a chart of `M` in the
-maximal atlas and `e : M' ≃ₘ M` is a diffeomorphism, then `φ ∘ e` is a chart of `M'` in the maximal
-atlas, and reading `f ∘ e` in it produces literally the same normal form that `f` had in `φ`. The
-same argument on the other side pulls an ambient chart back along `e⁻¹`. So both composites are
-immersions with the *same* complement, and hence smooth embeddings.
+Composing with a **diffeomorphism** is elementary, and
+`TauCeti/Geometry/Manifold/Immersion.lean` settles it at the level of immersions: a diffeomorphism
+carries charts to charts, so both composites are immersions with the *same* complement. This file
+adds the topological half — composing with a diffeomorphism on either side preserves being a
+topological embedding — and packages the result as operations on the bundled type
+`TauCeti.SmoothEmbedding`.
 
-Since the composition is transparent, the bundled operations are then just reindexing: a
+Since the composition is transparent, the bundled operations are just reindexing: a
 `TauCeti.SmoothEmbedding` may be reparametrised by a diffeomorphism of its source
 (`TauCeti.SmoothEmbedding.compDiffeomorph`) or transported by a diffeomorphism of its target
 (`TauCeti.SmoothEmbedding.transDiffeomorph`). Reparametrisation leaves the image alone and
 transport moves it by the ambient diffeomorphism, and the two assemble into an action of the
-self-diffeomorphism group `TauCeti.Diff` of the target and a right action of that of the source.
+self-diffeomorphism group `TauCeti.Diff` of the target and a right action of that of the source;
+the two actions commute, which is recorded as a `SMulCommClass` instance.
 
 This is the transport layer that layer 4 of the geometric-topology roadmap
 (`TauCetiRoadmap/GeometricTopology/README.md`) needs for its geometric presentations, where a knot
-presentation is a smooth embedding `S¹ ↪ M`: reversing the orientation of such a presentation and
-rotating its parametrisation are precisely precomposition with a diffeomorphism of the circle,
-while the ambient `Diff(M)`-action is postcomposition.
+presentation is a smooth embedding of the circle into the ambient manifold `N`: reversing the
+orientation of such a presentation and rotating its parametrisation are precisely precomposition
+with a diffeomorphism of the circle, while the ambient `Diff(N)`-action is postcomposition.
 
 ## Main results
 
-* `TauCeti.mem_maximalAtlas_transOpenPartialHomeomorph`: a diffeomorphism pulls a chart of the
-  maximal atlas back to a chart of the maximal atlas.
 * `TauCeti.isSmoothEmbedding_comp_diffeomorph` and
-  `TauCeti.isSmoothEmbedding_diffeomorph_comp`: smooth embeddings are stable under composition with
-  a diffeomorphism on either side, together with their `Manifold.IsImmersion` counterparts.
+  `TauCeti.isSmoothEmbedding_diffeomorph_comp`, with their `_iff` companions: smooth embeddings are
+  stable under composition with a diffeomorphism on either side.
 * `TauCeti.isSmoothEmbedding_diffeomorph`: a diffeomorphism is a smooth embedding.
 
 ## Main definitions
@@ -75,12 +70,11 @@ namespace TauCeti
 open Manifold Set
 open scoped Manifold ContDiff
 
-section Immersion
+section IsSmoothEmbedding
 
 variable {𝕜 : Type*} [NontriviallyNormedField 𝕜]
   {E : Type*} [NormedAddCommGroup E] [NormedSpace 𝕜 E]
   {E' : Type*} [NormedAddCommGroup E'] [NormedSpace 𝕜 E']
-  {F : Type*} [NormedAddCommGroup F] [NormedSpace 𝕜 F]
   {H : Type*} [TopologicalSpace H] {G : Type*} [TopologicalSpace G]
   {I : ModelWithCorners 𝕜 E H} {J : ModelWithCorners 𝕜 E' G}
   {M : Type*} [TopologicalSpace M] [ChartedSpace H M]
@@ -88,69 +82,6 @@ variable {𝕜 : Type*} [NontriviallyNormedField 𝕜]
   {N : Type*} [TopologicalSpace N] [ChartedSpace G N]
   {P : Type*} [TopologicalSpace P] [ChartedSpace G P]
   {n : ℕ∞ω} {f : M → N}
-
-/-- A diffeomorphism `e : M' ≃ₘ M` pulls a chart `φ` of the maximal atlas of `M` back to the chart
-`φ ∘ e` of the maximal atlas of `M'`. This is the only geometric input to the composition results
-below: it is what lets a normal form in charts be read on the other side of a diffeomorphism. -/
-theorem mem_maximalAtlas_transOpenPartialHomeomorph [IsManifold I n M']
-    (e : M' ≃ₘ^n⟮I, I⟯ M) {φ : OpenPartialHomeomorph M H}
-    (hφ : φ ∈ IsManifold.maximalAtlas I n M) :
-    e.toHomeomorph.transOpenPartialHomeomorph φ ∈ IsManifold.maximalAtlas I n M' := by
-  rw [IsManifold.mem_maximalAtlas_iff_contMDiffOn]
-  exact ⟨(contMDiffOn_of_mem_maximalAtlas hφ).comp e.contMDiff.contMDiffOn fun _ hx => hx,
-    e.symm.contMDiff.comp_contMDiffOn (contMDiffOn_symm_of_mem_maximalAtlas hφ)⟩
-
-/-- Precomposing with a diffeomorphism of the source preserves the immersion normal form at a
-point, with the same complement: the domain chart of the immersion is pulled back along the
-diffeomorphism, and `f ∘ e` read in the new chart is what `f` was in the old one. -/
-theorem isImmersionAtOfComplement_comp_diffeomorph [IsManifold I n M']
-    (e : M' ≃ₘ^n⟮I, I⟯ M) {x : M'} (h : IsImmersionAtOfComplement F I J n f (e x)) :
-    IsImmersionAtOfComplement F I J n (f ∘ e) x := by
-  refine IsImmersionAtOfComplement.mk_of_charts h.equiv
-    (e.toHomeomorph.transOpenPartialHomeomorph h.domChart) h.codChart h.mem_domChart_source
-    h.mem_codChart_source
-    (mem_maximalAtlas_transOpenPartialHomeomorph e h.domChart_mem_maximalAtlas)
-    h.codChart_mem_maximalAtlas (fun _ hy => h.source_subset_preimage_source hy) fun y hy => ?_
-  simpa using h.writtenInCharts hy
-
-/-- Postcomposing with a diffeomorphism of the target preserves the immersion normal form at a
-point, with the same complement: the codomain chart of the immersion is pulled back along the
-inverse diffeomorphism, and `e ∘ f` read in the new chart is what `f` was in the old one. -/
-theorem isImmersionAtOfComplement_diffeomorph_comp [IsManifold J n P]
-    {x : M} (h : IsImmersionAtOfComplement F I J n f x) (e : N ≃ₘ^n⟮J, J⟯ P) :
-    IsImmersionAtOfComplement F I J n (e ∘ f) x := by
-  refine IsImmersionAtOfComplement.mk_of_charts h.equiv h.domChart
-    (e.symm.toHomeomorph.transOpenPartialHomeomorph h.codChart) h.mem_domChart_source ?_
-    h.domChart_mem_maximalAtlas
-    (mem_maximalAtlas_transOpenPartialHomeomorph e.symm h.codChart_mem_maximalAtlas)
-    (fun y hy => ?_) fun y hy => ?_
-  · simpa using h.mem_codChart_source
-  · simpa using h.source_subset_preimage_source hy
-  · simpa using h.writtenInCharts hy
-
-/-- Precomposing an immersion with a fixed complement by a diffeomorphism of the source gives an
-immersion with the same complement. -/
-theorem isImmersionOfComplement_comp_diffeomorph [IsManifold I n M']
-    (e : M' ≃ₘ^n⟮I, I⟯ M) (h : IsImmersionOfComplement F I J n f) :
-    IsImmersionOfComplement F I J n (f ∘ e) :=
-  fun x => isImmersionAtOfComplement_comp_diffeomorph e (h (e x))
-
-/-- Postcomposing an immersion with a fixed complement by a diffeomorphism of the target gives an
-immersion with the same complement. -/
-theorem isImmersionOfComplement_diffeomorph_comp [IsManifold J n P]
-    (h : IsImmersionOfComplement F I J n f) (e : N ≃ₘ^n⟮J, J⟯ P) :
-    IsImmersionOfComplement F I J n (e ∘ f) :=
-  fun x => isImmersionAtOfComplement_diffeomorph_comp (h x) e
-
-/-- Reparametrising an immersion by a diffeomorphism of the source gives an immersion. -/
-theorem isImmersion_comp_diffeomorph [IsManifold I n M']
-    (e : M' ≃ₘ^n⟮I, I⟯ M) (h : IsImmersion I J n f) : IsImmersion I J n (f ∘ e) :=
-  (isImmersionOfComplement_comp_diffeomorph e h.isImmersionOfComplement_complement).isImmersion
-
-/-- Transporting an immersion by a diffeomorphism of the target gives an immersion. -/
-theorem isImmersion_diffeomorph_comp [IsManifold J n P]
-    (h : IsImmersion I J n f) (e : N ≃ₘ^n⟮J, J⟯ P) : IsImmersion I J n (e ∘ f) :=
-  (isImmersionOfComplement_diffeomorph_comp h.isImmersionOfComplement_complement e).isImmersion
 
 /-- Reparametrising a smooth embedding by a diffeomorphism of the source gives a smooth
 embedding. -/
@@ -165,17 +96,34 @@ theorem isSmoothEmbedding_diffeomorph_comp [IsManifold J n P]
     IsSmoothEmbedding I J n (e ∘ f) :=
   ⟨isImmersion_diffeomorph_comp h.isImmersion e, e.toHomeomorph.isEmbedding.comp h.isEmbedding⟩
 
-/-- A diffeomorphism is an immersion: it is the identity immersion transported by itself. -/
-theorem isImmersion_diffeomorph [IsManifold I n M] [IsManifold I n M'] (e : M ≃ₘ^n⟮I, I⟯ M') :
-    IsImmersion I I n e :=
-  (isImmersion_diffeomorph_comp (IsImmersion.id (I := I) (n := n) (M := M)) e).congr rfl
+/-- Precomposition with a diffeomorphism of the source neither creates nor destroys a smooth
+embedding. -/
+theorem isSmoothEmbedding_comp_diffeomorph_iff [IsManifold I n M] [IsManifold I n M']
+    (e : M' ≃ₘ^n⟮I, I⟯ M) : IsSmoothEmbedding I J n (f ∘ e) ↔ IsSmoothEmbedding I J n f := by
+  refine ⟨fun h => ?_, isSmoothEmbedding_comp_diffeomorph e⟩
+  have hcomp : (f ∘ ⇑e) ∘ ⇑e.symm = f := funext fun y => by simp
+  have h' := isSmoothEmbedding_comp_diffeomorph e.symm h
+  rwa [hcomp] at h'
 
-/-- A diffeomorphism is a smooth embedding. -/
+/-- Postcomposition with a diffeomorphism of the target neither creates nor destroys a smooth
+embedding. -/
+theorem isSmoothEmbedding_diffeomorph_comp_iff [IsManifold J n N] [IsManifold J n P]
+    (e : N ≃ₘ^n⟮J, J⟯ P) : IsSmoothEmbedding I J n (e ∘ f) ↔ IsSmoothEmbedding I J n f := by
+  refine ⟨fun h => ?_, fun h => isSmoothEmbedding_diffeomorph_comp h e⟩
+  have hcomp : ⇑e.symm ∘ ⇑e ∘ f = f := funext fun y => by simp
+  have h' := isSmoothEmbedding_diffeomorph_comp h e.symm
+  rwa [hcomp] at h'
+
+/-- A diffeomorphism is a smooth embedding.
+
+This is the statement Mathlib lists as the `TODO` `Diffeomorph.isSmoothEmbedding` in
+`Mathlib/Geometry/Manifold/SmoothEmbedding.lean`; the name is flat here because a `Diffeomorph`
+namespace nested in `TauCeti` would break dot notation on Mathlib's type. -/
 theorem isSmoothEmbedding_diffeomorph [IsManifold I n M] [IsManifold I n M']
     (e : M ≃ₘ^n⟮I, I⟯ M') : IsSmoothEmbedding I I n e :=
   ⟨isImmersion_diffeomorph e, e.toHomeomorph.isEmbedding⟩
 
-end Immersion
+end IsSmoothEmbedding
 
 namespace SmoothEmbedding
 
@@ -211,8 +159,8 @@ theorem coe_ofDiffeomorph [IsManifold I n M] [IsManifold I n M'] (e : M ≃ₘ^n
 
 /-- A diffeomorphism is onto, so as a smooth embedding it has full image.
 
-Not a `simp` lemma: `coe_ofDiffeomorph` already rewrites the left-hand side, so `simp` reaches the
-statement on its own and this form is never in normal form. -/
+Not a `simp` lemma: `coe_ofDiffeomorph` already rewrites the left-hand side, so this form is never
+in normal form. -/
 theorem range_ofDiffeomorph [IsManifold I n M] [IsManifold I n M'] (e : M ≃ₘ^n⟮I, I⟯ M') :
     range (ofDiffeomorph e) = univ := by
   rw [coe_ofDiffeomorph]
@@ -220,8 +168,8 @@ theorem range_ofDiffeomorph [IsManifold I n M] [IsManifold I n M'] (e : M ≃ₘ
 
 /-- **Reparametrisation.** A diffeomorphism `e : M' ≃ₘ M` of the source turns a bundled smooth
 embedding `f : M → N` into the bundled smooth embedding `f ∘ e : M' → N`. For a geometric knot
-presentation `S¹ ↪ M`, this is the change of parametrisation of the knot, orientation reversal
-included. -/
+presentation, an embedding of the circle into the ambient manifold `N`, this is the change of
+parametrisation of the knot, orientation reversal included. -/
 def compDiffeomorph [IsManifold I n M'] (f : SmoothEmbedding I J n M N)
     (e : M' ≃ₘ^n⟮I, I⟯ M) : SmoothEmbedding I J n M' N :=
   SmoothEmbedding.ofIsSmoothEmbedding (f ∘ e)
@@ -262,8 +210,8 @@ theorem compDiffeomorph_compDiffeomorph [IsManifold I n M']
 
 /-- Reparametrisation does not move the image of an embedding.
 
-Not a `simp` lemma: `coe_compDiffeomorph` already rewrites the left-hand side, so `simp` reaches the
-statement on its own and this form is never in normal form. -/
+Not a `simp` lemma: `coe_compDiffeomorph` already rewrites the left-hand side, so this form is never
+in normal form. -/
 theorem range_compDiffeomorph [IsManifold I n M']
     (f : SmoothEmbedding I J n M N) (e : M' ≃ₘ^n⟮I, I⟯ M) :
     range (f.compDiffeomorph e) = range f := by
@@ -313,14 +261,16 @@ theorem transDiffeomorph_transDiffeomorph {Q : Type*} [TopologicalSpace Q] [Char
 
 /-- Ambient transport moves the image of an embedding by the ambient diffeomorphism.
 
-Not a `simp` lemma: `coe_transDiffeomorph` already rewrites the left-hand side, which `simp` then
-carries on to the preimage form `⇑e.symm ⁻¹' range f`, so this form is never in normal form. -/
+Not a `simp` lemma: `coe_transDiffeomorph` already rewrites the left-hand side, so this form is
+never in normal form. -/
 theorem range_transDiffeomorph [IsManifold J n P]
     (f : SmoothEmbedding I J n M N) (e : N ≃ₘ^n⟮J, J⟯ P) :
     range (f.transDiffeomorph e) = e '' range f := by
   rw [coe_transDiffeomorph, range_comp]
 
-/-- Reparametrising and transporting commute: they act on opposite sides of the embedding. -/
+/-- Reparametrising and transporting commute: they act on opposite sides of the embedding. This is
+the normal form for a mixed reparametrisation-and-transport, with the transport innermost. -/
+@[simp]
 theorem transDiffeomorph_compDiffeomorph [IsManifold I n M'] [IsManifold J n P]
     (f : SmoothEmbedding I J n M N)
     (e : M' ≃ₘ^n⟮I, I⟯ M) (e' : N ≃ₘ^n⟮J, J⟯ P) :
@@ -329,7 +279,7 @@ theorem transDiffeomorph_compDiffeomorph [IsManifold I n M'] [IsManifold J n P]
     compDiffeomorph_apply, transDiffeomorph_apply]
 
 /-- The self-diffeomorphism group of the target acts on the smooth embeddings into it, by ambient
-transport. This is the action of `Diff(M)` on geometric knot presentations. -/
+transport. This is the action of `Diff(N)` on geometric knot presentations in `N`. -/
 instance instMulActionDiff [IsManifold J n N] :
     MulAction (Diff J N n) (SmoothEmbedding I J n M N) where
   smul e f := f.transDiffeomorph e
@@ -349,8 +299,13 @@ instance instMulActionMulOppositeDiff [IsManifold I n M] :
   mul_smul e e' f := (f.compDiffeomorph_compDiffeomorph e'.unop e.unop).symm
 
 @[simp]
-theorem op_smul_def [IsManifold I n M] (e : Diff I M n) (f : SmoothEmbedding I J n M N) :
-    MulOpposite.op e • f = f.compDiffeomorph e := rfl
+theorem unop_smul_def [IsManifold I n M] (a : (Diff I M n)ᵐᵒᵖ) (f : SmoothEmbedding I J n M N) :
+    a • f = f.compDiffeomorph a.unop := rfl
+
+/-- Ambient transport and reparametrisation commute, so the two actions are compatible. -/
+instance instSMulCommClassDiff [IsManifold I n M] [IsManifold J n N] :
+    SMulCommClass (Diff J N n) (Diff I M n)ᵐᵒᵖ (SmoothEmbedding I J n M N) :=
+  ⟨fun e a f => transDiffeomorph_compDiffeomorph f a.unop e⟩
 
 end Bundled
 

@@ -16,6 +16,11 @@ isotopy. Transport by the final map of a diffeotopy is smoothly ambient isotopic
 embedding, while reparametrising two smoothly ambient-isotopic embeddings by the same source
 diffeomorphism preserves the relation.
 
+Both statements are the specializations to bundled embeddings, and to a diffeomorphism, of
+`TauCeti.SmoothAmbientIsotopic.final_comp` and `TauCeti.SmoothAmbientIsotopic.precomp`, which hold
+for arbitrary bundled smooth maps; only the identification of the composite with the corresponding
+reindexing operation is done here.
+
 These are the compatibility results needed by Layer 4 of the GeometricTopology roadmap, in the
 milestone “equivalence in each presentation.”
 
@@ -54,20 +59,23 @@ to the identity — for knot presentations, that is exactly ambient isotopy of k
 theorem smoothAmbientIsotopic_transDiffeomorph_final [IsManifold J n N]
     (f : SmoothEmbedding I J n M N) (Φ : Diffeotopy J n N) :
     f.SmoothAmbientIsotopic (f.transDiffeomorph Φ.final) := by
-  apply SmoothAmbientIsotopic.of_diffeotopy Φ
-  intro x
-  rw [transDiffeomorph_apply]
+  have hf : (f.transDiffeomorph Φ.final).toContMDiffMap
+      = Φ.final.toContMDiffMap.comp f.toContMDiffMap := ContMDiffMap.ext fun x ↦ by simp
+  rw [smoothAmbientIsotopic_iff_toContMDiffMap, hf]
+  exact TauCeti.SmoothAmbientIsotopic.final_comp f.toContMDiffMap Φ
 
 /-- Reparametrising two embeddings by the same diffeomorphism of the source preserves smooth
 ambient isotopy: the witnessing diffeotopy of the ambient manifold is unchanged. -/
 theorem SmoothAmbientIsotopic.compDiffeomorph [IsManifold I n M']
     (hfg : f.SmoothAmbientIsotopic g) (e : M' ≃ₘ^n⟮I, I⟯ M) :
     (f.compDiffeomorph e).SmoothAmbientIsotopic (g.compDiffeomorph e) := by
-  obtain ⟨Φ, hΦ⟩ := smoothAmbientIsotopic_def.mp hfg
-  apply SmoothAmbientIsotopic.of_diffeotopy Φ
-  intro x
-  rw [compDiffeomorph_apply, compDiffeomorph_apply]
-  exact hΦ (e x)
+  have hf : (f.compDiffeomorph e).toContMDiffMap = f.toContMDiffMap.comp e.toContMDiffMap :=
+    ContMDiffMap.ext fun x ↦ by simp
+  have hg : (g.compDiffeomorph e).toContMDiffMap = g.toContMDiffMap.comp e.toContMDiffMap :=
+    ContMDiffMap.ext fun x ↦ by simp
+  rw [smoothAmbientIsotopic_iff_toContMDiffMap, hf, hg]
+  exact TauCeti.SmoothAmbientIsotopic.precomp
+    (smoothAmbientIsotopic_iff_toContMDiffMap.mp hfg) e.toContMDiffMap
 
 end SmoothEmbedding
 
