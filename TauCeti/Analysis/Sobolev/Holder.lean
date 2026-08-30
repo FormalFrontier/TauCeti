@@ -27,7 +27,7 @@ open scoped NNReal BoundedContinuousFunction ENNReal
 
 universe u v
 
-variable {X : Type u} {Y : Type v} [TopologicalSpace X] [MetricSpace X]
+variable {X : Type u} {Y : Type v} [MetricSpace X]
   [NormedAddCommGroup Y] [NormedSpace ℝ Y]
 
 /-- The supremum-plus-Hölder norm on bounded continuous maps. -/
