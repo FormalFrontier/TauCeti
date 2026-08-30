@@ -170,7 +170,7 @@ theorem typeBQuadraticEquiv_typeBLongRootGenerator (i j : ι) (hij : i ≠ j) :
       bivector Q (b i : V) (P.dualVector b j : V) := by
   apply P.typeBQuadraticEquiv_coe_eq_bivector b z hz
   intro c
-  rw [coe_typeBLongRootGenerator, typeBLongRootMatrix_def, toLinAlgEquiv_basis_single_sub_single]
+  rw [coe_typeBLongRootGenerator, typeBLongRootMatrix, toLinAlgEquiv_basis_single_sub_single]
   rcases c with c | (c | c) <;>
     simp only [typeBBasis_inl, typeBBasis_inr_inl, typeBBasis_inr_inr]
   · -- The remainder vector is orthogonal to both isotropic summands.
@@ -196,7 +196,7 @@ theorem typeBQuadraticEquiv_typeBShortRootGenerator (i : ι) :
       bivector Q (b i : V) (z : V) := by
   apply P.typeBQuadraticEquiv_coe_eq_bivector b z hz
   intro c
-  rw [coe_typeBShortRootGenerator, typeBShortRootMatrix_def, toLinAlgEquiv_basis_single_sub_single]
+  rw [coe_typeBShortRootGenerator, typeBShortRootMatrix, toLinAlgEquiv_basis_single_sub_single]
   rcases c with c | (c | c) <;>
     simp only [typeBBasis_inl, typeBBasis_inr_inl, typeBBasis_inr_inr]
   · -- The remainder vector has polar self-pairing `2`, which is the matrix coefficient.
@@ -218,7 +218,7 @@ theorem typeBQuadraticEquiv_typeBShortNegativeRootGenerator (i : ι) :
       bivector Q (z : V) (P.dualVector b i : V) := by
   apply P.typeBQuadraticEquiv_coe_eq_bivector b z hz
   intro c
-  rw [coe_typeBShortNegativeRootGenerator, typeBShortNegativeRootMatrix_def,
+  rw [coe_typeBShortNegativeRootGenerator, typeBShortNegativeRootMatrix,
     toLinAlgEquiv_basis_single_sub_single]
   rcases c with c | (c | c) <;>
     simp only [typeBBasis_inl, typeBBasis_inr_inl, typeBBasis_inr_inr]
