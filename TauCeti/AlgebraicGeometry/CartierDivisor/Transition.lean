@@ -92,22 +92,16 @@ lemma transitionUnit_restrict_spec (D : CartierDivisor X) {U V W : X.Opens}
       TopCat.Presheaf.map_restrict (toRationalUnitSheaf X).hom hW _
     _ = (f |_ (U ⊓ V) - g |_ (U ⊓ V)) |_ W := by rw [transitionUnit_spec]
     _ = f |_ W - g |_ W := by
-      rw [sub_eq_add_neg, sub_eq_add_neg, TopCat.Presheaf.restrict_sum]
+      change
+        ((rationalUnitSheaf X).presheaf.map (homOfLE hW).op).hom
+            (f |_ (U ⊓ V) - g |_ (U ⊓ V)) = f |_ W - g |_ W
+      rw [map_sub]
       have hfres := TopCat.Presheaf.restrict_restrict
         (F := (rationalUnitSheaf X).presheaf) hW inf_le_left f
-      rw [hfres]
-      congr 1
-      have hneg :
-          TopCat.Presheaf.restrictOpen (F := (rationalUnitSheaf X).presheaf)
-              (-(g |_ (U ⊓ V))) W hW =
-            -TopCat.Presheaf.restrictOpen (F := (rationalUnitSheaf X).presheaf)
-              (g |_ (U ⊓ V)) W hW := by
-        simpa only [TopCat.Presheaf.restrictOpen, TopCat.Presheaf.restrict] using
-          (AddMonoidHom.map_neg
-            ((rationalUnitSheaf X).presheaf.map (homOfLE hW).op).hom (g |_ (U ⊓ V)))
       have hgres := TopCat.Presheaf.restrict_restrict
         (F := (rationalUnitSheaf X).presheaf) hW inf_le_right g
-      rw [hneg, hgres]
+      simpa only [TopCat.Presheaf.restrictOpen, TopCat.Presheaf.restrict] using
+        congrArg₂ (· - ·) hfres hgres
 
 /-- A local equation has trivial transition unit with itself. -/
 @[simp]
