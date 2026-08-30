@@ -179,22 +179,11 @@ theorem polar_W'_eq_zero (x y : P.W') : QuadraticMap.polar Q (x : V) (y : V) = 0
 
 /-! ### The remainder is orthogonal to both isotropic summands -/
 
-/-- The first isotropic summand is orthogonal to the remainder. This is
-`TauCeti.SpinPolarizationData.line_orthogonal_W` with its two arguments in the order the
-Clifford computations produce them. -/
-theorem polar_W_line (x : P.W) (z : P.line) : QuadraticMap.polar Q (x : V) (z : V) = 0 := by
-  rw [QuadraticMap.polar_comm]
-  exact P.line_orthogonal_W z x
-
-/-- The second isotropic summand is orthogonal to the remainder. -/
-theorem polar_W'_line (y : P.W') (z : P.line) : QuadraticMap.polar Q (y : V) (z : V) = 0 := by
-  rw [QuadraticMap.polar_comm]
-  exact P.line_orthogonal_W' z y
-
 /-- A vector of the first isotropic summand is orthogonal to the remainder. -/
 theorem isOrtho_W_line (x : P.W) (z : P.line) : Q.IsOrtho (x : V) (z : V) := by
-  rw [← QuadraticMap.isOrtho_polarBilin, QuadraticMap.polarBilin_apply_apply]
-  exact P.polar_W_line x z
+  rw [← QuadraticMap.isOrtho_polarBilin, QuadraticMap.polarBilin_apply_apply,
+    QuadraticMap.polar_comm]
+  exact P.line_orthogonal_W z x
 
 /-- The remainder is orthogonal to the second isotropic summand. -/
 theorem isOrtho_line_W' (z : P.line) (y : P.W') : Q.IsOrtho (z : V) (y : V) := by

@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Lie.Orthogonal.TypeB.RootGenerators
+public import TauCeti.LinearAlgebra.Matrix.ToLin
 public import TauCeti.RepresentationTheory.Spin.IntegralLattice
 public import TauCeti.RepresentationTheory.Spin.Polarization.TypeB.Basic
 public import TauCeti.RepresentationTheory.Spin.Weight
@@ -47,12 +48,13 @@ square `TauCeti.typeBShortRootDividedSquare` is a nonzero matrix.
 They preserve the coordinate integral lattice. For a root vector this is immediate from the
 product form: each factor is one of the three primitive integral operators — creation,
 annihilation, and the parity operator of a remainder vector of unit quadratic norm. A coroot is
-not such a product, and its integrality is instead read off its action on the exterior basis,
-which is by `±1` for a short coroot and by `0` or `±1` for a long one. The spinor weights are
-half-integral in the `ε` coordinates, so a single diagonal bivector is *not* integral; what clears
-the halves is that the short coroot doubles one diagonal bivector while the long coroot subtracts
-two of them. Half-integral weights that are integral on the coroots are exactly what makes the
-spinor lattice available to the simply connected form and not to the adjoint one.
+not a single such product. The spinor weights are half-integral in the `ε` coordinates, and
+correspondingly a single diagonal bivector is a creation-annihilation product less the scalar
+`⅟2`, so it is *not* integral. What clears the halves is that the short coroot doubles one
+diagonal bivector while the long coroot subtracts two of them; each combination is then again an
+integral polynomial in the primitive operators, and acts on the exterior basis by `±1`,
+respectively by `0` or `±1`. Half-integral weights that are integral on the coroots are exactly
+what makes the spinor lattice available to the simply connected form and not to the adjoint one.
 
 Nothing here constructs a group scheme or asserts reductivity, and no divided-power structure is
 introduced: the statements are about the Clifford elements and their action on the lattice.
@@ -141,25 +143,6 @@ private theorem typeBQuadraticEquiv_coe_eq_bivector (A : LieAlgebra.Orthogonal.t
     (P.typeBQuadraticEquiv b z hz A : CliffordAlgebra Q) = bivector Q x y :=
   congrArg Subtype.val (P.typeBQuadraticEquiv_eq_bivector b z hz A x y h)
 
-omit [Invertible (2 : K)] in
-/-- The value of a matrix unit's endomorphism on a basis vector. Nothing in this or the next
-computation is specific to the odd hyperbolic basis; both are stated for an arbitrary basis. -/
-private theorem toLinAlgEquiv_basis_single {n : Type*} [Fintype n] [DecidableEq n]
-    (bas : Module.Basis n K V) (p q : n) (v : K) (c : n) :
-    Matrix.toLinAlgEquiv bas (Matrix.single p q v) (bas c) =
-      (if q = c then v else 0) • bas p := by
-  rw [Matrix.toLinAlgEquiv_self]
-  simp [Matrix.single_apply, ite_and, ite_smul]
-
-omit [Invertible (2 : K)] in
-/-- The value on a basis of the endomorphism of a difference of two matrix units, which is the
-shape of every type-`B` root matrix. -/
-private theorem toLinAlgEquiv_basis_single_sub_single {n : Type*} [Fintype n] [DecidableEq n]
-    (bas : Module.Basis n K V) (p q p' q' : n) (v v' : K) (c : n) :
-    Matrix.toLinAlgEquiv bas (Matrix.single p q v - Matrix.single p' q' v') (bas c) =
-      (if q = c then v else 0) • bas p - (if q' = c then v' else 0) • bas p' := by
-  rw [map_sub, LinearMap.sub_apply, toLinAlgEquiv_basis_single, toLinAlgEquiv_basis_single]
-
 /-! ### The root vectors -/
 
 /-- **The long root vector `e_{εᵢ-εⱼ}` is the Clifford bivector of the `i`-th basis vector and the
@@ -170,22 +153,10 @@ theorem typeBQuadraticEquiv_typeBLongRootGenerator (i j : ι) (hij : i ≠ j) :
       bivector Q (b i : V) (P.dualVector b j : V) := by
   apply P.typeBQuadraticEquiv_coe_eq_bivector b z hz
   intro c
-  rw [coe_typeBLongRootGenerator, typeBLongRootMatrix, toLinAlgEquiv_basis_single_sub_single]
-  rcases c with c | (c | c) <;>
-    simp only [typeBBasis_inl, typeBBasis_inr_inl, typeBBasis_inr_inr]
-  · -- The remainder vector is orthogonal to both isotropic summands.
-    simp [P.polar_W_line (b i) z, P.polar_W'_line (P.dualVector b j) z]
-  · -- Only the first matrix unit sees a vector of the first isotropic summand.
-    by_cases hjc : j = c
-    · subst hjc
-      simp [P.polar_W_eq_zero, polar_comm (⇑Q) (P.dualVector b j : V), P.polar_dualVector]
-    · simp [hjc, Ne.symm hjc, P.polar_W_eq_zero, polar_comm (⇑Q) (P.dualVector b j : V),
-        P.polar_dualVector]
-  · -- Only the second matrix unit sees a polar dual vector.
-    by_cases hic : i = c
-    · subst hic
-      simp [P.polar_W'_eq_zero, P.polar_dualVector]
-    · simp [hic, P.polar_W'_eq_zero, P.polar_dualVector]
+  -- Each matrix unit picks out one basis index, and so does each polar coordinate.
+  rw [coe_typeBLongRootGenerator, typeBLongRootMatrix, map_sub, LinearMap.sub_apply,
+    toLinAlgEquiv_basis_single, toLinAlgEquiv_basis_single]
+  simp [eq_comm]
 
 /-- **The short root vector `e_{εᵢ}` is the Clifford bivector of the `i`-th basis vector and the
 remainder vector.** The factor `2` in the integral matrix `2 Eᵢ₀ - E₀₋ᵢ` is the polar self-pairing
@@ -196,19 +167,10 @@ theorem typeBQuadraticEquiv_typeBShortRootGenerator (i : ι) :
       bivector Q (b i : V) (z : V) := by
   apply P.typeBQuadraticEquiv_coe_eq_bivector b z hz
   intro c
-  rw [coe_typeBShortRootGenerator, typeBShortRootMatrix, toLinAlgEquiv_basis_single_sub_single]
-  rcases c with c | (c | c) <;>
-    simp only [typeBBasis_inl, typeBBasis_inr_inl, typeBBasis_inr_inr]
-  · -- The remainder vector has polar self-pairing `2`, which is the matrix coefficient.
-    rw [polar_self, hz, P.polar_W_line (b i) z]
-    simp [two_smul, add_smul]
-  · -- A vector of the first isotropic summand is killed by both terms.
-    simp [P.polar_W_eq_zero, P.line_orthogonal_W]
-  · -- A polar dual vector is seen only by the second matrix unit.
-    by_cases hic : i = c
-    · subst hic
-      simp [P.line_orthogonal_W', P.polar_dualVector]
-    · simp [hic, P.line_orthogonal_W', P.polar_dualVector]
+  -- The polar self-pairing `2` of the remainder vector matches the matrix coefficient `2`.
+  rw [coe_typeBShortRootGenerator, typeBShortRootMatrix, map_sub, LinearMap.sub_apply,
+    toLinAlgEquiv_basis_single, toLinAlgEquiv_basis_single]
+  simp [eq_comm]
 
 /-- **The negative short root vector `f_{εᵢ}` is the Clifford bivector of the remainder vector and
 the polar dual of the `i`-th basis vector.** -/
@@ -218,21 +180,9 @@ theorem typeBQuadraticEquiv_typeBShortNegativeRootGenerator (i : ι) :
       bivector Q (z : V) (P.dualVector b i : V) := by
   apply P.typeBQuadraticEquiv_coe_eq_bivector b z hz
   intro c
-  rw [coe_typeBShortNegativeRootGenerator, typeBShortNegativeRootMatrix,
-    toLinAlgEquiv_basis_single_sub_single]
-  rcases c with c | (c | c) <;>
-    simp only [typeBBasis_inl, typeBBasis_inr_inl, typeBBasis_inr_inr]
-  · -- The remainder vector is orthogonal to the second isotropic summand and self-pairs to `2`.
-    rw [polar_self, hz, P.polar_W'_line (P.dualVector b i) z]
-    simp [two_smul, add_smul]
-  · -- A vector of the first isotropic summand is seen only by the first matrix unit.
-    by_cases hic : i = c
-    · subst hic
-      simp [P.line_orthogonal_W, polar_comm (⇑Q) (P.dualVector b i : V), P.polar_dualVector]
-    · simp [hic, Ne.symm hic, P.line_orthogonal_W, polar_comm (⇑Q) (P.dualVector b i : V),
-        P.polar_dualVector]
-  · -- A polar dual vector is killed by both terms.
-    simp [P.polar_W'_eq_zero, P.line_orthogonal_W']
+  rw [coe_typeBShortNegativeRootGenerator, typeBShortNegativeRootMatrix, map_sub,
+    LinearMap.sub_apply, toLinAlgEquiv_basis_single, toLinAlgEquiv_basis_single]
+  simp [eq_comm]
 
 /-! ### The Cartan generators -/
 
@@ -249,23 +199,16 @@ theorem typeBQuadraticEquiv_typeBDiagonalMatrix_single (i : ι) :
         bivector_mem_quadraticLieSubalgebra Q _ _⟩ := by
     apply P.typeBQuadraticEquiv_eq_bivector b z hz
     intro c
+    -- Read off the polar coordinates first, then let the diagonal matrix scale the basis vector
+    -- `c` by its own diagonal entry.
+    simp only [P.polar_basis_typeBBasis, P.polar_dualVector_typeBBasis]
     rw [Matrix.toLinAlgEquiv_self]
-    rcases c with c | (c | c) <;>
-      simp only [typeBBasis_inl, typeBBasis_inr_inl, typeBBasis_inr_inr]
-    · simp [typeBDiagonalMatrix_apply, Finset.sum_ite_eq', P.polar_W_line (b i) z,
-        P.polar_W'_line (P.dualVector b i) z]
-    · by_cases hic : i = c
-      · subst hic
-        simp [typeBDiagonalMatrix_apply, Finset.sum_ite_eq', P.polar_W_eq_zero,
-          polar_comm (⇑Q) (P.dualVector b i : V) (b i : V), P.polar_dualVector_self]
-      · simp [typeBDiagonalMatrix_apply, Finset.sum_ite_eq', Ne.symm hic, P.polar_W_eq_zero,
-          polar_comm (⇑Q) (P.dualVector b i : V), P.polar_dualVector]
-    · by_cases hic : i = c
-      · subst hic
-        simp [typeBDiagonalMatrix_apply, Finset.sum_ite_eq', P.polar_W'_eq_zero,
-          P.polar_dualVector]
-      · simp [typeBDiagonalMatrix_apply, Finset.sum_ite_eq', hic, P.polar_W'_eq_zero,
-          P.polar_dualVector]
+    rcases c with ⟨⟩ | (c | c)
+    · simp [typeBDiagonalMatrix_apply, Finset.sum_ite_eq']
+    · by_cases hic : c = i <;>
+        simp [typeBDiagonalMatrix_apply, Finset.sum_ite_eq', hic]
+    · by_cases hic : c = i <;>
+        simp [typeBDiagonalMatrix_apply, Finset.sum_ite_eq', hic]
   rw [key]
   exact Subtype.ext (P.diagonalBivector_def b i).symm
 

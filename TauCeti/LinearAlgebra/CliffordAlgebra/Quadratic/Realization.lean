@@ -241,10 +241,7 @@ theorem quadraticLieSubalgebra_eq_bivector_of_lie_ι (Q : QuadraticForm K V) (hQ
   apply quadraticLieSubalgebra_ext Q hQ
   intro v
   rw [hf v]
-  -- The extensionality lemma compares the underlying Clifford elements, so the bracket on the
-  -- right is still stated on the subtype and has to be exposed before its action formula applies.
-  change _ = ⁅bivector Q x y, ι Q v⁆
-  rw [bivector_lie_ι]
+  simp only [bivector_lie_ι]
   apply congrArg (ι Q)
   -- Both sides are values of a linear map at `v`, so compare those maps on the basis.
   have hlin : f = (Q.polarBilin y).smulRight x - (Q.polarBilin x).smulRight y := by

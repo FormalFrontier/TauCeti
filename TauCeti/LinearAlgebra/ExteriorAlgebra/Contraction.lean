@@ -16,8 +16,8 @@ onto the exterior basis vectors containing that coordinate. This is the occupati
 projection used by both scalar detection in Clifford algebras and the matrix-unit construction
 from creation and annihilation operators.
 
-The exterior basis is diagonal for the grade involution as well: the involution multiplies the
-basis vector indexed by `s` by the parity of `s.card`.
+The grade involution is diagonal for the exterior basis as well: it multiplies an exterior
+monomial, and so the basis vector indexed by `s`, by the parity of its degree.
 -/
 
 public section
@@ -62,26 +62,28 @@ private theorem contractLeft_coord_basis_eq_zero_of_not_mem {I : Type w} [Linear
     exact hj
   · rfl
 
+/-- **The grade involution acts on an exterior monomial by the parity of its degree.** The
+monomial is the product of its `n` generators, each of which the involution negates. -/
+@[simp]
+theorem involute_ιMulti {n : ℕ} (v : Fin n → M) :
+    CliffordAlgebra.involute (Q := (0 : QuadraticForm R M)) (ExteriorAlgebra.ιMulti R n v) =
+      (-1 : R) ^ n • ExteriorAlgebra.ιMulti R n v := by
+  -- Every exterior monomial is the product of the list of its generators.
+  have h : ExteriorAlgebra.ιMulti R n v =
+      ((List.ofFn v).map (CliffordAlgebra.ι (0 : QuadraticForm R M))).prod := by
+    rw [ExteriorAlgebra.ιMulti_apply, List.map_ofFn]
+    rfl
+  rw [h, CliffordAlgebra.involute_prod_map_ι, List.length_ofFn]
+
 /-- **The grade involution acts on an exterior-basis vector by the parity of its index set.** The
-basis vector indexed by `s` is a product of `s.card` generators, each of which the involution
-negates. -/
+basis vector indexed by `s` is the monomial on `s.card` generators. -/
 @[simp]
 theorem involute_basis {I : Type w} [LinearOrder I]
     (b : Module.Basis I R M) (s : Finset I) :
     CliffordAlgebra.involute (Q := (0 : QuadraticForm R M)) (b.ExteriorAlgebra s) =
       (-1 : R) ^ s.card • b.ExteriorAlgebra s := by
-  -- Every exterior monomial is the product of the list of its generators.
-  have hlist : ∀ (n : ℕ) (v : Fin n → M),
-      CliffordAlgebra.involute (Q := (0 : QuadraticForm R M)) (ExteriorAlgebra.ιMulti R n v) =
-        (-1 : R) ^ n • ExteriorAlgebra.ιMulti R n v := by
-    intro n v
-    have h : ExteriorAlgebra.ιMulti R n v =
-        ((List.ofFn v).map (CliffordAlgebra.ι (0 : QuadraticForm R M))).prod := by
-      rw [ExteriorAlgebra.ιMulti_apply, List.map_ofFn]
-      rfl
-    rw [h, CliffordAlgebra.involute_prod_map_ι, List.length_ofFn]
   rw [ExteriorAlgebra.basis_apply]
-  exact hlist _ _
+  exact involute_ιMulti _
 
 /-- The shuffle sign for the singleton basis vector indexed by `i` followed by the basis vector
 indexed by `s.erase i`. When `i ∈ s`, this is the sign of moving `i` to the front of `s`. -/

@@ -194,8 +194,7 @@ theorem involute_mem_integralLattice {x : _root_.ExteriorAlgebra ℚ M}
     ((CliffordAlgebra.involute (Q := (0 : QuadraticForm ℚ M))).toLinearMap.restrictScalars ℤ)
     (fun s => ?_) hx
   -- Expose the algebra map underneath the restriction of scalars before computing it.
-  change CliffordAlgebra.involute (Q := (0 : QuadraticForm ℚ M)) (b.ExteriorAlgebra s) ∈ _
-  rw [involute_basis]
+  simp only [LinearMap.restrictScalars_apply, AlgHom.toLinearMap_apply, involute_basis]
   have hsign : ((-1 : ℚ) ^ s.card) = (((-1 : ℤ) ^ s.card : ℤ) : ℚ) := by push_cast; ring
   rw [hsign, Int.cast_smul_eq_zsmul]
   exact Submodule.smul_mem _ _ (basis_mem_integralLattice b s)
