@@ -298,12 +298,12 @@ end Transpose
 namespace IsMinimalProjectivePresentation
 
 variable {M : Type*} [AddCommGroup M] [Module A M]
-variable {P₀ : Type v} {P₁ : Type w} [AddCommGroup P₀] [Module A P₀]
-  [AddCommGroup P₁] [Module A P₁]
+variable {P₀ : Type v} [AddCommGroup P₀] [Module A P₀]
+
+section Projective
+
+variable {P₁ : Type w} [AddCommMonoid P₁] [Module A P₁]
 variable {p₁ : P₁ →ₗ[A] P₀} {p₀ : P₀ →ₗ[A] M}
-variable {Q₀ : Type v'} {Q₁ : Type w'} [AddCommGroup Q₀] [Module A Q₀]
-  [AddCommGroup Q₁] [Module A Q₁]
-variable {q₁ : Q₁ →ₗ[A] Q₀} {q₀ : Q₀ →ₗ[A] M}
 
 /-- The Auslander--Reiten transpose of a projective module is zero, represented here by the
 stronger typeclass-friendly statement that its underlying quotient is a subsingleton. -/
@@ -318,6 +318,16 @@ theorem subsingleton_auslanderReitenTranspose_of_projective
     induction y using AuslanderReitenTranspose.induction_on p₁ with
     | _ ψ => exact congrArg (AuslanderReitenTranspose.mk p₁) (Subsingleton.elim φ ψ)
 
+end Projective
+
+section Comparison
+
+variable {P₁ : Type w} [AddCommGroup P₁] [Module A P₁]
+variable {p₁ : P₁ →ₗ[A] P₀} {p₀ : P₀ →ₗ[A] M}
+variable {Q₀ : Type v'} {Q₁ : Type w'} [AddCommGroup Q₀] [Module A Q₀]
+  [AddCommGroup Q₁] [Module A Q₁]
+variable {q₁ : Q₁ →ₗ[A] Q₀} {q₀ : Q₀ →ₗ[A] M}
+
 /-- The Auslander--Reiten transpose is independent, up to opposite-linear equivalence, of the
 chosen minimal projective presentation of a module. -/
 theorem nonempty_linearEquiv_auslanderReitenTranspose
@@ -326,6 +336,8 @@ theorem nonempty_linearEquiv_auslanderReitenTranspose
     Nonempty (AuslanderReitenTranspose p₁ ≃ₗ[Aᵐᵒᵖ] AuslanderReitenTranspose q₁) := by
   obtain ⟨e₀, e₁, -, hsquare⟩ := h.exists_linearEquiv h'
   exact ⟨AuslanderReitenTranspose.linearEquiv e₀ e₁ hsquare⟩
+
+end Comparison
 
 end IsMinimalProjectivePresentation
 
