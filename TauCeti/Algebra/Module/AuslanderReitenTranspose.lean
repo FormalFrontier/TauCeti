@@ -64,27 +64,29 @@ variable {P₀ : Type v} {P₁ : Type w} [AddCommGroup P₀] [Module A P₀]
 Minimality is not needed to form the cokernel.  It is used by
 `IsMinimalProjectivePresentation.nonempty_linearEquiv_auslanderReitenTranspose` to show that the
 result is independent, up to equivalence, of the chosen presentation of a module. -/
-abbrev AuslanderReitenTranspose (p₁ : P₁ →ₗ[A] P₀) : Type _ :=
+def AuslanderReitenTranspose (p₁ : P₁ →ₗ[A] P₀) : Type _ :=
   Module.Dual A P₁ ⧸ LinearMap.range (p₁.lcomp Aᵐᵒᵖ A)
 
 namespace AuslanderReitenTranspose
 
 variable (p₁ : P₁ →ₗ[A] P₀)
 
+instance : AddCommGroup (AuslanderReitenTranspose p₁) :=
+  inferInstanceAs (AddCommGroup (Module.Dual A P₁ ⧸ LinearMap.range (p₁.lcomp Aᵐᵒᵖ A)))
+
+instance : Module Aᵐᵒᵖ (AuslanderReitenTranspose p₁) :=
+  inferInstanceAs (Module Aᵐᵒᵖ (Module.Dual A P₁ ⧸ LinearMap.range (p₁.lcomp Aᵐᵒᵖ A)))
+
 /-- The quotient map from the dual of the first projective onto its Auslander--Reiten transpose. -/
 def mk : Module.Dual A P₁ →ₗ[Aᵐᵒᵖ] AuslanderReitenTranspose p₁ :=
   (LinearMap.range (p₁.lcomp Aᵐᵒᵖ A)).mkQ
-
-theorem mk_apply (φ : Module.Dual A P₁) :
-    mk p₁ φ = Submodule.Quotient.mk φ :=
-  (rfl)
 
 /-- A functional represents zero in the transpose exactly when it factors through the first map of
 the presentation. -/
 @[simp]
 theorem mk_eq_zero_iff (φ : Module.Dual A P₁) :
-    mk p₁ φ = 0 ↔ φ ∈ LinearMap.range (p₁.lcomp Aᵐᵒᵖ A) := by
-  rw [mk_apply, Submodule.Quotient.mk_eq_zero]
+    mk p₁ φ = 0 ↔ φ ∈ LinearMap.range (p₁.lcomp Aᵐᵒᵖ A) :=
+  Submodule.Quotient.mk_eq_zero _
 
 /-- A functional precomposed with the first map of the presentation vanishes in its cokernel. -/
 @[simp]
@@ -127,9 +129,8 @@ def lift (f : Module.Dual A P₁ →ₗ[Aᵐᵒᵖ] N)
 @[simp]
 theorem lift_mk (f : Module.Dual A P₁ →ₗ[Aᵐᵒᵖ] N)
     (hf : ∀ φ : Module.Dual A P₀, f (p₁.lcomp Aᵐᵒᵖ A φ) = 0) (φ : Module.Dual A P₁) :
-    lift p₁ f hf (mk p₁ φ) = f φ := by
-  rw [mk_apply]
-  exact Submodule.liftQ_apply _ f φ
+    lift p₁ f hf (mk p₁ φ) = f φ :=
+  Submodule.liftQ_apply _ f φ
 
 /-- Opposite-linear maps out of the transpose are determined by their values on representatives. -/
 theorem hom_ext {f g : AuslanderReitenTranspose p₁ →ₗ[Aᵐᵒᵖ] N}
@@ -189,8 +190,66 @@ theorem linearEquiv_mk {q₁ : Q₁ →ₗ[A] Q₀} (e₀ : P₀ ≃ₗ[A] Q₀)
     (φ : Module.Dual A P₁) :
     linearEquiv e₀ e₁ hsquare (mk p₁ φ) =
       mk q₁ (e₁.symm.toLinearMap.lcomp Aᵐᵒᵖ A φ) := by
-  rw [mk_apply, linearEquiv, Submodule.Quotient.equiv_apply, Submodule.mapQ_apply, mk_apply]
-  rfl
+  with_unfolding_all
+    change Submodule.Quotient.equiv _ _ _ _ (Submodule.Quotient.mk φ) =
+      Submodule.Quotient.mk _
+    rw [Submodule.Quotient.equiv_apply, Submodule.mapQ_apply]
+    rfl
+
+/-- Transport along the identity presentation equivalences is the identity. -/
+@[simp]
+theorem linearEquiv_refl
+    (hsquare : (LinearEquiv.refl A P₀).toLinearMap ∘ₗ p₁ =
+      p₁ ∘ₗ (LinearEquiv.refl A P₁).toLinearMap) :
+    linearEquiv (LinearEquiv.refl A P₀) (LinearEquiv.refl A P₁) hsquare =
+      LinearEquiv.refl Aᵐᵒᵖ (AuslanderReitenTranspose p₁) := by
+  apply LinearEquiv.ext
+  intro x
+  induction x using induction_on p₁ with
+  | _ φ =>
+    rw [linearEquiv_mk]
+    apply congrArg (mk p₁)
+    ext y
+    simp only [LinearMap.lcomp_apply, LinearEquiv.refl_symm, LinearEquiv.refl_toLinearMap,
+      LinearMap.id_apply]
+
+/-- Transport along a composite of presentation equivalences is the composite transport. -/
+theorem linearEquiv_trans {q₁ : Q₁ →ₗ[A] Q₀}
+    {R₀ R₁ : Type*} [AddCommGroup R₀] [Module A R₀] [AddCommGroup R₁] [Module A R₁]
+    {r₁ : R₁ →ₗ[A] R₀} (e₀ : P₀ ≃ₗ[A] Q₀) (e₁ : P₁ ≃ₗ[A] Q₁)
+    (f₀ : Q₀ ≃ₗ[A] R₀) (f₁ : Q₁ ≃ₗ[A] R₁)
+    (he : e₀.toLinearMap ∘ₗ p₁ = q₁ ∘ₗ e₁.toLinearMap)
+    (hf : f₀.toLinearMap ∘ₗ q₁ = r₁ ∘ₗ f₁.toLinearMap)
+    (htrans : (e₀.trans f₀).toLinearMap ∘ₗ p₁ =
+      r₁ ∘ₗ (e₁.trans f₁).toLinearMap) :
+    (linearEquiv e₀ e₁ he).trans (linearEquiv f₀ f₁ hf) =
+      linearEquiv (e₀.trans f₀) (e₁.trans f₁) htrans := by
+  apply LinearEquiv.ext
+  intro x
+  induction x using induction_on p₁ with
+  | _ φ =>
+    rw [LinearEquiv.trans_apply, linearEquiv_mk, linearEquiv_mk, linearEquiv_mk]
+    apply congrArg (mk r₁)
+    ext y
+    simp only [LinearMap.lcomp_apply, LinearEquiv.trans_symm, LinearEquiv.coe_trans,
+      LinearMap.comp_apply]
+
+/-- The inverse of transport is transport along the inverse presentation equivalences. -/
+theorem linearEquiv_symm {q₁ : Q₁ →ₗ[A] Q₀} (e₀ : P₀ ≃ₗ[A] Q₀)
+    (e₁ : P₁ ≃ₗ[A] Q₁)
+    (hsquare : e₀.toLinearMap ∘ₗ p₁ = q₁ ∘ₗ e₁.toLinearMap)
+    (hsymm : e₀.symm.toLinearMap ∘ₗ q₁ = p₁ ∘ₗ e₁.symm.toLinearMap) :
+    (linearEquiv e₀ e₁ hsquare).symm = linearEquiv e₀.symm e₁.symm hsymm := by
+  apply LinearEquiv.ext
+  intro x
+  induction x using induction_on q₁ with
+  | _ φ =>
+    apply (linearEquiv e₀ e₁ hsquare).injective
+    rw [LinearEquiv.apply_symm_apply, linearEquiv_mk, linearEquiv_mk]
+    apply congrArg (mk q₁)
+    ext y
+    simp only [LinearMap.lcomp_apply, LinearEquiv.symm_symm]
+    exact congrArg φ (e₁.apply_symm_apply y).symm
 
 end Equivalence
 
@@ -210,7 +269,12 @@ theorem subsingleton_auslanderReitenTranspose_of_projective
     [Module.Projective A M] (h : IsMinimalProjectivePresentation p₁ p₀) :
     Subsingleton (AuslanderReitenTranspose p₁) := by
   let _ : Subsingleton P₁ := h.subsingleton_of_projective
-  infer_instance
+  constructor
+  intro x y
+  induction x using AuslanderReitenTranspose.induction_on p₁ with
+  | _ φ =>
+    induction y using AuslanderReitenTranspose.induction_on p₁ with
+    | _ ψ => exact congrArg (AuslanderReitenTranspose.mk p₁) (Subsingleton.elim φ ψ)
 
 /-- The Auslander--Reiten transpose is independent, up to opposite-linear equivalence, of the
 chosen minimal projective presentation of a module. -/
