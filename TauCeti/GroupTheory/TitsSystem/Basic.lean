@@ -27,7 +27,7 @@ double cosets satisfy the Tits multiplication and nondegeneracy axioms.
 
 ## References
 
-* J. E. Humphreys, *Linear Algebraic Groups* (1975), Section 28.1.
+* J. E. Humphreys, *Linear Algebraic Groups* (1975), Sections 29.1--29.2.
 * T. A. Springer, *Linear Algebraic Groups*, second edition (1998), Section 8.3.
 -/
 
@@ -54,25 +54,25 @@ structure TitsSystem (G : Type u) [Group G] where
   closure_subgroupB_union_subgroupN :
     Subgroup.closure ((subgroupB : Set G) ∪ subgroupN) = ⊤
   /-- The intersection `B ∩ N`, regarded inside `N`, is normal. -/
-  intersection_normal : (subgroupB.comap subgroupN.subtype).Normal
+  intersection_normal : (subgroupB.subgroupOf subgroupN).Normal
   /-- The simple reflections in the Weyl quotient `N / (B ∩ N)`. -/
-  simple : Set (subgroupN ⧸ subgroupB.comap subgroupN.subtype)
+  simple : Set (subgroupN ⧸ subgroupB.subgroupOf subgroupN)
   /-- The simple reflections generate the Weyl quotient. -/
   closure_simple :
     let _ := intersection_normal
     Subgroup.closure simple = ⊤
   /-- Every simple reflection has a representative whose square lies in `B ∩ N`. -/
   exists_simpleRep_sq_mem
-      (s : subgroupN ⧸ subgroupB.comap subgroupN.subtype) (hs : s ∈ simple) :
+      (s : subgroupN ⧸ subgroupB.subgroupOf subgroupN) (hs : s ∈ simple) :
     ∃ r : subgroupN,
-      (QuotientGroup.mk r : subgroupN ⧸ subgroupB.comap subgroupN.subtype) = s ∧
-        r * r ∈ subgroupB.comap subgroupN.subtype
+      (QuotientGroup.mk r : subgroupN ⧸ subgroupB.subgroupOf subgroupN) = s ∧
+        r * r ∈ subgroupB.subgroupOf subgroupN
   /-- Multiplying a Bruhat cell on the left by a simple cell produces at most the adjacent cell
   and the original cell. -/
   mul_doubleCoset_subset
-      (s : subgroupN ⧸ subgroupB.comap subgroupN.subtype) (hs : s ∈ simple) :
+      (s : subgroupN ⧸ subgroupB.subgroupOf subgroupN) (hs : s ∈ simple) :
     ∃ r : subgroupN,
-      (QuotientGroup.mk r : subgroupN ⧸ subgroupB.comap subgroupN.subtype) = s ∧
+      (QuotientGroup.mk r : subgroupN ⧸ subgroupB.subgroupOf subgroupN) = s ∧
         ∀ w : subgroupN,
           DoubleCoset.doubleCoset (r : G) subgroupB subgroupB *
               DoubleCoset.doubleCoset (w : G) subgroupB subgroupB ⊆
@@ -80,9 +80,9 @@ structure TitsSystem (G : Type u) [Group G] where
               DoubleCoset.doubleCoset (w : G) subgroupB subgroupB
   /-- No simple reflection conjugates `B` into `B`. -/
   exists_conj_not_mem
-      (s : subgroupN ⧸ subgroupB.comap subgroupN.subtype) (hs : s ∈ simple) :
+      (s : subgroupN ⧸ subgroupB.subgroupOf subgroupN) (hs : s ∈ simple) :
     ∃ r : subgroupN,
-      (QuotientGroup.mk r : subgroupN ⧸ subgroupB.comap subgroupN.subtype) = s ∧
+      (QuotientGroup.mk r : subgroupN ⧸ subgroupB.subgroupOf subgroupN) = s ∧
         ∃ b : subgroupB, (r : G) * (b : G) * (r : G)⁻¹ ∉ subgroupB
 
 namespace TitsSystem
@@ -91,7 +91,7 @@ variable {G : Type u} [Group G] (T : TitsSystem G)
 
 /-- The intersection `B ∩ N`, regarded as a subgroup of `N`. -/
 abbrev intersection : Subgroup T.subgroupN :=
-  T.subgroupB.comap T.subgroupN.subtype
+  T.subgroupB.subgroupOf T.subgroupN
 
 /-- Membership in the intersection means membership in `B` after forgetting the `N` subtype. -/
 theorem mem_intersection (n : T.subgroupN) : n ∈ T.intersection ↔ (n : G) ∈ T.subgroupB :=

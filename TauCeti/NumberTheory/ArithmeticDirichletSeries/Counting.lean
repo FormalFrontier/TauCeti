@@ -90,7 +90,7 @@ open IsDedekindDomain
 by `Ideal.finite_setOfPred_absNorm_le₀`. Mathlib already supplies the corresponding instance on
 height-one primes. -/
 instance instNorthcottAbsNormNonZeroDivisors {R : Type*} [CommRing R] [IsDedekindDomain R]
-    [Module.Free ℤ R] [Module.Finite ℤ R] [CharZero R] :
+    [Module.Free ℤ R] [Module.Finite ℤ R] :
     Northcott (fun I : (Ideal R)⁰ ↦ Ideal.absNorm (I : Ideal R)) :=
   ⟨fun B ↦ Ideal.finite_setOfPred_absNorm_le₀ B⟩
 

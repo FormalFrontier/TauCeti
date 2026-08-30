@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.AlgebraicGeometry.EllipticCurve.FormalGroup.Add.Series
+import TauCeti.RingTheory.MvPowerSeries.Rename
 
 /-!
 # The unit laws and the linear part of the chord group law
@@ -272,13 +273,10 @@ theorem subst_unitL_formalAdd :
     subst (Sum.elim (fun _ ↦ 0) X : Unit ⊕ Unit → MvPowerSeries Unit R)
       (formalAdd W) = PowerSeries.X := by
   conv_lhs => rw [← rename_swap_formalAdd W]
-  rw [rename_eq_subst, subst_comp_subst_apply (HasSubst.X_comp _) hasSubst_unitL]
-  have h : (fun s : Unit ⊕ Unit ↦ subst
-      (Sum.elim (fun _ ↦ 0) X : Unit ⊕ Unit → MvPowerSeries Unit R)
-      ((X ∘ Sum.swap : Unit ⊕ Unit → MvPowerSeries (Unit ⊕ Unit) R) s)) =
+  rw [subst_rename Sum.swap (formalAdd W) hasSubst_unitL]
+  have h : (Sum.elim (fun _ ↦ 0) X : Unit ⊕ Unit → MvPowerSeries Unit R) ∘ Sum.swap =
       (Sum.elim X (fun _ ↦ 0) : Unit ⊕ Unit → MvPowerSeries Unit R) := by
     funext s
-    rw [Function.comp_apply, subst_X hasSubst_unitL]
     match s with
     | .inl () => rfl
     | .inr () => rfl

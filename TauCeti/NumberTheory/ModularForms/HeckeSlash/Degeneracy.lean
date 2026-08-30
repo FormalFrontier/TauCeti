@@ -88,17 +88,17 @@ not vanish at level `M`, and `b ↦ d b mod p` stops being a permutation once `p
 theorem heckeTCuspNat_levelRaise (hdvd : d * M ∣ N) (hp : p.Prime)
     (hpN : Nat.Coprime p N) (f : CuspForm ((Gamma1 M).map (mapGL ℝ)) k) :
     haveI : NeZero N := ⟨fun hN ↦ hp.ne_one (by simpa [hN] using hpN)⟩
-    haveI : NeZero d := ⟨fun hd ↦ NeZero.ne N (by simpa [hd] using hdvd)⟩
-    haveI : NeZero M := ⟨fun hM ↦ NeZero.ne N (by simpa [hM] using hdvd)⟩
+    haveI : NeZero d := NeZero.of_dvd (dvd_of_mul_right_dvd hdvd)
+    haveI : NeZero M := NeZero.of_dvd (dvd_of_mul_left_dvd hdvd)
     haveI : NeZero p := ⟨hp.ne_zero⟩
     heckeTCuspNat k p (CuspForm.levelRaise d (Gamma1_map_le_conjAct_scaleGL_of_dvd hdvd) f) =
       CuspForm.levelRaise d (Gamma1_map_le_conjAct_scaleGL_of_dvd hdvd) (heckeTCuspNat k p f) := by
   have : NeZero N := ⟨fun hN ↦ hp.ne_one (by simpa [hN] using hpN)⟩
-  have : NeZero d := ⟨fun hd ↦ NeZero.ne N (by simpa [hd] using hdvd)⟩
-  have : NeZero M := ⟨fun hM ↦ NeZero.ne N (by simpa [hM] using hdvd)⟩
+  have : NeZero d := NeZero.of_dvd (dvd_of_mul_right_dvd hdvd)
+  have : NeZero M := NeZero.of_dvd (dvd_of_mul_left_dvd hdvd)
   have : NeZero p := ⟨hp.ne_zero⟩
   have hdpos : 0 < d := Nat.pos_of_ne_zero (NeZero.ne d)
-  have hMdvd : M ∣ N := (Dvd.intro_left d rfl).trans hdvd
+  have hMdvd : M ∣ N := dvd_of_mul_left_dvd hdvd
   have hpM : Nat.Coprime p M := hpN.coprime_dvd_right hMdvd
   have hpd : Nat.Coprime p d := hpN.coprime_dvd_right ((dvd_mul_right d M).trans hdvd)
   have hf : ∀ γ ∈ (Gamma1 M).map (mapGL ℝ), ⇑f ∣[k] γ = ⇑f :=

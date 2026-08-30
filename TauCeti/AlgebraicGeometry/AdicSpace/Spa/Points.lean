@@ -33,11 +33,12 @@ it is supplied by `Ideal.isOpen_of_isMaximal_of_isOpen_isTopologicallyNilpotent`
 
 ## Provenance
 
-Adapted from AINTLIB (see References), section `Prop752` of the source file: the
-trivial-valuation witness and the derivation of 7.52(2) are that file's, with the
-valuation-spectrum vocabulary adapted to this repository's `Spv`/`ValuativeRel` interface
-(`trivialSection`, `mem_spa_iff`, `supp`) and the statement of 7.51 weakened from maximal to
-prime ideals.
+Adapted from AINTLIB (see References), section `Prop752` of the source file: the derivation of
+7.52(2) is that file's, with the valuation-spectrum vocabulary adapted to this repository's
+`Spv`/`ValuativeRel` interface (`trivialSection`, `mem_spa_iff`, `supp`) and the statement of 7.51
+weakened from maximal to prime ideals. The trivial-valuation witness is also that file's, but it no
+longer lives here: it was factored out as `trivialSection_mem_spa_iff` in
+`TauCeti/AlgebraicGeometry/AdicSpace/Spa/Basic.lean`, which carries the credit for it.
 
 ## References
 
@@ -58,7 +59,7 @@ point of the adic spectrum — the point of its trivial valuation, `trivialSecti
 Wedhorn states the proposition for maximal ideals; the proof needs only primality. -/
 theorem exists_mem_spa_supp_eq (Aplus : Subring A) (𝔭 : Ideal A) [𝔭.IsPrime]
     (h𝔭 : IsOpen (𝔭 : Set A)) : ∃ v ∈ spa Aplus, supp v = 𝔭 := by
-  refine ⟨trivialSection ⟨𝔭, ‹_›⟩, trivialSection_mem_spa Aplus h𝔭, ?_⟩
+  refine ⟨trivialSection ⟨𝔭, ‹_›⟩, (trivialSection_mem_spa_iff Aplus _).mpr h𝔭, ?_⟩
   rw [← suppFun_asIdeal, suppFun_trivialSection]
 
 /-- **The converse half of Wedhorn Corollary 7.53.** If every maximal ideal of `A` is open and
