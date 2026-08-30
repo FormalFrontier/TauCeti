@@ -48,7 +48,8 @@ is not proved here.
   that the enveloping subalgebra of `A` is the smallest subalgebra containing the canonical Lie
   generators of `A`.
 * `TauCeti.UniversalEnvelopingAlgebra.envelopingSubalgebra_eq_range_map`: the enveloping
-  subalgebra of `A` is the image of `U(A)` in `U(L)`, which is what makes the name accurate.
+  subalgebra of `A` is the image of `U(A)` in `U(L)`, which is what makes the name accurate, and
+  `TauCeti.UniversalEnvelopingAlgebra.mem_envelopingSubalgebra_iff`, its membership form.
 * `envelopingSubalgebra_mul_envelopingSubalgebra_eq_envelopingSubalgebra`: **the factorisation**
   `U(A) · U(B) = U(C)` for a Lie subalgebra `C` with `C = A + B` as modules, and
   `TauCeti.UniversalEnvelopingAlgebra.envelopingSubalgebra_mul_envelopingSubalgebra_eq_top`, its
@@ -104,6 +105,8 @@ theorem envelopingSubalgebra_le_iff {A : LieSubalgebra R L} {S : Subalgebra R U}
   rw [envelopingSubalgebra_eq_adjoin, Algebra.adjoin_le_iff]
   exact ⟨fun h x hx => h ⟨x, hx, rfl⟩, by rintro h _ ⟨x, hx, rfl⟩; exact h x hx⟩
 
+/-- **Monotonicity**: an inclusion `h : A ≤ B` of Lie subalgebras of `L` induces an inclusion of
+their enveloping subalgebras, the canonical Lie generators of `A` being among those of `B`. -/
 @[gcongr]
 theorem envelopingSubalgebra_mono {A B : LieSubalgebra R L} (h : A ≤ B) :
     envelopingSubalgebra R A ≤ envelopingSubalgebra R B :=
@@ -128,14 +131,15 @@ theorem envelopingSubalgebra_sup (A B : LieSubalgebra R L) :
     let S : LieSubalgebra R L := LieSubalgebra.comap (ι R : L →ₗ⁅R⁆ U)
       (lieSubalgebraOfSubalgebra R U
         (envelopingSubalgebra R A ⊔ envelopingSubalgebra R B))
-    have hA : A ≤ S := fun x hx =>
-      (show envelopingSubalgebra R A ≤
-        envelopingSubalgebra R A ⊔ envelopingSubalgebra R B from le_sup_left)
-        (ι_mem_envelopingSubalgebra R hx)
-    have hB : B ≤ S := fun x hx =>
-      (show envelopingSubalgebra R B ≤
-        envelopingSubalgebra R A ⊔ envelopingSubalgebra R B from le_sup_right)
-        (ι_mem_envelopingSubalgebra R hx)
+    -- Membership of `x` in `S` is, by definition of `LieSubalgebra.comap`, membership of the
+    -- canonical Lie generator `ι R x` in the join, so the two inequalities of subalgebras below
+    -- are exactly what places the generators of `A` and of `B` in the join.
+    have hAle : envelopingSubalgebra R A ≤ envelopingSubalgebra R A ⊔ envelopingSubalgebra R B :=
+      le_sup_left
+    have hBle : envelopingSubalgebra R B ≤ envelopingSubalgebra R A ⊔ envelopingSubalgebra R B :=
+      le_sup_right
+    have hA : A ≤ S := fun _ hx => hAle (ι_mem_envelopingSubalgebra R hx)
+    have hB : B ≤ S := fun _ hx => hBle (ι_mem_envelopingSubalgebra R hx)
     exact sup_le hA hB
   · exact sup_le (envelopingSubalgebra_mono R le_sup_left)
       (envelopingSubalgebra_mono R le_sup_right)
@@ -162,6 +166,14 @@ theorem envelopingSubalgebra_eq_range_map (A : LieSubalgebra R L) :
   | algebraMap r => rw [AlgHom.commutes]; exact Subalgebra.algebraMap_mem _ r
   | add a b ha hb => rw [map_add]; exact add_mem ha hb
   | mul a b ha hb => rw [map_mul]; exact mul_mem ha hb
+
+/-- **Membership in the enveloping subalgebra of `A`**: an element of `U(L)` lies in it exactly when
+it is the image of an element of `U(A)` under the functorial map. This is the membership form of
+`TauCeti.UniversalEnvelopingAlgebra.envelopingSubalgebra_eq_range_map`. -/
+@[simp]
+theorem mem_envelopingSubalgebra_iff {A : LieSubalgebra R L} {u : U} :
+    u ∈ envelopingSubalgebra R A ↔ ∃ w, map R A.incl w = u := by
+  rw [envelopingSubalgebra_eq_range_map, AlgHom.mem_range]
 
 /-! ### The factorisation induced by a splitting of a Lie subalgebra -/
 
@@ -222,6 +234,26 @@ private theorem one_mem_mul_envelopingSubalgebra :
   le_mul_envelopingSubalgebra_left
     ((Subalgebra.mem_toSubmodule (envelopingSubalgebra R A)).mpr (one_mem _))
 
+/-- **The commutation rule for the canonical Lie generators.** Moving the generator of `y` past the
+generator of `z` in `U(L)` costs the generator of the bracket `⁅y, z⁆`. -/
+private theorem ι_mul_ι_eq_ι_mul_ι_add_ι_lie (y z : L) :
+    (ι R y : U) * ι R z = ι R z * ι R y + ι R ⁅y, z⁆ := by
+  have h := mul_sub_mul_eq_map_ι_lie (AlgHom.id R U) y z
+  simp only [AlgHom.id_apply] at h
+  rw [← h]
+  abel
+
+/-- **The straightening identity.** If the bracket `⁅y, z⁆` splits as `wa + wb`, then moving the
+canonical Lie generator of `y` past that of `z` in front of an element `a` of `U(L)` costs exactly
+the two generators `ι R wa` and `ι R wb` acting on `a`. -/
+private theorem ι_mul_ι_mul_eq_of_add_eq_lie {y z wa wb : L} (hsum : wa + wb = ⁅y, z⁆) (a : U) :
+    (ι R y : U) * (ι R z * a) = ι R z * (ι R y * a) + (ι R wa * a + ι R wb * a) :=
+  calc (ι R y : U) * (ι R z * a)
+      = ((ι R z : U) * ι R y + ι R ⁅y, z⁆) * a := by
+        rw [← mul_assoc, ι_mul_ι_eq_ι_mul_ι_add_ι_lie]
+    _ = ι R z * (ι R y * a) + ι R ⁅y, z⁆ * a := by rw [add_mul, mul_assoc]
+    _ = ι R z * (ι R y * a) + (ι R wa * a + ι R wb * a) := by rw [← hsum, map_add, add_mul]
+
 /-- **The straightening step.** A canonical Lie generator of `B` moves to the right across an
 element of `U(A)` at the cost of brackets, and those brackets are again sums of elements of `A`
 and of `B`, so the result stays in `U(A) · U(B)`.
@@ -246,16 +278,11 @@ private theorem ι_mul_mem_mul_of_mem_envelopingSubalgebra
     | mul_left w hw a' ha' ih =>
       obtain ⟨z, hz, rfl⟩ := hw
       intro y hy
-      have hswap : (ι R y : U) * ι R z = ι R z * ι R y + ι R ⁅y, z⁆ := by
-        have h := mul_sub_mul_eq_map_ι_lie (AlgHom.id R U) y z
-        simp only [AlgHom.id_apply] at h
-        rw [← h]
-        abel
       obtain ⟨wa, hwa, wb, hwb, hsum⟩ := Submodule.mem_sup.mp (hbr y hy z hz)
       have haA : a' ∈ envelopingSubalgebra R A := by
         rw [← Subalgebra.mem_toSubmodule, envelopingSubalgebra_eq_adjoin, Algebra.adjoin_eq_span]
         exact Submodule.subset_span ha'
-      rw [← mul_assoc, hswap, add_mul, mul_assoc, ← hsum, map_add, add_mul]
+      rw [ι_mul_ι_mul_eq_of_add_eq_lie hsum]
       refine Submodule.add_mem _ ?_ (Submodule.add_mem _ ?_ ?_)
       · exact ι_mul_mem_mul_of_mem_left hz (ih y hy)
       · exact le_mul_envelopingSubalgebra_left ((Subalgebra.mem_toSubmodule _).mpr

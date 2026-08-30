@@ -47,7 +47,7 @@ ordered-monomial theorem is available there.
 
 * `TauCeti.UniversalEnvelopingAlgebra.negativeNilradical_mul_borelSubalgebra_eq_top`:
   `U(n⁻) · U(𝔟) = U(L)`, the two-factor form.
-* `TauCeti.UniversalEnvelopingAlgebra.cartan_mul_positiveNilradical_eq_borelSubalgebra`:
+* `cartan_mul_positiveNilradical_eq_envelopingSubalgebra_borelSubalgebra`:
   `U(H) · U(n⁺) = U(𝔟)`, the corresponding factorisation of the Borel subalgebra.
 * `TauCeti.UniversalEnvelopingAlgebra.negativeNilradical_mul_cartan_mul_positiveNilradical_eq_top`:
   `U(n⁻) · U(H) · U(n⁺) = U(L)`, the three-factor form.
@@ -86,7 +86,7 @@ theorem negativeNilradical_mul_borelSubalgebra_eq_top :
 /-- **`U(H) · U(n⁺) = U(𝔟)`**: the enveloping subalgebra of the Borel subalgebra is spanned by the
 products of the enveloping subalgebra of the Cartan subalgebra with that of the positive
 nilradical. -/
-theorem cartan_mul_positiveNilradical_eq_borelSubalgebra :
+theorem cartan_mul_positiveNilradical_eq_envelopingSubalgebra_borelSubalgebra :
     Subalgebra.toSubmodule (envelopingSubalgebra K H) *
         Subalgebra.toSubmodule (envelopingSubalgebra K (positiveNilradical H b)) =
       Subalgebra.toSubmodule (envelopingSubalgebra K (borelSubalgebra H b)) :=
@@ -104,7 +104,7 @@ theorem negativeNilradical_mul_cartan_mul_positiveNilradical_eq_top :
     Subalgebra.toSubmodule (envelopingSubalgebra K (negativeNilradical H b)) *
         Subalgebra.toSubmodule (envelopingSubalgebra K H) *
         Subalgebra.toSubmodule (envelopingSubalgebra K (positiveNilradical H b)) = ⊤ := by
-  rw [mul_assoc, cartan_mul_positiveNilradical_eq_borelSubalgebra H b,
+  rw [mul_assoc, cartan_mul_positiveNilradical_eq_envelopingSubalgebra_borelSubalgebra H b,
     negativeNilradical_mul_borelSubalgebra_eq_top H b]
 
 end TauCeti.UniversalEnvelopingAlgebra
