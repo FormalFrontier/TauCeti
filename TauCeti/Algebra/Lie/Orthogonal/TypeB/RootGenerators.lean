@@ -136,12 +136,13 @@ theorem coe_typeBLongRootGenerator (i j : ι) (hij : i ≠ j) :
 @[simp]
 theorem toLinAlgEquiv_typeBLongRootMatrix_apply {M : Type*} [AddCommGroup M] [Module K M]
     (B : Module.Basis (Unit ⊕ ι ⊕ ι) K M) (i j : ι) (hij : i ≠ j) (k : Unit ⊕ ι ⊕ ι) :
-    Matrix.toLinAlgEquiv B (typeBLongRootMatrix (K := K) i j hij) (B k) =
+    typeBLongRootMatrix (K := K) i j hij (.inl ()) k • B (.inl ()) +
+        ((∑ a, typeBLongRootMatrix (K := K) i j hij (.inr (.inl a)) k • B (.inr (.inl a))) +
+          ∑ a, typeBLongRootMatrix (K := K) i j hij (.inr (.inr a)) k • B (.inr (.inr a))) =
       match k with
       | .inl _ => 0
       | .inr (.inl k) => if k = j then B (.inr (.inl i)) else 0
       | .inr (.inr k) => if k = i then -B (.inr (.inr j)) else 0 := by
-  rw [Matrix.toLinAlgEquiv_self]
   rcases k with k | k | k
   · simp [typeBLongRootMatrix]
   · by_cases h : j = k <;>
@@ -323,32 +324,36 @@ theorem coe_typeBShortNegativeRootGenerator (i : ι) :
 @[simp]
 theorem toLinAlgEquiv_typeBShortRootMatrix_apply {M : Type*} [AddCommGroup M] [Module K M]
     (B : Module.Basis (Unit ⊕ ι ⊕ ι) K M) (i : ι) (k : Unit ⊕ ι ⊕ ι) :
-    Matrix.toLinAlgEquiv B (typeBShortRootMatrix (K := K) i) (B k) =
+    typeBShortRootMatrix (K := K) i (.inl ()) k • B (.inl ()) +
+        ((∑ a, typeBShortRootMatrix (K := K) i (.inr (.inl a)) k • B (.inr (.inl a))) +
+          ∑ a, typeBShortRootMatrix (K := K) i (.inr (.inr a)) k • B (.inr (.inr a))) =
       match k with
       | .inl _ => (2 : K) • B (.inr (.inl i))
       | .inr (.inl _) => 0
       | .inr (.inr k) => if k = i then -B (.inl ()) else 0 := by
-  rw [Matrix.toLinAlgEquiv_self]
   rcases k with k | k | k
   · simp [typeBShortRootMatrix, Matrix.single_apply]
   · simp [typeBShortRootMatrix]
   · by_cases h : i = k <;>
-      simp [typeBShortRootMatrix, Matrix.single_apply, h, eq_comm]
+      simp [typeBShortRootMatrix, h, eq_comm]
 
 /-- The negative short-root matrix action on a vector of an indexed basis. -/
 @[simp]
 theorem toLinAlgEquiv_typeBShortNegativeRootMatrix_apply {M : Type*} [AddCommGroup M]
     [Module K M] (B : Module.Basis (Unit ⊕ ι ⊕ ι) K M) (i : ι) (k : Unit ⊕ ι ⊕ ι) :
-    Matrix.toLinAlgEquiv B (typeBShortNegativeRootMatrix (K := K) i) (B k) =
+    typeBShortNegativeRootMatrix (K := K) i (.inl ()) k • B (.inl ()) +
+        ((∑ a, typeBShortNegativeRootMatrix (K := K) i (.inr (.inl a)) k •
+            B (.inr (.inl a))) +
+          ∑ a, typeBShortNegativeRootMatrix (K := K) i (.inr (.inr a)) k •
+            B (.inr (.inr a))) =
       match k with
       | .inl _ => -((2 : K) • B (.inr (.inr i)))
       | .inr (.inl k) => if k = i then B (.inl ()) else 0
       | .inr (.inr _) => 0 := by
-  rw [Matrix.toLinAlgEquiv_self]
   rcases k with k | k | k
   · simp [typeBShortNegativeRootMatrix, Matrix.single_apply]
   · by_cases h : i = k <;>
-      simp [typeBShortNegativeRootMatrix, Matrix.single_apply, h, eq_comm]
+      simp [typeBShortNegativeRootMatrix, h, eq_comm]
   · simp [typeBShortNegativeRootMatrix]
 
 /-! ### Diagonal action on root generators -/
