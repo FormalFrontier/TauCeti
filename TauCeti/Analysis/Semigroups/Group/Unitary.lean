@@ -320,6 +320,7 @@ private theorem one_add_complexGenerator_surjective (hU : U.IsUnitary) :
 Its Hilbert-space adjoint is its negative. The reverse inclusion of adjoint domains uses the
 surjectivity of both `1 - A` and `1 + A`, supplied by the resolvents of the forward and reversed
 contraction semigroups. -/
+@[simp]
 theorem complexGenerator_adjoint_eq_neg (hU : U.IsUnitary) :
     (U.complexGenerator hU).adjoint = -U.complexGenerator hU := by
   have hdense : Dense ((U.complexGenerator hU).domain : Set H) := by
