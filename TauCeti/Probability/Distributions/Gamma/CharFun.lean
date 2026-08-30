@@ -29,6 +29,9 @@ imaginary axis.
 ## References
 
 * Roadmap: `TauCetiRoadmap/StandardDistributions/README.md`, Layer 1, **Gamma**.
+* The identity-theorem and real-to-complex sequence argument adapts
+  `ProbabilityTheory.eqOn_complexMGF_of_mgf'` from
+  `Mathlib/Probability/Moments/ComplexMGF.lean`.
 * N. L. Johnson, S. Kotz, N. Balakrishnan, *Continuous Univariate Distributions*, vol. 1,
   2nd ed., Wiley, 1994, ch. 17.
 -/
