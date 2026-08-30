@@ -17,8 +17,6 @@ arguments, so its diagonal specialization is available for the geodesic spray.
 
 ## Main results
 
-* `TauCeti.Manifold.continuousLinearMapAt_symmL_coordChange`: the coordinate change read through
-  the preferred tangent-bundle trivializations.
 * `TauCeti.Manifold.christoffelMap_coordChange`: the Christoffel transformation law under a
   change of tangent trivialization.
 
@@ -51,27 +49,6 @@ variable
   {e : Trivialization E (TotalSpace.proj : TangentBundle I M → M)} [MemTrivializationAtlas e]
   {x x₀ y : M}
   {cov : (Π z : M, TangentSpace I z) → (Π z : M, TangentSpace I z →L[𝕜] TangentSpace I z)}
-
-omit [CompleteSpace 𝕜] [FiniteDimensional 𝕜 E]
-  [ContMDiffVectorBundle 1 E (TangentSpace I : M → Type _) I] in
-/-- The reading map of the preferred trivialization centred at `x₀` sends the tangent vector at
-`y` whose `x`-coordinates are `u` to its `x₀`-coordinates. -/
-theorem continuousLinearMapAt_symmL_coordChange
-    (hyx : y ∈ (chartAt H x).source) (hyx₀ : y ∈ (chartAt H x₀).source) (u : E) :
-    (trivializationAt E (TangentSpace I) x₀).continuousLinearMapAt 𝕜 y
-        ((trivializationAt E (TangentSpace I) x).symmL 𝕜 y u)
-      = tangentCoordChange I x x₀ y u := by
-  rw [TangentBundle.symmL_trivializationAt_eq_core (I := I) (b₀ := x) (b := y) hyx,
-    TangentBundle.continuousLinearMapAt_trivializationAt_eq_core (I := I) (b₀ := x₀) (b := y)
-      hyx₀]
-  simp only [tangentBundleCore_coordChange_achart]
-  have hy1 : y ∈ (extChartAt I x).source := by rw [extChartAt_source]; exact hyx
-  have hy2 : y ∈ (extChartAt I y).source := by
-    rw [extChartAt_source]
-    exact mem_chart_source H y
-  have hy3 : y ∈ (extChartAt I x₀).source := by rw [extChartAt_source]; exact hyx₀
-  exact tangentCoordChange_comp (I := I) (w := x) (x := y) (y := x₀) (z := y) (v := u)
-    ⟨⟨hy1, hy2⟩, hy3⟩
 
 /-- **The Christoffel transformation law.**  The Christoffel map of a covariant derivative on the
 tangent bundle, read in the trivialization centred at `x₀` and evaluated at the `x₀`-coordinates
@@ -136,9 +113,11 @@ theorem christoffelMap_coordChange [Fintype ι] [IsManifold I 2 M]
     simp only [hσdef]
     exact congrArg (b.coord i) (e₁.continuousLinearMapAt_symmL (R := 𝕜) hz V)
   -- the family of coordinate changes is differentiable; write its derivative as `A`
-  have hcmd : MDifferentiableAt I 𝓘(𝕜, E →L[𝕜] E) (tangentCoordChange I x x₀) x :=
-    (contMDiffAt_tangentCoordChange (I := I) (x := x) (y := x₀) hx₀).mdifferentiableAt
-      one_ne_zero
+  have hcmd : MDifferentiableAt I 𝓘(𝕜, E →L[𝕜] E) (tangentCoordChange I x x₀) x := by
+    -- the `n + 1` regularity hypothesis of the polymorphic theorem, read at `n := 1`
+    have : IsManifold I (1 + 1) M := inferInstanceAs (IsManifold I 2 M)
+    exact (contMDiffAt_tangentCoordChange (I := I) (n := 1) (x := x) (y := x₀)
+      hx₀).mdifferentiableAt one_ne_zero
   have hgA : MDifferentiableAt I 𝓘(𝕜, E) (fun z => tangentCoordChange I x x₀ z V) x :=
     MDifferentiableAt.clm_apply hcmd mdifferentiableAt_const
   set A : TangentSpace I x →L[𝕜] E := mvfderiv I (fun z => tangentCoordChange I x x₀ z V) x with hA

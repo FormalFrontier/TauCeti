@@ -25,6 +25,14 @@ identification.
   inverse act as the identity on the fibre over `x`.
 * `TauCeti.Manifold.localFrame_trivializationAt_self`: consequently its local frame at `x` is the
   chosen basis of the model space.
+* `TauCeti.Manifold.contDiffOn_tangentCoordChange`: the tangent coordinate change between the
+  charts at two points is `C^n` on the overlap of their sources, read in the chart at the first
+  point.
+* `TauCeti.Manifold.contMDiffAt_tangentCoordChange`: that coordinate change is `C^n` at the base
+  point of its first chart, as a map of manifolds into the linear endomorphisms of the model
+  space.
+* `TauCeti.Manifold.continuousLinearMapAt_symmL_coordChange`: reading a tangent vector through the
+  preferred trivializations of two charts is the tangent coordinate change between them.
 * `TauCeti.Manifold.tangentSpaceOpenEquiv`: the canonical continuous linear equivalence between
   the tangent space of an open submanifold and the ambient tangent space.
 * `TauCeti.Manifold.mfderiv_subtype_val`: the differential of the inclusion is the canonical
@@ -36,7 +44,7 @@ identification.
 public section
 
 open Bundle Filter Manifold Module Set TopologicalSpace
-open scoped Bundle Manifold Topology
+open scoped Bundle Manifold Topology ContDiff
 
 noncomputable section
 
@@ -60,14 +68,14 @@ tangent-bundle charts completely. -/
 @[simp, mfld_simps]
 theorem coe_chartAt_snd {p q : TangentBundle I M} :
     (chartAt (ModelProd H E) q p).2 =
-      tangentCoordChange I p.1 q.1 p.1 (show E from p.2) := by
+      tangentCoordChange I p.1 q.1 p.1 p.2 := by
   have hcomp : chartAt (ModelProd H E) q p =
       (chartAt H q.1).prod (OpenPartialHomeomorph.refl E)
         (trivializationAt E (TangentSpace I) q.1 p) := by
     rw [TangentBundle.chartAt]
     rfl
   have h2 : (trivializationAt E (TangentSpace I) q.1 p).2 =
-      tangentCoordChange I p.1 q.1 p.1 (show E from p.2) :=
+      tangentCoordChange I p.1 q.1 p.1 p.2 :=
     rfl
   rw [hcomp, OpenPartialHomeomorph.prod_apply]
   simp only [OpenPartialHomeomorph.refl_apply, h2]
@@ -75,14 +83,13 @@ theorem coe_chartAt_snd {p q : TangentBundle I M} :
 
 end TangentBundle
 
-/-- The tangent coordinate change between the charts at `x` and `y` is `C^1` on the overlap of
+/-- The tangent coordinate change between the charts at `x` and `y` is `C^n` on the overlap of
 the two chart sources, read in the chart at `x`.  This is Mathlib's
 `contDiffOn_fderiv_coord_change` for the preferred charts at two points. -/
-theorem contDiffOn_tangentCoordChange [IsManifold I 2 M] (x y : M) :
-    ContDiffOn 𝕜 1 (fun a : E => tangentCoordChange I x y ((extChartAt I x).symm a))
+theorem contDiffOn_tangentCoordChange {n : ℕ∞ω} [IsManifold I (n + 1) M] (x y : M) :
+    ContDiffOn 𝕜 n (fun a : E => tangentCoordChange I x y ((extChartAt I x).symm a))
       (((extChartAt I x).symm ≫ extChartAt I y).source) := by
-  have : IsManifold I (1 + 1) M := inferInstanceAs (IsManifold I 2 M)
-  refine (contDiffOn_fderiv_coord_change (𝕜 := 𝕜) (n := 1) (I := I) (M := M)
+  refine (contDiffOn_fderiv_coord_change (𝕜 := 𝕜) (n := n) (I := I) (M := M)
     (achart H x) (achart H y)).congr (fun a ha => ?_)
   have ha2 : a ∈ (extChartAt I x).target := by
     rw [PartialEquiv.trans_source] at ha
@@ -90,11 +97,11 @@ theorem contDiffOn_tangentCoordChange [IsManifold I 2 M] (x y : M) :
   rw [tangentCoordChange_def, (extChartAt I x).right_inv ha2]
   rfl
 
-/-- The tangent coordinate change between the charts at `x` and `y` is `C^1` at `x`, as a map of
+/-- The tangent coordinate change between the charts at `x` and `y` is `C^n` at `x`, as a map of
 manifolds into the continuous linear endomorphisms of the model space. -/
-theorem contMDiffAt_tangentCoordChange [IsManifold I 2 M] {x y : M}
+theorem contMDiffAt_tangentCoordChange {n : ℕ∞ω} [IsManifold I (n + 1) M] {x y : M}
     (hy : x ∈ (extChartAt I y).source) :
-    ContMDiffAt I 𝓘(𝕜, E →L[𝕜] E) 1 (tangentCoordChange I x y) x := by
+    ContMDiffAt I 𝓘(𝕜, E →L[𝕜] E) n (tangentCoordChange I x y) x := by
   rw [contMDiffAt_iff]
   refine ⟨?_, ?_⟩
   · refine (continuousOn_tangentCoordChange (I := I) (𝕜 := 𝕜) x y).continuousAt ?_
@@ -112,6 +119,25 @@ theorem contMDiffAt_tangentCoordChange [IsManifold I 2 M] {x y : M}
         (ChartedSpace.mem_chart_source x) hychart
     refine ((contDiffOn_tangentCoordChange (I := I) (𝕜 := 𝕜) x y).contDiffWithinAt
       hmem).mono_of_mem_nhdsWithin hset
+
+/-- The reading map of the preferred trivialization centred at `x₀` sends the tangent vector at
+`y` whose `x`-coordinates are `u` to its `x₀`-coordinates. -/
+theorem continuousLinearMapAt_symmL_coordChange {x x₀ y : M}
+    (hyx : y ∈ (chartAt H x).source) (hyx₀ : y ∈ (chartAt H x₀).source) (u : E) :
+    (trivializationAt E (TangentSpace I) x₀).continuousLinearMapAt 𝕜 y
+        ((trivializationAt E (TangentSpace I) x).symmL 𝕜 y u)
+      = tangentCoordChange I x x₀ y u := by
+  rw [TangentBundle.symmL_trivializationAt_eq_core (I := I) (b₀ := x) (b := y) hyx,
+    TangentBundle.continuousLinearMapAt_trivializationAt_eq_core (I := I) (b₀ := x₀) (b := y)
+      hyx₀]
+  simp only [tangentBundleCore_coordChange_achart]
+  have hy1 : y ∈ (extChartAt I x).source := by rw [extChartAt_source]; exact hyx
+  have hy2 : y ∈ (extChartAt I y).source := by
+    rw [extChartAt_source]
+    exact mem_chart_source H y
+  have hy3 : y ∈ (extChartAt I x₀).source := by rw [extChartAt_source]; exact hyx₀
+  exact tangentCoordChange_comp (I := I) (w := x) (x := y) (y := x₀) (z := y) (v := u)
+    ⟨⟨hy1, hy2⟩, hy3⟩
 
 end TangentChart
 
