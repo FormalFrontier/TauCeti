@@ -47,9 +47,9 @@ randomization step used when a probabilistic representation is converted into la
   on `I` to its parameter.
 * `TauCeti.Probability.map_infinitePi_volume_unitIntervalCoding` — applying it coordinatewise to
   i.i.d. uniform noise produces the `ι`-fold power of the parameter for an arbitrary index type.
-* `TauCeti.Probability.Kernel.exists_measurable_map_prod_volume_eq_compProd` — a Markov kernel and
+* `TauCeti.Probability.exists_measurable_map_prod_volume_eq_compProd` — a Markov kernel and
   a base measure are jointly realized from the base point and independent uniform noise.
-* `TauCeti.Probability.Measure.exists_measurable_map_prod_volume_eq` — every finite joint law has
+* `TauCeti.Probability.exists_measurable_map_prod_volume_eq` — every finite joint law has
   such a conditional functional representation.
 * `TauCeti.Probability.exists_measurable_map_prod_volume_eq_map_prodMk` — the random-variable form,
   using fresh uniform noise on the original probability space.
@@ -159,7 +159,7 @@ theorem map_prod_volume_eq_compProd_of_map_volume {μ : Measure β} [SFinite μ]
 /-- **Conditional randomization of a Markov kernel.** There is a jointly measurable function of
 the kernel parameter and one uniform variable whose skew-product law over any s-finite base
 measure is the corresponding composition-product. -/
-theorem Kernel.exists_measurable_map_prod_volume_eq_compProd (κ : Kernel β α)
+theorem exists_measurable_map_prod_volume_eq_compProd (κ : Kernel β α)
     [IsMarkovKernel κ] {μ : Measure β} [SFinite μ] :
     ∃ f : β → I → α, Measurable (Function.uncurry f) ∧
       (μ.prod (volume : Measure I)).map (fun p => (p.1, f p.1 p.2)) = μ ⊗ₘ κ := by
@@ -169,12 +169,12 @@ theorem Kernel.exists_measurable_map_prod_volume_eq_compProd (κ : Kernel β α)
 /-- **Conditional randomization of a joint law.** Every finite measure on `β × α` is obtained by
 first drawing its first marginal and then applying a jointly measurable function to that point
 and a fresh independent uniform variable. -/
-theorem Measure.exists_measurable_map_prod_volume_eq (ρ : Measure (β × α))
+theorem exists_measurable_map_prod_volume_eq (ρ : Measure (β × α))
     [IsFiniteMeasure ρ] :
     ∃ f : β → I → α, Measurable (Function.uncurry f) ∧
       (ρ.fst.prod (volume : Measure I)).map (fun p => (p.1, f p.1 p.2)) = ρ := by
   obtain ⟨f, hf, hcode⟩ :=
-    Kernel.exists_measurable_map_prod_volume_eq_compProd ρ.condKernel (μ := ρ.fst)
+    exists_measurable_map_prod_volume_eq_compProd ρ.condKernel (μ := ρ.fst)
   exact ⟨f, hf, hcode.trans (Measure.disintegrate ρ ρ.condKernel)⟩
 
 /-- **Conditional randomization of a pair of random variables.** The joint law of `X` and `Y` is
@@ -187,7 +187,7 @@ theorem exists_measurable_map_map_prod_volume_eq_map_prodMk
       ((μ.map X).prod (volume : Measure I)).map (fun p => (p.1, f p.1 p.2)) =
         μ.map fun ω => (X ω, Y ω) := by
   obtain ⟨f, hf, hcode⟩ :=
-    Kernel.exists_measurable_map_prod_volume_eq_compProd
+    exists_measurable_map_prod_volume_eq_compProd
       (condDistrib Y X μ) (μ := μ.map X)
   exact ⟨f, hf, hcode.trans (compProd_map_condDistrib hY)⟩
 
