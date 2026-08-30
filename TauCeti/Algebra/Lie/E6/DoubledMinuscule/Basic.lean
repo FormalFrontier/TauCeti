@@ -112,7 +112,6 @@ noncomputable def serreRepresentation :
 
 /-- The doubled representation is the block-diagonal sum of the minuscule representation and its
 contragredient. -/
-@[simp]
 private theorem serreRepresentation_apply (x : Matrix.ToLieAlgebra ℤ (CartanMatrix.E 6)ᵀ) :
     serreRepresentation x =
       Matrix.fromBlocks (TauCeti.E6Minuscule.serreRepresentation x) 0 0
