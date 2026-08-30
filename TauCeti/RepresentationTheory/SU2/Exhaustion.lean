@@ -40,7 +40,7 @@ That continuity is the one genuinely analytic step. A group element acts on a pu
 tensor factor by factor, so the action is the composition of the continuous map
 `g ↦ (g·v₁, …, g·v_d)` with the multilinear map `⨂ₛ`, read in coordinates; multilinear maps on
 finite-dimensional spaces are continuous
-(`TauCeti.MultilinearMap.continuous_of_finiteDimensional`), and expanding an arbitrary vector in
+(`MultilinearMap.continuous_of_finiteDimensional`), and expanding an arbitrary vector in
 the weight basis extends the conclusion from pure tensors to all of `Symᵈ(ℂ²)`.
 
 Unitarity of `Symᵈ(ℂ²)` is *not* established, and is not needed: the second orthogonality
@@ -119,7 +119,7 @@ private theorem continuous_weightEquiv_symPower_tprod (v : Fin d → (Fin 2 → 
     Continuous fun g : SU2 ↦ weightEquiv d (symPower d g (⨂ₛ[ℂ] j, v j)) := by
   have hΦ : Continuous
       ((weightEquiv d).toLinearMap.compMultilinearMap (SymmetricPower.tprod ℂ)) :=
-    TauCeti.MultilinearMap.continuous_of_finiteDimensional _
+    MultilinearMap.continuous_of_finiteDimensional _
   have hv : Continuous fun g : SU2 ↦ fun j ↦ (g : Matrix (Fin 2) (Fin 2) ℂ) *ᵥ v j :=
     continuous_pi fun j ↦ continuous_mulVec (v j)
   exact (hΦ.comp hv).congr fun g ↦ by simp

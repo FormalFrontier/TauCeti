@@ -13,7 +13,7 @@ public import Mathlib.LinearAlgebra.Multilinear.Basic
 
 A multilinear map `f : MultilinearMap 𝕜 M N` on finitely many finite-dimensional normed spaces
 over a complete field is continuous, with no bound assumed:
-`TauCeti.MultilinearMap.continuous_of_finiteDimensional`. Expanding each argument in a basis
+`MultilinearMap.continuous_of_finiteDimensional`. Expanding each argument in a basis
 writes `f` as a finite sum of terms `(∏ i, coordinate) • constant`, and each coordinate is a
 linear functional on a finite-dimensional space, hence continuous.
 
@@ -24,8 +24,6 @@ construction, say — rather than from analysis.
 -/
 
 public section
-
-namespace TauCeti
 
 namespace MultilinearMap
 
@@ -56,5 +54,3 @@ theorem continuous_of_finiteDimensional (f : MultilinearMap 𝕜 M N) : Continuo
     (continuous_apply i)).congr fun m ↦ Module.Basis.coord_apply _ _ _
 
 end MultilinearMap
-
-end TauCeti
