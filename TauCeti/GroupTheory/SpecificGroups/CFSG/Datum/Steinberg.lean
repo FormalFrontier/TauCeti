@@ -79,8 +79,8 @@ degenerates to its Frobenius exactly on the nine untwisted families, so `²Aₙ(
 * `TauCeti.GraphTwistedIndex.datumSteinberg_eq_datumFrobenius_iff` and
   `TauCeti.GraphTwistedIndex.datumSteinberg_eq_datumFrobenius_iff_twistOrder`: it is the plain
   Frobenius exactly on the untwisted families, equivalently exactly when the twist order is one.
-* `TauCeti.GraphTwistedIndex.datumSteinberg_pow_twistOrder`: its twist-order power is the Frobenius
-  `Frob_(q ^ e)`, which is the order relation of milestone L1 read on the Steinberg map.
+* `TauCeti.GraphTwistedIndex.datumSteinberg_pow_twistOrder_eq_smulId`: its twist-order power is the
+  Frobenius `Frob_(q ^ e)`, which is the order relation of milestone L1 read on the Steinberg map.
 
 ## Roadmap
 
@@ -228,7 +228,7 @@ theorem datumSteinberg_eq_datumFrobenius_iff_twistOrder :
 order returns the Frobenius of the field of that degree, `Frob_(q ^ e)`. It is milestone L1's
 `γ ^ 2 = 1` and `γ ^ 3 = 1` read on the Steinberg map itself rather than on its graph factor. On an
 untwisted family the twist order is `1` and this is the definition of the Frobenius. -/
-theorem datumSteinberg_pow_twistOrder :
+theorem datumSteinberg_pow_twistOrder_eq_smulId :
     d.datumSteinberg ^ d.twistOrder =
       RootPairingIsogeny.smulId _ (d.1.1.fieldOrderPNat ^ d.twistOrder) := by
   -- the power splits over the two factors because a scaling is central,
@@ -239,7 +239,7 @@ theorem datumSteinberg_pow_twistOrder :
   -- and the graph factor is annihilated by the twist order.
   have hgraph : RootPairingIsogeny.ofEquiv d.datumGraphAut⁻¹ ^ d.twistOrder = 1 := by
     rw [← RootPairingIsogeny.ofEquiv_pow, inv_pow, datumGraphAut_pow_twistOrder, inv_one,
-      RootPairingIsogeny.ofEquiv_one]
+      RootPairingIsogeny.ofEquiv_one, ← RootPairingIsogeny.one_def]
   calc d.datumSteinberg ^ d.twistOrder
       = RootPairingIsogeny.ofEquiv d.datumGraphAut⁻¹ ^ d.twistOrder *
           RootPairingIsogeny.smulId _ d.1.1.fieldOrderPNat ^ d.twistOrder := by

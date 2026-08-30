@@ -25,8 +25,8 @@ the domains of the two constructions, so the dispatcher is a `dite` on that deci
 invents nothing on either side. The two branch equations
 `TauCeti.ValidLieTypeIndex.datumSteinberg_of_usesHalfFrobenius` and
 `TauCeti.ValidLieTypeIndex.datumSteinberg_of_not_usesHalfFrobenius` are what a consumer reasons
-with; the body is not exposed, and since the predicate is decidable on a concrete constructor they
-are exhaustive, as the worked branches at the end of the file illustrate.
+with, and since the predicate is decidable on a concrete constructor they are exhaustive, as the
+worked branches at the end of the file illustrate.
 
 ## What the two halves share
 
@@ -35,13 +35,13 @@ exception, where the diagram permutation is trivial and the Steinberg map is `Fr
 `TauCeti.ValidLieTypeIndex.datumSteinberg_eq_datumFrobenius_iff_of_not_usesHalfFrobenius`. What
 holds in general is only an order relation on each side: a graph-twisted map raised to its twist
 order is `Frob_(q ^ e)`, by
-`TauCeti.GraphTwistedIndex.datumSteinberg_pow_twistOrder`, and a half-Frobenius power squares to
-`Frob_q`, by `TauCeti.SuzukiReeIndex.datumSteinberg_mul_self`. What is uniform is that *some*
-positive power is a scaling, which is
+`TauCeti.GraphTwistedIndex.datumSteinberg_pow_twistOrder_eq_smulId`, and a half-Frobenius power
+squares to `Frob_q`, by `TauCeti.SuzukiReeIndex.datumSteinberg_mul_self`. What is uniform is that
+*some* positive power is a scaling by a positive power of the characteristic, which is
 `TauCeti.ValidLieTypeIndex.exists_pow_datumSteinberg_eq_smulId`. That is the defining property of a
 Steinberg endomorphism in Steinberg's sense, and on the group layer it is the reason the fixed
-groups of milestone L3 are finite at all; the two exponents are genuinely different, which is why
-the uniform statement is an existential rather than one formula.
+groups of milestone L3 are finite at all; the two exponents and the two scalars are genuinely
+different, which is why the uniform statement is an existential rather than one formula.
 
 Note that the scaling factors do not follow one rule either. The graph-twisted power is the
 Frobenius of the *larger* field `𝔽_(q ^ e)`, since each of the `e` factors contributes its own `q`;
@@ -62,8 +62,8 @@ points, or a finite group.
   `TauCeti.ValidLieTypeIndex.datumSteinberg_of_not_usesHalfFrobenius`: the two branch equations,
   exhaustive because the selecting predicate is decidable.
 * `TauCeti.ValidLieTypeIndex.exists_pow_datumSteinberg_eq_smulId`: some positive power of the
-  Steinberg map is a scaling, which is the root-datum form of "some power of a Steinberg
-  endomorphism is a Frobenius".
+  Steinberg map is the scaling at a positive power of the characteristic, which is the root-datum
+  form of "some power of a Steinberg endomorphism is a Frobenius".
 * `TauCeti.ValidLieTypeIndex.datumSteinberg_eq_datumFrobenius_iff_of_not_usesHalfFrobenius`: on the
   thirteen ordinary constructors it degenerates to the Frobenius exactly on the nine untwisted
   families.
@@ -71,11 +71,13 @@ points, or a finite group.
 ## Roadmap
 
 This assembles the root-datum layer of milestones L1, "ordinary and graph Steinberg maps", and L2,
-"Suzuki--Ree Steinberg maps", of `TauCetiRoadmap/CFSGStatement/README.md` into the single map that
-L2's completion condition, "`steinberg` unfolds on every branch", asks for. What is still missing
-from L1 and L2 is the group layer: `TauCeti.ValidLieTypeIndex.steinberg`, an endomorphism of the
-points of a pinned Chevalley--Demazure group, together with its action on root subgroups. That waits
-on the carriers of milestone L0, and this file is the shadow those maps will cast on the root datum.
+"Suzuki--Ree Steinberg maps", of `TauCetiRoadmap/CFSGStatement/README.md` into a single map on every
+valid index. It is the root-datum shadow of the map named in L2's completion condition, "`steinberg`
+unfolds on every branch", and does not meet that condition: the condition is about the group-layer
+`TauCeti.ValidLieTypeIndex.steinberg`, an endomorphism of the points of a pinned
+Chevalley--Demazure group, together with its action on root subgroups, and both remain open. That
+group layer waits on the carriers of milestone L0, and the map assembled here is what it will
+dispatch to on each branch.
 
 The conventions follow R. Steinberg, *Endomorphisms of linear algebraic groups*, Memoirs AMS 80
 (1968), §11, and R. W. Carter, *Finite Groups of Lie Type: Conjugacy Classes and Complex
@@ -127,38 +129,52 @@ theorem datumSteinberg_eq_datumFrobenius_iff_of_not_usesHalfFrobenius
 
 /-- **The twist-order power of an ordinary Steinberg map is a Frobenius**: `(γ ∘ Frob_q) ^ e` is
 `Frob_(q ^ e)`, the Frobenius of the degree-`e` extension of the field the index names. -/
-theorem datumSteinberg_pow_twistOrder_of_not_usesHalfFrobenius (h : ¬ d.1.UsesHalfFrobenius) :
+theorem datumSteinberg_pow_twistOrder_eq_smulId_of_not_usesHalfFrobenius
+    (h : ¬ d.1.UsesHalfFrobenius) :
     d.datumSteinberg ^ GraphTwistedIndex.twistOrder ⟨d, h⟩ =
       RootPairingIsogeny.smulId _
         (d.1.fieldOrderPNat ^ GraphTwistedIndex.twistOrder ⟨d, h⟩) := by
   rw [datumSteinberg_of_not_usesHalfFrobenius d h]
-  exact GraphTwistedIndex.datumSteinberg_pow_twistOrder ⟨d, h⟩
+  exact GraphTwistedIndex.datumSteinberg_pow_twistOrder_eq_smulId ⟨d, h⟩
 
-/-- **The square of a half-Frobenius Steinberg map is a Frobenius**: `(τ ^ (2 * m + 1)) ^ 2` is
-`Frob_(p ^ (2 * m + 1))`, the Frobenius of the field the index itself names. -/
-theorem datumSteinberg_pow_two_of_usesHalfFrobenius (h : d.1.UsesHalfFrobenius) :
-    d.datumSteinberg ^ 2 =
-      RootPairingIsogeny.smulId _ ⟨d.fieldOrder, d.fieldOrder_pos⟩ := by
-  rw [datumSteinberg_of_usesHalfFrobenius d h, pow_two]
+/-- **The square of a half-Frobenius Steinberg map is the Frobenius of the index**:
+`(τ ^ (2 * m + 1)) ^ 2` is `Frob_(p ^ (2 * m + 1))`, the Frobenius of the field the index itself
+names. -/
+theorem datumSteinberg_pow_two_eq_datumFrobenius_of_usesHalfFrobenius
+    (h : d.1.UsesHalfFrobenius) :
+    d.datumSteinberg ^ 2 = d.datumFrobenius := by
+  rw [datumSteinberg_of_usesHalfFrobenius d h, pow_two, datumFrobenius_def]
   exact SuzukiReeIndex.datumSteinberg_mul_self ⟨d, h⟩
 
-/-- **Some positive power of the Steinberg map is a scaling.** This is the root-datum form of the
-property that defines a Steinberg endomorphism: some power of it is a Frobenius. The witnessing
-exponent is the twist order on the thirteen ordinary constructors and `2` on the four
-half-Frobenius ones, so it is stated existentially; the two explicit forms are
-`TauCeti.ValidLieTypeIndex.datumSteinberg_pow_twistOrder_of_not_usesHalfFrobenius` and
-`TauCeti.ValidLieTypeIndex.datumSteinberg_pow_two_of_usesHalfFrobenius`. -/
+/-- **Some positive power of the Steinberg map is the scaling at a positive power of the
+characteristic.** Since the scaling at a prime power is the root-datum shadow of the Frobenius of
+the field of that order, this is the root-datum form of the property that defines a Steinberg
+endomorphism: some power of it is a Frobenius. The witnessing exponent is the twist order on the
+thirteen ordinary constructors and `2` on the four half-Frobenius ones, and the scalar is `q ^ e`
+there and `q` here, so both are recorded existentially; the two explicit forms are
+`TauCeti.ValidLieTypeIndex.datumSteinberg_pow_twistOrder_eq_smulId_of_not_usesHalfFrobenius` and
+`TauCeti.ValidLieTypeIndex.datumSteinberg_pow_two_eq_datumFrobenius_of_usesHalfFrobenius`. -/
 theorem exists_pow_datumSteinberg_eq_smulId :
-    ∃ (n : ℕ) (c : ℕ+), 0 < n ∧ d.datumSteinberg ^ n =
-      RootPairingIsogeny.smulId
-        (d.dynkinType.simplyConnectedRootDatum d.dynkinType_valid) c := by
+    ∃ (n : ℕ) (c : ℕ+) (k : ℕ), 0 < n ∧ 0 < k ∧ (c : ℕ) = d.characteristic ^ k ∧
+      d.datumSteinberg ^ n =
+        RootPairingIsogeny.smulId
+          (d.dynkinType.simplyConnectedRootDatum d.dynkinType_valid) c := by
   by_cases h : d.1.UsesHalfFrobenius
-  · exact ⟨2, ⟨d.fieldOrder, d.fieldOrder_pos⟩, two_pos,
-      d.datumSteinberg_pow_two_of_usesHalfFrobenius h⟩
-  · exact ⟨GraphTwistedIndex.twistOrder ⟨d, h⟩,
+  · -- The square is the Frobenius of the field the index names, a `fieldExponent`-th power of `p`.
+    refine ⟨2, d.1.fieldOrderPNat, d.fieldExponent, two_pos, d.fieldExponent_pos, ?_, ?_⟩
+    · rw [LieTypeIndex.coe_fieldOrderPNat]
+      exact d.fieldOrder_eq_characteristic_pow
+    · rw [d.datumSteinberg_pow_two_eq_datumFrobenius_of_usesHalfFrobenius h, datumFrobenius_def]
+  · -- The twist-order power is the Frobenius of the degree-`e` extension, so the exponent of `p`
+    -- is multiplied by `e`.
+    refine ⟨GraphTwistedIndex.twistOrder ⟨d, h⟩,
       d.1.fieldOrderPNat ^ GraphTwistedIndex.twistOrder ⟨d, h⟩,
+      d.fieldExponent * GraphTwistedIndex.twistOrder ⟨d, h⟩,
       GraphTwistedIndex.twistOrder_pos ⟨d, h⟩,
-      d.datumSteinberg_pow_twistOrder_of_not_usesHalfFrobenius h⟩
+      Nat.mul_pos d.fieldExponent_pos (GraphTwistedIndex.twistOrder_pos ⟨d, h⟩), ?_,
+      d.datumSteinberg_pow_twistOrder_eq_smulId_of_not_usesHalfFrobenius h⟩
+    rw [PNat.pow_coe, LieTypeIndex.coe_fieldOrderPNat, d.1.fieldOrder_eq_characteristic_pow,
+      pow_mul]
 
 end
 
@@ -187,7 +203,7 @@ the Frobenius of the quadratic extension `𝔽_(q ^ 2)`. -/
 example (hv : (LieTypeIndex.twistedA n q).Valid) :
     ValidLieTypeIndex.datumSteinberg ⟨_, hv⟩ ^ 2 =
       RootPairingIsogeny.smulId _ ((LieTypeIndex.twistedA n q).fieldOrderPNat ^ 2) := by
-  have h := ValidLieTypeIndex.datumSteinberg_pow_twistOrder_of_not_usesHalfFrobenius
+  have h := ValidLieTypeIndex.datumSteinberg_pow_twistOrder_eq_smulId_of_not_usesHalfFrobenius
     (⟨_, hv⟩ : ValidLieTypeIndex) (by simp)
   rwa [GraphTwistedIndex.twistOrder_twistedA hv] at h
 

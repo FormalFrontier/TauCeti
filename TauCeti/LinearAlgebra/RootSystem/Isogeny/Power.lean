@@ -142,13 +142,10 @@ homomorphism: an automorphism is an isogeny with every exponent `1`, and composi
 two sides. -/
 def ofEquivHom (P : RootPairing ι R M N) : RootPairing.Aut P →* RootPairingIsogeny P P where
   toFun := ofEquiv
-  map_one' := by rw [one_def]; ext <;> simp
+  map_one' := by rw [one_def]; exact ofEquiv_one
   map_mul' _ _ := by ext <;> simp
 
 @[simp] theorem ofEquivHom_apply (f : RootPairing.Aut P) : ofEquivHom P f = ofEquiv f := (rfl)
-
-@[simp] theorem ofEquiv_one : ofEquiv (1 : RootPairing.Aut P) = 1 :=
-  map_one (ofEquivHom P)
 
 /-- **An automorphism and the isogeny it becomes have the same powers**, since
 `TauCeti.RootPairingIsogeny.ofEquiv` is multiplicative. -/
