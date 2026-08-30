@@ -54,8 +54,11 @@ namespace TauCeti
 universe u v w v' w'
 
 variable {A : Type u} [Ring A]
-variable {P₀ : Type v} {P₁ : Type w} [AddCommGroup P₀] [Module A P₀]
-  [AddCommGroup P₁] [Module A P₁]
+
+section Transpose
+
+variable {P₀ : Type v} {P₁ : Type w} [AddCommMonoid P₀] [Module A P₀]
+  [AddCommMonoid P₁] [Module A P₁]
 
 /-- The **Auslander--Reiten transpose** attached to a projective presentation whose first map is
 `p₁ : P₁ → P₀`.  It is the cokernel of the opposite-linear precomposition map
@@ -148,6 +151,7 @@ theorem lift_comp_mk (f : Module.Dual A P₁ →ₗ[Aᵐᵒᵖ] N)
   LinearMap.ext fun φ => lift_mk p₁ f hf φ
 
 /-- Opposite-linear maps out of the transpose are determined by their values on representatives. -/
+@[ext]
 theorem hom_ext {f g : AuslanderReitenTranspose p₁ →ₗ[Aᵐᵒᵖ] N}
     (h : ∀ φ : Module.Dual A P₁, f (mk p₁ φ) = g (mk p₁ φ)) : f = g :=
   LinearMap.ext fun x => induction_on p₁ x h
@@ -166,8 +170,8 @@ variable {p₁}
 
 section Equivalence
 
-variable {Q₀ : Type v'} {Q₁ : Type w'} [AddCommGroup Q₀] [Module A Q₀]
-  [AddCommGroup Q₁] [Module A Q₁]
+variable {Q₀ : Type v'} {Q₁ : Type w'} [AddCommMonoid Q₀] [Module A Q₀]
+  [AddCommMonoid Q₁] [Module A Q₁]
 
 private theorem map_range_lcomp_eq {q₁ : Q₁ →ₗ[A] Q₀} (e₀ : P₀ ≃ₗ[A] Q₀)
     (e₁ : P₁ ≃ₗ[A] Q₁)
@@ -205,16 +209,20 @@ theorem linearEquiv_mk {q₁ : Q₁ →ₗ[A] Q₀} (e₀ : P₀ ≃ₗ[A] Q₀)
     (φ : Module.Dual A P₁) :
     linearEquiv e₀ e₁ hsquare (mk p₁ φ) =
       mk q₁ (e₁.symm.toLinearMap.lcomp Aᵐᵒᵖ A φ) := by
+  have hrep : (e₁.congrLeft A Aᵐᵒᵖ : Module.Dual A P₁ →ₗ[Aᵐᵒᵖ] Module.Dual A Q₁) φ =
+      e₁.symm.toLinearMap.lcomp Aᵐᵒᵖ A φ := by
+    ext x
+    simp [LinearMap.lcomp_apply]
   -- `linearEquiv`, `mk` and `AuslanderReitenTranspose` itself are not exposed, so neither the
   -- statement nor Mathlib's quotient lemmas reduce here on their own: an exported theorem may only
   -- unfold exposed definitions.  `with_unfolding_all` lets this proof see through them, and the
   -- `change` then presents the goal in the `Submodule.Quotient` form in which
-  -- `Submodule.Quotient.equiv_apply` and `Submodule.mapQ_apply` apply.
+  -- `Submodule.Quotient.equiv_apply` and `Submodule.mapQ_apply` apply; `hrep` then identifies the
+  -- representative maps through public application lemmas rather than by definitional unfolding.
   with_unfolding_all
     change Submodule.Quotient.equiv _ _ _ _ (Submodule.Quotient.mk φ) =
       Submodule.Quotient.mk _
-    rw [Submodule.Quotient.equiv_apply, Submodule.mapQ_apply]
-    rfl
+    rw [Submodule.Quotient.equiv_apply, Submodule.mapQ_apply, hrep]
 
 /-- Transport along the identity presentation equivalences is the identity. -/
 @[simp]
@@ -234,7 +242,7 @@ theorem linearEquiv_refl :
 /-- Transport along a composite of presentation equivalences is the composite transport. -/
 @[simp]
 theorem linearEquiv_trans {q₁ : Q₁ →ₗ[A] Q₀}
-    {R₀ R₁ : Type*} [AddCommGroup R₀] [Module A R₀] [AddCommGroup R₁] [Module A R₁]
+    {R₀ R₁ : Type*} [AddCommMonoid R₀] [Module A R₀] [AddCommMonoid R₁] [Module A R₁]
     {r₁ : R₁ →ₗ[A] R₀} (e₀ : P₀ ≃ₗ[A] Q₀) (e₁ : P₁ ≃ₗ[A] Q₁)
     (f₀ : Q₀ ≃ₗ[A] R₀) (f₁ : Q₁ ≃ₗ[A] R₁)
     (he : e₀.toLinearMap ∘ₗ p₁ = q₁ ∘ₗ e₁.toLinearMap)
@@ -285,9 +293,13 @@ end Equivalence
 
 end AuslanderReitenTranspose
 
+end Transpose
+
 namespace IsMinimalProjectivePresentation
 
 variable {M : Type*} [AddCommGroup M] [Module A M]
+variable {P₀ : Type v} {P₁ : Type w} [AddCommGroup P₀] [Module A P₀]
+  [AddCommGroup P₁] [Module A P₁]
 variable {p₁ : P₁ →ₗ[A] P₀} {p₀ : P₀ →ₗ[A] M}
 variable {Q₀ : Type v'} {Q₁ : Type w'} [AddCommGroup Q₀] [Module A Q₀]
   [AddCommGroup Q₁] [Module A Q₁]
