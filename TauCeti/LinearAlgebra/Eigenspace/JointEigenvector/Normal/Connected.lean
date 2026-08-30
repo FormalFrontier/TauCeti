@@ -58,14 +58,6 @@ variable {V : Type w} [AddCommGroup V] [Module k V] [FiniteDimensional k V]
 variable (N : Subgroup (WithConv (H →ₐ[k] k))) [N.Normal]
 variable (ρ : WithConv (H →ₐ[k] k) →* Module.End k V)
 
-/-- The type of characters of a normal subgroup whose joint weight space is nonzero. -/
-abbrev NonzeroJointWeight :=
-  {χ : N →* kˣ // (⨅ n : N, (ρ n).eigenspace (χ n)) ≠ ⊥}
-
-/-- Finiteness of the nonzero joint weights, specialized to a normal subgroup. -/
-local instance : Finite (NonzeroJointWeight N ρ) :=
-  finite_nonzeroJointWeights (ρ.comp N.subtype)
-
 /-- A finite indexing type for the nonzero joint weights. -/
 local instance : Fintype (NonzeroJointWeight N ρ) :=
   Fintype.ofFinite _
@@ -77,10 +69,10 @@ theorem nonzeroJointWeightAction_eq_one_of_coordinate
     (hconnected : ConnectedSpace (PrimeSpectrum H))
     (f : ConstantGroup.coordinateRing k (Equiv.Perm (NonzeroJointWeight N ρ)) →ₐc[k] H)
     (hcoordinate : nonzeroJointWeightAction N ρ =
-      ConstantGroup.pointHom (Equiv.Perm (NonzeroJointWeight N ρ)) f) :
+      ConstantGroup.pointHom f) :
     nonzeroJointWeightAction N ρ = 1 := by
   rw [hcoordinate]
-  exact ConstantGroup.pointHom_eq_one_of_connected _ hconnected f
+  exact ConstantGroup.pointHom_eq_one_of_connected hconnected f
 
 /-- Under a coordinate realization of the finite joint-weight action, every point of a connected
 affine group fixes every nonzero normal-subgroup joint weight. -/
@@ -88,7 +80,7 @@ theorem nonzeroJointWeightAction_apply_eq_self_of_coordinate
     (hconnected : ConnectedSpace (PrimeSpectrum H))
     (f : ConstantGroup.coordinateRing k (Equiv.Perm (NonzeroJointWeight N ρ)) →ₐc[k] H)
     (hcoordinate : nonzeroJointWeightAction N ρ =
-      ConstantGroup.pointHom (Equiv.Perm (NonzeroJointWeight N ρ)) f)
+      ConstantGroup.pointHom f)
     (g : WithConv (H →ₐ[k] k)) (χ : NonzeroJointWeight N ρ) :
     nonzeroJointWeightAction N ρ g χ = χ := by
   rw [nonzeroJointWeightAction_eq_one_of_coordinate N ρ hconnected f hcoordinate]
@@ -100,7 +92,7 @@ theorem map_iInf_eigenspace_unitHom_eq_self_of_coordinate
     (hconnected : ConnectedSpace (PrimeSpectrum H))
     (f : ConstantGroup.coordinateRing k (Equiv.Perm (NonzeroJointWeight N ρ)) →ₐc[k] H)
     (hcoordinate : nonzeroJointWeightAction N ρ =
-      ConstantGroup.pointHom (Equiv.Perm (NonzeroJointWeight N ρ)) f)
+      ConstantGroup.pointHom f)
     (g : WithConv (H →ₐ[k] k)) (χ : NonzeroJointWeight N ρ) :
     (⨅ n : N, (ρ n).eigenspace (χ.1 n)).map (ρ g) =
       ⨅ n : N, (ρ n).eigenspace (χ.1 n) := by
