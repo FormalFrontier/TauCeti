@@ -82,9 +82,7 @@ variable (wt : Fin n → κ → ℤ)
 property. It is a quotient of the finite-type coordinate Hopf algebra of `GLₙ`. -/
 noncomputable def kostantToralFiniteTypeCoordinateHopfAlgebra :
     FiniteTypeCommHopfAlgCat ℤ :=
-  FiniteTypeCommHopfAlgCat.quotient
-    (⟨GeneralLinear.coordinateHopfAlgebra ℤ n,
-      (finiteTypeCommHopfAlgProperty_iff _).2 inferInstance⟩ : FiniteTypeCommHopfAlgCat ℤ)
+  FiniteTypeCommHopfAlgCat.quotient (GeneralLinear.finiteTypeCoordinateHopfAlgebra ℤ n)
     (kostantToralDefiningIdeal e h ρ M hM hnil b wt)
 
 /-- The underlying object of the finite-type package is the coordinate Hopf algebra already used
@@ -96,14 +94,6 @@ theorem kostantToralFiniteTypeCoordinateHopfAlgebra_obj :
         (kostantToralDefiningIdeal e h ρ M hM hnil b wt) :=
   (rfl)
 
-/-- The structural morphism of the toral Kostant group scheme is locally of finite type. -/
-instance locallyOfFiniteType_kostantToralGroupScheme :
-    LocallyOfFiniteType (kostantToralGroupScheme e h ρ M hM hnil b wt).X.hom :=
-  FiniteTypeCommHopfAlgCat.locallyOfFiniteType_quotientSpec
-    (⟨GeneralLinear.coordinateHopfAlgebra ℤ n,
-      (finiteTypeCommHopfAlgProperty_iff _).2 inferInstance⟩ : FiniteTypeCommHopfAlgCat ℤ)
-    (kostantToralDefiningIdeal e h ρ M hM hnil b wt)
-
 /-! ## Finite-type specialization -/
 
 variable (A : Type v) [CommRing A]
@@ -114,8 +104,7 @@ noncomputable def kostantToralFiniteTypeSpecialization :
     FiniteTypeCommHopfAlgCat A :=
   FiniteTypeCommHopfAlgCat.quotient
     (FiniteTypeCommHopfAlgCat.baseChange (K := A)
-      (⟨GeneralLinear.coordinateHopfAlgebra ℤ n,
-        (finiteTypeCommHopfAlgProperty_iff _).2 inferInstance⟩ : FiniteTypeCommHopfAlgCat ℤ))
+      (GeneralLinear.finiteTypeCoordinateHopfAlgebra ℤ n))
     (kostantToralBaseChangeIdeal e h ρ M hM hnil b wt A)
 
 /-- The object underlying the finite-type specialization is the specialized quotient coordinate
@@ -168,13 +157,14 @@ instance locallyOfFiniteType_kostantToralBaseChangeGroupScheme :
       (kostantToralBaseChangeGroupScheme e h ρ M hM hnil b wt A).X.hom :=
   FiniteTypeCommHopfAlgCat.locallyOfFiniteType_quotientSpec
     (FiniteTypeCommHopfAlgCat.baseChange (K := A)
-      (⟨GeneralLinear.coordinateHopfAlgebra ℤ n,
-        (finiteTypeCommHopfAlgProperty_iff _).2 inferInstance⟩ : FiniteTypeCommHopfAlgCat ℤ))
+      (GeneralLinear.finiteTypeCoordinateHopfAlgebra ℤ n))
     (kostantToralBaseChangeIdeal e h ρ M hM hnil b wt A)
 
 /-- The closed-subgroup inclusion of the specialized toral carrier into the base-changed
-general-linear group scheme. -/
-noncomputable def kostantToralBaseChangeGroupSchemeι :
+general-linear group scheme. Being reducible, it inherits
+`CommHopfAlgCat.isClosedImmersion_quotientSpecι`, so its underlying scheme morphism is a closed
+immersion by instance search. -/
+noncomputable abbrev kostantToralBaseChangeGroupSchemeι :
     kostantToralBaseChangeGroupScheme e h ρ M hM hnil b wt A ⟶
       (hopfSpec (CommRingCat.of A)).obj
         (Opposite.op
@@ -182,13 +172,6 @@ noncomputable def kostantToralBaseChangeGroupSchemeι :
   CommHopfAlgCat.quotientSpecι
     (CommHopfAlgCat.baseChange (K := A) (GeneralLinear.coordinateHopfAlgebra ℤ n))
     (kostantToralBaseChangeIdeal e h ρ M hM hnil b wt A)
-
-/-- The specialized toral carrier is a closed subgroup scheme of the base-changed general-linear
-group scheme. -/
-instance isClosedImmersion_kostantToralBaseChangeGroupSchemeι :
-    IsClosedImmersion
-      (kostantToralBaseChangeGroupSchemeι e h ρ M hM hnil b wt A).hom.hom.left := by
-  exact CommHopfAlgCat.isClosedImmersion_quotientSpecι _ _
 
 /-! ## The specialized carrier as a scheme-theoretic base change -/
 
@@ -220,6 +203,7 @@ noncomputable def kostantToralBaseChangeGroupSchemePullbackIso :
 
 /-- The base-change comparison of group schemes is the Hopf-spectrum base-change comparison
 followed by the spectrum of the specialized quotient identification. -/
+@[simp]
 theorem kostantToralBaseChangeGroupSchemePullbackIso_hom :
     (kostantToralBaseChangeGroupSchemePullbackIso e h ρ M hM hnil b wt A).hom =
       (AffineGroupSchemeCat.hopfSpecBaseChangeGrpIso
