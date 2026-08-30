@@ -51,7 +51,9 @@ cases.
 ## Main results
 
 * `TauCeti.coeff_weylDenominator_zero`: the constant term of `Δ` is `1`.
-* `TauCeti.weylDenominator_eq_weylNumerator_zero`: **the Weyl denominator identity**, `Δ = N(0)`.
+* `TauCeti.weylDenominator_ne_zero`: the Weyl denominator does not vanish.
+* `TauCeti.weylDenominator_eq_weylNumerator_zero` and
+  `TauCeti.weylNumerator_zero_eq_weylDenominator`: **the Weyl denominator identity**, `Δ = N(0)`.
 * `TauCeti.support_coeff_weylDenominator` and `TauCeti.card_support_coeff_weylDenominator`:
   consequently `Δ` is supported on the dot orbit of `0` and has exactly `|W|` terms.
 
@@ -87,6 +89,12 @@ theorem coeff_weylDenominator_zero : (weylDenominator P b).coeff 0 = 1 := by
         fun i hi => (mem_posRootsFinset P b i).mp (Finset.mem_powerset.mp hT hi)
     exact Finsupp.single_eq_of_ne (Ne.symm (neg_ne_zero.mpr hsum))
   · simp
+
+/-- **The Weyl denominator does not vanish**, its coefficient at the exponent `0` being `1`. -/
+theorem weylDenominator_ne_zero : weylDenominator P b ≠ 0 := fun hcon => by
+  have h := coeff_weylDenominator_zero P b
+  rw [hcon] at h
+  simp at h
 
 section Cone
 
@@ -168,6 +176,13 @@ theorem weylDenominator_eq_weylNumerator_zero :
           (by linarith)) hyne
     exact hx w⁻¹ (by
       rw [← eq_zero_of_coeff_weylDenominator_ne_zero P b hyne hopen, dotAction_inv_dotAction])
+
+/-- **The Weyl denominator identity**, stated with the Weyl numerator on the left-hand side:
+`∑_{w ∈ W} sgn(w) e^{w(ρ) - ρ} = ∏_{α > 0} (1 - e^{-α})`. -/
+@[simp]
+theorem weylNumerator_zero_eq_weylDenominator :
+    weylNumerator P b 0 = weylDenominator P b :=
+  (weylDenominator_eq_weylNumerator_zero P b).symm
 
 /-- **The Weyl denominator is supported exactly on the dot orbit of `0`**, one term for each
 element of the Weyl group. -/
