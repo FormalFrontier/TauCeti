@@ -27,6 +27,7 @@ structure, and it computes the concrete pieces.
 
 * `TauCeti.zigzagGrade`: the induced degree-`n` piece on the relation quotient, the descent of
   `TauCeti.PathAlgebra.grade` along the quotient map.
+* `TauCeti.zigzagIntegerGrade`: the same grading extended by zero to integer degrees.
 * `TauCeti.zigzagGradedAlgebra`: **the zigzag relation quotient is a graded algebra** for the
   induced path-length grading.
 
@@ -149,24 +150,6 @@ noncomputable def zigzagGradedAlgebra : GradedAlgebra (zigzagGrade k G) :=
   TauCeti.GradedAlgebra.gradedAlgebraGradeQuot (grade k (DoubledQuiver G))
     (zigzagIdeal k G).asIdeal (isHomogeneous_zigzagIdeal k G)
 
-/-- The descended piece is spanned by the images of any spanning family of the original piece:
-a member of the descended degree-`n` piece lies in the span of `T` as soon as the image under
-`zigzagMk` of every generator of the original piece does. Private helper for the computations of
-the concrete pieces below. -/
-private theorem mem_span_of_mem_zigzagGrade {n : ℕ}
-    {S : Set (pathAlgebra k (DoubledQuiver G))}
-    (hs : grade k (DoubledQuiver G) n = Submodule.span k S)
-    {T : Set (nonisolatedZigzagQuotient k G)}
-    (hmem : ∀ z ∈ S, Ideal.Quotient.mk (zigzagIdeal k G).asIdeal z ∈ Submodule.span k T)
-    {w : nonisolatedZigzagQuotient k G} (hw : w ∈ zigzagGrade k G n) :
-    w ∈ Submodule.span k T := by
-  have heq := TauCeti.GradedAlgebra.gradeQuot_eq_span_image
-    (grade k (DoubledQuiver G)) (zigzagIdeal k G).asIdeal (i := n) hs
-  rw [zigzagGrade, heq] at hw
-  refine (Submodule.span_le.2 ?_) hw
-  rintro u ⟨z, hz, rfl⟩
-  exact hmem z hz
-
 /-- **Degree zero is spanned by the vertex idempotent classes.** -/
 theorem zigzagGrade_zero_eq_span_range_vertexIdempotent :
     zigzagGrade k G 0 =
@@ -174,7 +157,8 @@ theorem zigzagGrade_zero_eq_span_range_vertexIdempotent :
         (Set.range fun i : V => zigzagMk k G (vertexIdempotent k (vertex G i))) := by
   refine le_antisymm ?_ ?_
   · intro w hw
-    refine mem_span_of_mem_zigzagGrade k G
+    refine TauCeti.GradedAlgebra.mem_span_of_mem_gradeQuot
+      (grade k (DoubledQuiver G)) (zigzagIdeal k G).asIdeal (i := 0)
       (PathAlgebra.grade_zero_eq_span_range_vertexIdempotent k (DoubledQuiver G)) ?_ hw
     rintro z ⟨v, rfl⟩
     rw [← zigzagMk_apply k G]
@@ -190,7 +174,8 @@ theorem zigzagGrade_one_eq_span_range_ofArrow :
         zigzagMk k G (ofArrow (arrow G d.adj))) := by
   refine le_antisymm ?_ ?_
   · intro w hw
-    refine mem_span_of_mem_zigzagGrade k G
+    refine TauCeti.GradedAlgebra.mem_span_of_mem_gradeQuot
+      (grade k (DoubledQuiver G)) (zigzagIdeal k G).asIdeal (i := 1)
       (PathAlgebra.grade_one_eq_span_range_ofArrow) ?_ hw
     rintro z ⟨⟨a, b, e⟩, rfl⟩
     rw [← zigzagMk_apply k G]
@@ -214,7 +199,8 @@ theorem zigzagGrade_two_eq_span_range_zigzagVolume :
       Submodule.span k (Set.range fun i : V => zigzagVolume k G i) := by
   refine le_antisymm ?_ ?_
   · intro w hw
-    refine mem_span_of_mem_zigzagGrade k G
+    refine TauCeti.GradedAlgebra.mem_span_of_mem_gradeQuot
+      (grade k (DoubledQuiver G)) (zigzagIdeal k G).asIdeal (i := 2)
       (PathAlgebra.grade_eq_span_image_basis k (DoubledQuiver G) 2) ?_ hw
     rintro z ⟨t, ht, rfl⟩
     rw [← zigzagMk_apply k G]
@@ -256,5 +242,42 @@ theorem zigzagGrade_eq_bot_of_three_le {n : ℕ} (hn : 3 ≤ n) : zigzagGrade k 
   refine TauCeti.GradedAlgebra.gradeQuot_eq_bot_of_le (grade k (DoubledQuiver G))
     (zigzagIdeal k G).asIdeal fun y hy => ?_
   exact hle hy
+
+/-! ### Integer-indexed grading -/
+
+/-- The path-length grading of the zigzag relation quotient, extended by zero from `ℕ` to `ℤ`.
+This signed indexing is needed to state every internal grading shift. -/
+noncomputable def zigzagIntegerGrade (d : ℤ) :
+    Submodule k (nonisolatedZigzagQuotient k G) :=
+  if 0 ≤ d then zigzagGrade k G d.toNat else ⊥
+
+@[simp]
+theorem zigzagIntegerGrade_ofNat (d : ℕ) :
+    zigzagIntegerGrade k G d = zigzagGrade k G d := by
+  simp [zigzagIntegerGrade]
+
+/-- The integer extension of the path-length grading vanishes in negative degrees. -/
+theorem zigzagIntegerGrade_eq_bot_of_neg {d : ℤ} (hd : d < 0) :
+    zigzagIntegerGrade k G d = ⊥ := by
+  simp [zigzagIntegerGrade, (not_le_of_gt hd)]
+
+/-- Multiplication adds signed degrees in the integer extension of the path-length grading. -/
+theorem mul_mem_zigzagIntegerGrade {m n : ℤ}
+    {x y : nonisolatedZigzagQuotient k G} (hx : x ∈ zigzagIntegerGrade k G m)
+    (hy : y ∈ zigzagIntegerGrade k G n) : x * y ∈ zigzagIntegerGrade k G (m + n) := by
+  by_cases hm : 0 ≤ m
+  · by_cases hn : 0 ≤ n
+    · simp only [zigzagIntegerGrade, hm, ↓reduceIte] at hx
+      simp only [zigzagIntegerGrade, hn, ↓reduceIte] at hy
+      simp only [zigzagIntegerGrade, add_nonneg hm hn, ↓reduceIte]
+      simpa [Int.toNat_add hm hn] using mul_mem_zigzagGrade k G hx hy
+    · simp only [zigzagIntegerGrade, hn, ↓reduceIte] at hy
+      rw [Submodule.mem_bot] at hy
+      subst y
+      simp
+  · simp only [zigzagIntegerGrade, hm, ↓reduceIte] at hx
+    rw [Submodule.mem_bot] at hx
+    subst x
+    simp
 
 end TauCeti

@@ -9,6 +9,7 @@ import TauCeti.MeasureTheory.Function.Lp.LIntegralRpow
 import Mathlib.MeasureTheory.Function.LpSeminorm.CompareExp
 public import Mathlib.MeasureTheory.Integral.Average
 public import Mathlib.MeasureTheory.Measure.Lebesgue.EqHaar
+public import Mathlib.Topology.MetricSpace.Equicontinuity
 -- `Mathlib.MeasureTheory.Group.Integral` is imported privately: translation invariance of the
 -- Bochner integral is used only inside the proofs below.
 import Mathlib.MeasureTheory.Group.Integral
@@ -87,6 +88,7 @@ the maximal inequality, so the two developments are kept apart.
   commutes with translation, and its increment is the ball average of the increment.
 * `TauCeti.enorm_ballAverage_add_sub_ballAverage_le`: the equicontinuity estimate, with modulus
   the `Lᵖ` modulus of continuity of `f` itself.
+* `TauCeti.uniformEquicontinuous_ballAverage`: equicontinuity of the ball averages of a family.
 * `TauCeti.continuous_ballAverage`, `TauCeti.memLp_ballAverage`: a ball average at positive
   scale is continuous and remains in `Lᵖ`.
 * `TauCeti.ballAverage_sub_self`, `TauCeti.eLpNorm_ballAverage_sub_le`: the deviation of `f` from
@@ -285,6 +287,37 @@ theorem enorm_ballAverage_add_sub_ballAverage_le (hp : 1 ≤ p) (hp' : p ≠ ∞
   rw [ballAverage_sub_ballAverage hp hf]
   exact enorm_ballAverage_le hp hp'
     (hshift.aestronglyMeasurable.sub hf.aestronglyMeasurable) hr x
+
+omit [CompleteSpace F] in
+/-- At a fixed positive scale, the ball averages of a family of `Lᵖ` functions whose translation
+increments are uniformly small in `Lᵖ` form a uniformly equicontinuous family. -/
+theorem uniformEquicontinuous_ballAverage {ι : Type*} {u : ι → E → F}
+    (hp : 1 ≤ p) (hp' : p ≠ ∞) (hu : ∀ i, MemLp (u i) p mu) (hr : 0 < r)
+    (htrans : ∀ ε : ℝ≥0∞, 0 < ε → ∃ δ > 0, ∀ i, ∀ h : E, ‖h‖ < δ →
+      eLpNorm (fun x => u i (x + h) - u i x) p mu ≤ ε) :
+    UniformEquicontinuous fun i => ballAverage mu r (u i) := by
+  set V : ℝ≥0∞ := mu (ball (0 : E) r)
+  have hV0 : V ≠ 0 := (measure_ball_pos mu 0 hr).ne'
+  have hVt : V ≠ ∞ := measure_ball_lt_top.ne
+  have hVinv : V ^ (p.toReal)⁻¹ ≠ 0 := (ENNReal.rpow_pos (pos_iff_ne_zero.2 hV0) hVt).ne'
+  have hVinvt : V ^ (p.toReal)⁻¹ ≠ ∞ := ENNReal.rpow_ne_top_of_ne_zero hV0 hVt
+  have hcancel : ∀ c : ℝ≥0∞, V ^ (-(p.toReal)⁻¹) * (c * V ^ (p.toReal)⁻¹) = c := fun c => by
+    rw [ENNReal.rpow_neg, mul_comm c, ← mul_assoc, ENNReal.inv_mul_cancel hVinv hVinvt, one_mul]
+  rw [Metric.uniformEquicontinuous_iff]
+  intro c hc
+  obtain ⟨δ, hδ, hδS⟩ := htrans (ENNReal.ofReal (c / 2) * V ^ (p.toReal)⁻¹)
+    (ENNReal.mul_pos (ENNReal.ofReal_pos.2 (by linarith)).ne' hVinv)
+  refine ⟨δ, hδ, fun x y hxy i => ?_⟩
+  have hyx : ‖y - x‖ < δ := by rwa [← dist_eq_norm, dist_comm]
+  have hbound := enorm_ballAverage_add_sub_ballAverage_le (mu := mu) (r := r) hp hp' (hu i) hr
+    (y - x) x
+  rw [add_sub_cancel] at hbound
+  have hb2 := hbound.trans (mul_le_mul' (le_refl (V ^ (-(p.toReal)⁻¹))) (hδS i _ hyx))
+  rw [hcancel] at hb2
+  have hb3 : ‖ballAverage mu r (u i) y - ballAverage mu r (u i) x‖ ≤ c / 2 := by
+    rwa [← ofReal_norm, ENNReal.ofReal_le_ofReal_iff (by linarith)] at hb2
+  rw [dist_eq_norm, ← norm_neg, neg_sub]
+  linarith
 
 omit [NormedSpace ℝ F] [CompleteSpace F] in
 /-- Translation is continuous in `Lᵖ` for every `Lᵖ` function. This private form is the input that

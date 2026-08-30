@@ -181,10 +181,7 @@ private theorem truncatedExtEuler_shortExact_correction₁ {S : ShortComplex C} 
     have h := Ext.contravariant_sequence_exact₁' hS Y n (n + 1) (Nat.one_add n)
     rw [ShortComplex.ab_exact_iff_function_exact] at h
     exact h
-  · intro n
-    have h := Ext.contravariant_sequence_exact₃' hS Y n (n + 1) (Nat.one_add n)
-    rw [ShortComplex.ab_exact_iff_function_exact] at h
-    exact h
+  · exact fun n ↦ exact_precompOfLinear₃ k hS Y n (n + 1) (Nat.one_add n)
 
 /-! ### Additivity on short exact sequences -/
 

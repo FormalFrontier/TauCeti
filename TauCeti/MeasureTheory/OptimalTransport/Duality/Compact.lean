@@ -8,7 +8,7 @@ module
 public import Mathlib.Probability.ConditionalProbability
 public import Mathlib.Topology.UniformSpace.HeineCantor
 public import TauCeti.MeasureTheory.MeasurableSpace.Metric
-public import TauCeti.MeasureTheory.OptimalTransport.CTransform
+public import TauCeti.MeasureTheory.OptimalTransport.CTransform.Basic
 public import TauCeti.MeasureTheory.OptimalTransport.Cost.Compact
 public import TauCeti.MeasureTheory.OptimalTransport.Finite.Duality
 
@@ -53,7 +53,7 @@ The transform is spelled here as the real infimum `⨅ x, (c (x, y) - φ x)` rat
 computation stays inside `ℝ`. The bridge lemmas `TauCeti.cTransform_coe` and
 `TauCeti.cTransformSymm_coe` identify these real infima with the extended-real transforms, so the
 proof reuses the order-theoretic transform API from
-`TauCeti.MeasureTheory.OptimalTransport.CTransform`.
+`TauCeti.MeasureTheory.OptimalTransport.CTransform.Basic`.
 
 The cost is taken nonnegative because `TauCeti.transportCost` measures an `ℝ≥0∞`-valued cost. A
 continuous cost on a compact space is bounded below, so this costs no generality beyond an

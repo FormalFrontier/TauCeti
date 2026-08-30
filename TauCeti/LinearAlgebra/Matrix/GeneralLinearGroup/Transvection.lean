@@ -13,6 +13,7 @@ public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal.Basic
 public import Mathlib.GroupTheory.NoncommCoprod
 -- Non-public: the diagonal-matrix-unit product law is used only in a proof below.
 import TauCeti.LinearAlgebra.Matrix.Diagonal
+import Mathlib.Data.Nat.Dist
 
 /-!
 # The commutator relations between transvections
@@ -53,6 +54,10 @@ elementary matrices against the diagonal torus.
 
 ## Main results
 
+* `TauCeti.toGL_transvection_eq_transvectionUnit`: the defining equality relating the
+  special-linear and general-linear transvection APIs.
+* `TauCeti.transvectionUnit_mem_of_adjacent`: a subgroup containing the adjacent transvections
+  in both orientations contains every transvection.
 * `TauCeti.commute_transvectionUnit`: transvections at index pairs that do not chain commute.
 * `TauCeti.commutatorElement_transvectionUnit` and
   `TauCeti.commutatorElement_transvectionUnit_reverse`: the commutators of two chaining
@@ -120,6 +125,16 @@ def transvectionUnit (hij : i ≠ j) (c : A) : GL n A :=
 theorem coe_transvectionUnit (hij : i ≠ j) (c : A) :
     (transvectionUnit hij c : Matrix n n A) = transvection i j c :=
   (rfl)
+
+/-- Viewing a special-linear transvection in the general linear group gives
+`TauCeti.transvectionUnit`. -/
+theorem toGL_transvection_eq_transvectionUnit (hij : i ≠ j) (c : A) :
+    SpecialLinearGroup.toGL (SpecialLinearGroup.transvection hij c) =
+      transvectionUnit hij c := by
+  apply GeneralLinearGroup.ext
+  intro p q
+  rw [SpecialLinearGroup.coe_GL_coe_matrix, coe_transvectionUnit]
+  rfl
 
 /-- The transvection of parameter zero is the identity. -/
 @[simp]
@@ -224,6 +239,47 @@ theorem commutatorElement_transvectionUnit_reverse
     _ = (transvectionUnit hkj (d * c))⁻¹ := by
       rw [commutatorElement_transvectionUnit hki hij hkj]
     _ = transvectionUnit hkj (-(d * c)) := transvectionUnit_inv hkj (d * c)
+
+private theorem exists_intermediate_fin_index {m : ℕ} {i j : Fin (m + 1)}
+    (hij : i ≠ j) (hforward : i.val + 1 ≠ j.val) (hbackward : j.val + 1 ≠ i.val) :
+    ∃ k : Fin (m + 1), i ≠ k ∧ k ≠ j ∧
+      Nat.dist i.val k.val < Nat.dist i.val j.val ∧
+      Nat.dist k.val j.val < Nat.dist i.val j.val := by
+  have hval := Fin.val_ne_of_ne hij
+  let k : Fin (m + 1) := if h : i.val < j.val then
+    ⟨i.val + 1, by omega⟩ else ⟨i.val - 1, by omega⟩
+  refine ⟨k, ?_, ?_, ?_, ?_⟩ <;> dsimp only [k] <;> split_ifs with h <;>
+    simp only [Fin.ext_iff, Nat.dist, ne_eq] <;> omega
+
+/-- If a subgroup of `GL (Fin (m + 1), A)` contains every adjacent transvection in both
+orientations, then it contains every elementary transvection. -/
+theorem transvectionUnit_mem_of_adjacent {m : ℕ}
+    (H : Subgroup (Matrix.GeneralLinearGroup (Fin (m + 1)) A))
+    (hadjacent : ∀ {i j : Fin (m + 1)} (hij : i ≠ j) (c : A),
+      i.val + 1 = j.val ∨ j.val + 1 = i.val → transvectionUnit hij c ∈ H)
+    {i j : Fin (m + 1)} (hij : i ≠ j) (c : A) : transvectionUnit hij c ∈ H := by
+  let P : ℕ → Prop := fun d =>
+    ∀ (i j : Fin (m + 1)) (hij : i ≠ j), Nat.dist i.val j.val = d → ∀ c : A,
+      transvectionUnit hij c ∈ H
+  suffices ∀ d, P d by
+    exact this (Nat.dist i.val j.val) i j hij rfl c
+  intro d
+  induction d using Nat.strong_induction_on with
+  | h d ih =>
+      intro i j hij hdist c
+      by_cases hforward : i.val + 1 = j.val
+      · exact hadjacent hij c (Or.inl hforward)
+      by_cases hbackward : j.val + 1 = i.val
+      · exact hadjacent hij c (Or.inr hbackward)
+      obtain ⟨k, hik, hkj, hdist_ik, hdist_kj⟩ :=
+        exists_intermediate_fin_index hij hforward hbackward
+      rw [hdist] at hdist_ik hdist_kj
+      have hik_mem := ih (Nat.dist i.val k.val) hdist_ik i k hik rfl c
+      have hkj_mem := ih (Nat.dist k.val j.val) hdist_kj k j hkj rfl 1
+      rw [← mul_one c, ← commutatorElement_transvectionUnit hik hkj hij c 1,
+        commutatorElement_def]
+      exact H.mul_mem (H.mul_mem (H.mul_mem hik_mem hkj_mem) (H.inv_mem hik_mem))
+        (H.inv_mem hkj_mem)
 
 end Unit
 

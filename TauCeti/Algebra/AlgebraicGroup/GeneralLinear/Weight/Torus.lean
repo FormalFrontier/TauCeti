@@ -9,6 +9,7 @@ public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.BaseChange
 public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.Scheme.GeneralLinear
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Coordinate.BaseChange
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.DiagonalTorus.Basic
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Determinant
 public import TauCeti.Algebra.AlgebraicGroup.SplitTorus.Relabel
 public import TauCeti.Algebra.AlgebraicGroup.SplitTorus.Weight
 public import TauCeti.AlgebraicGeometry.GroupScheme.ClosedSubgroup
@@ -42,6 +43,8 @@ No faithfulness is asserted: an arbitrary weight family may have a common kernel
 * `TauCeti.GeneralLinear.weightCharacterMap`: the homomorphism on character lattices.
 * `TauCeti.GeneralLinear.weightTorusCoordinateMap`: the coordinate Hopf-algebra morphism of the
   represented weight torus.
+* `TauCeti.GeneralLinear.weightTorusCoordinateMap_surjective`: spanning weights make the
+  coordinate morphism surjective.
 * `TauCeti.GeneralLinear.weightTorusCoordinateBialgHom`: its direct diagonal-representation form,
   allowing the base ring and torus index to live in different universes.
 * `TauCeti.GeneralLinear.weightTorusBaseChangeCoordinateMap`: that morphism base changed along
@@ -77,7 +80,7 @@ No faithfulness is asserted: an arbitrary weight family may have a common kernel
 
 public section
 
-open AlgebraicGeometry CategoryTheory
+open AlgebraicGeometry CategoryTheory WithConv
 open scoped CategoryTheory.MonObj
 
 namespace TauCeti.GeneralLinear
@@ -194,6 +197,15 @@ theorem hom_weightTorusCoordinateMap (wt : Fin N → κ → ℤ) :
   apply coordinateHopfAlgebra_bialgHom_ext R N
   intro i j
   rw [weightTorusCoordinateMap_X, weightTorusCoordinateBialgHom_X]
+
+/-- A spanning family of weights makes the weight-torus coordinate morphism surjective. -/
+theorem weightTorusCoordinateMap_surjective (wt : Fin N → κ → ℤ)
+    (hwt : Submodule.span ℤ (Set.range wt) = ⊤) :
+    Function.Surjective (weightTorusCoordinateMap (R := R) wt).hom := by
+  let _ : Fintype κ := Fintype.ofFinite κ
+  rw [hom_weightTorusCoordinateMap, weightTorusCoordinateBialgHom]
+  apply DiagonalizableGroup.surjective_diagonalCoordinateMap
+  exact SplitTorus.closure_range_weightCharacter_eq_top wt hwt
 
 /-- The group-scheme morphism from a split torus to `GL_N` prescribed by a family of weights.
 It factors through the diagonal torus: the `i`-th diagonal entry is the character `wt i`. -/
@@ -393,6 +405,52 @@ theorem pointsMulEquiv_mapPointsFunctor_weightTorusCoordinateMap [Fintype κ]
   congr 1
   funext i
   exact diagonalTorusCoordinates_pointsMap_weightCharacterMap wt A p i
+
+/-- A represented weight torus has determinant one when the sum of its weights is zero. -/
+theorem weightTorusCoordinateMap_determinantGroupLike [Finite κ]
+    (wt : Fin N → κ → ℤ) (hwt : ∑ i, wt i = 0) :
+    (weightTorusCoordinateMap (R := R) wt).hom
+      (determinantGroupLike R N : coordinateHopfAlgebra R N) = 1 := by
+  let _ : Fintype κ := Fintype.ofFinite κ
+  let f := weightTorusCoordinateMap (R := R) wt
+  let q : WithConv
+      ((DiagonalizableGroup.coordinateRing R (SplitTorus.characterGroup κ)).obj →ₐ[R]
+        (DiagonalizableGroup.coordinateRing R (SplitTorus.characterGroup κ)).obj) :=
+    toConv (AlgHom.id R
+      (DiagonalizableGroup.coordinateRing R (SplitTorus.characterGroup κ)).obj)
+  have hq : q.ofConv = AlgHom.id R
+      (DiagonalizableGroup.coordinateRing R (SplitTorus.characterGroup κ)).obj :=
+    WithConv.ofConv_toConv _
+  let A := CommAlgCat.of R
+    (DiagonalizableGroup.coordinateRing R (SplitTorus.characterGroup κ)).obj
+  let p : WithConv
+      (coordinateHopfAlgebra R N →ₐ[R]
+        (DiagonalizableGroup.coordinateRing R (SplitTorus.characterGroup κ)).obj) :=
+    (CommHopfAlgCat.mapPointsFunctor f).app A q
+  have hdet := point_apply_determinantGroupLike (R := R) (n := N) p
+  have hpoint : pointToGeneralLinear N p =
+      TauCeti.diagGL fun i =>
+        TauCeti.torusCharacter (SplitTorus.pointsMulEquiv q) (wt i) := by
+    calc
+      pointToGeneralLinear N p = pointsMulEquiv N p :=
+        (pointsMulEquiv_apply N p).symm
+      _ = _ := by
+        simpa only [p, f] using
+          (pointsMulEquiv_mapPointsFunctor_weightTorusCoordinateMap
+            (R := R) (N := N) (wt := wt) A q)
+  calc
+    f.hom (determinantGroupLike R N : coordinateHopfAlgebra R N) =
+        Matrix.det (pointToGeneralLinear N p).val := by
+          rw [← hdet]
+          dsimp only [p]
+          rw [CommHopfAlgCat.mapPointsFunctor_app_apply_apply, hq, AlgHom.id_apply]
+    _ = Matrix.det (TauCeti.diagGL fun i =>
+        TauCeti.torusCharacter (SplitTorus.pointsMulEquiv q) (wt i)).val := by
+          exact congrArg (fun g => Matrix.det g.val) hpoint
+    _ = 1 := by
+      rw [← Matrix.GeneralLinearGroup.val_det_apply, TauCeti.det_diagGL,
+        ← TauCeti.torusCharacter_sum _ Finset.univ wt, hwt, TauCeti.torusCharacter_zero,
+        Units.val_one]
 
 end PointsFunctor
 

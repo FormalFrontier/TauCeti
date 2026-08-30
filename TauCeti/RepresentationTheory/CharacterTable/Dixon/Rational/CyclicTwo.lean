@@ -123,7 +123,8 @@ theorem cyclicGroupTwoCentralCharacterTable_apply (i j : CyclicGroupTwoClassInde
 /-- The displayed central-character rows reduced modulo the certified Dixon prime `3`. -/
 def cyclicGroupTwoModularCentralRows :
     Finset (CyclicGroupTwoClassIndex → ZMod 3) :=
-  Finset.univ.image fun i j => (cyclicGroupTwoCentralCharacterTable i j : ZMod 3)
+  (cyclicClassData 2).rowsOfMap (fun x : ℤ => (x : ZMod 3))
+    cyclicGroupTwoCentralCharacterTable
 
 /-- A modular row is displayed exactly when it is the reduction of a row of the integral table. -/
 @[simp]
@@ -161,19 +162,18 @@ theorem card_cyclicGroupTwoModularCentralRows :
 theorem cyclicGroupTwo_centralCharacterSearch :
     (cyclicClassData 2).centralCharacterSearch (F := ZMod 3) =
       cyclicGroupTwoModularCentralRows := by
-  symm
-  apply Finset.eq_of_subset_of_card_le
-  · rw [cyclicGroupTwoModularCentralRows, Finset.image_subset_iff]
-    intro i _
-    rw [(cyclicClassData 2).mem_centralCharacterSearch]
-    exact ⟨by fin_cases i <;> decide,
-      by
-        simpa using
-          (isModularEigenrow_cyclicGroupTwoCentralCharacterTable_int i).map
-            (Int.castRingHom (ZMod 3))⟩
-  · rw [(cyclicClassData 2).card_centralCharacterSearch_of_isGoodDixonPrime
-      isGoodDixonPrime_cyclicGroup_two_three,
-      card_cyclicGroupTwoModularCentralRows, numClasses_cyclicClassData]
+  rw [cyclicGroupTwoModularCentralRows]
+  apply (cyclicClassData 2).centralCharacterSearch_eq_rowsOfMap_of_isGoodDixonPrime
+    isGoodDixonPrime_cyclicGroup_two_three (fun x : ℤ => (x : ZMod 3))
+    cyclicGroupTwoCentralCharacterTable
+  · intro i
+    fin_cases i <;> decide
+  · intro i
+    simpa using
+      (isModularEigenrow_cyclicGroupTwoCentralCharacterTable_int i).map
+        (Int.castRingHom (ZMod 3))
+  · simpa only [cyclicGroupTwoModularCentralRows, numClasses_cyclicClassData] using
+      card_cyclicGroupTwoModularCentralRows
 
 /-- **Signed least representatives modulo `3` recover every entry of the integral
 central-character table.** -/
@@ -197,7 +197,7 @@ theorem cyclicGroupTwo_liftedCentralRows :
     cyclicGroupTwoLiftedCentralRows =
       Finset.univ.image fun i => cyclicGroupTwoCentralCharacterTable i := by
   rw [cyclicGroupTwoLiftedCentralRows, cyclicGroupTwo_centralCharacterSearch,
-    cyclicGroupTwoModularCentralRows, Finset.image_image]
+    cyclicGroupTwoModularCentralRows, ClassData.rowsOfMap, Finset.image_image]
   apply Finset.image_congr
   intro i _
   funext j

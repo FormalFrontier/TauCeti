@@ -135,6 +135,20 @@ instance finiteDimensional_modularForm_finiteIndex
 
 end ModularForm
 
+/-- **Finite-dimensionality of cusp forms.** A cusp form is a modular form, injectively, so this
+is `TauCeti.ModularForm.finiteDimensional_modularForm_finiteIndex` transported along
+`CuspForm.toModularFormₗ`, under exactly the same hypotheses.
+
+It is stated here rather than at its use sites because cusp-form finite-dimensionality is a
+standing hypothesis of the old/new theory, not a fact local to any one argument: before this,
+the two proofs in `TauCeti/NumberTheory/ModularForms/Petersson/Orthogonal.lean` that need it
+each built it inline. -/
+instance finiteDimensional_cuspForm_finiteIndex
+    {𝒢 : Subgroup (GL (Fin 2) ℝ)} [𝒢.HasDetOne] [𝒢.IsFiniteRelIndex 𝒮ℒ]
+    [DiscreteTopology 𝒢.strictPeriods] {k : ℤ} :
+    Module.Finite ℂ (CuspForm 𝒢 k) :=
+  Module.Finite.of_injective CuspForm.toModularFormₗ CuspForm.toModularFormₗ_injective
+
 end TauCeti
 
 end

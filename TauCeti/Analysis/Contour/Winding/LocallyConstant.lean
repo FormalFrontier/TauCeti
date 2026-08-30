@@ -51,7 +51,7 @@ open scoped Topology
 namespace TauCeti.Contour
 
 /-- **Two integers whose complex images are closer than `1` are equal.** -/
-private theorem eq_of_dist_intCast_lt_one {m n : ℤ} (h : dist (m : ℂ) (n : ℂ) < 1) : m = n := by
+theorem eq_of_dist_intCast_lt_one {m n : ℤ} (h : dist (m : ℂ) (n : ℂ) < 1) : m = n := by
   by_contra hne
   have : (1 : ℝ) ≤ dist (m : ℂ) (n : ℂ) := by
     rw [Complex.isometry_intCast.dist_eq]; exact Int.pairwise_one_le_dist hne

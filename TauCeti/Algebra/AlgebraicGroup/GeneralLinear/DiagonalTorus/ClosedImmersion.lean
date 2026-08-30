@@ -28,6 +28,8 @@ maximal among tori is a separate geometric step in Layer 7 of the ReductiveGroup
   for the standard basis of its character lattice.
 * `TauCeti.GeneralLinear.diagonalTorus_eq_diagonalGroupSchemeHom`: its equivalent description as
   a diagonalizable-group representation.
+* `TauCeti.GeneralLinear.diagonalTorusCoordinateMap_surjective`: the restriction map from the
+  coordinate ring of `GL_n` onto that of the diagonal torus is surjective.
 * `TauCeti.GeneralLinear.isClosedImmersion_diagonalTorus`: the diagonal torus morphism is a
   closed immersion.
 * `TauCeti.GeneralLinear.diagonalTorusClosedSubgroup`: the diagonal torus as a closed subgroup
@@ -95,6 +97,15 @@ theorem diagonalTorus_eq_diagonalGroupSchemeHom :
           SplitTorus.weightCharacter
             (Pi.basisFun ℤ (ULift.{u} (Fin N)) (ULift.up i)) := by
   rw [diagonalTorus_eq_weightTorus, weightTorus_eq_diagonalGroupSchemeHom]
+
+/-- The coordinate morphism restricting functions on `GL_n` to the diagonal torus is
+surjective. -/
+theorem diagonalTorusCoordinateMap_surjective :
+    Function.Surjective (diagonalTorusCoordinateMap (R := R) (N := N)).hom := by
+  rw [diagonalTorusCoordinateMap_eq_weightTorusCoordinateMap]
+  apply weightTorusCoordinateMap_surjective
+  rw [Set.range_comp', ULift.up_surjective.range_eq, Set.image_univ,
+    (Pi.basisFun ℤ (ULift.{u} (Fin N))).span_eq]
 
 /-- **The diagonal split torus is a closed subgroup scheme of `GL_n` over every commutative
 base ring.** -/

@@ -8,7 +8,7 @@ module
 public import TauCeti.NumberTheory.HeckeRing.GL2.Gamma0.Basic
 
 -- the gcd decomposition and `Γ(N) ≤ Γ₀(N)` are used only inside proofs here
-import TauCeti.NumberTheory.ModularForms.CongruenceSubgroups
+import TauCeti.NumberTheory.ModularForms.CongruenceSubgroups.Basic
 
 /-!
 # The `Γ₀(N)` double coset of a coprime-determinant element

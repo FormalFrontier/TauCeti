@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.MvPolynomial.Eval
+public import Mathlib.Algebra.MvPolynomial.CommRing
 public import Mathlib.NumberTheory.ModularForms.LevelOne.GradedRing
 public import Mathlib.RingTheory.MvPolynomial.WeightedHomogeneous
 

@@ -27,6 +27,8 @@ Weyl group of the corresponding coordinate root datum with the same permutation 
 * `TauCeti.mem_normalizer_diagonalTorus_iff_exists`: normalizing matrices are precisely products
   of a diagonal matrix and a permutation matrix.
 * `TauCeti.diagonalNormalizerPerm`: the permutation homomorphism from the normalizer.
+* `TauCeti.diagonalNormalizer_mul_diagGL_mul_inv`: conjugation by a normalizer element relabels
+  diagonal coordinates by its coordinate permutation.
 * `TauCeti.diagonalNormalizerQuotientMulEquivPerm`: the normalizer quotient is the symmetric
   group.
 
@@ -437,23 +439,53 @@ noncomputable def diagonalNormalizerPerm :
   map_one' := diagonalNormalizerPermFun_one
   map_mul' := diagonalNormalizerPermFun_mul
 
+/-- A monomial factorization of a diagonal-normalizer element has the coordinate permutation
+selected by `diagonalNormalizerPerm`. -/
+theorem diagonalNormalizerPerm_eq_of_eq_diagGL_mul_permutationGL
+    (g : Subgroup.normalizer (diagonalTorus k n : Set (GL (Fin n) k)))
+    (d : Fin n → kˣ) (σ : Equiv.Perm (Fin n))
+    (h : (g : GL (Fin n) k) = diagGL d * permutationGL (k := k) σ) :
+    diagonalNormalizerPerm (k := k) (n := n) g = σ := by
+  apply permutation_eq_of_diagGL_mul_permutationGL_eq (k := k)
+  exact (diagonalNormalizer_factor g).symm.trans h
+
 /-- The coordinate permutation induced by a permutation matrix is the original permutation. -/
 @[simp]
 theorem diagonalNormalizerPerm_permutationGL (σ : Equiv.Perm (Fin n)) :
     diagonalNormalizerPerm (k := k) (n := n)
         ⟨permutationGL (k := k) σ, permutationGL_mem_normalizer σ⟩ = σ := by
-  -- Unfold only the homomorphism's value so uniqueness can identify its chosen factor.
-  change diagonalNormalizerPermFun
-    ⟨permutationGL (k := k) σ, permutationGL_mem_normalizer σ⟩ = σ
   have hone : permutationGL (k := k) σ =
       diagGL (fun _ ↦ (1 : kˣ)) * permutationGL (k := k) σ := by
     -- Present the trivial diagonal factor as the image of the identity.
     change permutationGL (k := k) σ =
       diagGL (1 : Fin n → kˣ) * permutationGL (k := k) σ
     rw [map_one, one_mul]
-  apply permutation_eq_of_diagGL_mul_permutationGL_eq (k := k)
-  exact (diagonalNormalizer_factor
-    ⟨permutationGL (k := k) σ, permutationGL_mem_normalizer σ⟩).symm.trans hone
+  exact diagonalNormalizerPerm_eq_of_eq_diagGL_mul_permutationGL _ _ σ hone
+
+/-- Conjugation by a diagonal-normalizer element relabels the diagonal entries by its coordinate
+permutation: the entry at `i` becomes the original entry at the inverse image of `i`. -/
+@[simp]
+theorem diagonalNormalizer_mul_diagGL_mul_inv
+    (g : Subgroup.normalizer (diagonalTorus k n : Set (GL (Fin n) k)))
+    (t : Fin n → kˣ) :
+    (g : GL (Fin n) k) * diagGL t * (g : GL (Fin n) k)⁻¹ =
+      diagGL (fun i ↦ t ((diagonalNormalizerPerm (k := k) (n := n) g).symm i)) := by
+  obtain ⟨d, σ, hg⟩ := mem_normalizer_diagonalTorus_iff_exists.mp g.property
+  have hσ := diagonalNormalizerPerm_eq_of_eq_diagGL_mul_permutationGL g d σ hg
+  rw [hσ, hg]
+  calc
+    (diagGL d * permutationGL (k := k) σ) * diagGL t *
+          (diagGL d * permutationGL (k := k) σ)⁻¹ =
+        diagGL d *
+          (permutationGL (k := k) σ * diagGL t *
+            (permutationGL (k := k) σ)⁻¹) * (diagGL d)⁻¹ := by group
+    _ = diagGL d * diagGL (fun i ↦ t (σ⁻¹ i)) * (diagGL d)⁻¹ := by
+      rw [permutationGL_mul_diagGL_mul_inv]
+    _ = diagGL (fun i ↦ t (σ⁻¹ i)) := by
+      have hcomm : Commute (diagGL d) (diagGL (fun i ↦ t (σ⁻¹ i))) :=
+        (Commute.all d (fun i ↦ t (σ⁻¹ i))).map diagGL
+      rw [hcomm.eq]
+      simp
 
 /-- Every coordinate permutation is induced by a permutation matrix in the normalizer. -/
 theorem diagonalNormalizerPerm_surjective :
@@ -479,13 +511,10 @@ theorem diagonalNormalizerPerm_eq_one_iff
       ⟨diagonalNormalizerDiag g, hfactor.symm⟩
   · intro hg
     obtain ⟨d, hd⟩ := mem_diagonalTorus_iff_exists_diagGL.mp hg
-    -- Compare the chosen factorization with the factorization having identity permutation.
-    change diagonalNormalizerPermFun g = 1
     have hone : (g : GL (Fin n) k) =
         diagGL d * permutationGL (k := k) 1 := by
       rw [map_one, mul_one, hd]
-    apply permutation_eq_of_diagGL_mul_permutationGL_eq (k := k)
-    exact (diagonalNormalizer_factor g).symm.trans hone
+    exact diagonalNormalizerPerm_eq_of_eq_diagGL_mul_permutationGL g d 1 hone
 
 /-- The normalizer of the diagonal torus modulo the torus is canonically the symmetric group. -/
 noncomputable def diagonalNormalizerQuotientMulEquivPerm :

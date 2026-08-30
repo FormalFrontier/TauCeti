@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.CategoryTheory.Monoidal.Internal.Types.Grp
+public import Mathlib.CategoryTheory.Monoidal.Cartesian.FunctorCategory
 public import Mathlib.CategoryTheory.Sites.LeftExact
 public import Mathlib.Algebra.Category.Grp.Ulift
 public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.SchemePoints

@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+import TauCeti.LinearAlgebra.SymmetricAlgebra.Derivation
 public import TauCeti.Algebra.AlgebraicGroup.AdditiveGroup.Basic
 public import TauCeti.Algebra.AlgebraicGroup.Tangent.Lie.Basic
 
@@ -23,10 +24,9 @@ Over commutative rings, the convolution bracket of two tangent derivations is ze
 to calculate on a generator: the generator is primitive, so both convolution products vanish
 there. Thus the tangent Lie algebra of every additive vector group is abelian.
 
-The inverse tangent construction uses the universal property `SymmetricAlgebra.lift` and
-`TauCeti.derivationToDualNumberEquivLift`: a linear map `f : M →ₗ[R] B` sends a generator `x`
-to the pure infinitesimal dual number `ε f(x)`. No choice of basis or finiteness hypothesis on
-`M` is needed.
+The inverse tangent construction uses `SymmetricAlgebra.mkDerivation`: a linear map
+`f : M →ₗ[R] B` extends uniquely from the canonical generators. No choice of basis or finiteness
+hypothesis on `M` is needed.
 
 ## Main declarations
 
@@ -46,7 +46,7 @@ namespace TauCeti
 
 namespace AdditiveGroup
 
-open TauCeti.Bialgebra TrivSqZeroExt
+open TauCeti.Bialgebra
 
 universe u v w
 
@@ -56,61 +56,20 @@ variable {R : Type u} [CommSemiring R]
 variable {M : Type v} [AddCommMonoid M] [Module R M]
 variable {B : Type w} [CommSemiring B] [Algebra R B]
 
-private noncomputable def infinitesimalGenerator (f : M →ₗ[R] B) :
-    M →ₗ[R] DualNumber (CounitAlgebra R (SymmetricAlgebra R M) B) :=
-  (inrHom (CounitAlgebra R (SymmetricAlgebra R M) B)
-      (CounitAlgebra R (SymmetricAlgebra R M) B)).restrictScalars R ∘ₗ
-    (CounitAlgebra.algEquivSelf R (SymmetricAlgebra R M) B).symm.toLinearMap ∘ₗ f
-
-private lemma infinitesimalGenerator_apply (f : M →ₗ[R] B) (x : M) :
-    infinitesimalGenerator f x =
-      inr ((CounitAlgebra.algEquivSelf R (SymmetricAlgebra R M) B).symm (f x)) := by
-  rfl
-
-private noncomputable def tangentLift (f : M →ₗ[R] B) :
-    {ψ : SymmetricAlgebra R M →ₐ[R] DualNumber (CounitAlgebra R (SymmetricAlgebra R M) B) //
-      (fstHom R _ _).comp ψ =
-        IsScalarTower.toAlgHom R (SymmetricAlgebra R M)
-          (CounitAlgebra R (SymmetricAlgebra R M) B)} := by
-  refine ⟨SymmetricAlgebra.lift (infinitesimalGenerator f), ?_⟩
-  apply SymmetricAlgebra.algHom_ext
-  apply LinearMap.ext
-  intro x
-  -- Expose the two algebra-homomorphism compositions once so their generator values reduce.
-  change fst (SymmetricAlgebra.lift (infinitesimalGenerator f)
-      (SymmetricAlgebra.ι R M x)) =
-    algebraMap (SymmetricAlgebra R M)
-      (CounitAlgebra R (SymmetricAlgebra R M) B) (SymmetricAlgebra.ι R M x)
-  rw [SymmetricAlgebra.lift_ι_apply, infinitesimalGenerator_apply, fst_inr]
-  simp only [CounitAlgebra.algebraMap_apply, SymmetricAlgebra.counit_ι, map_zero]
-  rfl
-
 private noncomputable def tangentOfLinear (f : M →ₗ[R] B) :
     Derivation R (SymmetricAlgebra R M)
       (CounitAlgebra R (SymmetricAlgebra R M) B) :=
-  (derivationToDualNumberEquivLift R (SymmetricAlgebra R M)
-    (CounitAlgebra R (SymmetricAlgebra R M) B)).symm (tangentLift f)
+  SymmetricAlgebra.mkDerivation <|
+    (CounitAlgebra.algEquivSelf R (SymmetricAlgebra R M) B).symm.toLinearMap ∘ₗ f
 
 private lemma tangentOfLinear_ι (f : M →ₗ[R] B) (x : M) :
     CounitAlgebra.algEquivSelf R (SymmetricAlgebra R M) B
         (tangentOfLinear f (SymmetricAlgebra.ι R M x)) = f x := by
-  rw [tangentOfLinear, derivationToDualNumberEquivLift_symm_apply, tangentLift,
-    SymmetricAlgebra.lift_ι_apply, infinitesimalGenerator_apply, snd_inr,
-    AlgEquiv.apply_symm_apply]
-
-/-- Two tangent derivations of a symmetric algebra are equal if they agree on its generators. -/
-@[ext]
-theorem derivation_ext
-    {d e : Derivation R (SymmetricAlgebra R M)
-      (CounitAlgebra R (SymmetricAlgebra R M) B)}
-    (h : ∀ x, d (SymmetricAlgebra.ι R M x) = e (SymmetricAlgebra.ι R M x)) : d = e := by
-  apply Derivation.ext
-  intro a
-  induction a using SymmetricAlgebra.induction with
-  | algebraMap r => simp only [Derivation.map_algebraMap]
-  | ι x => exact h x
-  | mul a b ha hb => simp only [Derivation.leibniz, ha, hb]
-  | add a b ha hb => simp only [map_add, ha, hb]
+  rw [tangentOfLinear, SymmetricAlgebra.mkDerivation_ι, LinearMap.comp_apply]
+  -- Cross the linear-map coercion to expose the inverse algebra equivalence.
+  change CounitAlgebra.algEquivSelf R (SymmetricAlgebra R M) B
+      ((CounitAlgebra.algEquivSelf R (SymmetricAlgebra R M) B).symm (f x)) = f x
+  exact AlgEquiv.apply_symm_apply _ _
 
 /-- The tangent module of the additive vector group represented by `SymmetricAlgebra R M` is
 the module `M →ₗ[R] B` of possible generator values.
@@ -126,7 +85,7 @@ noncomputable def tangentLinearEquiv :
       d.toLinearMap ∘ₗ SymmetricAlgebra.ι R M
   invFun := tangentOfLinear
   left_inv d := by
-    apply derivation_ext
+    apply SymmetricAlgebra.derivation_ext
     intro x
     apply (CounitAlgebra.algEquivSelf R (SymmetricAlgebra R M) B).injective
     exact tangentOfLinear_ι _ _
@@ -242,7 +201,7 @@ values on the generators. -/
 theorem tangent_bracket_eq_zero
     (d e : Derivation R (SymmetricAlgebra R M)
       (CounitAlgebra R (SymmetricAlgebra R M) B)) : ⁅d, e⁆ = 0 := by
-  apply derivation_ext
+  apply SymmetricAlgebra.derivation_ext
   intro x
   rw [Derivation.bracket_apply, SymmetricAlgebra.comul_ι]
   simp

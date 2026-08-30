@@ -20,7 +20,11 @@ into `CompleteSeparatedTopCommRingCat`, with the restriction morphisms of
 This preorder is *intended* to index the adic structure presheaf — `𝒪_X(V)` as a limit of this
 functor over the presentations whose rational subset lies in `V` — but no presheaf exists in
 this file's imports, and refinement is the cofactor relation on presentation data: sufficient
-for containment of the rational subsets, not (yet) proved equivalent to it.
+for containment of the rational subsets, and not proved equivalent to it.
+`TauCeti.ValuationSpectrum.existsUnique_continuous_ringHom_of_rationalSubset_subset` produces the
+comparison map from a containment alone, but only for targets in which the denominator is
+invertible and whose plus subring is open; refinement remains the route that works
+unconditionally.
 
 ## Main definitions
 

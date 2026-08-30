@@ -15,17 +15,25 @@ import Mathlib.LinearAlgebra.ExteriorPower.Basis
 # Exterior powers of the standard general-linear module
 
 The infinitesimal exterior-power action restricts along the matrix-to-endomorphism equivalence to
-an action of a general linear Lie algebra. Over a nontrivial ring, for `d ≤ n`, the wedge of the
-first `d` standard basis vectors in `Kⁿ` is a highest-weight vector for this action.
+an action of a general linear Lie algebra. A matrix unit acts on the wedge of the standard basis
+vectors indexed by a finite set `S` of coordinates in a way read off from `S`: the diagonal unit
+`Eᵢᵢ` scales it by one or by zero according as `i` lies in `S`, and `Eᵢⱼ` with `i ≠ j` annihilates
+it whenever `S` contains `i` as soon as it contains `j`. Over a nontrivial ring, for `d ≤ n`, this
+makes the wedge of the first `d` standard basis vectors in `Kⁿ` a highest-weight vector.
 
 ## Main definitions
 
 * `exteriorPower.glLieMap`: the action of matrices on an exterior power.
+* `exteriorPower.basisWedge`: the wedge of the standard basis vectors indexed by a finite set of
+  coordinates.
 * `exteriorPower.firstBasisWedge`: the wedge of the first standard basis vectors.
 * `exteriorPower.fundamentalWeight`: the first-`d` coordinate-indicator weight.
 
-## Main result
+## Main results
 
+* `exteriorPower.lie_single_self_basisWedge` and
+  `exteriorPower.lie_single_basisWedge_eq_zero_of_ne_of_mem_imp_mem`: how a matrix unit acts on the
+  wedge of a set of standard basis vectors.
 * `exteriorPower.isGlHighestWeightVector_firstBasisWedge`: over a nontrivial ring, the first basis
   wedge is a highest-weight vector when `d ≤ n`.
 
@@ -77,7 +85,6 @@ noncomputable scoped instance glLieModule (d : ℕ) {n : Type*} [DecidableEq n] 
   LieModule.compLieHom _ (glLieMap d)
 
 /-- The scoped Lie action is the action represented by `glLieMap`. -/
-@[simp]
 theorem gl_lie_def (d : ℕ) {n : Type*} [DecidableEq n] [Fintype n]
     (A : Matrix n n K) (x : ⋀[K]^d (n → K)) :
     letI : LieRingModule (Matrix n n K) (⋀[K]^d (n → K)) :=
@@ -85,9 +92,100 @@ theorem gl_lie_def (d : ℕ) {n : Type*} [DecidableEq n] [Fintype n]
     ⁅A, x⁆ = glLieMap d A x := by
   rw [LieRingModule.compLieHom_apply, Module.End.lie_apply]
 
+section BasisWedge
+
+variable {n : Type*} [DecidableEq n] [Fintype n] [LinearOrder n] {N : ℕ}
+
+variable (K) in
+/-- The wedge of the standard basis vectors of `n → K` indexed by a finite set `S` of coordinates,
+an element of the exterior power of degree the size of `S`. The factors are wedged together in the
+order `S` inherits from `n`. -/
+noncomputable def basisWedge (S : Finset n) (h : S.card = N) : ⋀[K]^N (n → K) :=
+  ιMulti_family K N (Pi.basisFun K n) ⟨S, h⟩
+
+omit [DecidableEq n] in
+/-- The wedge of a set of basis vectors is the member of the standard basis of the exterior power
+that the set indexes. -/
+theorem basisWedge_eq_ιMulti_family (S : Finset n) (h : S.card = N) :
+    basisWedge K S h = ιMulti_family K N (Pi.basisFun K n) ⟨S, h⟩ := by
+  rw [basisWedge]
+
+/-- The wedge of a set of basis vectors, written as an exterior product. -/
+theorem basisWedge_eq_ιMulti (S : Finset n) (h : S.card = N) :
+    basisWedge K S h = ιMulti K N fun k => Pi.single (S.orderEmbOfFin h k) 1 := by
+  rw [basisWedge_eq_ιMulti_family, ιMulti_family]
+  refine congrArg (ιMulti K N) (funext fun k => ?_)
+  simp [Pi.basisFun_apply, Set.powersetCard.ofFinEmbEquiv_symm_apply]
+
+omit [DecidableEq n] in
+/-- The wedge of a set of basis vectors is nonzero. -/
+theorem basisWedge_ne_zero [Nontrivial K] (S : Finset n) (h : S.card = N) :
+    basisWedge K S h ≠ 0 := by
+  rw [basisWedge_eq_ιMulti_family]
+  exact (ιMulti_family_linearIndependent_ofBasis K N (Pi.basisFun K n)).ne_zero _
+
+/-- The diagonal matrix unit `Eᵢᵢ` fixes the factors of a wedge of standard basis vectors that lie
+in direction `i` and kills the others, so it scales the wedge by one when `i` is one of its indices
+and annihilates it otherwise. -/
+@[simp]
+theorem lie_single_self_basisWedge (S : Finset n) (h : S.card = N) (i : n) :
+    ⁅Matrix.single i i (1 : K), basisWedge K S h⁆ =
+      (if i ∈ S then (1 : K) else 0) • basisWedge K S h := by
+  rw [basisWedge_eq_ιMulti, gl_lie_def, glLieMap_apply_ιMulti]
+  simp only [Matrix.single_mulVec_eq, Pi.single_apply, one_mul, ite_smul, one_smul, zero_smul,
+    eq_comm]
+  by_cases hiS : i ∈ S
+  · obtain ⟨k₀, hk₀⟩ := (S.range_orderEmbOfFin h).ge (Finset.mem_coe.2 hiS)
+    rw [ite_eq_left hiS, Finset.sum_eq_single k₀]
+    · rw [ite_eq_left hk₀.symm, ← hk₀]
+      exact (congrArg (ιMulti K N) (Function.update_eq_self k₀ _)).symm
+    · intro k _ hk
+      have hik : ¬i = S.orderEmbOfFin h k := fun hik =>
+        hk ((S.orderEmbOfFin h).injective (hk₀.trans hik)).symm
+      rw [ite_eq_right hik]
+      exact (ιMulti K N).map_update_zero _ _
+    · exact fun hk => absurd (Finset.mem_univ k₀) hk
+  · rw [ite_eq_right hiS]
+    refine (Finset.sum_eq_zero fun k _ => ?_).symm
+    have hik : ¬i = S.orderEmbOfFin h k := by
+      intro hik
+      exact hiS (by rw [hik]; exact Finset.orderEmbOfFin_mem S h k)
+    rw [ite_eq_right hik]
+    exact (ιMulti K N).map_update_zero _ _
+
+/-- A matrix unit `Eᵢⱼ` with `i ≠ j` annihilates the wedge of the standard basis vectors indexed by
+`S`, as soon as `S` contains `i` whenever it contains `j`: the `j`-th factor is carried to a factor
+already present, so every summand of the Leibniz expansion has a repeated factor. -/
+theorem lie_single_basisWedge_eq_zero_of_ne_of_mem_imp_mem (S : Finset n) (h : S.card = N)
+    {i j : n} (hij : i ≠ j) (hS : j ∈ S → i ∈ S) :
+    ⁅Matrix.single i j (1 : K), basisWedge K S h⁆ = 0 := by
+  rw [basisWedge_eq_ιMulti, gl_lie_def, glLieMap_apply_ιMulti]
+  simp only [Matrix.single_mulVec_eq, Pi.single_apply, one_mul, ite_smul, one_smul, zero_smul,
+    eq_comm]
+  refine (Finset.sum_eq_zero fun k _ => ?_).symm
+  by_cases hjk : j = S.orderEmbOfFin h k
+  · have hjS : j ∈ S := by rw [hjk]; exact Finset.orderEmbOfFin_mem S h k
+    obtain ⟨l, hl⟩ := (S.range_orderEmbOfFin h).ge (Finset.mem_coe.2 (hS hjS))
+    have hlk : l ≠ k := by
+      rintro rfl
+      exact hij (hl.symm.trans hjk.symm)
+    rw [ite_eq_left hjk]
+    refine (ιMulti K N).map_eq_zero_of_eq _ (i := l) (j := k) ?_ hlk
+    rw [Function.update_of_ne hlk, Function.update_self, hl]
+  · rw [ite_eq_right hjk]
+    exact (ιMulti K N).map_update_zero _ _
+
+end BasisWedge
+
 /-- The subset of the first `d` coordinates in `Fin n`. -/
 private noncomputable def firstBasisSet (d n : ℕ) (h : d ≤ n) : Set.powersetCard (Fin n) d :=
   Set.powersetCard.ofFinEmbEquiv (Fin.castLEOrderEmb h)
+
+private theorem mem_firstBasisSet (d n : ℕ) (h : d ≤ n) (k : Fin n) :
+    k ∈ (firstBasisSet d n h : Finset (Fin n)) ↔ (k : ℕ) < d := by
+  rw [Set.powersetCard.mem_coe_iff, firstBasisSet,
+    Set.powersetCard.mem_ofFinEmbEquiv_iff_mem_range]
+  simp [Fin.castLEOrderEmb, Fin.range_castLE]
 
 /-- The wedge of the first `d` standard basis vectors of `K^n`. -/
 noncomputable def firstBasisWedge (d n : ℕ) (h : d ≤ n) : ⋀[K]^d (Fin n → K) :=
@@ -102,6 +200,13 @@ theorem firstBasisWedge_eq_ιMulti (d n : ℕ) (h : d ≤ n) :
   apply congrArg (ιMulti K d)
   funext i x
   simp [Pi.basisFun_apply, Pi.single_apply]
+
+/-- The first basis wedge is the wedge of the basis vectors indexed by the first `d` coordinates. -/
+private theorem firstBasisWedge_eq_basisWedge (d n : ℕ) (h : d ≤ n) :
+    firstBasisWedge (K := K) d n h =
+      basisWedge K (firstBasisSet d n h : Finset (Fin n))
+        (Set.powersetCard.card_eq (firstBasisSet d n h)) :=
+  rfl
 
 end Action
 
@@ -141,84 +246,8 @@ theorem isGlDominantIntegral_fundamentalWeight [CharZero K] (d n : ℕ) :
 /-- The first basis wedge is nonzero. -/
 theorem firstBasisWedge_ne_zero [Nontrivial K] (d n : ℕ) (h : d ≤ n) :
     firstBasisWedge (K := K) d n h ≠ 0 := by
-  rw [firstBasisWedge]
-  exact (ιMulti_family_linearIndependent_ofBasis K d (Pi.basisFun K (Fin n))).ne_zero
-    (firstBasisSet d n h)
-
-private theorem single_mulVec_firstBasis (d n : ℕ) (h : d ≤ n) (i j : Fin n) (k : Fin d) :
-    Matrix.single i j 1 *ᵥ (Pi.single (Fin.castLE h k) 1 : Fin n → K) =
-      if j = Fin.castLE h k then Pi.single i 1 else 0 := by
-  rw [Matrix.single_mulVec_eq]
-  by_cases hjk : j = Fin.castLE h k
-  · subst j
-    simp
-  · simp [hjk]
-
-private theorem lie_single_self_firstBasisWedge (d n : ℕ) (h : d ≤ n) (k : Fin n) :
-    letI : LieRingModule (Matrix (Fin n) (Fin n) K) (⋀[K]^d (Fin n → K)) :=
-      glLieRingModule (K := K) (n := Fin n) d
-    ⁅Matrix.single k k (1 : K), firstBasisWedge (K := K) d n h⁆ =
-      fundamentalWeight (K := K) d n k • firstBasisWedge (K := K) d n h := by
-  classical
-  rw [firstBasisWedge_eq_ιMulti, gl_lie_def, glLieMap_apply_ιMulti]
-  simp_rw [single_mulVec_firstBasis d n h]
-  by_cases hk : k.val < d
-  · let a : Fin d := ⟨k.val, hk⟩
-    have hka : k = Fin.castLE h a := Fin.ext rfl
-    simp only [fundamentalWeight_apply, hk, ite_true, one_smul]
-    rw [Finset.sum_eq_single a]
-    · simp only [hka, ite_true]
-      simp
-    · intro b _ hba
-      have hkb : k ≠ Fin.castLE h b := by
-        intro hkb
-        exact hba (Fin.castLE_injective h (hkb.symm.trans hka))
-      simp only [hkb, ite_false]
-      exact (ιMulti K d).map_update_zero _ _
-    · simp
-  · simp only [fundamentalWeight_apply, hk, ite_false, zero_smul]
-    apply Finset.sum_eq_zero
-    intro a _
-    have hka : k ≠ Fin.castLE h a := by
-      intro hka
-      apply hk
-      rw [hka]
-      exact a.isLt
-    simp only [hka, ite_false]
-    exact (ιMulti K d).map_update_zero _ _
-
-private theorem lie_single_firstBasisWedge_of_lt (d n : ℕ) (h : d ≤ n)
-    {i j : Fin n} (hij : i < j) :
-    letI : LieRingModule (Matrix (Fin n) (Fin n) K) (⋀[K]^d (Fin n → K)) :=
-      glLieRingModule (K := K) (n := Fin n) d
-    ⁅Matrix.single i j (1 : K), firstBasisWedge (K := K) d n h⁆ = 0 := by
-  classical
-  rw [firstBasisWedge_eq_ιMulti, gl_lie_def, glLieMap_apply_ιMulti]
-  simp_rw [single_mulVec_firstBasis d n h]
-  apply Finset.sum_eq_zero
-  intro k _
-  by_cases hjk : j = Fin.castLE h k
-  · simp only [hjk, ite_true]
-    have hjd : j.val < d := by
-      rw [hjk]
-      exact k.isLt
-    have hi : i.val < d := lt_trans hij hjd
-    let l : Fin d := ⟨i.val, hi⟩
-    have hil : i = Fin.castLE h l := Fin.ext rfl
-    have hlk : l ≠ k := by
-      intro hlk
-      apply hij.ne
-      rw [hil, hjk, hlk]
-    refine (ιMulti K d).map_eq_zero_of_eq
-      (Function.update
-        (fun a : Fin d => (Pi.single (Fin.castLE h a) (1 : K) : Fin n → K)) k
-        (Pi.single i 1))
-      (i := l) (j := k) ?_ hlk
-    rw [Function.update_of_ne hlk]
-    rw [hil]
-    rw [Function.update_self]
-  · simp only [hjk, ite_false]
-    exact (ιMulti K d).map_update_zero _ _
+  rw [firstBasisWedge_eq_basisWedge]
+  exact basisWedge_ne_zero _ _
 
 /-- Over a nontrivial ring, the first basis wedge is a highest-weight vector for the exterior-power
 action when `d ≤ n`. -/
@@ -227,10 +256,14 @@ theorem isGlHighestWeightVector_firstBasisWedge [Nontrivial K] (d n : ℕ) (h : 
       glLieRingModule (K := K) (n := Fin n) d
     TauCeti.IsGlHighestWeightVector (fundamentalWeight (K := K) d n)
       (firstBasisWedge (K := K) d n h) := by
+  rw [firstBasisWedge_eq_basisWedge]
   refine TauCeti.isGlHighestWeightVector_iff.mpr
-    ⟨firstBasisWedge_ne_zero (K := K) d n h, fun i => ?_, fun i j hij => ?_⟩
-  · exact lie_single_self_firstBasisWedge (K := K) d n h i
-  · exact lie_single_firstBasisWedge_of_lt (K := K) d n h hij
+    ⟨basisWedge_ne_zero _ _, fun i => ?_, fun i j hij => ?_⟩
+  · rw [lie_single_self_basisWedge, fundamentalWeight_apply]
+    simp only [mem_firstBasisSet]
+  · exact lie_single_basisWedge_eq_zero_of_ne_of_mem_imp_mem _ _ hij.ne fun hj =>
+      (mem_firstBasisSet d n h i).2
+        ((Fin.lt_def.1 hij).trans ((mem_firstBasisSet d n h j).1 hj))
 
 end HighestWeight
 

@@ -96,6 +96,20 @@ theorem coe_diagonalRoot {n : ℕ} (i j : Fin n) :
     ⇑(diagonalRoot i j : ULift.{u} (Fin n) →₀ ℤ) = diagonalCoroot i j :=
   by rw [diagonalCoroot]
 
+/-- A diagonal root is the corresponding root of the coordinate root datum. -/
+theorem diagonalRoot_eq_coordinateRoot {n : ℕ} (i j : Fin n) :
+    diagonalRoot i j = SplitTorus.coordinateRoot (ULift.up i) (ULift.up j) := by
+  ext x
+  rw [diagonalRoot_apply, SplitTorus.coordinateRoot_apply]
+  split_ifs <;> rfl
+
+/-- A diagonal coroot is the corresponding coroot of the coordinate root datum. -/
+theorem diagonalCoroot_eq_coordinateCoroot {n : ℕ} (i j : Fin n) :
+    diagonalCoroot i j = SplitTorus.coordinateCoroot (ULift.up i) (ULift.up j) := by
+  ext x
+  rw [diagonalCoroot_apply, SplitTorus.coordinateCoroot_apply]
+  split_ifs <;> rfl
+
 /-- The coordinate root datum on the diagonal split-torus lattices of `GL_n`.
 
 This package is constructed directly from the coordinate differences. The theorem
@@ -105,6 +119,13 @@ classification is `mem_nontrivialAdjointWeights_iff_exists_diagonalRoot` in
 noncomputable def diagonalRootDatum (n : ℕ) :
     RootDatum (DiagonalRootIndex n) (ULift.{u} (Fin n) →₀ ℤ) (ULift.{u} (Fin n) → ℤ) :=
   SplitTorus.coordinateRootDatum (ULift.{u} (Fin n))
+
+/-- The diagonal root datum is the coordinate root datum on the universe-lifted indices. -/
+theorem diagonalRootDatum_eq_coordinateRootDatum (n : ℕ) :
+    diagonalRootDatum.{u} n = SplitTorus.coordinateRootDatum (ULift.{u} (Fin n)) :=
+  -- `(rfl)` opts out of exporting the definitional equality, so the definition can remain opaque
+  -- while this theorem provides the downstream rewriting interface.
+  (rfl)
 
 /-- The underlying bilinear map is the split-torus character--cocharacter dot pairing. -/
 @[simp]
