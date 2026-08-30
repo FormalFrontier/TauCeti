@@ -69,8 +69,8 @@ data for a reviewer to compare with the source, rather than checking it against 
   `TauCeti.Sporadic.ruPresentation_totalLength`: the letter counts of the compiled words.
 * `TauCeti.Sporadic.ruPresentation_map_length_reduce_relators` and
   `TauCeti.Sporadic.ruPresentation_reducedTotalLength`: the same counts after free reduction.
-* `TauCeti.Sporadic.isCyclicallyReduced_reduce_mem_ruPresentation_relators`: the reduced words are
-  cyclically reduced.
+* `TauCeti.Sporadic.isCyclicallyReduced_reduce_of_mem_ruPresentation_relators`: the reduced words
+  are cyclically reduced.
 
 ## References
 
@@ -293,7 +293,7 @@ theorem ruPresentation_reducedTotalLength :
 This is what makes the letter count of `TauCeti.Sporadic.ruPresentation_reducedTotalLength`
 comparable with a published presentation length, which is measured after free and cyclic reduction
 of each relator. -/
-theorem isCyclicallyReduced_reduce_mem_ruPresentation_relators :
+theorem isCyclicallyReduced_reduce_of_mem_ruPresentation_relators :
     ∀ w ∈ ruPresentation.relators, FreeGroup.IsCyclicallyReduced (FreeGroup.reduce w) := by
   simp only [GroupPresentation.relators_def, ruPresentation_transcribed, List.map_cons,
     List.map_nil, Relator.toWord_gen, Relator.toWord_inv, Relator.toWord_mul, Relator.toWord_pow,

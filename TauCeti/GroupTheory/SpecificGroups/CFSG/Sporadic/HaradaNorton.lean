@@ -41,35 +41,9 @@ The source-to-Lean transcription has been read against both the corrected printe
 machine-readable Magma file. An independent read-through remains part of the S1 review artifact.
 This file asserts no order, finiteness, simplicity, or identification result.
 
-## The letter counts
-
-The row is a sealed definition, so it publishes an equation for each of its fields: the transcribed
-relator expressions with their generator indices written out, and the provenance a manifest row
-exists to record. Further decidable checks accompany them. The lengths of the compiled relator
-words, one at a time and in aggregate, record the transcription as written, so a dropped or
-duplicated letter shows up at the relator that carries it. Exactly one compiled word is not reduced:
-the fifth relator `a⁻²(abab³)³` puts the second letter of `a⁻²` against the `a` opening `abab³`, and
-that single cancelling pair is the two letters by which the compiled count `153` exceeds the reduced
-count `151`. Free reduction leaves every relator cyclically reduced, which is what makes the reduced
-figure the one comparable with a published presentation length, since such a length is measured
-after free and cyclic reduction.
-
-No such length is published for this presentation: `HNpb.m` is a Magma file of relator words with no
-letter count, the paper's known-errors record adds none, and Bray's presentation page for `HN` is
-one of the 1997 stubs that print `Length ??`. The figures below therefore state the transcribed
-data for a reviewer to compare with the source, rather than checking it against a recorded number.
-
-## Main definitions and results
+## Main definition
 
 * `TauCeti.Sporadic.hnPresentation`: the Bray--Curtis finite presentation of `HN`.
-* `TauCeti.Sporadic.transcribed_hnPresentation` and the equations for the remaining fields: the
-  characterization of the sealed row.
-* `TauCeti.Sporadic.map_length_relators_hnPresentation` and
-  `TauCeti.Sporadic.totalLength_hnPresentation`: the letter counts of the compiled words.
-* `TauCeti.Sporadic.map_length_reduce_relators_hnPresentation` and
-  `TauCeti.Sporadic.reducedTotalLength_hnPresentation`: the same counts after free reduction.
-* `TauCeti.Sporadic.isCyclicallyReduced_reduce_mem_hnPresentation_relators`: the reduced words are
-  cyclically reduced.
 
 ## References
 
@@ -80,9 +54,6 @@ data for a reviewer to compare with the source, rather than checking it against 
   <https://webspace.maths.qmul.ac.uk/j.n.bray/Papers/HN/HN.html>, and the corrected
   machine-readable presentation,
   <https://webspace.maths.qmul.ac.uk/j.n.bray/Papers/HN/HNpb.m>.
-* J. N. Bray, presentation page for the Harada--Norton group,
-  <https://webspace.maths.qmul.ac.uk/j.n.bray/web/Pres/HN.html>, which records `Length ??` and so
-  publishes no letter count.
 -/
 
 public section
@@ -159,57 +130,6 @@ theorem generatorNames_hnPresentation :
     hnPresentation.generatorNames = ["a", "b", "c", "d", "t"] := by
   simp [hnPresentation]
 
-/-- The source recorded for `HN`. The row's body is sealed, so this equation publishes the citation
-itself, rather than only the row's name, to a downstream audit. -/
-@[simp]
-theorem source_hnPresentation :
-    hnPresentation.source = "J. N. Bray and R. T. Curtis, Monomial modular representations and \
-      symmetric generation of the Harada--Norton group, J. Algebra 268 (2003), 723--743" := by
-  simp [hnPresentation]
-
-/-- The locator recorded for `HN`, naming both the sections of the paper and the corrected Magma
-file that carries the same nineteen relators. -/
-@[simp]
-theorem sourceLocator_hnPresentation :
-    hnPresentation.sourceLocator = "Sections 4--5, especially p. 735; corrected Magma file HNpb.m \
-      at https://webspace.maths.qmul.ac.uk/j.n.bray/Papers/HN/HNpb.m" := by
-  simp [hnPresentation]
-
-/-- The generator convention recorded for `HN`, fixing which generator each relator index names and
-which commutator and conjugation conventions the source uses. -/
-@[simp]
-theorem generatorConvention_hnPresentation :
-    hnPresentation.generatorConvention = "The generators a, b, c, d and t of Bray--Curtis HNpb.m, \
-      in that order, so indices 0 through 4 have those names. Products are read left to right, \
-      negative exponents denote inverses, [r,s] denotes r^-1 s^-1 r s, and r^s denotes \
-      s^-1 r s." := by
-  simp [hnPresentation]
-
-/-- The transcription notes recorded for `HN`, including the correction the authors' known-errors
-record makes to the twelfth relator. -/
-@[simp]
-theorem transcriptionNotes_hnPresentation :
-    hnPresentation.transcriptionNotes = "The nineteen words in the first presentation of the \
-      corrected HNpb.m file are stored as nineteen relators equal to the identity. They agree in \
-      order and spelling with the five-generator presentation displayed in Section 5 of the \
-      corrected paper. The corrected source uses (a*d)^2 as its twelfth relator; the authors' \
-      known-errors record notes that the preprint's [a,d] at this position was wrong. An \
-      independent source-to-Lean read-through remains part of the S1 review artifact." := by
-  simp [hnPresentation]
-
-/-- The generator count `HN`'s source states. With
-`TauCeti.Sporadic.generatorNames_hnPresentation` this makes
-`TauCeti.Sporadic.matchesMetadata_hnPresentation` an equation between two visible numbers. -/
-@[simp]
-theorem expectedGeneratorCount_hnPresentation : hnPresentation.expectedGeneratorCount = 5 := by
-  simp [hnPresentation]
-
-/-- The relator count `HN`'s source states; see
-`TauCeti.Sporadic.expectedGeneratorCount_hnPresentation`. -/
-@[simp]
-theorem expectedRelatorCount_hnPresentation : hnPresentation.expectedRelatorCount = 19 := by
-  simp [hnPresentation]
-
 /-- The relator expressions transcribed for `HN`, with their generator indices written out.
 
 The row's body is sealed, so this is the equation that characterizes it: with
@@ -274,54 +194,5 @@ theorem transcribed_hnPresentation :
 
 /-- The generator and relator counts recorded for `HN` agree with the transcribed data. -/
 theorem matchesMetadata_hnPresentation : hnPresentation.matchesMetadata := by decide
-
-/-! ### The letter counts of the compiled words -/
-
-/-- The lengths of the nineteen compiled relator words for `HN`, in the source's order.
-
-Reading the counts off one relator at a time is what lets a reviewer locate a discrepancy, rather
-than only observe one in the total of `TauCeti.Sporadic.totalLength_hnPresentation`. -/
-theorem map_length_relators_hnPresentation :
-    hnPresentation.relators.map List.length =
-      [4, 6, 7, 12, 20, 20, 4, 4, 8, 18, 2, 4, 4, 15, 5, 5, 5, 4, 6] := by
-  simp [GroupPresentation.relators_def, transcribed_hnPresentation]
-
-/-- The compiled relator words for `HN` have `153` letters in total. The fifth of them is not
-reduced, so `TauCeti.Sporadic.reducedTotalLength_hnPresentation` and not this figure is the one to
-compare with a published presentation length. -/
-theorem totalLength_hnPresentation : hnPresentation.totalLength = 153 := by
-  rw [GroupPresentation.totalLength_def, map_length_relators_hnPresentation]
-  decide
-
-/-- The lengths of the nineteen compiled relator words for `HN` after free reduction. Only the fifth
-entry differs from `TauCeti.Sporadic.map_length_relators_hnPresentation`, by the cancelling pair at
-the junction of the two factors of `a⁻²(abab³)³`. -/
-theorem map_length_reduce_relators_hnPresentation :
-    (hnPresentation.relators.map fun w => (FreeGroup.reduce w).length) =
-      [4, 6, 7, 12, 18, 20, 4, 4, 8, 18, 2, 4, 4, 15, 5, 5, 5, 4, 6] := by
-  simp only [GroupPresentation.relators_def, transcribed_hnPresentation, List.map_cons,
-    List.map_nil, Relator.toWord_gen, Relator.toWord_inv, Relator.toWord_mul, Relator.toWord_pow,
-    Relator.toWord_comm]
-  decide
-
-/-- The freely reduced relator words for `HN` have `151` letters in total. No length is recorded for
-this presentation to compare it with, so this figure states the transcribed data for a reviewer to
-check against the source rather than against a published number. -/
-theorem reducedTotalLength_hnPresentation :
-    (hnPresentation.relators.map fun w => (FreeGroup.reduce w).length).sum = 151 := by
-  rw [map_length_reduce_relators_hnPresentation]
-  decide
-
-/-- Free reduction makes every compiled relator word for `HN` cyclically reduced.
-
-This is what makes the letter count of `TauCeti.Sporadic.reducedTotalLength_hnPresentation`
-comparable with a published presentation length, which is measured after free and cyclic reduction
-of each relator. -/
-theorem isCyclicallyReduced_reduce_mem_hnPresentation_relators :
-    ∀ w ∈ hnPresentation.relators, FreeGroup.IsCyclicallyReduced (FreeGroup.reduce w) := by
-  simp only [GroupPresentation.relators_def, transcribed_hnPresentation, List.map_cons,
-    List.map_nil, Relator.toWord_gen, Relator.toWord_inv, Relator.toWord_mul, Relator.toWord_pow,
-    Relator.toWord_comm]
-  decide
 
 end TauCeti.Sporadic

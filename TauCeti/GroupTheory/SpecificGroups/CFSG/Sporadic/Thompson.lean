@@ -104,7 +104,7 @@ so the list is deliberately not minimal.
   `TauCeti.Sporadic.Thompson.totalLength_presentation`: the letter counts of the compiled words.
 * `TauCeti.Sporadic.Thompson.map_length_reduce_relators_presentation` and
   `TauCeti.Sporadic.Thompson.reducedTotalLength_presentation`: the same counts after free reduction.
-* `TauCeti.Sporadic.Thompson.isCyclicallyReduced_reduce_mem_presentation_relators`: the reduced
+* `TauCeti.Sporadic.Thompson.isCyclicallyReduced_reduce_of_mem_presentation_relators`: the reduced
   words are cyclically reduced.
 
 ## References
@@ -414,7 +414,7 @@ theorem reducedTotalLength_presentation :
 This is what makes the letter count of
 `TauCeti.Sporadic.Thompson.reducedTotalLength_presentation` comparable with a published
 presentation length, which is measured after free and cyclic reduction of each relator. -/
-theorem isCyclicallyReduced_reduce_mem_presentation_relators :
+theorem isCyclicallyReduced_reduce_of_mem_presentation_relators :
     ∀ w ∈ presentation.relators, FreeGroup.IsCyclicallyReduced (FreeGroup.reduce w) := by
   -- The check runs through `List.all` rather than by `decide` on the bounded quantifier directly.
   -- The compiled relator list of this row is a large enough term that the `Decidable` instance of
