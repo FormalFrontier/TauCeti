@@ -64,6 +64,8 @@ attribute [local instance 100] LieRing.ofAssociativeRing
 def cartanMatrix (i : Fin 7) : Matrix (Fin 56) (Fin 56) ℤ :=
   Matrix.diagonal fun a => e7MinusculeWeight a i
 
+/-- The matrix carrying a weight vector across the `i`th simple-reflection edge when its
+`i`th coordinate is `c`. -/
 private def stepMatrix (i : Fin 7) (c : ℤ) : Matrix (Fin 56) (Fin 56) ℤ :=
   fun a b => if e7MinusculeWeight b i = c ∧ a = e7MinusculeReflection i b then 1 else 0
 
