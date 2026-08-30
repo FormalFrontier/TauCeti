@@ -9,6 +9,7 @@ public import TauCeti.Analysis.Normed.Operator.Dense
 public import TauCeti.Analysis.Normed.Operator.Resolvent.DomainPow
 public import TauCeti.Analysis.Semigroups.Generator.Invariance
 public import TauCeti.Analysis.Semigroups.Resolvent.Identity
+import TauCeti.Analysis.Normed.Operator.Basic
 
 /-!
 # The iterated generator domains of a strongly continuous semigroup are dense
@@ -149,23 +150,12 @@ limit. This is the induction step behind the convergence of `lambdaⁿ R(lambda)
 private theorem tendsto_smul_resolventFun_comp (hb : S.HasGrowthBound omega M) {f : ℝ → X} {x : X}
     (hf : Tendsto f atTop (nhds x)) :
     Tendsto (fun lambda : ℝ => lambda • S.resolventFun hb lambda (f lambda)) atTop (nhds x) := by
-  have hsmall : Tendsto
-      (fun lambda : ℝ => (lambda • S.resolventFun hb lambda) (f lambda - x)) atTop (nhds 0) := by
-    have hnorm : Tendsto (fun lambda : ℝ => 2 * M * ‖f lambda - x‖) atTop (nhds 0) := by
-      simpa using (tendsto_iff_norm_sub_tendsto_zero.mp hf).const_mul (2 * M)
-    refine squeeze_zero_norm' ?_ hnorm
+  have hbound : ∀ᶠ lambda : ℝ in atTop, ‖lambda • S.resolventFun hb lambda‖ ≤ 2 * M := by
     filter_upwards [eventually_ge_atTop (2 * |omega| + 1)] with lambda hlambda
-    calc ‖(lambda • S.resolventFun hb lambda) (f lambda - x)‖
-        ≤ ‖lambda • S.resolventFun hb lambda‖ * ‖f lambda - x‖ :=
-          ContinuousLinearMap.le_opNorm _ _
-      _ ≤ 2 * M * ‖f lambda - x‖ := by
-          gcongr
-          exact S.norm_smul_resolventFun_le hb hlambda
-  have hsum := hsmall.add (S.tendsto_smul_resolventFun_apply hb x)
-  rw [zero_add] at hsum
-  refine hsum.congr fun lambda => ?_
-  rw [map_sub]
-  simp
+    exact S.norm_smul_resolventFun_le hb hlambda
+  simpa only [smul_apply] using
+    (TauCeti.ContinuousLinearMap.tendsto_apply_of_eventually_norm_le hbound
+      (S.tendsto_smul_resolventFun_apply hb x) hf)
 
 /-- **The iterated scaled resolvents converge strongly to the identity**:
 `lambdaⁿ R(lambda)ⁿ x → x` as `lambda → ∞`. -/

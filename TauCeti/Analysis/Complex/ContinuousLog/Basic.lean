@@ -65,11 +65,14 @@ component of `a` is preconnected, hence entirely good.
 ## What this settles, and what it does not
 
 Only one implication of the classical criterion is proved here. Its converse — that a Borsuk map
-with a continuous logarithm on a *compact* `K` forces `a` and `b` into one component of `Kᶜ` — is
-a genuinely deeper statement, equivalent to a case of Alexander duality: it fails for the naive
-reason one might hope to prove it, since a compact connected set can separate the plane while
-containing no arc at all, so no argument through winding numbers of curves inside `K` can reach
-it. Nothing below assumes it, and no statement is phrased so as to presume it.
+with a continuous logarithm on a *bounded* closed `K` forces `a` and `b` into one component of
+`Kᶜ` — is the deeper half, and is proved separately, in
+`TauCeti/Analysis/Complex/PlaneSeparation.lean`, as
+`TauCeti.mem_connectedComponentIn_of_hasContinuousLogOn`. Boundedness is essential there and is
+not assumed here. Nothing below uses that converse, and no statement below is phrased so as to
+presume it; in particular the naive route to it, through winding numbers of curves drawn inside
+`K`, is unavailable, since a compact connected set can separate the plane while containing no arc
+at all.
 
 ## Roadmap role
 
@@ -90,7 +93,8 @@ intersection, neither of which separates a pair of points, have a union that doe
 either — and Janiszewski is proved by translating "does not separate" into "the Borsuk map has a
 continuous logarithm" and gluing the two logarithms over the connected intersection. This file
 supplies that translation in the direction that holds without duality, together with the gluing;
-what remains before Janiszewski is the converse direction described above.
+`TauCeti/Analysis/Complex/PlaneSeparation.lean` adds the converse direction and assembles the
+three into `TauCeti.janiszewski`.
 
 The one statement below already phrased in the vocabulary of that development is
 `TauCeti.mem_filledHull_or_mem_filledHull_of_not_hasContinuousLogOn`: a bounded closed set on which

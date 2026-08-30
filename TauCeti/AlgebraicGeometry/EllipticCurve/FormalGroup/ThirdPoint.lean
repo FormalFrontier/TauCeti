@@ -65,18 +65,32 @@ lemma chord_point_nonsingular {q w : F}
   linear_combination hw
 
 
-/-- The cubic satisfied by each chord parameter. Substituting the line `w = Λ z + N` into the
-`(z, w)`-form of the Weierstrass equation leaves this cubic in `z`, whose three roots are the
-parameters of the three points where the chord meets the curve. Applied at each of `z₁`, `z₂`. -/
-private lemma chord_cubic {AA Λ N q w : F}
+/-- The cubic in the chord parameter left by substituting the line `w = Λ z + N` into the
+`(z, w)`-form of the Weierstrass equation, with its leading coefficient carried as the parameter
+`AA`.
+
+The geometric reading needs `AA` pinned: **when** `AA = 1 + a₂Λ + a₄Λ² + a₆Λ³`, which is what
+`hAA2` supplies at every use below, this is the cubic whose roots are the parameters of the points
+where the chord meets the curve. For an unconstrained `AA` it is just the substituted expression
+and carries no such meaning. -/
+-- `AA` is carried as a parameter rather than inlined because the `linear_combination` certificates
+-- below are written against it as a single atom: substituting the expansion here makes `ring` fail
+-- in `chordCubic_eq_zero`, `chord_addX` and `chord_addY` alike.
+private def chordCubic (AA Λ N q : F) : F :=
+  -N + AA * q ^ 3 + W.a₃ * N ^ 2 + W.a₆ * N ^ 3 - Λ * q + Λ * W.a₁ * q ^ 2 +
+    N * W.a₁ * q + N * W.a₂ * q ^ 2 + W.a₃ * Λ ^ 2 * q ^ 2 + W.a₄ * q * N ^ 2 +
+    2 * Λ * N * W.a₃ * q + 2 * Λ * N * W.a₄ * q ^ 2 + 3 * Λ * W.a₆ * q * N ^ 2 +
+    3 * N * W.a₆ * Λ ^ 2 * q ^ 2
+
+/-- Each chord parameter is a root of `chordCubic`: a point of the `(z, w)`-chart lying on the
+line `w = Λ z + N` has its parameter annihilate the cubic. Applied at each of `z₁`, `z₂`. -/
+private lemma chordCubic_eq_zero {AA Λ N q w : F}
     (hAA2 : AA = 1 + W.a₂ * Λ + W.a₄ * Λ ^ 2 + W.a₆ * Λ ^ 3)
     (hw : w = q ^ 3 + W.a₁ * q * w + W.a₂ * q ^ 2 * w + W.a₃ * w ^ 2 +
       W.a₄ * q * w ^ 2 + W.a₆ * w ^ 3)
     (hline : w = Λ * q + N) :
-    -N + AA * q ^ 3 + W.a₃ * N ^ 2 + W.a₆ * N ^ 3 - Λ * q + Λ * W.a₁ * q ^ 2 +
-      N * W.a₁ * q + N * W.a₂ * q ^ 2 + W.a₃ * Λ ^ 2 * q ^ 2 + W.a₄ * q * N ^ 2 +
-      2 * Λ * N * W.a₃ * q + 2 * Λ * N * W.a₄ * q ^ 2 + 3 * Λ * W.a₆ * q * N ^ 2 +
-      3 * N * W.a₆ * Λ ^ 2 * q ^ 2 = 0 := by
+    W.chordCubic AA Λ N q = 0 := by
+  simp only [chordCubic]
   linear_combination -hw + (1 + w*(-W.a₃ - N*W.a₆ - W.a₄*q - Λ*W.a₆*q) - N*W.a₃
     - W.a₁*q - W.a₂*q^2 - W.a₆*N^2 - W.a₆*w^2 - Λ*W.a₃*q - Λ*W.a₄*q^2 - N*W.a₄*q
     - W.a₆*Λ^2*q^2 - 2*Λ*N*W.a₆*q) * hline + (q^3) * hAA2
@@ -85,19 +99,13 @@ private lemma chord_cubic {AA Λ N q w : F}
 private lemma chord_addX {AA Λ N q₁ q₂ w₁ w₂ T₃ wT : F}
     (hAA2 : AA = 1 + W.a₂ * Λ + W.a₄ * Λ ^ 2 + W.a₆ * Λ ^ 3)
     (hline₁ : w₁ = Λ * q₁ + N) (hline₂ : w₂ = Λ * q₂ + N)
-    (hCub₁ : -N + AA * q₁ ^ 3 + W.a₃ * N ^ 2 + W.a₆ * N ^ 3 - Λ * q₁ + Λ * W.a₁ * q₁ ^ 2 +
-      N * W.a₁ * q₁ + N * W.a₂ * q₁ ^ 2 + W.a₃ * Λ ^ 2 * q₁ ^ 2 + W.a₄ * q₁ * N ^ 2 +
-      2 * Λ * N * W.a₃ * q₁ + 2 * Λ * N * W.a₄ * q₁ ^ 2 + 3 * Λ * W.a₆ * q₁ * N ^ 2 +
-      3 * N * W.a₆ * Λ ^ 2 * q₁ ^ 2 = 0)
-    (hCub₂ : -N + AA * q₂ ^ 3 + W.a₃ * N ^ 2 + W.a₆ * N ^ 3 - Λ * q₂ + Λ * W.a₁ * q₂ ^ 2 +
-      N * W.a₁ * q₂ + N * W.a₂ * q₂ ^ 2 + W.a₃ * Λ ^ 2 * q₂ ^ 2 + W.a₄ * q₂ * N ^ 2 +
-      2 * Λ * N * W.a₃ * q₂ + 2 * Λ * N * W.a₄ * q₂ ^ 2 + 3 * Λ * W.a₆ * q₂ * N ^ 2 +
-      3 * N * W.a₆ * Λ ^ 2 * q₂ ^ 2 = 0)
+    (hCub₁ : W.chordCubic AA Λ N q₁ = 0) (hCub₂ : W.chordCubic AA Λ N q₂ = 0)
     (hT₃ : AA * (T₃ + q₁ + q₂) =
       -(W.a₁ * Λ + W.a₂ * N + W.a₃ * Λ ^ 2 + 2 * W.a₄ * Λ * N + 3 * W.a₆ * Λ ^ 2 * N))
     (hwT : wT = Λ * T₃ + N) (hA : AA ≠ 0) (hq12 : q₁ - q₂ ≠ 0) (hN0 : N ≠ 0)
     (hw₁0 : w₁ ≠ 0) (hw₂0 : w₂ ≠ 0) (hwT0 : wT ≠ 0) :
     T₃ / wT = W.toAffine.addX (q₁ / w₁) (q₂ / w₂) (Λ / N) := by
+  simp only [chordCubic] at hCub₁ hCub₂
   rw [Affine.addX]
   field_simp
   refine mul_left_cancel₀ (mul_ne_zero (pow_ne_zero 3 hA) hq12) ?_
@@ -132,20 +140,14 @@ private lemma chord_addX {AA Λ N q₁ q₂ w₁ w₂ T₃ wT : F}
 private lemma chord_addY {AA Λ N q₁ q₂ w₁ w₂ T₃ wT : F}
     (hAA2 : AA = 1 + W.a₂ * Λ + W.a₄ * Λ ^ 2 + W.a₆ * Λ ^ 3)
     (hline₁ : w₁ = Λ * q₁ + N) (hline₂ : w₂ = Λ * q₂ + N)
-    (hCub₁ : -N + AA * q₁ ^ 3 + W.a₃ * N ^ 2 + W.a₆ * N ^ 3 - Λ * q₁ + Λ * W.a₁ * q₁ ^ 2 +
-      N * W.a₁ * q₁ + N * W.a₂ * q₁ ^ 2 + W.a₃ * Λ ^ 2 * q₁ ^ 2 + W.a₄ * q₁ * N ^ 2 +
-      2 * Λ * N * W.a₃ * q₁ + 2 * Λ * N * W.a₄ * q₁ ^ 2 + 3 * Λ * W.a₆ * q₁ * N ^ 2 +
-      3 * N * W.a₆ * Λ ^ 2 * q₁ ^ 2 = 0)
-    (hCub₂ : -N + AA * q₂ ^ 3 + W.a₃ * N ^ 2 + W.a₆ * N ^ 3 - Λ * q₂ + Λ * W.a₁ * q₂ ^ 2 +
-      N * W.a₁ * q₂ + N * W.a₂ * q₂ ^ 2 + W.a₃ * Λ ^ 2 * q₂ ^ 2 + W.a₄ * q₂ * N ^ 2 +
-      2 * Λ * N * W.a₃ * q₂ + 2 * Λ * N * W.a₄ * q₂ ^ 2 + 3 * Λ * W.a₆ * q₂ * N ^ 2 +
-      3 * N * W.a₆ * Λ ^ 2 * q₂ ^ 2 = 0)
+    (hCub₁ : W.chordCubic AA Λ N q₁ = 0) (hCub₂ : W.chordCubic AA Λ N q₂ = 0)
     (hT₃ : AA * (T₃ + q₁ + q₂) =
       -(W.a₁ * Λ + W.a₂ * N + W.a₃ * Λ ^ 2 + 2 * W.a₄ * Λ * N + 3 * W.a₆ * Λ ^ 2 * N))
     (hwT : wT = Λ * T₃ + N) (hA : AA ≠ 0) (hq12 : q₁ - q₂ ≠ 0) (hN0 : N ≠ 0)
     (hw₁0 : w₁ ≠ 0) (hw₂0 : w₂ ≠ 0) (hwT0 : wT ≠ 0) :
     (1 - W.a₁ * T₃ - W.a₃ * wT) / wT =
       W.toAffine.addY (q₁ / w₁) (q₂ / w₂) (-1 / w₁) (Λ / N) := by
+  simp only [chordCubic] at hCub₁ hCub₂
   rw [Affine.addY, Affine.negAddY, Affine.addX, Affine.negY]
   field_simp
   refine mul_left_cancel₀ (mul_ne_zero (pow_ne_zero 3 hA) hq12) ?_
@@ -233,8 +235,8 @@ private lemma chord_addX_addY {q₁ q₂ w₁ w₂ Λ N T₃ wT : F}
     rw [Affine.slope_of_X_ne hxq, div_eq_div_iff (sub_ne_zero.mpr hxq) hN0]
     field_simp
     linear_combination (w₂ - Λ * q₂) * hline₁ - w₁ * hline₂ + Λ * q₂ * hline₁
-  have hCub₁ := chord_cubic W rfl hw₁ hline₁
-  have hCub₂ := chord_cubic W rfl hw₂ hline₂
+  have hCub₁ := chordCubic_eq_zero W rfl hw₁ hline₁
+  have hCub₂ := chordCubic_eq_zero W rfl hw₂ hline₂
   rw [hℓ]
   exact ⟨chord_addX W rfl hline₁ hline₂ hCub₁ hCub₂ hT₃ hwT hA hq12 hN0 hw₁0 hw₂0 hwT0,
     chord_addY W rfl hline₁ hline₂ hCub₁ hCub₂ hT₃ hwT hA hq12 hN0 hw₁0 hw₂0 hwT0⟩

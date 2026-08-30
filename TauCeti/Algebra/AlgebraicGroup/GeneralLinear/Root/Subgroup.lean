@@ -159,9 +159,7 @@ section Scheme
 Its direction is `O(GLₙ) → O(𝔾ₐ)`, opposite to the represented group-scheme morphism. -/
 noncomputable def rootSubgroupCoordinateMap (hij : i ≠ j) :
     coordinateHopfAlgebra R N ⟶ AdditiveGroup.coordinateHopfAlgebra R :=
-  ((CommHopfAlgCat.pointsFunctor.{u, u, u} (R := R) :
-      (_root_.CommHopfAlgCat.{u} R)ᵒᵖ ⥤ CommAlgCat.{u} R ⥤ GrpCat.{u}).preimage
-    (rootSubgroupPointsMap.{u, u} (R := R) (N := N) hij)).unop
+  CommHopfAlgCat.homOfPointsMap (rootSubgroupPointsMap.{u, u} (R := R) (N := N) hij)
 
 /-- Precomposition by the root-subgroup coordinate morphism is the previously constructed
 natural map on convolution points. -/
@@ -172,12 +170,8 @@ theorem mapPointsFunctor_rootSubgroupCoordinateMap (hij : i ≠ j) :
         HopfAlgebra.pointsFunctor (R := R) (H := coordinateHopfAlgebra R N)) =
       (rootSubgroupPointsMap.{u, u} hij :
         HopfAlgebra.pointsFunctor (R := R) (H := AdditiveGroup.coordinateHopfAlgebra R) ⟶
-          HopfAlgebra.pointsFunctor (R := R) (H := coordinateHopfAlgebra R N)) := by
-  unfold rootSubgroupCoordinateMap
-  rw [← CommHopfAlgCat.pointsFunctor_map]
-  exact Functor.map_preimage
-    (CommHopfAlgCat.pointsFunctor.{u, u, u} (R := R) :
-      (_root_.CommHopfAlgCat.{u} R)ᵒᵖ ⥤ CommAlgCat.{u} R ⥤ GrpCat.{u}) _
+          HopfAlgebra.pointsFunctor (R := R) (H := coordinateHopfAlgebra R N)) :=
+  CommHopfAlgCat.mapPointsFunctor_homOfPointsMap _
 
 /-- On every same-universe value algebra, the map induced by the root-subgroup coordinate
 morphism is the elementary root subgroup homomorphism already constructed on points. -/

@@ -92,54 +92,6 @@ theorem polarBilin_toMatrix_typeDBasis (hline : P.line = ⊥) :
   · simp [LinearMap.BilinForm.toMatrix_apply, LieAlgebra.Orthogonal.JD,
       P.polar_W'_eq_zero]
 
-private theorem mem_typeD_toMatrix_iff (hline : P.line = ⊥) (f : Module.End K V) :
-    LinearMap.toMatrix (P.typeDBasis b hline) (P.typeDBasis b hline) f ∈
-        LieAlgebra.Orthogonal.typeD ι K ↔
-      f ∈ skewAdjointLieSubalgebra Q.polarBilin := by
-  have hB : Matrix.toLinearMap₂ (P.typeDBasis b hline) (P.typeDBasis b hline)
-      (LieAlgebra.Orthogonal.JD ι K) = Q.polarBilin := by
-    rw [← P.polarBilin_toMatrix_typeDBasis b hline]
-    exact Matrix.toLinearMap₂_toMatrix₂ _ _ Q.polarBilin
-  -- Convert the matrix Gram equation to the basis-free bilinear form before comparing
-  -- skew-adjointness.
-  rw [LieAlgebra.Orthogonal.typeD, mem_skewAdjointMatricesLieSubalgebra,
-    mem_skewAdjointMatricesSubmodule]
-  -- Expose the two bundled skew-adjoint predicates after transporting the Gram matrix.
-  change (LieAlgebra.Orthogonal.JD ι K).IsSkewAdjoint
-      (LinearMap.toMatrix (P.typeDBasis b hline) (P.typeDBasis b hline) f) ↔
-    f ∈ Q.polarBilin.skewAdjointSubmodule
-  rw [LinearMap.mem_skewAdjointSubmodule]
-  rw [Matrix.IsSkewAdjoint, LinearMap.IsSkewAdjoint]
-  symm
-  simpa [hB] using
-    (isAdjointPair_toLinearMap₂
-      (b₁ := P.typeDBasis b hline) (b₂ := P.typeDBasis b hline)
-      (J := LieAlgebra.Orthogonal.JD ι K) (J' := LieAlgebra.Orthogonal.JD ι K)
-      (A := LinearMap.toMatrix (P.typeDBasis b hline) (P.typeDBasis b hline) f)
-      (A' := -(LinearMap.toMatrix (P.typeDBasis b hline) (P.typeDBasis b hline) f)))
-
-/-- The split matrix model transported to skew-adjoint endomorphisms through the hyperbolic
-basis. -/
-private noncomputable def typeDSkewAdjointEquiv
-    (b : Module.Basis ι K P.W) (hline : P.line = ⊥) :
-    LieAlgebra.Orthogonal.typeD ι K ≃ₗ⁅K⁆ skewAdjointLieSubalgebra Q.polarBilin :=
-  LieEquiv.ofSubalgebras _ _
-    (LinearMap.toMatrixAlgEquiv (P.typeDBasis b hline)).symm.toLieEquiv <| by
-      ext f
-      simp only [Submodule.mem_map_equiv, LieSubalgebra.mem_map_submodule]
-      -- Membership in the mapped subalgebra is the underlying matrix membership statement.
-      change LinearMap.toMatrix (P.typeDBasis b hline) (P.typeDBasis b hline) f ∈
-          LieAlgebra.Orthogonal.typeD ι K ↔
-        f ∈ skewAdjointLieSubalgebra Q.polarBilin
-      exact P.mem_typeD_toMatrix_iff b hline f
-
-@[simp]
-private theorem typeDSkewAdjointEquiv_apply (hline : P.line = ⊥)
-    (A : LieAlgebra.Orthogonal.typeD ι K) :
-    (P.typeDSkewAdjointEquiv b hline A : Module.End K V) =
-      (LinearMap.toMatrixAlgEquiv (P.typeDBasis b hline)).symm A := by
-  rfl
-
 end PreQuadratic
 
 section Quadratic
@@ -155,8 +107,8 @@ noncomputable def typeDQuadraticEquiv
     (b : Module.Basis ι K P.W) (hline : P.line = ⊥) :
     LieAlgebra.Orthogonal.typeD ι K ≃ₗ⁅K⁆ quadraticLieSubalgebra Q := by
   let _ : Module.Finite K V := Module.Finite.of_basis (P.typeDBasis b hline)
-  exact (P.typeDSkewAdjointEquiv b hline).trans
-    (soEquivQuadratic Q (P.nondegenerate_of_line_eq_bot hline))
+  exact skewAdjointMatricesEquivQuadratic Q (P.nondegenerate_of_line_eq_bot hline)
+    (P.typeDBasis b hline) (P.polarBilin_toMatrix_typeDBasis b hline)
 
 /-- The type-`D` comparison acts on Clifford generators through the corresponding matrix
 endomorphism in the hyperbolic basis. -/
@@ -165,10 +117,14 @@ theorem typeDQuadraticEquiv_lie_ι (hline : P.line = ⊥)
     (A : LieAlgebra.Orthogonal.typeD ι K) (x : V) :
     ⁅(P.typeDQuadraticEquiv b hline A : CliffordAlgebra Q), CliffordAlgebra.ι Q x⁆ =
       CliffordAlgebra.ι Q
-        ((LinearMap.toMatrixAlgEquiv (P.typeDBasis b hline)).symm A x) := by
+        (Matrix.toLinAlgEquiv (P.typeDBasis b hline) A x) := by
   let _ : Module.Finite K V := Module.Finite.of_basis (P.typeDBasis b hline)
-  rw [typeDQuadraticEquiv, LieEquiv.trans_apply, soEquivQuadratic_lie_ι]
-  rw [P.typeDSkewAdjointEquiv_apply]
+  -- Unfold the type-`D` abbreviation to expose the shared matrix-to-quadratic transport.
+  change ⁅(skewAdjointMatricesEquivQuadratic Q (P.nondegenerate_of_line_eq_bot hline)
+    (P.typeDBasis b hline) (P.polarBilin_toMatrix_typeDBasis b hline) A : CliffordAlgebra Q),
+      CliffordAlgebra.ι Q x⁆ = _
+  exact skewAdjointMatricesEquivQuadratic_lie_ι Q (P.nondegenerate_of_line_eq_bot hline)
+    (P.typeDBasis b hline) (P.polarBilin_toMatrix_typeDBasis b hline) A x
 
 /-- The standard one-coordinate diagonal matrix is the diagonal Clifford bivector of the
 corresponding polarization coordinate. -/

@@ -16,6 +16,7 @@ public import TauCeti.NumberTheory.ModularForms.DiamondOperators
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal.Basic
 
 import TauCeti.Analysis.Complex.UpperHalfPlane.Manifold
+import TauCeti.NumberTheory.ModularForms.Cusps.Basic
 
 /-!
 # The level-raising degeneracy maps `V_d`
@@ -921,7 +922,7 @@ theorem ModularForm.qExpansion_levelRaise_coeff_Gamma1 (M : ℕ) [NeZero M] [NeZ
       if d ∣ n then (qExpansion 1 f).coeff (n / d) else 0 := by
   have : NeZero (d * M) := ⟨Nat.mul_ne_zero (NeZero.ne d) (NeZero.ne M)⟩
   refine ModularForm.qExpansion_levelRaise_coeff ?_ ?_ _ f n <;>
-    simp [CongruenceSubgroup.strictPeriods_Gamma1]
+    exact one_mem_strictPeriods_Gamma1_map _
 
 /-- **The `q`-expansion of a level-raised cusp form.** A cusp form and its image under the
 inclusion into modular forms have the same underlying function, so the substitution `q ↦ q ^ d`
@@ -956,7 +957,7 @@ theorem CuspForm.qExpansion_levelRaise_coeff_Gamma1 (M : ℕ) [NeZero M] [NeZero
       if d ∣ n then (qExpansion 1 f).coeff (n / d) else 0 := by
   have : NeZero (d * M) := ⟨Nat.mul_ne_zero (NeZero.ne d) (NeZero.ne M)⟩
   refine CuspForm.qExpansion_levelRaise_coeff ?_ ?_ _ f n <;>
-    simp [CongruenceSubgroup.strictPeriods_Gamma1]
+    exact one_mem_strictPeriods_Gamma1_map _
 
 end QExpansion
 
