@@ -13,10 +13,10 @@ public import TauCeti.NumberTheory.ArithmeticDirichletSeries.Weight
 
 This file bundles the algebraic input for an Euler product over the height-one primes of the ring
 of integers of a number field. An `EulerProductData K` consists of an ideal arithmetic function
-that is multiplicative on relatively prime nonzero ideals and has only finitely many vanishing
-prime coefficients. Its bad-prime set is derived from that function, so the bundle carries no
-unconstrained local data. The prime-power series and local arithmetic factors are likewise the
-canonical ones defined in `EulerProduct/Basic.lean`.
+that is multiplicative on relatively prime nonzero ideals, together with an explicit finite set
+of bad primes. The prime-power series and local arithmetic factors are canonically derived from
+the function as defined in `EulerProduct/Basic.lean`; in particular, the bad set does not impose
+an unrelated condition on the linear prime coefficients.
 
 The formal Euler-product identity follows from
 `IdealArithmeticFunction.normCoeff_eq_eulerProduct`: coprime multiplicativity and unique
@@ -27,7 +27,7 @@ canonical local factors. Analytic convergence of the evaluated factors belongs t
 
 * `TauCeti.EulerProductData` bundles a multiplicative ideal coefficient system with finite
   bad-prime set.
-* `TauCeti.EulerProductData.badPrimes` is its canonically determined vanishing set.
+* `TauCeti.EulerProductData.badPrimes` is its explicitly specified finite exceptional set.
 * `TauCeti.EulerProductData.ofMultiplicativeIdealWeight` regards a degree-one ideal weight as
   Euler-product data.
 * Pointwise multiplication, complex conjugation, and restriction away from finitely many primes
@@ -61,61 +61,51 @@ open scoped nonZeroDivisors NumberField
 open IsDedekindDomain (HeightOneSpectrum)
 
 /-- The algebraic coefficient data of an ideal Euler product. The local prime-power series is
-canonically derived from `toIdealArithmeticFunction`; the final field says that the prime
-coefficients vanish at only finitely many height-one primes. -/
+canonically derived from `toIdealArithmeticFunction`, while `badPrimes` records the finite set of
+exceptional local factors without constraining the linear prime coefficients. -/
 structure EulerProductData (K : Type*) [Field K] [NumberField K] where
   /-- The coefficients indexed by nonzero integral ideals. -/
   toIdealArithmeticFunction : IdealArithmeticFunction K
   /-- Coprime multiplicativity, the exact algebraic hypothesis used by an Euler product. -/
   isMultiplicative : toIdealArithmeticFunction.IsMultiplicative
-  /-- Only finitely many height-one prime coefficients vanish. -/
-  finite_setOf_apply_prime_eq_zero :
-    {P : HeightOneSpectrum (𝓞 K) |
-      toIdealArithmeticFunction
-        ⟨P.asIdeal, mem_nonZeroDivisors_of_ne_zero P.ne_bot⟩ = 0}.Finite
+  /-- The height-one primes where the local data is exceptional. -/
+  badPrimes : Set (HeightOneSpectrum (𝓞 K))
+  /-- The exceptional set is finite. -/
+  finite_badPrimes : badPrimes.Finite
 
 namespace EulerProductData
 
 variable {K : Type*} [Field K] [NumberField K]
 
-instance : FunLike (EulerProductData K) ((Ideal (𝓞 K))⁰) ℂ where
+instance : CoeFun (EulerProductData K) fun _ ↦ ((Ideal (𝓞 K))⁰) → ℂ where
   coe D := D.toIdealArithmeticFunction
-  coe_injective D E h := by
-    cases D
-    cases E
-    congr
 
 @[ext]
-theorem ext {D E : EulerProductData K} (h : ∀ I, D I = E I) : D = E :=
-  DFunLike.ext D E h
+theorem ext {D E : EulerProductData K} (h : ∀ I, D I = E I)
+    (hbad : D.badPrimes = E.badPrimes) : D = E := by
+  cases D with
+  | mk D hD S hS =>
+    cases E with
+    | mk E hE T hT =>
+      have hDE : D = E := funext h
+      subst E
+      change S = T at hbad
+      subst T
+      rfl
 
 /-- Evaluating the stored ideal arithmetic function agrees with evaluating the bundle. -/
 @[simp]
 theorem toIdealArithmeticFunction_apply (D : EulerProductData K) (I : (Ideal (𝓞 K))⁰) :
     D.toIdealArithmeticFunction I = D I := rfl
 
-/-- The bad primes of Euler-product data: precisely the height-one primes at which its prime
-coefficient vanishes. This is derived rather than stored independently. -/
-def badPrimes (D : EulerProductData K) : Set (HeightOneSpectrum (𝓞 K)) :=
-  {P | D ⟨P.asIdeal, mem_nonZeroDivisors_of_ne_zero P.ne_bot⟩ = 0}
-
-@[simp]
-theorem mem_badPrimes {D : EulerProductData K} {P : HeightOneSpectrum (𝓞 K)} :
-    P ∈ D.badPrimes ↔ D ⟨P.asIdeal, mem_nonZeroDivisors_of_ne_zero P.ne_bot⟩ = 0 := Iff.rfl
-
-/-- The bad-prime set of Euler-product data is finite. -/
-theorem finite_badPrimes (D : EulerProductData K) : D.badPrimes.Finite :=
-  D.finite_setOf_apply_prime_eq_zero
-
 /-- A completely multiplicative ideal weight supplies Euler-product data. Its finite zero support
-is exactly the finiteness condition required here. -/
+supplies the explicit exceptional set. -/
 noncomputable def ofMultiplicativeIdealWeight (χ : MultiplicativeIdealWeight K) :
     EulerProductData K where
   toIdealArithmeticFunction := χ.toIdealArithmeticFunction
   isMultiplicative := χ.isMultiplicative_toIdealArithmeticFunction
-  finite_setOf_apply_prime_eq_zero := by
-    simpa only [MultiplicativeIdealWeight.toIdealArithmeticFunction_apply,
-      MultiplicativeIdealWeight.coe_toMonoidWithZeroHom] using χ.finite_setOf_apply_eq_zero
+  badPrimes := χ.badPrimes
+  finite_badPrimes := χ.finite_badPrimes
 
 @[simp]
 theorem ofMultiplicativeIdealWeight_apply (χ : MultiplicativeIdealWeight K)
@@ -125,18 +115,15 @@ theorem ofMultiplicativeIdealWeight_apply (χ : MultiplicativeIdealWeight K)
 @[simp]
 theorem badPrimes_ofMultiplicativeIdealWeight (χ : MultiplicativeIdealWeight K) :
     (ofMultiplicativeIdealWeight χ).badPrimes = χ.badPrimes := by
-  ext P
-  simp
+  rw [ofMultiplicativeIdealWeight]
 
 /-- The pointwise product of two Euler-product coefficient systems. -/
 noncomputable instance : Mul (EulerProductData K) where
   mul D E :=
     { toIdealArithmeticFunction := D.toIdealArithmeticFunction * E.toIdealArithmeticFunction
       isMultiplicative := D.isMultiplicative.mul E.isMultiplicative
-      finite_setOf_apply_prime_eq_zero :=
-        (D.finite_badPrimes.union E.finite_badPrimes).subset fun P hP ↦ by
-          simpa only [Set.mem_union, mem_badPrimes, toIdealArithmeticFunction_apply] using
-            mul_eq_zero.mp hP }
+      badPrimes := D.badPrimes ∪ E.badPrimes
+      finite_badPrimes := D.finite_badPrimes.union E.finite_badPrimes }
 
 @[simp]
 theorem mul_apply (D E : EulerProductData K) (I : (Ideal (𝓞 K))⁰) :
@@ -145,9 +132,7 @@ theorem mul_apply (D E : EulerProductData K) (I : (Ideal (𝓞 K))⁰) :
 /-- The bad primes of a pointwise product are the union of the bad primes of its factors. -/
 @[simp]
 theorem badPrimes_mul (D E : EulerProductData K) :
-    (D * E).badPrimes = D.badPrimes ∪ E.badPrimes := by
-  ext P
-  simp [mul_eq_zero]
+    (D * E).badPrimes = D.badPrimes ∪ E.badPrimes := rfl
 
 /-- The trivial ideal coefficient system as Euler-product data. -/
 noncomputable instance : One (EulerProductData K) where
@@ -171,10 +156,10 @@ theorem badPrimes_one : (1 : EulerProductData K).badPrimes = ∅ := by
 /-- Pointwise multiplication makes Euler-product data a commutative monoid. This product remains
 distinct from ideal Dirichlet convolution. -/
 noncomputable instance : CommMonoid (EulerProductData K) where
-  mul_assoc D E F := by ext I; simp [mul_assoc]
-  one_mul D := by ext I; simp
-  mul_one D := by ext I; simp
-  mul_comm D E := by ext I; simp [mul_comm]
+  mul_assoc D E F := by ext I <;> simp [mul_assoc, Set.union_assoc]
+  one_mul D := by ext I <;> simp
+  mul_one D := by ext I <;> simp
+  mul_comm D E := by ext I <;> simp [mul_comm, Set.union_comm]
   npow := npowRec
   npow_zero := by intros; rfl
   npow_succ := by intros; rfl
@@ -184,25 +169,24 @@ noncomputable instance : StarMul (EulerProductData K) where
   star D :=
     { toIdealArithmeticFunction := star D.toIdealArithmeticFunction
       isMultiplicative := D.isMultiplicative.star
-      finite_setOf_apply_prime_eq_zero := by
-        simpa only [Pi.star_apply, star_eq_zero] using D.finite_setOf_apply_prime_eq_zero }
+      badPrimes := D.badPrimes
+      finite_badPrimes := D.finite_badPrimes }
   star_involutive D := by
-    ext I
-    exact star_star (D I)
+    ext I <;> simp
   star_mul D E := by
-    ext I
-    change star (D I * E I) = star (E I) * star (D I)
-    exact star_mul (D I) (E I)
+    apply ext
+    · intro I
+      change star (D I * E I) = star (E I) * star (D I)
+      exact star_mul (D I) (E I)
+    · exact Set.union_comm D.badPrimes E.badPrimes
 
 @[simp]
 theorem star_apply (D : EulerProductData K) (I : (Ideal (𝓞 K))⁰) :
     (star D) I = star (D I) := (rfl)
 
-/-- Complex conjugation leaves the canonical bad-prime set unchanged. -/
+/-- Complex conjugation leaves the specified bad-prime set unchanged. -/
 @[simp]
-theorem badPrimes_star (D : EulerProductData K) : (star D).badPrimes = D.badPrimes := by
-  ext P
-  simp
+theorem badPrimes_star (D : EulerProductData K) : (star D).badPrimes = D.badPrimes := rfl
 
 /-- Restrict Euler-product data away from a finite set of height-one primes, leaving its
 coefficients unchanged on ideals prime to that set and setting the others to zero. -/
