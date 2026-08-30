@@ -132,6 +132,7 @@ theorem GL2Linear_character_injective :
   simpa using this
 
 /-- **The determinant character restricts to the boundary Borel character `α ⊗ α`.** -/
+@[simp]
 theorem GL2LinearChar_comp_gl2BorelSubtype (α : Fˣ →* ℂˣ) :
     (GL2LinearChar α).comp (GL2Borel F).subtype = GL2Borel.linearChar α α := by
   apply MonoidHom.ext
@@ -140,6 +141,7 @@ theorem GL2LinearChar_comp_gl2BorelSubtype (α : Fˣ →* ℂˣ) :
 
 /-- **The linear representation restricts to the one-dimensional Borel representation at the
 boundary pair `(α, α)`.** -/
+@[simp]
 theorem GL2LinearRep_comp_gl2BorelSubtype (α : Fˣ →* ℂˣ) :
     (GL2LinearRep α).comp (GL2Borel F).subtype = GL2Borel.linearRep α α := by
   rw [GL2LinearRep_def, Representation.ofLinearCharacter_comp,

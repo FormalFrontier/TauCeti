@@ -63,6 +63,7 @@ theorem ofLinearCharacter_apply [CommSemiring k] [Monoid G] (χ : G →* kˣ) (g
   (rfl)
 
 /-- **Restricting a one-dimensional representation is precomposition of its character.** -/
+@[simp]
 theorem ofLinearCharacter_comp [CommSemiring k] [Monoid G] {H : Type*} [Monoid H]
     (χ : G →* kˣ) (f : H →* G) :
     (ofLinearCharacter χ).comp f = ofLinearCharacter (χ.comp f) := by
