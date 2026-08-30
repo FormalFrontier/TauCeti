@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.LinearAlgebra.RootSystem.DiagramPermutations
 public import TauCeti.LinearAlgebra.RootSystem.SimpleReflections
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.E6.Basic
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.Reduced
@@ -24,9 +25,20 @@ with the full Weyl orbit, and proves that its weights span the complete characte
 property is what lets the represented weight torus of an admissible minuscule lattice be a closed
 immersion, rather than seeing only the index-three root lattice of the adjoint representation.
 
+The table is *not* stable under the pinned diagram symmetry `TauCeti.graphPermE6`, which exchanges
+`ϖ₁` and `ϖ₆` and so carries the weights of `V(ϖ₁)` to those of `V(ϖ₆) = V(ϖ₁)ˣ`, their negatives.
+The last two sections make that exchange explicit and repair it: `e6MinusculeGraphPerm` is the
+involution of the index set implementing it, and `e6DoubledMinusculeWeight` is the fifty-four-weight
+family of `V(ϖ₁) ⊕ V(ϖ₆)`, which is stable, is still injective, and still spans. A carrier inherits
+a symmetry of its numbered data only when its weight family is equivariant, the hypothesis
+`wt (π i) (τ k) = wt i k` of
+`TauCeti.UniversalEnvelopingAlgebra.kostantToralNumberedSymmetryIso`, which the doubled family
+meets and the minuscule family alone does not.
+
 No representation or group scheme is constructed here. This is the pinned weight-diagram input
 for the type-`E₆` full-weight Chevalley--Demazure carrier in Layer 9 of
-`TauCetiRoadmap/ReductiveGroups/README.md`, consumed by milestone L0 of the CFSG statement roadmap.
+`TauCetiRoadmap/ReductiveGroups/README.md`, consumed by milestone L0 of the CFSG statement roadmap,
+the doubled family being what its graph-twisted family `²E₆(q)` needs where `E₆(q)` does not.
 
 ## Main declarations
 
@@ -35,13 +47,25 @@ for the type-`E₆` full-weight Chevalley--Demazure carrier in Layer 9 of
 * `TauCeti.DynkinType.e6MinusculeWeight_reflection`: the simple-reflection equation.
 * `TauCeti.DynkinType.range_e6MinusculeWeight`: the table is exactly the Weyl orbit of `ϖ₁`.
 * `TauCeti.DynkinType.span_range_e6MinusculeWeight_eq_top`: the weights span the character lattice.
+* `TauCeti.DynkinType.e6MinusculeGraphPerm`: the involution of the index set induced by the diagram
+  symmetry followed by duality, and
+  `TauCeti.DynkinType.e6MinusculeWeight_e6MinusculeGraphPerm` its defining equation.
+* `TauCeti.DynkinType.e6MinusculeWeight_zero_comp_graphPermE6_notMem_range`: the twenty-seven
+  weights are not stable under the diagram symmetry.
+* `TauCeti.DynkinType.e6DoubledMinusculeWeight`: the fifty-four weights of `V(ϖ₁) ⊕ V(ϖ₆)`, with
+  `TauCeti.DynkinType.e6DoubledMinusculeWeight_injective`,
+  `TauCeti.DynkinType.span_range_e6DoubledMinusculeWeight_eq_top` and
+  `TauCeti.DynkinType.e6DoubledMinusculeWeight_e6DoubledMinusculeGraphPerm`, its equivariance for
+  the diagram symmetry.
 
 ## References
 
 The node numbering and the choice of the minuscule weight `ϖ₁` follow Bourbaki, *Lie Groups and Lie
 Algebras, Chapters 4--6*, Plate V. The minuscule-orbit description of the 27-dimensional
 representation follows J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*,
-§13.4, and J. C. Jantzen, *Representations of Algebraic Groups*, II.2.
+§13.4, and J. C. Jantzen, *Representations of Algebraic Groups*, II.2. That the diagram
+automorphism exchanges the two twenty-seven dimensional representations, and the conventions for
+`²E₆(q)` that makes this relevant to, are R. W. Carter, *Simple Groups of Lie Type*, §12.2.
 -/
 
 public section
@@ -305,5 +329,158 @@ theorem span_range_e6MinusculeWeight_eq_top :
     exact S.sub_mem
       (S.sub_mem (S.sub_mem (S.add_mem (S.add_mem (h 0) (h 1)) (h 2)) (h 3)) (h 5))
       (S.smul_mem 2 (h 9))
+
+/-! ## The diagram symmetry on the weight table -/
+
+/-- The index table of `e6MinusculeGraphPerm`, matching each minuscule weight with the one whose
+negative is its image under the diagram symmetry. -/
+private def e6MinusculeGraphIndex : Fin 27 → Fin 27 :=
+  ![26, 25, 24, 23, 22, 21, 19, 20, 17, 18, 15, 16, 12, 13, 14, 10, 11, 8, 9, 6, 7, 5, 4, 3, 2, 1,
+    0]
+
+private theorem e6MinusculeGraphIndex_involutive :
+    Function.Involutive e6MinusculeGraphIndex := fun _ => by decide +kernel +revert
+
+/-- **The permutation of the twenty-seven minuscule weights induced by the `E₆` diagram
+symmetry.** The symmetry `TauCeti.graphPermE6` does not preserve the weight table, so this
+permutation records the composite of that symmetry with duality: it matches the index `a` with the
+index whose weight is the negative of the image of the `a`-th weight. -/
+def e6MinusculeGraphPerm : Equiv.Perm (Fin 27) :=
+  e6MinusculeGraphIndex_involutive.toPerm
+
+/-- The graph permutation of the minuscule weight table is an involution, as the diagram symmetry
+it realizes is. -/
+@[simp]
+theorem e6MinusculeGraphPerm_apply_apply (a : Fin 27) :
+    e6MinusculeGraphPerm (e6MinusculeGraphPerm a) = a :=
+  e6MinusculeGraphIndex_involutive a
+
+/-- The node table of `TauCeti.graphPermE6`. The permutation itself lives in another module, so
+the kernel cannot evaluate it while checking the weight table below; this table can be evaluated
+and is identified with it by `graphPermE6_apply_eq_e6GraphNode`. -/
+private def e6GraphNode : Fin 6 → Fin 6 := ![5, 1, 4, 3, 2, 0]
+
+private theorem graphPermE6_apply_eq_e6GraphNode (i : Fin 6) : graphPermE6 i = e6GraphNode i := by
+  fin_cases i <;> simp [e6GraphNode]
+
+private theorem e6MinusculeWeight_e6MinusculeGraphIndex_apply (a : Fin 27) (i : Fin 6) :
+    e6MinusculeWeight (e6MinusculeGraphIndex a) i = -e6MinusculeWeight a (e6GraphNode i) := by
+  decide +kernel +revert
+
+/-- **The diagram symmetry carries each minuscule weight to the negative of another one.** The
+symmetry exchanges `ϖ₁` and `ϖ₆`, so on representations it carries `V(ϖ₁)` to
+`V(ϖ₆) = V(ϖ₁)ˣ`, whose weights are the negatives of these. -/
+theorem e6MinusculeWeight_e6MinusculeGraphPerm_apply (a : Fin 27) (i : Fin 6) :
+    e6MinusculeWeight (e6MinusculeGraphPerm a) i = -e6MinusculeWeight a (graphPermE6 i) := by
+  rw [graphPermE6_apply_eq_e6GraphNode]
+  exact e6MinusculeWeight_e6MinusculeGraphIndex_apply a i
+
+/-- The functional form of `e6MinusculeWeight_e6MinusculeGraphPerm_apply`. -/
+theorem e6MinusculeWeight_e6MinusculeGraphPerm (a : Fin 27) :
+    e6MinusculeWeight (e6MinusculeGraphPerm a) = -(e6MinusculeWeight a ∘ graphPermE6) := by
+  funext i
+  simpa using e6MinusculeWeight_e6MinusculeGraphPerm_apply a i
+
+private theorem exists_e6MinusculeWeight_apply_ne_neg (a b : Fin 27) :
+    ∃ i, e6MinusculeWeight a i ≠ -e6MinusculeWeight b i := by
+  decide +kernel +revert
+
+private theorem e6MinusculeGraphPerm_zero : e6MinusculeGraphPerm 0 = 26 := by
+  decide +kernel
+
+/-- **The twenty-seven minuscule weights are not stable under the diagram symmetry.** The image of
+the highest weight `ϖ₁` is `ϖ₆`, which is not a weight of `V(ϖ₁)`. So a carrier built from this
+weight family alone does not inherit the diagram automorphism. -/
+theorem e6MinusculeWeight_zero_comp_graphPermE6_notMem_range :
+    e6MinusculeWeight 0 ∘ graphPermE6 ∉ range e6MinusculeWeight := by
+  rintro ⟨a, ha⟩
+  obtain ⟨i, hi⟩ := exists_e6MinusculeWeight_apply_ne_neg a 26
+  have h26 : e6MinusculeWeight 26 i = -e6MinusculeWeight 0 (graphPermE6 i) := by
+    rw [← e6MinusculeGraphPerm_zero, e6MinusculeWeight_e6MinusculeGraphPerm_apply]
+  -- The assumed witness reads `e6MinusculeWeight a i` as the image of `ϖ₁`, which `h26` reads
+  -- back as the negative of the `26`-th weight, contradicting the choice of `i`.
+  exact hi (by simp [congrFun ha i, h26])
+
+/-! ## The doubled weight family -/
+
+/-- **The fifty-four weights of the type-`E₆` representation `V(ϖ₁) ⊕ V(ϖ₆)`**, in coordinates
+given by the pairings with the six Bourbaki-numbered simple coroots. The left summand carries the
+twenty-seven minuscule weights and the right summand their negatives, which are the weights of the
+dual representation `V(ϖ₆)`. -/
+def e6DoubledMinusculeWeight : Fin 27 ⊕ Fin 27 → Fin 6 → ℤ :=
+  Sum.elim e6MinusculeWeight fun a => -e6MinusculeWeight a
+
+@[simp]
+theorem e6DoubledMinusculeWeight_inl (a : Fin 27) :
+    e6DoubledMinusculeWeight (.inl a) = e6MinusculeWeight a :=
+  (rfl)
+
+@[simp]
+theorem e6DoubledMinusculeWeight_inr (a : Fin 27) :
+    e6DoubledMinusculeWeight (.inr a) = -e6MinusculeWeight a :=
+  (rfl)
+
+/-- The doubled family is closed under negation, which exchanges its two summands. -/
+theorem neg_e6DoubledMinusculeWeight (x : Fin 27 ⊕ Fin 27) :
+    -e6DoubledMinusculeWeight x = e6DoubledMinusculeWeight (Equiv.sumComm _ _ x) := by
+  cases x <;> simp
+
+/-- **The fifty-four weights of `V(ϖ₁) ⊕ V(ϖ₆)` are pairwise distinct.** No minuscule weight is
+the negative of another, all twenty-seven of them lying in one nontrivial coset of the root
+lattice. -/
+theorem e6DoubledMinusculeWeight_injective : Function.Injective e6DoubledMinusculeWeight := by
+  have key (a b : Fin 27) : e6MinusculeWeight a ≠ -e6MinusculeWeight b := by
+    obtain ⟨i, hi⟩ := exists_e6MinusculeWeight_apply_ne_neg a b
+    exact fun h => hi (by simpa using congrFun h i)
+  rintro (a | a) (b | b) h <;>
+    simp only [e6DoubledMinusculeWeight_inl, e6DoubledMinusculeWeight_inr] at h
+  · exact congrArg Sum.inl (e6MinusculeWeight_injective h)
+  · exact absurd h (key a b)
+  · exact absurd h.symm (key b a)
+  · exact congrArg Sum.inr (e6MinusculeWeight_injective (neg_injective h))
+
+/-- The doubled minuscule weight family has fifty-four distinct members. -/
+theorem ncard_range_e6DoubledMinusculeWeight :
+    (range e6DoubledMinusculeWeight).ncard = 54 := by
+  simpa using Set.ncard_range_of_injective e6DoubledMinusculeWeight_injective
+
+/-- **The doubled minuscule weights span the full type-`E₆` character lattice.** They include the
+twenty-seven minuscule weights, which already do. -/
+theorem span_range_e6DoubledMinusculeWeight_eq_top :
+    Submodule.span ℤ (range e6DoubledMinusculeWeight) = ⊤ := by
+  refine top_unique (span_range_e6MinusculeWeight_eq_top ▸ Submodule.span_mono ?_)
+  rintro _ ⟨a, rfl⟩
+  exact ⟨.inl a, rfl⟩
+
+/-- **The permutation of the doubled index set realizing the `E₆` diagram symmetry.** It exchanges
+the two summands along `e6MinusculeGraphPerm`, which is what makes the doubled weight family
+equivariant where the minuscule family alone is not. -/
+def e6DoubledMinusculeGraphPerm : Equiv.Perm (Fin 27 ⊕ Fin 27) :=
+  (Equiv.sumCongr e6MinusculeGraphPerm e6MinusculeGraphPerm).trans (Equiv.sumComm _ _)
+
+@[simp]
+theorem e6DoubledMinusculeGraphPerm_inl (a : Fin 27) :
+    e6DoubledMinusculeGraphPerm (.inl a) = .inr (e6MinusculeGraphPerm a) :=
+  (rfl)
+
+@[simp]
+theorem e6DoubledMinusculeGraphPerm_inr (a : Fin 27) :
+    e6DoubledMinusculeGraphPerm (.inr a) = .inl (e6MinusculeGraphPerm a) :=
+  (rfl)
+
+/-- The permutation realizing the diagram symmetry on the doubled index set is an involution. -/
+@[simp]
+theorem e6DoubledMinusculeGraphPerm_apply_apply (x : Fin 27 ⊕ Fin 27) :
+    e6DoubledMinusculeGraphPerm (e6DoubledMinusculeGraphPerm x) = x := by
+  cases x <;> simp
+
+/-- **The doubled minuscule weight family is equivariant for the `E₆` diagram symmetry.** This is
+the hypothesis `wt (π i) (τ k) = wt i k` under which a numbered symmetry of a Kostant toral-closure
+carrier extends to an automorphism of the carrier, and it is what
+`e6MinusculeWeight_zero_comp_graphPermE6_notMem_range` denies to the minuscule family alone. -/
+theorem e6DoubledMinusculeWeight_e6DoubledMinusculeGraphPerm (x : Fin 27 ⊕ Fin 27) (i : Fin 6) :
+    e6DoubledMinusculeWeight (e6DoubledMinusculeGraphPerm x) i =
+      e6DoubledMinusculeWeight x (graphPermE6 i) := by
+  cases x <;> simp [e6MinusculeWeight_e6MinusculeGraphPerm_apply]
 
 end TauCeti.DynkinType
