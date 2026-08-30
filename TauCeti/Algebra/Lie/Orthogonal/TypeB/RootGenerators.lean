@@ -58,8 +58,12 @@ variable {ι : Type*} [DecidableEq ι] [Fintype ι]
 
 /-! ### Long roots -/
 
+/- The explicit matrix bodies in this file are exposed because downstream representation
+comparisons compute their action on the standard basis. -/
+
 /-- The ambient root matrix for the long type-`B` root `εᵢ - εⱼ`; the inequality witness
 excludes the degenerate zero-weight case. -/
+@[expose]
 def typeBLongRootMatrix (i j : ι) (_hij : i ≠ j) :
     Matrix (Unit ⊕ ι ⊕ ι) (Unit ⊕ ι ⊕ ι) K :=
   single (.inr (.inl i)) (.inr (.inl j)) 1 -
@@ -148,10 +152,12 @@ theorem typeBLongRootMatrix_sq (i j : ι) (hij : i ≠ j) :
 
 /-- The ambient root matrix for the short type-`B` root `εᵢ`, with the integral Chevalley
 normalization adapted to the middle coefficient `2` in `LieAlgebra.Orthogonal.JB`. -/
+@[expose]
 def typeBShortRootMatrix (i : ι) : Matrix (Unit ⊕ ι ⊕ ι) (Unit ⊕ ι ⊕ ι) K :=
   single (.inr (.inl i)) (.inl ()) 2 - single (.inl ()) (.inr (.inr i)) 1
 
 /-- The ambient root matrix for the opposite short root `-εᵢ`. -/
+@[expose]
 def typeBShortNegativeRootMatrix (i : ι) : Matrix (Unit ⊕ ι ⊕ ι) (Unit ⊕ ι ⊕ ι) K :=
   single (.inl ()) (.inr (.inl i)) 1 - single (.inr (.inr i)) (.inl ()) 2
 

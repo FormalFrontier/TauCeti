@@ -38,9 +38,10 @@ matrix. The coordinate equivalence absorbs its arbitrary square-one internal coo
 ## Roadmap
 
 This supplies the matrix-to-Clifford bridge needed by the full-weight type-`B` Chevalley carrier
-in Layer 9 of `TauCetiRoadmap/ReductiveGroups/README.md`. The next carrier step is to evaluate the
-comparison on the numbered root vectors and prove their divided powers preserve the integral
-spinor lattice.
+in Layer 9 of `TauCetiRoadmap/ReductiveGroups/README.md`. Its evaluation on the numbered root
+vectors is developed in
+`TauCeti.RepresentationTheory.Spin.Polarization.TypeB.RootGenerators`; after that, the carrier
+still needs the divided-power preservation of the integral spinor lattice.
 
 ## References
 
