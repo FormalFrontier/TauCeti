@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.RootLattice
+import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.RootLattice
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.WeightDegree
 
 /-!
@@ -22,8 +22,9 @@ only the root lattice, so the carrier is a candidate for the adjoint form rather
 connected form needed by milestone L0 of the CFSG statement roadmap. The root lattice is the whole
 character lattice exactly at a unimodular Cartan matrix, which by
 `TauCeti.DynkinType.span_range_root_eq_top_iff` happens exactly in the types `E₈`, `F₄` and `G₂`.
-The existing Geck admissible lattice therefore has the full character lattice in precisely those
-three exceptional cases, and in no other valid type.
+The weights of the existing Geck admissible lattice therefore generate the full character lattice
+in precisely those three exceptional cases, and a proper sublattice of it in every other valid
+type.
 
 This file proves only the lattice statement. Identifying the resulting group scheme as split
 reductive with the pinned root datum, and constructing suitable admissible lattices for the other
@@ -95,8 +96,9 @@ theorem span_range_geckWeight_eq_span_range_root :
 
 /-- **The pinned Geck weights generate the full character lattice exactly in the types `E₈`, `F₄`
 and `G₂`.** They generate the root lattice, which is the whole character lattice precisely at a
-unimodular Cartan matrix. In every other valid type the Geck admissible lattice is therefore too
-small for the carrier built from it to be the simply connected form. -/
+unimodular Cartan matrix. In every other valid type they generate a proper sublattice, so the
+carrier built from the Geck admissible lattice is not the simply connected form there. -/
+@[simp]
 theorem span_range_geckWeight_eq_top_iff :
     Submodule.span ℤ (Set.range (t.geckWeight ht)) = ⊤ ↔ t = E8 ∨ t = F4 ∨ t = G2 := by
   rw [span_range_geckWeight_eq_span_range_root, span_range_root_eq_top_iff]
