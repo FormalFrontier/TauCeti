@@ -103,11 +103,11 @@ theorem forkLeft_ne_forkRight : forkLeft n hn ≠ forkRight n hn := by
   simp [forkLeft, forkRight] at this
   omega
 
-private def forkBlock {K : Type*} [CommRing K] : Matrix (Fin n) (Fin n) K :=
+private def forkBlock {K : Type*} [Ring K] : Matrix (Fin n) (Fin n) K :=
   Matrix.single (forkLeft n hn) (forkRight n hn) 1 -
     Matrix.single (forkRight n hn) (forkLeft n hn) 1
 
-private theorem forkBlock_transpose {K : Type*} [CommRing K] :
+private theorem forkBlock_transpose {K : Type*} [Ring K] :
     (forkBlock (K := K) n hn).transpose = -forkBlock n hn := by
   rw [forkBlock, Matrix.transpose_sub, Matrix.transpose_single, Matrix.transpose_single]
   abel
@@ -117,7 +117,7 @@ private theorem forkBlock_transpose {K : Type*} [CommRing K] :
 
 For a chain node this is `E_{i,i+1} - E_{\bar{i+1},\bar i}`; at the fork node it is
 `E_{n-2,\bar{n-1}} - E_{n-1,\bar{n-2}}`. -/
-def raisingMatrix {K : Type*} [CommRing K] (i : Fin n) :
+def raisingMatrix {K : Type*} [Ring K] (i : Fin n) :
     Matrix (Fin n ⊕ Fin n) (Fin n ⊕ Fin n) K :=
   if hi : (i : ℕ) + 1 < n then
     let A : Matrix (Fin n) (Fin n) K := Matrix.single i (chainNext n i hi) 1
@@ -126,12 +126,12 @@ def raisingMatrix {K : Type*} [CommRing K] (i : Fin n) :
     Matrix.fromBlocks 0 (forkBlock n hn) 0 0
 
 /-- The lowering matrix is the transpose of the corresponding raising matrix. -/
-def loweringMatrix {K : Type*} [CommRing K] (i : Fin n) :
+def loweringMatrix {K : Type*} [Ring K] (i : Fin n) :
     Matrix (Fin n ⊕ Fin n) (Fin n ⊕ Fin n) K :=
   (raisingMatrix n hn i).transpose
 
 @[simp]
-theorem raisingMatrix_of_chain {K : Type*} [CommRing K] {i : Fin n}
+theorem raisingMatrix_of_chain {K : Type*} [Ring K] {i : Fin n}
     (hi : (i : ℕ) + 1 < n) :
     raisingMatrix (K := K) n hn i =
       let A : Matrix (Fin n) (Fin n) K := Matrix.single i (chainNext n i hi) 1
@@ -139,7 +139,7 @@ theorem raisingMatrix_of_chain {K : Type*} [CommRing K] {i : Fin n}
   simp [raisingMatrix, hi]
 
 @[simp]
-theorem raisingMatrix_of_fork {K : Type*} [CommRing K] {i : Fin n}
+theorem raisingMatrix_of_fork {K : Type*} [Ring K] {i : Fin n}
     (hi : ¬(i : ℕ) + 1 < n) :
     raisingMatrix (K := K) n hn i =
       let B : Matrix (Fin n) (Fin n) K :=
@@ -149,7 +149,7 @@ theorem raisingMatrix_of_fork {K : Type*} [CommRing K] {i : Fin n}
   simp [raisingMatrix, hi, forkBlock]
 
 @[simp]
-theorem loweringMatrix_of_chain {K : Type*} [CommRing K] {i : Fin n}
+theorem loweringMatrix_of_chain {K : Type*} [Ring K] {i : Fin n}
     (hi : (i : ℕ) + 1 < n) :
     loweringMatrix (K := K) n hn i =
       let A : Matrix (Fin n) (Fin n) K := Matrix.single i (chainNext n i hi) 1
@@ -158,7 +158,7 @@ theorem loweringMatrix_of_chain {K : Type*} [CommRing K] {i : Fin n}
   simp
 
 @[simp]
-theorem loweringMatrix_of_fork {K : Type*} [CommRing K] {i : Fin n}
+theorem loweringMatrix_of_fork {K : Type*} [Ring K] {i : Fin n}
     (hi : ¬(i : ℕ) + 1 < n) :
     loweringMatrix (K := K) n hn i =
       let B : Matrix (Fin n) (Fin n) K :=
@@ -580,7 +580,7 @@ private theorem lie_raisingMatrix_raisingMatrix_of_cartan_eq_zero
 
 /-- A raising generator squares to zero as an endomorphism of the standard split module. -/
 @[simp]
-theorem raisingMatrix_mul_self {K : Type*} [CommRing K] (i : Fin n) :
+theorem raisingMatrix_mul_self {K : Type*} [Ring K] (i : Fin n) :
     raisingMatrix (K := K) n hn i * raisingMatrix n hn i = 0 := by
   by_cases hi : (i : ℕ) + 1 < n
   · rw [raisingMatrix_of_chain n hn hi, Matrix.fromBlocks_multiply]
@@ -662,6 +662,8 @@ theorem lie_rootGenerator_inl_inl_of_cartan_eq_zero {K : Type*} [CommRing K]
     ⁅rootGenerator (K := K) n hn (.inl i), rootGenerator (K := K) n hn (.inl j)⁆ = 0 := by
   apply Subtype.ext
   rw [LieSubalgebra.coe_bracket, val_rootGenerator_inl, val_rootGenerator_inl]
+  -- Rewriting removes the subtype coercions but leaves the ambient bracket definition folded;
+  -- expose the matrix equality so that the private bracket lemma applies.
   change ⁅raisingMatrix n hn i, raisingMatrix n hn j⁆ = 0
   exact lie_raisingMatrix_raisingMatrix_of_cartan_eq_zero n hn i j hij
 
@@ -672,6 +674,8 @@ theorem lie_rootGenerator_inr_inr_of_cartan_eq_zero {K : Type*} [CommRing K]
     ⁅rootGenerator (K := K) n hn (.inr i), rootGenerator (K := K) n hn (.inr j)⁆ = 0 := by
   apply Subtype.ext
   rw [LieSubalgebra.coe_bracket, val_rootGenerator_inr, val_rootGenerator_inr]
+  -- As in the raising case, state the ambient matrix equality hidden by the Lie-subalgebra
+  -- bracket before applying the private bracket lemma.
   change ⁅loweringMatrix n hn i, loweringMatrix n hn j⁆ = 0
   exact lie_loweringMatrix_loweringMatrix_of_cartan_eq_zero n hn i j hij
 
@@ -685,6 +689,8 @@ theorem lie_rootGenerator_inl_lie_rootGenerator_inl {K : Type*} [CommRing K]
   apply Subtype.ext
   rw [LieSubalgebra.coe_bracket, LieSubalgebra.coe_bracket, val_rootGenerator_inl,
     val_rootGenerator_inl]
+  -- The two rewritten subtype brackets are definitionally the following nested ambient bracket;
+  -- make that bridge explicit so that the private Serre lemma applies.
   change ⁅raisingMatrix n hn i, ⁅raisingMatrix n hn i, raisingMatrix n hn j⁆⁆ = 0
   exact lie_raisingMatrix_lie_raisingMatrix n hn i j
 
@@ -698,6 +704,8 @@ theorem lie_rootGenerator_inr_lie_rootGenerator_inr {K : Type*} [CommRing K]
   apply Subtype.ext
   rw [LieSubalgebra.coe_bracket, LieSubalgebra.coe_bracket, val_rootGenerator_inr,
     val_rootGenerator_inr]
+  -- As above, expose the nested ambient matrix bracket hidden by the subtype coercions before
+  -- applying the private Serre lemma.
   change ⁅loweringMatrix n hn i, ⁅loweringMatrix n hn i, loweringMatrix n hn j⁆⁆ = 0
   exact lie_loweringMatrix_lie_loweringMatrix n hn i j
 
@@ -714,6 +722,8 @@ theorem lie_rootGenerator_inl_inr {K : Type*} [CommRing K] (i j : Fin n) :
     rw [ite_eq_left rfl, val_cartanGenerator]
     exact lie_raisingMatrix_loweringMatrix_self n hn i
   · rw [ite_eq_right hij]
+    -- Rewriting the conditional and subtype coercions leaves this ambient bracket only
+    -- definitionally visible; state it explicitly for the private off-diagonal lemma.
     change ⁅raisingMatrix n hn i, loweringMatrix n hn j⁆ = 0
     exact lie_raisingMatrix_loweringMatrix_of_ne n hn i j hij
 
@@ -738,10 +748,14 @@ theorem lie_rootGenerator_inr_inl {K : Type*} [CommRing K] (i j : Fin n) :
 
 /-- A lowering generator squares to zero as an endomorphism of the standard split module. -/
 @[simp]
-theorem loweringMatrix_mul_self {K : Type*} [CommRing K] (i : Fin n) :
+theorem loweringMatrix_mul_self {K : Type*} [Ring K] (i : Fin n) :
     loweringMatrix (K := K) n hn i * loweringMatrix n hn i = 0 := by
-  rw [loweringMatrix, ← Matrix.transpose_mul, raisingMatrix_mul_self n hn i]
-  simp
+  by_cases hi : (i : ℕ) + 1 < n
+  · rw [loweringMatrix_of_chain n hn hi, Matrix.fromBlocks_multiply]
+    have hne := ne_chainNext n i hi
+    simp [Matrix.transpose_single, Matrix.single_mul_single_of_ne, hne, hne.symm]
+  · rw [loweringMatrix_of_fork n hn hi, Matrix.fromBlocks_multiply]
+    simp
 
 /-- Every numbered type-`D` root generator squares to zero in the standard representation. -/
 @[simp]
