@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.Algebra.FiniteSupport.Basic
 public import Mathlib.Algebra.Polynomial.Laurent
 public import TauCeti.LinearAlgebra.Exact
 
@@ -148,14 +149,10 @@ theorem of_exact
 /-- A finite Laurent support is preserved by translating the degree index. -/
 theorem reindex_add (h : HasFiniteLaurentSupport k V) (r : ℤ) :
     HasFiniteLaurentSupport k (fun j => V (j + r)) := by
-  obtain ⟨s, hs⟩ := h.exists_finset
-  refine of_finset (fun j => h.finiteDimensional (j + r))
-    (s.image fun j => j - r) ?_
-  intro j hj
-  apply hs (j + r)
-  intro hmem
-  apply hj
-  exact Finset.mem_image.mpr ⟨j + r, hmem, by omega⟩
+  refine ⟨fun j => h.finiteDimensional (j + r), ?_⟩
+  exact Function.HasFiniteSupport.fun_comp_of_injective
+    (f := fun j => Module.finrank k (V j)) (g := fun j : ℤ => j + r)
+    (add_left_injective r) h.finite_finrankSupport
 
 end HasFiniteLaurentSupport
 
@@ -288,16 +285,13 @@ theorem coeff_targetShiftGradedDimension (h : HasFiniteLaurentSupport k V) (j : 
     (targetShiftGradedDimension k V h).coeff j = Module.finrank k (V (-j)) := by
   simp [targetShiftGradedDimension]
 
-/-- The target-shift dimension of a translated family is multiplied by the Laurent monomial `T r`.
-This is the coefficient-level reindexing used by graded Euler forms. -/
+/-- The target-shift dimension of a translated family is multiplied by the
+Laurent monomial `T r`. -/
 theorem targetShiftGradedDimension_reindex_add (h : HasFiniteLaurentSupport k V) (r : ℤ) :
     targetShiftGradedDimension k (fun j => V (j + r)) (h.reindex_add r) =
       T r * targetShiftGradedDimension k V h := by
-  ext j
-  simp only [T, coeff_targetShiftGradedDimension,
-    AddMonoidAlgebra.coeff_single_mul_apply, one_mul]
-  have harg : -j + r = -(-r + j) := by omega
-  rw [harg]
+  simp only [targetShiftGradedDimension]
+  rw [gradedDimension_reindex_add h r, map_mul, invert_T, neg_neg]
 
 /-- The support of the target-shift graded dimension is the negation of the set of degrees with
 nonzero dimension. -/
