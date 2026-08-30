@@ -142,7 +142,6 @@ theorem diagramPerm_eq_one (d : TypeCLieIndex) : d.toGraphTwistedIndex.diagramPe
     simpa only [toGraphTwistedIndex] using GraphTwistedIndex.diagramPerm_C hvalid
 
 /-- The diagram permutation of an untwisted type-`C` index fixes each simple root. -/
-@[simp]
 theorem diagramPerm_apply (d : TypeCLieIndex) (i : Fin d.1.rank) :
     d.toGraphTwistedIndex.diagramPerm i = i := by
   rw [diagramPerm_eq_one]
