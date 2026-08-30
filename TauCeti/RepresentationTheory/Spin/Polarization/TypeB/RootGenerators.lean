@@ -95,6 +95,9 @@ so the spinor lattice rather than the adjoint one.
 * R. W. Carter, *Simple Groups of Lie Type*, Section 4.2, for the integral normalization of the
   short-root operators.
 * N. Bourbaki, *Groupes et algèbres de Lie*, Chapters 4--6, Planche II, for the numbering.
+* The basis-extensionality proof architecture is adapted from
+  `SpinPolarizationData.typeDQuadraticEquiv_typeDDiagonalMatrix_single` in
+  [`TauCeti.RepresentationTheory.Spin.Polarization.TypeD.Basic`](https://github.com/TauCetiProject/TauCeti/blob/main/TauCeti/RepresentationTheory/Spin/Polarization/TypeD/Basic.lean).
 -/
 
 public section
