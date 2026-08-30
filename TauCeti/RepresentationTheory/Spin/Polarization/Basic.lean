@@ -232,7 +232,7 @@ theorem polar_dualVector (i j : ι) :
 /-- The dual vectors pair with the basis of `W` by the Kronecker delta, with the arguments in
 the opposite order from `polar_dualVector`. -/
 @[simp]
-theorem polar_dualVector_comm (i j : ι) :
+theorem polar_dualVector_left (i j : ι) :
     QuadraticMap.polar Q (P.dualVector b i : V) (b j : V) = if j = i then 1 else 0 := by
   rw [QuadraticMap.polar_comm, P.polar_dualVector]
 

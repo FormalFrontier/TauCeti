@@ -167,53 +167,9 @@ theorem typeDSimpleCorootBivector_def (hn : 2 ≤ n) (i : Fin n) :
           ι Q (b ⟨n - 1, by omega⟩ : V) * ι Q (P.dualVector b ⟨n - 1, by omega⟩ : V) - 1 :=
   (rfl)
 
-/-- The commutator of a product of two Clifford generators with a third generator. -/
-private theorem lie_ι_mul_ι_ι (x y z : V) :
-    ⁅ι Q x * ι Q y, ι Q z⁆ =
-      polar Q y z • ι Q x - polar Q x z • ι Q y := by
-  rw [Ring.lie_def]
-  calc
-    ι Q x * ι Q y * ι Q z - ι Q z * (ι Q x * ι Q y) =
-        ι Q x * ι Q y * ι Q z -
-          (algebraMap K (CliffordAlgebra Q) (polar Q z x) - ι Q x * ι Q z) * ι Q y := by
-            rw [show ι Q z * (ι Q x * ι Q y) = (ι Q z * ι Q x) * ι Q y by
-              rw [mul_assoc], ι_mul_ι_comm (Q := Q) z x]
-    _ = ι Q x * ι Q y * ι Q z -
-          algebraMap K (CliffordAlgebra Q) (polar Q z x) * ι Q y +
-          ι Q x * (ι Q z * ι Q y) := by noncomm_ring
-    _ = ι Q x * ι Q y * ι Q z -
-          algebraMap K (CliffordAlgebra Q) (polar Q z x) * ι Q y +
-          ι Q x * (algebraMap K (CliffordAlgebra Q) (polar Q z y) - ι Q y * ι Q z) := by
-            rw [ι_mul_ι_comm (Q := Q) z y]
-    _ = polar Q y z • ι Q x - polar Q x z • ι Q y := by
-      have hyz : polar Q y z = polar Q z y := polar_comm Q y z
-      have hxz : polar Q x z = polar Q z x := polar_comm Q x z
-      rw [hyz, hxz]
-      simp only [mul_sub, Algebra.smul_def, ← Algebra.commutes (polar Q z y) (ι Q x)]
-      noncomm_ring
-
-/-- The commutator of two products of Clifford generators, in a form that does not divide by
-`2`. This is the common calculation behind all integral type-`D` Serre relations. -/
-theorem lie_ι_mul_ι_ι_mul_ι (x y z w : V) :
-    ⁅ι Q x * ι Q y, ι Q z * ι Q w⁆ =
-      polar Q z y • (ι Q x * ι Q w) -
-        polar Q z x • (ι Q y * ι Q w) +
-        polar Q w y • (ι Q z * ι Q x) -
-        polar Q x w • (ι Q z * ι Q y) := by
-  calc
-    ⁅ι Q x * ι Q y, ι Q z * ι Q w⁆ =
-        ⁅ι Q x * ι Q y, ι Q z⁆ * ι Q w +
-          ι Q z * ⁅ι Q x * ι Q y, ι Q w⁆ := by
-            simp only [Ring.lie_def]
-            noncomm_ring
-    _ = _ := by
-      rw [lie_ι_mul_ι_ι, lie_ι_mul_ι_ι]
-      simp only [sub_mul, mul_sub, smul_mul_assoc, mul_smul_comm]
-      rw [polar_comm Q y z, polar_comm Q x z, polar_comm Q y w]
-      abel
-
 /-- Positive and negative type-`D` simple-root representatives have the standard Chevalley
 normalization over an arbitrary commutative base ring. -/
+@[simp]
 theorem lie_typeDSimpleRootBivector_typeDSimpleNegativeRootBivector (hn : 2 ≤ n) (i : Fin n) :
     ⁅P.typeDSimpleRootBivector b hn i, P.typeDSimpleNegativeRootBivector b hn i⁆ =
       P.typeDSimpleCorootBivector b hn i := by
