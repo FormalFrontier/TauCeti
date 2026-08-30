@@ -100,9 +100,11 @@ noncomputable def typeBSpinRep :
 Clifford element. -/
 @[simp]
 theorem typeBSpinRep_ι (x : LieAlgebra.Orthogonal.typeB (Fin (n + 1)) ℚ) :
-    P.typeBSpinRep b z hz (_root_.UniversalEnvelopingAlgebra.ι ℚ x) =
+    P.typeBSpinRep b z hz
+        (_root_.UniversalEnvelopingAlgebra.mkAlgHom ℚ
+          (LieAlgebra.Orthogonal.typeB (Fin (n + 1)) ℚ) (TensorAlgebra.ι ℚ x)) =
       spinAction Q P (P.typeBQuadraticEquiv b z hz x : CliffordAlgebra Q) := by
-  rw [typeBSpinRep, _root_.UniversalEnvelopingAlgebra.lift_ι_apply,
+  rw [typeBSpinRep, _root_.UniversalEnvelopingAlgebra.lift_ι_apply',
     typeBSpinLieRep, LieHom.comp_apply, LieHom.comp_apply, LieSubalgebra.coe_incl,
     AlgHom.toLieHom_apply]
   rfl
@@ -134,7 +136,7 @@ private theorem typeBQuadraticEquiv_typeBSimpleNegativeRootGenerator_mul_self
 theorem typeBSpinRep_rootGenerator_sq (k : Fin (n + 1) ⊕ Fin (n + 1)) :
     P.typeBSpinRep b z hz
         (_root_.UniversalEnvelopingAlgebra.ι ℚ (typeBRootGenerator k)) ^ 2 = 0 := by
-  rw [P.typeBSpinRep_ι b z hz, pow_two, ← map_mul]
+  rw [_root_.UniversalEnvelopingAlgebra.ι_apply, P.typeBSpinRep_ι b z hz, pow_two, ← map_mul]
   cases k with
   | inl i =>
       rw [typeBRootGenerator_inl, ← pow_two,
@@ -177,7 +179,7 @@ theorem typeBSpinRep_rootGenerator_apply_mem_integralLattice
     P.typeBSpinRep b z hz
         (_root_.UniversalEnvelopingAlgebra.ι ℚ (typeBRootGenerator k)) v ∈
       TauCeti.ExteriorAlgebra.integralLattice b := by
-  rw [P.typeBSpinRep_ι b z hz]
+  rw [_root_.UniversalEnvelopingAlgebra.ι_apply, P.typeBSpinRep_ι b z hz]
   cases k with
   | inl i =>
       exact (P.mem_integralSpinActionSubring b).mp
@@ -200,11 +202,10 @@ def typeBSpinCorootWeight (s : Finset (Fin (n + 1))) (i : Fin (n + 1)) : ℤ :=
 @[simp]
 theorem typeBSpinRep_coroot_exteriorBasis
     (i : Fin (n + 1)) (s : Finset (Fin (n + 1))) :
-    P.typeBSpinRep b z hz
-        (_root_.UniversalEnvelopingAlgebra.ι ℚ (typeBSimpleCorootGenerator i))
+    spinAction Q P
+        (P.typeBQuadraticEquiv b z hz (typeBSimpleCorootGenerator i) : CliffordAlgebra Q)
         (b.ExteriorAlgebra s) =
       (typeBSpinCorootWeight s i : ℚ) • b.ExteriorAlgebra s := by
-  rw [P.typeBSpinRep_ι b z hz]
   refine Fin.lastCases ?_ (fun j ↦ ?_) i
   · rw [typeBSimpleCorootGenerator_last,
       P.spinAction_typeBQuadraticEquiv_typeBShortCorootGenerator_basis b z hz]
@@ -225,11 +226,14 @@ theorem typeBSpinRep_ringChoose_coroot_apply_mem_integralLattice
           (typeBSimpleCorootGenerator i)) m) v ∈
       TauCeti.ExteriorAlgebra.integralLattice b := by
   rw [Ring.map_choose]
+  simp only [_root_.UniversalEnvelopingAlgebra.ι_apply]
   refine TauCeti.ExteriorAlgebra.map_mem_integralLattice b
     ((Ring.choose (P.typeBSpinRep b z hz
-      (_root_.UniversalEnvelopingAlgebra.ι ℚ (typeBSimpleCorootGenerator i))) m).restrictScalars ℤ)
+      (_root_.UniversalEnvelopingAlgebra.mkAlgHom ℚ
+        (LieAlgebra.Orthogonal.typeB (Fin (n + 1)) ℚ)
+        (TensorAlgebra.ι ℚ (typeBSimpleCorootGenerator i)))) m).restrictScalars ℤ)
     (fun s ↦ ?_) hv
-  rw [LinearMap.restrictScalars_apply]
+  rw [LinearMap.restrictScalars_apply, P.typeBSpinRep_ι b z hz]
   rw [TauCeti.ringChoose_end_apply_of_apply_eq_smul
       (P.typeBSpinRep_coroot_exteriorBasis b z hz i s),
     Ring.choose_intCast, Int.cast_smul_eq_zsmul ℚ]
