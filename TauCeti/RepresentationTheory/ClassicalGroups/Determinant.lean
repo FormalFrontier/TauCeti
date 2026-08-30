@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.LinearAlgebra.Matrix.SpecialLinearGroup
-public import Mathlib.RepresentationTheory.Character
 public import TauCeti.RepresentationTheory.LinearCharacter
 
 /-!
@@ -43,7 +42,7 @@ variable [CommRing k]
 /-- The one-dimensional representation of `GL n k` on which `g` acts by `det(g)^m`. This is the
 representation carrying the linear character `det ^ m`. -/
 def detPowerRep (m : ℤ) : Representation k (GL (Fin n) k) k :=
-  Representation.ofLinearChar (Matrix.GeneralLinearGroup.det ^ m)
+  Representation.ofLinearCharacter ((Matrix.GeneralLinearGroup.det : GL (Fin n) k →* kˣ) ^ m)
 
 /-- The determinant representation of `GL n k`. -/
 abbrev detRep : Representation k (GL (Fin n) k) k := detPowerRep k n 1
@@ -52,7 +51,7 @@ abbrev detRep : Representation k (GL (Fin n) k) k := detPowerRep k n 1
 @[simp]
 theorem detPowerRep_apply (m : ℤ) (g : GL (Fin n) k) (x : k) :
     detPowerRep k n m g x = (↑((Matrix.GeneralLinearGroup.det g) ^ m) : k) * x :=
-  Representation.ofLinearChar_apply _ g x
+  Representation.ofLinearCharacter_apply _ g x
 
 /-- The zero determinant power is the trivial representation. -/
 @[simp]
@@ -84,7 +83,7 @@ theorem detPowerRep_comp_toGL (m : ℤ) : (detPowerRep k n m).comp Matrix.Specia
 
 /-- The determinant-power representation as a finite-dimensional representation. -/
 noncomputable abbrev detPowerFDRep (m : ℤ) : FDRep k (GL (Fin n) k) :=
-  FDRep.ofLinearChar (Matrix.GeneralLinearGroup.det ^ m)
+  FDRep.ofLinearCharacter (Matrix.GeneralLinearGroup.det ^ m)
 
 /-- The determinant representation as a finite-dimensional representation. -/
 noncomputable abbrev detFDRep : FDRep k (GL (Fin n) k) :=
@@ -104,17 +103,17 @@ theorem detPowerRep_neg_apply (m : ℤ) (g : GL (Fin n) k) (x : k) :
 /-- The character of the determinant-power representation is the corresponding determinant power. -/
 @[simp]
 theorem char_detPowerRep (m : ℤ) (g : GL (Fin n) k) :
-    (detPowerRep k n m).character g = (↑((Matrix.GeneralLinearGroup.det g) ^ m) : k) :=
-  Representation.character_ofLinearChar _ g
+    (detPowerRep k n m).character g = (↑((Matrix.GeneralLinearGroup.det g) ^ m) : k) := by
+  exact Representation.char_ofLinearCharacter _ g
 
 /-- The bundled determinant-power character is the corresponding determinant power.
 
 This is deliberately not a `simp` lemma: `TauCeti.detPowerFDRep` is a reducible abbreviation for
-`TauCeti.FDRep.ofLinearChar (det ^ m)`, so `TauCeti.FDRep.character_ofLinearChar` already reduces
+`FDRep.ofLinearCharacter (det ^ m)`, so `FDRep.char_ofLinearCharacter` already reduces
 its left-hand side. -/
 theorem char_detPowerFDRep (m : ℤ) (g : GL (Fin n) k) :
     (detPowerFDRep k n m).character g = (↑((Matrix.GeneralLinearGroup.det g) ^ m) : k) :=
-  FDRep.character_ofLinearChar _ g
+  FDRep.char_ofLinearCharacter _ g
 
 /-- The bundled determinant character is the determinant. -/
 theorem char_detFDRep (g : GL (Fin n) k) :

@@ -12,12 +12,12 @@ public import TauCeti.RepresentationTheory.LinearCharacter
 # Inducing a linear character from a normal subgroup
 
 Let `N` be a normal subgroup of a finite group `G` and let `χ : N →* kˣ` be a linear character,
-carried by the one-dimensional representation `TauCeti.FDRep.ofLinearChar χ`.  The Mackey
+carried by the one-dimensional representation `FDRep.ofLinearCharacter χ`.  The Mackey
 irreducibility criterion for a normal subgroup, `TauCeti.simple_indFDRep_iff_of_normal`, asks that
 the representation be irreducible -- automatic here, a line having no proper nonzero
 subrepresentation -- and that no conjugate `{}^s (χ)` for `s ∉ N` be isomorphic to `χ`.  On a line
 that second condition is an identity in `N →* kˣ`, because a one-dimensional representation is
-determined by the scalar it acts by: `TauCeti.FDRep.nonempty_iso_ofLinearChar_iff`.  The criterion
+determined by the scalar it acts by: `FDRep.nonempty_iso_ofLinearCharacter_iff`.  The criterion
 therefore becomes elementary group theory: `Ind_N^G χ` is irreducible exactly when **no element
 outside `N` stabilizes `χ`**, that is, when for every `s ∉ N` there is an `x ∈ N` with
 `χ (s x s⁻¹) ≠ χ x`.
@@ -35,11 +35,11 @@ normal subgroup `A₃` does induce irreducibly.
 
 ## Main statements
 
-* `TauCeti.conjNormalFDRep_ofLinearChar`: conjugating a one-dimensional representation conjugates
-  its linear character, as an equality of objects.
-* `TauCeti.simple_indFDRep_ofLinearChar_iff`: **the Mackey criterion for an induced linear
+* `TauCeti.conjNormalFDRep_ofLinearCharacter`: conjugating a one-dimensional representation
+  conjugates its linear character, as an equality of objects.
+* `TauCeti.simple_indFDRep_ofLinearCharacter_iff`: **the Mackey criterion for an induced linear
   character** -- `Ind_N^G χ` is irreducible exactly when no element outside `N` stabilizes `χ`.
-* `TauCeti.simple_indFDRep_ofLinearChar_iff_centralizer_le`: for a faithful `χ`, exactly when
+* `TauCeti.simple_indFDRep_ofLinearCharacter_iff_centralizer_le`: for a faithful `χ`, exactly when
   `C_G(N) ≤ N`.
 
 ## References
@@ -66,18 +66,18 @@ variable {k G : Type u} [Field k] [Group G] {N : Subgroup G} [N.Normal]
 /-- **Conjugating a one-dimensional representation conjugates its linear character.**  Both sides
 are the line `k` with `x : N` acting by the scalar `χ (g⁻¹ x g)`, so this is an equality of
 objects of `FDRep k N`, not merely an isomorphism. -/
-theorem conjNormalFDRep_ofLinearChar (g : G) (χ : N →* kˣ) :
-    conjNormalFDRep g (FDRep.ofLinearChar χ) =
-      FDRep.ofLinearChar (χ.comp (MulAut.conjNormal g⁻¹ : MulAut N).toMonoidHom) :=
-  FDRep.actionRes_obj_ofLinearChar _ _
+theorem conjNormalFDRep_ofLinearCharacter (g : G) (χ : N →* kˣ) :
+    conjNormalFDRep g (FDRep.ofLinearCharacter χ) =
+      FDRep.ofLinearCharacter (χ.comp (MulAut.conjNormal g⁻¹ : MulAut N).toMonoidHom) :=
+  FDRep.actionRes_obj_ofLinearCharacter _ _
 
 /-- **A conjugate of a one-dimensional representation is isomorphic to it exactly when the
 conjugated linear character is the same one.**  There is no room for anything but an equality of
 scalars: a line is determined by the character it carries. -/
-theorem nonempty_iso_conjNormalFDRep_ofLinearChar_iff (g : G) (χ : N →* kˣ) :
-    Nonempty (conjNormalFDRep g (FDRep.ofLinearChar (k := k) χ) ≅ FDRep.ofLinearChar χ) ↔
+theorem nonempty_iso_conjNormalFDRep_ofLinearCharacter_iff (g : G) (χ : N →* kˣ) :
+    Nonempty (conjNormalFDRep g (FDRep.ofLinearCharacter (k := k) χ) ≅ FDRep.ofLinearCharacter χ) ↔
       ∀ x : N, χ (MulAut.conjNormal g⁻¹ x) = χ x := by
-  rw [conjNormalFDRep_ofLinearChar, FDRep.nonempty_iso_ofLinearChar_iff]
+  rw [conjNormalFDRep_ofLinearCharacter, FDRep.nonempty_iso_ofLinearCharacter_iff]
   exact DFunLike.ext_iff
 
 section Criterion
@@ -91,12 +91,12 @@ irreducible exactly when **no element of `G` outside `N` stabilizes `χ`**: for 
 
 The irreducibility of `χ` itself, which the general criterion also asks for, is automatic: a line
 has no proper nonzero subrepresentation. -/
-theorem simple_indFDRep_ofLinearChar_iff (χ : N →* kˣ) :
-    Simple (indFDRep (FDRep.ofLinearChar (k := k) χ)) ↔
+theorem simple_indFDRep_ofLinearCharacter_iff (χ : N →* kˣ) :
+    Simple (indFDRep (FDRep.ofLinearCharacter (k := k) χ)) ↔
       ∀ s ∉ N, ∃ x : N, χ (MulAut.conjNormal s x) ≠ χ x := by
   rw [simple_indFDRep_iff_of_normal]
-  simp only [not_nonempty_iff.symm, nonempty_iso_conjNormalFDRep_ofLinearChar_iff, not_forall,
-    and_iff_right (FDRep.simple_ofLinearChar χ)]
+  simp only [not_nonempty_iff.symm, nonempty_iso_conjNormalFDRep_ofLinearCharacter_iff, not_forall,
+    and_iff_right (FDRep.simple_ofLinearCharacter χ)]
   -- The general criterion conjugates by `s⁻¹`; reindex over the complement of `N`, which is
   -- closed under inversion.
   exact ⟨fun h s hs => by simpa using h s⁻¹ (fun hc => hs (by simpa using inv_mem hc)),
@@ -106,10 +106,11 @@ theorem simple_indFDRep_ofLinearChar_iff (χ : N →* kˣ) :
 centralizer of that subgroup is no bigger than the subgroup.**  Faithfulness turns the Mackey
 condition `χ (s x s⁻¹) ≠ χ x` into `s x s⁻¹ ≠ x`, so all reference to `χ` disappears and only the
 position of `N` inside `G` is left. -/
-theorem simple_indFDRep_ofLinearChar_iff_centralizer_le {χ : N →* kˣ}
+theorem simple_indFDRep_ofLinearCharacter_iff_centralizer_le {χ : N →* kˣ}
     (hχ : Function.Injective χ) :
-    Simple (indFDRep (FDRep.ofLinearChar (k := k) χ)) ↔ Subgroup.centralizer (N : Set G) ≤ N := by
-  rw [simple_indFDRep_ofLinearChar_iff]
+    Simple (indFDRep (FDRep.ofLinearCharacter (k := k) χ)) ↔
+      Subgroup.centralizer (N : Set G) ≤ N := by
+  rw [simple_indFDRep_ofLinearCharacter_iff]
   constructor
   · intro h s hs
     by_contra hsN

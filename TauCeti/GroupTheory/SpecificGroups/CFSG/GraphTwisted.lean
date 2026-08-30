@@ -45,9 +45,10 @@ pinned group; and its order is the superscript in the printed family name, recor
 
 * `TauCeti.GraphTwistedIndex.cartanMatrix_diagramPerm`: the permutation attached to an index is an
   automorphism of the Cartan matrix of its underlying Dynkin diagram.
-* `TauCeti.GraphTwistedIndex.diagramPerm_pow_twistOrder` and
-  `TauCeti.GraphTwistedIndex.orderOf_diagramPerm`: the twist order annihilates the permutation, and
-  is exactly its order.
+* `TauCeti.GraphTwistedIndex.diagramPerm_pow_twistOrder`,
+  `TauCeti.GraphTwistedIndex.orderOf_diagramPerm` and
+  `TauCeti.GraphTwistedIndex.twistOrder_pos`: the twist order annihilates the permutation, is
+  exactly its order, and is positive.
 
 ## Roadmap
 
@@ -316,6 +317,12 @@ map of the form `γ ∘ Frob_q`. -/
     d.diagramPerm ^ d.twistOrder = 1 := by
   rw [← orderOf_diagramPerm d]
   exact pow_orderOf_eq_one d.diagramPerm
+
+/-- The twist order of an index is positive, being the order of a permutation of a finite set. It is
+`1`, `2` or `3`, and never `0`. -/
+theorem twistOrder_pos (d : GraphTwistedIndex) : 0 < d.twistOrder := by
+  rw [← orderOf_diagramPerm d]
+  exact orderOf_pos d.diagramPerm
 
 end GraphTwistedIndex
 

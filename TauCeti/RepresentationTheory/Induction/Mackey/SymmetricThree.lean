@@ -28,11 +28,11 @@ about the representation at all. The decomposition `sgn ⊕ standard` itself is 
 From the *normal* subgroup `A₃`, on the other hand, every **faithful** linear character induces
 irreducibly, producing the two-dimensional irreducible of `S₃`. Here the normal-subgroup Mackey
 criterion, read on a linear character by
-`TauCeti.simple_indFDRep_ofLinearChar_iff_centralizer_le`, reduces the question to whether anything
-outside `A₃` centralizes `A₃`, and nothing does. A faithful linear character exists because `A₃`
-is cyclic of order three and the coefficient field has enough roots of unity for the exponent of
-`A₃` -- which an algebraically closed field of characteristic zero does, having a primitive cube
-root of unity.
+`TauCeti.simple_indFDRep_ofLinearCharacter_iff_centralizer_le`, reduces the question to whether
+anything outside `A₃` centralizes `A₃`, and nothing does. A faithful linear character exists
+because `A₃` is cyclic of order three and the coefficient field has enough roots of unity for the
+exponent of `A₃` -- which an algebraically closed field of characteristic zero does, having a
+primitive cube root of unity.
 
 `S₃` is realized as `Equiv.Perm (Fin 3)`, the two-element subgroup as the point stabilizer
 `MulAction.stabilizer (Equiv.Perm (Fin 3)) a` -- which
@@ -47,9 +47,9 @@ is what makes it a *worked* example rather than a further piece of theory.
 
 * `TauCeti.not_simple_indFDRep_stabilizer_perm_fin_three`: **nothing induced from a point
   stabilizer of `S₃` is irreducible**, in particular not the roadmap's linear characters.
-* `TauCeti.simple_indFDRep_ofLinearChar_alternatingGroup_fin_three`: **a faithful linear character
-  of `A₃` induces irreducibly to `S₃`**.
-* `TauCeti.finrank_indFDRep_ofLinearChar_alternatingGroup_fin_three`: what it induces to is
+* `TauCeti.simple_indFDRep_ofLinearCharacter_alternatingGroup_fin_three`: **a faithful linear
+  character of `A₃` induces irreducibly to `S₃`**.
+* `TauCeti.finrank_indFDRep_ofLinearCharacter_alternatingGroup_fin_three`: what it induces to is
   two-dimensional, so this is the two-dimensional irreducible of `S₃`.
 * `TauCeti.exists_monoidHom_alternatingGroup_fin_three_injective`: a faithful linear character of
   `A₃` exists, so the previous two statements are not vacuous.
@@ -91,20 +91,20 @@ theorem not_simple_indFDRep_stabilizer_perm_fin_three (a : Fin 3)
 /-- **A faithful linear character of `A₃` induces irreducibly to `S₃`.** `A₃` is normal, so the
 Mackey criterion for an induced linear character asks only that nothing outside `A₃` centralize
 `A₃`, which is `TauCeti.centralizer_alternatingGroup_fin_three_le`. -/
-theorem simple_indFDRep_ofLinearChar_alternatingGroup_fin_three
+theorem simple_indFDRep_ofLinearCharacter_alternatingGroup_fin_three
     {χ : alternatingGroup (Fin 3) →* kˣ} (hχ : Function.Injective χ) :
-    Simple (indFDRep (FDRep.ofLinearChar (k := k) χ)) :=
-  (simple_indFDRep_ofLinearChar_iff_centralizer_le hχ).mpr
+    Simple (indFDRep (FDRep.ofLinearCharacter (k := k) χ)) :=
+  (simple_indFDRep_ofLinearCharacter_iff_centralizer_le hχ).mpr
     centralizer_alternatingGroup_fin_three_le
 
 omit [IsAlgClosed k] [CharZero k] in
 /-- **What a linear character of `A₃` induces to is two-dimensional**, `A₃` having index two in
-`S₃`. Together with `TauCeti.simple_indFDRep_ofLinearChar_alternatingGroup_fin_three` this is the
-roadmap's two-dimensional irreducible of `S₃`. -/
-theorem finrank_indFDRep_ofLinearChar_alternatingGroup_fin_three
+`S₃`. Together with `TauCeti.simple_indFDRep_ofLinearCharacter_alternatingGroup_fin_three` this is
+the roadmap's two-dimensional irreducible of `S₃`. -/
+theorem finrank_indFDRep_ofLinearCharacter_alternatingGroup_fin_three
     (χ : alternatingGroup (Fin 3) →* kˣ) :
-    Module.finrank k (indFDRep (FDRep.ofLinearChar (k := k) χ)) = 2 := by
-  rw [finrank_indFDRep, FDRep.finrank_ofLinearChar, mul_one, alternatingGroup.index_eq_two]
+    Module.finrank k (indFDRep (FDRep.ofLinearCharacter (k := k) χ)) = 2 := by
+  rw [finrank_indFDRep, FDRep.finrank_ofLinearCharacter, mul_one, alternatingGroup.index_eq_two]
 
 omit [IsAlgClosed k] [CharZero k] in
 /-- **`A₃` has a faithful linear character** over any field with enough roots of unity for the

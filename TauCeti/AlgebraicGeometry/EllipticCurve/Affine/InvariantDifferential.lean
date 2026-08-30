@@ -8,6 +8,7 @@ module
 public import Mathlib.AlgebraicGeometry.EllipticCurve.Affine.Point
 public import Mathlib.RingTheory.Kaehler.Polynomial
 public import Mathlib.RingTheory.Unramified.Field
+import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.FunctionField.GenericPoint
 
 /-!
 # The invariant differential of an elliptic curve
@@ -208,23 +209,6 @@ theorem invariantDifferentialDenom_ne_zero [E.IsElliptic] :
 
 /-! ### The differential of `x` is nonzero -/
 
-/-- `F[X] → K(E)` is injective: a nonzero polynomial cannot be a multiple of `W`, whose degree
-in `Y` is two, and `F[E] → K(E)` is injective. -/
-private lemma algebraMap_polynomial_injective :
-    Function.Injective (algebraMap (Polynomial F) E.FunctionField) := by
-  rw [IsScalarTower.algebraMap_eq (Polynomial F) E.CoordinateRing E.FunctionField]
-  refine (IsFractionRing.injective E.CoordinateRing E.FunctionField).comp ?_
-  intro p q (h : algebraMap _ E.CoordinateRing p = algebraMap _ E.CoordinateRing q)
-  by_contra hpq
-  have h' : algebraMap (Polynomial F) E.CoordinateRing (p - q) = 0 := by
-    rw [map_sub, sub_eq_zero, h]
-  have hle := Polynomial.natDegree_le_of_dvd (AdjoinRoot.mk_eq_zero.mp h')
-    (Polynomial.C_ne_zero.mpr (sub_ne_zero.mpr hpq))
-  have hC : (algebraMap (Polynomial F) (Polynomial (Polynomial F)) (p - q)).natDegree = 0 :=
-    Polynomial.natDegree_C _
-  rw [natDegree_polynomial] at hle
-  omega
-
 /-- Evaluating a polynomial at `x` in `K(E)` is applying `algebraMap` to it. -/
 private lemma aeval_algebraMap_X (p : Polynomial F) :
     Polynomial.aeval (algebraMap (Polynomial F) E.FunctionField Polynomial.X) p =
@@ -233,13 +217,6 @@ private lemma aeval_algebraMap_X (p : Polynomial F) :
     (IsScalarTower.toAlgHom F (Polynomial F) E.FunctionField) Polynomial.X
   rw [Polynomial.aeval_X_left, AlgHom.comp_id] at h
   exact DFunLike.congr_fun h p
-
-/-- `x` is transcendental over `F`. -/
-private lemma not_isAlgebraic_X :
-    ¬ IsAlgebraic F (algebraMap (Polynomial F) E.FunctionField Polynomial.X) := by
-  rintro ⟨p, hp_ne, hp_eval⟩
-  exact hp_ne (algebraMap_polynomial_injective E
-    (((aeval_algebraMap_X E p).symm.trans hp_eval).trans (map_zero _).symm))
 
 /-- If `D x = 0` then `D` kills every polynomial in `x`. -/
 private lemma D_algebraMap_polynomial
@@ -370,7 +347,9 @@ theorem D_X_ne_zero [E.IsElliptic] :
     exact D_eq_zero E hDx s
   have hFU : Algebra.FormallyUnramified F E.FunctionField := ⟨hΩ⟩
   have hSep := (Algebra.FormallyUnramified.iff_isSeparable F E.FunctionField).mp hFU
-  exact not_isAlgebraic_X E ((Algebra.IsSeparable.isAlgebraic F E.FunctionField).isAlgebraic _)
+  apply transcendental_genericX E
+  rw [genericX_eq_algebraMap]
+  exact (Algebra.IsSeparable.isAlgebraic F E.FunctionField).isAlgebraic _
 
 /-! ### The invariant differential -/
 
