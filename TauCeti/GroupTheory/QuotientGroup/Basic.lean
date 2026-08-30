@@ -19,6 +19,9 @@ coset for that action, and, for the trivial subgroup, the compatibility of the i
 The stabilizer of the coset `sH` is the conjugate subgroup `sHs⁻¹`
 (`TauCeti.stabilizer_quotientGroup_mk`); this is Mathlib's `MulAction.stabilizer_quotient`, which
 covers the trivial coset, transported along `MulAction.stabilizer_smul_eq_stabilizer_map_conj`.
+Read on elements, it says that `g` fixes `sH` exactly when `s⁻¹ g s` lies in `H`
+(`TauCeti.smul_quotientGroup_mk_eq_self_iff`), which is the form a fixed-coset count is checked
+in.
 
 The cosets of `⊥` in a group `G` are the elements of `G`, and Mathlib's
 `QuotientGroup.quotientBot` is that identification.  The identification is equivariant for left
@@ -27,6 +30,8 @@ translation, and the only element of `G` fixing a coset of `⊥` is the identity
 ## Main statements
 
 * `TauCeti.stabilizer_quotientGroup_mk`: the stabilizer of `sH` in `G` is `sHs⁻¹`.
+* `TauCeti.smul_quotientGroup_mk_eq_self_iff`: `g` fixes the coset `sH` exactly when `s⁻¹ g s`
+  lies in `H`.
 * `TauCeti.quotientBot_equivariant`: `QuotientGroup.quotientBot` intertwines left translation on
   `G ⧸ ⊥` with left translation in `G`.
 * `TauCeti.quotientBot_smul_eq_self_iff`: a group element fixes a coset of the trivial subgroup
@@ -56,6 +61,17 @@ theorem stabilizer_quotientGroup_mk (H : Subgroup G) (s : G) :
   ext x
   rw [Subgroup.mem_map_equiv, Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ← map_inv,
     MulAut.smul_def, MulAut.conj_symm_apply, MulAut.conj_apply, inv_inv]
+
+/-- **A group element fixes the coset `sH` exactly when its conjugate `s⁻¹gs` lies in `H`.**  This
+is `TauCeti.stabilizer_quotientGroup_mk` read on elements.
+
+Not a `simp` lemma: `MulAction.Quotient.smul_coe` rewrites the translation inside the left-hand
+side first, so the left-hand side is not in `simp`-normal form. -/
+theorem smul_quotientGroup_mk_eq_self_iff (H : Subgroup G) (g s : G) :
+    g • (s : G ⧸ H) = s ↔ s⁻¹ * g * s ∈ H := by
+  rw [← mem_stabilizer_iff, stabilizer_quotientGroup_mk,
+    Subgroup.mem_pointwise_smul_iff_inv_smul_mem, ← map_inv, MulAut.smul_def, MulAut.conj_apply]
+  simp
 
 /-- Left translation on the cosets of the trivial subgroup is left translation in the group.
 

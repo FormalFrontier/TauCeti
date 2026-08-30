@@ -8,7 +8,7 @@ module
 public import Mathlib.Analysis.Convex.StdSimplex
 public import Mathlib.Probability.ProbabilityMassFunction.Integrals
 public import Mathlib.Topology.Sion
-public import TauCeti.MeasureTheory.OptimalTransport.CTransform
+public import TauCeti.MeasureTheory.OptimalTransport.CTransform.Basic
 public import TauCeti.MeasureTheory.OptimalTransport.Duality.Basic
 public import TauCeti.MeasureTheory.OptimalTransport.Finite.TransportMatrix
 
@@ -62,6 +62,8 @@ codomain: the inner supremum is `⊤` at a plan whose marginals are wrong.
   lives on the contact set of the pair, and
   `TauCeti.TransportMatrix.forall_cost_le_and_forall_finiteDualValue_le_iff_mem_contactSet` —
   the same certificate read through `TauCeti.contactSet`;
+* `TauCeti.TransportMatrix.forall_cost_le_iff_exists_forall_add_le_and_support_subset_contactSet`
+  — existential complementary slackness, with finite dual attainment supplying the potentials;
 * `TauCeti.finiteDualValue_eq_kantorovichDualValue`,
   `TauCeti.TransportMatrix.cost_eq_integral` and
   `TauCeti.TransportMatrix.isCoupling_toPMF_toMeasure` — the bridges to the measure-level dual
@@ -91,11 +93,6 @@ universe u v
 variable {ι : Type u} {κ : Type v} [Fintype ι] [Fintype κ] {μ : PMF ι} {ν : PMF κ}
   {c : ι × κ → ℝ} {φ : ι → ℝ} {ψ : κ → ℝ} {f : ι × κ → ℝ}
 
-/-- The masses of a probability mass function on a finite type sum to one. -/
-private theorem sum_toReal_pmf (μ : PMF ι) : ∑ i, (μ i).toReal = 1 := by
-  have h : ∑ i, μ i = 1 := (tsum_fintype fun i ↦ μ i).symm.trans μ.tsum_coe
-  rw [← ENNReal.toReal_sum fun i _ ↦ μ.apply_ne_top i, h, ENNReal.toReal_one]
-
 /-- The value of a pair of Kantorovich potentials against two probability mass functions on
 finite types: the sum of the two marginal expectations. -/
 def finiteDualValue (μ : PMF ι) (ν : PMF κ) (φ : ι → ℝ) (ψ : κ → ℝ) : ℝ :=
@@ -113,7 +110,7 @@ theorem finiteDualValue_add_const_add_const (μ : PMF ι) (ν : PMF κ) (φ : ι
     finiteDualValue μ ν (fun i ↦ φ i + a) (fun j ↦ ψ j + b)
       = finiteDualValue μ ν φ ψ + a + b := by
   simp only [finiteDualValue_def, mul_add, Finset.sum_add_distrib, ← Finset.sum_mul,
-    sum_toReal_pmf, one_mul]
+    PMF.sum_toReal_eq_one, one_mul]
   ring
 
 /-- Adding a constant to the first potential adds it to the dual value: the first marginal has
@@ -264,7 +261,7 @@ private theorem realPlans_subset_stdSimplex : RealPlans μ ν ⊆ stdSimplex ℝ
   refine ⟨hf.1, ?_⟩
   rw [Fintype.sum_prod_type]
   simp only [hf.2.1]
-  exact sum_toReal_pmf μ
+  exact PMF.sum_toReal_eq_one μ
 
 private theorem isClosed_realPlans : IsClosed (RealPlans μ ν) := by
   have h1 : IsClosed {f : ι × κ → ℝ | ∀ q, 0 ≤ f q} := by
@@ -714,7 +711,43 @@ theorem TransportMatrix.forall_cost_le_and_forall_finiteDualValue_le_iff_mem_con
           (i, j) ∈ contactSet c (fun i ↦ (φ i : EReal)) (fun j ↦ (ψ j : EReal)) := by
   rw [A.forall_cost_le_and_forall_finiteDualValue_le_iff hfeas]
   refine forall_congr' fun i ↦ forall_congr' fun j ↦ imp_congr_right fun _ ↦ ?_
-  rw [mk_mem_contactSet_iff, ← EReal.coe_add, EReal.coe_eq_coe_iff]
+  rw [mk_mem_contactSet_coe_iff]
+
+/-- Containment of the support of a transportation matrix in the contact set of real-valued
+potentials is the pointwise complementary-slackness condition on every nonzero entry. -/
+theorem TransportMatrix.toPMF_support_subset_contactSet_coe_iff (A : TransportMatrix μ ν)
+    (c : ι × κ → ℝ) (φ : ι → ℝ) (ψ : κ → ℝ) :
+    A.toPMF.support ⊆ contactSet c (fun i ↦ (φ i : EReal)) (fun j ↦ (ψ j : EReal)) ↔
+      ∀ i j, A i j ≠ 0 → φ i + ψ j = c (i, j) := by
+  constructor
+  · intro hsupp i j hij
+    rw [← mk_mem_contactSet_coe_iff c φ ψ i j]
+    apply hsupp
+    simpa only [PMF.mem_support_iff, A.toPMF_apply]
+  · intro hcontact q hq
+    rw [mk_mem_contactSet_coe_iff]
+    apply hcontact q.1 q.2
+    simpa only [PMF.mem_support_iff, A.toPMF_apply] using hq
+
+/-- **Existential complementary slackness for a finite transport plan.** A transportation
+matrix minimizes a real cost exactly when there is a dual-feasible pair of potentials whose
+contact set contains the support of the matrix. Finite Kantorovich duality supplies the
+potentials, so they need not be selected in advance. -/
+theorem TransportMatrix.forall_cost_le_iff_exists_forall_add_le_and_support_subset_contactSet
+    (A : TransportMatrix μ ν) (c : ι × κ → ℝ) :
+    (∀ B : TransportMatrix μ ν, A.cost c ≤ B.cost c) ↔
+      ∃ φ : ι → ℝ, ∃ ψ : κ → ℝ, (∀ i j, φ i + ψ j ≤ c (i, j)) ∧
+        A.toPMF.support ⊆
+          contactSet c (fun i ↦ (φ i : EReal)) (fun j ↦ (ψ j : EReal)) := by
+  constructor
+  · intro hA
+    obtain ⟨φ, ψ, hfeas, hmax⟩ := exists_forall_finiteDualValue_le c μ ν
+    refine ⟨φ, ψ, hfeas,
+      (A.toPMF_support_subset_contactSet_coe_iff c φ ψ).2 ?_⟩
+    exact (A.forall_cost_le_and_forall_finiteDualValue_le_iff hfeas).1 ⟨hA, hmax⟩
+  · rintro ⟨φ, ψ, hfeas, hsupp⟩
+    exact ((A.forall_cost_le_and_forall_finiteDualValue_le_iff hfeas).2
+      ((A.toPMF_support_subset_contactSet_coe_iff c φ ψ).1 hsupp)).1
 
 /-! ### The measure-level reading
 

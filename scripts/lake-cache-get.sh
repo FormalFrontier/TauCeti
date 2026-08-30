@@ -12,9 +12,10 @@
 #
 # Anonymous GETs from the PUBLIC read host (a different host than the S3 API endpoint the
 # trusted upload uses). Looks up the root-package oleans for the checkout's revision --
-# backtracking up to --max-revs ancestors, and unpacks them into $LAKE_CACHE_DIR. This is
-# trusted, publisher-built data: no token is in reach and no PR code runs (lakefile.toml is
-# declarative and base-trusted). Mathlib's oleans are NOT here; they come from
+# backtracking up to LAKE_CACHE_MAX_REVS ancestors (default 100; 0 means the complete available
+# history), and unpacks them into $LAKE_CACHE_DIR. This is trusted, publisher-built data: no token
+# is in reach and no PR code runs (the caller attests the declarative lakefile first). Mathlib's
+# oleans are NOT here; they come from
 # `lake exe cache get`.
 #
 # A TOTAL miss is non-fatal: the build just recompiles from scratch, as when the cache is off.
@@ -30,6 +31,10 @@ set -euo pipefail
 PROJECT_DIR="${1:?usage: lake-cache-get.sh <project-dir>}"
 : "${PUBLIC_ARTIFACT_ENDPOINT:?PUBLIC_ARTIFACT_ENDPOINT is required}"
 : "${PUBLIC_REVISION_ENDPOINT:?PUBLIC_REVISION_ENDPOINT is required}"
+LAKE_CACHE_MAX_REVS="${LAKE_CACHE_MAX_REVS:-100}"
+case "$LAKE_CACHE_MAX_REVS" in
+  ''|*[!0-9]*) echo "::error::LAKE_CACHE_MAX_REVS must be a natural number"; exit 1 ;;
+esac
 
 # Define the public read service in a Lake system config and select it with `--service`
 # (the env-var form of endpoint config is deprecated). Anonymous GETs, so no key here.
@@ -74,7 +79,7 @@ for attempt in $(seq 1 $ATTEMPTS); do
   LOG="${RUNNER_TEMP:-/tmp}/cache-get-$attempt.log"
   rc=0
   ( cd "$PROJECT_DIR" && LAKE_CONFIG="$CFG" lake cache get --service tauceti-public \
-      --repo TauCetiProject/TauCeti ) > "$LOG" 2>&1 || rc=$?
+      --repo TauCetiProject/TauCeti --max-revs="$LAKE_CACHE_MAX_REVS" ) > "$LOG" 2>&1 || rc=$?
   cat "$LOG"
   if [ "$rc" = 0 ]; then clean=1; break; fi
   if grep -qE "$MISS_RE" "$LOG"; then break; fi

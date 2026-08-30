@@ -35,6 +35,8 @@ the entrywise description of the representatives is not restated.
   its sum.
 * `HeckeRing.GL2.heckeSlashUpperTri_zero`, `heckeSlashUpperTri_add`,
   `heckeSlashUpperTri_smul`: linearity in `f`.
+* `HeckeRing.GL2.heckeSlashUpperTri_heckeSlashUpperTri`: the sums compose, the `p`-term sum of
+  the `n`-term sum being the `(n · p)`-term sum.
 The representatives themselves, and their upper-triangularity and positive determinant, live in
 `HeckeRing/GL2/CosetDecomposition.lean`; this file is only the slash sum built from them.
 
@@ -103,5 +105,34 @@ scalar generality matches `ModularForm.rat_smul_slash_of_det_pos`. -/
   rw [heckeSlashUpperTri_def, heckeSlashUpperTri_def, Finset.smul_sum]
   exact Finset.sum_congr rfl fun b _ ↦
     ModularForm.rat_smul_slash_of_det_pos k (det_upperTriRep_pos p b) f c
+
+/-- **The upper-triangular sums compose**: the `p`-term sum of the `n`-term sum is the
+`(n · p)`-term sum,
+
+`∑_{b < p} (∑_{b' < n} f ∣[k] !![1, b'; 0, n]) ∣[k] !![1, b; 0, p] =
+  ∑_{c < n·p} f ∣[k] !![1, c; 0, n·p]`.
+
+Both sides are sums of slashes of `f` by representatives, and `upperTriRep_mul_upperTriRep`
+matches the index pair `(b', b)` with the offset `finProdFinEquiv (b', b)` of the composite
+family; that map is a bijection, so each composite representative occurs exactly once.
+
+No divisibility, primality or level hypothesis enters: this is an identity of finite sums of
+slashes, valid for every `f : ℍ → ℂ`. -/
+@[simp] lemma heckeSlashUpperTri_heckeSlashUpperTri (n : ℕ) (f : ℍ → ℂ) :
+    heckeSlashUpperTri k p (heckeSlashUpperTri k n f) = heckeSlashUpperTri k (n * p) f := by
+  have hstep : ∀ b : Fin p, heckeSlashUpperTri k n f ∣[k] upperTriRep p b =
+      ∑ b' : Fin n, f ∣[k] upperTriRep (n * p) (finProdFinEquiv (b', b)) := fun b ↦ by
+    rw [heckeSlashUpperTri_def, SlashAction.sum_slash]
+    exact Finset.sum_congr rfl fun b' _ ↦ by
+      rw [← SlashAction.slash_mul, upperTriRep_mul_upperTriRep]
+  calc heckeSlashUpperTri k p (heckeSlashUpperTri k n f)
+      = ∑ b : Fin p, ∑ b' : Fin n, f ∣[k] upperTriRep (n * p) (finProdFinEquiv (b', b)) := by
+        rw [heckeSlashUpperTri_def]
+        exact Finset.sum_congr rfl fun b _ ↦ hstep b
+    _ = ∑ x : Fin n × Fin p, f ∣[k] upperTriRep (n * p) (finProdFinEquiv x) := by
+        rw [Fintype.sum_prod_type]
+        exact Finset.sum_comm
+    _ = heckeSlashUpperTri k (n * p) f :=
+        Fintype.sum_equiv finProdFinEquiv _ _ fun _ ↦ rfl
 
 end HeckeRing.GL2

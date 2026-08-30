@@ -21,7 +21,7 @@ for `Β` itself — symmetry and the unit step in the first parameter — are re
 
 These are the analytic prerequisites of
 `TauCeti/Analysis/SpecialFunctions/IncompleteBeta.lean`, and
-`TauCeti/Probability/Distributions/Beta.lean` uses the beta integral for its moment formula.
+`TauCeti/Probability/Distributions/Beta/Basic.lean` uses the beta integral for its moment formula.
 
 ## Main results
 

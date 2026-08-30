@@ -231,6 +231,18 @@ public theorem titsForm_single (i : Q) :
   rw [titsForm_def, eulerForm_single_single]
   simp
 
+omit [DecidableEq Q] in
+/-- **A positive definite Tits form has no loops.** The simple dimension vector `αᵢ` has
+`q(αᵢ) = 1 - #(i ⟶ i)`, which a loop at `i` makes non-positive. -/
+public theorem isEmpty_hom_self_of_titsForm_posDef (hpd : (titsForm Q).PosDef) (i : Q) :
+    IsEmpty (i ⟶ i) := by
+  classical
+  have hne : (Pi.single i 1 : Q → ℤ) ≠ 0 := fun h ↦ by simpa using congrFun h i
+  have hpos := hpd _ hne
+  rw [titsForm_single] at hpos
+  rw [← Fintype.card_eq_zero_iff]
+  omega
+
 /-- A loopless vertex has a simple dimension vector of Tits norm one, that is, `αᵢ` is a root. -/
 public theorem titsForm_single_of_isEmpty {i : Q} (h : IsEmpty (i ⟶ i)) :
     titsForm Q (Pi.single i 1) = 1 := by

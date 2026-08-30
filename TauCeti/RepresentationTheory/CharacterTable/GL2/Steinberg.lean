@@ -7,7 +7,7 @@ module
 
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Bruhat
 public import TauCeti.RepresentationTheory.Augmentation
-public import TauCeti.RepresentationTheory.CharacterTable.GL2.PrincipalSeries
+public import TauCeti.RepresentationTheory.CharacterTable.GL2.PrincipalSeries.Basic
 public import TauCeti.RepresentationTheory.Induction.Character
 public import TauCeti.RepresentationTheory.Induction.DoubleCosetPairing
 
@@ -17,7 +17,7 @@ public import TauCeti.RepresentationTheory.Induction.DoubleCosetPairing
 The Borel subgroup `B` of `GL₂(𝔽_q)` has index `q + 1`, and `GL₂` permutes the cosets `GL₂ ⧸ B`
 — the points of the projective line. The resulting permutation representation `ℂ[GL₂ ⧸ B]` has the
 same character as the principal series `Ind_B^{GL₂}(1 ⊗ 1)` of
-`TauCeti/RepresentationTheory/CharacterTable/GL2/PrincipalSeries.lean` at the boundary value
+`TauCeti/RepresentationTheory/CharacterTable/GL2/PrincipalSeries/Basic.lean` at the boundary value
 `α = β = 1`, where it is reducible: it contains the line spanned by the sum of the cosets, on
 which `GL₂` acts trivially. The complement of that line is the **Steinberg representation**
 `TauCeti.GL2Steinberg`, of dimension `q`.

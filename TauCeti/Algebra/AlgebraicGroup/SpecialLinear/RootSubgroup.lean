@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 -- The ambient root subgroup supplies the matrix calculation and the named `GLₙ` presentation.
-public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.RootSubgroup
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Root.Subgroup
 -- The special-linear scheme supplies the group scheme, inclusion, and scheme points.
 public import TauCeti.Algebra.AlgebraicGroup.SpecialLinear.Scheme
 
@@ -151,9 +151,7 @@ section Scheme
 action on points. -/
 noncomputable def rootSubgroupCoordinateMap (hij : i ≠ j) :
     coordinateHopfAlgebra R N ⟶ AdditiveGroup.coordinateHopfAlgebra R :=
-  ((CommHopfAlgCat.pointsFunctor.{u, u, u} (R := R) :
-      (_root_.CommHopfAlgCat.{u} R)ᵒᵖ ⥤ CommAlgCat.{u} R ⥤ GrpCat.{u}).preimage
-    (rootSubgroupPointsMap.{u, u} (R := R) (N := N) hij)).unop
+  CommHopfAlgCat.homOfPointsMap (rootSubgroupPointsMap.{u, u} (R := R) (N := N) hij)
 
 /-- Precomposition by the coordinate morphism is the constructed natural map on points. -/
 theorem mapPointsFunctor_rootSubgroupCoordinateMap (hij : i ≠ j) :
@@ -163,12 +161,8 @@ theorem mapPointsFunctor_rootSubgroupCoordinateMap (hij : i ≠ j) :
         HopfAlgebra.pointsFunctor (R := R) (H := coordinateHopfAlgebra R N)) =
       (rootSubgroupPointsMap.{u, u} hij :
         HopfAlgebra.pointsFunctor (R := R) (H := AdditiveGroup.coordinateHopfAlgebra R) ⟶
-          HopfAlgebra.pointsFunctor (R := R) (H := coordinateHopfAlgebra R N)) := by
-  unfold rootSubgroupCoordinateMap
-  rw [← CommHopfAlgCat.pointsFunctor_map]
-  exact Functor.map_preimage
-    (CommHopfAlgCat.pointsFunctor.{u, u, u} (R := R) :
-      (_root_.CommHopfAlgCat.{u} R)ᵒᵖ ⥤ CommAlgCat.{u} R ⥤ GrpCat.{u}) _
+          HopfAlgebra.pointsFunctor (R := R) (H := coordinateHopfAlgebra R N)) :=
+  CommHopfAlgCat.mapPointsFunctor_homOfPointsMap _
 
 /-- On a same-universe algebra, the coordinate morphism induces the previously constructed
 special-linear root subgroup map. -/

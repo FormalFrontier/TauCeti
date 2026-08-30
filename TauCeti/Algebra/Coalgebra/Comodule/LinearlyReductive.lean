@@ -43,6 +43,9 @@ milestone in Layer 6 of the ReductiveGroups roadmap.
 * `TauCeti.Comodule.IsCompletelyReducible.of_exists_isCompl` and
   `TauCeti.Comodule.IsCompletelyReducible.exists_isCompl`: construct and use complete
   reducibility through complementary subcomodules.
+* `TauCeti.Comodule.isCompletelyReducible_of_subsingleton` and
+  `TauCeti.Comodule.isCompletelyReducible_of_isSimpleOrder`: subsingleton and simple comodules
+  are completely reducible.
 * `TauCeti.Comodule.fixedSubcomodule_eq_top_of_isCompletelyReducible_of_forall_exists_fixed` and
   `TauCeti.Comodule.coact_eq_tmul_one_of_isCompletelyReducible_of_forall_exists_fixed`: a
   completely reducible comodule all of whose nonzero subcomodules contain nonzero fixed vectors
@@ -110,6 +113,33 @@ theorem IsCompletelyReducible.exists_isCompl (h : IsCompletelyReducible k C V)
     (W : Subcomodule k C V) :
     ∃ Q : Subcomodule k C V, IsCompl W.toSubmodule Q.toSubmodule :=
   h W
+
+/-- A comodule on a subsingleton module is completely reducible. -/
+theorem isCompletelyReducible_of_subsingleton [Subsingleton V] :
+    IsCompletelyReducible k C V := by
+  apply IsCompletelyReducible.of_exists_isCompl
+  intro W
+  have hW : W = ⊥ := by
+    ext m
+    constructor
+    · intro _
+      rw [Subcomodule.mem_bot]
+      exact Subsingleton.elim _ _
+    · intro hm
+      exact (Subcomodule.mem_bot.mp hm) ▸ zero_mem W
+  refine ⟨⊤, ?_⟩
+  simpa [hW] using (isCompl_bot_top : IsCompl (⊥ : Submodule k V) ⊤)
+
+/-- A comodule with no subcomodules except `⊥` and `⊤` is completely reducible. -/
+theorem isCompletelyReducible_of_isSimpleOrder
+    [IsSimpleOrder (Subcomodule k C V)] : IsCompletelyReducible k C V := by
+  apply IsCompletelyReducible.of_exists_isCompl
+  intro W
+  exact (eq_bot_or_eq_top W).elim
+    (fun h ↦ ⟨⊤, by
+      simpa [h] using (isCompl_bot_top : IsCompl (⊥ : Submodule k V) ⊤)⟩)
+    (fun h ↦ ⟨⊥, by
+      simpa [h] using (isCompl_top_bot : IsCompl (⊤ : Submodule k V) ⊥)⟩)
 
 /-- If `V` is completely reducible and every nonzero subcomodule of `V` contains a nonzero fixed
 vector, then the fixed subcomodule is everything.

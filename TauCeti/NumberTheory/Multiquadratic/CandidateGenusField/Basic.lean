@@ -26,9 +26,9 @@ arbitrary finite set of prime discriminants with chosen roots; here we fix a cho
 factorization finset `genusPrimeDiscriminants` from
 `IsFundamentalDiscriminant.exists_finset_primeDiscriminant`, and chosen complex roots
 `genusFieldRoot` of the radicands (using that `ℂ` is algebraically closed) — and package the
-compositum as `candidateGenusField`. (Both choices are made with `choose`; independence of the
-resulting field from them is not claimed here.) As a first property we record that it contains a
-square root of `d`, so it really is a candidate genus field *of `ℚ(√d)`*.
+compositum as `candidateGenusField`. The factorization is uniquely characterized by
+`genusPrimeDiscriminants_eq`; only the roots retain a choice. As a first property we record that it
+contains a square root of `d`, so it really is a candidate genus field *of `ℚ(√d)`*.
 
 The prime-discriminant description is classical; see D. A. Cox, *Primes of the Form x² + ny²*, and
 F. Lemmermeyer, *Reciprocity Laws*.
@@ -42,6 +42,8 @@ F. Lemmermeyer, *Reciprocity Laws*.
 
 ## Main results
 
+* `TauCeti.Multiquadratic.genusPrimeDiscriminants_eq`: the chosen factor finset is equal to every
+  prime-discriminant factorization satisfying the defining conditions.
 * `TauCeti.Multiquadratic.candidateGenusField_le_iff`: its universal property — it is below an
   intermediate field iff that field contains every chosen root.
 * `TauCeti.Multiquadratic.exists_mem_candidateGenusField_sq_eq`: it contains an element squaring
@@ -69,6 +71,15 @@ theorem genusPrimeDiscriminants_spec {d : ℤ} (hd : Squarefree d) :
       ∏ P ∈ genusPrimeDiscriminants hd, P = fundamentalDiscriminant d := by
   have h := (isFundamentalDiscriminant_fundamentalDiscriminant hd).exists_finset_primeDiscriminant
   simpa only [genusPrimeDiscriminants] using h.choose_spec
+
+/-- **Characterization of the chosen prime-discriminant factorization.** Every factorization of
+`fundamentalDiscriminant d` into distinct prime discriminants is the finset
+`genusPrimeDiscriminants hd`. -/
+theorem genusPrimeDiscriminants_eq {d : ℤ} (hd : Squarefree d) {s : Finset ℤ}
+    (hs : ∀ P ∈ s, IsPrimeDiscriminant P)
+    (hprod : ∏ P ∈ s, P = fundamentalDiscriminant d) : genusPrimeDiscriminants hd = s := by
+  obtain ⟨hgenus, _, hgenusProd⟩ := genusPrimeDiscriminants_spec hd
+  exact finset_primeDiscriminant_eq_of_prod_eq hgenus hs (hgenusProd.trans hprod.symm)
 
 /-- A chosen complex square root of the radicand of each prime discriminant in
 `genusPrimeDiscriminants hd` (available since `ℂ` is algebraically closed). -/

@@ -11,6 +11,7 @@ public import Mathlib.RepresentationTheory.Homological.GroupCohomology.LowDegree
 public import Mathlib.Topology.Algebra.ContinuousMonoidHom
 public import Mathlib.Topology.Algebra.MulAction
 public import Mathlib.Topology.ContinuousMap.Algebra
+public import TauCeti.GroupTheory.GroupAction.FixedPoints
 
 import Mathlib.Tactic.Abel
 
@@ -38,6 +39,9 @@ H⁰(G, M) = M^G,   H¹(G, M) = Z¹/B¹,   H²(G, M) = Z²/B².
 * `TauCeti.ContCohomology.H0`, `H1`, `H2`, their class maps `H1pi`, `H2pi`, and the discrete
   carriers `DiscreteH1`, `DiscreteH2` used by the comparison with canonical cohomology, together
   with their identifications `discreteH1Equiv`, `discreteH2Equiv` with `H1` and `H2`.
+* `TauCeti.ContCohomology.explicitMap0`: the compatible-pair pullback on the explicit degree-zero
+  carrier, with `TauCeti.ContCohomology.explicitRes0` and `explicitCoeff0` its two named
+  instances.
 
 ## Main statements
 
@@ -109,7 +113,7 @@ public section
 
 namespace TauCeti.ContCohomology
 
-universe u v
+universe u v w
 
 section Cochains
 
@@ -134,6 +138,11 @@ theorem mem_C1_iff {f : G → M} : f ∈ C1 G M ↔ Continuous f := (Iff.rfl)
 /-- Membership in `C²` is continuity. -/
 @[simp]
 theorem mem_C2_iff {f : G × G → M} : f ∈ C2 G M ↔ Continuous f := mem_C1_iff
+
+/-- The degree-`2` cochains are the degree-`1` cochains of `G × G`. This is how `C²` is defined,
+but the definition is not exposed outside this file, so the identity is recorded as a theorem for
+consumers that have to move between the two spellings. -/
+theorem C2_eq_C1 : C2 G M = C1 (G × G) M := (rfl)
 
 /-- Over a discrete group every `1`-cochain is continuous. -/
 @[simp]
@@ -170,10 +179,23 @@ variable {G M}
 @[simp]
 theorem d0_apply (m : M) (g : G) : d0 G M m g = g • m - m := (rfl)
 
+/-- An equivariant additive map commutes with the degree-`0` differential. -/
+theorem map_d0_apply {N : Type w} [AddCommGroup N] [DistribSMul G N] (φ : M →+ N)
+    (hφ : ∀ (g : G) (m : M), φ (g • m) = g • φ m) (m : M) (g : G) :
+    φ (d0 G M m g) = d0 G N (φ m) g := by
+  simp only [d0_apply, map_sub, hφ]
+
 /-- Membership in `B¹` is Mathlib's unbundled `1`-coboundary condition. -/
 @[simp]
 theorem mem_B1_iff {f : G → M} : f ∈ B1 G M ↔ groupCohomology.IsCoboundary₁ f := by
   simp only [B1, AddMonoidHom.mem_range, groupCohomology.IsCoboundary₁, funext_iff, d0_apply]
+
+/-- The introduction rule for `B¹`: every `d⁰`-image is a `1`-coboundary.
+
+This is deliberately not `@[simp]`: `mem_B1_iff` already rewrites the left-hand side to
+`groupCohomology.IsCoboundary₁ (d0 G M m)`. -/
+theorem d0_mem_B1 (m : M) : d0 G M m ∈ B1 G M :=
+  AddMonoidHom.mem_range.2 ⟨m, rfl⟩
 
 section TrivialAction
 
@@ -221,6 +243,12 @@ variable {G M}
 /-- The defining formula for `d¹`. -/
 @[simp]
 theorem d1_apply (f : G → M) (g h : G) : d1 G M f (g, h) = g • f h - f (g * h) + f g := (rfl)
+
+/-- An equivariant additive map commutes with the degree-`1` differential. -/
+theorem map_d1_apply {N : Type w} [AddCommGroup N] [DistribSMul G N] (φ : M →+ N)
+    (hφ : ∀ (g : G) (m : M), φ (g • m) = g • φ m) (f : G → M) (g h : G) :
+    φ (d1 G M f (g, h)) = d1 G N (fun x => φ (f x)) (g, h) := by
+  simp only [d1_apply, map_add, map_sub, hφ]
 
 /-- The defining formula for `d²`. -/
 @[simp]
@@ -315,6 +343,132 @@ theorem H0_eq_top_of_smul_eq_self (htriv : ∀ (g : G) (m : M), g • m = m) : H
   eq_top_iff.2 fun m _ => (FixedPoints.mem_addSubgroup G M m).2 fun g => htriv g m
 
 end Complex
+
+section CompatiblePairDegreeZero
+
+/-! Degree zero is a subgroup of the coefficients rather than a quotient, so the pullback along a
+compatible pair needs neither inverses in the acting monoids nor a topology anywhere. -/
+
+variable (G : Type u) [Monoid G] (M : Type v) [AddCommGroup M] [DistribMulAction G M]
+
+/-- **The compatible-pair pullback in degree zero.** A monoid homomorphism `φ : H →* G` together
+with an additive map `f : M →+ N` satisfying `f (φ h • m) = h • f m` carries the `G`-invariants of
+`M` into the `H`-invariants of `N`. This is the degree-zero counterpart of
+`TauCeti.ContCohomology.explicitMap1` and `explicitMap2`; unlike them it needs no topology at all,
+a degree-zero cochain being a single element rather than a function. Restriction and coefficient
+maps are its two named instances, by `TauCeti.ContCohomology.explicitRes0_eq_explicitMap0` and
+`TauCeti.ContCohomology.explicitCoeff0_eq_explicitMap0`. -/
+def explicitMap0 {H : Type*} [Monoid H] {N : Type*} [AddCommGroup N] [DistribMulAction H N]
+    (φ : H →* G) (f : M →+ N) (hequiv : ∀ (h : H) (m : M), f (φ h • m) = h • f m) :
+    H0 G M →+ H0 H N where
+  toFun m := ⟨f (m : M), (FixedPoints.mem_addSubgroup H N (f (m : M))).2 fun h => by
+    rw [← hequiv h (m : M), (FixedPoints.mem_addSubgroup G M (m : M)).1 m.2 (φ h)]⟩
+  map_zero' := Subtype.ext (map_zero f)
+  map_add' _ _ := Subtype.ext (map_add f _ _)
+
+/-- The degree-zero compatible-pair pullback applies the coefficient map. -/
+@[simp]
+theorem coe_explicitMap0 {H : Type*} [Monoid H] {N : Type*} [AddCommGroup N]
+    [DistribMulAction H N] (φ : H →* G) (f : M →+ N)
+    (hequiv : ∀ (h : H) (m : M), f (φ h • m) = h • f m) (m : H0 G M) :
+    (explicitMap0 G M φ f hequiv m : N) = f (m : M) :=
+  (rfl)
+
+/-- Pullback along the identity compatible pair is the identity on degree-zero cohomology. -/
+@[simp]
+theorem explicitMap0_id :
+    explicitMap0 G M (MonoidHom.id G) (AddMonoidHom.id M) (fun _ _ => rfl) =
+      AddMonoidHom.id (H0 G M) :=
+  AddMonoidHom.ext fun _ => Subtype.ext (rfl)
+
+/-- Pullback in degree zero respects composition of compatible pairs: it is contravariant in the
+group homomorphism and covariant in the coefficient map. Compatibility of the composite pair is
+not a hypothesis: it is `hequiv` at `ψ k` followed by `hequivq`. -/
+theorem explicitMap0_comp {H : Type*} [Monoid H] {N : Type*} [AddCommGroup N]
+    [DistribMulAction H N] {K : Type*} [Monoid K] {P : Type*} [AddCommGroup P]
+    [DistribMulAction K P] (φ : H →* G) (f : M →+ N)
+    (hequiv : ∀ (h : H) (m : M), f (φ h • m) = h • f m) (ψ : K →* H) (q : N →+ P)
+    (hequivq : ∀ (k : K) (n : N), q (ψ k • n) = k • q n) :
+    explicitMap0 G M (φ.comp ψ) (q.comp f)
+        (fun k m => (congrArg (q : N → P) (hequiv (ψ k) m)).trans (hequivq k (f m))) =
+      (explicitMap0 H N ψ q hequivq).comp (explicitMap0 G M φ f hequiv) :=
+  AddMonoidHom.ext fun _ => Subtype.ext (rfl)
+
+end CompatiblePairDegreeZero
+
+section RestrictionDegreeZero
+
+variable (G : Type u) [Group G] (M : Type v) [AddCommGroup M] [DistribMulAction G M]
+  (U : Subgroup G)
+
+private def H0.toFixedPointsTop : H0 G M →+ FixedPoints.addSubmonoid (⊤ : Subgroup G) M where
+  toFun m := ⟨m, (FixedPoints.mem_addSubmonoid (⊤ : Subgroup G) M m).2 fun g =>
+    (FixedPoints.mem_addSubgroup G M m).1 m.2 (g : G)⟩
+  map_zero' := rfl
+  map_add' _ _ := rfl
+
+private def H0.ofFixedPointsTop : FixedPoints.addSubmonoid (⊤ : Subgroup G) M →+ H0 G M where
+  toFun m := ⟨m, (FixedPoints.mem_addSubgroup G M m).2 fun g =>
+    (FixedPoints.mem_addSubmonoid (⊤ : Subgroup G) M m).1 m.2 ⟨g, Subgroup.mem_top g⟩⟩
+  map_zero' := rfl
+  map_add' _ _ := rfl
+
+/-- A coefficient homomorphism induces an additive map on degree-zero cohomology. -/
+def explicitCoeff0 {N : Type*} [AddCommGroup N] [DistribMulAction G N] (f : M →+[G] N) :
+    H0 G M →+ H0 G N :=
+  (H0.ofFixedPointsTop G N).comp
+    ((fixedPointsMap f (⊤ : Subgroup G)).comp (H0.toFixedPointsTop G M))
+
+/-- The degree-zero coefficient map applies the underlying coefficient homomorphism. -/
+@[simp]
+theorem coe_explicitCoeff0 {N : Type*} [AddCommGroup N] [DistribMulAction G N]
+    (f : M →+[G] N) (m : H0 G M) : (explicitCoeff0 G M f m : N) = f (m : M) := by
+  unfold explicitCoeff0 H0.ofFixedPointsTop H0.toFixedPointsTop
+  exact coe_fixedPointsMap f ⊤ _
+
+/-- **Restriction in degree zero**, the inclusion `H⁰(G, M) → H⁰(U, M)`. -/
+def explicitRes0 : H0 G M →+ H0 U M :=
+  (fixedPointsInclusion (M := M) (show U ≤ (⊤ : Subgroup G) from le_top)).comp
+    (H0.toFixedPointsTop G M)
+
+/-- Restriction in degree zero does not change the underlying coefficient. -/
+@[simp]
+theorem coe_explicitRes0 (m : H0 G M) : (explicitRes0 G M U m : M) = m := by
+  unfold explicitRes0 H0.toFixedPointsTop
+  exact coe_fixedPointsInclusion (M := M) (show U ≤ (⊤ : Subgroup G) from le_top) _
+
+/-- Restriction in degree zero is natural in equivariant coefficient homomorphisms. -/
+theorem map_explicitRes0 {N : Type*} [AddCommGroup N] [DistribMulAction G N]
+    (f : M →+[G] N) (m : H0 G M) :
+    fixedPointsMap f U (explicitRes0 G M U m) =
+      explicitRes0 G N U (explicitCoeff0 G M f m) := by
+  apply Subtype.ext
+  calc
+    (fixedPointsMap f U (explicitRes0 G M U m) : N) =
+        f (explicitRes0 G M U m : M) := coe_fixedPointsMap f U _
+    _ = f (m : M) := congrArg f (coe_explicitRes0 G M U m)
+    _ = (explicitCoeff0 G M f m : N) := (coe_explicitCoeff0 G M f m).symm
+    _ = (explicitRes0 G N U (explicitCoeff0 G M f m) : N) :=
+      (coe_explicitRes0 G N U _).symm
+
+/-- Restriction in degree zero is the compatible-pair pullback along the inclusion of the subgroup
+with the identity on the coefficients. -/
+theorem explicitRes0_eq_explicitMap0 :
+    explicitRes0 G M U =
+      explicitMap0 G M U.subtype (AddMonoidHom.id M) (fun _ _ => rfl) :=
+  AddMonoidHom.ext fun m => Subtype.ext ((coe_explicitRes0 G M U m).trans
+    (coe_explicitMap0 G M U.subtype (AddMonoidHom.id M) (fun _ _ => rfl) m).symm)
+
+/-- A coefficient map in degree zero is the compatible-pair pullback along the identity of the
+group. -/
+theorem explicitCoeff0_eq_explicitMap0 {N : Type*} [AddCommGroup N] [DistribMulAction G N]
+    (f : M →+[G] N) :
+    explicitCoeff0 G M f =
+      explicitMap0 G M (MonoidHom.id G) f.toAddMonoidHom (fun g m => f.map_smul g m) :=
+  AddMonoidHom.ext fun m => Subtype.ext ((coe_explicitCoeff0 G M f m).trans
+    (coe_explicitMap0 G M (MonoidHom.id G) f.toAddMonoidHom (fun g m => f.map_smul g m) m).symm)
+
+end RestrictionDegreeZero
 
 end Differentials
 

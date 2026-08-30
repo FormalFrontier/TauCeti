@@ -70,7 +70,9 @@ rather than postulating an unrelated graded copy." This file discharges the nonn
 separate graded copy: the pieces are submodules of `kQ` and `TauCeti.PathAlgebra.isInternal_grade`
 exhibits `kQ` as their direct sum. Homogeneity of the zigzag relation ideals is
 `TauCeti.RepresentationTheory.Quiver.Zigzag.Grading`; the descent of the grading along the quotient
-map — the comparison with the ungraded *quotient* — is not proved here. See
+map — the comparison with the ungraded *quotient* — is
+`TauCeti.RingTheory.GradedAlgebra.Homogeneous.Quotient`, instantiated at the zigzag relations in
+the former file. See
 Assem--Simson--Skowroński, *Elements of the Representation Theory of Associative Algebras I*,
 Ch. II.
 -/
@@ -91,7 +93,7 @@ variable (k : Type w) (Q : Type u) [Semiring k] [Quiver.{v} Q]
 
 /-- The degree-`n` piece of the path-length grading of the path algebra: the `k`-span of the paths
 of length `n`. -/
-noncomputable def grade (n : ℕ) : Submodule k (pathAlgebra k Q) :=
+noncomputable def grade (n : ℕ) : Submodule k (pathAlgebra k Q):=
   Submodule.span k
     ((fun x : Quiver.TotalPath Q => (ofPath x : pathAlgebra k Q)) ''
       {x : Quiver.TotalPath Q | x.2.2.length = n})

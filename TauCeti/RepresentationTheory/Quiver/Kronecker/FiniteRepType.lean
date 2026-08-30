@@ -7,16 +7,19 @@ module
 
 public import TauCeti.CategoryTheory.Preadditive.Indecomposable
 public import TauCeti.RepresentationTheory.Quiver.FiniteRepType.Basic
-public import TauCeti.RepresentationTheory.Quiver.Kronecker.Representation
+public import TauCeti.RepresentationTheory.Quiver.Kronecker.Indecomposable
 public import TauCeti.RepresentationTheory.Quiver.Representation.DimensionVector
-public import TauCeti.RingTheory.AdjoinRoot
-public import TauCeti.RingTheory.LocalRing.Basic
+public import TauCeti.RingTheory.AdjoinRoot.Basic
 public import TauCeti.RingTheory.Polynomial.Truncated
 
 /-!
-# The Kronecker quiver has infinite representation type
+# The representation type of the generalized Kronecker quiver
 
-This file exhibits, over *every* field, an infinite family of pairwise non-isomorphic
+This file settles the representation type of the generalized Kronecker quiver on both sides of
+Gabriel's boundary: infinite as soon as there are two distinct arrows, finite for the `A₂` quiver
+`• → •` of a single arrow.
+
+The negative half exhibits, over *every* field, an infinite family of pairwise non-isomorphic
 finite-dimensional indecomposable representations of the generalized Kronecker quiver as soon as
 there are two distinct arrows: `TauCeti.kroneckerJordanRep` puts the truncated polynomial algebra
 `k[X]/(Xⁿ⁺¹)` at both vertices, lets one distinguished arrow act by multiplication by the class of
@@ -35,7 +38,9 @@ The `A₂` quiver `• → •` -- a one-element arrow type -- is of Dynkin type
 representation type, so the hypothesis that two distinct arrows exist is not an artefact: with a
 single arrow there is no arrow beside the distinguished one, so nothing forces the two components
 of an endomorphism to agree and the Jordan block below is not indecomposable -- the `A₂`
-indecomposables have dimension vectors `(1, 0)`, `(0, 1)` and `(1, 1)`.
+indecomposables have dimension vectors `(1, 0)`, `(0, 1)` and `(1, 1)`. That positive half,
+`TauCeti.isFiniteRepType_kronecker`, is read off the count of those three isomorphism classes in
+`TauCeti.RepresentationTheory.Quiver.Kronecker.Indecomposable`.
 
 ## Main definitions
 
@@ -50,6 +55,8 @@ indecomposables have dimension vectors `(1, 0)`, `(0, 1)` and `(1, 1)`.
   sizes agree.
 * `TauCeti.not_isFiniteRepType_kronecker`: over any field, a generalized Kronecker quiver with at
   least two arrows has infinite representation type.
+* `TauCeti.isFiniteRepType_kronecker`: the `A₂` quiver, of a single arrow, has finite
+  representation type.
 
 ## Implementation notes
 
@@ -60,10 +67,11 @@ on objects only through its definition. The obstruction is at the level of *stat
 proofs, so no characteristic lemma can remove it: without `@[expose]`, every statement below
 reading an endomorphism of a Jordan block as a linear map on `k[X]/(Xⁿ⁺¹)` fails to elaborate.
 
-Indecomposability runs through `TauCeti.indecomposable_of_idempotent_eq_zero_or_id` rather than the
+Indecomposability runs through `TauCeti.indecomposable_of_injective_of_isLocalRing` rather than the
 brick criterion: the endomorphism algebra of a Jordan block is `k[X]/(Xⁿ⁺¹)`, which is not a field.
-It is a *local* ring (`TauCeti.isLocalRing_adjoinRoot_X_pow`), and that is exactly enough, by
-`TauCeti.IsLocalRing.eq_zero_or_eq_one_of_isIdempotentElem`.
+It is a *local* ring (`TauCeti.isLocalRing_adjoinRoot_X_pow`), and that is exactly enough: the
+value of an endomorphism at `1` records it faithfully there, sending `0` to `0`, the identity to
+`1` and squares to squares.
 
 The two components of an endomorphism are forced to agree by naturality along an arrow acting as
 the identity, which is why a second arrow is needed; the distinguished arrow then contributes the
@@ -244,21 +252,17 @@ one exists.** An idempotent endomorphism is multiplication by an idempotent of `
 that ring is local, so that idempotent is `0` or `1`. -/
 theorem indecomposable_kroneckerJordanRep (h : a₀ ≠ a₁) :
     Indecomposable (kroneckerJordanRep k a₁ n) := by
-  refine indecomposable_of_idempotent_eq_zero_or_id not_isZero_kroneckerJordanRep fun e he ↦ ?_
-  have hmul := jordanApp_eq_mulRight h e
-  have hmul_apply : ∀ x, jordanApp e x = x * jordanApp e 1 := fun x ↦ by rw [hmul]; simp
-  have hidem : IsIdempotentElem (jordanApp e 1) := by
-    have h' := congrArg (fun t ↦ jordanApp t 1) he
-    simp only [jordanApp_comp, LinearMap.comp_apply] at h'
-    rw [hmul_apply (jordanApp e 1)] at h'
-    exact h'
-  rcases IsLocalRing.eq_zero_or_eq_one_of_isIdempotentElem hidem with h0 | h1
-  · refine Or.inl (jordanApp_ext h ?_)
-    rw [hmul, h0, jordanApp_zero]
-    exact LinearMap.ext fun x ↦ by simp
-  · refine Or.inr (jordanApp_ext h ?_)
-    rw [hmul, h1, jordanApp_id]
-    exact LinearMap.ext fun x ↦ by simp
+  refine indecomposable_of_injective_of_isLocalRing not_isZero_kroneckerJordanRep
+    (fun e ↦ jordanApp e 1) (fun e e' heq ↦ ?_) ?_ ?_ fun e ↦ ?_
+  · refine jordanApp_ext h ?_
+    rw [jordanApp_eq_mulRight h e, jordanApp_eq_mulRight h e']
+    exact congrArg (LinearMap.mulRight k) heq
+  · rw [jordanApp_zero]
+    simp
+  · rw [jordanApp_id]
+    simp
+  · rw [jordanApp_comp, LinearMap.comp_apply, jordanApp_eq_mulRight h e]
+    simp
 
 /-- **Jordan blocks of different sizes are non-isomorphic**: their dimension vectors differ. -/
 theorem eq_of_nonempty_kroneckerJordanRep_iso {m n : ℕ}
@@ -287,5 +291,18 @@ theorem not_isFiniteRepType_kronecker (k : Type u) [Field k] (A : Type v) [Nontr
     (fun _ ↦ isFinDim_kroneckerJordanRep)
     (fun _ ↦ indecomposable_kroneckerJordanRep h)
     fun _ _ hne hiso ↦ hne (eq_of_nonempty_kroneckerJordanRep_iso hiso)
+
+/-- **The `A₂` quiver has finite representation type**, the positive half of Gabriel's dichotomy
+for the smallest Dynkin quiver: by `TauCeti.card_skeleton_indecomposable_kronecker` its
+finite-dimensional indecomposables fall into exactly three isomorphism classes.
+
+Contrast `TauCeti.not_isFiniteRepType_kronecker` above: as soon as a second arrow is added the
+Kronecker quiver leaves Dynkin type and acquires infinitely many indecomposables. -/
+theorem isFiniteRepType_kronecker (k : Type u) [Field k] (A : Type) [Unique A] :
+    IsFiniteRepType.{u, 0, 0, u} k (Quiver.Kronecker A) := by
+  rw [isFiniteRepType_iff]
+  refine Nat.finite_of_card_ne_zero ?_
+  rw [card_skeleton_indecomposable_kronecker]
+  exact three_ne_zero
 
 end TauCeti

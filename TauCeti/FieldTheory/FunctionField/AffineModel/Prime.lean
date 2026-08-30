@@ -7,6 +7,7 @@ module
 
 public import Mathlib.RingTheory.Ideal.Quotient.Operations
 public import TauCeti.FieldTheory.FunctionField.AffineModel.Place
+public import TauCeti.FieldTheory.FunctionField.HolomorphyRing
 
 /-!
 # Affine models: the place of a height one prime, and the two-way correspondence
@@ -27,6 +28,11 @@ off from Mathlib's factorization calculus; and the residue field of the place of
 so the degree of the place is the residue degree `[R ⧸ 𝔭 : k]` of the prime. Together these say
 that divisor theory on the finite chart of a model is exactly the ideal theory of the model.
 
+Holomorphy rings supply the examples: once `𝒪_S` is a Dedekind domain with fraction field `F` —
+which `TauCeti.isPrincipalIdealRing_holomorphyRing` and `TauCeti.isFractionRing_holomorphyRing`
+give for a finite `S` omitting some place — its finite chart is `S` itself, so the correspondence
+above becomes the bijection `S ≃ HeightOneSpectrum 𝒪_S`.
+
 ## Main definitions
 
 * `TauCeti.Place.ofPrime`: the place of `F / k` attached to a height one prime of an affine
@@ -36,12 +42,16 @@ that divisor theory on the finite chart of a model is exactly the ideal theory o
   (`TauCeti.Place.ker_residueHom`).
 * `TauCeti.Place.heightOneSpectrumEquiv`: the bijection between the places finite on a model and
   the height one primes of the model.
+* `TauCeti.holomorphyRingHeightOneSpectrumEquiv`: that bijection for the model `𝒪_S`, whose
+  finite chart is `S`, as the identification of `S` with the height one primes of `𝒪_S`.
 
 ## Main results
 
 * `TauCeti.Place.center_ofPrime` and `TauCeti.Place.ofPrime_center`: the two constructions are
   mutually inverse, and `TauCeti.Place.exists_eq_ofPrime_iff` identifies the places in the image
-  as exactly the places finite on the model.
+  as exactly the places finite on the model, with `TauCeti.Place.range_ofPrime` and
+  `TauCeti.Place.compl_range_ofPrime` the same statement for the finite chart and its complement
+  as sets of places.
 * `TauCeti.Place.ord_ofPrime_algebraMap`: the coefficient formula `ord_P r = mult_𝔭 (r)`, for
   `r ≠ 0`, the `𝔭`-form of `TauCeti.Place.ord_algebraMap_eq_multiplicity_center`.
 * `TauCeti.Place.quotientAlgEquivResidueField`: the residue field of a place finite on the model
@@ -155,6 +165,24 @@ theorem exists_eq_ofPrime_iff (P : Place k F) :
   ⟨fun ⟨𝔭, h⟩ r ↦ h ▸ algebraMap_mem_integers_ofPrime k F 𝔭 r,
     fun hR ↦ ⟨P.center hR, ofPrime_center k F P hR⟩⟩
 
+variable (R) in
+/-- **The finite chart of an affine model, as a set of places**: the image of
+`TauCeti.Place.ofPrime` consists of the places finite on `R`. -/
+theorem range_ofPrime :
+    Set.range (ofPrime (R := R) k F) = {P : Place k F | ∀ r : R, algebraMap R F r ∈ P.integers} :=
+  Set.ext fun P ↦ exists_eq_ofPrime_iff k F P
+
+variable (R) in
+/-- **The places infinite on an affine model** are the complement of its finite chart: a place
+lies outside the image of `TauCeti.Place.ofPrime` exactly when some element of the model has a
+pole there. -/
+theorem compl_range_ofPrime :
+    (Set.range (ofPrime (R := R) k F))ᶜ =
+      {P : Place k F | ∃ r : R, algebraMap R F r ∉ P.integers} := by
+  rw [range_ofPrime]
+  ext P
+  simp only [Set.mem_compl_iff, Set.mem_ofPred_eq, not_forall]
+
 /-- **The coefficient formula on the finite chart**: the order at the place of `𝔭` of a nonzero
 element of the model is the multiplicity of `𝔭` in the ideal it generates. This is
 `TauCeti.Place.ord_algebraMap_eq_multiplicity_center` at the place of `𝔭`, whose centre is `𝔭`,
@@ -262,5 +290,41 @@ theorem degree_ofPrime : (ofPrime k F 𝔭).degree = Module.finrank k (R ⧸ �
 end ResidueFieldOfPrime
 
 end Place
+
+/-! ### Holomorphy rings as affine models -/
+
+section HolomorphyRing
+
+universe u v
+
+variable {k : Type u} {F : Type v} [Field k] [Field F] [Algebra k F] {S : Set (Place k F)}
+  [IsDedekindDomain ↥(holomorphyRing S)] [IsFractionRing ↥(holomorphyRing S) F]
+
+/-- **The height one primes of the affine model `𝒪_S` are the places of `S`.**  Once `𝒪_S` is a
+Dedekind domain with fraction field `F` — which `TauCeti.isPrincipalIdealRing_holomorphyRing` and
+`TauCeti.isFractionRing_holomorphyRing` supply for a finite `S` avoiding at least one place — the
+finite chart of the model `𝒪_S` is exactly `S` by
+`TauCeti.forall_algebraMap_mem_integers_holomorphyRing_iff`, so this is
+`TauCeti.Place.heightOneSpectrumEquiv` for `𝒪_S`, read along that identification of subtypes. -/
+noncomputable def holomorphyRingHeightOneSpectrumEquiv (hF : IsFunctionField k F) :
+    S ≃ HeightOneSpectrum ↥(holomorphyRing S) :=
+  (Equiv.subtypeEquivRight fun _ ↦
+      (forall_algebraMap_mem_integers_holomorphyRing_iff hF).symm).trans
+    (Place.heightOneSpectrumEquiv k F ↥(holomorphyRing S))
+
+@[simp]
+theorem holomorphyRingHeightOneSpectrumEquiv_apply (hF : IsFunctionField k F) (P : S) :
+    holomorphyRingHeightOneSpectrumEquiv hF P =
+      (P : Place k F).center
+        ((forall_algebraMap_mem_integers_holomorphyRing_iff hF).mpr P.2) :=
+  Place.heightOneSpectrumEquiv_apply k F _
+
+@[simp]
+theorem coe_holomorphyRingHeightOneSpectrumEquiv_symm_apply (hF : IsFunctionField k F)
+    (𝔭 : HeightOneSpectrum ↥(holomorphyRing S)) :
+    ((holomorphyRingHeightOneSpectrumEquiv hF).symm 𝔭 : Place k F) = Place.ofPrime k F 𝔭 :=
+  Place.coe_heightOneSpectrumEquiv_symm_apply k F 𝔭
+
+end HolomorphyRing
 
 end TauCeti

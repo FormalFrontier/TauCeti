@@ -8,7 +8,7 @@ module
 public import Mathlib.Algebra.GroupWithZero.Units.Basic
 
 /-!
-# Merging a power of a unit with a power of its inverse
+# Powers in groups with zero
 
 A product `a ^ i * a⁻¹ ^ (n - i)`, in which the two exponents are natural numbers adding up to
 `n`, is the integer power `a ^ (2 * i - n)`.  Such a product is what a diagonal matrix

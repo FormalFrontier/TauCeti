@@ -5,8 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.RingTheory.Binomial
 public import TauCeti.Algebra.Module.Rat
+public import TauCeti.RingTheory.Binomial
 
 /-!
 # Generalized binomial coefficients of an endomorphism at an eigenvector
@@ -37,6 +37,8 @@ diagonal in a fixed basis rather than merely applied to one eigenvector.
   scales an eigenvector by the binomial coefficient of its eigenvalue.
 * `TauCeti.ringChoose_end_apply_of_apply_eq_natCast_smul`: the specialization to a natural-number
   eigenvalue, where the scalar is `Nat.choose`.
+* `TauCeti.ringChoose_end_apply_mem_span_of_apply_eq_intCast_smul`: binomial coefficients of an
+  endomorphism preserve the integral span of integer-eigenvalue generators.
 
 ## References
 
@@ -91,5 +93,22 @@ integrally. -/
 theorem ringChoose_end_apply_of_apply_eq_natCast_smul {f : Module.End ℚ V} {v : V} {j : ℕ}
     (h : f v = (j : ℚ) • v) (n : ℕ) : (Ring.choose f n) v = (j.choose n : ℚ) • v := by
   rw [ringChoose_end_apply_of_apply_eq_smul h, Ring.choose_natCast]
+
+/-- Binomial coefficients of an endomorphism preserve the integral span of any family of
+eigenvectors whose eigenvalues are integers. -/
+theorem ringChoose_end_apply_mem_span_of_apply_eq_intCast_smul {I : Type*}
+    {f : Module.End ℚ V} {e : I → V} {weight : I → ℤ}
+    (heigen : ∀ i, f (e i) = (weight i : ℚ) • e i) (n : ℕ) {v : V}
+    (hv : v ∈ Submodule.span ℤ (Set.range e)) :
+    (Ring.choose f n) v ∈ Submodule.span ℤ (Set.range e) := by
+  induction hv using Submodule.span_induction with
+  | mem v hv =>
+      obtain ⟨i, rfl⟩ := hv
+      rw [ringChoose_end_apply_of_apply_eq_smul (heigen i) n,
+        Ring.choose_intCast, Int.cast_smul_eq_zsmul ℚ]
+      exact Submodule.smul_mem _ _ (Submodule.subset_span (Set.mem_range_self i))
+  | zero => rw [map_zero]; exact Submodule.zero_mem _
+  | add x y _ _ hx hy => rw [map_add]; exact Submodule.add_mem _ hx hy
+  | smul z x _ hx => rw [map_zsmul]; exact Submodule.smul_mem _ z hx
 
 end TauCeti

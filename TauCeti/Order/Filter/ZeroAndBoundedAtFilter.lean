@@ -75,6 +75,22 @@ theorem ZeroAtFilter.comp {γ : Type*} [Zero β] [TopologicalSpace β] [Zero γ]
   have h := Filter.Tendsto.comp hφ hg
   rwa [h0] at h
 
+/-- **Zeroing values keeps a function zero at a filter.** If `g` eventually agrees with `f` or
+vanishes, then `g` inherits `ZeroAtFilter`: since `0` lies in every neighbourhood of `0`, the
+preimage of such a neighbourhood under `g` contains the intersection of the one under `f` with
+the set where the hypothesis holds.
+
+Only an eventual hypothesis is needed, because convergence along `l` sees `g` only through sets
+in `l`. Stated pointwise rather than for an indicator, so it carries no decidability hypothesis
+and also covers truncations that are not indicators. -/
+theorem ZeroAtFilter.of_eventually_eq_or_eq_zero [Zero β] [TopologicalSpace β] {f g : α → β}
+    (hf : ZeroAtFilter l f) (h : ∀ᶠ a in l, g a = f a ∨ g a = 0) : ZeroAtFilter l g := fun _ hU ↦
+  Filter.mem_map.mpr (Filter.mem_of_superset
+    (Filter.inter_mem (Filter.mem_map.mp (hf hU)) h) fun a ha ↦ by
+      rcases ha.2 with he | he
+      · simpa [he] using ha.1
+      · simpa [he] using mem_of_mem_nhds hU)
+
 end Filter
 
 end

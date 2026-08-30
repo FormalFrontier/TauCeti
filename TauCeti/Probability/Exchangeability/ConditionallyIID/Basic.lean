@@ -181,11 +181,24 @@ theorem mixedIIDWith_of_conditionallyIIDWith {μ : Measure Ω} {X : ι → Ω �
         rw [TauCeti.MeasureTheory.map_bind hK measurable_snd]
         simp
 
+/-- A conditionally i.i.d. family with a named directing measure has a.e.-measurable coordinates,
+so no separate coordinate measurability hypothesis is needed. -/
+theorem ConditionallyIIDWith.aemeasurable {μ : Measure Ω} {X : ι → Ω → α}
+    {ν : Ω → ProbabilityMeasure α} (h : ConditionallyIIDWith μ X ν) (i : ι) :
+    AEMeasurable (X i) μ :=
+  (mixedIIDWith_of_conditionallyIIDWith h).aemeasurable i
+
 /-- The existential form of the easy arrow. -/
 theorem mixedIID_of_conditionallyIID {μ : Measure Ω} {X : ι → Ω → α}
     (h : ConditionallyIID μ X) : MixedIID μ X := by
   obtain ⟨ν, hν⟩ := h.exists_directing
   exact MixedIID.of_mixingRepresentative (mixedIIDWith_of_conditionallyIIDWith hν)
+
+/-- A conditionally i.i.d. family has a.e.-measurable coordinates, so no separate coordinate
+measurability hypothesis is needed. -/
+theorem ConditionallyIID.aemeasurable {μ : Measure Ω} {X : ι → Ω → α}
+    (h : ConditionallyIID μ X) (i : ι) : AEMeasurable (X i) μ :=
+  (mixedIID_of_conditionallyIID h).aemeasurable i
 
 end Probability
 

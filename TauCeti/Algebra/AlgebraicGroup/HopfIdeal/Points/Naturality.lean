@@ -286,6 +286,129 @@ lemma quotientPointsSubgroupNatIso_inv_app_apply (H : _root_.CommHopfAlgCat.{v} 
       liftQuotientPoint H I A g ((mem_quotientPointsSubgroup_iff H I A g).mp g.property) := by
   exact quotientPointsSubgroupIso_inv_apply H I A g
 
+section SubgroupRepresentability
+
+variable (H : _root_.CommHopfAlgCat.{v} R) (I : HopfIdeal R H)
+variable (S : (A : CommAlgCat.{w} R) →
+  Subgroup (HopfAlgebra.points (R := R) (H := H) A))
+variable (mapS : {A B : CommAlgCat.{w} R} → (A ⟶ B) → S A →* S B)
+variable (mapS_id : ∀ (A : CommAlgCat.{w} R) (g : S A), mapS (𝟙 A) g = g)
+variable (mapS_comp : ∀ {A B C : CommAlgCat.{w} R} (φ : A ⟶ B) (ψ : B ⟶ C)
+  (g : S A), mapS (φ ≫ ψ) g = mapS ψ (mapS φ g))
+variable (hS : ∀ (A : CommAlgCat.{w} R)
+  (g : HopfAlgebra.points (R := R) (H := H) A),
+  g ∈ quotientPointsSubgroup H I A ↔ g ∈ S A)
+variable (hmapS : ∀ {A B : CommAlgCat.{w} R} (φ : A ⟶ B) (g : S A),
+  (mapS φ g : HopfAlgebra.points (R := R) (H := H) B) =
+    HopfAlgebra.mapPoints (H := H) φ g)
+
+/-- Pointwise identification of a Hopf-ideal cut-out with a subgroup family having the same
+membership predicate. -/
+private noncomputable def quotientPointsSubgroupMulEquiv (A : CommAlgCat.{w} R) :
+    quotientPointsSubgroup H I A ≃* S A :=
+  MulEquiv.subgroupCongr <| Subgroup.ext fun g ↦ hS A g
+
+include hmapS in
+private theorem quotientPointsSubgroupMulEquiv_natural
+    {A B : CommAlgCat.{w} R} (φ : A ⟶ B) (g : quotientPointsSubgroup H I A) :
+    quotientPointsSubgroupMulEquiv H I S hS B
+        (mapQuotientPointsSubgroup H I φ g) =
+      mapS φ (quotientPointsSubgroupMulEquiv H I S hS A g) := by
+  apply Subtype.ext
+  calc
+    _ = (mapQuotientPointsSubgroup H I φ g :
+        HopfAlgebra.points (R := R) (H := H) B) :=
+      MulEquiv.subgroupCongr_apply _ _
+    _ = HopfAlgebra.mapPoints (H := H) φ g :=
+      coe_mapQuotientPointsSubgroup_apply H I φ g
+    _ = HopfAlgebra.mapPoints (H := H) φ
+        (quotientPointsSubgroupMulEquiv H I S hS A g) := by
+      exact congrArg (HopfAlgebra.mapPoints (H := H) φ)
+        (MulEquiv.subgroupCongr_apply _ g).symm
+    _ = (mapS φ (quotientPointsSubgroupMulEquiv H I S hS A g) :
+        HopfAlgebra.points (R := R) (H := H) B) :=
+      (hmapS φ _).symm
+
+include hS hmapS
+/-- The Hopf-ideal cut-out subgroup functor is naturally isomorphic to any stable subgroup
+family with the same pointwise membership condition. -/
+noncomputable def quotientPointsSubgroupFunctorIso :
+    quotientPointsSubgroupFunctor (R := R) H I ≅
+      HopfAlgebra.subgroupFunctor S mapS mapS_id mapS_comp :=
+  NatIso.ofComponents
+    (fun A ↦ (quotientPointsSubgroupMulEquiv H I S hS A).toGrpIso)
+    (by
+      intro A B φ
+      apply GrpCat.hom_ext
+      apply MonoidHom.ext
+      intro g
+      exact quotientPointsSubgroupMulEquiv_natural H I S mapS hS hmapS φ g)
+
+/-- A Hopf quotient represents any value-algebra-stable family of ambient point subgroups
+whose membership condition agrees with vanishing on the Hopf ideal. -/
+noncomputable def quotientPointsSubgroupRepresentingIso :
+    HopfAlgebra.pointsFunctor (R := R) (H := quotient H I) ≅
+      HopfAlgebra.subgroupFunctor S mapS mapS_id mapS_comp :=
+  (quotientPointsSubgroupNatIso H I).trans
+    (quotientPointsSubgroupFunctorIso H I S mapS mapS_id mapS_comp hS hmapS)
+
+/-- The represented subgroup point underlying a quotient point is induced by the quotient
+coordinate map. -/
+@[simp]
+theorem coe_quotientPointsSubgroupRepresentingIso_hom_app_apply
+    (A : CommAlgCat.{w} R)
+    (f : HopfAlgebra.points (R := R) (H := quotient H I) A) :
+    ((CategoryTheory.ConcreteCategory.hom
+      (X := HopfAlgebra.pointsFunctor (R := R) (H := quotient H I) |>.obj A)
+      (Y := GrpCat.of (S A))
+      ((quotientPointsSubgroupRepresentingIso
+        H I S mapS mapS_id mapS_comp hS hmapS).hom.app A) f : S A) :
+          HopfAlgebra.points (R := R) (H := H) A) =
+      quotientPointsHom H I A f := by
+  have hcomponent := quotientPointsSubgroupNatIso_hom_app_apply H I A f
+  unfold quotientPointsSubgroupRepresentingIso
+  exact congrArg
+    (fun g ↦ ((quotientPointsSubgroupMulEquiv H I S hS A g : S A) :
+      HopfAlgebra.points (R := R) (H := H) A))
+    hcomponent
+
+/-- Applying the quotient inclusion to the inverse representing isomorphism recovers the
+ambient subgroup point. -/
+@[simp]
+theorem quotientPointsHom_quotientPointsSubgroupRepresentingIso_inv_app_apply
+    (A : CommAlgCat.{w} R) (g : S A) :
+    quotientPointsHom H I A
+        (CategoryTheory.ConcreteCategory.hom
+          (X := GrpCat.of (S A))
+          (Y := HopfAlgebra.pointsFunctor (R := R) (H := quotient H I) |>.obj A)
+          ((quotientPointsSubgroupRepresentingIso
+            H I S mapS mapS_id mapS_comp hS hmapS).inv.app A) g) =
+      g.1 := by
+  let f :=
+    CategoryTheory.ConcreteCategory.hom
+      (X := GrpCat.of (S A))
+      (Y := HopfAlgebra.pointsFunctor (R := R) (H := quotient H I) |>.obj A)
+      ((quotientPointsSubgroupRepresentingIso
+        H I S mapS mapS_id mapS_comp hS hmapS).inv.app A) g
+  calc
+    quotientPointsHom H I A f =
+        ((CategoryTheory.ConcreteCategory.hom
+          (X := HopfAlgebra.pointsFunctor (R := R) (H := quotient H I) |>.obj A)
+          (Y := GrpCat.of (S A))
+          ((quotientPointsSubgroupRepresentingIso
+            H I S mapS mapS_id mapS_comp hS hmapS).hom.app A) f : S A) :
+              HopfAlgebra.points (R := R) (H := H) A) :=
+      (coe_quotientPointsSubgroupRepresentingIso_hom_app_apply
+        H I S mapS mapS_id mapS_comp hS hmapS A f).symm
+    _ = g.1 := by
+      have hinv := CategoryTheory.Iso.inv_hom_id_apply
+        ((quotientPointsSubgroupRepresentingIso
+          H I S mapS mapS_id mapS_comp hS hmapS).app A)
+        g
+      exact congrArg Subtype.val hinv
+
+end SubgroupRepresentability
+
 /-- The image of a quotient point under the subgroup functor is its mapped quotient point,
 viewed inside the cut-out subgroup. -/
 lemma quotientPointsSubgroupFunctor_map_quotientPointsHom

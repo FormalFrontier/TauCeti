@@ -27,6 +27,8 @@ inclusion.
 * `TauCeti.integral_pow_mul_exp_neg_mul_Ioi`: evaluation in terms of a factorial.
 * `TauCeti.integrableOn_exp_mul_Ioi_iff`: `exp (a * ·)` is integrable on `(c, ∞)` exactly when
   `a < 0`.
+* `TauCeti.integrableOn_exp_mul_Iic_iff`: `exp (a * ·)` is integrable on `(-∞, c]` exactly when
+  `0 < a`.
 * `TauCeti.integrable_exp_neg_mul_abs`: `exp (-(a * |·|))` is integrable when `0 < a`.
 -/
 
@@ -102,5 +104,16 @@ theorem integrableOn_exp_mul_Ioi_iff {a c : ℝ} :
   refine ⟨fun h => ?_, fun ha => integrableOn_exp_mul_Ioi ha c⟩
   by_contra hne
   exact not_integrableOn_exp_mul_Ioi (not_lt.mp hne) h
+
+/-- **The exact integrability rate on a left half-line.** `fun x => exp (a * x)` is integrable
+on `(-∞, c]` precisely when the rate is positive. -/
+@[simp]
+theorem integrableOn_exp_mul_Iic_iff {a c : ℝ} :
+    IntegrableOn (fun x : ℝ => Real.exp (a * x)) (Set.Iic c) ↔ 0 < a := by
+  rw [integrableOn_Iic_iff_integrableOn_Iio,
+    ← (Measure.measurePreserving_neg (volume : Measure ℝ)).integrableOn_comp_preimage
+      (Homeomorph.neg ℝ).measurableEmbedding]
+  simpa only [Function.comp_def, neg_preimage, neg_Iio, neg_neg, mul_neg, neg_mul,
+    neg_lt_zero] using (integrableOn_exp_mul_Ioi_iff (a := -a) (c := -c))
 
 end TauCeti

@@ -28,7 +28,8 @@ second radical layer is exactly the volume span.
 * `TauCeti.zigzagTrivialCoeff`: the algebra homomorphism from the zigzag quotient to
   `DoubledQuiver G → k` that retains the vertex coefficients.
 * `TauCeti.zigzagPositiveSpan`: the span of the arrow and volume basis classes.
-* `TauCeti.zigzagVolumeSpan`: the span of the volume basis classes.
+* `TauCeti.zigzagVolumeSpan`: the span of the volume basis classes, with the description
+  `TauCeti.zigzagVolumeSpan_eq_span` and the elimination lemma `TauCeti.zigzagVolumeSpan_le`.
 
 ## Main results
 
@@ -154,11 +155,20 @@ theorem zigzagVolume_mem_zigzagVolumeSpan (i : V) :
     zigzagVolume k G i ∈ zigzagVolumeSpan k G :=
   Submodule.subset_span (Set.mem_range_self i)
 
+/-- The volume span is the span of the volume classes. -/
+theorem zigzagVolumeSpan_eq_span :
+    zigzagVolumeSpan k G = Submodule.span k (Set.range (zigzagVolume k G)) := (rfl)
+
+/-- A subspace containing every volume class contains the volume span. -/
+theorem zigzagVolumeSpan_le {N : Submodule k (nonisolatedZigzagQuotient k G)}
+    (h : ∀ i : V, zigzagVolume k G i ∈ N) : zigzagVolumeSpan k G ≤ N := by
+  rw [zigzagVolumeSpan_eq_span, Submodule.span_le, Set.range_subset_iff]
+  exact h
+
 /-- The volume span is contained in the positive-length span. -/
 theorem zigzagVolumeSpan_le_zigzagPositiveSpan :
-    zigzagVolumeSpan k G ≤ zigzagPositiveSpan k G := by
-  rw [zigzagVolumeSpan, Submodule.span_le, Set.range_subset_iff]
-  exact zigzagVolume_mem_zigzagPositiveSpan
+    zigzagVolumeSpan k G ≤ zigzagPositiveSpan k G :=
+  zigzagVolumeSpan_le zigzagVolume_mem_zigzagPositiveSpan
 
 /-- The positive-length span is characterized by vanishing vertex coordinates. -/
 theorem mem_zigzagPositiveSpan_iff (hns : ∀ i : V, ∃ j, G.Adj i j)
@@ -210,22 +220,16 @@ theorem zigzagTrivialCoeff_apply_eq_repr (hns : ∀ i : V, ∃ j, G.Adj i j)
     zigzagTrivialCoeff k G x (vertex G i) =
       (zigzagBasis k G hns).repr x (.inl i) := by
   classical
-  have repr_basisFun (b : ZigzagBasisIndex G) :
-      (zigzagBasis k G hns).repr (zigzagBasisFun k G b) = Finsupp.single b 1 := by
-    rw [← zigzagBasis_apply k G hns, Module.Basis.repr_self]
-  have coord_basisFun (b b' : ZigzagBasisIndex G) :
-      (zigzagBasis k G hns).coord b (zigzagBasisFun k G b') = if b' = b then 1 else 0 := by
-    rw [Module.Basis.coord_apply, repr_basisFun, Finsupp.single_apply]
   have key : (LinearMap.proj (vertex G i)).comp (zigzagTrivialCoeff k G).toLinearMap =
       (zigzagBasis k G hns).coord (.inl i) := by
     refine (zigzagBasis k G hns).ext fun b => ?_
-    rw [LinearMap.comp_apply, LinearMap.proj_apply, zigzagBasis_apply, coord_basisFun]
+    rw [LinearMap.comp_apply, LinearMap.proj_apply, zigzagBasis_coord_apply]
     rcases b with j | d | j
-    · simp only [zigzagBasisFun_inl, AlgHom.toLinearMap_apply,
+    · simp only [zigzagBasis_apply, zigzagBasisFun_inl, AlgHom.toLinearMap_apply,
         zigzagTrivialCoeff_vertexIdempotent, Sum.inl.injEq, eq_comm]
-    · simp only [zigzagBasisFun_inr_inl, AlgHom.toLinearMap_apply,
+    · simp only [zigzagBasis_apply, zigzagBasisFun_inr_inl, AlgHom.toLinearMap_apply,
         zigzagTrivialCoeff_ofArrow, Pi.zero_apply, Sum.inr_ne_inl, ↓reduceIte]
-    · simp only [zigzagBasisFun_inr_inr, AlgHom.toLinearMap_apply,
+    · simp only [zigzagBasis_apply, zigzagBasisFun_inr_inr, AlgHom.toLinearMap_apply,
         zigzagTrivialCoeff_zigzagVolume, Pi.zero_apply, Sum.inr_ne_inl, ↓reduceIte]
   exact LinearMap.congr_fun key x
 

@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Topology.Algebra.Nonarchimedean.Basic
+public import Mathlib.Algebra.Ring.Subring.Basic
 
 /-!
 # Bounded subsets of a topological ring

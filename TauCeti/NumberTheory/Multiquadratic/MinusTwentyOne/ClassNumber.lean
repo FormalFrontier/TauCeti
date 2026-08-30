@@ -83,12 +83,8 @@ private theorem minkowski_bound_lt_six
   have hfin : finrank ℚ K = 2 := finrank_rat_eq_two hmin hgen
   have _ : IsTotallyComplex K :=
     isTotallyComplex_of_minpoly_eq_X_sq_sub_C_of_neg hmin (by norm_num)
-  have hreal : InfinitePlace.nrRealPlaces K = 0 :=
-    NumberField.IsTotallyComplex.nrRealPlaces_eq_zero K
-  have hcomplex : InfinitePlace.nrComplexPlaces K = 1 := by
-    have hsignature := InfinitePlace.card_add_two_mul_card_eq_rank K
-    rw [hreal, hfin] at hsignature
-    omega
+  have hcomplex : InfinitePlace.nrComplexPlaces K = 1 :=
+    InfinitePlace.nrComplexPlaces_eq_one_of_finrank_eq_two hfin
   have hdisc := discr_eq_neg_eighty_four hmin hgen
   have hsqrt : Real.sqrt 84 < 46 / 5 := by
     rw [Real.sqrt_lt' (by norm_num)]

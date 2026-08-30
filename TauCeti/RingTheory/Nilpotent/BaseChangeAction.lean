@@ -305,6 +305,20 @@ theorem baseChange_integralDividedPower_eq_zero_of_le (x : A) (M : S) {n : ℕ}
     (integralDividedPower x M n hn).baseChange R = 0 := by
   rw [integralDividedPower_eq_zero_of_le x M n hn hk hkn, LinearMap.baseChange_zero]
 
+/-- **The base-changed divided powers vanish from the nilpotency index on.** The `∀`-form of
+`baseChange_integralDividedPower_eq_zero_of_le`, stated for the family
+`hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M` that `baseChangeExp` carries, rather than
+for one index at a time.
+
+This is the `hzero` shape that `sum_pow_smul_mul_sum_pow_smul` and the normal-ordering
+combinators consume: each wants the vanishing as one hypothesis about the whole tail, supplied
+once per element, before case-splitting on which factor of a reordered product falls outside its
+truncation bound. -/
+theorem forall_baseChange_integralDividedPower_eq_zero_of_le (x : A) (M : S)
+    (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M) {k : ℕ} (hk : x ^ k = 0) :
+    ∀ n, k ≤ n → (integralDividedPower x M n (hM n)).baseChange R = 0 :=
+  fun n hn => baseChange_integralDividedPower_eq_zero_of_le x M (hM n) hk hn
+
 /-- The base-changed exponential expanded over any truncation bound `k` satisfying `x ^ k = 0`. -/
 theorem baseChangeExp_of_pow_eq_zero (x : A) (M : S)
     (hM : ∀ n, ∀ v ∈ M, Associative.dividedPower n x • v ∈ M) {k : ℕ} (hk : x ^ k = 0) (t : R) :
@@ -390,9 +404,7 @@ theorem baseChangeExp_add (x : A) (M : S)
   rw [baseChangeExp, baseChangeExp, baseChangeExp]
   symm
   apply sum_pow_smul_mul_sum_pow_smul (fun n => (integralDividedPower x M n (hM n)).baseChange R)
-  · intro n hn
-    exact baseChange_integralDividedPower_eq_zero_of_le x M (hM n)
-      (pow_nilpotencyClass hx) hn
+  · exact forall_baseChange_integralDividedPower_eq_zero_of_le x M hM (pow_nilpotencyClass hx)
   · exact baseChange_mul_integralDividedPower x M hM
 
 /-- The base-changed divided-power exponential at zero is the identity. -/

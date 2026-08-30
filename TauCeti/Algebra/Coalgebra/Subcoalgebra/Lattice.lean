@@ -48,17 +48,6 @@ variable [CommSemiring R] [AddCommMonoid C] [Module R C] [Coalgebra R C]
 
 namespace Subcoalgebra
 
-omit [Coalgebra R C] in
-private lemma tensorSquare_range_mono {P Q : Submodule R C} (hPQ : P ≤ Q) :
-    LinearMap.range (TensorProduct.map P.subtype P.subtype) ≤
-      LinearMap.range (TensorProduct.map Q.subtype Q.subtype) := by
-  rintro _ ⟨x, rfl⟩
-  refine ⟨TensorProduct.map (Submodule.inclusion hPQ) (Submodule.inclusion hPQ) x, ?_⟩
-  induction x with
-  | zero => simp
-  | tmul p q => rfl
-  | add x y hx hy => simp [hx, hy]
-
 private lemma comul_mem_sup (D E : Subcoalgebra R C) {c : C}
     (hc : c ∈ D.toSubmodule ⊔ E.toSubmodule) :
     Coalgebra.comul (R := R) (A := C) c ∈
@@ -68,12 +57,8 @@ private lemma comul_mem_sup (D E : Subcoalgebra R C) {c : C}
   rcases Submodule.mem_sup.1 hc with ⟨d, hd, e, he, rfl⟩
   rw [LinearMap.map_add]
   exact add_mem
-    (tensorSquare_range_mono
-      (P := D.toSubmodule) (Q := D.toSubmodule ⊔ E.toSubmodule) le_sup_left
-      (D.comul_mem hd))
-    (tensorSquare_range_mono
-      (P := E.toSubmodule) (Q := D.toSubmodule ⊔ E.toSubmodule) le_sup_right
-      (E.comul_mem he))
+    (TensorProduct.range_mapIncl_mono le_sup_left le_sup_left (D.comul_mem hd))
+    (TensorProduct.range_mapIncl_mono le_sup_right le_sup_right (E.comul_mem he))
 
 private lemma comul_mem_sSup (S : Set (Subcoalgebra R C)) {c : C}
     (hc : c ∈ ⨆ D : S, (D : Subcoalgebra R C).toSubmodule) :
@@ -86,9 +71,8 @@ private lemma comul_mem_sSup (S : Set (Subcoalgebra R C)) {c : C}
   rcases hc with ⟨f, hf, rfl⟩
   rw [Finsupp.sum, map_sum]
   exact Submodule.sum_mem _ fun D _ =>
-    tensorSquare_range_mono
-      (P := (D : Subcoalgebra R C).toSubmodule)
-      (Q := ⨆ D : S, (D : Subcoalgebra R C).toSubmodule)
+    TensorProduct.range_mapIncl_mono
+      (le_iSup (fun D : S => (D : Subcoalgebra R C).toSubmodule) D)
       (le_iSup (fun D : S => (D : Subcoalgebra R C).toSubmodule) D)
       (D.1.comul_mem (hf D))
 

@@ -53,8 +53,8 @@ countability Markov exchangeability already carries.
 ## Main results
 
 * `TauCeti.Probability.measurable_excursion`: an excursion is a measurable function of the path.
-* `TauCeti.Probability.Recurrent.measure_setOf_excursionPrefix_eq`: under recurrence, prescribing
-  the first excursions is a finite-path event.
+* `TauCeti.Probability.measure_setOf_excursionPrefix_eq`: for a process making the visit that
+  closes the last prescribed excursion, prescribing the first excursions is a finite-path event.
 * `TauCeti.Probability.MarkovExchangeable.measure_setOf_excursionPrefix_eq_of_perm`: reordering a
   list of excursions does not change the probability that it is the process's list of first
   excursions.
@@ -165,20 +165,20 @@ end Measurability
 variable {μ : Measure Ω} {X : ℕ → Ω → α} {a₀ : α}
 
 omit [MeasurableSpace α] in
-/-- **Under recurrence, prescribing the first excursions is a finite-path event.** For a process
-almost surely starting at `a₀`, having `bs` as its first `bs.length` excursions is, up to a null
-set, spelling out the loop word of `bs`. -/
-theorem Recurrent.measure_setOf_excursionPrefix_eq (hrec : Recurrent μ X)
-    (h0 : ∀ᵐ ω ∂μ, X 0 ω = a₀) {bs : List (List α)} (havoid : ∀ e ∈ bs, a₀ ∉ e) :
+/-- **Prescribing the first excursions is a finite-path event.** For a process almost surely
+starting at `a₀` and almost surely making a `bs.length`-th visit to `a₀`, having `bs` as its first
+`bs.length` excursions is, up to a null set, spelling out the loop word of `bs`. Only the visit
+closing the last prescribed excursion is used, so this asks less than returning to `a₀` infinitely
+often, let alone recurrence of the whole process; `TauCeti.exists_visitCount_of_infinite` supplies
+the hypothesis from infinitely many returns. -/
+theorem measure_setOf_excursionPrefix_eq {bs : List (List α)}
+    (hvisit : ∀ᵐ ω ∂μ, ∃ n, X n ω = a₀ ∧ visitCount (fun n => X n ω) a₀ n = bs.length)
+    (h0 : ∀ᵐ ω ∂μ, X 0 ω = a₀) (havoid : ∀ e ∈ bs, a₀ ∉ e) :
     μ {ω | excursionPrefix (fun n => X n ω) a₀ bs.length = bs} =
       μ {ω | ∀ i ≤ loopSteps bs, X i ω = loopPathAt a₀ bs i} := by
   refine (measure_congr (Filter.eventuallyEq_set.2 ?_)).symm
-  filter_upwards [h0, hrec.ae_infinite_setOf_eq] with ω hω0 hωinf
-  have hinf : {n | X n ω = a₀}.Infinite := by
-    have h := hωinf 0
-    rwa [hω0] at h
-  exact eqOn_loopPathAt_iff_excursionPrefix_eq havoid
-    (exists_visitCount_of_infinite hinf bs.length) hω0
+  filter_upwards [h0, hvisit] with ω hω0 hω
+  exact eqOn_loopPathAt_iff_excursionPrefix_eq havoid hω hω0
 
 /-- **Reordering a list of excursions does not change the probability that a recurrent Markov
 exchangeable process traverses it.** No hypothesis on the list is needed: excursions never visit
@@ -189,9 +189,16 @@ theorem MarkovExchangeable.measure_setOf_excursionPrefix_eq_of_perm (h : MarkovE
     μ {ω | excursionPrefix (fun n => X n ω) a₀ bs.length = bs} =
       μ {ω | excursionPrefix (fun n => X n ω) a₀ bs'.length = bs'} := by
   by_cases havoid : ∀ e ∈ bs, a₀ ∉ e
-  · have havoid' : ∀ e ∈ bs', a₀ ∉ e := fun e he => havoid e (hperm.mem_iff.2 he)
-    rw [hrec.measure_setOf_excursionPrefix_eq h0 havoid,
-      hrec.measure_setOf_excursionPrefix_eq h0 havoid',
+  · have hvisit : ∀ cs : List (List α),
+        ∀ᵐ ω ∂μ, ∃ n, X n ω = a₀ ∧ visitCount (fun n => X n ω) a₀ n = cs.length := by
+      intro cs
+      filter_upwards [h0, hrec.ae_infinite_setOf_eq] with ω hω0 hωinf
+      have hinf := hωinf 0
+      rw [hω0] at hinf
+      exact exists_visitCount_of_infinite hinf cs.length
+    have havoid' : ∀ e ∈ bs', a₀ ∉ e := fun e he => havoid e (hperm.mem_iff.2 he)
+    rw [measure_setOf_excursionPrefix_eq (hvisit bs) h0 havoid,
+      measure_setOf_excursionPrefix_eq (hvisit bs') h0 havoid',
       ← loopSteps_eq_of_perm hperm]
     exact h.measure_setOf_loopPathAt_eq_of_perm a₀ hperm rfl
   · -- A list with an entry through the base state is nobody's list of excursions.

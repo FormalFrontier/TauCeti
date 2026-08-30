@@ -116,6 +116,13 @@ keeps the doubled quiver structure from being replaced by that of `Q`. -/
 noncomputable def doubledVertexIdempotent (v : Q) : pathAlgebra k (Symmetrify Q) :=
   @vertexIdempotent k (Symmetrify Q) _ (symmetrifyQuiver Q) (Symmetrify.of.obj v)
 
+/-- The doubled vertex idempotent is the vertex idempotent of the doubled quiver. This is the
+defining equation, exposed for use outside this module. -/
+theorem doubledVertexIdempotent_def (v : Q) :
+    doubledVertexIdempotent k v =
+      @vertexIdempotent k (Symmetrify Q) _ (symmetrifyQuiver Q) (Symmetrify.of.obj v) := by
+  rw [doubledVertexIdempotent]
+
 /-- The **head backtrack** of an arrow `a : i ⟶ j`: the length-two loop of the doubled quiver at
 the head `j` of `a` which traverses the formal reverse `a*` and then `a`. In Tau Ceti's
 later-factor-first convention this is the product `ofArrow a * ofArrow (reverse a)`, which is the
@@ -326,6 +333,14 @@ which lives in the corner cut out by `e_v`. -/
 noncomputable def localPreprojectiveRelator (v : Q) : pathAlgebra k (Symmetrify Q) :=
   (∑ i : Q, ∑ a : (i ⟶ v), headBacktrackElem k a) -
     ∑ j : Q, ∑ a : (v ⟶ j), tailBacktrackElem k a
+
+/-- The local preprojective relator at a vertex, by its defining sum. This is the defining
+equation, exposed for use outside this module. -/
+theorem localPreprojectiveRelator_def (v : Q) :
+    localPreprojectiveRelator k v =
+      (∑ i : Q, ∑ a : (i ⟶ v), headBacktrackElem k a) -
+        ∑ j : Q, ∑ a : (v ⟶ j), tailBacktrackElem k a := by
+  rw [localPreprojectiveRelator]
 
 /-- **The global relator is the sum of the local ones**: each arrow contributes its head backtrack
 to the relator at its head, and its tail backtrack to the relator at its tail. -/

@@ -110,8 +110,8 @@ theorem norm_deriv_div_one_sub_norm_sq_le {f : ℂ → ℂ}
     ‖deriv f z‖ / (1 - ‖f z‖ ^ 2) ≤ 1 / (1 - ‖z‖ ^ 2) := by
   have hz1 : ‖z‖ < 1 := by simpa [mem_ball_zero_iff] using hz
   have hfz1 : ‖f z‖ < 1 := by simpa [mem_ball_zero_iff] using hmaps hz
-  have hden_z : (0 : ℝ) < 1 - ‖z‖ ^ 2 := by nlinarith [norm_nonneg z]
-  have hden_fz : (0 : ℝ) < 1 - ‖f z‖ ^ 2 := by nlinarith [norm_nonneg (f z)]
+  have hden_z : (0 : ℝ) < 1 - ‖z‖ ^ 2 := one_sub_sq_norm_pos_of_norm_lt_one hz1
+  have hden_fz : (0 : ℝ) < 1 - ‖f z‖ ^ 2 := one_sub_sq_norm_pos_of_norm_lt_one hfz1
   -- Pass to the Schwarz--Pick conjugate of `f` at `z`, a holomorphic self-map fixing the origin.
   obtain ⟨hg_diff, hg_maps, hg_zero⟩ :=
     differentiableOn_and_mapsTo_ball_and_apply_zero_schwarzPickConjugate hf hmaps hz1

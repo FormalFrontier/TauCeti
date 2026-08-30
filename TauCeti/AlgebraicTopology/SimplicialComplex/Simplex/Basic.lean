@@ -6,6 +6,10 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.AlgebraicTopology.SimplicialComplex.Basic
+public import Mathlib.Data.Finset.Powerset
+public import Mathlib.Data.Fintype.Card
+public import Mathlib.Data.Set.Finite.Basic
+public import Mathlib.Order.Fin.Basic
 public import TauCeti.AlgebraicTopology.SimplicialComplex.IsCone
 
 /-!
@@ -26,6 +30,8 @@ The definitions follow Rourke--Sanderson, *Introduction to Piecewise-Linear Topo
 
 * `PreAbstractSimplicialComplex.simplex`: the complex of nonempty subsets of a finite vertex set.
 * `PreAbstractSimplicialComplex.simplexBoundary`: its proper faces.
+* `AbstractSimplicialComplex.standardSuccSimplexBoundary`: the boundary complex of the standard
+  `(n + 1)`-simplex.
 -/
 
 public section
@@ -97,6 +103,10 @@ theorem singleton_mem_simplexBoundary {v : ι} : {v} ∈ simplexBoundary V ↔ v
 /-- The boundary is a subcomplex of the simplex. -/
 theorem simplexBoundary_le_simplex : simplexBoundary V ≤ simplex V :=
   fun _ hσ => ⟨hσ.1, hσ.2.subset⟩
+
+/-- The boundary of an abstract simplex has finitely many faces. -/
+theorem finite_faces_simplexBoundary (V : Finset ι) : (simplexBoundary V).faces.Finite :=
+  (finite_faces_simplex V).subset simplexBoundary_le_simplex
 
 /-- The boundary of a simplex with nonempty spanning set is a strict subcomplex of the simplex. -/
 theorem simplexBoundary_lt_simplex (hV : V.Nonempty) : simplexBoundary V < simplex V := by
@@ -214,3 +224,41 @@ theorem mem_simplex_iff_mem_simplexBoundary_or_eq :
 
 end PreAbstractSimplicialComplex
 
+namespace AbstractSimplicialComplex
+
+private theorem singleton_mem_standardSuccSimplexBoundaryPrecomplex (n : ℕ) (v : Fin (n + 2)) :
+    {v} ∈ (PreAbstractSimplicialComplex.simplexBoundary
+      (Finset.univ : Finset (Fin (n + 2)))).faces := by
+  exact PreAbstractSimplicialComplex.singleton_mem_simplexBoundary.mpr
+    ⟨Finset.mem_univ v, (Finset.singleton_ne_univ v).symm⟩
+
+/-- The boundary complex of the standard `(n + 1)`-simplex.  Its vertices are `Fin (n + 2)` and
+its faces are the nonempty proper subsets of all vertices. -/
+def standardSuccSimplexBoundary (n : ℕ) : AbstractSimplicialComplex (Fin (n + 2)) :=
+  PreAbstractSimplicialComplex.toAbstractSimplicialComplex (Fin (n + 2))
+    (PreAbstractSimplicialComplex.simplexBoundary
+      (Finset.univ : Finset (Fin (n + 2))))
+    (singleton_mem_standardSuccSimplexBoundaryPrecomplex n)
+
+/-- The underlying precomplex of `standardSuccSimplexBoundary n` is the boundary of the simplex on
+all `n + 2` vertices. -/
+@[simp]
+theorem standardSuccSimplexBoundary_toPreAbstractSimplicialComplex (n : ℕ) :
+    (standardSuccSimplexBoundary n).toPreAbstractSimplicialComplex =
+      PreAbstractSimplicialComplex.simplexBoundary
+        (Finset.univ : Finset (Fin (n + 2))) :=
+  by
+    ext σ
+    rfl
+
+/-- The faces of the boundary of the standard `(n + 1)`-simplex are exactly the nonempty proper
+subsets of its vertex set. -/
+@[simp]
+theorem mem_standardSuccSimplexBoundary_iff {n : ℕ} {σ : Finset (Fin (n + 2))} :
+    σ ∈ standardSuccSimplexBoundary n ↔ σ.Nonempty ∧ σ ⊂ Finset.univ :=
+  by
+    rw [← mem_toPreAbstractSimplicialComplex,
+      standardSuccSimplexBoundary_toPreAbstractSimplicialComplex,
+      PreAbstractSimplicialComplex.mem_simplexBoundary]
+
+end AbstractSimplicialComplex

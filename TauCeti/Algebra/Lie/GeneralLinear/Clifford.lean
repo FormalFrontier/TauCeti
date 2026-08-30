@@ -8,6 +8,7 @@ module
 public import TauCeti.Algebra.Lie.GeneralLinear.TraceForm
 public import TauCeti.LinearAlgebra.CliffordAlgebra.Quadratic.Lie.Representation
 import Mathlib.Algebra.Lie.Classical
+import TauCeti.LinearAlgebra.CliffordAlgebra.Vectors
 
 /-!
 # The quadratic Clifford lift of the general linear Lie algebra
@@ -24,6 +25,9 @@ corresponding Clifford algebra.
 * `TauCeti.glCliffordHom_single`: its formula on matrix units.
 * `TauCeti.glCliffordHom_normalOrdering`: its decomposition into bivectors and the central
   normal-ordering constant.
+* `TauCeti.glCliffordHom_injective`: it is injective once `Fintype.card n` is invertible, which
+  the quadratic part alone is not — the centre of `gl n K` is what the normal-ordering constant
+  separates.
 
 ## References
 
@@ -223,5 +227,71 @@ theorem glCliffordHom_single (i j : n) :
     rw [← hcentral]
     rw [Finset.sum_add_distrib, smul_add]
   · simp [h, Finset.smul_sum]
+
+/-! ### Injectivity -/
+
+/-- A matrix annihilated by the normal-ordered lift is central: the lift acts on Clifford
+generators by the matrix commutator, and the generators are a faithful copy of the matrices. -/
+private theorem commute_of_glCliffordHom_eq_zero {X : Matrix n n K}
+    (hX : glCliffordHom (K := K) (n := n) X = 0) (Y : Matrix n n K) : Commute Y X := by
+  have h : ι (traceQuadraticForm K n) ⁅X, Y⁆ = 0 := by
+    rw [← glCliffordHom_lie_ι, hX, zero_lie]
+  have hXY : ⁅X, Y⁆ = 0 := by rwa [ι_eq_zero_iff] at h
+  rw [Ring.lie_def, sub_eq_zero] at hXY
+  exact hXY.symm
+
+/-- On a central matrix the lift is its normal-ordering constant alone: the adjoint action the
+quadratic part lifts already vanishes there. -/
+private theorem glCliffordHom_eq_algebraMap_of_commute {X : Matrix n n K}
+    (hX : ∀ Y : Matrix n n K, Commute Y X) :
+    glCliffordHom (K := K) (n := n) X =
+      algebraMap K (CliffordAlgebra (traceQuadraticForm K n))
+        ((Fintype.card n / 2 : K) * X.trace) := by
+  have hzero : traceAdjointSO K n X = 0 := by
+    refine Subtype.ext (LinearMap.ext fun Y => ?_)
+    rw [coe_traceAdjointSO, _root_.LieAlgebra.ad_apply, Ring.lie_def, (hX Y).eq, sub_self]
+    rfl
+  rw [glCliffordHom_apply, CliffordAlgebra.quadraticLift_apply, hzero, map_zero,
+    ZeroMemClass.coe_zero, zero_add]
+
+/-- **The normal-ordered lift is injective as soon as `Fintype.card n` is invertible in `K`.**
+The adjoint action of `gl n K` is not faithful — its kernel is the centre, the scalar matrices
+(`TauCeti.ker_traceAdjointSO`) — so the quadratic part alone is not injective; this is the
+reductive-not-semisimple behaviour that distinguishes `gl n K` from a Killing-semisimple Lie
+algebra, where `CliffordAlgebra.adjointCliffordHom_injective` needs no hypothesis. It is the
+normal-ordering constant that repairs it: on the scalar matrix `r • 1` the lift is the scalar
+`(card n) ^ 2 * r / 2`, nonzero exactly when `r` is. The hypothesis is not removable, since in
+characteristic dividing `card n` those scalar matrices are again killed. -/
+theorem glCliffordHom_injective (h : (Fintype.card n : K) ≠ 0) :
+    Function.Injective (glCliffordHom (K := K) (n := n)) := by
+  have key : ∀ X : Matrix n n K, glCliffordHom (K := K) (n := n) X = 0 → X = 0 := by
+    intro X hX
+    have hcomm := commute_of_glCliffordHom_eq_zero hX
+    obtain ⟨r, hr⟩ :=
+      Matrix.mem_range_scalar_iff_commute_single'.mpr fun i j => hcomm (Matrix.single i j 1)
+    have htrace : X.trace = r * Fintype.card n := by
+      rw [← hr]
+      simp [Matrix.scalar_apply, Matrix.trace_diagonal, mul_comm]
+    have hscalar :
+        algebraMap K (CliffordAlgebra (traceQuadraticForm K n))
+          ((Fintype.card n / 2 : K) * X.trace) = 0 := by
+      rw [← glCliffordHom_eq_algebraMap_of_commute hcomm, hX]
+    have hcoef : (Fintype.card n / 2 : K) * X.trace = 0 :=
+      ((ι_eq_algebraMap_iff (traceQuadraticForm K n) 0
+        ((Fintype.card n / 2 : K) * X.trace)).mp (by rw [map_zero, hscalar])).2
+    rw [htrace] at hcoef
+    have hr0 : r = 0 := by
+      rcases mul_eq_zero.mp hcoef with hc | hc
+      · rcases div_eq_zero_iff.mp hc with hc | hc
+        · exact absurd hc h
+        · exact absurd hc (Invertible.ne_zero (2 : K))
+      · rcases mul_eq_zero.mp hc with hc | hc
+        · exact hc
+        · exact absurd hc h
+    rw [← hr, hr0]
+    simp
+  intro X Y hXY
+  have h0 : glCliffordHom (K := K) (n := n) (X - Y) = 0 := by rw [map_sub, hXY, sub_self]
+  exact sub_eq_zero.mp (key _ h0)
 
 end TauCeti

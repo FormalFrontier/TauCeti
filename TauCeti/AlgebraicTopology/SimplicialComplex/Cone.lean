@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.AlgebraicTopology.SimplicialComplex.IsCone
+public import Mathlib.Data.Fintype.Powerset
 public import TauCeti.AlgebraicTopology.SimplicialComplex.Join
 import Mathlib.Data.Finite.Prod
 import Mathlib.Data.Set.Finite.Basic
@@ -212,4 +213,3 @@ theorem cone_mono (h : K ≤ L) : cone K ≤ cone L :=
   join_mono h le_rfl
 
 end AbstractSimplicialComplex
-

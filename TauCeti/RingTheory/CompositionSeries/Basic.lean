@@ -8,21 +8,36 @@ module
 public import Mathlib.RingTheory.SimpleModule.Basic
 
 /-!
-# Transporting a composition series along a linear equivalence
+# Transporting a composition series along a linear map
 
-A linear equivalence `e : M ≃ₗ[R] N` carries the submodules of `M` to the submodules of `N` by the
-order isomorphism `Submodule.orderIsoMapComap e`, so it carries a composition series of `M` to one
-of `N` (`TauCeti.mapCompositionSeries`) and identifies the two series factor by factor
-(`TauCeti.factorEquivMapCompositionSeries`).  This is what makes an invariant read off a composition
-series an invariant of the isomorphism class of the ambient module; the Jordan-Hölder multiplicities
-of `TauCeti.RingTheory.CompositionSeries.Multiplicity` are the consumer this was written for.
+An injective linear map `f : M →ₗ[R] N` carries the submodules of `M` to submodules of `N` and
+preserves coverings (`Submodule.map_covBy_of_injective`), and a surjective one pulls the submodules
+of `N` back and preserves coverings (`Submodule.comap_covBy_of_surjective`), so each carries a
+composition series to a composition series: `TauCeti.mapCompositionSeriesOfInjective` and
+`TauCeti.comapCompositionSeriesOfSurjective`.  That the transported series keeps the *factors*
+themselves, and not just their number, is the identification of subquotients
+`TauCeti.mapSubquotientEquivOfInjective`, respectively
+`TauCeti.comapSubquotientEquivOfSurjective`, of `TauCeti.Algebra.Module.Submodule.Quotient`.
+
+Taking `f` to be a linear equivalence, this is what makes an invariant read off a composition
+series an invariant of the isomorphism class of the ambient module; the Jordan-Hölder
+multiplicities of `TauCeti.RingTheory.CompositionSeries.Multiplicity` are the consumer this was
+written for, and `TauCeti.RingTheory.CompositionSeries.Additivity` is the consumer that needs the
+two one-sided forms, for the inclusion of a submodule and the projection onto a quotient.
 
 ## Main definitions
 
-* `TauCeti.mapCompositionSeries`: the image of a composition series under a linear equivalence of
-  the ambient module.
-* `TauCeti.factorEquivMapCompositionSeries`: the identification of the factor of a composition
-  series at an index with the factor of its image at the same index.
+* `TauCeti.mapCompositionSeriesOfInjective`: the image of a composition series under an injective
+  linear map.
+* `TauCeti.comapCompositionSeriesOfSurjective`: the preimage of a composition series under a
+  surjective linear map.
+
+## References
+
+The two transports are exactly the anonymous `let`s inside the proof of Mathlib's
+`Module.length_eq_add_of_exact` (`Mathlib/RingTheory/Length.lean`, by Andrew Yang), packaged here
+as named definitions with an API so that they can be shown to preserve the factors themselves and
+not just their number.
 -/
 
 public section
@@ -34,78 +49,70 @@ universe u v v'
 variable {R : Type u} [Ring R] {M : Type v} [AddCommGroup M] [Module R M]
 variable {N : Type v'} [AddCommGroup N] [Module R N]
 
-/-- The image of a composition series of `M` under a linear equivalence `M ≃ₗ[R] N`: the image of
-the series under the order isomorphism `Submodule.orderIsoMapComap e`, which preserves coverings.
-
-The body is `@[expose]`d on purpose: `mapCompositionSeries e s i` is definitionally
-`Submodule.map ↑e (s i)` — the content of `TauCeti.mapCompositionSeries_apply` below — and the
-*statements* of that lemma, of `TauCeti.factorEquivMapCompositionSeries`, and of the transport
-lemmas downstream all rest on that definitional identity, which without `@[expose]` would have to be
-carried by `Fin.cast`s and dependent rewrites. -/
-@[expose] def mapCompositionSeries (e : M ≃ₗ[R] N) (s : CompositionSeries (Submodule R M)) :
-    CompositionSeries (Submodule R N) :=
-  s.map ⟨fun A => Submodule.map (e : M →ₗ[R] N) A,
-    fun h => (apply_covBy_apply_iff (Submodule.orderIsoMapComap e)).mpr h⟩
+/-- The image of a composition series of `M` under an injective linear map `f : M →ₗ[R] N`. -/
+def mapCompositionSeriesOfInjective (f : M →ₗ[R] N) (hf : Function.Injective f)
+    (s : CompositionSeries (Submodule R M)) : CompositionSeries (Submodule R N) :=
+  s.map ⟨fun A => A.map f, Submodule.map_covBy_of_injective hf⟩
 
 @[simp]
-theorem mapCompositionSeries_apply (e : M ≃ₗ[R] N) (s : CompositionSeries (Submodule R M))
-    (i : Fin (s.length + 1)) :
-    mapCompositionSeries e s i = Submodule.map (e : M →ₗ[R] N) (s i) :=
-  rfl
+theorem mapCompositionSeriesOfInjective_length (f : M →ₗ[R] N) (hf : Function.Injective f)
+    (s : CompositionSeries (Submodule R M)) :
+    (mapCompositionSeriesOfInjective f hf s).length = s.length :=
+  (rfl)
+
+/-- The term of the transported series at an index is the image of the term of `s` at that same
+index, transported along `TauCeti.mapCompositionSeriesOfInjective_length`. -/
+@[simp]
+theorem mapCompositionSeriesOfInjective_apply (f : M →ₗ[R] N) (hf : Function.Injective f)
+    (s : CompositionSeries (Submodule R M))
+    (i : Fin ((mapCompositionSeriesOfInjective f hf s).length + 1)) :
+    mapCompositionSeriesOfInjective f hf s i =
+      (s (i.cast (by rw [mapCompositionSeriesOfInjective_length]))).map f :=
+  (rfl)
 
 @[simp]
-theorem mapCompositionSeries_length (e : M ≃ₗ[R] N) (s : CompositionSeries (Submodule R M)) :
-    (mapCompositionSeries e s).length = s.length :=
-  rfl
+theorem head_mapCompositionSeriesOfInjective (f : M →ₗ[R] N) (hf : Function.Injective f)
+    (s : CompositionSeries (Submodule R M)) :
+    (mapCompositionSeriesOfInjective f hf s).head = s.head.map f :=
+  (rfl)
 
 @[simp]
-theorem head_mapCompositionSeries (e : M ≃ₗ[R] N) (s : CompositionSeries (Submodule R M)) :
-    (mapCompositionSeries e s).head = Submodule.map (e : M →ₗ[R] N) s.head :=
-  rfl
+theorem last_mapCompositionSeriesOfInjective (f : M →ₗ[R] N) (hf : Function.Injective f)
+    (s : CompositionSeries (Submodule R M)) :
+    (mapCompositionSeriesOfInjective f hf s).last = s.last.map f :=
+  (rfl)
+
+/-- The preimage of a composition series of `N` under a surjective linear map `f : M →ₗ[R] N`. -/
+def comapCompositionSeriesOfSurjective (f : M →ₗ[R] N) (hf : Function.Surjective f)
+    (s : CompositionSeries (Submodule R N)) : CompositionSeries (Submodule R M) :=
+  s.map ⟨fun A => A.comap f, Submodule.comap_covBy_of_surjective hf⟩
 
 @[simp]
-theorem last_mapCompositionSeries (e : M ≃ₗ[R] N) (s : CompositionSeries (Submodule R M)) :
-    (mapCompositionSeries e s).last = Submodule.map (e : M →ₗ[R] N) s.last :=
-  rfl
+theorem comapCompositionSeriesOfSurjective_length (f : M →ₗ[R] N) (hf : Function.Surjective f)
+    (s : CompositionSeries (Submodule R N)) :
+    (comapCompositionSeriesOfSurjective f hf s).length = s.length :=
+  (rfl)
 
-/-- Restricting a linear equivalence to a submodule carries the trace of another submodule to the
-trace of its image.  This is the compatibility that lets a linear equivalence be pushed through the
-subquotients of a composition series. -/
-theorem map_submoduleMap_comap_subtype (e : M ≃ₗ[R] N) (A B : Submodule R M) :
-    Submodule.map (e.submoduleMap B).toLinearMap (Submodule.comap B.subtype A)
-      = Submodule.comap (Submodule.map (e : M →ₗ[R] N) B).subtype
-          (Submodule.map (e : M →ₗ[R] N) A) := by
-  ext y
-  simp only [Submodule.mem_map, Submodule.mem_comap, Submodule.coe_subtype]
-  constructor
-  · rintro ⟨x, hx, rfl⟩
-    exact ⟨(x : M), hx, rfl⟩
-  · rintro ⟨a, ha, hay⟩
-    obtain ⟨b, hb, hby⟩ := y.2
-    have hab : a = b := e.injective (hay.trans hby.symm)
-    exact ⟨⟨a, by rw [hab]; exact hb⟩, ha, Subtype.ext hay⟩
+/-- The term of the transported series at an index is the preimage of the term of `s` at that same
+index, transported along `TauCeti.comapCompositionSeriesOfSurjective_length`. -/
+@[simp]
+theorem comapCompositionSeriesOfSurjective_apply (f : M →ₗ[R] N) (hf : Function.Surjective f)
+    (s : CompositionSeries (Submodule R N))
+    (i : Fin ((comapCompositionSeriesOfSurjective f hf s).length + 1)) :
+    comapCompositionSeriesOfSurjective f hf s i =
+      (s (i.cast (by rw [comapCompositionSeriesOfSurjective_length]))).comap f :=
+  (rfl)
 
-/-- A linear equivalence identifies the factors of a composition series with those of its image:
-`LinearEquiv.submoduleMap` carries the trace of `s i.castSucc` in `s i.succ` onto the trace of its
-image, by `TauCeti.map_submoduleMap_comap_subtype`, so it descends to the subquotients.  Its target
-is spelled with `TauCeti.mapCompositionSeries`, which is definitionally `Submodule.map ↑e` applied
-termwise. -/
-noncomputable def factorEquivMapCompositionSeries (e : M ≃ₗ[R] N)
-    (s : CompositionSeries (Submodule R M)) (i : Fin s.length) :
-    (↥(s i.succ) ⧸ Submodule.comap (s i.succ).subtype (s i.castSucc)) ≃ₗ[R]
-      (↥(mapCompositionSeries e s i.succ) ⧸
-        Submodule.comap (mapCompositionSeries e s i.succ).subtype
-          (mapCompositionSeries e s i.castSucc)) :=
-  Submodule.Quotient.equiv _ _ (e.submoduleMap (s i.succ))
-    (map_submoduleMap_comap_subtype e (s i.castSucc) (s i.succ))
+@[simp]
+theorem head_comapCompositionSeriesOfSurjective (f : M →ₗ[R] N) (hf : Function.Surjective f)
+    (s : CompositionSeries (Submodule R N)) :
+    (comapCompositionSeriesOfSurjective f hf s).head = s.head.comap f :=
+  (rfl)
 
--- Not `@[simp]`: the implicit type arguments of the left-hand side mention
--- `mapCompositionSeries e s i.succ`, which `mapCompositionSeries_apply` rewrites, so the statement
--- is not in simp-normal form and `simpNF` rejects the tag.
-theorem factorEquivMapCompositionSeries_apply (e : M ≃ₗ[R] N)
-    (s : CompositionSeries (Submodule R M)) (i : Fin s.length) (x : ↥(s i.succ)) :
-    factorEquivMapCompositionSeries e s i (Submodule.Quotient.mk x) =
-      Submodule.Quotient.mk (e.submoduleMap (s i.succ) x) :=
+@[simp]
+theorem last_comapCompositionSeriesOfSurjective (f : M →ₗ[R] N) (hf : Function.Surjective f)
+    (s : CompositionSeries (Submodule R N)) :
+    (comapCompositionSeriesOfSurjective f hf s).last = s.last.comap f :=
   (rfl)
 
 end TauCeti

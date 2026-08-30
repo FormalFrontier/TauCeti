@@ -8,6 +8,8 @@ module
 public import TauCeti.Geometry.Hodge.Decomposition
 public import TauCeti.Geometry.Hodge.Morphism
 public import TauCeti.Geometry.Hodge.Tate.Basic
+public import TauCeti.Geometry.Symplectic.AlmostComplex
+public import TauCeti.LinearAlgebra.Complex.Conjugation
 
 /-!
 # The Weil operator of a pure Hodge structure
@@ -34,6 +36,8 @@ of the ambient space, rather than only on homogeneous vectors where `i^{p-q}` ma
 * `TauCeti.Hodge.HodgeStructureOn.weilOperator_comp_weilOperator`: `C ∘ C = (-1)^n`.
 * `TauCeti.Hodge.HodgeStructureOn.weilOperatorEquiv`: `C` bundled as a linear automorphism.
 * `TauCeti.Hodge.HodgeStructureOn.conj_weilOperator`: `C` commutes with the conjugation.
+* `TauCeti.Hodge.HodgeStructureOn.realAlmostComplexStructure`: in odd weight, `C` restricted to the
+  real form as an almost complex structure, together with its scalar-extension comparison.
 * `TauCeti.Hodge.IsPolarization.isOrthogonal_weilOperator`: `C` is an isometry of a complexified
   polarizing form.
 * `TauCeti.Hodge.HodgeStructure.Hom.commutes_weilOperator`: morphisms commute with `C`.
@@ -221,6 +225,57 @@ theorem conj_weilOperator (hs : HodgeStructureOn W ω n) (x : W) :
   congr 1
   have h_exp : 2 * (n - p) - n = -(2 * p - n) := by ring
   rw [map_zpow₀, Complex.conj_I, h_exp, zpow_neg, ← inv_zpow, Complex.inv_I]
+
+/-- The Weil operator of an odd-weight Hodge structure, restricted to the real form fixed by its
+conjugation. It squares to `-1`, so it is an almost complex structure on that real vector space. -/
+noncomputable def realAlmostComplexStructure (hs : HodgeStructureOn W ω n) (hn : Odd n) :
+    AlmostComplexStructure (realPoints ω.toEquiv.toLinearMap) where
+  toLinearMap :=
+    (hs.weilOperator.restrictScalars ℝ).restrict fun x hx ↦ by
+      rw [mem_realPoints] at hx ⊢
+      calc
+        ω.toEquiv ((hs.weilOperator.restrictScalars ℝ) x) =
+            ω.toEquiv (hs.weilOperator x) := (rfl)
+        _ = hs.weilOperator (ω.toEquiv x) := hs.conj_weilOperator x
+        _ = hs.weilOperator x := congrArg hs.weilOperator hx
+        _ = (hs.weilOperator.restrictScalars ℝ) x := (rfl)
+  square_neg := by
+    ext x
+    have h := LinearMap.congr_fun (hs.weilOperator_comp_weilOperator_of_odd hn) (x : W)
+    simpa only [LinearMap.comp_apply, LinearMap.neg_apply, LinearMap.id_apply,
+      LinearMap.restrict_apply, LinearMap.restrictScalars_apply, Submodule.coe_neg] using h
+
+/-- The almost complex structure on the real form acts by the ambient Weil operator. -/
+@[simp]
+theorem coe_realAlmostComplexStructure_apply (hs : HodgeStructureOn W ω n) (hn : Odd n)
+    (x : realPoints ω.toEquiv.toLinearMap) :
+    (hs.realAlmostComplexStructure hn x : W) = hs.weilOperator x :=
+  (rfl)
+
+/-- **The real almost complex structure complexifies to the Weil operator.** Under the canonical
+equivalence `ℂ ⊗[ℝ] V_ℝ ≃ₗ[ℂ] W`, extending `J` from the real form sends the same vectors to the
+same place as the Weil operator on `W`. -/
+@[simp]
+theorem realPointsEquiv_baseChange_realAlmostComplexStructure_apply
+    (hs : HodgeStructureOn W ω n)
+    (hn : Odd n) (x : TensorProduct ℝ ℂ (realPoints ω.toEquiv.toLinearMap)) :
+    realPointsEquiv ω.involutive
+        ((LinearMap.baseChange ℂ (hs.realAlmostComplexStructure hn).toLinearMap) x) =
+      hs.weilOperator (realPointsEquiv ω.involutive x) := by
+  induction x with
+  | zero => simp
+  | tmul c x =>
+      rw [LinearMap.baseChange_tmul, realPointsEquiv_tmul, realPointsEquiv_tmul,
+        coe_realAlmostComplexStructure_apply, map_smul]
+  | add x y hx hy => simp only [map_add, hx, hy]
+
+/-- The complexification comparison as an identity of complex-linear maps. -/
+theorem realPointsEquiv_comp_baseChange_realAlmostComplexStructure
+    (hs : HodgeStructureOn W ω n) (hn : Odd n) :
+    (realPointsEquiv ω.involutive).toLinearMap ∘ₗ
+        LinearMap.baseChange ℂ (hs.realAlmostComplexStructure hn).toLinearMap =
+      hs.weilOperator ∘ₗ (realPointsEquiv ω.involutive).toLinearMap :=
+  LinearMap.ext (hs.realPointsEquiv_baseChange_realAlmostComplexStructure_apply hn)
 
 end HodgeStructureOn
 

@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.Algebra.Category.FGModuleCat.Abelian
 public import Mathlib.RingTheory.Finiteness.Small
 public import Mathlib.RepresentationTheory.Character
 
@@ -28,6 +29,16 @@ representation only when its carrier already lies there. A module-finite carrier
 neither the dimension nor the character. Only the character transfer needs `k` to be a field, `k`
 being a commutative ring throughout otherwise.
 
+Finally it records the structural properties of the character that Mathlib's
+`RepresentationTheory/Character.lean` leaves out beside `FDRep.char_iso` and `FDRep.char_tensor`:
+the character is **additive on biproducts**, the character of the **tensor unit** is the constant
+function `1`, and the character is **constant on the cosets of its kernel**. The first two are what
+is still missing before the character can be read as a ring homomorphism out of the representation
+ring, `TauCeti.repRingCharacter`; the last is the elementary half of the kernel API whose analytic
+half, over `ℂ`, is `TauCeti/RepresentationTheory/CharacterTable/Kernel.lean`. Beside it, and needing
+no characters at all, the **common kernel of a family** of representations is registered as a normal
+subgroup.
+
 ## Main definitions
 
 * `FDRep.ofShrink`: a module-finite representation on a carrier in an arbitrary universe, as an
@@ -43,6 +54,10 @@ being a commutative ring throughout otherwise.
 * `FDRep.of_ρ_eq_self`: rebundling the representation carried by an object returns that object.
 * `FDRep.ofShrinkEquiv`: `FDRep.ofShrink ρ` carries a representation equivalent to `ρ`, whence
   `FDRep.finrank_ofShrink` and `FDRep.character_ofShrink`.
+* `FDRep.char_biprod`: the character is additive on biproducts.
+* `FDRep.char_tensorUnit`: the character of the tensor unit is the constant function `1`.
+* `FDRep.char_mul_of_mem_ker_left`: the character is constant on the cosets of its kernel.
+* `FDRep.normal_iInf_ker`: the common kernel of a family of representations is a normal subgroup.
 -/
 
 public section
@@ -145,5 +160,109 @@ theorem character_ofShrink (g : G) : (ofShrink ρ).character g = ρ.character g 
   congrFun (Representation.char_iso (ofShrinkEquiv ρ)) g
 
 end ShrinkCharacter
+
+section Biproduct
+
+open CategoryTheory Limits
+
+variable {k : Type u} {G : Type v} [Field k] [Monoid G]
+
+/-- The trace of `ρ g` cut down to a retract: if `p ∘ i` is the identity of `X`, then the trace of
+`ρ g` composed with the idempotent `i ∘ p` is the character of `X`.
+
+This is the one computation behind `FDRep.char_biprod`: cyclicity of the trace moves `p` past
+`ρ g ∘ i`, equivariance of `i` moves `ρ g` past it in the other direction, and what is left is
+`p ∘ i = 𝟙` applied to `X.ρ g`. -/
+private theorem trace_comp_of_retraction {X B : FDRep k G} (i : X ⟶ B) (p : B ⟶ X)
+    (h : i ≫ p = 𝟙 X) (g : G) :
+    LinearMap.trace k B ((B.ρ g ∘ₗ i.hom.hom.hom) ∘ₗ p.hom.hom.hom) = X.character g := by
+  -- equivariance of `i`, namely `CategoryTheory.Action.Hom.comm`, read through the two layers of
+  -- bundling: `simp` strips the morphisms of `FGModuleCat k` and of `ModuleCat k` down to their
+  -- underlying linear maps, so no definitional unfolding is involved
+  have hcomm : i.hom.hom.hom ∘ₗ X.ρ g = B.ρ g ∘ₗ i.hom.hom.hom := by
+    simpa using congrArg (fun t : X.V ⟶ B.V => t.hom.hom) (i.comm g)
+  -- the retraction `h`, read the same way; here `simp` also rewrites the underlying map of `𝟙 X`
+  have hpi : p.hom.hom.hom ∘ₗ i.hom.hom.hom = LinearMap.id := by
+    simpa using congrArg (fun t : X ⟶ X => t.hom.hom.hom) h
+  rw [LinearMap.trace_comp_comm', ← hcomm, ← LinearMap.comp_assoc, hpi]
+  simp [FDRep.character]
+
+/-- **The character is additive on biproducts.** Together with `FDRep.char_iso` and
+`FDRep.char_tensor` this is what makes the character a ring homomorphism out of the representation
+ring; see `TauCeti.repRingCharacter`.
+
+The proof splits the identity of `X ⊞ Y` as the sum of the two idempotents
+`biprod.inl ∘ biprod.fst` and `biprod.inr ∘ biprod.snd` (`CategoryTheory.Limits.biprod.total`) and
+evaluates the trace of `ρ g` against each summand with `FDRep.trace_comp_of_retraction`. -/
+@[simp]
+theorem char_biprod (X Y : FDRep k G) : (X ⊞ Y).character = X.character + Y.character := by
+  ext g
+  have htot : (biprod.inl : X ⟶ X ⊞ Y).hom.hom.hom ∘ₗ (biprod.fst : X ⊞ Y ⟶ X).hom.hom.hom
+      + (biprod.inr : Y ⟶ X ⊞ Y).hom.hom.hom ∘ₗ (biprod.snd : X ⊞ Y ⟶ Y).hom.hom.hom
+      = LinearMap.id := by
+    have h := congrArg (fun t : (X ⊞ Y) ⟶ (X ⊞ Y) => t.hom.hom.hom)
+      (biprod.total (X := X) (Y := Y))
+    simp only [Action.id_hom] at h
+    exact h
+  have hsplit : (X ⊞ Y).ρ g
+      = ((X ⊞ Y).ρ g ∘ₗ (biprod.inl : X ⟶ X ⊞ Y).hom.hom.hom)
+          ∘ₗ (biprod.fst : X ⊞ Y ⟶ X).hom.hom.hom
+        + ((X ⊞ Y).ρ g ∘ₗ (biprod.inr : Y ⟶ X ⊞ Y).hom.hom.hom)
+          ∘ₗ (biprod.snd : X ⊞ Y ⟶ Y).hom.hom.hom := by
+    rw [LinearMap.comp_assoc, LinearMap.comp_assoc, ← LinearMap.comp_add, htot,
+      LinearMap.comp_id]
+  rw [FDRep.character, hsplit, map_add,
+    trace_comp_of_retraction biprod.inl biprod.fst biprod.inl_fst,
+    trace_comp_of_retraction biprod.inr biprod.snd biprod.inr_snd, Pi.add_apply]
+
+end Biproduct
+
+section TensorUnit
+
+open CategoryTheory MonoidalCategory
+
+/-- **The character of the tensor unit of `FDRep k G` is the constant function `1`**, the unit
+being the trivial representation on `k` itself. Beside `FDRep.char_tensor` this is what makes the
+character multiplicative out of the representation ring, see `TauCeti.repRingCharacter`. -/
+@[simp]
+theorem char_tensorUnit (k : Type u) (G : Type v) [Field k] [Monoid G] :
+    (𝟙_ (FDRep k G)).character = 1 := by
+  ext g
+  -- the two sides are the same object, not merely isomorphic ones: `Action.instMonoidalCategory`
+  -- takes the unit of `Action V G` to be the unit of `V` with the trivial action, and the unit of
+  -- `FGModuleCat k` is `k` itself, which is what `FDRep.of` bundles here
+  have hunit : 𝟙_ (FDRep k G) = FDRep.of (Representation.trivial k G k) := rfl
+  rw [hunit, Pi.one_apply, character_of_trivial]
+
+end TensorUnit
+
+section Kernel
+
+variable {k : Type u} {G : Type v} [Field k] [Group G]
+
+/-- **A character is constant on the cosets of its kernel**: an element acting as the identity may
+be deleted from a character value. This is an algebraic identity, so it holds over any field. The
+right-handed form is this one composed with `FDRep.char_mul_comm`. -/
+@[simp]
+theorem char_mul_of_mem_ker_left (V : FDRep k G) {g : G} (hg : g ∈ V.ρ.ker) (h : G) :
+    V.character (g * h) = V.character h := by
+  simp only [character, map_mul, MonoidHom.mem_ker.1 hg, one_mul]
+
+end Kernel
+
+section CommonKernel
+
+variable {ι : Type*} {k : Type u} {G : Type v} [CommRing k] [Group G]
+
+/-- **The common kernel of a family of representations is a normal subgroup.** Each kernel is
+normal, and Mathlib's `Subgroup.normal_iInf_normal` passes that to the infimum; what is added here
+is the registration as an instance, that lemma taking its hypothesis as an explicit argument, so
+that the normality of a common kernel is available to instance search. Nothing here is analytic or
+character-theoretic; over `ℂ` the common kernel is a locus of character equations by
+`FDRep.coe_iInf_ker` (`TauCeti/RepresentationTheory/CharacterTable/Kernel.lean`). -/
+instance normal_iInf_ker (W : ι → FDRep k G) : (⨅ i, (W i).ρ.ker).Normal :=
+  Subgroup.normal_iInf_normal fun _ => inferInstance
+
+end CommonKernel
 
 end FDRep

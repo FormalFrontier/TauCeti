@@ -48,10 +48,6 @@ namespace PreAbstractSimplicialComplex
 variable {α β : Type*} [DecidableEq β]
 variable {K L : _root_.PreAbstractSimplicialComplex α}
 
-private theorem mem_map_iff {f : α → β} {K : _root_.PreAbstractSimplicialComplex α}
-    {σ : Finset β} : σ ∈ K.map f ↔ ∃ τ, τ ∈ K ∧ τ.image f = σ :=
-  Iff.rfl
-
 private theorem map_injective (f : α → β) (hf : Function.Injective f) :
     Function.Injective (fun K : _root_.PreAbstractSimplicialComplex α => K.map f) := by
   intro K L hKL
@@ -250,4 +246,3 @@ theorem map_equiv_iff (e : α ≃ β) : Collapsible (K.map e) ↔ Collapsible K 
 end Collapsible
 
 end PreAbstractSimplicialComplex
-

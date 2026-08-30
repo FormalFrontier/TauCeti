@@ -84,6 +84,34 @@ theorem hasOneCommonSide_iff_existsUnique (D : GridRectangleDecomposition x z) :
   rw [HasOneCommonSide, Finset.card_eq_one_iff_existsUnique]
   simp only [mem_commonSideColumns]
 
+/-- If two rectangles share exactly one side column, that column occurs in one of the four
+possible ordered-side positions, and the two noncommon sides are distinct. -/
+theorem side_eq_cases_of_hasOneCommonSide (D : GridRectangleDecomposition x z)
+    (h : D.HasOneCommonSide) :
+    (D.first.left = D.second.left ∧ D.first.right ≠ D.second.right) ∨
+      (D.first.left = D.second.right ∧ D.first.right ≠ D.second.left) ∨
+      (D.first.right = D.second.left ∧ D.first.left ≠ D.second.right) ∨
+        (D.first.right = D.second.right ∧ D.first.left ≠ D.second.left) := by
+  obtain ⟨c, hc, hunique⟩ := D.hasOneCommonSide_iff_existsUnique.mp h
+  rcases D.first.mem_sideColumns c |>.mp hc.1 with hcfirst | hcfirst <;>
+    rcases D.second.mem_sideColumns c |>.mp hc.2 with hcsecond | hcsecond
+  · left
+    refine ⟨hcfirst.symm.trans hcsecond, fun hother => ?_⟩
+    have := hunique D.first.right ⟨by simp, by simp [← hother]⟩
+    exact D.first.left_ne_right (hcfirst.symm.trans this.symm)
+  · right; left
+    refine ⟨hcfirst.symm.trans hcsecond, fun hother => ?_⟩
+    have := hunique D.first.right ⟨by simp, by simp [← hother]⟩
+    exact D.first.left_ne_right (hcfirst.symm.trans this.symm)
+  · right; right; left
+    refine ⟨hcfirst.symm.trans hcsecond, fun hother => ?_⟩
+    have := hunique D.first.left ⟨by simp, by simp [← hother]⟩
+    exact D.first.left_ne_right (this.trans hcfirst)
+  · right; right; right
+    refine ⟨hcfirst.symm.trans hcsecond, fun hother => ?_⟩
+    have := hunique D.first.left ⟨by simp, by simp [← hother]⟩
+    exact D.first.left_ne_right (this.trans hcfirst)
+
 /-- The two side pairs are disjoint exactly when their common-side set is empty. -/
 @[simp]
 theorem commonSideColumns_eq_empty_iff (D : GridRectangleDecomposition x z) :
