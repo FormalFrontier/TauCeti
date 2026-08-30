@@ -183,15 +183,6 @@ noncomputable def kostantToralBaseChangeGroupSchemeι :
     (CommHopfAlgCat.baseChange (K := A) (GeneralLinear.coordinateHopfAlgebra ℤ n))
     (kostantToralBaseChangeIdeal e h ρ M hM hnil b wt A)
 
-/-- The specialized closed-subgroup inclusion is the spectrum of the specialized quotient
-coordinate map. -/
-theorem kostantToralBaseChangeGroupSchemeι_def :
-    kostantToralBaseChangeGroupSchemeι e h ρ M hM hnil b wt A =
-      CommHopfAlgCat.quotientSpecι
-        (CommHopfAlgCat.baseChange (K := A) (GeneralLinear.coordinateHopfAlgebra ℤ n))
-        (kostantToralBaseChangeIdeal e h ρ M hM hnil b wt A) :=
-  (rfl)
-
 /-- The specialized toral carrier is a closed subgroup scheme of the base-changed general-linear
 group scheme. -/
 instance isClosedImmersion_kostantToralBaseChangeGroupSchemeι :
