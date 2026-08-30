@@ -21,8 +21,12 @@ the resulting endomorphism.  Given a rung `N` at which the space `M_{χ + Nα}` 
 computes its trace:
 
 ```text
-tr_{Mχ}(y ∘ x) = Σ_{j ≥ 1} dim M_{χ + jα} · (χ + jα)(z).
+tr_{Mχ}(y ∘ x) = Σ_{1 ≤ j < N} dim M_{χ + jα} · (χ + jα)(z).
 ```
+
+Over a field of characteristic zero and for a nonzero `α`, the `α`-string above `χ` is finite, and
+the same computation takes the unbounded shape `Σ_{j ≥ 1}` that Freudenthal's formula uses, indexed
+by that string with its bottom rung removed.
 
 The argument is a ladder, with no `sl₂` representation theory and no complete reducibility.  Acting
 by `x` and by `y` gives maps `Mχ → M_{α+χ}` and `M_{α+χ} → Mχ`, and swapping the two factors of a
@@ -85,6 +89,17 @@ variable {K : Type u} {L : Type v} {M : Type w} [CommRing K] [LieRing L] [LieAlg
   {H : LieSubalgebra K L} [LieRing.IsNilpotent H]
   [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M]
 
+/-- Acting by a root vector on a weight vector is the bracket.  Mathlib states this elementwise
+description only for the bundled `rootSpaceWeightSpaceProduct`, in
+`coe_rootSpaceWeightSpaceProduct_tmul`, so the auxiliary bilinear map that this file uses is
+unfolded once, here. -/
+@[simp]
+theorem coe_rootSpaceWeightSpaceProductAux_apply {χ₁ χ₂ χ₃ : H → K} (hχ : χ₁ + χ₂ = χ₃)
+    (x : rootSpace H χ₁) (m : genWeightSpace M χ₂) :
+    ((rootSpaceWeightSpaceProductAux K L H M hχ x m : genWeightSpace M χ₃) : M)
+      = ⁅(x : L), (m : M)⁆ :=
+  rfl
+
 variable (M) in
 /-- Acting by a root vector `x` of weight `α` and then by a root vector `y` of weight `-α`, as an
 endomorphism of the `χ`-weight space of `M`. -/
@@ -104,12 +119,26 @@ theorem raiseLowerEnd_def {α : H → K} {x y : L} (hx : x ∈ rootSpace H α)
 @[simp]
 theorem coe_raiseLowerEnd_apply {α : H → K} {x y : L} (hx : x ∈ rootSpace H α)
     (hy : y ∈ rootSpace H (-α)) (χ : H → K) (m : genWeightSpace M χ) :
-    (raiseLowerEnd M hx hy χ m : M) = ⁅y, ⁅x, (m : M)⁆⁆ :=
-  (rfl)
+    (raiseLowerEnd M hx hy χ m : M) = ⁅y, ⁅x, (m : M)⁆⁆ := by
+  rw [raiseLowerEnd_def]
+  simp only [LinearMap.coe_comp, Function.comp_apply, coe_rootSpaceWeightSpaceProductAux_apply]
+
+/-- `raiseLowerEnd` is the restriction to the `χ`-weight space of the composite of the two actions
+on `M`, which is the shape in which a trace computation over a basis of `L` produces it. -/
+theorem raiseLowerEnd_eq_restrict {α : H → K} {x y : L} (hx : x ∈ rootSpace H α)
+    (hy : y ∈ rootSpace H (-α)) (χ : H → K)
+    (h : ∀ m ∈ (genWeightSpace M χ).toSubmodule,
+      (toEnd K L M y ∘ₗ toEnd K L M x) m ∈ (genWeightSpace M χ).toSubmodule) :
+    raiseLowerEnd M hx hy χ = (toEnd K L M y ∘ₗ toEnd K L M x).restrict h := by
+  ext m
+  -- `simp` cannot close this: the goal spells the coercion of `m` through the Lie submodule,
+  -- while `LinearMap.coe_restrict_apply` spells it through the carrier submodule.
+  rw [coe_raiseLowerEnd_apply]
+  exact (LinearMap.coe_restrict_apply h m).symm
 
 /-- **The Leibniz identity, read on a weight space.**  Lowering and then raising differs from
 raising and then lowering by the action of `⁅x, y⁆`. -/
-theorem rootSpaceWeightSpaceProductAux_comp_sub_raiseLowerEnd_eq_toEnd
+private theorem rootSpaceWeightSpaceProductAux_comp_sub_raiseLowerEnd_eq_toEnd
     {α : H → K} {x y : L} {z : H}
     (hx : x ∈ rootSpace H α) (hy : y ∈ rootSpace H (-α)) (hz : ⁅x, y⁆ = (z : L)) (χ : H → K) :
     rootSpaceWeightSpaceProductAux K L H M (rfl : α + χ = α + χ) ⟨x, hx⟩ ∘ₗ
@@ -118,15 +147,10 @@ theorem rootSpaceWeightSpaceProductAux_comp_sub_raiseLowerEnd_eq_toEnd
       = toEnd K H (genWeightSpace M (α + χ)) z := by
   ext m
   have h := leibniz_lie x y (m : M)
-  have hxy :
-      ((rootSpaceWeightSpaceProductAux K L H M (rfl : α + χ = α + χ) ⟨x, hx⟩
-          (rootSpaceWeightSpaceProductAux K L H M (neg_add_cancel_left α χ) ⟨y, hy⟩ m) :
-          genWeightSpace M (α + χ)) : M) = ⁅x, ⁅y, (m : M)⁆⁆ :=
-    rfl
   simp only [LinearMap.sub_apply, LinearMap.coe_comp, Function.comp_apply,
-    AddSubgroupClass.coe_sub, coe_raiseLowerEnd_apply, toEnd_apply_apply,
-    LieSubmodule.coe_bracket, LieSubalgebra.coe_bracket_of_module, ← hz]
-  rw [hxy, h]
+    AddSubgroupClass.coe_sub, coe_rootSpaceWeightSpaceProductAux_apply, coe_raiseLowerEnd_apply,
+    toEnd_apply_apply, LieSubmodule.coe_bracket, LieSubalgebra.coe_bracket_of_module, ← hz]
+  rw [h]
   abel
 
 /-- On a trivial weight space the raise-lower endomorphism vanishes. -/
@@ -195,7 +219,7 @@ theorem trace_raiseLowerEnd_eq_sum_Ico (hx : x ∈ rootSpace H α) (hy : y ∈ r
       abel
     · obtain rfl : i + 1 = N := by omega
       rw [Finset.Ico_eq_empty (by omega), Finset.Ico_eq_empty (by omega), Finset.sum_empty,
-        finrank_eq_zero_of_eq_bot hN, zero_smul, add_zero]
+        LieSubmodule.finrank_eq_zero_of_eq_bot hN, zero_smul, add_zero]
 
 end Trace
 
@@ -240,7 +264,7 @@ theorem trace_raiseLowerEnd_eq_sum_weightString_erase_zero (hα : α ≠ 0)
     have hjw : genWeightSpace M ((χ : H → K) + j • (α : H → K)) = ⊥ := by
       by_contra hne
       exact hjnot ((hmem j).mpr hne)
-    rw [finrank_eq_zero_of_eq_bot hjw, zero_smul]
+    rw [LieSubmodule.finrank_eq_zero_of_eq_bot hjw, zero_smul]
 
 end WeightString
 
