@@ -43,24 +43,11 @@ public section
 
 namespace TauCeti
 
-namespace FundamentalGroup
-
-open CategoryTheory
-
-variable {X : Type*} [TopologicalSpace X] {x₀ x₁ : X}
-
-/-- The subgroup of `π₁(X, x₁)` obtained from `H ≤ π₁(X, x₀)` by changing basepoint along a
-path `γ : Path x₀ x₁`. This is the subgroup-level form of conjugating loops by `γ`. -/
-noncomputable def basepointChangeSubgroup (γ : Path x₀ x₁)
-    (H : Subgroup (_root_.FundamentalGroup X x₀)) :
-    Subgroup (_root_.FundamentalGroup X x₁) :=
-  H.map (((_root_.FundamentalGroup.fundamentalGroupMulEquivOfPath γ) :
-    _root_.FundamentalGroup X x₀ →* _root_.FundamentalGroup X x₁))
-
+open CategoryTheory in
 /-- The inverse basepoint-change equivalence is represented by conjugation with the reverse path.
 This path-quotient formula is the interface for computations with the equivalence. -/
-lemma fundamentalGroupMulEquivOfPath_symm_apply (γ : Path x₀ x₁)
-    (g : _root_.FundamentalGroup X x₁) :
+lemma fundamentalGroupMulEquivOfPath_symm_apply {X : Type*} [TopologicalSpace X] {x₀ x₁ : X}
+    (γ : Path x₀ x₁) (g : _root_.FundamentalGroup X x₁) :
     (_root_.FundamentalGroup.fundamentalGroupMulEquivOfPath γ).symm g =
       Path.Homotopic.Quotient.trans (Path.Homotopic.Quotient.mk γ)
         (Path.Homotopic.Quotient.trans g (Path.Homotopic.Quotient.mk γ).symm) := by
@@ -85,6 +72,18 @@ lemma fundamentalGroupMulEquivOfPath_symm_apply (γ : Path x₀ x₁)
       CategoryTheory.Iso.symm_hom, hα_hom, hα_inv]
     simp only [FundamentalGroupoid.comp_eq]]
   exact (α.self_symm_conj g).symm
+
+namespace FundamentalGroup
+
+variable {X : Type*} [TopologicalSpace X] {x₀ x₁ : X}
+
+/-- The subgroup of `π₁(X, x₁)` obtained from `H ≤ π₁(X, x₀)` by changing basepoint along a
+path `γ : Path x₀ x₁`. This is the subgroup-level form of conjugating loops by `γ`. -/
+noncomputable def basepointChangeSubgroup (γ : Path x₀ x₁)
+    (H : Subgroup (_root_.FundamentalGroup X x₀)) :
+    Subgroup (_root_.FundamentalGroup X x₁) :=
+  H.map (((_root_.FundamentalGroup.fundamentalGroupMulEquivOfPath γ) :
+    _root_.FundamentalGroup X x₀ →* _root_.FundamentalGroup X x₁))
 
 /-- Membership in the subgroup transported along a basepoint-change path. -/
 lemma mem_basepointChangeSubgroup (γ : Path x₀ x₁) (H : Subgroup (_root_.FundamentalGroup X x₀))
