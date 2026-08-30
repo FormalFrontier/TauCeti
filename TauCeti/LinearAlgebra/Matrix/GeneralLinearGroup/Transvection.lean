@@ -51,6 +51,7 @@ elementary matrices against the diagonal torus.
 * `TauCeti.transvectionHom`: the resulting homomorphism from the additive group of `A`.
 * `TauCeti.commutingTransvectionPairHom`: the product of two commuting transvection
   homomorphisms, with a shared parameter.
+* `TauCeti.transvectionWeylElement`: the standard Weyl representative exchanging two indices.
 
 ## Main results
 
@@ -66,6 +67,9 @@ elementary matrices against the diagonal torus.
   determinant `1`, and distinct parameters give distinct transvections.
 * `TauCeti.diagGL_mul_transvectionUnit_mul_inv`: conjugation by an invertible diagonal matrix.
 * `TauCeti.map_transvectionUnit`: transvections are natural in the base ring.
+* `TauCeti.transvectionWeylElement_conj_transvectionUnit_left` and
+  `TauCeti.transvectionWeylElement_conj_transvectionUnit_right`: conjugation by a transvection
+  Weyl element exchanges the corresponding index of another transvection.
 
 ## References
 
@@ -239,6 +243,115 @@ theorem commutatorElement_transvectionUnit_reverse
     _ = (transvectionUnit hkj (d * c))⁻¹ := by
       rw [commutatorElement_transvectionUnit hki hij hkj]
     _ = transvectionUnit hkj (-(d * c)) := transvectionUnit_inv hkj (d * c)
+
+/-! ## Weyl elements -/
+
+/-- The standard representative in `GL n A` of the Weyl-group transposition exchanging `i` and
+`j`, written as the three-factor word `xᵢⱼ(1) xⱼᵢ(-1) xᵢⱼ(1)`. -/
+def transvectionWeylElement (hij : i ≠ j) : GL n A :=
+  transvectionUnit hij 1 * transvectionUnit hij.symm (-1) * transvectionUnit hij 1
+
+/-- The transvection Weyl element is its standard three-factor word. -/
+theorem transvectionWeylElement_def (hij : i ≠ j) :
+    transvectionWeylElement (A := A) hij =
+      transvectionUnit hij 1 * transvectionUnit hij.symm (-1) * transvectionUnit hij 1 := (rfl)
+
+/-- The inverse of the transvection Weyl element is the corresponding three-factor word with
+opposite parameters. -/
+theorem transvectionWeylElement_inv (hij : i ≠ j) :
+    (transvectionWeylElement (A := A) hij)⁻¹ =
+      transvectionUnit hij (-1) * transvectionUnit hij.symm 1 * transvectionUnit hij (-1) := by
+  simp [transvectionWeylElement_def, _root_.mul_inv_rev, mul_assoc]
+
+/-- Conjugation by the Weyl representative exchanging `i` and `j` replaces the left index `j`
+of `xⱼₖ(c)` by `i`. -/
+theorem transvectionWeylElement_conj_transvectionUnit_left
+    (hij : i ≠ j) (hjk : j ≠ k) (hik : i ≠ k) (c : A) :
+    transvectionWeylElement hij * transvectionUnit hjk c *
+        (transvectionWeylElement hij)⁻¹ =
+      transvectionUnit hik c := by
+  let x := transvectionUnit hij (1 : A)
+  let y := transvectionUnit hij.symm (-1 : A)
+  let z := transvectionUnit hjk c
+  let t := transvectionUnit hik c
+  have hxz : MulAut.conj x z = t * z := by
+    rw [conj_eq_commutatorElement_mul, commutatorElement_transvectionUnit hij hjk hik]
+    simp only [one_mul, z, t]
+  have hyt : MulAut.conj y t = z⁻¹ * t := by
+    rw [conj_eq_commutatorElement_mul, commutatorElement_transvectionUnit hij.symm hik hjk]
+    simp only [neg_one_mul, transvectionUnit_inv, z, t]
+  have hyz : Commute y z :=
+    commute_transvectionUnit hij.symm hjk hij hjk.symm (-1) c
+  have hxt : Commute x t :=
+    commute_transvectionUnit hij hik hij.symm hik.symm 1 c
+  have htz : Commute t z :=
+    commute_transvectionUnit hik hjk hjk.symm hik.symm c c
+  -- Unfold the Weyl word after naming its three factors and the source and target roots.
+  change (x * y * x) * z * (x * y * x)⁻¹ = t
+  calc
+    (x * y * x) * z * (x * y * x)⁻¹ =
+        x * (y * (x * z * x⁻¹) * y⁻¹) * x⁻¹ := by group
+    _ = x * (y * (t * z) * y⁻¹) * x⁻¹ := by
+      rw [← MulAut.conj_apply x z, hxz]
+    _ = x * ((y * t * y⁻¹) * (y * z * y⁻¹)) * x⁻¹ := by group
+    _ = x * ((z⁻¹ * t) * z) * x⁻¹ := by
+      rw [← MulAut.conj_apply y t, hyt, hyz.mul_inv_cancel]
+    _ = x * t * x⁻¹ := by rw [htz.symm.inv_mul_cancel]
+    _ = t := hxt.mul_inv_cancel
+
+/-- Conjugation by the Weyl representative exchanging `i` and `j` replaces the right index `j`
+of `xₖⱼ(c)` by `i`. -/
+theorem transvectionWeylElement_conj_transvectionUnit_right
+    (hij : i ≠ j) (hkj : k ≠ j) (hki : k ≠ i) (c : A) :
+    transvectionWeylElement hij * transvectionUnit hkj c *
+        (transvectionWeylElement hij)⁻¹ =
+      transvectionUnit hki c := by
+  let x := transvectionUnit hij (1 : A)
+  let y := transvectionUnit hij.symm (-1 : A)
+  let z := transvectionUnit hkj c
+  let t := transvectionUnit hki c
+  have hxz : Commute x z :=
+    commute_transvectionUnit hij hkj hkj.symm hij.symm 1 c
+  have hyz : MulAut.conj y z = t * z := by
+    rw [conj_eq_commutatorElement_mul,
+      commutatorElement_transvectionUnit_reverse hij.symm hkj hki]
+    simp only [mul_neg, mul_one, neg_neg, z, t]
+  have hxt : MulAut.conj x t = z⁻¹ * t := by
+    rw [conj_eq_commutatorElement_mul,
+      commutatorElement_transvectionUnit_reverse hij hki hkj]
+    simp only [mul_one, transvectionUnit_inv, z, t]
+  have htz : Commute t z :=
+    commute_transvectionUnit hki hkj hki.symm hkj.symm c c
+  -- Unfold the Weyl word after naming its three factors and the source and target roots.
+  change (x * y * x) * z * (x * y * x)⁻¹ = t
+  calc
+    (x * y * x) * z * (x * y * x)⁻¹ =
+        x * (y * (x * z * x⁻¹) * y⁻¹) * x⁻¹ := by group
+    _ = x * (y * z * y⁻¹) * x⁻¹ := by rw [hxz.mul_inv_cancel]
+    _ = x * (t * z) * x⁻¹ := by rw [← MulAut.conj_apply y z, hyz]
+    _ = (x * t * x⁻¹) * (x * z * x⁻¹) := by group
+    _ = (z⁻¹ * t) * z := by rw [← MulAut.conj_apply x t, hxt, hxz.mul_inv_cancel]
+    _ = t := htz.symm.inv_mul_cancel
+
+/-- Conjugation by the inverse Weyl representative replaces the left index `i` of `xᵢₖ(c)` by
+`j`. -/
+theorem transvectionWeylElement_inv_conj_transvectionUnit_left
+    (hij : i ≠ j) (hik : i ≠ k) (hjk : j ≠ k) (c : A) :
+    (transvectionWeylElement hij)⁻¹ * transvectionUnit hik c *
+        ((transvectionWeylElement hij)⁻¹)⁻¹ =
+      transvectionUnit hjk c := by
+  rw [← transvectionWeylElement_conj_transvectionUnit_left hij hjk hik c]
+  group
+
+/-- Conjugation by the inverse Weyl representative replaces the right index `i` of `xₖᵢ(c)` by
+`j`. -/
+theorem transvectionWeylElement_inv_conj_transvectionUnit_right
+    (hij : i ≠ j) (hki : k ≠ i) (hkj : k ≠ j) (c : A) :
+    (transvectionWeylElement hij)⁻¹ * transvectionUnit hki c *
+        ((transvectionWeylElement hij)⁻¹)⁻¹ =
+      transvectionUnit hkj c := by
+  rw [← transvectionWeylElement_conj_transvectionUnit_right hij hkj hki c]
+  group
 
 private theorem exists_intermediate_fin_index {m : ℕ} {i j : Fin (m + 1)}
     (hij : i ≠ j) (hforward : i.val + 1 ≠ j.val) (hbackward : j.val + 1 ≠ i.val) :
