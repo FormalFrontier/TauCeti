@@ -42,6 +42,10 @@ is asserted here. Those are subsequent steps in the pinned Chevalley--Demazure c
 * N. Bourbaki, *Lie Groups and Lie Algebras, Chapters 4--6*, Plate V.
 * J. E. Humphreys, *Linear Algebraic Groups*, §26.
 * J. C. Jantzen, *Representations of Algebraic Groups*, II.1--2.
+* The carrier API follows the formal templates in
+  `TauCeti.Algebra.Lie.SpecialLinear.StandardCarrier.Basic` and
+  `TauCeti.Algebra.Lie.Symplectic.StandardCarrier.Scheme`, specialized here using the
+  type-`E₆` minuscule representation, lattice, weights, and root characters.
 -/
 
 public section
@@ -107,19 +111,6 @@ theorem lie_serreH_rootGenerator (k : Fin 6 ⊕ Fin 6) (j : Fin 6) :
       simp only [Matrix.transpose_apply, rootGeneratorWeight_inr, Int.cast_neg,
         neg_smul, Int.cast_smul_eq_zsmul]
 
-/-- The admissible-lattice theorem in the exact generic `kostantForm` presentation used by the
-toral-closure construction. -/
-theorem rep_kostantForm_mem_lattice
-    {u : _root_.UniversalEnvelopingAlgebra ℚ
-      (Matrix.ToLieAlgebra ℚ (CartanMatrix.E 6)ᵀ)}
-    (hu : u ∈ TauCeti.UniversalEnvelopingAlgebra.kostantForm
-      (TauCeti.serreRootGenerator (CartanMatrix.E 6)ᵀ)
-      (TauCeti.serreH ℚ (CartanMatrix.E 6)ᵀ))
-    {v : Fin 27 → ℚ} (hv : v ∈ lattice) : rep u v ∈ lattice := by
-  apply rep_serreKostantForm_mem_lattice _ hv
-  rw [TauCeti.serreKostantForm_def]
-  exact hu
-
 /-! ## The pinned carrier -/
 
 /-- The Hopf ideal cutting out the type-`E₆` minuscule carrier inside `GL₂₇`. -/
@@ -128,7 +119,9 @@ noncomputable def definingIdeal :
   TauCeti.UniversalEnvelopingAlgebra.kostantToralDefiningIdeal
     (TauCeti.serreRootGenerator (CartanMatrix.E 6)ᵀ)
     (TauCeti.serreH ℚ (CartanMatrix.E 6)ᵀ) rep lattice.toAddSubgroup
-    (fun _ hu _ hv ↦ rep_kostantForm_mem_lattice hu hv)
+    (fun _ hu _ hv ↦ rep_serreKostantForm_mem_lattice (by
+      rw [TauCeti.serreKostantForm_def]
+      exact hu) hv)
     isNilpotent_rep_serreRootGenerator latticeBasis e6MinusculeWeight
 
 /-- The defining ideal is the ideal supplied by the generic Kostant toral-closure construction. -/
@@ -137,7 +130,9 @@ theorem definingIdeal_def :
       TauCeti.UniversalEnvelopingAlgebra.kostantToralDefiningIdeal
         (TauCeti.serreRootGenerator (CartanMatrix.E 6)ᵀ)
         (TauCeti.serreH ℚ (CartanMatrix.E 6)ᵀ) rep lattice.toAddSubgroup
-        (fun _ hu _ hv ↦ rep_kostantForm_mem_lattice hu hv)
+        (fun _ hu _ hv ↦ rep_serreKostantForm_mem_lattice (by
+          rw [TauCeti.serreKostantForm_def]
+          exact hu) hv)
         isNilpotent_rep_serreRootGenerator latticeBasis e6MinusculeWeight := by
   rw [definingIdeal]
 
@@ -147,7 +142,9 @@ noncomputable abbrev groupScheme : Grp (Over (Spec (CommRingCat.of ℤ))) :=
   TauCeti.UniversalEnvelopingAlgebra.kostantToralGroupScheme
     (TauCeti.serreRootGenerator (CartanMatrix.E 6)ᵀ)
     (TauCeti.serreH ℚ (CartanMatrix.E 6)ᵀ) rep lattice.toAddSubgroup
-    (fun _ hu _ hv ↦ rep_kostantForm_mem_lattice hu hv)
+    (fun _ hu _ hv ↦ rep_serreKostantForm_mem_lattice (by
+      rw [TauCeti.serreKostantForm_def]
+      exact hu) hv)
     isNilpotent_rep_serreRootGenerator latticeBasis e6MinusculeWeight
 
 /-- The quotient-spectrum presentation of the type-`E₆` minuscule carrier. -/
@@ -161,7 +158,9 @@ noncomputable def carrierι : groupScheme ⟶ TauCeti.GeneralLinear.groupScheme 
   TauCeti.UniversalEnvelopingAlgebra.kostantToralGroupSchemeι
     (TauCeti.serreRootGenerator (CartanMatrix.E 6)ᵀ)
     (TauCeti.serreH ℚ (CartanMatrix.E 6)ᵀ) rep lattice.toAddSubgroup
-    (fun _ hu _ hv ↦ rep_kostantForm_mem_lattice hu hv)
+    (fun _ hu _ hv ↦ rep_serreKostantForm_mem_lattice (by
+      rw [TauCeti.serreKostantForm_def]
+      exact hu) hv)
     isNilpotent_rep_serreRootGenerator latticeBasis e6MinusculeWeight
 
 /-- The carrier inclusion is the generic Kostant toral-closure inclusion. -/
@@ -169,7 +168,9 @@ theorem carrierι_def :
     carrierι = TauCeti.UniversalEnvelopingAlgebra.kostantToralGroupSchemeι
       (TauCeti.serreRootGenerator (CartanMatrix.E 6)ᵀ)
       (TauCeti.serreH ℚ (CartanMatrix.E 6)ᵀ) rep lattice.toAddSubgroup
-      (fun _ hu _ hv ↦ rep_kostantForm_mem_lattice hu hv)
+      (fun _ hu _ hv ↦ rep_serreKostantForm_mem_lattice (by
+        rw [TauCeti.serreKostantForm_def]
+        exact hu) hv)
       isNilpotent_rep_serreRootGenerator latticeBasis e6MinusculeWeight := by
   rw [carrierι]
 
@@ -185,8 +186,22 @@ noncomputable def rootSubgroup (k : Fin 6 ⊕ Fin 6) :
   TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupToToral
     (TauCeti.serreRootGenerator (CartanMatrix.E 6)ᵀ)
     (TauCeti.serreH ℚ (CartanMatrix.E 6)ᵀ) rep lattice.toAddSubgroup
-    (fun _ hu _ hv ↦ rep_kostantForm_mem_lattice hu hv)
+    (fun _ hu _ hv ↦ rep_serreKostantForm_mem_lattice (by
+      rw [TauCeti.serreKostantForm_def]
+      exact hu) hv)
     isNilpotent_rep_serreRootGenerator latticeBasis e6MinusculeWeight k
+
+/-- The root subgroup is the one supplied by the generic Kostant toral-closure construction. -/
+theorem rootSubgroup_def (k : Fin 6 ⊕ Fin 6) :
+    rootSubgroup k =
+      TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupToToral
+        (TauCeti.serreRootGenerator (CartanMatrix.E 6)ᵀ)
+        (TauCeti.serreH ℚ (CartanMatrix.E 6)ᵀ) rep lattice.toAddSubgroup
+        (fun _ hu _ hv ↦ rep_serreKostantForm_mem_lattice (by
+          rw [TauCeti.serreKostantForm_def]
+          exact hu) hv)
+        isNilpotent_rep_serreRootGenerator latticeBasis e6MinusculeWeight k := by
+  rw [rootSubgroup]
 
 /-- Including a numbered root subgroup into `GL₂₇` recovers its represented divided-power
 exponential subgroup. -/
@@ -196,7 +211,9 @@ theorem rootSubgroup_comp_carrierι (k : Fin 6 ⊕ Fin 6) :
       TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroup
         (TauCeti.serreRootGenerator (CartanMatrix.E 6)ᵀ)
         (TauCeti.serreH ℚ (CartanMatrix.E 6)ᵀ) rep lattice.toAddSubgroup
-        (fun _ hu _ hv ↦ rep_kostantForm_mem_lattice hu hv) k
+        (fun _ hu _ hv ↦ rep_serreKostantForm_mem_lattice (by
+          rw [TauCeti.serreKostantForm_def]
+          exact hu) hv) k
         (isNilpotent_rep_serreRootGenerator k) latticeBasis := by
   rw [rootSubgroup, carrierι]
   exact TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupToToral_comp_ι
@@ -207,8 +224,22 @@ noncomputable def weightTorus : SplitTorus.groupScheme ℤ (Fin 6) ⟶ groupSche
   TauCeti.UniversalEnvelopingAlgebra.kostantWeightTorusToToral
     (TauCeti.serreRootGenerator (CartanMatrix.E 6)ᵀ)
     (TauCeti.serreH ℚ (CartanMatrix.E 6)ᵀ) rep lattice.toAddSubgroup
-    (fun _ hu _ hv ↦ rep_kostantForm_mem_lattice hu hv)
+    (fun _ hu _ hv ↦ rep_serreKostantForm_mem_lattice (by
+      rw [TauCeti.serreKostantForm_def]
+      exact hu) hv)
     isNilpotent_rep_serreRootGenerator latticeBasis e6MinusculeWeight
+
+/-- The weight torus is the one supplied by the generic Kostant toral-closure construction. -/
+theorem weightTorus_def :
+    weightTorus =
+      TauCeti.UniversalEnvelopingAlgebra.kostantWeightTorusToToral
+        (TauCeti.serreRootGenerator (CartanMatrix.E 6)ᵀ)
+        (TauCeti.serreH ℚ (CartanMatrix.E 6)ᵀ) rep lattice.toAddSubgroup
+        (fun _ hu _ hv ↦ rep_serreKostantForm_mem_lattice (by
+          rw [TauCeti.serreKostantForm_def]
+          exact hu) hv)
+        isNilpotent_rep_serreRootGenerator latticeBasis e6MinusculeWeight := by
+  rw [weightTorus]
 
 /-- Including the weight torus into `GL₂₇` recovers the diagonal torus of the minuscule
 weights. -/
@@ -245,7 +276,9 @@ noncomputable def points (A : Type v) [CommRing A] :
   TauCeti.UniversalEnvelopingAlgebra.kostantToralPointsSubgroup
     (TauCeti.serreRootGenerator (CartanMatrix.E 6)ᵀ)
     (TauCeti.serreH ℚ (CartanMatrix.E 6)ᵀ) rep lattice.toAddSubgroup
-    (fun _ hu _ hv ↦ rep_kostantForm_mem_lattice hu hv)
+    (fun _ hu _ hv ↦ rep_serreKostantForm_mem_lattice (by
+      rw [TauCeti.serreKostantForm_def]
+      exact hu) hv)
     isNilpotent_rep_serreRootGenerator latticeBasis e6MinusculeWeight A
 
 /-- The carrier points are exactly the invertible matrices cut out by the defining Hopf ideal. -/
@@ -254,6 +287,18 @@ theorem points_def (A : Type v) [CommRing A] :
   rw [points, definingIdeal]
   exact TauCeti.UniversalEnvelopingAlgebra.kostantToralPointsSubgroup_def
     _ _ _ _ _ _ _ _ A
+
+/-- A matrix is a carrier point exactly when its associated convolution point kills the
+defining Hopf ideal. -/
+@[simp]
+theorem mem_points_iff (A : Type v) [CommRing A]
+    (g : _root_.Matrix.GeneralLinearGroup (Fin 27) A) :
+    g ∈ points A ↔
+      ∀ x ∈ definingIdeal,
+        ((TauCeti.GeneralLinear.pointsMulEquiv (R := ℤ) 27).symm g).ofConv x = 0 := by
+  rw [points, definingIdeal]
+  exact TauCeti.UniversalEnvelopingAlgebra.mem_kostantToralPointsSubgroup_iff
+    _ _ _ _ _ _ _ _ A g
 
 /-- The split weight torus on matrix-valued points of the type-`E₆` carrier. -/
 noncomputable def weightTorusPoints (A : Type v) [CommRing A] :
