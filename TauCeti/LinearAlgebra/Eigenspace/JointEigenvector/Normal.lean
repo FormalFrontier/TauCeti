@@ -35,6 +35,7 @@ force that permutation to be trivial.
   permutation action has an ambient-invariant joint weight space.
 * `map_iInf_eigenspace_unitHom_eq_self_of_mem_ker_nonzeroJointWeightAction`: the kernel of that
   action preserves every nonzero joint weight space.
+* `finiteIndex_ker_nonzeroJointWeightAction`: in finite dimension, that kernel has finite index.
 
 ## References
 
@@ -169,22 +170,6 @@ theorem map_iInf_eigenspace_unitHom_eq_self_of_nonzeroJointWeightAction_eq
   exact congrArg (fun ψ : N →* Kˣ ↦ ⨅ n : N, (ρ n).eigenspace (ψ n))
     (congrArg Subtype.val hχ)
 
-/-- If every ambient group element fixes a nonzero normal-subgroup weight, its joint weight space
-is invariant under the whole ambient representation. -/
-theorem mapsTo_iInf_eigenspace_unitHom_of_nonzeroJointWeightAction_eq
-    (N : Subgroup G) [N.Normal] (ρ : G →* Module.End K V)
-    (χ : {χ : N →* Kˣ // (⨅ n : N, (ρ n).eigenspace (χ n)) ≠ ⊥})
-    (hχ : ∀ g, nonzeroJointWeightAction N ρ g χ = χ) (g : G) :
-    Set.MapsTo (ρ g)
-      (↑(⨅ n : N, (ρ n).eigenspace (χ.1 n)) : Set V)
-      (↑(⨅ n : N, (ρ n).eigenspace (χ.1 n)) : Set V) := by
-  intro v hv
-  have hmap :=
-    map_iInf_eigenspace_unitHom_eq_self_of_nonzeroJointWeightAction_eq N ρ g χ (hχ g)
-  have hmapped : ρ g v ∈ (⨅ n : N, (ρ n).eigenspace (χ.1 n)).map (ρ g) :=
-    Submodule.mem_map_of_mem hv
-  rwa [hmap] at hmapped
-
 /-- Every element in the kernel of the permutation action preserves each nonzero
 normal-subgroup joint weight space. -/
 theorem map_iInf_eigenspace_unitHom_eq_self_of_mem_ker_nonzeroJointWeightAction
@@ -196,6 +181,22 @@ theorem map_iInf_eigenspace_unitHom_eq_self_of_mem_ker_nonzeroJointWeightAction
   apply map_iInf_eigenspace_unitHom_eq_self_of_nonzeroJointWeightAction_eq N ρ g χ
   have h := DFunLike.congr_fun ((MonoidHom.mem_ker).mp hg) χ
   simpa using h
+
+section Finite
+
+variable {G K V : Type*} [Group G] [Field K] [AddCommGroup V] [Module K V]
+
+/-- The kernel of the permutation action on nonzero normal-subgroup weights has finite index in
+the ambient group. -/
+theorem finiteIndex_ker_nonzeroJointWeightAction [FiniteDimensional K V]
+    (N : Subgroup G) [N.Normal]
+    (ρ : G →* Module.End K V) :
+    (nonzeroJointWeightAction N ρ).ker.FiniteIndex := by
+  let _ : Finite {χ : N →* Kˣ // (⨅ n : N, (ρ n).eigenspace (χ n)) ≠ ⊥} :=
+    finite_nonzeroJointWeights (ρ.comp N.subtype)
+  exact Subgroup.finiteIndex_ker (nonzeroJointWeightAction N ρ)
+
+end Finite
 
 end TauCeti
 
