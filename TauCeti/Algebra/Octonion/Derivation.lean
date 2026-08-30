@@ -18,7 +18,8 @@ until one knows that a derivation of `𝕆` lands in the imaginary octonions and
 form; that is what this file proves.
 
 Let `D` be a derivation of `TauCeti.Octonion R`. Applying `D` to the rank-two equation
-`x² = tr x · x - N x · 1` and to the polarization `x ȳ + y x̄ = ⟨x, y⟩ · 1` of the norm gives one
+`x² = tr x · x - N x · 1` and to the polarization
+`x * conj y + y * conj x = ⟨x, y⟩ · 1` of the norm gives one
 identity in `𝕆`,
 
 `tr (D x) · x = ⟨x, D x⟩ · 1`,
@@ -98,7 +99,7 @@ variable {R : Type*} [CommRing R] (D : derivationLieAlgebra R (Octonion R))
 
 /-! ### The key identity -/
 
-/-- Conjugation as a reflection in the trace: `x̄ = tr x · 1 - x`, the form of
+/-- Conjugation as a reflection in the trace: `conj x = tr x · 1 - x`, the form of
 `TauCeti.Octonion.add_conj` a derivation is applied to. -/
 private theorem conj_eq_trace_smul_one_sub (x : Octonion R) :
     conj x = trace x • (1 : Octonion R) - x := by
@@ -106,7 +107,8 @@ private theorem conj_eq_trace_smul_one_sub (x : Octonion R) :
   abel
 
 /-- **A derivation anticommutes with conjugation.** It kills `1` and conjugation is the reflection
-`x ↦ tr x · 1 - x`, so `D x̄ = -D x`. Once the values of `D` are known to have vanishing trace this
+`x ↦ tr x · 1 - x`, so `D (conj x) = -D x`. Once the values of `D` are known to have vanishing
+trace this
 upgrades to `TauCeti.Octonion.derivation_apply_conj`, the statement that `D` commutes with
 conjugation; that is the form to use, and this one is what proves it. -/
 theorem derivation_apply_conj_eq_neg (x : Octonion R) :
@@ -118,7 +120,8 @@ theorem derivation_apply_conj_eq_neg (x : Octonion R) :
 
 Applying `D` to the rank-two equation `x² = tr x · x - N x · 1` gives
 `D x · x + x · D x = tr x · D x`,
-and the polarization `x ȳ + y x̄ = ⟨x, y⟩ · 1` of the norm at `y = D x`, with both conjugates
+and the polarization `x * conj y + y * conj x = ⟨x, y⟩ · 1` of the norm at `y = D x`, with both
+conjugates
 rewritten as reflections in the trace, gives
 `tr (D x) · x + tr x · D x - (x · D x + D x · x) = ⟨x, D x⟩ · 1`. Substituting the first into the
 second is the statement. -/
@@ -289,8 +292,8 @@ theorem mem_imaginaryLieSubmodule {x : Octonion R} :
 /-- **`Der 𝕆` acts faithfully on the imaginary octonions**, so no information is lost by restricting
 the derivation algebra to its candidate fundamental representation.
 
-A derivation kills `1`, and `x - x̄` is imaginary with `D (x - x̄) = 2 · D x`, so a derivation
-vanishing on the imaginary octonions vanishes outright as soon as `2` is invertible. -/
+A derivation kills `1`, and `x - conj x` is imaginary with `D (x - conj x) = 2 · D x`, so a
+derivation vanishing on the imaginary octonions vanishes outright as soon as `2` is invertible. -/
 instance instIsFaithfulImaginaryLieSubmodule [Invertible (2 : R)] :
     LieModule.IsFaithful R (derivationLieAlgebra R (Octonion R))
       (imaginaryLieSubmodule R) := by
