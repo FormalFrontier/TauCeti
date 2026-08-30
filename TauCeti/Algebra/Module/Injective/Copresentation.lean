@@ -121,7 +121,7 @@ theorem _root_.TauCeti.IsInjectiveEnvelope.isMinimalInjectiveCopresentation
 
 /-- If the module being copresented is already injective, then the first structure map is an
 isomorphism. -/
-theorem bijective_i₀_of_moduleInjective [Small.{w₀} R] [Small.{v} R]
+theorem i₀_bijective_of_moduleInjective [Small.{w₀} R] [Small.{v} R]
     [Module.Injective R M] (h : IsMinimalInjectiveCopresentation i₀ i₁) :
     Function.Bijective i₀ := by
   obtain ⟨e, he⟩ := h.isInjectiveEnvelope.exists_linearEquiv
@@ -136,7 +136,7 @@ theorem bijective_i₀_of_moduleInjective [Small.{w₀} R] [Small.{v} R]
 theorem i₁_eq_zero_of_moduleInjective [Small.{w₀} R] [Small.{v} R]
     [Module.Injective R M] (h : IsMinimalInjectiveCopresentation i₀ i₁) : i₁ = 0 :=
   (LinearMap.surjective_iff_eq_zero_of_exact h.exact).mp
-    h.bijective_i₀_of_moduleInjective.surjective
+    h.i₀_bijective_of_moduleInjective.surjective
 
 /-- The second injective term of a minimal copresentation of an injective module is a zero
 module. -/
