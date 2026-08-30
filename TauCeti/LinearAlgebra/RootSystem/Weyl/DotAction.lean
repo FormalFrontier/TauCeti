@@ -297,7 +297,7 @@ lemma mem_openDotDominantChamber_iff_neg_one_lt_coroot' (x : M) :
 of a dominant weight is strictly dominant. -/
 lemma dominantChamber_subset_openDotDominantChamber :
     dominantChamber P b ⊆ openDotDominantChamber P b :=
-  fun _ hx ↦ add_weylVector_mem_openDominantChamber P b hx
+  fun x hx ↦ (mem_openDotDominantChamber P b x).mpr (add_weylVector_mem_openDominantChamber P b hx)
 
 /-- The origin lies in the open dominant chamber of the dot action. -/
 lemma zero_mem_openDotDominantChamber : (0 : M) ∈ openDotDominantChamber P b :=
@@ -315,7 +315,8 @@ freeness on the closed dominant chamber below is its special case, since a domin
 strictly dominant `ρ`-shift. -/
 theorem eq_one_of_dotAction_eq_self_of_mem_openDotDominantChamber (w : P.weylGroup) {x : M}
     (hx : x ∈ openDotDominantChamber P b) (hw : dotAction P b w x = x) : w = 1 :=
-  eq_one_of_smul_eq_self_of_mem_openDominantChamber P b w hx ((dotAction_eq_self_iff P b).mp hw)
+  eq_one_of_smul_eq_self_of_mem_openDominantChamber P b w ((mem_openDotDominantChamber P b x).mp hx)
+    ((dotAction_eq_self_iff P b).mp hw)
 
 /-- **A weight in the open chamber of the dot action is the only such weight in its dot orbit.**
 This is the separation statement the alternating elements of the group algebra consume: distinct
@@ -324,9 +325,9 @@ theorem eq_of_dotAction_eq_of_mem_openDotDominantChamber {w : P.weylGroup} {x y 
     (hx : x ∈ openDotDominantChamber P b) (hy : y ∈ openDotDominantChamber P b)
     (h : dotAction P b w x = y) : y = x := by
   have hone : w = 1 :=
-    eq_one_of_smul_mem_dominantChamber P b w hx
+    eq_one_of_smul_mem_dominantChamber P b w ((mem_openDotDominantChamber P b x).mp hx)
       (openDominantChamber_subset_dominantChamber P b
-        (by rw [← dotAction_add_weylVector, h]; exact hy))
+        (by rw [← dotAction_add_weylVector, h]; exact (mem_openDotDominantChamber P b y).mp hy))
   rw [← h, hone, dotAction_one]
 
 /-- **The dot orbit map of a weight in the open dot chamber is injective**: no two Weyl-group

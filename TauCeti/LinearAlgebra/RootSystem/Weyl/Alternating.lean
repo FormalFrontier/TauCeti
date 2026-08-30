@@ -235,6 +235,7 @@ section Numerator
 variable [P.flip.IsReduced] [Fintype P.weylGroup]
 
 /-- **The numerator of a weight of the open dot chamber has coefficient `1` there.** -/
+@[simp]
 theorem coeff_weylNumerator_self_of_mem_openDotDominantChamber {lam : M}
     (hlam : lam ∈ openDotDominantChamber P b) : (weylNumerator P b lam).coeff lam = 1 := by
   have h := coeff_weylNumerator_dotAction_of_injective P b
@@ -243,6 +244,7 @@ theorem coeff_weylNumerator_self_of_mem_openDotDominantChamber {lam : M}
 
 /-- **The numerator of a weight of the open dot chamber vanishes at every other weight of that
 chamber**: the chamber meets each dot orbit at most once. -/
+@[simp]
 theorem coeff_weylNumerator_eq_zero_of_mem_openDotDominantChamber {lam nu : M}
     (hlam : lam ∈ openDotDominantChamber P b) (hnu : nu ∈ openDotDominantChamber P b)
     (hne : lam ≠ nu) : (weylNumerator P b lam).coeff nu = 0 :=
