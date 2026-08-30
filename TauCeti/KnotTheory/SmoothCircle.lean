@@ -208,7 +208,7 @@ instance instSMulCommClassDiff :
 /-- Ambient diffeomorphisms commute with orientation reversal of a smooth circle presentation. -/
 @[simp]
 theorem reverse_smul (e : Diff I M ∞) (f : SmoothCircleEmbedding I M) :
-    (e • f).reverse = e • f.reverse := by
+    reverse (SmoothEmbedding.transDiffeomorph f e) = e • f.reverse := by
   simpa only [SmoothEmbedding.smul_def, reverse] using
     (SmoothEmbedding.transDiffeomorph_compDiffeomorph f circleReflection e).symm
 
