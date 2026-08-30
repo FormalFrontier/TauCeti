@@ -218,8 +218,8 @@ private theorem exists_nonempty_equiv_symPower_of_isUnitary {V : Type*} [NormedA
   exact one_ne_zero
     ((ContRepresentation.character_orthonormal_self π hπ hunitary hirr).symm.trans hker)
 
-/-- **The symmetric powers exhaust the irreducibles of `SU(2)`.** Every finite-dimensional
-irreducible continuous representation of `SU(2)` is equivalent to `Symᵈ(ℂ²)` for some `d`.
+/-- The inner-product case of `TauCeti.SU2.exists_nonempty_equiv_symPower`, where the characters
+live; the general normed case is reduced to it by transport to a Euclidean model.
 
 Suppose not. Then `π` is inequivalent to every `Symᵈ(ℂ²)`, so by Schur's lemma there is no nonzero
 intertwiner between them, and the second character orthogonality relation makes the character of
@@ -233,8 +233,9 @@ Unitarity is not assumed: Weyl's unitarian trick
 (`TauCeti.ContRepresentation.exists_isUnitary_congr`) makes any such representation unitary after
 conjugating by an automorphism of the carrier, and the conjugation is an equivalence, so it
 changes neither the hypotheses nor the conclusion. -/
-theorem exists_nonempty_equiv_symPower {V : Type*} [NormedAddCommGroup V]
-    [InnerProductSpace ℂ V] [FiniteDimensional ℂ V] (π : ContRepresentation ℂ SU2 V)
+private theorem exists_nonempty_equiv_symPower_of_innerProductSpace {V : Type*}
+    [NormedAddCommGroup V] [InnerProductSpace ℂ V] [FiniteDimensional ℂ V]
+    (π : ContRepresentation ℂ SU2 V)
     (hπ : Continuous π) (hirr : Representation.IsIrreducible π.toRepresentation) :
     ∃ d : ℕ, Nonempty ((symPower d).Equiv π.toRepresentation) := by
   obtain ⟨e, he⟩ := ContRepresentation.exists_isUnitary_congr π hπ
@@ -244,13 +245,35 @@ theorem exists_nonempty_equiv_symPower {V : Type*} [NormedAddCommGroup V]
   exact LinearMap.ext fun v ↦ by
     simp [_root_.ContRepresentation.toMonoidHom_apply]
 
+/-- **The symmetric powers exhaust the irreducibles of `SU(2)`.** Every finite-dimensional
+irreducible continuous representation of `SU(2)` is equivalent to `Symᵈ(ℂ²)` for some `d`.
+
+Neither an inner product nor unitarity is assumed of the carrier. A finite-dimensional normed
+space over `ℂ` is continuously linearly equivalent to `ℂ^{dim V}` by dimension count, and
+transporting `π` along that equivalence changes neither the hypotheses nor the conclusion, so the
+argument may be run on a Euclidean carrier, where the characters live; there Weyl's unitarian
+trick disposes of unitarity in the same way. -/
+theorem exists_nonempty_equiv_symPower {V : Type*} [NormedAddCommGroup V] [NormedSpace ℂ V]
+    [FiniteDimensional ℂ V] (π : ContRepresentation ℂ SU2 V) (hπ : Continuous π)
+    (hirr : Representation.IsIrreducible π.toRepresentation) :
+    ∃ d : ℕ, Nonempty ((symPower d).Equiv π.toRepresentation) := by
+  let e : V ≃L[ℂ] EuclideanSpace ℂ (Fin (Module.finrank ℂ V)) :=
+    ContinuousLinearEquiv.ofFinrankEq finrank_euclideanSpace_fin.symm
+  obtain ⟨d, hd⟩ := exists_nonempty_equiv_symPower_of_innerProductSpace
+    (ContRepresentation.congr e π) (ContRepresentation.continuous_congr e hπ)
+    (ContRepresentation.isIrreducible_congr e hirr)
+  refine ⟨d, ⟨hd.some.trans (Representation.Equiv.mk
+    (e.symm : EuclideanSpace ℂ (Fin (Module.finrank ℂ V)) ≃ₗ[ℂ] V) fun g ↦ ?_)⟩⟩
+  exact LinearMap.ext fun v ↦ by
+    simp [_root_.ContRepresentation.toMonoidHom_apply]
+
 /-- **The classification of the irreducible representations of `SU(2)`.** A finite-dimensional
 irreducible continuous representation of `SU(2)` is `Symᵈ(ℂ²)` for exactly one `d`, so
 `d ↦ Symᵈ(ℂ²)` is a bijection from `ℕ` onto the isomorphism classes. Exhaustion is
 `TauCeti.SU2.exists_nonempty_equiv_symPower` and uniqueness is
 `TauCeti.SU2.nonempty_equiv_symPower_iff`. -/
 theorem existsUnique_nonempty_equiv_symPower {V : Type*} [NormedAddCommGroup V]
-    [InnerProductSpace ℂ V] [FiniteDimensional ℂ V] (π : ContRepresentation ℂ SU2 V)
+    [NormedSpace ℂ V] [FiniteDimensional ℂ V] (π : ContRepresentation ℂ SU2 V)
     (hπ : Continuous π) (hirr : Representation.IsIrreducible π.toRepresentation) :
     ∃! d : ℕ, Nonempty ((symPower d).Equiv π.toRepresentation) := by
   obtain ⟨d, hd⟩ := exists_nonempty_equiv_symPower π hπ hirr
