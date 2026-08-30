@@ -13,9 +13,9 @@ public import TauCeti.RepresentationTheory.Symmetric.Specht.Module
 # The Garnir relations
 
 The polytabloids `e_t` of the `μ`-tableaux span the Specht module `S^μ`, and the standard basis
-theorem says that the polytabloids of the *standard* tableaux already do.  The relations that
-rewrite an arbitrary polytabloid in terms of ones closer to standard are the **Garnir relations**,
-and this file proves them.
+theorem says that the polytabloids of the *standard* tableaux already do.  The relations that the
+straightening algorithm rewrites an arbitrary polytabloid with are the **Garnir relations**, and
+this file proves them.
 
 Write `A_X` for the signed sum `∑ sgn(σ) σ` over the permutations `σ` fixing every label outside a
 finite set `X` (`TauCeti.antisymmetrizerOn`).  The Garnir relation is
@@ -24,10 +24,9 @@ finite set `X` (`TauCeti.antisymmetrizerOn`).  The Garnir relation is
 
 whenever `X` is too large to be spread over the rows available to it: all the labels of `X` lie in
 columns of `μ` of length at most `r`, and `X` has more than `r` elements
-(`TauCeti.YoungTableau.asAlgebraHom_antisymmetrizerOn_polytabloid_eq_zero`).  Since the identity
-contributes the term `e_t`, this expresses `e_t` as a combination of the polytabloids of the
-relabelings `σt`, `σ ≠ 1`
-(`TauCeti.YoungTableau.polytabloid_eq_neg_sum_signChar_smul_polytabloid_relabel`).
+(`TauCeti.YoungTableau.asAlgebraHom_antisymmetrizerOn_polytabloid_eq_zero`).  Applied to the
+polytabloid it reads as the vanishing of a signed sum of the polytabloids `e_{σt}`
+(`TauCeti.YoungTableau.sum_signChar_smul_polytabloid_relabel_eq_zero`).
 
 Two facts drive the proof.
 
@@ -46,12 +45,18 @@ j`: the labels of `t` in column `j` from row `i` downwards together with those i
 from row `i` upwards.  As soon as `(i, j + 1)` is a cell of `μ` there are `μ.colLen j + 1` of them
 (`TauCeti.YoungTableau.card_garnirSet`) while they occupy only the `μ.colLen j` rows of column `j`,
 so the relation applies (`TauCeti.YoungTableau.asAlgebraHom_antisymmetrizerOn_garnirSet_eq_zero`).
-Those are the sets that straighten a tableau whose rows fail to increase across the cell `(i, j)`.
+Those are the sets the straightening algorithm uses at a cell `(i, j)` where the rows of the
+tableau fail to increase.
 
-The classical Garnir *element* of a Garnir set is a shorter signed sum, over a transversal of the
-permutations internal to the two halves of the set; multiplying it by the signed sum over those
-internal permutations recovers `A_X`.  That repackaging is not carried out here: the relation is
-proved, and stated, for the whole of `A_X`.
+The straightening step itself is *not* proved here, and the relation as stated does not supply it.
+The permutations `σ` supported in `X` that lie in the column group of `t` satisfy
+`e_{σt} = sgn(σ) e_t`, so their terms in the signed sum are further copies of `e_t` rather than of
+anything nearer to standard; simply isolating the identity term of the sum therefore rewrites `e_t`
+in terms of itself.  The classical Garnir *element* avoids this by summing only over a transversal
+of the permutations internal to the two halves of the set, so that `A_X` factors as the signed sum
+over those internal permutations times the Garnir element, and the identity coset contributes `e_t`
+alone.  That repackaging is left to the file that performs the straightening induction; here the
+relation is proved, and stated, for the whole of `A_X`.
 
 ## Main definitions
 
@@ -67,8 +72,8 @@ proved, and stated, for the whole of `A_X`.
   oversized set share a row after any column permutation.
 * `TauCeti.YoungTableau.asAlgebraHom_antisymmetrizerOn_polytabloid_eq_zero`: **the Garnir
   relation**.
-* `TauCeti.YoungTableau.polytabloid_eq_neg_sum_signChar_smul_polytabloid_relabel`: the relation with
-  the identity term isolated, which is the form that straightens a polytabloid.
+* `TauCeti.YoungTableau.sum_signChar_smul_polytabloid_relabel_eq_zero`: the relation as the
+  vanishing of a signed sum of polytabloids.
 * `TauCeti.YoungTableau.card_garnirSet`: a Garnir set has one more element than the column it
   straddles has cells.
 * `TauCeti.YoungTableau.asAlgebraHom_antisymmetrizerOn_garnirSet_eq_zero`: the Garnir relation at a
@@ -239,25 +244,6 @@ theorem sum_signChar_smul_polytabloid_relabel_eq_zero (t : YoungTableau μ)
   rw [← asAlgebraHom_antisymmetrizerOn_polytabloid_eq_zero t hX hcard,
     asAlgebraHom_antisymmetrizerOn_apply]
   simp only [polytabloid_relabel]
-
-/-- **The Garnir relation, straightening a polytabloid.**  Isolating the identity term of
-`TauCeti.YoungTableau.sum_signChar_smul_polytabloid_relabel_eq_zero` writes `e_t` as a rational
-combination of the polytabloids of the relabelings `σt` by the nontrivial permutations `σ`
-supported in `X`. -/
-theorem polytabloid_eq_neg_sum_signChar_smul_polytabloid_relabel (t : YoungTableau μ)
-    {X : Finset (Fin μ.card)} {r : ℕ} (hX : ∀ k ∈ X, μ.colLen (colIndex t k) ≤ r)
-    (hcard : r < X.card) :
-    polytabloid t =
-      -∑ σ ∈ ({σ : Equiv.Perm (Fin μ.card) | ∀ k ∉ X, σ k = k} :
-          Finset (Equiv.Perm (Fin μ.card))).erase 1,
-        signChar σ • polytabloid (relabel σ t) := by
-  have hone : (1 : Equiv.Perm (Fin μ.card)) ∈
-      ({σ : Equiv.Perm (Fin μ.card) | ∀ k ∉ X, σ k = k} : Finset (Equiv.Perm (Fin μ.card))) := by
-    simp
-  have hsum := sum_signChar_smul_polytabloid_relabel_eq_zero t hX hcard
-  rw [← Finset.add_sum_erase _ _ hone] at hsum
-  rw [eq_neg_iff_add_eq_zero, ← hsum]
-  simp
 
 /-! ## Garnir sets -/
 
