@@ -8,7 +8,7 @@ module
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Borel
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.PositiveSubsystem
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.GeckLattice.GroupScheme
-import Mathlib.Data.Fin.Tuple.Sort
+import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.Weight.Order
 import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.WeightDegree
 
 /-!
@@ -43,14 +43,17 @@ generators at all.
 The route that does apply is triangularity:
 `TauCeti.UniversalEnvelopingAlgebra.isNilpotent_kostantSubsystemSubgroup_of_isPositive` asks only
 that the weight basis be ordered so that adding a positive multiple of the root of a selected
-generator moves strictly towards the beginning of the basis. That hypothesis is supplied here by
-sorting the Geck coordinate basis by decreasing height of its weight. Height is additive and takes
-the value one on each pinned simple root, so a raising generator strictly raises it; the two facts
-are all the ordering argument uses, and neither needs to know which Geck coordinates carry which
-weight. Height itself is `TauCeti.DynkinType.weightDegree`, read off the rational root system
-`TauCeti.DynkinType.rationalRootSystem`, where the roots span the weight space; the integral
-character lattice of the pinned datum is in general strictly larger than its root lattice, so there
-is no integral coordinate sum to use instead.
+generator moves strictly towards the beginning of the basis. Such an ordering is built once and for
+all by `TauCeti.UniversalEnvelopingAlgebra.orderedWeightBasis`, which reindexes a finite weight
+basis by decreasing value of a degree functional; all this file has to supply is the functional and
+the proof that it is positive on the root of each raising generator.
+
+That functional is `TauCeti.DynkinType.weightDegree`, the simple-root height read off the rational
+root system `TauCeti.DynkinType.rationalRootSystem`, where the roots span the weight space; the
+integral character lattice of the pinned datum is in general strictly larger than its root lattice,
+so there is no integral coordinate sum to use instead. Its positivity on a raising generator is
+just the value one on each pinned simple root, and nothing here needs to know which Geck coordinates
+carry which weight.
 
 The results are therefore stated for an arbitrary set of raising generators, since that is the
 generality the argument has: every subset of the raising nodes cuts out a nilpotent unipotent group
@@ -120,50 +123,18 @@ variable (t : DynkinType) (ht : t.Valid)
 
 /-! ## The height ordering of the Geck coordinates -/
 
-/-- The permutation sorting the finite-ordinal Geck coordinates by decreasing weight height. -/
-private def geckHeightSort : Equiv.Perm (Fin (t.geckDim ht)) :=
-  Tuple.sort fun i => -t.weightDegree ht (t.geckWeightFin ht i)
-
-/-- The Geck weights, listed in decreasing order of height. -/
-private def geckSortedWeight (r : Fin (t.geckDim ht)) : Fin t.rank → ℤ :=
-  t.geckWeightFin ht (t.geckHeightSort ht r)
-
-/-- The Geck coordinate basis, reordered so that its weights have decreasing height. -/
-private def geckHeightBasis :
-    Module.Basis (Fin (t.geckDim ht)) ℤ (t.geckCoordinateLattice ht).toAddSubgroup :=
-  (t.geckCoordinateBasisFin ht).reindex (t.geckHeightSort ht).symm
-
-private theorem geckHeightBasis_apply (r : Fin (t.geckDim ht)) :
-    t.geckHeightBasis ht r = t.geckCoordinateBasisFin ht (t.geckHeightSort ht r) := by
-  rw [geckHeightBasis, Module.Basis.reindex_apply, Equiv.symm_symm]
-
-private theorem monotone_neg_weightDegree_geckSortedWeight :
-    Monotone fun r => -t.weightDegree ht (t.geckSortedWeight ht r) := by
-  intro r s hrs
-  have hsort := Tuple.monotone_sort (fun i => -t.weightDegree ht (t.geckWeightFin ht i)) hrs
-  simpa only [geckSortedWeight, geckHeightSort, Function.comp_apply] using hsort
-
-/-- **A raising generator moves a Geck coordinate strictly towards the beginning of the
-height-ordered basis.** This is the positivity hypothesis of
-`TauCeti.UniversalEnvelopingAlgebra.isNilpotent_kostantSubsystemSubgroup_of_isPositive`, and the
-only place the ordering is used. -/
-private theorem geckSortedWeight_lt_of_eq_add_nsmul {i : Fin t.rank ⊕ Fin t.rank}
-    (hi : i ∈ Set.range (Sum.inl : Fin t.rank → Fin t.rank ⊕ Fin t.rank))
-    {r s : Fin (t.geckDim ht)} {m : ℕ} (hm : 0 < m)
-    (heq : t.geckSortedWeight ht r = t.geckSortedWeight ht s + m • t.rootGeneratorWeight ht i) :
-    r < s := by
+/-- **A raising generator has positive weight height.** This is the only input the generic ordered
+weight basis `TauCeti.UniversalEnvelopingAlgebra.orderedWeightBasis` needs in order to place the
+raising Geck root subgroups in triangular position. -/
+private theorem weightDegree_rootGeneratorWeight_pos {i : Fin t.rank ⊕ Fin t.rank}
+    (hi : i ∈ Set.range (Sum.inl : Fin t.rank → Fin t.rank ⊕ Fin t.rank)) :
+    0 < t.weightDegree ht (t.rootGeneratorWeight ht i) := by
   obtain ⟨j, rfl⟩ := hi
   have hrow : t.rootGeneratorWeight ht (.inl j) = fun k => t.cartanMatrix j k := by
     funext k
     rw [rootGeneratorWeight_inl]
-  have hheight : t.weightDegree ht (t.geckSortedWeight ht r) =
-      t.weightDegree ht (t.geckSortedWeight ht s) + m := by
-    rw [heq, map_add, map_nsmul, hrow, weightDegree_cartanMatrix_row, nsmul_eq_mul, mul_one]
-  have hmQ : (0 : ℚ) < m := by exact_mod_cast hm
-  by_contra hlt
-  have hmono := t.monotone_neg_weightDegree_geckSortedWeight ht (not_lt.mp hlt)
-  rw [neg_le_neg_iff, hheight] at hmono
-  linarith
+  rw [hrow, weightDegree_cartanMatrix_row]
+  norm_num
 
 /-! ## The positive part and the Borel-type subgroup on points -/
 
@@ -206,12 +177,15 @@ theorem isNilpotent_geckSubsystemSubgroup_of_subset_range_inl
     (t.geckCoordinateLattice ht).toAddSubgroup
     (t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht)
     (t.isNilpotent_geckRepresentation_rootGenerator ht)
-    (t.geckHeightBasis ht) (t.geckSortedWeight ht) (t.rootGeneratorWeight ht) S
-    (fun x => by
-      rw [geckSortedWeight, geckHeightBasis_apply]
-      exact t.isCartanWeightVector_geckCoordinateBasisFin ht _)
+    (orderedWeightBasis (t.weightDegree ht) (t.geckWeightFin ht) (t.geckCoordinateBasisFin ht))
+    (orderedWeight (t.weightDegree ht) (t.geckWeightFin ht)) (t.rootGeneratorWeight ht) S
+    (isCartanWeightVector_coe_orderedWeightBasis (t.lieBasis ht).h (t.geckRepresentation ht)
+      (t.geckCoordinateLattice ht).toAddSubgroup (t.geckCoordinateBasisFin ht)
+      (t.geckWeightFin ht) (t.weightDegree ht)
+      (t.isCartanWeightVector_geckCoordinateBasisFin ht))
     (fun i _ j => t.lie_lieBasis_h_rootGenerator ht i j)
-    (fun _ hiS {_ _ _} hm heq => t.geckSortedWeight_lt_of_eq_add_nsmul ht (hS hiS) hm heq) A
+    (fun _ hiS {_ _ _} hm heq => orderedWeight_lt_of_eq_add_nsmul _ _
+      (t.weightDegree_rootGeneratorWeight_pos ht (hS hiS)) hm heq) A
 
 /-- **The subgroup generated by all the numbered raising Geck root subgroups is nilpotent**, the
 unipotent part of the Borel-type subgroup of the points. -/
