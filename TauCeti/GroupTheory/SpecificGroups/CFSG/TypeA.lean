@@ -47,8 +47,8 @@ results about those maps apply to `d.steinberg` directly and are not restated he
 lemmas include the commutation `TauCeti.SlStd.graphAutomorphismPoints_comp_frobenius` and the
 involution equation `TauCeti.SlStd.graphAutomorphismPoints_graphAutomorphismPoints` required by
 milestone L1. Separately, `TauCeti.SlStd.twistedFrobenius_comp_self` supplies the square relation
-for the composite Steinberg map. The fixed-point containments
-`TauCeti.SlStd.map_subtype_fixedSubgroup_frobenius_eq` and
+for the composite Steinberg map. The fixed-point identification
+`TauCeti.SlStd.map_subtype_fixedSubgroup_frobenius_eq` and the containment
 `TauCeti.SlStd.map_subtype_fixedSubgroup_twistedFrobenius_le` are available in the same way. The
 lemma `simpleRootSubgroup_def` plays this role for the root subgroups.
 
