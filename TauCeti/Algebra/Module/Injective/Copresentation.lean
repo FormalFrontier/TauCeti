@@ -86,9 +86,9 @@ def cokernelMap (h : IsMinimalInjectiveCopresentation i₀ i₁) :
 
 /-- The induced cokernel map agrees with `i₁` on representatives. -/
 @[simp]
-theorem cokernelMap_mkQ (h : IsMinimalInjectiveCopresentation i₀ i₁) (x : Q₀) :
-    h.cokernelMap ((LinearMap.range i₀).mkQ x) = i₁ x :=
-  (rfl)
+theorem cokernelMap_mk (h : IsMinimalInjectiveCopresentation i₀ i₁) (x : Q₀) :
+    h.cokernelMap (Submodule.Quotient.mk x) = i₁ x :=
+  Submodule.liftQ_apply _ _ _
 
 /-- The induced cokernel map of a minimal injective copresentation is injective. -/
 theorem cokernelMap_injective (h : IsMinimalInjectiveCopresentation i₀ i₁) :
@@ -200,16 +200,16 @@ theorem exists_linearEquiv [Small.{w₀} R] [Small.{w₀'} R]
   obtain ⟨e₁, he₁⟩ := h.isInjectiveEnvelope_cokernelMap.exists_linearEquiv htarget
   refine ⟨e₀, e₁, he₀, ?_⟩
   ext x
-  have heCoker_mk : eCoker ((LinearMap.range i₀).mkQ x) =
-      (LinearMap.range i₀').mkQ (e₀ x) := by
+  have heCoker_mk : eCoker (Submodule.Quotient.mk x) =
+      (Submodule.Quotient.mk (e₀ x) : Q₀' ⧸ LinearMap.range i₀') := by
     simp [eCoker, Submodule.Quotient.equiv_apply]
   calc
-    e₁ (i₁ x) = e₁ (h.cokernelMap ((LinearMap.range i₀).mkQ x)) :=
-      congrArg e₁ (h.cokernelMap_mkQ x).symm
-    _ = h'.cokernelMap (eCoker ((LinearMap.range i₀).mkQ x)) :=
+    e₁ (i₁ x) = e₁ (h.cokernelMap (Submodule.Quotient.mk x)) :=
+      congrArg e₁ (h.cokernelMap_mk x).symm
+    _ = h'.cokernelMap (eCoker (Submodule.Quotient.mk x)) :=
       LinearMap.congr_fun he₁ _
-    _ = h'.cokernelMap ((LinearMap.range i₀').mkQ (e₀ x)) := by rw [heCoker_mk]
-    _ = i₁' (e₀ x) := h'.cokernelMap_mkQ (e₀ x)
+    _ = h'.cokernelMap (Submodule.Quotient.mk (e₀ x)) := by rw [heCoker_mk]
+    _ = i₁' (e₀ x) := h'.cokernelMap_mk (e₀ x)
 
 end Uniqueness
 
