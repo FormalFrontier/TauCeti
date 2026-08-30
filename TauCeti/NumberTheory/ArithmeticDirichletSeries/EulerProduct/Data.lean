@@ -93,11 +93,6 @@ theorem ext {D E : EulerProductData K} (h : ∀ I, D I = E I)
       subst T
       rfl
 
-/-- Evaluating the stored ideal arithmetic function agrees with evaluating the bundle. -/
-@[simp]
-theorem toIdealArithmeticFunction_apply (D : EulerProductData K) (I : (Ideal (𝓞 K))⁰) :
-    D.toIdealArithmeticFunction I = D I := rfl
-
 /-- A completely multiplicative ideal weight supplies Euler-product data. Its finite zero support
 supplies the explicit exceptional set. -/
 noncomputable def ofMultiplicativeIdealWeight (χ : MultiplicativeIdealWeight K) :
