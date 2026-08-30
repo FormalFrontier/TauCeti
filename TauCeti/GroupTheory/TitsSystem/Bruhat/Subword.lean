@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.GroupTheory.TitsSystem.Bruhat.Basic
-public import Mathlib.Data.List.Basic
 
 /-!
 # Subword expansion of products of Bruhat cells
