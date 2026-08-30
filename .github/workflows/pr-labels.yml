@@ -14,8 +14,9 @@ name: PR status labels
 # and the review engine's <!--tauceti-review-in-progress--> marker. It assumes nothing about any
 # worker or review harness -- a harness that posts the (optional) in-progress marker gets a
 # review-in-progress label; one that doesn't just shows awaiting-review during review. reconcile is
-# idempotent and convergent, so the trigger only decides *when* to refresh; a forged comment can only
-# TRIGGER a re-derive (from author-association-checked data), never supply a verdict.
+# idempotent and convergent, so the trigger only decides *when* to refresh. Like the worker and
+# auto-merge, status derivation deliberately accepts the newest marked scoreboard from any author;
+# the label is presentation, while trusted build/scope/axiom/bump statuses remain the hard boundary.
 #
 # Runs on pull_request_target so it can label fork PRs, but it NEVER checks out or executes PR head
 # code: it reads only PR metadata via the API and runs the trusted base-branch script under a scoped
@@ -210,11 +211,11 @@ jobs:
           PR: ${{ needs.resolve.outputs.pr }}
         run: python3 scripts/pr_status/labels.py reconcile "$PR"
 
-  # Scheduled backstop: reconcile the PRs currently carrying review-in-progress, so an expired
-  # in-flight marker (a crashed review) drops the label even though nothing else fired. It is the only
-  # label that can go stale with no event; the other five are always refreshed by a build/scoreboard/PR
-  # event. Note the deliberately narrow scope -- this is NOT a general repair pass over every open PR,
-  # so nothing here rescues a PR whose label is wrong for some other reason.
+  # Scheduled backstop: reconcile PRs currently waiting for or undergoing review. This clears an
+  # expired review-in-progress marker even though nothing else fired, self-heals a missed scoreboard
+  # event, and migrates existing awaiting-review labels when the scoreboard selection policy changes.
+  # Keep the scope to these two labels rather than rereading every open PR forever: after a migration
+  # drains, the steady-state cost is just the genuine review queue.
   #
   # Its own concurrency group keeps two sweeps from overlapping. It is a different group from the
   # per-PR one, so a sweep CAN run alongside a per-PR job for a PR it happens to be reconciling. That
@@ -242,17 +243,22 @@ jobs:
         with:
           sparse-checkout: scripts/pr_status
           persist-credentials: false
-      - name: Reconcile PRs holding review-in-progress
+      - name: Reconcile PRs waiting for or undergoing review
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           GH_REPO: ${{ github.repository }}
           REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
-          # Tolerate the label not existing yet (no review has ever been in progress): an empty/failed
-          # list just means nothing to sweep.
-          prs=$(gh pr list --repo "$REPO" --state open --label review-in-progress \
-                  --json number --jq '.[].number' 2>/dev/null || true)
+          # Tolerate either label not existing yet: an empty/failed list for that label contributes
+          # nothing. De-duplicate defensively even though the status-label invariant says a PR carries
+          # exactly one of them.
+          prs=$(
+            for label in awaiting-review review-in-progress; do
+              gh pr list --repo "$REPO" --state open --label "$label" \
+                --limit 1000 --json number --jq '.[].number' 2>/dev/null || true
+            done | sort -nu
+          )
           for pr in $prs; do
             python3 scripts/pr_status/labels.py reconcile "$pr"
           done
