@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.LinearAlgebra.Basis.Basic
 public import TauCeti.LinearAlgebra.RootSystem.Weyl.Denominator.Reflection
 public import TauCeti.LinearAlgebra.RootSystem.Weyl.Numerator
 
@@ -50,6 +51,9 @@ every result below.
   action. `TauCeti.isDotAlternating_iff` is the preferred way to introduce it and
   `TauCeti.IsDotAlternating.coeff_dotAction` the preferred way to eliminate it, so that the
   definition itself need not be unfolded.
+* `TauCeti.dotAlternatingSubmodule`: the alternating elements as a `ℤ`-submodule of `ℤ[M]`.
+* `TauCeti.weylNumeratorBasis`: its basis of Weyl numerators, indexed by the open dot chamber, whose
+  coordinates are read off by `TauCeti.weylNumeratorBasis_repr_apply`.
 
 ## Main results
 
@@ -60,7 +64,7 @@ every result below.
 * `TauCeti.IsDotAlternating.eq_sum_weylNumerator`: **an alternating element is the sum of the Weyl
   numerators of the points of the open dot chamber in its support, weighted by its coefficients
   there**, and `TauCeti.eq_zero_of_sum_smul_weylNumerator_eq_zero`: those weights are unique.
-  Together: the numerators of the open dot chamber are a basis of the alternating elements.
+  Together they are the spanning and independence halves of `TauCeti.weylNumeratorBasis`.
 * `TauCeti.IsDotAlternating.eq_weylNumerator`: **an alternating element whose only nonvanishing
   coefficient on the open dot chamber is a `1` at `λ` is `N(λ)`**, the form in which the Weyl
   character formula consumes all of this.
@@ -197,6 +201,21 @@ theorem isDotAlternating_sum {α : Type*} {s : Finset α} {g : α → AddMonoidA
   Finset.sum_induction g (IsDotAlternating P b) (fun _ _ ha hb ↦ ha.add hb)
     (isDotAlternating_zero P b) hg
 
+variable (P b) in
+/-- **The alternating elements of the integral group algebra `ℤ[M]`, as a `ℤ`-submodule.** The
+closure properties are `TauCeti.isDotAlternating_zero`, `TauCeti.IsDotAlternating.add` and
+`TauCeti.IsDotAlternating.zsmul`; `TauCeti.weylNumeratorBasis` is its basis of Weyl numerators. -/
+def dotAlternatingSubmodule : Submodule ℤ (AddMonoidAlgebra ℤ M) where
+  carrier := {f | IsDotAlternating P b f}
+  zero_mem' := isDotAlternating_zero P b
+  add_mem' hf hg := hf.add hg
+  smul_mem' c _ hf := hf.zsmul c
+
+/-- Membership in `TauCeti.dotAlternatingSubmodule` is being alternating. -/
+@[simp]
+lemma mem_dotAlternatingSubmodule :
+    f ∈ dotAlternatingSubmodule P b ↔ IsDotAlternating P b f := Iff.rfl
+
 end Alternating
 
 /-! ### The open chamber of the dot action as a fundamental domain
@@ -287,9 +306,10 @@ open scoped Classical in
 /-- **An alternating element is the combination of the Weyl numerators of the weights of the open
 dot chamber in its support**, taken with its own coefficients there as multipliers.
 
-With `TauCeti.eq_zero_of_sum_smul_weylNumerator_eq_zero`, which says those coefficients are
-uniquely determined, this exhibits the numerators `N(μ)` for `μ` in the open dot chamber as a basis
-of the alternating elements of `ℤ[M]`. -/
+This is the spanning half of `TauCeti.weylNumeratorBasis`; with
+`TauCeti.eq_zero_of_sum_smul_weylNumerator_eq_zero`, which says those coefficients are uniquely
+determined, it exhibits the numerators `N(μ)` for `μ` in the open dot chamber as a basis of the
+alternating elements of `ℤ[M]`. -/
 theorem IsDotAlternating.eq_sum_weylNumerator (hf : IsDotAlternating P b f) :
     f = ∑ mu ∈ f.coeff.support.filter (· ∈ openDotDominantChamber P b),
       f.coeff mu • weylNumerator P b mu := by
@@ -326,6 +346,75 @@ theorem eq_zero_of_sum_smul_weylNumerator_eq_zero {s : Finset M} {c : M → ℤ}
       rw [coeff_weylNumerator_eq_zero_of_mem_openDotDominantChamber P b (hs mu hmu) (hs nu hnu)
         hne, mul_zero],
     coeff_weylNumerator_self_of_mem_openDotDominantChamber P b (hs nu hnu), mul_one] at h'
+
+variable (P b) in
+/-- **The Weyl numerators of the weights of the open dot chamber, as a basis of the alternating
+elements of `ℤ[M]`.**
+
+The two halves are `TauCeti.IsDotAlternating.eq_sum_weylNumerator`, which spans, and
+`TauCeti.eq_zero_of_sum_smul_weylNumerator_eq_zero`, which is the independence; those are what
+`Module.Basis.mk` consumes here, and `TauCeti.weylNumeratorBasis_repr_apply` reads the resulting
+coordinates back as the coefficients of the element on the chamber. -/
+noncomputable def weylNumeratorBasis :
+    Module.Basis (openDotDominantChamber P b) ℤ (dotAlternatingSubmodule P b) :=
+  Module.Basis.mk (v := fun mu ↦ ⟨weylNumerator P b mu, isDotAlternating_weylNumerator P b mu⟩)
+    (by
+      classical
+      refine linearIndependent_iff'.mpr fun s g hg mu hmu ↦ ?_
+      -- extend the multipliers, indexed by the chamber, to a function on all of `M`
+      obtain ⟨c, hcval⟩ : ∃ c : M → ℤ, ∀ nu : openDotDominantChamber P b, c nu = g nu :=
+        ⟨fun x ↦ if h : x ∈ openDotDominantChamber P b then g ⟨x, h⟩ else 0, fun nu ↦ by simp⟩
+      have hsum : ∑ nu ∈ s.image ((↑) : openDotDominantChamber P b → M),
+          c nu • weylNumerator P b nu = 0 := by
+        rw [Finset.sum_image fun x _ y _ h ↦ Subtype.ext h]
+        simpa [hcval] using congrArg Subtype.val hg
+      have := eq_zero_of_sum_smul_weylNumerator_eq_zero
+        (fun nu hnu ↦ by obtain ⟨nu, -, rfl⟩ := Finset.mem_image.mp hnu; exact nu.2) hsum
+        (Finset.mem_image_of_mem _ hmu)
+      rwa [hcval] at this)
+    (by
+      classical
+      rintro ⟨f, hf⟩ -
+      have key : (⟨f, hf⟩ : dotAlternatingSubmodule P b) =
+          ∑ mu ∈ (f.coeff.support.filter (· ∈ openDotDominantChamber P b)).attach,
+            f.coeff (mu : M) •
+              (⟨weylNumerator P b mu, isDotAlternating_weylNumerator P b mu⟩ :
+                dotAlternatingSubmodule P b) := by
+        refine Subtype.ext ?_
+        rw [AddSubmonoidClass.coe_finsetSum]
+        simp only [SetLike.val_smul]
+        rw [Finset.sum_attach _ fun mu ↦ f.coeff mu • weylNumerator P b mu]
+        exact hf.eq_sum_weylNumerator
+      rw [key]
+      exact Submodule.sum_mem _ fun mu _ ↦ Submodule.smul_mem _ _
+        (Submodule.subset_span ⟨⟨(mu : M), (Finset.mem_filter.mp mu.2).2⟩, rfl⟩))
+
+variable (P b) in
+/-- The basis vector of `TauCeti.weylNumeratorBasis` at a weight of the open dot chamber is the
+Weyl numerator of that weight. -/
+@[simp]
+lemma coe_weylNumeratorBasis (mu : openDotDominantChamber P b) :
+    (weylNumeratorBasis P b mu : AddMonoidAlgebra ℤ M) = weylNumerator P b mu :=
+  congrArg Subtype.val (Module.Basis.mk_apply _ _ mu)
+
+variable (P b) in
+/-- **The coordinates of an alternating element in the basis of Weyl numerators are its
+coefficients on the open dot chamber.** -/
+@[simp]
+lemma weylNumeratorBasis_repr_apply (f : dotAlternatingSubmodule P b)
+    (mu : openDotDominantChamber P b) :
+    (weylNumeratorBasis P b).repr f mu = (f : AddMonoidAlgebra ℤ M).coeff mu := by
+  classical
+  refine (weylNumeratorBasis P b).repr_apply_eq
+    (fun f mu ↦ (f : AddMonoidAlgebra ℤ M).coeff mu) (fun _ _ ↦ funext fun _ ↦ by simp)
+    (fun _ _ ↦ funext fun _ ↦ by
+      simp only [SetLike.val_smul, AddMonoidAlgebra.coeff_smul_apply, Pi.smul_apply])
+    (fun mu ↦ funext fun nu ↦ ?_) f mu
+  rcases eq_or_ne nu mu with rfl | hne
+  · simp [coeff_weylNumerator_self_of_mem_openDotDominantChamber P b nu.2]
+  · rw [Finsupp.single_eq_of_ne hne]
+    simpa using coeff_weylNumerator_eq_zero_of_mem_openDotDominantChamber P b mu.2 nu.2
+      fun h ↦ hne (Subtype.ext h).symm
 
 /-- **An alternating element whose only nonvanishing coefficient on the open dot chamber is a `1`
 at `λ` is the Weyl numerator of `λ`.**
