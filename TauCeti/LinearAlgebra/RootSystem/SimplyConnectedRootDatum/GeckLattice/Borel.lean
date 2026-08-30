@@ -37,10 +37,14 @@ any kind is defined or proved below.
 The ambient group these subgroups live in is the one the Kostant root subgroups are built in:
 `Aut_A(A ⊗ L)`, the general linear group of `A ⊗ L` for `L` the Geck coordinate lattice
 `TauCeti.DynkinType.geckCoordinateLattice`, inside which the carrier is cut out. They are therefore
-*not* typed as subgroups of the carrier's point group `TauCeti.DynkinType.geckPoints`, and no
-containment in it is proved here; the statement that does place them there, after the transport
-along the Geck coordinate basis that turns an automorphism into a matrix, is the existing
-`TauCeti.DynkinType.map_geckTorusSubsystemSubgroup_le_geckPoints`.
+*not* typed as subgroups of the carrier's point group `TauCeti.DynkinType.geckPoints`; what places
+them there, after the transport along the Geck coordinate basis that turns an automorphism into a
+matrix, is `TauCeti.DynkinType.map_geckTorusPositiveSubgroup_le_geckPoints` and its positive-part
+companion. Together with the scalar-extension inclusions
+`TauCeti.DynkinType.map_geckSubsystemSubgroup_le` and
+`TauCeti.DynkinType.map_geckTorusPositiveSubgroup_le`, these say that the subgroups below form a
+family of subgroups of the points of the carrier that grows along maps of value rings, which is the
+data a Borel subgroup scheme would have to refine.
 
 ## Why the height ordering
 
@@ -76,12 +80,12 @@ is the case of all of them.
 ## What is and is not claimed
 
 Everything below is a statement about abstract subgroups of the individual groups `Aut_A(A ⊗ L)`,
-one value ring `A` at a time. Nothing here builds a subgroup scheme: no functoriality in `A`,
-representability, closedness in the carrier or compatibility with base change is proved for these
-subgroups, so none of them is shown to be the Borel member of a pinning; they are only its
-candidate on points. Nor is it asserted that they are *maximal* among solvable subgroups of the
-carrier's points, that `U(A)` consists of unipotent elements or is the unipotent radical, or that
-the Geck weight torus is a maximal torus; those are
+one value ring `A` at a time. Nothing here builds a subgroup scheme: what is proved of the
+dependence on `A` is the inclusion of the image under scalar extension, not an equality, and no
+representability or closedness in the carrier is proved, so none of these subgroups is shown to be
+the Borel member of a pinning; they are only its candidate on points. Nor is it asserted that they
+are *maximal* among solvable subgroups of the carrier's points, that `U(A)` consists of unipotent
+elements or is the unipotent radical, or that the Geck weight torus is a maximal torus; those are
 geometric statements about the group scheme and remain Layer 9 work, as does the construction of
 full-weight admissible lattices outside the three unimodular exceptional types. No finiteness or
 simplicity of any group appears.
@@ -109,6 +113,18 @@ simplicity of any group appears.
 * `TauCeti.DynkinType.geckSubsystemSubgroup_normal_subgroupOf_geckTorusSubsystemSubgroup` and
   `TauCeti.DynkinType.geckPositiveSubgroup_normal_subgroupOf_geckTorusPositiveSubgroup`: it is
   normal there.
+* `TauCeti.DynkinType.map_geckPositiveSubgroup_le_geckPoints` and
+  `TauCeti.DynkinType.map_geckTorusPositiveSubgroup_le_geckPoints`: written in the Geck coordinate
+  basis, both groups lie in the points of the carrier.
+* `TauCeti.DynkinType.map_geckSubsystemSubgroup_le` and
+  `TauCeti.DynkinType.map_geckTorusPositiveSubgroup_le`: scalar extension along a morphism of value
+  rings carries each of them into its counterpart over the target.
+
+The characterizations `TauCeti.DynkinType.geckSubsystemSubgroup_eq_closure`,
+`TauCeti.DynkinType.geckSubsystemSubgroup_le_iff`,
+`TauCeti.DynkinType.geckTorusPositiveSubgroup_eq_sup` and the membership and monotonicity lemmas
+beside them are how these subgroups are meant to be used, without unfolding them to the generic
+Kostant construction.
 
 ## References
 
@@ -184,12 +200,90 @@ subgroups.
 
 It is a subgroup of that group for one value ring `A` at a time, the candidate on points for the
 Borel member of a pinning; it is not built as a subgroup scheme here, and neither maximality among
-solvable subgroups nor closedness or compatibility with base change is asserted. Its containment in
-the points of the carrier is `TauCeti.DynkinType.map_geckTorusSubsystemSubgroup_le_geckPoints`. -/
+solvable subgroups nor closedness in the carrier is asserted. Its containment in the points of the
+carrier is `TauCeti.DynkinType.map_geckTorusPositiveSubgroup_le_geckPoints`, and what holds of its
+dependence on `A` is the inclusion `TauCeti.DynkinType.map_geckTorusPositiveSubgroup_le`. -/
 abbrev geckTorusPositiveSubgroup (A : CommAlgCat.{v} ℤ) :
     Subgroup (LinearMap.GeneralLinearGroup A
       (A ⊗[ℤ] (t.geckCoordinateLattice ht).toAddSubgroup)) :=
   t.geckTorusSubsystemSubgroup ht (Set.range Sum.inl) A
+
+/-! ## The interface of these subgroups -/
+
+/-- A group generated by a chosen set of numbered root subgroups is generated, as a subgroup of
+`Aut_A(A ⊗ L)`, by the elements of those root subgroups. -/
+theorem geckSubsystemSubgroup_eq_closure (S : Set (Fin t.rank ⊕ Fin t.rank))
+    (A : CommAlgCat.{v} ℤ) :
+    t.geckSubsystemSubgroup ht S A =
+      Subgroup.closure {g | ∃ i ∈ S, ∃ u, t.geckRootSubgroupParam ht i A u = g} :=
+  kostantSubsystemSubgroup_eq_closure _ _ _ _ _ _ S A
+
+/-- **Elimination principle.** A subgroup of `Aut_A(A ⊗ L)` contains the group generated by a
+chosen set of numbered root subgroups exactly when it contains every element of those root
+subgroups. -/
+theorem geckSubsystemSubgroup_le_iff {S : Set (Fin t.rank ⊕ Fin t.rank)} {A : CommAlgCat.{v} ℤ}
+    {P : Subgroup (LinearMap.GeneralLinearGroup A
+      (A ⊗[ℤ] (t.geckCoordinateLattice ht).toAddSubgroup))} :
+    t.geckSubsystemSubgroup ht S A ≤ P ↔
+      ∀ i ∈ S, ∀ u : Multiplicative A, t.geckRootSubgroupParam ht i A u ∈ P :=
+  kostantSubsystemSubgroup_le_iff _ _ _ _ _ _
+
+/-- An element of a numbered root subgroup indexed in `S` lies in the group `S` generates. -/
+theorem geckRootSubgroupParam_mem_geckSubsystemSubgroup {S : Set (Fin t.rank ⊕ Fin t.rank)}
+    {i : Fin t.rank ⊕ Fin t.rank} (hiS : i ∈ S) (A : CommAlgCat.{v} ℤ) (u : Multiplicative A) :
+    t.geckRootSubgroupParam ht i A u ∈ t.geckSubsystemSubgroup ht S A :=
+  kostantRootSubgroupParam_mem_kostantSubsystemSubgroup _ _ _ _ _ _ hiS A u
+
+/-- An element of a numbered raising root subgroup lies in the positive part. -/
+theorem geckRootSubgroupParam_inl_mem_geckPositiveSubgroup (i : Fin t.rank)
+    (A : CommAlgCat.{v} ℤ) (u : Multiplicative A) :
+    t.geckRootSubgroupParam ht (Sum.inl i) A u ∈ t.geckPositiveSubgroup ht A :=
+  t.geckRootSubgroupParam_mem_geckSubsystemSubgroup ht (S := Set.range Sum.inl)
+    (Set.mem_range_self i) A u
+
+/-- The group generated by a set of numbered root subgroups grows with the set. -/
+theorem geckSubsystemSubgroup_mono {S T : Set (Fin t.rank ⊕ Fin t.rank)} (hST : S ⊆ T)
+    (A : CommAlgCat.{v} ℤ) :
+    t.geckSubsystemSubgroup ht S A ≤ t.geckSubsystemSubgroup ht T A :=
+  kostantSubsystemSubgroup_mono _ _ _ _ _ _ hST A
+
+/-- **Change of value ring for the root-subgroup part.** Scalar extension along a morphism of
+value rings carries the group generated by a set of numbered root subgroups into the group the
+same set generates over the target. This is an inclusion, not an equality: over the target the
+same root subgroups have more parameters available. -/
+theorem map_geckSubsystemSubgroup_le (S : Set (Fin t.rank ⊕ Fin t.rank))
+    {A B : CommAlgCat.{v} ℤ} (φ : A ⟶ B) :
+    (t.geckSubsystemSubgroup ht S A).map
+        (GeneralLinear.mapScalarExtensionAutomorphisms
+          (V := (t.geckCoordinateLattice ht).toAddSubgroup) φ).hom ≤
+      t.geckSubsystemSubgroup ht S B :=
+  map_kostantSubsystemSubgroup_le _ _ _ _ _ _ S φ
+
+/-- The Borel-type subgroup on points is the join of the positive part and the Geck weight
+torus. -/
+theorem geckTorusPositiveSubgroup_eq_sup (A : CommAlgCat.{v} ℤ) :
+    t.geckTorusPositiveSubgroup ht A =
+      t.geckPositiveSubgroup ht A ⊔ (t.geckTorusPoints ht A).range :=
+  kostantTorusSubsystemSubgroup_eq_sup _ _ _ _ _ _ _ _ _ A
+
+/-- Every point of the Geck weight torus lies in the Borel-type subgroup. -/
+theorem geckTorusPoints_mem_geckTorusPositiveSubgroup (A : CommAlgCat.{v} ℤ)
+    (s : Fin t.rank → Aˣ) :
+    t.geckTorusPoints ht A s ∈ t.geckTorusPositiveSubgroup ht A :=
+  kostantTorusPoints_mem_kostantTorusSubsystemSubgroup _ _ _ _ _ _ _ _ _ A s
+
+/-- **Change of value ring for the Borel-type subgroup.** Scalar extension along a morphism of
+value rings carries the Borel-type subgroup into the Borel-type subgroup over the target. Like
+`TauCeti.DynkinType.map_geckSubsystemSubgroup_le` this is an inclusion, not an equality, so it
+does not by itself make the family of these subgroups a subgroup scheme. -/
+theorem map_geckTorusPositiveSubgroup_le {A B : CommAlgCat.{v} ℤ} (φ : A ⟶ B) :
+    (t.geckTorusPositiveSubgroup ht A).map
+        (GeneralLinear.mapScalarExtensionAutomorphisms
+          (V := (t.geckCoordinateLattice ht).toAddSubgroup) φ).hom ≤
+      t.geckTorusPositiveSubgroup ht B :=
+  map_kostantTorusSubsystemSubgroup_le _ _ _ _ _ _ _ _ _ φ
+
+/-! ## Nilpotence and solvability -/
 
 /-- **A group generated by raising Geck root subgroups is nilpotent**, over every value ring. -/
 theorem isNilpotent_geckSubsystemSubgroup_of_subset_range_inl
@@ -272,6 +366,32 @@ theorem geckPositiveSubgroup_le_geckTorusPositiveSubgroup (A : CommAlgCat.{v} �
 theorem geckPositiveSubgroup_normal_subgroupOf_geckTorusPositiveSubgroup (A : CommAlgCat.{v} ℤ) :
     ((t.geckPositiveSubgroup ht A).subgroupOf (t.geckTorusPositiveSubgroup ht A)).Normal :=
   t.geckSubsystemSubgroup_normal_subgroupOf_geckTorusSubsystemSubgroup ht (Set.range Sum.inl) A
+
+/-! ## Inside the points of the carrier -/
+
+/-- **The Borel-type subgroup lies in the points of the carrier.** Written in the Geck coordinate
+basis, the subgroup generated by the weight torus and the numbered raising root subgroups is
+contained in the `A`-valued points of the Geck carrier, so the solvable group of
+`TauCeti.DynkinType.isSolvable_geckTorusPositiveSubgroup` is a solvable subgroup of
+`TauCeti.DynkinType.geckPoints A`. -/
+theorem map_geckTorusPositiveSubgroup_le_geckPoints (A : Type v) [CommRing A] :
+    (t.geckTorusPositiveSubgroup ht (CommAlgCat.of ℤ A)).map
+        (Units.map (LinearMap.toMatrixAlgEquiv
+          ((t.geckCoordinateBasisFin ht).baseChange A)).toMulEquiv) ≤
+      t.geckPoints ht A :=
+  t.map_geckTorusSubsystemSubgroup_le_geckPoints ht (Set.range Sum.inl) A
+
+/-- **The positive part lies in the points of the carrier**, so the nilpotent group of
+`TauCeti.DynkinType.isNilpotent_geckPositiveSubgroup` is a nilpotent subgroup of
+`TauCeti.DynkinType.geckPoints A`. -/
+theorem map_geckPositiveSubgroup_le_geckPoints (A : Type v) [CommRing A] :
+    (t.geckPositiveSubgroup ht (CommAlgCat.of ℤ A)).map
+        (Units.map (LinearMap.toMatrixAlgEquiv
+          ((t.geckCoordinateBasisFin ht).baseChange A)).toMulEquiv) ≤
+      t.geckPoints ht A :=
+  (Subgroup.map_mono
+      (t.geckPositiveSubgroup_le_geckTorusPositiveSubgroup ht (CommAlgCat.of ℤ A))).trans
+    (t.map_geckTorusPositiveSubgroup_le_geckPoints ht A)
 
 end
 
