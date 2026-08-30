@@ -101,7 +101,7 @@ theorem mem_dualPiece_iff (G : InternalGrading R M) (p : ℤ) (φ : Module.Dual 
 
 /-- A functional in dual degree `p` vanishes on an original homogeneous vector of degree `q`
 unless `p + q = 0`. -/
-@[grind]
+@[grind →]
 theorem apply_eq_zero_of_mem_dualPiece_of_add_ne_zero (G : InternalGrading R M) {p q : ℤ}
     {φ : Module.Dual R M} {x : M} (hφ : φ ∈ G.dualPiece p) (hx : x ∈ G.piece q)
     (hpq : p + q ≠ 0) : φ x = 0 :=
