@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.Lie.Symplectic.StandardCarrier.Basic
+public import TauCeti.Algebra.Lie.Symplectic.StandardCarrier.Scheme
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.Assembly
 
 /-!
@@ -38,6 +38,10 @@ scheme. No group below is claimed to be finite or simple.
   numbered raising subgroup is the `i`-th simple root of the uniform pinned type-`C` datum.
 * `TauCeti.SpStd.rootGeneratorWeight_inr_eq_neg_root_simpleIndex`: the root character of the `i`-th
   numbered lowering subgroup is the negative of that simple root.
+* `TauCeti.SpStd.torusPoints_conj_rootSubgroupParam_root_simpleIndex` and its negative-root
+  counterpart state the pinning equations on the carrier's matrix-valued points.
+* `TauCeti.SpStd.weightTorus_conj_rootSubgroup_root_simpleIndex` and its negative-root counterpart
+  state the same equations on scheme points.
 
 ## References
 
@@ -60,7 +64,9 @@ public section
 
 namespace TauCeti.SpStd
 
+open AlgebraicGeometry CategoryTheory
 open DynkinType
+open scoped CategoryTheory.MonObj
 
 variable (n : ℕ)
 
@@ -99,5 +105,81 @@ theorem rootGeneratorWeight_inr_eq_neg_root_simpleIndex (ht : (C (n + 1)).Valid)
     funext j
     rw [rootGeneratorWeight_inr, Pi.neg_apply, rootGeneratorWeight_inl]
   hneg.trans (congrArg Neg.neg (rootGeneratorWeight_inl_eq_root_simpleIndex n ht i))
+
+/-! ## Pinning equations on matrix-valued points -/
+
+/-- Conjugation by the full-weight torus rescales the `i`-th raising root subgroup through the
+`i`-th simple root of the pinned type-`C_(n+1)` datum. -/
+theorem torusPoints_conj_rootSubgroupParam_root_simpleIndex (ht : (C (n + 1)).Valid)
+    (i : Fin (n + 1)) (A : CommAlgCat ℤ) (s : Fin (n + 1) → Aˣ) (u : Multiplicative A) :
+    torusPoints n A s * rootSubgroupParam n (.inl i) A u * (torusPoints n A s)⁻¹ =
+      rootSubgroupParam n (.inl i) A
+        (Multiplicative.ofAdd
+          ((TauCeti.torusCharacter s
+              (((C (n + 1)).simplyConnectedRootDatum ht).root
+                ((C (n + 1)).simpleIndex ht i)) : A) *
+            Multiplicative.toAdd u)) := by
+  rw [← rootGeneratorWeight_inl_eq_root_simpleIndex]
+  exact torusPoints_conj_rootSubgroupParam n (.inl i) A s u
+
+/-- Conjugation by the full-weight torus rescales the `i`-th lowering root subgroup through the
+negative of the `i`-th simple root of the pinned type-`C_(n+1)` datum. -/
+theorem torusPoints_conj_rootSubgroupParam_neg_root_simpleIndex (ht : (C (n + 1)).Valid)
+    (i : Fin (n + 1)) (A : CommAlgCat ℤ) (s : Fin (n + 1) → Aˣ) (u : Multiplicative A) :
+    torusPoints n A s * rootSubgroupParam n (.inr i) A u * (torusPoints n A s)⁻¹ =
+      rootSubgroupParam n (.inr i) A
+        (Multiplicative.ofAdd
+          ((TauCeti.torusCharacter s
+              (-((C (n + 1)).simplyConnectedRootDatum ht).root
+                ((C (n + 1)).simpleIndex ht i)) : A) *
+            Multiplicative.toAdd u)) := by
+  rw [← rootGeneratorWeight_inr_eq_neg_root_simpleIndex]
+  exact torusPoints_conj_rootSubgroupParam n (.inr i) A s u
+
+/-! ## Pinning equations on scheme points -/
+
+/-- On scheme points, conjugation by the full-weight torus rescales the `i`-th raising root subgroup
+through the `i`-th simple root of the pinned type-`C_(n+1)` datum. -/
+theorem weightTorus_conj_rootSubgroup_root_simpleIndex (ht : (C (n + 1)).Valid)
+    (i : Fin (n + 1)) (A : Type) [CommRing A]
+    (s : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of ℤ)) ⟶
+      (SplitTorus.groupScheme ℤ (Fin (n + 1))).X)
+    (u : A) :
+    (s ≫ (weightTorus n).hom.hom) *
+        ((AdditiveGroup.groupSchemePointMulEquiv A)
+            ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm
+              (Multiplicative.ofAdd u)) ≫
+          (rootSubgroup n (.inl i)).hom.hom) *
+        (s ≫ (weightTorus n).hom.hom)⁻¹ =
+      (AdditiveGroup.schemePointsMulEquiv A).symm
+          (Multiplicative.ofAdd
+            ((TauCeti.torusCharacter (SplitTorus.schemePointsMulEquiv (R := ℤ) (A := A) s)
+              (((C (n + 1)).simplyConnectedRootDatum ht).root
+                ((C (n + 1)).simpleIndex ht i)) : A) * u)) ≫
+        (rootSubgroup n (.inl i)).hom.hom := by
+  rw [← rootGeneratorWeight_inl_eq_root_simpleIndex]
+  exact weightTorus_conj_rootSubgroup n (.inl i) A s u
+
+/-- On scheme points, conjugation by the full-weight torus rescales the `i`-th lowering root
+subgroup through the negative of the `i`-th simple root of the pinned type-`C_(n+1)` datum. -/
+theorem weightTorus_conj_rootSubgroup_neg_root_simpleIndex (ht : (C (n + 1)).Valid)
+    (i : Fin (n + 1)) (A : Type) [CommRing A]
+    (s : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of ℤ)) ⟶
+      (SplitTorus.groupScheme ℤ (Fin (n + 1))).X)
+    (u : A) :
+    (s ≫ (weightTorus n).hom.hom) *
+        ((AdditiveGroup.groupSchemePointMulEquiv A)
+            ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm
+              (Multiplicative.ofAdd u)) ≫
+          (rootSubgroup n (.inr i)).hom.hom) *
+        (s ≫ (weightTorus n).hom.hom)⁻¹ =
+      (AdditiveGroup.schemePointsMulEquiv A).symm
+          (Multiplicative.ofAdd
+            ((TauCeti.torusCharacter (SplitTorus.schemePointsMulEquiv (R := ℤ) (A := A) s)
+              (-((C (n + 1)).simplyConnectedRootDatum ht).root
+                ((C (n + 1)).simpleIndex ht i)) : A) * u)) ≫
+        (rootSubgroup n (.inr i)).hom.hom := by
+  rw [← rootGeneratorWeight_inr_eq_neg_root_simpleIndex]
+  exact weightTorus_conj_rootSubgroup n (.inr i) A s u
 
 end TauCeti.SpStd
