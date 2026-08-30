@@ -30,8 +30,8 @@ variable {α : Type*} [Fintype α] [DecidableEq α]
 /-- A transitive permutation group of prime degree contains a full cycle.
 
 The returned permutation has order and support cardinality equal to the degree, so its support
-is all of `α`. This is the prime-degree recognition input used by the low-degree classification
-and by the prime-degree branch of the `Sₙ` realization argument.
+is all of `α`. This is intended as a prime-degree recognition input for the low-degree
+classification and for the prime-degree branch of the `Sₙ` realization argument.
 -/
 theorem exists_isCycle_mem_of_isPretransitive_of_prime_card
     {G : Subgroup (Equiv.Perm α)} (hG : IsPretransitive G α)
