@@ -72,9 +72,9 @@ submodule need not be closed under negation, as `ℕ ⊆ ℤ` shows — so over 
 * `TauCeti.IsMinimalProjectivePresentation.bijective_of_comp_eq` and
   `TauCeti.IsMinimalProjectivePresentation.exists_linearEquiv`: **uniqueness**, first as
   bijectivity of any pair of comparison maps between two minimal presentations and then as an
-  isomorphism of the whole diagram;
-  `TauCeti.IsMinimalProjectivePresentation.nonempty_linearEquiv_ker` records the resulting
-  isomorphism of syzygies.
+  isomorphism of the whole diagram. The accompanying isomorphism of syzygies needs neither
+  left-hand map and so is stated one layer down, as
+  `TauCeti.IsProjectiveCover.nonempty_linearEquiv_ker` for the two right-hand covers.
 * `TauCeti.IsMinimalProjectivePresentation.bijective_of_projective`,
   `TauCeti.IsMinimalProjectivePresentation.eq_zero_of_projective` and
   `TauCeti.IsMinimalProjectivePresentation.subsingleton_of_projective`: over a projective module
@@ -337,27 +337,6 @@ theorem exists_linearEquiv {q₁ : Q₁ →ₗ[R] Q₀} {q₀ : Q₀ →ₗ[R] M
   obtain ⟨f₀, f₁, hcomp, hsquare, -, -⟩ := h'.exists_surjective h.surjective h.range_eq_ker
   obtain ⟨hbij₀, hbij₁⟩ := h.bijective_of_comp_eq h' hcomp hsquare
   exact ⟨LinearEquiv.ofBijective f₀ hbij₀, LinearEquiv.ofBijective f₁ hbij₁, hcomp, hsquare⟩
-
-/-- **The syzygy of a minimal projective presentation is well defined.** The right-hand equivalence
-of `TauCeti.IsMinimalProjectivePresentation.exists_linearEquiv` carries one syzygy onto the
-other. -/
-theorem nonempty_linearEquiv_ker {q₁ : Q₁ →ₗ[R] Q₀} {q₀ : Q₀ →ₗ[R] M}
-    (h : IsMinimalProjectivePresentation p₁ p₀)
-    (h' : IsMinimalProjectivePresentation q₁ q₀) :
-    Nonempty (LinearMap.ker p₀ ≃ₗ[R] LinearMap.ker q₀) := by
-  obtain ⟨e₀, -, hcomp, -⟩ := h.exists_linearEquiv h'
-  have hqe : ∀ z : P₀, q₀ (e₀ z) = p₀ z := fun z => LinearMap.congr_fun hcomp z
-  have hmap : (LinearMap.ker p₀).map (e₀ : P₀ →ₗ[R] Q₀) = LinearMap.ker q₀ := by
-    refine le_antisymm ?_ ?_
-    · rintro _ ⟨z, hz, rfl⟩
-      simpa [hqe] using hz
-    · intro y hy
-      have hy0 : q₀ y = 0 := by simpa using hy
-      refine ⟨e₀.symm y, ?_, by simp⟩
-      have hy' : q₀ y = p₀ (e₀.symm y) := by
-        rw [← hqe (e₀.symm y), e₀.apply_symm_apply]
-      simpa [← hy'] using hy0
-  exact ⟨e₀.ofSubmodules (LinearMap.ker p₀) (LinearMap.ker q₀) hmap⟩
 
 end Comparison
 
