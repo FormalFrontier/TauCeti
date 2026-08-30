@@ -24,7 +24,7 @@ The generic scalar action from `TauCeti.Algebra.Bialgebra.GroupLike.ScalarAut` s
 absolute Galois group and acts by `σ • (a ⊗ h) = σ(a) ⊗ h`. Its actions on the scalar
 extension, the group-like elements, and their additive form are available through the instances
 `ScalarAut.instMulSemiringAction`, `ScalarAut.instGroupLikeDistribMulAction`, and
-`ScalarAut.instAdditiveDistribMulAction`; this module supplies the instance bridges needed for
+`Additive.distribMulAction`; this module supplies the instance bridges needed for
 the opaque `Field.absoluteGaloisGroup` definition.
 
 ## Main declarations
@@ -103,7 +103,9 @@ noncomputable abbrev instAdditiveCharacterGroupGaloisAction {A : Type v}
     DistribMulAction (Field.absoluteGaloisGroup k)
       (Additive (_root_.GroupLike (AlgebraicClosure k) (AlgebraicClosure k ⊗[k] A))) := by
   unfold Field.absoluteGaloisGroup
-  exact ScalarAut.instAdditiveDistribMulAction
+  -- The monoid argument is pinned by the stated type, so the multiplicative action it transports
+  -- has to be supplied rather than searched for.
+  exact @Additive.distribMulAction _ _ _ _ ScalarAut.instGroupLikeDistribMulAction
 
 attribute [instance] instAdditiveCharacterGroupGaloisAction
 
@@ -129,7 +131,7 @@ theorem toMul_smul {A : Type v} [Semiring A] [Bialgebra k A]
     (sigma • x).toMul = sigma • x.toMul :=
   by
     unfold Field.absoluteGaloisGroup at sigma ⊢
-    exact ScalarAut.toMul_smul sigma x
+    exact @Additive.toMul_smul _ _ _ _ ScalarAut.instGroupLikeDistribMulAction sigma x
 
 end CommHopfAlgCat
 

@@ -69,7 +69,7 @@ theorem isNontrivial_of_surjective (hw : Function.Surjective w) : w.IsNontrivial
   obtain ⟨x, hx⟩ := hw (WithZero.exp (-1))
   refine (isNontrivial_iff_exists_lt_one w).mpr ⟨x, ?_, ?_⟩
   · exact w.ne_zero_iff.mp (by simp [hx])
-  · simpa [hx] using WithZero.exp_lt_exp.mpr (by norm_num : (-1 : ℤ) < 0)
+  · simp [hx]
 
 section CenterIdeal
 

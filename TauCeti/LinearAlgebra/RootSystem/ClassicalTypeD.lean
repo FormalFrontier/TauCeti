@@ -329,20 +329,23 @@ noncomputable def typeDRootEquiv (n : ℕ) (hn : 4 ≤ n) :
 private lemma typeDRootEquiv_apply (hn : 4 ≤ n) (k : Fin (2 * n * (n - 1))) :
     typeDRootEquiv n hn k = typeDRawRoot ((typeDRawFinEquiv n (by omega)).symm k) := rfl
 
+/-- There is room for the first `n` indices in the type `Dₙ` enumeration of `2 * n * (n - 1)`
+roots. -/
+private lemma typeD_le_two_mul_mul (hn : 4 ≤ n) : n ≤ 2 * n * (n - 1) := by
+  have h : n ≤ n * (n - 1) := Nat.le_mul_of_pos_right n (by omega)
+  have h' : n * (n - 1) ≤ 2 * (n * (n - 1)) := Nat.le_mul_of_pos_left _ (by norm_num)
+  simpa [mul_assoc] using h.trans h'
+
 /-- The `i`-th simple root occupies root index `i`. -/
 def typeDSimpleIndex (n : ℕ) (hn : 4 ≤ n) (i : Fin n) : Fin (2 * n * (n - 1)) :=
-  ⟨i, lt_of_lt_of_le i.isLt (by
-    have h : n ≤ n * (n - 1) := Nat.le_mul_of_pos_right n (by omega)
-    have h' : n * (n - 1) ≤ 2 * (n * (n - 1)) :=
-      Nat.le_mul_of_pos_left _ (by norm_num)
-    simpa [mul_assoc] using h.trans h')⟩
+  Fin.castLE (typeD_le_two_mul_mul hn) i
 
 @[simp] lemma typeDSimpleIndex_val (hn : 4 ≤ n) (i : Fin n) :
-    (typeDSimpleIndex n hn i : ℕ) = i := (rfl)
+    (typeDSimpleIndex n hn i : ℕ) = i := by
+  simp [typeDSimpleIndex]
 
-lemma typeDSimpleIndex_injective (hn : 4 ≤ n) : Injective (typeDSimpleIndex n hn) := by
-  intro i j h
-  exact Fin.ext (by simpa using congrArg Fin.val h)
+lemma typeDSimpleIndex_injective (hn : 4 ≤ n) : Injective (typeDSimpleIndex n hn) :=
+  Fin.castLE_injective (typeD_le_two_mul_mul hn)
 
 private def typeDSimpleRawIndex (n : ℕ) (hn : 4 ≤ n) (i : Fin n) : TypeDRawIndex n :=
   if h : (i : ℕ) + 1 < n then

@@ -90,8 +90,8 @@ theorem cuspFormsOldMultiples_map_diamondOpCusp_le (u : (ZMod N)ˣ) (m : ℕ) :
     (cuspFormsOldMultiples N k m).map (diamondOpCusp k u) ≤ cuspFormsOldMultiples N k m := by
   rw [Submodule.map_le_iff_le_comap]
   refine cuspFormsOldMultiples_le fun M d h hM hm g hg ↦ ?_
-  have : NeZero d := ⟨fun hd ↦ NeZero.ne N (by simpa [hd] using h)⟩
-  have : NeZero M := ⟨fun hM' ↦ NeZero.ne N (by simpa [hM'] using h)⟩
+  have : NeZero d := NeZero.of_dvd (dvd_of_mul_right_dvd h)
+  have : NeZero M := NeZero.of_dvd (dvd_of_mul_left_dvd h)
   rw [Submodule.mem_comap, CuspForm.diamondOpCusp_levelRaise h]
   -- `levelRaiseₗ_apply` bridges the introduction rule's `levelRaiseₗ` to the bare `levelRaise`
   -- that `diamondOpCusp_levelRaise` produced above

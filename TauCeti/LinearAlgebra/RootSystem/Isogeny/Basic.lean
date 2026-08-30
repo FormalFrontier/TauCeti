@@ -53,18 +53,14 @@ Isogenies compose, with exponents multiplying along the composite, and for each 
 `c` the scaling `TauCeti.RootPairingIsogeny.smulId P c` is an isogeny of a finite free
 `ℤ`-root pairing `P` with itself with constant exponent `c`. At `c` a prime `p` the latter is the
 root-datum shadow of the `p`-power Frobenius
-isogeny, which is what makes `f * f = smulId P p` the root-datum form of the relation
+isogeny, which is what makes `f.comp f = smulId P p` the root-datum form of the relation
 `τ ^ 2 = Frob_p` satisfied by a special isogeny.
-
-Composition makes the self-isogenies of `P` a monoid. This is the isogeny analogue of Mathlib's
-`Monoid (RootPairing.Hom P P)` instance, with the additional exponent field accounted for.
 
 ## Main definitions
 
 * `TauCeti.RootPairingIsogeny`: an isogeny of root pairings.
 * `TauCeti.RootPairingIsogeny.comp`: the composite of two isogenies.
 * `TauCeti.RootPairingIsogeny.smulId`: multiplication by a scalar, as an isogeny.
-* the `Monoid` instance on `TauCeti.RootPairingIsogeny P P`, whose multiplication is composition.
 * `TauCeti.RootPairingIsogeny.ofMatrix`: an isogeny between root data on coordinate lattices,
   presented by an integer matrix.
 * `TauCeti.RootPairingIsogeny.toHom`: an isogeny with constant exponent `1` as a root-pairing
@@ -76,8 +72,10 @@ Composition makes the self-isogenies of `P` a monoid. This is the isogeny analog
 
 * `TauCeti.RootPairingIsogeny.exponent_mul_pairing`: the exponents intertwine the two Cartan
   matrices.
-* `TauCeti.RootPairingIsogeny.pow_exponent`: the exponent of an iterate is the product along the
-  corresponding orbit of indices.
+* `TauCeti.RootPairingIsogeny.comp_smulId`: every isogeny intertwines scaling on its source with
+  scaling on its target, so scaling is central among the endo-isogenies of one pairing.
+* `TauCeti.RootPairingIsogeny.comp_ofEquiv_smulId_eq_iff`: an automorphism composed with a scaling
+  is that scaling exactly when the automorphism is trivial.
 
 ## References
 
@@ -496,101 +494,42 @@ variable {ι₄ M₄ N₄ : Type*} [AddCommGroup M₄] [Module R M₄]
     (f : RootPairingIsogeny P Q) : comp (comp h g) f = comp h (comp g f) := by
   ext <;> simp [comp, mul_assoc]
 
-/-! ### Iterates of a self-isogeny -/
+/-- **Scaling is natural**: an isogeny `f : P ⟶ Q` intertwines multiplication by a positive integer
+on `P` with multiplication by the same integer on `Q`. At `P = Q` this says that scaling is central
+in the monoid of endo-isogenies, and since `TauCeti.RootPairingIsogeny.smulId` at a prime power `q`
+is the root-datum shadow of the `q`-power Frobenius, that specialization is the root-datum form of
+the fact that a Frobenius commutes with every endo-isogeny of the datum. -/
+theorem comp_smulId [Module.Free ℤ M] [Module.Finite ℤ M] [Module.Free ℤ N] [Module.Finite ℤ N]
+    [Module.Free ℤ M₂] [Module.Finite ℤ M₂] [Module.Free ℤ N₂] [Module.Finite ℤ N₂]
+    {P : RootPairing ι ℤ M N} {Q : RootPairing ι₂ ℤ M₂ N₂}
+    (f : RootPairingIsogeny P Q) (c : ℕ+) :
+    comp f (smulId P c) = comp (smulId Q c) f := by
+  ext <;> simp [mul_comm]
 
-section Iterate
-
-variable {ι R M N : Type*} [CommRing R] [AddCommGroup M] [Module R M]
-  [AddCommGroup N] [Module R N] {P : RootPairing ι R M N}
-
-/-- Composition of isogenies of a root pairing with itself, with the identity isogeny as unit.
-Multiplication is `TauCeti.RootPairingIsogeny.comp`, in the same order as for endomorphisms of a
-module: `f * g` applies `g` first. -/
-instance : Monoid (RootPairingIsogeny P P) where
-  mul := comp
-  one := id P
-  mul_assoc := comp_assoc
-  one_mul := comp_id
-  mul_one := id_comp
-
-/-- The product in the monoid of self-isogenies is composition. -/
-theorem mul_def (f g : RootPairingIsogeny P P) : f * g = comp f g := rfl
-
-/-- The unit of the monoid of self-isogenies is the identity isogeny. -/
-theorem one_def : (1 : RootPairingIsogeny P P) = id P := rfl
-
-/-- The character-lattice map of a product is the composite of the two character-lattice maps. -/
-@[simp] theorem mul_weightMap (f g : RootPairingIsogeny P P) :
-    (f * g).weightMap = f.weightMap ∘ₗ g.weightMap := by
-  rw [mul_def, comp_weightMap]
-
-/-- The cocharacter map of a composite is the composite in the opposite order: an isogeny is
-contravariant on coweight space. -/
-@[simp] theorem mul_coweightMap (f g : RootPairingIsogeny P P) :
-    (f * g).coweightMap = g.coweightMap ∘ₗ f.coweightMap := by
-  rw [mul_def, comp_coweightMap]
-
-/-- The index bijection of a product is the product of the two index bijections, as
-permutations. -/
-@[simp] theorem mul_indexEquiv (f g : RootPairingIsogeny P P) :
-    (f * g).indexEquiv = f.indexEquiv * g.indexEquiv := by
-  rw [mul_def, comp_indexEquiv, Equiv.Perm.mul_def]
-
-/-- The exponent of `f * g` at `i` is the exponent of `g` at `i`, times the exponent of `f` at
-`g.indexEquiv i`. -/
-@[simp] theorem mul_exponent (f g : RootPairingIsogeny P P) (i : ι) :
-    (f * g).exponent i = g.exponent i * f.exponent (g.indexEquiv i) := by
-  rw [mul_def, comp_exponent]
-
-/-- The identity isogeny is the identity on the character lattice. -/
-@[simp] theorem one_weightMap : (1 : RootPairingIsogeny P P).weightMap = LinearMap.id := by
-  rw [one_def, id_weightMap]
-
-/-- The identity isogeny is the identity on the cocharacter lattice. -/
-@[simp] theorem one_coweightMap : (1 : RootPairingIsogeny P P).coweightMap = LinearMap.id := by
-  rw [one_def, id_coweightMap]
-
-/-- The identity isogeny fixes every index. -/
-@[simp] theorem one_indexEquiv : (1 : RootPairingIsogeny P P).indexEquiv = Equiv.refl ι := by
-  rw [one_def, id_indexEquiv]
-
-/-- The identity isogeny rescales no root. -/
-@[simp] theorem one_exponent (i : ι) : (1 : RootPairingIsogeny P P).exponent i = 1 := by
-  rw [one_def, id_exponent]
-
-/-- The character-lattice map of an iterate is the iterate of the character-lattice map. -/
-@[simp] theorem pow_weightMap (f : RootPairingIsogeny P P) (k : ℕ) :
-    (f ^ k).weightMap = f.weightMap ^ k := by
-  induction k with
-  | zero => simp [Module.End.one_eq_id]
-  | succ k ih => rw [pow_succ, mul_weightMap, ih, pow_succ, Module.End.mul_eq_comp]
-
-/-- The cocharacter map of an iterate is the iterate of the cocharacter map. Composition reverses
-the order, but a power of an endomorphism commutes with itself, so no reversal is visible. -/
-@[simp] theorem pow_coweightMap (f : RootPairingIsogeny P P) (k : ℕ) :
-    (f ^ k).coweightMap = f.coweightMap ^ k := by
-  induction k with
-  | zero => simp [Module.End.one_eq_id]
-  | succ k ih => rw [pow_succ, mul_coweightMap, ih, pow_succ', Module.End.mul_eq_comp]
-
-/-- The index bijection of an iterate is the iterate of the index bijection. -/
-@[simp] theorem pow_indexEquiv (f : RootPairingIsogeny P P) (k : ℕ) :
-    (f ^ k).indexEquiv = f.indexEquiv ^ k := by
-  induction k with
-  | zero => simp [Equiv.Perm.one_def]
-  | succ k ih => rw [pow_succ, mul_indexEquiv, ih, pow_succ]
-
-/-- **The exponent of an iterate accumulates along the forward orbit of the index bijection.**
-Unlike the other three fields the exponent is not multiplicative: the exponent of a composite at
-an index is the product of the exponents met at the successive images of that index. -/
-@[simp] theorem pow_exponent (f : RootPairingIsogeny P P) (k : ℕ) (i : ι) :
-    (f ^ k).exponent i = ∏ j ∈ Finset.range k, f.exponent ((f.indexEquiv ^ j) i) := by
-  induction k with
-  | zero => simp
-  | succ k ih =>
-    rw [pow_succ', mul_exponent, ih, pow_indexEquiv, Finset.prod_range_succ]
-
-end Iterate
+/-- **Scaling cancels an automorphism factor**: composing an automorphism of a finite free
+`ℤ`-root pairing with multiplication by a positive integer returns that multiplication exactly when
+the automorphism is trivial. Multiplication by `c` is injective on a torsion-free weight lattice, so
+it cancels, and an automorphism of a root pairing is determined by its weight map. -/
+theorem comp_ofEquiv_smulId_eq_iff [Module.Free ℤ M] [Module.Finite ℤ M]
+    [Module.Free ℤ N] [Module.Finite ℤ N] {P : RootPairing ι ℤ M N}
+    (f : RootPairing.Equiv P P) (c : ℕ+) :
+    comp (ofEquiv f) (smulId P c) = smulId P c ↔ f = 1 := by
+  constructor
+  · intro h
+    -- Read the equality with the scaling outermost, where its injectivity on the weight lattice
+    -- cancels it.
+    rw [comp_smulId] at h
+    have hw := congrArg weightMap h
+    rw [comp_weightMap, ofEquiv_weightMap] at hw
+    have hx : ∀ x, f.toHom.weightMap x = x := fun x =>
+      (smulId P c).weightMap_injective (LinearMap.congr_fun hw x)
+    -- An automorphism of a root pairing is determined by its weight map.
+    apply RootPairing.Equiv.weightHom_injective P
+    apply LinearEquiv.toLinearMap_injective
+    exact LinearMap.ext fun x => by simpa using hx x
+  · rintro rfl
+    have hone : ofEquiv (1 : RootPairing.Equiv P P) = id P := by ext <;> simp
+    rw [hone, comp_id]
 
 end RootPairingIsogeny
 

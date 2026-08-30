@@ -121,7 +121,7 @@ theorem isModularEigenrow_dihedralGroupFourCentralCharacterTable_zmod
 /-- The explicit set of modular rows has five elements. -/
 @[simp]
 theorem card_dihedralGroupFourModularCentralRows :
-    ((dihedralClassData 4).modularCentralRows 5
+    ((dihedralClassData 4).rowsOfMap (fun x : ℤ => (x : ZMod 5))
       dihedralGroupFourCentralCharacterTable).card = (dihedralClassData 4).numClasses := by
   decide
 
@@ -130,14 +130,19 @@ five reductions in `TauCeti.dihedralGroupFourCentralCharacterTable`.** -/
 theorem dihedralGroupFour_centralCharacterSearch :
     (dihedralClassData 4).centralCharacterSearch
         (F := ZMod dihedralGroupFourDixonPrimeData.p) =
-      (dihedralClassData 4).modularCentralRows dihedralGroupFourDixonPrimeData.p
+      (dihedralClassData 4).rowsOfMap
+        (fun x : ℤ => (x : ZMod dihedralGroupFourDixonPrimeData.p))
         dihedralGroupFourCentralCharacterTable :=
-  (dihedralClassData 4).centralCharacterSearch_eq_modularCentralRows_of_isGoodDixonPrime
-    dihedralGroupFourDixonPrimeData.isGoodDixonPrime dihedralGroupFourCentralCharacterTable
+  (dihedralClassData 4).centralCharacterSearch_eq_rowsOfMap_of_isGoodDixonPrime
+    dihedralGroupFourDixonPrimeData.isGoodDixonPrime
+    (fun x : ℤ => (x : ZMod dihedralGroupFourDixonPrimeData.p))
+    dihedralGroupFourCentralCharacterTable
     (by intro i; fin_cases i <;> decide)
     isModularEigenrow_dihedralGroupFourCentralCharacterTable_zmod
-    (by simpa only [dihedralGroupFourDixonPrimeData_p] using
-      card_dihedralGroupFourModularCentralRows)
+    (by
+      have hcard := card_dihedralGroupFourModularCentralRows
+      rw [← dihedralGroupFourDixonPrimeData_p] at hcard
+      exact hcard)
 
 /-- **The rational lift of the modular search is exactly the displayed integral central-character
 table, up to the irrelevant order of its rows.** -/

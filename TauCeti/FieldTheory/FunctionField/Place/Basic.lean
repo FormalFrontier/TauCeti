@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.FieldTheory.AlgebraicClosure
+public import Mathlib.RingTheory.DiscreteValuationRing.TFAE
 public import Mathlib.RingTheory.Valuation.Integral
 public import Mathlib.RingTheory.Valuation.IsTrivialOn
 public import TauCeti.RingTheory.Valuation.Discrete.Order
@@ -149,6 +150,10 @@ theorem ord_one : P.ord 1 = 0 := Valuation.ord_one P.valuation
 theorem ord_mul {f g : F} (hf : f ≠ 0) (hg : g ≠ 0) : P.ord (f * g) = P.ord f + P.ord g :=
   Valuation.ord_mul P.valuation hf hg
 
+theorem ord_prod {ι : Type*} (s : Finset ι) {f : ι → F} (hf : ∀ i ∈ s, f i ≠ 0) :
+    P.ord (∏ i ∈ s, f i) = ∑ i ∈ s, P.ord (f i) :=
+  Valuation.ord_prod P.valuation s hf
+
 @[simp]
 theorem ord_inv (f : F) : P.ord f⁻¹ = -P.ord f := Valuation.ord_inv P.valuation f
 
@@ -197,6 +202,34 @@ have distinct orders, the order of their sum is the smaller of the two. -/
 theorem ord_add_eq_min_of_ord_ne {f g : F} (hf : f ≠ 0) (hg : g ≠ 0)
     (h : P.ord f ≠ P.ord g) : P.ord (f + g) = min (P.ord f) (P.ord g) :=
   Valuation.ord_add_eq_min_of_ord_ne P.valuation hf hg h
+
+/-- A finite sum one of whose summands has strictly least order at `P` does not vanish. -/
+theorem sum_ne_zero_of_forall_ord_lt {ι : Type*} {s : Finset ι} {f : ι → F} {j : ι} (hj : j ∈ s)
+    (hfj : f j ≠ 0) (hlt : ∀ i ∈ s, i ≠ j → P.ord (f j) < P.ord (f i)) :
+    ∑ i ∈ s, f i ≠ 0 :=
+  Valuation.sum_ne_zero_of_forall_ord_lt P.valuation hj hfj hlt
+
+/-- The **strict triangle inequality for a finite sum**: a summand of strictly least order at `P`
+dictates the order of the sum. -/
+theorem ord_sum_eq_of_forall_lt {ι : Type*} {s : Finset ι} {f : ι → F} {j : ι} (hj : j ∈ s)
+    (hfj : f j ≠ 0) (hlt : ∀ i ∈ s, i ≠ j → P.ord (f j) < P.ord (f i)) :
+    P.ord (∑ i ∈ s, f i) = P.ord (f j) :=
+  Valuation.ord_sum_eq_of_forall_lt P.valuation hj hfj hlt
+
+/-- **Normalizing a family of coefficients.** A finite family in `F` that does not vanish
+identically has a nonzero member by which the whole family can be divided without leaving `𝒪_P`;
+a member of least order at `P` is one. This is what turns a relation with coefficients in `F`
+into a relation with coefficients in `𝒪_P`, one of which is a unit. -/
+theorem exists_ne_zero_forall_div_mem_integers {ι : Type*} [Finite ι] (c : ι → F) {i₁ : ι}
+    (hi₁ : c i₁ ≠ 0) : ∃ i₀, c i₀ ≠ 0 ∧ ∀ i, c i / c i₀ ∈ P.integers := by
+  obtain ⟨i₀, hi₀, hmin⟩ :=
+    Set.exists_min_image {i | c i ≠ 0} (fun i ↦ P.ord (c i)) (Set.toFinite _) ⟨i₁, hi₁⟩
+  refine ⟨i₀, hi₀, fun i ↦ ?_⟩
+  rcases eq_or_ne (c i) 0 with h | h
+  · simp [h]
+  · rw [P.mem_integers_iff_ord_nonneg, P.ord_div h hi₀]
+    have := hmin i h
+    omega
 
 section Constants
 
@@ -326,30 +359,13 @@ theorem integers_injective : Function.Injective (integers : Place k F → Valuat
 /-- **The valuation ring of a place is a maximal proper subring of `F`** (Stichtenoth,
 Theorem 1.1.13(d)), in the form used to recognize a place from a containment of valuation
 rings: a place whose valuation ring contains the valuation ring of another place is that
-place. -/
-theorem eq_of_integers_le {P Q : Place k F} (h : P.integers ≤ Q.integers) : P = Q := by
-  refine integers_injective (le_antisymm h ?_)
-  by_contra hle
-  obtain ⟨f, hfQ, hfP⟩ := SetLike.not_le_iff_exists.mp hle
-  rw [mem_integers_iff_ord_nonneg] at hfQ
-  rw [mem_integers_iff_ord_nonneg, not_le] at hfP
-  have hf0 : f ≠ 0 := by rintro rfl; simp at hfP
-  have hgP : 0 < P.ord f⁻¹ := by rw [ord_inv]; omega
-  have hgQ : 0 ≤ Q.ord f⁻¹ := by
-    rw [← mem_integers_iff_ord_nonneg]
-    exact h (P.mem_integers_iff_ord_nonneg.mpr hgP.le)
-  have hgQ0 : Q.ord f⁻¹ = 0 := by rw [ord_inv] at hgQ ⊢; omega
-  refine Q.integers_ne_top (top_unique fun y _ ↦ ?_)
-  rcases eq_or_ne y 0 with rfl | hy0
-  · exact zero_mem _
-  set n := (max 0 (-P.ord y)).toNat with hn
-  have hmem : y * f⁻¹ ^ n ∈ P.integers := by
-    rw [mem_integers_iff_ord_nonneg, ord_mul _ hy0 (pow_ne_zero _ (inv_ne_zero hf0)), ord_pow]
-    have : (1 : ℤ) ≤ P.ord f⁻¹ := hgP
-    nlinarith [Int.toNat_of_nonneg (le_max_left 0 (-P.ord y)), le_max_right 0 (-P.ord y)]
-  have := Q.mem_integers_iff_ord_nonneg.mp (h hmem)
-  rw [ord_mul _ hy0 (pow_ne_zero _ (inv_ne_zero hf0)), ord_pow, hgQ0] at this
-  exact Q.mem_integers_iff_ord_nonneg.mpr (by omega)
+place.
+
+This is Mathlib's `ValuationSubring.eq_of_le_of_ne_top` for `𝒪_P`, which applies because a
+discrete valuation ring has Krull dimension at most one; properness of `𝒪_Q` is what rules out
+the other case. -/
+theorem eq_of_integers_le {P Q : Place k F} (h : P.integers ≤ Q.integers) : P = Q :=
+  integers_injective (P.integers.eq_of_le_of_ne_top h Q.integers_ne_top)
 
 /-- The valuation ring of a place is integrally closed in `F`: an element of `F` integral over a
 `k`-algebra whose image lies in `𝒪_P` lies in `𝒪_P`. -/

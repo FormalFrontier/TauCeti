@@ -96,6 +96,20 @@ theorem coe_diagonalRoot {n : ℕ} (i j : Fin n) :
     ⇑(diagonalRoot i j : ULift.{u} (Fin n) →₀ ℤ) = diagonalCoroot i j :=
   by rw [diagonalCoroot]
 
+/-- A diagonal root is the corresponding root of the coordinate root datum. -/
+theorem diagonalRoot_eq_coordinateRoot {n : ℕ} (i j : Fin n) :
+    diagonalRoot i j = SplitTorus.coordinateRoot (ULift.up i) (ULift.up j) := by
+  ext x
+  rw [diagonalRoot_apply, SplitTorus.coordinateRoot_apply]
+  split_ifs <;> rfl
+
+/-- A diagonal coroot is the corresponding coroot of the coordinate root datum. -/
+theorem diagonalCoroot_eq_coordinateCoroot {n : ℕ} (i j : Fin n) :
+    diagonalCoroot i j = SplitTorus.coordinateCoroot (ULift.up i) (ULift.up j) := by
+  ext x
+  rw [diagonalCoroot_apply, SplitTorus.coordinateCoroot_apply]
+  split_ifs <;> rfl
+
 /-- The coordinate root datum on the diagonal split-torus lattices of `GL_n`.
 
 This package is constructed directly from the coordinate differences. The theorem

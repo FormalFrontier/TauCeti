@@ -151,6 +151,29 @@ theorem mem_of_trace_eq_zero_of_single_mem {N : Submodule R (Matrix n n R)}
 
 /-! ### Matrix units as commutators -/
 
+/-- The commutator of two single-entry matrices is the difference of the two possible
+composites. -/
+@[simp]
+theorem lie_single_single (a b i j : n) (c d : R) :
+    ⁅single a b c, single i j d⁆ =
+      (if b = i then single a j (c * d) else 0) -
+        if j = a then single i b (d * c) else 0 := by
+  rw [LieRing.of_associative_ring_bracket]
+  by_cases hbi : b = i
+  · subst i
+    by_cases hja : j = a
+    · subst j
+      rw [single_mul_single_same, single_mul_single_same]
+      simp
+    · rw [single_mul_single_same, single_mul_single_of_ne (h := hja)]
+      simp [hja]
+  · by_cases hja : j = a
+    · subst j
+      rw [single_mul_single_of_ne (h := hbi), single_mul_single_same]
+      simp [hbi]
+    · rw [single_mul_single_of_ne (h := hbi), single_mul_single_of_ne (h := hja)]
+      simp [hbi, hja]
+
 /-- An off-diagonal matrix unit is a commutator: `Eᵢⱼ = ⁅Eᵢᵢ, Eᵢⱼ⁆` when `i ≠ j`. -/
 theorem lie_single_self_single_of_ne {i j : n} (hij : i ≠ j) (c : R) :
     ⁅single i i (1 : R), single i j c⁆ = single i j c := by

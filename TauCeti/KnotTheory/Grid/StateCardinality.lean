@@ -38,7 +38,7 @@ the free `ZMod 2`-module on `GridState n`.
 This advances `TauCetiRoadmap/CombinatorialHeegaardFloer/README.md`, Lane G.1, "Grid diagrams
 and grid states", and the standing convention that the grid complexes should compute on explicit
 small grids. The encoding follows Ozsváth--Stipsicz--Szabó, *Grid Homology for Knots and Links*,
-Chapter 3: a grid state is one occupied square in every row and every column.
+Chapter 3: a grid state is one occupied grid point in every row and every column.
 -/
 
 public section

@@ -89,8 +89,13 @@ lemma eval₂_negPolynomial_polynomial :
   simp only [eval₂_add, eval₂_sub, eval₂_mul, eval₂_pow, eval₂_C, eval₂_X]
   ring1
 
-/-- `AdjoinRoot.mk_C` in the `algebraMap` spelling that the rewrites below want. -/
-private lemma mk_C_eq_algebraMap (r : R[X]) :
+/-- **The class of a constant polynomial is its image under `algebraMap`.** `AdjoinRoot.mk_C` in
+the `algebraMap` spelling that rewriting wants.
+
+Public because it is the canonical form of an identity that consumers otherwise re-prove: it is
+the coordinate-ring half of every `mk W (C p)` computation, and composing it with
+`IsScalarTower.algebraMap_apply` carries the class all the way into the function field. -/
+lemma mk_C_eq_algebraMap (r : R[X]) :
     mk W (C r) = algebraMap R[X] W.CoordinateRing r := by
   simp [AdjoinRoot.algebraMap_eq]
 

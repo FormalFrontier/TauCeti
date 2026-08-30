@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Analysis.Sobolev.W1p.Zero
+public import TauCeti.Analysis.Sobolev.W1p.Extension
 public import TauCeti.MeasureTheory.Function.Lp.Translation
 
 /-!
@@ -49,6 +49,8 @@ boundary.
 
 * `TauCeti.W1p.eLpNorm_value_comp_add_sub_value_le_mul_enorm_gradient`: the translation estimate
   on `W^{1,p}_0(ℝⁿ)`.
+* `TauCeti.W1p0.eLpNorm_value_extendByZeroL_comp_add_sub_le_mul_enorm_gradient`: the same estimate
+  for an arbitrary open `Ω`, stated for the extension by zero.
 
 ## References
 
@@ -161,6 +163,29 @@ theorem W1p.eLpNorm_value_comp_add_sub_value_le_mul_enorm_gradient (hp : p ≠ �
   refine w1p0Submodule_subset_of_isClosed hclosed (fun phi => ?_) hu
   simpa only [Set.mem_ofPred_eq, W1p.value_ofTestFunctionₗ, W1p.gradient_ofTestFunctionₗ] using
     eLpNorm_testFunctionLp_comp_add_sub_testFunctionLp_le hp h phi
+
+/-- **The translation estimate on `W^{1,p}_0(Ω)` for an arbitrary open `Ω`**: for `1 ≤ p < ∞`,
+the extension by zero of `u ∈ W^{1,p}_0(Ω)` satisfies
+
+`‖u(· + h) - u‖_p ≤ ‖h‖ ‖∇u‖_p`
+
+on the whole space.  This is the whole-space estimate
+`TauCeti.W1p.eLpNorm_value_comp_add_sub_value_le_mul_enorm_gradient` composed with the
+zero-extension operator `TauCeti.W1p0.extendByZeroL`.  Extension by zero is an isometry on the
+gradient component, so the right-hand side is the gradient seminorm of `u` on `Ω` itself and
+nothing is lost in the transfer.  This is the form the Fréchet--Kolmogorov criterion consumes in
+the proof of Rellich--Kondrachov. -/
+theorem W1p0.eLpNorm_value_extendByZeroL_comp_add_sub_le_mul_enorm_gradient {Omega : Opens E}
+    (hp : p ≠ ∞) (h : E) (u : W1p0 mu Omega p) :
+    eLpNorm (fun x => W1p.value (W1p0.extendByZeroL le_top u : W1p mu ⊤ p) (x + h) -
+        W1p.value (W1p0.extendByZeroL le_top u : W1p mu ⊤ p) x) p mu
+      ≤ ‖h‖ₑ * ‖W1p.gradient (u : W1p mu Omega p)‖ₑ := by
+  refine (W1p.eLpNorm_value_comp_add_sub_value_le_mul_enorm_gradient hp h
+    (W1p0.extendByZeroL le_top u).2).trans_eq ?_
+  congr 1
+  rw [W1p0.gradient_extendByZeroL]
+  exact enorm_eq_iff_norm_eq.2 ((extendByZeroLpₗᵢ ℝ mu Omega.isOpen.measurableSet
+    (SetLike.coe_subset_coe.mpr (le_top : Omega ≤ ⊤))).norm_map _)
 
 end Sobolev
 
