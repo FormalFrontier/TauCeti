@@ -8,10 +8,6 @@ module
 public import TauCeti.RepresentationTheory.CharacterTable.Pairing
 import Mathlib.LinearAlgebra.BilinearForm.Orthogonal
 import Mathlib.LinearAlgebra.Dimension.Finite
-import Mathlib.RepresentationTheory.Maschke
-import TauCeti.RepresentationTheory.AsModule
-import TauCeti.RepresentationTheory.OfModule
-import TauCeti.RingTheory.Semisimple.Multiplicity
 
 /-!
 # Irreducible characters are linearly independent
@@ -45,10 +41,9 @@ below uses them.
   irreducible representations are linearly independent**, as class functions and as functions
   on `G`; `TauCeti.ClassFunction.linearIndependent_ofFDRep` and
   `TauCeti.ClassFunction.linearIndependent_character_fdRep` are the `FDRep` mirrors.
-* `TauCeti.Representation.nonempty_equiv_of_character_eq` and
+* `TauCeti.Representation.nonempty_equiv_of_character_eq_of_isIrreducible` and
   `FDRep.nonempty_iso_of_character_eq_of_simple`: **an irreducible representation is
-  determined by its character**. `FDRep.nonempty_iso_of_character_eq` drops the simplicity
-  hypotheses in characteristic zero.
+  determined by its character**.
 * `TauCeti.ClassFunction.card_le_card_conjClasses` and
   `TauCeti.ClassFunction.card_le_card_conjClasses_fdRep`: **there are at most as many pairwise
   inequivalent irreducibles as there are conjugacy classes**.
@@ -59,8 +54,7 @@ below uses them.
 
 ## Implementation notes
 
-Nothing here mentions `TauCeti.ClassFunction.characterPairing`, which is defined for a `Fintype`:
-the pairing enters only through the split orthonormality lemmas of
+The pairing enters only through the split orthonormality lemmas of
 `TauCeti/RepresentationTheory/CharacterTable/Pairing.lean`, so these statements ask for
 `Finite G` and produce the `Fintype` inside their proofs.
 
@@ -165,14 +159,15 @@ variable {k : Type u} {G : Type v} [Field k] [Group G] [Finite G] [IsAlgClosed k
 
 /-- **An irreducible representation is determined by its character**: two irreducible
 representations with the same character are equivalent. -/
-theorem nonempty_equiv_of_character_eq (ρ : Representation k G V) (σ : Representation k G W)
+theorem nonempty_equiv_of_character_eq_of_isIrreducible
+    (ρ : Representation k G V) (σ : Representation k G W)
     [ρ.IsIrreducible] [σ.IsIrreducible] (h : ρ.character = σ.character) :
     Nonempty (σ.Equiv ρ) := by
   let _ := Fintype.ofFinite G
   rw [← not_isEmpty_iff]
   intro hempty
   have hσρ : ClassFunction.ofCharacter σ = ClassFunction.ofCharacter ρ :=
-    Subtype.ext <| funext fun g => by simp only [ClassFunction.ofCharacter_apply, h]
+    ClassFunction.ofCharacter_eq_of_character_eq h.symm
   have h0 := ClassFunction.characterPairing_ofCharacter_eq_zero ρ σ hempty
   rw [hσρ, ClassFunction.characterPairing_ofCharacter_self ρ] at h0
   exact one_ne_zero h0
@@ -207,8 +202,7 @@ variable {k : Type u} {G : Type v} [Field k] [Group G] [Finite G] [IsAlgClosed k
   [Invertible (Nat.card G : k)]
 
 /-- **A simple object of `FDRep k G` is determined by its character**: two simple objects with
-the same character are isomorphic. See `FDRep.nonempty_iso_of_character_eq` for the
-characteristic-zero theorem without simplicity hypotheses. -/
+the same character are isomorphic. -/
 theorem _root_.FDRep.nonempty_iso_of_character_eq_of_simple (X Y : FDRep k G)
     [CategoryTheory.Simple X] [CategoryTheory.Simple Y]
     (h : X.character = Y.character) : Nonempty (X ≅ Y) := by
@@ -216,127 +210,12 @@ theorem _root_.FDRep.nonempty_iso_of_character_eq_of_simple (X Y : FDRep k G)
   rw [← not_isEmpty_iff]
   intro hempty
   have hXY : ClassFunction.ofFDRep Y = ClassFunction.ofFDRep X :=
-    Subtype.ext <| funext fun g => by simp only [ClassFunction.ofFDRep_apply, h]
+    ClassFunction.ofFDRep_eq_of_character_eq h.symm
   have h0 := ClassFunction.characterPairing_ofFDRep_eq_zero X Y hempty
   rw [hXY, ClassFunction.characterPairing_ofFDRep_self X] at h0
   exact one_ne_zero h0
 
 end Simple
-
-private theorem finrank_intertwiningMap_eq_natCard
-    {k G V ι : Type*} [Field k] [IsAlgClosed k] [Monoid G]
-    [AddCommGroup V] [Module k V] [Module.Finite k V] (Z : Representation k G V)
-    [IsSimpleModule k[G] (_root_.Representation.asModule Z)] [Finite ι]
-    {N : ι → Type*} [∀ i, AddCommGroup (N i)] [∀ i, Module k (N i)]
-    [∀ i, Module k[G] (N i)] [∀ i, IsScalarTower k k[G] (N i)]
-    [∀ i, IsSimpleModule k[G] (N i)] (X : FDRep k G)
-    (e : _root_.Representation.asModule X.ρ ≃ₗ[k[G]] ∀ i, N i) :
-    Module.finrank k (Representation.IntertwiningMap Z X.ρ) =
-      Nat.card {i // Nonempty (_root_.Representation.asModule Z ≃ₗ[k[G]] N i)} := by
-  calc
-    _ = Module.finrank k (_root_.Representation.asModule Z →ₗ[k[G]]
-          _root_.Representation.asModule X.ρ) :=
-      (Representation.IntertwiningMap.equivLinearMapAsModule Z X.ρ).finrank_eq
-    _ = _ := finrank_linearMap_eq_natCard_of_linearEquiv_pi
-      (k := k) (S := _root_.Representation.asModule Z) e
-
-private theorem simpleModuleClass_eq_mk_iff_nonempty_ofModule'
-    {k G N : Type*} [CommRing k] [Monoid G] [IsSemisimpleRing k[G]]
-    [AddCommGroup N] [Module k[G] N]
-    [IsSimpleModule k[G] N] (S : Submodule k[G] k[G]) [IsSimpleModule k[G] S] :
-    simpleModuleClass k[G] N = SimpleSubmoduleClasses.mk S ↔
-      Nonempty (_root_.Representation.asModule
-        (Representation.ofModule' (k := k) (G := G) S) ≃ₗ[k[G]] N) := by
-  rw [simpleModuleClass_eq_mk_iff]
-  constructor
-  · rintro ⟨e⟩
-    exact ⟨(Representation.ofModule'AsModuleEquiv S).trans e.symm⟩
-  · rintro ⟨e⟩
-    exact ⟨e.symm.trans (Representation.ofModule'AsModuleEquiv S)⟩
-
-section General
-
-variable {k : Type u} {G : Type v} [Field k] [Group G] [Finite G] [IsAlgClosed k] [CharZero k]
-
-/-- **Finite-dimensional representations are determined by their characters in characteristic
-zero.** Maschke decompositions and the character pairing identify the multiplicity of every simple
-module, so equal characters give isomorphic representations. This generalizes
-`FDRep.nonempty_iso_of_character_eq_of_simple`, which instead assumes both objects simple
-and only that the finite group order is invertible in the field. -/
-theorem _root_.FDRep.nonempty_iso_of_character_eq (X Y : FDRep k G)
-    (hchar : X.character = Y.character) : Nonempty (X ≅ Y) := by
-  classical
-  let _ : Fintype G := Fintype.ofFinite G
-  let _ : Invertible (Nat.card G : k) :=
-    invertibleOfNonzero (Nat.cast_ne_zero.mpr Nat.card_pos.ne')
-  let _ (V : FDRep k G) : Module.Finite k[G] (_root_.Representation.asModule V.ρ) :=
-    Module.Finite.of_restrictScalars_finite k k[G] _
-  obtain ⟨n, SX, eX, hSX⟩ :=
-    IsSemisimpleModule.exists_linearEquiv_fin_dfinsupp k[G]
-      (_root_.Representation.asModule X.ρ)
-  obtain ⟨m, SY, eY, hSY⟩ :=
-    IsSemisimpleModule.exists_linearEquiv_fin_dfinsupp k[G]
-      (_root_.Representation.asModule Y.ρ)
-  let _ (i : Fin n) : Module.Finite k (SX i) :=
-    Module.Finite.of_injective ((SX i).subtype.restrictScalars k) Subtype.val_injective
-  let _ (i : Fin m) : Module.Finite k (SY i) :=
-    Module.Finite.of_injective ((SY i).subtype.restrictScalars k) Subtype.val_injective
-  let _ (i : Fin n) : IsSimpleModule k[G] (SX i) := hSX i
-  let _ (i : Fin m) : IsSimpleModule k[G] (SY i) := hSY i
-  let epX : _root_.Representation.asModule X.ρ ≃ₗ[k[G]] ∀ i, SX i :=
-    eX.trans DFinsupp.linearEquivFunOnFintype
-  let epY : _root_.Representation.asModule Y.ρ ≃ₗ[k[G]] ∀ i, SY i :=
-    eY.trans DFinsupp.linearEquivFunOnFintype
-  have hfiber : ∀ c,
-      Nat.card {i // simpleModuleClass k[G] (SX i) = c} =
-        Nat.card {j // simpleModuleClass k[G] (SY j) = c} := by
-    intro c
-    induction c using SimpleSubmoduleClasses.ind with
-    | mk S hS =>
-      let Z := Representation.ofModule' (k := k) (G := G) S
-      let _ : IsSimpleModule k[G] (_root_.Representation.asModule Z) :=
-        (Representation.ofModule'AsModuleEquiv S).isSimpleModule_iff.mpr hS
-      have hpair : Module.finrank k (Representation.IntertwiningMap Z X.ρ) =
-          Module.finrank k (Representation.IntertwiningMap Z Y.ρ) := by
-        have hcf : ClassFunction.ofFDRep X = ClassFunction.ofFDRep Y :=
-          Subtype.ext <| funext fun g ↦ by
-            simp only [ClassFunction.ofFDRep_apply, hchar]
-        have heq : ClassFunction.characterPairing (ClassFunction.ofFDRep X)
-              (ClassFunction.ofCharacter Z) =
-            ClassFunction.characterPairing (ClassFunction.ofFDRep Y)
-              (ClassFunction.ofCharacter Z) := by
-          rw [hcf]
-        rw [ClassFunction.ofFDRep_eq_ofCharacter,
-          ClassFunction.characterPairing_ofCharacter_eq_finrank,
-          ClassFunction.ofFDRep_eq_ofCharacter,
-          ClassFunction.characterPairing_ofCharacter_eq_finrank] at heq
-        exact Nat.cast_injective heq
-      have hmultX := finrank_intertwiningMap_eq_natCard Z X epX
-      have hmultY := finrank_intertwiningMap_eq_natCard Z Y epY
-      have hpredX (i : Fin n) : simpleModuleClass k[G] (SX i) =
-          SimpleSubmoduleClasses.mk S ↔ Nonempty
-            (_root_.Representation.asModule Z ≃ₗ[k[G]] SX i) :=
-        simpleModuleClass_eq_mk_iff_nonempty_ofModule' S
-      have hpredY (i : Fin m) : simpleModuleClass k[G] (SY i) =
-          SimpleSubmoduleClasses.mk S ↔ Nonempty
-            (_root_.Representation.asModule Z ≃ₗ[k[G]] SY i) :=
-        simpleModuleClass_eq_mk_iff_nonempty_ofModule' S
-      calc
-        Nat.card {i // simpleModuleClass k[G] (SX i) = SimpleSubmoduleClasses.mk S} =
-            Nat.card {i // Nonempty
-              (_root_.Representation.asModule Z ≃ₗ[k[G]] SX i)} :=
-          Nat.card_congr (Equiv.subtypeEquivRight hpredX)
-        _ = Nat.card {i // Nonempty
-              (_root_.Representation.asModule Z ≃ₗ[k[G]] SY i)} := by
-          rw [← hmultX, hpair, hmultY]
-        _ = Nat.card {i // simpleModuleClass k[G] (SY i) = SimpleSubmoduleClasses.mk S} :=
-          Nat.card_congr (Equiv.subtypeEquivRight hpredY).symm
-  let eXY : _root_.Representation.asModule X.ρ ≃ₗ[k[G]]
-      _root_.Representation.asModule Y.ρ :=
-    epX |>.trans (nonempty_linearEquiv_of_natCard_eq hfiber).some |>.trans epY.symm
-  exact nonempty_fdRepIso_iff.mpr (Representation.nonempty_equiv_iff.mpr ⟨eXY⟩)
-
-end General
 
 end FDRep
 

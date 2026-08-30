@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.RepresentationTheory.RepresentationRing.Basic
-import TauCeti.RepresentationTheory.CharacterTable.Independence
+import TauCeti.RepresentationTheory.CharacterTable.Determined
 
 /-!
 # Injectivity of the character map on the representation ring
@@ -18,8 +18,9 @@ virtual representation is determined by its character.
 For the representation ring itself, every element of split `K₀` is a difference `[V] - [W]`.
 A difference in the kernel has `V.character = W.character`, so the object-level theorem makes
 `V` and `W` isomorphic and their difference vanishes. The object-level input is
-`FDRep.nonempty_iso_of_character_eq`, proved in the character-theory area from Maschke
-decompositions and the character pairing.
+`FDRep.nonempty_iso_of_character_eq`, proved in
+`TauCeti/RepresentationTheory/CharacterTable/Determined.lean` from Maschke decompositions and
+the character pairing.
 
 ## Main results
 
@@ -28,10 +29,7 @@ decompositions and the character pairing.
 
 ## References
 
-* J.-P. Serre, *Linear Representations of Finite Groups*, Part I, §§2.3 and 2.5, and Part II,
-  §9.1.
-* C. W. Curtis and I. Reiner, *Representation Theory of Finite Groups and Associative Algebras*,
-  §§25 and 30.
+* J.-P. Serre, *Linear Representations of Finite Groups*, Part II, §9.1.
 
 This is the injectivity target in Layer 6 of
 `TauCetiRoadmap/RepresentationTheory/InductionRestriction/README.md`.
@@ -47,15 +45,13 @@ section CharacterMap
 
 variable {k : Type u} {G : Type v} [Field k] [Group G]
 
-/-- **The character homomorphism is injective in characteristic zero.** If a virtual difference
-`[V] - [W]` has zero character, then `V` and `W` have equal characters. Semisimplicity and
-`FDRep.nonempty_iso_of_character_eq` make them isomorphic, so their classes agree in
-the representation ring. -/
+/-- **For a finite group over an algebraically closed field of characteristic zero, the character
+homomorphism is injective.** Thus every virtual representation is determined by its character. -/
 theorem repRingCharacter_injective [Finite G] [IsAlgClosed k] [CharZero k] :
     Function.Injective (repRingCharacter k G) := by
   intro x y hxy
   apply sub_eq_zero.mp
-  obtain ⟨V, W, hVW⟩ := SplitK0.exists_eq_sub_of (x - y)
+  obtain ⟨V, W, hVW⟩ := SplitK0.exists_eq_sub (x - y)
   have hzero : repRingCharacter k G (x - y) = 0 := by
     rw [map_sub, hxy, sub_self]
   have hchar : V.character = W.character := by
