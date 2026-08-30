@@ -12,9 +12,11 @@ public import TauCeti.RepresentationTheory.Spin.Polarization.TypeD.Basic
 /-!
 # Simple-root bivectors for the type-D spin representation
 
-Let `P` be an even polarization of a rational quadratic space and let `b` be a basis of its first
-isotropic summand. This file gives integral Clifford representatives of the positive and negative
-Bourbaki simple roots of `Dₙ`. For a chain root `eᵢ - eᵢ₊₁` they are
+Let `P` be a polarization of a rational quadratic space and let `b` be a basis of its first
+isotropic summand, indexed by `Fin n`. The span of `b` and its polar dual is a split quadratic
+subspace of rank `2 * n`, so its quadratic Lie subalgebra is a copy of `Dₙ` inside the quadratic
+Lie algebra of `Q`. This file gives integral Clifford representatives of the positive and negative
+Bourbaki simple roots of that `Dₙ`. For a chain root `eᵢ - eᵢ₊₁` they are
 
 ```text
 Eᵢ = ι(bᵢ) ι(b'ᵢ₊₁),        Fᵢ = ι(bᵢ₊₁) ι(b'ᵢ),
@@ -36,6 +38,13 @@ Each representative is a product of integral creation or annihilation operators,
 action preserves the coordinate integral lattice. It also squares to zero, and hence acts by a
 square-zero endomorphism on the rational spinor module.
 
+Nothing here needs the polarization to be even: the representatives, their weights and their
+Chevalley bracket are the same whatever the orthogonal remainder `P.line` is. What the remainder
+controls is how the `Dₙ` sits in the quadratic Lie algebra of `Q`. For an even polarization,
+`P.line = ⊥`, the two exhaust each other and these are the simple-root generators of the ambient
+type-`Dₙ` spin carrier; for a polarization with a nonzero remainder the very same elements
+generate a `Dₙ` subalgebra of the larger, type-`Bₙ` algebra of `Q`.
+
 ## Main definitions and results
 
 * `TauCeti.SpinPolarizationData.typeDPositiveSimpleRootBivector` and
@@ -53,7 +62,8 @@ square-zero endomorphism on the rational spinor module.
 ## Roadmap
 
 This is the simple-root Clifford prerequisite for the type-`D` Chevalley carrier in Layer 9 of
-`TauCetiRoadmap/ReductiveGroups/README.md`. The remaining carrier step is to identify these
+`TauCetiRoadmap/ReductiveGroups/README.md`, which instantiates it at an even polarization. The
+remaining carrier step is to identify these
 elements with the standard type-`D` matrix root generators and package the resulting integral
 pinned representation. That carrier is consumed by milestone L0 of
 `TauCetiRoadmap/CFSGStatement/README.md`.
@@ -76,9 +86,10 @@ variable {V : Type*} [AddCommGroup V] [Module ℚ V]
 variable {Q : QuadraticForm ℚ V} (P : SpinPolarizationData Q)
 variable {n : ℕ} (b : Module.Basis (Fin n) ℚ P.W)
 
-/-- The positive integral Clifford representative of the `i`-th Bourbaki simple root of `Dₙ`.
-For a chain node it is creation at `i` followed by annihilation at `i + 1`; at the fork node it
-is creation at each of the last two coordinates. -/
+/-- The positive integral Clifford representative of the `i`-th Bourbaki simple root of the `Dₙ`
+carried by the polarization basis `b`, which is all of the quadratic Lie algebra of `Q` exactly
+when `P` is even. For a chain node it is creation at `i` followed by annihilation at `i + 1`; at
+the fork node it is creation at each of the last two coordinates. -/
 noncomputable def typeDPositiveSimpleRootBivector (hn : 4 ≤ n) (i : Fin n) :
     CliffordAlgebra Q :=
   if h : (i : ℕ) + 1 < n then
@@ -86,8 +97,9 @@ noncomputable def typeDPositiveSimpleRootBivector (hn : 4 ≤ n) (i : Fin n) :
   else
     ι Q (b ⟨n - 2, by omega⟩ : V) * ι Q (b ⟨n - 1, by omega⟩ : V)
 
-/-- The negative integral Clifford representative paired with the `i`-th positive simple-root
-representative. The reversed order at the fork fixes the standard Chevalley sign convention. -/
+/-- The negative integral Clifford representative of the `i`-th Bourbaki simple root of the `Dₙ`
+carried by the polarization basis `b`, paired with the `i`-th positive representative. The
+reversed order at the fork fixes the standard Chevalley sign convention. -/
 noncomputable def typeDNegativeSimpleRootBivector (hn : 4 ≤ n) (i : Fin n) :
     CliffordAlgebra Q :=
   if h : (i : ℕ) + 1 < n then
