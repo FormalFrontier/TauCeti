@@ -23,7 +23,8 @@ vertex. No finite-dimensionality is assumed in the definition, so an infinite-di
 has value `0` by the convention for `Module.finrank`. This file defines dimension vectors and proves
 their fundamental functorial properties: invariance under isomorphism and additivity on biproducts
 and short exact sequences. It also records that, among pointwise finite-dimensional
-representations, only the zero object has vanishing dimension vector.
+representations, only the zero object has vanishing dimension vector, so that an indecomposable
+one has a nonzero dimension vector.
 
 ## References
 
@@ -128,9 +129,22 @@ theorem isZero_of_dimVector_eq_zero {M : QuiverRep k Q}
     (hfd : ∀ i : Q, FiniteDimensional k (M.obj ((Paths.of Q).obj i)))
     (h : dimVector M = 0) : IsZero M := by
   refine (Functor.isZero_iff M).mpr fun i ↦ ?_
-  have hfdi : FiniteDimensional k (M.obj i) := hfd i
-  have hall : ∀ x : M.obj i, x = 0 :=
-    (finrank_zero_iff_forall_zero (K := k) (V := M.obj i)).mp (congrFun h i)
-  exact @ModuleCat.isZero_of_subsingleton k _ (M.obj i) ⟨fun a b ↦ (hall a).trans (hall b).symm⟩
+  have : FiniteDimensional k (M.obj i) := hfd i
+  have : Subsingleton (M.obj i) :=
+    (Module.finrank_zero_iff (R := k) (M := M.obj i)).mp (congrFun h i)
+  exact ModuleCat.isZero_of_subsingleton (M.obj i)
+
+/-- **A zero object has vanishing dimension vector**, the converse of
+`TauCeti.isZero_of_dimVector_eq_zero`; no finite-dimensionality is needed in this direction. -/
+theorem dimVector_eq_zero_of_isZero {M : QuiverRep k Q} (h : IsZero M) : dimVector M = 0 :=
+  (dimVector_eq_of_iso (h.iso (isZero_zero _))).trans dimVector_zero
+
+/-- **A pointwise finite-dimensional indecomposable representation has nonzero dimension vector**,
+since it is not the zero object. This is the nonvanishing half of the statement that the dimension
+vector of an indecomposable is a *positive* root. -/
+theorem dimVector_ne_zero_of_indecomposable {M : QuiverRep k Q}
+    (hfd : ∀ i : Q, FiniteDimensional k (M.obj ((Paths.of Q).obj i)))
+    (hM : Indecomposable M) : dimVector M ≠ 0 :=
+  fun h ↦ hM.1 (isZero_of_dimVector_eq_zero hfd h)
 
 end TauCeti

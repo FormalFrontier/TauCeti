@@ -46,8 +46,6 @@ without first passing through root-system combinatorics.
 * `TauCeti.vertexReflectionList`: the same map as a linear automorphism, over a word in loopless
   vertices, with `TauCeti.vertexReflectionList_symm` identifying its inverse as the automorphism
   along the reversed word.
-* `TauCeti.titsForm_reflectAt`: reflecting the quiver structure at a vertex leaves the Tits form
-  unchanged, the form of `TauCeti.titsForm_reflect` that a sequence of reflections consumes.
 * `TauCeti.titsForm_vertexPreReflectionList` and
   `TauCeti.bijOn_vertexPreReflectionList`: along a word in loopless vertices, the composite
   preserves the Tits form, and hence permutes each of its level sets, in particular the roots
@@ -103,17 +101,6 @@ theorem vertexPreReflectionList_apply_cons (i : Q) (l : List Q) (d : Q → ℤ) 
     vertexPreReflectionList Q (i :: l) d
       = vertexPreReflectionList Q l (vertexPreReflection Q i d) := by
   rw [vertexPreReflectionList_cons, Module.End.mul_apply]
-
-omit [Quiver Q] [∀ a b : Q, Fintype (a ⟶ b)] [DecidableEq Q] in
-/-- Reflecting the quiver structure at a vertex leaves the Tits form unchanged: this is
-`TauCeti.titsForm_reflect` for `TauCeti.Quiver.reflectAt`, the form of reflection that iterates. -/
-theorem titsForm_reflectAt (q : _root_.Quiver.{v} Q)
-    (hq : ∀ a b : Q, Fintype (@_root_.Quiver.Hom Q q a b)) (i : Q) (d : Q → ℤ) :
-    @titsForm Q (Quiver.reflectAt q i) _ (@Quiver.instFintypeReflectHom Q q hq i) d
-      = @titsForm Q q _ hq d := by
-  let : _root_.Quiver.{v} Q := q
-  let : ∀ a b : Q, Fintype (@_root_.Quiver.Hom Q q a b) := hq
-  exact titsForm_reflect (V := Q) i d
 
 omit [Quiver Q] [∀ a b : Q, Fintype (a ⟶ b)] in
 /-- The composite of the simple reflections along a word is unchanged by reflecting the quiver

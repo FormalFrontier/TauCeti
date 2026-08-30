@@ -18,8 +18,8 @@ proves that every finite-dimensional indecomposable representation `M` of `Q` sa
 (`TauCeti.titsForm_dimVector_eq_one_of_indecomposable`).
 
 This is the half of the Gabriel correspondence saying that the dimension vector of an
-indecomposable *is* a positive root: `dim M` is nonnegative by construction and nonzero because
-`M` is not the zero object, and the theorem below supplies `q(dim M) = 1`.
+indecomposable *is* a positive root: `dim M` is nonnegative by construction and nonzero by
+`TauCeti.dimVector_ne_zero_of_indecomposable`, and the theorem below supplies `q(dim M) = 1`.
 
 ## The argument
 
@@ -43,13 +43,15 @@ itself.
 
 ## Main results
 
-* `TauCeti.titsForm_dimVector_eq_one_of_isZero_reflectionFunctorList`: an indecomposable
-  representation annihilated by a composite of reflection functors has a dimension vector of Tits
-  norm one.
+* `TauCeti.titsForm_dimVector_eq_one_of_isZero_reflectionFunctorList`: a finite-dimensional
+  indecomposable representation annihilated by a composite of reflection functors has a dimension
+  vector of Tits norm one.
 * `TauCeti.exists_isZero_coxeterFunctor_iterate`: a positive definite Tits form forces a power of
   the Coxeter functor to annihilate every finite-dimensional indecomposable representation.
 * `TauCeti.titsForm_dimVector_eq_one_of_indecomposable`: **the dimension vector of a
-  finite-dimensional indecomposable representation is a root of the Tits form.**
+  finite-dimensional indecomposable representation is a root of the Tits form**, with
+  `TauCeti.titsForm_dimVector_eq_one_of_indecomposable_of_isAcyclic` the same statement over an
+  acyclic quiver, where the ordering is chosen internally and so does not appear.
 
 ## Implementation notes
 
@@ -86,8 +88,8 @@ variable {k : Type u} {V : Type v} [fld : Field k] [fV : Fintype V]
 
 /-! ### The stage that annihilates an indecomposable representation -/
 
-/-- **An indecomposable representation annihilated by a composite of reflection functors has a
-dimension vector of Tits norm one.**
+/-- **A finite-dimensional indecomposable representation annihilated by a composite of reflection
+functors has a dimension vector of Tits norm one.**
 
 The induction is on the list of sinks. A stage that does not meet the vertex simple at its own
 sink preserves indecomposability and reflects the dimension vector, and neither reflecting the
@@ -115,9 +117,8 @@ theorem titsForm_dimVector_eq_one_of_isZero_reflectionFunctorList :
         (@isFinDim_iff.{u, v, w, max v w x} k V fld q M).mp hfd
       have key : (reflectionFunctorList.{u, v, w, x} k (i :: l) q hq hl).obj M
           = (reflectionFunctorList k l (Quiver.reflectAt q i)
-              (@instFintypeReflectHom V q hq i) hl').obj (reflectRep M hi) := by
-        rw [reflectionFunctorList_cons]
-        exact congrArg _ (reflectionFunctor_obj i hi M)
+              (@instFintypeReflectHom V q hq i) hl').obj (reflectRep M hi) :=
+        reflectionFunctorList_cons_obj i l q hq hl M
       rw [key] at hz
       rcases incomingSum_surjective_or_forall_subsingleton hi hM with hs | hsub
       · -- The stage reflects: indecomposability and the dimension vector are transported.
@@ -140,7 +141,7 @@ theorem titsForm_dimVector_eq_one_of_isZero_reflectionFunctorList :
           _ = @titsForm V (Quiver.reflectAt q i) fV (@instFintypeReflectHom V q hq i)
                 (fun j : V ↦
                   (@dimVector k V fld (Quiver.reflectAt q i) (reflectRep M hi) j : ℤ)) :=
-              (titsForm_reflectAt V q hq i _).symm
+              (titsForm_reflectAt (V := V) q hq i _).symm
           _ = 1 := ih
       · -- The stage annihilates: the representation is the vertex simple at the sink.
         obtain ⟨y, hy, hspan⟩ := exists_ne_zero_span_eq_top_of_forall_subsingleton hi hM hsub
@@ -211,8 +212,8 @@ theorem exists_isZero_coxeterFunctor_iterate (q : _root_.Quiver.{w} V)
     exact Int.natCast_nonneg _
   have hd0 : (fun j : V ↦ (@dimVector k V fld q M j : ℤ)) ≠ 0 := by
     intro h0
-    refine hM.1 (isZero_of_dimVector_eq_zero
-      ((@isFinDim_iff.{u, v, w, max v w x} k V fld q M).mp hfd) (funext fun j ↦ ?_))
+    refine @dimVector_ne_zero_of_indecomposable k V fld q M
+      ((@isFinDim_iff.{u, v, w, max v w x} k V fld q M).mp hfd) hM (funext fun j ↦ ?_)
     simpa using congrFun h0 j
   obtain ⟨N, i, hNi⟩ :=
     @exists_vertexPreReflectionList_pow_apply_neg V q fV hq _ hpd l hnd hall _ hd0
@@ -220,7 +221,8 @@ theorem exists_isZero_coxeterFunctor_iterate (q : _root_.Quiver.{w} V)
 
 /-! ### The dimension vector of an indecomposable is a root -/
 
-/-- The Tits form is unchanged by a pass of the Coxeter functor, so it may be computed at the last
+/-- The Tits form is unchanged by a pass of the Coxeter functor that does not annihilate the
+representation (`TauCeti.titsForm_dimVector_coxeterFunctor_obj`), so it may be computed at the last
 surviving representation, which `TauCeti.titsForm_dimVector_eq_one_of_isZero_reflectionFunctorList`
 reads off. -/
 private theorem titsForm_dimVector_eq_one_of_isZero_iterate (q : _root_.Quiver.{w} V)
@@ -241,14 +243,14 @@ private theorem titsForm_dimVector_eq_one_of_isZero_iterate (q : _root_.Quiver.{
     intro M hM hfd hz
     rw [Function.iterate_succ_apply] at hz
     rcases indecomposable_and_dimVector_coxeterFunctor_or_isZero q hq hnd hall hl M hM
-        ((@isFinDim_iff.{u, v, w, max v w x} k V fld q M).mp hfd) with ⟨h1, h2⟩ | h0
+        ((@isFinDim_iff.{u, v, w, max v w x} k V fld q M).mp hfd) with ⟨h1, -⟩ | h0
     · have hstep := ih ((coxeterFunctor.{u, v, w, x} k q hq hnd hall hl).obj M) h1
         (isFinDim_coxeterFunctor_obj q hq hnd hall hl M hfd) hz
-      rw [h2, @titsForm_vertexPreReflectionList V q fV hq _ l
-        fun j hj ↦ hl.isEmpty_hom_self hnd hj] at hstep
-      exact hstep
+      exact (titsForm_dimVector_coxeterFunctor_obj q hq hnd hall hl M hM
+        ((@isFinDim_iff.{u, v, w, max v w x} k V fld q M).mp hfd) h1.1).symm.trans hstep
     · exact titsForm_dimVector_eq_one_of_isZero_reflectionFunctorList l q hq hl M hM hfd
-        ((isZero_coxeterFunctor_obj_iff q hq hnd hall hl M).mp h0)
+        ((isZero_coxeterFunctor_obj_iff_isZero_reflectionFunctorList_obj
+          q hq hnd hall hl M).mp h0)
 
 /-- **The dimension vector of a finite-dimensional indecomposable representation is a root of the
 Tits form.** For a quiver with positive definite Tits form -- the numerical form of the ADE
@@ -257,7 +259,7 @@ with finite-dimensional vertex spaces has `q(dim M) = 1`. Since a dimension vect
 and is nonzero because an indecomposable is not the zero object, `dim M` is a *positive* root.
 
 This is the half of Gabriel's correspondence that produces a positive root from an
-indecomposable. -/
+indecomposable; the nonvanishing half is `TauCeti.dimVector_ne_zero_of_indecomposable`. -/
 theorem titsForm_dimVector_eq_one_of_indecomposable (q : _root_.Quiver.{w} V)
     (hq : ∀ a b : V, Fintype (@_root_.Quiver.Hom V q a b)) {l : List V} (hnd : l.Nodup)
     (hall : ∀ v : V, v ∈ l) (hl : Quiver.IsSinkAdmissible q l)
@@ -266,5 +268,18 @@ theorem titsForm_dimVector_eq_one_of_indecomposable (q : _root_.Quiver.{w} V)
     @titsForm V q fV hq (fun j : V ↦ (@dimVector k V fld q M j : ℤ)) = 1 := by
   obtain ⟨N, hN⟩ := exists_isZero_coxeterFunctor_iterate q hq hnd hall hl hpd M hM hfd
   exact titsForm_dimVector_eq_one_of_isZero_iterate q hq hnd hall hl N M hM hfd hN
+
+/-- **The dimension vector of a finite-dimensional indecomposable representation of an acyclic
+quiver with positive definite Tits form is a root.** This is the consumer-facing form of
+`TauCeti.titsForm_dimVector_eq_one_of_indecomposable`: acyclicity produces a sink-admissible
+ordering by `TauCeti.Quiver.IsAcyclic.exists_isSinkAdmissible`, and since the conclusion does not
+mention the ordering, the choice is made here rather than by the caller. -/
+theorem titsForm_dimVector_eq_one_of_indecomposable_of_isAcyclic [q : _root_.Quiver.{w} V]
+    [hq : ∀ a b : V, Fintype (a ⟶ b)] (hac : Quiver.IsAcyclic V) (hpd : (titsForm V).PosDef)
+    (M : QuiverRep.{u, v, w, max v w x} k V) (hM : Indecomposable M)
+    (hfd : IsFinDim.{u, v, w, max v w x} k V M) :
+    titsForm V (fun j : V ↦ (dimVector M j : ℤ)) = 1 := by
+  obtain ⟨l, hnd, hall, hl⟩ := hac.exists_isSinkAdmissible
+  exact titsForm_dimVector_eq_one_of_indecomposable q hq hnd hall hl hpd M hM hfd
 
 end TauCeti

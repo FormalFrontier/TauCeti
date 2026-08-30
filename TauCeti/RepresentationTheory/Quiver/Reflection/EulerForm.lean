@@ -7,6 +7,7 @@ module
 
 public import TauCeti.RepresentationTheory.Quiver.Reflection.Basic
 public import TauCeti.RepresentationTheory.Quiver.Reflection.DimensionVector
+public import TauCeti.RepresentationTheory.Quiver.Reflection.Iterate
 
 /-!
 # The Euler and Tits forms under reflection of a quiver at a vertex
@@ -22,7 +23,8 @@ Euler form of the original quiver evaluated at `d` and `e`.
 ## Main results
 
 * `TauCeti.titsForm_reflect`, `TauCeti.titsPolarForm_reflect`: the Tits form and its polarization
-  are unchanged by reflection at a vertex.
+  are unchanged by reflection at a vertex, with `TauCeti.titsForm_reflectAt` the first of these for
+  `TauCeti.Quiver.reflectAt`, the form of reflection that iterates.
 * `TauCeti.vertexPreReflection_reflect_apply`: so is every simple reflection on dimension vectors.
 * `TauCeti.eulerForm_reflect_vertexPreReflection`: at a sink, the Euler form is transported by the
   simple reflection at that vertex.
@@ -203,6 +205,17 @@ theorem titsForm_reflect (i : V) (d : V → ℤ) :
   rw [titsForm_def (Quiver.Reflect V i) d, titsForm_def V d,
     eulerForm_reflect_eq_sum_card i d d, eulerForm_eq_sum_card V d d]
   linarith [key]
+
+omit [_root_.Quiver.{v} V] [∀ a b : V, Fintype (a ⟶ b)] in
+/-- Reflecting the quiver structure at a vertex leaves the Tits form unchanged: this is
+`TauCeti.titsForm_reflect` for `TauCeti.Quiver.reflectAt`, the form of reflection that iterates. -/
+theorem titsForm_reflectAt (q : _root_.Quiver.{v} V)
+    (hq : ∀ a b : V, Fintype (@_root_.Quiver.Hom V q a b)) (i : V) (d : V → ℤ) :
+    @titsForm V (Quiver.reflectAt q i) _ (@Quiver.instFintypeReflectHom V q hq i) d
+      = @titsForm V q _ hq d := by
+  let : _root_.Quiver.{v} V := q
+  let : ∀ a b : V, Fintype (@_root_.Quiver.Hom V q a b) := hq
+  exact titsForm_reflect (V := V) i d
 
 /-- Reflecting at a vertex leaves the polarized Tits form unchanged. -/
 theorem titsPolarForm_reflect (i : V) (d e : V → ℤ) :
