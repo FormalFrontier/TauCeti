@@ -122,10 +122,10 @@ The displayed supremum records that these opens cover the whole scheme. -/
 theorem exists_local_equation_cover (D : CartierDivisor X) :
     ∃ (U : X → X.Opens)
       (f : ∀ x, Additive (((rationalFunctionsRing X).presheaf.obj (op (U x)))ˣ)),
-      (⨆ x, U x) = ⊤ ∧ ∀ x,
+      (∀ x, x ∈ U x) ∧ (⨆ x, U x) = ⊤ ∧ ∀ x,
         ((toCartierDivisorSheaf X).hom.app (op (U x))).hom (f x) = D |_ (U x) := by
   choose U _ hxU f hf using fun x ↦ exists_local_equation X D x (by simp)
-  refine ⟨U, f, ?_, hf⟩
+  refine ⟨U, f, hxU, ?_, hf⟩
   apply top_unique
   intro x _
   exact Opens.mem_iSup.mpr ⟨x, hxU x⟩
