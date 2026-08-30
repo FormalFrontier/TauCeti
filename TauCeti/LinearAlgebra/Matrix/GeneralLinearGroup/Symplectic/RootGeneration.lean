@@ -29,8 +29,8 @@ opposite relation, and the sum roots are then isolated from either commutator fo
 
 ## Main results
 
-* `TauCeti.GLSymplecticFin.positiveLongRootTransvectionUnit_mem_of_difference` and its negative
-  analogue propagate one long-root subgroup to every index.
+* `TauCeti.GLSymplecticFin.positiveLongRootTransvectionUnit_mem_of_difference_of_long` and its
+  negative analogue propagate one long-root subgroup to every index.
 * `TauCeti.GLSymplecticFin.positiveSumShortRootUnit_mem_of_difference_of_long` and its negative
   analogue generate the two sum-root families.
 * `TauCeti.GLSymplecticFin.RootSubgroupIndex.hom_apply_mem_of_difference_of_long` packages the
@@ -60,59 +60,9 @@ universe u
 
 variable {R : Type u} [CommRing R] {m : ℕ} {i j : Fin m}
 
-private theorem positiveLongRootTransvectionUnit_mul (i : Fin m) (a b : R) :
-    positiveLongRootTransvectionUnit i a * positiveLongRootTransvectionUnit i b =
-      positiveLongRootTransvectionUnit i (a + b) := by
-  apply (GLSymplecticFin m R).subtype_injective
-  change
-    (positiveLongRootTransvectionUnit i a : GL (Fin (m + m)) R) *
-        (positiveLongRootTransvectionUnit i b : GL (Fin (m + m)) R) =
-      (positiveLongRootTransvectionUnit i (a + b) : GL (Fin (m + m)) R)
-  rw [coe_positiveLongRootTransvectionUnit,
-    coe_positiveLongRootTransvectionUnit, coe_positiveLongRootTransvectionUnit,
-    transvectionUnit_add]
-
-private theorem positiveLongRootTransvectionUnit_inv (i : Fin m) (a : R) :
-    (positiveLongRootTransvectionUnit i a)⁻¹ =
-      positiveLongRootTransvectionUnit i (-a) := by
-  apply (GLSymplecticFin m R).subtype_injective
-  change ((positiveLongRootTransvectionUnit i a : GL (Fin (m + m)) R))⁻¹ =
-    (positiveLongRootTransvectionUnit i (-a) : GL (Fin (m + m)) R)
-  rw [coe_positiveLongRootTransvectionUnit,
-    coe_positiveLongRootTransvectionUnit, transvectionUnit_inv]
-
-private theorem negativeLongRootTransvectionUnit_mul (i : Fin m) (a b : R) :
-    negativeLongRootTransvectionUnit i a * negativeLongRootTransvectionUnit i b =
-      negativeLongRootTransvectionUnit i (a + b) := by
-  apply (GLSymplecticFin m R).subtype_injective
-  change
-    (negativeLongRootTransvectionUnit i a : GL (Fin (m + m)) R) *
-        (negativeLongRootTransvectionUnit i b : GL (Fin (m + m)) R) =
-      (negativeLongRootTransvectionUnit i (a + b) : GL (Fin (m + m)) R)
-  rw [coe_negativeLongRootTransvectionUnit,
-    coe_negativeLongRootTransvectionUnit, coe_negativeLongRootTransvectionUnit,
-    transvectionUnit_add]
-
-private theorem negativeLongRootTransvectionUnit_inv (i : Fin m) (a : R) :
-    (negativeLongRootTransvectionUnit i a)⁻¹ =
-      negativeLongRootTransvectionUnit i (-a) := by
-  apply (GLSymplecticFin m R).subtype_injective
-  change ((negativeLongRootTransvectionUnit i a : GL (Fin (m + m)) R))⁻¹ =
-    (negativeLongRootTransvectionUnit i (-a) : GL (Fin (m + m)) R)
-  rw [coe_negativeLongRootTransvectionUnit,
-    coe_negativeLongRootTransvectionUnit, transvectionUnit_inv]
-
 private theorem commute_positiveSumShortRootUnit_positiveLongRootTransvectionUnit
     (hij : i ≠ j) (a b : R) :
   Commute (positiveSumShortRootUnit hij a) (positiveLongRootTransvectionUnit i b) := by
-  apply (GLSymplecticFin m R).subtype_injective
-  change
-    (positiveSumShortRootUnit hij a : GL (Fin (m + m)) R) *
-        (positiveLongRootTransvectionUnit i b : GL (Fin (m + m)) R) =
-      (positiveLongRootTransvectionUnit i b : GL (Fin (m + m)) R) *
-        (positiveSumShortRootUnit hij a : GL (Fin (m + m)) R)
-  rw [coe_positiveSumShortRootUnit,
-    coe_positiveLongRootTransvectionUnit]
   have hIL : Commute (transvectionUnit (finSumFinEquiv_inl_ne_inr i j) a)
       (transvectionUnit (finSumFinEquiv_inl_ne_inr i i) b) :=
     commute_transvectionUnit (finSumFinEquiv_inl_ne_inr i j)
@@ -123,18 +73,18 @@ private theorem commute_positiveSumShortRootUnit_positiveLongRootTransvectionUni
     commute_transvectionUnit (finSumFinEquiv_inl_ne_inr j i)
       (finSumFinEquiv_inl_ne_inr i i) (finSumFinEquiv_inr_ne_inl i i)
       (finSumFinEquiv_inr_ne_inl i j) a b
-  exact hIL.mul_left hJL
+  have hambient :
+      (positiveSumShortRootUnit hij a : GL (Fin (m + m)) R) *
+          (positiveLongRootTransvectionUnit i b : GL (Fin (m + m)) R) =
+        (positiveLongRootTransvectionUnit i b : GL (Fin (m + m)) R) *
+          (positiveSumShortRootUnit hij a : GL (Fin (m + m)) R) := by
+    rw [coe_positiveSumShortRootUnit, coe_positiveLongRootTransvectionUnit]
+    exact hIL.mul_left hJL
+  exact (GLSymplecticFin m R).subtype_injective hambient
 
 private theorem commute_negativeSumShortRootUnit_negativeLongRootTransvectionUnit
     (hij : i ≠ j) (a b : R) :
     Commute (negativeSumShortRootUnit hij a) (negativeLongRootTransvectionUnit j b) := by
-  apply (GLSymplecticFin m R).subtype_injective
-  change
-    (negativeSumShortRootUnit hij a : GL (Fin (m + m)) R) *
-        (negativeLongRootTransvectionUnit j b : GL (Fin (m + m)) R) =
-      (negativeLongRootTransvectionUnit j b : GL (Fin (m + m)) R) *
-        (negativeSumShortRootUnit hij a : GL (Fin (m + m)) R)
-  rw [coe_negativeSumShortRootUnit, coe_negativeLongRootTransvectionUnit]
   have hIL : Commute (transvectionUnit (finSumFinEquiv_inr_ne_inl i j) a)
       (transvectionUnit (finSumFinEquiv_inr_ne_inl j j) b) :=
     commute_transvectionUnit (finSumFinEquiv_inr_ne_inl i j)
@@ -145,17 +95,19 @@ private theorem commute_negativeSumShortRootUnit_negativeLongRootTransvectionUni
     commute_transvectionUnit (finSumFinEquiv_inr_ne_inl j i)
       (finSumFinEquiv_inr_ne_inl j j) (finSumFinEquiv_inl_ne_inr i j)
       (finSumFinEquiv_inl_ne_inr j j) a b
-  exact hIL.mul_left hJL
-
-private theorem commutatorElement_mem (H : Subgroup (GLSymplecticFin m R))
-    {x y : GLSymplecticFin m R} (hx : x ∈ H) (hy : y ∈ H) : ⁅x, y⁆ ∈ H := by
-  rw [commutatorElement_def]
-  exact H.mul_mem (H.mul_mem (H.mul_mem hx hy) (H.inv_mem hx)) (H.inv_mem hy)
+  have hambient :
+      (negativeSumShortRootUnit hij a : GL (Fin (m + m)) R) *
+          (negativeLongRootTransvectionUnit j b : GL (Fin (m + m)) R) =
+        (negativeLongRootTransvectionUnit j b : GL (Fin (m + m)) R) *
+          (negativeSumShortRootUnit hij a : GL (Fin (m + m)) R) := by
+    rw [coe_negativeSumShortRootUnit, coe_negativeLongRootTransvectionUnit]
+    exact hIL.mul_left hJL
+  exact (GLSymplecticFin m R).subtype_injective hambient
 
 /-- If a subgroup contains every difference-root element and one positive long-root subgroup,
 then it contains every positive long-root element, provided `2` is invertible in the coefficient
 ring. -/
-theorem positiveLongRootTransvectionUnit_mem_of_difference
+theorem positiveLongRootTransvectionUnit_mem_of_difference_of_long
     (H : Subgroup (GLSymplecticFin m R)) (h2 : IsUnit (2 : R)) (r : Fin m)
     (hdifference : ∀ {i j : Fin m} (hij : i ≠ j) (c : R),
       differenceShortRootUnit hij c ∈ H)
@@ -172,12 +124,14 @@ theorem positiveLongRootTransvectionUnit_mem_of_difference
       simp
     have hfirst :
         positiveSumShortRootUnit hir t * positiveLongRootTransvectionUnit i t ∈ H := by
-      have hmem := commutatorElement_mem H (hdifference hir 1) (hpivot t)
+      have hmem := H.commutator_le_self
+        (Subgroup.commutator_mem_commutator (hdifference hir 1) (hpivot t))
       rw [commutatorElement_differenceShortRootUnit_positiveLongRootTransvectionUnit] at hmem
       simpa using hmem
     have hsecond :
         positiveSumShortRootUnit hir t * positiveLongRootTransvectionUnit i (-t) ∈ H := by
-      have hmem := commutatorElement_mem H (hdifference hir (-1)) (hpivot (-t))
+      have hmem := H.commutator_le_self
+        (Subgroup.commutator_mem_commutator (hdifference hir (-1)) (hpivot (-t)))
       rw [commutatorElement_differenceShortRootUnit_positiveLongRootTransvectionUnit] at hmem
       simpa using hmem
     have hquotient := H.mul_mem hfirst (H.inv_mem hsecond)
@@ -191,12 +145,22 @@ theorem positiveLongRootTransvectionUnit_mem_of_difference
               (positiveLongRootTransvectionUnit i t *
                 positiveLongRootTransvectionUnit i t) *
               (positiveSumShortRootUnit hir t)⁻¹ := by
-            rw [_root_.mul_inv_rev, positiveLongRootTransvectionUnit_inv, neg_neg]
+            rw [_root_.mul_inv_rev, show (positiveLongRootTransvectionUnit i (-t))⁻¹ =
+              positiveLongRootTransvectionUnit i t by
+                simpa only [positiveLongRootTransvectionHom_apply, toAdd_ofAdd, toAdd_inv,
+                  neg_neg] using
+                  (map_inv (positiveLongRootTransvectionHom (R := R) i)
+                    (Multiplicative.ofAdd (-t))).symm]
             group
         _ = positiveSumShortRootUnit hir t *
               positiveLongRootTransvectionUnit i (t + t) *
               (positiveSumShortRootUnit hir t)⁻¹ := by
-            rw [positiveLongRootTransvectionUnit_mul]
+            rw [show positiveLongRootTransvectionUnit i t *
+                positiveLongRootTransvectionUnit i t =
+              positiveLongRootTransvectionUnit i (t + t) by
+                simpa only [positiveLongRootTransvectionHom_apply, toAdd_ofAdd, toAdd_mul] using
+                  ((positiveLongRootTransvectionHom (R := R) i).map_mul
+                    (Multiplicative.ofAdd t) (Multiplicative.ofAdd t)).symm]
         _ = positiveLongRootTransvectionUnit i (t + t) := by
             rw [(commute_positiveSumShortRootUnit_positiveLongRootTransvectionUnit
               hir t (t + t)).eq]
@@ -207,7 +171,7 @@ theorem positiveLongRootTransvectionUnit_mem_of_difference
 /-- If a subgroup contains every difference-root element and one negative long-root subgroup,
 then it contains every negative long-root element, provided `2` is invertible in the coefficient
 ring. -/
-theorem negativeLongRootTransvectionUnit_mem_of_difference
+theorem negativeLongRootTransvectionUnit_mem_of_difference_of_long
     (H : Subgroup (GLSymplecticFin m R)) (h2 : IsUnit (2 : R)) (r : Fin m)
     (hdifference : ∀ {i j : Fin m} (hij : i ≠ j) (c : R),
       differenceShortRootUnit hij c ∈ H)
@@ -225,12 +189,14 @@ theorem negativeLongRootTransvectionUnit_mem_of_difference
     have hri : r ≠ i := Ne.symm hir
     have hfirst :
         negativeSumShortRootUnit hri (-t) * negativeLongRootTransvectionUnit i t ∈ H := by
-      have hmem := commutatorElement_mem H (hdifference hri 1) (hpivot t)
+      have hmem := H.commutator_le_self
+        (Subgroup.commutator_mem_commutator (hdifference hri 1) (hpivot t))
       rw [commutatorElement_differenceShortRootUnit_negativeLongRootTransvectionUnit] at hmem
       simpa using hmem
     have hsecond :
         negativeSumShortRootUnit hri (-t) * negativeLongRootTransvectionUnit i (-t) ∈ H := by
-      have hmem := commutatorElement_mem H (hdifference hri (-1)) (hpivot (-t))
+      have hmem := H.commutator_le_self
+        (Subgroup.commutator_mem_commutator (hdifference hri (-1)) (hpivot (-t)))
       rw [commutatorElement_differenceShortRootUnit_negativeLongRootTransvectionUnit] at hmem
       simpa using hmem
     have hquotient := H.mul_mem hfirst (H.inv_mem hsecond)
@@ -244,12 +210,22 @@ theorem negativeLongRootTransvectionUnit_mem_of_difference
               (negativeLongRootTransvectionUnit i t *
                 negativeLongRootTransvectionUnit i t) *
               (negativeSumShortRootUnit hri (-t))⁻¹ := by
-            rw [_root_.mul_inv_rev, negativeLongRootTransvectionUnit_inv, neg_neg]
+            rw [_root_.mul_inv_rev, show (negativeLongRootTransvectionUnit i (-t))⁻¹ =
+              negativeLongRootTransvectionUnit i t by
+                simpa only [negativeLongRootTransvectionHom_apply, toAdd_ofAdd, toAdd_inv,
+                  neg_neg] using
+                  (map_inv (negativeLongRootTransvectionHom (R := R) i)
+                    (Multiplicative.ofAdd (-t))).symm]
             group
         _ = negativeSumShortRootUnit hri (-t) *
               negativeLongRootTransvectionUnit i (t + t) *
               (negativeSumShortRootUnit hri (-t))⁻¹ := by
-            rw [negativeLongRootTransvectionUnit_mul]
+            rw [show negativeLongRootTransvectionUnit i t *
+                negativeLongRootTransvectionUnit i t =
+              negativeLongRootTransvectionUnit i (t + t) by
+                simpa only [negativeLongRootTransvectionHom_apply, toAdd_ofAdd, toAdd_mul] using
+                  ((negativeLongRootTransvectionHom (R := R) i).map_mul
+                    (Multiplicative.ofAdd t) (Multiplicative.ofAdd t)).symm]
         _ = negativeLongRootTransvectionUnit i (t + t) := by
             rw [(commute_negativeSumShortRootUnit_negativeLongRootTransvectionUnit
               hri (-t) (t + t)).eq]
@@ -257,30 +233,32 @@ theorem negativeLongRootTransvectionUnit_mem_of_difference
         _ = negativeLongRootTransvectionUnit i c := by rw [ht]
     rwa [heq] at hquotient
 
-/-- If a subgroup contains every difference-root element and every positive long-root element,
-then it contains every positive-sum short-root element. -/
+/-- A positive-sum short-root element lies in a subgroup containing the corresponding
+difference-root element at parameter `1` and the two long-root elements used to isolate it. -/
 theorem positiveSumShortRootUnit_mem_of_difference_of_long
-    (H : Subgroup (GLSymplecticFin m R))
-    (hdifference : ∀ {i j : Fin m} (hij : i ≠ j) (c : R),
-      differenceShortRootUnit hij c ∈ H)
-    (hlong : ∀ (i : Fin m) (c : R), positiveLongRootTransvectionUnit i c ∈ H)
-    (hij : i ≠ j) (c : R) : positiveSumShortRootUnit hij c ∈ H := by
-  have hproduct := commutatorElement_mem H (hdifference hij 1) (hlong j c)
+    (H : Subgroup (GLSymplecticFin m R)) (hij : i ≠ j) (c : R)
+    (hdifference : differenceShortRootUnit hij 1 ∈ H)
+    (hlongj : positiveLongRootTransvectionUnit j c ∈ H)
+    (hlongi : positiveLongRootTransvectionUnit i c ∈ H) :
+    positiveSumShortRootUnit hij c ∈ H := by
+  have hproduct := H.commutator_le_self
+    (Subgroup.commutator_mem_commutator hdifference hlongj)
   rw [commutatorElement_differenceShortRootUnit_positiveLongRootTransvectionUnit] at hproduct
-  have hisolate := H.mul_mem hproduct (H.inv_mem (hlong i c))
+  have hisolate := H.mul_mem hproduct (H.inv_mem hlongi)
   simpa only [one_mul, one_pow, mul_assoc, mul_inv_cancel, mul_one] using hisolate
 
-/-- If a subgroup contains every difference-root element and every negative long-root element,
-then it contains every negative-sum short-root element. -/
+/-- A negative-sum short-root element lies in a subgroup containing the corresponding
+difference-root element at parameter `1` and the two long-root elements used to isolate it. -/
 theorem negativeSumShortRootUnit_mem_of_difference_of_long
-    (H : Subgroup (GLSymplecticFin m R))
-    (hdifference : ∀ {i j : Fin m} (hij : i ≠ j) (c : R),
-      differenceShortRootUnit hij c ∈ H)
-    (hlong : ∀ (i : Fin m) (c : R), negativeLongRootTransvectionUnit i c ∈ H)
-    (hij : i ≠ j) (c : R) : negativeSumShortRootUnit hij c ∈ H := by
-  have hproduct := commutatorElement_mem H (hdifference hij 1) (hlong i (-c))
+    (H : Subgroup (GLSymplecticFin m R)) (hij : i ≠ j) (c : R)
+    (hdifference : differenceShortRootUnit hij 1 ∈ H)
+    (hlongi : negativeLongRootTransvectionUnit i (-c) ∈ H)
+    (hlongj : negativeLongRootTransvectionUnit j (-c) ∈ H) :
+    negativeSumShortRootUnit hij c ∈ H := by
+  have hproduct := H.commutator_le_self
+    (Subgroup.commutator_mem_commutator hdifference hlongi)
   rw [commutatorElement_differenceShortRootUnit_negativeLongRootTransvectionUnit] at hproduct
-  have hisolate := H.mul_mem hproduct (H.inv_mem (hlong j (-c)))
+  have hisolate := H.mul_mem hproduct (H.inv_mem hlongj)
   simpa only [one_mul, one_pow, neg_neg, mul_assoc, mul_inv_cancel, mul_one] using hisolate
 
 namespace RootSubgroupIndex
@@ -297,9 +275,11 @@ theorem hom_apply_mem_of_difference_of_long
     (hnegative : ∀ c : R, negativeLongRootTransvectionUnit r c ∈ H)
     (root : RootSubgroupIndex m) (c : Multiplicative R) : root.hom c ∈ H := by
   have hp (i : Fin m) (a : R) : positiveLongRootTransvectionUnit i a ∈ H :=
-    positiveLongRootTransvectionUnit_mem_of_difference H h2 r hdifference hpositive i a
+    positiveLongRootTransvectionUnit_mem_of_difference_of_long
+      H h2 r hdifference hpositive i a
   have hn (i : Fin m) (a : R) : negativeLongRootTransvectionUnit i a ∈ H :=
-    negativeLongRootTransvectionUnit_mem_of_difference H h2 r hdifference hnegative i a
+    negativeLongRootTransvectionUnit_mem_of_difference_of_long
+      H h2 r hdifference hnegative i a
   cases root with
   | positiveLong i =>
       simpa only [hom_positiveLong, positiveLongRootTransvectionHom_apply] using hp i c.toAdd
@@ -309,10 +289,12 @@ theorem hom_apply_mem_of_difference_of_long
       simpa only [hom_difference, differenceShortRootHom_apply] using hdifference hij c.toAdd
   | positiveSum i j hij =>
       simpa only [hom_positiveSum, positiveSumShortRootHom_apply] using
-        positiveSumShortRootUnit_mem_of_difference_of_long H hdifference hp hij.ne c.toAdd
+        positiveSumShortRootUnit_mem_of_difference_of_long H hij.ne c.toAdd
+          (hdifference hij.ne 1) (hp j c.toAdd) (hp i c.toAdd)
   | negativeSum i j hij =>
       simpa only [hom_negativeSum, negativeSumShortRootHom_apply] using
-        negativeSumShortRootUnit_mem_of_difference_of_long H hdifference hn hij.ne c.toAdd
+        negativeSumShortRootUnit_mem_of_difference_of_long H hij.ne c.toAdd
+          (hdifference hij.ne 1) (hn i (-c.toAdd)) (hn j (-c.toAdd))
 
 end RootSubgroupIndex
 
