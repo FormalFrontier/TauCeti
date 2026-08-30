@@ -29,7 +29,7 @@ load-bearing: a real linear program cannot represent a forbidden pair of infinit
   support of a matrix minimizing a nonnegative real cost is cyclically monotone for the
   corresponding extended-nonnegative cost.
 * `TauCeti.TransportMatrix.isCyclicallyMonotone_toPMF_support_of_forall_toReal_cost_le` gives the
-  same conclusion directly for a finite extended-nonnegative cost.
+  same conclusion directly for an extended-nonnegative cost that is finite on the support.
 * `TauCeti.exists_transportMatrix_isCyclicallyMonotone_toPMF_support` supplies an optimal
   matrix with cyclically monotone support for every nonnegative finite-space cost.
 
@@ -63,12 +63,6 @@ variable {ι : Type u} {κ : Type v} [Fintype ι] [Fintype κ] {μ : PMF ι} {ν
 
 namespace TransportMatrix
 
-/-- A pair belongs to the support of the probability mass function represented by a
-transportation matrix exactly when the corresponding matrix entry is nonzero. -/
-theorem mem_toPMF_support_iff (A : TransportMatrix μ ν) (q : ι × κ) :
-    q ∈ A.toPMF.support ↔ A q.1 q.2 ≠ 0 := by
-  rw [PMF.mem_support_iff, A.toPMF_apply]
-
 /-- **Existential complementary slackness for a finite transport plan.** A transportation
 matrix minimizes a real cost exactly when there is a dual-feasible pair of potentials whose
 contact set contains the support of the matrix.
@@ -90,13 +84,18 @@ theorem forall_cost_le_iff_exists_support_subset_contactSet (A : TransportMatrix
       · exact A.finiteDualValue_le_cost hfeas
     refine ⟨φ, ψ, hfeas, ?_⟩
     intro q hq
+    have hq' : A q.1 q.2 ≠ 0 := by
+      rw [← A.toPMF_apply q]
+      exact (PMF.mem_support_iff _ q).1 hq
     rw [mem_contactSet_iff, ← EReal.coe_add, EReal.coe_eq_coe_iff]
-    exact (A.cost_eq_finiteDualValue_iff hfeas).1 hA_eq q.1 q.2
-      (A.mem_toPMF_support_iff q |>.1 hq)
+    exact (A.cost_eq_finiteDualValue_iff hfeas).1 hA_eq q.1 q.2 hq'
   · rintro ⟨φ, ψ, hfeas, hsupp⟩ B
     have hcontact : ∀ i j, A i j ≠ 0 → φ i + ψ j = c (i, j) := by
       intro i j hij
-      have hmem := hsupp (A.mem_toPMF_support_iff (i, j) |>.2 hij)
+      have hij' : (i, j) ∈ A.toPMF.support := by
+        rw [PMF.mem_support_iff, A.toPMF_apply]
+        exact hij
+      have hmem := hsupp hij'
       rw [mem_contactSet_iff, ← EReal.coe_add, EReal.coe_eq_coe_iff] at hmem
       exact hmem
     rw [(A.cost_eq_finiteDualValue_iff hfeas).2 hcontact]
@@ -126,17 +125,22 @@ theorem isCyclicallyMonotone_toPMF_support_of_forall_cost_le (A : TransportMatri
     A.exists_support_subset_dualContactSet_of_forall_cost_le c hc hA
   exact hfeas.isCyclicallyMonotone_dualContactSet.mono hsupp
 
-/-- **The finite extended-cost form.** If an extended-nonnegative cost is finite everywhere
-and a transportation matrix minimizes its real-valued image, then the support of the matrix is
-cyclically monotone for the original cost. -/
+/-- **The finite extended-cost form.** If an extended-nonnegative cost is finite on the support
+of a transportation matrix minimizing its real-valued image, then that support is cyclically
+monotone for the original cost. Infinite costs off the support only make the rearranged totals
+larger, so they cost nothing. -/
 theorem isCyclicallyMonotone_toPMF_support_of_forall_toReal_cost_le
-    (A : TransportMatrix μ ν) (c : ι × κ → ℝ≥0∞) (hc : ∀ q, c q ≠ ∞)
+    (A : TransportMatrix μ ν) (c : ι × κ → ℝ≥0∞) (hc : ∀ q ∈ A.toPMF.support, c q ≠ ∞)
     (hA : ∀ B : TransportMatrix μ ν,
       A.cost (fun q ↦ (c q).toReal) ≤ B.cost (fun q ↦ (c q).toReal)) :
     IsCyclicallyMonotone c A.toPMF.support := by
   have hmono := A.isCyclicallyMonotone_toPMF_support_of_forall_cost_le
     (fun q ↦ (c q).toReal) (fun q ↦ ENNReal.toReal_nonneg) hA
-  simpa only [ENNReal.ofReal_toReal (hc _)] using hmono
+  refine isCyclicallyMonotone_iff.2 fun n x y hmem σ ↦ ?_
+  calc ∑ i, c (x i, y i) = ∑ i, ENNReal.ofReal (c (x i, y i)).toReal :=
+        Finset.sum_congr rfl fun i _ ↦ (ENNReal.ofReal_toReal (hc _ (hmem i))).symm
+    _ ≤ ∑ i, ENNReal.ofReal (c (x i, y (σ i))).toReal := hmono.sum_le n x y hmem σ
+    _ ≤ ∑ i, c (x i, y (σ i)) := Finset.sum_le_sum fun i _ ↦ ENNReal.ofReal_toReal_le
 
 end TransportMatrix
 
@@ -163,7 +167,7 @@ theorem exists_transportMatrix_isCyclicallyMonotone_toPMF_support_of_ne_top
         IsCyclicallyMonotone c A.toPMF.support := by
   obtain ⟨A, hA⟩ := TransportMatrix.exists_forall_cost_le (fun q ↦ (c q).toReal) μ ν
   exact ⟨A, hA,
-    A.isCyclicallyMonotone_toPMF_support_of_forall_toReal_cost_le c hc hA⟩
+    A.isCyclicallyMonotone_toPMF_support_of_forall_toReal_cost_le c (fun q _ ↦ hc q) hA⟩
 
 end TauCeti
 
