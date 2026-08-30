@@ -57,7 +57,7 @@ are what makes the numerator *alternating*, which is the content of
   is exactly the dot orbit and has `|W|` elements, and the numerator does not vanish. A **dominant**
   weight has an injective dot orbit map by
   `TauCeti.dotAction_eq_dotAction_iff_of_mem_dominantChamber`, whence
-  `TauCeti.coeff_weylNumerator_dotAction`, `TauCeti.coeff_weylNumerator_zero_zero`,
+  `TauCeti.coeff_weylNumerator_dotAction`,
   `TauCeti.coeff_weylNumerator_zero_eq_zero_of_add_weylVector_mem_dominantChamber`,
   `TauCeti.support_coeff_weylNumerator`,
   `TauCeti.card_support_coeff_weylNumerator` and
@@ -268,14 +268,6 @@ theorem coeff_weylNumerator_dotAction {lam : M} (hlam : lam ∈ dominantChamber 
     (weylNumerator P b lam).coeff (dotAction P b w lam) = ((weylSign P b w : ℤ)) :=
   coeff_weylNumerator_dotAction_of_injective P b
     (injective_dotAction_of_mem_dominantChamber P b hlam) w
-
-/-- **The constant coefficient of the Weyl numerator of `0` is one**: the identity is the only
-Weyl-group element fixing `0` for the dot action. -/
-@[simp]
-theorem coeff_weylNumerator_zero_zero : (weylNumerator P b 0).coeff 0 = 1 := by
-  have h := coeff_weylNumerator_dotAction P b (zero_mem_dominantChamber P b) (1 : P.weylGroup)
-  rw [dotAction_one] at h
-  simpa using h
 
 /-- **The only dot-dominant exponent of the Weyl numerator of `0` is `0`.** Its exponents are the
 `w ⬝ 0 = w(ρ) - ρ`, and `ρ` is strictly dominant, where the Weyl group acts freely. -/
