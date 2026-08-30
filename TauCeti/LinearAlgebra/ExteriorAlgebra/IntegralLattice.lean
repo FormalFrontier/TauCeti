@@ -27,7 +27,6 @@ the simply connected type-`B` and type-`D` Chevalley carriers.
 
 * `TauCeti.ExteriorAlgebra.integralLattice`: the `ℤ`-span of an exterior basis.
 * `TauCeti.ExteriorAlgebra.integralLatticeBasis`: the exterior basis restricted to `ℤ`.
-* `TauCeti.ExteriorAlgebra.integralLattice_eq_span`: it is the `ℤ`-span of the exterior basis.
 * `TauCeti.ExteriorAlgebra.map_mem_integralLattice`: a linear map preserves the lattice as soon as
   it preserves it on the exterior basis.
 * `TauCeti.ExteriorAlgebra.mem_integralLattice_iff`: membership means that every exterior-basis
@@ -66,12 +65,6 @@ variable {ι : Type*} [LinearOrder ι] (b : Module.Basis ι ℚ M)
 def integralLattice : Submodule ℤ (_root_.ExteriorAlgebra ℚ M) :=
   Submodule.span ℤ (Set.range b.ExteriorAlgebra)
 
-/-- The coordinate integral lattice is the `ℤ`-span of the exterior basis. -/
-theorem integralLattice_eq_span :
-    integralLattice b = Submodule.span ℤ (Set.range b.ExteriorAlgebra) :=
-  -- `(rfl)`, not `rfl`: the body of `integralLattice` is not `@[expose]`d.
-  (rfl)
-
 /-- **A linear map preserves the coordinate integral lattice as soon as it does so on the exterior
 basis**, since that basis spans the lattice. This is the shared induction behind every
 lattice-preservation statement below. -/
@@ -85,7 +78,7 @@ theorem map_mem_integralLattice
     rw [Submodule.span_le]
     rintro _ ⟨s, rfl⟩
     exact hf s
-  exact hle (by rwa [← integralLattice_eq_span])
+  exact hle hx
 
 /-- An element belongs to the coordinate integral lattice exactly when all of its exterior-basis
 coordinates are integers. -/
