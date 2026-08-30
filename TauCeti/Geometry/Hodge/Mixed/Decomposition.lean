@@ -302,19 +302,6 @@ theorem map_deligneSplitting_eq_piece (p q : ℤ) :
   · have hW := (mhs.WC_eq_iSup_deligneSplitting (p + q - 1)).le
     simpa only [add_sub_cancel_left] using mhs.piece_le_map_deligneSplitting hW p
 
-/-- The image of `I^{p,q}` in `gr^W_k` is the pure Hodge component `H^{p,q}` of that graded
-piece, for a total degree `k = p + q` supplied as a hypothesis.
-
-Deligne's theory constantly matches a bidegree against a weight index, and the graded piece the
-image lands in occurs in the *type* of that image; naming the weight index separately keeps those
-matches out of dependent rewriting. -/
-private theorem map_deligneSplitting_eq_piece_of_add_eq {p q k : ℤ} (hk : p + q = k) :
-    ((mhs.deligneSplitting p q).submoduleOf (mhs.WC k)).map
-        ((mhs.WC (k - 1)).submoduleOf (mhs.WC k)).mkQ =
-      (mhs.complexGradedHodgeStructure k).piece p := by
-  subst hk
-  exact mhs.map_deligneSplitting_eq_piece p q
-
 /-- **Deligne's bigrading spans**: the supremum of all the pieces `I^{p,q}` is the whole complex
 vector space. -/
 theorem iSup_deligneSplittingFamily_eq_top :
@@ -578,7 +565,11 @@ private theorem F_inf_WC_le_of_F_inf_WC_sub_one_le {p k : ℤ}
   have hpiece : ∀ r : ℤ, (mhs.complexGradedHodgeStructure k).piece r =
       ((mhs.deligneSplitting r (k - r)).submoduleOf (mhs.WC k)).map
         ((mhs.WC (k - 1)).submoduleOf (mhs.WC k)).mkQ :=
-    fun r ↦ (mhs.map_deligneSplitting_eq_piece_of_add_eq (by ring)).symm
+    fun r ↦ by
+      have hk : r + (k - r) = k := by omega
+      rw [← hk]
+      simpa only [add_sub_cancel_left] using
+        (mhs.map_deligneSplitting_eq_piece r (k - r)).symm
   simp only [hpiece, ← Submodule.map_iSup] at hmk
   obtain ⟨y, hy, hxy⟩ := hmk
   have hle : (⨆ r : ℤ, ⨆ (_ : p ≤ r), (mhs.deligneSplitting r (k - r)).submoduleOf (mhs.WC k)) ≤

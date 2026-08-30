@@ -105,7 +105,7 @@ vector of the source's `F^p`.
 The two filtration steps are the sums of the bigrading pieces of first index at least `p`, and `f`
 respects the bigrading, so a preimage may be truncated to its components of first index at least
 `p` without changing its image. -/
-theorem range_inf_F_eq_map_F (f : Hom source target) (p : ℤ) :
+@[simp] theorem range_inf_F_eq_map_F (f : Hom source target) (p : ℤ) :
     LinearMap.range f.toLinearMap ⊓ target.F p = (source.F p).map f.toLinearMap := by
   simpa only [deligneSplittingFamily_apply, ← target.F_eq_iSup_deligneSplitting p,
     ← source.F_eq_iSup_deligneSplitting p] using
@@ -113,7 +113,7 @@ theorem range_inf_F_eq_map_F (f : Hom source target) (p : ℤ) :
 
 /-- **Strictness of a morphism of mixed Hodge structures for the complexified weight
 filtration.** -/
-theorem range_inf_WC_eq_map_WC (f : Hom source target) (k : ℤ) :
+@[simp] theorem range_inf_WC_eq_map_WC (f : Hom source target) (k : ℤ) :
     LinearMap.range f.toLinearMap ⊓ target.WC k = (source.WC k).map f.toLinearMap := by
   simpa only [deligneSplittingFamily_apply, ← target.WC_eq_iSup_deligneSplitting k,
     ← source.WC_eq_iSup_deligneSplitting k] using
@@ -126,7 +126,7 @@ vector of the source's `W_k`.
 The weight filtration is rational, so this is the form the milestone takes; it descends from the
 complex statement because complexification of rational subspaces reflects inclusions. Only the
 inclusion `(A ∩ B)_ℂ ≤ A_ℂ ∩ B_ℂ` is used, which is monotonicity. -/
-theorem range_inf_WQ_eq_map_WQ (f : Hom source target) (k : ℤ) :
+@[simp] theorem range_inf_WQ_eq_map_WQ (f : Hom source target) (k : ℤ) :
     LinearMap.range f.toRatLinearMap ⊓ target.WQ k = (source.WQ k).map f.toRatLinearMap := by
   refine le_antisymm ?_ (le_inf LinearMap.map_le_range (f.map_WQ_le k))
   rw [← rationalToComplexSubmodule_le_iff h'ℚ h'ℂ]
