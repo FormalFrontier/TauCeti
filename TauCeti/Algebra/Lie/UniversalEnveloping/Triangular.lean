@@ -90,7 +90,8 @@ theorem cartan_mul_positiveNilradical_eq_borelSubalgebra :
     Subalgebra.toSubmodule (envelopingSubalgebra K H) *
         Subalgebra.toSubmodule (envelopingSubalgebra K (positiveNilradical H b)) =
       Subalgebra.toSubmodule (envelopingSubalgebra K (borelSubalgebra H b)) :=
-  envelopingSubalgebra_mul_envelopingSubalgebra (borelSubalgebra_toSubmodule H b)
+  envelopingSubalgebra_mul_envelopingSubalgebra_eq_envelopingSubalgebra
+    (borelSubalgebra_toSubmodule H b)
 
 /-- **The triangular decomposition of `U(L)`, in its spanning form**:
 `U(n⁻) · U(H) · U(n⁺) = U(L)`.
