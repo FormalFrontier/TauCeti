@@ -7,7 +7,7 @@ module
 
 public import TauCeti.GroupTheory.SpecificGroups.CFSG.Datum.Frobenius
 public import TauCeti.GroupTheory.SpecificGroups.CFSG.RootDatumAutomorphism
-public import TauCeti.LinearAlgebra.RootSystem.Isogeny.Basic
+public import TauCeti.LinearAlgebra.RootSystem.Isogeny.Power
 
 /-!
 # The root-datum Steinberg map of a graph-twisted index
@@ -79,6 +79,8 @@ degenerates to its Frobenius exactly on the nine untwisted families, so `²Aₙ(
 * `TauCeti.GraphTwistedIndex.datumSteinberg_eq_datumFrobenius_iff` and
   `TauCeti.GraphTwistedIndex.datumSteinberg_eq_datumFrobenius_iff_twistOrder`: it is the plain
   Frobenius exactly on the untwisted families, equivalently exactly when the twist order is one.
+* `TauCeti.GraphTwistedIndex.datumSteinberg_pow_twistOrder`: its twist-order power is the Frobenius
+  `Frob_(q ^ e)`, which is the order relation of milestone L1 read on the Steinberg map.
 
 ## Roadmap
 
@@ -221,6 +223,24 @@ permutation. -/
 theorem datumSteinberg_eq_datumFrobenius_iff_twistOrder :
     d.datumSteinberg = d.1.datumFrobenius ↔ d.twistOrder = 1 := by
   rw [datumSteinberg_eq_datumFrobenius_iff, ← orderOf_diagramPerm d, orderOf_eq_one_iff]
+
+/-- **The order relation of the graph-twisted Steinberg map**: raising `γ ∘ Frob_q` to the twist
+order returns the Frobenius of the field of that degree, `Frob_(q ^ e)`. It is milestone L1's
+`γ ^ 2 = 1` and `γ ^ 3 = 1` read on the Steinberg map itself rather than on its graph factor: the
+factor `γ` is annihilated by `TauCeti.GraphTwistedIndex.datumGraphAut_pow_twistOrder`, and it can be
+collected on one side because a scaling is central,
+`TauCeti.RootPairingIsogeny.commute_smulId`. On an untwisted family the twist order is `1` and this
+is the definition of the Frobenius. -/
+theorem datumSteinberg_pow_twistOrder :
+    d.datumSteinberg ^ d.twistOrder =
+      RootPairingIsogeny.smulId _ (d.1.1.fieldOrderPNat ^ d.twistOrder) := by
+  have hcomm : Commute (RootPairingIsogeny.ofEquiv d.datumGraphAut⁻¹)
+      (RootPairingIsogeny.smulId
+        (d.1.dynkinType.simplyConnectedRootDatum d.1.dynkinType_valid) d.1.1.fieldOrderPNat) :=
+    (RootPairingIsogeny.commute_smulId _ _ _).symm
+  rw [datumSteinberg_def, ValidLieTypeIndex.datumFrobenius_def, ← RootPairingIsogeny.mul_def,
+    hcomm.mul_pow, ← RootPairingIsogeny.ofEquiv_pow, inv_pow, datumGraphAut_pow_twistOrder,
+    inv_one, RootPairingIsogeny.ofEquiv_one, one_mul, RootPairingIsogeny.smulId_pow]
 
 end
 
