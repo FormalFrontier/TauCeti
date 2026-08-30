@@ -10,6 +10,7 @@ public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.E6.Minus
 public import Mathlib.Algebra.Lie.Sl2
 
 import TauCeti.Algebra.Lie.Sl2.WeightString
+import Mathlib.Data.Matrix.PEquiv
 
 /-!
 # A 27-dimensional representation of the type-E6 Serre presentation
@@ -63,17 +64,44 @@ private def raisingTarget (i : Fin 6) (a : Fin 27) : Option (Fin 27) :=
 private def loweringTarget (i : Fin 6) (a : Fin 27) : Option (Fin 27) :=
   if e6MinusculeWeight a i = 1 then some (e6MinusculeReflection i a) else none
 
-/-- The zero-one matrix of a partial map between finite coordinate bases. -/
-private def matrixOfTarget (f : Fin 27 → Option (Fin 27)) : Matrix (Fin 27) (Fin 27) ℤ :=
-  fun a b ↦ if some a = f b then 1 else 0
+/-- Reflection in a simple root negates the corresponding simple-coroot coordinate of a
+minuscule weight. -/
+@[simp]
+private theorem e6MinusculeWeight_reflection_apply_self (i : Fin 6) (a : Fin 27) :
+    e6MinusculeWeight (e6MinusculeReflection i a) i = -e6MinusculeWeight a i := by
+  have h := congrFun (e6MinusculeWeight_reflection i a) i
+  rw [root_e6SimpleIndex] at h
+  simp [CartanMatrix.E_diag] at h
+  omega
+
+/-- Simple reflection restricted to the weights on which the raising operator is nonzero. -/
+private def raisingPEquiv (i : Fin 6) : Fin 27 ≃. Fin 27 where
+  toFun := raisingTarget i
+  invFun := loweringTarget i
+  inv a b := by
+    have h :
+        (e6MinusculeWeight b i = 1 ∧ e6MinusculeReflection i b = a) ↔
+          (e6MinusculeWeight a i = -1 ∧ e6MinusculeReflection i a = b) := by
+      constructor
+      · rintro ⟨hb, rfl⟩
+        constructor
+        · rw [e6MinusculeWeight_reflection_apply_self]
+          omega
+        · exact e6MinusculeReflection_apply_apply i b
+      · rintro ⟨ha, rfl⟩
+        constructor
+        · rw [e6MinusculeWeight_reflection_apply_self]
+          omega
+        · exact e6MinusculeReflection_apply_apply i a
+    simpa [raisingTarget, loweringTarget] using h
 
 /-- The raising matrix of the `i`-th simple root on the integral minuscule weight basis. -/
 def raisingMatrix (i : Fin 6) : Matrix (Fin 27) (Fin 27) ℤ :=
-  matrixOfTarget (raisingTarget i)
+  (raisingPEquiv i).symm.toMatrix
 
 /-- The lowering matrix of the `i`-th simple root on the integral minuscule weight basis. -/
 def loweringMatrix (i : Fin 6) : Matrix (Fin 27) (Fin 27) ℤ :=
-  matrixOfTarget (loweringTarget i)
+  (raisingPEquiv i).toMatrix
 
 /-- The diagonal matrix of the `i`-th simple coroot on the integral minuscule weight basis. -/
 def cartanGeneratorMatrix (i : Fin 6) : Matrix (Fin 27) (Fin 27) ℤ :=
@@ -84,14 +112,27 @@ def cartanGeneratorMatrix (i : Fin 6) : Matrix (Fin 27) (Fin 27) ℤ :=
 theorem raisingMatrix_apply (i : Fin 6) (a b : Fin 27) :
     raisingMatrix i a b =
       if e6MinusculeWeight b i = -1 ∧ a = e6MinusculeReflection i b then 1 else 0 :=
-  by simp [raisingMatrix, matrixOfTarget, raisingTarget, eq_comm]
+  by
+    simp only [raisingMatrix, PEquiv.toMatrix_apply]
+    have hmem : b ∈ (raisingPEquiv i).symm a ↔
+        e6MinusculeWeight b i = -1 ∧ a = e6MinusculeReflection i b := by
+      rw [PEquiv.mem_iff_mem]
+      simp [raisingPEquiv, raisingTarget, eq_comm]
+    exact if_congr hmem rfl rfl
 
 /-- The entry formula for a simple lowering matrix. -/
 @[simp]
 theorem loweringMatrix_apply (i : Fin 6) (a b : Fin 27) :
     loweringMatrix i a b =
       if e6MinusculeWeight b i = 1 ∧ a = e6MinusculeReflection i b then 1 else 0 :=
-  by simp [loweringMatrix, matrixOfTarget, loweringTarget, eq_comm]
+  by
+    simp only [loweringMatrix, PEquiv.toMatrix_apply]
+    have hmem : b ∈ raisingPEquiv i a ↔
+        e6MinusculeWeight b i = 1 ∧ a = e6MinusculeReflection i b := by
+      rw [← PEquiv.mem_iff_mem]
+      simp only [raisingPEquiv, PEquiv.symm]
+      simp [loweringTarget, eq_comm]
+    exact if_congr hmem rfl rfl
 
 /-- The entry formula for a simple Cartan generator matrix. -/
 @[simp]
@@ -102,23 +143,6 @@ theorem cartanGeneratorMatrix_apply (i : Fin 6) (a b : Fin 27) :
   · subst b
     rfl
   · rfl
-
-private theorem matrixOfTarget_mul (f g : Fin 27 → Option (Fin 27)) :
-    matrixOfTarget f * matrixOfTarget g = matrixOfTarget (fun a ↦ (g a).bind f) := by
-  ext a b
-  cases h : g b with
-  | none => simp [matrixOfTarget, Matrix.mul_apply, h]
-  | some x => simp [matrixOfTarget, Matrix.mul_apply, h]
-
-/-- Reflection in a simple root negates the corresponding simple-coroot coordinate of a
-minuscule weight. -/
-@[simp]
-private theorem e6MinusculeWeight_reflection_apply_self (i : Fin 6) (a : Fin 27) :
-    e6MinusculeWeight (e6MinusculeReflection i a) i = -e6MinusculeWeight a i := by
-  have h := congrFun (e6MinusculeWeight_reflection i a) i
-  rw [root_e6SimpleIndex] at h
-  simp [CartanMatrix.E_diag] at h
-  omega
 
 /-- The coordinate change under a simple reflection, in the fundamental-weight basis. -/
 private theorem e6MinusculeWeight_reflection_apply (i : Fin 6) (a : Fin 27) (j : Fin 6) :
@@ -139,10 +163,6 @@ private theorem loweringTarget_eq_some_iff (i : Fin 6) (a b : Fin 27) :
     loweringTarget i a = some b ↔
       e6MinusculeWeight a i = 1 ∧ b = e6MinusculeReflection i a := by
   simp [loweringTarget, eq_comm]
-
-private theorem cartanMatrix_E_six_apply_eq_zero_or_neg_one_of_ne (i j : Fin 6) (hij : i ≠ j) :
-    CartanMatrix.E 6 i j = 0 ∨ CartanMatrix.E 6 i j = -1 := by
-  fin_cases i <;> fin_cases j <;> simp_all [CartanMatrix.E]
 
 private theorem e6MinusculeReflection_comm_of_cartan_eq_zero (i j : Fin 6) (a : Fin 27)
     (hij : CartanMatrix.E 6 i j = 0) :
@@ -169,7 +189,7 @@ private theorem raisingTarget_bind_loweringTarget_of_ne (i j : Fin 6) (hij : i �
   have hsym : CartanMatrix.E 6 j i = CartanMatrix.E 6 i j := by
     have h := congrFun (congrFun (CartanMatrix.E_transpose 6) i) j
     simpa [Matrix.transpose_apply] using h
-  rcases cartanMatrix_E_six_apply_eq_zero_or_neg_one_of_ne i j hij with hA | hA
+  rcases CartanMatrix.isSimplyLaced_E 6 hij with hA | hA
   all_goals
     rcases e6MinusculeWeight_apply_eq_neg_one_or_eq_zero_or_eq_one a i with hi | hi | hi
   all_goals
@@ -180,11 +200,14 @@ private theorem raisingTarget_bind_loweringTarget_of_ne (i j : Fin 6) (hij : i �
 
 private theorem lie_raisingMatrix_loweringMatrix_of_ne (i j : Fin 6) (hij : i ≠ j) :
     ⁅raisingMatrix i, loweringMatrix j⁆ = 0 := by
-  rw [Ring.lie_def, raisingMatrix, loweringMatrix, matrixOfTarget_mul, matrixOfTarget_mul]
+  rw [Ring.lie_def, raisingMatrix, loweringMatrix, ← PEquiv.toMatrix_trans,
+    ← PEquiv.toMatrix_trans]
   have hcomp :
-      (fun a ↦ (loweringTarget j a).bind (raisingTarget i)) =
-        fun a ↦ (raisingTarget i a).bind (loweringTarget j) :=
-    funext (raisingTarget_bind_loweringTarget_of_ne i j hij)
+      (raisingPEquiv i).symm.trans (raisingPEquiv j) =
+        (raisingPEquiv j).trans (raisingPEquiv i).symm := by
+    apply PEquiv.ext
+    intro a
+    exact raisingTarget_bind_loweringTarget_of_ne j i hij.symm a
   rw [hcomp, sub_self]
 
 private theorem lie_cartanGeneratorMatrix_cartanGeneratorMatrix (i j : Fin 6) :
