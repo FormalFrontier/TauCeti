@@ -246,8 +246,9 @@ theorem fi23Presentation_transcriptionNotes :
 theorem fi23Presentation_expectedGeneratorCount : fi23Presentation.expectedGeneratorCount = 10 := by
   simp [fi23Presentation]
 
-/-- The relator count derived from `Fi₂₃`'s source expansion; see
-`TauCeti.Sporadic.fi23Presentation_expectedGeneratorCount`. -/
+/-- The relator count derived from `Fi₂₃`'s source expansion. With
+`TauCeti.Sporadic.fi23Presentation_transcribed` this is what makes
+`TauCeti.Sporadic.fi23Presentation_matchesMetadata` an equation between two visible numbers. -/
 @[simp]
 theorem fi23Presentation_expectedRelatorCount : fi23Presentation.expectedRelatorCount = 57 := by
   simp [fi23Presentation]
@@ -349,8 +350,8 @@ theorem fi23Presentation_matchesMetadata : fi23Presentation.matchesMetadata := b
 
 /-- The compiled relators of the `Fi₂₃` presentation contain `371` signed letters in total. -/
 theorem fi23Presentation_totalLength : fi23Presentation.totalLength = 371 := by
-  simp [GroupPresentation.totalLength_def, GroupPresentation.relators_def, fi23Presentation,
-    fi23NodeAndEdgeRelators, fi23NonedgeRelators, fi23AdditionalRelators]
+  rw [GroupPresentation.totalLength_def, fi23Presentation_map_length_relators]
+  decide
 
 /-- Every compiled relator of the `Fi₂₃` presentation is cyclically reduced. -/
 theorem fi23Presentation_relatorsCyclicallyReduced :

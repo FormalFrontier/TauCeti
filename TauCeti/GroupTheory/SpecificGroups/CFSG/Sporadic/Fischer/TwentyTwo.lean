@@ -185,8 +185,9 @@ theorem fi22Presentation_transcriptionNotes :
 theorem fi22Presentation_expectedGeneratorCount : fi22Presentation.expectedGeneratorCount = 2 := by
   simp [fi22Presentation]
 
-/-- The relator count `Fi₂₂`'s source states; see
-`TauCeti.Sporadic.fi22Presentation_expectedGeneratorCount`. -/
+/-- The relator count `Fi₂₂`'s source states. With
+`TauCeti.Sporadic.fi22Presentation_transcribed` this is what makes
+`TauCeti.Sporadic.fi22Presentation_matchesMetadata` an equation between two visible numbers. -/
 @[simp]
 theorem fi22Presentation_expectedRelatorCount : fi22Presentation.expectedRelatorCount = 13 := by
   simp [fi22Presentation]
