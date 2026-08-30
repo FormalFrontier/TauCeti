@@ -54,11 +54,6 @@ For positive `e` this power is `ζ_e⁻¹`, so the substitution is complex conju
 @[expose] def conj (x : Cyclotomic e) : Cyclotomic e :=
   evalCoeffs (Int.castRingHom (Cyclotomic e)) (zeta e ^ (e - 1)) x
 
-/-- Exact cyclotomic conjugation, unfolded as evaluation at `ζ_e ^ (e - 1)`. -/
-theorem conj_def (x : Cyclotomic e) :
-    conj x = evalCoeffs (Int.castRingHom (Cyclotomic e)) (zeta e ^ (e - 1)) x :=
-  (rfl)
-
 private theorem map_evalCoeffs {R S : Type*} [CommRing R] [CommRing S]
     (g : R →+* S) (f : ℤ →+* R) (r : R) (x : Cyclotomic e) :
     g (evalCoeffs f r x) = evalCoeffs (g.comp f) (g r) x := by
@@ -78,7 +73,7 @@ private theorem complexEmbedding_conj (x : Cyclotomic e) :
     complexEmbedding (conj x) =
         evalCoeffs (complexEmbedding.comp (Int.castRingHom (Cyclotomic e)))
           (complexEmbedding (zeta e ^ (e - 1))) x := by
-      rw [conj_def, map_evalCoeffs]
+      rw [conj, map_evalCoeffs]
     _ = evalCoeffs (Int.castRingHom ℂ) (complexRoot e ^ (e - 1)) x := by
       congr 1
       · exact RingHom.ext_int _ _
@@ -155,7 +150,7 @@ inverse of `r` when `e` is positive. -/
 theorem evalRingHom_star {R : Type*} [CommRing R] (f : ℤ →+* R) (r : R)
     (hr : (Polynomial.cyclotomic e ℤ).eval₂ f r = 0) (x : Cyclotomic e) :
     evalRingHom f r hr (star x) = evalCoeffs f (r ^ (e - 1)) x := by
-  rw [star_eq_conj, conj_def, map_evalCoeffs]
+  rw [star_eq_conj, conj, map_evalCoeffs]
   congr 1
   · exact RingHom.ext_int _ _
   · rw [map_pow, evalRingHom_zeta]
