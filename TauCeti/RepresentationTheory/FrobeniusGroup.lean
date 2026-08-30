@@ -34,9 +34,10 @@ correspondence).  Choosing a representation `σ_φ` affording each `φ*`, the **
 
 * an element `g` in the Frobenius kernel lies in no conjugate of `H`, so every summand of the
   induced class function vanishes at `g` and `φ*(g) = φ(1) = φ*(1)` — that is, `g ∈ N`;
-* conversely `N` is normal and `N ∩ H = 1`, because `Res_H φ* = φ` means an element of `N ∩ H` is
-  killed by every irreducible character of `H`, and the irreducible characters of a finite group
-  detect the identity; so a nonidentity element of `N` can lie in no conjugate of `H`.
+* conversely `N` is normal and `N ∩ H = 1`, because `Res_H φ* = φ` means an element of `N ∩ H`
+  has the same value as the identity under every irreducible character of `H`, and the irreducible
+  characters of a finite group detect the identity; so a nonidentity element of `N` can lie in no
+  conjugate of `H`.
 
 Both inclusions are equalities of *sets*, so the Frobenius kernel inherits the subgroup structure
 of `N`.  The bundled subgroup is `TauCeti.frobeniusKernelSubgroup`, and with the counting already
@@ -45,30 +46,28 @@ complement.
 
 ## Main statements
 
-* `TauCeti.IsTISubgroup.exists_normal_coe_eq_frobeniusKernel`: **Frobenius's theorem**, in the form
-  that some normal subgroup of `G` has the Frobenius kernel as its carrier.
-* `TauCeti.frobeniusKernelSubgroup`: that subgroup, bundled, with
-  `TauCeti.coe_frobeniusKernelSubgroup` and `TauCeti.mem_frobeniusKernelSubgroup` its carrier and
-  membership, and `TauCeti.frobeniusKernelSubgroup_normal` its normality.
-* `TauCeti.frobeniusKernel_isComplement'`: the kernel is a **complement** to `H`, so
-  `G = N ⋊ H`; `TauCeti.natCard_frobeniusKernelSubgroup` records `|N| = |G : H|`.
-* `TauCeti.disjoint_frobeniusKernelSubgroup`: the kernel meets `H` trivially.
-* `TauCeti.IsFrobeniusComplement.frobeniusKernelSubgroup_ne_bot` and
-  `TauCeti.IsFrobeniusComplement.frobeniusKernelSubgroup_ne_top`: for a genuine Frobenius
-  complement the kernel is a **proper nontrivial** normal subgroup.
+* `TauCeti.frobeniusKernelSubgroup`: **Frobenius's theorem** — the Frobenius kernel, bundled as a
+  subgroup, with `TauCeti.coe_frobeniusKernelSubgroup` and `TauCeti.mem_frobeniusKernelSubgroup`
+  its carrier and membership, and `TauCeti.frobeniusKernelSubgroup_normal` its normality.
+* `TauCeti.frobeniusKernel_isComplement'`: the kernel is a **complement** to `H`, so `G = N ⋊ H`.
+* `TauCeti.frobeniusKernelSubgroup_ne_bot` and `TauCeti.frobeniusKernelSubgroup_ne_top`: when `H`
+  is proper the kernel is nontrivial, and when `H` is nontrivial the kernel is proper — so for a
+  Frobenius complement (`TauCeti.IsFrobeniusComplement`, which is both) the kernel is a **proper
+  nontrivial** normal subgroup.
 
 ## Implementation notes
 
-Everything except the last two statements needs only `TauCeti.IsTISubgroup H`, not the full
+Everything here needs only `TauCeti.IsTISubgroup H`, not the full
 `TauCeti.IsFrobeniusComplement H`: properness and nontriviality of `H` play no part in the
 character argument, and the degenerate cases are true as stated (`frobeniusKernel ⊤ = {1}` is the
 carrier of `⊥`, and `frobeniusKernel ⊥ = Set.univ` that of `⊤`).  They are exactly what makes the
-kernel itself nontrivial and proper, so they are assumed only there.
+kernel itself nontrivial and proper, so the last two statements take `H ≠ ⊤` and `H ≠ ⊥` as plain
+hypotheses.
 
-The existence statement comes first and the bundled subgroup is read off it with `Exists.choose`.
-That keeps the choice of affording representations — which is genuinely arbitrary — inside a single
-proof, rather than spread over an auxiliary definition whose `Invertible (Nat.card G : ℂ)` instance
-would then have to be produced identically at every use site.  Nothing downstream depends on which
+The bundled subgroup is read off a private existence statement with `Exists.choose`.  That keeps
+the choice of affording representations — which is genuinely arbitrary — inside a single proof,
+rather than spread over an auxiliary definition whose `Invertible (Nat.card G : ℂ)` instance would
+then have to be produced identically at every use site.  Nothing downstream depends on which
 subgroup the choice returns: `TauCeti.coe_frobeniusKernelSubgroup` pins its carrier, and a subgroup
 is determined by its carrier.
 
@@ -143,8 +142,11 @@ identity: the Frobenius kernel is contained in `N`.  Conversely a nonidentity el
 in a conjugate of `H` may be conjugated into `H` — `N` being normal — where `Res_H φ* = φ` makes
 every irreducible character of `H` take its identity value, forcing it to *be* the identity.
 
-The two inclusions are of sets, so the Frobenius kernel is the carrier of `N`. -/
-theorem IsTISubgroup.exists_normal_coe_eq_frobeniusKernel (hH : IsTISubgroup H) :
+The two inclusions are of sets, so the Frobenius kernel is the carrier of `N`.  This is the
+implementation step behind `TauCeti.frobeniusKernelSubgroup`; the statement to use is that
+subgroup together with `TauCeti.coe_frobeniusKernelSubgroup` and
+`TauCeti.frobeniusKernelSubgroup_normal`. -/
+private theorem exists_normal_coe_eq_frobeniusKernel (hH : IsTISubgroup H) :
     ∃ N : Subgroup G, N.Normal ∧ (N : Set G) = frobeniusKernel H := by
   classical
   let : Invertible (Nat.card G : ℂ) :=
@@ -190,9 +192,10 @@ theorem IsTISubgroup.exists_normal_coe_eq_frobeniusKernel (hH : IsTISubgroup H) 
       rw [← hφcoe j]
       calc (φ j).1 (⟨x⁻¹ * g * x, hx⟩ : H)
           = (indExtend H (φ j)).1 (x⁻¹ * g * x) := by
-            simpa using (congrArg (fun F : ClassFunction ℂ H => F.1 (⟨x⁻¹ * g * x, hx⟩ : H))
-              (comap_subtype_indExtend hH
-                (isUnit_natCard_subgroup H (isUnit_of_invertible _)) (φ j))).symm
+            simpa only [comap_apply, Subgroup.coe_subtype] using
+              (congrArg (fun F : ClassFunction ℂ H => F.1 (⟨x⁻¹ * g * x, hx⟩ : H))
+                (comap_subtype_indExtend hH
+                  (isUnit_natCard_subgroup H (isUnit_of_invertible _)) (φ j))).symm
         _ = (φ j).1 1 := (hker j _).mp (hyN j)
     refine hg1 ?_
     have hy : x⁻¹ * g * x = 1 := congrArg Subtype.val hone
@@ -215,23 +218,22 @@ theorem IsTISubgroup.exists_normal_coe_eq_frobeniusKernel (hH : IsTISubgroup H) 
 
 /-- **The Frobenius kernel of a trivial-intersection subgroup, as a subgroup.**
 
-This is the subgroup produced by `TauCeti.IsTISubgroup.exists_normal_coe_eq_frobeniusKernel`, whose
-carrier is the Frobenius kernel (`TauCeti.coe_frobeniusKernelSubgroup`) and which is normal
-(`TauCeti.frobeniusKernelSubgroup_normal`).  A subgroup is determined by its carrier, so nothing
-depends on the choice made inside that proof. -/
+Its carrier is the Frobenius kernel (`TauCeti.coe_frobeniusKernelSubgroup`) and it is normal
+(`TauCeti.frobeniusKernelSubgroup_normal`), which is Frobenius's theorem.  A subgroup is determined
+by its carrier, so nothing depends on the choice made inside that proof. -/
 noncomputable def frobeniusKernelSubgroup (hH : IsTISubgroup H) : Subgroup G :=
-  hH.exists_normal_coe_eq_frobeniusKernel.choose
+  (exists_normal_coe_eq_frobeniusKernel hH).choose
 
 /-- **The carrier of `TauCeti.frobeniusKernelSubgroup` is the Frobenius kernel.** -/
 @[simp]
 theorem coe_frobeniusKernelSubgroup (hH : IsTISubgroup H) :
     (frobeniusKernelSubgroup hH : Set G) = frobeniusKernel H :=
-  hH.exists_normal_coe_eq_frobeniusKernel.choose_spec.2
+  (exists_normal_coe_eq_frobeniusKernel hH).choose_spec.2
 
 /-- **Frobenius's theorem: the Frobenius kernel is normal.** -/
 theorem frobeniusKernelSubgroup_normal (hH : IsTISubgroup H) :
     (frobeniusKernelSubgroup hH).Normal :=
-  hH.exists_normal_coe_eq_frobeniusKernel.choose_spec.1
+  (exists_normal_coe_eq_frobeniusKernel hH).choose_spec.1
 
 /-- Membership in the Frobenius kernel subgroup is membership in the Frobenius kernel. -/
 theorem mem_frobeniusKernelSubgroup (hH : IsTISubgroup H) {g : G} :
@@ -245,37 +247,22 @@ theorem frobeniusKernel_isComplement' (hH : IsTISubgroup H) :
     (frobeniusKernelSubgroup hH).IsComplement' H :=
   hH.isComplement'_of_coe_eq_frobeniusKernel (coe_frobeniusKernelSubgroup hH)
 
-/-- **The Frobenius kernel has `|G : H|` elements.** -/
-theorem natCard_frobeniusKernelSubgroup (hH : IsTISubgroup H) :
-    Nat.card (frobeniusKernelSubgroup hH) = H.index :=
-  (Nat.card_congr (Equiv.setCongr (coe_frobeniusKernelSubgroup hH))).trans
-    hH.natCard_frobeniusKernel
-
-/-- **The Frobenius kernel meets the complement trivially.** -/
-theorem disjoint_frobeniusKernelSubgroup (hH : IsTISubgroup H) :
-    Disjoint (frobeniusKernelSubgroup hH) H :=
-  (frobeniusKernel_isComplement' hH).disjoint
-
-namespace IsFrobeniusComplement
-
-/-- **The Frobenius kernel of a Frobenius complement is a proper subgroup**: it is disjoint from
-`H`, which is nontrivial. -/
-theorem frobeniusKernelSubgroup_ne_top (hH : IsFrobeniusComplement H) :
-    frobeniusKernelSubgroup hH.isTISubgroup ≠ ⊤ := by
+/-- **The Frobenius kernel of a nontrivial trivial-intersection subgroup is proper**: it is
+disjoint from `H`, which is not `⊥`. -/
+theorem frobeniusKernelSubgroup_ne_top (hH : IsTISubgroup H) (hne : H ≠ ⊥) :
+    frobeniusKernelSubgroup hH ≠ ⊤ := by
   intro htop
-  refine hH.ne_bot (top_disjoint.mp ?_)
+  refine hne (top_disjoint.mp ?_)
   rw [← htop]
-  exact disjoint_frobeniusKernelSubgroup hH.isTISubgroup
+  exact (frobeniusKernel_isComplement' hH).disjoint
 
-/-- **The Frobenius kernel of a Frobenius complement is nontrivial**: it has `|G : H|` elements and
-`H` is proper, so that index is not `1`. -/
-theorem frobeniusKernelSubgroup_ne_bot (hH : IsFrobeniusComplement H) :
-    frobeniusKernelSubgroup hH.isTISubgroup ≠ ⊥ := by
+/-- **The Frobenius kernel of a proper trivial-intersection subgroup is nontrivial**: it has
+`|G : H|` elements, and `H ≠ ⊤` says that index is not `1`. -/
+theorem frobeniusKernelSubgroup_ne_bot (hH : IsTISubgroup H) (hne : H ≠ ⊤) :
+    frobeniusKernelSubgroup hH ≠ ⊥ := by
   intro hbot
-  have hcard := natCard_frobeniusKernelSubgroup hH.isTISubgroup
+  have hcard := (frobeniusKernel_isComplement' hH).index_eq_card
   rw [hbot, Subgroup.card_bot] at hcard
-  exact hH.ne_top (Subgroup.index_eq_one.mp hcard.symm)
-
-end IsFrobeniusComplement
+  exact hne (Subgroup.index_eq_one.mp hcard)
 
 end TauCeti
