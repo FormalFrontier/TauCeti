@@ -9,6 +9,8 @@ public import TauCeti.LinearAlgebra.RootSystem.ClassicalTypeD
 public import TauCeti.RepresentationTheory.Spin.IntegralLattice
 public import TauCeti.RepresentationTheory.Spin.Weight
 
+import TauCeti.LinearAlgebra.CliffordAlgebra.VolumeElement
+
 /-!
 # Simple-root bivectors for the type-D spin representation
 
@@ -145,15 +147,16 @@ theorem typeDSimpleNegativeRootBivector_def (hn : 2 ≤ n) (i : Fin n) :
 
 /-! ### Square-zero -/
 
+/-- `CliffordAlgebra.prod_map_ι_sq_scalar` at the two-element list `[x, y]`, whose scalar value
+`-(Q x * Q y)` vanishes with `Q x`. Each of the four branches below instantiates it. -/
 private theorem ι_mul_ι_mul_self_eq_zero {x y : V} (hx : Q x = 0) (hxy : polar Q x y = 0) :
     ι Q x * ι Q y * (ι Q x * ι Q y) = 0 := by
-  have h : Q.IsOrtho y x :=
-    isOrtho_polarBilin.mp (by rw [polarBilin_apply_apply, polar_comm]; exact hxy)
-  rw [mul_ι_mul_ι_mul_comm_of_isOrtho (ι Q x) h (ι Q y), ι_sq_scalar, hx, map_zero, zero_mul,
-    neg_zero]
+  have h : Q.IsOrtho x y := isOrtho_polarBilin.mp (by rw [polarBilin_apply_apply]; exact hxy)
+  simpa [hx] using prod_map_ι_sq_scalar (Q := Q) (l := [x, y]) (by simpa using h)
 
 /-- Every positive type-`D` simple-root representative squares to zero in the Clifford algebra:
 its two isotropic factors are orthogonal, so they anticommute and each squares to zero. -/
+@[simp]
 theorem typeDSimpleRootBivector_sq (hn : 2 ≤ n) (i : Fin n) :
     P.typeDSimpleRootBivector b hn i * P.typeDSimpleRootBivector b hn i = 0 := by
   by_cases h : (i : ℕ) + 1 < n
@@ -165,6 +168,7 @@ theorem typeDSimpleRootBivector_sq (hn : 2 ≤ n) (i : Fin n) :
     exact ι_mul_ι_mul_self_eq_zero (P.isotropic_W _) (P.polar_W_eq_zero _ _)
 
 /-- Every negative type-`D` simple-root representative squares to zero in the Clifford algebra. -/
+@[simp]
 theorem typeDSimpleNegativeRootBivector_sq (hn : 2 ≤ n) (i : Fin n) :
     P.typeDSimpleNegativeRootBivector b hn i * P.typeDSimpleNegativeRootBivector b hn i = 0 := by
   by_cases h : (i : ℕ) + 1 < n
@@ -177,6 +181,7 @@ theorem typeDSimpleNegativeRootBivector_sq (hn : 2 ≤ n) (i : Fin n) :
 
 /-- A positive type-`D` simple-root representative acts by a square-zero endomorphism on
 spinors. -/
+@[simp]
 theorem spinAction_typeDSimpleRootBivector_sq (hn : 2 ≤ n) (i : Fin n) :
     spinAction Q P (P.typeDSimpleRootBivector b hn i) *
         spinAction Q P (P.typeDSimpleRootBivector b hn i) = 0 := by
@@ -184,6 +189,7 @@ theorem spinAction_typeDSimpleRootBivector_sq (hn : 2 ≤ n) (i : Fin n) :
 
 /-- A negative type-`D` simple-root representative acts by a square-zero endomorphism on
 spinors. -/
+@[simp]
 theorem spinAction_typeDSimpleNegativeRootBivector_sq (hn : 2 ≤ n) (i : Fin n) :
     spinAction Q P (P.typeDSimpleNegativeRootBivector b hn i) *
         spinAction Q P (P.typeDSimpleNegativeRootBivector b hn i) = 0 := by
@@ -304,7 +310,10 @@ private theorem lie_diagonalBivector_bivector {k : Fin n} {x y : V} {cx cy : K}
   module
 
 /-- The diagonal Cartan bivectors act on a positive simple-root representative with the
-corresponding coordinate of the Bourbaki simple root. -/
+corresponding coordinate of the Bourbaki simple root. The classification bound `4 ≤ n` is not
+determined by the left-hand side, so `simp` discharges it as a side condition: use `simp [hn]`,
+or any simp set from which `4 ≤ n` follows. -/
+@[simp]
 theorem lie_diagonalBivector_typeDSimpleRootBivector (hn : 4 ≤ n) (i k : Fin n) :
     ⁅P.diagonalBivector b k, P.typeDSimpleRootBivector b (by omega) i⁆ =
       algebraMap ℤ K (DynkinType.typeDSimpleRoot n hn i k) •
@@ -326,7 +335,9 @@ theorem lie_diagonalBivector_typeDSimpleRootBivector (hn : 4 ≤ n) (i k : Fin n
     split_ifs <;> norm_num
 
 /-- The diagonal Cartan bivectors act on a negative simple-root representative with the negative
-of the corresponding Bourbaki simple-root coordinate. -/
+of the corresponding Bourbaki simple-root coordinate. As above, `simp` discharges `4 ≤ n` as a
+side condition. -/
+@[simp]
 theorem lie_diagonalBivector_typeDSimpleNegativeRootBivector (hn : 4 ≤ n) (i k : Fin n) :
     ⁅P.diagonalBivector b k, P.typeDSimpleNegativeRootBivector b (by omega) i⁆ =
       -algebraMap ℤ K (DynkinType.typeDSimpleRoot n hn i k) •
@@ -352,6 +363,7 @@ theorem lie_diagonalBivector_typeDSimpleNegativeRootBivector (hn : 4 ≤ n) (i k
 /-- The positive and negative representatives have the standard type-`D` Chevalley
 normalization. Their bracket is the simple coroot: `Hᵢ - Hᵢ₊₁` along the chain and
 `Hₙ₋₂ + Hₙ₋₁` at the fork. -/
+@[simp]
 theorem lie_typeDSimpleRootBivector_typeDSimpleNegativeRootBivector (hn : 2 ≤ n) (i : Fin n) :
     ⁅P.typeDSimpleRootBivector b hn i, P.typeDSimpleNegativeRootBivector b hn i⁆ =
       if h : (i : ℕ) + 1 < n then
