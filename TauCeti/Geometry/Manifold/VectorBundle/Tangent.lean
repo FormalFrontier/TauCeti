@@ -75,13 +75,6 @@ theorem coe_chartAt_snd {p q : TangentBundle I M} :
 
 end TangentBundle
 
-/-- Composing a tangent coordinate change with the inverse one gives the identity. -/
-theorem tangentCoordChange_symm_apply {x y z : M}
-    (h : z ∈ (extChartAt I x).source ∩ (extChartAt I y).source) (v : E) :
-    tangentCoordChange I x y z (tangentCoordChange I y x z v) = v :=
-  (tangentCoordChange_comp (I := I) (w := y) (x := x) (y := y) (z := z) (v := v)
-    (h := ⟨⟨h.2, h.1⟩, h.2⟩)).trans (tangentCoordChange_self h.2)
-
 /-- The tangent coordinate change between the charts at `x` and `y` is `C^1` on the overlap of
 the two chart sources, read in the chart at `x`.  This is Mathlib's
 `contDiffOn_fderiv_coord_change` for the preferred charts at two points. -/
