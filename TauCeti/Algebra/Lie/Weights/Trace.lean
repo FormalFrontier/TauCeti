@@ -208,15 +208,6 @@ variable {K : Type u} {L : Type v} {M : Type w} [Field K] [CharZero K] [LieRing 
   [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M] [FiniteDimensional K M]
   {α χ : Module.Dual K H} {x y : L} {z : H}
 
-omit [CharZero K] [LieRing.IsNilpotent H] [LieRingModule L M] [LieModule K L M]
-  [FiniteDimensional K M] in
-/-- Translating a linear weight by a multiple of another is the same operation before and after
-forgetting linearity. -/
-private theorem coe_add_nsmul (j : ℕ) :
-    ((χ + j • α : Module.Dual K H) : H → K) = (χ : H → K) + j • (α : H → K) := by
-  ext v
-  simp
-
 /-- **The closed form of the trace**, summed over the `α`-string above `χ` with its bottom index
 removed.  This is the index set of the inner sum of Freudenthal's multiplicity formula. -/
 theorem trace_raiseLowerEnd_eq_sum_weightString (hα : α ≠ 0)
@@ -227,11 +218,12 @@ theorem trace_raiseLowerEnd_eq_sum_weightString (hα : α ≠ 0)
           finrank K (genWeightSpace M ((χ : H → K) + j • (α : H → K)))
             • ((χ : H → K) + j • (α : H → K)) z := by
   classical
+  -- The string API speaks of `↑(χ + j • α)` while the trace results speak of `↑χ + j • ↑α`;
+  -- forgetting linearity commutes with these operations definitionally, so `hN` and
+  -- `mem_weightString_iff` transfer without a rewrite.
   obtain ⟨N, hN⟩ := exists_genWeightSpace_add_nsmul_eq_bot_of_le (M := M) hα χ
-  simp only [coe_add_nsmul] at hN
   have hmem : ∀ j : ℕ, j ∈ weightString M hα χ ↔
-      genWeightSpace M ((χ : H → K) + j • (α : H → K)) ≠ ⊥ := fun j => by
-    rw [mem_weightString_iff, coe_add_nsmul]
+      genWeightSpace M ((χ : H → K) + j • (α : H → K)) ≠ ⊥ := fun _ => mem_weightString_iff hα χ
   rw [trace_raiseLowerEnd_eq_sum_Ico hx hy hz _ hN]
   refine (Finset.sum_subset (fun j hj => ?_) (fun j hj hj' => ?_)).symm
   · have hjw := (hmem j).mp (Finset.mem_of_mem_erase hj)
