@@ -9,7 +9,7 @@ public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Borel
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.PositiveSubsystem
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.GeckLattice.GroupScheme
 import Mathlib.Data.Fin.Tuple.Sort
-import TauCeti.LinearAlgebra.RootSystem.Height
+import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.WeightDegree
 
 /-!
 # Borel-type point subgroups of the pinned Geck carrier
@@ -47,11 +47,10 @@ generator moves strictly towards the beginning of the basis. That hypothesis is 
 sorting the Geck coordinate basis by decreasing height of its weight. Height is additive and takes
 the value one on each pinned simple root, so a raising generator strictly raises it; the two facts
 are all the ordering argument uses, and neither needs to know which Geck coordinates carry which
-weight. Height itself is read off the rational root system
-`TauCeti.DynkinType.rationalRootSystem`, where the roots span the weight space and
-`TauCeti.heightLinearMap` is available; the integral character lattice of the pinned datum is in
-general strictly larger than its root lattice, so there is no integral coordinate sum to use
-instead.
+weight. Height itself is `TauCeti.DynkinType.weightDegree`, read off the rational root system
+`TauCeti.DynkinType.rationalRootSystem`, where the roots span the weight space; the integral
+character lattice of the pinned datum is in general strictly larger than its root lattice, so there
+is no integral coordinate sum to use instead.
 
 The results are therefore stated for an arbitrary set of raising generators, since that is the
 generality the argument has: every subset of the raising nodes cuts out a nilpotent unipotent group
@@ -119,47 +118,11 @@ attribute [local instance high] Algebra.toModule
 
 variable (t : DynkinType) (ht : t.Valid)
 
-/-! ## The height of an integral character -/
-
-/-- The height of an integral character of the pinned Cartan generators: its coordinate sum in the
-simple-root basis, computed in the rational root system, where the roots span the weight space.
-
-Only two properties of it are used below, additivity and the value one on each pinned simple root,
-so it stays an implementation detail of the ordering argument. -/
-private def characterHeight (v : Fin t.rank → ℤ) : ℚ :=
-  heightLinearMap (t.rationalRootSystem ht) (t.rationalBase ht) fun j => (v j : ℚ)
-
-private theorem characterHeight_add (v w : Fin t.rank → ℤ) :
-    t.characterHeight ht (v + w) = t.characterHeight ht v + t.characterHeight ht w := by
-  have hcast : (fun j => (((v + w) j : ℤ) : ℚ)) =
-      (fun j => ((v j : ℤ) : ℚ)) + fun j => ((w j : ℤ) : ℚ) := by
-    funext j
-    simp only [Pi.add_apply, Int.cast_add]
-  rw [characterHeight, characterHeight, characterHeight, hcast, map_add]
-
-private theorem characterHeight_nsmul (m : ℕ) (v : Fin t.rank → ℤ) :
-    t.characterHeight ht (m • v) = m * t.characterHeight ht v := by
-  have hcast : (fun j => (((m • v) j : ℤ) : ℚ)) = (m : ℚ) • fun j => ((v j : ℤ) : ℚ) := by
-    funext j
-    simp only [Pi.smul_apply, nsmul_eq_mul, Int.cast_mul, Int.cast_natCast, smul_eq_mul]
-  rw [characterHeight, characterHeight, hcast, map_smul, smul_eq_mul]
-
-/-- The root of a numbered raising generator has height one, being a pinned simple root. -/
-private theorem characterHeight_rootGeneratorWeight_inl (i : Fin t.rank) :
-    t.characterHeight ht (t.rootGeneratorWeight ht (.inl i)) = 1 := by
-  have hroot : (fun j => ((t.rootGeneratorWeight ht (.inl i) j : ℤ) : ℚ)) =
-      (t.rationalRootSystem ht).root ((t.simpleSupportEquiv ht i : Fin t.numRoots)) := by
-    funext j
-    rw [coe_simpleSupportEquiv, root_rationalRootSystem,
-      rootGeneratorWeight_inl_eq_root_simpleIndex]
-  rw [characterHeight, hroot]
-  exact heightLinearMap_simpleRoot _ _ (t.simpleSupportEquiv ht i)
-
 /-! ## The height ordering of the Geck coordinates -/
 
 /-- The permutation sorting the finite-ordinal Geck coordinates by decreasing weight height. -/
 private def geckHeightSort : Equiv.Perm (Fin (t.geckDim ht)) :=
-  Tuple.sort fun i => -t.characterHeight ht (t.geckWeightFin ht i)
+  Tuple.sort fun i => -t.weightDegree ht (t.geckWeightFin ht i)
 
 /-- The Geck weights, listed in decreasing order of height. -/
 private def geckSortedWeight (r : Fin (t.geckDim ht)) : Fin t.rank → ℤ :=
@@ -174,10 +137,10 @@ private theorem geckHeightBasis_apply (r : Fin (t.geckDim ht)) :
     t.geckHeightBasis ht r = t.geckCoordinateBasisFin ht (t.geckHeightSort ht r) := by
   rw [geckHeightBasis, Module.Basis.reindex_apply, Equiv.symm_symm]
 
-private theorem monotone_neg_characterHeight_geckSortedWeight :
-    Monotone fun r => -t.characterHeight ht (t.geckSortedWeight ht r) := by
+private theorem monotone_neg_weightDegree_geckSortedWeight :
+    Monotone fun r => -t.weightDegree ht (t.geckSortedWeight ht r) := by
   intro r s hrs
-  have hsort := Tuple.monotone_sort (fun i => -t.characterHeight ht (t.geckWeightFin ht i)) hrs
+  have hsort := Tuple.monotone_sort (fun i => -t.weightDegree ht (t.geckWeightFin ht i)) hrs
   simpa only [geckSortedWeight, geckHeightSort, Function.comp_apply] using hsort
 
 /-- **A raising generator moves a Geck coordinate strictly towards the beginning of the
@@ -190,13 +153,15 @@ private theorem geckSortedWeight_lt_of_eq_add_nsmul {i : Fin t.rank ⊕ Fin t.ra
     (heq : t.geckSortedWeight ht r = t.geckSortedWeight ht s + m • t.rootGeneratorWeight ht i) :
     r < s := by
   obtain ⟨j, rfl⟩ := hi
-  have hheight : t.characterHeight ht (t.geckSortedWeight ht r) =
-      t.characterHeight ht (t.geckSortedWeight ht s) + m := by
-    rw [heq, characterHeight_add, characterHeight_nsmul,
-      characterHeight_rootGeneratorWeight_inl, mul_one]
+  have hrow : t.rootGeneratorWeight ht (.inl j) = fun k => t.cartanMatrix j k := by
+    funext k
+    rw [rootGeneratorWeight_inl]
+  have hheight : t.weightDegree ht (t.geckSortedWeight ht r) =
+      t.weightDegree ht (t.geckSortedWeight ht s) + m := by
+    rw [heq, map_add, map_nsmul, hrow, weightDegree_cartanMatrix_row, nsmul_eq_mul, mul_one]
   have hmQ : (0 : ℚ) < m := by exact_mod_cast hm
   by_contra hlt
-  have hmono := t.monotone_neg_characterHeight_geckSortedWeight ht (not_lt.mp hlt)
+  have hmono := t.monotone_neg_weightDegree_geckSortedWeight ht (not_lt.mp hlt)
   rw [neg_le_neg_iff, hheight] at hmono
   linarith
 
