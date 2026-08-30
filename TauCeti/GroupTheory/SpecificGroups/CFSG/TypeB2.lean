@@ -10,21 +10,20 @@ public import TauCeti.Algebra.Lie.Symplectic.StandardCarrier.RootDatum
 public import TauCeti.GroupTheory.SpecificGroups.CFSG.Closure
 
 /-!
-# The Suzuki family on the rank-two type-B carrier
+# The Suzuki family on the rank-two type-`C` carrier
 
-The Suzuki family `²B₂(2^(2m+1))` is built on the rank-two diagram `B₂`, so the ambient group the
-CFSG recipe asks for is the group of algebraic-closure-valued points of the simply connected
-Chevalley--Demazure group scheme of type `B₂` in characteristic two. This file supplies that
-ambient group, its Bourbaki-numbered simple root subgroups, and its `q`-power Frobenius, for every
-validated Suzuki index.
+The Suzuki family `²B₂(2^(2m+1))` is built on the rank-two diagram `B₂`. This file supplies, for
+every validated Suzuki index, the group of algebraic-closure-valued points of Tau Ceti's explicit
+full-weight type-`C` Chevalley carrier at its rank-two member, `TauCeti.SpStd.groupScheme 1`,
+together with that group's Bourbaki-numbered simple root subgroups and its `q`-power Frobenius.
 
-The carrier used is Tau Ceti's explicit full-weight type-`C` Chevalley carrier at its rank-two
-member, `TauCeti.SpStd.groupScheme 1`. That is not a substitution: the two constructor names
-`B 2` and `C 2` denote the same rank-two root system, which is why `TauCeti.DynkinType.Valid`
-keeps only `B 2` of the two, and the identification is recorded rather than assumed. The Bourbaki
-numbering does move: `TauCeti.SpStd.rootGeneratorWeight_inl_eq_root_simpleIndex_B_two` shows that
-the character by which the pinned torus rescales the parameter of the carrier's `k`-th numbered
-raising subgroup is the simple root of the pinned `B₂` datum at the *other* node. So the node
+The rank-two type-`C` carrier is not a substitution for the diagram the family names: the two
+constructor names `B 2` and `C 2` denote the same rank-two root system, which is why
+`TauCeti.DynkinType.Valid` keeps only `B 2` of the two, and the identification is recorded rather
+than assumed. What is recorded is an identification of numbered root characters, not of group
+schemes. `TauCeti.SpStd.rootGeneratorWeight_inl_eq_root_simpleIndex_B_two` shows that
+the character by which the carrier's split torus rescales the parameter of its `k`-th numbered
+raising subgroup is the simple root of the `B₂` root datum at the *other* node. So the node
 correspondence `TauCeti.SuzukiLieIndex.carrierNode` composes the rank equality with the swap of the
 two nodes, and every numbered object below is indexed by `Fin d.1.rank`, the upstream Bourbaki
 index type of the index's own Dynkin type, rather than by a node of the carrier.
@@ -42,7 +41,11 @@ on this diagram and would use the same carrier and the same Frobenius: the branc
 needs is separate work, and this file adds no index subtype for it.
 
 Nothing here asserts that the carrier is reductive, that its weight torus is maximal, that it is
-the symplectic group scheme, or that any group below is finite, perfect, or simple.
+the symplectic group scheme, or that any group below is finite, perfect, or simple. In particular
+the carrier is not claimed to be *the* simply connected Chevalley--Demazure group scheme of type
+`B₂`: no pinning datum is constructed for it here or in the files it imports, which say so
+themselves. The identification with the `B₂` diagram proved below is the one on numbered root
+characters stated in `rootGeneratorWeight_carrierNode`.
 
 ## Main declarations
 
@@ -51,7 +54,7 @@ the symplectic group scheme, or that any group below is finite, perfect, or simp
 * `TauCeti.SuzukiLieIndex.AmbientGroup`: the algebraic-closure-valued points of that carrier.
 * `TauCeti.SuzukiLieIndex.simpleRootSubgroup`: the positive simple-root subgroup at a Bourbaki node.
 * `TauCeti.SuzukiLieIndex.rootGeneratorWeight_carrierNode`: the character of that subgroup is the
-  corresponding simple root of the pinned `B₂` datum.
+  corresponding simple root of the `B₂` root datum.
 * `TauCeti.SuzukiLieIndex.frobenius` and
   `TauCeti.SuzukiLieIndex.frobenius_simpleRootSubgroup`: the `q`-power Frobenius and its pinned
   equation `Frob_q (x_i(u)) = x_i(u ^ q)`.
@@ -98,9 +101,9 @@ def carrierNode : Fin d.1.rank ≃ Fin 2 :=
 
 /-! ## The ambient group and its simple root subgroups -/
 
-/-- **The pinned ambient group of a validated Suzuki index**: the points of the explicit
-full-weight rank-two type-`C` Chevalley carrier over the algebraic closure of the field with two
-elements. It is infinite; no finiteness, reductivity or maximality statement is attached to it. -/
+/-- **The ambient group of a validated Suzuki index**: the points of the explicit full-weight
+rank-two type-`C` Chevalley carrier over the algebraic closure of the field with two elements. It
+is infinite; no finiteness, reductivity, pinning or maximality statement is attached to it. -/
 abbrev AmbientGroup : Type := SpStd.points 1 d.1.Closure
 
 /-- The positive simple-root subgroup at the Bourbaki-numbered node `i` of the `B₂` diagram. It is
@@ -117,11 +120,12 @@ theorem simpleRootSubgroup_def (i : Fin d.1.rank) :
     d.simpleRootSubgroup i = SpStd.rootSubgroupPoints 1 (.inl (d.carrierNode i)) d.1.Closure :=
   (rfl)
 
-/-- **The simple-root subgroups sit at the simple roots of the pinned `B₂` datum.** The character
+/-- **The simple-root subgroups sit at the simple roots of the `B₂` root datum.** The character
 by which the carrier's split torus rescales the parameter of `simpleRootSubgroup i`, read in the
 same node correspondence, is the `i`-th simple root of
-`TauCeti.DynkinType.simplyConnectedRootDatum` at `B 2`. This is what makes the rank-two type-`C`
-carrier the pinned group of the diagram that the Suzuki index names. -/
+`TauCeti.DynkinType.simplyConnectedRootDatum` at `B 2`. This is the sense in which the rank-two
+type-`C` carrier serves the diagram that the Suzuki index names; it is not a claim that the
+carrier is the pinned group of that diagram, no pinning being constructed for it. -/
 theorem rootGeneratorWeight_carrierNode (ht : (B 2).Valid) (i j : Fin d.1.rank) :
     SpStd.rootGeneratorWeight 1 (.inl (d.carrierNode i)) (d.carrierNode j) =
       ((B 2).simplyConnectedRootDatum ht).root

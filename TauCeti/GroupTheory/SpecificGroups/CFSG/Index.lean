@@ -683,16 +683,16 @@ theorem exists_eq_of (d : SuzukiLieIndex) :
   all_goals exact fun _ hs => ((LieTypeIndex.isSuzuki_iff _).mp hs).elim
 
 /-- The Suzuki family is built on the rank-two diagram `B₂`. -/
-theorem dynkinType_eq (d : SuzukiLieIndex) : d.1.dynkinType = .B 2 := by
+@[simp] theorem dynkinType_eq (d : SuzukiLieIndex) : d.1.dynkinType = .B 2 := by
   obtain ⟨m, hvalid, rfl⟩ := d.exists_eq_of
   exact LieTypeIndex.dynkinType_suzuki m
 
 /-- The Suzuki family has rank two, that being the rank of `B₂`. -/
-theorem rank_eq_two (d : SuzukiLieIndex) : d.1.rank = 2 :=
+@[simp] theorem rank_eq_two (d : SuzukiLieIndex) : d.1.rank = 2 :=
   congrArg DynkinType.rank d.dynkinType_eq
 
 /-- The Suzuki family lives in characteristic two. -/
-theorem characteristic_eq_two (d : SuzukiLieIndex) : d.1.characteristic = 2 := by
+@[simp] theorem characteristic_eq_two (d : SuzukiLieIndex) : d.1.characteristic = 2 := by
   obtain ⟨m, hvalid, rfl⟩ := d.exists_eq_of
   exact LieTypeIndex.characteristic_suzuki m
 
