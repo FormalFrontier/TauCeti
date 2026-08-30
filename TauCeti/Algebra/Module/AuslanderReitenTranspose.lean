@@ -101,6 +101,7 @@ theorem mk_surjective : Function.Surjective (mk p₁) :=
 
 /-- Two functionals represent the same element of the transpose exactly when their difference
 factors through the first map of the presentation. -/
+@[simp]
 theorem mk_eq_mk_iff (φ ψ : Module.Dual A P₁) :
     mk p₁ φ = mk p₁ ψ ↔ φ - ψ ∈ LinearMap.range (p₁.lcomp Aᵐᵒᵖ A) :=
   Submodule.Quotient.eq _
