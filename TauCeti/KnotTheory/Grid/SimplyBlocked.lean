@@ -14,7 +14,7 @@ The unblocked grid complex `GC⁻` has one polynomial variable `V_c` for each `O
 the `O`-marking in a chosen column `i` means setting `V_i = 0`.  The resulting simply blocked
 theory keeps the variables indexed by the other columns and counts exactly the empty rectangles
 which cover neither an `X`-marking nor the blocked `O`-marking.  This specialization is defined
-for every grid diagram; for a knot grid it is the simply blocked chain complex `GĈ`, whose homology
+for every grid diagram; for a knot grid it is the simply blocked chain complex `GĈ`, whose homology
 is `GĤ`.  For a multi-component link, the corresponding theory instead requires blocking one
 `O`-marking on each component; that construction is not supplied here.
 
@@ -216,7 +216,7 @@ theorem simplyBlockedDifferentialOnGenerator_support_subset (i : Fin n) (x : Gri
   exact hy rfl
 
 /-- The differential obtained from `GC⁻` by setting `V_i = 0`, linear over the polynomial ring in
-the remaining columns. For a knot grid this is the simply blocked chain complex `GĈ`; a link with
+the remaining columns. For a knot grid this is the simply blocked chain complex `GĈ`; a link with
 multiple components requires one blocked marking on each component instead. -/
 noncomputable def simplyBlockedDifferential (i : Fin n) :
     SimplyBlockedGridChain R n i →ₗ[MvPolynomial (SimplyBlockedVariable i) R]
