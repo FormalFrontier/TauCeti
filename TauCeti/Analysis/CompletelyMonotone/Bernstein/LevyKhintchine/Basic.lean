@@ -212,17 +212,6 @@ theorem bernsteinLevyDerivativeMeasure_apply (μ : Measure ℝ≥0) {s : Set ℝ
     bernsteinLevyDerivativeMeasure μ s = ∫⁻ x in s, (x : ℝ≥0∞) ∂μ := by
   rw [bernsteinLevyDerivativeMeasure, withDensity_apply _ hs]
 
-/-- The coordinate-weighted Levy measure has no atom at zero: the weight vanishes there. -/
--- This is not a simp lemma: `bernsteinLevyDerivativeMeasure_apply` already proves it by
--- simplification, so the `simpNF` linter rejects the redundant specialization.
-theorem bernsteinLevyDerivativeMeasure_singleton_zero (μ : Measure ℝ≥0) :
-    bernsteinLevyDerivativeMeasure μ {0} = 0 := by
-  rw [bernsteinLevyDerivativeMeasure_apply μ (measurableSet_singleton 0),
-    lintegral_eq_zero_iff (by fun_prop)]
-  filter_upwards [ae_restrict_mem (measurableSet_singleton 0)] with x hx
-  rw [Set.mem_singleton_iff] at hx
-  simp [hx]
-
 /-- Dividing out the coordinate weight recovers a Levy measure from its coordinate-weighted
 counterpart, since the weight is invertible away from the zero-mass point `0`. -/
 theorem withDensity_inv_bernsteinLevyDerivativeMeasure {μ : Measure ℝ≥0} (hμ : μ {0} = 0) :
