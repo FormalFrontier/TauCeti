@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.Lie.Submodule
-public import Mathlib.LinearAlgebra.Dimension.Finrank
+public import Mathlib.LinearAlgebra.Dimension.Finite
 
 /-!
 # The dimension of a Lie submodule
@@ -22,6 +22,7 @@ submodules pass through: the linear-algebra lemmas about dimensions of direct su
 * `TauCeti.finrank_toSubmodule`: a Lie submodule has the dimension of its carrier submodule.
 * `TauCeti.finrank_toLieSubmodule`: a Lie subalgebra has the dimension of the Lie submodule it
   determines over itself.
+* `TauCeti.finrank_eq_zero_of_eq_bot`: a trivial Lie submodule has dimension zero.
 -/
 
 public section
@@ -39,6 +40,13 @@ have the same dimension. -/
 theorem finrank_toSubmodule (N : LieSubmodule R L M) :
     finrank R N.toSubmodule = finrank R N :=
   rfl
+
+/-- **A trivial Lie submodule has dimension zero.**  Unlike `Submodule.finrank_eq_zero`, which is
+an equivalence, this needs no finiteness or rank condition; it is the one-directional form in which
+a vanishing weight space contributes nothing to a dimension count. -/
+theorem finrank_eq_zero_of_eq_bot [Nontrivial R] {N : LieSubmodule R L M} (h : N = ⊥) :
+    finrank R N = 0 := by
+  rw [← finrank_toSubmodule, h, LieSubmodule.bot_toSubmodule, finrank_bot]
 
 variable [LieAlgebra R L]
 

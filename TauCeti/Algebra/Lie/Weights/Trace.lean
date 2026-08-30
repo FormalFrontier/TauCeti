@@ -17,7 +17,7 @@ Let `H` be a nilpotent Lie subalgebra of `L` acting on a module `M` that is fini
 principal ideal domain `K`, let `α : H → K` be a linear form, and let `x` and `y` be root vectors of
 weights `α` and `-α` whose bracket `⁅x, y⁆` lies in `H`, say `⁅x, y⁆ = z`.  Acting first by `x` and
 then by `y` carries the `χ`-weight space of `M` back to itself; write `TauCeti.raiseLowerEnd` for
-the resulting endomorphism.  Given a bound beyond which the spaces `M_{χ + jα}` vanish, this file
+the resulting endomorphism.  Given a rung `N` at which the space `M_{χ + Nα}` vanishes, this file
 computes its trace:
 
 ```text
@@ -35,9 +35,11 @@ because `z` acts on a generalized weight space with the single generalized eigen
 tr_{Mχ}(y ∘ x) = tr_{M_{α+χ}}(y ∘ x) + dim M_{α+χ} · (α+χ)(z),
 ```
 
-which telescopes up the `α`-string.  The initial-segment formulation assumes such an
-eventual-vanishing bound explicitly.  When `K` is a field of characteristic zero and `α` is a
-nonzero linear form, the string leaves the weights of `M` after finitely many steps;
+which telescopes down from a rung where the weight space is trivial: there `raiseLowerEnd` is
+itself `0`, so the ladder terminates and the rungs beyond it never enter the telescope.  The
+initial-segment formulation assumes such a vanishing rung explicitly.  When `K` is a field of
+characteristic zero and `α` is a nonzero linear form, the string leaves the weights of `M`
+after finitely many steps;
 `TauCeti/Algebra/Lie/Weights/String.lean` packages that finite index set as `TauCeti.weightString`.
 
 The identity is the computational input to **Freudenthal's multiplicity formula**: taking `x` and
@@ -56,11 +58,11 @@ recursion, by the normalization `⟨λ, α^∨⟩⟨α, α⟩ = 2⟨λ, α⟩` o
 
 * `TauCeti.trace_raiseLowerEnd_eq_trace_add_nsmul`: the ladder step, expressing the trace at `χ` in
   terms of the trace at `α + χ`.
-* `TauCeti.trace_raiseLowerEnd_eq_sum_Ico`: the closed form, as a sum over an initial segment of
-  `ℕ` reaching past the end of the `α`-string.
-* `TauCeti.trace_raiseLowerEnd_eq_sum_weightString`: the same closed form, summed over the
-  `α`-string above `χ` with its bottom index removed, which is the index set of the inner sum of
-  Freudenthal's formula.
+* `TauCeti.trace_raiseLowerEnd_eq_sum_Ico`: the closed form, as a sum over `Finset.Ico 1 N` for a
+  rung `N` at which the `α`-string above `χ` has a trivial weight space.
+* `TauCeti.trace_raiseLowerEnd_eq_sum_weightString_erase_zero`: the same closed form, summed over
+  the `α`-string above `χ` with its bottom index removed, which is the index set of the inner sum
+  of Freudenthal's formula.
 
 ## References
 
@@ -87,17 +89,24 @@ variable {K : Type u} {L : Type v} {M : Type w} [CommRing K] [LieRing L] [LieAlg
 
 variable (M) in
 /-- The action of a root vector `x` of weight `α`, as a map from the `χ`-weight space of `M` to the
-`ψ`-weight space, for `ψ = α + χ`.  The target weight is an argument rather than the literal sum,
-so that the composites below stay in normal form. -/
+`ψ`-weight space, for `ψ = α + χ`.  This is Mathlib's `LieAlgebra.rootSpaceWeightSpaceProductAux`
+evaluated at `x`, packaged so that the root vector enters as a membership hypothesis rather than as
+an element of `rootSpace H α`. -/
 def rootVectorMap {α χ ψ : H → K} {x : L} (hx : x ∈ rootSpace H α) (hψ : α + χ = ψ) :
     genWeightSpace M χ →ₗ[K] genWeightSpace M ψ :=
-  (toEnd K L M x).restrict fun _ hm =>
-    hψ ▸ mapsTo_toEnd_genWeightSpace_add_of_mem_rootSpace K L H M α χ hx hm
+  rootSpaceWeightSpaceProductAux K L H M hψ ⟨x, hx⟩
 
 @[simp]
 theorem coe_rootVectorMap_apply {α χ ψ : H → K} {x : L} (hx : x ∈ rootSpace H α)
     (hψ : α + χ = ψ) (m : genWeightSpace M χ) :
     (rootVectorMap M hx hψ m : M) = ⁅x, (m : M)⁆ :=
+  (rfl)
+
+/-- The action of a root vector on weight spaces is the restriction of its action on all of `M`. -/
+theorem rootVectorMap_eq_restrict {α χ ψ : H → K} {x : L} (hx : x ∈ rootSpace H α)
+    (hψ : α + χ = ψ) :
+    rootVectorMap M hx hψ = (toEnd K L M x).restrict fun _ hm =>
+      hψ ▸ mapsTo_toEnd_genWeightSpace_add_of_mem_rootSpace K L H M α χ hx hm :=
   (rfl)
 
 variable (M) in
@@ -107,6 +116,13 @@ def raiseLowerEnd {α : H → K} {x y : L} (hx : x ∈ rootSpace H α)
     (hy : y ∈ rootSpace H (-α)) (χ : H → K) : Module.End K (genWeightSpace M χ) :=
   rootVectorMap M hy (neg_add_cancel_left α χ) ∘ₗ rootVectorMap M hx rfl
 
+/-- `raiseLowerEnd` is the composite of the two root-vector actions, in that order. -/
+theorem raiseLowerEnd_def {α : H → K} {x y : L} (hx : x ∈ rootSpace H α)
+    (hy : y ∈ rootSpace H (-α)) (χ : H → K) :
+    raiseLowerEnd M hx hy χ
+      = rootVectorMap M hy (neg_add_cancel_left α χ) ∘ₗ rootVectorMap M hx rfl :=
+  (rfl)
+
 @[simp]
 theorem coe_raiseLowerEnd_apply {α : H → K} {x y : L} (hx : x ∈ rootSpace H α)
     (hy : y ∈ rootSpace H (-α)) (χ : H → K) (m : genWeightSpace M χ) :
@@ -115,7 +131,8 @@ theorem coe_raiseLowerEnd_apply {α : H → K} {x y : L} (hx : x ∈ rootSpace H
 
 /-- **The Leibniz identity, read on a weight space.**  Lowering and then raising differs from
 raising and then lowering by the action of `⁅x, y⁆`. -/
-theorem rootVectorMap_comp_rootVectorMap_sub_raiseLowerEnd {α : H → K} {x y : L} {z : H}
+theorem rootVectorMap_comp_rootVectorMap_sub_raiseLowerEnd_eq_toEnd
+    {α : H → K} {x y : L} {z : H}
     (hx : x ∈ rootSpace H α) (hy : y ∈ rootSpace H (-α)) (hz : ⁅x, y⁆ = (z : L)) (χ : H → K) :
     rootVectorMap M hx (rfl : α + χ = α + χ) ∘ₗ rootVectorMap M hy (neg_add_cancel_left α χ)
         - raiseLowerEnd M hx hy (α + χ)
@@ -157,24 +174,21 @@ theorem trace_raiseLowerEnd_eq_trace_add_nsmul (hx : x ∈ rootSpace H α)
   have hswap := LinearMap.trace_comp_comm' (R := K) (rootVectorMap M hx (rfl : α + χ = α + χ))
     (rootVectorMap M hy (neg_add_cancel_left α χ))
   have hcomm := congrArg (trace K (genWeightSpace M (α + χ)))
-    (rootVectorMap_comp_rootVectorMap_sub_raiseLowerEnd (M := M) hx hy hz χ)
+    (rootVectorMap_comp_rootVectorMap_sub_raiseLowerEnd_eq_toEnd (M := M) hx hy hz χ)
   rw [map_sub, trace_toEnd_genWeightSpace, sub_eq_iff_eq_add'] at hcomm
-  -- Unfolding `raiseLowerEnd` exposes the two factors that `hswap` exchanges.
-  rw [raiseLowerEnd, hswap, hcomm]
+  -- `raiseLowerEnd_def` exposes the two factors that `hswap` exchanges.
+  rw [raiseLowerEnd_def, hswap, hcomm]
 
-/-- **The closed form of the trace**, as a sum over an initial segment of `ℕ` reaching past the end
-of the `α`-string above `χ`. -/
+/-- **The closed form of the trace**, as a sum over `Finset.Ico 1 N`, for any rung `N` at which the
+`α`-string above `χ` has a trivial weight space.  The ladder terminates there, so nothing beyond
+that rung is assumed. -/
 theorem trace_raiseLowerEnd_eq_sum_Ico (hx : x ∈ rootSpace H α) (hy : y ∈ rootSpace H (-α))
-    (hz : ⁅x, y⁆ = (z : L)) (χ : H → K) {N : ℕ}
-    (hN : ∀ j : ℕ, N ≤ j → genWeightSpace M (χ + j • α) = ⊥) :
+    (hz : ⁅x, y⁆ = (z : L)) (χ : H → K) {N : ℕ} (hN : genWeightSpace M (χ + N • α) = ⊥) :
     trace K _ (raiseLowerEnd M hx hy χ)
       = ∑ j ∈ Finset.Ico 1 N, finrank K (genWeightSpace M (χ + j • α)) • (χ + j • α) z := by
-  have hterm : ∀ k : ℕ, N ≤ k →
-      finrank K (genWeightSpace M (χ + k • α)) • (χ + k • α) z = 0 := fun k hk => by
-    rw [hN k hk, ← finrank_toSubmodule, LieSubmodule.bot_toSubmodule, finrank_bot, zero_smul]
-  -- The statement at the rung `χ + i • α`, proved by induction on the number of rungs `d` still
-  -- available before the string is known to have ended.
-  suffices h : ∀ d i : ℕ, N ≤ i + d →
+  -- The statement at the rung `χ + i • α`, proved by induction on the number `d` of rungs between
+  -- `i` and the terminal rung `N`.
+  suffices h : ∀ d i : ℕ, i + d = N →
       trace K _ (raiseLowerEnd M hx hy (χ + i • α))
         = ∑ j ∈ Finset.Ico (i + 1) N,
             finrank K (genWeightSpace M (χ + j • α)) • (χ + j • α) z by
@@ -184,20 +198,19 @@ theorem trace_raiseLowerEnd_eq_sum_Ico (hx : x ∈ rootSpace H α) (hy : y ∈ r
   induction d with
   | zero =>
     intro i hi
-    rw [raiseLowerEnd_eq_zero hx hy (hN i (by omega)), map_zero,
-      Finset.Ico_eq_empty (by omega), Finset.sum_empty]
+    obtain rfl : i = N := by omega
+    rw [raiseLowerEnd_eq_zero hx hy hN, map_zero, Finset.Ico_eq_empty (by omega),
+      Finset.sum_empty]
   | succ d ih =>
     intro i hi
-    rcases le_or_gt N i with hiN | hiN
-    · rw [raiseLowerEnd_eq_zero hx hy (hN i hiN), map_zero,
-        Finset.Ico_eq_empty (by omega), Finset.sum_empty]
     have hshift : α + (χ + i • α) = χ + (i + 1) • α := by rw [succ_nsmul]; abel
     rw [trace_raiseLowerEnd_eq_trace_add_nsmul hx hy hz, hshift, ih (i + 1) (by omega)]
     rcases lt_or_ge (i + 1) N with hlt | hge
     · rw [Finset.sum_eq_sum_Ico_succ_bot hlt]
       abel
-    · rw [Finset.Ico_eq_empty (by omega), Finset.Ico_eq_empty (by omega), Finset.sum_empty,
-        hterm (i + 1) hge, add_zero]
+    · obtain rfl : i + 1 = N := by omega
+      rw [Finset.Ico_eq_empty (by omega), Finset.Ico_eq_empty (by omega), Finset.sum_empty,
+        finrank_eq_zero_of_eq_bot hN, zero_smul, add_zero]
 
 end Trace
 
@@ -210,34 +223,39 @@ variable {K : Type u} {L : Type v} {M : Type w} [Field K] [CharZero K] [LieRing 
 
 /-- **The closed form of the trace**, summed over the `α`-string above `χ` with its bottom index
 removed.  This is the index set of the inner sum of Freudenthal's multiplicity formula. -/
-theorem trace_raiseLowerEnd_eq_sum_weightString (hα : α ≠ 0)
+theorem trace_raiseLowerEnd_eq_sum_weightString_erase_zero (hα : α ≠ 0)
     (hx : x ∈ rootSpace H (α : H → K)) (hy : y ∈ rootSpace H (-(α : H → K)))
     (hz : ⁅x, y⁆ = (z : L)) :
     trace K _ (raiseLowerEnd M hx hy (χ : H → K))
       = ∑ j ∈ (weightString M hα χ).erase 0,
-          finrank K (genWeightSpace M ((χ : H → K) + j • (α : H → K)))
-            • ((χ : H → K) + j • (α : H → K)) z := by
+          finrank K (genWeightSpace M ((χ + j • α : Dual K H) : H → K))
+            • ((χ + j • α : Dual K H) : H → K) z := by
   classical
-  -- The string API speaks of `↑(χ + j • α)` while the trace results speak of `↑χ + j • ↑α`;
-  -- forgetting linearity commutes with these operations definitionally, so `hN` and
-  -- `mem_weightString_iff` transfer without a rewrite.
+  -- The string API spells the shifted weight `↑(χ + j • α)`, the trace results `↑χ + j • ↑α`;
+  -- `LinearMap.coe_add` and `LinearMap.coe_smul` pass between the two spellings.
+  have hcoe : ∀ j : ℕ, ((χ + j • α : Dual K H) : H → K) = (χ : H → K) + j • (α : H → K) :=
+    fun _ => by simp only [LinearMap.coe_add, LinearMap.coe_smul]
   obtain ⟨N, hN⟩ := exists_genWeightSpace_add_nsmul_eq_bot_of_le (M := M) hα χ
+  have hN' : ∀ j : ℕ, N ≤ j → genWeightSpace M ((χ : H → K) + j • (α : H → K)) = ⊥ :=
+    fun j hj => by rw [← hcoe]; exact hN j hj
   have hmem : ∀ j : ℕ, j ∈ weightString M hα χ ↔
-      genWeightSpace M ((χ : H → K) + j • (α : H → K)) ≠ ⊥ := fun _ => mem_weightString_iff hα χ
-  rw [trace_raiseLowerEnd_eq_sum_Ico hx hy hz _ hN]
+      genWeightSpace M ((χ : H → K) + j • (α : H → K)) ≠ ⊥ :=
+    fun j => by rw [mem_weightString_iff, hcoe]
+  simp only [hcoe]
+  rw [trace_raiseLowerEnd_eq_sum_Ico hx hy hz _ (hN' N le_rfl)]
   refine (Finset.sum_subset (fun j hj => ?_) (fun j hj hj' => ?_)).symm
   · have hjw := (hmem j).mp (Finset.mem_of_mem_erase hj)
     have hj0 : j ≠ 0 := Finset.ne_of_mem_erase hj
     refine Finset.mem_Ico.mpr ⟨by omega, ?_⟩
     by_contra hjN
-    exact hjw (hN j (by omega))
+    exact hjw (hN' j (by omega))
   · have hj0 : j ≠ 0 := by have := (Finset.mem_Ico.mp hj).1; omega
     have hjnot : j ∉ weightString M hα χ := fun hj'' =>
       hj' (Finset.mem_erase.mpr ⟨hj0, hj''⟩)
     have hjw : genWeightSpace M ((χ : H → K) + j • (α : H → K)) = ⊥ := by
       by_contra hne
       exact hjnot ((hmem j).mpr hne)
-    rw [hjw, ← finrank_toSubmodule, LieSubmodule.bot_toSubmodule, finrank_bot, zero_smul]
+    rw [finrank_eq_zero_of_eq_bot hjw, zero_smul]
 
 end WeightString
 
