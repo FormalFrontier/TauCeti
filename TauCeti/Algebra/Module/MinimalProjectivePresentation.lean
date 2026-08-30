@@ -48,9 +48,12 @@ The file is layered by the coefficients each part needs, as
 readings of it need only a semiring and additive monoids. The degeneration over a projective
 module needs the presented module to be an additive group, that being what uniqueness of covers
 needs. The comparison and uniqueness theorems need a ring, which the syzygy forces rather than the
-proofs choosing it: `ker p₀` is a submodule, a submodule of a module over a semiring carries only
-an `AddCommMonoid`, and the cover statements applied to it are available exactly for a covered
-module that is an additive group.
+proofs choosing it: they apply the cover statements of `TauCeti/Algebra/Module/ProjectiveCover.lean`
+to the syzygy `ker p₀` as the *covered* module, and those are stated for a covered module that is
+an additive group. A submodule of an additive group is itself an additive group only once the
+scalars form a ring — `Submodule.addCommGroup` is a `[Ring R]` instance, and over a semiring a
+submodule need not be closed under negation, as `ℕ ⊆ ℤ` shows — so over a semiring
+`↥(LinearMap.ker p₀)` carries no `AddCommGroup` structure at all.
 
 ## Main definitions
 
@@ -66,9 +69,12 @@ module that is an additive group.
 * `TauCeti.IsMinimalProjectivePresentation.exists_surjective`: **a minimal projective presentation
   is a quotient of every projective presentation**, by a pair of surjections commuting with the
   maps.
-* `TauCeti.IsMinimalProjectivePresentation.exists_linearEquiv`: **uniqueness**, as an isomorphism
-  of the whole diagram; `TauCeti.IsMinimalProjectivePresentation.nonempty_linearEquiv_ker` records
-  the resulting isomorphism of syzygies.
+* `TauCeti.IsMinimalProjectivePresentation.bijective_of_comp_eq` and
+  `TauCeti.IsMinimalProjectivePresentation.exists_linearEquiv`: **uniqueness**, first as
+  bijectivity of any pair of comparison maps between two minimal presentations and then as an
+  isomorphism of the whole diagram;
+  `TauCeti.IsMinimalProjectivePresentation.nonempty_linearEquiv_ker` records the resulting
+  isomorphism of syzygies.
 * `TauCeti.IsMinimalProjectivePresentation.bijective_of_projective`,
   `TauCeti.IsMinimalProjectivePresentation.eq_zero_of_projective` and
   `TauCeti.IsMinimalProjectivePresentation.subsingleton_of_projective`: over a projective module
@@ -138,8 +144,7 @@ theorem exact (h : IsMinimalProjectivePresentation p₁ p₀) : Function.Exact p
 /-- The left-hand map of a presentation lands in the syzygy. -/
 theorem apply_mem_ker (h : IsMinimalProjectivePresentation p₁ p₀) (x : P₁) :
     p₁ x ∈ LinearMap.ker p₀ := by
-  rw [← h.range_eq_ker]
-  exact LinearMap.mem_range_self p₁ x
+  simpa using LinearMap.congr_fun h.exact.linearMap_comp_eq_zero x
 
 /-- **Minimality of the left-hand map, in cover form**: corestricted to the syzygy `ker p₀`, the
 map `p₁` is a projective cover of it. This is the reading of the definition that
@@ -148,10 +153,8 @@ theorem isProjectiveCover_codRestrict (h : IsMinimalProjectivePresentation p₁ 
     IsProjectiveCover (LinearMap.codRestrict (LinearMap.ker p₀) p₁ h.apply_mem_ker) where
   projective := h.projective
   surjective := by
-    intro y
-    have hy : (y : P₀) ∈ LinearMap.range p₁ := by rw [h.range_eq_ker]; exact y.2
-    obtain ⟨x, hx⟩ := hy
-    exact ⟨x, Subtype.ext hx⟩
+    rw [← LinearMap.range_eq_top, LinearMap.range_codRestrict, h.range_eq_ker,
+      Submodule.comap_subtype_self]
   isSuperfluous_ker := by
     rw [LinearMap.ker_codRestrict]
     exact h.isSuperfluous_ker
@@ -176,6 +179,29 @@ theorem IsProjectiveCover.isMinimalProjectivePresentation {p₀ : P₀ →ₗ[R]
       simp
     rw [hker]
     exact h₁.isSuperfluous_ker
+
+/-- **A comparison of presentations descends to the syzygies.** If `f` is a surjection between the
+middle terms of two presentations of `M` commuting with the two presenting maps `a₀` and `b₀`, then
+the induced map `A₁ → ker b₀` on syzygies is again onto: a syzygy of the target is hit in the middle
+term, and exactness of the source sequence lifts it back along `a₁`.
+
+This is the step both comparison theorems below rest on, once for the presentation being compared
+and once for the second minimal presentation. -/
+private theorem surjective_codRestrict_comp {A : Type*} {A₁ : Type*} {B : Type*}
+    [AddCommMonoid A] [Module R A] [AddCommMonoid A₁] [Module R A₁] [AddCommMonoid B] [Module R B]
+    {a₀ : A →ₗ[R] M} {a₁ : A₁ →ₗ[R] A} {b₀ : B →ₗ[R] M} {f : A →ₗ[R] B}
+    (hf : Function.Surjective f) (ha : LinearMap.range a₁ = LinearMap.ker a₀)
+    (hcomp : b₀ ∘ₗ f = a₀) (hmem : ∀ z, (f ∘ₗ a₁) z ∈ LinearMap.ker b₀) :
+    Function.Surjective (LinearMap.codRestrict (LinearMap.ker b₀) (f ∘ₗ a₁) hmem) := by
+  have hbf : ∀ x, b₀ (f x) = a₀ x := fun x => LinearMap.congr_fun hcomp x
+  intro y
+  obtain ⟨u, hu⟩ := hf (y : B)
+  have hu' : u ∈ LinearMap.range a₁ := by
+    rw [ha]
+    have hzero : b₀ (f u) = 0 := by rw [hu]; exact y.2
+    simpa [hbf] using hzero
+  obtain ⟨z, hz⟩ := hu'
+  exact ⟨z, Subtype.ext (by simp [hz, hu])⟩
 
 end Semiring
 
@@ -255,41 +281,26 @@ theorem exists_surjective [AddCommMonoid Q₀] [Module R Q₀] [Module.Projectiv
     intro z
     have hz : q₁ z ∈ LinearMap.ker q₀ := by rw [← hq]; exact LinearMap.mem_range_self q₁ z
     simpa [hpf] using hz
-  -- It is onto, because `f₀` is onto and the source sequence is exact at `Q₀`.
-  have hgsurj : Function.Surjective
-      (LinearMap.codRestrict (LinearMap.ker p₀) (f₀ ∘ₗ q₁) hmem) := by
-    intro y
-    obtain ⟨u, hu⟩ := hf₀surj (y : P₀)
-    have hu' : u ∈ LinearMap.range q₁ := by
-      rw [hq]
-      have hzero : p₀ (f₀ u) = 0 := by rw [hu]; exact y.2
-      simpa [hpf] using hzero
-    obtain ⟨z, hz⟩ := hu'
-    exact ⟨z, Subtype.ext (by simp [hz, hu])⟩
-  obtain ⟨f₁, hf₁, hf₁surj⟩ := h.isProjectiveCover_codRestrict.exists_surjective hgsurj
+  obtain ⟨f₁, hf₁, hf₁surj⟩ := h.isProjectiveCover_codRestrict.exists_surjective
+    (surjective_codRestrict_comp hf₀surj hq hf₀ hmem)
   refine ⟨f₀, f₁, hf₀, LinearMap.ext fun z => ?_, hf₀surj, hf₁surj⟩
   have hval := congrArg Subtype.val (LinearMap.congr_fun hf₁ z)
   simpa using hval.symm
 
 variable [AddCommGroup Q₀] [Module R Q₀] [AddCommGroup Q₁] [Module R Q₁]
 
-/-- **Uniqueness of the minimal projective presentation.** Two minimal projective presentations of
-the same module are isomorphic as diagrams: there are linear equivalences of both sources
-commuting with the presenting map and with the two syzygy maps.
+/-- **Uniqueness of the minimal projective presentation, in comparison-map form.** A pair of maps
+between the sources of two minimal projective presentations of `M` that commutes with the presenting
+maps and with the two left-hand maps consists of two isomorphisms; no further hypothesis on the pair
+is needed.
 
-The comparison surjections come from
-`TauCeti.IsMinimalProjectivePresentation.exists_surjective`; each is bijective because it compares
-two projective covers of the same module — of `M` on the right, and of the syzygy on the left, the
-two syzygies being identified by the right-hand equivalence. -/
-theorem exists_linearEquiv {q₁ : Q₁ →ₗ[R] Q₀} {q₀ : Q₀ →ₗ[R] M}
+Each is bijective because it compares two projective covers of the same module — of `M` on the
+right, and of the syzygy on the left, the two syzygies being identified by the right-hand map. -/
+theorem bijective_of_comp_eq {q₁ : Q₁ →ₗ[R] Q₀} {q₀ : Q₀ →ₗ[R] M}
     (h : IsMinimalProjectivePresentation p₁ p₀)
-    (h' : IsMinimalProjectivePresentation q₁ q₀) :
-    ∃ (e₀ : P₀ ≃ₗ[R] Q₀) (e₁ : P₁ ≃ₗ[R] Q₁),
-      q₀ ∘ₗ (e₀ : P₀ →ₗ[R] Q₀) = p₀ ∧
-        (e₀ : P₀ →ₗ[R] Q₀) ∘ₗ p₁ = q₁ ∘ₗ (e₁ : P₁ →ₗ[R] Q₁) := by
-  have hP₀ : Module.Projective R P₀ := h.isProjectiveCover.projective
-  have hP₁ : Module.Projective R P₁ := h.projective
-  obtain ⟨f₀, f₁, hcomp, hsquare, -, -⟩ := h'.exists_surjective h.surjective h.range_eq_ker
+    (h' : IsMinimalProjectivePresentation q₁ q₀) {f₀ : P₀ →ₗ[R] Q₀} {f₁ : P₁ →ₗ[R] Q₁}
+    (hcomp : q₀ ∘ₗ f₀ = p₀) (hsquare : f₀ ∘ₗ p₁ = q₁ ∘ₗ f₁) :
+    Function.Bijective f₀ ∧ Function.Bijective f₁ := by
   have hbij₀ : Function.Bijective f₀ :=
     h.isProjectiveCover.bijective_of_comp_eq h'.isProjectiveCover hcomp
   have hqf : ∀ y, q₀ (f₀ y) = p₀ y := fun y => LinearMap.congr_fun hcomp y
@@ -300,24 +311,31 @@ theorem exists_linearEquiv {q₁ : Q₁ →ₗ[R] Q₀} {q₀ : Q₀ →ₗ[R] M
     simpa [hqf] using hz
   have hkerf₀ : LinearMap.ker f₀ = ⊥ := LinearMap.ker_eq_bot.mpr hbij₀.injective
   have hcover : IsProjectiveCover (LinearMap.codRestrict (LinearMap.ker q₀) (f₀ ∘ₗ p₁) hmem) := by
-    refine ⟨h.projective, ?_, ?_⟩
-    · intro y
-      obtain ⟨u, hu⟩ := hbij₀.2 (y : Q₀)
-      have hu' : u ∈ LinearMap.range p₁ := by
-        rw [h.range_eq_ker]
-        have hzero : q₀ (f₀ u) = 0 := by rw [hu]; exact y.2
-        simpa [hqf] using hzero
-      obtain ⟨z, hz⟩ := hu'
-      exact ⟨z, Subtype.ext (by simp [hz, hu])⟩
-    · have hker : LinearMap.ker (LinearMap.codRestrict (LinearMap.ker q₀) (f₀ ∘ₗ p₁) hmem)
-          = LinearMap.ker p₁ := by
-        rw [LinearMap.ker_codRestrict, LinearMap.ker_comp, hkerf₀, Submodule.comap_bot]
-      rw [hker]
-      exact h.isSuperfluous_ker
-  have hbij₁ : Function.Bijective f₁ := by
-    refine hcover.bijective_of_comp_eq h'.isProjectiveCover_codRestrict ?_
-    refine LinearMap.ext fun z => Subtype.ext ?_
-    simpa using (LinearMap.congr_fun hsquare z).symm
+    refine ⟨h.projective,
+      surjective_codRestrict_comp hbij₀.surjective h.range_eq_ker hcomp hmem, ?_⟩
+    rw [LinearMap.ker_codRestrict, LinearMap.ker_comp, hkerf₀, Submodule.comap_bot]
+    exact h.isSuperfluous_ker
+  refine ⟨hbij₀, hcover.bijective_of_comp_eq h'.isProjectiveCover_codRestrict ?_⟩
+  refine LinearMap.ext fun z => Subtype.ext ?_
+  simpa using (LinearMap.congr_fun hsquare z).symm
+
+/-- **Uniqueness of the minimal projective presentation.** Two minimal projective presentations of
+the same module are isomorphic as diagrams: there are linear equivalences of both sources
+commuting with the presenting map and with the two syzygy maps.
+
+The comparison surjections come from
+`TauCeti.IsMinimalProjectivePresentation.exists_surjective`, and
+`TauCeti.IsMinimalProjectivePresentation.bijective_of_comp_eq` turns them into isomorphisms. -/
+theorem exists_linearEquiv {q₁ : Q₁ →ₗ[R] Q₀} {q₀ : Q₀ →ₗ[R] M}
+    (h : IsMinimalProjectivePresentation p₁ p₀)
+    (h' : IsMinimalProjectivePresentation q₁ q₀) :
+    ∃ (e₀ : P₀ ≃ₗ[R] Q₀) (e₁ : P₁ ≃ₗ[R] Q₁),
+      q₀ ∘ₗ (e₀ : P₀ →ₗ[R] Q₀) = p₀ ∧
+        (e₀ : P₀ →ₗ[R] Q₀) ∘ₗ p₁ = q₁ ∘ₗ (e₁ : P₁ →ₗ[R] Q₁) := by
+  have hP₀ : Module.Projective R P₀ := h.isProjectiveCover.projective
+  have hP₁ : Module.Projective R P₁ := h.projective
+  obtain ⟨f₀, f₁, hcomp, hsquare, -, -⟩ := h'.exists_surjective h.surjective h.range_eq_ker
+  obtain ⟨hbij₀, hbij₁⟩ := h.bijective_of_comp_eq h' hcomp hsquare
   exact ⟨LinearEquiv.ofBijective f₀ hbij₀, LinearEquiv.ofBijective f₁ hbij₁, hcomp, hsquare⟩
 
 /-- **The syzygy of a minimal projective presentation is well defined.** The right-hand equivalence
@@ -339,8 +357,7 @@ theorem nonempty_linearEquiv_ker {q₁ : Q₁ →ₗ[R] Q₀} {q₀ : Q₀ →�
       have hy' : q₀ y = p₀ (e₀.symm y) := by
         rw [← hqe (e₀.symm y), e₀.apply_symm_apply]
       simpa [← hy'] using hy0
-  exact ⟨(Submodule.equivMapOfInjective (e₀ : P₀ →ₗ[R] Q₀) e₀.injective _).trans
-    (LinearEquiv.ofEq _ _ hmap)⟩
+  exact ⟨e₀.ofSubmodules (LinearMap.ker p₀) (LinearMap.ker q₀) hmap⟩
 
 end Comparison
 
