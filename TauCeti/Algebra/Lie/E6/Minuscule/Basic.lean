@@ -29,8 +29,8 @@ interpreting these matrices as a representation of that algebra, remains downstr
 
 This is the representation-theoretic input for the full-weight type-`E₆` Chevalley--Demazure
 carrier required by Layer 9 of the ReductiveGroups roadmap. The weights span the full character
-lattice by `TauCeti.DynkinType.span_range_e6MinusculeWeight_eq_top`; constructing the associated
-Kostant carrier and its group scheme remains downstream.
+lattice by `TauCeti.DynkinType.span_range_e6MinusculeWeight_eq_top`; the associated Kostant carrier
+and its group scheme are constructed in `TauCeti.Algebra.Lie.E6.Minuscule.Carrier`.
 
 ## Main declarations
 

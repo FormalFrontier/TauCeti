@@ -114,6 +114,20 @@ theorem e6MinusculeReflection_apply_apply (i : Fin 6) (a : Fin 27) :
     e6MinusculeReflection i (e6MinusculeReflection i a) = a :=
   e6MinusculeReflectionIndex_involutive i a
 
+/-- A distinguished weight with simple-coroot coordinate `-1`, together with its reflected
+target. -/
+theorem e6MinusculeWeight_distinguished_neg_one_step (i : Fin 6) :
+    e6MinusculeWeight (![1, 4, 2, 3, 5, 7] i) i = -1 ∧
+      e6MinusculeReflection i (![1, 4, 2, 3, 5, 7] i) = ![0, 3, 1, 2, 3, 5] i := by
+  fin_cases i <;> decide
+
+/-- A distinguished weight with simple-coroot coordinate `1`, together with its reflected
+target. -/
+theorem e6MinusculeWeight_distinguished_one_step (i : Fin 6) :
+    e6MinusculeWeight (![0, 3, 1, 2, 3, 5] i) i = 1 ∧
+      e6MinusculeReflection i (![0, 3, 1, 2, 3, 5] i) = ![1, 4, 2, 3, 5, 7] i := by
+  fin_cases i <;> decide
+
 private theorem e6MinusculeWeight_reflection_table (i : Fin 6) (a : Fin 27) :
     e6MinusculeWeight (e6MinusculeReflection i a) =
       e6MinusculeWeight a - e6MinusculeWeight a i • CartanMatrix.E 6 i := by
