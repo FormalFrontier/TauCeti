@@ -167,7 +167,6 @@ noncomputable def preprojectiveOpAlgEquiv :
 
 /-- On an arbitrary path-algebra representative, the opposite-algebra isomorphism reverses the
 representative before applying the opposite of the quotient map. -/
-@[simp]
 theorem preprojectiveOpAlgEquiv_preprojectiveMk (x : pathAlgebra k (Symmetrify Q)) :
     preprojectiveOpAlgEquiv k Q (preprojectiveMk k Q x) =
       (AlgHom.op (preprojectiveMk k Q)) (reverseOpAlgEquiv k (Symmetrify Q) x) := by
