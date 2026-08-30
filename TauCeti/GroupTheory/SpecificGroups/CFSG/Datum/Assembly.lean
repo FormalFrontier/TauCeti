@@ -58,6 +58,8 @@ points, or a finite group.
 
 ## Main results
 
+* `TauCeti.ValidLieTypeIndex.datumSteinberg_def`: the dispatcher itself, for a consumer reasoning
+  about both branches at once.
 * `TauCeti.ValidLieTypeIndex.datumSteinberg_of_usesHalfFrobenius` and
   `TauCeti.ValidLieTypeIndex.datumSteinberg_of_not_usesHalfFrobenius`: the two branch equations,
   exhaustive because the selecting predicate is decidable.
@@ -105,17 +107,29 @@ def datumSteinberg :
   if h : d.1.UsesHalfFrobenius then SuzukiReeIndex.datumSteinberg ⟨d, h⟩
   else GraphTwistedIndex.datumSteinberg ⟨d, h⟩
 
+/-- **The defining equation of the root-datum Steinberg map**, exhibiting it as the `dite` on
+`TauCeti.LieTypeIndex.UsesHalfFrobenius`. This is what a consumer rewrites with to reason about both
+branches at once; when the predicate is already decided one way,
+`TauCeti.ValidLieTypeIndex.datumSteinberg_of_usesHalfFrobenius` and
+`TauCeti.ValidLieTypeIndex.datumSteinberg_of_not_usesHalfFrobenius` are the eliminators to use
+instead. -/
+theorem datumSteinberg_def :
+    d.datumSteinberg =
+      if h : d.1.UsesHalfFrobenius then SuzukiReeIndex.datumSteinberg ⟨d, h⟩
+      else GraphTwistedIndex.datumSteinberg ⟨d, h⟩ := by
+  rw [datumSteinberg]
+
 /-- **The half-Frobenius branch of the Steinberg map.** On the Suzuki, Ree `G₂`, Ree `F₄` and Tits
 indices it is the odd power `τ ^ (2 * m + 1)` of the selected special isogeny. -/
 theorem datumSteinberg_of_usesHalfFrobenius (h : d.1.UsesHalfFrobenius) :
     d.datumSteinberg = SuzukiReeIndex.datumSteinberg ⟨d, h⟩ := by
-  rw [datumSteinberg, dite_eq_left h]
+  rw [datumSteinberg_def, dite_eq_left h]
 
 /-- **The ordinary branch of the Steinberg map.** On the nine untwisted families and on `²Aₙ(q)`,
 `²Dₙ(q)`, `²E₆(q)` and `³D₄(q)` it is the graph automorphism after the `q`-power Frobenius. -/
 theorem datumSteinberg_of_not_usesHalfFrobenius (h : ¬ d.1.UsesHalfFrobenius) :
     d.datumSteinberg = GraphTwistedIndex.datumSteinberg ⟨d, h⟩ := by
-  rw [datumSteinberg, dite_eq_right h]
+  rw [datumSteinberg_def, dite_eq_right h]
 
 /-- **The Steinberg map of a graph-twisted index degenerates to the Frobenius exactly on the
 untwisted families**, where the diagram permutation is trivial. This is
