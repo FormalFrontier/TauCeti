@@ -35,7 +35,6 @@ force that permutation to be trivial.
   permutation action has an ambient-invariant joint weight space.
 * `map_iInf_eigenspace_unitHom_eq_self_of_mem_ker_nonzeroJointWeightAction`: the kernel of that
   action preserves every nonzero joint weight space.
-* `finiteIndex_ker_nonzeroJointWeightAction`: in finite dimension, that kernel has finite index.
 
 ## References
 
@@ -181,22 +180,6 @@ theorem map_iInf_eigenspace_unitHom_eq_self_of_mem_ker_nonzeroJointWeightAction
   apply map_iInf_eigenspace_unitHom_eq_self_of_nonzeroJointWeightAction_eq N ρ g χ
   have h := DFunLike.congr_fun ((MonoidHom.mem_ker).mp hg) χ
   simpa using h
-
-section Finite
-
-variable {G K V : Type*} [Group G] [Field K] [AddCommGroup V] [Module K V]
-
-/-- The kernel of the permutation action on nonzero normal-subgroup weights has finite index in
-the ambient group. -/
-theorem finiteIndex_ker_nonzeroJointWeightAction [FiniteDimensional K V]
-    (N : Subgroup G) [N.Normal]
-    (ρ : G →* Module.End K V) :
-    (nonzeroJointWeightAction N ρ).ker.FiniteIndex := by
-  let _ : Finite {χ : N →* Kˣ // (⨅ n : N, (ρ n).eigenspace (χ n)) ≠ ⊥} :=
-    finite_nonzeroJointWeights (ρ.comp N.subtype)
-  exact Subgroup.finiteIndex_ker (nonzeroJointWeightAction N ρ)
-
-end Finite
 
 end TauCeti
 
