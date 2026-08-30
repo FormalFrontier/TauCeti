@@ -43,11 +43,11 @@ central-quotient recipe to this endomorphism.
 
 The branch equations `steinberg_ofA` and `steinberg_ofTwistedA` name the Steinberg map of each
 family as `TauCeti.SlStd.frobenius` and `TauCeti.SlStd.twistedFrobenius` outright, so the upstream
-results about those maps apply to `d.steinberg` directly and are not restated here. The upstream
+results about those maps apply to `d.steinberg` directly. The upstream
 lemmas include the commutation `TauCeti.SlStd.graphAutomorphismPoints_comp_frobenius` and the
 involution equation `TauCeti.SlStd.graphAutomorphismPoints_graphAutomorphismPoints` required by
-milestone L1. Separately, `TauCeti.SlStd.twistedFrobenius_comp_self` supplies the square relation
-for the composite Steinberg map. The fixed-point identification
+milestone L1. The theorem `steinberg_comp_self_ofTwistedA` records the resulting square relation
+for the composite Steinberg map at a validated twisted type-A index. The fixed-point identification
 `TauCeti.SlStd.map_subtype_fixedSubgroup_frobenius_eq` and the containment
 `TauCeti.SlStd.map_subtype_fixedSubgroup_twistedFrobenius_le` are available in the same way. The
 lemma `simpleRootSubgroup_def` plays this role for the root subgroups.
@@ -69,6 +69,8 @@ Nothing here asserts that a constructed group is finite or simple.
 * `TauCeti.TypeALieIndex.steinberg`, with `TauCeti.TypeALieIndex.steinberg_ofA` and
   `TauCeti.TypeALieIndex.steinberg_ofTwistedA`: Frobenius on `A_r(q)` and graph-twisted Frobenius
   on `²A_r(q)`.
+* `TauCeti.TypeALieIndex.steinberg_comp_self_ofTwistedA`: the square of the graph-twisted
+  Steinberg map is the corresponding `q ^ 2`-power Frobenius.
 * `TauCeti.TypeALieIndex.steinberg_simpleRootSubgroup`: the pinned simple-root-subgroup equation.
 * `TauCeti.TypeALieIndex.FixedPoints` and `TauCeti.TypeALieIndex.Group`: the fixed group and its
   derived central quotient.
@@ -142,6 +144,18 @@ theorem steinberg_ofTwistedA (rank : ℕ) (q : PrimePower)
         (ofTwistedA rank q hvalid).1.characteristic (ofTwistedA rank q hvalid).1.fieldExponent
         (ofTwistedA rank q hvalid).1.Closure := by
   simp only [steinberg]
+
+/-- The square of the Steinberg map on `²A_r(q)` is the `q ^ 2`-power Frobenius of the standard
+carrier. -/
+theorem steinberg_comp_self_ofTwistedA (rank : ℕ) (q : PrimePower)
+    (hvalid : (LieTypeIndex.twistedA rank q).Valid) :
+    (ofTwistedA rank q hvalid).steinberg.comp (ofTwistedA rank q hvalid).steinberg =
+      SlStd.frobenius (ofTwistedA rank q hvalid).1.rank
+        (ofTwistedA rank q hvalid).1.characteristic
+        (2 * (ofTwistedA rank q hvalid).1.fieldExponent)
+        (ofTwistedA rank q hvalid).1.Closure := by
+  rw [steinberg_ofTwistedA]
+  exact SlStd.twistedFrobenius_comp_self _ _ _ _
 
 /-- **The Steinberg map has the pinned action on every positive simple-root subgroup.** It sends
 `x_i(u)` to `x_{γ i}(u ^ q)`, where `γ` is the diagram permutation of the index and `q` is its
