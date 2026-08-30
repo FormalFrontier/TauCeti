@@ -50,8 +50,9 @@ and the two factorizations
 ```text
 F = γ ∘ Frob_q = Frob_q ∘ γ
 ```
-carry the relations that milestone L1 asks of a graph-twisted Steinberg map: `γ` has the order of
-the diagram permutation it realizes, and it commutes with the Frobenius.
+carry the relations that milestone L1 asks of a graph-twisted Steinberg map: the twist order of the
+diagram permutation `γ` realizes annihilates `γ`, that is `γ = 1` on `A_r(q)` and `γ ^ 2 = 1` on
+`²A_r(q)`, and `γ` commutes with the Frobenius. Its exact order is not proved here.
 
 The branch equations `steinberg_ofA` and `steinberg_ofTwistedA` name the Steinberg map of each
 family as `TauCeti.SlStd.frobenius` and `TauCeti.SlStd.twistedFrobenius` outright, so the upstream
