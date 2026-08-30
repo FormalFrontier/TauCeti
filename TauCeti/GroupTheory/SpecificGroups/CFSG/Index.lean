@@ -218,9 +218,9 @@ instance : DecidablePred UsesHalfFrobenius := fun d => by
 
 /-- Whether a Lie-type index belongs to one of the two type-A families, `A_r(q)` or `²A_r(q)`.
 
-This is a constructor selector, not a mathematical property of a group. In particular it carries
-no finiteness, simplicity, or small-field assumption; those restrictions come from the enclosing
-`TauCeti.ValidLieTypeIndex`. -/
+This is a constructor selector, not a mathematical property of a group. The small-field and
+duplicate-representative restrictions come from the enclosing `TauCeti.ValidLieTypeIndex`; no
+finiteness or simplicity is asserted here. -/
 def IsTypeA : LieTypeIndex → Prop
   | .A _ _ | .twistedA _ _ => True
   | _ => False
