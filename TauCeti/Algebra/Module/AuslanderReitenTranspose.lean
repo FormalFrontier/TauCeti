@@ -232,6 +232,7 @@ theorem linearEquiv_refl :
       LinearMap.id_apply]
 
 /-- Transport along a composite of presentation equivalences is the composite transport. -/
+@[simp]
 theorem linearEquiv_trans {q₁ : Q₁ →ₗ[A] Q₀}
     {R₀ R₁ : Type*} [AddCommGroup R₀] [Module A R₀] [AddCommGroup R₁] [Module A R₁]
     {r₁ : R₁ →ₗ[A] R₀} (e₀ : P₀ ≃ₗ[A] Q₀) (e₁ : P₁ ≃ₗ[A] Q₁)
@@ -257,6 +258,7 @@ theorem linearEquiv_trans {q₁ : Q₁ →ₗ[A] Q₀}
       LinearMap.comp_apply]
 
 /-- The inverse of transport is transport along the inverse presentation equivalences. -/
+@[simp]
 theorem linearEquiv_symm {q₁ : Q₁ →ₗ[A] Q₀} (e₀ : P₀ ≃ₗ[A] Q₀)
     (e₁ : P₁ ≃ₗ[A] Q₁)
     (hsquare : e₀.toLinearMap ∘ₗ p₁ = q₁ ∘ₗ e₁.toLinearMap) :
