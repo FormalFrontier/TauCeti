@@ -367,8 +367,9 @@ the opposite root subgroup and negates the parameter. -/
 @[simp]
 theorem transvectionWeylElement_mul_transvectionUnit_mul_inv_self (hij : i ≠ j) (c : A) :
     transvectionWeylElement hij * transvectionUnit hij c *
-        (transvectionWeylElement hij)⁻¹ =
+        transvectionWeylElement hij.symm =
       transvectionUnit hij.symm (-c) := by
+  rw [← transvectionWeylElement_inv hij]
   have hsemiconj :
       transvectionWeylElement hij * transvectionUnit hij c =
         transvectionUnit hij.symm (-c) * transvectionWeylElement hij := by
@@ -400,8 +401,9 @@ back to its root subgroup and negates the parameter. -/
 @[simp]
 theorem transvectionWeylElement_mul_transvectionUnit_mul_inv_symm (hij : i ≠ j) (c : A) :
     transvectionWeylElement hij * transvectionUnit hij.symm c *
-        (transvectionWeylElement hij)⁻¹ =
+        transvectionWeylElement hij.symm =
       transvectionUnit hij (-c) := by
+  rw [← transvectionWeylElement_inv hij]
   have hsemiconj :
       transvectionWeylElement hij * transvectionUnit hij.symm c =
         transvectionUnit hij (-c) * transvectionWeylElement hij := by
@@ -434,8 +436,9 @@ of `xⱼₖ(c)` by `i`. -/
 theorem transvectionWeylElement_mul_transvectionUnit_mul_inv_left
     (hij : i ≠ j) (hjk : j ≠ k) (hik : i ≠ k) (c : A) :
     transvectionWeylElement hij * transvectionUnit hjk c *
-        (transvectionWeylElement hij)⁻¹ =
+        transvectionWeylElement hij.symm =
       transvectionUnit hik c := by
+  rw [← transvectionWeylElement_inv hij]
   rw [transvectionWeylElement_def]
   set x := transvectionUnit hij (1 : A)
   set y := transvectionUnit hij.symm (-1 : A)
@@ -470,8 +473,9 @@ of `xₖⱼ(c)` by `i`. -/
 theorem transvectionWeylElement_mul_transvectionUnit_mul_inv_right
     (hij : i ≠ j) (hkj : k ≠ j) (hki : k ≠ i) (c : A) :
     transvectionWeylElement hij * transvectionUnit hkj c *
-        (transvectionWeylElement hij)⁻¹ =
+        transvectionWeylElement hij.symm =
       transvectionUnit hki c := by
+  rw [← transvectionWeylElement_inv hij]
   rw [transvectionWeylElement_def]
   set x := transvectionUnit hij (1 : A)
   set y := transvectionUnit hij.symm (-1 : A)
