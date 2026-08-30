@@ -51,6 +51,9 @@ cyclically reduced, which is what makes that comparison legitimate, both figures
 after free and cyclic reduction of each relator; the individual lengths locate any discrepancy in
 the total.
 
+These field equations and the checks beside them follow the shape that the
+`TauCeti.GroupTheory.SpecificGroups.CFSG.Sporadic.Janko` modules established for a manifest row.
+
 ## Main definitions and results
 
 * `TauCeti.Sporadic.co3Presentation`: Đoković's finite presentation of `Co₃`.
@@ -59,7 +62,9 @@ the total.
 * `TauCeti.Sporadic.co3Presentation_map_length_relators`,
   `TauCeti.Sporadic.co3Presentation_totalLength` and
   `TauCeti.Sporadic.co3Presentation_relatorsCyclicallyReduced`: the three checks on the compiled
-  words, the second of which is the source's stated length.
+  words, the second of which gives their `150`-letter total.
+* `TauCeti.Sporadic.co3Presentation_totalLength_add_length_transcribed`: that total together with
+  one separator for each relator, the length `174` that presentation (13.1) states.
 
 ## References
 

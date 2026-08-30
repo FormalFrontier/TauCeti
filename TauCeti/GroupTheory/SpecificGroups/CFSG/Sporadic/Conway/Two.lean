@@ -63,6 +63,9 @@ and cyclic reduction of each relator. This row records no published length, so t
 states the transcription for a reviewer to compare with the source, rather than checking it
 against a recorded number.
 
+These field equations and the checks beside them follow the shape that the
+`TauCeti.GroupTheory.SpecificGroups.CFSG.Sporadic.Janko` modules established for a manifest row.
+
 ## Main definitions and results
 
 * `TauCeti.Sporadic.co2Presentation`: John Bray's ATLAS finite presentation of `Co₂`.

@@ -49,6 +49,9 @@ lists concatenated, and the provenance a manifest row exists to record. Together
 first of those determines the compiled words and the relations defining the presented group, so a
 consumer reasons about the row without unfolding it.
 
+These field equations and the decidable checks beside them follow the shape that the
+`TauCeti.GroupTheory.SpecificGroups.CFSG.Sporadic.Janko` modules established for a manifest row.
+
 ## Main definitions and results
 
 * `TauCeti.Sporadic.co1Presentation`: the GPL finite presentation of the first Conway group `Co₁`.
