@@ -288,13 +288,6 @@ fundamental weights, the standard basis of the character lattice, by `σ`. -/
     (diagramAut ht hσ).toHom.weightMap = (LinearEquiv.funCongrLeft ℤ ℤ σ.symm).toLinearMap :=
   (rfl)
 
-/-- The diagram automorphism reads a character at the node moved by `σ⁻¹`. This is the pointwise
-form of `TauCeti.DynkinType.diagramAut_weightMap`, which a consumer with a named weight family in
-hand uses instead of unfolding the coordinate equivalence. -/
-theorem diagramAut_weightMap_apply (hσ : σ ∈ t.diagramSymmetry) (x : Fin t.rank → ℤ)
-    (i : Fin t.rank) : (diagramAut ht hσ).toHom.weightMap x i = x (σ.symm i) :=
-  (rfl)
-
 /-- The coweight map of the diagram automorphism is precomposition with `σ`, the transpose of the
 weight map, so it permutes the simple coroots by `σ⁻¹`. -/
 @[simp] theorem diagramAut_coweightMap (hσ : σ ∈ t.diagramSymmetry) :

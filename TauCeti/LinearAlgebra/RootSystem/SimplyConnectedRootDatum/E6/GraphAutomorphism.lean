@@ -70,7 +70,11 @@ theorem diagramAut_weightMap_graphPermE6 (x : Fin 6 → ℤ) :
   have h : (diagramAut valid_E6
       (mem_diagramSymmetry_iff.mpr cartanMatrix_E6_graphPermE6)).toHom.weightMap x =
       x ∘ graphPermE6.symm :=
-    funext fun i => diagramAut_weightMap_apply valid_E6 _ x i
+    (LinearMap.congr_fun (diagramAut_weightMap valid_E6
+      (mem_diagramSymmetry_iff.mpr cartanMatrix_E6_graphPermE6)) x).trans
+      (funext fun i =>
+        (congrFun (LinearEquiv.funCongrLeft_apply ℤ ℤ graphPermE6.symm x) i).trans
+          (LinearMap.funLeft_apply ℤ ℤ graphPermE6.symm x i))
   rw [h, graphPermE6_symm]
 
 /-- **The type-`E₆` diagram automorphism permutes the doubled minuscule weight family.** This is
