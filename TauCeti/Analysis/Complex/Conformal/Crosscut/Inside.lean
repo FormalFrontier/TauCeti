@@ -108,8 +108,9 @@ theorem exists_pos_forall_mem_image_inter_ball_and_image_sdiff_closedBall {U : S
     rw [hφ0, real_inner_self_eq_norm_sq, hnorm] at h1
     exact h1
   have hψ0 : ψ 0 = ρ ^ 2 := by
-    change ‖g (v * ((0 : ℝ) : ℂ) + f z₀) - ζ‖ ^ 2 = ρ ^ 2
-    rw [hφ0, hnorm]
+    dsimp only [ψ]
+    simp only [Complex.ofReal_zero, mul_zero, zero_add, hgf z₀ hz₀b,
+      hnorm]
   have hev : ∀ᶠ t : ℝ in 𝓝 0,
       |ψ t - ρ ^ 2 - t * (2 * ρ ^ 2)| ≤ ρ ^ 2 * |t| := by
     have := (hasDerivAt_iff_isLittleO.mp hψ).def
