@@ -83,13 +83,6 @@ theorem pointsMulEquiv_apply (G : Type v) [Group G] [Finite G] (g : G) :
   apply ofConv_injective
   exact toPoints_apply k G g
 
-/-- The inverse point equivalence sends evaluation at `g` back to `g`. -/
-@[simp]
-theorem pointsMulEquiv_symm_apply_eval (G : Type v) [Group G] [Finite G] (g : G) :
-    (pointsMulEquiv k G).symm (toConv (eval k G g)) = g := by
-  rw [← pointsMulEquiv_apply]
-  exact (pointsMulEquiv k G).symm_apply_apply g
-
 variable {H : Type w} [CommRing H] [Bialgebra k H]
 
 /-- A coordinate bialgebra morphism from the function algebra of a finite group to `H` induces
@@ -139,6 +132,17 @@ theorem pointHom_coordinateBialgHom
   simpa only [coordinateBialgHom_toAlgHom] using
     eval_comp_coordinateMap k F G q x
 
+/-- Pointwise, the morphism on points induced by a finite-group homomorphism is that
+homomorphism. -/
+@[simp]
+theorem pointHom_coordinateBialgHom_apply
+    {G : Type v} [Group G] [Finite G]
+    {F : Type w} [Group F] [Finite F] (q : F →* G) (x : F) :
+    pointHom (coordinateBialgHom k F G q) (toConv (eval k F x)) = q x := by
+  rw [← pointsMulEquiv_apply]
+  convert DFunLike.congr_fun (pointHom_coordinateBialgHom (k := k) q) x using 1
+  rfl
+
 /-- A connected affine group's homomorphism to a finite constant group is trivial on base-valued
 points. -/
 theorem pointHom_eq_one_of_connected {G : Type v} [Group G] [Finite G]
@@ -150,14 +154,6 @@ theorem pointHom_eq_one_of_connected {G : Type v} [Group G] [Finite G]
   apply (pointsMulEquiv k G).injective
   rw [pointsMulEquiv_pointHom, MonoidHom.one_apply, map_one]
   exact point_comp_eq_one_of_connected G hconnected f p.ofConv
-
-/-- Pointwise form of `pointHom_eq_one_of_connected`. -/
-theorem pointHom_apply_eq_one_of_connected {G : Type v} [Group G] [Finite G]
-    (hconnected : ConnectedSpace (PrimeSpectrum H))
-    (f : coordinateRing k G →ₐc[k] H)
-    (p : WithConv (H →ₐ[k] k)) :
-    pointHom f p = 1 := by
-  rw [pointHom_eq_one_of_connected hconnected f, MonoidHom.one_apply]
 
 end
 

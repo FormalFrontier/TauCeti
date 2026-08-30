@@ -27,10 +27,10 @@ joint-weight permutation; the finiteness and pointwise action are already suppli
 
 ## Main declarations
 
-* `TauCeti.nonzeroJointWeightAction_eq_one_of_coordinate`: a coordinate realization of the
+* `TauCeti.nonzeroJointWeightAction_eq_one_of_eq_pointHom`: a coordinate realization of the
   finite joint-weight action of a connected affine group is trivial.
-* `TauCeti.map_iInf_eigenspace_unitHom_eq_self_of_coordinate`: every ambient point preserves each
-  nonzero normal-subgroup joint weight space.
+* `TauCeti.map_iInf_eigenspace_unitHom_eq_self_of_eq_pointHom`: every ambient point preserves
+  each nonzero normal-subgroup joint weight space.
 
 ## References
 
@@ -65,7 +65,7 @@ local instance : Fintype (NonzeroJointWeight N ρ) :=
 /-- If the permutation of nonzero normal-subgroup joint weights is represented by a coordinate
 morphism to the corresponding finite constant symmetric group, connectedness makes the
 permutation action trivial. -/
-theorem nonzeroJointWeightAction_eq_one_of_coordinate
+theorem nonzeroJointWeightAction_eq_one_of_eq_pointHom
     (hconnected : ConnectedSpace (PrimeSpectrum H))
     (f : ConstantGroup.coordinateRing k (Equiv.Perm (NonzeroJointWeight N ρ)) →ₐc[k] H)
     (hcoordinate : nonzeroJointWeightAction N ρ =
@@ -75,20 +75,8 @@ theorem nonzeroJointWeightAction_eq_one_of_coordinate
   exact ConstantGroup.pointHom_eq_one_of_connected hconnected f
 
 /-- Under a coordinate realization of the finite joint-weight action, every point of a connected
-affine group fixes every nonzero normal-subgroup joint weight. -/
-theorem nonzeroJointWeightAction_apply_eq_self_of_coordinate
-    (hconnected : ConnectedSpace (PrimeSpectrum H))
-    (f : ConstantGroup.coordinateRing k (Equiv.Perm (NonzeroJointWeight N ρ)) →ₐc[k] H)
-    (hcoordinate : nonzeroJointWeightAction N ρ =
-      ConstantGroup.pointHom f)
-    (g : WithConv (H →ₐ[k] k)) (χ : NonzeroJointWeight N ρ) :
-    nonzeroJointWeightAction N ρ g χ = χ := by
-  rw [nonzeroJointWeightAction_eq_one_of_coordinate N ρ hconnected f hcoordinate]
-  rfl
-
-/-- Under a coordinate realization of the finite joint-weight action, every point of a connected
 affine group preserves every nonzero normal-subgroup joint weight space. -/
-theorem map_iInf_eigenspace_unitHom_eq_self_of_coordinate
+theorem map_iInf_eigenspace_unitHom_eq_self_of_eq_pointHom
     (hconnected : ConnectedSpace (PrimeSpectrum H))
     (f : ConstantGroup.coordinateRing k (Equiv.Perm (NonzeroJointWeight N ρ)) →ₐc[k] H)
     (hcoordinate : nonzeroJointWeightAction N ρ =
@@ -97,8 +85,8 @@ theorem map_iInf_eigenspace_unitHom_eq_self_of_coordinate
     (⨅ n : N, (ρ n).eigenspace (χ.1 n)).map (ρ g) =
       ⨅ n : N, (ρ n).eigenspace (χ.1 n) := by
   apply map_iInf_eigenspace_unitHom_eq_self_of_nonzeroJointWeightAction_eq N ρ g χ
-  exact nonzeroJointWeightAction_apply_eq_self_of_coordinate
-    N ρ hconnected f hcoordinate g χ
+  rw [nonzeroJointWeightAction_eq_one_of_eq_pointHom N ρ hconnected f hcoordinate]
+  rfl
 
 end
 
