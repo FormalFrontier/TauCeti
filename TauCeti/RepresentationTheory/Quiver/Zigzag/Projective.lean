@@ -6,6 +6,8 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.Module.Projective
+public import TauCeti.LinearAlgebra.Graded.Shift
+public import TauCeti.RepresentationTheory.Quiver.Zigzag.Grading
 public import TauCeti.RepresentationTheory.Quiver.Zigzag.Radical
 public import TauCeti.RingTheory.PrimitiveIdempotent
 
@@ -25,6 +27,8 @@ of paths which begin at `i`.
 ## Main definitions
 
 * `TauCeti.zigzagProjective`: the left ideal `Z e_i`.
+* `TauCeti.zigzagProjectiveGrade`: the signed path-length grading restricted to `Z e_i`.
+* `TauCeti.zigzagProjectiveShiftGrade`: the grading of the shifted projective `P_i{d}`.
 * `TauCeti.ZigzagProjectiveBasisIndex`: one vertex generator, the darts leaving `i`, and one
   volume generator.
 * `TauCeti.zigzagProjectiveBasis`: the corresponding basis of `Z e_i`.
@@ -78,6 +82,32 @@ theorem coe_zigzagProjectiveGenerator (i : V) :
     (zigzagProjectiveGenerator k G i : nonisolatedZigzagQuotient k G) =
       zigzagVertexIdempotent k G i :=
   coe_spanSingletonGenerator _
+
+/-! ### The vertex-projective grading -/
+
+/-- The signed degree-`d` part of the vertex projective `P_i`, obtained by restricting the
+integer-indexed grading of the zigzag algebra. -/
+noncomputable def zigzagProjectiveGrade (i : V) (d : ℤ) :
+    Submodule k (zigzagProjective k G i) :=
+  Submodule.comap ((zigzagProjective k G i).restrictScalars k).subtype
+    (zigzagIntegerGrade k G d)
+
+@[simp]
+theorem mem_zigzagProjectiveGrade_iff {i : V} {d : ℤ} {x : zigzagProjective k G i} :
+    x ∈ zigzagProjectiveGrade k G i d ↔
+      (x : nonisolatedZigzagQuotient k G) ∈ zigzagIntegerGrade k G d :=
+  Iff.rfl
+
+/-- The grading of the internal shift `P_i{d}`, normalized by
+`(P_i{d})_p = (P_i)_{p-d}` and hence `[P_i{1}] = q[P_i]`. -/
+noncomputable def zigzagProjectiveShiftGrade (i : V) (d : ℤ) :
+    ℤ → Submodule k (zigzagProjective k G i) :=
+  Graded.shift (zigzagProjectiveGrade k G i) (-d)
+
+@[simp]
+theorem zigzagProjectiveShiftGrade_apply (i : V) (d p : ℤ) :
+    zigzagProjectiveShiftGrade k G i d p = zigzagProjectiveGrade k G i (p - d) := by
+  simp [zigzagProjectiveShiftGrade, sub_eq_add_neg]
 
 /-! ### Projectivity -/
 

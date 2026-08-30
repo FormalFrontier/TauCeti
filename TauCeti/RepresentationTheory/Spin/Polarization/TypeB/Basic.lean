@@ -32,15 +32,19 @@ matrix. The coordinate equivalence absorbs its arbitrary square-one internal coo
 
 * `TauCeti.SpinPolarizationData.polarBilin_toMatrix_typeBBasis`: the polar form has Gram matrix
   `LieAlgebra.Orthogonal.JB` in the odd hyperbolic basis.
+* `TauCeti.SpinPolarizationData.polar_basis_typeBBasis`,
+  `TauCeti.SpinPolarizationData.polar_dualVector_typeBBasis` and
+  `TauCeti.SpinPolarizationData.polar_line_typeBBasis`: the rows of that Gram matrix, read as the
+  polar coordinates of a single vector against the whole basis.
 * `TauCeti.SpinPolarizationData.typeBQuadraticEquiv_lie_ι`: the comparison acts on Clifford
   generators through the matrix endomorphism in that basis.
 
 ## Roadmap
 
 This supplies the matrix-to-Clifford bridge needed by the full-weight type-`B` Chevalley carrier
-in Layer 9 of `TauCetiRoadmap/ReductiveGroups/README.md`. The next carrier step is to evaluate the
-comparison on the numbered root vectors and prove their divided powers preserve the integral
-spinor lattice.
+in Layer 9 of `TauCetiRoadmap/ReductiveGroups/README.md`. The comparison is evaluated on the
+numbered root vectors in
+`TauCeti/RepresentationTheory/Spin/Polarization/TypeB/RootGenerators.lean`.
 
 ## References
 
@@ -152,6 +156,46 @@ theorem polarBilin_toMatrix_typeBBasis :
     simp [LieAlgebra.Orthogonal.JB, LieAlgebra.Orthogonal.JD, Matrix.one_apply, eq_comm]
   · simp [LinearMap.BilinForm.toMatrix_apply, LieAlgebra.Orthogonal.JB,
       LieAlgebra.Orthogonal.JD, P.polar_W'_eq_zero]
+
+/-! ### The polar coordinates of the three kinds of vector
+
+These are the rows of `polarBilin_toMatrix_typeBBasis` in the form a Clifford computation wants
+them: the polar form of a fixed vector against the whole odd hyperbolic basis at once. -/
+
+/-- A basis vector of the first isotropic summand pairs with the odd hyperbolic basis only against
+its own polar dual. -/
+@[simp]
+theorem polar_basis_typeBBasis (i : ι) (c : Unit ⊕ ι ⊕ ι) :
+    polar Q (b i : V) (P.typeBBasis b z hz c) = if c = .inr (.inr i) then 1 else 0 := by
+  rcases c with ⟨⟩ | (c | c)
+  · rw [typeBBasis_inl, polar_comm]
+    simp [P.line_orthogonal_W]
+  · simp [P.polar_W_eq_zero]
+  · simp [P.polar_dualVector, eq_comm]
+
+/-- A polar-dual vector pairs with the odd hyperbolic basis only against its own basis vector. -/
+@[simp]
+theorem polar_dualVector_typeBBasis (i : ι) (c : Unit ⊕ ι ⊕ ι) :
+    polar Q (P.dualVector b i : V) (P.typeBBasis b z hz c) =
+      if c = .inr (.inl i) then 1 else 0 := by
+  rcases c with ⟨⟩ | (c | c)
+  · rw [typeBBasis_inl, polar_comm]
+    simp [P.line_orthogonal_W']
+  · rw [typeBBasis_inr_inl, polar_comm]
+    simp [P.polar_dualVector]
+  · simp [P.polar_W'_eq_zero]
+
+/-- **The remainder vector pairs with the odd hyperbolic basis only against itself, and there by
+`2`.** That coefficient is the middle entry of `LieAlgebra.Orthogonal.JB`, and it is what the
+integral short-root matrix carries. -/
+@[simp]
+theorem polar_line_typeBBasis (c : Unit ⊕ ι ⊕ ι) :
+    polar Q (z : V) (P.typeBBasis b z hz c) = if c = .inl () then 2 else 0 := by
+  rcases c with ⟨⟩ | (c | c)
+  · rw [typeBBasis_inl, polar_self, hz]
+    simp
+  · simp [P.line_orthogonal_W]
+  · simp [P.line_orthogonal_W']
 
 end PreQuadratic
 
