@@ -43,10 +43,8 @@ variable
   {𝕜 : Type*} [NontriviallyNormedField 𝕜] [CompleteSpace 𝕜]
   {E : Type*} [NormedAddCommGroup E] [NormedSpace 𝕜 E] [FiniteDimensional 𝕜 E]
   {H : Type*} [TopologicalSpace H] {I : ModelWithCorners 𝕜 E H}
-  {M : Type*} [TopologicalSpace M] [ChartedSpace H M] [IsManifold I 1 M]
-  [ContMDiffVectorBundle 1 E (TangentSpace I : M → Type _) I]
+  {M : Type*} [TopologicalSpace M] [ChartedSpace H M]
   {ι : Type*} (b : Basis ι 𝕜 E)
-  {e : Trivialization E (TotalSpace.proj : TangentBundle I M → M)} [MemTrivializationAtlas e]
   {x x₀ y : M}
   {cov : (Π z : M, TangentSpace I z) → (Π z : M, TangentSpace I z →L[𝕜] TangentSpace I z)}
 
@@ -56,18 +54,24 @@ of a tangent vector `V` and direction `U`, is the pushforward by
 `tangentCoordChange I x x₀ x` of its value read in the trivialization centred at `x`, less the
 derivative of the tangent coordinate change between the two charts along `U` applied to `V`. -/
 theorem christoffelMap_coordChange [Fintype ι] [IsManifold I 2 M]
-    (hx₀ : x ∈ (extChartAt I x₀).source) (U V : TangentSpace I x)
-    (hcov : IsCovariantDerivativeOn E cov (trivializationAt E (TangentSpace I) x₀).baseSet)
-    (hcov' : IsCovariantDerivativeOn E cov (trivializationAt E (TangentSpace I) x).baseSet) :
-    christoffelMap b hcov x (tangentCoordChange I x x₀ x V) (tangentCoordChange I x x₀ x U)
-      = tangentCoordChange I x x₀ x (christoffelMap b hcov' x V U)
-        - mvfderiv I (fun z => tangentCoordChange I x x₀ z V) x U := by
+    : haveI : IsManifold I 1 M := IsManifold.of_le (n := 2) one_le_two
+      ∀ (_hx₀ : x ∈ (extChartAt I x₀).source) (U V : TangentSpace I x)
+        (hcov : IsCovariantDerivativeOn E cov
+          (trivializationAt E (TangentSpace I) x₀).baseSet)
+        (hcov' : IsCovariantDerivativeOn E cov
+          (trivializationAt E (TangentSpace I) x).baseSet),
+        christoffelMap b hcov x (tangentCoordChange I x x₀ x V)
+            (tangentCoordChange I x x₀ x U)
+          = tangentCoordChange I x x₀ x (christoffelMap b hcov' x V U)
+            - mvfderiv I (fun z => tangentCoordChange I x x₀ z V) x U := by
   classical
+  have hI : IsManifold I 1 M := IsManifold.of_le (n := 2) one_le_two
+  intro _hx₀ U V hcov hcov'
   set e₀ := trivializationAt E (TangentSpace I) x₀ with he₀
   set e₁ := trivializationAt E (TangentSpace I) x with he₁
   have hx₀c : x ∈ (chartAt H x₀).source := by
     rw [← OpenPartialHomeomorph.extend_source (f := chartAt H x₀) (I := I)]
-    exact hx₀
+    exact _hx₀
   have hx₀' : x ∈ e₀.baseSet := hx₀c
   have hx₁' : x ∈ e₁.baseSet := FiberBundle.mem_baseSet_trivializationAt E (TangentSpace I) x
   have hopen₀ : e₀.baseSet ∈ nhds x := e₀.open_baseSet.mem_nhds hx₀'
@@ -117,7 +121,7 @@ theorem christoffelMap_coordChange [Fintype ι] [IsManifold I 2 M]
     -- the `n + 1` regularity hypothesis of the polymorphic theorem, read at `n := 1`
     have : IsManifold I (1 + 1) M := inferInstanceAs (IsManifold I 2 M)
     exact (contMDiffAt_tangentCoordChange (I := I) (n := 1) (x := x) (y := x₀)
-      hx₀).mdifferentiableAt one_ne_zero
+      _hx₀).mdifferentiableAt one_ne_zero
   have hgA : MDifferentiableAt I 𝓘(𝕜, E) (fun z => tangentCoordChange I x x₀ z V) x :=
     MDifferentiableAt.clm_apply hcmd mdifferentiableAt_const
   set A : TangentSpace I x →L[𝕜] E := mvfderiv I (fun z => tangentCoordChange I x x₀ z V) x with hA

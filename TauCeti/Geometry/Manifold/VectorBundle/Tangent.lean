@@ -58,6 +58,8 @@ variable
 
 section TangentChart
 
+section TangentBundleChart
+
 variable [IsManifold I 1 M]
 
 namespace TangentBundle
@@ -83,12 +85,16 @@ theorem coe_chartAt_snd {p q : TangentBundle I M} :
 
 end TangentBundle
 
+end TangentBundleChart
+
 /-- The tangent coordinate change between the charts at `x` and `y` is `C^n` on the overlap of
 the two chart sources, read in the chart at `x`.  This is Mathlib's
 `contDiffOn_fderiv_coord_change` for the preferred charts at two points. -/
 theorem contDiffOn_tangentCoordChange {n : ℕ∞ω} [IsManifold I (n + 1) M] (x y : M) :
+    haveI : IsManifold I 1 M := IsManifold.of_le (n := n + 1) le_add_self
     ContDiffOn 𝕜 n (fun a : E => tangentCoordChange I x y ((extChartAt I x).symm a))
       (((extChartAt I x).symm ≫ extChartAt I y).source) := by
+  have hI : IsManifold I 1 M := IsManifold.of_le (n := n + 1) le_add_self
   refine (contDiffOn_fderiv_coord_change (𝕜 := 𝕜) (n := n) (I := I) (M := M)
     (achart H x) (achart H y)).congr (fun a ha => ?_)
   have ha2 : a ∈ (extChartAt I x).target := by
@@ -101,7 +107,9 @@ theorem contDiffOn_tangentCoordChange {n : ℕ∞ω} [IsManifold I (n + 1) M] (x
 manifolds into the continuous linear endomorphisms of the model space. -/
 theorem contMDiffAt_tangentCoordChange {n : ℕ∞ω} [IsManifold I (n + 1) M] {x y : M}
     (hy : x ∈ (extChartAt I y).source) :
+    haveI : IsManifold I 1 M := IsManifold.of_le (n := n + 1) le_add_self
     ContMDiffAt I 𝓘(𝕜, E →L[𝕜] E) n (tangentCoordChange I x y) x := by
+  have hI : IsManifold I 1 M := IsManifold.of_le (n := n + 1) le_add_self
   rw [contMDiffAt_iff]
   refine ⟨?_, ?_⟩
   · refine (continuousOn_tangentCoordChange (I := I) (𝕜 := 𝕜) x y).continuousAt ?_
@@ -119,6 +127,10 @@ theorem contMDiffAt_tangentCoordChange {n : ℕ∞ω} [IsManifold I (n + 1) M] {
         (ChartedSpace.mem_chart_source x) hychart
     refine ((contDiffOn_tangentCoordChange (I := I) (𝕜 := 𝕜) x y).contDiffWithinAt
       hmem).mono_of_mem_nhdsWithin hset
+
+section TangentReading
+
+variable [IsManifold I 1 M]
 
 /-- The reading map of the preferred trivialization centred at `x₀` sends the tangent vector at
 `y` whose `x`-coordinates are `u` to its `x₀`-coordinates. -/
@@ -138,6 +150,8 @@ theorem continuousLinearMapAt_symmL_coordChange {x x₀ y : M}
   have hy3 : y ∈ (extChartAt I x₀).source := by rw [extChartAt_source]; exact hyx₀
   exact tangentCoordChange_comp (I := I) (w := x) (x := y) (y := x₀) (z := y) (v := u)
     ⟨⟨hy1, hy2⟩, hy3⟩
+
+end TangentReading
 
 end TangentChart
 
