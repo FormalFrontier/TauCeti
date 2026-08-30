@@ -117,6 +117,7 @@ theorem ofLinearCharacter_injective [CommSemiring k] [Monoid G] :
 
 /-- **The trivial linear character carries the trivial representation.** This is the sanity check
 that fixes the convention: `χ = 1` acts by the scalar `1`. -/
+@[simp]
 theorem ofLinearCharacter_one [CommSemiring k] [Monoid G] :
     ofLinearCharacter (1 : G →* kˣ) = Representation.trivial k G k :=
   MonoidHom.ext fun _ => LinearMap.ext fun x => by simp
@@ -159,6 +160,7 @@ theorem ofLinearCharacter_ρ [CommRing k] [Monoid G] (χ : G →* kˣ) :
 are the line `k` with `s` acting by the scalar `χ (f s)`, so this is an equality of objects, not
 merely an isomorphism; it is what lets conjugation and restriction of a one-dimensional
 representation be computed inside `G →* kˣ`. -/
+@[simp]
 theorem actionRes_obj_ofLinearCharacter [CommRing k] [Monoid G] {S : Type*} [Monoid S]
     (f : S →* G) (χ : G →* kˣ) :
     (Action.res (FGModuleCat k) f).obj (ofLinearCharacter χ) = ofLinearCharacter (χ.comp f) :=
@@ -188,6 +190,7 @@ instance simple_ofLinearCharacter [Field k] [Monoid G] (χ : G →* kˣ) :
 agree.** One direction is that an isomorphism preserves characters, and the character of
 `FDRep.ofLinearCharacter χ` is `χ`; the other is that equal characters give literally the same
 object. -/
+@[simp]
 theorem nonempty_iso_ofLinearCharacter_iff [Field k] [Monoid G] (χ ψ : G →* kˣ) :
     Nonempty (ofLinearCharacter (k := k) χ ≅ ofLinearCharacter ψ) ↔ χ = ψ := by
   refine ⟨fun ⟨e⟩ => MonoidHom.ext fun g => Units.ext ?_, fun h => ⟨h ▸ Iso.refl _⟩⟩

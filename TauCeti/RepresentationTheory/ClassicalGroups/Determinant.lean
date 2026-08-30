@@ -118,8 +118,10 @@ theorem char_detPowerFDRep (m : ℤ) (g : GL (Fin n) k) :
 /-- The bundled determinant character is the determinant. -/
 theorem char_detFDRep (g : GL (Fin n) k) :
     (detFDRep k n).character g = (Matrix.GeneralLinearGroup.det g : k) := by
-  simpa only [FDRep.character, FDRep.of_ρ', Representation.character, zpow_one,
-    Matrix.GeneralLinearGroup.val_det_apply] using char_detPowerRep k n 1 g
+  -- The determinant representation is the first determinant power, so its character is that of
+  -- `FDRep.ofLinearCharacter (det ^ (1 : ℤ))`.
+  have h : detFDRep k n = detPowerFDRep k n 1 := rfl
+  rw [h, char_detPowerFDRep, zpow_one]
 
 end Field
 
