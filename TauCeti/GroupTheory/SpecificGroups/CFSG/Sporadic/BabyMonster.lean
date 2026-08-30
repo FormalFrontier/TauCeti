@@ -71,6 +71,14 @@ source-to-Lean read-through remains the whole of the S1 review obligation.
   the shape itself.
 * `TauCeti.Sporadic.BabyMonster.length_relatorList` and
   `TauCeti.Sporadic.BabyMonster.matchesMetadata_presentation`: the transcription count checks.
+* `TauCeti.Sporadic.BabyMonster.presentation_totalLength`: the compiled relator words contain `478`
+  letters, of which `262` come from the Coxeter relators, by
+  `TauCeti.Sporadic.BabyMonster.sum_map_length_toWord_coxeterRelators`, and the rest from the three
+  adjoined relators. The source records no presentation length, so this is transcribed data stated
+  for comparison with the source rather than a check against a published figure.
+* `TauCeti.Sporadic.BabyMonster.presentation_relatorsCyclicallyReduced`: every compiled word is
+  cyclically reduced, which is what makes that letter count comparable with a published
+  presentation length at all.
 * `TauCeti.Sporadic.BabyMonster.mulEquivPresentedGroupCoxeterAppend`: the row presents the Coxeter
   group of the diagram cut down by the three adjoined relations, which is the shape of the source's
   statement.
@@ -314,6 +322,86 @@ theorem length_relatorList : relatorList.length = 69 := by
 /-- **The recorded generator and relator counts agree with the transcribed data.** -/
 theorem matchesMetadata_presentation : presentation.matchesMetadata :=
   (GroupPresentation.matchesMetadata_iff presentation).mpr ⟨by decide, length_relatorList⟩
+
+/-! ### Letter counts -/
+
+/-- The spider relator compiles to `10 · 9 = 90` letters. -/
+theorem length_toWord_spiderRelator : spiderRelator.toWord.length = 90 := by
+  simp [spiderRelator_eq]
+
+/-- The first adjoined relator compiles to `9 · 7 = 63` letters. -/
+theorem length_toWord_extraRelatorOne : extraRelatorOne.toWord.length = 63 := by
+  simp [extraRelatorOne_eq]
+
+/-- The second adjoined relator compiles to `9 · 7 = 63` letters. -/
+theorem length_toWord_extraRelatorTwo : extraRelatorTwo.toWord.length = 63 := by
+  simp [extraRelatorTwo_eq]
+
+/-- **The Coxeter relators of the `Y₄₃₃` diagram contain `262` letters.** A relator `(tᵢ tⱼ) ^ m`
+contributes `2m`, so the eleven involution relators contribute `2` each, the ten edges `6` each,
+and the forty-five remaining pairs of distinct nodes `4` each: `22 + 60 + 180`. Reading the count
+off the Coxeter matrix rather than off the expanded relators is what ties it to the transcribed
+edge list. -/
+theorem sum_map_length_toWord_coxeterRelators :
+    ((coxeterRelators coxeterMatrix).map fun r => r.toWord.length).sum = 262 := by
+  rw [coxeterRelators_def, coxeterRelatorsOfList_def, List.map_map]
+  simp_rw [Function.comp_def, length_toWord_coxeterRelator]
+  simp only [coxeterMatrix_apply]
+  rw [edges_eq]
+  decide
+
+/-- **The compiled relator words of the row contain `478` letters in total**, the `262` letters of
+the Coxeter relators together with the `90 + 63 + 63` letters of the three adjoined relators.
+
+The source displays its relations by family and records no presentation length, so this figure
+states the transcribed data for a reviewer to compare with the source rather than checking it
+against a published number. -/
+theorem presentation_totalLength : presentation.totalLength = 478 := by
+  have key : ((relatorList.map Relator.toWord).map List.length).sum = 478 := by
+    rw [relatorList_def]
+    simp only [List.map_append, List.sum_append, List.map_map, Function.comp_def,
+      adjoinedRelators_def, List.map_cons, List.map_nil, List.sum_cons, List.sum_nil,
+      length_toWord_spiderRelator, length_toWord_extraRelatorOne, length_toWord_extraRelatorTwo,
+      sum_map_length_toWord_coxeterRelators]
+    decide
+  rw [GroupPresentation.totalLength_def, GroupPresentation.relators_def, presentation_transcribed]
+  exact key
+
+/-- **Every expression in the `Y₄₃₃` relator list compiles to a cyclically reduced word.** The
+Coxeter relators are cyclically reduced for any Coxeter matrix, and each adjoined relator is a
+power whose base is a product of generators with no inverse, so no letter of it can cancel against
+its neighbour or against the last letter of the word.
+
+Each alternative is dispatched by the shape of its relator rather than by goal position, and the
+power route is what keeps the three adjoined relators tractable: expanding the tenth power of the
+spider base costs ninety letters where checking the base costs nine. -/
+theorem isCyclicallyReduced_toWord_of_mem_relatorList (r : Relator (Fin 11))
+    (hr : r ∈ relatorList) : FreeGroup.IsCyclicallyReduced r.toWord := by
+  rw [relatorList_def, List.mem_append] at hr
+  rcases hr with hr | hr
+  · obtain ⟨i, j, rfl⟩ := mem_coxeterRelators_iff.mp hr
+    exact isCyclicallyReduced_toWord_coxeterRelator coxeterMatrix _ _
+  · simp only [adjoinedRelators_def, List.mem_cons, List.not_mem_nil, or_false] at hr
+    rcases hr with rfl | rfl | rfl
+    · rw [spiderRelator_eq]
+      exact Relator.isCyclicallyReduced_toWord_pow
+        (by simp [FreeGroup.IsCyclicallyReduced, FreeGroup.IsReduced]) _
+    · rw [extraRelatorOne_eq]
+      exact Relator.isCyclicallyReduced_toWord_pow
+        (by simp [FreeGroup.IsCyclicallyReduced, FreeGroup.IsReduced]) _
+    · rw [extraRelatorTwo_eq]
+      exact Relator.isCyclicallyReduced_toWord_pow
+        (by simp [FreeGroup.IsCyclicallyReduced, FreeGroup.IsReduced]) _
+
+/-- **Every compiled relator word of the row is cyclically reduced**, which is what makes the
+letter count of `TauCeti.Sporadic.BabyMonster.presentation_totalLength` comparable with the usual
+presentation-length convention, under which a relator is measured after free and cyclic
+reduction. -/
+theorem presentation_relatorsCyclicallyReduced : presentation.relatorsCyclicallyReduced := by
+  rw [GroupPresentation.relatorsCyclicallyReduced_iff, GroupPresentation.relators_def]
+  intro w hw
+  obtain ⟨r, hr, rfl⟩ := List.mem_map.mp hw
+  exact isCyclicallyReduced_toWord_of_mem_relatorList r (presentation_transcribed ▸ hr)
 
 /-- **The row presents the Coxeter group of the `Y₄₃₃` diagram cut down by the three adjoined
 relations**, which is the shape in which the source states the presentation: the Coxeter relations
