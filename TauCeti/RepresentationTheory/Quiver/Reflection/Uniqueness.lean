@@ -32,7 +32,8 @@ this is `TauCeti.nonempty_iso_of_nonempty_iso_reflectRep`. An indecomposable rep
 that hypothesis only by being concentrated at `i`
 (`TauCeti.incomingSum_surjective_or_forall_subsingleton`), and a representation with the same
 dimension vector then vanishes wherever it does and has a vertex space of the same dimension at
-`i`; two such representations are isomorphic, by `TauCeti.nonempty_iso_of_isZero_of_ne`.
+`i`; two such representations are isomorphic, by
+`TauCeti.nonempty_iso_of_isZero_away_of_linearEquiv`.
 
 The comparison at such a stage is made directly, rather than through the vertex simple `Sᵢ` and
 `TauCeti.nonempty_iso_simpleRep_of_forall_subsingleton`: the vertex space of `Sᵢ` is the field
@@ -48,8 +49,8 @@ where it is concentrated at the sink.
 
 ## Main results
 
-* `TauCeti.nonempty_iso_of_isZero_of_ne`: two representations vanishing away from a sink are
-  isomorphic as soon as their vertex spaces at that sink are, and
+* `TauCeti.nonempty_iso_of_isZero_away_of_linearEquiv`: two representations vanishing away from a
+  sink are isomorphic as soon as their vertex spaces at that sink are, and
   `TauCeti.nonempty_iso_of_dimVector_eq_of_forall_subsingleton`: the same conclusion from equality
   of dimension vectors.
 * `TauCeti.nonempty_iso_of_nonempty_iso_reflectRep`: **the reflection functor at a sink reflects
@@ -89,7 +90,7 @@ variable {M N : QuiverRep.{u, v, w, max v w x} k Q} {i : Q}
 /-- **Two representations vanishing away from a sink are isomorphic as soon as their vertex spaces
 at that sink are.** Every component away from `i` is a map between zero objects, and there is no
 naturality condition to check at `i`, since no arrow leaves a sink. -/
-theorem nonempty_iso_of_isZero_of_ne (hi : IsSink i)
+theorem nonempty_iso_of_isZero_away_of_linearEquiv (hi : IsSink i)
     (hM : ∀ a : Q, a ≠ i → Limits.IsZero (M.obj a))
     (hN : ∀ a : Q, a ≠ i → Limits.IsZero (N.obj a))
     (e : M.obj ((Paths.of Q).obj i) ≃ₗ[k] N.obj ((Paths.of Q).obj i)) :
@@ -119,12 +120,15 @@ theorem nonempty_iso_of_isZero_of_ne (hi : IsSink i)
 
 /-- **A representation concentrated at a sink is isomorphic to every finite-dimensional
 representation with the same dimension vector.** Equality of dimension vectors makes the comparison
-representation vanish wherever `M` does, and matches the two vertex spaces at the sink. -/
+representation vanish wherever `M` does, and matches the two vertex spaces at the sink. Only the
+vertex space of `M` at the sink is asked to be finite-dimensional, since `M` is a subsingleton
+everywhere else; `N` is asked for it at every vertex, to read a vanishing dimension vector there as
+a vanishing vertex space. -/
 theorem nonempty_iso_of_dimVector_eq_of_forall_subsingleton (hi : IsSink i)
     (hsub : ∀ a : Q, a ≠ i → Subsingleton (M.obj a))
-    (hfdM : IsFinDim.{u, v, w, max v w x} k Q M) (hfdN : IsFinDim.{u, v, w, max v w x} k Q N)
+    (hfdM : FiniteDimensional k (M.obj ((Paths.of Q).obj i)))
+    (hfdN : IsFinDim.{u, v, w, max v w x} k Q N)
     (hd : dimVector M = dimVector N) : Nonempty (M ≅ N) := by
-  have hfdM' := isFinDim_iff.mp hfdM
   have hfdN' := isFinDim_iff.mp hfdN
   have hNzero : ∀ a : Q, a ≠ i → Limits.IsZero (N.obj a) := by
     intro a ha
@@ -135,12 +139,11 @@ theorem nonempty_iso_of_dimVector_eq_of_forall_subsingleton (hi : IsSink i)
       exact Module.finrank_zero_of_subsingleton (R := k)
     have hss : Subsingleton (N.obj ((Paths.of Q).obj a)) := Module.finrank_zero_iff.mp h0
     exact @ModuleCat.isZero_of_subsingleton k _ (N.obj a) hss
-  have hfdMi := hfdM' ((Paths.of Q).obj i)
   have hfdNi := hfdN' ((Paths.of Q).obj i)
   have hfr : Module.finrank k (M.obj ((Paths.of Q).obj i))
       = Module.finrank k (N.obj ((Paths.of Q).obj i)) := by
     rw [← dimVector_apply, ← dimVector_apply, hd]
-  exact nonempty_iso_of_isZero_of_ne hi
+  exact nonempty_iso_of_isZero_away_of_linearEquiv hi
     (fun a ha ↦ @ModuleCat.isZero_of_subsingleton k _ (M.obj a) (hsub a ha)) hNzero
     (LinearEquiv.ofFinrankEq _ _ hfr)
 
@@ -196,7 +199,7 @@ isomorphism through `TauCeti.nonempty_iso_of_nonempty_iso_reflectRep`; a stage a
 concentrated at its own sink identifies the two on the spot, by
 `TauCeti.nonempty_iso_of_dimVector_eq_of_forall_subsingleton`. The empty list leaves the hypothesis
 itself, whose second alternative an indecomposable representation excludes. -/
-theorem nonempty_iso_of_dimVector_eq_of_reflectionFunctorList :
+private theorem nonempty_iso_of_dimVector_eq_of_reflectionFunctorList :
     ∀ (l : List V) (q : _root_.Quiver.{w} V)
       (hq : ∀ a b : V, Fintype (@_root_.Quiver.Hom V q a b))
       (hl : Quiver.IsSinkAdmissible q l)
@@ -245,10 +248,10 @@ theorem nonempty_iso_of_dimVector_eq_of_reflectionFunctorList :
             ((@isFinDim_iff.{u, v, w, max v w x} k V fld (Quiver.reflectAt q i) _).mpr
               (finiteDimensional_reflectRep_obj N hi hfdN')) hdR hyp
         · -- `N` is concentrated at the sink, hence so is `M`
-          exact (nonempty_iso_of_dimVector_eq_of_forall_subsingleton hi hsubN hfdN hfdM
+          exact (nonempty_iso_of_dimVector_eq_of_forall_subsingleton hi hsubN (hfdN' i) hfdM
             hd.symm).map Iso.symm
       · -- `M` is concentrated at the sink, hence so is `N`
-        exact nonempty_iso_of_dimVector_eq_of_forall_subsingleton hi hsubM hfdM hfdN hd
+        exact nonempty_iso_of_dimVector_eq_of_forall_subsingleton hi hsubM (hfdM' i) hfdN hd
 
 /-! ### Uniqueness -/
 
@@ -295,8 +298,10 @@ private theorem nonempty_iso_of_dimVector_eq_of_isZero_iterate
           funext fun j ↦ Nat.cast_inj.mp (congrFun hcast j)
         have hiso := ih _ _ hM1 hN1 (isFinDim_coxeterFunctor_obj q hq hnd hall hl M hfdM)
           (isFinDim_coxeterFunctor_obj q hq hnd hall hl N hfdN) hdC hz
+        have hlist := (nonempty_iso_coxeterFunctor_obj_iff_nonempty_iso_reflectionFunctorList_obj
+          q hq hnd hall hl M N).mp hiso
         exact nonempty_iso_of_dimVector_eq_of_reflectionFunctorList l q hq hl M N hM hN hfdM
-          hfdN hd (Or.inl ((nonempty_iso_coxeterFunctor_obj_iff q hq hnd hall hl M N).mp hiso))
+          hfdN hd (Or.inl hlist)
       · exact (nonempty_iso_of_dimVector_eq_of_reflectionFunctorList l q hq hl N M hN hM hfdN
           hfdM hd.symm (Or.inr
             ((isZero_coxeterFunctor_obj_iff_isZero_reflectionFunctorList_obj q hq hnd hall hl

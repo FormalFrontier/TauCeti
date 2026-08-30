@@ -49,9 +49,10 @@ dichotomy for indecomposables is supplied by
 * `TauCeti.isFinDim_reflectionFunctorList_obj` and `TauCeti.isFinDim_coxeterFunctor_obj`:
   pointwise finite-dimensional vertex spaces stay finite-dimensional.
 * `TauCeti.isZero_coxeterFunctor_obj_iff_isZero_reflectionFunctorList_obj` and
-  `TauCeti.nonempty_iso_coxeterFunctor_obj_iff`: the Coxeter functor and the composite it
-  transports annihilate the same representations and identify the same pairs of them, so a
-  statement about the endofunctor may be proved one reflection at a time.
+  `TauCeti.nonempty_iso_coxeterFunctor_obj_iff_nonempty_iso_reflectionFunctorList_obj`: the
+  Coxeter functor and the composite it transports annihilate the same representations and identify
+  the same pairs of them, so a statement about the endofunctor may be proved one reflection at a
+  time.
 * `TauCeti.indecomposable_and_dimVector_reflectionFunctorList_or_isZero` and
   `TauCeti.indecomposable_and_dimVector_coxeterFunctor_or_isZero`: the dichotomy above, for a
   general sink-admissible list and for the Coxeter functor.
@@ -418,7 +419,8 @@ composite along the ordering does.** Like
 `TauCeti.isZero_coxeterFunctor_obj_iff_isZero_reflectionFunctorList_obj`, this only undoes the
 transport of the codomain, so that an isomorphism of Coxeter images may be descended one
 reflection at a time. -/
-theorem nonempty_iso_coxeterFunctor_obj_iff (q : _root_.Quiver.{w} V)
+theorem nonempty_iso_coxeterFunctor_obj_iff_nonempty_iso_reflectionFunctorList_obj
+    (q : _root_.Quiver.{w} V)
     (hq : ∀ a b : V, Fintype (@_root_.Quiver.Hom V q a b)) {l : List V} (hnd : l.Nodup)
     (hall : ∀ v : V, v ∈ l) (hl : Quiver.IsSinkAdmissible q l)
     (M N : @QuiverRep.{u, v, w, max v w x} k V fld q) :
