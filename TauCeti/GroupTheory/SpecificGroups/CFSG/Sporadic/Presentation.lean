@@ -118,7 +118,7 @@ theorem presentation_matchesMetadata (s : SporadicName) :
   | Co1 => exact Sporadic.co1Presentation_matchesMetadata
   | Co2 => exact Sporadic.co2Presentation_matchesMetadata
   | Co3 => exact Sporadic.co3Presentation_matchesMetadata
-  | Fi22 => exact Sporadic.matchesMetadata_fi22Presentation
+  | Fi22 => exact Sporadic.fi22Presentation_matchesMetadata
   | Fi23 => exact Sporadic.fi23Presentation_matchesMetadata
   | Fi24Prime => exact Sporadic.fi24PrimePresentation_matchesMetadata
   | HN => exact Sporadic.matchesMetadata_hnPresentation
