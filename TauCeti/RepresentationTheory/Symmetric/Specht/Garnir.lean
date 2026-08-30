@@ -216,10 +216,13 @@ rows, and `(i, j + 1) ∈ μ` says the column reaches that far. -/
 private theorem card_filter_cells_col_succ {i j : ℕ} (h : (i, j + 1) ∈ μ) :
     {c ∈ μ.cells | c.2 = j + 1 ∧ c.1 ≤ i}.card = i + 1 := by
   have hlt : i < μ.colLen (j + 1) := YoungDiagram.mem_iff_lt_colLen.mp h
+  -- the counting lemma filters the first `i + 1` rows before the column, so its nested filter
+  -- has to be flattened into the single filter of the statement
+  have hflat : {c ∈ {c ∈ μ.cells | c.1 < i + 1} | c.2 = j + 1} =
+      {c ∈ μ.cells | c.2 = j + 1 ∧ c.1 ≤ i} := by
+    simp [Finset.filter_filter, and_comm]
   have hcard := YoungDiagram.card_filter_fst_lt_filter_snd_eq μ (i + 1) (j + 1)
-  rw [show {c ∈ {c ∈ μ.cells | c.1 < i + 1} | c.2 = j + 1} =
-      {c ∈ μ.cells | c.2 = j + 1 ∧ c.1 ≤ i} from by
-    simp [Finset.filter_filter, and_comm]] at hcard
+  rw [hflat] at hcard
   omega
 
 /-- **A Garnir set is one bigger than the column it straddles.**  Column `j` contributes its cells

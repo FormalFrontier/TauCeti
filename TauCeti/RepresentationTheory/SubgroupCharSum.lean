@@ -20,14 +20,14 @@ Expanding it is immediate from the definition: it acts as the `χ`-weighted sum 
 mechanism behind every antisymmetrizer argument: if some `p ∈ H` has `χ(p⁻¹) = -1`, the sum
 absorbs `p` at the cost of a sign, so its value on a vector `p` fixes is its own negative, and
 doubling being injective forces that value to be zero
-(`TauCeti.asAlgebraHom_subgroupCharSum_eq_zero`).  Injective doubling is the hypothesis of
+(`TauCeti.asAlgebraHom_subgroupCharSum_apply_eq_zero`).  Injective doubling is the hypothesis of
 `Representation.asAlgebraHom_eq_zero_of_mul_single_eq_neg`, taken as an assumption rather than
 read off the scalars, so no invertibility of `2` in `k` is needed.
 
 ## Main results
 
 * `TauCeti.asAlgebraHom_subgroupCharSum_apply`: the character sum acts as `∑_{h ∈ H} χ(h) ρ(h)`;
-* `TauCeti.asAlgebraHom_subgroupCharSum_eq_zero`: the character sum annihilates every vector
+* `TauCeti.asAlgebraHom_subgroupCharSum_apply_eq_zero`: the character sum annihilates every vector
   fixed by an element of `H` whose inverse has character `-1`.
 -/
 
@@ -59,7 +59,7 @@ variable {k G V : Type*} [CommRing k] [Group G] [AddCommGroup V] [Module k V]
 /-- **A character sum annihilates whatever an element of character `-1` fixes.**  Right
 multiplication by `p ∈ H` rescales the sum by `χ(p⁻¹) = -1`, so the value of the sum on a vector
 fixed by `p` is its own negative; with doubling injective it vanishes. -/
-theorem asAlgebraHom_subgroupCharSum_eq_zero
+theorem asAlgebraHom_subgroupCharSum_apply_eq_zero
     (h2inj : Function.Injective fun w : V => (2 : ℕ) • w) (ρ : Representation k G V) {p : G}
     (hp : p ∈ H) (hχ : χ p⁻¹ = -1) {v : V} (hfix : ρ p v = v) :
     ρ.asAlgebraHom (subgroupCharSum χ H) v = 0 :=

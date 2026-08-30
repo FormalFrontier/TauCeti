@@ -491,16 +491,6 @@ theorem antisymmetrizerOn_mul_single {X : Finset α} {p : Equiv.Perm α} (hp : �
     subgroupCharSum_mul_single _ _ ⟨p, mem_fixingSubgroup_compl_of_forall_notMem hp⟩]
   simp
 
-/-- Right multiplication by the transposition of two distinct points of `X` negates the
-antisymmetrizer of `X`, that transposition being odd. -/
-theorem antisymmetrizerOn_mul_single_swap_eq_neg {X : Finset α} {x y : α} (hx : x ∈ X)
-    (hy : y ∈ X) (hxy : x ≠ y) :
-    antisymmetrizerOn X * MonoidAlgebra.single (Equiv.swap x y) (1 : ℚ) = -antisymmetrizerOn X := by
-  rw [antisymmetrizerOn_mul_single fun k hk =>
-      Equiv.swap_apply_of_ne_of_ne (fun h => hk (h ▸ hx)) fun h => hk (h ▸ hy),
-    Equiv.Perm.sign_swap hxy]
-  simp
-
 /-- **A signed sum annihilates whatever an odd permutation in it fixes.**  If an odd permutation
 supported in `X` fixes `v`, then the antisymmetrizer of `X` kills `v`: absorbing that permutation
 negates the sum while leaving `v` alone. -/
@@ -510,7 +500,7 @@ theorem asAlgebraHom_antisymmetrizerOn_apply_eq_zero {M : Type*} [AddCommGroup M
     V.asAlgebraHom (antisymmetrizerOn X) v = 0 := by
   have : IsAddTorsionFree M := .of_module_rat _
   rw [antisymmetrizerOn_def]
-  refine asAlgebraHom_subgroupCharSum_eq_zero _ _ (nsmul_right_injective two_ne_zero) V
+  refine asAlgebraHom_subgroupCharSum_apply_eq_zero _ _ (nsmul_right_injective two_ne_zero) V
     (mem_fixingSubgroup_compl_of_forall_notMem hp) ?_ hv
   simp [hsign]
 

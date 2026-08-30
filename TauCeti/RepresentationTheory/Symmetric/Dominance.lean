@@ -128,7 +128,7 @@ theorem asAlgebraHom_columnAntisymmetrizer_single_eq_zero {lam : YoungDiagram}
   -- the permutation module is a `ℚ`-vector space, so doubling is injective on it
   have : IsAddTorsionFree (permutationModule μ) := .of_module_rat _
   rw [columnAntisymmetrizer_eq_subgroupCharSum]
-  exact asAlgebraHom_subgroupCharSum_eq_zero _ _ (nsmul_right_injective two_ne_zero) _ hp
+  exact asAlgebraHom_subgroupCharSum_apply_eq_zero _ _ (nsmul_right_injective two_ne_zero) _ hp
     (by simp [hsign]) hfix'
 
 /-- **James's dominance lemma.**  If the column antisymmetrizer of a `lam`-tableau `t` does not
