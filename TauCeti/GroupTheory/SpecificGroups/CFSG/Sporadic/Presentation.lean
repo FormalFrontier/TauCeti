@@ -103,8 +103,8 @@ theorem presentation_matchesMetadata (s : SporadicName) :
   | M11 => exact Sporadic.m11Presentation_matchesMetadata
   | M12 => exact Sporadic.m12Presentation_matchesMetadata
   | M22 => exact Sporadic.m22Presentation_matchesMetadata
-  | M23 => exact Sporadic.matchesMetadata_m23Presentation
-  | M24 => exact Sporadic.matchesMetadata_m24Presentation
+  | M23 => exact Sporadic.m23Presentation_matchesMetadata
+  | M24 => exact Sporadic.m24Presentation_matchesMetadata
   | J1 => exact Sporadic.j1Presentation_matchesMetadata
   | J2 => exact Sporadic.j2Presentation_matchesMetadata
   | J3 => exact Sporadic.j3Presentation_matchesMetadata
