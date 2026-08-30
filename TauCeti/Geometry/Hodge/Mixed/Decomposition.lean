@@ -41,10 +41,14 @@ it.
   larger total degree, and what is left has a class in `gr^W_{p+q}` lying both in `H^{p,q}` and in
   the complementary `conj F^{q+1} ⊔ F^{p+1}`, hence vanishing.
 
-What remains of Deligne's theory after this file: the recovery
-`F^p = ⨆_{p' ≥ p} ⨆_{q'} I^{p',q'}` of the Hodge filtration, the conjugation symmetry
-`I^{p,q} ≡ conj I^{q,p}` modulo strictly lower bidegree, and the strictness of a morphism of mixed
-Hodge structures.
+The Hodge filtration is recovered from the bigrading by the same upward induction on the weight:
+a vector of `F^p ∩ W_k` has its class in `gr^W_k` in the `p`-th step of the induced Hodge
+filtration, so — the graded piece being pure — that class is a sum of Hodge components of first
+index at least `p`, each the image of a bigrading piece; correcting the vector by a representative
+of that sum drops it into `F^p ∩ W_{k-1}`.
+
+What remains of Deligne's theory after this file: the conjugation symmetry
+`I^{p,q} ≡ conj I^{q,p}` modulo strictly lower bidegree.
 
 ## Main declarations
 
@@ -59,6 +63,8 @@ Hodge structures.
   independent.
 * `TauCeti.Hodge.MixedHodgeStructure.isInternal_deligneSplittingFamily`: **Deligne's theorem**,
   the bigrading is an internal direct sum.
+* `TauCeti.Hodge.MixedHodgeStructure.F_eq_iSup_deligneSplitting`: the recovery
+  `F^p = ⨆_{p' ≥ p} ⨆_{q'} I^{p',q'}` of the Hodge filtration.
 
 ## References
 
@@ -530,6 +536,85 @@ theorem isInternal_deligneSplittingFamily :
   classical
   exact DirectSum.isInternal_submodule_of_iSupIndep_of_iSup_eq_top
     mhs.iSupIndep_deligneSplittingFamily mhs.iSup_deligneSplittingFamily_eq_top
+
+/-! ### The recovery of the Hodge filtration -/
+
+/-- Every bigrading piece whose first index is at least `p` lies in `F^p`. -/
+private theorem iSup_deligneSplitting_of_le_le_F (p : ℤ) :
+    (⨆ (rs : ℤ × ℤ) (_ : p ≤ rs.1), mhs.deligneSplitting rs.1 rs.2) ≤ mhs.F p :=
+  iSup₂_le fun rs hrs ↦ (mhs.deligneSplitting_le_F rs.1 rs.2).trans (mhs.F_antitone hrs)
+
+/-- The inductive step recovering the Hodge filtration: if the bigrading pieces of first index at
+least `p` already exhaust `F^p ∩ W_{k-1}`, they exhaust `F^p ∩ W_k`.
+
+The class in `gr^W_k` of a vector of `F^p ∩ W_k` lies in the `p`-th step of the induced Hodge
+filtration, hence — the graded piece being pure — in the sum of its Hodge components of first
+index at least `p`. Each of those components is the image of a bigrading piece, so the class has a
+representative among the bigrading pieces of first index at least `p`; subtracting it leaves a
+vector of `F^p ∩ W_{k-1}`. -/
+private theorem F_inf_WC_le_of_F_inf_WC_sub_one_le {p k : ℤ}
+    (ih : mhs.F p ⊓ mhs.WC (k - 1) ≤
+      ⨆ (rs : ℤ × ℤ) (_ : p ≤ rs.1), mhs.deligneSplitting rs.1 rs.2) :
+    mhs.F p ⊓ mhs.WC k ≤
+      ⨆ (rs : ℤ × ℤ) (_ : p ≤ rs.1), mhs.deligneSplitting rs.1 rs.2 := by
+  rintro x ⟨hxF, hxW⟩
+  have hmk : Submodule.Quotient.mk (⟨x, hxW⟩ : mhs.WC k) ∈
+      (mhs.complexGradedHodgeStructure k).F p :=
+    mhs.mk_mem_complexGradedHodgeStructure_F k p ⟨x, hxW⟩ hxF
+  rw [(mhs.complexGradedHodgeStructure k).F_eq_iSup_piece p] at hmk
+  have hpiece : ∀ r : ℤ, (mhs.complexGradedHodgeStructure k).piece r =
+      ((mhs.deligneSplitting r (k - r)).submoduleOf (mhs.WC k)).map
+        ((mhs.WC (k - 1)).submoduleOf (mhs.WC k)).mkQ :=
+    fun r ↦ by
+      have hk : r + (k - r) = k := by omega
+      rw [← hk]
+      simpa only [add_sub_cancel_left] using
+        (mhs.map_deligneSplitting_eq_piece r (k - r)).symm
+  simp only [hpiece, ← Submodule.map_iSup] at hmk
+  obtain ⟨y, hy, hxy⟩ := hmk
+  have hle : (⨆ r : ℤ, ⨆ (_ : p ≤ r), (mhs.deligneSplitting r (k - r)).submoduleOf (mhs.WC k)) ≤
+      (⨆ (rs : ℤ × ℤ) (_ : p ≤ rs.1), mhs.deligneSplitting rs.1 rs.2).comap
+        (mhs.WC k).subtype := by
+    refine iSup₂_le fun r hr ↦ ?_
+    simp only [Submodule.submoduleOf]
+    exact Submodule.comap_mono (le_iSup_of_le (r, k - r) (le_iSup_of_le hr le_rfl))
+  have hyG : (y : Vℂ) ∈
+      ⨆ (rs : ℤ × ℤ) (_ : p ≤ rs.1), mhs.deligneSplitting rs.1 rs.2 := hle hy
+  have hdiff : (y : Vℂ) - x ∈ mhs.WC (k - 1) := by
+    rw [Submodule.mkQ_apply] at hxy
+    exact (weightGradedComplex_mk_eq_mk_iff mhs.WC k y ⟨x, hxW⟩).1 hxy
+  have hxy' : x - (y : Vℂ) ∈ mhs.F p ⊓ mhs.WC (k - 1) :=
+    Submodule.mem_inf.2
+      ⟨Submodule.sub_mem _ hxF (mhs.iSup_deligneSplitting_of_le_le_F p hyG), by
+      simpa only [neg_sub] using Submodule.neg_mem _ hdiff⟩
+  have hsplit : x = x - (y : Vℂ) + (y : Vℂ) := by abel
+  rw [hsplit]
+  exact Submodule.add_mem _ (ih hxy') hyG
+
+/-- **Deligne's bigrading recovers the Hodge filtration**: the Hodge step `F^p` is the supremum of
+the bigrading pieces whose first index is at least `p`.
+
+One inclusion is `I^{p',q'} ≤ F^{p'} ≤ F^p`. The other is an induction upwards on the weight
+filtration, starting from a step where it vanishes: the class in `gr^W_k` of a vector of
+`F^p ∩ W_k` is a sum of Hodge components of first index at least `p`, each the image of a
+bigrading piece, so correcting the vector by a representative of that sum drops it into
+`F^p ∩ W_{k-1}`. -/
+theorem F_eq_iSup_deligneSplitting (p : ℤ) :
+    mhs.F p = ⨆ (rs : ℤ × ℤ) (_ : p ≤ rs.1), mhs.deligneSplitting rs.1 rs.2 := by
+  refine le_antisymm ?_ (mhs.iSup_deligneSplitting_of_le_le_F p)
+  obtain ⟨k₀, hk₀⟩ := mhs.WC_bot
+  obtain ⟨k₁, hk₁⟩ := mhs.WC_top
+  have key : ∀ m : ℤ, k₀ ≤ m → mhs.F p ⊓ mhs.WC m ≤
+      ⨆ (rs : ℤ × ℤ) (_ : p ≤ rs.1), mhs.deligneSplitting rs.1 rs.2 := by
+    refine Int.leInduction (by rw [hk₀, inf_bot_eq]; exact bot_le) ?_
+    intro m _ ih
+    exact mhs.F_inf_WC_le_of_F_inf_WC_sub_one_le (by simpa using ih)
+  have htop : mhs.WC (max k₀ k₁) = ⊤ := by
+    refine top_unique ?_
+    rw [← hk₁]
+    exact mhs.WC_monotone (le_max_right k₀ k₁)
+  intro x hx
+  exact key (max k₀ k₁) (le_max_left _ _) ⟨hx, by rw [htop]; trivial⟩
 
 end MixedHodgeStructure
 
