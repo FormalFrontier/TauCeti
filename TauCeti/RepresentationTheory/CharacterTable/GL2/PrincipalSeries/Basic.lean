@@ -9,6 +9,7 @@ public import Mathlib.Data.Complex.Basic
 public import Mathlib.RepresentationTheory.Character
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Borel
 public import TauCeti.RepresentationTheory.Induction.FiniteDimensional
+public import TauCeti.RepresentationTheory.LinearCharacter
 
 /-!
 # The principal series of `GL₂(𝔽_q)`
@@ -150,15 +151,8 @@ variable {R : Type*} [CommRing R] {k : Type*} [CommSemiring k]
 /-- **The one-dimensional representation of the Borel subgroup** on which `b` acts by the scalar
 `TauCeti.GL2Borel.linearChar α β b`. This is the representation `α ⊗ β` that parabolic induction
 consumes. -/
-def linearRep (α β : Rˣ →* kˣ) : Representation k (GL2Borel R) k where
-  toFun g := LinearMap.lsmul k k (linearChar α β g : k)
-  map_one' := by
-    refine LinearMap.ext fun x => ?_
-    simp
-  map_mul' g h := by
-    refine LinearMap.ext fun x => ?_
-    simp only [map_mul, Units.val_mul, LinearMap.lsmul_apply, smul_eq_mul, Module.End.mul_apply]
-    ring
+def linearRep (α β : Rˣ →* kˣ) : Representation k (GL2Borel R) k :=
+  Representation.ofLinearChar (linearChar α β)
 
 @[simp]
 theorem linearRep_apply (α β : Rˣ →* kˣ) (g : GL2Borel R) (x : k) :
@@ -175,13 +169,8 @@ variable {R : Type*} [CommRing R] {k : Type*} [Field k]
 multiplication by `c` on the line `k` is `c`. -/
 @[simp]
 theorem character_linearRep (α β : Rˣ →* kˣ) (g : GL2Borel R) :
-    (linearRep (R := R) α β).character g = (linearChar α β g : k) := by
-  rw [Representation.character]
-  have h : (linearRep (R := R) (k := k) α β) g =
-      LinearMap.id.smulRight (linearChar α β g : k) := by
-    refine LinearMap.ext fun x => ?_
-    simp [mul_comm]
-  rw [h, LinearMap.trace_smulRight, LinearMap.id_apply]
+    (linearRep (R := R) α β).character g = (linearChar α β g : k) :=
+  Representation.character_ofLinearChar (linearChar α β) g
 
 end Field
 
