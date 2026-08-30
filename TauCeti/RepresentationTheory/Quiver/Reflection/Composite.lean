@@ -359,8 +359,9 @@ unchanged by a simple reflection at a loopless vertex, hence by the whole Coxete
 (`TauCeti.titsForm_vertexPreReflectionList`), and no vertex of a repetition-free sink-admissible
 list carries a loop (`TauCeti.Quiver.IsSinkAdmissible.isEmpty_hom_self`). So on an indecomposable
 representation the Coxeter functor either annihilates it or leaves the Tits form of its dimension
-vector alone. This preserved invariant is used by the Layer 5 reflection induction, whose descent
-measure is root height. -/
+vector alone. This preserved invariant feeds the finite-orbit descent theorem
+`TauCeti.exists_vertexPreReflectionList_pow_apply_neg`, which forces a nonzero dimension vector out
+of the nonnegative cone after finitely many Coxeter passes. -/
 theorem titsForm_dimVector_coxeterFunctor_obj (q : _root_.Quiver.{w} V)
     (hq : ∀ a b : V, Fintype (@_root_.Quiver.Hom V q a b)) {l : List V} (hnd : l.Nodup)
     (hall : ∀ v : V, v ∈ l) (hl : Quiver.IsSinkAdmissible q l)

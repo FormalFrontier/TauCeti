@@ -33,8 +33,9 @@ order `p ^ (2 * m + 1)`.
 * `TauCeti.PrimePower`: a prime and positive exponent, retaining the data needed for a finite field.
 * `TauCeti.LieTypeIndex` and `TauCeti.LieTypeIndex.Valid`: the Lie families and their preferred
   parameter range.
-* `TauCeti.ValidLieTypeIndex`, `TauCeti.SuzukiReeIndex`, and `TauCeti.GraphTwistedIndex`: the
-  restricted domains consumed by later carrier and endomorphism constructions.
+* `TauCeti.ValidLieTypeIndex`, `TauCeti.SuzukiReeIndex`, `TauCeti.GraphTwistedIndex`, and
+  `TauCeti.TypeALieIndex`: the restricted domains consumed by later carrier and endomorphism
+  constructions.
 * `TauCeti.SporadicName`: the conventional twenty-six sporadic names.
 * `TauCeti.CFSGIndex`: cyclic, alternating, Lie-type, and sporadic entries in the classification
   list.
@@ -215,6 +216,30 @@ def UsesHalfFrobenius : LieTypeIndex → Prop
 instance : DecidablePred UsesHalfFrobenius := fun d => by
   cases d <;> rw [usesHalfFrobenius_iff] <;> infer_instance
 
+/-- Whether a Lie-type index belongs to one of the two type-A families, `A_r(q)` or `²A_r(q)`.
+
+This is a constructor selector, not a mathematical property of a group. The small-field and
+duplicate-representative restrictions come from the enclosing `TauCeti.ValidLieTypeIndex`; no
+finiteness or simplicity is asserted here. -/
+def IsTypeA : LieTypeIndex → Prop
+  | .A _ _ | .twistedA _ _ => True
+  | _ => False
+
+/-- Characterization of the two type-A constructors. -/
+@[simp] theorem isTypeA_iff (d : LieTypeIndex) : d.IsTypeA ↔
+    match d with
+    | .A _ _ | .twistedA _ _ => True
+    | _ => False :=
+  Iff.rfl
+
+instance : DecidablePred IsTypeA := fun d => by
+  cases d <;> rw [isTypeA_iff] <;> infer_instance
+
+/-- Neither type-A family uses a half-Frobenius, so both carry a diagram automorphism. -/
+theorem not_usesHalfFrobenius_of_isTypeA {d : LieTypeIndex} (h : d.IsTypeA) :
+    ¬ d.UsesHalfFrobenius := by
+  cases d <;> simp_all [usesHalfFrobenius_iff]
+
 /-- The underlying untwisted Dynkin diagram. Twisted types map to the diagram from which they are
 constructed, so all later root indices use the root-systems roadmap's Bourbaki numbering.
 
@@ -343,6 +368,13 @@ def characteristic : LieTypeIndex → ℕ
 theorem characteristic_prime (d : LieTypeIndex) : d.characteristic.Prime := by
   cases d <;> simp only [characteristic] <;>
     first | exact PrimePower.prime_p _ | decide
+
+/-- The fact instance that equips `ZMod d.characteristic` with its field structure downstream.
+
+It is stated for a bare index rather than for a `TauCeti.ValidLieTypeIndex`, so that it also
+applies at an explicitly written constructor such as `LieTypeIndex.A rank q`: through
+`Subtype.val ?d` the validated form is not a matchable instance key. -/
+instance (d : LieTypeIndex) : Fact d.characteristic.Prime := ⟨d.characteristic_prime⟩
 
 /-- The Frobenius/classification parameter `q`. For ordinary and graph-twisted families this is the
 exponent in `Frob_q`, not the cardinality of the extension field used by a twisted matrix
@@ -516,6 +548,40 @@ abbrev SuzukiReeIndex : Type _ := {d : ValidLieTypeIndex // d.1.UsesHalfFrobeniu
 automorphism. The Suzuki--Ree and Tits branches are excluded. -/
 abbrev GraphTwistedIndex : Type _ := {d : ValidLieTypeIndex // ¬ d.1.UsesHalfFrobenius}
 
+/-- A validated index in one of the two type-A families `A_r(q)` and `²A_r(q)`.
+
+The outer subtype is important: a raw type-A constructor with an excluded rank or field parameter
+is not a `TypeALieIndex`. -/
+abbrev TypeALieIndex : Type _ := {d : ValidLieTypeIndex // d.1.IsTypeA}
+
+namespace TypeALieIndex
+
+/-- Introduce a valid untwisted type-A index. -/
+abbrev ofA (rank : ℕ) (q : PrimePower) (hvalid : (LieTypeIndex.A rank q).Valid) :
+    TypeALieIndex :=
+  ⟨⟨.A rank q, hvalid⟩, (LieTypeIndex.isTypeA_iff _).mpr trivial⟩
+
+/-- Introduce a valid graph-twisted type-A index. -/
+abbrev ofTwistedA (rank : ℕ) (q : PrimePower) (hvalid : (LieTypeIndex.twistedA rank q).Valid) :
+    TypeALieIndex :=
+  ⟨⟨.twistedA rank q, hvalid⟩, (LieTypeIndex.isTypeA_iff _).mpr trivial⟩
+
+/-- Every type-A index is one of the two introduction forms. This is the eliminator matching `ofA`
+and `ofTwistedA`, so a consumer never repeats the case split over the other constructors. -/
+theorem exists_eq_ofA_or_exists_eq_ofTwistedA (d : TypeALieIndex) :
+    (∃ (rank : ℕ) (q : PrimePower) (hvalid : (LieTypeIndex.A rank q).Valid),
+        d = ofA rank q hvalid) ∨
+      ∃ (rank : ℕ) (q : PrimePower) (hvalid : (LieTypeIndex.twistedA rank q).Valid),
+        d = ofTwistedA rank q hvalid := by
+  obtain ⟨⟨d, hvalid⟩, hA⟩ := d
+  revert hvalid hA
+  cases d
+  case A rank q => exact fun hvalid _ => .inl ⟨rank, q, hvalid, rfl⟩
+  case twistedA rank q => exact fun hvalid _ => .inr ⟨rank, q, hvalid, rfl⟩
+  all_goals exact fun _ hA => ((LieTypeIndex.isTypeA_iff _).mp hA).elim
+
+end TypeALieIndex
+
 namespace ValidLieTypeIndex
 
 /-- The total Dynkin-diagram map, restricted along the valid-index coercion. -/
@@ -541,9 +607,6 @@ abbrev characteristic (d : ValidLieTypeIndex) : ℕ := d.1.characteristic
 /-- The characteristic attached to a valid Lie-type index is prime. -/
 theorem characteristic_prime (d : ValidLieTypeIndex) : d.characteristic.Prime :=
   d.1.characteristic_prime
-
-/-- The fact instance that equips `ZMod d.characteristic` with its field structure downstream. -/
-instance (d : ValidLieTypeIndex) : Fact d.characteristic.Prime := ⟨d.characteristic_prime⟩
 
 /-- The total Frobenius-parameter map, restricted along the valid-index coercion. -/
 abbrev fieldOrder (d : ValidLieTypeIndex) : ℕ := d.1.fieldOrder
