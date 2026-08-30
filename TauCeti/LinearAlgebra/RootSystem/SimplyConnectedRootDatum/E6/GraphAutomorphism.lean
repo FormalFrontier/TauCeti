@@ -30,7 +30,7 @@ permute the fifty-four weights of `V(ϖ₁) ⊕ V(ϖ₆)`.
   `TauCeti.graphPermE6`.
 * `TauCeti.DynkinType.diagramAut_weightMap_e6DoubledMinusculeWeight`: it permutes the doubled
   minuscule weight family, along `TauCeti.DynkinType.e6DoubledMinusculeGraphPerm`.
-* `TauCeti.DynkinType.diagramAut_weightMap_e6MinusculeWeight_zero_notMem_range`: it does not
+* `TauCeti.DynkinType.diagramAut_weightMap_e6MinusculeWeight_notMem_range`: it does not
   preserve the minuscule weight family alone.
 
 ## References
@@ -84,14 +84,14 @@ theorem diagramAut_weightMap_e6DoubledMinusculeWeight (x : Fin 27 ⊕ Fin 27) :
   rw [diagramAut_weightMap_graphPermE6]
   exact funext fun i => (e6DoubledMinusculeWeight_e6DoubledMinusculeGraphPerm x i).symm
 
-/-- **The type-`E₆` diagram automorphism does not preserve the minuscule weight family.** It sends
-the highest weight `ϖ₁` to `ϖ₆`, which is not a weight of `V(ϖ₁)`. -/
-theorem diagramAut_weightMap_e6MinusculeWeight_zero_notMem_range :
+/-- **The type-`E₆` diagram automorphism moves every minuscule weight off the family.** At the
+highest weight it sends `ϖ₁` to `ϖ₆`, which is not a weight of `V(ϖ₁)`. -/
+theorem diagramAut_weightMap_e6MinusculeWeight_notMem_range (a : Fin 27) :
     (diagramAut valid_E6
         (mem_diagramSymmetry_iff.mpr cartanMatrix_E6_graphPermE6)).toHom.weightMap
-        (e6MinusculeWeight 0) ∉ Set.range e6MinusculeWeight := by
+        (e6MinusculeWeight a) ∉ Set.range e6MinusculeWeight := by
   rw [diagramAut_weightMap_graphPermE6]
-  exact e6MinusculeWeight_zero_comp_graphPermE6_notMem_range
+  exact e6MinusculeWeight_comp_graphPermE6_notMem_range a
 
 end
 

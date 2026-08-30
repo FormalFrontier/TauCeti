@@ -50,7 +50,7 @@ the doubled family being what its graph-twisted family `²E₆(q)` needs where `
 * `TauCeti.DynkinType.e6MinusculeGraphDualPerm`: the involution of the index set induced by the
   diagram symmetry followed by duality, and
   `TauCeti.DynkinType.e6MinusculeWeight_e6MinusculeGraphDualPerm` its defining equation.
-* `TauCeti.DynkinType.e6MinusculeWeight_zero_comp_graphPermE6_notMem_range`: the twenty-seven
+* `TauCeti.DynkinType.e6MinusculeWeight_comp_graphPermE6_notMem_range`: the twenty-seven
   weights are not stable under the diagram symmetry.
 * `TauCeti.DynkinType.e6DoubledMinusculeWeight`: the fifty-four weights of `V(ϖ₁) ⊕ V(ϖ₆)`, with
   `TauCeti.DynkinType.e6DoubledMinusculeWeight_injective`,
@@ -391,21 +391,17 @@ private theorem exists_e6MinusculeWeight_apply_ne_neg (a b : Fin 27) :
     ∃ i, e6MinusculeWeight a i ≠ -e6MinusculeWeight b i := by
   decide +kernel +revert
 
-private theorem e6MinusculeGraphDualPerm_zero : e6MinusculeGraphDualPerm 0 = 26 := by
-  decide +kernel
-
-/-- **The twenty-seven minuscule weights are not stable under the diagram symmetry.** The image of
-the highest weight `ϖ₁` is `ϖ₆`, which is not a weight of `V(ϖ₁)`. So a carrier built from this
-weight family alone does not inherit the diagram automorphism. -/
-theorem e6MinusculeWeight_zero_comp_graphPermE6_notMem_range :
-    e6MinusculeWeight 0 ∘ graphPermE6 ∉ range e6MinusculeWeight := by
-  rintro ⟨a, ha⟩
-  obtain ⟨i, hi⟩ := exists_e6MinusculeWeight_apply_ne_neg a 26
-  have h26 : e6MinusculeWeight 26 i = -e6MinusculeWeight 0 (graphPermE6 i) := by
-    rw [← e6MinusculeGraphDualPerm_zero, e6MinusculeWeight_e6MinusculeGraphDualPerm_apply]
-  -- The assumed witness reads `e6MinusculeWeight a i` as the image of `ϖ₁`, which `h26` reads
-  -- back as the negative of the `26`-th weight, contradicting the choice of `i`.
-  exact hi (by simp [congrFun ha i, h26])
+/-- **The diagram symmetry moves every minuscule weight off the table.** Its image is the negative
+of a minuscule weight, and no minuscule weight is the negative of another; at the highest weight
+`ϖ₁` this is the image `ϖ₆`, not a weight of `V(ϖ₁)`. So a carrier built from this weight family
+alone does not inherit the diagram automorphism. -/
+theorem e6MinusculeWeight_comp_graphPermE6_notMem_range (a : Fin 27) :
+    e6MinusculeWeight a ∘ graphPermE6 ∉ range e6MinusculeWeight := by
+  rintro ⟨b, hb⟩
+  obtain ⟨i, hi⟩ := exists_e6MinusculeWeight_apply_ne_neg b (e6MinusculeGraphDualPerm a)
+  -- The assumed witness reads `e6MinusculeWeight b i` as the image of the `a`-th weight, which the
+  -- defining equation reads back as the negative of the `e6MinusculeGraphDualPerm a`-th one.
+  exact hi (by simp [congrFun hb i, e6MinusculeWeight_e6MinusculeGraphDualPerm_apply a i])
 
 /-! ## The doubled weight family -/
 
@@ -490,7 +486,7 @@ theorem e6DoubledMinusculeGraphPerm_symm :
 /-- **The doubled minuscule weight family is equivariant for the `E₆` diagram symmetry.** This is
 the hypothesis `wt (π i) (τ k) = wt i k` under which a numbered symmetry of a Kostant toral-closure
 carrier extends to an automorphism of the carrier, and it is what
-`e6MinusculeWeight_zero_comp_graphPermE6_notMem_range` denies to the minuscule family alone. -/
+`e6MinusculeWeight_comp_graphPermE6_notMem_range` denies to the minuscule family alone. -/
 theorem e6DoubledMinusculeWeight_e6DoubledMinusculeGraphPerm (x : Fin 27 ⊕ Fin 27) (i : Fin 6) :
     e6DoubledMinusculeWeight (e6DoubledMinusculeGraphPerm x) i =
       e6DoubledMinusculeWeight x (graphPermE6 i) := by
