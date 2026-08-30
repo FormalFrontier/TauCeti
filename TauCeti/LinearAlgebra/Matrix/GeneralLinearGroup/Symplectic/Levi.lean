@@ -162,11 +162,15 @@ theorem map_leviHom {S : Type*} [CommRing S] (f : R →+* S) (A : GL l R) :
     simpa only [Matrix.GeneralLinearGroup.map_apply,
       Matrix.GeneralLinearGroup.coe_inverseTranspose] using h
   cases i with
-  | inl i => cases j <;> simp [Matrix.fromBlocks]
+  | inl i =>
+      cases j with
+      | inl j => simp only [Matrix.fromBlocks_apply₁₁, Matrix.GeneralLinearGroup.map_apply]
+      | inr j => simp only [Matrix.fromBlocks_apply₁₂, Matrix.zero_apply, map_zero]
   | inr i =>
       cases j with
-      | inl j => simp [Matrix.fromBlocks]
-      | inr j => simpa [Matrix.fromBlocks, Matrix.transpose_apply] using hinv_apply i j
+      | inl j => simp only [Matrix.fromBlocks_apply₂₁, Matrix.zero_apply, map_zero]
+      | inr j =>
+          simpa only [Matrix.fromBlocks_apply₂₂] using hinv_apply i j
 
 end GLSymplectic
 
@@ -186,6 +190,24 @@ theorem mulEquivGLSymplectic_leviHom (A : GL (Fin m) R) :
     mulEquivGLSymplectic m R (leviHom A) = GLSymplectic.leviHom A := by
   rw [leviHom]
   simp
+
+/-- The matrix underlying the `Fin`-indexed Levi embedding is the block-diagonal Levi matrix,
+transported from sum coordinates along `finSumFinEquiv`. -/
+@[simp]
+theorem coe_leviHom (A : GL (Fin m) R) :
+    (((leviHom A : GLSymplecticFin m R) : GL (Fin (m + m)) R) :
+        Matrix (Fin (m + m)) (Fin (m + m)) R) =
+      (Matrix.fromBlocks (A : Matrix (Fin m) (Fin m) R) 0 0
+        ((A⁻¹ : GL (Fin m) R) : Matrix (Fin m) (Fin m) R)ᵀ).submatrix
+          finSumFinEquiv.symm finSumFinEquiv.symm := by
+  ext i j
+  have h := congrArg
+    (fun M : GLSymplectic (Fin m) R =>
+      (((M : GL (Fin m ⊕ Fin m) R) : Matrix (Fin m ⊕ Fin m) (Fin m ⊕ Fin m) R)
+        (finSumFinEquiv.symm i) (finSumFinEquiv.symm j)))
+    (mulEquivGLSymplectic_leviHom A)
+  simpa only [coe_mulEquivGLSymplectic, coe_reindexGL, Matrix.submatrix_apply,
+    Equiv.apply_symm_apply, GLSymplectic.coe_leviHom] using h
 
 /-- The `Fin`-indexed Levi embedding commutes with extension of the value ring. -/
 @[simp]
@@ -235,11 +257,8 @@ theorem leviHom_transvection {i j : Fin m} (hij : i ≠ j) (c : R) :
   rw [Matrix.GeneralLinearGroup.coe_inverseTranspose] at hcoeInv
   rw [toGL_transvection_eq_transvectionUnit hij c, hcoeInv]
   symm
-  simp only [Units.val_mul, coe_transvectionUnit, Matrix.transvection, Matrix.mul_add,
-    Matrix.add_mul, Matrix.one_mul, Matrix.mul_one]
-  rw [Matrix.single_mul_single_of_ne _ _ _ _ Sum.inl_ne_inr]
-  cases a <;> cases b <;>
-    simp [Matrix.single, Matrix.fromBlocks, Matrix.one_apply]
+  simpa only [coe_transvectionUnit] using
+    congrFun (congrFun (coe_differenceShortRootTransvectionUnits hij c) a) b
 
 /-- Over a field, every determinant-one element of the general-linear Levi subgroup belongs to
 any subgroup containing all difference-root elements. -/
@@ -267,7 +286,7 @@ theorem leviHom_toGL_mem_of_difference {K : Type*} [Field K]
     apply hclosure
     rw [htop]
     exact Subgroup.mem_top A
-  exact hA
+  exact Subgroup.mem_comap.mp hA
 
 end GLSymplecticFin
 
