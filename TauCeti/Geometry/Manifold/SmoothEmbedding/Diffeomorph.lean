@@ -8,7 +8,7 @@ module
 public import Mathlib.Geometry.Manifold.ContMDiff.Atlas
 public import Mathlib.Topology.OpenPartialHomeomorph.Composition
 public import TauCeti.Geometry.Diffeomorphism.Group
-public import TauCeti.Geometry.Manifold.SmoothEmbedding.SmoothAmbientIsotopy.Basic
+public import TauCeti.Geometry.Manifold.SmoothEmbedding.Basic
 
 /-!
 # Composing smooth embeddings with diffeomorphisms
@@ -39,9 +39,7 @@ This is the transport layer that layer 4 of the geometric-topology roadmap
 (`TauCetiRoadmap/GeometricTopology/README.md`) needs for its geometric presentations, where a knot
 presentation is a smooth embedding `S¹ ↪ M`: reversing the orientation of such a presentation and
 rotating its parametrisation are precisely precomposition with a diffeomorphism of the circle,
-while the ambient `Diff(M)`-action is postcomposition. The last result of the file connects that
-action to the layer's notion of equivalence: an embedding and its transport by the time-one map of
-a diffeotopy are smoothly ambient isotopic.
+while the ambient `Diff(M)`-action is postcomposition.
 
 ## Main results
 
@@ -197,14 +195,13 @@ variable {𝕜 : Type*} [NontriviallyNormedField 𝕜]
 
 /-- A diffeomorphism, as a bundled smooth embedding. -/
 def ofDiffeomorph [IsManifold I n M] [IsManifold I n M'] (e : M ≃ₘ^n⟮I, I⟯ M') :
-    SmoothEmbedding I I n M M' where
-  toContMDiffMap := ⟨e, e.contMDiff⟩
-  isSmoothEmbedding_toFun := isSmoothEmbedding_diffeomorph e
+    SmoothEmbedding I I n M M' :=
+  SmoothEmbedding.ofIsSmoothEmbedding e (isSmoothEmbedding_diffeomorph e)
 
 @[simp]
 theorem ofDiffeomorph_apply [IsManifold I n M] [IsManifold I n M'] (e : M ≃ₘ^n⟮I, I⟯ M') (x : M) :
     ofDiffeomorph e x = e x := by
-  rfl
+  simp only [ofDiffeomorph, ofIsSmoothEmbedding_apply]
 
 @[simp]
 theorem coe_ofDiffeomorph [IsManifold I n M] [IsManifold I n M'] (e : M ≃ₘ^n⟮I, I⟯ M') :
@@ -213,6 +210,7 @@ theorem coe_ofDiffeomorph [IsManifold I n M] [IsManifold I n M'] (e : M ≃ₘ^n
   exact ofDiffeomorph_apply e x
 
 /-- A diffeomorphism is onto, so as a smooth embedding it has full image. -/
+@[simp]
 theorem range_ofDiffeomorph [IsManifold I n M] [IsManifold I n M'] (e : M ≃ₘ^n⟮I, I⟯ M') :
     range (ofDiffeomorph e) = univ := by
   rw [coe_ofDiffeomorph]
@@ -223,15 +221,15 @@ embedding `f : M → N` into the bundled smooth embedding `f ∘ e : M' → N`. 
 presentation `S¹ ↪ M`, this is the change of parametrisation of the knot, orientation reversal
 included. -/
 def compDiffeomorph [IsManifold I n M'] (f : SmoothEmbedding I J n M N)
-    (e : M' ≃ₘ^n⟮I, I⟯ M) : SmoothEmbedding I J n M' N where
-  toContMDiffMap := ⟨f ∘ e, f.contMDiff.comp e.contMDiff⟩
-  isSmoothEmbedding_toFun := isSmoothEmbedding_comp_diffeomorph e f.isSmoothEmbedding
+    (e : M' ≃ₘ^n⟮I, I⟯ M) : SmoothEmbedding I J n M' N :=
+  SmoothEmbedding.ofIsSmoothEmbedding (f ∘ e)
+    (isSmoothEmbedding_comp_diffeomorph e f.isSmoothEmbedding)
 
 @[simp]
 theorem compDiffeomorph_apply [IsManifold I n M']
     (f : SmoothEmbedding I J n M N) (e : M' ≃ₘ^n⟮I, I⟯ M) (x : M') :
     f.compDiffeomorph e x = f (e x) := by
-  rfl
+  simp only [compDiffeomorph, ofIsSmoothEmbedding_apply, Function.comp_apply]
 
 @[simp]
 theorem coe_compDiffeomorph [IsManifold I n M']
@@ -243,17 +241,25 @@ theorem coe_compDiffeomorph [IsManifold I n M']
 /-- Reparametrising by the identity diffeomorphism changes nothing. -/
 @[simp]
 theorem compDiffeomorph_refl [IsManifold I n M] (f : SmoothEmbedding I J n M N) :
-    f.compDiffeomorph (_root_.Diffeomorph.refl I M n) = f :=
-  SmoothEmbedding.ext fun _ => rfl
+    f.compDiffeomorph (_root_.Diffeomorph.refl I M n) = f := by
+  apply SmoothEmbedding.ext
+  intro x
+  rw [compDiffeomorph_apply]
+  rfl
 
 /-- Reparametrising twice is reparametrising by the composite diffeomorphism. -/
+@[simp]
 theorem compDiffeomorph_compDiffeomorph [IsManifold I n M']
     [IsManifold I n M''] (f : SmoothEmbedding I J n M N) (e : M' ≃ₘ^n⟮I, I⟯ M)
     (e' : M'' ≃ₘ^n⟮I, I⟯ M') :
-    (f.compDiffeomorph e).compDiffeomorph e' = f.compDiffeomorph (e'.trans e) :=
-  SmoothEmbedding.ext fun _ => rfl
+    (f.compDiffeomorph e).compDiffeomorph e' = f.compDiffeomorph (e'.trans e) := by
+  apply SmoothEmbedding.ext
+  intro x
+  rw [compDiffeomorph_apply, compDiffeomorph_apply, compDiffeomorph_apply]
+  rfl
 
 /-- Reparametrisation does not move the image of an embedding. -/
+@[simp]
 theorem range_compDiffeomorph [IsManifold I n M']
     (f : SmoothEmbedding I J n M N) (e : M' ≃ₘ^n⟮I, I⟯ M) :
     range (f.compDiffeomorph e) = range f := by
@@ -264,15 +270,15 @@ theorem range_compDiffeomorph [IsManifold I n M']
 embedding `f : M → N` into the bundled smooth embedding `e ∘ f : M → P`. For a geometric knot
 presentation this is the action of the ambient diffeomorphism group on knots. -/
 def transDiffeomorph [IsManifold J n P] (f : SmoothEmbedding I J n M N)
-    (e : N ≃ₘ^n⟮J, J⟯ P) : SmoothEmbedding I J n M P where
-  toContMDiffMap := ⟨e ∘ f, e.contMDiff.comp f.contMDiff⟩
-  isSmoothEmbedding_toFun := isSmoothEmbedding_diffeomorph_comp f.isSmoothEmbedding e
+    (e : N ≃ₘ^n⟮J, J⟯ P) : SmoothEmbedding I J n M P :=
+  SmoothEmbedding.ofIsSmoothEmbedding (e ∘ f)
+    (isSmoothEmbedding_diffeomorph_comp f.isSmoothEmbedding e)
 
 @[simp]
 theorem transDiffeomorph_apply [IsManifold J n P]
     (f : SmoothEmbedding I J n M N) (e : N ≃ₘ^n⟮J, J⟯ P) (x : M) :
     f.transDiffeomorph e x = e (f x) := by
-  rfl
+  simp only [transDiffeomorph, ofIsSmoothEmbedding_apply, Function.comp_apply]
 
 @[simp]
 theorem coe_transDiffeomorph [IsManifold J n P]
@@ -284,17 +290,25 @@ theorem coe_transDiffeomorph [IsManifold J n P]
 /-- Transporting by the identity diffeomorphism changes nothing. -/
 @[simp]
 theorem transDiffeomorph_refl [IsManifold J n N] (f : SmoothEmbedding I J n M N) :
-    f.transDiffeomorph (_root_.Diffeomorph.refl J N n) = f :=
-  SmoothEmbedding.ext fun _ => rfl
+    f.transDiffeomorph (_root_.Diffeomorph.refl J N n) = f := by
+  apply SmoothEmbedding.ext
+  intro x
+  rw [transDiffeomorph_apply]
+  rfl
 
 /-- Transporting twice is transporting by the composite diffeomorphism. -/
+@[simp]
 theorem transDiffeomorph_transDiffeomorph {Q : Type*} [TopologicalSpace Q] [ChartedSpace G Q]
     [IsManifold J n P] [IsManifold J n Q] (f : SmoothEmbedding I J n M N)
     (e : N ≃ₘ^n⟮J, J⟯ P) (e' : P ≃ₘ^n⟮J, J⟯ Q) :
-    (f.transDiffeomorph e).transDiffeomorph e' = f.transDiffeomorph (e.trans e') :=
-  SmoothEmbedding.ext fun _ => rfl
+    (f.transDiffeomorph e).transDiffeomorph e' = f.transDiffeomorph (e.trans e') := by
+  apply SmoothEmbedding.ext
+  intro x
+  rw [transDiffeomorph_apply, transDiffeomorph_apply, transDiffeomorph_apply]
+  rfl
 
 /-- Ambient transport moves the image of an embedding by the ambient diffeomorphism. -/
+@[simp]
 theorem range_transDiffeomorph [IsManifold J n P]
     (f : SmoothEmbedding I J n M N) (e : N ≃ₘ^n⟮J, J⟯ P) :
     range (f.transDiffeomorph e) = e '' range f := by
@@ -305,7 +319,8 @@ theorem transDiffeomorph_compDiffeomorph [IsManifold I n M'] [IsManifold J n P]
     (f : SmoothEmbedding I J n M N)
     (e : M' ≃ₘ^n⟮I, I⟯ M) (e' : N ≃ₘ^n⟮J, J⟯ P) :
     (f.compDiffeomorph e).transDiffeomorph e' = (f.transDiffeomorph e').compDiffeomorph e :=
-  SmoothEmbedding.ext fun _ => rfl
+  SmoothEmbedding.ext fun x => by rw [transDiffeomorph_apply, compDiffeomorph_apply,
+    compDiffeomorph_apply, transDiffeomorph_apply]
 
 /-- The self-diffeomorphism group of the target acts on the smooth embeddings into it, by ambient
 transport. This is the action of `Diff(M)` on geometric knot presentations. -/
@@ -325,49 +340,13 @@ instance instMulActionMulOppositeDiff [IsManifold I n M] :
     MulAction (Diff I M n)ᵐᵒᵖ (SmoothEmbedding I J n M N) where
   smul e f := f.compDiffeomorph e.unop
   one_smul f := f.compDiffeomorph_refl
-  mul_smul e e' f := by
-    refine SmoothEmbedding.ext fun x => ?_
-    change (f.compDiffeomorph (e * e').unop) x
-      = ((f.compDiffeomorph e'.unop).compDiffeomorph e.unop) x
-    rw [compDiffeomorph_apply, compDiffeomorph_apply, compDiffeomorph_apply,
-      MulOpposite.unop_mul, Diffeomorph.mul_apply]
+  mul_smul e e' f := (f.compDiffeomorph_compDiffeomorph e'.unop e.unop).symm
 
 @[simp]
 theorem op_smul_def [IsManifold I n M] (e : Diff I M n) (f : SmoothEmbedding I J n M N) :
     MulOpposite.op e • f = f.compDiffeomorph e := rfl
 
 end Bundled
-
-section AmbientIsotopy
-
-variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
-  {E' : Type*} [NormedAddCommGroup E'] [NormedSpace ℝ E']
-  {H : Type*} [TopologicalSpace H] {G : Type*} [TopologicalSpace G]
-  {I : ModelWithCorners ℝ E H} {J : ModelWithCorners ℝ E' G}
-  {M : Type*} [TopologicalSpace M] [ChartedSpace H M]
-  {M' : Type*} [TopologicalSpace M'] [ChartedSpace H M']
-  {N : Type*} [TopologicalSpace N] [ChartedSpace G N]
-  {n : ℕ∞ω} {f g : SmoothEmbedding I J n M N}
-
-/-- **Transport along a diffeotopy is an ambient isotopy.** An embedding and its transport by the
-time-one map of a diffeotopy of the ambient manifold are smoothly ambient isotopic: the diffeotopy
-itself is the witness. So the ambient `Diff`-action of `TauCeti.SmoothEmbedding.instMulActionDiff`
-preserves the equivalence class of an embedding whenever the acting diffeomorphism is diffeotopic
-to the identity — for knot presentations, that is exactly ambient isotopy of knots. -/
-theorem smoothAmbientIsotopic_transDiffeomorph_final [IsManifold J n N]
-    (f : SmoothEmbedding I J n M N) (Φ : Diffeotopy J n N) :
-    f.SmoothAmbientIsotopic (f.transDiffeomorph Φ.final) :=
-  SmoothAmbientIsotopic.of_diffeotopy Φ fun _ => rfl
-
-/-- Reparametrising two embeddings by the same diffeomorphism of the source preserves smooth
-ambient isotopy: the witnessing diffeotopy of the ambient manifold is unchanged. -/
-theorem SmoothAmbientIsotopic.compDiffeomorph [IsManifold I n M']
-    (hfg : f.SmoothAmbientIsotopic g) (e : M' ≃ₘ^n⟮I, I⟯ M) :
-    (f.compDiffeomorph e).SmoothAmbientIsotopic (g.compDiffeomorph e) := by
-  obtain ⟨Φ, hΦ⟩ := smoothAmbientIsotopic_def.mp hfg
-  exact SmoothAmbientIsotopic.of_diffeotopy Φ fun x => hΦ (e x)
-
-end AmbientIsotopy
 
 end SmoothEmbedding
 
