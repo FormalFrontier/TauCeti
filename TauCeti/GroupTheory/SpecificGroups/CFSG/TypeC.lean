@@ -75,16 +75,8 @@ abbrev IsTypeC : LieTypeIndex → Prop
   | .C _ _ => True
   | _ => False
 
-/-- Characterization of the type-`C` constructor. -/
-@[simp]
-theorem isTypeC_iff (d : LieTypeIndex) : d.IsTypeC ↔
-    match d with
-    | .C _ _ => True
-    | _ => False :=
-  Iff.rfl
-
 instance : DecidablePred IsTypeC := fun d => by
-  cases d <;> rw [isTypeC_iff] <;> infer_instance
+  cases d <;> simp only [IsTypeC] <;> infer_instance
 
 end LieTypeIndex
 
@@ -96,7 +88,7 @@ abbrev TypeCLieIndex : Type := {d : ValidLieTypeIndex // d.1.IsTypeC}
 
 namespace TypeCLieIndex
 
-open LieTypeIndex (isTypeC_iff usesHalfFrobenius_iff)
+open LieTypeIndex (usesHalfFrobenius_iff)
 
 /-- Introduce a valid type-`C` index. -/
 abbrev ofC (rank : ℕ) (q : PrimePower) (hvalid : (LieTypeIndex.C rank q).Valid) :
@@ -108,6 +100,7 @@ Frobenius. Here the diagram component is always trivial. -/
 abbrev toGraphTwistedIndex (d : TypeCLieIndex) : GraphTwistedIndex :=
   ⟨d.1, by
     obtain ⟨⟨d, hvalid⟩, hC⟩ := d
+    -- Expose the two nested subtype coercions before splitting on the family constructor.
     change d.IsTypeC at hC
     change ¬d.UsesHalfFrobenius
     cases d <;> simp_all [usesHalfFrobenius_iff]⟩
@@ -119,9 +112,11 @@ abbrev carrierRank (d : TypeCLieIndex) : ℕ := d.1.rank - 1
 /-- Adding one back to the carrier parameter recovers the Dynkin rank. -/
 theorem carrierRank_add_one (d : TypeCLieIndex) : d.carrierRank + 1 = d.1.rank := by
   obtain ⟨⟨d, hvalid⟩, hC⟩ := d
+  -- Expose the nested subtype coercion so the impossible non-`C` constructors reduce.
   change d.IsTypeC at hC
   cases d <;> try contradiction
   case C rank q =>
+    -- Unfold the carrier and Dynkin-rank abbreviations to the common constructor parameter.
     change rank - 1 + 1 = rank
     have hrange := ((LieTypeIndex.valid_iff _).mp hvalid).1
     have hrank := ((LieTypeIndex.inStandardRange_iff _).mp hrange).1
@@ -136,6 +131,7 @@ abbrev carrierNode (d : TypeCLieIndex) (i : Fin d.1.rank) : Fin (d.carrierRank +
 theorem diagramPerm_apply (d : TypeCLieIndex) (i : Fin d.1.rank) :
     d.toGraphTwistedIndex.diagramPerm i = i := by
   obtain ⟨⟨d, hvalid⟩, hC⟩ := d
+  -- Expose the nested subtype coercion so only the type-`C` constructor remains.
   change d.IsTypeC at hC
   cases d <;> try contradiction
   case C rank q =>
@@ -151,22 +147,10 @@ noncomputable def simpleRootSubgroup (d : TypeCLieIndex) (i : Fin d.1.rank) :
     Multiplicative d.1.Closure →* d.AmbientGroup :=
   SpStd.rootSubgroupPoints d.carrierRank (.inl (d.carrierNode i)) d.1.Closure
 
-/-- The simple-root subgroup is the positive numbered root subgroup of the `SpStd` carrier, with
-the carrier's predecessor rank convention made explicit. -/
-theorem simpleRootSubgroup_def (d : TypeCLieIndex) (i : Fin d.1.rank) :
-    d.simpleRootSubgroup i =
-      SpStd.rootSubgroupPoints d.carrierRank (.inl (d.carrierNode i)) d.1.Closure := (rfl)
-
 /-- **The Steinberg endomorphism of a validated type-`C` index:** the `q`-power Frobenius of the
 explicit full-weight symplectic carrier. -/
 noncomputable def steinberg (d : TypeCLieIndex) : d.AmbientGroup →* d.AmbientGroup :=
   SpStd.frobenius d.carrierRank d.1.characteristic d.1.fieldExponent d.1.Closure
-
-/-- The type-`C` Steinberg map is the carrier Frobenius at the characteristic and exponent stored
-by the index. -/
-theorem steinberg_def (d : TypeCLieIndex) : d.steinberg =
-    SpStd.frobenius d.carrierRank d.1.characteristic d.1.fieldExponent d.1.Closure := by
-  rw [steinberg]
 
 /-- **The Steinberg map has the pinned action on every positive simple-root subgroup.** It fixes
 the Bourbaki node and raises the parameter to the recorded field order `q`. The node is written
@@ -177,7 +161,7 @@ theorem steinberg_simpleRootSubgroup (d : TypeCLieIndex) (i : Fin d.1.rank)
     d.steinberg (d.simpleRootSubgroup i u) =
       d.simpleRootSubgroup (d.toGraphTwistedIndex.diagramPerm i)
         (Multiplicative.ofAdd (Multiplicative.toAdd u ^ d.1.fieldOrder)) := by
-  rw [diagramPerm_apply, steinberg_def, simpleRootSubgroup_def,
+  rw [diagramPerm_apply, steinberg, simpleRootSubgroup,
     SpStd.frobenius_rootSubgroupPoints, d.1.fieldOrder_eq_characteristic_pow]
 
 /-! ## Fixed points and the candidate group -/
