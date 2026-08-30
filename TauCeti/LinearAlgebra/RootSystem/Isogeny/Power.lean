@@ -150,6 +150,8 @@ def ofEquivHom (P : RootPairing ι R M N) : RootPairing.Aut P →* RootPairingIs
 @[simp] theorem ofEquiv_one : ofEquiv (1 : RootPairing.Aut P) = 1 :=
   map_one (ofEquivHom P)
 
+/-- **An automorphism and the isogeny it becomes have the same powers**, since
+`TauCeti.RootPairingIsogeny.ofEquiv` is multiplicative. -/
 @[simp] theorem ofEquiv_pow (f : RootPairing.Aut P) (n : ℕ) :
     ofEquiv (f ^ n) = ofEquiv f ^ n :=
   map_pow (ofEquivHom P) f n
@@ -243,8 +245,7 @@ def smulIdHom : ℕ+ →* RootPairingIsogeny P P where
 shadow of the `q`-power Frobenius, this is the root-datum form of the fact that a Frobenius
 commutes with every endomorphism of the datum. -/
 theorem commute_smulId (f : RootPairingIsogeny P P) (c : ℕ+) : Commute (smulId P c) f :=
-  show smulId P c * f = f * smulId P c from
-    (mul_def _ _).trans ((comp_smulId f c).symm.trans (mul_def _ _).symm)
+  (commute_iff_eq _ _).2 <| by rw [mul_def, mul_def, comp_smulId]
 
 variable {f : RootPairingIsogeny P P} {c : ℕ+}
 

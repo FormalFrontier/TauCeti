@@ -30,7 +30,11 @@ are exhaustive, as the worked branches at the end of the file illustrate.
 
 ## What the two halves share
 
-Neither half is a Frobenius. A graph-twisted map raised to its twist order is `Frob_(q ^ e)`, by
+Neither half is uniformly a Frobenius; on the ordinary branch the nine untwisted families are the
+exception, where the diagram permutation is trivial and the Steinberg map is `Frob_q` itself, by
+`TauCeti.ValidLieTypeIndex.datumSteinberg_eq_datumFrobenius_iff_of_not_usesHalfFrobenius`. What
+holds in general is only an order relation on each side: a graph-twisted map raised to its twist
+order is `Frob_(q ^ e)`, by
 `TauCeti.GraphTwistedIndex.datumSteinberg_pow_twistOrder`, and a half-Frobenius power squares to
 `Frob_q`, by `TauCeti.SuzukiReeIndex.datumSteinberg_mul_self`. What is uniform is that *some*
 positive power is a scaling, which is

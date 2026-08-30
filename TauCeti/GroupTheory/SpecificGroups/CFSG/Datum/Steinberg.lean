@@ -226,21 +226,27 @@ theorem datumSteinberg_eq_datumFrobenius_iff_twistOrder :
 
 /-- **The order relation of the graph-twisted Steinberg map**: raising `γ ∘ Frob_q` to the twist
 order returns the Frobenius of the field of that degree, `Frob_(q ^ e)`. It is milestone L1's
-`γ ^ 2 = 1` and `γ ^ 3 = 1` read on the Steinberg map itself rather than on its graph factor: the
-factor `γ` is annihilated by `TauCeti.GraphTwistedIndex.datumGraphAut_pow_twistOrder`, and it can be
-collected on one side because a scaling is central,
-`TauCeti.RootPairingIsogeny.commute_smulId`. On an untwisted family the twist order is `1` and this
-is the definition of the Frobenius. -/
+`γ ^ 2 = 1` and `γ ^ 3 = 1` read on the Steinberg map itself rather than on its graph factor. On an
+untwisted family the twist order is `1` and this is the definition of the Frobenius. -/
 theorem datumSteinberg_pow_twistOrder :
     d.datumSteinberg ^ d.twistOrder =
       RootPairingIsogeny.smulId _ (d.1.1.fieldOrderPNat ^ d.twistOrder) := by
+  -- the power splits over the two factors because a scaling is central,
   have hcomm : Commute (RootPairingIsogeny.ofEquiv d.datumGraphAut⁻¹)
       (RootPairingIsogeny.smulId
         (d.1.dynkinType.simplyConnectedRootDatum d.1.dynkinType_valid) d.1.1.fieldOrderPNat) :=
     (RootPairingIsogeny.commute_smulId _ _ _).symm
-  rw [datumSteinberg_def, ValidLieTypeIndex.datumFrobenius_def, ← RootPairingIsogeny.mul_def,
-    hcomm.mul_pow, ← RootPairingIsogeny.ofEquiv_pow, inv_pow, datumGraphAut_pow_twistOrder,
-    inv_one, RootPairingIsogeny.ofEquiv_one, one_mul, RootPairingIsogeny.smulId_pow]
+  -- and the graph factor is annihilated by the twist order.
+  have hgraph : RootPairingIsogeny.ofEquiv d.datumGraphAut⁻¹ ^ d.twistOrder = 1 := by
+    rw [← RootPairingIsogeny.ofEquiv_pow, inv_pow, datumGraphAut_pow_twistOrder, inv_one,
+      RootPairingIsogeny.ofEquiv_one]
+  calc d.datumSteinberg ^ d.twistOrder
+      = RootPairingIsogeny.ofEquiv d.datumGraphAut⁻¹ ^ d.twistOrder *
+          RootPairingIsogeny.smulId _ d.1.1.fieldOrderPNat ^ d.twistOrder := by
+        rw [datumSteinberg_def, ValidLieTypeIndex.datumFrobenius_def, ← RootPairingIsogeny.mul_def,
+          hcomm.mul_pow]
+    _ = RootPairingIsogeny.smulId _ (d.1.1.fieldOrderPNat ^ d.twistOrder) := by
+        rw [hgraph, one_mul, RootPairingIsogeny.smulId_pow]
 
 end
 
