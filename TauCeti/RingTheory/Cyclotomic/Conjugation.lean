@@ -23,12 +23,14 @@ Burnside--Dixon--Schneider character-table solver.
 
 ## Main definitions
 
-* `TauCeti.Cyclotomic.conj`: computable conjugation on exact cyclotomic integers.
-* `TauCeti.Cyclotomic.instStar`: the `star` notation, defined to be `conj`.
+* `TauCeti.Cyclotomic.instStar`: computable conjugation on exact cyclotomic integers, given by the
+  substitution `ζ_e ↦ ζ_e ^ (e - 1)`.
 * `TauCeti.Cyclotomic.instStarRing`: the canonical star-ring structure for positive conductor.
 
 ## Main results
 
+* `TauCeti.Cyclotomic.star_def`: `star` evaluates the canonical coefficient vector at
+  `ζ_e ^ (e - 1)`.
 * `TauCeti.Cyclotomic.star_zeta`: conjugation sends `ζ_e` to `ζ_e ^ (e - 1)`.
 * `TauCeti.Cyclotomic.complexEmbedding_star`: the distinguished complex embedding intertwines
   exact and complex conjugation.
@@ -48,11 +50,18 @@ namespace TauCeti.Cyclotomic
 
 variable {e : ℕ}
 
-/-- Evaluate the canonical coefficient vector after replacing `ζ_e` by `ζ_e ^ (e - 1)`.
-For positive `e` this power is `ζ_e⁻¹`, so the substitution is complex conjugation on exact
-`e`-th cyclotomic integers. -/
-@[expose] def conj (x : Cyclotomic e) : Cyclotomic e :=
-  evalCoeffs (Int.castRingHom (Cyclotomic e)) (zeta e ^ (e - 1)) x
+/-- `star` on exact cyclotomic integers evaluates the canonical coefficient vector after replacing
+`ζ_e` by `ζ_e ^ (e - 1)`.  For positive `e` this power is `ζ_e⁻¹`, so the substitution is complex
+conjugation on exact `e`-th cyclotomic integers. -/
+instance instStar : Star (Cyclotomic e) where
+  star x := evalCoeffs (Int.castRingHom (Cyclotomic e)) (zeta e ^ (e - 1)) x
+
+/-- `star` is the computable substitution `ζ_e ↦ ζ_e ^ (e - 1)`: it evaluates the canonical
+coefficient vector at that power.  This is the defining equation of `Star (Cyclotomic e)`; it is
+not `simp`, since it unfolds into coefficient lists. -/
+theorem star_def (x : Cyclotomic e) :
+    star x = evalCoeffs (Int.castRingHom (Cyclotomic e)) (zeta e ^ (e - 1)) x :=
+  rfl
 
 private theorem map_evalCoeffs {R S : Type*} [CommRing R] [CommRing S]
     (g : R →+* S) (f : ℤ →+* R) (r : R) (x : Cyclotomic e) :
@@ -67,13 +76,14 @@ private theorem complexEmbedding_eq_evalCoeffs (x : Cyclotomic e) :
 
 /-- **The distinguished complex embedding intertwines exact conjugation with complex
 conjugation.** -/
-private theorem complexEmbedding_conj (x : Cyclotomic e) :
-    complexEmbedding (conj x) = star (complexEmbedding x) := by
+@[simp]
+theorem complexEmbedding_star (x : Cyclotomic e) :
+    complexEmbedding (star x) = star (complexEmbedding x) := by
   calc
-    complexEmbedding (conj x) =
+    complexEmbedding (star x) =
         evalCoeffs (complexEmbedding.comp (Int.castRingHom (Cyclotomic e)))
           (complexEmbedding (zeta e ^ (e - 1))) x := by
-      rw [conj, map_evalCoeffs]
+      rw [star_def, map_evalCoeffs]
     _ = evalCoeffs (Int.castRingHom ℂ) (complexRoot e ^ (e - 1)) x := by
       congr 1
       · exact RingHom.ext_int _ _
@@ -89,31 +99,6 @@ private theorem complexEmbedding_conj (x : Cyclotomic e) :
         (Int.castRingHom ℂ)] at h
       exact h
     _ = star (complexEmbedding x) := by rw [complexEmbedding_eq_evalCoeffs]
-
-/-- Exact cyclotomic conjugation sends the distinguished generator to its inverse power
-`ζ_e ^ (e - 1)`. -/
-@[simp]
-private theorem conj_zeta : conj (zeta e) = zeta e ^ (e - 1) := by
-  apply complexEmbedding_injective
-  rw [complexEmbedding_conj, ← starRingEnd_apply, complexEmbedding_zeta,
-    conj_complexRoot_eq_pow_sub_one, map_pow, complexEmbedding_zeta]
-
-/-- `star` on exact cyclotomic integers is the computable substitution `conj`, that is,
-evaluation of the canonical coefficient vector at `ζ_e ^ (e - 1)`. -/
-instance instStar : Star (Cyclotomic e) where
-  star := conj
-
-omit [NeZero e] in
-/-- On exact cyclotomic integers, `star` is the computable substitution
-`ζ_e ↦ ζ_e ^ (e - 1)`. -/
-theorem star_eq_conj (x : Cyclotomic e) : star x = conj x :=
-  (rfl)
-
-/-- The distinguished complex embedding is compatible with the star operations. -/
-@[simp]
-theorem complexEmbedding_star (x : Cyclotomic e) :
-    complexEmbedding (star x) = star (complexEmbedding x) :=
-  complexEmbedding_conj x
 
 /-- Exact cyclotomic integers form a star ring under complex conjugation. -/
 instance instStarRing : StarRing (Cyclotomic e) where
@@ -141,8 +126,10 @@ instance instStarRing : StarRing (Cyclotomic e) where
 
 /-- Conjugation sends the distinguished generator to `ζ_e ^ (e - 1)`. -/
 @[simp]
-theorem star_zeta : star (zeta e) = zeta e ^ (e - 1) :=
-  conj_zeta
+theorem star_zeta : star (zeta e) = zeta e ^ (e - 1) := by
+  apply complexEmbedding_injective
+  rw [complexEmbedding_star, ← starRingEnd_apply, complexEmbedding_zeta,
+    conj_complexRoot_eq_pow_sub_one, map_pow, complexEmbedding_zeta]
 
 omit [NeZero e] in
 /-- Evaluation at a cyclotomic root `r` intertwines `star` with substituting `r ^ (e - 1)`, the
@@ -150,7 +137,7 @@ inverse of `r` when `e` is positive. -/
 theorem evalRingHom_star {R : Type*} [CommRing R] (f : ℤ →+* R) (r : R)
     (hr : (Polynomial.cyclotomic e ℤ).eval₂ f r = 0) (x : Cyclotomic e) :
     evalRingHom f r hr (star x) = evalCoeffs f (r ^ (e - 1)) x := by
-  rw [star_eq_conj, conj, map_evalCoeffs]
+  rw [star_def, map_evalCoeffs]
   congr 1
   · exact RingHom.ext_int _ _
   · rw [map_pow, evalRingHom_zeta]
