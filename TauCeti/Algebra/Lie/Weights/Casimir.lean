@@ -23,10 +23,13 @@ finite-dimensional `L`-module. The Casimir element `Ω ∈ U(L)` is central
 and therefore preserves each weight space `Mμ`. This file computes the trace of its restriction:
 
 ```text
-tr_{Mμ}(Ω) = dim Mμ · ⟨μ, μ⟩ + ∑_{α ∈ roots} ∑_{j ≥ 1} dim M_{μ + jα} · ⟨μ + jα, α⟩,
+tr_{Mμ}(Ω) = dim Mμ · ⟨μ, μ⟩
+  + ∑_{α ∈ roots} ∑_{j ∈ weightString(M, α, μ) \ {0}} dim M_{μ + jα} · ⟨μ + jα, α⟩,
 ```
 
-with `⟨·,·⟩` the invariant form `TauCeti.invForm` on `Module.Dual K H`.
+with `⟨·,·⟩` the invariant form `TauCeti.invForm` on `Module.Dual K H` and `weightString(M, α, μ)`
+the `α`-string above `μ` of `TauCeti.weightString`, a `Finset ℕ` whose index `j = 0` is the `μ`
+rung itself.
 
 ## The argument
 
@@ -49,12 +52,10 @@ root space, so it preserves `Mμ` and is a `TauCeti.raiseLowerEnd` of
 * the summands at a **root** `α` have `⁅x, y⁆ = κ(x, y) α^♯`, and the coefficients `κ(x, y)` sum
   to the trace `1` of a root-space projection, so the string formula
   `TauCeti.trace_raiseLowerEnd_eq_sum_weightString_erase_zero` turns their traces into
-  `∑_{j ≥ 1} dim M_{μ + jα} · ⟨μ + jα, α⟩`.
+  `∑_{j ∈ weightString(M, α, μ) \ {0}} dim M_{μ + jα} · ⟨μ + jα, α⟩`.
 
 ## Main definitions
 
-* `TauCeti.killingExtend`: a weight of `H`, extended to a linear form on `L` by pairing with the
-  vector that represents it under the Killing form.
 * `TauCeti.casimirGenWeightSpaceEnd`: the Casimir operator of `M`, restricted to a generalized
   weight space.
 
@@ -96,14 +97,6 @@ variable {K : Type u} {L : Type v} [Field K] [LieRing L] [LieAlgebra K L]
 
 /-! ### Splitting a Killing-dual-basis sum along the root spaces -/
 
-/-- **Opposite root-space projections are a Killing-adjoint pair.** This is the
-`LinearMap.IsAdjointPair` form of `TauCeti.killingForm_genWeightSpaceProjection`, which is what
-the Killing-dual-basis lemmas consume. -/
-theorem isAdjointPair_genWeightSpaceProjection (χ : Weight K H L) :
-    LinearMap.IsAdjointPair (killingForm K L) (killingForm K L)
-      (genWeightSpaceProjection K H L (-χ)) (genWeightSpaceProjection K H L χ) := fun x y ↦ by
-  rw [killingForm_genWeightSpaceProjection H (-χ) x y, neg_neg]
-
 variable (H) in
 /-- **A Killing-dual-basis sum splits along the root spaces.** For a bilinear map `f`, the sum
 `∑ᵢ f xᵢ yᵢ` along a basis of `L` and its Killing-dual basis is the sum over the weights `χ` of
@@ -132,7 +125,7 @@ theorem sum_apply_killingDualBasis_eq_sum_weight {W : Type*} [AddCommGroup W] [M
   rw [Finset.sum_congr rfl fun i _ ↦ second i, Finset.sum_comm]
   refine Finset.sum_eq_single (-χ) (fun ψ _ hψ ↦ ?_) (by simp)
   have hmove := sum_apply_killingDualBasis_of_isAdjointPair
-    (f.comp (genWeightSpaceProjection K H L χ)) bs (isAdjointPair_genWeightSpaceProjection ψ)
+    (f.comp (genWeightSpaceProjection K H L χ)) bs (isAdjointPair_genWeightSpaceProjection H ψ)
   simp only [LinearMap.comp_apply] at hmove
   rw [← hmove]
   refine Finset.sum_eq_zero fun i _ ↦ ?_
@@ -166,43 +159,11 @@ theorem representation_casimirElement_eq_sum_weight {ι : Type*} [DecidableEq ι
   simpa only [doubleBracketBilin_apply] using
     sum_apply_killingDualBasis_eq_sum_weight H (doubleBracketBilin K M) bs
 
-/-! ### The weight extended to the whole Lie algebra -/
+/-! ### Sums built from the extended weight
 
-/-- **A weight, extended to a linear form on `L`** by pairing with the vector that represents it
-under the Killing form. It agrees with the weight on `H`
-(`TauCeti.killingExtend_apply_cartan`) and vanishes on every root space of a nonzero weight
-(`TauCeti.killingExtend_apply_eq_zero`), so it sees the zero-weight component of a vector and
-nothing else. -/
-noncomputable def killingExtend (lam : Module.Dual K H) : L →ₗ[K] K :=
-  killingForm K L (((IsKilling.cartanEquivDual H).symm lam : H) : L)
-
-omit [IsTriangularizable K H L] in
-/-- The defining formula of the extension: pairing with the vector that represents the weight. -/
-theorem killingExtend_apply (lam : Module.Dual K H) (x : L) :
-    killingExtend lam x =
-      killingForm K L (((IsKilling.cartanEquivDual H).symm lam : H) : L) x := (rfl)
-
-omit [IsTriangularizable K H L] in
-/-- On the Cartan subalgebra the extension is the weight itself. -/
-@[simp]
-theorem killingExtend_apply_cartan (lam : Module.Dual K H) (x : H) :
-    killingExtend lam (x : L) = lam x := by
-  have hres : killingForm K L (((IsKilling.cartanEquivDual H).symm lam : H) : L) (x : L) =
-      traceForm K H L ((IsKilling.cartanEquivDual H).symm lam) x := by
-    rw [← LieAlgebra.restrict_killingForm (R := K) (L := L) H,
-      LinearMap.BilinForm.restrict_apply, LinearMap.domRestrict_apply]
-  rw [killingExtend_apply, hres]
-  conv_rhs => rw [← (IsKilling.cartanEquivDual H).apply_symm_apply lam]
-  rw [IsKilling.cartanEquivDual_apply_apply, traceForm_apply_apply, Module.End.mul_eq_comp]
-
-/-- The extension of a weight vanishes on the root space of a nonzero weight, the Cartan
-subalgebra being the zero root space. -/
-theorem killingExtend_apply_eq_zero (lam : Module.Dual K H) {χ : Weight K H L}
-    (hχ : χ.IsNonZero) {x : L} (hx : x ∈ rootSpace H (χ : H → K)) : killingExtend lam x = 0 := by
-  refine LieAlgebra.killingForm_apply_eq_zero_of_mem_rootSpace_of_add_ne_zero K L H
-    (α := (0 : H → K)) ?_ hx (by simpa using hχ)
-  rw [LieAlgebra.rootSpace_zero_eq, LieSubalgebra.mem_toLieSubmodule]
-  exact ((IsKilling.cartanEquivDual H).symm lam).2
+The extension `TauCeti.killingExtend` of a weight to a linear form on `L` lives in
+`TauCeti/Algebra/Lie/Weights/InvariantForm.lean`; the two sums below are the ones that need the
+root-space projections and the Killing-dual basis as well. -/
 
 /-- **The extension of a weight sees only the zero weight**, so the products of its values on the
 root-space projections of two vectors telescope to the product of its values on the vectors. -/
@@ -400,24 +361,21 @@ theorem sum_trace_raiseLowerEnd_of_ne_zero {ι : Type*} [DecidableEq ι] [Fintyp
 
 /-! ### The trace -/
 
-omit [IsKilling K L] [IsAlgClosed K] [IsTriangularizable K H L] in
-/-- A root, read as a linear form on the Cartan subalgebra, is nonzero. -/
-theorem coe_root_ne_zero (a : H.root) : ((a : Weight K H L) : Module.Dual K H) ≠ 0 :=
-  Weight.coe_toLinear_ne_zero_iff.mpr (H.isNonZero_coe_root a)
-
 variable (M) in
 /-- **The trace of the Casimir operator on a weight space.** For a finite-dimensional module `M`
 over a Killing-semisimple Lie algebra and a linear form `mu` on the Cartan subalgebra, the trace
 of the Casimir operator on the `mu`-weight space of `M` is
 
-`dim M_mu ⟨mu, mu⟩ + ∑_{α ∈ roots} ∑_{j ≥ 1} dim M_{mu + jα} ⟨mu + jα, α⟩`.
+`dim M_mu ⟨mu, mu⟩ + ∑_{α ∈ roots} ∑_{j ∈ weightString(M, α, mu) \ {0}} dim M_{mu + jα}
+⟨mu + jα, α⟩`.
 
-The inner sums are over the `α`-strings above `mu` with the bottom rung removed, which is where
-the terms with a zero weight space are already absent. -/
+The inner sums run over the `α`-string above `mu` (`TauCeti.weightString`, a `Finset ℕ`) with the
+`mu` rung `j = 0` removed, which is where the terms with a zero weight space are already absent. -/
 theorem trace_casimirGenWeightSpaceEnd (mu : Module.Dual K H) :
     trace K _ (casimirGenWeightSpaceEnd M (mu : H → K)) =
       finrank K (genWeightSpace M (mu : H → K)) • invForm mu mu +
-        ∑ a : H.root, ∑ j ∈ (weightString M (coe_root_ne_zero a) mu).erase 0,
+        ∑ a : H.root, ∑ j ∈ (weightString M
+            (Weight.coe_toLinear_ne_zero_iff.mpr (H.isNonZero_coe_root a)) mu).erase 0,
           finrank K (genWeightSpace M ((mu + j • ((a : Weight K H L) : Module.Dual K H) :
               Module.Dual K H) : H → K))
             • invForm (mu + j • ((a : Weight K H L) : Module.Dual K H))
@@ -456,7 +414,7 @@ theorem trace_casimirGenWeightSpaceEnd (mu : Module.Dual K H) :
       ← Finset.sum_sdiff (Finset.subset_univ H.root), Finset.sum_eq_zero hu_root, add_zero]
   · rw [← Finset.sum_coe_sort H.root]
     exact Finset.sum_congr rfl fun a _ ↦ sum_trace_raiseLowerEnd_of_ne_zero bs
-      (coe_root_ne_zero a) mu
+      (Weight.coe_toLinear_ne_zero_iff.mpr (H.isNonZero_coe_root a)) mu
 
 end Trace
 
