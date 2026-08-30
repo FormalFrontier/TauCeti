@@ -113,26 +113,6 @@ theorem commutatorElement_kostantRootSubgroupToToral_of_lie_eq
     ← Grp.comp_hom_hom,
     kostantRootSubgroupToGenerated_comp_kostantGeneratedToToral] using hrel
 
-/-- The class-two Chevalley commutator relation in the toral group scheme, with the output point
-written explicitly at parameter `c` times the product of the two input parameters. -/
-@[simp]
-theorem commutatorElement_kostantRootSubgroupToToral_of_lie_eq'
-    {i j k : I} {c : ℤ}
-    (hij : ⁅e i, e j⁆ = c • e k) (hik : ⁅e i, e k⁆ = 0) (hjk : ⁅e j, e k⁆ = 0)
-    (p q : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of ℤ)) ⟶
-      (AdditiveGroup.groupScheme ℤ).X) :
-    ⁅p ≫ (kostantRootSubgroupToToral e h ρ M hM hnil b wt i).hom.hom,
-      q ≫ (kostantRootSubgroupToToral e h ρ M hM hnil b wt j).hom.hom⁆ =
-      (AdditiveGroup.schemePointsMulEquiv A).symm
-          (Multiplicative.ofAdd ((c : A) *
-            (Multiplicative.toAdd (AdditiveGroup.schemePointsMulEquiv A p) *
-              Multiplicative.toAdd (AdditiveGroup.schemePointsMulEquiv A q)))) ≫
-        (kostantRootSubgroupToToral e h ρ M hM hnil b wt k).hom.hom :=
-  commutatorElement_kostantRootSubgroupToToral_of_lie_eq
-    e h ρ M hM b hnil wt A hij hik hjk p q _
-      (congrArg Multiplicative.toAdd
-        ((AdditiveGroup.schemePointsMulEquiv A).apply_symm_apply _))
-
 /-- **The multiply-laced Chevalley commutator relation inside the toral Kostant group scheme.**
 The indices `i, j, k, l` correspond to `α, β, α + β, 2α + β`. If `r` and `s` have parameters
 `c t u` and `d t² u`, then the commutator of the factored input points is the product of the two
@@ -163,35 +143,6 @@ theorem commutatorElement_kostantRootSubgroupToToral_of_lie_lie_eq
   simpa only [map_commutatorElement, map_mul, IsMonHom.monoidHom_apply, Category.assoc,
     ← Grp.comp_hom_hom,
     kostantRootSubgroupToGenerated_comp_kostantGeneratedToToral] using hrel
-
-/-- The multiply-laced Chevalley commutator relation in the toral group scheme, with both output
-points written explicitly at parameters `c t u` and `d t² u`. -/
-@[simp]
-theorem commutatorElement_kostantRootSubgroupToToral_of_lie_lie_eq'
-    {i j k l : I} {c d : ℤ}
-    (hij : ⁅e i, e j⁆ = c • e k) (hiij : ⁅e i, ⁅e i, e j⁆⁆ = (2 * d) • e l)
-    (hil : ⁅e i, e l⁆ = 0) (hjk : ⁅e j, e k⁆ = 0) (hjl : ⁅e j, e l⁆ = 0)
-    (hkl : ⁅e k, e l⁆ = 0)
-    (p q : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of ℤ)) ⟶
-      (AdditiveGroup.groupScheme ℤ).X) :
-    ⁅p ≫ (kostantRootSubgroupToToral e h ρ M hM hnil b wt i).hom.hom,
-      q ≫ (kostantRootSubgroupToToral e h ρ M hM hnil b wt j).hom.hom⁆ =
-      ((AdditiveGroup.schemePointsMulEquiv A).symm
-          (Multiplicative.ofAdd ((c : A) *
-            (Multiplicative.toAdd (AdditiveGroup.schemePointsMulEquiv A p) *
-              Multiplicative.toAdd (AdditiveGroup.schemePointsMulEquiv A q)))) ≫
-        (kostantRootSubgroupToToral e h ρ M hM hnil b wt k).hom.hom) *
-      ((AdditiveGroup.schemePointsMulEquiv A).symm
-          (Multiplicative.ofAdd ((d : A) *
-            (Multiplicative.toAdd (AdditiveGroup.schemePointsMulEquiv A p) ^ 2 *
-              Multiplicative.toAdd (AdditiveGroup.schemePointsMulEquiv A q)))) ≫
-        (kostantRootSubgroupToToral e h ρ M hM hnil b wt l).hom.hom) :=
-  commutatorElement_kostantRootSubgroupToToral_of_lie_lie_eq
-    e h ρ M hM b hnil wt A hij hiij hil hjk hjl hkl p q _ _
-      (congrArg Multiplicative.toAdd
-        ((AdditiveGroup.schemePointsMulEquiv A).apply_symm_apply _))
-      (congrArg Multiplicative.toAdd
-        ((AdditiveGroup.schemePointsMulEquiv A).apply_symm_apply _))
 
 /-- **The type-`G₂` Chevalley product relation inside the toral Kostant group scheme.**
 The indices `i, j, k, l, m, o` correspond to
@@ -237,54 +188,5 @@ theorem kostantRootSubgroupToToral_mul_of_lie_eq_three_nsmul
         f g p q r s hp hq hr hs)
   simpa only [map_mul, IsMonHom.monoidHom_apply, Category.assoc, ← Grp.comp_hom_hom,
     kostantRootSubgroupToGenerated_comp_kostantGeneratedToToral] using hrel
-
-/-- The type-`G₂` Chevalley product relation in the toral group scheme, with all four output
-points written explicitly in terms of the two input parameters. -/
-theorem kostantRootSubgroupToToral_mul_of_lie_eq_three_nsmul'
-    {i j k l m o : I} {c d a b' : ℤ}
-    (hij : ⁅e i, e j⁆ = c • e k)
-    (hik : c • ⁅e i, e k⁆ = (2 * d) • e l)
-    (hil : d • ⁅e i, e l⁆ = (3 * a) • e m)
-    (hlk : (d * c) • ⁅e l, e k⁆ = (3 * b') • e o)
-    (him : ⁅e i, e m⁆ = 0) (hio : ⁅e i, e o⁆ = 0) (hjk : ⁅e j, e k⁆ = 0)
-    (hlm : ⁅e l, e m⁆ = 0) (hko : ⁅e k, e o⁆ = 0) (hlo : ⁅e l, e o⁆ = 0)
-    (hmo : ⁅e m, e o⁆ = 0)
-    (f g : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of ℤ)) ⟶
-      (AdditiveGroup.groupScheme ℤ).X) :
-    (f ≫ (kostantRootSubgroupToToral e h ρ M hM hnil b wt i).hom.hom) *
-        (g ≫ (kostantRootSubgroupToToral e h ρ M hM hnil b wt j).hom.hom) =
-      (g ≫ (kostantRootSubgroupToToral e h ρ M hM hnil b wt j).hom.hom) *
-        ((AdditiveGroup.schemePointsMulEquiv A).symm
-            (Multiplicative.ofAdd ((c : A) *
-              (Multiplicative.toAdd (AdditiveGroup.schemePointsMulEquiv A f) *
-                Multiplicative.toAdd (AdditiveGroup.schemePointsMulEquiv A g)))) ≫
-          (kostantRootSubgroupToToral e h ρ M hM hnil b wt k).hom.hom) *
-        ((AdditiveGroup.schemePointsMulEquiv A).symm
-            (Multiplicative.ofAdd ((d : A) *
-              (Multiplicative.toAdd (AdditiveGroup.schemePointsMulEquiv A f) ^ 2 *
-                Multiplicative.toAdd (AdditiveGroup.schemePointsMulEquiv A g)))) ≫
-          (kostantRootSubgroupToToral e h ρ M hM hnil b wt l).hom.hom) *
-        ((AdditiveGroup.schemePointsMulEquiv A).symm
-            (Multiplicative.ofAdd ((a : A) *
-              (Multiplicative.toAdd (AdditiveGroup.schemePointsMulEquiv A f) ^ 3 *
-                Multiplicative.toAdd (AdditiveGroup.schemePointsMulEquiv A g)))) ≫
-          (kostantRootSubgroupToToral e h ρ M hM hnil b wt m).hom.hom) *
-        ((AdditiveGroup.schemePointsMulEquiv A).symm
-            (Multiplicative.ofAdd ((b' : A) *
-              (Multiplicative.toAdd (AdditiveGroup.schemePointsMulEquiv A f) ^ 3 *
-                Multiplicative.toAdd (AdditiveGroup.schemePointsMulEquiv A g) ^ 2))) ≫
-          (kostantRootSubgroupToToral e h ρ M hM hnil b wt o).hom.hom) *
-        (f ≫ (kostantRootSubgroupToToral e h ρ M hM hnil b wt i).hom.hom) :=
-  kostantRootSubgroupToToral_mul_of_lie_eq_three_nsmul
-    e h ρ M hM b hnil wt A hij hik hil hlk him hio hjk hlm hko hlo hmo
-      f g _ _ _ _
-      (congrArg Multiplicative.toAdd
-        ((AdditiveGroup.schemePointsMulEquiv A).apply_symm_apply _))
-      (congrArg Multiplicative.toAdd
-        ((AdditiveGroup.schemePointsMulEquiv A).apply_symm_apply _))
-      (congrArg Multiplicative.toAdd
-        ((AdditiveGroup.schemePointsMulEquiv A).apply_symm_apply _))
-      (congrArg Multiplicative.toAdd
-        ((AdditiveGroup.schemePointsMulEquiv A).apply_symm_apply _))
 
 end TauCeti.UniversalEnvelopingAlgebra
