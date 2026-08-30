@@ -36,7 +36,7 @@ module.
 * `TauCeti.DenseGraphLimits.abs_cutDist_sub_right_le_cutNorm` is the corresponding bound on the
   right carrier.
 * `TauCeti.DenseGraphLimits.abs_cutDist_sub_le_cutNorm_add_cutNorm` changes both graphons at once.
-* `TauCeti.DenseGraphLimits.cutDist_triangle_le_add_two_mul_cutNorm_of_approx` transfers a triangle
+* `TauCeti.DenseGraphLimits.cutDist_le_add_two_mul_cutNorm_of_le_add` transfers a triangle
   estimate proved with an approximating intermediate graphon back to the original intermediate.
 
 ## References
@@ -153,7 +153,7 @@ graphon `W` on the same carrier costs at most twice `‖W - W'‖□`, once for 
 The finite-step reduction uses this with `W'` a step approximation of `W`: finite-middle coupling
 gluing supplies the hypothesis, and letting the cut-norm error tend to zero yields the desired
 triangle estimate through `W`. -/
-theorem cutDist_triangle_le_add_two_mul_cutNorm_of_approx (U : Graphon Ω₁ μ₁)
+theorem cutDist_le_add_two_mul_cutNorm_of_le_add (U : Graphon Ω₁ μ₁)
     (W W' : Graphon Ω₂ μ₂) (X : Graphon Ω₃ μ₃)
     (h : cutDist U X ≤ cutDist U W' + cutDist W' X) :
     cutDist U X ≤ cutDist U W + cutDist W X +
