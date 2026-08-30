@@ -223,23 +223,31 @@ theorem cyclicOrder_of_isEmpty_of_left_eq_right (D : GridRectangleDecomposition 
       (D.first.bottom ∈ Grid.cIoo D.second.bottom D.first.top ∨
         D.second.bottom ∈ Grid.cIoo D.first.bottom D.first.top) := by
   have htransRight : D.transpose.first.right = D.transpose.second.right := by
-    simpa only [GridRectangleDecomposition.transpose, GridRectangleBetween.transpose_right,
+    simpa only [GridRectangleDecomposition.transpose_first,
+      GridRectangleDecomposition.transpose_second, GridRectangleBetween.transpose_right,
       GridRectangleBetween.top_def, hcommon] using D.first.map_left.symm
   have htransLeft : D.transpose.first.left ≠ D.transpose.second.left := by
     have hsecondLeft_ne_firstLeft : D.second.left ≠ D.first.left := fun h =>
       D.second.left_ne_right (h.trans hcommon)
     have hmiddle : D.middle D.second.left = x D.second.left :=
       D.first.map_of_ne D.second.left hsecondLeft_ne_firstLeft hother.symm
-    simpa only [GridRectangleDecomposition.transpose, GridRectangleBetween.transpose_left,
+    simpa only [GridRectangleDecomposition.transpose_first,
+      GridRectangleDecomposition.transpose_second, GridRectangleBetween.transpose_left,
       GridRectangleBetween.bottom_def, hmiddle] using
       x.toPerm.injective.ne hsecondLeft_ne_firstLeft.symm
   have h := D.transpose.cyclicOrder_of_isEmpty_of_right_eq_right htransRight htransLeft
     (D.first.isEmpty_transpose.mpr hfirst) (D.second.isEmpty_transpose.mpr hsecond)
   rcases h with ⟨hrows, hcolumns⟩
+  have hfirstBottom : D.transpose.first.bottom = D.first.left :=
+    (congrArg (fun R => R.bottom) D.transpose_first).trans D.first.transpose_bottom
+  have hsecondBottom : D.transpose.second.bottom = D.second.left :=
+    (congrArg (fun R => R.bottom) D.transpose_second).trans D.second.transpose_bottom
+  have hfirstTop : D.transpose.first.top = D.first.right :=
+    (congrArg (fun R => R.top) D.transpose_first).trans D.first.transpose_top
   exact ⟨mem_cIoo_cyclic_left (by
-      simpa only [GridRectangleDecomposition.transpose, GridRectangleBetween.transpose_bottom,
-        GridRectangleBetween.transpose_top] using hcolumns), by
-    simpa only [GridRectangleDecomposition.transpose, GridRectangleBetween.transpose_left,
+      simpa only [hfirstBottom, hsecondBottom, hfirstTop] using hcolumns), by
+    simpa only [GridRectangleDecomposition.transpose_first,
+      GridRectangleDecomposition.transpose_second, GridRectangleBetween.transpose_left,
       GridRectangleBetween.transpose_right] using hrows⟩
 
 /-- Suppose the first empty rectangle's terminal side is the second one's initial side, with no
@@ -252,7 +260,8 @@ theorem cyclicOrder_of_isEmpty_of_right_eq_left (D : GridRectangleDecomposition 
       (D.first.top ∈ Grid.cIoo D.first.bottom D.second.top ∨
         D.second.top ∈ Grid.cIoo D.first.bottom D.first.top) := by
   have htransLeft : D.transpose.first.left = D.transpose.second.left := by
-    simpa only [GridRectangleDecomposition.transpose, GridRectangleBetween.transpose_left,
+    simpa only [GridRectangleDecomposition.transpose_first,
+      GridRectangleDecomposition.transpose_second, GridRectangleBetween.transpose_left,
       GridRectangleBetween.bottom_def, hcommon] using D.first.map_right.symm
   have htransRight : D.transpose.first.right ≠ D.transpose.second.right := by
     intro h
@@ -262,16 +271,23 @@ theorem cyclicOrder_of_isEmpty_of_right_eq_left (D : GridRectangleDecomposition 
       D.middle D.first.left = x D.first.right := D.first.map_left
       _ = D.first.top := D.first.top_def.symm
       _ = D.second.top := by
-        simpa only [GridRectangleDecomposition.transpose,
+        simpa only [GridRectangleDecomposition.transpose_first,
+          GridRectangleDecomposition.transpose_second,
           GridRectangleBetween.transpose_right] using h
       _ = D.middle D.second.right := D.second.top_def
   have h := D.transpose.cyclicOrder_of_isEmpty_of_left_eq_left htransLeft htransRight
     (D.first.isEmpty_transpose.mpr hfirst) (D.second.isEmpty_transpose.mpr hsecond)
   rcases h with ⟨hrows, hcolumns⟩
+  have hfirstBottom : D.transpose.first.bottom = D.first.left :=
+    (congrArg (fun R => R.bottom) D.transpose_first).trans D.first.transpose_bottom
+  have hfirstTop : D.transpose.first.top = D.first.right :=
+    (congrArg (fun R => R.top) D.transpose_first).trans D.first.transpose_top
+  have hsecondTop : D.transpose.second.top = D.second.right :=
+    (congrArg (fun R => R.top) D.transpose_second).trans D.second.transpose_top
   exact ⟨by
-    simpa only [GridRectangleDecomposition.transpose, GridRectangleBetween.transpose_bottom,
-      GridRectangleBetween.transpose_top] using hcolumns, by
-    simpa only [GridRectangleDecomposition.transpose, GridRectangleBetween.transpose_left,
+    simpa only [hfirstBottom, hfirstTop, hsecondTop] using hcolumns, by
+    simpa only [GridRectangleDecomposition.transpose_first,
+      GridRectangleDecomposition.transpose_second, GridRectangleBetween.transpose_left,
       GridRectangleBetween.transpose_right] using hrows⟩
 
 end GridRectangleDecomposition
