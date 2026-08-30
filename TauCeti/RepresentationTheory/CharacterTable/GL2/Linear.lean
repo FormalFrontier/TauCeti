@@ -8,10 +8,6 @@ module
 -- The untwisted Steinberg values and the four class representatives occur in the statements below.
 public import TauCeti.RepresentationTheory.CharacterTable.GL2.CharacterValues
 public import TauCeti.RepresentationTheory.LinearCharacter
--- Non-public: the tensor notation and dimension/character API are used only in definitions and
--- proofs; their resulting `FDRep` objects are exposed through the public imports above.
-import Mathlib.CategoryTheory.Monoidal.Category
-import TauCeti.RepresentationTheory.FDRep
 
 /-!
 # Linear characters and Steinberg twists of `GL₂(𝔽_q)`
@@ -164,8 +160,9 @@ theorem character_GL2Linear_diagGL (α : Fˣ →* ℂˣ) (a b : Fˣ) :
   rw [character_GL2Linear, det_diagGL]
   simp [Fin.prod_univ_two]
 
-/-- The linear character at a non-semisimple representative is `α(a²)`. The value is independent
-of the nonzero upper-right entry, so the formula is stated without a hypothesis on it. -/
+/-- The linear character at a Jordan-form matrix `jordanGL a b` is `α(a²)`. The value does not
+depend on the upper-right entry `b`, so no hypothesis on it is needed; the matrix represents the
+non-semisimple family exactly when `b ≠ 0`. -/
 theorem character_GL2Linear_jordanGL (α : Fˣ →* ℂˣ) (a : Fˣ) (b : F) :
     (GL2Linear F α).character (jordanGL a b) = (α (a ^ 2) : ℂ) := by
   rw [character_GL2Linear, det_jordanGL]
@@ -206,15 +203,15 @@ theorem GL2SteinbergTwist_def (α : Fˣ →* ℂˣ) :
     GL2SteinbergTwist F α = GL2Linear F α ⊗ GL2Steinberg F :=
   (rfl)
 
-/-- The Steinberg twist has dimension `q`. -/
+/-- The Steinberg twist has dimension `q`, being the tensor product of a line with the Steinberg
+representation. -/
 @[simp]
 theorem finrank_GL2SteinbergTwist (α : Fˣ →* ℂˣ) :
     Module.finrank ℂ (GL2SteinbergTwist F α) = Fintype.card F := by
-  apply Nat.cast_injective (R := ℂ)
-  rw [← FDRep.char_one (GL2SteinbergTwist F α), GL2SteinbergTwist_def,
-    congrFun (FDRep.char_tensor (GL2Linear F α) (GL2Steinberg F)) 1, Pi.mul_apply,
-    character_GL2Linear, FDRep.char_one, finrank_GL2Steinberg]
-  simp
+  -- The carrier of a tensor product in `FDRep` is the tensor product of the carriers.
+  have hcarrier : Module.finrank ℂ (GL2SteinbergTwist F α) =
+      Module.finrank ℂ (TensorProduct ℂ (GL2Linear F α) (GL2Steinberg F)) := rfl
+  rw [hcarrier, Module.finrank_tensorProduct, finrank_GL2Linear, finrank_GL2Steinberg, one_mul]
 
 /-- **The character of a Steinberg twist is the determinant character times the Steinberg
 character.** -/

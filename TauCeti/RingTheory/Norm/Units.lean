@@ -24,7 +24,7 @@ finiteness where the value is computed.
 
 ## Main definitions
 
-* `TauCeti.Algebra.normUnits`: the field norm read as a homomorphism `Sˣ →* Rˣ`.
+* `TauCeti.Algebra.normUnits`: the algebra norm read as a homomorphism `Sˣ →* Rˣ`.
 -/
 
 public section
