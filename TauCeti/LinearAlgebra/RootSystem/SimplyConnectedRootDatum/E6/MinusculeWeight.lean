@@ -27,7 +27,7 @@ immersion, rather than seeing only the index-three root lattice of the adjoint r
 
 The table is *not* stable under the pinned diagram symmetry `TauCeti.graphPermE6`, which exchanges
 `ϖ₁` and `ϖ₆` and so carries the weights of `V(ϖ₁)` to those of `V(ϖ₆) = V(ϖ₁)ˣ`, their negatives.
-The last two sections make that exchange explicit and repair it: `e6MinusculeGraphPerm` is the
+The last two sections make that exchange explicit and repair it: `e6MinusculeGraphDualPerm` is the
 involution of the index set implementing it, and `e6DoubledMinusculeWeight` is the fifty-four-weight
 family of `V(ϖ₁) ⊕ V(ϖ₆)`, which is stable, is still injective, and still spans. A carrier inherits
 a symmetry of its numbered data only when its weight family is equivariant, the hypothesis
@@ -47,9 +47,9 @@ the doubled family being what its graph-twisted family `²E₆(q)` needs where `
 * `TauCeti.DynkinType.e6MinusculeWeight_reflection`: the simple-reflection equation.
 * `TauCeti.DynkinType.range_e6MinusculeWeight`: the table is exactly the Weyl orbit of `ϖ₁`.
 * `TauCeti.DynkinType.span_range_e6MinusculeWeight_eq_top`: the weights span the character lattice.
-* `TauCeti.DynkinType.e6MinusculeGraphPerm`: the involution of the index set induced by the diagram
-  symmetry followed by duality, and
-  `TauCeti.DynkinType.e6MinusculeWeight_e6MinusculeGraphPerm` its defining equation.
+* `TauCeti.DynkinType.e6MinusculeGraphDualPerm`: the involution of the index set induced by the
+  diagram symmetry followed by duality, and
+  `TauCeti.DynkinType.e6MinusculeWeight_e6MinusculeGraphDualPerm` its defining equation.
 * `TauCeti.DynkinType.e6MinusculeWeight_zero_comp_graphPermE6_notMem_range`: the twenty-seven
   weights are not stable under the diagram symmetry.
 * `TauCeti.DynkinType.e6DoubledMinusculeWeight`: the fifty-four weights of `V(ϖ₁) ⊕ V(ϖ₆)`, with
@@ -332,28 +332,34 @@ theorem span_range_e6MinusculeWeight_eq_top :
 
 /-! ## The diagram symmetry on the weight table -/
 
-/-- The index table of `e6MinusculeGraphPerm`, matching each minuscule weight with the one whose
+/-- The index table of `e6MinusculeGraphDualPerm`, matching each minuscule weight with the one whose
 negative is its image under the diagram symmetry. -/
-private def e6MinusculeGraphIndex : Fin 27 → Fin 27 :=
+private def e6MinusculeGraphDualIndex : Fin 27 → Fin 27 :=
   ![26, 25, 24, 23, 22, 21, 19, 20, 17, 18, 15, 16, 12, 13, 14, 10, 11, 8, 9, 6, 7, 5, 4, 3, 2, 1,
     0]
 
-private theorem e6MinusculeGraphIndex_involutive :
-    Function.Involutive e6MinusculeGraphIndex := fun _ => by decide +kernel +revert
+private theorem e6MinusculeGraphDualIndex_involutive :
+    Function.Involutive e6MinusculeGraphDualIndex := fun _ => by decide +kernel +revert
 
-/-- **The permutation of the twenty-seven minuscule weights induced by the `E₆` diagram
-symmetry.** The symmetry `TauCeti.graphPermE6` does not preserve the weight table, so this
-permutation records the composite of that symmetry with duality: it matches the index `a` with the
-index whose weight is the negative of the image of the `a`-th weight. -/
-def e6MinusculeGraphPerm : Equiv.Perm (Fin 27) :=
-  e6MinusculeGraphIndex_involutive.toPerm
+/-- **The permutation of the twenty-seven minuscule weights induced by the `E₆` diagram symmetry
+followed by duality.** The symmetry `TauCeti.graphPermE6` does not preserve the weight table, so
+this permutation records the composite of that symmetry with duality: it matches the index `a` with
+the index whose weight is the negative of the image of the `a`-th weight. -/
+def e6MinusculeGraphDualPerm : Equiv.Perm (Fin 27) :=
+  e6MinusculeGraphDualIndex_involutive.toPerm
 
-/-- The graph permutation of the minuscule weight table is an involution, as the diagram symmetry
-it realizes is. -/
+/-- The graph-and-duality permutation of the minuscule weight table is an involution, as the
+diagram symmetry it realizes is. -/
 @[simp]
-theorem e6MinusculeGraphPerm_apply_apply (a : Fin 27) :
-    e6MinusculeGraphPerm (e6MinusculeGraphPerm a) = a :=
-  e6MinusculeGraphIndex_involutive a
+theorem e6MinusculeGraphDualPerm_apply_apply (a : Fin 27) :
+    e6MinusculeGraphDualPerm (e6MinusculeGraphDualPerm a) = a :=
+  e6MinusculeGraphDualIndex_involutive a
+
+/-- The graph-and-duality permutation of the minuscule weight table is its own inverse. -/
+@[simp]
+theorem e6MinusculeGraphDualPerm_symm :
+    e6MinusculeGraphDualPerm.symm = e6MinusculeGraphDualPerm :=
+  e6MinusculeGraphDualIndex_involutive.toPerm_symm
 
 /-- The node table of `TauCeti.graphPermE6`. The permutation itself lives in another module, so
 the kernel cannot evaluate it while checking the weight table below; this table can be evaluated
@@ -363,29 +369,29 @@ private def e6GraphNode : Fin 6 → Fin 6 := ![5, 1, 4, 3, 2, 0]
 private theorem graphPermE6_apply_eq_e6GraphNode (i : Fin 6) : graphPermE6 i = e6GraphNode i := by
   fin_cases i <;> simp [e6GraphNode]
 
-private theorem e6MinusculeWeight_e6MinusculeGraphIndex_apply (a : Fin 27) (i : Fin 6) :
-    e6MinusculeWeight (e6MinusculeGraphIndex a) i = -e6MinusculeWeight a (e6GraphNode i) := by
+private theorem e6MinusculeWeight_e6MinusculeGraphDualIndex_apply (a : Fin 27) (i : Fin 6) :
+    e6MinusculeWeight (e6MinusculeGraphDualIndex a) i = -e6MinusculeWeight a (e6GraphNode i) := by
   decide +kernel +revert
 
 /-- **The diagram symmetry carries each minuscule weight to the negative of another one.** The
 symmetry exchanges `ϖ₁` and `ϖ₆`, so on representations it carries `V(ϖ₁)` to
 `V(ϖ₆) = V(ϖ₁)ˣ`, whose weights are the negatives of these. -/
-theorem e6MinusculeWeight_e6MinusculeGraphPerm_apply (a : Fin 27) (i : Fin 6) :
-    e6MinusculeWeight (e6MinusculeGraphPerm a) i = -e6MinusculeWeight a (graphPermE6 i) := by
+theorem e6MinusculeWeight_e6MinusculeGraphDualPerm_apply (a : Fin 27) (i : Fin 6) :
+    e6MinusculeWeight (e6MinusculeGraphDualPerm a) i = -e6MinusculeWeight a (graphPermE6 i) := by
   rw [graphPermE6_apply_eq_e6GraphNode]
-  exact e6MinusculeWeight_e6MinusculeGraphIndex_apply a i
+  exact e6MinusculeWeight_e6MinusculeGraphDualIndex_apply a i
 
-/-- The functional form of `e6MinusculeWeight_e6MinusculeGraphPerm_apply`. -/
-theorem e6MinusculeWeight_e6MinusculeGraphPerm (a : Fin 27) :
-    e6MinusculeWeight (e6MinusculeGraphPerm a) = -(e6MinusculeWeight a ∘ graphPermE6) := by
+/-- The functional form of `e6MinusculeWeight_e6MinusculeGraphDualPerm_apply`. -/
+theorem e6MinusculeWeight_e6MinusculeGraphDualPerm (a : Fin 27) :
+    e6MinusculeWeight (e6MinusculeGraphDualPerm a) = -(e6MinusculeWeight a ∘ graphPermE6) := by
   funext i
-  simpa using e6MinusculeWeight_e6MinusculeGraphPerm_apply a i
+  simpa using e6MinusculeWeight_e6MinusculeGraphDualPerm_apply a i
 
 private theorem exists_e6MinusculeWeight_apply_ne_neg (a b : Fin 27) :
     ∃ i, e6MinusculeWeight a i ≠ -e6MinusculeWeight b i := by
   decide +kernel +revert
 
-private theorem e6MinusculeGraphPerm_zero : e6MinusculeGraphPerm 0 = 26 := by
+private theorem e6MinusculeGraphDualPerm_zero : e6MinusculeGraphDualPerm 0 = 26 := by
   decide +kernel
 
 /-- **The twenty-seven minuscule weights are not stable under the diagram symmetry.** The image of
@@ -396,7 +402,7 @@ theorem e6MinusculeWeight_zero_comp_graphPermE6_notMem_range :
   rintro ⟨a, ha⟩
   obtain ⟨i, hi⟩ := exists_e6MinusculeWeight_apply_ne_neg a 26
   have h26 : e6MinusculeWeight 26 i = -e6MinusculeWeight 0 (graphPermE6 i) := by
-    rw [← e6MinusculeGraphPerm_zero, e6MinusculeWeight_e6MinusculeGraphPerm_apply]
+    rw [← e6MinusculeGraphDualPerm_zero, e6MinusculeWeight_e6MinusculeGraphDualPerm_apply]
   -- The assumed witness reads `e6MinusculeWeight a i` as the image of `ϖ₁`, which `h26` reads
   -- back as the negative of the `26`-th weight, contradicting the choice of `i`.
   exact hi (by simp [congrFun ha i, h26])
@@ -453,19 +459,19 @@ theorem span_range_e6DoubledMinusculeWeight_eq_top :
   exact ⟨.inl a, rfl⟩
 
 /-- **The permutation of the doubled index set realizing the `E₆` diagram symmetry.** It exchanges
-the two summands along `e6MinusculeGraphPerm`, which is what makes the doubled weight family
+the two summands along `e6MinusculeGraphDualPerm`, which is what makes the doubled weight family
 equivariant where the minuscule family alone is not. -/
 def e6DoubledMinusculeGraphPerm : Equiv.Perm (Fin 27 ⊕ Fin 27) :=
-  (Equiv.sumCongr e6MinusculeGraphPerm e6MinusculeGraphPerm).trans (Equiv.sumComm _ _)
+  (Equiv.sumCongr e6MinusculeGraphDualPerm e6MinusculeGraphDualPerm).trans (Equiv.sumComm _ _)
 
 @[simp]
 theorem e6DoubledMinusculeGraphPerm_inl (a : Fin 27) :
-    e6DoubledMinusculeGraphPerm (.inl a) = .inr (e6MinusculeGraphPerm a) :=
+    e6DoubledMinusculeGraphPerm (.inl a) = .inr (e6MinusculeGraphDualPerm a) :=
   (rfl)
 
 @[simp]
 theorem e6DoubledMinusculeGraphPerm_inr (a : Fin 27) :
-    e6DoubledMinusculeGraphPerm (.inr a) = .inl (e6MinusculeGraphPerm a) :=
+    e6DoubledMinusculeGraphPerm (.inr a) = .inl (e6MinusculeGraphDualPerm a) :=
   (rfl)
 
 /-- The permutation realizing the diagram symmetry on the doubled index set is an involution. -/
@@ -474,6 +480,13 @@ theorem e6DoubledMinusculeGraphPerm_apply_apply (x : Fin 27 ⊕ Fin 27) :
     e6DoubledMinusculeGraphPerm (e6DoubledMinusculeGraphPerm x) = x := by
   cases x <;> simp
 
+/-- The permutation realizing the diagram symmetry on the doubled index set is its own inverse. -/
+@[simp]
+theorem e6DoubledMinusculeGraphPerm_symm :
+    e6DoubledMinusculeGraphPerm.symm = e6DoubledMinusculeGraphPerm :=
+  Equiv.ext fun x => by
+    rw [Equiv.symm_apply_eq, e6DoubledMinusculeGraphPerm_apply_apply]
+
 /-- **The doubled minuscule weight family is equivariant for the `E₆` diagram symmetry.** This is
 the hypothesis `wt (π i) (τ k) = wt i k` under which a numbered symmetry of a Kostant toral-closure
 carrier extends to an automorphism of the carrier, and it is what
@@ -481,6 +494,6 @@ carrier extends to an automorphism of the carrier, and it is what
 theorem e6DoubledMinusculeWeight_e6DoubledMinusculeGraphPerm (x : Fin 27 ⊕ Fin 27) (i : Fin 6) :
     e6DoubledMinusculeWeight (e6DoubledMinusculeGraphPerm x) i =
       e6DoubledMinusculeWeight x (graphPermE6 i) := by
-  cases x <;> simp [e6MinusculeWeight_e6MinusculeGraphPerm_apply]
+  cases x <;> simp [e6MinusculeWeight_e6MinusculeGraphDualPerm_apply]
 
 end TauCeti.DynkinType
