@@ -129,14 +129,14 @@ theorem antisymmetrizerOn_coeff (X : Finset α) (σ : Equiv.Perm α) :
       if ∀ k ∉ X, σ k = k then ((Equiv.Perm.sign σ : ℤ) : ℚ) else 0 := by
   classical
   rw [antisymmetrizerOn_def, subgroupCharSum_coeff]
-  simp [mem_fixingSubgroup_compl_coe_iff]
+  simp [mem_fixingSubgroup_iff]
 
 /-- The permutations summed over by `TauCeti.antisymmetrizerOn X`, as a `Finset`. -/
 private theorem mem_filter_forall_notMem_iff (X : Finset α)
     [DecidablePred fun σ : Equiv.Perm α => ∀ k ∉ X, σ k = k] (σ : Equiv.Perm α) :
     σ ∈ ({σ : Equiv.Perm α | ∀ k ∉ X, σ k = k} : Finset (Equiv.Perm α)) ↔
       σ ∈ fixingSubgroup (Equiv.Perm α) ((X : Set α)ᶜ) := by
-  simp [mem_fixingSubgroup_compl_coe_iff]
+  simp [mem_fixingSubgroup_iff]
 
 /-- The antisymmetrizer of a set, acting on a representation of the symmetric group, is the signed
 sum of the actions of the permutations fixing everything outside that set.

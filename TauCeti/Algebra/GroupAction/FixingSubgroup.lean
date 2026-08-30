@@ -32,17 +32,11 @@ theorem fixingSubgroup_univ {G α : Type*} [Group G] [MulAction G α] [FaithfulS
   exact FaithfulSMul.eq_of_smul_eq_smul fun x =>
     (hg x (Set.mem_univ x)).trans (one_smul G x).symm
 
-/-- A permutation fixes the complement of a finite set `X` pointwise exactly when it moves no
-point outside `X`. -/
-theorem mem_fixingSubgroup_compl_coe_iff {α : Type*} {X : Finset α} {σ : Equiv.Perm α} :
-    σ ∈ _root_.fixingSubgroup (Equiv.Perm α) ((X : Set α)ᶜ) ↔ ∀ k ∉ X, σ k = k := by
-  simp [_root_.mem_fixingSubgroup_iff]
-
 /-- The transposition of two points of `X` fixes the complement of `X` pointwise. -/
 theorem swap_mem_fixingSubgroup_compl_coe {α : Type*} [DecidableEq α] {X : Finset α} {x y : α}
     (hx : x ∈ X) (hy : y ∈ X) :
     Equiv.swap x y ∈ _root_.fixingSubgroup (Equiv.Perm α) ((X : Set α)ᶜ) :=
-  mem_fixingSubgroup_compl_coe_iff.mpr fun _ hk =>
+  (_root_.mem_fixingSubgroup_iff _).mpr fun _ hk =>
     Equiv.swap_apply_of_ne_of_ne (fun h => hk (h ▸ hx)) fun h => hk (h ▸ hy)
 
 end TauCeti
