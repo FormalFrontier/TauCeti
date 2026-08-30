@@ -141,11 +141,6 @@ def complexOperator (hU : U.IsUnitary) (t : ℝ) : H →L[ℂ] H where
 theorem complexOperator_apply (hU : U.IsUnitary) (t : ℝ) (x : H) :
     hU.complexOperator t x = U t x := (rfl)
 
-/-- The complex operator underlying a unitary group preserves the inner product. -/
-theorem complexOperator_inner_map_map (hU : U.IsUnitary) (t : ℝ) (x y : H) :
-    ⟪hU.complexOperator t x, hU.complexOperator t y⟫_ℂ = ⟪x, y⟫_ℂ :=
-  hU.inner_map_map t x y
-
 /-- Multiplying a generator-domain vector by a complex scalar keeps it in the generator domain,
 and its difference quotient converges to the correspondingly scaled generator value. -/
 private theorem tendsto_genQuot_smul (hU : U.IsUnitary) (x : U.domain) (z : ℂ) :
@@ -218,7 +213,7 @@ theorem complexGenerator_domain (U : StronglyContinuousGroup H) (hU : U.IsUnitar
 
 /-- Membership in the complex generator domain implies membership in the original real generator
 domain; the two domains have the same carrier. -/
-theorem complexGenerator_mem_domain (U : StronglyContinuousGroup H) (hU : U.IsUnitary)
+private theorem complexGenerator_mem_domain (U : StronglyContinuousGroup H) (hU : U.IsUnitary)
     (x : (U.complexGenerator hU).domain) : (x : H) ∈ U.domain := by
   apply (U.mem_complexDomain_iff hU x).mp
   rw [← U.complexGenerator_domain hU]
@@ -235,7 +230,7 @@ theorem complexGenerator_apply (U : StronglyContinuousGroup H) (hU : U.IsUnitary
 
 namespace IsUnitary
 
-variable [CompleteSpace H] {U : StronglyContinuousGroup H}
+variable {U : StronglyContinuousGroup H}
 
 /-- **The infinitesimal generator of a unitary strongly continuous group is skew-symmetric.**
 For vectors `x` and `y` in its natural complex domain,
@@ -246,7 +241,17 @@ theorem inner_complexGenerator_eq_neg (hU : U.IsUnitary)
       -⟪(x : H), U.complexGenerator hU y⟫_ℂ := by
   let xr : U.domain := ⟨x, U.complexGenerator_mem_domain hU x⟩
   let yr : U.domain := ⟨y, U.complexGenerator_mem_domain hU y⟩
-  have hderiv := (U.hasDerivAt xr 0).inner ℂ (U.hasDerivAt yr 0)
+  have hxderiv : HasDerivWithinAt (fun t : ℝ => U t (xr : H))
+      (U.generator ⟨(xr : H), by rw [U.generator_domain]; exact xr.property⟩) (Set.Ici 0) 0 := by
+    rw [hasDerivWithinAt_iff_tendsto_slope]
+    unfold slope
+    simpa [U.map_zero_apply] using U.generator_tendsto xr
+  have hyderiv : HasDerivWithinAt (fun t : ℝ => U t (yr : H))
+      (U.generator ⟨(yr : H), by rw [U.generator_domain]; exact yr.property⟩) (Set.Ici 0) 0 := by
+    rw [hasDerivWithinAt_iff_tendsto_slope]
+    unfold slope
+    simpa [U.map_zero_apply] using U.generator_tendsto yr
+  have hderiv := hxderiv.inner ℂ hyderiv
   have hfun : (fun t : ℝ => ⟪U t (x : H), U t (y : H)⟫_ℂ) =
       fun _ : ℝ => ⟪(x : H), (y : H)⟫_ℂ := by
     funext t
@@ -256,7 +261,8 @@ theorem inner_complexGenerator_eq_neg (hU : U.IsUnitary)
       ⟪(x : H), U.complexGenerator hU y⟫_ℂ +
         ⟪U.complexGenerator hU x, (y : H)⟫_ℂ = 0 := by
     simpa only [U.map_zero_apply, complexGenerator_apply, xr, yr] using
-      hderiv.unique (hasDerivAt_const (x := (0 : ℝ)) ⟪(x : H), (y : H)⟫_ℂ)
+      UniqueDiffWithinAt.eq_deriv (Set.Ici (0 : ℝ)) (uniqueDiffWithinAt_Ici 0) hderiv
+        (hasDerivAt_const (x := (0 : ℝ)) ⟪(x : H), (y : H)⟫_ℂ).hasDerivWithinAt
   exact eq_neg_of_add_eq_zero_right hzero
 
 /-- The complex generator of a unitary strongly continuous group is a formal adjoint of its
@@ -266,6 +272,8 @@ theorem complexGenerator_isFormalAdjoint_neg (hU : U.IsUnitary) :
   intro x y
   rw [LinearPMap.neg_apply, inner_neg_right]
   exact hU.inner_complexGenerator_eq_neg x y
+
+variable [CompleteSpace H]
 
 /-- The range of `1 - A` is the whole Hilbert space. This is the forward semigroup's resolvent
 range, transported from the real generator to the complex generator. -/
