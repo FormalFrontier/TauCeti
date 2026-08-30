@@ -230,19 +230,28 @@ theorem reducedBurau_sigma (n : ℕ) (t : Rˣ) (i : Fin n) (x : Fin n → R) :
         (reducedBurauSpaceEquiv n (t : R) x : Fin (n + 1) → R)) := by
   rw [reducedBurau_apply, burau_sigma, coe_burauGL]
 
+/-- The individual free coordinates of the reduced action of an elementary braid: the `j`-th
+coordinate of the reduced action is the `j.succ`-th coordinate of the unreduced action. This is
+`TauCeti.KnotTheory.reducedBurau_sigma` evaluated at a coordinate, using that `Fin.tail v j` is by
+definition `v j.succ`; it is the form in which entrywise computations with the reduced matrices are
+carried out. -/
+theorem reducedBurau_sigma_apply (n : ℕ) (t : Rˣ) (i : Fin n) (x : Fin n → R) (j : Fin n) :
+    reducedBurau n t (BraidGroup.sigma i) x j =
+      (burauMatrix (n := n + 1) (t : R) i *ᵥ
+        (reducedBurauSpaceEquiv n (t : R) x : Fin (n + 1) → R)) j.succ := by
+  rw [reducedBurau_sigma]
+  rfl
+
 /-- On two strands the reduced Burau representation sends the elementary braid to multiplication
 by `-t`. This is the first nonzero-dimensional case and fixes the normalization of the reduced
 representation. -/
 @[simp]
 theorem reducedBurau_sigma_zero_apply (t : Rˣ) (x : Fin 1 → R) :
     reducedBurau 1 t (BraidGroup.sigma 0) x 0 = -(t : R) * x 0 := by
-  rw [reducedBurau_sigma]
-  simp only [Nat.reduceAdd, Fin.isValue, reducedBurauSpaceEquiv_apply_coe,
-    Finset.univ_unique, Fin.default_eq_zero, Fin.val_eq_zero, zero_add, pow_one,
-    Finset.sum_singleton, neg_mul]
-  change (burauMatrix (t : R) 0 *ᵥ Fin.cons (-((t : R) * x 0)) x) (1 : Fin 2) = _
-  rw [Matrix.mulVec, dotProduct, Fin.sum_univ_succ, Fin.sum_univ_one]
-  simp [burauMatrix_apply, burauCol_apply, burauRow_apply, Fin.ext_iff]
+  rw [reducedBurau_sigma_apply, burauMatrix_mulVec, burauRow_dotProduct]
+  have hstrand : BraidGroup.strand (n := 2) 0 = 0 := by simp [Fin.ext_iff]
+  have hstrandSucc : BraidGroup.strandSucc (n := 2) 0 = 1 := by simp [Fin.ext_iff]
+  simp [hstrand, hstrandSucc, burauCol_apply]
 
 end CommRing
 
