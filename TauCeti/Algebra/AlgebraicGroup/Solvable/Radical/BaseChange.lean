@@ -29,8 +29,8 @@ conclusion is
 
 The four candidate conditions use their corresponding base-change theorems. The quotient by a
 base-changed ideal is identified with the base change of the original quotient by
-`CommHopfAlgCat.quotientBaseChangeIso`; smoothness promotes geometric solvability to a universal
-derived-word identity, so that condition also survives arbitrary field extension.
+`CommHopfAlgCat.quotientBaseChangeIso`; finite-type Nullstellensatz makes the universal
+derived-word defect nilpotent, so that condition also survives arbitrary field extension.
 
 Equality requires descent of an arbitrary radical candidate over `K` and is not asserted here.
 
@@ -80,7 +80,7 @@ theorem baseChange (hI : IsSolvableRadicalCandidate H I) :
       (FiniteTypeCommHopfAlgCat.quotient H I) K _ _ _ _ hI.smooth
   · apply (geometricallySolvablePointsCommHopfAlgProperty K).prop_of_iso qIso.symm
     exact geometricallySolvablePointsCommHopfAlgProperty.baseChange
-      (CommHopfAlgCat.quotient H.obj I) hI.smooth hI.geometricallySolvable
+      (CommHopfAlgCat.quotient H.obj I) hI.geometricallySolvable
 
 end HopfIdeal.IsSolvableRadicalCandidate
 

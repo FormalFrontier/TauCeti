@@ -26,16 +26,16 @@ makes this algebra reduced, so algebraic-closure-valued points separate its elem
 of `f`, and hence of all its iterated tensor powers, then reflects the universal identity from
 `K` to `H`.
 
-The same universal identity proves that geometric solvability of a smooth affine group survives
-every field extension: specialize it to points over the new algebraic closure, then use the
-standard equivalence between points of a scalar extension and points with scalars restricted.
+For a finite-type affine group, the same argument makes each coordinate of the universal
+derived-word defect nilpotent. Every field-valued point kills that defect, proving that geometric
+solvability survives arbitrary field extension without a smoothness hypothesis.
 
 ## Main declarations
 
 * `TauCeti.geometricallySolvablePointsCommHopfAlgProperty.of_injective_of_smooth`: geometric
   solvability descends along an injective coordinate morphism with smooth codomain.
 * `TauCeti.geometricallySolvablePointsCommHopfAlgProperty.baseChange`: geometric solvability of a
-  smooth affine group is preserved by field extension.
+  finite-type affine group is preserved by field extension.
 
 ## References
 
@@ -111,6 +111,18 @@ private theorem smooth (hH : Algebra.Smooth k H) (n : ℕ) :
       exact Algebra.Smooth.comp k (derivedWordCoordinateAlgebra H n)
         ((derivedWordCoordinateAlgebra H n) ⊗[k]
           (derivedWordCoordinateAlgebra H n))
+
+/-- If the original coordinate algebra is finite type, every universal derived-word value
+algebra is finite type. -/
+private theorem finiteType (hH : Algebra.FiniteType k H) (n : ℕ) :
+    Algebra.FiniteType k (derivedWordCoordinateAlgebra H n) := by
+  induction n with
+  | zero => exact hH
+  | succ n ih =>
+      let _ : Algebra.FiniteType k (derivedWordCoordinateAlgebra H n) := ih
+      exact Algebra.FiniteType.trans (R := k) (S := derivedWordCoordinateAlgebra H n)
+        (A := (derivedWordCoordinateAlgebra H n) ⊗[k]
+          (derivedWordCoordinateAlgebra H n)) inferInstance inferInstance
 
 end derivedWordCoordinateAlgebra
 
@@ -271,15 +283,39 @@ namespace geometricallySolvablePointsCommHopfAlgProperty
 variable {k : Type u} [Field k]
 variable {H K : CommHopfAlgCat.{v} k}
 
+/-- Finite-type geometric solvability makes every coordinate of a universal derived-word defect
+nilpotent. -/
+private theorem exists_universalDerivedWord_sub_one_isNilpotent
+    (hH_finite : Algebra.FiniteType k H)
+    (hH : geometricallySolvablePointsCommHopfAlgProperty k H) :
+    ∃ n, ∀ z, IsNilpotent ((HopfAlgebra.universalDerivedWord H n).ofConv z -
+      algebraMap k (derivedWordCoordinateAlgebra H n) (Coalgebra.counit (R := k) z)) := by
+  rw [geometricallySolvablePointsCommHopfAlgProperty_iff,
+    isSolvable_iff_exists_derivedWord_eq_one] at hH
+  obtain ⟨n, hn⟩ := hH
+  refine ⟨n, fun z ↦ ?_⟩
+  let _ : Algebra.FiniteType k (derivedWordCoordinateAlgebra H n) :=
+    derivedWordCoordinateAlgebra.finiteType hH_finite n
+  rw [← TauCeti.forall_algHom_apply_eq_zero_iff_isNilpotent
+    (k := k) (K := AlgebraicClosure k)]
+  intro q
+  let args := HopfAlgebra.derivedWordArgumentsOfAlgHom H n q
+  have hq := HopfAlgebra.mapValue_universalDerivedWord H n args
+  rw [HopfAlgebra.derivedWordEvaluation_argumentsOfAlgHom] at hq
+  have hqz := congrArg (fun g : HopfAlgebra.points (R := k) (H := H)
+    (CommAlgCat.of k (AlgebraicClosure k)) ↦ g.ofConv z) hq
+  rw [hn] at hqz
+  simpa [AlgHom.mapValue_apply, AlgHom.convOne_apply, sub_eq_zero] using hqz
+
 /-- Smooth geometric solvability gives a universal derived-word identity in the coordinate
 algebra. -/
 private theorem exists_universalDerivedWord_eq_one
     (hH_smooth : Algebra.Smooth k H)
     (hH : geometricallySolvablePointsCommHopfAlgProperty k H) :
     ∃ n, HopfAlgebra.universalDerivedWord H n = 1 := by
-  rw [geometricallySolvablePointsCommHopfAlgProperty_iff,
-    isSolvable_iff_exists_derivedWord_eq_one] at hH
-  obtain ⟨n, hn⟩ := hH
+  let _ : Algebra.Smooth k H := hH_smooth
+  obtain ⟨n, hn⟩ := exists_universalDerivedWord_sub_one_isNilpotent
+    (inferInstance : Algebra.FiniteType k H) hH
   refine ⟨n, ?_⟩
   let _ : Algebra.Smooth k (derivedWordCoordinateAlgebra H n) :=
     derivedWordCoordinateAlgebra.smooth hH_smooth n
@@ -288,16 +324,7 @@ private theorem exists_universalDerivedWord_eq_one
   apply WithConv.ofConv_injective
   apply AlgHom.ext
   intro z
-  apply TauCeti.eq_of_forall_algHom_apply_eq
-    (k := k) (K := AlgebraicClosure k)
-  intro q
-  let args := HopfAlgebra.derivedWordArgumentsOfAlgHom H n q
-  have hq := HopfAlgebra.mapValue_universalDerivedWord H n args
-  rw [HopfAlgebra.derivedWordEvaluation_argumentsOfAlgHom] at hq
-  have hqz := congrArg (fun g : HopfAlgebra.points (R := k) (H := H)
-    (CommAlgCat.of k (AlgebraicClosure k)) ↦ g.ofConv z) hq
-  rw [hn] at hqz
-  simpa [AlgHom.mapValue_apply, AlgHom.convOne_apply] using hqz
+  exact sub_eq_zero.mp (isNilpotent_iff_eq_zero.mp (hn z))
 
 /-- A universal derived-word identity makes the points over every value algebra solvable. -/
 private theorem isSolvable_points_of_universalDerivedWord_eq_one
@@ -312,6 +339,23 @@ private theorem isSolvable_points_of_universalDerivedWord_eq_one
   ext z
   simp only [AlgHom.comp_apply, AlgHom.convOne_apply]
   exact (HopfAlgebra.derivedWordEvaluation H n x).commutes _
+
+/-- A coordinatewise nilpotent universal derived-word defect vanishes at every field-valued
+point. -/
+private theorem isSolvable_points_of_universalDerivedWord_sub_one_isNilpotent
+    {A : Type w} [Field A] [Algebra k A] (n : ℕ)
+    (hH : ∀ z, IsNilpotent ((HopfAlgebra.universalDerivedWord H n).ofConv z -
+      algebraMap k (derivedWordCoordinateAlgebra H n) (Coalgebra.counit (R := k) z))) :
+    Group.IsSolvable
+      (HopfAlgebra.points (R := k) (H := H) (CommAlgCat.of k A)) := by
+  rw [isSolvable_iff_exists_derivedWord_eq_one]
+  refine ⟨n, fun x ↦ ?_⟩
+  rw [← HopfAlgebra.mapValue_universalDerivedWord H n x]
+  apply WithConv.ofConv_injective
+  ext z
+  have hz := (hH z).map (HopfAlgebra.derivedWordEvaluation H n x)
+  rw [isNilpotent_iff_eq_zero] at hz
+  simpa [AlgHom.convOne_apply, sub_eq_zero] using hz
 
 /-- Geometric solvability descends along an injective morphism of coordinate Hopf algebras whose
 codomain is smooth.
@@ -353,24 +397,26 @@ theorem of_injective_of_smooth (f : H ⟶ K) (hf : Function.Injective f.hom)
         rw [AlgHom.convOne_apply]
   exact isSolvable_points_of_universalDerivedWord_eq_one n hHuniv
 
-/-- Geometric solvability of a smooth affine group is preserved by arbitrary field extension.
+/-- Geometric solvability of a finite-type affine group is preserved by arbitrary field
+extension.
 
-The smoothness hypothesis is used to promote solvability over one algebraic closure to a
-universal derived-word identity. That identity then holds over the algebraic closure of the
-larger field, and the standard base-change equivalence of point groups transfers solvability. -/
+Finite-type Nullstellensatz makes the coordinates of a universal derived-word defect nilpotent.
+They vanish under points valued in the algebraic closure of the larger field, and the standard
+base-change equivalence of point groups transfers solvability. -/
 theorem baseChange {K : Type w} [Field K] [Algebra k K]
-    (H : CommHopfAlgCat.{v} k) (hH_smooth : Algebra.Smooth k H)
+    (H : CommHopfAlgCat.{v} k) [Algebra.FiniteType k H]
     (hH : geometricallySolvablePointsCommHopfAlgProperty k H) :
     geometricallySolvablePointsCommHopfAlgProperty K
       (CommHopfAlgCat.baseChange (K := K) H) := by
   rw [geometricallySolvablePointsCommHopfAlgProperty_iff]
-  obtain ⟨n, hword⟩ := exists_universalDerivedWord_eq_one hH_smooth hH
+  obtain ⟨n, hword⟩ := exists_universalDerivedWord_sub_one_isNilpotent
+    (inferInstance : Algebra.FiniteType k H) hH
   let _ : Algebra k (AlgebraicClosure K) :=
     Algebra.compHom (AlgebraicClosure K) (algebraMap k K)
   have hpoints : Group.IsSolvable
       (HopfAlgebra.points (R := k) (H := H)
         (CommAlgCat.of k (AlgebraicClosure K))) :=
-    isSolvable_points_of_universalDerivedWord_eq_one n hword
+    isSolvable_points_of_universalDerivedWord_sub_one_isNilpotent n hword
   let e := CommHopfAlgCat.baseChangePointsMulEquiv (K := K)
     (CommAlgCat.of K (AlgebraicClosure K)) H
   let _ := hpoints
