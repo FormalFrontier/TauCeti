@@ -233,12 +233,13 @@ theorem integral_hypergeometricMeasure {E : Type*} [NormedAddCommGroup E] [Norme
 
 /-! ## Cumulative masses -/
 
-/-- The cumulative mass of a valid hypergeometric law is the finite sum of its singleton masses. -/
-theorem hypergeometricMeasure_real_Iic (hK : K ≤ N) (hn : n ≤ N) (k : ℕ) :
+/-- The cumulative mass of a hypergeometric law is the finite sum of its singleton masses. -/
+theorem hypergeometricMeasure_real_Iic (k : ℕ) :
     (hypergeometricMeasure N K n).real {j | j ≤ k} =
       ∑ j ∈ Finset.Iic k, (hypergeometricMeasure N K n).real {j} := by
-  let _ : IsProbabilityMeasure (hypergeometricMeasure N K n) :=
-    isProbabilityMeasure_hypergeometricMeasure hK hn
+  let _ : IsFiniteMeasure (hypergeometricMeasure N K n) :=
+    (integrable_const_iff_isFiniteMeasure one_ne_zero).mp
+      (integrable_hypergeometricMeasure (fun _ ↦ (1 : ℝ)) N K n)
   have hset : {j : ℕ | j ≤ k} = (Finset.Iic k : Set ℕ) := by
     ext j
     simp
@@ -251,13 +252,14 @@ theorem hypergeometricMeasure_real_Iic_eq_sum (hK : K ≤ N) (hn : n ≤ N) (k :
         if j ≤ n then
           (K.choose j : ℝ) * ((N - K).choose (n - j) : ℝ) / (N.choose n : ℝ)
         else 0 := by
-  rw [hypergeometricMeasure_real_Iic hK hn]
+  rw [hypergeometricMeasure_real_Iic]
   exact Finset.sum_congr rfl fun j _ ↦ hypergeometricMeasure_real_singleton hK hn j
 
 /-! ## Transforms of the real-valued cast law -/
 
 /-- Every function on `ℝ` is integrable against the real-valued cast of a hypergeometric law,
 since the native law has finite support. -/
+@[simp]
 theorem integrable_map_cast_hypergeometricMeasure {E : Type*} [NormedAddCommGroup E]
     (f : ℝ → E) (N K n : ℕ) :
     Integrable f ((hypergeometricMeasure N K n).map (Nat.cast : ℕ → ℝ)) := by
