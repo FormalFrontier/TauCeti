@@ -5,9 +5,9 @@ Authors: The Tau Ceti contributors
 -/
 module
 
--- The untwisted Steinberg values and the four class representatives occur in the statements below.
+-- The untwisted Steinberg values and the four class representatives occur in the statements below,
+-- and this module re-exports `Representation.ofLinearCharacter`, which the definitions below use.
 public import TauCeti.RepresentationTheory.CharacterTable.GL2.CharacterValues
-public import TauCeti.RepresentationTheory.LinearCharacter
 
 /-!
 # Linear characters and Steinberg twists of `GL₂(𝔽_q)`
