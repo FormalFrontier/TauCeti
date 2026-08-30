@@ -50,8 +50,6 @@ union is itself a fundamental domain for `Γ`.
 
 ## Main results
 
-* `UpperHalfPlane.peterssonInner_smul_set`: the change of variables, `⟪f, h⟫_{α • S}` is the
-  integral over `S` of the integrand composed with `α`.
 * `UpperHalfPlane.peterssonInner_slash_slash_of_det_pos`: a simultaneous slash by a
   positive-determinant `α` rescales the pairing by `(det α) ^ (k - 2)` and translates the
   domain.
@@ -86,16 +84,6 @@ namespace UpperHalfPlane
 
 variable {k : ℤ} {g : GL (Fin 2) ℝ}
 
-/-! ### Change of variables -/
-
-/-- **The Petersson pairing over a translated domain.** The invariant measure of `ℍ` is
-`GL(2, ℝ)`-invariant, so integrating over `α • S` is integrating the composite over `S`. -/
-theorem peterssonInner_smul_set (k : ℤ) (g : GL (Fin 2) ℝ) (S : Set ℍ) (f h : ℍ → ℂ) :
-    peterssonInner k (g • S) f h = ∫ τ in S, petersson k f h (g • τ) := by
-  rw [peterssonInner_def, ← Set.image_smul]
-  exact (measurePreserving_smul g volume).setIntegral_image_emb
-    (measurableEmbedding_const_smul g) _ S
-
 /-! ### Slashing by an element of positive determinant -/
 
 /-- **A simultaneous slash rescales the Petersson pairing and translates its domain**:
@@ -108,7 +96,9 @@ theorem peterssonInner_slash_slash_of_det_pos (k : ℤ)
     (S : Set ℍ) (f h : ℍ → ℂ) :
     peterssonInner k S (f ∣[k] g) (h ∣[k] g) =
       ((g : Matrix (Fin 2) (Fin 2) ℝ).det : ℂ) ^ (k - 2) * peterssonInner k (g • S) f h := by
-  rw [peterssonInner_smul_set, peterssonInner_def]
+  rw [peterssonInner_def, peterssonInner_def, ← Set.image_smul,
+    (measurePreserving_smul g volume).setIntegral_image_emb
+      (measurableEmbedding_const_smul g)]
   simp_rw [petersson_slash]
   simp only [σ_eq_refl_of_det_pos hg, ContinuousAlgEquiv.refl_apply,
     Matrix.GeneralLinearGroup.val_det_apply, abs_of_pos hg]
