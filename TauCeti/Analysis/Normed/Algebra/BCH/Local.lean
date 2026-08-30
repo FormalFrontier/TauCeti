@@ -33,8 +33,8 @@ representative is analytic at the origin.
 * `NormedSpace.localBCH_tendsto`: the germ tends to zero at the origin.
 * `NormedSpace.eq_localBCH_of_tendsto_of_map_exp_eq`: uniqueness among germs
   tending to zero with the same exponential image.
-* `NormedSpace.map_localBCH`: continuous real algebra homomorphisms commute with
-  the local BCH germ.
+* `NormedSpace.map_localBCH`: continuous ring homomorphisms commute with the
+  local BCH germ.
 
 ## References
 
@@ -144,7 +144,7 @@ section Naturality
 
 variable {B : Type*} [NormedRing B] [NormedAlgebra ℝ B] [CompleteSpace B]
 
-/-- Continuous real algebra homomorphisms commute with the local
+/-- Continuous ring homomorphisms commute with the local
 Baker--Campbell--Hausdorff germ. -/
 @[simp high]
 theorem map_localBCH {F : Type*} [FunLike F A B] [ContinuousMapClass F A B]
