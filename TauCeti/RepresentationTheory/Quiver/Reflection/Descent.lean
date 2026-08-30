@@ -73,7 +73,7 @@ private theorem exists_pos_pow_apply_eq (v : M) {s : Set M} (hs : s.Finite)
   have key : ∀ m n : ℕ, m < n → (f ^ m) v = (f ^ n) v →
       ∃ N p : ℕ, 0 < p ∧ (f ^ p) ((f ^ N) v) = (f ^ N) v := fun m n hmn hv ↦
     ⟨m, n - m, by omega, by
-      rw [← Module.End.mul_apply, ← pow_add, show n - m + m = n by omega]
+      rw [← Module.End.mul_apply, ← pow_add, Nat.sub_add_cancel (Nat.le_of_lt hmn)]
       exact hv.symm⟩
   obtain ⟨a, b, hab, heq⟩ :=
     Finite.exists_ne_map_eq_of_infinite fun N : ℕ ↦ (⟨(f ^ N) v, hmem N⟩ : s)
@@ -97,17 +97,6 @@ end Orbit
 
 variable (Q : Type u) [Quiver.{v} Q] [Fintype Q] [∀ a b : Q, Fintype (a ⟶ b)]
 
-/-- **A positive definite Tits form has no loops.** The simple dimension vector `αᵢ` has
-`q(αᵢ) = 1 - #(i ⟶ i)`, which a loop at `i` makes non-positive. -/
-theorem isEmpty_hom_self_of_titsForm_posDef (hpd : (titsForm Q).PosDef) (i : Q) :
-    IsEmpty (i ⟶ i) := by
-  classical
-  have hne : (Pi.single i 1 : Q → ℤ) ≠ 0 := fun h ↦ by simpa using congrFun h i
-  have hpos := hpd _ hne
-  rw [titsForm_single] at hpos
-  rw [← Fintype.card_eq_zero_iff]
-  omega
-
 variable [DecidableEq Q]
 
 /-- **The Coxeter transformation drives every nonzero dimension vector out of the positive cone.**
@@ -129,12 +118,15 @@ theorem exists_vertexPreReflectionList_pow_apply_neg (hpd : (titsForm Q).PosDef)
   set c := vertexPreReflectionList Q l with hc
   have hnn : ∀ N : ℕ, 0 ≤ (c ^ N) d := fun N ↦ Pi.le_def.mpr fun i ↦ hcon N i
   -- Every iterate has the same Tits value, so the orbit lies in a level set.
+  have hc_preserves (y : Q → ℤ) : titsForm Q (c y) = titsForm Q y := by
+    rw [hc]
+    exact titsForm_vertexPreReflectionList Q hloop y
   have hlevel : ∀ N : ℕ, titsForm Q ((c ^ N) d) = titsForm Q d := by
     intro N
     induction N with
     | zero => simp
     | succ N ih =>
-      rw [pow_succ', Module.End.mul_apply, hc, titsForm_vertexPreReflectionList Q hloop, ← hc, ih]
+      rw [pow_succ', Module.End.mul_apply, hc_preserves, ih]
   -- The level set is finite, so the orbit returns to one of its own points.
   have hfin : {x : Q → ℤ | titsForm Q x = titsForm Q d}.Finite :=
     QuadraticMap.PosDef.finite_setOf_apply_eq hpd _
@@ -145,9 +137,8 @@ theorem exists_vertexPreReflectionList_pow_apply_neg (hpd : (titsForm Q).PosDef)
     rw [hx, ← Module.End.mul_apply, ← pow_add]
     exact hnn (j + N)
   have hx0 : x ≠ 0 := by
-    have hcoe : ⇑(c ^ N) = (⇑c)^[N] := funext fun z ↦ Module.End.pow_apply c N z
     have hinj : Function.Injective ⇑(c ^ N) := by
-      rw [hcoe]
+      rw [Module.End.coe_pow]
       exact ((vertexPreReflectionList_bijective Q hloop).1).iterate N
     rw [hx]
     intro h

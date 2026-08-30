@@ -90,7 +90,7 @@ theorem finite_setOf_apply_le {q : QuadraticForm ℤ M} (hq : q.PosDef) (n : ℤ
   set T : M →ₗ[ℤ] (Module.Free.ChooseBasisIndex ℤ M → ℤ) :=
     LinearMap.pi fun i ↦ B.flip (b i)
   have hTapply : ∀ (x : M) (i : Module.Free.ChooseBasisIndex ℤ M), T x i = B x (b i) :=
-    fun x i ↦ rfl
+    fun x i ↦ by simp only [T, LinearMap.pi_apply, LinearMap.BilinForm.flip_apply]
   have hTinj : Function.Injective T := by
     refine (injective_iff_map_eq_zero T).mpr fun x hx ↦ ?_
     have hzero : B x = 0 := b.ext fun i ↦ by
