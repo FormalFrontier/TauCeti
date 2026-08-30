@@ -8,6 +8,7 @@ module
 public import TauCeti.Algebra.AlgebraicGroup.FiniteType.BaseChange
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Scheme.Basic
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.BaseChange
+public import TauCeti.AlgebraicGeometry.AffineGroupScheme.BaseChange.Basic
 
 /-!
 # The toral Kostant carrier as a finite-type group scheme
@@ -34,11 +35,13 @@ properties needed to identify a specialized carrier as a split reductive group.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantToralFiniteTypeSpecialization`: the corresponding
   specialized quotient over a commutative ring.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantToralFiniteTypeBaseChangeIso`: the finite-type
-  identification between specialization and base change of the generic carrier.
+  identification between the base change of the generic carrier and the specialization.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantToralBaseChangeGroupScheme`: the specialized affine
   group scheme, locally of finite type over its base.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantToralBaseChangeGroupSchemeι`: its closed immersion
   into the base-changed general-linear group scheme.
+* `TauCeti.UniversalEnvelopingAlgebra.kostantToralBaseChangeGroupSchemePullbackIso`: its
+  identification with the scheme-theoretic base change of the toral group scheme over `ℤ`.
 
 ## References
 
@@ -79,11 +82,10 @@ variable (wt : Fin n → κ → ℤ)
 property. It is a quotient of the finite-type coordinate Hopf algebra of `GLₙ`. -/
 noncomputable def kostantToralFiniteTypeCoordinateHopfAlgebra :
     FiniteTypeCommHopfAlgCat ℤ :=
-  ⟨CommHopfAlgCat.quotient (GeneralLinear.coordinateHopfAlgebra ℤ n)
-      (kostantToralDefiningIdeal e h ρ M hM hnil b wt),
-    inferInstanceAs (Algebra.FiniteType ℤ
-      (CommHopfAlgCat.quotient (GeneralLinear.coordinateHopfAlgebra ℤ n)
-        (kostantToralDefiningIdeal e h ρ M hM hnil b wt)))⟩
+  FiniteTypeCommHopfAlgCat.quotient
+    (⟨GeneralLinear.coordinateHopfAlgebra ℤ n,
+      (finiteTypeCommHopfAlgProperty_iff _).2 inferInstance⟩ : FiniteTypeCommHopfAlgCat ℤ)
+    (kostantToralDefiningIdeal e h ρ M hM hnil b wt)
 
 /-- The underlying object of the finite-type package is the coordinate Hopf algebra already used
 to define the toral Kostant group scheme. -/
@@ -96,19 +98,11 @@ theorem kostantToralFiniteTypeCoordinateHopfAlgebra_obj :
 
 /-- The structural morphism of the toral Kostant group scheme is locally of finite type. -/
 instance locallyOfFiniteType_kostantToralGroupScheme :
-    LocallyOfFiniteType (kostantToralGroupScheme e h ρ M hM hnil b wt).X.hom := by
-  let H : FiniteTypeCommHopfAlgCat ℤ :=
-    ⟨GeneralLinear.coordinateHopfAlgebra ℤ n,
-      (finiteTypeCommHopfAlgProperty_iff _).2 inferInstance⟩
-  exact FiniteTypeCommHopfAlgCat.locallyOfFiniteType_quotientSpec
-    H
+    LocallyOfFiniteType (kostantToralGroupScheme e h ρ M hM hnil b wt).X.hom :=
+  FiniteTypeCommHopfAlgCat.locallyOfFiniteType_quotientSpec
+    (⟨GeneralLinear.coordinateHopfAlgebra ℤ n,
+      (finiteTypeCommHopfAlgProperty_iff _).2 inferInstance⟩ : FiniteTypeCommHopfAlgCat ℤ)
     (kostantToralDefiningIdeal e h ρ M hM hnil b wt)
-
-/-- The toral Kostant group scheme is affine. -/
-instance isAffine_kostantToralGroupScheme :
-    IsAffine (kostantToralGroupScheme e h ρ M hM hnil b wt).X.left := by
-  rw [hopfSpec_obj_X_left]
-  exact isAffine_Spec _
 
 /-! ## Finite-type specialization -/
 
@@ -118,13 +112,11 @@ variable (A : Type v) [CommRing A]
 ambient general-linear coordinate Hopf algebra and its defining ideal. -/
 noncomputable def kostantToralFiniteTypeSpecialization :
     FiniteTypeCommHopfAlgCat A :=
-  ⟨CommHopfAlgCat.quotient
-      (CommHopfAlgCat.baseChange (K := A) (GeneralLinear.coordinateHopfAlgebra ℤ n))
-      (kostantToralBaseChangeIdeal e h ρ M hM hnil b wt A),
-    inferInstanceAs (Algebra.FiniteType A
-      (CommHopfAlgCat.quotient
-        (CommHopfAlgCat.baseChange (K := A) (GeneralLinear.coordinateHopfAlgebra ℤ n))
-        (kostantToralBaseChangeIdeal e h ρ M hM hnil b wt A)))⟩
+  FiniteTypeCommHopfAlgCat.quotient
+    (FiniteTypeCommHopfAlgCat.baseChange (K := A)
+      (⟨GeneralLinear.coordinateHopfAlgebra ℤ n,
+        (finiteTypeCommHopfAlgProperty_iff _).2 inferInstance⟩ : FiniteTypeCommHopfAlgCat ℤ))
+    (kostantToralBaseChangeIdeal e h ρ M hM hnil b wt A)
 
 /-- The object underlying the finite-type specialization is the specialized quotient coordinate
 Hopf algebra. -/
@@ -136,28 +128,30 @@ theorem kostantToralFiniteTypeSpecialization_obj :
         (kostantToralBaseChangeIdeal e h ρ M hM hnil b wt A) :=
   (rfl)
 
-/-- The specialized finite-type carrier is canonically the base change of the generic toral
+/-- The base change of the generic toral carrier is canonically the specialized finite-type
 carrier. This is `kostantToralBaseChangeIso` lifted to the finite-type full subcategory. -/
 noncomputable def kostantToralFiniteTypeBaseChangeIso :
-    kostantToralFiniteTypeSpecialization e h ρ M hM hnil b wt A ≅
-      FiniteTypeCommHopfAlgCat.baseChange (K := A)
-        (kostantToralFiniteTypeCoordinateHopfAlgebra e h ρ M hM hnil b wt) :=
-  ObjectProperty.isoMk (finiteTypeCommHopfAlgProperty A) <|
-    eqToIso (kostantToralFiniteTypeSpecialization_obj e h ρ M hM hnil b wt A) ≪≫
-      kostantToralBaseChangeIso e h ρ M hM hnil b wt A ≪≫
-      eqToIso (congrArg (CommHopfAlgCat.baseChange (K := A))
-        (kostantToralFiniteTypeCoordinateHopfAlgebra_obj e h ρ M hM hnil b wt)).symm
+    FiniteTypeCommHopfAlgCat.baseChange (K := A)
+        (kostantToralFiniteTypeCoordinateHopfAlgebra e h ρ M hM hnil b wt) ≅
+      kostantToralFiniteTypeSpecialization e h ρ M hM hnil b wt A :=
+  FiniteTypeCommHopfAlgCat.baseChangeIsoOfObjIso
+    (kostantToralFiniteTypeCoordinateHopfAlgebra_obj e h ρ M hM hnil b wt)
+    (kostantToralFiniteTypeSpecialization_obj e h ρ M hM hnil b wt A)
+    (kostantToralBaseChangeIso e h ρ M hM hnil b wt A).symm
 
 /-- The underlying commutative-Hopf-algebra isomorphism of the finite-type comparison is the
 previously constructed quotient/base-change comparison. -/
 @[simp]
 theorem kostantToralFiniteTypeBaseChangeIso_hom :
     (kostantToralFiniteTypeBaseChangeIso e h ρ M hM hnil b wt A).hom.hom =
-      (eqToIso (kostantToralFiniteTypeSpecialization_obj e h ρ M hM hnil b wt A) ≪≫
-        kostantToralBaseChangeIso e h ρ M hM hnil b wt A ≪≫
-        eqToIso (congrArg (CommHopfAlgCat.baseChange (K := A))
-          (kostantToralFiniteTypeCoordinateHopfAlgebra_obj e h ρ M hM hnil b wt)).symm).hom :=
-  (rfl)
+      (eqToIso (congrArg (CommHopfAlgCat.baseChange (K := A))
+          (kostantToralFiniteTypeCoordinateHopfAlgebra_obj e h ρ M hM hnil b wt)) ≪≫
+        (kostantToralBaseChangeIso e h ρ M hM hnil b wt A).symm ≪≫
+        eqToIso (kostantToralFiniteTypeSpecialization_obj e h ρ M hM hnil b wt A).symm).hom :=
+  FiniteTypeCommHopfAlgCat.baseChangeIsoOfObjIso_hom
+    (kostantToralFiniteTypeCoordinateHopfAlgebra_obj e h ρ M hM hnil b wt)
+    (kostantToralFiniteTypeSpecialization_obj e h ρ M hM hnil b wt A)
+    (kostantToralBaseChangeIso e h ρ M hM hnil b wt A).symm
 
 /-! ## The specialized finite-type group scheme -/
 
@@ -171,19 +165,12 @@ noncomputable abbrev kostantToralBaseChangeGroupScheme :
 /-- The specialized toral carrier is locally of finite type over its base. -/
 instance locallyOfFiniteType_kostantToralBaseChangeGroupScheme :
     LocallyOfFiniteType
-      (kostantToralBaseChangeGroupScheme e h ρ M hM hnil b wt A).X.hom := by
-  let H : FiniteTypeCommHopfAlgCat A :=
-    ⟨CommHopfAlgCat.baseChange (K := A) (GeneralLinear.coordinateHopfAlgebra ℤ n),
-      (finiteTypeCommHopfAlgProperty_iff _).2 inferInstance⟩
-  exact FiniteTypeCommHopfAlgCat.locallyOfFiniteType_quotientSpec
-    H
+      (kostantToralBaseChangeGroupScheme e h ρ M hM hnil b wt A).X.hom :=
+  FiniteTypeCommHopfAlgCat.locallyOfFiniteType_quotientSpec
+    (FiniteTypeCommHopfAlgCat.baseChange (K := A)
+      (⟨GeneralLinear.coordinateHopfAlgebra ℤ n,
+        (finiteTypeCommHopfAlgProperty_iff _).2 inferInstance⟩ : FiniteTypeCommHopfAlgCat ℤ))
     (kostantToralBaseChangeIdeal e h ρ M hM hnil b wt A)
-
-/-- The specialized toral Kostant group scheme is affine. -/
-instance isAffine_kostantToralBaseChangeGroupScheme :
-    IsAffine (kostantToralBaseChangeGroupScheme e h ρ M hM hnil b wt A).X.left := by
-  rw [hopfSpec_obj_X_left]
-  exact isAffine_Spec _
 
 /-- The closed-subgroup inclusion of the specialized toral carrier into the base-changed
 general-linear group scheme. -/
@@ -211,5 +198,46 @@ instance isClosedImmersion_kostantToralBaseChangeGroupSchemeι :
     IsClosedImmersion
       (kostantToralBaseChangeGroupSchemeι e h ρ M hM hnil b wt A).hom.hom.left := by
   exact CommHopfAlgCat.isClosedImmersion_quotientSpecι _ _
+
+/-! ## The specialized carrier as a scheme-theoretic base change -/
+
+section Pullback
+
+variable (A : Type) [CommRing A]
+
+/-- **The specialized toral group scheme is the base change of the toral group scheme over
+`ℤ`.**
+
+`AffineGroupSchemeCat.hopfSpecBaseChangeGrpIso` identifies the pullback of a Hopf spectrum along
+`Spec A ⟶ Spec ℤ` with the Hopf spectrum of the scalar extension of its coordinate Hopf algebra,
+and `kostantToralBaseChangeIso`, whose finite-type form is
+`kostantToralFiniteTypeBaseChangeIso`, identifies that scalar extension with the specialized
+quotient presentation. Smoothness, flatness or reductivity of the specialized carrier may
+therefore be transported along this isomorphism.
+
+The base ring is a `Type` because the Hopf-spectrum base-change comparison requires the two base
+rings to lie in the same universe, and the carrier being specialized lives over `ℤ`. -/
+noncomputable def kostantToralBaseChangeGroupSchemePullbackIso :
+    (Over.pullback (Spec.map (CommRingCat.ofHom (algebraMap ℤ A)))).mapGrp.obj
+        (kostantToralGroupScheme e h ρ M hM hnil b wt) ≅
+      kostantToralBaseChangeGroupScheme e h ρ M hM hnil b wt A :=
+  AffineGroupSchemeCat.hopfSpecBaseChangeGrpIso
+      (CommHopfAlgCat.quotient (GeneralLinear.coordinateHopfAlgebra ℤ n)
+        (kostantToralDefiningIdeal e h ρ M hM hnil b wt)) ≪≫
+    (hopfSpec (CommRingCat.of A)).mapIso
+      (kostantToralBaseChangeIso e h ρ M hM hnil b wt A).op
+
+/-- The base-change comparison of group schemes is the Hopf-spectrum base-change comparison
+followed by the spectrum of the specialized quotient identification. -/
+theorem kostantToralBaseChangeGroupSchemePullbackIso_hom :
+    (kostantToralBaseChangeGroupSchemePullbackIso e h ρ M hM hnil b wt A).hom =
+      (AffineGroupSchemeCat.hopfSpecBaseChangeGrpIso
+          (CommHopfAlgCat.quotient (GeneralLinear.coordinateHopfAlgebra ℤ n)
+            (kostantToralDefiningIdeal e h ρ M hM hnil b wt))).hom ≫
+        (hopfSpec (CommRingCat.of A)).map
+          (kostantToralBaseChangeIso e h ρ M hM hnil b wt A).hom.op := by
+  rw [kostantToralBaseChangeGroupSchemePullbackIso, Iso.trans_hom, Functor.mapIso_hom, Iso.op_hom]
+
+end Pullback
 
 end TauCeti.UniversalEnvelopingAlgebra
