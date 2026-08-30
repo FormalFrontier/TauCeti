@@ -187,6 +187,24 @@ theorem mulEquivGLSymplectic_leviHom (A : GL (Fin m) R) :
   rw [leviHom]
   simp
 
+/-- The `Fin`-indexed Levi embedding commutes with extension of the value ring. -/
+@[simp]
+theorem map_leviHom {S : Type*} [CommRing S] (f : R →+* S) (A : GL (Fin m) R) :
+    GLSymplecticFin.map m R f (leviHom A) =
+      leviHom (Matrix.GeneralLinearGroup.map f A) := by
+  apply (mulEquivGLSymplectic m S).injective
+  have hmap :
+      mulEquivGLSymplectic m S (GLSymplecticFin.map m R f (leviHom A)) =
+        GLSymplectic.map (Fin m) f (mulEquivGLSymplectic m R (leviHom A)) := by
+    apply Subtype.ext
+    apply Matrix.GeneralLinearGroup.ext
+    intro i j
+    simp only [coe_mulEquivGLSymplectic, GLSymplecticFin.coe_map,
+      GLSymplectic.coe_map, coe_reindexGL, Matrix.GeneralLinearGroup.map_apply,
+      Matrix.submatrix_apply]
+  rw [hmap, mulEquivGLSymplectic_leviHom, GLSymplectic.map_leviHom,
+    mulEquivGLSymplectic_leviHom]
+
 /-- The `Fin`-indexed Levi homomorphism is injective. -/
 theorem leviHom_injective : Function.Injective (leviHom : GL (Fin m) R → GLSymplecticFin m R) :=
   (mulEquivGLSymplectic m R).symm.injective.comp GLSymplectic.leviHom_injective
