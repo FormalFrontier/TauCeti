@@ -7,6 +7,7 @@ module
 
 public import Mathlib.LinearAlgebra.Determinant
 public import Mathlib.LinearAlgebra.Matrix.Block
+public import TauCeti.RingTheory.MvPolynomial.Symmetric.Homogeneous
 public import TauCeti.RingTheory.MvPolynomial.Symmetric.Schur.Monomial
 
 /-!
@@ -49,9 +50,11 @@ where the ring hypothesis enters: over `ℕ` the transition matrix is not invert
 
 ## Main definitions
 
-* `TauCeti.symmetricHomogeneousSubmodule σ R n`: the symmetric polynomials in `σ` over `R` that
-  are homogeneous of degree `n`.
-* `TauCeti.partWeightCoeff`: the coordinates of such a polynomial at the sorted monomials.
+The module being based, `TauCeti.symmetricHomogeneousSubmodule σ R n`, carries no Schur content and
+is defined in `TauCeti/RingTheory/MvPolynomial/Symmetric/Homogeneous.lean`.
+
+* `TauCeti.partWeightCoeff`: the coordinates of a symmetric homogeneous polynomial at the sorted
+  monomials.
 * `TauCeti.msymmBasis`: **the monomial basis**.
 * `TauCeti.schurPolyBasis`: **the Schur basis**.
 
@@ -91,20 +94,6 @@ section CommSemiring
 variable {σ : Type*} {R : Type*} [CommSemiring R] {n : ℕ}
 
 /-! ### The symmetric homogeneous polynomials -/
-
-variable (σ R n) in
-/-- **The symmetric polynomials of degree `n`**: those polynomials in the finite alphabet `σ` over
-`R` that are both symmetric and homogeneous of degree `n`.  This is the module the monomial
-symmetric polynomials and the Schur polynomials of the partitions of `n` are bases of. -/
-noncomputable def symmetricHomogeneousSubmodule : Submodule R (MvPolynomial σ R) :=
-  (symmetricSubalgebra σ R).toSubmodule ⊓ homogeneousSubmodule σ R n
-
-/-- Membership in `TauCeti.symmetricHomogeneousSubmodule` is the conjunction of the two
-conditions defining it. -/
-@[simp]
-theorem mem_symmetricHomogeneousSubmodule {p : MvPolynomial σ R} :
-    p ∈ symmetricHomogeneousSubmodule σ R n ↔ p.IsSymmetric ∧ p.IsHomogeneous n :=
-  Iff.rfl
 
 variable [Fintype σ]
 
@@ -149,8 +138,10 @@ The body of `TauCeti.partWeightCoeff` is not exposed, so this is what a consumer
 @[simp]
 theorem partWeightCoeff_apply (p : symmetricHomogeneousSubmodule σ R n)
     (ν : {ν : n.Partition // ν.parts.card ≤ Fintype.card σ}) :
-    partWeightCoeff σ R n p ν = coeff (partWeight σ ν.1) (p : MvPolynomial σ R) :=
-  (rfl)
+    partWeightCoeff σ R n p ν = coeff (partWeight σ ν.1) (p : MvPolynomial σ R) := by
+  rw [partWeightCoeff, LinearMap.comp_apply, LinearEquiv.coe_coe,
+    Finsupp.linearEquivFunOnFinite_symm_apply, LinearMap.pi_apply, LinearMap.comp_apply,
+    Submodule.subtype_apply, lcoeff_apply]
 
 /-- **A symmetric homogeneous polynomial is determined by its coefficients at the sorted
 monomials**: away from them symmetry moves each coefficient to a sorted one, and away from degree
@@ -162,8 +153,10 @@ theorem partWeightCoeff_injective : Function.Injective (partWeightCoeff σ R n) 
   by_cases hd : d.degree = n
   · have h := DFunLike.congr_fun hpq ⟨weightPartition d hd, card_parts_weightPartition_le d hd⟩
     rw [partWeightCoeff_apply, partWeightCoeff_apply] at h
-    rw [coeff_eq_coeff_partWeight p.2.1 hd, coeff_eq_coeff_partWeight q.2.1 hd, h]
-  · rw [p.2.2.coeff_eq_zero hd, q.2.2.coeff_eq_zero hd]
+    rw [coeff_eq_coeff_partWeight (mem_symmetricHomogeneousSubmodule.mp p.2).1 hd,
+      coeff_eq_coeff_partWeight (mem_symmetricHomogeneousSubmodule.mp q.2).1 hd, h]
+  · rw [(mem_symmetricHomogeneousSubmodule.mp p.2).2.coeff_eq_zero hd,
+      (mem_symmetricHomogeneousSubmodule.mp q.2).2.coeff_eq_zero hd]
 
 /-- **The coefficients at the sorted monomials may be prescribed arbitrarily**: the combination of
 the monomial symmetric polynomials with the prescribed coefficients realizes them, each `m_ν` being
@@ -202,9 +195,16 @@ the normal form of a monomial-basis coordinate, and the elimination rule matchin
 @[simp]
 theorem msymmBasis_repr_apply (p : symmetricHomogeneousSubmodule σ R n)
     (ν : {ν : n.Partition // ν.parts.card ≤ Fintype.card σ}) :
-    (msymmBasis σ R n).repr p ν = coeff (partWeight σ ν.1) (p : MvPolynomial σ R) :=
-  (rfl)
+    (msymmBasis σ R n).repr p ν = coeff (partWeight σ ν.1) (p : MvPolynomial σ R) := by
+  -- The coordinate map of `TauCeti.msymmBasis` is the map it was built from.
+  have h : (msymmBasis σ R n).repr p = partWeightCoeff σ R n p :=
+    LinearEquiv.ofBijective_apply (f := partWeightCoeff σ R n)
+      (hf := partWeightCoeff_bijective) p
+  rw [h, partWeightCoeff_apply]
 
+/-- **The vectors of the monomial basis are the monomial symmetric polynomials**:
+`TauCeti.msymmBasis` is defined through its coordinates, and this reads its basis vectors back as
+the polynomials `m_ν` the name records. -/
 @[simp]
 theorem coe_msymmBasis [DecidableEq σ] (ν : {ν : n.Partition // ν.parts.card ≤ Fintype.card σ}) :
     ((msymmBasis σ R n ν : symmetricHomogeneousSubmodule σ R n) : MvPolynomial σ R)
@@ -280,6 +280,10 @@ noncomputable def schurPolyBasis :
   .mk ((Module.Basis.is_basis_iff_det _).mpr isUnit_det_schurPolyElem).1
     ((Module.Basis.is_basis_iff_det _).mpr isUnit_det_schurPolyElem).2.ge
 
+/-- **The vectors of the Schur basis are the Schur polynomials**: `TauCeti.schurPolyBasis` is
+produced from the invertibility of the Kostka matrix rather than from a formula, and this reads its
+basis vectors back as the polynomials `s_μ`.  It is what makes the basis usable: a statement about
+`TauCeti.schurPolyBasis` becomes a statement about `TauCeti.schurPoly`. -/
 @[simp]
 theorem coe_schurPolyBasis (μ : {ν : n.Partition // ν.parts.card ≤ Fintype.card σ}) :
     ((schurPolyBasis σ R n μ : symmetricHomogeneousSubmodule σ R n) : MvPolynomial σ R)

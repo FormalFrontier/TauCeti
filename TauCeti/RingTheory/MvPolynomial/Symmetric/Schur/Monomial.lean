@@ -322,6 +322,7 @@ theorem weightPartition_partWeight (ν : n.Partition) (hν : ν.parts.card ≤ F
 coefficient `1` at the sorted monomial of `ν` and `0` at the sorted monomial of any other
 partition.  This is the statement that the monomial symmetric polynomials are dual to the sorted
 monomials, and the reason they are linearly independent. -/
+@[simp]
 theorem coeff_msymm_partWeight (ν ξ : n.Partition) (hξ : ξ.parts.card ≤ Fintype.card σ) :
     coeff (partWeight σ ξ) (msymm σ R ν) = if ξ = ν then 1 else 0 := by
   rw [coeff_msymm R ν (degree_partWeight ξ hξ), weightPartition_partWeight ξ hξ]
