@@ -139,9 +139,7 @@ The body of `TauCeti.partWeightCoeff` is not exposed, so this is what a consumer
 theorem partWeightCoeff_apply (p : symmetricHomogeneousSubmodule σ R n)
     (ν : {ν : n.Partition // ν.parts.card ≤ Fintype.card σ}) :
     partWeightCoeff σ R n p ν = coeff (partWeight σ ν.1) (p : MvPolynomial σ R) := by
-  rw [partWeightCoeff, LinearMap.comp_apply, LinearEquiv.coe_coe,
-    Finsupp.linearEquivFunOnFinite_symm_apply, LinearMap.pi_apply, LinearMap.comp_apply,
-    Submodule.subtype_apply, lcoeff_apply]
+  simp [partWeightCoeff]
 
 /-- **A symmetric homogeneous polynomial is determined by its coefficients at the sorted
 monomials**: away from them symmetry moves each coefficient to a sorted one, and away from degree

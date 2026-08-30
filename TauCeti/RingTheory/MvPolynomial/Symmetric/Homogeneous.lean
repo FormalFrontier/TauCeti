@@ -15,7 +15,9 @@ The symmetric polynomials of `Mathlib.RingTheory.MvPolynomial.Symmetric.Defs` ar
 degree, each graded piece being the intersection of `MvPolynomial.symmetricSubalgebra` with the
 homogeneous polynomials `MvPolynomial.homogeneousSubmodule` of that degree.  This file names that
 intersection, `TauCeti.symmetricHomogeneousSubmodule`, and nothing else; it is the module the
-classical families of symmetric polynomials are bases of, one degree at a time.
+classical families of symmetric polynomials are bases of, one degree at a time: the monomial
+symmetric polynomials over any commutative semiring, and the Schur polynomials over a commutative
+ring.
 
 ## Main definitions
 
@@ -32,8 +34,9 @@ open MvPolynomial
 variable (σ : Type*) (R : Type*) [CommSemiring R] (n : ℕ)
 
 /-- **The symmetric polynomials of degree `n`**: those polynomials in the alphabet `σ` over `R`
-that are both symmetric and homogeneous of degree `n`.  This is the module the monomial symmetric
-polynomials and the Schur polynomials of the partitions of `n` are bases of. -/
+that are both symmetric and homogeneous of degree `n`.  The monomial symmetric polynomials of the
+partitions of `n` are a basis of this module over any commutative semiring; the Schur polynomials
+of those partitions are a basis of it over a commutative ring. -/
 noncomputable def symmetricHomogeneousSubmodule : Submodule R (MvPolynomial σ R) :=
   (symmetricSubalgebra σ R).toSubmodule ⊓ homogeneousSubmodule σ R n
 
