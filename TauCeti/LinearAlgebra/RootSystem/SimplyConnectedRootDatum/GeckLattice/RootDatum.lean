@@ -8,35 +8,36 @@ module
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.GeckLattice.GroupScheme
 
 /-!
-# The Geck carrier is pinned by its named root datum
+# The conjugation equations of the Geck carrier, against its named root datum
 
 For a valid Dynkin type `t`, `TauCeti.DynkinType.geckGroupScheme t` is the explicit Kostant
-toral-closure carrier built from Geck's integral coordinate lattice. Its numbered raising and
-lowering subgroups and its split weight torus were constructed using the Bourbaki rows of
-`t.cartanMatrix`. This file identifies those rows with the simple roots of
-`TauCeti.DynkinType.simplyConnectedRootDatum t` and restates the carrier's conjugation equations
-against that named datum.
+toral-closure carrier built from Geck's integral coordinate lattice. Its split weight torus
+conjugates the parameter of the numbered raising subgroup at node `i` through the character
+`t.rootGeneratorWeight ht (.inl i)`, which was constructed as a Bourbaki row of `t.cartanMatrix`.
+This file restates those conjugation equations with that character read instead as a simple root
+of `TauCeti.DynkinType.simplyConnectedRootDatum t`.
 
 The distinction is important to the downstream finite-group construction. Its ambient carrier is
 indexed by a Dynkin type and must use the root datum supplied by the root-systems roadmap; equality
 with a Cartan-matrix row is not by itself an interface connecting the two constructions. The
-results here say that the raising subgroup at node `i` sits at the named simple root `α_i`, the
-lowering subgroup sits at `-α_i`, and the torus acts on their parameters through those characters.
+substitution itself is `TauCeti.DynkinType.rootGeneratorWeight_inl_eq_root_simpleIndex` and its
+lowering counterpart, proved with the Kostant form in
+`TauCeti/LinearAlgebra/RootSystem/SimplyConnectedRootDatum/KostantForm.lean`; the results below are
+the carrier's conjugation equations that consume it.
 
 The existing Geck lattice has full character lattice exactly in types `E₈`, `F₄`, and `G₂`.
-Thus the results below complete this root-datum part of the pinning interface for those three
-carriers. They are stated uniformly because the root identifications and conjugation equations are
-valid for every Dynkin type, including the other types whose full-weight admissible lattices remain
-to be constructed. Nothing here asserts reductivity, maximality of the torus, or an identification
-of the carrier's root datum; those are separate Layer 9 targets.
+Thus the equations below supply this named-root form of the pinning interface for those three
+carriers. They are stated uniformly because the conjugation equations are valid for every Dynkin
+type, including the other types whose full-weight admissible lattices remain to be constructed.
+Each equation says only how the torus rescales a subgroup parameter: nothing here asserts
+reductivity, maximality of the torus, or that these numbered subgroups exhaust the root subgroups
+of a root datum carried by the group scheme; those are separate Layer 9 targets.
 
 ## Main results
 
-* `TauCeti.DynkinType.rootGeneratorWeight_inl_eq_root_simpleIndex` and
-  `TauCeti.DynkinType.rootGeneratorWeight_inr_eq_neg_root_simpleIndex`: the numbered raising and
-  lowering subgroups sit at the pinned simple roots and their negatives.
 * `TauCeti.DynkinType.geckTorusPoints_conj_geckRootSubgroupParam_root_simpleIndex` and its
-  negative-root counterpart: the pointwise pinning equations against the named datum.
+  negative-root counterpart: the pointwise conjugation equations, with the conjugating character
+  read as a named simple root.
 * `TauCeti.DynkinType.geckWeightTorus_conj_geckRootSubgroup_root_simpleIndex` and its
   negative-root counterpart: the corresponding equations on scheme-valued points.
 
@@ -65,32 +66,9 @@ noncomputable section
 
 variable (t : DynkinType) (ht : t.Valid)
 
-/-! ## The numbered root subgroups sit at the pinned simple roots
+/-! ## The pointwise conjugation equations -/
 
-These identifications are deliberately not `simp` lemmas. Both sides already have canonical simp
-forms: `rootGeneratorWeight_inl` and `root_simpleIndex` reduce them to the same Cartan-matrix row,
-while their negative-root counterparts reduce them to its negative. -/
-
-/-- **The `i`-th numbered raising subgroup of the Geck carrier sits at the `i`-th pinned simple
-root.** The character through which the split torus rescales its parameter is the simple root of
-`t.simplyConnectedRootDatum ht` with the same Bourbaki node number. -/
-theorem rootGeneratorWeight_inl_eq_root_simpleIndex (i : Fin t.rank) :
-    t.rootGeneratorWeight ht (.inl i) =
-      (t.simplyConnectedRootDatum ht).root (t.simpleIndex ht i) := by
-  funext j
-  rw [rootGeneratorWeight_inl, root_simpleIndex]
-
-/-- **The `i`-th numbered lowering subgroup of the Geck carrier sits at the negative of the
-`i`-th pinned simple root.** -/
-theorem rootGeneratorWeight_inr_eq_neg_root_simpleIndex (i : Fin t.rank) :
-    t.rootGeneratorWeight ht (.inr i) =
-      -(t.simplyConnectedRootDatum ht).root (t.simpleIndex ht i) := by
-  funext j
-  rw [rootGeneratorWeight_inr, Pi.neg_apply, root_simpleIndex]
-
-/-! ## The pointwise pinning equations -/
-
-/-- **The pointwise pinning equation of the Geck carrier at a named simple root.** A split-torus
+/-- **The pointwise conjugation equation of the Geck carrier at a named simple root.** A split-torus
 point `s` conjugates the raising-subgroup element of parameter `u` at node `i` into the one of
 parameter `α_i(s)u`, where `α_i` is the corresponding simple root of the pinned simply connected
 datum. -/
@@ -106,7 +84,7 @@ theorem geckTorusPoints_conj_geckRootSubgroupParam_root_simpleIndex (i : Fin t.r
   rw [← t.rootGeneratorWeight_inl_eq_root_simpleIndex ht i]
   exact t.geckTorusPoints_conj_geckRootSubgroupParam ht (.inl i) A s u
 
-/-- **The pointwise pinning equation of the Geck carrier at the negative of a named simple
+/-- **The pointwise conjugation equation of the Geck carrier at the negative of a named simple
 root.** -/
 theorem geckTorusPoints_conj_geckRootSubgroupParam_neg_root_simpleIndex (i : Fin t.rank)
     (A : CommAlgCat.{v} ℤ) (s : Fin t.rank → Aˣ) (u : Multiplicative A) :
@@ -120,9 +98,9 @@ theorem geckTorusPoints_conj_geckRootSubgroupParam_neg_root_simpleIndex (i : Fin
   rw [← t.rootGeneratorWeight_inr_eq_neg_root_simpleIndex ht i]
   exact t.geckTorusPoints_conj_geckRootSubgroupParam ht (.inr i) A s u
 
-/-! ## The scheme-level pinning equations -/
+/-! ## The scheme-level conjugation equations -/
 
-/-- **The scheme-level pinning equation of the Geck carrier at a named simple root.** -/
+/-- **The scheme-level conjugation equation of the Geck carrier at a named simple root.** -/
 theorem geckWeightTorus_conj_geckRootSubgroup_root_simpleIndex (i : Fin t.rank)
     (A : Type) [CommRing A]
     (s : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of ℤ)) ⟶
@@ -143,7 +121,7 @@ theorem geckWeightTorus_conj_geckRootSubgroup_root_simpleIndex (i : Fin t.rank)
   rw [← t.rootGeneratorWeight_inl_eq_root_simpleIndex ht i]
   exact t.geckWeightTorus_conj_geckRootSubgroup ht (.inl i) A s u
 
-/-- **The scheme-level pinning equation of the Geck carrier at the negative of a named simple
+/-- **The scheme-level conjugation equation of the Geck carrier at the negative of a named simple
 root.** -/
 theorem geckWeightTorus_conj_geckRootSubgroup_neg_root_simpleIndex (i : Fin t.rank)
     (A : Type) [CommRing A]
