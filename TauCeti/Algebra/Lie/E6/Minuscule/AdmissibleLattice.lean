@@ -200,6 +200,7 @@ theorem rep_ι_apply (x : Matrix.ToLieAlgebra ℚ (CartanMatrix.E 6)ᵀ) (v : Fi
   exact (Pi.basisFun ℚ (Fin 27)).sum_repr (rationalSerreRepresentation x *ᵥ v)
 
 /-- Every rational raising matrix is square-zero. -/
+@[simp]
 theorem raisingMatrixQ_sq (i : Fin 6) : raisingMatrixQ i ^ 2 = 0 := by
   ext a b
   simp only [pow_two, Matrix.mul_apply, raisingMatrixQ_apply, Matrix.zero_apply]
@@ -208,6 +209,7 @@ theorem raisingMatrixQ_sq (i : Fin 6) : raisingMatrixQ i ^ 2 = 0 := by
   · simp [hb]
 
 /-- Every rational lowering matrix is square-zero. -/
+@[simp]
 theorem loweringMatrixQ_sq (i : Fin 6) : loweringMatrixQ i ^ 2 = 0 := by
   ext a b
   simp only [pow_two, Matrix.mul_apply, loweringMatrixQ_apply, Matrix.zero_apply]
@@ -215,23 +217,26 @@ theorem loweringMatrixQ_sq (i : Fin 6) : loweringMatrixQ i ^ 2 = 0 := by
   · simp [hb, e6MinusculeWeight_reflection_apply_self]
   · simp [hb]
 
+private theorem mulVec_sq_eq_zero (M : Matrix (Fin 27) (Fin 27) ℚ) (hM : M ^ 2 = 0)
+    (v : Fin 27 → ℚ) : M *ᵥ M *ᵥ v = 0 := by
+  rw [Matrix.mulVec_mulVec, ← pow_two, hM, Matrix.zero_mulVec]
+
 /-- Every represented positive or negative Serre root generator is square-zero. -/
 theorem pow_two_rep_serreRootGenerator_eq_zero (k : Fin 6 ⊕ Fin 6) :
     rep (_root_.UniversalEnvelopingAlgebra.ι ℚ
       (TauCeti.serreRootGenerator (CartanMatrix.E 6)ᵀ k)) ^ 2 = 0 := by
   apply LinearMap.ext
   intro v
+  rw [pow_two, Module.End.mul_apply]
   cases k with
   | inl i =>
-      rw [pow_two, Module.End.mul_apply, rep_ι_apply, rep_ι_apply,
-        TauCeti.serreRootGenerator_inl, rationalSerreRepresentation_serreE,
-        Matrix.mulVec_mulVec, ← pow_two, raisingMatrixQ_sq, Matrix.zero_mulVec,
-        LinearMap.zero_apply]
+      simpa only [TauCeti.serreRootGenerator_inl, rep_ι_apply,
+        rationalSerreRepresentation_serreE, LinearMap.zero_apply] using
+        mulVec_sq_eq_zero (raisingMatrixQ i) (raisingMatrixQ_sq i) v
   | inr i =>
-      rw [pow_two, Module.End.mul_apply, rep_ι_apply, rep_ι_apply,
-        TauCeti.serreRootGenerator_inr, rationalSerreRepresentation_serreF,
-        Matrix.mulVec_mulVec, ← pow_two, loweringMatrixQ_sq, Matrix.zero_mulVec,
-        LinearMap.zero_apply]
+      simpa only [TauCeti.serreRootGenerator_inr, rep_ι_apply,
+        rationalSerreRepresentation_serreF, LinearMap.zero_apply] using
+        mulVec_sq_eq_zero (loweringMatrixQ i) (loweringMatrixQ_sq i) v
 
 /-- Every represented positive or negative Serre root generator acts nilpotently. -/
 theorem isNilpotent_rep_serreRootGenerator (k : Fin 6 ⊕ Fin 6) :
@@ -288,7 +293,7 @@ theorem rep_serreRootGenerator_mem_lattice (k : Fin 6 ⊕ Fin 6) {v : Fin 27 →
         loweringMatrixQ]
       exact castMatrix_mulVec_mem_lattice (loweringMatrix i) hv
 
-/-- Every rational coordinate vector is a Cartan weight vector with its minuscule weight. -/
+/-- Each standard coordinate vector is a Cartan weight vector with its minuscule weight. -/
 theorem isCartanWeightVector_single (a : Fin 27) :
     TauCeti.UniversalEnvelopingAlgebra.IsCartanWeightVector
       (TauCeti.serreH ℚ (CartanMatrix.E 6)ᵀ) rep (e6MinusculeWeight a) (Pi.single a 1) := by
