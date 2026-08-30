@@ -15,11 +15,14 @@ public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.GeckLatt
 
 The pinned Geck carrier `TauCeti.DynkinType.geckGroupScheme` is built from the adjoint
 representation, so the characters occurring in it generate the root lattice and not, in general,
-the whole character lattice of the pinned torus. It is therefore the adjoint form of a
-Chevalley--Demazure group, whereas the CFSG recipe has to be run in the simply connected form.
-The two forms agree exactly where the root lattice is the whole weight lattice, which by
-`TauCeti.DynkinType.span_range_geckWeight_eq_top_iff` happens exactly in the types `E₈`, `F₄`
-and `G₂`.
+the whole character lattice of the pinned torus: it is expected to be the adjoint form of a
+Chevalley--Demazure group, whereas the CFSG recipe has to be run in the simply connected form. The
+lattice condition that separates the two forms -- that the weights span the whole character lattice
+-- holds by `TauCeti.DynkinType.span_range_geckWeight_eq_top_iff` exactly in the types `E₈`, `F₄`
+and `G₂`, and that span is what this file proves and uses. Identifying the carrier itself with the
+pinned simply connected Chevalley--Demazure group, and proving it reductive, is the Layer 9 work of
+`TauCetiRoadmap/ReductiveGroups/README.md` that this roadmap consumes rather than performs; no
+declaration below asserts either.
 
 This file therefore singles out `TauCeti.LieTypeIndex.HasUnimodularDiagram`, the indices whose
 underlying diagram is one of those three, and gives them the pinned ambient group and numbered root
@@ -74,7 +77,7 @@ Lie-type constructors of `TauCeti.LieTypeIndex` and no more.
   `TauCeti.LieTypeIndex.exists_eq_of_hasUnimodularDiagram`: the predicate says exactly that the
   underlying diagram is `E₈`, `F₄` or `G₂`, and the six families above exhaust it.
 * `TauCeti.UnimodularLieIndex.span_range_geckWeight_eq_top`: the Geck weights of such an index
-  span the whole character lattice, so its Geck carrier is the simply connected form.
+  span the whole character lattice, the lattice condition the simply connected form requires.
 * `TauCeti.UnimodularLieIndex.isClosedImmersion_geckWeightTorus`: consequently the pinned split
   torus is a closed subgroup scheme of the ambient carrier.
 * `TauCeti.UnimodularLieIndex.frobenius_rootSubgroup`: the Frobenius raises the parameter of every
@@ -117,8 +120,9 @@ namespace TauCeti
 namespace LieTypeIndex
 
 /-- The Lie-type families whose underlying Dynkin diagram has unimodular Cartan matrix, namely
-`E₈`, `F₄` and `G₂`. These are exactly the CFSG indices whose pinned adjoint Geck carrier is
-already the simply connected form.
+`E₈`, `F₄` and `G₂`. These are exactly the CFSG indices whose pinned Geck carrier has full
+character span, the lattice condition the simply connected form of a Chevalley--Demazure group
+requires; the identification of the carrier with that form is Layer 9 work, not asserted here.
 
 Both the untwisted families `E₈(q)`, `F₄(q)`, `G₂(q)` and the Ree families `²G₂(3^(2m+1))`,
 `²F₄(2^(2m+1))` together with the Tits index are included: the predicate constrains the diagram
@@ -221,8 +225,12 @@ theorem dynkinType_eq_E8_or_eq_F4_or_eq_G2 :
   (LieTypeIndex.hasUnimodularDiagram_iff_dynkinType d.1.1).mp d.2
 
 /-- **The Geck weights of an index with unimodular diagram span the whole character lattice.** This
-is what makes its adjoint Geck carrier the simply connected form, and hence the ambient group the
-CFSG recipe asks for. -/
+is the lattice condition that separates the simply connected form of a Chevalley--Demazure group
+from the adjoint one, and it fails on every other diagram, which is why the carrier below is
+offered on these branches and no others. It is a statement about characters only: that the carrier
+is reductive, and that it is the pinned simply connected group of
+`TauCeti.DynkinType.simplyConnectedRootDatum`, are Layer 9 statements that this file consumes when
+they arrive rather than proving. -/
 theorem span_range_geckWeight_eq_top :
     Submodule.span ℤ (Set.range (d.dynkinType.geckWeight d.dynkinType_valid)) = ⊤ :=
   (DynkinType.span_range_geckWeight_eq_top_iff _ d.dynkinType_valid).mpr
@@ -239,8 +247,11 @@ theorem isClosedImmersion_geckWeightTorus :
 /-! ## The ambient group and its root subgroups -/
 
 /-- **The pinned ambient group of an index with unimodular diagram**: the points of the pinned Geck
-carrier of its underlying Dynkin type over the algebraic closure of its prime field. It is
-generally infinite; no finiteness, reductivity or maximality statement is attached to it. -/
+carrier of its underlying Dynkin type over the algebraic closure of its prime field, pinned by the
+Bourbaki-numbered root subgroups and weight torus that carrier comes with. It is generally
+infinite; no finiteness, reductivity or maximality statement is attached to it, and the
+identification of the carrier with the pinned simply connected Chevalley--Demazure group of
+`TauCeti.DynkinType.simplyConnectedRootDatum` is Layer 9 work that is not asserted here. -/
 abbrev ambientPoints :
     Subgroup (Matrix.GeneralLinearGroup
       (Fin (d.dynkinType.geckDim d.dynkinType_valid)) d.1.Closure) :=
