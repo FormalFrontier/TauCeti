@@ -581,9 +581,11 @@ abbrev TypeALieIndex : Type _ := {d : ValidLieTypeIndex // d.1.IsTypeA}
 /-- A validated index in the Suzuki family `²B₂(2^(2m+1))`.
 
 The outer subtype is important: `²B₂(2)`, the parameter `m = 0`, is excluded from the
-classification list, its derived-subgroup recipe returning the Frobenius group of order twenty, so
-it is not a `SuzukiLieIndex`. The Suzuki--Ree relatives `²G₂`, `²F₄` and the Tits group are
-excluded too; they are the other three constructors of `TauCeti.SuzukiReeIndex`. -/
+classification list. It is itself the Frobenius group of order twenty, whose derived subgroup is
+cyclic of order five and is its own centre, so the derived-subgroup recipe collapses to the trivial
+group rather than a simple one, and `²B₂(2)` is not a `SuzukiLieIndex`. The Suzuki--Ree relatives
+`²G₂`, `²F₄` and the Tits group are excluded too; they are the other three constructors of
+`TauCeti.SuzukiReeIndex`. -/
 abbrev SuzukiLieIndex : Type _ := {d : ValidLieTypeIndex // d.1.IsSuzuki}
 
 namespace TypeALieIndex

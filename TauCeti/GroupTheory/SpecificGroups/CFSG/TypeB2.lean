@@ -45,7 +45,7 @@ the symplectic group scheme, or that any group below is finite, perfect, or simp
 the carrier is not claimed to be *the* simply connected Chevalley--Demazure group scheme of type
 `B₂`: no pinning datum is constructed for it here or in the files it imports, which say so
 themselves. The identification with the `B₂` diagram proved below is the one on numbered root
-characters stated in `rootGeneratorWeight_carrierNode`.
+characters stated in `rootGeneratorWeight_carrierNode_eq_root_simpleIndex`.
 
 ## Main declarations
 
@@ -53,8 +53,8 @@ characters stated in `rootGeneratorWeight_carrierNode`.
   Bourbaki numbering of `B₂` and the numbering of the rank-two type-`C` carrier.
 * `TauCeti.SuzukiLieIndex.AmbientGroup`: the algebraic-closure-valued points of that carrier.
 * `TauCeti.SuzukiLieIndex.simpleRootSubgroup`: the positive simple-root subgroup at a Bourbaki node.
-* `TauCeti.SuzukiLieIndex.rootGeneratorWeight_carrierNode`: the character of that subgroup is the
-  corresponding simple root of the `B₂` root datum.
+* `TauCeti.SuzukiLieIndex.rootGeneratorWeight_carrierNode_eq_root_simpleIndex`: the character of
+  that subgroup is the corresponding simple root of the `B₂` root datum.
 * `TauCeti.SuzukiLieIndex.frobenius` and
   `TauCeti.SuzukiLieIndex.frobenius_simpleRootSubgroup`: the `q`-power Frobenius and its pinned
   equation `Frob_q (x_i(u)) = x_i(u ^ q)`.
@@ -126,7 +126,8 @@ same node correspondence, is the `i`-th simple root of
 `TauCeti.DynkinType.simplyConnectedRootDatum` at `B 2`. This is the sense in which the rank-two
 type-`C` carrier serves the diagram that the Suzuki index names; it is not a claim that the
 carrier is the pinned group of that diagram, no pinning being constructed for it. -/
-theorem rootGeneratorWeight_carrierNode (ht : (B 2).Valid) (i j : Fin d.1.rank) :
+theorem rootGeneratorWeight_carrierNode_eq_root_simpleIndex (ht : (B 2).Valid)
+    (i j : Fin d.1.rank) :
     SpStd.rootGeneratorWeight 1 (.inl (d.carrierNode i)) (d.carrierNode j) =
       ((B 2).simplyConnectedRootDatum ht).root
         ((B 2).simpleIndex ht (finCongr d.rank_eq_two i)) (finCongr d.rank_eq_two j) := by
