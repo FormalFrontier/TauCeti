@@ -205,12 +205,6 @@ map composes with this one. -/
 noncomputable def frobenius (d : TypeALieIndex) : d.AmbientGroup →* d.AmbientGroup :=
   SlStd.frobenius d.1.rank d.1.characteristic d.1.fieldExponent d.1.Closure
 
-/-- The Frobenius of a type-A index is the standard carrier's Frobenius at the characteristic and
-field exponent recorded by the index. -/
-theorem frobenius_def (d : TypeALieIndex) :
-    d.frobenius = SlStd.frobenius d.1.rank d.1.characteristic d.1.fieldExponent d.1.Closure :=
-  (rfl)
-
 /-- **The Frobenius fixes the Bourbaki numbering of a positive simple-root subgroup and raises its
 parameter to the `q`-th power**, that is, `Frob_q (x_i(u)) = x_i(u ^ q)`. -/
 @[simp]
@@ -218,7 +212,7 @@ theorem frobenius_simpleRootSubgroup (d : TypeALieIndex) (i : Fin d.1.rank)
     (u : Multiplicative d.1.Closure) :
     d.frobenius (d.simpleRootSubgroup i u) =
       d.simpleRootSubgroup i (Multiplicative.ofAdd (Multiplicative.toAdd u ^ d.1.fieldOrder)) := by
-  rw [frobenius_def, simpleRootSubgroup_def, SlStd.frobenius_rootSubgroupPoints,
+  rw [TypeALieIndex.frobenius, simpleRootSubgroup_def, SlStd.frobenius_rootSubgroupPoints,
     ValidLieTypeIndex.fieldOrder_eq_characteristic_pow]
 
 /-- **The pinned graph automorphism of a validated type-A index.** It realizes on the ambient group
@@ -309,7 +303,7 @@ theorem graphAut_frobenius (d : TypeALieIndex) (g : d.AmbientGroup) :
   rcases d.exists_eq_ofA_or_exists_eq_ofTwistedA with
     ⟨rank, q, hvalid, rfl⟩ | ⟨rank, q, hvalid, rfl⟩
   · rw [graphAut_ofA, MulAut.one_apply, MulAut.one_apply]
-  · rw [graphAut_ofTwistedA, frobenius_def, SlStd.graphAutomorphismPoints_frobenius]
+  · rw [graphAut_ofTwistedA, TypeALieIndex.frobenius, SlStd.graphAutomorphismPoints_frobenius]
 
 /-- The graph automorphism commutes with the Frobenius, as an identity of endomorphisms. This is
 the relation `γ ∘ Frob_q = Frob_q ∘ γ` required of the graph-twisted families by milestone L1. -/
@@ -328,8 +322,9 @@ theorem steinberg_eq_graphAut_comp_frobenius (d : TypeALieIndex) :
   simp only [MonoidHom.comp_apply, MulEquiv.coe_toMonoidHom]
   rcases d.exists_eq_ofA_or_exists_eq_ofTwistedA with
     ⟨rank, q, hvalid, rfl⟩ | ⟨rank, q, hvalid, rfl⟩
-  · rw [steinberg_ofA, graphAut_ofA, frobenius_def, MulAut.one_apply]
-  · rw [steinberg_ofTwistedA, graphAut_ofTwistedA, frobenius_def, SlStd.twistedFrobenius_apply]
+  · rw [steinberg_ofA, graphAut_ofA, TypeALieIndex.frobenius, MulAut.one_apply]
+  · rw [steinberg_ofTwistedA, graphAut_ofTwistedA, TypeALieIndex.frobenius,
+      SlStd.twistedFrobenius_apply]
 
 /-- The Steinberg map may equally be read with its Frobenius factor last, the two factors
 commuting. -/
