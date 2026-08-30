@@ -80,11 +80,7 @@ namespace IsProP
 variable {G : Type u} [Group G] [TopologicalSpace G]
 variable {H : Type v} [Group H] [TopologicalSpace H]
 
-/-- A continuous surjective image of a pro-`p` group is pro-`p`.
-
-For an open normal subgroup `U` of the target, its preimage is open and normal in the source.
-The induced map between the corresponding quotients is surjective, so the target quotient is
-a `p`-group. -/
+/-- A continuous surjective image of a pro-`p` group is pro-`p`. -/
 theorem of_surjective (hG : IsProP p G) (f : G →* H) (hf : Continuous f)
     (hsurj : Function.Surjective f) : IsProP p H := by
   intro U
