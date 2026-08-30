@@ -57,6 +57,9 @@ spin lattice, are deliberately left to the next carrier step.
 * N. Bourbaki, *Lie Groups and Lie Algebras, Chapters 4--6*, Plate IV.
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, §§11, 25.
 * R. W. Carter, *Simple Groups of Lie Type*, §4.4.
+* The combined-generator interface adapts `LieAlgebra.Basis.rootGenerator`,
+  `LieAlgebra.Basis.rootGeneratorWeight`, and `LieAlgebra.Basis.lie_h_rootGenerator` from
+  `TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.Basis`.
 
 This advances the explicit Chevalley--Demazure construction in Layer 9 of
 `TauCetiRoadmap/ReductiveGroups/README.md`. Its consumer is milestone L0, pinned ambient groups,
