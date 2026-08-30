@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.FaithfullyFlatPoints
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Points.Kernel
+public import TauCeti.AlgebraicGeometry.GroupScheme.CentralIsogeny.Coordinate
 
 /-!
 # Isogenies of affine group schemes
@@ -26,6 +27,10 @@ surjectivity by a weaker statement about points over the base field.
 
 * `TauCeti.CommHopfAlgCat.IsIsogeny`: a finite faithfully flat coordinate morphism.
 * `TauCeti.CommHopfAlgCat.IsCentralIsogeny`: an isogeny with central kernel Hopf ideal.
+* `TauCeti.CommHopfAlgCat.isIsogeny_iff_isIsogeny_hopfSpec_map`: the coordinate and
+  group-scheme definitions agree over a field.
+* `TauCeti.CommHopfAlgCat.isCentralIsogeny_iff_isCentralIsogeny_hopfSpec_map`: the analogous
+  bridge for central isogenies.
 * `TauCeti.CommHopfAlgCat.IsIsogeny.mapPointsFunctor_app_surjective`: an isogeny is
   surjective on points over algebraically closed fields.
 * `TauCeti.CommHopfAlgCat.IsCentralIsogeny.isCentralPoint_of_mapPoints_eq_one`: every
@@ -78,6 +83,39 @@ theorem isCentralIsogeny_iff (f : H ⟶ K) :
       f.hom.toAlgHom.Finite ∧ f.hom.toAlgHom.toRingHom.FaithfullyFlat ∧
         (kernelHopfIdeal f).IsCentral := by
   rw [IsCentralIsogeny, IsIsogeny, and_assoc]
+
+section Field
+
+variable {k : Type u} [Field k] {H₀ K₀ : _root_.CommHopfAlgCat.{u} k}
+
+/-- Over a field, the coordinate-algebra definition of an isogeny agrees with the existing
+group-scheme definition after applying the contravariant Hopf spectrum functor. -/
+theorem isIsogeny_iff_isIsogeny_hopfSpec_map (f : H₀ ⟶ K₀) :
+    IsIsogeny f ↔
+      GroupScheme.IsIsogeny
+        ((AlgebraicGeometry.hopfSpec (CommRingCat.of k)).map f.op) := by
+  rw [IsIsogeny, GroupScheme.isIsogeny_iff]
+  change f.hom.toAlgHom.Finite ∧ f.hom.toAlgHom.toRingHom.FaithfullyFlat ↔
+    AlgebraicGeometry.IsFinite
+      (AlgebraicGeometry.Spec.map (CommRingCat.ofHom f.hom.toAlgHom.toRingHom)) ∧
+    AlgebraicGeometry.Flat
+      (AlgebraicGeometry.Spec.map (CommRingCat.ofHom f.hom.toAlgHom.toRingHom)) ∧
+    AlgebraicGeometry.Surjective
+      (AlgebraicGeometry.Spec.map (CommRingCat.ofHom f.hom.toAlgHom.toRingHom))
+  rw [AlgebraicGeometry.IsFinite.SpecMap_iff,
+    AlgebraicGeometry.flat_and_surjective_SpecMap_iff]
+  rfl
+
+/-- Over a field, the coordinate-algebra definition of a central isogeny agrees with the
+existing group-scheme definition after applying the contravariant Hopf spectrum functor. -/
+theorem isCentralIsogeny_iff_isCentralIsogeny_hopfSpec_map (f : H₀ ⟶ K₀) :
+    IsCentralIsogeny f ↔
+      GroupScheme.IsCentralIsogeny
+        ((AlgebraicGeometry.hopfSpec (CommRingCat.of k)).map f.op) := by
+  rw [IsCentralIsogeny, GroupScheme.isCentralIsogeny_hopfSpec_map_iff,
+    isIsogeny_iff_isIsogeny_hopfSpec_map]
+
+end Field
 
 namespace IsIsogeny
 
@@ -169,6 +207,20 @@ theorem isCentralIsogeny_of_bijective (f : H ⟶ K) (hf : Function.Bijective f.h
   rw [kernelHopfIdeal_eq_augmentation_of_surjective f hf.2]
   exact isCentral_augmentation K
 
+/-- The structure morphism from a finite faithfully flat commutative affine group scheme to the
+trivial group is a central isogeny. Its kernel is the whole source group, so nontrivial choices of
+`K` give central isogenies with nontrivial kernel. -/
+theorem isCentralIsogeny_unit_of_isCocomm (K : _root_.CommHopfAlgCat.{u} R)
+    [Module.Finite R K] [Module.FaithfullyFlat R K] [Coalgebra.IsCocomm R K] :
+    IsCentralIsogeny
+      (CommHopfAlgCat.ofHom (Bialgebra.unitBialgHom R K)) := by
+  refine ⟨⟨?_, ?_⟩, ?_⟩
+  · change (algebraMap R K).Finite
+    exact RingHom.finite_algebraMap.mpr inferInstance
+  · change (algebraMap R K).FaithfullyFlat
+    exact RingHom.faithfullyFlat_algebraMap_iff.mpr inferInstance
+  · exact (HopfIdeal.isCentral_bot_iff_isCocomm.mpr inferInstance).mono bot_le
+
 /-- Every categorical isomorphism of commutative Hopf algebras is an isogeny. -/
 theorem isIsogeny_of_isIso (f : H ⟶ K) [IsIso f] : IsIsogeny f :=
   isIsogeny_of_bijective f (ConcreteCategory.bijective_of_isIso f)
@@ -199,8 +251,9 @@ theorem IsCentralIsogeny.isCentralPoint_of_mapPoints_eq_one
     (hf : IsCentralIsogeny f₀) (A : CommAlgCat.{w} R)
     (g : HopfAlgebra.points (R := R) (H := K₀) A)
     (hg : (mapPointsFunctor f₀).app A g = 1) : HopfAlgebra.IsCentralPoint g := by
-  exact isCentralPoint_of_isCentral_kernelHopfIdeal_of_mapPoints_eq_one
-    hf.isCentral_kernelHopfIdeal A g hg
+  apply isCentralPoint_of_mem_quotientPointsSubgroup K₀ (kernelHopfIdeal f₀)
+    hf.isCentral_kernelHopfIdeal A
+  exact (mapPointsFunctor_app_eq_one_iff f₀ A g).mp hg
 
 end KernelPoints
 
