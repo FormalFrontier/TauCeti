@@ -64,6 +64,8 @@ characters stated in `rootGeneratorWeight_carrierNode_eq_root_simpleIndex`.
 * R. W. Carter, *Simple Groups of Lie Type*, §§4.4 and 14.
 * R. W. Carter, *Finite Groups of Lie Type: Conjugacy Classes and Complex Characters*, §1.17.
 * R. Steinberg, *Endomorphisms of linear algebraic groups*, Memoirs AMS **80** (1968), §11.
+* N. Bourbaki, *Lie Groups and Lie Algebras, Chapters 4--6*, Plates II and III, for the numbering
+  of the two rank-two diagrams that the node correspondence below moves between.
 * The target signatures realized here follow the human-authored formal skeleton
   `TauCetiRoadmap/CFSGStatement/Suggested.lean`: the ambient group, the numbered simple root
   subgroup, and the Frobenius with its pinned equation, all taken on a validated-index subtype.

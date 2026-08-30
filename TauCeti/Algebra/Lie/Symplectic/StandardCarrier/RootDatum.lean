@@ -51,7 +51,8 @@ scheme. No group below is claimed to be finite or simple.
 
 * R. W. Carter, *Simple Groups of Lie Type*, §§4.4, 7.1, and 11.3.
 * J. E. Humphreys, *Linear Algebraic Groups*, §§26--27.
-* N. Bourbaki, *Lie Groups and Lie Algebras, Chapters 4--6*, Plate III.
+* N. Bourbaki, *Lie Groups and Lie Algebras, Chapters 4--6*, Plate III for the type-`C` numbering
+  and Plate II for the `B₂` numbering the rank-two statements are read in.
 
 The statements follow the type-`A` identifications in
 `TauCeti/Algebra/Lie/SpecialLinear/StandardCarrier/RootDatum.lean`, added in
