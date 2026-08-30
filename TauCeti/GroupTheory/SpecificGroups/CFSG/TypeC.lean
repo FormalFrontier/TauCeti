@@ -140,12 +140,6 @@ theorem diagramPerm_eq_one (d : TypeCLieIndex) : d.toGraphTwistedIndex.diagramPe
   case C rank q =>
     simpa only [toGraphTwistedIndex] using GraphTwistedIndex.diagramPerm_C hvalid
 
-/-- The diagram permutation of an untwisted type-`C` index fixes each simple root. -/
-theorem diagramPerm_apply (d : TypeCLieIndex) (i : Fin d.1.rank) :
-    d.toGraphTwistedIndex.diagramPerm i = i := by
-  rw [diagramPerm_eq_one]
-  rfl
-
 /-- The algebraic-closure-valued points of the explicit full-weight type-`C` Chevalley carrier. -/
 noncomputable abbrev AmbientGroup (d : TypeCLieIndex) : Type :=
   SpStd.points d.carrierParameter d.1.Closure
@@ -177,7 +171,8 @@ theorem steinberg_simpleRootSubgroup (d : TypeCLieIndex) (i : Fin d.1.rank)
     d.steinberg (d.simpleRootSubgroup i u) =
       d.simpleRootSubgroup (d.toGraphTwistedIndex.diagramPerm i)
         (Multiplicative.ofAdd (Multiplicative.toAdd u ^ d.1.fieldOrder)) := by
-  rw [diagramPerm_apply, steinberg, simpleRootSubgroup_def,
+  simp only [diagramPerm_eq_one, Equiv.Perm.coe_one, id_eq]
+  rw [steinberg, simpleRootSubgroup_def,
     SpStd.frobenius_rootSubgroupPoints,
     ValidLieTypeIndex.fieldOrder_eq_characteristic_pow]
 
