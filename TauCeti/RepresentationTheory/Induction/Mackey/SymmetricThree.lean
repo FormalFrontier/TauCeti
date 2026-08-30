@@ -30,8 +30,9 @@ irreducibly, producing the two-dimensional irreducible of `S₃`. Here the norma
 criterion, read on a linear character by
 `TauCeti.simple_indFDRep_ofLinearChar_iff_centralizer_le`, reduces the question to whether anything
 outside `A₃` centralizes `A₃`, and nothing does. A faithful linear character exists because `A₃`
-is cyclic of order three and the coefficient field, being algebraically closed of characteristic
-zero, has a primitive cube root of unity.
+is cyclic of order three and the coefficient field has enough roots of unity for the exponent of
+`A₃` -- which an algebraically closed field of characteristic zero does, having a primitive cube
+root of unity.
 
 `S₃` is realized as `Equiv.Perm (Fin 3)`, the two-element subgroup as the point stabilizer
 `MulAction.stabilizer (Equiv.Perm (Fin 3)) a` -- which
@@ -50,7 +51,7 @@ is what makes it a *worked* example rather than a further piece of theory.
   of `A₃` induces irreducibly to `S₃`**.
 * `TauCeti.finrank_indFDRep_ofLinearChar_alternatingGroup_fin_three`: what it induces to is
   two-dimensional, so this is the two-dimensional irreducible of `S₃`.
-* `TauCeti.exists_injective_monoidHom_alternatingGroup_fin_three`: a faithful linear character of
+* `TauCeti.exists_monoidHom_alternatingGroup_fin_three_injective`: a faithful linear character of
   `A₃` exists, so the previous two statements are not vacuous.
 
 ## References
@@ -105,11 +106,13 @@ theorem finrank_indFDRep_ofLinearChar_alternatingGroup_fin_three
     Module.finrank k (indFDRep (FDRep.ofLinearChar (k := k) χ)) = 2 := by
   rw [finrank_indFDRep, FDRep.finrank_ofLinearChar, mul_one, alternatingGroup.index_eq_two]
 
-/-- **`A₃` has a faithful linear character** over an algebraically closed field of characteristic
-zero: it is cyclic of order three, and such a field has a primitive cube root of unity. A
-character of a group of prime order is faithful as soon as it is nontrivial, its kernel being a
-proper subgroup. -/
-theorem exists_injective_monoidHom_alternatingGroup_fin_three :
+omit [IsAlgClosed k] [CharZero k] in
+/-- **`A₃` has a faithful linear character** over any field with enough roots of unity for the
+exponent of `A₃`: it is cyclic of order three, so a primitive cube root of unity suffices, and an
+algebraically closed field of characteristic zero supplies one. A character of a group of prime
+order is faithful as soon as it is nontrivial, its kernel being a proper subgroup. -/
+theorem exists_monoidHom_alternatingGroup_fin_three_injective
+    [HasEnoughRootsOfUnity k (Monoid.exponent (alternatingGroup (Fin 3)))] :
     ∃ χ : alternatingGroup (Fin 3) →* kˣ, Function.Injective χ := by
   have hprime : Fact (Nat.card (alternatingGroup (Fin 3))).Prime := by
     rw [card_alternatingGroup_fin_three]
@@ -117,8 +120,6 @@ theorem exists_injective_monoidHom_alternatingGroup_fin_three :
   have _ : IsCyclic (alternatingGroup (Fin 3)) :=
     alternatingGroup.isCyclic_of_card_le_three (by simp)
   let _ : CommGroup (alternatingGroup (Fin 3)) := IsCyclic.commGroup
-  have _ : NeZero ((Monoid.exponent (alternatingGroup (Fin 3)) : ℕ) : k) :=
-    ⟨Nat.cast_ne_zero.mpr Monoid.exponent_ne_zero_of_finite⟩
   have _ : Nontrivial (alternatingGroup (Fin 3)) :=
     Finite.one_lt_card_iff_nontrivial.mp (by rw [card_alternatingGroup_fin_three]; norm_num)
   obtain ⟨a, ha⟩ := exists_ne (1 : alternatingGroup (Fin 3))

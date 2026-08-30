@@ -157,7 +157,7 @@ def linearRep (α β : Rˣ →* kˣ) : Representation k (GL2Borel R) k :=
 @[simp]
 theorem linearRep_apply (α β : Rˣ →* kˣ) (g : GL2Borel R) (x : k) :
     linearRep α β g x = (linearChar α β g : k) * x :=
-  (rfl)
+  Representation.ofLinearChar_apply _ g x
 
 end CommSemiring
 

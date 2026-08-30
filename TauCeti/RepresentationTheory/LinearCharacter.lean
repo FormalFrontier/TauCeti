@@ -43,12 +43,15 @@ fed in the classical worked examples: `Ind_H^G` of a linear character of a subgr
 
 ## Implementation notes
 
-Both definitions are `@[expose]`.  The point of a one-dimensional representation is that its
-carrier is the line `k` **on the nose** and its action is multiplication by a scalar, so the
-restriction lemma `TauCeti.FDRep.actionRes_obj_ofLinearChar` is an honest equality of objects
-rather than an isomorphism, and downstream files need the body to see that.  Exposing the body is
-what lets a consumer conjugate, restrict and compare these objects by rewriting the underlying
-homomorphism `G →* kˣ`, which is the whole reason for naming them.
+`TauCeti.Representation.ofLinearChar` keeps its body private: `ofLinearChar_apply` characterizes
+every use of it.  `TauCeti.FDRep.ofLinearChar` is `@[expose]` because it has to be: the carrier of
+an object of `FDRep k G` is part of that object's data, so with the body hidden the two sides of
+`TauCeti.FDRep.ofLinearChar_ρ` live in different types and its statement does not elaborate at all.
+Consumers are still expected to go through the lemmas rather than the body.  That the carrier is
+the line `k` **on the nose** is recorded once and for all by
+`TauCeti.FDRep.actionRes_obj_ofLinearChar`, an honest equality of objects rather than an
+isomorphism; conjugation, restriction and comparison of these objects are then computed inside
+`G →* kˣ` through it and `TauCeti.FDRep.nonempty_iso_ofLinearChar_iff`.
 -/
 
 public section
@@ -67,7 +70,6 @@ variable {k : Type u} {G : Type v} [CommSemiring k] [Monoid G]
 
 /-- **The one-dimensional representation carrying a linear character** `χ : G →* kˣ`: the
 representation of `G` on the line `k` in which `g` acts by multiplication by `χ g`. -/
-@[expose]
 def ofLinearChar (χ : G →* kˣ) : Representation k G k where
   toFun g := LinearMap.lsmul k k (χ g : k)
   map_one' := by
@@ -81,7 +83,7 @@ def ofLinearChar (χ : G →* kˣ) : Representation k G k where
 @[simp]
 theorem ofLinearChar_apply (χ : G →* kˣ) (g : G) (x : k) :
     ofLinearChar χ g x = (χ g : k) * x :=
-  rfl
+  (rfl)
 
 /-- **The trivial linear character carries the trivial representation.**  This is the sanity check
 that fixes the convention: `χ = 1` acts by the scalar `1`. -/
@@ -116,7 +118,9 @@ end Representation
 
 namespace FDRep
 
-variable {k : Type u} {G : Type v} [Field k] [Monoid G]
+section CommRing
+
+variable {k : Type u} {G : Type v} [CommRing k] [Monoid G]
 
 /-- **The one-dimensional representation carrying a linear character, as an object of
 `FDRep k G`.**  This is the shape induction consumes. -/
@@ -127,7 +131,19 @@ noncomputable def ofLinearChar (χ : G →* kˣ) : FDRep k G :=
 @[simp]
 theorem ofLinearChar_ρ (χ : G →* kˣ) :
     (ofLinearChar (k := k) χ).ρ = Representation.ofLinearChar χ :=
-  rfl
+  (rfl)
+
+/-- **Restricting a linear character along a homomorphism pulls the character back.**  Both sides
+are the line `k` with `s` acting by the scalar `χ (f s)`, so this is an equality of objects, not
+merely an isomorphism; it is what lets conjugation and restriction of a one-dimensional
+representation be computed inside `G →* kˣ`. -/
+theorem actionRes_obj_ofLinearChar {S : Type*} [Monoid S] (f : S →* G) (χ : G →* kˣ) :
+    (Action.res (FGModuleCat k) f).obj (ofLinearChar χ) = ofLinearChar (χ.comp f) :=
+  (rfl)
+
+end CommRing
+
+variable {k : Type u} {G : Type v} [Field k] [Monoid G]
 
 /-- A linear character is carried by a line. -/
 @[simp]
@@ -147,14 +163,6 @@ instance simple_ofLinearChar (χ : G →* kˣ) : Simple (ofLinearChar (k := k) �
   have : Representation.IsIrreducible (ofLinearChar (k := k) χ).ρ :=
     Representation.isIrreducible_ofLinearChar χ
   FDRep.simple_of_isIrreducible _
-
-/-- **Restricting a linear character along a homomorphism pulls the character back.**  Both sides
-are the line `k` with `s` acting by the scalar `χ (f s)`, so this is an equality of objects, not
-merely an isomorphism; it is what lets conjugation and restriction of a one-dimensional
-representation be computed inside `G →* kˣ`. -/
-theorem actionRes_obj_ofLinearChar {S : Type*} [Monoid S] (f : S →* G) (χ : G →* kˣ) :
-    (Action.res (FGModuleCat k) f).obj (ofLinearChar χ) = ofLinearChar (χ.comp f) :=
-  rfl
 
 /-- **Two one-dimensional representations are isomorphic exactly when their linear characters
 agree.**  One direction is that an isomorphism preserves characters, and the character of
