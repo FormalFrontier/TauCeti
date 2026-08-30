@@ -34,9 +34,11 @@ have the same finrank.
   into simple `U(L)`-modules, the multiplicity is the ring-level count of
   `TauCeti.finrank_linearMap_eq_natCard_of_linearEquiv_pi`.
 * `LieModule.finrank_isotypicComponent`: **the dimension of an isotypic component is the
-  multiplicity times the dimension of its type**, and
-  `LieModule.finrank_of_isIsotypicOfType`: for a completely reducible module which is itself
-  isotypic, that dimension count is the dimension of the module.
+  multiplicity times the dimension of its type**;
+  `LieModule.finrank_of_isotypicComponent_eq_top`: for a module its own isotypic component, that
+  dimension count is the dimension of the module; and
+  `LieModule.finrank_of_isIsotypicOfType`: the same for a completely reducible module which is
+  itself isotypic.
 
 ## The dimension of an isotypic component
 
@@ -47,7 +49,10 @@ Mathlib's `isotypicComponent` over `U(L)` by
 `LieModule.lieSubmoduleOrderIso_isotypicComponent`, where
 `TauCeti.finrank_isotypicComponent` computes its dimension. The two hypotheses are the ones that
 statement needs, finite-dimensionality of `M` and of the irreducible `S`; complete reducibility of
-`M` is not among them, an isotypic component being a sum of copies of `S` in any case.
+`M` is not among them, an isotypic component being a sum of copies of `S` in any case. It is not
+needed either for `LieModule.finrank_of_isotypicComponent_eq_top`, which reads off the dimension of
+a module its own `S`-isotypic component; it is needed only to reach that hypothesis from isotypy,
+which is what `LieModule.finrank_of_isIsotypicOfType` does.
 
 ## Roadmap
 
@@ -163,10 +168,22 @@ theorem finrank_isotypicComponent (S : Type w₁) [AddCommGroup S] [Module K S] 
   rw [hrank, isotypicMultiplicity_eq_finrank_linearMap_of_ι_smul hM S hS,
     TauCeti.finrank_isotypicComponent (k := K)]
 
+/-- **A module exhausted by an isotypic component has dimension the multiplicity times the
+dimension of its type.** This is the numerical content of `M ≅ S^{⊕ m}`, and it needs nothing of
+`M` beyond finite-dimensionality: the whole hypothesis is that the `S`-isotypic component is all
+of `M`. -/
+theorem finrank_of_isotypicComponent_eq_top (S : Type w₁) [AddCommGroup S] [Module K S]
+    [LieRingModule L S] [LieModule K L S] [FiniteDimensional K S] [IsIrreducible K L S]
+    (h : isotypicComponent K L M S = ⊤) :
+    finrank K M = isotypicMultiplicity K L M S * finrank K S := by
+  rw [← finrank_isotypicComponent (M := M) S, h]
+  exact (LieModuleEquiv.ofTop K L M).toLinearEquiv.finrank_eq.symm
+
 /-- **An isotypic module has dimension the multiplicity times the dimension of its type.** This is
 the form a decomposition argument consumes: having checked that every irreducible Lie submodule of
 a completely reducible `M` is equivalent to `S`, the dimension of `M` is `m · dim S` with `m` the
-multiplicity, which is the numerical content of `M ≅ S^{⊕ m}`. -/
+multiplicity. Complete reducibility enters only to turn the isotypy hypothesis into the
+component-exhausts-`M` hypothesis of `LieModule.finrank_of_isotypicComponent_eq_top`. -/
 theorem finrank_of_isIsotypicOfType (S : Type w₁) [AddCommGroup S] [Module K S]
     [LieRingModule L S] [LieModule K L S] [FiniteDimensional K S] [IsIrreducible K L S]
     [ComplementedLattice (LieSubmodule K L M)] (h : IsIsotypicOfType K L M S) :
@@ -175,11 +192,9 @@ theorem finrank_of_isIsotypicOfType (S : Type w₁) [AddCommGroup S] [Module K S
   let := isScalarTower_asModule K L M
   let := asModule K L S
   let := isScalarTower_asModule K L S
-  have htop : isotypicComponent K L M S = ⊤ :=
-    (isotypicComponent_eq_top_iff_of_ι_smul (asModule_ι_smul K L M) S
-      (asModule_ι_smul K L S)).mpr h
-  rw [← finrank_isotypicComponent (M := M) S, htop]
-  exact (finrank_top K M).symm
+  exact finrank_of_isotypicComponent_eq_top S
+    ((isotypicComponent_eq_top_iff_of_ι_smul (asModule_ι_smul K L M) S
+      (asModule_ι_smul K L S)).mpr h)
 
 end IsotypicComponent
 

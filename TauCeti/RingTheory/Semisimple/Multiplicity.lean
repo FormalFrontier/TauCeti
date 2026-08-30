@@ -205,10 +205,12 @@ variable [AddCommGroup M] [Module k M] [Module A M] [IsScalarTower k A M]
 variable [AddCommGroup S] [Module k S] [Module A S] [IsScalarTower k A S] [IsSimpleModule A S]
 
 omit [IsSimpleModule A S] in
-/-- **A module is its own isotypic component**: the sum of the submodules isomorphic to `M` is all
-of `M`, the top submodule being one of them. -/
+/-- **A module is its own isotypic component**: the sum of the submodules of `S` isomorphic to `S`
+is all of `S`, the top submodule being one of them. -/
+@[simp]
 theorem isotypicComponent_self_eq_top : isotypicComponent A S S = ⊤ :=
-  eq_top_iff.mpr <| le_sSup (s := {m : Submodule A S | Nonempty (m ≃ₗ[A] S)}) ⟨Submodule.topEquiv⟩
+  eq_top_iff.mpr <| (Submodule.le_isotypicComponent ⊤).trans_eq
+    Submodule.topEquiv.isotypicComponent_eq
 
 /-- **A map out of a simple module takes its values in the isotypic component of that type.**  So
 the hom space out of `S` sees only the `S`-isotypic component of its target, which is what makes
@@ -233,6 +235,7 @@ private noncomputable def linearMapIsotypicComponentEquiv :
 omit [Module k S] [IsScalarTower k A S] in
 /-- **The multiplicity of `S` in `M` is its multiplicity in the `S`-isotypic component**, every
 map out of `S` landing there. -/
+@[simp]
 theorem finrank_linearMap_isotypicComponent :
     Module.finrank k (S →ₗ[A] isotypicComponent A M S) = Module.finrank k (S →ₗ[A] M) :=
   (linearMapIsotypicComponentEquiv (k := k)).finrank_eq

@@ -28,8 +28,7 @@ Mathlib's `IsIsotypicOfType`, `IsIsotypic`, and `isotypicComponent` through thos
 * `LieModule.isIsotypic_iff_isIsotypic_of_ι_smul`: pairwise isotypy transport for compatible
   actions.
 * `LieModule.lieSubmoduleOrderIso_isotypicComponent`: component transport for compatible actions.
-* `LieModule.isIsotypicOfType_isotypicComponent_of_ι_smul` and
-  `LieModule.isIsotypicOfType_isotypicComponent`: **the isotypic component of an irreducible type
+* `LieModule.isIsotypicOfType_isotypicComponent`: **the isotypic component of an irreducible type
   is isotypic of that type**, so it really is the largest Lie submodule built from copies of it.
 * `LieModule.mem_isotypicComponent_iff_mem_isotypicComponent_asModule`: canonical component
   membership normalization.
@@ -137,11 +136,10 @@ theorem lieSubmoduleOrderIso_isotypicComponent
   rw [(lieSubmoduleOrderIso hM).symm_apply_apply]
   exact nonempty_lieModuleEquiv_iff_nonempty_linearEquiv hM S hS P
 
-/-- **The Lie isotypic component of an irreducible type is isotypic of that type**: every
-irreducible Lie submodule of the `S`-isotypic component is equivalent to `S`. This is Mathlib's
-`IsIsotypicOfType.isotypicComponent` read through the dictionary, and it is what makes the
-component the largest Lie submodule built from copies of `S`. -/
-theorem isIsotypicOfType_isotypicComponent_of_ι_smul
+/-- The compatible-action form of `LieModule.isIsotypicOfType_isotypicComponent`, from which the
+canonical statement below is read off. Its conclusion mentions no `U(L)`-action, so it is not part
+of the interface: only the canonical form is exposed. -/
+private theorem isIsotypicOfType_isotypicComponent_of_ι_smul
     (hM : ∀ (x : L) (m : M), ι R x • m = ⁅x, m⁆)
     (S : Type*) [AddCommGroup S] [Module R S] [LieRingModule L S] [LieModule R L S]
     [Module U S] [IsScalarTower R U S]
@@ -206,9 +204,10 @@ theorem mem_isotypicComponent_iff_mem_isotypicComponent_asModule
   mem_isotypicComponent_iff_mem_isotypicComponent_of_ι_smul
     (asModule_ι_smul R L M) (asModule_ι_smul R L S)
 
-/-- **The Lie isotypic component of an irreducible type is isotypic of that type**, in the
-enveloping-algebra-free form: every irreducible Lie submodule of the `S`-isotypic component of `M`
-is equivalent to `S`. -/
+/-- **The Lie isotypic component of an irreducible type is isotypic of that type**: every
+irreducible Lie submodule of the `S`-isotypic component of `M` is equivalent to `S`. This is
+Mathlib's `IsIsotypicOfType.isotypicComponent` read through the dictionary, and it is what makes
+the component the largest Lie submodule built from copies of `S`. -/
 theorem isIsotypicOfType_isotypicComponent
     (S : Type*) [AddCommGroup S] [Module R S] [LieRingModule L S] [LieModule R L S]
     [IsIrreducible R L S] :
