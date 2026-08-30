@@ -57,6 +57,8 @@ The value is defined by truncating the sum to the degrees below an explicit boun
   either variable, and `TauCeti.IsEulerAdmissible.biprod`,
   `TauCeti.IsEulerAdmissible.biprod'` under binary direct sums; the empty direct sum is covered by
   `TauCeti.IsEulerAdmissible.of_isZero_left` and `TauCeti.IsEulerAdmissible.of_isZero_right`.
+* `TauCeti.IsExtFinite.of_shortExact₃'`: `Ext`-finiteness also passes from the subobject and the
+  middle object of a short exact sequence to its quotient, in the first variable.
 * `TauCeti.IsExtFinite.finiteDimensional_hom`: Hom-finiteness is the degree-zero consequence of
   `Ext`-finiteness, and is kept as a separate predicate.
 * `TauCeti.extEuler_projective`: **projective evaluation**, `χ(P, Y) = dim_k Hom(P, Y)`.
@@ -298,6 +300,24 @@ theorem IsExtFinite.of_shortExact₂' (hS : S.ShortExact) {Y : C} (h₁ : IsExtF
   ⟨fun n ↦ haveI := h₁.finiteDimensional n
     haveI := h₃.finiteDimensional n
     finiteDimensional_of_exact (exact_precompOfLinear k hS Y n)⟩
+
+/-- `Ext`-finiteness passes to the quotient term of a short exact sequence, along the first
+variable: the long exact sequence exhibits `Extⁿ⁺¹(S.X₃, Y)` between `Extⁿ(S.X₁, Y)` and
+`Extⁿ⁺¹(S.X₂, Y)`, and its degree-zero group is a subspace of `Hom(S.X₂, Y)`. -/
+theorem IsExtFinite.of_shortExact₃' (hS : S.ShortExact) {Y : C} (h₁ : IsExtFinite.{w} k S.X₁ Y)
+    (h₂ : IsExtFinite.{w} k S.X₂ Y) : IsExtFinite.{w} k S.X₃ Y := by
+  refine ⟨fun n ↦ ?_⟩
+  match n with
+  | 0 =>
+      have := hS.epi_g
+      have := h₂.finiteDimensional 0
+      refine FiniteDimensional.of_injective
+        (Ext.precompOfLinear (Ext.mk₀ S.g) k Y (zero_add 0)) ?_
+      simpa only [coe_precompOfLinear] using Ext.precomp_mk₀_injective_of_epi Y S.g
+  | n + 1 =>
+      have := h₁.finiteDimensional n
+      have := h₂.finiteDimensional (n + 1)
+      exact finiteDimensional_of_exact (exact_precompOfLinear₃ k hS Y n (n + 1) (Nat.one_add n))
 
 /-- **Extension closure in the second variable** for eventual `Ext`-vanishing: the middle term of
 a short exact sequence inherits the larger of the two outer bounds. -/

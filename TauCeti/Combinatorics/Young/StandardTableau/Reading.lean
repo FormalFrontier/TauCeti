@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Combinatorics.Young.HookLength.Basic
+public import Mathlib.Order.Preorder.Finite
 public import TauCeti.Combinatorics.Young.StandardTableau.Basic
 
 /-!
@@ -25,10 +25,6 @@ a cell outside its first column, while a diagram with at most one row, or with a
 -- the empty diagram included -- has only one standard Young tableau at all.  So `f^μ = 1` holds
 exactly for the diagrams with at most one row and those with at most one column.
 
-Those are also exactly the shapes whose hook lengths are already known to multiply to `μ.card !`,
-by `YoungDiagram.prod_hookLength_eq_factorial_of_colLen_le_one` and its transpose, so the
-multiplicative hook-length formula `f^μ · ∏_{c ∈ μ} hookLength μ c = μ.card !` follows for them.
-
 ## Main definitions
 
 * `YoungDiagram.readingIndex`: the position of a cell in reading order.
@@ -41,11 +37,6 @@ multiplicative hook-length formula `f^μ · ∏_{c ∈ μ} hookLength μ c = μ.
 * `TauCeti.standardCount_pos`: every Young diagram has a standard Young tableau.
 * `TauCeti.standardCount_eq_one_iff`: a Young diagram has exactly one standard Young tableau
   precisely when it has at most one row or at most one column, the empty diagram included.
-* `TauCeti.standardCount_mul_prod_hookLength_of_standardCount_eq_one`: the multiplicative
-  hook-length formula for the diagrams with a unique standard Young tableau, together with its
-  specialisations `TauCeti.standardCount_mul_prod_hookLength_of_colLen_le_one` and
-  `TauCeti.standardCount_mul_prod_hookLength_of_rowLen_le_one` to the diagrams with at most one
-  row and to those with at most one column.
 
 ## References
 
@@ -294,33 +285,5 @@ theorem standardCount_eq_one_iff {μ : YoungDiagram} :
     by_contra hcol
     exact hcon (Or.inr (by omega))
   exact absurd h (one_lt_standardCount hrow hcol).ne'
-
-/-- **The multiplicative hook-length formula for the shapes with a unique standard Young
-tableau**: by `standardCount_eq_one_iff` these are the diagrams with at most one row and those
-with at most one column, the empty diagram included, and their hook lengths are already known to
-multiply to `μ.card !`. -/
-theorem standardCount_mul_prod_hookLength_of_standardCount_eq_one {μ : YoungDiagram}
-    (h : standardCount μ = 1) :
-    standardCount μ * ∏ c ∈ μ.cells, YoungDiagram.hookLength μ c = μ.card ! := by
-  rw [h, one_mul]
-  rcases standardCount_eq_one_iff.mp h with hrow | hcol
-  · exact YoungDiagram.prod_hookLength_eq_factorial_of_rowLen_le_one hrow
-  · exact YoungDiagram.prod_hookLength_eq_factorial_of_colLen_le_one hcol
-
-/-- **The hook-length formula for a Young diagram with at most one row** (in particular for the
-empty diagram). -/
-theorem standardCount_mul_prod_hookLength_of_colLen_le_one {μ : YoungDiagram}
-    (h : μ.colLen 0 ≤ 1) :
-    standardCount μ * ∏ c ∈ μ.cells, YoungDiagram.hookLength μ c = μ.card ! :=
-  standardCount_mul_prod_hookLength_of_standardCount_eq_one
-    (standardCount_eq_one_of_colLen_le_one h)
-
-/-- **The hook-length formula for a Young diagram with at most one column** (in particular for the
-empty diagram). -/
-theorem standardCount_mul_prod_hookLength_of_rowLen_le_one {μ : YoungDiagram}
-    (h : μ.rowLen 0 ≤ 1) :
-    standardCount μ * ∏ c ∈ μ.cells, YoungDiagram.hookLength μ c = μ.card ! :=
-  standardCount_mul_prod_hookLength_of_standardCount_eq_one
-    (standardCount_eq_one_of_rowLen_le_one h)
 
 end TauCeti

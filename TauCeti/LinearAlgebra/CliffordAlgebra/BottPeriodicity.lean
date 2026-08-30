@@ -10,7 +10,7 @@ public import TauCeti.LinearAlgebra.CliffordAlgebra.SignSwitch
 public import Mathlib.LinearAlgebra.CliffordAlgebra.Prod
 public import Mathlib.RingTheory.MatrixAlgebra
 
-import Mathlib.LinearAlgebra.Matrix.Unique
+import TauCeti.LinearAlgebra.Matrix.TensorProduct
 -- Private: `CliffordAlgebra.prod_map_ι_mul_ι_of_even_length` is used only inside the proof of
 -- `CliffordAlgebra.hyperbolicVolume_anticomm_rightGenerator`.
 import TauCeti.LinearAlgebra.CliffordAlgebra.VolumeElement
@@ -477,8 +477,7 @@ private def tensorMatrixMulEquiv (R A : Type*) [CommSemiring R] [Semiring A] [Al
 
 private def tensorMatrixOneEquiv (R A : Type*) [CommSemiring R] [Semiring A] [Algebra R A] :
     A ≃ₐ[R] A ⊗[R] Matrix (Fin 1) (Fin 1) R :=
-  ((Matrix.uniqueAlgEquiv (R := R) (A := A) (m := Unit)).symm.trans
-      (Matrix.reindexAlgEquiv R A (Equiv.ofUnique Unit (Fin 1)))).trans
+  (Matrix.finOneAlgEquiv R A).trans
     (matrixEquivTensor (Fin 1) R A)
 
 private noncomputable def realCliffordBottIterEquivImpl (p q : ℕ) : (n : ℕ) →
@@ -557,7 +556,8 @@ theorem realCliffordBottIterEquiv_zero_apply (p q : ℕ)
   -- Expose the zero branch of the private recursive implementation.
   change tensorMatrixOneEquiv ℝ (_root_.CliffordAlgebra (realCliffordForm p q)) x = _
   rw [tensorMatrixOneEquiv, AlgEquiv.trans_apply, matrixEquivTensor_apply,
-    Fintype.sum_prod_type, Fin.sum_univ_one, Fin.sum_univ_one]
+    Fintype.sum_prod_type, Fin.sum_univ_one, Fin.sum_univ_one,
+    Matrix.finOneAlgEquiv_apply]
   -- The unfolded tensor equivalence leaves the unique matrix unit to identify with `1`.
   change x ⊗ₜ[ℝ] Matrix.single 0 0 1 = x ⊗ₜ[ℝ] 1
   congr 1

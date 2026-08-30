@@ -155,11 +155,12 @@ theorem smul_spanSingletonGenerator (he : IsIdempotentElem e)
     (x : (Ideal.span {e} : Ideal A)) : (x : A) • spanSingletonGenerator e = x :=
   Subtype.ext (by simpa using (mem_span_singleton_iff_mul_eq_self he).1 x.2)
 
-/-- **An endomorphism of `Ae` is right multiplication by its value at the generator.** This is the
-dictionary between the corner ring `eAe` and `End (Ae)`, and it is what makes primitivity of `e`
-and indecomposability of `Ae` the same statement. -/
-theorem coe_apply_eq_mul_apply_generator (he : IsIdempotentElem e)
-    (f : Module.End A (Ideal.span {e} : Ideal A)) (x : (Ideal.span {e} : Ideal A)) :
+/-- **A homomorphism out of `Ae` is right multiplication by its value at the generator.** For an
+endomorphism this is the dictionary between the corner ring `eAe` and `End (Ae)`, and it is what
+makes primitivity of `e` and indecomposability of `Ae` the same statement; the arbitrary target
+ideal `p` is what `TauCeti.RingTheory.Idempotents.Hom` needs to compute `Hom (Ae) (Af)`. -/
+theorem coe_apply_eq_mul_apply_generator (he : IsIdempotentElem e) {p : Ideal A}
+    (f : (Ideal.span {e} : Ideal A) →ₗ[A] p) (x : (Ideal.span {e} : Ideal A)) :
     (f x : A) = (x : A) * (f (spanSingletonGenerator e) : A) := by
   conv_lhs => rw [← smul_spanSingletonGenerator he x]
   rw [map_smul]

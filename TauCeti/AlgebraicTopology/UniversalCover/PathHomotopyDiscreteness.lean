@@ -146,8 +146,46 @@ private theorem Path.exists_partition_with_property {x y : X} (γ : Path x y) (P
   obtain ⟨⟨z, hz⟩, h_seg⟩ := ht_cover i
   exact ⟨U z hz, hU_open z hz, hU_P z hz, fun s hs ↦ h_seg ⟨hs.1, hs.2⟩⟩
 
-/-- Given segment neighborhoods covering each subpath of `γ`, construct the vertex neighborhoods
-as path components of the finite intersections of adjacent segment neighborhoods. -/
+/-- The vertex neighborhood at a single index `j`: the path component, around `γ (t j)`, of the
+intersection of the segment neighborhoods `U i` adjacent to `j`. It is open and path-connected,
+contains `γ (t j)`, and lies inside each adjacent `U i`. -/
+private theorem Path.exists_vertexNeighborhood [LocallyPathConnectedSpace X]
+    {x y : X} {γ : Path x y} {n : ℕ} {t : Fin (n + 1) → unitInterval} {U : Fin n → Set X}
+    (h_mono : Monotone t) (hU_open : ∀ i, IsOpen (U i))
+    (hU_contains : ∀ i : Fin n, ∀ s : unitInterval,
+      (t i.castSucc : ℝ) ≤ s ∧ s ≤ (t i.succ : ℝ) → γ s ∈ U i) (j : Fin (n + 1)) :
+    ∃ V : Set X, IsOpen V ∧ IsPathConnected V ∧ γ (t j) ∈ V ∧
+      (∀ i : Fin n, j = i.castSucc → V ⊆ U i) ∧
+      (∀ i : Fin n, j = i.succ → V ⊆ U i) := by
+  let U_inter := ⋂ i : Fin n, ⋂ (_ : j = i.castSucc ∨ j = i.succ), U i
+  have hγ_in_inter : γ (t j) ∈ U_inter := by
+    simp only [U_inter, Set.mem_iInter]
+    intro i hi
+    exact hU_contains i (t j) <| by
+      cases hi with
+      | inl h =>
+          constructor <;> apply h_mono <;> simp [h, Fin.le_def]
+      | inr h =>
+          constructor <;> apply h_mono <;> simp [h, Fin.le_def, Fin.succ]
+  refine ⟨pathComponentIn U_inter (γ (t j)), ?_, isPathConnected_pathComponentIn hγ_in_inter,
+    mem_pathComponentIn_self hγ_in_inter, ?_, ?_⟩
+  · apply IsOpen.pathComponentIn
+    apply isOpen_iInter_of_finite
+    intro i
+    apply isOpen_iInter_of_finite
+    intro _
+    exact hU_open i
+  · intro i hi
+    trans U_inter
+    · exact pathComponentIn_subset
+    · exact Set.iInter_subset_of_subset i <| Set.iInter_subset_of_subset (Or.inl hi) <| subset_rfl
+  · intro i hi
+    trans U_inter
+    · exact pathComponentIn_subset
+    · exact Set.iInter_subset_of_subset i <| Set.iInter_subset_of_subset (Or.inr hi) <| subset_rfl
+
+/-- Given segment neighborhoods covering each subpath of `γ`, the vertex neighborhoods of
+`Path.exists_vertexNeighborhood` assemble into a family indexed by the partition points. -/
 private theorem Path.exists_vertexNeighborhood_family [LocallyPathConnectedSpace X]
     {x y : X} {γ : Path x y} {n : ℕ} {t : Fin (n + 1) → unitInterval} {U : Fin n → Set X}
     (h_mono : Monotone t) (hU_open : ∀ i, IsOpen (U i))
@@ -159,38 +197,8 @@ private theorem Path.exists_vertexNeighborhood_family [LocallyPathConnectedSpace
       (∀ j, γ (t j) ∈ V j) ∧
       (∀ i : Fin n, V i.castSucc ⊆ U i) ∧
       (∀ i : Fin n, V i.succ ⊆ U i) := by
-  have V_data : ∀ j : Fin (n + 1),
-      ∃ V : Set X, IsOpen V ∧ IsPathConnected V ∧ γ (t j) ∈ V ∧
-        (∀ i : Fin n, j = i.castSucc → V ⊆ U i) ∧
-        (∀ i : Fin n, j = i.succ → V ⊆ U i) := by
-    intro j
-    let U_inter := ⋂ i : Fin n, ⋂ (_ : j = i.castSucc ∨ j = i.succ), U i
-    have hγ_in_inter : γ (t j) ∈ U_inter := by
-      simp only [U_inter, Set.mem_iInter]
-      intro i hi
-      exact hU_contains i (t j) <| by
-        cases hi with
-        | inl h =>
-            constructor <;> apply h_mono <;> simp [h, Fin.le_def]
-        | inr h =>
-            constructor <;> apply h_mono <;> simp [h, Fin.le_def, Fin.succ]
-    refine ⟨pathComponentIn U_inter (γ (t j)), ?_, isPathConnected_pathComponentIn hγ_in_inter,
-      mem_pathComponentIn_self hγ_in_inter, ?_, ?_⟩
-    · apply IsOpen.pathComponentIn
-      apply isOpen_iInter_of_finite
-      intro i
-      apply isOpen_iInter_of_finite
-      intro _
-      exact hU_open i
-    · intro i hi
-      trans U_inter
-      · exact pathComponentIn_subset
-      · exact Set.iInter_subset_of_subset i <| Set.iInter_subset_of_subset (Or.inl hi) <| subset_rfl
-    · intro i hi
-      trans U_inter
-      · exact pathComponentIn_subset
-      · exact Set.iInter_subset_of_subset i <| Set.iInter_subset_of_subset (Or.inr hi) <| subset_rfl
-  choose V hV_open hV_pathConn hγ_in_V hV_left hV_right using V_data
+  choose V hV_open hV_pathConn hγ_in_V hV_left hV_right using
+    Path.exists_vertexNeighborhood h_mono hU_open hU_contains
   refine ⟨V, hV_open, hV_pathConn, hγ_in_V, ?_, ?_⟩
   · intro i
     exact hV_left i.castSucc i rfl

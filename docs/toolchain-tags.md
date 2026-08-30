@@ -23,8 +23,10 @@ the recorded CI result and the published cache; neither needs a rebuild.
 
 ## What it does not cover
 
-The tool tags only commits on `main`, and reports a release `main` never ran on as
-`unreachable`. Two things cause that, and they differ in what can be done about them: the
+The tool tags only commits on `main`. A release mathlib has tagged but `main` has not
+reached yet is reported `ahead`: nothing is wrong, the bump has not got there, and it will
+be tagged like any other release when it does. A release `main` went past without stopping
+is reported `unreachable`. Two things cause that, and they differ in what can be done about them: the
 daily bump stepped over the release's window on Mathlib master, which a later bump could
 avoid, or Mathlib cut the release on its `stable` branch, which `check-bump.sh` will not let
 this repository pin at all.

@@ -6,11 +6,20 @@ Authors: Claude
 module
 
 public import Mathlib.MeasureTheory.Constructions.Pi
+import Mathlib.Probability.Independence.Basic
 
 /-!
-# Refreshing two coordinates of a finite product measure
+# Two distinct coordinates of a finite product measure
 
-Over a finite product `Measure.pi μ` of sigma-finite measures, overwriting two *distinct*
+Two lemmas about a *pair of distinct* coordinates of a finite product measure `Measure.pi μ`.
+
+**Reading off a pair of coordinates.** The evaluation map `x ↦ (x a, x b)` at two distinct indices
+pushes `Measure.pi μ` forward to `μ a ⊗ μ b`: distinct coordinates of a product measure are
+independent, and each single coordinate has law `μ a` (Mathlib's `measurePreserving_eval`). This
+is the two-variable companion of `measurePreserving_eval`, and is what transports an
+almost-everywhere statement about a pair back to the product space.
+
+**Refreshing a pair of coordinates.** Overwriting two *distinct*
 probability coordinates by an independent pair samples the same law: the map
 
 `(z, s, t) ↦ Function.update (Function.update z a s) b t`
@@ -25,20 +34,26 @@ construction.
 
 ## Main statements
 
+* `TauCeti.measurePreserving_eval_pair` — reading off two distinct coordinates is measure
+  preserving;
 * `TauCeti.measurePreserving_update_update` — the two-coordinate refresh is measure
   preserving.
 
 ## Implementation
 
-The proof splits the product into the coordinates `{a, b}` and their complement using Mathlib's
-measure-preserving product equivalences. The fresh pair replaces the selected coordinates, while
-the complementary coordinates are projected from the original assignment; recombining the two
-parts is pointwise the double update.
+`measurePreserving_eval_pair` reads the pair law off Mathlib's independence of the coordinates of a
+product measure, `ProbabilityTheory.iIndepFun_pi`, through
+`ProbabilityTheory.indepFun_iff_map_prod_eq_prod_map_map`.
+
+The proof of `measurePreserving_update_update` splits the product into the coordinates `{a, b}`
+and their complement using Mathlib's measure-preserving product equivalences. The fresh pair
+replaces the selected coordinates, while the complementary coordinates are projected from the
+original assignment; recombining the two parts is pointwise the double update.
 -/
 
 public section
 
-open Function MeasureTheory Set
+open Function MeasureTheory ProbabilityTheory Set
 
 open scoped ENNReal
 
@@ -46,6 +61,23 @@ namespace TauCeti
 
 variable {ι : Type*} [Fintype ι] [DecidableEq ι] {α : ι → Type*}
   [∀ i, MeasurableSpace (α i)]
+
+omit [DecidableEq ι] in
+/-- **Two distinct coordinates of a product measure carry the product of their laws.** Reading off
+the coordinates `a ≠ b` of a product-distributed assignment pushes `Measure.pi μ` forward to
+`μ a ⊗ μ b`.
+
+The one-coordinate statement is Mathlib's `MeasureTheory.measurePreserving_eval`; distinctness is
+what makes the pair independent, and hence its law a product. -/
+theorem measurePreserving_eval_pair (μ : ∀ i, Measure (α i))
+    [∀ i, IsProbabilityMeasure (μ i)] {a b : ι} (hab : a ≠ b) :
+    MeasurePreserving (fun x : ∀ i, α i => (x a, x b)) (Measure.pi μ) ((μ a).prod (μ b)) := by
+  refine ⟨(measurable_pi_apply a).prodMk (measurable_pi_apply b), ?_⟩
+  have hindep : (fun x : ∀ i, α i => x a) ⟂ᵢ[Measure.pi μ] fun x : ∀ i, α i => x b :=
+    (iIndepFun_pi (X := fun i => (id : α i → α i)) fun _ => aemeasurable_id).indepFun hab
+  rw [indepFun_iff_map_prod_eq_prod_map_map (measurable_pi_apply a).aemeasurable
+    (measurable_pi_apply b).aemeasurable] at hindep
+  rw [hindep, (measurePreserving_eval μ a).map_eq, (measurePreserving_eval μ b).map_eq]
 
 /-- Overwriting the two distinct coordinates `a` and `b` of a product-distributed assignment by an
 independent pair leaves the product law unchanged. -/

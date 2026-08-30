@@ -37,7 +37,16 @@ The charts so obtained depend on choices — of the separating neighbourhoods, a
 bijection — so the atlas below is a choice of one chart per point, exactly as much as a charted
 structure asks for. Upgrading it to a *complex* manifold, by exhibiting an atlas whose transition
 maps are holomorphic, is the next step of Lane F4.1 and is not done here; so are the totally real
-tori `T_α`, `T_β`.
+tori `T_α`, `T_β`. What is available towards that holomorphy is the analytic ingredient for a
+single coordinate patch at a multiplicity-free coefficient tuple,
+`TauCeti.Sym.analyticAt_coeffEquiv_map_coeffEquiv_symm` in
+`TauCeti/Analysis/Polynomial/SimpleRoots/Basic.lean`. Its assembly across the blocks that a chart
+below splits a tuple into, along the regrouping `e`, is
+`TauCeti.Sym.analyticAt_piSigmaConstHomeomorph_coeffEquiv_map_coeffEquiv_symm` in
+`TauCeti/Analysis/Polynomial/SimpleRoots/Family.lean`. At colliding points, polynomial-induced
+coordinate maps are handled by `TauCeti.Sym.analyticOnNhd_coeffEquiv_map_eval_coeffEquiv_symm` in
+`TauCeti/Analysis/Polynomial/SymmetricPower.lean`; the case of a general holomorphic coordinate
+change remains open.
 
 ## Main declarations
 

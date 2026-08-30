@@ -129,8 +129,7 @@ theorem coe_heckeTNat_prime (hp : p.Prime)
     ⇑(heckeTNat (N := N) k p (_hn := ⟨hp.ne_zero⟩) f) =
       heckeSlashUpperTri k p ⇑f + ⇑(diamondOpNat k p f) ∣[k] scaleRep p := by
   let _ : NeZero p := ⟨hp.ne_zero⟩
-  unfold heckeTNat
-  rw [coe_heckeSlashGamma1ModularFormEnd_diagCosetGamma1_of_prime k hp]
+  rw [heckeTNat_def, coe_heckeSlashGamma1ModularFormEnd_diagCosetGamma1_of_prime k hp]
 
 /-- **The classical `T_p` formula on cusp forms, at every prime.** -/
 theorem coe_heckeTCuspNat_prime (hp : p.Prime)
@@ -138,8 +137,7 @@ theorem coe_heckeTCuspNat_prime (hp : p.Prime)
     ⇑(heckeTCuspNat (N := N) k p (_hn := ⟨hp.ne_zero⟩) f) =
       heckeSlashUpperTri k p ⇑f + ⇑(diamondOpCuspNat k p f) ∣[k] scaleRep p := by
   let _ : NeZero p := ⟨hp.ne_zero⟩
-  unfold heckeTCuspNat
-  rw [coe_heckeSlashGamma1CuspFormEnd_diagCosetGamma1_of_prime k hp]
+  rw [heckeTCuspNat_def, coe_heckeSlashGamma1CuspFormEnd_diagCosetGamma1_of_prime k hp]
 
 /-- At a positive index dividing the level, `T_p` is the upper-triangular operator. This is the
 operator modern sources denote by `U_p`. -/
@@ -148,8 +146,7 @@ theorem heckeTNat_eq_upperTri (hpN : p ∣ N) :
       (_hn := ⟨fun h ↦ NeZero.ne N (Nat.eq_zero_of_zero_dvd (h ▸ hpN))⟩) =
       heckeSlashUpperTriModularFormEnd k hpN := by
   let _ : NeZero p := ⟨fun h ↦ NeZero.ne N (Nat.eq_zero_of_zero_dvd (h ▸ hpN))⟩
-  unfold heckeTNat
-  rw [heckeSlashGamma1ModularFormEnd_diagCosetGamma1 k hpN]
+  rw [heckeTNat_def, heckeSlashGamma1ModularFormEnd_diagCosetGamma1 k hpN]
 
 /-- At a positive index dividing the level, the cusp-form `T_p` is the upper-triangular
 operator. -/
@@ -158,8 +155,7 @@ theorem heckeTCuspNat_eq_upperTri (hpN : p ∣ N) :
       (_hn := ⟨fun h ↦ NeZero.ne N (Nat.eq_zero_of_zero_dvd (h ▸ hpN))⟩) =
       heckeSlashUpperTriCuspFormEnd k hpN := by
   let _ : NeZero p := ⟨fun h ↦ NeZero.ne N (Nat.eq_zero_of_zero_dvd (h ▸ hpN))⟩
-  unfold heckeTCuspNat
-  rw [heckeSlashGamma1CuspFormEnd_diagCosetGamma1 k hpN]
+  rw [heckeTCuspNat_def, heckeSlashGamma1CuspFormEnd_diagCosetGamma1 k hpN]
 
 /-- The first Hecke operator on modular forms is the identity. -/
 @[simp] theorem heckeTNat_one : heckeTNat (N := N) k 1 = 1 := by

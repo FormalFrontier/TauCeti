@@ -8,6 +8,8 @@ module
 public import TauCeti.Probability.Exchangeability.MixedIID.Basic
 -- Non-public: `map_bind` is used only inside the proof below.
 import TauCeti.MeasureTheory.Measure.GiryMonad
+-- Non-public: the Giry-measurability of a pushforward is used only inside the proof below.
+import TauCeti.MeasureTheory.Measure.Measurability
 
 /-!
 # Coordinatewise maps of mixed i.i.d. families
@@ -57,9 +59,8 @@ theorem MixedIIDWith.map_values {μ : Measure Ω} {X : ι → Ω → α}
     MixedIIDWith μ (fun i ω => f (X i ω)) fun ω => (ν ω).map hf.aemeasurable := by
   refine MixedIIDWith.intro ?_ ?_
   · -- The pushforward mixing representative is measurable in the Giry structure.
-    have hν : Measurable fun ω => (ν ω : Measure α) :=
-      measurable_subtype_coe.comp h.measurable_mixingRepresentative
-    exact ((Measure.measurable_map f hf).comp hν).subtype_mk
+    exact (TauCeti.MeasureTheory.measurable_probabilityMeasure_map hf).comp
+      h.measurable_mixingRepresentative
   · intro m k hk
     have hXk : ∀ i : Fin m, AEMeasurable (X (k i)) μ := fun i => h.aemeasurable (k i)
     have hFmeas : Measurable fun x : Fin m → α => fun i => f (x i) :=

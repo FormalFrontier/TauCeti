@@ -8,10 +8,12 @@ module
 -- `TauCeti.GL2Steinberg` and `TauCeti.GL2PrincipalSeries` are the representations whose characters
 -- are computed here.
 public import TauCeti.RepresentationTheory.CharacterTable.GL2.Steinberg
--- The fixed-coset counts are the content of every proof below, and this module re-exports
--- `TauCeti.diagGL`, `TauCeti.jordanGL` and `TauCeti.GL2NonSplitTorusHom`, which occur in the
--- statements.
+-- The fixed-coset counts are the content of every Steinberg proof below, and this module
+-- re-exports `TauCeti.diagGL`, `TauCeti.jordanGL` and `TauCeti.GL2NonSplitTorusHom`, which occur
+-- in the statements.
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.ProjectiveLine
+-- The boundary principal-series row is the general principal-series row at `α = β = 1`.
+public import TauCeti.RepresentationTheory.CharacterTable.GL2.PrincipalSeries.CharacterValues
 
 /-!
 # The Steinberg character of `GL₂(𝔽_q)` on the four families of conjugacy classes
@@ -116,26 +118,29 @@ end Elliptic
 /-! ### The boundary principal series
 
 At `α = β = 1` the principal series is the permutation representation of the projective line, so
-its character is the fixed-point count itself: one more than the Steinberg value. -/
+its character is the fixed-point count itself: one more than the Steinberg value. These four
+values are the general principal-series row
+(`TauCeti/RepresentationTheory/CharacterTable/GL2/PrincipalSeries/CharacterValues.lean`) at the
+trivial pair of characters, and are read off it rather than proved a second time. -/
 
 /-- The boundary principal series has character `q + 1` at a central element. -/
 theorem character_GL2PrincipalSeries_one_one_scalar (u : Fˣ) :
     (GL2PrincipalSeries F 1 1).character (Matrix.GeneralLinearGroup.scalar (Fin 2) u) =
       (Fintype.card F : ℂ) + 1 := by
-  rw [character_GL2PrincipalSeries_one_one_eq_one_add, character_GL2Steinberg_scalar]
-  ring
+  rw [character_GL2PrincipalSeries_scalar]
+  simp
 
 /-- The boundary principal series has character `2` at a split semisimple element. -/
 theorem character_GL2PrincipalSeries_one_one_diagGL {a b : Fˣ} (hab : a ≠ b) :
     (GL2PrincipalSeries F 1 1).character (diagGL ![a, b]) = 2 := by
-  rw [character_GL2PrincipalSeries_one_one_eq_one_add, character_GL2Steinberg_diagGL hab]
+  rw [character_GL2PrincipalSeries_diagGL _ _ hab]
   norm_num
 
 /-- The boundary principal series has character `1` at a non-semisimple element. -/
 theorem character_GL2PrincipalSeries_one_one_jordanGL (a : Fˣ) {b : F} (hb : b ≠ 0) :
     (GL2PrincipalSeries F 1 1).character (jordanGL a b) = 1 := by
-  rw [character_GL2PrincipalSeries_one_one_eq_one_add, character_GL2Steinberg_jordanGL a hb]
-  ring
+  rw [character_GL2PrincipalSeries_jordanGL _ _ a hb]
+  simp
 
 section Elliptic
 
@@ -145,10 +150,8 @@ variable {E : Type*} [Field E] [Algebra F E] (hE : Module.finrank F E = 2)
 projective line is fixed, so the permutation character vanishes. -/
 theorem character_GL2PrincipalSeries_one_one_gl2NonSplitTorusHom {x : Eˣ}
     (hx : (x : E) ∉ Set.range (algebraMap F E)) :
-    (GL2PrincipalSeries F 1 1).character (GL2NonSplitTorusHom F E hE x) = 0 := by
-  rw [character_GL2PrincipalSeries_one_one_eq_one_add,
-    character_GL2Steinberg_gl2NonSplitTorusHom hE hx]
-  ring
+    (GL2PrincipalSeries F 1 1).character (GL2NonSplitTorusHom F E hE x) = 0 :=
+  character_GL2PrincipalSeries_gl2NonSplitTorusHom _ _ hE hx
 
 end Elliptic
 
