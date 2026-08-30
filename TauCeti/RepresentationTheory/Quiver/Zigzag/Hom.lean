@@ -5,8 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.LinearAlgebra.Graded.Shift
 public import TauCeti.RepresentationTheory.Quiver.Zigzag.CartanMatrix
+public import TauCeti.RingTheory.Idempotents.Hom
 
 /-!
 # The graded homomorphism spaces of the zigzag vertex projectives
@@ -43,7 +43,7 @@ are `Hom(P_i{d}, P_j)`, equivalently `Hom(P_i, P_j{-d})`, not `Hom(P_i, P_j{d})`
 
 ## Main results
 
-* `TauCeti.zigzagGradedProjectiveHomEquiv`: **the graded dictionary**
+* `TauCeti.zigzagProjectiveHomOfDegreeEquivGradedCorner`: **the graded dictionary**
   `Hom(P_i{d}, P_j) ≃ₗ[k] (e_i Z e_j)_d`.
 * `TauCeti.zigzagProjectiveTargetShiftHomEquiv`: **the signed target-shift dictionary**
   `Hom(P_i, P_j{d}) ≃ₗ[k] (e_i Z e_j)_{-d}` for every `d : ℤ`.
@@ -164,6 +164,8 @@ private theorem coe_zigzagProjectiveHomEquivSpanSingletonHom_apply {i j : V}
         (spanSingletonGenerator (zigzagVertexIdempotent k G i)) :
       nonisolatedZigzagQuotient k G) =
         (φ (zigzagProjectiveGenerator k G i) : nonisolatedZigzagQuotient k G) := by
+  -- The arrow-congruence equivalence has no application theorem, so expose its composite once;
+  -- the following rewrites use the explicit coercion lemmas for both transported projectives.
   change ((zigzagProjectiveEquivSpanSingleton k G j)
       (φ ((zigzagProjectiveEquivSpanSingleton k G i).symm
         (spanSingletonGenerator (zigzagVertexIdempotent k G i)))) :
@@ -186,6 +188,7 @@ private theorem coe_zigzagProjectiveHomEquivSpanSingletonHom_symm_apply {i j : V
       nonisolatedZigzagQuotient k G) =
         (φ (zigzagProjectiveEquivSpanSingleton k G i y) :
           nonisolatedZigzagQuotient k G) := by
+  -- As above, expose the arrow-congruence application and immediately rewrite the transport.
   change ((zigzagProjectiveEquivSpanSingleton k G j).symm
       (φ (zigzagProjectiveEquivSpanSingleton k G i y)) :
     nonisolatedZigzagQuotient k G) = _
@@ -210,6 +213,7 @@ theorem coe_zigzagProjectiveHomEquivCorner_apply {i j : V}
         nonisolatedZigzagQuotient k G) =
       (φ (zigzagProjectiveGenerator k G i) : nonisolatedZigzagQuotient k G) :=
   by
+    -- Expose the composite equivalence; every step below is then an explicit coercion lemma.
     change ((zigzagCornerEquivCornerSubmodule k G i j).symm
       (spanSingletonHomEquivCorner (zigzagMk_vertexIdempotent_mul_self k G i)
         (zigzagMk_vertexIdempotent_mul_self k G j)
@@ -234,6 +238,7 @@ theorem coe_zigzagProjectiveHomEquivCorner_symm_apply {i j : V} (x : zigzagCorne
     (((zigzagProjectiveHomEquivCorner k G i j).symm x) y : nonisolatedZigzagQuotient k G) =
       (y : nonisolatedZigzagQuotient k G) * (x : nonisolatedZigzagQuotient k G) :=
   by
+    -- Expose the composite inverse; its factors are handled by their application lemmas.
     change (((zigzagProjectiveHomEquivSpanSingletonHom k G i j).symm
       ((spanSingletonHomEquivCorner (zigzagMk_vertexIdempotent_mul_self k G i)
         (zigzagMk_vertexIdempotent_mul_self k G j)).symm
@@ -281,41 +286,6 @@ theorem coe_zigzagProjectiveHom_apply {i j : V}
 
 /-! ### The graded dictionary -/
 
-/-- The path-length grading of the zigzag relation quotient, extended by zero from `ℕ` to `ℤ`.
-This signed indexing is needed to state every internal grading shift. -/
-noncomputable def zigzagIntegerGrade (d : ℤ) :
-    Submodule k (nonisolatedZigzagQuotient k G) :=
-  if 0 ≤ d then zigzagGrade k G d.toNat else ⊥
-
-@[simp]
-theorem zigzagIntegerGrade_ofNat (d : ℕ) :
-    zigzagIntegerGrade k G d = zigzagGrade k G d := by
-  simp [zigzagIntegerGrade]
-
-/-- The signed degree-`d` part of the vertex projective `P_i`, obtained by restricting the
-integer-indexed grading of the zigzag algebra. -/
-noncomputable def zigzagProjectiveGrade (i : V) (d : ℤ) :
-    Submodule k (zigzagProjective k G i) :=
-  Submodule.comap ((zigzagProjective k G i).restrictScalars k).subtype
-    (zigzagIntegerGrade k G d)
-
-@[simp]
-theorem mem_zigzagProjectiveGrade_iff {i : V} {d : ℤ} {x : zigzagProjective k G i} :
-    x ∈ zigzagProjectiveGrade k G i d ↔
-      (x : nonisolatedZigzagQuotient k G) ∈ zigzagIntegerGrade k G d :=
-  Iff.rfl
-
-/-- The grading of the internal shift `P_i{d}`, normalized by
-`(P_i{d})_p = (P_i)_{p-d}` and hence `[P_i{1}] = q[P_i]`. -/
-noncomputable def zigzagProjectiveShiftGrade (i : V) (d : ℤ) :
-    ℤ → Submodule k (zigzagProjective k G i) :=
-  Graded.shift (zigzagProjectiveGrade k G i) (-d)
-
-@[simp]
-theorem zigzagProjectiveShiftGrade_apply (i : V) (d p : ℤ) :
-    zigzagProjectiveShiftGrade k G i d p = zigzagProjectiveGrade k G i (p - d) := by
-  simp [zigzagProjectiveShiftGrade, sub_eq_add_neg]
-
 /-- The signed degree-`d` part of the corner `e_i Z e_j`. -/
 noncomputable def zigzagIntegerGradedCorner (i j : V) (d : ℤ) :
     Submodule k (nonisolatedZigzagQuotient k G) :=
@@ -334,11 +304,6 @@ theorem zigzagIntegerGradedCorner_ofNat (i j : V) (d : ℕ) :
   ext x
   simp [zigzagIntegerGradedCorner]
 
-/-- The integer extension of the path-length grading vanishes in negative degrees. -/
-theorem zigzagIntegerGrade_eq_bot_of_neg {d : ℤ} (hd : d < 0) :
-    zigzagIntegerGrade k G d = ⊥ := by
-  simp [zigzagIntegerGrade, (not_le_of_gt hd)]
-
 /-- Signed corners vanish in negative degrees. -/
 theorem zigzagIntegerGradedCorner_eq_bot_of_neg (i j : V) {d : ℤ} (hd : d < 0) :
     zigzagIntegerGradedCorner k G i j d = ⊥ := by
@@ -348,25 +313,6 @@ theorem zigzagIntegerGradedCorner_eq_bot_of_neg (i j : V) {d : ℤ} (hd : d < 0)
   have h := ((mem_zigzagIntegerGradedCorner_iff k G).1 hx).2
   rw [zigzagIntegerGrade_eq_bot_of_neg k G hd, Submodule.mem_bot] at h
   exact h
-
-/-- Multiplication adds signed degrees in the integer extension of the path-length grading. -/
-theorem mul_mem_zigzagIntegerGrade {m n : ℤ}
-    {x y : nonisolatedZigzagQuotient k G} (hx : x ∈ zigzagIntegerGrade k G m)
-    (hy : y ∈ zigzagIntegerGrade k G n) : x * y ∈ zigzagIntegerGrade k G (m + n) := by
-  by_cases hm : 0 ≤ m
-  · by_cases hn : 0 ≤ n
-    · simp only [zigzagIntegerGrade, hm, ↓reduceIte] at hx
-      simp only [zigzagIntegerGrade, hn, ↓reduceIte] at hy
-      simp only [zigzagIntegerGrade, add_nonneg hm hn, ↓reduceIte]
-      simpa [Int.toNat_add hm hn] using mul_mem_zigzagGrade k G hx hy
-    · simp only [zigzagIntegerGrade, hn, ↓reduceIte] at hy
-      rw [Submodule.mem_bot] at hy
-      subst y
-      simp
-  · simp only [zigzagIntegerGrade, hm, ↓reduceIte] at hx
-    rw [Submodule.mem_bot] at hx
-    subst x
-    simp
 
 /-- The graded homomorphism space `Hom(P_i, P_j{d})`: the `Z`-linear maps which are degree zero
 from the grading of `P_i` to the shifted grading of `P_j{d}`.  The shift parameter is an arbitrary
@@ -385,20 +331,39 @@ theorem mem_zigzagProjectiveTargetShiftHom_iff_isHomogeneous {i j : V} {d : ℤ}
     φ ∈ zigzagProjectiveTargetShiftHom k G i j d ↔
       LinearMap.IsHomogeneous φ (zigzagProjectiveGrade k G i)
         (zigzagProjectiveGrade k G j) (-d) := by
-  simp only [zigzagProjectiveTargetShiftHom, LinearMap.mem_homogeneousSubmodule,
-    zigzagProjectiveShiftGrade, LinearMap.isHomogeneous_shift_target_iff, zero_add]
+  rw [zigzagProjectiveTargetShiftHom, LinearMap.mem_homogeneousSubmodule]
+  constructor
+  · intro h
+    rw [LinearMap.isHomogeneous_def] at h ⊢
+    intro p x hx
+    have hpx := h p x hx
+    rw [zigzagProjectiveShiftGrade_apply] at hpx
+    simpa only [add_zero, sub_eq_add_neg] using hpx
+  · intro h
+    rw [LinearMap.isHomogeneous_def] at h ⊢
+    intro p x hx
+    rw [zigzagProjectiveShiftGrade_apply]
+    simpa only [add_zero, sub_eq_add_neg] using h p x hx
+
+/-- The path-length grading restricted to a vertex projective, indexed by natural degrees. -/
+private noncomputable def zigzagProjectiveNatGrade (i : V) (d : ℕ) :
+    Submodule k (zigzagProjective k G i) :=
+  Submodule.comap ((zigzagProjective k G i).restrictScalars k).subtype (zigzagGrade k G d)
+
+@[simp]
+private theorem mem_zigzagProjectiveNatGrade_iff {i : V} {d : ℕ}
+    {x : zigzagProjective k G i} :
+    x ∈ zigzagProjectiveNatGrade k G i d ↔
+      (x : nonisolatedZigzagQuotient k G) ∈ zigzagGrade k G d :=
+  Iff.rfl
 
 /-- **The homomorphisms `P_i{d} → P_j`**: those `Z`-linear maps `Z e_i → Z e_j` which send a
 homogeneous element of degree `n` to a homogeneous element of degree `n + d`. -/
-def zigzagProjectiveHomOfDegree (i j : V) (d : ℕ) :
+noncomputable def zigzagProjectiveHomOfDegree (i j : V) (d : ℕ) :
     Submodule k
-      (zigzagProjective k G i →ₗ[nonisolatedZigzagQuotient k G] zigzagProjective k G j) where
-  carrier := {φ | ∀ (n : ℕ) (x : zigzagProjective k G i),
-    (x : nonisolatedZigzagQuotient k G) ∈ zigzagGrade k G n →
-      (φ x : nonisolatedZigzagQuotient k G) ∈ zigzagGrade k G (n + d)}
-  add_mem' hφ hψ n x hx := Submodule.add_mem _ (hφ n x hx) (hψ n x hx)
-  zero_mem' _ _ _ := Submodule.zero_mem _
-  smul_mem' c _ hφ n x hx := Submodule.smul_mem _ c (hφ n x hx)
+      (zigzagProjective k G i →ₗ[nonisolatedZigzagQuotient k G] zigzagProjective k G j) :=
+  LinearMap.homogeneousSubmodule (R := nonisolatedZigzagQuotient k G) (S := k)
+    (zigzagProjectiveNatGrade k G i) (zigzagProjectiveNatGrade k G j) d
 
 /-- **A homomorphism raises degree by `d` exactly when its value at the generator is a degree-`d`
 element of the corner.** The generator `e_i` has degree zero, which gives one direction, and
@@ -409,9 +374,9 @@ theorem mem_zigzagProjectiveHomOfDegree_iff {i j : V} {d : ℕ}
     φ ∈ zigzagProjectiveHomOfDegree k G i j d ↔
       (φ (zigzagProjectiveGenerator k G i) : nonisolatedZigzagQuotient k G) ∈
         zigzagGradedCorner k G i j d := by
-  have hgen : (zigzagProjectiveGenerator k G i : nonisolatedZigzagQuotient k G) ∈
-      zigzagGrade k G 0 := by
-    rw [coe_zigzagProjectiveGenerator]
+  rw [zigzagProjectiveHomOfDegree, LinearMap.mem_homogeneousSubmodule]
+  have hgen : zigzagProjectiveGenerator k G i ∈ zigzagProjectiveNatGrade k G i 0 := by
+    rw [mem_zigzagProjectiveNatGrade_iff, coe_zigzagProjectiveGenerator]
     exact zigzagMk_mem_zigzagGrade k G (PathAlgebra.vertexIdempotent_mem_grade_zero _)
   constructor
   · intro hφ
@@ -419,10 +384,14 @@ theorem mem_zigzagProjectiveHomOfDegree_iff {i j : V} {d : ℕ}
       ⟨?_, ?_⟩
     · rw [← coe_zigzagProjectiveHomEquivCorner_apply]
       exact (zigzagProjectiveHomEquivCorner k G i j φ).2
-    simpa only [Nat.zero_add] using hφ 0 (zigzagProjectiveGenerator k G i) hgen
-  · intro hφ n x hx
-    rw [coe_zigzagProjectiveHom_apply]
-    exact mul_mem_zigzagGrade k G hx ((mem_zigzagGradedCorner_iff k G).1 hφ).2
+    exact (mem_zigzagProjectiveNatGrade_iff k G).1
+      (by simpa only [Nat.zero_add] using hφ.map_mem hgen)
+  · intro hφ
+    rw [LinearMap.isHomogeneous_def]
+    intro n x hx
+    rw [mem_zigzagProjectiveNatGrade_iff, coe_zigzagProjectiveHom_apply]
+    exact mul_mem_zigzagGrade k G ((mem_zigzagProjectiveNatGrade_iff k G).1 hx)
+      ((mem_zigzagGradedCorner_iff k G).1 hφ).2
 
 /-- A homomorphism of vertex projectives has signed degree `d` exactly when its value at the
 projective generator belongs to the signed degree-`d` corner. -/
@@ -434,8 +403,9 @@ theorem isHomogeneous_zigzagProjective_iff {i j : V} {d : ℤ}
       (φ (zigzagProjectiveGenerator k G i) : nonisolatedZigzagQuotient k G) ∈
         zigzagIntegerGradedCorner k G i j d := by
   have hgen : zigzagProjectiveGenerator k G i ∈ zigzagProjectiveGrade k G i 0 := by
-    rw [mem_zigzagProjectiveGrade_iff, show (0 : ℤ) = (0 : ℕ) by rfl,
-      zigzagIntegerGrade_ofNat, coe_zigzagProjectiveGenerator]
+    have hzero : (0 : ℤ) = (0 : ℕ) := rfl
+    rw [mem_zigzagProjectiveGrade_iff, hzero, zigzagIntegerGrade_ofNat,
+      coe_zigzagProjectiveGenerator]
     exact zigzagMk_mem_zigzagGrade k G (PathAlgebra.vertexIdempotent_mem_grade_zero _)
   constructor
   · intro hφ
@@ -477,7 +447,7 @@ theorem zigzagProjectiveHomOfDegree_eq_comap (i j : V) (d : ℕ) :
 
 /-- **The graded dictionary**: the homomorphisms `P_i{d} → P_j` are the degree-`d` part of the
 corner `e_i Z e_j`. -/
-noncomputable def zigzagGradedProjectiveHomEquiv (i j : V) (d : ℕ) :
+noncomputable def zigzagProjectiveHomOfDegreeEquivGradedCorner (i j : V) (d : ℕ) :
     zigzagProjectiveHomOfDegree k G i j d ≃ₗ[k] zigzagGradedCorner k G i j d :=
   (LinearEquiv.ofEq _ _ (zigzagProjectiveHomOfDegree_eq_comap k G i j d)).trans
     (((zigzagProjectiveHomEquivCorner k G i j).ofSubmodules _ _
@@ -487,13 +457,16 @@ noncomputable def zigzagGradedProjectiveHomEquiv (i j : V) (d : ℕ) :
 
 /-- The graded dictionary sends a homogeneous map to its value at the projective generator. -/
 @[simp]
-theorem coe_zigzagGradedProjectiveHomEquiv_apply {i j : V} {d : ℕ}
+theorem coe_zigzagProjectiveHomOfDegreeEquivGradedCorner_apply {i j : V} {d : ℕ}
     (φ : zigzagProjectiveHomOfDegree k G i j d) :
-    ((zigzagGradedProjectiveHomEquiv k G i j d φ : zigzagGradedCorner k G i j d) :
+    ((zigzagProjectiveHomOfDegreeEquivGradedCorner k G i j d φ :
+        zigzagGradedCorner k G i j d) :
         nonisolatedZigzagQuotient k G) =
       ((φ : zigzagProjective k G i →ₗ[nonisolatedZigzagQuotient k G]
         zigzagProjective k G j) (zigzagProjectiveGenerator k G i) :
           nonisolatedZigzagQuotient k G) := by
+  -- The standard submodule-restriction equivalences have no coercion theorem; expose their
+  -- composite once, then use the public application lemma for the ungraded dictionary.
   change ((zigzagProjectiveHomEquivCorner k G i j
     (φ : zigzagProjective k G i →ₗ[nonisolatedZigzagQuotient k G]
       zigzagProjective k G j) : zigzagCorner k G i j) :
@@ -503,14 +476,16 @@ theorem coe_zigzagGradedProjectiveHomEquiv_apply {i j : V} {d : ℕ}
 /-- The inverse graded dictionary is right multiplication by the corresponding homogeneous
 corner element. -/
 @[simp]
-theorem coe_zigzagGradedProjectiveHomEquiv_symm_apply {i j : V} {d : ℕ}
+theorem coe_zigzagProjectiveHomOfDegreeEquivGradedCorner_symm_apply {i j : V} {d : ℕ}
     (x : zigzagGradedCorner k G i j d) (y : zigzagProjective k G i) :
-    ((((zigzagGradedProjectiveHomEquiv k G i j d).symm x :
+    ((((zigzagProjectiveHomOfDegreeEquivGradedCorner k G i j d).symm x :
         zigzagProjectiveHomOfDegree k G i j d) :
           zigzagProjective k G i →ₗ[nonisolatedZigzagQuotient k G]
             zigzagProjective k G j) y : nonisolatedZigzagQuotient k G) =
       (y : nonisolatedZigzagQuotient k G) *
         (x : nonisolatedZigzagQuotient k G) := by
+  -- The inverse composite likewise reduces to the ungraded dictionary after inserting the
+  -- explicit inclusion of the graded corner into the corner.
   change (((zigzagProjectiveHomEquivCorner k G i j).symm
     (⟨(x : nonisolatedZigzagQuotient k G),
       (zigzagGradedCorner_le_zigzagCorner k G i j d) x.2⟩ : zigzagCorner k G i j)) y :
@@ -551,6 +526,8 @@ theorem coe_zigzagProjectiveTargetShiftHomEquiv_apply {i j : V} {d : ℤ}
       ((φ : zigzagProjective k G i →ₗ[nonisolatedZigzagQuotient k G]
         zigzagProjective k G j) (zigzagProjectiveGenerator k G i) :
           nonisolatedZigzagQuotient k G) := by
+  -- The target-shift equivalence uses the same standard submodule restrictions, whose
+  -- application is exposed here before invoking the ungraded dictionary lemma.
   change ((zigzagProjectiveHomEquivCorner k G i j
     (φ : zigzagProjective k G i →ₗ[nonisolatedZigzagQuotient k G]
       zigzagProjective k G j) : zigzagCorner k G i j) :
@@ -568,6 +545,8 @@ theorem coe_zigzagProjectiveTargetShiftHomEquiv_symm_apply {i j : V} {d : ℤ}
             zigzagProjective k G j) y : nonisolatedZigzagQuotient k G) =
       (y : nonisolatedZigzagQuotient k G) *
         (x : nonisolatedZigzagQuotient k G) := by
+  -- Expose the inverse submodule composite and then rewrite it through the public inverse
+  -- application lemma for the ungraded dictionary.
   change (((zigzagProjectiveHomEquivCorner k G i j).symm
     (⟨(x : nonisolatedZigzagQuotient k G),
       ((mem_zigzagIntegerGradedCorner_iff k G).1 x.2).1⟩ : zigzagCorner k G i j)) y :
@@ -610,7 +589,7 @@ corner. -/
 theorem finrank_zigzagProjectiveHomOfDegree (i j : V) (d : ℕ) :
     Module.finrank k (zigzagProjectiveHomOfDegree k G i j d) =
       Module.finrank k (zigzagGradedCorner k G i j d) :=
-  (zigzagGradedProjectiveHomEquiv k G i j d).finrank_eq
+  (zigzagProjectiveHomOfDegreeEquivGradedCorner k G i j d).finrank_eq
 
 /-- Right multiplication by a degree-`d` element of the corner raises degree by `d`. -/
 theorem zigzagProjectiveHomEquivCorner_symm_apply_mem {i j : V} {d : ℕ}
@@ -625,8 +604,9 @@ theorem zigzagProjectiveHomEquivCorner_symm_apply_mem {i j : V} {d : ℕ}
 /-- **The identity of a vertex projective raises degree by zero.** -/
 theorem id_mem_zigzagProjectiveHomOfDegree_zero (i : V) :
     (LinearMap.id : zigzagProjective k G i →ₗ[nonisolatedZigzagQuotient k G]
-      zigzagProjective k G i) ∈ zigzagProjectiveHomOfDegree k G i i 0 :=
-  fun n x hx => by simpa only [LinearMap.id_coe, id_eq, Nat.add_zero] using hx
+      zigzagProjective k G i) ∈ zigzagProjectiveHomOfDegree k G i i 0 := by
+  rw [zigzagProjectiveHomOfDegree, LinearMap.mem_homogeneousSubmodule]
+  exact LinearMap.isHomogeneous_id (zigzagProjectiveNatGrade k G i)
 
 /-! ### The homogeneous homomorphism spaces -/
 

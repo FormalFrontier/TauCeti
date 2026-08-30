@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Algebra.Algebra.Bilinear
+public import TauCeti.RingTheory.Idempotents.Corner
 public import TauCeti.RingTheory.PrimitiveIdempotent
 
 /-!
@@ -17,8 +17,8 @@ module into, and this file identifies the homomorphisms between two of them:
 
 `Hom_A(Ae, Af) ≅ eAf`, by `φ ↦ φ e`.
 
-The corner `eAf` is defined here as the range of the `k`-linear map `x ↦ e x f`.  When `e` and
-`f` are idempotent, membership in it is the single equation `e x f = x`, and the identification is
+The corner `eAf` is defined in `TauCeti.RingTheory.Idempotents.Corner` as the range of the
+`k`-linear map `x ↦ e x f`. When `e` and `f` are idempotent, the identification here is
 `k`-linear.
 
 Both directions are elementary. A homomorphism `φ` out of `Ae` is right multiplication by `φ e`
@@ -35,8 +35,6 @@ idempotents, since the corner inherits the grading of `A`.
 
 ## Main definitions
 
-* `TauCeti.cornerMap`: the `k`-linear map `x ↦ e x f`.
-* `TauCeti.cornerSubmodule`: **the corner `eAf`**, as a `k`-submodule of `A`.
 * `TauCeti.cornerToSpanSingletonHom`: right multiplication by an element of `eAf`, as a
   homomorphism `Ae → Af`.
 
@@ -61,59 +59,17 @@ universe u v
 
 variable (k : Type v) [CommSemiring k] {A : Type u} [Semiring A] [Algebra k A]
 
-/-! ### The corner attached to two idempotents -/
-
-/-- Cutting an element of `A` down to the corner at `(e, f)`: multiplying it by `e` on the left
-and by `f` on the right. -/
-def cornerMap (e f : A) : A →ₗ[k] A :=
-  (LinearMap.mulLeft k e).comp (LinearMap.mulRight k f)
-
-@[simp]
-theorem cornerMap_apply (e f x : A) : cornerMap k e f x = e * x * f :=
-  (mul_assoc _ _ _).symm
-
-/-- **The corner `eAf`**, as a `k`-submodule of `A`: the range of the map `x ↦ e * x * f`. -/
-def cornerSubmodule (e f : A) : Submodule k A :=
-  LinearMap.range (cornerMap k e f)
-
-/-- For idempotents `e` and `f`, an element belongs to the corner `eAf` exactly when multiplying it
-by `e` on the left and by `f` on the right fixes it. -/
-@[simp]
-theorem mem_cornerSubmodule_iff {e f x : A} (he : IsIdempotentElem e)
-    (hf : IsIdempotentElem f) : x ∈ cornerSubmodule k e f ↔ e * x * f = x := by
-  constructor
-  · rintro ⟨y, rfl⟩
-    simp only [cornerMap_apply]
-    calc
-      e * (e * y * f) * f = (e * e) * y * (f * f) := by simp only [mul_assoc]
-      _ = e * y * f := by rw [he.eq, hf.eq]
-  · intro h
-    exact ⟨x, by simpa only [cornerMap_apply] using h⟩
+/-! ### The dictionary -/
 
 variable {k}
+variable {e f : A}
 
 /-- An element of the corner `eAf` is fixed by `f` on the right, hence lies in the left ideal
 `Af`. -/
 theorem mem_span_singleton_of_mem_cornerSubmodule {e f x : A} (hf : IsIdempotentElem f)
     (hx : x ∈ cornerSubmodule k e f) : x ∈ (Ideal.span {f} : Ideal A) := by
-  rcases hx with ⟨y, rfl⟩
-  refine (mem_span_singleton_iff_mul_eq_self hf).2 ?_
-  simp only [cornerMap_apply]
-  rw [mul_assoc, hf.eq]
-
-/-- An element of the corner `eAf` is fixed by `e` on the left. -/
-theorem mul_eq_self_of_mem_cornerSubmodule {e f x : A} (he : IsIdempotentElem e)
-    (hx : x ∈ cornerSubmodule k e f) : e * x = x := by
-  rcases hx with ⟨y, rfl⟩
-  simp only [cornerMap_apply]
-  calc
-    e * (e * y * f) = (e * (e * y)) * f := (mul_assoc _ _ _).symm
-    _ = (e * e) * y * f := by rw [← mul_assoc e e y]
-    _ = e * y * f := by rw [he.eq]
-
-/-! ### The dictionary -/
-
-variable {e f : A}
+  exact (mem_span_singleton_iff_mul_eq_self hf).2
+    (mul_eq_self_of_mem_cornerSubmodule_right hf hx)
 
 /-- The value at the generator of a homomorphism `Ae → Af` lies in the corner `eAf`. -/
 theorem apply_generator_mem_cornerSubmodule (he : IsIdempotentElem e) (hf : IsIdempotentElem f)

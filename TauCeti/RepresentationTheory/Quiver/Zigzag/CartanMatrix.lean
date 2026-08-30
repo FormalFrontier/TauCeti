@@ -8,7 +8,7 @@ module
 public import Mathlib.Algebra.Polynomial.Eval.Defs
 public import TauCeti.RepresentationTheory.Quiver.Zigzag.Grading
 public import TauCeti.RepresentationTheory.Quiver.Zigzag.Projective
-public import TauCeti.RingTheory.Idempotents.Hom
+public import TauCeti.RingTheory.Idempotents.Corner
 
 /-!
 # The graded Cartan matrix of a zigzag algebra
