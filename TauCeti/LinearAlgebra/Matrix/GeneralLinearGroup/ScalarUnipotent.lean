@@ -214,7 +214,7 @@ theorem jordanGL_eq_scalar_mul_transvectionUnit (a : Rˣ) (b : R) :
 conjugate, by the diagonal matrix `diag (1, b)`, to the standard representative `!![a, 1; 0, a]`.
 The scalar factor of `TauCeti.jordanGL_eq_scalar_mul_transvectionUnit` is central, and conjugation
 rescales the parameter of the remaining transvection by the value `1 · b⁻¹` of the root `ε₀ - ε₁`
-(`TauCeti.diagGL_mul_transvectionUnit_mul_inv`). Over a field this applies to every `b ≠ 0` through
+(`TauCeti.diagGL_conj_transvectionUnit`). Over a field this applies to every `b ≠ 0` through
 `Units.mk0`, so leaving `b` free below costs no generality. -/
 theorem isConj_jordanGL (a b : Rˣ) : IsConj (jordanGL a (b : R)) (jordanGL a 1) := by
   have hcomm : Commute (diagGL ![1, b]) (Matrix.GeneralLinearGroup.scalar (Fin 2) a) :=
@@ -224,7 +224,7 @@ theorem isConj_jordanGL (a b : Rˣ) : IsConj (jordanGL a (b : R)) (jordanGL a 1)
       = ((a⁻¹ : Rˣ) : R) * 1 := by simp
   refine isConj_iff.mpr ⟨diagGL ![1, b], ?_⟩
   rw [jordanGL_eq_scalar_mul_transvectionUnit, jordanGL_eq_scalar_mul_transvectionUnit,
-    hcomm.left_comm, mul_assoc, diagGL_mul_transvectionUnit_mul_inv, hpar]
+    hcomm.left_comm, mul_assoc, diagGL_conj_transvectionUnit, hpar]
 
 /-- The scalar–unipotent homomorphism is injective: the pair `(x, t)` is read back off the matrix
 `!![x, x t; 0, x]` as its upper-left entry and the quotient of its two top entries. So `Z U` is a

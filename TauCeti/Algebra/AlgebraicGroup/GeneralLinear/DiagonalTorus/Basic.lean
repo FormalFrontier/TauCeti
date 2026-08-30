@@ -167,7 +167,7 @@ theorem diagonalTorusPoints_mul_rootSubgroupPoints_mul_inv {i j : Fin N} (hij : 
     pointsMulEquiv_rootSubgroupPoints, pointsMulEquiv_rootSubgroupPoints]
   rw [MulEquiv.apply_symm_apply]
   simpa only [diagonalTorusCoordinates, MonoidHom.coe_mk, OneHom.coe_mk, toAdd_ofAdd] using
-    diagGL_mul_transvectionUnit_mul_inv hij
+    diagGL_conj_transvectionUnit hij
       (diagonalTorusCoordinates (SplitTorus.pointsMulEquiv t))
       (Multiplicative.toAdd (AdditiveGroup.gaPointsMulEquiv c))
 
