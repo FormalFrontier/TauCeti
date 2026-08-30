@@ -150,7 +150,6 @@ theorem burauRepresentation_apply (n : ℕ) (t : Rˣ) (b : BraidGroup n) (x : Fi
   by simp [burauRepresentation]
 
 /-- The geometric covector is invariant under the unreduced Burau representation. -/
-@[simp]
 theorem geometricCovector_burauRepresentation (n : ℕ) (t : Rˣ) (b : BraidGroup n)
     (x : Fin n → R) :
     geometricCovector n (t : R) (burauRepresentation n t b x) =
@@ -209,7 +208,6 @@ theorem reducedBurau_apply (n : ℕ) (t : Rˣ) (b : BraidGroup (n + 1)) (x : Fin
 
 /-- On an elementary braid, the reduced action is the tail of the elementary Burau matrix acting
 on the canonical kernel coordinates. -/
-@[simp]
 theorem reducedBurau_sigma (n : ℕ) (t : Rˣ) (i : Fin n) (x : Fin n → R) :
     reducedBurau n t (BraidGroup.sigma i) x = Fin.tail
       (burauMatrix (t : R) i *ᵥ
