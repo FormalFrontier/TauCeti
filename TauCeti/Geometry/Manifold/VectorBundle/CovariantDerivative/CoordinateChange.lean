@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Geometry.Manifold.VectorBundle.CovariantDerivative.LocalFrame
 public import TauCeti.Geometry.Manifold.VectorBundle.Tangent
+import TauCeti.Geometry.Manifold.VectorField.Regularity
 
 /-!
 # Coordinate changes for Christoffel maps
@@ -78,12 +79,7 @@ theorem christoffelMap_coordChange [Fintype ι] [IsManifold I 2 M]
   have hopen₁ : e₁.baseSet ∈ nhds x := e₁.open_baseSet.mem_nhds hx₁'
   set σ : Π z : M, TangentSpace I z := fun z => e₁.symmL 𝕜 z V with hσdef
   have hσx : σ x = V := by
-    -- `e₁` is definitionally the preferred trivialization at `x`; after exposing that wrapper,
-    -- its inverse is the tangent-bundle core coordinate change at a chart's own base point.
-    change (trivializationAt E (TangentSpace I) x).symmL 𝕜 x V = V
-    rw [TangentBundle.symmL_trivializationAt_eq_core (I := I) (b₀ := x) (b := x)
-      (mem_chart_source H x)]
-    exact (tangentBundleCore I M).coordChange_self (achart H x) x (mem_chart_source H x) V
+    simpa only [hσdef, he₁] using (symmL_trivializationAt_self (I := I) x V)
   have hσ : MDifferentiableAt I I.tangent (T% σ) x := by
     have h1 : ContMDiffAt I (I.prod 𝓘(𝕜, E)) 1 (fun z => TotalSpace.mk' E z (σ z)) x := by
       rw [e₁.contMDiffAt_section_iff hx₁']
@@ -100,9 +96,7 @@ theorem christoffelMap_coordChange [Fintype ι] [IsManifold I 2 M]
     filter_upwards [hopen₀, hopen₁] with z hz₀ hz₁
     rw [e₀.localFrameCoeff_eq_coeff (b := b) hz₀,
       ← Bundle.Trivialization.continuousLinearMapAt_apply_of_mem (R := 𝕜) e₀ hz₀]
-    -- The coefficient functional is definitionally the model-space coordinate after the
-    -- preceding trivialization rewrite; no application-level conversion lemma exists.
-    change b.coord i (e₀.continuousLinearMapAt 𝕜 z (σ z)) = _
+    rw [← Basis.coord_apply]
     simp only [hσdef]
     rw [continuousLinearMapAt_symmL_coordChange (I := I) (x := x) (x₀ := x₀) (y := z)
       hz₁ hz₀ V]
@@ -111,9 +105,7 @@ theorem christoffelMap_coordChange [Fintype ι] [IsManifold I 2 M]
     filter_upwards [hopen₁] with z hz
     rw [e₁.localFrameCoeff_eq_coeff (b := b) hz,
       ← Bundle.Trivialization.continuousLinearMapAt_apply_of_mem (R := 𝕜) e₁ hz]
-    -- As above, this exposes the coefficient functional's model-space representative after the
-    -- local-frame rewrite, while `hσdef` exposes the inverse trivialization wrapper.
-    change b.coord i (e₁.continuousLinearMapAt 𝕜 z (σ z)) = b.coord i V
+    rw [← Basis.coord_apply]
     simp only [hσdef]
     exact congrArg (b.coord i) (e₁.continuousLinearMapAt_symmL (R := 𝕜) hz V)
   -- the family of coordinate changes is differentiable; write its derivative as `A`
@@ -141,10 +133,7 @@ theorem christoffelMap_coordChange [Fintype ι] [IsManifold I 2 M]
         exact HasMFDerivAt.comp (x := x) (f := fun z => tangentCoordChange I x x₀ z V)
           (g := k) (g' := k) (ContinuousLinearMap.hasMFDerivAt k) h1
       have h3 := h2.congr_of_eventuallyEq (hcoeff₀ i)
-      -- `mvfderiv` is the coercion of `mfderiv`; `LinearMap.piApply_apply` makes the two
-      -- displayed derivative expressions definitionally equal.
-      change (mfderiv I 𝓘(𝕜, 𝕜) (LinearMap.piApply (e₀.localFrameCoeff I b i) σ) x) v
-        = b.coord i (A v)
+      rw [mvfderiv_apply_eq_mfderiv_apply]
       rw [LinearMap.piApply_apply, h3.mfderiv]
       rfl
     simp only [hterm]
@@ -166,10 +155,7 @@ theorem christoffelMap_coordChange [Fintype ι] [IsManifold I 2 M]
       intro i
       have h4 := hasMFDerivAt_const (I := I) (I' := 𝓘(𝕜, 𝕜)) (b.coord i V) x
       have h3 := h4.congr_of_eventuallyEq (hcoeff₁ i)
-      -- This is the same `mvfderiv`/`mfderiv` coercion as in `hflat₀`; the typed target records
-      -- the scalar codomain before rewriting the derivative of the constant function.
-      change (mfderiv I 𝓘(𝕜, 𝕜) (LinearMap.piApply (e₁.localFrameCoeff I b i) σ) x) v
-        = (0 : 𝕜)
+      rw [mvfderiv_apply_eq_mfderiv_apply]
       rw [LinearMap.piApply_apply, h3.mfderiv]
       rfl
     simp only [hterm, zero_smul, Finset.sum_const_zero, zero_apply]
@@ -184,10 +170,7 @@ theorem christoffelMap_coordChange [Fintype ι] [IsManifold I 2 M]
   -- read both Christoffel forms in the model space
   have hw : ∀ u : E, e₀.continuousLinearMapAt 𝕜 x u = tangentCoordChange I x x₀ x u := by
     intro u
-    -- Unfolding the local abbreviation `e₀` is the only conversion needed to apply the core
-    -- coordinate-change theorem.
-    change (trivializationAt E (TangentSpace I) x₀).continuousLinearMapAt 𝕜 x u
-      = tangentCoordChange I x x₀ x u
+    simp only [he₀]
     rw [TangentBundle.continuousLinearMapAt_trivializationAt_eq_core
       (I := I) (b₀ := x₀) (b := x) hx₀c]
     rfl
@@ -196,9 +179,7 @@ theorem christoffelMap_coordChange [Fintype ι] [IsManifold I 2 M]
     rw [← hw u, e₀.symmL_continuousLinearMapAt (R := 𝕜) hx₀' u]
   have hV : e₁.symmL 𝕜 x V = V := hσx
   have hU : e₁.symmL 𝕜 x U = U := by
-    rw [TangentBundle.symmL_trivializationAt_eq_core (I := I) (b₀ := x) (b := x)
-      (mem_chart_source H x)]
-    exact (tangentBundleCore I M).coordChange_self (achart H x) x (mem_chart_source H x) U
+    simpa only [he₁] using (symmL_trivializationAt_self (I := I) x U)
   have hmap' : e₀.continuousLinearMapAt 𝕜 x (christoffelForm b hcov' x V U)
       = tangentCoordChange I x x₀ x (christoffelMap b hcov' x V U) := by
     have h1 : e₁.symmL 𝕜 x (christoffelMap b hcov' x V U)

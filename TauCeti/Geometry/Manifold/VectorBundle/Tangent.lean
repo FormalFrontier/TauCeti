@@ -71,16 +71,9 @@ tangent-bundle charts completely. -/
 theorem coe_chartAt_snd {p q : TangentBundle I M} :
     (chartAt (ModelProd H E) q p).2 =
       tangentCoordChange I p.1 q.1 p.1 p.2 := by
-  have hcomp : chartAt (ModelProd H E) q p =
-      (chartAt H q.1).prod (OpenPartialHomeomorph.refl E)
-        (trivializationAt E (TangentSpace I) q.1 p) := by
-    rw [TangentBundle.chartAt]
-    rfl
-  have h2 : (trivializationAt E (TangentSpace I) q.1 p).2 =
-      tangentCoordChange I p.1 q.1 p.1 p.2 :=
-    rfl
-  rw [hcomp, OpenPartialHomeomorph.prod_apply]
-  simp only [OpenPartialHomeomorph.refl_apply, h2]
+  -- After unfolding the tangent-bundle chart, the fibre-to-model-space conversion is
+  -- definitionally the tangent coordinate change; no separate conversion lemma is needed.
+  rw [TangentBundle.chartAt]
   rfl
 
 end TangentBundle
