@@ -169,9 +169,9 @@ instance locallyOfFiniteType_kostantToralBaseChangeGroupScheme :
     (kostantToralBaseChangeIdeal e h ρ M hM hnil b wt A)
 
 /-- The closed-subgroup inclusion of the specialized toral carrier into the base-changed
-general-linear group scheme. Being reducible, it inherits
-`CommHopfAlgCat.isClosedImmersion_quotientSpecι`, so its underlying scheme morphism is a closed
-immersion by instance search. -/
+general-linear group scheme. Unfolding this abbreviation exposes `CommHopfAlgCat.quotientSpecι`,
+so instance search finds `CommHopfAlgCat.isClosedImmersion_quotientSpecι` for its underlying
+scheme morphism. -/
 noncomputable abbrev kostantToralBaseChangeGroupSchemeι :
     kostantToralBaseChangeGroupScheme e h ρ M hM hnil b wt A ⟶
       (hopfSpec (CommRingCat.of A)).obj
