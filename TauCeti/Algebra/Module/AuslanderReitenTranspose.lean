@@ -34,6 +34,8 @@ duality `D = Hom_k(-, k)` to construct the Auslander--Reiten translate `τ = D T
 
 * `AuslanderReitenTranspose`: the cokernel of the dual of the first map in a projective
   presentation.
+* `AuslanderReitenTranspose.lift`: the universal property of that cokernel, descending an
+  opposite-linear map that kills the functionals factoring through `p₁`.
 * `AuslanderReitenTranspose.linearEquiv`: the equivalence induced by an isomorphism of presentation
   diagrams.
 
@@ -90,6 +92,59 @@ theorem mk_lcomp (φ : Module.Dual A P₀) :
     mk p₁ (p₁.lcomp Aᵐᵒᵖ A φ) = 0 := by
   rw [mk_eq_zero_iff]
   exact LinearMap.mem_range_self _ φ
+
+/-- Every element of the transpose is represented by a functional on `P₁`. -/
+theorem mk_surjective : Function.Surjective (mk p₁) :=
+  Submodule.mkQ_surjective _
+
+/-- Two functionals represent the same element of the transpose exactly when their difference
+factors through the first map of the presentation. -/
+theorem mk_eq_mk_iff (φ ψ : Module.Dual A P₁) :
+    mk p₁ φ = mk p₁ ψ ↔ φ - ψ ∈ LinearMap.range (p₁.lcomp Aᵐᵒᵖ A) :=
+  Submodule.Quotient.eq _
+
+/-- To prove a property of every element of the transpose it suffices to prove it of the classes
+of functionals on `P₁`. -/
+@[elab_as_elim]
+theorem induction_on {motive : AuslanderReitenTranspose p₁ → Prop}
+    (x : AuslanderReitenTranspose p₁) (h : ∀ φ : Module.Dual A P₁, motive (mk p₁ φ)) :
+    motive x :=
+  Submodule.Quotient.induction_on _ x h
+
+section Lift
+
+variable {N : Type*} [AddCommGroup N] [Module Aᵐᵒᵖ N]
+
+/-- The universal property of the transpose: an opposite-linear map out of `Hom_A(P₁, A)` that
+kills every functional factoring through `p₁` descends to the cokernel. -/
+@[expose] def lift (f : Module.Dual A P₁ →ₗ[Aᵐᵒᵖ] N)
+    (hf : ∀ φ : Module.Dual A P₀, f (p₁.lcomp Aᵐᵒᵖ A φ) = 0) :
+    AuslanderReitenTranspose p₁ →ₗ[Aᵐᵒᵖ] N :=
+  Submodule.liftQ _ f <| by
+    rintro _ ⟨φ, rfl⟩
+    exact hf φ
+
+@[simp]
+theorem lift_mk (f : Module.Dual A P₁ →ₗ[Aᵐᵒᵖ] N)
+    (hf : ∀ φ : Module.Dual A P₀, f (p₁.lcomp Aᵐᵒᵖ A φ) = 0) (φ : Module.Dual A P₁) :
+    lift p₁ f hf (mk p₁ φ) = f φ := by
+  rw [mk_apply]
+  exact Submodule.liftQ_apply _ f φ
+
+/-- Opposite-linear maps out of the transpose are determined by their values on representatives. -/
+theorem hom_ext {f g : AuslanderReitenTranspose p₁ →ₗ[Aᵐᵒᵖ] N}
+    (h : ∀ φ : Module.Dual A P₁, f (mk p₁ φ) = g (mk p₁ φ)) : f = g :=
+  LinearMap.ext fun x => induction_on p₁ x h
+
+/-- `AuslanderReitenTranspose.lift` is the unique descent of `f` to the transpose. -/
+theorem eq_lift (f : Module.Dual A P₁ →ₗ[Aᵐᵒᵖ] N)
+    (hf : ∀ φ : Module.Dual A P₀, f (p₁.lcomp Aᵐᵒᵖ A φ) = 0)
+    (g : AuslanderReitenTranspose p₁ →ₗ[Aᵐᵒᵖ] N)
+    (hg : ∀ φ : Module.Dual A P₁, g (mk p₁ φ) = f φ) :
+    g = lift p₁ f hf :=
+  hom_ext p₁ fun φ => by rw [hg, lift_mk]
+
+end Lift
 
 variable {p₁}
 
