@@ -100,10 +100,8 @@ theorem circleReflection_mul_circleRotationHom (a : Circle) :
     circleReflection * circleRotationHom a = circleRotationHom (a⁻¹) * circleReflection := by
   apply _root_.Diffeomorph.ext
   intro x
-  rw [Diffeomorph.mul_apply, Diffeomorph.mul_apply, circleReflection_apply,
-    circleRotationHom_apply_apply, circleRotationHom_apply_apply, circleReflection_apply,
-    mul_inv_rev]
-  exact mul_comm _ _
+  simp only [Diffeomorph.mul_apply, circleReflection_apply, circleRotationHom_apply_apply,
+    mul_inv_rev, mul_comm]
 
 /-- A smooth circle presentation in a manifold modelled on `I` is a smooth embedding of the
 standard complex unit circle into the manifold.  Its parametrization orients the image circle. -/
@@ -206,6 +204,13 @@ instance instSMulCommClassDiff :
     apply SmoothEmbedding.ext
     intro x
     simp⟩
+
+/-- Ambient diffeomorphisms commute with orientation reversal of a smooth circle presentation. -/
+@[simp]
+theorem reverse_smul (e : Diff I M ∞) (f : SmoothCircleEmbedding I M) :
+    (e • f).reverse = e • f.reverse := by
+  simpa only [SmoothEmbedding.smul_def, reverse] using
+    (SmoothEmbedding.transDiffeomorph_compDiffeomorph f circleReflection e).symm
 
 end Ambient
 
