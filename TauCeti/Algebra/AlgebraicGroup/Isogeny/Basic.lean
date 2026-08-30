@@ -108,7 +108,7 @@ theorem finiteType (hf : IsIsogeny f) : f.hom.toAlgHom.FiniteType :=
   hf.finite.finiteType
 
 /-- A composite of isogenies is an isogeny. -/
-theorem comp {f : H ⟶ K} {g : K ⟶ L} (hg : IsIsogeny g) (hf : IsIsogeny f) :
+theorem comp {f : H ⟶ K} {g : K ⟶ L} (hf : IsIsogeny f) (hg : IsIsogeny g) :
     IsIsogeny (f ≫ g) := by
   rw [IsIsogeny, _root_.CommHopfAlgCat.hom_comp]
   exact ⟨AlgHom.Finite.comp hg.finite hf.finite,
@@ -160,19 +160,6 @@ end IsCentralIsogeny
 theorem isIsogeny_id (H : _root_.CommHopfAlgCat.{v} R) : IsIsogeny (𝟙 H) := by
   rw [IsIsogeny, _root_.CommHopfAlgCat.hom_id]
   exact ⟨AlgHom.Finite.id R H, Module.FaithfullyFlat.self H⟩
-
-/-- The kernel Hopf ideal of a surjective coordinate morphism is the augmentation ideal.
-This applies in particular to isomorphisms and identifies their group-scheme kernel with the
-trivial subgroup. -/
-theorem kernelHopfIdeal_eq_augmentation_of_surjective (f : H ⟶ K)
-    (hf : Function.Surjective f.hom) :
-    kernelHopfIdeal f = HopfIdeal.augmentation R K := by
-  apply le_antisymm
-    (HopfIdeal.le_augmentation (R := R) K (kernelHopfIdeal f)) fun y hy ↦ ?_
-  obtain ⟨x, rfl⟩ := hf y
-  rw [HopfIdeal.mem_augmentation] at hy
-  apply mem_kernelHopfIdeal_of_mem_augmentation f
-  simpa only [CoalgHomClass.counit_comp_apply] using hy
 
 /-- A bijective coordinate morphism is an isogeny. -/
 theorem isIsogeny_of_bijective (f : H ⟶ K) (hf : Function.Bijective f.hom) :
