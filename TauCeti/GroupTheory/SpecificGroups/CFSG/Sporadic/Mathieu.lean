@@ -112,9 +112,11 @@ The Lean development named in the cross-check above is
 [FiniteSimpleGroups](https://github.com/KitaKen1/finite-simple-groups-lean); nothing from it is
 imported, copied, or adapted here.
 
-The remaining two Mathieu names, `M₂₃` and `M₂₄`, are not transcribed here. The presentations on
-their ATLAS version 3 pages are stated rather than proved there, and locating a source that proves
-them is part of the S0 search that milestone still owes those rows.
+The remaining two Mathieu names, `M₂₃` and `M₂₄`, are transcribed in
+`TauCeti.GroupTheory.SpecificGroups.CFSG.Sporadic.Mathieu.TwentyThree` and
+`TauCeti.GroupTheory.SpecificGroups.CFSG.Sporadic.Mathieu.TwentyFour` from the ATLAS version 3
+presentations `M23G1-P1` and `M24G1-P1`, whose Magma source files carry the coset enumerations
+demonstrating that each presents the named group.
 -/
 
 public section

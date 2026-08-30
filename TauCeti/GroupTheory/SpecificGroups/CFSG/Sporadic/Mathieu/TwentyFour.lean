@@ -58,9 +58,36 @@ identification result. The cross-check against the `M24` of the
 `TauCetiRoadmap/CFSGStatement/README.md` asks for on the names that development covers, is still
 owed on this row.
 
+The row's body is sealed, so the equations below are what publish it: one per record field, and
+one spelling out the transcribed relator expressions with their generator indices written out and
+the private syllable abbreviations of this file expanded. Beside the count check, three further
+decidable checks read the compiled words: they have the individual letter counts
+`2, 3, 46, 48, 40, 36, 56`, totalling `231`, and every one of them is cyclically reduced. Neither
+the presentation page nor the Magma source file records a length for this presentation, so unlike
+the neighbouring `M₂₃` row these figures state the transcription for a reviewer to compare with the
+source rather than checking it against a published number; cyclic reducedness is what would make
+them comparable with one.
+
+The per-relator lengths are read off the transcribed expressions through
+`TauCeti.Relator.length_toWord` rather than off the compiled lists, since that multiplies at a
+`TauCeti.Relator.pow` instead of expanding it: the third relator `(ab)²³` then costs one
+multiplication rather than forty-six letter constructors.
+
 ## Main definition
 
 * `TauCeti.Sporadic.m24Presentation`: the ATLAS finite presentation of `M₂₄`.
+
+## Main results
+
+* `TauCeti.Sporadic.transcribed_m24Presentation`, together with the equations for the other record
+  fields, publishes the sealed row.
+* `TauCeti.Sporadic.matchesMetadata_m24Presentation`: the generator and relator counts agree with
+  the transcribed data.
+* `TauCeti.Sporadic.map_length_relators_m24Presentation` and
+  `TauCeti.Sporadic.totalLength_m24Presentation`: the letter counts of the compiled words and
+  their total `231`.
+* `TauCeti.Sporadic.relatorsCyclicallyReduced_m24Presentation`: every compiled word is cyclically
+  reduced.
 
 ## References
 
@@ -131,7 +158,135 @@ def m24Presentation : GroupPresentation where
       .pow (ab1 ⬝ ab1 ⬝ abNeg1) 3 ⬝ .pow (ab1 ⬝ abNeg1 ⬝ abNeg1) 3,
       .pow (ab1 ⬝ .pow (ab1 ⬝ abNeg1) 3) 4 ]
 
+/-- The generator names recorded for `M₂₄`. The row's body is sealed, so this is what tells a
+consumer that the transcription is on two generators, and it supplies the index bounds in
+`TauCeti.Sporadic.transcribed_m24Presentation`. -/
+@[simp]
+theorem generatorNames_m24Presentation : m24Presentation.generatorNames = ["a", "b"] := by
+  simp [m24Presentation]
+
+/-- The source recorded for `M₂₄`. The row's body is sealed, so this equation is what publishes the
+citation itself, rather than only the row's name, to a downstream audit. -/
+@[simp]
+theorem source_m24Presentation :
+    m24Presentation.source = "R. A. Wilson, R. A. Parker, J. N. Bray et al., ATLAS of Finite \
+      Group Representations, version 3" := by
+  simp [m24Presentation]
+
+/-- The locator recorded for `M₂₄`, pointing at the presentation inside its source. -/
+@[simp]
+theorem sourceLocator_m24Presentation :
+    m24Presentation.sourceLocator = "M24G1-P1, \
+      https://brauer.maths.qmul.ac.uk/Atlas/v3/pres/M24G1-P1, with the relator list and the \
+      demonstration of correctness in the Magma source file \
+      https://brauer.maths.qmul.ac.uk/Atlas/spor/M24/mag/M24G1-P1.M" := by
+  simp [m24Presentation]
+
+/-- The generator convention recorded for `M₂₄`, fixing which generator each relator index names
+and which commutator convention the source uses. -/
+@[simp]
+theorem generatorConvention_m24Presentation :
+    m24Presentation.generatorConvention = "The ATLAS standard generators a and b of M24, that is, \
+      a in class 2B and b in class 3A with ab of order 23 and ababab^2abab^2ab^2 of order 4, in \
+      that order, so index 0 is a and index 1 is b. Products are read left to right, negative \
+      exponents denote inverses, and [r,s] denotes r^-1 s^-1 r s." := by
+  simp [m24Presentation]
+
+/-- The transcription notes recorded for `M₂₄`, including the treatment of the source's
+commented-out eighth word and the external re-enumerations of the compiled relators. -/
+@[simp]
+theorem transcriptionNotes_m24Presentation :
+    m24Presentation.transcriptionNotes = "The seven words of the source's relator list are stored \
+      as seven relators equal to the identity. The Magma file's eighth word \
+      [a, b^-1*a*b*a*b]^5 is commented out of the Group<x, y | ...> constructor with the note \
+      'redundant, but quite useful.', so it lies outside the relator list and is not transcribed. \
+      GAP 4.15.1 checks that the seven compiled words vanish on five independent standard \
+      generating pairs of the natural 24-point representation of M24, taking a with centralizer \
+      of order 7680 and b with centralizer of order 1080; that enumerating the compiled relators \
+      over the image of the source's subgroup H returns the index 31878 that the source's \
+      demonstration of correctness predicts; and that enumerating them over the cyclic subgroup \
+      generated by the image of ab returns the index 10644480, hence the order 23 * 10644480 = \
+      244823040 of M24." := by
+  simp [m24Presentation]
+
+/-- The generator count `M₂₄`'s source states. With
+`TauCeti.Sporadic.generatorNames_m24Presentation` this is what makes
+`TauCeti.Sporadic.matchesMetadata_m24Presentation` an equation between two visible numbers. -/
+@[simp]
+theorem expectedGeneratorCount_m24Presentation :
+    m24Presentation.expectedGeneratorCount = 2 := by
+  simp [m24Presentation]
+
+/-- The relator count `M₂₄`'s source states, namely the seven words left inside its Magma relator
+list; see `TauCeti.Sporadic.expectedGeneratorCount_m24Presentation`. -/
+@[simp]
+theorem expectedRelatorCount_m24Presentation : m24Presentation.expectedRelatorCount = 7 := by
+  simp [m24Presentation]
+
+/-- The relator expressions transcribed for `M₂₄`, with their generator indices written out and the
+syllable abbreviations of this file expanded.
+
+The row's body is sealed, so this is the equation that characterizes it: with
+`TauCeti.GroupPresentation.relators_def` it determines the compiled words, and with
+`TauCeti.GroupPresentation.mem_relatorSet_iff` it determines the relations defining
+`TauCeti.GroupPresentation.Group`, so a consumer never has to unfold the row or its private
+helpers. Index `0` is the generator `a` and index `1` is `b`, and the bounds come from
+`TauCeti.Sporadic.generatorNames_m24Presentation`. -/
+@[simp]
+theorem transcribed_m24Presentation :
+    m24Presentation.transcribed =
+      [ -- a²
+        .pow (.gen ⟨0, by decide⟩) 2,
+        -- b³
+        .pow (.gen ⟨1, by decide⟩) 3,
+        -- (ab)²³
+        .pow (.gen ⟨0, by decide⟩ ⬝ .gen ⟨1, by decide⟩) 23,
+        -- [a,b]¹²
+        .pow (.comm (.inv (.gen ⟨0, by decide⟩)) (.inv (.gen ⟨1, by decide⟩))) 12,
+        -- [a,bab]⁵
+        .pow (.comm (.inv (.gen ⟨0, by decide⟩))
+          (.inv (.gen ⟨1, by decide⟩ ⬝ .gen ⟨0, by decide⟩ ⬝ .gen ⟨1, by decide⟩))) 5,
+        -- (ab·ab·ab⁻¹)³ (ab·ab⁻¹·ab⁻¹)³
+        .pow (.gen ⟨0, by decide⟩ ⬝ .gen ⟨1, by decide⟩ ⬝
+            (.gen ⟨0, by decide⟩ ⬝ .gen ⟨1, by decide⟩) ⬝
+            (.gen ⟨0, by decide⟩ ⬝ .inv (.gen ⟨1, by decide⟩))) 3 ⬝
+          .pow (.gen ⟨0, by decide⟩ ⬝ .gen ⟨1, by decide⟩ ⬝
+            (.gen ⟨0, by decide⟩ ⬝ .inv (.gen ⟨1, by decide⟩)) ⬝
+            (.gen ⟨0, by decide⟩ ⬝ .inv (.gen ⟨1, by decide⟩))) 3,
+        -- (ab·(ab·ab⁻¹)³)⁴
+        .pow (.gen ⟨0, by decide⟩ ⬝ .gen ⟨1, by decide⟩ ⬝
+          .pow (.gen ⟨0, by decide⟩ ⬝ .gen ⟨1, by decide⟩ ⬝
+            (.gen ⟨0, by decide⟩ ⬝ .inv (.gen ⟨1, by decide⟩))) 3) 4 ] := by
+  simp [m24Presentation]
+
 /-- The generator and relator counts recorded for `M₂₄` agree with the transcribed data. -/
 theorem matchesMetadata_m24Presentation : m24Presentation.matchesMetadata := by decide
+
+/-- The number of signed letters in each of the seven compiled relator words of `M₂₄`, in the order
+the source lists them. These are read off the transcribed expressions through
+`TauCeti.Relator.length_toWord`, so a power is multiplied out rather than expanded. -/
+theorem map_length_relators_m24Presentation :
+    m24Presentation.relators.map List.length = [2, 3, 46, 48, 40, 36, 56] := by
+  simp [GroupPresentation.relators_def, m24Presentation]
+
+/-- The compiled relators of `M₂₄` contain `231` signed letters in total. The source records no
+presentation length, so this states the transcription rather than checking it against a published
+figure. -/
+theorem totalLength_m24Presentation : m24Presentation.totalLength = 231 := by
+  rw [GroupPresentation.totalLength_def, map_length_relators_m24Presentation]
+  decide
+
+/-- Every compiled relator word of `M₂₄` is cyclically reduced. This is what would make the letter
+count in `TauCeti.Sporadic.totalLength_m24Presentation` comparable with a published presentation
+length, which is measured after free and cyclic reduction of each relator.
+
+Only the compiler needs unfolding here: once the transcribed expressions are compiled away, the
+words are closed data and the kernel decides the predicate. -/
+theorem relatorsCyclicallyReduced_m24Presentation :
+    m24Presentation.relatorsCyclicallyReduced := by
+  simp only [GroupPresentation.relatorsCyclicallyReduced_iff, GroupPresentation.relators_def,
+    transcribed_m24Presentation, List.map_cons, List.map_nil, Relator.toWord_mul,
+    Relator.toWord_pow, Relator.toWord_inv, Relator.toWord_gen, Relator.toWord_comm]
+  decide
 
 end TauCeti.Sporadic
