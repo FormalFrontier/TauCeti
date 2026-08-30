@@ -81,7 +81,7 @@ representations, so that the character orthogonality of
   Chapter II, §5.
 -/
 
-open Finset Matrix Polynomial
+open Matrix Polynomial
 
 namespace TauCeti
 
@@ -100,9 +100,9 @@ private theorem trace_mul_character_symPower_torusHom (d : ℕ) (z : Circle) :
   have hstep : ∀ i : ℕ, ((z : ℂ) + ((z : ℂ))⁻¹) * (z : ℂ) ^ (2 * (i : ℤ) - ((d : ℤ) + 1))
       = (z : ℂ) ^ (2 * (i : ℤ) - (d : ℤ)) + (z : ℂ) ^ (2 * (i : ℤ) - ((d : ℤ) + 2)) := by
     intro i
-    rw [show 2 * (i : ℤ) - (d : ℤ) = (2 * (i : ℤ) - ((d : ℤ) + 1)) + 1 by ring,
-      show 2 * (i : ℤ) - ((d : ℤ) + 2) = (2 * (i : ℤ) - ((d : ℤ) + 1)) - 1 by ring,
-      zpow_add_one₀ hz, zpow_sub_one₀ hz]
+    have hsucc : 2 * (i : ℤ) - (d : ℤ) = (2 * (i : ℤ) - ((d : ℤ) + 1)) + 1 := by ring
+    have hpred : 2 * (i : ℤ) - ((d : ℤ) + 2) = (2 * (i : ℤ) - ((d : ℤ) + 1)) - 1 := by ring
+    rw [hsucc, hpred, zpow_add_one₀ hz, zpow_sub_one₀ hz]
     field_simp
   rw [coe_torusHom, trace_torusMatrix, character_symPower_torusHom_zpow,
     character_symPower_torusHom_zpow, character_symPower_torusHom_zpow]
@@ -111,8 +111,10 @@ private theorem trace_mul_character_symPower_torusHom (d : ℕ) (z : Circle) :
     Finset.sum_range_succ (fun i : ℕ => (z : ℂ) ^ (2 * (i : ℤ) - (d : ℤ))) (d + 1),
     Finset.sum_range_succ (fun i : ℕ => (z : ℂ) ^ (2 * (i : ℤ) - ((d : ℤ) + 2))) (d + 2)]
   push_cast
-  rw [show 2 * ((d : ℤ) + 1) - (d : ℤ) = (d : ℤ) + 2 by ring,
-    show 2 * ((d : ℤ) + 2) - ((d : ℤ) + 2) = (d : ℤ) + 2 by ring]
+  -- the two leftover exponents, the top of the string of `Symᵈ⁺²(ℂ²)` twice over
+  have hlast : 2 * ((d : ℤ) + 1) - (d : ℤ) = (d : ℤ) + 2 := by ring
+  have hlast' : 2 * ((d : ℤ) + 2) - ((d : ℤ) + 2) = (d : ℤ) + 2 := by ring
+  rw [hlast, hlast']
   ring
 
 /-- **The Chebyshev recursion for the characters of `SU(2)`:**
@@ -136,6 +138,7 @@ theorem trace_mul_character_symPower (d : ℕ) (g : SU2) :
   exact congrFun h g
 
 /-- **`Sym⁰(ℂ²)` is the trivial representation:** its character is constantly `1`. -/
+@[simp]
 theorem character_symPower_zero (g : SU2) : (symPower 0).character g = 1 := by
   have h : (fun g : SU2 => (symPower 0).character g) = fun _ : SU2 => (1 : ℂ) := by
     refine eq_of_conjInvariant_of_eqOn_torus (fun u g => Representation.char_conj _ g u)
@@ -145,6 +148,7 @@ theorem character_symPower_zero (g : SU2) : (symPower 0).character g = 1 := by
   exact congrFun h g
 
 /-- **`Sym¹(ℂ²)` is the standard representation:** its character is the trace. -/
+@[simp]
 theorem character_symPower_one_eq_trace (g : SU2) :
     (symPower 1).character g = Matrix.trace (g : Matrix (Fin 2) (Fin 2) ℂ) := by
   have h : (fun g : SU2 => (symPower 1).character g)
@@ -261,21 +265,23 @@ theorem pow_symPowerCharacter_one_mem_characterSpan (n : ℕ) :
   | zero => simpa [← symPowerCharacter_zero] using symPowerCharacter_mem_characterSpan 0
   | succ n ih => rw [pow_succ']; exact symPowerCharacter_one_mul_mem ih
 
-/-- A real polynomial in the trace, as an element of the span of the characters. -/
+/-- A real polynomial in the trace, as an element of the span of the characters: the polynomial
+evaluated at the first character `χ_1 = tr` in the `ℝ`-algebra `C(SU(2), ℂ)`. -/
 private noncomputable def polyTrace (p : Polynomial ℝ) : C(SU2, ℂ) :=
-  ∑ i ∈ range (p.natDegree + 1), ((p.coeff i : ℝ) : ℂ) • symPowerCharacter 1 ^ i
+  aeval (symPowerCharacter 1) p
 
 private theorem polyTrace_mem_characterSpan (p : Polynomial ℝ) :
-    polyTrace p ∈ characterSpan :=
-  Submodule.sum_mem _ fun i _ =>
-    Submodule.smul_mem _ _ (pow_symPowerCharacter_one_mem_characterSpan i)
+    polyTrace p ∈ characterSpan := by
+  rw [polyTrace, aeval_eq_sum_range]
+  exact Submodule.sum_mem _ fun i _ =>
+    Submodule.smul_of_tower_mem _ _ (pow_symPowerCharacter_one_mem_characterSpan i)
 
 private theorem polyTrace_apply (p : Polynomial ℝ) {g : SU2} {t : ℝ}
     (ht : Matrix.trace (g : Matrix (Fin 2) (Fin 2) ℂ) = (t : ℂ)) :
     polyTrace p g = ((p.eval t : ℝ) : ℂ) := by
-  rw [polyTrace, p.eval_eq_sum_range]
+  rw [polyTrace, aeval_eq_sum_range, p.eval_eq_sum_range]
   push_cast
-  simp [ContinuousMap.sum_apply, character_symPower_one_eq_trace, ht]
+  simp [ContinuousMap.sum_apply, ht, Complex.real_smul]
 
 /-! ### Uniform density in the class functions -/
 
@@ -307,7 +313,8 @@ theorem exists_mem_characterSpan_norm_sub_lt {f : C(SU2, ℂ)}
   obtain ⟨θ, hθ, hconj⟩ := exists_isConj_torusExp_mem_Icc g
   obtain ⟨u, hu⟩ := isConj_iff.mp hconj
   have harc : Real.arccos (2 * Real.cos θ / 2) = θ := by
-    rw [show (2 : ℝ) * Real.cos θ / 2 = Real.cos θ by ring, Real.arccos_cos hθ.1 hθ.2]
+    have hhalf : (2 : ℝ) * Real.cos θ / 2 = Real.cos θ := by ring
+    rw [hhalf, Real.arccos_cos hθ.1 hθ.2]
   have hfg : f g = F (2 * Real.cos θ) := by
     rw [hF]
     simp only [harc]
