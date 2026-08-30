@@ -60,7 +60,6 @@ the matrix entries, so its fixed set is not the points over a subfield.
   the Frobenius-fixed points are exactly the image of `SL_{r+1}(𝔽)`, and
   `TauCeti.SlStd.mem_map_subtype_fixedSubgroup_frobenius_iff` is the entrywise form of that: they
   are the invertible matrices of determinant one with entries in `𝔽`.
-* `TauCeti.SlStd.specialLinearToFixedSubgroupFrobenius_bijective`.
 * `TauCeti.SlStd.finite_fixedSubgroup_frobenius` and
   `TauCeti.SlStd.finite_fixedSubgroup_frobenius_of_charP`: the fixed group is finite.
 
@@ -114,10 +113,8 @@ theorem mapGL_mem_fixedSubgroup_frobenius
 /-- **The homomorphism from `SL_{r+1}` over the Frobenius-fixed subfield to the Frobenius-fixed
 points of the full-weight type-`A_r` carrier**, given by including the matrix entries into `K`.
 
-The body is exposed because the equation below, which says that the underlying general linear
-matrix is the entrywise inclusion, holds by definition and is the whole content of the
-definition. -/
-@[expose]
+`TauCeti.SlStd.coe_specialLinearToFixedSubgroupFrobenius` below, which says that the underlying
+general linear matrix is the entrywise inclusion, is the whole content of the definition. -/
 def specialLinearToFixedSubgroupFrobenius :
     Matrix.SpecialLinearGroup (Fin (r + 1)) ↥(frobeniusFixedSubfield K p k) →*
       ↥(fixedSubgroup (frobenius r p k K)) :=
@@ -132,13 +129,16 @@ theorem coe_specialLinearToFixedSubgroupFrobenius
     (x : Matrix.SpecialLinearGroup (Fin (r + 1)) ↥(frobeniusFixedSubfield K p k)) :
     ((specialLinearToFixedSubgroupFrobenius r p k x : points r K) :
         Matrix.GeneralLinearGroup (Fin (r + 1)) K) =
-      Matrix.SpecialLinearGroup.mapGL K x :=
+      Matrix.SpecialLinearGroup.mapGL K x := by
+  -- `specialLinearToFixedSubgroupFrobenius` is not `@[expose]`d, so its body is reached through
+  -- its equation lemma rather than by definitional unfolding.
+  rw [specialLinearToFixedSubgroupFrobenius]
   rfl
 
 /-! ## Bijectivity -/
 
 /-- Including the entries of a determinant-one matrix into `K` loses nothing. -/
-theorem specialLinearToFixedSubgroupFrobenius_injective :
+private theorem specialLinearToFixedSubgroupFrobenius_injective :
     Function.Injective (specialLinearToFixedSubgroupFrobenius r p k (K := K)) := by
   intro x y hxy
   apply Matrix.SpecialLinearGroup.mapGL_injective (n := Fin (r + 1)) (S := K)
@@ -174,7 +174,7 @@ theorem exists_mapGL_eq_of_mem_fixedSubgroup_frobenius {g : points r K}
   rfl
 
 /-- Every Frobenius-fixed carrier point is in the image. -/
-theorem specialLinearToFixedSubgroupFrobenius_surjective :
+private theorem specialLinearToFixedSubgroupFrobenius_surjective :
     Function.Surjective (specialLinearToFixedSubgroupFrobenius r p k (K := K)) := by
   rintro ⟨g, hg⟩
   obtain ⟨x, hx⟩ := exists_mapGL_eq_of_mem_fixedSubgroup_frobenius r p k hg
@@ -184,8 +184,9 @@ theorem specialLinearToFixedSubgroupFrobenius_surjective :
   apply Subtype.ext
   rw [coe_specialLinearToFixedSubgroupFrobenius, hx]
 
-/-- The homomorphism onto the Frobenius-fixed points is bijective. -/
-theorem specialLinearToFixedSubgroupFrobenius_bijective :
+/-- The homomorphism onto the Frobenius-fixed points is bijective. Consumers should read this off
+`TauCeti.SlStd.specialLinearMulEquivFixedSubgroupFrobenius` instead. -/
+private theorem specialLinearToFixedSubgroupFrobenius_bijective :
     Function.Bijective (specialLinearToFixedSubgroupFrobenius r p k (K := K)) :=
   ⟨specialLinearToFixedSubgroupFrobenius_injective r p k,
     specialLinearToFixedSubgroupFrobenius_surjective r p k⟩
@@ -195,10 +196,9 @@ theorem specialLinearToFixedSubgroupFrobenius_bijective :
 characteristic `p`, the subfield is the field of `p ^ k` elements, so this is the finite group
 `SL_{r+1}(q)`.
 
-The body is exposed so that the equation identifying the underlying map with
-`TauCeti.SlStd.specialLinearToFixedSubgroupFrobenius`, and hence the matrix description of the
-isomorphism, holds by definition. -/
-@[expose]
+`TauCeti.SlStd.specialLinearMulEquivFixedSubgroupFrobenius_apply` below identifies the underlying
+map with `TauCeti.SlStd.specialLinearToFixedSubgroupFrobenius`, and hence gives the matrix
+description of the isomorphism. -/
 def specialLinearMulEquivFixedSubgroupFrobenius :
     Matrix.SpecialLinearGroup (Fin (r + 1)) ↥(frobeniusFixedSubfield K p k) ≃*
       ↥(fixedSubgroup (frobenius r p k K)) :=
@@ -209,7 +209,8 @@ def specialLinearMulEquivFixedSubgroupFrobenius :
 theorem specialLinearMulEquivFixedSubgroupFrobenius_apply
     (x : Matrix.SpecialLinearGroup (Fin (r + 1)) ↥(frobeniusFixedSubfield K p k)) :
     specialLinearMulEquivFixedSubgroupFrobenius r p k x =
-      specialLinearToFixedSubgroupFrobenius r p k x :=
+      specialLinearToFixedSubgroupFrobenius r p k x := by
+  rw [specialLinearMulEquivFixedSubgroupFrobenius]
   rfl
 
 /-! ## The fixed points inside the general linear group -/
