@@ -39,7 +39,7 @@ namespace IsCoveringMap
 
 /-- The subgroup recovered at the endpoint of a lifted path is the basepoint transport of the
 subgroup recovered at its starting point. -/
-theorem _root_.IsCoveringMap.range_mapOfEq_monodromy_of_path (hp : IsCoveringMap p) (γ : Path x₀ x₁)
+theorem range_mapOfEq_monodromy_path (hp : IsCoveringMap p) (γ : Path x₀ x₁)
     (e₀ : p ⁻¹' {x₀}) :
     (FundamentalGroup.mapOfEq ⟨p, hp.continuous⟩
       (hp.monodromy ⟦γ⟧ e₀).2).range =
@@ -60,7 +60,8 @@ theorem _root_.IsCoveringMap.range_mapOfEq_monodromy_of_path (hp : IsCoveringMap
     have hf :
         f.symm g = Path.Homotopic.Quotient.trans γq
           (Path.Homotopic.Quotient.trans g γq.symm) := by
-      rfl
+      simpa only [f, γq] using
+        TauCeti.FundamentalGroup.fundamentalGroupMulEquivOfPath_symm_apply γ g
     rw [← htrans]
     rw [hf]
     have hback : hp.monodromy γq.symm (hp.monodromy γq e₀) = e₀ := by
