@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.GeneralLinearBaseChange
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.GeckLattice.GroupScheme
+public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.GeckLattice.PointsFunctor
 
 /-!
 # Base change of the pinned Geck carrier
@@ -33,6 +34,8 @@ reductive or that the represented weight torus is maximal.
   `O(GLₙ/A)`.
 * `TauCeti.DynkinType.geckBaseChangeCoordinateIso`: its quotient is the scalar extension of the
   integral Geck coordinate Hopf algebra.
+* `TauCeti.DynkinType.geckBaseChangePointsMulEquiv`: points of that quotient are the matrix points
+  of the integral carrier over the base ring.
 * `TauCeti.DynkinType.geckRootSubgroupToBaseChangeCoordinateMap`: the transported numbered root
   subgroup factored through the specialized carrier.
 * `TauCeti.DynkinType.geckWeightTorusToBaseChangeCoordinateMap`: the transported weight torus
@@ -68,6 +71,18 @@ attribute [local instance high] Algebra.toModule
 
 variable (t : DynkinType) (ht : t.Valid)
 variable (A : Type v) [CommRing A]
+
+private noncomputable def pointsMulEquivOfIso {H K : _root_.CommHopfAlgCat A}
+    (e : H ≅ K) :
+    HopfAlgebra.points (R := A) (H := H) (CommAlgCat.of A A) ≃*
+      HopfAlgebra.points (R := A) (H := K) (CommAlgCat.of A A) :=
+  (((CommHopfAlgCat.pointsFunctor (R := A)).mapIso e.symm.op).app
+    (CommAlgCat.of A A)).groupIsoToMulEquiv
+
+private theorem pointsMulEquivOfIso_apply {H K : _root_.CommHopfAlgCat A}
+    (e : H ≅ K) (q : HopfAlgebra.points (R := A) (H := H) (CommAlgCat.of A A)) :
+    pointsMulEquivOfIso A e q = (CommHopfAlgCat.mapPointsFunctor e.inv).app _ q :=
+  rfl
 
 /-- The Hopf ideal in `O(GLₙ/A)` obtained by transporting the defining ideal of the integral Geck
 carrier along `ℤ → A`. -/
@@ -179,6 +194,116 @@ theorem mkQuotient_comp_geckBaseChangeCoordinateIso_hom :
     mkQuotient_comp_kostantToralBaseChangePresentationIso_hom, Category.assoc,
     geckIntegralCoordinateTransportIso,
     t.baseChangeMap_mkQuotient_comp_eqToIso ht A (t.geckDefiningIdeal_def ht).symm]
+
+/-- The inverse base-change coordinate isomorphism sends an extended integral generic-matrix
+coordinate to the corresponding coordinate of the quotient constructed directly over `A`. -/
+@[simp]
+private theorem geckBaseChangeCoordinateIso_inv_one_tmul_mkQuotient_X
+    (i j : Fin (t.geckDim ht)) :
+    (t.geckBaseChangeCoordinateIso ht A).inv
+        (1 ⊗ₜ[ℤ] (CommHopfAlgCat.mkQuotient
+          (GeneralLinear.coordinateHopfAlgebra ℤ (t.geckDim ht))
+          (t.geckDefiningIdeal ht)).hom
+            (GeneralLinear.coordinateHopfAlgebraAlgEquiv ℤ (t.geckDim ht)
+              (GeneralLinear.coordinateRingMap ℤ (t.geckDim ht)
+                (MvPolynomial.X (i, j))))) =
+      (CommHopfAlgCat.mkQuotient
+          (GeneralLinear.coordinateHopfAlgebra A (t.geckDim ht))
+        (t.geckBaseChangeDefiningIdeal ht A)).hom
+          (GeneralLinear.coordinateHopfAlgebraAlgEquiv A (t.geckDim ht)
+            (GeneralLinear.coordinateRingMap A (t.geckDim ht) (MvPolynomial.X (i, j)))) := by
+  have h : (t.geckBaseChangeCoordinateIso ht A).hom
+      ((CommHopfAlgCat.mkQuotient
+        (GeneralLinear.coordinateHopfAlgebra A (t.geckDim ht))
+        (t.geckBaseChangeDefiningIdeal ht A)).hom
+        (GeneralLinear.coordinateHopfAlgebraAlgEquiv A (t.geckDim ht)
+          (GeneralLinear.coordinateRingMap A (t.geckDim ht) (MvPolynomial.X (i, j))))) =
+      1 ⊗ₜ[ℤ] (CommHopfAlgCat.mkQuotient
+        (GeneralLinear.coordinateHopfAlgebra ℤ (t.geckDim ht))
+        (t.geckDefiningIdeal ht)).hom
+          (GeneralLinear.coordinateHopfAlgebraAlgEquiv ℤ (t.geckDim ht)
+            (GeneralLinear.coordinateRingMap ℤ (t.geckDim ht)
+              (MvPolynomial.X (i, j)))) := by
+    change ((CommHopfAlgCat.mkQuotient
+      (GeneralLinear.coordinateHopfAlgebra A (t.geckDim ht))
+      (t.geckBaseChangeDefiningIdeal ht A) ≫
+        (t.geckBaseChangeCoordinateIso ht A).hom).hom
+          (GeneralLinear.coordinateHopfAlgebraAlgEquiv A (t.geckDim ht)
+            (GeneralLinear.coordinateRingMap A (t.geckDim ht)
+              (MvPolynomial.X (i, j))))) = _
+    rw [mkQuotient_comp_geckBaseChangeCoordinateIso_hom]
+    rw [_root_.CommHopfAlgCat.hom_comp, BialgHom.coe_comp, Function.comp_apply]
+    rw [GeneralLinear.coordinateHopfAlgebraBaseChangeIso_inv_X,
+      CommHopfAlgCat.baseChangeMap_apply_tmul]
+  rw [← h]
+  exact (t.geckBaseChangeCoordinateIso ht A).hom_inv_id_apply _
+
+/-! ## Points of the base-changed carrier -/
+
+/-- **The points of the base-changed Geck carrier are its matrix-valued points over the new
+base.**
+
+The first factor transports a point through `geckBaseChangeCoordinateIso`; the second is the
+generic equivalence between points of a scalar extension and points of the original Hopf algebra
+on the restricted value algebra; and the last is the represented-points equivalence of the
+integral Geck carrier. Thus this definition uses the scalar extension constructed above rather
+than choosing a new carrier over `A`. -/
+noncomputable def geckBaseChangePointsMulEquiv :
+    HopfAlgebra.points (R := A)
+        (H := CommHopfAlgCat.quotient
+          (GeneralLinear.coordinateHopfAlgebra A (t.geckDim ht))
+          (t.geckBaseChangeDefiningIdeal ht A)) (CommAlgCat.of A A) ≃*
+      t.geckPoints ht A :=
+  (pointsMulEquivOfIso A (t.geckBaseChangeCoordinateIso ht A)).trans
+    (CommHopfAlgCat.baseChangePointsMulEquiv (K := A) (CommAlgCat.of A A)
+      (CommHopfAlgCat.quotient
+        (GeneralLinear.coordinateHopfAlgebra ℤ (t.geckDim ht))
+        (t.geckDefiningIdeal ht))) |>.trans
+    (t.geckPointsMulEquiv ht
+      (TauCeti.CommAlgCat.restrictScalarsObj (algebraMap ℤ A) (CommAlgCat.of A A)))
+
+/-- Under `geckBaseChangePointsMulEquiv`, a quotient point has the same ambient invertible matrix
+as its composite with the quotient map over `A`. -/
+@[simp]
+theorem coe_geckBaseChangePointsMulEquiv_apply
+    (q : HopfAlgebra.points (R := A)
+      (H := CommHopfAlgCat.quotient
+        (GeneralLinear.coordinateHopfAlgebra A (t.geckDim ht))
+        (t.geckBaseChangeDefiningIdeal ht A)) (CommAlgCat.of A A)) :
+    (t.geckBaseChangePointsMulEquiv ht A q :
+        Matrix.GeneralLinearGroup (Fin (t.geckDim ht)) A) =
+      GeneralLinear.pointsMulEquiv (t.geckDim ht)
+        (CommHopfAlgCat.quotientPointsHom
+          (GeneralLinear.coordinateHopfAlgebra A (t.geckDim ht))
+          (t.geckBaseChangeDefiningIdeal ht A) (CommAlgCat.of A A) q) := by
+  change ((t.geckPointsMulEquiv ht _)
+      (CommHopfAlgCat.baseChangePointsMulEquiv (K := A) (CommAlgCat.of A A)
+        (CommHopfAlgCat.quotient
+          (GeneralLinear.coordinateHopfAlgebra ℤ (t.geckDim ht))
+          (t.geckDefiningIdeal ht))
+        (pointsMulEquivOfIso A (t.geckBaseChangeCoordinateIso ht A) q)) :
+        Matrix.GeneralLinearGroup (Fin (t.geckDim ht)) A) = _
+  rw [t.coe_geckPointsMulEquiv_apply ht]
+  ext i j
+  simp only [GeneralLinear.pointsMulEquiv_apply, GeneralLinear.pointToGeneralLinear_apply]
+  change (CommHopfAlgCat.baseChangePointsMulEquiv (K := A) (CommAlgCat.of A A)
+      (CommHopfAlgCat.quotient
+        (GeneralLinear.coordinateHopfAlgebra ℤ (t.geckDim ht)) (t.geckDefiningIdeal ht))
+      (pointsMulEquivOfIso A (t.geckBaseChangeCoordinateIso ht A) q)).ofConv
+        ((CommHopfAlgCat.mkQuotient
+          (GeneralLinear.coordinateHopfAlgebra ℤ (t.geckDim ht))
+          (t.geckDefiningIdeal ht)).hom
+            (GeneralLinear.coordinateHopfAlgebraAlgEquiv ℤ (t.geckDim ht)
+              (GeneralLinear.coordinateRingMap ℤ (t.geckDim ht)
+                (MvPolynomial.X (i, j))))) =
+    q.ofConv ((CommHopfAlgCat.mkQuotient
+      (GeneralLinear.coordinateHopfAlgebra A (t.geckDim ht))
+      (t.geckBaseChangeDefiningIdeal ht A)).hom
+        (GeneralLinear.coordinateHopfAlgebraAlgEquiv A (t.geckDim ht)
+          (GeneralLinear.coordinateRingMap A (t.geckDim ht) (MvPolynomial.X (i, j)))))
+  rw [CommHopfAlgCat.baseChangePointsMulEquiv_apply_apply,
+    pointsMulEquivOfIso_apply, CommHopfAlgCat.mapPointsFunctor_app_apply_apply,
+    geckBaseChangeCoordinateIso_inv_one_tmul_mkQuotient_X]
 
 /-- The integral `i`th root-subgroup coordinate map, with source expressed using the named Geck
 defining ideal. -/
