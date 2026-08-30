@@ -47,8 +47,9 @@ every result below.
 ## Main definitions
 
 * `TauCeti.IsDotAlternating`: the coefficients of `f` transform by the sign character under the dot
-  action. The predicate is not exposed; `TauCeti.isDotAlternating_iff` introduces it and
-  `TauCeti.IsDotAlternating.coeff_dotAction` eliminates it.
+  action. `TauCeti.isDotAlternating_iff` is the preferred way to introduce it and
+  `TauCeti.IsDotAlternating.coeff_dotAction` the preferred way to eliminate it, so that the
+  definition itself need not be unfolded.
 
 ## Main results
 
@@ -99,9 +100,9 @@ def IsDotAlternating (f : AddMonoidAlgebra ℤ M) : Prop :=
   ∀ (w : P.weylGroup) (x : M),
     f.coeff (dotAction P b w x) = ((weylSign P b w : ℤ)) * f.coeff x
 
-/-- The defining condition of `TauCeti.IsDotAlternating`, as an `Iff`: the predicate is not
-exposed, so this is how it is introduced outside this file, and
-`TauCeti.IsDotAlternating.coeff_dotAction` is how it is eliminated.
+/-- The defining condition of `TauCeti.IsDotAlternating`, as an `Iff`: this is the preferred way to
+introduce the predicate, and `TauCeti.IsDotAlternating.coeff_dotAction` the preferred way to
+eliminate it, so that callers need not unfold the definition.
 
 Not a `simp` lemma: unfolding the predicate would dissolve `IsDotAlternating` out of the goals its
 own API is stated about. -/
