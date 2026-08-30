@@ -32,8 +32,9 @@ irreducible character of `G` restricting back to `φ`
 correspondence).  Choosing a representation `σ_φ` affording each `φ*`, the **common kernel**
 `N = ⨅_φ ker σ_φ` is a normal subgroup, and it *is* the Frobenius kernel:
 
-* an element `g` in the Frobenius kernel lies in no conjugate of `H`, so every summand of the
-  induced class function vanishes at `g` and `φ*(g) = φ(1) = φ*(1)` — that is, `g ∈ N`;
+* a *nonidentity* element `g` of the Frobenius kernel lies in no conjugate of `H`, so every summand
+  of the induced class function vanishes at `g` and `φ*(g) = φ(1) = φ*(1)` — that is, `g ∈ N`; the
+  identity, the one other element of the kernel, lies in `N` outright;
 * conversely `N` is normal and `N ∩ H = 1`, because `Res_H φ* = φ` means an element of `N ∩ H`
   has the same value as the identity under every irreducible character of `H`, and the irreducible
   characters of a finite group detect the identity; so a nonidentity element of `N` can lie in no
@@ -136,11 +137,12 @@ subgroup of `G`.
 The proof is the exceptional-character correspondence.  Each irreducible character `φ` of `H`
 extends to an irreducible character `φ*` of `G` with `φ*(1) = φ(1)` and `Res_H φ* = φ`; choose a
 representation `σ_φ` affording `φ*` and let `N` be the common kernel of the `σ_φ`, a normal
-subgroup.  An element of the Frobenius kernel lies in no conjugate of `H`, so every summand of the
-induced class function `Ind_H^G (φ - φ(1) · 1_H)` vanishes there and `φ*` takes its value at the
-identity: the Frobenius kernel is contained in `N`.  Conversely a nonidentity element of `N` lying
-in a conjugate of `H` may be conjugated into `H` — `N` being normal — where `Res_H φ* = φ` makes
-every irreducible character of `H` take its identity value, forcing it to *be* the identity.
+subgroup.  A *nonidentity* element of the Frobenius kernel lies in no conjugate of `H`, so every
+summand of the induced class function `Ind_H^G (φ - φ(1) · 1_H)` vanishes there and `φ*` takes its
+value at the identity, while the identity lies in `N` outright: the Frobenius kernel is contained
+in `N`.  Conversely a nonidentity element of `N` lying in a conjugate of `H` may be conjugated into
+`H` — `N` being normal — where `Res_H φ* = φ` makes every irreducible character of `H` take its
+identity value, forcing it to *be* the identity.
 
 The two inclusions are of sets, so the Frobenius kernel is the carrier of `N`.  This is the
 implementation step behind `TauCeti.frobeniusKernelSubgroup`; the statement to use is that
@@ -161,19 +163,17 @@ private theorem exists_normal_coe_eq_frobeniusKernel (hH : IsTISubgroup H) :
       simp only [hφdef, ofCharacter_apply, character_irreducibleRepresentation]
   -- each extends to an irreducible character of `G`, afforded by some representation `σ j`
   have hstar : ∀ j, ∃ (n : ℕ) (σ : Representation ℂ G (Fin n → ℂ)),
-      σ.character = ((indExtend H (φ j) : ClassFunction ℂ G) : G → ℂ) := by
+      ∀ x : G, σ.character x = (indExtend H (φ j)).1 x := by
     intro j
     obtain ⟨n, σ, -, hσ⟩ := mem_irreducibleCharacters_iff.mp
       (indExtend_mem_irreducibleCharacters hH (by rw [hφcoe j]; exact irreducibleCharacter_mem ℂ j))
-    exact ⟨n, σ, hσ⟩
+    exact ⟨n, σ, congrFun hσ⟩
   choose n σ hσ using hstar
   refine ⟨⨅ j, (σ j).ker, Subgroup.normal_iInf_normal fun _ => inferInstance, ?_⟩
   have hker : ∀ (j : Fin (Nat.card (ConjClasses H))) (x : G),
       x ∈ (σ j).ker ↔ (indExtend H (φ j)).1 x = (φ j).1 1 := by
     intro j x
-    rw [Representation.mem_ker_iff_char_eq (σ j) (isOfFinOrder_of_finite x),
-      show (σ j).character x = (indExtend H (φ j)).1 x from congrFun (hσ j) x,
-      show (σ j).character 1 = (indExtend H (φ j)).1 1 from congrFun (hσ j) 1,
+    rw [Representation.mem_ker_iff_char_eq (σ j) (isOfFinOrder_of_finite x), hσ j x, hσ j 1,
       indExtend_apply_one]
   ext g
   simp only [SetLike.mem_coe, Subgroup.mem_iInf, hker]
@@ -205,16 +205,11 @@ private theorem exists_normal_coe_eq_frobeniusKernel (hH : IsTISubgroup H) :
     intro hg j
     rcases mem_frobeniusKernel.mp hg with rfl | hgc
     · rw [indExtend_apply_one]
-    have hindzero : (ind H (φ j - (φ j).1 1 • ofCharacter (Representation.trivial ℂ H ℂ))).1 g
-        = 0 := by
-      rw [ind_apply, indClassFun_apply]
+    -- no conjugate of `H` contains `g`, so *every* class function induced from `H` vanishes there
+    have hindzero : ∀ f : H → ℂ, indClassFun H f g = 0 := fun f => by
+      rw [indClassFun_apply]
       exact Finset.sum_eq_zero fun t _ => dite_eq_right (hgc _)
-    have htriv : ((ofCharacter (Representation.trivial ℂ G ℂ) : ClassFunction ℂ G) : G → ℂ) g
-        = 1 := by
-      rw [ofCharacter_apply, Representation.char_trivial]
-      simp
-    rw [indExtend_def, Submodule.coe_add, Pi.add_apply, hindzero, SetLike.val_smul, Pi.smul_apply,
-      htriv, smul_eq_mul, mul_one, zero_add]
+    simp [indExtend_def, hindzero]
 
 /-- **The Frobenius kernel of a trivial-intersection subgroup, as a subgroup.**
 
@@ -236,6 +231,7 @@ theorem frobeniusKernelSubgroup_normal (hH : IsTISubgroup H) :
   (exists_normal_coe_eq_frobeniusKernel hH).choose_spec.1
 
 /-- Membership in the Frobenius kernel subgroup is membership in the Frobenius kernel. -/
+@[simp]
 theorem mem_frobeniusKernelSubgroup (hH : IsTISubgroup H) {g : G} :
     g ∈ frobeniusKernelSubgroup hH ↔ g = 1 ∨ ∀ x : G, x⁻¹ * g * x ∉ H := by
   rw [← mem_frobeniusKernel (H := H), ← coe_frobeniusKernelSubgroup hH, SetLike.mem_coe]
