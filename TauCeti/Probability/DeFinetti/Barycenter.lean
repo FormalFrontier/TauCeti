@@ -17,6 +17,7 @@ import TauCeti.Probability.Exchangeability.ConditionallyIID.Construct
 import TauCeti.Probability.Exchangeability.PathSpace.Law.Bridge
 -- Non-public: `map_bind` and `bind_map` are used only inside the naturality proof.
 import TauCeti.MeasureTheory.Measure.GiryMonad
+import TauCeti.MeasureTheory.Measure.Measurability
 
 /-!
 # The de Finetti barycenter of a mixing law
@@ -158,7 +159,7 @@ theorem map_pi_deFinettiBarycenter {β : Type*} [MeasurableSpace β]
     (deFinettiBarycenter π).map (fun x i => f (x i))
       = deFinettiBarycenter (π.map fun P => P.map f) := by
   have hmap : Measurable fun P : ProbabilityMeasure α => P.map f :=
-    ((Measure.measurable_map f hf).comp measurable_subtype_coe).subtype_mk
+    TauCeti.MeasureTheory.measurable_probabilityMeasure_map hf
   have hpi : Measurable fun x : ℕ → α => fun i => f (x i) :=
     measurable_pi_lambda _ fun i => hf.comp (measurable_pi_apply i)
   calc (deFinettiBarycenter π).map (fun x i => f (x i))

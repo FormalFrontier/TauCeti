@@ -13,8 +13,9 @@ public import TauCeti.MeasureTheory.Measure.ProductKernel
 
 A family is *mixed i.i.d.* when there is a measurable random probability measure
 `ν : Ω → ProbabilityMeasure α` such that every finite block of **distinct** coordinates has, as
-its law, the `ν`-mixture of the corresponding product measure. `MixedIIDWith μ X ν` names the
-witness `ν`; `MixedIID` is the existential wrapper.
+its law, the `ν`-mixture of the corresponding product measure, and every coordinate is
+`μ`-a.e. measurable. `MixedIIDWith μ X ν` names the witness `ν`; `MixedIID` is the existential
+wrapper.
 
 ⚠ This is a property of the **unconditional** finite-dimensional laws: the mixture identity
 constrains each finite block's marginal law, never the joint law of `(ν, X)`. It is therefore

@@ -190,7 +190,6 @@ values weighted by the masses of the fibres. -/
 private theorem integral_comp_eq_sum (μ : Measure X) [IsProbabilityMeasure μ] {n : ℕ}
     {q : X → Fin n} (hq : Measurable q) (a : Fin n → ℝ) :
     ∫ x, a (q x) ∂μ = ∑ i, (μ (q ⁻¹' {i})).toReal * a i := by
-  have : IsProbabilityMeasure (μ.map q) := inferInstance
   rw [← integral_map hq.aemeasurable (Measurable.of_discrete (f := a)).aestronglyMeasurable,
     integral_fintype Integrable.of_finite]
   refine Finset.sum_congr rfl fun i _ ↦ ?_

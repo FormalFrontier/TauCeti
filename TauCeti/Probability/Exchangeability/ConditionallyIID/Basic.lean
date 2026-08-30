@@ -15,7 +15,8 @@ import TauCeti.MeasureTheory.Measure.GiryMonad
 The **conditional** strengthening of the mixture identity: a family is *conditionally i.i.d.*
 with directing measure `ν` when, along every finite selection of distinct coordinates, the
 **joint** law of `(ν, block)` is the disintegration `∫ δ_{ν ω} ⊗ (ν ω)^{⊗m} dμ(ω)` — conditionally
-on `ν`, the block is i.i.d. `ν` (Kallenberg 2005, §1.1 eq. (2)).
+on `ν`, the block is i.i.d. `ν` (Kallenberg 2005, §1.1 eq. (2)). The definition also requires
+every coordinate to be `μ`-a.e. measurable and `ν` itself to be measurable.
 
 Stating it as a joint-law identity means the definition needs no conditional expectations, and
 sits in the same `bind`/`pi` vocabulary as `MixedIIDWith`.

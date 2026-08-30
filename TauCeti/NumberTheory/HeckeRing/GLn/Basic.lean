@@ -561,7 +561,7 @@ lemma mem_commensurator_of_hasIntEntries {g : GL (Fin n) ℚ} (hg : HasIntEntrie
     ext x
     rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem, Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
       ← map_inv MulAut.conj, ← ConjAct.toConjAct_inv, ConjAct.toConjAct_smul_eq_mulAut_conj]
-    rfl
+    rw [MulAut.smul_def]
   have hgH_relIndex : (ConjAct.toConjAct g • H).relIndex H ≠ 0 :=
     ne_zero_of_dvd_ne_zero hK_relIndex (Subgroup.relIndex_dvd_of_le_left H hK_le_gH)
   have h1 : ConjAct.toConjAct g⁻¹ • (ConjAct.toConjAct g • H) = H := by

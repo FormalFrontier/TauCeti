@@ -7,6 +7,7 @@ module
 
 public import Mathlib.MeasureTheory.Integral.Lebesgue.Map
 public import Mathlib.Probability.HasLaw
+public import TauCeti.MeasureTheory.Measure.Dirac
 public import TauCeti.MeasureTheory.OptimalTransport.Coupling
 
 /-!
@@ -116,10 +117,30 @@ so this is the lemma downstream modules should rewrite with. -/
 theorem graphPlan_def (T : X → Y) (μ : Measure X) :
     graphPlan T μ = μ.map fun x ↦ (x, T x) := (rfl)
 
+/-- A graph plan inherits `MeasureTheory.SFinite` from its source measure. -/
+instance instSFiniteGraphPlan [SFinite μ] : SFinite (graphPlan T μ) := by
+  rw [graphPlan_def]
+  infer_instance
+
+/-- A graph plan inherits `MeasureTheory.IsFiniteMeasure` from its source measure. -/
+instance instIsFiniteMeasureGraphPlan [IsFiniteMeasure μ] : IsFiniteMeasure (graphPlan T μ) := by
+  rw [graphPlan_def]
+  infer_instance
+
+/-- A graph plan over a probability measure is a probability measure. -/
+instance instIsProbabilityMeasureGraphPlan [IsProbabilityMeasure μ] :
+    IsProbabilityMeasure (graphPlan T μ) := by
+  rw [graphPlan_def]
+  infer_instance
+
 /-- The graph map `x ↦ (x, T x)` is a.e. measurable as soon as `T` is. -/
 theorem aemeasurable_prodMk_self (hT : AEMeasurable T μ) :
     AEMeasurable (fun x ↦ (x, T x)) μ :=
   aemeasurable_id.prodMk hT
+
+/-- The graph map `x ↦ (x, T x)` is measurable as soon as `T` is. -/
+private theorem measurable_prodMk_self (hT : Measurable T) : Measurable fun x ↦ (x, T x) :=
+  measurable_id.prodMk hT
 
 /-- The graph plan of a measurable set is the mass of the set of points whose graph point lies
 in it. -/
@@ -133,6 +154,12 @@ theorem graphPlan_prod (hT : AEMeasurable T μ) {s : Set X} {t : Set Y}
     (hs : MeasurableSet s) (ht : MeasurableSet t) :
     graphPlan T μ (s ×ˢ t) = μ (s ∩ T ⁻¹' t) :=
   graphPlan_apply hT (hs.prod ht)
+
+/-- The graph plan over the zero measure is the zero measure. -/
+@[simp]
+theorem graphPlan_zero (T : X → Y) : graphPlan T (0 : Measure X) = 0 := by
+  rw [graphPlan_def]
+  exact Measure.map_zero _
 
 /-- The second marginal of the graph plan of an a.e. measurable `T` is the pushforward of `μ`
 along `T`. -/
@@ -162,6 +189,30 @@ theorem isCoupling_graphPlan_iff (hT : AEMeasurable T μ) :
     IsCoupling (graphPlan T μ) μ ν ↔ HasLaw T ν μ :=
   ⟨fun h ↦ ⟨hT, by rw [← snd_graphPlan hT, h.snd_eq]⟩, isCoupling_graphPlan⟩
 
+/-- A map transports `μ` to `ν` exactly when its graph plan has second marginal `ν`. -/
+theorem hasLaw_iff_snd_graphPlan_eq (hT : AEMeasurable T μ) :
+    HasLaw T ν μ ↔ (graphPlan T μ).snd = ν := by
+  rw [snd_graphPlan hT]
+  exact ⟨fun h ↦ h.map_eq, fun h ↦ ⟨hT, h⟩⟩
+
+/-- The second marginal of the graph plan of a transport map is its target. -/
+theorem snd_graphPlan_of_hasLaw (hT : HasLaw T ν μ) : (graphPlan T μ).snd = ν := by
+  rw [snd_graphPlan hT.aemeasurable, hT.map_eq]
+
+/-- Chaining two transport maps chains the targets of their graph plans. -/
+theorem snd_graphPlan_comp {R : Y → Z} {ρ : Measure Z} (hR : HasLaw R ρ ν)
+    (hT : HasLaw T ν μ) : (graphPlan (R ∘ T) μ).snd = ρ :=
+  snd_graphPlan_of_hasLaw (hR.comp hT)
+
+/-- The second marginal of the graph plan of a measure-preserving map is its target. -/
+theorem snd_graphPlan_of_measurePreserving (hT : MeasurePreserving T μ ν) :
+    (graphPlan T μ).snd = ν :=
+  snd_graphPlan_of_hasLaw hT.hasLaw
+
+/-- The second marginal of the graph plan of the identity is the original measure. -/
+theorem snd_graphPlan_id (μ : Measure X) : (graphPlan (id : X → X) μ).snd = μ :=
+  snd_graphPlan_of_hasLaw HasLaw.id
+
 /-- The identity is a transport map from `μ` to itself, so its graph plan — the diagonal plan,
 carried by the diagonal of `X × X` — couples `μ` with itself. -/
 theorem isCoupling_graphPlan_id (μ : Measure X) : IsCoupling (graphPlan id μ) μ μ :=
@@ -185,6 +236,19 @@ theorem graphPlan_congr (h : T =ᵐ[μ] S) : graphPlan T μ = graphPlan S μ :=
 
 section Functoriality
 
+/-- Taking the graph plan of a fixed map is additive in the source measure. -/
+@[simp]
+theorem graphPlan_add {μ₁ μ₂ : Measure X} (hT₁ : AEMeasurable T μ₁)
+    (hT₂ : AEMeasurable T μ₂) :
+    graphPlan T (μ₁ + μ₂) = graphPlan T μ₁ + graphPlan T μ₂ :=
+  AEMeasurable.map_add₀ (aemeasurable_prodMk_self hT₁) (aemeasurable_prodMk_self hT₂)
+
+/-- Taking the graph plan of a fixed map commutes with rescaling the source measure. -/
+@[simp]
+theorem graphPlan_smul (c : ℝ≥0∞) {μ : Measure X} (hT : AEMeasurable T μ) :
+    graphPlan T (c • μ) = c • graphPlan T μ :=
+  Measure.map_smul c (aemeasurable_prodMk_self hT)
+
 /-- Exchanging the coordinates of a graph plan gives the pushforward of `μ` along
 `x ↦ (T x, x)`, the graph plan for the opposite convention. -/
 theorem map_swap_graphPlan (hT : AEMeasurable T μ) :
@@ -205,6 +269,27 @@ theorem map_prodMap_id_graphPlan {R : Y → Z} (hR : AEMeasurable R (μ.map T))
       (AEMeasurable.comp_aemeasurable' (by rw [hsnd]; exact hR) measurable_snd.aemeasurable)
   rw [graphPlan_def, AEMeasurable.map_map_of_aemeasurable hR' (aemeasurable_prodMk_self hT)]
   rfl
+
+/-- Reparametrizing the source measure pushes the graph plan through the first coordinate. -/
+theorem graphPlan_map {f : Z → X} {μ : Measure Z} (hf : AEMeasurable f μ)
+    (hT : AEMeasurable T (μ.map f)) :
+    graphPlan T (μ.map f) = (graphPlan (T ∘ f) μ).map (Prod.map f id) := by
+  have hTf : AEMeasurable (T ∘ f) μ := hT.comp_aemeasurable hf
+  have hf' : AEMeasurable f (graphPlan (T ∘ f) μ).fst := by rwa [fst_graphPlan hTf]
+  have hmap : AEMeasurable (Prod.map f (id : Y → Y)) (μ.map fun z ↦ (z, (T ∘ f) z)) :=
+    (hf'.comp_aemeasurable' measurable_fst.aemeasurable).prodMk measurable_snd.aemeasurable
+  simp only [graphPlan_def]
+  rw [AEMeasurable.map_map_of_aemeasurable
+    (aemeasurable_prodMk_self hT) hf,
+    AEMeasurable.map_map_of_aemeasurable hmap (aemeasurable_prodMk_self hTf)]
+  rfl
+
+/-- A measurable equivalence and its inverse have graph plans exchanged by coordinate swap. -/
+theorem map_swap_graphPlan_symm (e : X ≃ᵐ Y) (μ : Measure X) :
+    (graphPlan e μ).map Prod.swap = graphPlan e.symm (μ.map e) := by
+  rw [map_swap_graphPlan e.measurable.aemeasurable, graphPlan_def,
+    Measure.map_map (measurable_prodMk_self e.symm.measurable) e.measurable]
+  simp [Function.comp_def]
 
 end Functoriality
 
@@ -283,35 +368,20 @@ end Determinism
 
 section Dirac
 
-/-- An a.e. measurable map sends a Dirac measure to the Dirac measure at the image point. -/
-private theorem map_dirac_of_aemeasurable {f : X → Y} {x : X}
-    (hf : AEMeasurable f (Measure.dirac x)) :
-    (Measure.dirac x).map f = Measure.dirac (f x) := by
-  have hx : f x = hf.mk f x := by
-    by_contra hne
-    have hzero : Measure.dirac x {a | f a ≠ hf.mk f a} = 0 := ae_iff.mp hf.ae_eq_mk
-    rw [Measure.dirac_apply_of_mem hne] at hzero
-    exact one_ne_zero hzero
-  calc
-    (Measure.dirac x).map f = (Measure.dirac x).map (hf.mk f) :=
-      Measure.map_congr hf.ae_eq_mk
-    _ = Measure.dirac (hf.mk f x) := Measure.map_dirac' hf.measurable_mk x
-    _ = Measure.dirac (f x) := by rw [hx]
-
 /-- A transport map out of a Dirac measure forces the target to be the Dirac measure at its
 value. So the unique coupling of `Measure.dirac x` with a non-Dirac probability measure `ν`,
 namely the pushforward of `ν` along `y ↦ (x, y)`, is not a graph plan: the Monge problem out of
 an atom is infeasible unless the target is an atom too. -/
 theorem eq_dirac_of_hasLaw_dirac {x : X} (h : HasLaw T ν (Measure.dirac x)) :
     ν = Measure.dirac (T x) := by
-  rw [← h.map_eq, map_dirac_of_aemeasurable h.aemeasurable]
+  rw [← h.map_eq, Measure.map_dirac_of_aemeasurable h.aemeasurable]
 
 /-- The graph plan of an a.e. measurable map at a Dirac measure is the Dirac measure at the
 graph point. -/
 @[simp]
 theorem graphPlan_dirac {x : X} (hT : AEMeasurable T (Measure.dirac x)) :
     graphPlan T (Measure.dirac x) = Measure.dirac (x, T x) :=
-  map_dirac_of_aemeasurable (aemeasurable_prodMk_self hT)
+  Measure.map_dirac_of_aemeasurable (aemeasurable_prodMk_self hT)
 
 end Dirac
 

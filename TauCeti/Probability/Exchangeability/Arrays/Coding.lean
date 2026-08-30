@@ -11,6 +11,7 @@ public import TauCeti.Probability.Exchangeability.Arrays.DeFinetti
 -- Public: the coding map and the barycenter identity it satisfies appear in every statement.
 public import TauCeti.Probability.DeFinetti.Coding
 -- Non-public: the mixture form of a row path law is used only inside proofs.
+import TauCeti.MeasureTheory.Measure.Measurability
 import TauCeti.Probability.Exchangeability.MixedIID.Mixture
 
 /-!
@@ -187,7 +188,7 @@ theorem SeparatelyExchangeable.exists_arrayLaw_eq_map_unitIntervalCoding
   refine ⟨⟨μ.map ν, hprob⟩, fun τ => ?_, ?_⟩
   · have hmap : Measurable fun P : ProbabilityMeasure (ℕ → α) =>
         P.map (fun x : ℕ → α => fun k => x (τ k)) :=
-      ((Measure.measurable_map _ (measurable_reindex τ)).comp measurable_subtype_coe).subtype_mk
+      TauCeti.MeasureTheory.measurable_probabilityMeasure_map (measurable_reindex τ)
     simp only [ProbabilityMeasure.coe_mk]
     rw [AEMeasurable.map_map_of_aemeasurable hmap.aemeasurable hν_meas.aemeasurable]
     exact hinv τ

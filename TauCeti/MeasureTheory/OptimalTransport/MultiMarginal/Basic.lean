@@ -223,7 +223,7 @@ def map {Y : ι → Type w} [∀ i, MeasurableSpace (Y i)] (π : MultiCoupling �
   ⟨π.1.map (fun x i ↦ f i (x i)),
     by
       simp only [ProbabilityMeasure.toMeasure_map]
-      convert π.2.map f hf using 1⟩
+      exact π.2.map f hf⟩
 
 /-- The underlying probability measure of a coordinatewise map is the corresponding
 pushforward. -/

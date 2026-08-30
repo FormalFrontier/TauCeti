@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.Product
 public import TauCeti.Algebra.Coalgebra.Convolution
+public import TauCeti.GroupTheory.Commutator
 
 /-!
 # Conjugation in Hopf-algebra coordinates
@@ -251,13 +252,6 @@ private theorem toConv_assoc_comp_map_comul_comp_includeLeft :
   · apply congrArg WithConv.toConv
     ext h
     simp [up]
-
-/-- Associativity of conjugation: conjugating by a product is conjugating successively. Stated for
-an abstract group so it elaborates against a single, canonical `Group` instance at the call site,
-rather than through `SemiconjBy` combinators whose own instance resolution need not match. -/
-private theorem conj_mul_assoc {G : Type*} [Group G] (a b x : G) :
-    a * b * x * (a * b)⁻¹ = a * (b * x * b⁻¹) * a⁻¹ := by
-  simp [mul_inv_rev, mul_assoc]
 
 /-- The coordinate morphism of left conjugation satisfies the action-associativity law.
 

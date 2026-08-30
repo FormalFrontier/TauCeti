@@ -87,9 +87,8 @@ lemma _root_.AlgebraicGeometry.Scheme.Modules.cohomology_smul
     rfl
 
 /-- The map on cohomology induced by a morphism of coefficient sheaves is linear over global
-functions. The body is exposed: `TauCeti.AlgebraicGeometry.Cohomology.Module.Base` proves the
-base-ring linearity of the same underlying map by `change` through this definition. -/
-@[expose] def _root_.AlgebraicGeometry.Scheme.Modules.cohomologyMapLinear
+functions. -/
+def _root_.AlgebraicGeometry.Scheme.Modules.cohomologyMapLinear
     (f : M ⟶ N) (i : ℕ) :
     Cohomology M i →ₗ[Γ(X, ⊤)] Cohomology N i where
   toFun := (cohomologyFunctor X i).map f
@@ -146,9 +145,8 @@ lemma _root_.AlgebraicGeometry.Scheme.Modules.cohomologyMapLinear_add
   rfl
 
 /-- The canonical identification of zeroth cohomology with global sections is linear over global
-functions. The body is exposed: `TauCeti.AlgebraicGeometry.Cohomology.Module.Base` restricts
-this equivalence's action along the base ring by `change` through this definition. -/
-@[expose] def _root_.AlgebraicGeometry.Scheme.Modules.cohomologyZeroLinearEquiv
+functions. -/
+def _root_.AlgebraicGeometry.Scheme.Modules.cohomologyZeroLinearEquiv
     (M : X.Modules) :
     Cohomology M 0 ≃ₗ[Γ(X, ⊤)] Γ(M, ⊤) where
   __ := cohomologyZeroEquiv M

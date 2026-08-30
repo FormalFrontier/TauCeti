@@ -12,7 +12,8 @@ public import TauCeti.Probability.Exchangeability.MixedIID.Basic
 
 This file provides the first shared de Finetti common-ending adapter.  If a measurable random
 probability measure `ν : Ω → ProbabilityMeasure α` has the expected rectangle factorization for
-every finite injective block of a family, then the family is `MixedIID`.
+every finite injective block of a coordinatewise `μ`-a.e. measurable family, then the family is
+`MixedIID`.
 
 The work is done by the `MixedIIDWith` rectangle characterization
 (`mixedIIDWith_of_forall_rectangles`, next to its definition): rectangles generate the

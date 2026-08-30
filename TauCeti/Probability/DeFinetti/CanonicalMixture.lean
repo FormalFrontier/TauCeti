@@ -19,7 +19,7 @@ import TauCeti.Probability.Exchangeability.PathSpace.Law.Bridge
 
 The development names the mixing law of an exchangeable process three times:
 
-* `deFinettiMeasure μ X hTail`, the law of the canonical tail directing measure
+* `deFinettiMeasure μ X`, the law of the canonical tail directing measure
   (`DeFinetti/Mixture.lean`);
 * the unique witness `π` produced by `deFinetti_mixture` (`DeFinetti/Representation.lean`);
 * `deFinettiEquiv.symm ρ`, the mixing law read off an exchangeable path law

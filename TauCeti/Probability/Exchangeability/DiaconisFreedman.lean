@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.MeasureTheory.Measure.DiracProba
+public import TauCeti.MeasureTheory.Measure.Measurability
 public import TauCeti.Probability.Exchangeability.MixedMarkovChain
 public import TauCeti.Probability.Exchangeability.RowExchangeable
 public import TauCeti.Probability.Exchangeability.SuccessorArray
@@ -99,7 +100,7 @@ theorem mixedMarkovChainWith_of_rowExchangeable_successorProcess [Countable α]
   -- Taking the `a`-th row marginal is measurable in the Giry structure.
   have hmarg : ∀ a : α, Measurable fun P : ProbabilityMeasure (α → α) =>
       P.map (fun x => x a) := fun a =>
-    ((Measure.measurable_map _ (measurable_pi_apply a)).comp measurable_subtype_coe).subtype_mk
+    TauCeti.MeasureTheory.measurable_probabilityMeasure_map (measurable_pi_apply a)
   refine MixedMarkovChainWith.intro hX measurable_const
     (fun a => (hmarg a).comp hlam.measurable_mixingRepresentative) ?_
   intro n w

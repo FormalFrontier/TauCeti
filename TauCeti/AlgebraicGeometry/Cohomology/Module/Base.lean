@@ -5,13 +5,13 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.AlgebraicGeometry.Cohomology.Module
+public import TauCeti.AlgebraicGeometry.Cohomology.Module.Basic
 
 /-!
 # Base-ring actions on the cohomology of a sheaf of modules on a scheme
 
 For a scheme over a base commutative ring, restricting the global-functions actions of
-`TauCeti.AlgebraicGeometry.Cohomology.Module` along the induced map on global functions gives
+`TauCeti.AlgebraicGeometry.Cohomology.Module.Basic` along the induced map on global functions gives
 the corresponding actions of the base ring: the module structure on cohomology, the linearity
 of the maps induced by morphisms of coefficient sheaves, and the degree-zero identification
 with global sections.
@@ -60,21 +60,14 @@ def _root_.AlgebraicGeometry.Scheme.Modules.cohomologyMapBaseLinear
   toFun := (cohomologyFunctor X i).map f
   map_add' := map_add _
   map_smul' r x := by
-    rw [base_smul_cohomology]
-    -- Normalize the target's restricted action, whose `LinearMap.map_smul` goal retains
-    -- the identity ring homomorphism, to the existing global-functions linear map.
-    change cohomologyMapLinear f i ((baseRingToGlobalSections R X r) • x) =
-      (baseRingToGlobalSections R X r) • cohomologyMapLinear f i x
+    simp only [base_smul_cohomology, RingHom.id_apply, ← cohomologyMapLinear_apply]
     exact (cohomologyMapLinear f i).map_smul (baseRingToGlobalSections R X r) x
 
 @[simp]
 lemma _root_.AlgebraicGeometry.Scheme.Modules.cohomologyMapBaseLinear_apply
     (f : M ⟶ N) (i : ℕ) (x : Cohomology M i) :
     cohomologyMapBaseLinear R X f i x = (cohomologyFunctor X i).map f x :=
-  by
-    -- The base- and global-functions-linear maps have the same underlying additive map.
-    change cohomologyMapLinear f i x = _
-    exact cohomologyMapLinear_apply f i x
+  by rfl
 
 @[simp]
 lemma _root_.AlgebraicGeometry.Scheme.Modules.cohomologyMapBaseLinear_id
@@ -117,15 +110,16 @@ global sections is linear over the base ring. -/
 def _root_.AlgebraicGeometry.Scheme.Modules.cohomologyZeroBaseLinearEquiv
     (M : X.Modules) :
     Cohomology M 0 ≃ₗ[R] Γ(M, ⊤) where
-  __ := cohomologyZeroEquiv M
-  map_smul' r x := (cohomologyZeroLinearEquiv M).map_smul
-    (baseRingToGlobalSections R X r) x
+  __ := (cohomologyZeroLinearEquiv M).toAddEquiv
+  map_smul' r x := by
+    simp only [base_smul_cohomology, base_smul_globalSections, RingHom.id_apply]
+    exact (cohomologyZeroLinearEquiv M).map_smul (baseRingToGlobalSections R X r) x
 
 @[simp]
 lemma _root_.AlgebraicGeometry.Scheme.Modules.cohomologyZeroBaseLinearEquiv_apply
     (M : X.Modules) (x : Cohomology M 0) :
     cohomologyZeroBaseLinearEquiv R X M x = cohomologyZeroEquiv M x := by
-  rfl
+  exact cohomologyZeroLinearEquiv_apply M x
 
 end Scheme.Modules
 

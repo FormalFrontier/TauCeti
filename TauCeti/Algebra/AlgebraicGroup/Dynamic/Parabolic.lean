@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.Hopf.Map
 public import TauCeti.Algebra.AlgebraicGroup.MultiplicativeGroup.Basic
+public import TauCeti.GroupTheory.Commutator
 
 /-!
 # The dynamic parabolic, unipotent and Levi subgroups of a cocharacter
@@ -81,11 +82,6 @@ variable {R H A B : Type*} [CommSemiring R] [Semiring H] [_root_.HopfAlgebra R H
 variable [CommSemiring A] [Algebra R A] [CommSemiring B] [Algebra R B]
 
 /-! ### Auxiliary lemmas -/
-
-private theorem conj_conj {G : Type*} [Group G] (a b x : G) :
-    a * (b * x * b⁻¹) * a⁻¹ = a * b * x * (a * b)⁻¹ := by
-  rw [mul_inv_rev]
-  simp only [mul_assoc]
 
 private theorem mapAlgHom_C {C : Type*} [CommSemiring C] [Algebra R C] (φ : A →ₐ[R] C) (a : A) :
     (AddMonoidAlgebra.mapAlgHom ℤ φ) (LaurentPolynomial.C a) = LaurentPolynomial.C (φ a) :=
@@ -594,7 +590,8 @@ theorem limit_mem_levi (g : parabolic A l) : limit A l g ∈ levi A l := by
         AlgHom.mapValue (prodSubst R A) (conjugate A l (g : WithConv (H →ₐ[R] A))) := by
       rw [← MonoidHom.comp_apply, ← AlgHom.mapValue_comp, ← prodSubst_comp_toLaurent,
         AlgHom.mapValue_comp, MonoidHom.comp_apply, hF]
-    rw [hl, hr, conjugate_apply, constPoint, mapValue_conjugate, genericPoint, conj_conj, ← map_mul,
+    rw [hl, hr, conjugate_apply, constPoint, mapValue_conjugate, genericPoint, ← conj_mul_assoc,
+      ← map_mul,
       mapValue_conjugate, map_prodSubst_genericUnit, prodSubst_comp_const, prodUnit,
       mul_comm (Units.map (IsScalarTower.toAlgHom R (LaurentPolynomial A)
         (LaurentPolynomial (LaurentPolynomial A))).toMonoidHom
