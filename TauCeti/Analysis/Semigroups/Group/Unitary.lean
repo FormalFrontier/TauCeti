@@ -235,7 +235,23 @@ theorem inner_complexGenerator_eq_neg (hU : U.IsUnitary)
       -⟪(x : H), U.complexGenerator hU y⟫_ℂ := by
   let xr : U.domain := ⟨x, U.complexGenerator_mem_domain hU x⟩
   let yr : U.domain := ⟨y, U.complexGenerator_mem_domain hU y⟩
-  have hderiv := (U.hasDerivWithinAt_zero xr).inner ℂ (U.hasDerivWithinAt_zero yr)
+  have orbit_hasDerivWithinAt_zero (z : U.domain) :
+      HasDerivWithinAt (fun t : ℝ => U t (z : H))
+        (U.generator ⟨(z : H), by rw [U.generator_domain]; exact z.property⟩) (Set.Ici 0) 0 := by
+    let zs : U.toSemigroup.domain := ⟨z, by rw [← U.domain_def]; exact z.property⟩
+    have hgen :
+        U.generator ⟨(z : H), by rw [U.generator_domain]; exact z.property⟩ =
+          U.toSemigroup.generator
+            ⟨(zs : H), by rw [U.toSemigroup.generator_domain]; exact zs.property⟩ := by
+      simpa only [zs] using
+        ((LinearPMap.ext_iff.mp U.generator_def).2 (x := (z : H))
+          (hf := by rw [U.generator_domain]; exact z.property)
+          (hg := by rw [U.toSemigroup.generator_domain, ← U.domain_def]; exact z.property))
+    simpa only [zs] using
+      ((U.toSemigroup.realOperator_hasDerivWithinAt_zero zs).congr_of_mem
+        (fun t ht => by rw [U.toSemigroup_realOperator_of_nonneg ht])
+          Set.self_mem_Ici).congr_deriv hgen.symm
+  have hderiv := (orbit_hasDerivWithinAt_zero xr).inner ℂ (orbit_hasDerivWithinAt_zero yr)
   have hfun : (fun t : ℝ => ⟪U t (xr : H), U t (yr : H)⟫_ℂ) =
       fun _ : ℝ => ⟪(x : H), (y : H)⟫_ℂ := by
     funext t

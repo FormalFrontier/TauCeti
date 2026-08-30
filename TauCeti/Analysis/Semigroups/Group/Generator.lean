@@ -155,16 +155,6 @@ theorem generator_eq_of_hasDerivAt_zero (U : StronglyContinuousGroup X) {x y : X
   U.generator_eq_of_tendsto (U.mem_domain_of_hasDerivAt_zero h)
     (U.tendsto_of_hasDerivAt_zero h)
 
-/-- **The orbit of a domain vector is right-differentiable at `0`.** Unlike
-`TauCeti.Semigroups.StronglyContinuousGroup.hasDerivAt_zero`, this one-sided form needs no
-completeness: it only repackages the defining limit `generator_tendsto`. -/
-theorem hasDerivWithinAt_zero (U : StronglyContinuousGroup X) (x : U.domain) :
-    HasDerivWithinAt (fun t : ℝ => U t (x : X))
-      (U.generator ⟨(x : X), by rw [U.generator_domain]; exact x.property⟩) (Set.Ici 0) 0 := by
-  rw [hasDerivWithinAt_iff_tendsto_slope]
-  unfold slope
-  simpa [U.map_zero_apply] using U.generator_tendsto x
-
 variable [CompleteSpace X]
 
 /-! ## Time reversal -/
