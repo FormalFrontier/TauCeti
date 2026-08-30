@@ -150,6 +150,20 @@ lemma solvableRadicalCoordinateMap_def
     solvableRadicalCoordinateMap H = mkQuotient H (solvableRadicalDefiningIdeal H) :=
   (rfl)
 
+/-- A morphism out of a solvable radical is determined by its composite with the coordinate
+quotient map. -/
+@[ext]
+theorem solvableRadical_hom_ext {H X : FiniteTypeCommHopfAlgCat.{u, u} k}
+    {f g : solvableRadical H ⟶ X}
+    (h : solvableRadicalCoordinateMap H ≫ f = solvableRadicalCoordinateMap H ≫ g) :
+    f = g := by
+  have hsurjective : Function.Surjective (toBialgHom (solvableRadicalCoordinateMap H)) := by
+    rw [solvableRadicalCoordinateMap_def]
+    exact CommHopfAlgCat.mkQuotient_surjective H.obj (solvableRadicalDefiningIdeal H)
+  let _ : Epi (solvableRadicalCoordinateMap H) :=
+    ConcreteCategory.epi_of_surjective _ hsurjective
+  exact (cancel_epi (solvableRadicalCoordinateMap H)).mp h
+
 /-- The kernel of the solvable-radical coordinate morphism is its defining ideal. -/
 @[simp]
 theorem solvableRadicalCoordinateMap_ker

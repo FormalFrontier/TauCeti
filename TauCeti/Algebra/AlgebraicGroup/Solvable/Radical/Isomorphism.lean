@@ -64,22 +64,21 @@ theorem comapOfIso (hI : IsSolvableRadicalCandidate K I) (e : H ≅ K) :
       (I.comapOfSurjective (FiniteTypeCommHopfAlgCat.toBialgHom e.hom)
         (ConcreteCategory.bijective_of_isIso e.hom).2) := by
   let qIso := FiniteTypeCommHopfAlgCat.quotientIsoOfIso e I
+  let qIso' := (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} k)
+    (_root_.CommHopfAlgCat.{u} k)).mapIso qIso.symm
   refine .mk
     (hI.isNormal.comapOfSurjective_of_bijective
       (FiniteTypeCommHopfAlgCat.toBialgHom e.hom)
       (ConcreteCategory.bijective_of_isIso e.hom).1
       (ConcreteCategory.bijective_of_isIso e.hom).2) ?_ ?_ ?_
   · exact (geometricallyConnectedCommHopfAlgProperty k).prop_of_iso
-      ((forget₂ (FiniteTypeCommHopfAlgCat.{u, u} k)
-        (_root_.CommHopfAlgCat.{u} k)).mapIso qIso.symm) hI.geometricallyConnected
+      qIso' hI.geometricallyConnected
   · exact (smoothCommHopfAlgProperty_iff _).mp <|
       (smoothCommHopfAlgProperty k).prop_of_iso
-        ((forget₂ (FiniteTypeCommHopfAlgCat.{u, u} k)
-          (_root_.CommHopfAlgCat.{u} k)).mapIso qIso.symm)
+        qIso'
         ((smoothCommHopfAlgProperty_iff _).mpr hI.smooth)
   · exact (geometricallySolvablePointsCommHopfAlgProperty k).prop_of_iso
-      ((forget₂ (FiniteTypeCommHopfAlgCat.{u, u} k)
-        (_root_.CommHopfAlgCat.{u} k)).mapIso qIso.symm) hI.geometricallySolvable
+      qIso' hI.geometricallySolvable
 
 end HopfIdeal.IsSolvableRadicalCandidate
 
@@ -113,8 +112,7 @@ theorem comapOfSurjective_solvableRadicalDefiningIdeal (e : H ≅ K) :
       have h := congrArg (fun f : H ⟶ H => toBialgHom f x) e.hom_inv_id
       simpa only [toBialgHom_comp, BialgHom.comp_apply, toBialgHom_id,
         BialgHom.coe_id, id_eq] using h
-    rw [hcancel] at hx''
-    exact hx''
+    rwa [hcancel] at hx''
   · exact solvableRadicalDefiningIdeal_le H pulled hpulled
 
 /-- An isomorphism of finite-type commutative Hopf algebras induces an isomorphism of their
@@ -142,20 +140,6 @@ theorem solvableRadicalCoordinateMap_comp_solvableRadicalIsoOfIso_inv (e : H ≅
       e.inv ≫ solvableRadicalCoordinateMap H := by
   rw [← cancel_mono (solvableRadicalIsoOfIso e).hom]
   simp
-
-/-- A morphism out of a solvable radical is determined by its composite with the coordinate
-quotient map. -/
-@[ext]
-theorem solvableRadical_hom_ext {X : FiniteTypeCommHopfAlgCat.{u, u} k}
-    {f g : solvableRadical H ⟶ X}
-    (h : solvableRadicalCoordinateMap H ≫ f = solvableRadicalCoordinateMap H ≫ g) :
-    f = g := by
-  have hsurjective : Function.Surjective (toBialgHom (solvableRadicalCoordinateMap H)) := by
-    rw [solvableRadicalCoordinateMap_def]
-    exact CommHopfAlgCat.mkQuotient_surjective H.obj (solvableRadicalDefiningIdeal H)
-  let _ : Epi (solvableRadicalCoordinateMap H) :=
-    ConcreteCategory.epi_of_surjective _ hsurjective
-  exact (cancel_epi (solvableRadicalCoordinateMap H)).mp h
 
 /-- The isomorphism induced by the identity isomorphism is the identity on the solvable
 radical. -/
