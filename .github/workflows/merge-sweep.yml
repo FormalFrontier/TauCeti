@@ -32,10 +32,10 @@ jobs:
   sweep:
     # Pinned to a TauCetiReview commit; bump deliberately. The reusable workflow receives the App
     # secrets, so a floating @main would be a supply-chain risk.
-    uses: TauCetiProject/TauCetiReview/.github/workflows/merge-sweep.yml@a66b04d97721565b13c8abe07f750fb1d2959ad5
+    uses: TauCetiProject/TauCetiReview/.github/workflows/merge-sweep.yml@b613bf827a7acfecf858e6c44e20c28df602239b
     with:
       dry_run: ${{ inputs.dry-run || false }}
-      review_ref: a66b04d97721565b13c8abe07f750fb1d2959ad5
+      review_ref: b613bf827a7acfecf858e6c44e20c28df602239b
     secrets:
       APP_ID: ${{ secrets.APP_ID }}
       APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
