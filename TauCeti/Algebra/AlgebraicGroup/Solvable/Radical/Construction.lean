@@ -157,12 +157,8 @@ theorem solvableRadical_hom_ext {H X : FiniteTypeCommHopfAlgCat.{u, u} k}
     {f g : solvableRadical H ⟶ X}
     (h : solvableRadicalCoordinateMap H ≫ f = solvableRadicalCoordinateMap H ≫ g) :
     f = g := by
-  have hsurjective : Function.Surjective (toBialgHom (solvableRadicalCoordinateMap H)) := by
-    rw [solvableRadicalCoordinateMap_def]
-    exact CommHopfAlgCat.mkQuotient_surjective H.obj (solvableRadicalDefiningIdeal H)
-  let _ : Epi (solvableRadicalCoordinateMap H) :=
-    ConcreteCategory.epi_of_surjective _ hsurjective
-  exact (cancel_epi (solvableRadicalCoordinateMap H)).mp h
+  rw [solvableRadicalCoordinateMap_def] at h
+  exact mkQuotient_hom_ext h
 
 /-- The kernel of the solvable-radical coordinate morphism is its defining ideal. -/
 @[simp]

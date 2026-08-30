@@ -34,6 +34,8 @@ the finite-type coordinate-Hopf-algebra category.
 * `TauCeti.FiniteTypeCommHopfAlgCat.quotient`: the quotient object in
   `FiniteTypeCommHopfAlgCat`.
 * `TauCeti.FiniteTypeCommHopfAlgCat.mkQuotient`: the quotient morphism.
+* `TauCeti.FiniteTypeCommHopfAlgCat.mkQuotient_hom_ext`: morphisms out of a quotient are
+  determined after precomposition with the quotient morphism.
 * `TauCeti.FiniteTypeCommHopfAlgCat.mkQuotient_ker`: its kernel characterization.
 * `TauCeti.FiniteTypeCommHopfAlgCat.liftQuotient`: the induced morphism out of a quotient.
 * `TauCeti.CommHopfAlgCat.toIdeal_le_ker_of_mkQuotient_comp`: a morphism factoring through
@@ -577,6 +579,17 @@ noncomputable def quotientBotIso (H : FiniteTypeCommHopfAlgCat.{u, v} R) :
 noncomputable abbrev mkQuotient (H : FiniteTypeCommHopfAlgCat.{u, v} R)
     (I : HopfIdeal R H) : H ⟶ quotient H I :=
   ObjectProperty.homMk (CommHopfAlgCat.mkQuotient H.obj I)
+
+/-- Morphisms out of a finite-type Hopf-algebra quotient are determined by their composites
+with the quotient morphism. -/
+theorem mkQuotient_hom_ext {H X : FiniteTypeCommHopfAlgCat.{u, v} R}
+    {I : HopfIdeal R H} {f g : quotient H I ⟶ X}
+    (h : mkQuotient H I ≫ f = mkQuotient H I ≫ g) : f = g := by
+  have hsurjective : Function.Surjective (toBialgHom (mkQuotient H I)) :=
+    CommHopfAlgCat.mkQuotient_surjective H.obj I
+  let _ : Epi (mkQuotient H I) :=
+    ConcreteCategory.epi_of_surjective _ hsurjective
+  exact (cancel_epi (mkQuotient H I)).mp h
 
 /-- The inverse map of the finite-type quotient-by-zero isomorphism is the quotient morphism. -/
 @[simp]
