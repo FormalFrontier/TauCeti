@@ -26,9 +26,6 @@ same proof serves both the integer-valued stage and the exact cyclotomic stage.
 * `TauCeti.ClassData.IsExactCharacterTableSpec`: an exact numbered certificate over a
   commutative star ring.
 * `TauCeti.ClassData.exactCharacterTableChecker`: its executable Boolean checker.
-* `TauCeti.ClassData.complexTableOfMap`: map an exact table to `ℂ` and reindex its columns by
-  conjugacy classes.
-
 ## Main result
 
 * `TauCeti.ClassData.IsExactCharacterTableSpec.isCharacterTableSpec`: a certified exact table
@@ -126,30 +123,6 @@ theorem exactCharacterTableChecker_eq_true_iff [DecidableEq R]
       d.IsExactCharacterTableSpec conj omega table degree := by
   simp [exactCharacterTableChecker]
 
-/-- Map a numbered exact table to `ℂ`, reindexing its rows by the number of conjugacy classes and
-its columns by the conjugacy classes themselves. -/
-noncomputable def complexTableOfMap (f : R →+* ℂ)
-    (table : Matrix (Fin d.numClasses) (Fin d.numClasses) R) :
-    Matrix (Fin (Nat.card (ConjClasses G))) (ConjClasses G) ℂ :=
-  d.reindexTableOfMap f table
-
-/-- The mapped and reindexed exact table evaluated at arbitrary row and column indices. -/
-@[simp]
-theorem complexTableOfMap_apply (f : R →+* ℂ)
-    (table : Matrix (Fin d.numClasses) (Fin d.numClasses) R)
-    (i : Fin (Nat.card (ConjClasses G))) (C : ConjClasses G) :
-    d.complexTableOfMap f table i C =
-      f (table ((finCongr d.numClasses_eq_card_conjClasses).symm i)
-        (d.equivConjClasses.symm C)) :=
-  d.reindexTableOfMap_apply f table i C
-
-/-- The mapped and reindexed exact table evaluated at a numbered row and numbered class. -/
-theorem complexTableOfMap_apply_classOf (f : R →+* ℂ)
-    (table : Matrix (Fin d.numClasses) (Fin d.numClasses) R) (i j : Fin d.numClasses) :
-    d.complexTableOfMap f table
-        (finCongr d.numClasses_eq_card_conjClasses i) (d.classOf j) = f (table i j) :=
-  d.reindexTableOfMap_apply_classOf f table i j
-
 namespace IsExactCharacterTableSpec
 
 variable {d : ClassData G}
@@ -173,9 +146,9 @@ private theorem central_eigen_map (f : R →+* ℂ) (i : Fin d.numClasses) :
 
 /-- The normalized row of the mapped ordinary table is the corresponding mapped central row,
 with both transported from the numbering of `d` to conjugacy classes. -/
-theorem centralCharacterRow_complexTableOfMap (f : R →+* ℂ)
+theorem centralCharacterRow_reindexTableOfMap (f : R →+* ℂ)
     (i : Fin (Nat.card (ConjClasses G))) :
-    centralCharacterRow (d.complexTableOfMap f table) i =
+    centralCharacterRow (d.reindexTableOfMap f table) i =
       d.reindexModularRow
         (fun j => f (omega ((finCongr d.numClasses_eq_card_conjClasses).symm i) j)) := by
   let i' := (finCongr d.numClasses_eq_card_conjClasses).symm i
@@ -185,9 +158,9 @@ theorem centralCharacterRow_complexTableOfMap (f : R →+* ℂ)
   have hdeg : (degree i' : ℂ) ≠ 0 := Nat.cast_ne_zero.mpr (h.degree_pos i').ne'
   have hconvert := congrArg f (h.degree_mul_central i' j)
   have htable (k : Fin d.numClasses) :
-      d.complexTableOfMap f table i (d.classOf k) = f (table i' k) := by
+      d.reindexTableOfMap f table i (d.classOf k) = f (table i' k) := by
     rw [← (finCongr d.numClasses_eq_card_conjClasses).apply_symm_apply i,
-      d.complexTableOfMap_apply_classOf]
+      d.reindexTableOfMap_apply_classOf]
   rw [centralCharacterRow_apply, htable j, ← d.classOf_index (1 : G),
     htable (d.index 1), h.table_index_one, map_natCast, d.reindexModularRow_classOf,
     ← d.card_classFinset]
@@ -196,24 +169,24 @@ theorem centralCharacterRow_complexTableOfMap (f : R →+* ℂ)
 
 /-- The mapped rows of a certified exact table are orthonormal for the complex Hermitian
 character pairing. -/
-private theorem row_orthonormal_complexTableOfMap (f : R →+* ℂ)
+private theorem row_orthonormal_reindexTableOfMap (f : R →+* ℂ)
     (hf : ∀ x, f (conj x) = star (f x))
     (i j : Fin (Nat.card (ConjClasses G))) :
     (Nat.card G : ℂ)⁻¹ * ∑ C : ConjClasses G,
-        (Nat.card C.carrier : ℂ) * d.complexTableOfMap f table i C *
-          (starRingEnd ℂ) (d.complexTableOfMap f table j C) = if i = j then 1 else 0 := by
+        (Nat.card C.carrier : ℂ) * d.reindexTableOfMap f table i C *
+          (starRingEnd ℂ) (d.reindexTableOfMap f table j C) = if i = j then 1 else 0 := by
   let i' := (finCongr d.numClasses_eq_card_conjClasses).symm i
   let j' := (finCongr d.numClasses_eq_card_conjClasses).symm j
   have hsum := congrArg f (h.row_orthogonal i' j')
   have hG : (Fintype.card G : ℂ) ≠ 0 := by exact_mod_cast Fintype.card_pos.ne'
   have htable_i (k : Fin d.numClasses) :
-      d.complexTableOfMap f table i (d.classOf k) = f (table i' k) := by
+      d.reindexTableOfMap f table i (d.classOf k) = f (table i' k) := by
     rw [← (finCongr d.numClasses_eq_card_conjClasses).apply_symm_apply i,
-      d.complexTableOfMap_apply_classOf]
+      d.reindexTableOfMap_apply_classOf]
   have htable_j (k : Fin d.numClasses) :
-      d.complexTableOfMap f table j (d.classOf k) = f (table j' k) := by
+      d.reindexTableOfMap f table j (d.classOf k) = f (table j' k) := by
     rw [← (finCongr d.numClasses_eq_card_conjClasses).apply_symm_apply j,
-      d.complexTableOfMap_apply_classOf]
+      d.reindexTableOfMap_apply_classOf]
   simp only [Nat.card_eq_fintype_card]
   rw [← d.equivConjClasses.sum_comp]
   simp only [d.equivConjClasses_apply, htable_i, htable_j, starRingEnd_apply]
@@ -239,23 +212,23 @@ private theorem row_orthonormal_complexTableOfMap (f : R →+* ℂ)
 /-- **A certified exact table satisfies the complex character-table specification after mapping
 through a star-preserving ring homomorphism.** -/
 theorem isCharacterTableSpec (f : R →+* ℂ) (hf : ∀ x, f (conj x) = star (f x)) :
-    IsCharacterTableSpec G (d.complexTableOfMap f table) where
+    IsCharacterTableSpec G (d.reindexTableOfMap f table) where
   exists_degree i := by
     let i' := (finCongr d.numClasses_eq_card_conjClasses).symm i
     refine ⟨degree i', h.degree_pos i', ?_, ?_⟩
     · rw [← d.classOf_index (1 : G),
         ← (finCongr d.numClasses_eq_card_conjClasses).apply_symm_apply i,
-        d.complexTableOfMap_apply_classOf, h.table_index_one, map_natCast]
+        d.reindexTableOfMap_apply_classOf, h.table_index_one, map_natCast]
     · simpa only [Nat.card_eq_fintype_card] using h.degree_dvd i'
   sum_degree_sq := by
     rw [@Nat.card_eq_fintype_card G, ← h.sum_degree_sq,
       ← (finCongr d.numClasses_eq_card_conjClasses).sum_comp]
-    simp only [← d.classOf_index (1 : G), d.complexTableOfMap_apply_classOf,
+    simp only [← d.classOf_index (1 : G), d.reindexTableOfMap_apply_classOf,
       h.table_index_one, map_natCast]
     exact_mod_cast rfl
-  row_orthonormal := h.row_orthonormal_complexTableOfMap f hf
+  row_orthonormal := h.row_orthonormal_reindexTableOfMap f hf
   row_eigen i := by
-    rw [h.centralCharacterRow_complexTableOfMap f i]
+    rw [h.centralCharacterRow_reindexTableOfMap f i]
     exact (d.isModularEigenrow_iff_isClassEigenrow _).mp
       (h.central_eigen_map f ((finCongr d.numClasses_eq_card_conjClasses).symm i))
 

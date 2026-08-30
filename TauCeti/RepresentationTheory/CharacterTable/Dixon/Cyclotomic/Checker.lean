@@ -77,7 +77,7 @@ conjugacy classes and its columns by the conjugacy classes themselves. -/
 noncomputable def complexTableOfCyclotomic
     (table : Matrix (Fin d.numClasses) (Fin d.numClasses) (Cyclotomic e)) :
     Matrix (Fin (Nat.card (ConjClasses G))) (ConjClasses G) ℂ :=
-  d.complexTableOfMap Cyclotomic.complexEmbedding table
+  d.reindexTableOfMap Cyclotomic.complexEmbedding table
 
 /-- The embedded and reindexed cyclotomic table evaluated at arbitrary row and column indices. -/
 @[simp]
@@ -88,7 +88,7 @@ theorem complexTableOfCyclotomic_apply
       Cyclotomic.complexEmbedding
         (table ((finCongr d.numClasses_eq_card_conjClasses).symm i)
           (d.equivConjClasses.symm C)) :=
-  d.complexTableOfMap_apply Cyclotomic.complexEmbedding table i C
+  d.reindexTableOfMap_apply Cyclotomic.complexEmbedding table i C
 
 /-- The embedded and reindexed cyclotomic table evaluated at a numbered row and numbered class. -/
 theorem complexTableOfCyclotomic_apply_classOf
@@ -97,7 +97,7 @@ theorem complexTableOfCyclotomic_apply_classOf
     d.complexTableOfCyclotomic e table
         (finCongr d.numClasses_eq_card_conjClasses i) (d.classOf j) =
       Cyclotomic.complexEmbedding (table i j) :=
-  d.complexTableOfMap_apply_classOf Cyclotomic.complexEmbedding table i j
+  d.reindexTableOfMap_apply_classOf Cyclotomic.complexEmbedding table i j
 
 namespace IsCyclotomicCharacterTableSpec
 
@@ -119,7 +119,7 @@ theorem centralCharacterRow_complexTableOfCyclotomic
     centralCharacterRow (d.complexTableOfCyclotomic e table) i =
       d.reindexModularRow (fun j => Cyclotomic.complexEmbedding
         (omega ((finCongr d.numClasses_eq_card_conjClasses).symm i) j)) :=
-  IsExactCharacterTableSpec.centralCharacterRow_complexTableOfMap h
+  IsExactCharacterTableSpec.centralCharacterRow_reindexTableOfMap h
     Cyclotomic.complexEmbedding i
 
 /-- **A certified exact cyclotomic table satisfies the complex character-table specification.** -/

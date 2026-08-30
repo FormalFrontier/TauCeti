@@ -66,7 +66,7 @@ classes and its columns by the conjugacy classes themselves. -/
 noncomputable def complexTableOfInteger
     (table : Matrix (Fin d.numClasses) (Fin d.numClasses) ℤ) :
     Matrix (Fin (Nat.card (ConjClasses G))) (ConjClasses G) ℂ :=
-  d.complexTableOfMap (Int.castRingHom ℂ) table
+  d.reindexTableOfMap (Int.castRingHom ℂ) table
 
 /-- The cast-and-reindexed integer table evaluated at arbitrary row and column indices. -/
 @[simp]
@@ -76,14 +76,14 @@ theorem complexTableOfInteger_apply
     d.complexTableOfInteger table i C =
       (table ((finCongr d.numClasses_eq_card_conjClasses).symm i)
         (d.equivConjClasses.symm C) : ℂ) :=
-  d.complexTableOfMap_apply (Int.castRingHom ℂ) table i C
+  d.reindexTableOfMap_apply (Int.castRingHom ℂ) table i C
 
 /-- The cast-and-reindexed integer table evaluated at a numbered row and numbered class. -/
 theorem complexTableOfInteger_apply_classOf
     (table : Matrix (Fin d.numClasses) (Fin d.numClasses) ℤ) (i j : Fin d.numClasses) :
     d.complexTableOfInteger table
         (finCongr d.numClasses_eq_card_conjClasses i) (d.classOf j) = (table i j : ℂ) :=
-  d.complexTableOfMap_apply_classOf (Int.castRingHom ℂ) table i j
+  d.reindexTableOfMap_apply_classOf (Int.castRingHom ℂ) table i j
 
 namespace IsIntegerCharacterTableSpec
 
@@ -104,7 +104,7 @@ theorem centralCharacterRow_complexTableOfInteger
     centralCharacterRow (d.complexTableOfInteger table) i =
       d.reindexModularRow
         (fun j => (omega ((finCongr d.numClasses_eq_card_conjClasses).symm i) j : ℂ)) :=
-  IsExactCharacterTableSpec.centralCharacterRow_complexTableOfMap h (Int.castRingHom ℂ) i
+  IsExactCharacterTableSpec.centralCharacterRow_reindexTableOfMap h (Int.castRingHom ℂ) i
 
 /-- **A certified integer table satisfies the complex character-table specification.** -/
 theorem isCharacterTableSpec :
