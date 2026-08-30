@@ -13,12 +13,12 @@ public section
 /-!
 # The trace of a pair of opposite root vectors on a weight space
 
-Let `H` be a nilpotent Lie subalgebra of `L` acting on a finite-dimensional module `M`, let
-`α : H → K` be a linear form, and let `x` and `y` be root vectors of weights `α` and `-α` whose
-bracket `⁅x, y⁆` lies in `H`, say `⁅x, y⁆ = z`.  Acting first by `x` and then by `y` carries the
-`χ`-weight space of `M` back to itself; write `TauCeti.raiseLowerEnd` for the resulting
-endomorphism.  Given a bound beyond which the spaces `M_{χ + jα}` vanish, this file computes its
-trace:
+Let `H` be a nilpotent Lie subalgebra of `L` acting on a module `M` that is finite and free over a
+principal ideal domain `K`, let `α : H → K` be a linear form, and let `x` and `y` be root vectors of
+weights `α` and `-α` whose bracket `⁅x, y⁆` lies in `H`, say `⁅x, y⁆ = z`.  Acting first by `x` and
+then by `y` carries the `χ`-weight space of `M` back to itself; write `TauCeti.raiseLowerEnd` for
+the resulting endomorphism.  Given a bound beyond which the spaces `M_{χ + jα}` vanish, this file
+computes its trace:
 
 ```text
 tr_{Mχ}(y ∘ x) = Σ_{j ≥ 1} dim M_{χ + jα} · (χ + jα)(z).
@@ -36,8 +36,8 @@ tr_{Mχ}(y ∘ x) = tr_{M_{α+χ}}(y ∘ x) + dim M_{α+χ} · (α+χ)(z),
 ```
 
 which telescopes up the `α`-string.  The initial-segment formulation assumes such an
-eventual-vanishing bound explicitly.  When `K` has characteristic zero and `α` is a nonzero linear
-form, the string leaves the weights of `M` after finitely many steps;
+eventual-vanishing bound explicitly.  When `K` is a field of characteristic zero and `α` is a
+nonzero linear form, the string leaves the weights of `M` after finitely many steps;
 `TauCeti/Algebra/Lie/Weights/String.lean` packages that finite index set as `TauCeti.weightString`.
 
 The identity is the computational input to **Freudenthal's multiplicity formula**: taking `x` and
@@ -128,28 +128,24 @@ theorem rootVectorMap_comp_rootVectorMap_sub_raiseLowerEnd {α : H → K} {x y :
   rw [h]
   abel
 
+/-- On a trivial weight space the raise-lower endomorphism vanishes. -/
+@[simp]
+theorem raiseLowerEnd_eq_zero {α : H → K} {x y : L} (hx : x ∈ rootSpace H α)
+    (hy : y ∈ rootSpace H (-α)) {χ : H → K} (hχ : genWeightSpace M χ = ⊥) :
+    raiseLowerEnd M hx hy χ = 0 := by
+  ext m
+  have hm : (m : M) = 0 := by simpa [hχ] using m.2
+  simp [hm]
+
 end Defs
 
 section Trace
 
-variable {K : Type u} {L : Type v} {M : Type w} [Field K] [LieRing L] [LieAlgebra K L]
+variable {K : Type u} {L : Type v} {M : Type w} [CommRing K] [IsDomain K]
+  [IsPrincipalIdealRing K] [LieRing L] [LieAlgebra K L]
   {H : LieSubalgebra K L} [LieRing.IsNilpotent H]
-  [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M] [FiniteDimensional K M]
-  {α : H → K} {x y : L} {z : H}
-
-omit [FiniteDimensional K M] in
-/-- A trivial weight space has dimension zero, so it contributes nothing to a multiplicity sum. -/
-private theorem finrank_genWeightSpace_eq_zero {χ : H → K} (hχ : genWeightSpace M χ = ⊥) :
-    finrank K (genWeightSpace M χ) = 0 := by
-  rw [hχ, ← finrank_toSubmodule, LieSubmodule.bot_toSubmodule, finrank_bot]
-
-omit [FiniteDimensional K M] in
-/-- On a trivial weight space the raise-lower endomorphism vanishes. -/
-theorem raiseLowerEnd_eq_zero (hx : x ∈ rootSpace H α) (hy : y ∈ rootSpace H (-α)) {χ : H → K}
-    (hχ : genWeightSpace M χ = ⊥) : raiseLowerEnd M hx hy χ = 0 := by
-  ext m
-  have hm : (m : M) = 0 := by simpa [hχ] using m.2
-  simp [hm]
+  [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M]
+  [Module.Free K M] [Module.Finite K M] {α : H → K} {x y : L} {z : H}
 
 /-- **The ladder step.**  The trace of `y ∘ x` on the `χ`-weight space exceeds its trace on the
 `(α + χ)`-weight space by `dim M_{α+χ} · (α+χ)(z)`, where `z = ⁅x, y⁆`. -/
@@ -175,7 +171,7 @@ theorem trace_raiseLowerEnd_eq_sum_Ico (hx : x ∈ rootSpace H α) (hy : y ∈ r
       = ∑ j ∈ Finset.Ico 1 N, finrank K (genWeightSpace M (χ + j • α)) • (χ + j • α) z := by
   have hterm : ∀ k : ℕ, N ≤ k →
       finrank K (genWeightSpace M (χ + k • α)) • (χ + k • α) z = 0 := fun k hk => by
-    rw [finrank_genWeightSpace_eq_zero (hN k hk), zero_smul]
+    rw [hN k hk, ← finrank_toSubmodule, LieSubmodule.bot_toSubmodule, finrank_bot, zero_smul]
   -- The statement at the rung `χ + i • α`, proved by induction on the number of rungs `d` still
   -- available before the string is known to have ended.
   suffices h : ∀ d i : ℕ, N ≤ i + d →
@@ -249,7 +245,7 @@ theorem trace_raiseLowerEnd_eq_sum_weightString (hα : α ≠ 0)
     have hjw : genWeightSpace M ((χ : H → K) + j • (α : H → K)) = ⊥ := by
       by_contra hne
       exact hjnot ((hmem j).mpr hne)
-    rw [finrank_genWeightSpace_eq_zero hjw, zero_smul]
+    rw [hjw, ← finrank_toSubmodule, LieSubmodule.bot_toSubmodule, finrank_bot, zero_smul]
 
 end WeightString
 
