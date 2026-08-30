@@ -55,7 +55,8 @@ variable {G : Type u} [Group G] [TopologicalSpace G]
 
 /-- An abstract `p`-group is pro-`p` for any topology: all of its group quotients are
 `p`-groups. -/
-theorem isProP (hG : IsPGroup p G) : IsProP p G := fun U ↦ hG.to_quotient U.toSubgroup
+theorem _root_.IsPGroup.isProP (hG : IsPGroup p G) : IsProP p G :=
+  fun U ↦ hG.to_quotient U.toSubgroup
 
 end IsPGroup
 
