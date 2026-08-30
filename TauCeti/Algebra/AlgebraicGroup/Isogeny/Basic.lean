@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.FaithfullyFlatPoints
-public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Central
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Points.Kernel
 
 /-!
@@ -72,12 +71,6 @@ is represented by the quotient of `K` by `kernelHopfIdeal f`, so centrality is i
 that Hopf ideal. -/
 def IsCentralIsogeny (f : H ⟶ K) : Prop :=
   IsIsogeny f ∧ (kernelHopfIdeal f).IsCentral
-
-/-- Restatement of the coordinate-algebra conditions defining an isogeny. -/
-theorem isIsogeny_iff (f : H ⟶ K) :
-    IsIsogeny f ↔
-      f.hom.toAlgHom.Finite ∧ f.hom.toAlgHom.toRingHom.FaithfullyFlat :=
-  Iff.rfl
 
 /-- Restatement of the coordinate-algebra conditions defining a central isogeny. -/
 theorem isCentralIsogeny_iff (f : H ⟶ K) :
@@ -203,10 +196,10 @@ variable {H₀ K₀ : _root_.CommHopfAlgCat.{v} R} {f₀ : H₀ ⟶ K₀}
 /-- Every point in the kernel of a central isogeny is central in its source group. This is
 the functor-of-points meaning of the central-kernel condition. -/
 theorem IsCentralIsogeny.isCentralPoint_of_mapPoints_eq_one
-    (hf : IsCentralIsogeny f₀) (A : CommAlgCat.{v} R)
+    (hf : IsCentralIsogeny f₀) (A : CommAlgCat.{w} R)
     (g : HopfAlgebra.points (R := R) (H := K₀) A)
     (hg : (mapPointsFunctor f₀).app A g = 1) : HopfAlgebra.IsCentralPoint g := by
-  exact isCentralPoint_of_mapPoints_eq_one_of_isCentral_kernelHopfIdeal
+  exact isCentralPoint_of_isCentral_kernelHopfIdeal_of_mapPoints_eq_one
     hf.isCentral_kernelHopfIdeal A g hg
 
 end KernelPoints
