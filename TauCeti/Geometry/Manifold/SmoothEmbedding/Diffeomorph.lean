@@ -209,8 +209,10 @@ theorem coe_ofDiffeomorph [IsManifold I n M] [IsManifold I n M'] (e : M ≃ₘ^n
   funext x
   exact ofDiffeomorph_apply e x
 
-/-- A diffeomorphism is onto, so as a smooth embedding it has full image. -/
-@[simp]
+/-- A diffeomorphism is onto, so as a smooth embedding it has full image.
+
+Not a `simp` lemma: `coe_ofDiffeomorph` already rewrites the left-hand side, so `simp` reaches the
+statement on its own and this form is never in normal form. -/
 theorem range_ofDiffeomorph [IsManifold I n M] [IsManifold I n M'] (e : M ≃ₘ^n⟮I, I⟯ M') :
     range (ofDiffeomorph e) = univ := by
   rw [coe_ofDiffeomorph]
@@ -258,8 +260,10 @@ theorem compDiffeomorph_compDiffeomorph [IsManifold I n M']
   rw [compDiffeomorph_apply, compDiffeomorph_apply, compDiffeomorph_apply]
   rfl
 
-/-- Reparametrisation does not move the image of an embedding. -/
-@[simp]
+/-- Reparametrisation does not move the image of an embedding.
+
+Not a `simp` lemma: `coe_compDiffeomorph` already rewrites the left-hand side, so `simp` reaches the
+statement on its own and this form is never in normal form. -/
 theorem range_compDiffeomorph [IsManifold I n M']
     (f : SmoothEmbedding I J n M N) (e : M' ≃ₘ^n⟮I, I⟯ M) :
     range (f.compDiffeomorph e) = range f := by
@@ -307,8 +311,10 @@ theorem transDiffeomorph_transDiffeomorph {Q : Type*} [TopologicalSpace Q] [Char
   rw [transDiffeomorph_apply, transDiffeomorph_apply, transDiffeomorph_apply]
   rfl
 
-/-- Ambient transport moves the image of an embedding by the ambient diffeomorphism. -/
-@[simp]
+/-- Ambient transport moves the image of an embedding by the ambient diffeomorphism.
+
+Not a `simp` lemma: `coe_transDiffeomorph` already rewrites the left-hand side, which `simp` then
+carries on to the preimage form `⇑e.symm ⁻¹' range f`, so this form is never in normal form. -/
 theorem range_transDiffeomorph [IsManifold J n P]
     (f : SmoothEmbedding I J n M N) (e : N ≃ₘ^n⟮J, J⟯ P) :
     range (f.transDiffeomorph e) = e '' range f := by
