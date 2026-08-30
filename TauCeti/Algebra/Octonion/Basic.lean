@@ -54,7 +54,7 @@ which ranks are well behaved, and each asks for it as `StrongRankCondition` and 
 
 * `TauCeti.Octonion.finrank_eq_eight`: the split octonions are `8`-dimensional.
 * `TauCeti.Octonion.self_mul_conj` and `TauCeti.Octonion.conj_mul_self`:
-  `x * x̄ = x̄ * x = N x • 1`.
+  `x * conj x = conj x * x = N x • 1`.
 * `TauCeti.Octonion.norm_mul`: the norm is **multiplicative**, so `𝕆` is a composition algebra.
 * `TauCeti.Octonion.normQuadraticForm`: the norm, bundled as a `QuadraticForm`, so that Mathlib's
   `QuadraticMap.polar` API supplies the associated symmetric bilinear form. That form is visible
@@ -405,13 +405,13 @@ each of the two products making up the norm is unchanged. -/
 theorem norm_smul (r : R) (x : Octonion R) : norm (r • x) = r ^ 2 * norm x := by
   simp [norm_def]; ring
 
-/-- `x * x̄ = N x • 1`: conjugation inverts an octonion up to its norm. -/
+/-- `x * conj x = N x • 1`: conjugation inverts an octonion up to its norm. -/
 @[simp, grind =]
 theorem self_mul_conj (x : Octonion R) : x * conj x = norm x • 1 := by
   -- The two vector entries vanish by `Matrix.cross_self`.
   refine Octonion.ext ?_ ?_ ?_ ?_ <;> simp [norm_def, dotProduct_comm] <;> ring
 
-/-- `x̄ * x = N x • 1`, the mirror of `TauCeti.Octonion.self_mul_conj`. -/
+/-- `conj x * x = N x • 1`, the mirror of `TauCeti.Octonion.self_mul_conj`. -/
 @[simp, grind =]
 theorem conj_mul_self (x : Octonion R) : conj x * x = norm x • 1 := by
   simpa using self_mul_conj (conj x)
@@ -600,7 +600,7 @@ def imaginary (R : Type*) [CommRing R] : Submodule R (Octonion R) := LinearMap.k
 @[simp] theorem mem_imaginary {x : Octonion R} : x ∈ imaginary R ↔ trace x = 0 :=
   LinearMap.mem_ker
 
-/-- **Conjugation negates exactly the imaginary octonions**: `x̄ = -x` if and only if `x` has
+/-- **Conjugation negates exactly the imaginary octonions**: `conj x = -x` if and only if `x` has
 vanishing trace. Not a `simp` lemma, because `TauCeti.Octonion.mem_imaginary` already takes its
 left-hand side apart. -/
 theorem mem_imaginary_iff_conj_eq_neg {x : Octonion R} : x ∈ imaginary R ↔ conj x = -x := by

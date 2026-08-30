@@ -42,9 +42,9 @@ import sys
 
 REPO = os.environ["REPO"]
 
-# The trusted-scoreboard parse lives once, in the pr_status package; import it rather than keeping a
-# second copy here (the two had drifted on the meta regex). This script is parameterised by $REPO, so
-# point core's reads at the same repo.
+# The scoreboard parse and explicit repo-associated selector live once, in the pr_status package;
+# import them rather than keeping a second copy here (the parsers had drifted before). This script is
+# parameterised by $REPO, so point core's reads at the same repo.
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "pr_status"))
 import core  # noqa: E402
 
@@ -121,10 +121,11 @@ def parse_ts(s: str) -> datetime.datetime:
 def latest_scoreboard_meta(pr: int):
     """The meta block of the newest TRUSTED review scoreboard comment, or None. Trust = the
     `tauceti-scoreboard` marker AND a repo-associated author (so an external author cannot forge a
-    verdict). Delegates to the shared `core.scoreboard_meta` so that parse lives in one place; fails
-    safe (None) on any API/parse error, so a hiccup never causes a wrong close."""
+    verdict). Delegates to the shared `core.repo_associated_scoreboard_meta` so both the parse and the
+    destructive trust policy live in one place; fails safe (None) on any API/parse error, so a hiccup
+    never causes a wrong close."""
     try:
-        return core.scoreboard_meta(pr) or None
+        return core.repo_associated_scoreboard_meta(pr) or None
     except Exception as e:
         print(f"#{pr}: scoreboard fetch failed ({e}); leaving it", file=sys.stderr)
         return None

@@ -40,6 +40,8 @@ that can be stated.
 * `TauCeti.rootInvariantForm`: `invForm` packaged as an invariant form on the root system
   `LieAlgebra.IsKilling.rootSystem H`, which makes Mathlib's `RootPairing.InvariantForm` API
   available for it.
+* `TauCeti.killingExtend`: a weight, extended to a linear form on `L` by pairing with the vector
+  that represents it under the Killing form.
 
 ## Main results
 
@@ -54,6 +56,9 @@ that can be stated.
   `⟨λ, α^∨⟩ ⟨α, α⟩ = 2 ⟨λ, α⟩`.
 * `TauCeti.traceForm_coroot_self_mul_invForm_self_eq_four`: `⟨α^∨, α^∨⟩ ⟨α, α⟩ = 4`, so a long
   root has a short coroot.
+* `TauCeti.killingExtend_apply_cartan` and `TauCeti.killingExtend_apply_eq_zero`: the extension of
+  a weight is the weight itself on `H` and vanishes on every root space of a nonzero weight, so it
+  sees the zero-weight component of a vector and nothing else.
 
 The compatibility with `LieAlgebra.IsKilling.rootSystem_pairing_apply` — that a Cartan integer is
 `2 ⟨α, β⟩ / ⟨β, β⟩` — and the orthogonality criterion and reflection invariance of the form are not
@@ -165,6 +170,42 @@ theorem cartanEquivDual_coroot (α : Weight K H L) :
   ext x
   simpa [invForm_apply_apply, Weight.toLinear_apply, mul_assoc, traceForm_apply_apply,
     Module.End.mul_eq_comp] using traceForm_coroot α x
+
+/-! ## A weight, extended to the Lie algebra -/
+
+/-- **A weight, extended to a linear form on `L`** by pairing with the vector that represents it
+under the Killing form. It agrees with the weight on `H`
+(`TauCeti.killingExtend_apply_cartan`) and vanishes on every root space of a nonzero weight
+(`TauCeti.killingExtend_apply_eq_zero`), so it sees the zero-weight component of a vector and
+nothing else. -/
+noncomputable def killingExtend (lam : Module.Dual K H) : L →ₗ[K] K :=
+  killingForm K L (((cartanEquivDual H).symm lam : H) : L)
+
+/-- The defining formula of the extension: pairing with the vector that represents the weight. -/
+theorem killingExtend_apply (lam : Module.Dual K H) (x : L) :
+    killingExtend lam x = killingForm K L (((cartanEquivDual H).symm lam : H) : L) x := (rfl)
+
+/-- On the Cartan subalgebra the extension is the weight itself. -/
+@[simp]
+theorem killingExtend_apply_cartan (lam : Module.Dual K H) (x : H) :
+    killingExtend lam (x : L) = lam x := by
+  have hres : killingForm K L (((cartanEquivDual H).symm lam : H) : L) (x : L) =
+      traceForm K H L ((cartanEquivDual H).symm lam) x := by
+    rw [← LieAlgebra.restrict_killingForm (R := K) (L := L) H,
+      LinearMap.BilinForm.restrict_apply, LinearMap.domRestrict_apply]
+  rw [killingExtend_apply, hres]
+  conv_rhs => rw [← (cartanEquivDual H).apply_symm_apply lam]
+  rw [cartanEquivDual_apply_apply, traceForm_apply_apply, Module.End.mul_eq_comp]
+
+/-- The extension of a weight vanishes on the root space of a nonzero weight, the Cartan
+subalgebra being the zero root space. -/
+theorem killingExtend_apply_eq_zero [LieModule.IsTriangularizable K H L] (lam : Module.Dual K H)
+    {χ : Weight K H L} (hχ : χ.IsNonZero) {x : L} (hx : x ∈ rootSpace H (χ : H → K)) :
+    killingExtend lam x = 0 := by
+  refine LieAlgebra.killingForm_apply_eq_zero_of_mem_rootSpace_of_add_ne_zero K L H
+    (α := (0 : H → K)) ?_ hx (by simpa using hχ)
+  rw [LieAlgebra.rootSpace_zero_eq, LieSubalgebra.mem_toLieSubmodule]
+  exact ((cartanEquivDual H).symm lam).2
 
 /-! ## Roots and coroots -/
 

@@ -3,8 +3,8 @@ name: Auto-merge
 # Merge a PR automatically once it is genuinely ready, WITHOUT generating any reviews here (that is
 # expensive — it spends API budget — and is gated off in review.yml). Reviews are produced by people
 # running tauceti-review / tauceti locally and posting a head-pinned scoreboard comment. This workflow
-# reconciles the queue from all current-head scoreboards and live review markers; TauCetiData is a
-# separate analytics archive.
+# reconciles the queue from the newest completed current-head scoreboard; a live marker delays initial
+# enqueue without ejecting an already-green PR. TauCetiData is a separate analytics archive.
 #
 # It calls the lightweight TauCetiReview merge-only workflow, which mints no provider keys, runs no
 # reviewer, and merges only when the engine's own rule says so: build green on HEAD, every blocking
@@ -76,10 +76,10 @@ jobs:
     if: ${{ needs.resolve.outputs.pr != '' }}
     # Pinned to a TauCetiReview commit; bump deliberately. The reusable workflow receives the App
     # secrets, so a floating @main would be a supply-chain risk.
-    uses: TauCetiProject/TauCetiReview/.github/workflows/merge-only.yml@e4607c8728dbf7d68b9e30ddfa3ef559f9e555bd
+    uses: TauCetiProject/TauCetiReview/.github/workflows/merge-only.yml@b613bf827a7acfecf858e6c44e20c28df602239b
     with:
       pr: ${{ needs.resolve.outputs.pr }}
-      review_ref: e4607c8728dbf7d68b9e30ddfa3ef559f9e555bd
+      review_ref: b613bf827a7acfecf858e6c44e20c28df602239b
     # Pass only the App credentials merge-only needs, not all of TauCeti's secrets.
     secrets:
       APP_ID: ${{ secrets.APP_ID }}

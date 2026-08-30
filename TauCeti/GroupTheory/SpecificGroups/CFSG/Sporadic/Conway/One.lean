@@ -42,9 +42,25 @@ in an already constructed group. This file asserts no order, finiteness, simplic
 identification result. A separate source-to-Lean read-through remains part of the S1 review artifact
 required by the roadmap.
 
-## Main definition
+The row is a sealed definition, so it publishes an equation for each of its fields: the transcribed
+relator expressions with their generator indices written out and this file's three private relator
+lists concatenated, and the provenance a manifest row exists to record. Together with
+`TauCeti.GroupPresentation.relators_def` and `TauCeti.GroupPresentation.mem_relatorSet_iff` the
+first of those determines the compiled words and the relations defining the presented group, so a
+consumer reasons about the row without unfolding it.
+
+These field equations and the decidable checks beside them follow the shape that the
+`TauCeti.GroupTheory.SpecificGroups.CFSG.Sporadic.Janko` modules established for a manifest row.
+
+## Main definitions and results
 
 * `TauCeti.Sporadic.co1Presentation`: the GPL finite presentation of the first Conway group `Co₁`.
+* `TauCeti.Sporadic.co1Presentation_transcribed` and the equations for the remaining fields: the
+  characterization of the sealed row.
+* `TauCeti.Sporadic.co1Presentation_map_length_relators`,
+  `TauCeti.Sporadic.co1Presentation_totalLength` and
+  `TauCeti.Sporadic.co1Presentation_relatorsCyclicallyReduced`: the three checks on the compiled
+  words.
 
 ## References
 
@@ -163,18 +179,160 @@ def co1Presentation : GroupPresentation where
   expectedRelatorCount := 45
   transcribed := co1NodeAndEdgeRelators ++ co1NonedgeRelators ++ co1AdditionalRelators
 
+/-- The generator names recorded for `Co₁`. The row's body is sealed, so this is what lets a
+consumer see that it is an eight-generator presentation. -/
+@[simp]
+theorem co1Presentation_generatorNames :
+    co1Presentation.generatorNames = ["a", "b", "c", "d", "e", "f", "g", "h"] := by
+  simp [co1Presentation]
+
+/-- The source recorded for `Co₁`. The row's body is sealed, so this equation is what publishes the
+citation itself, rather than only the row's name, to a downstream audit. -/
+@[simp]
+theorem co1Presentation_source :
+    co1Presentation.source = "R. Lindenbergh, Group Presentations Library, version 1.0; \
+      presentation attributed there to C. E. Praeger and L. H. Soicher, Low Rank Representations \
+      and Graphs for Sporadic Groups, Cambridge University Press, 1997" := by
+  simp [co1Presentation]
+
+/-- The locator recorded for `Co₁`, pointing at the presentation inside its source. -/
+@[simp]
+theorem co1Presentation_sourceLocator :
+    co1Presentation.sourceLocator = "GPLTable.Co1.1 in \
+      https://doris.tudelft.nl/~rlindenbergh/GPL/gpl.g; Praeger--Soicher, Chapter 4, \
+      doi:10.1017/CBO9780511526039.005" := by
+  simp [co1Presentation]
+
+/-- The generator convention recorded for `Co₁`, fixing which involution each relator index names
+and how a Coxeter path decodes to relations. -/
+@[simp]
+theorem co1Presentation_generatorConvention :
+    co1Presentation.generatorConvention = "The source generators are indexed alphabetically in \
+      Lean: indices 0 through 7 are a,b,c,d,e,f,g,h. This is a relabeling of the GPL decoder's \
+      first-occurrence map b,h,a,c,d,f,e,g and preserves every named relation. A Coxeter path \
+      declares each node to be an involution, a labeled edge x-m-y declares (x*y)^m = 1, and an \
+      omitted edge declares (x*y)^2 = 1. An equality x = y compiles to x^-1*y, and products are \
+      read left to right." := by
+  simp [co1Presentation]
+
+/-- The transcription notes recorded for `Co₁`. -/
+@[simp]
+theorem co1Presentation_transcriptionNotes :
+    co1Presentation.transcriptionNotes = "Expand the paths b4h3a3b5c3d3f4c3e4a, b4g4f, and e6f6h \
+      to eight square relations, thirteen labeled-edge relations, and fifteen omitted-edge \
+      relations. Append the nine words in presdef[3], interpreting each equality as left-hand \
+      inverse times right-hand side, and reindex the named generators alphabetically. The \
+      expected relator count and total length are derived from this exact expansion. A separate \
+      source-to-Lean read-through remains an S1 review obligation." := by
+  simp [co1Presentation]
+
+/-- The generator count `Co₁`'s source states. With
+`TauCeti.Sporadic.co1Presentation_generatorNames` this is what makes
+`TauCeti.Sporadic.co1Presentation_matchesMetadata` an equation between two visible numbers. -/
+@[simp]
+theorem co1Presentation_expectedGeneratorCount : co1Presentation.expectedGeneratorCount = 8 := by
+  simp [co1Presentation]
+
+/-- The relator count `Co₁`'s source states; see
+`TauCeti.Sporadic.co1Presentation_expectedGeneratorCount`. -/
+@[simp]
+theorem co1Presentation_expectedRelatorCount : co1Presentation.expectedRelatorCount = 45 := by
+  simp [co1Presentation]
+
+/-- The relator expressions transcribed for `Co₁`, with their generator indices written out and the
+three private relator lists of this file concatenated.
+
+The row's body is sealed, so this is the equation that characterizes it: with
+`TauCeti.GroupPresentation.relators_def` it determines the compiled words, and with
+`TauCeti.GroupPresentation.mem_relatorSet_iff` it determines the relations defining
+`TauCeti.GroupPresentation.Group`, so a consumer never has to unfold the row. Indices `0` through
+`7` are the involutions `a` through `h`, and the bounds come from
+`TauCeti.Sporadic.co1Presentation_generatorNames`. -/
+@[simp]
+theorem co1Presentation_transcribed :
+    co1Presentation.transcribed =
+      [ -- a², b², c², d², e², f², g², h²
+        .pow (.gen ⟨0, by simp⟩) 2,
+        .pow (.gen ⟨1, by simp⟩) 2,
+        .pow (.gen ⟨2, by simp⟩) 2,
+        .pow (.gen ⟨3, by simp⟩) 2,
+        .pow (.gen ⟨4, by simp⟩) 2,
+        .pow (.gen ⟨5, by simp⟩) 2,
+        .pow (.gen ⟨6, by simp⟩) 2,
+        .pow (.gen ⟨7, by simp⟩) 2,
+        -- the thirteen labeled edges
+        .pow (.gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩) 3,
+        .pow (.gen ⟨0, by simp⟩ ⬝ .gen ⟨4, by simp⟩) 4,
+        .pow (.gen ⟨0, by simp⟩ ⬝ .gen ⟨7, by simp⟩) 3,
+        .pow (.gen ⟨1, by simp⟩ ⬝ .gen ⟨2, by simp⟩) 5,
+        .pow (.gen ⟨1, by simp⟩ ⬝ .gen ⟨6, by simp⟩) 4,
+        .pow (.gen ⟨1, by simp⟩ ⬝ .gen ⟨7, by simp⟩) 4,
+        .pow (.gen ⟨2, by simp⟩ ⬝ .gen ⟨3, by simp⟩) 3,
+        .pow (.gen ⟨2, by simp⟩ ⬝ .gen ⟨4, by simp⟩) 3,
+        .pow (.gen ⟨2, by simp⟩ ⬝ .gen ⟨5, by simp⟩) 4,
+        .pow (.gen ⟨3, by simp⟩ ⬝ .gen ⟨5, by simp⟩) 3,
+        .pow (.gen ⟨4, by simp⟩ ⬝ .gen ⟨5, by simp⟩) 6,
+        .pow (.gen ⟨5, by simp⟩ ⬝ .gen ⟨6, by simp⟩) 4,
+        .pow (.gen ⟨5, by simp⟩ ⬝ .gen ⟨7, by simp⟩) 6,
+        -- the fifteen omitted edges
+        .pow (.gen ⟨0, by simp⟩ ⬝ .gen ⟨2, by simp⟩) 2,
+        .pow (.gen ⟨0, by simp⟩ ⬝ .gen ⟨3, by simp⟩) 2,
+        .pow (.gen ⟨0, by simp⟩ ⬝ .gen ⟨5, by simp⟩) 2,
+        .pow (.gen ⟨0, by simp⟩ ⬝ .gen ⟨6, by simp⟩) 2,
+        .pow (.gen ⟨1, by simp⟩ ⬝ .gen ⟨3, by simp⟩) 2,
+        .pow (.gen ⟨1, by simp⟩ ⬝ .gen ⟨4, by simp⟩) 2,
+        .pow (.gen ⟨1, by simp⟩ ⬝ .gen ⟨5, by simp⟩) 2,
+        .pow (.gen ⟨2, by simp⟩ ⬝ .gen ⟨6, by simp⟩) 2,
+        .pow (.gen ⟨2, by simp⟩ ⬝ .gen ⟨7, by simp⟩) 2,
+        .pow (.gen ⟨3, by simp⟩ ⬝ .gen ⟨4, by simp⟩) 2,
+        .pow (.gen ⟨3, by simp⟩ ⬝ .gen ⟨6, by simp⟩) 2,
+        .pow (.gen ⟨3, by simp⟩ ⬝ .gen ⟨7, by simp⟩) 2,
+        .pow (.gen ⟨4, by simp⟩ ⬝ .gen ⟨6, by simp⟩) 2,
+        .pow (.gen ⟨4, by simp⟩ ⬝ .gen ⟨7, by simp⟩) 2,
+        .pow (.gen ⟨6, by simp⟩ ⬝ .gen ⟨7, by simp⟩) 2,
+        -- the nine words following the Coxeter paths
+        .inv (.gen ⟨0, by simp⟩) ⬝ .pow (.gen ⟨2, by simp⟩ ⬝ .gen ⟨5, by simp⟩) 2,
+        .inv (.gen ⟨4, by simp⟩) ⬝ .pow (.gen ⟨1, by simp⟩ ⬝ .gen ⟨6, by simp⟩) 2,
+        .inv (.gen ⟨1, by simp⟩) ⬝ .pow (.gen ⟨4, by simp⟩ ⬝ .gen ⟨5, by simp⟩) 3,
+        .inv (.gen ⟨3, by simp⟩) ⬝ .pow (.gen ⟨1, by simp⟩ ⬝ .gen ⟨7, by simp⟩) 2,
+        .inv (.gen ⟨3, by simp⟩) ⬝
+          .pow (.gen ⟨4, by simp⟩ ⬝ .gen ⟨0, by simp⟩ ⬝ .gen ⟨7, by simp⟩) 3,
+        .pow (.gen ⟨0, by simp⟩ ⬝ .gen ⟨3, by simp⟩ ⬝ .gen ⟨5, by simp⟩ ⬝ .gen ⟨7, by simp⟩) 3,
+        .pow (.gen ⟨1, by simp⟩ ⬝ .gen ⟨0, by simp⟩ ⬝ .gen ⟨4, by simp⟩ ⬝ .gen ⟨5, by simp⟩ ⬝
+          .gen ⟨6, by simp⟩) 3,
+        .pow (.gen ⟨2, by simp⟩ ⬝ .gen ⟨4, by simp⟩ ⬝ .gen ⟨5, by simp⟩) 7,
+        .pow (.gen ⟨0, by simp⟩ ⬝ .gen ⟨3, by simp⟩ ⬝ .gen ⟨4, by simp⟩ ⬝ .gen ⟨5, by simp⟩ ⬝
+          .gen ⟨2, by simp⟩ ⬝ .gen ⟨4, by simp⟩ ⬝ .gen ⟨5, by simp⟩ ⬝ .gen ⟨6, by simp⟩ ⬝
+          .gen ⟨7, by simp⟩) 39 ] := by
+  simp [co1Presentation, co1NodeAndEdgeRelators, co1NonedgeRelators, co1AdditionalRelators]
+
 /-- The generator and relator counts recorded for `Co₁` agree with the transcribed data. -/
 theorem co1Presentation_matchesMetadata : co1Presentation.matchesMetadata := by
   decide
 
-/-- The compiled relators of the `Co₁` presentation contain `611` signed letters in total. -/
+/-- The lengths of the forty-five compiled relator words for `Co₁`, in the order in which the three
+Coxeter paths and the nine trailing words are decoded.
+
+Reading the counts off one relator at a time is what lets a reviewer locate a discrepancy, rather
+than only observe one in the total of `TauCeti.Sporadic.co1Presentation_totalLength`, which sums
+exactly this list. The lengths are computed through `TauCeti.Relator.length_toWord`, which
+multiplies rather than repeats, so the thirty-ninth power at the end never has to be expanded. -/
+theorem co1Presentation_map_length_relators :
+    co1Presentation.relators.map List.length =
+      [2, 2, 2, 2, 2, 2, 2, 2,
+       6, 8, 6, 10, 8, 8, 6, 6, 8, 6, 12, 8, 12,
+       4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+       5, 5, 7, 5, 10, 12, 15, 21, 351] := by
+  simp only [GroupPresentation.relators_def, co1Presentation, co1NodeAndEdgeRelators,
+    co1NonedgeRelators, co1AdditionalRelators, List.map_cons, List.map_nil,
+    Relator.length_toWord, Relator.length_gen, Relator.length_inv, Relator.length_mul,
+    Relator.length_pow, List.cons_append, List.nil_append]
+
+/-- The compiled relators of the `Co₁` presentation contain `611` signed letters in total: the sum
+of the per-relator lengths of `TauCeti.Sporadic.co1Presentation_map_length_relators`. -/
 theorem co1Presentation_totalLength : co1Presentation.totalLength = 611 := by
-  rw [GroupPresentation.totalLength_def, GroupPresentation.relators_def]
-  simp only [co1Presentation, co1NodeAndEdgeRelators, co1NonedgeRelators, co1AdditionalRelators,
-    List.map_append, List.sum_append, Relator.length_toWord, Relator.length_gen, Relator.length_inv,
-    Relator.length_mul, Relator.length_pow, List.map_cons, List.map_nil, List.sum_cons,
-    List.sum_nil]
-  norm_num
+  rw [GroupPresentation.totalLength_def, co1Presentation_map_length_relators]
+  decide
 
 /-- The involution and labeled-edge relators compile to cyclically reduced words. -/
 private theorem isCyclicallyReduced_toWord_of_mem_co1NodeAndEdgeRelators :
@@ -214,9 +372,10 @@ private theorem isCyclicallyReduced_toWord_of_mem_co1Transcribed :
     · exact isCyclicallyReduced_toWord_of_mem_co1NonedgeRelators r h
   · exact isCyclicallyReduced_toWord_of_mem_co1AdditionalRelators r h
 
-/-- Every compiled `Co₁` relator is cyclically reduced, so the letter count recorded by
+/-- Every compiled `Co₁` relator is cyclically reduced, hence by
+`FreeGroup.IsCyclicallyReduced.isReduced` freely reduced, so the letter count recorded by
 `TauCeti.Sporadic.co1Presentation_totalLength` is comparable with a published presentation length,
-which is measured after free and cyclic reduction of each relator. -/
+which is normally measured on freely reduced relators. -/
 theorem co1Presentation_relatorsCyclicallyReduced :
     co1Presentation.relatorsCyclicallyReduced := by
   rw [GroupPresentation.relatorsCyclicallyReduced_iff, GroupPresentation.relators_def]

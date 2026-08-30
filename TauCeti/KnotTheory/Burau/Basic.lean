@@ -49,9 +49,10 @@ vector is fixed (`TauCeti.KnotTheory.burau_mulVec_one`), and the row vector
 `(1, t, …, t ^ (n - 1))` is fixed (`TauCeti.KnotTheory.vecMul_burau_geom`). The kernel of the
 latter covector is therefore an invariant submodule, and for `2 ≤ n` over a nontrivial ring it is
 a proper nonzero one, which is the reducibility that the *reduced* Burau representation — the
-restriction to that kernel — is carved out of. Neither that restriction nor its comparison with
-the Seifert-matrix Alexander polynomial of `TauCeti/KnotTheory/Alexander.lean` is built here; both
-need a basis of that kernel and the closure of a braid to a link, and are the next steps.
+restriction to that kernel — is carved out of. The restriction and an explicit basis of its kernel
+are constructed in `TauCeti.KnotTheory.Burau.Reduced`; its comparison with the Seifert-matrix
+Alexander polynomial of `TauCeti/KnotTheory/Alexander.lean` still needs the closure of a braid to
+a link.
 
 This is the Burau route of the "knot polynomials, each a project in itself, with several algorithms
 apiece" bullet of Layer 4 ("knot theory, done properly") of the GeometricTopology roadmap.
