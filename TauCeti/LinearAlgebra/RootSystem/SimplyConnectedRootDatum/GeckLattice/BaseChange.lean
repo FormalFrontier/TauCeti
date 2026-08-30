@@ -289,6 +289,47 @@ theorem quotientPointsHom_geckBaseChangePointsMulEquiv_symm (B : CommAlgCat.{v} 
   rw [MulEquiv.apply_symm_apply] at h
   rw [h, MulEquiv.symm_apply_apply]
 
+/-- **The identification of the base-changed Geck carrier's points is natural in the value
+algebra.** A morphism `χ : B ⟶ C` of value `A`-algebras acts on the specialized carrier's points
+by `HopfAlgebra.mapPoints` and on the Geck points by `geckPointsMap` along the same morphism with
+its scalars restricted to `ℤ`, and the equivalence intertwines the two. A consumer can therefore
+use it functorially without unfolding its composite implementation. -/
+@[simp]
+theorem geckBaseChangePointsMulEquiv_mapPoints {B C : CommAlgCat.{v} A} (χ : B ⟶ C)
+    (q : HopfAlgebra.points (R := A)
+      (H := CommHopfAlgCat.quotient
+        (GeneralLinear.coordinateHopfAlgebra A (t.geckDim ht))
+        (t.geckBaseChangeDefiningIdeal ht A)) B) :
+    t.geckBaseChangePointsMulEquiv ht A C
+        (HopfAlgebra.mapPoints
+          (H := CommHopfAlgCat.quotient
+            (GeneralLinear.coordinateHopfAlgebra A (t.geckDim ht))
+            (t.geckBaseChangeDefiningIdeal ht A)) χ q) =
+      t.geckPointsMap ht
+        ((TauCeti.CommAlgCat.restrictScalars (algebraMap ℤ A)).map χ).hom.toRingHom
+        (t.geckBaseChangePointsMulEquiv ht A B q) := by
+  -- Transporting along the coordinate isomorphism is a pre-composition, so it commutes with the
+  -- post-composition by `χ` that moves a point to the larger value algebra.
+  have h : (AlgHom.mapDomainMulEquiv (A := C)
+        (CommHopfAlgCat.ofIso (t.geckBaseChangeCoordinateIso ht A).symm))
+        (HopfAlgebra.mapPoints
+          (H := CommHopfAlgCat.quotient
+            (GeneralLinear.coordinateHopfAlgebra A (t.geckDim ht))
+            (t.geckBaseChangeDefiningIdeal ht A)) χ q) =
+      HopfAlgebra.mapPoints
+        (H := CommHopfAlgCat.baseChange (K := A)
+          (CommHopfAlgCat.quotient (GeneralLinear.coordinateHopfAlgebra ℤ (t.geckDim ht))
+            (t.geckDefiningIdeal ht))) χ
+        ((AlgHom.mapDomainMulEquiv (A := B)
+          (CommHopfAlgCat.ofIso (t.geckBaseChangeCoordinateIso ht A).symm)) q) :=
+    DFunLike.congr_fun
+      (AlgHom.mapValue_mapDomain
+        (CommHopfAlgCat.ofIso (t.geckBaseChangeCoordinateIso ht A).symm).toBialgHom χ.hom) q
+  simp only [geckBaseChangePointsMulEquiv, MulEquiv.trans_apply, h]
+  rw [CommHopfAlgCat.baseChangePointsMulEquiv_mapValue,
+    t.geckPointsMulEquiv_mapPoints ht
+      ((TauCeti.CommAlgCat.restrictScalars (algebraMap ℤ A)).map χ)]
+
 /-- The integral `i`th root-subgroup coordinate map, with source expressed using the named Geck
 defining ideal. -/
 noncomputable def geckRootSubgroupIntegralCoordinateMap
