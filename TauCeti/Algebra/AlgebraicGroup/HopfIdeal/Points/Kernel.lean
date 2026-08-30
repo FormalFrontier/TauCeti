@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Central
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Points.Basic
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Quotient.Kernel.Basic
 
@@ -24,6 +25,8 @@ functors.
 
 * `TauCeti.CommHopfAlgCat.mapPointsFunctor_app_eq_one_iff`: the points-level kernel
   property.
+* `TauCeti.CommHopfAlgCat.isCentralPoint_of_mapPoints_eq_one_of_isCentral_kernelHopfIdeal`:
+  a point in a central kernel is central.
 -/
 
 public section
@@ -32,11 +35,11 @@ open CategoryTheory WithConv
 
 namespace TauCeti
 
-universe u w
+universe u v w
 
 namespace CommHopfAlgCat
 
-variable {R : Type u} [CommRing R] {H K : _root_.CommHopfAlgCat.{u} R}
+variable {R : Type u} [CommRing R] {H K : _root_.CommHopfAlgCat.{v} R}
 
 /-- Kernel semantics on functors of points: for every commutative `R`-algebra `A`, an
 `A`-point of the source is sent to the unit point exactly when it lies in the subgroup of
@@ -71,6 +74,15 @@ theorem mapPointsFunctor_app_eq_one_iff (f : H ⟶ K) (A : CommAlgCat.{w} R)
     ext a
     simp only [AlgHom.comp_apply, Algebra.ofId_apply, Bialgebra.counitAlgHom_apply]
     exact (AlgHom.convOne_apply a).symm
+
+/-- Every point in the kernel of a morphism with central kernel Hopf ideal is central in its
+source group. -/
+theorem isCentralPoint_of_mapPoints_eq_one_of_isCentral_kernelHopfIdeal
+    {f : H ⟶ K} (hf : (kernelHopfIdeal f).IsCentral) (A : CommAlgCat.{v} R)
+    (g : HopfAlgebra.points (R := R) (H := K) A)
+    (hg : (mapPointsFunctor f).app A g = 1) : HopfAlgebra.IsCentralPoint g := by
+  apply isCentralPoint_of_mem_quotientPointsSubgroup K (kernelHopfIdeal f) hf A
+  exact (mapPointsFunctor_app_eq_one_iff f A g).mp hg
 
 end CommHopfAlgCat
 
