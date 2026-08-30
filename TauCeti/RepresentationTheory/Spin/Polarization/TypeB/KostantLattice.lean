@@ -98,6 +98,7 @@ noncomputable def typeBSpinRep :
 
 /-- A Lie generator acts in the enveloping-algebra representation through its quadratic
 Clifford element. -/
+@[simp]
 theorem typeBSpinRep_ι (x : LieAlgebra.Orthogonal.typeB (Fin (n + 1)) ℚ) :
     P.typeBSpinRep b z hz (_root_.UniversalEnvelopingAlgebra.ι ℚ x) =
       spinAction Q P (P.typeBQuadraticEquiv b z hz x : CliffordAlgebra Q) := by
@@ -190,11 +191,14 @@ theorem typeBSpinRep_rootGenerator_apply_mem_integralLattice
 /-! ## Cartan binomial operators -/
 
 /-- The integral eigenvalue of a numbered simple coroot on an exterior-basis vector. -/
-private def typeBSpinCorootWeight (s : Finset (Fin (n + 1))) (i : Fin (n + 1)) : ℤ :=
+def typeBSpinCorootWeight (s : Finset (Fin (n + 1))) (i : Fin (n + 1)) : ℤ :=
   Fin.lastCases (if Fin.last n ∈ s then 1 else -1)
     (fun j ↦ (if j.castSucc ∈ s then 1 else 0) - if j.succ ∈ s then 1 else 0) i
 
-private theorem typeBSpinRep_coroot_exteriorBasis
+/-- A numbered simple coroot acts diagonally on the exterior basis, with integral eigenvalue
+`typeBSpinCorootWeight`. -/
+@[simp]
+theorem typeBSpinRep_coroot_exteriorBasis
     (i : Fin (n + 1)) (s : Finset (Fin (n + 1))) :
     P.typeBSpinRep b z hz
         (_root_.UniversalEnvelopingAlgebra.ι ℚ (typeBSimpleCorootGenerator i))
@@ -225,9 +229,7 @@ theorem typeBSpinRep_ringChoose_coroot_apply_mem_integralLattice
     ((Ring.choose (P.typeBSpinRep b z hz
       (_root_.UniversalEnvelopingAlgebra.ι ℚ (typeBSimpleCorootGenerator i))) m).restrictScalars ℤ)
     (fun s ↦ ?_) hv
-  change (Ring.choose (P.typeBSpinRep b z hz
-      (_root_.UniversalEnvelopingAlgebra.ι ℚ (typeBSimpleCorootGenerator i))) m)
-      (b.ExteriorAlgebra s) ∈ TauCeti.ExteriorAlgebra.integralLattice b
+  rw [LinearMap.restrictScalars_apply]
   rw [TauCeti.ringChoose_end_apply_of_apply_eq_smul
       (P.typeBSpinRep_coroot_exteriorBasis b z hz i s),
     Ring.choose_intCast, Int.cast_smul_eq_zsmul ℚ]
