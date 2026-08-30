@@ -218,10 +218,8 @@ theorem linearEquiv_mk {q₁ : Q₁ →ₗ[A] Q₀} (e₀ : P₀ ≃ₗ[A] Q₀)
 
 /-- Transport along the identity presentation equivalences is the identity. -/
 @[simp]
-theorem linearEquiv_refl
-    (hsquare : (LinearEquiv.refl A P₀).toLinearMap ∘ₗ p₁ =
-      p₁ ∘ₗ (LinearEquiv.refl A P₁).toLinearMap) :
-    linearEquiv (LinearEquiv.refl A P₀) (LinearEquiv.refl A P₁) hsquare =
+theorem linearEquiv_refl :
+    linearEquiv (LinearEquiv.refl A P₀) (LinearEquiv.refl A P₁) (by simp) =
       LinearEquiv.refl Aᵐᵒᵖ (AuslanderReitenTranspose p₁) := by
   apply LinearEquiv.ext
   intro x
@@ -239,11 +237,15 @@ theorem linearEquiv_trans {q₁ : Q₁ →ₗ[A] Q₀}
     {r₁ : R₁ →ₗ[A] R₀} (e₀ : P₀ ≃ₗ[A] Q₀) (e₁ : P₁ ≃ₗ[A] Q₁)
     (f₀ : Q₀ ≃ₗ[A] R₀) (f₁ : Q₁ ≃ₗ[A] R₁)
     (he : e₀.toLinearMap ∘ₗ p₁ = q₁ ∘ₗ e₁.toLinearMap)
-    (hf : f₀.toLinearMap ∘ₗ q₁ = r₁ ∘ₗ f₁.toLinearMap)
-    (htrans : (e₀.trans f₀).toLinearMap ∘ₗ p₁ =
-      r₁ ∘ₗ (e₁.trans f₁).toLinearMap) :
+    (hf : f₀.toLinearMap ∘ₗ q₁ = r₁ ∘ₗ f₁.toLinearMap) :
     (linearEquiv e₀ e₁ he).trans (linearEquiv f₀ f₁ hf) =
-      linearEquiv (e₀.trans f₀) (e₁.trans f₁) htrans := by
+      linearEquiv (e₀.trans f₀) (e₁.trans f₁)
+        (by
+          ext x
+          have h₀ := LinearMap.congr_fun he x
+          have h₁ := LinearMap.congr_fun hf (e₁ x)
+          simp only [LinearMap.comp_apply, LinearEquiv.coe_coe] at h₀ h₁ ⊢
+          rw [LinearEquiv.trans_apply, LinearEquiv.trans_apply, h₀, h₁]) := by
   apply LinearEquiv.ext
   intro x
   induction x using induction_on p₁ with
@@ -257,9 +259,15 @@ theorem linearEquiv_trans {q₁ : Q₁ →ₗ[A] Q₀}
 /-- The inverse of transport is transport along the inverse presentation equivalences. -/
 theorem linearEquiv_symm {q₁ : Q₁ →ₗ[A] Q₀} (e₀ : P₀ ≃ₗ[A] Q₀)
     (e₁ : P₁ ≃ₗ[A] Q₁)
-    (hsquare : e₀.toLinearMap ∘ₗ p₁ = q₁ ∘ₗ e₁.toLinearMap)
-    (hsymm : e₀.symm.toLinearMap ∘ₗ q₁ = p₁ ∘ₗ e₁.symm.toLinearMap) :
-    (linearEquiv e₀ e₁ hsquare).symm = linearEquiv e₀.symm e₁.symm hsymm := by
+    (hsquare : e₀.toLinearMap ∘ₗ p₁ = q₁ ∘ₗ e₁.toLinearMap) :
+    (linearEquiv e₀ e₁ hsquare).symm =
+      linearEquiv e₀.symm e₁.symm
+        (by
+          ext x
+          have h := LinearMap.congr_fun hsquare (e₁.symm x)
+          simp only [LinearMap.comp_apply, LinearEquiv.coe_coe,
+            LinearEquiv.apply_symm_apply] at h ⊢
+          rw [← h, LinearEquiv.symm_apply_apply]) := by
   apply LinearEquiv.ext
   intro x
   induction x using induction_on q₁ with
