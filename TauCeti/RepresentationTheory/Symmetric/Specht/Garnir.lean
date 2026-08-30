@@ -90,7 +90,7 @@ open scoped BigOperators
 
 /-- Classical decidability of membership in the subgroup of permutations fixing everything outside
 a finite set, used to form its finite sum. -/
-noncomputable local instance {α : Type*} (X : Finset α) :
+noncomputable local instance decidablePredMemFixingSubgroupCompl {α : Type*} (X : Finset α) :
     DecidablePred (· ∈ fixingSubgroup (Equiv.Perm α) ((X : Set α)ᶜ)) :=
   Classical.decPred _
 
