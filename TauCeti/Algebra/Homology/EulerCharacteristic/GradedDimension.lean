@@ -175,14 +175,14 @@ theorem coeff_gradedDimension (h : HasFiniteLaurentSupport k V) (j : ℤ) :
     (gradedDimension k V h).coeff j = Module.finrank k (V j) := by
   rw [gradedDimension, AddMonoidAlgebra.coeff_ofCoeff, Finsupp.ofSupportFinite_coe]
 
-/-- The graded dimension of a translated family is multiplied by the corresponding Laurent
-variable. -/
+/-- The graded dimension of a translated family is multiplied by the Laurent monomial `T (-r)`. -/
 theorem gradedDimension_reindex_add (h : HasFiniteLaurentSupport k V) (r : ℤ) :
     gradedDimension k (fun j => V (j + r)) (h.reindex_add r) =
       T (-r) * gradedDimension k V h := by
   ext j
   simp only [T, coeff_gradedDimension, AddMonoidAlgebra.coeff_single_mul_apply, one_mul]
-  rw [show j + r = - -r + j by ring]
+  have harg : j + r = - -r + j := by omega
+  rw [harg]
 
 /-- The support of the graded dimension is exactly the set of degrees with nonzero dimension. -/
 theorem support_gradedDimension (h : HasFiniteLaurentSupport k V) :
@@ -288,15 +288,16 @@ theorem coeff_targetShiftGradedDimension (h : HasFiniteLaurentSupport k V) (j : 
     (targetShiftGradedDimension k V h).coeff j = Module.finrank k (V (-j)) := by
   simp [targetShiftGradedDimension]
 
-/-- The target-shift dimension of a translated family is multiplied by the corresponding Laurent
-variable.  This is the coefficient-level reindexing used by graded Euler forms. -/
+/-- The target-shift dimension of a translated family is multiplied by the Laurent monomial `T r`.
+This is the coefficient-level reindexing used by graded Euler forms. -/
 theorem targetShiftGradedDimension_reindex_add (h : HasFiniteLaurentSupport k V) (r : ℤ) :
     targetShiftGradedDimension k (fun j => V (j + r)) (h.reindex_add r) =
       T r * targetShiftGradedDimension k V h := by
   ext j
   simp only [T, coeff_targetShiftGradedDimension,
     AddMonoidAlgebra.coeff_single_mul_apply, one_mul]
-  rw [show -j + r = -(-r + j) by ring]
+  have harg : -j + r = -(-r + j) := by omega
+  rw [harg]
 
 /-- The support of the target-shift graded dimension is the negation of the set of degrees with
 nonzero dimension. -/
