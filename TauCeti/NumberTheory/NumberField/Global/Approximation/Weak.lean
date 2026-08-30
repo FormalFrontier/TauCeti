@@ -78,15 +78,15 @@ private theorem finite_mixedAbsoluteValue_not_isEquiv_infinite
   intro h
   have hfinite : mixedAbsoluteValue (Sₑ := Sₑ) (Sinf := Sinf) (Sum.inl v) (2 : K) ≤
       mixedAbsoluteValue (Sₑ := Sₑ) (Sinf := Sinf) (Sum.inl v) 1 := by
-    rw [mixedAbsoluteValue, Valuation.toRealAbsoluteValue_le_iff]
-    rw [show (2 : K) = algebraMap (RingOfIntegers K) K 2 by
-      exact (map_ofNat (algebraMap (RingOfIntegers K) K) 2).symm, map_one]
+    rw [mixedAbsoluteValue, Valuation.toRealAbsoluteValue_le_iff, map_one,
+      ← map_ofNat (algebraMap (RingOfIntegers K) K) 2]
     exact v.1.valuation_le_one (K := K) 2
   have hinfinite : ¬mixedAbsoluteValue (Sₑ := Sₑ) (Sinf := Sinf) (Sum.inr w) (2 : K) ≤
       mixedAbsoluteValue (Sₑ := Sₑ) (Sinf := Sinf) (Sum.inr w) 1 := by
     have hw : (1 : ℝ) < w.1.1 (2 : K) := by
-      rw [← InfinitePlace.coe_apply]
-      exact (show 1 < w.1 ((2 : ℕ) : K) by rw [InfinitePlace.map_natCast]; norm_num)
+      rw [← InfinitePlace.coe_apply, ← Nat.cast_ofNat (R := K) (n := 2),
+        InfinitePlace.map_natCast]
+      norm_num
     simpa only [mixedAbsoluteValue, map_one, not_le] using hw
   exact hinfinite ((h (2 : K) 1).mp hfinite)
 
