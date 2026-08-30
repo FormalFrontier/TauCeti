@@ -152,7 +152,8 @@ theorem steinberg_simpleRootSubgroup (d : TypeALieIndex) (i : Fin d.1.rank)
     d.steinberg (d.simpleRootSubgroup i u) =
       d.simpleRootSubgroup (d.toGraphTwistedIndex.diagramPerm i)
         (Multiplicative.ofAdd (Multiplicative.toAdd u ^ d.1.fieldOrder)) := by
-  rcases d.exists_eq with ⟨rank, q, hvalid, rfl⟩ | ⟨rank, q, hvalid, rfl⟩
+  rcases d.exists_eq_ofA_or_exists_eq_ofTwistedA with
+    ⟨rank, q, hvalid, rfl⟩ | ⟨rank, q, hvalid, rfl⟩
   · rw [steinberg_ofA, simpleRootSubgroup_def, simpleRootSubgroup_def,
       SlStd.frobenius_rootSubgroupPoints, ValidLieTypeIndex.fieldOrder_eq_characteristic_pow,
       GraphTwistedIndex.diagramPerm_A, Equiv.Perm.one_apply]

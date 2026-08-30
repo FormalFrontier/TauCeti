@@ -554,7 +554,7 @@ abbrev ofTwistedA (rank : ℕ) (q : PrimePower) (hvalid : (LieTypeIndex.twistedA
 
 /-- Every type-A index is one of the two introduction forms. This is the eliminator matching `ofA`
 and `ofTwistedA`, so a consumer never repeats the case split over the other constructors. -/
-theorem exists_eq (d : TypeALieIndex) :
+theorem exists_eq_ofA_or_exists_eq_ofTwistedA (d : TypeALieIndex) :
     (∃ (rank : ℕ) (q : PrimePower) (hvalid : (LieTypeIndex.A rank q).Valid),
         d = ofA rank q hvalid) ∨
       ∃ (rank : ℕ) (q : PrimePower) (hvalid : (LieTypeIndex.twistedA rank q).Valid),
