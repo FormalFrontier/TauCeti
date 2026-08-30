@@ -310,6 +310,7 @@ private theorem coe_transvectionWeylElement_apply (hij : i ≠ j) (a b : n) :
 
 /-- The inverse of the Weyl representative for `εᵢ-εⱼ` is the representative for the
 opposite root `εⱼ-εᵢ`. -/
+@[simp]
 theorem transvectionWeylElement_inv (hij : i ≠ j) :
     (transvectionWeylElement (A := A) hij)⁻¹ = transvectionWeylElement hij.symm := by
   rw [inv_eq_iff_mul_eq_one]
@@ -363,6 +364,7 @@ theorem transvectionWeylElement_inv (hij : i ≠ j) :
 
 /-- Conjugation by the Weyl representative for `εᵢ-εⱼ` sends its own root subgroup to
 the opposite root subgroup and negates the parameter. -/
+@[simp]
 theorem transvectionWeylElement_mul_transvectionUnit_mul_inv_self (hij : i ≠ j) (c : A) :
     transvectionWeylElement hij * transvectionUnit hij c *
         (transvectionWeylElement hij)⁻¹ =
@@ -395,6 +397,7 @@ theorem transvectionWeylElement_mul_transvectionUnit_mul_inv_self (hij : i ≠ j
 
 /-- Conjugation by the Weyl representative for `εᵢ-εⱼ` sends the opposite root subgroup
 back to its root subgroup and negates the parameter. -/
+@[simp]
 theorem transvectionWeylElement_mul_transvectionUnit_mul_inv_symm (hij : i ≠ j) (c : A) :
     transvectionWeylElement hij * transvectionUnit hij.symm c *
         (transvectionWeylElement hij)⁻¹ =
@@ -427,6 +430,7 @@ theorem transvectionWeylElement_mul_transvectionUnit_mul_inv_symm (hij : i ≠ j
 
 /-- Conjugation by the Weyl representative exchanging `i` and `j` replaces the left index `j`
 of `xⱼₖ(c)` by `i`. -/
+@[simp]
 theorem transvectionWeylElement_mul_transvectionUnit_mul_inv_left
     (hij : i ≠ j) (hjk : j ≠ k) (hik : i ≠ k) (c : A) :
     transvectionWeylElement hij * transvectionUnit hjk c *
@@ -462,6 +466,7 @@ theorem transvectionWeylElement_mul_transvectionUnit_mul_inv_left
 
 /-- Conjugation by the Weyl representative exchanging `i` and `j` replaces the right index `j`
 of `xₖⱼ(c)` by `i`. -/
+@[simp]
 theorem transvectionWeylElement_mul_transvectionUnit_mul_inv_right
     (hij : i ≠ j) (hkj : k ≠ j) (hki : k ≠ i) (c : A) :
     transvectionWeylElement hij * transvectionUnit hkj c *
