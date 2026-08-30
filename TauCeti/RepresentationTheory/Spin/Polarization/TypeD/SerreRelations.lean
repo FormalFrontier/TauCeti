@@ -399,6 +399,19 @@ private instance instDecidableTypeDAdjacent (n : ℕ) (i j : Fin n) :
   unfold typeDAdjacent
   infer_instance
 
+private theorem not_typeDAdjacent_index_cases (i j : Fin n) (hij : ¬typeDAdjacent n i j) :
+      if (i : ℕ) + 1 < n then
+        if (j : ℕ) + 1 < n then
+          (i : ℕ) + 1 ≠ j ∧ (j : ℕ) + 1 ≠ i
+        else
+          (i : ℕ) + 3 ≠ n
+      else if (j : ℕ) + 1 < n then
+        (j : ℕ) + 3 ≠ n
+      else
+        True := by
+  unfold typeDAdjacent at hij
+  split_ifs <;> omega
+
 private theorem neg_typeDCartan_toNat (hn : 4 ≤ n) (i j : Fin n) :
     (-CartanMatrix.D n i j).toNat = if typeDAdjacent n i j then 1 else 0 := by
   classical
@@ -415,19 +428,51 @@ private theorem lie_typeDSimpleRootBivector_of_not_adjacent
   have hn1 : n - 1 + 1 = n := by omega
   have hn2 : n - 2 + 2 = n := by omega
   rw [P.typeDSimpleRootBivector_def b, P.typeDSimpleRootBivector_def b]
-  split <;> split <;> rw [lie_ι_mul_ι_ι_mul_ι]
-  all_goals
-    simp only [P.polar_W_eq_zero, P.polar_W'_eq_zero,
-      P.polar_dualVector, P.polar_dualVector_left, zero_smul, add_zero, sub_zero,
-      Fin.mk.injEq] at *
-  all_goals unfold typeDAdjacent at hij
-  all_goals split_ifs
-  all_goals try simp only [Fin.ext_iff] at *
-  all_goals try omega
-  all_goals simp only [zero_smul, one_smul, add_zero, zero_add, sub_zero]
-  all_goals apply P.ι_basis_mul_ι_basis_eq_zero_of_eq b
-  · exact Fin.ext_iff.mpr (by simp only; omega)
-  · exact Fin.ext_iff.mpr (by simp only; omega)
+  split
+  · rename_i hi
+    split
+    · rename_i hj
+      rw [lie_ι_mul_ι_ι_mul_ι]
+      have hindices := not_typeDAdjacent_index_cases i j hij
+      rw [ite_eq_left hi, ite_eq_left hj] at hindices
+      simp only [P.polar_W_eq_zero, P.polar_W'_eq_zero,
+        P.polar_dualVector, zero_smul, add_zero, sub_zero]
+      split_ifs
+      all_goals simp only [Fin.ext_iff] at *
+      · omega
+      · omega
+      · omega
+      · simp only [zero_smul, sub_self]
+    · rename_i hj
+      rw [lie_ι_mul_ι_ι_mul_ι]
+      have hindices := not_typeDAdjacent_index_cases i j hij
+      rw [ite_eq_left hi, ite_eq_right hj] at hindices
+      simp only [P.polar_W_eq_zero, P.polar_dualVector, zero_smul, sub_zero, Fin.mk.injEq]
+      split_ifs with hnextLast hnextPenultimate
+      · omega
+      · omega
+      · simp only [one_smul, zero_smul, zero_add]
+        apply P.ι_basis_mul_ι_basis_eq_zero_of_eq b
+        exact Fin.ext_iff.mpr (by simp only; omega)
+      · simp only [zero_smul, add_zero]
+  · rename_i hi
+    split
+    · rename_i hj
+      rw [lie_ι_mul_ι_ι_mul_ι]
+      have hindices := not_typeDAdjacent_index_cases i j hij
+      rw [ite_eq_right hi, ite_eq_left hj] at hindices
+      simp only [P.polar_W_eq_zero, P.polar_dualVector, P.polar_dualVector_left,
+        zero_smul, sub_zero, Fin.mk.injEq]
+      split_ifs with hnextLast hnextPenultimate
+      · omega
+      · simp only [one_smul, zero_smul, zero_add, sub_zero]
+        apply P.ι_basis_mul_ι_basis_eq_zero_of_eq b
+        exact Fin.ext_iff.mpr (by simp only; omega)
+      · omega
+      · simp only [zero_smul, add_zero, sub_self]
+    · rename_i hj
+      rw [lie_ι_mul_ι_ι_mul_ι]
+      simp only [P.polar_W_eq_zero, zero_smul, add_zero, sub_self]
 
 private theorem lie_typeDSimpleNegativeRootBivector_of_not_adjacent
     (hn : 4 ≤ n) (i j : Fin n) (hij : ¬typeDAdjacent n i j) :
@@ -437,19 +482,52 @@ private theorem lie_typeDSimpleNegativeRootBivector_of_not_adjacent
   have hn2 : n - 2 + 2 = n := by omega
   rw [P.typeDSimpleNegativeRootBivector_def b,
     P.typeDSimpleNegativeRootBivector_def b]
-  split <;> split <;> rw [lie_ι_mul_ι_ι_mul_ι]
-  all_goals
-    simp only [P.polar_W_eq_zero, P.polar_W'_eq_zero,
-      P.polar_dualVector, P.polar_dualVector_left, zero_smul, add_zero, sub_zero,
-      Fin.mk.injEq] at *
-  all_goals unfold typeDAdjacent at hij
-  all_goals split_ifs
-  all_goals try simp only [Fin.ext_iff] at *
-  all_goals try omega
-  all_goals simp only [zero_smul, one_smul, sub_zero, zero_sub, neg_eq_zero]
-  all_goals apply P.ι_dualVector_mul_ι_dualVector_eq_zero_of_eq b
-  · exact Fin.ext_iff.mpr (by simp only; omega)
-  · exact Fin.ext_iff.mpr (by simp only; omega)
+  split
+  · rename_i hi
+    split
+    · rename_i hj
+      rw [lie_ι_mul_ι_ι_mul_ι]
+      have hindices := not_typeDAdjacent_index_cases i j hij
+      rw [ite_eq_left hi, ite_eq_left hj] at hindices
+      simp only [P.polar_W_eq_zero, P.polar_W'_eq_zero, P.polar_dualVector,
+        zero_smul, add_zero]
+      split_ifs
+      all_goals simp only [Fin.ext_iff] at *
+      · omega
+      · omega
+      · omega
+      · simp only [zero_smul, sub_self]
+    · rename_i hj
+      rw [lie_ι_mul_ι_ι_mul_ι]
+      have hindices := not_typeDAdjacent_index_cases i j hij
+      rw [ite_eq_left hi, ite_eq_right hj] at hindices
+      simp only [P.polar_W'_eq_zero, P.polar_dualVector, P.polar_dualVector_left,
+        zero_smul, add_zero, Fin.mk.injEq]
+      split_ifs with hnextLast hnextPenultimate
+      · omega
+      · simp only [one_smul, zero_smul, zero_sub, sub_zero, neg_eq_zero]
+        apply P.ι_dualVector_mul_ι_dualVector_eq_zero_of_eq b
+        exact Fin.ext_iff.mpr (by simp only; omega)
+      · omega
+      · simp only [zero_smul, sub_self]
+  · rename_i hi
+    split
+    · rename_i hj
+      rw [lie_ι_mul_ι_ι_mul_ι]
+      have hindices := not_typeDAdjacent_index_cases i j hij
+      rw [ite_eq_right hi, ite_eq_left hj] at hindices
+      simp only [P.polar_W'_eq_zero, P.polar_dualVector, zero_smul, add_zero,
+        sub_zero, Fin.mk.injEq]
+      split_ifs with hnextLast hnextPenultimate
+      · omega
+      · omega
+      · simp only [one_smul, zero_smul, zero_sub, neg_eq_zero]
+        apply P.ι_dualVector_mul_ι_dualVector_eq_zero_of_eq b
+        exact Fin.ext_iff.mpr (by simp only; omega)
+      · simp only [zero_smul, sub_self]
+    · rename_i hj
+      rw [lie_ι_mul_ι_ι_mul_ι]
+      simp only [P.polar_W'_eq_zero, zero_smul, add_zero, sub_self]
 
 /-- The higher Serre relation for the positive type-`D` spin representatives. -/
 @[simp]
