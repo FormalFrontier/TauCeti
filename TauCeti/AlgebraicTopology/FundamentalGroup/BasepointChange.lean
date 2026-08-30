@@ -43,10 +43,12 @@ public section
 
 namespace TauCeti
 
+namespace FundamentalGroup
+
 open CategoryTheory in
 /-- The inverse basepoint-change equivalence is represented by conjugation with the reverse path.
 This path-quotient formula is the interface for computations with the equivalence. -/
-lemma _root_.FundamentalGroup.fundamentalGroupMulEquivOfPath_symm_apply
+lemma fundamentalGroupMulEquivOfPath_symm_apply
     {X : Type*} [TopologicalSpace X] {x₀ x₁ : X}
     (γ : Path x₀ x₁) (g : _root_.FundamentalGroup X x₁) :
     (_root_.FundamentalGroup.fundamentalGroupMulEquivOfPath γ).symm g =
@@ -74,8 +76,6 @@ lemma _root_.FundamentalGroup.fundamentalGroupMulEquivOfPath_symm_apply
     simp only [FundamentalGroupoid.comp_eq]
   rw [hconj]
   exact (α.self_symm_conj g).symm
-
-namespace FundamentalGroup
 
 variable {X : Type*} [TopologicalSpace X] {x₀ x₁ : X}
 
