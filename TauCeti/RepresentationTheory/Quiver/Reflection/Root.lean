@@ -93,7 +93,7 @@ functors has a dimension vector of Tits norm one.**
 
 The induction is on the list of sinks. A stage that does not meet the vertex simple at its own
 sink preserves indecomposability and reflects the dimension vector, and neither reflecting the
-quiver (`TauCeti.titsForm_reflectAt`) nor reflecting the dimension vector
+quiver (`TauCeti.titsForm_reflect`) nor reflecting the dimension vector
 (`TauCeti.titsForm_vertexPreReflection`) changes the Tits form. The stage that does meet it finds
 the representation concentrated at that sink, hence a line there
 (`TauCeti.exists_ne_zero_span_eq_top_of_forall_subsingleton`), so its dimension vector is the
@@ -141,7 +141,7 @@ theorem titsForm_dimVector_eq_one_of_isZero_reflectionFunctorList :
           _ = @titsForm V (Quiver.reflectAt q i) fV (@instFintypeReflectHom V q hq i)
                 (fun j : V ↦
                   (@dimVector k V fld (Quiver.reflectAt q i) (reflectRep M hi) j : ℤ)) :=
-              (titsForm_reflectAt (V := V) q hq i _).symm
+              (titsForm_reflect (V := V) i _).symm
           _ = 1 := ih
       · -- The stage annihilates: the representation is the vertex simple at the sink.
         obtain ⟨y, hy, hspan⟩ := exists_ne_zero_span_eq_top_of_forall_subsingleton hi hM hsub
