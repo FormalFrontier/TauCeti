@@ -43,7 +43,7 @@ conformal maps, so this is new Lean formalization rather than a temporary shim.
 
 * `TauCeti.exists_pos_forall_mem_image_inter_ball_and_image_sdiff_closedBall` — **the transversal
   segment through a point of the image crosscut, with near side and far side on opposite sides.**
-* `TauCeti.mem_closure_image_inter_sphere_inter_setOf_im_pos_and_im_neg`
+* `TauCeti.mem_closure_image_inter_sphere_inter_setOf_im_pos_and_mem_closure_inter_setOf_im_neg`
   — **the image crosscut is
   adherent to each of its points from both sides of the transversal.**
 * `TauCeti.image_inter_ball_subset_filledHull_or_image_sdiff_closedBall_subset_filledHull` —
@@ -153,7 +153,7 @@ theorem exists_pos_forall_mem_image_inter_ball_and_image_sdiff_closedBall {U : S
 
 /-- **The image crosscut is adherent from both sides of the transversal segment.** In the
 transversal coordinate the crosscut has velocity `i` at the crossing point. -/
-theorem mem_closure_image_inter_sphere_inter_setOf_im_pos_and_im_neg
+theorem mem_closure_image_inter_sphere_inter_setOf_im_pos_and_mem_closure_inter_setOf_im_neg
     {U : Set ℂ}
     (hf : DifferentiableOn ℂ f U) (hU : IsOpen U)
     (hinj : InjOn f U) (hz₀ : z₀ ∈ U ∩ sphere ζ ρ) (hρ : 0 < ρ) :
@@ -275,8 +275,9 @@ theorem image_inter_ball_subset_filledHull_or_image_sdiff_closedBall_subset_fill
       (sub_ne_zero.mpr (Metric.ne_of_mem_sphere hz₀.2 hρ.ne'))
   obtain ⟨η, hη, hnear, hfar⟩ :=
     exists_pos_forall_mem_image_inter_ball_and_image_sdiff_closedBall hf hUo hinj hz₀ hρ
-  obtain ⟨hleft, hright⟩ := mem_closure_image_inter_sphere_inter_setOf_im_pos_and_im_neg
-    hf hUo hinj hz₀ hρ
+  obtain ⟨hleft, hright⟩ :=
+    mem_closure_image_inter_sphere_inter_setOf_im_pos_and_mem_closure_inter_setOf_im_neg
+      hf hUo hinj hz₀ hρ
   -- neither image piece meets `K`
   have hnearK : Disjoint (f '' (U ∩ ball ζ ρ)) K :=
     disjoint_image_of_subset_closure_image_inter_sphere_union_frontier_image
