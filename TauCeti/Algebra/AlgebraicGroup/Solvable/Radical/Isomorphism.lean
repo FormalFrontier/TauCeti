@@ -165,7 +165,7 @@ theorem solvableRadicalIsoOfIso_refl :
   apply Iso.ext
   apply solvableRadical_hom_ext
   rw [solvableRadicalCoordinateMap_comp_solvableRadicalIsoOfIso_hom]
-  rfl
+  simp only [Iso.refl_hom, Category.id_comp, Category.comp_id]
 
 /-- Isomorphisms induced on solvable radicals respect composition. -/
 @[simp]
