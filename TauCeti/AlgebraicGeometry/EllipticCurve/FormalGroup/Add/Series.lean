@@ -102,10 +102,6 @@ theorem constantCoeff_formalAdd : constantCoeff (formalAdd W) = 0 :=
   constantCoeff_subst_eq_zero (hasSubst_formalThirdRoot W)
     (fun _ ↦ constantCoeff_formalThirdRoot W) (constantCoeff_formalInverse W)
 
-/-- The addition series may be substituted into a one-variable power series. -/
-theorem hasSubst_formalAdd : HasSubst (fun _ : Unit ↦ formalAdd W) :=
-  hasSubst_of_constantCoeff_zero fun _ ↦ constantCoeff_formalAdd W
-
 /-- **The addition series is symmetric**: `F(z₂, z₁) = F(z₁, z₂)`. The chord through two points
 does not depend on their order, so the formal group law is commutative. -/
 @[simp]
