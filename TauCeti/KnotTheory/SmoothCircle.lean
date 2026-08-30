@@ -95,6 +95,7 @@ theorem circleReflection_inv : circleReflection⁻¹ = circleReflection := by
   exact inv_eq_of_mul_eq_one_right circleReflection_mul_self
 
 /-- Reflection conjugates rotation by `a` to rotation by `a⁻¹`. -/
+@[simp]
 theorem circleReflection_mul_circleRotationHom (a : Circle) :
     circleReflection * circleRotationHom a = circleRotationHom (a⁻¹) * circleReflection := by
   apply _root_.Diffeomorph.ext
@@ -146,6 +147,7 @@ theorem rotate_rotate (f : SmoothCircleEmbedding I M) (a b : Circle) :
   simp [mul_assoc]
 
 /-- Rotation does not change the image of a smooth circle embedding. -/
+@[simp]
 theorem range_rotate (f : SmoothCircleEmbedding I M) (a : Circle) :
     range (f.rotate a) = range f :=
   SmoothEmbedding.range_compDiffeomorph f (circleRotationHom a)
@@ -154,9 +156,8 @@ theorem range_rotate (f : SmoothCircleEmbedding I M) (a : Circle) :
 instance instMulActionCircle : MulAction Circle (SmoothCircleEmbedding I M) where
   smul a f := f.rotate a
   one_smul := rotate_one
-  mul_smul a b f := by
-    change f.rotate (a * b) = (f.rotate b).rotate a
-    rw [rotate_rotate, mul_comm]
+  mul_smul a b f :=
+    (congrArg (fun c => f.rotate c) (mul_comm a b)).trans (rotate_rotate f a b).symm
 
 /-- The circle action on smooth circle embeddings is rotation of the source. -/
 @[simp]
@@ -182,10 +183,12 @@ theorem reverse_reverse (f : SmoothCircleEmbedding I M) : f.reverse.reverse = f 
   simp
 
 /-- Orientation reversal does not change the image of a smooth circle embedding. -/
+@[simp]
 theorem range_reverse (f : SmoothCircleEmbedding I M) : range f.reverse = range f :=
   SmoothEmbedding.range_compDiffeomorph f circleReflection
 
 /-- Reversing after rotation by `a` is rotating the reversed presentation by `a⁻¹`. -/
+@[simp]
 theorem reverse_rotate (f : SmoothCircleEmbedding I M) (a : Circle) :
     (f.rotate a).reverse = f.reverse.rotate (a⁻¹) := by
   apply SmoothEmbedding.ext
