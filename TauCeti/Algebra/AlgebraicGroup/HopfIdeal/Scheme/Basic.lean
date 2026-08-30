@@ -42,8 +42,6 @@ in the same universe, which is reflected in all scheme-level declarations in thi
   `I ≤ J`.
 * `TauCeti.FiniteTypeCommHopfAlgCat.locallyOfFiniteType_quotientSpec`: a finite-type Hopf
   algebra has quotient group schemes locally of finite type over `Spec R`.
-* `TauCeti.FiniteTypeCommHopfAlgCat.locallyOfFiniteType_quotientSpec_of_objEq`: the same for a
-  Hopf algebra presented as the object underlying a finite-type package.
 
 ## References
 
@@ -177,14 +175,6 @@ instance locallyOfFiniteType_quotientSpec (H : FiniteTypeCommHopfAlgCat.{u, u} R
   change LocallyOfFiniteType
     (Spec (CommRingCat.of (H ⧸ I.toIdeal)) ↘ Spec (CommRingCat.of R))
   infer_instance
-
-/-- The same conclusion for a commutative Hopf algebra `B` presented as the object underlying a
-finite-type package, so that a Hopf ideal stated for `B` may be used directly. -/
-theorem locallyOfFiniteType_quotientSpec_of_objEq (H : FiniteTypeCommHopfAlgCat.{u, u} R)
-    {B : _root_.CommHopfAlgCat.{u} R} (h : H.obj = B) (I : HopfIdeal R B) :
-    LocallyOfFiniteType (CommHopfAlgCat.quotientSpec B I).X.hom := by
-  subst h
-  exact locallyOfFiniteType_quotientSpec H I
 
 end FiniteTypeCommHopfAlgCat
 
