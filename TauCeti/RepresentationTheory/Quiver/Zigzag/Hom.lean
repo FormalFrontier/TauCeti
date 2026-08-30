@@ -45,7 +45,8 @@ are `Hom(P_i{d}, P_j)`, equivalently `Hom(P_i, P_j{-d})`, not `Hom(P_i, P_j{d})`
 
 * `TauCeti.zigzagProjectiveHomOfDegreeEquivGradedCorner`: **the graded dictionary**
   `Hom(P_i{d}, P_j) ≃ₗ[k] (e_i Z e_j)_d`.
-* `TauCeti.zigzagProjectiveTargetShiftHomEquiv`: **the signed target-shift dictionary**
+* `TauCeti.zigzagProjectiveTargetShiftHomEquivIntegerGradedCorner`: **the signed target-shift
+  dictionary**
   `Hom(P_i, P_j{d}) ≃ₗ[k] (e_i Z e_j)_{-d}` for every `d : ℤ`.
 * `TauCeti.zigzagProjectiveHomOfDegree_eq_bot_of_three_le`: no homomorphism raises degree by three
   or more, so the graded homomorphism spaces are concentrated in degrees `0`, `1` and `2`.
@@ -331,19 +332,13 @@ theorem mem_zigzagProjectiveTargetShiftHom_iff_isHomogeneous {i j : V} {d : ℤ}
     φ ∈ zigzagProjectiveTargetShiftHom k G i j d ↔
       LinearMap.IsHomogeneous φ (zigzagProjectiveGrade k G i)
         (zigzagProjectiveGrade k G j) (-d) := by
-  rw [zigzagProjectiveTargetShiftHom, LinearMap.mem_homogeneousSubmodule]
-  constructor
-  · intro h
-    rw [LinearMap.isHomogeneous_def] at h ⊢
-    intro p x hx
-    have hpx := h p x hx
-    rw [zigzagProjectiveShiftGrade_apply] at hpx
-    simpa only [add_zero, sub_eq_add_neg] using hpx
-  · intro h
-    rw [LinearMap.isHomogeneous_def] at h ⊢
-    intro p x hx
-    rw [zigzagProjectiveShiftGrade_apply]
-    simpa only [add_zero, sub_eq_add_neg] using h p x hx
+  have hshift : zigzagProjectiveShiftGrade k G j d =
+      Graded.shift (zigzagProjectiveGrade k G j) (-d) := by
+    funext p
+    simp [Graded.shift_apply, sub_eq_add_neg]
+  rw [zigzagProjectiveTargetShiftHom, LinearMap.mem_homogeneousSubmodule, hshift,
+    LinearMap.isHomogeneous_shift_target_iff]
+  simp
 
 /-- The path-length grading restricted to a vertex projective, indexed by natural degrees. -/
 private noncomputable def zigzagProjectiveNatGrade (i : V) (d : ℕ) :
@@ -506,7 +501,7 @@ theorem zigzagProjectiveTargetShiftHom_eq_comap (i j : V) (d : ℤ) :
 
 /-- **The signed target-shift dictionary**: for every `d : ℤ`, the degree-zero maps
 `Hom(P_i, P_j{d})` are the degree-`(-d)` part of the corner `e_i Z e_j`. -/
-noncomputable def zigzagProjectiveTargetShiftHomEquiv (i j : V) (d : ℤ) :
+noncomputable def zigzagProjectiveTargetShiftHomEquivIntegerGradedCorner (i j : V) (d : ℤ) :
     zigzagProjectiveTargetShiftHom k G i j d ≃ₗ[k]
       zigzagIntegerGradedCorner k G i j (-d) :=
   (LinearEquiv.ofEq _ _ (zigzagProjectiveTargetShiftHom_eq_comap k G i j d)).trans
@@ -519,9 +514,9 @@ noncomputable def zigzagProjectiveTargetShiftHomEquiv (i j : V) (d : ℤ) :
 /-- The signed target-shift dictionary sends a homogeneous map to its value at the projective
 generator. -/
 @[simp]
-theorem coe_zigzagProjectiveTargetShiftHomEquiv_apply {i j : V} {d : ℤ}
+theorem coe_zigzagProjectiveTargetShiftHomEquivIntegerGradedCorner_apply {i j : V} {d : ℤ}
     (φ : zigzagProjectiveTargetShiftHom k G i j d) :
-    ((zigzagProjectiveTargetShiftHomEquiv k G i j d φ :
+    ((zigzagProjectiveTargetShiftHomEquivIntegerGradedCorner k G i j d φ :
         zigzagIntegerGradedCorner k G i j (-d)) : nonisolatedZigzagQuotient k G) =
       ((φ : zigzagProjective k G i →ₗ[nonisolatedZigzagQuotient k G]
         zigzagProjective k G j) (zigzagProjectiveGenerator k G i) :
@@ -537,9 +532,9 @@ theorem coe_zigzagProjectiveTargetShiftHomEquiv_apply {i j : V} {d : ℤ}
 /-- The inverse signed target-shift dictionary is right multiplication by the corresponding
 homogeneous corner element. -/
 @[simp]
-theorem coe_zigzagProjectiveTargetShiftHomEquiv_symm_apply {i j : V} {d : ℤ}
+theorem coe_zigzagProjectiveTargetShiftHomEquivIntegerGradedCorner_symm_apply {i j : V} {d : ℤ}
     (x : zigzagIntegerGradedCorner k G i j (-d)) (y : zigzagProjective k G i) :
-    ((((zigzagProjectiveTargetShiftHomEquiv k G i j d).symm x :
+    ((((zigzagProjectiveTargetShiftHomEquivIntegerGradedCorner k G i j d).symm x :
         zigzagProjectiveTargetShiftHom k G i j d) :
           zigzagProjective k G i →ₗ[nonisolatedZigzagQuotient k G]
             zigzagProjective k G j) y : nonisolatedZigzagQuotient k G) =
@@ -582,7 +577,7 @@ corner. -/
 theorem finrank_zigzagProjectiveTargetShiftHom (i j : V) (d : ℤ) :
     Module.finrank k (zigzagProjectiveTargetShiftHom k G i j d) =
       Module.finrank k (zigzagIntegerGradedCorner k G i j (-d)) :=
-  (zigzagProjectiveTargetShiftHomEquiv k G i j d).finrank_eq
+  (zigzagProjectiveTargetShiftHomEquivIntegerGradedCorner k G i j d).finrank_eq
 
 /-- The dimension of a homogeneous homomorphism space is the dimension of the corresponding graded
 corner. -/
