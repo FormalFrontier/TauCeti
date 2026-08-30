@@ -189,7 +189,8 @@ theorem dynkinType_valid : d.dynkinType.Valid := d.1.dynkinType_valid
 
 /-- The underlying Dynkin type of an unimodular exceptional index is one of the three unimodular
 exceptional types. -/
-theorem dynkinType_eq : d.dynkinType = .E8 ∨ d.dynkinType = .F4 ∨ d.dynkinType = .G2 :=
+theorem dynkinType_eq_E8_or_eq_F4_or_eq_G2 :
+    d.dynkinType = .E8 ∨ d.dynkinType = .F4 ∨ d.dynkinType = .G2 :=
   LieTypeIndex.dynkinType_of_isUnimodularExceptional d.2
 
 /-- **The Geck weights of an unimodular exceptional index span the whole character lattice.** This
@@ -197,7 +198,8 @@ is what makes its adjoint Geck carrier the simply connected form, and hence the 
 CFSG recipe asks for. -/
 theorem span_range_geckWeight_eq_top :
     Submodule.span ℤ (Set.range (d.dynkinType.geckWeight d.dynkinType_valid)) = ⊤ :=
-  (DynkinType.span_range_geckWeight_eq_top_iff _ d.dynkinType_valid).mpr d.dynkinType_eq
+  (DynkinType.span_range_geckWeight_eq_top_iff _ d.dynkinType_valid).mpr
+    d.dynkinType_eq_E8_or_eq_F4_or_eq_G2
 
 /-- **The pinned split torus is a closed subgroup scheme of the ambient carrier.** This is the
 torus half of the pinning, and it is exactly what the full character span of
@@ -261,6 +263,7 @@ theorem steinberg_def : d.steinberg =
 
 /-- The Steinberg map acts on the ambient group by raising every matrix entry to the `q`-th
 power. -/
+@[simp]
 theorem coe_steinberg_apply (g : AmbientGroup d)
     (r c : Fin (d.dynkinType.geckDim d.dynkinType_valid)) :
     ((d.steinberg g : Matrix.GeneralLinearGroup
@@ -289,7 +292,11 @@ theorem steinberg_rootSubgroup (i : Fin d.dynkinType.rank ⊕ Fin d.dynkinType.r
 /-- **A point of the ambient group is fixed by the Steinberg map exactly when all of its matrix
 entries lie in the field of definition.** Writing `𝔽_q` for `TauCeti.ValidLieTypeIndex.fixedField`,
 the copy of the field of `q` elements inside the algebraic closure, the fixed group `H_d` of
-milestone L3 is therefore the group of points of the pinned carrier whose entries lie in `𝔽_q`. -/
+milestone L3 is therefore the group of points of the pinned carrier whose entries lie in `𝔽_q`.
+
+This is deliberately not a `simp` lemma: `TauCeti.fixedSubgroup` is `MonoidHom.eqLocus` against the
+identity, so `simp` rewrites its left-hand side to `d.steinberg g = g` through the Mathlib
+`simp` lemma `MonoidHom.mem_eqLocus`, and the `simpNF` linter rejects the annotation. -/
 theorem mem_fixedSubgroup_steinberg_iff (g : AmbientGroup d) :
     g ∈ fixedSubgroup d.steinberg ↔
       ∀ r c, ((g : Matrix.GeneralLinearGroup
