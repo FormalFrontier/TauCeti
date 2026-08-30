@@ -28,6 +28,8 @@ the simply connected type-`B` and type-`D` Chevalley carriers.
 * `TauCeti.ExteriorAlgebra.integralLattice`: the `ℤ`-span of an exterior basis.
 * `TauCeti.ExteriorAlgebra.integralLatticeBasis`: the exterior basis restricted to `ℤ`.
 * `TauCeti.ExteriorAlgebra.integralLattice_eq_span`: it is the `ℤ`-span of the exterior basis.
+* `TauCeti.ExteriorAlgebra.map_mem_integralLattice`: a linear map preserves the lattice as soon as
+  it preserves it on the exterior basis.
 * `TauCeti.ExteriorAlgebra.mem_integralLattice_iff`: membership means that every exterior-basis
   coordinate is integral.
 * `TauCeti.ExteriorAlgebra.mul_mem_integralLattice`: the lattice is closed under multiplication.
@@ -69,6 +71,21 @@ theorem integralLattice_eq_span :
     integralLattice b = Submodule.span ℤ (Set.range b.ExteriorAlgebra) :=
   -- `(rfl)`, not `rfl`: the body of `integralLattice` is not `@[expose]`d.
   (rfl)
+
+/-- **A linear map preserves the coordinate integral lattice as soon as it does so on the exterior
+basis**, since that basis spans the lattice. This is the shared induction behind every
+lattice-preservation statement below. -/
+theorem map_mem_integralLattice
+    (f : _root_.ExteriorAlgebra ℚ M →ₗ[ℤ] _root_.ExteriorAlgebra ℚ M)
+    (hf : ∀ s : Finset ι, f (b.ExteriorAlgebra s) ∈ integralLattice b)
+    {x : _root_.ExteriorAlgebra ℚ M} (hx : x ∈ integralLattice b) :
+    f x ∈ integralLattice b := by
+  have hle : Submodule.span ℤ (Set.range b.ExteriorAlgebra) ≤
+      Submodule.comap f (integralLattice b) := by
+    rw [Submodule.span_le]
+    rintro _ ⟨s, rfl⟩
+    exact hf s
+  exact hle (by rwa [← integralLattice_eq_span])
 
 /-- An element belongs to the coordinate integral lattice exactly when all of its exterior-basis
 coordinates are integers. -/
@@ -160,24 +177,11 @@ theorem basis_mul_basis_mem_integralLattice (s t : Finset ι) :
 theorem mul_mem_integralLattice {x y : _root_.ExteriorAlgebra ℚ M}
     (hx : x ∈ integralLattice b) (hy : y ∈ integralLattice b) :
     x * y ∈ integralLattice b := by
-  rw [integralLattice] at hx hy ⊢
-  induction hx using Submodule.span_induction with
-  | mem x hx =>
-      obtain ⟨s, rfl⟩ := hx
-      induction hy using Submodule.span_induction with
-      | mem y hy =>
-          obtain ⟨t, rfl⟩ := hy
-          exact basis_mul_basis_mem_integralLattice b s t
-      | zero => simp
-      | add y z _ _ hy hz => simpa only [mul_add] using add_mem hy hz
-      | smul z y _ hy =>
-          simpa only [← Int.cast_smul_eq_zsmul ℚ, mul_smul_comm] using
-            Submodule.smul_mem _ z hy
-  | zero => simp
-  | add x z _ _ hx hz => simpa only [add_mul] using add_mem hx hz
-  | smul z x _ hx =>
-      simpa only [← Int.cast_smul_eq_zsmul ℚ, smul_mul_assoc] using
-        Submodule.smul_mem _ z hx
+  have hxt : ∀ t : Finset ι, x * b.ExteriorAlgebra t ∈ integralLattice b := fun t =>
+    map_mem_integralLattice b
+      ((LinearMap.mulRight ℚ (b.ExteriorAlgebra t)).restrictScalars ℤ)
+      (fun s => basis_mul_basis_mem_integralLattice b s t) hx
+  exact map_mem_integralLattice b ((LinearMap.mulLeft ℚ x).restrictScalars ℤ) hxt hy
 
 /-- Exterior multiplication by a basis vector preserves the coordinate integral lattice. -/
 theorem ι_basis_mul_mem_integralLattice (i : ι) {x : _root_.ExteriorAlgebra ℚ M}
@@ -193,17 +197,15 @@ exterior-basis vector by the sign of the parity of its index set. -/
 theorem involute_mem_integralLattice {x : _root_.ExteriorAlgebra ℚ M}
     (hx : x ∈ integralLattice b) :
     CliffordAlgebra.involute (Q := (0 : QuadraticForm ℚ M)) x ∈ integralLattice b := by
-  rw [integralLattice] at hx ⊢
-  induction hx using Submodule.span_induction with
-  | mem x hx =>
-      obtain ⟨s, rfl⟩ := hx
-      rw [involute_basis]
-      have hsign : ((-1 : ℚ) ^ s.card) = (((-1 : ℤ) ^ s.card : ℤ) : ℚ) := by push_cast; ring
-      rw [hsign, Int.cast_smul_eq_zsmul]
-      exact Submodule.smul_mem _ _ (Submodule.subset_span (Set.mem_range_self s))
-  | zero => rw [map_zero]; exact zero_mem _
-  | add x y _ _ hx hy => rw [map_add]; exact add_mem hx hy
-  | smul z x _ hx => rw [map_zsmul]; exact Submodule.smul_mem _ z hx
+  refine map_mem_integralLattice b
+    ((CliffordAlgebra.involute (Q := (0 : QuadraticForm ℚ M))).toLinearMap.restrictScalars ℤ)
+    (fun s => ?_) hx
+  -- Expose the algebra map underneath the restriction of scalars before computing it.
+  change CliffordAlgebra.involute (Q := (0 : QuadraticForm ℚ M)) (b.ExteriorAlgebra s) ∈ _
+  rw [involute_basis]
+  have hsign : ((-1 : ℚ) ^ s.card) = (((-1 : ℤ) ^ s.card : ℤ) : ℚ) := by push_cast; ring
+  rw [hsign, Int.cast_smul_eq_zsmul]
+  exact Submodule.smul_mem _ _ (basis_mem_integralLattice b s)
 
 /-- Contracting an exterior-basis vector by a dual basis coordinate gives an element of the
 coordinate integral lattice. -/
@@ -221,16 +223,10 @@ annihilation-operator counterpart of `ι_basis_mul_mem_integralLattice`. -/
 theorem contractLeft_coord_mem_integralLattice (i : ι)
     {x : _root_.ExteriorAlgebra ℚ M} (hx : x ∈ integralLattice b) :
     CliffordAlgebra.contractLeft (Q := (0 : QuadraticForm ℚ M)) (b.coord i) x ∈
-      integralLattice b := by
-  rw [integralLattice] at hx ⊢
-  induction hx using Submodule.span_induction with
-  | mem x hx =>
-      obtain ⟨s, rfl⟩ := hx
-      exact contractLeft_coord_basis_mem_integralLattice b i s
-  | zero => rw [map_zero]; exact zero_mem _
-  | add x y _ _ hx hy => rw [map_add]; exact add_mem hx hy
-  | smul z x _ hx =>
-      rw [← Int.cast_smul_eq_zsmul ℚ, map_smul, Int.cast_smul_eq_zsmul ℚ]
-      exact Submodule.smul_mem _ z hx
+      integralLattice b :=
+  map_mem_integralLattice b
+    ((CliffordAlgebra.contractLeft (Q := (0 : QuadraticForm ℚ M))
+      (b.coord i)).restrictScalars ℤ)
+    (contractLeft_coord_basis_mem_integralLattice b i) hx
 
 end TauCeti.ExteriorAlgebra

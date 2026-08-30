@@ -65,6 +65,7 @@ private theorem contractLeft_coord_basis_eq_zero_of_not_mem {I : Type w} [Linear
 /-- **The grade involution acts on an exterior-basis vector by the parity of its index set.** The
 basis vector indexed by `s` is a product of `s.card` generators, each of which the involution
 negates. -/
+@[simp]
 theorem involute_basis {I : Type w} [LinearOrder I]
     (b : Module.Basis I R M) (s : Finset I) :
     CliffordAlgebra.involute (Q := (0 : QuadraticForm R M)) (b.ExteriorAlgebra s) =
