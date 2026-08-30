@@ -43,15 +43,19 @@ central-quotient recipe to this endomorphism.
 
 The branch equations `steinberg_ofA` and `steinberg_ofTwistedA` name the Steinberg map of each
 family as `TauCeti.SlStd.frobenius` and `TauCeti.SlStd.twistedFrobenius` outright, so the upstream
-results about those maps apply to `d.steinberg` directly and are not restated here. That covers the
-commutation `TauCeti.SlStd.graphAutomorphismPoints_comp_frobenius` and the square relation
-`TauCeti.SlStd.twistedFrobenius_comp_self` that milestone L1 asks for, and the fixed-point
-containments `TauCeti.SlStd.map_subtype_fixedSubgroup_frobenius_eq` and
-`TauCeti.SlStd.map_subtype_fixedSubgroup_twistedFrobenius_le`. The lemma
-`simpleRootSubgroup_def` plays the same role for the root subgroups.
+results about those maps apply to `d.steinberg` directly and are not restated here. The upstream
+lemmas include the commutation `TauCeti.SlStd.graphAutomorphismPoints_comp_frobenius` and the
+involution equation `TauCeti.SlStd.graphAutomorphismPoints_graphAutomorphismPoints` required by
+milestone L1. Separately, `TauCeti.SlStd.twistedFrobenius_comp_self` supplies the square relation
+for the composite Steinberg map. The fixed-point containments
+`TauCeti.SlStd.map_subtype_fixedSubgroup_frobenius_eq` and
+`TauCeti.SlStd.map_subtype_fixedSubgroup_twistedFrobenius_le` are available in the same way. The
+lemma `simpleRootSubgroup_def` plays this role for the root subgroups.
 
-This closes the type-A branch of milestones L0, L1, and L3 of
-`TauCetiRoadmap/CFSGStatement/README.md`. It does not define the uniform
+This closes the type-A branch of milestones L0 and L3 and advances milestone L1 of
+`TauCetiRoadmap/CFSGStatement/README.md`. L1 still needs an index-level `graphAut` on the type-A
+branch of `GraphTwistedIndex`, together with its pinned simple-root equation
+`γ (x_i(u)) = x_{γ i}(u)`. This file does not define the uniform
 `ValidLieTypeIndex.AmbientGroup`: the other Dynkin types still need their full-weight carriers.
 Nothing here asserts that a constructed group is finite or simple.
 
@@ -119,10 +123,9 @@ noncomputable def steinberg (d : TypeALieIndex) : d.AmbientGroup →* d.AmbientG
       SlStd.twistedFrobenius d.1.rank d.1.characteristic d.1.fieldExponent d.1.Closure
   | .B _ _ | .C _ _ | .D _ _ | .twistedD _ _ | .E6 _ | .E7 _ | .E8 _ | .F4 _ | .G2 _
   | .twistedE6 _ | .trialityD4 _ | .suzuki _ | .reeG2 _ | .reeF4 _ | .tits =>
-      absurd d.2 (by rw [h]; exact not_false)
+      absurd d.2 (by rw [LieTypeIndex.isTypeA_iff, h]; exact not_false)
 
 /-- On `A_r(q)` the Steinberg map is the `q`-power Frobenius of the standard carrier. -/
-@[simp]
 theorem steinberg_ofA (rank : ℕ) (q : PrimePower)
     (hvalid : (LieTypeIndex.A rank q).Valid) :
     (ofA rank q hvalid).steinberg =
@@ -132,7 +135,6 @@ theorem steinberg_ofA (rank : ℕ) (q : PrimePower)
 
 /-- On `²A_r(q)` the Steinberg map is the graph-twisted `q`-power Frobenius of the standard
 carrier, that is, the pinned reversal graph automorphism composed with the Frobenius. -/
-@[simp]
 theorem steinberg_ofTwistedA (rank : ℕ) (q : PrimePower)
     (hvalid : (LieTypeIndex.twistedA rank q).Valid) :
     (ofTwistedA rank q hvalid).steinberg =

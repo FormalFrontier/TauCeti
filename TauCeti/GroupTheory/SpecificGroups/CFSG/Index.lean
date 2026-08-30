@@ -221,7 +221,7 @@ instance : DecidablePred UsesHalfFrobenius := fun d => by
 This is a constructor selector, not a mathematical property of a group. In particular it carries
 no finiteness, simplicity, or small-field assumption; those restrictions come from the enclosing
 `TauCeti.ValidLieTypeIndex`. -/
-abbrev IsTypeA : LieTypeIndex → Prop
+def IsTypeA : LieTypeIndex → Prop
   | .A _ _ | .twistedA _ _ => True
   | _ => False
 
@@ -233,7 +233,7 @@ abbrev IsTypeA : LieTypeIndex → Prop
   Iff.rfl
 
 instance : DecidablePred IsTypeA := fun d => by
-  cases d <;> infer_instance
+  cases d <;> rw [isTypeA_iff] <;> infer_instance
 
 /-- Neither type-A family uses a half-Frobenius, so both carry a diagram automorphism. -/
 theorem not_usesHalfFrobenius_of_isTypeA {d : LieTypeIndex} (h : d.IsTypeA) :
@@ -545,12 +545,12 @@ namespace TypeALieIndex
 /-- Introduce a valid untwisted type-A index. -/
 abbrev ofA (rank : ℕ) (q : PrimePower) (hvalid : (LieTypeIndex.A rank q).Valid) :
     TypeALieIndex :=
-  ⟨⟨.A rank q, hvalid⟩, trivial⟩
+  ⟨⟨.A rank q, hvalid⟩, (LieTypeIndex.isTypeA_iff _).mpr trivial⟩
 
 /-- Introduce a valid graph-twisted type-A index. -/
 abbrev ofTwistedA (rank : ℕ) (q : PrimePower) (hvalid : (LieTypeIndex.twistedA rank q).Valid) :
     TypeALieIndex :=
-  ⟨⟨.twistedA rank q, hvalid⟩, trivial⟩
+  ⟨⟨.twistedA rank q, hvalid⟩, (LieTypeIndex.isTypeA_iff _).mpr trivial⟩
 
 /-- Every type-A index is one of the two introduction forms. This is the eliminator matching `ofA`
 and `ofTwistedA`, so a consumer never repeats the case split over the other thirteen
@@ -565,7 +565,7 @@ theorem exists_eq (d : TypeALieIndex) :
   cases d
   case A rank q => exact fun hvalid _ => .inl ⟨rank, q, hvalid, rfl⟩
   case twistedA rank q => exact fun hvalid _ => .inr ⟨rank, q, hvalid, rfl⟩
-  all_goals exact fun _ hA => hA.elim
+  all_goals exact fun _ hA => ((LieTypeIndex.isTypeA_iff _).mp hA).elim
 
 end TypeALieIndex
 
