@@ -185,7 +185,8 @@ theorem finrank_lieModuleHom_eq_zero_of_isEmpty_lieModuleEquiv (h : IsEmpty (M �
 
 omit [IsAlgClosed K] in
 /-- The morphism space from a finite-dimensional irreducible Lie module to any irreducible Lie
-module is finite-dimensional: by Schur's lemma it is a line or trivial. -/
+module is finite-dimensional: it is either trivial, when the two modules are inequivalent, or,
+transported along an equivalence, the endomorphism space of the finite-dimensional `M`. -/
 theorem finiteDimensional_lieModuleHom_of_isIrreducible :
     FiniteDimensional K (M →ₗ⁅K,L⁆ N) := by
   by_cases h : Nonempty (M ≃ₗ⁅K,L⁆ N)

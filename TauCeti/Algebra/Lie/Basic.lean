@@ -144,32 +144,17 @@ theorem sum_apply {s : Finset ι} (F : ι → (M →ₗ⁅R,L⁆ N)) (m : M) :
 
 end Sum
 
-section FiniteDimensional
-
-variable [LieAlgebra R L] [LieModule R L N]
-variable (R L M N)
-
--- Only the injectivity of this bundling is used, to transport finite-dimensionality of the
--- ambient space of linear maps to the subspace of Lie module morphisms.
-private def toLinearMapₗ : (M →ₗ⁅R,L⁆ N) →ₗ[R] (M →ₗ[R] N) where
-  toFun f := (f : M →ₗ[R] N)
-  map_add' _ _ := rfl
-  map_smul' _ _ := rfl
-
-private theorem toLinearMapₗ_injective : Function.Injective (toLinearMapₗ R L M N) :=
-  fun _ _ h ↦ _root_.LieModuleHom.coe_injective (congrArg (fun k : M →ₗ[R] N ↦ ⇑k) h)
-
-end FiniteDimensional
-
-/-- The morphism space of two finite-dimensional Lie modules is finite-dimensional: it embeds in
-the space of all linear maps between them. -/
+/-- The morphism space of two finite-dimensional Lie modules is finite-dimensional: by
+`LieModule.maxTrivLinearMapEquivLieModuleHom` it is the maximal trivial submodule of the
+finite-dimensional space of all linear maps between them. -/
 instance instFiniteDimensional {K : Type u} {L : Type v} {M : Type w} {N : Type w₁}
     [Field K] [LieRing L] [LieAlgebra K L]
-    [AddCommGroup M] [Module K M] [LieRingModule L M] [FiniteDimensional K M]
+    [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M] [FiniteDimensional K M]
     [AddCommGroup N] [Module K N] [LieRingModule L N] [LieModule K L N]
     [FiniteDimensional K N] :
     FiniteDimensional K (M →ₗ⁅K,L⁆ N) :=
-  Module.Finite.of_injective (toLinearMapₗ K L M N) (toLinearMapₗ_injective K L M N)
+  Module.Finite.equiv (LieModule.maxTrivLinearMapEquivLieModuleHom (R := K) (L := L)
+    (M := M) (N := N))
 
 end LieModuleHom
 

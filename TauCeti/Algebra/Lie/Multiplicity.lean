@@ -60,8 +60,10 @@ enveloping-algebra dictionary lives,
 
 ## Main results
 
-* `TauCeti.LieModule.finrank_lieModuleHom_eq_sum_of_isInternal`: **additivity of the morphism space
-  over a finite decomposition of `M` into Lie submodules.**
+* `LieModule.isotypicMultiplicity_eq_sum_of_isInternal`: **the multiplicity is additive over a
+  finite decomposition of `M` into Lie submodules.**
+* `LieModule.isotypicMultiplicity_self`: an irreducible module occurs in itself with multiplicity
+  one.
 * `LieModule.isotypicMultiplicity_eq_of_lieModuleEquiv` and
   `LieModule.isotypicMultiplicity_eq_of_lieModuleEquiv_type`: the multiplicity depends only on the
   equivalence classes of `M` and of `S`.
