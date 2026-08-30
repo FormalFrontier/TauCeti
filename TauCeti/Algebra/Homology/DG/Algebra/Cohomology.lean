@@ -234,6 +234,7 @@ noncomputable abbrev cohomologyGrading (h : IsDGAlgebra 𝒜 d) (p : ℤ) :
     Submodule R h.Cohomology :=
   GradedAlgebra.gradeQuot h.cyclesDeg h.boundaries.asIdeal p
 
+@[simp]
 lemma mem_cohomologyGrading (h : IsDGAlgebra 𝒜 d) {p : ℤ} {x : h.Cohomology} :
     x ∈ h.cohomologyGrading p ↔
       ∃ z : h.cycles, (z : A) ∈ 𝒜 p ∧ Ideal.Quotient.mk h.boundaries.asIdeal z = x :=
