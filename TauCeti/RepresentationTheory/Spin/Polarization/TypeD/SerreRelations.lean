@@ -521,33 +521,31 @@ theorem isSerreSystem_typeDSimpleRootBivector_quadraticLieSubalgebra (hn : 4 ≤
         P.typeDSimpleNegativeRootBivector_mem_quadraticLieSubalgebra b (by omega) i⟩ :
           quadraticLieSubalgebra Q)) := by
   let S := P.isSerreSystem_typeDSimpleRootBivector b hn
+  have ad_pow_lie_eq_zero_of_coe (x y : quadraticLieSubalgebra Q) (m : ℕ)
+      (h : (LieAlgebra.ad K (CliffordAlgebra Q) (x : CliffordAlgebra Q) ^ m)
+        ⁅(x : CliffordAlgebra Q), (y : CliffordAlgebra Q)⁆ = 0) :
+      (LieAlgebra.ad K (quadraticLieSubalgebra Q) x ^ m) ⁅x, y⁆ = 0 := by
+    apply Subtype.ext
+    calc
+      ↑((LieAlgebra.ad K (quadraticLieSubalgebra Q) x ^ m) ⁅x, y⁆) =
+          (quadraticLieSubalgebra Q).incl
+            ((LieAlgebra.ad K (quadraticLieSubalgebra Q) x ^ m) ⁅x, y⁆) := rfl
+      _ = (LieAlgebra.ad K (CliffordAlgebra Q)
+            ((quadraticLieSubalgebra Q).incl x) ^ m)
+          ((quadraticLieSubalgebra Q).incl ⁅x, y⁆) :=
+        TauCeti.LieHom.map_ad_pow (quadraticLieSubalgebra Q).incl x m ⁅x, y⁆
+      _ = (LieAlgebra.ad K (CliffordAlgebra Q) (x : CliffordAlgebra Q) ^ m)
+          ⁅(x : CliffordAlgebra Q), (y : CliffordAlgebra Q)⁆ := by
+        simp only [LieHom.map_lie, LieSubalgebra.coe_incl]
+      _ = 0 := h
+      _ = ↑(0 : quadraticLieSubalgebra Q) := rfl
   refine
     { lie_H_H := fun i j ↦ Subtype.ext (S.lie_H_H i j)
       lie_E_F_self := fun i ↦ Subtype.ext (S.lie_E_F_self i)
       lie_E_F_of_ne := fun i j hij ↦ Subtype.ext (S.lie_E_F_of_ne i j hij)
       lie_H_E := fun i j ↦ Subtype.ext (S.lie_H_E i j)
       lie_H_F := fun i j ↦ Subtype.ext (S.lie_H_F i j)
-      ad_pow_lie_E_E := ?_
-      ad_pow_lie_F_F := ?_ }
-  · intro i j
-    classical
-    rw [neg_typeDCartan_toNat hn]
-    by_cases hij : typeDAdjacent n i j
-    · rw [ite_eq_left hij, pow_one, LieAlgebra.ad_apply]
-      apply Subtype.ext
-      exact P.lie_typeDSimpleRootBivector_lie_typeDSimpleRootBivector b hn i j
-    · rw [ite_eq_right hij, pow_zero, Module.End.one_apply]
-      apply Subtype.ext
-      exact P.lie_typeDSimpleRootBivector_of_not_adjacent b hn i j hij
-  · intro i j
-    classical
-    rw [neg_typeDCartan_toNat hn]
-    by_cases hij : typeDAdjacent n i j
-    · rw [ite_eq_left hij, pow_one, LieAlgebra.ad_apply]
-      apply Subtype.ext
-      exact P.lie_typeDSimpleNegativeRootBivector_lie_typeDSimpleNegativeRootBivector b hn i j
-    · rw [ite_eq_right hij, pow_zero, Module.End.one_apply]
-      apply Subtype.ext
-      exact P.lie_typeDSimpleNegativeRootBivector_of_not_adjacent b hn i j hij
+      ad_pow_lie_E_E := fun i j ↦ ad_pow_lie_eq_zero_of_coe _ _ _ (S.ad_pow_lie_E_E i j)
+      ad_pow_lie_F_F := fun i j ↦ ad_pow_lie_eq_zero_of_coe _ _ _ (S.ad_pow_lie_F_F i j) }
 
 end TauCeti.SpinPolarizationData
