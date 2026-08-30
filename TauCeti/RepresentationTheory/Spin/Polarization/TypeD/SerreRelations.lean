@@ -299,10 +299,10 @@ private theorem lie_ι_mul_ι_lie_ι_mul_ι_eq_zero (x y z w : V)
 other positive simple-root representative gives zero. -/
 @[simp]
 theorem lie_typeDSimpleRootBivector_lie_typeDSimpleRootBivector
-    (hn : 4 ≤ n) (i j : Fin n) :
-    ⁅P.typeDSimpleRootBivector b (by omega) i,
-      ⁅P.typeDSimpleRootBivector b (by omega) i,
-        P.typeDSimpleRootBivector b (by omega) j⁆⁆ = 0 := by
+    (hn : 2 ≤ n) (i j : Fin n) :
+    ⁅P.typeDSimpleRootBivector b hn i,
+      ⁅P.typeDSimpleRootBivector b hn i,
+        P.typeDSimpleRootBivector b hn j⁆⁆ = 0 := by
   rw [P.typeDSimpleRootBivector_def b, P.typeDSimpleRootBivector_def b]
   split
   · rename_i hi
@@ -345,10 +345,10 @@ theorem lie_typeDSimpleRootBivector_lie_typeDSimpleRootBivector
 other negative simple-root representative gives zero. -/
 @[simp]
 theorem lie_typeDSimpleNegativeRootBivector_lie_typeDSimpleNegativeRootBivector
-    (hn : 4 ≤ n) (i j : Fin n) :
-    ⁅P.typeDSimpleNegativeRootBivector b (by omega) i,
-      ⁅P.typeDSimpleNegativeRootBivector b (by omega) i,
-        P.typeDSimpleNegativeRootBivector b (by omega) j⁆⁆ = 0 := by
+    (hn : 2 ≤ n) (i j : Fin n) :
+    ⁅P.typeDSimpleNegativeRootBivector b hn i,
+      ⁅P.typeDSimpleNegativeRootBivector b hn i,
+        P.typeDSimpleNegativeRootBivector b hn j⁆⁆ = 0 := by
   rw [P.typeDSimpleNegativeRootBivector_def b, P.typeDSimpleNegativeRootBivector_def b]
   split
   · rename_i hi
@@ -542,7 +542,7 @@ theorem ad_pow_lie_typeDSimpleRootBivector_typeDSimpleRootBivector
   rw [neg_typeDCartan_toNat hn]
   by_cases hij : typeDAdjacent n i j
   · rw [ite_eq_left hij, pow_one, LieAlgebra.ad_apply]
-    exact P.lie_typeDSimpleRootBivector_lie_typeDSimpleRootBivector b hn i j
+    exact P.lie_typeDSimpleRootBivector_lie_typeDSimpleRootBivector b (by omega) i j
   · rw [ite_eq_right hij, pow_zero, Module.End.one_apply]
     exact P.lie_typeDSimpleRootBivector_of_not_adjacent b hn i j hij
 
@@ -559,7 +559,8 @@ theorem ad_pow_lie_typeDSimpleNegativeRootBivector_typeDSimpleNegativeRootBivect
   rw [neg_typeDCartan_toNat hn]
   by_cases hij : typeDAdjacent n i j
   · rw [ite_eq_left hij, pow_one, LieAlgebra.ad_apply]
-    exact P.lie_typeDSimpleNegativeRootBivector_lie_typeDSimpleNegativeRootBivector b hn i j
+    exact P.lie_typeDSimpleNegativeRootBivector_lie_typeDSimpleNegativeRootBivector b
+      (by omega) i j
   · rw [ite_eq_right hij, pow_zero, Module.End.one_apply]
     exact P.lie_typeDSimpleNegativeRootBivector_of_not_adjacent b hn i j hij
 
