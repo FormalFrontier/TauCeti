@@ -108,6 +108,8 @@ noncomputable def reverseOpAlgEquiv : pathAlgebra k Q ≃ₐ[k] (pathAlgebra k Q
       apply AlgHom.ext
       intro z
       obtain ⟨y, rfl⟩ := MulOpposite.op_surjective z
+      -- `AlgHom.opComm` and composition are hidden behind coercions here; expose their
+      -- applications definitionally so their computation lemmas can rewrite below.
       change reverseOpAlgHom k Q
           (AlgHom.opComm (reverseOpAlgHom k Q) (op y)) = op y
       induction y using induction_linear with

@@ -38,9 +38,9 @@ open _root_.Quiver MulOpposite PathAlgebra
 
 universe u v w
 
-section Relator
+section Backtrack
 
-variable (k : Type w) {Q : Type u} [CommRing k] [Quiver.{v + 1} Q] [Finite Q]
+variable (k : Type w) {Q : Type u} [CommSemiring k] [Quiver.{v + 1} Q] [Finite Q]
 
 /-- Reversal fixes the head backtrack of an original arrow, up to passage to the opposite path
 algebra. -/
@@ -62,7 +62,12 @@ theorem reverseOpAlgEquiv_tailBacktrackElem {i j : Q} (a : i ⟶ j) :
   rw [map_mul, reverseOpAlgEquiv_ofArrow, reverseOpAlgEquiv_ofArrow,
     Quiver.reverse_reverse, ← op_mul]
 
-variable (Q) [Fintype Q] [∀ i j : Q, Fintype (i ⟶ j)]
+end Backtrack
+
+section Relator
+
+variable (k : Type w) (Q : Type u) [CommRing k] [Quiver.{v + 1} Q] [Fintype Q]
+  [∀ i j : Q, Fintype (i ⟶ j)]
 
 /-- **Path reversal preserves the preprojective relator**, up to passage to the opposite path
 algebra. Both backtracks of every arrow are palindromic, so their signed difference is fixed. -/
@@ -160,6 +165,17 @@ noncomputable def preprojectiveOpAlgEquiv :
             preprojectiveReverseOpAlgHom_opComm_op_preprojectiveMk_ofPath,
             Quiver.TotalPath.reverse_reverse])
 
+/-- On an arbitrary path-algebra representative, the opposite-algebra isomorphism reverses the
+representative before applying the opposite of the quotient map. -/
+@[simp]
+theorem preprojectiveOpAlgEquiv_preprojectiveMk (x : pathAlgebra k (Symmetrify Q)) :
+    preprojectiveOpAlgEquiv k Q (preprojectiveMk k Q x) =
+      (AlgHom.op (preprojectiveMk k Q)) (reverseOpAlgEquiv k (Symmetrify Q) x) := by
+  rw [preprojectiveOpAlgEquiv, AlgEquiv.ofAlgHom_apply,
+    preprojectiveReverseOpAlgHom_preprojectiveMk, preprojectiveReversePathAlgHom,
+    AlgHom.comp_apply]
+  rfl
+
 /-- On a path class, the opposite-algebra isomorphism takes the opposite of the class of the
 reversed path. -/
 @[simp]
@@ -167,8 +183,8 @@ theorem preprojectiveOpAlgEquiv_preprojectiveMk_ofPath
     (x : Quiver.TotalPath (Symmetrify Q)) :
     preprojectiveOpAlgEquiv k Q (preprojectiveMk k Q (ofPath x)) =
       op (preprojectiveMk k Q (ofPath x.reverse)) := by
-  rw [preprojectiveOpAlgEquiv, AlgEquiv.ofAlgHom_apply,
-    preprojectiveReverseOpAlgHom_preprojectiveMk_ofPath]
+  rw [preprojectiveOpAlgEquiv_preprojectiveMk, reverseOpAlgEquiv_ofPath]
+  rfl
 
 /-- The inverse opposite-algebra isomorphism reverses a path representative as well. -/
 @[simp]
