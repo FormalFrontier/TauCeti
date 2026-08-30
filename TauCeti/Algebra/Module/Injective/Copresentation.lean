@@ -21,9 +21,10 @@ embedding
 `Q₀ / range(i₀) → Q₁`, and minimality says that this induced embedding is an injective envelope as
 well. Equivalently, the ranges of both displayed maps are essential submodules of their targets.
 
-This file records that equivalence and proves uniqueness: two minimal injective copresentations of
-the same module are related by linear equivalences of both injective terms, commuting with both
-maps. Thus the first two terms of a minimal injective resolution are independent of the choices.
+This file records both directions of that equivalence and proves uniqueness: two minimal injective
+copresentations of the same module are related by linear equivalences of both injective terms,
+commuting with both maps. Thus the first two terms of a minimal injective resolution are
+independent of the choices.
 The construction is dual to minimal projective presentations, and is the injective half of the
 presentation theory used to define the Auslander--Reiten translate and its inverse.
 
@@ -90,13 +91,6 @@ theorem cokernelMap_mk (h : IsMinimalInjectiveCopresentation i₀ i₁) (x : Q�
     h.cokernelMap (Submodule.Quotient.mk x) = i₁ x :=
   Submodule.liftQ_apply _ _ _
 
-/-- The induced cokernel map of a minimal injective copresentation is injective. -/
-theorem cokernelMap_injective (h : IsMinimalInjectiveCopresentation i₀ i₁) :
-    Function.Injective h.cokernelMap := by
-  rw [← LinearMap.ker_eq_bot]
-  exact (LinearMap.range i₀).ker_liftQ_eq_bot' i₁
-    (LinearMap.exact_iff.mp h.exact).symm
-
 /-- The induced cokernel map has the same range as the displayed second map. -/
 @[simp]
 theorem range_cokernelMap (h : IsMinimalInjectiveCopresentation i₀ i₁) :
@@ -108,7 +102,7 @@ injective copresentation. -/
 theorem isInjectiveEnvelope_cokernelMap (h : IsMinimalInjectiveCopresentation i₀ i₁) :
     IsInjectiveEnvelope h.cokernelMap where
   moduleInjective := h.moduleInjective
-  injective := h.cokernelMap_injective
+  injective := LinearMap.injective_range_liftQ_of_exact h.exact
   isEssential_range := h.range_cokernelMap.symm ▸ h.isEssential_range
 
 /-- Construct a minimal injective copresentation from an injective envelope of `M`, an exact
@@ -125,23 +119,6 @@ theorem _root_.TauCeti.IsInjectiveEnvelope.isMinimalInjectiveCopresentation
     rw [← Submodule.range_liftQ (LinearMap.range i₀) i₁]
     exact h₁.isEssential_range
 
-/-- Minimal injective copresentations are exactly two successive injective envelopes: first of
-`M`, then of the cokernel of the first map. -/
-theorem iff_isInjectiveEnvelope (hexact : Function.Exact i₀ i₁) :
-    IsMinimalInjectiveCopresentation i₀ i₁ ↔
-      IsInjectiveEnvelope i₀ ∧
-        IsInjectiveEnvelope
-          ((LinearMap.range i₀).liftQ i₁ (LinearMap.exact_iff.mp hexact).ge) := by
-  constructor
-  · intro h
-    refine ⟨h.isInjectiveEnvelope, ?_⟩
-    have heq : h.cokernelMap =
-        (LinearMap.range i₀).liftQ i₁ (LinearMap.exact_iff.mp hexact).ge := by
-      rfl
-    exact heq ▸ h.isInjectiveEnvelope_cokernelMap
-  · rintro ⟨h₀, h₁⟩
-    exact h₀.isMinimalInjectiveCopresentation hexact h₁
-
 /-- If the module being copresented is already injective, then the first structure map is an
 isomorphism. -/
 theorem bijective_i₀_of_moduleInjective [Small.{w₀} R] [Small.{v} R]
@@ -157,10 +134,9 @@ theorem bijective_i₀_of_moduleInjective [Small.{w₀} R] [Small.{v} R]
 
 /-- A minimal injective copresentation of an injective module has zero second map. -/
 theorem i₁_eq_zero_of_moduleInjective [Small.{w₀} R] [Small.{v} R]
-    [Module.Injective R M] (h : IsMinimalInjectiveCopresentation i₀ i₁) : i₁ = 0 := by
-  ext y
-  obtain ⟨x, rfl⟩ := h.bijective_i₀_of_moduleInjective.surjective y
-  exact h.exact.apply_apply_eq_zero x
+    [Module.Injective R M] (h : IsMinimalInjectiveCopresentation i₀ i₁) : i₁ = 0 :=
+  (LinearMap.surjective_iff_eq_zero_of_exact h.exact).mp
+    h.bijective_i₀_of_moduleInjective.surjective
 
 /-- The second injective term of a minimal copresentation of an injective module is a zero
 module. -/
