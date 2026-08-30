@@ -38,7 +38,7 @@ dimension vector down to a simple root.
 The proof is the finite-orbit argument, and it needs no root-system combinatorics. The iterates
 `cᴺ d` all have the same Tits value, and a positive definite integral quadratic form takes each
 value only finitely often
-(`TauCeti.QuadraticMap.PosDef.finite_setOf_apply_eq`), so the orbit repeats: `cᵖ x = x` for some
+(`QuadraticMap.PosDef.finite_setOf_apply_eq`), so the orbit repeats: `cᵖ x = x` for some
 `x = cᴺ d` and some `p > 0`. Were every iterate nonnegative, the sum `x + c x + ⋯ + cᵖ⁻¹ x` over one
 period would be a nonzero vector fixed by `c`, which
 `TauCeti.vertexPreReflectionList_eq_self_iff_of_anisotropic` forbids.

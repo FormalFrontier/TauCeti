@@ -21,10 +21,13 @@ the one that turns an orbit lying in a level set into a periodic orbit.
 
 ## Main results
 
-* `TauCeti.QuadraticMap.PosDef.finite_setOf_apply_le`: a positive definite quadratic form on a
+* `QuadraticMap.PosDef.finite_setOf_apply_le`: a positive definite quadratic form on a
   finitely generated free `ℤ`-module has only finitely many vectors of value at most `n`.
-* `TauCeti.QuadraticMap.PosDef.finite_setOf_apply_eq`: consequently only finitely many vectors of
+* `QuadraticMap.PosDef.finite_setOf_apply_eq`: consequently only finitely many vectors of
   value exactly `n`.
+
+Both live in the root `QuadraticMap.PosDef` namespace so that they are available by dot notation
+on a `QuadraticForm.PosDef` hypothesis.
 
 ## Implementation notes
 
@@ -46,10 +49,6 @@ public section
 
 namespace TauCeti
 
-namespace QuadraticMap
-
-variable {M : Type*} [AddCommGroup M] [Module.Free ℤ M] [Module.Finite ℤ M]
-
 /-- Over `ℤ` a bound on the square is a bound on the absolute value: a nonzero integer is at most
 its own square in absolute value. -/
 private theorem abs_le_of_sq_le {y c : ℤ} (h : y ^ 2 ≤ c) : |y| ≤ c := by
@@ -63,10 +62,16 @@ private theorem abs_le_of_sq_le {y c : ℤ} (h : y ^ 2 ≤ c) : |y| ≤ c := by
       _ = y ^ 2 := by rw [← sq, sq_abs]
       _ ≤ c := h
 
+end TauCeti
+
+namespace QuadraticMap.PosDef
+
+variable {M : Type*} [AddCommGroup M] [Module.Free ℤ M] [Module.Finite ℤ M]
+
 /-- **A positive definite integral quadratic form has finitely many vectors of bounded value.**
 For a positive definite quadratic form `q` on a finitely generated free `ℤ`-module and any integer
 `n`, only finitely many vectors satisfy `q x ≤ n`. -/
-theorem PosDef.finite_setOf_apply_le {q : QuadraticForm ℤ M} (hq : q.PosDef) (n : ℤ) :
+theorem finite_setOf_apply_le {q : QuadraticForm ℤ M} (hq : q.PosDef) (n : ℤ) :
     {x : M | q x ≤ n}.Finite := by
   classical
   set b := Module.Free.chooseBasis ℤ M
@@ -112,16 +117,14 @@ theorem PosDef.finite_setOf_apply_le {q : QuadraticForm ℤ M} (hq : q.PosDef) (
       _ ≤ 2 * n * (2 * q (b i)) := by
           exact mul_le_mul_of_nonneg_right (by omega) h2
       _ = C i := rfl
-  exact abs_le.mp (abs_le_of_sq_le (hcs.trans hle))
+  exact abs_le.mp (TauCeti.abs_le_of_sq_le (hcs.trans hle))
 
 /-- **A positive definite integral quadratic form takes each value finitely often.** For a
 positive definite quadratic form `q` on a finitely generated free `ℤ`-module, only finitely many
 vectors satisfy `q x = n`; for a positive definite lattice this is the finiteness of the set of
 vectors of a given norm. -/
-theorem PosDef.finite_setOf_apply_eq {q : QuadraticForm ℤ M} (hq : q.PosDef) (n : ℤ) :
+theorem finite_setOf_apply_eq {q : QuadraticForm ℤ M} (hq : q.PosDef) (n : ℤ) :
     {x : M | q x = n}.Finite :=
-  (PosDef.finite_setOf_apply_le hq n).subset fun _ hx ↦ le_of_eq hx
+  (finite_setOf_apply_le hq n).subset fun _ hx ↦ le_of_eq hx
 
-end QuadraticMap
-
-end TauCeti
+end QuadraticMap.PosDef
