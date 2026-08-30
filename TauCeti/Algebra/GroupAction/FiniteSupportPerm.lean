@@ -174,7 +174,6 @@ theorem exists_finite_compl_fixedBy_apply_eq_on_finset {β : Type*} (π : Equiv.
 
 /-- A row-wise family has finite total support exactly when its product shear belongs to the
 finitary symmetric group on the product. -/
-@[simp]
 theorem mem_finitary_prodShear_iff {ι β : Type*} {τ : ι → Equiv.Perm β} :
     Equiv.prodShear (Equiv.refl ι) τ ∈ finitary (ι × β) ↔
       {p : ι × β | τ p.1 p.2 ≠ p.2}.Finite := by
