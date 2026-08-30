@@ -9,6 +9,7 @@ public import TauCeti.Algebra.Lie.Presentation.Serre
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.E6.MinusculeWeight
 public import Mathlib.Algebra.Lie.Sl2
 
+import TauCeti.Algebra.Lie.GeneralLinear.DiagonalCartan
 import TauCeti.Algebra.Lie.Sl2.WeightString
 import Mathlib.Data.Matrix.PEquiv
 
@@ -107,18 +108,22 @@ def loweringMatrix (i : Fin 6) : Matrix (Fin 27) (Fin 27) ℤ :=
 def cartanGeneratorMatrix (i : Fin 6) : Matrix (Fin 27) (Fin 27) ℤ :=
   Matrix.diagonal (fun b ↦ e6MinusculeWeight b i)
 
+private theorem pEquivMatrix_apply (e : Fin 27 ≃. Fin 27) (a b : Fin 27) (p : Prop)
+    [Decidable p] (h : b ∈ e a ↔ p) :
+    (e.toMatrix : Matrix (Fin 27) (Fin 27) ℤ) a b = if p then 1 else 0 := by
+  simp only [PEquiv.toMatrix_apply]
+  exact if_congr h rfl rfl
+
 /-- The entry formula for a simple raising matrix. -/
 @[simp]
 theorem raisingMatrix_apply (i : Fin 6) (a b : Fin 27) :
     raisingMatrix i a b =
       if e6MinusculeWeight b i = -1 ∧ a = e6MinusculeReflection i b then 1 else 0 :=
   by
-    simp only [raisingMatrix, PEquiv.toMatrix_apply]
-    have hmem : b ∈ (raisingPEquiv i).symm a ↔
-        e6MinusculeWeight b i = -1 ∧ a = e6MinusculeReflection i b := by
-      rw [PEquiv.mem_iff_mem]
-      simp [raisingPEquiv, raisingTarget, eq_comm]
-    exact if_congr hmem rfl rfl
+    rw [raisingMatrix]
+    apply pEquivMatrix_apply
+    rw [PEquiv.mem_iff_mem]
+    simp [raisingPEquiv, raisingTarget, eq_comm]
 
 /-- The entry formula for a simple lowering matrix. -/
 @[simp]
@@ -126,13 +131,11 @@ theorem loweringMatrix_apply (i : Fin 6) (a b : Fin 27) :
     loweringMatrix i a b =
       if e6MinusculeWeight b i = 1 ∧ a = e6MinusculeReflection i b then 1 else 0 :=
   by
-    simp only [loweringMatrix, PEquiv.toMatrix_apply]
-    have hmem : b ∈ raisingPEquiv i a ↔
-        e6MinusculeWeight b i = 1 ∧ a = e6MinusculeReflection i b := by
-      rw [← PEquiv.mem_iff_mem]
-      simp only [raisingPEquiv, PEquiv.symm]
-      simp [loweringTarget, eq_comm]
-    exact if_congr hmem rfl rfl
+    rw [loweringMatrix]
+    apply pEquivMatrix_apply
+    rw [← PEquiv.mem_iff_mem]
+    simp only [raisingPEquiv, PEquiv.symm]
+    simp [loweringTarget, eq_comm]
 
 /-- The entry formula for a simple Cartan generator matrix. -/
 @[simp]
@@ -152,6 +155,11 @@ private theorem e6MinusculeWeight_reflection_apply (i : Fin 6) (a : Fin 27) (j :
   rw [root_e6SimpleIndex] at h
   simpa using h
 
+private theorem cartanMatrix_E_symmetric (i j : Fin 6) :
+    CartanMatrix.E 6 j i = CartanMatrix.E 6 i j := by
+  have h := congrFun (congrFun (CartanMatrix.E_transpose 6) i) j
+  simpa [Matrix.transpose_apply] using h
+
 @[simp]
 private theorem raisingTarget_eq_some_iff (i : Fin 6) (a b : Fin 27) :
     raisingTarget i a = some b ↔
@@ -168,12 +176,10 @@ private theorem e6MinusculeReflection_comm_of_cartan_eq_zero (i j : Fin 6) (a : 
     (hij : CartanMatrix.E 6 i j = 0) :
     e6MinusculeReflection i (e6MinusculeReflection j a) =
       e6MinusculeReflection j (e6MinusculeReflection i a) := by
-  have hsym : CartanMatrix.E 6 j i = CartanMatrix.E 6 i j := by
-    have h := congrFun (congrFun (CartanMatrix.E_transpose 6) i) j
-    simpa [Matrix.transpose_apply] using h
   have horth : e6SimplyConnectedRootDatum.IsOrthogonal
       (e6SimpleIndex i) (e6SimpleIndex j) := by
-    rw [RootPairing.IsOrthogonal, pairing_e6SimpleIndex, pairing_e6SimpleIndex, hsym, hij]
+    rw [RootPairing.IsOrthogonal, pairing_e6SimpleIndex, pairing_e6SimpleIndex,
+      cartanMatrix_E_symmetric i j, hij]
     exact ⟨rfl, rfl⟩
   have hcomm := RootPairing.isOrthogonal_comm e6SimplyConnectedRootDatum
     (e6SimpleIndex i) (e6SimpleIndex j) horth
@@ -182,21 +188,66 @@ private theorem e6MinusculeReflection_comm_of_cartan_eq_zero (i j : Fin 6) (a : 
   simpa only [LinearEquiv.mul_apply,
     e6SimplyConnectedRootDatum_reflection_e6MinusculeWeight] using happ
 
+private theorem e6MinusculeWeight_reflection_apply_of_cartan_eq_zero (i j : Fin 6)
+    (a : Fin 27) (hij : CartanMatrix.E 6 i j = 0) :
+    e6MinusculeWeight (e6MinusculeReflection i a) j = e6MinusculeWeight a j := by
+  rw [e6MinusculeWeight_reflection_apply, hij]
+  ring
+
+private theorem raisingTarget_bind_loweringTarget_of_cartan_eq_zero (i j : Fin 6)
+    (hij : CartanMatrix.E 6 i j = 0) (a : Fin 27) :
+    (loweringTarget j a).bind (raisingTarget i) =
+      (raisingTarget i a).bind (loweringTarget j) := by
+  have hji : CartanMatrix.E 6 j i = 0 := by
+    rw [cartanMatrix_E_symmetric i j, hij]
+  by_cases hi : e6MinusculeWeight a i = -1
+  · by_cases hj : e6MinusculeWeight a j = 1
+    · simp [raisingTarget, loweringTarget, hi, hj,
+        e6MinusculeWeight_reflection_apply_of_cartan_eq_zero i j a hij,
+        e6MinusculeWeight_reflection_apply_of_cartan_eq_zero j i a hji,
+        e6MinusculeReflection_comm_of_cartan_eq_zero i j a hij]
+    · simp [raisingTarget, loweringTarget, hi, hj,
+        e6MinusculeWeight_reflection_apply_of_cartan_eq_zero i j a hij]
+  · by_cases hj : e6MinusculeWeight a j = 1
+    · simp [raisingTarget, loweringTarget, hi, hj,
+        e6MinusculeWeight_reflection_apply_of_cartan_eq_zero j i a hji]
+    · simp [raisingTarget, loweringTarget, hi, hj]
+
+private theorem raisingTarget_bind_loweringTarget_of_cartan_eq_neg_one (i j : Fin 6)
+    (hij : CartanMatrix.E 6 i j = -1) (a : Fin 27) :
+    (loweringTarget j a).bind (raisingTarget i) =
+      (raisingTarget i a).bind (loweringTarget j) := by
+  have hi_lower : -1 ≤ e6MinusculeWeight a i := by
+    rcases e6MinusculeWeight_apply_eq_neg_one_or_eq_zero_or_eq_one a i with hi | hi | hi <;>
+      omega
+  have hj_upper : e6MinusculeWeight a j ≤ 1 := by
+    rcases e6MinusculeWeight_apply_eq_neg_one_or_eq_zero_or_eq_one a j with hj | hj | hj <;>
+      omega
+  have hji : CartanMatrix.E 6 j i = -1 := by
+    rw [cartanMatrix_E_symmetric i j, hij]
+  have hleft : (loweringTarget j a).bind (raisingTarget i) = none := by
+    by_cases hj : e6MinusculeWeight a j = 1
+    · have href : e6MinusculeWeight (e6MinusculeReflection j a) i ≠ -1 := by
+        rw [e6MinusculeWeight_reflection_apply, hj, hji]
+        omega
+      simp [loweringTarget, raisingTarget, hj, href]
+    · simp [loweringTarget, hj]
+  have hright : (raisingTarget i a).bind (loweringTarget j) = none := by
+    by_cases hi : e6MinusculeWeight a i = -1
+    · have href : e6MinusculeWeight (e6MinusculeReflection i a) j ≠ 1 := by
+        rw [e6MinusculeWeight_reflection_apply, hi, hij]
+        omega
+      simp [raisingTarget, loweringTarget, hi, href]
+    · simp [raisingTarget, hi]
+  rw [hleft, hright]
+
 private theorem raisingTarget_bind_loweringTarget_of_ne (i j : Fin 6) (hij : i ≠ j)
     (a : Fin 27) :
     (loweringTarget j a).bind (raisingTarget i) =
       (raisingTarget i a).bind (loweringTarget j) := by
-  have hsym : CartanMatrix.E 6 j i = CartanMatrix.E 6 i j := by
-    have h := congrFun (congrFun (CartanMatrix.E_transpose 6) i) j
-    simpa [Matrix.transpose_apply] using h
   rcases CartanMatrix.isSimplyLaced_E 6 hij with hA | hA
-  all_goals
-    rcases e6MinusculeWeight_apply_eq_neg_one_or_eq_zero_or_eq_one a i with hi | hi | hi
-  all_goals
-    rcases e6MinusculeWeight_apply_eq_neg_one_or_eq_zero_or_eq_one a j with hj | hj | hj
-  all_goals simp [raisingTarget, loweringTarget, hi, hj,
-    e6MinusculeWeight_reflection_apply, hA, hsym,
-    e6MinusculeReflection_comm_of_cartan_eq_zero]
+  · exact raisingTarget_bind_loweringTarget_of_cartan_eq_zero i j hA a
+  · exact raisingTarget_bind_loweringTarget_of_cartan_eq_neg_one i j hA a
 
 private theorem lie_raisingMatrix_loweringMatrix_of_ne (i j : Fin 6) (hij : i ≠ j) :
     ⁅raisingMatrix i, loweringMatrix j⁆ = 0 := by
@@ -210,10 +261,6 @@ private theorem lie_raisingMatrix_loweringMatrix_of_ne (i j : Fin 6) (hij : i �
     exact raisingTarget_bind_loweringTarget_of_ne j i hij.symm a
   rw [hcomp, sub_self]
 
-private theorem lie_cartanGeneratorMatrix_cartanGeneratorMatrix (i j : Fin 6) :
-    ⁅cartanGeneratorMatrix i, cartanGeneratorMatrix j⁆ = 0 :=
-  (Matrix.commute_diagonal _ _).lie_eq
-
 private theorem lie_raisingMatrix_loweringMatrix_self (i : Fin 6) :
     ⁅raisingMatrix i, loweringMatrix i⁆ = cartanGeneratorMatrix i := by
   ext a b
@@ -225,41 +272,35 @@ private theorem lie_raisingMatrix_loweringMatrix_self (i : Fin 6) :
     e6MinusculeReflection_apply_apply]
   all_goals by_cases hab : a = b <;> simp_all
 
+private theorem lie_cartanGeneratorMatrix_eq_smul_of_apply (i j : Fin 6)
+    (M : Matrix (Fin 27) (Fin 27) ℤ) (s : ℤ)
+    (hM : ∀ a b, M a b =
+      if e6MinusculeWeight b j = s ∧ a = e6MinusculeReflection j b then 1 else 0) :
+    ⁅cartanGeneratorMatrix i, M⁆ =
+      (-s * (CartanMatrix.E 6)ᵀ i j) • M := by
+  ext a b
+  rw [cartanGeneratorMatrix]
+  rw [TauCeti.lie_apply_of_mem_diagonalCartan
+    (TauCeti.diagonal_mem_diagonalCartan (fun b ↦ e6MinusculeWeight b i))]
+  rw [hM a b, Matrix.smul_apply, hM a b]
+  simp only [Matrix.diagonal_apply_eq, Matrix.transpose_apply]
+  split_ifs with h
+  · obtain ⟨hb, rfl⟩ := h
+    rw [e6MinusculeWeight_reflection_apply, hb]
+    simp
+  · simp
+
 private theorem lie_cartanGeneratorMatrix_raisingMatrix (i j : Fin 6) :
     ⁅cartanGeneratorMatrix i, raisingMatrix j⁆ =
       (CartanMatrix.E 6)ᵀ i j • raisingMatrix j := by
-  ext a b
-  simp only [Ring.lie_def, Matrix.sub_apply, Matrix.mul_apply, cartanGeneratorMatrix,
-    Matrix.diagonal_apply, raisingMatrix_apply, Matrix.transpose_apply, Matrix.smul_apply,
-    mul_ite, ite_mul, mul_one, mul_zero]
-  by_cases h : e6MinusculeWeight b j = -1
-  · have href := congrFun (e6MinusculeWeight_reflection j b) i
-    rw [root_e6SimpleIndex] at href
-    simp [h] at href
-    simp [h]
-    split_ifs with hab
-    · subst a
-      omega
-    · rfl
-  · simp [h]
+  simpa using lie_cartanGeneratorMatrix_eq_smul_of_apply i j (raisingMatrix j) (-1)
+    (raisingMatrix_apply j)
 
 private theorem lie_cartanGeneratorMatrix_loweringMatrix (i j : Fin 6) :
     ⁅cartanGeneratorMatrix i, loweringMatrix j⁆ =
       -((CartanMatrix.E 6)ᵀ i j • loweringMatrix j) := by
-  ext a b
-  simp only [Ring.lie_def, Matrix.sub_apply, Matrix.mul_apply, cartanGeneratorMatrix,
-    Matrix.diagonal_apply, loweringMatrix_apply, Matrix.transpose_apply, Matrix.neg_apply,
-    Matrix.smul_apply, mul_ite, ite_mul, mul_one, mul_zero]
-  by_cases h : e6MinusculeWeight b j = 1
-  · have href := congrFun (e6MinusculeWeight_reflection j b) i
-    rw [root_e6SimpleIndex] at href
-    simp [h] at href
-    simp [h]
-    split_ifs with hab
-    · subst a
-      omega
-    · rfl
-  · simp [h]
+  simpa using lie_cartanGeneratorMatrix_eq_smul_of_apply i j (loweringMatrix j) 1
+    (loweringMatrix_apply j)
 
 private theorem cartanGeneratorMatrix_ne_zero (i : Fin 6) : cartanGeneratorMatrix i ≠ 0 := by
   intro hzero
@@ -297,7 +338,7 @@ theorem isSl2Triple (i : Fin 6) :
 theorem isSerreSystem :
     TauCeti.IsSerreSystem ℤ (CartanMatrix.E 6)ᵀ cartanGeneratorMatrix raisingMatrix
       loweringMatrix where
-  lie_H_H := lie_cartanGeneratorMatrix_cartanGeneratorMatrix
+  lie_H_H := fun _ _ ↦ (Matrix.commute_diagonal _ _).lie_eq
   lie_E_F_self := lie_raisingMatrix_loweringMatrix_self
   lie_E_F_of_ne := lie_raisingMatrix_loweringMatrix_of_ne
   lie_H_E := lie_cartanGeneratorMatrix_raisingMatrix
