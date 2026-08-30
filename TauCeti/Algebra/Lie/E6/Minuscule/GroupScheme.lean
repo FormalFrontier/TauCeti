@@ -35,6 +35,7 @@ is asserted here. Those are subsequent steps in the pinned Chevalley--Demazure c
 * `TauCeti.E6Minuscule.rootSubgroup`: its twelve numbered simple-root subgroup morphisms.
 * `TauCeti.E6Minuscule.weightTorus`: its closed rank-six split torus.
 * `TauCeti.E6Minuscule.points`: its matrix-valued points over a commutative ring.
+* `TauCeti.E6Minuscule.rootSubgroupPoints`: its numbered root subgroups on matrix-valued points.
 * `TauCeti.E6Minuscule.weightTorus_conj_rootSubgroup`: the scheme-level pinning equation.
 
 ## References
@@ -85,13 +86,13 @@ theorem rootGeneratorWeight_inr (i j : Fin 6) :
 
 /-- The character of a raising generator is the corresponding simple root of the pinned
 simply connected type-`E₆` root datum. -/
-theorem rootGeneratorWeight_inl_eq_root_simpleIndex (i : Fin 6) :
+theorem rootGeneratorWeight_inl_eq_e6Root_e6SimpleIndex (i : Fin 6) :
     rootGeneratorWeight (.inl i) = e6Root (e6SimpleIndex i) := by
   ext j
   rw [rootGeneratorWeight_inl, root_e6SimpleIndex]
 
 /-- The character of a lowering generator is the negative of the corresponding simple root. -/
-theorem rootGeneratorWeight_inr_eq_neg_root_simpleIndex (i : Fin 6) :
+theorem rootGeneratorWeight_inr_eq_neg_e6Root_e6SimpleIndex (i : Fin 6) :
     rootGeneratorWeight (.inr i) = -e6Root (e6SimpleIndex i) := by
   ext j
   rw [rootGeneratorWeight_inr, Pi.neg_apply, root_e6SimpleIndex]
@@ -299,6 +300,39 @@ theorem mem_points_iff (A : Type v) [CommRing A]
   rw [points, definingIdeal]
   exact TauCeti.UniversalEnvelopingAlgebra.mem_kostantToralPointsSubgroup_iff
     _ _ _ _ _ _ _ _ A g
+
+/-- The parametrized numbered root subgroup inside the type-`E₆` minuscule carrier points. -/
+noncomputable def rootSubgroupPoints (k : Fin 6 ⊕ Fin 6) (A : Type v) [CommRing A] :
+    Multiplicative A →* points A :=
+  MonoidHom.codRestrict
+    ((TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupMatrix
+      (TauCeti.serreRootGenerator (CartanMatrix.E 6)ᵀ)
+      (TauCeti.serreH ℚ (CartanMatrix.E 6)ᵀ) rep lattice.toAddSubgroup
+      (fun _ hu _ hv ↦ rep_serreKostantForm_mem_lattice (by
+        rw [TauCeti.serreKostantForm_def]
+        exact hu) hv) k (isNilpotent_rep_serreRootGenerator k) latticeBasis).comp
+        (AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm.toMonoidHom)
+    (points A) fun u ↦ by
+      rw [points]
+      exact TauCeti.UniversalEnvelopingAlgebra.kostantGeneratedPointsSubgroup_le_toralPoints
+        _ _ _ _ _ _ _ _ A
+        (TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupMatrix_mem_generatedPoints
+          _ _ _ _ _ _ _ A k _)
+
+/-- A numbered root-subgroup point is its represented divided-power exponential matrix. -/
+@[simp]
+theorem coe_rootSubgroupPoints (k : Fin 6 ⊕ Fin 6) (A : Type v) [CommRing A]
+    (u : Multiplicative A) :
+    (rootSubgroupPoints k A u : _root_.Matrix.GeneralLinearGroup (Fin 27) A) =
+      TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupMatrix
+        (TauCeti.serreRootGenerator (CartanMatrix.E 6)ᵀ)
+        (TauCeti.serreH ℚ (CartanMatrix.E 6)ᵀ) rep lattice.toAddSubgroup
+        (fun _ hu _ hv ↦ rep_serreKostantForm_mem_lattice (by
+          rw [TauCeti.serreKostantForm_def]
+          exact hu) hv) k (isNilpotent_rep_serreRootGenerator k) latticeBasis
+        ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm u) := by
+  rw [rootSubgroupPoints]
+  rfl
 
 /-- The split weight torus on matrix-valued points of the type-`E₆` carrier. -/
 noncomputable def weightTorusPoints (A : Type v) [CommRing A] :
