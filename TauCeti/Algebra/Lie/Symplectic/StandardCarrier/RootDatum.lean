@@ -100,11 +100,19 @@ theorem rootGeneratorWeight_inr_eq_neg_root_simpleIndex (ht : (C (n + 1)).Valid)
     (i : Fin (n + 1)) :
     rootGeneratorWeight n (.inr i) =
       -((C (n + 1)).simplyConnectedRootDatum ht).root
-        ((C (n + 1)).simpleIndex ht i) :=
-  have hneg : rootGeneratorWeight n (.inr i) = -rootGeneratorWeight n (.inl i) := by
-    funext j
-    rw [rootGeneratorWeight_inr, Pi.neg_apply, rootGeneratorWeight_inl]
-  hneg.trans (congrArg Neg.neg (rootGeneratorWeight_inl_eq_root_simpleIndex n ht i))
+        ((C (n + 1)).simpleIndex ht i) := by
+  funext j
+  rw [rootGeneratorWeight_inr]
+  change -CartanMatrix.C (n + 1) i j =
+    -((C (n + 1)).simplyConnectedRootDatum ht).root
+      ((C (n + 1)).simpleIndex ht i) j
+  apply congrArg Neg.neg
+  calc
+    CartanMatrix.C (n + 1) i j = (C (n + 1)).cartanMatrix i j := by
+      rw [cartanMatrix_C]
+    _ = ((C (n + 1)).simplyConnectedRootDatum ht).root
+        ((C (n + 1)).simpleIndex ht i) j :=
+      (congrFun (root_simpleIndex (C (n + 1)) ht i) j).symm
 
 /-! ## Pinning equations on matrix-valued points -/
 
