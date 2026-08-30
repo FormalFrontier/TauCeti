@@ -16,7 +16,7 @@ public import TauCeti.Analysis.Fourier.ExpNegAbs
 public import TauCeti.Probability.Distributions.Dirac
 
 /-!
-# The cumulative distribution function and the characteristic function of the Cauchy law
+# Elementary theory of the Cauchy law
 
 This file develops the elementary transform theory of Mathlib's Cauchy law. For nonzero scale
 `γ` the cumulative distribution function at `x` is
@@ -26,6 +26,10 @@ This file develops the elementary transform theory of Mathlib's Cauchy law. For 
 and for every scale, including the degenerate one, the characteristic function is
 
 `t ↦ exp (t x₀ i - γ |t|)`.
+
+The nondegenerate law has no first absolute moment, and its exponential integrand is integrable
+only at rate zero. These statements record the sharp heavy-tail behavior that distinguishes the
+Cauchy family from the light-tailed distributions developed alongside it.
 
 At scale zero Mathlib defines `cauchyMeasure x₀ 0` to be the Dirac mass at `x₀`. The file records
 the corresponding cumulative distribution function, mean, variance, exponential-integrability
@@ -50,6 +54,8 @@ parent law.
   half-line;
 * `TauCeti.cdf_cauchyMeasure_of_scale_ne_zero` — the Cauchy cdf at nonzero scale;
 * `TauCeti.cdf_cauchyMeasure_zero_scale` — the cdf of the zero-scale Dirac law;
+* `TauCeti.not_integrable_id_cauchyMeasure` — a nondegenerate Cauchy law has no first moment;
+* `TauCeti.integrableExpSet_id_cauchyMeasure` — its exponential-integrability domain is `{0}`;
 * `TauCeti.integral_id_cauchyMeasure_zero_scale` and
   `TauCeti.variance_id_cauchyMeasure_zero_scale` — its mean and variance;
 * `TauCeti.integrableExpSet_id_cauchyMeasure_zero_scale`,
@@ -156,6 +162,146 @@ theorem mgf_id_cauchyMeasure_zero_scale (x₀ t : ℝ) :
 theorem cgf_id_cauchyMeasure_zero_scale (x₀ t : ℝ) :
     cgf id (cauchyMeasure x₀ 0) t = t * x₀ := by
   rw [cauchyMeasure_zero_scale, cgf_dirac', id_eq]
+
+section Integrability
+
+variable {γ : ℝ≥0}
+
+private lemma eventually_cauchyPDFReal_ge (x₀ : ℝ) (hγ : γ ≠ 0) :
+    ∀ᶠ x in atTop,
+      Real.pi⁻¹ * (γ : ℝ) / (5 * x ^ 2) ≤ cauchyPDFReal x₀ γ x := by
+  have hγpos : (0 : ℝ) < γ := NNReal.coe_pos.mpr (pos_iff_ne_zero.mpr hγ)
+  filter_upwards [eventually_ge_atTop (max 1 (max |x₀| (γ : ℝ)))] with x hx
+  have hx1 : 1 ≤ x := le_trans (le_max_left _ _) hx
+  have hxpos : 0 < x := zero_lt_one.trans_le hx1
+  have hx₀ : |x₀| ≤ x := le_trans (le_max_left _ _) (le_trans (le_max_right _ _) hx)
+  have hγx : (γ : ℝ) ≤ x := le_trans (le_max_right _ _) (le_trans (le_max_right _ _) hx)
+  have hdiff_nonneg : 0 ≤ x - x₀ := by
+    have : x₀ ≤ |x₀| := le_abs_self x₀
+    linarith
+  have hdiff_le : x - x₀ ≤ 2 * x := by
+    have : -x ≤ x₀ := by
+      have := neg_abs_le x₀
+      linarith
+    linarith
+  have hdiff_sq : (x - x₀) ^ 2 ≤ (2 * x) ^ 2 :=
+    (sq_le_sq₀ hdiff_nonneg (by positivity)).2 hdiff_le
+  have hγsq : (γ : ℝ) ^ 2 ≤ x ^ 2 := (sq_le_sq₀ hγpos.le hxpos.le).2 hγx
+  have hdenom : (x - x₀) ^ 2 + (γ : ℝ) ^ 2 ≤ 5 * x ^ 2 := by
+    nlinarith
+  rw [cauchyPDFReal_def]
+  have hc : 0 < Real.pi⁻¹ * (γ : ℝ) := by positivity
+  have hdenom_pos : 0 < (x - x₀) ^ 2 + (γ : ℝ) ^ 2 := by positivity
+  have hfive_pos : 0 < 5 * x ^ 2 := by positivity
+  simpa only [div_eq_mul_inv] using
+    (mul_le_mul_of_nonneg_left ((inv_le_inv₀ hfive_pos hdenom_pos).2 hdenom) hc.le)
+
+private theorem not_integrable_exp_mul_cauchyPDFReal_of_pos (x₀ : ℝ) (hγ : γ ≠ 0)
+    {t : ℝ} (ht : 0 < t) :
+    ¬ Integrable (fun x : ℝ ↦ Real.exp (t * x) * cauchyPDFReal x₀ γ x) volume := by
+  intro hint
+  let c : ℝ := Real.pi⁻¹ * (γ : ℝ)
+  have hc : 0 < c := by
+    dsimp [c]
+    positivity
+  have hlarge : ∀ᶠ x in atTop, 5 / c ≤ Real.exp (t * x) / x ^ (2 : ℝ) :=
+    (tendsto_exp_mul_div_rpow_atTop 2 t ht).eventually_ge_atTop (5 / c)
+  have hbound : ∀ᶠ x in atTop,
+      (1 : ℝ) ≤ Real.exp (t * x) * cauchyPDFReal x₀ γ x := by
+    filter_upwards [eventually_cauchyPDFReal_ge x₀ hγ, hlarge,
+      eventually_ge_atTop (1 : ℝ)] with x hpdf hexp hx
+    have hxpos : 0 < x := zero_lt_one.trans_le hx
+    rw [Real.rpow_two] at hexp
+    calc
+      (1 : ℝ) = (c / 5) * (5 / c) := by field_simp
+      _ ≤ (c / 5) * (Real.exp (t * x) / x ^ 2) :=
+        mul_le_mul_of_nonneg_left hexp (by positivity)
+      _ = Real.exp (t * x) * (c / (5 * x ^ (2 : ℕ))) := by
+        field_simp
+      _ ≤ Real.exp (t * x) * cauchyPDFReal x₀ γ x :=
+        mul_le_mul_of_nonneg_left hpdf (Real.exp_pos _).le
+  obtain ⟨a, ha⟩ := eventually_atTop.mp hbound
+  have hone : IntegrableOn (fun _ : ℝ ↦ (1 : ℝ)) (Ioi a) volume := by
+    refine Integrable.mono' hint.integrableOn (by fun_prop) ?_
+    filter_upwards [ae_restrict_mem measurableSet_Ioi] with x hx
+    simpa only [norm_one] using ha x hx.le
+  rw [integrableOn_const_iff] at hone
+  simp [Real.volume_Ioi] at hone
+
+/-- A nondegenerate Cauchy law has no first absolute moment. -/
+theorem not_integrable_id_cauchyMeasure (x₀ : ℝ) (hγ : γ ≠ 0) :
+    ¬ Integrable id (cauchyMeasure x₀ γ) := by
+  rw [cauchyMeasure_of_scale_ne_zero x₀ hγ,
+    integrable_withDensity_iff (measurable_cauchyPDF x₀ γ) (ae_of_all _ fun x ↦ by
+      simp [cauchyPDF])]
+  simp only [id_eq]
+  intro hint
+  have htoReal : ∀ x : ℝ, (cauchyPDF x₀ γ x).toReal = cauchyPDFReal x₀ γ x :=
+    fun x ↦ by rw [cauchyPDF_def, ENNReal.toReal_ofReal (cauchyPDF_pos x₀ hγ x).le]
+  simp_rw [htoReal] at hint
+  let c : ℝ := Real.pi⁻¹ * (γ : ℝ)
+  have hc : 0 < c := by
+    dsimp [c]
+    positivity
+  have hbound : ∀ᶠ x in atTop,
+      ‖x⁻¹‖ ≤ (5 / c) * (x * cauchyPDFReal x₀ γ x) := by
+    filter_upwards [eventually_cauchyPDFReal_ge x₀ hγ,
+      eventually_ge_atTop (1 : ℝ)] with x hpdf hx
+    have hxpos : 0 < x := zero_lt_one.trans_le hx
+    rw [Real.norm_eq_abs, abs_of_pos (inv_pos.mpr hxpos)]
+    calc
+      x⁻¹ = (5 / c) * (x * (c / (5 * x ^ 2))) := by field_simp
+      _ ≤ (5 / c) * (x * cauchyPDFReal x₀ γ x) := by gcongr
+  obtain ⟨a, ha⟩ := eventually_atTop.mp hbound
+  have hinv : IntegrableOn (fun x : ℝ ↦ x⁻¹) (Ioi a) volume := by
+    refine Integrable.mono' (hint.const_mul (5 / c)).integrableOn (by fun_prop) ?_
+    filter_upwards [ae_restrict_mem measurableSet_Ioi] with x hx
+    exact ha x hx.le
+  exact not_integrableOn_Ioi_inv hinv
+
+/-- The exponential of a nonzero multiple of the identity is not integrable under a
+nondegenerate Cauchy law. -/
+theorem not_integrable_exp_mul_id_cauchyMeasure (x₀ : ℝ) (hγ : γ ≠ 0) {t : ℝ}
+    (ht : t ≠ 0) :
+    ¬ Integrable (fun x : ℝ ↦ Real.exp (t * x)) (cauchyMeasure x₀ γ) := by
+  rw [cauchyMeasure_of_scale_ne_zero x₀ hγ,
+    integrable_withDensity_iff (measurable_cauchyPDF x₀ γ) (ae_of_all _ fun x ↦ by
+      simp [cauchyPDF])]
+  intro hint
+  have htoReal : ∀ x : ℝ, (cauchyPDF x₀ γ x).toReal = cauchyPDFReal x₀ γ x :=
+    fun x ↦ by rw [cauchyPDF_def, ENNReal.toReal_ofReal (cauchyPDF_pos x₀ hγ x).le]
+  simp_rw [htoReal] at hint
+  rcases lt_or_gt_of_ne ht with ht | ht
+  · have hcomp := (Measure.measurePreserving_neg (volume : Measure ℝ)).integrable_comp_of_integrable
+      hint
+    apply not_integrable_exp_mul_cauchyPDFReal_of_pos (-x₀) hγ (neg_pos.mpr ht)
+    have hpoint (x : ℝ) :
+        Real.exp (t * -x) * cauchyPDFReal x₀ γ (-x) =
+          Real.exp (-t * x) * cauchyPDFReal (-x₀) γ x := by
+      rw [cauchyPDFReal_def, cauchyPDFReal_def]
+      congr 2 <;> ring
+    refine hcomp.congr (ae_of_all _ fun x ↦ ?_)
+    simpa only [Function.comp_apply] using hpoint x
+  · exact not_integrable_exp_mul_cauchyPDFReal_of_pos x₀ hγ ht hint
+
+/-- The exponential integrand of a nondegenerate Cauchy law is integrable exactly at rate zero. -/
+@[simp]
+theorem integrable_exp_mul_id_cauchyMeasure_iff (x₀ : ℝ) (hγ : γ ≠ 0) (t : ℝ) :
+    Integrable (fun x : ℝ ↦ Real.exp (t * x)) (cauchyMeasure x₀ γ) ↔ t = 0 := by
+  refine ⟨fun h ↦ not_ne_iff.mp fun ht ↦ not_integrable_exp_mul_id_cauchyMeasure x₀ hγ ht h,
+    fun ht ↦ ?_⟩
+  subst t
+  simpa only [zero_mul, Real.exp_zero] using (integrable_const (c := (1 : ℝ)) :
+    Integrable (fun _ : ℝ ↦ (1 : ℝ)) (cauchyMeasure x₀ γ))
+
+/-- The exponential-integrability domain of a nondegenerate Cauchy law is the singleton `{0}`. -/
+@[simp]
+theorem integrableExpSet_id_cauchyMeasure (x₀ : ℝ) (hγ : γ ≠ 0) :
+    integrableExpSet id (cauchyMeasure x₀ γ) = {0} := by
+  ext t
+  simpa [integrableExpSet, id_eq] using integrable_exp_mul_id_cauchyMeasure_iff x₀ hγ t
+
+end Integrability
 
 section CharFun
 

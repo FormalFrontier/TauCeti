@@ -87,84 +87,60 @@ private noncomputable def ofTensorProductComponents :
         (R := R) (H₁ := H₁) (H₂ := H₂))).toLinearMap.comp
       (LinearMap.snd B _ _))
 
+/-- The **left** component of the round trip: restricting the extension of `d` along
+`includeLeft` returns `d.1`. -/
+private theorem tensorProductComponents_ofTensorProductComponents_fst
+    (d : _root_.Derivation R H₁ (Bialgebra.CounitAlgebra R H₁ B) ×
+      _root_.Derivation R H₂ (Bialgebra.CounitAlgebra R H₂ B)) :
+    (tensorProductComponents (ofTensorProductComponents d)).1 = d.1 := by
+  simp only [tensorProductComponents, ofTensorProductComponents, LieHom.prod_apply,
+    LieHom.coe_toLinearMap, derivationCompLieHom_apply, LinearMap.add_apply, LinearMap.comp_apply,
+    LinearMap.fst_apply, LinearMap.snd_apply]
+  rw [map_add]
+  have hdiag := derivationComp_derivationComp_eq_self_of_comp_eq_id (B := B)
+    (TauCeti.Bialgebra.TensorProduct.projectLeft (R := R) (H₁ := H₁) (H₂ := H₂))
+    (TauCeti.Bialgebra.TensorProduct.includeLeft (R := R) (H₁ := H₁) (H₂ := H₂))
+    TauCeti.Bialgebra.TensorProduct.projectLeft_comp_includeLeft d.1
+  rw [hdiag]
+  have hcross := derivationComp_derivationComp_eq_zero_of_comp_eq_counit_smul_one (B := B)
+    (TauCeti.Bialgebra.TensorProduct.projectRight (R := R) (H₁ := H₁) (H₂ := H₂))
+    (TauCeti.Bialgebra.TensorProduct.includeLeft (R := R) (H₁ := H₁) (H₂ := H₂))
+    (fun h => by
+      simp only [BialgHom.coe_toAlgHom, TauCeti.Bialgebra.TensorProduct.includeLeft_toAlgHom,
+        Algebra.TensorProduct.includeLeft_apply, TauCeti.Bialgebra.TensorProduct.projectRight_tmul])
+    d.2
+  rw [hcross, add_zero]
+
+/-- The **right** component of the round trip: restricting the extension of `d` along
+`includeRight` returns `d.2`. -/
+private theorem tensorProductComponents_ofTensorProductComponents_snd
+    (d : _root_.Derivation R H₁ (Bialgebra.CounitAlgebra R H₁ B) ×
+      _root_.Derivation R H₂ (Bialgebra.CounitAlgebra R H₂ B)) :
+    (tensorProductComponents (ofTensorProductComponents d)).2 = d.2 := by
+  simp only [tensorProductComponents, ofTensorProductComponents, LieHom.prod_apply,
+    LieHom.coe_toLinearMap, derivationCompLieHom_apply, LinearMap.add_apply, LinearMap.comp_apply,
+    LinearMap.fst_apply, LinearMap.snd_apply]
+  rw [map_add]
+  have hdiag := derivationComp_derivationComp_eq_self_of_comp_eq_id (B := B)
+    (TauCeti.Bialgebra.TensorProduct.projectRight (R := R) (H₁ := H₁) (H₂ := H₂))
+    (TauCeti.Bialgebra.TensorProduct.includeRight (R := R) (H₁ := H₁) (H₂ := H₂))
+    TauCeti.Bialgebra.TensorProduct.projectRight_comp_includeRight d.2
+  rw [hdiag]
+  have hcross := derivationComp_derivationComp_eq_zero_of_comp_eq_counit_smul_one (B := B)
+    (TauCeti.Bialgebra.TensorProduct.projectLeft (R := R) (H₁ := H₁) (H₂ := H₂))
+    (TauCeti.Bialgebra.TensorProduct.includeRight (R := R) (H₁ := H₁) (H₂ := H₂))
+    (fun h => by
+      simp only [BialgHom.coe_toAlgHom, TauCeti.Bialgebra.TensorProduct.includeRight_toAlgHom,
+        Algebra.TensorProduct.includeRight_apply, TauCeti.Bialgebra.TensorProduct.projectLeft_tmul])
+    d.1
+  rw [hcross, zero_add]
+
 private theorem tensorProductComponents_ofTensorProductComponents
     (d : _root_.Derivation R H₁ (Bialgebra.CounitAlgebra R H₁ B) ×
       _root_.Derivation R H₂ (Bialgebra.CounitAlgebra R H₂ B)) :
-    tensorProductComponents (ofTensorProductComponents d) = d := by
-  apply Prod.ext
-  · simp only [tensorProductComponents, ofTensorProductComponents, LieHom.prod_apply,
-      LieHom.coe_toLinearMap, derivationCompLieHom_apply, LinearMap.add_apply, LinearMap.comp_apply,
-      LinearMap.fst_apply, LinearMap.snd_apply]
-    -- The preceding simplification exposes the bundled maps' underlying derivations;
-    -- `change` records that definitional identification before using the functorial API.
-    change derivationComp (B := B)
-        (TauCeti.Bialgebra.TensorProduct.includeLeft (R := R) (H₁ := H₁) (H₂ := H₂))
-        (derivationComp (B := B)
-            (TauCeti.Bialgebra.TensorProduct.projectLeft
-              (R := R) (H₁ := H₁) (H₂ := H₂)) d.1 +
-          derivationComp (B := B)
-            (TauCeti.Bialgebra.TensorProduct.projectRight
-              (R := R) (H₁ := H₁) (H₂ := H₂)) d.2) = d.1
-    rw [map_add]
-    have hdiag : derivationComp (B := B)
-        (TauCeti.Bialgebra.TensorProduct.includeLeft (R := R) (H₁ := H₁) (H₂ := H₂))
-        (derivationComp (B := B)
-          (TauCeti.Bialgebra.TensorProduct.projectLeft (R := R) (H₁ := H₁) (H₂ := H₂))
-            d.1) = d.1 := by
-      rw [← LinearMap.comp_apply, ← derivationComp_comp,
-        TauCeti.Bialgebra.TensorProduct.projectLeft_comp_includeLeft,
-        derivationComp_id, LinearMap.id_apply]
-    rw [hdiag]
-    have hcross : derivationComp (B := B)
-        (TauCeti.Bialgebra.TensorProduct.includeLeft (R := R) (H₁ := H₁) (H₂ := H₂))
-        (derivationComp (B := B)
-          (TauCeti.Bialgebra.TensorProduct.projectRight (R := R) (H₁ := H₁) (H₂ := H₂))
-            d.2) = 0 := by
-      ext h
-      simp only [derivationComp_apply, BialgHom.coe_toAlgHom,
-        TauCeti.Bialgebra.TensorProduct.includeLeft_toAlgHom,
-        Algebra.TensorProduct.includeLeft_apply,
-        TauCeti.Bialgebra.TensorProduct.projectRight_tmul, Derivation.map_smul,
-        Derivation.map_one_eq_zero, smul_zero]
-      -- Both sides are zero in exposed counit-coefficient synonyms.
-      rfl
-    rw [hcross, add_zero]
-  · simp only [tensorProductComponents, ofTensorProductComponents, LieHom.prod_apply,
-      LieHom.coe_toLinearMap, derivationCompLieHom_apply, LinearMap.add_apply, LinearMap.comp_apply,
-      LinearMap.fst_apply, LinearMap.snd_apply]
-    -- As in the first component, the bundled maps reduce definitionally to this composite.
-    change derivationComp (B := B)
-        (TauCeti.Bialgebra.TensorProduct.includeRight (R := R) (H₁ := H₁) (H₂ := H₂))
-        (derivationComp (B := B)
-            (TauCeti.Bialgebra.TensorProduct.projectLeft
-              (R := R) (H₁ := H₁) (H₂ := H₂)) d.1 +
-          derivationComp (B := B)
-            (TauCeti.Bialgebra.TensorProduct.projectRight
-              (R := R) (H₁ := H₁) (H₂ := H₂)) d.2) = d.2
-    rw [map_add]
-    have hdiag : derivationComp (B := B)
-        (TauCeti.Bialgebra.TensorProduct.includeRight (R := R) (H₁ := H₁) (H₂ := H₂))
-        (derivationComp (B := B)
-          (TauCeti.Bialgebra.TensorProduct.projectRight (R := R) (H₁ := H₁) (H₂ := H₂))
-            d.2) = d.2 := by
-      rw [← LinearMap.comp_apply, ← derivationComp_comp,
-        TauCeti.Bialgebra.TensorProduct.projectRight_comp_includeRight,
-        derivationComp_id, LinearMap.id_apply]
-    rw [hdiag]
-    have hcross : derivationComp (B := B)
-        (TauCeti.Bialgebra.TensorProduct.includeRight (R := R) (H₁ := H₁) (H₂ := H₂))
-        (derivationComp (B := B)
-          (TauCeti.Bialgebra.TensorProduct.projectLeft (R := R) (H₁ := H₁) (H₂ := H₂))
-            d.1) = 0 := by
-      ext h
-      simp only [derivationComp_apply, BialgHom.coe_toAlgHom,
-        TauCeti.Bialgebra.TensorProduct.includeRight_toAlgHom,
-        Algebra.TensorProduct.includeRight_apply,
-        TauCeti.Bialgebra.TensorProduct.projectLeft_tmul, Derivation.map_smul,
-        Derivation.map_one_eq_zero, smul_zero]
-      -- Both sides are zero in exposed counit-coefficient synonyms.
-      rfl
-    rw [hcross, zero_add]
+    tensorProductComponents (ofTensorProductComponents d) = d :=
+  Prod.ext (tensorProductComponents_ofTensorProductComponents_fst d)
+    (tensorProductComponents_ofTensorProductComponents_snd d)
 
 private theorem tensorProduct_smul_eq_counit_smul
     (x : H₁ ⊗[R] H₂) (b : Bialgebra.CounitAlgebra R (H₁ ⊗[R] H₂) B) :

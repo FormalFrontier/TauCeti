@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Borel
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Dynamic.Weight.Basic
+public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Borel
 
 /-!
 # The upper-triangular Borel as a dynamic parabolic of `GL₂`

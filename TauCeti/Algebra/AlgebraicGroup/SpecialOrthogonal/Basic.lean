@@ -88,7 +88,7 @@ theorem definingHopfIdeal_toIdeal :
         Ideal.span
           {(GeneralLinear.determinantGroupLike R n :
               GeneralLinear.coordinateHopfAlgebra R n) - 1} := by
-  rw [definingHopfIdeal, HopfIdeal.sup_toIdeal, Orthogonal.definingHopfIdeal_toIdeal,
+  rw [definingHopfIdeal, HopfIdeal.sup_toIdeal, ConstantForm.definingHopfIdeal_toIdeal,
     SpecialLinear.definingHopfIdeal_toIdeal]
 
 /-- The coordinate Hopf algebra of the special orthogonal subgroup scheme of `GL n`. -/
@@ -120,7 +120,7 @@ theorem coordinateMap_relationMatrix (i j : Fin n) :
   exact Ideal.Quotient.eq_zero_iff_mem.mpr
     (definingHopfIdeal_toIdeal R n ▸
       Ideal.mem_sup_left
-        (Ideal.subset_span (Orthogonal.relationMatrix_mem_relationSet R n i j)))
+        (Ideal.subset_span (ConstantForm.relationMatrix_mem_relationSet R n 1 i j)))
 
 /-- The generic determinant maps to one in the special orthogonal coordinate Hopf algebra. -/
 @[simp↓]

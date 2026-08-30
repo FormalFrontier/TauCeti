@@ -126,16 +126,10 @@ the `p ^ k`-th power. -/
 theorem map_iterateFrobenius_kostantTorusMatrix (s : κ → Aˣ) :
     Matrix.GeneralLinearGroup.map (iterateFrobenius A p k) (kostantTorusMatrix M b wt s) =
       kostantTorusMatrix M b wt (s ^ p ^ k) := by
-  have hchar : ∀ i : Fin n,
-      torusCharacter (s ^ p ^ k) (wt i) = torusCharacter s (wt i) ^ p ^ k := by
-    intro i
-    have hpow := congrFun (map_pow (torusCharacterHom (R := A) wt) s (p ^ k)) i
-    rwa [torusCharacterHom_apply, Pi.pow_apply, torusCharacterHom_apply] at hpow
-  refine Matrix.GeneralLinearGroup.ext fun r c => ?_
-  simp only [Matrix.GeneralLinearGroup.map_apply, kostantTorusMatrix_apply, diagGL_apply]
-  split_ifs with hrc
-  · rw [iterateFrobenius_def, ← Units.val_pow_eq_pow_val, hchar r]
-  · exact map_zero (iterateFrobenius A p k)
+  rw [map_kostantTorusMatrix]
+  refine congrArg (kostantTorusMatrix M b wt) (funext fun j => Units.ext ?_)
+  rw [Units.coe_map, MonoidHom.coe_coe, iterateFrobenius_def, Pi.pow_apply,
+    Units.val_pow_eq_pow_val]
 
 end Generators
 

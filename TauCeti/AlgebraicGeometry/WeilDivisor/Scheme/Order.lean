@@ -21,6 +21,10 @@ This is the local algebraic input for the scheme-theoretic principal-divisor map
 that map also requires the separate global theorem that a nonzero rational function has nonzero
 order at only finitely many codimension-one points; no finiteness assumption is hidden here.
 
+An elementary fact about `Scheme.ord` itself is recorded first: a function regular on `U` has
+nonnegative order at every point of `U` (`Scheme.ord_germToFunctionField_nonneg`), that is, it has
+no poles where it is defined.
+
 The construction advances `TauCetiRoadmap/JacobianChallenge/README.md`, Layer A, the
 "principal divisors" part of "Divisors on a curve". It reuses Mathlib's
 `AlgebraicGeometry.Scheme.ord`, `ordHom`, and `ord_eq_unzero_ordHom`; no external
@@ -37,11 +41,29 @@ namespace AlgebraicGeometry
 
 universe u
 
-namespace SchemeWeilDivisor
-
 variable {X : Scheme.{u}} [IsIntegral X] [IsLocallyNoetherian X]
 
 noncomputable section
+
+namespace Scheme
+
+/-- A regular function on `U` has nonnegative order at every point of `U`: it has no poles where
+it is defined. -/
+lemma ord_germToFunctionField_nonneg {U : X.Opens} [Nonempty U] (a : Γ(X, U)) {x : X}
+    (hx : x ∈ U) : 0 ≤ X.ord (X.germToFunctionField U a) x := by
+  rcases eq_or_ne a 0 with rfl | ha
+  · simp
+  · have h := Scheme.ord_le_smul hx ha (1 : X.functionField)
+    let _ : Nonempty (⊤ : X.Opens) := ⟨⟨x, trivial⟩⟩
+    -- Naming this proof fixes the open set before elaborating `ord_of_isUnit`.
+    have hx_top : x ∈ (⊤ : X.Opens) := by simp
+    have h_one : X.ord (1 : X.functionField) x = 0 := by
+      simpa using X.ord_of_isUnit (U := ⊤) isUnit_one hx_top
+    rwa [Algebra.smul_def, mul_one, RingHom.algebraMap_toAlgebra, h_one] at h
+
+end Scheme
+
+namespace SchemeWeilDivisor
 
 /-- The order of a nonzero rational function at a codimension-one point, as an additive
 homomorphism from the additive form of the unit group of the function field. -/
@@ -61,9 +83,9 @@ lemma orderAt_apply (x : CodimensionOnePoint X) (f : Additive X.functionFieldˣ)
     MulEquiv.coe_toMonoidHom, Function.comp_apply, WithZero.unitsWithZeroEquiv_apply]
   congr 1
 
-end
-
 end SchemeWeilDivisor
+
+end
 
 end AlgebraicGeometry
 

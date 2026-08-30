@@ -284,6 +284,22 @@ private theorem lipschitzOnWith_derivWithin_comp_const_sub {γ : ℝ → ℂ} {c
   rw [← dist_sub_left (2 * t₀) t s]
   exact hlip (2 * t₀ - t) hmem_t (2 * t₀ - s) hmem_s
 
+/-- **Reflecting the curve turns the left-hand integrand image into the negated right-hand one.**
+Writing `γ'` for the reflection `s ↦ γ (2 * t₀ - s)` of `γ` about `t₀`, the image of the real
+winding integrand over `[t₀ - ρ, t₀]` is the negation of the corresponding image for `γ'` over
+`[t₀, t₀ + ρ]`: reflection negates the velocity (`deriv_comp_const_sub`) and
+`realWindingIntegrand` is odd in it. No hypothesis on `γ`, `w` or `ρ` is needed. -/
+private theorem image_realWindingIntegrand_comp_const_sub {γ : ℝ → ℂ} {w : ℂ} {t₀ ρ : ℝ} :
+    (fun t => realWindingIntegrand (γ t - w) (deriv γ t)) '' Icc (t₀ - ρ) t₀
+      = Neg.neg '' ((fun t => realWindingIntegrand ((fun s => γ (2 * t₀ - s)) t - w)
+          (deriv (fun s => γ (2 * t₀ - s)) t)) '' Icc t₀ (t₀ + ρ)) := by
+  have hIcc_eq : Icc (t₀ - ρ) t₀ = (fun t => 2 * t₀ - t) '' Icc t₀ (t₀ + ρ) := by
+    rw [image_const_sub_Icc]; congr 1 <;> ring
+  rw [hIcc_eq, Set.image_image, Set.image_image]
+  refine Set.image_congr fun t _ ↦ ?_
+  simp only [deriv_comp_const_sub, realWindingIntegrand_neg_right, neg_neg]
+
+
 /-- **Boundedness of the real winding integrand at a `C^{1,1}` crossing, from the left.** If `γ`
 is differentiable on `[c, t₀]` and `derivWithin γ (Icc c t₀)` is `K`-Lipschitz there and non-zero
 at `t₀`, where `γ t₀ = w`, then the real winding integrand (the ordinary derivative, which agrees
@@ -321,39 +337,7 @@ theorem exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWith
     exists_isBounded_image_realWindingIntegrand_of_lipschitzOnWith_derivWithin_right
       hd'_gt hdiff' hlip' h_eq' hvel'
   refine ⟨ρ, hρ_pos, by linarith, ?_⟩
-  have himg : (fun t => realWindingIntegrand (γ t - w) (deriv γ t)) '' Icc (t₀ - ρ) t₀
-      = Neg.neg '' ((fun t => realWindingIntegrand (γ' t - w) (deriv γ' t)) ''
-          Icc t₀ (t₀ + ρ)) := by
-    have hIcc_eq : Icc (t₀ - ρ) t₀ = (fun t => 2 * t₀ - t) '' Icc t₀ (t₀ + ρ) := by
-      rw [image_const_sub_Icc]; congr 1 <;> ring
-    rw [hIcc_eq, Set.image_image, Set.image_image]
-    apply Set.image_congr
-    intro t ht
-    rcases eq_or_ne t t₀ with heq | htne
-    · have hz2 : γ (2 * t₀ - t) - w = 0 := by
-        rw [heq, h2t₀, h_eq, sub_self]
-      -- `Set.image_congr`'s goal states the right side's position as `γ' t - w`, defeq (via
-      -- `γ'`'s definition) but not syntactically equal to the `γ (2 * t₀ - t) - w` on the left;
-      -- `change` records that both sides already talk about the same position, before `hz2`
-      -- zeroes it out on both.
-      change realWindingIntegrand (γ (2 * t₀ - t) - w) (deriv γ (2 * t₀ - t))
-        = -realWindingIntegrand (γ (2 * t₀ - t) - w) (deriv γ' t)
-      simp [hz2]
-    · have htlt : t₀ < t := lt_of_le_of_ne ht.1 (Ne.symm htne)
-      have hint : t ∈ Ioo t₀ (2 * t₀ - c) := ⟨htlt, by linarith [ht.2]⟩
-      have hDeq' : deriv γ' t = derivWithin γ' (Icc t₀ (2 * t₀ - c)) t :=
-        (derivWithin_of_mem_nhds (Icc_mem_nhds hint.1 hint.2)).symm
-      have hint2 : 2 * t₀ - t ∈ Ioo c t₀ := ⟨by linarith [ht.2], by linarith [htlt]⟩
-      have hDeq : deriv γ (2 * t₀ - t) = derivWithin γ (Icc c t₀) (2 * t₀ - t) :=
-        (derivWithin_of_mem_nhds (Icc_mem_nhds hint2.1 hint2.2)).symm
-      have hDeriv_eq : deriv γ' t = -deriv γ (2 * t₀ - t) := by
-        rw [hDeq', hγ'_def, derivWithin_comp_const_sub_Icc γ c t₀ t, hDeq]
-      -- Same defeq-not-syntactic gap as the `heq` case above: restate the position on both
-      -- sides as `γ (2 * t₀ - t) - w` so the remaining rewrites only need to track the velocity.
-      change realWindingIntegrand (γ (2 * t₀ - t) - w) (deriv γ (2 * t₀ - t))
-        = -realWindingIntegrand (γ (2 * t₀ - t) - w) (deriv γ' t)
-      rw [hDeriv_eq, realWindingIntegrand_neg_right, neg_neg]
-  rw [himg, Set.image_neg_eq_neg]
+  rw [image_realWindingIntegrand_comp_const_sub, Set.image_neg_eq_neg]
   exact hbdd.neg
 
 /-- **Boundedness of the real winding integrand on the full neighborhood of a `C^{1,1}` corner

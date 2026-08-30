@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.RingTheory.Valuation.Extension
+public import Mathlib.RingTheory.DedekindDomain.IntegralClosure
 public import TauCeti.FieldTheory.FunctionField.Place.Basic
 public import TauCeti.RingTheory.Valuation.Discrete.Normalize
 
@@ -20,13 +21,32 @@ constants and — because `F'` is algebraic over `F`, so that a valuation ring o
 is the **ramification index** `e(P' | P)`. The residue field of `P` embeds in the residue field
 of `P'`, and the degree of that extension is the **relative degree** `f(P' | P)`.
 
+The constant field may grow along with `F`: if `k'` is integral over `k` then a valuation of `F'`
+is trivial on `k` exactly when it is trivial on `k'`, so the places of `F' / k` and of `F' / k'`
+are literally the same objects. That is `TauCeti.Place.constantsEquiv`, which lets a place of
+`F' / k'` be produced from data that only sees the smaller constant field `k`.
+
 The main theorem is the bound `e(P' | P) · f(P' | P) ≤ [F' : F]`: residues of elements of `𝒪_{P'}`
 that are independent over `F_P`, multiplied by the powers `t^j` of a prime element for `P'` with
 `0 ≤ j < e`, are independent over `F`, because the orders of the resulting blocks are pairwise
 distinct modulo `e`.
 
+The file also records the action of the valuation ring `𝒪_P` of a place `P` of `F / k` on the
+extension field `F'`, through `F`.  That action is not a global instance — for `F' = F` it would
+compete with the action of a valuation subring on its own field — so it, and the scalar tower it
+sits in, are provided to be reinstalled by consumers with `attribute [local instance 10]`.
+For a finite extension, it also records the standard local integral-closure model
+`𝒪_P ⊆ 𝒪'_P`: `F'` is the fraction field and the localization of `𝒪'_P` at `(𝒪_P)⁰`; for a
+separable extension, `𝒪'_P` is Dedekind and module-finite over `𝒪_P`, and separability transports
+to the canonical fraction fields used by Mathlib's different API.
+
 ## Main definitions
 
+* `TauCeti.Place.constantsEquiv`: the places of `F' / k` are the places of `F' / k'`, for `k'`
+  integral over `k`; enlarging the constants by an algebraic extension changes nothing.
+* `TauCeti.Place.algebraIntegersExtension` and `TauCeti.Place.isScalarTowerIntegersExtension`: the
+  action of the valuation ring of a place of `F / k` on an extension field `F'`, to be installed
+  with `attribute [local instance 10]`.
 * `TauCeti.Place.restrict`: the place of `F / k` that a place of `F' / k'` lies over.
 * `TauCeti.Place.ramificationIdx`: the ramification index `e(P' | P)`.
 * `TauCeti.Place.relativeDegree`: the relative degree `f(P' | P) = [F'_{P'} : F_P]`.
@@ -40,13 +60,27 @@ distinct modulo `e`.
   maximal ideals, and by the scaling of the order functions. Together with
   `TauCeti.Place.restrict` they say that every place of `F'` lies over exactly one place of `F`.
 * `TauCeti.Place.linearIndependent_mul_pow_of_linearIndependent_residue`: the independence
-  statement carrying the fundamental inequality.
+  statement carrying the fundamental inequality, together with the three ingredients of its
+  proof — `TauCeti.Place.ord_sum_eq_zero_of_isUnit`,
+  `TauCeti.Place.sum_ne_zero_of_linearIndependent_residue` and
+  `TauCeti.Place.ramificationIdx_dvd_ord_sum_of_linearIndependent_residue` — and the
+  ultrametric estimate `TauCeti.Place.sum_ne_zero_of_ord_eq_mul_add_natCast` with
+  `TauCeti.Place.ord_sum_le_of_ord_eq_mul_add_natCast` that combines them.
 * `TauCeti.Place.ramificationIdx_mul_relativeDegree_le_finrank`: `e(P' ∣ P) · f(P' ∣ P) ≤
   [F' : F]`, with `TauCeti.Place.ramificationIdx_le_finrank` and
   `TauCeti.Place.relativeDegree_le_finrank` its two halves (Stichtenoth, Corollary 3.1.12).
 * `TauCeti.Place.finiteDimensional_residueField_restrict`: the relative degree is finite, so it
   is not the junk value of `Module.finrank`; `TauCeti.Place.one_le_relativeDegree` and
   `TauCeti.Place.ramificationIdx_pos` are the matching lower bounds.
+* `TauCeti.Place.finrank_mul_degree_eq_relativeDegree_mul_degree_restrict`:
+  `[k' : k] · deg P' = f(P' ∣ P) · deg P`, the comparison of the degrees of `P'` and of the place
+  it lies over.
+* `TauCeti.Place.isFractionRing_integralClosure`,
+  `TauCeti.Place.isLocalization_integralClosure`,
+  `TauCeti.Place.isDedekindDomain_integralClosure`,
+  `TauCeti.Place.moduleFinite_integralClosure`, and
+  `TauCeti.Place.isSeparable_fractionRing_integralClosure`: the fraction-field, localization,
+  Dedekind, finiteness, and separability properties of the local integral closure `𝒪'_P`.
 
 ## References
 
@@ -56,7 +90,12 @@ distinct modulo `e`.
 
 public section
 
+open IsDedekindDomain
+
 open scoped WithZero
+open scoped nonZeroDivisors
+
+attribute [local instance] FractionRing.liftAlgebra FractionRing.isScalarTower_liftAlgebra
 
 namespace TauCeti
 
@@ -68,6 +107,142 @@ variable {k : Type u} {k' : Type u'} {F : Type v} {F' : Type v'}
 variable [Field k] [Field k'] [Field F] [Field F']
 variable [Algebra k k'] [Algebra k F] [Algebra k' F'] [Algebra F F'] [Algebra k F']
 variable [IsScalarTower k k' F'] [IsScalarTower k F F']
+
+section LocalModel
+
+omit [Field k'] [Algebra k k'] [Algebra k' F'] [Algebra k F'] [IsScalarTower k k' F']
+  [IsScalarTower k F F']
+
+variable (F') (P : Place k F)
+
+/-- **The valuation ring of a place of `F / k` acts on an extension field `F'`**, through `F`.
+
+This is not a global instance: for `F' = F` it would compete with the action of a valuation
+subring on its own field.  Install it, together with
+`TauCeti.Place.isScalarTowerIntegersExtension`, with `attribute [local instance 10]` in any file
+that works with the local model of the extension at `P` — at low priority, so that the case
+`F' = F` still resolves to the valuation subring's own action, as the fraction-field instances
+expect. -/
+@[instance_reducible]
+noncomputable def algebraIntegersExtension : Algebra (P.integers) F' :=
+  ((algebraMap F F').comp (algebraMap (P.integers) F)).toAlgebra
+
+attribute [local instance 10] algebraIntegersExtension
+
+/-- The action of `TauCeti.Place.algebraIntegersExtension` on `F'` factors through `F`. -/
+theorem isScalarTowerIntegersExtension : IsScalarTower (P.integers) F F' :=
+  .of_algebraMap_eq fun _ ↦ rfl
+
+attribute [local instance 10] isScalarTowerIntegersExtension
+
+theorem algebraMap_integersExtension_injective :
+    Function.Injective (algebraMap (P.integers) F') := by
+  rw [IsScalarTower.algebraMap_eq (P.integers) F F', RingHom.coe_comp]
+  exact (algebraMap F F').injective.comp (FaithfulSMul.algebraMap_injective (P.integers) F)
+
+instance isTorsionFree_integersExtension : Module.IsTorsionFree (P.integers) F' :=
+  Module.isTorsionFree_iff_algebraMap_injective.mpr
+    (algebraMap_integersExtension_injective F' P)
+
+end LocalModel
+
+section LocalIntegralClosure
+
+omit [Field k'] [Algebra k k'] [Algebra k' F'] [Algebra k F'] [IsScalarTower k k' F']
+  [IsScalarTower k F F']
+
+variable (F') (P : Place k F)
+
+attribute [local instance 10] algebraIntegersExtension isScalarTowerIntegersExtension
+
+variable [FiniteDimensional F F']
+
+/-- The local model `𝒪'_P` — the integral closure of `𝒪_P` in `F'` — has fraction field `F'`. -/
+instance isFractionRing_integralClosure :
+    IsFractionRing (integralClosure (P.integers) F') F' :=
+  IsIntegralClosure.isFractionRing_of_finite_extension (P.integers) F F' _
+
+/-- More precisely, `F'` is the localization of the local model `𝒪'_P` at the nonzero divisors
+of `𝒪_P`. -/
+theorem isLocalization_integralClosure :
+    IsLocalization
+      (Algebra.algebraMapSubmonoid (integralClosure (P.integers) F') (P.integers)⁰) F' :=
+  IsIntegralClosure.isLocalization (P.integers) F F' _
+
+variable [Algebra.IsSeparable F F']
+
+/-- The local model `𝒪'_P` is a Dedekind domain. -/
+instance isDedekindDomain_integralClosure :
+    IsDedekindDomain (integralClosure (P.integers) F') :=
+  integralClosure.isDedekindDomain (A := P.integers) (K := F) (L := F')
+
+/-- The local model `𝒪'_P` is module-finite over `𝒪_P`. -/
+instance moduleFinite_integralClosure :
+    Module.Finite (P.integers) (integralClosure (P.integers) F') :=
+  IsIntegralClosure.finite (A := P.integers) (K := F) (L := F') _
+
+/-- Separability of `F' / F`, transported to the canonical fraction fields used by the
+integral-closure API. -/
+instance isSeparable_fractionRing_integralClosure :
+    Algebra.IsSeparable (FractionRing (P.integers))
+      (FractionRing (integralClosure (P.integers) F')) := by
+  refine Algebra.IsSeparable.of_equiv_equiv (FractionRing.algEquiv (P.integers) F).symm.toRingEquiv
+    (FractionRing.algEquiv (integralClosure (P.integers) F') F').symm.toRingEquiv ?_
+  apply IsLocalization.ringHom_ext (P.integers)⁰
+  ext a
+  simp only [RingHom.coe_comp, Function.comp_apply, RingHom.coe_coe, AlgEquiv.coe_ringEquiv,
+    AlgEquiv.commutes, ← IsScalarTower.algebraMap_apply]
+  rw [IsScalarTower.algebraMap_apply (P.integers) (integralClosure (P.integers) F') F',
+    AlgEquiv.commutes, ← IsScalarTower.algebraMap_apply]
+
+end LocalIntegralClosure
+
+section Constants
+
+variable (k k' F') [Algebra.IsIntegral k k']
+
+/-- **Enlarging an algebraic constant field does not change the places**: a valuation of `F'` is
+trivial on `k` exactly when it is trivial on `k'`, because every nonzero element of `k'` is
+algebraic over `k` and every nonzero element of `k` is one of `k'`.  So the places of `F' / k` and
+the places of `F' / k'` are the same, with the same valuations. -/
+def constantsEquiv : Place k F' ≃ Place k' F' where
+  toFun Q :=
+    { valuation := Q.valuation
+      valuation_surjective := Q.valuation_surjective
+      isTrivialOn := ⟨fun c hc ↦ Q.valuation_eq_one_of_isAlgebraic
+        (IsIntegral.algebraMap (Algebra.IsIntegral.isIntegral (R := k) c)).isAlgebraic
+        fun h ↦ hc ((algebraMap k' F').injective (by rw [h, map_zero]))⟩ }
+  invFun Q :=
+    { valuation := Q.valuation
+      valuation_surjective := Q.valuation_surjective
+      isTrivialOn := ⟨fun c hc ↦ by
+        rw [IsScalarTower.algebraMap_apply k k' F']
+        exact Q.isTrivialOn.eq_one _ fun h ↦
+          hc ((algebraMap k k').injective (by rw [h, map_zero]))⟩ }
+  left_inv _ := rfl
+  right_inv _ := rfl
+
+variable {k k' F'}
+
+@[simp]
+theorem valuation_constantsEquiv (Q : Place k F') :
+    (constantsEquiv k k' F' Q).valuation = Q.valuation := (rfl)
+
+@[simp]
+theorem valuation_constantsEquiv_symm (Q : Place k' F') :
+    ((constantsEquiv k k' F').symm Q).valuation = Q.valuation := (rfl)
+
+@[simp]
+theorem integers_constantsEquiv (Q : Place k F') :
+    (constantsEquiv k k' F' Q).integers = Q.integers :=
+  SetLike.ext fun x ↦ by rw [mem_integers_iff, mem_integers_iff, valuation_constantsEquiv]
+
+@[simp]
+theorem integers_constantsEquiv_symm (Q : Place k' F') :
+    ((constantsEquiv k k' F').symm Q).integers = Q.integers :=
+  SetLike.ext fun x ↦ by rw [mem_integers_iff, mem_integers_iff, valuation_constantsEquiv_symm]
+
+end Constants
 
 section Restrict
 
@@ -272,6 +447,29 @@ theorem relativeDegree_def :
     relativeDegree k F P' = Module.finrank (P'.restrict k F).ResidueField P'.ResidueField := by
   rw [relativeDegree]
 
+/-- **The degree of a place and the degree of the place below it** (Stichtenoth, Section III.1):
+the residue field `F'_{P'}` sits in the two towers `k ⊆ k' ⊆ F'_{P'}` and `k ⊆ F_P ⊆ F'_{P'}`,
+whose successive degrees are `[k' : k]`, `deg P'` and `deg P`, `f(P' ∣ P)`.  Comparing them gives
+`[k' : k] · deg P' = f(P' ∣ P) · deg P`.
+
+The factor `[k' : k]` is mandatory and the identity is stated cross-multiplied: when the constant
+field grows, `deg P'` falls short of `f(P' ∣ P) · deg P` by exactly that factor. -/
+theorem finrank_mul_degree_eq_relativeDegree_mul_degree_restrict :
+    Module.finrank k k' * P'.degree = relativeDegree k F P' * (P'.restrict k F).degree := by
+  -- The residue field of `P'` is a `k`-algebra through the constants `k'` of `F'`.  This is a
+  -- local instance: for `k = k'` it would compete with the constant-field algebra of `P'`.
+  let _ : Algebra k P'.integers := ((algebraMap k' P'.integers).comp (algebraMap k k')).toAlgebra
+  have : IsScalarTower k k' P'.integers := .of_algebraMap_eq fun _ ↦ rfl
+  have : IsScalarTower k (P'.restrict k F).integers P'.integers := by
+    refine .of_algebraMap_eq fun c ↦ Subtype.ext ?_
+    rw [coe_algebraMap_integers, coe_algebraMap_constants, ← IsScalarTower.algebraMap_apply k F F']
+    exact (P'.coe_algebraMap_constants (algebraMap k k' c)).trans
+      (IsScalarTower.algebraMap_apply k k' F' c).symm
+  rw [degree_eq_finrank, degree_eq_finrank, relativeDegree_def,
+    Module.finrank_mul_finrank k k' P'.ResidueField,
+    mul_comm (Module.finrank (P'.restrict k F).ResidueField P'.ResidueField),
+    Module.finrank_mul_finrank k (P'.restrict k F).ResidueField P'.ResidueField]
+
 end ResidueField
 
 section Independence
@@ -293,9 +491,13 @@ private theorem eq_of_mul_add_natCast_eq {e : ℕ} {j j' : Fin e} {a b : ℤ}
   simp only [key] at h'
   exact Fin.ext (by exact_mod_cast h')
 
-private theorem sum_ne_zero_of_ord_eq_mul_add_natCast {e : ℕ} (A : Fin e → F')
+/-- The valuation of a sum whose nonzero terms have pairwise distinct orders is the valuation of a
+term of least order. -/
+private theorem exists_valuation_sum_eq {e : ℕ} (A : Fin e → F')
     (hAord : ∀ j, A j ≠ 0 → ∃ m : ℤ, P'.ord (A j) = (e : ℤ) * m + (j : ℕ))
-    {j₁ : Fin e} (hj₁ : A j₁ ≠ 0) : ∑ j, A j ≠ 0 := by
+    {j₁ : Fin e} (hj₁ : A j₁ ≠ 0) :
+    ∃ j₀, A j₀ ≠ 0 ∧ P'.ord (A j₀) ≤ P'.ord (A j₁) ∧
+      P'.valuation (∑ j, A j) = P'.valuation (A j₀) := by
   classical
   set J : Finset (Fin e) := {j | A j ≠ 0} with hJdef
   have hJ : J.Nonempty := ⟨j₁, by simp [hJdef, hj₁]⟩
@@ -315,10 +517,28 @@ private theorem sum_ne_zero_of_ord_eq_mul_add_natCast {e : ℕ} (A : Fin e → F
         exact fun hcontra ↦ hj.2 (eq_of_mul_add_natCast_eq hcontra)
       have hge := hj₀ j (by simp [hJdef, hAj])
       exact valuation_lt_of_ord_lt P' hAj hj₀A (by omega)
+  exact ⟨j₀, hj₀A, hj₀ j₁ (by simp [hJdef, hj₁]),
+    P'.valuation.map_sum_eq_of_lt (Finset.mem_univ j₀) hlt⟩
+
+/-- **A sum whose nonzero terms have pairwise distinct orders is nonzero.** The hypothesis is the
+form in which the distinctness is met in the extension theory: the order of `A j` is congruent to
+`j` modulo `e`, so no two nonzero terms can cancel. -/
+theorem sum_ne_zero_of_ord_eq_mul_add_natCast {e : ℕ} (A : Fin e → F')
+    (hAord : ∀ j, A j ≠ 0 → ∃ m : ℤ, P'.ord (A j) = (e : ℤ) * m + (j : ℕ))
+    {j₁ : Fin e} (hj₁ : A j₁ ≠ 0) : ∑ j, A j ≠ 0 := by
+  obtain ⟨j₀, hj₀A, -, hval⟩ := exists_valuation_sum_eq P' A hAord hj₁
   intro hsum
-  have hval := P'.valuation.map_sum_eq_of_lt (Finset.mem_univ j₀) hlt
   rw [hsum, map_zero] at hval
   exact (Valuation.ne_zero_iff _).mpr hj₀A hval.symm
+
+/-- **The order of a sum whose nonzero terms have pairwise distinct orders is the least of them**;
+in particular it is at most the order of any nonzero term. -/
+theorem ord_sum_le_of_ord_eq_mul_add_natCast {e : ℕ} (A : Fin e → F')
+    (hAord : ∀ j, A j ≠ 0 → ∃ m : ℤ, P'.ord (A j) = (e : ℤ) * m + (j : ℕ))
+    {j₁ : Fin e} (hj₁ : A j₁ ≠ 0) : P'.ord (∑ j, A j) ≤ P'.ord (A j₁) := by
+  obtain ⟨j₀, -, hle, hval⟩ := exists_valuation_sum_eq P' A hAord hj₁
+  calc P'.ord (∑ j, A j) = P'.ord (A j₀) := by simp only [ord_def, hval]
+    _ ≤ P'.ord (A j₁) := hle
 
 /-- A combination of elements of `𝒪_{P'}` with coefficients in `𝒪_P`, one of them a unit, is a
 unit at `P'` as soon as the residues of the elements are independent over the residue field of
@@ -367,19 +587,8 @@ private theorem exists_ord_sum_eq_mul {ι : Type*} [Fintype ι] (s : ι → P'.i
     (c : ι → F) {i₁ : ι} (hi₁ : c i₁ ≠ 0) :
     (∑ i, algebraMap F F' (c i) * (s i : F')) ≠ 0 ∧
       ∃ m : ℤ, P'.ord (∑ i, algebraMap F F' (c i) * (s i : F')) = ramificationIdx F P' * m := by
-  classical
-  set P := P'.restrict k F with hP
-  set S : Finset ι := {i | c i ≠ 0} with hS
-  have hSne : S.Nonempty := ⟨i₁, by simp [hS, hi₁]⟩
-  obtain ⟨i₀, hi₀S, hi₀⟩ := S.exists_min_image (fun i ↦ P.ord (c i)) hSne
-  have hd : c i₀ ≠ 0 := by simpa [hS] using hi₀S
-  have hb : ∀ i, c i / c i₀ ∈ P.integers := by
-    intro i
-    rcases eq_or_ne (c i) 0 with h | h
-    · simp [h]
-    · rw [P.mem_integers_iff_ord_nonneg, P.ord_div h hd]
-      have := hi₀ i (by simp [hS, h])
-      omega
+  set P := P'.restrict k F
+  obtain ⟨i₀, hd, hb⟩ := P.exists_ne_zero_forall_div_mem_integers c hi₁
   set b : ι → P.integers := fun i ↦ ⟨c i / c i₀, hb i⟩ with hbdef
   have hb₀ : IsUnit (b i₀) := by
     have hb_eq_one : b i₀ = 1 := Subtype.ext (by simp [hbdef, div_self hd])
@@ -398,6 +607,39 @@ private theorem exists_ord_sum_eq_mul {ι : Type*} [Fintype ι] (s : ι → P'.i
   have hd' : algebraMap F F' (c i₀) ≠ 0 := by simpa using hd
   refine ⟨by rw [hsum]; exact mul_ne_zero hd' hne, ⟨P.ord (c i₀), ?_⟩⟩
   rw [hsum, P'.ord_mul hd' hne, hord, add_zero, ord_algebraMap_restrict k F P' (c i₀)]
+
+/-- A combination of elements of `𝒪_{P'}` with independent residues and coefficients in `𝒪_P`,
+one of them a unit, has order zero at `P'` — that is, it is again a unit there. -/
+theorem ord_sum_eq_zero_of_isUnit {ι : Type*} [Fintype ι] (s : ι → P'.integers)
+    (hind : LinearIndependent (P'.restrict k F).ResidueField
+      fun i ↦ IsLocalRing.residue P'.integers (s i))
+    (b : ι → (P'.restrict k F).integers) {i₀ : ι} (hb₀ : IsUnit (b i₀)) :
+    P'.ord (∑ i, algebraMap F F' (b i : F) * (s i : F')) = 0 :=
+  (ord_sum_eq_zero k F P' s hind b hb₀).2
+
+/-- A nontrivial `F`-combination of elements of `𝒪_{P'}` whose residues are independent over the
+residue field of the place below is nonzero. -/
+theorem sum_ne_zero_of_linearIndependent_residue {ι : Type*} [Fintype ι] (s : ι → P'.integers)
+    (hind : LinearIndependent (P'.restrict k F).ResidueField
+      fun i ↦ IsLocalRing.residue P'.integers (s i))
+    (c : ι → F) {i₁ : ι} (hi₁ : c i₁ ≠ 0) :
+    (∑ i, algebraMap F F' (c i) * (s i : F')) ≠ 0 :=
+  (exists_ord_sum_eq_mul k F P' s hind c hi₁).1
+
+/-- The order at `P'` of an `F`-combination of elements of `𝒪_{P'}` whose residues are independent
+over the residue field of the place below is divisible by the ramification index, because such a
+combination is a scalar in `F` times a unit at `P'`. -/
+theorem ramificationIdx_dvd_ord_sum_of_linearIndependent_residue {ι : Type*} [Fintype ι]
+    (s : ι → P'.integers)
+    (hind : LinearIndependent (P'.restrict k F).ResidueField
+      fun i ↦ IsLocalRing.residue P'.integers (s i))
+    (c : ι → F) :
+    (ramificationIdx F P' : ℤ) ∣ P'.ord (∑ i, algebraMap F F' (c i) * (s i : F')) := by
+  classical
+  by_cases hc : ∀ i, c i = 0
+  · simp [hc]
+  · obtain ⟨i₁, hi₁⟩ := not_forall.mp hc
+    exact (exists_ord_sum_eq_mul k F P' s hind c hi₁).2
 
 /-- **The independence statement behind the fundamental inequality** (Stichtenoth,
 Theorem 3.1.11): if the residues at `P'` of finitely many elements of `𝒪_{P'}` are independent

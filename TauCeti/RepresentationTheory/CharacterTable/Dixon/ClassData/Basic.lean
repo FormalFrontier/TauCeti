@@ -43,6 +43,9 @@ order `8` as a closed instance of everything here.
 * `TauCeti.ClassData.ofList`: such a list, extracted from any list meeting every conjugacy class.
 * `TauCeti.ClassData.index`, `TauCeti.ClassData.rep`: the numbering and its representatives.
 * `TauCeti.ClassData.equivConjClasses`: the numbering as an equivalence with `ConjClasses G`.
+* `TauCeti.ClassData.rowsOfMap`: the rows of a numbered matrix, mapped entrywise into another type.
+* `TauCeti.ClassData.reindexTableOfMap`: map the entries of a numbered table and reindex it by the
+  conjugacy classes.
 * `TauCeti.ClassData.classFinset`, `TauCeti.ClassData.classes`: the `i`-th conjugacy class and the
   executable list of all conjugacy classes.
 * `TauCeti.ClassData.structureConstant`, `TauCeti.ClassData.structureConstantTable`,
@@ -181,6 +184,22 @@ theorem nodup_reps : d.reps.Nodup := by
   rintro rfl
   exact h (IsConj.refl a)
 
+/-! ### Rows of a numbered matrix -/
+
+/-- The rows of a numbered matrix, mapped entrywise by `f` and collected without an ordering. -/
+@[expose] def rowsOfMap {R S : Type*} [DecidableEq S] (f : R → S)
+    (M : Matrix (Fin d.numClasses) (Fin d.numClasses) R) :
+    Finset (Fin d.numClasses → S) :=
+  Finset.univ.image fun i j => f (M i j)
+
+/-- A row is displayed exactly when it is the mapped image of a matrix row. -/
+@[simp]
+theorem mem_rowsOfMap_iff {R S : Type*} [DecidableEq S] (f : R → S)
+    (M : Matrix (Fin d.numClasses) (Fin d.numClasses) R)
+    {a : Fin d.numClasses → S} :
+    a ∈ d.rowsOfMap f M ↔ ∃ i, (fun j => f (M i j)) = a := by
+  simp [rowsOfMap]
+
 section Executable
 
 -- A decidable conjugacy relation is what makes the search below, and everything computed from it,
@@ -268,6 +287,40 @@ theorem numClasses_eq_card_conjClasses : d.numClasses = Nat.card (ConjClasses G)
       -- the representative `d.rep ⟨i, hi⟩` is the list entry `d.reps[i]` by definition
       exact hxg
   simpa using Nat.card_congr (Equiv.ofBijective _ hbij)
+
+/-! ### Reindexing numbered tables -/
+
+/-- Map the entries of a numbered table with `f`, reindexing its rows by the cardinality of the
+conjugacy classes and its columns by the conjugacy classes themselves. -/
+noncomputable def reindexTableOfMap {R S : Type*} (f : R → S)
+    (table : Matrix (Fin d.numClasses) (Fin d.numClasses) R) :
+    Matrix (Fin (Nat.card (ConjClasses G))) (ConjClasses G) S :=
+  (table.map f).submatrix
+    (finCongr d.numClasses_eq_card_conjClasses).symm d.equivConjClasses.symm
+
+/-- The mapped and reindexed table, evaluated at arbitrary row and column indices. -/
+@[simp]
+theorem reindexTableOfMap_apply {R S : Type*}
+    (f : R → S) (table : Matrix (Fin d.numClasses) (Fin d.numClasses) R)
+    (i : Fin (Nat.card (ConjClasses G))) (C : ConjClasses G) :
+    d.reindexTableOfMap f table i C =
+      f (table ((finCongr d.numClasses_eq_card_conjClasses).symm i)
+        (d.equivConjClasses.symm C)) :=
+  (rfl)
+
+/-- The mapped and reindexed table evaluated at a numbered row and numbered class. -/
+theorem reindexTableOfMap_apply_classOf {R S : Type*}
+    (f : R → S) (table : Matrix (Fin d.numClasses) (Fin d.numClasses) R)
+    (i j : Fin d.numClasses) :
+    d.reindexTableOfMap f table (finCongr d.numClasses_eq_card_conjClasses i) (d.classOf j) =
+      f (table i j) := by
+  rw [d.reindexTableOfMap_apply]
+  have hi : (finCongr d.numClasses_eq_card_conjClasses).symm
+      (finCongr d.numClasses_eq_card_conjClasses i) = i :=
+    (finCongr d.numClasses_eq_card_conjClasses).symm_apply_apply i
+  have hj : d.equivConjClasses.symm (d.classOf j) = j := by
+    rw [← d.equivConjClasses_apply j, Equiv.symm_apply_apply]
+  rw [hi, hj]
 
 -- Finiteness enters only from here: it is what presents a conjugacy class as a `Finset`, and so
 -- what lets the structure constants be counted.

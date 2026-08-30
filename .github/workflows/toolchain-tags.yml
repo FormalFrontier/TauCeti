@@ -12,7 +12,8 @@ name: Toolchain tags
 #
 # It posts only when the state has changed since its last message, which it reads from a
 # marker in that message rather than from any stored state. So a run that finds nothing new
-# says nothing, and a message in the topic means something happened.
+# posts nothing new. It may first make a one-time edit to add the missing `shell` language
+# to its own newest old-style command fence, without changing that report's body.
 #
 # It never creates a tag. `--create` is a manual step, because a tag is permanent.
 #

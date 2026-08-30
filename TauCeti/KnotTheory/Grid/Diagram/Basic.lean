@@ -29,22 +29,26 @@ unique row occupied by the state in that column. A grid diagram is encoded by tw
 permutation graphs, one for the `O` markings and one for the `X` markings, with the condition
 that no square contains both markings.
 
+A state coordinate `(c, r)` is the grid point where column line `c` meets row line `r`. A marking
+coordinate `(c, r)` instead names the square whose lower-left corner is that grid point, bounded
+by column lines `c`, `c + 1` and row lines `r`, `r + 1`, with indices read cyclically.
+
 The point-set API records the basic row, column, cardinality, and disjointness facts used
 before defining rectangles, empty rectangles, and the grid differential.
 
 * `TauCeti.GridState`: a grid state with a permutation graph on `Fin n`.
-* `TauCeti.GridState.pointSet`: the finite set of occupied squares of a grid state.
+* `TauCeti.GridState.pointSet`: the finite set of occupied grid points of a grid state.
 * `TauCeti.GridDiagram`: an `n × n` grid diagram with `O` and `X` markings.
-* `TauCeti.GridDiagram.OSet`, `TauCeti.GridDiagram.XSet`: the marking point sets.
+* `TauCeti.GridDiagram.OSet`, `TauCeti.GridDiagram.XSet`: the marking-square sets.
 * Relabeling, swapping, transposition, and marking-swap operations for grid states and diagrams.
 
 ## References
 
 This supplies the first prerequisite for the Tau Ceti Heegaard Floer roadmap,
-`HeegaardFloer/README.md` in TauCetiRoadmap, Lane G.1, "Grid diagrams and grid states". The
-encoding follows the standard grid-diagram convention from Ozsváth--Stipsicz--Szabó, *Grid
-Homology for Knots and Links*, Chapter 3: one `O` and one `X` marking in each row and column,
-and a grid state is one point in each row and column.
+`TauCetiRoadmap/CombinatorialHeegaardFloer/README.md`, Lane G.1, "Grid diagrams and grid states".
+The encoding follows the standard grid-diagram convention from Ozsváth--Stipsicz--Szabó, *Grid
+Homology for Knots and Links*, Chapter 3: one `O` and one `X` marking in each row and column, and
+a grid state is one point in each row and column.
 -/
 
 @[expose] public section
@@ -104,7 +108,7 @@ theorem ext {x y : GridState n} (h : ∀ c : Fin n, x c = y c) : x = y := by
   ext c
   exact congrArg Fin.val (h c)
 
-/-- The finite set of occupied squares of a grid state. The first coordinate is the column and
+/-- The finite set of occupied grid points of a grid state. The first coordinate is the column and
 the second coordinate is the row. -/
 def pointSet (x : GridState n) : Finset (Fin n × Fin n) :=
   Finset.univ.image fun c => (c, x c)
@@ -127,11 +131,11 @@ theorem mem_pointSet (x : GridState n) (p : Fin n × Fin n) :
     rw [pointSet]
     exact Finset.mem_image.mpr ⟨p.1, Finset.mem_univ _, by ext <;> simp [hp]⟩
 
-/-- The square `(c, r)` lies in a grid state's point set exactly when `x c = r`. -/
+/-- The grid point `(c, r)` lies in a grid state's point set exactly when `x c = r`. -/
 theorem mk_mem_pointSet (x : GridState n) (c r : Fin n) : (c, r) ∈ x.pointSet ↔ x c = r := by
   simp
 
-/-- The point set of a grid state has exactly `n` occupied squares. -/
+/-- The point set of a grid state has exactly `n` occupied grid points. -/
 @[simp]
 theorem card_pointSet (x : GridState n) : x.pointSet.card = n := by
   rw [pointSet, Finset.card_image_of_injective]
@@ -218,7 +222,7 @@ theorem pointSet_inj {x y : GridState n} : x.pointSet = y.pointSet ↔ x = y := 
   · intro h
     simp [h]
 
-/-- A square lies in both state point sets exactly when both state permutations send its
+/-- A grid point lies in both state point sets exactly when both state permutations send its
 column to its row. -/
 theorem mem_pointSet_inter (x y : GridState n) (p : Fin n × Fin n) :
     p ∈ x.pointSet ∩ y.pointSet ↔ x p.1 = p.2 ∧ y p.1 = p.2 := by
@@ -544,8 +548,8 @@ theorem mem_pointSet_swapColumns (a b : Fin n) (x : GridState n) (p : Fin n × F
     p ∈ (x.swapColumns a b).pointSet ↔ (Equiv.swap a b p.1, p.2) ∈ x.pointSet := by
   simp [swapColumns]
 
-/-- A square is shared by a grid state and a column relabeling exactly when it is a
-source-state square whose column is fixed by the relabeling permutation. -/
+/-- A grid point is shared by a grid state and a column relabeling exactly when it is a
+source-state grid point whose column is fixed by the relabeling permutation. -/
 theorem mem_pointSet_inter_relabelColumns_iff (x : GridState n) (κ : Equiv.Perm (Fin n))
     (p : Fin n × Fin n) :
     p ∈ x.pointSet ∩ (x.relabelColumns κ).pointSet ↔ p ∈ x.pointSet ∧ κ p.1 = p.1 := by
@@ -574,8 +578,8 @@ theorem swapRows_swapRows (a b : Fin n) (x : GridState n) : (x.swapRows a b).swa
   ext c
   simp [swapRows]
 
-/-- A square is shared by a grid state and the state with columns `a` and `b` swapped exactly
-when it is a source-state square away from the two swapped columns. -/
+/-- A grid point is shared by a grid state and the state with columns `a` and `b` swapped exactly
+when it is a source-state grid point away from the two swapped columns. -/
 theorem mem_pointSet_inter_swapColumns_iff (x : GridState n) {a b : Fin n} (h : a ≠ b)
     (p : Fin n × Fin n) :
     p ∈ x.pointSet ∩ (x.swapColumns a b).pointSet ↔
@@ -594,7 +598,7 @@ theorem mem_pointSet_inter_swapColumns_iff (x : GridState n) {a b : Fin n} (h : 
     exact ⟨hx, Equiv.swap_apply_of_ne_of_ne ha hb⟩
 
 /-- The point set of a grid state is the shared part with a column swap, together with the two
-source-state squares in the swapped columns. -/
+source-state grid points in the swapped columns. -/
 theorem pointSet_eq_insert_insert_inter_swapColumns (x : GridState n) {a b : Fin n} (h : a ≠ b) :
     x.pointSet =
       insert (a, x a) (insert (b, x b) (x.pointSet ∩ (x.swapColumns a b).pointSet)) := by
@@ -619,7 +623,7 @@ theorem pointSet_eq_insert_insert_inter_swapColumns (x : GridState n) {a b : Fin
     · exact Finset.mem_of_mem_inter_left hp
 
 /-- The point set after swapping columns `a` and `b` is the shared part with the source state,
-together with the two target-state squares in the swapped columns. -/
+together with the two target-state grid points in the swapped columns. -/
 theorem swapColumns_pointSet_eq_insert_insert_inter (x : GridState n) {a b : Fin n} (h : a ≠ b) :
     (x.swapColumns a b).pointSet =
       insert (a, x b) (insert (b, x a) (x.pointSet ∩ (x.swapColumns a b).pointSet)) := by
@@ -648,7 +652,7 @@ theorem swapColumns_pointSet_eq_insert_insert_inter (x : GridState n) {a b : Fin
     · simp
     · exact Finset.mem_of_mem_inter_right hp
 
-/-- A grid state and a swap of two distinct columns share exactly `n - 2` squares. -/
+/-- A grid state and a swap of two distinct columns share exactly `n - 2` grid points. -/
 theorem card_pointSet_inter_swapColumns (x : GridState n) {a b : Fin n} (h : a ≠ b) :
     (x.pointSet ∩ (x.swapColumns a b).pointSet).card = n - 2 := by
   have hne : (b, x b) ∉ x.pointSet ∩ (x.swapColumns a b).pointSet := by
@@ -669,7 +673,7 @@ theorem card_pointSet_inter_swapColumns (x : GridState n) {a b : Fin n} (h : a �
 
 /-- The diagonal reflection of a grid state.
 
-Reflecting the occupied squares across the main diagonal exchanges columns and rows, so the new
+Reflecting the occupied grid points across the main diagonal exchanges columns and rows, so the new
 permutation graph is the inverse of the old one. -/
 def transpose (x : GridState n) : GridState n where
   toPerm := x.toPerm.symm
@@ -717,7 +721,7 @@ theorem swapColumns_transpose (a b : Fin n) (x : GridState n) :
     (x.swapColumns a b).transpose = x.transpose.swapRows a b := by
   simp [swapRows, swapColumns]
 
-/-- A square lies in the reflected state exactly when its diagonal reflection lies in the
+/-- A grid point lies in the reflected state exactly when its diagonal reflection lies in the
 original state. -/
 theorem mem_pointSet_transpose (x : GridState n) (p : Fin n × Fin n) :
     p ∈ x.transpose.pointSet ↔ Prod.swap p ∈ x.pointSet := by
@@ -762,13 +766,13 @@ namespace GridDiagram
 
 variable {n : ℕ} (G : GridDiagram n)
 
-/-- The finite set of `O` markings of a grid diagram. The first coordinate is the column and
-the second coordinate is the row. -/
+/-- The finite set of `O`-marked squares of a grid diagram. A pair `(c, r)` names the square whose
+lower-left grid point is `(c, r)`. -/
 def OSet : Finset (Fin n × Fin n) :=
   G.O.pointSet
 
-/-- The finite set of `X` markings of a grid diagram. The first coordinate is the column and
-the second coordinate is the row. -/
+/-- The finite set of `X`-marked squares of a grid diagram. A pair `(c, r)` names the square whose
+lower-left grid point is `(c, r)`. -/
 def XSet : Finset (Fin n × Fin n) :=
   G.X.pointSet
 
