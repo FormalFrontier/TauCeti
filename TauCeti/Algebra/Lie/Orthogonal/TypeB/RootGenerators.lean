@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Lie.Orthogonal.TypeB.DiagonalCartan
+public import TauCeti.LinearAlgebra.Matrix.ToLin
 
 /-!
 # Simple-root generators for the split orthogonal Lie algebra of type B
@@ -59,12 +60,24 @@ variable {ι : Type*} [DecidableEq ι] [Fintype ι]
 /-! ### Long roots -/
 
 /-- The ambient root matrix for the long type-`B` root `εᵢ - εⱼ`; the inequality witness
-excludes the degenerate zero-weight case. Its body is exposed so downstream matrix computations
-can unfold it directly. -/
-@[expose] def typeBLongRootMatrix (i j : ι) (_hij : i ≠ j) :
+excludes the degenerate zero-weight case. -/
+def typeBLongRootMatrix (i j : ι) (_hij : i ≠ j) :
     Matrix (Unit ⊕ ι ⊕ ι) (Unit ⊕ ι ⊕ ι) K :=
   single (.inr (.inl i)) (.inr (.inl j)) 1 -
     single (.inr (.inr j)) (.inr (.inr i)) 1
+
+/-- The long-root matrix sends a coordinate basis vector to the difference of its two selected
+coordinates. -/
+@[simp]
+theorem toLinAlgEquiv_typeBLongRootMatrix_apply_basis {M : Type*} [AddCommGroup M] [Module K M]
+    (bas : Module.Basis (Unit ⊕ ι ⊕ ι) K M) (i j : ι) (hij : i ≠ j)
+    (c : Unit ⊕ ι ⊕ ι) :
+    Matrix.toLinAlgEquiv bas (typeBLongRootMatrix i j hij) (bas c) =
+      (if .inr (.inl j) = c then bas (.inr (.inl i)) else 0) -
+        if .inr (.inr i) = c then bas (.inr (.inr j)) else 0 := by
+  rw [typeBLongRootMatrix, map_sub, LinearMap.sub_apply,
+    toLinAlgEquiv_single_apply_basis, toLinAlgEquiv_single_apply_basis]
+  simp
 
 /-- The long-root matrix is skew-adjoint for the split odd orthogonal form. -/
 theorem typeBLongRootMatrix_mem_typeB (i j : ι) (hij : i ≠ j) :
@@ -148,16 +161,39 @@ theorem typeBLongRootMatrix_sq (i j : ι) (hij : i ≠ j) :
 /-! ### Short roots -/
 
 /-- The ambient root matrix for the short type-`B` root `εᵢ`, with the integral Chevalley
-normalization adapted to the middle coefficient `2` in `LieAlgebra.Orthogonal.JB`. Its body is
-exposed so downstream matrix computations can unfold it directly. -/
-@[expose] def typeBShortRootMatrix (i : ι) : Matrix (Unit ⊕ ι ⊕ ι) (Unit ⊕ ι ⊕ ι) K :=
+normalization adapted to the middle coefficient `2` in `LieAlgebra.Orthogonal.JB`. -/
+def typeBShortRootMatrix (i : ι) : Matrix (Unit ⊕ ι ⊕ ι) (Unit ⊕ ι ⊕ ι) K :=
   single (.inr (.inl i)) (.inl ()) 2 - single (.inl ()) (.inr (.inr i)) 1
 
-/-- The ambient root matrix for the opposite short root `-εᵢ`. Its body is exposed so downstream
-matrix computations can unfold it directly. -/
-@[expose] def typeBShortNegativeRootMatrix (i : ι) :
+/-- The ambient root matrix for the opposite short root `-εᵢ`. -/
+def typeBShortNegativeRootMatrix (i : ι) :
     Matrix (Unit ⊕ ι ⊕ ι) (Unit ⊕ ι ⊕ ι) K :=
   single (.inl ()) (.inr (.inl i)) 1 - single (.inr (.inr i)) (.inl ()) 2
+
+/-- The positive short-root matrix has its two nonzero coordinate-basis actions in the middle and
+negative summands. -/
+@[simp]
+theorem toLinAlgEquiv_typeBShortRootMatrix_apply_basis {M : Type*} [AddCommGroup M] [Module K M]
+    (bas : Module.Basis (Unit ⊕ ι ⊕ ι) K M) (i : ι) (c : Unit ⊕ ι ⊕ ι) :
+    Matrix.toLinAlgEquiv bas (typeBShortRootMatrix i) (bas c) =
+      (if .inl () = c then (2 : K) • bas (.inr (.inl i)) else 0) -
+        if .inr (.inr i) = c then bas (.inl ()) else 0 := by
+  rw [typeBShortRootMatrix, map_sub, LinearMap.sub_apply,
+    toLinAlgEquiv_single_apply_basis, toLinAlgEquiv_single_apply_basis]
+  simp
+
+/-- The negative short-root matrix has its two nonzero coordinate-basis actions in the positive and
+middle summands. -/
+@[simp]
+theorem toLinAlgEquiv_typeBShortNegativeRootMatrix_apply_basis {M : Type*} [AddCommGroup M]
+    [Module K M] (bas : Module.Basis (Unit ⊕ ι ⊕ ι) K M) (i : ι)
+    (c : Unit ⊕ ι ⊕ ι) :
+    Matrix.toLinAlgEquiv bas (typeBShortNegativeRootMatrix i) (bas c) =
+      (if .inr (.inl i) = c then bas (.inl ()) else 0) -
+        if .inl () = c then (2 : K) • bas (.inr (.inr i)) else 0 := by
+  rw [typeBShortNegativeRootMatrix, map_sub, LinearMap.sub_apply,
+    toLinAlgEquiv_single_apply_basis, toLinAlgEquiv_single_apply_basis]
+  simp
 
 /-- The positive short-root matrix is skew-adjoint for the split odd orthogonal form. -/
 theorem typeBShortRootMatrix_mem_typeB (i : ι) :

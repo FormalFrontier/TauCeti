@@ -6,10 +6,8 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Lie.Orthogonal.TypeB.RootGenerators
-public import TauCeti.LinearAlgebra.Matrix.ToLin
 public import TauCeti.RepresentationTheory.Spin.IntegralLattice
 public import TauCeti.RepresentationTheory.Spin.Polarization.TypeB.Basic
-public import TauCeti.RepresentationTheory.Spin.Weight
 
 /-!
 # The type-`B` root vectors as quadratic Clifford elements
@@ -154,8 +152,7 @@ theorem typeBQuadraticEquiv_typeBLongRootGenerator (i j : ι) (hij : i ≠ j) :
   apply P.typeBQuadraticEquiv_coe_eq_bivector b z hz
   intro c
   -- Each matrix unit picks out one basis index, and so does each polar coordinate.
-  rw [coe_typeBLongRootGenerator, typeBLongRootMatrix, map_sub, LinearMap.sub_apply,
-    toLinAlgEquiv_basis_single, toLinAlgEquiv_basis_single]
+  rw [coe_typeBLongRootGenerator, toLinAlgEquiv_typeBLongRootMatrix_apply_basis]
   simp [eq_comm]
 
 /-- **The short root vector `e_{εᵢ}` is the Clifford bivector of the `i`-th basis vector and the
@@ -168,8 +165,7 @@ theorem typeBQuadraticEquiv_typeBShortRootGenerator (i : ι) :
   apply P.typeBQuadraticEquiv_coe_eq_bivector b z hz
   intro c
   -- The polar self-pairing `2` of the remainder vector matches the matrix coefficient `2`.
-  rw [coe_typeBShortRootGenerator, typeBShortRootMatrix, map_sub, LinearMap.sub_apply,
-    toLinAlgEquiv_basis_single, toLinAlgEquiv_basis_single]
+  rw [coe_typeBShortRootGenerator, toLinAlgEquiv_typeBShortRootMatrix_apply_basis]
   simp [eq_comm]
 
 /-- **The negative short root vector `f_{εᵢ}` is the Clifford bivector of the remainder vector and
@@ -180,8 +176,8 @@ theorem typeBQuadraticEquiv_typeBShortNegativeRootGenerator (i : ι) :
       bivector Q (z : V) (P.dualVector b i : V) := by
   apply P.typeBQuadraticEquiv_coe_eq_bivector b z hz
   intro c
-  rw [coe_typeBShortNegativeRootGenerator, typeBShortNegativeRootMatrix, map_sub,
-    LinearMap.sub_apply, toLinAlgEquiv_basis_single, toLinAlgEquiv_basis_single]
+  rw [coe_typeBShortNegativeRootGenerator,
+    toLinAlgEquiv_typeBShortNegativeRootMatrix_apply_basis]
   simp [eq_comm]
 
 /-! ### The Cartan generators -/

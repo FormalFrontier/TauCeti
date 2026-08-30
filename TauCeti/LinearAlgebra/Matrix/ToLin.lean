@@ -28,8 +28,8 @@ computation every matrix model of a Lie algebra performs on its root vectors.
 
 * `TauCeti.Algebra.endAlgEquivMatrix`: the above, read off the basis
   `Module.finBasisOfFinrankEq`.
-* `TauCeti.toLinAlgEquiv_basis_single`: the endomorphism of a matrix unit sends a basis vector to
-  a single coordinate.
+* `TauCeti.toLinAlgEquiv_single_apply_basis`: the endomorphism of a matrix unit sends a basis
+  vector to a single coordinate.
 
 The first is used to turn the Azumaya isomorphism of a finite-dimensional central simple algebra
 into a matrix algebra in `TauCeti/Algebra/CentralSimple/Opposite.lean`.
@@ -42,7 +42,7 @@ namespace TauCeti
 /-- **A matrix unit acts on a basis by a single coordinate.** The endomorphism attached to
 `Matrix.single p q v` sends the basis vector indexed by the column `q` to `v • bas p`, and every
 other basis vector to `0`. -/
-theorem toLinAlgEquiv_basis_single {R : Type*} [CommRing R] {M : Type*} [AddCommGroup M]
+theorem toLinAlgEquiv_single_apply_basis {R : Type*} [CommRing R] {M : Type*} [AddCommGroup M]
     [Module R M] {n : Type*} [Fintype n] [DecidableEq n]
     (bas : Module.Basis n R M) (p q : n) (v : R) (c : n) :
     Matrix.toLinAlgEquiv bas (Matrix.single p q v) (bas c) =
