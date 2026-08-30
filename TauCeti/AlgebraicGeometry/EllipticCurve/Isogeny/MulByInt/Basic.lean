@@ -304,15 +304,13 @@ already normalised this way by the time this fires. -/
 @[simp]
 theorem mulByIntPullback_X [W.IsElliptic] {n : ℤ} (hn : psiFunctionField W n ≠ 0) :
     mulByIntPullback W hn (AdjoinRoot.of W.polynomial X) = mulByIntX W n := by
-  simpa [mulByIntPullback] using
-    Affine.CoordinateRing.evalAlgHom_mk_C_X (equation_mulByInt W hn)
+  simp [mulByIntPullback]
 
 /-- The pullback of `[n]` sends the class of `Y` to `ωₙ/ψₙ³`. -/
 @[simp]
 theorem mulByIntPullback_Y [W.IsElliptic] {n : ℤ} (hn : psiFunctionField W n ≠ 0) :
     mulByIntPullback W hn (AdjoinRoot.root W.polynomial) = mulByIntY W n := by
-  simpa [mulByIntPullback] using
-    Affine.CoordinateRing.evalAlgHom_mk_Y (equation_mulByInt W hn)
+  simp [mulByIntPullback]
 
 end Isogeny
 
