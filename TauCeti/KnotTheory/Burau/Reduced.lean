@@ -55,7 +55,11 @@ open Matrix
 
 namespace TauCeti.KnotTheory
 
-variable {R : Type*} [CommRing R]
+variable {R : Type*}
+
+section CommSemiring
+
+variable [CommSemiring R]
 
 /-- The Burau-invariant covector on `Rⁿ`, with coordinates `(1, t, ..., t ^ (n - 1))`. -/
 def geometricCovector (n : ℕ) (t : R) : (Fin n → R) →ₗ[R] R :=
@@ -74,6 +78,18 @@ def reducedBurauSpace (n : ℕ) (t : R) : Submodule R (Fin n → R) :=
 
 /-- The type underlying the invariant submodule `reducedBurauSpace n t`. -/
 abbrev ReducedBurauSpace (n : ℕ) (t : R) : Type _ := reducedBurauSpace n t
+
+/-- Membership in the reduced Burau space means that the weighted coordinate sum vanishes. -/
+@[simp]
+theorem mem_reducedBurauSpace_iff (n : ℕ) (t : R) (x : Fin n → R) :
+    x ∈ reducedBurauSpace n t ↔ ∑ i : Fin n, t ^ (i : ℕ) * x i = 0 := by
+  simp [reducedBurauSpace]
+
+end CommSemiring
+
+section CommRing
+
+variable [CommRing R]
 
 /-- Coordinates on the reduced Burau space of an `(n + 1)`-strand braid. The tail coordinates
 are free, and the zeroth coordinate is determined by the equation
@@ -221,29 +237,13 @@ representation. -/
 theorem reducedBurau_sigma_zero_apply (t : Rˣ) (x : Fin 1 → R) :
     reducedBurau 1 t (BraidGroup.sigma 0) x 0 = -(t : R) * x 0 := by
   rw [reducedBurau_sigma]
-  have hzero : (0 : Fin 2) = BraidGroup.strand (0 : Fin 1) := by
-    apply Fin.ext
-    simp
-  have hone : (1 : Fin 2) = BraidGroup.strandSucc (0 : Fin 1) := by
-    apply Fin.ext
-    simp
   simp only [Nat.reduceAdd, Fin.isValue, reducedBurauSpaceEquiv_apply_coe,
     Finset.univ_unique, Fin.default_eq_zero, Fin.val_eq_zero, zero_add, pow_one,
     Finset.sum_singleton, neg_mul]
-  have htail : Fin.tail (burauMatrix (t : R) 0 *ᵥ Fin.cons (-((t : R) * x 0)) x) 0 =
-      (burauMatrix (t : R) 0 *ᵥ Fin.cons (-((t : R) * x 0)) x) (1 : Fin 2) := rfl
-  rw [htail, Matrix.mulVec, dotProduct, Fin.sum_univ_succ]
-  rw [hzero, hone]
-  have hv : (Fin.cons (-((t : R) * x 0)) x : Fin 2 → R)
-      (BraidGroup.strand (n := 2) (0 : Fin 1)) =
-      -((t : R) * x 0) := by rw [← hzero, Fin.cons_zero]
-  have hM : burauMatrix (t : R) (0 : Fin 1)
-      (BraidGroup.strandSucc (n := 2) 0) (1 : Fin 2) = 0 := by
-    rw [hone]
-    exact burauMatrix_apply_strandSucc_strandSucc (t : R) 0
-  rw [Fin.sum_univ_one, Fin.cons_succ, hv]
-  have hsucc : (0 : Fin 1).succ = (1 : Fin 2) := rfl
-  rw [hsucc, hM, burauMatrix_apply_strandSucc_strand]
-  ring
+  change (burauMatrix (t : R) 0 *ᵥ Fin.cons (-((t : R) * x 0)) x) (1 : Fin 2) = _
+  rw [Matrix.mulVec, dotProduct, Fin.sum_univ_succ, Fin.sum_univ_one]
+  simp [burauMatrix_apply, burauCol_apply, burauRow_apply, Fin.ext_iff]
+
+end CommRing
 
 end TauCeti.KnotTheory
