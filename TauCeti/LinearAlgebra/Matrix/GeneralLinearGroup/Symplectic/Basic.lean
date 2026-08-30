@@ -999,6 +999,26 @@ theorem hom_negativeLong (i : Fin m) :
     (RootSubgroupIndex.negativeLong i).hom (R := R) = negativeLongRootTransvectionHom i := by
   rw [hom]
 
+/-- The difference-root constructor selects the corresponding difference-root homomorphism. -/
+@[simp]
+theorem hom_difference (i j : Fin m) (hij : i ≠ j) :
+    (RootSubgroupIndex.difference i j hij).hom (R := R) = differenceShortRootHom hij := by
+  rw [hom]
+
+/-- The positive-sum constructor selects the corresponding positive-sum homomorphism. -/
+@[simp]
+theorem hom_positiveSum (i j : Fin m) (hij : i < j) :
+    (RootSubgroupIndex.positiveSum i j hij).hom (R := R) =
+      positiveSumShortRootHom hij.ne := by
+  rw [hom]
+
+/-- The negative-sum constructor selects the corresponding negative-sum homomorphism. -/
+@[simp]
+theorem hom_negativeSum (i j : Fin m) (hij : i < j) :
+    (RootSubgroupIndex.negativeSum i j hij).hom (R := R) =
+      negativeSumShortRootHom hij.ne := by
+  rw [hom]
+
 /-- The short constructor selects its family's short-root homomorphism. -/
 @[simp]
 theorem hom_short (family : ShortRootFamily) (i j : Fin m) (hij : i ≠ j) :
