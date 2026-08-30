@@ -389,7 +389,10 @@ theorem finSumFinEquiv_inr_ne_inl (i j : Fin m) :
     finSumFinEquiv (Sum.inr i) ≠ finSumFinEquiv (Sum.inl j) :=
   finSumFinEquiv.injective.ne Sum.inr_ne_inl
 
-private theorem reindexGL_transvectionUnit (i j : Fin m ⊕ Fin m) (hij : i ≠ j) (c : R) :
+/-- Reindexing a transvection from `Fin (m + m)` coordinates to sum coordinates recovers the
+transvection at the corresponding sum indices. -/
+@[simp]
+theorem reindexGL_transvectionUnit (i j : Fin m ⊕ Fin m) (hij : i ≠ j) (c : R) :
     reindexGL m R
         (transvectionUnit (finSumFinEquiv.injective.ne hij) c) =
       transvectionUnit hij c := by
