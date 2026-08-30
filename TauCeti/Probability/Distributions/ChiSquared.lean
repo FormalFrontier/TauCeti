@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Probability.Distributions.Dirac
 public import TauCeti.Probability.Distributions.Gamma.Cdf
+public import TauCeti.Probability.Distributions.Gamma.CharFun
 public import TauCeti.Probability.Distributions.Measurability
 public import TauCeti.Probability.Distributions.PDFInstances
 
