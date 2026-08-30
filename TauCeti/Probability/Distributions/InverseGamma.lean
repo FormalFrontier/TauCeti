@@ -99,20 +99,22 @@ private theorem gammaMeasure_Iic_zero :
 
 /-- The inverse-gamma law assigns no mass to the nonpositive half-line. -/
 @[simp]
-theorem inverseGammaMeasure_Iic_zero (ha : 0 < a) (hr : 0 < r) :
-    inverseGammaMeasure a r (Iic 0) = 0 := by
-  rw [inverseGammaMeasure_of_pos ha hr, Measure.map_apply measurable_inv measurableSet_Iic]
-  have hpre : Inv.inv ⁻¹' Iic (0 : ℝ) = Iic 0 := by
-    ext y
-    simp only [mem_preimage, mem_Iic]
-    exact inv_nonpos
-  rw [hpre, gammaMeasure_Iic_zero]
+theorem inverseGammaMeasure_Iic_zero (a r : ℝ) : inverseGammaMeasure a r (Iic 0) = 0 := by
+  by_cases h : 0 < a ∧ 0 < r
+  · rw [inverseGammaMeasure_of_pos h.1 h.2,
+      Measure.map_apply measurable_inv measurableSet_Iic]
+    have hpre : Inv.inv ⁻¹' Iic (0 : ℝ) = Iic 0 := by
+      ext y
+      simp only [mem_preimage, mem_Iic]
+      exact inv_nonpos
+    rw [hpre, gammaMeasure_Iic_zero]
+  · simp [inverseGammaMeasure_of_not_pos h]
 
-/-- A variable with a valid inverse-gamma law is almost surely positive. -/
-theorem ae_pos_inverseGammaMeasure (ha : 0 < a) (hr : 0 < r) :
-    ∀ᵐ x ∂inverseGammaMeasure a r, 0 < x := by
+/-- An inverse-gamma law is concentrated on the positive half-line, including in the zero-measure
+invalid-parameter cases. -/
+theorem ae_pos_inverseGammaMeasure (a r : ℝ) : ∀ᵐ x ∂inverseGammaMeasure a r, 0 < x := by
   rw [ae_iff]
-  simpa only [not_lt, ← Iic_def] using inverseGammaMeasure_Iic_zero ha hr
+  simpa only [not_lt, ← Iic_def] using inverseGammaMeasure_Iic_zero a r
 
 /-! ### Density -/
 
@@ -147,6 +149,24 @@ theorem inverseGammaPDFReal_of_not_pos (h : ¬ (0 < a ∧ 0 < r)) (x : ℝ) :
   rw [inverseGammaPDFReal, ite_eq_right]
   exact fun hx ↦ h ⟨hx.1, hx.2.1⟩
 
+/-- The inverse-gamma density has its usual formula at valid parameters and a positive point. -/
+@[simp]
+theorem inverseGammaPDF_of_pos (ha : 0 < a) (hr : 0 < r) (hx : 0 < x) :
+    inverseGammaPDF a r x =
+      ENNReal.ofReal (r ^ a / Real.Gamma a * x ^ (-a - 1) * Real.exp (-r / x)) := by
+  rw [inverseGammaPDF, inverseGammaPDFReal_of_pos ha hr hx]
+
+/-- The inverse-gamma density vanishes at a nonpositive point. -/
+@[simp]
+theorem inverseGammaPDF_of_nonpos (hx : x ≤ 0) (a r : ℝ) : inverseGammaPDF a r x = 0 := by
+  rw [inverseGammaPDF, inverseGammaPDFReal_of_nonpos hx, ENNReal.ofReal_zero]
+
+/-- The inverse-gamma density vanishes when its parameters are invalid. -/
+@[simp]
+theorem inverseGammaPDF_of_not_pos (h : ¬ (0 < a ∧ 0 < r)) (x : ℝ) :
+    inverseGammaPDF a r x = 0 := by
+  rw [inverseGammaPDF, inverseGammaPDFReal_of_not_pos h, ENNReal.ofReal_zero]
+
 /-- The real-valued inverse-gamma density is nonnegative. -/
 theorem inverseGammaPDFReal_nonneg (a r x : ℝ) : 0 ≤ inverseGammaPDFReal a r x := by
   rw [inverseGammaPDFReal]
@@ -156,11 +176,6 @@ theorem inverseGammaPDFReal_nonneg (a r x : ℝ) : 0 ≤ inverseGammaPDFReal a r
         (Real.Gamma_pos_of_pos h.1).le) (Real.rpow_nonneg h.2.2.le _))
       (Real.exp_pos _).le
   · exact le_rfl
-
-/-- The `ℝ≥0∞` density is the nonnegative coercion of the real density. -/
-theorem inverseGammaPDF_eq_ofReal (a r x : ℝ) :
-    inverseGammaPDF a r x = ENNReal.ofReal (inverseGammaPDFReal a r x) := by
-  rw [inverseGammaPDF]
 
 /-- Converting the inverse-gamma density back to `ℝ` recovers its real-valued version. -/
 @[simp]
@@ -231,75 +246,78 @@ private lemma ofReal_abs_inv_deriv_mul_inverseGammaPDF
     inverseGammaPDFReal_eq_inv_sq_mul_gammaPDFReal ha hr (inv_pos.mpr hx), inv_inv,
     inv_pow, inv_inv, ← mul_assoc, inv_mul_cancel₀ (pow_ne_zero 2 hx.ne'), one_mul]
 
-/-- **The density of a valid inverse-gamma law.** -/
-theorem inverseGammaMeasure_eq_withDensity (ha : 0 < a) (hr : 0 < r) :
+/-- **The density of an inverse-gamma law**, including the zero density at invalid parameters. -/
+theorem inverseGammaMeasure_eq_withDensity (a r : ℝ) :
     inverseGammaMeasure a r = volume.withDensity (inverseGammaPDF a r) := by
-  ext s hs
-  let u : Set ℝ := Ioi 0 ∩ Inv.inv ⁻¹' s
-  have hu : MeasurableSet u := measurableSet_Ioi.inter (measurable_inv hs)
-  have himage : Inv.inv '' u = Ioi 0 ∩ s := by
-    apply Set.Subset.antisymm
-    · rintro _ ⟨z, hz, rfl⟩
-      refine ⟨?_, by simpa using hz.2⟩
-      change 0 < z⁻¹
-      exact inv_pos.mpr hz.1
-    · intro y hy
-      refine ⟨y⁻¹, ?_, inv_inv y⟩
-      refine ⟨?_, by simpa using hy.2⟩
-      change 0 < y⁻¹
-      exact inv_pos.mpr hy.1
-  calc
-    inverseGammaMeasure a r s
-        = ∫⁻ y in Inv.inv ⁻¹' s, gammaPDF a r y := by
-            rw [inverseGammaMeasure_of_pos ha hr, Measure.map_apply measurable_inv hs,
-              gammaMeasure, withDensity_apply _ (measurable_inv hs)]
-    _ = ∫⁻ y in u, gammaPDF a r y := by
-          have hpre : MeasurableSet (Inv.inv ⁻¹' s) := measurable_inv hs
-          calc
-            ∫⁻ y in Inv.inv ⁻¹' s, gammaPDF a r y =
-                ∫⁻ y in Inv.inv ⁻¹' s, (Ioi 0).indicator (gammaPDF a r) y := by
-              apply setLIntegral_congr_fun_ae hpre
-              filter_upwards [volume.ae_ne (0 : ℝ)] with y hy _
-              rcases lt_or_gt_of_ne hy with hy | hy
-              · have hymem : y ∉ Ioi (0 : ℝ) := by simpa using not_lt.mpr hy.le
-                rw [gammaPDF_of_neg hy, indicator_apply, ite_eq_right hymem]
-              · have hymem : y ∈ Ioi (0 : ℝ) := hy
-                rw [indicator_apply, ite_eq_left hymem]
-            _ = ∫⁻ y in u, gammaPDF a r y := by
-              rw [setLIntegral_indicator measurableSet_Ioi]
-    _ = ∫⁻ y in u,
-          ENNReal.ofReal (abs (-((y ^ 2)⁻¹))) * inverseGammaPDF a r y⁻¹ := by
-          refine setLIntegral_congr_fun hu fun y hy ↦ ?_
-          exact (ofReal_abs_inv_deriv_mul_inverseGammaPDF ha hr hy.1).symm
-    _ = ∫⁻ y in Ioi 0 ∩ s, inverseGammaPDF a r y := by
-          rw [← himage]
-          exact (lintegral_image_eq_lintegral_abs_deriv_mul
-            (f := Inv.inv) (f' := fun y : ℝ ↦ -((y ^ 2)⁻¹)) hu
-            (fun y hy ↦ (hasDerivAt_inv hy.1.ne').hasDerivWithinAt)
-            (MeasurableEquiv.inv ℝ).injective.injOn (inverseGammaPDF a r)).symm
-    _ = volume.withDensity (inverseGammaPDF a r) s := by
-          rw [withDensity_apply _ hs, ← setLIntegral_indicator measurableSet_Ioi,
-            indicator_Ioi_inverseGammaPDF]
+  by_cases h : 0 < a ∧ 0 < r
+  · obtain ⟨ha, hr⟩ := h
+    ext s hs
+    let u : Set ℝ := Ioi 0 ∩ Inv.inv ⁻¹' s
+    have hu : MeasurableSet u := measurableSet_Ioi.inter (measurable_inv hs)
+    have himage : Inv.inv '' u = Ioi 0 ∩ s := by
+      apply Set.Subset.antisymm
+      · rintro _ ⟨z, hz, rfl⟩
+        have hzpos : 0 < z := hz.1
+        refine ⟨by simpa using inv_pos.mpr hzpos, by simpa using hz.2⟩
+      · intro y hy
+        have hypos : 0 < y := hy.1
+        refine ⟨y⁻¹, ?_, inv_inv y⟩
+        exact ⟨by simpa using inv_pos.mpr hypos, by simpa using hy.2⟩
+    calc
+      inverseGammaMeasure a r s
+          = ∫⁻ y in Inv.inv ⁻¹' s, gammaPDF a r y := by
+              rw [inverseGammaMeasure_of_pos ha hr, Measure.map_apply measurable_inv hs,
+                gammaMeasure, withDensity_apply _ (measurable_inv hs)]
+      _ = ∫⁻ y in u, gammaPDF a r y := by
+            have hpre : MeasurableSet (Inv.inv ⁻¹' s) := measurable_inv hs
+            calc
+              ∫⁻ y in Inv.inv ⁻¹' s, gammaPDF a r y =
+                  ∫⁻ y in Inv.inv ⁻¹' s, (Ioi 0).indicator (gammaPDF a r) y := by
+                apply setLIntegral_congr_fun_ae hpre
+                filter_upwards [volume.ae_ne (0 : ℝ)] with y hy _
+                rcases lt_or_gt_of_ne hy with hy | hy
+                · have hymem : y ∉ Ioi (0 : ℝ) := by simpa using not_lt.mpr hy.le
+                  rw [gammaPDF_of_neg hy, indicator_apply, ite_eq_right hymem]
+                · have hymem : y ∈ Ioi (0 : ℝ) := hy
+                  rw [indicator_apply, ite_eq_left hymem]
+              _ = ∫⁻ y in u, gammaPDF a r y := by
+                rw [setLIntegral_indicator measurableSet_Ioi]
+      _ = ∫⁻ y in u,
+            ENNReal.ofReal (abs (-((y ^ 2)⁻¹))) * inverseGammaPDF a r y⁻¹ := by
+            refine setLIntegral_congr_fun hu fun y hy ↦ ?_
+            exact (ofReal_abs_inv_deriv_mul_inverseGammaPDF ha hr hy.1).symm
+      _ = ∫⁻ y in Ioi 0 ∩ s, inverseGammaPDF a r y := by
+            rw [← himage]
+            exact (lintegral_image_eq_lintegral_abs_deriv_mul
+              (f := Inv.inv) (f' := fun y : ℝ ↦ -((y ^ 2)⁻¹)) hu
+              (fun y hy ↦ (hasDerivAt_inv hy.1.ne').hasDerivWithinAt)
+              (MeasurableEquiv.inv ℝ).injective.injOn (inverseGammaPDF a r)).symm
+      _ = volume.withDensity (inverseGammaPDF a r) s := by
+            rw [withDensity_apply _ hs, ← setLIntegral_indicator measurableSet_Ioi,
+              indicator_Ioi_inverseGammaPDF]
+  · rw [inverseGammaMeasure_of_not_pos h]
+    ext s hs
+    simp [withDensity_apply, hs, inverseGammaPDF_of_not_pos h]
 
 variable {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω} {X : Ω → ℝ}
 
-/-- A random variable with a valid inverse-gamma law has a density. -/
-theorem hasPDF_of_hasLaw_inverseGammaMeasure (ha : 0 < a) (hr : 0 < r)
+/-- A random variable with an inverse-gamma law has a density. -/
+theorem hasPDF_of_hasLaw_inverseGammaMeasure
     (hX : HasLaw X (inverseGammaMeasure a r) P) : HasPDF X P volume :=
   hasPDF_of_hasLaw_withDensity (measurable_inverseGammaPDF a r).aemeasurable
-    (by rwa [inverseGammaMeasure_eq_withDensity ha hr] at hX)
+    (by rwa [inverseGammaMeasure_eq_withDensity a r] at hX)
 
-/-- The density of a random variable with a valid inverse-gamma law is `inverseGammaPDF`. -/
-theorem pdf_eq_inverseGammaPDF_of_hasLaw_inverseGammaMeasure (ha : 0 < a) (hr : 0 < r)
+/-- The density of a random variable with an inverse-gamma law is `inverseGammaPDF`. -/
+theorem pdf_eq_inverseGammaPDF_of_hasLaw_inverseGammaMeasure
     (hX : HasLaw X (inverseGammaMeasure a r) P) :
     pdf X P volume =ᵐ[volume] inverseGammaPDF a r :=
   pdf_eq_of_hasLaw_withDensity (measurable_inverseGammaPDF a r).aemeasurable
-    (by rwa [inverseGammaMeasure_eq_withDensity ha hr] at hX)
+    (by rwa [inverseGammaMeasure_eq_withDensity a r] at hX)
 
-/-- The Radon–Nikodym derivative of a valid inverse-gamma law against Lebesgue measure. -/
-theorem rnDeriv_inverseGammaMeasure (ha : 0 < a) (hr : 0 < r) :
+/-- The Radon–Nikodym derivative of an inverse-gamma law against Lebesgue measure. -/
+theorem rnDeriv_inverseGammaMeasure (a r : ℝ) :
     (inverseGammaMeasure a r).rnDeriv volume =ᵐ[volume] inverseGammaPDF a r := by
-  rw [inverseGammaMeasure_eq_withDensity ha hr]
+  rw [inverseGammaMeasure_eq_withDensity a r]
   exact Measure.rnDeriv_withDensity volume (measurable_inverseGammaPDF a r)
 
 /-! ### Moments -/
@@ -392,7 +410,7 @@ theorem integral_pow_inverseGammaMeasure (ha : 0 < a) (hr : 0 < r) (n : ℕ)
   rw [TauCeti.integral_gammaMeasure_eq ha hr,
     setIntegral_congr_fun measurableSet_Ioi (fun x hx ↦ gammaWeight_mul_inv_pow n hx)]
   have han : 0 < a - (n : ℝ) := sub_pos.mpr hn
-  rw [TauCeti.integral_const_mul_gammaKernel _ _ _ han hr]
+  rw [TauCeti.integral_const_mul_rpow_mul_exp_neg_mul_Ioi _ _ _ han hr]
   have hGa : Real.Gamma a ≠ 0 := (Real.Gamma_pos_of_pos ha).ne'
   rw [Real.rpow_sub hr, Real.rpow_natCast]
   field_simp
@@ -456,8 +474,9 @@ theorem variance_id_inverseGammaMeasure (hr : 0 < r) (ha : 2 < a) :
 /-- At and below shape one, the identity is not integrable under a valid inverse-gamma law. -/
 theorem not_integrable_id_inverseGammaMeasure (ha : 0 < a) (hr : 0 < r) (h : a ≤ 1) :
     ¬ Integrable id (inverseGammaMeasure a r) := by
-  change ¬ Integrable (fun x : ℝ ↦ x) (inverseGammaMeasure a r)
   intro hint
+  have hid : (id : ℝ → ℝ) = fun x ↦ x := rfl
+  rw [hid] at hint
   have hint' : Integrable (fun x : ℝ ↦ x ^ 1) (inverseGammaMeasure a r) := by
     simpa only [pow_one] using hint
   have hlt := (integrable_pow_inverseGammaMeasure_iff ha hr 1).1 hint'
@@ -476,7 +495,7 @@ theorem integrable_exp_mul_inverseGammaMeasure (ha : 0 < a) (hr : 0 < r) (ht : t
     Integrable (fun x : ℝ ↦ Real.exp (t * x)) (inverseGammaMeasure a r) := by
   let _ := isProbabilityMeasure_inverseGammaMeasure ha hr
   refine Integrable.mono' (integrable_const 1) (by fun_prop) ?_
-  filter_upwards [ae_pos_inverseGammaMeasure ha hr] with x hx
+  filter_upwards [ae_pos_inverseGammaMeasure a r] with x hx
   rw [Real.norm_eq_abs, abs_of_pos (Real.exp_pos _), Real.exp_le_one_iff]
   nlinarith [hx.le]
 
@@ -508,7 +527,7 @@ theorem cdf_inverseGammaMeasure_eq (ha : 0 < a) (hr : 0 < r) (x : ℝ) :
   let _ := isProbabilityMeasure_inverseGammaMeasure ha hr
   split_ifs with hx
   · rw [cdf_eq_real, measureReal_def,
-      measure_mono_null (Iic_subset_Iic.mpr hx) (inverseGammaMeasure_Iic_zero ha hr),
+      measure_mono_null (Iic_subset_Iic.mpr hx) (inverseGammaMeasure_Iic_zero a r),
       ENNReal.toReal_zero]
   · have hxpos : 0 < x := not_le.mp hx
     rw [cdf_eq_real, inverseGammaMeasure_of_pos ha hr, measureReal_def,

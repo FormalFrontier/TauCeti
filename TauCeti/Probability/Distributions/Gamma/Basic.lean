@@ -112,7 +112,7 @@ lemma integrable_gammaMeasure_iff (ha : 0 < a) (hr : 0 < r) (f : ℝ → ℝ) :
     fun h ↦ ⟨hneg, h.congr_fun (fun x hx ↦ (hpos x hx).symm) measurableSet_Ioi⟩⟩
 
 /-- A constant multiple of Euler's Gamma integral, in quotient form. -/
-lemma integral_const_mul_gammaKernel (C s b : ℝ) (hs : 0 < s) (hb : 0 < b) :
+lemma integral_const_mul_rpow_mul_exp_neg_mul_Ioi (C s b : ℝ) (hs : 0 < s) (hb : 0 < b) :
     ∫ x in Ioi 0, C * (x ^ (s - 1) * exp (-(b * x))) = C * Real.Gamma s / b ^ s := by
   rw [integral_const_mul, Real.integral_rpow_mul_exp_neg_mul_Ioi hs hb, one_div,
     Real.inv_rpow hb.le, div_eq_mul_inv]
@@ -141,7 +141,8 @@ theorem integral_pow_gammaMeasure (ha : 0 < a) (hr : 0 < r) (n : ℕ) :
   have hra := (Real.rpow_pos_of_pos hr a).ne'
   have hrn := (pow_pos hr n).ne'
   rw [integral_gammaMeasure_eq ha hr, setIntegral_congr_fun measurableSet_Ioi hcongr,
-    integral_const_mul_gammaKernel _ _ _ han hr, Real.rpow_add hr, Real.rpow_natCast]
+    integral_const_mul_rpow_mul_exp_neg_mul_Ioi _ _ _ han hr, Real.rpow_add hr,
+    Real.rpow_natCast]
   field_simp
 
 /-- The mean of a gamma law with positive shape and rate is `a / r`. -/
@@ -255,7 +256,7 @@ theorem mgf_id_gammaMeasure (ha : 0 < a) (hr : 0 < r) {t : ℝ} (ht : t < r) :
   simp only [id_eq]
   rw [integral_gammaMeasure_eq ha hr,
     setIntegral_congr_fun measurableSet_Ioi (fun x _ ↦ gammaWeight_mul_exp a r t x),
-    integral_const_mul_gammaKernel _ _ _ ha hrt, hone_sub,
+    integral_const_mul_rpow_mul_exp_neg_mul_Ioi _ _ _ ha hrt, hone_sub,
     Real.rpow_neg (by positivity), Real.div_rpow hrt.le hr.le]
   field_simp
 
