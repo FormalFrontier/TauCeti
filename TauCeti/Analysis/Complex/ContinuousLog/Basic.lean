@@ -76,11 +76,13 @@ at all.
 
 ## Roadmap role
 
-**Plane separation for Jordan curves** is an open frontier item of layer **L5** of
+**Plane separation for Jordan curves** was an open frontier item of layer **L5** of
 `TauCetiRoadmap/ConformalMapping/README.md`, the Carathéodory boundary correspondence.
-`TauCeti.image_inter_ball_subset_filledHull_of_diam_lt_of_isPreconnected_sdiff` of
+`TauCeti.image_inter_ball_subset_filledHull_of_diam_lt_of_isPreconnected_sdiff_singleton` of
 `TauCeti/Analysis/Complex/Conformal/Crosscut/Inside.lean` avoids the plane-separation hypothesis
-entirely by taking `IsPreconnected (K \ {f z₀})` instead. The remaining open statement is
+entirely by taking `IsPreconnected (K \ {f z₀})` instead, which
+`IsJordanCurve.isPathConnected_sdiff_singleton` discharges; `Caratheodory.lean` is now
+unconditional. The remaining open statement is
 `frontier Ω ∩ closure A ∩ closure B ⊆ closure γ`, the input
 `TauCeti/Analysis/Complex/Conformal/Crosscut/BoundarySplit.lean` names as missing before its
 dichotomy `TauCeti.subset_or_subset_of_isPreconnected_frontier_image_sdiff` can be fed a boundary
@@ -434,7 +436,7 @@ filled hull outright, or they lie in different components of `Kᶜ`, of which at
 unbounded component of a bounded set's complement.
 
 It is the form in which an obstruction to a logarithm delivers the enclosure hypothesis of
-`TauCeti.image_inter_ball_subset_filledHull_of_diam_lt_of_isPreconnected_sdiff`. -/
+`TauCeti.image_inter_ball_subset_filledHull_of_diam_lt_of_isPreconnected_sdiff_singleton`. -/
 theorem mem_filledHull_or_mem_filledHull_of_not_hasContinuousLogOn (hK : IsClosed K)
     (hKb : Bornology.IsBounded K)
     (h : ¬ HasContinuousLogOn (fun z => (z - a) / (z - b)) K) :

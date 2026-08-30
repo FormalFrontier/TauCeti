@@ -63,14 +63,15 @@ or to contain an arc; `K` enters only through the frontier of one component of i
 
 ## Roadmap role
 
-**Plane separation for Jordan curves** is the open frontier item of layer **L5** of
-`TauCetiRoadmap/ConformalMapping/README.md`, the Carathéodory boundary correspondence: the whole of
-`TauCeti/Analysis/Complex/Conformal/Caratheodory.lean` is proved from the single unmet hypothesis
-`∀ J, IsJordanCurve J → J ⊆ closure (filledHull J \ J)`, and the classical route to it runs through
-Janiszewski's theorem. `TauCeti/Analysis/Complex/ContinuousLog/Basic.lean` names exactly one missing
-step on that route — "what remains before Janiszewski is the converse direction" — and this file
-supplies it, so `TauCeti.janiszewski` is now available to the separation theory that layer L5
-waits on.
+**Plane separation for Jordan curves** was the open frontier item of layer **L5** of
+`TauCetiRoadmap/ConformalMapping/README.md`, the Carathéodory boundary correspondence.
+`TauCeti.image_inter_ball_subset_filledHull_of_diam_lt_of_isPreconnected_sdiff_singleton` of
+`TauCeti/Analysis/Complex/Conformal/Crosscut/Inside.lean` avoids the plane-separation hypothesis
+entirely by taking `IsPreconnected (K \ {f z₀})` instead, which
+`IsJordanCurve.isPathConnected_sdiff_singleton` discharges; `Caratheodory.lean` is now
+unconditional. `TauCeti/Analysis/Complex/ContinuousLog/Basic.lean` names the remaining open
+statement on the classical route through Janiszewski's theorem — the converse direction — and
+this file supplies it, so `TauCeti.janiszewski` is available to that route as well.
 
 Mathlib has no separation theory for the plane and no Jordan curve theorem, and layer L5 is absent
 from [mathlib4#33505](https://github.com/leanprover-community/mathlib4/pull/33505), the in-progress

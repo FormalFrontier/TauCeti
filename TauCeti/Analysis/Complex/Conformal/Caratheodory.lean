@@ -45,8 +45,9 @@ length–area method:
   `TauCeti.IsJordanCurve.isPathConnected_sdiff_singleton`, so the winding-number two-sidedness
   theorem applies directly. No plane-separation hypothesis is needed.
 
-`TauCeti.image_inter_ball_subset_filledHull_of_diam_lt_of_isPreconnected_sdiff` then puts the
-*near* side inside `filledHull J` — the far side cannot be the enclosed one, being wider than `J` —
+`TauCeti.image_inter_ball_subset_filledHull_of_diam_lt_of_isPreconnected_sdiff_singleton`
+then puts the *near* side inside `filledHull J` — the far side cannot be the enclosed one, being
+wider than `J` —
 and `TauCeti.diam_le_diam_of_subset_filledHull` reads that enclosure as the width bound
 `diam (f '' (ball c r ∩ ball ζ ρ)) ≤ diam J ≤ ε`. Since this holds at every boundary point, the
 extension theorem `TauCeti.exists_continuousOn_closure_eqOn_of_isBounded` assembles the continuous
@@ -71,6 +72,12 @@ which arc of the image boundary the near side clings to.
 
 This is layer **L5** of `TauCetiRoadmap/ConformalMapping/README.md`, the Jordan-domain case of the
 Carathéodory boundary correspondence.
+
+Layer L5 is absent from
+[mathlib4#33505](https://github.com/leanprover-community/mathlib4/pull/33505), the in-progress
+human-curated Riemann-mapping-theorem effort, and Mathlib has no boundary correspondence for
+conformal maps and no Jordan curve theorem, so this is new Lean formalization rather than a
+temporary shim.
 
 ## Main results
 
@@ -110,8 +117,9 @@ the bounding circle. For every `ε > 0` there is a crosscut radius `ρ > 0` with
 > `Metric.diam (f '' (ball c r ∩ ball ζ ρ)) ≤ ε`.
 
 The preconnectedness hypothesis on the curve `J` minus a point, needed by the enclosure theorem
-`TauCeti.image_inter_ball_subset_filledHull_of_diam_lt_of_isPreconnected_sdiff`, is supplied by
-`TauCeti.IsJordanCurve.isPathConnected_sdiff_singleton`. Connectedness of both cut sides and a far
+`TauCeti.image_inter_ball_subset_filledHull_of_diam_lt_of_isPreconnected_sdiff_singleton`, is
+supplied by `TauCeti.IsJordanCurve.isPathConnected_sdiff_singleton`. Connectedness of both cut
+sides and a far
 side wider than `J` are discharged here. -/
 theorem exists_diam_image_ball_inter_ball_le_of_isJordanCurve_frontier
     (hr : 0 < r) (hf : DifferentiableOn ℂ f (ball c r)) (hinj : InjOn f (ball c r))
@@ -152,7 +160,7 @@ theorem exists_diam_image_ball_inter_ball_le_of_isJordanCurve_frontier
     (hJ.isPathConnected_sdiff_singleton (f z)).isConnected.isPreconnected
   calc diam (f '' (ball c r ∩ ball ζ ρ))
       ≤ diam J := diam_le_diam_of_subset_filledHull hJb
-        (image_inter_ball_subset_filledHull_of_diam_lt_of_isPreconnected_sdiff
+        (image_inter_ball_subset_filledHull_of_diam_lt_of_isPreconnected_sdiff_singleton
           isOpen_ball hρmem.1 hf hinj hAc hBc hJ.isCompact.isClosed hJb hγ hJsub hz hKp hlt)
     _ ≤ ε := hdiamJ.trans (min_le_left _ _)
 

@@ -22,6 +22,8 @@ functions that are injective on an open set and for holomorphic open partial hom
   holomorphic on its image.
 * `TauCeti.hasDerivAt_invFunOn` — the derivative of the inverse at `f z₀` is
   `(deriv f z₀)⁻¹`, via `HasDerivAt.of_local_left_inverse`.
+* `TauCeti.hasDerivAt_invFunOn_comp_segment` — the chain rule for the inverse along an affine
+  segment through the image of `z₀`.
 * `TauCeti.OpenPartialHomeomorph.differentiableOn_symm` — the inverse of a holomorphic open partial
   homeomorphism is holomorphic on its target.
 -/
@@ -87,5 +89,35 @@ theorem hasDerivAt_invFunOn {f : ℂ → ℂ} {U : Set ℂ}
   have hfg : ∀ᶠ y in 𝓝 (f z₀), f (Function.invFunOn f U y) = y :=
     Filter.eventually_of_mem (hΩ.mem_nhds hp) fun w hw => Function.invFunOn_eq hw
   exact HasDerivAt.of_local_left_inverse hgcont hfz hd0 hfg
+
+/-- **The chain rule for the inverse along a segment.** Composing a local inverse `g` with the
+affine segment `t ↦ v * t + f z₀` gives a curve whose derivative at `t = 0` is `n`, when the
+velocity `v = deriv f z₀ * n` and `g` has derivative `(deriv f z₀)⁻¹` at `f z₀`. Only
+nonvanishing of the derivative is needed — not global injectivity. -/
+theorem hasDerivAt_comp_segment_of_hasDerivAt_inv {g : ℂ → ℂ} {z₀ : ℂ}
+    (hd0 : deriv f z₀ ≠ 0) (hg : HasDerivAt g (deriv f z₀)⁻¹ (f z₀)) (n : ℂ) :
+    HasDerivAt (fun t : ℝ => g (deriv f z₀ * n * t + f z₀)) n 0 := by
+  have h1 : HasDerivAt (fun t : ℝ => deriv f z₀ * n * (t : ℂ) + f z₀)
+      (deriv f z₀ * n) 0 := by
+    simpa using
+      (((hasDerivAt_id (0 : ℝ)).ofReal_comp.const_mul (deriv f z₀ * n)).add_const (f z₀))
+  have h2 : HasDerivAt g (deriv f z₀)⁻¹
+      (deriv f z₀ * n * ((0 : ℝ) : ℂ) + f z₀) := by simpa using hg
+  have h3 := HasDerivAt.scomp (0 : ℝ) h2 h1
+  have h4 : (deriv f z₀ * n) • (deriv f z₀)⁻¹ = n := by
+    rw [smul_eq_mul]; field_simp [hd0]
+  rw [h4] at h3
+  exact h3
+
+/-- **The chain rule for `invFunOn` along a segment.** Specialization of
+`hasDerivAt_comp_segment_of_hasDerivAt_inv` to the canonical inverse. -/
+theorem hasDerivAt_invFunOn_comp_segment {f : ℂ → ℂ} {U : Set ℂ}
+    (hf : DifferentiableOn ℂ f U) (hU : IsOpen U) (hinj : InjOn f U) {z₀ : ℂ}
+    (hz₀ : z₀ ∈ U) (n : ℂ) :
+    HasDerivAt (fun t : ℝ => Function.invFunOn f U
+      (deriv f z₀ * n * t + f z₀)) n 0 :=
+  hasDerivAt_comp_segment_of_hasDerivAt_inv
+    (deriv_ne_zero_of_injOn hf hU hinj hz₀)
+    (hasDerivAt_invFunOn hf hU hinj hz₀) n
 
 end TauCeti

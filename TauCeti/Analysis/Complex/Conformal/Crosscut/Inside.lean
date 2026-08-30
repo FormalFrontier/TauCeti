@@ -8,7 +8,7 @@ module
 public import TauCeti.Analysis.Normed.Module.FilledHull
 import Mathlib.Analysis.Calculus.Deriv.Slope
 import Mathlib.MeasureTheory.Integral.CircleIntegral
-import TauCeti.Analysis.Complex.Conformal.Crosscut.Endpoints
+import TauCeti.Analysis.Complex.Conformal.Crosscut.Basic
 public import TauCeti.Analysis.Complex.Conformal.Crosscut.Image
 import TauCeti.Analysis.Complex.Conformal.InverseFunction
 import TauCeti.Analysis.Contour.Winding.Separation
@@ -33,21 +33,26 @@ filled hull. No Jordan curve theorem is used.
 
 This is the planar-separation step of the `ConformalMapping` roadmap (L5).
 
+Layer L5 is absent from
+[mathlib4#33505](https://github.com/leanprover-community/mathlib4/pull/33505), the in-progress
+human-curated Riemann-mapping-theorem effort, and Mathlib has no boundary correspondence for
+conformal maps, so this is new Lean formalization rather than a temporary shim.
+
 ## Main results
 
 * `TauCeti.exists_pos_forall_mem_image_inter_ball_and_image_sdiff_closedBall` — **the transversal
   segment through a point of the image crosscut, with near side and far side on opposite sides.**
-* `TauCeti.mem_closure_image_inter_sphere_inter_setOf_im_pos_and_mem_closure_inter_setOf_im_neg`
+* `TauCeti.mem_closure_image_inter_sphere_inter_setOf_im_pos_and_im_neg`
   — **the image crosscut is
   adherent to each of its points from both sides of the transversal.**
 * `TauCeti.image_inter_ball_subset_filledHull_or_image_sdiff_closedBall_subset_filledHull` —
   **one of the two image pieces lies in the filled hull of a closed bounded set through the image
   crosscut.** Requires `K \ {f z₀}` preconnected.
-* `TauCeti.image_inter_ball_subset_filledHull_of_diam_lt_of_isPreconnected_sdiff` — diameter
-  selection: when the enclosing set is narrower than the far side, the near side is enclosed.
-  Consumes the disjunction above without the `hp`/`hin` plane-separation input.
-* `TauCeti.image_subset_filledHull_of_disjoint_inter_sphere` — an image side meeting the inside of
-  such a curve lies inside it.
+* `TauCeti.image_inter_ball_subset_filledHull_of_diam_lt_of_isPreconnected_sdiff_singleton`
+  — diameter selection: when the enclosing set is narrower than the far side, the near side is
+  enclosed.
+  Consumes the disjunction above; `IsJordanCurve.isPathConnected_sdiff_singleton` discharges the
+  preconnectedness hypothesis in the intended application.
 * `TauCeti.image_inter_ball_subset_filledHull_of_frontier_subset` — the enclosure hypothesis is
   implied by the boundary-piece hypothesis of `Conformal/CutDiameter.lean`.
 
@@ -69,24 +74,6 @@ namespace TauCeti
 
 variable {f : ℂ → ℂ} {c ζ z₀ : ℂ} {r ρ : ℝ}
 
-private theorem hasDerivAt_invFunOn_comp_segment {f : ℂ → ℂ} {U : Set ℂ}
-    (hf : DifferentiableOn ℂ f U) (hU : IsOpen U) (hinj : InjOn f U) {z₀ : ℂ}
-    (hz₀ : z₀ ∈ U) (n : ℂ) :
-    HasDerivAt (fun t : ℝ => Function.invFunOn f U (deriv f z₀ * n * t + f z₀)) n 0 := by
-  have h1 : HasDerivAt (fun t : ℝ => deriv f z₀ * n * (t : ℂ) + f z₀)
-      (deriv f z₀ * n) 0 := by
-    simpa using
-      (((hasDerivAt_id (0 : ℝ)).ofReal_comp.const_mul (deriv f z₀ * n)).add_const (f z₀))
-  have h2 : HasDerivAt (Function.invFunOn f U) (deriv f z₀)⁻¹
-      (deriv f z₀ * n * ((0 : ℝ) : ℂ) + f z₀) := by
-    simpa using hasDerivAt_invFunOn hf hU hinj hz₀
-  have h3 := HasDerivAt.scomp (0 : ℝ) h2 h1
-  have h4 : (deriv f z₀ * n) • (deriv f z₀)⁻¹ = n := by
-    rw [smul_eq_mul]
-    field_simp [deriv_ne_zero_of_injOn hf hU hinj hz₀]
-  rw [h4] at h3
-  exact h3
-
 /-- **The transversal segment through a point of the image crosscut.** For small negative `t` the
 segment lies in the image of the near side, and for small positive `t` in the far side. -/
 theorem exists_pos_forall_mem_image_inter_ball_and_image_sdiff_closedBall {U : Set ℂ}
@@ -100,9 +87,7 @@ theorem exists_pos_forall_mem_image_inter_ball_and_image_sdiff_closedBall {U : S
   obtain ⟨hz₀b, hz₀s⟩ := hz₀
   have hΩ : IsOpen (f '' U) := isOpen_image_of_differentiableOn_of_injOn hU hf hinj
   have hp : f z₀ ∈ f '' U := mem_image_of_mem f hz₀b
-  set g := Function.invFunOn f U with hg_def
-  have hg : DifferentiableOn ℂ g (f '' U) :=
-    TauCeti.DifferentiableOn.invFunOn hf hU hinj
+  set g := Function.invFunOn f U
   have hgf : ∀ z ∈ U, g (f z) = z := fun z hz => hinj.leftInvOn_invFunOn hz
   have hfg : ∀ w ∈ f '' U, f (g w) = w := fun w hw => Function.invFunOn_eq hw
   have hgmem : ∀ w ∈ f '' U, g w ∈ U := fun w hw => Function.invFunOn_mem hw
@@ -110,7 +95,6 @@ theorem exists_pos_forall_mem_image_inter_ball_and_image_sdiff_closedBall {U : S
     deriv_ne_zero_of_injOn hf hU hinj hz₀b
   have hzζ : z₀ - ζ ≠ 0 := sub_ne_zero.mpr (Metric.ne_of_mem_sphere hz₀s hρ.ne')
   set v := deriv f z₀ * (z₀ - ζ) with hv_def
-  have hv : v ≠ 0 := mul_ne_zero hd0 hzζ
   -- the pulled-back segment has velocity `z₀ - ζ` at `t = 0`
   have hφ : HasDerivAt (fun t : ℝ => g (v * t + f z₀)) (z₀ - ζ) 0 :=
     hasDerivAt_invFunOn_comp_segment hf hU hinj hz₀b (z₀ - ζ)
@@ -126,58 +110,66 @@ theorem exists_pos_forall_mem_image_inter_ball_and_image_sdiff_closedBall {U : S
     exact hcont.continuousAt.preimage_mem_nhds (hΩ.mem_nhds h0)
   obtain ⟨η, hη, hηball⟩ := Metric.eventually_nhds_iff.mp (hev.and hΩev)
   have hnorm : ‖z₀ - ζ‖ = ρ := by rwa [← dist_eq_norm, ← mem_sphere]
+  -- shared estimate: for |t| < min η 1, extract preimage and little-o bound
+  have hcore : ∀ t : ℝ, t ∈ Ioo (-(min η 1)) (min η 1) → t ≠ 0 →
+      v * t + f z₀ ∈ f '' U ∧
+      ‖g (v * t + f z₀) - z₀ - t • (z₀ - ζ)‖ ≤ ρ / 2 * |t| := by
+    intro t ht ht0
+    have htη : dist t 0 < η := by
+      rw [Real.dist_eq, sub_zero]
+      exact (abs_lt.mpr ⟨by linarith [ht.1], by linarith [ht.2]⟩).trans_le
+        (min_le_left η 1)
+    obtain ⟨hlo, hmem⟩ := hηball htη
+    rw [hφ0, sub_zero] at hlo
+    exact ⟨hmem, hlo⟩
   refine ⟨min η 1, lt_min hη one_pos, fun t ht => ?_, fun t ht => ?_⟩
   · -- `t < 0`: the pulled-back point is closer to `ζ` than `ρ`
-    have htη : dist t 0 < η := by
-      rw [Real.dist_eq, sub_zero, abs_of_neg ht.2]
-      linarith [ht.1, min_le_left η 1]
     have ht1 : -1 < t := by linarith [ht.1, min_le_right η 1]
-    obtain ⟨hlo, hmem⟩ := hηball htη
-    rw [hφ0, sub_zero, Real.norm_eq_abs, abs_of_neg ht.2] at hlo
-    have hfactor : z₀ - ζ + t • (z₀ - ζ) = (1 + t) • (z₀ - ζ) := by
-      rw [add_smul, one_smul]
+    obtain ⟨hmem, hlo⟩ := hcore t
+      ⟨ht.1, by linarith [ht.2, lt_min hη one_pos]⟩ ht.2.ne
+    rw [abs_of_neg ht.2] at hlo
     refine ⟨g (v * t + f z₀), ⟨hgmem _ hmem, ?_⟩, hfg _ hmem⟩
     rw [mem_ball, dist_eq_norm]
     calc ‖g (v * t + f z₀) - ζ‖
-        ≤ ‖z₀ - ζ + t • (z₀ - ζ)‖ +
+        ≤ ‖(1 + t) • (z₀ - ζ)‖ +
             ‖g (v * t + f z₀) - z₀ - t • (z₀ - ζ)‖ := by
-          have := norm_le_insert' (g (v * t + f z₀) - ζ) (z₀ - ζ + t • (z₀ - ζ))
-          have e : g (v * t + f z₀) - ζ - (z₀ - ζ + t • (z₀ - ζ))
-              = g (v * t + f z₀) - z₀ - t • (z₀ - ζ) := by abel
-          rwa [e] at this
+          have := norm_le_insert'
+            (g (v * t + f z₀) - ζ) ((1 + t) • (z₀ - ζ))
+          rwa [show g (v * t + f z₀) - ζ - (1 + t) • (z₀ - ζ)
+              = g (v * t + f z₀) - z₀ - t • (z₀ - ζ) from by
+            rw [add_smul, one_smul]; abel] at this
       _ ≤ (1 + t) * ρ + ρ / 2 * (-t) := by
           gcongr
-          · rw [hfactor, norm_smul, hnorm, Real.norm_eq_abs,
+          · rw [norm_smul, hnorm, Real.norm_eq_abs,
               abs_of_pos (by linarith)]
       _ < ρ := by nlinarith [ht.2]
   · -- `t > 0`: the pulled-back point is farther from `ζ` than `ρ`
-    have htη : dist t 0 < η := by
-      rw [Real.dist_eq, sub_zero, abs_of_pos ht.1]
-      linarith [ht.2, min_le_left η 1]
-    obtain ⟨hlo, hmem⟩ := hηball htη
-    rw [hφ0, sub_zero, Real.norm_eq_abs, abs_of_pos ht.1] at hlo
-    have hfactor : z₀ - ζ + t • (z₀ - ζ) = (1 + t) • (z₀ - ζ) := by
-      rw [add_smul, one_smul]
-    refine ⟨g (v * t + f z₀), ⟨hgmem _ hmem, fun hcb => ?_⟩, hfg _ hmem⟩
+    obtain ⟨hmem, hlo⟩ := hcore t
+      ⟨by linarith [ht.1, lt_min hη one_pos], ht.2⟩ ht.1.ne'
+    rw [abs_of_pos ht.1] at hlo
+    refine ⟨g (v * t + f z₀), ⟨hgmem _ hmem, fun hcb => ?_⟩,
+      hfg _ hmem⟩
     rw [mem_closedBall, dist_eq_norm] at hcb
     have hlow : (1 + t) * ρ - ρ / 2 * t ≤ ‖g (v * t + f z₀) - ζ‖ := by
       calc (1 + t) * ρ - ρ / 2 * t
-          ≤ ‖z₀ - ζ + t • (z₀ - ζ)‖ -
+          ≤ ‖(1 + t) • (z₀ - ζ)‖ -
               ‖g (v * t + f z₀) - z₀ - t • (z₀ - ζ)‖ := by
-            rw [hfactor, norm_smul, hnorm, Real.norm_eq_abs,
+            rw [norm_smul, hnorm, Real.norm_eq_abs,
               abs_of_pos (by linarith [ht.1])]
             linarith
         _ ≤ ‖g (v * t + f z₀) - ζ‖ := by
-            have := norm_sub_norm_le (z₀ - ζ + t • (z₀ - ζ)) (g (v * t + f z₀) - ζ)
-            have e : z₀ - ζ + t • (z₀ - ζ) - (g (v * t + f z₀) - ζ)
-                = -(g (v * t + f z₀) - z₀ - t • (z₀ - ζ)) := by abel
-            rw [e, norm_neg] at this
+            have := norm_sub_norm_le
+              ((1 + t) • (z₀ - ζ)) (g (v * t + f z₀) - ζ)
+            rw [show (1 + t) • (z₀ - ζ) - (g (v * t + f z₀) - ζ)
+                = -(g (v * t + f z₀) - z₀ - t • (z₀ - ζ)) from by
+              rw [add_smul, one_smul]; abel,
+              norm_neg] at this
             linarith
     nlinarith [ht.1]
 
 /-- **The image crosscut is adherent from both sides of the transversal segment.** In the
 transversal coordinate the crosscut has velocity `i` at the crossing point. -/
-theorem mem_closure_image_inter_sphere_inter_setOf_im_pos_and_mem_closure_inter_setOf_im_neg
+theorem mem_closure_image_inter_sphere_inter_setOf_im_pos_and_im_neg
     {U : Set ℂ}
     (hf : DifferentiableOn ℂ f U) (hU : IsOpen U)
     (hinj : InjOn f U) (hz₀ : z₀ ∈ U ∩ sphere ζ ρ) (hρ : 0 < ρ) :
@@ -264,7 +256,7 @@ preconnected as a continuous image of a preconnected set and disjoint from `K` b
 so `TauCeti.IsPreconnected.subset_filledHull`
 traps it in the bounded component of `Kᶜ` it meets. Instantiate `V` at `U ∩ ball ζ ρ` for the near
 side and at `U \ closedBall ζ ρ` for the far side. -/
-theorem image_subset_filledHull_of_disjoint_inter_sphere {U V K : Set ℂ} (hUo : IsOpen U)
+private theorem image_subset_filledHull_of_disjoint_inter_sphere {U V K : Set ℂ} (hUo : IsOpen U)
     (hd : DifferentiableOn ℂ f U) (hinj : InjOn f U) (hVU : V ⊆ U)
     (hV : Disjoint V (U ∩ sphere ζ ρ)) (hVc : IsPreconnected V)
     (hK : K ⊆ closure (f '' (U ∩ sphere ζ ρ)) ∪ frontier (f '' U))
@@ -299,9 +291,8 @@ theorem image_inter_ball_subset_filledHull_or_image_sdiff_closedBall_subset_fill
       (sub_ne_zero.mpr (Metric.ne_of_mem_sphere hz₀.2 hρ.ne'))
   obtain ⟨η, hη, hnear, hfar⟩ :=
     exists_pos_forall_mem_image_inter_ball_and_image_sdiff_closedBall hf hUo hinj hz₀ hρ
-  obtain ⟨hleft, hright⟩ :=
-    mem_closure_image_inter_sphere_inter_setOf_im_pos_and_mem_closure_inter_setOf_im_neg
-      hf hUo hinj hz₀ hρ
+  obtain ⟨hleft, hright⟩ := mem_closure_image_inter_sphere_inter_setOf_im_pos_and_im_neg
+    hf hUo hinj hz₀ hρ
   -- neither image piece meets `K`
   have hnearK : Disjoint (f '' (U ∩ ball ζ ρ)) K :=
     disjoint_image_of_subset_closure_image_inter_sphere_union_frontier_image
@@ -339,11 +330,13 @@ theorem image_inter_ball_subset_filledHull_or_image_sdiff_closedBall_subset_fill
 enclosed.** This consumes the disjunction
 `TauCeti.image_inter_ball_subset_filledHull_or_image_sdiff_closedBall_subset_filledHull` by
 excluding the far-side case: trapping the far side inside `K` gives
-`diam (f '' (U \ closedBall ζ ρ)) ≤ diam K`, contradicting the hypothesis. Unlike
-`TauCeti.image_inter_ball_subset_filledHull_of_diam_lt`, no `hp`/`hin` plane-separation input is
-needed — the preconnectedness hypothesis `hKp` on `K \ {p}` is discharged by
+`diam (f '' (U \ closedBall ζ ρ)) ≤ diam K`, contradicting the hypothesis. The plane-separation
+input `p ∈ closure (filledHull K \ K)` is replaced by preconnectedness of `K \ {f z₀}`, which is
+discharged by
 `IsJordanCurve.isPathConnected_sdiff_singleton` in the intended application. -/
-theorem image_inter_ball_subset_filledHull_of_diam_lt_of_isPreconnected_sdiff {U : Set ℂ}
+theorem
+    image_inter_ball_subset_filledHull_of_diam_lt_of_isPreconnected_sdiff_singleton
+    {U : Set ℂ}
     (hUo : IsOpen U) (hρ : 0 < ρ)
     (hf : DifferentiableOn ℂ f U)
     (hinj : InjOn f U) (hAc : IsPreconnected (U ∩ ball ζ ρ))
@@ -360,7 +353,7 @@ theorem image_inter_ball_subset_filledHull_of_diam_lt_of_isPreconnected_sdiff {U
   · exact h
   · exact absurd (diam_le_diam_of_subset_filledHull hKb h) (not_le.mpr hlt)
 
-/-! ## An enclosed side is trapped, and narrow -/
+/-! ## The frontier route to enclosure -/
 
 section GeneralDomain
 
