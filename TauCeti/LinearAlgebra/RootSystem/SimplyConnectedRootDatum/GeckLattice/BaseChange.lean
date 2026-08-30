@@ -62,7 +62,7 @@ open TauCeti.UniversalEnvelopingAlgebra
 
 namespace TauCeti.DynkinType
 
-universe v
+universe v w
 
 noncomputable section
 
@@ -231,7 +231,7 @@ than choosing a new carrier over `A`.
 The value algebra `B` is an arbitrary commutative `A`-algebra, so this identifies the points of
 the specialized carrier at every value algebra rather than only at `A`; taking `B` to be
 `CommAlgCat.of A A` reads its `A`-points. -/
-noncomputable def geckBaseChangePointsMulEquiv (B : CommAlgCat.{v} A) :
+noncomputable def geckBaseChangePointsMulEquiv (B : CommAlgCat.{w} A) :
     HopfAlgebra.points (R := A)
         (H := CommHopfAlgCat.quotient
           (GeneralLinear.coordinateHopfAlgebra A (t.geckDim ht))
@@ -246,23 +246,19 @@ noncomputable def geckBaseChangePointsMulEquiv (B : CommAlgCat.{v} A) :
     (t.geckPointsMulEquiv ht
       (TauCeti.CommAlgCat.restrictScalarsObj (algebraMap ℤ A) B))
 
-/-- Under `geckBaseChangePointsMulEquiv`, a quotient point has the same ambient invertible matrix
-as its composite with the quotient map over `A`. -/
-@[simp]
-theorem coe_geckBaseChangePointsMulEquiv_apply (B : CommAlgCat.{v} A)
+private theorem geckBaseChangePointsMulEquiv_apply_apply (B : CommAlgCat.{w} A)
     (q : HopfAlgebra.points (R := A)
       (H := CommHopfAlgCat.quotient
         (GeneralLinear.coordinateHopfAlgebra A (t.geckDim ht))
-        (t.geckBaseChangeDefiningIdeal ht A)) B) :
+        (t.geckBaseChangeDefiningIdeal ht A)) B) (i j : Fin (t.geckDim ht)) :
     (t.geckBaseChangePointsMulEquiv ht A B q :
-        Matrix.GeneralLinearGroup (Fin (t.geckDim ht)) B) =
+        Matrix.GeneralLinearGroup (Fin (t.geckDim ht)) B) i j =
       GeneralLinear.pointsMulEquiv (t.geckDim ht)
         (CommHopfAlgCat.quotientPointsHom
           (GeneralLinear.coordinateHopfAlgebra A (t.geckDim ht))
-          (t.geckBaseChangeDefiningIdeal ht A) B q) := by
+          (t.geckBaseChangeDefiningIdeal ht A) B q) i j := by
   simp only [geckBaseChangePointsMulEquiv, MulEquiv.trans_apply]
   rw [t.coe_geckPointsMulEquiv_apply ht]
-  ext i j
   simp only [GeneralLinear.pointsMulEquiv_apply, GeneralLinear.pointToGeneralLinear_apply]
   rw [CommHopfAlgCat.quotientPointsHom_apply_apply,
     CommHopfAlgCat.quotientPointsHom_apply_apply, ← CommHopfAlgCat.mkQuotient_apply,
@@ -273,10 +269,27 @@ theorem coe_geckBaseChangePointsMulEquiv_apply (B : CommAlgCat.{v} A)
     (t.geckBaseChangeCoordinateIso ht A).symm _).trans
       (t.geckBaseChangeCoordinateIso_inv_one_tmul_mkQuotient_X ht A i j)
 
+/-- Under `geckBaseChangePointsMulEquiv`, a quotient point has the same ambient invertible matrix
+as its composite with the quotient map over `A`. -/
+@[simp]
+theorem coe_geckBaseChangePointsMulEquiv_apply (B : CommAlgCat.{w} A)
+    (q : HopfAlgebra.points (R := A)
+      (H := CommHopfAlgCat.quotient
+        (GeneralLinear.coordinateHopfAlgebra A (t.geckDim ht))
+        (t.geckBaseChangeDefiningIdeal ht A)) B) :
+    (t.geckBaseChangePointsMulEquiv ht A B q :
+        Matrix.GeneralLinearGroup (Fin (t.geckDim ht)) B) =
+      GeneralLinear.pointsMulEquiv (t.geckDim ht)
+        (CommHopfAlgCat.quotientPointsHom
+          (GeneralLinear.coordinateHopfAlgebra A (t.geckDim ht))
+          (t.geckBaseChangeDefiningIdeal ht A) B q) :=
+  Matrix.GeneralLinearGroup.ext fun i j ↦
+    t.geckBaseChangePointsMulEquiv_apply_apply ht A B q i j
+
 /-- Under the inverse of `geckBaseChangePointsMulEquiv`, the ambient point of the quotient point
 attached to a Geck point is the one read off its invertible matrix. -/
 @[simp]
-theorem quotientPointsHom_geckBaseChangePointsMulEquiv_symm (B : CommAlgCat.{v} A)
+theorem quotientPointsHom_geckBaseChangePointsMulEquiv_symm (B : CommAlgCat.{w} A)
     (g : t.geckPoints ht (TauCeti.CommAlgCat.restrictScalarsObj (algebraMap ℤ A) B)) :
     CommHopfAlgCat.quotientPointsHom
         (GeneralLinear.coordinateHopfAlgebra A (t.geckDim ht))
@@ -295,7 +308,7 @@ by `HopfAlgebra.mapPoints` and on the Geck points by `geckPointsMap` along the s
 its scalars restricted to `ℤ`, and the equivalence intertwines the two. A consumer can therefore
 use it functorially without unfolding its composite implementation. -/
 @[simp]
-theorem geckBaseChangePointsMulEquiv_mapPoints {B C : CommAlgCat.{v} A} (χ : B ⟶ C)
+theorem geckBaseChangePointsMulEquiv_mapPoints {B C : CommAlgCat.{w} A} (χ : B ⟶ C)
     (q : HopfAlgebra.points (R := A)
       (H := CommHopfAlgCat.quotient
         (GeneralLinear.coordinateHopfAlgebra A (t.geckDim ht))
