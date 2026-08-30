@@ -117,7 +117,7 @@ variable {N : Type*} [AddCommGroup N] [Module Aᵐᵒᵖ N]
 
 /-- The universal property of the transpose: an opposite-linear map out of `Hom_A(P₁, A)` that
 kills every functional factoring through `p₁` descends to the cokernel. -/
-@[expose] def lift (f : Module.Dual A P₁ →ₗ[Aᵐᵒᵖ] N)
+def lift (f : Module.Dual A P₁ →ₗ[Aᵐᵒᵖ] N)
     (hf : ∀ φ : Module.Dual A P₀, f (p₁.lcomp Aᵐᵒᵖ A φ) = 0) :
     AuslanderReitenTranspose p₁ →ₗ[Aᵐᵒᵖ] N :=
   Submodule.liftQ _ f <| by
@@ -153,47 +153,21 @@ section Equivalence
 variable {Q₀ : Type v'} {Q₁ : Type w'} [AddCommGroup Q₀] [Module A Q₀]
   [AddCommGroup Q₁] [Module A Q₁]
 
-/-- Dualizing a linear equivalence of left modules gives a linear equivalence of their
-opposite-ring duals.  This file-local construction is used to transport the cokernel below. -/
-private def opDualMap (e : P₁ ≃ₗ[A] Q₁) :
-    Module.Dual A P₁ ≃ₗ[Aᵐᵒᵖ] Module.Dual A Q₁ where
-  __ := e.symm.toLinearMap.lcomp Aᵐᵒᵖ A
-  invFun := e.toLinearMap.lcomp Aᵐᵒᵖ A
-  left_inv φ := by
-    ext x
-    exact congrArg φ (e.symm_apply_apply x)
-  right_inv φ := by
-    ext x
-    exact congrArg φ (e.apply_symm_apply x)
-
 private theorem map_range_lcomp_eq {q₁ : Q₁ →ₗ[A] Q₀} (e₀ : P₀ ≃ₗ[A] Q₀)
     (e₁ : P₁ ≃ₗ[A] Q₁)
     (hsquare : e₀.toLinearMap ∘ₗ p₁ = q₁ ∘ₗ e₁.toLinearMap) :
-    Submodule.map (opDualMap e₁ : Module.Dual A P₁ →ₗ[Aᵐᵒᵖ] Module.Dual A Q₁)
+    Submodule.map (e₁.congrLeft A Aᵐᵒᵖ : Module.Dual A P₁ →ₗ[Aᵐᵒᵖ] Module.Dual A Q₁)
         (LinearMap.range (p₁.lcomp Aᵐᵒᵖ A)) =
       LinearMap.range (q₁.lcomp Aᵐᵒᵖ A) := by
-  apply le_antisymm
-  · rintro _ ⟨φ, ⟨ψ, rfl⟩, rfl⟩
-    refine ⟨e₀.symm.toLinearMap.lcomp Aᵐᵒᵖ A ψ, ?_⟩
-    ext x
-    have h := LinearMap.congr_fun hsquare (e₁.symm x)
-    have h' : e₀ (p₁ (e₁.symm x)) = q₁ x := by
-      simpa using h
-    have h'' : p₁ (e₁.symm x) = e₀.symm (q₁ x) := by
-      simpa using congrArg e₀.symm h'
-    -- Expose the nested precomposition applications hidden by the linear-map coercions.
-    change ψ (e₀.symm (q₁ x)) = ψ (p₁ (e₁.symm x))
-    exact congrArg ψ h''.symm
-  · rintro _ ⟨ψ, rfl⟩
-    refine ⟨p₁.lcomp Aᵐᵒᵖ A (e₀.toLinearMap.lcomp Aᵐᵒᵖ A ψ), ?_, ?_⟩
-    · exact LinearMap.mem_range_self _ _
-    · ext x
-      have h := LinearMap.congr_fun hsquare (e₁.symm x)
-      have h' : e₀ (p₁ (e₁.symm x)) = q₁ x := by
-        simpa using h
-      -- Expose the nested precomposition applications hidden by the linear-map coercions.
-      change ψ (e₀ (p₁ (e₁.symm x))) = ψ (q₁ x)
-      exact congrArg ψ h'
+  rw [← LinearMap.range_comp]
+  have hcomp :
+      (e₁.congrLeft A Aᵐᵒᵖ).toLinearMap.comp (p₁.lcomp Aᵐᵒᵖ A) =
+        (q₁.lcomp Aᵐᵒᵖ A).comp (e₀.congrLeft A Aᵐᵒᵖ).toLinearMap := by
+    ext φ x
+    simp only [LinearMap.comp_apply, LinearMap.lcomp_apply]
+    apply congrArg φ
+    simpa using congrArg e₀.symm (LinearMap.congr_fun hsquare (e₁.symm x))
+  rw [hcomp, LinearEquiv.range_comp]
 
 /-- An isomorphism of the first square of two projective presentations induces an equivalence of
 their Auslander--Reiten transposes.  On representatives it sends `φ : Hom_A(P₁, A)` to
@@ -205,7 +179,7 @@ def linearEquiv {q₁ : Q₁ →ₗ[A] Q₀} (e₀ : P₀ ≃ₗ[A] Q₀)
     (e₁ : P₁ ≃ₗ[A] Q₁)
     (hsquare : e₀.toLinearMap ∘ₗ p₁ = q₁ ∘ₗ e₁.toLinearMap) :
     AuslanderReitenTranspose p₁ ≃ₗ[Aᵐᵒᵖ] AuslanderReitenTranspose q₁ :=
-  Submodule.Quotient.equiv _ _ (opDualMap e₁) (map_range_lcomp_eq e₀ e₁ hsquare)
+  Submodule.Quotient.equiv _ _ (e₁.congrLeft A Aᵐᵒᵖ) (map_range_lcomp_eq e₀ e₁ hsquare)
 
 /-- The presentation equivalence on transposes, evaluated on a functional representative. -/
 @[simp]
