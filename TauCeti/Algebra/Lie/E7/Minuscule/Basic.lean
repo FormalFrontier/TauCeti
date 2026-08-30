@@ -20,9 +20,9 @@ generator `F_i` makes the reverse move when `lambda_i = 1`.
 
 The resulting integer matrices satisfy the Chevalley--Serre relations for the Bourbaki Cartan
 matrix. The universal property of the Serre presentation gives the explicit integral
-fifty-six-dimensional minuscule representation; extending scalars gives its rational form.
-Each raising and lowering matrix squares to zero, which is the divided-power input for the
-integral coordinate lattice.
+fifty-six-dimensional minuscule representation. Each raising and lowering matrix squares to
+zero. See `TauCeti.Algebra.Lie.E7.Minuscule.AdmissibleLattice` for the rational extension and
+the admissibility of its coordinate lattice.
 
 No identification with the abstract irreducible highest-weight module is asserted here. The
 construction is explicit: every matrix entry is read from the already audited weight and
@@ -64,6 +64,8 @@ attribute [local instance 100] LieRing.ofAssociativeRing
 def cartanMatrix (i : Fin 7) : Matrix (Fin 56) (Fin 56) ℤ :=
   Matrix.diagonal fun a => e7MinusculeWeight a i
 
+/-- The matrix carrying a weight vector across the `i`th simple-reflection edge when its
+`i`th coordinate is `c`. -/
 private def stepMatrix (i : Fin 7) (c : ℤ) : Matrix (Fin 56) (Fin 56) ℤ :=
   fun a b => if e7MinusculeWeight b i = c ∧ a = e7MinusculeReflection i b then 1 else 0
 
@@ -79,18 +81,21 @@ def raisingMatrix (i : Fin 7) : Matrix (Fin 56) (Fin 56) ℤ :=
 def loweringMatrix (i : Fin 7) : Matrix (Fin 56) (Fin 56) ℤ :=
   stepMatrix i 1
 
+/-- The entrywise formula for the diagonal Cartan generator matrix. -/
 @[simp]
 theorem cartanMatrix_apply (i : Fin 7) (a b : Fin 56) :
     cartanMatrix i a b = if a = b then e7MinusculeWeight a i else 0 := by
   classical
   rw [cartanMatrix, Matrix.diagonal_apply]
 
+/-- The entrywise formula for the raising generator matrix. -/
 @[simp]
 theorem raisingMatrix_apply (i : Fin 7) (a b : Fin 56) :
     raisingMatrix i a b =
       if e7MinusculeWeight b i = -1 ∧ a = e7MinusculeReflection i b then 1 else 0 :=
   by rw [raisingMatrix, stepMatrix]
 
+/-- The entrywise formula for the lowering generator matrix. -/
 @[simp]
 theorem loweringMatrix_apply (i : Fin 7) (a b : Fin 56) :
     loweringMatrix i a b =
@@ -268,16 +273,19 @@ noncomputable def serreRepresentation :
     Matrix.ToLieAlgebra ℤ (CartanMatrix.E 7) →ₗ⁅ℤ⁆ Matrix (Fin 56) (Fin 56) ℤ :=
   serreLift isSerreSystem
 
+/-- The integral Serre representation sends `H_i` to the Cartan generator matrix. -/
 @[simp]
 theorem serreRepresentation_serreH (i : Fin 7) :
     serreRepresentation (serreH ℤ (CartanMatrix.E 7) i) = cartanMatrix i :=
   serreLift_serreH isSerreSystem i
 
+/-- The integral Serre representation sends `E_i` to the raising generator matrix. -/
 @[simp]
 theorem serreRepresentation_serreE (i : Fin 7) :
     serreRepresentation (serreE ℤ (CartanMatrix.E 7) i) = raisingMatrix i :=
   serreLift_serreE isSerreSystem i
 
+/-- The integral Serre representation sends `F_i` to the lowering generator matrix. -/
 @[simp]
 theorem serreRepresentation_serreF (i : Fin 7) :
     serreRepresentation (serreF ℤ (CartanMatrix.E 7) i) = loweringMatrix i :=
