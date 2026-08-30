@@ -5,8 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Algebra.Homology.HomotopyCategory.HomComplex
 public import Mathlib.Algebra.Homology.QuasiIso
+public import TauCeti.Algebra.Homology.HomotopyCategory.HomComplex
 
 /-!
 # Contractions of cochain complexes and their normalization
@@ -34,7 +34,9 @@ a chain map.  The second step replaces `h₁` by `h₂ = h₁ d h₁`.  The two 
 survive, and the new homotopy squares to zero: the degree `-2` cochain `h₁ h₁` is a cocycle,
 hence commutes with `d`, so `h₂ h₂` contains the factor `d (h₁ h₁) d = d d (h₁ h₁) = 0`.  That
 `h₂` is still a contracting homotopy is visible from the equivalent form
-`h₂ = h₁ - d (h₁ h₁)`, whose correction term is `δ`-closed.
+`h₂ = h₁ - d (h₁ h₁)`, whose correction term is `δ`-closed.  The two intermediate homotopies are
+private: a consumer needs `TauCeti.Contraction.normalize` and the side conditions it carries as a
+`TauCeti.SpecialContraction`, not the stages producing it.
 
 Cochains and their differential are Mathlib's `CochainComplex.HomComplex` API.  In degree `-1`
 that differential is `δ (-1) 0 h = h d + d h`, with no sign, so it is exactly the operator the
@@ -46,16 +48,13 @@ contracting equation constrains.
 * `TauCeti.Contraction.idem` and `TauCeti.Contraction.idemCompl`: the idempotent `i p` cut out by
   a contraction, and its complement `1 - i p`.
 * `TauCeti.SpecialContraction`: a contraction satisfying the three side conditions.
-* `TauCeti.Contraction.homotopy₁` and `TauCeti.Contraction.homotopy₂`: the two normalization steps.
-* `TauCeti.Contraction.normalize`: the special contraction produced from a contraction.
+* `TauCeti.Contraction.normalize`: the special contraction produced from a contraction.  Its three
+  side conditions are the `TauCeti.SpecialContraction` fields it carries.
 * `TauCeti.Contraction.homotopyEquiv`: the homotopy equivalence between `L` and `K` underlying a
   contraction.
 
 ## Main results
 
-* `TauCeti.Contraction.δ_homotopy₂`: the twice-normalized cochain is still a contracting homotopy.
-* `TauCeti.Contraction.incl_comp_homotopy₂`, `TauCeti.Contraction.homotopy₂_comp_proj`, and
-  `TauCeti.Contraction.homotopy₂_comp_homotopy₂`: the three side conditions.
 * `TauCeti.Contraction.normalize_incl` and `TauCeti.Contraction.normalize_proj`: normalization
   changes only the homotopy.
 * `TauCeti.SpecialContraction.normalize_toContraction`: normalization is a retraction, so it
@@ -90,42 +89,6 @@ variable {C : Type u} [Category.{v} C] [Preadditive C]
 -- The output degree argument of `Cochain.comp` is not always inferable from its cochain arguments.
 -- The typed proof terms below pin that index while keeping the arithmetic proof routine.
 
-section CochainAux
-
-variable {F G : CochainComplex C ℤ}
-
-/-- The differential of the Hom complex, written through composition with the differential
-cochains of the source and of the target: `δ z = z d + (-1)^(n+1) d z`. -/
-theorem δ_eq_comp_diff_add_diff_comp (n m : ℤ) (hnm : n + 1 = m) (z : Cochain F G n) :
-    δ n m z = z.comp (Cochain.diff G) (by lia) +
-      m.negOnePow • (Cochain.diff F).comp z (by lia) := by
-  ext p q hpq
-  rw [δ_v n m hnm z p q hpq (q - 1) (p + 1) rfl rfl, Cochain.add_v,
-    Cochain.comp_v z (Cochain.diff G) (by lia) p (q - 1) q (by lia) (by lia),
-    Cochain.units_smul_v,
-    Cochain.comp_v (Cochain.diff F) z (by lia) p (p + 1) q (by lia) (by lia),
-    Cochain.diff_v, Cochain.diff_v]
-
-/-- A morphism of cochain complexes commutes with the differential cochains. -/
-theorem ofHom_comp_diff (φ : F ⟶ G) :
-    (Cochain.ofHom φ).comp (Cochain.diff G) (zero_add 1) =
-      (Cochain.diff F).comp (Cochain.ofHom φ) (add_zero 1) := by
-  ext p q hpq
-  rw [Cochain.zero_cochain_comp_v, Cochain.comp_zero_cochain_v, Cochain.diff_v, Cochain.diff_v,
-    Cochain.ofHom_v, Cochain.ofHom_v, φ.comm]
-
-variable (F) in
-/-- The differential cochain squares to zero. -/
-@[simp]
-theorem diff_comp_diff :
-    (Cochain.diff F).comp (Cochain.diff F) (by lia : (1 : ℤ) + 1 = 2) = 0 := by
-  ext p q hpq
-  rw [Cochain.comp_v (Cochain.diff F) (Cochain.diff F) (by lia : (1 : ℤ) + 1 = 2)
-      p (p + 1) q (by lia) (by lia),
-    Cochain.diff_v, Cochain.diff_v, Cochain.zero_v, HomologicalComplex.d_comp_d]
-
-end CochainAux
-
 /-- A **contraction** of a cochain complex `K` onto a cochain complex `L`: an inclusion `incl`,
 a projection `proj` retracting it, and a degree `-1` cochain contracting the identity of `K` onto
 the resulting idempotent.  No side conditions are imposed; `TauCeti.Contraction.normalize`
@@ -157,44 +120,55 @@ structure SpecialContraction (K L : CochainComplex C ℤ) extends Contraction K 
   homotopy_comp_homotopy :
     homotopy.comp homotopy (by lia : (-1 : ℤ) + (-1) = -2) = 0
 
+attribute [simp, reassoc] Contraction.incl_comp_proj
+
+attribute [simp] Contraction.δ_homotopy SpecialContraction.incl_comp_homotopy
+  SpecialContraction.homotopy_comp_proj SpecialContraction.homotopy_comp_homotopy
+
 namespace Contraction
 
 variable {K L : CochainComplex C ℤ} (c : Contraction K L)
 
 /-- The idempotent endomorphism `i p` of `K` cut out by a contraction. -/
-@[expose] def idem : K ⟶ K := c.proj ≫ c.incl
+def idem : K ⟶ K := c.proj ≫ c.incl
 
 /-- The complementary idempotent `1 - i p` of a contraction; it is the endomorphism which the
 contracting homotopy trivializes. -/
-@[expose] def idemCompl : K ⟶ K := 𝟙 K - c.idem
+def idemCompl : K ⟶ K := 𝟙 K - c.idem
+
+/-- The defining equation of the idempotent cut out by a contraction. -/
+theorem idem_def : c.idem = c.proj ≫ c.incl := (rfl)
+
+/-- The defining equation of the complementary idempotent of a contraction. -/
+theorem idemCompl_def : c.idemCompl = 𝟙 K - c.idem := (rfl)
 
 private theorem δ_homotopy_idemCompl :
     δ (-1) 0 c.homotopy = Cochain.ofHom c.idemCompl := c.δ_homotopy
 
 @[simp] theorem incl_comp_idem : c.incl ≫ c.idem = c.incl := by
-  rw [idem, ← assoc, c.incl_comp_proj, id_comp]
+  rw [idem_def, ← assoc, c.incl_comp_proj, id_comp]
 
 @[simp] theorem idem_comp_proj : c.idem ≫ c.proj = c.proj := by
-  rw [idem, assoc, c.incl_comp_proj, comp_id]
+  rw [idem_def, assoc, c.incl_comp_proj, comp_id]
 
 @[simp] theorem idem_comp_idem : c.idem ≫ c.idem = c.idem := by
-  rw [idem, assoc, ← assoc c.incl, c.incl_comp_proj, id_comp]
+  rw [idem_def, assoc, ← assoc c.incl, c.incl_comp_proj, id_comp]
 
 @[simp] theorem incl_comp_idemCompl : c.incl ≫ c.idemCompl = 0 := by
-  rw [idemCompl, idem, comp_sub, comp_id, ← assoc, c.incl_comp_proj, id_comp, sub_self]
+  rw [idemCompl_def, idem_def, comp_sub, comp_id, ← assoc, c.incl_comp_proj, id_comp, sub_self]
 
 @[simp] theorem idemCompl_comp_proj : c.idemCompl ≫ c.proj = 0 := by
-  rw [idemCompl, idem, sub_comp, id_comp, assoc, c.incl_comp_proj, comp_id, sub_self]
+  rw [idemCompl_def, idem_def, sub_comp, id_comp, assoc, c.incl_comp_proj, comp_id, sub_self]
 
 @[simp] theorem idemCompl_comp_idemCompl : c.idemCompl ≫ c.idemCompl = c.idemCompl := by
-  rw [idemCompl, sub_comp, id_comp, comp_sub, comp_id, c.idem_comp_idem,
+  rw [idemCompl_def, sub_comp, id_comp, comp_sub, comp_id, c.idem_comp_idem,
     sub_self, sub_zero]
 
 section Step1
 
 /-- The first normalization step, `h₁ = Ψ h Ψ` with `Ψ = 1 - i p`.  It is still a contracting
 homotopy, and it satisfies the two annihilation conditions `h₁ i = 0` and `p h₁ = 0`. -/
-def homotopy₁ : Cochain K K (-1) :=
+private def homotopy₁ : Cochain K K (-1) :=
   (Cochain.ofHom c.idemCompl).comp
     (c.homotopy.comp (Cochain.ofHom c.idemCompl) (by lia : (-1 : ℤ) + 0 = -1))
     (by lia : (0 : ℤ) + (-1) = -1)
@@ -204,31 +178,31 @@ private theorem homotopy₁_def : c.homotopy₁ =
       (c.homotopy.comp (Cochain.ofHom c.idemCompl) (by lia : (-1 : ℤ) + 0 = -1))
       (by lia : (0 : ℤ) + (-1) = -1) := (rfl)
 
-@[simp] theorem idemCompl_comp_homotopy₁ :
+@[simp] private theorem idemCompl_comp_homotopy₁ :
     (Cochain.ofHom c.idemCompl).comp c.homotopy₁ (by lia : (0 : ℤ) + (-1) = -1) =
       c.homotopy₁ := by
   rw [homotopy₁_def, ← Cochain.comp_assoc_of_first_is_zero_cochain, ← Cochain.ofHom_comp,
     c.idemCompl_comp_idemCompl]
 
-@[simp] theorem homotopy₁_comp_idemCompl :
+@[simp] private theorem homotopy₁_comp_idemCompl :
     c.homotopy₁.comp (Cochain.ofHom c.idemCompl) (by lia : (-1 : ℤ) + 0 = -1) =
       c.homotopy₁ := by
   rw [homotopy₁_def, Cochain.comp_assoc_of_first_is_zero_cochain,
     Cochain.comp_assoc_of_third_is_zero_cochain, ← Cochain.ofHom_comp, c.idemCompl_comp_idemCompl]
 
-@[simp] theorem incl_comp_homotopy₁ :
+@[simp] private theorem incl_comp_homotopy₁ :
     (Cochain.ofHom c.incl).comp c.homotopy₁ (by lia : (0 : ℤ) + (-1) = -1) = 0 := by
   rw [homotopy₁_def, ← Cochain.comp_assoc_of_first_is_zero_cochain, ← Cochain.ofHom_comp,
     c.incl_comp_idemCompl, Cochain.ofHom_zero, Cochain.zero_comp]
 
-@[simp] theorem homotopy₁_comp_proj :
+@[simp] private theorem homotopy₁_comp_proj :
     c.homotopy₁.comp (Cochain.ofHom c.proj) (by lia : (-1 : ℤ) + 0 = -1) = 0 := by
   rw [homotopy₁_def, Cochain.comp_assoc_of_first_is_zero_cochain,
     Cochain.comp_assoc_of_third_is_zero_cochain, ← Cochain.ofHom_comp, c.idemCompl_comp_proj,
     Cochain.ofHom_zero, Cochain.comp_zero, Cochain.comp_zero]
 
 /-- The first normalization step preserves the contracting homotopy property. -/
-@[simp] theorem δ_homotopy₁ : δ (-1) 0 c.homotopy₁ = Cochain.ofHom c.idemCompl := by
+@[simp] private theorem δ_homotopy₁ : δ (-1) 0 c.homotopy₁ = Cochain.ofHom c.idemCompl := by
   have hψ : δ 0 1 (Cochain.ofHom c.idemCompl) = 0 := δ_ofHom _
   rw [homotopy₁_def, δ_zero_cochain_comp _ _ 0 (by lia), hψ, Cochain.zero_comp, smul_zero, add_zero,
     δ_comp_zero_cochain _ _ 0 (by lia), hψ, Cochain.comp_zero, zero_add,
@@ -237,7 +211,7 @@ private theorem homotopy₁_def : c.homotopy₁ =
     c.idemCompl_comp_idemCompl]
 
 /-- Composing the once-normalized homotopy with the differential on the right. -/
-theorem homotopy₁_comp_diff :
+private theorem homotopy₁_comp_diff :
     c.homotopy₁.comp (Cochain.diff K) (by lia : (-1 : ℤ) + 1 = 0) =
       Cochain.ofHom c.idemCompl -
         (Cochain.diff K).comp c.homotopy₁ (by lia : (1 : ℤ) + (-1) = 0) := by
@@ -254,14 +228,14 @@ section Step2
 /-- The square of the once-normalized homotopy, a cochain of degree `-2`.  It is a cocycle, hence
 commutes with the differential, and this is what makes the second normalization step square to
 zero. -/
-def homotopySq : Cochain K K (-2) :=
+private def homotopySq : Cochain K K (-2) :=
   c.homotopy₁.comp c.homotopy₁ (by lia : (-1 : ℤ) + (-1) = -2)
 
 private theorem homotopySq_def : c.homotopySq =
     c.homotopy₁.comp c.homotopy₁ (by lia : (-1 : ℤ) + (-1) = -2) := (rfl)
 
 /-- The square of the once-normalized homotopy is a cocycle. -/
-@[simp] theorem δ_homotopySq : δ (-2) (-1) c.homotopySq = 0 := by
+@[simp] private theorem δ_homotopySq : δ (-2) (-1) c.homotopySq = 0 := by
   rw [homotopySq_def,
     δ_comp c.homotopy₁ c.homotopy₁ (by lia : (-1 : ℤ) + (-1) = -2)
       0 0 (-1) (by lia) (by lia) (by lia),
@@ -269,7 +243,7 @@ private theorem homotopySq_def : c.homotopySq =
   simp
 
 /-- The square of the once-normalized homotopy commutes with the differential. -/
-theorem homotopySq_comp_diff :
+private theorem homotopySq_comp_diff :
     c.homotopySq.comp (Cochain.diff K) (by lia : (-2 : ℤ) + 1 = -1) =
       (Cochain.diff K).comp c.homotopySq (by lia : (1 : ℤ) + (-2) = -1) := by
   have h := c.δ_homotopySq
@@ -278,7 +252,7 @@ theorem homotopySq_comp_diff :
   rwa [← sub_eq_add_neg, sub_eq_zero] at h
 
 /-- The second normalization step, the classical product `h₂ = h₁ d h₁`. -/
-def homotopy₂ : Cochain K K (-1) :=
+private def homotopy₂ : Cochain K K (-1) :=
   c.homotopy₁.comp
     ((Cochain.diff K).comp c.homotopy₁ (by lia : (1 : ℤ) + (-1) = 0))
     (by lia : (-1 : ℤ) + 0 = -1)
@@ -290,7 +264,7 @@ private theorem homotopy₂_def : c.homotopy₂ =
 
 /-- The second normalization step, written so that the correction to `h₁` is visibly a
 `δ`-cocycle multiplied by the differential. -/
-theorem homotopy₂_eq_sub :
+private theorem homotopy₂_eq_sub :
     c.homotopy₂ =
       c.homotopy₁ -
         (Cochain.diff K).comp c.homotopySq (by lia : (1 : ℤ) + (-2) = -1) := by
@@ -304,7 +278,7 @@ theorem homotopy₂_eq_sub :
 
 /-- The second normalization step preserves the contracting homotopy property: the correction is
 the differential composed with a cocycle, so it is annihilated by `δ`. -/
-@[simp] theorem δ_homotopy₂ : δ (-1) 0 c.homotopy₂ = Cochain.ofHom c.idemCompl := by
+@[simp] private theorem δ_homotopy₂ : δ (-1) 0 c.homotopy₂ = Cochain.ofHom c.idemCompl := by
   have hd : δ 1 2 (Cochain.diff K) = 0 := by simpa using (Cocycle.diff K).δ_eq_zero 2
   rw [homotopy₂_eq_sub, δ_sub,
     δ_comp (Cochain.diff K) c.homotopySq (by lia : (1 : ℤ) + (-2) = -1)
@@ -312,19 +286,21 @@ the differential composed with a cocycle, so it is annihilated by `δ`. -/
     c.δ_homotopySq, hd, Cochain.comp_zero, Cochain.zero_comp, smul_zero, add_zero, sub_zero,
     c.δ_homotopy₁]
 
-@[simp] theorem incl_comp_homotopy₂ :
+/-- The twice-normalized homotopy annihilates the inclusion. -/
+@[simp] private theorem incl_comp_homotopy₂ :
     (Cochain.ofHom c.incl).comp c.homotopy₂ (by lia : (0 : ℤ) + (-1) = -1) = 0 := by
   rw [homotopy₂_def, ← Cochain.comp_assoc_of_first_is_zero_cochain, c.incl_comp_homotopy₁,
     Cochain.zero_comp]
 
-@[simp] theorem homotopy₂_comp_proj :
+/-- The twice-normalized homotopy is annihilated by the projection. -/
+@[simp] private theorem homotopy₂_comp_proj :
     c.homotopy₂.comp (Cochain.ofHom c.proj) (by lia : (-1 : ℤ) + 0 = -1) = 0 := by
   rw [homotopy₂_def, Cochain.comp_assoc_of_third_is_zero_cochain,
     Cochain.comp_assoc_of_third_is_zero_cochain, c.homotopy₁_comp_proj, Cochain.comp_zero,
     Cochain.comp_zero]
 
 /-- The second normalization step squares to zero. -/
-@[simp] theorem homotopy₂_comp_homotopy₂ :
+@[simp] private theorem homotopy₂_comp_homotopy₂ :
     c.homotopy₂.comp c.homotopy₂ (by lia : (-1 : ℤ) + (-1) = -2) = 0 := by
   have key : (Cochain.diff K).comp
       (c.homotopySq.comp (Cochain.diff K) (by lia : (-2 : ℤ) + 1 = -1))
@@ -374,7 +350,7 @@ def normalize : SpecialContraction K L where
 
 @[simp] theorem normalize_proj : c.normalize.proj = c.proj := (rfl)
 
-@[simp] theorem normalize_homotopy : c.normalize.homotopy = c.homotopy₂ := (rfl)
+@[simp] private theorem normalize_homotopy : c.normalize.homotopy = c.homotopy₂ := (rfl)
 
 section HomotopyEquivalence
 
@@ -416,7 +392,7 @@ from the left, because `h i = 0`. -/
 @[simp] theorem idemCompl_comp_homotopy :
     (Cochain.ofHom s.toContraction.idemCompl).comp s.homotopy
       (by lia : (0 : ℤ) + (-1) = -1) = s.homotopy := by
-  rw [Contraction.idemCompl, Contraction.idem, Cochain.ofHom_sub, Cochain.sub_comp,
+  rw [Contraction.idemCompl_def, Contraction.idem_def, Cochain.ofHom_sub, Cochain.sub_comp,
     Cochain.id_comp,
     Cochain.ofHom_comp, Cochain.comp_assoc_of_first_is_zero_cochain, s.incl_comp_homotopy,
     Cochain.comp_zero, sub_zero]
@@ -426,20 +402,20 @@ from the right, because `p h = 0`. -/
 @[simp] theorem homotopy_comp_idemCompl :
     s.homotopy.comp (Cochain.ofHom s.toContraction.idemCompl)
       (by lia : (-1 : ℤ) + 0 = -1) = s.homotopy := by
-  rw [Contraction.idemCompl, Contraction.idem, Cochain.ofHom_sub, Cochain.comp_sub,
+  rw [Contraction.idemCompl_def, Contraction.idem_def, Cochain.ofHom_sub, Cochain.comp_sub,
     Cochain.comp_id,
     Cochain.ofHom_comp, ← Cochain.comp_assoc_of_third_is_zero_cochain, s.homotopy_comp_proj,
     Cochain.zero_comp, sub_zero]
 
 /-- The first normalization step does nothing to a special contraction. -/
-@[simp] theorem homotopy₁_eq : s.toContraction.homotopy₁ = s.homotopy := by
+@[simp] private theorem homotopy₁_eq : s.toContraction.homotopy₁ = s.homotopy := by
   rw [Contraction.homotopy₁_def, s.homotopy_comp_idemCompl, s.idemCompl_comp_homotopy]
 
-@[simp] theorem homotopySq_eq_zero : s.toContraction.homotopySq = 0 := by
+@[simp] private theorem homotopySq_eq_zero : s.toContraction.homotopySq = 0 := by
   rw [Contraction.homotopySq_def, s.homotopy₁_eq, s.homotopy_comp_homotopy]
 
 /-- The second normalization step does nothing to a special contraction either. -/
-@[simp] theorem homotopy₂_eq : s.toContraction.homotopy₂ = s.homotopy := by
+@[simp] private theorem homotopy₂_eq : s.toContraction.homotopy₂ = s.homotopy := by
   rw [Contraction.homotopy₂_eq_sub, s.homotopy₁_eq, s.homotopySq_eq_zero, Cochain.comp_zero,
     sub_zero]
 
