@@ -144,7 +144,7 @@ theorem GL2LinearChar_comp_gl2BorelSubtype (α : Fˣ →* ℂˣ) :
 
 /-- **The linear representation restricts to the one-dimensional Borel representation at the
 boundary pair `(α, α)`.** -/
-theorem GL2Linear_comp_gl2BorelSubtype (α : Fˣ →* ℂˣ) :
+theorem GL2LinearRep_comp_gl2BorelSubtype (α : Fˣ →* ℂˣ) :
     (GL2LinearRep α).comp (GL2Borel F).subtype = GL2Borel.linearRep α α := by
   rw [GL2LinearRep_def, Representation.ofLinearCharacter_comp,
     GL2LinearChar_comp_gl2BorelSubtype, GL2Borel.linearRep_def]
@@ -183,7 +183,7 @@ variable {E : Type*} [Field E] [Algebra F E] (hE : Module.finrank F E = 2)
 /-- The linear character at a non-split-torus element is the character applied to its field norm. -/
 theorem character_GL2Linear_gl2NonSplitTorusHom (α : Fˣ →* ℂˣ) (x : Eˣ) :
     (GL2Linear F α).character (GL2NonSplitTorusHom F E hE x) =
-      (α (GL2NonSplitTorus.normUnitsHom hE x) : ℂ) := by
+      (α (Algebra.normUnits F x) : ℂ) := by
   rw [character_GL2Linear, GL2NonSplitTorus.det_gl2NonSplitTorusHom]
 
 end Elliptic
@@ -218,6 +218,7 @@ theorem finrank_GL2SteinbergTwist (α : Fˣ →* ℂˣ) :
 
 /-- **The character of a Steinberg twist is the determinant character times the Steinberg
 character.** -/
+@[simp]
 theorem character_GL2SteinbergTwist (α : Fˣ →* ℂˣ) (g : GL (Fin 2) F) :
     (GL2SteinbergTwist F α).character g =
       (α (Matrix.GeneralLinearGroup.det g) : ℂ) * (GL2Steinberg F).character g := by
@@ -272,7 +273,7 @@ variable {E : Type*} [Field E] [Algebra F E] (hE : Module.finrank F E = 2)
 theorem character_GL2SteinbergTwist_gl2NonSplitTorusHom (α : Fˣ →* ℂˣ) {x : Eˣ}
     (hx : (x : E) ∉ Set.range (algebraMap F E)) :
     (GL2SteinbergTwist F α).character (GL2NonSplitTorusHom F E hE x) =
-      -(α (GL2NonSplitTorus.normUnitsHom hE x) : ℂ) := by
+      -(α (Algebra.normUnits F x) : ℂ) := by
   rw [character_GL2SteinbergTwist,
     GL2NonSplitTorus.det_gl2NonSplitTorusHom hE x,
     character_GL2Steinberg_gl2NonSplitTorusHom hE hx]

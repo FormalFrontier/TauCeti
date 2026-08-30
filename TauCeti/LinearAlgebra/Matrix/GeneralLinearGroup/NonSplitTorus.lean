@@ -12,6 +12,8 @@ public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.LeftMulMatrix
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Borel
 -- `Module.finBasisOfFinrankEq` is the body of `TauCeti.nonSplitTorusBasis`.
 public import Mathlib.LinearAlgebra.Dimension.Free
+-- `TauCeti.Algebra.normUnits` states the determinant of a torus element below.
+public import TauCeti.RingTheory.Norm.Units
 -- Non-public: `Algebra.IsQuadraticExtension.exists_notMem_range_algebraMap`,
 -- `Algebra.norm_ne_zero_iff`, `Module.natCard_eq_pow_finrank` and `Nat.card_units` are used only
 -- inside proofs, so downstream importers do not pay for them.
@@ -62,8 +64,6 @@ choice, following the convention of
 * `TauCeti.GL2NonSplitTorus`: its range, the non-split torus.
 * `TauCeti.GL2NonSplitTorus.unitsEquiv`: the resulting multiplicative equivalence `Eˣ ≃*` the
   torus.
-* `TauCeti.GL2NonSplitTorus.normUnitsHom`: the field norm on units, used to state determinant
-  character values without choosing a nonvanishing proof.
 
 ## Main results
 
@@ -166,24 +166,12 @@ theorem trace_gl2NonSplitTorusHom (x : Eˣ) :
       Algebra.trace F E (x : E) :=
   trace_unitsLeftMulMatrix _ x
 
-/-- **The field norm on units of a quadratic extension.** The explicit degree hypothesis supplies
-the finite-dimensional instance needed by `Algebra.norm`; packaging the result as a homomorphism
-to `Fˣ` avoids exposing a choice of proof that each norm is nonzero. -/
-noncomputable def normUnitsHom : Eˣ →* Fˣ :=
-  have := Module.finite_of_finrank_eq_succ (n := 1) hE
-  Units.map (Algebra.norm F : E →* F)
-
-/-- The value underlying the norm of a unit is the ordinary field norm. -/
-@[simp]
-theorem coe_normUnitsHom (x : Eˣ) :
-    (normUnitsHom hE x : F) = Algebra.norm F (x : E) := by
-  simp [normUnitsHom]
-
 /-- **The determinant of a non-split-torus element is its field norm, as an equality of units.** -/
+@[simp]
 theorem det_gl2NonSplitTorusHom (x : Eˣ) :
-    Matrix.GeneralLinearGroup.det (GL2NonSplitTorusHom F E hE x) = normUnitsHom hE x := by
+    Matrix.GeneralLinearGroup.det (GL2NonSplitTorusHom F E hE x) = Algebra.normUnits F x := by
   apply Units.ext
-  rw [coe_normUnitsHom]
+  rw [Algebra.coe_normUnits]
   exact val_det_gl2NonSplitTorusHom hE x
 
 /-- A unit of `F` is sent to the corresponding scalar matrix. -/
