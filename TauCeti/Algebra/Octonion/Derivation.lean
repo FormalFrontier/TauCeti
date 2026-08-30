@@ -34,8 +34,8 @@ So `D` maps all of `𝕆` into the imaginary octonions, commutes with conjugatio
 orthogonal Lie algebra of the norm: `Der 𝕆 ≤ 𝔰𝔬(N)`
 (`TauCeti.Octonion.derivationLieAlgebra_le_skewAdjointLieSubalgebra`). In particular the imaginary
 octonions are a Lie submodule (`TauCeti.Octonion.imaginaryLieSubmodule`) — this is the candidate
-`7`-dimensional fundamental representation — and, when scalar multiplication by `2` is cancellable,
-`Der 𝕆` acts faithfully on it, since `𝕆 = R · 1 ⊕ Im 𝕆` and a derivation kills `1`.
+`7`-dimensional fundamental representation — and, when scalar multiplication by `2` on `𝕆` is
+regular, `Der 𝕆` acts faithfully on it, since `𝕆 = R · 1 ⊕ Im 𝕆` and a derivation kills `1`.
 
 ## Main definitions
 
@@ -54,18 +54,21 @@ octonions are a Lie submodule (`TauCeti.Octonion.imaginaryLieSubmodule`) — thi
   bilinear form of the norm, `⟨D x, y⟩ = -⟨x, D y⟩`.
 * `TauCeti.Octonion.derivationLieAlgebra_le_skewAdjointLieSubalgebra`: `Der 𝕆 ≤ 𝔰𝔬(N)`, the
   previous item as an inclusion of Lie subalgebras of `Module.End R 𝕆`.
-* `TauCeti.Octonion.instIsFaithfulImaginaryLieSubmodule`: when scalar multiplication by `2` is
-  cancellable, `Der 𝕆` acts faithfully on `Im 𝕆`.
+* `TauCeti.Octonion.isFaithful_imaginaryLieSubmodule`: when scalar multiplication by `2` on `𝕆` is
+  regular, `Der 𝕆` acts faithfully on `Im 𝕆`; `TauCeti.Octonion.instIsFaithfulImaginaryLieSubmodule`
+  is the instance form of that, under `[NoZeroSMulDivisors R (Octonion R)]` and `[NeZero (2 : R)]`.
 * `TauCeti.Octonion.diagonalDerivation` and
   `TauCeti.Octonion.instNontrivialDerivationLieAlgebra`: the diagonal endomorphisms are derivations,
   so `Der 𝕆` is not the zero Lie algebra and none of the above is vacuous.
 
 ## Implementation notes
 
-Everything is stated over a commutative ring; the base is a field nowhere. The faithfulness instance
-only requires cancellation of scalar multiplication by `2`; some such hypothesis is necessary
-(over `𝔽₂` conjugation is the identity, so `Im 𝕆` contains `1` and the argument that `Im 𝕆`
-complements `R · 1` breaks down).
+Everything is stated over a commutative ring; the base is a field nowhere. The faithfulness result
+is stated for the exact hypothesis its proof uses, `IsSMulRegular (Octonion R) (2 : R)`, which is
+not a class; the instance form of it therefore asks for the two classes
+`[NoZeroSMulDivisors R (Octonion R)]` and `[NeZero (2 : R)]`, which imply it but are strictly
+stronger. Some such hypothesis is necessary (over `𝔽₂` conjugation is the identity, so `Im 𝕆`
+contains `1` and the argument that `Im 𝕆` complements `R · 1` breaks down).
 
 The two coordinate extractions the argument needs — reading the `a` and `b` entries of an equation
 between multiples of `⟨1, 0, 0, 0⟩` and of `1` — are isolated in a private lemma, so no public
@@ -216,7 +219,9 @@ theorem trace_derivation_apply_eq_zero (x : Octonion R) :
 /-- **A derivation of `𝕆` takes imaginary values**, that is
 `TauCeti.Octonion.trace_derivation_apply_eq_zero` read through the definition of the imaginary
 octonions as the kernel of the trace. In particular the imaginary octonions are stable under `D`;
-that is `TauCeti.Octonion.imaginaryLieSubmodule`. -/
+that is `TauCeti.Octonion.imaginaryLieSubmodule`. Not a `simp` lemma, because
+`TauCeti.Octonion.mem_imaginary` and `TauCeti.Octonion.trace_apply` already take its left-hand side
+apart, for the same reason as `TauCeti.Octonion.trace_derivation_apply_eq_zero`. -/
 theorem derivation_apply_mem_imaginary (x : Octonion R) :
     (D : Module.End R (Octonion R)) x ∈ imaginary R :=
   mem_imaginary.mpr (trace_derivation_apply_eq_zero D x)
@@ -224,6 +229,7 @@ theorem derivation_apply_mem_imaginary (x : Octonion R) :
 /-- **A derivation commutes with conjugation.** Conjugation negates the imaginary octonions and the
 values of `D` are imaginary, so the sign in
 `TauCeti.Octonion.derivation_apply_conj_eq_neg` is the one conjugation itself supplies. -/
+@[simp]
 theorem derivation_apply_conj (x : Octonion R) :
     (D : Module.End R (Octonion R)) (conj x) = conj ((D : Module.End R (Octonion R)) x) := by
   rw [derivation_apply_conj_eq_neg,
@@ -255,8 +261,9 @@ theorem polar_derivation_apply_left_eq_neg (x y : Octonion R) :
 
 /-- **`Der 𝕆 ≤ 𝔰𝔬(N)`**: every derivation of the split octonions is skew-adjoint for the symmetric
 bilinear form of the norm, so the derivation algebra is a Lie subalgebra of the orthogonal Lie
-algebra of that form. This is the inclusion `G₂ ↪ 𝔰𝔬₈` that the dimension count of `Der 𝕆` runs
-through. -/
+algebra of that form. This is the inclusion `Der 𝕆 ↪ 𝔰𝔬(N)` that the dimension count of `Der 𝕆`
+runs through; once `Der 𝕆` is identified with `G₂` — which is not done here — it becomes the
+familiar `G₂ ↪ 𝔰𝔬₈`. -/
 theorem derivationLieAlgebra_le_skewAdjointLieSubalgebra (R : Type*) [CommRing R] :
     derivationLieAlgebra R (Octonion R)
       ≤ skewAdjointLieSubalgebra (QuadraticMap.polarBilin (normQuadraticForm R)) := by
@@ -294,10 +301,10 @@ theorem mem_imaginaryLieSubmodule {x : Octonion R} :
 the derivation algebra to its candidate fundamental representation.
 
 A derivation kills `1`, and `x - conj x` is imaginary with `D (x - conj x) = 2 · D x`, so a
-derivation vanishing on the imaginary octonions vanishes outright whenever scalar multiplication by
-`2` has no zero divisors. -/
-instance instIsFaithfulImaginaryLieSubmodule [NoZeroSMulDivisors R (Octonion R)]
-    [NeZero (2 : R)] :
+derivation vanishing on the imaginary octonions vanishes outright as soon as scalar multiplication
+by `2` on `𝕆` is regular. That regularity is the exact hypothesis the proof uses; the instance
+`TauCeti.Octonion.instIsFaithfulImaginaryLieSubmodule` supplies it from typeclasses. -/
+theorem isFaithful_imaginaryLieSubmodule (h2 : IsSMulRegular (Octonion R) (2 : R)) :
     LieModule.IsFaithful R (derivationLieAlgebra R (Octonion R))
       (imaginaryLieSubmodule R) := by
   rw [LieModule.isFaithful_iff']
@@ -311,9 +318,17 @@ instance instIsFaithfulImaginaryLieSubmodule [NoZeroSMulDivisors R (Octonion R)]
   have h₂ : (2 : R) • (D : Module.End R (Octonion R)) x = 0 := by
     rw [two_smul]
     exact h
-  have h₃ : (D : Module.End R (Octonion R)) x = 0 :=
-    (eq_zero_or_eq_zero_of_smul_eq_zero h₂).resolve_left (NeZero.ne (2 : R))
-  simp [h₃]
+  simp [h2.right_eq_zero_of_smul h₂]
+
+/-- **`Der 𝕆` acts faithfully on the imaginary octonions** over a base for which `2` is a nonzero
+scalar acting without zero divisors, the typeclass form of
+`TauCeti.Octonion.isFaithful_imaginaryLieSubmodule`. -/
+instance instIsFaithfulImaginaryLieSubmodule [NoZeroSMulDivisors R (Octonion R)]
+    [NeZero (2 : R)] :
+    LieModule.IsFaithful R (derivationLieAlgebra R (Octonion R))
+      (imaginaryLieSubmodule R) :=
+  isFaithful_imaginaryLieSubmodule <| IsSMulRegular.of_right_eq_zero_of_smul fun _ h =>
+    (eq_zero_or_eq_zero_of_smul_eq_zero h).resolve_left (NeZero.ne (2 : R))
 
 /-! ### An explicit family of derivations
 
