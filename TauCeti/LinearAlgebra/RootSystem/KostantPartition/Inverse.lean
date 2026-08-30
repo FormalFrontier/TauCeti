@@ -115,7 +115,7 @@ theorem kostantPartitionOn_def (S : Finset ι) (ν : M) :
   rw [kostantPartitionOn]
 
 /-- Being supported in the whole set of positive roots is no condition at all. -/
-theorem isKostantPartitionOn_posRootsFinset_iff {ν : M} {c : ι → ℕ} :
+@[simp] theorem isKostantPartitionOn_posRootsFinset_iff {ν : M} {c : ι → ℕ} :
     IsKostantPartitionOn P b (posRootsFinset P b) ν c ↔ IsKostantPartition P b ν c :=
   ⟨And.left, fun h ↦ ⟨h, fun i hi ↦ Finset.mem_coe.mpr ((mem_posRootsFinset P b i).mpr
     (((isKostantPartition_iff P b ν c).mp h).1 hi))⟩⟩
@@ -129,7 +129,7 @@ partition function.** -/
     (Equiv.subtypeEquivRight fun _ ↦ isKostantPartitionOn_posRootsFinset_iff P b)
 
 /-- The only Kostant partition using no positive root at all is the empty partition of `0`. -/
-theorem isKostantPartitionOn_empty_iff {ν : M} {c : ι → ℕ} :
+@[simp] theorem isKostantPartitionOn_empty_iff {ν : M} {c : ι → ℕ} :
     IsKostantPartitionOn P b (∅ : Finset ι) ν c ↔ c = 0 ∧ ν = 0 := by
   refine ⟨fun h ↦ ?_, ?_⟩
   · have hc : c = 0 := support_eq_empty_iff.mp
@@ -275,9 +275,12 @@ theorem sum_powerset_neg_one_pow_mul_kostantPartitionOn {S : Finset ι}
       have hrec := kostantPartitionOn_eq_erase_add_sub_root (Finset.mem_insert_self i S)
         (hS (Finset.mem_insert_self i S)) (ν - ∑ k ∈ t, P.root k)
       rw [Finset.erase_insert hi] at hrec
-      rw [Finset.card_insert_of_notMem hit, Finset.sum_insert hit,
-        show ν - (P.root i + ∑ k ∈ t, P.root k) = (ν - ∑ k ∈ t, P.root k) - P.root i by abel,
-        hrec]
+      -- `Finset.sum_insert` splits off `αᵢ` on the left of the sum, leaving the argument in the
+      -- shape `ν - (αᵢ + ∑_{k ∈ t} αₖ)`, whereas the recursion subtracts `αᵢ` from the argument
+      -- `ν - ∑_{k ∈ t} αₖ` it is applied at; the two differ only by reassociating the subtraction.
+      have hshift : ν - (P.root i + ∑ k ∈ t, P.root k) = (ν - ∑ k ∈ t, P.root k) - P.root i := by
+        abel
+      rw [Finset.card_insert_of_notMem hit, Finset.sum_insert hit, hshift, hrec]
       push_cast
       ring
     rw [Finset.sum_powerset_insert hi, ← Finset.sum_add_distrib, Finset.sum_congr rfl key]
