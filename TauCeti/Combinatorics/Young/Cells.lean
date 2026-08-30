@@ -17,9 +17,8 @@ public section
 
 A finite set `D : Finset (ι × κ)` of **cells** has its rows indexed by `ι` and its columns indexed
 by `κ`. This file counts the cells of `D` one row at a time (`TauCeti.CellDiagram.rowLen`), imposes
-the shape condition that makes such a set look like a Young diagram
-(`TauCeti.CellDiagram.IsRowLowerSet`: with every cell, `D` contains the cells directly above it),
-and builds the set of cells lying under a prescribed tuple of row lengths
+closure in the row direction (`TauCeti.CellDiagram.IsRowLowerSet`: with every cell, `D` contains the
+cells directly above it), and builds the set of cells lying under a prescribed tuple of row lengths
 (`TauCeti.CellDiagram.ofRowLens`).
 
 ## Main definitions
@@ -89,7 +88,8 @@ end RowLen
 
 /-- A set of cells is a **row lower set** when with every cell it contains all the cells directly
 above it: if `(j, c)` is a cell and `i < j`, then `(i, c)` is a cell. In other words `D` is a lower
-set in its row index. This is the shape condition on a Young diagram. -/
+set in its row index. This is one of the two conditions on the shape of a Young diagram, the one in
+the row direction; closure in the column direction is not imposed. -/
 def IsRowLowerSet [LT ι] (D : Finset (ι × κ)) : Prop :=
   ∀ p ∈ D, ∀ i : ι, i < p.1 → (i, p.2) ∈ D
 

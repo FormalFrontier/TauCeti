@@ -7,6 +7,8 @@ module
 
 public import TauCeti.Algebra.Lie.GeneralLinear.ExteriorPower
 
+import Mathlib.LinearAlgebra.Matrix.Kronecker
+
 public section
 
 /-!
@@ -26,6 +28,8 @@ this map gives a `gl ι` action on every exterior power of `ι × κ → R`.
 namespace TauCeti
 
 open Matrix Module exteriorPower
+
+open scoped Kronecker
 
 attribute [local instance 100] LieRing.ofAssociativeRing
 
@@ -55,22 +59,14 @@ of the matrix units of `gl (ι × κ)` that move a cell from row `t` to row `s` 
 alone. -/
 theorem glBlockDiagonal_single (s t : ι) :
     glBlockDiagonal R ι κ (single s t 1) = ∑ c : κ, single (s, c) (t, c) (1 : R) := by
-  ext p q
-  rw [glBlockDiagonal_apply, blockDiagonal_apply, Matrix.sum_apply]
-  by_cases hpq : p.2 = q.2
-  · rw [ite_eq_left hpq, Finset.sum_eq_single p.2]
-    · simp [single_apply, Prod.ext_iff, hpq, eq_comm]
-    · intro c _ hc
-      refine Matrix.single_apply_of_ne _ _ _ _ _ ?_
-      rintro ⟨hp, -⟩
-      exact hc (congrArg Prod.snd hp)
-    · exact fun hc => absurd (Finset.mem_univ p.2) hc
-  · rw [ite_eq_right hpq]
-    refine (Finset.sum_eq_zero fun c _ => Matrix.single_apply_of_ne _ _ _ _ _ ?_).symm
-    rintro ⟨hp, hq⟩
-    have hcp : c = p.2 := congrArg Prod.snd hp
-    have hcq : c = q.2 := congrArg Prod.snd hq
-    exact hpq (hcp.symm.trans hcq)
+  rw [glBlockDiagonal_apply]
+  calc (blockDiagonal fun _ : κ => single s t (1 : R))
+      = single s t (1 : R) ⊗ₖ (1 : Matrix κ κ R) := (kronecker_one _).symm
+    _ = single s t (1 : R) ⊗ₖ ∑ c : κ, single c c (1 : R) := by rw [sum_single_one]
+    _ = ∑ c : κ, single s t (1 : R) ⊗ₖ single c c (1 : R) :=
+        map_sum (kroneckerBilinear (R := R) (single s t (1 : R))) _ _
+    _ = ∑ c : κ, single (s, c) (t, c) (1 : R) := by
+        simp [single_kronecker_single]
 
 variable (R ι κ) in
 /-- The bracket of `gl ι` on an exterior power of `ι × κ → R`, pulled back along the block-diagonal

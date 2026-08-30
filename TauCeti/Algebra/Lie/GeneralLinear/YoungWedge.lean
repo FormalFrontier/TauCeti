@@ -29,8 +29,8 @@ For a finite set of cells `D ⊆ ι × κ` the wedge `exteriorPower.basisWedge R
 basis vectors `e_p`, `p ∈ D`, is then a weight vector for the diagonal: summing
 `exteriorPower.lie_single_self_basisWedge` over the columns, `Eₛₛ` scales the wedge by the number
 of cells of `D` in row `s`. And if `D` is a row lower set — containing with every cell the cells
-directly above it, which is exactly the shape of a Young diagram — then every raising operator
-`Eₛₜ` with `s < t` annihilates the wedge by
+directly above it, which is the closure in the row direction that the raising operators need —
+then every raising operator `Eₛₜ` with `s < t` annihilates the wedge by
 `exteriorPower.lie_single_basisWedge_eq_zero_of_ne_of_mem_imp_mem`, since moving a cell from row
 `t` up to row `s` lands on a cell already present.
 
@@ -60,8 +60,8 @@ weights with natural number entries, the existence input to that classification;
 ## Implementation notes
 
 `TauCeti.glBlockDiagonal` is the constant family map followed by `Matrix.blockDiagonalRingHom`,
-promoted to an `AlgHom`, and then viewed as a `LieHom`. It is not injective when `κ` is empty, so it
-is a map rather than an embedding.
+promoted to an `AlgHom`, and then viewed as a `LieHom`. It need not be injective when `κ` is empty,
+so it is a map rather than an embedding.
 
 A single-column diagram gives back the fundamental weights: for `κ` a singleton, the row lower
 set of the first `d` rows is the wedge `exteriorPower.firstBasisWedge`, transported along
@@ -70,9 +70,11 @@ and it is the second coordinate — absent there — that lets a row be repeated
 general weakly decreasing tuple needs.
 
 The cells of a diagram are wedged together in the order `exteriorPower.basisWedge` reads off the
-linear order on `ι × κ`; the lexicographic one is used, as a local instance, purely to fix that
-order. Nothing below depends on the choice: a different order permutes the factors and changes the
-wedge by a sign, which affects neither being nonzero nor being a highest weight vector.
+linear order on `ι × κ`, and that order is a parameter of the results below: nothing depends on the
+choice, since a different order permutes the factors and changes the wedge by a sign, which affects
+neither being nonzero nor being a highest weight vector. Only
+`TauCeti.exists_isGlHighestWeightVector_natCast`, which has to produce a witness, picks one, and it
+picks the lexicographic order, supplied as a local instance.
 
 ## References
 
@@ -93,11 +95,7 @@ section Wedge
 
 variable {R : Type*} [CommRing R]
 variable {ι : Type*} [Fintype ι] [LinearOrder ι]
-variable {κ : Type*} [Fintype κ] [LinearOrder κ]
-
-/-- The local lexicographic order fixes the order of the wedge factors. -/
-local instance cellLinearOrder : LinearOrder (ι × κ) :=
-  LinearOrder.lift' (⇑(toLex : (ι × κ) ≃ ι ×ₗ κ)) (Equiv.injective _)
+variable {κ : Type*} [DecidableEq κ] [Fintype κ] [LinearOrder (ι × κ)]
 
 open CellDiagram
 
@@ -139,22 +137,23 @@ section YoungDiagram
 variable {R : Type*} [CommRing R]
 variable {ι : Type*} [Fintype ι] [LinearOrder ι]
 
-/-- The local lexicographic order fixes the order of the wedge factors. -/
-local instance cellFinLinearOrder {m : ℕ} : LinearOrder (ι × Fin m) :=
-  LinearOrder.lift' (⇑(toLex : (ι × Fin m) ≃ ι ×ₗ Fin m)) (Equiv.injective _)
-
 open CellDiagram
 
 /-- **The wedge of a Young diagram is a highest weight vector of the weight the diagram
 prescribes.** Its exterior degree is the size `∑ i, a i` of the diagram. -/
 theorem isGlHighestWeightVector_basisWedge_ofRowLens [Nontrivial R] {a : ι → ℕ} (ha : Antitone a)
-    {m : ℕ} (hm : ∀ i, a i ≤ m) :
+    {m : ℕ} [LinearOrder (ι × Fin m)] (hm : ∀ i, a i ≤ m) :
     IsGlHighestWeightVector (fun i => (a i : R))
       (basisWedge R (ofRowLens a m) (card_ofRowLens_of_le hm)) := by
   have hweight : (fun i => ((rowLen (ofRowLens a m) i : ℕ) : R)) = fun i => ((a i : ℕ) : R) :=
     funext fun i => by rw [rowLen_ofRowLens_of_le hm]
   rw [← hweight]
   exact isGlHighestWeightVector_basisWedge _ (isRowLowerSet_ofRowLens ha m)
+
+/-- The lexicographic order on the cells, used only to fix the order of the wedge factors in the
+existential witness below. -/
+local instance cellFinLinearOrder {m : ℕ} : LinearOrder (ι × Fin m) :=
+  LinearOrder.lift' (⇑(toLex : (ι × Fin m) ≃ ι ×ₗ Fin m)) (Equiv.injective _)
 
 /-- **Every weakly decreasing tuple of natural numbers is a highest weight** of `gl ι`: it is the
 weight of a highest weight vector in the exterior power `⋀^|a| (ι × Fin |a| → R)` of the standard

@@ -124,14 +124,6 @@ theorem basisWedge_ne_zero [Nontrivial K] (S : Finset n) (h : S.card = N) :
   rw [basisWedge_eq_ιMulti_family]
   exact (ιMulti_family_linearIndependent_ofBasis K N (Pi.basisFun K n)).ne_zero _
 
-omit [DecidableEq n] [Fintype n] in
-private theorem exists_orderEmbOfFin_eq {S : Finset n} (h : S.card = N) {p : n} (hp : p ∈ S) :
-    ∃ k, S.orderEmbOfFin h k = p := by
-  have hrange : p ∈ Set.range (S.orderEmbOfFin h) := by
-    rw [Finset.range_orderEmbOfFin]
-    exact Finset.mem_coe.2 hp
-  exact hrange
-
 /-- The diagonal matrix unit `Eᵢᵢ` fixes the factors of a wedge of standard basis vectors that lie
 in direction `i` and kills the others, so it scales the wedge by one when `i` is one of its indices
 and annihilates it otherwise. -/
@@ -143,7 +135,7 @@ theorem lie_single_self_basisWedge (S : Finset n) (h : S.card = N) (i : n) :
   simp only [Matrix.single_mulVec_eq, Pi.single_apply, one_mul, ite_smul, one_smul, zero_smul,
     eq_comm]
   by_cases hiS : i ∈ S
-  · obtain ⟨k₀, hk₀⟩ := exists_orderEmbOfFin_eq h hiS
+  · obtain ⟨k₀, hk₀⟩ := (S.range_orderEmbOfFin h).ge (Finset.mem_coe.2 hiS)
     rw [ite_eq_left hiS, Finset.sum_eq_single k₀]
     · rw [ite_eq_left hk₀.symm, ← hk₀]
       exact (congrArg (ιMulti K N) (Function.update_eq_self k₀ _)).symm
@@ -173,7 +165,7 @@ theorem lie_single_basisWedge_eq_zero_of_ne_of_mem_imp_mem (S : Finset n) (h : S
   refine (Finset.sum_eq_zero fun k _ => ?_).symm
   by_cases hjk : j = S.orderEmbOfFin h k
   · have hjS : j ∈ S := by rw [hjk]; exact Finset.orderEmbOfFin_mem S h k
-    obtain ⟨l, hl⟩ := exists_orderEmbOfFin_eq h (hS hjS)
+    obtain ⟨l, hl⟩ := (S.range_orderEmbOfFin h).ge (Finset.mem_coe.2 (hS hjS))
     have hlk : l ≠ k := by
       rintro rfl
       exact hij (hl.symm.trans hjk.symm)
@@ -193,9 +185,7 @@ private theorem mem_firstBasisSet (d n : ℕ) (h : d ≤ n) (k : Fin n) :
     k ∈ (firstBasisSet d n h : Finset (Fin n)) ↔ (k : ℕ) < d := by
   rw [Set.powersetCard.mem_coe_iff, firstBasisSet,
     Set.powersetCard.mem_ofFinEmbEquiv_iff_mem_range]
-  refine ⟨?_, fun hk => ⟨⟨k, hk⟩, rfl⟩⟩
-  rintro ⟨l, rfl⟩
-  exact l.isLt
+  simp [Fin.castLEOrderEmb, Fin.range_castLE]
 
 /-- The wedge of the first `d` standard basis vectors of `K^n`. -/
 noncomputable def firstBasisWedge (d n : ℕ) (h : d ≤ n) : ⋀[K]^d (Fin n → K) :=
