@@ -53,21 +53,14 @@ attribute [local instance 100] LieRing.ofAssociativeRing
 
 /-- Entrywise coercion from integral to rational matrices, as a homomorphism of Lie rings. -/
 private noncomputable def castMatrixLieHom :
-    Matrix (Fin 27) (Fin 27) ℤ →ₗ⁅ℤ⁆ Matrix (Fin 27) (Fin 27) ℚ where
-  toLinearMap := (Int.castRingHom ℚ).mapMatrix.toAddMonoidHom.toIntLinearMap
-  map_lie' := by
-    intro x y
-    -- The matrix Lie bracket and the linear-map wrapper both reduce definitionally here;
-    -- after exposing the commutator, preservation follows from the ring-homomorphism laws.
-    change (Int.castRingHom ℚ).mapMatrix (x * y - y * x) =
-      (Int.castRingHom ℚ).mapMatrix x * (Int.castRingHom ℚ).mapMatrix y -
-        (Int.castRingHom ℚ).mapMatrix y * (Int.castRingHom ℚ).mapMatrix x
-    rw [map_sub, map_mul, map_mul]
+    Matrix (Fin 27) (Fin 27) ℤ →ₗ⁅ℤ⁆ Matrix (Fin 27) (Fin 27) ℚ :=
+  ((Int.castRingHom ℚ).mapMatrix.toIntAlgHom).toLieHom
 
 @[simp]
 private theorem castMatrixLieHom_apply (M : Matrix (Fin 27) (Fin 27) ℤ) (a b : Fin 27) :
     castMatrixLieHom M a b = (M a b : ℚ) := by
-  rfl
+  simp only [castMatrixLieHom, AlgHom.toLieHom_apply, RingHom.toIntAlgHom_apply,
+    RingHom.mapMatrix_apply, Matrix.map_apply, Int.coe_castRingHom]
 
 /-- The rational raising matrix obtained from the integral minuscule representation. -/
 noncomputable def raisingMatrixQ (i : Fin 6) : Matrix (Fin 27) (Fin 27) ℚ :=
@@ -255,6 +248,11 @@ def lattice : Submodule ℤ (Fin 27 → ℚ) :=
 theorem mem_lattice_iff {v : Fin 27 → ℚ} :
     v ∈ lattice ↔ ∀ a, ∃ z : ℤ, (z : ℚ) = v a :=
   TauCeti.mem_coordinateLattice_iff (Fin 27)
+
+/-- Every standard coordinate vector belongs to the minuscule lattice. -/
+theorem single_mem_lattice (a : Fin 27) : Pi.single a (1 : ℚ) ∈ lattice := by
+  rw [← Pi.basisFun_apply]
+  exact TauCeti.basisFun_mem_coordinateLattice (Fin 27) a
 
 /-- The coordinate basis of the minuscule lattice. -/
 noncomputable def latticeBasis : Module.Basis (Fin 27) ℤ lattice :=
