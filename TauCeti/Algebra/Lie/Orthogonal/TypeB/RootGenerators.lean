@@ -76,7 +76,6 @@ theorem typeBLongRootMatrix_def (i j : ι) (hij : i ≠ j) :
 
 /-- The long-root matrix sends a coordinate basis vector to the difference of its two selected
 coordinates. -/
-@[simp]
 theorem toLinAlgEquiv_typeBLongRootMatrix_apply_basis {M : Type*} [AddCommGroup M] [Module K M]
     (bas : Module.Basis (Unit ⊕ ι ⊕ ι) K M) (i j : ι) (hij : i ≠ j)
     (c : Unit ⊕ ι ⊕ ι) :
@@ -214,7 +213,6 @@ theorem typeBShortNegativeRootMatrix_def (i : ι) :
 
 /-- The positive short-root matrix has its two nonzero coordinate-basis actions in the middle and
 negative summands. -/
-@[simp]
 theorem toLinAlgEquiv_typeBShortRootMatrix_apply_basis {M : Type*} [AddCommGroup M] [Module K M]
     (bas : Module.Basis (Unit ⊕ ι ⊕ ι) K M) (i : ι) (c : Unit ⊕ ι ⊕ ι) :
     Matrix.toLinAlgEquiv bas (typeBShortRootMatrix i) (bas c) =
@@ -226,7 +224,6 @@ theorem toLinAlgEquiv_typeBShortRootMatrix_apply_basis {M : Type*} [AddCommGroup
 
 /-- The negative short-root matrix has its two nonzero coordinate-basis actions in the positive and
 middle summands. -/
-@[simp]
 theorem toLinAlgEquiv_typeBShortNegativeRootMatrix_apply_basis {M : Type*} [AddCommGroup M]
     [Module K M] (bas : Module.Basis (Unit ⊕ ι ⊕ ι) K M) (i : ι)
     (c : Unit ⊕ ι ⊕ ι) :
