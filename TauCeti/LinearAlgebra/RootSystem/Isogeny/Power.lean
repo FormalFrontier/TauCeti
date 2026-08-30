@@ -59,7 +59,7 @@ come from.
 * `TauCeti.RootPairingIsogeny.pow_two_mul_eq_smulId` and
   `TauCeti.RootPairingIsogeny.pow_two_mul_add_one_eq_smulId_mul`: such an isogeny has scalings for
   its even powers, and a scaling times itself for its odd ones.
-* `TauCeti.RootPairingIsogeny.pow_exponent`: the exponent of an iterate is the product along the
+* `TauCeti.RootPairingIsogeny.exponent_pow`: the exponent of an iterate is the product along the
   corresponding orbit of indices.
 * `TauCeti.RootPairingIsogeny.indexEquiv_pow_two_mul_add_one`,
   `TauCeti.RootPairingIsogeny.exponent_pow_two_mul_add_one`,
@@ -189,7 +189,7 @@ theorem exponent_pow_succ (f : RootPairingIsogeny P P) (n : ℕ) (i : ι) :
 /-- **The exponent of an iterate accumulates along the forward orbit of the index bijection.**
 Unlike the other three fields the exponent is not multiplicative: the exponent of a composite at
 an index is the product of the exponents met at the successive images of that index. -/
-@[simp] theorem pow_exponent (f : RootPairingIsogeny P P) (k : ℕ) (i : ι) :
+@[simp] theorem exponent_pow (f : RootPairingIsogeny P P) (k : ℕ) (i : ι) :
     (f ^ k).exponent i = ∏ j ∈ Finset.range k, f.exponent ((f.indexEquiv ^ j) i) := by
   induction k with
   | zero => simp
