@@ -97,18 +97,16 @@ lemma transitionUnit_restrict_spec (D : CartierDivisor X) {U V W : X.Opens}
         (F := (rationalUnitSheaf X).presheaf) hW inf_le_left f
       rw [hfres]
       congr 1
-      have hgres := TopCat.Presheaf.restrict_restrict
-        (F := (rationalUnitSheaf X).presheaf) hW inf_le_right g
-      let gv := TopCat.Presheaf.restrictOpen
-        (F := (rationalUnitSheaf X).presheaf) g (U ⊓ V) inf_le_right
       have hneg :
           TopCat.Presheaf.restrictOpen (F := (rationalUnitSheaf X).presheaf)
-              (-gv) W hW =
+              (-(g |_ (U ⊓ V))) W hW =
             -TopCat.Presheaf.restrictOpen (F := (rationalUnitSheaf X).presheaf)
-              gv W hW := by
-        change ((rationalUnitSheaf X).presheaf.map (homOfLE hW).op).hom
-            (-gv) = _
-        exact AddMonoidHom.map_neg _ _
+              (g |_ (U ⊓ V)) W hW := by
+        simpa only [TopCat.Presheaf.restrictOpen, TopCat.Presheaf.restrict] using
+          (AddMonoidHom.map_neg
+            ((rationalUnitSheaf X).presheaf.map (homOfLE hW).op).hom (g |_ (U ⊓ V)))
+      have hgres := TopCat.Presheaf.restrict_restrict
+        (F := (rationalUnitSheaf X).presheaf) hW inf_le_right g
       rw [hneg, hgres]
 
 /-- A local equation has trivial transition unit with itself. -/
@@ -120,6 +118,7 @@ lemma transitionUnit_self (D : CartierDivisor X) {U : X.Opens}
   symm
   apply transitionUnit_eq_of_spec D f f hf hf
   rw [sub_self]
+  -- The component of `toRationalUnitSheaf` is definitionally an additive hom.
   change ((toRationalUnitSheaf X).hom.app (op (U ⊓ U))).hom 0 =
     (0 : Additive (((rationalFunctionsRing X).presheaf.obj (op (U ⊓ U)))ˣ))
   exact AddMonoidHom.map_zero _
