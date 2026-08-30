@@ -94,10 +94,10 @@ noncomputable def lowerUnipotent (C : Matrix (Fin m) (Fin m) R) (hC : C.IsSymm) 
 @[simp]
 theorem coe_mulEquivGLSymplectic_upperUnipotent (B : Matrix (Fin m) (Fin m) R)
     (hB : B.IsSymm) :
-    (((mulEquivGLSymplectic m R) (upperUnipotent B hB) : GLSymplectic (Fin m) R) :
-        GL (Fin m ⊕ Fin m) R) =
+    reindexGL m R ((upperUnipotent B hB : GLSymplecticFin m R) : GL (Fin (m + m)) R) =
       GLSymplectic.ofSymplecticGroup (Fin m) R
         ⟨Matrix.fromBlocks 1 B 0 1, GLSymplectic.fromBlocks_upper_mem B hB.eq⟩ := by
+  rw [← coe_mulEquivGLSymplectic]
   apply Matrix.GeneralLinearGroup.ext
   intro i j
   rw [← GLSymplectic.coe_mulEquivSymplecticGroup]
@@ -107,10 +107,10 @@ theorem coe_mulEquivGLSymplectic_upperUnipotent (B : Matrix (Fin m) (Fin m) R)
 @[simp]
 theorem coe_mulEquivGLSymplectic_lowerUnipotent (C : Matrix (Fin m) (Fin m) R)
     (hC : C.IsSymm) :
-    (((mulEquivGLSymplectic m R) (lowerUnipotent C hC) : GLSymplectic (Fin m) R) :
-        GL (Fin m ⊕ Fin m) R) =
+    reindexGL m R ((lowerUnipotent C hC : GLSymplecticFin m R) : GL (Fin (m + m)) R) =
       GLSymplectic.ofSymplecticGroup (Fin m) R
         ⟨Matrix.fromBlocks 1 0 C 1, GLSymplectic.fromBlocks_lower_mem C hC.eq⟩ := by
+  rw [← coe_mulEquivGLSymplectic]
   apply Matrix.GeneralLinearGroup.ext
   intro i j
   rw [← GLSymplectic.coe_mulEquivSymplecticGroup]
@@ -159,8 +159,8 @@ theorem upperUnipotent_single_diagonal (i : Fin m) (c : R) :
       positiveLongRootTransvectionUnit i c := by
   apply (mulEquivGLSymplectic m R).injective
   apply Subtype.ext
-  rw [coe_mulEquivGLSymplectic_upperUnipotent, coe_mulEquivGLSymplectic,
-    coe_positiveLongRootTransvectionUnit]
+  rw [coe_mulEquivGLSymplectic, coe_mulEquivGLSymplectic_upperUnipotent,
+    coe_mulEquivGLSymplectic, coe_positiveLongRootTransvectionUnit]
   apply Matrix.GeneralLinearGroup.ext
   intro a b
   simp only [GLSymplectic.coe_ofSymplecticGroup, coe_reindexGL, coe_transvectionUnit]
@@ -175,8 +175,8 @@ theorem lowerUnipotent_single_diagonal (i : Fin m) (c : R) :
       negativeLongRootTransvectionUnit i c := by
   apply (mulEquivGLSymplectic m R).injective
   apply Subtype.ext
-  rw [coe_mulEquivGLSymplectic_lowerUnipotent, coe_mulEquivGLSymplectic,
-    coe_negativeLongRootTransvectionUnit]
+  rw [coe_mulEquivGLSymplectic, coe_mulEquivGLSymplectic_lowerUnipotent,
+    coe_mulEquivGLSymplectic, coe_negativeLongRootTransvectionUnit]
   apply Matrix.GeneralLinearGroup.ext
   intro a b
   simp only [GLSymplectic.coe_ofSymplecticGroup, coe_reindexGL, coe_transvectionUnit]
@@ -191,8 +191,8 @@ theorem upperUnipotent_single_add_transpose {i j : Fin m} (hij : i ≠ j) (c : R
       simp [Matrix.IsSymm, add_comm]) = positiveSumShortRootUnit hij c := by
   apply (mulEquivGLSymplectic m R).injective
   apply Subtype.ext
-  rw [coe_mulEquivGLSymplectic_upperUnipotent, coe_mulEquivGLSymplectic,
-    coe_positiveSumShortRootUnit]
+  rw [coe_mulEquivGLSymplectic, coe_mulEquivGLSymplectic_upperUnipotent,
+    coe_mulEquivGLSymplectic, coe_positiveSumShortRootUnit]
   apply Matrix.GeneralLinearGroup.ext
   intro a b
   simp only [GLSymplectic.coe_ofSymplecticGroup, coe_reindexGL, Matrix.submatrix_apply,
@@ -210,8 +210,8 @@ theorem lowerUnipotent_single_add_transpose {i j : Fin m} (hij : i ≠ j) (c : R
       simp [Matrix.IsSymm, add_comm]) = negativeSumShortRootUnit hij c := by
   apply (mulEquivGLSymplectic m R).injective
   apply Subtype.ext
-  rw [coe_mulEquivGLSymplectic_lowerUnipotent, coe_mulEquivGLSymplectic,
-    coe_negativeSumShortRootUnit]
+  rw [coe_mulEquivGLSymplectic, coe_mulEquivGLSymplectic_lowerUnipotent,
+    coe_mulEquivGLSymplectic, coe_negativeSumShortRootUnit]
   apply Matrix.GeneralLinearGroup.ext
   intro a b
   simp only [GLSymplectic.coe_ofSymplecticGroup, coe_reindexGL, Matrix.submatrix_apply,
