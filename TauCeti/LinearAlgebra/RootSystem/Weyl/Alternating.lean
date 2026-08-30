@@ -35,7 +35,7 @@ itself, and is the case `λ = 0` of the character formula.
 
 The dot action `w ⬝ x = w(x + ρ) - ρ` has its walls at `⟨x, αᵢ^∨⟩ = -1`, so its open chamber is
 `TauCeti.openDotDominantChamber`, the weights whose `ρ`-shift is strictly dominant, which for a
-general coefficient ring is strictly larger than the closed dominant chamber. Two facts about it
+general coefficient ring may be strictly larger than the closed dominant chamber. Two facts about it
 drive everything here. The dot action is **free** on it, so a numerator `N(μ)` with `μ` in the
 chamber has coefficient `1` at `μ` and `0` at every other point of the chamber. And every weight is
 carried into the closed shifted chamber by some Weyl-group element, whose boundary is a union of
@@ -58,7 +58,7 @@ every result below.
   determined by its coefficients on the open chamber of the dot action.
 * `TauCeti.IsDotAlternating.eq_sum_weylNumerator`: **an alternating element is the sum of the Weyl
   numerators of the points of the open dot chamber in its support, weighted by its coefficients
-  there**, and `TauCeti.coeff_eq_zero_of_sum_smul_weylNumerator_eq_zero`: those weights are unique.
+  there**, and `TauCeti.eq_zero_of_sum_smul_weylNumerator_eq_zero`: those weights are unique.
   Together: the numerators of the open dot chamber are a basis of the alternating elements.
 * `TauCeti.IsDotAlternating.eq_weylNumerator`: **an alternating element whose only nonvanishing
   coefficient on the open dot chamber is a `1` at `λ` is `N(λ)`**, the form in which the Weyl
@@ -218,7 +218,7 @@ variable [P.flip.IsReduced] [Fintype P.weylGroup]
 theorem coeff_weylNumerator_self_of_mem_openDotDominantChamber {lam : M}
     (hlam : lam ∈ openDotDominantChamber P b) : (weylNumerator P b lam).coeff lam = 1 := by
   have h := coeff_weylNumerator_dotAction_of_injective P b
-    (injective_dotAction_of_mem_openDotDominantChamber P b hlam) 1
+    (dotAction_injective_of_mem_openDotDominantChamber P b hlam) 1
   rwa [dotAction_one, map_one, Units.val_one] at h
 
 /-- **The numerator of a weight of the open dot chamber vanishes at every other weight of that
@@ -282,14 +282,14 @@ section Basis
 
 variable [P.flip.IsReduced] [P.IsRootSystem] [Fintype P.weylGroup]
 
+open scoped Classical in
 /-- **An alternating element is the combination of the Weyl numerators of the weights of the open
 dot chamber in its support**, taken with its own coefficients there as multipliers.
 
-With `TauCeti.coeff_eq_zero_of_sum_smul_weylNumerator_eq_zero`, which says those coefficients are
+With `TauCeti.eq_zero_of_sum_smul_weylNumerator_eq_zero`, which says those coefficients are
 uniquely determined, this exhibits the numerators `N(μ)` for `μ` in the open dot chamber as a basis
 of the alternating elements of `ℤ[M]`. -/
-theorem IsDotAlternating.eq_sum_weylNumerator
-    [DecidablePred (· ∈ openDotDominantChamber P b)] (hf : IsDotAlternating P b f) :
+theorem IsDotAlternating.eq_sum_weylNumerator (hf : IsDotAlternating P b f) :
     f = ∑ mu ∈ f.coeff.support.filter (· ∈ openDotDominantChamber P b),
       f.coeff mu • weylNumerator P b mu := by
   refine hf.eq_of_coeff_openDotDominantChamber_eq
@@ -314,7 +314,7 @@ omit [P.IsRootSystem] in
 /-- **The Weyl numerators of the weights of the open dot chamber are linearly independent over
 `ℤ`**: a vanishing combination has vanishing multipliers, since the coefficient of the combination
 at `ν` is exactly the multiplier of `N(ν)`. -/
-theorem coeff_eq_zero_of_sum_smul_weylNumerator_eq_zero {s : Finset M} {c : M → ℤ}
+theorem eq_zero_of_sum_smul_weylNumerator_eq_zero {s : Finset M} {c : M → ℤ}
     (hs : ∀ mu ∈ s, mu ∈ openDotDominantChamber P b)
     (h : ∑ mu ∈ s, c mu • weylNumerator P b mu = 0) {nu : M} (hnu : nu ∈ s) : c nu = 0 := by
   have h' := congrArg (fun u : AddMonoidAlgebra ℤ M ↦ u.coeff nu) h

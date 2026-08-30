@@ -49,9 +49,9 @@ needs: distinct dominant weights lie in distinct dot orbits.
 * `TauCeti.dotAction_ofIdx_eq_self_iff`: the wall of `sᵢ` for the dot action is `⟨x, αᵢ^∨⟩ = -1`.
 * `TauCeti.eq_one_of_dotAction_eq_self_of_mem_openDotDominantChamber`,
   `TauCeti.eq_of_dotAction_eq_of_mem_openDotDominantChamber` and
-  `TauCeti.injective_dotAction_of_mem_openDotDominantChamber`: **the dot action is free on its own
-  open dominant chamber**, which for a general coefficient ring is strictly larger than the closed
-  dominant chamber.
+  `TauCeti.dotAction_injective_of_mem_openDotDominantChamber`: **the dot action is free on its own
+  open dominant chamber**, which for a general coefficient ring may be strictly larger than the
+  closed dominant chamber.
 * `TauCeti.eq_one_of_dotAction_mem_dominantChamber` and
   `TauCeti.eq_one_of_dotAction_eq_self_of_mem_dominantChamber`: **the dot action is free on the
   closed dominant chamber**, and no nontrivial element keeps a dominant weight dominant.
@@ -256,8 +256,9 @@ dominant, equivalently (`TauCeti.mem_openDotDominantChamber_iff_neg_one_lt_coroo
 This, and not `TauCeti.dominantChamber`, is the region the dot action is free on for a general
 coefficient ring: the walls of the dot action sit at `⟨x, αᵢ^∨⟩ = -1`
 (`TauCeti.dotAction_ofIdx_eq_self_iff`), so this is the open chamber the dot action cuts out. Every
-dominant weight lies in it (`TauCeti.dominantChamber_subset_openDotDominantChamber`), and for
-integral weights the two conditions agree, since `-1 < ⟨x, αᵢ^∨⟩` then forces `0 ≤ ⟨x, αᵢ^∨⟩`. -/
+dominant weight lies in it (`TauCeti.dominantChamber_subset_openDotDominantChamber`), and the
+containment may be strict; for integral weights the two conditions agree, since `-1 < ⟨x, αᵢ^∨⟩`
+then forces `0 ≤ ⟨x, αᵢ^∨⟩`. -/
 def openDotDominantChamber : Set M := {x | x + weylVector P b ∈ openDominantChamber P b}
 
 /-- Membership in the open dominant chamber of the dot action, as the strict dominance of the
@@ -330,7 +331,7 @@ theorem eq_of_dotAction_eq_of_mem_openDotDominantChamber {w : P.weylGroup} {x y 
 
 /-- **The dot orbit map of a weight in the open dot chamber is injective**: no two Weyl-group
 elements carry it to the same place. -/
-theorem injective_dotAction_of_mem_openDotDominantChamber {x : M}
+theorem dotAction_injective_of_mem_openDotDominantChamber {x : M}
     (hx : x ∈ openDotDominantChamber P b) :
     Function.Injective fun w : P.weylGroup ↦ dotAction P b w x := by
   intro v w (h : dotAction P b v x = dotAction P b w x)
