@@ -196,8 +196,10 @@ theorem mkQuotient_comp_geckBaseChangeCoordinateIso_hom :
     t.baseChangeMap_mkQuotient_comp_eqToIso ht A (t.geckDefiningIdeal_def ht).symm]
 
 /-- The inverse base-change coordinate isomorphism sends an extended integral generic-matrix
-coordinate to the corresponding coordinate of the quotient constructed directly over `A`. -/
-@[simp]
+coordinate to the corresponding coordinate of the quotient constructed directly over `A`.
+
+This is stated in terms of `CommHopfAlgCat.mkQuotient`, which `simp` unfolds to
+`Ideal.Quotient.mk`, so it is a `rw` lemma rather than a `simp` one. -/
 private theorem geckBaseChangeCoordinateIso_inv_one_tmul_mkQuotient_X
     (i j : Fin (t.geckDim ht)) :
     (t.geckBaseChangeCoordinateIso ht A).inv
