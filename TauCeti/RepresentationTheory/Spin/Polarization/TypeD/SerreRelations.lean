@@ -12,24 +12,21 @@ public import TauCeti.RepresentationTheory.Spin.Polarization.TypeD.RootBivectors
 # Serre relations for the type-D spin bivectors
 
 Let `P` be a polarization of a quadratic module and let `b` be a basis of its first isotropic
-summand. The positive and negative Clifford bivectors attached to the Bourbaki simple roots of
-type `D_n` were constructed in
-`TauCeti.RepresentationTheory.Spin.Polarization.TypeD.RootBivectors`. This file proves that,
-together with the corresponding diagonal coroot bivectors, they satisfy the complete
-Chevalley--Serre relations for `CartanMatrix.D n`.
+summand. This file proves that the integral positive, negative, and coroot Clifford products
+attached to the Bourbaki simple roots of type `Dₙ` satisfy the complete Chevalley--Serre
+relations for `CartanMatrix.D n`.
 
-The result is stated over an arbitrary commutative ring in which `2` is invertible. In
-particular it applies over `Q`, where the root bivectors preserve the integral spinor lattice.
-It supplies the Serre-system input for mapping the presented type-D Lie algebra, and hence its
-Kostant form, into the full-weight integral spin representation used by the type-D
-Chevalley--Demazure carrier.
+All relations are integral: they hold over an arbitrary commutative ring, including `ℤ` and
+rings of characteristic two. When `2` is invertible, the same generators lie in the canonical
+quadratic Lie subalgebra and are packaged there as a second Serre system.
 
-## Main definitions and results
+## Main results
 
-* `TauCeti.SpinPolarizationData.typeDSimpleCorootBivector`: the diagonal Clifford bivector for a
-  Bourbaki simple coroot.
-* `TauCeti.SpinPolarizationData.isSerreSystem_typeDSimpleRootBivector`: the positive, negative,
-  and coroot bivectors form a Serre system for `CartanMatrix.D n`.
+* `TauCeti.SpinPolarizationData.isSerreSystem_typeDSimpleRootBivector`: the integral Clifford
+  products form a type-`D` Serre system in the ambient Clifford algebra.
+* `TauCeti.SpinPolarizationData.isSerreSystem_typeDSimpleRootBivector_quadraticLieSubalgebra`:
+  when `2` is invertible, the corresponding subtype-valued system in the quadratic Lie
+  subalgebra.
 
 ## References
 
@@ -38,8 +35,6 @@ Chevalley--Demazure carrier.
 * C. Chevalley, *The Algebraic Theory of Spinors*, Chapter II.
 
 This advances the Chevalley--Demazure construction in Layer 9 of the ReductiveGroups roadmap.
-The type-D full-weight carrier consumes these relations to extend its numbered Clifford
-generators to the Serre Lie algebra and its Kostant integral form.
 -/
 
 public section
@@ -54,169 +49,192 @@ variable {K : Type*} [CommRing K]
 variable {V : Type*} [AddCommGroup V] [Module K V]
 variable {Q : QuadraticForm K V} (P : SpinPolarizationData Q)
 variable {n : Nat} (b : Module.Basis (Fin n) K P.W)
-variable [Invertible (2 : K)]
 
-@[simp] private theorem bivector_zero_left (x : V) : bivector Q 0 x = 0 := by
-  rw [bivector_def]
-  simp
+private theorem ι_basis_mul_ι_basis_eq_zero_of_eq (i j : Fin n) (hij : i = j) :
+    ι Q (b i : V) * ι Q (b j : V) = 0 := by
+  subst j
+  rw [ι_sq_scalar]
+  simp [P.isotropic_W]
 
-@[simp] private theorem bivector_zero_right (x : V) : bivector Q x 0 = 0 := by
-  rw [bivector_def]
-  simp
+private theorem ι_dualVector_mul_ι_dualVector_eq_zero_of_eq (i j : Fin n) (hij : i = j) :
+    ι Q (P.dualVector b i : V) * ι Q (P.dualVector b j : V) = 0 := by
+  subst j
+  rw [ι_sq_scalar]
+  simp [P.isotropic_W']
 
-@[simp] private theorem bivector_ite_zero_left (p : Prop) [Decidable p] (x y : V) :
-    bivector Q (if p then x else 0) y = if p then bivector Q x y else 0 := by
-  by_cases h : p <;> simp [h]
+/-- The ordered Clifford product of a polarized basis vector with its dual. -/
+private noncomputable def diagonalProduct (i : Fin n) : CliffordAlgebra Q :=
+  ι Q (b i : V) * ι Q (P.dualVector b i : V)
 
-@[simp] private theorem bivector_ite_zero_right (p : Prop) [Decidable p] (x y : V) :
-    bivector Q x (if p then y else 0) = if p then bivector Q x y else 0 := by
-  by_cases h : p <;> simp [h]
+private theorem lie_diagonalProduct_diagonalProduct (i j : Fin n) :
+    ⁅P.diagonalProduct b i, P.diagonalProduct b j⁆ = 0 := by
+  rw [diagonalProduct, diagonalProduct, lie_ι_mul_ι_ι_mul_ι]
+  by_cases hij : i = j
+  · subst j
+    simp [P.polar_W_eq_zero, P.polar_W'_eq_zero]
+  · simp [P.polar_W_eq_zero, P.polar_W'_eq_zero, hij, Ne.symm hij]
 
-@[simp] private theorem bivector_neg_left (x y : V) : bivector Q (-x) y = -bivector Q x y := by
-  let v : Fin 2 → V := ![x, y]
-  calc
-    bivector Q (-x) y = bivectorAlternating Q ![-x, y] :=
-      (bivectorAlternating_apply Q (-x) y).symm
-    _ = bivectorAlternating Q (Function.update v 0 (-x)) := by
-      congr 1
-      funext i
-      fin_cases i <;> simp [v]
-    _ = -bivectorAlternating Q (Function.update v 0 x) :=
-      (bivectorAlternating Q).map_update_neg v 0 x
-    _ = -bivectorAlternating Q ![x, y] := by
-      congr 1
-      congr 1
-      funext i
-      fin_cases i <;> simp [v]
-    _ = -bivector Q x y := congrArg Neg.neg (bivectorAlternating_apply Q x y)
-
-@[simp] private theorem bivector_neg_right (x y : V) : bivector Q x (-y) = -bivector Q x y := by
-  let v : Fin 2 → V := ![x, y]
-  calc
-    bivector Q x (-y) = bivectorAlternating Q ![x, -y] :=
-      (bivectorAlternating_apply Q x (-y)).symm
-    _ = bivectorAlternating Q (Function.update v 1 (-y)) := by
-      congr 1
-      funext i
-      fin_cases i <;> simp [v]
-    _ = -bivectorAlternating Q (Function.update v 1 y) :=
-      (bivectorAlternating Q).map_update_neg v 1 y
-    _ = -bivectorAlternating Q ![x, y] := by
-      congr 1
-      congr 1
-      funext i
-      fin_cases i <;> simp [v]
-    _ = -bivector Q x y := congrArg Neg.neg (bivectorAlternating_apply Q x y)
-
-omit [Invertible (2 : K)] in
-@[simp] private theorem polar_dualVector_basis (i j : Fin n) :
-    polar Q (P.dualVector b i : V) (b j : V) = if j = i then 1 else 0 := by
-  rw [polar_comm, P.polar_dualVector]
-
-/-- The diagonal Clifford bivector representing the `i`-th Bourbaki simple coroot of type
-`D_n`. Along the chain this is `H_i - H_(i+1)`; at the fork it is
-`H_(n-2) + H_(n-1)`. -/
-noncomputable def typeDSimpleCorootBivector (hn : 4 ≤ n) (i : Fin n) :
-    CliffordAlgebra Q :=
-  if h : (i : Nat) + 1 < n then
-    P.diagonalBivector b i -
-      P.diagonalBivector b ⟨(i : Nat) + 1, h⟩
-  else
-    P.diagonalBivector b ⟨n - 2, by omega⟩ +
-      P.diagonalBivector b ⟨n - 1, by omega⟩
-
-/-- The coordinate formula for a type-D simple coroot bivector. -/
-theorem typeDSimpleCorootBivector_def (hn : 4 ≤ n) (i : Fin n) :
-    P.typeDSimpleCorootBivector b hn i =
-      if h : (i : Nat) + 1 < n then
-        P.diagonalBivector b i -
-          P.diagonalBivector b ⟨(i : Nat) + 1, h⟩
+private theorem typeDSimpleCorootBivector_eq_diagonalProduct (hn : 4 ≤ n) (i : Fin n) :
+    P.typeDSimpleCorootBivector b (by omega) i =
+      if h : (i : ℕ) + 1 < n then
+        P.diagonalProduct b i - P.diagonalProduct b ⟨(i : ℕ) + 1, h⟩
       else
-        P.diagonalBivector b ⟨n - 2, by omega⟩ +
-          P.diagonalBivector b ⟨n - 1, by omega⟩ :=
-  (rfl)
+        P.diagonalProduct b ⟨n - 2, by omega⟩ +
+          P.diagonalProduct b ⟨n - 1, by omega⟩ - 1 := by
+  rw [P.typeDSimpleCorootBivector_def b]
+  rfl
 
-/-- The simple coroot bivectors commute. -/
+/-- The simple coroot representatives commute over every commutative base ring. -/
 @[simp]
 theorem lie_typeDSimpleCorootBivector_typeDSimpleCorootBivector
-    (hn : 4 <= n) (i j : Fin n) :
-    ⁅P.typeDSimpleCorootBivector b hn i, P.typeDSimpleCorootBivector b hn j⁆ = 0 := by
-  rw [typeDSimpleCorootBivector_def, typeDSimpleCorootBivector_def]
+    (hn : 4 ≤ n) (i j : Fin n) :
+    ⁅P.typeDSimpleCorootBivector b (by omega) i,
+      P.typeDSimpleCorootBivector b (by omega) j⁆ = 0 := by
+  rw [P.typeDSimpleCorootBivector_eq_diagonalProduct b hn,
+    P.typeDSimpleCorootBivector_eq_diagonalProduct b hn]
   split <;> split <;>
     simp only [lie_sub, sub_lie, lie_add, add_lie,
-      P.lie_diagonalBivector_diagonalBivector, sub_self, add_zero]
+      P.lie_diagonalProduct_diagonalProduct b, sub_self, add_zero] <;>
+    simp [Ring.lie_def]
 
-/-- A positive and its corresponding negative type-D root bivector bracket to the simple
-coroot bivector. -/
+/-- A positive and its corresponding negative type-`D` root representative bracket to the
+simple coroot representative. -/
+@[simp]
 theorem lie_typeDSimpleRootBivector_typeDSimpleNegativeRootBivector_eq_coroot
-    (hn : 4 <= n) (i : Fin n) :
+    (hn : 4 ≤ n) (i : Fin n) :
     ⁅P.typeDSimpleRootBivector b (by omega) i,
         P.typeDSimpleNegativeRootBivector b (by omega) i⁆ =
-      P.typeDSimpleCorootBivector b hn i := by
-  rw [P.lie_typeDSimpleRootBivector_typeDSimpleNegativeRootBivector b (by omega),
-    typeDSimpleCorootBivector_def]
+      P.typeDSimpleCorootBivector b (by omega) i :=
+  P.lie_typeDSimpleRootBivector_typeDSimpleNegativeRootBivector b (by omega) i
 
-/-- The `j`-th positive root bivector is an eigenvector of the `i`-th simple coroot bivector
-with eigenvalue given by the type-D Cartan matrix. -/
+private theorem lie_diagonalProduct_typeDSimpleRootBivector
+    (hn : 4 ≤ n) (i j : Fin n) :
+    ⁅P.diagonalProduct b i, P.typeDSimpleRootBivector b (by omega) j⁆ =
+      algebraMap ℤ K (DynkinType.typeDSimpleRoot n hn j i) •
+        P.typeDSimpleRootBivector b (by omega) j := by
+  rw [diagonalProduct, P.typeDSimpleRootBivector_def b]
+  split
+  · rename_i h
+    rw [lie_ι_mul_ι_ι_mul_ι, DynkinType.typeDSimpleRoot_of_add_one_lt hn h]
+    simp only [P.polar_W_eq_zero, P.polar_W'_eq_zero, P.polar_dualVector,
+      zero_smul, add_zero, sub_zero, Pi.sub_apply, Pi.single_apply]
+    by_cases h1 : i = j
+    · subst i
+      simp [Fin.ext_iff]
+    · by_cases h2 : i = ⟨(j : ℕ) + 1, h⟩
+      · subst i
+        simp [Fin.ext_iff, h1]
+      · simp [h1, h2, Ne.symm h1]
+  · rename_i h
+    rw [lie_ι_mul_ι_ι_mul_ι, DynkinType.typeDSimpleRoot_of_not_add_one_lt hn h]
+    simp only [P.polar_W_eq_zero, P.polar_dualVector,
+      zero_smul, sub_zero, Pi.add_apply, Pi.single_apply]
+    by_cases h1 : i = ⟨n - 2, by omega⟩
+    · subst i
+      have hne : n - 2 ≠ n - 1 := by omega
+      simp [Fin.ext_iff, hne]
+    · by_cases h2 : i = ⟨n - 1, by omega⟩
+      · subst i
+        simp [Fin.ext_iff, h1]
+      · simp [h1, h2, Ne.symm h1, Ne.symm h2]
+
+private theorem lie_diagonalProduct_typeDSimpleNegativeRootBivector
+    (hn : 4 ≤ n) (i j : Fin n) :
+    ⁅P.diagonalProduct b i, P.typeDSimpleNegativeRootBivector b (by omega) j⁆ =
+      -algebraMap ℤ K (DynkinType.typeDSimpleRoot n hn j i) •
+        P.typeDSimpleNegativeRootBivector b (by omega) j := by
+  rw [diagonalProduct, P.typeDSimpleNegativeRootBivector_def b]
+  split
+  · rename_i h
+    rw [lie_ι_mul_ι_ι_mul_ι, DynkinType.typeDSimpleRoot_of_add_one_lt hn h]
+    simp only [P.polar_W_eq_zero, P.polar_W'_eq_zero, P.polar_dualVector,
+      zero_smul, add_zero, sub_zero, Pi.sub_apply, Pi.single_apply]
+    by_cases h1 : i = ⟨(j : ℕ) + 1, h⟩
+    · subst i
+      simp [Fin.ext_iff]
+    · by_cases h2 : i = j
+      · subst i
+        simp [Fin.ext_iff, h1]
+      · simp [h1, h2, Ne.symm h1]
+  · rename_i h
+    rw [lie_ι_mul_ι_ι_mul_ι, DynkinType.typeDSimpleRoot_of_not_add_one_lt hn h]
+    simp only [P.polar_W'_eq_zero, P.polar_dualVector, P.polar_dualVector_comm,
+      zero_smul, add_zero, Pi.add_apply, Pi.single_apply]
+    by_cases h1 : i = ⟨n - 1, by omega⟩
+    · subst i
+      have hne : n - 1 ≠ n - 2 := by omega
+      simp [Fin.ext_iff, hne]
+    · by_cases h2 : i = ⟨n - 2, by omega⟩
+      · subst i
+        simp [h1]
+      · simp [h1, h2]
+
+/-- The `j`-th positive root representative is an eigenvector of the `i`-th simple coroot with
+eigenvalue given by the type-`D` Cartan matrix. -/
 @[simp]
 theorem lie_typeDSimpleCorootBivector_typeDSimpleRootBivector
-    (hn : 4 <= n) (i j : Fin n) :
-    ⁅P.typeDSimpleCorootBivector b hn i,
+    (hn : 4 ≤ n) (i j : Fin n) :
+    ⁅P.typeDSimpleCorootBivector b (by omega) i,
         P.typeDSimpleRootBivector b (by omega) j⁆ =
-      algebraMap Int K (CartanMatrix.D n i j) •
+      algebraMap ℤ K (CartanMatrix.D n i j) •
         P.typeDSimpleRootBivector b (by omega) j := by
-  rw [typeDSimpleCorootBivector_def]
-  by_cases hi : (i : Nat) + 1 < n
+  rw [P.typeDSimpleCorootBivector_eq_diagonalProduct b hn]
+  by_cases hi : (i : ℕ) + 1 < n
   · rw [dite_eq_left hi, sub_lie,
-      P.lie_diagonalBivector_typeDSimpleRootBivector b hn j i,
-      P.lie_diagonalBivector_typeDSimpleRootBivector b hn j ⟨(i : Nat) + 1, hi⟩]
+      P.lie_diagonalProduct_typeDSimpleRootBivector b hn,
+      P.lie_diagonalProduct_typeDSimpleRootBivector b hn]
     have hdot := DynkinType.typeDSimpleRoot_dotProduct_typeDSimpleRoot hn i j
     rw [DynkinType.typeDSimpleRoot_of_add_one_lt hn hi, sub_dotProduct,
       single_dotProduct, single_dotProduct, one_mul] at hdot
-    have hcoeff := congrArg (algebraMap Int K) hdot
+    have hcoeff := congrArg (algebraMap ℤ K) hdot
     simp only [map_sub, one_mul] at hcoeff
     rw [← sub_smul, hcoeff]
-  · rw [dite_eq_right hi, add_lie,
-      P.lie_diagonalBivector_typeDSimpleRootBivector b hn j ⟨n - 2, by omega⟩,
-      P.lie_diagonalBivector_typeDSimpleRootBivector b hn j ⟨n - 1, by omega⟩]
+  · rw [dite_eq_right hi, sub_lie, add_lie,
+      P.lie_diagonalProduct_typeDSimpleRootBivector b hn,
+      P.lie_diagonalProduct_typeDSimpleRootBivector b hn]
+    have hone : ⁅(1 : CliffordAlgebra Q), P.typeDSimpleRootBivector b (by omega) j⁆ = 0 := by
+      simp [Ring.lie_def]
+    rw [hone, sub_zero]
     have hdot := DynkinType.typeDSimpleRoot_dotProduct_typeDSimpleRoot hn i j
     rw [DynkinType.typeDSimpleRoot_of_not_add_one_lt hn hi, add_dotProduct,
       single_dotProduct, single_dotProduct, one_mul] at hdot
-    have hcoeff := congrArg (algebraMap Int K) hdot
+    have hcoeff := congrArg (algebraMap ℤ K) hdot
     simp only [map_add, one_mul] at hcoeff
     rw [← add_smul, hcoeff]
 
-/-- The `j`-th negative root bivector is an eigenvector of the `i`-th simple coroot bivector
-with the negative type-D Cartan eigenvalue. -/
+/-- The `j`-th negative root representative is an eigenvector of the `i`-th simple coroot with
+the negative type-`D` Cartan eigenvalue. -/
 @[simp]
 theorem lie_typeDSimpleCorootBivector_typeDSimpleNegativeRootBivector
-    (hn : 4 <= n) (i j : Fin n) :
-    ⁅P.typeDSimpleCorootBivector b hn i,
+    (hn : 4 ≤ n) (i j : Fin n) :
+    ⁅P.typeDSimpleCorootBivector b (by omega) i,
         P.typeDSimpleNegativeRootBivector b (by omega) j⁆ =
-      -(algebraMap Int K (CartanMatrix.D n i j) •
+      -(algebraMap ℤ K (CartanMatrix.D n i j) •
         P.typeDSimpleNegativeRootBivector b (by omega) j) := by
-  rw [typeDSimpleCorootBivector_def]
-  by_cases hi : (i : Nat) + 1 < n
+  rw [P.typeDSimpleCorootBivector_eq_diagonalProduct b hn]
+  by_cases hi : (i : ℕ) + 1 < n
   · rw [dite_eq_left hi, sub_lie,
-      P.lie_diagonalBivector_typeDSimpleNegativeRootBivector b hn j i,
-      P.lie_diagonalBivector_typeDSimpleNegativeRootBivector b hn j ⟨(i : Nat) + 1, hi⟩]
+      P.lie_diagonalProduct_typeDSimpleNegativeRootBivector b hn,
+      P.lie_diagonalProduct_typeDSimpleNegativeRootBivector b hn]
     have hdot := DynkinType.typeDSimpleRoot_dotProduct_typeDSimpleRoot hn i j
     rw [DynkinType.typeDSimpleRoot_of_add_one_lt hn hi, sub_dotProduct,
       single_dotProduct, single_dotProduct, one_mul] at hdot
-    have hcoeff := congrArg (algebraMap Int K) hdot
-    rw [← hcoeff]
+    rw [← congrArg (algebraMap ℤ K) hdot]
     module
-  · rw [dite_eq_right hi, add_lie,
-      P.lie_diagonalBivector_typeDSimpleNegativeRootBivector b hn j ⟨n - 2, by omega⟩,
-      P.lie_diagonalBivector_typeDSimpleNegativeRootBivector b hn j ⟨n - 1, by omega⟩]
+  · rw [dite_eq_right hi, sub_lie, add_lie,
+      P.lie_diagonalProduct_typeDSimpleNegativeRootBivector b hn,
+      P.lie_diagonalProduct_typeDSimpleNegativeRootBivector b hn]
+    have hone : ⁅(1 : CliffordAlgebra Q),
+        P.typeDSimpleNegativeRootBivector b (by omega) j⁆ = 0 := by
+      simp [Ring.lie_def]
+    rw [hone, sub_zero]
     have hdot := DynkinType.typeDSimpleRoot_dotProduct_typeDSimpleRoot hn i j
     rw [DynkinType.typeDSimpleRoot_of_not_add_one_lt hn hi, add_dotProduct,
       single_dotProduct, single_dotProduct, one_mul] at hdot
-    have hcoeff := congrArg (algebraMap Int K) hdot
-    rw [← hcoeff]
+    rw [← congrArg (algebraMap ℤ K) hdot]
     module
 
-/-- Positive and negative type-D simple-root bivectors at distinct nodes commute. -/
+/-- Positive and negative type-`D` simple-root representatives at distinct nodes commute. -/
 @[simp]
 theorem lie_typeDSimpleRootBivector_typeDSimpleNegativeRootBivector_of_ne
     (hn : 4 ≤ n) (i j : Fin n) (hij : i ≠ j) :
@@ -224,246 +242,111 @@ theorem lie_typeDSimpleRootBivector_typeDSimpleNegativeRootBivector_of_ne
         P.typeDSimpleNegativeRootBivector b (by omega) j⁆ = 0 := by
   by_cases hi : (i : ℕ) + 1 < n
   · by_cases hj : (j : ℕ) + 1 < n
-    · rw [P.typeDSimpleRootBivector_of_add_one_lt b (by omega) hi,
-        P.typeDSimpleNegativeRootBivector_of_add_one_lt b (by omega) hj,
-        lie_bivector_bivector]
-      have hnext : (⟨(i : ℕ) + 1, hi⟩ : Fin n) ≠ ⟨(j : ℕ) + 1, hj⟩ := by
-        intro h
-        apply hij
-        ext
-        simpa using congrArg Fin.val h
-      have hpolar : polar Q (P.dualVector b ⟨(i : ℕ) + 1, hi⟩ : V)
-          (b ⟨(j : ℕ) + 1, hj⟩ : V) = 0 := by
-        rw [polar_comm, P.polar_dualVector]
-        simp [Ne.symm hnext]
-      rw [hpolar]
-      simp [P.polar_W_eq_zero, P.polar_W'_eq_zero, P.polar_dualVector, hij, bivector_def]
-    · rw [P.typeDSimpleRootBivector_of_add_one_lt b (by omega) hi,
-        P.typeDSimpleNegativeRootBivector_of_not_add_one_lt b (by omega) hj,
-        lie_bivector_bivector]
+    · rw [P.typeDSimpleRootBivector_def b, dite_eq_left hi,
+        P.typeDSimpleNegativeRootBivector_def b, dite_eq_left hj,
+        lie_ι_mul_ι_ι_mul_ι]
+      have hijVal : (i : ℕ) ≠ (j : ℕ) := by
+        simpa [Fin.ext_iff] using hij
+      simp [P.polar_W_eq_zero, P.polar_W'_eq_zero, P.polar_dualVector,
+        hij, Ne.symm hijVal]
+    · rw [P.typeDSimpleRootBivector_def b, dite_eq_left hi,
+        P.typeDSimpleNegativeRootBivector_def b, dite_eq_right hj,
+        lie_ι_mul_ι_ι_mul_ι]
       have hiLast : (i : ℕ) ≠ n - 1 := by omega
       by_cases hiPenultimate : (i : ℕ) = n - 2
       · have hnextLast : (⟨(i : ℕ) + 1, hi⟩ : Fin n) = ⟨n - 1, by omega⟩ := by
-          apply Fin.ext
-          change (i : ℕ) + 1 = n - 1
+          ext
+          simp only
           omega
         rw [hnextLast]
         have hne : n - 2 ≠ n - 1 := by omega
-        simp [P.polar_W'_eq_zero, P.polar_dualVector, Fin.ext_iff, hiPenultimate, hne,
-          bivector_self]
-      · simp [P.polar_W'_eq_zero, P.polar_dualVector, Fin.ext_iff, hiLast,
-          hiPenultimate]
+        simp [P.polar_W'_eq_zero, P.polar_dualVector, P.polar_dualVector_comm,
+          Fin.ext_iff, hiPenultimate, hne]
+      · simp [P.polar_W'_eq_zero, P.polar_dualVector, P.polar_dualVector_comm,
+          Fin.ext_iff, hiLast, hiPenultimate]
   · by_cases hj : (j : ℕ) + 1 < n
-    · rw [P.typeDSimpleRootBivector_of_not_add_one_lt b (by omega) hi,
-        P.typeDSimpleNegativeRootBivector_of_add_one_lt b (by omega) hj,
-        lie_bivector_bivector]
+    · rw [P.typeDSimpleRootBivector_def b, dite_eq_right hi,
+        P.typeDSimpleNegativeRootBivector_def b, dite_eq_left hj,
+        lie_ι_mul_ι_ι_mul_ι]
       have hjLast : (j : ℕ) ≠ n - 1 := by omega
       by_cases hjPenultimate : (j : ℕ) = n - 2
       · have hnextLast : (⟨(j : ℕ) + 1, hj⟩ : Fin n) = ⟨n - 1, by omega⟩ := by
-          apply Fin.ext
-          change (j : ℕ) + 1 = n - 1
+          ext
+          simp only
           omega
         rw [hnextLast]
         have hne : n - 2 ≠ n - 1 := by omega
-        simp [P.polar_W_eq_zero, P.polar_dualVector, Fin.ext_iff, hjPenultimate,
-          Ne.symm hne,
-          bivector_self]
-      · simp [P.polar_W_eq_zero, P.polar_dualVector, Fin.ext_iff, Ne.symm hjLast,
-          Ne.symm hjPenultimate]
-    · rw [P.typeDSimpleRootBivector_of_not_add_one_lt b (by omega) hi,
-        P.typeDSimpleNegativeRootBivector_of_not_add_one_lt b (by omega) hj,
-        lie_bivector_bivector]
-      exfalso
+        simp [P.polar_W_eq_zero, P.polar_dualVector, P.polar_dualVector_comm,
+          Fin.ext_iff, hjPenultimate, Ne.symm hne]
+      · simp [P.polar_W_eq_zero, P.polar_dualVector, P.polar_dualVector_comm,
+          Fin.ext_iff, Ne.symm hjLast, Ne.symm hjPenultimate]
+    · exfalso
       apply hij
-      apply Fin.ext
+      ext
       omega
 
-private theorem lie_positiveChainBivector_positiveChainBivector
-    {i j : Fin n} (hi : (i : ℕ) + 1 < n) (hj : (j : ℕ) + 1 < n) :
-    ⁅bivector Q (b i : V) (P.dualVector b ⟨(i : ℕ) + 1, hi⟩ : V),
-        bivector Q (b j : V) (P.dualVector b ⟨(j : ℕ) + 1, hj⟩ : V)⁆ =
-      (if (⟨(i : ℕ) + 1, hi⟩ : Fin n) = j then
-          bivector Q (b i : V) (P.dualVector b ⟨(j : ℕ) + 1, hj⟩ : V)
-        else 0) +
-      -(if i = (⟨(j : ℕ) + 1, hj⟩ : Fin n) then
-          bivector Q (b j : V) (P.dualVector b ⟨(i : ℕ) + 1, hi⟩ : V)
-        else 0) := by
-  rw [lie_bivector_bivector]
-  by_cases hij : (⟨(i : ℕ) + 1, hi⟩ : Fin n) = j
-  · have hji : i ≠ (⟨(j : ℕ) + 1, hj⟩ : Fin n) := by
-      intro h
-      have hij' := congrArg Fin.val hij
-      have h' := congrArg Fin.val h
-      simp only at hij' h'
-      omega
-    simp [P.polar_W_eq_zero, P.polar_W'_eq_zero, P.polar_dualVector,
-      P.polar_dualVector_basis b, hij, hji]
-  · by_cases hji : i = (⟨(j : ℕ) + 1, hj⟩ : Fin n)
-    · simp [P.polar_W_eq_zero, P.polar_W'_eq_zero, P.polar_dualVector,
-        P.polar_dualVector_basis b, hji]
-      simp only [eq_comm]
-    · simp [P.polar_W_eq_zero, P.polar_W'_eq_zero, P.polar_dualVector,
-        P.polar_dualVector_basis b, hij, Ne.symm hij, hji]
-
-private theorem lie_positiveChainBivector_lie_positiveChainBivector
-    {i j : Fin n} (hi : (i : ℕ) + 1 < n) (hj : (j : ℕ) + 1 < n) :
-    ⁅bivector Q (b i : V) (P.dualVector b ⟨(i : ℕ) + 1, hi⟩ : V),
-      ⁅bivector Q (b i : V) (P.dualVector b ⟨(i : ℕ) + 1, hi⟩ : V),
-        bivector Q (b j : V) (P.dualVector b ⟨(j : ℕ) + 1, hj⟩ : V)⁆⁆ = 0 := by
-  rw [P.lie_positiveChainBivector_positiveChainBivector b hi hj]
-  by_cases hij : (⟨(i : ℕ) + 1, hi⟩ : Fin n) = j
-  · have hji : i ≠ (⟨(j : ℕ) + 1, hj⟩ : Fin n) := by
-      intro h
-      have hij' := congrArg Fin.val hij
-      have h' := congrArg Fin.val h
-      simp only at hij' h'
-      omega
-    have hself : i ≠ (⟨(i : ℕ) + 1, hi⟩ : Fin n) := by
-      intro h
-      have h' := congrArg Fin.val h
-      simp only at h'
-      omega
-    rw [ite_eq_left hij, ite_eq_right hji, neg_zero, add_zero, lie_bivector_bivector]
-    simp [P.polar_W_eq_zero, P.polar_W'_eq_zero, P.polar_dualVector,
-      P.polar_dualVector_basis b, hself, hji]
-  · by_cases hji : i = (⟨(j : ℕ) + 1, hj⟩ : Fin n)
-    · rw [ite_eq_right hij, ite_eq_left hji, zero_add, lie_neg, lie_bivector_bivector]
-      have hself : i ≠ (⟨(i : ℕ) + 1, hi⟩ : Fin n) := by
-        intro h
-        have h' := congrArg Fin.val h
-        simp only at h'
-        omega
-      simp [P.polar_W_eq_zero, P.polar_W'_eq_zero, P.polar_dualVector,
-        P.polar_dualVector_basis b, Ne.symm hij, hself]
-    · rw [ite_eq_right hij, ite_eq_right hji, neg_zero, add_zero, lie_zero]
-
-/-- Applying the adjoint action of a positive type-D simple-root bivector twice to any other
-positive simple-root bivector gives zero. This is the higher Serre relation in the simply-laced
-type-D diagram. -/
+/-- Applying the adjoint action of a positive type-`D` simple-root representative twice to any
+other positive simple-root representative gives zero. -/
 @[simp]
 theorem lie_typeDSimpleRootBivector_lie_typeDSimpleRootBivector
     (hn : 4 ≤ n) (i j : Fin n) :
     ⁅P.typeDSimpleRootBivector b (by omega) i,
       ⁅P.typeDSimpleRootBivector b (by omega) i,
         P.typeDSimpleRootBivector b (by omega) j⁆⁆ = 0 := by
-  by_cases hi : (i : ℕ) + 1 < n
-  · by_cases hj : (j : ℕ) + 1 < n
-    · rw [P.typeDSimpleRootBivector_of_add_one_lt b (by omega) hi,
-        P.typeDSimpleRootBivector_of_add_one_lt b (by omega) hj]
-      exact P.lie_positiveChainBivector_lie_positiveChainBivector b hi hj
-    · rw [P.typeDSimpleRootBivector_of_add_one_lt b (by omega) hi,
-        P.typeDSimpleRootBivector_of_not_add_one_lt b (by omega) hj]
-      rw [lie_bivector_bivector]
-      simp only [polar_dualVector_basis, Fin.mk.injEq, ite_smul, one_smul, zero_smul,
-        Nat.pred_eq_succ_iff, lie_add]
-      split_ifs <;>
-        simp_all only [zero_sub, bivector_neg_right, bivector_neg_left, lie_neg, lie_skew]
-      all_goals
-        rw [lie_bivector_bivector]
-        simp [P.polar_W_eq_zero, P.polar_dualVector_basis b, Fin.ext_iff] <;> omega
-  · by_cases hj : (j : ℕ) + 1 < n
-    · rw [P.typeDSimpleRootBivector_of_not_add_one_lt b (by omega) hi,
-        P.typeDSimpleRootBivector_of_add_one_lt b (by omega) hj]
-      rw [lie_bivector_bivector]
-      simp [P.polar_W_eq_zero, P.polar_dualVector, Fin.ext_iff]
-      simp only [lie_bivector_bivector]
-      split_ifs <;> simp [P.polar_W_eq_zero]
-    · rw [P.typeDSimpleRootBivector_of_not_add_one_lt b (by omega) hi,
-        P.typeDSimpleRootBivector_of_not_add_one_lt b (by omega) hj, lie_self, lie_zero]
+  have hn1 : n - 1 + 1 = n := by omega
+  have hn2 : n - 2 + 2 = n := by omega
+  rw [P.typeDSimpleRootBivector_def b, P.typeDSimpleRootBivector_def b]
+  split <;> split <;> rw [lie_ι_mul_ι_ι_mul_ι]
+  all_goals
+    simp [P.polar_W_eq_zero, P.polar_W'_eq_zero,
+      P.polar_dualVector, P.polar_dualVector_comm, Fin.ext_iff]
+  all_goals try split_ifs
+  all_goals try omega
+  all_goals try simp only [lie_zero]
+  all_goals try rw [lie_ι_mul_ι_ι_mul_ι]
+  all_goals try simp only [P.polar_W_eq_zero]
+  all_goals try simp only [P.polar_W'_eq_zero]
+  all_goals try simp only [P.polar_dualVector]
+  all_goals try split_ifs
+  all_goals try simp only [Fin.ext_iff] at *
+  all_goals try omega
+  all_goals try simp only [zero_smul]
+  all_goals try simp only [add_zero]
+  all_goals try simp only [zero_add]
+  all_goals try simp only [sub_zero]
 
-private theorem lie_negativeChainBivector_negativeChainBivector
-    {i j : Fin n} (hi : (i : ℕ) + 1 < n) (hj : (j : ℕ) + 1 < n) :
-    ⁅bivector Q (b ⟨(i : ℕ) + 1, hi⟩ : V) (P.dualVector b i : V),
-        bivector Q (b ⟨(j : ℕ) + 1, hj⟩ : V) (P.dualVector b j : V)⁆ =
-      (if (⟨(j : ℕ) + 1, hj⟩ : Fin n) = i then
-          bivector Q (b ⟨(i : ℕ) + 1, hi⟩ : V) (P.dualVector b j : V)
-        else 0) +
-      -(if j = (⟨(i : ℕ) + 1, hi⟩ : Fin n) then
-          bivector Q (b ⟨(j : ℕ) + 1, hj⟩ : V) (P.dualVector b i : V)
-        else 0) := by
-  rw [lie_bivector_bivector]
-  by_cases hij : j = (⟨(i : ℕ) + 1, hi⟩ : Fin n)
-  · have hji : (⟨(j : ℕ) + 1, hj⟩ : Fin n) ≠ i := by
-      intro h
-      have hij' := congrArg Fin.val hij
-      have h' := congrArg Fin.val h
-      simp only at hij' h'
-      omega
-    simp [P.polar_W_eq_zero, P.polar_W'_eq_zero, P.polar_dualVector,
-      P.polar_dualVector_basis b, hij]
-  · by_cases hji : (⟨(j : ℕ) + 1, hj⟩ : Fin n) = i
-    · simp [P.polar_W_eq_zero, P.polar_W'_eq_zero, P.polar_dualVector,
-        P.polar_dualVector_basis b, hij, Ne.symm hij, hji]
-    · simp [P.polar_W_eq_zero, P.polar_W'_eq_zero, P.polar_dualVector,
-        P.polar_dualVector_basis b, hij, Ne.symm hij, hji]
-
-private theorem lie_negativeChainBivector_lie_negativeChainBivector
-    {i j : Fin n} (hi : (i : ℕ) + 1 < n) (hj : (j : ℕ) + 1 < n) :
-    ⁅bivector Q (b ⟨(i : ℕ) + 1, hi⟩ : V) (P.dualVector b i : V),
-      ⁅bivector Q (b ⟨(i : ℕ) + 1, hi⟩ : V) (P.dualVector b i : V),
-        bivector Q (b ⟨(j : ℕ) + 1, hj⟩ : V) (P.dualVector b j : V)⁆⁆ = 0 := by
-  rw [P.lie_negativeChainBivector_negativeChainBivector b hi hj]
-  by_cases hji : (⟨(j : ℕ) + 1, hj⟩ : Fin n) = i
-  · have hij : j ≠ (⟨(i : ℕ) + 1, hi⟩ : Fin n) := by
-      intro h
-      have hji' := congrArg Fin.val hji
-      have h' := congrArg Fin.val h
-      simp only at hji' h'
-      omega
-    have hself : i ≠ (⟨(i : ℕ) + 1, hi⟩ : Fin n) := by
-      intro h
-      have h' := congrArg Fin.val h
-      simp only at h'
-      omega
-    rw [ite_eq_left hji, ite_eq_right hij, neg_zero, add_zero, lie_bivector_bivector]
-    simp [P.polar_W_eq_zero, P.polar_W'_eq_zero, P.polar_dualVector,
-      P.polar_dualVector_basis b, Ne.symm hij, Ne.symm hself]
-  · by_cases hij : j = (⟨(i : ℕ) + 1, hi⟩ : Fin n)
-    · rw [ite_eq_right hji, ite_eq_left hij, zero_add, lie_neg, lie_bivector_bivector]
-      have hself : i ≠ (⟨(i : ℕ) + 1, hi⟩ : Fin n) := by
-        intro h
-        have h' := congrArg Fin.val h
-        simp only at h'
-        omega
-      simp [P.polar_W_eq_zero, P.polar_W'_eq_zero, P.polar_dualVector,
-        P.polar_dualVector_basis b, hji, Ne.symm hself]
-    · rw [ite_eq_right hji, ite_eq_right hij, neg_zero, add_zero, lie_zero]
-
-/-- Applying the adjoint action of a negative type-D simple-root bivector twice to any other
-negative simple-root bivector gives zero. -/
+/-- Applying the adjoint action of a negative type-`D` simple-root representative twice to any
+other negative simple-root representative gives zero. -/
 @[simp]
 theorem lie_typeDSimpleNegativeRootBivector_lie_typeDSimpleNegativeRootBivector
     (hn : 4 ≤ n) (i j : Fin n) :
     ⁅P.typeDSimpleNegativeRootBivector b (by omega) i,
       ⁅P.typeDSimpleNegativeRootBivector b (by omega) i,
         P.typeDSimpleNegativeRootBivector b (by omega) j⁆⁆ = 0 := by
-  by_cases hi : (i : ℕ) + 1 < n
-  · by_cases hj : (j : ℕ) + 1 < n
-    · rw [P.typeDSimpleNegativeRootBivector_of_add_one_lt b (by omega) hi,
-        P.typeDSimpleNegativeRootBivector_of_add_one_lt b (by omega) hj]
-      exact P.lie_negativeChainBivector_lie_negativeChainBivector b hi hj
-    · rw [P.typeDSimpleNegativeRootBivector_of_add_one_lt b (by omega) hi,
-        P.typeDSimpleNegativeRootBivector_of_not_add_one_lt b (by omega) hj]
-      rw [lie_bivector_bivector]
-      simp [P.polar_W'_eq_zero, P.polar_dualVector, Fin.ext_iff]
-      split_ifs <;> simp_all <;> try omega
-      all_goals
-        simp only [lie_bivector_bivector]
-        simp [P.polar_W'_eq_zero, P.polar_dualVector_basis b, Fin.ext_iff]
-        split_ifs <;> simp_all
-  · by_cases hj : (j : ℕ) + 1 < n
-    · rw [P.typeDSimpleNegativeRootBivector_of_not_add_one_lt b (by omega) hi,
-        P.typeDSimpleNegativeRootBivector_of_add_one_lt b (by omega) hj]
-      rw [lie_bivector_bivector]
-      simp [P.polar_W'_eq_zero,
-        P.polar_dualVector_basis b, Fin.ext_iff]
-      simp only [lie_bivector_bivector]
-      split_ifs <;> simp [P.polar_W'_eq_zero]
-    · rw [P.typeDSimpleNegativeRootBivector_of_not_add_one_lt b (by omega) hi,
-        P.typeDSimpleNegativeRootBivector_of_not_add_one_lt b (by omega) hj, lie_self, lie_zero]
+  have hn1 : n - 1 + 1 = n := by omega
+  have hn2 : n - 2 + 2 = n := by omega
+  rw [P.typeDSimpleNegativeRootBivector_def b, P.typeDSimpleNegativeRootBivector_def b]
+  split <;> split <;> rw [lie_ι_mul_ι_ι_mul_ι]
+  all_goals
+    simp [P.polar_W_eq_zero, P.polar_W'_eq_zero,
+      P.polar_dualVector, P.polar_dualVector_comm, Fin.ext_iff]
+  all_goals split_ifs
+  all_goals try omega
+  all_goals try simp only [lie_zero]
+  all_goals try simp only [zero_lie]
+  all_goals try rw [lie_ι_mul_ι_ι_mul_ι]
+  all_goals try simp only [P.polar_W_eq_zero]
+  all_goals try simp only [P.polar_W'_eq_zero]
+  all_goals try simp only [P.polar_dualVector]
+  all_goals try simp only [P.polar_dualVector_comm]
+  all_goals try split_ifs
+  all_goals try simp only [Fin.ext_iff] at *
+  all_goals try omega
+  all_goals try simp only [zero_smul]
+  all_goals try simp only [add_zero]
+  all_goals try simp only [sub_zero]
 
-/-- Adjacency in the Bourbaki type-D diagram, written in the coordinates used by
-`CartanMatrix.D`. -/
+/-- Whether two vertices are adjacent in the Bourbaki type-`D` Dynkin diagram. -/
 private def typeDAdjacent (n : ℕ) (i j : Fin n) : Prop :=
   ((i : ℕ) + 1 = j ∧ (j : ℕ) + 2 < n) ∨
     ((j : ℕ) + 1 = i ∧ (i : ℕ) + 2 < n) ∨
@@ -488,118 +371,52 @@ private theorem lie_typeDSimpleRootBivector_of_not_adjacent
     (hn : 4 ≤ n) (i j : Fin n) (hij : ¬typeDAdjacent n i j) :
     ⁅P.typeDSimpleRootBivector b (by omega) i,
         P.typeDSimpleRootBivector b (by omega) j⁆ = 0 := by
-  by_cases hi : (i : ℕ) + 1 < n
-  · by_cases hj : (j : ℕ) + 1 < n
-    · rw [P.typeDSimpleRootBivector_of_add_one_lt b (by omega) hi,
-        P.typeDSimpleRootBivector_of_add_one_lt b (by omega) hj,
-        P.lie_positiveChainBivector_positiveChainBivector b hi hj]
-      have hforward : (⟨i.val + 1, hi⟩ : Fin n) ≠ j := by
-        intro h
-        apply hij
-        unfold typeDAdjacent
-        have hval := congrArg Fin.val h
-        simp only at hval
-        omega
-      have hbackward : i ≠ (⟨j.val + 1, hj⟩ : Fin n) := by
-        intro h
-        apply hij
-        unfold typeDAdjacent
-        have hval := congrArg Fin.val h
-        simp only at hval
-        omega
-      rw [ite_eq_right hforward, ite_eq_right hbackward, neg_zero, add_zero]
-    · rw [P.typeDSimpleRootBivector_of_add_one_lt b (by omega) hi,
-        P.typeDSimpleRootBivector_of_not_add_one_lt b (by omega) hj,
-        lie_bivector_bivector]
-      simp only [polar_W_eq_zero, polar_dualVector_basis, Fin.mk.injEq, ite_smul, one_smul,
-        zero_smul, Nat.pred_eq_succ_iff]
-      split_ifs <;> (simp_all; try omega)
-      all_goals
-        exfalso
-        apply hij
-        unfold typeDAdjacent
-        omega
-  · by_cases hj : (j : ℕ) + 1 < n
-    · rw [P.typeDSimpleRootBivector_of_not_add_one_lt b (by omega) hi,
-        P.typeDSimpleRootBivector_of_add_one_lt b (by omega) hj,
-        lie_bivector_bivector]
-      simp only [polar_W_eq_zero, polar_dualVector, Fin.mk.injEq, Nat.pred_eq_succ_iff,
-        ite_smul, one_smul, zero_smul]
-      split_ifs <;> (simp_all; try omega)
-      all_goals
-        exfalso
-        apply hij
-        unfold typeDAdjacent
-        omega
-    · have hEq : i = j := by apply Fin.ext; omega
-      rw [hEq, lie_self]
+  have hn1 : n - 1 + 1 = n := by omega
+  have hn2 : n - 2 + 2 = n := by omega
+  rw [P.typeDSimpleRootBivector_def b, P.typeDSimpleRootBivector_def b]
+  split <;> split <;> rw [lie_ι_mul_ι_ι_mul_ι]
+  all_goals
+    simp only [P.polar_W_eq_zero, P.polar_W'_eq_zero,
+      P.polar_dualVector, P.polar_dualVector_comm, zero_smul, add_zero, sub_zero,
+      Fin.mk.injEq] at *
+  all_goals unfold typeDAdjacent at hij
+  all_goals split_ifs
+  all_goals try simp only [Fin.ext_iff] at *
+  all_goals try omega
+  all_goals simp only [zero_smul, one_smul, add_zero, zero_add, sub_zero]
+  all_goals apply P.ι_basis_mul_ι_basis_eq_zero_of_eq b
+  all_goals apply Fin.ext
+  · change n - 2 = (i : ℕ)
+    omega
+  · change (j : ℕ) = n - 2
+    omega
 
 private theorem lie_typeDSimpleNegativeRootBivector_of_not_adjacent
     (hn : 4 ≤ n) (i j : Fin n) (hij : ¬typeDAdjacent n i j) :
     ⁅P.typeDSimpleNegativeRootBivector b (by omega) i,
         P.typeDSimpleNegativeRootBivector b (by omega) j⁆ = 0 := by
-  by_cases hi : (i : ℕ) + 1 < n
-  · by_cases hj : (j : ℕ) + 1 < n
-    · rw [P.typeDSimpleNegativeRootBivector_of_add_one_lt b (by omega) hi,
-        P.typeDSimpleNegativeRootBivector_of_add_one_lt b (by omega) hj,
-        P.lie_negativeChainBivector_negativeChainBivector b hi hj]
-      have hforward : j ≠ (⟨i.val + 1, hi⟩ : Fin n) := by
-        intro h
-        apply hij
-        unfold typeDAdjacent
-        have hval := congrArg Fin.val h
-        simp only at hval
-        omega
-      have hbackward : (⟨j.val + 1, hj⟩ : Fin n) ≠ i := by
-        intro h
-        apply hij
-        unfold typeDAdjacent
-        have hval := congrArg Fin.val h
-        simp only at hval
-        omega
-      rw [ite_eq_right hbackward, ite_eq_right hforward, neg_zero, add_zero]
-    · rw [P.typeDSimpleNegativeRootBivector_of_add_one_lt b (by omega) hi,
-        P.typeDSimpleNegativeRootBivector_of_not_add_one_lt b (by omega) hj,
-        lie_bivector_bivector]
-      simp only [polar_W'_eq_zero, polar_dualVector, Fin.mk.injEq, ite_smul, one_smul, zero_smul]
-      split_ifs <;> (simp_all; try omega)
-      all_goals
-        by_cases hsibling : (i : ℕ) + 1 = n - 1
-        · try omega
-          all_goals
-            have hpenultimate : i = (⟨n - 2, by omega⟩ : Fin n) := by
-              apply Fin.ext
-              change (i : ℕ) = n - 2
-              omega
-            simp only [hpenultimate, bivector_self]
-        · exfalso
-          apply hij
-          unfold typeDAdjacent
-          omega
-  · by_cases hj : (j : ℕ) + 1 < n
-    · rw [P.typeDSimpleNegativeRootBivector_of_not_add_one_lt b (by omega) hi,
-        P.typeDSimpleNegativeRootBivector_of_add_one_lt b (by omega) hj,
-        lie_bivector_bivector]
-      simp only [polar_W'_eq_zero, polar_dualVector_basis, Fin.mk.injEq, ite_smul, one_smul,
-        zero_smul]
-      split_ifs <;> (simp_all; try omega)
-      all_goals
-        by_cases hsibling : (j : ℕ) + 1 = n - 1
-        · try omega
-          all_goals
-            have hpenultimate : j = (⟨n - 2, by omega⟩ : Fin n) := by
-              apply Fin.ext
-              change (j : ℕ) = n - 2
-              omega
-            simp only [hpenultimate, bivector_self]
-        · exfalso
-          apply hij
-          unfold typeDAdjacent
-          omega
-    · have hEq : i = j := by apply Fin.ext; omega
-      rw [hEq, lie_self]
+  have hn1 : n - 1 + 1 = n := by omega
+  have hn2 : n - 2 + 2 = n := by omega
+  rw [P.typeDSimpleNegativeRootBivector_def b,
+    P.typeDSimpleNegativeRootBivector_def b]
+  split <;> split <;> rw [lie_ι_mul_ι_ι_mul_ι]
+  all_goals
+    simp only [P.polar_W_eq_zero, P.polar_W'_eq_zero,
+      P.polar_dualVector, P.polar_dualVector_comm, zero_smul, add_zero, sub_zero,
+      Fin.mk.injEq] at *
+  all_goals unfold typeDAdjacent at hij
+  all_goals split_ifs
+  all_goals try simp only [Fin.ext_iff] at *
+  all_goals try omega
+  all_goals simp only [zero_smul, one_smul, sub_zero, zero_sub, neg_eq_zero]
+  all_goals apply P.ι_dualVector_mul_ι_dualVector_eq_zero_of_eq b
+  all_goals apply Fin.ext
+  · change (i : ℕ) = n - 2
+    omega
+  · change n - 2 = (j : ℕ)
+    omega
 
-/-- The higher Serre relation for the positive type-D spin bivectors. -/
+/-- The higher Serre relation for the positive type-`D` spin representatives. -/
 @[simp]
 theorem ad_pow_lie_typeDSimpleRootBivector_typeDSimpleRootBivector
     (hn : 4 ≤ n) (i j : Fin n) :
@@ -616,7 +433,7 @@ theorem ad_pow_lie_typeDSimpleRootBivector_typeDSimpleRootBivector
   · rw [ite_eq_right hij, pow_zero, Module.End.one_apply]
     exact P.lie_typeDSimpleRootBivector_of_not_adjacent b hn i j hij
 
-/-- The higher Serre relation for the negative type-D spin bivectors. -/
+/-- The higher Serre relation for the negative type-`D` spin representatives. -/
 @[simp]
 theorem ad_pow_lie_typeDSimpleNegativeRootBivector_typeDSimpleNegativeRootBivector
     (hn : 4 ≤ n) (i j : Fin n) :
@@ -633,11 +450,11 @@ theorem ad_pow_lie_typeDSimpleNegativeRootBivector_typeDSimpleNegativeRootBivect
   · rw [ite_eq_right hij, pow_zero, Module.End.one_apply]
     exact P.lie_typeDSimpleNegativeRootBivector_of_not_adjacent b hn i j hij
 
-/-- The Bourbaki-numbered coroot and root bivectors of the type-D spin representation satisfy
-the complete Chevalley--Serre relations. -/
+/-- The Bourbaki-numbered coroot and root representatives of the type-`D` spin representation
+satisfy the complete Chevalley--Serre relations over every commutative ring. -/
 theorem isSerreSystem_typeDSimpleRootBivector (hn : 4 ≤ n) :
     TauCeti.IsSerreSystem K (CartanMatrix.D n)
-      (P.typeDSimpleCorootBivector b hn)
+      (P.typeDSimpleCorootBivector b (by omega))
       (P.typeDSimpleRootBivector b (by omega))
       (P.typeDSimpleNegativeRootBivector b (by omega)) where
   lie_H_H := P.lie_typeDSimpleCorootBivector_typeDSimpleCorootBivector b hn
@@ -652,5 +469,50 @@ theorem isSerreSystem_typeDSimpleRootBivector (hn : 4 ≤ n) :
   ad_pow_lie_E_E := P.ad_pow_lie_typeDSimpleRootBivector_typeDSimpleRootBivector b hn
   ad_pow_lie_F_F :=
     P.ad_pow_lie_typeDSimpleNegativeRootBivector_typeDSimpleNegativeRootBivector b hn
+
+variable [Invertible (2 : K)]
+
+/-- The canonical subtype-valued type-`D` Serre system in the quadratic Clifford Lie
+subalgebra. -/
+theorem isSerreSystem_typeDSimpleRootBivector_quadraticLieSubalgebra (hn : 4 ≤ n) :
+    TauCeti.IsSerreSystem K (CartanMatrix.D n)
+      (fun i : Fin n ↦ (⟨P.typeDSimpleCorootBivector b (by omega) i,
+        P.typeDSimpleCorootBivector_mem_quadraticLieSubalgebra b (by omega) i⟩ :
+          quadraticLieSubalgebra Q))
+      (fun i : Fin n ↦ (⟨P.typeDSimpleRootBivector b (by omega) i,
+        P.typeDSimpleRootBivector_mem_quadraticLieSubalgebra b (by omega) i⟩ :
+          quadraticLieSubalgebra Q))
+      (fun i : Fin n ↦ (⟨P.typeDSimpleNegativeRootBivector b (by omega) i,
+        P.typeDSimpleNegativeRootBivector_mem_quadraticLieSubalgebra b (by omega) i⟩ :
+          quadraticLieSubalgebra Q)) := by
+  let S := P.isSerreSystem_typeDSimpleRootBivector b hn
+  refine
+    { lie_H_H := fun i j ↦ Subtype.ext (S.lie_H_H i j)
+      lie_E_F_self := fun i ↦ Subtype.ext (S.lie_E_F_self i)
+      lie_E_F_of_ne := fun i j hij ↦ Subtype.ext (S.lie_E_F_of_ne i j hij)
+      lie_H_E := fun i j ↦ Subtype.ext (S.lie_H_E i j)
+      lie_H_F := fun i j ↦ Subtype.ext (S.lie_H_F i j)
+      ad_pow_lie_E_E := ?_
+      ad_pow_lie_F_F := ?_ }
+  · intro i j
+    classical
+    rw [neg_typeDCartan_toNat hn]
+    by_cases hij : typeDAdjacent n i j
+    · rw [ite_eq_left hij, pow_one, LieAlgebra.ad_apply]
+      apply Subtype.ext
+      exact P.lie_typeDSimpleRootBivector_lie_typeDSimpleRootBivector b hn i j
+    · rw [ite_eq_right hij, pow_zero, Module.End.one_apply]
+      apply Subtype.ext
+      exact P.lie_typeDSimpleRootBivector_of_not_adjacent b hn i j hij
+  · intro i j
+    classical
+    rw [neg_typeDCartan_toNat hn]
+    by_cases hij : typeDAdjacent n i j
+    · rw [ite_eq_left hij, pow_one, LieAlgebra.ad_apply]
+      apply Subtype.ext
+      exact P.lie_typeDSimpleNegativeRootBivector_lie_typeDSimpleNegativeRootBivector b hn i j
+    · rw [ite_eq_right hij, pow_zero, Module.End.one_apply]
+      apply Subtype.ext
+      exact P.lie_typeDSimpleNegativeRootBivector_of_not_adjacent b hn i j hij
 
 end TauCeti.SpinPolarizationData

@@ -229,6 +229,13 @@ theorem polar_dualVector (i j : ι) :
   rw [← P.pairingEquiv_apply (P.dualVector b i) (b j), pairingEquiv_dualVector]
   simp [Module.Basis.coord_apply, Finsupp.single_apply, eq_comm]
 
+/-- The dual vectors pair with the basis of `W` by the Kronecker delta, with the arguments in
+the opposite order from `polar_dualVector`. -/
+@[simp]
+theorem polar_dualVector_comm (i j : ι) :
+    QuadraticMap.polar Q (P.dualVector b i : V) (b j : V) = if j = i then 1 else 0 := by
+  rw [QuadraticMap.polar_comm, P.polar_dualVector]
+
 omit [DecidableEq ι] in
 /-- A basis vector of `W` pairs with its own dual vector to `1`. -/
 theorem polar_dualVector_self (i : ι) :
