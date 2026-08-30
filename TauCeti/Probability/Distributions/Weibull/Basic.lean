@@ -39,7 +39,8 @@ Natural moments reduce to Euler's Gamma integral.
 * `cdf_weibullMeasure_eq` gives the closed cdf;
 * `integral_pow_weibullMeasure` gives every natural moment;
 * `integral_id_weibullMeasure` and `variance_id_weibullMeasure` give the mean and variance;
-* `cdf_weibullMeasure_one_eq_cdf_expMeasure` recovers the exponential cdf at shape one;
+* `cdf_weibullMeasure_one_eq_cdf_expMeasure` and `weibullMeasure_one_eq_expMeasure` identify
+  shape-one Weibull laws with exponential laws;
 * `measurable_weibullMeasure` makes the family available for kernel constructions.
 
 ## References
@@ -330,6 +331,15 @@ theorem isProbabilityMeasure_weibullMeasure_iff :
   · rintro ⟨hk, hlam⟩
     exact isProbabilityMeasure_weibullMeasure hk hlam
 
+/-- Every Weibull measure is finite, including the zero measure at invalid parameters. -/
+instance : IsFiniteMeasure (weibullMeasure k lam) := by
+  by_cases h : 0 < k ∧ 0 < lam
+  · let _ : IsProbabilityMeasure (weibullMeasure k lam) :=
+      isProbabilityMeasure_weibullMeasure h.1 h.2
+    infer_instance
+  · rw [weibullMeasure_of_not_pos h]
+    infer_instance
+
 /-- The upper tail integral of a valid Weibull density. -/
 theorem integral_weibullPDFReal_Ioi (hk : 0 < k) (hlam : 0 < lam) (hx : 0 < x) :
     ∫ y in Ioi x, weibullPDFReal k lam y = Real.exp (-(x / lam) ^ k) := by
@@ -421,6 +431,18 @@ theorem cdf_weibullMeasure_one_eq_cdf_expMeasure (hlam : 0 < lam) (x : ℝ) :
     simp only [ite_eq_right hx, ite_eq_left hx', Real.rpow_one]
     congr 3
     field_simp
+
+/-- **A shape-one Weibull law is exponential.** Its scale `lam` is the reciprocal of the
+exponential rate. -/
+theorem weibullMeasure_one_eq_expMeasure (hlam : 0 < lam) :
+    weibullMeasure 1 lam = expMeasure lam⁻¹ := by
+  let _ : IsProbabilityMeasure (weibullMeasure 1 lam) :=
+    isProbabilityMeasure_weibullMeasure one_pos hlam
+  let _ : IsProbabilityMeasure (expMeasure lam⁻¹) :=
+    isProbabilityMeasure_expMeasure (inv_pos.mpr hlam)
+  apply Measure.eq_of_cdf
+  ext x
+  exact cdf_weibullMeasure_one_eq_cdf_expMeasure hlam x
 
 /-! ### Natural moments, mean, and variance -/
 

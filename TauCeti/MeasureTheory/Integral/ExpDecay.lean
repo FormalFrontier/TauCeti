@@ -13,8 +13,8 @@ public import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
 
 This file records integrability and evaluation of exponential integrands on a half-line or the
 whole real line: natural powers multiplied by an exponentially decaying factor, the exact rate at
-which a bare exponential is integrable on a right half-line, and integrability of the two-sided
-exponential.
+which a bare exponential is integrable on a right half-line, integrability of the two-sided
+exponential, and general comparison criteria for exponential integrands and tail lower bounds.
 
 Mathlib supplies the *sufficient* direction of the right-half-line integrability criterion,
 `integrableOn_exp_mul_Ioi`, for a negative rate.  `integrableOn_exp_mul_Ioi_iff` adds the converse,
@@ -30,15 +30,42 @@ inclusion.
 * `TauCeti.integrableOn_exp_mul_Iic_iff`: `exp (a * ·)` is integrable on `(-∞, c]` exactly when
   `0 < a`.
 * `TauCeti.integrable_exp_neg_mul_abs`: `exp (-(a * |·|))` is integrable when `0 < a`.
+* `TauCeti.integrable_exp_mul_of_ae_nonneg_of_nonpos`: a nonpositive exponential rate is
+  integrable under a finite measure supported on the nonnegative half-line.
+* `TauCeti.not_integrable_of_eventually_one_le_atTop`: an eventually-at-least-one real function
+  is not Lebesgue integrable.
 -/
 
 public section
 
 noncomputable section
 
-open MeasureTheory Set
+open Filter MeasureTheory Set
 
 namespace TauCeti
+
+/-- Under a finite measure supported on the nonnegative half-line, every nonpositive exponential
+rate gives an integrable function. -/
+theorem integrable_exp_mul_of_ae_nonneg_of_nonpos {μ : Measure ℝ} [IsFiniteMeasure μ]
+    (hμ : ∀ᵐ x ∂μ, 0 ≤ x) {t : ℝ} (ht : t ≤ 0) :
+    Integrable (fun x : ℝ => Real.exp (t * x)) μ := by
+  refine Integrable.mono' (integrable_const 1) (by fun_prop) ?_
+  filter_upwards [hμ] with x hx
+  rw [Real.norm_eq_abs, abs_of_pos (Real.exp_pos _), Real.exp_le_one_iff]
+  exact mul_nonpos_of_nonpos_of_nonneg ht hx
+
+/-- A real-valued function that is eventually at least one at `atTop` is not Lebesgue
+integrable. -/
+theorem not_integrable_of_eventually_one_le_atTop {f : ℝ → ℝ}
+    (hf : ∀ᶠ x in atTop, 1 ≤ f x) : ¬ Integrable f volume := by
+  intro hint
+  obtain ⟨a, ha⟩ := eventually_atTop.mp hf
+  have hone : IntegrableOn (fun _ : ℝ => (1 : ℝ)) (Ioi a) volume := by
+    refine Integrable.mono' hint.integrableOn (by fun_prop) ?_
+    filter_upwards [ae_restrict_mem measurableSet_Ioi] with x hx
+    simpa only [norm_one] using ha x hx.le
+  rw [integrableOn_const_iff] at hone
+  simp [Real.volume_Ioi] at hone
 
 /-- Natural powers times an exponentially decaying factor are integrable on `(0, ∞)`. -/
 theorem integrableOn_pow_mul_exp_neg_mul_Ioi (n : ℕ) {b : ℝ} (hb : 0 < b) :
