@@ -65,7 +65,6 @@ namespace TransportMatrix
 
 /-- A pair belongs to the support of the probability mass function represented by a
 transportation matrix exactly when the corresponding matrix entry is nonzero. -/
-@[simp]
 theorem mem_toPMF_support_iff (A : TransportMatrix μ ν) (q : ι × κ) :
     q ∈ A.toPMF.support ↔ A q.1 q.2 ≠ 0 := by
   rw [PMF.mem_support_iff, A.toPMF_apply]
