@@ -21,9 +21,10 @@ validated indices for the two type-A families in the classification list:
 A_r(q),       ²A_r(q).
 ```
 
-`TauCeti.TypeALieIndex` is the subtype of `TauCeti.ValidLieTypeIndex` consisting of exactly these
-two constructors. Thus every group-valued definition below still takes a validated Lie-type
-index: excluded ranks and duplicate representatives cannot reach a carrier or Steinberg map.
+`TauCeti.TypeALieIndex`, the subtype of `TauCeti.ValidLieTypeIndex` consisting of exactly these two
+constructors, is supplied by `CFSG/Index.lean`. Thus every group-valued definition below still
+takes a validated Lie-type index: excluded ranks and duplicate representatives cannot reach a
+carrier or Steinberg map.
 
 For an index `d`, `TauCeti.TypeALieIndex.AmbientGroup d` is the group of
 `d.Closure`-valued points of the explicit type-A carrier. Its positive simple-root subgroup at
@@ -35,12 +36,19 @@ on `²A_r(q)`. The uniform pinned equation is
 F (x_i(u)) = x_{γ i}(u ^ q),
 ```
 
-where `γ` is the diagram permutation already attached to the index. Finally,
+where `γ` is the diagram permutation already attached to the index: the identity on `A_r(q)`, and
+on `²A_r(q)` the reversal `i ↦ i.rev` of the zero-based Bourbaki numbering. Finally,
 `TauCeti.TypeALieIndex.Group d` applies the roadmap's fixed-points, derived-subgroup, and
-central-quotient recipe to this endomorphism. The required commutation and square relation for the
-twisted map are `TauCeti.SlStd.graphAutomorphismPoints_comp_frobenius` and
-`TauCeti.SlStd.twistedFrobenius_comp_self`; `steinberg_ofTwistedA` identifies this file's branch
-with that map without duplicating those results.
+central-quotient recipe to this endomorphism.
+
+The branch equations `steinberg_ofA` and `steinberg_ofTwistedA` name the Steinberg map of each
+family as `TauCeti.SlStd.frobenius` and `TauCeti.SlStd.twistedFrobenius` outright, so the upstream
+results about those maps apply to `d.steinberg` directly and are not restated here. That covers the
+commutation `TauCeti.SlStd.graphAutomorphismPoints_comp_frobenius` and the square relation
+`TauCeti.SlStd.twistedFrobenius_comp_self` that milestone L1 asks for, and the fixed-point
+containments `TauCeti.SlStd.map_subtype_fixedSubgroup_frobenius_eq` and
+`TauCeti.SlStd.map_subtype_fixedSubgroup_twistedFrobenius_le`. The lemma
+`simpleRootSubgroup_def` plays the same role for the root subgroups.
 
 This closes the type-A branch of milestones L0, L1, and L3 of
 `TauCetiRoadmap/CFSGStatement/README.md`. It does not define the uniform
@@ -49,13 +57,14 @@ Nothing here asserts that a constructed group is finite or simple.
 
 ## Main declarations
 
-* `TauCeti.TypeALieIndex`: the valid untwisted and twisted type-A indices.
 * `TauCeti.TypeALieIndex.AmbientGroup`: the algebraic-closure-valued points of the full-weight
   type-A carrier.
-* `TauCeti.TypeALieIndex.simpleRootSubgroup`: the positive simple-root subgroup at a Bourbaki
-  node.
-* `TauCeti.TypeALieIndex.steinberg`: Frobenius on `A_r(q)` and graph-twisted Frobenius on
-  `²A_r(q)`.
+* `TauCeti.TypeALieIndex.simpleRootSubgroup` and `TauCeti.TypeALieIndex.simpleRootSubgroup_def`:
+  the positive simple-root subgroup at a Bourbaki node, and its identification with the carrier's
+  numbered root subgroup.
+* `TauCeti.TypeALieIndex.steinberg`, with `TauCeti.TypeALieIndex.steinberg_ofA` and
+  `TauCeti.TypeALieIndex.steinberg_ofTwistedA`: Frobenius on `A_r(q)` and graph-twisted Frobenius
+  on `²A_r(q)`.
 * `TauCeti.TypeALieIndex.steinberg_simpleRootSubgroup`: the pinned simple-root-subgroup equation.
 * `TauCeti.TypeALieIndex.FixedPoints` and `TauCeti.TypeALieIndex.Group`: the fixed group and its
   derived central quotient.
@@ -65,91 +74,17 @@ Nothing here asserts that a constructed group is finite or simple.
 * R. W. Carter, *Simple Groups of Lie Type*, Chapters 2 and 14.
 * R. W. Carter, *Finite Groups of Lie Type: Conjugacy Classes and Complex Characters*, §1.17.
 * R. Steinberg, *Endomorphisms of linear algebraic groups*, Memoirs AMS **80** (1968), §11.
+* The target signatures realized here follow the human-authored formal skeleton
+  `TauCetiRoadmap/CFSGStatement/Suggested.lean`: the ambient group, the numbered simple root
+  subgroup, the Steinberg map and its pinned equation `x_i(u) ↦ x_{γ i}(u ^ q)`, the fixed points,
+  and the derived central quotient, all taken on a validated-index subtype.
 -/
 
 public section
 
 namespace TauCeti
 
-namespace LieTypeIndex
-
-/-- Whether a Lie-type index belongs to one of the two type-A families, `A_r(q)` or `²A_r(q)`.
-
-This is a constructor selector, not a mathematical property of a group. In particular it carries
-no finiteness, simplicity, or small-field assumption; those restrictions come from the enclosing
-`ValidLieTypeIndex`. -/
-abbrev IsTypeA : LieTypeIndex → Prop
-  | .A _ _ | .twistedA _ _ => True
-  | _ => False
-
-/-- Characterization of the two type-A constructors. -/
-@[simp]
-theorem isTypeA_iff (d : LieTypeIndex) : d.IsTypeA ↔
-    match d with
-    | .A _ _ | .twistedA _ _ => True
-    | _ => False :=
-  Iff.rfl
-
-instance : DecidablePred IsTypeA := fun d => by
-  cases d <;> rw [isTypeA_iff] <;> infer_instance
-
-end LieTypeIndex
-
-/-- A validated index in one of the two type-A families `A_r(q)` and `²A_r(q)`.
-
-The outer subtype is important: a raw type-A constructor with an excluded rank or field parameter
-is not a `TypeALieIndex`. -/
-abbrev TypeALieIndex : Type := {d : ValidLieTypeIndex // d.1.IsTypeA}
-
 namespace TypeALieIndex
-
-open LieTypeIndex (isTypeA_iff usesHalfFrobenius_iff)
-
-/-- Introduce a valid untwisted type-A index. -/
-abbrev ofA (rank : ℕ) (q : PrimePower) (hvalid : (LieTypeIndex.A rank q).Valid) :
-    TypeALieIndex :=
-  ⟨⟨.A rank q, hvalid⟩, trivial⟩
-
-/-- Introduce a valid graph-twisted type-A index. -/
-abbrev ofTwistedA (rank : ℕ) (q : PrimePower) (hvalid : (LieTypeIndex.twistedA rank q).Valid) :
-    TypeALieIndex :=
-  ⟨⟨.twistedA rank q, hvalid⟩, trivial⟩
-
-/-- A type-A index, regarded as an ordinary-or-graph-twisted index. -/
-abbrev toGraphTwistedIndex (d : TypeALieIndex) : GraphTwistedIndex :=
-  ⟨d.1, by
-    obtain ⟨⟨d, hvalid⟩, hA⟩ := d
-    change d.IsTypeA at hA
-    change ¬d.UsesHalfFrobenius
-    cases d <;> simp_all [usesHalfFrobenius_iff]⟩
-
-@[simp]
-theorem toGraphTwistedIndex_ofA (rank : ℕ) (q : PrimePower)
-    (hvalid : (LieTypeIndex.A rank q).Valid) :
-    (ofA rank q hvalid).toGraphTwistedIndex =
-      ⟨⟨.A rank q, hvalid⟩, by simp [usesHalfFrobenius_iff]⟩ :=
-  by rfl
-
-@[simp]
-theorem toGraphTwistedIndex_ofTwistedA (rank : ℕ) (q : PrimePower)
-    (hvalid : (LieTypeIndex.twistedA rank q).Valid) :
-    (ofTwistedA rank q hvalid).toGraphTwistedIndex =
-      ⟨⟨.twistedA rank q, hvalid⟩, by simp [usesHalfFrobenius_iff]⟩ :=
-  by rfl
-
-@[simp]
-theorem diagramPerm_ofA (rank : ℕ) (q : PrimePower)
-    (hvalid : (LieTypeIndex.A rank q).Valid) (i : Fin rank) :
-    (ofA rank q hvalid).toGraphTwistedIndex.diagramPerm i = i := by
-  simp only [toGraphTwistedIndex, GraphTwistedIndex.diagramPerm_A]
-  rfl
-
-@[simp]
-theorem diagramPerm_ofTwistedA (rank : ℕ) (q : PrimePower)
-    (hvalid : (LieTypeIndex.twistedA rank q).Valid) (i : Fin rank) :
-    (ofTwistedA rank q hvalid).toGraphTwistedIndex.diagramPerm i = i.rev := by
-  simp only [toGraphTwistedIndex, GraphTwistedIndex.diagramPerm_twistedA]
-  exact graphPermA_apply rank i
 
 /-- The algebraic-closure-valued points of the explicit full-weight type-A Chevalley carrier. -/
 noncomputable abbrev AmbientGroup (d : TypeALieIndex) : Type :=
@@ -160,50 +95,51 @@ noncomputable def simpleRootSubgroup (d : TypeALieIndex) (i : Fin d.1.rank) :
     Multiplicative d.1.Closure →* d.AmbientGroup :=
   SlStd.rootSubgroupPoints d.1.rank (.inl i) d.1.Closure
 
-private noncomputable def plainFrobenius (d : ValidLieTypeIndex) :
-    SlStd.points d.rank d.Closure →* SlStd.points d.rank d.Closure :=
-  SlStd.frobenius d.rank d.characteristic d.fieldExponent d.Closure
-
-private noncomputable def typeAGraphFrobenius (d : ValidLieTypeIndex) :
-    SlStd.points d.rank d.Closure →* SlStd.points d.rank d.Closure :=
-  SlStd.twistedFrobenius d.rank d.characteristic d.fieldExponent d.Closure
-
-/-- The entrywise field Frobenius on the validated untwisted type-A carrier. -/
-noncomputable def frobenius (rank : ℕ) (q : PrimePower)
-    (hvalid : (LieTypeIndex.A rank q).Valid) :
-    (ofA rank q hvalid).AmbientGroup →* (ofA rank q hvalid).AmbientGroup :=
-  plainFrobenius ⟨.A rank q, hvalid⟩
-
-/-- The reversal graph automorphism composed with field Frobenius on the validated twisted type-A
-carrier. -/
-noncomputable def twistedFrobenius (rank : ℕ) (q : PrimePower)
-    (hvalid : (LieTypeIndex.twistedA rank q).Valid) :
-    (ofTwistedA rank q hvalid).AmbientGroup →* (ofTwistedA rank q hvalid).AmbientGroup :=
-  typeAGraphFrobenius ⟨.twistedA rank q, hvalid⟩
+/-- The simple-root subgroup is the carrier's numbered root subgroup at the positive simple root
+`i`. This is the equation through which the upstream root-subgroup API reaches
+`simpleRootSubgroup`. It is not a `simp` lemma: `steinberg_simpleRootSubgroup` is the normal form
+the pinned equations of this file are stated against, and unfolding to
+`TauCeti.SlStd.rootSubgroupPoints` would keep it from firing. -/
+theorem simpleRootSubgroup_def (d : TypeALieIndex) (i : Fin d.1.rank) :
+    d.simpleRootSubgroup i = SlStd.rootSubgroupPoints d.1.rank (.inl i) d.1.Closure :=
+  (rfl)
 
 /-- **The Steinberg endomorphism of a validated type-A index.** It is the `q`-power Frobenius on
-`A_r(q)` and the reversal graph automorphism composed with that Frobenius on `²A_r(q)`. -/
-noncomputable def steinberg : (d : TypeALieIndex) → d.AmbientGroup →* d.AmbientGroup
-  | ⟨⟨.A rank q, hvalid⟩, _⟩ => frobenius rank q hvalid
-  | ⟨⟨.twistedA rank q, hvalid⟩, _⟩ => twistedFrobenius rank q hvalid
-  | ⟨⟨.B _ _, _⟩, hA⟩ | ⟨⟨.C _ _, _⟩, hA⟩ | ⟨⟨.D _ _, _⟩, hA⟩
-  | ⟨⟨.twistedD _ _, _⟩, hA⟩ | ⟨⟨.E6 _, _⟩, hA⟩ | ⟨⟨.E7 _, _⟩, hA⟩
-  | ⟨⟨.E8 _, _⟩, hA⟩ | ⟨⟨.F4 _, _⟩, hA⟩ | ⟨⟨.G2 _, _⟩, hA⟩
-  | ⟨⟨.twistedE6 _, _⟩, hA⟩ | ⟨⟨.trialityD4 _, _⟩, hA⟩
-  | ⟨⟨.suzuki _, _⟩, hA⟩ | ⟨⟨.reeG2 _, _⟩, hA⟩ | ⟨⟨.reeF4 _, _⟩, hA⟩
-  | ⟨⟨.tits, _⟩, hA⟩ => False.elim hA
+`A_r(q)` and the reversal graph automorphism composed with that Frobenius on `²A_r(q)`.
 
+The two branch equations `steinberg_ofA` and `steinberg_ofTwistedA` name the selected upstream map
+on each family, so no consumer needs this body. -/
+noncomputable def steinberg (d : TypeALieIndex) : d.AmbientGroup →* d.AmbientGroup :=
+  -- Matching on `d.1.1` rather than destructuring `d` keeps the validated index `d.1` a variable,
+  -- which is what lets `Fin d.1.rank`, `d.1.Closure` and its `ExpChar` instance be found uniformly
+  -- in every branch.
+  match h : d.1.1 with
+  | .A _ _ => SlStd.frobenius d.1.rank d.1.characteristic d.1.fieldExponent d.1.Closure
+  | .twistedA _ _ =>
+      SlStd.twistedFrobenius d.1.rank d.1.characteristic d.1.fieldExponent d.1.Closure
+  | .B _ _ | .C _ _ | .D _ _ | .twistedD _ _ | .E6 _ | .E7 _ | .E8 _ | .F4 _ | .G2 _
+  | .twistedE6 _ | .trialityD4 _ | .suzuki _ | .reeG2 _ | .reeF4 _ | .tits =>
+      absurd d.2 (by rw [h]; exact not_false)
+
+/-- On `A_r(q)` the Steinberg map is the `q`-power Frobenius of the standard carrier. -/
 @[simp]
 theorem steinberg_ofA (rank : ℕ) (q : PrimePower)
     (hvalid : (LieTypeIndex.A rank q).Valid) :
-    (ofA rank q hvalid).steinberg = frobenius rank q hvalid := by
-  rw [steinberg.eq_def]
+    (ofA rank q hvalid).steinberg =
+      SlStd.frobenius (ofA rank q hvalid).1.rank (ofA rank q hvalid).1.characteristic
+        (ofA rank q hvalid).1.fieldExponent (ofA rank q hvalid).1.Closure := by
+  simp only [steinberg]
 
+/-- On `²A_r(q)` the Steinberg map is the graph-twisted `q`-power Frobenius of the standard
+carrier, that is, the pinned reversal graph automorphism composed with the Frobenius. -/
 @[simp]
 theorem steinberg_ofTwistedA (rank : ℕ) (q : PrimePower)
     (hvalid : (LieTypeIndex.twistedA rank q).Valid) :
-    (ofTwistedA rank q hvalid).steinberg = twistedFrobenius rank q hvalid := by
-  rw [steinberg.eq_def]
+    (ofTwistedA rank q hvalid).steinberg =
+      SlStd.twistedFrobenius (ofTwistedA rank q hvalid).1.rank
+        (ofTwistedA rank q hvalid).1.characteristic (ofTwistedA rank q hvalid).1.fieldExponent
+        (ofTwistedA rank q hvalid).1.Closure := by
+  simp only [steinberg]
 
 /-- **The Steinberg map has the pinned action on every positive simple-root subgroup.** It sends
 `x_i(u)` to `x_{γ i}(u ^ q)`, where `γ` is the diagram permutation of the index and `q` is its
@@ -214,34 +150,24 @@ theorem steinberg_simpleRootSubgroup (d : TypeALieIndex) (i : Fin d.1.rank)
     d.steinberg (d.simpleRootSubgroup i u) =
       d.simpleRootSubgroup (d.toGraphTwistedIndex.diagramPerm i)
         (Multiplicative.ofAdd (Multiplicative.toAdd u ^ d.1.fieldOrder)) := by
-  obtain ⟨⟨d, hvalid⟩, hA⟩ := d
-  change d.IsTypeA at hA
-  revert hvalid hA i u
-  cases d
-  case A rank q =>
-    intro hvalid hA i u
-    cases hA
-    simp only [steinberg.eq_def]
-    rw [frobenius.eq_def, plainFrobenius.eq_def]
-    simp only [simpleRootSubgroup]
-    rw [SlStd.frobenius_rootSubgroupPoints,
-      ValidLieTypeIndex.fieldOrder_eq_characteristic_pow]
-    simp only [toGraphTwistedIndex, GraphTwistedIndex.diagramPerm_A]
-    rfl
-  case twistedA rank q =>
-    intro hvalid hA i u
-    cases hA
+  rcases d.exists_eq with ⟨rank, q, hvalid, rfl⟩ | ⟨rank, q, hvalid, rfl⟩
+  · rw [steinberg_ofA, simpleRootSubgroup_def, simpleRootSubgroup_def,
+      SlStd.frobenius_rootSubgroupPoints, ValidLieTypeIndex.fieldOrder_eq_characteristic_pow,
+      GraphTwistedIndex.diagramPerm_A, Equiv.Perm.one_apply]
+  · rw [steinberg_ofTwistedA, simpleRootSubgroup_def, simpleRootSubgroup_def,
+      SlStd.twistedFrobenius_rootSubgroupPoints,
+      ValidLieTypeIndex.fieldOrder_eq_characteristic_pow,
+      GraphTwistedIndex.diagramPerm_twistedA]
+    -- The remaining two equations, `SlStd.graphRootPerm_inl` and `graphPermA_apply`, are stated
+    -- for a node of `Fin rank`, whereas the goal types its node by the unreduced
+    -- `Fin (LieTypeIndex.twistedA rank q).dynkinType.rank`. The two agree by the exposed
+    -- `LieTypeIndex.dynkinType` and `DynkinType.rank`, which is the same reduction that
+    -- `GraphTwistedIndex.diagramPerm_twistedA` is stated up to. Present the goal in the reduced
+    -- form once, rather than at each rewrite.
     change Fin rank at i
-    simp only [steinberg.eq_def]
-    rw [twistedFrobenius.eq_def, typeAGraphFrobenius.eq_def]
-    simp only [simpleRootSubgroup]
-    rw [SlStd.twistedFrobenius_rootSubgroupPoints,
-      ValidLieTypeIndex.fieldOrder_eq_characteristic_pow]
-    simp only [toGraphTwistedIndex, GraphTwistedIndex.diagramPerm_twistedA]
     change SlStd.rootSubgroupPoints rank (SlStd.graphRootPerm rank (.inl i)) _ _ =
       SlStd.rootSubgroupPoints rank (.inl (graphPermA rank i)) _ _
     rw [SlStd.graphRootPerm_inl, graphPermA_apply]
-  all_goals intro hvalid hA; contradiction
 
 /-- The fixed subgroup of the Steinberg endomorphism attached to a type-A index. -/
 abbrev FixedPoints (d : TypeALieIndex) : Type :=

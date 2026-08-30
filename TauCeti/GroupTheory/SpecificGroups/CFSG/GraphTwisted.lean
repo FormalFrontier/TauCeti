@@ -38,6 +38,8 @@ pinned group; and its order is the superscript in the printed family name, recor
   the Steinberg map of a graph-twisted index composes with the field Frobenius.
 * `TauCeti.GraphTwistedIndex.twistOrder`: the order of that permutation, which is the superscript
   in the family name.
+* `TauCeti.TypeALieIndex.toGraphTwistedIndex`: the two type-A families, `Aₙ(q)` and `²Aₙ(q)`, as
+  indices of that subtype, so that the permutations above are attached to them.
 
 ## Main results
 
@@ -316,5 +318,19 @@ map of the form `γ ∘ Frob_q`. -/
   exact pow_orderOf_eq_one d.diagramPerm
 
 end GraphTwistedIndex
+
+/-! ### The type-A families as graph-twisted indices -/
+
+namespace TypeALieIndex
+
+open LieTypeIndex (not_usesHalfFrobenius_of_isTypeA)
+
+/-- A type-A index, regarded as an ordinary-or-graph-twisted index. Neither `Aₙ(q)` nor `²Aₙ(q)`
+uses a half-Frobenius, so both carry a diagram permutation: the identity on the untwisted family
+and the chain reversal on the twisted one. -/
+abbrev toGraphTwistedIndex (d : TypeALieIndex) : GraphTwistedIndex :=
+  ⟨d.1, not_usesHalfFrobenius_of_isTypeA d.2⟩
+
+end TypeALieIndex
 
 end TauCeti
