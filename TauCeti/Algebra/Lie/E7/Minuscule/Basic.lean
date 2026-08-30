@@ -81,18 +81,21 @@ def raisingMatrix (i : Fin 7) : Matrix (Fin 56) (Fin 56) ℤ :=
 def loweringMatrix (i : Fin 7) : Matrix (Fin 56) (Fin 56) ℤ :=
   stepMatrix i 1
 
+/-- The entrywise formula for the diagonal Cartan generator matrix. -/
 @[simp]
 theorem cartanMatrix_apply (i : Fin 7) (a b : Fin 56) :
     cartanMatrix i a b = if a = b then e7MinusculeWeight a i else 0 := by
   classical
   rw [cartanMatrix, Matrix.diagonal_apply]
 
+/-- The entrywise formula for the raising generator matrix. -/
 @[simp]
 theorem raisingMatrix_apply (i : Fin 7) (a b : Fin 56) :
     raisingMatrix i a b =
       if e7MinusculeWeight b i = -1 ∧ a = e7MinusculeReflection i b then 1 else 0 :=
   by rw [raisingMatrix, stepMatrix]
 
+/-- The entrywise formula for the lowering generator matrix. -/
 @[simp]
 theorem loweringMatrix_apply (i : Fin 7) (a b : Fin 56) :
     loweringMatrix i a b =
@@ -270,16 +273,19 @@ noncomputable def serreRepresentation :
     Matrix.ToLieAlgebra ℤ (CartanMatrix.E 7) →ₗ⁅ℤ⁆ Matrix (Fin 56) (Fin 56) ℤ :=
   serreLift isSerreSystem
 
+/-- The integral Serre representation sends `H_i` to the Cartan generator matrix. -/
 @[simp]
 theorem serreRepresentation_serreH (i : Fin 7) :
     serreRepresentation (serreH ℤ (CartanMatrix.E 7) i) = cartanMatrix i :=
   serreLift_serreH isSerreSystem i
 
+/-- The integral Serre representation sends `E_i` to the raising generator matrix. -/
 @[simp]
 theorem serreRepresentation_serreE (i : Fin 7) :
     serreRepresentation (serreE ℤ (CartanMatrix.E 7) i) = raisingMatrix i :=
   serreLift_serreE isSerreSystem i
 
+/-- The integral Serre representation sends `F_i` to the lowering generator matrix. -/
 @[simp]
 theorem serreRepresentation_serreF (i : Fin 7) :
     serreRepresentation (serreF ℤ (CartanMatrix.E 7) i) = loweringMatrix i :=

@@ -58,21 +58,19 @@ attribute [local instance 100] LieRing.ofAssociativeRing
 
 /-- Entrywise coercion from integral to rational matrices, as a homomorphism of Lie rings. -/
 private noncomputable def castMatrixLieHom :
-    Matrix (Fin 56) (Fin 56) ℤ →ₗ⁅ℤ⁆ Matrix (Fin 56) (Fin 56) ℚ where
-  toLinearMap := (Int.castRingHom ℚ).mapMatrix.toAddMonoidHom.toIntLinearMap
-  map_lie' := by
-    intro x y
-    -- Expose the matrix commutator so the ring-homomorphism laws can rewrite each product.
-    change (Int.castRingHom ℚ).mapMatrix (x * y - y * x) =
-      (Int.castRingHom ℚ).mapMatrix x * (Int.castRingHom ℚ).mapMatrix y -
-        (Int.castRingHom ℚ).mapMatrix y * (Int.castRingHom ℚ).mapMatrix x
-    rw [map_sub, map_mul, map_mul]
+    Matrix (Fin 56) (Fin 56) ℤ →ₗ⁅ℤ⁆ Matrix (Fin 56) (Fin 56) ℚ :=
+  ((Int.castRingHom ℚ).mapMatrix.toIntAlgHom).toLieHom
 
 @[simp]
 private theorem castMatrixLieHom_apply (M : Matrix (Fin 56) (Fin 56) ℤ) (a b : Fin 56) :
     castMatrixLieHom M a b = (M a b : ℚ) := by
-  change (Int.castRingHom ℚ).mapMatrix M a b = (M a b : ℚ)
-  rw [RingHom.mapMatrix_apply, Matrix.map_apply, Int.coe_castRingHom]
+  simp only [castMatrixLieHom, AlgHom.toLieHom_apply, RingHom.toIntAlgHom_apply,
+    RingHom.mapMatrix_apply, Matrix.map_apply, Int.coe_castRingHom]
+
+@[simp]
+private theorem castMatrixLieHom_mul (M N : Matrix (Fin 56) (Fin 56) ℤ) :
+    castMatrixLieHom (M * N) = castMatrixLieHom M * castMatrixLieHom N := by
+  exact map_mul ((Int.castRingHom ℚ).mapMatrix.toIntAlgHom) M N
 
 /-- The rational raising matrix obtained from the integral minuscule representation. -/
 noncomputable def raisingMatrixRat (i : Fin 7) : Matrix (Fin 56) (Fin 56) ℚ :=
@@ -117,40 +115,59 @@ private theorem ad_pow_int_eq_rat (x y : Matrix (Fin 56) (Fin 56) ℚ) (n : ℕ)
       simp only [pow_succ, Module.End.mul_apply, LieAlgebra.ad_apply]
       exact ih ⁅x, y⁆
 
+private theorem cast_lie_eq_zero {x y : Matrix (Fin 56) (Fin 56) ℤ}
+    (h : ⁅x, y⁆ = 0) : ⁅castMatrixLieHom x, castMatrixLieHom y⁆ = 0 := by
+  rw [← LieHom.map_lie, h, map_zero]
+
+private theorem cast_lie_eq {x y z : Matrix (Fin 56) (Fin 56) ℤ}
+    (h : ⁅x, y⁆ = z) : ⁅castMatrixLieHom x, castMatrixLieHom y⁆ = castMatrixLieHom z := by
+  rw [← LieHom.map_lie, h]
+
+private theorem cast_lie_eq_smul {x y z : Matrix (Fin 56) (Fin 56) ℤ} (c : ℤ)
+    (h : ⁅x, y⁆ = c • z) :
+    ⁅castMatrixLieHom x, castMatrixLieHom y⁆ = c • castMatrixLieHom z := by
+  rw [← LieHom.map_lie, h, map_zsmul]
+
+private theorem cast_lie_eq_neg_smul {x y z : Matrix (Fin 56) (Fin 56) ℤ} (c : ℤ)
+    (h : ⁅x, y⁆ = -(c • z)) :
+    ⁅castMatrixLieHom x, castMatrixLieHom y⁆ = -(c • castMatrixLieHom z) := by
+  rw [← LieHom.map_lie, h, map_neg, map_zsmul]
+
+private theorem cast_ad_pow_lie_eq_zero {x y : Matrix (Fin 56) (Fin 56) ℤ} (n : ℕ)
+    (h : (LieAlgebra.ad ℤ _ x ^ n) ⁅x, y⁆ = 0) :
+    (LieAlgebra.ad ℚ _ (castMatrixLieHom x) ^ n)
+      ⁅castMatrixLieHom x, castMatrixLieHom y⁆ = 0 := by
+  have h' := congrArg castMatrixLieHom h
+  rw [TauCeti.LieHom.map_ad_pow, LieHom.map_lie, map_zero] at h'
+  rw [← ad_pow_int_eq_rat]
+  exact h'
+
 /-- The rational minuscule matrices satisfy the type-`E₇` Serre relations. -/
 theorem isSerreSystemRat :
     TauCeti.IsSerreSystem ℚ (CartanMatrix.E 7)
       cartanMatrixRat raisingMatrixRat loweringMatrixRat where
   lie_H_H i j := by
-    have h := congrArg castMatrixLieHom (isSerreSystem.lie_H_H i j)
-    rw [LieHom.map_lie, map_zero] at h
-    simpa only [cartanMatrixRat] using h
+    simpa only [cartanMatrixRat] using cast_lie_eq_zero (isSerreSystem.lie_H_H i j)
   lie_E_F_self i := by
-    have h := congrArg castMatrixLieHom (isSerreSystem.lie_E_F_self i)
-    rw [LieHom.map_lie] at h
-    simpa only [raisingMatrixRat, loweringMatrixRat, cartanMatrixRat] using h
+    simpa only [raisingMatrixRat, loweringMatrixRat, cartanMatrixRat] using
+      cast_lie_eq (isSerreSystem.lie_E_F_self i)
   lie_E_F_of_ne i j hij := by
-    have h := congrArg castMatrixLieHom (isSerreSystem.lie_E_F_of_ne i j hij)
-    rw [LieHom.map_lie, map_zero] at h
-    simpa only [raisingMatrixRat, loweringMatrixRat] using h
+    simpa only [raisingMatrixRat, loweringMatrixRat] using
+      cast_lie_eq_zero (isSerreSystem.lie_E_F_of_ne i j hij)
   lie_H_E i j := by
-    have h := congrArg castMatrixLieHom (isSerreSystem.lie_H_E i j)
-    rw [LieHom.map_lie, map_zsmul] at h
-    simpa only [cartanMatrixRat, raisingMatrixRat, Int.cast_smul_eq_zsmul] using h
+    simpa only [cartanMatrixRat, raisingMatrixRat] using
+      cast_lie_eq_smul (CartanMatrix.E 7 i j) (isSerreSystem.lie_H_E i j)
   lie_H_F i j := by
-    have h := congrArg castMatrixLieHom (isSerreSystem.lie_H_F i j)
-    rw [LieHom.map_lie, map_neg, map_zsmul] at h
-    simpa only [cartanMatrixRat, loweringMatrixRat, Int.cast_smul_eq_zsmul] using h
+    simpa only [cartanMatrixRat, loweringMatrixRat] using
+      cast_lie_eq_neg_smul (CartanMatrix.E 7 i j) (isSerreSystem.lie_H_F i j)
   ad_pow_lie_E_E i j := by
-    have h := congrArg castMatrixLieHom (isSerreSystem.ad_pow_lie_E_E i j)
-    rw [TauCeti.LieHom.map_ad_pow, LieHom.map_lie, map_zero] at h
-    rw [← ad_pow_int_eq_rat]
-    simpa only [raisingMatrixRat] using h
+    simpa only [raisingMatrixRat] using
+      cast_ad_pow_lie_eq_zero (-(CartanMatrix.E 7) i j).toNat
+        (isSerreSystem.ad_pow_lie_E_E i j)
   ad_pow_lie_F_F i j := by
-    have h := congrArg castMatrixLieHom (isSerreSystem.ad_pow_lie_F_F i j)
-    rw [TauCeti.LieHom.map_ad_pow, LieHom.map_lie, map_zero] at h
-    rw [← ad_pow_int_eq_rat]
-    simpa only [loweringMatrixRat] using h
+    simpa only [loweringMatrixRat] using
+      cast_ad_pow_lie_eq_zero (-(CartanMatrix.E 7) i j).toNat
+        (isSerreSystem.ad_pow_lie_F_F i j)
 
 /-- The rational `56`-dimensional minuscule representation of the type-`E₇` Serre
 presentation. -/
@@ -183,25 +200,22 @@ noncomputable def rep :
     _root_.UniversalEnvelopingAlgebra ℚ (Matrix.ToLieAlgebra ℚ (CartanMatrix.E 7)) →ₐ[ℚ]
       Module.End ℚ (Fin 56 → ℚ) :=
   _root_.UniversalEnvelopingAlgebra.lift ℚ
-    ((Matrix.toLinAlgEquiv (Pi.basisFun ℚ (Fin 56))).toAlgHom.toLieHom.comp
+    (Matrix.toLinAlgEquiv'.toAlgHom.toLieHom.comp
       rationalSerreRepresentation)
 
 /-- The enveloping-algebra inclusion acts by multiplying with the represented matrix. -/
 theorem rep_ι_apply (x : Matrix.ToLieAlgebra ℚ (CartanMatrix.E 7)) (v : Fin 56 → ℚ) :
     rep (_root_.UniversalEnvelopingAlgebra.ι ℚ x) v = rationalSerreRepresentation x *ᵥ v := by
   rw [rep, _root_.UniversalEnvelopingAlgebra.lift_ι_apply, LieHom.comp_apply,
-    AlgHom.toLieHom_apply, AlgEquiv.toAlgHom_apply, Matrix.toLinAlgEquiv_apply]
-  exact (Pi.basisFun ℚ (Fin 56)).sum_repr (rationalSerreRepresentation x *ᵥ v)
+    AlgHom.toLieHom_apply, AlgEquiv.toAlgHom_apply, Matrix.toLinAlgEquiv'_apply]
 
 /-- Every rational minuscule raising matrix squares to zero. -/
 theorem raisingMatrixRat_pow_two (i : Fin 7) : raisingMatrixRat i ^ 2 = 0 := by
-  change (Int.castRingHom ℚ).mapMatrix (raisingMatrix i) ^ 2 = 0
-  rw [pow_two, ← map_mul, raisingMatrix_mul_self, map_zero]
+  rw [pow_two, raisingMatrixRat, ← castMatrixLieHom_mul, raisingMatrix_mul_self, map_zero]
 
 /-- Every rational minuscule lowering matrix squares to zero. -/
 theorem loweringMatrixRat_pow_two (i : Fin 7) : loweringMatrixRat i ^ 2 = 0 := by
-  change (Int.castRingHom ℚ).mapMatrix (loweringMatrix i) ^ 2 = 0
-  rw [pow_two, ← map_mul, loweringMatrix_mul_self, map_zero]
+  rw [pow_two, loweringMatrixRat, ← castMatrixLieHom_mul, loweringMatrix_mul_self, map_zero]
 
 /-- Every simple-root generator acts with square zero in the rational minuscule
 representation. -/
