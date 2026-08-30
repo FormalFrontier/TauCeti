@@ -24,6 +24,7 @@ Burnside--Dixon--Schneider character-table solver.
 ## Main definitions
 
 * `TauCeti.Cyclotomic.conj`: computable conjugation on exact cyclotomic integers.
+* `TauCeti.Cyclotomic.instStar`: the `star` notation, defined to be `conj`.
 * `TauCeti.Cyclotomic.instStarRing`: the canonical star-ring structure for positive conductor.
 
 ## Main results
@@ -48,7 +49,8 @@ namespace TauCeti.Cyclotomic
 variable {e : ℕ}
 
 /-- Evaluate the canonical coefficient vector after replacing `ζ_e` by `ζ_e ^ (e - 1)`.
-This is complex conjugation on exact `e`-th cyclotomic integers. -/
+For positive `e` this power is `ζ_e⁻¹`, so the substitution is complex conjugation on exact
+`e`-th cyclotomic integers. -/
 @[expose] def conj (x : Cyclotomic e) : Cyclotomic e :=
   evalCoeffs (Int.castRingHom (Cyclotomic e)) (zeta e ^ (e - 1)) x
 
@@ -101,6 +103,8 @@ private theorem conj_zeta : conj (zeta e) = zeta e ^ (e - 1) := by
   rw [complexEmbedding_conj, ← starRingEnd_apply, complexEmbedding_zeta,
     conj_complexRoot_eq_pow_sub_one, map_pow, complexEmbedding_zeta]
 
+/-- `star` on exact cyclotomic integers is the computable substitution `conj`, that is,
+evaluation of the canonical coefficient vector at `ζ_e ^ (e - 1)`. -/
 instance instStar : Star (Cyclotomic e) where
   star := conj
 
@@ -146,8 +150,8 @@ theorem star_zeta : star (zeta e) = zeta e ^ (e - 1) :=
   conj_zeta
 
 omit [NeZero e] in
-/-- Evaluation at a cyclotomic root intertwines `star` with substituting the inverse power of
-that root. -/
+/-- Evaluation at a cyclotomic root `r` intertwines `star` with substituting `r ^ (e - 1)`, the
+inverse of `r` when `e` is positive. -/
 theorem evalRingHom_star {R : Type*} [CommRing R] (f : ℤ →+* R) (r : R)
     (hr : (Polynomial.cyclotomic e ℤ).eval₂ f r = 0) (x : Cyclotomic e) :
     evalRingHom f r hr (star x) = evalCoeffs f (r ^ (e - 1)) x := by
@@ -157,9 +161,10 @@ theorem evalRingHom_star {R : Type*} [CommRing R] (f : ℤ →+* R) (r : R)
   · rw [map_pow, evalRingHom_zeta]
 
 omit [NeZero e] in
-/-- **Reduction intertwines conjugation with inversion of the chosen cyclotomic root.** Reducing
-`star x` at `r` is the same as reducing `x` at `r ^ (e - 1)`. This is the exact relation between
-conjugate cyclotomic entries and the residue tuples used by the Dixon lift. -/
+/-- **Reduction intertwines `star` with passing to the `(e - 1)`-st power of the chosen cyclotomic
+root.** Reducing `star x` at `r` is the same as reducing `x` at `r ^ (e - 1)`, which for positive
+`e` and primitive `r` is `r⁻¹`. This is the exact relation between conjugate cyclotomic entries
+and the residue tuples used by the Dixon lift. -/
 theorem reduce_star (p : ℕ) (r : ZMod p)
     (hr : (Polynomial.cyclotomic e ℤ).eval₂ (Int.castRingHom (ZMod p)) r = 0)
     (x : Cyclotomic e) :
