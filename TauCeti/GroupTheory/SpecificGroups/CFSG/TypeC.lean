@@ -44,7 +44,8 @@ finite or simple.
   type-`C` carrier.
 * `TauCeti.TypeCLieIndex.simpleRootSubgroup`: its positive simple-root subgroups, indexed by the
   Dynkin rank stored in the CFSG index.
-* `TauCeti.TypeCLieIndex.steinberg`: the indexed field Frobenius.
+* `TauCeti.TypeCLieIndex.steinberg` and `TauCeti.TypeCLieIndex.coe_steinberg_apply`: the indexed
+  field Frobenius and its coefficient-level action.
 * `TauCeti.TypeCLieIndex.steinberg_simpleRootSubgroup`: the pinned Frobenius equation.
 * `TauCeti.TypeCLieIndex.FixedPoints` and `TauCeti.TypeCLieIndex.Group`: the fixed group and its
   derived central quotient.
@@ -160,8 +161,26 @@ theorem simpleRootSubgroup_def (d : TypeCLieIndex) (i : Fin d.1.rank) :
 
 /-- **The Steinberg endomorphism of a validated type-`C` index:** entrywise `q`-power
 Frobenius on the full-weight symplectic carrier. -/
-noncomputable def steinberg (d : TypeCLieIndex) : d.AmbientGroup →* d.AmbientGroup :=
+noncomputable abbrev steinberg (d : TypeCLieIndex) : d.AmbientGroup →* d.AmbientGroup :=
   SpStd.frobenius d.carrierParameter d.1.characteristic d.1.fieldExponent d.1.Closure
+
+/-- Entrywise, the indexed Steinberg endomorphism raises every matrix coefficient to the recorded
+field order. -/
+@[simp]
+theorem coe_steinberg_apply (d : TypeCLieIndex) (g : d.AmbientGroup)
+    (i j : Fin ((d.carrierParameter + 1) + (d.carrierParameter + 1))) :
+    ((d.steinberg g : Matrix.GeneralLinearGroup
+          (Fin ((d.carrierParameter + 1) + (d.carrierParameter + 1))) d.1.Closure) :
+        Matrix (Fin ((d.carrierParameter + 1) + (d.carrierParameter + 1)))
+          (Fin ((d.carrierParameter + 1) + (d.carrierParameter + 1))) d.1.Closure) i j =
+      ((g : Matrix.GeneralLinearGroup
+          (Fin ((d.carrierParameter + 1) + (d.carrierParameter + 1))) d.1.Closure) :
+        Matrix (Fin ((d.carrierParameter + 1) + (d.carrierParameter + 1)))
+          (Fin ((d.carrierParameter + 1) + (d.carrierParameter + 1))) d.1.Closure) i j ^
+        d.1.fieldOrder := by
+  rw [ValidLieTypeIndex.fieldOrder_eq_characteristic_pow]
+  exact SpStd.coe_frobenius_apply d.carrierParameter d.1.characteristic d.1.fieldExponent
+    d.1.Closure g i j
 
 /-- **The type-`C` Steinberg map has the pinned action on every positive simple-root subgroup.**
 It sends `x_i(u)` to `x_i(u ^ q)`, where `q` is the field order recorded by the index. -/
