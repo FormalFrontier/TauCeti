@@ -57,13 +57,42 @@ namespace MixedHodgeStructure
 
 variable (mhs : MixedHodgeStructure hℚ hℂ)
 
-/-- The image of a bigrading piece in a separately named weight-graded piece. -/
-private theorem map_deligneSplitting_eq_piece_of_add_eq {p q k : ℤ} (hk : p + q = k) :
-    ((mhs.deligneSplitting p q).submoduleOf (mhs.WC k)).map
-        ((mhs.WC (k - 1)).submoduleOf (mhs.WC k)).mkQ =
-      (mhs.complexGradedHodgeStructure k).piece p := by
-  subst hk
-  exact mhs.map_deligneSplitting_eq_piece p q
+/-- An element of a weight step lying in opposed filtration steps modulo the preceding weight step
+already lies in that preceding step. -/
+private theorem mem_WC_sub_one_of_mem_F_sup_and_mem_conjF_sup (k p : ℤ) {x : Vℂ}
+    (hxW : x ∈ mhs.WC k) (hxF : x ∈ mhs.F p ⊔ mhs.WC (k - 1))
+    (hxConj : x ∈ mhs.conjF (k + 1 - p) ⊔ mhs.WC (k - 1)) :
+    x ∈ mhs.WC (k - 1) := by
+  obtain ⟨f, hf, wf, hwf, hfw⟩ := Submodule.mem_sup.1 hxF
+  obtain ⟨c, hc, wc, hwc, hcw⟩ := Submodule.mem_sup.1 hxConj
+  have hfW : f ∈ mhs.WC k := by
+    have hfd : f = x - wf := by rw [← hfw]; abel
+    rw [hfd]
+    exact Submodule.sub_mem _ hxW (mhs.WC_monotone (by omega) hwf)
+  have hcW : c ∈ mhs.WC k := by
+    have hcd : c = x - wc := by rw [← hcw]; abel
+    rw [hcd]
+    exact Submodule.sub_mem _ hxW (mhs.WC_monotone (by omega) hwc)
+  have hfc : f - c ∈ mhs.WC (k - 1) := by
+    have hfc' : f - c = wc - wf := by
+      calc
+        f - c = (f + wf) - (c + wc) + (wc - wf) := by abel
+        _ = wc - wf := by rw [hfw, hcw, sub_self, zero_add]
+    rw [hfc']
+    exact Submodule.sub_mem _ hwc hwf
+  have hmk : (Submodule.Quotient.mk (⟨f, hfW⟩ : mhs.WC k) :
+        weightGradedComplex mhs.WC k) = Submodule.Quotient.mk ⟨c, hcW⟩ :=
+    (weightGradedComplex_mk_eq_mk_iff mhs.WC k _ _).2 hfc
+  have hF := mhs.mk_mem_complexGradedHodgeStructure_F k p ⟨f, hfW⟩ hf
+  have hConj := mhs.mk_mem_complexGradedHodgeStructure_conjF k (k + 1 - p) ⟨c, hcW⟩ hc
+  rw [← hmk] at hConj
+  have hzero := ((mhs.complexGradedHodgeStructure k).isCompl_F_conjF p).disjoint.le_bot
+    ⟨hF, hConj⟩
+  rw [Submodule.mem_bot] at hzero
+  have hfLower : f ∈ mhs.WC (k - 1) :=
+    (weightGradedComplex_mk_eq_zero_iff mhs.WC k ⟨f, hfW⟩).1 hzero
+  rw [← hfw]
+  exact Submodule.add_mem _ hfLower hwf
 
 /-- Conjugating `I^{p,q}` lands in the swapped Deligne piece modulo `W_{p+q-2}`. -/
 theorem map_latticeConj_deligneSplitting_le_sup_WC (p q : ℤ) :
@@ -88,8 +117,8 @@ theorem map_latticeConj_deligneSplitting_le_sup_WC (p q : ℤ) :
         (Submodule.mem_sup_right (mhs.WC_monotone (by omega) htW))
     have hindex : p + q - q = p := by ring
     simpa only [mhs.conjF_def, hindex] using haConj
-  have hmap := mhs.map_deligneSplitting_eq_piece_of_add_eq
-    (p := q) (q := p) (k := p + q) (by ring)
+  have hmap := mhs.map_deligneSplitting_eq_piece q p
+  rw [add_comm q p] at hmap
   rw [← hmap] at hclassA
   obtain ⟨y, hyI, hyClass⟩ := hclassA
   have hyIAmbient : (y : Vℂ) ∈ mhs.deligneSplitting q p := hyI
@@ -121,47 +150,13 @@ theorem map_latticeConj_deligneSplitting_le_sup_WC (p q : ℤ) :
   have hdiffConj : x - (y : Vℂ) ∈ mhs.conjF p ⊔ mhs.WC (p + q - 2) :=
     Submodule.sub_mem _ (Submodule.mem_sup_left hxConj) hyConj
   have hdrop : x - (y : Vℂ) ∈ mhs.WC (p + q - 2) := by
-    obtain ⟨f, hf, wf, hwf, hfw⟩ := Submodule.mem_sup.1 hdiffF
-    obtain ⟨c, hc, wc, hwc, hcw⟩ := Submodule.mem_sup.1 hdiffConj
-    have hfW : f ∈ mhs.WC (p + q - 1) := by
-      have hfd : f = (x - (y : Vℂ)) - wf := by rw [← hfw]; abel
-      rw [hfd]
-      exact Submodule.sub_mem _ hdiffW (mhs.WC_monotone (by omega) hwf)
-    have hcW : c ∈ mhs.WC (p + q - 1) := by
-      have hcd : c = (x - (y : Vℂ)) - wc := by rw [← hcw]; abel
-      rw [hcd]
-      exact Submodule.sub_mem _ hdiffW (mhs.WC_monotone (by omega) hwc)
-    have hfc : f - c ∈ mhs.WC (p + q - 2) := by
-      have hfc' : f - c = wc - wf := by
-        calc
-          f - c = (f + wf) - (c + wc) + (wc - wf) := by abel
-          _ = wc - wf := by rw [hfw, hcw, sub_self, zero_add]
-      rw [hfc']
-      exact Submodule.sub_mem _ hwc hwf
-    have hmk : (Submodule.Quotient.mk (⟨f, hfW⟩ : mhs.WC (p + q - 1)) :
-          weightGradedComplex mhs.WC (p + q - 1)) =
-        Submodule.Quotient.mk ⟨c, hcW⟩ :=
-      (weightGradedComplex_mk_eq_mk_iff mhs.WC (p + q - 1) _ _).2 (by
-        have hindex : p + q - 1 - 1 = p + q - 2 := by ring
-        rwa [hindex])
-    have hF := mhs.mk_mem_complexGradedHodgeStructure_F (p + q - 1) q ⟨f, hfW⟩ hf
-    have hConj := mhs.mk_mem_complexGradedHodgeStructure_conjF
-      (p + q - 1) p ⟨c, hcW⟩ hc
-    rw [← hmk] at hConj
-    have hzero := ((mhs.complexGradedHodgeStructure (p + q - 1)).isCompl_F_conjF q).disjoint.le_bot
-      ⟨hF, by
-        have hindex : p + q - 1 + 1 - q = p := by ring
-        rw [hindex]
-        exact hConj⟩
-    rw [Submodule.mem_bot] at hzero
-    have hfLower : f ∈ mhs.WC (p + q - 2) := by
-      have hindex : p + q - 1 - 1 = p + q - 2 := by ring
-      simpa only [hindex] using
-        (weightGradedComplex_mk_eq_zero_iff mhs.WC (p + q - 1) ⟨f, hfW⟩).1 hzero
-    rw [show x - (y : Vℂ) = f + wf from hfw.symm]
-    exact Submodule.add_mem _ hfLower hwf
-  rw [show x = (y : Vℂ) + (x - (y : Vℂ)) by abel]
-  exact Submodule.add_mem_sup hyIAmbient hdrop
+    have hstep : p + q - 1 - 1 = p + q - 2 := by ring
+    have hconjIndex : p + q - 1 + 1 - q = p := by ring
+    simpa only [hstep] using mhs.mem_WC_sub_one_of_mem_F_sup_and_mem_conjF_sup
+      (p + q - 1) q hdiffW (by simpa only [hstep] using hdiffF)
+        (by simpa only [hstep, hconjIndex] using hdiffConj)
+  convert Submodule.add_mem_sup hyIAmbient hdrop using 1
+  all_goals abel
 
 /-- The swapped Deligne piece lands in the conjugate of `I^{p,q}` modulo `W_{p+q-2}`.
 
