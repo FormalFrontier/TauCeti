@@ -14,14 +14,16 @@ The unblocked grid complex `GC⁻` has one polynomial variable `V_c` for each `O
 the `O`-marking in a chosen column `i` means setting `V_i = 0`.  The resulting simply blocked
 theory keeps the variables indexed by the other columns and counts exactly the empty rectangles
 which cover neither an `X`-marking nor the blocked `O`-marking.  This specialization is defined
-for every grid diagram; for a knot grid it is the simply blocked chain complex `GĈ`, whose homology
-is `GĤ`.  For a multi-component link, the corresponding theory instead requires blocking one
-`O`-marking on each component; that construction is not supplied here.
+for every grid diagram; for a knot grid it is the differential underlying the future simply
+blocked chain complex `GĈ`.  Its square-zero theorem, chain-complex packaging, and homology `GĤ`
+are supplied later.  For a multi-component link, the corresponding theory instead requires
+blocking one `O`-marking on each component; that construction is not supplied here.
 
-This file constructs that specialization before the square-zero theorem.  The coefficient ring is
-`R[V_c | c ≠ i]`, not a polynomial ring with a redundant variable known to act by zero.  Mathlib's
-`MvPolynomial.killCompl` makes the relation to `GC⁻` explicit, while
-`simplyBlockedCoefficient_eq_sum` identifies the terms that remain after specialization.
+This file constructs the coefficient specialization and its linear map before the square-zero
+theorem.  The coefficient ring is `R[V_c | c ≠ i]`, not a polynomial ring with a redundant
+variable known to act by zero.  Mathlib's `MvPolynomial.killCompl` makes the relation to `GC⁻`
+explicit, while `simplyBlockedCoefficient_eq_sum` identifies the terms that remain after
+specialization.
 
 ## Main definitions
 
@@ -34,10 +36,11 @@ This file constructs that specialization before the square-zero theorem.  The co
 
 ## References
 
-This supplies the simply blocked `GĤ` part of
-`TauCetiRoadmap/CombinatorialHeegaardFloer/README.md`, Lane G.3, "The complexes and `∂² = 0`".
-The specialization and rectangle formula follow Ozsváth--Stipsicz--Szabó,
-*Grid Homology for Knots and Links*, Chapter 4.6.
+This supplies the differential needed for the simply blocked `GĤ` part of
+`TauCetiRoadmap/CombinatorialHeegaardFloer/README.md`, Lane G.3, "The complexes and `∂² = 0`";
+square-zero, chain-complex packaging, and `GĤ` itself are later steps.  The specialization and
+rectangle formula follow Ozsváth--Stipsicz--Szabó, *Grid Homology for Knots and Links*, Chapter
+4.6.
 -/
 
 public section
@@ -53,6 +56,46 @@ abbrev SimplyBlockedVariable {n : ℕ} (i : Fin n) := {c : Fin n // c ≠ i}
 over the polynomial ring in the columns other than the blocked column. -/
 abbrev SimplyBlockedGridChain (R : Type*) [CommSemiring R] (n : ℕ) (i : Fin n) : Type _ :=
   GridChain (MvPolynomial (SimplyBlockedVariable i) R) n
+
+/-- Coefficientwise specialization of an unblocked grid chain at `V_i = 0`.
+
+This is semilinear over `MvPolynomial.killCompl`: specializing a polynomial multiple of a chain
+specializes both the scalar and every coefficient. -/
+@[expose]
+noncomputable def simplyBlockedSpecialization {n : ℕ} (R : Type*) [CommSemiring R] (i : Fin n) :
+    GridChainMinus R n →ₛₗ[
+      (MvPolynomial.killCompl (R := R) (f := Subtype.val)
+        (Subtype.val_injective : Function.Injective
+          (Subtype.val : SimplyBlockedVariable i → Fin n))).toRingHom]
+      SimplyBlockedGridChain R n i :=
+  Finsupp.mapRange.linearMap
+    (MvPolynomial.killCompl (R := R) (f := Subtype.val)
+      (Subtype.val_injective : Function.Injective
+        (Subtype.val : SimplyBlockedVariable i → Fin n))).toRingHom.toSemilinearMap
+
+/-- Specializing a grid chain applies `MvPolynomial.killCompl` to each coefficient. -/
+@[simp]
+theorem simplyBlockedSpecialization_apply {n : ℕ} (R : Type*) [CommSemiring R] (i : Fin n)
+    (c : GridChainMinus R n) (x : GridState n) :
+    simplyBlockedSpecialization R i c x =
+      MvPolynomial.killCompl (f := Subtype.val) Subtype.val_injective (c x) :=
+  rfl
+
+/-- Specialization sends a single unblocked generator coefficient to its specialization. -/
+@[simp]
+theorem simplyBlockedSpecialization_single {n : ℕ} (R : Type*) [CommSemiring R] (i : Fin n)
+    (x : GridState n) (a : MvPolynomial (Fin n) R) :
+    simplyBlockedSpecialization R i (Finsupp.single x a) =
+      Finsupp.single x
+        (MvPolynomial.killCompl (f := Subtype.val) Subtype.val_injective a) := by
+  classical
+  apply Finsupp.ext
+  intro y
+  rw [simplyBlockedSpecialization_apply]
+  by_cases hxy : x = y
+  · subst y
+    simp
+  · simp [hxy]
 
 namespace GridDiagram
 
@@ -215,9 +258,23 @@ theorem simplyBlockedDifferentialOnGenerator_support_subset (i : Fin n) (x : Gri
   rw [G.simplyBlockedCoefficient_def R i x y, hzero, map_zero] at hy
   exact hy rfl
 
-/-- The differential obtained from `GC⁻` by setting `V_i = 0`, linear over the polynomial ring in
-the remaining columns. For a knot grid this is the simply blocked chain complex `GĈ`; a link with
-multiple components requires one blocked marking on each component instead. -/
+/-- Specializing the unblocked differential of a generator gives its simply blocked
+differential row. -/
+theorem simplyBlockedSpecialization_unblockedDifferentialOnGenerator (i : Fin n)
+    (x : GridState n) :
+    simplyBlockedSpecialization R i (G.unblockedDifferentialOnGenerator R x) =
+      G.simplyBlockedDifferentialOnGenerator R i x := by
+  apply Finsupp.ext
+  intro y
+  rw [simplyBlockedSpecialization_apply,
+    G.simplyBlockedDifferentialOnGenerator_apply R i x y,
+    G.unblockedDifferentialOnGenerator_apply R x y]
+  exact G.simplyBlockedCoefficient_def R i x y
+
+/-- The linear map obtained from the `GC⁻` differential by setting `V_i = 0`.  For a knot grid it
+is the differential underlying the future simply blocked chain complex `GĈ`; square-zero,
+chain-complex packaging, and its homology `GĤ` are supplied later.  A link with multiple
+components requires one blocked marking on each component instead. -/
 noncomputable def simplyBlockedDifferential (i : Fin n) :
     SimplyBlockedGridChain R n i →ₗ[MvPolynomial (SimplyBlockedVariable i) R]
       SimplyBlockedGridChain R n i :=
@@ -256,6 +313,28 @@ theorem simplyBlockedDifferential_apply_apply (i : Fin n)
       c.sum fun x a => a * G.simplyBlockedCoefficient R i x y := by
   rw [G.simplyBlockedDifferential_apply R i c]
   simp [Finsupp.sum_apply]
+
+/-- Coefficientwise specialization intertwines the unblocked and simply blocked differentials. -/
+theorem simplyBlockedSpecialization_unblockedDifferential (i : Fin n)
+    (c : GridChainMinus R n) :
+    simplyBlockedSpecialization R i (G.unblockedDifferential R c) =
+      G.simplyBlockedDifferential R i (simplyBlockedSpecialization R i c) := by
+  induction c using Finsupp.induction with
+  | zero =>
+      rw [(G.unblockedDifferential R).map_zero,
+        (simplyBlockedSpecialization R i).map_zero,
+        (G.simplyBlockedDifferential R i).map_zero]
+  | single_add x a c _ _ ih =>
+      rw [(G.unblockedDifferential R).map_add, (simplyBlockedSpecialization R i).map_add,
+        (simplyBlockedSpecialization R i).map_add,
+        (G.simplyBlockedDifferential R i).map_add, ih]
+      congr 1
+      rw [simplyBlockedSpecialization_single]
+      apply Finsupp.ext
+      intro y
+      rw [simplyBlockedSpecialization_apply, G.unblockedDifferential_apply_apply,
+        G.simplyBlockedDifferential_apply_apply]
+      simp [simplyBlockedCoefficient_def]
 
 end GridDiagram
 
