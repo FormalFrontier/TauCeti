@@ -167,8 +167,18 @@ theorem geckFrobenius_geckRootSubgroupPoints (i : Fin t.rank ⊕ Fin t.rank)
     t.geckFrobenius ht p k A (t.geckRootSubgroupPoints ht i A u) =
       t.geckRootSubgroupPoints ht i A
         (Multiplicative.ofAdd (Multiplicative.toAdd u ^ p ^ k)) := by
-  rw [t.geckRootSubgroupPoints_apply ht i A u,
-    t.geckRootSubgroupPoints_apply ht i A]
+  rw [show t.geckRootSubgroupPoints ht i A u =
+      ⟨t.geckRootSubgroupMatrix ht i
+          ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm u),
+        t.geckRootSubgroupMatrix_mem_geckPoints ht A i _⟩ from
+      Subtype.ext (t.coe_geckRootSubgroupPoints ht i A u),
+    show t.geckRootSubgroupPoints ht i A
+        (Multiplicative.ofAdd (Multiplicative.toAdd u ^ p ^ k)) =
+      ⟨t.geckRootSubgroupMatrix ht i
+          ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm
+            (Multiplicative.ofAdd (Multiplicative.toAdd u ^ p ^ k))),
+        t.geckRootSubgroupMatrix_mem_geckPoints ht A i _⟩ from
+      Subtype.ext (t.coe_geckRootSubgroupPoints ht i A _)]
   exact t.geckFrobenius_geckRootSubgroupMatrix ht p k A i u
 
 /-- **The Frobenius raises a point of the pinned Geck weight torus to its `p ^ k`-th power.** -/

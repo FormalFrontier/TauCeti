@@ -19,17 +19,15 @@ geckRootSubgroupPoints i A : Multiplicative A →* geckPoints A.
 ```
 
 The codomain restriction is justified by the existing theorem that every represented root-subgroup
-matrix lies in the carrier. The accompanying coercion and application theorems connect the new map
-to the matrix API, so later functoriality and Frobenius proofs can reuse the established matrix
-equations without unfolding the construction.
+matrix lies in the carrier. The accompanying coercion theorem connects the new map to the matrix
+API, so later functoriality and Frobenius proofs can reuse the established matrix equations without
+unfolding the construction.
 
 ## Main declarations
 
 * `TauCeti.DynkinType.geckRootSubgroupPoints`: the parametrized positive or negative simple-root
   subgroup inside the point group of the Geck carrier.
 * `TauCeti.DynkinType.coe_geckRootSubgroupPoints`: its underlying general-linear matrix.
-* `TauCeti.DynkinType.geckRootSubgroupPoints_apply`: the corresponding equality in the carrier
-  point group.
 
 ## References
 
@@ -66,12 +64,8 @@ read through the canonical multiplicative copy of the additive group of `A`. -/
 noncomputable def geckRootSubgroupPoints (i : Fin t.rank ⊕ Fin t.rank)
     (A : Type v) [CommRing A] : Multiplicative A →* t.geckPoints ht A :=
   MonoidHom.codRestrict
-    ((TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupMatrix
-      (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
-      (t.geckCoordinateLattice ht).toAddSubgroup
-      (t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht) i
-      (t.isNilpotent_geckRepresentation_rootGenerator ht i) (t.geckCoordinateBasisFin ht)).comp
-        (AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm.toMonoidHom)
+    ((t.geckRootSubgroupMatrix ht i).comp
+      (AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm.toMonoidHom)
     (t.geckPoints ht A) fun u =>
       t.geckRootSubgroupMatrix_mem_geckPoints ht A i
         ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm u)
@@ -85,16 +79,6 @@ theorem coe_geckRootSubgroupPoints (i : Fin t.rank ⊕ Fin t.rank)
         Matrix.GeneralLinearGroup (Fin (t.geckDim ht)) A) =
       t.geckRootSubgroupMatrix ht i
         ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm u) := (rfl)
-
-/-- A parametrized Geck root-subgroup point is the represented matrix together with its proof of
-membership in the carrier point group. -/
-theorem geckRootSubgroupPoints_apply (i : Fin t.rank ⊕ Fin t.rank)
-    (A : Type v) [CommRing A] (u : Multiplicative A) :
-    t.geckRootSubgroupPoints ht i A u =
-      ⟨t.geckRootSubgroupMatrix ht i
-          ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm u),
-        t.geckRootSubgroupMatrix_mem_geckPoints ht A i _⟩ :=
-  Subtype.ext (t.coe_geckRootSubgroupPoints ht i A u)
 
 end
 

@@ -176,8 +176,18 @@ theorem geckPointsMap_geckRootSubgroupPoints (f : A →+* B)
     t.geckPointsMap ht f (t.geckRootSubgroupPoints ht i A u) =
       t.geckRootSubgroupPoints ht i B
         (Multiplicative.ofAdd (f (Multiplicative.toAdd u))) := by
-  rw [t.geckRootSubgroupPoints_apply ht i A u,
-    t.geckRootSubgroupPoints_apply ht i B]
+  rw [show t.geckRootSubgroupPoints ht i A u =
+      ⟨t.geckRootSubgroupMatrix ht i
+          ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm u),
+        t.geckRootSubgroupMatrix_mem_geckPoints ht A i _⟩ from
+      Subtype.ext (t.coe_geckRootSubgroupPoints ht i A u),
+    show t.geckRootSubgroupPoints ht i B
+        (Multiplicative.ofAdd (f (Multiplicative.toAdd u))) =
+      ⟨t.geckRootSubgroupMatrix ht i
+          ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := B)).symm
+            (Multiplicative.ofAdd (f (Multiplicative.toAdd u)))),
+        t.geckRootSubgroupMatrix_mem_geckPoints ht B i _⟩ from
+      Subtype.ext (t.coe_geckRootSubgroupPoints ht i B _)]
   exact t.geckPointsMap_geckRootSubgroupMatrix ht f i u
 
 /-- **The induced map carries a point of the pinned Geck weight torus along the homomorphism of
