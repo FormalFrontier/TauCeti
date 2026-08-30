@@ -322,7 +322,7 @@ private theorem typeAGraphAutomorphism_transvectionUnit_aux (r : ℕ)
     _ = d * (p * transvectionUnit hij.symm (-c) * p⁻¹) * d⁻¹ := by group
     _ = d * transvectionUnit (Fin.rev_injective.ne hij.symm) (-c) * d⁻¹ := by
       rw [permutationGL_conj_transvectionUnit]
-    _ = _ := by rw [diagGL_conj_transvectionUnit]
+    _ = _ := by rw [diagGL_mul_transvectionUnit_mul_inv]
 
 /-- **The pinned graph automorphism reverses the positive simple-root subgroups without changing
 their parameters.** In Bourbaki numbering, the node `i` is carried to `i.rev`. -/

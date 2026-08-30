@@ -44,7 +44,7 @@ the other transvections; this is the normalizer half of the data pinning the ele
 against the torus.
 
 Conjugating a transvection by an invertible diagonal matrix rescales its parameter by the value of
-the corresponding root: `TauCeti.diagGL_conj_transvectionUnit` says that `t xᵢⱼ(c) t⁻¹` is
+the corresponding root: `TauCeti.diagGL_mul_transvectionUnit_mul_inv` says that `t xᵢⱼ(c) t⁻¹` is
 `xᵢⱼ(tᵢ c tⱼ⁻¹)`. Together with the two relations above these are the equations that pin the
 elementary matrices against the diagonal torus.
 
@@ -70,17 +70,17 @@ elementary matrices against the diagonal torus.
   transvections in either orientation.
 * `TauCeti.det_transvectionUnit` and `TauCeti.transvectionUnit_injective`: a transvection has
   determinant `1`, and distinct parameters give distinct transvections.
-* `TauCeti.diagGL_conj_transvectionUnit`: conjugation by an invertible diagonal matrix.
+* `TauCeti.diagGL_mul_transvectionUnit_mul_inv`: conjugation by an invertible diagonal matrix.
 * `TauCeti.map_transvectionUnit` and `TauCeti.map_transvectionWeylElement`: transvections and their
   Weyl representatives are natural in the base ring.
 * `TauCeti.transvectionWeylElement_inv`: the representative for the opposite root is the inverse.
-* `TauCeti.transvectionWeylElement_conj_transvectionUnit_self` and
-  `TauCeti.transvectionWeylElement_conj_transvectionUnit_symm`: the reflection exchanges its two
-  root subgroups and negates their parameters.
-* `TauCeti.transvectionWeylElement_conj_transvectionUnit_left` and
-  `TauCeti.transvectionWeylElement_conj_transvectionUnit_right`: conjugation by `nᵢⱼ` moves an
-  occurrence of `j` to `i` with unchanged parameter. Applying these at the opposite root describes
-  the reverse index movement by conjugation with `nᵢⱼ⁻¹`.
+* `TauCeti.transvectionWeylElement_mul_transvectionUnit_mul_inv_self` and
+  `TauCeti.transvectionWeylElement_mul_transvectionUnit_mul_inv_symm`: the reflection exchanges
+  its two root subgroups and negates their parameters.
+* `TauCeti.transvectionWeylElement_mul_transvectionUnit_mul_inv_left` and
+  `TauCeti.transvectionWeylElement_mul_transvectionUnit_mul_inv_right`: conjugation by `nᵢⱼ`
+  moves an occurrence of `j` to `i` with unchanged parameter. Applying these at the opposite root
+  describes the reverse index movement by conjugation with `nᵢⱼ⁻¹`.
 
 ## References
 
@@ -363,7 +363,7 @@ theorem transvectionWeylElement_inv (hij : i ≠ j) :
 
 /-- Conjugation by the Weyl representative for `εᵢ-εⱼ` sends its own root subgroup to
 the opposite root subgroup and negates the parameter. -/
-theorem transvectionWeylElement_conj_transvectionUnit_self (hij : i ≠ j) (c : A) :
+theorem transvectionWeylElement_mul_transvectionUnit_mul_inv_self (hij : i ≠ j) (c : A) :
     transvectionWeylElement hij * transvectionUnit hij c *
         (transvectionWeylElement hij)⁻¹ =
       transvectionUnit hij.symm (-c) := by
@@ -395,7 +395,7 @@ theorem transvectionWeylElement_conj_transvectionUnit_self (hij : i ≠ j) (c : 
 
 /-- Conjugation by the Weyl representative for `εᵢ-εⱼ` sends the opposite root subgroup
 back to its root subgroup and negates the parameter. -/
-theorem transvectionWeylElement_conj_transvectionUnit_symm (hij : i ≠ j) (c : A) :
+theorem transvectionWeylElement_mul_transvectionUnit_mul_inv_symm (hij : i ≠ j) (c : A) :
     transvectionWeylElement hij * transvectionUnit hij.symm c *
         (transvectionWeylElement hij)⁻¹ =
       transvectionUnit hij (-c) := by
@@ -427,7 +427,7 @@ theorem transvectionWeylElement_conj_transvectionUnit_symm (hij : i ≠ j) (c : 
 
 /-- Conjugation by the Weyl representative exchanging `i` and `j` replaces the left index `j`
 of `xⱼₖ(c)` by `i`. -/
-theorem transvectionWeylElement_conj_transvectionUnit_left
+theorem transvectionWeylElement_mul_transvectionUnit_mul_inv_left
     (hij : i ≠ j) (hjk : j ≠ k) (hik : i ≠ k) (c : A) :
     transvectionWeylElement hij * transvectionUnit hjk c *
         (transvectionWeylElement hij)⁻¹ =
@@ -462,7 +462,7 @@ theorem transvectionWeylElement_conj_transvectionUnit_left
 
 /-- Conjugation by the Weyl representative exchanging `i` and `j` replaces the right index `j`
 of `xₖⱼ(c)` by `i`. -/
-theorem transvectionWeylElement_conj_transvectionUnit_right
+theorem transvectionWeylElement_mul_transvectionUnit_mul_inv_right
     (hij : i ≠ j) (hkj : k ≠ j) (hki : k ≠ i) (c : A) :
     transvectionWeylElement hij * transvectionUnit hkj c *
         (transvectionWeylElement hij)⁻¹ =
@@ -569,7 +569,7 @@ variable {N : ℕ} {i j : Fin N}
 /-- Conjugating the root subgroup element `xᵢⱼ(c)` by the diagonal matrix with entries `t`
 rescales the parameter by `tᵢ tⱼ⁻¹`, the value at `t` of the root `εᵢ - εⱼ`. This is the equation
 pinning the root subgroup against the diagonal torus. -/
-theorem diagGL_conj_transvectionUnit (hij : i ≠ j) (t : Fin N → Aˣ) (c : A) :
+theorem diagGL_mul_transvectionUnit_mul_inv (hij : i ≠ j) (t : Fin N → Aˣ) (c : A) :
     diagGL t * transvectionUnit hij c * (diagGL t)⁻¹ =
       transvectionUnit hij ((t i : A) * c * ((t j)⁻¹ : Aˣ)) := by
   have hval : ((((diagGL t)⁻¹ : GL (Fin N) A)) : Matrix (Fin N) (Fin N) A) =

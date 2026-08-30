@@ -32,11 +32,11 @@ subgroups. This advances the explicit full-weight type-`C` carrier in Layer 9 of
 
 * `TauCeti.GLSymplecticFin.differenceShortRootWeylElement`: the standard representative of the
   reflection in `e_i-e_j`.
-* `TauCeti.GLSymplecticFin.differenceShortRootWeylElement_conj_differenceShortRootUnit`: its
-  reflection action on the short-root subgroup.
-* `TauCeti.GLSymplecticFin.differenceShortRootWeylElement_conj_positiveLongRootTransvectionUnit`: it
+* `differenceShortRootWeylElement_mul_differenceShortRootUnit_mul_inv`: its reflection action on
+  the short-root subgroup.
+* `differenceShortRootWeylElement_mul_positiveLongRootTransvectionUnit_mul_inv`: it
   transports `x_{2e_j}(c)` to `x_{2e_i}(c)`.
-* `TauCeti.GLSymplecticFin.differenceShortRootWeylElement_conj_negativeLongRootTransvectionUnit`:
+* `differenceShortRootWeylElement_mul_negativeLongRootTransvectionUnit_mul_inv`:
   the corresponding transport of `x_{-2e_j}(c)`.
 
 ## References
@@ -61,20 +61,13 @@ def differenceShortRootWeylElement (hij : i ≠ j) : GLSymplecticFin m R :=
   differenceShortRootUnit hij 1 * differenceShortRootUnit hij.symm (-1) *
     differenceShortRootUnit hij 1
 
-/-- The short-root Weyl element is the standard three-factor word in the two opposite root
-subgroups. -/
-theorem differenceShortRootWeylElement_def (hij : i ≠ j) :
-    differenceShortRootWeylElement (R := R) hij =
-      differenceShortRootUnit hij 1 * differenceShortRootUnit hij.symm (-1) *
-        differenceShortRootUnit hij 1 := (rfl)
-
 private theorem coe_differenceShortRootWeylElement (hij : i ≠ j) :
     ((differenceShortRootWeylElement (R := R) hij : GLSymplecticFin m R) :
         GL (Fin (m + m)) R) =
       TauCeti.transvectionWeylElement (differenceShortRoot_first_indices_ne hij) *
         (TauCeti.transvectionWeylElement
           (differenceShortRoot_second_indices_ne hij))⁻¹ := by
-  rw [differenceShortRootWeylElement_def, Subgroup.coe_mul, Subgroup.coe_mul,
+  rw [differenceShortRootWeylElement, Subgroup.coe_mul, Subgroup.coe_mul,
     coe_differenceShortRootUnit, coe_differenceShortRootUnit (hij := hij.symm),
     TauCeti.transvectionWeylElement_inv_def, TauCeti.transvectionWeylElement_def]
   simp only [neg_neg]
@@ -103,7 +96,7 @@ private theorem coe_differenceShortRootWeylElement (hij : i ≠ j) :
 /-- Conjugation by the Weyl representative for `e_i-e_j` sends its short-root subgroup to
 the opposite short-root subgroup and negates the parameter. -/
 @[simp]
-theorem differenceShortRootWeylElement_conj_differenceShortRootUnit
+theorem differenceShortRootWeylElement_mul_differenceShortRootUnit_mul_inv
     (hij : i ≠ j) (c : R) :
     differenceShortRootWeylElement hij * differenceShortRootUnit hij c *
         (differenceShortRootWeylElement hij)⁻¹ =
@@ -123,11 +116,11 @@ theorem differenceShortRootWeylElement_conj_differenceShortRootUnit
   set u := TauCeti.transvectionUnit (differenceShortRoot_first_indices_ne hij).symm (-c)
   set v := TauCeti.transvectionUnit (differenceShortRoot_second_indices_ne hij).symm c
   have hleft : left * x * left⁻¹ = u :=
-    TauCeti.transvectionWeylElement_conj_transvectionUnit_self
+    TauCeti.transvectionWeylElement_mul_transvectionUnit_mul_inv_self
       (differenceShortRoot_first_indices_ne hij) c
   have hright : right * y * right⁻¹ = v :=
     by simpa only [neg_neg] using
-      TauCeti.transvectionWeylElement_conj_transvectionUnit_symm
+      TauCeti.transvectionWeylElement_mul_transvectionUnit_mul_inv_symm
         (differenceShortRoot_second_indices_ne hij).symm (-c)
   have hright_x : Commute right x := by
     have houter := TauCeti.commute_transvectionUnit
@@ -167,7 +160,7 @@ theorem differenceShortRootWeylElement_conj_differenceShortRootUnit
 /-- **A short-root Weyl element transports positive long roots.** Conjugation by the reflection
 representative for `e_i-e_j` sends `x_{2e_j}(c)` to `x_{2e_i}(c)`, with no change of parameter. -/
 @[simp]
-theorem differenceShortRootWeylElement_conj_positiveLongRootTransvectionUnit
+theorem differenceShortRootWeylElement_mul_positiveLongRootTransvectionUnit_mul_inv
     (hij : i ≠ j) (c : R) :
     differenceShortRootWeylElement hij * positiveLongRootTransvectionUnit j c *
         (differenceShortRootWeylElement hij)⁻¹ =
@@ -187,18 +180,18 @@ theorem differenceShortRootWeylElement_conj_positiveLongRootTransvectionUnit
         left * (right * TauCeti.transvectionUnit (finSumFinEquiv_inl_ne_inr j j) c *
           right⁻¹) * left⁻¹ := by group
     _ = left * TauCeti.transvectionUnit (finSumFinEquiv_inl_ne_inr j i) c * left⁻¹ := by
-      rw [TauCeti.transvectionWeylElement_conj_transvectionUnit_right
+      rw [TauCeti.transvectionWeylElement_mul_transvectionUnit_mul_inv_right
         (differenceShortRoot_second_indices_ne hij).symm
         (finSumFinEquiv_inl_ne_inr j j) (finSumFinEquiv_inl_ne_inr j i)]
     _ = TauCeti.transvectionUnit (finSumFinEquiv_inl_ne_inr i i) c := by
-      exact TauCeti.transvectionWeylElement_conj_transvectionUnit_left
+      exact TauCeti.transvectionWeylElement_mul_transvectionUnit_mul_inv_left
         (differenceShortRoot_first_indices_ne hij)
         (finSumFinEquiv_inl_ne_inr j i) (finSumFinEquiv_inl_ne_inr i i) c
 
 /-- **A short-root Weyl element transports negative long roots.** Conjugation by the reflection
 representative for `e_i-e_j` sends `x_{-2e_j}(c)` to `x_{-2e_i}(c)`, with no change of parameter. -/
 @[simp]
-theorem differenceShortRootWeylElement_conj_negativeLongRootTransvectionUnit
+theorem differenceShortRootWeylElement_mul_negativeLongRootTransvectionUnit_mul_inv
     (hij : i ≠ j) (c : R) :
     differenceShortRootWeylElement hij * negativeLongRootTransvectionUnit j c *
         (differenceShortRootWeylElement hij)⁻¹ =
@@ -218,11 +211,11 @@ theorem differenceShortRootWeylElement_conj_negativeLongRootTransvectionUnit
         left * (right * TauCeti.transvectionUnit (finSumFinEquiv_inr_ne_inl j j) c *
           right⁻¹) * left⁻¹ := by group
     _ = left * TauCeti.transvectionUnit (finSumFinEquiv_inr_ne_inl i j) c * left⁻¹ := by
-      rw [TauCeti.transvectionWeylElement_conj_transvectionUnit_left
+      rw [TauCeti.transvectionWeylElement_mul_transvectionUnit_mul_inv_left
         (differenceShortRoot_second_indices_ne hij).symm
         (finSumFinEquiv_inr_ne_inl j j) (finSumFinEquiv_inr_ne_inl i j)]
     _ = TauCeti.transvectionUnit (finSumFinEquiv_inr_ne_inl i i) c := by
-      exact TauCeti.transvectionWeylElement_conj_transvectionUnit_right
+      exact TauCeti.transvectionWeylElement_mul_transvectionUnit_mul_inv_right
         (differenceShortRoot_first_indices_ne hij)
         (finSumFinEquiv_inr_ne_inl i j) (finSumFinEquiv_inr_ne_inl i i) c
 
