@@ -199,8 +199,8 @@ private theorem eq_zero_and_eq_zero_of_smul_diagIdempotent {r c : R}
 Evaluating the key identity `tr (D x) · x = ⟨x, D x⟩ · 1` at the diagonal idempotent `e` gives
 `tr (D e) = 0`, because the two sides have different second diagonal entries; polarizing the
 identity and putting `e` in the second slot then gives `tr (D x) · e = ⟨x, D e⟩ + ⟨e, D x⟩ · 1` for
-arbitrary `x`, and the same entry comparison finishes. -/
-@[simp]
+arbitrary `x`, and the same entry comparison finishes. Not a `simp` lemma, because
+`TauCeti.Octonion.trace_apply` already takes its left-hand side apart. -/
 theorem trace_derivation_apply_eq_zero (x : Octonion R) :
     trace ((D : Module.End R (Octonion R)) x) = 0 := by
   obtain ⟨he, -⟩ := eq_zero_and_eq_zero_of_smul_diagIdempotent
