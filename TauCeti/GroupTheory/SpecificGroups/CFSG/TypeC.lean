@@ -74,16 +74,8 @@ abbrev IsTypeC : LieTypeIndex → Prop
   | .C _ _ => True
   | _ => False
 
-/-- Characterization of the type-`C` constructor selector. -/
-@[simp]
-theorem isTypeC_iff (d : LieTypeIndex) : d.IsTypeC ↔
-    match d with
-    | .C _ _ => True
-    | _ => False :=
-  Iff.rfl
-
 instance : DecidablePred IsTypeC := fun d => by
-  cases d <;> rw [isTypeC_iff] <;> infer_instance
+  cases d <;> infer_instance
 
 end LieTypeIndex
 
@@ -94,7 +86,7 @@ abbrev TypeCLieIndex : Type := {d : ValidLieTypeIndex // d.1.IsTypeC}
 
 namespace TypeCLieIndex
 
-open LieTypeIndex (inStandardRange_iff isTypeC_iff usesHalfFrobenius_iff valid_iff)
+open LieTypeIndex (inStandardRange_iff usesHalfFrobenius_iff valid_iff)
 
 /-- Introduce a valid type-`C` index. -/
 abbrev ofC (rank : ℕ) (q : PrimePower) (hvalid : (LieTypeIndex.C rank q).Valid) :
@@ -104,9 +96,13 @@ abbrev ofC (rank : ℕ) (q : PrimePower) (hvalid : (LieTypeIndex.C rank q).Valid
 /-- The rank of a validated type-`C` index is at least three. -/
 theorem three_le_rank (d : TypeCLieIndex) : 3 ≤ d.1.rank := by
   obtain ⟨⟨d, hvalid⟩, hC⟩ := d
-  have hC' := (isTypeC_iff d).mp hC
-  cases d <;> simp_all only
+  -- Destructuring the nested subtype leaves its coercion in `hC`; expose the raw-index
+  -- proposition so constructor reduction can eliminate every non-`C` branch.
+  change d.IsTypeC at hC
+  cases d <;> try contradiction
   case C rank q =>
+    -- Once the constructor selector has removed every other branch, the rank projection of
+    -- `LieTypeIndex.C rank q` reduces to `rank`.
     change 3 ≤ rank
     exact (inStandardRange_iff _).mp ((valid_iff _).mp hvalid).1 |>.1
 
@@ -128,16 +124,19 @@ the identity. -/
 abbrev toGraphTwistedIndex (d : TypeCLieIndex) : GraphTwistedIndex :=
   ⟨d.1, by
     obtain ⟨⟨d, _⟩, hC⟩ := d
-    have hC' := (isTypeC_iff d).mp hC
+    -- Both hypotheses and target retain projections through the two subtype layers. Expose the
+    -- raw index before eliminating the constructors excluded by `IsTypeC`.
+    change d.IsTypeC at hC
     change ¬d.UsesHalfFrobenius
-    cases d <;> simp_all [usesHalfFrobenius_iff]⟩
+    cases d <;> simp_all [LieTypeIndex.IsTypeC, usesHalfFrobenius_iff]⟩
 
 /-- The diagram permutation of an untwisted type-`C` index is the identity. -/
 @[simp]
 theorem diagramPerm_eq_one (d : TypeCLieIndex) : d.toGraphTwistedIndex.diagramPerm = 1 := by
   obtain ⟨⟨d, hvalid⟩, hC⟩ := d
-  have hC' := (isTypeC_iff d).mp hC
-  cases d <;> simp_all only
+  -- As in `three_le_rank`, expose the raw selector after destructuring the nested subtype.
+  change d.IsTypeC at hC
+  cases d <;> try contradiction
   case C rank q =>
     simpa only [toGraphTwistedIndex] using GraphTwistedIndex.diagramPerm_C hvalid
 
@@ -156,16 +155,19 @@ noncomputable def simpleRootSubgroup (d : TypeCLieIndex) (i : Fin d.1.rank) :
     Multiplicative d.1.Closure →* d.AmbientGroup :=
   SpStd.rootSubgroupPoints d.carrierParameter (.inl (rootIndex d i)) d.1.Closure
 
+/-- The type-`C` simple-root subgroup is the corresponding positive numbered root subgroup of the
+symplectic carrier. This is intentionally not a simp lemma: `steinberg_simpleRootSubgroup` is the
+pinned normal form for these expressions. -/
+theorem simpleRootSubgroup_def (d : TypeCLieIndex) (i : Fin d.1.rank) :
+    d.simpleRootSubgroup i =
+      SpStd.rootSubgroupPoints d.carrierParameter
+        (.inl (Fin.cast d.carrierParameter_add_one.symm i)) d.1.Closure :=
+  (rfl)
+
 /-- **The Steinberg endomorphism of a validated type-`C` index:** entrywise `q`-power
 Frobenius on the full-weight symplectic carrier. -/
 noncomputable def steinberg (d : TypeCLieIndex) : d.AmbientGroup →* d.AmbientGroup :=
   SpStd.frobenius d.carrierParameter d.1.characteristic d.1.fieldExponent d.1.Closure
-
-/-- The indexed type-`C` Steinberg map is the carrier's entrywise Frobenius. -/
-theorem steinberg_def (d : TypeCLieIndex) :
-    d.steinberg =
-      SpStd.frobenius d.carrierParameter d.1.characteristic d.1.fieldExponent d.1.Closure :=
-  by rw [steinberg]
 
 /-- **The type-`C` Steinberg map has the pinned action on every positive simple-root subgroup.**
 It sends `x_i(u)` to `x_i(u ^ q)`, where `q` is the field order recorded by the index. -/
@@ -175,9 +177,8 @@ theorem steinberg_simpleRootSubgroup (d : TypeCLieIndex) (i : Fin d.1.rank)
     d.steinberg (d.simpleRootSubgroup i u) =
       d.simpleRootSubgroup (d.toGraphTwistedIndex.diagramPerm i)
         (Multiplicative.ofAdd (Multiplicative.toAdd u ^ d.1.fieldOrder)) := by
-  rw [diagramPerm_apply, steinberg_def]
-  simp only [simpleRootSubgroup]
-  rw [SpStd.frobenius_rootSubgroupPoints,
+  rw [diagramPerm_apply, steinberg, simpleRootSubgroup_def,
+    SpStd.frobenius_rootSubgroupPoints,
     ValidLieTypeIndex.fieldOrder_eq_characteristic_pow]
 
 /-- The fixed subgroup of the Steinberg endomorphism attached to a type-`C` index. -/
