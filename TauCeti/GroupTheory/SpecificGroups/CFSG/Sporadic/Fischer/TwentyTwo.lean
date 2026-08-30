@@ -48,11 +48,10 @@ the relations defining the presented group, so a consumer reasons about the row 
 it.
 
 Three decidable checks accompany those equations. The relator lengths and their total record the
-compiled data one word at a time and in aggregate, and cyclic reducedness is what makes such a
-letter count comparable with a published presentation length, since both are measured after free
-and cyclic reduction of each relator. The ATLAS page records no length for this presentation, so
-the total here states the transcription for a reviewer to compare with the source, rather than
-checking it against a recorded number.
+compiled data one word at a time and in aggregate. Cyclic reducedness shows that cyclic reduction
+does not shorten any of these relators, so `328` is also their post-reduction total. The ATLAS page
+records no length for this presentation, so the total here states the transcription for a reviewer
+to compare with the source, rather than checking it against a recorded number.
 
 ## Main definitions and results
 
@@ -262,9 +261,9 @@ theorem fi22Presentation_totalLength : fi22Presentation.totalLength = 328 := by
   rw [GroupPresentation.totalLength_def, fi22Presentation_map_length_relators]
   decide
 
-/-- Every compiled relator word for `Fi₂₂` is cyclically reduced. This is what makes the letter
-count of `TauCeti.Sporadic.fi22Presentation_totalLength` comparable with a published presentation
-length, which is measured after free and cyclic reduction of each relator. -/
+/-- Every compiled relator word for `Fi₂₂` is cyclically reduced. Thus cyclic reduction does not
+shorten any relator, so `TauCeti.Sporadic.fi22Presentation_totalLength` is also the post-reduction
+total. -/
 theorem fi22Presentation_relatorsCyclicallyReduced :
     fi22Presentation.relatorsCyclicallyReduced := by
   simp only [GroupPresentation.relatorsCyclicallyReduced_iff, GroupPresentation.relators_def,
