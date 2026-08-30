@@ -193,6 +193,7 @@ theorem preprojectiveBaseChange_preprojectiveMk_ofPath (f : k →+* l)
 
 /-- The map on preprojective algebras carries the source scalar action to the target scalar action
 through the coefficient homomorphism. -/
+@[simp]
 theorem preprojectiveBaseChange_algebraMap (f : k →+* l) (r : k) :
     preprojectiveBaseChange f (algebraMap k (preprojectiveAlgebra k Q) r) =
       algebraMap l (preprojectiveAlgebra l Q) (f r) := by
