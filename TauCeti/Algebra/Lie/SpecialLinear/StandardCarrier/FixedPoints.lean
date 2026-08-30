@@ -97,7 +97,6 @@ variable [ExpChar K p]
 /-- **A type-`A_r` carrier point over a field is fixed by the `p ^ k`-power Frobenius exactly when
 all of its matrix entries lie in the Frobenius-fixed subfield.** This is
 `TauCeti.SlStd.frobenius_eq_self_iff` read over a field, where the fixed subring is a subfield. -/
-@[simp]
 theorem mem_fixedSubgroup_frobenius_iff (g : points r K) :
     g ∈ fixedSubgroup (frobenius r p k K) ↔
       ∀ i j, ((g : Matrix.GeneralLinearGroup (Fin (r + 1)) K) :
@@ -241,7 +240,6 @@ theorem map_subtype_fixedSubgroup_frobenius_eq_range_mapGL :
 invertible matrix over `K` is one exactly when its determinant is one and its entries lie in the
 Frobenius-fixed subfield. This is the entrywise reading of
 `TauCeti.SlStd.map_subtype_fixedSubgroup_frobenius_eq_range_mapGL`. -/
-@[simp]
 theorem mem_map_subtype_fixedSubgroup_frobenius_iff
     (g : Matrix.GeneralLinearGroup (Fin (r + 1)) K) :
     g ∈ (fixedSubgroup (frobenius r p k K)).map (points r K).subtype ↔
