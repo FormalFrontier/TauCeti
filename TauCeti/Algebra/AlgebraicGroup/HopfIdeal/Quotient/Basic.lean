@@ -33,6 +33,8 @@ the finite-type coordinate-Hopf-algebra category.
 * `TauCeti.CommHopfAlgCat.mkQuotient_surjective`: the quotient morphism is surjective.
 * `TauCeti.FiniteTypeCommHopfAlgCat.quotient`: the quotient object in
   `FiniteTypeCommHopfAlgCat`.
+* `TauCeti.FiniteTypeCommHopfAlgCat.quotientOfObjEq`: the same quotient, taken by a Hopf ideal
+  of a commutative Hopf algebra presented as the underlying object.
 * `TauCeti.FiniteTypeCommHopfAlgCat.mkQuotient`: the quotient morphism.
 * `TauCeti.FiniteTypeCommHopfAlgCat.mkQuotient_ker`: its kernel characterization.
 * `TauCeti.FiniteTypeCommHopfAlgCat.liftQuotient`: the induced morphism out of a quotient.
@@ -566,6 +568,28 @@ finite-type commutative Hopf algebra. -/
 noncomputable abbrev quotient (H : FiniteTypeCommHopfAlgCat.{u, v} R) (I : HopfIdeal R H) :
     FiniteTypeCommHopfAlgCat.{u, v} R :=
   ⟨CommHopfAlgCat.quotient H.obj I, inferInstanceAs (Algebra.FiniteType R (H ⧸ I.toIdeal))⟩
+
+/-- The quotient of a finite-type commutative Hopf algebra by a Hopf ideal of a commutative Hopf
+algebra `B` presented as its underlying object.
+
+Hopf ideals are usually stated for an unbundled coordinate Hopf algebra, whose finite-type
+package identifies it only up to the propositional equality `h`. Transporting the ideal along
+`h` keeps such an ideal usable in the finite-type category without unfolding the package. -/
+noncomputable abbrev quotientOfObjEq (H : FiniteTypeCommHopfAlgCat.{u, v} R)
+    {B : _root_.CommHopfAlgCat.{v} R} (h : H.obj = B) (I : HopfIdeal R B) :
+    FiniteTypeCommHopfAlgCat.{u, v} R :=
+  -- The ring and Hopf-algebra structures both depend on the ambient object, so the transport
+  -- is taken along the motive `B ↦ HopfIdeal R B` rather than on the carrier alone.
+  quotient H (cast (congrArg (fun B : _root_.CommHopfAlgCat.{v} R => HopfIdeal R B) h.symm) I)
+
+/-- The object underlying `quotientOfObjEq` is the quotient of the presented commutative Hopf
+algebra by the given Hopf ideal. -/
+@[simp]
+theorem quotientOfObjEq_obj (H : FiniteTypeCommHopfAlgCat.{u, v} R)
+    {B : _root_.CommHopfAlgCat.{v} R} (h : H.obj = B) (I : HopfIdeal R B) :
+    (quotientOfObjEq H h I).obj = CommHopfAlgCat.quotient B I := by
+  subst h
+  rfl
 
 /-- Quotienting a finite-type commutative Hopf algebra by the zero Hopf ideal gives an
 isomorphic finite-type commutative Hopf algebra. -/

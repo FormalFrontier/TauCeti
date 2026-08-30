@@ -82,7 +82,8 @@ variable (wt : Fin n → κ → ℤ)
 property. It is a quotient of the finite-type coordinate Hopf algebra of `GLₙ`. -/
 noncomputable def kostantToralFiniteTypeCoordinateHopfAlgebra :
     FiniteTypeCommHopfAlgCat ℤ :=
-  FiniteTypeCommHopfAlgCat.quotient (GeneralLinear.finiteTypeCoordinateHopfAlgebra ℤ n)
+  FiniteTypeCommHopfAlgCat.quotientOfObjEq (GeneralLinear.finiteTypeCoordinateHopfAlgebra ℤ n)
+    (GeneralLinear.finiteTypeCoordinateHopfAlgebra_obj ℤ n)
     (kostantToralDefiningIdeal e h ρ M hM hnil b wt)
 
 /-- The underlying object of the finite-type package is the coordinate Hopf algebra already used
@@ -92,7 +93,8 @@ theorem kostantToralFiniteTypeCoordinateHopfAlgebra_obj :
     (kostantToralFiniteTypeCoordinateHopfAlgebra e h ρ M hM hnil b wt).obj =
       CommHopfAlgCat.quotient (GeneralLinear.coordinateHopfAlgebra ℤ n)
         (kostantToralDefiningIdeal e h ρ M hM hnil b wt) :=
-  (rfl)
+  FiniteTypeCommHopfAlgCat.quotientOfObjEq_obj _
+    (GeneralLinear.finiteTypeCoordinateHopfAlgebra_obj ℤ n) _
 
 /-! ## Finite-type specialization -/
 
@@ -102,9 +104,11 @@ variable (A : Type v) [CommRing A]
 ambient general-linear coordinate Hopf algebra and its defining ideal. -/
 noncomputable def kostantToralFiniteTypeSpecialization :
     FiniteTypeCommHopfAlgCat A :=
-  FiniteTypeCommHopfAlgCat.quotient
+  FiniteTypeCommHopfAlgCat.quotientOfObjEq
     (FiniteTypeCommHopfAlgCat.baseChange (K := A)
       (GeneralLinear.finiteTypeCoordinateHopfAlgebra ℤ n))
+    (congrArg (CommHopfAlgCat.baseChange (K := A))
+      (GeneralLinear.finiteTypeCoordinateHopfAlgebra_obj ℤ n))
     (kostantToralBaseChangeIdeal e h ρ M hM hnil b wt A)
 
 /-- The object underlying the finite-type specialization is the specialized quotient coordinate
@@ -115,7 +119,9 @@ theorem kostantToralFiniteTypeSpecialization_obj :
       CommHopfAlgCat.quotient
         (CommHopfAlgCat.baseChange (K := A) (GeneralLinear.coordinateHopfAlgebra ℤ n))
         (kostantToralBaseChangeIdeal e h ρ M hM hnil b wt A) :=
-  (rfl)
+  FiniteTypeCommHopfAlgCat.quotientOfObjEq_obj _
+    (congrArg (CommHopfAlgCat.baseChange (K := A))
+      (GeneralLinear.finiteTypeCoordinateHopfAlgebra_obj ℤ n)) _
 
 /-- The base change of the generic toral carrier is canonically the specialized finite-type
 carrier. This is `kostantToralBaseChangeIso` lifted to the finite-type full subcategory. -/
@@ -155,9 +161,11 @@ noncomputable abbrev kostantToralBaseChangeGroupScheme :
 instance locallyOfFiniteType_kostantToralBaseChangeGroupScheme :
     LocallyOfFiniteType
       (kostantToralBaseChangeGroupScheme e h ρ M hM hnil b wt A).X.hom :=
-  FiniteTypeCommHopfAlgCat.locallyOfFiniteType_quotientSpec
+  FiniteTypeCommHopfAlgCat.locallyOfFiniteType_quotientSpec_of_objEq
     (FiniteTypeCommHopfAlgCat.baseChange (K := A)
       (GeneralLinear.finiteTypeCoordinateHopfAlgebra ℤ n))
+    (congrArg (CommHopfAlgCat.baseChange (K := A))
+      (GeneralLinear.finiteTypeCoordinateHopfAlgebra_obj ℤ n))
     (kostantToralBaseChangeIdeal e h ρ M hM hnil b wt A)
 
 /-- The closed-subgroup inclusion of the specialized toral carrier into the base-changed

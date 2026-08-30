@@ -722,12 +722,7 @@ theorem adjoin_coordinateHopfAlgebra_X_union_antipode_X :
   rw [himage, Algebra.adjoin_image, adjoin_X_union_antipode_X, Algebra.map_top]
   exact (AlgHom.range_eq_top _).mpr (coordinateHopfAlgebraAlgEquiv R n).surjective
 
-/-- The general linear coordinate Hopf algebra bundled with its finite-type algebra property.
-
-The body is exposed so that the underlying object reduces to `coordinateHopfAlgebra` in other
-modules: a Hopf ideal of `coordinateHopfAlgebra R n` is then also a Hopf ideal of this bundle,
-which is what `FiniteTypeCommHopfAlgCat.quotient` expects. -/
-@[expose]
+/-- The general linear coordinate Hopf algebra bundled with its finite-type algebra property. -/
 noncomputable def finiteTypeCoordinateHopfAlgebra : FiniteTypeCommHopfAlgCat R :=
   ⟨coordinateHopfAlgebra R n,
     Algebra.FiniteType.equiv (inferInstance : Algebra.FiniteType R (CoordinateRing R n))
