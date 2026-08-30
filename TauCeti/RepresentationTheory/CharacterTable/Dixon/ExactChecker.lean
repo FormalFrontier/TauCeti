@@ -24,8 +24,9 @@ same proof serves both the integer-valued stage and the exact cyclotomic stage.
 ## Main definitions
 
 * `TauCeti.ClassData.IsExactCharacterTableSpec`: an exact numbered certificate over a
-  commutative star ring.
+  commutative ring with a chosen conjugation operation.
 * `TauCeti.ClassData.exactCharacterTableChecker`: its executable Boolean checker.
+
 ## Main result
 
 * `TauCeti.ClassData.IsExactCharacterTableSpec.isCharacterTableSpec`: a certified exact table
