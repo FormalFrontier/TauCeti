@@ -16,9 +16,13 @@ lifted endpoint `hp.monodromy ⟦γ⟧ e₀` lies over `x₁`, and the subgroup 
 pointed lift is the transport of the subgroup recovered from `e₀` along `γ`:
 
 ```text
-  p₁(π₁(E, hp.monodromy ⟦γ⟧ e₀))
-    = γ₊ p₁(π₁(E, e₀)).
+  im (p_* : π₁(E, hp.monodromy ⟦γ⟧ e₀) → π₁(X, x₁))
+    = γ_* (im (p_* : π₁(E, e₀) → π₁(X, x₀))).
 ```
+
+Here `p_*` denotes the induced map on fundamental groups and `γ_*` denotes the
+basepoint-change isomorphism induced by `γ`; the displayed equality is an equality of
+image subgroups.
 
 The proof combines Mathlib's path-conjugation isomorphism for fundamental groups with its
 path-lifting and monodromy API, packaged for recovered subgroups in
