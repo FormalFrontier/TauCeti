@@ -20,9 +20,9 @@ generator `F_i` makes the reverse move when `lambda_i = 1`.
 
 The resulting integer matrices satisfy the Chevalley--Serre relations for the Bourbaki Cartan
 matrix. The universal property of the Serre presentation gives the explicit integral
-fifty-six-dimensional minuscule representation; extending scalars gives its rational form.
-Each raising and lowering matrix squares to zero, which is the divided-power input for the
-integral coordinate lattice.
+fifty-six-dimensional minuscule representation. Each raising and lowering matrix squares to
+zero. See `TauCeti.Algebra.Lie.E7.Minuscule.AdmissibleLattice` for the rational extension and
+the admissibility of its coordinate lattice.
 
 No identification with the abstract irreducible highest-weight module is asserted here. The
 construction is explicit: every matrix entry is read from the already audited weight and

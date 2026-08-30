@@ -186,6 +186,7 @@ private theorem e7MinusculeWeight_reflection_apply_self (i : Fin 7) (a : Fin 56)
   simp [CartanMatrix.E_diag] at h
   omega
 
+/-- Every rational minuscule raising matrix squares to zero. -/
 theorem raisingMatrixQ_sq (i : Fin 7) : raisingMatrixQ i ^ 2 = 0 := by
   ext a b
   simp only [pow_two, Matrix.mul_apply, raisingMatrixQ_apply, Matrix.zero_apply]
@@ -193,6 +194,7 @@ theorem raisingMatrixQ_sq (i : Fin 7) : raisingMatrixQ i ^ 2 = 0 := by
   · simp [hb, e7MinusculeWeight_reflection_apply_self]
   · simp [hb]
 
+/-- Every rational minuscule lowering matrix squares to zero. -/
 theorem loweringMatrixQ_sq (i : Fin 7) : loweringMatrixQ i ^ 2 = 0 := by
   ext a b
   simp only [pow_two, Matrix.mul_apply, loweringMatrixQ_apply, Matrix.zero_apply]
@@ -200,6 +202,8 @@ theorem loweringMatrixQ_sq (i : Fin 7) : loweringMatrixQ i ^ 2 = 0 := by
   · simp [hb, e7MinusculeWeight_reflection_apply_self]
   · simp [hb]
 
+/-- Every simple-root generator acts with square zero in the rational minuscule
+representation. -/
 theorem pow_two_rep_serreRootGenerator_eq_zero (k : Fin 7 ⊕ Fin 7) :
     rep (_root_.UniversalEnvelopingAlgebra.ι ℚ
       (TauCeti.serreRootGenerator (CartanMatrix.E 7) k)) ^ 2 = 0 := by
@@ -248,6 +252,7 @@ private theorem castMatrix_mulVec_mem_lattice (M : Matrix (Fin 56) (Fin 56) ℤ)
   simp only [Int.cast_sum, Int.cast_mul, hz, Matrix.mulVec, dotProduct,
     castMatrixLieHom_apply]
 
+/-- Every simple-root generator preserves the minuscule coordinate lattice. -/
 theorem rep_serreRootGenerator_mem_lattice (k : Fin 7 ⊕ Fin 7) {v : Fin 56 → ℚ}
     (hv : v ∈ lattice) :
     rep (_root_.UniversalEnvelopingAlgebra.ι ℚ
@@ -261,6 +266,8 @@ theorem rep_serreRootGenerator_mem_lattice (k : Fin 7 ⊕ Fin 7) {v : Fin 56 →
       rw [TauCeti.serreRootGenerator_inr, rationalSerreRepresentation_serreF, loweringMatrixQ]
       exact castMatrix_mulVec_mem_lattice (loweringMatrix i) hv
 
+/-- Each coordinate basis vector has the corresponding minuscule weight for the Cartan
+generators. -/
 theorem isCartanWeightVector_single (a : Fin 56) :
     TauCeti.UniversalEnvelopingAlgebra.IsCartanWeightVector
       (TauCeti.serreH ℚ (CartanMatrix.E 7)) rep (e7MinusculeWeight a) (Pi.single a 1) := by
