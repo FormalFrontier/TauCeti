@@ -204,14 +204,6 @@ instance instSMulCommClassDiff :
     intro x
     simp⟩
 
-/-- Transport by an ambient diffeomorphism commutes with orientation reversal. -/
-@[simp]
-theorem reverse_transDiffeomorph (e : Diff I M ∞) (f : SmoothCircleEmbedding I M) :
-    reverse (f.transDiffeomorph e) = f.reverse.transDiffeomorph e := by
-  apply SmoothEmbedding.ext
-  intro x
-  simp
-
 end Ambient
 
 end SmoothCircleEmbedding
