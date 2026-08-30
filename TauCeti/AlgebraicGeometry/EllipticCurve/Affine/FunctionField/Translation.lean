@@ -232,6 +232,8 @@ private theorem comp_translationAux (P Q : (W⁄F).toAffine.Point) :
   apply AlgHom.ext
   intro z
   simp only [AlgHom.comp_apply]
+  -- `IsLocalization.algHom_ext` restricts along `Algebra.algHom F W.CoordinateRing
+  -- W.FunctionField`; its application to `z` is definitionally the displayed `algebraMap`.
   change translationAux W Q
       (translationAux W P (algebraMap W.CoordinateRing W.FunctionField z)) =
     translationAux W (P + Q) (algebraMap W.CoordinateRing W.FunctionField z)
@@ -255,6 +257,8 @@ private theorem translationAux_zero : translationAux W 0 = AlgHom.id F W.Functio
   apply AlgHom.ext
   intro z
   simp only [AlgHom.comp_apply]
+  -- As above, unfold the canonical restriction from `IsLocalization.algHom_ext`; this also
+  -- unfolds the application of `AlgHom.id` on the right to the underlying element.
   change translationAux W 0 (algebraMap W.CoordinateRing W.FunctionField z) =
     algebraMap W.CoordinateRing W.FunctionField z
   have h : translationAux W 0 (algebraMap W.CoordinateRing W.FunctionField z) =
