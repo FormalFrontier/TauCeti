@@ -245,7 +245,7 @@ theorem gramSmithInvariantFactors_dvd (L : IntegralLattice V)
 open Classical in
 /-- The Gram matrix is diagonalized by special-linear row and column operations using the
 normalized invariant factors. -/
-theorem exists_gramSmithInvariantFactors_smith (L : IntegralLattice V)
+theorem exists_gramSmithInvariantFactors_smith_normal_form (L : IntegralLattice V)
     {ι : Type v} [Fintype ι]
     (b : Basis ι ℤ L) (hdet : 0 < L.gramDet b) :
     ∃ P Q : Matrix.SpecialLinearGroup (Fin (Fintype.card ι)) ℤ,
@@ -262,7 +262,7 @@ theorem prod_gramSmithInvariantFactors_eq_gramDet (L : IntegralLattice V)
     {ι : Type v} [Fintype ι]
     (b : Basis ι ℤ L) (hdet : 0 < L.gramDet b) :
     ∏ i, L.gramSmithInvariantFactors b hdet i = L.gramDet b := by
-  obtain ⟨P, Q, hPQ⟩ := L.exists_gramSmithInvariantFactors_smith b hdet
+  obtain ⟨P, Q, hPQ⟩ := L.exists_gramSmithInvariantFactors_smith_normal_form b hdet
   have hdetPQ := congrArg Matrix.det hPQ
   simp only [Matrix.det_mul, Matrix.det_diagonal] at hdetPQ
   have hgram : (L.gramMatrix (b.reindex (Fintype.equivFin ι))).det =
