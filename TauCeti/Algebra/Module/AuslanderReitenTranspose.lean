@@ -88,6 +88,13 @@ theorem mk_eq_zero_iff (φ : Module.Dual A P₁) :
     mk p₁ φ = 0 ↔ φ ∈ LinearMap.range (p₁.lcomp Aᵐᵒᵖ A) :=
   Submodule.Quotient.mk_eq_zero _
 
+/-- The quotient map onto the transpose kills exactly the functionals factoring through the first
+map of the presentation. -/
+@[simp]
+theorem ker_mk : LinearMap.ker (mk p₁) = LinearMap.range (p₁.lcomp Aᵐᵒᵖ A) := by
+  ext φ
+  simp [LinearMap.mem_ker]
+
 /-- A functional precomposed with the first map of the presentation vanishes in its cokernel. -/
 @[simp]
 theorem mk_lcomp (φ : Module.Dual A P₀) :
@@ -132,6 +139,13 @@ theorem lift_mk (f : Module.Dual A P₁ →ₗ[Aᵐᵒᵖ] N)
     (hf : ∀ φ : Module.Dual A P₀, f (p₁.lcomp Aᵐᵒᵖ A φ) = 0) (φ : Module.Dual A P₁) :
     lift p₁ f hf (mk p₁ φ) = f φ :=
   Submodule.liftQ_apply _ f φ
+
+/-- `AuslanderReitenTranspose.lift` factors the given map through the quotient map. -/
+@[simp]
+theorem lift_comp_mk (f : Module.Dual A P₁ →ₗ[Aᵐᵒᵖ] N)
+    (hf : ∀ φ : Module.Dual A P₀, f (p₁.lcomp Aᵐᵒᵖ A φ) = 0) :
+    (lift p₁ f hf).comp (mk p₁) = f :=
+  LinearMap.ext fun φ => lift_mk p₁ f hf φ
 
 /-- Opposite-linear maps out of the transpose are determined by their values on representatives. -/
 theorem hom_ext {f g : AuslanderReitenTranspose p₁ →ₗ[Aᵐᵒᵖ] N}
@@ -191,6 +205,11 @@ theorem linearEquiv_mk {q₁ : Q₁ →ₗ[A] Q₀} (e₀ : P₀ ≃ₗ[A] Q₀)
     (φ : Module.Dual A P₁) :
     linearEquiv e₀ e₁ hsquare (mk p₁ φ) =
       mk q₁ (e₁.symm.toLinearMap.lcomp Aᵐᵒᵖ A φ) := by
+  -- `linearEquiv`, `mk` and `AuslanderReitenTranspose` itself are not exposed, so neither the
+  -- statement nor Mathlib's quotient lemmas reduce here on their own: an exported theorem may only
+  -- unfold exposed definitions.  `with_unfolding_all` lets this proof see through them, and the
+  -- `change` then presents the goal in the `Submodule.Quotient` form in which
+  -- `Submodule.Quotient.equiv_apply` and `Submodule.mapQ_apply` apply.
   with_unfolding_all
     change Submodule.Quotient.equiv _ _ _ _ (Submodule.Quotient.mk φ) =
       Submodule.Quotient.mk _
