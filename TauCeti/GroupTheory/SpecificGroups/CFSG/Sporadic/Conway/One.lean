@@ -314,9 +314,9 @@ theorem co1Presentation_matchesMetadata : co1Presentation.matchesMetadata := by
 Coxeter paths and the nine trailing words are decoded.
 
 Reading the counts off one relator at a time is what lets a reviewer locate a discrepancy, rather
-than only observe one in the total of `TauCeti.Sporadic.co1Presentation_totalLength`. As there, the
-lengths are computed through `TauCeti.Relator.length_toWord`, which multiplies rather than repeats,
-so the thirty-ninth power at the end never has to be expanded. -/
+than only observe one in the total of `TauCeti.Sporadic.co1Presentation_totalLength`, which sums
+exactly this list. The lengths are computed through `TauCeti.Relator.length_toWord`, which
+multiplies rather than repeats, so the thirty-ninth power at the end never has to be expanded. -/
 theorem co1Presentation_map_length_relators :
     co1Presentation.relators.map List.length =
       [2, 2, 2, 2, 2, 2, 2, 2,
@@ -328,14 +328,11 @@ theorem co1Presentation_map_length_relators :
     Relator.length_toWord, Relator.length_gen, Relator.length_inv, Relator.length_mul,
     Relator.length_pow, List.cons_append, List.nil_append]
 
-/-- The compiled relators of the `Co₁` presentation contain `611` signed letters in total. -/
+/-- The compiled relators of the `Co₁` presentation contain `611` signed letters in total: the sum
+of the per-relator lengths of `TauCeti.Sporadic.co1Presentation_map_length_relators`. -/
 theorem co1Presentation_totalLength : co1Presentation.totalLength = 611 := by
-  rw [GroupPresentation.totalLength_def, GroupPresentation.relators_def]
-  simp only [co1Presentation, co1NodeAndEdgeRelators, co1NonedgeRelators, co1AdditionalRelators,
-    List.map_append, List.sum_append, Relator.length_toWord, Relator.length_gen, Relator.length_inv,
-    Relator.length_mul, Relator.length_pow, List.map_cons, List.map_nil, List.sum_cons,
-    List.sum_nil]
-  norm_num
+  rw [GroupPresentation.totalLength_def, co1Presentation_map_length_relators]
+  decide
 
 /-- The involution and labeled-edge relators compile to cyclically reduced words. -/
 private theorem isCyclicallyReduced_toWord_of_mem_co1NodeAndEdgeRelators :
@@ -375,9 +372,10 @@ private theorem isCyclicallyReduced_toWord_of_mem_co1Transcribed :
     · exact isCyclicallyReduced_toWord_of_mem_co1NonedgeRelators r h
   · exact isCyclicallyReduced_toWord_of_mem_co1AdditionalRelators r h
 
-/-- Every compiled `Co₁` relator is cyclically reduced, so the letter count recorded by
+/-- Every compiled `Co₁` relator is cyclically reduced, hence by
+`FreeGroup.IsCyclicallyReduced.isReduced` freely reduced, so the letter count recorded by
 `TauCeti.Sporadic.co1Presentation_totalLength` is comparable with a published presentation length,
-which is measured after free and cyclic reduction of each relator. -/
+which is normally measured on freely reduced relators. -/
 theorem co1Presentation_relatorsCyclicallyReduced :
     co1Presentation.relatorsCyclicallyReduced := by
   rw [GroupPresentation.relatorsCyclicallyReduced_iff, GroupPresentation.relators_def]

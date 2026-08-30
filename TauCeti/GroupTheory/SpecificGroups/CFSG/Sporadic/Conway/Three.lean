@@ -13,7 +13,9 @@ public import TauCeti.GroupTheory.Presentation.GroupPresentation
 This file carries the `Co₃` row of the sporadic presentation data required by milestone S1 of
 `TauCetiRoadmap/CFSGStatement/README.md`. It records Đoković's Coxeter-type presentation of the
 third Conway group on seven involutions as a `TauCeti.GroupPresentation`, together with its exact
-source, generator convention, transcription notes, expected counts, and decidable count check.
+source, generator convention, transcription notes, expected counts, and decidable checks on the
+transcription: the two counts, the per-relator and total letter counts of the compiled words, and
+their cyclic reducedness.
 
 The twenty-four defining relators are
 
@@ -46,10 +48,11 @@ it.
 
 Three decidable checks accompany those equations, and here they check the transcription against a
 published figure. The twenty-four compiled words have `150` letters in total, so with one separator
-for each relator they have the length `174` that presentation (13.1) states. Every compiled word is
-cyclically reduced, which is what makes that comparison legitimate, both figures being measured
-after free and cyclic reduction of each relator; the individual lengths locate any discrepancy in
-the total.
+for each relator they have the length `174` that presentation (13.1) states. Đoković measures a
+relator by its freely reduced length, so what makes that comparison legitimate is that every
+compiled word is cyclically reduced and hence, by `FreeGroup.IsCyclicallyReduced.isReduced`, already
+freely reduced: its letter count is the reduced length the source counts. The individual lengths
+locate any discrepancy in the total.
 
 These field equations and the checks beside them follow the shape that the
 `TauCeti.GroupTheory.SpecificGroups.CFSG.Sporadic.Janko` modules established for a manifest row.
@@ -265,9 +268,9 @@ theorem co3Presentation_map_length_relators :
 /-- The compiled relator words for `Co₃` have `150` letters in total.
 
 This is the check against the source's stated figure. Đoković measures the length of a presentation
-as the sum of the lengths of its relators together with one separator for each of them, so the
-twenty-four relators here give `150 + 24 = 174`, which is the length presentation (13.1)
-states. -/
+as the sum of the freely reduced lengths of its relators together with one separator for each of
+them, so the twenty-four relators here give `150 + 24 = 174`, which is the length presentation
+(13.1) states. -/
 theorem co3Presentation_totalLength : co3Presentation.totalLength = 150 := by
   rw [GroupPresentation.totalLength_def, co3Presentation_map_length_relators]
   decide
@@ -279,9 +282,10 @@ theorem co3Presentation_totalLength_add_length_transcribed :
   rw [co3Presentation_totalLength]
   simp
 
-/-- Every compiled relator word for `Co₃` is cyclically reduced. This is what makes the letter
-count of `TauCeti.Sporadic.co3Presentation_totalLength` comparable with the length stated by
-presentation (13.1), which is measured after free and cyclic reduction of each relator. -/
+/-- Every compiled relator word for `Co₃` is cyclically reduced, hence by
+`FreeGroup.IsCyclicallyReduced.isReduced` freely reduced. This is what makes the letter count of
+`TauCeti.Sporadic.co3Presentation_totalLength` comparable with the length stated by presentation
+(13.1), which measures each relator by its freely reduced length. -/
 theorem co3Presentation_relatorsCyclicallyReduced :
     co3Presentation.relatorsCyclicallyReduced := by
   simp only [GroupPresentation.relatorsCyclicallyReduced_iff, GroupPresentation.relators_def,

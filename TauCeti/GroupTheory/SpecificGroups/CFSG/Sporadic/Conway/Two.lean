@@ -13,7 +13,8 @@ public import TauCeti.GroupTheory.Presentation.GroupPresentation
 This file carries the `Co₂` row of the sporadic presentation data required by milestone S1 of
 `TauCetiRoadmap/CFSGStatement/README.md`. It records John Bray's ATLAS version 3 presentation of
 the second Conway group on its standard generators `a` and `b` as a `TauCeti.GroupPresentation`,
-together with the source, the generator convention, transcription notes, and the expected counts.
+together with the source, the generator convention, transcription notes, the expected counts, and
+decidable checks on the transcription.
 
 Writing `s₁ = ab`, `s₂ = ab²`, `s₋₁ = ab⁻¹` and `s₋₂ = ab⁻²` for the four syllables that occur, the
 ten transcribed relators are
@@ -58,8 +59,9 @@ consumer reasons about the row without unfolding it.
 
 Three decidable checks accompany those equations. The relator lengths and their total record the
 compiled data one word at a time and in aggregate, and cyclic reducedness is what makes such a
-letter count comparable with a published presentation length, since both are measured after free
-and cyclic reduction of each relator. This row records no published length, so the total here
+letter count comparable with a published presentation length, which is normally measured on freely
+reduced relators: a cyclically reduced word is in particular freely reduced, so its letter count is
+already that reduced length. This row records no published length, so the total here
 states the transcription for a reviewer to compare with the source, rather than checking it
 against a recorded number.
 
@@ -278,9 +280,10 @@ theorem co2Presentation_totalLength : co2Presentation.totalLength = 258 := by
   rw [GroupPresentation.totalLength_def, co2Presentation_map_length_relators]
   decide
 
-/-- Every compiled relator word for `Co₂` is cyclically reduced. This is what makes the letter
-count of `TauCeti.Sporadic.co2Presentation_totalLength` comparable with a published presentation
-length, which is measured after free and cyclic reduction of each relator. -/
+/-- Every compiled relator word for `Co₂` is cyclically reduced, hence by
+`FreeGroup.IsCyclicallyReduced.isReduced` freely reduced. This is what makes the letter count of
+`TauCeti.Sporadic.co2Presentation_totalLength` comparable with a published presentation length,
+which is normally measured on freely reduced relators. -/
 theorem co2Presentation_relatorsCyclicallyReduced :
     co2Presentation.relatorsCyclicallyReduced := by
   simp only [GroupPresentation.relatorsCyclicallyReduced_iff, GroupPresentation.relators_def,
