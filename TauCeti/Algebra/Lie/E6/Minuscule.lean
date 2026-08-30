@@ -12,17 +12,18 @@ public import Mathlib.Algebra.Lie.Sl2
 import TauCeti.Algebra.Lie.Sl2.WeightString
 
 /-!
-# The integral minuscule representation of type E6
+# A 27-dimensional representation of the type-E6 Serre presentation
 
-This file constructs the raising, lowering, and Cartan matrices of the 27-dimensional minuscule
-representation of the split Lie algebra of type `E₆`. The coordinate basis is indexed by the Weyl
-orbit of the first fundamental weight enumerated by `TauCeti.DynkinType.e6MinusculeWeight`.
+This file constructs a 27-dimensional representation of the type-`E₆` Serre presentation. The
+coordinate basis is indexed by the Weyl orbit of the first fundamental weight enumerated by
+`TauCeti.DynkinType.e6MinusculeWeight`.
 
 For a simple root `i`, the raising matrix sends the basis vector of weight `μ` to the basis vector
 of weight `μ + αᵢ` when `⟨μ, αᵢ∨⟩ = -1`, and to zero otherwise. The lowering matrix is defined
-dually. The Cartan matrix acts diagonally by the simple-coroot coordinate of the weight. These
-integral matrices satisfy the Serre relations for the transposed type-`E₆` Cartan matrix and hence
-give an explicit integral form of the minuscule representation.
+dually. The Cartan generator acts diagonally by the simple-coroot coordinate of the weight. These
+integral matrices satisfy the Serre relations for the transposed type-`E₆` Cartan matrix.
+Identifying this presentation with the split semisimple Lie algebra of type `E₆`, and hence
+interpreting these matrices as a representation of that algebra, remains downstream.
 
 This is the representation-theoretic input for the full-weight type-`E₆` Chevalley--Demazure
 carrier required by Layer 9 of the ReductiveGroups roadmap. The weights span the full character
@@ -31,8 +32,8 @@ Kostant carrier and its group scheme remains downstream.
 
 ## Main declarations
 
-* `TauCeti.E6Minuscule.raisingMatrix`, `loweringMatrix`, and `cartanMatrix`: the integral
-  Chevalley generators on the minuscule weight basis.
+* `TauCeti.E6Minuscule.raisingMatrix`, `loweringMatrix`, and `cartanGeneratorMatrix`: the
+  integral Chevalley generators on the minuscule weight basis.
 * `TauCeti.E6Minuscule.isSerreSystem`: the generators satisfy the type-`E₆` Serre relations.
 * `TauCeti.E6Minuscule.serreRepresentation`: the induced homomorphism from the integral
   type-`E₆` Serre presentation.
@@ -75,8 +76,8 @@ def loweringMatrix (i : Fin 6) : Matrix (Fin 27) (Fin 27) ℤ :=
   fun a b ↦ if e6MinusculeWeight b i = 1 ∧ a = e6MinusculeReflection i b then 1 else 0
 
 /-- The diagonal matrix of the `i`-th simple coroot on the integral minuscule weight basis. -/
-def cartanMatrix (i : Fin 6) : Matrix (Fin 27) (Fin 27) ℤ :=
-  fun a b ↦ if a = b then e6MinusculeWeight b i else 0
+def cartanGeneratorMatrix (i : Fin 6) : Matrix (Fin 27) (Fin 27) ℤ :=
+  Matrix.diagonal (fun b ↦ e6MinusculeWeight b i)
 
 /-- The entry formula for a simple raising matrix. -/
 @[simp]
@@ -92,11 +93,15 @@ theorem loweringMatrix_apply (i : Fin 6) (a b : Fin 27) :
       if e6MinusculeWeight b i = 1 ∧ a = e6MinusculeReflection i b then 1 else 0 :=
   by rw [loweringMatrix]
 
-/-- The entry formula for a simple Cartan matrix. -/
+/-- The entry formula for a simple Cartan generator matrix. -/
 @[simp]
-theorem cartanMatrix_apply (i : Fin 6) (a b : Fin 27) :
-    cartanMatrix i a b = if a = b then e6MinusculeWeight b i else 0 :=
-  by rw [cartanMatrix]
+theorem cartanGeneratorMatrix_apply (i : Fin 6) (a b : Fin 27) :
+    cartanGeneratorMatrix i a b = if a = b then e6MinusculeWeight b i else 0 := by
+  rw [cartanGeneratorMatrix, Matrix.diagonal_apply]
+  split_ifs with h
+  · subst b
+    rfl
+  · rfl
 
 private theorem matrixOfTarget_mul (f g : Fin 27 → Option (Fin 27)) :
     matrixOfTarget f * matrixOfTarget g = matrixOfTarget (fun a ↦ (g a).bind f) := by
@@ -153,14 +158,19 @@ private theorem e6MinusculeReflection_comm_of_cartan_eq_zero (i j : Fin 6) (a : 
     (hij : CartanMatrix.E 6 i j = 0) :
     e6MinusculeReflection i (e6MinusculeReflection j a) =
       e6MinusculeReflection j (e6MinusculeReflection i a) := by
-  apply e6MinusculeWeight_injective
-  funext k
   have hsym : CartanMatrix.E 6 j i = CartanMatrix.E 6 i j := by
     have h := congrFun (congrFun (CartanMatrix.E_transpose 6) i) j
     simpa [Matrix.transpose_apply] using h
-  simp only [e6MinusculeWeight_reflection_apply]
-  rw [hsym, hij]
-  ring
+  have horth : e6SimplyConnectedRootDatum.IsOrthogonal
+      (e6SimpleIndex i) (e6SimpleIndex j) := by
+    rw [RootPairing.IsOrthogonal, pairing_e6SimpleIndex, pairing_e6SimpleIndex, hsym, hij]
+    exact ⟨rfl, rfl⟩
+  have hcomm := RootPairing.isOrthogonal_comm e6SimplyConnectedRootDatum
+    (e6SimpleIndex i) (e6SimpleIndex j) horth
+  apply e6MinusculeWeight_injective
+  have happ := congrArg (fun f ↦ f (e6MinusculeWeight a)) hcomm.eq
+  simpa only [LinearEquiv.mul_apply,
+    e6SimplyConnectedRootDatum_reflection_e6MinusculeWeight] using happ
 
 private theorem raisingTarget_bind_loweringTarget_of_ne (i j : Fin 6) (hij : i ≠ j)
     (a : Fin 27) :
@@ -188,28 +198,27 @@ private theorem lie_raisingMatrix_loweringMatrix_of_ne (i j : Fin 6) (hij : i �
     funext (raisingTarget_bind_loweringTarget_of_ne i j hij)
   rw [hcomp, sub_self]
 
-private theorem lie_cartanMatrix_cartanMatrix (i j : Fin 6) :
-    ⁅cartanMatrix i, cartanMatrix j⁆ = 0 := by
-  ext a b
-  simp [Ring.lie_def, cartanMatrix, Matrix.mul_apply]
-  split_ifs <;> ring
+private theorem lie_cartanGeneratorMatrix_cartanGeneratorMatrix (i j : Fin 6) :
+    ⁅cartanGeneratorMatrix i, cartanGeneratorMatrix j⁆ = 0 :=
+  (Matrix.commute_diagonal _ _).lie_eq
 
 private theorem lie_raisingMatrix_loweringMatrix_self (i : Fin 6) :
-    ⁅raisingMatrix i, loweringMatrix i⁆ = cartanMatrix i := by
+    ⁅raisingMatrix i, loweringMatrix i⁆ = cartanGeneratorMatrix i := by
   ext a b
   simp only [Ring.lie_def, Matrix.sub_apply, Matrix.mul_apply, raisingMatrix, loweringMatrix,
-    mul_ite, mul_one, mul_zero, cartanMatrix]
+    mul_ite, mul_one, mul_zero, cartanGeneratorMatrix, Matrix.diagonal_apply]
   rcases e6MinusculeWeight_apply_eq_neg_one_or_eq_zero_or_eq_one b i with h | h | h
   all_goals simp [h, e6MinusculeWeight_reflection_apply_self,
     e6MinusculeReflection_apply_apply]
-  all_goals split_ifs <;> simp
+  all_goals by_cases hab : a = b <;> simp_all
 
-private theorem lie_cartanMatrix_raisingMatrix (i j : Fin 6) :
-    ⁅cartanMatrix i, raisingMatrix j⁆ =
+private theorem lie_cartanGeneratorMatrix_raisingMatrix (i j : Fin 6) :
+    ⁅cartanGeneratorMatrix i, raisingMatrix j⁆ =
       (CartanMatrix.E 6)ᵀ i j • raisingMatrix j := by
   ext a b
-  simp only [Ring.lie_def, Matrix.sub_apply, Matrix.mul_apply, cartanMatrix, raisingMatrix,
-    Matrix.transpose_apply, Matrix.smul_apply, mul_ite, ite_mul, mul_one, mul_zero]
+  simp only [Ring.lie_def, Matrix.sub_apply, Matrix.mul_apply, cartanGeneratorMatrix,
+    Matrix.diagonal_apply, raisingMatrix, Matrix.transpose_apply, Matrix.smul_apply, mul_ite,
+    ite_mul, mul_one, mul_zero]
   by_cases h : e6MinusculeWeight b j = -1
   · have href := congrFun (e6MinusculeWeight_reflection j b) i
     rw [root_e6SimpleIndex] at href
@@ -221,13 +230,13 @@ private theorem lie_cartanMatrix_raisingMatrix (i j : Fin 6) :
     · rfl
   · simp [h]
 
-private theorem lie_cartanMatrix_loweringMatrix (i j : Fin 6) :
-    ⁅cartanMatrix i, loweringMatrix j⁆ =
+private theorem lie_cartanGeneratorMatrix_loweringMatrix (i j : Fin 6) :
+    ⁅cartanGeneratorMatrix i, loweringMatrix j⁆ =
       -((CartanMatrix.E 6)ᵀ i j • loweringMatrix j) := by
   ext a b
-  simp only [Ring.lie_def, Matrix.sub_apply, Matrix.mul_apply, cartanMatrix, loweringMatrix,
-    Matrix.transpose_apply, Matrix.neg_apply, Matrix.smul_apply, mul_ite, ite_mul, mul_one,
-    mul_zero]
+  simp only [Ring.lie_def, Matrix.sub_apply, Matrix.mul_apply, cartanGeneratorMatrix,
+    Matrix.diagonal_apply, loweringMatrix, Matrix.transpose_apply, Matrix.neg_apply,
+    Matrix.smul_apply, mul_ite, ite_mul, mul_one, mul_zero]
   by_cases h : e6MinusculeWeight b j = 1
   · have href := congrFun (e6MinusculeWeight_reflection j b) i
     rw [root_e6SimpleIndex] at href
@@ -239,11 +248,11 @@ private theorem lie_cartanMatrix_loweringMatrix (i j : Fin 6) :
     · rfl
   · simp [h]
 
-private theorem cartanMatrix_ne_zero (i : Fin 6) : cartanMatrix i ≠ 0 := by
+private theorem cartanGeneratorMatrix_ne_zero (i : Fin 6) : cartanGeneratorMatrix i ≠ 0 := by
   intro hzero
   have hweight (a : Fin 27) : e6MinusculeWeight a i = 0 := by
     have h := congrFun (congrFun hzero a) a
-    simpa [cartanMatrix] using h
+    simpa [cartanGeneratorMatrix, Matrix.diagonal_apply] using h
   have hbasis : Pi.single i 1 ∈ Submodule.span ℤ (Set.range e6MinusculeWeight) := by
     rw [span_range_e6MinusculeWeight_eq_top]
     exact Submodule.mem_top
@@ -260,31 +269,32 @@ private theorem cartanMatrix_ne_zero (i : Fin 6) : cartanMatrix i ≠ 0 := by
 
 /-- At each simple node, the three integral minuscule matrices form an `sl₂` triple. -/
 theorem isSl2Triple (i : Fin 6) :
-    _root_.IsSl2Triple (cartanMatrix i) (raisingMatrix i) (loweringMatrix i) where
-  h_ne_zero := cartanMatrix_ne_zero i
+    _root_.IsSl2Triple (cartanGeneratorMatrix i) (raisingMatrix i) (loweringMatrix i) where
+  h_ne_zero := cartanGeneratorMatrix_ne_zero i
   lie_e_f := lie_raisingMatrix_loweringMatrix_self i
   lie_h_e_nsmul := by
-    rw [lie_cartanMatrix_raisingMatrix, Matrix.transpose_apply, CartanMatrix.E_diag]
+    rw [lie_cartanGeneratorMatrix_raisingMatrix, Matrix.transpose_apply, CartanMatrix.E_diag]
     simp
   lie_h_f_nsmul := by
-    rw [lie_cartanMatrix_loweringMatrix, Matrix.transpose_apply, CartanMatrix.E_diag]
+    rw [lie_cartanGeneratorMatrix_loweringMatrix, Matrix.transpose_apply, CartanMatrix.E_diag]
     simp
 
 /-- **The integral 27-dimensional minuscule matrices satisfy the Serre relations of type
 `E₆`.** The transpose is the convention in which the coroot index precedes the root index. -/
 theorem isSerreSystem :
-    TauCeti.IsSerreSystem ℤ (CartanMatrix.E 6)ᵀ cartanMatrix raisingMatrix loweringMatrix where
-  lie_H_H := lie_cartanMatrix_cartanMatrix
+    TauCeti.IsSerreSystem ℤ (CartanMatrix.E 6)ᵀ cartanGeneratorMatrix raisingMatrix
+      loweringMatrix where
+  lie_H_H := lie_cartanGeneratorMatrix_cartanGeneratorMatrix
   lie_E_F_self := lie_raisingMatrix_loweringMatrix_self
   lie_E_F_of_ne := lie_raisingMatrix_loweringMatrix_of_ne
-  lie_H_E := lie_cartanMatrix_raisingMatrix
-  lie_H_F := lie_cartanMatrix_loweringMatrix
+  lie_H_E := lie_cartanGeneratorMatrix_raisingMatrix
+  lie_H_F := lie_cartanGeneratorMatrix_loweringMatrix
   ad_pow_lie_E_E i j := by
     rcases eq_or_ne i j with rfl | hij
     · simp
     · rw [Matrix.transpose_apply]
       exact TauCeti.ad_pow_lie_eq_zero_of_isSl2Triple_of_lie_h_eq_smul_of_lie_f_eq_zero
-        (isSl2Triple i) (lie_cartanMatrix_raisingMatrix i j)
+        (isSl2Triple i) (lie_cartanGeneratorMatrix_raisingMatrix i j)
         (by rw [← lie_skew, lie_raisingMatrix_loweringMatrix_of_ne j i hij.symm, neg_zero])
   ad_pow_lie_F_F i j := by
     rcases eq_or_ne i j with rfl | hij
@@ -293,7 +303,8 @@ theorem isSerreSystem :
       exact TauCeti.ad_pow_lie_eq_zero_of_isSl2Triple_of_lie_h_eq_smul_of_lie_f_eq_zero
         (isSl2Triple i).symm
         (by
-          rw [neg_lie, lie_cartanMatrix_loweringMatrix i j, Matrix.transpose_apply, neg_neg]
+          rw [neg_lie, lie_cartanGeneratorMatrix_loweringMatrix i j, Matrix.transpose_apply,
+            neg_neg]
           simp only [Int.cast_id])
         (lie_raisingMatrix_loweringMatrix_of_ne i j hij)
 
@@ -305,7 +316,7 @@ noncomputable def serreRepresentation :
 /-- The minuscule representation sends a Cartan generator to its diagonal matrix. -/
 @[simp]
 theorem serreRepresentation_serreH (i : Fin 6) :
-    serreRepresentation (TauCeti.serreH ℤ (CartanMatrix.E 6)ᵀ i) = cartanMatrix i :=
+    serreRepresentation (TauCeti.serreH ℤ (CartanMatrix.E 6)ᵀ i) = cartanGeneratorMatrix i :=
   TauCeti.serreLift_serreH isSerreSystem i
 
 /-- The minuscule representation sends a positive simple generator to its raising matrix. -/
