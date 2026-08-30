@@ -38,6 +38,10 @@ surjectivity by a weaker statement about points over the base field.
 
 * J. S. Milne, *Algebraic Groups* (2017), Definition 2.20 and §23.
 
+The isogeny and central-kernel interfaces and their proof organization are adapted from the prior
+formalizations in `TauCeti.AlgebraicGeometry.GroupScheme.CentralIsogeny.Basic` and
+`TauCeti.AlgebraicGeometry.GroupScheme.CentralIsogeny.Coordinate`.
+
 This supplies the central-isogeny interface requested in Layer 6, "Reductive and semisimple
 groups", of `TauCetiRoadmap/ReductiveGroups/README.md`. It builds on the existing
 scheme-theoretic kernel and central Hopf-ideal APIs.
