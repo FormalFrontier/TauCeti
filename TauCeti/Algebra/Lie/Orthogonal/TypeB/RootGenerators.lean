@@ -65,6 +65,34 @@ def typeBLongRootMatrix (i j : ι) (_hij : i ≠ j) :
   single (.inr (.inl i)) (.inr (.inl j)) 1 -
     single (.inr (.inr j)) (.inr (.inr i)) 1
 
+omit [Fintype ι] in
+/-- The long type-`B` root matrix as a difference of two matrix units. -/
+theorem typeBLongRootMatrix_def (i j : ι) (hij : i ≠ j) :
+    typeBLongRootMatrix (K := K) i j hij =
+      single (.inr (.inl i)) (.inr (.inl j)) 1 -
+        single (.inr (.inr j)) (.inr (.inr i)) 1 :=
+  (rfl)
+
+/-- Two long type-`B` root matrices bracket to zero when their directed index pairs cannot
+concatenate in either order. -/
+theorem typeBLongRootMatrix_lie_longRootMatrix_of_ne (i j k l : ι)
+    (hij : i ≠ j) (hkl : k ≠ l) (hjk : j ≠ k) (hil : i ≠ l) :
+    ⁅typeBLongRootMatrix (K := K) i j hij, typeBLongRootMatrix (K := K) k l hkl⁆ = 0 := by
+  rw [LieRing.of_associative_ring_bracket]
+  simp [typeBLongRootMatrix_def, mul_sub, sub_mul, Matrix.single_mul_single_of_ne,
+    hjk, hjk.symm, hil, hil.symm]
+
+/-- The bracket of two concatenated long type-`B` root matrices is the long root matrix for the
+concatenated index pair. -/
+theorem typeBLongRootMatrix_lie_longRootMatrix_chain (i j k l : ι)
+    (hij : i ≠ j) (hkl : k ≠ l) (hjk : j = k) (hil : i ≠ l) :
+    ⁅typeBLongRootMatrix (K := K) i j hij, typeBLongRootMatrix (K := K) k l hkl⁆ =
+      typeBLongRootMatrix (K := K) i l hil := by
+  subst k
+  rw [LieRing.of_associative_ring_bracket]
+  simp [typeBLongRootMatrix_def, mul_sub, sub_mul, Matrix.single_mul_single_same,
+    Matrix.single_mul_single_of_ne, hil, hil.symm]
+
 /-- The long-root matrix is skew-adjoint for the split odd orthogonal form. -/
 theorem typeBLongRootMatrix_mem_typeB (i j : ι) (hij : i ≠ j) :
     typeBLongRootMatrix (K := K) i j hij ∈ LieAlgebra.Orthogonal.typeB ι K := by
@@ -151,9 +179,47 @@ normalization adapted to the middle coefficient `2` in `LieAlgebra.Orthogonal.JB
 def typeBShortRootMatrix (i : ι) : Matrix (Unit ⊕ ι ⊕ ι) (Unit ⊕ ι ⊕ ι) K :=
   single (.inr (.inl i)) (.inl ()) 2 - single (.inl ()) (.inr (.inr i)) 1
 
+omit [Fintype ι] in
+/-- The positive short type-`B` root matrix as `2 Eᵢ₀ - E₀,₋ᵢ`. -/
+theorem typeBShortRootMatrix_def (i : ι) :
+    typeBShortRootMatrix (K := K) i =
+      single (.inr (.inl i)) (.inl ()) 2 - single (.inl ()) (.inr (.inr i)) 1 :=
+  (rfl)
+
 /-- The ambient root matrix for the opposite short root `-εᵢ`. -/
 def typeBShortNegativeRootMatrix (i : ι) : Matrix (Unit ⊕ ι ⊕ ι) (Unit ⊕ ι ⊕ ι) K :=
   single (.inl ()) (.inr (.inl i)) 1 - single (.inr (.inr i)) (.inl ()) 2
+
+omit [Fintype ι] in
+/-- The negative short type-`B` root matrix as `E₀ᵢ - 2 E₋ᵢ,₀`. -/
+theorem typeBShortNegativeRootMatrix_def (i : ι) :
+    typeBShortNegativeRootMatrix (K := K) i =
+      single (.inl ()) (.inr (.inl i)) 1 - single (.inr (.inr i)) (.inl ()) 2 :=
+  (rfl)
+
+/-- The bracket of a positive short type-`B` root matrix with a long root matrix. -/
+theorem typeBShortRootMatrix_lie_longRootMatrix (i k l : ι) (hkl : k ≠ l) :
+    ⁅typeBShortRootMatrix (K := K) i, typeBLongRootMatrix (K := K) k l hkl⁆ =
+      -(if i = l then typeBShortRootMatrix (K := K) k else 0) := by
+  rw [LieRing.of_associative_ring_bracket]
+  split_ifs with hil
+  · subst l
+    simp [typeBShortRootMatrix_def, typeBLongRootMatrix_def, mul_sub, sub_mul,
+      Matrix.single_mul_single_same, Matrix.single_mul_single_of_ne]
+  · simp [typeBShortRootMatrix_def, typeBLongRootMatrix_def, mul_sub, sub_mul,
+      Matrix.single_mul_single_of_ne, hil, Ne.symm hil]
+
+/-- The bracket of a negative short type-`B` root matrix with a long root matrix. -/
+theorem typeBShortNegativeRootMatrix_lie_longRootMatrix (i k l : ι) (hkl : k ≠ l) :
+    ⁅typeBShortNegativeRootMatrix (K := K) i, typeBLongRootMatrix (K := K) k l hkl⁆ =
+      if i = k then typeBShortNegativeRootMatrix (K := K) l else 0 := by
+  rw [LieRing.of_associative_ring_bracket]
+  split_ifs with hik
+  · subst k
+    simp [typeBShortNegativeRootMatrix_def, typeBLongRootMatrix_def, mul_sub, sub_mul,
+      Matrix.single_mul_single_same, Matrix.single_mul_single_of_ne]
+  · simp [typeBShortNegativeRootMatrix_def, typeBLongRootMatrix_def, mul_sub, sub_mul,
+      Matrix.single_mul_single_of_ne, hik, Ne.symm hik]
 
 /-- The positive short-root matrix is skew-adjoint for the split odd orthogonal form. -/
 theorem typeBShortRootMatrix_mem_typeB (i : ι) :
