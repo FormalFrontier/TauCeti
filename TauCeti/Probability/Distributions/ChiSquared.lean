@@ -18,10 +18,10 @@ The chi-squared law with `k` degrees of freedom is the Gamma law with shape `k /
 degrees of freedom give the usual absolutely continuous law, zero degrees of freedom give the
 Dirac measure at zero, and negative degrees of freedom give the zero measure.
 
-For positive `k`, the file supplies the density, probability-measure instance, cdf, mean,
-variance, exact exponential-integrability domain, moment-generating function, cumulant-generating
-function, and additivity in the degrees of freedom. The corresponding formulas at `k = 0` are
-recorded separately because that law is singular rather than density-defined.
+For positive `k`, the file supplies the density, cdf, exact exponential-integrability domain,
+moment-generating function, and cumulant-generating function. For nonnegative `k`, it supplies
+probability normalization, mean, variance, and additivity in the degrees of freedom. The
+corresponding singular formulas at `k = 0` are recorded separately.
 
 The characteristic function at positive degree is deliberately not proved here: it is the direct
 specialization of the Gamma characteristic function currently tracked separately by the same
@@ -135,6 +135,7 @@ theorem chiSquaredMeasure_eq_withDensity (hk : 0 < k) :
   exact (chiSquaredPDF_of_pos hk x).symm
 
 /-- The chi-squared density is measurable for every degree of freedom. -/
+@[fun_prop]
 theorem measurable_chiSquaredPDF (k : ℝ) : Measurable (chiSquaredPDF k) := by
   by_cases hk : 0 < k
   · have heq : chiSquaredPDF k = gammaPDF (k / 2) (1 / 2) :=
@@ -157,11 +158,6 @@ theorem isProbabilityMeasure_chiSquaredMeasure (hk : 0 ≤ k) :
     infer_instance
   · rw [chiSquaredMeasure_of_pos hk]
     exact isProbabilityMeasure_gammaMeasure (half_pos hk) (by norm_num)
-
-/-- The zero-degree chi-squared law is a probability measure, despite being singular. -/
-theorem isProbabilityMeasure_chiSquaredMeasure_zero :
-    IsProbabilityMeasure (chiSquaredMeasure 0) :=
-  isProbabilityMeasure_chiSquaredMeasure le_rfl
 
 /-- A variable with a positive-degree chi-squared law has a density. -/
 theorem hasPDF_of_hasLaw_chiSquaredMeasure {Omega : Type*} [MeasurableSpace Omega]
@@ -204,27 +200,32 @@ theorem cdf_chiSquaredMeasure_zero (x : ℝ) :
     cdf (chiSquaredMeasure 0) x = if 0 ≤ x then 1 else 0 := by
   rw [chiSquaredMeasure_zero, TauCeti.cdf_dirac]
 
-/-- The mean of a positive-degree chi-squared law is its degree of freedom. -/
-theorem integral_id_chiSquaredMeasure (hk : 0 < k) :
+/-- The mean of a nonnegative-degree chi-squared law is its degree of freedom. -/
+theorem integral_id_chiSquaredMeasure (hk : 0 ≤ k) :
     ∫ x, x ∂chiSquaredMeasure k = k := by
-  rw [chiSquaredMeasure_of_pos hk,
-    TauCeti.integral_id_gammaMeasure (half_pos hk) (by norm_num)]
-  ring
+  rcases hk.eq_or_lt with rfl | hk
+  · rw [chiSquaredMeasure_zero, integral_dirac]
+  · rw [chiSquaredMeasure_of_pos hk,
+      TauCeti.integral_id_gammaMeasure (half_pos hk) (by norm_num)]
+    ring
 
 /-- The zero-degree chi-squared law has mean zero. -/
 theorem integral_id_chiSquaredMeasure_zero : ∫ x, x ∂chiSquaredMeasure 0 = 0 := by
-  rw [chiSquaredMeasure_zero, integral_dirac]
+  exact integral_id_chiSquaredMeasure le_rfl
 
-/-- The variance of a positive-degree chi-squared law is twice its degree of freedom. -/
-theorem variance_id_chiSquaredMeasure (hk : 0 < k) :
+/-- The variance of a nonnegative-degree chi-squared law is twice its degree of freedom. -/
+theorem variance_id_chiSquaredMeasure (hk : 0 ≤ k) :
     variance id (chiSquaredMeasure k) = 2 * k := by
-  rw [chiSquaredMeasure_of_pos hk,
-    TauCeti.variance_id_gammaMeasure (half_pos hk) (by norm_num)]
-  ring
+  rcases hk.eq_or_lt with rfl | hk
+  · rw [chiSquaredMeasure_zero, variance_dirac]
+    norm_num
+  · rw [chiSquaredMeasure_of_pos hk,
+      TauCeti.variance_id_gammaMeasure (half_pos hk) (by norm_num)]
+    ring
 
 /-- The zero-degree chi-squared law has variance zero. -/
 theorem variance_id_chiSquaredMeasure_zero : variance id (chiSquaredMeasure 0) = 0 := by
-  rw [chiSquaredMeasure_zero, variance_dirac]
+  simpa only [mul_zero] using variance_id_chiSquaredMeasure (k := 0) le_rfl
 
 /-- The exponential moments of a positive-degree chi-squared law exist exactly below `1 / 2`. -/
 theorem integrableExpSet_id_chiSquaredMeasure (hk : 0 < k) :
@@ -291,6 +292,7 @@ theorem chiSquaredMeasure_two : chiSquaredMeasure 2 = expMeasure (1 / 2) := by
   norm_num [expMeasure]
 
 /-- The chi-squared family is measurable in its degree of freedom. -/
+@[fun_prop]
 theorem measurable_chiSquaredMeasure : Measurable chiSquaredMeasure := by
   unfold chiSquaredMeasure
   refine Measurable.ite (measurableSet_singleton 0) measurable_const ?_
