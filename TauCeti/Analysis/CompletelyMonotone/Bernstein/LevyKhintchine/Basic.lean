@@ -37,8 +37,8 @@ terms, is a Bernstein function.
   nonnegative killing and drift terms preserves the Bernstein property.
 
 Existence of the converse triplet is proved in
-`TauCeti.Analysis.CompletelyMonotone.Bernstein.LevyKhintchine.Representation`; uniqueness remains
-separate.
+`TauCeti.Analysis.CompletelyMonotone.Bernstein.LevyKhintchine.Representation`, and uniqueness in
+`TauCeti.Analysis.CompletelyMonotone.Bernstein.LevyKhintchine.Uniqueness`.
 
 ## References
 
