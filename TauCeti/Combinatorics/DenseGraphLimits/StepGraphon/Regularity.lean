@@ -34,7 +34,9 @@ null sets, and `stepGraphonAvg` uses Mathlib's zero set-average convention on th
   (1999), 175--220.
 * L. Lovász, *Large Networks and Graph Limits*, AMS Colloquium Publications 60 (2012), §9.2.
 * Roadmap: `TauCetiRoadmap/DenseGraphLimits/README.md`, Layer 2 —
-  `weak_regularity_frieze_kannan` and its null-cell/energy-increment validation gate.
+  `weak_regularity_frieze_kannan` and its null-cell/energy-increment validation gate.  The theorem
+  signature and its `4 ^ (Nat.ceil (1 / ε ^ 2) + 1)` bound are taken from
+  `TauCetiRoadmap/DenseGraphLimits/Suggested.lean` (Layer 2).
 * The refinement-and-energy iteration follows `Graphon/Regularity.lean` in
   `cameronfreer/graphon` (Apache 2.0) at commit
   `6eccca5bbe5c9df46d7129bf59575b8b9b1d6699`, adapted here to Mathlib `Finpartition`, strict
@@ -97,12 +99,12 @@ theorem exists_refinement_energy_add_sq_le (P : Finpartition (Set.univ : Set Ω)
         (Nat.mul_le_mul_left _ (Finpartition.card_parts_bipartition_le S))
         (Finpartition.card_parts_bipartition_le T)
       _ = 4 * P.parts.card := by omega
-  let pS : PS.parts := ⟨S, Finpartition.mem_bipartition_of_ne_empty hS_ne⟩
-  let pT : PT.parts := ⟨T, Finpartition.mem_bipartition_of_ne_empty hT_ne⟩
+  let pS : PS.parts := ⟨S, Finpartition.mem_bipartition_of_ne_bot hS_ne⟩
+  let pT : PT.parts := ⟨T, Finpartition.mem_bipartition_of_ne_bot hT_ne⟩
   have havg :
       (stepGraphonAvg (μ := μ) Q hQ W).toSymmKernel.rectIntegral μ S T =
         W.toSymmKernel.rectIntegral μ S T := by
-    simpa [pS, pT] using stepGraphonAvg_rectIntegral_of_le_left_right μ hPS hPT hQ
+    simpa [pS, pT] using stepGraphonAvg_rectIntegral_of_le μ hPS hPT hQ
       hQS hQT W pS pT
   let L := (stepGraphonAvg (μ := μ) Q hQ W).toSymmKernel -
     (stepGraphonAvg (μ := μ) P hP W).toSymmKernel
@@ -127,6 +129,8 @@ theorem weak_regularity_frieze_kannan (W : Graphon Ω μ) {ε : ℝ} (hε : 0 < 
       cutNorm μ (W.toSymmKernel - (stepGraphonAvg (μ := μ) P hP W).toSymmKernel) ≤ ε := by
   let N := Nat.ceil (1 / ε ^ 2) + 1
   let δ := ε ^ 2
+  -- Iteration invariant: after `n` allowed refinements, either the approximation is good or the
+  -- energy has grown by `n * δ`, while the starting part budget is `4 ^ (N - n)`.
   suffices hiter : ∀ n : ℕ, n ≤ N →
       ∀ (P : Finpartition (Set.univ : Set Ω)) (hP : ∀ p ∈ P.parts, MeasurableSet p),
         P.parts.card ≤ 4 ^ (N - n) →
@@ -135,6 +139,7 @@ theorem weak_regularity_frieze_kannan (W : Graphon Ω μ) {ε : ℝ} (hε : 0 < 
             (cutNorm μ (W.toSymmKernel - (stepGraphonAvg (μ := μ) Q hQ W).toSymmKernel) ≤ ε ∨
               graphonPartitionEnergy μ P hP W + (n : ℝ) * δ ≤
                 graphonPartitionEnergy μ Q hQ W) by
+    -- Instantiate the invariant at the indiscrete partition and rule out the energy-growth branch.
     let P₀ : Finpartition (Set.univ : Set Ω) := ⊤
     have hP₀ : ∀ p ∈ P₀.parts, MeasurableSet p := by
       intro p hp
@@ -161,9 +166,12 @@ theorem weak_regularity_frieze_kannan (W : Graphon Ω μ) {ε : ℝ} (hε : 0 < 
   intro n hn
   induction n with
   | zero =>
+      -- Base case: keep the current partition; the required energy gain is zero.
       intro P hP hPcard
       exact ⟨P, hP, by simpa using hPcard, Or.inr (by simp)⟩
   | succ n ih =>
+      -- Refinement step: stop if already good, otherwise gain `δ` and apply the induction
+      -- hypothesis to the refined partition with the remaining part budget.
       intro P hP hPcard
       by_cases hgood :
           cutNorm μ (W.toSymmKernel - (stepGraphonAvg (μ := μ) P hP W).toSymmKernel) ≤ ε

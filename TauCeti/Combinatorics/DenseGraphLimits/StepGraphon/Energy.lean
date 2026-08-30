@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Claude
+Authors: Claude, Codex
 -/
 module
 
@@ -48,9 +48,7 @@ graph.
 ## Main results
 
 * `TauCeti.DenseGraphLimits.stepGraphonAvg_rectIntegral_of_le`: block averaging over a refinement
-  preserves the coarse block integrals;
-* `TauCeti.DenseGraphLimits.stepGraphonAvg_rectIntegral_of_le_left_right`: the corresponding
-  statement when the two rectangle sides come from different coarser partitions;
+  preserves rectangle integrals whose sides come from possibly different coarser partitions;
 * `TauCeti.DenseGraphLimits.l2inner_stepGraphonAvg_eq_sum`: the block computation everything else
   is read off from — pairing any kernel against a block-average step graphon;
 * `TauCeti.DenseGraphLimits.graphonPartitionEnergy_eq_sum`: the energy as a finite block sum;
@@ -101,7 +99,7 @@ section Decomposition
 
 /-- Two kernels with the same integral over every rectangle of a partition `Q` have the same
 integral over a rectangle whose sides are parts of two partitions coarser than `Q`. -/
-theorem rectIntegral_eq_of_le_left_right {P R Q : Finpartition (Set.univ : Set Ω)}
+private theorem rectIntegral_eq_of_le_left_right {P R Q : Finpartition (Set.univ : Set Ω)}
     (hP : ∀ p ∈ P.parts, MeasurableSet p) (hR : ∀ r ∈ R.parts, MeasurableSet r)
     (hQ : ∀ q ∈ Q.parts, MeasurableSet q) (hQP : Q ≤ P) (hQR : Q ≤ R)
     {K L : SymmKernel Ω μ}
@@ -127,23 +125,9 @@ theorem rectIntegral_eq_of_le_left_right {P R Q : Finpartition (Set.univ : Set �
 
 end Decomposition
 
-variable (P Q : Finpartition (Set.univ : Set Ω))
-
-/-- Block averaging over a refinement still reproduces the block integrals of the coarser
-partition.  No hypothesis excluding null parts is needed: a null part of the finer partition cuts
-out a null rectangle, which contributes zero to both sides whatever value the step graphon takes
-there. -/
-theorem stepGraphonAvg_rectIntegral_of_le (hP : ∀ p ∈ P.parts, MeasurableSet p)
-    (hQ : ∀ r ∈ Q.parts, MeasurableSet r) (href : Q ≤ P) (W : Graphon Ω μ) (p q : P.parts) :
-    (stepGraphonAvg (μ := μ) Q hQ W).toSymmKernel.rectIntegral μ (p : Set Ω) (q : Set Ω)
-      = W.toSymmKernel.rectIntegral μ (p : Set Ω) (q : Set Ω) :=
-  rectIntegral_eq_of_le_left_right μ hP hP hQ href href
-    (fun r s => stepGraphonAvg_rectIntegral Q hQ W r s) p q
-
 /-- Block averaging over `Q` reproduces the integral over any rectangle whose two sides are parts
 of (possibly different) measurable partitions coarser than `Q`. -/
-theorem stepGraphonAvg_rectIntegral_of_le_left_right
-    {P R Q : Finpartition (Set.univ : Set Ω)}
+theorem stepGraphonAvg_rectIntegral_of_le {P R Q : Finpartition (Set.univ : Set Ω)}
     (hP : ∀ p ∈ P.parts, MeasurableSet p) (hR : ∀ r ∈ R.parts, MeasurableSet r)
     (hQ : ∀ q ∈ Q.parts, MeasurableSet q) (hQP : Q ≤ P) (hQR : Q ≤ R)
     (W : Graphon Ω μ) (p : P.parts) (r : R.parts) :
@@ -151,6 +135,8 @@ theorem stepGraphonAvg_rectIntegral_of_le_left_right
       = W.toSymmKernel.rectIntegral μ (p : Set Ω) (r : Set Ω) :=
   rectIntegral_eq_of_le_left_right μ hP hR hQ hQP hQR
     (fun q q' => stepGraphonAvg_rectIntegral Q hQ W q q') p r
+
+variable (P Q : Finpartition (Set.univ : Set Ω))
 
 /-- On a single block, pairing any kernel against the block-average step graphon multiplies the
 block integral of the kernel by the block average of `W`. -/
@@ -233,7 +219,7 @@ theorem l2inner_stepGraphonAvg_of_le (hP : ∀ p ∈ P.parts, MeasurableSet p)
       = graphonPartitionEnergy μ P hP W := by
   rw [l2inner_stepGraphonAvg_eq_sum, graphonPartitionEnergy_eq_sum]
   exact Finset.sum_congr rfl fun pq _ => by
-    rw [stepGraphonAvg_rectIntegral_of_le μ P Q hP hQ href W pq.1 pq.2]
+    rw [stepGraphonAvg_rectIntegral_of_le μ hP hP hQ href href W pq.1 pq.2]
 
 /-- **The `L²`-Pythagoras energy increment.**  Refining a partition raises the energy by exactly the
 `L²` norm squared of the change in the block-average step graphon.  This is the quantitative driver
