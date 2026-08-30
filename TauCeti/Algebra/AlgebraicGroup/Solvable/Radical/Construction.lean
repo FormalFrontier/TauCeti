@@ -144,12 +144,6 @@ noncomputable def solvableRadicalCoordinateMap
     (H : FiniteTypeCommHopfAlgCat.{u, u} k) : H ⟶ solvableRadical H :=
   mkQuotient H (solvableRadicalDefiningIdeal H)
 
-/-- The solvable-radical coordinate morphism is the canonical quotient morphism. -/
-lemma solvableRadicalCoordinateMap_def
-    (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
-    solvableRadicalCoordinateMap H = mkQuotient H (solvableRadicalDefiningIdeal H) :=
-  (rfl)
-
 /-- The kernel of the solvable-radical coordinate morphism is its defining ideal. -/
 @[simp]
 theorem solvableRadicalCoordinateMap_ker
