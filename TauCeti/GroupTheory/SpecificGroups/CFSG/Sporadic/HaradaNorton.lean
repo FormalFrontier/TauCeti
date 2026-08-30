@@ -41,9 +41,9 @@ order-five symmetric generator whose final relations produce `HN`.
 For this audit, the source-to-Lean transcription was independently read against the first
 presentation in the corrected machine-readable `HNpb.m` file. All nineteen expressions agree in
 order, including the conjugation convention in the fourteenth relator. The fifth compiled word has
-the freely cancelling boundary `a⁻²a`; the checks below therefore record both the raw total of `153`
-letters and the freely reduced total of `151`, and prove that every reduced word is cyclically
-reduced. This file asserts no order, finiteness, simplicity, or identification result.
+the freely cancelling boundary `a⁻²a`; the checks below therefore record the raw total of `153`
+letters alongside the freely reduced length of each relator, and prove that every reduced word is
+cyclically reduced. This file asserts no order, finiteness, simplicity, or identification result.
 
 ## Main definitions and results
 
@@ -52,8 +52,7 @@ reduced. This file asserts no order, finiteness, simplicity, or identification r
   characterization of the sealed row.
 * `TauCeti.Sporadic.hnPresentation_map_length_relators` and
   `TauCeti.Sporadic.hnPresentation_totalLength`: the compiled-word length checks.
-* `TauCeti.Sporadic.hnPresentation_map_length_reduce_relators`,
-  `TauCeti.Sporadic.hnPresentation_reducedTotalLength`, and
+* `TauCeti.Sporadic.hnPresentation_map_length_reduce_relators` and
   `TauCeti.Sporadic.isCyclicallyReduced_reduce_mem_hnPresentation_relators`: the corresponding
   freely reduced checks.
 
@@ -287,19 +286,14 @@ theorem isCyclicallyReduced_reduce_mem_hnPresentation_relators :
   decide
 
 /-- The freely reduced lengths of the nineteen `HN` relators, in source order. Only the fifth
-compiled word shortens, from `20` letters to `18`. -/
+compiled word shortens, from `20` letters to `18`, so the reduced words carry `151` of the `153`
+compiled letters. -/
 theorem hnPresentation_map_length_reduce_relators :
     hnPresentation.relators.map (fun w => (FreeGroup.reduce w).length) =
       [4, 6, 7, 12, 18, 20, 4, 4, 8, 18, 2, 4, 4, 15, 5, 5, 5, 4, 6] := by
   simp only [GroupPresentation.relators_def, hnPresentation_transcribed, List.map_cons,
     List.map_nil, Relator.toWord_gen, Relator.toWord_inv, Relator.toWord_mul,
     Relator.toWord_pow, Relator.toWord_comm]
-  decide
-
-/-- After free reduction, the nineteen `HN` relator words contain `151` letters in total. -/
-theorem hnPresentation_reducedTotalLength :
-    (hnPresentation.relators.map fun w => (FreeGroup.reduce w).length).sum = 151 := by
-  rw [hnPresentation_map_length_reduce_relators]
   decide
 
 end TauCeti.Sporadic
