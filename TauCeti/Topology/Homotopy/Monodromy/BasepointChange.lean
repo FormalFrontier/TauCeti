@@ -39,7 +39,7 @@ namespace IsCoveringMap
 
 /-- The subgroup recovered at the endpoint of a lifted path is the basepoint transport of the
 subgroup recovered at its starting point. -/
-theorem range_mapOfEq_monodromy_of_path (hp : IsCoveringMap p) (γ : Path x₀ x₁)
+theorem _root_.IsCoveringMap.range_mapOfEq_monodromy_of_path (hp : IsCoveringMap p) (γ : Path x₀ x₁)
     (e₀ : p ⁻¹' {x₀}) :
     (FundamentalGroup.mapOfEq ⟨p, hp.continuous⟩
       (hp.monodromy ⟦γ⟧ e₀).2).range =
