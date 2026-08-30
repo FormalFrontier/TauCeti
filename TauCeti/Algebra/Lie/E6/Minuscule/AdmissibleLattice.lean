@@ -215,7 +215,7 @@ private theorem mulVec_sq_eq_zero (M : Matrix (Fin 27) (Fin 27) ℚ) (hM : M ^ 2
   rw [Matrix.mulVec_mulVec, ← pow_two, hM, Matrix.zero_mulVec]
 
 /-- Every represented positive or negative Serre root generator is square-zero. -/
-theorem pow_two_rep_serreRootGenerator_eq_zero (k : Fin 6 ⊕ Fin 6) :
+theorem rep_serreRootGenerator_sq (k : Fin 6 ⊕ Fin 6) :
     rep (_root_.UniversalEnvelopingAlgebra.ι ℚ
       (TauCeti.serreRootGenerator (CartanMatrix.E 6)ᵀ k)) ^ 2 = 0 := by
   apply LinearMap.ext
@@ -235,7 +235,7 @@ theorem pow_two_rep_serreRootGenerator_eq_zero (k : Fin 6 ⊕ Fin 6) :
 theorem isNilpotent_rep_serreRootGenerator (k : Fin 6 ⊕ Fin 6) :
     IsNilpotent (rep (_root_.UniversalEnvelopingAlgebra.ι ℚ
       (TauCeti.serreRootGenerator (CartanMatrix.E 6)ᵀ k))) :=
-  ⟨2, pow_two_rep_serreRootGenerator_eq_zero k⟩
+  ⟨2, rep_serreRootGenerator_sq k⟩
 
 /-! ## The admissible coordinate lattice -/
 
@@ -319,7 +319,7 @@ theorem rep_serreKostantForm_mem_lattice
   exact TauCeti.UniversalEnvelopingAlgebra.kostantForm_apply_mem_coordinateLattice
     (TauCeti.serreRootGenerator (CartanMatrix.E 6)ᵀ)
     (TauCeti.serreH ℚ (CartanMatrix.E 6)ᵀ) rep
-    (wt := e6MinusculeWeight) pow_two_rep_serreRootGenerator_eq_zero
+    (wt := e6MinusculeWeight) rep_serreRootGenerator_sq
     (fun k _ hw ↦ rep_serreRootGenerator_mem_lattice k hw) isCartanWeightVector_single hu hv
 
 end TauCeti.E6Minuscule
