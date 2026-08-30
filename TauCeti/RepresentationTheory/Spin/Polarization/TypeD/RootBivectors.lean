@@ -304,6 +304,7 @@ variable [Invertible (2 : K)]
 
 /-- When `2` is invertible, the integral simple-coroot representative is the usual sum or
 difference of half-normalized diagonal bivectors. -/
+@[simp]
 theorem typeDSimpleCorootBivector_eq_diagonalBivector (hn : 2 ≤ n) (i : Fin n) :
     P.typeDSimpleCorootBivector b hn i =
       if h : (i : ℕ) + 1 < n then

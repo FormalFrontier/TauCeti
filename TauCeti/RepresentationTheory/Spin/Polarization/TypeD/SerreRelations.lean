@@ -66,6 +66,30 @@ private theorem ι_dualVector_mul_ι_dualVector_eq_zero_of_eq (i j : Fin n) (hij
 private noncomputable def diagonalProduct (i : Fin n) : CliffordAlgebra Q :=
   ι Q (b i : V) * ι Q (P.dualVector b i : V)
 
+/-- The common chain/fork shape underlying both orientations of the type-`D` root products. -/
+private noncomputable def typeDRootProduct (hn : 2 ≤ n) (x y : Fin n → V) (i : Fin n) :
+    CliffordAlgebra Q :=
+  if h : (i : ℕ) + 1 < n then
+    ι Q (x i) * ι Q (y ⟨(i : ℕ) + 1, h⟩)
+  else
+    ι Q (x ⟨n - 2, by omega⟩) * ι Q (x ⟨n - 1, by omega⟩)
+
+private theorem typeDSimpleRootBivector_eq_typeDRootProduct (hn : 2 ≤ n) (i : Fin n) :
+    P.typeDSimpleRootBivector b hn i =
+      typeDRootProduct hn (fun k ↦ (b k : V)) (fun k ↦ P.dualVector b k) i := by
+  rw [P.typeDSimpleRootBivector_def b, typeDRootProduct]
+
+private theorem typeDSimpleNegativeRootBivector_eq_neg_typeDRootProduct
+    (hn : 2 ≤ n) (i : Fin n) :
+    P.typeDSimpleNegativeRootBivector b hn i =
+      -typeDRootProduct hn (fun k ↦ (P.dualVector b k : V)) (fun k ↦ (b k : V)) i := by
+  rw [P.typeDSimpleNegativeRootBivector_def b, typeDRootProduct]
+  split
+  · rename_i h
+    rw [ι_mul_ι_comm, P.polar_dualVector]
+    simp [Fin.ext_iff]
+  · rw [ι_mul_ι_comm, P.polar_W'_eq_zero, map_zero, zero_sub]
+
 private theorem lie_diagonalProduct_diagonalProduct (i j : Fin n) :
     ⁅P.diagonalProduct b i, P.diagonalProduct b j⁆ = 0 := by
   rw [diagonalProduct, diagonalProduct, lie_ι_mul_ι_ι_mul_ι]
@@ -133,6 +157,9 @@ private theorem lie_diagonalProduct_typeDSimpleNegativeRootBivector
     ⁅P.diagonalProduct b i, P.typeDSimpleNegativeRootBivector b (by omega) j⁆ =
       -algebraMap ℤ K (DynkinType.typeDSimpleRoot n hn j i) •
         P.typeDSimpleNegativeRootBivector b (by omega) j := by
+  have polar_dual_basis (k l : Fin n) :
+      polar Q (P.dualVector b k : V) (b l : V) = if l = k then 1 else 0 := by
+    rw [polar_comm, P.polar_dualVector]
   rw [diagonalProduct, P.typeDSimpleNegativeRootBivector_def b]
   split
   · rename_i h
@@ -148,7 +175,7 @@ private theorem lie_diagonalProduct_typeDSimpleNegativeRootBivector
       · simp [h1, h2, Ne.symm h1]
   · rename_i h
     rw [lie_ι_mul_ι_ι_mul_ι, DynkinType.typeDSimpleRoot_of_not_add_one_lt hn h]
-    simp only [P.polar_W'_eq_zero, P.polar_dualVector, P.polar_dualVector_left,
+    simp only [P.polar_W'_eq_zero, P.polar_dualVector, polar_dual_basis,
       zero_smul, add_zero, Pi.add_apply, Pi.single_apply]
     by_cases h1 : i = ⟨n - 1, by omega⟩
     · subst i
@@ -230,6 +257,9 @@ theorem lie_typeDSimpleRootBivector_typeDSimpleNegativeRootBivector_of_ne
     (hn : 4 ≤ n) (i j : Fin n) (hij : i ≠ j) :
     ⁅P.typeDSimpleRootBivector b (by omega) i,
         P.typeDSimpleNegativeRootBivector b (by omega) j⁆ = 0 := by
+  have polar_dual_basis (k l : Fin n) :
+      polar Q (P.dualVector b k : V) (b l : V) = if l = k then 1 else 0 := by
+    rw [polar_comm, P.polar_dualVector]
   by_cases hi : (i : ℕ) + 1 < n
   · by_cases hj : (j : ℕ) + 1 < n
     · rw [P.typeDSimpleRootBivector_def b, dite_eq_left hi,
@@ -250,9 +280,9 @@ theorem lie_typeDSimpleRootBivector_typeDSimpleNegativeRootBivector_of_ne
           omega
         rw [hnextLast]
         have hne : n - 2 ≠ n - 1 := by omega
-        simp [P.polar_W'_eq_zero, P.polar_dualVector, P.polar_dualVector_left,
+        simp [P.polar_W'_eq_zero, P.polar_dualVector, polar_dual_basis,
           Fin.ext_iff, hiPenultimate, hne]
-      · simp [P.polar_W'_eq_zero, P.polar_dualVector, P.polar_dualVector_left,
+      · simp [P.polar_W'_eq_zero, P.polar_dualVector, polar_dual_basis,
           Fin.ext_iff, hiLast, hiPenultimate]
   · by_cases hj : (j : ℕ) + 1 < n
     · rw [P.typeDSimpleRootBivector_def b, dite_eq_right hi,
@@ -266,9 +296,9 @@ theorem lie_typeDSimpleRootBivector_typeDSimpleNegativeRootBivector_of_ne
           omega
         rw [hnextLast]
         have hne : n - 2 ≠ n - 1 := by omega
-        simp [P.polar_W_eq_zero, P.polar_dualVector, P.polar_dualVector_left,
+        simp [P.polar_W_eq_zero, P.polar_dualVector, polar_dual_basis,
           Fin.ext_iff, hjPenultimate, Ne.symm hne]
-      · simp [P.polar_W_eq_zero, P.polar_dualVector, P.polar_dualVector_left,
+      · simp [P.polar_W_eq_zero, P.polar_dualVector, polar_dual_basis,
           Fin.ext_iff, Ne.symm hjLast, Ne.symm hjPenultimate]
     · exfalso
       apply hij
@@ -295,6 +325,60 @@ private theorem lie_ι_mul_ι_lie_ι_mul_ι_eq_zero (x y z w : V)
     ring
   linear_combination (norm := module) hcoeff • (ι Q x * ι Q y)
 
+private theorem lie_typeDRootProduct_lie_typeDRootProduct
+    (hn : 2 ≤ n) (x y : Fin n → V)
+    (hxx : ∀ k l, polar Q (x k) (x l) = 0)
+    (hyy : ∀ k l, polar Q (y k) (y l) = 0)
+    (hxy : ∀ k l, polar Q (x k) (y l) = if k = l then 1 else 0)
+    (hxSq : ∀ k, ι Q (x k) * ι Q (x k) = 0)
+    (hySq : ∀ k, ι Q (y k) * ι Q (y k) = 0)
+    (i j : Fin n) :
+    ⁅typeDRootProduct (K := K) (Q := Q) hn x y i,
+      ⁅typeDRootProduct (K := K) (Q := Q) hn x y i,
+        typeDRootProduct (K := K) (Q := Q) hn x y j⁆⁆ = 0 := by
+  rw [typeDRootProduct, typeDRootProduct]
+  split
+  · rename_i hi
+    split
+    · rename_i hj
+      apply lie_ι_mul_ι_lie_ι_mul_ι_eq_zero (Q := Q)
+      · exact hxx _ _
+      · rw [hxy]
+        simp [Fin.ext_iff]
+      · exact hyy _ _
+      · exact hxSq _
+      · exact hySq _
+      · simp only [hxx, hyy, hxy, mul_zero]
+        split_ifs with hleft hright
+        · simp only [Fin.ext_iff, one_mul] at *
+          omega
+        · simp only [Fin.ext_iff, one_mul] at *
+        · simp only [Fin.ext_iff, zero_mul] at *
+        · simp only [Fin.ext_iff, zero_mul] at *
+    · apply lie_ι_mul_ι_lie_ι_mul_ι_eq_zero (Q := Q)
+      · exact hxx _ _
+      · rw [hxy]
+        simp [Fin.ext_iff]
+      · exact hyy _ _
+      · exact hxSq _
+      · exact hySq _
+      · simp [hxx]
+  · split
+    · apply lie_ι_mul_ι_lie_ι_mul_ι_eq_zero (Q := Q)
+      · exact hxx _ _
+      · exact hxx _ _
+      · exact hxx _ _
+      · exact hxSq _
+      · exact hxSq _
+      · simp [hxx]
+    · apply lie_ι_mul_ι_lie_ι_mul_ι_eq_zero (Q := Q)
+      · exact hxx _ _
+      · exact hxx _ _
+      · exact hxx _ _
+      · exact hxSq _
+      · exact hxSq _
+      · simp [hxx]
+
 /-- Applying the adjoint action of a positive type-`D` simple-root representative twice to any
 other positive simple-root representative gives zero. -/
 @[simp]
@@ -303,43 +387,19 @@ theorem lie_typeDSimpleRootBivector_lie_typeDSimpleRootBivector
     ⁅P.typeDSimpleRootBivector b hn i,
       ⁅P.typeDSimpleRootBivector b hn i,
         P.typeDSimpleRootBivector b hn j⁆⁆ = 0 := by
-  rw [P.typeDSimpleRootBivector_def b, P.typeDSimpleRootBivector_def b]
-  split
-  · rename_i hi
-    split
-    · rename_i hj
-      apply lie_ι_mul_ι_lie_ι_mul_ι_eq_zero
-      · exact P.polar_W_eq_zero _ _
-      · simp [P.polar_dualVector, Fin.ext_iff]
-      · exact P.polar_W'_eq_zero _ _
-      · exact P.ι_basis_mul_ι_basis_eq_zero_of_eq b _ _ rfl
-      · exact P.ι_dualVector_mul_ι_dualVector_eq_zero_of_eq b _ _ rfl
-      · simp only [P.polar_W_eq_zero, P.polar_W'_eq_zero, P.polar_dualVector,
-          mul_zero]
-        split_ifs <;> simp only [Fin.ext_iff, zero_mul, one_mul] at *
-        omega
-    · apply lie_ι_mul_ι_lie_ι_mul_ι_eq_zero
-      · exact P.polar_W_eq_zero _ _
-      · simp [P.polar_dualVector, Fin.ext_iff]
-      · exact P.polar_W'_eq_zero _ _
-      · exact P.ι_basis_mul_ι_basis_eq_zero_of_eq b _ _ rfl
-      · exact P.ι_dualVector_mul_ι_dualVector_eq_zero_of_eq b _ _ rfl
-      · simp [P.polar_W_eq_zero]
-  · split
-    · apply lie_ι_mul_ι_lie_ι_mul_ι_eq_zero
-      · exact P.polar_W_eq_zero _ _
-      · exact P.polar_W_eq_zero _ _
-      · exact P.polar_W_eq_zero _ _
-      · exact P.ι_basis_mul_ι_basis_eq_zero_of_eq b _ _ rfl
-      · exact P.ι_basis_mul_ι_basis_eq_zero_of_eq b _ _ rfl
-      · simp [P.polar_W_eq_zero]
-    · apply lie_ι_mul_ι_lie_ι_mul_ι_eq_zero
-      · exact P.polar_W_eq_zero _ _
-      · exact P.polar_W_eq_zero _ _
-      · exact P.polar_W_eq_zero _ _
-      · exact P.ι_basis_mul_ι_basis_eq_zero_of_eq b _ _ rfl
-      · exact P.ι_basis_mul_ι_basis_eq_zero_of_eq b _ _ rfl
-      · simp [P.polar_W_eq_zero]
+  rw [P.typeDSimpleRootBivector_eq_typeDRootProduct b hn i,
+    P.typeDSimpleRootBivector_eq_typeDRootProduct b hn j]
+  apply lie_typeDRootProduct_lie_typeDRootProduct
+  · intro k l
+    exact P.polar_W_eq_zero _ _
+  · intro k l
+    exact P.polar_W'_eq_zero _ _
+  · intro k l
+    exact P.polar_dualVector b l k
+  · intro k
+    exact P.ι_basis_mul_ι_basis_eq_zero_of_eq b k k rfl
+  · intro k
+    exact P.ι_dualVector_mul_ι_dualVector_eq_zero_of_eq b k k rfl
 
 /-- Applying the adjoint action of a negative type-`D` simple-root representative twice to any
 other negative simple-root representative gives zero. -/
@@ -349,43 +409,31 @@ theorem lie_typeDSimpleNegativeRootBivector_lie_typeDSimpleNegativeRootBivector
     ⁅P.typeDSimpleNegativeRootBivector b hn i,
       ⁅P.typeDSimpleNegativeRootBivector b hn i,
         P.typeDSimpleNegativeRootBivector b hn j⁆⁆ = 0 := by
-  rw [P.typeDSimpleNegativeRootBivector_def b, P.typeDSimpleNegativeRootBivector_def b]
-  split
-  · rename_i hi
-    split
-    · rename_i hj
-      apply lie_ι_mul_ι_lie_ι_mul_ι_eq_zero
-      · exact P.polar_W_eq_zero _ _
-      · simp [P.polar_dualVector, Fin.ext_iff]
-      · exact P.polar_W'_eq_zero _ _
-      · exact P.ι_basis_mul_ι_basis_eq_zero_of_eq b _ _ rfl
-      · exact P.ι_dualVector_mul_ι_dualVector_eq_zero_of_eq b _ _ rfl
-      · simp only [P.polar_W_eq_zero, P.polar_W'_eq_zero, P.polar_dualVector,
-          mul_zero]
-        split_ifs <;> simp only [Fin.ext_iff, zero_mul, one_mul] at *
-        omega
-    · apply lie_ι_mul_ι_lie_ι_mul_ι_eq_zero
-      · exact P.polar_W_eq_zero _ _
-      · simp [P.polar_dualVector, Fin.ext_iff]
-      · exact P.polar_W'_eq_zero _ _
-      · exact P.ι_basis_mul_ι_basis_eq_zero_of_eq b _ _ rfl
-      · exact P.ι_dualVector_mul_ι_dualVector_eq_zero_of_eq b _ _ rfl
-      · simp [P.polar_W'_eq_zero]
-  · split
-    · apply lie_ι_mul_ι_lie_ι_mul_ι_eq_zero
-      · exact P.polar_W'_eq_zero _ _
-      · exact P.polar_W'_eq_zero _ _
-      · exact P.polar_W'_eq_zero _ _
-      · exact P.ι_dualVector_mul_ι_dualVector_eq_zero_of_eq b _ _ rfl
-      · exact P.ι_dualVector_mul_ι_dualVector_eq_zero_of_eq b _ _ rfl
-      · simp [P.polar_W'_eq_zero]
-    · apply lie_ι_mul_ι_lie_ι_mul_ι_eq_zero
-      · exact P.polar_W'_eq_zero _ _
-      · exact P.polar_W'_eq_zero _ _
-      · exact P.polar_W'_eq_zero _ _
-      · exact P.ι_dualVector_mul_ι_dualVector_eq_zero_of_eq b _ _ rfl
-      · exact P.ι_dualVector_mul_ι_dualVector_eq_zero_of_eq b _ _ rfl
-      · simp [P.polar_W'_eq_zero]
+  rw [P.typeDSimpleNegativeRootBivector_eq_neg_typeDRootProduct b hn i,
+    P.typeDSimpleNegativeRootBivector_eq_neg_typeDRootProduct b hn j]
+  have hroot :
+      ⁅typeDRootProduct (K := K) (Q := Q) hn
+          (fun k ↦ (P.dualVector b k : V)) (fun k ↦ (b k : V)) i,
+        ⁅typeDRootProduct (K := K) (Q := Q) hn
+            (fun k ↦ (P.dualVector b k : V)) (fun k ↦ (b k : V)) i,
+          typeDRootProduct (K := K) (Q := Q) hn
+            (fun k ↦ (P.dualVector b k : V)) (fun k ↦ (b k : V)) j⁆⁆ = 0 := by
+    apply lie_typeDRootProduct_lie_typeDRootProduct
+    · intro k l
+      exact P.polar_W'_eq_zero _ _
+    · intro k l
+      exact P.polar_W_eq_zero _ _
+    · intro k l
+      rw [polar_comm, P.polar_dualVector]
+      by_cases hkl : k = l
+      · subst l
+        simp
+      · simp [hkl, Ne.symm hkl]
+    · intro k
+      exact P.ι_dualVector_mul_ι_dualVector_eq_zero_of_eq b k k rfl
+    · intro k
+      exact P.ι_basis_mul_ι_basis_eq_zero_of_eq b k k rfl
+  simp only [lie_neg, neg_lie, neg_neg, hroot, neg_zero]
 
 /-- Whether two vertices are adjacent in the Bourbaki type-`D` Dynkin diagram. -/
 private def typeDAdjacent (n : ℕ) (i j : Fin n) : Prop :=
@@ -421,13 +469,25 @@ private theorem neg_typeDCartan_toNat (hn : 4 ≤ n) (i j : Fin n) :
   rw [hD]
   split_ifs <;> norm_num
 
-private theorem lie_typeDSimpleRootBivector_of_not_adjacent
-    (hn : 4 ≤ n) (i j : Fin n) (hij : ¬typeDAdjacent n i j) :
-    ⁅P.typeDSimpleRootBivector b (by omega) i,
-        P.typeDSimpleRootBivector b (by omega) j⁆ = 0 := by
+private theorem lie_typeDRootProduct_of_not_adjacent
+    (hn : 4 ≤ n) (x y : Fin n → V)
+    (hxx : ∀ k l, polar Q (x k) (x l) = 0)
+    (hyy : ∀ k l, polar Q (y k) (y l) = 0)
+    (hxy : ∀ k l, polar Q (x k) (y l) = if k = l then 1 else 0)
+    (hxSq : ∀ k, ι Q (x k) * ι Q (x k) = 0)
+    (i j : Fin n) (hij : ¬typeDAdjacent n i j) :
+    ⁅typeDRootProduct (K := K) (Q := Q) (by omega) x y i,
+      typeDRootProduct (K := K) (Q := Q) (by omega) x y j⁆ = 0 := by
+  have hyx (k l : Fin n) :
+      polar Q (y k) (x l) = if l = k then 1 else 0 := by
+    rw [polar_comm, hxy]
+  have hx_mul_eq_zero (k l : Fin n) (hkl : k = l) :
+      ι Q (x k) * ι Q (x l) = 0 := by
+    subst l
+    exact hxSq k
   have hn1 : n - 1 + 1 = n := by omega
   have hn2 : n - 2 + 2 = n := by omega
-  rw [P.typeDSimpleRootBivector_def b, P.typeDSimpleRootBivector_def b]
+  rw [typeDRootProduct, typeDRootProduct]
   split
   · rename_i hi
     split
@@ -435,24 +495,25 @@ private theorem lie_typeDSimpleRootBivector_of_not_adjacent
       rw [lie_ι_mul_ι_ι_mul_ι]
       have hindices := not_typeDAdjacent_index_cases i j hij
       rw [ite_eq_left hi, ite_eq_left hj] at hindices
-      simp only [P.polar_W_eq_zero, P.polar_W'_eq_zero,
-        P.polar_dualVector, zero_smul, add_zero, sub_zero]
-      split_ifs
-      all_goals simp only [Fin.ext_iff] at *
-      · omega
-      · omega
-      · omega
+      simp only [hxx, hyy, hxy, zero_smul, add_zero, sub_zero]
+      split_ifs with hforward hbackward
+      · simp only [Fin.ext_iff] at *
+        omega
+      · simp only [Fin.ext_iff] at *
+        omega
+      · simp only [Fin.ext_iff] at *
+        omega
       · simp only [zero_smul, sub_self]
     · rename_i hj
       rw [lie_ι_mul_ι_ι_mul_ι]
       have hindices := not_typeDAdjacent_index_cases i j hij
       rw [ite_eq_left hi, ite_eq_right hj] at hindices
-      simp only [P.polar_W_eq_zero, P.polar_dualVector, zero_smul, sub_zero, Fin.mk.injEq]
+      simp only [hxx, hxy, zero_smul, sub_zero, Fin.mk.injEq]
       split_ifs with hnextLast hnextPenultimate
       · omega
       · omega
       · simp only [one_smul, zero_smul, zero_add]
-        apply P.ι_basis_mul_ι_basis_eq_zero_of_eq b
+        apply hx_mul_eq_zero
         exact Fin.ext_iff.mpr (by simp only; omega)
       · simp only [zero_smul, add_zero]
   · rename_i hi
@@ -461,73 +522,57 @@ private theorem lie_typeDSimpleRootBivector_of_not_adjacent
       rw [lie_ι_mul_ι_ι_mul_ι]
       have hindices := not_typeDAdjacent_index_cases i j hij
       rw [ite_eq_right hi, ite_eq_left hj] at hindices
-      simp only [P.polar_W_eq_zero, P.polar_dualVector, P.polar_dualVector_left,
+      simp only [hxx, hxy, hyx,
         zero_smul, sub_zero, Fin.mk.injEq]
       split_ifs with hnextLast hnextPenultimate
       · omega
       · simp only [one_smul, zero_smul, zero_add, sub_zero]
-        apply P.ι_basis_mul_ι_basis_eq_zero_of_eq b
+        apply hx_mul_eq_zero
         exact Fin.ext_iff.mpr (by simp only; omega)
       · omega
       · simp only [zero_smul, add_zero, sub_self]
     · rename_i hj
       rw [lie_ι_mul_ι_ι_mul_ι]
-      simp only [P.polar_W_eq_zero, zero_smul, add_zero, sub_self]
+      simp only [hxx, zero_smul, add_zero, sub_self]
+
+private theorem lie_typeDSimpleRootBivector_of_not_adjacent
+    (hn : 4 ≤ n) (i j : Fin n) (hij : ¬typeDAdjacent n i j) :
+    ⁅P.typeDSimpleRootBivector b (by omega) i,
+        P.typeDSimpleRootBivector b (by omega) j⁆ = 0 := by
+  rw [P.typeDSimpleRootBivector_eq_typeDRootProduct b (by omega) i,
+    P.typeDSimpleRootBivector_eq_typeDRootProduct b (by omega) j]
+  apply lie_typeDRootProduct_of_not_adjacent hn
+  · intro k l
+    exact P.polar_W_eq_zero _ _
+  · intro k l
+    exact P.polar_W'_eq_zero _ _
+  · intro k l
+    exact P.polar_dualVector b l k
+  · intro k
+    exact P.ι_basis_mul_ι_basis_eq_zero_of_eq b k k rfl
+  · exact hij
 
 private theorem lie_typeDSimpleNegativeRootBivector_of_not_adjacent
     (hn : 4 ≤ n) (i j : Fin n) (hij : ¬typeDAdjacent n i j) :
     ⁅P.typeDSimpleNegativeRootBivector b (by omega) i,
         P.typeDSimpleNegativeRootBivector b (by omega) j⁆ = 0 := by
-  have hn1 : n - 1 + 1 = n := by omega
-  have hn2 : n - 2 + 2 = n := by omega
-  rw [P.typeDSimpleNegativeRootBivector_def b,
-    P.typeDSimpleNegativeRootBivector_def b]
-  split
-  · rename_i hi
-    split
-    · rename_i hj
-      rw [lie_ι_mul_ι_ι_mul_ι]
-      have hindices := not_typeDAdjacent_index_cases i j hij
-      rw [ite_eq_left hi, ite_eq_left hj] at hindices
-      simp only [P.polar_W_eq_zero, P.polar_W'_eq_zero, P.polar_dualVector,
-        zero_smul, add_zero]
-      split_ifs
-      all_goals simp only [Fin.ext_iff] at *
-      · omega
-      · omega
-      · omega
-      · simp only [zero_smul, sub_self]
-    · rename_i hj
-      rw [lie_ι_mul_ι_ι_mul_ι]
-      have hindices := not_typeDAdjacent_index_cases i j hij
-      rw [ite_eq_left hi, ite_eq_right hj] at hindices
-      simp only [P.polar_W'_eq_zero, P.polar_dualVector, P.polar_dualVector_left,
-        zero_smul, add_zero, Fin.mk.injEq]
-      split_ifs with hnextLast hnextPenultimate
-      · omega
-      · simp only [one_smul, zero_smul, zero_sub, sub_zero, neg_eq_zero]
-        apply P.ι_dualVector_mul_ι_dualVector_eq_zero_of_eq b
-        exact Fin.ext_iff.mpr (by simp only; omega)
-      · omega
-      · simp only [zero_smul, sub_self]
-  · rename_i hi
-    split
-    · rename_i hj
-      rw [lie_ι_mul_ι_ι_mul_ι]
-      have hindices := not_typeDAdjacent_index_cases i j hij
-      rw [ite_eq_right hi, ite_eq_left hj] at hindices
-      simp only [P.polar_W'_eq_zero, P.polar_dualVector, zero_smul, add_zero,
-        sub_zero, Fin.mk.injEq]
-      split_ifs with hnextLast hnextPenultimate
-      · omega
-      · omega
-      · simp only [one_smul, zero_smul, zero_sub, neg_eq_zero]
-        apply P.ι_dualVector_mul_ι_dualVector_eq_zero_of_eq b
-        exact Fin.ext_iff.mpr (by simp only; omega)
-      · simp only [zero_smul, sub_self]
-    · rename_i hj
-      rw [lie_ι_mul_ι_ι_mul_ι]
-      simp only [P.polar_W'_eq_zero, zero_smul, add_zero, sub_self]
+  rw [P.typeDSimpleNegativeRootBivector_eq_neg_typeDRootProduct b (by omega) i,
+    P.typeDSimpleNegativeRootBivector_eq_neg_typeDRootProduct b (by omega) j]
+  simp only [lie_neg, neg_lie, neg_neg]
+  apply lie_typeDRootProduct_of_not_adjacent hn
+  · intro k l
+    exact P.polar_W'_eq_zero _ _
+  · intro k l
+    exact P.polar_W_eq_zero _ _
+  · intro k l
+    rw [polar_comm, P.polar_dualVector]
+    by_cases hkl : k = l
+    · subst l
+      simp
+    · simp [hkl, Ne.symm hkl]
+  · intro k
+    exact P.ι_dualVector_mul_ι_dualVector_eq_zero_of_eq b k k rfl
+  · exact hij
 
 /-- The higher Serre relation for the positive type-`D` spin representatives. -/
 @[simp]
@@ -608,7 +653,8 @@ theorem isSerreSystem_typeDSimpleRootBivector_quadraticLieSubalgebra (hn : 4 ≤
     calc
       ↑((LieAlgebra.ad K (quadraticLieSubalgebra Q) x ^ m) ⁅x, y⁆) =
           (quadraticLieSubalgebra Q).incl
-            ((LieAlgebra.ad K (quadraticLieSubalgebra Q) x ^ m) ⁅x, y⁆) := rfl
+            ((LieAlgebra.ad K (quadraticLieSubalgebra Q) x ^ m) ⁅x, y⁆) := by
+        rw [LieSubalgebra.coe_incl]
       _ = (LieAlgebra.ad K (CliffordAlgebra Q)
             ((quadraticLieSubalgebra Q).incl x) ^ m)
           ((quadraticLieSubalgebra Q).incl ⁅x, y⁆) :=
