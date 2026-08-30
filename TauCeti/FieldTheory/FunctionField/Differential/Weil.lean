@@ -30,6 +30,8 @@ specialty, and are proved in `TauCeti/FieldTheory/FunctionField/Differential/Dim
 * `TauCeti.weilDifferentialFiltration`: the space `Ω_F(D)` of Weil differentials bounded by a
   divisor (Definition 1.5.6), as a `k`-subspace of the dual of `A_F`.
 * `TauCeti.weilDifferentialSpace`: the space `Ω_F` of all Weil differentials.
+* `TauCeti.repartitionDualMul_inv_repartitionDualMul`: multiplying by a unit and then its
+  inverse restores the form.
 * `TauCeti.repartitionDualMul`: the action of `F` on the `k`-linear forms on `A_F`, induced by
   multiplication of repartitions by a function (Definition 1.5.8).
 * `TauCeti.weilDifferentialSpaceMul` and `TauCeti.weilDifferentialSpaceModule`: its restriction
@@ -211,6 +213,15 @@ theorem repartitionDualMul_repartitionDualMul (hF : IsFunctionField k F) (f g : 
     repartitionDualMul hF f (repartitionDualMul hF g ω) = repartitionDualMul hF (f * g) ω := by
   rw [← Module.End.mul_apply, ← map_mul]
 
+/-- **Multiplying by a unit and then by its inverse restores the linear form.** The cancellation
+that makes multiplication by a nonzero function invertible on `Ω_F`. -/
+@[simp]
+theorem repartitionDualMul_inv_repartitionDualMul (hF : IsFunctionField k F) (z : Fˣ)
+    (ω : Module.Dual k ↥(repartitionSpace k F)) :
+    repartitionDualMul hF ((z⁻¹ : Fˣ) : F) (repartitionDualMul hF (z : F) ω) = ω := by
+  rw [← Module.End.mul_apply, ← map_mul, ← Units.val_mul, inv_mul_cancel, Units.val_one,
+    map_one, Module.End.one_apply]
+
 /-- **Multiplication translates the filtration by a principal divisor**: for a nonzero function
 `z`, a linear form is bounded by `D` exactly when `z · ω` is bounded by `D + div z`, exactly as
 multiplication by `z` carries `A_F(D + div z)` into `A_F(D)`. -/
@@ -233,9 +244,7 @@ theorem repartitionDualMul_mem_weilDifferentialFiltration_iff (hF : IsFunctionFi
       rw [coe_repartitionMul_apply]
       exact smul_mem_diagonalRepartitions (y : F) ha
   refine ⟨fun h ↦ ?_, key z D ω⟩
-  have hzz : repartitionDualMul hF ((z⁻¹ : Fˣ) : F) (repartitionDualMul hF (z : F) ω) = ω := by
-    rw [← Module.End.mul_apply, ← map_mul, ← Units.val_mul, inv_mul_cancel, Units.val_one,
-      map_one, Module.End.one_apply]
+  have hzz := repartitionDualMul_inv_repartitionDualMul hF z ω
   have hD : D + Divisor.principal hF z + Divisor.principal hF z⁻¹ = D := by
     rw [Divisor.principal_inv, add_neg_cancel_right]
   have h' := key z⁻¹ _ _ h

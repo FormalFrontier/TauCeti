@@ -216,6 +216,7 @@ theorem adeleFiltration_mono {D E : Divisor k F} (h : D ≤ E) :
 /-- **The filtration turns suprema of divisors into sums of subspaces.** The inclusion that has
 content is `≤`: a repartition bounded by `D ⊔ E` respects, at each place separately, one of the
 two bounds, so assigning each entry to a side splits it as a sum. -/
+@[simp]
 theorem adeleFiltration_sup (D E : Divisor k F) :
     adeleFiltration (D ⊔ E) = adeleFiltration D ⊔ adeleFiltration E := by
   refine le_antisymm (fun a ha ↦ ?_)

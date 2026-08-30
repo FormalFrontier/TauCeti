@@ -87,29 +87,24 @@ theorem mem_weilDifferentialFiltration_sup {D E : Divisor k F}
   have hxA : x ∈ repartitionSpace k F := adeleFiltration_le_repartitionSpace D hx
   have hyA : y ∈ repartitionSpace k F := adeleFiltration_le_repartitionSpace E hy
   have hsplit : a = ⟨x, hxA⟩ + ⟨y, hyA⟩ := Subtype.ext hxy.symm
-  rw [hsplit, map_add,
-    weilDifferentialFiltration_apply_eq_zero_of_mem_adeleFiltration hD ⟨x, hxA⟩ hx,
-    weilDifferentialFiltration_apply_eq_zero_of_mem_adeleFiltration hE ⟨y, hyA⟩ hy, add_zero]
+  rw [hsplit, map_add]
+  simp [weilDifferentialFiltration_apply_eq_zero_of_mem_adeleFiltration hD ⟨x, hxA⟩ hx,
+    weilDifferentialFiltration_apply_eq_zero_of_mem_adeleFiltration hE ⟨y, hyA⟩ hy]
 
 /-! ### The divisor of a nonzero Weil differential -/
 
 /-- The divisors bounding a fixed nonzero Weil differential have bounded degree: past the
-constant supplied by Riemann's theorem the index of specialty vanishes, and with it `Ω_F(D)`. -/
+threshold of `TauCeti.exists_forall_indexOfSpecialty_eq_zero` the divisor is nonspecial, and a
+nonspecial divisor bounds no nonzero Weil differential. -/
 theorem exists_forall_degree_lt_of_mem_weilDifferentialFiltration (hF : IsFunctionField k F)
     (hex : IsIntegrallyClosedIn k F) {ω : Module.Dual k ↥(repartitionSpace k F)} (hω : ω ≠ 0) :
     ∃ c : ℤ, ∀ D : Divisor k F, ω ∈ weilDifferentialFiltration D → Divisor.degree D < c := by
-  obtain ⟨c, hc⟩ := exists_forall_dim_eq_degree_add_one_sub_genus hF hex
+  obtain ⟨c, hc⟩ := exists_forall_indexOfSpecialty_eq_zero hF hex
   refine ⟨c, fun D hD ↦ ?_⟩
   by_contra hcon
   push Not at hcon
-  have hi : Divisor.indexOfSpecialty D = 0 := by
-    rw [Divisor.indexOfSpecialty_def, hc D hcon]; ring
-  have hfd := finiteDimensional_weilDifferentialFiltration hF hex D
-  have hrank : Module.finrank k ↥(weilDifferentialFiltration D) = 0 := by
-    have h := finrank_weilDifferentialFiltration hF hex D
-    rw [hi] at h
-    exact_mod_cast h
-  have hbot : weilDifferentialFiltration D = ⊥ := Submodule.finrank_eq_zero.mp hrank
+  have hbot : weilDifferentialFiltration D = ⊥ :=
+    (weilDifferentialFiltration_eq_bot_iff_indexOfSpecialty_eq_zero hF hex D).2 (hc D hcon)
   exact hω (by simpa [hbot] using hD)
 
 /-- **The divisor of a nonzero Weil differential** (Stichtenoth, Proposition 1.5.11): the
@@ -201,10 +196,7 @@ theorem isRiemannRochDivisor_of_isGreatest_mem_weilDifferentialFiltration
     by_contra hx0
     obtain ⟨z, rfl⟩ : ∃ z : Fˣ, (z : F) = x := ⟨Units.mk0 x hx0, rfl⟩
     refine hω ?_
-    have hinv : repartitionDualMul hF ((z⁻¹ : Fˣ) : F) (repartitionDualMul hF (z : F) ω) = ω := by
-      rw [repartitionDualMul_repartitionDualMul, ← Units.val_mul, inv_mul_cancel, Units.val_one,
-        map_one, Module.End.one_apply]
-    rw [← hinv, ← hφ_apply, hx, map_zero]
+    rw [← repartitionDualMul_inv_repartitionDualMul hF z ω, ← hφ_apply, hx, map_zero]
   rw [Divisor.isRiemannRochDivisor_iff]
   intro D
   have key : ∀ x : F, φ x ∈ weilDifferentialFiltration D ↔ x ∈ riemannRochSpace (W - D) :=
