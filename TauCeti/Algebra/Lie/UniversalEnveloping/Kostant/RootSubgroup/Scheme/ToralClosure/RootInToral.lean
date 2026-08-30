@@ -31,6 +31,10 @@ root-subgroup datum used by a pinned Chevalley--Demazure carrier.
 
 ## References
 
+The declaration order, hypothesis layout, and proof organization adapt the existing formal
+template in `TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.RootInGenerated`
+to the toral carrier.
+
 The construction is the root-subgroup part of a pinning in the Chevalley--Demazure construction;
 see J. E. Humphreys, *Linear Algebraic Groups*, §26, and R. W. Carter,
 *Simple Groups of Lie Type*, §4.4. It advances the "Pinnings" and "Root subgroup maps" targets
