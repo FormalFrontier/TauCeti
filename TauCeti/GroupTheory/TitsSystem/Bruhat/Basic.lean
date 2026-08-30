@@ -15,7 +15,7 @@ For a Tits system `(B, N)`, every element of the ambient group belongs to a doub
 `B n B` represented by an element `n ∈ N`. Thus the canonical map from `N` to `B \ G / B`
 is surjective, and the union of the Bruhat cells is the whole group.
 
-The file also establishes the rank-one multiplication law. If `s` is simple and `w` belongs to
+The file also establishes the left rank-one multiplication law. If `s` is simple and `w` belongs to
 the Weyl group, then `(B s B)(B w B)` is either `B (s w) B` or
 `B (s w) B ∪ B w B`. This sharpens the subset appearing among the Tits-system axioms: the
 adjacent cell always occurs, and the product can acquire only the original cell in addition.
@@ -24,6 +24,9 @@ The proof uses the multiplication axiom first for a simple reflection. Since the
 reflections generate `W = N / (B ∩ N)` and are involutions, induction in `W` shows that left
 multiplication by any Bruhat cell preserves the union of the cells. That union is consequently a
 subgroup containing both `B` and `N`, hence is all of `G` by the generation axiom.
+
+Inversion, the corresponding right multiplication law, and the subword expansion of a product of
+simple cells are developed in `TauCeti.GroupTheory.TitsSystem.Bruhat.Subword`.
 
 ## Main declarations
 
