@@ -255,8 +255,8 @@ theorem nonempty_linearEquiv_isotypicComponent :
   obtain ⟨n, ⟨e⟩⟩ := (IsIsotypicOfType.isotypicComponent A M S).linearEquiv_fun
   have hn : Module.finrank k (S →ₗ[A] M) = n := by
     rw [← finrank_linearMap_isotypicComponent (k := k),
-      finrank_linearMap_eq_natCard_of_linearEquiv_pi_const (k := k) e, Nat.card_eq_fintype_card,
-      Fintype.card_fin]
+      finrank_linearMap_eq_natCard_of_linearEquiv_pi_const (k := k) e]
+    simp
   rw [hn]
   exact ⟨e⟩
 
@@ -267,8 +267,8 @@ theorem finrank_isotypicComponent :
     Module.finrank k ↥(isotypicComponent A M S)
       = Module.finrank k (S →ₗ[A] M) * Module.finrank k S := by
   obtain ⟨e⟩ := nonempty_linearEquiv_isotypicComponent (k := k) (A := A) (M := M) (S := S)
-  rw [(e.restrictScalars k).finrank_eq, Module.finrank_pi_fintype, Finset.sum_const,
-    Finset.card_univ, Fintype.card_fin, smul_eq_mul]
+  rw [(e.restrictScalars k).finrank_eq]
+  simp [Module.finrank_pi_fintype]
 
 end IsotypicComponent
 
