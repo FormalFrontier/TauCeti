@@ -165,8 +165,9 @@ noncomputable abbrev steinberg (d : TypeCLieIndex) : d.AmbientGroup →* d.Ambie
   SpStd.frobenius d.carrierParameter d.1.characteristic d.1.fieldExponent d.1.Closure
 
 /-- Entrywise, the indexed Steinberg endomorphism raises every matrix coefficient to the recorded
-field order. -/
-@[simp]
+field order. This is not a simp lemma: because `steinberg` is transparent,
+`TauCeti.SpStd.coe_frobenius_apply` already supplies the canonical simp normal form in terms of the
+characteristic and field exponent; this theorem provides the CFSG index's `fieldOrder` spelling. -/
 theorem coe_steinberg_apply (d : TypeCLieIndex) (g : d.AmbientGroup)
     (i j : Fin ((d.carrierParameter + 1) + (d.carrierParameter + 1))) :
     ((d.steinberg g : Matrix.GeneralLinearGroup
