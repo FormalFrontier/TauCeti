@@ -144,12 +144,12 @@ theorem typeDSimpleNegativeRootBivector_def (hn : 2 ≤ n) (i : Fin n) :
 
 /-! ### Square-zero -/
 
-/-- `CliffordAlgebra.prod_map_ι_sq_scalar` at the two-element list `[x, y]`, whose scalar value
-`-(Q x * Q y)` vanishes with `Q x`. Each of the four branches below instantiates it. -/
+/-- `CliffordAlgebra.ι_mul_ι_mul_self_of_isOrtho`, whose scalar value `-(Q x * Q y)` vanishes
+with `Q x`. Each of the four branches below instantiates it. -/
 private theorem ι_mul_ι_mul_self_eq_zero {x y : V} (hx : Q x = 0) (hxy : polar Q x y = 0) :
     ι Q x * ι Q y * (ι Q x * ι Q y) = 0 := by
   have h : Q.IsOrtho x y := isOrtho_polarBilin.mp (by rw [polarBilin_apply_apply]; exact hxy)
-  simpa [hx] using prod_map_ι_sq_scalar (Q := Q) (l := [x, y]) (by simpa using h)
+  rw [ι_mul_ι_mul_self_of_isOrtho h, hx, zero_mul, map_zero, neg_zero]
 
 /-- Every positive type-`D` simple-root representative squares to zero in the Clifford algebra:
 its two isotropic factors are orthogonal, so they anticommute and each squares to zero. -/

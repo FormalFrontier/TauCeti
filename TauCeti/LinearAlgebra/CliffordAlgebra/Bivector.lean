@@ -109,12 +109,11 @@ theorem bivector_eq_ι_mul_ι_of_isOrtho {a b : M} (h : Q.IsOrtho a b) :
 what makes a root vector of a hyperbolic pair act by a square-zero operator on a Clifford
 module.
 
-This is `CliffordAlgebra.prod_map_ι_sq_scalar` for the two-element list `[a, b]`, whose sign
-`(-1) ^ Nat.choose 2 2` is the displayed minus. -/
+This is `CliffordAlgebra.ι_mul_ι_mul_self_of_isOrtho`, the bivector being the plain product. -/
 theorem bivector_mul_self_of_isOrtho {a b : M} (h : Q.IsOrtho a b) :
     bivector Q a b * bivector Q a b = -algebraMap R (CliffordAlgebra Q) (Q a * Q b) := by
   rw [bivector_eq_ι_mul_ι_of_isOrtho Q h]
-  simpa using prod_map_ι_sq_scalar (Q := Q) (l := [a, b]) (by simpa using h)
+  exact ι_mul_ι_mul_self_of_isOrtho h
 
 /-- The alternating map whose value on two vectors is their half-normalized Clifford bivector. -/
 noncomputable def bivectorAlternating : M [⋀^Fin 2]→ₗ[R] CliffordAlgebra Q :=
