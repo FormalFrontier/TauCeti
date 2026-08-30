@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.HopfIdealPoints.Functor
-public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.GeckLattice.GroupScheme
+public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.GeckLattice.PinnedRootPoints
 
 /-!
 # The points of the pinned Geck carrier, functorially in the value ring
@@ -51,7 +51,8 @@ appearing in it is finite, is simple, or is a named finite group.
   functoriality laws.
 * `TauCeti.DynkinType.geckPointsMap_injective`: an injective homomorphism of value rings induces
   an injective map of points.
-* `TauCeti.DynkinType.geckPointsMap_geckRootSubgroupMatrix` and
+* `TauCeti.DynkinType.geckPointsMap_geckRootSubgroupPoints` and
+  `TauCeti.DynkinType.geckPointsMap_geckRootSubgroupMatrix`, together with
   `TauCeti.DynkinType.geckPointsMap_geckTorusMatrix`: the equations on the pinned root subgroups
   and on the pinned weight torus.
 
@@ -166,6 +167,18 @@ theorem geckPointsMap_geckRootSubgroupMatrix (f : A →+* B) (i : Fin t.rank ⊕
   Subtype.ext (by
     rw [coe_geckPointsMap, TauCeti.UniversalEnvelopingAlgebra.map_kostantRootSubgroupMatrix,
       AdditiveGroup.mapValue_gaPointsMulEquiv_symm_apply, RingHom.toIntAlgHom_apply])
+
+/-- **The induced map carries a numbered root-subgroup point along the homomorphism of value
+rings.** -/
+@[simp]
+theorem geckPointsMap_geckRootSubgroupPoints (f : A →+* B)
+    (i : Fin t.rank ⊕ Fin t.rank) (u : Multiplicative A) :
+    t.geckPointsMap ht f (t.geckRootSubgroupPoints ht i A u) =
+      t.geckRootSubgroupPoints ht i B
+        (Multiplicative.ofAdd (f (Multiplicative.toAdd u))) := by
+  rw [t.geckRootSubgroupPoints_apply ht i A u,
+    t.geckRootSubgroupPoints_apply ht i B]
+  exact t.geckPointsMap_geckRootSubgroupMatrix ht f i u
 
 /-- **The induced map carries a point of the pinned Geck weight torus along the homomorphism of
 value rings**, parameter by parameter. The left-hand side is stated on the underlying diagonal
