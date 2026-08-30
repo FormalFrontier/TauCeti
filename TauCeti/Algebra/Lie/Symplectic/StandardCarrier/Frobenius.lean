@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.Lie.Symplectic.StandardCarrier.Scheme
+public import TauCeti.Algebra.Lie.Symplectic.StandardCarrier.PointsFunctor
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Frobenius
 
 /-!
@@ -41,6 +41,8 @@ symplectic group scheme, or that any fixed-point group is finite or simple.
 
 * `TauCeti.SpStd.coe_frobenius` and `TauCeti.SpStd.coe_frobenius_apply`: the endomorphism acts by
   entrywise Frobenius.
+* `TauCeti.SpStd.frobenius_eq_pointsMap`: Frobenius is the functorial point map induced by the
+  iterated Frobenius endomorphism of the value ring.
 * `TauCeti.SpStd.frobenius_rootSubgroupPoints` and `TauCeti.SpStd.frobenius_weightTorusPoints`: the
   equations on the pinned generating root subgroups and split torus.
 * `TauCeti.SpStd.frobenius_zero` and `TauCeti.SpStd.frobenius_add`: the iteration laws.
@@ -83,6 +85,7 @@ private theorem points_eq_kostantToralPointsSubgroup :
   rw [mem_points_iff, definingIdeal_def,
     TauCeti.UniversalEnvelopingAlgebra.mem_kostantToralPointsSubgroup_iff]
 
+/-- The presentation of the named carrier points as the generic Kostant toral-closure points. -/
 private def pointsEquivKostantToralPoints :
     points n A ≃*
       TauCeti.UniversalEnvelopingAlgebra.kostantToralPointsSubgroup (rootGenerator n)
@@ -129,6 +132,15 @@ theorem coe_frobenius (g : points n A) :
   have h := congrArg Subtype.val (pointsEquivKostantToralPoints_frobenius n p k A g)
   rw [TauCeti.UniversalEnvelopingAlgebra.coe_kostantToralFrobenius] at h
   simpa only [coe_pointsEquivKostantToralPoints] using h
+
+/-- The carrier Frobenius is the functorial map on points induced by the iterated Frobenius
+endomorphism of the value ring. -/
+theorem frobenius_eq_pointsMap :
+    frobenius n p k A = pointsMap n (iterateFrobenius A p k) := by
+  apply MonoidHom.ext
+  intro g
+  apply Subtype.ext
+  rw [coe_frobenius, coe_pointsMap]
 
 /-- Entrywise, the Frobenius endomorphism raises each matrix coefficient to its
 `p ^ k`-th power. -/

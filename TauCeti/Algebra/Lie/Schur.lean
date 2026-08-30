@@ -29,7 +29,8 @@ transporting along an equivalence gives the same for `M → N`. Together:
 That dichotomy is the input a *multiplicity* count needs: in a decomposition of `M` into
 irreducibles, each summand contributes `1` to `dim_K (S →ₗ⁅K,L⁆ M)` when it is equivalent to `S`
 and `0` when it is not. Reading the multiplicity off `dim_K (S →ₗ⁅K,L⁆ M)` needs one further
-ingredient, additivity of the morphism space over a direct sum, which is not proved here; this
+ingredient, additivity of the morphism space over a direct sum; that is
+`TauCeti.LieModule.lieModuleHomDirectSumEquiv` of `TauCeti/Algebra/Lie/DirectSum.lean`, and this
 file goes no further than the two-irreducible dimension count.
 
 ## Main results
@@ -44,6 +45,8 @@ file goes no further than the two-irreducible dimension count.
 * `TauCeti.LieModule.finrank_lieModuleHom_self`: **the endomorphisms of a finite-dimensional
   irreducible Lie module over an algebraically closed field are the scalars**, so the
   endomorphism space is a line.
+* `TauCeti.LieModule.finiteDimensional_lieModuleHom_of_isIrreducible`: the morphism space from a
+  finite-dimensional irreducible to any irreducible is finite-dimensional.
 * `TauCeti.LieModule.finrank_lieModuleHom_eq_one_iff`,
   `TauCeti.LieModule.finrank_lieModuleHom_eq_zero_iff` and
   `TauCeti.LieModule.finrank_lieModuleHom_le_one`: the dimension of the morphism space is `1` when
@@ -63,9 +66,11 @@ This is the uniqueness input for the multiplicity `m_λ = dim Hom_L(L(λ), M)` o
 toolkit in Layer 6 of `TauCetiRoadmap/RepresentationTheory/LieHighestWeight/README.md`
 (the `isotypicMultiplicity` target of its `Suggested.lean`, whose "`Hom` definition is the one that
 makes uniqueness automatic"): the morphism space between irreducibles has dimension `1` or `0`
-according as they are equivalent. The multiplicity theorem itself is not proved here; it needs, in
-addition, additivity of the morphism space over a direct-sum decomposition, and for the
-`L(λ)`-indexed form the irreducible quotient `L(λ)`.
+according as they are equivalent. The multiplicity theorem itself is
+`LieModule.isotypicMultiplicity_eq_ncard_of_isInternal` of
+`TauCeti/Algebra/Lie/Multiplicity.lean`, which adds to this file the additivity of the morphism
+space over a direct-sum decomposition; the `L(λ)`-indexed form additionally needs the irreducible
+quotient `L(λ)`.
 
 ## References
 
@@ -178,6 +183,20 @@ theorem finrank_lieModuleHom_eq_zero_of_isEmpty_lieModuleEquiv (h : IsEmpty (M �
   have := subsingleton_lieModuleHom_of_isEmpty_lieModuleEquiv h
   Module.finrank_zero_of_subsingleton
 
+omit [IsAlgClosed K] in
+/-- The morphism space from a finite-dimensional irreducible Lie module to any irreducible Lie
+module is finite-dimensional: it is either trivial, when the two modules are inequivalent, or,
+transported along an equivalence, the endomorphism space of the finite-dimensional `M`. -/
+theorem finiteDimensional_lieModuleHom_of_isIrreducible :
+    FiniteDimensional K (M →ₗ⁅K,L⁆ N) := by
+  by_cases h : Nonempty (M ≃ₗ⁅K,L⁆ N)
+  · have hend : FiniteDimensional K (M →ₗ⁅K,L⁆ M) := inferInstance
+    exact Module.Finite.equiv (LieModuleEquiv.congrRight (M := M) h.some)
+  · have : Subsingleton (M →ₗ⁅K,L⁆ N) :=
+      subsingleton_lieModuleHom_of_isEmpty_lieModuleEquiv (not_nonempty_iff.mp h)
+    exact Module.Finite.of_surjective (0 : K →ₗ[K] (M →ₗ⁅K,L⁆ N))
+      fun _ ↦ ⟨0, Subsingleton.elim _ _⟩
+
 /-- **The morphism space of two finite-dimensional irreducible Lie modules is one-dimensional
 exactly when they are equivalent.** -/
 theorem finrank_lieModuleHom_eq_one_iff :
@@ -208,8 +227,9 @@ open scoped Classical in
 /-- **Schur's lemma for finite-dimensional irreducible Lie modules over an algebraically closed
 field, in its dimension form**: the morphism space is a line for equivalent modules and zero for
 inequivalent ones. This is the per-summand contribution that a multiplicity count of `S` in `M`
-reads off `dim_K (S →ₗ⁅K,L⁆ M)`, once additivity of the morphism space over a decomposition of `M`
-is available. -/
+reads off `dim_K (S →ₗ⁅K,L⁆ M)`, which additivity of the morphism space over a decomposition of `M`
+supplies: `TauCeti.LieModule.finrank_lieModuleHom_eq_sum_of_isInternal` of
+`TauCeti/Algebra/Lie/Submodule/DirectSum.lean`. -/
 theorem finrank_lieModuleHom :
     finrank K (M →ₗ⁅K,L⁆ N) = if Nonempty (M ≃ₗ⁅K,L⁆ N) then 1 else 0 := by
   split

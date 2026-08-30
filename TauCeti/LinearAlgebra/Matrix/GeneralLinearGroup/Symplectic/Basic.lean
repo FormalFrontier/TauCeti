@@ -964,6 +964,26 @@ def short (family : ShortRootFamily) (i j : Fin m) (hij : i ≠ j) :
       if h : i < j then .negativeSum i j h
       else .negativeSum j i (lt_of_le_of_ne (le_of_not_gt h) hij.symm)
 
+/-- The canonical short-root index leaves a difference root ordered. -/
+@[simp]
+theorem short_difference (i j : Fin m) (hij : i ≠ j) :
+    short .difference i j hij = .difference i j hij := by
+  rw [short]
+
+/-- Increasing indices are already the canonical order for a positive sum root. -/
+@[simp]
+theorem short_positiveSum_of_lt (i j : Fin m) (hij : i < j) :
+    short .positiveSum i j hij.ne = .positiveSum i j hij := by
+  rw [short]
+  simp only [hij, ↓reduceDIte]
+
+/-- Increasing indices are already the canonical order for a negative sum root. -/
+@[simp]
+theorem short_negativeSum_of_lt (i j : Fin m) (hij : i < j) :
+    short .negativeSum i j hij.ne = .negativeSum i j hij := by
+  rw [short]
+  simp only [hij, ↓reduceDIte]
+
 /-- Swapping the inputs gives the same canonical positive-sum root index. -/
 theorem short_positiveSum_swap (i j : Fin m) (hij : i ≠ j) :
     short .positiveSum i j hij = short .positiveSum j i hij.symm := by
