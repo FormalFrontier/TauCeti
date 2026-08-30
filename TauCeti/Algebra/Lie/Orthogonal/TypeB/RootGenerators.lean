@@ -120,7 +120,6 @@ theorem coe_typeBLongRootGenerator (i j : ι) (hij : i ≠ j) :
   (rfl)
 
 /-- The long-root matrix action on a vector of an indexed basis. -/
-@[simp]
 theorem typeBLongRootMatrix_toLinAlgEquiv_apply {M : Type*} [AddCommGroup M] [Module K M]
     (B : Module.Basis (Unit ⊕ ι ⊕ ι) K M) (i j : ι) (hij : i ≠ j) (k : Unit ⊕ ι ⊕ ι) :
     Matrix.toLinAlgEquiv B (typeBLongRootMatrix (K := K) i j hij) (B k) =
@@ -283,7 +282,6 @@ theorem coe_typeBShortNegativeRootGenerator (i : ι) :
   (rfl)
 
 /-- The positive short-root matrix action on a vector of an indexed basis. -/
-@[simp]
 theorem typeBShortRootMatrix_toLinAlgEquiv_apply {M : Type*} [AddCommGroup M] [Module K M]
     (B : Module.Basis (Unit ⊕ ι ⊕ ι) K M) (i : ι) (k : Unit ⊕ ι ⊕ ι) :
     Matrix.toLinAlgEquiv B (typeBShortRootMatrix (K := K) i) (B k) =
@@ -299,7 +297,6 @@ theorem typeBShortRootMatrix_toLinAlgEquiv_apply {M : Type*} [AddCommGroup M] [M
       simp [typeBShortRootMatrix, Matrix.single_apply, h, eq_comm]
 
 /-- The negative short-root matrix action on a vector of an indexed basis. -/
-@[simp]
 theorem typeBShortNegativeRootMatrix_toLinAlgEquiv_apply {M : Type*} [AddCommGroup M]
     [Module K M] (B : Module.Basis (Unit ⊕ ι ⊕ ι) K M) (i : ι) (k : Unit ⊕ ι ⊕ ι) :
     Matrix.toLinAlgEquiv B (typeBShortNegativeRootMatrix (K := K) i) (B k) =

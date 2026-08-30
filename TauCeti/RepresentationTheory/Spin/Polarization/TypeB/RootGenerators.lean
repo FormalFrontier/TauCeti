@@ -198,7 +198,6 @@ theorem typeBQuadraticEquiv_typeBShortNegativeRootGenerator (i : ι) :
 /-! ## Bourbaki-numbered simple roots -/
 
 /-- The terminal positive simple root is the short Clifford bivector. -/
-@[simp]
 theorem typeBQuadraticEquiv_typeBSimpleRootGenerator_last {n : ℕ}
     (bFin : Module.Basis (Fin (n + 1)) K P.W) :
     P.typeBQuadraticEquiv bFin z hz
@@ -209,7 +208,6 @@ theorem typeBQuadraticEquiv_typeBSimpleRootGenerator_last {n : ℕ}
   exact P.typeBQuadraticEquiv_typeBShortRootGenerator bFin z hz (Fin.last n)
 
 /-- A nonfinal positive simple root is the adjacent long Clifford bivector. -/
-@[simp]
 theorem typeBQuadraticEquiv_typeBSimpleRootGenerator_castSucc {n : ℕ}
     (bFin : Module.Basis (Fin (n + 1)) K P.W) (j : Fin n) :
     P.typeBQuadraticEquiv bFin z hz
@@ -221,7 +219,6 @@ theorem typeBQuadraticEquiv_typeBSimpleRootGenerator_castSucc {n : ℕ}
     (ne_of_lt j.castSucc_lt_succ)
 
 /-- The terminal negative simple root is the opposite short Clifford bivector. -/
-@[simp]
 theorem typeBQuadraticEquiv_typeBSimpleNegativeRootGenerator_last {n : ℕ}
     (bFin : Module.Basis (Fin (n + 1)) K P.W) :
     P.typeBQuadraticEquiv bFin z hz
@@ -232,7 +229,6 @@ theorem typeBQuadraticEquiv_typeBSimpleNegativeRootGenerator_last {n : ℕ}
   exact P.typeBQuadraticEquiv_typeBShortNegativeRootGenerator bFin z hz (Fin.last n)
 
 /-- A nonfinal negative simple root is the opposite adjacent long Clifford bivector. -/
-@[simp]
 theorem typeBQuadraticEquiv_typeBSimpleNegativeRootGenerator_castSucc {n : ℕ}
     (bFin : Module.Basis (Fin (n + 1)) K P.W) (j : Fin n) :
     P.typeBQuadraticEquiv bFin z hz
