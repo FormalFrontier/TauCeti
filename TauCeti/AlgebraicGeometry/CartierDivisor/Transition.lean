@@ -15,7 +15,6 @@ that unit and exposes the restriction compatibility needed to glue the local cop
 structure sheaf:
 
 * `CartierDivisor.transitionUnit` chooses the unique unit between two local equations;
-* `regularUnitRestrict` identifies the underlying structure-sheaf restriction map;
 * `transitionUnit_spec` exposes the defining equation for the chosen unit.
 
 This prepares the exact descent datum used in the Cartier-divisor-to-line-bundle construction in
@@ -42,24 +41,6 @@ namespace Scheme
 variable {X : Scheme.{u}} [IsIntegral X]
 
 namespace CartierDivisor
-
-/-- Restriction of a regular unit, expressed using the underlying structure sheaf. -/
-def regularUnitRestrict {U V : X.Opens} (e : U ≤ V)
-    (r : Additive (((X.presheaf.obj (op V)) : Type u)ˣ)) :
-    Additive (((X.presheaf.obj (op U)) : Type u)ˣ) :=
-  Additive.ofMul
-    (Units.map (X.presheaf.map (homOfLE e).op).hom.toMonoidHom (Additive.toMul r))
-
-@[simp]
-lemma toRationalUnitSheaf_regularUnitRestrict {U V : X.Opens} (e : U ≤ V)
-    (r : Additive (((X.presheaf.obj (op V)) : Type u)ˣ)) :
-    ((toRationalUnitSheaf X).hom.app (op U)).hom
-        (regularUnitRestrict (X := X) e r) =
-      ((toRationalUnitSheaf X).hom.app (op V)).hom r |_ₗ U ⟪e⟫ := by
-  -- Unfold the additive-units presheaf map so that naturality applies directly.
-  change ((toRationalUnitSheaf X).hom.app (op U)).hom
-      ((regularUnitSheaf X).presheaf.map (homOfLE e).op r) = _
-  exact TopCat.Presheaf.map_restrict (toRationalUnitSheaf X).hom e r
 
 /-- The regular unit relating two chosen local equations of a Cartier divisor. -/
 noncomputable def transitionUnit (D : CartierDivisor X) {U V : X.Opens}
