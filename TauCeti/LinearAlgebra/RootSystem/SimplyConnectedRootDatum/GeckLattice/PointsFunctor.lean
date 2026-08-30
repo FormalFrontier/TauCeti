@@ -52,7 +52,6 @@ appearing in it is finite, is simple, or is a named finite group.
 * `TauCeti.DynkinType.geckPointsMap_injective`: an injective homomorphism of value rings induces
   an injective map of points.
 * `TauCeti.DynkinType.geckPointsMap_geckRootSubgroupPoints` and
-  `TauCeti.DynkinType.geckPointsMap_geckRootSubgroupMatrix`, together with
   `TauCeti.DynkinType.geckPointsMap_geckTorusMatrix`: the equations on the pinned root subgroups
   and on the pinned weight torus.
 
@@ -150,24 +149,6 @@ theorem geckPointsMap_injective {f : A →+* B} (hf : Function.Injective f) :
   refine Subtype.ext (Matrix.GeneralLinearGroup.ext fun r c => hf ?_)
   rw [← coe_geckPointsMap_apply, ← coe_geckPointsMap_apply, hxy]
 
-/-- **The induced map carries the parameter of a numbered Geck root subgroup along the
-homomorphism of value rings.** This is the naturality of the pinned simple root subgroups, the
-form in which a consumer states its conventions. -/
-@[simp]
-theorem geckPointsMap_geckRootSubgroupMatrix (f : A →+* B) (i : Fin t.rank ⊕ Fin t.rank)
-    (u : Multiplicative A) :
-    t.geckPointsMap ht f
-        ⟨t.geckRootSubgroupMatrix ht i
-            ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm u),
-          t.geckRootSubgroupMatrix_mem_geckPoints ht A i _⟩ =
-      ⟨t.geckRootSubgroupMatrix ht i
-          ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := B)).symm
-            (Multiplicative.ofAdd (f (Multiplicative.toAdd u)))),
-        t.geckRootSubgroupMatrix_mem_geckPoints ht B i _⟩ :=
-  Subtype.ext (by
-    rw [coe_geckPointsMap, TauCeti.UniversalEnvelopingAlgebra.map_kostantRootSubgroupMatrix,
-      AdditiveGroup.mapValue_gaPointsMulEquiv_symm_apply, RingHom.toIntAlgHom_apply])
-
 /-- **The induced map carries a numbered root-subgroup point along the homomorphism of value
 rings.** -/
 @[simp]
@@ -188,7 +169,9 @@ theorem geckPointsMap_geckRootSubgroupPoints (f : A →+* B)
             (Multiplicative.ofAdd (f (Multiplicative.toAdd u)))),
         t.geckRootSubgroupMatrix_mem_geckPoints ht B i _⟩ from
       Subtype.ext (t.coe_geckRootSubgroupPoints ht i B _)]
-  exact t.geckPointsMap_geckRootSubgroupMatrix ht f i u
+  exact Subtype.ext (by
+    rw [coe_geckPointsMap, TauCeti.UniversalEnvelopingAlgebra.map_kostantRootSubgroupMatrix,
+      AdditiveGroup.mapValue_gaPointsMulEquiv_symm_apply, RingHom.toIntAlgHom_apply])
 
 /-- **The induced map carries a point of the pinned Geck weight torus along the homomorphism of
 value rings**, parameter by parameter. The left-hand side is stated on the underlying diagonal
