@@ -226,6 +226,13 @@ theorem symPowerCharacter_mem_characterSpan (d : ℕ) :
     symPowerCharacter d ∈ characterSpan :=
   Submodule.subset_span ⟨d, rfl⟩
 
+/-- The span of the characters is contained in a subspace exactly when every character is: the
+characteristic property of `TauCeti.SU2.characterSpan` as a span. -/
+theorem characterSpan_le_iff {p : Submodule ℂ C(SU2, ℂ)} :
+    characterSpan ≤ p ↔ ∀ d : ℕ, symPowerCharacter d ∈ p := by
+  rw [characterSpan, Submodule.span_le, Set.range_subset_iff]
+  rfl
+
 /-- Multiplying a character by the trace stays in the span of the characters: the Chebyshev
 recursion `TauCeti.SU2.trace_mul_character_symPower` expresses the product as a sum of two
 characters. -/
