@@ -6,6 +6,7 @@ Authors: Chris Birkbeck, The Tau Ceti contributors
 module
 
 public import Mathlib.AlgebraicGeometry.EllipticCurve.Affine.Point
+import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.Derivative
 import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.XYIdealMaximal
 import Mathlib.LinearAlgebra.DirectSum.Finite
 import Mathlib.LinearAlgebra.FreeModule.Norm
@@ -289,19 +290,12 @@ private theorem nonsingular_of_isUnit_XYIdeal {x y : F} (heq : W.Equation x y)
     (evalY.comp (Polynomial.derivative.restrictScalars F))
   have hdX_apply (p : P) : dX p = (p.eval (C y)).derivative.eval x := rfl
   have hdY_apply (p : P) : dY p = (p.derivative.eval (C y)).eval x := rfl
-  have hpolynomialX : (W.polynomial.eval (C y)).derivative.eval x =
-      W.polynomialX.evalEval x y := by
-    simp only [polynomial, polynomialX, evalEval]
-    simp [Polynomial.derivative_pow]
-    ring
-  have hpolynomialY : (W.polynomial.derivative.eval (C y)).eval x =
-      W.polynomialY.evalEval x y := by
-    simp only [polynomial, polynomialY, evalEval]
-    simp [Polynomial.derivative_pow]
   have hWX : dX W.polynomial = 0 := by
-    rw [hdX_apply, hpolynomialX, hs.1]
+    rw [hdX_apply, W.derivative_eval_polynomial]
+    simpa using hs.1
   have hWY : dY W.polynomial = 0 := by
-    rw [hdY_apply, hpolynomialY, hs.2]
+    rw [hdY_apply, W.derivative_polynomial]
+    simpa only [evalEval] using hs.2
   have hdX_mul (p q : P) : dX (p * q) =
       p.evalEval x y * dX q + q.evalEval x y * dX p := by
     rw [hdX_apply, hdX_apply, hdX_apply]

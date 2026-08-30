@@ -78,6 +78,29 @@ private theorem lipschitzDet_unitι [Module.Free R M] [Module.Finite R M]
   rw [haction, lipschitzVectorAction_unitι]
   exact QuadraticMap.det_reflection Q v
 
+/-- **The parity formula is multiplicative.** If `involute` acts on `x` and on `y` as the scalar
+`lipschitzDet`, it does so on the product. This is the `mul` closure step of
+`involute_eq_det_smul_of_mem_lipschitz`: the two scalars are central, so they collect in front. -/
+private theorem involute_mul_lipschitzDet (Q : QuadraticForm R M) {x y : (CliffordAlgebra Q)ˣ}
+    (hx : x ∈ lipschitzGroup Q) (hy : y ∈ lipschitzGroup Q)
+    (ihx : involute (Q := Q) (x : CliffordAlgebra Q) =
+      algebraMap R (CliffordAlgebra Q) (↑(lipschitzDet Q ⟨x, hx⟩)) * x)
+    (ihy : involute (Q := Q) (y : CliffordAlgebra Q) =
+      algebraMap R (CliffordAlgebra Q) (↑(lipschitzDet Q ⟨y, hy⟩)) * y) :
+    involute (Q := Q) ((x : CliffordAlgebra Q) * y) =
+      algebraMap R (CliffordAlgebra Q)
+        (↑(lipschitzDet Q ((⟨x, hx⟩ : lipschitzGroup Q) * ⟨y, hy⟩))) *
+          ((x : CliffordAlgebra Q) * y) := by
+  rw [map_mul, ihx, ihy, map_mul]
+  simp only [Units.val_mul, map_mul]
+  rw [mul_assoc
+    (algebraMap R (CliffordAlgebra Q) (↑(lipschitzDet Q ⟨x, hx⟩)))
+    (x : CliffordAlgebra Q)]
+  rw [← mul_assoc (x : CliffordAlgebra Q)
+    (algebraMap R (CliffordAlgebra Q) (↑(lipschitzDet Q ⟨y, hy⟩))) y]
+  rw [← Algebra.commutes (↑(lipschitzDet Q ⟨y, hy⟩) : R) (x : CliffordAlgebra Q)]
+  noncomm_ring
+
 private theorem involute_eq_det_smul_of_mem_lipschitz [Module.Free R M] [Module.Finite R M]
     (Q : QuadraticForm R M) {x : (CliffordAlgebra Q)ˣ} (hx : x ∈ lipschitzGroup Q) :
     involute (Q := Q) (x : CliffordAlgebra Q) =
@@ -128,26 +151,8 @@ private theorem involute_eq_det_smul_of_mem_lipschitz [Module.Free R M] [Module.
   | mul x y hx hy ihx ihy =>
       have hx' : x ∈ lipschitzGroup Q := hx
       have hy' : y ∈ lipschitzGroup Q := hy
-      have ihx' : involute (Q := Q) (x : CliffordAlgebra Q) =
-          algebraMap R (CliffordAlgebra Q) (↑(lipschitzDet Q ⟨x, hx'⟩)) * x := by
-        simpa only using ihx
-      have ihy' : involute (Q := Q) (y : CliffordAlgebra Q) =
-          algebraMap R (CliffordAlgebra Q) (↑(lipschitzDet Q ⟨y, hy'⟩)) * y := by
-        simpa only using ihy
-      -- Expose multiplication in the ambient Clifford algebra before combining the hypotheses.
-      change involute (Q := Q) ((x : CliffordAlgebra Q) * y) =
-        algebraMap R (CliffordAlgebra Q)
-          (↑(lipschitzDet Q ((⟨x, hx'⟩ : lipschitzGroup Q) * ⟨y, hy'⟩))) *
-            ((x : CliffordAlgebra Q) * y)
-      rw [map_mul, ihx', ihy', map_mul]
-      simp only [Units.val_mul, map_mul]
-      rw [mul_assoc
-        (algebraMap R (CliffordAlgebra Q) (↑(lipschitzDet Q ⟨x, hx'⟩)))
-        (x : CliffordAlgebra Q)]
-      rw [← mul_assoc (x : CliffordAlgebra Q)
-        (algebraMap R (CliffordAlgebra Q) (↑(lipschitzDet Q ⟨y, hy'⟩))) y]
-      rw [← Algebra.commutes (↑(lipschitzDet Q ⟨y, hy'⟩) : R) (x : CliffordAlgebra Q)]
-      noncomm_ring
+      exact involute_mul_lipschitzDet Q hx' hy' (by simpa only using ihx)
+        (by simpa only using ihy)
 
 private theorem mem_even_of_involute_eq (Q : QuadraticForm R M) {x : CliffordAlgebra Q}
     (hx : involute x = x) : x ∈ even Q := by

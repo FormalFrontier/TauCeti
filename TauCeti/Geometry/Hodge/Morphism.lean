@@ -15,14 +15,23 @@ whose complexification preserves the Hodge filtration.  The complex action is de
 from the integral map through the universal property of the source base change; in particular, it
 commutes with the lattice-induced conjugations.
 
-This file develops the elementary morphism calculus.  Morphisms are closed under identities and
-composition, and form an additive commutative group.  Preservation of the filtration and
-compatibility with conjugation imply preservation of the conjugate filtration and hence of every
-Hodge component `H^{p,n-p}`.
+Those two properties — commuting with the conjugations and preserving the filtration — are also
+what a morphism of pure Hodge structures amounts to on the conjugation-parametric object
+`TauCeti.Hodge.HodgeStructureOn`, where no lattice is in sight.  They are recorded there as the
+unbundled predicate `TauCeti.Hodge.HodgeStructureOn.IsMorphism`, from which the integral morphism
+calculus below is derived: preservation of the filtration and compatibility with conjugation imply
+preservation of the conjugate filtration and hence of every Hodge component `H^{p,n-p}`.
+
+The rest of the file develops the elementary morphism calculus.  Morphisms are closed under
+identities and composition, and form an additive commutative group.
 
 ## Main declarations
 
-* `TauCeti.Hodge.HodgeStructure.Hom`: morphisms of integral pure Hodge structures of a fixed weight.
+* `TauCeti.Hodge.HodgeStructureOn.IsMorphism`: a complex-linear map commuting with the
+  conjugations and preserving the Hodge filtration — a morphism of pure Hodge structures in
+  unbundled, lattice-free form.
+* `TauCeti.Hodge.HodgeStructure.Hom`: morphisms of integral pure Hodge structures of a fixed weight,
+  with `TauCeti.Hodge.HodgeStructure.Hom.isMorphism` exhibiting one as such a map.
 * `TauCeti.Hodge.HodgeStructure.Hom.id` and `Hom.comp`: identity and composition.
 * `TauCeti.Hodge.HodgeStructure.Hom.map_conjF_le`: morphisms preserve the conjugate filtration.
 * `TauCeti.Hodge.HodgeStructure.Hom.map_piece_le`: morphisms preserve every Hodge component.
@@ -46,6 +55,87 @@ variable [AddCommGroup W₁] [Module ℂ W₁]
 variable [AddCommGroup W₂] [Module ℂ W₂]
 variable [AddCommGroup W₃] [Module ℂ W₃]
 variable {ι₁ : V₁ →ₗ[ℤ] W₁} {ι₂ : V₂ →ₗ[ℤ] W₂} {ι₃ : V₃ →ₗ[ℤ] W₃}
+
+namespace HodgeStructureOn
+
+variable {ω₁ : Conjugation W₁} {ω₂ : Conjugation W₂} {n : ℤ}
+variable {hs₁ : HodgeStructureOn W₁ ω₁ n} {hs₂ : HodgeStructureOn W₂ ω₂ n} {g : W₁ →ₗ[ℂ] W₂}
+
+/-- A **morphism of pure Hodge structures** of weight `n`, in unbundled form: a complex-linear map
+commuting with the two conjugations and preserving every step of the Hodge filtration.
+
+The bundled integral morphisms `TauCeti.Hodge.HodgeStructure.Hom` are of this form, by
+`TauCeti.Hodge.HodgeStructure.Hom.isMorphism`. -/
+structure IsMorphism (hs₁ : HodgeStructureOn W₁ ω₁ n) (hs₂ : HodgeStructureOn W₂ ω₂ n)
+    (g : W₁ →ₗ[ℂ] W₂) : Prop where
+  /-- The map commutes with the two conjugations. -/
+  commutes_conj : ∀ x, g (ω₁.toEquiv x) = ω₂.toEquiv (g x)
+  /-- The map preserves every step of the Hodge filtration. -/
+  map_F_le : ∀ p, (hs₁.F p).map g ≤ hs₂.F p
+
+namespace IsMorphism
+
+/-- The identity map is a morphism of pure Hodge structures. -/
+theorem id (hs : HodgeStructureOn W₁ ω₁ n) : IsMorphism hs hs LinearMap.id where
+  commutes_conj x := by simp
+  map_F_le p := by simp
+
+/-- The composite of two morphisms of pure Hodge structures is a morphism. -/
+theorem comp {ω₃ : Conjugation W₃} {hs₃ : HodgeStructureOn W₃ ω₃ n}
+    {g' : W₂ →ₗ[ℂ] W₃} (h' : IsMorphism hs₂ hs₃ g') (h : IsMorphism hs₁ hs₂ g) :
+    IsMorphism hs₁ hs₃ (g' ∘ₗ g) where
+  commutes_conj x := by rw [LinearMap.comp_apply, h.commutes_conj, h'.commutes_conj,
+    LinearMap.comp_apply]
+  map_F_le p := by
+    rintro _ ⟨x, hx, rfl⟩
+    exact h'.map_F_le p ⟨g x, h.map_F_le p ⟨x, hx, rfl⟩, rfl⟩
+
+/-- The zero map is a morphism of pure Hodge structures. -/
+theorem zero : IsMorphism hs₁ hs₂ 0 where
+  commutes_conj x := by simp
+  map_F_le p := by simp
+
+/-- The sum of two morphisms of pure Hodge structures is a morphism. -/
+theorem add {g' : W₁ →ₗ[ℂ] W₂} (h : IsMorphism hs₁ hs₂ g)
+    (h' : IsMorphism hs₁ hs₂ g') : IsMorphism hs₁ hs₂ (g + g') where
+  commutes_conj x := by
+    simp only [LinearMap.add_apply, map_add]
+    rw [h.commutes_conj, h'.commutes_conj]
+  map_F_le p := by
+    rintro _ ⟨x, hx, rfl⟩
+    exact Submodule.add_mem _ (h.map_F_le p ⟨x, hx, rfl⟩) (h'.map_F_le p ⟨x, hx, rfl⟩)
+
+/-- The negation of a morphism of pure Hodge structures is a morphism. -/
+theorem neg (h : IsMorphism hs₁ hs₂ g) : IsMorphism hs₁ hs₂ (-g) where
+  commutes_conj x := by
+    simp only [LinearMap.neg_apply, map_neg]
+    rw [h.commutes_conj]
+  map_F_le p := by
+    rintro _ ⟨x, hx, rfl⟩
+    exact Submodule.neg_mem _ (h.map_F_le p ⟨x, hx, rfl⟩)
+
+/-- The difference of two morphisms of pure Hodge structures is a morphism. -/
+theorem sub {g' : W₁ →ₗ[ℂ] W₂} (h : IsMorphism hs₁ hs₂ g)
+    (h' : IsMorphism hs₁ hs₂ g') : IsMorphism hs₁ hs₂ (g - g') := by
+  rw [sub_eq_add_neg]
+  exact h.add h'.neg
+
+/-- A morphism of pure Hodge structures preserves the conjugate Hodge filtration. -/
+theorem map_conjF_le (h : IsMorphism hs₁ hs₂ g) (p : ℤ) : (hs₁.conjF p).map g ≤ hs₂.conjF p := by
+  rw [hs₁.conjF_def, hs₂.conjF_def, ← ω₁.conjFiltration_def hs₁.F p,
+    ← ω₂.conjFiltration_def hs₂.F p]
+  exact ω₁.map_conjFiltration_le ω₂ hs₁.F hs₂.F g h.commutes_conj (h.map_F_le p)
+
+/-- A morphism of pure Hodge structures preserves every Hodge component `H^{p,n-p}`. -/
+theorem map_piece_le (h : IsMorphism hs₁ hs₂ g) (p : ℤ) : (hs₁.piece p).map g ≤ hs₂.piece p := by
+  rintro _ ⟨x, hx, rfl⟩
+  exact (hs₂.mem_piece_iff p _).2
+    ⟨h.map_F_le p ⟨x, hs₁.piece_le_F p hx, rfl⟩,
+      h.map_conjF_le (n - p) ⟨x, hs₁.piece_le_conjF p hx, rfl⟩⟩
+
+end IsMorphism
+
+end HodgeStructureOn
 
 namespace HodgeStructure
 
@@ -106,16 +196,17 @@ theorem map_F_le (f : Hom source target) (p : ℤ) :
   rintro _ ⟨x, hx, rfl⟩
   exact f.map_mem_F p x hx
 
+/-- A bundled integral Hodge morphism is a morphism of the underlying pure Hodge structures. -/
+theorem isMorphism (f : Hom source target) :
+    HodgeStructureOn.IsMorphism source target f.toLinearMap where
+  commutes_conj x := by
+    simpa only [latticeConjugation_toEquiv_apply] using f.commutes_conj x
+  map_F_le := f.map_F_le
+
 /-- A Hodge morphism preserves the conjugate Hodge filtration. -/
 theorem map_conjF_le (f : Hom source target) (p : ℤ) :
-    (source.conjF p).map f.toLinearMap ≤ target.conjF p := by
-  rw [source.conjF_def, target.conjF_def,
-    ← (latticeConjugation h₁).conjFiltration_def source.F p,
-    ← (latticeConjugation h₂).conjFiltration_def target.F p]
-  exact (latticeConjugation h₁).map_conjFiltration_le (latticeConjugation h₂)
-    source.F target.F f.toLinearMap
-    (fun x ↦ by simpa only [latticeConjugation_toEquiv_apply] using f.commutes_conj x)
-    (f.map_F_le p)
+    (source.conjF p).map f.toLinearMap ≤ target.conjF p :=
+  f.isMorphism.map_conjF_le p
 
 /-- Elementwise form of preservation of the conjugate Hodge filtration. -/
 theorem map_mem_conjF (f : Hom source target) (p : ℤ) {x : W₁}
@@ -124,11 +215,8 @@ theorem map_mem_conjF (f : Hom source target) (p : ℤ) {x : W₁}
 
 /-- A Hodge morphism preserves every Hodge component `H^{p,n-p}`. -/
 theorem map_piece_le (f : Hom source target) (p : ℤ) :
-    (source.piece p).map f.toLinearMap ≤ target.piece p := by
-  rintro _ ⟨x, hx, rfl⟩
-  rw [target.mem_piece_iff]
-  exact ⟨f.map_mem_F p x (source.piece_le_F p hx),
-    f.map_mem_conjF (n - p) (source.piece_le_conjF p hx)⟩
+    (source.piece p).map f.toLinearMap ≤ target.piece p :=
+  f.isMorphism.map_piece_le p
 
 /-- Elementwise form of preservation of Hodge components. -/
 theorem map_mem_piece (f : Hom source target) (p : ℤ) {x : W₁}

@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.RingTheory.Length
+public import TauCeti.Algebra.Module.Submodule.Quotient
 public import TauCeti.RingTheory.CompositionSeries.Basic
 
 /-!
@@ -55,7 +56,7 @@ definitional identity.
 * `TauCeti.jordanHolderMultiplicity_eq_of_linearEquiv`: **the multiplicity is an invariant of the
   isomorphism class of the ambient module**, which is what makes `[Pᵢ : Sⱼ]` well posed for a
   projective cover, an object defined only up to isomorphism.  The transport of a composition
-  series along a linear equivalence that this rests on is
+  series along an injective or a surjective linear map that this rests on is
   `TauCeti.RingTheory.CompositionSeries.Basic`.
 * `TauCeti.jordanHolderMultiplicity_eq_one_of_isSimpleModule_of_linearEquiv` and
   `TauCeti.jordanHolderMultiplicity_eq_zero_of_isEmpty_linearEquiv_of_isSimpleModule`: a simple
@@ -115,6 +116,14 @@ theorem isCompositionFactorAt_congr (e : S ≃ₗ[R] T) :
     IsCompositionFactorAt s i S ↔ IsCompositionFactorAt s i T :=
   ⟨fun h => h.congr e, fun h => h.congr e.symm⟩
 
+/-- Two composition series with the same two submodules at an index have the same factor there.
+The equalities are enough: the subquotient is built from the two submodules alone. -/
+theorem isCompositionFactorAt_congr_of_eq {s t : CompositionSeries (Submodule R M)}
+    {i : Fin s.length} {j : Fin t.length} (hsucc : s i.succ = t j.succ)
+    (hcast : s i.castSucc = t j.castSucc) :
+    IsCompositionFactorAt s i S ↔ IsCompositionFactorAt t j S := by
+  rw [isCompositionFactorAt_iff, isCompositionFactorAt_iff, hcast, hsucc]
+
 /-- **The factors of a composition series are simple**: each step of a composition series is a
 covering, and a covering pair of submodules has simple quotient. -/
 theorem isSimpleModule_subquotient (s : CompositionSeries (Submodule R M)) (i : Fin s.length) :
@@ -142,6 +151,15 @@ theorem compositionMultiplicity_def (s : CompositionSeries (Submodule R M))
     (S : Type w) [AddCommGroup S] [Module R S] :
     compositionMultiplicity s S = Nat.card {i : Fin s.length // IsCompositionFactorAt s i S} :=
   (rfl)
+
+/-- The multiplicity along a fixed composition series as a sum of indicators, the form in which it
+splits along a decomposition of the index set. -/
+theorem compositionMultiplicity_eq_sum_ite (s : CompositionSeries (Submodule R M))
+    (S : Type w) [AddCommGroup S] [Module R S] [∀ i, Decidable (IsCompositionFactorAt s i S)] :
+    compositionMultiplicity s S =
+      ∑ i : Fin s.length, if IsCompositionFactorAt s i S then 1 else 0 := by
+  rw [compositionMultiplicity_def, Nat.card_eq_fintype_card, Fintype.card_subtype,
+    Finset.card_filter]
 
 /-- `S` occurs in `s` — the multiplicity is nonzero — exactly when some index carries a copy of
 `S`. -/
@@ -228,31 +246,64 @@ theorem jordanHolderMultiplicity_eq_zero_of_not_isSimpleModule [IsNoetherian R M
     jordanHolderMultiplicity R M S = 0 :=
   compositionMultiplicity_eq_zero_of_not_isSimpleModule _ S hS
 
-/-! ### Transport along a linear equivalence of the ambient module -/
+/-! ### Transport along an injective or a surjective linear map -/
 
 section Transport
 
 variable {N : Type v'} [AddCommGroup N] [Module R N]
 
-/-- Transporting a composition series along a linear equivalence does not change which module sits
-at an index. -/
+/-- Transporting a composition series along an injective linear map does not change which module
+sits at an index; the index is transported along
+`TauCeti.mapCompositionSeriesOfInjective_length`. -/
 @[simp]
-theorem isCompositionFactorAt_mapCompositionSeries_iff (e : M ≃ₗ[R] N)
-    (s : CompositionSeries (Submodule R M)) (i : Fin s.length)
+theorem isCompositionFactorAt_mapCompositionSeriesOfInjective_iff (f : M →ₗ[R] N)
+    (hf : Function.Injective f) (s : CompositionSeries (Submodule R M))
+    (i : Fin (mapCompositionSeriesOfInjective f hf s).length)
     (S : Type w) [AddCommGroup S] [Module R S] :
-    IsCompositionFactorAt (mapCompositionSeries e s) i S ↔ IsCompositionFactorAt s i S :=
-  ⟨fun ⟨f⟩ => ⟨(factorEquivMapCompositionSeries e s i).trans f⟩,
-    fun ⟨f⟩ => ⟨(factorEquivMapCompositionSeries e s i).symm.trans f⟩⟩
+    IsCompositionFactorAt (mapCompositionSeriesOfInjective f hf s) i S ↔
+      IsCompositionFactorAt s (i.cast (mapCompositionSeriesOfInjective_length f hf s)) S := by
+  rw [isCompositionFactorAt_iff, isCompositionFactorAt_iff,
+    mapCompositionSeriesOfInjective_apply, mapCompositionSeriesOfInjective_apply]
+  exact ⟨fun ⟨g⟩ => ⟨(mapSubquotientEquivOfInjective f hf _ _).symm.trans g⟩,
+    fun ⟨g⟩ => ⟨(mapSubquotientEquivOfInjective f hf _ _).trans g⟩⟩
 
-/-- **Transport preserves multiplicities.** The image of a composition series under a linear
-equivalence of the ambient module counts every module the same number of times as the series
-itself. -/
+/-- Transporting a composition series along a surjective linear map does not change which module
+sits at an index; the index is transported along
+`TauCeti.comapCompositionSeriesOfSurjective_length`. -/
 @[simp]
-theorem compositionMultiplicity_mapCompositionSeries (e : M ≃ₗ[R] N)
-    (s : CompositionSeries (Submodule R M)) (S : Type w) [AddCommGroup S] [Module R S] :
-    compositionMultiplicity (mapCompositionSeries e s) S = compositionMultiplicity s S :=
-  Nat.card_congr (Equiv.subtypeEquivRight fun i =>
-    isCompositionFactorAt_mapCompositionSeries_iff e s i S)
+theorem isCompositionFactorAt_comapCompositionSeriesOfSurjective_iff (f : M →ₗ[R] N)
+    (hf : Function.Surjective f) (s : CompositionSeries (Submodule R N))
+    (i : Fin (comapCompositionSeriesOfSurjective f hf s).length)
+    (S : Type w) [AddCommGroup S] [Module R S] :
+    IsCompositionFactorAt (comapCompositionSeriesOfSurjective f hf s) i S ↔
+      IsCompositionFactorAt s (i.cast (comapCompositionSeriesOfSurjective_length f hf s)) S := by
+  rw [isCompositionFactorAt_iff, isCompositionFactorAt_iff,
+    comapCompositionSeriesOfSurjective_apply, comapCompositionSeriesOfSurjective_apply]
+  exact ⟨fun ⟨g⟩ => ⟨(comapSubquotientEquivOfSurjective f hf _ _).symm.trans g⟩,
+    fun ⟨g⟩ => ⟨(comapSubquotientEquivOfSurjective f hf _ _).trans g⟩⟩
+
+/-- **An injective map preserves multiplicities**: the image of a composition series counts every
+module the same number of times as the series itself. -/
+@[simp]
+theorem compositionMultiplicity_mapCompositionSeriesOfInjective (f : M →ₗ[R] N)
+    (hf : Function.Injective f) (s : CompositionSeries (Submodule R M))
+    (S : Type w) [AddCommGroup S] [Module R S] :
+    compositionMultiplicity (mapCompositionSeriesOfInjective f hf s) S =
+      compositionMultiplicity s S :=
+  Nat.card_congr (Equiv.subtypeEquiv (finCongr (mapCompositionSeriesOfInjective_length f hf s))
+    fun i => isCompositionFactorAt_mapCompositionSeriesOfInjective_iff f hf s i S)
+
+/-- **A surjective map preserves multiplicities**: the preimage of a composition series counts
+every module the same number of times as the series itself. -/
+@[simp]
+theorem compositionMultiplicity_comapCompositionSeriesOfSurjective (f : M →ₗ[R] N)
+    (hf : Function.Surjective f) (s : CompositionSeries (Submodule R N))
+    (S : Type w) [AddCommGroup S] [Module R S] :
+    compositionMultiplicity (comapCompositionSeriesOfSurjective f hf s) S =
+      compositionMultiplicity s S :=
+  Nat.card_congr
+    (Equiv.subtypeEquiv (finCongr (comapCompositionSeriesOfSurjective_length f hf s))
+      fun i => isCompositionFactorAt_comapCompositionSeriesOfSurjective_iff f hf s i S)
 
 /-- **The multiplicity only depends on the isomorphism class of the ambient module.** -/
 theorem jordanHolderMultiplicity_eq_of_linearEquiv [IsNoetherian R M] [IsArtinian R M]
@@ -261,10 +312,10 @@ theorem jordanHolderMultiplicity_eq_of_linearEquiv [IsNoetherian R M] [IsArtinia
     jordanHolderMultiplicity R M S = jordanHolderMultiplicity R N S := by
   obtain ⟨s, hbot, htop⟩ := exists_compositionSeries_of_isNoetherian_isArtinian R M
   rw [← compositionMultiplicity_eq_jordanHolderMultiplicity s hbot htop S,
-    ← compositionMultiplicity_eq_jordanHolderMultiplicity (mapCompositionSeries e s)
-      (by rw [head_mapCompositionSeries, hbot, Submodule.map_bot])
-      (by rw [last_mapCompositionSeries, htop, Submodule.map_top, e.range]) S,
-    compositionMultiplicity_mapCompositionSeries]
+    ← compositionMultiplicity_eq_jordanHolderMultiplicity
+      (mapCompositionSeriesOfInjective (e : M →ₗ[R] N) e.injective s)
+      (by simp [hbot]) (by simp [htop, e.range]) S,
+    compositionMultiplicity_mapCompositionSeriesOfInjective]
 
 end Transport
 

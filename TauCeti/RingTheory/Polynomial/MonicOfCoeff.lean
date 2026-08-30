@@ -17,7 +17,7 @@ to be `X ^ n`. This file names the resulting polynomial `TauCeti.Polynomial.moni
 tuple `c : Fin n → R`, and records that reading the coefficients back off is inverse to it.
 
 The point of naming it is that it is the object against which analytic dependence on the
-coefficients is stated: `TauCeti/Analysis/Polynomial/SimpleRoots.lean` differentiates
+coefficients is stated: `TauCeti/Analysis/Polynomial/SimpleRoots/Basic.lean` differentiates
 `(c, z) ↦ (monicOfCoeff c).eval z` in `c` and `z` jointly, so the lower coefficients must appear as
 a *free* tuple rather than as the data of a polynomial subtype.
 

@@ -65,6 +65,8 @@ subgroup is the root rather than a difference `εᵢ - εⱼ` of coordinates.
   of a root vector of weight `α` raises the weight of a weight vector by a multiple of `α`.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantTorusPoints_tmul_of_isCartanWeightVector`: a torus
   point acts on a weight vector by the value of its character.
+* `TauCeti.UniversalEnvelopingAlgebra.kostantTorusPoints_injective`: weights generating the whole
+  character lattice make the torus a monomorphism on points.
 * `TauCeti.UniversalEnvelopingAlgebra.map_kostantTorusPoints`: naturality in the value ring.
 * `TauCeti.UniversalEnvelopingAlgebra.mapScalarExtensionAutomorphisms_kostantTorusPoints`:
   scalar extension of a torus point is the torus point with mapped parameter.
@@ -341,6 +343,18 @@ theorem kostantTorusPoints_apply (s : κ → Aˣ) (z : A ⊗[ℤ] M) :
     (kostantTorusPoints M b wt A s).val z = basisWeightTorus (b.baseChange A) wt s z := by
   rw [← LinearMap.GeneralLinearGroup.coe_toLinearEquiv, kostantTorusPoints_toLinearEquiv]
 
+omit [Module ℚ V] in
+/-- **Spanning weights make the split torus a monomorphism on points.** When the weights of the
+basis generate the whole character lattice, distinct torus points act differently on the
+base-changed lattice, over every value ring. -/
+theorem kostantTorusPoints_injective
+    (hwt : Submodule.span ℤ (Set.range wt) = ⊤) :
+    Function.Injective (kostantTorusPoints M b wt A) := by
+  intro s t hst
+  refine basisWeightTorus_injective (b.baseChange A) hwt ?_
+  rw [← kostantTorusPoints_toLinearEquiv M b wt s, ← kostantTorusPoints_toLinearEquiv M b wt t,
+    hst]
+
 include e hM in
 /-- A torus point acts on a weight vector by the value of the corresponding character. -/
 theorem kostantTorusPoints_tmul_of_isCartanWeightVector
@@ -476,6 +490,22 @@ theorem kostantTorusMatrix_apply (s : κ → Aˣ) :
   have hlinear := congrArg LinearEquiv.toLinearMap
     (kostantTorusPoints_toLinearEquiv M b wt s)
   rw [hlinear, basisWeightTorus_apply, toMatrix_basisDiagonal, diagGL_coe]
+
+omit [Module ℚ V] in
+/-- **The matrix torus is natural in the value ring.** Applying a ring homomorphism entrywise to a
+torus point written in a weight basis gives the torus point of the transported parameters. The
+`p ^ k`-power Frobenius is the case
+`TauCeti.UniversalEnvelopingAlgebra.map_iterateFrobenius_kostantTorusMatrix`. -/
+-- Not `@[simp]`: `kostantTorusMatrix_apply` already simplifies the left-hand side to its
+-- diagonal form, so `simpNF` rejects this higher-level equation as not being in normal form.
+theorem map_kostantTorusMatrix {B : Type*} [CommRing B] [Algebra ℤ B] (φ : A →+* B) (s : κ → Aˣ) :
+    Matrix.GeneralLinearGroup.map φ (kostantTorusMatrix M b wt s) =
+      kostantTorusMatrix M b wt fun j => Units.map (φ : A →* B) (s j) := by
+  refine Matrix.GeneralLinearGroup.ext fun r c => ?_
+  simp only [Matrix.GeneralLinearGroup.map_apply, kostantTorusMatrix_apply, diagGL_apply]
+  split_ifs
+  · rw [← map_torusCharacter φ s (wt r), Units.coe_map, MonoidHom.coe_coe]
+  · exact map_zero φ
 
 end Matrix
 

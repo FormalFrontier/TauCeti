@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Root.Datum
+public import TauCeti.LinearAlgebra.RootSystem.Positive
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.Basic
 import Mathlib.LinearAlgebra.Finsupp.Pi
 
@@ -31,6 +32,8 @@ to the standard maximal torus of `GL_(n+1)` carries the expected Bourbaki-number
 
 * `TauCeti.GeneralLinear.diagonalSimpleRootIndex`: the root index of `e_i - e_(i+1)`.
 * `TauCeti.GeneralLinear.diagonalRootBase`: the consecutive coordinate roots as a base.
+* `TauCeti.GeneralLinear.diagonalRootBase_isPos_iff`: positive diagonal roots are exactly
+  the coordinate differences `e_i - e_j` with `i < j`.
 * `TauCeti.GeneralLinear.hasCartanType_diagonalRootDatum`: this base has Cartan type `A_n`.
 
 ## References
@@ -302,6 +305,94 @@ indices. -/
 theorem mem_diagonalRootBase_support (n : ℕ) (p : DiagonalRootIndex (n + 1)) :
     p ∈ (diagonalRootBase.{u} n).support ↔ ∃ i : Fin n, diagonalSimpleRootIndex n i = p := by
   rw [diagonalRootBase_support, mem_simpleSupport]
+
+/-- The diagonal root index attached to an ordered pair of distinct matrix coordinates. -/
+private def diagonalRootIndexOfNe {n : ℕ} (i j : Fin n) (hij : i ≠ j) :
+    DiagonalRootIndex n :=
+  ⟨(ULift.up i, ULift.up j), fun h ↦ hij (ULift.up_injective h)⟩
+
+@[simp]
+private theorem diagonalRootIndexOfNe_fst {n : ℕ} (i j : Fin n) (hij : i ≠ j) :
+    (diagonalRootIndexOfNe i j hij).1.1 = ULift.up i := by
+  rfl
+
+@[simp]
+private theorem diagonalRootIndexOfNe_snd {n : ℕ} (i j : Fin n) (hij : i ≠ j) :
+    (diagonalRootIndexOfNe i j hij).1.2 = ULift.up j := by
+  rfl
+
+private theorem diagonalRootIndexOfNe_eq_diagonalSimpleRootIndex (n : ℕ) (i : Fin n) :
+    diagonalRootIndexOfNe i.castSucc i.succ i.castSucc_lt_succ.ne =
+      diagonalSimpleRootIndex n i := by
+  apply Subtype.ext
+  apply Prod.ext <;> simp
+
+private theorem diagonalRootIndexOfNe_isPos_of_lt (n : ℕ) (i j : Fin (n + 1))
+    (hij : i < j) :
+    (diagonalRootBase.{u} n).IsPos (diagonalRootIndexOfNe i j hij.ne) := by
+  induction hdist : j.val - i.val using Nat.strong_induction_on generalizing i j with
+  | h d ih =>
+      by_cases hadj : i.val + 1 = j.val
+      · let a : Fin n := ⟨i.val, by omega⟩
+        have hidx : diagonalRootIndexOfNe i j hij.ne = diagonalSimpleRootIndex n a := by
+          apply Subtype.ext
+          apply Prod.ext
+          · simp [a]
+          · simp [a, hadj]
+        rw [hidx]
+        exact RootPairing.Base.isPos_of_mem_support
+          ((mem_diagonalRootBase_support n _).2 ⟨a, rfl⟩)
+      · let k : Fin (n + 1) := ⟨i.val + 1, by omega⟩
+        have hik : i < k := by simp [Fin.lt_def, k]
+        have hkj : k < j := by simp only [Fin.lt_def, k]; omega
+        have hdist' : j.val - k.val < d := by simp only [k]; omega
+        have hkpos := ih (j.val - k.val) hdist' k j hkj rfl
+        let a : Fin n := ⟨i.val, by omega⟩
+        have hipos : (diagonalRootBase.{u} n).IsPos
+            (diagonalRootIndexOfNe i k hik.ne) := by
+          have hidx : diagonalRootIndexOfNe i k hik.ne =
+              diagonalSimpleRootIndex n a := by
+            apply Subtype.ext
+            apply Prod.ext
+            · simp [a]
+            · simp [a, k]
+          rw [hidx]
+          exact RootPairing.Base.isPos_of_mem_support
+            ((mem_diagonalRootBase_support n _).2 ⟨a, rfl⟩)
+        exact RootPairing.Base.IsPos.add hipos hkpos (by
+          rw [diagonalRootDatum_root, diagonalRootDatum_root, diagonalRootDatum_root]
+          ext x
+          simp only [diagonalRoot_apply, diagonalRootIndexOfNe_fst,
+            diagonalRootIndexOfNe_snd, ULift.down_up, Finsupp.add_apply]
+          ring)
+
+/-- A diagonal root is positive for the consecutive-root base exactly when its row index is
+strictly smaller than its column index. -/
+@[simp]
+theorem diagonalRootBase_isPos_iff (n : ℕ)
+    (p : DiagonalRootIndex.{u} (n + 1)) :
+    (diagonalRootBase.{u} n).IsPos p ↔ p.1.1.down < p.1.2.down := by
+  constructor
+  · intro hp
+    by_contra hlt
+    have hrev : p.1.2.down < p.1.1.down := by
+      exact lt_of_le_of_ne (not_lt.mp hlt) fun h ↦ p.2 (ULift.down_injective h.symm)
+    let q := diagonalRootIndexOfNe p.1.2.down p.1.1.down hrev.ne
+    have hq : (diagonalRootBase.{u} n).IsPos q :=
+      diagonalRootIndexOfNe_isPos_of_lt n _ _ hrev
+    let _ := (diagonalRootDatum.{u} (n + 1)).indexNeg
+    have hneg : -p = q := by
+      rw [RootPairing.indexNeg_neg, diagonalRootDatum_reflectionPerm]
+      apply Subtype.ext
+      rw [diagonalReflectionIndex_coe]
+      simp [q, diagonalRootIndexOfNe]
+    have := (RootPairing.Base.IsPos.neg_iff_not (diagonalRootBase.{u} n) p).mp
+      (hneg.symm ▸ hq)
+    exact this hp
+  · intro hij
+    convert diagonalRootIndexOfNe_isPos_of_lt n p.1.1.down p.1.2.down hij using 1
+    apply Subtype.ext
+    simp [diagonalRootIndexOfNe]
 
 /-- The simple-root pairings in the diagonal root datum are the entries of the type-`A` Cartan
 matrix. -/

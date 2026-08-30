@@ -8,7 +8,7 @@ module
 public import Mathlib.Topology.Algebra.ConstMulAction
 public import Mathlib.Topology.Algebra.MulAction
 public import TauCeti.Topology.Algebra.Group.LocallyConstant
-public import TauCeti.Topology.Algebra.Group.ProfiniteSection
+public import TauCeti.Topology.Algebra.Group.Profinite.Section
 
 /-!
 # The coinduced discrete module of a subgroup

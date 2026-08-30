@@ -205,16 +205,11 @@ noncomputable def diagonalTorusCoordinateMap :
     coordinateHopfAlgebra R N ⟶
       _root_.CommHopfAlgCat.of R
         (MonoidAlgebra R (Multiplicative (ULift.{u} (Fin N) →₀ ℤ))) :=
-  ((CommHopfAlgCat.pointsFunctor.{u, u, u} (R := R) :
-      (_root_.CommHopfAlgCat.{u} R)ᵒᵖ ⥤ CommAlgCat.{u} R ⥤ GrpCat.{u}).preimage
-    (X := Opposite.op (_root_.CommHopfAlgCat.of R
-      (MonoidAlgebra R (Multiplicative (ULift.{u} (Fin N) →₀ ℤ)))))
-    (Y := Opposite.op (coordinateHopfAlgebra R N))
-    (diagonalTorusPointsMap.{u, u} (R := R) (N := N) :
-      HopfAlgebra.pointsFunctor
-          (R := R)
-          (H := MonoidAlgebra R (Multiplicative (ULift.{u} (Fin N) →₀ ℤ))) ⟶
-        HopfAlgebra.pointsFunctor (R := R) (H := coordinateHopfAlgebra R N))).unop
+  CommHopfAlgCat.homOfPointsMap
+    (H := _root_.CommHopfAlgCat.of R
+      (MonoidAlgebra R (Multiplicative (ULift.{u} (Fin N) →₀ ℤ))))
+    (K := coordinateHopfAlgebra R N)
+    (diagonalTorusPointsMap.{u, u} (R := R) (N := N))
 
 /-- Precomposition by the diagonal-torus coordinate morphism is the previously constructed
 natural map on convolution points. -/
@@ -229,12 +224,8 @@ theorem mapPointsFunctor_diagonalTorusCoordinateMap :
         HopfAlgebra.pointsFunctor
             (R := R)
             (H := MonoidAlgebra R (Multiplicative (ULift.{u} (Fin N) →₀ ℤ))) ⟶
-          HopfAlgebra.pointsFunctor (R := R) (H := coordinateHopfAlgebra R N)) := by
-  unfold diagonalTorusCoordinateMap
-  rw [← CommHopfAlgCat.pointsFunctor_map]
-  exact Functor.map_preimage
-    (CommHopfAlgCat.pointsFunctor.{u, u, u} (R := R) :
-      (_root_.CommHopfAlgCat.{u} R)ᵒᵖ ⥤ CommAlgCat.{u} R ⥤ GrpCat.{u}) _
+          HopfAlgebra.pointsFunctor (R := R) (H := coordinateHopfAlgebra R N)) :=
+  CommHopfAlgCat.mapPointsFunctor_homOfPointsMap _
 
 /-- On every value algebra, the map induced by the diagonal-torus coordinate morphism is
 `diagonalTorusPoints`. -/

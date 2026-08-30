@@ -269,6 +269,17 @@ theorem kostantRootSubgroupToToral_def (i : I) :
           (kostantRootSubgroupToralCoordinateMap e h ρ M hM hnil b wt i).op :=
   by rw [kostantRootSubgroupToToral]
 
+/-- A root-subgroup morphism into the toral closure is a closed immersion whenever its factored
+coordinate map is surjective. -/
+theorem isClosedImmersion_kostantRootSubgroupToToral_of_surjective (i : I)
+    (hi : Function.Surjective
+      (kostantRootSubgroupToralCoordinateMap e h ρ M hM hnil b wt i).hom) :
+    IsClosedImmersion (kostantRootSubgroupToToral e h ρ M hM hnil b wt i).hom.hom.left := by
+  rw [kostantRootSubgroupToToral_def]
+  exact (CommHopfAlgCat.isClosedImmersion_eqToHom_comp_hopfSpec_map_iff
+    (AdditiveGroup.groupScheme_def ℤ)
+    (kostantRootSubgroupToralCoordinateMap e h ρ M hM hnil b wt i)).2 hi
+
 /-- Factoring a root subgroup through the toral closure and then including into `GLₙ` recovers
 the original represented root-subgroup morphism. -/
 @[simp]

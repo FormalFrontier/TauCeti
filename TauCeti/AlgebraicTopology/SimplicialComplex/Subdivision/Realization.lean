@@ -19,8 +19,8 @@ face in that chain. The affine extension therefore lands in the realization of `
 
 This file constructs that canonical continuous map. It is the forward map in the homeomorphism
 between the realizations of a complex and its barycentric subdivision required by Layer 11 of the
-GeometricTopology roadmap. Proving that it is a homeomorphism requires the inverse obtained by
-sorting the barycentric coordinates of a point, and is left to the next step.
+GeometricTopology roadmap. The inverse is constructed and proved continuous in
+`Subdivision.Homeomorph`.
 
 The construction follows Rourke--Sanderson, *Introduction to Piecewise-Linear Topology*, Chapter 2,
 "Derived Subdivisions".

@@ -126,13 +126,14 @@ theorem map_comp_algebraMap :
 /-- `FunctionField.map` sends the generic `x`-coordinate to the generic `x`-coordinate. -/
 @[simp]
 theorem map_genericX : map W f W.genericX = (W.map f).genericX := by
-  simp only [genericX_def, map_algebraMap_coordinateRing, AdjoinRoot.algebraMap_eq,
-    CoordinateRing.map_of_X]
+  rw [genericX_def, genericX_def, map_algebraMap_coordinateRing]
+  exact congr_arg _ (CoordinateRing.map_of_X W f)
 
 /-- `FunctionField.map` sends the generic `y`-coordinate to the generic `y`-coordinate. -/
 @[simp]
 theorem map_genericY : map W f W.genericY = (W.map f).genericY := by
-  rw [genericY_def, genericY_def, map_algebraMap_coordinateRing, CoordinateRing.map_root]
+  rw [genericY_def, genericY_def, map_algebraMap_coordinateRing]
+  exact congr_arg _ (CoordinateRing.map_root W f)
 
 /-- **`FunctionField.map` along the identity is the identity.** -/
 @[simp]

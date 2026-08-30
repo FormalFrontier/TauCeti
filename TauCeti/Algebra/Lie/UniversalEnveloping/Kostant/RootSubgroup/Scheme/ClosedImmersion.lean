@@ -7,6 +7,7 @@ module
 
 public import TauCeti.AlgebraicGeometry.GroupScheme.ClosedSubgroup
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.Basic
+public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Transvection
 import TauCeti.CategoryTheory.Comma.Over
 
 /-!
@@ -48,6 +49,15 @@ left to the caller in the general construction.
   makes one coordinate equal to the parameter, scaled by the unit `c`.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupMatrix_apply_of_isRootStep`: the same
   statement read as a matrix entry.
+* `TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupPoints_apply_baseChange_basis_of_action`:
+  the class-two exponential formula for an operator with one nonzero basis column.
+* `TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupMatrix_eq_transvectionUnit_of_action`:
+  a class-two root operator with one nonzero basis column exponentiates to a transvection.
+* `TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupMatrix_eq_one_add_smul` and, in the same
+  namespace,
+  `exists_map_genericMatrix_kostantRootSubgroupCoordinateMap_eq_one_add_smul`:
+  without the single-column hypothesis a square-zero root operator still exponentiates to
+  `1 + t X`, on a point and on the generic matrix respectively.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupPoints_injective`: the root subgroup is
   faithfully parametrized by `𝔾ₐ`.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupCoordinateMap_surjective`: the coordinate
@@ -231,6 +241,58 @@ theorem kostantRootSubgroupMatrix_apply_of_isRootStep {A : Type*} [CommRing A]
   rw [kostantRootSubgroupMatrix_apply,
     repr_kostantRootSubgroupPoints_of_isRootStep e h ρ M hM i hnil b hc hstep hsq]
 
+omit [Fintype η] in
+include hnil in
+/-- A class-two root operator with one nonzero basis column acts by adding the parameter times
+that column after base change. -/
+theorem kostantRootSubgroupPoints_apply_baseChange_basis_of_action
+    {A : Type*} [CommRing A] (source target : η)
+    (hclass : nilpotencyClass
+      (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) = 2)
+    (haction : ∀ s, ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) (b s : V) =
+      if s = source then (b target : V) else 0)
+    (f : WithConv (SymmetricAlgebra ℤ ℤ →ₐ[ℤ] A)) (s : η) :
+    (kostantRootSubgroupPoints e h ρ M hM i hnil f).val (b.baseChange A s) =
+      b.baseChange A s + if s = source then
+        Multiplicative.toAdd (AdditiveGroup.gaPointsMulEquiv f) • b.baseChange A target else 0 := by
+  have hone :
+      integralDividedPower (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) M 1
+          (fun _ hv => dividedPower_apply_mem_of_kostantForm_apply_mem e h ρ hM i 1 hv)
+          (b s) = if s = source then b target else 0 := by
+    apply Subtype.ext
+    rw [coe_integralDividedPower_apply, Associative.dividedPower_one, Module.End.smul_def,
+      haction]
+    split <;> rfl
+  rw [Module.Basis.baseChange_apply, kostantRootSubgroupPoints_tmul, hclass,
+    Finset.sum_range_succ, Finset.sum_range_one, integralDividedPower_zero, hone]
+  split <;> simp [smul_tmul']
+
+include hnil in
+/-- A class-two root operator that sends one basis vector to another and kills all remaining
+basis vectors exponentiates to the corresponding elementary transvection. -/
+theorem kostantRootSubgroupMatrix_eq_transvectionUnit_of_action
+    {A : Type*} [CommRing A] (source target : η) (hne : target ≠ source)
+    (hclass : nilpotencyClass
+      (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) = 2)
+    (haction : ∀ s, ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) (b s : V) =
+      if s = source then (b target : V) else 0)
+    (f : WithConv (SymmetricAlgebra ℤ ℤ →ₐ[ℤ] A)) :
+    kostantRootSubgroupMatrix e h ρ M hM i hnil b f =
+      TauCeti.transvectionUnit hne
+        (Multiplicative.toAdd (AdditiveGroup.gaPointsMulEquiv f)) := by
+  apply Matrix.GeneralLinearGroup.ext
+  intro row col
+  rw [kostantRootSubgroupMatrix_apply,
+    kostantRootSubgroupPoints_apply_baseChange_basis_of_action e h ρ M hM i hnil b source
+      target hclass haction f,
+    TauCeti.coe_transvectionUnit]
+  simp only [map_add, Module.Basis.repr_self, Finsupp.add_apply, Matrix.transvection,
+    Matrix.add_apply, Matrix.one_apply, Matrix.single_apply, Finsupp.single_apply]
+  by_cases hcol : source = col
+  · subst col
+    simp [Module.Basis.repr_self, Finsupp.single_apply, eq_comm]
+  · simp [hcol, Ne.symm hcol, eq_comm]
+
 end Coordinates
 
 section Scheme
@@ -357,5 +419,128 @@ theorem coe_kostantRootSubgroupClosedSubgroup :
   ClosedSubgroupScheme.coe_mk _
 
 end Scheme
+
+section ClassTwo
+
+variable {L : Type u} [LieRing L] [LieAlgebra ℚ L]
+variable {ι : Type w} {κ : Type*}
+variable {V : Type v} [AddCommGroup V] [Module ℚ V]
+variable (e : ι → L) (h : κ → L)
+variable (ρ : _root_.UniversalEnvelopingAlgebra ℚ L →ₐ[ℚ] Module.End ℚ V)
+variable (M : AddSubgroup V)
+variable (hM : ∀ u ∈ kostantForm e h, ∀ v ∈ M, ρ u v ∈ M)
+variable (i : ι)
+variable (hnil : IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))))
+variable {η : Type*} [Fintype η] [DecidableEq η] (b : Module.Basis η ℤ M)
+
+include hnil in
+/-- **The matrix of a square-zero root subgroup is `1 + t X`.** When the root operator squares to
+zero its divided-power exponential stops after the linear term, so the root-subgroup matrix at
+parameter `t` is the identity plus `t` times the integral matrix `X` of the operator itself.
+Unlike `TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupMatrix_eq_transvectionUnit_of_action`
+this does not assume the operator has a single nonzero basis column, so it also covers operators
+with several nonzero columns, such as the nonfinal root generators of type `C`. -/
+theorem kostantRootSubgroupMatrix_eq_one_add_smul {A : Type*} [CommRing A]
+    (X : Matrix η η ℤ)
+    (hclass : nilpotencyClass
+      (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) ≤ 2)
+    (haction : ∀ s, ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) (b s : V) =
+      ∑ r, X r s • (b r : V))
+    (f : WithConv (SymmetricAlgebra ℤ ℤ →ₐ[ℤ] A)) :
+    (kostantRootSubgroupMatrix e h ρ M hM i hnil b f).val =
+      1 + Multiplicative.toAdd (AdditiveGroup.gaPointsMulEquiv f) •
+        X.map (Int.cast : ℤ → A) := by
+  classical
+  have hone : ∀ s : η, integralDividedPower
+      (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) M 1
+      (fun _ hv => dividedPower_apply_mem_of_kostantForm_apply_mem e h ρ hM i 1 hv)
+      (b s) = ∑ r, X r s • b r := by
+    intro s
+    apply Subtype.ext
+    rw [coe_integralDividedPower_apply, Associative.dividedPower_one, Module.End.smul_def,
+      haction]
+    push_cast
+    simp
+  ext r s
+  -- Past the nilpotency class the divided powers vanish, so the exponential sum may be padded
+  -- out to the two terms that the square-zero truncation leaves.
+  have hpad : ∑ k ∈ Finset.range
+        (nilpotencyClass (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)))),
+      b.repr (integralDividedPower (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) M k
+          (fun _ hv => dividedPower_apply_mem_of_kostantForm_apply_mem e h ρ hM i k hv)
+          (b s)) r • Multiplicative.toAdd (AdditiveGroup.gaPointsMulEquiv f) ^ k =
+      ∑ k ∈ Finset.range 2,
+        b.repr (integralDividedPower (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) M k
+            (fun _ hv => dividedPower_apply_mem_of_kostantForm_apply_mem e h ρ hM i k hv)
+            (b s)) r • Multiplicative.toAdd (AdditiveGroup.gaPointsMulEquiv f) ^ k := by
+    refine Finset.sum_subset (Finset.range_subset_range.2 hclass) fun k _ hk => ?_
+    rw [Finset.mem_range, not_lt] at hk
+    rw [integralDividedPower_eq_zero_of_le _ _ _ _ (pow_nilpotencyClass hnil) hk]
+    simp
+  rw [kostantRootSubgroupMatrix_apply, repr_kostantRootSubgroupPoints_baseChange, hpad,
+    Finset.sum_range_succ, Finset.sum_range_one, integralDividedPower_zero_apply, hone, map_sum]
+  simp only [Finsupp.coe_finsetSum, Finset.sum_apply, map_zsmul, Module.Basis.repr_self,
+    Finsupp.smul_single, smul_eq_mul, mul_one, Finsupp.single_apply, pow_zero, pow_one,
+    Matrix.add_apply, Matrix.one_apply, Matrix.smul_apply, Matrix.map_apply, zsmul_eq_mul,
+    Int.cast_ite, Int.cast_one, Int.cast_zero]
+  rw [Finset.sum_ite_eq' Finset.univ r fun x => X x s]
+  rcases eq_or_ne r s with rfl | hrs
+  · simp [mul_comm]
+  · simp [hrs, hrs.symm, mul_comm]
+
+end ClassTwo
+
+section GenericMatrix
+
+variable {L : Type u} [LieRing L] [LieAlgebra ℚ L]
+variable {ι : Type w} {κ : Type*}
+variable {V : Type} [AddCommGroup V] [Module ℚ V]
+variable (e : ι → L) (h : κ → L)
+variable (ρ : _root_.UniversalEnvelopingAlgebra ℚ L →ₐ[ℚ] Module.End ℚ V)
+variable (M : AddSubgroup V)
+variable (hM : ∀ u ∈ kostantForm e h, ∀ v ∈ M, ρ u v ∈ M)
+variable (i : ι)
+variable (hnil : IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))))
+variable {N : ℕ} (bb : Module.Basis (Fin N) ℤ M)
+
+include hnil in
+/-- **The generic matrix of a square-zero root subgroup is `1 + t X`.** This is
+`TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupMatrix_eq_one_add_smul` read on the
+coordinate morphism rather than on a point: the entries of the generic matrix of `GL N` are carried
+to those of `1 + t X` for the parameter `t` of the universal point of `𝔾ₐ`. A consumer that has to
+check a matrix equation on every algebra-valued point at once evaluates it here instead. -/
+theorem exists_map_genericMatrix_kostantRootSubgroupCoordinateMap_eq_one_add_smul
+    (X : Matrix (Fin N) (Fin N) ℤ)
+    (hclass : nilpotencyClass
+      (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) ≤ 2)
+    (haction : ∀ s, ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)) (bb s : V) =
+      ∑ r, X r s • (bb r : V)) :
+    ∃ t : AdditiveGroup.coordinateHopfAlgebra ℤ,
+      (GeneralLinear.genericMatrix ℤ N).map
+          (kostantRootSubgroupCoordinateMap e h ρ M hM i hnil bb).hom.toAlgHom =
+        1 + t • X.map (Int.cast : ℤ → AdditiveGroup.coordinateHopfAlgebra ℤ) := by
+  let f := kostantRootSubgroupCoordinateMap e h ρ M hM i hnil bb
+  let q : WithConv (AdditiveGroup.coordinateHopfAlgebra ℤ →ₐ[ℤ]
+      AdditiveGroup.coordinateHopfAlgebra ℤ) :=
+    toConv (AlgHom.id ℤ (AdditiveGroup.coordinateHopfAlgebra ℤ))
+  have hq : q.ofConv = AlgHom.id ℤ (AdditiveGroup.coordinateHopfAlgebra ℤ) :=
+    WithConv.ofConv_toConv _
+  let m := kostantRootSubgroupMatrix e h ρ M hM i hnil bb q
+  have hpoint : GeneralLinear.pointToGeneralLinear N
+      (toConv (q.ofConv.comp f.hom.toAlgHom)) = m :=
+    pointsMulEquiv_kostantRootSubgroupCoordinateMap e h ρ M hM i hnil bb
+      (AdditiveGroup.coordinateHopfAlgebra ℤ) q
+  have hpoint' : GeneralLinear.pointToGeneralLinear N (toConv f.hom.toAlgHom) = m := by
+    simpa only [hq, AlgHom.id_comp, WithConv.ofConv_toConv] using hpoint
+  have hmval : m.val = 1 + Multiplicative.toAdd (AdditiveGroup.gaPointsMulEquiv q) •
+      X.map (Int.cast : ℤ → AdditiveGroup.coordinateHopfAlgebra ℤ) :=
+    kostantRootSubgroupMatrix_eq_one_add_smul e h ρ M hM i hnil bb X hclass haction q
+  refine ⟨Multiplicative.toAdd (AdditiveGroup.gaPointsMulEquiv q), ?_⟩
+  rw [← hmval, ← hpoint']
+  ext a c
+  rw [Matrix.map_apply, GeneralLinear.genericMatrix_apply,
+    GeneralLinear.pointToGeneralLinear_apply, WithConv.ofConv_toConv]
+
+end GenericMatrix
 
 end TauCeti.UniversalEnvelopingAlgebra

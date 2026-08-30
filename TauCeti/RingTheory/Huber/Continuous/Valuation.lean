@@ -6,6 +6,7 @@ Authors: Chris Birkbeck
 module
 
 public import TauCeti.RingTheory.Huber.Basic
+public import TauCeti.RingTheory.Valuation.LtAddSubgroup
 public import TauCeti.RingTheory.Valuation.Continuous.Basic
 
 /-!
@@ -27,7 +28,8 @@ Mathlib's `Valuation.ltAddSubgroup` packages a sublevel set as an additive subgr
 indexed by `Γ₀ˣ` and so forces a `LinearOrderedCommGroupWithZero` codomain. `IsContinuous` is
 stated over a `LinearOrderedCommMonoidWithZero`, matching Mathlib's `Valuation`, and this
 criterion is stated over one too — the strict triangle inequality needs no inverses. The
-subgroup is therefore built where it is used rather than taken from Mathlib.
+subgroup used below is therefore `TauCeti.Valuation.ltAddSubgroupOfNeZero`, the analogue of
+Mathlib's construction at the weaker codomain, rather than Mathlib's own.
 
 ## Main results
 
@@ -70,11 +72,9 @@ theorem isContinuous_iff_forall_exists_idealImage_subset (P : PairOfDefinition A
     exact ⟨n, hn⟩
   · obtain ⟨n, hn⟩ := h b hb
     -- the sublevel set is an additive subgroup, by the strict triangle inequality
-    let S : AddSubgroup A :=
-      { carrier := {a : A | v a < v b}
-        add_mem' := fun ha hb' ↦ lt_of_le_of_lt (v.map_add _ _) (max_lt ha hb')
-        zero_mem' := by simpa using zero_lt_iff.mpr hb
-        neg_mem' := fun {x} hx ↦ by simpa [Set.mem_ofPred_eq, v.map_neg] using hx }
-    exact AddSubgroup.isOpen_mono (H₁ := P.idealImage n) (H₂ := S) hn (P.isOpen_idealImage n)
+    have hopen := AddSubgroup.isOpen_mono (H₁ := P.idealImage n)
+      (H₂ := v.ltAddSubgroupOfNeZero hb)
+      (fun x hx ↦ (Valuation.mem_ltAddSubgroupOfNeZero hb).mpr (hn hx)) (P.isOpen_idealImage n)
+    rwa [Valuation.coe_ltAddSubgroupOfNeZero] at hopen
 
 end TauCeti.Huber.PairOfDefinition

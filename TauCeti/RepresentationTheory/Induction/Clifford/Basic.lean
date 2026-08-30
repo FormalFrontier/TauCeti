@@ -5,9 +5,9 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.GroupTheory.GroupAction.ConjAct
 public import Mathlib.RepresentationTheory.Semisimple
 public import TauCeti.RepresentationTheory.Irreducible
+public import TauCeti.RepresentationTheory.Induction.Conjugate
 
 /-!
 # Restriction to a normal subgroup preserves semisimplicity
@@ -100,22 +100,6 @@ section Translate
 
 variable {k G V : Type*} [Semiring k] [Group G] [AddCommMonoid V] [Module k V]
   {N : Subgroup G} [N.Normal] (ρ : Representation k G V)
-
-/-- Acting by `g` and then by `n ∈ N` is the same as acting by the conjugate `g⁻¹ n g` and then by
-`g`.  This conjugation identity is what everything below rests on: it is why translating an
-`N`-stable subspace by `ρ g` produces another `N`-stable subspace, and why the two carry the same
-representation of `N` up to a conjugation twist.
-
-The conjugate is written as Mathlib's `MulAut.conjNormal g⁻¹`, the automorphism of `N` that
-`TauCeti.conjNormalRep` twists by. -/
-theorem apply_conjNormal_inv (g : G) (n : N) (v : V) :
-    ρ g (ρ (MulAut.conjNormal g⁻¹ n : G) v) = ρ (n : G) (ρ g v) := by
-  -- `MulAut.conjNormal g⁻¹` sends `n` to `g⁻¹ * n * g⁻¹⁻¹`, and it is only after that double
-  -- inverse is cleared that the two group elements below are visibly equal.
-  have hg : g * (MulAut.conjNormal g⁻¹ n : G) = (n : G) * g := by
-    rw [MulAut.conjNormal_apply]
-    group
-  rw [← Module.End.mul_apply, ← Module.End.mul_apply, ← map_mul, ← map_mul, hg]
 
 /-- The **translate** of an `N`-subrepresentation `σ` by `g : G`: the image of `σ` under `ρ g`,
 again stable under `N` because `N` is normal.

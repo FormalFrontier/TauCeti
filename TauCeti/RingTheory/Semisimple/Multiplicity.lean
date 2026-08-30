@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.LinearAlgebra.Matrix.FiniteDimensional
+public import Mathlib.RingTheory.SimpleModule.Isotypic
 public import TauCeti.RingTheory.Semisimple.Schur
 
 /-!
@@ -46,9 +47,23 @@ space of intertwiners".
   exactly when `S` occurs among the factors, so the hom space detects the constituents.
 * `TauCeti.finrank_linearMap_eq_natCard_of_linearEquiv_pi_const`: the isotypic case, where `M` is
   a power of `S` itself and the multiplicity is the number of copies.
+* `TauCeti.nonempty_linearEquiv_isotypicComponent`: **the isotypic component is the power of its
+  type with exponent the multiplicity**, `isotypicComponent A M S ≃ₗ[A] Fin m → S` for
+  `m = finrank k (S →ₗ[A] M)`, and
+  `TauCeti.finrank_isotypicComponent`: consequently `dim (isotypicComponent A M S) = m · dim S`.
 * `TauCeti.finrank_linearMap_pos_of_ne_bot`: for a finite-dimensional `M`, the hom space out of
   any nonzero submodule is positive-dimensional.  This asks for neither simplicity nor an
   algebraically closed field, so it lives apart from the results above.
+
+## The isotypic component
+
+Mathlib's `isotypicComponent A M S` is the sum of the submodules of `M` isomorphic to `S`, and
+`IsIsotypicOfType.linearEquiv_fun` writes it as a finite power of `S` once `S` is simple and `M` is
+finite-dimensional.  What the multiplicity theorem adds is the value of the exponent: every
+`A`-linear map out of `S` lands in the isotypic component
+(`TauCeti.apply_mem_isotypicComponent`), so `M` and its component have the same hom space out of
+`S`, and the count above identifies the exponent with `finrank k (S →ₗ[A] M)`.  This is the
+decomposition-free description of the component that a multiplicity computation needs.
 
 ## Implementation notes
 
@@ -180,6 +195,82 @@ theorem finrank_linearMap_eq_natCard_of_linearEquiv_pi_const {ι : Type*} [Finit
   exact Nat.card_congr (Equiv.subtypeUnivEquiv fun _ ↦ ⟨LinearEquiv.refl A S⟩)
 
 end Isotypic
+
+/-! ### The isotypic component -/
+
+section IsotypicComponent
+
+variable {k A M S : Type*} [Field k] [Ring A] [Algebra k A]
+variable [AddCommGroup M] [Module k M] [Module A M] [IsScalarTower k A M]
+variable [AddCommGroup S] [Module k S] [Module A S] [IsScalarTower k A S] [IsSimpleModule A S]
+
+omit [IsSimpleModule A S] in
+/-- **A module is its own isotypic component**: the sum of the submodules of `S` isomorphic to `S`
+is all of `S`, the top submodule being one of them. -/
+@[simp]
+theorem isotypicComponent_self_eq_top : isotypicComponent A S S = ⊤ :=
+  eq_top_iff.mpr <| (Submodule.le_isotypicComponent ⊤).trans_eq
+    Submodule.topEquiv.isotypicComponent_eq
+
+/-- **A map out of a simple module takes its values in the isotypic component of that type.**  So
+the hom space out of `S` sees only the `S`-isotypic component of its target, which is what makes
+the multiplicity of `S` in `M` a statement about that component alone. -/
+theorem apply_mem_isotypicComponent (f : S →ₗ[A] M) (s : S) :
+    f s ∈ isotypicComponent A M S := by
+  have h := LinearMap.le_comap_isotypicComponent (M := S) (N := M) S f
+  rw [isotypicComponent_self_eq_top] at h
+  exact h Submodule.mem_top
+
+/-- Corestriction to the isotypic component, an equivalence of hom spaces out of `S`.  It is the
+reason the multiplicity of `S` in `M` and in its `S`-isotypic component agree. -/
+private noncomputable def linearMapIsotypicComponentEquiv :
+    (S →ₗ[A] isotypicComponent A M S) ≃ₗ[k] (S →ₗ[A] M) where
+  toFun g := (isotypicComponent A M S).subtype ∘ₗ g
+  map_add' _ _ := rfl
+  map_smul' _ _ := rfl
+  invFun f := f.codRestrict _ (apply_mem_isotypicComponent f)
+  left_inv _ := rfl
+  right_inv _ := rfl
+
+omit [Module k S] [IsScalarTower k A S] in
+/-- **The multiplicity of `S` in `M` is its multiplicity in the `S`-isotypic component**, every
+map out of `S` landing there. -/
+@[simp]
+theorem finrank_linearMap_isotypicComponent :
+    Module.finrank k (S →ₗ[A] isotypicComponent A M S) = Module.finrank k (S →ₗ[A] M) :=
+  (linearMapIsotypicComponentEquiv (k := k)).finrank_eq
+
+variable [IsAlgClosed k] [FiniteDimensional k S] [FiniteDimensional k M]
+
+/-- **The isotypic component is the power of its type with exponent the multiplicity.**  Mathlib's
+`IsIsotypicOfType.linearEquiv_fun` writes the component as a finite power of `S`; what is proved
+here is that the exponent is the multiplicity `finrank k (S →ₗ[A] M)`, which is the form that
+identifies it without reference to the decomposition. -/
+theorem nonempty_linearEquiv_isotypicComponent :
+    Nonempty (isotypicComponent A M S ≃ₗ[A] (Fin (Module.finrank k (S →ₗ[A] M)) → S)) := by
+  have : Module.Finite k ↥(isotypicComponent A M S) :=
+    .of_injective ((isotypicComponent A M S).subtype.restrictScalars k) Subtype.val_injective
+  have : Module.Finite A ↥(isotypicComponent A M S) :=
+    Module.Finite.of_restrictScalars_finite k A _
+  obtain ⟨n, ⟨e⟩⟩ := (IsIsotypicOfType.isotypicComponent A M S).linearEquiv_fun
+  have hn : Module.finrank k (S →ₗ[A] M) = n := by
+    rw [← finrank_linearMap_isotypicComponent (k := k),
+      finrank_linearMap_eq_natCard_of_linearEquiv_pi_const (k := k) e]
+    simp
+  rw [hn]
+  exact ⟨e⟩
+
+/-- **The dimension of an isotypic component is the multiplicity times the dimension of its
+type.**  This is the counted form of the isotypic decomposition: the `S`-isotypic component of `M`
+is `S^{⊕ m}` with `m` the multiplicity `finrank k (S →ₗ[A] M)`. -/
+theorem finrank_isotypicComponent :
+    Module.finrank k ↥(isotypicComponent A M S)
+      = Module.finrank k (S →ₗ[A] M) * Module.finrank k S := by
+  obtain ⟨e⟩ := nonempty_linearEquiv_isotypicComponent (k := k) (A := A) (M := M) (S := S)
+  rw [(e.restrictScalars k).finrank_eq]
+  simp [Module.finrank_pi_fintype]
+
+end IsotypicComponent
 
 /-! ### Positivity for an arbitrary nonzero submodule -/
 

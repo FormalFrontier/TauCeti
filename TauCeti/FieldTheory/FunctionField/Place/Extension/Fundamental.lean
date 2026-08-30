@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.RingTheory.DedekindDomain.IntegralClosure
 public import TauCeti.FieldTheory.FunctionField.AffineModel.Extension
 
 /-!
@@ -28,6 +27,10 @@ discrete valuation ring with fraction field `F`, together with the integral clos
 `𝒪_P`-module — the hypothesis of Mathlib's `Ideal.sum_ramification_inertia_eq_finrank`, which the
 affine-model reconciliation consumes.  No separability-free finiteness of a normalization is
 available, so the unconditional form of Stichtenoth's Theorem 3.1.11 waits on one.
+
+That local model is the one set up in
+`TauCeti/FieldTheory/FunctionField/Place/Extension/Basic.lean`; the action of `𝒪_P` on `F'`
+and the scalar tower it sits in are not global instances, so they are reinstalled here.
 
 ## Main result
 
@@ -59,6 +62,8 @@ variable [FiniteDimensional F F'] [Algebra.IsSeparable F F'] [Algebra.IsIntegral
 
 variable (k F)
 
+attribute [local instance 10] algebraIntegersExtension isScalarTowerIntegersExtension
+
 /-- **The fundamental identity** (Stichtenoth, Theorem 3.1.11) at an arbitrary place `P` of
 `F / k`, for an extension `F' / k'` whose extension of function fields `F' / F` is finite and
 **separable**: the ramification indices and relative degrees of the places of `F' / k'` lying
@@ -77,8 +82,6 @@ theorem sum_ramificationIdx_mul_relativeDegree_eq_finrank_of_isSeparable (P : Pl
   have hR : ∀ r : P.integers, algebraMap P.integers F r ∈ P.integers := fun r ↦ by
     rw [ValuationSubring.algebraMap_apply]
     exact r.2
-  let _ : Algebra P.integers F' := ((algebraMap F F').comp (algebraMap P.integers F)).toAlgebra
-  have : IsScalarTower P.integers F F' := .of_algebraMap_eq fun _ ↦ rfl
   have : IsScalarTower k P.integers F' := .of_algebraMap_eq fun c ↦ by
     rw [IsScalarTower.algebraMap_apply P.integers F F',
       ← IsScalarTower.algebraMap_apply k P.integers F, ← IsScalarTower.algebraMap_apply k F F']
@@ -89,12 +92,6 @@ theorem sum_ramificationIdx_mul_relativeDegree_eq_finrank_of_isSeparable (P : Pl
   let _ : Algebra k' (integralClosure P.integers F') :=
     ((algebraMap k' F').codRestrict (integralClosure P.integers F') hk').toAlgebra
   have : IsScalarTower k' (integralClosure P.integers F') F' := .of_algebraMap_eq fun _ ↦ rfl
-  have : IsFractionRing (integralClosure P.integers F') F' :=
-    IsIntegralClosure.isFractionRing_of_finite_extension P.integers F F' _
-  have : IsDedekindDomain (integralClosure P.integers F') :=
-    integralClosure.isDedekindDomain (A := P.integers) (K := F) (L := F')
-  have : Module.Finite P.integers (integralClosure P.integers F') :=
-    IsIntegralClosure.finite (A := P.integers) (K := F) (L := F') _
   -- `P` is the place of the maximal ideal of `𝒪_P`, so the affine-model identity applies to it.
   refine sum_ramificationIdx_mul_relativeDegree_eq_finrank (S := integralClosure P.integers F')
     k F (P.center hR) fun P' ↦ ?_

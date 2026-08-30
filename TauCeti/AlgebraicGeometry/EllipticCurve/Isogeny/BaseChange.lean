@@ -150,11 +150,14 @@ theorem map_comp_coordinateRingMap (φ : CoordinatePullback W₁ W₂) (f : F �
 theorem map_id (W : WeierstrassCurve.Affine F) (f : F →+* K) :
     (id W).map f = id (W.map f) := by
   apply ext_coords
-  · rw [map_of_X, id_apply, id_apply, ← AdjoinRoot.algebraMap_eq,
-      ← AdjoinRoot.algebraMap_eq, ← genericX_def, ← genericX_def,
-      FunctionField.map_genericX]
-  · rw [map_root, id_apply, id_apply, ← genericY_def, ← genericY_def,
-      FunctionField.map_genericY]
+  · rw [map_of_X]
+    change FunctionField.map W f (id W (CoordinateRing.mk W (C X))) =
+      id (W.map f) (CoordinateRing.mk (W.map f) (C X))
+    rw [id_apply, id_apply, ← genericX_def, ← genericX_def, FunctionField.map_genericX]
+  · rw [map_root]
+    change FunctionField.map W f (id W (CoordinateRing.mk W Y)) =
+      id (W.map f) (CoordinateRing.mk (W.map f) Y)
+    rw [id_apply, id_apply, ← genericY_def, ← genericY_def, FunctionField.map_genericY]
 
 /-- **Base change of a coordinate pullback along the identity is the original pullback.** -/
 @[simp]
@@ -203,10 +206,10 @@ theorem MapsInfinity.map {φ : CoordinatePullback W₁ W₂} (hφ : φ.MapsInfin
       rw [RingHom.algebraMap_toAlgebra]
       exact ((φ.map f).commutes a).symm
   have hX : IsIntegral (W₂.map f).CoordinateRing (W₁.map f).genericX := by
-    have h := isIntegral_map φ f (hφ (algebraMap F[X] W₁.CoordinateRing X))
+    have h := isIntegral_map φ f (hφ (CoordinateRing.mk W₁ (C X)))
     rwa [← genericX_def, FunctionField.map_genericX] at h
   have hY : IsIntegral (W₂.map f).CoordinateRing (W₁.map f).genericY := by
-    have h := isIntegral_map φ f (hφ (AdjoinRoot.root W₁.polynomial))
+    have h := isIntegral_map φ f (hφ (CoordinateRing.mk W₁ Y))
     rwa [← genericY_def, FunctionField.map_genericY] at h
   have hle : Algebra.adjoin K
         ({(W₁.map f).genericX, (W₁.map f).genericY} : Set (W₁.map f).FunctionField) ≤

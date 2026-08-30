@@ -22,7 +22,9 @@ The dimension vector of a representation records the `Module.finrank` of its vec
 vertex. No finite-dimensionality is assumed in the definition, so an infinite-dimensional component
 has value `0` by the convention for `Module.finrank`. This file defines dimension vectors and proves
 their fundamental functorial properties: invariance under isomorphism and additivity on biproducts
-and short exact sequences.
+and short exact sequences. It also records that, among pointwise finite-dimensional
+representations, only the zero object has vanishing dimension vector, so that an indecomposable
+one has a nonzero dimension vector.
 
 ## References
 
@@ -118,5 +120,31 @@ theorem dimVector_add_of_shortExact {S : ShortComplex (QuiverRep k Q)} (hS : S.S
     congrArg (fun X : ModuleCat k ↦ Module.finrank k X) ((ShortComplex.map_X₃ S E).trans
       (evaluation_obj_obj (Paths Q) (ModuleCat k) ((Paths.of Q).obj i) S.X₃))
   exact hfin₂.symm.trans (ModuleCat.free_shortExact_finrank_add hSi hfin₁ hfin₃)
+
+/-- **A pointwise finite-dimensional representation with vanishing dimension vector is a zero
+object.** Finite-dimensionality is needed: the convention making `Module.finrank` vanish on an
+infinite-dimensional space would otherwise make the dimension vector of a nonzero representation
+zero. -/
+theorem isZero_of_dimVector_eq_zero {M : QuiverRep k Q}
+    (hfd : ∀ i : Q, FiniteDimensional k (M.obj ((Paths.of Q).obj i)))
+    (h : dimVector M = 0) : IsZero M := by
+  refine (Functor.isZero_iff M).mpr fun i ↦ ?_
+  have : FiniteDimensional k (M.obj i) := hfd i
+  have : Subsingleton (M.obj i) :=
+    (Module.finrank_zero_iff (R := k) (M := M.obj i)).mp (congrFun h i)
+  exact ModuleCat.isZero_of_subsingleton (M.obj i)
+
+/-- **A zero object has vanishing dimension vector**, the converse of
+`TauCeti.isZero_of_dimVector_eq_zero`; no finite-dimensionality is needed in this direction. -/
+theorem dimVector_eq_zero_of_isZero {M : QuiverRep k Q} (h : IsZero M) : dimVector M = 0 :=
+  (dimVector_eq_of_iso (h.iso (isZero_zero _))).trans dimVector_zero
+
+/-- **A pointwise finite-dimensional indecomposable representation has nonzero dimension vector**,
+since it is not the zero object. This is the nonvanishing half of the statement that the dimension
+vector of an indecomposable is a *positive* root. -/
+theorem dimVector_ne_zero_of_indecomposable {M : QuiverRep k Q}
+    (hfd : ∀ i : Q, FiniteDimensional k (M.obj ((Paths.of Q).obj i)))
+    (hM : Indecomposable M) : dimVector M ≠ 0 :=
+  fun h ↦ hM.1 (isZero_of_dimVector_eq_zero hfd h)
 
 end TauCeti

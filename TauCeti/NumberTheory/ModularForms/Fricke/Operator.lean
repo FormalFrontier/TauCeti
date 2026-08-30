@@ -6,6 +6,7 @@ Authors: Chris Birkbeck
 module
 
 public import TauCeti.NumberTheory.ModularForms.Basic
+public import TauCeti.NumberTheory.ModularForms.DiamondOperators
 public import TauCeti.NumberTheory.ModularForms.Fricke.Conjugation
 
 /-!
@@ -23,8 +24,9 @@ a `ℂ`-linear endomorphism `frickeOperator` of `M_k(Γ₁(N))` and `frickeOpera
 `frickeOperator` is the **raw slash by `W`**: it carries no normalizing scalar, and it is
 therefore **not an involution**. With mathlib's weight-`k` slash and `W² = (-N) • 1`
 (`coe_frickeGL_sq`) it squares to multiplication by the scalar `N ^ (2 * (k - 1)) * (-N) ^ (-k)`,
-that is `(-1) ^ k * N ^ (k - 2)`. That scalar is AINTLIB's `frickeScalar N k`, where the identity
-is proved; it is not restated here.
+that is `(-1) ^ k * N ^ (k - 2)`. That scalar is `frickeScalar N k` and the identity is
+`frickeGL_sq_slash`, both in `TauCeti/NumberTheory/ModularForms/Fricke/Involution.lean`; they are
+not restated here.
 
 The roadmap's Fricke operator is the **normalized** `𝒲_N = (√N) ^ (2 - k) • (· ∣[k] W)`, which
 brings that scalar down to `(-1) ^ k` and so is an involution in even weight — the weights the
@@ -49,6 +51,14 @@ Scalars commute past a slash only on the positive-determinant branch — mathlib
 `det W = N > 0`, so `ModularForm.smul_slash_of_det_pos` of
 `TauCeti/NumberTheory/ModularForms/Basic.lean` applies and gives `map_smul'` for both operators.
 
+## The diamond shift
+
+`W` conjugates a representative `σ ∈ Γ₀(N)` of `d : (ZMod N)ˣ` into `frickeConjGamma0 σ`, whose
+diamond label is `d⁻¹` (`toHomUnits_gamma0Map_frickeConjGamma0_eq_inv`). So `W` does not commute
+with the diamond operators; it shifts them, `W ∘ ⟨d⟩ = ⟨d⁻¹⟩ ∘ W`. Read on a nebentypus space
+this says `W` carries `M_k(Γ₁(N), χ)` into `M_k(Γ₁(N), χ⁻¹)`, which is what the character-space
+transport of the later Fricke rungs is built from.
+
 ## Main definitions
 
 * `TauCeti.frickeOperator`: the un-normalized Fricke slash operator on `M_k(Γ₁(N))`.
@@ -63,6 +73,8 @@ Scalars commute past a slash only on the positive-determinant branch — mathlib
   operators are `⇑f ∣[k] W`.
 * `TauCeti.frickeOperator_coe_cuspForm`: the two operators agree under the coercion
   `S_k(Γ₁(N)) → M_k(Γ₁(N))`.
+* `TauCeti.frickeOperator_diamondOp`, `TauCeti.frickeOperatorCusp_diamondOpCusp`: the
+  **diamond shift** `W ∘ ⟨d⟩ = ⟨d⁻¹⟩ ∘ W`, on modular and on cusp forms.
 
 ## Provenance
 
@@ -88,12 +100,15 @@ AINTLIB proves `ℂ`-linearity with its own `smul_slash_pos_det`; the correspond
 `ModularForm.smul_slash_of_det_pos` was already on hand, and is more general (any scalar `α`
 acting on `ℂ` by an `IsScalarTower`, rather than `ℂ` itself).
 
-The diamond-shift theorem `frickeOperator_diamondOp` of the source (`W ∘ ⟨d⟩ = ⟨d⁻¹⟩ ∘ W`) is
-deliberately *not* ported here: it is stated through AINTLIB's `Gamma0MapUnits`, the unit-valued
-refinement of mathlib's `CongruenceSubgroup.Gamma0Map`, which TauCeti does not have — the same
-definition whose absence already kept `Gamma0MapUnits_frickeConjSL` out of
-`Fricke/Conjugation.lean`.
-It belongs with that definition and with the character-space transport, not here.
+The source states the diamond shift through AINTLIB's `Gamma0MapUnits`, the unit-valued
+refinement of mathlib's `CongruenceSubgroup.Gamma0Map`, which TauCeti does not define. It is
+ported here over the composite `(Gamma0Map N).toHomUnits` that this repository already uses for
+the diamond label — the same substitution by which `Gamma0MapUnits_frickeConjSL` became
+`toHomUnits_gamma0Map_frickeConjGamma0_eq_inv` in `Fricke/Conjugation.lean`, and the reason no
+`Gamma0MapUnits` definition is needed to state it. AINTLIB evaluates `⟨d⟩` on a representative
+through its private `diamondOp_eq_diamondOpAux`; the public `coe_diamondOp` does that here, so
+no auxiliary is introduced. The cusp-form twin `frickeOperatorCusp_diamondOpCusp` has no
+counterpart in the source.
 
 ## References
 
@@ -194,5 +209,39 @@ public theorem frickeOperator_coe_cuspForm (k : ℤ)
   DFunLike.coe_injective <| by
     rw [coe_frickeOperator, ModularFormClass.coe_modularForm, ModularFormClass.coe_modularForm,
       coe_frickeOperatorCusp]
+
+/-- **The diamond shift** `W ∘ ⟨d⟩ = ⟨d⁻¹⟩ ∘ W` on `M_k(Γ₁(N))`: the Fricke operator does not
+commute with the diamond operators, it inverts their label. Read on a nebentypus space this says
+`W` carries `M_k(Γ₁(N), χ)` into `M_k(Γ₁(N), χ⁻¹)`. -/
+@[simp]
+public theorem frickeOperator_diamondOp (k : ℤ) (d : (ZMod N)ˣ) :
+    (frickeOperator (N := N) k).comp (diamondOp k d) =
+      (diamondOp k d⁻¹).comp (frickeOperator (N := N) k) := by
+  -- `W` moves a representative `g` of `d` across it as `frickeConjSL g`
+  -- (`mapGL_mul_frickeGL`), and that matrix carries the label `d⁻¹`
+  -- (`toHomUnits_gamma0Map_frickeConjGamma0_eq_inv`). `coe_diamondOp` evaluates a diamond
+  -- operator at any representative with the right label, so both sides become one slash by a
+  -- product.
+  obtain ⟨g, hg⟩ := Gamma0Map_toHomUnits_surjective (N := N) d
+  refine LinearMap.ext fun f ↦ DFunLike.coe_injective ?_
+  rw [LinearMap.comp_apply, LinearMap.comp_apply, coe_frickeOperator,
+    coe_diamondOp k d g hg, coe_diamondOp k d⁻¹ (frickeConjGamma0 g) (by simp [hg]),
+    coe_frickeOperator, ← SlashAction.slash_mul, ← SlashAction.slash_mul, coe_frickeConjGamma0,
+    mapGL_mul_frickeGL]
+
+/-- **The diamond shift on cusp forms**: the `S_k(Γ₁(N))` counterpart of
+`frickeOperator_diamondOp`. -/
+@[simp]
+public theorem frickeOperatorCusp_diamondOpCusp (k : ℤ) (d : (ZMod N)ˣ) :
+    (frickeOperatorCusp (N := N) k).comp (diamondOpCusp k d) =
+      (diamondOpCusp k d⁻¹).comp (frickeOperatorCusp (N := N) k) := by
+  -- Both operators commute with the coercion `S_k(Γ₁(N)) → M_k(Γ₁(N))`, so this is the modular
+  -- identity read on the image; no second representative-and-slash argument is needed.
+  refine LinearMap.ext fun f ↦ DFunLike.coe_injective (funext fun z ↦ ?_)
+  have h := LinearMap.congr_fun (frickeOperator_diamondOp (N := N) k d)
+    (f : ModularForm ((Gamma1 N).map (mapGL ℝ)) k)
+  rw [LinearMap.comp_apply, LinearMap.comp_apply, diamondOp_coe_cuspForm,
+    frickeOperator_coe_cuspForm, frickeOperator_coe_cuspForm, diamondOp_coe_cuspForm] at h
+  simpa [LinearMap.comp_apply] using DFunLike.congr_fun h z
 
 end TauCeti

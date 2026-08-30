@@ -87,27 +87,25 @@ lemma slash_eq_of_rightCoset_eq {f : ℍ → ℂ} (hf : ∀ γ ∈ Γ₁, f ∣[
 
 variable [Finite (DecompQuotient Γ₂ Γ₁ (D.out : GL (Fin 2) ℚ)⁻¹)]
 
-/-- **The slash sum of a `Γ₁`-invariant function is the sum over any decomposition of the double
-coset into right cosets.** If the right cosets `Γ₁ aᵢ` are pairwise distinct and cover
-`Γ₁ D.out Γ₂`, then `heckeSlashSum k D f = ∑ᵢ f ∣[k] aᵢ`.
+omit [Finite (DecompQuotient Γ₂ Γ₁ (D.out : GL (Fin 2) ℚ)⁻¹)] in
+/-- **Two families of representatives of the same right cosets are matched by a bijection.**
+If the cosets `Γ₁ aᵢ` are pairwise distinct and cover `Γ₁ D.out Γ₂`, then the index type `ι` is
+matched with `DecompQuotient Γ₂ Γ₁ (D.out)⁻¹` — the index `heckeSlashSum` sums over — by a
+bijection `φ` carrying each `Γ₁ aᵢ` to `Γ₁ (rightCosetRep D (φ i))`.
 
-So the operator is attached to the double coset itself: the representatives `D.out` and `v.out`
-that `heckeSlashSum` happens to pick are one such family (`doubleCoset_eq_iUnion_rightCosets` and
-`op_mul_out_inv_smul_injective`), and every other family gives the same function.
-
-Invariance of `f` under `Γ₁` is what the proof uses, once, through
-`slash_eq_of_rightCoset_eq`; on a general `f` the statement is false, as `HeckeSlash/Basic.lean`
-records. -/
-theorem heckeSlashSum_eq_sum_of_rightCosets {ι : Type*} [Fintype ι] (a : ι → GL (Fin 2) ℚ)
+This is pure coset bookkeeping: no slash, no weight and no character appears, and it is what makes
+a sum over one family equal to the sum over the other. Both the unweighted
+`heckeSlashSum_eq_sum_of_rightCosets` below and the nebentypus-weighted
+`twistedHeckeSlashSum_eq_sum_of_rightCosets` of `HeckeSlash/Nebentypus/Independence.lean` consume
+it, and differ only in the per-summand lemma they then supply. -/
+theorem exists_bijective_rightCosetRep_smul_eq {ι : Type*} (a : ι → GL (Fin 2) ℚ)
     (hcover : doubleCoset (D.out : GL (Fin 2) ℚ) Γ₁ Γ₂ =
       ⋃ i, MulOpposite.op (a i) • (Γ₁ : Set (GL (Fin 2) ℚ)))
-    (hinj : Function.Injective fun i ↦ MulOpposite.op (a i) • (Γ₁ : Set (GL (Fin 2) ℚ)))
-    (f : ℍ → ℂ) (hf : ∀ γ ∈ Γ₁, f ∣[k] γ = f) :
-    heckeSlashSum k D f = ∑ i, f ∣[k] a i := by
+    (hinj : Function.Injective fun i ↦ MulOpposite.op (a i) • (Γ₁ : Set (GL (Fin 2) ℚ))) :
+    ∃ φ : ι → DecompQuotient Γ₂ Γ₁ (D.out : GL (Fin 2) ℚ)⁻¹, Function.Bijective φ ∧
+      ∀ i, MulOpposite.op (a i) • (Γ₁ : Set (GL (Fin 2) ℚ)) =
+        MulOpposite.op (rightCosetRep D (φ i)) • (Γ₁ : Set (GL (Fin 2) ℚ)) := by
   classical
-  -- the enumeration the comparison of sums needs; `heckeSlashSum` fixes one of its own, and the
-  -- two agree, no sum here depending on which is chosen
-  let _ : Fintype (DecompQuotient Γ₂ Γ₁ (D.out : GL (Fin 2) ℚ)⁻¹) := Fintype.ofFinite _
   -- Shimura's decomposition, written with the representatives `heckeSlashSum` uses.
   have hcover' : doubleCoset (D.out : GL (Fin 2) ℚ) Γ₁ Γ₂ =
       ⋃ v, MulOpposite.op (rightCosetRep D v) • (Γ₁ : Set (GL (Fin 2) ℚ)) := by
@@ -117,8 +115,9 @@ theorem heckeSlashSum_eq_sum_of_rightCosets {ι : Type*} [Fintype ι] (a : ι �
       MulOpposite.op (rightCosetRep D v) • (Γ₁ : Set (GL (Fin 2) ℚ)) := by
     simpa only [rightCosetRep_def] using
       op_mul_out_inv_smul_injective Γ₁ Γ₂ (D.out : GL (Fin 2) ℚ)
+  -- Mathlib's own lemma; stated for a submonoid, so `Γ₁` is passed through `toSubmonoid`.
   have hself : ∀ x : GL (Fin 2) ℚ, x ∈ MulOpposite.op x • (Γ₁ : Set (GL (Fin 2) ℚ)) := fun x ↦
-    (mem_rightCoset_iff x).mpr (by simp)
+    mem_own_rightCoset Γ₁.toSubmonoid x
   -- Two right cosets of `Γ₁` that meet are equal, so each family's cosets occur in the other.
   have hmatch : ∀ x y : GL (Fin 2) ℚ, x ∈ MulOpposite.op y • (Γ₁ : Set (GL (Fin 2) ℚ)) →
       MulOpposite.op x • (Γ₁ : Set (GL (Fin 2) ℚ)) =
@@ -154,6 +153,28 @@ theorem heckeSlashSum_eq_sum_of_rightCosets {ι : Type*} [Fintype ι] (a : ι �
     refine ⟨fun i j hij ↦ hinj (hcoset i j hij), fun v ↦ ?_⟩
     obtain ⟨i, hi⟩ := key' v
     exact ⟨i, (hinj' (hi.trans (hφ i))).symm⟩
+  exact ⟨φ, hbij, hφ⟩
+
+/-- **The slash sum of a `Γ₁`-invariant function is the sum over any decomposition of the double
+coset into right cosets.** If the right cosets `Γ₁ aᵢ` are pairwise distinct and cover
+`Γ₁ D.out Γ₂`, then `heckeSlashSum k D f = ∑ᵢ f ∣[k] aᵢ`.
+
+So the operator is attached to the double coset itself: the representatives `D.out` and `v.out`
+that `heckeSlashSum` happens to pick are one such family (`doubleCoset_eq_iUnion_rightCosets` and
+`op_mul_out_inv_smul_injective`), and every other family gives the same function.
+
+Invariance of `f` under `Γ₁` is what the proof uses, once, through
+`slash_eq_of_rightCoset_eq`; on a general `f` the statement is false, as `HeckeSlash/Basic.lean`
+records. -/
+theorem heckeSlashSum_eq_sum_of_rightCosets {ι : Type*} [Fintype ι] (a : ι → GL (Fin 2) ℚ)
+    (hcover : doubleCoset (D.out : GL (Fin 2) ℚ) Γ₁ Γ₂ =
+      ⋃ i, MulOpposite.op (a i) • (Γ₁ : Set (GL (Fin 2) ℚ)))
+    (hinj : Function.Injective fun i ↦ MulOpposite.op (a i) • (Γ₁ : Set (GL (Fin 2) ℚ)))
+    (f : ℍ → ℂ) (hf : ∀ γ ∈ Γ₁, f ∣[k] γ = f) :
+    heckeSlashSum k D f = ∑ i, f ∣[k] a i := by
+  classical
+  let _ : Fintype (DecompQuotient Γ₂ Γ₁ (D.out : GL (Fin 2) ℚ)⁻¹) := Fintype.ofFinite _
+  obtain ⟨φ, hbij, hφ⟩ := exists_bijective_rightCosetRep_smul_eq D a hcover hinj
   rw [heckeSlashSum_def]
   exact (Fintype.sum_bijective φ hbij _ _ fun i ↦ slash_eq_of_rightCoset_eq k hf (hφ i)).symm
 
