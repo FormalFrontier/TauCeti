@@ -213,7 +213,6 @@ theorem kostantPartitionOn_eq_erase_add_sub_root [DecidableEq ι] {S : Finset ι
     (hiS : i ∈ S) (hi : i ∈ posRootsFinset P b) (ν : M) :
     kostantPartitionOn P b S ν
       = kostantPartitionOn P b (S.erase i) ν + kostantPartitionOn P b S (ν - P.root i) := by
-  classical
   -- The partitions that avoid `αᵢ` are exactly those supported in `S` with `i` erased.
   have herase : ∀ c : ι → ℕ,
       IsKostantPartitionOn P b S ν c ∧ c i = 0 ↔ IsKostantPartitionOn P b (S.erase i) ν c := by
@@ -255,7 +254,6 @@ theorem sum_powerset_neg_one_pow_mul_kostantPartitionOn {S : Finset ι}
     ∑ T ∈ S.powerset,
         (-1 : ℤ) ^ T.card * kostantPartitionOn P b S (ν - ∑ i ∈ T, P.root i)
       = if ν = 0 then 1 else 0 := by
-  classical
   revert hS
   induction S using Finset.induction_on generalizing ν with
   | empty =>
