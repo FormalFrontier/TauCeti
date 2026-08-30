@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.NumberTheory.ModularForms.HeckeSlash.Composition
+public import TauCeti.NumberTheory.ModularForms.HeckeSlash.Nebentypus.CharRing
 public import TauCeti.NumberTheory.ModularForms.HeckeSlash.Nebentypus.Independence
 
 /-!
@@ -15,7 +16,9 @@ public import TauCeti.NumberTheory.ModularForms.HeckeSlash.Nebentypus.Independen
 representatives they are defined with and then over free families, and collapses it onto a single
 double coset. This file is the weighted counterpart of that development, up to and including the
 operator statement: for a single pair of double cosets whose product set is a third, the twisted
-operators of `D₁` and `D₂` compose to the operator of `D₃` on the character space.
+operators of `D₁` and `D₂` compose to the operator of `D₃` on the character space. It then reads
+that operator statement at the ring level, on basis elements, through the extension of
+`Nebentypus/CharRing.lean`.
 
 ⚠ That is a *generator-level* statement, and it is **not** the multiplicativity
 `HeckeSlash/Nebentypus/Ring.lean` records as missing. That gap is about
@@ -56,6 +59,8 @@ reason: that is the carrier on which the hypothesis comes for free.
 
 ## Main definitions
 
+This file introduces no definitions; the extension it reads the composition theorem through,
+`twistedHeckeSlashRingCharLinearMap`, is defined in `Nebentypus/CharRing.lean`.
 
 ## Main results
 
@@ -70,8 +75,21 @@ reason: that is the carrier on which the hypothesis comes for free.
   of its right cosets once.
 * `HeckeRing.GL2.twistedHeckeSlashSumCharEnd_mul_of_doubleCoset_eq_mul`: the pay-off — the twisted
   Hecke operators multiply.
+* `HeckeRing.GL2.twistedHeckeSlashRingCharLinearMap_mul_single_single`: the ring-level reading of
+  that pay-off — a **conditional anti-multiplicativity identity on basis elements**. Under the
+  same collapse and injectivity hypotheses, the image of `single D₁ 1 * single D₂ 1` is the
+  composite of the images *in the opposite order*. It is not a multiplicative action of the Hecke
+  ring: basis elements only, under those hypotheses, and no ring homomorphism follows.
 
 ## Provenance
+
+`twistedHeckeSlashRingCharLinearMap_mul_single_single` is adapted from the same project's
+`twistedHeckeSumFunction_mul` (line 917), with two departures: the source proves multiplicativity
+for arbitrary ring elements, reaching it through its own fibre-counting chain (lines 601-801,
+which this repository does not carry), so what is stated here is the basis-element form the
+generator-level theorem above supports, with the collapse hypotheses explicit; and the statement
+shape follows `main`'s own untwisted
+`heckeSlashGamma1RingModularFormLinearMap_mul_single_single` (`HeckeSlash/Composition.lean`).
 
 The weight-multiplication that `twistedHeckeSlashSum_twistedHeckeSlashSum` turns on is the content
 of `delta0NebentypusWeight_mul_eq_tripleDelta` (line 478) in the AINTLIB `LeanModularForms` project
@@ -114,7 +132,7 @@ public section
 open Matrix Matrix.SpecialLinearGroup UpperHalfPlane CongruenceSubgroup DoubleCoset
   HeckeRing.GLn
 
-open scoped MatrixGroups ModularForm Pointwise
+open scoped MatrixGroups ModularForm Pointwise HeckeCosetModule
 
 namespace HeckeRing.GL2
 
@@ -303,6 +321,47 @@ theorem twistedHeckeSlashSumCharEnd_mul_of_doubleCoset_eq_mul
   have := congrFun (twistedHeckeSlashSum_twistedHeckeSlashSum_eq_twistedHeckeSlashSum k χ D₁ D₂
     a b hcover₁ hinj₁ hcover₂ hinj₂ D₃ hD₃ hinj₃ f f.2) x
   simpa [Module.End.mul_apply] using this
+
+include hcover₁ hinj₁ hcover₂ hinj₂ in
+/-- **A conditional anti-multiplicativity identity on basis elements.** When the product of the two
+double cosets is again a single double coset with no right-coset collisions, the image of
+`single D₁ 1 * single D₂ 1` is the composite of the images in the opposite order. Stated for basis
+elements only, under those hypotheses; this is not a multiplicative action of the Hecke ring, and
+no ring homomorphism follows from it.
+
+The ring-level reading of `twistedHeckeSlashSumCharEnd_mul_of_doubleCoset_eq_mul` above: the two
+criteria line up, one on each side, with `HeckeCosetModule.mul_single_single_of_mulMap_eq`
+supplying the product in the Hecke ring and the composition theorem supplying it in `Module.End`.
+
+`Module.End` multiplies by composition and the slash acts on the right, so the basis element `D₁`
+of the *left* factor is the operator applied *first* — the map is an anti-homomorphism on these
+elements, matching `heckeSlashGamma1RingModularFormLinearMap_mul_single_single` for the untwisted
+`Γ₁(N)` operators. -/
+theorem twistedHeckeSlashRingCharLinearMap_mul_single_single
+    (hmulMap : ∀ p, HeckeCoset.mulMap ((Gamma0 N).map (mapGL ℚ)) ((Gamma0 N).map (mapGL ℚ))
+      ((Gamma0 N).map (mapGL ℚ)) D₁.rep D₂.rep p = D₃)
+    (hmul : multiplicity ((Gamma0 N).map (mapGL ℚ)) ((Gamma0 N).map (mapGL ℚ))
+      ((Gamma0 N).map (mapGL ℚ)) (D₁.rep : GL (Fin 2) ℚ) (D₂.rep : GL (Fin 2) ℚ)
+      (D₃.rep : GL (Fin 2) ℚ) ≤ 1)
+    (hD₃ : doubleCoset (D₃.out : GL (Fin 2) ℚ) ((Gamma0 N).map (mapGL ℚ))
+        ((Gamma0 N).map (mapGL ℚ)) =
+      doubleCoset (D₁.out : GL (Fin 2) ℚ) ((Gamma0 N).map (mapGL ℚ))
+          ((Gamma0 N).map (mapGL ℚ)) *
+        doubleCoset (D₂.out : GL (Fin 2) ℚ) ((Gamma0 N).map (mapGL ℚ))
+          ((Gamma0 N).map (mapGL ℚ)))
+    (hinj₃ : Function.Injective fun p : ι × κ ↦ MulOpposite.op (a p.1 * b p.2) •
+      (((Gamma0 N).map (mapGL ℚ) : Subgroup (GL (Fin 2) ℚ)) : Set (GL (Fin 2) ℚ))) :
+    twistedHeckeSlashRingCharLinearMap k χ
+        (HeckeCosetModule.single ℤ D₁ 1 * HeckeCosetModule.single ℤ D₂ 1) =
+      twistedHeckeSlashRingCharLinearMap k χ (HeckeCosetModule.single ℤ D₂ 1) *
+        twistedHeckeSlashRingCharLinearMap k χ (HeckeCosetModule.single ℤ D₁ 1) := by
+  have hprod : HeckeCosetModule.single ℤ D₁ 1 * HeckeCosetModule.single ℤ D₂ 1
+      = HeckeCosetModule.single ℤ D₃ 1 :=
+    HeckeCosetModule.mul_single_single_of_mulMap_eq ℤ D₁ D₂ D₃ hmulMap hmul
+  rw [hprod, twistedHeckeSlashRingCharLinearMap_single, twistedHeckeSlashRingCharLinearMap_single,
+    twistedHeckeSlashRingCharLinearMap_single, one_smul, one_smul, one_smul]
+  exact (twistedHeckeSlashSumCharEnd_mul_of_doubleCoset_eq_mul k χ D₁ D₂ a b
+    hcover₁ hinj₁ hcover₂ hinj₂ D₃ hD₃ hinj₃).symm
 
 end Free
 

@@ -40,6 +40,8 @@ definition is made here.
   antidiagonal sum.
 * `TauCeti.Associative.dividedPower_sub`: the corresponding signed expansion for a difference.
 * `TauCeti.Associative.map_dividedPower`: divided powers are natural under algebra homomorphisms.
+* `TauCeti.Associative.dividedPower_apply_mem_of_pow_two_eq_zero`: a square-zero endomorphism
+  preserving an integral submodule has all divided powers preserving it.
 * `TauCeti.Associative.dividedPower_units_conj`: divided powers are equivariant for conjugation by
   a unit.
 
@@ -81,6 +83,26 @@ theorem dividedPower_one (x : A) : dividedPower 1 x = x := by
 @[simp]
 theorem dividedPower_eval_zero {n : ℕ} (hn : n ≠ 0) : dividedPower n (0 : A) = 0 := by
   simp [dividedPower_def, hn]
+
+section ModuleEnd
+
+variable {V : Type*} [AddCommGroup V] [Module ℚ V]
+
+/-- Every divided power of a square-zero endomorphism preserves an integral submodule once the
+endomorphism itself does. -/
+theorem dividedPower_apply_mem_of_pow_two_eq_zero
+    (f : Module.End ℚ V) (N : Submodule ℤ V) (hf : f ^ 2 = 0)
+    (hN : ∀ {v : V}, v ∈ N → f v ∈ N) (n : ℕ) {v : V} (hv : v ∈ N) :
+    dividedPower n f v ∈ N := by
+  match n with
+  | 0 => rwa [dividedPower_zero, Module.End.one_apply]
+  | 1 => rw [dividedPower_one]; exact hN hv
+  | n + 2 =>
+      rw [dividedPower_def, pow_eq_zero_of_le (m := 2) (by omega) hf, smul_zero,
+        LinearMap.zero_apply]
+      exact zero_mem _
+
+end ModuleEnd
 
 /-- Multiplying a divided power by its factorial recovers the ordinary power. -/
 theorem factorial_smul_dividedPower_eq_pow (n : ℕ) (x : A) :

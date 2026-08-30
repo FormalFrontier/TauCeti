@@ -1,306 +1,389 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: The Tau Ceti contributors
+Authors: Claude
 -/
 module
 
 public import TauCeti.Probability.Distributions.Dirac
 public import TauCeti.Probability.Distributions.Gamma.Cdf
+public import TauCeti.Probability.Distributions.Gamma.CharFun
 public import TauCeti.Probability.Distributions.Measurability
 public import TauCeti.Probability.Distributions.PDFInstances
 
 /-!
 # The chi-squared distribution
 
-The chi-squared law with `k` degrees of freedom is the Gamma law with shape `k / 2` and rate
-`1 / 2`. This file makes that specialization available as a total measurable family. Positive
-degrees of freedom give the usual absolutely continuous law, zero degrees of freedom give the
-Dirac measure at zero, and negative degrees of freedom give the zero measure.
+The chi-squared law with `k` degrees of freedom is the gamma law of shape `k / 2` and rate `1 / 2`.
+This file defines it for every real `k`, records its three parameter regimes, and transports the
+elementary theory of the gamma law across the bridge: the density, the cumulative distribution
+function, the mean `k`, the variance `2 * k`, the exponential-moment domain `Set.Iio (1 / 2)`, the
+moment- and cumulant-generating functions there, and the characteristic function. It also proves
+that the family is additive in its degrees of freedom.
 
-For positive `k`, the file supplies the density, cdf, exact exponential-integrability domain,
-moment-generating function, and cumulant-generating function. For nonnegative `k`, it supplies
-probability normalization, mean, variance, and additivity in the degrees of freedom. The
-corresponding singular formulas at `k = 0` are recorded separately.
+**The three regimes.** Only `0 < k` gives a gamma law. At `k = 0` the shape would degenerate, and
+the law is *defined* to be `Measure.dirac 0`: that is the value forced by additivity, since a
+convolution unit must be a point mass at the origin, and it is the law of an empty sum of squared
+standard Gaussians. Below `0` there is no law at all, and the measure is `0`. The boundary at
+`k = 0` is singular with respect to Lebesgue measure, so it carries its own moment and transform
+formulas rather than a density.
 
-The characteristic function at positive degree is deliberately not proved here: it is the direct
-specialization of the Gamma characteristic function currently tracked separately by the same
-roadmap. The zero-degree characteristic function needs no such dependency and is included.
+## Main definitions
 
-## Main definitions and results
+* `TauCeti.Probability.chiSquaredPDFReal` — the real-valued candidate density formula,
+  `x ^ (k / 2 - 1) * exp (-x / 2) / (2 ^ (k / 2) * Γ (k / 2))` on `[0, ∞)`,
+  which is a probability density when `0 < k`;
+* `TauCeti.Probability.chiSquaredPDF` — its `ℝ≥0∞`-valued companion, which is a probability
+  density when `0 < k`;
+* `TauCeti.Probability.chiSquaredMeasure` — the law.
 
-* `chiSquaredPDFReal`, `chiSquaredPDF`, and `chiSquaredMeasure` define the density and law;
-* `isProbabilityMeasure_chiSquaredMeasure` covers every nonnegative degree;
-* `cdf_chiSquaredMeasure_eq`, `integral_id_chiSquaredMeasure`, and
-  `variance_id_chiSquaredMeasure` give the elementary distributional formulas;
-* `integrableExpSet_id_chiSquaredMeasure`, `mgf_id_chiSquaredMeasure`, and
-  `cgf_id_chiSquaredMeasure` give the exponential transforms at positive degree;
-* `chiSquaredMeasure_conv_chiSquaredMeasure` adds nonnegative degrees of freedom;
-* `measurable_chiSquaredMeasure` makes the family available for kernels.
+## Main results
+
+* `TauCeti.Probability.chiSquaredMeasure_eq_gammaMeasure` — the bridge to the gamma law;
+* `TauCeti.Probability.isProbabilityMeasure_chiSquaredMeasure` — it is a probability measure for
+  every `0 ≤ k`, the boundary `k = 0` included;
+* `TauCeti.Probability.chiSquaredMeasure_eq_withDensity`,
+  `TauCeti.Probability.hasPDF_of_hasLaw_chiSquaredMeasure` and
+  `TauCeti.Probability.rnDeriv_chiSquaredMeasure` — the density, as a `withDensity`
+  presentation, a `MeasureTheory.HasPDF` bridge and a Radon–Nikodym derivative;
+* `TauCeti.Probability.measurable_chiSquaredMeasure` — measurability in the degrees of freedom,
+  so the family can be used as a kernel;
+* `TauCeti.Probability.cdf_chiSquaredMeasure_eq` — the cdf is `P (k / 2, x / 2)`;
+* `TauCeti.Probability.integral_id_chiSquaredMeasure` and
+  `TauCeti.Probability.variance_id_chiSquaredMeasure` — the mean `k` and the variance `2 * k`;
+* `TauCeti.Probability.integrableExpSet_id_chiSquaredMeasure`,
+  `TauCeti.Probability.mgf_id_chiSquaredMeasure` and
+  `TauCeti.Probability.cgf_id_chiSquaredMeasure` — for `0 < k` the exponential moments exist
+  exactly below `1 / 2`; on that half-line the mgf is `(1 - 2 * t) ^ (-(k / 2))` for every
+  `0 ≤ k`;
+* `TauCeti.Probability.charFun_chiSquaredMeasure` — the characteristic function is
+  `(1 - 2 * I * t) ^ (-k / 2)`, for every real `t`;
+* `TauCeti.Probability.chiSquaredMeasure_conv_chiSquaredMeasure` — degrees of freedom add under
+  convolution;
+* `TauCeti.Probability.chiSquaredMeasure_two` — two degrees of freedom give the exponential law of
+  rate `1 / 2`.
+
+## Implementation
+
+Every positive-parameter statement is the gamma statement of shape `k / 2` and rate `1 / 2`, read
+through `chiSquaredMeasure_eq_gammaMeasure`; nothing is recomputed. The arithmetic that remains is
+the substitution `r = 1 / 2` in the gamma formulas: it turns `a / r` into `k`, `a / r ^ 2` into
+`2 * k`, and `(1 - t / r) ^ (-a)` into `(1 - 2 * t) ^ (-(k / 2))`.
+
+The density is stated in the textbook normalisation `2 ^ (k / 2) * Γ (k / 2)` rather than as
+`gammaPDFReal (k / 2) (1 / 2)`, and `chiSquaredPDFReal_eq_gammaPDFReal` identifies the two; the
+only content of that identification is `(1 / 2) ^ (k / 2) = (2 ^ (k / 2))⁻¹`.
+
+The boundary `k = 0` uses the Dirac formulas of `TauCeti/Probability/Distributions/Dirac.lean`
+together with Mathlib's `ProbabilityTheory.mgf_dirac'`, `ProbabilityTheory.variance_dirac` and
+`MeasureTheory.charFun_dirac`. Its exponential-moment domain is all of `ℝ`, strictly larger than
+the positive-parameter domain `Set.Iio (1 / 2)`, which is why the two regimes cannot share a
+statement.
 
 ## References
 
-* Roadmap: `TauCetiRoadmap/StandardDistributions/README.md`, Layer 3, **Chi-squared**.
-* N. L. Johnson, S. Kotz, N. Balakrishnan, *Continuous Univariate Distributions*, vol. 1,
-  2nd ed., Wiley, 1994, chapter 18.
+* Roadmap: `TauCetiRoadmap/StandardDistributions/README.md`, Layer 3, the **Chi-squared** target,
+  together with the chi-squared case of items 1–4 of "What every distribution must provide", and
+  the completion check `chiSquaredMeasure 2 = expMeasure (1 / 2)`.
+* Formal declaration scaffold: `TauCetiRoadmap/StandardDistributions/Suggested.lean`, Layer 3.
+* N. L. Johnson, S. Kotz, N. Balakrishnan, *Continuous Univariate Distributions*, vol. 1, 2nd ed.,
+  Wiley (1994), ch. 18.
 -/
 
 public section
 
 noncomputable section
 
-open MeasureTheory ProbabilityTheory Set
+open MeasureTheory ProbabilityTheory Real Set
+
 open scoped ENNReal MeasureTheory
 
 namespace TauCeti
 
 namespace Probability
 
-variable {k l t x : ℝ}
+variable {k l : ℝ}
 
-/-! ### Density and measure -/
+/-! ### The density -/
 
-/-- The real-valued chi-squared density with `k` degrees of freedom.
-
-It is the Gamma density with shape `k / 2` and rate `1 / 2` when `k` is positive, and zero for
-nonpositive `k`. In particular, this density does not represent the singular law at `k = 0`. -/
+/-- The candidate density formula for the chi-squared law with `k` degrees of freedom, in the
+textbook normalisation: `x ^ (k / 2 - 1) * exp (-x / 2) / (2 ^ (k / 2) * Γ (k / 2))` on the
+nonnegative half-line, and `0` below it. It is a probability density when `0 < k`. -/
 def chiSquaredPDFReal (k x : ℝ) : ℝ :=
-  if 0 < k then gammaPDFReal (k / 2) (1 / 2) x else 0
+  if 0 ≤ x then x ^ (k / 2 - 1) * exp (-x / 2) / (2 ^ (k / 2) * Real.Gamma (k / 2)) else 0
 
-/-- The chi-squared density, valued in `ℝ≥0∞`. -/
-def chiSquaredPDF (k x : ℝ) : ℝ≥0∞ :=
-  ENNReal.ofReal (chiSquaredPDFReal k x)
+/-- The `ℝ≥0∞`-valued companion to `chiSquaredPDFReal`. It is a probability density when
+`0 < k`. -/
+def chiSquaredPDF (k x : ℝ) : ℝ≥0∞ := ENNReal.ofReal (chiSquaredPDFReal k x)
 
-/-- The chi-squared law with `k` degrees of freedom.
+/-- On the nonnegative half-line, the candidate real-valued chi-squared density is given by its
+textbook formula. -/
+@[simp]
+theorem chiSquaredPDFReal_of_nonneg (hx : 0 ≤ x) :
+    chiSquaredPDFReal k x =
+      x ^ (k / 2 - 1) * exp (-x / 2) / (2 ^ (k / 2) * Real.Gamma (k / 2)) := by
+  rw [chiSquaredPDFReal, ite_eq_left hx]
 
-It is `gammaMeasure (k / 2) (1 / 2)` for `0 < k`, `Measure.dirac 0` for `k = 0`, and the zero
-measure for `k < 0`. -/
+/-- Below zero, the candidate real-valued chi-squared density vanishes. -/
+@[simp]
+theorem chiSquaredPDFReal_of_neg (hx : x < 0) : chiSquaredPDFReal k x = 0 := by
+  rw [chiSquaredPDFReal, ite_eq_right (not_le.mpr hx)]
+
+/-- On the nonnegative half-line, the `ℝ≥0∞`-valued candidate chi-squared density is given by its
+textbook formula. -/
+@[simp]
+theorem chiSquaredPDF_of_nonneg (hx : 0 ≤ x) :
+    chiSquaredPDF k x = ENNReal.ofReal
+      (x ^ (k / 2 - 1) * exp (-x / 2) / (2 ^ (k / 2) * Real.Gamma (k / 2))) := by
+  rw [chiSquaredPDF, chiSquaredPDFReal_of_nonneg hx]
+
+/-- Below zero, the `ℝ≥0∞`-valued candidate chi-squared density vanishes. -/
+@[simp]
+theorem chiSquaredPDF_of_neg (hx : x < 0) : chiSquaredPDF k x = 0 := by
+  rw [chiSquaredPDF, chiSquaredPDFReal_of_neg hx, ENNReal.ofReal_zero]
+
+/-- The chi-squared density is the gamma density of shape `k / 2` and rate `1 / 2`. -/
+theorem chiSquaredPDFReal_eq_gammaPDFReal (k x : ℝ) :
+    chiSquaredPDFReal k x = gammaPDFReal (k / 2) (1 / 2) x := by
+  rw [chiSquaredPDFReal, gammaPDFReal]
+  split_ifs with hx
+  · have hneg : -((1 : ℝ) / 2 * x) = -x / 2 := by ring
+    rw [hneg, Real.div_rpow zero_le_one (by norm_num), Real.one_rpow]
+    ring
+  · rfl
+
+/-- The `ℝ≥0∞`-valued chi-squared density is the gamma density of shape `k / 2` and rate
+`1 / 2`. -/
+theorem chiSquaredPDF_eq_gammaPDF (k x : ℝ) : chiSquaredPDF k x = gammaPDF (k / 2) (1 / 2) x := by
+  rw [chiSquaredPDF, gammaPDF, chiSquaredPDFReal_eq_gammaPDFReal]
+
+/-- The chi-squared density is nonnegative for nonnegative degrees of freedom. -/
+theorem chiSquaredPDFReal_nonneg (hk : 0 ≤ k) (x : ℝ) : 0 ≤ chiSquaredPDFReal k x := by
+  rcases hk.eq_or_lt' with rfl | hk
+  · simp [chiSquaredPDFReal_eq_gammaPDFReal, gammaPDFReal]
+  · rw [chiSquaredPDFReal_eq_gammaPDFReal]
+    exact gammaPDFReal_nonneg (by positivity) one_half_pos x
+
+/-- The real-valued chi-squared density is measurable. -/
+@[fun_prop]
+theorem measurable_chiSquaredPDFReal (k : ℝ) : Measurable (chiSquaredPDFReal k) := by
+  have h : chiSquaredPDFReal k = gammaPDFReal (k / 2) (1 / 2) :=
+    funext (chiSquaredPDFReal_eq_gammaPDFReal k)
+  rw [h]
+  exact measurable_gammaPDFReal _ _
+
+/-- The chi-squared density is measurable. -/
+@[fun_prop]
+theorem measurable_chiSquaredPDF (k : ℝ) : Measurable (chiSquaredPDF k) := by
+  have h : chiSquaredPDF k = gammaPDF (k / 2) (1 / 2) := funext (chiSquaredPDF_eq_gammaPDF k)
+  rw [h]
+  exact measurable_gammaPDF _ _
+
+/-! ### The measure and its three regimes -/
+
+/-- The chi-squared law with `k` degrees of freedom: the gamma law of shape `k / 2` and rate
+`1 / 2` for `0 < k`, the point mass at the origin for `k = 0`, and the zero measure for `k < 0`. -/
 def chiSquaredMeasure (k : ℝ) : Measure ℝ :=
   if k = 0 then Measure.dirac 0 else if 0 < k then gammaMeasure (k / 2) (1 / 2) else 0
 
-/-- At positive degree, the real chi-squared density is the corresponding Gamma density. -/
-@[simp]
-theorem chiSquaredPDFReal_of_pos (hk : 0 < k) (x : ℝ) :
-    chiSquaredPDFReal k x = gammaPDFReal (k / 2) (1 / 2) x := by
-  simp [chiSquaredPDFReal, hk]
-
-/-- At positive degree, the `ℝ≥0∞`-valued chi-squared density is the corresponding Gamma
-density. -/
-@[simp]
-theorem chiSquaredPDF_of_pos (hk : 0 < k) (x : ℝ) :
-    chiSquaredPDF k x = gammaPDF (k / 2) (1 / 2) x := by
-  simp [chiSquaredPDF, chiSquaredPDFReal, gammaPDF, hk]
-
-/-- The explicit real chi-squared density at positive degree. -/
-theorem chiSquaredPDFReal_eq (hk : 0 < k) (x : ℝ) :
-    chiSquaredPDFReal k x =
-      if 0 ≤ x then
-        (1 / 2 : ℝ) ^ (k / 2) / Real.Gamma (k / 2) * x ^ (k / 2 - 1) *
-          Real.exp (-((1 / 2 : ℝ) * x))
-      else 0 := by
-  simp [chiSquaredPDFReal, gammaPDFReal, hk]
-
-/-- The chi-squared density vanishes at nonpositive degree. -/
-@[simp]
-theorem chiSquaredPDFReal_of_nonpos (hk : k ≤ 0) (x : ℝ) : chiSquaredPDFReal k x = 0 := by
-  simp [chiSquaredPDFReal, not_lt.mpr hk]
-
-/-- The `ℝ≥0∞`-valued chi-squared density vanishes at nonpositive degree. -/
-@[simp]
-theorem chiSquaredPDF_of_nonpos (hk : k ≤ 0) (x : ℝ) : chiSquaredPDF k x = 0 := by
-  simp [chiSquaredPDF, hk]
-
-/-- A positive-degree chi-squared law is its defining Gamma law. -/
-@[simp]
-theorem chiSquaredMeasure_of_pos (hk : 0 < k) :
+/-- For positive degrees of freedom the chi-squared law is a gamma law. -/
+theorem chiSquaredMeasure_eq_gammaMeasure (hk : 0 < k) :
     chiSquaredMeasure k = gammaMeasure (k / 2) (1 / 2) := by
-  simp [chiSquaredMeasure, hk, hk.ne']
+  rw [chiSquaredMeasure, ite_eq_right hk.ne', ite_eq_left hk]
 
-/-- The chi-squared law at zero degrees of freedom is concentrated at zero. -/
+/-- At zero degrees of freedom the chi-squared law is the point mass at the origin. -/
 @[simp]
 theorem chiSquaredMeasure_zero : chiSquaredMeasure 0 = Measure.dirac 0 := by
-  simp [chiSquaredMeasure]
+  rw [chiSquaredMeasure, ite_eq_left rfl]
 
-/-- A negative degree of freedom gives the zero measure. -/
+/-- There is no chi-squared law with negative degrees of freedom: the measure is zero. -/
 @[simp]
 theorem chiSquaredMeasure_of_neg (hk : k < 0) : chiSquaredMeasure k = 0 := by
   rw [chiSquaredMeasure, ite_eq_right hk.ne, ite_eq_right (not_lt.mpr hk.le)]
 
-/-- At positive degree, the chi-squared law has density `chiSquaredPDF`. -/
-theorem chiSquaredMeasure_eq_withDensity (hk : 0 < k) :
-    chiSquaredMeasure k = volume.withDensity (chiSquaredPDF k) := by
-  rw [chiSquaredMeasure_of_pos hk, gammaMeasure]
-  congr 1
-  funext x
-  exact (chiSquaredPDF_of_pos hk x).symm
-
-/-- The chi-squared density is measurable for every degree of freedom. -/
-@[fun_prop]
-theorem measurable_chiSquaredPDF (k : ℝ) : Measurable (chiSquaredPDF k) := by
-  by_cases hk : 0 < k
-  · have heq : chiSquaredPDF k = gammaPDF (k / 2) (1 / 2) :=
-      funext (chiSquaredPDF_of_pos hk)
-    rw [heq]
-    exact measurable_gammaPDF (k / 2) (1 / 2)
-  · have heq : chiSquaredPDF k = 0 := by
-      funext x
-      simp [chiSquaredPDF, chiSquaredPDFReal, hk]
-    rw [heq]
-    exact measurable_const
-
-/-! ### Probability measures and densities -/
-
-/-- A chi-squared law with any nonnegative degree of freedom is a probability measure. -/
+/-- The chi-squared law is a probability measure for every nonnegative number of degrees of
+freedom, the boundary `k = 0` included. -/
 theorem isProbabilityMeasure_chiSquaredMeasure (hk : 0 ≤ k) :
     IsProbabilityMeasure (chiSquaredMeasure k) := by
-  rcases hk.eq_or_lt with rfl | hk
+  rcases hk.eq_or_lt' with rfl | h
   · rw [chiSquaredMeasure_zero]
     infer_instance
-  · rw [chiSquaredMeasure_of_pos hk]
-    exact isProbabilityMeasure_gammaMeasure (half_pos hk) (by norm_num)
+  · rw [chiSquaredMeasure_eq_gammaMeasure h]
+    exact isProbabilityMeasure_gammaMeasure (by positivity) one_half_pos
 
-/-- A variable with a positive-degree chi-squared law has a density. -/
-theorem hasPDF_of_hasLaw_chiSquaredMeasure {Omega : Type*} [MeasurableSpace Omega]
-    {P : Measure Omega} {X : Omega → ℝ} (hk : 0 < k)
+/-- For positive degrees of freedom the chi-squared law has the chi-squared density with respect
+to Lebesgue measure. -/
+theorem chiSquaredMeasure_eq_withDensity (hk : 0 < k) :
+    chiSquaredMeasure k = volume.withDensity (chiSquaredPDF k) := by
+  rw [chiSquaredMeasure_eq_gammaMeasure hk, gammaMeasure,
+    funext (chiSquaredPDF_eq_gammaPDF k)]
+
+/-- The chi-squared family is measurable in its degrees of freedom, so it can be used as a
+kernel. -/
+@[fun_prop]
+theorem measurable_chiSquaredMeasure : Measurable fun k : ℝ ↦ chiSquaredMeasure k := by
+  have h : (fun k : ℝ ↦ gammaMeasure (k / 2) (1 / 2)) =
+      (fun p : ℝ × ℝ ↦ gammaMeasure p.1 p.2) ∘ fun k : ℝ ↦ (k / 2, 1 / 2) := rfl
+  unfold chiSquaredMeasure
+  refine Measurable.ite (by simp) measurable_const ?_
+  refine Measurable.ite (measurableSet_lt measurable_const measurable_id) ?_ measurable_const
+  rw [h]
+  exact measurable_gammaMeasure.comp (by fun_prop)
+
+/-! ### Densities of random variables -/
+
+variable {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω} {X : Ω → ℝ}
+
+/-- A variable with a chi-squared law of positive degrees of freedom has a density. -/
+theorem hasPDF_of_hasLaw_chiSquaredMeasure (hk : 0 < k)
     (hX : HasLaw X (chiSquaredMeasure k) P) : HasPDF X P := by
-  apply hasPDF_of_hasLaw_withDensity (measurable_chiSquaredPDF k).aemeasurable
-  simpa only [chiSquaredMeasure_eq_withDensity hk] using hX
+  rw [chiSquaredMeasure_eq_gammaMeasure hk] at hX
+  exact hasPDF_of_hasLaw_gammaMeasure hX
 
-/-- The density of a variable with a positive-degree chi-squared law is `chiSquaredPDF`. -/
-theorem pdf_eq_chiSquaredPDF_of_hasLaw_chiSquaredMeasure {Omega : Type*}
-    [MeasurableSpace Omega] {P : Measure Omega} {X : Omega → ℝ} (hk : 0 < k)
+/-- The density of a chi-squared law of positive degrees of freedom is `chiSquaredPDF`. -/
+theorem pdf_eq_chiSquaredPDF_of_hasLaw_chiSquaredMeasure (hk : 0 < k)
     (hX : HasLaw X (chiSquaredMeasure k) P) : pdf X P =ᵐ[volume] chiSquaredPDF k := by
-  apply pdf_eq_of_hasLaw_withDensity (measurable_chiSquaredPDF k).aemeasurable
-  simpa only [chiSquaredMeasure_eq_withDensity hk] using hX
+  rw [chiSquaredMeasure_eq_gammaMeasure hk] at hX
+  refine (pdf_eq_gammaPDF_of_hasLaw_gammaMeasure hX).trans (.of_forall fun x ↦ ?_)
+  rw [chiSquaredPDF_eq_gammaPDF]
 
-/-- The Radon–Nikodym derivative of a positive-degree chi-squared law is its density. -/
+/-- The Radon–Nikodym derivative of a chi-squared law of positive degrees of freedom is
+`chiSquaredPDF`. -/
 theorem rnDeriv_chiSquaredMeasure (hk : 0 < k) :
     (chiSquaredMeasure k).rnDeriv volume =ᵐ[volume] chiSquaredPDF k := by
-  rw [chiSquaredMeasure_eq_withDensity hk]
-  exact Measure.rnDeriv_withDensity volume (measurable_chiSquaredPDF k)
+  rw [chiSquaredMeasure_eq_gammaMeasure hk]
+  refine (rnDeriv_gammaMeasure _ _).trans (.of_forall fun x ↦ ?_)
+  rw [chiSquaredPDF_eq_gammaPDF]
 
-/-- The Radon–Nikodym derivative of the singular zero-degree law vanishes almost everywhere. -/
-theorem rnDeriv_chiSquaredMeasure_zero :
-    (chiSquaredMeasure 0).rnDeriv volume =ᵐ[volume] 0 := by
-  rw [chiSquaredMeasure_zero]
-  exact Measure.rnDeriv_eq_zero_of_mutuallySingular
-    (mutuallySingular_dirac (0 : ℝ) volume) Measure.AbsolutelyContinuous.rfl
+/-! ### The cumulative distribution function -/
 
-/-! ### Cdf, moments, and transforms -/
-
-/-- The cdf of a positive-degree chi-squared law is the regularized Gamma function. -/
+/-- The cumulative distribution function of a chi-squared law with positive degrees of freedom is
+the regularized lower incomplete gamma function `P (k / 2, x / 2)`. -/
+@[simp]
 theorem cdf_chiSquaredMeasure_eq (hk : 0 < k) (x : ℝ) :
     cdf (chiSquaredMeasure k) x = regularizedGamma (k / 2) (x / 2) := by
-  rw [chiSquaredMeasure_of_pos hk]
-  simpa only [div_eq_mul_inv, one_mul, mul_comm] using
-    TauCeti.cdf_gammaMeasure_eq (a := k / 2) (r := 1 / 2) (half_pos hk) (by norm_num) x
+  rw [chiSquaredMeasure_eq_gammaMeasure hk, cdf_gammaMeasure_eq (by positivity) one_half_pos]
+  ring_nf
 
-/-- The cdf of the zero-degree chi-squared law is the step function at zero. -/
+/-- At zero degrees of freedom the cumulative distribution function is the unit step at the
+origin. -/
 theorem cdf_chiSquaredMeasure_zero (x : ℝ) :
     cdf (chiSquaredMeasure 0) x = if 0 ≤ x then 1 else 0 := by
-  rw [chiSquaredMeasure_zero, TauCeti.cdf_dirac]
+  rw [chiSquaredMeasure_zero, cdf_dirac]
 
-/-- The mean of a nonnegative-degree chi-squared law is its degree of freedom. -/
-theorem integral_id_chiSquaredMeasure (hk : 0 ≤ k) :
-    ∫ x, x ∂chiSquaredMeasure k = k := by
-  rcases hk.eq_or_lt with rfl | hk
+/-! ### Moments -/
+
+/-- The mean of a chi-squared law with nonnegative degrees of freedom is its number of degrees of
+freedom. -/
+@[simp]
+theorem integral_id_chiSquaredMeasure (hk : 0 ≤ k) : ∫ x, x ∂chiSquaredMeasure k = k := by
+  rcases hk.eq_or_lt' with rfl | hk
   · rw [chiSquaredMeasure_zero, integral_dirac]
-  · rw [chiSquaredMeasure_of_pos hk,
-      TauCeti.integral_id_gammaMeasure (half_pos hk) (by norm_num)]
+  · rw [chiSquaredMeasure_eq_gammaMeasure hk,
+      integral_id_gammaMeasure (by positivity) one_half_pos]
     ring
 
-/-- The zero-degree chi-squared law has mean zero. -/
-theorem integral_id_chiSquaredMeasure_zero : ∫ x, x ∂chiSquaredMeasure 0 = 0 := by
-  exact integral_id_chiSquaredMeasure le_rfl
-
-/-- The variance of a nonnegative-degree chi-squared law is twice its degree of freedom. -/
+/-- The variance of a chi-squared law with nonnegative degrees of freedom is twice its number of
+degrees of freedom. -/
+@[simp]
 theorem variance_id_chiSquaredMeasure (hk : 0 ≤ k) :
     variance id (chiSquaredMeasure k) = 2 * k := by
-  rcases hk.eq_or_lt with rfl | hk
-  · rw [chiSquaredMeasure_zero, variance_dirac]
-    norm_num
-  · rw [chiSquaredMeasure_of_pos hk,
-      TauCeti.variance_id_gammaMeasure (half_pos hk) (by norm_num)]
+  rcases hk.eq_or_lt' with rfl | hk
+  · rw [chiSquaredMeasure_zero]
+    simpa only [mul_zero] using variance_dirac 0
+  · rw [chiSquaredMeasure_eq_gammaMeasure hk,
+      variance_id_gammaMeasure (by positivity) one_half_pos]
     ring
 
-/-- The zero-degree chi-squared law has variance zero. -/
-theorem variance_id_chiSquaredMeasure_zero : variance id (chiSquaredMeasure 0) = 0 := by
-  simpa only [mul_zero] using variance_id_chiSquaredMeasure (k := 0) le_rfl
+/-! ### Exponential moments and transforms -/
 
-/-- The exponential moments of a positive-degree chi-squared law exist exactly below `1 / 2`. -/
+/-- The exponential moments of a chi-squared law with positive degrees of freedom are exactly
+those of rate `t < 1 / 2`. -/
+@[simp]
 theorem integrableExpSet_id_chiSquaredMeasure (hk : 0 < k) :
-    integrableExpSet id (chiSquaredMeasure k) = Iio (1 / 2 : ℝ) := by
-  rw [chiSquaredMeasure_of_pos hk,
-    TauCeti.integrableExpSet_id_gammaMeasure (half_pos hk) (by norm_num)]
+    integrableExpSet id (chiSquaredMeasure k) = Iio (1 / 2) := by
+  rw [chiSquaredMeasure_eq_gammaMeasure hk,
+    integrableExpSet_id_gammaMeasure (by positivity) one_half_pos]
 
-/-- Every exponential moment exists for the zero-degree chi-squared law. -/
+/-- The moment-generating function of a chi-squared law with nonnegative degrees of freedom on the
+half-line `t < 2⁻¹`. -/
+@[simp]
+theorem mgf_id_chiSquaredMeasure (hk : 0 ≤ k) {t : ℝ} (ht : t < 2⁻¹) :
+    mgf id (chiSquaredMeasure k) t = (1 - 2 * t) ^ (-(k / 2)) := by
+  rcases hk.eq_or_lt' with rfl | hk
+  · rw [chiSquaredMeasure_zero, mgf_dirac']
+    simp
+  · rw [chiSquaredMeasure_eq_gammaMeasure hk,
+      mgf_id_gammaMeasure (by positivity) one_half_pos (by rwa [one_div])]
+    congr 1
+    all_goals ring
+
+/-- The cumulant-generating function of a chi-squared law with nonnegative degrees of freedom on
+the half-line `t < 2⁻¹`. It is the real logarithm of
+`TauCeti.Probability.mgf_id_chiSquaredMeasure`. -/
+@[simp]
+theorem cgf_id_chiSquaredMeasure (hk : 0 ≤ k) {t : ℝ} (ht : t < 2⁻¹) :
+    cgf id (chiSquaredMeasure k) t = -(k / 2) * Real.log (1 - 2 * t) := by
+  rcases hk.eq_or_lt' with rfl | hk
+  · rw [chiSquaredMeasure_zero, cgf_dirac']
+    simp
+  · rw [chiSquaredMeasure_eq_gammaMeasure hk,
+      cgf_id_gammaMeasure (by positivity) one_half_pos (by rwa [one_div])]
+    congr 2
+    all_goals ring
+
+/-- The characteristic function of a chi-squared law with nonnegative degrees of freedom, at every
+real `t`. The base has real part `1`, so the principal power does not meet the branch cut. -/
+@[simp]
+theorem charFun_chiSquaredMeasure (hk : 0 ≤ k) (t : ℝ) :
+    charFun (chiSquaredMeasure k) t = (1 - 2 * Complex.I * t) ^ (-(k : ℂ) / 2) := by
+  rcases hk.eq_or_lt' with rfl | hk
+  · rw [chiSquaredMeasure_zero, charFun_dirac]
+    simp
+  · rw [chiSquaredMeasure_eq_gammaMeasure hk, charFun_gammaMeasure (by positivity) one_half_pos]
+    push_cast
+    congr 1 <;> ring
+
+/-- At zero degrees of freedom every exponential moment exists. -/
 theorem integrableExpSet_id_chiSquaredMeasure_zero :
     integrableExpSet id (chiSquaredMeasure 0) = univ := by
-  rw [chiSquaredMeasure_zero]
-  exact TauCeti.integrableExpSet_dirac _ _
+  rw [chiSquaredMeasure_zero, integrableExpSet_dirac]
 
-/-- The moment-generating function of a positive-degree chi-squared law. -/
-theorem mgf_id_chiSquaredMeasure (hk : 0 < k) (ht : t < 1 / 2) :
-    mgf id (chiSquaredMeasure k) t = (1 - 2 * t) ^ (-(k / 2)) := by
-  rw [chiSquaredMeasure_of_pos hk,
-    TauCeti.mgf_id_gammaMeasure (half_pos hk) (by norm_num) ht]
-  congr 2
-  ring
-
-/-- The moment-generating function of the zero-degree chi-squared law is one. -/
+/-- At zero degrees of freedom the moment-generating function is identically `1`. -/
 theorem mgf_id_chiSquaredMeasure_zero (t : ℝ) : mgf id (chiSquaredMeasure 0) t = 1 := by
   rw [chiSquaredMeasure_zero, mgf_dirac']
   simp
 
-/-- The cumulant-generating function of a positive-degree chi-squared law is the real logarithm
-of its moment-generating function. -/
-theorem cgf_id_chiSquaredMeasure (hk : 0 < k) (ht : t < 1 / 2) :
-    cgf id (chiSquaredMeasure k) t = Real.log ((1 - 2 * t) ^ (-(k / 2))) := by
-  rw [cgf, mgf_id_chiSquaredMeasure hk ht]
-
-/-- The cumulant-generating function of the zero-degree chi-squared law is zero. -/
+/-- At zero degrees of freedom the cumulant-generating function is identically `0`. -/
 theorem cgf_id_chiSquaredMeasure_zero (t : ℝ) : cgf id (chiSquaredMeasure 0) t = 0 := by
-  rw [chiSquaredMeasure_zero, TauCeti.cgf_dirac']
+  rw [chiSquaredMeasure_zero, cgf_dirac']
   simp
 
-/-- The characteristic function of the zero-degree chi-squared law is one. -/
-theorem charFun_chiSquaredMeasure_zero (t : ℝ) : charFun (chiSquaredMeasure 0) t = 1 := by
-  rw [chiSquaredMeasure_zero, charFun_dirac]
-  simp
+/-! ### Additivity and the exponential law -/
 
-/-! ### Additivity and parameter measurability -/
-
-/-- Convolution adds nonnegative degrees of freedom, including the Dirac boundary at zero. -/
-@[simp]
+/-- Degrees of freedom add under convolution, including at the boundary `k = 0`, where the
+chi-squared law is the convolution unit. -/
 theorem chiSquaredMeasure_conv_chiSquaredMeasure (hk : 0 ≤ k) (hl : 0 ≤ l) :
     chiSquaredMeasure k ∗ chiSquaredMeasure l = chiSquaredMeasure (k + l) := by
-  let _ := isProbabilityMeasure_chiSquaredMeasure hk
-  let _ := isProbabilityMeasure_chiSquaredMeasure hl
-  rcases hk.eq_or_lt with rfl | hk
-  · simp
-  rcases hl.eq_or_lt with rfl | hl
-  · simp
-  rw [chiSquaredMeasure_of_pos hk, chiSquaredMeasure_of_pos hl,
-    chiSquaredMeasure_of_pos (add_pos hk hl),
-    TauCeti.gammaMeasure_conv_gammaMeasure (half_pos hk) (half_pos hl) (by norm_num)]
-  congr 2
-  ring
+  -- At a zero factor the law is the point mass at the origin, the convolution unit; the
+  -- probability measure instance is what makes the other factor `SFinite`.
+  rcases hk.eq_or_lt' with rfl | hk'
+  · have := isProbabilityMeasure_chiSquaredMeasure hl
+    rw [chiSquaredMeasure_zero, zero_add]
+    simp
+  rcases hl.eq_or_lt' with rfl | hl'
+  · have := isProbabilityMeasure_chiSquaredMeasure hk
+    rw [chiSquaredMeasure_zero, add_zero]
+    simp
+  rw [chiSquaredMeasure_eq_gammaMeasure hk', chiSquaredMeasure_eq_gammaMeasure hl',
+    chiSquaredMeasure_eq_gammaMeasure (by linarith),
+    gammaMeasure_conv_gammaMeasure (by positivity) (by positivity) one_half_pos]
+  ring_nf
 
 /-- Two degrees of freedom give the exponential law of rate `1 / 2`. -/
 theorem chiSquaredMeasure_two : chiSquaredMeasure 2 = expMeasure (1 / 2) := by
-  rw [chiSquaredMeasure_of_pos (by norm_num)]
-  norm_num [expMeasure]
-
-/-- The chi-squared family is measurable in its degree of freedom. -/
-@[fun_prop]
-theorem measurable_chiSquaredMeasure : Measurable chiSquaredMeasure := by
-  unfold chiSquaredMeasure
-  refine Measurable.ite (measurableSet_singleton 0) measurable_const ?_
-  refine Measurable.ite (measurableSet_lt measurable_const measurable_id) ?_ measurable_const
-  have heq : (fun k : ℝ => gammaMeasure (k / 2) (1 / 2)) =
-      (fun p : ℝ × ℝ => gammaMeasure p.1 p.2) ∘ fun k : ℝ => (k / 2, 1 / 2) := rfl
-  rw [heq]
-  exact measurable_gammaMeasure.comp ((measurable_id.div_const 2).prodMk measurable_const)
+  rw [chiSquaredMeasure_eq_gammaMeasure two_pos, expMeasure]
+  norm_num
 
 end Probability
 

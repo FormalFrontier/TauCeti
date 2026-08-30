@@ -9,12 +9,14 @@ import Mathlib.Data.Nat.Prime.Int
 import TauCeti.Data.ZMod.Divisibility
 public import Mathlib.NumberTheory.ModularForms.QExpansion
 public import Mathlib.RingTheory.PowerSeries.Expand
+public import TauCeti.Algebra.GroupWithZero.Divisibility
 public import TauCeti.NumberTheory.ModularForms.Basic
 public import TauCeti.NumberTheory.ModularForms.CongruenceSubgroups.Units
 public import TauCeti.NumberTheory.ModularForms.DiamondOperators
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal.Basic
 
 import TauCeti.Analysis.Complex.UpperHalfPlane.Manifold
+import TauCeti.NumberTheory.ModularForms.Cusps.Basic
 
 /-!
 # The level-raising degeneracy maps `V_d`
@@ -686,7 +688,7 @@ lemma exists_conjScale_mem_Gamma0 (d M : ℕ) (γ : ↥(Gamma0 (d * M))) :
   have hc : (γ : SL(2, ℤ)) 1 0 = d * ((M : ℤ) * t) := by rw [ht]; push_cast; ring
   refine ⟨_, hc, Gamma0_mem.mpr (by simp), ?_⟩
   ext
-  simp [Gamma0Map, ZMod.unitsMap_def]
+  simp [Gamma0Map_apply, ZMod.unitsMap_def]
 
 /-- The `diag(d, 1)`-conjugate of a matrix of `Γ₀(N)` lies in `Γ₀(M)` whenever `d * M ∣ N`, and
 the conjugation leaves the lower-right entry alone: the diamond label of `γ` is read along the
@@ -707,13 +709,13 @@ reduction of `u` acts on `f`. Both sides are slashes by a matrix of `Γ₀`, rel
 theorem CuspForm.diamondOpCusp_levelRaise {M d N : ℕ} [NeZero N]
     (hdvd : d * M ∣ N) (k : ℤ) (u : (ZMod N)ˣ)
     (f : CuspForm ((Gamma1 M).map (mapGL ℝ)) k) :
-    haveI : NeZero d := ⟨fun hd ↦ NeZero.ne N (by simpa [hd] using hdvd)⟩
-    haveI : NeZero M := ⟨fun hM ↦ NeZero.ne N (by simpa [hM] using hdvd)⟩
+    haveI : NeZero d := NeZero.of_dvd (dvd_of_mul_right_dvd hdvd)
+    haveI : NeZero M := NeZero.of_dvd (dvd_of_mul_left_dvd hdvd)
     diamondOpCusp k u (CuspForm.levelRaise d (Gamma1_map_le_conjAct_scaleGL_of_dvd hdvd) f) =
       CuspForm.levelRaise d (Gamma1_map_le_conjAct_scaleGL_of_dvd hdvd)
         (diamondOpCusp k (ZMod.unitsMap ((Dvd.intro_left d rfl).trans hdvd) u) f) := by
-  let _ : NeZero d := ⟨fun hd ↦ NeZero.ne N (by simpa [hd] using hdvd)⟩
-  let _ : NeZero M := ⟨fun hM ↦ NeZero.ne N (by simpa [hM] using hdvd)⟩
+  let _ : NeZero d := NeZero.of_dvd (dvd_of_mul_right_dvd hdvd)
+  let _ : NeZero M := NeZero.of_dvd (dvd_of_mul_left_dvd hdvd)
   obtain ⟨γ, hγ⟩ := Gamma0Map_toHomUnits_surjective u
   obtain ⟨c, hc, hm, heq⟩ := exists_conjScale_mem_Gamma0_of_dvd d M N hdvd γ
   refine DFunLike.coe_injective ?_
@@ -807,12 +809,10 @@ theorem slash_mapGL_eq_self_of_mem_Gamma1_div (l N : ℕ) [NeZero l] (hlN : l �
   have hchar : (χ ((Gamma0Map N).toHomUnits ⟨γ, hγ⟩) : ℂ) = 1 := by
     obtain ⟨-, hd, hcz⟩ := (Gamma1_mem _ _).mp hδ
     have hγ' : γ ∈ Gamma0 (N / l) := Gamma0_le_Gamma0_of_dvd (Nat.div_dvd_of_dvd hlN) hγ
-    -- Mathlib builds `Gamma0Map` as a bare `MonoidHom.mk` and provides no lemma for its value,
-    -- so reading it as the lower-right entry is a definitional step that cannot be avoided; the
-    -- one lemma naming it, `gamma0Map_apply` in `Fricke/Conjugation.lean`, is `private` there and
-    -- so unavailable here. Naming it once keeps the rest of the proof independent of that
-    -- representation.
-    have hentry : Gamma0Map (N / l) ⟨γ, hγ'⟩ = ((γ 1 1 : ℤ) : ZMod (N / l)) := rfl
+    -- `Gamma0Map_apply` reads the label as the lower-right entry. Instantiating it here, with the
+    -- entry spelled as `hdiag` spells it, keeps the subtype coercion in one named step instead of
+    -- leaving it for `rw` to discharge silently.
+    have hentry : Gamma0Map (N / l) ⟨γ, hγ'⟩ = ((γ 1 1 : ℤ) : ZMod (N / l)) := Gamma0Map_apply _
     have hlabel : Gamma0Map (N / l) ⟨γ, hγ'⟩ = 1 := by
       rw [hentry, hdiag]
       push_cast
@@ -922,7 +922,7 @@ theorem ModularForm.qExpansion_levelRaise_coeff_Gamma1 (M : ℕ) [NeZero M] [NeZ
       if d ∣ n then (qExpansion 1 f).coeff (n / d) else 0 := by
   have : NeZero (d * M) := ⟨Nat.mul_ne_zero (NeZero.ne d) (NeZero.ne M)⟩
   refine ModularForm.qExpansion_levelRaise_coeff ?_ ?_ _ f n <;>
-    simp [CongruenceSubgroup.strictPeriods_Gamma1]
+    exact one_mem_strictPeriods_Gamma1_map _
 
 /-- **The `q`-expansion of a level-raised cusp form.** A cusp form and its image under the
 inclusion into modular forms have the same underlying function, so the substitution `q ↦ q ^ d`
@@ -957,7 +957,7 @@ theorem CuspForm.qExpansion_levelRaise_coeff_Gamma1 (M : ℕ) [NeZero M] [NeZero
       if d ∣ n then (qExpansion 1 f).coeff (n / d) else 0 := by
   have : NeZero (d * M) := ⟨Nat.mul_ne_zero (NeZero.ne d) (NeZero.ne M)⟩
   refine CuspForm.qExpansion_levelRaise_coeff ?_ ?_ _ f n <;>
-    simp [CongruenceSubgroup.strictPeriods_Gamma1]
+    exact one_mem_strictPeriods_Gamma1_map _
 
 end QExpansion
 

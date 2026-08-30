@@ -31,6 +31,8 @@ the original points evaluated on `K`-algebras.
 * `CommHopfAlgCat.baseChangeFunctor`: functorial base change on commutative Hopf algebras.
 * `CommHopfAlgCat.baseChangePointsMulEquiv`: the inherited point equivalence
   `(K ⊗[k] H →ₐ[K] A) ≃* (H →ₐ[k] A)`.
+* `CommHopfAlgCat.baseChangeIsoPointsMulEquiv`: the same equivalence for a Hopf `K`-algebra
+  presented as a scalar extension by an isomorphism `L ≅ K ⊗[k] H`.
 
 ## References
 
@@ -207,6 +209,51 @@ lemma baseChangePointsMulEquiv_mapDomain {H L : _root_.CommHopfAlgCat.{v} k}
   simpa [baseChangePointsMulEquiv, hom_baseChangeMap]
     using AlgHom.baseChangePointsMulEquiv_symm_mapDomain (k := k) (K := K)
       (A := H) (B := L) (R := A) φ.hom f
+
+variable {H : _root_.CommHopfAlgCat.{v} k} {L : _root_.CommHopfAlgCat.{max w v} K}
+
+/-- **The points of a commutative Hopf `K`-algebra presented as a scalar extension.** An
+isomorphism `e : L ≅ K ⊗[k] H` identifies the points of `L` on a value algebra `A` with the
+points of `H` on `A` with its scalars restricted to `k`; the carrier `L` need not be the tensor
+product itself. This is `baseChangePointsMulEquiv` preceded by transport along `e`. -/
+noncomputable def baseChangeIsoPointsMulEquiv (e : L ≅ baseChange (K := K) H)
+    (A : CommAlgCat.{x} K) :
+    HopfAlgebra.points (R := K) (H := L) A ≃*
+      HopfAlgebra.points (R := k) (H := H)
+        (_root_.TauCeti.CommAlgCat.restrictScalarsObj (algebraMap k K) A) :=
+  (AlgHom.mapDomainMulEquiv (A := A) (_root_.CommHopfAlgCat.ofIso e.symm)).trans
+    (baseChangePointsMulEquiv (K := K) A H)
+
+/-- The presented point equivalence evaluates a point of `L` at the image of `1 ⊗ h` under the
+presenting isomorphism. -/
+@[simp]
+lemma baseChangeIsoPointsMulEquiv_apply_apply (e : L ≅ baseChange (K := K) H)
+    (A : CommAlgCat.{x} K) (f : HopfAlgebra.points (R := K) (H := L) A) (h : H) :
+    (baseChangeIsoPointsMulEquiv e A f).ofConv h = f.ofConv (e.inv (1 ⊗ₜ[k] h)) := by
+  rw [baseChangeIsoPointsMulEquiv, MulEquiv.trans_apply, baseChangePointsMulEquiv_apply_apply,
+    AlgHom.mapDomainMulEquiv_apply, AlgHom.mapDomain_apply_apply]
+  exact congrArg f.ofConv (_root_.CommHopfAlgCat.ofIso_apply e.symm _)
+
+/-- The presented point equivalence is natural in the value algebra. -/
+lemma baseChangeIsoPointsMulEquiv_mapPoints (e : L ≅ baseChange (K := K) H)
+    {A B : CommAlgCat.{x} K} (χ : A ⟶ B)
+    (f : HopfAlgebra.points (R := K) (H := L) A) :
+    baseChangeIsoPointsMulEquiv e B (HopfAlgebra.mapPoints (H := L) χ f) =
+      HopfAlgebra.mapPoints (H := H)
+        ((_root_.TauCeti.CommAlgCat.restrictScalars (algebraMap k K)).map χ)
+        (baseChangeIsoPointsMulEquiv e A f) := by
+  -- Transport along `e` is a pre-composition in the coordinate Hopf algebra, so it commutes with
+  -- the post-composition by `χ` in the value algebra. The bundled `mapDomainMulEquiv` and
+  -- `mapPoints` are unfolded to `mapDomain` and `mapValue` to reach `mapValue_mapDomain`.
+  have h : AlgHom.mapDomainMulEquiv (A := B) (_root_.CommHopfAlgCat.ofIso e.symm)
+        (HopfAlgebra.mapPoints (H := L) χ f) =
+      HopfAlgebra.mapPoints (H := baseChange (K := K) H) χ
+        (AlgHom.mapDomainMulEquiv (A := A) (_root_.CommHopfAlgCat.ofIso e.symm) f) := by
+    simp only [AlgHom.mapDomainMulEquiv_apply, HopfAlgebra.mapPoints]
+    exact DFunLike.congr_fun
+      (AlgHom.mapValue_mapDomain (_root_.CommHopfAlgCat.ofIso e.symm).toBialgHom χ.hom) f
+  simp only [baseChangeIsoPointsMulEquiv, MulEquiv.trans_apply, h]
+  rw [baseChangePointsMulEquiv_mapValue]
 
 end CommHopfAlgCat
 

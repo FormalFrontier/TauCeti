@@ -311,12 +311,6 @@ public theorem coe_frickeConjGamma1 (σ : ↥(Gamma1 N)) :
 
 section NeZero
 
-/-- The value of mathlib's `Gamma0Map` on a `Γ₀(N)` element: it is the lower-right entry, reduced.
-`Gamma0Map` is a bare `MonoidHom.mk`, so this is definitional; naming it keeps the one
-definitional step out of the `simp` sets below. -/
-private theorem gamma0Map_apply (g : ↥(Gamma0 N)) :
-    Gamma0Map N g = (((g : Matrix (Fin 2) (Fin 2) ℤ) 1 1 : ℤ) : ZMod N) := rfl
-
 /-- **The Fricke conjugation inverts the diamond label.** `Gamma0Map` reads the lower-right entry
 mod `N`; conjugation swaps the two diagonal entries, so it reads `a` where it read `d`, and
 `a · d ≡ 1 (mod N)` because `det σ = 1` and `N ∣ c`.
@@ -327,7 +321,7 @@ computing a nebentypus along the Fricke involution has to redo the determinant a
 public theorem gamma0Map_frickeConjGamma0_mul (σ : ↥(Gamma0 N)) :
     Gamma0Map N (frickeConjGamma0 σ) * Gamma0Map N σ = 1 := by
   have hcast := intCast_apply_zero_zero_mul_apply_one_one_of_mem_Gamma0 (M := N) σ.property
-  simp only [gamma0Map_apply, coe_frickeConjGamma0, coe_frickeConjSL]
+  simp only [Gamma0Map_apply, coe_frickeConjGamma0, coe_frickeConjSL]
   simpa using hcast
 
 /-- **The unit-valued form of `gamma0Map_frickeConjGamma0_mul`**: on units, the `Gamma0Map` image
