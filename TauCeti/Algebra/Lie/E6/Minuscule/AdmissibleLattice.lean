@@ -57,6 +57,8 @@ private noncomputable def castMatrixLieHom :
   toLinearMap := (Int.castRingHom ℚ).mapMatrix.toAddMonoidHom.toIntLinearMap
   map_lie' := by
     intro x y
+    -- The matrix Lie bracket and the linear-map wrapper both reduce definitionally here;
+    -- after exposing the commutator, preservation follows from the ring-homomorphism laws.
     change (Int.castRingHom ℚ).mapMatrix (x * y - y * x) =
       (Int.castRingHom ℚ).mapMatrix x * (Int.castRingHom ℚ).mapMatrix y -
         (Int.castRingHom ℚ).mapMatrix y * (Int.castRingHom ℚ).mapMatrix x
@@ -79,6 +81,8 @@ noncomputable def loweringMatrixQ (i : Fin 6) : Matrix (Fin 27) (Fin 27) ℚ :=
 noncomputable def cartanGeneratorMatrixQ (i : Fin 6) : Matrix (Fin 27) (Fin 27) ℚ :=
   castMatrixLieHom (cartanGeneratorMatrix i)
 
+/-- The entries of a rational raising matrix are the same zero-one coefficients as those of the
+integral raising matrix. -/
 @[simp]
 theorem raisingMatrixQ_apply (i : Fin 6) (a b : Fin 27) :
     raisingMatrixQ i a b =
@@ -86,6 +90,8 @@ theorem raisingMatrixQ_apply (i : Fin 6) (a b : Fin 27) :
   rw [raisingMatrixQ, castMatrixLieHom_apply, raisingMatrix_apply]
   split_ifs <;> norm_num
 
+/-- The entries of a rational lowering matrix are the same zero-one coefficients as those of the
+integral lowering matrix. -/
 @[simp]
 theorem loweringMatrixQ_apply (i : Fin 6) (a b : Fin 27) :
     loweringMatrixQ i a b =
@@ -93,6 +99,7 @@ theorem loweringMatrixQ_apply (i : Fin 6) (a b : Fin 27) :
   rw [loweringMatrixQ, castMatrixLieHom_apply, loweringMatrix_apply]
   split_ifs <;> norm_num
 
+/-- The rational Cartan generator is diagonal with the minuscule weights on its diagonal. -/
 @[simp]
 theorem cartanGeneratorMatrixQ_apply (i : Fin 6) (a b : Fin 27) :
     cartanGeneratorMatrixQ i a b =
@@ -100,13 +107,19 @@ theorem cartanGeneratorMatrixQ_apply (i : Fin 6) (a b : Fin 27) :
   rw [cartanGeneratorMatrixQ, castMatrixLieHom_apply, cartanGeneratorMatrix_apply]
   split_ifs <;> norm_num
 
+/-- Restricting scalars from `ℚ` to `ℤ` does not change the adjoint action on rational matrices. -/
+private theorem ad_int_apply_eq_rat (x y : Matrix (Fin 27) (Fin 27) ℚ) :
+    (LieAlgebra.ad ℤ _ x) y = (LieAlgebra.ad ℚ _ x) y := by
+  simp only [LieAlgebra.ad_apply]
+
 private theorem ad_pow_int_eq_rat (x y : Matrix (Fin 27) (Fin 27) ℚ) (n : ℕ) :
     (LieAlgebra.ad ℤ _ x ^ n) y = (LieAlgebra.ad ℚ _ x ^ n) y := by
   induction n generalizing y with
   | zero => simp
   | succ n ih =>
-      simp only [pow_succ, Module.End.mul_apply, LieAlgebra.ad_apply]
-      exact ih ⁅x, y⁆
+      rw [pow_succ, pow_succ, Module.End.mul_apply, Module.End.mul_apply,
+        ad_int_apply_eq_rat]
+      exact ih ((LieAlgebra.ad ℚ _ x) y)
 
 /-- The rational minuscule matrices satisfy the type-`E₆` Serre relations. -/
 theorem isSerreSystemQ :
@@ -114,13 +127,14 @@ theorem isSerreSystemQ :
       loweringMatrixQ where
   lie_H_H i j := by
     have h := congrArg castMatrixLieHom (isSerreSystem.lie_H_H i j)
-    simpa [cartanGeneratorMatrixQ] using h
+    simpa only [LieHom.map_lie, map_zero, cartanGeneratorMatrixQ] using h
   lie_E_F_self i := by
     have h := congrArg castMatrixLieHom (isSerreSystem.lie_E_F_self i)
-    simpa [raisingMatrixQ, loweringMatrixQ, cartanGeneratorMatrixQ] using h
+    simpa only [LieHom.map_lie, raisingMatrixQ, loweringMatrixQ,
+      cartanGeneratorMatrixQ] using h
   lie_E_F_of_ne i j hij := by
     have h := congrArg castMatrixLieHom (isSerreSystem.lie_E_F_of_ne i j hij)
-    simpa [raisingMatrixQ, loweringMatrixQ] using h
+    simpa only [LieHom.map_lie, map_zero, raisingMatrixQ, loweringMatrixQ] using h
   lie_H_E i j := by
     have h := congrArg castMatrixLieHom (isSerreSystem.lie_H_E i j)
     rw [LieHom.map_lie, map_zsmul] at h
@@ -133,12 +147,12 @@ theorem isSerreSystemQ :
     have h := congrArg castMatrixLieHom (isSerreSystem.ad_pow_lie_E_E i j)
     rw [TauCeti.LieHom.map_ad_pow, map_zero] at h
     rw [← ad_pow_int_eq_rat]
-    simpa [raisingMatrixQ] using h
+    simpa only [LieHom.map_lie, raisingMatrixQ] using h
   ad_pow_lie_F_F i j := by
     have h := congrArg castMatrixLieHom (isSerreSystem.ad_pow_lie_F_F i j)
     rw [TauCeti.LieHom.map_ad_pow, map_zero] at h
     rw [← ad_pow_int_eq_rat]
-    simpa [loweringMatrixQ] using h
+    simpa only [LieHom.map_lie, loweringMatrixQ] using h
 
 /-- The rational `27`-dimensional minuscule representation of the type-`E₆` Serre
 presentation. -/
@@ -146,17 +160,21 @@ noncomputable def rationalSerreRepresentation :
     Matrix.ToLieAlgebra ℚ (CartanMatrix.E 6)ᵀ →ₗ⁅ℚ⁆ Matrix (Fin 27) (Fin 27) ℚ :=
   TauCeti.serreLift isSerreSystemQ
 
+/-- The rational representation sends each Cartan Serre generator to its diagonal minuscule
+matrix. -/
 @[simp]
 theorem rationalSerreRepresentation_serreH (i : Fin 6) :
     rationalSerreRepresentation (TauCeti.serreH ℚ (CartanMatrix.E 6)ᵀ i) =
       cartanGeneratorMatrixQ i :=
   TauCeti.serreLift_serreH isSerreSystemQ i
 
+/-- The rational representation sends each positive Serre generator to its raising matrix. -/
 @[simp]
 theorem rationalSerreRepresentation_serreE (i : Fin 6) :
     rationalSerreRepresentation (TauCeti.serreE ℚ (CartanMatrix.E 6)ᵀ i) = raisingMatrixQ i :=
   TauCeti.serreLift_serreE isSerreSystemQ i
 
+/-- The rational representation sends each negative Serre generator to its lowering matrix. -/
 @[simp]
 theorem rationalSerreRepresentation_serreF (i : Fin 6) :
     rationalSerreRepresentation (TauCeti.serreF ℚ (CartanMatrix.E 6)ᵀ i) = loweringMatrixQ i :=
@@ -173,19 +191,15 @@ noncomputable def rep :
     ((Matrix.toLinAlgEquiv (Pi.basisFun ℚ (Fin 27))).toAlgHom.toLieHom.comp
       rationalSerreRepresentation)
 
+/-- The enveloping-algebra representation acts on an included Lie element by matrix-vector
+multiplication. -/
 theorem rep_ι_apply (x : Matrix.ToLieAlgebra ℚ (CartanMatrix.E 6)ᵀ) (v : Fin 27 → ℚ) :
     rep (_root_.UniversalEnvelopingAlgebra.ι ℚ x) v = rationalSerreRepresentation x *ᵥ v := by
   rw [rep, _root_.UniversalEnvelopingAlgebra.lift_ι_apply, LieHom.comp_apply,
     AlgHom.toLieHom_apply, AlgEquiv.toAlgHom_apply, Matrix.toLinAlgEquiv_apply]
   exact (Pi.basisFun ℚ (Fin 27)).sum_repr (rationalSerreRepresentation x *ᵥ v)
 
-private theorem e6MinusculeWeight_reflection_apply_self (i : Fin 6) (a : Fin 27) :
-    e6MinusculeWeight (e6MinusculeReflection i a) i = -e6MinusculeWeight a i := by
-  have h := congrFun (e6MinusculeWeight_reflection i a) i
-  rw [root_e6SimpleIndex] at h
-  simp [CartanMatrix.E_diag] at h
-  omega
-
+/-- Every rational raising matrix is square-zero. -/
 theorem raisingMatrixQ_sq (i : Fin 6) : raisingMatrixQ i ^ 2 = 0 := by
   ext a b
   simp only [pow_two, Matrix.mul_apply, raisingMatrixQ_apply, Matrix.zero_apply]
@@ -193,6 +207,7 @@ theorem raisingMatrixQ_sq (i : Fin 6) : raisingMatrixQ i ^ 2 = 0 := by
   · simp [hb, e6MinusculeWeight_reflection_apply_self]
   · simp [hb]
 
+/-- Every rational lowering matrix is square-zero. -/
 theorem loweringMatrixQ_sq (i : Fin 6) : loweringMatrixQ i ^ 2 = 0 := by
   ext a b
   simp only [pow_two, Matrix.mul_apply, loweringMatrixQ_apply, Matrix.zero_apply]
@@ -200,6 +215,7 @@ theorem loweringMatrixQ_sq (i : Fin 6) : loweringMatrixQ i ^ 2 = 0 := by
   · simp [hb, e6MinusculeWeight_reflection_apply_self]
   · simp [hb]
 
+/-- Every represented positive or negative Serre root generator is square-zero. -/
 theorem pow_two_rep_serreRootGenerator_eq_zero (k : Fin 6 ⊕ Fin 6) :
     rep (_root_.UniversalEnvelopingAlgebra.ι ℚ
       (TauCeti.serreRootGenerator (CartanMatrix.E 6)ᵀ k)) ^ 2 = 0 := by
@@ -217,6 +233,12 @@ theorem pow_two_rep_serreRootGenerator_eq_zero (k : Fin 6 ⊕ Fin 6) :
         Matrix.mulVec_mulVec, ← pow_two, loweringMatrixQ_sq, Matrix.zero_mulVec,
         LinearMap.zero_apply]
 
+/-- Every represented positive or negative Serre root generator acts nilpotently. -/
+theorem isNilpotent_rep_serreRootGenerator (k : Fin 6 ⊕ Fin 6) :
+    IsNilpotent (rep (_root_.UniversalEnvelopingAlgebra.ι ℚ
+      (TauCeti.serreRootGenerator (CartanMatrix.E 6)ᵀ k))) :=
+  ⟨2, pow_two_rep_serreRootGenerator_eq_zero k⟩
+
 /-! ## The admissible coordinate lattice -/
 
 /-- The coordinate `ℤ`-lattice in the rational minuscule module. -/
@@ -233,6 +255,8 @@ theorem mem_lattice_iff {v : Fin 27 → ℚ} :
 noncomputable def latticeBasis : Module.Basis (Fin 27) ℤ lattice :=
   TauCeti.coordinateLatticeBasis (Fin 27)
 
+/-- Coercing a minuscule lattice-basis vector to the rational module gives the corresponding
+coordinate vector. -/
 @[simp]
 theorem coe_latticeBasis (a : Fin 27) :
     ((latticeBasis a : lattice) : Fin 27 → ℚ) = Pi.single a 1 := by
@@ -248,6 +272,7 @@ private theorem castMatrix_mulVec_mem_lattice (M : Matrix (Fin 27) (Fin 27) ℤ)
   simp only [Int.cast_sum, Int.cast_mul, hz, Matrix.mulVec, dotProduct,
     castMatrixLieHom_apply]
 
+/-- Every represented Serre root generator preserves the minuscule coordinate lattice. -/
 theorem rep_serreRootGenerator_mem_lattice (k : Fin 6 ⊕ Fin 6) {v : Fin 27 → ℚ}
     (hv : v ∈ lattice) :
     rep (_root_.UniversalEnvelopingAlgebra.ι ℚ
@@ -263,6 +288,7 @@ theorem rep_serreRootGenerator_mem_lattice (k : Fin 6 ⊕ Fin 6) {v : Fin 27 →
         loweringMatrixQ]
       exact castMatrix_mulVec_mem_lattice (loweringMatrix i) hv
 
+/-- Every rational coordinate vector is a Cartan weight vector with its minuscule weight. -/
 theorem isCartanWeightVector_single (a : Fin 27) :
     TauCeti.UniversalEnvelopingAlgebra.IsCartanWeightVector
       (TauCeti.serreH ℚ (CartanMatrix.E 6)ᵀ) rep (e6MinusculeWeight a) (Pi.single a 1) := by
@@ -271,6 +297,14 @@ theorem isCartanWeightVector_single (a : Fin 27) :
   rw [rep_ι_apply, rationalSerreRepresentation_serreH]
   ext b
   simp [Matrix.mulVec, dotProduct, cartanGeneratorMatrixQ_apply, Pi.single_apply]
+
+/-- Every minuscule lattice-basis vector is a Cartan weight vector with its minuscule weight. -/
+theorem isCartanWeightVector_latticeBasis (a : Fin 27) :
+    TauCeti.UniversalEnvelopingAlgebra.IsCartanWeightVector
+      (TauCeti.serreH ℚ (CartanMatrix.E 6)ᵀ) rep (e6MinusculeWeight a)
+      ((latticeBasis a : lattice) : Fin 27 → ℚ) := by
+  rw [coe_latticeBasis]
+  exact isCartanWeightVector_single a
 
 /-- **The minuscule coordinate lattice is admissible for the type-`E₆` Serre Kostant form.** -/
 theorem rep_serreKostantForm_mem_lattice
