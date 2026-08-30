@@ -248,7 +248,6 @@ theorem typeBQuadraticEquiv_typeBLongCorootGenerator (i j : ι) (hij : i ≠ j) 
 /-! ### The Bourbaki simple roots -/
 
 /-- The terminal positive simple root is the short Clifford bivector. -/
-@[simp]
 theorem typeBQuadraticEquiv_typeBSimpleRootGenerator_last {n : ℕ}
     (bFin : Module.Basis (Fin (n + 1)) K P.W) :
     (P.typeBQuadraticEquiv bFin z hz
@@ -258,7 +257,6 @@ theorem typeBQuadraticEquiv_typeBSimpleRootGenerator_last {n : ℕ}
   exact P.typeBQuadraticEquiv_typeBShortRootGenerator bFin z hz (Fin.last n)
 
 /-- A nonfinal positive simple root is the adjacent long Clifford bivector. -/
-@[simp]
 theorem typeBQuadraticEquiv_typeBSimpleRootGenerator_castSucc {n : ℕ}
     (bFin : Module.Basis (Fin (n + 1)) K P.W) (j : Fin n) :
     (P.typeBQuadraticEquiv bFin z hz
@@ -269,7 +267,6 @@ theorem typeBQuadraticEquiv_typeBSimpleRootGenerator_castSucc {n : ℕ}
     (ne_of_lt j.castSucc_lt_succ)
 
 /-- The terminal negative simple root is the opposite short Clifford bivector. -/
-@[simp]
 theorem typeBQuadraticEquiv_typeBSimpleNegativeRootGenerator_last {n : ℕ}
     (bFin : Module.Basis (Fin (n + 1)) K P.W) :
     (P.typeBQuadraticEquiv bFin z hz
@@ -279,7 +276,6 @@ theorem typeBQuadraticEquiv_typeBSimpleNegativeRootGenerator_last {n : ℕ}
   exact P.typeBQuadraticEquiv_typeBShortNegativeRootGenerator bFin z hz (Fin.last n)
 
 /-- A nonfinal negative simple root is the opposite adjacent long Clifford bivector. -/
-@[simp]
 theorem typeBQuadraticEquiv_typeBSimpleNegativeRootGenerator_castSucc {n : ℕ}
     (bFin : Module.Basis (Fin (n + 1)) K P.W) (j : Fin n) :
     (P.typeBQuadraticEquiv bFin z hz
@@ -290,7 +286,6 @@ theorem typeBQuadraticEquiv_typeBSimpleNegativeRootGenerator_castSucc {n : ℕ}
     (ne_of_gt j.castSucc_lt_succ)
 
 /-- The terminal simple coroot is twice the final diagonal bivector. -/
-@[simp]
 theorem typeBQuadraticEquiv_typeBSimpleCorootGenerator_last {n : ℕ}
     (bFin : Module.Basis (Fin (n + 1)) K P.W) :
     (P.typeBQuadraticEquiv bFin z hz
@@ -300,7 +295,6 @@ theorem typeBQuadraticEquiv_typeBSimpleCorootGenerator_last {n : ℕ}
   exact P.typeBQuadraticEquiv_typeBShortCorootGenerator bFin z hz (Fin.last n)
 
 /-- A nonfinal simple coroot is the difference of the two adjacent diagonal bivectors. -/
-@[simp]
 theorem typeBQuadraticEquiv_typeBSimpleCorootGenerator_castSucc {n : ℕ}
     (bFin : Module.Basis (Fin (n + 1)) K P.W) (j : Fin n) :
     (P.typeBQuadraticEquiv bFin z hz
