@@ -37,6 +37,11 @@ step.
   integral.
 * `TauCeti.SpinPolarizationData.ι_dualVector_mem_integralSpinActionSubring`: annihilation
   operators are integral.
+* `TauCeti.SpinPolarizationData.ι_line_mem_integralSpinActionSubring`: a remainder vector with
+  integral coordinate is integral, which is the third primitive generator of an odd
+  polarization.
+* `TauCeti.SpinPolarizationData.mem_integralSpinActionSubring_of_basis`: integrality may be
+  checked on the exterior basis alone.
 
 ## Roadmap
 
@@ -140,5 +145,35 @@ theorem ι_dualVector_mem_integralSpinActionSubring (i : ι) :
   intro x hx
   rw [spinAction_ι_contract, P.pairingEquiv_dualVector]
   exact TauCeti.ExteriorAlgebra.contractLeft_coord_mem_integralLattice b i hx
+
+/-- **Integrality is checked on the exterior basis.** The coordinate lattice is spanned by the
+exterior basis, so a Clifford element that carries every basis vector into the lattice preserves
+it. -/
+theorem mem_integralSpinActionSubring_of_basis {c : CliffordAlgebra Q}
+    (h : ∀ s : Finset ι, spinAction Q P c (b.ExteriorAlgebra s) ∈
+      TauCeti.ExteriorAlgebra.integralLattice b) :
+    c ∈ P.integralSpinActionSubring b := by
+  rw [mem_integralSpinActionSubring]
+  intro x hx
+  rw [TauCeti.ExteriorAlgebra.integralLattice_eq_span] at hx
+  induction hx using Submodule.span_induction with
+  | mem x hx =>
+      obtain ⟨s, rfl⟩ := hx
+      exact h s
+  | zero => rw [map_zero]; exact zero_mem _
+  | add x y _ _ hx hy => rw [map_add]; exact add_mem hx hy
+  | smul m x _ hx => rw [map_zsmul]; exact Submodule.smul_mem _ m hx
+
+/-- A vector of the orthogonal remainder with integral coordinate acts integrally on the spinor
+lattice: its Clifford action is that integer times the grade involution. This is the third
+primitive generator entering the odd, type-`B` polarization, alongside the creation and
+annihilation operators of the two isotropic summands. -/
+theorem ι_line_mem_integralSpinActionSubring (w : P.line) (m : ℤ)
+    (hm : P.lineCoordinate w = (m : ℚ)) :
+    CliffordAlgebra.ι Q (w : V) ∈ P.integralSpinActionSubring b := by
+  rw [mem_integralSpinActionSubring]
+  intro x hx
+  rw [spinAction_ι_lineOperator, hm, Int.cast_smul_eq_zsmul]
+  exact Submodule.smul_mem _ m (TauCeti.ExteriorAlgebra.involute_mem_integralLattice b hx)
 
 end TauCeti.SpinPolarizationData

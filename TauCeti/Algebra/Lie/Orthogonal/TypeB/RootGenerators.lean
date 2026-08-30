@@ -33,6 +33,8 @@ This advances the **Pinnings** and **Chevalley--Demazure construction** targets 
 * `TauCeti.typeBShortRootGenerator`: the root vector for `εᵢ`.
 * `TauCeti.typeBShortCorootGenerator`: its diagonal coroot.
 * `TauCeti.typeBShortRootDividedSquare`: the integral divided square `eᵢ² / 2`.
+* `TauCeti.typeBLongRootMatrix_def`, `TauCeti.typeBShortRootMatrix_def` and
+  `TauCeti.typeBShortNegativeRootMatrix_def`: the matrix units each root matrix is built from.
 * `TauCeti.typeBSimpleRootGenerator`: the Bourbaki-indexed simple-root vectors of `Bₙ₊₁`.
 
 ## References
@@ -64,6 +66,14 @@ def typeBLongRootMatrix (i j : ι) (_hij : i ≠ j) :
     Matrix (Unit ⊕ ι ⊕ ι) (Unit ⊕ ι ⊕ ι) K :=
   single (.inr (.inl i)) (.inr (.inl j)) 1 -
     single (.inr (.inr j)) (.inr (.inr i)) 1
+
+omit [Fintype ι] in
+/-- The defining paired matrix units of a long root matrix. -/
+theorem typeBLongRootMatrix_def (i j : ι) (hij : i ≠ j) :
+    typeBLongRootMatrix (K := K) i j hij =
+      single (.inr (.inl i)) (.inr (.inl j)) 1 -
+        single (.inr (.inr j)) (.inr (.inr i)) 1 :=
+  (rfl)
 
 /-- The long-root matrix is skew-adjoint for the split odd orthogonal form. -/
 theorem typeBLongRootMatrix_mem_typeB (i j : ι) (hij : i ≠ j) :
@@ -154,6 +164,21 @@ def typeBShortRootMatrix (i : ι) : Matrix (Unit ⊕ ι ⊕ ι) (Unit ⊕ ι ⊕
 /-- The ambient root matrix for the opposite short root `-εᵢ`. -/
 def typeBShortNegativeRootMatrix (i : ι) : Matrix (Unit ⊕ ι ⊕ ι) (Unit ⊕ ι ⊕ ι) K :=
   single (.inl ()) (.inr (.inl i)) 1 - single (.inr (.inr i)) (.inl ()) 2
+
+omit [Fintype ι] in
+/-- The defining matrix units of a positive short-root matrix, with the coefficient `2` forced by
+the middle entry of `LieAlgebra.Orthogonal.JB`. -/
+theorem typeBShortRootMatrix_def (i : ι) :
+    typeBShortRootMatrix (K := K) i =
+      single (.inr (.inl i)) (.inl ()) 2 - single (.inl ()) (.inr (.inr i)) 1 :=
+  (rfl)
+
+omit [Fintype ι] in
+/-- The defining matrix units of a negative short-root matrix. -/
+theorem typeBShortNegativeRootMatrix_def (i : ι) :
+    typeBShortNegativeRootMatrix (K := K) i =
+      single (.inl ()) (.inr (.inl i)) 1 - single (.inr (.inr i)) (.inl ()) 2 :=
+  (rfl)
 
 /-- The positive short-root matrix is skew-adjoint for the split odd orthogonal form. -/
 theorem typeBShortRootMatrix_mem_typeB (i : ι) :

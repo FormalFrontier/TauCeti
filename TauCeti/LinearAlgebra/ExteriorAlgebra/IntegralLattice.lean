@@ -27,6 +27,7 @@ the simply connected type-`B` and type-`D` Chevalley carriers.
 
 * `TauCeti.ExteriorAlgebra.integralLattice`: the `ℤ`-span of an exterior basis.
 * `TauCeti.ExteriorAlgebra.integralLatticeBasis`: the exterior basis restricted to `ℤ`.
+* `TauCeti.ExteriorAlgebra.integralLattice_eq_span`: it is the `ℤ`-span of the exterior basis.
 * `TauCeti.ExteriorAlgebra.mem_integralLattice_iff`: membership means that every exterior-basis
   coordinate is integral.
 * `TauCeti.ExteriorAlgebra.mul_mem_integralLattice`: the lattice is closed under multiplication.
@@ -34,6 +35,8 @@ the simply connected type-`B` and type-`D` Chevalley carriers.
   the lattice.
 * `TauCeti.ExteriorAlgebra.contractLeft_coord_mem_integralLattice`: contraction by a dual basis
   coordinate preserves the lattice.
+* `TauCeti.ExteriorAlgebra.involute_mem_integralLattice`: the grade involution preserves the
+  lattice.
 
 ## Roadmap
 
@@ -60,6 +63,12 @@ variable {ι : Type*} [LinearOrder ι] (b : Module.Basis ι ℚ M)
 `b`. -/
 def integralLattice : Submodule ℤ (_root_.ExteriorAlgebra ℚ M) :=
   Submodule.span ℤ (Set.range b.ExteriorAlgebra)
+
+/-- The coordinate integral lattice is the `ℤ`-span of the exterior basis. -/
+theorem integralLattice_eq_span :
+    integralLattice b = Submodule.span ℤ (Set.range b.ExteriorAlgebra) :=
+  -- `(rfl)`, not `rfl`: the body of `integralLattice` is not `@[expose]`d.
+  (rfl)
 
 /-- An element belongs to the coordinate integral lattice exactly when all of its exterior-basis
 coordinates are integers. -/
@@ -178,6 +187,23 @@ theorem ι_basis_mul_mem_integralLattice (i : ι) {x : _root_.ExteriorAlgebra �
     have h := basis_mem_integralLattice b ({i} : Finset ι)
     simpa only [basis_singleton] using h
   exact mul_mem_integralLattice b hi hx
+
+/-- **The grade involution preserves the coordinate integral lattice**: it rescales each
+exterior-basis vector by the sign of the parity of its index set. -/
+theorem involute_mem_integralLattice {x : _root_.ExteriorAlgebra ℚ M}
+    (hx : x ∈ integralLattice b) :
+    CliffordAlgebra.involute (Q := (0 : QuadraticForm ℚ M)) x ∈ integralLattice b := by
+  rw [integralLattice] at hx ⊢
+  induction hx using Submodule.span_induction with
+  | mem x hx =>
+      obtain ⟨s, rfl⟩ := hx
+      rw [involute_basis]
+      have hsign : ((-1 : ℚ) ^ s.card) = (((-1 : ℤ) ^ s.card : ℤ) : ℚ) := by push_cast; ring
+      rw [hsign, Int.cast_smul_eq_zsmul]
+      exact Submodule.smul_mem _ _ (Submodule.subset_span (Set.mem_range_self s))
+  | zero => rw [map_zero]; exact zero_mem _
+  | add x y _ _ hx hy => rw [map_add]; exact add_mem hx hy
+  | smul z x _ hx => rw [map_zsmul]; exact Submodule.smul_mem _ z hx
 
 /-- Contracting an exterior-basis vector by a dual basis coordinate gives an element of the
 coordinate integral lattice. -/
