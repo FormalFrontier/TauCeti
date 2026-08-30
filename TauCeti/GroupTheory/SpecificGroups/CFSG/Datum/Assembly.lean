@@ -78,8 +78,21 @@ valid index. It is the root-datum shadow of the map named in L2's completion con
 unfolds on every branch", and does not meet that condition: the condition is about the group-layer
 `TauCeti.ValidLieTypeIndex.steinberg`, an endomorphism of the points of a pinned
 Chevalley--Demazure group, together with its action on root subgroups, and both remain open. That
-group layer waits on the carriers of milestone L0, and the map assembled here is what it will
-dispatch to on each branch.
+group layer waits on the carriers of milestone L0.
+
+What this file contributes to it is not the group-level composite. On the ordinary branch that
+composite already exists in another form: `TauCeti.DynkinType.geckTwistedFrobenius` realizes
+`γ ∘ Frob_q` on the points of the pinned Geck carrier, for a diagram symmetry and a field order
+handed to it, and satisfies L1's simple-root-subgroup equation there. What is contributed is the
+branch split and the exponents. The split `TauCeti.LieTypeIndex.UsesHalfFrobenius` is decided here
+once and for every valid index, against the two subtypes that carry the two constructions, so a
+consumer of a total Steinberg map has one place to reason about which shape an index takes; and the
+order relations below fix the exponent and the scalar on each side, the twist order and `q ^ e` on
+the ordinary branch and `2` and `q` on the half-Frobenius one. Those are the root-datum readings of
+the "order relations" half of L1's completion evidence and of L2's
+`steinberg(m) ^ 2 = Frob_(p ^ (2 * m + 1))`. The half-Frobenius branch has no group-level
+counterpart at all yet, since the special isogeny of pinned group schemes it would compose is an
+upstream Layer 9 target.
 
 The conventions follow R. Steinberg, *Endomorphisms of linear algebraic groups*, Memoirs AMS 80
 (1968), §11, and R. W. Carter, *Finite Groups of Lie Type: Conjugacy Classes and Complex
