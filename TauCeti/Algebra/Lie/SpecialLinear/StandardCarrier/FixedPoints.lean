@@ -84,15 +84,20 @@ namespace TauCeti.SlStd
 
 universe u
 
-variable (r p k : ℕ) {K : Type u} [Field K] [ExpChar K p]
+variable (r p k : ℕ) {K : Type u} [Field K]
 
 noncomputable section
+
+section
+
+variable [ExpChar K p]
 
 /-! ## The fixed points as matrices over the fixed subfield -/
 
 /-- **A type-`A_r` carrier point over a field is fixed by the `p ^ k`-power Frobenius exactly when
 all of its matrix entries lie in the Frobenius-fixed subfield.** This is
 `TauCeti.SlStd.frobenius_eq_self_iff` read over a field, where the fixed subring is a subfield. -/
+@[simp]
 theorem mem_fixedSubgroup_frobenius_iff (g : points r K) :
     g ∈ fixedSubgroup (frobenius r p k K) ↔
       ∀ i j, ((g : Matrix.GeneralLinearGroup (Fin (r + 1)) K) :
@@ -104,7 +109,7 @@ theorem mem_fixedSubgroup_frobenius_iff (g : points r K) :
 carrier point**: its entries lie in the fixed subfield by construction. -/
 theorem mapGL_mem_fixedSubgroup_frobenius
     (x : Matrix.SpecialLinearGroup (Fin (r + 1)) ↥(frobeniusFixedSubfield K p k)) :
-    (⟨Matrix.SpecialLinearGroup.mapGL K x, mapGL_mem_points r x⟩ : points r K) ∈
+    (⟨Matrix.SpecialLinearGroup.mapGL K x, toGL_mem_points r _⟩ : points r K) ∈
       fixedSubgroup (frobenius r p k K) := by
   rw [mem_fixedSubgroup_frobenius_iff]
   intro i j
@@ -120,7 +125,7 @@ def specialLinearToFixedSubgroupFrobenius :
       ↥(fixedSubgroup (frobenius r p k K)) :=
   MonoidHom.codRestrict
     (MonoidHom.codRestrict (Matrix.SpecialLinearGroup.mapGL (n := Fin (r + 1))
-      (R := ↥(frobeniusFixedSubfield K p k)) K) (points r K) (mapGL_mem_points r))
+      (R := ↥(frobeniusFixedSubfield K p k)) K) (points r K) (fun _ => toGL_mem_points r _))
     (fixedSubgroup (frobenius r p k K)) (mapGL_mem_fixedSubgroup_frobenius r p k)
 
 /-- The general linear matrix underlying the image of `x` is the entrywise inclusion of `x`. -/
@@ -236,6 +241,7 @@ theorem map_subtype_fixedSubgroup_frobenius_eq_range_mapGL :
 invertible matrix over `K` is one exactly when its determinant is one and its entries lie in the
 Frobenius-fixed subfield. This is the entrywise reading of
 `TauCeti.SlStd.map_subtype_fixedSubgroup_frobenius_eq_range_mapGL`. -/
+@[simp]
 theorem mem_map_subtype_fixedSubgroup_frobenius_iff
     (g : Matrix.GeneralLinearGroup (Fin (r + 1)) K) :
     g ∈ (fixedSubgroup (frobenius r p k K)).map (points r K).subtype ↔
@@ -257,15 +263,17 @@ theorem finite_fixedSubgroup_frobenius [Finite ↥(frobeniusFixedSubfield K p k)
     Finite ↥(fixedSubgroup (frobenius r p k K)) :=
   .of_equiv _ (specialLinearMulEquivFixedSubgroupFrobenius r p k).toEquiv
 
+end
+
 /-- **The Frobenius-fixed points of the type-`A_r` carrier over a field of characteristic `p` form
 a finite group**, for every nonzero exponent: the Frobenius-fixed subfield is a set of roots of
 `X ^ p ^ k - X`, hence finite.
 
 Separable closedness is not needed for finiteness, only for the count: when `K` is separably closed
 the subfield has exactly `p ^ k` elements by `TauCeti.card_frobeniusFixedSubfield`, so the fixed
-group is `SL_{r+1}(q)` with `q = p ^ k`, while over a smaller field of characteristic `p` it is
-`SL_{r+1}` of a smaller finite field. This is the first point at which the construction produces a
-finite group; no order formula, perfectness or simplicity statement is claimed. -/
+group is `SL_{r+1}(q)` with `q = p ^ k`, while over an arbitrary field of characteristic `p` it is
+`SL_{r+1}` of a possibly smaller finite field. This is the first point at which the construction
+produces a finite group; no order formula, perfectness or simplicity statement is claimed. -/
 theorem finite_fixedSubgroup_frobenius_of_charP [Fact p.Prime] [CharP K p]
     (hk : k ≠ 0) : Finite ↥(fixedSubgroup (frobenius r p k K)) :=
   have : Finite ↥(frobeniusFixedSubfield K p k) := finite_frobeniusFixedSubfield K p k hk

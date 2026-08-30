@@ -25,8 +25,6 @@ the equality of their defining Hopf ideals over `ℤ` is not asserted here.
 
 * `TauCeti.SlStd.toGL_mem_points`: every determinant-one matrix over a field is a point of the
   carrier.
-* `TauCeti.SlStd.mapGL_mem_points`: the same for a determinant-one matrix over a base ring of the
-  field.
 * `TauCeti.SlStd.mem_points_iff_det_eq_one`: over a field, carrier-point membership is equivalent
   to having determinant one.
 * `TauCeti.SlStd.points_eq_range_toGL`: over a field, the carrier points are exactly the image of
@@ -65,13 +63,6 @@ theorem toGL_mem_points (g : Matrix.SpecialLinearGroup (Fin (r + 1)) K) :
     Matrix.SpecialLinearGroup.toGL g ∈ points r K := by
   rw [points_eq_range_toGL r]
   exact ⟨g, rfl⟩
-
-/-- The image in `GL_{r+1}` of a determinant-one matrix over a base ring of a field is a point of
-the full-weight type `A_r` carrier over that field. -/
-theorem mapGL_mem_points {R : Type*} [CommRing R] [Algebra R K]
-    (g : Matrix.SpecialLinearGroup (Fin (r + 1)) R) :
-    Matrix.SpecialLinearGroup.mapGL K g ∈ points r K :=
-  toGL_mem_points r _
 
 /-- Over a field, a general linear matrix is a point of the full-weight type `A_r` carrier if and
 only if its determinant is one. -/
