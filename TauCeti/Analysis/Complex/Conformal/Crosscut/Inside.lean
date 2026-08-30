@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Analysis.Normed.Module.FilledHull
 import Mathlib.Analysis.Calculus.Deriv.Slope
+import Mathlib.Analysis.InnerProductSpace.Calculus
 import Mathlib.MeasureTheory.Integral.CircleIntegral
 import TauCeti.Analysis.Complex.Conformal.Crosscut.Basic
 public import TauCeti.Analysis.Complex.Conformal.Crosscut.Image
@@ -99,73 +100,55 @@ theorem exists_pos_forall_mem_image_inter_ball_and_image_sdiff_closedBall {U : S
   have hφ : HasDerivAt (fun t : ℝ => g (v * t + f z₀)) (z₀ - ζ) 0 :=
     hasDerivAt_invFunOn_comp_segment hf hU hinj hz₀b (z₀ - ζ)
   have hφ0 : g (v * ((0 : ℝ) : ℂ) + f z₀) = z₀ := by simp [hgf z₀ hz₀b]
-  -- the little-`o` estimate at `t = 0`, and the segment staying in the image domain
+  have hnorm : ‖z₀ - ζ‖ = ρ := by rwa [← dist_eq_norm, ← mem_sphere]
+  -- derivative of ‖g(v*t + f z₀) - ζ‖² at t = 0 is 2ρ², via HasDerivAt.norm_sq
+  set ψ := fun t : ℝ => ‖g (v * t + f z₀) - ζ‖ ^ 2
+  have hψ : HasDerivAt ψ (2 * ρ ^ 2) 0 := by
+    have h1 := (hφ.sub_const ζ).norm_sq
+    rw [hφ0, real_inner_self_eq_norm_sq, hnorm] at h1
+    exact h1
+  have hψ0 : ψ 0 = ρ ^ 2 := by
+    change ‖g (v * ((0 : ℝ) : ℂ) + f z₀) - ζ‖ ^ 2 = ρ ^ 2
+    rw [hφ0, hnorm]
   have hev : ∀ᶠ t : ℝ in 𝓝 0,
-      ‖g (v * t + f z₀) - g (v * ((0 : ℝ) : ℂ) + f z₀) - (t - 0) • (z₀ - ζ)‖ ≤
-        ρ / 2 * ‖t - 0‖ :=
-    (hasDerivAt_iff_isLittleO.mp hφ).def (by positivity)
+      |ψ t - ρ ^ 2 - t * (2 * ρ ^ 2)| ≤ ρ ^ 2 * |t| := by
+    have := (hasDerivAt_iff_isLittleO.mp hψ).def
+      (show (0 : ℝ) < ρ ^ 2 by positivity)
+    simp only [hψ0, sub_zero, Real.norm_eq_abs] at this
+    exact this
   have hΩev : ∀ᶠ t : ℝ in 𝓝 0, v * t + f z₀ ∈ f '' U := by
     have hcont : Continuous fun t : ℝ => v * (t : ℂ) + f z₀ := by fun_prop
     have h0 : (fun t : ℝ => v * (t : ℂ) + f z₀) 0 ∈ f '' U := by simpa using hp
     exact hcont.continuousAt.preimage_mem_nhds (hΩ.mem_nhds h0)
   obtain ⟨η, hη, hηball⟩ := Metric.eventually_nhds_iff.mp (hev.and hΩev)
-  have hnorm : ‖z₀ - ζ‖ = ρ := by rwa [← dist_eq_norm, ← mem_sphere]
-  -- shared estimate: for |t| < min η 1, extract preimage and little-o bound
-  have hcore : ∀ t : ℝ, t ∈ Ioo (-(min η 1)) (min η 1) → t ≠ 0 →
-      v * t + f z₀ ∈ f '' U ∧
-      ‖g (v * t + f z₀) - z₀ - t • (z₀ - ζ)‖ ≤ ρ / 2 * |t| := by
-    intro t ht ht0
+  refine ⟨η, hη, fun t ht => ?_, fun t ht => ?_⟩
+  · -- `t < 0`: ψ(t) < ρ², so the pulled-back point is inside `ball ζ ρ`
     have htη : dist t 0 < η := by
-      rw [Real.dist_eq, sub_zero]
-      exact (abs_lt.mpr ⟨by linarith [ht.1], by linarith [ht.2]⟩).trans_le
-        (min_le_left η 1)
-    obtain ⟨hlo, hmem⟩ := hηball htη
-    rw [hφ0, sub_zero] at hlo
-    exact ⟨hmem, hlo⟩
-  refine ⟨min η 1, lt_min hη one_pos, fun t ht => ?_, fun t ht => ?_⟩
-  · -- `t < 0`: the pulled-back point is closer to `ζ` than `ρ`
-    have ht1 : -1 < t := by linarith [ht.1, min_le_right η 1]
-    obtain ⟨hmem, hlo⟩ := hcore t
-      ⟨ht.1, by linarith [ht.2, lt_min hη one_pos]⟩ ht.2.ne
-    rw [abs_of_neg ht.2] at hlo
+      rw [Real.dist_eq, sub_zero, abs_of_neg ht.2]; linarith [ht.1]
+    obtain ⟨hsq, hmem⟩ := hηball htη
+    rw [abs_of_neg ht.2] at hsq
+    have hle := (abs_le.mp hsq).2
+    have hlt : ψ t < ρ ^ 2 := by
+      have := mul_neg_of_pos_of_neg (show 0 < ρ ^ 2 by positivity) ht.2
+      linarith
     refine ⟨g (v * t + f z₀), ⟨hgmem _ hmem, ?_⟩, hfg _ hmem⟩
     rw [mem_ball, dist_eq_norm]
-    calc ‖g (v * t + f z₀) - ζ‖
-        ≤ ‖(1 + t) • (z₀ - ζ)‖ +
-            ‖g (v * t + f z₀) - z₀ - t • (z₀ - ζ)‖ := by
-          have := norm_le_insert'
-            (g (v * t + f z₀) - ζ) ((1 + t) • (z₀ - ζ))
-          rwa [show g (v * t + f z₀) - ζ - (1 + t) • (z₀ - ζ)
-              = g (v * t + f z₀) - z₀ - t • (z₀ - ζ) from by
-            rw [add_smul, one_smul]; abel] at this
-      _ ≤ (1 + t) * ρ + ρ / 2 * (-t) := by
-          gcongr
-          · rw [norm_smul, hnorm, Real.norm_eq_abs,
-              abs_of_pos (by linarith)]
-      _ < ρ := by nlinarith [ht.2]
-  · -- `t > 0`: the pulled-back point is farther from `ζ` than `ρ`
-    obtain ⟨hmem, hlo⟩ := hcore t
-      ⟨by linarith [ht.1, lt_min hη one_pos], ht.2⟩ ht.1.ne'
-    rw [abs_of_pos ht.1] at hlo
+    nlinarith [sq_nonneg (‖g (v * t + f z₀) - ζ‖ - ρ)]
+  · -- `t > 0`: ψ(t) > ρ², so the pulled-back point is outside `closedBall ζ ρ`
+    have htη : dist t 0 < η := by
+      rw [Real.dist_eq, sub_zero, abs_of_pos ht.1]; exact ht.2
+    obtain ⟨hsq, hmem⟩ := hηball htη
+    rw [abs_of_pos ht.1] at hsq
+    have hle := (abs_le.mp hsq).1
+    have hgt : ρ ^ 2 < ψ t := by
+      have := mul_pos (show 0 < ρ ^ 2 by positivity) ht.1
+      linarith
     refine ⟨g (v * t + f z₀), ⟨hgmem _ hmem, fun hcb => ?_⟩,
       hfg _ hmem⟩
     rw [mem_closedBall, dist_eq_norm] at hcb
-    have hlow : (1 + t) * ρ - ρ / 2 * t ≤ ‖g (v * t + f z₀) - ζ‖ := by
-      calc (1 + t) * ρ - ρ / 2 * t
-          ≤ ‖(1 + t) • (z₀ - ζ)‖ -
-              ‖g (v * t + f z₀) - z₀ - t • (z₀ - ζ)‖ := by
-            rw [norm_smul, hnorm, Real.norm_eq_abs,
-              abs_of_pos (by linarith [ht.1])]
-            linarith
-        _ ≤ ‖g (v * t + f z₀) - ζ‖ := by
-            have := norm_sub_norm_le
-              ((1 + t) • (z₀ - ζ)) (g (v * t + f z₀) - ζ)
-            rw [show (1 + t) • (z₀ - ζ) - (g (v * t + f z₀) - ζ)
-                = -(g (v * t + f z₀) - z₀ - t • (z₀ - ζ)) from by
-              rw [add_smul, one_smul]; abel,
-              norm_neg] at this
-            linarith
-    nlinarith [ht.1]
+    have hnsq : ‖g (v * ↑t + f z₀) - ζ‖ ^ 2 ≤ ρ ^ 2 :=
+      sq_le_sq' (by linarith [norm_nonneg (g (v * ↑t + f z₀) - ζ)]) hcb
+    linarith
 
 /-- **The image crosscut is adherent from both sides of the transversal segment.** In the
 transversal coordinate the crosscut has velocity `i` at the crossing point. -/
