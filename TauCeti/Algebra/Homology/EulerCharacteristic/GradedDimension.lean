@@ -175,6 +175,15 @@ theorem coeff_gradedDimension (h : HasFiniteLaurentSupport k V) (j : ℤ) :
     (gradedDimension k V h).coeff j = Module.finrank k (V j) := by
   rw [gradedDimension, AddMonoidAlgebra.coeff_ofCoeff, Finsupp.ofSupportFinite_coe]
 
+/-- The graded dimension of a translated family is multiplied by the corresponding Laurent
+variable. -/
+theorem gradedDimension_reindex_add (h : HasFiniteLaurentSupport k V) (r : ℤ) :
+    gradedDimension k (fun j => V (j + r)) (h.reindex_add r) =
+      T (-r) * gradedDimension k V h := by
+  ext j
+  simp only [T, coeff_gradedDimension, AddMonoidAlgebra.coeff_single_mul_apply, one_mul]
+  rw [show j + r = - -r + j by ring]
+
 /-- The support of the graded dimension is exactly the set of degrees with nonzero dimension. -/
 theorem support_gradedDimension (h : HasFiniteLaurentSupport k V) :
     (gradedDimension k V h).coeff.support = h.finite_finrankSupport.toFinset := by
@@ -285,27 +294,9 @@ theorem targetShiftGradedDimension_reindex_add (h : HasFiniteLaurentSupport k V)
     targetShiftGradedDimension k (fun j => V (j + r)) (h.reindex_add r) =
       T r * targetShiftGradedDimension k V h := by
   ext j
-  rw [coeff_targetShiftGradedDimension]
-  rw [AddMonoidAlgebra.coeff_mul]
-  simp only [T, AddMonoidAlgebra.coeff_single]
-  -- `coeff_mul` leaves a nested finitely supported sum; the change exposes its single summand.
-  change _ = (Finsupp.single r 1).sum
-      (fun m₁ r₁ => (targetShiftGradedDimension k V h).coeff.sum
-        fun m₂ r₂ => if m₁ + m₂ = j then r₁ * r₂ else 0)
-  rw [Finsupp.sum_single_index (h_zero := by simp)]
-  simp only [Finsupp.sum]
-  rw [Finset.sum_eq_single (j - r)]
-  · simp only [add_sub_cancel, ↓reduceIte, coeff_targetShiftGradedDimension, one_mul,
-      Nat.cast_inj]
-    rw [show -j + r = -(j - r) by ring]
-  · intro b _ hbr
-    by_cases h' : r + b = j
-    · exact (hbr (by omega)).elim
-    · simp [h']
-  · intro h'
-    by_contra hn
-    apply h'
-    exact Finsupp.mem_support_iff.mpr (by simpa using hn)
+  simp only [T, coeff_targetShiftGradedDimension,
+    AddMonoidAlgebra.coeff_single_mul_apply, one_mul]
+  rw [show -j + r = -(-r + j) by ring]
 
 /-- The support of the target-shift graded dimension is the negation of the set of degrees with
 nonzero dimension. -/
