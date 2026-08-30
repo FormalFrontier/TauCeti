@@ -50,6 +50,10 @@ spin lattice, are deliberately left to the next carrier step.
 * `TauCeti.TypeDStd.rootGeneratorWeight`: the integral Cartan weights of the generators.
 * `TauCeti.TypeDStd.lie_cartanGenerator_rootGenerator`: the Cartan action on the generators.
 * `TauCeti.TypeDStd.lie_rootGenerator_inl_inr`: the raising--lowering bracket relations.
+* `TauCeti.TypeDStd.lie_rootGenerator_inl_inl_of_cartan_eq_zero`: nonadjacent same-sign
+  generators commute.
+* `TauCeti.TypeDStd.lie_rootGenerator_inl_lie_rootGenerator_inl`: the adjacent-node Serre
+  relations, with a corresponding lowering-generator theorem.
 * `TauCeti.TypeDStd.val_rootGenerator_mul_self`: every numbered generator is square-zero in the
   standard representation.
 
@@ -487,6 +491,216 @@ private theorem lie_raisingMatrix_loweringMatrix_of_ne {K : Type*} [CommRing K]
       have hj' := j.isLt
       omega
 
+private theorem lie_raisingMatrix_raisingMatrix_chain_chain_of_cartan_eq_zero
+    {K : Type*} [CommRing K] (i j : Fin n) (hi : (i : ℕ) + 1 < n)
+    (hj : (j : ℕ) + 1 < n) (hij : CartanMatrix.D n i j = 0) :
+    ⁅raisingMatrix (K := K) n hn i, raisingMatrix (K := K) n hn j⁆ = 0 := by
+  have hi' := i.isLt
+  have hj' := j.isLt
+  have hforward : chainNext n i hi ≠ j := by
+    intro h
+    have hval := congrArg Fin.val h
+    simp only [chainNext] at hval
+    simp only [CartanMatrix.D, Matrix.of_apply, Fin.ext_iff] at hij
+    split_ifs at hij <;> omega
+  have hback : chainNext n j hj ≠ i := by
+    intro h
+    have hval := congrArg Fin.val h
+    simp only [chainNext] at hval
+    simp only [CartanMatrix.D, Matrix.of_apply, Fin.ext_iff] at hij
+    split_ifs at hij <;> omega
+  rw [raisingMatrix_of_chain n hn hi, raisingMatrix_of_chain n hn hj,
+    LieRing.of_associative_ring_bracket, Matrix.fromBlocks_multiply,
+    Matrix.fromBlocks_multiply]
+  simp [Matrix.transpose_single, Matrix.single_mul_single_of_ne _ _ _ _ hforward,
+    Matrix.single_mul_single_of_ne _ _ _ _ hback, hforward.symm, hback.symm]
+
+private theorem lie_raisingMatrix_raisingMatrix_chain_fork_of_cartan_eq_zero
+    {K : Type*} [CommRing K] (i j : Fin n) (hi : (i : ℕ) + 1 < n)
+    (hj : ¬(j : ℕ) + 1 < n) (hij : CartanMatrix.D n i j = 0) :
+    ⁅raisingMatrix (K := K) n hn i, raisingMatrix (K := K) n hn j⁆ = 0 := by
+  have hi' := i.isLt
+  have hj' := j.isLt
+  have hne := forkLeft_ne_forkRight n hn
+  have hjfork : j = forkRight n hn := by
+    apply Fin.ext
+    simp [forkRight]
+    omega
+  by_cases hil : i = forkLeft n hn
+  · subst i
+    have hinext : chainNext n (forkLeft n hn) hi = forkRight n hn := by
+      apply Fin.ext
+      simp [chainNext, forkLeft, forkRight]
+      omega
+    rw [raisingMatrix_of_chain n hn hi, raisingMatrix_of_fork n hn hj,
+      LieRing.of_associative_ring_bracket, Matrix.fromBlocks_multiply,
+      Matrix.fromBlocks_multiply]
+    simp [Matrix.transpose_single, Matrix.mul_sub, Matrix.sub_mul, hinext, hne, hne.symm]
+  · have hinextl : chainNext n i hi ≠ forkLeft n hn := by
+      intro h
+      have hval := congrArg Fin.val h
+      simp only [chainNext, forkLeft] at hval
+      simp only [CartanMatrix.D, Matrix.of_apply, Fin.ext_iff] at hij
+      split_ifs at hij <;> omega
+    have hinextr : chainNext n i hi ≠ forkRight n hn := by
+      intro h
+      have hval := congrArg Fin.val h
+      simp only [chainNext, forkRight] at hval
+      apply hil
+      apply Fin.ext
+      simp [forkLeft]
+      omega
+    rw [raisingMatrix_of_chain n hn hi, raisingMatrix_of_fork n hn hj,
+      LieRing.of_associative_ring_bracket, Matrix.fromBlocks_multiply,
+      Matrix.fromBlocks_multiply]
+    simp [Matrix.transpose_single, Matrix.mul_sub, Matrix.sub_mul, hinextl, hinextr,
+      hinextl.symm, hinextr.symm]
+
+private theorem lie_raisingMatrix_raisingMatrix_of_cartan_eq_zero
+    {K : Type*} [CommRing K] (i j : Fin n) (hij : CartanMatrix.D n i j = 0) :
+    ⁅raisingMatrix (K := K) n hn i, raisingMatrix (K := K) n hn j⁆ = 0 := by
+  by_cases hi : (i : ℕ) + 1 < n
+  · by_cases hj : (j : ℕ) + 1 < n
+    · exact lie_raisingMatrix_raisingMatrix_chain_chain_of_cartan_eq_zero
+        n hn i j hi hj hij
+    · exact lie_raisingMatrix_raisingMatrix_chain_fork_of_cartan_eq_zero n hn i j hi hj hij
+  · by_cases hj : (j : ℕ) + 1 < n
+    · rw [← lie_skew]
+      have hji : CartanMatrix.D n j i = 0 := by
+        exact ((CartanMatrix.D_isSymm n).apply j i).symm.trans hij
+      rw [lie_raisingMatrix_raisingMatrix_chain_fork_of_cartan_eq_zero n hn j i hj hi hji,
+        neg_zero]
+    · have heq : i = j := by
+        apply Fin.ext
+        have hi' := i.isLt
+        have hj' := j.isLt
+        omega
+      subst j
+      simp [CartanMatrix.D] at hij
+
+/-- A raising generator squares to zero as an endomorphism of the standard split module. -/
+@[simp]
+theorem raisingMatrix_mul_self {K : Type*} [CommRing K] (i : Fin n) :
+    raisingMatrix (K := K) n hn i * raisingMatrix n hn i = 0 := by
+  by_cases hi : (i : ℕ) + 1 < n
+  · rw [raisingMatrix_of_chain n hn hi, Matrix.fromBlocks_multiply]
+    have hne := ne_chainNext n i hi
+    simp [Matrix.transpose_single, Matrix.single_mul_single_of_ne, hne, hne.symm]
+  · rw [raisingMatrix_of_fork n hn hi, Matrix.fromBlocks_multiply]
+    simp
+
+private theorem raisingMatrix_mul_raisingMatrix_mul_self {K : Type*} [CommRing K]
+    (i j : Fin n) :
+    raisingMatrix (K := K) n hn i * raisingMatrix (K := K) n hn j *
+        raisingMatrix (K := K) n hn i = 0 := by
+  by_cases hi : (i : ℕ) + 1 < n
+  · by_cases hj : (j : ℕ) + 1 < n
+    · rw [raisingMatrix_of_chain n hn hi, raisingMatrix_of_chain n hn hj,
+        Matrix.fromBlocks_multiply, Matrix.fromBlocks_multiply]
+      ext (a | a) (b | b) <;>
+        simp [Matrix.fromBlocks, Matrix.transpose_single, Matrix.single_mul_mul_single,
+          Matrix.single_apply, chainNext, Fin.ext_iff] <;>
+        omega
+    · rw [raisingMatrix_of_chain n hn hi, raisingMatrix_of_fork n hn hj,
+        Matrix.fromBlocks_multiply, Matrix.fromBlocks_multiply]
+      have hne := forkLeft_ne_forkRight n hn
+      simp [Matrix.mul_sub, Matrix.sub_mul, Matrix.transpose_single,
+        Matrix.single_mul_mul_single, Matrix.single_apply]
+      split_ifs with h₁ h₂ <;> simp_all
+  · by_cases hj : (j : ℕ) + 1 < n
+    · rw [raisingMatrix_of_fork n hn hi, raisingMatrix_of_chain n hn hj,
+        Matrix.fromBlocks_multiply, Matrix.fromBlocks_multiply]
+      simp
+    · rw [raisingMatrix_of_fork n hn hi, raisingMatrix_of_fork n hn hj,
+        Matrix.fromBlocks_multiply, Matrix.fromBlocks_multiply]
+      simp
+
+private theorem lie_raisingMatrix_lie_raisingMatrix {K : Type*} [CommRing K]
+    (i j : Fin n) :
+    ⁅raisingMatrix (K := K) n hn i,
+      ⁅raisingMatrix (K := K) n hn i, raisingMatrix (K := K) n hn j⁆⁆ = 0 := by
+  have hleft : raisingMatrix (K := K) n hn i *
+      (raisingMatrix n hn i * raisingMatrix n hn j) = 0 := by
+    rw [← mul_assoc, raisingMatrix_mul_self n hn i, zero_mul]
+  have hmiddle : raisingMatrix (K := K) n hn i *
+      (raisingMatrix n hn j * raisingMatrix n hn i) = 0 := by
+    rw [← mul_assoc, raisingMatrix_mul_raisingMatrix_mul_self n hn i j]
+  have hmiddle' : (raisingMatrix (K := K) n hn i * raisingMatrix n hn j) *
+      raisingMatrix n hn i = 0 := raisingMatrix_mul_raisingMatrix_mul_self n hn i j
+  have hright : (raisingMatrix (K := K) n hn j * raisingMatrix n hn i) *
+      raisingMatrix n hn i = 0 := by
+    rw [mul_assoc, raisingMatrix_mul_self n hn i, mul_zero]
+  rw [LieRing.of_associative_ring_bracket, LieRing.of_associative_ring_bracket]
+  rw [Matrix.mul_sub, Matrix.sub_mul, hleft, hmiddle, hmiddle', hright]
+  simp
+
+private theorem lie_loweringMatrix_loweringMatrix_of_cartan_eq_zero
+    {K : Type*} [CommRing K] (i j : Fin n) (hij : CartanMatrix.D n i j = 0) :
+    ⁅loweringMatrix (K := K) n hn i, loweringMatrix (K := K) n hn j⁆ = 0 := by
+  have hji : CartanMatrix.D n j i = 0 :=
+    ((CartanMatrix.D_isSymm n).apply j i).symm.trans hij
+  apply Matrix.transpose_injective
+  rw [Matrix.lie_transpose]
+  simpa [loweringMatrix] using
+    lie_raisingMatrix_raisingMatrix_of_cartan_eq_zero (K := K) n hn j i hji
+
+private theorem lie_loweringMatrix_lie_loweringMatrix {K : Type*} [CommRing K]
+    (i j : Fin n) :
+    ⁅loweringMatrix (K := K) n hn i,
+      ⁅loweringMatrix (K := K) n hn i, loweringMatrix (K := K) n hn j⁆⁆ = 0 := by
+  apply Matrix.transpose_injective
+  rw [Matrix.lie_transpose, Matrix.lie_transpose]
+  simp only [loweringMatrix, Matrix.transpose_transpose, Matrix.transpose_zero]
+  rw [← lie_skew (raisingMatrix n hn j) (raisingMatrix n hn i), neg_lie,
+    lie_skew (raisingMatrix n hn i) (⁅raisingMatrix n hn i, raisingMatrix n hn j⁆)]
+  exact lie_raisingMatrix_lie_raisingMatrix n hn i j
+
+/-- Raising generators at nonadjacent type-`D` nodes commute. -/
+@[simp]
+theorem lie_rootGenerator_inl_inl_of_cartan_eq_zero {K : Type*} [CommRing K]
+    {i j : Fin n} (hij : CartanMatrix.D n i j = 0) :
+    ⁅rootGenerator (K := K) n hn (.inl i), rootGenerator (K := K) n hn (.inl j)⁆ = 0 := by
+  apply Subtype.ext
+  rw [LieSubalgebra.coe_bracket, val_rootGenerator_inl, val_rootGenerator_inl]
+  change ⁅raisingMatrix n hn i, raisingMatrix n hn j⁆ = 0
+  exact lie_raisingMatrix_raisingMatrix_of_cartan_eq_zero n hn i j hij
+
+/-- Lowering generators at nonadjacent type-`D` nodes commute. -/
+@[simp]
+theorem lie_rootGenerator_inr_inr_of_cartan_eq_zero {K : Type*} [CommRing K]
+    {i j : Fin n} (hij : CartanMatrix.D n i j = 0) :
+    ⁅rootGenerator (K := K) n hn (.inr i), rootGenerator (K := K) n hn (.inr j)⁆ = 0 := by
+  apply Subtype.ext
+  rw [LieSubalgebra.coe_bracket, val_rootGenerator_inr, val_rootGenerator_inr]
+  change ⁅loweringMatrix n hn i, loweringMatrix n hn j⁆ = 0
+  exact lie_loweringMatrix_loweringMatrix_of_cartan_eq_zero n hn i j hij
+
+/-- The raising generators satisfy the simply-laced type-`D` adjacent-node Serre relation.
+The formula holds for every pair of nodes, including the nonadjacent and diagonal cases. -/
+@[simp]
+theorem lie_rootGenerator_inl_lie_rootGenerator_inl {K : Type*} [CommRing K]
+    (i j : Fin n) :
+    ⁅rootGenerator (K := K) n hn (.inl i),
+      ⁅rootGenerator (K := K) n hn (.inl i), rootGenerator (K := K) n hn (.inl j)⁆⁆ = 0 := by
+  apply Subtype.ext
+  rw [LieSubalgebra.coe_bracket, LieSubalgebra.coe_bracket, val_rootGenerator_inl,
+    val_rootGenerator_inl]
+  change ⁅raisingMatrix n hn i, ⁅raisingMatrix n hn i, raisingMatrix n hn j⁆⁆ = 0
+  exact lie_raisingMatrix_lie_raisingMatrix n hn i j
+
+/-- The lowering generators satisfy the simply-laced type-`D` adjacent-node Serre relation.
+The formula holds for every pair of nodes, including the nonadjacent and diagonal cases. -/
+@[simp]
+theorem lie_rootGenerator_inr_lie_rootGenerator_inr {K : Type*} [CommRing K]
+    (i j : Fin n) :
+    ⁅rootGenerator (K := K) n hn (.inr i),
+      ⁅rootGenerator (K := K) n hn (.inr i), rootGenerator (K := K) n hn (.inr j)⁆⁆ = 0 := by
+  apply Subtype.ext
+  rw [LieSubalgebra.coe_bracket, LieSubalgebra.coe_bracket, val_rootGenerator_inr,
+    val_rootGenerator_inr]
+  change ⁅loweringMatrix n hn i, ⁅loweringMatrix n hn i, loweringMatrix n hn j⁆⁆ = 0
+  exact lie_loweringMatrix_lie_loweringMatrix n hn i j
+
 /-- A raising generator bracketed with a lowering generator is the corresponding Cartan
 generator on the diagonal and zero off the diagonal. -/
 @[simp]
@@ -521,17 +735,6 @@ theorem lie_rootGenerator_inr_inl {K : Type*} [CommRing K] (i j : Fin n) :
       · simp [hij, Ne.symm hij]
 
 /-! ## Nilpotence in the standard representation -/
-
-/-- A raising generator squares to zero as an endomorphism of the standard split module. -/
-@[simp]
-theorem raisingMatrix_mul_self {K : Type*} [CommRing K] (i : Fin n) :
-    raisingMatrix (K := K) n hn i * raisingMatrix n hn i = 0 := by
-  by_cases hi : (i : ℕ) + 1 < n
-  · rw [raisingMatrix_of_chain n hn hi, Matrix.fromBlocks_multiply]
-    have hne := ne_chainNext n i hi
-    simp [Matrix.transpose_single, Matrix.single_mul_single_of_ne, hne, hne.symm]
-  · rw [raisingMatrix_of_fork n hn hi, Matrix.fromBlocks_multiply]
-    simp
 
 /-- A lowering generator squares to zero as an endomorphism of the standard split module. -/
 @[simp]
