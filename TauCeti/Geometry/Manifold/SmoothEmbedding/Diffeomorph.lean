@@ -94,7 +94,7 @@ variable {𝕜 : Type*} [NontriviallyNormedField 𝕜]
 /-- A diffeomorphism `e : M' ≃ₘ M` pulls a chart `φ` of the maximal atlas of `M` back to the chart
 `φ ∘ e` of the maximal atlas of `M'`. This is the only geometric input to the composition results
 below: it is what lets a normal form in charts be read on the other side of a diffeomorphism. -/
-theorem mem_maximalAtlas_transOpenPartialHomeomorph [IsManifold I n M] [IsManifold I n M']
+theorem mem_maximalAtlas_transOpenPartialHomeomorph [IsManifold I n M']
     (e : M' ≃ₘ^n⟮I, I⟯ M) {φ : OpenPartialHomeomorph M H}
     (hφ : φ ∈ IsManifold.maximalAtlas I n M) :
     e.toHomeomorph.transOpenPartialHomeomorph φ ∈ IsManifold.maximalAtlas I n M' := by
@@ -105,7 +105,7 @@ theorem mem_maximalAtlas_transOpenPartialHomeomorph [IsManifold I n M] [IsManifo
 /-- Precomposing with a diffeomorphism of the source preserves the immersion normal form at a
 point, with the same complement: the domain chart of the immersion is pulled back along the
 diffeomorphism, and `f ∘ e` read in the new chart is what `f` was in the old one. -/
-theorem isImmersionAtOfComplement_comp_diffeomorph [IsManifold I n M] [IsManifold I n M']
+theorem isImmersionAtOfComplement_comp_diffeomorph [IsManifold I n M']
     (e : M' ≃ₘ^n⟮I, I⟯ M) {x : M'} (h : IsImmersionAtOfComplement F I J n f (e x)) :
     IsImmersionAtOfComplement F I J n (f ∘ e) x := by
   refine IsImmersionAtOfComplement.mk_of_charts h.equiv
@@ -118,7 +118,7 @@ theorem isImmersionAtOfComplement_comp_diffeomorph [IsManifold I n M] [IsManifol
 /-- Postcomposing with a diffeomorphism of the target preserves the immersion normal form at a
 point, with the same complement: the codomain chart of the immersion is pulled back along the
 inverse diffeomorphism, and `e ∘ f` read in the new chart is what `f` was in the old one. -/
-theorem isImmersionAtOfComplement_diffeomorph_comp [IsManifold J n N] [IsManifold J n P]
+theorem isImmersionAtOfComplement_diffeomorph_comp [IsManifold J n P]
     {x : M} (h : IsImmersionAtOfComplement F I J n f x) (e : N ≃ₘ^n⟮J, J⟯ P) :
     IsImmersionAtOfComplement F I J n (e ∘ f) x := by
   refine IsImmersionAtOfComplement.mk_of_charts h.equiv h.domChart
@@ -132,37 +132,37 @@ theorem isImmersionAtOfComplement_diffeomorph_comp [IsManifold J n N] [IsManifol
 
 /-- Precomposing an immersion with a fixed complement by a diffeomorphism of the source gives an
 immersion with the same complement. -/
-theorem isImmersionOfComplement_comp_diffeomorph [IsManifold I n M] [IsManifold I n M']
+theorem isImmersionOfComplement_comp_diffeomorph [IsManifold I n M']
     (e : M' ≃ₘ^n⟮I, I⟯ M) (h : IsImmersionOfComplement F I J n f) :
     IsImmersionOfComplement F I J n (f ∘ e) :=
   fun x => isImmersionAtOfComplement_comp_diffeomorph e (h (e x))
 
 /-- Postcomposing an immersion with a fixed complement by a diffeomorphism of the target gives an
 immersion with the same complement. -/
-theorem isImmersionOfComplement_diffeomorph_comp [IsManifold J n N] [IsManifold J n P]
+theorem isImmersionOfComplement_diffeomorph_comp [IsManifold J n P]
     (h : IsImmersionOfComplement F I J n f) (e : N ≃ₘ^n⟮J, J⟯ P) :
     IsImmersionOfComplement F I J n (e ∘ f) :=
   fun x => isImmersionAtOfComplement_diffeomorph_comp (h x) e
 
 /-- Reparametrising an immersion by a diffeomorphism of the source gives an immersion. -/
-theorem isImmersion_comp_diffeomorph [IsManifold I n M] [IsManifold I n M']
+theorem isImmersion_comp_diffeomorph [IsManifold I n M']
     (e : M' ≃ₘ^n⟮I, I⟯ M) (h : IsImmersion I J n f) : IsImmersion I J n (f ∘ e) :=
   (isImmersionOfComplement_comp_diffeomorph e h.isImmersionOfComplement_complement).isImmersion
 
 /-- Transporting an immersion by a diffeomorphism of the target gives an immersion. -/
-theorem isImmersion_diffeomorph_comp [IsManifold J n N] [IsManifold J n P]
+theorem isImmersion_diffeomorph_comp [IsManifold J n P]
     (h : IsImmersion I J n f) (e : N ≃ₘ^n⟮J, J⟯ P) : IsImmersion I J n (e ∘ f) :=
   (isImmersionOfComplement_diffeomorph_comp h.isImmersionOfComplement_complement e).isImmersion
 
 /-- Reparametrising a smooth embedding by a diffeomorphism of the source gives a smooth
 embedding. -/
-theorem isSmoothEmbedding_comp_diffeomorph [IsManifold I n M] [IsManifold I n M']
+theorem isSmoothEmbedding_comp_diffeomorph [IsManifold I n M']
     (e : M' ≃ₘ^n⟮I, I⟯ M) (h : IsSmoothEmbedding I J n f) :
     IsSmoothEmbedding I J n (f ∘ e) :=
   ⟨isImmersion_comp_diffeomorph e h.isImmersion, h.isEmbedding.comp e.toHomeomorph.isEmbedding⟩
 
 /-- Transporting a smooth embedding by a diffeomorphism of the target gives a smooth embedding. -/
-theorem isSmoothEmbedding_diffeomorph_comp [IsManifold J n N] [IsManifold J n P]
+theorem isSmoothEmbedding_diffeomorph_comp [IsManifold J n P]
     (h : IsSmoothEmbedding I J n f) (e : N ≃ₘ^n⟮J, J⟯ P) :
     IsSmoothEmbedding I J n (e ∘ f) :=
   ⟨isImmersion_diffeomorph_comp h.isImmersion e, e.toHomeomorph.isEmbedding.comp h.isEmbedding⟩
@@ -213,7 +213,6 @@ theorem coe_ofDiffeomorph [IsManifold I n M] [IsManifold I n M'] (e : M ≃ₘ^n
   exact ofDiffeomorph_apply e x
 
 /-- A diffeomorphism is onto, so as a smooth embedding it has full image. -/
-@[simp]
 theorem range_ofDiffeomorph [IsManifold I n M] [IsManifold I n M'] (e : M ≃ₘ^n⟮I, I⟯ M') :
     range (ofDiffeomorph e) = univ := by
   rw [coe_ofDiffeomorph]
@@ -223,19 +222,19 @@ theorem range_ofDiffeomorph [IsManifold I n M] [IsManifold I n M'] (e : M ≃ₘ
 embedding `f : M → N` into the bundled smooth embedding `f ∘ e : M' → N`. For a geometric knot
 presentation `S¹ ↪ M`, this is the change of parametrisation of the knot, orientation reversal
 included. -/
-def compDiffeomorph [IsManifold I n M] [IsManifold I n M'] (f : SmoothEmbedding I J n M N)
+def compDiffeomorph [IsManifold I n M'] (f : SmoothEmbedding I J n M N)
     (e : M' ≃ₘ^n⟮I, I⟯ M) : SmoothEmbedding I J n M' N where
   toContMDiffMap := ⟨f ∘ e, f.contMDiff.comp e.contMDiff⟩
   isSmoothEmbedding_toFun := isSmoothEmbedding_comp_diffeomorph e f.isSmoothEmbedding
 
 @[simp]
-theorem compDiffeomorph_apply [IsManifold I n M] [IsManifold I n M']
+theorem compDiffeomorph_apply [IsManifold I n M']
     (f : SmoothEmbedding I J n M N) (e : M' ≃ₘ^n⟮I, I⟯ M) (x : M') :
     f.compDiffeomorph e x = f (e x) := by
   rfl
 
 @[simp]
-theorem coe_compDiffeomorph [IsManifold I n M] [IsManifold I n M']
+theorem coe_compDiffeomorph [IsManifold I n M']
     (f : SmoothEmbedding I J n M N) (e : M' ≃ₘ^n⟮I, I⟯ M) :
     ⇑(f.compDiffeomorph e) = f ∘ e := by
   funext x
@@ -248,15 +247,14 @@ theorem compDiffeomorph_refl [IsManifold I n M] (f : SmoothEmbedding I J n M N) 
   SmoothEmbedding.ext fun _ => rfl
 
 /-- Reparametrising twice is reparametrising by the composite diffeomorphism. -/
-theorem compDiffeomorph_compDiffeomorph [IsManifold I n M] [IsManifold I n M']
+theorem compDiffeomorph_compDiffeomorph [IsManifold I n M']
     [IsManifold I n M''] (f : SmoothEmbedding I J n M N) (e : M' ≃ₘ^n⟮I, I⟯ M)
     (e' : M'' ≃ₘ^n⟮I, I⟯ M') :
     (f.compDiffeomorph e).compDiffeomorph e' = f.compDiffeomorph (e'.trans e) :=
   SmoothEmbedding.ext fun _ => rfl
 
 /-- Reparametrisation does not move the image of an embedding. -/
-@[simp]
-theorem range_compDiffeomorph [IsManifold I n M] [IsManifold I n M']
+theorem range_compDiffeomorph [IsManifold I n M']
     (f : SmoothEmbedding I J n M N) (e : M' ≃ₘ^n⟮I, I⟯ M) :
     range (f.compDiffeomorph e) = range f := by
   rw [coe_compDiffeomorph]
@@ -265,19 +263,19 @@ theorem range_compDiffeomorph [IsManifold I n M] [IsManifold I n M']
 /-- **Ambient transport.** A diffeomorphism `e : N ≃ₘ P` of the target turns a bundled smooth
 embedding `f : M → N` into the bundled smooth embedding `e ∘ f : M → P`. For a geometric knot
 presentation this is the action of the ambient diffeomorphism group on knots. -/
-def transDiffeomorph [IsManifold J n N] [IsManifold J n P] (f : SmoothEmbedding I J n M N)
+def transDiffeomorph [IsManifold J n P] (f : SmoothEmbedding I J n M N)
     (e : N ≃ₘ^n⟮J, J⟯ P) : SmoothEmbedding I J n M P where
   toContMDiffMap := ⟨e ∘ f, e.contMDiff.comp f.contMDiff⟩
   isSmoothEmbedding_toFun := isSmoothEmbedding_diffeomorph_comp f.isSmoothEmbedding e
 
 @[simp]
-theorem transDiffeomorph_apply [IsManifold J n N] [IsManifold J n P]
+theorem transDiffeomorph_apply [IsManifold J n P]
     (f : SmoothEmbedding I J n M N) (e : N ≃ₘ^n⟮J, J⟯ P) (x : M) :
     f.transDiffeomorph e x = e (f x) := by
   rfl
 
 @[simp]
-theorem coe_transDiffeomorph [IsManifold J n N] [IsManifold J n P]
+theorem coe_transDiffeomorph [IsManifold J n P]
     (f : SmoothEmbedding I J n M N) (e : N ≃ₘ^n⟮J, J⟯ P) :
     ⇑(f.transDiffeomorph e) = e ∘ f := by
   funext x
@@ -291,21 +289,20 @@ theorem transDiffeomorph_refl [IsManifold J n N] (f : SmoothEmbedding I J n M N)
 
 /-- Transporting twice is transporting by the composite diffeomorphism. -/
 theorem transDiffeomorph_transDiffeomorph {Q : Type*} [TopologicalSpace Q] [ChartedSpace G Q]
-    [IsManifold J n N] [IsManifold J n P] [IsManifold J n Q] (f : SmoothEmbedding I J n M N)
+    [IsManifold J n P] [IsManifold J n Q] (f : SmoothEmbedding I J n M N)
     (e : N ≃ₘ^n⟮J, J⟯ P) (e' : P ≃ₘ^n⟮J, J⟯ Q) :
     (f.transDiffeomorph e).transDiffeomorph e' = f.transDiffeomorph (e.trans e') :=
   SmoothEmbedding.ext fun _ => rfl
 
 /-- Ambient transport moves the image of an embedding by the ambient diffeomorphism. -/
-@[simp]
-theorem range_transDiffeomorph [IsManifold J n N] [IsManifold J n P]
+theorem range_transDiffeomorph [IsManifold J n P]
     (f : SmoothEmbedding I J n M N) (e : N ≃ₘ^n⟮J, J⟯ P) :
     range (f.transDiffeomorph e) = e '' range f := by
   rw [coe_transDiffeomorph, range_comp]
 
 /-- Reparametrising and transporting commute: they act on opposite sides of the embedding. -/
-theorem transDiffeomorph_compDiffeomorph [IsManifold I n M] [IsManifold I n M']
-    [IsManifold J n N] [IsManifold J n P] (f : SmoothEmbedding I J n M N)
+theorem transDiffeomorph_compDiffeomorph [IsManifold I n M'] [IsManifold J n P]
+    (f : SmoothEmbedding I J n M N)
     (e : M' ≃ₘ^n⟮I, I⟯ M) (e' : N ≃ₘ^n⟮J, J⟯ P) :
     (f.compDiffeomorph e).transDiffeomorph e' = (f.transDiffeomorph e').compDiffeomorph e :=
   SmoothEmbedding.ext fun _ => rfl
@@ -364,7 +361,7 @@ theorem smoothAmbientIsotopic_transDiffeomorph_final [IsManifold J n N]
 
 /-- Reparametrising two embeddings by the same diffeomorphism of the source preserves smooth
 ambient isotopy: the witnessing diffeotopy of the ambient manifold is unchanged. -/
-theorem SmoothAmbientIsotopic.compDiffeomorph [IsManifold I n M] [IsManifold I n M']
+theorem SmoothAmbientIsotopic.compDiffeomorph [IsManifold I n M']
     (hfg : f.SmoothAmbientIsotopic g) (e : M' ≃ₘ^n⟮I, I⟯ M) :
     (f.compDiffeomorph e).SmoothAmbientIsotopic (g.compDiffeomorph e) := by
   obtain ⟨Φ, hΦ⟩ := smoothAmbientIsotopic_def.mp hfg
