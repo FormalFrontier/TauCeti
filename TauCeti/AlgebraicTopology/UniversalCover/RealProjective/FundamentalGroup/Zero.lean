@@ -78,7 +78,6 @@ theorem fundamentalGroup_eq_one (x : RealProjectiveSpace 0)
   Subsingleton.elim _ _
 
 /-- The fundamental group of `RP⁰` has exactly one element. -/
-@[simp]
 theorem card_fundamentalGroup (x : RealProjectiveSpace 0) :
     Nat.card (FundamentalGroup (RealProjectiveSpace 0) x) = 1 :=
   Nat.card_unique
