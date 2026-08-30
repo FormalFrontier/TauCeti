@@ -271,9 +271,12 @@ theorem eq_one_of_trace_eq_finrank {f : End ℂ V} {n : ℕ} (hn : n ≠ 0) (hf 
     simpa using (End.isSemisimple_sub_algebraMap_iff (μ := (1 : ℂ))).2
       (isSemisimple_of_pow_eq_one hn' hf)
   refine sub_eq_zero.1 (hss.eq_zero_iff_forall_eigenvalue.2 fun μ hμ => ?_)
+  -- `End.hasEigenvalue_sub_iff` shifts the eigenvalues of `f - c • LinearMap.id` by `c`, so the
+  -- subtracted identity has to be written as that scalar action before it applies
+  have hid : (f - 1 : End ℂ V) = f - (1 : ℂ) • LinearMap.id := by
+    rw [one_smul, End.one_eq_id]
   have hev : f.HasEigenvalue (μ + 1) := by
-    rw [show (f - 1 : End ℂ V) = f - (1 : ℂ) • LinearMap.id by module,
-      End.hasEigenvalue_sub_iff] at hμ
+    rw [hid, End.hasEigenvalue_sub_iff] at hμ
     exact hμ
   linear_combination hone (μ + 1) ((End.finite_hasEigenvalue f).mem_toFinset.2 hev)
 

@@ -35,7 +35,9 @@ the character is **additive on biproducts**, the character of the **tensor unit*
 function `1`, and the character is **constant on the cosets of its kernel**. The first two are what
 is still missing before the character can be read as a ring homomorphism out of the representation
 ring, `TauCeti.repRingCharacter`; the last is the elementary half of the kernel API whose analytic
-half, over `ℂ`, is `TauCeti/RepresentationTheory/CharacterTable/Kernel.lean`.
+half, over `ℂ`, is `TauCeti/RepresentationTheory/CharacterTable/Kernel.lean`. Beside it, and needing
+no characters at all, the **common kernel of a family** of representations is registered as a normal
+subgroup.
 
 ## Main definitions
 
@@ -55,6 +57,7 @@ half, over `ℂ`, is `TauCeti/RepresentationTheory/CharacterTable/Kernel.lean`.
 * `FDRep.char_biprod`: the character is additive on biproducts.
 * `FDRep.char_tensorUnit`: the character of the tensor unit is the constant function `1`.
 * `FDRep.char_mul_of_mem_ker_left`: the character is constant on the cosets of its kernel.
+* `FDRep.normal_iInf_ker`: the common kernel of a family of representations is a normal subgroup.
 -/
 
 public section
@@ -240,10 +243,26 @@ variable {k : Type u} {G : Type v} [Field k] [Group G]
 /-- **A character is constant on the cosets of its kernel**: an element acting as the identity may
 be deleted from a character value. This is an algebraic identity, so it holds over any field. The
 right-handed form is this one composed with `FDRep.char_mul_comm`. -/
+@[simp]
 theorem char_mul_of_mem_ker_left (V : FDRep k G) {g : G} (hg : g ∈ V.ρ.ker) (h : G) :
     V.character (g * h) = V.character h := by
   simp only [character, map_mul, MonoidHom.mem_ker.1 hg, one_mul]
 
 end Kernel
+
+section CommonKernel
+
+variable {ι : Type*} {k : Type u} {G : Type v} [CommRing k] [Group G]
+
+/-- **The common kernel of a family of representations is a normal subgroup.** Each kernel is
+normal, and Mathlib's `Subgroup.normal_iInf_normal` passes that to the infimum; what is added here
+is the registration as an instance, that lemma taking its hypothesis as an explicit argument, so
+that the normality of a common kernel is available to instance search. Nothing here is analytic or
+character-theoretic; over `ℂ` the common kernel is a locus of character equations by
+`FDRep.coe_iInf_ker` (`TauCeti/RepresentationTheory/CharacterTable/Kernel.lean`). -/
+instance normal_iInf_ker (W : ι → FDRep k G) : (⨅ i, (W i).ρ.ker).Normal :=
+  Subgroup.normal_iInf_normal fun _ => inferInstance
+
+end CommonKernel
 
 end FDRep
