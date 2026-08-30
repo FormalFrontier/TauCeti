@@ -96,7 +96,8 @@ theorem coe_toMultiCoupling [∀ i, MeasurableSpace (X i)]
 
 section Independent
 
-variable [Fintype ι] [∀ i, Fintype (X i)] [Fintype (∀ i, X i)]
+variable [Fintype ι] [∀ i, Fintype (X i)]
+local instance : DecidableEq ι := Classical.decEq ι
 
 /-- The independent finite multi-marginal coupling. -/
 def independent (μ : ∀ i, PMF (X i)) : FiniteMultiCoupling μ := by
@@ -113,7 +114,7 @@ def independent (μ : ∀ i, PMF (X i)) : FiniteMultiCoupling μ := by
 end Independent
 
 /-- Every finite family of probability mass functions has a finite multi-marginal coupling. -/
-instance instNonempty [Finite ι] [∀ i, Finite (X i)] [Finite (∀ i, X i)] :
+instance instNonempty [Finite ι] [∀ i, Finite (X i)] :
     Nonempty (FiniteMultiCoupling μ) := by
   let _ := Fintype.ofFinite ι
   let _ : ∀ i, Fintype (X i) := fun _ ↦ Fintype.ofFinite _
@@ -192,6 +193,7 @@ def FiniteMultiDualFeasible (c : (∀ i, X i) → ℝ) (φ : ∀ i, X i → ℝ)
   ∀ x, ∑ i, φ i (x i) ≤ c x
 
 /-- The pointwise inequality defining finite multi-marginal dual feasibility. -/
+@[simp]
 theorem finiteMultiDualFeasible_iff {c : (∀ i, X i) → ℝ} {φ : ∀ i, X i → ℝ} :
     FiniteMultiDualFeasible c φ ↔ ∀ x, ∑ i, φ i (x i) ≤ c x := Iff.rfl
 
@@ -223,17 +225,8 @@ end DualFeasible
 
 section Finite
 
-variable [Fintype ι] [∀ i, Fintype (X i)] [Fintype (∀ i, X i)]
-
-private theorem sum_map_toReal_mul {α β : Type*} [Fintype α] [Fintype β]
-    (p : PMF α) (f : α → β) (g : β → ℝ) :
-    ∑ y, ((p.map f) y).toReal * g y = ∑ x, (p x).toReal * g (f x) := by
-  let _ : MeasurableSpace α := ⊤
-  let _ : MeasurableSpace β := ⊤
-  have hmap := MeasureTheory.integral_map (μ := p.toMeasure) (φ := f)
-    (measurable_of_finite f).aemeasurable (measurable_of_finite g).aestronglyMeasurable
-  rw [PMF.toMeasure_map f p (measurable_of_finite f)] at hmap
-  simpa only [PMF.integral_eq_sum, smul_eq_mul] using hmap
+variable [Fintype ι] [∀ i, Fintype (X i)]
+local instance : DecidableEq ι := Classical.decEq ι
 
 /-- Integrating the sum of the coordinate potentials against a coupling gives their dual value.
 This is the finite change-of-variables identity behind multi-marginal weak duality. -/
@@ -246,7 +239,14 @@ theorem FiniteMultiCoupling.sum_mul_mass_eq_finiteMultiDualValue
   apply Finset.sum_congr rfl
   intro i _
   rw [← π.map_eval i]
-  simpa only [mul_comm] using (sum_map_toReal_mul π.1 (Function.eval i) (φ i)).symm
+  let _ : MeasurableSpace (∀ i, X i) := ⊤
+  let _ : MeasurableSpace (X i) := ⊤
+  have hmap := MeasureTheory.integral_map (μ := π.1.toMeasure) (φ := Function.eval i)
+    (measurable_of_finite (Function.eval i)).aemeasurable
+    (measurable_of_finite (φ i)).aestronglyMeasurable
+  rw [PMF.toMeasure_map (Function.eval i) π.1
+    (measurable_of_finite (Function.eval i))] at hmap
+  simpa only [PMF.integral_eq_sum, smul_eq_mul, mul_comm] using hmap.symm
 
 /-- The cost of a plan minus the value of a family of potentials is the mass-weighted sum of
 the pointwise dual gaps. -/
@@ -287,7 +287,7 @@ theorem FiniteMultiCoupling.cost_eq_finiteMultiDualValue_iff (π : FiniteMultiCo
   · intro h x _
     by_cases hx : π.1 x = 0
     · simp [hx]
-    · rw [show c x - ∑ i, φ i (x i) = 0 by linarith [h x hx], zero_mul]
+    · rw [h x hx, sub_self, zero_mul]
 
 /-- A complementary-slackness pair is simultaneously primal- and dual-optimal among all finite
 multi-marginal plans and all feasible families of potentials. -/
