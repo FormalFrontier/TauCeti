@@ -17,7 +17,8 @@ Let `H` be a nilpotent Lie subalgebra of `L` acting on a finite-dimensional modu
 `α : H → K` be a linear form, and let `x` and `y` be root vectors of weights `α` and `-α` whose
 bracket `⁅x, y⁆` lies in `H`, say `⁅x, y⁆ = z`.  Acting first by `x` and then by `y` carries the
 `χ`-weight space of `M` back to itself; write `TauCeti.raiseLowerEnd` for the resulting
-endomorphism.  This file computes its trace:
+endomorphism.  Given a bound beyond which the spaces `M_{χ + jα}` vanish, this file computes its
+trace:
 
 ```text
 tr_{Mχ}(y ∘ x) = Σ_{j ≥ 1} dim M_{χ + jα} · (χ + jα)(z).
@@ -34,9 +35,10 @@ because `z` acts on a generalized weight space with the single generalized eigen
 tr_{Mχ}(y ∘ x) = tr_{M_{α+χ}}(y ∘ x) + dim M_{α+χ} · (α+χ)(z),
 ```
 
-which telescopes up the `α`-string.  The string leaves the weights of `M` after finitely many
-steps, so the sum is finite; `TauCeti/Algebra/Lie/Weights/String.lean` packages that index set as
-`TauCeti.weightString`.
+which telescopes up the `α`-string.  The initial-segment formulation assumes such an
+eventual-vanishing bound explicitly.  When `K` has characteristic zero and `α` is a nonzero linear
+form, the string leaves the weights of `M` after finitely many steps;
+`TauCeti/Algebra/Lie/Weights/String.lean` packages that finite index set as `TauCeti.weightString`.
 
 The identity is the computational input to **Freudenthal's multiplicity formula**: taking `x` and
 `y` to be the root vectors of an `sl₂` triple attached to a positive root `α`, so that `z = α^∨`,
