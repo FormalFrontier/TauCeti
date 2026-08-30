@@ -62,8 +62,14 @@ positive root is a nonnegative integer combination of the simple coroots.
   a natural multiple of a simple root, in the order defined by `Q⁺`, is that simple root itself.
 * `TauCeti.one_le_height_of_mem_posRoots` says every positive root has height at least one, and
   `TauCeti.height_neg_of_mem_negRoots` says every negative root has negative height.
-* `TauCeti.exists_natCast_eq_heightLinearMap_of_mem_posRootCone` says the height functional takes
-  natural-number values on `Q⁺`.
+* `TauCeti.heightLinearMap_sum_nsmul_root` computes the height of a nonnegative integer
+  combination of the simple roots, whence
+  `TauCeti.exists_natCast_eq_heightLinearMap_of_mem_posRootCone`, that the height functional takes
+  natural-number values on `Q⁺`, and
+  `TauCeti.eq_zero_of_mem_posRootCone_of_heightLinearMap_eq_zero`, that zero is the only member of
+  `Q⁺` of height zero.
+* `TauCeti.exists_intCast_eq_coroot'_of_mem_posRootCone` says a coroot functional takes integer
+  values on `Q⁺`.
 * `TauCeti.exists_coroot_eq_sum_nat_of_mem_posRoots` says the coroot of a positive root is a
   nonnegative integer combination of the simple coroots.
 
@@ -287,6 +293,16 @@ theorem root_mem_posRootCone_of_mem_posRoots {i : ι} (hi : i ∈ posRoots P b) 
   (mem_posRootCone P b).mpr ⟨f, hf⟩
 
 omit [CharZero R] in
+/-- **The height of a nonnegative integer combination of the simple roots** is the total number of
+simple roots occurring in it, every simple root having height one. -/
+theorem heightLinearMap_sum_nsmul_root [P.IsRootSystem] (f : ι → ℕ) :
+    heightLinearMap P b (∑ j ∈ b.support, f j • P.root j)
+      = ((∑ j ∈ b.support, f j : ℕ) : R) := by
+  rw [map_sum, Nat.cast_sum]
+  exact Finset.sum_congr rfl fun j hj => by
+    rw [map_nsmul, heightLinearMap_simpleRoot P b ⟨j, hj⟩, nsmul_eq_mul, mul_one]
+
+omit [CharZero R] in
 /-- **The height functional takes natural-number values on the positive root cone**: the height of
 a nonnegative integer combination of simple roots is the total number of simple roots in it, every
 simple root having height one. This is what makes the height of a cone member a legitimate
@@ -294,10 +310,31 @@ induction parameter. -/
 theorem exists_natCast_eq_heightLinearMap_of_mem_posRootCone [P.IsRootSystem] {u : M}
     (hu : u ∈ posRootCone P b) : ∃ n : ℕ, heightLinearMap P b u = (n : R) := by
   obtain ⟨f, rfl⟩ := (mem_posRootCone P b).mp hu
-  refine ⟨∑ j ∈ b.support, f j, ?_⟩
-  rw [map_sum, Nat.cast_sum]
-  exact Finset.sum_congr rfl fun j hj => by
-    rw [map_nsmul, heightLinearMap_simpleRoot P b ⟨j, hj⟩, nsmul_eq_mul, mul_one]
+  exact ⟨∑ j ∈ b.support, f j, heightLinearMap_sum_nsmul_root P b f⟩
+
+/-- **The only member of the positive root cone of height zero is zero.** The height counts the
+simple roots occurring in a member, so a member of height zero has no summand at all. -/
+theorem eq_zero_of_mem_posRootCone_of_heightLinearMap_eq_zero [P.IsRootSystem] {u : M}
+    (hu : u ∈ posRootCone P b) (hheight : heightLinearMap P b u = 0) : u = 0 := by
+  obtain ⟨f, rfl⟩ := (mem_posRootCone P b).mp hu
+  rw [heightLinearMap_sum_nsmul_root P b f, Nat.cast_eq_zero, Finset.sum_eq_zero_iff] at hheight
+  exact Finset.sum_eq_zero fun j hj => by rw [hheight j hj, zero_smul]
+
+omit [CharZero R] in
+/-- **A coroot functional takes integer values on the positive root cone**: a nonnegative integer
+combination of the simple roots pairs with a coroot to the matching combination of Cartan
+integers. -/
+theorem exists_intCast_eq_coroot'_of_mem_posRootCone [P.IsCrystallographic] {u : M}
+    (hu : u ∈ posRootCone P b) (i : ι) : ∃ m : ℤ, P.coroot' i u = (m : R) := by
+  obtain ⟨f, rfl⟩ := (mem_posRootCone P b).mp hu
+  have hpair : ∀ p q : ι, ((P.pairingIn ℤ p q : ℤ) : R) = P.pairing p q := fun p q => by
+    rw [← P.algebraMap_pairingIn ℤ p q]
+    simp
+  refine ⟨∑ j ∈ b.support, (f j : ℤ) * P.pairingIn ℤ j i, ?_⟩
+  rw [map_sum]
+  push_cast
+  exact Finset.sum_congr rfl fun j _ => by
+    rw [map_nsmul, P.root_coroot'_eq_pairing, nsmul_eq_mul, hpair]
 
 /-- **The positive root cone is pointed**: the only member whose negative is again a member is
 zero. Expanding a member and its negative in the simple roots, the total coefficient vector is
