@@ -157,7 +157,7 @@ theorem map_localBCH {F : Type*} [FunLike F A B] [ContinuousMapClass F A B]
   let _ : NormedAlgebra ℚ B := NormedAlgebra.restrictScalars ℚ ℝ B
   rw [localBCH_def, Germ.map_coe, localBCH_def, Germ.coe_compTendsto, Germ.coe_eq]
   filter_upwards [(tendsto_exp_mul_exp_sub_one A).eventually
-    (eventually_map_logOneAdd (𝕂 := ℝ) f)] with p hp
+    (eventually_map_logOneAdd (𝕂 := ℝ) (𝕃 := ℝ) f)] with p hp
   dsimp only [Function.comp_apply, Prod.map]
   rw [hp]
   have hx : f (exp p.1) = exp (f p.1) := map_exp f (map_continuous f) p.1
