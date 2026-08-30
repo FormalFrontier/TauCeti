@@ -60,24 +60,8 @@ variable {G : Type u} [Group G] (T : TitsSystem G)
 theorem inv_bruhatCell (w : T.WeylGroup) : (T.bruhatCell w)⁻¹ = T.bruhatCell w⁻¹ := by
   obtain ⟨n, rfl⟩ := QuotientGroup.mk'_surjective T.intersection w
   simp only [QuotientGroup.mk'_apply, ← QuotientGroup.mk_inv, T.bruhatCell_mk]
-  apply Set.ext
-  intro g
-  rw [Set.mem_inv]
-  constructor
-  · intro hg
-    obtain ⟨b₁, hb₁, b₂, hb₂, h⟩ := DoubleCoset.mem_doubleCoset.mp hg
-    apply DoubleCoset.mem_doubleCoset.mpr
-    refine ⟨b₂⁻¹, T.subgroupB.inv_mem hb₂, b₁⁻¹, T.subgroupB.inv_mem hb₁, ?_⟩
-    calc
-      g = (g⁻¹)⁻¹ := (inv_inv g).symm
-      _ = (b₁ * (n : G) * b₂)⁻¹ := congrArg Inv.inv h
-      _ = b₂⁻¹ * (n⁻¹ : T.subgroupN) * b₁⁻¹ := by
-        simp only [mul_inv_rev, Subgroup.coe_inv, mul_assoc]
-  · intro hg
-    obtain ⟨b₁, hb₁, b₂, hb₂, rfl⟩ := DoubleCoset.mem_doubleCoset.mp hg
-    exact DoubleCoset.mem_doubleCoset.mpr
-      ⟨b₂⁻¹, T.subgroupB.inv_mem hb₂, b₁⁻¹, T.subgroupB.inv_mem hb₁, by
-        simp only [mul_inv_rev, Subgroup.coe_inv, inv_inv, mul_assoc]⟩
+  simp only [DoubleCoset.doubleCoset, mul_inv_rev, Set.inv_singleton, inv_coe_set,
+    Subgroup.coe_inv, mul_assoc]
 
 /-- **Right multiplication by a simple Bruhat cell.** For a Weyl-group element `w` and a simple
 reflection `s`, the product of their cells is either the cell at `w * s` or its union with the
