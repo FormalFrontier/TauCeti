@@ -158,6 +158,8 @@ theorem loweringMatrix_of_fork {K : Type*} [CommRing K] {i : Fin n}
           Matrix.single (forkRight n hn) (forkLeft n hn) 1
       Matrix.fromBlocks 0 0 (-B) 0 := by
   rw [loweringMatrix, raisingMatrix_of_fork n hn hi, Matrix.fromBlocks_transpose]
+  -- The branch equation uses a local `B`; expose its definition as `forkBlock` so that the
+  -- private transpose lemma can rewrite the lower-left block.
   change Matrix.fromBlocks 0 0 (forkBlock (K := K) n hn).transpose 0 = _
   rw [forkBlock_transpose]
   rfl
@@ -269,6 +271,97 @@ private theorem forkCartanCoeff (i j : Fin n) (hi : ¬(i : ℕ) + 1 < n) :
     single_dotProduct, single_dotProduct]
   simp [forkLeft, forkRight]
 
+private theorem lie_typeDDiagonalMatrix_raisingMatrix_of_chain {K : Type*} [CommRing K]
+    (i j : Fin n) (hi : (i : ℕ) + 1 < n) :
+    ⁅typeDDiagonalMatrix (fun a => (DynkinType.typeDSimpleRoot n hn j a : K)),
+        raisingMatrix (K := K) n hn i⁆ =
+      (CartanMatrix.D n i j : K) • raisingMatrix n hn i := by
+  rw [raisingMatrix_of_chain n hn hi]
+  have hcoeff := congrArg (fun z : ℤ => (z : K)) (chainCartanCoeff n hn i j hi)
+  simp only [Int.cast_sub] at hcoeff
+  ext (a | a) (b | b)
+  · simp only [Matrix.transpose_single, typeDDiagonalMatrix_lie_apply,
+      typeDDiagonalValue_inl, Matrix.fromBlocks_apply₁₁, Matrix.smul_apply, smul_eq_mul,
+      Matrix.single_apply]
+    split_ifs with h
+    · rcases h with ⟨rfl, rfl⟩
+      simpa only [mul_one] using hcoeff
+    · simp only [mul_zero]
+  · simp [typeDDiagonalMatrix_lie_apply, Matrix.fromBlocks]
+  · simp [typeDDiagonalMatrix_lie_apply, Matrix.fromBlocks]
+  · simp only [Matrix.transpose_single, typeDDiagonalMatrix_lie_apply,
+      typeDDiagonalValue_inr, Matrix.fromBlocks_apply₂₂, Matrix.neg_apply,
+      Matrix.smul_apply, smul_eq_mul, Matrix.single_apply]
+    split_ifs with h
+    · rcases h with ⟨rfl, rfl⟩
+      linear_combination -hcoeff
+    · simp only [neg_zero, mul_zero]
+
+private theorem lie_typeDDiagonalMatrix_raisingMatrix_of_fork {K : Type*} [CommRing K]
+    (i j : Fin n) (hi : ¬(i : ℕ) + 1 < n) :
+    ⁅typeDDiagonalMatrix (fun a => (DynkinType.typeDSimpleRoot n hn j a : K)),
+        raisingMatrix (K := K) n hn i⁆ =
+      (CartanMatrix.D n i j : K) • raisingMatrix n hn i := by
+  rw [raisingMatrix_of_fork n hn hi]
+  have hcoeff := congrArg (fun z : ℤ => (z : K)) (forkCartanCoeff n hn i j hi)
+  simp only [Int.cast_add] at hcoeff
+  have hne := forkLeft_ne_forkRight n hn
+  ext (a | a) (b | b)
+  · simp [typeDDiagonalMatrix_lie_apply, Matrix.fromBlocks]
+  · by_cases h₁ : forkLeft n hn = a ∧ forkRight n hn = b
+    · have h₂ : ¬(forkRight n hn = a ∧ forkLeft n hn = b) := by
+        rintro ⟨hra, hlb⟩
+        exact forkLeft_ne_forkRight n hn (h₁.1.trans hra.symm)
+      rcases h₁ with ⟨rfl, rfl⟩
+      simpa [typeDDiagonalMatrix_lie_apply, Matrix.fromBlocks, Matrix.single_apply, hne]
+        using hcoeff
+    · by_cases h₂ : forkRight n hn = a ∧ forkLeft n hn = b
+      · rcases h₂ with ⟨rfl, rfl⟩
+        simpa [typeDDiagonalMatrix_lie_apply, Matrix.fromBlocks, Matrix.single_apply,
+          hne, add_comm] using congrArg Neg.neg hcoeff
+      · simp [typeDDiagonalMatrix_lie_apply, Matrix.fromBlocks, h₁, h₂]
+  · simp [typeDDiagonalMatrix_lie_apply, Matrix.fromBlocks]
+  · simp [typeDDiagonalMatrix_lie_apply, Matrix.fromBlocks]
+
+private theorem lie_typeDDiagonalMatrix_raisingMatrix {K : Type*} [CommRing K]
+    (i j : Fin n) :
+    ⁅typeDDiagonalMatrix (fun a => (DynkinType.typeDSimpleRoot n hn j a : K)),
+        raisingMatrix (K := K) n hn i⁆ =
+      (CartanMatrix.D n i j : K) • raisingMatrix n hn i := by
+  by_cases hi : (i : ℕ) + 1 < n
+  · exact lie_typeDDiagonalMatrix_raisingMatrix_of_chain n hn i j hi
+  · exact lie_typeDDiagonalMatrix_raisingMatrix_of_fork n hn i j hi
+
+private theorem lie_typeDDiagonalMatrix_loweringMatrix {K : Type*} [CommRing K]
+    (i j : Fin n) :
+    ⁅typeDDiagonalMatrix (fun a => (DynkinType.typeDSimpleRoot n hn j a : K)),
+        loweringMatrix (K := K) n hn i⁆ =
+      (-CartanMatrix.D n i j : K) • loweringMatrix n hn i := by
+  rw [loweringMatrix]
+  apply Matrix.transpose_injective
+  calc
+    (⁅typeDDiagonalMatrix (fun a => (DynkinType.typeDSimpleRoot n hn j a : K)),
+        (raisingMatrix n hn i).transpose⁆).transpose =
+        ⁅raisingMatrix n hn i,
+          (typeDDiagonalMatrix
+            (fun a => (DynkinType.typeDSimpleRoot n hn j a : K))).transpose⁆ :=
+      Matrix.lie_transpose _ _
+    _ = ⁅raisingMatrix n hn i,
+        typeDDiagonalMatrix (fun a => (DynkinType.typeDSimpleRoot n hn j a : K))⁆ := by
+      congr 1
+      ext a b
+      by_cases hab : a = b
+      · subst b
+        simp [typeDDiagonalMatrix_apply]
+      · have hba : b ≠ a := Ne.symm hab
+        simp [typeDDiagonalMatrix_apply, hab, hba]
+    _ = -⁅typeDDiagonalMatrix (fun a => (DynkinType.typeDSimpleRoot n hn j a : K)),
+        raisingMatrix n hn i⁆ := by rw [← lie_skew]
+    _ = -((CartanMatrix.D n i j : K) • raisingMatrix n hn i) := by
+      rw [lie_typeDDiagonalMatrix_raisingMatrix n hn i j]
+    _ = ((-CartanMatrix.D n i j : K) •
+        (raisingMatrix n hn i).transpose).transpose := by simp
+
 /-- The numbered Cartan generators act on the numbered root generators through the type-`D`
 Cartan matrix, with the opposite weight on lowering generators. -/
 theorem lie_cartanGenerator_rootGenerator {K : Type*} [CommRing K]
@@ -280,95 +373,19 @@ theorem lie_cartanGenerator_rootGenerator {K : Type*} [CommRing K]
   | inl i =>
       rw [LieSubalgebra.coe_bracket, SetLike.val_smul, val_cartanGenerator,
         val_rootGenerator_inl, rootGeneratorWeight_inl]
+      -- The subtype coercions have been rewritten away; state the resulting ambient matrix goal
+      -- explicitly so that the private Cartan-action lemma applies.
       change ⁅typeDDiagonalMatrix (fun a => (DynkinType.typeDSimpleRoot n hn j a : K)),
           raisingMatrix n hn i⁆ = (CartanMatrix.D n i j : K) • raisingMatrix n hn i
-      by_cases hi : (i : ℕ) + 1 < n
-      · rw [raisingMatrix_of_chain n hn hi]
-        have hcoeff := congrArg (fun z : ℤ => (z : K)) (chainCartanCoeff n hn i j hi)
-        simp only [Int.cast_sub] at hcoeff
-        ext (a | a) (b | b)
-        · simp only [Matrix.transpose_single, typeDDiagonalMatrix_lie_apply,
-            typeDDiagonalValue_inl, Matrix.fromBlocks_apply₁₁, Matrix.smul_apply, smul_eq_mul,
-            Matrix.single_apply]
-          split_ifs with h
-          · rcases h with ⟨rfl, rfl⟩
-            simpa only [mul_one] using hcoeff
-          · simp only [mul_zero]
-        · simp [typeDDiagonalMatrix_lie_apply, Matrix.fromBlocks]
-        · simp [typeDDiagonalMatrix_lie_apply, Matrix.fromBlocks]
-        · simp only [Matrix.transpose_single, typeDDiagonalMatrix_lie_apply,
-            typeDDiagonalValue_inr, Matrix.fromBlocks_apply₂₂, Matrix.neg_apply,
-            Matrix.smul_apply, smul_eq_mul, Matrix.single_apply]
-          split_ifs with h
-          · rcases h with ⟨rfl, rfl⟩
-            linear_combination -hcoeff
-          · simp only [neg_zero, mul_zero]
-      · rw [raisingMatrix_of_fork n hn hi]
-        have hcoeff := congrArg (fun z : ℤ => (z : K)) (forkCartanCoeff n hn i j hi)
-        simp only [Int.cast_add] at hcoeff
-        have hne := forkLeft_ne_forkRight n hn
-        ext (a | a) (b | b)
-        · simp [typeDDiagonalMatrix_lie_apply, Matrix.fromBlocks]
-        · by_cases h₁ : forkLeft n hn = a ∧ forkRight n hn = b
-          · have h₂ : ¬(forkRight n hn = a ∧ forkLeft n hn = b) := by
-              rintro ⟨hra, hlb⟩
-              exact forkLeft_ne_forkRight n hn (h₁.1.trans hra.symm)
-            rcases h₁ with ⟨rfl, rfl⟩
-            simpa [typeDDiagonalMatrix_lie_apply, Matrix.fromBlocks, Matrix.single_apply, hne]
-              using hcoeff
-          · by_cases h₂ : forkRight n hn = a ∧ forkLeft n hn = b
-            · rcases h₂ with ⟨rfl, rfl⟩
-              simpa [typeDDiagonalMatrix_lie_apply, Matrix.fromBlocks, Matrix.single_apply,
-                hne, add_comm] using congrArg Neg.neg hcoeff
-            · simp [typeDDiagonalMatrix_lie_apply, Matrix.fromBlocks, h₁, h₂]
-        · simp [typeDDiagonalMatrix_lie_apply, Matrix.fromBlocks]
-        · simp [typeDDiagonalMatrix_lie_apply, Matrix.fromBlocks]
+      exact lie_typeDDiagonalMatrix_raisingMatrix n hn i j
   | inr i =>
       rw [LieSubalgebra.coe_bracket, SetLike.val_smul, val_cartanGenerator,
         val_rootGenerator_inr, rootGeneratorWeight_inr, Int.cast_neg]
+      -- As in the raising case, this bridge exposes the ambient matrix equality hidden by the
+      -- Lie-subalgebra and scalar-action coercions.
       change ⁅typeDDiagonalMatrix (fun a => (DynkinType.typeDSimpleRoot n hn j a : K)),
           loweringMatrix n hn i⁆ = (-CartanMatrix.D n i j : K) • loweringMatrix n hn i
-      by_cases hi : (i : ℕ) + 1 < n
-      · rw [loweringMatrix_of_chain n hn hi]
-        have hcoeff := congrArg (fun z : ℤ => (z : K)) (chainCartanCoeff n hn i j hi)
-        simp only [Int.cast_sub] at hcoeff
-        ext (a | a) (b | b)
-        · simp only [Matrix.transpose_single, typeDDiagonalMatrix_lie_apply,
-            typeDDiagonalValue_inl, Matrix.fromBlocks_apply₁₁, Matrix.smul_apply, smul_eq_mul,
-            Matrix.single_apply]
-          split_ifs with h
-          · rcases h with ⟨rfl, rfl⟩
-            linear_combination -hcoeff
-          · simp only [mul_zero]
-        · simp [typeDDiagonalMatrix_lie_apply, Matrix.fromBlocks]
-        · simp [typeDDiagonalMatrix_lie_apply, Matrix.fromBlocks]
-        · simp only [typeDDiagonalMatrix_lie_apply, typeDDiagonalValue_inr,
-            Matrix.fromBlocks_apply₂₂, Matrix.neg_apply, Matrix.smul_apply, smul_eq_mul,
-            Matrix.single_apply]
-          split_ifs with h
-          · rcases h with ⟨rfl, rfl⟩
-            linear_combination hcoeff
-          · simp only [neg_zero, mul_zero]
-      · rw [loweringMatrix_of_fork n hn hi]
-        have hcoeff := congrArg (fun z : ℤ => (z : K)) (forkCartanCoeff n hn i j hi)
-        simp only [Int.cast_add] at hcoeff
-        have hne := forkLeft_ne_forkRight n hn
-        ext (a | a) (b | b)
-        · simp [typeDDiagonalMatrix_lie_apply, Matrix.fromBlocks]
-        · simp [typeDDiagonalMatrix_lie_apply, Matrix.fromBlocks]
-        · by_cases h₁ : forkRight n hn = a ∧ forkLeft n hn = b
-          · have h₂ : ¬(forkLeft n hn = a ∧ forkRight n hn = b) := by
-              rintro ⟨hla, hrb⟩
-              exact forkLeft_ne_forkRight n hn (hla.trans h₁.1.symm)
-            rcases h₁ with ⟨rfl, rfl⟩
-            simpa [typeDDiagonalMatrix_lie_apply, Matrix.fromBlocks, Matrix.single_apply,
-              hne, sub_eq_add_neg, add_comm] using (congrArg Neg.neg hcoeff)
-          · by_cases h₂ : forkLeft n hn = a ∧ forkRight n hn = b
-            · rcases h₂ with ⟨rfl, rfl⟩
-              simpa [typeDDiagonalMatrix_lie_apply, Matrix.fromBlocks, Matrix.single_apply,
-                hne, add_comm] using hcoeff
-            · simp [typeDDiagonalMatrix_lie_apply, Matrix.fromBlocks, h₁, h₂]
-        · simp [typeDDiagonalMatrix_lie_apply, Matrix.fromBlocks]
+      exact lie_typeDDiagonalMatrix_loweringMatrix n hn i j
 
 /-! ## Nilpotence in the standard representation -/
 
