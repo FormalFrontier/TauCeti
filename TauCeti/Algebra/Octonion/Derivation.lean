@@ -7,7 +7,7 @@ module
 
 public import Mathlib.Algebra.Lie.SkewAdjoint
 public import TauCeti.Algebra.Lie.Derivation
-public import TauCeti.Algebra.Octonion
+public import TauCeti.Algebra.Octonion.Basic
 
 /-!
 # Derivations of the split octonions
@@ -34,8 +34,8 @@ So `D` maps all of `𝕆` into the imaginary octonions, commutes with conjugatio
 orthogonal Lie algebra of the norm: `Der 𝕆 ≤ 𝔰𝔬(N)`
 (`TauCeti.Octonion.derivationLieAlgebra_le_skewAdjointLieSubalgebra`). In particular the imaginary
 octonions are a Lie submodule (`TauCeti.Octonion.imaginaryLieSubmodule`) — this is the candidate
-`7`-dimensional fundamental representation — and, once `2` is invertible, `Der 𝕆` acts faithfully on
-it, since `𝕆 = R · 1 ⊕ Im 𝕆` and a derivation kills `1`.
+`7`-dimensional fundamental representation — and, when scalar multiplication by `2` is cancellable,
+`Der 𝕆` acts faithfully on it, since `𝕆 = R · 1 ⊕ Im 𝕆` and a derivation kills `1`.
 
 ## Main definitions
 
@@ -54,17 +54,18 @@ it, since `𝕆 = R · 1 ⊕ Im 𝕆` and a derivation kills `1`.
   bilinear form of the norm, `⟨D x, y⟩ = -⟨x, D y⟩`.
 * `TauCeti.Octonion.derivationLieAlgebra_le_skewAdjointLieSubalgebra`: `Der 𝕆 ≤ 𝔰𝔬(N)`, the
   previous item as an inclusion of Lie subalgebras of `Module.End R 𝕆`.
-* `TauCeti.Octonion.instIsFaithfulImaginaryLieSubmodule`: over a base in which `2` is invertible,
-  `Der 𝕆` acts faithfully on `Im 𝕆`.
-* `TauCeti.Octonion.diagonalDerivationEnd_mem` and
+* `TauCeti.Octonion.instIsFaithfulImaginaryLieSubmodule`: when scalar multiplication by `2` is
+  cancellable, `Der 𝕆` acts faithfully on `Im 𝕆`.
+* `TauCeti.Octonion.diagonalDerivation` and
   `TauCeti.Octonion.instNontrivialDerivationLieAlgebra`: the diagonal endomorphisms are derivations,
   so `Der 𝕆` is not the zero Lie algebra and none of the above is vacuous.
 
 ## Implementation notes
 
-Everything is stated over a commutative ring; the base is a field nowhere, and `2` is inverted only
-for the faithfulness instance, whose statement is false without it (over `𝔽₂` conjugation is the
-identity, so `Im 𝕆` contains `1` and the argument that `Im 𝕆` complements `R · 1` breaks down).
+Everything is stated over a commutative ring; the base is a field nowhere. The faithfulness instance
+only requires cancellation of scalar multiplication by `2`; some such hypothesis is necessary
+(over `𝔽₂` conjugation is the identity, so `Im 𝕆` contains `1` and the argument that `Im 𝕆`
+complements `R · 1` breaks down).
 
 The two coordinate extractions the argument needs — reading the `a` and `b` entries of an equation
 between multiples of `⟨1, 0, 0, 0⟩` and of `1` — are isolated in a private lemma, so no public
@@ -106,7 +107,7 @@ private theorem conj_eq_trace_smul_one_sub (x : Octonion R) :
   rw [← add_conj]
   abel
 
-/-- **A derivation anticommutes with conjugation.** It kills `1` and conjugation is the reflection
+/-- **A derivation negates conjugated inputs.** It kills `1` and conjugation is the reflection
 `x ↦ tr x · 1 - x`, so `D (conj x) = -D x`. Once the values of `D` are known to have vanishing
 trace this
 upgrades to `TauCeti.Octonion.derivation_apply_conj`, the statement that `D` commutes with
@@ -230,7 +231,7 @@ theorem derivation_apply_conj (x : Octonion R) :
 
 /-- **A derivation is skew for the norm form**, in the quadratic form of that statement:
 `⟨x, D x⟩ = 0`. This is the key identity once its left-hand side is known to vanish, and it is the
-infinitesimal version of `N (D x) = N x`. -/
+infinitesimal norm-preservation statement `d/dt|₀ N (x + t • D x) = 0`. -/
 @[simp]
 theorem polar_derivation_apply_self_eq_zero (x : Octonion R) :
     QuadraticMap.polar (normQuadraticForm R) x ((D : Module.End R (Octonion R)) x) = 0 := by
@@ -293,8 +294,10 @@ theorem mem_imaginaryLieSubmodule {x : Octonion R} :
 the derivation algebra to its candidate fundamental representation.
 
 A derivation kills `1`, and `x - conj x` is imaginary with `D (x - conj x) = 2 · D x`, so a
-derivation vanishing on the imaginary octonions vanishes outright as soon as `2` is invertible. -/
-instance instIsFaithfulImaginaryLieSubmodule [Invertible (2 : R)] :
+derivation vanishing on the imaginary octonions vanishes outright whenever scalar multiplication by
+`2` has no zero divisors. -/
+instance instIsFaithfulImaginaryLieSubmodule [NoZeroSMulDivisors R (Octonion R)]
+    [NeZero (2 : R)] :
     LieModule.IsFaithful R (derivationLieAlgebra R (Octonion R))
       (imaginaryLieSubmodule R) := by
   rw [LieModule.isFaithful_iff']
@@ -308,8 +311,8 @@ instance instIsFaithfulImaginaryLieSubmodule [Invertible (2 : R)] :
   have h₂ : (2 : R) • (D : Module.End R (Octonion R)) x = 0 := by
     rw [two_smul]
     exact h
-  have h₃ : (D : Module.End R (Octonion R)) x = 0 := by
-    simpa using congrArg (fun z : Octonion R => (⅟(2 : R)) • z) h₂
+  have h₃ : (D : Module.End R (Octonion R)) x = 0 :=
+    (eq_zero_or_eq_zero_of_smul_eq_zero h₂).resolve_left (NeZero.ne (2 : R))
   simp [h₃]
 
 /-! ### An explicit family of derivations
@@ -319,28 +322,24 @@ are some. `SL₃` acts on the Zorn vector matrices by `⟨a, b, v, w⟩ ↦ ⟨a
 differentiating that action at the identity along a traceless *diagonal* matrix `diag (r, s, -r-s)`
 gives the derivations below. -/
 
-/-- The endomorphism of `𝕆` scaling the vector entries by the traceless diagonal matrix
-`diag (r, s, -r-s)` and its negative transpose, and killing the scalar diagonal. It is a derivation
-(`TauCeti.Octonion.diagonalDerivationEnd_mem`), and `TauCeti.Octonion.diagonalDerivation` is the
-bundled form to use. As elsewhere in the split-octonion development the body is not exposed: the
-four projection `simp` lemmas below are the interface. -/
-def diagonalDerivationEnd (r s : R) : Module.End R (Octonion R) where
+/-- The endomorphism underlying `TauCeti.Octonion.diagonalDerivation`. -/
+private def diagonalDerivationEnd (r s : R) : Module.End R (Octonion R) where
   toFun x := ⟨0, 0, fun i => ![r, s, -r - s] i * x.v i, fun i => -(![r, s, -r - s] i) * x.w i⟩
   map_add' x y := by
     refine Octonion.ext ?_ ?_ (funext fun i => ?_) (funext fun i => ?_) <;> simp <;> ring
   map_smul' c x := by
     refine Octonion.ext ?_ ?_ (funext fun i => ?_) (funext fun i => ?_) <;> simp <;> ring
 
-@[simp] theorem diagonalDerivationEnd_apply_a (r s : R) (x : Octonion R) :
+@[simp] private theorem diagonalDerivationEnd_apply_a (r s : R) (x : Octonion R) :
     (diagonalDerivationEnd r s x).a = 0 := (rfl)
 
-@[simp] theorem diagonalDerivationEnd_apply_b (r s : R) (x : Octonion R) :
+@[simp] private theorem diagonalDerivationEnd_apply_b (r s : R) (x : Octonion R) :
     (diagonalDerivationEnd r s x).b = 0 := (rfl)
 
-@[simp] theorem diagonalDerivationEnd_apply_v (r s : R) (x : Octonion R) (i : Fin 3) :
+@[simp] private theorem diagonalDerivationEnd_apply_v (r s : R) (x : Octonion R) (i : Fin 3) :
     (diagonalDerivationEnd r s x).v i = ![r, s, -r - s] i * x.v i := (rfl)
 
-@[simp] theorem diagonalDerivationEnd_apply_w (r s : R) (x : Octonion R) (i : Fin 3) :
+@[simp] private theorem diagonalDerivationEnd_apply_w (r s : R) (x : Octonion R) (i : Fin 3) :
     (diagonalDerivationEnd r s x).w i = -(![r, s, -r - s] i) * x.w i := (rfl)
 
 section Coordinates
@@ -353,7 +352,7 @@ attribute [local simp] vec3_dotProduct cross_apply Matrix.vecHead Matrix.vecTail
 `v ⬝ᵥ w'` pick up opposite scalings and cancel; on the vector entries the Leibniz rule is the
 infinitesimal Cauchy--Binet relation `(c ⊙ u) ⨯₃ w + u ⨯₃ (c ⊙ w) = -c ⊙ (u ⨯₃ w)`, valid exactly
 because `r + s + (-r - s) = 0`. -/
-theorem diagonalDerivationEnd_mem (r s : R) :
+private theorem diagonalDerivationEnd_mem (r s : R) :
     diagonalDerivationEnd r s ∈ derivationLieAlgebra R (Octonion R) := by
   rw [mem_derivationLieAlgebra]
   intro x y
@@ -371,10 +370,19 @@ vacuous: `TauCeti.Octonion.instNontrivialDerivationLieAlgebra`. -/
 def diagonalDerivation (r s : R) : derivationLieAlgebra R (Octonion R) :=
   ⟨diagonalDerivationEnd r s, diagonalDerivationEnd_mem r s⟩
 
-@[simp]
-theorem coe_diagonalDerivation (r s : R) :
-    (diagonalDerivation r s : Module.End R (Octonion R)) = diagonalDerivationEnd r s :=
-  (rfl)
+@[simp] theorem diagonalDerivation_apply_a (r s : R) (x : Octonion R) :
+    ((diagonalDerivation r s : Module.End R (Octonion R)) x).a = 0 := (rfl)
+
+@[simp] theorem diagonalDerivation_apply_b (r s : R) (x : Octonion R) :
+    ((diagonalDerivation r s : Module.End R (Octonion R)) x).b = 0 := (rfl)
+
+@[simp] theorem diagonalDerivation_apply_v (r s : R) (x : Octonion R) (i : Fin 3) :
+    ((diagonalDerivation r s : Module.End R (Octonion R)) x).v i =
+      ![r, s, -r - s] i * x.v i := (rfl)
+
+@[simp] theorem diagonalDerivation_apply_w (r s : R) (x : Octonion R) (i : Fin 3) :
+    ((diagonalDerivation r s : Module.End R (Octonion R)) x).w i =
+      -(![r, s, -r - s] i) * x.w i := (rfl)
 
 /-- **`𝕆` has nonzero derivations**, so the derivation algebra whose skewness the rest of this file
 establishes is not the zero Lie algebra. The witness is the diagonal derivation
