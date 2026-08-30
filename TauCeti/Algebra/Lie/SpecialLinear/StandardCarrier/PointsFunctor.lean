@@ -114,17 +114,24 @@ theorem coe_pointsMap_apply (f : A →+* B) (g : points r A) (i j : Fin (r + 1))
 
 /-- The identity homomorphism of value rings induces the identity on type-`A_r` carrier points. -/
 @[simp]
-theorem pointsMap_id : pointsMap r (RingHom.id A) = MonoidHom.id _ :=
-  MonoidHom.ext fun g => Subtype.ext (Matrix.GeneralLinearGroup.ext fun i j => by
-    rw [coe_pointsMap_apply, MonoidHom.id_apply, RingHom.id_apply])
+theorem pointsMap_id : pointsMap r (RingHom.id A) = MonoidHom.id _ := by
+  have hid : (RingHom.id A).toIntAlgHom = AlgHom.id ℤ A :=
+    AlgHom.ext fun _ ↦ rfl
+  rw [pointsMap, hid, GeneralLinear.mapHopfIdealPointsSubgroup_id]
+  apply MonoidHom.ext
+  intro g
+  exact (MulEquiv.subgroupCongr (points_def r A)).symm_apply_apply g
 
 /-- The induced maps on type-`A_r` carrier points compose. -/
 @[simp]
 theorem pointsMap_comp {C : Type*} [CommRing C] (f : A →+* B) (g : B →+* C) :
-    pointsMap r (g.comp f) = (pointsMap r g).comp (pointsMap r f) :=
-  MonoidHom.ext fun x => Subtype.ext (Matrix.GeneralLinearGroup.ext fun i j => by
-    rw [coe_pointsMap_apply, MonoidHom.comp_apply, coe_pointsMap_apply, coe_pointsMap_apply,
-      RingHom.comp_apply])
+    pointsMap r (g.comp f) = (pointsMap r g).comp (pointsMap r f) := by
+  have hcomp : (g.comp f).toIntAlgHom = g.toIntAlgHom.comp f.toIntAlgHom :=
+    AlgHom.ext fun _ ↦ rfl
+  apply MonoidHom.ext
+  intro x
+  simp only [pointsMap, MonoidHom.comp_apply, MulEquiv.coe_toMonoidHom, hcomp,
+    GeneralLinear.mapHopfIdealPointsSubgroup_comp, MulEquiv.apply_symm_apply]
 
 /-- An injective homomorphism of value rings induces an injective map on type-`A_r` carrier
 points. -/
