@@ -165,14 +165,12 @@ theorem evalAlgHom_mk (h : (W⁄A).toAffine.Equation x y) (p : R[X][Y]) :
   exact eval₂_eval₂RingHom_apply (algebraMap R A) x y p
 
 /-- Evaluation sends the coordinate-ring class of `X` to the first coordinate `x`. -/
-@[simp]
 theorem evalAlgHom_mk_C_X (h : (W⁄A).toAffine.Equation x y) :
     evalAlgHom h (CoordinateRing.mk W (C X)) = x := by
   rw [evalAlgHom_mk]
   simp [evalEval_C]
 
 /-- Evaluation sends the coordinate-ring class of `Y` to the second coordinate `y`. -/
-@[simp]
 theorem evalAlgHom_mk_Y (h : (W⁄A).toAffine.Equation x y) :
     evalAlgHom h (CoordinateRing.mk W Y) = y := by
   rw [evalAlgHom_mk]
