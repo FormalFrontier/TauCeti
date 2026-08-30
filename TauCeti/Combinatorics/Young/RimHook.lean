@@ -323,7 +323,9 @@ theorem IsCorner.isRimHook_erase (hc : IsCorner μ c) : IsRimHook μ (erase μ c
   · have hxc := hmem x hx
     have hyc := hmem y hy
     obtain ⟨hxz, hzy⟩ := Set.mem_Icc.mp hz
-    rw [show z = c.1 by omega]
+    -- Both endpoints are the corner's row, so the row `z` between them is that row too.
+    have hzc : z = c.1 := by omega
+    subst hzc
     exact hc1
   · have h1 := hmem i hi
     have h2 := hmem (i + 1) hi'
@@ -397,6 +399,7 @@ theorem card_filter_betaNumber (h : IsRimHook μ ν) (hab : μ.rimHookRows ν = 
     ((Finset.range r).filter fun i => ν.betaNumber r b < μ.betaNumber r i ∧
         μ.betaNumber r i < μ.betaNumber r a).card = μ.rimHookHeight ν := by
   have hle := h.le_of_rimHookRows_eq_Icc hab
+  have har : a < r := by omega
   have hb := rowLen_lt_of_rimHookRows_eq_Icc hab hle le_rfl
   have hbeta : ν.betaNumber r b < μ.betaNumber r b := by
     rw [betaNumber_def, betaNumber_def]; omega
@@ -412,7 +415,7 @@ theorem card_filter_betaNumber (h : IsRimHook μ ν) (hab : μ.rimHookRows ν = 
         · exfalso
           rcases eq_or_lt_of_le h1 with rfl | h2
           · omega
-          · have := μ.betaNumber_lt_betaNumber h2 (show a < r by omega)
+          · have := μ.betaNumber_lt_betaNumber h2 har
             omega
       · by_contra hib'
         have hib : b < i := Nat.not_le.mp hib'
