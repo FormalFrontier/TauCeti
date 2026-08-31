@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.Algebra.Lie.Quotient
 public import Mathlib.Algebra.Lie.Semisimple.Basic
 
 /-!
@@ -15,12 +16,13 @@ submodules of `N` itself, whereas `IsAtom N` is a statement about the position o
 lattice `LieSubmodule R L M` of the Lie submodules of the ambient module. This file proves that the
 two agree, so that a lattice-theoretic decomposition into atoms may be read as a decomposition into
 irreducibles. It also records that every nonzero vector of an irreducible module generates the whole
-module as a Lie submodule.
+module as a Lie submodule, and, dually, that the quotient by a coatom is irreducible.
 
 Both directions move along the inclusion `N.incl : N →ₗ⁅R,L⁆ M`, whose `map` and `comap` connect
 the two lattices: `LieSubmodule.map_incl_lt_iff_lt_top` says that a proper Lie submodule of `N`
 maps to a Lie submodule strictly below `N`, while `LieSubmodule.comap_incl_eq_top` and
-`LieSubmodule.comap_incl_eq_bot` read the two extremes of a comap back in the ambient module.
+`LieSubmodule.comap_incl_eq_bot` read the two extremes of a comap back in the ambient module. The
+coatom statement runs the same way along the projection `LieSubmodule.Quotient.mk' N` instead.
 
 ## Main results
 
@@ -30,6 +32,8 @@ maps to a Lie submodule strictly below `N`, while `LieSubmodule.comap_incl_eq_to
   generates the whole module.
 * `TauCeti.lieSpan_singleton_eq_top_of_lieSpan_eq`: the generator of a cyclic Lie submodule
   generates that submodule, read as a Lie module in its own right.
+* `TauCeti.isIrreducible_quotient_of_isCoatom`: the quotient of a Lie module by a coatom of its
+  lattice of Lie submodules is irreducible.
 
 ## References
 
@@ -94,5 +98,39 @@ theorem isIrreducible_iff_isAtom (N : LieSubmodule R L M) :
     have hmem : (z : M) ∈ W.map N.incl := ⟨z, hz, rfl⟩
     rw [hbot] at hmem
     exact Subtype.ext (by simpa using hmem)
+
+variable [LieAlgebra R L] [LieModule R L M]
+
+/-- **The quotient by a coatom is irreducible.** A Lie submodule of `M ⧸ N` pulls back along the
+projection to a Lie submodule of `M` containing `N`, which a coatom `N` forces to be either `N`
+itself, when the submodule is `⊥`, or all of `M`, when it is `⊤`.
+
+This is the Lie analogue of `isSimpleModule_iff_isCoatom`, which does not apply: the Lie submodules
+of `M ⧸ N` are not the submodules of `M ⧸ N`. Only the direction stated is needed, the converse
+being the easy one. -/
+theorem isIrreducible_quotient_of_isCoatom {N : LieSubmodule R L M} (hN : IsCoatom N) :
+    LieModule.IsIrreducible R L (M ⧸ N) := by
+  obtain ⟨m, hm⟩ : ∃ m : M, m ∉ N := by
+    by_contra hcon
+    push Not at hcon
+    exact hN.1 (eq_top_iff.mpr fun x _ ↦ hcon x)
+  have : Nontrivial (M ⧸ N) :=
+    ⟨LieSubmodule.Quotient.mk' N m, 0, by rwa [Ne, LieSubmodule.Quotient.mk_eq_zero]⟩
+  refine LieModule.IsIrreducible.mk fun P hP ↦ ?_
+  have hle : N ≤ P.comap (LieSubmodule.Quotient.mk' N) := fun x hx ↦
+    LieSubmodule.mem_comap.mpr (by
+      rw [(LieSubmodule.Quotient.mk_eq_zero _).mpr hx]; exact P.zero_mem)
+  rcases hle.lt_or_eq with hlt | heq
+  · have htop := hN.2 _ hlt
+    refine eq_top_iff.mpr fun q _ ↦ ?_
+    obtain ⟨x, rfl⟩ := LieSubmodule.Quotient.surjective_mk' N q
+    have hx : x ∈ P.comap (LieSubmodule.Quotient.mk' N) := by
+      rw [htop]; exact LieSubmodule.mem_top x
+    exact LieSubmodule.mem_comap.mp hx
+  · refine absurd ((LieSubmodule.eq_bot_iff P).mpr fun q hq ↦ ?_) hP
+    obtain ⟨x, rfl⟩ := LieSubmodule.Quotient.surjective_mk' N q
+    have hx : x ∈ P.comap (LieSubmodule.Quotient.mk' N) := LieSubmodule.mem_comap.mpr hq
+    rw [← heq] at hx
+    exact (LieSubmodule.Quotient.mk_eq_zero _).mpr hx
 
 end TauCeti
