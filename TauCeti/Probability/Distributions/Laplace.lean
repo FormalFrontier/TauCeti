@@ -12,7 +12,6 @@ public import Mathlib.Probability.Moments.Basic
 public import Mathlib.Probability.Moments.IntegrableExpMul
 public import Mathlib.Probability.Moments.Variance
 import TauCeti.Analysis.Fourier.ExpNegAbs
-import TauCeti.MeasureTheory.Integral.ExpDecay
 import Mathlib.Analysis.SpecialFunctions.Gaussian.GaussianIntegral
 import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
 import Mathlib.MeasureTheory.Function.JacobianOneDim
@@ -68,10 +67,10 @@ mass `1` is the sum of the two halves at `x = μ`.
 The moments take a different route. Translating by the location with
 `MeasureTheory.integral_sub_right_eq_self` makes the integrand a function of `|x|`, and Mathlib's
 `integral_comp_abs` folds that onto the positive half-line, where the moment is the polynomially
-weighted exponential integral `TauCeti.integral_pow_mul_exp_neg_mul_Ioi`. The mean is *not* computed
-from a first
-moment: the translated integrand is odd, so the whole integral vanishes by the reflection
-invariance of Lebesgue measure, and the variance is the second absolute central moment.
+weighted exponential integral `TauCeti.integral_pow_mul_exp_neg_mul_Ioi`. The mean is *not*
+computed from a first moment: the translated integrand is odd, so the whole integral vanishes by
+the reflection invariance of Lebesgue measure, and the variance is the second absolute central
+moment.
 
 ## References
 
