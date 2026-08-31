@@ -110,8 +110,7 @@ noncomputable def baseChangeDefiningIdeal :
     (isNilpotent_rep_rootGenerator n hn) (latticeBasis n) (basisWeight n) A
 
 /-- The transported defining ideal is the one supplied by the generic Kostant toral-closure base
-change. The module system does not expose a definition's body outside its own module, so this is
-the form in which downstream files rewrite with the definition. -/
+change. -/
 theorem baseChangeDefiningIdeal_def :
     baseChangeDefiningIdeal n hn A =
       kostantToralBaseChangePresentationIdeal
@@ -256,12 +255,8 @@ noncomputable def rootSubgroupToBaseChangeCoordinateMap (k : Fin n ⊕ Fin n) :
     (rep_kostantForm_mem_lattice n hn)
     (isNilpotent_rep_rootGenerator n hn) (latticeBasis n) (basisWeight n) A k
 
-/-- The factored root-subgroup map recovers its ambient transported coordinate map.
-
-Since `CommHopfAlgCat.mkQuotient` is an epimorphism this determines the factored map, which is
-why no separate defining equation for it is stated: its source is spelled with
-`TauCeti.TypeDSpinCarrier.baseChangeDefiningIdeal`, so such an equation would need an
-`eqToHom` transport. -/
+/-- The factored root-subgroup map recovers its ambient transported coordinate map after composition
+with the quotient map. -/
 @[simp]
 theorem mkQuotient_comp_rootSubgroupToBaseChangeCoordinateMap
     (k : Fin n ⊕ Fin n) :
