@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Algebra.Lie.ExteriorPower
 public import TauCeti.Algebra.Lie.GeneralLinear.HighestWeight
+public import Mathlib.Algebra.Lie.Semisimple.Defs
 import Mathlib.Algebra.Lie.Matrix
 import Mathlib.LinearAlgebra.ExteriorPower.Basis
 
