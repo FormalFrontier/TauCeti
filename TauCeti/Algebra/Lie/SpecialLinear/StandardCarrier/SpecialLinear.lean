@@ -34,8 +34,8 @@ explicit carrier with the coordinate Hopf algebra of `SL_{r+1}`.
 
 * `TauCeti.SlStd.mem_baseChangeDefiningPointsSubgroup_iff_mem_points`: on base-ring-valued
   points, the transported carrier equations cut out the original integral carrier's matrices.
-* `TauCeti.SlStd.baseChangeDefiningIdeal_eq_specialLinear`: over an algebraically closed field,
-  the transported carrier and special-linear defining ideals agree.
+* `TauCeti.SlStd.baseChangeDefiningIdeal_eq_specialLinearDefiningHopfIdeal`: over an
+  algebraically closed field, the transported carrier and special-linear defining ideals agree.
 * `TauCeti.SlStd.baseChangeCoordinateSpecialLinearIso`: the induced coordinate Hopf-algebra
   isomorphism with `SL_{r+1}`.
 
@@ -64,6 +64,14 @@ noncomputable section
 attribute [local instance high] Algebra.toModule
 
 variable (r : ℕ)
+
+/-- Mapping an invertible matrix along a ring homomorphism identified with the identity leaves
+the matrix unchanged. This isolates the identity-map coercion used in both transport directions. -/
+private theorem generalLinearMap_eq_self_of_ringHom_eq_id
+    {k : Type u} [CommRing k] (n : ℕ) (φ : k →+* k) (hφ : φ = RingHom.id k)
+    (g : Matrix.GeneralLinearGroup (Fin n) k) :
+    Matrix.GeneralLinearGroup.map φ g = g := by
+  rw [hφ, Matrix.GeneralLinearGroup.map_id, MonoidHom.id_apply]
 
 /-- A base-ring-valued point satisfies the transported defining equations of the type `A_r`
 carrier exactly when its underlying matrix is a point of the original integral carrier. This
@@ -115,10 +123,7 @@ theorem mem_baseChangeDefiningPointsSubgroup_iff_mem_points
       rw [HopfAlgebra.mapPoints_apply, hχ]
       dsimp only [qZraw]
       rw [← hmatrix]
-      apply Matrix.GeneralLinearGroup.ext
-      intro i j
-      change (RingHom.id k) _ = _
-      rfl
+      exact generalLinearMap_eq_self_of_ringHom_eq_id (r + 1) (RingHom.id k) rfl _
     have hmem : GeneralLinear.pointsMulEquiv (r + 1)
         (CommHopfAlgCat.quotientPointsHom
           (GeneralLinear.coordinateHopfAlgebra ℤ (r + 1)) I (CommAlgCat.of ℤ k) qZ) ∈
@@ -168,10 +173,7 @@ theorem mem_baseChangeDefiningPointsSubgroup_iff_mem_points
         (GeneralLinear.coordinateHopfAlgebra ℤ (r + 1)) (↑C) _ _ _ _ C.algebra
         (↑BZ) _ BZ.algebra χ.hom _] at hχ
       rw [HopfAlgebra.mapPoints_apply, hχ]
-      apply Matrix.GeneralLinearGroup.ext
-      intro i j
-      change (RingHom.id k) _ = _
-      rfl
+      exact generalLinearMap_eq_self_of_ringHom_eq_id (r + 1) (RingHom.id k) rfl _
     have hleft : GeneralLinear.pointsMulEquiv (r + 1)
         (CommHopfAlgCat.quotientPointsHom
           (GeneralLinear.coordinateHopfAlgebra ℤ (r + 1)) I (CommAlgCat.of ℤ k) qZ) =
@@ -217,7 +219,7 @@ theorem specialLinearDefiningHopfIdeal_le_baseChangeDefiningIdeal
 type `A_r` carrier is the determinant-one ideal.** Thus the explicit carrier obtained from the
 Kostant construction is scheme-theoretically `SL_{r+1}`, not merely equal to it on field-valued
 points. -/
-theorem baseChangeDefiningIdeal_eq_specialLinear
+theorem baseChangeDefiningIdeal_eq_specialLinearDefiningHopfIdeal
     (k : Type u) [Field k] [IsAlgClosed k] :
     baseChangeDefiningIdeal r k = SpecialLinear.definingHopfIdeal k (r + 1) := by
   let _ : IsReduced (SpecialLinear.coordinateHopfAlgebra k (r + 1)) :=
@@ -241,7 +243,7 @@ noncomputable def baseChangeCoordinateSpecialLinearIso
       SpecialLinear.coordinateHopfAlgebra k (r + 1) :=
   eqToIso (congrArg (CommHopfAlgCat.quotient
     (GeneralLinear.coordinateHopfAlgebra k (r + 1)))
-      (baseChangeDefiningIdeal_eq_specialLinear r k))
+      (baseChangeDefiningIdeal_eq_specialLinearDefiningHopfIdeal r k))
 
 private theorem mkQuotient_comp_eqToIso {R : Type u} [CommRing R]
     {H : _root_.CommHopfAlgCat R} {I J : HopfIdeal R H} (hIJ : I = J) :
@@ -260,7 +262,8 @@ theorem mkQuotient_comp_baseChangeCoordinateSpecialLinearIso_hom
           (baseChangeDefiningIdeal r k) ≫
         (baseChangeCoordinateSpecialLinearIso r k).hom =
       SpecialLinear.coordinateMap k (r + 1) := by
-  exact mkQuotient_comp_eqToIso (baseChangeDefiningIdeal_eq_specialLinear r k)
+  exact mkQuotient_comp_eqToIso
+    (baseChangeDefiningIdeal_eq_specialLinearDefiningHopfIdeal r k)
 
 end
 
