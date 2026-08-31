@@ -250,7 +250,9 @@ section KernelPoints
 variable {H₀ K₀ : _root_.CommHopfAlgCat.{v} R} {f₀ : H₀ ⟶ K₀}
 
 /-- Every point in the kernel of a central isogeny is central in its source group. This is
-the functor-of-points meaning of the central-kernel condition. -/
+the functor-of-points meaning of the central-kernel condition. For a morphism assumed only to have
+central kernel, combine `mapPointsFunctor_app_eq_one_iff` with
+`isCentralPoint_of_mem_quotientPointsSubgroup`. -/
 theorem IsCentralIsogeny.isCentralPoint_of_mapPoints_eq_one
     (hf : IsCentralIsogeny f₀) (A : CommAlgCat.{w} R)
     (g : HopfAlgebra.points (R := R) (H := K₀) A)
