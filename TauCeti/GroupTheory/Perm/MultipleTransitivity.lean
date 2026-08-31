@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.GroupTheory.GroupAction.Jordan
+public import TauCeti.GroupTheory.Perm.Basic
 
 /-!
 # Long cycles and double transitivity
@@ -46,14 +47,6 @@ namespace TauCeti
 open MulAction
 
 variable {α : Type*} [Fintype α] [DecidableEq α]
-
-/-- A permutation moves all but one point exactly when it has a unique fixed point. -/
-theorem card_support_add_one_eq_card_iff_existsUnique_fixedPoint (σ : Equiv.Perm α) :
-    σ.support.card + 1 = Fintype.card α ↔ ∃! x : α, σ x = x := by
-  have hfixed : (∃! x : α, x ∈ σ.supportᶜ) ↔ ∃! x : α, σ x = x := by
-    simp only [Finset.mem_compl, Equiv.Perm.notMem_support]
-  rw [← hfixed, ← Finset.card_eq_one_iff_existsUnique, Finset.card_compl]
-  omega
 
 /-- A transitive subgroup of a finite symmetric group that contains a cycle moving all but one
 point is doubly transitive. -/
