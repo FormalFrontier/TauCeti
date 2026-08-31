@@ -12,7 +12,6 @@ public import TauCeti.Probability.Exchangeability.Arrays.Coding
 -- Non-public: measurability of pushforward on probability measures is used in the symmetry proof.
 import TauCeti.MeasureTheory.Measure.Measurability
 import TauCeti.MeasureTheory.Measure.GiryMonad
-import TauCeti.Probability.Exchangeability.ConditionallyIID.Map
 
 /-!
 # Coupled row coding for separately exchangeable arrays
@@ -278,7 +277,10 @@ theorem map_pairReindex_arrayRowCodingLaw_eq_of_col_invariant
     have hz : z = c ∘ r := by
       funext x i
       rfl
-    change (Measure.infinitePi fun _ : ℕ => (P : Measure (ℕ → α))).map z = _
+    have hgz : g = z := by
+      funext x i
+      rfl
+    rw [hgz]
     rw [hz, ← Measure.map_map hc hr, hrow, hcol]
   have hfib (P : ProbabilityMeasure (ℕ → α)) :
       ((Measure.dirac P).prod
@@ -292,10 +294,8 @@ theorem map_pairReindex_arrayRowCodingLaw_eq_of_col_invariant
       (Measure.dirac P).prod (Measure.infinitePi fun _ : ℕ => (P : Measure (ℕ → α))) :=
     TauCeti.MeasureTheory.measurable_dirac_prod_infinitePi_const id measurable_id
   have hmix : (iidMixtureLaw π id).map J = iidMixtureLaw (π.map f) id := by
-    change Measure.map J (π.bind fun t =>
-      (Measure.dirac t).prod (Measure.infinitePi fun _ : ℕ => (t : Measure (ℕ → α)))) =
-      (π.map f).bind fun t =>
-        (Measure.dirac t).prod (Measure.infinitePi fun _ : ℕ => (t : Measure (ℕ → α)))
+    rw [iidMixtureLaw_def, iidMixtureLaw_def]
+    simp only [id_eq]
     rw [TauCeti.MeasureTheory.map_bind hkernel.aemeasurable hJ]
     simp_rw [hfib]
     rw [TauCeti.MeasureTheory.bind_map hf.aemeasurable hkernel.aemeasurable]
