@@ -91,17 +91,15 @@ theorem rightNumericalMap_mk (g : M →ₗ[R] M')
 
 /-- The identity of the left argument induces the identity on the left numerical quotient. -/
 @[simp]
-theorem leftNumericalMap_id
-    (h : leftRadical b ≤ (leftRadical b).comap LinearMap.id) :
-    leftNumericalMap b b LinearMap.id h = LinearMap.id :=
-  Submodule.mapQ_id (leftRadical b) h
+theorem leftNumericalMap_id :
+    leftNumericalMap b b LinearMap.id (by rw [Submodule.comap_id]) = LinearMap.id :=
+  Submodule.mapQ_id (leftRadical b)
 
 /-- The identity of the right argument induces the identity on the right numerical quotient. -/
 @[simp]
-theorem rightNumericalMap_id
-    (h : rightRadical b ≤ (rightRadical b).comap LinearMap.id) :
-    rightNumericalMap b b LinearMap.id h = LinearMap.id :=
-  Submodule.mapQ_id (rightRadical b) h
+theorem rightNumericalMap_id :
+    rightNumericalMap b b LinearMap.id (by rw [Submodule.comap_id]) = LinearMap.id :=
+  Submodule.mapQ_id (rightRadical b)
 
 variable (d : L'' →ₗ[R] M'' →ₗ[R] P)
 
@@ -109,21 +107,19 @@ variable (d : L'' →ₗ[R] M'' →ₗ[R] P)
 quotients. -/
 theorem leftNumericalMap_comp (f : L →ₗ[R] L') (g : L' →ₗ[R] L'')
     (hf : leftRadical b ≤ (leftRadical c).comap f)
-    (hg : leftRadical c ≤ (leftRadical d).comap g)
-    (hgf : leftRadical b ≤ (leftRadical d).comap (g.comp f)) :
-    leftNumericalMap b d (g.comp f) hgf =
+    (hg : leftRadical c ≤ (leftRadical d).comap g) :
+    leftNumericalMap b d (g.comp f) (hf.trans (Submodule.comap_mono hg)) =
       (leftNumericalMap c d g hg).comp (leftNumericalMap b c f hf) :=
-  Submodule.mapQ_comp (leftRadical b) (leftRadical c) (leftRadical d) f g hf hg hgf
+  Submodule.mapQ_comp (leftRadical b) (leftRadical c) (leftRadical d) f g hf hg
 
 /-- Composition of right-argument maps induces composition of the maps on right numerical
 quotients. -/
 theorem rightNumericalMap_comp (f : M →ₗ[R] M') (g : M' →ₗ[R] M'')
     (hf : rightRadical b ≤ (rightRadical c).comap f)
-    (hg : rightRadical c ≤ (rightRadical d).comap g)
-    (hgf : rightRadical b ≤ (rightRadical d).comap (g.comp f)) :
-    rightNumericalMap b d (g.comp f) hgf =
+    (hg : rightRadical c ≤ (rightRadical d).comap g) :
+    rightNumericalMap b d (g.comp f) (hf.trans (Submodule.comap_mono hg)) =
       (rightNumericalMap c d g hg).comp (rightNumericalMap b c f hf) :=
-  Submodule.mapQ_comp (rightRadical b) (rightRadical c) (rightRadical d) f g hf hg hgf
+  Submodule.mapQ_comp (rightRadical b) (rightRadical c) (rightRadical d) f g hf hg
 
 end Maps
 
@@ -134,7 +130,7 @@ variable (f : L →ₗ[R] L') (g : M →ₗ[R] M')
 
 /-- If a pair of maps preserves a pairing and the right map is surjective, then the left map sends
 the left radical into the target left radical. -/
-theorem leftRadical_le_comap_of_pairing (hg : Function.Surjective g)
+theorem leftRadical_le_comap_of_surjective_of_pairing (hg : Function.Surjective g)
     (hpair : ∀ x y, c (f x) (g y) = b x y) :
     leftRadical b ≤ (leftRadical c).comap f := by
   intro x hx
@@ -146,7 +142,7 @@ theorem leftRadical_le_comap_of_pairing (hg : Function.Surjective g)
 
 /-- If a pair of maps preserves a pairing and the left map is surjective, then the right map sends
 the right radical into the target right radical. -/
-theorem rightRadical_le_comap_of_pairing (hf : Function.Surjective f)
+theorem rightRadical_le_comap_of_surjective_of_pairing (hf : Function.Surjective f)
     (hpair : ∀ x y, c (f x) (g y) = b x y) :
     rightRadical b ≤ (rightRadical c).comap g := by
   intro y hy
@@ -181,7 +177,7 @@ theorem map_leftRadical_eq (hpair : ∀ x y, c (f x) (g y) = b x y) :
     (leftRadical b).map (f : L →ₗ[R] L') = leftRadical c := by
   apply le_antisymm
   · rw [Submodule.map_le_iff_le_comap]
-    exact leftRadical_le_comap_of_pairing b c f g g.surjective hpair
+    exact leftRadical_le_comap_of_surjective_of_pairing b c f g g.surjective hpair
   · intro x' hx'
     obtain ⟨x, rfl⟩ := f.surjective x'
     refine ⟨x, ?_, rfl⟩
@@ -194,7 +190,7 @@ theorem map_rightRadical_eq (hpair : ∀ x y, c (f x) (g y) = b x y) :
     (rightRadical b).map (g : M →ₗ[R] M') = rightRadical c := by
   apply le_antisymm
   · rw [Submodule.map_le_iff_le_comap]
-    exact rightRadical_le_comap_of_pairing b c f g f.surjective hpair
+    exact rightRadical_le_comap_of_surjective_of_pairing b c f g f.surjective hpair
   · intro y' hy'
     obtain ⟨y, rfl⟩ := g.surjective y'
     refine ⟨y, ?_, rfl⟩
@@ -223,8 +219,7 @@ theorem leftNumericalEquiv_mk (hpair : ∀ x y, c (f x) (g y) = b x y) (x : L) :
     leftNumericalEquiv b c f g hpair (leftNumericalQuotientMk b x) =
       leftNumericalQuotientMk c (f x) := by
   simp only [leftNumericalEquiv, Submodule.Quotient.equiv_apply,
-    leftNumericalQuotientMk_apply, Submodule.mapQ_apply]
-  rfl
+    leftNumericalQuotientMk_apply, Submodule.mapQ_apply, LinearEquiv.coe_coe]
 
 /-- The induced equivalence of right numerical quotients sends a representative to the class of
 its image. -/
@@ -233,8 +228,23 @@ theorem rightNumericalEquiv_mk (hpair : ∀ x y, c (f x) (g y) = b x y) (y : M) 
     rightNumericalEquiv b c f g hpair (rightNumericalQuotientMk b y) =
       rightNumericalQuotientMk c (g y) := by
   simp only [rightNumericalEquiv, Submodule.Quotient.equiv_apply,
-    rightNumericalQuotientMk_apply, Submodule.mapQ_apply]
-  rfl
+    rightNumericalQuotientMk_apply, Submodule.mapQ_apply, LinearEquiv.coe_coe]
+
+/-- The inverse induced equivalence of left numerical quotients sends a representative to the
+class of its inverse image. -/
+@[simp]
+theorem leftNumericalEquiv_symm_mk (hpair : ∀ x y, c (f x) (g y) = b x y) (x : L') :
+    (leftNumericalEquiv b c f g hpair).symm (leftNumericalQuotientMk c x) =
+      leftNumericalQuotientMk b (f.symm x) := by
+  rw [LinearEquiv.symm_apply_eq, leftNumericalEquiv_mk, LinearEquiv.apply_symm_apply]
+
+/-- The inverse induced equivalence of right numerical quotients sends a representative to the
+class of its inverse image. -/
+@[simp]
+theorem rightNumericalEquiv_symm_mk (hpair : ∀ x y, c (f x) (g y) = b x y) (y : M') :
+    (rightNumericalEquiv b c f g hpair).symm (rightNumericalQuotientMk c y) =
+      rightNumericalQuotientMk b (g.symm y) := by
+  rw [LinearEquiv.symm_apply_eq, rightNumericalEquiv_mk, LinearEquiv.apply_symm_apply]
 
 /-- The equivalences induced on the two numerical quotients preserve the numerical pairing. -/
 theorem numericalPairing_equiv_equiv
