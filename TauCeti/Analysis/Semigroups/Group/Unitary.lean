@@ -77,15 +77,13 @@ operators, this condition forces complex linearity; see `IsUnitary.map_smul`. -/
 def IsUnitary (U : StronglyContinuousGroup H) : Prop :=
   ∀ t x y, ⟪U t x, U t y⟫_ℂ = ⟪x, y⟫_ℂ
 
-/-- A strongly continuous group is unitary exactly when each operator preserves the inner
-product. -/
-theorem isUnitary_iff (U : StronglyContinuousGroup H) :
-    U.IsUnitary ↔ ∀ t x y, ⟪U t x, U t y⟫_ℂ = ⟪x, y⟫_ℂ :=
-  Iff.rfl
-
 namespace IsUnitary
 
 variable {U : StronglyContinuousGroup H}
+
+/-- Construct a unitary group from inner-product preservation by each of its operators. -/
+theorem intro (hU : ∀ t x y, ⟪U t x, U t y⟫_ℂ = ⟪x, y⟫_ℂ) : U.IsUnitary :=
+  hU
 
 /-- Every operator of a unitary strongly continuous group preserves the complex inner product. -/
 @[simp]
