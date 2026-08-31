@@ -228,7 +228,7 @@ theorem bivectorExterior_range_le_of_bivector_mem
   exact hP _ _
 
 /-- Clifford reversal negates the image of the exterior-square bivector map. -/
-theorem reverse_bivectorExterior (x : ⋀[R]^2 M) :
+@[simp] theorem reverse_bivectorExterior (x : ⋀[R]^2 M) :
     reverse (bivectorExterior Q x) = -bivectorExterior Q x := by
   let P : Submodule R (CliffordAlgebra Q) :=
     LinearMap.eqLocus (reverse (Q := Q)) (-LinearMap.id)

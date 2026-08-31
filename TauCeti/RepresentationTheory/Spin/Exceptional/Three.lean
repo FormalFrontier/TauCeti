@@ -8,28 +8,32 @@ module
 public import TauCeti.RepresentationTheory.Spin.OddStructure
 
 import TauCeti.LinearAlgebra.CliffordAlgebra.Bivector
+public import TauCeti.LinearAlgebra.CliffordAlgebra.Grading
 import TauCeti.LinearAlgebra.Matrix.AdjugateFinTwo
 
 
 /-!
 # The even Clifford algebra in dimension three
 
-In dimension three the even Clifford algebra consists of scalars and Clifford bivectors.  Reversal
-fixes the scalar summand and negates the bivector summand.  Consequently every algebra
-equivalence from the even Clifford algebra to two-by-two matrices carries reversal to matrix
-adjugation.
+In dimension three over a field with `NeZero (2 : K)`, the even Clifford algebra consists of
+scalars and Clifford bivectors.  Reversal fixes the scalar summand and negates the bivector
+summand.  Consequently every algebra equivalence from the even Clifford algebra to two-by-two
+matrices carries reversal to matrix adjugation.
 
 This is the matrix-model input for the low-dimensional isomorphism `Spin₃ ≃ SL₂`: under any
-equivalence below, Clifford reversal becomes matrix adjugation, and the Spin norm equation becomes
-the determinant-one equation.  Identifying the exact image with `SL₂` remains downstream.
+equivalence below, Clifford reversal becomes matrix adjugation, from which the Spin norm equation
+becomes the determinant-one equation downstream.  Identifying the exact image with `SL₂` remains
+downstream.
 
 ## Main results
 
 * `CliffordAlgebra.evenEquivMatrixFinTwoOfFinrankEqThree`: a chosen algebra equivalence from the
-  even Clifford algebra of a nondegenerate three-dimensional form over a separably closed field.
-* `CliffordAlgebra.reverse_eq_adjugate_of_finrank_eq_three`: every such algebra equivalence carries
-  reversal to matrix adjugation.
-* `CliffordAlgebra.reverse_mul_eq_det_smul_one`: the norm product maps to determinant times one.
+  even Clifford algebra of a nondegenerate three-dimensional form over a separably closed field
+  of characteristic not two.
+* `CliffordAlgebra.reverseEven_eq_adjugate_of_finrank_eq_three`: every such algebra equivalence
+  carries reversal to matrix adjugation.
+* `CliffordAlgebra.reverseEven_mul_eq_det_smul_one`: the norm product maps to determinant times
+  one.
 
 ## References
 
@@ -66,9 +70,10 @@ private noncomputable def bivectorExteriorEven : ⋀[K]^2 V →ₗ[K] ↥(even Q
     exact bivector_mem_evenOdd_zero Q a b
 
 omit [FiniteDimensional K V] in
+/-- Coercion from the even-subalgebra lift exposes the underlying bivector map. -/
 private theorem coe_bivectorExteriorEven (x : ⋀[K]^2 V) :
     (bivectorExteriorEven Q x : CliffordAlgebra Q) = bivectorExterior Q x :=
-  rfl
+  by exact LinearMap.codRestrict_apply (even Q).toSubmodule (bivectorExterior Q) x
 
 omit [FiniteDimensional K V] in
 private theorem bivectorExteriorEven_injective :
@@ -124,7 +129,8 @@ private theorem scalarAddBivectorEven_injective :
     LinearMap.ker_eq_bot.2 (bivectorExteriorEven_injective Q), Submodule.prod_bot]
 
 omit [NeZero (2 : K)] in
-theorem finrank_prod_exteriorPower_two_of_finrank_eq_three
+/-- The scalar-plus-bivector product has the expected four-dimensional rank in dimension three. -/
+private theorem finrank_prod_exteriorPower_two_of_finrank_eq_three
     (hV : Module.finrank K V = 3) :
     Module.finrank K (K × ⋀[K]^2 V) = 4 := by
   rw [Module.finrank_prod, Module.finrank_self, exteriorPower.finrank_eq, hV]
@@ -152,16 +158,7 @@ private theorem scalarAddBivectorEquivEven_apply
     scalarAddBivectorEquivEven Q hV x = scalarAddBivectorEven Q x :=
   LinearEquiv.ofBijective_apply _ _
 
-/-- Reversal restricted to the even Clifford subalgebra. -/
-def reverseEven : ↥(even Q) →ₗ[K] ↥(even Q) :=
-  (reverse (Q := Q)).restrict (p := (even Q).toSubmodule) (q := (even Q).toSubmodule)
-    (fun _x hx => (reverse_mem_evenOdd_iff Q).2 hx)
-
-omit [NeZero (2 : K)] [FiniteDimensional K V] in
-@[simp] theorem reverseEven_coe (x : ↥(even Q)) :
-    (reverseEven Q x : CliffordAlgebra Q) = reverse x := by
-  rfl
-
+/-- In dimension three, every even element plus its reversal is scalar. -/
 theorem exists_add_reverseEven_eq_smul_one
     (hV : Module.finrank K V = 3) (x : ↥(even Q)) :
     ∃ r : K, x + reverseEven Q x = r • 1 := by
@@ -189,12 +186,28 @@ noncomputable def reverseMatrix
   e.toLinearMap.comp ((reverseEven Q).comp e.symm.toLinearMap)
 
 omit [NeZero (2 : K)] [FiniteDimensional K V] in
-theorem reverseMatrix_apply
+/-- Reversal transported to matrices computes from the even-subalgebra reversal. -/
+@[simp] theorem reverseMatrix_apply
     (e : ↥(even Q) ≃ₐ[K] Matrix (Fin 2) (Fin 2) K) (A : Matrix (Fin 2) (Fin 2) K) :
     reverseMatrix Q e A = e (reverseEven Q (e.symm A)) := by
   simp [reverseMatrix]
 
 omit [NeZero (2 : K)] [FiniteDimensional K V] in
+/-- The transported reversal fixes the matrix unit. -/
+@[simp] theorem reverseMatrix_map_one
+    (e : ↥(even Q) ≃ₐ[K] Matrix (Fin 2) (Fin 2) K) :
+    reverseMatrix Q e 1 = 1 := by
+  simp [reverseMatrix_apply]
+
+omit [NeZero (2 : K)] [FiniteDimensional K V] in
+/-- The transported reversal is an involution. -/
+@[simp] theorem reverseMatrix_reverseMatrix
+    (e : ↥(even Q) ≃ₐ[K] Matrix (Fin 2) (Fin 2) K) (A : Matrix (Fin 2) (Fin 2) K) :
+    reverseMatrix Q e (reverseMatrix Q e A) = A := by
+  simp [reverseMatrix_apply]
+
+omit [NeZero (2 : K)] [FiniteDimensional K V] in
+/-- The transported reversal reverses products. -/
 theorem reverseMatrix_mul
     (e : ↥(even Q) ≃ₐ[K] Matrix (Fin 2) (Fin 2) K) (A B : Matrix (Fin 2) (Fin 2) K) :
     reverseMatrix Q e (A * B) = reverseMatrix Q e B * reverseMatrix Q e A := by
@@ -202,11 +215,11 @@ theorem reverseMatrix_mul
   rw [← map_mul]
   congr 1
   apply Subtype.ext
-  change reverse (e.symm (A * B) : CliffordAlgebra Q) =
-    reverse (e.symm B : CliffordAlgebra Q) * reverse (e.symm A : CliffordAlgebra Q)
+  rw [reverseEven_coe, Subalgebra.coe_mul, reverseEven_coe, reverseEven_coe]
   rw [map_mul]
-  exact reverse.map_mul (Q := Q) (e.symm A) (e.symm B)
+  exact reverse.map_mul (Q := Q) (e.symm A : CliffordAlgebra Q) (e.symm B : CliffordAlgebra Q)
 
+/-- Every matrix plus its transported reversal is scalar. -/
 theorem exists_add_reverseMatrix_eq_smul_one
     (hV : Module.finrank K V = 3)
     (e : ↥(even Q) ≃ₐ[K] Matrix (Fin 2) (Fin 2) K) (A : Matrix (Fin 2) (Fin 2) K) :
@@ -221,12 +234,14 @@ theorem exists_add_reverseMatrix_eq_smul_one
     _ = e (r • 1) := congrArg e hr
     _ = r • 1 := by rw [map_smul, map_one]
 
-theorem reverse_eq_adjugate_of_finrank_eq_three
+/-- Reversal transported through any two-by-two model is matrix adjugation. -/
+theorem reverseEven_eq_adjugate_of_finrank_eq_three
     (hV : Module.finrank K V = 3)
     (e : ↥(even Q) ≃ₐ[K] Matrix (Fin 2) (Fin 2) K) (x : ↥(even Q)) :
     e (reverseEven Q x) = Matrix.adjugate (e x) := by
   have hf := congrArg (fun g : Matrix (Fin 2) (Fin 2) K →ₗ[K] _ => g (e x))
-    (Matrix.linearMap_antimultiplicative_eq_adjugateMap (reverseMatrix Q e) (reverseMatrix_mul Q e)
+    (Matrix.linearMap_antimultiplicative_eq_adjugateLinearMap
+      (reverseMatrix Q e) (reverseMatrix_mul Q e)
       (exists_add_reverseMatrix_eq_smul_one Q hV e))
   simpa only [reverseMatrix_apply, e.symm_apply_apply, reverseEven_coe,
     Matrix.adjugateLinearMap_apply] using hf
@@ -234,7 +249,7 @@ theorem reverse_eq_adjugate_of_finrank_eq_three
 variable [IsSepClosed K]
 
 /-- A chosen matrix model of the even Clifford algebra of a nondegenerate three-dimensional
-quadratic space over a separably closed field. -/
+quadratic space over a separably closed field of characteristic not two. -/
 noncomputable def evenEquivMatrixFinTwoOfFinrankEqThree
     (hQ : Q.Nondegenerate) (hV : Module.finrank K V = 3) :
     ↥(even Q) ≃ₐ[K] Matrix (Fin 2) (Fin 2) K :=
@@ -246,29 +261,31 @@ theorem evenEquivMatrixFinTwoOfFinrankEqThree_reverse
     (hQ : Q.Nondegenerate) (hV : Module.finrank K V = 3) (x : ↥(even Q)) :
     evenEquivMatrixFinTwoOfFinrankEqThree Q hQ hV (reverseEven Q x) =
       Matrix.adjugate (evenEquivMatrixFinTwoOfFinrankEqThree Q hQ hV x) :=
-  reverse_eq_adjugate_of_finrank_eq_three Q hV (evenEquivMatrixFinTwoOfFinrankEqThree Q hQ hV) x
+  reverseEven_eq_adjugate_of_finrank_eq_three Q hV (evenEquivMatrixFinTwoOfFinrankEqThree Q hQ hV) x
 
 omit [IsSepClosed K] in
-theorem reverse_mul_eq_det_smul_one
+/-- The Clifford norm product maps to the matrix determinant times the identity. -/
+theorem reverseEven_mul_eq_det_smul_one
     (hV : Module.finrank K V = 3)
     (e : ↥(even Q) ≃ₐ[K] Matrix (Fin 2) (Fin 2) K) (x : ↥(even Q)) :
     e (reverseEven Q x * x) = (e x).det • (1 : Matrix (Fin 2) (Fin 2) K) := by
-  rw [map_mul, reverse_eq_adjugate_of_finrank_eq_three Q hV e x]
+  rw [map_mul, reverseEven_eq_adjugate_of_finrank_eq_three Q hV e x]
   exact Matrix.adjugate_mul _
 
 omit [IsSepClosed K] in
-theorem reverse_mul_eq_one_iff_det_eq_one
+/-- The Clifford norm-one equation is equivalent to determinant one. -/
+theorem reverseEven_mul_eq_one_iff_det_eq_one
     (hV : Module.finrank K V = 3)
     (e : ↥(even Q) ≃ₐ[K] Matrix (Fin 2) (Fin 2) K) (x : ↥(even Q)) :
     reverseEven Q x * x = 1 ↔ (e x).det = 1 := by
   constructor
   · intro h
     have hm := congrArg e h
-    rw [reverse_mul_eq_det_smul_one Q hV e x, map_one] at hm
+    rw [reverseEven_mul_eq_det_smul_one Q hV e x, map_one] at hm
     have h00 := congrArg (fun M : Matrix (Fin 2) (Fin 2) K => M 0 0) hm
     simpa using h00
   · intro hdet
     apply e.injective
-    rw [map_one, reverse_mul_eq_det_smul_one Q hV e x, hdet, one_smul]
+    rw [map_one, reverseEven_mul_eq_det_smul_one Q hV e x, hdet, one_smul]
 
 end CliffordAlgebra

@@ -23,15 +23,16 @@ public section
 
 namespace Matrix
 
-variable {K : Type*} [Field K]
+variable {K : Type*} [CommRing K]
 
+/-- The adjugate of a two-by-two matrix is its trace times the identity minus itself. -/
 theorem adjugate_eq_trace_smul_one_sub (A : Matrix (Fin 2) (Fin 2) K) :
     Matrix.adjugate A = Matrix.trace A • 1 - A := by
   rw [Matrix.adjugate_fin_two, Matrix.trace_fin_two]
   ext i j
   fin_cases i <;> fin_cases j <;> simp
 
-/-- The adjugate as a linear map on `2 × 2` matrices over a field. -/
+/-- The adjugate as a linear map on `2 × 2` matrices over a commutative ring. -/
 noncomputable def adjugateLinearMap :
     Matrix (Fin 2) (Fin 2) K →ₗ[K] Matrix (Fin 2) (Fin 2) K where
   toFun := Matrix.adjugate
@@ -42,10 +43,36 @@ noncomputable def adjugateLinearMap :
     simp only [adjugate_eq_trace_smul_one_sub, Matrix.trace_smul, smul_sub, smul_smul,
       RingHom.id_apply, smul_eq_mul]
 
+/-- Applying `adjugateLinearMap` computes the ordinary matrix adjugate. -/
 @[simp] theorem adjugateLinearMap_apply (A : Matrix (Fin 2) (Fin 2) K) :
     adjugateLinearMap A = Matrix.adjugate A := by
   simp [adjugateLinearMap]
 
+section NoZeroDivisors
+
+variable [NoZeroDivisors K]
+
+omit [NoZeroDivisors K] in
+private theorem adjugate_single_diag (i j : Fin 2) (hij : i ≠ j) :
+    Matrix.adjugate (Matrix.single i i (1 : K)) = Matrix.single j j (1 : K) := by
+  fin_cases i <;> fin_cases j <;> ext a b <;> fin_cases a <;> fin_cases b <;>
+    simp_all [Matrix.adjugate_fin_two, Matrix.single]
+
+omit [NoZeroDivisors K] in
+private theorem adjugate_single_offdiag (i j : Fin 2) (hij : i ≠ j) :
+    Matrix.adjugate (Matrix.single i j (1 : K)) = -(Matrix.single i j (1 : K)) := by
+  fin_cases i <;> fin_cases j <;> ext a b <;> fin_cases a <;> fin_cases b <;>
+    simp_all [Matrix.adjugate_fin_two, Matrix.single]
+
+omit [NoZeroDivisors K] in
+private theorem one_sub_single_diag (i j : Fin 2) (hij : i ≠ j) :
+    (1 : Matrix (Fin 2) (Fin 2) K) - Matrix.single i i (1 : K) =
+      Matrix.single j j (1 : K) := by
+  fin_cases i <;> fin_cases j <;> ext a b <;> fin_cases a <;> fin_cases b <;>
+    simp_all [Matrix.single]
+
+/-- An anti-multiplicative linear map with scalar translates sends an off-diagonal unit
+to its negative. -/
 theorem map_single_eq_neg_of_ne
     (f : Matrix (Fin 2) (Fin 2) K →ₗ[K] Matrix (Fin 2) (Fin 2) K)
     (hmul : ∀ A B, f (A * B) = f B * f A)
@@ -70,6 +97,7 @@ theorem map_single_eq_neg_of_ne
     simp
   simpa only [E] using hneg
 
+/-- Such a map exchanges the two diagonal matrix units. -/
 theorem map_single_self_eq_single_of_ne
     (f : Matrix (Fin 2) (Fin 2) K →ₗ[K] Matrix (Fin 2) (Fin 2) K)
     (hmul : ∀ A B, f (A * B) = f B * f A)
@@ -92,10 +120,9 @@ theorem map_single_self_eq_single_of_ne
         hij, Ne.symm hij] using hpij
     exact hr1'.symm
   rw [hfD, hr1]
-  ext a b
-  fin_cases i <;> fin_cases j <;> fin_cases a <;> fin_cases b <;>
-    simp [D, Matrix.single] at hij ⊢
+  simpa [D, smul_eq_mul] using one_sub_single_diag i j hij
 
+/-- Such a map agrees with adjugation on every standard matrix unit. -/
 theorem map_single_eq_adjugate
     (f : Matrix (Fin 2) (Fin 2) K →ₗ[K] Matrix (Fin 2) (Fin 2) K)
     (hmul : ∀ A B, f (A * B) = f B * f A)
@@ -108,24 +135,19 @@ theorem map_single_eq_adjugate
         f (Matrix.single _ _ 1) = Matrix.single (1 : Fin 2) (1 : Fin 2) 1 := by
           simpa using
             map_single_self_eq_single_of_ne f hmul hscalar (0 : Fin 2) (1 : Fin 2) (by decide)
-        _ = Matrix.adjugate (Matrix.single _ _ 1) := by
-          ext a b
-          fin_cases a <;> fin_cases b <;> simp [Matrix.adjugate_fin_two, Matrix.single]
+        _ = Matrix.adjugate (Matrix.single _ _ 1) :=
+          (adjugate_single_diag (0 : Fin 2) (1 : Fin 2) (by decide)).symm
     · calc
         f (Matrix.single _ _ 1) = Matrix.single (0 : Fin 2) (0 : Fin 2) 1 := by
           simpa using
             map_single_self_eq_single_of_ne f hmul hscalar (1 : Fin 2) (0 : Fin 2) (by decide)
-        _ = Matrix.adjugate (Matrix.single _ _ 1) := by
-          ext a b
-          fin_cases a <;> fin_cases b <;> simp [Matrix.adjugate_fin_two, Matrix.single]
+        _ = Matrix.adjugate (Matrix.single _ _ 1) :=
+          (adjugate_single_diag (1 : Fin 2) (0 : Fin 2) (by decide)).symm
   · rw [map_single_eq_neg_of_ne f hmul hscalar i j hij]
-    ext a b
-    fin_cases i <;> fin_cases j <;> fin_cases a <;> fin_cases b <;>
-      simp_all [Matrix.adjugate_fin_two, Matrix.single]
+    exact (adjugate_single_offdiag i j hij).symm
 
-/-- A linear anti-multiplicative map on `2 × 2` matrices that sends each matrix to a
-scalar translate of its negative is the adjugate map. -/
-theorem linearMap_antimultiplicative_eq_adjugateMap
+/-- A linear anti-multiplicative map whose scalar translate is the negative is adjugation. -/
+theorem linearMap_antimultiplicative_eq_adjugateLinearMap
     (f : Matrix (Fin 2) (Fin 2) K →ₗ[K] Matrix (Fin 2) (Fin 2) K)
     (hmul : ∀ A B, f (A * B) = f B * f A)
     (hscalar : ∀ A, ∃ r : K, A + f A = r • 1) :
@@ -135,6 +157,8 @@ theorem linearMap_antimultiplicative_eq_adjugateMap
   rw [Matrix.stdBasis_eq_single]
   simpa only [adjugateLinearMap, LinearMap.coe_mk, AddHom.coe_mk] using
     map_single_eq_adjugate f hmul hscalar i j
+
+end NoZeroDivisors
 
 
 end Matrix
