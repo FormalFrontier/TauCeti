@@ -27,12 +27,12 @@ indexed by a vertex of `S`, is at least one".
 The length-one case is the looplessness `TauCeti.isEmpty_hom_self_of_titsForm_posDef` that the
 reflection identities need, proved there directly from the arrow count at a single vertex.
 
-## Main results
+The generic path facts used in the counting argument are
+`TauCeti.exists_hom_mem_vertices_of_mem_dropLast` and `TauCeti.exists_hom_mem_vertices`, from
+`TauCeti.RepresentationTheory.Quiver.Acyclic.Basic`.
 
-* `TauCeti.exists_hom_mem_vertices_of_mem_dropLast`: every vertex of a path but its last is the
-  source of an arrow of the path.
-* `TauCeti.exists_hom_mem_vertices`: on a closed path of positive length, every visited vertex is
-  the source of an arrow of the path.
+## Main result
+
 * `TauCeti.isAcyclic_of_titsForm_posDef`: **a finite quiver whose Tits form is positive definite is
   acyclic.**
 
@@ -52,45 +52,6 @@ namespace TauCeti
 open _root_.Quiver
 
 universe u v
-
-section Vertices
-
-variable {V : Type u} [_root_.Quiver.{v} V]
-
-/-- **Every vertex of a path but its last is the source of an arrow of the path**, and that arrow
-lands on a vertex of the path again. The vertices of a path other than its endpoint are exactly
-those of `List.dropLast` of its vertex list, since the endpoint is the last entry. -/
-theorem exists_hom_mem_vertices_of_mem_dropLast {a b : V} (p : Path a b) :
-    ∀ {u : V}, u ∈ p.vertices.dropLast → ∃ w ∈ p.vertices, Nonempty (u ⟶ w) := by
-  induction p with
-  | nil => intro u hu; simp at hu
-  | @cons b' c p e ih =>
-    intro u hu
-    rw [Path.vertices_cons, List.concat_eq_append, List.dropLast_concat,
-      ← Path.dropLast_append_end_eq p, List.mem_append, List.mem_singleton] at hu
-    rcases hu with hu | rfl
-    · obtain ⟨w, hw, hwe⟩ := ih hu
-      exact ⟨w, (Path.mem_vertices_cons p e).mpr (Or.inl hw), hwe⟩
-    · exact ⟨c, (Path.mem_vertices_cons p e).mpr (Or.inr rfl), ⟨e⟩⟩
-
-/-- **Every vertex of a closed path of positive length is the source of an arrow of the path.**
-The endpoint is excluded by `TauCeti.exists_hom_mem_vertices_of_mem_dropLast`, but on a closed path
-of positive length it reappears as the first vertex, hence inside `List.dropLast` after all. -/
-theorem exists_hom_mem_vertices {a : V} (p : Path a a) (hp : p ≠ Path.nil) {u : V}
-    (hu : u ∈ p.vertices) : ∃ w ∈ p.vertices, Nonempty (u ⟶ w) := by
-  have hlen : 0 < p.length := Nat.pos_of_ne_zero fun h ↦ hp ((Path.length_eq_zero_iff p).mp h)
-  have h0 : 0 < p.vertices.dropLast.length := by
-    rw [List.length_dropLast, Path.vertices_length]
-    omega
-  have hstart : a ∈ p.vertices.dropLast := by
-    have hmem := List.getElem_mem h0
-    rwa [List.getElem_dropLast, Path.getElem_vertices_zero] at hmem
-  rw [← Path.dropLast_append_end_eq p, List.mem_append, List.mem_singleton] at hu
-  rcases hu with hu | rfl
-  · exact exists_hom_mem_vertices_of_mem_dropLast p hu
-  · exact exists_hom_mem_vertices_of_mem_dropLast p hstart
-
-end Vertices
 
 section PosDef
 

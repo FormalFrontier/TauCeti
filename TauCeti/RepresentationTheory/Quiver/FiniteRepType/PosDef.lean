@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.CategoryTheory.Skeletal
 public import TauCeti.RepresentationTheory.Quiver.Acyclic.TitsForm
 public import TauCeti.RepresentationTheory.Quiver.FiniteRepType.Basic
 public import TauCeti.RepresentationTheory.Quiver.Reflection.Uniqueness
@@ -187,6 +186,15 @@ noncomputable def isoClassDimVectorEmbedding (hpd : (titsForm V).PosDef) :
   toFun X := ⟨isoClassDimVector X, isoClassDimVector_nonneg X,
     titsForm_isoClassDimVector_eq_one hpd X⟩
   inj' _ _ h := isoClassDimVector_injective hpd (Subtype.ext_iff.mp h)
+
+/-- The vector underlying the Gabriel injection is the dimension vector of the isomorphism class. -/
+@[simp]
+theorem coe_isoClassDimVectorEmbedding (hpd : (titsForm V).PosDef)
+    (X : Skeleton (ObjectProperty.FullSubcategory
+      (fun M : QuiverRep.{u, v, w, max v w x} k V ↦ IsFinDim k V M ∧ Indecomposable M))) :
+    ((isoClassDimVectorEmbedding.{u, v, w, x} (k := k) hpd X :
+      {d : V → ℤ // 0 ≤ d ∧ titsForm V d = 1}) : V → ℤ) = isoClassDimVector X :=
+  (rfl)
 
 /-- **A finite quiver whose Tits form is positive definite has finite representation type.**
 This is the affirming direction of Gabriel's dichotomy: the dimension vector embeds the
