@@ -74,13 +74,16 @@ variable {H : Type*} [NormedAddCommGroup H] [InnerProductSpace ℂ H]
 /-- A strongly continuous group on a complex Hilbert space is unitary when every operator
 preserves the complex inner product. Although the underlying group is represented by real-linear
 operators, this condition forces complex linearity; see `IsUnitary.map_smul`. -/
-@[expose]
 def IsUnitary (U : StronglyContinuousGroup H) : Prop :=
   ∀ t x y, ⟪U t x, U t y⟫_ℂ = ⟪x, y⟫_ℂ
 
 namespace IsUnitary
 
 variable {U : StronglyContinuousGroup H}
+
+/-- Construct a unitary group from inner-product preservation by each of its operators. -/
+theorem intro (hU : ∀ t x y, ⟪U t x, U t y⟫_ℂ = ⟪x, y⟫_ℂ) : U.IsUnitary :=
+  hU
 
 /-- Every operator of a unitary strongly continuous group preserves the complex inner product. -/
 @[simp]

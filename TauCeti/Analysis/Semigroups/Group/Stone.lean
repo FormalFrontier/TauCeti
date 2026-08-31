@@ -27,11 +27,11 @@ namespace TauCeti.Semigroups
 
 namespace StronglyContinuousGroup
 
-variable {H : Type*} [NormedAddCommGroup H] [InnerProductSpace ℂ H] [CompleteSpace H]
+variable {H : Type*} [NormedAddCommGroup H] [NormedSpace ℂ H] [CompleteSpace H]
 
 /-- The exponential group associated to a bounded operator. It is unitary when the operator is
 self-adjoint. -/
-def ofBoundedSelfAdjoint (A : H →L[ℂ] H) : StronglyContinuousGroup H :=
+def ofBoundedExp (A : H →L[ℂ] H) : StronglyContinuousGroup H :=
   ofBounded ((Complex.I • A).restrictScalars ℝ)
 
 private theorem restrictScalars_exp (A : H →L[ℂ] H) (t : ℝ) :
@@ -60,17 +60,32 @@ private theorem restrictScalars_exp (A : H →L[ℂ] H) (t : ℝ) :
 
 /-- At time `t`, the bounded Stone group is the complex exponential regarded as real-linear. -/
 @[simp]
-theorem ofBoundedSelfAdjoint_apply (A : H →L[ℂ] H) (t : ℝ) :
-    ofBoundedSelfAdjoint A t =
+theorem ofBoundedExp_apply (A : H →L[ℂ] H) (t : ℝ) :
+    ofBoundedExp A t =
       (NormedSpace.exp ((t : ℂ) • (Complex.I • A))).restrictScalars ℝ := by
-  rw [ofBoundedSelfAdjoint, ofBounded_apply, restrictScalars_exp]
+  rw [ofBoundedExp, ofBounded_apply, restrictScalars_exp]
 
-/-- The bounded Stone group is unitary. -/
-theorem isUnitary_ofBoundedSelfAdjoint (A : H →L[ℂ] H) (hA : IsSelfAdjoint A) :
-    TauCeti.Semigroups.StronglyContinuousGroup.IsUnitary (ofBoundedSelfAdjoint A) := by
-  change ∀ t x y, ⟪ofBoundedSelfAdjoint A t x, ofBoundedSelfAdjoint A t y⟫_ℂ = ⟪x, y⟫_ℂ
-  refine fun t x y => ?_
-  rw [ofBoundedSelfAdjoint_apply]
+/-- The generator of the bounded exponential group is `i A`, regarded as a real partial linear
+map. -/
+@[simp]
+theorem ofBoundedExp_generator (A : H →L[ℂ] H) :
+    (ofBoundedExp A).generator =
+      ((Complex.I • A).restrictScalars ℝ).toLinearMap.toPMap ⊤ := by
+  exact ofBounded_generator _
+
+end StronglyContinuousGroup
+
+section
+
+namespace StronglyContinuousGroup
+
+variable {H : Type*} [NormedAddCommGroup H] [InnerProductSpace ℂ H] [CompleteSpace H]
+
+/-- The bounded exponential group is unitary when its operator is self-adjoint. -/
+theorem isUnitary_ofBoundedExp (A : H →L[ℂ] H) (hA : IsSelfAdjoint A) :
+    TauCeti.Semigroups.StronglyContinuousGroup.IsUnitary (ofBoundedExp A) := by
+  refine IsUnitary.intro fun t x y => ?_
+  rw [ofBoundedExp_apply]
   let _i : Module ℚ H := Module.compHom H (algebraMap ℚ ℂ)
   let +nondep : NormedAlgebra ℚ (H →L[ℂ] H) := .restrictScalars ℚ ℂ _
   have hskew : Complex.I • A ∈ skewAdjoint (H →L[ℂ] H) := by
@@ -82,21 +97,11 @@ theorem isUnitary_ofBoundedSelfAdjoint (A : H →L[ℂ] H) (hA : IsSelfAdjoint A
     NormedSpace.exp_mem_unitary_of_mem_skewAdjoint hscaled
   have hu : NormedSpace.exp ((t : ℂ) • (Complex.I • A)) ∈ unitary (H →L[ℂ] H) := by
     simpa only [Complex.coe_smul] using hu0
-  have hu' := Unitary.star_mul_self_of_mem hu
-  rw [ContinuousLinearMap.star_eq_adjoint] at hu'
-  have hu'' := congrArg (fun B : H →L[ℂ] H => ⟪B x, y⟫_ℂ) hu'
-  rw [mul_apply_eq_comp, one_apply_eq_self,
-    ContinuousLinearMap.adjoint_inner_left] at hu''
-  exact hu''
-
-/-- The generator of the bounded Stone group is `i A`, regarded as a real partial linear map. -/
-@[simp]
-theorem ofBoundedSelfAdjoint_generator (A : H →L[ℂ] H) :
-    (ofBoundedSelfAdjoint A).generator =
-      ((Complex.I • A).restrictScalars ℝ).toLinearMap.toPMap ⊤ := by
-  exact ofBounded_generator _
+  exact (NormedSpace.exp ((t : ℂ) • (Complex.I • A))).inner_map_map_of_mem_unitary hu x y
 
 end StronglyContinuousGroup
+
+end
 
 end TauCeti.Semigroups
 
