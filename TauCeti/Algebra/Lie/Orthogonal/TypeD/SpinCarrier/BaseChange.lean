@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Lie.Orthogonal.TypeD.SpinCarrier.Basic
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.HopfIdealPoints.BaseChange
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.GeneralLinearBaseChange
 
 /-!
@@ -34,6 +35,8 @@ connected type-`Dₙ` datum.
   coordinate ring of `GL_(2^n)/A`.
 * `TauCeti.TypeDSpinCarrier.baseChangeCoordinateIso`: the quotient is the scalar extension of
   the integral carrier coordinate Hopf algebra.
+* `TauCeti.TypeDSpinCarrier.baseChangePointsMulEquiv`: the points of that quotient in a
+  commutative `A`-algebra are the matrix points of the integral carrier over that algebra.
 * `TauCeti.TypeDSpinCarrier.rootSubgroupToBaseChangeCoordinateMap`: the transported numbered
   root subgroup factored through the specialized carrier.
 * `TauCeti.TypeDSpinCarrier.weightTorusToBaseChangeCoordinateMap`: the transported weight torus
@@ -86,7 +89,7 @@ open TauCeti.UniversalEnvelopingAlgebra
 
 namespace TauCeti.TypeDSpinCarrier
 
-universe v
+universe v w
 
 noncomputable section
 
@@ -178,6 +181,128 @@ theorem mkQuotient_comp_baseChangeCoordinateIso_hom :
     (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
     (rep_kostantForm_mem_lattice n hn)
     (isNilpotent_rep_rootGenerator n hn) (latticeBasis n) (basisWeight n) A (definingIdeal_def n hn)
+
+/-! ## Points of the base-changed carrier -/
+
+/-- At a bundled `ℤ`-algebra, the named type-`Dₙ` carrier points are the general-linear
+subgroup cut out by the defining ideal. -/
+private theorem points_eq_hopfIdealPointsSubgroup (B : CommAlgCat.{w} ℤ) :
+    points n hn B =
+      GeneralLinear.hopfIdealPointsSubgroup (dimension n) (definingIdeal n hn) B := by
+  rw [points_def n hn B]
+  congr 1
+  exact Subsingleton.elim _ _
+
+/-- The points of the integral carrier coordinate Hopf algebra are its named matrix points. -/
+private def integralPointsMulEquiv (B : CommAlgCat.{w} ℤ) :
+    HopfAlgebra.points
+        (R := ℤ) (H := CommHopfAlgCat.quotient
+          (GeneralLinear.coordinateHopfAlgebra ℤ (dimension n)) (definingIdeal n hn)) B ≃*
+      points n hn B :=
+  (GeneralLinear.hopfIdealPointsSubgroupMulEquiv (dimension n)
+      (definingIdeal n hn) B).trans
+    (MulEquiv.subgroupCongr (points_eq_hopfIdealPointsSubgroup n hn B)).symm
+
+/-- The integral points equivalence preserves the ambient invertible matrix. -/
+private theorem coe_integralPointsMulEquiv_apply (B : CommAlgCat.{w} ℤ)
+    (q : HopfAlgebra.points
+      (R := ℤ) (H := CommHopfAlgCat.quotient
+        (GeneralLinear.coordinateHopfAlgebra ℤ (dimension n)) (definingIdeal n hn)) B) :
+    (integralPointsMulEquiv n hn B q : Matrix.GeneralLinearGroup (Fin (dimension n)) B) =
+      GeneralLinear.pointsMulEquiv (dimension n)
+        (CommHopfAlgCat.quotientPointsHom
+          (GeneralLinear.coordinateHopfAlgebra ℤ (dimension n)) (definingIdeal n hn)
+          B q) := by
+  simp only [integralPointsMulEquiv, MulEquiv.trans_apply,
+    MulEquiv.subgroupCongr_symm_apply]
+  exact GeneralLinear.coe_hopfIdealPointsSubgroupMulEquiv_apply
+    (dimension n) (definingIdeal n hn) B q
+
+/-- The integral points equivalence is natural in the value algebra. -/
+private theorem integralPointsMulEquiv_mapPoints {B C : CommAlgCat.{w} ℤ} (f : B ⟶ C)
+    (q : HopfAlgebra.points
+      (R := ℤ) (H := CommHopfAlgCat.quotient
+        (GeneralLinear.coordinateHopfAlgebra ℤ (dimension n)) (definingIdeal n hn)) B) :
+    integralPointsMulEquiv n hn C
+        (HopfAlgebra.mapPoints
+          (H := CommHopfAlgCat.quotient
+            (GeneralLinear.coordinateHopfAlgebra ℤ (dimension n)) (definingIdeal n hn))
+          f q) =
+      pointsMap n hn f.hom.toRingHom (integralPointsMulEquiv n hn B q) := by
+  apply Subtype.ext
+  rw [coe_pointsMap]
+  simp only [integralPointsMulEquiv, MulEquiv.trans_apply,
+    MulEquiv.subgroupCongr_symm_apply]
+  exact (congrArg Subtype.val
+      (GeneralLinear.hopfIdealPointsSubgroupMulEquiv_mapPoints
+        (dimension n) (definingIdeal n hn) f q)).trans
+    (GeneralLinear.coe_mapHopfIdealPointsSubgroup
+      (dimension n) (definingIdeal n hn) f.hom _)
+
+/-- The points of the base-changed type-`Dₙ` carrier over a commutative `A`-algebra are its
+matrix-valued carrier points over that algebra. -/
+noncomputable def baseChangePointsMulEquiv (B : CommAlgCat.{w} A) :
+    HopfAlgebra.points (R := A)
+        (H := CommHopfAlgCat.quotient
+          (GeneralLinear.coordinateHopfAlgebra A (dimension n))
+          (baseChangeDefiningIdeal n hn A)) B ≃*
+      points n hn B :=
+  (CommHopfAlgCat.baseChangeIsoPointsMulEquiv (baseChangeCoordinateIso n hn A) B).trans
+    (integralPointsMulEquiv n hn
+      (TauCeti.CommAlgCat.restrictScalarsObj (algebraMap ℤ A) B))
+
+/-- The base-change points equivalence preserves the ambient invertible matrix. -/
+@[simp]
+theorem coe_baseChangePointsMulEquiv_apply (B : CommAlgCat.{w} A)
+    (q : HopfAlgebra.points (R := A)
+      (H := CommHopfAlgCat.quotient
+        (GeneralLinear.coordinateHopfAlgebra A (dimension n))
+        (baseChangeDefiningIdeal n hn A)) B) :
+    (baseChangePointsMulEquiv n hn A B q :
+        Matrix.GeneralLinearGroup (Fin (dimension n)) B) =
+      GeneralLinear.pointsMulEquiv (dimension n)
+        (CommHopfAlgCat.quotientPointsHom
+          (GeneralLinear.coordinateHopfAlgebra A (dimension n))
+          (baseChangeDefiningIdeal n hn A) B q) := by
+  rw [baseChangePointsMulEquiv, MulEquiv.trans_apply, coe_integralPointsMulEquiv_apply]
+  exact GeneralLinear.pointsMulEquiv_quotientPointsHom_baseChangeIsoPointsMulEquiv
+    (dimension n) (definingIdeal n hn) (baseChangeDefiningIdeal n hn A)
+    (baseChangeCoordinateIso n hn A) (mkQuotient_comp_baseChangeCoordinateIso_hom n hn A) B q
+
+/-- The quotient point underlying the inverse base-change equivalence is the point determined by
+the ambient invertible matrix. -/
+@[simp]
+theorem quotientPointsHom_baseChangePointsMulEquiv_symm (B : CommAlgCat.{w} A)
+    (g : points n hn B) :
+    CommHopfAlgCat.quotientPointsHom
+        (GeneralLinear.coordinateHopfAlgebra A (dimension n))
+        (baseChangeDefiningIdeal n hn A) B
+        ((baseChangePointsMulEquiv n hn A B).symm g) =
+      (GeneralLinear.pointsMulEquiv (R := A) (dimension n)).symm
+        (g : Matrix.GeneralLinearGroup (Fin (dimension n)) B) := by
+  have h := coe_baseChangePointsMulEquiv_apply n hn A B
+    ((baseChangePointsMulEquiv n hn A B).symm g)
+  rw [MulEquiv.apply_symm_apply] at h
+  rw [h, MulEquiv.symm_apply_apply]
+
+/-- The identification of the base-changed carrier's points is natural in the value algebra. -/
+@[simp]
+theorem baseChangePointsMulEquiv_mapPoints {B C : CommAlgCat.{w} A} (f : B ⟶ C)
+    (q : HopfAlgebra.points (R := A)
+      (H := CommHopfAlgCat.quotient
+        (GeneralLinear.coordinateHopfAlgebra A (dimension n))
+        (baseChangeDefiningIdeal n hn A)) B) :
+    baseChangePointsMulEquiv n hn A C
+        (HopfAlgebra.mapPoints
+          (H := CommHopfAlgCat.quotient
+            (GeneralLinear.coordinateHopfAlgebra A (dimension n))
+            (baseChangeDefiningIdeal n hn A)) f q) =
+      pointsMap n hn f.hom.toRingHom (baseChangePointsMulEquiv n hn A B q) := by
+  simp only [baseChangePointsMulEquiv, MulEquiv.trans_apply]
+  rw [CommHopfAlgCat.baseChangeIsoPointsMulEquiv_mapPoints,
+    integralPointsMulEquiv_mapPoints n hn
+      ((TauCeti.CommAlgCat.restrictScalars (algebraMap ℤ A)).map f)]
+  rfl
 
 /-! ## The transported root subgroups -/
 

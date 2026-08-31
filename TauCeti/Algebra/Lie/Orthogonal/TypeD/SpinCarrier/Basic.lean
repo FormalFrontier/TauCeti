@@ -582,5 +582,24 @@ theorem weightTorus_conj_rootSubgroup_neg_root_simpleIndex (i : Fin n) (A : Type
         (rootSubgroup n hn (.inr i)).hom.hom := by
   rw [← TypeDStd.rootGeneratorWeight_inr_eq_neg_root_simpleIndex n hn i]
   exact weightTorus_conj_rootSubgroup n hn (.inr i) A s u
+/-- The map on type-`Dₙ` spin-carrier points induced by a homomorphism of value rings. -/
+noncomputable def pointsMap {A B : Type*} [CommRing A] [CommRing B] (f : A →+* B) :
+    points n hn A →* points n hn B :=
+  ((MulEquiv.subgroupCongr (points_def n hn B)).symm.toMonoidHom).comp
+    ((GeneralLinear.mapHopfIdealPointsSubgroup (dimension n) (definingIdeal n hn)
+          f.toIntAlgHom).comp
+      (MulEquiv.subgroupCongr (points_def n hn A)).toMonoidHom)
+
+/-- The induced map on type-`Dₙ` spin-carrier points is the entrywise matrix map. -/
+@[simp]
+theorem coe_pointsMap {A B : Type*} [CommRing A] [CommRing B] (f : A →+* B)
+    (g : points n hn A) :
+    (pointsMap n hn f g : Matrix.GeneralLinearGroup (Fin (dimension n)) B) =
+      Matrix.GeneralLinearGroup.map f g := by
+  have hring : f.toIntAlgHom.toRingHom = f := RingHom.ext (RingHom.toIntAlgHom_apply f)
+  rw [pointsMap]
+  simp only [MonoidHom.comp_apply, MulEquiv.coe_toMonoidHom,
+    MulEquiv.subgroupCongr_symm_apply, GeneralLinear.coe_mapHopfIdealPointsSubgroup,
+    MulEquiv.subgroupCongr_apply, hring]
 
 end TauCeti.TypeDSpinCarrier
