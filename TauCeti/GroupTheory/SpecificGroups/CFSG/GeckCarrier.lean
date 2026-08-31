@@ -127,6 +127,18 @@ theorem coe_geckRootSubgroup (i : Fin d.dynkinType.rank ⊕ Fin d.dynkinType.ran
   rw [geckRootSubgroup]
   rfl
 
+/-- A root-subgroup point of the Geck point group, written as the represented Geck root-subgroup
+matrix together with its membership proof. This is the form in which the pinned equations of
+`TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.GeckLattice` are stated, so it is what
+lets a consumer apply them to `TauCeti.ValidLieTypeIndex.geckRootSubgroup`. -/
+theorem geckRootSubgroup_apply (i : Fin d.dynkinType.rank ⊕ Fin d.dynkinType.rank)
+    (u : Multiplicative d.Closure) :
+    d.geckRootSubgroup i u =
+      ⟨d.dynkinType.geckRootSubgroupMatrix d.dynkinType_valid i
+          ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := d.Closure)).symm u),
+        d.dynkinType.geckRootSubgroupMatrix_mem_geckPoints d.dynkinType_valid d.Closure i _⟩ :=
+  Subtype.ext (d.coe_geckRootSubgroup i u)
+
 /-! ## The Frobenius endomorphism -/
 
 /-- **The `q`-power Frobenius endomorphism of the Geck point group**, for `q` the field order
