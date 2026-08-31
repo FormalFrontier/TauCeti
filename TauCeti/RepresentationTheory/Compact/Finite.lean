@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.RepresentationTheory.Compact.Intertwiner.Dimension
-public import TauCeti.RepresentationTheory.Compact.Invariants
 public import Mathlib.MeasureTheory.Measure.Count
 public import Mathlib.Probability.UniformOn
 import Mathlib.MeasureTheory.Integral.Bochner.SumMeasure
@@ -107,7 +106,11 @@ Cardinalities are written `Nat.card G` throughout, matching the rest of the road
 
 `IsTopologicalGroup G`, `CompactSpace G`, `T2Space G` and `MeasurableSingletonClass G` are all
 found by instance search from `[DiscreteTopology G]`, `[Finite G]` and `[BorelSpace G]`, so no
-extra hypotheses are carried.
+extra hypotheses are carried. Continuity of a representation is likewise automatic, by
+`continuous_of_discreteTopology`, and is asked of the caller only where the *statement* needs it:
+`matrixCoeffLp π hπ`, `characterLp π hπ` and `character π hπ` take the continuity proof as an
+argument, so a caller of the pairing lemmas has one in hand already, whereas the orthogonality
+relations are stated as bare sums `∑ g, ⟪π g v, w⟫ · …` and take no continuity argument at all.
 
 The scalar in the averaged sums is real, not `𝕜`: the Bochner integral being specialized is an
 `ℝ`-integral, and `V` is not assumed to be an `ℝ`-`𝕜`-scalar tower. The conversion is confined to
@@ -255,6 +258,7 @@ variable (G : Type*) [Group G] [Finite G] [TopologicalSpace G] [DiscreteTopology
 /-- **Normalized Haar measure on a finite discrete group has full support**, in the sharp form that
 its almost-everywhere filter is the whole filter: every singleton has mass `|G|⁻¹ ≠ 0`, so the empty
 set is the only null set. -/
+@[simp]
 theorem ae_haarProb_eq_top : ae (haarProb G) = ⊤ :=
   ae_eq_top.2 fun a ↦ by
     rw [haarProb_singleton]
@@ -444,14 +448,16 @@ representation of dimension `d`,
 
 This is `TauCeti.ContRepresentation.schur_orthogonality_self` with the Haar integral of the
 compact theory replaced by the group average; the normalization `|G|⁻¹` is exactly the one that
-makes normalized Haar measure a probability measure. -/
-theorem schur_orthogonality_self_sum (π : ContRepresentation 𝕜 G V) (hπ : Continuous π)
+makes normalized Haar measure a probability measure. No continuity of `π` is asked: the statement
+does not mention it, and on a discrete group `continuous_of_discreteTopology` supplies it. -/
+theorem schur_orthogonality_self_sum (π : ContRepresentation 𝕜 G V)
     (hunitary : IsUnitary π) (hirr : Representation.IsIrreducible π.toRepresentation)
     (v₁ w₁ v₂ w₂ : V) :
     (Nat.card G : 𝕜)⁻¹ * ∑ g, (starRingEnd 𝕜) ⟪π g v₁, w₁⟫_𝕜 * ⟪π g v₂, w₂⟫_𝕜 =
       (Module.finrank 𝕜 V : 𝕜)⁻¹ * ((starRingEnd 𝕜) ⟪v₁, v₂⟫_𝕜 * ⟪w₁, w₂⟫_𝕜) := by
-  rw [← inner_matrixCoeffLp_eq_inv_mul_sum π hπ π hπ,
-    schur_orthogonality_self π hπ hunitary hirr]
+  rw [← inner_matrixCoeffLp_eq_inv_mul_sum π continuous_of_discreteTopology π
+      continuous_of_discreteTopology,
+    schur_orthogonality_self π continuous_of_discreteTopology hunitary hirr]
 
 end SchurSelf
 
@@ -469,27 +475,33 @@ continuous intertwiner `π → ρ` is zero and `ρ` is unitary, then every matri
 vanishing group average against every matrix coefficient of `ρ`. This is
 `TauCeti.ContRepresentation.schur_orthogonality_distinct` read through the finite Hermitian
 pairing; Schur's lemma is what supplies the hypothesis for a pair of inequivalent irreducibles, as
-in `ContRepresentation.schur_orthogonality_sum` below. -/
-theorem schur_orthogonality_distinct_sum (π : ContRepresentation 𝕜 G V) (hπ : Continuous π)
-    (ρ : ContRepresentation 𝕜 G W) (hρ : Continuous ρ) (hunitary : IsUnitary ρ)
+in `ContRepresentation.schur_orthogonality_sum` below. No continuity is asked of either
+representation, for the reason given at `ContRepresentation.schur_orthogonality_self_sum`. -/
+theorem schur_orthogonality_distinct_sum (π : ContRepresentation 𝕜 G V)
+    (ρ : ContRepresentation 𝕜 G W) (hunitary : IsUnitary ρ)
     (hdistinct : ∀ f : ContIntertwiningMap π ρ, f.toContinuousLinearMap = 0)
     (v w : V) (v' w' : W) :
     (Nat.card G : 𝕜)⁻¹ * ∑ g, (starRingEnd 𝕜) ⟪π g v, w⟫_𝕜 * ⟪ρ g v', w'⟫_𝕜 = 0 := by
-  rw [← inner_matrixCoeffLp_eq_inv_mul_sum π hπ ρ hρ,
-    schur_orthogonality_distinct π hπ ρ hρ hunitary hdistinct]
+  rw [← inner_matrixCoeffLp_eq_inv_mul_sum π continuous_of_discreteTopology ρ
+      continuous_of_discreteTopology,
+    schur_orthogonality_distinct π continuous_of_discreteTopology ρ
+      continuous_of_discreteTopology hunitary hdistinct]
 
 /-- **The second Schur orthogonality relation for a finite group.** Matrix coefficients of
 inequivalent irreducible representations, the second of them unitary, have vanishing group average,
 this being `TauCeti.ContRepresentation.schur_orthogonality` read through the finite Hermitian
-pairing. -/
-theorem schur_orthogonality_sum (π : ContRepresentation 𝕜 G V) (hπ : Continuous π)
-    (ρ : ContRepresentation 𝕜 G W) (hρ : Continuous ρ) (hunitary : IsUnitary ρ)
+pairing. No continuity is asked of either representation, for the reason given at
+`ContRepresentation.schur_orthogonality_self_sum`. -/
+theorem schur_orthogonality_sum (π : ContRepresentation 𝕜 G V)
+    (ρ : ContRepresentation 𝕜 G W) (hunitary : IsUnitary ρ)
     (hirrπ : Representation.IsIrreducible π.toRepresentation)
     (hirrρ : Representation.IsIrreducible ρ.toRepresentation)
     (hne : IsEmpty (_root_.ContRepresentation.Equiv π ρ)) (v w : V) (v' w' : W) :
     (Nat.card G : 𝕜)⁻¹ * ∑ g, (starRingEnd 𝕜) ⟪π g v, w⟫_𝕜 * ⟪ρ g v', w'⟫_𝕜 = 0 := by
-  rw [← inner_matrixCoeffLp_eq_inv_mul_sum π hπ ρ hρ,
-    schur_orthogonality π hπ ρ hρ hunitary hirrπ hirrρ hne]
+  rw [← inner_matrixCoeffLp_eq_inv_mul_sum π continuous_of_discreteTopology ρ
+      continuous_of_discreteTopology,
+    schur_orthogonality π continuous_of_discreteTopology ρ continuous_of_discreteTopology
+      hunitary hirrπ hirrρ hne]
 
 end SchurDistinct
 
