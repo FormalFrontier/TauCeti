@@ -70,7 +70,9 @@ leaves the formula.
 
 namespace TauCeti
 
-open Finset Nat
+-- `_root_.Nat` rather than `Nat`: inside `namespace TauCeti` the latter is ambiguous, `TauCeti.Nat`
+-- being a namespace of this repository too.
+open Finset _root_.Nat
 
 variable {n i : ℕ} {μ : YoungDiagram}
 
@@ -147,7 +149,7 @@ theorem weylDimension_weightOfShape_mul_prod_hookLength (hμ : μ.colLen 0 ≤ n
       ((YoungDiagram.cast_prod_betaNumber_sub μ n).trans
         (prod_betaNumber_sub_eq_weylDimensionNumerator n μ)).symm
     exact_mod_cast this
-  have hsf : 0 < (n - 1).superFactorial := superFactorial_pos (n - 1)
+  have hsf : 0 < (n - 1).superFactorial := Nat.superFactorial_pos (n - 1)
   refine Nat.eq_of_mul_eq_mul_right hsf ?_
   calc weylDimension (weightOfShape n μ) * (∏ c ∈ μ.cells, μ.hookLength c)
         * (n - 1).superFactorial
