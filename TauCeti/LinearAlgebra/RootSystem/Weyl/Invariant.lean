@@ -45,13 +45,15 @@ the second is the whole proof.
   action. `TauCeti.isWeylInvariant_iff` is the preferred way to introduce it and
   `TauCeti.IsWeylInvariant.coeff_smul` the preferred way to eliminate it, so that the definition
   itself need not be unfolded.
+* `TauCeti.weylInvariantSubring`: the invariant elements as a subring of `ℤ[M]`.
 
 ## Main results
 
 * `TauCeti.IsWeylInvariant.mul_isDotAlternating`: **an invariant element times an alternating
   element is alternating.**
 * `TauCeti.isWeylInvariant_zero`, `TauCeti.isWeylInvariant_one`, `TauCeti.IsWeylInvariant.add`,
-  `TauCeti.IsWeylInvariant.neg` and `TauCeti.IsWeylInvariant.mul`: the invariants are closed under
+  `TauCeti.IsWeylInvariant.neg`, `TauCeti.IsWeylInvariant.sub`, `TauCeti.IsWeylInvariant.zsmul`,
+  `TauCeti.IsWeylInvariant.mul` and `TauCeti.isWeylInvariant_sum`: the invariants are closed under
   the ring operations of `ℤ[M]`.
 
 ## References
@@ -151,6 +153,16 @@ theorem neg (hf : IsWeylInvariant P f) : IsWeylInvariant P (-f) := by
   intro w x
   simp only [AddMonoidAlgebra.coeff_neg, Finsupp.neg_apply, hf.coeff_smul w x]
 
+/-- A difference of invariant elements is invariant. -/
+theorem sub (hf : IsWeylInvariant P f) (hg : IsWeylInvariant P g) : IsWeylInvariant P (f - g) := by
+  rw [sub_eq_add_neg]
+  exact hf.add hg.neg
+
+/-- An integer multiple of an invariant element is invariant. -/
+theorem zsmul (hf : IsWeylInvariant P f) (c : ℤ) : IsWeylInvariant P (c • f) := by
+  intro w x
+  simp only [AddMonoidAlgebra.coeff_smul_apply, smul_eq_mul, hf.coeff_smul w x]
+
 /-- A product of invariant elements is invariant. -/
 theorem mul (hf : IsWeylInvariant P f) (hg : IsWeylInvariant P g) : IsWeylInvariant P (f * g) :=
   (isWeylInvariant_iff_weylReindex_eq P).mpr fun w ↦ by
@@ -158,6 +170,28 @@ theorem mul (hf : IsWeylInvariant P f) (hg : IsWeylInvariant P g) : IsWeylInvari
       (isWeylInvariant_iff_weylReindex_eq P).mp hg w]
 
 end IsWeylInvariant
+
+/-- A finite sum of invariant elements is invariant. -/
+theorem isWeylInvariant_sum {α : Type*} {s : Finset α} {g : α → AddMonoidAlgebra ℤ M}
+    (hg : ∀ a ∈ s, IsWeylInvariant P (g a)) : IsWeylInvariant P (∑ a ∈ s, g a) :=
+  Finset.sum_induction g (IsWeylInvariant P) (fun _ _ ha hb ↦ ha.add hb)
+    (isWeylInvariant_zero P) hg
+
+variable (P) in
+/-- **The Weyl-invariant elements of the integral group algebra `ℤ[M]`, as a subring.** The
+closure properties are `TauCeti.isWeylInvariant_zero`, `TauCeti.isWeylInvariant_one`,
+`TauCeti.IsWeylInvariant.add`, `TauCeti.IsWeylInvariant.neg` and `TauCeti.IsWeylInvariant.mul`. -/
+def weylInvariantSubring : Subring (AddMonoidAlgebra ℤ M) where
+  carrier := {f | IsWeylInvariant P f}
+  zero_mem' := isWeylInvariant_zero P
+  one_mem' := isWeylInvariant_one P
+  add_mem' hf hg := hf.add hg
+  mul_mem' hf hg := hf.mul hg
+  neg_mem' hf := hf.neg
+
+/-- Membership in `TauCeti.weylInvariantSubring` is Weyl invariance. -/
+@[simp]
+lemma mem_weylInvariantSubring : f ∈ weylInvariantSubring P ↔ IsWeylInvariant P f := Iff.rfl
 
 end Closure
 
