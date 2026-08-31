@@ -35,6 +35,26 @@ ATLAS 2058-point standard generators; those generators yield a simple group of o
 `4030387200`. This computation is provenance for the transcription, not a Lean theorem. This file
 asserts no order, finiteness, simplicity, or identification result.
 
+## Independent comparison with `FiniteSimpleGroups`
+
+The comparison used `finite-simple-groups-lean` at commit
+`7f09e33a9ceef6b59ce03e34cd4f0558c763e325`. That development defines `hea` and `heb` as
+permutations of `Fin 2058`, proves that their generated subgroup has order `4030387200`, and proves
+it simple. Its tables were obtained by coset enumeration from the same seven-relator presentation,
+with no permutation representation supplied as input, and it identifies `hea` and `heb` with the
+ATLAS standard generators `a` and `b`.
+
+Independently decoding the two committed 12-bit flat tables gives permutations of orders `2` and
+`7`, whose product has order `17`. Direct evaluation of the seven compiled relators in this module
+on `a = hea` and `b = heb` makes every one the identity. A Schreier--Sims calculation from these
+two decoded tables gives generated order `4030387200`, agreeing with the kernel-checked theorem in
+that development.
+
+The check used Python 3.14.6 and SymPy 1.14.0. Concatenating the forward image tables for `hea` and
+then `heb`, with each image stored as a two-byte little-endian integer, has SHA-256
+`1c939734b8bd8511a6a16ad6a84c845cd8113b941e9efb5472bcb196ae8b5588`. This is the independent
+comparison artifact required by S1; no external code or permutation data is imported into Tau Ceti.
+
 The row is a sealed definition, so it publishes an equation for each of its fields: the transcribed
 relator expressions with their generator indices written out, and the provenance a manifest row
 exists to record. Together with `TauCeti.GroupPresentation.relators_def` and
@@ -68,6 +88,9 @@ for a reviewer to compare with the source, rather than checking it against a rec
 * J. N. Bray, presentation page for the Held group,
   <https://webspace.maths.qmul.ac.uk/j.n.bray/web/Pres/He.html>, which records `Length ??` and so
   publishes no letter count for this presentation.
+* KitaKen1, *FiniteSimpleGroups*, `He` construction at commit
+  `7f09e33a9ceef6b59ce03e34cd4f0558c763e325`,
+  <https://github.com/KitaKen1/finite-simple-groups-lean>.
 -/
 
 public section
