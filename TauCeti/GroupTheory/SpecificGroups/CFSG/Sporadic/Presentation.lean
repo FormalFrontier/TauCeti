@@ -116,12 +116,12 @@ theorem presentation_matchesMetadata (s : SporadicName) :
   | Suz => exact Sporadic.suzPresentation_matchesMetadata
   | ONan => exact Sporadic.onanPresentation_matchesMetadata
   | Co1 => exact Sporadic.co1Presentation_matchesMetadata
-  | Co2 => exact Sporadic.matchesMetadata_co2Presentation
-  | Co3 => exact Sporadic.matchesMetadata_co3Presentation
-  | Fi22 => exact Sporadic.matchesMetadata_fi22Presentation
+  | Co2 => exact Sporadic.co2Presentation_matchesMetadata
+  | Co3 => exact Sporadic.co3Presentation_matchesMetadata
+  | Fi22 => exact Sporadic.fi22Presentation_matchesMetadata
   | Fi23 => exact Sporadic.fi23Presentation_matchesMetadata
   | Fi24Prime => exact Sporadic.fi24PrimePresentation_matchesMetadata
-  | HN => exact Sporadic.matchesMetadata_hnPresentation
+  | HN => exact Sporadic.hnPresentation_matchesMetadata
   | Ly => exact Sporadic.matchesMetadata_lyPresentation
   | Th => exact Sporadic.Thompson.matchesMetadata_presentation
   | B => exact Sporadic.BabyMonster.matchesMetadata_presentation

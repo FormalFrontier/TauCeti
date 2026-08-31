@@ -35,6 +35,32 @@ ATLAS 2058-point standard generators; those generators yield a simple group of o
 `4030387200`. This computation is provenance for the transcription, not a Lean theorem. This file
 asserts no order, finiteness, simplicity, or identification result.
 
+## Independent comparison with the ATLAS permutation data
+
+The independent comparison used the ATLAS representation `HeG1-p2058B0`, a primitive action on
+2058 points whose two published MeatAxe tables are the standard generators `a` and `b`. The raw
+generator files have respective SHA-256 digests
+`d55a1451cd552d3caf571893754bf25ffa73c934107d820f9e0b7af1de29ccf5` and
+`4790eac0de182c3b0ab5d4243ab28e31e3b768398d5e7a8a3c2f243fc95db66d`. These are independently
+published representation data, not permutations obtained from the presentation transcribed here.
+
+Decoding the two one-based image tables gives permutations of orders `2` and `7`, whose product
+has order `17`. Direct evaluation of the seven compiled relators in this module makes every one
+the identity. A Schreier--Sims calculation from the same decoded tables gives generated order
+`4030387200`, agreeing with the ATLAS order check for this representation.
+
+The check used Python 3.14.6 and SymPy 1.14.0. Concatenating the zero-based forward image tables for
+`a` and then `b`, with each image stored as a two-byte little-endian integer, has SHA-256
+`4a386b7656182c087d66c18ca3ee9f6c4cc61b416d23f1623b97996ce8499da5`. This is the independent
+comparison artifact required by S1; no external code or permutation data is imported into Tau Ceti.
+
+For separate corroboration, `finite-simple-groups-lean` at commit
+`7f09e33a9ceef6b59ce03e34cd4f0558c763e325` defines `hea` and `heb` by coset enumeration from this
+same seven-relator presentation and proves that their generated subgroup has order `4030387200`
+and is simple. Because that action is derived from the same relators, it is not the independent
+transcription comparison above and is not used as one; its order and simplicity proofs instead
+give kernel-checked evidence about the quotient action obtained from the presentation.
+
 The row is a sealed definition, so it publishes an equation for each of its fields: the transcribed
 relator expressions with their generator indices written out, and the provenance a manifest row
 exists to record. Together with `TauCeti.GroupPresentation.relators_def` and
@@ -68,6 +94,12 @@ for a reviewer to compare with the source, rather than checking it against a rec
 * J. N. Bray, presentation page for the Held group,
   <https://webspace.maths.qmul.ac.uk/j.n.bray/web/Pres/He.html>, which records `Length ??` and so
   publishes no letter count for this presentation.
+* R. A. Wilson, R. A. Parker, J. N. Bray et al., *ATLAS of Finite Group Representations*,
+  version 3, primitive permutation representation `HeG1-p2058B0`,
+  <https://brauer.maths.qmul.ac.uk/Atlas/v3/permrep/HeG1-p2058B0>.
+* KitaKen1, *FiniteSimpleGroups*, `He` construction at commit
+  `7f09e33a9ceef6b59ce03e34cd4f0558c763e325`,
+  <https://github.com/KitaKen1/finite-simple-groups-lean>.
 -/
 
 public section

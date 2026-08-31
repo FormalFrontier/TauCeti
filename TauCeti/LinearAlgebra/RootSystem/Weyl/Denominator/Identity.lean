@@ -6,8 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.LinearAlgebra.RootSystem.DominantCone
-public import TauCeti.LinearAlgebra.RootSystem.Weyl.Denominator.Reflection
-public import TauCeti.LinearAlgebra.RootSystem.Weyl.Numerator
+public import TauCeti.LinearAlgebra.RootSystem.Weyl.Alternating
 
 public section
 
@@ -30,23 +29,17 @@ own, with no representation theory involved.
 
 ## The argument
 
-The two sides are compared coefficient by coefficient, and the dot orbit of `0` separates the two
-cases.
+`Δ` is alternating for the dot action (`TauCeti.isDotAlternating_weylDenominator`), so
+`TauCeti.IsDotAlternating.eq_weylNumerator` reduces the identity to two coefficient computations on
+the open chamber of the dot action: the constant term of `Δ` is `1`
+(`TauCeti.coeff_weylDenominator_zero`, since the empty set is the only set of positive roots
+summing to `0`), and `0` is the only weight of that chamber where `Δ` does not vanish.
 
-* **On the orbit.** The coefficient of `N(0)` at `w ⬝ 0` is `sgn(w)`, because the dot orbit of the
-  dominant weight `0` is free. The coefficient of `Δ` there is the same: `Δ` is alternating for the
-  dot action (`TauCeti.coeff_weylDenominator_dotAction`) and its constant term is `1`
-  (`TauCeti.coeff_weylDenominator_zero`: the empty set is the only set of positive roots summing
-  to `0`).
-* **Off the orbit.** `N(0)` vanishes there by its support statement, and so must `Δ`. Suppose not,
-  and move the weight by the dot action into the dominant region, which changes the coefficient
-  only by a sign; a coefficient of `Δ` on a dot-action wall vanishes
-  (`TauCeti.coeff_weylDenominator_eq_zero_of_coroot'_eq_neg_one`), so the `ρ`-shift of the moved
-  weight is *strictly* dominant. Now the geometric heart of the identity applies: an exponent of
-  `Δ` is `-ν` for a sum `ν` of positive roots, strict dominance of `ρ - ν` bounds every
-  `⟨ν, αᵢ^∨⟩` above by `1`, these pairings are integers, and the only antidominant member of the
-  positive root cone is `0` (`TauCeti.eq_zero_of_mem_posRootCone_of_forall_coroot'_nonpos`). So the
-  moved weight is `0`, which does lie on the orbit — a contradiction.
+The second computation is the geometric heart of the identity, and is the only step specific to the
+denominator. An exponent of `Δ` is `-ν` for a sum `ν` of positive roots; lying in the open dot
+chamber makes `ρ - ν` strictly dominant, which bounds every `⟨ν, αᵢ^∨⟩` above by `1`; these
+pairings are integers, hence nonpositive; and the only antidominant member of the positive root
+cone is `0` (`TauCeti.eq_zero_of_mem_posRootCone_of_forall_coroot'_nonpos`).
 
 ## Main results
 
@@ -93,7 +86,7 @@ section Cone
 variable [LinearOrder R] [IsStrictOrderedRing R] [Invertible (2 : R)] [P.IsCrystallographic]
   [P.IsReduced] [P.IsRootSystem]
 
-/-- The Weyl denominator vanishes at a weight whose `ρ`-shift is strictly dominant, unless that
+/-- The Weyl denominator vanishes at a weight of the open chamber of the dot action, unless that
 weight is `0`.
 
 An exponent of `Δ` is minus a sum `ν` of positive roots, so strict dominance of `ρ - ν` bounds
@@ -101,7 +94,7 @@ every `⟨ν, αᵢ^∨⟩` above by `1`; these pairings are integers, hence non
 antidominant member of the positive root cone is `0`. -/
 private theorem eq_zero_of_coeff_weylDenominator_ne_zero {y : M}
     (hy : (weylDenominator P b).coeff y ≠ 0)
-    (hdom : y + weylVector P b ∈ openDominantChamber P b) : y = 0 := by
+    (hdom : y ∈ openDotDominantChamber P b) : y = 0 := by
   obtain ⟨T, hT, hyT⟩ : ∃ T ⊆ posRootsFinset P b, y = -∑ i ∈ T, P.root i := by
     by_contra hcon
     push Not at hcon
@@ -113,8 +106,8 @@ private theorem eq_zero_of_coeff_weylDenominator_ne_zero {y : M}
     refine eq_zero_of_mem_posRootCone_of_forall_coroot'_nonpos b hcone fun i hi => ?_
     obtain ⟨m, hm⟩ := exists_intCast_eq_coroot'_of_mem_posRootCone P b hcone i
     have hlt : P.coroot' i (∑ j ∈ T, P.root j) < 1 := by
-      have h0 := (mem_openDominantChamber P b _).mp hdom i hi
-      rw [coroot'_add_weylVector P b hi, hyT, map_neg] at h0
+      have h0 := (mem_openDotDominantChamber_iff_neg_one_lt_coroot' P b y).mp hdom i hi
+      rw [hyT, map_neg] at h0
       linarith
     rw [hm] at hlt ⊢
     have hm1 : m < 1 := by exact_mod_cast hlt
@@ -139,35 +132,10 @@ right-hand side is `∑_{w ∈ W} sgn(w) e^{w(ρ) - ρ}`.
 This is the case `λ = 0` of the Weyl character formula, in which the character of the trivial
 module is `1`. -/
 theorem weylDenominator_eq_weylNumerator_zero :
-    weylDenominator P b = weylNumerator P b 0 := by
-  refine AddMonoidAlgebra.coeff_inj.mp (Finsupp.ext fun x => ?_)
-  by_cases hx : ∃ v : P.weylGroup, dotAction P b v 0 = x
-  · -- On the dot orbit of `0` both sides have the sign of the translating element.
-    obtain ⟨v, rfl⟩ := hx
-    rw [coeff_weylDenominator_dotAction, coeff_weylDenominator_zero, mul_one,
-      coeff_weylNumerator_dotAction P b (zero_mem_dominantChamber P b) v]
-  · -- Off the dot orbit of `0` the numerator vanishes; so must the denominator.
-    push Not at hx
-    rw [coeff_weylNumerator_eq_zero P b hx]
-    by_contra hne
-    obtain ⟨w, hw⟩ := exists_mem_dominantChamber P b (x + weylVector P b)
-    have hyd : dotAction P b w x + weylVector P b ∈ dominantChamber P b := by
-      rw [dotAction_add_weylVector]
-      exact hw
-    have hyne : (weylDenominator P b).coeff (dotAction P b w x) ≠ 0 := by
-      rw [coeff_weylDenominator_dotAction]
-      exact mul_ne_zero (by exact_mod_cast Units.ne_zero (weylSign P b w)) hne
-    -- A coefficient on a dot-action wall vanishes, so the `ρ`-shift is *strictly* dominant.
-    have hopen : dotAction P b w x + weylVector P b ∈ openDominantChamber P b := by
-      rw [mem_openDominantChamber]
-      intro i hi
-      rcases lt_or_eq_of_le ((mem_dominantChamber P b _).mp hyd i hi) with h | h
-      · exact h
-      · rw [coroot'_add_weylVector P b hi] at h
-        exact absurd (coeff_weylDenominator_eq_zero_of_coroot'_eq_neg_one P b hi
-          (by linarith)) hyne
-    exact hx w⁻¹ (by
-      rw [← eq_zero_of_coeff_weylDenominator_ne_zero P b hyne hopen, dotAction_inv_dotAction])
+    weylDenominator P b = weylNumerator P b 0 :=
+  (isDotAlternating_weylDenominator P b).eq_weylNumerator (zero_mem_openDotDominantChamber P b)
+    (coeff_weylDenominator_zero P b)
+    fun _ hx hne => eq_zero_of_coeff_weylDenominator_ne_zero P b hne hx
 
 /-- **The Weyl denominator is supported exactly on the dot orbit of `0`**, one term for each
 element of the Weyl group. -/

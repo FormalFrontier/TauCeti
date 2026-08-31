@@ -38,8 +38,10 @@ pinned group; and its order is the superscript in the printed family name, recor
   the Steinberg map of a graph-twisted index composes with the field Frobenius.
 * `TauCeti.GraphTwistedIndex.twistOrder`: the order of that permutation, which is the superscript
   in the family name.
-* `TauCeti.TypeALieIndex.toGraphTwistedIndex`: the two type-A families, `Aₙ(q)` and `²Aₙ(q)`, as
-  indices of that subtype, so that the permutations above are attached to them.
+* `TauCeti.TypeALieIndex.toGraphTwistedIndex`, `TauCeti.TypeCLieIndex.toGraphTwistedIndex`, and
+  `TauCeti.TypeE6LieIndex.toGraphTwistedIndex`: the two type-A families, `Aₙ(q)` and `²Aₙ(q)`, the
+  untwisted type-C family, and the untwisted family `E₆(q)`, as indices of that subtype, so that
+  the permutations above are attached to them.
 
 ## Main results
 
@@ -339,5 +341,46 @@ abbrev toGraphTwistedIndex (d : TypeALieIndex) : GraphTwistedIndex :=
   ⟨d.1, not_usesHalfFrobenius_of_isTypeA d.2⟩
 
 end TypeALieIndex
+
+/-! ### The type-C family as graph-twisted indices -/
+
+namespace TypeCLieIndex
+
+open LieTypeIndex (not_usesHalfFrobenius_of_isTypeC)
+
+/-- A type-`C` index, regarded as an ordinary-or-graph-twisted index. The untwisted family does
+not use a half-Frobenius and its diagram permutation is the identity. -/
+abbrev toGraphTwistedIndex (d : TypeCLieIndex) : GraphTwistedIndex :=
+  ⟨d.1, not_usesHalfFrobenius_of_isTypeC d.2⟩
+
+/-- The diagram permutation of an untwisted type-`C` index is the identity. -/
+@[simp]
+theorem diagramPerm_eq_one (d : TypeCLieIndex) : d.toGraphTwistedIndex.diagramPerm = 1 := by
+  obtain ⟨rank, q, hvalid, rfl⟩ := d.exists_eq_ofC
+  simpa only [toGraphTwistedIndex] using GraphTwistedIndex.diagramPerm_C hvalid
+
+end TypeCLieIndex
+
+/-! ### The untwisted family `E₆(q)` as graph-twisted indices -/
+
+namespace TypeE6LieIndex
+
+open LieTypeIndex (not_usesHalfFrobenius_of_isTypeE6)
+
+/-- The untwisted family `E₆(q)`, regarded as an ordinary-or-graph-twisted index. It uses no
+half-Frobenius, so it carries a diagram permutation, namely the identity. -/
+abbrev toGraphTwistedIndex (d : TypeE6LieIndex) : GraphTwistedIndex :=
+  ⟨d.1, not_usesHalfFrobenius_of_isTypeE6 d.2⟩
+
+/-- **The diagram permutation of the untwisted family `E₆(q)` is the identity**, which is what
+places it in the untwisted row of milestone L1's table, where the Steinberg map is `Frob_q`
+outright. The nontrivial symmetry of the `E₆` diagram belongs to `²E₆(q)`. -/
+@[simp]
+theorem diagramPerm_toGraphTwistedIndex (d : TypeE6LieIndex) :
+    d.toGraphTwistedIndex.diagramPerm = 1 := by
+  obtain ⟨q, rfl⟩ := d.exists_eq_of
+  exact GraphTwistedIndex.diagramPerm_E6 (LieTypeIndex.valid_E6 q)
+
+end TypeE6LieIndex
 
 end TauCeti
