@@ -272,6 +272,7 @@ abstract root-pairing API is evaluation at the coroot of `i`.
 
 This is the dictionary between the root-pairing formulation of dominance and integrality, in which
 the general root-system results are stated, and the Lie-theoretic one used below. -/
+@[simp]
 theorem rootSystem_coroot'_apply (i : H.root) (chi : Dual K H) :
     (IsKilling.rootSystem H).coroot' i chi = chi ((IsKilling.rootSystem H).coroot i) := by
   rw [LinearMap.flip_apply, IsKilling.rootSystem_toLinearMap_apply]

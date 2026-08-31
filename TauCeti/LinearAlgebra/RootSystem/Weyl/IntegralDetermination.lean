@@ -17,7 +17,8 @@ An element of the integral group algebra `ℤ[M]` of the weight space of a root 
 the sign character. Such an element is determined by its coefficients on a fundamental domain of
 the dot action, and `TauCeti.IsDotAlternating.eq_of_coeff_openDotDominantChamber_eq` says so with
 the fundamental domain taken to be the open dominant chamber of the dot action. That statement
-needs a `[LinearOrder R]` on the coefficient ring, because a chamber is cut out by inequalities.
+needs a `[LinearOrder R]` on the coefficient ring compatible with its ring structure
+(`[IsStrictOrderedRing R]`), because a chamber is cut out by inequalities.
 
 This file proves the same determination without any order on `R`, for an alternating element whose
 support is **integral** — every simple coroot takes an integer value on it — and lies **below** a
@@ -29,15 +30,16 @@ open dominant chamber of the dot action, read off arithmetically.
 
 Both hypotheses are met by the object the Weyl character formula is about: for a finite-dimensional
 highest weight module of weight `lam`, the product of the formal character with the Weyl
-denominator is alternating and supported in `lam - Q⁺`, while the weight space of a Lie algebra
-over an algebraically closed field carries no order at all.
+denominator is alternating and supported in `lam - Q⁺`, while the coefficient ring there is an
+algebraically closed field, which carries no linear order making it a strictly ordered ring, so
+that the chamber statement does not apply to it.
 
 ## Main results
 
-* `TauCeti.IsDotAlternating.eq_zero_of_forall_coeff_dominant_eq_zero`: **an alternating element
-  below `lam` whose dominant integral coefficients all vanish is zero.**
-* `TauCeti.IsDotAlternating.eq_of_forall_coeff_dominant_eq`: **two alternating elements below
-  `lam` agreeing at every dominant integral weight are equal.**
+* `TauCeti.IsDotAlternating.eq_zero_of_forall_coeff_dominantIntegral_eq_zero`: **an alternating
+  element below `lam` whose dominant integral coefficients all vanish is zero.**
+* `TauCeti.IsDotAlternating.eq_of_forall_coeff_dominantIntegral_eq`: **two alternating elements
+  below `lam` agreeing at every dominant integral weight are equal.**
 
 ## The argument
 
@@ -82,7 +84,7 @@ variable {ι : Type u} {R : Type v} {M : Type w} {N : Type x}
 namespace IsDotAlternating
 
 /-- The raising induction behind
-`TauCeti.IsDotAlternating.eq_zero_of_forall_coeff_dominant_eq_zero`, run on the height of
+`TauCeti.IsDotAlternating.eq_zero_of_forall_coeff_dominantIntegral_eq_zero`, run on the height of
 `lam - x`: a weight on which some simple coroot takes a value below `-1` is moved by the dot
 reflection in that root to a weight of strictly smaller height and opposite coefficient. -/
 private theorem coeff_eq_zero_of_heightLinearMap_eq (hf : IsDotAlternating P b f)
@@ -135,7 +137,7 @@ The support is assumed to lie in `lam - Q⁺` and to be integral on the simple c
 conclusion is that a coefficient at a weight with a negative simple coroot value is forced to
 vanish as well, either because the weight lies on a wall of the dot action or because the dot
 reflection carries it to a weight strictly closer to `lam`. -/
-theorem eq_zero_of_forall_coeff_dominant_eq_zero (hf : IsDotAlternating P b f)
+theorem eq_zero_of_forall_coeff_dominantIntegral_eq_zero (hf : IsDotAlternating P b f)
     (hcone : ∀ x : M, f.coeff x ≠ 0 → lam - x ∈ posRootCone P b)
     (hint : ∀ x : M, f.coeff x ≠ 0 → ∀ i ∈ b.support, ∃ z : ℤ, P.coroot' i x = (z : R))
     (hdom : ∀ x : M, (∀ i ∈ b.support, ∃ n : ℕ, P.coroot' i x = (n : R)) → f.coeff x = 0) :
@@ -153,7 +155,8 @@ This is the order-free counterpart of
 `TauCeti.IsDotAlternating.eq_of_coeff_openDotDominantChamber_eq`: the dominant integral weights
 replace the open dominant chamber of the dot action, at the cost of the two support hypotheses,
 which the character of a highest weight module satisfies. -/
-theorem eq_of_forall_coeff_dominant_eq (hf : IsDotAlternating P b f) (hg : IsDotAlternating P b g)
+theorem eq_of_forall_coeff_dominantIntegral_eq (hf : IsDotAlternating P b f)
+    (hg : IsDotAlternating P b g)
     (hconef : ∀ x : M, f.coeff x ≠ 0 → lam - x ∈ posRootCone P b)
     (hconeg : ∀ x : M, g.coeff x ≠ 0 → lam - x ∈ posRootCone P b)
     (hintf : ∀ x : M, f.coeff x ≠ 0 → ∀ i ∈ b.support, ∃ z : ℤ, P.coroot' i x = (z : R))
@@ -167,7 +170,7 @@ theorem eq_of_forall_coeff_dominant_eq (hf : IsDotAlternating P b f) (hg : IsDot
     push Not at hc
     exact hxne (by simp [AddMonoidAlgebra.coeff_sub, hc.1, hc.2])
   rw [← sub_eq_zero]
-  refine (hf.sub hg).eq_zero_of_forall_coeff_dominant_eq_zero (lam := lam)
+  refine (hf.sub hg).eq_zero_of_forall_coeff_dominantIntegral_eq_zero (lam := lam)
     (fun x hx ↦ (hsplit x hx).elim (hconef x) (hconeg x))
     (fun x hx ↦ (hsplit x hx).elim (hintf x) (hintg x)) fun x hx ↦ ?_
   simp [AddMonoidAlgebra.coeff_sub, hagree x hx]
