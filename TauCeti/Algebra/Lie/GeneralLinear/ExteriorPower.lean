@@ -417,7 +417,7 @@ private theorem lie_basisPath_succ (d n k : ℕ) (h : d ≤ n) (hk : k < d)
   · subst l
     simp [Function.update, basisPath, a]
   · have hlk : l.val ≠ k := fun hlk ↦ hla (Fin.ext hlk)
-    rw [Function.update_noteq hla, basisPath_succ_eq_of_ne d n k h hk s a l hla rfl]
+    rw [Function.update_of_ne hla, basisPath_succ_eq_of_ne d n k h hk s a l hla rfl]
 
 private theorem basisWedge_mem_of_first_mem (d n : ℕ) (h : d ≤ n)
     (N : LieSubmodule K (Matrix (Fin n) (Fin n) K) (⋀[K]^d (Fin n → K)))
@@ -489,7 +489,7 @@ private theorem lie_basisPath_reverse (d n k : ℕ) (h : d ≤ n) (hk : k < d)
   · subst l
     simp [Function.update, basisPath, a]
   · have hlk : l.val ≠ k := fun hlk ↦ hla (Fin.ext hlk)
-    rw [Function.update_noteq hla, (basisPath_succ_eq_of_ne d n k h hk s a l hla rfl).symm]
+    rw [Function.update_of_ne hla, (basisPath_succ_eq_of_ne d n k h hk s a l hla rfl).symm]
 
 private theorem first_mem_of_basisWedge_mem (d n : ℕ) (h : d ≤ n)
     (N : LieSubmodule K (Matrix (Fin n) (Fin n) K) (⋀[K]^d (Fin n → K)))
