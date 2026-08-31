@@ -53,7 +53,8 @@ of `D₄`.
 
 ## Implementation notes
 
-`TauCeti.dihedralRotationChar` reads the exponent through `ZMod.val`, so that its values are
+`TauCeti.dihedralRotationChar` takes the coordinate of a rotation along
+`TauCeti.dihedralRotationsEquiv` and reads it through `ZMod.val`, so that its values are
 natural-number powers of `ζ`; multiplicativity is then the statement that the exponent may be
 reduced modulo `n`, which is Mathlib's `pow_eq_pow_of_modEq`. Taking `ζ` in an arbitrary monoid
 costs nothing and keeps the construction independent of the coefficient field.
@@ -89,20 +90,21 @@ variable [NeZero n]
 the rotation `r i` is sent to `ζ ^ i`, the exponent being the canonical representative of `i` in
 `ZMod n`. -/
 def dihedralRotationChar (hζ : ζ ^ n = 1) : dihedralRotations n →* M where
-  toFun x := ζ ^ (dihedralRotIdx (x : DihedralGroup n)).val
-  map_one' := by
-    change ζ ^ (dihedralRotIdx (1 : DihedralGroup n)).val = 1
-    rw [DihedralGroup.one_def, dihedralRotIdx_r, ZMod.val_zero, pow_zero]
+  toFun x := ζ ^ (Multiplicative.toAdd (dihedralRotationsEquiv n x)).val
+  map_one' := by simp
   map_mul' x y := by
-    change ζ ^ (dihedralRotIdx ((x : DihedralGroup n) * (y : DihedralGroup n))).val = _
-    rw [dihedralRotIdx_mul x.2 y.2, ZMod.val_add, pow_eq_pow_of_modEq (Nat.mod_modEq _ n) hζ,
-      pow_add]
+    simp only [map_mul, toAdd_mul, ZMod.val_add]
+    rw [pow_eq_pow_of_modEq (Nat.mod_modEq _ n) hζ, pow_add]
 
 @[simp]
-theorem dihedralRotationChar_apply (hζ : ζ ^ n = 1) (i : ZMod n) :
+theorem dihedralRotationChar_apply (hζ : ζ ^ n = 1) (x : dihedralRotations n) :
+    dihedralRotationChar hζ x = ζ ^ (Multiplicative.toAdd (dihedralRotationsEquiv n x)).val :=
+  (rfl)
+
+/-- The character sends the rotation `r i` to `ζ ^ i`. -/
+theorem dihedralRotationChar_r (hζ : ζ ^ n = 1) (i : ZMod n) :
     dihedralRotationChar hζ ⟨DihedralGroup.r i, r_mem_dihedralRotations i⟩ = ζ ^ i.val := by
-  change ζ ^ (dihedralRotIdx (DihedralGroup.r i)).val = _
-  rw [dihedralRotIdx_r]
+  rw [dihedralRotationChar_apply, dihedralRotationsEquiv_r, toAdd_ofAdd]
 
 end RotationChar
 
@@ -159,8 +161,7 @@ theorem simple_indFDRep_ofLinearCharacter_dihedralRotations_iff (ψ : dihedralRo
           apply_conjNormal_of_notMem_dihedralRotations ψ (sr_notMem_dihedralRotations 0) x,
           inv_eq_iff_mul_eq_one, ← sq]
         exact hc x
-    change FDRep.of ((Representation.ofLinearCharacter ψ).comp _) = _
-    rw [Representation.ofLinearCharacter_comp, hψ]
+    rw [conjNormalFDRep_of, Representation.ofLinearCharacter_comp, hψ]
   · rintro ⟨x, hx⟩
     refine ⟨inferInstance, fun s hs => ⟨fun e => hx ?_⟩⟩
     -- The conjugate object is the representation of the conjugate character, and isomorphic
@@ -168,8 +169,7 @@ theorem simple_indFDRep_ofLinearCharacter_dihedralRotations_iff (ψ : dihedralRo
     have hobj : conjNormalFDRep s (FDRep.of (Representation.ofLinearCharacter ψ)) =
         FDRep.of (Representation.ofLinearCharacter (ψ.comp
           (MulAut.conjNormal s⁻¹ : MulAut (dihedralRotations n)).toMonoidHom)) := by
-      change FDRep.of ((Representation.ofLinearCharacter ψ).comp _) = _
-      rw [Representation.ofLinearCharacter_comp]
+      rw [conjNormalFDRep_of, Representation.ofLinearCharacter_comp]
     have hcomp := congrArg (fun φ : dihedralRotations n →* kˣ => φ x)
       (Representation.eq_of_nonempty_iso_ofLinearCharacter ⟨eqToIso hobj.symm ≪≫ e⟩)
     rw [MonoidHom.comp_apply, MulEquiv.coe_toMonoidHom,
@@ -192,15 +192,16 @@ noncomputable def dihedralFourChar : dihedralRotations 4 →* ℂˣ :=
   dihedralRotationChar unitI_pow_four
 
 /-- The value of `TauCeti.dihedralFourChar` at a rotation is the corresponding power of `i`. -/
+@[simp]
 theorem dihedralFourChar_r (i : ZMod 4) :
     (dihedralFourChar ⟨DihedralGroup.r i, r_mem_dihedralRotations i⟩ : ℂ) = Complex.I ^ i.val := by
-  rw [dihedralFourChar, dihedralRotationChar_apply, Units.val_pow_eq_pow_val]
-  rfl
+  rw [dihedralFourChar, dihedralRotationChar_r, Units.val_pow_eq_pow_val, Units.val_mk0]
 
 /-- `TauCeti.dihedralFourChar` sends the generating rotation to `i`. -/
 theorem dihedralFourChar_r_one :
     (dihedralFourChar ⟨DihedralGroup.r 1, r_mem_dihedralRotations 1⟩ : ℂ) = Complex.I := by
-  rw [dihedralFourChar_r, show (1 : ZMod 4).val = 1 from rfl, pow_one]
+  rw [dihedralFourChar_r, ZMod.val_one_eq_one_mod]
+  norm_num
 
 /-- **`TauCeti.dihedralFourChar` is faithful**: `i` is a *primitive* fourth root of unity, so no
 nontrivial rotation is sent to `1`. -/

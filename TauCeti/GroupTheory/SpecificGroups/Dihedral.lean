@@ -35,7 +35,7 @@ every rotation.
 * `TauCeti.dihedralGroupMulEquiv`: that homomorphism as an isomorphism, when the two involutions
   generate `G` and neither is the identity.
 * `TauCeti.dihedralReflectionParity`, `TauCeti.dihedralRotations`: the reflection parity and the
-  rotation subgroup it cuts out, with `TauCeti.dihedralRotIdx` reading the index of a rotation.
+  rotation subgroup it cuts out, with `TauCeti.dihedralRotationsEquiv` its cyclic coordinate.
 
 ## Main results
 
@@ -363,36 +363,50 @@ theorem inv_mul_mul_of_notMem_dihedralRotations {s g : DihedralGroup n}
       DihedralGroup.inv_r]
     exact congrArg DihedralGroup.r (by ring)
 
-/-- The **rotation index** of a dihedral element: the index `i` of a rotation `r i`, and the
-junk value `0` on a reflection, where `TauCeti.mem_dihedralRotations_iff` forbids it from being
-read. -/
-def dihedralRotIdx {n : ℕ} : DihedralGroup n → ZMod n
+/-- The **rotation index** of a dihedral element: the index `i` of a rotation `r i`, and the junk
+value `0` on a reflection. This is the ambient pattern match only; the interface is
+`TauCeti.dihedralRotationsEquiv`, which reads the index off an element of the rotation subgroup and
+so never meets the junk value. -/
+private def dihedralRotationIndex {n : ℕ} : DihedralGroup n → ZMod n
   | DihedralGroup.r i => i
   | DihedralGroup.sr _ => 0
 
-@[simp]
-theorem dihedralRotIdx_r (i : ZMod n) : dihedralRotIdx (DihedralGroup.r i) = i :=
-  (rfl)
-
-@[simp]
-theorem dihedralRotIdx_sr (i : ZMod n) : dihedralRotIdx (DihedralGroup.sr i) = 0 :=
-  (rfl)
-
 /-- On the rotation subgroup the rotation index is a section of `r`. -/
-theorem r_dihedralRotIdx {g : DihedralGroup n} (hg : g ∈ dihedralRotations n) :
-    DihedralGroup.r (dihedralRotIdx g) = g := by
+private theorem r_dihedralRotationIndex {g : DihedralGroup n} (hg : g ∈ dihedralRotations n) :
+    DihedralGroup.r (dihedralRotationIndex g) = g := by
   obtain ⟨i, rfl⟩ := mem_dihedralRotations_iff.mp hg
   rfl
 
-/-- On the rotation subgroup the rotation index is additive: the rotations are `ZMod n` written
-multiplicatively. -/
-theorem dihedralRotIdx_mul {g h : DihedralGroup n} (hg : g ∈ dihedralRotations n)
+/-- On the rotation subgroup the rotation index is additive. -/
+private theorem dihedralRotationIndex_mul {g h : DihedralGroup n} (hg : g ∈ dihedralRotations n)
     (hh : h ∈ dihedralRotations n) :
-    dihedralRotIdx (g * h) = dihedralRotIdx g + dihedralRotIdx h := by
+    dihedralRotationIndex (g * h) = dihedralRotationIndex g + dihedralRotationIndex h := by
   obtain ⟨i, rfl⟩ := mem_dihedralRotations_iff.mp hg
   obtain ⟨j, rfl⟩ := mem_dihedralRotations_iff.mp hh
   rw [DihedralGroup.r_mul_r]
   rfl
+
+/-- **The rotation subgroup is `ZMod n` written multiplicatively**: the rotation `r i` has
+coordinate `i`. This is the canonical coordinate on `TauCeti.dihedralRotations`, and it is what
+lets a character of the rotation subgroup be named by a single `n`-th root of unity. -/
+def dihedralRotationsEquiv (n : ℕ) : dihedralRotations n ≃* Multiplicative (ZMod n) where
+  toFun x := Multiplicative.ofAdd (dihedralRotationIndex (x : DihedralGroup n))
+  invFun i := ⟨DihedralGroup.r (Multiplicative.toAdd i), r_mem_dihedralRotations _⟩
+  left_inv x := Subtype.ext (r_dihedralRotationIndex x.2)
+  right_inv _ := rfl
+  map_mul' x y := congrArg Multiplicative.ofAdd (dihedralRotationIndex_mul x.2 y.2)
+
+@[simp]
+theorem dihedralRotationsEquiv_r (i : ZMod n) :
+    dihedralRotationsEquiv n ⟨DihedralGroup.r i, r_mem_dihedralRotations i⟩ =
+      Multiplicative.ofAdd i :=
+  (rfl)
+
+@[simp]
+theorem coe_dihedralRotationsEquiv_symm (i : Multiplicative (ZMod n)) :
+    ((dihedralRotationsEquiv n).symm i : DihedralGroup n) =
+      DihedralGroup.r (Multiplicative.toAdd i) :=
+  (rfl)
 
 end Rotations
 
