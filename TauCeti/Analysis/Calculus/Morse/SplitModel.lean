@@ -7,9 +7,11 @@ module
 
 public import Mathlib.Analysis.InnerProductSpace.ProdL2
 public import Mathlib.Analysis.SpecialFunctions.ExpDeriv
+public import TauCeti.Analysis.Calculus.Morse.Basic
 public import TauCeti.Analysis.Calculus.Morse.GradientFlow
 public import TauCeti.Analysis.Calculus.Morse.Stable
 import Mathlib.Analysis.InnerProductSpace.Calculus
+import Mathlib.Analysis.InnerProductSpace.Dual
 import Mathlib.Analysis.Calculus.FDeriv.Prod
 
 /-!
@@ -34,6 +36,7 @@ and Hessian determine the corresponding linearized gradient flow and its contrac
 
 * `TauCeti.splitQuadratic`: the standard split quadratic function.
 * `TauCeti.gradient_splitQuadratic`: its gradient is `(x, -y)`.
+* `TauCeti.isNondegenerateCriticalPoint_splitQuadratic_zero`: the origin is nondegenerate.
 * `TauCeti.splitQuadraticFlow`: its explicit negative-gradient flow.
 * `Flow.isNegativeGradient_splitQuadraticFlow`: the flow solves the negative-gradient equation.
 * `Flow.stableSet_splitQuadraticFlow_zero`: the stable set is the first coordinate plane.
@@ -108,6 +111,33 @@ theorem gradient_splitQuadratic_eq_zero_iff [InnerProductSpace ℝ Eₛ] [InnerP
   · rintro rfl
     simp
 
+/-- The origin is a nondegenerate critical point of the split quadratic function. -/
+theorem isNondegenerateCriticalPoint_splitQuadratic_zero
+    [InnerProductSpace ℝ Eₛ] [InnerProductSpace ℝ Eᵤ]
+    [CompleteSpace Eₛ] [CompleteSpace Eᵤ] :
+    IsNondegenerateCriticalPoint (splitQuadratic (Eₛ := Eₛ) (Eᵤ := Eᵤ)) 0 := by
+  -- Polarize the quadratic using the involution `(x, y) ↦ (x, -y)` and the Riesz equivalence.
+  let e : WithLp 2 (Eₛ × Eᵤ) ≃L[ℝ] WithLp 2 (Eₛ × Eᵤ) :=
+    (LinearIsometryEquiv.withLpProdCongr 2 (LinearIsometryEquiv.refl ℝ Eₛ)
+      (LinearIsometryEquiv.neg ℝ : Eᵤ ≃ₗᵢ[ℝ] Eᵤ)).toContinuousLinearEquiv
+  let half : WithLp 2 (Eₛ × Eᵤ) ≃L[ℝ] WithLp 2 (Eₛ × Eᵤ) :=
+    ContinuousLinearEquiv.smulLeft (Units.mk0 (2 : ℝ)⁻¹ (by norm_num))
+  let BEquiv : WithLp 2 (Eₛ × Eᵤ) ≃L[ℝ] WithLp 2 (Eₛ × Eᵤ) →L[ℝ] ℝ :=
+    (e.trans half).trans
+      (InnerProductSpace.toDual ℝ (WithLp 2 (Eₛ × Eᵤ))).toContinuousLinearEquiv
+  let B : WithLp 2 (Eₛ × Eᵤ) →L[ℝ] WithLp 2 (Eₛ × Eᵤ) →L[ℝ] ℝ :=
+    BEquiv
+  have hsymm : B.flip = B := by
+    ext z w
+    simp [B, BEquiv, half, e, WithLp.prod_inner_apply, real_inner_comm]
+  have hB : B.IsInvertible := by
+    exact ⟨BEquiv, rfl⟩
+  have h := ContinuousLinearMap.isNondegenerateCriticalPoint_apply_self_of_flip_eq_self B hsymm hB
+  convert h using 1
+  funext z
+  simp [B, BEquiv, half, e, splitQuadratic, WithLp.prod_inner_apply]
+  ring
+
 section
 
 variable [NormedSpace ℝ Eₛ] [NormedSpace ℝ Eᵤ]
@@ -143,7 +173,7 @@ theorem Flow.isNegativeGradient_splitQuadraticFlow
     [CompleteSpace Eₛ] [CompleteSpace Eᵤ] :
     Flow.IsNegativeGradient (TauCeti.splitQuadraticFlow (Eₛ := Eₛ) (Eᵤ := Eᵤ))
       (TauCeti.splitQuadratic (Eₛ := Eₛ) (Eᵤ := Eᵤ)) := by
-  simp only [Flow.IsNegativeGradient]
+  rw [Flow.isNegativeGradient_iff]
   intro z t
   have hs : HasDerivAt (fun u : ℝ ↦ Real.exp (-u) • z.fst)
       (-Real.exp (-t) • z.fst) t := by

@@ -55,6 +55,7 @@ route to Morse homology.
   `TauCeti.IsIntegralCurve.eq_of_periodic_neg_gradient`: a periodic negative gradient trajectory
   consists entirely of critical points and is constant.
 * `Flow.IsNegativeGradient`: every orbit of a flow solves the negative gradient equation.
+* `Flow.isNegativeGradient_iff`: the introduction and elimination rule for that predicate.
 * `Flow.IsNegativeGradient.isIntegralCurve`: the orbit curve through a point, as an integral
   curve of the negative gradient field.
 * `Flow.IsNegativeGradient.orbit_antitone`: the defining function is antitone along every orbit
@@ -256,8 +257,13 @@ variable {E : Type*} [NormedAddCommGroup E] [InnerProductSpace ℝ E] [CompleteS
 `γ' = -∇f(γ)`.  Regularity and uniqueness assumptions used to construct the flow remain
 separate; this predicate records precisely the differential equation needed by its dynamical
 consequences. -/
-@[expose] def IsNegativeGradient (φ : _root_.Flow ℝ E) (f : E → ℝ) : Prop :=
+def IsNegativeGradient (φ : _root_.Flow ℝ E) (f : E → ℝ) : Prop :=
   ∀ x, IsIntegralCurve (fun t ↦ φ t x) (fun _ y ↦ -∇ f y)
+
+/-- The introduction and elimination rule for a negative-gradient flow. -/
+theorem isNegativeGradient_iff : IsNegativeGradient φ f ↔
+    ∀ x, IsIntegralCurve (fun t ↦ φ t x) (fun _ y ↦ -∇ f y) :=
+  Iff.rfl
 
 /-- Each orbit curve of a negative gradient flow solves the negative gradient equation. -/
 theorem IsNegativeGradient.isIntegralCurve (hφ : IsNegativeGradient φ f) (x : E) :
