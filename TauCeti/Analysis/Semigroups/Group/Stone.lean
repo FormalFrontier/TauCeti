@@ -84,7 +84,7 @@ variable {H : Type*} [NormedAddCommGroup H] [InnerProductSpace ℂ H] [CompleteS
 /-- The bounded exponential group is unitary when its operator is self-adjoint. -/
 theorem isUnitary_ofBoundedExp (A : H →L[ℂ] H) (hA : IsSelfAdjoint A) :
     TauCeti.Semigroups.StronglyContinuousGroup.IsUnitary (ofBoundedExp A) := by
-  refine IsUnitary.intro fun t x y => ?_
+  refine (isUnitary_iff _).mpr fun t x y => ?_
   rw [ofBoundedExp_apply]
   let _i : Module ℚ H := Module.compHom H (algebraMap ℚ ℂ)
   let +nondep : NormedAlgebra ℚ (H →L[ℂ] H) := .restrictScalars ℚ ℂ _
