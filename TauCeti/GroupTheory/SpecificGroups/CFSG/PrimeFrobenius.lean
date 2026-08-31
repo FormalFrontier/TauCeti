@@ -15,9 +15,10 @@ Two different Frobenius maps occur in the classification list. The one already a
 Lie-type index is `Frob_q`, at the field order `q` the index records: it is
 `TauCeti.ValidLieTypeIndex.geckFrobenius` on the points of the Geck carrier, and it is the
 Steinberg map of the untwisted families. The other is `Frob_p`, at the defining characteristic. It
-is not the Steinberg map of any family, and it is what the Suzuki--Ree convention is stated
-against: milestone L2 of `TauCetiRoadmap/CFSGStatement/README.md` selects the special isogeny `τ`
-by
+is not in general the Steinberg map of a family: an untwisted index takes `Frob_q`, which
+coincides with `Frob_p` when its field exponent is one, and the Suzuki--Ree and Tits indices take
+an odd power of a half-Frobenius. It is the map their convention is stated against: milestone L2 of
+`TauCetiRoadmap/CFSGStatement/README.md` selects the special isogeny `τ` by
 
 ```text
 τ ^ 2 = Frob_p,     steinberg (m) = τ ^ (2 * m + 1),
@@ -98,9 +99,10 @@ variable (d : ValidLieTypeIndex)
 /-- **The `p`-power Frobenius endomorphism of the Geck point group**, for `p` the characteristic
 recorded by the index.
 
-It is not the Steinberg map of any family: the untwisted families take `Frob_q` at the recorded
-field order, and the Suzuki--Ree and Tits families take an odd power of a half-Frobenius. It is the
-map their convention is stated against, `τ ^ 2 = Frob_p`, and by
+It is not in general the Steinberg map of a family: the untwisted families take `Frob_q` at the
+recorded field order, which coincides with `Frob_p` on an index of field exponent one, and the
+Suzuki--Ree and Tits families take an odd power of a half-Frobenius. It is the map their
+convention is stated against, `τ ^ 2 = Frob_p`, and by
 `TauCeti.ValidLieTypeIndex.coe_geckFrobenius_eq_iterate_geckPrimeFrobenius` every `Frob_q` in the
 list is one of its iterates. -/
 def geckPrimeFrobenius : GeckGroup d →* GeckGroup d :=
