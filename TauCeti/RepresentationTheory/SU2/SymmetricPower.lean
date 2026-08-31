@@ -102,7 +102,7 @@ theorem symPower_apply (g : SU2) : symPower d g = symPowerRep ℂ 2 d (toGL g) :
 
 /-- **The action on a pure symmetric tensor is factor by factor**: `g` multiplies each factor of
 `v₁ ⊙ ⋯ ⊙ v_d` by its own matrix. -/
-theorem symPower_tprod (g : SU2) (v : Fin d → (Fin 2 → ℂ)) :
+theorem symPower_apply_tprod (g : SU2) (v : Fin d → (Fin 2 → ℂ)) :
     symPower d g (⨂ₛ[ℂ] i, v i) = ⨂ₛ[ℂ] i, (g : Matrix (Fin 2) (Fin 2) ℂ) *ᵥ v i := by
   simp only [symPower_apply, symPowerRep, Representation.symmetricPower_apply_tprod,
     stdRep_apply_apply, coe_toGL]

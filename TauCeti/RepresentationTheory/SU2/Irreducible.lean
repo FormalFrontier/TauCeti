@@ -132,7 +132,7 @@ private theorem repr_symPower_mixElement_weightBasis_last_ne_zero (i : Fin (d + 
     (weightBasis d).repr (symPower d mixElement (weightBasis d i)) (Fin.last d) ≠ 0 := by
   obtain ⟨f, hf⟩ := exists_weightBasis_eq_tprod d i
   rw [hf, weightBasis_eq_reindex, Basis.repr_reindex_apply, symFinTwoEquiv_symm_last,
-    symPower_tprod, coe_mixElement, SymmetricPower.repr_basis_symmetricPower_tprod_ofFn_const]
+    symPower_apply_tprod, coe_mixElement, SymmetricPower.repr_basis_symmetricPower_tprod_ofFn_const]
   exact Finset.prod_ne_zero_iff.2 fun j _ => by
     rw [repr_mulVec_basisFun]; exact mixMatrix_apply_ne_zero 0 (f j)
 
@@ -145,7 +145,7 @@ private theorem repr_symPower_mixElement_weightBasis_last_ne_zero' (i : Fin (d +
       ⨂ₛ[ℂ] (_ : Fin d), Pi.basisFun ℂ (Fin 2) 0 := by
     rw [weightBasis_apply, symFinTwoEquiv_symm_last, Basis.symmetricPower_apply,
       SymmetricPower.tprodOfSym_ofFn]
-  rw [hf, weightBasis_eq_reindex, Basis.repr_reindex_apply, symPower_tprod, coe_mixElement]
+  rw [hf, weightBasis_eq_reindex, Basis.repr_reindex_apply, symPower_apply_tprod, coe_mixElement]
   exact SymmetricPower.repr_basis_symmetricPower_tprod_const_ne_zero _
     (fun l => by rw [repr_mulVec_basisFun]; exact mixMatrix_apply_ne_zero l 0) _
 

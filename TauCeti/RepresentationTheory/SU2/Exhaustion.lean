@@ -5,6 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+-- The home of `Complex.isAlgClosed`: the scalar half of Schur's lemma, which the first
+-- orthogonality relation below runs on, needs `IsAlgClosed ℂ`.
 public import Mathlib.Analysis.Complex.Polynomial.Basic
 public import TauCeti.Analysis.Normed.Module.Multilinear
 public import TauCeti.RepresentationTheory.Compact.Character.Basic
@@ -62,9 +64,14 @@ carries the inner product making the weight basis orthonormal, which for `d ≥ 
 ## References
 
 This is the `su2Irrep_exhaust` target of the `SU(2)` engine case of
-`TauCetiRoadmap/RepresentationTheory/CompactGroups/README.md`, proved as that roadmap requires:
-from the irreducibility and weight arguments together with the density of the character span, not
-by reading a classification off Peter-Weyl.
+`TauCetiRoadmap/RepresentationTheory/CompactGroups/README.md`. The route taken is the
+character-theoretic one, not the Lie-algebra highest-weight argument that the roadmap names; it
+runs on the irreducibility and weight results of `TauCeti/RepresentationTheory/SU2/Irreducible.lean`
+together with the density of the character span. It is not circular. Peter-Weyl is nowhere used;
+the density is Stone-Weierstrass applied to the Chebyshev recursion for `χ_d`; and the
+orthogonality relations invoked are the general compact-group ones of
+`TauCeti/RepresentationTheory/Compact/Character/Basic.lean`, which know nothing of `SU(2)`, rather
+than the concrete `SU(2)` orthonormality that is computed from the Weyl integration formula.
 
 * D. Bump, *Lie Groups*, 2nd ed., Springer GTM 225 (2013), Chapter 3.
 * T. Bröcker, T. tom Dieck, *Representations of Compact Lie Groups*, Springer GTM 98 (1985),
