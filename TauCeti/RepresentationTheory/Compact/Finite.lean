@@ -119,7 +119,9 @@ the two pairing lemmas are about the `L²` classes `matrixCoeffLp π hπ` and `c
 take the continuity proof as an argument, so a caller of them holds one already. The orthogonality
 relations ask for none: the Schur ones are stated as bare sums `∑ g, ⟪π g v, w⟫ · …`, and the
 character one uses Mathlib's `Representation.character`, which is by
-`TauCeti.ContRepresentation.coe_character` the function underlying `character π hπ`.
+`TauCeti.ContRepresentation.coe_character` the function underlying `character π hπ`. Those
+statements mention no measure either, so they ask for no measurable structure on `G`: their proofs
+install `borel G` themselves, and the caller is left with a bare finite discrete group.
 
 The scalar in the averaged sums is real, not `𝕜`: the Bochner integral being specialized is an
 `ℝ`-integral, and `V` is not assumed to be an `ℝ`-`𝕜`-scalar tower. The conversion is confined to
@@ -450,7 +452,7 @@ end MatrixCoefficient
 section SchurSelf
 
 variable {𝕜 G V : Type*} [RCLike 𝕜] [IsAlgClosed 𝕜] [Group G] [Fintype G] [TopologicalSpace G]
-  [DiscreteTopology G] [MeasurableSpace G] [BorelSpace G]
+  [DiscreteTopology G]
   [NormedAddCommGroup V] [InnerProductSpace 𝕜 V] [NormedSpace ℝ V] [SMulCommClass ℝ 𝕜 V]
   [FiniteDimensional 𝕜 V]
 
@@ -460,13 +462,17 @@ representation of dimension `d`,
 
 This is `TauCeti.ContRepresentation.schur_orthogonality_self` with the Haar integral of the
 compact theory replaced by the group average; the normalization `|G|⁻¹` is exactly the one that
-makes normalized Haar measure a probability measure. No continuity of `π` is asked: the statement
-does not mention it, and on a discrete group `continuous_of_discreteTopology` supplies it. -/
+makes normalized Haar measure a probability measure. Neither continuity of `π` nor a measurable
+structure on `G` is asked: the statement mentions no measure and no continuity proof, and the proof
+installs the Borel structure it integrates against, `continuous_of_discreteTopology` supplying the
+continuity. -/
 theorem schur_orthogonality_self_sum (π : ContRepresentation 𝕜 G V)
     (hunitary : IsUnitary π) (hirr : Representation.IsIrreducible π.toRepresentation)
     (v₁ w₁ v₂ w₂ : V) :
     (Nat.card G : 𝕜)⁻¹ * ∑ g, (starRingEnd 𝕜) ⟪π g v₁, w₁⟫_𝕜 * ⟪π g v₂, w₂⟫_𝕜 =
       (Module.finrank 𝕜 V : 𝕜)⁻¹ * ((starRingEnd 𝕜) ⟪v₁, v₂⟫_𝕜 * ⟪w₁, w₂⟫_𝕜) := by
+  let _ : MeasurableSpace G := borel G
+  have _ : BorelSpace G := ⟨rfl⟩
   rw [← inner_matrixCoeffLp_eq_inv_mul_sum π continuous_of_discreteTopology π
       continuous_of_discreteTopology,
     schur_orthogonality_self π continuous_of_discreteTopology hunitary hirr]
@@ -483,6 +489,8 @@ theorem schur_orthogonality_basis_sum (π : ContRepresentation 𝕜 G V)
     {d : ℕ} (e : OrthonormalBasis (Fin d) 𝕜 V) (i j k l : Fin d) :
     (Nat.card G : 𝕜)⁻¹ * ∑ g, (starRingEnd 𝕜) ⟪π g (e j), e i⟫_𝕜 * ⟪π g (e l), e k⟫_𝕜 =
       (d : 𝕜)⁻¹ * ((if j = l then (1 : 𝕜) else 0) * (if i = k then (1 : 𝕜) else 0)) := by
+  let _ : MeasurableSpace G := borel G
+  have _ : BorelSpace G := ⟨rfl⟩
   rw [← inner_matrixCoeffLp_eq_inv_mul_sum π continuous_of_discreteTopology π
       continuous_of_discreteTopology,
     schur_orthogonality_basis π continuous_of_discreteTopology hunitary hirr]
@@ -492,7 +500,7 @@ end SchurSelf
 section SchurDistinct
 
 variable {𝕜 G V W : Type*} [RCLike 𝕜] [Group G] [Fintype G] [TopologicalSpace G]
-  [DiscreteTopology G] [MeasurableSpace G] [BorelSpace G]
+  [DiscreteTopology G]
   [NormedAddCommGroup V] [InnerProductSpace 𝕜 V] [FiniteDimensional 𝕜 V]
   [NormedAddCommGroup W] [InnerProductSpace 𝕜 W] [NormedSpace ℝ W] [SMulCommClass ℝ 𝕜 W]
   [CompleteSpace W]
@@ -510,6 +518,8 @@ theorem schur_orthogonality_distinct_sum (π : ContRepresentation 𝕜 G V)
     (hdistinct : ∀ f : ContIntertwiningMap π ρ, f.toContinuousLinearMap = 0)
     (v w : V) (v' w' : W) :
     (Nat.card G : 𝕜)⁻¹ * ∑ g, (starRingEnd 𝕜) ⟪π g v, w⟫_𝕜 * ⟪ρ g v', w'⟫_𝕜 = 0 := by
+  let _ : MeasurableSpace G := borel G
+  have _ : BorelSpace G := ⟨rfl⟩
   rw [← inner_matrixCoeffLp_eq_inv_mul_sum π continuous_of_discreteTopology ρ
       continuous_of_discreteTopology,
     schur_orthogonality_distinct π continuous_of_discreteTopology ρ
@@ -526,6 +536,8 @@ theorem schur_orthogonality_sum (π : ContRepresentation 𝕜 G V)
     (hirrρ : Representation.IsIrreducible ρ.toRepresentation)
     (hne : IsEmpty (_root_.ContRepresentation.Equiv π ρ)) (v w : V) (v' w' : W) :
     (Nat.card G : 𝕜)⁻¹ * ∑ g, (starRingEnd 𝕜) ⟪π g v, w⟫_𝕜 * ⟪ρ g v', w'⟫_𝕜 = 0 := by
+  let _ : MeasurableSpace G := borel G
+  have _ : BorelSpace G := ⟨rfl⟩
   rw [← inner_matrixCoeffLp_eq_inv_mul_sum π continuous_of_discreteTopology ρ
       continuous_of_discreteTopology,
     schur_orthogonality π continuous_of_discreteTopology ρ continuous_of_discreteTopology
@@ -579,7 +591,7 @@ end Character
 section CharacterOrthogonality
 
 variable {𝕜 G V W : Type*} [RCLike 𝕜] [Group G] [Fintype G] [TopologicalSpace G]
-  [DiscreteTopology G] [MeasurableSpace G] [BorelSpace G]
+  [DiscreteTopology G]
   [NormedAddCommGroup V] [InnerProductSpace 𝕜 V] [NormedSpace ℝ V] [SMulCommClass ℝ 𝕜 V]
   [FiniteDimensional 𝕜 V]
   [NormedAddCommGroup W] [InnerProductSpace 𝕜 W] [NormedSpace ℝ W] [SMulCommClass ℝ 𝕜 W]
@@ -596,13 +608,15 @@ is not proved here.)
 
 The characters are written as Mathlib's `Representation.character` of the underlying
 representations, which is by `TauCeti.ContRepresentation.coe_character` the function underlying
-`character π hπ`; so no continuity proof is asked of the caller, the statement not mentioning
-one. -/
+`character π hπ`; so no continuity proof is asked of the caller, and no measurable structure on `G`
+either, the statement mentioning neither. -/
 theorem character_orthonormal_distinct_sum (ρ : ContRepresentation 𝕜 G W)
     (hunitary : IsUnitary π)
     (hdistinct : ∀ f : ContIntertwiningMap ρ π, f.toContinuousLinearMap = 0) :
     (Nat.card G : 𝕜)⁻¹ * ∑ g, (starRingEnd 𝕜) (π.toRepresentation.character g) *
         ρ.toRepresentation.character g = 0 := by
+  let _ : MeasurableSpace G := borel G
+  have _ : BorelSpace G := ⟨rfl⟩
   rw [← coe_character π continuous_of_discreteTopology,
     ← coe_character ρ continuous_of_discreteTopology,
     ← inner_characterLp_eq_inv_mul_sum π continuous_of_discreteTopology ρ
@@ -630,6 +644,8 @@ exhibited is that the compact-group normalization agrees with the finite-group o
 example [IsAlgClosed 𝕜] (hunitary : IsUnitary π)
     (hirr : Representation.IsIrreducible π.toRepresentation) :
     (Nat.card G : 𝕜)⁻¹ * ∑ g, character π hπ g * character π hπ g⁻¹ = 1 := by
+  let _ : MeasurableSpace G := borel G
+  have _ : BorelSpace G := ⟨rfl⟩
   rw [← character_orthonormal_self π hπ hunitary hirr, inner_characterLp_eq_inv_mul_sum π hπ π hπ]
   exact congrArg _ (Finset.sum_congr rfl fun g _ ↦ by
     rw [character_apply_inv π hπ hunitary, mul_comm])
