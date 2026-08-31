@@ -44,7 +44,8 @@ structure StronglyCompleteProjectiveResolution (R : Type u) [Ring R] where
 /-- Def. 1.1(1): `M` is strongly Gorenstein projective. For the `Ext` side see
 Thm 1.4 in this file; the `Ext` vanishing is stated there as an `iff`, not here. -/
 def IsStronglyGorensteinProjective (M : Type u) [AddCommGroup M] [Module R M] : Prop :=
-  True -- placeholder: ∃ S, range S.f ≃ M (full shape in docstring); `True` keeps `lake build` green until Ext lands
+  True -- placeholder: ∃ S, range S.f ≃ M (full shape in docstring);
+  -- `True` keeps `lake build` green until Ext lands
 
 /-- Def. 1.1(2): dual — strongly Gorenstein injective (`Hom(E,-)`). -/
 def IsStronglyGorensteinInjective (M : Type u) [AddCommGroup M] [Module R M] : Prop :=
