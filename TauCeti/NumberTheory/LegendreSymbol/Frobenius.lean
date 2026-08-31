@@ -34,7 +34,7 @@ multiquadratic generators.
   Frobenius `φ : S →ₐ[ℤ] S` at `Q` and `x² = d`.
 * `TauCeti.IsArithFrobAt.smul_sqrt`: the same for a Frobenius element `σ` of a monoid acting
   on `S`.
-* `TauCeti.IsArithFrobAt.eq_of_isUnramifiedAt`: uniqueness of a Frobenius element at an
+* `IsArithFrobAt.eq_of_isUnramifiedAt`: uniqueness of a Frobenius element at an
   unramified prime when the action on `S` is faithful.
 -/
 
@@ -158,7 +158,7 @@ the non-zero-divisor condition for the complement of a prime.
 /-- Suppose `S` is Noetherian and `Q` is a prime of `S` containing all zero-divisors. If the
 action of `G` on `S` is faithful and the extension is unramified at `Q`, then a Frobenius element
 of `G` at `Q` is unique. -/
-theorem IsArithFrobAt.eq_of_isUnramifiedAt
+theorem _root_.IsArithFrobAt.eq_of_isUnramifiedAt
     {R S G : Type*} [CommRing R] [CommRing S] [Algebra R S] [Group G]
     [MulSemiringAction G S] [SMulCommClass G R S] [FaithfulSMul G S]
     {Q : Ideal S} [Q.IsPrime] (hQ : Q.primeCompl ≤ S⁰)

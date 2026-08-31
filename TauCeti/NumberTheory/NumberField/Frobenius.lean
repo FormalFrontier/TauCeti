@@ -110,14 +110,14 @@ hypothesis of the generic theorem.
 ring of integers of a finite Galois extension `L/K`, then two arithmetic Frobenius elements at
 `Q` coincide whenever `L/K` is unramified at `Q`.
 
-This is the Galois-group form of `AlgHom.IsArithFrobAt.eq_of_isUnramifiedAt`. -/
+This is the Galois-group form of `IsArithFrobAt.eq_of_isUnramifiedAt`. -/
 theorem isArithFrobAt_eq_of_isUnramifiedAt {K L : Type*} [Field K] [Field L]
     [NumberField K] [NumberField L] [Algebra K L] [IsGalois K L]
     {σ τ : L ≃ₐ[K] L} {Q : Ideal (𝓞 L)} [Q.IsPrime]
     [Algebra.IsUnramifiedAt (𝓞 K) Q] (hσ : IsArithFrobAt (𝓞 K) σ Q)
     (hτ : IsArithFrobAt (𝓞 K) τ Q) : σ = τ := by
   let _ : FaithfulSMul (L ≃ₐ[K] L) (𝓞 L) := IsGaloisGroup.faithful (𝓞 K)
-  exact TauCeti.IsArithFrobAt.eq_of_isUnramifiedAt
+  exact _root_.IsArithFrobAt.eq_of_isUnramifiedAt
     (Ideal.primeCompl_le_nonZeroDivisors Q) hσ hτ
 
 /-- The Frobenius elements at an unramified prime form a subsingleton. -/
