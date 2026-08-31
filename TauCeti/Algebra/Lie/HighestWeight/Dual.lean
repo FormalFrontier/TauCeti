@@ -8,7 +8,6 @@ module
 public import TauCeti.Algebra.Lie.Dual
 public import TauCeti.Algebra.Lie.HighestWeight.FiniteDimensional
 public import TauCeti.Algebra.Lie.HighestWeight.Irreducible
-public import TauCeti.Algebra.Lie.HighestWeight.Reflection
 public import TauCeti.Algebra.Lie.HighestWeight.Verma
 public import TauCeti.Algebra.Lie.Weights.Diagonalizable
 public import TauCeti.LinearAlgebra.RootSystem.Opposition
@@ -54,7 +53,7 @@ morphism `M → M*`, which by Schur's lemma is an equivalence.
 * `TauCeti.IsDominantIntegral.neg_longestElement_smul`: `-(w₀ • lam)` is dominant integral when
   `lam` is, by the opposition involution of the base.
 * `TauCeti.sub_longestElement_smul_mem_posRootCone_of_genWeightSpace_ne_bot`: **`w₀ • lam` is the
-  lowest weight**, and `TauCeti.genWeightSpace_sub_root_longestElement_smul_eq_bot` is the form the
+  lowest weight**, and `TauCeti.genWeightSpace_longestElement_smul_sub_root_eq_bot` is the form the
   construction of the dual highest weight vector consumes.
 * `TauCeti.exists_isHighestWeightVector_dual`: **the dual module has a highest weight vector of
   weight `-(w₀ • lam)`.**
@@ -147,7 +146,7 @@ private theorem coe_sub_root_rootSystem (x : Dual K H) (i : H.root) :
 /-- **Nothing lies below the lowest weight.** Subtracting a positive root from `w₀ • lam` leaves
 the weight support of `M`: the positive root cone is pointed, so a weight below the lowest one
 would give a positive root whose negative is again in the cone. -/
-theorem genWeightSpace_sub_root_longestElement_smul_eq_bot
+theorem genWeightSpace_longestElement_smul_sub_root_eq_bot
     (hv : IsHighestWeightVector b lam v) (hlam : IsDominantIntegral b lam) {i : H.root}
     (hi : i ∈ posRoots (IsKilling.rootSystem H) b) :
     genWeightSpace M (⇑(longestElement (IsKilling.rootSystem H) b • lam) - (i : H → K)) = ⊥ := by
@@ -216,7 +215,7 @@ theorem exists_isHighestWeightVector_dual (hv : IsHighestWeightVector b lam v) :
     · -- the raised weight is the lowest one, so `m` lives below it and is zero
       have hchi : chi = ⇑mu - (alpha : H → K) := eq_sub_of_add_eq' hsum
       rw [hchi] at hm
-      rw [genWeightSpace_sub_root_longestElement_smul_eq_bot hv hlam ha] at hm
+      rw [genWeightSpace_longestElement_smul_sub_root_eq_bot hv hlam ha] at hm
       rw [(_root_.LieSubmodule.mem_bot _).mp hm]
       simp
     · exact hkill _ hsum _ (lie_mem_genWeightSpace_of_mem_genWeightSpace hx hm)

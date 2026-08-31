@@ -18,11 +18,10 @@ The dual `M* = Module.Dual R M` of a Lie module carries the contragredient actio
 `⁅x, f⁆ m = - f ⁅x, m⁆` (Mathlib's `Module.Dual.instLieRingModule`). This file records the two
 facts about it that a self-duality statement needs.
 
-The first is that irreducibility passes to the dual in finite dimensions. Annihilation sets up an
-inclusion-reversing map from the Lie submodules of `M*` to those of `M`
-(`TauCeti.LieModule.dualCoannihilator`): if `N ≤ M*` is stable under the action then so is the set
-of vectors every functional in `N` kills, because `⁅x, f⁆` again lies in `N`. A nonzero `N` has a
-proper annihilator, hence a zero one, and in finite dimensions that forces `N = ⊤`.
+The first is that irreducibility passes to the dual in finite dimensions. If `N ≤ M*` is stable
+under the action then so is the set of vectors every functional in `N` kills, because `⁅x, f⁆`
+again lies in `N`. A nonzero `N` has a proper annihilator, hence a zero one, and in finite
+dimensions that forces `N = ⊤`.
 
 The second is that a nonzero invariant bilinear form on `M` is the same datum as a nonzero morphism
 `M → M*`. A bilinear form on `M` *is* a linear map `M → M*`, and Mathlib's
@@ -30,11 +29,6 @@ The second is that a nonzero invariant bilinear form on `M` is the same datum as
 trivial submodule, which `LieModule.maxTrivLinearMapEquivLieModuleHom` identifies with the morphism
 space. For an irreducible `M` Schur's lemma then upgrades a nonzero morphism to an equivalence, so
 carrying a nonzero invariant form and being self-dual are the same condition.
-
-## Main definitions
-
-* `TauCeti.LieModule.dualCoannihilator`: the Lie submodule of `M` annihilated by every functional
-  in a Lie submodule of `M*`.
 
 ## Main results
 
@@ -74,7 +68,7 @@ variable [AddCommGroup M] [Module R M] [LieRingModule L M] [_root_.LieModule R L
 /-- The vectors of `M` annihilated by every functional in a Lie submodule `N` of the dual. It is a
 Lie submodule because `N` is: if `f m = 0` for every `f ∈ N`, then `f ⁅x, m⁆ = -⁅x, f⁆ m = 0`,
 the functional `⁅x, f⁆` again lying in `N`. -/
-def dualCoannihilator (N : LieSubmodule R L (Dual R M)) : LieSubmodule R L M where
+private def dualCoannihilator (N : LieSubmodule R L (Dual R M)) : LieSubmodule R L M where
   __ := N.toSubmodule.dualCoannihilator
   lie_mem {x m} hm := by
     simp only [AddSubsemigroup.mem_carrier, AddSubmonoid.mem_toSubsemigroup,
@@ -85,18 +79,18 @@ def dualCoannihilator (N : LieSubmodule R L (Dual R M)) : LieSubmodule R L M whe
     rwa [Module.Dual.lie_apply, neg_eq_zero] at h
 
 @[simp]
-theorem mem_dualCoannihilator {N : LieSubmodule R L (Dual R M)} {m : M} :
+private theorem mem_dualCoannihilator {N : LieSubmodule R L (Dual R M)} {m : M} :
     m ∈ dualCoannihilator N ↔ ∀ f ∈ N, f m = 0 := by
   simp [dualCoannihilator, ← LieSubmodule.mem_toSubmodule, Submodule.mem_dualCoannihilator]
 
 @[simp]
-theorem dualCoannihilator_toSubmodule (N : LieSubmodule R L (Dual R M)) :
+private theorem dualCoannihilator_toSubmodule (N : LieSubmodule R L (Dual R M)) :
     (dualCoannihilator N).toSubmodule = N.toSubmodule.dualCoannihilator := by
   ext m
   simp [Submodule.mem_dualCoannihilator]
 
 /-- Only the zero submodule of the dual annihilates all of `M`. -/
-theorem eq_bot_of_dualCoannihilator_eq_top {N : LieSubmodule R L (Dual R M)}
+private theorem eq_bot_of_dualCoannihilator_eq_top {N : LieSubmodule R L (Dual R M)}
     (h : dualCoannihilator N = ⊤) : N = ⊥ := by
   have hall : ∀ m : M, m ∈ dualCoannihilator N := by simp [h]
   refine eq_bot_iff.mpr fun f hf => ?_
