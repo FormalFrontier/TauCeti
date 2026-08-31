@@ -68,22 +68,26 @@ private instance : isogenyProperty (L := L).RespectsIso := by
     MorphismProperty.RespectsIso.inf @IsFinite (@Flat ⊓ @Surjective)
   infer_instance
 
-private theorem isogenyProperty_iff_schemeMap
-    {G K : Grp (Over (Spec (CommRingCat.of L)))} (f : G ⟶ K) :
-    isogenyProperty (L := L) f ↔
-      IsFinite f.hom.hom.left ∧ Flat f.hom.hom.left ∧ Surjective f.hom.hom.left :=
-  Iff.rfl
-
-private theorem isogenyProperty_iff (f : H ⟶ K) :
-    isogenyProperty (L := k) ((hopfSpec (CommRingCat.of k)).map f.op) ↔ IsIsogeny f :=
-  (isIsogeny_iff_isFinite_and_flat_and_surjective_hopfSpec_map f).symm
-
 private theorem isogenyProperty_pullback
     (f : H ⟶ K) (h : isogenyProperty (L := k) ((hopfSpec (CommRingCat.of k)).map f.op)) :
     isogenyProperty (L := L)
       ((Over.pullback (Spec.map (CommRingCat.ofHom (algebraMap k L)))).mapGrp.map
         ((hopfSpec (CommRingCat.of k)).map f.op)) := by
-  rw [isogenyProperty_iff_schemeMap, Functor.mapGrp_map_hom_hom]
+  change
+    IsFinite ((hopfSpec (CommRingCat.of k)).map f.op).hom.hom.left ∧
+      Flat ((hopfSpec (CommRingCat.of k)).map f.op).hom.hom.left ∧
+        Surjective ((hopfSpec (CommRingCat.of k)).map f.op).hom.hom.left at h
+  change
+    IsFinite
+        (((Over.pullback (Spec.map (CommRingCat.ofHom (algebraMap k L)))).mapGrp.map
+          ((hopfSpec (CommRingCat.of k)).map f.op)).hom.hom.left) ∧
+      Flat
+          (((Over.pullback (Spec.map (CommRingCat.ofHom (algebraMap k L)))).mapGrp.map
+            ((hopfSpec (CommRingCat.of k)).map f.op)).hom.hom.left) ∧
+        Surjective
+          (((Over.pullback (Spec.map (CommRingCat.ofHom (algebraMap k L)))).mapGrp.map
+            ((hopfSpec (CommRingCat.of k)).map f.op)).hom.hom.left)
+  rw [Functor.mapGrp_map_hom_hom]
   exact ⟨MorphismProperty.overPullbackMap _ _ h.1,
     MorphismProperty.overPullbackMap _ _ h.2.1,
     MorphismProperty.overPullbackMap _ _ h.2.2⟩
@@ -108,9 +112,10 @@ private theorem groupSchemeProperty_hopfSpec_baseChange
 /-- Scalar extension of a coordinate morphism preserves isogenies of affine group schemes. -/
 theorem IsIsogeny.baseChange {f : H ⟶ K} (hf : IsIsogeny f) :
     IsIsogeny (baseChangeMap (K := L) f) := by
-  rw [← isogenyProperty_iff]
+  apply (isIsogeny_iff_isFinite_and_flat_and_surjective_hopfSpec_map _).2
   exact groupSchemeProperty_hopfSpec_baseChange isogenyProperty f <|
-    isogenyProperty_pullback f (isogenyProperty_iff f |>.2 hf)
+    isogenyProperty_pullback f <|
+      (isIsogeny_iff_isFinite_and_flat_and_surjective_hopfSpec_map f).1 hf
 
 /-- Scalar extension of a coordinate morphism preserves central isogenies of affine group
 schemes. -/
