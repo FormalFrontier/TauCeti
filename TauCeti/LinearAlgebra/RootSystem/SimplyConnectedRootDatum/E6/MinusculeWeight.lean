@@ -107,6 +107,13 @@ theorem e6MinusculeWeight_apply_eq_neg_one_or_eq_zero_or_eq_one (a : Fin 27) (i 
       e6MinusculeWeight a i = 1 := by
   fin_cases a <;> fin_cases i <;> decide
 
+/-- Every simple-coroot coordinate takes the value `-1` on some weight of the type-`E₆`
+minuscule representation. Equivalently, every positive simple-root operator has a nonzero step
+on the minuscule weight graph. -/
+theorem exists_e6MinusculeWeight_apply_eq_neg_one (i : Fin 6) :
+    ∃ a : Fin 27, e6MinusculeWeight a i = -1 := by
+  fin_cases i <;> decide +kernel
+
 /-! ## Simple reflections -/
 
 private def e6MinusculeReflectionIndex : Fin 6 → Fin 27 → Fin 27 := ![

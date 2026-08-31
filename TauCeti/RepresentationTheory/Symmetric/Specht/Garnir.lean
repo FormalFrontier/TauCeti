@@ -45,7 +45,11 @@ from row `i` upwards.  As soon as `(i, j + 1)` is a cell of `μ` there are `μ.c
 so the relation applies
 (`TauCeti.YoungTableau.asAlgebraHom_antisymmetrizerOn_garnirSet_polytabloid_eq_zero`).
 Those are the sets the straightening algorithm uses at a cell `(i, j)` where the rows of the
-tableau fail to increase.
+tableau fail to increase.  Their two halves are described here as well:
+`TauCeti.YoungTableau.garnirSetLeft` names the column-`j` half, and a permutation supported in the
+set preserves the columns of `t` exactly when it maps that half onto itself
+(`TauCeti.YoungTableau.mem_colSubgroup_iff_image_garnirSetLeft_eq`), which is the classical
+description of the permutations internal to the halves as a product of two symmetric groups.
 
 The straightening step itself is *not* proved here, and the relation as stated does not supply it.
 The permutations `σ` supported in `X` that lie in the column group of `t` satisfy
@@ -60,6 +64,7 @@ relation is proved, and stated, for the whole of `A_X`.
 ## Main definitions
 
 * `TauCeti.YoungTableau.garnirSet`: the Garnir set of a tableau at a row and a column.
+* `TauCeti.YoungTableau.garnirSetLeft`: its column-`j` half.
 
 ## Main results
 
@@ -73,6 +78,8 @@ relation is proved, and stated, for the whole of `A_X`.
   straddles has cells.
 * `TauCeti.YoungTableau.asAlgebraHom_antisymmetrizerOn_garnirSet_polytabloid_eq_zero`: the Garnir
   relation at a Garnir set.
+* `TauCeti.YoungTableau.mem_colSubgroup_iff_image_garnirSetLeft_eq`: the permutations of a Garnir
+  set internal to its halves are those preserving its left half.
 
 ## References
 
@@ -256,6 +263,84 @@ theorem asAlgebraHom_antisymmetrizerOn_garnirSet_polytabloid_eq_zero (t : YoungT
   asAlgebraHom_antisymmetrizerOn_polytabloid_eq_zero t
     (fun _ hk => colLen_colIndex_le_colLen_of_mem_garnirSet hk)
     (by rw [card_garnirSet t h]; exact Nat.lt_succ_self _)
+
+/-! ## The left half of a Garnir set -/
+
+/-- A permutation fixing everything outside `X` maps `X` to itself: were `σ k` outside `X` for
+some `k` of `X`, it would be fixed, forcing `σ k = k`. -/
+private theorem apply_mem_of_forall_notMem {α : Type*} {X : Finset α} {σ : Equiv.Perm α}
+    (hσ : ∀ k ∉ X, σ k = k) {k : α} (hk : k ∈ X) : σ k ∈ X := by
+  by_contra h
+  have h' : σ k = k := σ.injective (hσ (σ k) h)
+  rw [h'] at h
+  exact h hk
+
+/-- The **left half of a Garnir set**: the labels of `t` lying in column `j` from row `i`
+downwards.  The Garnir set of `t` at `(i, j)` is this set together with the labels in column
+`j + 1` from row `i` upwards, and the permutations of the Garnir set that preserve the columns of
+`t` are exactly those preserving this half
+(`TauCeti.YoungTableau.mem_colSubgroup_iff_image_garnirSetLeft_eq`). -/
+def garnirSetLeft (t : YoungTableau μ) (i j : ℕ) : Finset (Fin μ.card) :=
+  {k | colIndex t k = j ∧ i ≤ rowIndex t k}
+
+@[simp]
+theorem mem_garnirSetLeft {t : YoungTableau μ} {i j : ℕ} {k : Fin μ.card} :
+    k ∈ garnirSetLeft t i j ↔ colIndex t k = j ∧ i ≤ rowIndex t k := by
+  simp [garnirSetLeft]
+
+/-- The left half of a Garnir set is part of it, being the first of the two cases of its
+definition. -/
+theorem garnirSetLeft_subset_garnirSet (t : YoungTableau μ) (i j : ℕ) :
+    garnirSetLeft t i j ⊆ garnirSet t i j := fun _ hk =>
+  mem_garnirSet.mpr (Or.inl (mem_garnirSetLeft.mp hk))
+
+/-- A label of a Garnir set outside its left half lies in column `j + 1`, the two halves being the
+two cases of the definition of the Garnir set. -/
+theorem colIndex_eq_of_mem_garnirSet_of_notMem_garnirSetLeft {t : YoungTableau μ} {i j : ℕ}
+    {k : Fin μ.card} (hk : k ∈ garnirSet t i j) (hk' : k ∉ garnirSetLeft t i j) :
+    colIndex t k = j + 1 := by
+  rcases mem_garnirSet.mp hk with h | h
+  · exact absurd (mem_garnirSetLeft.mpr h) hk'
+  · exact h.1
+
+/-- **The internal permutations of a Garnir set are those preserving its left half.**  A
+permutation supported in the Garnir set of `t` at `(i, j)` preserves the columns of `t` exactly
+when it maps the column-`j` half of that set onto itself; it then automatically preserves the
+column-`(j + 1)` half as well, so the internal permutations are the product of the two symmetric
+groups on the halves. -/
+theorem mem_colSubgroup_iff_image_garnirSetLeft_eq {t : YoungTableau μ} {i j : ℕ}
+    {σ : Equiv.Perm (Fin μ.card)} (hσ : ∀ k ∉ garnirSet t i j, σ k = k) :
+    σ ∈ colSubgroup t ↔ (garnirSetLeft t i j).image σ = garnirSetLeft t i j := by
+  constructor
+  · intro hcol
+    refine Finset.eq_of_subset_of_card_le ?_
+      (le_of_eq (Finset.card_image_of_injective _ σ.injective).symm)
+    intro k hk
+    obtain ⟨l, hl, rfl⟩ := Finset.mem_image.mp hk
+    have hmem : σ l ∈ garnirSet t i j :=
+      apply_mem_of_forall_notMem hσ (garnirSetLeft_subset_garnirSet t i j hl)
+    have hcolσ : colIndex t (σ l) = j := by
+      rw [mem_colSubgroup.mp hcol l]
+      exact (mem_garnirSetLeft.mp hl).1
+    rcases mem_garnirSet.mp hmem with ⟨-, hrow⟩ | ⟨hc, -⟩
+    · exact mem_garnirSetLeft.mpr ⟨hcolσ, hrow⟩
+    · exact absurd hc (by omega)
+  · intro himg
+    rw [mem_colSubgroup]
+    intro k
+    by_cases hk : k ∈ garnirSet t i j
+    · by_cases hkl : k ∈ garnirSetLeft t i j
+      · have hmem : σ k ∈ garnirSetLeft t i j := himg ▸ Finset.mem_image_of_mem σ hkl
+        rw [(mem_garnirSetLeft.mp hmem).1, (mem_garnirSetLeft.mp hkl).1]
+      · have hnot : σ k ∉ garnirSetLeft t i j := by
+          intro h
+          rw [← himg] at h
+          obtain ⟨l, hl, hlk⟩ := Finset.mem_image.mp h
+          exact hkl (σ.injective hlk ▸ hl)
+        rw [colIndex_eq_of_mem_garnirSet_of_notMem_garnirSetLeft
+            (apply_mem_of_forall_notMem hσ hk) hnot,
+          colIndex_eq_of_mem_garnirSet_of_notMem_garnirSetLeft hk hkl]
+    · rw [hσ k hk]
 
 end YoungTableau
 

@@ -51,6 +51,7 @@ the same small universe.
 
 * `TauCeti.SplitK0.of_biprod` and `TauCeti.SplitK0.of_eq_zero_of_isZero`: the defining biproduct
   relation and its consequence for a zero object.
+* `TauCeti.SplitK0.exists_eq_sub`: every split-`K₀` class is a difference of two object classes.
 * `TauCeti.SplitK0.liftEquiv`: the universal property. Biproduct-additive invariants with values
   in `G` correspond bijectively to homomorphisms `SplitK0 C →+ G`.
 * `TauCeti.SplitK0.grothendieckAddGroupEquiv`: split `K₀` is the group completion of the additive
@@ -163,6 +164,24 @@ theorem induction_on {motive : SplitK0 C → Prop} (x : SplitK0 C) (zero : motiv
     (of : ∀ X : C, motive (SplitK0.of X)) (add : ∀ a b, motive a → motive b → motive (a + b))
     (neg : ∀ a, motive a → motive (-a)) : motive x :=
   PresentedK0.induction_on x zero of add neg
+
+/-- Every element of split `K₀` is a difference of the classes of two objects. -/
+theorem exists_eq_sub [HasZeroObject C] (x : SplitK0 C) :
+    ∃ X Y : C, x = of X - of Y := by
+  induction x using induction_on with
+  | zero =>
+      exact ⟨0, 0, by simp⟩
+  | of X =>
+      exact ⟨X, 0, by simp⟩
+  | add x y hx hy =>
+      obtain ⟨X, Y, rfl⟩ := hx
+      obtain ⟨X', Y', rfl⟩ := hy
+      refine ⟨X ⊞ X', Y ⊞ Y', ?_⟩
+      simp only [of_biprod]
+      abel
+  | neg x hx =>
+      obtain ⟨X, Y, rfl⟩ := hx
+      exact ⟨Y, X, by abel⟩
 
 variable {G : Type*} [AddCommGroup G]
 

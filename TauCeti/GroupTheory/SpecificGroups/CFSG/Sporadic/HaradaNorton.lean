@@ -13,7 +13,8 @@ public import TauCeti.GroupTheory.Presentation.GroupPresentation
 This file carries the `HN` row of the sporadic presentation data required by milestone S1 of
 `TauCetiRoadmap/CFSGStatement/README.md`. It records the corrected five-generator presentation of
 the Harada--Norton group given by Bray and Curtis as a `TauCeti.GroupPresentation`, together with
-its source, generator convention, transcription notes, and expected counts.
+its source, generator convention, transcription notes, characteristic equations, and decidable
+checks on the compiled and freely reduced relator words.
 
 The nineteen relators are
 
@@ -37,13 +38,23 @@ uses `(ad)²`, correcting the preprint's `[a,d]` at that position. The source de
 as generators adjoined while successively presenting `U₃(5):2` and `HS:2`, and `t` as the
 order-five symmetric generator whose final relations produce `HN`.
 
-The source-to-Lean transcription has been read against both the corrected printed display and the
-machine-readable Magma file. An independent read-through remains part of the S1 review artifact.
-This file asserts no order, finiteness, simplicity, or identification result.
+For this audit, the source-to-Lean transcription was independently read against the first
+presentation in the corrected machine-readable `HNpb.m` file. All nineteen expressions agree in
+order, including the conjugation convention in the fourteenth relator. The fifth compiled word has
+the freely cancelling boundary `a⁻²a`; the checks below therefore record the raw total of `153`
+letters alongside the freely reduced length of each relator, and prove that every reduced word is
+cyclically reduced. This file asserts no order, finiteness, simplicity, or identification result.
 
-## Main definition
+## Main definitions and results
 
 * `TauCeti.Sporadic.hnPresentation`: the Bray--Curtis finite presentation of `HN`.
+* `TauCeti.Sporadic.hnPresentation_transcribed` and the equations for the remaining fields: the
+  characterization of the sealed row.
+* `TauCeti.Sporadic.hnPresentation_map_length_relators` and
+  `TauCeti.Sporadic.hnPresentation_totalLength`: the compiled-word length checks.
+* `TauCeti.Sporadic.hnPresentation_map_length_reduce_relators` and
+  `TauCeti.Sporadic.isCyclicallyReduced_reduce_mem_hnPresentation_relators`: the corresponding
+  freely reduced checks.
 
 ## References
 
@@ -54,6 +65,8 @@ This file asserts no order, finiteness, simplicity, or identification result.
   <https://webspace.maths.qmul.ac.uk/j.n.bray/Papers/HN/HN.html>, and the corrected
   machine-readable presentation,
   <https://webspace.maths.qmul.ac.uk/j.n.bray/Papers/HN/HNpb.m>.
+* The presentation-row characterization and audit theorem scaffold is adapted from the Janko-row
+  formalization in <https://github.com/TauCetiProject/TauCeti/pull/5283>.
 -/
 
 public section
@@ -98,7 +111,8 @@ def hnPresentation : GroupPresentation where
     with the five-generator presentation displayed in Section 5 of the corrected paper. The \
     corrected source uses (a*d)^2 as its twelfth relator; the authors' known-errors record notes \
     that the preprint's [a,d] at this position was wrong. An independent source-to-Lean \
-    read-through remains part of the S1 review artifact."
+    read-through of the corrected HNpb.m file confirms all nineteen stored expressions and their \
+    order."
   expectedGeneratorCount := 5
   expectedRelatorCount := 19
   transcribed :=
@@ -124,10 +138,55 @@ def hnPresentation : GroupPresentation where
 
 /-- The generator names recorded for `HN`. The row's body is sealed, so this equation is what shows
 a consumer that the transcription is on five generators, and it supplies the index bounds in
-`TauCeti.Sporadic.transcribed_hnPresentation`. -/
+`TauCeti.Sporadic.hnPresentation_transcribed`. -/
 @[simp]
-theorem generatorNames_hnPresentation :
+theorem hnPresentation_generatorNames :
     hnPresentation.generatorNames = ["a", "b", "c", "d", "t"] := by
+  simp [hnPresentation]
+
+/-- The bibliographic source recorded for `HN`. -/
+@[simp]
+theorem hnPresentation_source :
+    hnPresentation.source = "J. N. Bray and R. T. Curtis, Monomial modular representations and \
+      symmetric generation of the Harada--Norton group, J. Algebra 268 (2003), 723--743" := by
+  simp [hnPresentation]
+
+/-- The locator recorded for `HN`, including the corrected machine-readable presentation. -/
+@[simp]
+theorem hnPresentation_sourceLocator :
+    hnPresentation.sourceLocator = "Sections 4--5, especially p. 735; corrected Magma file HNpb.m \
+      at https://webspace.maths.qmul.ac.uk/j.n.bray/Papers/HN/HNpb.m" := by
+  simp [hnPresentation]
+
+/-- The generator and word conventions recorded for `HN`. -/
+@[simp]
+theorem hnPresentation_generatorConvention :
+    hnPresentation.generatorConvention = "The generators a, b, c, d and t of Bray--Curtis \
+      HNpb.m, in that order, so indices 0 through 4 have those names. Products are read left to \
+      right, negative exponents denote inverses, [r,s] denotes r^-1 s^-1 r s, and r^s denotes \
+      s^-1 r s." := by
+  simp [hnPresentation]
+
+/-- The transcription notes recorded for `HN`, including the corrected twelfth relator. -/
+@[simp]
+theorem hnPresentation_transcriptionNotes :
+    hnPresentation.transcriptionNotes = "The nineteen words in the first presentation of the \
+      corrected HNpb.m file are stored as nineteen relators equal to the identity. They agree in \
+      order and spelling with the five-generator presentation displayed in Section 5 of the \
+      corrected paper. The corrected source uses (a*d)^2 as its twelfth relator; the authors' \
+      known-errors record notes that the preprint's [a,d] at this position was wrong. An \
+      independent source-to-Lean read-through of the corrected HNpb.m file confirms all nineteen \
+      stored expressions and their order." := by
+  simp [hnPresentation]
+
+/-- The generator count stated by the `HN` source. -/
+@[simp]
+theorem hnPresentation_expectedGeneratorCount : hnPresentation.expectedGeneratorCount = 5 := by
+  simp [hnPresentation]
+
+/-- The relator count stated by the `HN` source. -/
+@[simp]
+theorem hnPresentation_expectedRelatorCount : hnPresentation.expectedRelatorCount = 19 := by
   simp [hnPresentation]
 
 /-- The relator expressions transcribed for `HN`, with their generator indices written out.
@@ -137,9 +196,9 @@ The row's body is sealed, so this is the equation that characterizes it: with
 `TauCeti.GroupPresentation.mem_relatorSet_iff` it determines the relations defining
 `TauCeti.GroupPresentation.Group`, so a consumer auditing the transcription never has to unfold the
 row. Indices `0` through `4` are the generators `a`, `b`, `c`, `d` and `t`, and their bounds come
-from `TauCeti.Sporadic.generatorNames_hnPresentation`. -/
+from `TauCeti.Sporadic.hnPresentation_generatorNames`. -/
 @[simp]
-theorem transcribed_hnPresentation :
+theorem hnPresentation_transcribed :
     hnPresentation.transcribed =
       [ -- a⁴
         .pow (.gen ⟨0, by simp⟩) 4,
@@ -193,6 +252,48 @@ theorem transcribed_hnPresentation :
   simp [hnPresentation]
 
 /-- The generator and relator counts recorded for `HN` agree with the transcribed data. -/
-theorem matchesMetadata_hnPresentation : hnPresentation.matchesMetadata := by decide
+theorem hnPresentation_matchesMetadata : hnPresentation.matchesMetadata := by decide
+
+/-- The lengths of the nineteen compiled relator words for `HN`, in source order.
+
+The fifth source word contains the freely cancelling boundary `a⁻²a`; this theorem records the
+compiled words before reduction, exactly as `TauCeti.GroupPresentation.relators` stores them. -/
+theorem hnPresentation_map_length_relators : hnPresentation.relators.map List.length =
+    [4, 6, 7, 12, 20, 20, 4, 4, 8, 18, 2, 4, 4, 15, 5, 5, 5, 4, 6] := by
+  simp [GroupPresentation.relators_def, hnPresentation]
+
+/-- The nineteen compiled `HN` relator words contain `153` letters before free reduction. -/
+theorem hnPresentation_totalLength : hnPresentation.totalLength = 153 := by
+  rw [GroupPresentation.totalLength_def, hnPresentation_map_length_relators]
+  decide
+
+/-- The compiled `HN` relator list is not freely, hence not cyclically, reduced: its fifth word
+contains the cancelling boundary `a⁻²a`. -/
+theorem hnPresentation_not_relatorsCyclicallyReduced :
+    ¬ hnPresentation.relatorsCyclicallyReduced := by
+  simp only [GroupPresentation.relatorsCyclicallyReduced_iff, GroupPresentation.relators_def,
+    hnPresentation, List.map_cons, List.map_nil, Relator.toWord_mul, Relator.toWord_pow,
+    Relator.toWord_inv, Relator.toWord_comm, Relator.toWord_gen]
+  decide
+
+/-- Free reduction makes every compiled `HN` relator word cyclically reduced. -/
+theorem isCyclicallyReduced_reduce_mem_hnPresentation_relators :
+    ∀ w ∈ hnPresentation.relators,
+      FreeGroup.IsCyclicallyReduced (FreeGroup.reduce w) := by
+  simp only [GroupPresentation.relators_def, hnPresentation_transcribed, List.map_cons,
+    List.map_nil, Relator.toWord_gen, Relator.toWord_inv, Relator.toWord_mul,
+    Relator.toWord_pow, Relator.toWord_comm]
+  decide
+
+/-- The freely reduced lengths of the nineteen `HN` relators, in source order. Only the fifth
+compiled word shortens, from `20` letters to `18`, so the reduced words carry `151` of the `153`
+compiled letters. -/
+theorem hnPresentation_map_length_reduce_relators :
+    hnPresentation.relators.map (fun w => (FreeGroup.reduce w).length) =
+      [4, 6, 7, 12, 18, 20, 4, 4, 8, 18, 2, 4, 4, 15, 5, 5, 5, 4, 6] := by
+  simp only [GroupPresentation.relators_def, hnPresentation_transcribed, List.map_cons,
+    List.map_nil, Relator.toWord_gen, Relator.toWord_inv, Relator.toWord_mul,
+    Relator.toWord_pow, Relator.toWord_comm]
+  decide
 
 end TauCeti.Sporadic

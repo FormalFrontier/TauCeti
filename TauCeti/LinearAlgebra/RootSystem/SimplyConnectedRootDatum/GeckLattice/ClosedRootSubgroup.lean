@@ -285,12 +285,8 @@ theorem coe_geckRootSubgroupClosedSubgroup (i : Fin t.rank ⊕ Fin t.rank) :
 /-- The bundled numbered root subgroup is canonically isomorphic to the additive group scheme. -/
 noncomputable def geckRootSubgroupClosedSubgroupIso (i : Fin t.rank ⊕ Fin t.rank) :
     ((t.geckRootSubgroupClosedSubgroup ht i).1 :
-      Grp (Over (Spec (CommRingCat.of ℤ)))) ≅ AdditiveGroup.groupScheme ℤ := by
-  exact eqToIso (congrArg
-      (fun P : Subobject (t.geckGroupScheme ht) =>
-        (P : Grp (Over (Spec (CommRingCat.of ℤ)))))
-      (t.coe_geckRootSubgroupClosedSubgroup ht i)) ≪≫
-    Subobject.underlyingIso (t.geckRootSubgroup ht i)
+      Grp (Over (Spec (CommRingCat.of ℤ)))) ≅ AdditiveGroup.groupScheme ℤ :=
+  ClosedSubgroupScheme.mkIso (t.geckRootSubgroup ht i)
 
 /-- The canonical parametrization of the bundled closed subgroup followed by its inclusion is the
 numbered Geck root-subgroup map. -/
@@ -298,20 +294,8 @@ numbered Geck root-subgroup map. -/
 theorem geckRootSubgroupClosedSubgroupIso_inv_comp_arrow (i : Fin t.rank ⊕ Fin t.rank) :
     (t.geckRootSubgroupClosedSubgroupIso ht i).inv ≫
         (t.geckRootSubgroupClosedSubgroup ht i).1.arrow =
-      t.geckRootSubgroup ht i := by
-  have harrow :
-      (eqToIso (congrArg
-        (fun P : Subobject (t.geckGroupScheme ht) =>
-          (P : Grp (Over (Spec (CommRingCat.of ℤ)))))
-        (t.coe_geckRootSubgroupClosedSubgroup ht i))).inv ≫
-          (t.geckRootSubgroupClosedSubgroup ht i).1.arrow =
-        (Subobject.mk (t.geckRootSubgroup ht i)).arrow := by
-    exact Subobject.arrow_congr
-      (Subobject.mk (t.geckRootSubgroup ht i))
-      (t.geckRootSubgroupClosedSubgroup ht i).1
-      (t.coe_geckRootSubgroupClosedSubgroup ht i).symm
-  rw [geckRootSubgroupClosedSubgroupIso, Iso.trans_inv, Category.assoc, harrow,
-    Subobject.underlyingIso_arrow]
+      t.geckRootSubgroup ht i :=
+  ClosedSubgroupScheme.mkIso_inv_comp_arrow (t.geckRootSubgroup ht i)
 
 end
 
