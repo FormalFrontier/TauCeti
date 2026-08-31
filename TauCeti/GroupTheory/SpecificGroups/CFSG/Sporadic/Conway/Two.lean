@@ -50,6 +50,30 @@ that is, pairs generating the group with `a` an involution whose centralizer has
 provenance for the transcription, not Lean theorems: this file asserts no order, finiteness,
 simplicity, or identification result.
 
+## Independent source-to-Lean read-through
+
+An independent read-through used the bytes of the ATLAS Magma source `Co2G1-P1.M` whose SHA-256
+digest is `85179f5887ea4f86b3ca5ed0f37cafdca9512f7fb85cbd52d91ad26b27833c5b`. Its constructor
+`G<x,y>` fixes the source generator order, and the assignments `a := x; b := y` immediately after
+the constructor confirm the names used by this Lean row.
+
+Reading the active constructor entries from top to bottom gives
+
+```text
+x², y⁵, (xy²)⁹, [x,y]⁴, [x,y²]⁴, [x,yxy]³,
+[x,yxy²xy]², [x,yxy⁻²]³, [x,y⁻²xyxy⁻²]²,
+(xyxy²xy⁻¹xy⁻²)⁷.
+```
+
+These are exactly the ten entries of `co2Presentation_transcribed`, after identifying `x,y` with
+`a,b`, substituting the four displayed syllable abbreviations, and expanding the source
+commutator `[r,s]` as `r⁻¹s⁻¹rs`. Between the ninth and tenth active entries the Magma file
+comments out `[x,y²xy²]³` with the note "Redundant, but useful."; the presentation page places
+the same word in an HTML element of class `redundant`. It is therefore correctly absent from the
+Lean row. This checks every active source relator, inverse, exponent, and the sole optional-word
+boundary independently of the original transcription and closes this row's S1 source-to-Lean
+read-through.
+
 The row is a sealed definition, so it publishes an equation for each of its fields: the transcribed
 relator expressions with their generator indices written out and this file's private syllable
 abbreviations expanded, and the provenance a manifest row exists to record. Together with
