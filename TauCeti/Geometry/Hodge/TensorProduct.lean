@@ -17,10 +17,11 @@ Hodge decompositions to package the total grading as a pure Hodge structure.
 
 ## Main declarations
 
-* `TauCeti.Hodge.Conjugation.tensorProduct`: the tensor product conjugation.
 * `TauCeti.Hodge.HodgeStructureOn.tensorProduct`: the tensor product pure Hodge structure.
-* `TauCeti.Hodge.HodgeStructureOn.tmul_mem_tensorProduct_piece`: pure tensors have the expected
-  total Hodge degree.
+* `TauCeti.Hodge.HodgeStructureOn.tensorProduct_F_eq_iSup_piece`: the tensor-product filtration
+  as the supremum of products of Hodge pieces.
+* `TauCeti.Hodge.HodgeStructureOn.tmul_mem_tensorProduct`: pure tensors have the expected total
+  Hodge degree.
 
 The construction supplies the tensor-product companion requested in Layer 0 of the
 `HodgeStructures` roadmap.
@@ -33,48 +34,6 @@ open scoped TensorProduct
 namespace TauCeti.Hodge
 
 universe u v
-
-namespace Conjugation
-
-variable {W₁ : Type u} {W₂ : Type v} [AddCommGroup W₁] [Module ℂ W₁]
-  [AddCommGroup W₂] [Module ℂ W₂]
-
-private def tensorMap (ω₁ : Conjugation W₁) (ω₂ : Conjugation W₂) :
-    W₁ ⊗[ℂ] W₂ →ₛₗ[starRingEnd ℂ] W₁ ⊗[ℂ] W₂ :=
-  TensorProduct.map ω₁.toEquiv ω₂.toEquiv
-
-private theorem tensorMap_involutive (ω₁ : Conjugation W₁) (ω₂ : Conjugation W₂) :
-    Function.Involutive (tensorMap ω₁ ω₂) := by
-  intro x
-  induction x using TensorProduct.induction_on with
-  | zero => simp [tensorMap]
-  | tmul x y =>
-      simp only [tensorMap, TensorProduct.map_tmul]
-      exact congrArg₂ (fun a b ↦ a ⊗ₜ[ℂ] b) (ω₁.apply_apply x) (ω₂.apply_apply y)
-  | add x y hx hy => simp [hx, hy]
-
-/-- The tensor product of two conjugate-linear involutions. -/
-def tensorProduct (ω₁ : Conjugation W₁) (ω₂ : Conjugation W₂) :
-    Conjugation (W₁ ⊗[ℂ] W₂) where
-  toEquiv :=
-    { toFun := tensorMap ω₁ ω₂
-      invFun := tensorMap ω₁ ω₂
-      left_inv := tensorMap_involutive ω₁ ω₂
-      right_inv := tensorMap_involutive ω₁ ω₂
-      map_add' := by simp [tensorMap]
-      map_smul' := by simp [tensorMap] }
-  involutive := tensorMap_involutive ω₁ ω₂
-
-@[simp]
-theorem tensorProduct_toEquiv_tmul (ω₁ : Conjugation W₁) (ω₂ : Conjugation W₂)
-    (x : W₁) (y : W₂) :
-    (ω₁.tensorProduct ω₂).toEquiv (x ⊗ₜ[ℂ] y) = ω₁.toEquiv x ⊗ₜ[ℂ] ω₂.toEquiv y :=
-  by
-    -- Expose the private map so Mathlib's pure-tensor computation lemma can fire.
-    change tensorMap ω₁ ω₂ (x ⊗ₜ[ℂ] y) = _
-    simp [tensorMap]
-
-end Conjugation
 
 namespace HodgeStructureOn
 
@@ -169,28 +128,24 @@ noncomputable def tensorProduct (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
         rw [hs₂.piece_eq_bot_of_F_eq_top ha₂ hpq]
         simp }
 
-theorem tensorProduct_piece_eq_iSup (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
+/-- The tensor-product filtration is the supremum of products of Hodge pieces of total degree at
+least `p`. -/
+theorem tensorProduct_F_eq_iSup_piece (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
     (hs₂ : HodgeStructureOn W₂ ω₂ n₂) (p : ℤ) :
-    (hs₁.tensorProduct hs₂).piece p =
-      ⨆ r : ℤ, Submodule.map₂ (TensorProduct.mk ℂ W₁ W₂)
-        (hs₁.piece r) (hs₂.piece (p - r)) := by
-  calc
-    (hs₁.tensorProduct hs₂).piece p =
-        ((pieceGrading hs₁).tensorProduct (pieceGrading hs₂)).piece p :=
-      ofDecomposition_piece _ _
-    _ = _ := by
-      rw [InternalGrading.tensorProduct_piece_eq_iSup]
-      rfl
+    (hs₁.tensorProduct hs₂).F p =
+      ⨆ q : ℤ, ⨆ (_ : p ≤ q), ⨆ r : ℤ,
+        Submodule.map₂ (TensorProduct.mk ℂ W₁ W₂)
+          (hs₁.piece r) (hs₂.piece (q - r)) := by
+  rw [tensorProduct, ofDecomposition_F]
+  simp only [InternalGrading.tensorProduct_piece_eq_iSup, pieceGrading]
 
 /-- A pure tensor of vectors in Hodge degrees `p` and `q` has degree `p + q`. -/
-theorem tmul_mem_tensorProduct_piece (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
+theorem tmul_mem_tensorProduct (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
     (hs₂ : HodgeStructureOn W₂ ω₂ n₂) {p q : ℤ} {x : W₁} {y : W₂}
     (hx : x ∈ hs₁.piece p) (hy : y ∈ hs₂.piece q) :
     x ⊗ₜ[ℂ] y ∈ (hs₁.tensorProduct hs₂).piece (p + q) := by
-  rw [tensorProduct_piece_eq_iSup]
-  refine Submodule.mem_iSup_of_mem p ?_
-  simpa only [add_sub_cancel_left, TensorProduct.mk_apply] using
-    Submodule.apply_mem_map₂ (TensorProduct.mk ℂ W₁ W₂) hx hy
+  rw [tensorProduct, ofDecomposition_piece]
+  exact InternalGrading.tmul_mem_tensorProduct (pieceGrading hs₁) (pieceGrading hs₂) hx hy
 
 end HodgeStructureOn
 
