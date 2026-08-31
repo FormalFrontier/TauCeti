@@ -8,7 +8,6 @@ module
 public import TauCeti.Probability.Distributions.Weibull.Basic
 public import TauCeti.Probability.Distributions.Exponential
 public import Mathlib.Probability.Moments.IntegrableExpMul
-import Mathlib.Analysis.SpecialFunctions.Gaussian.GaussianIntegral
 import TauCeti.MeasureTheory.Integral.ExpDecay
 
 /-!
@@ -62,6 +61,29 @@ namespace Probability
 
 variable {k lam t : ℝ}
 
+/-- Normalize the quotient used in the superlinear power comparison. -/
+private lemma mul_div_rpow_eq (hx : 0 < x) (hlam : 0 < lam) (k t : ℝ) :
+    t * x / (x / lam) ^ k = (t * lam ^ k) * x ^ (-(k - 1)) := by
+  rw [Real.div_rpow hx.le hlam.le, Real.rpow_neg hx.le, Real.rpow_sub_one hx.ne']
+  field_simp [hx.ne', hlam.ne']
+
+/-- Normalize the quotient used in the sublinear power comparison. -/
+private lemma rpow_div_eq (hx : 0 < x) (hlam : 0 < lam) (k : ℝ) :
+    (x / lam) ^ k / x = lam ^ (-k) * x ^ (-(1 - k)) := by
+  have hsub : 1 - k = -(k - 1) := by ring
+  rw [Real.div_rpow hx.le hlam.le, Real.rpow_neg hlam.le, hsub,
+    Real.rpow_neg hx.le, Real.rpow_neg hx.le, Real.rpow_sub_one hx.ne']
+  field_simp [hx.ne', hlam.ne']
+
+/-- Normalize the prefactor used in the exponential comparison. -/
+private lemma mul_rpow_mul_exp_eq (hx : 0 < x) (hlam : 0 < lam) (k t : ℝ) :
+    (k / lam) * (x / lam) ^ (k - 1) * Real.exp ((t / 2) * x) =
+      ((k / lam) / lam ^ (k - 1)) *
+        (Real.exp ((t / 2) * x) / x ^ (1 - k)) := by
+  have hsub : 1 - k = -(k - 1) := by ring
+  rw [Real.div_rpow hx.le hlam.le, hsub, Real.rpow_neg hx.le]
+  field_simp [hx.ne', hlam.ne']
+
 /-- For superlinear powers, a linear function is negligible compared with the scaled power. -/
 private lemma tendsto_mul_div_rpow_atTop (hk : 1 < k) (hlam : 0 < lam) (t : ℝ) :
     Tendsto (fun x : ℝ => t * x / (x / lam) ^ k) atTop (𝓝 0) := by
@@ -70,8 +92,7 @@ private lemma tendsto_mul_div_rpow_atTop (hk : 1 < k) (hlam : 0 < lam) (t : ℝ)
     simpa using h
   refine h'.congr' ?_
   filter_upwards [eventually_gt_atTop (0 : ℝ)] with x hx
-  rw [Real.div_rpow hx.le hlam.le, Real.rpow_neg hx.le, Real.rpow_sub_one hx.ne']
-  field_simp
+  exact (mul_div_rpow_eq hx hlam k t).symm
 
 /-- A sublinear scaled power is negligible compared with the identity. -/
 private lemma tendsto_rpow_div_id_atTop (hk : k < 1) (hlam : 0 < lam) :
@@ -81,10 +102,7 @@ private lemma tendsto_rpow_div_id_atTop (hk : k < 1) (hlam : 0 < lam) :
     simpa using h
   refine h'.congr' ?_
   filter_upwards [eventually_gt_atTop (0 : ℝ)] with x hx
-  rw [Real.div_rpow hx.le hlam.le, Real.rpow_neg hlam.le, Real.rpow_neg hx.le,
-    show 1 - k = -(k - 1) by ring, Real.rpow_neg hx.le,
-    Real.rpow_sub_one hx.ne']
-  field_simp
+  exact (rpow_div_eq hx hlam k).symm
 
 /-- A positive exponential dominates the polynomial prefactor in a sublinear Weibull density. -/
 private lemma tendsto_mul_rpow_mul_exp_atTop (hk : 0 < k)
@@ -96,9 +114,7 @@ private lemma tendsto_mul_rpow_mul_exp_atTop (hk : 0 < k)
   have h := hbase.const_mul_atTop hcoef
   refine h.congr' ?_
   filter_upwards [eventually_gt_atTop (0 : ℝ)] with x hx
-  rw [Real.div_rpow hx.le hlam.le, show 1 - k = -(k - 1) by ring,
-    Real.rpow_neg hx.le]
-  field_simp
+  exact (mul_rpow_mul_exp_eq hx hlam k t).symm
 
 /-- The Weibull density with its exponential decay halved. -/
 private def weibullPDFRealHalfDecay (k lam x : ℝ) : ℝ :=
@@ -136,7 +152,8 @@ private lemma integrableOn_weibullPDFRealHalfDecay (hk : 0 < k) (hlam : 0 < lam)
       _ = (k / lam) * (x / lam) ^ (k - 1) := by rw [hc_mul]; norm_num
   simp only [weibullPDFRealHalfDecay]
   rw [hpower]
-  rw [show -((x / lam) ^ k / 2) = -(x / lam) ^ k / 2 by ring]
+  have hneg_div : -((x / lam) ^ k / 2) = -(x / lam) ^ k / 2 := by ring
+  rw [hneg_div]
   calc
     2 * (k / (lam * c) * (x / (lam * c)) ^ (k - 1) *
         Real.exp (-(x / lam) ^ k / 2)) =
@@ -155,6 +172,7 @@ private lemma exp_mul_mul_exp_neg (c t x p : ℝ) :
 theorem integrable_exp_mul_id_weibullMeasure_of_nonpos (k lam : ℝ) (ht : t ≤ 0) :
     Integrable (fun x : ℝ => Real.exp (t * x)) (weibullMeasure k lam) := by
   exact integrable_exp_mul_of_ae_nonneg_of_nonpos
+    (X := id) (by fun_prop)
     ((ae_pos_weibullMeasure k lam).mono fun _ hx => hx.le) ht
 
 private lemma integrable_exp_mul_id_weibullMeasure_of_one_lt_of_scale_pos
@@ -164,7 +182,7 @@ private lemma integrable_exp_mul_id_weibullMeasure_of_one_lt_of_scale_pos
   · exact integrable_exp_mul_id_weibullMeasure_of_nonpos k lam ht
   have htpos : 0 < t := lt_of_not_ge ht
   rw [weibullMeasure_eq_withDensity, integrable_withDensity_iff (measurable_weibullPDF k lam)
-    (ae_of_all _ fun x => weibullPDF_lt_top k lam x)]
+    (ae_of_all _ fun x => by rw [weibullPDF_eq_ofReal]; exact ENNReal.ofReal_lt_top)]
   simp_rw [toReal_weibullPDF]
   have hratio : ∀ᶠ x in atTop, t * x / (x / lam) ^ k < (1 / 2 : ℝ) :=
     (tendsto_order.1 (tendsto_mul_div_rpow_atTop hk hlam t)).2 _ (by norm_num)
@@ -230,7 +248,7 @@ theorem not_integrable_exp_mul_id_weibullMeasure_of_lt_one (hk : 0 < k) (hk' : k
     (hlam : 0 < lam) (ht : 0 < t) :
     ¬ Integrable (fun x : ℝ => Real.exp (t * x)) (weibullMeasure k lam) := by
   rw [weibullMeasure_eq_withDensity, integrable_withDensity_iff (measurable_weibullPDF k lam)
-    (ae_of_all _ fun x => weibullPDF_lt_top k lam x)]
+    (ae_of_all _ fun x => by rw [weibullPDF_eq_ofReal]; exact ENNReal.ofReal_lt_top)]
   simp_rw [toReal_weibullPDF]
   intro hint
   have hsmall : ∀ᶠ x in atTop, (x / lam) ^ k / x < t / 2 :=
@@ -306,6 +324,7 @@ theorem integrableExpSet_id_weibullMeasure (hk : 0 < k) (hlam : 0 < lam) :
     simpa [hklt, hkone] using integrableExpSet_id_weibullMeasure_of_one_lt (lam := lam) hone
 
 /-- The moment-generating function of a shape-one Weibull law. -/
+@[simp]
 theorem mgf_id_weibullMeasure_one (hlam : 0 < lam) (ht : t < lam⁻¹) :
     mgf id (weibullMeasure 1 lam) t = (1 - lam * t)⁻¹ := by
   rw [weibullMeasure_one_eq_expMeasure hlam, mgf_id_expMeasure (inv_pos.mpr hlam) ht]
@@ -313,6 +332,7 @@ theorem mgf_id_weibullMeasure_one (hlam : 0 < lam) (ht : t < lam⁻¹) :
   field_simp
 
 /-- The cumulant-generating function of a shape-one Weibull law. -/
+@[simp]
 theorem cgf_id_weibullMeasure_one (hlam : 0 < lam) (ht : t < lam⁻¹) :
     cgf id (weibullMeasure 1 lam) t = -Real.log (1 - lam * t) := by
   rw [cgf, mgf_id_weibullMeasure_one hlam ht, Real.log_inv]

@@ -44,15 +44,17 @@ open Filter MeasureTheory Set
 
 namespace TauCeti
 
-/-- Under a finite measure supported on the nonnegative half-line, every nonpositive exponential
-rate gives an integrable function. -/
-theorem integrable_exp_mul_of_ae_nonneg_of_nonpos {μ : Measure ℝ} [IsFiniteMeasure μ]
-    (hμ : ∀ᵐ x ∂μ, 0 ≤ x) {t : ℝ} (ht : t ≤ 0) :
-    Integrable (fun x : ℝ => Real.exp (t * x)) μ := by
-  refine Integrable.mono' (integrable_const 1) (by fun_prop) ?_
-  filter_upwards [hμ] with x hx
+/-- Under a finite measure, the exponential of a nonpositive multiple of an almost everywhere
+nonnegative random variable is integrable. -/
+theorem integrable_exp_mul_of_ae_nonneg_of_nonpos {Ω : Type*} [MeasurableSpace Ω]
+    {X : Ω → ℝ} {μ : Measure Ω} [IsFiniteMeasure μ] (hX : AEStronglyMeasurable X μ)
+    (hX_nonneg : ∀ᵐ ω ∂μ, 0 ≤ X ω) {t : ℝ} (ht : t ≤ 0) :
+    Integrable (fun ω => Real.exp (t * X ω)) μ := by
+  refine Integrable.mono' (integrable_const 1)
+    (Real.continuous_exp.comp_aestronglyMeasurable (hX.const_mul t)) ?_
+  filter_upwards [hX_nonneg] with ω hω
   rw [Real.norm_eq_abs, abs_of_pos (Real.exp_pos _), Real.exp_le_one_iff]
-  exact mul_nonpos_of_nonpos_of_nonneg ht hx
+  exact mul_nonpos_of_nonpos_of_nonneg ht hω
 
 /-- A real-valued function that is eventually at least one at `atTop` is not Lebesgue
 integrable. -/

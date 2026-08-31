@@ -94,11 +94,6 @@ theorem weibullPDF_eq_ofReal (k lam x : ℝ) :
     weibullPDF k lam x = ENNReal.ofReal (weibullPDFReal k lam x) := by
   rw [weibullPDF]
 
-/-- The Weibull density is finite everywhere. -/
-theorem weibullPDF_lt_top (k lam x : ℝ) : weibullPDF k lam x < ⊤ := by
-  rw [weibullPDF_eq_ofReal]
-  exact ENNReal.ofReal_lt_top
-
 /-- The real density has its usual formula at valid parameters and a positive point. -/
 @[simp]
 theorem weibullPDFReal_of_pos (hk : 0 < k) (hlam : 0 < lam) (hx : 0 < x) :

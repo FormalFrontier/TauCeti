@@ -244,7 +244,7 @@ theorem integrable_exp_mul_id_paretoMeasure_of_nonpos (ht : 0 < t) (hr : 0 < r)
     Integrable (fun x : ℝ => Real.exp (u * x)) (paretoMeasure t r) := by
   let _ : IsProbabilityMeasure (paretoMeasure t r) :=
     isProbabilityMeasure_paretoMeasure ht hr
-  exact TauCeti.integrable_exp_mul_of_ae_nonneg_of_nonpos
+  exact TauCeti.integrable_exp_mul_of_ae_nonneg_of_nonpos (X := id) (by fun_prop)
     ((ae_paretoMeasure_mem_Ici t r).mono fun _ hx => ht.le.trans hx) hu
 
 /-- The exponential of a multiple of the identity is integrable under a nondegenerate Pareto
