@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.FaithfullyFlatPoints
-public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Points.Kernel
 public import TauCeti.AlgebraicGeometry.GroupScheme.CentralIsogeny.Coordinate
 
 /-!
@@ -33,8 +32,6 @@ surjectivity by a weaker statement about points over the base field.
   bridge for central isogenies.
 * `TauCeti.CommHopfAlgCat.IsIsogeny.mapPointsFunctor_app_surjective`: an isogeny is
   surjective on points over algebraically closed fields.
-* `TauCeti.CommHopfAlgCat.IsCentralIsogeny.isCentralPoint_of_mapPoints_eq_one`: every
-  point in the kernel of a central isogeny is central.
 * `TauCeti.CommHopfAlgCat.isCentralIsogeny_of_isIso`: every isomorphism is a central
   isogeny.
 
@@ -244,23 +241,5 @@ theorem IsIsogeny.mapPointsFunctor_app_surjective (hf : IsIsogeny f)
     (F : Type w) [Field F] [Algebra R F] [IsAlgClosed F] :
     Function.Surjective ((mapPointsFunctor f).app (CommAlgCat.of R F)) :=
   mapPointsFunctor_app_surjective_of_faithfullyFlat F f hf.finiteType hf.faithfullyFlat
-
-section KernelPoints
-
-variable {H₀ K₀ : _root_.CommHopfAlgCat.{v} R} {f₀ : H₀ ⟶ K₀}
-
-/-- Every point in the kernel of a central isogeny is central in its source group. This is
-the functor-of-points meaning of the central-kernel condition. For a morphism assumed only to have
-central kernel, combine `mapPointsFunctor_app_eq_one_iff` with
-`isCentralPoint_of_mem_quotientPointsSubgroup`. -/
-theorem IsCentralIsogeny.isCentralPoint_of_mapPoints_eq_one
-    (hf : IsCentralIsogeny f₀) (A : CommAlgCat.{w} R)
-    (g : HopfAlgebra.points (R := R) (H := K₀) A)
-    (hg : (mapPointsFunctor f₀).app A g = 1) : HopfAlgebra.IsCentralPoint g := by
-  apply isCentralPoint_of_mem_quotientPointsSubgroup K₀ (kernelHopfIdeal f₀)
-    hf.isCentral_kernelHopfIdeal A
-  exact (mapPointsFunctor_app_eq_one_iff f₀ A g).mp hg
-
-end KernelPoints
 
 end TauCeti.CommHopfAlgCat
