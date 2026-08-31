@@ -35,6 +35,45 @@ the signed words consumed by `PresentedGroup`. This file asserts no order, finit
 or identification theorem for the presented group. The independent `FiniteSimpleGroups`
 development named by the roadmap does not cover `Ly`, so that cross-check is unavailable here.
 
+## Independent source-to-Lean read-through
+
+An independent read-through used the archived bytes of the journal's PostScript article linked by
+EuDML, whose SHA-256 digest is
+`79473942e611ee0996d813f0b9f68e07e24ee59f7228b89d86d94bc2cff84cf2`. Printed pages 335--336
+give the presentation used here. Page 335 starts `R_H2` with
+
+```text
+a⁸, b⁵, (ab)⁴, [a²,b], [a,b]³,
+```
+
+and page 336 adds
+
+```text
+c⁵, c^(a²) = c³,
+c^(ba) = c^(a²b) c b c b⁻¹,
+c^(b²) = c² c^(b⁻¹) (c^b)⁻².
+```
+
+These are exactly the nine entries of `lyH2Relators`, in source order. The next displayed block
+`R_H1` has seven entries. Its first two equations are
+`(ab⁻¹a)^d = ab⁻¹a⁵` and `(b²a⁻¹)^d = a⁻²b²a⁻¹`; entries three and four use the conjugator
+`dcd`, entries five and six use `dca⁻¹bcd`, and entry seven is the standalone long word rather
+than an equation. Reading both sides of every displayed equation and every inverse in that final
+word gives exactly the seven entries of `lyH1Relators`.
+
+The facing `R_G` block has nine further entries. The first two are `a^z = a⁻³` and
+`a^(zdz) = a³`; entry three also uses `zdz`, entry four is a commutator equation, entries five
+and six use `zdb⁻¹z`, entries seven and eight use `zdcdz`, and entry nine is again a
+standalone long word. Every left- and right-hand side, overbar, and exponent agrees position by
+position with `lyExtensionRelators`. Under the paper's conventions `x^y = y⁻¹xy` and
+`[x,y] = x⁻¹y⁻¹xy`, while each displayed equation is compiled by `Relator.div`; those are exactly
+the three translation rules used in the Lean expressions.
+
+Thus the concatenated Lean list follows the paper's `R_H2`, `R_H1`, `R_G` order with block counts
+`9`, `7`, and `9`. The independently read reduced block lengths are the published `80`, `160`,
+and `309`, whose sum is the paper's total `549`. This checks every source relator and closes this
+row's S1 source-to-Lean read-through independently of the original transcription.
+
 ## Main definition
 
 * `TauCeti.Sporadic.lyPresentation`: Gebhardt's finite presentation of `Ly`.

@@ -6,6 +6,7 @@ Authors: Codex
 module
 
 public import TauCeti.Combinatorics.DenseGraphLimits.StepGraphon.Energy
+public import TauCeti.Combinatorics.DenseGraphLimits.Kernel.CutNorm
 import TauCeti.MeasureTheory.MeasurableSpace.Finpartition
 
 /-!
