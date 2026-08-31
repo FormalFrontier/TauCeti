@@ -48,6 +48,57 @@ notes of each row. Each row is also an *efficient* presentation in the sense of 
 that its deficiency attains the lower bound coming from the Schur multiplier; that is the property
 the sources are about, and it plays no role here beyond explaining why they list these words.
 
+## Independent source-to-Lean read-through
+
+The three rows were independently checked against the source PDFs, rather than against the Lean
+definitions or the existing GAP re-enumeration. The downloaded bytes of Campbell--Havas--Ramsay--
+Robertson's paper have SHA-256
+`ab91fcb806b1bc50508100f01893dcd84825146a80027c12796db325f8cf9966`; the paper's Table 2 (p. 270)
+and Sections 5.8 and 5.17 (pp. 275 and 279) give the `M₁₁` and `M₁₂` rows. The downloaded bytes of
+Conder--Havas--Ramsay's paper have SHA-256
+`f0cf99d0c46a8c0546e036a62ecdd4407e043c8f9e2aeba744d9db5afe9301ed`; its Section 3.4 (p. 40)
+gives the `M₂₂` quotient presentation.
+
+For `M₁₁`, the source row is
+
+```text
+b A^3 b A b^3,  b a B A B A b a B a
+```
+
+The first word expands to the nine letters in the first entry of
+`m11Presentation_relatorLetters`, and the second to its ten-letter second entry. The source's
+generator order is `a,b`, and its convention `A = a⁻¹`, `B = b⁻¹` agrees with the row. The table
+and Section 5.8 both identify the presentation as `M₁₁`; the table reports length `19`, `10428`
+cosets, and order `7920`, matching the row's letter total and transcription notes.
+
+For `M₁₂`, the source row is
+
+```text
+(B a)^3,  a^5 b^6,  a b^2 a B a^2 b a^2 b^2
+```
+
+The first word expands to six letters, the second to eleven, and the third to twelve, in exactly
+the order of `m12Presentation_relatorLetters`. The source again uses alphabetical generators and
+upper-case inverses. Table 2 reports length `29`, `119334` cosets, and order `95040`; Section 5.17
+describes the same row and distinguishes it from the separate covering-group presentation.
+
+For `M₂₂`, the source's Section 3.4 starts from a presentation of the cover and then adjoins the
+central relation `b^11`. The final displayed presentation is
+
+```text
+ a^4 b A b A b,  a^2 b A B a b^2 A B,  b^11
+```
+
+These expand to the three entries of `m22Presentation_relatorLetters`, of lengths `9`, `10`, and
+`11`. In particular, the third word is the relation that passes from the cover to `M₂₂`; it is
+not omitted as a redundant cover relation. The source uses the same `a,b` and upper-case-inverse
+conventions, and reports length `30`, `2104858` cosets, and order `443520` for this presentation.
+
+Thus every source relator, exponent, generator index, and source-order position agrees with the
+corresponding sealed row and its compiled-letter theorem. This paragraph is the independent
+source-to-Lean review artifact for these three rows; it is not a theorem about the order or
+simplicity of any presented group.
+
 ## What is and is not claimed
 
 Nothing in this file asserts that the presented groups are nontrivial, finite, or simple, that they
@@ -103,10 +154,12 @@ comparisons against the FiniteSimpleGroups development are recorded. The two sou
 
 * C. M. Campbell, G. Havas, C. Ramsay and E. F. Robertson, *Nice efficient presentations for all
   small simple groups and their covers*, LMS J. Comput. Math. **7** (2004), 266--283,
-  <https://doi.org/10.1112/S1461157000001121>;
+  <https://doi.org/10.1112/S1461157000001121>,
+  <https://staff.itee.uq.edu.au/havas/2004chrr.pdf>;
 * M. D. E. Conder, G. Havas and C. Ramsay, *Efficient presentations for the Mathieu simple group
   `M₂₂` and its cover*, in *Finite Geometries, Groups, and Computation*, Walter de Gruyter, Berlin,
-  2006, 33--41.
+  2006, 33--41,
+  <https://www.math.auckland.ac.nz/~conder/preprints/m22presentations.pdf>.
 
 The Lean development named in the cross-check above is
 [FiniteSimpleGroups](https://github.com/KitaKen1/finite-simple-groups-lean); nothing from it is
@@ -151,7 +204,7 @@ def m11Presentation : GroupPresentation where
   source := "C. M. Campbell, G. Havas, C. Ramsay and E. F. Robertson, Nice efficient \
     presentations for all small simple groups and their covers, LMS J. Comput. Math. 7 (2004), \
     266-283"
-  sourceLocator := "Table 2 (p. 269), row M11, with the discussion in Section 5.8 (p. 275); \
+  sourceLocator := "Table 2 (p. 270), row M11, with the discussion in Section 5.8 (p. 275); \
     doi:10.1112/S1461157000001121"
   generatorConvention := "The generators a and b of the source, in that order, so index 0 is a and \
     index 1 is b. An upper-case letter denotes the inverse of the corresponding generator, and \
@@ -186,7 +239,7 @@ theorem m11Presentation_source :
 /-- The locator recorded for `M₁₁`, pointing at the presentation inside its source. -/
 @[simp]
 theorem m11Presentation_sourceLocator :
-    m11Presentation.sourceLocator = "Table 2 (p. 269), row M11, with the discussion in Section 5.8 \
+    m11Presentation.sourceLocator = "Table 2 (p. 270), row M11, with the discussion in Section 5.8 \
       (p. 275); doi:10.1112/S1461157000001121" := by
   simp [m11Presentation]
 
@@ -287,7 +340,7 @@ def m12Presentation : GroupPresentation where
   source := "C. M. Campbell, G. Havas, C. Ramsay and E. F. Robertson, Nice efficient \
     presentations for all small simple groups and their covers, LMS J. Comput. Math. 7 (2004), \
     266-283"
-  sourceLocator := "Table 2 (p. 269), row M12, with the discussion in Section 5.17 (p. 279); \
+  sourceLocator := "Table 2 (p. 270), row M12, with the discussion in Section 5.17 (p. 279); \
     doi:10.1112/S1461157000001121"
   generatorConvention := "The generators a and b of the source, in that order, so index 0 is a and \
     index 1 is b. An upper-case letter denotes the inverse of the corresponding generator, and \
@@ -324,7 +377,7 @@ theorem m12Presentation_source :
 /-- The locator recorded for `M₁₂`, pointing at the presentation inside its source. -/
 @[simp]
 theorem m12Presentation_sourceLocator :
-    m12Presentation.sourceLocator = "Table 2 (p. 269), row M12, with the discussion in Section \
+    m12Presentation.sourceLocator = "Table 2 (p. 270), row M12, with the discussion in Section \
       5.17 (p. 279); doi:10.1112/S1461157000001121" := by
   simp [m12Presentation]
 
