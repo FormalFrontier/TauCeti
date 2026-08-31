@@ -104,13 +104,13 @@ private theorem commute_negativeSumShortRootUnit_negativeLongRootTransvectionUni
     exact hIL.mul_left hJL
   exact (GLSymplecticFin m R).subtype_injective hambient
 
-/-- If a subgroup contains every difference-root element and one positive long-root subgroup,
-then it contains every positive long-root element, provided `2` is invertible in the coefficient
-ring. -/
+/-- If a subgroup contains every difference-root element pointing to `r` and the positive
+long-root subgroup at `r`, then it contains every positive long-root element, provided `2` is
+invertible in the coefficient ring. -/
 theorem positiveLongRootTransvectionUnit_mem_of_difference_of_long
     (H : Subgroup (GLSymplecticFin m R)) (h2 : IsUnit (2 : R)) (r : Fin m)
-    (hdifference : ∀ {i j : Fin m} (hij : i ≠ j) (c : R),
-      differenceShortRootUnit hij c ∈ H)
+    (hdifference : ∀ {i : Fin m} (hir : i ≠ r) (c : R),
+      differenceShortRootUnit hir c ∈ H)
     (hpivot : ∀ c : R, positiveLongRootTransvectionUnit r c ∈ H)
     (i : Fin m) (c : R) : positiveLongRootTransvectionUnit i c ∈ H := by
   by_cases hir : i = r
@@ -158,13 +158,13 @@ theorem positiveLongRootTransvectionUnit_mem_of_difference_of_long
         _ = positiveLongRootTransvectionUnit i c := by rw [ht]
     rwa [heq] at hquotient
 
-/-- If a subgroup contains every difference-root element and one negative long-root subgroup,
-then it contains every negative long-root element, provided `2` is invertible in the coefficient
-ring. -/
+/-- If a subgroup contains every difference-root element pointing from `r` and the negative
+long-root subgroup at `r`, then it contains every negative long-root element, provided `2` is
+invertible in the coefficient ring. -/
 theorem negativeLongRootTransvectionUnit_mem_of_difference_of_long
     (H : Subgroup (GLSymplecticFin m R)) (h2 : IsUnit (2 : R)) (r : Fin m)
-    (hdifference : ∀ {i j : Fin m} (hij : i ≠ j) (c : R),
-      differenceShortRootUnit hij c ∈ H)
+    (hdifference : ∀ {i : Fin m} (hri : r ≠ i) (c : R),
+      differenceShortRootUnit hri c ∈ H)
     (hpivot : ∀ c : R, negativeLongRootTransvectionUnit r c ∈ H)
     (i : Fin m) (c : R) : negativeLongRootTransvectionUnit i c ∈ H := by
   by_cases hir : i = r
