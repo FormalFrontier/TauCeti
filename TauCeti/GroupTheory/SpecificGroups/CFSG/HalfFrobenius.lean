@@ -209,12 +209,14 @@ half-Frobenius returns the Frobenius of the field the index names, `2 ^ (2 * m +
 and Ree `F₄` families, `3 ^ (2 * m + 1)` for Ree `G₂`, and `2` for the Tits index. -/
 @[simp] theorem datumSteinberg_mul_self (e : SuzukiReeIndex) :
     e.datumSteinberg * e.datumSteinberg =
-      RootPairingIsogeny.smulId _ ⟨e.1.fieldOrder, e.1.fieldOrder_pos⟩ := by
+      RootPairingIsogeny.smulId _ e.1.1.fieldOrderPNat := by
   rw [datumSteinberg, RootPairingIsogeny.pow_mul_self_eq_smulId _ e.datumSpecialIsogeny_mul_self]
   -- The two scalings differ only in how their common value `p ^ (2 * m + 1)` is written, so all
   -- that is left is the numeric identity between the field order and that power.
   congr 1
-  exact PNat.coe_injective e.1.fieldOrder_eq_characteristic_pow.symm
+  refine PNat.coe_injective ?_
+  rw [LieTypeIndex.coe_fieldOrderPNat]
+  exact e.1.fieldOrder_eq_characteristic_pow.symm
 
 /-! ### The four pieces of data -/
 

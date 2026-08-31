@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Aut
+public import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.BaseChange
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.Point.VariableChange
 public import TauCeti.AlgebraicGeometry.EllipticCurve.GaloisDescent
 public import TauCeti.AlgebraicGeometry.EllipticCurve.NodePolynomial
@@ -658,8 +659,6 @@ theorem not_exists_smul_quadraticTwist_eq (hj₀ : E.j ≠ 0) (hj₁₇₂₈ : 
   rintro ⟨CK, hCK⟩
   obtain ⟨σ, hσ⟩ := Algebra.IsQuadraticExtension.exists_algEquiv_ne_one K L
   have hinj := FaithfulSMul.algebraMap_injective K L
-  -- needed by `negVariableChange_ne_one` at the end
-  have : (E.baseChange L).IsElliptic := inferInstanceAs ((E.map (algebraMap K L)).IsElliptic)
   -- `b := CKᴸ · T` fixes `Eᴸ`, where `T` is the change of variables carrying `Eᴸ` to the twist
   set b := CK.baseChange L * E.quadraticTwistVariableChange L with hb
   have haut : b • E.baseChange L = E.baseChange L := by
@@ -809,7 +808,6 @@ Like the twist itself this is well defined only up to an `L`-automorphism of `E`
 to sign — and this definition makes one arbitrary choice, consistently across all `M`. -/
 noncomputable def quadraticTwistPointEquiv :
     ((E.quadraticTwist L).baseChange M).toAffine.Point ≃+ (E.baseChange M).toAffine.Point :=
-  have : (E.baseChange M).IsElliptic := inferInstanceAs (E.map (algebraMap K M)).IsElliptic
   (AddEquiv.cast (M := fun V : WeierstrassCurve M ↦ V.toAffine.Point)
       (E.quadraticTwistVariableChange_smul_baseChange L M).symm).trans
     (Affine.Point.equivVariableChange (E.baseChange M)

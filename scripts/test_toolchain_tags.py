@@ -302,6 +302,43 @@ class Digest(unittest.TestCase):
         self.assertEqual(tt.state_digest(self.ROWS), tt.state_digest(worded))
 
 
+class AheadOfMain(unittest.TestCase):
+    """A release mathlib has tagged but main has not reached is not `unreachable`.
+
+    `unreachable` reads as permanent and the report files it under "no tag is possible".
+    For a release ahead of main that is the opposite of the truth, and it is the normal
+    state for days or weeks after mathlib cuts one, so it was the commonest thing the
+    report said and it was wrong."""
+
+    def test_a_release_ahead_of_main_is_ahead_not_unreachable(self):
+        row = tt._unreachable_row("v4.34.0-rc2", {}, newest_era="v4.34.0-rc1")
+        self.assertEqual(row["status"], "ahead")
+        self.assertIn("still on v4.34.0-rc1", row["reason"])
+
+    def test_a_release_main_stepped_over_is_still_unreachable(self):
+        # v4.33.1 is BEHIND v4.34.0-rc1, so main went past without stopping.
+        row = tt._unreachable_row("v4.33.1", {}, newest_era="v4.34.0-rc1")
+        self.assertEqual(row["status"], "unreachable")
+
+    def test_every_kind_of_later_release_counts_as_ahead(self):
+        for release in ("v4.34.0-rc2", "v4.34.0", "v4.35.0-rc1"):
+            with self.subTest(release=release):
+                row = tt._unreachable_row(release, {}, newest_era="v4.34.0-rc1")
+                self.assertEqual(row["status"], "ahead")
+
+    def test_the_report_separates_it_from_no_tag_is_possible(self):
+        rows = [tt._unreachable_row("v4.34.0-rc2", {}, newest_era="v4.34.0-rc1")]
+        text = tt.render(rows, include_policy=False)
+        self.assertIn("Ahead of main", text)
+        self.assertNotIn("No tag is possible", text)
+
+    def test_ahead_alone_is_not_worth_posting(self):
+        # Otherwise every mathlib release cut would post, whether or not main can act on it.
+        base = [{"release": "v4.34.0-rc1", "status": "tagged"}]
+        plus = base + [{"release": "v4.34.0-rc2", "status": "ahead"}]
+        self.assertEqual(tt.state_digest(base), tt.state_digest(plus))
+
+
 class DigestCause(unittest.TestCase):
     """A blocked release whose CAUSE changes must repost, or the visible reason stays wrong."""
 

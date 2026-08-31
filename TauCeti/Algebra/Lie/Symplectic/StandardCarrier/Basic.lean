@@ -71,8 +71,11 @@ asserted here.
   the numbered generators.
 * `TauCeti.SpStd.lie_cartanGenerator_rootGenerator`: the numbered Cartan generators act on the
   root generators through the rows of the type-`C` Cartan matrix.
-* `TauCeti.SpStd.isNilpotent_rep_rootGenerator`: each numbered root generator squares to zero on
-  the standard module.
+* `TauCeti.SpStd.isNilpotent_rep_rootGenerator` and
+  `TauCeti.SpStd.nilpotencyClass_rep_rootGenerator`: each numbered root generator squares to zero
+  on the standard module, and has nilpotency class exactly two.
+* `TauCeti.SpStd.intCast_latticeBasis_repr`: the coordinate-basis coefficients of a lattice vector
+  are its rational coordinates.
 * `TauCeti.SpStd.rep_kostantForm_mem_lattice`: the Kostant `ℤ`-form preserves the standard
   lattice, so the lattice is admissible.
 * `TauCeti.SpStd.span_range_weight_eq_top`: the weights of the standard module generate the full
@@ -758,6 +761,15 @@ noncomputable def latticeBasis :
   rw [Module.Basis.reindex_apply, ← Pi.basisFun_apply]
   exact TauCeti.coe_coordinateLatticeBasis (Fin (n + 1) ⊕ Fin (n + 1)) _
 
+/-- The coordinate-basis coefficients of a lattice vector are its rational coordinates: extending
+the `a`-th coefficient to `ℚ` recovers the coordinate at the standard index enumerated by `a`. -/
+@[simp] theorem intCast_latticeBasis_repr (v : (lattice n).toAddSubgroup)
+    (a : Fin ((n + 1) + (n + 1))) :
+    (((latticeBasis n).repr v a : ℤ) : ℚ) =
+      (v : (Fin (n + 1) ⊕ Fin (n + 1)) → ℚ) (finSumFinEquiv.symm a) := by
+  unfold latticeBasis lattice at *
+  rw [Module.Basis.repr_reindex_apply, TauCeti.intCast_coordinateLatticeBasis_repr]
+
 /-- The weight attached to the enumerated coordinate basis. -/
 def basisWeight (a : Fin ((n + 1) + (n + 1))) : Fin (n + 1) → ℤ :=
   weight n (finSumFinEquiv.symm a)
@@ -846,6 +858,22 @@ theorem rep_rootGenerator_latticeBasis (k : Fin (n + 1) ⊕ Fin (n + 1)) :
       · simp [hi]
 
 attribute [local instance high] Algebra.toModule
+
+/-- Every numbered root generator has nilpotency class exactly two in the standard
+representation. -/
+theorem nilpotencyClass_rep_rootGenerator (k : Fin (n + 1) ⊕ Fin (n + 1)) :
+    nilpotencyClass
+        (rep n (_root_.UniversalEnvelopingAlgebra.ι ℚ (rootGenerator n k))) = 2 := by
+  refine nilpotencyClass_eq_succ_iff.mpr ⟨pow_two_rep_rootGenerator_eq_zero n k, ?_⟩
+  rw [pow_one]
+  intro hzero
+  have h := DFunLike.congr_fun hzero
+    ((latticeBasis n (finSumFinEquiv (rootSource n k)) : (lattice n).toAddSubgroup) :
+      (Fin (n + 1) ⊕ Fin (n + 1)) → ℚ)
+  rw [rep_rootGenerator_latticeBasis, one_smul, coe_latticeBasis] at h
+  simp only [LinearMap.zero_apply, Equiv.symm_apply_apply] at h
+  have h2 := congrFun h (rootTarget n k)
+  simp at h2
 
 /-- Every coordinate basis vector of the standard lattice is a Cartan weight vector. -/
 theorem isCartanWeightVector_latticeBasis (a : Fin ((n + 1) + (n + 1))) :

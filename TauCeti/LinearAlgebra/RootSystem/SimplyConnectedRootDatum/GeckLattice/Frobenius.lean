@@ -51,8 +51,10 @@ subgroup appearing in it is finite, is simple, or is a named finite group.
 * `TauCeti.DynkinType.geckFrobenius_eq_self_iff`: a carrier point is fixed exactly when all of its
   matrix entries are fixed.
 * `TauCeti.DynkinType.geckFrobenius_geckRootSubgroupPoints` and
-  `TauCeti.DynkinType.geckFrobenius_geckWeightTorusPoints`: the equations on the pinned root
-  subgroups and on the pinned weight torus.
+  `TauCeti.DynkinType.geckFrobenius_geckRootSubgroupMatrix`, together with
+  `TauCeti.DynkinType.geckFrobenius_geckWeightTorusPoints` and
+  `TauCeti.DynkinType.geckFrobenius_geckTorusMatrix`: the equations on the pinned root subgroups
+  and on the pinned weight torus.
 * `TauCeti.DynkinType.map_subtype_fixedSubgroup_geckFrobenius_eq`: the Frobenius-fixed points of
   the carrier are its points over the Frobenius-fixed subring.
 
@@ -152,6 +154,27 @@ theorem geckFrobenius_geckRootSubgroupPoints (i : Fin t.rank ⊕ Fin t.rank)
         (Multiplicative.ofAdd (Multiplicative.toAdd u ^ p ^ k)) := by
   rw [geckFrobenius, t.geckPointsMap_geckRootSubgroupPoints ht, iterateFrobenius_def]
 
+/-- **The Frobenius raises the parameter of a numbered Geck root subgroup to its `p ^ k`-th
+power**, which is the defining equation of the untwisted Steinberg map on the pinned simple root
+subgroups. -/
+@[simp]
+theorem geckFrobenius_geckRootSubgroupMatrix (i : Fin t.rank ⊕ Fin t.rank) (u : Multiplicative A) :
+    t.geckFrobenius ht p k A
+        ⟨t.geckRootSubgroupMatrix ht i
+            ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm u),
+          t.geckRootSubgroupMatrix_mem_geckPoints ht A i _⟩ =
+      ⟨t.geckRootSubgroupMatrix ht i
+          ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm
+            (Multiplicative.ofAdd (Multiplicative.toAdd u ^ p ^ k))),
+        t.geckRootSubgroupMatrix_mem_geckPoints ht A i _⟩ := by
+  refine Subtype.ext ?_
+  have h := congrArg (fun (g : t.geckPoints ht A) =>
+    (g : Matrix.GeneralLinearGroup (Fin (t.geckDim ht)) A))
+    (t.geckFrobenius_geckRootSubgroupPoints ht p k A i u)
+  rw [coe_geckFrobenius, coe_geckRootSubgroupPoints, coe_geckRootSubgroupPoints] at h
+  rw [coe_geckFrobenius]
+  exact h
+
 /-- **The Frobenius raises a point of the pinned Geck weight torus to its `p ^ k`-th power.** -/
 @[simp]
 theorem geckFrobenius_geckWeightTorusPoints (s : Fin t.rank → Aˣ) :
@@ -163,6 +186,23 @@ theorem geckFrobenius_geckWeightTorusPoints (s : Fin t.rank → Aˣ) :
       rw [Units.coe_map, MonoidHom.coe_coe, iterateFrobenius_def, Pi.pow_apply,
         Units.val_pow_eq_pow_val])
   rw [geckFrobenius, t.geckPointsMap_geckWeightTorusPoints ht (iterateFrobenius A p k) s, hs]
+
+/-- **The Frobenius raises a point of the pinned Geck weight torus to its `p ^ k`-th power.** -/
+@[simp]
+theorem geckFrobenius_geckTorusMatrix (s : Fin t.rank → Aˣ) :
+    t.geckFrobenius ht p k A
+        ⟨diagGL fun i => torusCharacter s (t.geckWeightFin ht i), by
+          simpa only [TauCeti.UniversalEnvelopingAlgebra.kostantTorusMatrix_apply] using
+            t.geckTorusMatrix_mem_geckPoints ht A s⟩ =
+      ⟨t.geckTorusMatrix ht (s ^ p ^ k), t.geckTorusMatrix_mem_geckPoints ht A _⟩ := by
+  rw [← t.geckPoints_mk_geckTorusMatrix ht A s]
+  refine Subtype.ext ?_
+  have h := congrArg (fun (g : t.geckPoints ht A) =>
+    (g : Matrix.GeneralLinearGroup (Fin (t.geckDim ht)) A))
+    (t.geckFrobenius_geckWeightTorusPoints ht p k A s)
+  rw [coe_geckFrobenius, coe_geckWeightTorusPoints, coe_geckWeightTorusPoints] at h
+  rw [coe_geckFrobenius]
+  exact h
 
 /-- **The Frobenius-fixed points of the pinned Geck carrier are its points over the
 Frobenius-fixed subring.** For `p` prime, `0 < k`, `A` an algebraic closure of `ZMod p` and

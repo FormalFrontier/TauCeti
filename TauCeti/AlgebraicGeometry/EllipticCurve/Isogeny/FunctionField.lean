@@ -6,9 +6,10 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Isogeny.Basic
-import Mathlib.RingTheory.Norm.Basic
 import Mathlib.RingTheory.Polynomial.IsIntegral
+import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.Eval
 import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.FunctionField.Finrank
+import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.FunctionField.GenericPoint
 
 /-!
 # Function-field pullbacks of isogenies
@@ -66,9 +67,10 @@ Silverman, *The Arithmetic of Elliptic Curves*, II.2.4.
 
 public section
 
+open Polynomial WeierstrassCurve.Affine
+
 namespace TauCeti
 
-open Polynomial WeierstrassCurve.Affine
 open scoped Polynomial.Bivariate
 
 variable {F : Type*} [Field F]
@@ -141,42 +143,20 @@ theorem transcendental_pullback_X (φ : Isogeny W₁ W₂) :
   have hx₁ : IsIntegral F x₁ :=
     isIntegral_of_isIntegral_map φ.pullback.toRingHom himage hx₁_over_target
   have hx₁_transcendental : Transcendental F x₁ := by
-    have hx₁_eq : x₁ = algebraMap F[X] W₁.FunctionField X :=
-      (IsScalarTower.algebraMap_apply F[X] W₁.CoordinateRing W₁.FunctionField X).symm
+    have hx₁_eq : x₁ = WeierstrassCurve.Affine.genericX W₁ := by
+      rw [WeierstrassCurve.Affine.genericX_def,
+        WeierstrassCurve.Affine.CoordinateRing.mk_C_eq_algebraMap]
     rw [hx₁_eq]
-    exact (transcendental_algebraMap_iff
-      (FaithfulSMul.algebraMap_injective F[X] W₁.FunctionField)).2
-        (Polynomial.transcendental_X F)
+    exact WeierstrassCurve.Affine.transcendental_genericX W₁
   exact hx₁_transcendental hx₁.isAlgebraic
 
 /-- The coordinate pullback of any isogeny of affine Weierstrass curves over a field is
-injective. A nonzero element of the kernel has nonzero norm over `F[x₂]`, and that norm is a
-polynomial relation killing `φ^*x₂` — which `transcendental_pullback_X` forbids. -/
-theorem pullback_injective (φ : Isogeny W₁ W₂) : Function.Injective φ.pullback := by
-  apply (injective_iff_map_eq_zero φ.pullback).2
-  intro z hz
-  by_contra hz₀
-  obtain ⟨p, q, hpq⟩ := CoordinateRing.exists_smul_basis_eq z
-  let N : F[X] := Algebra.norm F[X] z
-  have hN₀ : N ≠ 0 :=
-    (Algebra.norm_ne_zero_iff_of_basis (CoordinateRing.basis W₂)).2 hz₀
-  let x₂ : W₂.CoordinateRing := algebraMap F[X] W₂.CoordinateRing X
-  let t : W₁.FunctionField := φ.pullback x₂
-  have hnorm : algebraMap F[X] W₂.CoordinateRing N =
-      z * CoordinateRing.mk W₂
-        (C p + C q * (-(Y : F[X][Y]) - C (C W₂.a₁ * X + C W₂.a₃))) := by
-    dsimp only [N]
-    rw [← hpq]
-    simpa [N, CoordinateRing.smul] using CoordinateRing.coe_norm_smul_basis (W' := W₂) p q
-  have hN : aeval t N = 0 := by
-    have heval : aeval t N = φ.pullback (algebraMap F[X] W₂.CoordinateRing N) := by
-      have hhom : aeval t =
-          φ.pullback.comp (IsScalarTower.toAlgHom F F[X] W₂.CoordinateRing) := by
-        apply Polynomial.algHom_ext
-        simp [t, x₂]
-      exact AlgHom.congr_fun hhom N
-    rw [heval, hnorm, map_mul, hz, zero_mul]
-  exact φ.transcendental_pullback_X ⟨N, hN₀, hN⟩
+injective, by the general criterion `CoordinateRing.algHom_injective`: the pullback of the
+coordinate `x` is transcendental. -/
+theorem pullback_injective (φ : Isogeny W₁ W₂) : Function.Injective φ.pullback :=
+  WeierstrassCurve.Affine.CoordinateRing.algHom_injective φ.pullback <| by
+    rw [WeierstrassCurve.Affine.CoordinateRing.mk_C_eq_algebraMap]
+    exact φ.transcendental_pullback_X
 
 /-- The function-field pullback induced by an isogeny. It is the unique extension of the
 coordinate pullback across the target fraction field. -/

@@ -31,6 +31,10 @@ force that permutation to be trivial.
   weight spaces are nonzero.
 * `nonzeroJointWeightAction`: the resulting permutation action of the ambient group on the
   characters having nonzero joint weight space.
+* `map_iInf_eigenspace_unitHom_eq_self_of_nonzeroJointWeightAction_eq`: a character fixed by the
+  permutation action has an ambient-invariant joint weight space.
+* `map_iInf_eigenspace_unitHom_eq_self_of_mem_ker_nonzeroJointWeightAction`: the kernel of that
+  action preserves every nonzero joint weight space.
 
 ## References
 
@@ -152,6 +156,30 @@ theorem nonzeroJointWeightAction_apply_coe (N : Subgroup G) [N.Normal]
       {χ : N →* Kˣ // (⨅ n : N, (ρ n).eigenspace (χ n)) ≠ ⊥}) : N →* Kˣ) =
         (MulAut.conjNormal g).monoidHomCongrLeftEquiv χ := by
   rfl
+
+/-- If an ambient group element fixes a nonzero normal-subgroup weight, its representation
+operator maps the corresponding joint weight space onto itself. -/
+theorem map_iInf_eigenspace_unitHom_eq_self_of_nonzeroJointWeightAction_eq
+    (N : Subgroup G) [N.Normal] (ρ : G →* Module.End K V) (g : G)
+    (χ : {χ : N →* Kˣ // (⨅ n : N, (ρ n).eigenspace (χ n)) ≠ ⊥})
+    (hχ : nonzeroJointWeightAction N ρ g χ = χ) :
+    (⨅ n : N, (ρ n).eigenspace (χ.1 n)).map (ρ g) =
+      ⨅ n : N, (ρ n).eigenspace (χ.1 n) := by
+  rw [map_iInf_eigenspace_unitHom_eq_conjNormal]
+  exact congrArg (fun ψ : N →* Kˣ ↦ ⨅ n : N, (ρ n).eigenspace (ψ n))
+    (congrArg Subtype.val hχ)
+
+/-- Every element in the kernel of the permutation action preserves each nonzero
+normal-subgroup joint weight space. -/
+theorem map_iInf_eigenspace_unitHom_eq_self_of_mem_ker_nonzeroJointWeightAction
+    (N : Subgroup G) [N.Normal] (ρ : G →* Module.End K V) (g : G)
+    (hg : g ∈ (nonzeroJointWeightAction N ρ).ker)
+    (χ : {χ : N →* Kˣ // (⨅ n : N, (ρ n).eigenspace (χ n)) ≠ ⊥}) :
+    (⨅ n : N, (ρ n).eigenspace (χ.1 n)).map (ρ g) =
+      ⨅ n : N, (ρ n).eigenspace (χ.1 n) := by
+  apply map_iInf_eigenspace_unitHom_eq_self_of_nonzeroJointWeightAction_eq N ρ g χ
+  have h := DFunLike.congr_fun ((MonoidHom.mem_ker).mp hg) χ
+  simpa using h
 
 end TauCeti
 

@@ -477,6 +477,10 @@ def id (P : RootPairing ι R M N) : RootPairingIsogeny P P :=
     (id P).exponent i = 1 := by
   rw [id, ofEquiv]
 
+/-- **The identity automorphism becomes the identity isogeny.** -/
+@[simp] theorem ofEquiv_one : ofEquiv (1 : RootPairing.Equiv P P) = id P := by
+  ext <;> simp
+
 /-- Composing an isogeny on the left with the identity isogeny does not change it. -/
 @[simp] theorem comp_id (f : RootPairingIsogeny P Q) : comp (id Q) f = f := by
   ext <;> simp [comp, id, ofEquiv]
@@ -528,8 +532,7 @@ theorem comp_ofEquiv_smulId_eq_iff [Module.Free ℤ M] [Module.Finite ℤ M]
     apply LinearEquiv.toLinearMap_injective
     exact LinearMap.ext fun x => by simpa using hx x
   · rintro rfl
-    have hone : ofEquiv (1 : RootPairing.Equiv P P) = id P := by ext <;> simp
-    rw [hone, comp_id]
+    rw [ofEquiv_one, comp_id]
 
 end RootPairingIsogeny
 

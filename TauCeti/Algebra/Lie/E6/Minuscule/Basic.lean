@@ -68,7 +68,7 @@ private def loweringTarget (i : Fin 6) (a : Fin 27) : Option (Fin 27) :=
 /-- Reflection in a simple root negates the corresponding simple-coroot coordinate of a
 minuscule weight. -/
 @[simp]
-private theorem e6MinusculeWeight_reflection_apply_self (i : Fin 6) (a : Fin 27) :
+theorem e6MinusculeWeight_reflection_apply_self (i : Fin 6) (a : Fin 27) :
     e6MinusculeWeight (e6MinusculeReflection i a) i = -e6MinusculeWeight a i := by
   have h := congrFun (e6MinusculeWeight_reflection i a) i
   rw [root_e6SimpleIndex] at h
