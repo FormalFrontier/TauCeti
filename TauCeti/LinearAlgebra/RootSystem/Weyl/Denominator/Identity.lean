@@ -23,9 +23,9 @@ without the dot action `w ⬝ 0 = w(ρ) - ρ` it is the familiar
 `∏_{α>0}(1 - e^{-α}) = ∑_w sgn(w) e^{w(ρ) - ρ}`, or, after multiplying by `e^{ρ}`, the symmetric
 form `∏_{α>0}(e^{α/2} - e^{-α/2}) = ∑_w sgn(w) e^{w(ρ)}`.
 
-It is the case `λ = 0` of the Weyl character formula, whose right-hand side is the numerator of a
-dominant weight; the formula divides by this identity, so the identity is proved first and on its
-own, with no representation theory involved.
+It is the case `λ = 0` of the Weyl character formula, which identifies the product of a formal
+character with the denominator with the numerator of a dominant weight. Thus the identity is proved
+first and on its own, with no representation theory involved.
 
 ## The argument
 
