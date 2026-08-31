@@ -42,6 +42,11 @@ makes the wedge of the first `d` standard basis vectors in `Kⁿ` a highest-weig
 The [highest-weight roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/LieHighestWeight/README.md)
 uses these exterior modules in two places: Layer 9 constructs the fundamental `gl_n` modules,
 while Layer 8 uses the `sl₉` action on `⋀³(K⁹)` in the Vinberg model of `E₈`.
+
+## References
+
+The exterior-power construction and its cyclicity and irreducibility argument follow the standard
+general-linear treatment in Goodman--Wallach, especially §§5.5 and 9.1, and Fulton--Harris §15.5.
 -/
 
 public section
@@ -287,35 +292,8 @@ private theorem lie_single_self_basisWedge_family (d n : ℕ)
     ⁅Matrix.single i i (1 : K),
       ιMulti_family K d (Pi.basisFun K (Fin n)) s⁆ =
         if i ∈ s.1 then ιMulti_family K d (Pi.basisFun K (Fin n)) s else 0 := by
-  classical
-  rw [exteriorPower.ιMulti_family, gl_lie_def, glLieMap_apply_ιMulti]
-  simp only [Function.comp_apply, Pi.basisFun_apply, single_mulVec_basis]
-  by_cases hi : i ∈ s.1
-  · obtain ⟨k, hk⟩ := (Set.powersetCard.mem_range_ofFinEmbEquiv_symm_iff_mem s i).mpr hi
-    rw [Finset.sum_eq_single k]
-    · simp only [hi, ite_true]
-      congr 1
-      funext l
-      by_cases hl : l = k
-      · subst l
-        simp [Function.comp_apply, Pi.basisFun_apply, hk]
-      · simp [hl]
-    · intro l _ hlk
-      have hil : i ≠ Set.powersetCard.ofFinEmbEquiv.symm s l := by
-        intro hil
-        apply hlk
-        exact (Set.powersetCard.ofFinEmbEquiv.symm s).injective (hil.symm.trans hk.symm)
-      simp [hil]
-    · simp
-  · simp only [hi, ite_false]
-    apply Fintype.sum_eq_zero
-    intro k
-    have hik : i ≠ Set.powersetCard.ofFinEmbEquiv.symm s k := by
-      intro hik
-      apply hi
-      rw [hik]
-      exact (Set.powersetCard.mem_range_ofFinEmbEquiv_symm_iff_mem s _).mp ⟨k, rfl⟩
-    simp [hik]
+  simpa [basisWedge] using
+    (lie_single_self_basisWedge (K := K) s.1 s.2 i)
 
 private noncomputable def basisPath (d n : ℕ) (h : d ≤ n)
     (s : Set.powersetCard (Fin n) d) (k : ℕ) (l : Fin d) : Fin n :=
@@ -402,6 +380,19 @@ private theorem lie_single_basisPath_transition (d n : ℕ) (v w : Fin d → Fin
   exact congrArg (ιMulti K d) (congrArg (fun f ↦
     fun l ↦ (Pi.single (f l) (1 : K) : Fin n → K)) hupdate)
 
+private theorem basisPath_succ_eq_of_ne (d n k : ℕ) (h : d ≤ n) (hk : k < d)
+    (s : Set.powersetCard (Fin n) d) (a l : Fin d) (hla : l ≠ a)
+    (ha : a = ⟨k, hk⟩) :
+    basisPath d n h s (k + 1) l = basisPath d n h s k l := by
+  have hlk : l.val ≠ k := by
+    intro hlk
+    apply hla
+    exact Fin.ext (hlk.trans (congrArg Fin.val ha.symm))
+  by_cases hlt : l.val < k
+  · simp [basisPath, hlt, Nat.lt_succ_of_lt hlt]
+  · have hsucc : ¬l.val < k + 1 := by omega
+    simp [basisPath, hlt, hsucc]
+
 private theorem lie_basisPath_succ (d n k : ℕ) (h : d ≤ n) (hk : k < d)
     (s : Set.powersetCard (Fin n) d) :
     letI : LieRingModule (Matrix (Fin n) (Fin n) K) (⋀[K]^d (Fin n → K)) :=
@@ -426,10 +417,7 @@ private theorem lie_basisPath_succ (d n k : ℕ) (h : d ≤ n) (hk : k < d)
   · subst l
     simp [Function.update, basisPath, a]
   · have hlk : l.val ≠ k := fun hlk ↦ hla (Fin.ext hlk)
-    by_cases hlt : l.val < k
-    · simp [Function.update, hla, basisPath, hlt, Nat.lt_succ_of_lt hlt]
-    · have hsucc : ¬l.val < k + 1 := by omega
-      simp [Function.update, hla, basisPath, hlt, hsucc]
+    rw [Function.update_noteq hla, basisPath_succ_eq_of_ne d n k h hk s a l hla rfl]
 
 private theorem basisWedge_mem_of_first_mem (d n : ℕ) (h : d ≤ n)
     (N : LieSubmodule K (Matrix (Fin n) (Fin n) K) (⋀[K]^d (Fin n → K)))
@@ -501,10 +489,7 @@ private theorem lie_basisPath_reverse (d n k : ℕ) (h : d ≤ n) (hk : k < d)
   · subst l
     simp [Function.update, basisPath, a]
   · have hlk : l.val ≠ k := fun hlk ↦ hla (Fin.ext hlk)
-    by_cases hlt : l.val < k
-    · simp [Function.update, hla, basisPath, hlt, Nat.lt_succ_of_lt hlt]
-    · have hsucc : ¬l.val < k + 1 := by omega
-      simp [Function.update, hla, basisPath, hlt, hsucc]
+    rw [Function.update_noteq hla, (basisPath_succ_eq_of_ne d n k h hk s a l hla rfl).symm]
 
 private theorem first_mem_of_basisWedge_mem (d n : ℕ) (h : d ≤ n)
     (N : LieSubmodule K (Matrix (Fin n) (Fin n) K) (⋀[K]^d (Fin n → K)))
@@ -621,7 +606,7 @@ private theorem diagonalProjector_mem (d n : ℕ)
         exact N.sub_mem ih (N.lie_mem ih)
   exact hmem (List.ofFn id)
 
-private theorem basisWedge_mem_of_nonzero_mem (d n : ℕ)
+private theorem exists_basisWedge_mem_of_nonzero_mem (d n : ℕ)
     (N : LieSubmodule K (Matrix (Fin n) (Fin n) K) (⋀[K]^d (Fin n → K)))
     {x : ⋀[K]^d (Fin n → K)} (hx : x ∈ N) (hx0 : x ≠ 0) :
     ∃ s : Set.powersetCard (Fin n) d,
@@ -661,7 +646,7 @@ theorem isIrreducible_glLieModule (d n : ℕ) (h : d ≤ n) :
   have hN' : N.toSubmodule ≠ ⊥ := fun h ↦
     hN ((LieSubmodule.toSubmodule_eq_bot N).mp h)
   obtain ⟨x, hx, hx0⟩ := Submodule.exists_mem_ne_zero_of_ne_bot hN'
-  obtain ⟨s, hs⟩ := basisWedge_mem_of_nonzero_mem (K := K) d n N hx hx0
+  obtain ⟨s, hs⟩ := exists_basisWedge_mem_of_nonzero_mem (K := K) d n N hx hx0
   have hfirst := first_mem_of_basisWedge_mem (K := K) d n h N s hs
   apply top_unique
   rw [← lieSpan_firstBasisWedge_eq_top (K := K) d n h]
