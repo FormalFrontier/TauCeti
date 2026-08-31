@@ -54,7 +54,7 @@ variable {k : Type u} [Field k]
 
 /-- The zero Hopf ideal is a unipotent-radical candidate exactly when the whole represented
 group is geometrically connected, smooth, and unipotent. -/
-theorem isUnipotentRadicalCandidate_bot_iff
+@[simp] theorem isUnipotentRadicalCandidate_bot_iff
     (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
     IsUnipotentRadicalCandidate H ⊥ ↔
       geometricallyConnectedCommHopfAlgProperty k H.obj ∧
@@ -84,7 +84,7 @@ variable {k : Type u} [Field k]
 affine group is geometrically connected, smooth, and unipotent.
 
 The equality is stated on defining Hopf ideals: the zero ideal cuts out the whole group. -/
-theorem unipotentRadicalDefiningIdeal_eq_bot_iff
+@[simp] theorem unipotentRadicalDefiningIdeal_eq_bot_iff
     (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
     unipotentRadicalDefiningIdeal H = ⊥ ↔
       geometricallyConnectedCommHopfAlgProperty k H.obj ∧
@@ -102,7 +102,7 @@ theorem unipotentRadicalDefiningIdeal_eq_bot_iff
 
 /-- The unipotent radical of the unipotent radical is the whole unipotent radical. Equivalently,
 the unipotent-radical construction is idempotent on defining ideals. -/
-theorem unipotentRadicalDefiningIdeal_unipotentRadical_eq_bot
+@[simp] theorem unipotentRadicalDefiningIdeal_unipotentRadical_eq_bot
     (H : FiniteTypeCommHopfAlgCat.{u, u} k) :
     unipotentRadicalDefiningIdeal (unipotentRadical H) = ⊥ := by
   rw [unipotentRadicalDefiningIdeal_eq_bot_iff]
