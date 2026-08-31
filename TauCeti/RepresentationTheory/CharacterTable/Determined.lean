@@ -22,7 +22,7 @@ dimension of every intertwiner space. The reconstruction theorem in
 
 ## Main results
 
-* `Representation.nonempty_equiv_of_character_eq_of_charZero`: equal characters determine
+* `Representation.nonempty_equiv_of_character_eq`: equal characters determine
   equivalent finite-dimensional representations.
 * `FDRep.nonempty_iso_of_character_eq`: the bundled `FDRep` form.
 
@@ -69,7 +69,7 @@ variable {V W : Type w} [AddCommGroup V] [Module k V] [FiniteDimensional k V]
 
 /-- **For a finite group over an algebraically closed field of characteristic zero,
 finite-dimensional representations are determined by their characters.** -/
-theorem _root_.Representation.nonempty_equiv_of_character_eq_of_charZero (ρ : Representation k G V)
+theorem _root_.Representation.nonempty_equiv_of_character_eq (ρ : Representation k G V)
     (σ : Representation k G W) (hchar : ρ.character = σ.character) :
     Nonempty (ρ.Equiv σ) := by
   let _ : Fintype G := Fintype.ofFinite G
@@ -87,7 +87,8 @@ theorem _root_.Representation.nonempty_equiv_of_character_eq_of_charZero (ρ : R
           (ClassFunction.ofCharacter Z) =
         ClassFunction.characterPairing (ClassFunction.ofCharacter σ)
           (ClassFunction.ofCharacter Z) := by
-      rw [ClassFunction.ofCharacter_eq_of_character_eq hchar]
+      rw [show ClassFunction.ofCharacter ρ = ClassFunction.ofCharacter σ from
+        Subtype.ext <| funext fun g ↦ by simp only [ClassFunction.ofCharacter_apply, hchar]]
     have hinter : Module.finrank k (_root_.Representation.IntertwiningMap Z ρ) =
         Module.finrank k (_root_.Representation.IntertwiningMap Z σ) := by
       apply Nat.cast_injective (R := k)
@@ -114,6 +115,6 @@ theorem _root_.FDRep.nonempty_iso_of_character_eq {k : Type u} {G : Type v}
     [Field k] [Group G] [Finite G] [IsAlgClosed k] [CharZero k] (X Y : FDRep k G)
     (hchar : X.character = Y.character) : Nonempty (X ≅ Y) :=
   nonempty_fdRepIso_iff.mpr
-    (Representation.nonempty_equiv_of_character_eq_of_charZero X.ρ Y.ρ hchar)
+    (Representation.nonempty_equiv_of_character_eq X.ρ Y.ρ hchar)
 
 end TauCeti

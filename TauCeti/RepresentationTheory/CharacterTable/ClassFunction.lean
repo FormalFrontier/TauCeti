@@ -278,12 +278,6 @@ theorem ofCharacter_apply {V : Type w} [AddCommGroup V] [Module k V]
     (ρ : Representation k G V) (g : G) : (ofCharacter ρ).1 g = ρ.character g :=
   (rfl)
 
-/-- Representations with equal characters define equal class functions. -/
-theorem ofCharacter_eq_of_character_eq {V W : Type*} [AddCommGroup V] [Module k V]
-    [AddCommGroup W] [Module k W] {ρ : Representation k G V} {σ : Representation k G W}
-    (h : ρ.character = σ.character) : ofCharacter ρ = ofCharacter σ :=
-  Subtype.ext h
-
 /-- **Inverting the group element in a character gives the character of the dual
 representation**: `χ_{ρ*}(g) = χ_ρ(g⁻¹)`. -/
 @[simp]
@@ -300,11 +294,6 @@ noncomputable def ofFDRep (V : FDRep k G) : ClassFunction k G :=
 @[simp]
 theorem ofFDRep_apply (V : FDRep k G) (g : G) : (ofFDRep V).1 g = V.character g :=
   (rfl)
-
-/-- Bundled representations with equal characters define equal class functions. -/
-theorem ofFDRep_eq_of_character_eq {V W : FDRep k G} (h : V.character = W.character) :
-    ofFDRep V = ofFDRep W :=
-  Subtype.ext h
 
 /-- The class function of a bundled finite-dimensional representation is the class function of the
 underlying representation: `FDRep.character` is `Representation.character` of `V.ρ`. -/

@@ -167,7 +167,7 @@ theorem _root_.Representation.nonempty_equiv_of_character_eq_of_isIrreducible
   rw [← not_isEmpty_iff]
   intro hempty
   have hσρ : ClassFunction.ofCharacter σ = ClassFunction.ofCharacter ρ :=
-    ClassFunction.ofCharacter_eq_of_character_eq h.symm
+    Subtype.ext <| funext fun g ↦ by simp only [ClassFunction.ofCharacter_apply, h]
   have h0 := ClassFunction.characterPairing_ofCharacter_eq_zero ρ σ hempty
   rw [hσρ, ClassFunction.characterPairing_ofCharacter_self ρ] at h0
   exact one_ne_zero h0
@@ -210,7 +210,7 @@ theorem _root_.FDRep.nonempty_iso_of_character_eq_of_simple (X Y : FDRep k G)
   rw [← not_isEmpty_iff]
   intro hempty
   have hXY : ClassFunction.ofFDRep Y = ClassFunction.ofFDRep X :=
-    ClassFunction.ofFDRep_eq_of_character_eq h.symm
+    Subtype.ext <| funext fun g ↦ by simp only [ClassFunction.ofFDRep_apply, h]
   have h0 := ClassFunction.characterPairing_ofFDRep_eq_zero X Y hempty
   rw [hXY, ClassFunction.characterPairing_ofFDRep_self X] at h0
   exact one_ne_zero h0
