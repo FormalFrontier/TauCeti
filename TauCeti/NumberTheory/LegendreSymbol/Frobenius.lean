@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.NumberTheory.LegendreSymbol.Basic
-public import Mathlib.RingTheory.Frobenius
+public import TauCeti.RingTheory.Frobenius
 public import Mathlib.RingTheory.Ideal.Int
 import TauCeti.RingTheory.Ideal.LiesOver
 
@@ -34,14 +34,11 @@ multiquadratic generators.
   Frobenius `φ : S →ₐ[ℤ] S` at `Q` and `x² = d`.
 * `TauCeti.IsArithFrobAt.smul_sqrt`: the same for a Frobenius element `σ` of a monoid acting
   on `S`.
-* `IsArithFrobAt.eq_of_isUnramifiedAt`: uniqueness of a Frobenius element at an
-  unramified prime when the action on `S` is faithful.
 -/
 
 public section
 
 open Ideal
-open nonZeroDivisors
 
 namespace TauCeti
 
@@ -147,25 +144,6 @@ theorem AlgHom.IsArithFrobAt.apply_sqrt {φ : S →ₐ[ℤ] S} (H : φ.IsArithFr
     rw [neg_sub, sub_neg_eq_add] at hmem
     exact absurd hmem hsep
   · rw [hx', hg]
-
-/-! ### Uniqueness at unramified primes
-
-The generic monoid-level uniqueness theorem packages Mathlib's algebra-homomorphism result with
-the injectivity of a faithful action.  Number-field specializations supply the faithfulness and
-the non-zero-divisor condition for the complement of a prime.
--/
-
-/-- Suppose `S` is Noetherian and `Q` is a prime of `S` containing all zero-divisors. If the
-action of `G` on `S` is faithful and the extension is unramified at `Q`, then a Frobenius element
-of `G` at `Q` is unique. -/
-theorem _root_.IsArithFrobAt.eq_of_isUnramifiedAt
-    {R S G : Type*} [CommRing R] [CommRing S] [Algebra R S] [Monoid G]
-    [MulSemiringAction G S] [SMulCommClass G R S] [FaithfulSMul G S]
-    {Q : Ideal S} [Q.IsPrime] (hQ : Q.primeCompl ≤ S⁰)
-    [Algebra.IsUnramifiedAt R Q] [IsNoetherianRing S]
-    {σ τ : G} (hσ : _root_.IsArithFrobAt R σ Q) (hτ : _root_.IsArithFrobAt R τ Q) : σ = τ := by
-  apply MulSemiringAction.toAlgHom_injective R S
-  exact AlgHom.IsArithFrobAt.eq_of_isUnramifiedAt hσ hτ hQ
 
 /-- **A Frobenius element acts on square roots by the Legendre symbol**, action form: if `σ : M`
 is an arithmetic Frobenius at an ideal `Q` over the odd prime `p` and `x² = d` with `p ∤ d`,
