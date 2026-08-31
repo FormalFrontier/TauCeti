@@ -34,6 +34,29 @@ GAP constructs an isomorphism from its permutation image to the ATLAS group. Thi
 provenance for the transcription, not a Lean theorem. This file asserts no order, finiteness,
 simplicity, or identification result.
 
+## Independent source-to-Lean read-through
+
+An independent read-through used the bytes of the ATLAS Magma source `J1G1-P1.M` whose SHA-256
+digest is `d59534c449adee5461053f262627c77b3ffce57e2b25741dcdfecf9c030c9ae4`. Its constructor
+`G<x,y>` fixes the generator order, and the assignments `a := x; b := y` immediately after it
+confirm that these are the standard generators called `a,b` in this row.
+
+The five constructor entries, in source order, are
+
+```text
+x²,
+y³,
+(xy)⁷,
+(xy (xyxy⁻¹)³)⁵,
+(xy (xyxy⁻¹)⁶ xyxy (xy⁻¹)²)².
+```
+
+They agree in every letter, inverse, exponent, and source-order position with
+`j1Presentation_transcribed`: `repeatedWord` is `xyxy⁻¹`, `fifthPowerBase` is the fourth source
+base, and `squareBase` is the fifth. No constructor entry is commented out or marked redundant.
+This comparison was performed from the pinned source bytes independently of the original
+transcription and closes this row's S1 source-to-Lean read-through.
+
 ## Independent comparison with `FiniteSimpleGroups`
 
 The comparison used `finite-simple-groups-lean` at commit

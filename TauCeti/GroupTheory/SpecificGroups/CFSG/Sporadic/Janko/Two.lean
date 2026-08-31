@@ -55,6 +55,27 @@ agreeing with both the paper and GAP's Atlas group `J2`. This computation is pro
 transcription, not a Lean theorem, and this file asserts no order, finiteness, simplicity, or
 identification result.
 
+## Independent source-to-Lean read-through
+
+An independent read-through used the bytes of the arXiv v1 PDF whose SHA-256 digest is
+`ecdc292ea95ec143251eef270c892bac9edeb4fbf4302f494cf71db75dbf79f6`. In Section 3, under
+`n = 7 (Hurwitz groups)`, the order-`604800` entry labelled `J₂` first presents
+
+```text
+aba = bab,
+ab²a = b⁵,
+(ab⁻¹ab⁻³a³b⁻¹)^(±3) a⁷ = 1.
+```
+
+The source then gives a second efficient presentation with the long word moved into the
+right-hand side of the second equality; this row deliberately transcribes the first display. Its
+choice of the positive sign gives the third entry of `j2Presentation_transcribed` exactly. For the
+first equality, multiplying by `(bab)⁻¹` gives the stored six-letter relator; for the second,
+multiplying by `b⁻⁵` gives the stored nine-letter relator. Thus the source family, chosen display,
+sign, equation orientation, every exponent, and all three source-order positions agree with the
+sealed row. This comparison was performed from the pinned PDF bytes independently of the original
+transcription and closes this row's S1 source-to-Lean read-through.
+
 ## Independent comparison with `FiniteSimpleGroups`
 
 The comparison used `finite-simple-groups-lean` at commit
