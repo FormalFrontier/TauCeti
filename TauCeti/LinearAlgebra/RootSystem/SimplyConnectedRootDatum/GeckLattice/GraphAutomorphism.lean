@@ -75,6 +75,8 @@ reductivity, maximality of the weight torus, or any finiteness or simplicity sta
   points is the map the carrier automorphism induces.
 * `TauCeti.DynkinType.geckGraphAutPoints_geckRootSubgroupMatrix` and
   `TauCeti.DynkinType.geckGraphAutPoints_geckTorusMatrix`: the two pinning equations on points.
+* `TauCeti.DynkinType.geckGraphAutPoints_pow_geckRootSubgroupMatrix`: the first of those equations
+  iterated, renumbering by the `m`-th power of the symmetry.
 * `TauCeti.DynkinType.geckPointsMap_comp_geckGraphAutPoints`: the automorphism on points is natural
   in the value ring.
 * `TauCeti.DynkinType.geckGraphAutPoints_pow_eq_one` and
@@ -409,6 +411,24 @@ theorem geckGraphAutPoints_geckRootSubgroupMatrix (hsigma : sigma ∈ t.diagramS
       (t.geckDiagramModuleEquiv_mem_geckCoordinateLattice_iff ht hsigma)
       (geckDiagramModuleEquiv_ι_geckRepresentation_rootGenerator ht hsigma)
       A i _)
+
+/-- **The `m`-th power of the graph automorphism renumbers the pinned root subgroups by the `m`-th
+power of the diagram symmetry**, again without changing their additive parameter. -/
+@[simp]
+theorem geckGraphAutPoints_pow_geckRootSubgroupMatrix (hsigma : sigma ∈ t.diagramSymmetry)
+    (A : Type v) [CommRing A] (m : ℕ) (i : Fin t.rank ⊕ Fin t.rank) (u : Multiplicative A) :
+    (t.geckGraphAutPoints ht hsigma A ^ m)
+        ⟨t.geckRootSubgroupMatrix ht i
+            ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm u),
+          t.geckRootSubgroupMatrix_mem_geckPoints ht A i _⟩ =
+      ⟨t.geckRootSubgroupMatrix ht ((diagramRootGeneratorPerm sigma ^ m) i)
+          ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm u),
+        t.geckRootSubgroupMatrix_mem_geckPoints ht A _ _⟩ := by
+  induction m generalizing i with
+  | zero => simp
+  | succ m ih =>
+      rw [pow_succ', MulAut.mul_apply, ih, geckGraphAutPoints_geckRootSubgroupMatrix,
+        ← Equiv.Perm.mul_apply, ← pow_succ']
 
 /-- **The graph automorphism relabels the coordinates of a pinned weight-torus point** by the
 inverse of the diagram symmetry. -/

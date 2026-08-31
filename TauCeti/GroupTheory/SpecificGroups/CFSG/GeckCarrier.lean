@@ -57,9 +57,10 @@ connected one, that its weight torus is maximal, or that its point group is fini
 * `TauCeti.ValidLieTypeIndex.coe_geckFrobeniusPow_apply`,
   `TauCeti.ValidLieTypeIndex.geckFrobeniusPow_geckRootSubgroup` and
   `TauCeti.ValidLieTypeIndex.mem_fixedSubgroup_geckFrobeniusPow_iff`: the same three descriptions
-  of the iterate `Frob_(q ^ m)`, whose fixed points are the points over the degree-`m` extension of
-  the field of definition. A graph-twisted Steinberg map is not a Frobenius but has such a power,
-  so this is the form the twisted branches read their own fixed points against.
+  of the iterate `Frob_(q ^ m)`, whose fixed points are, for `0 < m`, the points over the degree-`m`
+  extension of the field of definition, and at `m = 0`, where the iterate is the identity, all of
+  the carrier. A graph-twisted Steinberg map is not a Frobenius but has such a power, so this is
+  the form the twisted branches read their own fixed points against.
 
 ## References
 
@@ -200,9 +201,11 @@ theorem mem_fixedSubgroup_geckFrobenius_iff (g : GeckGroup d) :
 
 /-! ## The iterated Frobenius
 
-Iterating the Frobenius `m` times gives the `q ^ m`-power Frobenius, whose fixed points are the
-points of the carrier over the degree-`m` extension of the field of definition. The graph-twisted
-branches need exactly this: their Steinberg map is not the Frobenius, but a power of it is. -/
+Iterating the Frobenius `m` times gives the `q ^ m`-power Frobenius. For `0 < m` its fixed points
+are the points of the carrier over the degree-`m` extension of the field of definition; at the
+permitted value `m = 0` the iterate is the identity, its fixed subfield is the whole closure, and
+its fixed points are all of the carrier. The graph-twisted branches need exactly this: their
+Steinberg map is not the Frobenius, but a power of it is. -/
 
 /-- **The `q ^ m`-power Frobenius endomorphism of the Geck point group**: the `m`-th power of
 `TauCeti.ValidLieTypeIndex.geckFrobenius`, named so that the subgroup it fixes can be spoken of
@@ -220,6 +223,9 @@ theorem geckFrobeniusPow_def (m : ℕ) : d.geckFrobeniusPow m =
 /-- **The iterated Frobenius is the corresponding power of the Frobenius** in the endomorphism
 monoid, which is what makes it the `q ^ m`-power map rather than merely the Frobenius of a larger
 field. -/
+-- As in `TauCeti.DynkinType.geckFrobenius_pow`, `Monoid.End` is definitionally a bundled
+-- `MonoidHom`, and the `show` picks its composition monoid structure before the power is
+-- elaborated.
 theorem geckFrobeniusPow_eq_pow (m : ℕ) :
     d.geckFrobeniusPow m = (show Monoid.End _ from d.geckFrobenius) ^ m := by
   rw [geckFrobeniusPow_def, geckFrobenius_def, DynkinType.geckFrobenius_pow]
@@ -271,9 +277,10 @@ theorem geckFrobeniusPow_geckRootSubgroup (m : ℕ)
     d.characteristic (d.fieldExponent * m) d.Closure i u
 
 /-- **A point of the Geck point group is fixed by the `q ^ m`-power Frobenius exactly when all of
-its matrix entries lie in the degree-`m` extension of the field of definition.** For positive `m`
-that subfield has `q ^ m` elements, by `TauCeti.card_frobeniusFixedSubfield`; at `m = 0` it is the
-whole closure and the statement is vacuous.
+its matrix entries lie in the subfield that Frobenius fixes.** For positive `m` that subfield is
+the degree-`m` extension of the field of definition and has `q ^ m` elements, by
+`TauCeti.card_frobeniusFixedSubfield`; at `m = 0` it is the whole closure and the statement is
+vacuous.
 
 As for `mem_fixedSubgroup_geckFrobenius_iff`, this is not a `simp` lemma: `simp` rewrites its
 left-hand side through `MonoidHom.mem_eqLocus`, and the `simpNF` linter rejects the annotation. -/
