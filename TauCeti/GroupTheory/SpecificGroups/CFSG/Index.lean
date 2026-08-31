@@ -34,8 +34,9 @@ order `p ^ (2 * m + 1)`.
 * `TauCeti.LieTypeIndex` and `TauCeti.LieTypeIndex.Valid`: the Lie families and their preferred
   parameter range.
 * `TauCeti.ValidLieTypeIndex`, `TauCeti.SuzukiReeIndex`, `TauCeti.GraphTwistedIndex`,
-  `TauCeti.TypeALieIndex`, and `TauCeti.UnimodularLieIndex`: the restricted domains consumed by
-  later carrier and endomorphism constructions.
+  `TauCeti.TypeALieIndex`, `TauCeti.TypeE6LieIndex`, `TauCeti.SuzukiLieIndex`, and
+  `TauCeti.UnimodularLieIndex`: the restricted domains consumed by later carrier and endomorphism
+  constructions.
 * `TauCeti.SporadicName`: the conventional twenty-six sporadic names.
 * `TauCeti.CFSGIndex`: cyclic, alternating, Lie-type, and sporadic entries in the classification
   list.
@@ -238,6 +239,60 @@ instance : DecidablePred IsTypeA := fun d => by
 /-- Neither type-A family uses a half-Frobenius, so both carry a diagram automorphism. -/
 theorem not_usesHalfFrobenius_of_isTypeA {d : LieTypeIndex} (h : d.IsTypeA) :
     ¬ d.UsesHalfFrobenius := by
+  cases d <;> simp_all [usesHalfFrobenius_iff]
+
+/-- Whether a Lie-type index names the untwisted exceptional family `E₆(q)`.
+
+This is a constructor selector, not a mathematical property of a group. It is false on the
+graph-twisted family `²E₆(q)`, which shares the `E₆` diagram but takes a different Steinberg map,
+and it asserts no finiteness or simplicity. -/
+def IsTypeE6 : LieTypeIndex → Prop
+  | .E6 _ => True
+  | _ => False
+
+/-- Characterization of the untwisted type-`E₆` constructor. -/
+@[simp] theorem isTypeE6_iff (d : LieTypeIndex) : d.IsTypeE6 ↔
+    match d with
+    | .E6 _ => True
+    | _ => False :=
+  Iff.rfl
+
+instance : DecidablePred IsTypeE6 := fun d => by
+  cases d <;> rw [isTypeE6_iff] <;> infer_instance
+
+/-- The untwisted family `E₆(q)` does not use a half-Frobenius, so it carries a diagram
+automorphism. -/
+theorem not_usesHalfFrobenius_of_isTypeE6 {d : LieTypeIndex} (h : d.IsTypeE6) :
+    ¬ d.UsesHalfFrobenius := by
+  cases d <;> simp_all [usesHalfFrobenius_iff]
+
+/-- **Every `E₆(q)` index is valid.** The `E₆` row of `InStandardRange` is unrestricted, and no
+`E₆` parameter is a duplicate representative, so the family contributes one classification entry
+for each prime power. -/
+theorem valid_E6 (q : PrimePower) : (E6 q).Valid := by simp
+
+/-- Whether a Lie-type index names the Suzuki family `²B₂(2^(2m+1))`.
+
+This is a constructor selector, not a mathematical property of a group. The exclusion of `²B₂(2)`
+comes from the enclosing `TauCeti.ValidLieTypeIndex`; no finiteness or simplicity is asserted
+here. -/
+def IsSuzuki : LieTypeIndex → Prop
+  | .suzuki _ => True
+  | _ => False
+
+/-- Characterization of the Suzuki constructor. -/
+@[simp] theorem isSuzuki_iff (d : LieTypeIndex) : d.IsSuzuki ↔
+    match d with
+    | .suzuki _ => True
+    | _ => False :=
+  Iff.rfl
+
+instance : DecidablePred IsSuzuki := fun d => by
+  cases d <;> rw [isSuzuki_iff] <;> infer_instance
+
+/-- The Suzuki family uses a half-Frobenius, so it carries no diagram automorphism. -/
+theorem usesHalfFrobenius_of_isSuzuki {d : LieTypeIndex} (h : d.IsSuzuki) :
+    d.UsesHalfFrobenius := by
   cases d <;> simp_all [usesHalfFrobenius_iff]
 
 /-- The underlying untwisted Dynkin diagram. Twisted types map to the diagram from which they are
@@ -601,6 +656,24 @@ The outer subtype is important: a raw type-A constructor with an excluded rank o
 is not a `TypeALieIndex`. -/
 abbrev TypeALieIndex : Type _ := {d : ValidLieTypeIndex // d.1.IsTypeA}
 
+/-- A validated index in the untwisted exceptional family `E₆(q)`.
+
+Every `E₆(q)` is valid, by `TauCeti.LieTypeIndex.valid_E6`, so the outer subtype excludes nothing
+here; it is retained because the carrier-valued constructions of milestone L0 take
+`TauCeti.ValidLieTypeIndex`. The graph-twisted family `²E₆(q)`, which shares the diagram, is not of
+this subtype. -/
+abbrev TypeE6LieIndex : Type _ := {d : ValidLieTypeIndex // d.1.IsTypeE6}
+
+/-- A validated index in the Suzuki family `²B₂(2^(2m+1))`.
+
+The outer subtype is important: `²B₂(2)`, the parameter `m = 0`, is excluded from the
+classification list. It is itself the Frobenius group of order twenty, whose derived subgroup is
+cyclic of order five and is its own centre, so the derived-subgroup recipe collapses to the trivial
+group rather than a simple one, and `²B₂(2)` is not a `SuzukiLieIndex`. The Suzuki--Ree relatives
+`²G₂`, `²F₄` and the Tits group are excluded too; they are the other three constructors of
+`TauCeti.SuzukiReeIndex`. -/
+abbrev SuzukiLieIndex : Type _ := {d : ValidLieTypeIndex // d.1.IsSuzuki}
+
 namespace TypeALieIndex
 
 /-- Introduce a valid untwisted type-A index. -/
@@ -675,6 +748,80 @@ theorem fieldOrder_pos (d : ValidLieTypeIndex) : 0 < d.fieldOrder :=
   d.1.fieldOrder_pos
 
 end ValidLieTypeIndex
+
+/-! ## The Suzuki family
+
+This section follows `ValidLieTypeIndex` rather than sitting beside `TypeALieIndex`, because
+`rank_eq_two` reads the numbered data `TauCeti.ValidLieTypeIndex.rank` defined just above. -/
+
+namespace SuzukiLieIndex
+
+/-- Introduce a valid Suzuki index `²B₂(2^(2m+1))`. Validity forces `1 ≤ m`. -/
+abbrev of (m : ℕ) (hvalid : (LieTypeIndex.suzuki m).Valid) : SuzukiLieIndex :=
+  ⟨⟨.suzuki m, hvalid⟩, (LieTypeIndex.isSuzuki_iff _).mpr trivial⟩
+
+/-- Every Suzuki index is of the introduction form. This is the eliminator matching `of`, so a
+consumer never repeats the case split over the other constructors. -/
+theorem exists_eq_of (d : SuzukiLieIndex) :
+    ∃ (m : ℕ) (hvalid : (LieTypeIndex.suzuki m).Valid), d = of m hvalid := by
+  obtain ⟨⟨d, hvalid⟩, hs⟩ := d
+  revert hvalid hs
+  cases d
+  case suzuki m => exact fun hvalid _ => ⟨m, hvalid, rfl⟩
+  all_goals exact fun _ hs => ((LieTypeIndex.isSuzuki_iff _).mp hs).elim
+
+/-- The Suzuki family is built on the rank-two diagram `B₂`. -/
+@[simp] theorem dynkinType_eq (d : SuzukiLieIndex) : d.1.dynkinType = .B 2 := by
+  obtain ⟨m, hvalid, rfl⟩ := d.exists_eq_of
+  exact LieTypeIndex.dynkinType_suzuki m
+
+/-- The Suzuki family has rank two, that being the rank of `B₂`. -/
+@[simp] theorem rank_eq_two (d : SuzukiLieIndex) : d.1.rank = 2 :=
+  congrArg DynkinType.rank d.dynkinType_eq
+
+/-- The Suzuki family lives in characteristic two. -/
+@[simp] theorem characteristic_eq_two (d : SuzukiLieIndex) : d.1.characteristic = 2 := by
+  obtain ⟨m, hvalid, rfl⟩ := d.exists_eq_of
+  exact LieTypeIndex.characteristic_suzuki m
+
+/-- A Suzuki index is a Suzuki--Ree index: its Steinberg map is an odd power of a
+half-Frobenius. -/
+abbrev toSuzukiReeIndex (d : SuzukiLieIndex) : SuzukiReeIndex :=
+  ⟨d.1, LieTypeIndex.usesHalfFrobenius_of_isSuzuki d.2⟩
+
+end SuzukiLieIndex
+
+/-! ## The untwisted family `E₆(q)`
+
+This section, like the Suzuki one above, follows `ValidLieTypeIndex` because `rank_eq_six` reads
+the numbered data `TauCeti.ValidLieTypeIndex.rank` defined there. -/
+
+namespace TypeE6LieIndex
+
+/-- Introduce the index `E₆(q)`. No validity hypothesis is taken: every `E₆` parameter is valid by
+`TauCeti.LieTypeIndex.valid_E6`. -/
+abbrev of (q : PrimePower) : TypeE6LieIndex :=
+  ⟨⟨.E6 q, LieTypeIndex.valid_E6 q⟩, (LieTypeIndex.isTypeE6_iff _).mpr trivial⟩
+
+/-- Every untwisted type-`E₆` index is of the introduction form. This is the eliminator matching
+`of`, so a consumer never repeats the case split over the other constructors. -/
+theorem exists_eq_of (d : TypeE6LieIndex) : ∃ q : PrimePower, d = of q := by
+  obtain ⟨⟨d, hvalid⟩, hd⟩ := d
+  revert hvalid hd
+  cases d
+  case E6 q => exact fun _ _ => ⟨q, rfl⟩
+  all_goals exact fun _ hd => ((LieTypeIndex.isTypeE6_iff _).mp hd).elim
+
+/-- The untwisted family `E₆(q)` is built on the diagram `E₆`. -/
+@[simp] theorem dynkinType_eq (d : TypeE6LieIndex) : d.1.dynkinType = .E6 := by
+  obtain ⟨q, rfl⟩ := d.exists_eq_of
+  exact LieTypeIndex.dynkinType_E6 q
+
+/-- The untwisted family `E₆(q)` has rank six, that being the rank of `E₆`. -/
+@[simp] theorem rank_eq_six (d : TypeE6LieIndex) : d.1.rank = 6 :=
+  congrArg DynkinType.rank d.dynkinType_eq
+
+end TypeE6LieIndex
 
 namespace UnimodularLieIndex
 

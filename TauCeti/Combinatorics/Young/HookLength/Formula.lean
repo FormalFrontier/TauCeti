@@ -113,19 +113,6 @@ open Finset Nat YoungDiagram
 
 /-! ### The Frobenius determinant formula -/
 
-/-- The Vandermonde-style product of the differences of the beta-numbers is computed by the same
-formula over `ℤ`, the differences being nonnegative. -/
-private theorem cast_prod_betaNumber_sub (μ : YoungDiagram) (r : ℕ) :
-    ((∏ k ∈ range r, ∏ l ∈ Ico (k + 1) r, (μ.betaNumber r k - μ.betaNumber r l) : ℕ) : ℤ)
-      = ∏ k ∈ range r, ∏ l ∈ Ico (k + 1) r,
-          ((μ.betaNumber r k : ℤ) - (μ.betaNumber r l : ℤ)) := by
-  rw [Nat.cast_prod]
-  refine Finset.prod_congr rfl fun k _ => ?_
-  rw [Nat.cast_prod]
-  refine Finset.prod_congr rfl fun l hl => ?_
-  rw [mem_Ico] at hl
-  exact Nat.cast_sub (μ.betaNumber_lt_betaNumber (by omega) hl.2).le
-
 /-- A row of the diagram carrying no corner contributes nothing to the lowering identity: either
 its beta-number vanishes, or lowering that beta-number by one makes it agree with the next one,
 which puts a zero factor in the product. -/

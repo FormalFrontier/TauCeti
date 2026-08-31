@@ -82,10 +82,37 @@ Bray's presentation page for `Th`, which in any case describes a different two-g
 presentation, prints `Length ??`. The figures below therefore state the transcribed data for a
 reviewer to compare with the source, rather than checking it against a recorded number.
 
-Correctness of the transcription beyond that is a review obligation, exactly as the roadmap
-describes: a reviewer reads the six lists below against Theorem 3.1 of the source. Note that the
-source states that some of its relators are redundant, kept for clarity or to help the enumeration,
-so the list is deliberately not minimal.
+## Independent source-to-Lean read-through
+
+An independent read-through used the PDF whose SHA-256 digest is
+`4701d82bcba1f9b2db8793af9170d97269cc2a18aa3265fd92406879b0ce160e`. Theorem 3.1 displays the
+following six groups of relators:
+
+```text
+(1) a², b², c², d², e², (ab)³, (ae)², (bc)³, (bd)², (be)²,
+    a = (cd)⁴, (ce)², (de)³, (bcde)⁸;
+(2) s⁷, [s,a], [s,b], [s,c], (sd)², [e,s] = e^(s³);
+(3) t³, [t,a], [t,b], [t,c], [t,d], [t,e], s^t = s²;
+(4) u² = ac, [u,a], [u,c], [u,e], (d e d^u)², [u,(ac)^b] = e,
+    [u^d,(ac)^b] = u e (ac)^b u^d e c;
+(5) t^u = t⁻¹;
+(6) [e,u^(s²)], ac = (us)³ = [u,s]⁴,
+    (d u^(s²))⁴ = a c c^d c^(d e s⁻¹) c^(d e s²).
+```
+
+Reading each source line against `relatorsOne` through `relatorsSix` found the same letters,
+order, exponents, equations, conjugations, and commutators. In particular, the chained equality in
+(6) becomes its two equations and no extra relation. The translation uses `.pow` for powers,
+`.div` for the source's equation `w₁ = w₂`, `.conj` for `w₁ ^ w₂`, and `sourceCommutator` for the
+source convention `[w₁,w₂] = w₁⁻¹w₂⁻¹w₁w₂`; the characteristic free-group lemmas cited above
+check those three nontrivial notation choices. `relatorList` concatenates the six source groups in
+order, and their checked lengths give `14 + 6 + 7 + 7 + 1 + 4 = 39`, with none dropped or
+duplicated. This closes the row's S1 source-to-Lean read-through.
+
+The independent `FiniteSimpleGroups` development named by the roadmap does not cover `Th`, so the
+additional explicit-construction comparison does not apply to this row. The source states that
+some relators are redundant, kept for clarity or to help the enumeration, so the list is
+deliberately not minimal.
 
 ## Main definitions
 
@@ -115,7 +142,8 @@ admissible source for each sporadic name. The source is
 
 * G. Havas, L. H. Soicher and R. A. Wilson, *A presentation for the Thompson sporadic simple
   group*, in *Groups and Computation III* (Columbus, OH, 1999), Ohio State University Mathematical
-  Research Institute Publications **8**, de Gruyter, Berlin, 2001, 193--200.
+  Research Institute Publications **8**, de Gruyter, Berlin, 2001, 193--200,
+  <https://webspace.maths.qmul.ac.uk/r.a.wilson/pubs_files/Thpres2web.pdf>.
 
 Theorem 3.1 there states the presentation as relators (1) to (6) and proves that the group it
 presents is `Th`.
@@ -288,7 +316,9 @@ def presentation : GroupPresentation where
     prints no total, so the expected relator count is the sum 14 + 6 + 7 + 7 + 1 + 4 of the \
     displayed groups; the chain ac = (us)³ = [u, s]⁴ in group (6) is counted as its two equations. \
     The source states that some of its relators are redundant, kept for clarity or to aid the \
-    coset enumeration, so the list is deliberately not minimal."
+    coset enumeration, so the list is deliberately not minimal. The independent source-to-Lean \
+    read-through checked all six groups and 39 relators. The FiniteSimpleGroups permutation \
+    construction does not cover Th."
   expectedGeneratorCount := 8
   expectedRelatorCount := 39
   transcribed := relatorList

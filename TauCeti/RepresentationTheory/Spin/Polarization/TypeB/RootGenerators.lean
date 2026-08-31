@@ -67,6 +67,8 @@ introduced: the statements are about the Clifford elements and their action on t
   `TauCeti.SpinPolarizationData.typeBQuadraticEquiv_typeBShortCorootGenerator` and
   `TauCeti.SpinPolarizationData.typeBQuadraticEquiv_typeBLongCorootGenerator`: the diagonal Cartan
   generators are the corresponding combinations of diagonal bivectors.
+* The `typeBQuadraticEquiv_typeBSimple...` theorems specialize these formulas to the terminal
+  short node and the nonfinal long nodes in Bourbaki order.
 * `TauCeti.SpinPolarizationData.spinAction_typeBQuadraticEquiv_typeBShortCorootGenerator_basis`
   and its long counterpart: the coroots act on the exterior basis by integers.
 * `TauCeti.SpinPolarizationData.typeBQuadraticEquiv_typeBLongRootGenerator_mul_self` and its two
@@ -93,6 +95,9 @@ so the spinor lattice rather than the adjoint one.
 * R. W. Carter, *Simple Groups of Lie Type*, Section 4.2, for the integral normalization of the
   short-root operators.
 * N. Bourbaki, *Groupes et algèbres de Lie*, Chapters 4--6, Planche II, for the numbering.
+* The basis-extensionality proof architecture is adapted from
+  `SpinPolarizationData.typeDQuadraticEquiv_typeDDiagonalMatrix_single` in
+  [`TauCeti.RepresentationTheory.Spin.Polarization.TypeD.Basic`](https://github.com/TauCetiProject/TauCeti/blob/main/TauCeti/RepresentationTheory/Spin/Polarization/TypeD/Basic.lean).
 -/
 
 public section
@@ -242,6 +247,68 @@ theorem typeBQuadraticEquiv_typeBLongCorootGenerator (i j : ι) (hij : i ≠ j) 
     P.typeBQuadraticEquiv_typeBDiagonalMatrix_single b z hz]
   -- The quadratic Lie subalgebra carries the ambient subtraction on its elements.
   exact AddSubgroupClass.coe_sub _ _
+
+/-! ### The Bourbaki simple roots -/
+
+-- These specializations are intentionally not simp lemmas: the simple-generator simp rules
+-- reduce their left-hand sides to the general evaluations above, so `simpNF` rejects them.
+
+/-- The terminal positive simple root is the short Clifford bivector. -/
+theorem typeBQuadraticEquiv_typeBSimpleRootGenerator_last {n : ℕ}
+    (bFin : Module.Basis (Fin (n + 1)) K P.W) :
+    (P.typeBQuadraticEquiv bFin z hz
+        (typeBSimpleRootGenerator (K := K) (Fin.last n)) : CliffordAlgebra Q) =
+      bivector Q (bFin (Fin.last n) : V) (z : V) := by
+  rw [typeBSimpleRootGenerator_last]
+  exact P.typeBQuadraticEquiv_typeBShortRootGenerator bFin z hz (Fin.last n)
+
+/-- A nonfinal positive simple root is the adjacent long Clifford bivector. -/
+theorem typeBQuadraticEquiv_typeBSimpleRootGenerator_castSucc {n : ℕ}
+    (bFin : Module.Basis (Fin (n + 1)) K P.W) (j : Fin n) :
+    (P.typeBQuadraticEquiv bFin z hz
+        (typeBSimpleRootGenerator (K := K) j.castSucc) : CliffordAlgebra Q) =
+      bivector Q (bFin j.castSucc : V) (P.dualVector bFin j.succ : V) := by
+  rw [typeBSimpleRootGenerator_castSucc]
+  exact P.typeBQuadraticEquiv_typeBLongRootGenerator bFin z hz _ _
+    (ne_of_lt j.castSucc_lt_succ)
+
+/-- The terminal negative simple root is the opposite short Clifford bivector. -/
+theorem typeBQuadraticEquiv_typeBSimpleNegativeRootGenerator_last {n : ℕ}
+    (bFin : Module.Basis (Fin (n + 1)) K P.W) :
+    (P.typeBQuadraticEquiv bFin z hz
+        (typeBSimpleNegativeRootGenerator (K := K) (Fin.last n)) : CliffordAlgebra Q) =
+      bivector Q (z : V) (P.dualVector bFin (Fin.last n) : V) := by
+  rw [typeBSimpleNegativeRootGenerator_last]
+  exact P.typeBQuadraticEquiv_typeBShortNegativeRootGenerator bFin z hz (Fin.last n)
+
+/-- A nonfinal negative simple root is the opposite adjacent long Clifford bivector. -/
+theorem typeBQuadraticEquiv_typeBSimpleNegativeRootGenerator_castSucc {n : ℕ}
+    (bFin : Module.Basis (Fin (n + 1)) K P.W) (j : Fin n) :
+    (P.typeBQuadraticEquiv bFin z hz
+        (typeBSimpleNegativeRootGenerator (K := K) j.castSucc) : CliffordAlgebra Q) =
+      bivector Q (bFin j.succ : V) (P.dualVector bFin j.castSucc : V) := by
+  rw [typeBSimpleNegativeRootGenerator_castSucc]
+  exact P.typeBQuadraticEquiv_typeBLongRootGenerator bFin z hz _ _
+    (ne_of_gt j.castSucc_lt_succ)
+
+/-- The terminal simple coroot is twice the final diagonal bivector. -/
+theorem typeBQuadraticEquiv_typeBSimpleCorootGenerator_last {n : ℕ}
+    (bFin : Module.Basis (Fin (n + 1)) K P.W) :
+    (P.typeBQuadraticEquiv bFin z hz
+        (typeBSimpleCorootGenerator (K := K) (Fin.last n)) : CliffordAlgebra Q) =
+      (2 : K) • P.diagonalBivector bFin (Fin.last n) := by
+  rw [typeBSimpleCorootGenerator_last]
+  exact P.typeBQuadraticEquiv_typeBShortCorootGenerator bFin z hz (Fin.last n)
+
+/-- A nonfinal simple coroot is the difference of the two adjacent diagonal bivectors. -/
+theorem typeBQuadraticEquiv_typeBSimpleCorootGenerator_castSucc {n : ℕ}
+    (bFin : Module.Basis (Fin (n + 1)) K P.W) (j : Fin n) :
+    (P.typeBQuadraticEquiv bFin z hz
+        (typeBSimpleCorootGenerator (K := K) j.castSucc) : CliffordAlgebra Q) =
+      P.diagonalBivector bFin j.castSucc - P.diagonalBivector bFin j.succ := by
+  rw [typeBSimpleCorootGenerator_castSucc]
+  exact P.typeBQuadraticEquiv_typeBLongCorootGenerator bFin z hz _ _
+    (ne_of_lt j.castSucc_lt_succ)
 
 /-! ### The root vectors are square-zero -/
 

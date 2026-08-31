@@ -57,6 +57,28 @@ transcription, not Lean theorems: this file asserts no order, finiteness, simpli
 identification result. The roadmap's further cross-check against the `FiniteSimpleGroups`
 permutation development is unavailable for `J₃`, which that development does not cover.
 
+## Independent source-to-Lean read-through
+
+An independent read-through used the bytes of the ATLAS Magma source `J3G1-P1.M` whose SHA-256
+digest is `db34e17432d777cb96784c78883ff956352f822ae1f9472f60fdff96a26f5082`. Its constructor
+`G<x,y>` and later assignments `a := x; b := y` fix the generator order used by the Lean row.
+
+The source constructor lists, in order,
+
+```text
+x², y³, [x,y]⁹, (xy)¹⁹, ((xy)⁶(xy⁻¹)⁵)²,
+((xyxyxy⁻¹)² xy xy⁻¹ xy⁻¹ xy xy⁻¹)²,
+xyxy (xyxy⁻¹)³ xyxy (xyxy⁻¹)⁴ xy⁻¹ (xyxy⁻¹)³,
+((xy)³(xyxy⁻¹)²)⁴.
+```
+
+These are exactly the eight entries of `j3Presentation_transcribed` after substituting
+`s₁ = ab` and `s₋₁ = ab⁻¹` and expanding the source commutator as `x⁻¹y⁻¹xy`. In particular, the
+Lean row follows the Magma order in placing `[x,y]⁹` before `(xy)¹⁹`; the rendered ATLAS page has
+the same words with those two positions swapped. No constructor entry is commented out or marked
+redundant. This checks every source relator, inverse, exponent, and source-order position
+independently of the original transcription and closes this row's S1 source-to-Lean read-through.
+
 The row is a sealed definition, so it publishes an equation for each of its fields: the transcribed
 relator expressions with their generator indices written out, and the provenance a manifest row
 exists to record. Together with `TauCeti.GroupPresentation.relators_def` and

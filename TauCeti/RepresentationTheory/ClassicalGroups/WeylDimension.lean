@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.LinearAlgebra.Vandermonde
+public import TauCeti.Data.Nat.Factorial.SuperFactorial
 public import TauCeti.RepresentationTheory.ClassicalGroups.DominantWeight
 
 /-!
@@ -118,12 +119,6 @@ private theorem prod_Ioi_rev {M : Type*} [CommMonoid M] (f : Fin n → Fin n →
     ?_ ?_ ?_ ?_ ?_ <;>
     simp +contextual [Finset.mem_sigma, mem_Ioi, Fin.rev_lt_rev, Fin.rev_rev]
 
-/-- The superfactorial is positive: it is a product of factorials.  Mathlib has the superfactorial
-and its factorial-product expansions but not this consequence. -/
-private theorem superFactorial_pos (n : ℕ) : 0 < n.superFactorial := by
-  rw [← Nat.prod_range_succ_factorial n]
-  exact Finset.prod_pos fun i _ => i.factorial_pos
-
 /-- The denominator of the Weyl dimension formula, `∏_{i < j} (j - i)`, is the superfactorial
 `sf (n - 1) = 0! · 1! ⋯ (n-1)!`: it is the Vandermonde determinant of the nodes
 `0, 1, …, n - 1`.  Stated over an arbitrary commutative ring, since the formula is used both over
@@ -192,7 +187,7 @@ times the denominator `sf (n - 1)` is the numerator `∏_{i < j} (λᵢ - λⱼ 
 theorem weylDimension_mul_superFactorial (l : DominantWeight n) :
     (weylDimension l : ℤ) * ((n - 1).superFactorial : ℤ) = weylDimensionNumerator l := by
   have hsf : (0 : ℤ) < ((n - 1).superFactorial : ℤ) := by
-    exact_mod_cast superFactorial_pos (n - 1)
+    exact_mod_cast Nat.superFactorial_pos (n - 1)
   have hnonneg : 0 ≤ weylDimensionNumerator l / ((n - 1).superFactorial : ℤ) :=
     Int.ediv_nonneg (weylDimensionNumerator_pos l).le hsf.le
   rw [weylDimension, Int.toNat_of_nonneg hnonneg,
@@ -220,7 +215,7 @@ theorem weylDimension_eq_prod_prod_div (l : DominantWeight n) :
     push_cast
     rfl
   have hsf : ((n - 1).superFactorial : ℚ) ≠ 0 := by
-    exact_mod_cast (superFactorial_pos (n - 1)).ne'
+    exact_mod_cast (Nat.superFactorial_pos (n - 1)).ne'
   simp only [Finset.prod_div_distrib]
   rw [hden, hnum, eq_div_iff hsf]
   exact_mod_cast weylDimension_mul_superFactorial l
@@ -241,7 +236,7 @@ theorem weylDimension_congr {l l' : DominantWeight n}
     (h : ∀ i j, i < j → l.1 i - l.1 j = l'.1 i - l'.1 j) :
     weylDimension l = weylDimension l' := by
   have hsf : (0 : ℤ) < ((n - 1).superFactorial : ℤ) := by
-    exact_mod_cast superFactorial_pos (n - 1)
+    exact_mod_cast Nat.superFactorial_pos (n - 1)
   have h1 : (weylDimension l : ℤ) * ((n - 1).superFactorial : ℤ) =
       (weylDimension l' : ℤ) * ((n - 1).superFactorial : ℤ) :=
     (weylDimension_mul_superFactorial l).trans
@@ -276,7 +271,7 @@ dimension `1`. -/
 theorem weylDimension_eq_one_of_forall_eq {l : DominantWeight n} {c : ℤ} (h : ∀ i, l.1 i = c) :
     weylDimension l = 1 := by
   have hsf : (0 : ℤ) < ((n - 1).superFactorial : ℤ) := by
-    exact_mod_cast superFactorial_pos (n - 1)
+    exact_mod_cast Nat.superFactorial_pos (n - 1)
   have h1 := weylDimension_mul_superFactorial l
   rw [weylDimensionNumerator_eq_superFactorial_of_forall_eq h] at h1
   have h2 : (weylDimension l : ℤ) = 1 := mul_right_cancel₀ hsf.ne' (h1.trans (one_mul _).symm)

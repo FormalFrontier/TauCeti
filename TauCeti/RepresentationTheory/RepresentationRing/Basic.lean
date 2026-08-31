@@ -44,14 +44,12 @@ multiplicative on tensor products (`FDRep.char_tensor`), the unit going to the c
 `TauCeti.virtualCharacters`, and in particular, when `G` is a group, so that conjugation and hence
 the class functions make sense, every value is a class function.
 
-Note what is *not* claimed. For a **finite group** `G` over an algebraically closed field of
-characteristic zero the character homomorphism is injective — that is the statement that a virtual
-representation is determined by its character — but that rests on the freeness of `R(G)` on the
-isomorphism classes of irreducible representations, which for the split ring comes from Maschke's
-theorem: it is semisimplicity, not a Jordan-Hölder filtration, that decomposes every object of
-`FDRep k G` into a direct sum of irreducibles and so makes the biproduct relations the only ones.
-Neither that decomposition nor the injectivity is proved here, and outside the finite semisimple
-regime — for a monoid, or in modular characteristic — injectivity is not to be expected at all.
+For a **finite group** `G` over an algebraically closed field of characteristic zero, injectivity is
+proved in `TauCeti/RepresentationTheory/RepresentationRing/Injective.lean` as
+`TauCeti.repRingCharacter_injective`. Its object-level input,
+`FDRep.nonempty_iso_of_character_eq`, says that equal characters determine isomorphic
+representations. Outside the finite semisimple regime — for a monoid, or in modular characteristic
+— injectivity is not to be expected in general.
 
 ## Main definitions
 

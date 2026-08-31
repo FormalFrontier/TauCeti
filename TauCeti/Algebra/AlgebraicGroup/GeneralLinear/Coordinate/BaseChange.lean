@@ -10,6 +10,7 @@ public import Mathlib.RingTheory.TensorProduct.MvPolynomial
 public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.BaseChange
 public import TauCeti.Algebra.AlgebraicGroup.FiniteType.BaseChange
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Coordinate.HopfAlgebra
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Determinant
 
 /-!
 # Base change of the general linear coordinate Hopf algebra
@@ -36,6 +37,8 @@ Chevalley--Demazure construction in Layer 9 of the ReductiveGroups roadmap.
 * `TauCeti.GeneralLinear.coordinateHopfAlgebraBaseChangeBialgEquiv`: the bialgebra equivalence.
 * `TauCeti.GeneralLinear.coordinateHopfAlgebraBaseChangeIso`: its bundled
   commutative-Hopf-algebra form, when the extension ring's universe contains the base ring's.
+* `TauCeti.GeneralLinear.coordinateHopfAlgebraBaseChangeIso_hom_determinantGroupLike`: scalar
+  extension carries the generic determinant to the generic determinant.
 * `TauCeti.GeneralLinear.finiteTypeCoordinateHopfAlgebraBaseChangeIso`: the corresponding
   isomorphism of finite-type commutative Hopf algebras.
 * `TauCeti.GeneralLinear.coordinateHopfAlgebraBaseChangeMap_X`: the value on a generic matrix
@@ -326,6 +329,25 @@ theorem coordinateHopfAlgebraBaseChangeIso_hom_apply
     CategoryTheory.comp_apply, CommHopfAlgCat.ofIsoSelf_hom, CommHopfAlgCat.isoMk_hom,
     CategoryTheory.Iso.symm_hom, CommHopfAlgCat.ofIsoSelf_inv]
   exact coordinateHopfAlgebraBaseChangeBialgEquiv_tmul_coordinateRingMap R K n s p
+
+/-- The general-linear base-change isomorphism sends the scalar extension of the generic
+determinant to the generic determinant over the new base. -/
+theorem coordinateHopfAlgebraBaseChangeIso_hom_determinantGroupLike
+    (R : Type u) (K : Type max u v) [CommRing R] [CommRing K] [Algebra R K] (n : ℕ) :
+    (coordinateHopfAlgebraBaseChangeIso R K n).hom.hom
+        (1 ⊗ₜ[R] (determinantGroupLike R n : coordinateHopfAlgebra R n)) =
+      (determinantGroupLike K n : coordinateHopfAlgebra K n) := by
+  have hdet :
+      MvPolynomial.map (algebraMap R K)
+          (Matrix.det (Matrix.mvPolynomialX (Fin n) (Fin n) R)) =
+        Matrix.det (Matrix.mvPolynomialX (Fin n) (Fin n) K) := by
+    rw [RingHom.map_det]
+    congr 1
+    funext i j
+    simp [Matrix.mvPolynomialX]
+  rw [determinantGroupLike_val, det_localizedGenericMatrix,
+    coordinateHopfAlgebraBaseChangeIso_hom_apply, determinantGroupLike_val,
+    det_localizedGenericMatrix, hdet, one_smul]
 
 /-- The general-linear base-change isomorphism sends the scalar extension of the bundled generic
 matrix to the bundled generic matrix over the new base. -/

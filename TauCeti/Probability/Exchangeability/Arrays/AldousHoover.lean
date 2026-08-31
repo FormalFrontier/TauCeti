@@ -60,6 +60,7 @@ has to construct the coding function from an exchangeable array.
 
 * `TauCeti.Probability.AldousHoover.separatelyExchangeable_separateArray`;
 * `TauCeti.Probability.AldousHoover.jointlyExchangeable_jointArray`;
+* `TauCeti.Probability.AldousHoover.jointArray_symmetric_of`;
 * `TauCeti.Probability.AldousHoover.separatelyDissociated_separateArray_of_snd`;
 * `TauCeti.Probability.AldousHoover.jointlyDissociated_jointArray_of_snd`.
 
@@ -234,6 +235,27 @@ theorem jointArray_apply (f : I × I × I × I → α)
     jointArray f p u =
       f (u .global, u (.vertex () p.1), u (.vertex () p.2), u (.cell s(p.1, p.2))) :=
   (rfl)
+
+omit [MeasurableSpace α] in
+/-- Swapping the two indices of a joint coding only swaps its two vertex-noise arguments.  The
+cell-noise argument is unchanged because it is indexed by the unordered pair `Sym2.mk i j`. -/
+theorem jointArray_apply_swap (f : I × I × I × I → α)
+    (i j : ℕ) (u : NoiseIndex Unit (Sym2 ℕ) → I) :
+    jointArray f (j, i) u =
+      f (u .global, u (.vertex () j), u (.vertex () i), u (.cell s(i, j))) := by
+  rw [jointArray_apply, Sym2.eq_swap]
+
+omit [MeasurableSpace α] in
+/-- A kernel symmetric in its two vertex variables produces a pathwise symmetric array.  This is
+the symmetry condition needed when the jointly exchangeable Aldous--Hoover coding is specialized
+to random graphs and other undirected arrays. -/
+theorem jointArray_symmetric_of
+    (f : I × I × I × I → α)
+    (hf : ∀ (a b c d : I), f (a, b, c, d) = f (a, c, b, d))
+    (u : NoiseIndex Unit (Sym2 ℕ) → I) (i j : ℕ) :
+    jointArray f (i, j) u = jointArray f (j, i) u := by
+  rw [jointArray_apply, jointArray_apply_swap]
+  exact (hf _ _ _ _).symm
 
 /-- A measurable joint Aldous--Hoover coding is measurable as an array-valued random variable. -/
 theorem measurable_jointArray (f : I × I × I × I → α) (hf : Measurable f) :

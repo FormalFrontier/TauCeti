@@ -523,6 +523,26 @@ theorem preprojectiveMk_apply (f : pathAlgebra k (Symmetrify Q)) :
 theorem preprojectiveMk_surjective : Function.Surjective (preprojectiveMk k Q) :=
   Ideal.Quotient.mk_surjective
 
+/-- Two ring homomorphisms out of a preprojective algebra are equal if they agree on coefficients
+and on the classes of all doubled paths. -/
+theorem preprojectiveAlgebra_ringHom_ext {B : Type*} [Semiring B]
+    {g h : preprojectiveAlgebra k Q →+* B}
+    (hscalar : ∀ r : k,
+      g (algebraMap k (preprojectiveAlgebra k Q) r) =
+        h (algebraMap k (preprojectiveAlgebra k Q) r))
+    (hpath : ∀ x : Quiver.TotalPath (Symmetrify Q),
+      g (preprojectiveMk k Q (ofPath x)) = h (preprojectiveMk k Q (ofPath x))) :
+    g = h := by
+  apply RingHom.ext
+  intro y
+  obtain ⟨x, rfl⟩ := preprojectiveMk_surjective k Q y
+  induction x using PathAlgebra.induction_linear with
+  | zero => simp
+  | add x y hx hy => simp only [map_add, hx, hy]
+  | single x c =>
+      rw [single_eq_smul_ofPath, map_smul]
+      simp only [Algebra.smul_def, map_mul, hscalar, hpath]
+
 @[simp]
 theorem preprojectiveMk_eq_zero_iff {f : pathAlgebra k (Symmetrify Q)} :
     preprojectiveMk k Q f = 0 ↔ f ∈ preprojectiveIdeal k Q := by

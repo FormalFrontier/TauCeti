@@ -198,6 +198,21 @@ theorem polytabloid_relabel (σ : Equiv.Perm (Fin μ.card)) (t : YoungTableau μ
   simp only [Module.End.mul_apply, Representation.ofMulAction_single, smul_smul,
     inv_mul_cancel, one_smul]
 
+/-- **Relabeling by a column permutation of `t` scales the polytabloid by its sign**:
+`e_{qt} = sgn(q) e_t` for `q` in the column group of `t`.  So the tableaux in one column-group
+orbit all carry, up to sign, the same polytabloid.
+
+This is not a `simp` lemma: its left-hand side is the one of
+`TauCeti.YoungTableau.polytabloid_relabel`, which applies to every permutation. -/
+theorem polytabloid_relabel_of_mem_colSubgroup {t : YoungTableau μ}
+    {q : Equiv.Perm (Fin μ.card)} (hq : q ∈ colSubgroup t) :
+    polytabloid (relabel q t) = ((Equiv.Perm.sign q : ℤ) : ℚ) • polytabloid t := by
+  have hmul : MonoidAlgebra.single q (1 : ℚ) * columnAntisymmetrizer t =
+      ((Equiv.Perm.sign q : ℤ) : ℚ) • columnAntisymmetrizer t :=
+    mul_columnAntisymmetrizer_left t ⟨q, hq⟩
+  rw [polytabloid_relabel, polytabloid_def, ← Representation.asAlgebraHom_single_one,
+    ← Module.End.mul_apply, ← map_mul, hmul, map_smul, LinearMap.smul_apply]
+
 /-- The coefficient, in the polytabloid `e_t`, of the tabloid obtained from `{t}` by a column
 permutation `q` of `t` is the sign of `q`. -/
 @[simp]
