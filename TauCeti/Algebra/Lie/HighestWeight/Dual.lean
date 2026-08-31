@@ -24,7 +24,7 @@ system, and let `M` be a finite-dimensional irreducible `L`-module with a highes
 weight `lam`. This file identifies the highest weight of the dual module `M*` and reads off the
 self-duality criterion:
 
-`M` carries a nonzero invariant bilinear form ⟺ `M ≃ M*` ⟺ `-(w₀ • lam) = lam`,
+`M` carries a nonzero invariant bilinear form ↔ `M ≃ M*` ↔ `-(w₀ • lam) = lam`,
 
 with `w₀` the longest element of the Weyl group.
 
