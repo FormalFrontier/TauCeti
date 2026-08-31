@@ -20,17 +20,17 @@ elements. Applying this to the coefficients of the characteristic polynomial of 
 representation shows that geometric unipotence descends from `K` to `H`.
 
 The same universal characteristic-polynomial identity also shows that the chosen algebraic
-closure in the definition is immaterial: every point valued in any algebraically closed extension
-of the ground field is unipotent.
+closure in the definition is immaterial: every point valued in any extension field of the ground
+field is unipotent.
 
 ## Main declarations
 
 * `TauCeti.geometricallyUnipotentPointsCommHopfAlgProperty.of_injective_of_reduced`: geometric
   unipotence descends along an injective coordinate morphism with reduced finite-type codomain.
-* `TauCeti.geometricallyUnipotentPointsCommHopfAlgProperty.isUnipotentPoint_of_isAlgClosed`:
-  geometric unipotence can be evaluated in any algebraically closed extension field.
-* `TauCeti.smoothUnipotentCommHopfAlgProperty.isUnipotentPoint_of_isAlgClosed`: the smooth
-  finite-type specialization, where reducedness follows from smoothness.
+* `TauCeti.geometricallyUnipotentPointsCommHopfAlgProperty.isUnipotentPoint`: geometric
+  unipotence can be evaluated in any extension field.
+* `TauCeti.smoothUnipotentCommHopfAlgProperty.isUnipotentPoint`: the smooth finite-type
+  specialization, where reducedness follows from smoothness.
 
 ## References
 
@@ -102,14 +102,14 @@ private theorem coefficientMatrix_charpoly_eq
       exact (q.commutes (P.coeff r)).symm
 
 /-- If a reduced finite-type Hopf algebra is geometrically unipotent, every point valued in any
-algebraically closed extension of the ground field is unipotent.
+extension field of the ground field is unipotent.
 
 Thus the particular algebraic closure used in
 `geometricallyUnipotentPointsCommHopfAlgProperty` does not affect the property. -/
-theorem isUnipotentPoint_of_isAlgClosed
+theorem isUnipotentPoint
     {A : _root_.CommHopfAlgCat.{v} k} [Algebra.FiniteType k A] [IsReduced A]
     (hA : geometricallyUnipotentPointsCommHopfAlgProperty k A)
-    {L : Type w} [Field L] [Algebra k L] [IsAlgClosed L]
+    {L : Type w} [Field L] [Algebra k L]
     (g : WithConv (A →ₐ[k] L)) : HopfAlgebra.IsUnipotentPoint g := by
   rw [HopfAlgebra.isUnipotentPoint_def]
   intro M
@@ -213,11 +213,11 @@ namespace smoothUnipotentCommHopfAlgProperty
 variable {k : Type u} [Field k]
 variable {A : FiniteTypeCommHopfAlgCat.{u, v} k}
 
-/-- Every point of a smooth geometrically unipotent affine group valued in an algebraically
-closed extension of the ground field is unipotent. -/
-theorem isUnipotentPoint_of_isAlgClosed
+/-- Every point of a smooth geometrically unipotent affine group valued in an extension field of
+the ground field is unipotent. -/
+theorem isUnipotentPoint
     (hA : smoothUnipotentCommHopfAlgProperty k A)
-    {L : Type w} [Field L] [Algebra k L] [IsAlgClosed L]
+    {L : Type w} [Field L] [Algebra k L]
     (g : WithConv (A →ₐ[k] L)) : HopfAlgebra.IsUnipotentPoint g := by
   have hA' := (smoothUnipotentCommHopfAlgProperty_iff k A).mp hA
   let _ : Algebra.Smooth k A := hA'.1
@@ -225,7 +225,7 @@ theorem isUnipotentPoint_of_isAlgClosed
   have hgeom : geometricallyUnipotentPointsCommHopfAlgProperty k A.obj := by
     rw [geometricallyUnipotentPointsCommHopfAlgProperty_iff]
     exact hA'.2
-  exact geometricallyUnipotentPointsCommHopfAlgProperty.isUnipotentPoint_of_isAlgClosed
+  exact geometricallyUnipotentPointsCommHopfAlgProperty.isUnipotentPoint
     (A := A.obj) (L := L) hgeom g
 
 end smoothUnipotentCommHopfAlgProperty
