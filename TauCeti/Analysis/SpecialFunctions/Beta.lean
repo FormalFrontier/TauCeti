@@ -188,18 +188,20 @@ private lemma image_div_one_sub : (fun u : ℝ => u / (1 - u)) '' Ioo 0 1 = Ioi 
     refine ⟨x / (1 + x), ⟨by positivity, ?_⟩, ?_⟩
     · rw [div_lt_one h1]
       linarith
-    · change x / (1 + x) / (1 - x / (1 + x)) = x
-      rw [show (1 : ℝ) - x / (1 + x) = (1 + x)⁻¹ by field_simp; ring]
-      field_simp
+    · have hden : (1 : ℝ) - x / (1 + x) = (1 + x)⁻¹ := by
+        field_simp
+        ring
+      have himage : x / (1 + x) / (1 - x / (1 + x)) = x := by
+        rw [hden]
+        field_simp
+      exact himage
 
 /-- The chart `u ↦ u / (1 - u)` is injective on the open unit interval. -/
 private lemma injOn_div_one_sub : InjOn (fun u : ℝ => u / (1 - u)) (Ioo (0 : ℝ) 1) := by
   intro u hu v hv huv
   have h1 : (0 : ℝ) < 1 - u := by linarith [hu.2]
   have h2 : (0 : ℝ) < 1 - v := by linarith [hv.2]
-  rw [show (fun u : ℝ => u / (1 - u)) u = u / (1 - u) from rfl,
-    show (fun u : ℝ => u / (1 - u)) v = v / (1 - v) from rfl,
-    div_eq_div_iff h1.ne' h2.ne'] at huv
+  rw [div_eq_div_iff h1.ne' h2.ne'] at huv
   nlinarith
 
 /-- The derivative of the chart `u ↦ u / (1 - u)`. -/
@@ -209,7 +211,8 @@ private lemma hasDerivAt_div_one_sub {u : ℝ} (hu : u ≠ 1) :
   have hd : HasDerivAt (fun t : ℝ => 1 - t) (-1) u := by
     simpa using (hasDerivAt_id u).const_sub (1 : ℝ)
   refine ((hasDerivAt_id' (x := u)).div hd h).congr_deriv ?_
-  rw [show (1 : ℝ) * (1 - u) - u * -1 = 1 by ring, one_div]
+  have hnum : (1 : ℝ) * (1 - u) - u * -1 = 1 := by ring
+  rw [hnum, one_div]
 
 /-- Under the chart `u ↦ u / (1 - u)` the integrand of Euler's second beta integral becomes the
 integrand of Euler's first one. -/
@@ -220,7 +223,8 @@ private lemma abs_deriv_smul_one_add_rpow (a b : ℝ) {u : ℝ} (hu : u ∈ Ioo 
   have h1u : (0 : ℝ) < 1 - u := by linarith
   have hbase : (1 : ℝ) + u / (1 - u) = (1 - u)⁻¹ := by field_simp; ring
   have e1 : ((1 - u) ^ (2 : ℕ))⁻¹ = (1 - u) ^ (-2 : ℝ) := by
-    rw [show (-2 : ℝ) = -(2 : ℕ) by norm_num, Real.rpow_neg h1u.le, Real.rpow_natCast]
+    have hneg : (-2 : ℝ) = -(2 : ℕ) := by norm_num
+    rw [hneg, Real.rpow_neg h1u.le, Real.rpow_natCast]
   have e2 : ((1 - u)⁻¹) ^ (-(a + b)) = (1 - u) ^ (a + b) := by
     rw [Real.inv_rpow h1u.le, ← Real.rpow_neg h1u.le, neg_neg]
   have e3 : (1 - u) ^ (-2 : ℝ) * (((1 - u) ^ (a - 1))⁻¹ * (1 - u) ^ (a + b)) =
@@ -296,8 +300,9 @@ theorem integrableOn_one_add_sq_rpow_Ioi (hs : 1 / 2 < s) :
     IntegrableOn (fun x : ℝ => (1 + x ^ 2) ^ (-s)) (Ioi 0) := by
   have hb : (0 : ℝ) < s - 1 / 2 := by linarith
   have hbp := integrableOn_rpow_mul_one_add_rpow (a := 1 / 2) (b := s - 1 / 2) (by norm_num) hb
-  rw [show (1 / 2 : ℝ) + (s - 1 / 2) = s by ring, show (1 / 2 : ℝ) - 1 = -(1 / 2) by norm_num]
-    at hbp
+  have hsum : (1 / 2 : ℝ) + (s - 1 / 2) = s := by ring
+  have hsub : (1 / 2 : ℝ) - 1 = -(1 / 2) := by norm_num
+  rw [hsum, hsub] at hbp
   rw [← image_sqrt_Ioi,
     integrableOn_image_iff_integrableOn_abs_deriv_smul measurableSet_Ioi
       (fun t ht => (Real.hasDerivAt_sqrt (ne_of_gt (mem_Ioi.mp ht))).hasDerivWithinAt)
@@ -323,8 +328,9 @@ theorem integral_one_add_sq_rpow (hs : 1 / 2 < s) :
     ∫ x : ℝ, (1 + x ^ 2) ^ (-s) = beta (1 / 2) (s - 1 / 2) := by
   have hb : (0 : ℝ) < s - 1 / 2 := by linarith
   have hbp := integral_rpow_mul_one_add_rpow (a := 1 / 2) (b := s - 1 / 2) (by norm_num) hb
-  rw [show (1 / 2 : ℝ) + (s - 1 / 2) = s by ring, show (1 / 2 : ℝ) - 1 = -(1 / 2) by norm_num]
-    at hbp
+  have hsum : (1 / 2 : ℝ) + (s - 1 / 2) = s := by ring
+  have hsub : (1 / 2 : ℝ) - 1 = -(1 / 2) := by norm_num
+  rw [hsum, hsub] at hbp
   have habs : ∫ x : ℝ, (1 + x ^ 2) ^ (-s) = 2 * ∫ x in Ioi (0 : ℝ), (1 + x ^ 2) ^ (-s) := by
     have h := integral_comp_abs (f := fun y : ℝ => (1 + y ^ 2) ^ (-s))
     simp only [sq_abs] at h

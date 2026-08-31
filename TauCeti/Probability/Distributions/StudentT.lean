@@ -5,8 +5,9 @@ Authors: Claude
 -/
 module
 
-public import TauCeti.Analysis.SpecialFunctions.Beta
+import TauCeti.Analysis.SpecialFunctions.Beta
 public import TauCeti.Probability.Density
+public import Mathlib.Analysis.SpecialFunctions.Gamma.Basic
 public import Mathlib.Probability.Distributions.Cauchy
 import TauCeti.Analysis.SpecialFunctions.Gamma
 import Mathlib.MeasureTheory.Measure.Haar.NormedSpace
@@ -86,11 +87,6 @@ def studentTPDFReal (ν x : ℝ) : ℝ :=
 def studentTPDF (ν x : ℝ) : ℝ≥0∞ :=
   ENNReal.ofReal (studentTPDFReal ν x)
 
-/-- The `ℝ≥0∞`-valued Student t density is the coercion of the real-valued one. -/
-theorem studentTPDF_eq_ofReal (ν x : ℝ) :
-    studentTPDF ν x = ENNReal.ofReal (studentTPDFReal ν x) := by
-  rw [studentTPDF]
-
 /-- Outside the valid parameter range the density vanishes. -/
 @[simp]
 theorem studentTPDFReal_of_nonpos (hν : ν ≤ 0) (x : ℝ) : studentTPDFReal ν x = 0 := by
@@ -104,10 +100,19 @@ theorem studentTPDFReal_of_pos (hν : 0 < ν) (x : ℝ) :
         (1 + x ^ 2 / ν) ^ (-((ν + 1) / 2)) := by
   rw [studentTPDFReal, ite_eq_left hν]
 
+/-- For a positive number of degrees of freedom the `ℝ≥0∞`-valued density is the Student t
+formula. -/
+@[simp]
+theorem studentTPDF_of_pos (hν : 0 < ν) (x : ℝ) :
+    studentTPDF ν x = ENNReal.ofReal
+      (Real.Gamma ((ν + 1) / 2) / (√(ν * π) * Real.Gamma (ν / 2)) *
+        (1 + x ^ 2 / ν) ^ (-((ν + 1) / 2))) := by
+  rw [studentTPDF, studentTPDFReal_of_pos hν]
+
 /-- Outside the valid parameter range the `ℝ≥0∞`-valued density vanishes. -/
 @[simp]
 theorem studentTPDF_of_nonpos (hν : ν ≤ 0) (x : ℝ) : studentTPDF ν x = 0 := by
-  rw [studentTPDF_eq_ofReal, studentTPDFReal_of_nonpos hν, ENNReal.ofReal_zero]
+  rw [studentTPDF, studentTPDFReal_of_nonpos hν, ENNReal.ofReal_zero]
 
 /-- The normalizing constant of Student's t law is positive. -/
 theorem studentT_const_pos (hν : 0 < ν) :
@@ -140,7 +145,7 @@ theorem studentTPDFReal_neg (ν x : ℝ) : studentTPDFReal ν (-x) = studentTPDF
 /-- The `ℝ≥0∞`-valued Student t density is even in the sample point. -/
 @[simp]
 theorem studentTPDF_neg (ν x : ℝ) : studentTPDF ν (-x) = studentTPDF ν x := by
-  rw [studentTPDF_eq_ofReal, studentTPDF_eq_ofReal, studentTPDFReal_neg]
+  rw [studentTPDF, studentTPDF, studentTPDFReal_neg]
 
 /-- The real-valued Student t density is measurable. -/
 @[fun_prop]
@@ -189,9 +194,10 @@ theorem integral_one_add_sq_div_rpow (hν : 0 < ν) :
   have h := Measure.integral_comp_inv_mul_left
     (fun y : ℝ => (1 + y ^ 2) ^ (-((ν + 1) / 2))) √ν
   simp only [one_add_sq_div_eq hν, abs_of_nonneg (Real.sqrt_nonneg ν), smul_eq_mul] at h
-  rw [h, integral_one_add_sq_rpow hs, show (ν + 1) / 2 - 1 / 2 = ν / 2 by ring,
-    ProbabilityTheory.beta, Real.Gamma_one_half_eq, show (1 : ℝ) / 2 + ν / 2 = (ν + 1) / 2 by ring,
-    Real.sqrt_mul hν.le]
+  have hsub : (ν + 1) / 2 - 1 / 2 = ν / 2 := by ring
+  have hsum : (1 : ℝ) / 2 + ν / 2 = (ν + 1) / 2 := by ring
+  rw [h, integral_one_add_sq_rpow hs, hsub, ProbabilityTheory.beta,
+    Real.Gamma_one_half_eq, hsum, Real.sqrt_mul hν.le]
   ring
 
 /-! ### The measure and its total mass -/
@@ -203,11 +209,6 @@ For `ν ≤ 0` this is the zero measure, not a probability measure; see
 def studentTMeasure (ν : ℝ) : Measure ℝ :=
   volume.withDensity (studentTPDF ν)
 
-/-- The defining presentation of Student's t law as a `MeasureTheory.Measure.withDensity`. -/
-theorem studentTMeasure_eq_withDensity (ν : ℝ) :
-    studentTMeasure ν = volume.withDensity (studentTPDF ν) := by
-  rw [studentTMeasure]
-
 /-- Outside the valid parameter range Student's t law is the zero measure. -/
 @[simp]
 theorem studentTMeasure_of_nonpos (hν : ν ≤ 0) : studentTMeasure ν = 0 := by
@@ -215,7 +216,7 @@ theorem studentTMeasure_of_nonpos (hν : ν ≤ 0) : studentTMeasure ν = 0 := b
     funext y
     rw [studentTPDF_of_nonpos hν]
     rfl
-  rw [studentTMeasure_eq_withDensity, h, withDensity_zero]
+  rw [studentTMeasure, h, withDensity_zero]
 
 /-- The Student t density is integrable on the whole line for every parameter. -/
 theorem integrable_studentTPDFReal (ν : ℝ) : Integrable (studentTPDFReal ν) := by
@@ -239,7 +240,7 @@ theorem integral_studentTPDFReal (hν : 0 < ν) : ∫ x, studentTPDFReal ν x = 
 
 /-- The `ℝ≥0∞`-valued Student t density has total mass `1`. -/
 theorem lintegral_studentTPDF_eq_one (hν : 0 < ν) : ∫⁻ x, studentTPDF ν x = 1 := by
-  simp_rw [studentTPDF_eq_ofReal]
+  simp_rw [studentTPDF]
   rw [← ofReal_integral_eq_lintegral_ofReal (integrable_studentTPDFReal ν)
       (ae_of_all _ fun y => studentTPDFReal_nonneg ν y),
     integral_studentTPDFReal hν, ENNReal.ofReal_one]
@@ -248,7 +249,7 @@ theorem lintegral_studentTPDF_eq_one (hν : 0 < ν) : ∫⁻ x, studentTPDF ν x
 theorem isProbabilityMeasure_studentTMeasure (hν : 0 < ν) :
     IsProbabilityMeasure (studentTMeasure ν) := by
   constructor
-  rw [studentTMeasure_eq_withDensity, withDensity_apply _ MeasurableSet.univ,
+  rw [studentTMeasure, withDensity_apply _ MeasurableSet.univ,
     Measure.restrict_univ, lintegral_studentTPDF_eq_one hν]
 
 /-! ### Absolute continuity -/
@@ -278,7 +279,7 @@ theorem studentTMeasure_map_neg (ν : ℝ) :
     (studentTMeasure ν).map (fun x => -x) = studentTMeasure ν := by
   refine Measure.ext fun t ht => ?_
   have hpre : MeasurableSet ((fun x : ℝ => -x) ⁻¹' t) := ht.preimage measurable_neg
-  rw [Measure.map_apply measurable_neg ht, studentTMeasure_eq_withDensity,
+  rw [Measure.map_apply measurable_neg ht, studentTMeasure,
     withDensity_apply _ hpre, withDensity_apply _ ht]
   have h := (Measure.measurePreserving_neg (volume : Measure ℝ)).setLIntegral_comp_preimage_emb
     (Homeomorph.neg ℝ).measurableEmbedding (studentTPDF ν) t
@@ -298,10 +299,10 @@ theorem studentTPDFReal_one (x : ℝ) : studentTPDFReal 1 x = cauchyPDFReal 0 1 
 
 /-- **Student's t law with one degree of freedom is the standard Cauchy law.** -/
 theorem studentTMeasure_one : studentTMeasure 1 = cauchyMeasure 0 1 := by
-  rw [studentTMeasure_eq_withDensity, cauchyMeasure_of_scale_ne_zero 0 one_ne_zero]
+  rw [studentTMeasure, cauchyMeasure_of_scale_ne_zero 0 one_ne_zero]
   congr 1
   funext x
-  rw [studentTPDF_eq_ofReal, studentTPDFReal_one, cauchyPDF]
+  rw [studentTPDF, studentTPDFReal_one, cauchyPDF]
 
 /-! ### Parameter measurability -/
 
@@ -314,7 +315,7 @@ theorem measurable_uncurry_studentTPDF :
         Real.Gamma ((q.1 + 1) / 2) / (√(q.1 * π) * Real.Gamma (q.1 / 2)) *
           Real.exp (Real.log (1 + q.2 ^ 2 / q.1) * (-((q.1 + 1) / 2))) else 0) := by
     funext q
-    rw [studentTPDF_eq_ofReal, studentTPDFReal]
+    rw [studentTPDF, studentTPDFReal]
     split_ifs with h
     · rw [Real.rpow_def_of_pos (by positivity)]
     · rfl
