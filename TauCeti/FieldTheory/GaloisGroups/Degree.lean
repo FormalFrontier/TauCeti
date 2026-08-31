@@ -68,7 +68,6 @@ theorem nonempty_rootSet_splittingField_equiv_fin (p : F[X]) (hsep : p.Separable
 
 /-- The image of the Galois action on the roots in any splitting extension has the same order as
 the polynomial Galois group. -/
-@[simp]
 theorem natCard_galActionHom_range (p : F[X]) (E : Type v) [Field E] [Algebra F E]
     [Fact ((p.map (algebraMap F E)).Splits)] :
     Nat.card (Polynomial.Gal.galActionHom p E).range = Nat.card p.Gal := by
