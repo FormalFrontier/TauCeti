@@ -23,7 +23,7 @@ change.
 
 ## Main declarations
 
-* `TauCeti.SpecialLinear.coordinateHopfAlgebraBaseChangeIso_hom_determinantGroupLike`: scalar
+* `TauCeti.GeneralLinear.coordinateHopfAlgebraBaseChangeIso_hom_determinantGroupLike`: scalar
   extension carries the generic determinant to the generic determinant.
 * `TauCeti.SpecialLinear.coordinateHopfAlgebraBaseChangeIso`: base change of the coordinate Hopf
   algebra of `SLₙ`.
@@ -47,12 +47,14 @@ public section
 open CategoryTheory
 open scoped TensorProduct
 
-namespace TauCeti.SpecialLinear
+namespace TauCeti
 
 universe u v
 
 variable (R : Type u) (K : Type max u v) [CommRing R] [CommRing K] [Algebra R K]
 variable (n : ℕ)
+
+namespace GeneralLinear
 
 /-- The general-linear base-change isomorphism sends the scalar extension of the generic
 determinant to the generic determinant over the new base. -/
@@ -77,6 +79,10 @@ theorem coordinateHopfAlgebraBaseChangeIso_hom_determinantGroupLike :
     GeneralLinear.determinantGroupLike_val,
     GeneralLinear.det_localizedGenericMatrix, hdet, one_smul]
 
+end GeneralLinear
+
+namespace SpecialLinear
+
 /-- The general-linear base-change isomorphism carries the base-changed determinant-one Hopf
 ideal onto the determinant-one Hopf ideal over the new base. -/
 private theorem map_baseChangeHopfIdeal_definingHopfIdeal :
@@ -93,7 +99,7 @@ private theorem map_baseChangeHopfIdeal_definingHopfIdeal :
               GeneralLinear.coordinateHopfAlgebra R n)) =
         (GeneralLinear.determinantGroupLike K n :
           GeneralLinear.coordinateHopfAlgebra K n) :=
-    coordinateHopfAlgebraBaseChangeIso_hom_determinantGroupLike R K n
+    GeneralLinear.coordinateHopfAlgebraBaseChangeIso_hom_determinantGroupLike R K n
   refine CommHopfAlgCat.map_baseChangeHopfIdeal_of_toIdeal_eq_span
     (definingHopfIdeal R n) (definingHopfIdeal K n)
     (GeneralLinear.coordinateHopfAlgebraBaseChangeIso R K n)
@@ -147,4 +153,6 @@ theorem finiteTypeCoordinateHopfAlgebraBaseChangeIso_hom :
     (finiteTypeCoordinateHopfAlgebra_obj R n) (finiteTypeCoordinateHopfAlgebra_obj K n)
     (coordinateHopfAlgebraBaseChangeIso R K n)
 
-end TauCeti.SpecialLinear
+end SpecialLinear
+
+end TauCeti

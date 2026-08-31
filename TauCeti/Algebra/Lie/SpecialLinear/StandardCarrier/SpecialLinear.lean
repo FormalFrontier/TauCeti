@@ -73,6 +73,17 @@ private theorem generalLinearMap_eq_self_of_ringHom_eq_id
     Matrix.GeneralLinearGroup.map φ g = g := by
   rw [hφ, Matrix.GeneralLinearGroup.map_id, MonoidHom.id_apply]
 
+/-- Reading a general-linear point commutes with mapping it along a morphism of value algebras. -/
+private theorem pointsMulEquiv_mapPoints
+    (n : ℕ) {A B : CommAlgCat ℤ} (χ : A ⟶ B)
+    (g : HopfAlgebra.points (R := ℤ)
+      (H := GeneralLinear.coordinateHopfAlgebra ℤ n) A) :
+    GeneralLinear.pointsMulEquiv n
+        (HopfAlgebra.mapPoints (H := GeneralLinear.coordinateHopfAlgebra ℤ n) χ g) =
+      Matrix.GeneralLinearGroup.map χ.hom.toRingHom
+        (GeneralLinear.pointsMulEquiv n g) := by
+  exact GeneralLinear.pointsMulEquiv_mapValue n χ.hom g
+
 /-- A base-ring-valued point satisfies the transported defining equations of the type `A_r`
 carrier exactly when its underlying matrix is a point of the original integral carrier. This
 holds over every commutative base ring. -/
@@ -113,14 +124,7 @@ theorem mem_baseChangeDefiningPointsSubgroup_iff_mem_points
           (GeneralLinear.coordinateHopfAlgebra k (r + 1)) J B q) := by
       dsimp only [qZ]
       rw [← CommHopfAlgCat.mapPoints_quotientPointsHom]
-      have hχ := @GeneralLinear.pointsMulEquiv_mapValue ℤ _ (r + 1)
-        (↑BZ) (↑C) BZ.commRing C.commRing BZ.algebra C.algebra χ.hom
-        (CommHopfAlgCat.quotientPointsHom (GeneralLinear.coordinateHopfAlgebra ℤ (r + 1)) I
-          (CommAlgCat.restrictScalarsObj (algebraMap ℤ k) B) qZraw)
-      rw [@AlgHom.mapValue_apply ℤ
-        (GeneralLinear.coordinateHopfAlgebra ℤ (r + 1)) (↑BZ) _ _ _ _ BZ.algebra
-        (↑C) _ C.algebra χ.hom _] at hχ
-      rw [HopfAlgebra.mapPoints_apply, hχ]
+      rw [pointsMulEquiv_mapPoints (r + 1) χ]
       dsimp only [qZraw]
       rw [← hmatrix]
       exact generalLinearMap_eq_self_of_ringHom_eq_id (r + 1) (RingHom.id k) rfl _
@@ -165,14 +169,7 @@ theorem mem_baseChangeDefiningPointsSubgroup_iff_mem_points
       rw [← hmatrix]
       dsimp only [qZraw]
       rw [← CommHopfAlgCat.mapPoints_quotientPointsHom]
-      have hχ := @GeneralLinear.pointsMulEquiv_mapValue ℤ _ (r + 1)
-        (↑C) (↑BZ) C.commRing BZ.commRing C.algebra BZ.algebra χ.hom
-        (CommHopfAlgCat.quotientPointsHom
-          (GeneralLinear.coordinateHopfAlgebra ℤ (r + 1)) I (CommAlgCat.of ℤ k) qZ)
-      rw [@AlgHom.mapValue_apply ℤ
-        (GeneralLinear.coordinateHopfAlgebra ℤ (r + 1)) (↑C) _ _ _ _ C.algebra
-        (↑BZ) _ BZ.algebra χ.hom _] at hχ
-      rw [HopfAlgebra.mapPoints_apply, hχ]
+      rw [pointsMulEquiv_mapPoints (r + 1) χ]
       exact generalLinearMap_eq_self_of_ringHom_eq_id (r + 1) (RingHom.id k) rfl _
     have hleft : GeneralLinear.pointsMulEquiv (r + 1)
         (CommHopfAlgCat.quotientPointsHom
@@ -209,7 +206,7 @@ theorem specialLinearDefiningHopfIdeal_le_baseChangeDefiningIdeal
     (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv)
     (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) A (1 : A) hgenerator
   rw [TensorProduct.tmul_sub, map_sub,
-    SpecialLinear.coordinateHopfAlgebraBaseChangeIso_hom_determinantGroupLike,
+    GeneralLinear.coordinateHopfAlgebraBaseChangeIso_hom_determinantGroupLike,
     ← Algebra.TensorProduct.one_def, map_one] at hmap
   apply HopfIdeal.mem_toIdeal.mp
   rw [baseChangeDefiningIdeal_def]
