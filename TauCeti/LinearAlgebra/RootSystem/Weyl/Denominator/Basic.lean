@@ -37,7 +37,9 @@ whose Weyl-group combinatorics is a much later dependency.
 * `TauCeti.weylDenominator_eq_sum_powerset`: expanding the product, `Δ` is the signed sum
   `∑_{T ⊆ Φ⁺} (-1)^{|T|} e^{-∑_{α ∈ T} α}` over the subsets of the positive roots; hence
 * `TauCeti.coeff_weylDenominator_eq_zero`: `Δ` is supported on the negatives of the sums of sets of
-  positive roots, which is the statement that it lives in the negative cone.
+  positive roots, which is the statement that it lives in the negative cone; and
+* `TauCeti.coeff_weylDenominator_zero`: the constant term of `Δ` is `1`, the empty set being the
+  only set of positive roots summing to `0`.
 
 ## References
 
@@ -100,5 +102,20 @@ theorem coeff_weylDenominator_eq_zero {x : M}
     AddMonoidAlgebra.coeff_single]
   exact Finset.sum_eq_zero fun T hT ↦ Finsupp.single_apply_eq_zero.mpr fun h ↦
     absurd h (hx T (Finset.mem_powerset.mp hT))
+
+/-- **The constant term of the Weyl denominator is `1`.** Expanding `∏_{α>0}(1 - e^{-α})` indexes
+the terms by the sets of positive roots, and the empty set is the only one whose sum vanishes. -/
+@[simp]
+theorem coeff_weylDenominator_zero : (weylDenominator P b).coeff 0 = 1 := by
+  classical
+  simp only [weylDenominator_eq_sum_powerset, AddMonoidAlgebra.coeff_sum, Finsupp.finsetSum_apply,
+    AddMonoidAlgebra.coeff_single]
+  refine (Finset.sum_eq_single_of_mem (∅ : Finset ι) (Finset.empty_mem_powerset _) ?_).trans ?_
+  · intro T hT hTne
+    have hsum : ∑ i ∈ T, P.root i ≠ 0 :=
+      sum_root_ne_zero_of_mem_posRoots P b (Finset.nonempty_iff_ne_empty.mpr hTne)
+        fun i hi => (mem_posRootsFinset P b i).mp (Finset.mem_powerset.mp hT hi)
+    exact Finsupp.single_eq_of_ne (Ne.symm (neg_ne_zero.mpr hsum))
+  · simp
 
 end TauCeti

@@ -32,8 +32,8 @@ first and on its own, with no representation theory involved.
 `Δ` is alternating for the dot action (`TauCeti.isDotAlternating_weylDenominator`), so
 `TauCeti.IsDotAlternating.eq_weylNumerator` reduces the identity to two coefficient computations on
 the open chamber of the dot action: the constant term of `Δ` is `1`
-(`TauCeti.coeff_weylDenominator_zero`, since the empty set is the only set of positive roots
-summing to `0`), and `0` is the only weight of that chamber where `Δ` does not vanish.
+(`TauCeti.coeff_weylDenominator_zero`, an elementary expansion proved with the denominator itself),
+and `0` is the only weight of that chamber where `Δ` does not vanish.
 
 The second computation is the geometric heart of the identity, and is the only step specific to the
 denominator. An exponent of `Δ` is `-ν` for a sum `ν` of positive roots; lying in the open dot
@@ -43,7 +43,6 @@ cone is `0` (`TauCeti.eq_zero_of_mem_posRootCone_of_forall_coroot'_nonpos`).
 
 ## Main results
 
-* `TauCeti.coeff_weylDenominator_zero`: the constant term of `Δ` is `1`.
 * `TauCeti.weylDenominator_eq_weylNumerator_zero`: **the Weyl denominator identity**, `Δ = N(0)`.
 * `TauCeti.support_coeff_weylDenominator` and `TauCeti.card_support_coeff_weylDenominator`:
   consequently `Δ` is supported on the dot orbit of `0` and has exactly `|W|` terms.
@@ -65,21 +64,6 @@ universe u v w x
 variable {ι : Type u} {R : Type v} {M : Type w} {N : Type x}
   [CommRing R] [AddCommGroup M] [Module R M] [AddCommGroup N] [Module R N]
   (P : _root_.RootPairing ι R M N) [Finite ι] [CharZero R] (b : P.Base)
-
-/-- **The constant term of the Weyl denominator is `1`.** Expanding `∏_{α>0}(1 - e^{-α})` indexes
-the terms by the sets of positive roots, and the empty set is the only one whose sum vanishes. -/
-@[simp]
-theorem coeff_weylDenominator_zero : (weylDenominator P b).coeff 0 = 1 := by
-  classical
-  simp only [weylDenominator_eq_sum_powerset, AddMonoidAlgebra.coeff_sum, Finsupp.finsetSum_apply,
-    AddMonoidAlgebra.coeff_single]
-  refine (Finset.sum_eq_single_of_mem (∅ : Finset ι) (Finset.empty_mem_powerset _) ?_).trans ?_
-  · intro T hT hTne
-    have hsum : ∑ i ∈ T, P.root i ≠ 0 :=
-      sum_root_ne_zero_of_mem_posRoots P b (Finset.nonempty_iff_ne_empty.mpr hTne)
-        fun i hi => (mem_posRootsFinset P b i).mp (Finset.mem_powerset.mp hT hi)
-    exact Finsupp.single_eq_of_ne (Ne.symm (neg_ne_zero.mpr hsum))
-  · simp
 
 section Cone
 
