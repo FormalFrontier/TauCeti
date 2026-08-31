@@ -54,7 +54,7 @@ this count, while `TauCeti.Sporadic.even_length_of_mem_fi24AutomorphismRelators`
 source relator does lie in the index-two subgroup before the rewrite is applied.
 
 The rewrite drops exactly the source letters equal to `a`, which is
-`TauCeti.Sporadic.length_toWord_fi24SchreierRewrite`, so the letter count of the row is read off
+`TauCeti.Sporadic.length_fi24SchreierRewrite`, so the letter count of the row is read off
 the source relators rather than off the rewritten ones:
 `TauCeti.Sporadic.fi24PrimePresentation_totalLength` records the `1076` letters they contribute.
 Neither source publishes a presentation length to check that figure against, and the row claims no
@@ -384,7 +384,7 @@ every other source letter contributes one, inverted or not according to the tran
 representative reached so far. In particular the two rewrites `r` and `a r a` of one source relator
 have the same length, the right-hand side not mentioning `positive`. -/
 @[simp]
-theorem length_toWord_fi24SchreierRewrite (positive : Bool) (r : Relator (Fin 12)) :
+theorem length_fi24SchreierRewrite (positive : Bool) (r : Relator (Fin 12)) :
     (fi24SchreierRewrite positive r).length =
       r.toWord.countP fun letter => letter.1 ≠ 0 := by
   rw [fi24SchreierRewrite_def]
@@ -539,7 +539,7 @@ theorem fi24PrimePresentation_matchesMetadata : fi24PrimePresentation.matchesMet
 /-! ## Letter counts
 
 Every count below is read off the source relators through
-`TauCeti.Sporadic.length_toWord_fi24SchreierRewrite` rather than off the rewritten words, which is
+`TauCeti.Sporadic.length_fi24SchreierRewrite` rather than off the rewritten words, which is
 what keeps the arithmetic tied to the eleven-edge diagram a reviewer checks against the source. -/
 
 /-- A repeated list contributes its own count once per repetition. Counting on the base rather than
@@ -600,12 +600,12 @@ private theorem sum_map_length_flatMap_fi24SchreierRewrite (l : List (Relator (F
   | cons r l ih =>
     rw [List.flatMap_cons, List.map_append, List.sum_append, ih]
     simp only [List.map_cons, List.map_nil, List.sum_cons, List.sum_nil,
-      length_toWord_fi24SchreierRewrite]
+      length_fi24SchreierRewrite]
     ring
 
 /-- **The compiled relator words of the `Fi₂₄'` row contain `1076` letters in total.**
 
-By `TauCeti.Sporadic.length_toWord_fi24SchreierRewrite` the two rewrites of a source relator have
+By `TauCeti.Sporadic.length_fi24SchreierRewrite` the two rewrites of a source relator have
 the same length, namely its number of letters other than `a`, so the total is twice the `538`
 letters the `68` rewritten source relators contribute: `524` from the off-diagonal Coxeter
 relators, `110` from the source equation for `l`, and `442` from the final source relation.
@@ -615,6 +615,7 @@ transcribed data for a reviewer to compare with the source rather than checking 
 recorded number. It is a count of compiled letters and not of reduced ones: unlike the other
 sporadic rows this one claims no cyclic reduction of its words, the Reidemeister--Schreier rewrite
 being what stands between a source relator and the word whose letters are counted. -/
+@[simp]
 theorem fi24PrimePresentation_totalLength : fi24PrimePresentation.totalLength = 1076 := by
   rw [← GroupPresentation.sum_map_length_relatorLetters, fi24PrimePresentation_relatorLetters,
     List.map_map]

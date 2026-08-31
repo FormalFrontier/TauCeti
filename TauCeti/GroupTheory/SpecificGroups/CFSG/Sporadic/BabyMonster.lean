@@ -326,14 +326,17 @@ theorem matchesMetadata_presentation : presentation.matchesMetadata :=
 /-! ### Letter counts -/
 
 /-- The spider relator compiles to `10 · 9 = 90` letters. -/
+@[simp]
 theorem length_toWord_spiderRelator : spiderRelator.toWord.length = 90 := by
   simp [spiderRelator_eq]
 
 /-- The first adjoined relator compiles to `9 · 7 = 63` letters. -/
+@[simp]
 theorem length_toWord_extraRelatorOne : extraRelatorOne.toWord.length = 63 := by
   simp [extraRelatorOne_eq]
 
 /-- The second adjoined relator compiles to `9 · 7 = 63` letters. -/
+@[simp]
 theorem length_toWord_extraRelatorTwo : extraRelatorTwo.toWord.length = 63 := by
   simp [extraRelatorTwo_eq]
 
@@ -342,6 +345,7 @@ contributes `2m`, so the eleven involution relators contribute `2` each, the ten
 and the forty-five remaining pairs of distinct nodes `4` each: `22 + 60 + 180`. Reading the count
 off the Coxeter matrix rather than off the expanded relators is what ties it to the transcribed
 edge list. -/
+@[simp]
 theorem sum_map_length_toWord_coxeterRelators :
     ((coxeterRelators coxeterMatrix).map fun r => r.toWord.length).sum = 262 := by
   rw [coxeterRelators_def, coxeterRelatorsOfList_def, List.map_map]
@@ -356,6 +360,7 @@ the Coxeter relators together with the `90 + 63 + 63` letters of the three adjoi
 The source displays its relations by family and records no presentation length, so this figure
 states the transcribed data for a reviewer to compare with the source rather than checking it
 against a published number. -/
+@[simp]
 theorem presentation_totalLength : presentation.totalLength = 478 := by
   have key : ((relatorList.map Relator.toWord).map List.length).sum = 478 := by
     rw [relatorList_def]
@@ -370,11 +375,7 @@ theorem presentation_totalLength : presentation.totalLength = 478 := by
 /-- **Every expression in the `Y₄₃₃` relator list compiles to a cyclically reduced word.** The
 Coxeter relators are cyclically reduced for any Coxeter matrix, and each adjoined relator is a
 power whose base is a product of generators with no inverse, so no letter of it can cancel against
-its neighbour or against the last letter of the word.
-
-Each alternative is dispatched by the shape of its relator rather than by goal position, and the
-power route is what keeps the three adjoined relators tractable: expanding the tenth power of the
-spider base costs ninety letters where checking the base costs nine. -/
+its neighbour or against the last letter of the word. -/
 theorem isCyclicallyReduced_toWord_of_mem_relatorList (r : Relator (Fin 11))
     (hr : r ∈ relatorList) : FreeGroup.IsCyclicallyReduced r.toWord := by
   rw [relatorList_def, List.mem_append] at hr
