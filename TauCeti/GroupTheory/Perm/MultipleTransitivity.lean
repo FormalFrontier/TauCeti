@@ -19,7 +19,7 @@ transitivity of the original action.
 
 * `TauCeti.existsUnique_fixedPoint_of_card_support_add_one_eq`: a permutation moving all but
   one point has a unique fixed point.
-* `TauCeti.isMultiplyPretransitive_two_of_isCycle_mem`: a transitive permutation group that
+* `TauCeti.is_two_pretransitive_of_isCycle_mem`: a transitive permutation group that
   contains such a cycle is doubly transitive.
 
 The second result is one of the generic recognition theorems in Layer 1 of
@@ -51,8 +51,7 @@ theorem existsUnique_fixedPoint_of_card_support_add_one_eq (σ : Equiv.Perm α)
     omega
   obtain ⟨x, hx⟩ := Finset.card_eq_one.mp hcompl
   refine ⟨x, ?_, fun y hy => ?_⟩
-  · change σ x = x
-    apply Equiv.Perm.notMem_support.mp
+  · apply Equiv.Perm.notMem_support.mp
     have : x ∈ σ.supportᶜ := by simp [hx]
     simpa only [Finset.mem_compl] using this
   · have hy' : y ∉ σ.support := by simpa only [Equiv.Perm.notMem_support] using hy
@@ -61,7 +60,7 @@ theorem existsUnique_fixedPoint_of_card_support_add_one_eq (σ : Equiv.Perm α)
 
 /-- A transitive subgroup of a finite symmetric group that contains a cycle moving all but one
 point is doubly transitive. -/
-theorem isMultiplyPretransitive_two_of_isCycle_mem
+theorem is_two_pretransitive_of_isCycle_mem
     (G : Subgroup (Equiv.Perm α)) [IsPretransitive G α] {σ : Equiv.Perm α}
     (hσ : σ.IsCycle) (hσG : σ ∈ G)
     (hcard : σ.support.card + 1 = Fintype.card α) :
