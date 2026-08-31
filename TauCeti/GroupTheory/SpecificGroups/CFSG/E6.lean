@@ -168,7 +168,6 @@ noncomputable def rootSubgroup (d : E6LieIndex)
 
 /-- The indexed root subgroup is the corresponding numbered root subgroup of the minuscule
 carrier. -/
-@[simp]
 theorem rootSubgroup_def (d : E6LieIndex) (k : Fin d.1.rank ⊕ Fin d.1.rank) :
     d.rootSubgroup k = E6Minuscule.rootSubgroupPoints (d.rootNodeEquiv k) d.1.Closure :=
   (rfl)
