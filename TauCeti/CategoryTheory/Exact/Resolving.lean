@@ -31,14 +31,6 @@ own hypotheses.
 * `TauCeti.ExactStructure.IsResolving.inducedExactStructure`: the exact structure induced on the
   full subcategory of resolving objects.
 
-## Main results
-
-* `TauCeti.ExactStructure.IsResolving.prop_of_kernel_of_deflation`: the kernel-closure operation
-  exposed in a form using the two maps of a conflation.
-* `TauCeti.ExactStructure.IsResolving.isConflationExact_ι` and
-  `TauCeti.ExactStructure.IsResolving.reflectsConflations_ι`: the full-subcategory inclusion
-  preserves and reflects the induced conflations.
-
 The finite-resolution field is the coverage hypothesis consumed by the general resolution theorem;
 the theorem itself and its Euler-class comparison are downstream of this package.
 
@@ -77,18 +69,6 @@ structure IsClosedUnderKernelsOfDeflations : Prop where
   /-- The kernel of a conflation between `P`-objects again satisfies `P`. -/
   prop_X₁ {S : ShortComplex C} (hS : E.Conflation S) (h₂ : P S.X₂) (h₃ : P S.X₃) : P S.X₁
 
-namespace IsClosedUnderKernelsOfDeflations
-
-variable {E P}
-
-/-- The kernel-closure condition, with the conflation written by its two maps. -/
-theorem prop_of_kernel_of_deflation {K Q X : C} {i : K ⟶ Q} {p : Q ⟶ X}
-    {zero : i ≫ p = 0} (hS : E.Conflation (ShortComplex.mk i p zero)) (hQ : P Q) (hX : P X)
-    (hP : E.IsClosedUnderKernelsOfDeflations P) : P K :=
-  hP.prop_X₁ hS hQ hX
-
-end IsClosedUnderKernelsOfDeflations
-
 /-- A **resolving subcategory** of an exact category.
 
 The first three parent classes say that `P` is replete and additive. The remaining fields are,
@@ -107,12 +87,6 @@ namespace IsResolving
 
 variable {E P}
 
-/-- The kernel-closure operation of a resolving subcategory. -/
-theorem prop_of_kernel_of_deflation [hP : E.IsResolving P] {K Q X : C}
-    {i : K ⟶ Q} {p : Q ⟶ X} {zero : i ≫ p = 0}
-    (hS : E.Conflation (ShortComplex.mk i p zero)) (hQ : P Q) (hX : P X) : P K :=
-  hP.isClosedUnderKernelsOfDeflations.prop_of_kernel_of_deflation hS hQ hX
-
 /-- The exact structure induced on the full subcategory of resolving objects.
 
 Its conflations are precisely the ambient `E`-conflations whose three terms satisfy `P`; the
@@ -120,22 +94,6 @@ existence and exactness of this structure use the extension-closure field of `hP
 noncomputable def inducedExactStructure [hP : E.IsResolving P] :
     ExactStructure P.FullSubcategory :=
   E.fullSubcategory P hP.isExtensionClosed
-
-@[simp]
-theorem inducedExactStructure_conflation_iff [hP : E.IsResolving P]
-    (S : ShortComplex P.FullSubcategory) :
-    hP.inducedExactStructure.Conflation S ↔ E.Conflation (S.map P.ι) :=
-  E.fullSubcategory_conflation_iff hP.isExtensionClosed S
-
-/-- The inclusion of a resolving subcategory is conflation-exact. -/
-theorem isConflationExact_ι [hP : E.IsResolving P] :
-    hP.inducedExactStructure.IsConflationExact E P.ι :=
-  E.isConflationExact_ι hP.isExtensionClosed
-
-/-- The inclusion of a resolving subcategory reflects conflations. -/
-theorem reflectsConflations_ι [hP : E.IsResolving P] :
-    hP.inducedExactStructure.ReflectsConflations E P.ι :=
-  E.reflectsConflations_ι hP.isExtensionClosed
 
 end IsResolving
 
