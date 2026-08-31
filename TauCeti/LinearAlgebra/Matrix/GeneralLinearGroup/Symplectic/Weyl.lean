@@ -32,6 +32,8 @@ subgroups. This advances the explicit full-weight type-`C` carrier in Layer 9 of
 
 * `TauCeti.GLSymplecticFin.differenceShortRootWeylElement`: the standard representative of the
   reflection in `e_i-e_j`.
+* `coe_differenceShortRootWeylElement`: in sum coordinates it is a product of two type-`A` Weyl
+  representatives.
 * `differenceShortRootWeylElement_inv`: the representative for the opposite root is its inverse.
 * `differenceShortRootWeylElement_mul_differenceShortRootUnit_mul_inv`: its reflection action on
   the short-root subgroup.
@@ -62,7 +64,9 @@ def differenceShortRootWeylElement (hij : i ≠ j) : GLSymplecticFin m R :=
   differenceShortRootUnit hij 1 * differenceShortRootUnit hij.symm (-1) *
     differenceShortRootUnit hij 1
 
-private theorem coe_differenceShortRootWeylElement (hij : i ≠ j) :
+/-- In sum coordinates the short-root Weyl representative is the product of the type-`A` Weyl
+representative on the first block and the inverse of the one on the second block. -/
+theorem coe_differenceShortRootWeylElement (hij : i ≠ j) :
     ((differenceShortRootWeylElement (R := R) hij : GLSymplecticFin m R) :
         GL (Fin (m + m)) R) =
       TauCeti.transvectionWeylElement (differenceShortRoot_first_indices_ne hij) *
@@ -111,31 +115,21 @@ theorem differenceShortRootWeylElement_inv (hij : i ≠ j) :
   have houter : Commute
       (TauCeti.transvectionUnit (differenceShortRoot_first_indices_ne hij) (1 : R))
       (TauCeti.transvectionWeylElement (A := R)
-        (differenceShortRoot_second_indices_ne hij)) := by
-    rw [TauCeti.transvectionWeylElement_def]
-    have hfirst := TauCeti.commute_transvectionUnit
-      (differenceShortRoot_first_indices_ne hij)
+        (differenceShortRoot_second_indices_ne hij)) :=
+    TauCeti.commute_transvectionUnit_transvectionWeylElement
       (differenceShortRoot_second_indices_ne hij)
-      (finSumFinEquiv_inl_ne_inr j j) (finSumFinEquiv_inr_ne_inl i i) (1 : R) 1
-    have hmiddle := TauCeti.commute_transvectionUnit
       (differenceShortRoot_first_indices_ne hij)
-      (differenceShortRoot_second_indices_ne hij).symm
-      (finSumFinEquiv_inl_ne_inr j i) (finSumFinEquiv_inr_ne_inl j i) (1 : R) (-1)
-    exact (hfirst.mul_right hmiddle).mul_right hfirst
+      (finSumFinEquiv_inr_ne_inl i i) (finSumFinEquiv_inl_ne_inr j j)
+      (finSumFinEquiv_inr_ne_inl j i) (finSumFinEquiv_inl_ne_inr j i) 1
   have hmiddle : Commute
       (TauCeti.transvectionUnit (differenceShortRoot_first_indices_ne hij).symm (-1 : R))
       (TauCeti.transvectionWeylElement (A := R)
-        (differenceShortRoot_second_indices_ne hij)) := by
-    rw [TauCeti.transvectionWeylElement_def]
-    have hfirst := TauCeti.commute_transvectionUnit
-      (differenceShortRoot_first_indices_ne hij).symm
+        (differenceShortRoot_second_indices_ne hij)) :=
+    TauCeti.commute_transvectionUnit_transvectionWeylElement
       (differenceShortRoot_second_indices_ne hij)
-      (finSumFinEquiv_inl_ne_inr i j) (finSumFinEquiv_inr_ne_inl i j) (-1 : R) 1
-    have hmiddle := TauCeti.commute_transvectionUnit
       (differenceShortRoot_first_indices_ne hij).symm
-      (differenceShortRoot_second_indices_ne hij).symm
-      (finSumFinEquiv_inl_ne_inr i i) (finSumFinEquiv_inr_ne_inl j j) (-1 : R) (-1)
-    exact (hfirst.mul_right hmiddle).mul_right hfirst
+      (finSumFinEquiv_inr_ne_inl i j) (finSumFinEquiv_inl_ne_inr i j)
+      (finSumFinEquiv_inr_ne_inl j j) (finSumFinEquiv_inl_ne_inr i i) (-1)
   have hcomm : Commute
       (TauCeti.transvectionWeylElement (A := R)
         (differenceShortRoot_first_indices_ne hij))
@@ -177,35 +171,18 @@ theorem differenceShortRootWeylElement_mul_differenceShortRootUnit_mul_inv
     by simpa only [right, y, v, TauCeti.transvectionWeylElement_inv, neg_neg] using
       TauCeti.transvectionWeylElement_mul_transvectionUnit_mul_inv_symm
         (differenceShortRoot_second_indices_ne hij).symm (-c)
-  have hright_x : Commute right x := by
-    have houter := TauCeti.commute_transvectionUnit
+  have hright_x : Commute right x :=
+    (TauCeti.commute_transvectionUnit_transvectionWeylElement
       (differenceShortRoot_second_indices_ne hij).symm
       (differenceShortRoot_first_indices_ne hij)
-      (finSumFinEquiv_inr_ne_inl j i) (finSumFinEquiv_inl_ne_inr j i) (1 : R) c
-    have hmiddle := TauCeti.commute_transvectionUnit
-      (differenceShortRoot_second_indices_ne hij)
-      (differenceShortRoot_first_indices_ne hij)
-      (finSumFinEquiv_inr_ne_inl i i) (finSumFinEquiv_inl_ne_inr j j) (-1 : R) c
-    -- `set` makes `right` an opaque local wrapper, while the public `_def` theorem is needed to
-    -- expose the cross-module Weyl word before combining the three commutation witnesses.
-    rw [show right = TauCeti.transvectionWeylElement
-      (differenceShortRoot_second_indices_ne hij).symm from rfl,
-      TauCeti.transvectionWeylElement_def]
-    exact (houter.mul_left hmiddle).mul_left houter
-  have hleft_v : Commute left v := by
-    have houter := TauCeti.commute_transvectionUnit
+      (finSumFinEquiv_inr_ne_inl j i) (finSumFinEquiv_inl_ne_inr j i)
+      (finSumFinEquiv_inr_ne_inl i i) (finSumFinEquiv_inl_ne_inr j j) c).symm
+  have hleft_v : Commute left v :=
+    (TauCeti.commute_transvectionUnit_transvectionWeylElement
       (differenceShortRoot_first_indices_ne hij)
       (differenceShortRoot_second_indices_ne hij).symm
-      (finSumFinEquiv_inl_ne_inr j i) (finSumFinEquiv_inr_ne_inl j i) (1 : R) c
-    have hmiddle := TauCeti.commute_transvectionUnit
-      (differenceShortRoot_first_indices_ne hij).symm
-      (differenceShortRoot_second_indices_ne hij).symm
-      (finSumFinEquiv_inl_ne_inr i i) (finSumFinEquiv_inr_ne_inl j j) (-1 : R) c
-    -- As above, identify the opaque local wrapper explicitly before exposing the Weyl word.
-    rw [show left = TauCeti.transvectionWeylElement
-      (differenceShortRoot_first_indices_ne hij) from rfl,
-      TauCeti.transvectionWeylElement_def]
-    exact (houter.mul_left hmiddle).mul_left houter
+      (finSumFinEquiv_inl_ne_inr j i) (finSumFinEquiv_inr_ne_inl j i)
+      (finSumFinEquiv_inl_ne_inr i i) (finSumFinEquiv_inr_ne_inl j j) c).symm
   calc
     (left * right) * (x * y) * (left * right)⁻¹ =
         left * (right * x * right⁻¹) * (right * y * right⁻¹) * left⁻¹ := by group

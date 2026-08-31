@@ -81,6 +81,9 @@ elementary matrices against the diagonal torus.
   `TauCeti.transvectionWeylElement_mul_transvectionUnit_mul_inv_right`: conjugation by `nᵢⱼ`
   moves an occurrence of `j` to `i` with unchanged parameter. Applying these at the opposite root
   describes the reverse index movement by conjugation with `nᵢⱼ⁻¹`.
+* `TauCeti.commute_transvectionUnit_transvectionWeylElement` and
+  `TauCeti.transvectionWeylElement_mul_transvectionUnit_mul_inv_of_ne`: a transvection whose two
+  indices avoid `i` and `j` commutes with `nᵢⱼ`, so conjugation by `nᵢⱼ` fixes it.
 
 ## References
 
@@ -273,6 +276,18 @@ theorem transvectionWeylElement_inv_def (hij : i ≠ j) :
     (transvectionWeylElement (A := A) hij)⁻¹ =
       transvectionUnit hij (-1) * transvectionUnit hij.symm 1 * transvectionUnit hij (-1) := by
   simp [transvectionWeylElement_def, _root_.mul_inv_rev, mul_assoc]
+
+/-- A transvection whose two indices both avoid `i` and `j` commutes with the Weyl representative
+exchanging `i` and `j`: it commutes with each of the three transvections of the defining word. -/
+theorem commute_transvectionUnit_transvectionWeylElement (hij : i ≠ j) (hkl : k ≠ l)
+    (hjk : j ≠ k) (hli : l ≠ i) (hik : i ≠ k) (hlj : l ≠ j) (c : A) :
+    Commute (transvectionUnit hkl c) (transvectionWeylElement (A := A) hij) := by
+  rw [transvectionWeylElement_def]
+  have hpos : Commute (transvectionUnit hkl c) (transvectionUnit hij (1 : A)) :=
+    commute_transvectionUnit hkl hij hli hjk c 1
+  have hneg : Commute (transvectionUnit hkl c) (transvectionUnit hij.symm (-1 : A)) :=
+    commute_transvectionUnit hkl hij.symm hlj hik c (-1)
+  exact (hpos.mul_right hneg).mul_right hpos
 
 private theorem coe_transvectionWeylElement_apply (hij : i ≠ j) (a b : n) :
     ((transvectionWeylElement (A := A) hij : GL n A) : Matrix n n A) a b =
@@ -501,6 +516,18 @@ theorem transvectionWeylElement_mul_transvectionUnit_mul_inv_right
     _ = (x * t * x⁻¹) * (x * z * x⁻¹) := by group
     _ = (z⁻¹ * t) * z := by rw [← MulAut.conj_apply x t, hxt, hxz.mul_inv_cancel]
     _ = t := htz.symm.inv_mul_cancel
+
+/-- Conjugation by the Weyl representative exchanging `i` and `j` fixes a transvection whose two
+indices both avoid `i` and `j`: the reflection in `εᵢ - εⱼ` fixes the root `εₖ - εₗ`. -/
+@[simp]
+theorem transvectionWeylElement_mul_transvectionUnit_mul_inv_of_ne
+    (hij : i ≠ j) (hkl : k ≠ l) (hjk : j ≠ k) (hli : l ≠ i) (hik : i ≠ k) (hlj : l ≠ j) (c : A) :
+    transvectionWeylElement hij * transvectionUnit hkl c *
+        transvectionWeylElement hij.symm =
+      transvectionUnit hkl c := by
+  have hcomm := commute_transvectionUnit_transvectionWeylElement hij hkl hjk hli hik hlj c
+  rw [← transvectionWeylElement_inv hij]
+  exact hcomm.symm.mul_inv_cancel
 
 /-- If a subgroup of `GL (Fin (m + 1), A)` contains every adjacent transvection in both
 orientations, then it contains every elementary transvection. -/
