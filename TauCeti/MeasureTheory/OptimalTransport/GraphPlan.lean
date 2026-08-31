@@ -118,22 +118,6 @@ so this is the lemma downstream modules should rewrite with. -/
 theorem graphPlan_def (T : X → Y) (μ : Measure X) :
     graphPlan T μ = μ.map fun x ↦ (x, T x) := (rfl)
 
-/-- A graph plan inherits `MeasureTheory.SFinite` from its source measure. -/
-instance instSFiniteGraphPlan [SFinite μ] : SFinite (graphPlan T μ) := by
-  rw [graphPlan_def]
-  infer_instance
-
-/-- A graph plan inherits `MeasureTheory.IsFiniteMeasure` from its source measure. -/
-instance instIsFiniteMeasureGraphPlan [IsFiniteMeasure μ] : IsFiniteMeasure (graphPlan T μ) := by
-  rw [graphPlan_def]
-  infer_instance
-
-/-- A graph plan over a probability measure is a probability measure. -/
-instance instIsProbabilityMeasureGraphPlan [IsProbabilityMeasure μ] :
-    IsProbabilityMeasure (graphPlan T μ) := by
-  rw [graphPlan_def]
-  infer_instance
-
 /-- The graph map `x ↦ (x, T x)` is a.e. measurable as soon as `T` is. -/
 theorem aemeasurable_prodMk_self (hT : AEMeasurable T μ) :
     AEMeasurable (fun x ↦ (x, T x)) μ :=

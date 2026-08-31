@@ -76,6 +76,7 @@ conditional statement: see `MixedIIDWith` for the marginal-only version and
 Coordinatewise a.e. measurability is part of the definition because `Measure.map` sends a
 function that is not a.e. measurable to a junk Dirac mass, so the joint-law identity alone
 cannot see measurability; compare `ProbabilityTheory.HasLaw` in Mathlib. -/
+@[grind unfold]
 def ConditionallyIIDWith (μ : Measure Ω) (X : ι → Ω → α) (ν : Ω → ProbabilityMeasure α) : Prop :=
   (∀ i, AEMeasurable (X i) μ) ∧ Measurable ν ∧
     ∀ (m : ℕ) (k : Fin m → ι), Function.Injective k →
@@ -130,13 +131,11 @@ theorem ConditionallyIIDWith.aemeasurable {μ : Measure Ω} {X : ι → Ω → �
   h.1 i
 
 /-- The directing measure of a `ConditionallyIIDWith` witness is measurable. -/
-@[grind →]
 theorem ConditionallyIIDWith.measurable_directing {μ : Measure Ω} {X : ι → Ω → α}
     {ν : Ω → ProbabilityMeasure α} (h : ConditionallyIIDWith μ X ν) : Measurable ν :=
   h.2.1
 
 /-- The defining joint-law disintegration of a `ConditionallyIIDWith` witness. -/
-@[grind =>]
 theorem ConditionallyIIDWith.jointLaw_eq_disintegration {μ : Measure Ω} {X : ι → Ω → α}
     {ν : Ω → ProbabilityMeasure α} (h : ConditionallyIIDWith μ X ν)
     {m : ℕ} (k : Fin m → ι) (hk : Function.Injective k) :

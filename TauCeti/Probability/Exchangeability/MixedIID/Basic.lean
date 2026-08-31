@@ -99,6 +99,7 @@ laws need, in contrast with the order condition `StrictMono` of `Contractable`.
 Coordinatewise a.e. measurability is part of the definition because `Measure.map` sends a
 function that is not a.e. measurable to a junk Dirac mass, so the mixture identity alone
 cannot see measurability; compare `ProbabilityTheory.HasLaw` in Mathlib. -/
+@[grind unfold]
 def MixedIIDWith (μ : Measure Ω) (X : ι → Ω → α) (ν : Ω → ProbabilityMeasure α) :
     Prop :=
   (∀ i, AEMeasurable (X i) μ) ∧ Measurable ν ∧
@@ -139,7 +140,6 @@ theorem mixedIID_iff {μ : Measure Ω} {X : ι → Ω → α} :
   Iff.rfl
 
 /-- The mixing representative of a `MixedIIDWith` witness is measurable. -/
-@[grind →]
 theorem MixedIIDWith.measurable_mixingRepresentative {μ : Measure Ω} {X : ι → Ω → α}
     {ν : Ω → ProbabilityMeasure α} (h : MixedIIDWith μ X ν) : Measurable ν :=
   h.2.1
@@ -147,7 +147,6 @@ theorem MixedIIDWith.measurable_mixingRepresentative {μ : Measure Ω} {X : ι �
 /-- The defining finite-block mixture identity of a `MixedIIDWith` witness: along an injective
 selection the block law is the `ν`-mixture of the product measure. The prefix specialization is
 `MixedIIDWith.prefixLaw_eq_mixture`. -/
-@[grind =>]
 theorem MixedIIDWith.blockLaw_eq_mixture {μ : Measure Ω} {X : ι → Ω → α}
     {ν : Ω → ProbabilityMeasure α} (h : MixedIIDWith μ X ν)
     {m : ℕ} (k : Fin m → ι) (hk : Function.Injective k) :
