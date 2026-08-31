@@ -100,7 +100,8 @@ theorem finiteTypeSpecializationSpecialLinearIso_hom_hom :
       (eqToIso (finiteTypeSpecialization_obj r k) ≪≫
         baseChangeCoordinateSpecialLinearIso r k ≪≫
         eqToIso (SpecialLinear.finiteTypeCoordinateHopfAlgebra_obj k (r + 1)).symm).hom := by
-  rfl
+  simp only [finiteTypeSpecializationSpecialLinearIso, ObjectProperty.isoMk_hom,
+    ObjectProperty.homMk_hom]
 
 /-- **The full-weight type `A_r` carrier is reductive over every algebraically closed field.**
 
