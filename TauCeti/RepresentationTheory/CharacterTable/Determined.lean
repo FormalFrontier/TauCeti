@@ -28,7 +28,7 @@ dimension of every intertwiner space. The reconstruction theorem in
 
 ## References
 
-* J.-P. Serre, *Linear Representations of Finite Groups*, Part I, §2.5.
+* J.-P. Serre, *Linear Representations of Finite Groups*, Part I, §§2.3 and 2.5.
 * C. W. Curtis and I. Reiner, *Representation Theory of Finite Groups and Associative Algebras*,
   §§25 and 30.
 
@@ -83,12 +83,13 @@ theorem _root_.Representation.nonempty_equiv_of_character_eq (ρ : Representatio
       Module.finrank k (S →ₗ[k[G]] ρ.asModule) =
         Module.finrank k (S →ₗ[k[G]] σ.asModule) := by
     let Z := _root_.Representation.ofModule' (k := k) (G := G) S
+    have hofCharacter : ClassFunction.ofCharacter ρ = ClassFunction.ofCharacter σ :=
+      Subtype.ext <| funext fun g ↦ by simp only [ClassFunction.ofCharacter_apply, hchar]
     have heq : ClassFunction.characterPairing (ClassFunction.ofCharacter ρ)
           (ClassFunction.ofCharacter Z) =
         ClassFunction.characterPairing (ClassFunction.ofCharacter σ)
           (ClassFunction.ofCharacter Z) := by
-      rw [show ClassFunction.ofCharacter ρ = ClassFunction.ofCharacter σ from
-        Subtype.ext <| funext fun g ↦ by simp only [ClassFunction.ofCharacter_apply, hchar]]
+      rw [hofCharacter]
     have hinter : Module.finrank k (_root_.Representation.IntertwiningMap Z ρ) =
         Module.finrank k (_root_.Representation.IntertwiningMap Z σ) := by
       apply Nat.cast_injective (R := k)
