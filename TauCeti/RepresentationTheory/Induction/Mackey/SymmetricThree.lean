@@ -104,7 +104,7 @@ the roadmap's two-dimensional irreducible of `S₃`. -/
 theorem finrank_indFDRep_ofLinearCharacter_alternatingGroup_fin_three
     (χ : alternatingGroup (Fin 3) →* kˣ) :
     Module.finrank k (indFDRep (FDRep.ofLinearCharacter (k := k) χ)) = 2 := by
-  rw [finrank_indFDRep, FDRep.finrank_ofLinearCharacter, mul_one, alternatingGroup.index_eq_two]
+  rw [finrank_indFDRep_ofLinearCharacter, alternatingGroup.index_eq_two]
 
 section Faithful
 

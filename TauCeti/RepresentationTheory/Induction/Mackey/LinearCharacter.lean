@@ -35,6 +35,8 @@ normal subgroup `A₃` does induce irreducibly.
 
 ## Main statements
 
+* `TauCeti.finrank_indFDRep_ofLinearCharacter`: what a linear character induces to has the
+  dimension of the index of the subgroup.
 * `TauCeti.conjNormalFDRep_ofLinearCharacter`: conjugating a one-dimensional representation
   conjugates its linear character, as an equality of objects.
 * `TauCeti.simple_indFDRep_ofLinearCharacter_iff`: **the Mackey criterion for an induced linear
@@ -59,7 +61,20 @@ open CategoryTheory
 
 namespace TauCeti
 
-universe u
+universe u v
+
+section Dimension
+
+variable {k : Type u} {G : Type v} [Field k] [Group G] {N : Subgroup G} [N.FiniteIndex]
+
+/-- **What a linear character induces to has the dimension of the index of the subgroup.**
+Induction multiplies the dimension by the index, and the representation carrying a linear
+character is a line. -/
+theorem finrank_indFDRep_ofLinearCharacter (χ : N →* kˣ) :
+    Module.finrank k (indFDRep (FDRep.ofLinearCharacter χ)) = N.index := by
+  rw [finrank_indFDRep, FDRep.finrank_ofLinearCharacter, mul_one]
+
+end Dimension
 
 section Conjugation
 
