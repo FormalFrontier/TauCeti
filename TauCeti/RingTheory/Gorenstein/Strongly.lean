@@ -34,11 +34,17 @@ variable (R : Type u) [Ring R]
 /-- Bennis–Mahdou 2007, Def. 1.1(1): strongly complete projective resolution
 `P = ⋯ → P -f→ P -f→ P → ⋯`, `P` projective, `M ≃ Im(f)`. -/
 structure StronglyCompleteProjectiveResolution (R : Type u) [Ring R] where
+  /-- The underlying projective module `P` in `⋯ → P → P → ⋯`. -/
   P : Type u
+  /-- `P` is an additive group. -/
   [addGroup : AddCommGroup P]
+  /-- `P` is an `R`-module. -/
   [moduleInst : Module R P]
+  /-- `P` is projective. -/
   [projective : Module.Projective R P]
+  /-- The differential `f : P →ₗ[R] P` with `f ∘ f = 0`. -/
   f : P →ₗ[R] P
+  /-- `f` squares to zero, so `⋯ → P -f→ P -f→ P → ⋯` is a complex. -/
   hf : f.comp f = 0
 
 /-- Def. 1.1(1): `M` is strongly Gorenstein projective. For the `Ext` side see
