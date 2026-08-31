@@ -10,6 +10,7 @@ public import TauCeti.NumberTheory.LegendreSymbol.Frobenius
 public import TauCeti.NumberTheory.NumberField.IntegralSqrt
 import TauCeti.NumberTheory.NumberField.AutomorphismAction
 import Mathlib.Algebra.CharP.Basic
+import Mathlib.RingTheory.Frobenius
 
 /-!
 # Frobenius elements of a Galois number field and their action on square roots
@@ -18,26 +19,32 @@ For a Galois number field `K/ℚ` and a prime `Q` of `𝓞 K` over the rational 
 arithmetic Frobenius at `Q` is a `σ ∈ Gal(K/ℚ)` with `σ x ≡ x ^ #(ℤ ⧸ Q ∩ ℤ) (mod Q)` for all
 `x : 𝓞 K` — the exponent is the cardinality of the *base* residue ring `ℤ ⧸ Q ∩ ℤ`, which is
 `p` for `Q` over `(p)`, distinguishing the arithmetic Frobenius from the absolute one (whose
-exponent would be the residue-field norm `p^f`). This file provides the two number-field
-services on top of Mathlib's `RingTheory/Frobenius.lean`:
+exponent would be the residue-field norm `p^f`). This file provides three number-field services
+on top of Mathlib's `RingTheory/Frobenius.lean`:
 
 * **existence** — a Frobenius exists at every nonzero prime of `𝓞 K`
   (`IsArithFrobAt.exists_of_isInvariant` with the number-field instances discharged: the
   residue field of a nonzero prime is finite, and the Galois action on `𝓞 K` has invariants
-  `ℤ`); and
+  `ℤ`);
+* **uniqueness** — at an unramified prime, two Frobenius elements in the Galois group agree;
+  this is the faithful-action upgrade of Mathlib's algebra-homomorphism theorem; and
 * **the square-root action** — for `p` odd and `x ∈ K` with `x² = d ∈ ℤ`, `p ∤ d`, a
   Frobenius at any ideal `Q` over `p` satisfies `σ x = legendreSym p d • x`, transporting the
   `𝓞 K`-level computation `TauCeti.AlgHom.IsArithFrobAt.apply_sqrt` along the Galois action
   on the ring of integers (via `NumberField.algebraMap_smul_eq_apply`), with the `σ x = x`
   characterization read off from it.
 
-`TauCeti.NumberTheory.Multiquadratic.Frobenius` combines the two to describe the Frobenius of
-a multiquadratic field on all its generators at once (Layer 1 of the multiquadratic roadmap).
+`TauCeti.NumberTheory.Multiquadratic.Frobenius` combines the existence and square-root services
+to describe the Frobenius of a multiquadratic field on all its generators at once (Layer 1 of the
+multiquadratic roadmap).
 
 ## Main results
 
 * `NumberField.exists_isArithFrobAt`: a Frobenius exists at every nonzero prime of
   `𝓞 K`.
+* `NumberField.isArithFrobAt_eq_of_isUnramifiedAt`: Frobenius elements at an unramified prime
+  are equal in the Galois group.
+* `NumberField.subsingleton_isArithFrobAt`: the corresponding subtype is a subsingleton.
 * `NumberField.isArithFrobAt_apply_sqrt`: a Frobenius at `Q ∣ p` sends a square root
   of `d` to `legendreSym p d` times it.
 * `NumberField.isArithFrobAt_apply_sqrt_eq_self_iff`: it fixes `√d` iff `d` is a
@@ -71,6 +78,35 @@ theorem exists_isArithFrobAt_of_liesOver [IsGalois ℚ K] {p : ℕ} [Fact p.Prim
   have hp : (span {(p : ℤ)} : Ideal ℤ) ≠ ⊥ := by
     rw [Ne, Ideal.span_singleton_eq_bot]; exact_mod_cast (Fact.out : p.Prime).ne_zero
   exact exists_isArithFrobAt Q (Ideal.ne_bot_of_liesOver_of_ne_bot hp Q)
+
+/-- **Uniqueness of Frobenius at an unramified prime.** In a finite Galois extension of number
+fields, two arithmetic Frobenius elements at the same prime agree when the prime is unramified.
+The proof transports Mathlib's uniqueness theorem for the induced algebra homomorphisms through
+the faithful action of the Galois group on the ring of integers. -/
+theorem isArithFrobAt_eq_of_isUnramifiedAt {K L : Type*} [Field K] [Field L] [NumberField K]
+    [NumberField L] [Algebra K L] [IsGalois K L] {σ τ : L ≃ₐ[K] L} {Q : Ideal (𝓞 L)}
+    [Q.IsPrime] [Algebra.IsUnramifiedAt (𝓞 K) Q]
+    (hσ : IsArithFrobAt (𝓞 K) σ Q) (hτ : IsArithFrobAt (𝓞 K) τ Q) : σ = τ := by
+  -- `IsArithFrobAt` is an abbreviation for the induced algebra homomorphism predicate;
+  -- expose it so that Mathlib's uniqueness theorem can be applied.
+  change (MulSemiringAction.toAlgHom (𝓞 K) (𝓞 L) σ).IsArithFrobAt Q at hσ
+  change (MulSemiringAction.toAlgHom (𝓞 K) (𝓞 L) τ).IsArithFrobAt Q at hτ
+  have hστ := AlgHom.IsArithFrobAt.eq_of_isUnramifiedAt hσ hτ
+    (Ideal.primeCompl_le_nonZeroDivisors Q)
+  apply (galRestrict (𝓞 K) K L (𝓞 L)).injective
+  ext x
+  have hστ' := congrArg (fun f : (𝓞 L) →ₐ[𝓞 K] (𝓞 L) => f x) hστ
+  have hστ'' := congrArg (algebraMap (𝓞 L) L) hστ'
+  rw [MulSemiringAction.toAlgHom_apply, MulSemiringAction.toAlgHom_apply,
+    NumberField.algebraMap_smul_eq_apply, NumberField.algebraMap_smul_eq_apply] at hστ''
+  simpa [galRestrict_apply, algebraMap_galRestrict_apply] using hστ''
+
+/-- The arithmetic Frobenius at an unramified prime is unique as an element of the Galois group. -/
+instance subsingleton_isArithFrobAt {K L : Type*} [Field K] [Field L] [NumberField K]
+    [NumberField L] [Algebra K L] [IsGalois K L] {Q : Ideal (𝓞 L)} [Q.IsPrime]
+    [Algebra.IsUnramifiedAt (𝓞 K) Q] :
+    Subsingleton {σ : L ≃ₐ[K] L // IsArithFrobAt (𝓞 K) σ Q} where
+  allEq σ τ := Subtype.ext (isArithFrobAt_eq_of_isUnramifiedAt σ.property τ.property)
 
 /-- **A Frobenius acts on square roots by the Legendre symbol.** Let `K` be a number field,
 `p` an odd prime, and `σ ∈ Gal(K/ℚ)` an arithmetic Frobenius at an ideal `Q` of `𝓞 K` above

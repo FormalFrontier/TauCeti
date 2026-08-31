@@ -74,20 +74,9 @@ theorem artinSymbol_eq_mk_of_isArithFrobAt {L : Type*} [Field L] [NumberField L]
     ((Ideal.LiesOver.over (p := 𝔭) (P := P.1)).symm.trans
       (Ideal.LiesOver.over (p := 𝔭) (P := Q)))
   have hQeq : arithFrobAt (𝓞 K) (L ≃ₐ[K] L) Q = σ := by
-    -- `IsArithFrobAt` is an abbreviation for the action's induced algebra homomorphism;
-    -- expose that homomorphism so Mathlib's uniqueness theorem can be applied.
-    change (MulSemiringAction.toAlgHom (𝓞 K) (𝓞 L) σ).IsArithFrobAt Q at hσ
     let _ : Algebra.IsUnramifiedAt (𝓞 K) Q := hur Q
-    have hQ' := AlgHom.IsArithFrobAt.eq_of_isUnramifiedAt
+    exact isArithFrobAt_eq_of_isUnramifiedAt
       (IsArithFrobAt.arithFrobAt (𝓞 K) (L ≃ₐ[K] L) Q) hσ
-      (by exact Ideal.primeCompl_le_nonZeroDivisors Q)
-    apply (galRestrict (𝓞 K) K L (𝓞 L)).injective
-    ext x
-    have hQ'' := congrArg (algebraMap (𝓞 L) L)
-      (congrArg (fun f : (𝓞 L) →ₐ[𝓞 K] (𝓞 L) => f x) hQ')
-    rw [MulSemiringAction.toAlgHom_apply, MulSemiringAction.toAlgHom_apply,
-      NumberField.algebraMap_smul_eq_apply, NumberField.algebraMap_smul_eq_apply] at hQ''
-    simpa [galRestrict_apply, algebraMap_galRestrict_apply] using hQ''
   simpa [hQeq] using hconj
 
 end NumberField
