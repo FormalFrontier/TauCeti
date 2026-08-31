@@ -18,6 +18,8 @@ Hodge decompositions to package the total grading as a pure Hodge structure.
 ## Main declarations
 
 * `TauCeti.Hodge.HodgeStructureOn.tensorProduct`: the tensor product pure Hodge structure.
+* `TauCeti.Hodge.HodgeStructureOn.tensorProduct_piece_eq_iSup`: the tensor-product Hodge piece as
+  the supremum of products of Hodge pieces of complementary total degree.
 * `TauCeti.Hodge.HodgeStructureOn.tensorProduct_F_eq_iSup_piece`: the tensor-product filtration
   as the supremum of products of Hodge pieces.
 * `TauCeti.Hodge.HodgeStructureOn.tmul_mem_tensorProduct`: pure tensors have the expected total
@@ -138,6 +140,17 @@ theorem tensorProduct_F_eq_iSup_piece (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
           (hs₁.piece r) (hs₂.piece (q - r)) := by
   rw [tensorProduct, ofDecomposition_F]
   simp only [InternalGrading.tensorProduct_piece_eq_iSup, pieceGrading]
+
+/-- The tensor-product Hodge piece is the supremum of products of pieces of complementary total
+degree. -/
+@[simp]
+theorem tensorProduct_piece_eq_iSup (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
+    (hs₂ : HodgeStructureOn W₂ ω₂ n₂) (p : ℤ) :
+    (hs₁.tensorProduct hs₂).piece p =
+      ⨆ r : ℤ, Submodule.map₂ (TensorProduct.mk ℂ W₁ W₂)
+        (hs₁.piece r) (hs₂.piece (p - r)) := by
+  rw [tensorProduct, ofDecomposition_piece]
+  exact InternalGrading.tensorProduct_piece_eq_iSup (pieceGrading hs₁) (pieceGrading hs₂) p
 
 /-- A pure tensor of vectors in Hodge degrees `p` and `q` has degree `p + q`. -/
 theorem tmul_mem_tensorProduct (hs₁ : HodgeStructureOn W₁ ω₁ n₁)

@@ -96,12 +96,14 @@ private def tensorMap (ω₁ : Conjugation W₁) (ω₂ : Conjugation W₂) :
 private theorem tensorMap_involutive (ω₁ : Conjugation W₁) (ω₂ : Conjugation W₂) :
     Function.Involutive (tensorMap ω₁ ω₂) := by
   intro x
-  induction x using TensorProduct.induction_on with
-  | zero => simp [tensorMap]
-  | tmul x y =>
-      simp only [tensorMap, TensorProduct.map_tmul]
-      exact congrArg₂ (fun a b ↦ a ⊗ₜ[ℂ] b) (ω₁.apply_apply x) (ω₂.apply_apply y)
-  | add x y hx hy => simp [hx, hy]
+  simp only [tensorMap, TensorProduct.map_map]
+  rw [show ω₁.toEquiv.toLinearMap ∘ₛₗ ω₁.toEquiv.toLinearMap = LinearMap.id by
+    ext y
+    simp [Conjugation.apply_apply]]
+  rw [show ω₂.toEquiv.toLinearMap ∘ₛₗ ω₂.toEquiv.toLinearMap = LinearMap.id by
+    ext y
+    simp [Conjugation.apply_apply], TensorProduct.map_id]
+  rfl
 
 /-- The tensor product of two conjugate-linear involutions. -/
 def tensorProduct (ω₁ : Conjugation W₁) (ω₂ : Conjugation W₂) :
@@ -115,6 +117,7 @@ def tensorProduct (ω₁ : Conjugation W₁) (ω₂ : Conjugation W₂) :
       map_smul' := by simp [tensorMap] }
   involutive := tensorMap_involutive ω₁ ω₂
 
+/-- Tensor-product conjugation acts componentwise on pure tensors. -/
 @[simp]
 theorem tensorProduct_toEquiv_tmul (ω₁ : Conjugation W₁) (ω₂ : Conjugation W₂)
     (x : W₁) (y : W₂) :
