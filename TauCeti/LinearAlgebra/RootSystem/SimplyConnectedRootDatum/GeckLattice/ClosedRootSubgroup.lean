@@ -143,6 +143,7 @@ private theorem two_le_nilpotencyClass_geckRootOperator
 
 /-- The distinguished root row and column of a represented numbered root subgroup recover its
 additive parameter. -/
+@[simp]
 theorem geckRootSubgroupMatrix_apply (i : Fin t.rank ⊕ Fin t.rank)
     (A : Type v) [CommRing A]
     (q : WithConv (SymmetricAlgebra ℤ ℤ →ₐ[ℤ] A)) :
