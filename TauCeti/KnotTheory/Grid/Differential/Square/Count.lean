@@ -115,18 +115,10 @@ variable (R : Type*) [CommSemiring R]
 
 /-- The weight of a two-step rectangle decomposition in the square of the unblocked differential:
 the product of the weights `V^{O(r)}` of its two rectangles. -/
-noncomputable def decompositionWeight {x z : GridState n}
+noncomputable abbrev decompositionWeight {x z : GridState n}
     (D : GridRectangleDecomposition x z) :
     MvPolynomial (Fin n) R :=
   G.OMonomial R D.first.toGridRectangle * G.OMonomial R D.second.toGridRectangle
-
-/-- The weight of a two-step decomposition is the product of its rectangle weights. -/
-@[simp]
-theorem decompositionWeight_def {x z : GridState n} (D : GridRectangleDecomposition x z) :
-    G.decompositionWeight R D =
-      G.OMonomial R D.first.toGridRectangle * G.OMonomial R D.second.toGridRectangle := by
-  unfold decompositionWeight
-  rfl
 
 /-- The two-step matrix entry of the square of the unblocked differential is the sum of the
 weights of the two-step decompositions it counts. -/
@@ -140,8 +132,7 @@ theorem sum_unblockedCoefficient_mul_unblockedCoefficient (x z : GridState n) :
     rw [G.unblockedCoefficient_def R x y, G.unblockedCoefficient_def R y z,
       Finset.sum_mul_sum]
   rw [Finset.sum_congr rfl fun y (_ : y ∈ Finset.univ) => hstep y]
-  rw [Finset.sum_congr rfl fun D (_ : D ∈ G.unblockedDecompositions x z) =>
-    G.decompositionWeight_def R D]
+  simp only [decompositionWeight]
   exact (GridRectangleDecomposition.sum_decompositionsOf G.unblockedRectangles x z
     (fun _ r₁ r₂ =>
       G.OMonomial R r₁.toGridRectangle * G.OMonomial R r₂.toGridRectangle)).symm

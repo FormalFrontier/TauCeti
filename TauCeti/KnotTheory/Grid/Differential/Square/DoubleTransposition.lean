@@ -130,8 +130,11 @@ toroidal domains are exchanged. -/
 theorem decompositionWeight_commute {x z : GridState n}
     (D : GridRectangleDecomposition x z) (h : D.HasDisjointSides) :
     G.decompositionWeight R (D.commute h) = G.decompositionWeight R D := by
-  rw [G.decompositionWeight_def R, G.decompositionWeight_def R,
-    D.commute_first_toGridRectangle h,
+  change
+    G.OMonomial R (D.commute h).first.toGridRectangle *
+        G.OMonomial R (D.commute h).second.toGridRectangle =
+      G.OMonomial R D.first.toGridRectangle * G.OMonomial R D.second.toGridRectangle
+  rw [D.commute_first_toGridRectangle h,
     D.commute_second_toGridRectangle h, mul_comm]
 
 /-- Reordering a two-step decomposition with disjoint side columns preserves whether the

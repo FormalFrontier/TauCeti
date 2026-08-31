@@ -123,9 +123,7 @@ theorem target_mem_twoStepColumnSwapNeighbors (D : GridRectangleDecomposition x 
       GridState.mem_columnSwapNeighbors.mpr
         ⟨D.second.left, D.second.right, D.second.left_ne_right, D.second.target_eq_swapColumns⟩⟩
 
-/-- Rectangle decompositions are equivalent to dependent triples consisting of an intermediate
-state and one rectangle on either side of it. -/
-def decompositionSigmaEquiv (x z : GridState n) :
+private def decompositionSigmaEquiv (x z : GridState n) :
     GridRectangleDecomposition x z ≃
       (Σ y : GridState n,
         Σ _first : GridRectangleBetween x y, GridRectangleBetween y z) where
