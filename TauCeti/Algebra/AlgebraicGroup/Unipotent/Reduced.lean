@@ -19,16 +19,15 @@ homomorphism `Spec K ⟶ Spec H`. When `K` is reduced and finite type, its geome
 elements. Applying this to the coefficients of the characteristic polynomial of every
 representation shows that geometric unipotence descends from `K` to `H`.
 
-The same universal characteristic-polynomial identity also shows that the chosen algebraic
-closure in the definition is immaterial: every point valued in any extension field of the ground
-field is unipotent.
+The same universal characteristic-polynomial identity also shows that every point valued in any
+commutative algebra over the ground field is unipotent.
 
 ## Main declarations
 
 * `TauCeti.geometricallyUnipotentPointsCommHopfAlgProperty.of_injective_of_reduced`: geometric
   unipotence descends along an injective coordinate morphism with reduced finite-type codomain.
 * `TauCeti.geometricallyUnipotentPointsCommHopfAlgProperty.isUnipotentPoint`: geometric
-  unipotence can be evaluated in any extension field.
+  unipotence can be evaluated in any commutative algebra.
 * `TauCeti.smoothUnipotentCommHopfAlgProperty.isUnipotentPoint`: the smooth finite-type
   specialization, where reducedness follows from smoothness.
 
@@ -101,24 +100,18 @@ private theorem coefficientMatrix_charpoly_eq
       rw [Polynomial.coeff_map, Polynomial.coeff_map]
       exact (q.commutes (P.coeff r)).symm
 
-/-- If a reduced finite-type Hopf algebra is geometrically unipotent, every point valued in any
-extension field of the ground field is unipotent.
-
-Thus the particular algebraic closure used in
-`geometricallyUnipotentPointsCommHopfAlgProperty` does not affect the property. -/
-theorem isUnipotentPoint
-    {A : _root_.CommHopfAlgCat.{v} k} [Algebra.FiniteType k A] [IsReduced A]
-    (hA : geometricallyUnipotentPointsCommHopfAlgProperty k A)
-    {L : Type w} [Field L] [Algebra k L]
-    (g : WithConv (A →ₐ[k] L)) : HopfAlgebra.IsUnipotentPoint g := by
-  rw [HopfAlgebra.isUnipotentPoint_def]
-  intro M
-  let b := Module.Free.chooseBasis k M
+private theorem isUnipotent_pointsAction_of_coefficientMatrix_charpoly_eq
+    {A : _root_.CommHopfAlgCat.{v} k} {L : Type w} [CommRing L] [Algebra k L]
+    (M : FGComoduleCat.{u, v, u} k A) (g : WithConv (A →ₐ[k] L))
+    {ι : Type*} [Fintype ι] [DecidableEq ι] (b : _root_.Module.Basis ι k M)
+    (hCcharpoly : (Comodule.coefficientMatrix (C := A) b).charpoly =
+      ((Polynomial.X - (1 : Polynomial k)) ^ Module.finrank k M).map
+        (algebraMap k A)) :
+    LinearMap.GeneralLinearGroup.IsUnipotent
+      (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g)) := by
   let C := Comodule.coefficientMatrix (C := A) b
   let d := Module.finrank k M
   let P : Polynomial k := (Polynomial.X - 1) ^ d
-  have hCcharpoly : C.charpoly = P.map (algebraMap k A) :=
-    coefficientMatrix_charpoly_eq hA M b
   have hgcharpoly : (Comodule.endOfPoint M g.ofConv).charpoly =
       P.map (algebraMap k L) := by
     rw [← LinearMap.charpoly_toMatrix (Comodule.endOfPoint M g.ofConv) (b.baseChange L),
@@ -139,6 +132,22 @@ theorem isUnipotentPoint
     Comodule.pointsAction_toLinearMap M g
   rw [hcoe]
   exact hgcharpoly.trans (by simp [P])
+
+/-- If a reduced finite-type Hopf algebra is geometrically unipotent, every point valued in any
+commutative algebra over the ground field is unipotent.
+
+Thus the particular algebraic closure used in
+`geometricallyUnipotentPointsCommHopfAlgProperty` does not affect the property. -/
+theorem isUnipotentPoint
+    {A : _root_.CommHopfAlgCat.{v} k} [Algebra.FiniteType k A] [IsReduced A]
+    (hA : geometricallyUnipotentPointsCommHopfAlgProperty k A)
+    {L : Type w} [CommRing L] [Algebra k L]
+    (g : WithConv (A →ₐ[k] L)) : HopfAlgebra.IsUnipotentPoint g := by
+  rw [HopfAlgebra.isUnipotentPoint_def]
+  intro M
+  let b := Module.Free.chooseBasis k M
+  exact isUnipotent_pointsAction_of_coefficientMatrix_charpoly_eq M g b
+    (coefficientMatrix_charpoly_eq hA M b)
 
 /-- Geometric unipotence descends along an injective morphism of coordinate Hopf algebras whose
 codomain is reduced and finite type.
@@ -181,30 +190,7 @@ theorem of_injective_of_reduced (f : H ⟶ K) (hf : Function.Injective f.hom)
     congr 1
     ext x
     exact (f.hom.toAlgHom.commutes x).symm
-  -- Evaluating the reflected identity proves the required statement at an arbitrary target point.
-  have hgcharpoly :
-      (Comodule.endOfPoint M g.ofConv).charpoly =
-        P.map (algebraMap k (AlgebraicClosure k)) := by
-    rw [← LinearMap.charpoly_toMatrix (Comodule.endOfPoint M g.ofConv)
-      (b.baseChange (AlgebraicClosure k)), Comodule.toMatrix_endOfPoint]
-    -- Expose the local name for the target coefficient matrix before applying `charpoly_map`.
-    change (C.map g.ofConv).charpoly = _
-    calc
-      (C.map g.ofConv).charpoly = C.charpoly.map g.ofConv.toRingHom :=
-        Matrix.charpoly_map C g.ofConv.toRingHom
-      _ = _ := by
-        rw [hCcharpoly, Polynomial.map_map]
-        congr 1
-        ext x
-        exact g.ofConv.commutes x
-  apply LinearMap.GeneralLinearGroup.isUnipotent_of_charpoly_eq (n := d)
-  have hcoe :
-      ((LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g)) :
-        Module.End _ _) =
-          Comodule.endOfPoint M g.ofConv :=
-    Comodule.pointsAction_toLinearMap M g
-  rw [hcoe]
-  exact hgcharpoly.trans (by simp [P])
+  exact isUnipotent_pointsAction_of_coefficientMatrix_charpoly_eq M g b hCcharpoly
 
 end geometricallyUnipotentPointsCommHopfAlgProperty
 
@@ -213,11 +199,11 @@ namespace smoothUnipotentCommHopfAlgProperty
 variable {k : Type u} [Field k]
 variable {A : FiniteTypeCommHopfAlgCat.{u, v} k}
 
-/-- Every point of a smooth geometrically unipotent affine group valued in an extension field of
-the ground field is unipotent. -/
+/-- Every point of a smooth geometrically unipotent affine group valued in a commutative algebra
+over the ground field is unipotent. -/
 theorem isUnipotentPoint
     (hA : smoothUnipotentCommHopfAlgProperty k A)
-    {L : Type w} [Field L] [Algebra k L]
+    {L : Type w} [CommRing L] [Algebra k L]
     (g : WithConv (A →ₐ[k] L)) : HopfAlgebra.IsUnipotentPoint g := by
   have hA' := (smoothUnipotentCommHopfAlgProperty_iff k A).mp hA
   let _ : Algebra.Smooth k A := hA'.1
