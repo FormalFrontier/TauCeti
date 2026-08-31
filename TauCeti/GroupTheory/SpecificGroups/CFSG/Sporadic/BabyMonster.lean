@@ -73,7 +73,7 @@ source-to-Lean read-through remains the whole of the S1 review obligation.
   `TauCeti.Sporadic.BabyMonster.matchesMetadata_presentation`: the transcription count checks.
 * `TauCeti.Sporadic.BabyMonster.presentation_totalLength`: the compiled relator words contain `478`
   letters, of which `262` come from the Coxeter relators, by
-  `TauCeti.Sporadic.BabyMonster.sum_map_length_toWord_coxeterRelators`, and the rest from the three
+  `TauCeti.Sporadic.BabyMonster.sum_map_length_coxeterRelators`, and the rest from the three
   adjoined relators. The source records no presentation length, so this is transcribed data stated
   for comparison with the source rather than a check against a published figure.
 * `TauCeti.Sporadic.BabyMonster.presentation_relatorsCyclicallyReduced`: every compiled word is
@@ -214,7 +214,6 @@ def spiderRelator : Relator (Fin 11) :=
   .pow (t5 ⬝ t4 ⬝ t3 ⬝ t5 ⬝ t6 ⬝ t7 ⬝ t5 ⬝ t9 ⬝ t10) 10
 
 /-- The spider relator spelled out in the numbered alphabet. -/
-@[simp]
 theorem spiderRelator_eq :
     spiderRelator =
       .pow (.gen 4 ⬝ .gen 3 ⬝ .gen 2 ⬝ .gen 4 ⬝ .gen 5 ⬝ .gen 6 ⬝ .gen 4 ⬝ .gen 8 ⬝ .gen 9) 10 := by
@@ -225,7 +224,6 @@ spider relation to pass from `2 × 2·B` to `B`. -/
 def extraRelatorOne : Relator (Fin 11) := .pow (t5 ⬝ t4 ⬝ t3 ⬝ t6 ⬝ t7 ⬝ t8 ⬝ t9) 9
 
 /-- The first adjoined relator spelled out in the numbered alphabet. -/
-@[simp]
 theorem extraRelatorOne_eq :
     extraRelatorOne =
       .pow (.gen 4 ⬝ .gen 3 ⬝ .gen 2 ⬝ .gen 5 ⬝ .gen 6 ⬝ .gen 7 ⬝ .gen 8) 9 := by
@@ -236,7 +234,6 @@ spider relation to pass from `2 × 2·B` to `B`. -/
 def extraRelatorTwo : Relator (Fin 11) := .pow (t5 ⬝ t4 ⬝ t3 ⬝ t6 ⬝ t9 ⬝ t10 ⬝ t11) 9
 
 /-- The second adjoined relator spelled out in the numbered alphabet. -/
-@[simp]
 theorem extraRelatorTwo_eq :
     extraRelatorTwo =
       .pow (.gen 4 ⬝ .gen 3 ⬝ .gen 2 ⬝ .gen 5 ⬝ .gen 8 ⬝ .gen 9 ⬝ .gen 10) 9 := by
@@ -327,17 +324,17 @@ theorem matchesMetadata_presentation : presentation.matchesMetadata :=
 
 /-- The spider relator compiles to `10 · 9 = 90` letters. -/
 @[simp]
-theorem length_toWord_spiderRelator : spiderRelator.toWord.length = 90 := by
+theorem length_spiderRelator : spiderRelator.length = 90 := by
   simp [spiderRelator_eq]
 
 /-- The first adjoined relator compiles to `9 · 7 = 63` letters. -/
 @[simp]
-theorem length_toWord_extraRelatorOne : extraRelatorOne.toWord.length = 63 := by
+theorem length_extraRelatorOne : extraRelatorOne.length = 63 := by
   simp [extraRelatorOne_eq]
 
 /-- The second adjoined relator compiles to `9 · 7 = 63` letters. -/
 @[simp]
-theorem length_toWord_extraRelatorTwo : extraRelatorTwo.toWord.length = 63 := by
+theorem length_extraRelatorTwo : extraRelatorTwo.length = 63 := by
   simp [extraRelatorTwo_eq]
 
 /-- **The Coxeter relators of the `Y₄₃₃` diagram contain `262` letters.** A relator `(tᵢ tⱼ) ^ m`
@@ -346,10 +343,10 @@ and the forty-five remaining pairs of distinct nodes `4` each: `22 + 60 + 180`. 
 off the Coxeter matrix rather than off the expanded relators is what ties it to the transcribed
 edge list. -/
 @[simp]
-theorem sum_map_length_toWord_coxeterRelators :
-    ((coxeterRelators coxeterMatrix).map fun r => r.toWord.length).sum = 262 := by
+theorem sum_map_length_coxeterRelators :
+    ((coxeterRelators coxeterMatrix).map fun r => r.length).sum = 262 := by
   rw [coxeterRelators_def, coxeterRelatorsOfList_def, List.map_map]
-  simp_rw [Function.comp_def, length_toWord_coxeterRelator]
+  simp_rw [Function.comp_def, ← Relator.length_toWord, length_toWord_coxeterRelator]
   simp only [coxeterMatrix_apply]
   rw [edges_eq]
   decide
@@ -366,8 +363,8 @@ theorem presentation_totalLength : presentation.totalLength = 478 := by
     rw [relatorList_def]
     simp only [List.map_append, List.sum_append, List.map_map, Function.comp_def,
       adjoinedRelators_def, List.map_cons, List.map_nil, List.sum_cons, List.sum_nil,
-      length_toWord_spiderRelator, length_toWord_extraRelatorOne, length_toWord_extraRelatorTwo,
-      sum_map_length_toWord_coxeterRelators]
+      Relator.length_toWord, length_spiderRelator, length_extraRelatorOne,
+      length_extraRelatorTwo, sum_map_length_coxeterRelators]
     decide
   rw [GroupPresentation.totalLength_def, GroupPresentation.relators_def, presentation_transcribed]
   exact key
