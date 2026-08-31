@@ -85,6 +85,7 @@ variable {K : Type u} [CommRing K] {M : Type v} [AddCommGroup M] [Module K M]
 
 /-- **The polar form of the hyperbolic quadratic form** `Q (f, m) = f m` pairs each coordinate
 summand with the other and neither with itself. -/
+@[simp]
 theorem polar_dualProd (p q : Module.Dual K M × M) :
     polar (QuadraticForm.dualProd K M) p q = p.1 q.2 + q.1 p.2 := by
   simp only [polar, QuadraticForm.dualProd_apply, Prod.fst_add, Prod.snd_add,
@@ -120,7 +121,6 @@ variable (K M)
 /-- **The direct-sum coordinates of the hyperbolic quadratic space**: its two coordinate summands
 `Submodule.snd` and `Submodule.fst`, which are complementary, together with a trivial orthogonal
 remainder. -/
-@[expose]
 noncomputable def hyperbolicDecomposition :
     ((Submodule.snd K (Module.Dual K M) M × Submodule.fst K (Module.Dual K M) M) ×
         (⊥ : Submodule K (Module.Dual K M × M))) ≃ₗ[K] Module.Dual K M × M :=
@@ -129,11 +129,14 @@ noncomputable def hyperbolicDecomposition :
 
 variable {K M}
 
+@[simp]
 theorem hyperbolicDecomposition_apply
     (x : (Submodule.snd K (Module.Dual K M) M × Submodule.fst K (Module.Dual K M) M) ×
       (⊥ : Submodule K (Module.Dual K M × M))) :
     hyperbolicDecomposition K M x =
-      (x.1.1 : Module.Dual K M × M) + (x.1.2 : Module.Dual K M × M) := rfl
+      (x.1.1 : Module.Dual K M × M) + (x.1.2 : Module.Dual K M × M) :=
+  -- `(rfl)`, not `rfl`: the body of `hyperbolicDecomposition` is not `@[expose]`d.
+  (rfl)
 
 /-- **The split polarization of a hyperbolic quadratic space.** For a module `M` over a commutative
 ring `K` whose functionals separate points, the hyperbolic form `Q (f, m) = f m` on
@@ -141,7 +144,6 @@ ring `K` whose functionals separate points, the hyperbolic form `Q (f, m) = f m`
 
 The exterior summand `W` is the copy of `M` and the contraction summand `W'` is the copy of its
 dual, so the spinor module attached to this datum is the full exterior algebra of `M`. -/
-@[expose]
 noncomputable def hyperbolic (hM : ∀ m : M, (∀ f : Module.Dual K M, f m = 0) → m = 0) :
     SpinPolarizationData (QuadraticForm.dualProd K M) where
   W := Submodule.snd K (Module.Dual K M) M
@@ -179,13 +181,15 @@ noncomputable def hyperbolic (hM : ∀ m : M, (∀ f : Module.Dual K M, f m = 0)
 variable (hM : ∀ m : M, (∀ f : Module.Dual K M, f m = 0) → m = 0)
 
 @[simp]
-theorem hyperbolic_W : (hyperbolic hM).W = Submodule.snd K (Module.Dual K M) M := rfl
+theorem hyperbolic_W : (hyperbolic hM).W = Submodule.snd K (Module.Dual K M) M :=
+  -- `(rfl)`, not `rfl`: the body of `hyperbolic` is not `@[expose]`d.
+  (rfl)
 
 @[simp]
-theorem hyperbolic_W' : (hyperbolic hM).W' = Submodule.fst K (Module.Dual K M) M := rfl
+theorem hyperbolic_W' : (hyperbolic hM).W' = Submodule.fst K (Module.Dual K M) M := (rfl)
 
 @[simp]
-theorem hyperbolic_line : (hyperbolic hM).line = ⊥ := rfl
+theorem hyperbolic_line : (hyperbolic hM).line = ⊥ := (rfl)
 
 /-- **The hyperbolic form is nondegenerate.** It has no orthogonal remainder, so this needs no
 regularity hypothesis on `2`, by
@@ -199,7 +203,6 @@ theorem nondegenerate_dualProd (hM : ∀ m : M, (∀ f : Module.Dual K M, f m = 
 /-- A basis of `M` is a basis of the exterior summand of the hyperbolic polarization, which by
 `TauCeti.SpinPolarizationData.hyperbolic_W` is the copy of `M` in `Module.Dual K M × M`. This is
 the basis the exterior model of the spin representation is coordinatized by. -/
-@[expose]
 noncomputable def hyperbolicBasis {ι : Type w} (b : Module.Basis ι K M) :
     Module.Basis ι K (Submodule.snd K (Module.Dual K M) M) :=
   b.map (Submodule.sndEquiv K (Module.Dual K M) M).symm

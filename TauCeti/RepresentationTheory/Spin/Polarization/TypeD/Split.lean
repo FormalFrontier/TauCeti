@@ -43,6 +43,8 @@ reductivity of anything: this file fixes the integral input data those construct
 
 ## Main results
 
+* `TauCeti.typeDSplitPolarization_W`, `typeDSplitPolarization_W'` and
+  `typeDSplitPolarization_line`: the summands of the split polarization.
 * `TauCeti.finrank_typeDSplitPolarization_W`: the exterior summand has dimension `n`, so the
   quadratic space has dimension `2 n` and the diagram is `Dₙ`.
 * `TauCeti.isCartanWeightVector_typeDSplit`: the coordinate basis of the split spinor module is a
@@ -82,33 +84,47 @@ namespace TauCeti
 exterior summand is the copy of `Fin n → ℚ` in the second coordinate, its contraction summand is
 the copy of the dual in the first, and there is no orthogonal remainder, so the attached spinor
 module is the exterior algebra on `n` generators. -/
-@[expose]
 noncomputable def typeDSplitPolarization (n : ℕ) :
     SpinPolarizationData (QuadraticForm.dualProd ℚ (Fin n → ℚ)) :=
   SpinPolarizationData.hyperbolic fun m h => (Module.forall_dual_apply_eq_zero_iff ℚ m).mp h
 
+/-- The exterior summand of the split model is the copy of `Fin n → ℚ`. -/
+@[simp]
+theorem typeDSplitPolarization_W (n : ℕ) : (typeDSplitPolarization n).W =
+    Submodule.snd ℚ (Module.Dual ℚ (Fin n → ℚ)) (Fin n → ℚ) :=
+  SpinPolarizationData.hyperbolic_W _
+
+/-- The contraction summand of the split model is the copy of the dual of `Fin n → ℚ`. -/
+@[simp]
+theorem typeDSplitPolarization_W' (n : ℕ) : (typeDSplitPolarization n).W' =
+    Submodule.fst ℚ (Module.Dual ℚ (Fin n → ℚ)) (Fin n → ℚ) :=
+  SpinPolarizationData.hyperbolic_W' _
+
 /-- The split model has no orthogonal remainder. -/
 @[simp]
-theorem typeDSplitPolarization_line (n : ℕ) : (typeDSplitPolarization n).line = ⊥ := rfl
+theorem typeDSplitPolarization_line (n : ℕ) : (typeDSplitPolarization n).line = ⊥ :=
+  SpinPolarizationData.hyperbolic_line _
 
 /-- **The standard basis of the exterior summand of the split model**, carried from the standard
 basis of `Fin n → ℚ`. This is the basis the exterior model of the type-`D` spin representation is
 coordinatized by, and the one the Bourbaki numbering of the simple roots is read against. -/
-@[expose]
 noncomputable def typeDSplitBasis (n : ℕ) :
     Module.Basis (Fin n) ℚ (typeDSplitPolarization n).W :=
-  SpinPolarizationData.hyperbolicBasis (Pi.basisFun ℚ (Fin n))
+  (SpinPolarizationData.hyperbolicBasis (Pi.basisFun ℚ (Fin n))).map
+    (LinearEquiv.ofEq _ _ (typeDSplitPolarization_W n).symm)
 
 @[simp]
 theorem coe_typeDSplitBasis_apply (n : ℕ) (i : Fin n) :
     (typeDSplitBasis n i : Module.Dual ℚ (Fin n → ℚ) × (Fin n → ℚ)) =
-      (0, Pi.basisFun ℚ (Fin n) i) :=
-  SpinPolarizationData.coe_hyperbolicBasis_apply _ i
+      (0, Pi.basisFun ℚ (Fin n) i) := by
+  rw [typeDSplitBasis, Module.Basis.map_apply, LinearEquiv.coe_ofEq_apply,
+    SpinPolarizationData.coe_hyperbolicBasis_apply]
 
 /-- **The exterior summand of the split model has dimension `n`.** With
 `TauCeti.SpinPolarizationData.finrank_eq_two_mul_finrank_W_add_finrank_line` and the vanishing
 remainder, this is what says the quadratic space has dimension `2 n`, so that the diagram of the
 construction below is `Dₙ` and not another rank. -/
+@[simp]
 theorem finrank_typeDSplitPolarization_W (n : ℕ) :
     Module.finrank ℚ (typeDSplitPolarization n).W = n := by
   rw [Module.finrank_eq_card_basis (typeDSplitBasis n), Fintype.card_fin]
