@@ -96,11 +96,7 @@ theorem nonempty_iso_of_isZero_away_of_linearEquiv (hi : IsSink i)
     (e : M.obj ((Paths.of Q).obj i) ≃ₗ[k] N.obj ((Paths.of Q).obj i)) :
     Nonempty (M ≅ N) := by
   classical
-  have eIso : M.obj ((Paths.of Q).obj i) ≅ N.obj ((Paths.of Q).obj i) :=
-    { hom := ModuleCat.ofHom e.toLinearMap
-      inv := ModuleCat.ofHom e.symm.toLinearMap
-      hom_inv_id := by ext y; exact e.symm_apply_apply y
-      inv_hom_id := by ext y; exact e.apply_symm_apply y }
+  have eIso : M.obj ((Paths.of Q).obj i) ≅ N.obj ((Paths.of Q).obj i) := e.toModuleIso
   refine ⟨NatIso.ofComponents (fun a ↦ if h : a = (Paths.of Q).obj i then
       eqToIso (congrArg M.obj h) ≪≫ eIso ≪≫ eqToIso (congrArg N.obj h).symm
     else (hM a h).iso (hN a h)) fun {a b} p ↦ ?_⟩
