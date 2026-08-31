@@ -169,7 +169,7 @@ theorem geckRootSubgroupPoints_injective (i : Fin t.rank ⊕ Fin t.rank)
       (((g : Matrix.GeneralLinearGroup (Fin (t.geckDim ht)) A) :
         Matrix (Fin (t.geckDim ht)) (Fin (t.geckDim ht)) A)
           (t.geckRootRow ht (Sum.elim id id i)) (t.geckRootColumn ht i))) huu'
-  change Multiplicative.toAdd u = Multiplicative.toAdd u'
+  apply Multiplicative.toAdd.injective
   simpa only [t.coe_geckRootSubgroupPoints ht, t.geckRootSubgroupMatrix_apply ht,
     (AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).apply_symm_apply] using hentry
 
