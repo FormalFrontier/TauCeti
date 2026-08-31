@@ -109,6 +109,12 @@ theorem weightEquiv_weightBasis (i : Fin (d + 1)) :
   rw [weightEquiv, Module.Basis.equiv_apply, OrthonormalBasis.coe_toBasis,
     Equiv.refl_apply, EuclideanSpace.basisFun_apply]
 
+/-- The identification sends the `i`-th standard basis vector back to the `i`-th weight vector. -/
+@[simp]
+theorem weightEquiv_symm_single (i : Fin (d + 1)) :
+    (weightEquiv d).symm (EuclideanSpace.single i 1) = weightBasis d i :=
+  (LinearEquiv.symm_apply_eq _).2 (weightEquiv_weightBasis d i).symm
+
 @[simp]
 theorem symPowerModel_apply (g : SU2) (x : EuclideanSpace ℂ (Fin (d + 1))) :
     symPowerModel d g x = weightEquiv d (symPower d g ((weightEquiv d).symm x)) := (rfl)
@@ -164,6 +170,17 @@ theorem continuous_symPowerModel : Continuous (symPowerModel d) :=
 noncomputable def symPowerModelEquiv : (symPower d).Equiv (symPowerModel d).toRepresentation :=
   Representation.Equiv.mk (weightEquiv d) fun g ↦ LinearMap.ext fun v ↦ by
     simp [_root_.ContRepresentation.toMonoidHom_apply]
+
+/-- The equivalence to the model is the weight-basis identification. -/
+@[simp]
+theorem symPowerModelEquiv_toLinearEquiv :
+    (symPowerModelEquiv d).toLinearEquiv = weightEquiv d := by
+  rw [symPowerModelEquiv, Representation.Equiv.toLinearEquiv_mk']
+
+@[simp]
+theorem symPowerModelEquiv_apply (x : Sym[ℂ]^d(Fin 2 → ℂ)) :
+    symPowerModelEquiv d x = weightEquiv d x := by
+  rw [symPowerModelEquiv, Representation.Equiv.mk_apply]
 
 /-- The character of the model is the character of the symmetric power: the trace does not see the
 transport. -/
