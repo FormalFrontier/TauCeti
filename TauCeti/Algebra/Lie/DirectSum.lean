@@ -24,10 +24,20 @@ from a Lie module `S` into a finite external direct sum is the family of its com
 finite family of components reassembles to the element it came from. That is
 `TauCeti.LieModule.lieModuleHomDirectSumEquiv`.
 
+The file also refines the two ways an external direct sum is transported to Mathlib's Lie module
+structure: along a family of morphisms of the summands (`DirectSum.lieModuleMap`, refining
+`DirectSum.lmap`) and along an equivalence of the index type (`DirectSum.lieModuleEquivCongrLeft`,
+refining `DirectSum.lequivCongrLeft`). The bracket acts summand by summand, so in both cases the
+only thing to check is that Mathlib's underlying linear map is equivariant.
+
 ## Main definitions
 
 * `TauCeti.LieModule.lieModuleHomDirectSumEquiv`: **the morphism space is additive over a direct
   sum in its target**, `(S →ₗ⁅R,L⁆ ⨁ i, Pᵢ) ≃ₗ[R] Π i, (S →ₗ⁅R,L⁆ Pᵢ)`.
+* `DirectSum.lieModuleMap` and `DirectSum.lieModuleEquivCongr`: a family of morphisms,
+  respectively of equivalences, of the summands acts on the external direct sum.
+* `DirectSum.lieModuleEquivCongrLeft`: **reindexing an external direct sum of Lie modules** along
+  an equivalence of index types.
 
 ## Main results
 
@@ -40,12 +50,14 @@ This is infrastructure for the decomposition toolkit of Layer 6 of
 `TauCetiRoadmap/RepresentationTheory/LieHighestWeight/README.md`: additivity of the morphism space
 is the ingredient that `TauCeti/Algebra/Lie/Schur.lean` names as missing from its dimension form of
 Schur's lemma, and with which `TauCeti/Algebra/Lie/Multiplicity.lean` reads a multiplicity off
-`dim_K (S →ₗ⁅K,L⁆ M)`.
+`dim_K (S →ₗ⁅K,L⁆ M)`. The transport definitions are what regroup a decomposition of a module into
+irreducibles by isomorphism type, in
+`TauCeti/Algebra/Lie/Submodule/DirectSum.lean`.
 -/
 
 open scoped DirectSum
 
-universe u v w w₁ w₂
+universe u v w w₁ w₂ w₃ w₄
 
 namespace DirectSum
 
@@ -69,6 +81,61 @@ theorem lieModuleComponent_apply (i : ι) (x : ⨁ i, P i) :
   (rfl)
 
 end LieModules
+
+section Transport
+
+variable {R : Type u} {L : Type v} {ι : Type w₂} {κ : Type w₃}
+variable [CommRing R] [LieRing L]
+variable {P : ι → Type w₁} [∀ i, AddCommGroup (P i)] [∀ i, Module R (P i)]
+  [∀ i, LieRingModule L (P i)]
+variable {Q : ι → Type w₄} [∀ i, AddCommGroup (Q i)] [∀ i, Module R (Q i)]
+  [∀ i, LieRingModule L (Q i)]
+
+/-- **A family of morphisms of the summands, as a morphism of the external direct sums.** Its
+underlying linear map is Mathlib's `DirectSum.lmap`, so it acts componentwise; the bracket does
+too, which is all that equivariance needs. -/
+def lieModuleMap (f : ∀ i, P i →ₗ⁅R,L⁆ Q i) : (⨁ i, P i) →ₗ⁅R,L⁆ ⨁ i, Q i :=
+  { lmap fun i ↦ (f i : P i →ₗ[R] Q i) with
+    map_lie' := by
+      intro x m
+      ext i
+      simp [lie_module_bracket_apply] }
+
+@[simp]
+theorem lieModuleMap_apply (f : ∀ i, P i →ₗ⁅R,L⁆ Q i) (x : ⨁ i, P i) (i : ι) :
+    lieModuleMap f x i = f i (x i) :=
+  (rfl)
+
+/-- **A family of equivalences of the summands, as an equivalence of the external direct sums.**
+The inverse is the family of inverses. -/
+def lieModuleEquivCongr (e : ∀ i, P i ≃ₗ⁅R,L⁆ Q i) : (⨁ i, P i) ≃ₗ⁅R,L⁆ ⨁ i, Q i :=
+  { lieModuleMap fun i ↦ ((e i : P i →ₗ⁅R,L⁆ Q i)) with
+    invFun := lieModuleMap fun i ↦ ((e i).symm : Q i →ₗ⁅R,L⁆ P i)
+    left_inv := fun x ↦ by ext i; simp
+    right_inv := fun x ↦ by ext i; simp }
+
+@[simp]
+theorem lieModuleEquivCongr_apply (e : ∀ i, P i ≃ₗ⁅R,L⁆ Q i) (x : ⨁ i, P i) (i : ι) :
+    lieModuleEquivCongr e x i = e i (x i) :=
+  (rfl)
+
+variable (R L) in
+/-- **Reindexing an external direct sum of Lie modules** along an equivalence of index types. Its
+underlying linear equivalence is Mathlib's `DirectSum.lequivCongrLeft`. -/
+def lieModuleEquivCongrLeft (h : ι ≃ κ) : (⨁ i, P i) ≃ₗ⁅R,L⁆ ⨁ k, P (h.symm k) :=
+  { lequivCongrLeft R h with
+    map_lie' := by
+      intro x m
+      ext k
+      simp [lequivCongrLeft_apply, lie_module_bracket_apply] }
+
+variable (R L) in
+@[simp]
+theorem lieModuleEquivCongrLeft_apply (h : ι ≃ κ) (x : ⨁ i, P i) (k : κ) :
+    lieModuleEquivCongrLeft R L (P := P) h x k = x (h.symm k) :=
+  lequivCongrLeft_apply R h x k
+
+end Transport
 
 end DirectSum
 
