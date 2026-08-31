@@ -137,15 +137,15 @@ subgroups in a pinning. -/
 instance isClosedImmersion_rootSubgroup (k : Fin 6 ⊕ Fin 6) :
     IsClosedImmersion (rootSubgroup k).hom.hom.left := by
   rw [rootSubgroup_def]
-  exact
-    TauCeti.UniversalEnvelopingAlgebra.isClosedImmersion_kostantRootSubgroupToToral_of_surjective
-      (TauCeti.serreRootGenerator (CartanMatrix.E 6)ᵀ)
-      (TauCeti.serreH ℚ (CartanMatrix.E 6)ᵀ) rep lattice.toAddSubgroup
-      (fun _ hu _ hv => rep_serreKostantForm_mem_lattice (by
-        rw [TauCeti.serreKostantForm_def]
-        exact hu) hv)
-      isNilpotent_rep_serreRootGenerator latticeBasis DynkinType.e6MinusculeWeight k
-      (rootSubgroupCoordinateMap_surjective k)
+  exact TauCeti.UniversalEnvelopingAlgebra.isClosedImmersion_kostantRootSubgroupToToral
+    (TauCeti.serreRootGenerator (CartanMatrix.E 6)ᵀ)
+    (TauCeti.serreH ℚ (CartanMatrix.E 6)ᵀ) rep lattice.toAddSubgroup
+    (fun _ hu _ hv => rep_serreKostantForm_mem_lattice (by
+      rw [TauCeti.serreKostantForm_def]
+      exact hu) hv)
+    k isNilpotent_rep_serreRootGenerator latticeBasis DynkinType.e6MinusculeWeight
+    isUnit_one (rep_serreRootGenerator_latticeBasis k)
+    (rep_serreRootGenerator_sq_apply_latticeBasis k)
 
 /-- Every numbered root-subgroup map into the type-`E₆` minuscule carrier is a monomorphism. -/
 theorem mono_rootSubgroup (k : Fin 6 ⊕ Fin 6) : Mono (rootSubgroup k) :=
@@ -167,32 +167,16 @@ theorem coe_rootSubgroupClosedSubgroup (k : Fin 6 ⊕ Fin 6) :
 /-- The bundled numbered root subgroup is canonically isomorphic to the additive group scheme. -/
 noncomputable def rootSubgroupClosedSubgroupIso (k : Fin 6 ⊕ Fin 6) :
     ((rootSubgroupClosedSubgroup k).1 :
-      Grp (Over (Spec (CommRingCat.of ℤ)))) ≅ AdditiveGroup.groupScheme ℤ := by
-  exact eqToIso (congrArg
-      (fun P : Subobject groupScheme =>
-        (P : Grp (Over (Spec (CommRingCat.of ℤ)))))
-      (coe_rootSubgroupClosedSubgroup k)) ≪≫
-    Subobject.underlyingIso (rootSubgroup k)
+      Grp (Over (Spec (CommRingCat.of ℤ)))) ≅ AdditiveGroup.groupScheme ℤ :=
+  ClosedSubgroupScheme.mkIso (rootSubgroup k)
 
 /-- The canonical parametrization of the bundled closed subgroup followed by its inclusion is the
 numbered type-`E₆` root-subgroup map. -/
 @[simp]
 theorem rootSubgroupClosedSubgroupIso_inv_comp_arrow (k : Fin 6 ⊕ Fin 6) :
     (rootSubgroupClosedSubgroupIso k).inv ≫ (rootSubgroupClosedSubgroup k).1.arrow =
-      rootSubgroup k := by
-  have harrow :
-      (eqToIso (congrArg
-        (fun P : Subobject groupScheme =>
-          (P : Grp (Over (Spec (CommRingCat.of ℤ)))))
-        (coe_rootSubgroupClosedSubgroup k))).inv ≫
-          (rootSubgroupClosedSubgroup k).1.arrow =
-        (Subobject.mk (rootSubgroup k)).arrow := by
-    exact Subobject.arrow_congr
-      (Subobject.mk (rootSubgroup k))
-      (rootSubgroupClosedSubgroup k).1
-      (coe_rootSubgroupClosedSubgroup k).symm
-  rw [rootSubgroupClosedSubgroupIso, Iso.trans_inv, Category.assoc, harrow,
-    Subobject.underlyingIso_arrow]
+      rootSubgroup k :=
+  ClosedSubgroupScheme.mkIso_inv_comp_arrow (rootSubgroup k)
 
 end
 
