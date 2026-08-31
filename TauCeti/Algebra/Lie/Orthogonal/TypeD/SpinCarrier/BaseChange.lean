@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.Lie.Orthogonal.TypeD.SpinCarrier.Basic
+public import TauCeti.Algebra.Lie.Orthogonal.TypeD.SpinCarrier.PointsFunctor
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.HopfIdealPoints.BaseChange
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.GeneralLinearBaseChange
 
@@ -302,7 +302,13 @@ theorem baseChangePointsMulEquiv_mapPoints {B C : CommAlgCat.{w} A} (f : B ⟶ C
   rw [CommHopfAlgCat.baseChangeIsoPointsMulEquiv_mapPoints,
     integralPointsMulEquiv_mapPoints n hn
       ((TauCeti.CommAlgCat.restrictScalars (algebraMap ℤ A)).map f)]
-  rfl
+  have hring :
+      ((TauCeti.CommAlgCat.restrictScalars (algebraMap ℤ A)).map f).hom.toRingHom =
+        f.hom.toRingHom := by
+    rw [TauCeti.CommAlgCat.restrictScalars_map,
+      TauCeti.CommAlgCat.restrictScalarsMap_hom]
+    exact RingHom.ext fun x ↦ AlgHom.restrictScalars_apply ℤ f.hom x
+  rw [hring]
 
 /-! ## The transported root subgroups -/
 
