@@ -288,8 +288,10 @@ private theorem burauCoordMatrix_mulVec_succ (m : ℕ) (t : Rˣ) (x : Fin (m + 1
     rw [Finset.mul_sum]
     apply Finset.sum_congr rfl
     intro a ha
-    rw [← mul_assoc, show (i : ℕ) + 1 + 1 - a = ((i : ℕ) + 1 - a) + 1 by
-      simp only [Finset.mem_range] at ha; omega, unit_mul_inv_pow_succ]
+    have hexponent : (i : ℕ) + 1 + 1 - a = ((i : ℕ) + 1 - a) + 1 := by
+      simp only [Finset.mem_range] at ha
+      omega
+    rw [← mul_assoc, hexponent, unit_mul_inv_pow_succ]
   rw [hsum]
   simp only [Fin.ofNat_eq_cast, add_tsub_cancel_left, pow_one, Units.mul_inv_cancel_left,
     add_sub_cancel_left]
@@ -461,6 +463,36 @@ theorem eq_of_burauColMatrix_mul_eq {t : Rˣ} {X Y : Matrix (Fin (n - 1)) (Fin (
     (h : burauColMatrix n (t : R) * X = burauColMatrix n (t : R) * Y) : X = Y := by
   have hX := congrArg (fun M => burauCoordMatrix n t * M) h
   simpa only [← Matrix.mul_assoc, burauCoordMatrix_mul_burauColMatrix, Matrix.one_mul] using hX
+
+/-! ### The reduced Burau matrices on two and three strands -/
+
+/-- On two strands the reduced Burau representation is one-dimensional, sending the single
+elementary braid to `-t`. -/
+theorem reducedBurauMatrix_two (t : R) (i : Fin (2 - 1)) :
+    reducedBurauMatrix t i = !![-t] := by
+  ext a b
+  fin_cases i
+  fin_cases a
+  fin_cases b
+  simp [reducedBurauMatrix_apply_self]
+
+/-- The reduced Burau matrix of the first elementary braid on three strands. -/
+theorem reducedBurauMatrix_three_zero (t : R) :
+    reducedBurauMatrix t (0 : Fin (3 - 1)) = !![-t, t; 0, 1] := by
+  rw [Matrix.eta_fin_two (reducedBurauMatrix t (0 : Fin (3 - 1))),
+    reducedBurauMatrix_apply_self, reducedBurauMatrix_apply_of_succ t (by decide),
+    reducedBurauMatrix_apply_of_ne t (by decide),
+    reducedBurauMatrix_apply_of_ne t (by decide)]
+  norm_num
+
+/-- The reduced Burau matrix of the second elementary braid on three strands. -/
+theorem reducedBurauMatrix_three_one (t : R) :
+    reducedBurauMatrix t (1 : Fin (3 - 1)) = !![1, 0; 1, -t] := by
+  rw [Matrix.eta_fin_two (reducedBurauMatrix t (1 : Fin (3 - 1))),
+    reducedBurauMatrix_apply_of_ne t (by decide),
+    reducedBurauMatrix_apply_of_ne t (by decide),
+    reducedBurauMatrix_apply_of_succ_rev t (by decide), reducedBurauMatrix_apply_self]
+  norm_num
 
 end Ring
 
@@ -700,36 +732,6 @@ theorem inv_reducedBurauMatrix (t : Rˣ) (i : Fin (n - 1)) :
       1 - ((t⁻¹ : Rˣ) : R) • vecMulVec (Pi.single i 1) (reducedBurauRow (t : R) i) := by
   rw [reducedBurauMatrix_def,
     inv_one_sub_vecMulVec t (reducedBurauRow_dotProduct_single (t : R) i)]
-
-/-! ### The reduced Burau matrices on two and three strands -/
-
-/-- On two strands the reduced Burau representation is one-dimensional, sending the single
-elementary braid to `-t`. -/
-theorem reducedBurauMatrix_two (t : R) (i : Fin (2 - 1)) :
-    reducedBurauMatrix t i = !![-t] := by
-  ext a b
-  fin_cases i
-  fin_cases a
-  fin_cases b
-  simp [reducedBurauMatrix_apply_self]
-
-/-- The reduced Burau matrix of the first elementary braid on three strands. -/
-theorem reducedBurauMatrix_three_zero (t : R) :
-    reducedBurauMatrix t (0 : Fin (3 - 1)) = !![-t, t; 0, 1] := by
-  rw [Matrix.eta_fin_two (reducedBurauMatrix t (0 : Fin (3 - 1))),
-    reducedBurauMatrix_apply_self, reducedBurauMatrix_apply_of_succ t (by decide),
-    reducedBurauMatrix_apply_of_ne t (by decide),
-    reducedBurauMatrix_apply_of_ne t (by decide)]
-  norm_num
-
-/-- The reduced Burau matrix of the second elementary braid on three strands. -/
-theorem reducedBurauMatrix_three_one (t : R) :
-    reducedBurauMatrix t (1 : Fin (3 - 1)) = !![1, 0; 1, -t] := by
-  rw [Matrix.eta_fin_two (reducedBurauMatrix t (1 : Fin (3 - 1))),
-    reducedBurauMatrix_apply_of_ne t (by decide),
-    reducedBurauMatrix_apply_of_ne t (by decide),
-    reducedBurauMatrix_apply_of_succ_rev t (by decide), reducedBurauMatrix_apply_self]
-  norm_num
 
 end CommRing
 
