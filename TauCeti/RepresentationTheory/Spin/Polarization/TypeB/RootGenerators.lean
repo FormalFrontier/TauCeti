@@ -250,6 +250,9 @@ theorem typeBQuadraticEquiv_typeBLongCorootGenerator (i j : ι) (hij : i ≠ j) 
 
 /-! ### The Bourbaki simple roots -/
 
+-- These specializations are intentionally not simp lemmas: the simple-generator simp rules
+-- reduce their left-hand sides to the general evaluations above, so `simpNF` rejects them.
+
 /-- The terminal positive simple root is the short Clifford bivector. -/
 theorem typeBQuadraticEquiv_typeBSimpleRootGenerator_last {n : ℕ}
     (bFin : Module.Basis (Fin (n + 1)) K P.W) :
