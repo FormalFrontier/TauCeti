@@ -42,16 +42,11 @@ are constant on the cosets, so counting them suffices.
 
 For the Garnir set `X` of `t` at a cell `(i, j)` -- the labels of `t` in column `j` from row `i`
 down together with those in column `j + 1` from row `i` up -- the internal permutations are
-exactly the ones preserving the column-`j` half `TauCeti.YoungTableau.garnirSetLeft`
-(`TauCeti.YoungTableau.mem_colSubgroup_iff_image_garnirSetLeft_eq`), which is the classical
-description of that subgroup as a product of the symmetric groups on the two halves.  The
+exactly the ones preserving the column-`j` half `TauCeti.YoungTableau.garnirSetLeft`, by
+`TauCeti.YoungTableau.mem_colSubgroup_iff_image_garnirSetLeft_eq` of Garnir's file.  The
 straightening step therefore rewrites `e_t` in terms of the polytabloids of the tableaux obtained
 by genuinely exchanging labels between the two columns, which is what makes it progress towards a
 standard tableau.
-
-## Main definitions
-
-* `TauCeti.YoungTableau.garnirSetLeft`: the column-`j` half of the Garnir set of `t` at `(i, j)`.
 
 ## Main results
 
@@ -60,10 +55,8 @@ standard tableau.
 * `TauCeti.YoungTableau.polytabloid_mem_span_polytabloid_relabel`: `e_t` lies in the span of the
   polytabloids of the relabelings of `t` by permutations supported in `X` that leave the column
   group.
-* `TauCeti.YoungTableau.mem_colSubgroup_iff_image_garnirSetLeft_eq`: the internal permutations of
-  a Garnir set are those preserving its left half.
 * `TauCeti.YoungTableau.polytabloid_mem_span_polytabloid_relabel_garnirSet`: **the
-  straightening step**, the previous three combined at a Garnir set.
+  straightening step**, the previous two combined at a Garnir set.
 
 ## References
 
@@ -91,15 +84,6 @@ noncomputable local instance decidablePredMemColSubgroupStraightening (t : Young
   Classical.decPred _
 
 /-! ## Collecting the column-group terms of a Garnir relation -/
-
-/-- A permutation fixing everything outside `X` maps `X` to itself: were `σ k` outside `X` for
-some `k` of `X`, it would be fixed, forcing `σ k = k`. -/
-private theorem apply_mem_of_forall_notMem {α : Type*} {X : Finset α} {σ : Equiv.Perm α}
-    (hσ : ∀ k ∉ X, σ k = k) {k : α} (hk : k ∈ X) : σ k ∈ X := by
-  by_contra h
-  have h' : σ k = k := σ.injective (hσ (σ k) h)
-  rw [h'] at h
-  exact h hk
 
 /-- **The Garnir element relation.**  Under the hypotheses of the Garnir relation
 `TauCeti.YoungTableau.sum_sign_smul_polytabloid_relabel_eq_zero` -- every label of `X` lying in a
@@ -158,75 +142,6 @@ theorem polytabloid_mem_span_polytabloid_relabel (t : YoungTableau μ) {X : Fins
     (card_nsmul_polytabloid_add_sum_sign_smul_polytabloid_relabel_eq_zero t hX hcard)]
   refine neg_mem (Submodule.sum_mem _ fun σ hσ => Submodule.smul_mem _ _ ?_)
   exact Submodule.subset_span ⟨σ, (Finset.mem_filter.mp hσ).2, rfl⟩
-
-/-! ## The left half of a Garnir set -/
-
-/-- The **left half of a Garnir set**: the labels of `t` lying in column `j` from row `i`
-downwards.  The Garnir set of `t` at `(i, j)` is this set together with the labels in column
-`j + 1` from row `i` upwards, and the permutations of the Garnir set that preserve the columns of
-`t` are exactly those preserving this half
-(`TauCeti.YoungTableau.mem_colSubgroup_iff_image_garnirSetLeft_eq`). -/
-def garnirSetLeft (t : YoungTableau μ) (i j : ℕ) : Finset (Fin μ.card) :=
-  {k | colIndex t k = j ∧ i ≤ rowIndex t k}
-
-@[simp]
-theorem mem_garnirSetLeft {t : YoungTableau μ} {i j : ℕ} {k : Fin μ.card} :
-    k ∈ garnirSetLeft t i j ↔ colIndex t k = j ∧ i ≤ rowIndex t k := by
-  simp [garnirSetLeft]
-
-/-- The left half of a Garnir set is part of it, being the first of the two cases of its
-definition. -/
-theorem garnirSetLeft_subset_garnirSet (t : YoungTableau μ) (i j : ℕ) :
-    garnirSetLeft t i j ⊆ garnirSet t i j := fun _ hk =>
-  mem_garnirSet.mpr (Or.inl (mem_garnirSetLeft.mp hk))
-
-/-- A label of a Garnir set outside its left half lies in column `j + 1`, the two halves being the
-two cases of the definition of the Garnir set. -/
-theorem colIndex_eq_of_mem_garnirSet_of_notMem_garnirSetLeft {t : YoungTableau μ} {i j : ℕ}
-    {k : Fin μ.card} (hk : k ∈ garnirSet t i j) (hk' : k ∉ garnirSetLeft t i j) :
-    colIndex t k = j + 1 := by
-  rcases mem_garnirSet.mp hk with h | h
-  · exact absurd (mem_garnirSetLeft.mpr h) hk'
-  · exact h.1
-
-/-- **The internal permutations of a Garnir set are those preserving its left half.**  A
-permutation supported in the Garnir set of `t` at `(i, j)` preserves the columns of `t` exactly
-when it maps the column-`j` half of that set onto itself; it then automatically preserves the
-column-`(j + 1)` half as well, so the internal permutations are the product of the two symmetric
-groups on the halves. -/
-theorem mem_colSubgroup_iff_image_garnirSetLeft_eq {t : YoungTableau μ} {i j : ℕ}
-    {σ : Equiv.Perm (Fin μ.card)} (hσ : ∀ k ∉ garnirSet t i j, σ k = k) :
-    σ ∈ colSubgroup t ↔ (garnirSetLeft t i j).image σ = garnirSetLeft t i j := by
-  constructor
-  · intro hcol
-    refine Finset.eq_of_subset_of_card_le ?_
-      (le_of_eq (Finset.card_image_of_injective _ σ.injective).symm)
-    intro k hk
-    obtain ⟨l, hl, rfl⟩ := Finset.mem_image.mp hk
-    have hmem : σ l ∈ garnirSet t i j :=
-      apply_mem_of_forall_notMem hσ (garnirSetLeft_subset_garnirSet t i j hl)
-    have hcolσ : colIndex t (σ l) = j := by
-      rw [mem_colSubgroup.mp hcol l]
-      exact (mem_garnirSetLeft.mp hl).1
-    rcases mem_garnirSet.mp hmem with ⟨-, hrow⟩ | ⟨hc, -⟩
-    · exact mem_garnirSetLeft.mpr ⟨hcolσ, hrow⟩
-    · exact absurd hc (by omega)
-  · intro himg
-    rw [mem_colSubgroup]
-    intro k
-    by_cases hk : k ∈ garnirSet t i j
-    · by_cases hkl : k ∈ garnirSetLeft t i j
-      · have hmem : σ k ∈ garnirSetLeft t i j := himg ▸ Finset.mem_image_of_mem σ hkl
-        rw [(mem_garnirSetLeft.mp hmem).1, (mem_garnirSetLeft.mp hkl).1]
-      · have hnot : σ k ∉ garnirSetLeft t i j := by
-          intro h
-          rw [← himg] at h
-          obtain ⟨l, hl, hlk⟩ := Finset.mem_image.mp h
-          exact hkl (σ.injective hlk ▸ hl)
-        rw [colIndex_eq_of_mem_garnirSet_of_notMem_garnirSetLeft
-            (apply_mem_of_forall_notMem hσ hk) hnot,
-          colIndex_eq_of_mem_garnirSet_of_notMem_garnirSetLeft hk hkl]
-    · rw [hσ k hk]
 
 /-! ## The straightening step at a Garnir set -/
 
