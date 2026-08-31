@@ -23,8 +23,6 @@ change.
 
 ## Main declarations
 
-* `TauCeti.GeneralLinear.coordinateHopfAlgebraBaseChangeIso_hom_determinantGroupLike`: scalar
-  extension carries the generic determinant to the generic determinant.
 * `TauCeti.SpecialLinear.coordinateHopfAlgebraBaseChangeIso`: base change of the coordinate Hopf
   algebra of `SLₙ`.
 * `TauCeti.SpecialLinear.finiteTypeCoordinateHopfAlgebraBaseChangeIso`: the finite-type form of
@@ -53,33 +51,6 @@ universe u v
 
 variable (R : Type u) (K : Type max u v) [CommRing R] [CommRing K] [Algebra R K]
 variable (n : ℕ)
-
-namespace GeneralLinear
-
-/-- The general-linear base-change isomorphism sends the scalar extension of the generic
-determinant to the generic determinant over the new base. -/
-theorem coordinateHopfAlgebraBaseChangeIso_hom_determinantGroupLike :
-    (GeneralLinear.coordinateHopfAlgebraBaseChangeIso R K n).hom.hom
-        (1 ⊗ₜ[R]
-          (GeneralLinear.determinantGroupLike R n :
-            GeneralLinear.coordinateHopfAlgebra R n)) =
-      (GeneralLinear.determinantGroupLike K n :
-        GeneralLinear.coordinateHopfAlgebra K n) := by
-  have hdet :
-      MvPolynomial.map (algebraMap R K)
-          (Matrix.det (Matrix.mvPolynomialX (Fin n) (Fin n) R)) =
-        Matrix.det (Matrix.mvPolynomialX (Fin n) (Fin n) K) := by
-    rw [RingHom.map_det]
-    congr 1
-    funext i j
-    simp [Matrix.mvPolynomialX]
-  rw [GeneralLinear.determinantGroupLike_val,
-    GeneralLinear.det_localizedGenericMatrix,
-    GeneralLinear.coordinateHopfAlgebraBaseChangeIso_hom_apply,
-    GeneralLinear.determinantGroupLike_val,
-    GeneralLinear.det_localizedGenericMatrix, hdet, one_smul]
-
-end GeneralLinear
 
 namespace SpecialLinear
 

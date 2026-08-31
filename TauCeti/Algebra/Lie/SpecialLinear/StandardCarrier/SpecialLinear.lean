@@ -244,14 +244,6 @@ noncomputable def baseChangeCoordinateSpecialLinearIso
     (GeneralLinear.coordinateHopfAlgebra k (r + 1)))
       (baseChangeDefiningIdeal_eq_specialLinearDefiningHopfIdeal r k))
 
-private theorem mkQuotient_comp_eqToIso {R : Type u} [CommRing R]
-    {H : _root_.CommHopfAlgCat R} {I J : HopfIdeal R H} (hIJ : I = J) :
-    CommHopfAlgCat.mkQuotient H I ≫
-        (eqToIso (congrArg (CommHopfAlgCat.quotient H) hIJ)).hom =
-      CommHopfAlgCat.mkQuotient H J := by
-  subst J
-  simp
-
 /-- The carrier--special-linear coordinate isomorphism is compatible with their quotient maps
 from `O(GL_{r+1}/k)`. -/
 @[simp]
@@ -261,8 +253,8 @@ theorem mkQuotient_comp_baseChangeCoordinateSpecialLinearIso_hom
           (baseChangeDefiningIdeal r k) ≫
         (baseChangeCoordinateSpecialLinearIso r k).hom =
       SpecialLinear.coordinateMap k (r + 1) := by
-  exact mkQuotient_comp_eqToIso
-    (baseChangeDefiningIdeal_eq_specialLinearDefiningHopfIdeal r k)
+  exact CommHopfAlgCat.mkQuotient_comp_eqToHom
+    (baseChangeDefiningIdeal_eq_specialLinearDefiningHopfIdeal r k).symm
 
 end
 
