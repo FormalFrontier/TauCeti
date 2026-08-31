@@ -35,7 +35,7 @@ order `p ^ (2 * m + 1)`.
   parameter range.
 * `TauCeti.ValidLieTypeIndex`, `TauCeti.SuzukiReeIndex`, `TauCeti.GraphTwistedIndex`,
   `TauCeti.TypeALieIndex`, `TauCeti.TypeCLieIndex`, `TauCeti.TypeE6LieIndex`,
-  `TauCeti.SuzukiLieIndex`, `TauCeti.RankTwoBLieIndex`, and
+  `TauCeti.SuzukiLieIndex`, `TauCeti.RankTwoBLieIndex`, `TauCeti.TypeBTwoLieIndex`, and
   `TauCeti.UnimodularLieIndex`: the restricted domains consumed by later carrier and endomorphism
   constructions.
 * `TauCeti.SporadicName`: the conventional twenty-six sporadic names.
@@ -745,12 +745,14 @@ abbrev SuzukiLieIndex : Type _ := {d : ValidLieTypeIndex // d.1.IsSuzuki}
 /-- A validated index built on the rank-two diagram `B₂`: the untwisted family `B₂(q)` and the
 Suzuki family `²B₂(2^(2m+1))`.
 
-These are the two branches of the classification list that share a diagram and hence a carrier, so
-this subtype is the domain of the carrier constructions of
-`TauCeti/GroupTheory/SpecificGroups/CFSG/TypeB2.lean`. The outer subtype is important: `B₂(2)`,
-`B₂(3)` and `²B₂(2)` are excluded from the classification list and are not indices of this
-subtype. -/
+This is diagram-level indexing data only; it does not attach the pinned L0 carrier that both
+branches will eventually consume. The outer subtype is important: `B₂(2)`, `B₂(3)` and `²B₂(2)`
+are excluded from the classification list and are not indices of this subtype. -/
 abbrev RankTwoBLieIndex : Type _ := {d : ValidLieTypeIndex // d.1.HasRankTwoBDiagram}
+
+/-- A validated index in the untwisted rank-two family `B₂(q)`. The Suzuki family, which shares the
+diagram, is excluded by the outer predicate. -/
+abbrev TypeBTwoLieIndex : Type _ := {d : RankTwoBLieIndex // ¬d.1.1.UsesHalfFrobenius}
 
 namespace TypeALieIndex
 
@@ -866,17 +868,40 @@ end TypeCLieIndex
 This section follows `ValidLieTypeIndex` rather than sitting beside `TypeALieIndex`, because
 `rank_eq_two` reads the numbered data `TauCeti.ValidLieTypeIndex.rank` defined just above. -/
 
-namespace RankTwoBLieIndex
+namespace TypeBTwoLieIndex
 
-/-- A rank-two type-`B` index names the Dynkin type `B 2`. -/
-@[simp] theorem dynkinType_eq (d : RankTwoBLieIndex) : d.1.dynkinType = .B 2 :=
-  (LieTypeIndex.hasRankTwoBDiagram_iff_dynkinType _).mp d.2
+/-- Introduce a valid untwisted index `B₂(q)`. Validity forces `4 ≤ q.card`, by
+`four_le_fieldOrder` below. -/
+abbrev of (q : PrimePower) (hvalid : (LieTypeIndex.B 2 q).Valid) : TypeBTwoLieIndex :=
+  ⟨⟨⟨.B 2 q, hvalid⟩, by simp⟩, by simp [LieTypeIndex.usesHalfFrobenius_iff]⟩
 
-/-- A rank-two type-`B` index has rank two, that being the rank of `B₂`. -/
-@[simp] theorem rank_eq_two (d : RankTwoBLieIndex) : d.1.rank = 2 :=
+/-- Every untwisted rank-two type-`B` index is of the introduction form. -/
+theorem exists_eq_of (d : TypeBTwoLieIndex) :
+    ∃ (q : PrimePower) (hvalid : (LieTypeIndex.B 2 q).Valid), d = of q hvalid := by
+  obtain ⟨⟨⟨e, hvalid⟩, hdiag⟩, hhalf⟩ := d
+  obtain ⟨q, rfl⟩ :=
+    LieTypeIndex.exists_eq_of_hasRankTwoBDiagram_of_not_usesHalfFrobenius hdiag hhalf
+  exact ⟨q, hvalid, rfl⟩
+
+/-- An untwisted rank-two type-`B` index names the Dynkin type `B 2`. -/
+@[simp] theorem dynkinType_eq (d : TypeBTwoLieIndex) : d.1.1.dynkinType = .B 2 :=
+  (LieTypeIndex.hasRankTwoBDiagram_iff_dynkinType _).mp d.1.2
+
+/-- An untwisted rank-two type-`B` index has rank two, that being the rank of `B₂`. -/
+@[simp] theorem rank_eq_two (d : TypeBTwoLieIndex) : d.1.1.rank = 2 :=
   congrArg DynkinType.rank d.dynkinType_eq
 
-end RankTwoBLieIndex
+/-- The field order of an untwisted rank-two type-`B` index is at least four. The two smaller prime
+powers are excluded from the classification list as duplicate representatives. -/
+theorem four_le_fieldOrder (d : TypeBTwoLieIndex) : 4 ≤ d.1.1.fieldOrder := by
+  obtain ⟨q, hvalid, rfl⟩ := d.exists_eq_of
+  rw [LieTypeIndex.valid_iff, LieTypeIndex.inStandardRange_iff,
+    LieTypeIndex.isDuplicateRepresentative_iff] at hvalid
+  have h2 := q.two_le_card
+  simp only [ValidLieTypeIndex.fieldOrder, LieTypeIndex.fieldOrder_B]
+  omega
+
+end TypeBTwoLieIndex
 
 namespace SuzukiLieIndex
 
@@ -894,10 +919,14 @@ theorem exists_eq_of (d : SuzukiLieIndex) :
   case suzuki m => exact fun hvalid _ => ⟨m, hvalid, rfl⟩
   all_goals exact fun _ hs => ((LieTypeIndex.isSuzuki_iff _).mp hs).elim
 
-/-- A Suzuki index is built on the rank-two diagram `B₂`, so it carries the diagram data of
-`TauCeti.RankTwoBLieIndex`. -/
-abbrev toRankTwoBLieIndex (d : SuzukiLieIndex) : RankTwoBLieIndex :=
-  ⟨d.1, LieTypeIndex.hasRankTwoBDiagram_of_isSuzuki d.2⟩
+/-- The Suzuki family is built on the rank-two diagram `B₂`. -/
+@[simp] theorem dynkinType_eq (d : SuzukiLieIndex) : d.1.dynkinType = .B 2 := by
+  obtain ⟨m, hvalid, rfl⟩ := d.exists_eq_of
+  exact LieTypeIndex.dynkinType_suzuki m
+
+/-- The Suzuki family has rank two, that being the rank of `B₂`. -/
+@[simp] theorem rank_eq_two (d : SuzukiLieIndex) : d.1.rank = 2 :=
+  congrArg DynkinType.rank d.dynkinType_eq
 
 /-- The Suzuki family lives in characteristic two. -/
 @[simp] theorem characteristic_eq_two (d : SuzukiLieIndex) : d.1.characteristic = 2 := by
