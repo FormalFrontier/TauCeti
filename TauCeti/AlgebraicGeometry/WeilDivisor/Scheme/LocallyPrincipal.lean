@@ -12,10 +12,15 @@ import Mathlib.Tactic.Abel
 # Locally principal Weil divisors on a scheme
 
 Let `X` be a locally Noetherian integral scheme. A Weil divisor `D` on `X` is locally principal when
-every point has an open neighbourhood on which the coefficients of `D` agree with those of the
-principal divisor of one nonzero rational function. This is the condition which identifies a
-Weil divisor with a Cartier divisor when the comparison between the two kinds of divisor is
-available.
+every point has an open neighbourhood on which the coefficients of `D` agree with the orders of one
+nonzero rational function. On a scheme regular in codimension one (expressed in
+`TauCeti/AlgebraicGeometry/WeilDivisor/Scheme/Sheaf.lean` by the codimension-one stalks being
+discrete valuation rings), this is the local condition used to compare Weil divisors with the
+Cartier divisors defined in `TauCeti/AlgebraicGeometry/CartierDivisor/Basic.lean`.
+
+The predicate and its additive subgroup require only `IsLocallyNoetherian X`. Results involving
+the globally assembled principal Weil divisors and linear equivalence require `IsNoetherian X`,
+which supplies the finite-support condition for `orderAt`.
 
 ## Main declarations
 
@@ -70,19 +75,29 @@ def IsLocallyPrincipal (D : SchemeWeilDivisor X) : Prop :=
     ∀ y : CodimensionOnePoint X, (y : X) ∈ U →
       WeilDivisor.coeff D y = orderAt y g
 
-/-- Local principality, unfolded into its neighbourhood-and-equation formulation. -/
+/-- The defining neighbourhood-and-equation characterization of local principality, provided for
+rewriting without exposing the definition body. -/
 lemma isLocallyPrincipal_iff {D : SchemeWeilDivisor X} :
     IsLocallyPrincipal D ↔
       ∀ x : X, ∃ U : X.Opens, x ∈ U ∧ ∃ g : Additive X.functionFieldˣ,
         ∀ y : CodimensionOnePoint X, (y : X) ∈ U →
           WeilDivisor.coeff D y = orderAt y g :=
-  Iff.rfl
+  (Iff.rfl)
+
+/-- A Weil divisor whose coefficients globally equal the orders of one rational function is
+locally principal. -/
+lemma isLocallyPrincipal_of_forall_coeff_eq {D : SchemeWeilDivisor X}
+    (g : Additive X.functionFieldˣ)
+    (h : ∀ y : CodimensionOnePoint X, WeilDivisor.coeff D y = orderAt y g) :
+    IsLocallyPrincipal D := by
+  intro x
+  exact ⟨⊤, Opens.mem_top x, g, fun y _ ↦ h y⟩
 
 /-- The zero Weil divisor is locally principal. -/
+@[simp]
 lemma isLocallyPrincipal_zero : IsLocallyPrincipal (0 : SchemeWeilDivisor X) := by
-  rw [isLocallyPrincipal_iff]
-  intro x
-  refine ⟨⊤, Set.mem_univ x, 0, fun y _ ↦ ?_⟩
+  apply isLocallyPrincipal_of_forall_coeff_eq 0
+  intro y
   rw [WeilDivisor.coeff_zero, map_zero]
 
 namespace IsLocallyPrincipal
@@ -93,17 +108,16 @@ variable {D E : SchemeWeilDivisor X}
 the intersection of their neighbourhoods. -/
 lemma add (hD : IsLocallyPrincipal D) (hE : IsLocallyPrincipal E) :
     IsLocallyPrincipal (D + E) := by
-  rw [isLocallyPrincipal_iff] at hD hE ⊢
   intro x
   obtain ⟨U, hxU, g, hg⟩ := hD x
   obtain ⟨V, hxV, h, hh⟩ := hE x
-  refine ⟨U ⊓ V, ⟨hxU, hxV⟩, g + h, ?_⟩
+  refine ⟨U ⊓ V, Opens.mem_inf.mpr ⟨hxU, hxV⟩, g + h, ?_⟩
   intro y hy
-  rw [WeilDivisor.coeff_add, hg y hy.1, hh y hy.2, map_add]
+  obtain ⟨hyU, hyV⟩ := Opens.mem_inf.mp hy
+  rw [WeilDivisor.coeff_add, hg y hyU, hh y hyV, map_add]
 
 /-- The negation of a locally principal Weil divisor is locally principal. -/
 lemma neg (hD : IsLocallyPrincipal D) : IsLocallyPrincipal (-D) := by
-  rw [isLocallyPrincipal_iff] at hD ⊢
   intro x
   obtain ⟨U, hxU, g, hg⟩ := hD x
   refine ⟨U, hxU, -g, ?_⟩
@@ -128,9 +142,9 @@ def locallyPrincipalSubgroup (X : Scheme.{u}) [IsIntegral X] [IsLocallyNoetheria
 
 /-- Membership in the subgroup of locally principal Weil divisors is local principality. -/
 @[simp]
-lemma mem_locallyPrincipalSubgroup_iff {D : SchemeWeilDivisor X} :
+lemma mem_locallyPrincipalSubgroup {D : SchemeWeilDivisor X} :
     D ∈ locallyPrincipalSubgroup X ↔ IsLocallyPrincipal D :=
-  Iff.rfl
+  (Iff.rfl)
 
 end LocallyNoetherian
 
@@ -138,25 +152,14 @@ section Noetherian
 
 variable [IsNoetherian X]
 
-/-- On a Noetherian scheme, local principality can be stated using the globally assembled
-principal Weil divisor of each local equation. -/
-lemma isLocallyPrincipal_iff_exists_principalDivisor {D : SchemeWeilDivisor X} :
-    IsLocallyPrincipal D ↔
-      ∀ x : X, ∃ U : X.Opens, x ∈ U ∧ ∃ g : Additive X.functionFieldˣ,
-        ∀ y : CodimensionOnePoint X, (y : X) ∈ U →
-          WeilDivisor.coeff D y =
-            WeilDivisor.coeff
-              ((WeilDivisor.OrderSystem.ofScheme X).principalDivisor g) y := by
-  rw [isLocallyPrincipal_iff]
-  simp only [WeilDivisor.OrderSystem.coeff_principalDivisor,
-    WeilDivisor.OrderSystem.ofScheme_ord]
-
 /-- A principal Weil divisor is locally principal, with the same equation on the whole scheme. -/
+@[simp]
 lemma isLocallyPrincipal_principalDivisor (g : Additive X.functionFieldˣ) :
     IsLocallyPrincipal ((WeilDivisor.OrderSystem.ofScheme X).principalDivisor g) := by
-  rw [isLocallyPrincipal_iff_exists_principalDivisor]
-  intro x
-  exact ⟨⊤, Set.mem_univ x, g, fun _ _ ↦ rfl⟩
+  apply isLocallyPrincipal_of_forall_coeff_eq g
+  intro y
+  rw [WeilDivisor.OrderSystem.coeff_principalDivisor,
+    WeilDivisor.OrderSystem.ofScheme_ord]
 
 /-- Every principal divisor is locally principal. Equivalently, the principal subgroup is
 contained in the subgroup of locally principal divisors. -/
@@ -173,9 +176,10 @@ lemma IsLocallyPrincipal.of_linearlyEquivalent {D E : SchemeWeilDivisor X}
     (hD : IsLocallyPrincipal D)
     (hDE : (WeilDivisor.OrderSystem.ofScheme X).LinearlyEquivalent D E) :
     IsLocallyPrincipal E := by
-  have hDiff : D - E ∈ locallyPrincipalSubgroup X :=
-    principalSubgroup_le_locallyPrincipalSubgroup
-      ((WeilDivisor.OrderSystem.ofScheme X).linearlyEquivalent_iff.mp hDE)
+  have hDiff : IsLocallyPrincipal (D - E) :=
+    mem_locallyPrincipalSubgroup.mp
+      (principalSubgroup_le_locallyPrincipalSubgroup
+        ((WeilDivisor.OrderSystem.ofScheme X).linearlyEquivalent_iff.mp hDE))
   have hE : E = D - (D - E) := by abel
   rw [hE]
   exact hD.sub hDiff
