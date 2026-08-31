@@ -211,36 +211,6 @@ theorem IsPreconnected.diam_le_diam_of_disjoint (hS : IsPreconnected S) (hSK : D
     (hne : (S ∩ filledHull K).Nonempty) (hK : IsBounded K) : diam S ≤ diam K :=
   diam_le_diam_of_subset_filledHull hK (IsPreconnected.subset_filledHull hS hSK hne)
 
-/-! ## The filled hull of a sphere -/
-
-/-- **The filled hull of a sphere is its closed ball.** The inclusion into the closed ball is the
-closed-convex-hull bound, while the reverse inclusion follows from the fact that the frontier of a
-closed ball lies on its sphere. This is the model plane-separation computation used by the
-conformal boundary theory. -/
-@[simp]
-theorem filledHull_sphere_eq_closedBall [Nontrivial E] (c : E) {r : ℝ} (hr : 0 ≤ r) :
-    filledHull (sphere c r) = closedBall c r := by
-  apply Subset.antisymm
-  · have hsphere : (sphere c r).Nonempty := NormedSpace.sphere_nonempty.mpr hr
-    have hbound := filledHull_subset_closedConvexHull hsphere
-    rw [closedConvexHull_eq_closure_convexHull, convexHull_sphere_eq_closedBall c hr,
-      closure_closedBall] at hbound
-    exact hbound
-  · exact subset_filledHull_of_frontier_subset isBounded_closedBall
-      frontier_closedBall_subset_sphere
-
-/-- The points filled in by a sphere are exactly the open ball it bounds. -/
-theorem filledHull_sphere_sdiff_sphere [Nontrivial E] (c : E) {r : ℝ} (hr : 0 ≤ r) :
-    filledHull (sphere c r) \ sphere c r = ball c r := by
-  rw [filledHull_sphere_eq_closedBall c hr, closedBall_sdiff_sphere]
-
-/-- **The points filled in by a sphere are dense up to its boundary.** The filled-hull description
-of a sphere identifies its interior with the open ball, whose closure contains the sphere. -/
-theorem sphere_subset_closure_filledHull_sdiff_sphere [Nontrivial E] (c : E) {r : ℝ}
-    (hr : 0 < r) : sphere c r ⊆ closure (filledHull (sphere c r) \ sphere c r) := by
-  rw [filledHull_sphere_sdiff_sphere c hr.le, closure_ball c hr.ne']
-  exact sphere_subset_closedBall
-
 variable {x y : E}
 
 /-- **The unbounded component of the complement of a bounded set is unique** in a real normed space
