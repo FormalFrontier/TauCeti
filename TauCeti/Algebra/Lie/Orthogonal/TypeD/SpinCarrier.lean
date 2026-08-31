@@ -54,7 +54,8 @@ the pinned Chevalley--Demazure construction.
 ## Main results
 
 * `TauCeti.TypeDSpinCarrier.lie_serreH_rootGenerator`: each numbered Serre root generator is a
-  Cartan weight vector, with weight the corresponding row of the type-`D` Cartan matrix.
+  Cartan weight vector, with weight the corresponding row of the type-`D` Cartan matrix for a
+  raising generator and its negative for a lowering generator.
 * `TauCeti.TypeDSpinCarrier.weightTorusPoints_conj_rootSubgroupPoints` and
   `TauCeti.TypeDSpinCarrier.weightTorus_conj_rootSubgroup`: conjugation by the weight torus
   rescales the parameter of each numbered root subgroup through that character, on matrix-valued
@@ -343,17 +344,11 @@ theorem mem_points_iff (A : Type v) [CommRing A]
 parameter is read through the canonical multiplicative copy of the additive group of `A`. -/
 noncomputable def rootSubgroupPoints (hn : 4 ≤ n) (k : Fin n ⊕ Fin n) (A : Type v) [CommRing A] :
     Multiplicative A →* points n hn A :=
-  MonoidHom.codRestrict
-    ((kostantRootSubgroupMatrix
-      (TauCeti.serreRootGenerator (CartanMatrix.D n))
-      (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
-      (rep_kostantForm_mem_lattice n hn) k (isNilpotent_rep_rootGenerator n hn k)
-      (latticeBasis n)).comp
-        (AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm.toMonoidHom)
-    (points n hn A) fun u ↦ by
-      rw [points]
-      exact kostantGeneratedPointsSubgroup_le_toralPoints _ _ _ _ _ _ _ _ A
-        (kostantRootSubgroupMatrix_mem_generatedPoints _ _ _ _ _ _ _ A k _)
+  kostantToralRootSubgroupPoints
+    (TauCeti.serreRootGenerator (CartanMatrix.D n))
+    (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
+    (rep_kostantForm_mem_lattice n hn) (isNilpotent_rep_rootGenerator n hn)
+    (latticeBasis n) (basisWeight n) k A
 
 /-- A numbered root-subgroup point is its represented divided-power exponential matrix. -/
 @[simp]
@@ -367,17 +362,16 @@ theorem coe_rootSubgroupPoints (k : Fin n ⊕ Fin n) (A : Type v) [CommRing A]
         (rep_kostantForm_mem_lattice n hn) k (isNilpotent_rep_rootGenerator n hn k)
         (latticeBasis n)
         ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm u) := by
-  rw [rootSubgroupPoints]
-  rfl
+  exact coe_kostantToralRootSubgroupPoints _ _ _ _ _ _ _ _ k A u
 
 /-- **The split spin weight torus inside the type-`Dₙ` spin carrier points.** -/
 noncomputable def weightTorusPoints (hn : 4 ≤ n) (A : Type v) [CommRing A] :
     (Fin n → Aˣ) →* points n hn A :=
-  MonoidHom.codRestrict
-    (kostantTorusMatrix (lattice n).toAddSubgroup (latticeBasis n) (basisWeight n))
-    (points n hn A) fun s ↦ by
-      rw [points]
-      exact kostantTorusMatrix_mem_toralPoints _ _ _ _ _ _ _ _ A s
+  kostantToralWeightTorusPoints
+    (TauCeti.serreRootGenerator (CartanMatrix.D n))
+    (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
+    (rep_kostantForm_mem_lattice n hn) (isNilpotent_rep_rootGenerator n hn)
+    (latticeBasis n) (basisWeight n) A
 
 /-- A weight-torus point is the diagonal matrix obtained by evaluating each spin weight. -/
 @[simp]
@@ -385,8 +379,7 @@ theorem coe_weightTorusPoints (A : Type v) [CommRing A] (s : Fin n → Aˣ) :
     (weightTorusPoints n hn A s :
         _root_.Matrix.GeneralLinearGroup (Fin (dimension n)) A) =
       kostantTorusMatrix (lattice n).toAddSubgroup (latticeBasis n) (basisWeight n) s := by
-  rw [weightTorusPoints]
-  rfl
+  exact coe_kostantToralWeightTorusPoints _ _ _ _ _ _ _ _ A s
 
 /-! ## The Cartan action on the numbered root generators -/
 
@@ -401,14 +394,11 @@ theorem lie_serreH_rootGenerator (k : Fin n ⊕ Fin n) (j : Fin n) :
         TauCeti.serreRootGenerator (CartanMatrix.D n) k := by
   cases k with
   | inl i =>
-      rw [TauCeti.serreRootGenerator_inl, TauCeti.lie_serreH_serreE,
-        (CartanMatrix.D_isSymm n).apply i j]
-      simp only [TypeDStd.rootGeneratorWeight_inl, Int.cast_smul_eq_zsmul]
+      rw [TauCeti.lie_serreH_serreRootGenerator_inl,
+        (CartanMatrix.D_isSymm n).apply i j, TypeDStd.rootGeneratorWeight_inl]
   | inr i =>
-      rw [TauCeti.serreRootGenerator_inr, TauCeti.lie_serreH_serreF,
-        (CartanMatrix.D_isSymm n).apply i j]
-      simp only [TypeDStd.rootGeneratorWeight_inr, Int.cast_neg, neg_smul,
-        Int.cast_smul_eq_zsmul]
+      rw [TauCeti.lie_serreH_serreRootGenerator_inr,
+        (CartanMatrix.D_isSymm n).apply i j, TypeDStd.rootGeneratorWeight_inr]
 
 /-! ## The pinning equation -/
 
@@ -424,47 +414,12 @@ theorem weightTorusPoints_conj_rootSubgroupPoints (k : Fin n ⊕ Fin n) (A : Typ
         (Multiplicative.ofAdd
           ((TauCeti.torusCharacter s (TypeDStd.rootGeneratorWeight n k) : A) *
             Multiplicative.toAdd u)) := by
-  -- The intertwining form of the generic pinning equation, in the coordinates of the base-changed
-  -- lattice basis. Its value ring is the plain `A` the carrier points are taken over, so no
-  -- passage through the category of `ℤ`-algebras is needed.
-  have hmul := kostantTorusPoints_mul_kostantRootSubgroupPoints
+  exact kostantToralWeightTorusPoints_conj_rootSubgroupPoints
     (TauCeti.serreRootGenerator (CartanMatrix.D n))
     (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
-    (rep_kostantForm_mem_lattice n hn) (latticeBasis n) (basisWeight n)
-    (isCartanWeightVector_latticeBasis n hn) (lie_serreH_rootGenerator n k)
-    (isNilpotent_rep_rootGenerator n hn k) s
-    ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm u)
-    ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm
-      (Multiplicative.ofAdd
-        ((TauCeti.torusCharacter s (TypeDStd.rootGeneratorWeight n k) : A) *
-          Multiplicative.toAdd u))) (by simp)
-  -- Reading a root-subgroup point in those coordinates is its matrix form. This is folded into the
-  -- transported equation with `simp only`, whose keyed matching stays away from the unrelated
-  -- coercions the equation carries.
-  have hroot : ∀ f : WithConv (SymmetricAlgebra ℤ ℤ →ₐ[ℤ] A),
-      Units.map (LinearMap.toMatrixAlgEquiv ((latticeBasis n).baseChange A)).toMonoidHom
-          (kostantRootSubgroupPoints
-            (TauCeti.serreRootGenerator (CartanMatrix.D n))
-            (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
-            (rep_kostantForm_mem_lattice n hn) k (isNilpotent_rep_rootGenerator n hn k) f) =
-        kostantRootSubgroupMatrix
-          (TauCeti.serreRootGenerator (CartanMatrix.D n))
-          (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
-          (rep_kostantForm_mem_lattice n hn) k (isNilpotent_rep_rootGenerator n hn k)
-          (latticeBasis n) f :=
-    fun f ↦ (DFunLike.congr_fun (kostantRootSubgroupMatrix_def (A := A)
-      (TauCeti.serreRootGenerator (CartanMatrix.D n))
-      (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
-      (rep_kostantForm_mem_lattice n hn) k (isNilpotent_rep_rootGenerator n hn k)
-      (latticeBasis n)) f).symm
-  have hmatrix := congrArg
-    (Units.map (LinearMap.toMatrixAlgEquiv ((latticeBasis n).baseChange A)).toMonoidHom) hmul
-  simp only [map_mul, hroot] at hmatrix
-  apply Subtype.ext
-  simp only [Subgroup.coe_mul, Subgroup.coe_inv, coe_weightTorusPoints, coe_rootSubgroupPoints]
-  rw [mul_inv_eq_iff_eq_mul, ← basisMatrix_kostantTorusPoints (lattice n).toAddSubgroup
-    (latticeBasis n) (basisWeight n) (A := A) s]
-  simpa only [MulEquiv.toMonoidHom_eq_coe] using hmatrix
+    (rep_kostantForm_mem_lattice n hn) (isNilpotent_rep_rootGenerator n hn)
+    (latticeBasis n) (basisWeight n) (isCartanWeightVector_latticeBasis n hn)
+    (lie_serreH_rootGenerator n k) A s u
 
 /-- **Conjugation by the spin weight torus acts on each numbered root subgroup through its
 positive or negative simple-root character.** -/
