@@ -55,7 +55,7 @@ are what makes the numerator *alternating*, which is the content of
   is exactly the dot orbit and has `|W|` elements, and the numerator does not vanish. A **dominant**
   weight has an injective dot orbit map by
   `TauCeti.dotAction_eq_dotAction_iff_of_mem_dominantChamber`, whence
-  `TauCeti.coeff_weylNumerator_dotAction`, `TauCeti.support_coeff_weylNumerator`,
+  `TauCeti.coeff_weylNumerator_dotAction_self`, `TauCeti.support_coeff_weylNumerator`,
   `TauCeti.card_support_coeff_weylNumerator` and
   `TauCeti.weylNumerator_ne_zero_of_mem_dominantChamber`.
 
@@ -236,7 +236,7 @@ private lemma injective_dotAction_of_mem_dominantChamber {lam : M}
 /-- **The coefficients of the numerator of a dominant weight are the signs.** No two Weyl-group
 elements carry a dominant weight to the same place, so the term of `w` sits alone at `w ⬝ λ`. -/
 @[simp]
-theorem coeff_weylNumerator_dotAction {lam : M} (hlam : lam ∈ dominantChamber P b)
+theorem coeff_weylNumerator_dotAction_self {lam : M} (hlam : lam ∈ dominantChamber P b)
     (w : P.weylGroup) :
     (weylNumerator P b lam).coeff (dotAction P b w lam) = ((weylSign P b w : ℤ)) :=
   coeff_weylNumerator_dotAction_of_injective P b

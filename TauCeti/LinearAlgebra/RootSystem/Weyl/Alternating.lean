@@ -58,7 +58,8 @@ every result below.
 ## Main results
 
 * `TauCeti.isDotAlternating_weylNumerator` and `TauCeti.isDotAlternating_weylDenominator`: the Weyl
-  numerator of any weight, and the Weyl denominator, are alternating.
+  numerator of any weight, and the Weyl denominator, are alternating;
+  `TauCeti.coeff_weylNumerator_dotAction` is the numerator's coefficient-level simplification rule.
 * `TauCeti.IsDotAlternating.eq_of_coeff_openDotDominantChamber_eq`: an alternating element is
   determined by its coefficients on the open chamber of the dot action.
 * `TauCeti.IsDotAlternating.eq_sum_weylNumerator`: **an alternating element is the sum of the Weyl
@@ -194,6 +195,15 @@ theorem coeff_eq_zero_of_coroot'_eq_neg_one (hf : IsDotAlternating P b f) {i : �
     ((dotAction_ofIdx_eq_self_iff P b hi x).mpr hx)
 
 end IsDotAlternating
+
+variable (P b) in
+/-- **The coefficients of the Weyl numerator transform by the sign character under the dot
+action:** `[e^{w ⬝ x}] N(λ) = sgn(w) [e^x] N(λ)`. -/
+@[simp]
+theorem coeff_weylNumerator_dotAction [Fintype P.weylGroup] (lam : M) (w : P.weylGroup) (x : M) :
+    (weylNumerator P b lam).coeff (dotAction P b w x) =
+      (weylSign P b w : ℤ) * (weylNumerator P b lam).coeff x :=
+  (isDotAlternating_weylNumerator P b lam).coeff_dotAction w x
 
 /-- A finite sum of alternating elements is alternating. -/
 theorem isDotAlternating_sum {α : Type*} {s : Finset α} {g : α → AddMonoidAlgebra ℤ M}
