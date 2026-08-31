@@ -62,10 +62,11 @@ exists to record. Together with `TauCeti.GroupPresentation.relators_def` and
 the relations defining the presented group, so a consumer reasons about the row without unfolding
 it.
 
-Three decidable checks accompany those equations. The relator lengths and their total record the
-compiled data one word at a time and in aggregate, and cyclic reducedness makes the letter count
-comparable with the source's published length. The nine-word total is `238`, exactly the figure in
-the source header for the version including the useful redundant relator.
+Four decidable checks accompany those equations. The relator lengths and two aggregate totals record
+the compiled data one word at a time and in aggregate, and cyclic reducedness makes the letter
+counts comparable with the source's published lengths. The nine-word total is `238` and deleting the
+useful redundant eighth relator leaves `190`, exactly the two figures in the source header for the
+two versions of the presentation.
 
 ## Main definitions and results
 
@@ -287,7 +288,8 @@ the figures on the source's header lines `Length: 190 [or 238].` and `NoRels: 8 
 bracketed alternatives are exactly the presence of this relator. -/
 theorem m23Presentation_sum_map_length_eraseIdx_relators :
     ((m23Presentation.relators.eraseIdx 7).map List.length).sum = 190 := by
-  simp [GroupPresentation.relators_def, m23Presentation]
+  rw [← List.eraseIdx_map, m23Presentation_map_length_relators]
+  decide
 
 /-- Every compiled relator word for `M₂₃` is cyclically reduced. This is what makes
 `TauCeti.Sporadic.m23Presentation_totalLength` and
