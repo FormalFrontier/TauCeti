@@ -96,8 +96,14 @@ theorem independent_apply (μ : ∀ i, PMF (X i)) (x : ∀ i, X i) :
     (independent μ).1 x = ∏ i, μ i (x i) := by
   simp only [independent, Measure.toPMF_apply]
   let _ : ∀ i, MeasurableSpace (X i) := fun _ ↦ ⊤
-  erw [MultiCoupling.coe_pi]
-  change Measure.pi (fun i ↦ (μ i).toMeasure) {x} = _
+  have hpi :
+      ((MultiCoupling.pi (fun i ↦
+          (⟨(μ i).toMeasure, inferInstance⟩ : ProbabilityMeasure (X i))) :
+        ProbabilityMeasure (∀ i, X i)).toMeasure) =
+        Measure.pi (fun i ↦ (μ i).toMeasure) := by
+    erw [MultiCoupling.coe_pi]
+    exact ProbabilityMeasure.toMeasure_pi _
+  rw [hpi]
   rw [Measure.pi_singleton]
   simp
 
