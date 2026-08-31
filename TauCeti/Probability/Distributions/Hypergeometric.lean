@@ -252,9 +252,10 @@ private theorem sum_fst_mul_choose_mul_choose (A B r : ℕ) (hr : 0 < r) :
           rw [Finset.mul_sum]
           apply Finset.sum_congr rfl
           intro p hp
-          rw [show (p.1 + 1) * (a + 1).choose (p.1 + 1) =
-              (a + 1) * a.choose p.1 by
-            simpa [Nat.mul_comm] using (Nat.add_one_mul_choose_eq a p.1).symm]
+          have hchoose : (p.1 + 1) * (a + 1).choose (p.1 + 1) =
+              (a + 1) * a.choose p.1 := by
+            simpa [Nat.mul_comm] using (Nat.add_one_mul_choose_eq a p.1).symm
+          rw [hchoose]
           ring
         _ = (a + 1) * (a + B).choose s := by
           rw [← Nat.add_choose_eq]
@@ -287,7 +288,8 @@ private theorem sum_fst_mul_pred_mul_choose_mul_choose (A B r : ℕ) (hr : 2 ≤
           · simp [h]
           · simp [Nat.choose_eq_zero_of_lt h]
       | succ a =>
-          rw [show 2 + s = (s + 1) + 1 by omega]
+          have hr : 2 + s = (s + 1) + 1 := by omega
+          rw [hr]
           rw [Finset.Nat.sum_antidiagonal_succ]
           simp only [Nat.zero_mul, zero_add, Nat.add_sub_cancel]
           calc
@@ -314,11 +316,12 @@ private theorem sum_fst_mul_pred_mul_choose_mul_choose (A B r : ℕ) (hr : 2 ≤
               rw [sum_fst_mul_choose_mul_choose (a + 1) B (s + 1) (by omega)]
             _ = (a + 2) * (a + 2 - 1) *
                 (a + 2 + B - 2).choose (s + 2 - 2) := by
-              rw [show a + 2 - 1 = a + 1 by omega,
-                show a + 2 + B - 2 = a + B by omega,
-                show s + 2 - 2 = s by omega,
-                show a + 1 + B - 1 = a + B by omega,
-                show s + 1 - 1 = s by omega]
+              have haPred : a + 2 - 1 = a + 1 := by omega
+              have haBPred : a + 2 + B - 2 = a + B := by omega
+              have hsPred : s + 2 - 2 = s := by omega
+              have haBPred' : a + 1 + B - 1 = a + B := by omega
+              have hsPred' : s + 1 - 1 = s := by omega
+              rw [haPred, haBPred, hsPred, haBPred', hsPred']
               ring
 
 private theorem sum_range_mul_choose_mul_choose {N K n : ℕ} (hK : K ≤ N) (hn : 0 < n) :
@@ -434,7 +437,8 @@ private theorem sum_hypergeometricWeight_toReal_mul_pred {N K n : ℕ} (hK : K �
           exact Nat.add_one_mul_choose_eq M m
         have hchoose₂ : (N - 1) * (N - 2).choose (n - 2) =
             (N - 1).choose (n - 1) * (n - 1) := by
-          obtain ⟨M, hM⟩ := Nat.exists_eq_add_of_le (show 2 ≤ N by omega)
+          have hNtwo : 2 ≤ N := by omega
+          obtain ⟨M, hM⟩ := Nat.exists_eq_add_of_le hNtwo
           obtain ⟨m, hm⟩ := Nat.exists_eq_add_of_le hn2
           subst N
           subst n
@@ -475,6 +479,7 @@ private theorem sum_hypergeometricWeight_toReal_mul_pred {N K n : ℕ} (hK : K �
 
 /-- The mean of the real cast of a valid hypergeometric law is `nK / N` when the population
 is nonempty. The only valid empty-population parameters are handled separately below. -/
+@[simp]
 theorem integral_id_map_cast_hypergeometricMeasure {N K n : ℕ}
     (hK : K ≤ N) (hn : n ≤ N) (hN : 0 < N) :
     ∫ x, x ∂((hypergeometricMeasure N K n).map (Nat.cast : ℕ → ℝ)) =
@@ -512,12 +517,14 @@ private theorem integrable_sq_id_map_cast_hypergeometricMeasure (N K n : ℕ) :
     Integrable (fun x : ℝ ↦ x ^ 2)
       ((hypergeometricMeasure N K n).map (Nat.cast : ℕ → ℝ)) := by
   rw [(MeasurableEmbedding.natCast (α := ℝ)).integrable_map_iff]
-  change Integrable (fun k : ℕ ↦ (k : ℝ) ^ 2) (hypergeometricMeasure N K n)
-  exact integrable_hypergeometricMeasure (fun k : ℕ ↦ ((k : ℝ) ^ 2)) N K n
+  convert integrable_hypergeometricMeasure (fun k : ℕ ↦ ((k : ℝ) ^ 2)) N K n using 1
+  funext k
+  rfl
 
 /-- The variance of the real cast of a valid hypergeometric law for a population with at least
 two elements. The finite-population correction is `(N - n) / (N - 1)`; populations of size zero
 and one are handled separately below. -/
+@[simp]
 theorem variance_id_map_cast_hypergeometricMeasure {N K n : ℕ}
     (hK : K ≤ N) (hn : n ≤ N) (hN : 1 < N) :
     variance id ((hypergeometricMeasure N K n).map (Nat.cast : ℕ → ℝ)) =
@@ -555,6 +562,7 @@ theorem variance_id_map_cast_hypergeometricMeasure_zero :
 
 /-- Every valid hypergeometric law on a population of size one has variance zero. This is stated
 separately because the usual formula contains the totalized quotient by `N - 1`. -/
+@[simp]
 theorem variance_id_map_cast_hypergeometricMeasure_of_population_one {K n : ℕ}
     (hK : K ≤ 1) (hn : n ≤ 1) :
     variance id ((hypergeometricMeasure 1 K n).map (Nat.cast : ℕ → ℝ)) = 0 := by
