@@ -77,7 +77,6 @@ abbrev separateNoiseCongr (rowPerm colPerm : Equiv.Perm ℕ) :
     (NoiseIndex Axis (ℕ × ℕ) → I) ≃ᵐ (NoiseIndex Axis (ℕ × ℕ) → I) :=
   noiseCongr (separateVertexPerm rowPerm colPerm) (separateCellPerm rowPerm colPerm)
 
-@[simp]
 theorem map_separateNoiseCongr_noiseMeasure (rowPerm colPerm : Equiv.Perm ℕ) :
     (noiseMeasure Axis (ℕ × ℕ)).map (separateNoiseCongr rowPerm colPerm) =
       noiseMeasure Axis (ℕ × ℕ) :=
@@ -111,7 +110,6 @@ abbrev jointNoiseCongr (perm : Equiv.Perm ℕ) :
     (NoiseIndex Unit (Sym2 ℕ) → I) ≃ᵐ (NoiseIndex Unit (Sym2 ℕ) → I) :=
   noiseCongr (fun _ : Unit => perm) (jointCellPerm perm)
 
-@[simp]
 theorem map_jointNoiseCongr_noiseMeasure (perm : Equiv.Perm ℕ) :
     (noiseMeasure Unit (Sym2 ℕ)).map (jointNoiseCongr perm) =
       noiseMeasure Unit (Sym2 ℕ) :=
