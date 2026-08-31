@@ -8,8 +8,6 @@ module
 public import Mathlib.NumberTheory.Modular
 public import TauCeti.Analysis.Complex.UpperHalfPlane.MoebiusAction
 public import TauCeti.Analysis.Complex.UpperHalfPlane.Measure
-public import TauCeti.GroupTheory.Index
-public import TauCeti.LinearAlgebra.Matrix.SpecialLinearGroup.Basic
 import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
 import Mathlib.MeasureTheory.Measure.Lebesgue.EqHaar
 
@@ -33,8 +31,6 @@ sums of integrals over translates into a single integral over their union.
 * `ModularGroup.isOpen_smul_fdo` and `ModularGroup.disjoint_smul_fdo`: the translates of the
   open fundamental domain are open, and two of them are disjoint unless the translating
   elements differ by a sign.
-* `ModularGroup.pairwise_disjoint_smul_fdo_out_withCenter`: the translates of `𝒟ᵒ` indexed by
-  the cosets of `Γ·{±I}` are pairwise disjoint.
 
 Split out of the Petersson inner-product development ported from the AINTLIB
 `LeanModularForms` project
@@ -194,25 +190,5 @@ theorem disjoint_smul_fdo {γ δ : SL(2, ℤ)} (h₁ : γ⁻¹ * δ ≠ 1) (h₂
   refine (eq_one_or_neg_one_of_mem_fdo_mem_fdo hz' (g := γ⁻¹ * δ) ?_).elim h₁ h₂
   rw [mul_smul, hw', inv_smul_smul]
   exact hz
-
-/-- **The translates of `𝒟ᵒ` indexed by the cosets of `Γ·{±I}` are pairwise disjoint.** By
-`ModularGroup.disjoint_smul_fdo` it suffices that the chosen representatives of two distinct
-cosets differ neither by `1` nor by `−1`; and both `1` and `−1` lie in `Γ·{±I}`, so either
-coincidence would identify the two cosets. -/
-theorem pairwise_disjoint_smul_fdo_out_withCenter (Γ : Subgroup SL(2, ℤ)) :
-    Pairwise (Function.onFun Disjoint
-      fun q : SL(2, ℤ) ⧸ Γ.withCenter ↦ ((q.out)⁻¹ • fdo)) := by
-  intro q₁ q₂ hq
-  refine disjoint_smul_fdo ?_ ?_ <;> rw [inv_inv] <;> intro h <;> apply hq
-  · rw [← Quotient.out_eq q₁, ← Quotient.out_eq q₂, mul_inv_eq_one.mp h]
-  · have hneg : q₁.out = -q₂.out := by
-      rw [mul_inv_eq_iff_eq_mul] at h
-      simpa using h
-    rw [← Quotient.out_eq q₁, ← Quotient.out_eq q₂, hneg]
-    refine QuotientGroup.eq.mpr ?_
-    have hcalc : (-q₂.out)⁻¹ * q₂.out = -1 := by rw [← neg_inv, neg_mul, inv_mul_cancel]
-    rw [hcalc]
-    exact Γ.center_le_withCenter
-      (Matrix.SpecialLinearGroup.mem_center_iff_eq_one_or_eq_neg_one.mpr (Or.inr rfl))
 
 end ModularGroup
