@@ -32,10 +32,12 @@ transport changes no matrix, and the one thing it has to check is that the two F
 endomorphisms correspond under it, which they do because both act entrywise.
 
 What the isomorphism adds over
-`TauCeti.DynkinType.map_subtype_fixedSubgroup_geckFrobenius_eq`, which is already available, is the
-group structure: that lemma describes the fixed points as a *set* of matrices, an equality of two
-subgroups of `GLₙ(A)`, while a consumer that wants to read a property of `G(A)^F` off the same
-property of `G(𝔽)` needs a homomorphism between the two groups.
+`TauCeti.DynkinType.map_subtype_fixedSubgroup_geckFrobenius_eq`, which is already available, is a
+map. That lemma equates two subgroups of the ambient `GLₙ(A)`: the image of the fixed subgroup and
+the image of the points over `𝔽`. It names no map between `G(𝔽)` and `G(A)^F` themselves, and a
+consumer that wants to read a property of `G(A)^F` off the same property of `G(𝔽)` needs one. The
+isomorphism below packages that equality of embedded subgroups as an explicit `MulEquiv` between
+the two element types.
 
 Naturality on the pinned generating families is not restated: the isomorphism is the entrywise
 inclusion, by `TauCeti.DynkinType.coe_geckPointsMulEquivFixedSubgroupGeckFrobenius`, so
@@ -60,6 +62,10 @@ finite, perfect, simple, or a named finite group of Lie type.
 * `TauCeti.DynkinType.coe_geckPointsMulEquivFixedSubgroupGeckFrobenius` and
   `TauCeti.DynkinType.coe_geckPointsMulEquivFixedSubgroupGeckFrobenius_apply`: the isomorphism is
   the entrywise inclusion of the Frobenius-fixed subring into the value ring.
+* `TauCeti.DynkinType.coe_geckPointsMulEquivFixedSubgroupGeckFrobenius_symm_apply` and
+  `TauCeti.DynkinType.coe_geckPointsMulEquivFixedSubgroupGeckFrobenius_symm_apply_apply`: the same
+  read backwards, so that a Frobenius-fixed point is recovered from its inverse image entry by
+  entry.
 
 ## References
 
@@ -81,8 +87,8 @@ for the points of a Hopf algebra rather than for matrix points, is
 This advances the target "points over an algebraically closed field as a group, functorially in the
 field, so that a field endomorphism induces a group endomorphism of the points. The `q`-power
 Frobenius is the case a consumer asks for first" in Layer 9 of
-`TauCetiRoadmap/ReductiveGroups/README.md`, by saying which group that endomorphism fixes, as a
-group and not merely as a subgroup of `GLₙ(A)`.
+`TauCetiRoadmap/ReductiveGroups/README.md`, by naming an isomorphism onto the group that
+endomorphism fixes, from the points over the fixed subring.
 -/
 
 public section
@@ -136,7 +142,9 @@ private theorem geckPointsMulEquivHopfIdealPoints_comp_geckFrobenius :
 /-! ## The fixed points as points over the fixed subring -/
 
 /-- **The Frobenius-fixed points of the pinned Geck carrier are its points over the Frobenius-fixed
-subring**, as groups and not merely as subgroups of `GLₙ(A)`. For `p` prime, `0 < k` and `A` an
+subring**, as an isomorphism between the two element types rather than as the equality of their
+images in `GLₙ(A)` recorded by
+`TauCeti.DynkinType.map_subtype_fixedSubgroup_geckFrobenius_eq`. For `p` prime, `0 < k` and `A` an
 algebraic closure of `ZMod p` this reads `G(𝔽_q) ≃* G(A)^F` with `q = p ^ k`.
 
 It is `TauCeti.GeneralLinear.frobeniusFixedHopfIdealPointsMulEquiv`, the same isomorphism for the
@@ -177,6 +185,32 @@ theorem coe_geckPointsMulEquivFixedSubgroupGeckFrobenius_apply
             ↥(frobeniusFixedSubring A p k)) r c : ↥(frobeniusFixedSubring A p k)) : A) := by
   rw [coe_geckPointsMulEquivFixedSubgroupGeckFrobenius, Matrix.GeneralLinearGroup.map_apply,
     Subring.coe_subtype]
+
+/-- **The inverse of the isomorphism reads a Frobenius-fixed point as a point over the
+Frobenius-fixed subring**: including its matrix back into the `A`-valued points returns the point
+one started from. -/
+@[simp]
+theorem coe_geckPointsMulEquivFixedSubgroupGeckFrobenius_symm_apply
+    (x : ↥(fixedSubgroup (t.geckFrobenius ht p k A))) :
+    Matrix.GeneralLinearGroup.map (frobeniusFixedSubring A p k).subtype
+        ((t.geckPointsMulEquivFixedSubgroupGeckFrobenius ht p k A).symm x) =
+      ((x : t.geckPoints ht A) : Matrix.GeneralLinearGroup (Fin (t.geckDim ht)) A) := by
+  rw [← coe_geckPointsMulEquivFixedSubgroupGeckFrobenius, MulEquiv.apply_symm_apply]
+
+/-- Entrywise, the point over the Frobenius-fixed subring produced by the inverse of the
+isomorphism has the entries of the Frobenius-fixed point it came from. -/
+@[simp]
+theorem coe_geckPointsMulEquivFixedSubgroupGeckFrobenius_symm_apply_apply
+    (x : ↥(fixedSubgroup (t.geckFrobenius ht p k A))) (r c : Fin (t.geckDim ht)) :
+    (((((t.geckPointsMulEquivFixedSubgroupGeckFrobenius ht p k A).symm x :
+            Matrix.GeneralLinearGroup (Fin (t.geckDim ht))
+              ↥(frobeniusFixedSubring A p k)) :
+          Matrix (Fin (t.geckDim ht)) (Fin (t.geckDim ht))
+            ↥(frobeniusFixedSubring A p k)) r c : ↥(frobeniusFixedSubring A p k)) : A) =
+      ((((x : t.geckPoints ht A) : Matrix.GeneralLinearGroup (Fin (t.geckDim ht)) A) :
+        Matrix (Fin (t.geckDim ht)) (Fin (t.geckDim ht)) A) r c) := by
+  rw [← coe_geckPointsMulEquivFixedSubgroupGeckFrobenius_symm_apply,
+    Matrix.GeneralLinearGroup.map_apply, Subring.coe_subtype]
 
 end
 
