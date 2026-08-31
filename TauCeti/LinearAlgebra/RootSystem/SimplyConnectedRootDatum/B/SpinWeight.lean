@@ -93,7 +93,6 @@ private theorem algebraMap_indicator_sub_eq_spinWeight_sub {K : Type*} [CommRing
 `typeBSpinWeight` is obtained from the orthonormal sign weight by pairing with the simple
 coroot, that is, by taking an adjacent difference away from the terminal node and doubling the
 terminal coordinate. -/
-@[simp]
 theorem algebraMap_typeBSpinWeight_apply {K : Type*} [CommRing K] [Invertible (2 : K)] {n : ℕ}
     (s : Finset (Fin n)) (i : Fin n) :
     algebraMap ℤ K (typeBSpinWeight s i) =
