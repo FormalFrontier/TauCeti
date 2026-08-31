@@ -44,15 +44,15 @@ digest is `6ab1294d2599ce209cb9ef53e433cdb40342244ac387c425d0682be6ab55e374`. It
 The rendered presentation page lists the seven active words in this order:
 
 ```text
-x², y⁷, (xy)¹⁷, [x,y]⁶, [x,y³]⁵,
-[x,yxyxy⁻¹xyxy],
-(xy)⁴xy²xy⁻³xyxyxy⁻¹xy³xy⁻²xy².
+a², b⁷, (ab)¹⁷, [a,b]⁶, [a,b³]⁵,
+[a,babab⁻¹abab],
+(ab)⁴ab²ab⁻³ababab⁻¹ab³ab⁻²ab².
 ```
 
 These are exactly the seven entries of `hePresentation_transcribed`, after expanding the source
 commutator `[r,s]` as `r⁻¹s⁻¹rs` and the two private long-word abbreviations. The Magma
-constructor contains the same active words, but places the long commutator before `[x,y³]⁵` and
-`[x,y]⁶`; the Lean row deliberately follows the rendered page's order. The constructor also
+constructor writes the same active words in `x,y`, but places the long commutator before
+`[x,y³]⁵` and `[x,y]⁶`; the Lean row deliberately follows the rendered page's order. It also
 comments out three other words, marking each redundant and two of them possibly useful, so none
 belongs to the active relator list. This checks every source relator, inverse, exponent, both
 source-order renderings, and the active/commented boundary independently of the original
