@@ -65,8 +65,9 @@ generate a subgroup of `Equiv.Perm (Fin 276)` with proved order `495766656000` a
 simplicity. Its first five generators fix point `275` and restrict to the pinned `McL` generators;
 the sixth moves that point.
 
-An independent ATLAS 276-point standard pair has orders `3` and `4`, with product of order `14`.
-Its source files have respective SHA-256 digests
+An independent ATLAS 276-point standard pair is given by the files `Co3G1-p276B0.g1` and
+`Co3G1-p276B0.g2`. It has orders `3` and `4`, with product of order `14`, and the two files have
+respective SHA-256 digests
 `3681b302dfb31792d27d3d5c82b29ffb8576cd6f8fea063c5c5de97cc4fc7ed9` and
 `ef3a53d716836ee0d773dc5591e42f16c9c4954c84902eddc15fc42e8a42fce8`. In that group, the
 centralizer of an involution whose conjugacy class has length `170775` has order `2903040`.
@@ -127,6 +128,10 @@ These field equations and the checks beside them follow the shape that the
 * D. Ž. Đoković, *Presentations of some finite simple groups*, J. Austral. Math. Soc. Ser. A
   **45** (1988), 143--168, presentation (13.1), p. 162,
   <https://doi.org/10.1017/S1446788700030068>.
+* R. A. Wilson, R. A. Parker, J. N. Bray et al., *ATLAS of Finite Group Representations*,
+  the 276-point `Co3` standard-generator files
+  <https://brauer.maths.qmul.ac.uk/Atlas/spor/Co3/gap/Co3G1-p276B0.g1> and
+  <https://brauer.maths.qmul.ac.uk/Atlas/spor/Co3/gap/Co3G1-p276B0.g2>.
 * KitaKen1, *FiniteSimpleGroups*, `Co3` construction at commit
   `7f09e33a9ceef6b59ce03e34cd4f0558c763e325`,
   <https://github.com/KitaKen1/finite-simple-groups-lean>.

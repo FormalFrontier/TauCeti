@@ -82,7 +82,11 @@ generate a subgroup of `Equiv.Perm (Fin 2300)` with proved order `42305421312000
 simplicity. Those generators both have order `23`, so they are not the standard pair used by this
 row.
 
-The independent ATLAS 2300-point standard pair has orders `2` and `5`, with product of order `28`.
+The independent ATLAS 2300-point standard pair is given by the files `Co2G1-p2300B0.g1` and
+`Co2G1-p2300B0.g2`, whose bytes have respective SHA-256 digests
+`388e0c3c1e66fefe7c75f6155dc7d84d30b4a91ee52b028c5902416a06c21d39` and
+`2ab89fcfc29455a03b7027c8a93c8dc832ac1259dfee712ef5fffc9cab56e527`. The pair has orders `2`
+and `5`, with product of order `28`.
 The pinned pair and the ATLAS pair each determine the same rank-three graph: their point stabilizer
 suborbits have lengths `1`, `891`, and `1408`, and the nontrivial orbit of length `891` is the
 neighbor set. Canonically labeling the two 891-regular graphs with pynauty transports the ATLAS
@@ -133,7 +137,10 @@ These field equations and the checks beside them follow the shape that the
   version 3, presentation `Co2G1-P1`, contributed by John Bray,
   <https://brauer.maths.qmul.ac.uk/Atlas/v3/pres/Co2G1-P1>, with the relators and the
   demonstration of correctness in the Magma source file
-  <https://brauer.maths.qmul.ac.uk/Atlas/spor/Co2/mag/Co2G1-P1.M>.
+  <https://brauer.maths.qmul.ac.uk/Atlas/spor/Co2/mag/Co2G1-P1.M>; the comparison uses its
+  2300-point standard-generator files
+  <https://brauer.maths.qmul.ac.uk/Atlas/spor/Co2/gap/Co2G1-p2300B0.g1> and
+  <https://brauer.maths.qmul.ac.uk/Atlas/spor/Co2/gap/Co2G1-p2300B0.g2>.
 * KitaKen1, *FiniteSimpleGroups*, `Co2` construction at commit
   `7f09e33a9ceef6b59ce03e34cd4f0558c763e325`,
   <https://github.com/KitaKen1/finite-simple-groups-lean>.
