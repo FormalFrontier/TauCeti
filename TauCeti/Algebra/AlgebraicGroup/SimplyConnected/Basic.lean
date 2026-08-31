@@ -21,6 +21,9 @@ The source and target of the isogenies are required to be semisimple. Allowing a
 group schemes would make the definition test central isogenies from nonsmooth finite group
 schemes, which is not the standard notion for semisimple algebraic groups.
 
+This coordinate-Hopf interface is adapted from the scheme-side formalization in
+`TauCeti.AlgebraicGeometry.AffineGroupScheme.SimplyConnected`.
+
 Because a faithfully flat coordinate morphism is injective, the only missing half of bijectivity
 is surjectivity. Thus `simplyConnectedSemisimpleCommHopfAlgProperty_iff_forall_surjective` gives
 the characteristic coordinate criterion: a semisimple group is simply connected exactly when
@@ -115,6 +118,14 @@ theorem bijective (hH : simplyConnectedSemisimpleCommHopfAlgProperty k H)
 
 end simplyConnectedSemisimpleCommHopfAlgProperty
 
+/-- The composite inclusion from semisimple Hopf algebras to commutative Hopf algebras maps a
+morphism to its underlying commutative-Hopf-algebra morphism. -/
+private theorem semisimpleCommHopfAlgForget_map
+    {H K : SemisimpleCommHopfAlgCat.{u} k} (f : H ⟶ K) :
+    (((semisimpleCommHopfAlgProperty k).ι ⋙
+      (finiteTypeCommHopfAlgProperty k).ι).map f) = f.hom.hom :=
+  rfl
+
 /-- A semisimple affine group is simply connected exactly when every coordinate central
 isogeny out of its Hopf algebra is surjective.
 
@@ -134,7 +145,7 @@ theorem simplyConnectedSemisimpleCommHopfAlgProperty_iff_forall_surjective
     let F := (semisimpleCommHopfAlgProperty k).ι ⋙
       (finiteTypeCommHopfAlgProperty k).ι
     let _ : IsIso (F.map f) := by
-      change IsIso f.hom.hom
+      rw [semisimpleCommHopfAlgForget_map]
       exact this
     exact isIso_of_reflects_iso f F
 
