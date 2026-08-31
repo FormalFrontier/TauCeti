@@ -121,16 +121,11 @@ theorem lastExitAdmissible_of_support_lt_visitCount {π : α → Equiv.Perm ℕ}
 def pathOfReindexedSuccessors (π : α → Equiv.Perm ℕ) (x : ℕ → α) : ℕ → α :=
   pathOfSuccessors (x 0) fun a k => successorArray x a (π a k)
 
-private theorem pathOfReindexedSuccessors_def_private (π : α → Equiv.Perm ℕ) (x : ℕ → α) :
-    pathOfReindexedSuccessors π x =
-      pathOfSuccessors (x 0) fun a k => successorArray x a (π a k) :=
-  rfl
-
 /-- The defining equation for reconstruction from reindexed successor rows. -/
 theorem pathOfReindexedSuccessors_def (π : α → Equiv.Perm ℕ) (x : ℕ → α) :
     pathOfReindexedSuccessors π x =
       pathOfSuccessors (x 0) fun a k => successorArray x a (π a k) :=
-  pathOfReindexedSuccessors_def_private π x
+  (rfl)
 
 /-- A rebuilt path starts where the original does. -/
 @[simp]
@@ -411,8 +406,10 @@ private theorem reindexStepEmbedding_val_ne (π : α → Equiv.Perm ℕ) (x : �
     have hsucc : visitCount (pathOfReindexedSuccessors π x) (x r) (j.val + 1) =
         visitCount (pathOfReindexedSuccessors π x) (x r) j.val + 1 :=
       visitCount_succ_of_eq hsource
+    have hj : j.val + 1 ≤ t := by
+      simpa only [Nat.succ_eq_add_one] using Nat.succ_le_of_lt j.isLt
     have hmono := visitCount_monotone (pathOfReindexedSuccessors π x) (x r)
-      (show j.val + 1 ≤ t from j.isLt)
+      hj
     omega
   have hp := visitCount_reindexStepIndex π x m j.val (hused j.val j.isLt) hmaps
   rw [reindexStepEmbedding_apply] at hej
@@ -466,7 +463,9 @@ theorem visitCount_pathOfReindexedSuccessors_lt_visitCount (π : α → Equiv.Pe
     -- Yet the arrival counts at `x (r + 1)` have to agree, since both prefixes end at `x m`.
     have hbcount : visitCount (pathOfReindexedSuccessors π x) (x (r + 1)) t =
         visitCount x (x (r + 1)) m := by
-      rcases eq_or_lt_of_le (show r + 1 ≤ m from hr) with hlastIndex | hbefore
+      have hrle : r + 1 ≤ m := by
+        simpa only [Nat.succ_eq_add_one] using Nat.succ_le_of_lt hr
+      rcases eq_or_lt_of_le hrle with hlastIndex | hbefore
       · rw [hlastIndex, ← hend]
         exact hcount
       · exact hmax (r + 1) (by omega) hbefore
