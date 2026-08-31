@@ -125,11 +125,6 @@ theorem equation_genericX_genericY :
   CoordinateRing.equation_of_algHom
     (IsScalarTower.toAlgHom R W.CoordinateRing W.FunctionField)
 
-/-- **The generic point is a point of the curve.** -/
-theorem equation_genericPoint :
-    (W⁄W.FunctionField).toAffine.Equation W.genericX W.genericY :=
-  equation_genericX_genericY W
-
 /-- **The image of `R[X]` in the function field consists of the polynomials in the generic
 `x`-coordinate.** -/
 theorem algebraMap_eq_aeval_genericX (p : R[X]) :

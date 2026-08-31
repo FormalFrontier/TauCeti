@@ -116,13 +116,15 @@ theorem relativeFrobenius_comp_map :
     (relativeFrobenius p W).toRingHom.comp
         (_root_.WeierstrassCurve.Affine.CoordinateRing.map W (frobenius R p)) =
       frobenius W.CoordinateRing p := by
-  rw [map_eq_adjoinRootMap]
   refine AdjoinRoot.ringHom_ext ?_ ?_
-  · apply RingHom.ext
-    intro g
-    simp only [AlgHom.toRingHom_eq_coe, RingHom.comp_apply, AdjoinRoot.map_of,
-      Polynomial.coe_mapRingHom, AlgHom.coe_toRingHom, frobenius_def, relativeFrobenius_of,
-      expand_map_frobenius, map_pow]
+  · apply Polynomial.ringHom_ext
+    · intro r
+      change relativeFrobenius p W
+          (map W (frobenius R p) (algebraMap R W.CoordinateRing r)) =
+        algebraMap R W.CoordinateRing r ^ p
+      rw [map_algebraMap]
+      simp [frobenius_def]
+    · simp [frobenius_def]
   · simp [frobenius_def]
 
 /-- The pointwise form of `relativeFrobenius_comp_map`. -/
@@ -201,13 +203,15 @@ theorem iterateRelativeFrobenius_comp_map (n : ℕ) :
         (_root_.WeierstrassCurve.Affine.CoordinateRing.map W
           (iterateFrobenius R p n)) =
       iterateFrobenius W.CoordinateRing p n := by
-  rw [map_eq_adjoinRootMap]
   refine AdjoinRoot.ringHom_ext ?_ ?_
-  · apply RingHom.ext
-    intro g
-    simp only [AlgHom.toRingHom_eq_coe, RingHom.comp_apply, AdjoinRoot.map_of,
-      Polynomial.coe_mapRingHom, AlgHom.coe_toRingHom, iterateFrobenius_def,
-      iterateRelativeFrobenius_of, expand_map_iterateFrobenius, map_pow]
+  · apply Polynomial.ringHom_ext
+    · intro r
+      change iterateRelativeFrobenius p W n
+          (map W (iterateFrobenius R p n) (algebraMap R W.CoordinateRing r)) =
+        algebraMap R W.CoordinateRing r ^ p ^ n
+      rw [map_algebraMap]
+      simp [iterateFrobenius_def]
+    · simp [iterateFrobenius_def]
   · simp [iterateFrobenius_def]
 
 /-- Pointwise form of `iterateRelativeFrobenius_comp_map`. -/

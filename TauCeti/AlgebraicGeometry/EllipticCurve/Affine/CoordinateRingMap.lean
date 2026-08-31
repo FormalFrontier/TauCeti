@@ -138,9 +138,7 @@ lemma map_XYIdeal (f : R →+* S) (x : R) (y : R[X]) :
   congr 1
   rw [Set.image_insert_eq, Set.image_singleton, map_XClass, map_YClass]
 
-/-- Mathlib's base-change map on a coordinate ring is `AdjoinRoot.map` along the coefficientwise
-map of bivariate polynomials. -/
-theorem map_eq_adjoinRootMap (f : R →+* S) :
+private theorem map_eq_adjoinRootMap (f : R →+* S) :
     map W f = AdjoinRoot.map (mapRingHom f) W.polynomial (W.map f).polynomial
       (dvd_of_eq (_root_.WeierstrassCurve.Affine.map_polynomial W f)) :=
   rfl
