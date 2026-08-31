@@ -326,10 +326,11 @@ jobs:
           persist-credentials: false
           fetch-depth: 1
 
-      # Full history is intentional. lake cache get --max-revs=0 walks all available ancestors
-      # until it reaches a published main commit, then Lake's input hashes invalidate only changed
-      # modules and their downstream dependents. The checkout is the immutable event head itself:
-      # no refs/pull/N/merge, no local merge, and no source/config overlay.
+      # Full history is intentional. lake cache get walks ancestors until it reaches a published
+      # main commit, then Lake's input hashes invalidate only changed modules and their downstream
+      # dependents. The cache step below limits how many ancestors it reads. The checkout is the
+      # immutable event head itself: no refs/pull/N/merge, no local merge, and no source/config
+      # overlay.
       - name: Checkout the exact candidate head (untrusted contents, no credentials)
         if: ${{ env.INFRA != '1' }}
         uses: actions/checkout@v4
@@ -604,7 +605,14 @@ jobs:
           # environment variables; the script hands it the endpoints through a `--service` config.
           PUBLIC_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT_PUBLIC }}
           PUBLIC_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT_PUBLIC }}
-          LAKE_CACHE_MAX_REVS: "0"
+          # This limit stops the search after 100 ancestors. The search otherwise stops only when
+          # a lookup succeeds. On a hit the first ancestor that main published succeeds. The
+          # search then reads only the few ancestors between this head and main.
+          #
+          # After a lean-toolchain bump no lookup succeeds. The cache keys each revision map by
+          # toolchain, and no ancestor has a map under the new toolchain. Without this limit, the
+          # search then reads the full history and finds nothing.
+          LAKE_CACHE_MAX_REVS: "100"
         run: bash gate/scripts/lake-cache-get.sh pr
 
       - name: Prepare trusted read-only Lean watchdog toolchain
