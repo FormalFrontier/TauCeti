@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Lie.GeneralLinear.Basic
+public import TauCeti.Algebra.Lie.GeneralLinear.HighestWeight
 public import Mathlib.FieldTheory.IsAlgClosed.Basic
 import TauCeti.Algebra.Lie.Weights.Central
 
@@ -23,7 +24,9 @@ The empty-rank case is included. For positive rank the decomposition is supplied
 ## Main results
 
 * `TauCeti.isIrreducible_restrict_sl_of_forall_one_lie_eq_smul`: restriction of an irreducible
-  `gl n` module to `sl n` is irreducible as soon as the identity matrix acts by a scalar.
+  `gl n` module to `sl n` is irreducible as soon as the identity matrix acts by a scalar, and
+  `TauCeti.isIrreducible_restrict_sl_of_isGlHighestWeightVector` reads that scalar off a highest
+  weight vector.
 * `TauCeti.isIrreducible_restrict_sl`: over an algebraically closed field Schur's lemma supplies
   that scalar, so a finite-dimensional irreducible `gl n` module restricts irreducibly.
 * `TauCeti.gl_equiv_of_sl_equiv_of_central_scalar`: an `sl n`-module equivalence between two
@@ -104,6 +107,17 @@ theorem isIrreducible_restrict_sl_of_forall_one_lie_eq_smul {c : K}
     (Matrix (Fin n) (Fin n) K) M _ sup_center_eq_top fun z => ?_
   obtain ⟨r, hr⟩ := mem_center_matrix_iff.mp z.2
   exact ⟨r * c, fun m => by rw [hr, smul_lie, hc, smul_smul]⟩
+
+/-- **An irreducible `gl n` module carrying a highest weight vector stays irreducible on restriction
+to `sl n`**: by `TauCeti.forall_one_lie_eq_sum_smul_of_isGlHighestWeightVector` the identity matrix
+acts by the sum of the entries of that weight, which is the scalar
+`TauCeti.isIrreducible_restrict_sl_of_forall_one_lie_eq_smul` asks for. Reading the scalar off the
+vector is what lets this hold over any characteristic-zero field. -/
+theorem isIrreducible_restrict_sl_of_isGlHighestWeightVector {mu : Fin n → K} {v : M}
+    (hv : IsGlHighestWeightVector mu v) :
+    LieModule.IsIrreducible K (LieAlgebra.SpecialLinear.sl (Fin n) K) M :=
+  isIrreducible_restrict_sl_of_forall_one_lie_eq_smul
+    (forall_one_lie_eq_sum_smul_of_isGlHighestWeightVector hv)
 
 variable [IsAlgClosed K] [FiniteDimensional K M]
 

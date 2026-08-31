@@ -9,7 +9,6 @@ public import TauCeti.Algebra.Lie.GeneralLinear.Restriction
 public import TauCeti.Algebra.Lie.GeneralLinear.Twist
 public import TauCeti.Algebra.Lie.GeneralLinear.Uniqueness
 public import TauCeti.Algebra.Lie.Submodule.Atom
-import TauCeti.Algebra.Lie.Weights.Central
 
 public section
 
@@ -273,27 +272,6 @@ theorem exists_isGlHighestWeightVector_glIrreducible (hmu : IsGlDominantIntegral
     ∃ v : glIrreducible K mu, IsGlHighestWeightVector mu v :=
   ⟨_, isGlHighestWeightVector_glIrreducibleGenerator hmu⟩
 
-section CommRing
-
-variable {R : Type*} [CommRing R] {nu : Fin N → R}
-variable {M : Type*} [AddCommGroup M] [Module R M]
-  [LieRingModule (Matrix (Fin N) (Fin N) R) M] [LieModule R (Matrix (Fin N) (Fin N) R) M]
-
-/-- **The identity matrix acts by the sum of the highest weight entries** on any irreducible module
-carrying a highest weight vector. The scalar is read off the highest weight vector rather than
-produced by Schur's lemma, so a commutative ring of scalars is all this needs. -/
-theorem forall_one_lie_eq_sum_smul_of_isGlHighestWeightVector
-    [LieModule.IsIrreducible R (Matrix (Fin N) (Fin N) R) M] {v : M}
-    (hv : IsGlHighestWeightVector nu v) (m : M) :
-    ⁅(1 : Matrix (Fin N) (Fin N) R), m⁆ = (∑ i, nu i) • m := by
-  have hone : (1 : Matrix (Fin N) (Fin N) R) ∈ diagonalCartan R (Fin N) :=
-    mem_diagonalCartan_iff.mpr fun i j hij => Matrix.one_apply_ne hij
-  exact forall_lie_eq_smul_of_lie_eq_smul R (Matrix (Fin N) (Fin N) R) M
-    ⟨1, one_mem_center_matrix R (Fin N)⟩
-    hv.ne_zero (by simpa using hv.lie_eq_smul_of_mem_diagonalCartan hone) m
-
-end CommRing
-
 variable {M : Type*} [AddCommGroup M] [Module K M]
   [LieRingModule (Matrix (Fin N) (Fin N) K) M] [LieModule K (Matrix (Fin N) (Fin N) K) M]
 
@@ -318,15 +296,6 @@ theorem finrank_glIrreducible_le [FiniteDimensional K M] {v : M}
     finrank K (glIrreducible K mu) ≤ finrank K M :=
   have := isIrreducible_glIrreducible (K := K) hmu
   finrank_le_of_isGlHighestWeightVector (isGlHighestWeightVector_glIrreducibleGenerator hmu) hv
-
-/-- **An irreducible `gl N K`-module carrying a highest weight vector stays irreducible on
-restriction to `sl N K`.** -/
-theorem isIrreducible_restrict_sl_of_isGlHighestWeightVector
-    [LieModule.IsIrreducible K (Matrix (Fin N) (Fin N) K) M] {v : M}
-    (hv : IsGlHighestWeightVector mu v) :
-    LieModule.IsIrreducible K (LieAlgebra.SpecialLinear.sl (Fin N) K) M :=
-  isIrreducible_restrict_sl_of_forall_one_lie_eq_smul
-    (forall_one_lie_eq_sum_smul_of_isGlHighestWeightVector hv)
 
 /-- **The identity matrix acts on `L(mu)` by the scalar `∑ i, mu i`.** -/
 theorem one_lie_glIrreducible_eq_smul (hmu : IsGlDominantIntegral mu)

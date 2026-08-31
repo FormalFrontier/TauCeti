@@ -6,8 +6,11 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Lie.GeneralLinear.Borel
+public import Mathlib.Algebra.Lie.Semisimple.Defs
 public import Mathlib.Algebra.Ring.CharZero
 public import Mathlib.Data.Rat.Cast.Defs
+import TauCeti.Algebra.Lie.GeneralLinear.Basic
+import TauCeti.Algebra.Lie.Weights.Central
 
 /-!
 # Dominant weights and highest weight vectors for `gl n`
@@ -68,6 +71,8 @@ and the whole of `𝔫⁺` annihilates (`TauCeti.isGlHighestWeightVector_iff_for
   vectors transport along module morphisms that preserve nonzeroness, in particular equivalences.
 * `TauCeti.isGlHighestWeightVector_coe_iff`: a vector of a Lie submodule is a highest weight vector
   of that submodule exactly when it is one of the ambient module.
+* `TauCeti.forall_one_lie_eq_sum_smul_of_isGlHighestWeightVector`: on an irreducible module carrying
+  a highest weight vector, the identity matrix acts by the sum of the entries of that weight.
 * `TauCeti.isGlHighestWeightVector_single_bot_top`: the highest root vector `E_{⊥⊤}` is a highest
   weight vector of the adjoint module, of weight `ε_⊥ - ε_⊤`, so the predicate is not vacuous.
 
@@ -457,6 +462,19 @@ theorem IsGlHighestWeightVector.smul (hv : IsGlHighestWeightVector mu v) {c : R}
   · rw [lie_smul, hv.lie_single_eq_zero hij, smul_zero]
 
 end TorsionFree
+
+/-- **The identity matrix acts by the sum of the highest weight entries** on any irreducible module
+carrying a highest weight vector. The scalar is read off the highest weight vector rather than
+produced by Schur's lemma, so a commutative ring of scalars is all this needs. -/
+theorem forall_one_lie_eq_sum_smul_of_isGlHighestWeightVector
+    [LieModule.IsIrreducible R (Matrix n n R) M]
+    (hv : IsGlHighestWeightVector mu v) (m : M) :
+    ⁅(1 : Matrix n n R), m⁆ = (∑ i, mu i) • m := by
+  have hone : (1 : Matrix n n R) ∈ diagonalCartan R n :=
+    mem_diagonalCartan_iff.mpr fun i j hij => Matrix.one_apply_ne hij
+  exact forall_lie_eq_smul_of_lie_eq_smul R (Matrix n n R) M
+    ⟨1, one_mem_center_matrix R n⟩
+    hv.ne_zero (by simpa using hv.lie_eq_smul_of_mem_diagonalCartan hone) m
 
 end HighestWeight
 
