@@ -62,7 +62,7 @@ morphism `M → M*`, which by Schur's lemma is an equivalence.
   `TauCeti.exists_ne_zero_lieInvariant_iff_neg_longestElement_smul_eq`: **the self-duality
   criterion**, in its module and its bilinear-form form.
 * `TauCeti.exists_ne_zero_lieInvariant_irreducibleQuotient_iff`: the same criterion at the named
-  carrier `L(lam)`.
+  carrier `L(lam)`, for dominant integral `lam` with `M(lam) ≠ 0`.
 
 ## References
 
@@ -73,6 +73,14 @@ records as the interface the Frobenius-Schur indicator of
 `TauCetiRoadmap/RepresentationTheory/CompactGroups/README.md` consumes. The pinned statement
 phrases `w₀` as "a Weyl element carrying the dominant cone to its negative" so as not to import a
 length function; `TauCeti.longestElement` is that element, so it is used directly here.
+
+The pinned statement asks for the criterion at `L(lam)` from dominance alone. That form is out of
+reach of the current Layer 3: it entails `M(lam) ≠ 0` for every dominant integral `lam`, since for
+`lam` with `-(w₀ • lam) = lam` it produces a nonzero bilinear form on `L(lam)`, and the zero module
+carries none. That nonvanishing is the freeness half of Poincaré--Birkhoff--Witt, isolated as a
+hypothesis in `TauCeti/Algebra/Lie/HighestWeight/Verma.lean` and unavailable here, so the named
+carrier statement carries `vermaGenerator b lam ≠ 0` alongside dominance, exactly as
+`TauCeti.isIrreducible_irreducibleQuotient` does.
 
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §21.6.
 * N. Bourbaki, *Groupes et algèbres de Lie*, Chapitre VIII, §7.5.
@@ -239,20 +247,25 @@ theorem exists_ne_zero_lieInvariant_iff_neg_longestElement_smul_eq
   TauCeti.LieModule.exists_ne_zero_lieInvariant_iff_nonempty_lieModuleEquiv_dual.trans
     (nonempty_lieModuleEquiv_dual_iff hv)
 
-omit [_root_.LieModule.IsIrreducible K L M] in
-/-- **The self-duality criterion at the named carrier `L(lam)`.** The hypothesis is a highest
-weight vector of weight `lam` in some finite-dimensional module, which is exactly what makes the
-Verma module `M(lam)` nonzero, so `L(lam)` is a finite-dimensional irreducible module of highest
-weight `lam` and the criterion above applies to it. -/
-theorem exists_ne_zero_lieInvariant_irreducibleQuotient_iff
-    (hv : IsHighestWeightVector b lam v) :
+/-- **The self-duality criterion at the named carrier `L(lam)`.** For dominant integral `lam` with
+`M(lam) ≠ 0`, the module `L(lam)` carries a nonzero invariant bilinear form exactly when
+`-(w₀ • lam) = lam`.
+
+The nonvanishing `vermaGenerator b lam ≠ 0` is the isolated Poincaré--Birkhoff--Witt input of
+`TauCeti/Algebra/Lie/HighestWeight/Verma.lean`, which `TauCeti.isIrreducible_irreducibleQuotient`
+already takes; a caller holding a highest weight vector of weight `lam` in any module obtains it
+from `TauCeti.vermaGenerator_ne_zero_of_isHighestWeightVector`. It cannot be dropped: without it
+`L(lam)` may be the zero module, which carries no nonzero bilinear form however `lam` sits. Given
+it, dominance makes `L(lam)` finite-dimensional
+(`TauCeti.finiteDimensional_of_isHighestWeightVector_of_isDominantIntegral`), so no
+finite-dimensionality hypothesis is needed. -/
+theorem exists_ne_zero_lieInvariant_irreducibleQuotient_iff (hlam : IsDominantIntegral b lam)
+    (hne : vermaGenerator b lam ≠ 0) :
     (∃ Φ : LinearMap.BilinForm K (irreducibleQuotient b lam), Φ ≠ 0 ∧ Φ.lieInvariant L) ↔
       -(longestElement (IsKilling.rootSystem H) b • lam) = lam := by
-  have hne := vermaGenerator_ne_zero_of_isHighestWeightVector b lam hv
   have _i := isIrreducible_irreducibleQuotient b lam hne
   have hgen := isHighestWeightVector_irreducibleQuotientGenerator b lam hne
-  have _j := finiteDimensional_of_isHighestWeightVector_of_isDominantIntegral hgen
-    hv.isDominantIntegral
+  have _j := finiteDimensional_of_isHighestWeightVector_of_isDominantIntegral hgen hlam
   exact exists_ne_zero_lieInvariant_iff_neg_longestElement_smul_eq hgen
 
 end TauCeti
