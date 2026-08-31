@@ -29,7 +29,8 @@ namespace StronglyContinuousGroup
 
 variable {H : Type*} [NormedAddCommGroup H] [InnerProductSpace ℂ H] [CompleteSpace H]
 
-/-- The bounded Stone group associated to a self-adjoint operator. -/
+/-- The exponential group associated to a bounded operator. It is unitary when the operator is
+self-adjoint. -/
 def ofBoundedSelfAdjoint (A : H →L[ℂ] H) : StronglyContinuousGroup H :=
   ofBounded ((Complex.I • A).restrictScalars ℝ)
 
@@ -46,6 +47,8 @@ private theorem restrictScalars_exp (A : H →L[ℂ] H) (t : ℝ) :
       map_zero' := by ext x; rfl
       map_add' := by intro B C; ext x; rfl }
   have hφ : Continuous φ := by
+    -- The local normed-algebra instances give `φ` a bundled topology; expose its underlying
+    -- function so that the restriction isometry supplies continuity for the normed topologies.
     change Continuous (fun B : H →L[ℂ] H => B.restrictScalars ℝ)
     exact (ContinuousLinearMap.restrictScalarsIsometry ℂ H H ℝ ℝ).continuous
   have h := NormedSpace.map_exp φ hφ ((t : ℂ) • A)
@@ -63,9 +66,9 @@ theorem ofBoundedSelfAdjoint_apply (A : H →L[ℂ] H) (t : ℝ) :
   rw [ofBoundedSelfAdjoint, ofBounded_apply, restrictScalars_exp]
 
 /-- The bounded Stone group is unitary. -/
-theorem ofBoundedSelfAdjoint_isUnitary (A : H →L[ℂ] H) (hA : IsSelfAdjoint A) :
+theorem isUnitary_ofBoundedSelfAdjoint (A : H →L[ℂ] H) (hA : IsSelfAdjoint A) :
     TauCeti.Semigroups.StronglyContinuousGroup.IsUnitary (ofBoundedSelfAdjoint A) := by
-  apply (TauCeti.Semigroups.StronglyContinuousGroup.isUnitary_iff_inner_map_map _).mpr
+  change ∀ t x y, ⟪ofBoundedSelfAdjoint A t x, ofBoundedSelfAdjoint A t y⟫_ℂ = ⟪x, y⟫_ℂ
   refine fun t x y => ?_
   rw [ofBoundedSelfAdjoint_apply]
   let _i : Module ℚ H := Module.compHom H (algebraMap ℚ ℂ)
