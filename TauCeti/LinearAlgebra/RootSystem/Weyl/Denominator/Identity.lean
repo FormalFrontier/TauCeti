@@ -51,7 +51,6 @@ cases.
 ## Main results
 
 * `TauCeti.coeff_weylDenominator_zero`: the constant term of `Δ` is `1`.
-* `TauCeti.weylDenominator_ne_zero`: the Weyl denominator does not vanish.
 * `TauCeti.weylDenominator_eq_weylNumerator_zero`: **the Weyl denominator identity**, `Δ = N(0)`.
 * `TauCeti.support_coeff_weylDenominator` and `TauCeti.card_support_coeff_weylDenominator`:
   consequently `Δ` is supported on the dot orbit of `0` and has exactly `|W|` terms.
@@ -88,12 +87,6 @@ theorem coeff_weylDenominator_zero : (weylDenominator P b).coeff 0 = 1 := by
         fun i hi => (mem_posRootsFinset P b i).mp (Finset.mem_powerset.mp hT hi)
     exact Finsupp.single_eq_of_ne (Ne.symm (neg_ne_zero.mpr hsum))
   · simp
-
-/-- **The Weyl denominator does not vanish**, its coefficient at the exponent `0` being `1`. -/
-theorem weylDenominator_ne_zero : weylDenominator P b ≠ 0 := fun hcon => by
-  have h := coeff_weylDenominator_zero P b
-  rw [hcon] at h
-  simp at h
 
 section Cone
 
