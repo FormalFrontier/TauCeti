@@ -61,7 +61,6 @@ abbrev SimplyBlockedGridChain (R : Type*) [CommSemiring R] (n : ℕ) (i : Fin n)
 
 This is semilinear over `MvPolynomial.killCompl`: specializing a polynomial multiple of a chain
 specializes both the scalar and every coefficient. -/
-@[expose]
 noncomputable def simplyBlockedSpecialization {n : ℕ} (R : Type*) [CommSemiring R] (i : Fin n) :
     GridChainMinus R n →ₛₗ[
       (MvPolynomial.killCompl (R := R) (f := Subtype.val)
@@ -79,7 +78,7 @@ theorem simplyBlockedSpecialization_apply {n : ℕ} (R : Type*) [CommSemiring R]
     (c : GridChainMinus R n) (x : GridState n) :
     simplyBlockedSpecialization R i c x =
       MvPolynomial.killCompl (f := Subtype.val) Subtype.val_injective (c x) :=
-  rfl
+  (rfl)
 
 /-- Specialization sends a single unblocked generator coefficient to its specialization. -/
 @[simp]
