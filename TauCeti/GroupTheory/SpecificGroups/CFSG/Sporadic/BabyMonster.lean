@@ -50,8 +50,41 @@ below records that chain of attributions rather than reproving any part of it.
 Nothing here asserts that the presented group is nontrivial, finite or simple, that it has any
 particular order, or that it is isomorphic to any other construction of the Baby Monster. The
 roadmap's independent permutation-group cross-check does not cover `B`, whose smallest faithful
-permutation representation has degree `13 571 955 000`, so for this row an independent
-source-to-Lean read-through remains the whole of the S1 review obligation.
+permutation representation has degree `13 571 955 000`. The independent source-to-Lean
+read-through below therefore supplies the whole of this row's S1 review obligation.
+
+## Independent source-to-Lean read-through
+
+An independent read-through used Breuer--Magaard--Wilson, Section 3.1, in arXiv:1902.07758v2. The
+source numbers eleven involutions `t₁` through `t₁₁` and lists the exponent-three pairs
+
+```text
+(1,2), (2,3), (3,4), (4,5), (5,6), (6,7), (7,8), (5,9), (9,10), (10,11).
+```
+
+After the source's one-based numbering is shifted to `Fin 11`, these are exactly the ten
+undirected pairs in `edges_eq`. The source assigns exponent two to every other pair `i < j`, which
+is exactly the complement selected by `coxeterMatrix_apply`; the diagonal entries supply the
+eleven square relations. Thus the Coxeter list contains the source's `11 + 10 + 45 = 66`
+relations, with none dropped or duplicated.
+
+The source next displays the spider word
+
+```text
+(t₅ t₄ t₃ t₅ t₆ t₇ t₅ t₉ t₁₀)^10
+```
+
+and the two words
+
+```text
+(t₅ t₄ t₃ t₆ t₇ t₈ t₉)^9,  (t₅ t₄ t₃ t₆ t₉ t₁₀ t₁₁)^9.
+```
+
+Their letters, order, and exponents agree exactly with `spiderRelator_eq`,
+`extraRelatorOne_eq`, and `extraRelatorTwo_eq`. The source states that the Coxeter relations plus
+the spider relation present `2 × 2·B`, and that adjoining the last two relations presents `B`.
+`relatorList_def` appends precisely those three words in that order, giving the checked total
+`66 + 3 = 69`. This closes the row's S1 source-to-Lean read-through.
 
 ## Main definitions
 
@@ -289,8 +322,8 @@ def presentation : GroupPresentation where
     spider relation, which presents 2 x 2.B, and then its two further relations, which present B. \
     The source displays its relations by family rather than as a numbered list and records no \
     total length, so the expected relator count is the sum 11 + 55 + 1 + 2 over those families. \
-    The independent FiniteSimpleGroups permutation construction does not cover B, so a \
-    source-to-Lean read-through remains an S1 review obligation for this row."
+    The independent source-to-Lean read-through checked the 66 Coxeter relations and all three \
+    adjoined relators. The FiniteSimpleGroups permutation construction does not cover B."
   expectedGeneratorCount := 11
   expectedRelatorCount := 69
   transcribed := relatorList
