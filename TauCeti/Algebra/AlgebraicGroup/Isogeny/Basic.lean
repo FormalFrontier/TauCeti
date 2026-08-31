@@ -85,15 +85,16 @@ section Field
 
 variable {k : Type u} [Field k] {H₀ K₀ : _root_.CommHopfAlgCat.{u} k}
 
-/-- Over a field, the coordinate-algebra definition of an isogeny agrees with the existing
-group-scheme definition after applying the contravariant Hopf spectrum functor. -/
-theorem isIsogeny_iff_isIsogeny_hopfSpec_map (f : H₀ ⟶ K₀) :
-    IsIsogeny f ↔
-      GroupScheme.IsIsogeny
-        ((AlgebraicGeometry.hopfSpec (CommRingCat.of k)).map f.op) := by
-  rw [IsIsogeny, GroupScheme.isIsogeny_iff]
-  -- The underlying scheme morphism of `hopfSpec.map f.op` reduces definitionally to the
-  -- `Spec.map` induced by the underlying ring homomorphism of `f`.
+-- This isolates the definitional computation of Mathlib's bundled `hopfSpec` functor at the
+-- morphism-property boundary where the source and target schemes are propositionally aligned.
+private lemma isogeny_conditions_hopfSpec_map_iff (f : H₀ ⟶ K₀) :
+    f.hom.toAlgHom.Finite ∧ f.hom.toAlgHom.toRingHom.FaithfullyFlat ↔
+      AlgebraicGeometry.IsFinite
+          ((AlgebraicGeometry.hopfSpec (CommRingCat.of k)).map f.op).hom.hom.left ∧
+        AlgebraicGeometry.Flat
+            ((AlgebraicGeometry.hopfSpec (CommRingCat.of k)).map f.op).hom.hom.left ∧
+          AlgebraicGeometry.Surjective
+            ((AlgebraicGeometry.hopfSpec (CommRingCat.of k)).map f.op).hom.hom.left := by
   change f.hom.toAlgHom.Finite ∧ f.hom.toAlgHom.toRingHom.FaithfullyFlat ↔
     AlgebraicGeometry.IsFinite
       (AlgebraicGeometry.Spec.map (CommRingCat.ofHom f.hom.toAlgHom.toRingHom)) ∧
@@ -104,6 +105,15 @@ theorem isIsogeny_iff_isIsogeny_hopfSpec_map (f : H₀ ⟶ K₀) :
   rw [AlgebraicGeometry.IsFinite.SpecMap_iff,
     AlgebraicGeometry.flat_and_surjective_SpecMap_iff]
   rfl
+
+/-- Over a field, the coordinate-algebra definition of an isogeny agrees with the existing
+group-scheme definition after applying the contravariant Hopf spectrum functor. -/
+theorem isIsogeny_iff_isIsogeny_hopfSpec_map (f : H₀ ⟶ K₀) :
+    IsIsogeny f ↔
+      GroupScheme.IsIsogeny
+        ((AlgebraicGeometry.hopfSpec (CommRingCat.of k)).map f.op) := by
+  rw [IsIsogeny, GroupScheme.isIsogeny_iff]
+  exact isogeny_conditions_hopfSpec_map_iff f
 
 /-- Over a field, the coordinate-algebra definition of a central isogeny agrees with the
 existing group-scheme definition after applying the contravariant Hopf spectrum functor. -/
@@ -206,6 +216,18 @@ theorem isCentralIsogeny_of_bijective (f : H ⟶ K) (hf : Function.Bijective f.h
   rw [kernelHopfIdeal_eq_augmentation_of_surjective f hf.2]
   exact isCentral_augmentation K
 
+-- These lemmas isolate the definitional identification of `unitBialgHom` with `algebraMap`.
+private lemma unitBialgHom_finite (K : _root_.CommHopfAlgCat.{u} R) [Module.Finite R K] :
+    (Bialgebra.unitBialgHom R K).toAlgHom.Finite := by
+  change (algebraMap R K).Finite
+  exact RingHom.finite_algebraMap.mpr inferInstance
+
+private lemma unitBialgHom_faithfullyFlat (K : _root_.CommHopfAlgCat.{u} R)
+    [Module.FaithfullyFlat R K] :
+    (Bialgebra.unitBialgHom R K).toAlgHom.toRingHom.FaithfullyFlat := by
+  change (algebraMap R K).FaithfullyFlat
+  exact RingHom.faithfullyFlat_algebraMap_iff.mpr inferInstance
+
 /-- The structure morphism from a finite faithfully flat commutative affine group scheme to the
 trivial group is a central isogeny. Its kernel is the whole source group, so nontrivial choices of
 `K` give central isogenies with nontrivial kernel. -/
@@ -213,14 +235,8 @@ theorem isCentralIsogeny_unit_of_isCocomm (K : _root_.CommHopfAlgCat.{u} R)
     [Module.Finite R K] [Module.FaithfullyFlat R K] [Coalgebra.IsCocomm R K] :
     IsCentralIsogeny
       (CommHopfAlgCat.ofHom (Bialgebra.unitBialgHom R K)) := by
-  refine ⟨⟨?_, ?_⟩, ?_⟩
-  -- Mathlib has no lemma identifying the ring-hom carrier of `unitBialgHom`; both goals
-  -- reduce definitionally to the corresponding properties of the algebra map.
-  · change (algebraMap R K).Finite
-    exact RingHom.finite_algebraMap.mpr inferInstance
-  · change (algebraMap R K).FaithfullyFlat
-    exact RingHom.faithfullyFlat_algebraMap_iff.mpr inferInstance
-  · exact (HopfIdeal.isCentral_bot_iff_isCocomm.mpr inferInstance).mono bot_le
+  exact ⟨⟨unitBialgHom_finite K, unitBialgHom_faithfullyFlat K⟩,
+    (HopfIdeal.isCentral_bot_iff_isCocomm.mpr inferInstance).mono bot_le⟩
 
 /-- Every categorical isomorphism of commutative Hopf algebras is an isogeny. -/
 theorem isIsogeny_of_isIso (f : H ⟶ K) [IsIso f] : IsIsogeny f :=
