@@ -190,17 +190,19 @@ theorem simplyConnectedSemisimpleAffineGroupSchemeProperty_inverseImage
     let e := E.counitIso.app G
     let g : E.functor.obj (E.inverse.obj G) ⟶ E.functor.obj H := e.hom ≫ f
     let g' : E.inverse.obj G ⟶ H := E.functor.preimage g
+    have hmap : E.functor.map g' = g := by
+      simp only [g', Functor.map_preimage]
     have hg : GroupScheme.IsCentralIsogeny
         ((semisimpleAffineGroupSchemeForget k).map g) := by
       rw [Functor.map_comp]
       exact ((GroupScheme.centralIsogenies k).cancel_left_of_respectsIso _ _).2 hf
     have hg' : CommHopfAlgCat.IsCentralIsogeny g'.unop.hom.hom := by
       apply (isCentralIsogeny_semisimpleEquiv_map_iff g').1
-      simpa only [g', E, Functor.map_preimage] using hg
+      rw [hmap]
+      exact hg
     let _ : IsIso g'.unop := hH.isIso g'.unop hg'
     let _ : IsIso g' := (isIso_unop_iff g').1 (inferInstance : IsIso g'.unop)
-    let _ : IsIso g := by
-      simpa only [g', E, Functor.map_preimage] using (inferInstance : IsIso (E.functor.map g'))
+    let _ : IsIso g := hmap ▸ (inferInstance : IsIso (E.functor.map g'))
     exact IsIso.of_isIso_comp_left e.hom f
 
 /-- `Spec` restricts to an anti-equivalence from simply connected semisimple finite-type
@@ -213,5 +215,33 @@ noncomputable def
   (ObjectProperty.opEquivalence (simplyConnectedSemisimpleCommHopfAlgProperty k)).symm.trans <|
     (semisimpleCommHopfAlgCatOpEquivSemisimpleAffineGroupSchemeCat k).congrFullSubcategory
       (simplyConnectedSemisimpleAffineGroupSchemeProperty_inverseImage k)
+
+namespace
+  simplyConnectedSemisimpleCommHopfAlgCatOpEquivSimplyConnectedSemisimpleAffineGroupSchemeCat
+
+/-- After forgetting simple connectivity, the restricted anti-equivalence is the existing
+semisimple Hopf/group-scheme anti-equivalence. -/
+noncomputable def functorCompιIso
+    (k : Type u) [Field k] :
+    (simplyConnectedSemisimpleCommHopfAlgCatOpEquivSimplyConnectedSemisimpleAffineGroupSchemeCat
+          k).functor ⋙
+        (simplyConnectedSemisimpleAffineGroupSchemeProperty k).ι ≅
+      (forget₂ (SimplyConnectedSemisimpleCommHopfAlgCat.{u} k)
+          (SemisimpleCommHopfAlgCat.{u} k)).op ⋙
+        (semisimpleCommHopfAlgCatOpEquivSemisimpleAffineGroupSchemeCat k).functor := by
+  let P := simplyConnectedSemisimpleCommHopfAlgProperty k
+  let Q := simplyConnectedSemisimpleAffineGroupSchemeProperty k
+  let e := semisimpleCommHopfAlgCatOpEquivSemisimpleAffineGroupSchemeCat k
+  let h := simplyConnectedSemisimpleAffineGroupSchemeProperty_inverseImage k
+  exact
+    Functor.associator _ _ _ ≪≫
+      Functor.isoWhiskerLeft (ObjectProperty.opEquivalence P).symm.functor
+        (Q.liftCompιIso (P.op.ι ⋙ e.functor) (fun X ↦
+          (congrFun h X.obj).symm.mp X.property)) ≪≫
+      (Functor.associator _ _ _).symm ≪≫
+      Functor.isoWhiskerRight
+        (P.op.liftCompιIso P.ι.op (fun X ↦ X.unop.property)) e.functor
+
+end simplyConnectedSemisimpleCommHopfAlgCatOpEquivSimplyConnectedSemisimpleAffineGroupSchemeCat
 
 end TauCeti
