@@ -234,6 +234,13 @@ theorem filledHull_sphere_sdiff_sphere [Nontrivial E] (c : E) {r : ℝ} (hr : 0 
     filledHull (sphere c r) \ sphere c r = ball c r := by
   rw [filledHull_sphere_eq_closedBall c hr, closedBall_sdiff_sphere]
 
+/-- **The points filled in by a sphere are dense up to its boundary.** The filled-hull description
+of a sphere identifies its interior with the open ball, whose closure contains the sphere. -/
+theorem sphere_subset_closure_filledHull_sdiff_sphere [Nontrivial E] (c : E) {r : ℝ}
+    (hr : 0 < r) : sphere c r ⊆ closure (filledHull (sphere c r) \ sphere c r) := by
+  rw [filledHull_sphere_sdiff_sphere c hr.le, closure_ball c hr.ne']
+  exact sphere_subset_closedBall
+
 variable {x y : E}
 
 /-- **The unbounded component of the complement of a bounded set is unique** in a real normed space

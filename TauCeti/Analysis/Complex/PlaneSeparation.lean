@@ -147,14 +147,6 @@ theorem not_hasContinuousLogOn_sub_sphere {r : ℝ} (hr : 0 ≤ r) (a : ℂ) :
   · exact (by positivity : (0 : ℝ) < 2 * π).ne' (by exact_mod_cast hπ)
   · exact Complex.I_ne_zero hI
 
-/-- **The inside of a circle is dense up to the circle.** The filled-hull description of a sphere
-identifies its interior with the open ball, whose closure contains the sphere. This is the concrete
-circle case of the plane-separation input required by the Carathéodory boundary theorem. -/
-theorem sphere_subset_closure_filledHull_sdiff_sphere (c : ℂ) {r : ℝ} (hr : 0 < r) :
-    sphere c r ⊆ closure (filledHull (sphere c r) \ sphere c r) := by
-  rw [filledHull_sphere_sdiff_sphere c hr.le, closure_ball c hr.ne']
-  exact sphere_subset_closedBall
-
 /-! ## Borsuk's separation theorem -/
 
 /-- The heart of `TauCeti.mem_connectedComponentIn_of_hasContinuousLogOn`, in the case where the
