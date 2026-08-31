@@ -85,9 +85,8 @@ reproved.
 * `TauCeti.DynkinType.geckFrobenius_pow` and `TauCeti.DynkinType.geckTwistedFrobenius_pow`: the
   powers of the two endomorphisms, the second separating into `γ ^ m ∘ Frob_(q ^ m)`.
 * `TauCeti.DynkinType.geckTwistedFrobenius_pow_eq_geckFrobenius`: a symmetry of order dividing `m`
-  makes the `m`-th power the plain Frobenius `Frob_(q ^ m)`; this is the order relation milestone
-  L1 of `TauCetiRoadmap/CFSGStatement/README.md` asks of a graph-twisted Steinberg map, read at
-  the group layer.
+  makes the `m`-th power the plain Frobenius `Frob_(q ^ m)`, the order relation a graph-twisted
+  Steinberg map is required to satisfy, read at the group layer.
 * `TauCeti.DynkinType.geckTwistedFrobenius_eq_self_iff`: a point is fixed exactly when its
   entrywise Frobenius image is its conjugate by the pinned symmetry matrix.
 * `TauCeti.DynkinType.map_subtype_fixedSubgroup_geckTwistedFrobenius_le`: the twisted fixed points
@@ -103,9 +102,18 @@ reproved.
   1.17.
 
 This composes the graph-automorphism and Frobenius halves of the pinning and points targets of
-Layer 9 of `TauCetiRoadmap/ReductiveGroups/README.md`. Its consumer is milestone L1, ordinary and
-graph-twisted Steinberg maps, of `TauCetiRoadmap/CFSGStatement/README.md`, whose `²A`, `²D`, `²E₆`
-and `³D₄` branches are `γ ∘ Frob_q` and whose required relation is that `γ` commutes with `Frob_q`.
+Layer 9 of `TauCetiRoadmap/ReductiveGroups/README.md`, and reads the two halves' own relations at
+the composite. The powers separate because the points are functorial in the value ring, which is
+the points target, and the graph factor collapses because a pinned diagram symmetry has finite
+order, which is the pinning target; the fixed subgroup is then the one the points target already
+carries for the untwisted factor, in `TauCeti.DynkinType.map_subtype_fixedSubgroup_geckFrobenius_eq`
+on the carrier and in `TauCeti.Bialgebra.fixedSubgroup_iterateFrobeniusPoints_le_of_dvd` in general.
+The consumers are milestone L1, ordinary and graph-twisted Steinberg maps, of
+`TauCetiRoadmap/CFSGStatement/README.md`, whose `²A`, `²D`, `²E₆` and `³D₄` branches are
+`γ ∘ Frob_q` and whose required relations are that `γ` commutes with `Frob_q` and that `γ` is
+annihilated by `2` or by `3`, and milestone L3, which sets `H_d = fixedSubgroup d.steinberg`.
+Instantiating either at a `ValidLieTypeIndex` needs this carrier to be identified with the simply
+connected form, which is separate Layer 9 work that no statement below anticipates.
 -/
 
 public section
