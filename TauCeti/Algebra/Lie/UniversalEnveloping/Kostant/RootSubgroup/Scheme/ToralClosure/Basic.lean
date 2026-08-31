@@ -76,14 +76,17 @@ variable {n : ℕ} (b : Module.Basis (Fin n) ℤ M)
 variable (wt : Fin n → κ → ℤ)
 
 /-- The coordinate Hopf algebra receiving a root-subgroup or weight-torus generator map. -/
-private noncomputable def kostantToralGeneratorCodomain (j : Sum I Unit) :
+@[expose] noncomputable def kostantToralGeneratorCodomain (j : Sum I Unit) :
     _root_.CommHopfAlgCat ℤ :=
   match j with
   | .inl _ => AdditiveGroup.coordinateHopfAlgebra ℤ
   | .inr _ => (DiagonalizableGroup.coordinateRing ℤ (SplitTorus.characterGroup κ)).obj
 
-/-- The family consisting of every root-subgroup coordinate map and the weight-torus map. -/
-private noncomputable def kostantToralGeneratorMap (j : Sum I Unit) :
+/-- The family consisting of every root-subgroup coordinate map and the weight-torus map.
+
+Restricting this family along an inclusion of root indices presents the closed carrier generated
+by a selected set of root subgroups together with the torus. -/
+@[expose] noncomputable def kostantToralGeneratorMap (j : Sum I Unit) :
     GeneralLinear.coordinateHopfAlgebra ℤ n ⟶
       kostantToralGeneratorCodomain (I := I) (κ := κ) j :=
   match j with
