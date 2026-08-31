@@ -25,10 +25,11 @@ multiplicities lying above it along the positive root directions:
 ```
 
 with `⟨·,·⟩` the invariant form `TauCeti.invForm` and `ρ` the Weyl vector `TauCeti.weylVector`.
-Anchored at the top weight, where `dim Mλ = 1`
-(`TauCeti.formalCharacter_coeff_eq_one_of_isHighestWeightVector_of_lieSpan_eq_top`), and read
-downwards, it determines every multiplicity, the scalar on the left being nonzero at every weight
-below `λ`.
+The anchor at the top weight, `dim Mλ = 1`, is
+`TauCeti.formalCharacter_coeff_eq_one_of_isHighestWeightVector_of_lieSpan_eq_top`. Reading the
+formula downwards from there as a computation of the lower multiplicities needs one more
+ingredient, namely that the scalar on the left is nonzero at every weight strictly below `λ`;
+that nonvanishing is a separate prerequisite, and is not proved here.
 
 ## The two halves
 
@@ -51,7 +52,7 @@ Passing from all roots to the positive ones is the second half, and it is
 direction `α` by the single term `dim Mμ · ⟨μ, α⟩`. That comparison is the reflection symmetry of
 the multiplicities (`TauCeti.finrank_weightSpace_neg_sub_zsmul_add`, proved directly from the
 rank-one theory) read along the whole two-sided string: the summand at the rung `i` and the
-summand at the reflected rung `-⟨μ, α^∨⟩ - i` are negatives of one another, so the sum over the
+summand at the reflected rung `-i - ⟨μ, α^∨⟩` are negatives of one another, so the sum over the
 two-sided string vanishes, and splitting that vanishing sum at the rung `i = 0` — whose term is
 `dim Mμ · ⟨μ, α⟩` — is the comparison. Summing it over the positive roots turns `∑_{α ∈ roots}`
 into `2 ∑_{α > 0}` at the cost of `dim Mμ · ∑_{α > 0} ⟨μ, α⟩`, which
@@ -150,23 +151,22 @@ private theorem invForm_add_zsmul (mu alpha : Dual K H) (i : ℤ) :
     LinearMap.smul_apply, smul_eq_mul]
 
 /-- **The two rungs exchanged by the reflection carry opposite summands.** Reflecting the
-`α`-string matches the rung `i` with the rung `-⟨μ, α^∨⟩ - i`, preserving the multiplicity and
+`α`-string matches the rung `i` with the rung `-i - ⟨μ, α^∨⟩`, preserving the multiplicity and
 negating the pairing with `α`. -/
 private theorem stringTerm_add_stringTerm_eq_zero {alpha : Weight K H L} {mu : Dual K H} {n : ℤ}
     (hn : mu (IsKilling.coroot alpha) = (n : K)) (i : ℤ) :
-    stringTerm M mu (alpha : Dual K H) i + stringTerm M mu (alpha : Dual K H) (-n - i) = 0 := by
+    stringTerm M mu (alpha : Dual K H) i + stringTerm M mu (alpha : Dual K H) (-i - n) = 0 := by
   have hdim : (finrank K (genWeightSpace M
-        ((mu + (-n - i) • (alpha : Dual K H) : Dual K H) : H → K)) : K) =
+        ((mu + (-i - n) • (alpha : Dual K H) : Dual K H) : H → K)) : K) =
       (finrank K (genWeightSpace M
         ((mu + i • (alpha : Dual K H) : Dual K H) : H → K)) : K) := by
     have hkey := finrank_weightSpace_neg_sub_zsmul_add (M := M) (α := alpha) (χ := (mu : H → K))
       hn i
-    rw [show (-i - n) = (-n - i) by ring] at hkey
     rw [coe_add_zsmul mu alpha, coe_add_zsmul mu alpha, genWeightSpace_eq_weightSpace,
       genWeightSpace_eq_weightSpace]
     exact_mod_cast hkey
   have hform : invForm (mu + i • (alpha : Dual K H)) (alpha : Dual K H) +
-      invForm (mu + (-n - i) • (alpha : Dual K H)) (alpha : Dual K H) = 0 := by
+      invForm (mu + (-i - n) • (alpha : Dual K H)) (alpha : Dual K H) = 0 := by
     have hcoroot := invForm_coroot_weight (H := H) mu alpha
     rw [hn] at hcoroot
     rw [invForm_add_zsmul, invForm_add_zsmul]
@@ -174,12 +174,12 @@ private theorem stringTerm_add_stringTerm_eq_zero {alpha : Weight K H L} {mu : D
     linear_combination -hcoroot
   rw [stringTerm, stringTerm, hdim, ← mul_add, hform, mul_zero]
 
-/-- **The summands of a two-sided root string cancel in pairs.** The reflection `i ↦ -n - i` is an
+/-- **The summands of a two-sided root string cancel in pairs.** The reflection `i ↦ -i - n` is an
 involution of any interval `Finset.Icc a c` with `a + c = -n`, and it negates the summands. -/
 private theorem sum_Icc_stringTerm_eq_zero {alpha : Weight K H L} {mu : Dual K H} {n : ℤ}
     (hn : mu (IsKilling.coroot alpha) = (n : K)) {a c : ℤ} (hac : a + c = -n) :
     ∑ i ∈ Finset.Icc a c, stringTerm M mu (alpha : Dual K H) i = 0 := by
-  refine Finset.sum_involution (fun i _ ↦ -n - i)
+  refine Finset.sum_involution (fun i _ ↦ -i - n)
     (fun i _ ↦ stringTerm_add_stringTerm_eq_zero hn i) (fun i _ hne heq ↦ hne ?_)
     (fun i hi ↦ ?_) (fun i _ ↦ by ring)
   · have h := stringTerm_add_stringTerm_eq_zero (M := M) hn i
@@ -229,12 +229,12 @@ private theorem exists_forall_genWeightSpace_add_zsmul_eq_bot {alpha : Dual K H}
     exists_genWeightSpace_add_nsmul_eq_bot_of_le (M := M) (neg_ne_zero.mpr halpha) mu
   refine ⟨max N₁ N₂, fun i hi ↦ ?_⟩
   rcases le_or_gt 0 i with h | h
-  · rw [show i • alpha = (i.toNat : ℕ) • alpha by
-      rw [← natCast_zsmul, Int.toNat_of_nonneg h]]
-    exact hN₁ i.toNat (by omega)
-  · rw [show i • alpha = ((-i).toNat : ℕ) • (-alpha) by
-      rw [← neg_natCast_zsmul, Int.toNat_of_nonneg (by omega : (0 : ℤ) ≤ -i), neg_neg]]
-    exact hN₂ (-i).toNat (by omega)
+  · obtain ⟨j, rfl⟩ : ∃ j : ℕ, i = (j : ℤ) := ⟨i.toNat, by omega⟩
+    rw [natCast_zsmul]
+    exact hN₁ j (by omega)
+  · obtain ⟨j, rfl⟩ : ∃ j : ℕ, i = -(j : ℤ) := ⟨(-i).toNat, by omega⟩
+    rw [neg_natCast_zsmul]
+    exact hN₂ j (by omega)
 
 omit [IsAlgClosed K] in
 /-- A string sum is a sum over any long enough initial segment of `ℕ`, the summands off the string
@@ -443,8 +443,9 @@ highest weight vector of weight `λ`. Then for every linear form `μ` on the Car
 
 the inner sum running over the `α`-string above `μ` with the rung `μ` itself removed.
 
-Together with `dim Mλ = 1` at the top weight this determines every multiplicity, the scalar on the
-left being nonzero at every weight below `λ`. -/
+Together with `dim Mλ = 1` at the top weight this is the recursion for the multiplicities below
+`λ`. Running it as a downward computation of `dim Mμ` needs in addition that the scalar on the
+left is nonzero there, which is not proved here. -/
 theorem freudenthal_multiplicity_formula {b : (IsKilling.rootSystem H).Base} {lam : Dual K H}
     {v : M} (hv : IsHighestWeightVector b lam v) (hgen : LieSubmodule.lieSpan K L {v} = ⊤)
     (mu : Dual K H) :
