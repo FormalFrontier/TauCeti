@@ -246,24 +246,19 @@ theorem not_usesHalfFrobenius_of_isTypeA {d : LieTypeIndex} (h : d.IsTypeA) :
 
 This is a constructor selector, not a mathematical property of a group. The rank, field, and
 preferred-representative restrictions come from the enclosing `TauCeti.ValidLieTypeIndex`. -/
-def IsTypeC : LieTypeIndex → Prop
+abbrev IsTypeC : LieTypeIndex → Prop
   | .C _ _ => True
   | _ => False
 
-/-- Characterization of the untwisted type-C constructor. -/
-@[simp] theorem isTypeC_iff (d : LieTypeIndex) : d.IsTypeC ↔
-    match d with
-    | .C _ _ => True
-    | _ => False :=
-  Iff.rfl
-
 instance : DecidablePred IsTypeC := fun d => by
-  cases d <;> rw [isTypeC_iff] <;> infer_instance
+  cases d <;> infer_instance
 
 /-- The untwisted type-C family does not use a half-Frobenius. -/
 theorem not_usesHalfFrobenius_of_isTypeC {d : LieTypeIndex} (h : d.IsTypeC) :
     ¬ d.UsesHalfFrobenius := by
-  cases d <;> simp_all [usesHalfFrobenius_iff]
+  cases d
+  case C => simp only [usesHalfFrobenius_iff, not_false_eq_true]
+  all_goals contradiction
 
 /-- Whether a Lie-type index names the untwisted exceptional family `E₆(q)`.
 
@@ -784,7 +779,7 @@ open LieTypeIndex (inStandardRange_iff valid_iff)
 /-- Introduce a valid type-`C` index. -/
 abbrev ofC (rank : ℕ) (q : PrimePower) (hvalid : (LieTypeIndex.C rank q).Valid) :
     TypeCLieIndex :=
-  ⟨⟨.C rank q, hvalid⟩, (LieTypeIndex.isTypeC_iff _).mpr trivial⟩
+  ⟨⟨.C rank q, hvalid⟩, trivial⟩
 
 /-- Every type-C index is an introduction form `ofC rank q hvalid`. -/
 theorem exists_eq_ofC (d : TypeCLieIndex) :
@@ -794,7 +789,7 @@ theorem exists_eq_ofC (d : TypeCLieIndex) :
   revert hvalid hC
   cases d
   case C rank q => exact fun hvalid _ => ⟨rank, q, hvalid, rfl⟩
-  all_goals exact fun _ hC => ((LieTypeIndex.isTypeC_iff _).mp hC).elim
+  all_goals exact fun _ hC => False.elim hC
 
 /-- The rank of a validated type-`C` index is at least three. -/
 theorem three_le_rank (d : TypeCLieIndex) : 3 ≤ d.1.rank := by
