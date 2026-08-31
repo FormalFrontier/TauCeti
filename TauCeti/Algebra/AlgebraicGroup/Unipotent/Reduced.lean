@@ -172,14 +172,13 @@ theorem of_injective_of_reduced (f : H ⟶ K) (hf : Function.Injective f.hom)
   intro M
   let b := Module.Free.chooseBasis k M
   let C := Comodule.coefficientMatrix (C := H) b
-  let D := C.map f.hom
   let d := Module.finrank k M
   let P : Polynomial k := (Polynomial.X - 1) ^ d
   -- Point separation turns the characteristic polynomial identity at every source point into
   -- an identity for the universal coefficient matrix over the source coordinate algebra.
   let _ : Comodule k K M := Comodule.Corestrict f.hom.toCoalgHom
   let N : FGComoduleCat.{u, v, u} k K := FGComoduleCat.of (R := k) (C := K) M
-  have hDcharpoly : D.charpoly = P.map (algebraMap k K) := by
+  have hDcharpoly : (C.map f.hom.toAlgHom.toRingHom).charpoly = P.map (algebraMap k K) := by
     have hcharpoly := coefficientMatrix_charpoly_eq hK N b
     rw [Comodule.coefficientMatrix_corestrict b f.hom.toCoalgHom] at hcharpoly
     exact hcharpoly
@@ -187,8 +186,6 @@ theorem of_injective_of_reduced (f : H ⟶ K) (hf : Function.Injective f.hom)
   have hCcharpoly : C.charpoly = P.map (algebraMap k H) := by
     apply Polynomial.map_injective f.hom.toAlgHom.toRingHom hf
     rw [← Matrix.charpoly_map]
-    -- Expose the local name for the mapped coefficient matrix.
-    change D.charpoly = _
     rw [hDcharpoly]
     rw [Polynomial.map_map]
     congr 1
