@@ -66,6 +66,7 @@ variable {k G : Type u} [Field k] [Group G] {N : Subgroup G} [N.Normal]
 /-- **Conjugating a one-dimensional representation conjugates its linear character.**  Both sides
 are the line `k` with `x : N` acting by the scalar `χ (g⁻¹ x g)`, so this is an equality of
 objects of `FDRep k N`, not merely an isomorphism. -/
+@[simp]
 theorem conjNormalFDRep_ofLinearCharacter (g : G) (χ : N →* kˣ) :
     conjNormalFDRep g (FDRep.ofLinearCharacter χ) =
       FDRep.ofLinearCharacter (χ.comp (MulAut.conjNormal g⁻¹ : MulAut N).toMonoidHom) :=
@@ -73,7 +74,12 @@ theorem conjNormalFDRep_ofLinearCharacter (g : G) (χ : N →* kˣ) :
 
 /-- **A conjugate of a one-dimensional representation is isomorphic to it exactly when the
 conjugated linear character is the same one.**  There is no room for anything but an equality of
-scalars: a line is determined by the character it carries. -/
+scalars: a line is determined by the character it carries.
+
+Not a `simp` lemma: with `conjNormalFDRep_ofLinearCharacter` tagged, `simp` already rewrites this
+left-hand side to `χ.comp ↑(MulAut.conjNormal g)⁻¹ = χ` through
+`FDRep.nonempty_iso_ofLinearCharacter_iff`, so tagging it too is a `simpNF` violation. This is the
+pointwise spelling of that same condition. -/
 theorem nonempty_iso_conjNormalFDRep_ofLinearCharacter_iff (g : G) (χ : N →* kˣ) :
     Nonempty (conjNormalFDRep g (FDRep.ofLinearCharacter (k := k) χ) ≅ FDRep.ofLinearCharacter χ) ↔
       ∀ x : N, χ (MulAut.conjNormal g⁻¹ x) = χ x := by
