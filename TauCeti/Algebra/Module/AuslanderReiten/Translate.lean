@@ -6,15 +6,14 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Module.AuslanderReiten.Transpose
-public import Mathlib.LinearAlgebra.Dual.Defs
+public import TauCeti.LinearAlgebra.Dual.RightAction
 
 /-!
 # The Auslander--Reiten translate
 
 For an algebra `A` over a commutative ring `k`, the **duality** `D = Hom_k(-, k)` turns a right
-`A`-module into a left `A`-module: a scalar `a` acts on a functional `φ` by precomposition with
-multiplication by `a`, `(a • φ) x = φ (x * a)`.  This file records that action as the ring
-homomorphism `TauCeti.dualRightAction` and uses it to define the **Auslander--Reiten translate**
+`A`-module into a left `A`-module, by `TauCeti.dualRightAction`.  This file applies that duality to
+the Auslander--Reiten transpose to define the **Auslander--Reiten translate**
 
 `τ M = D (Tr M)`
 
@@ -29,8 +28,6 @@ statement, and it is what licenses the notation `τ M`.
 
 ## Main definitions
 
-* `TauCeti.dualRightAction`: the left action of `A` on the `k`-dual of a right `A`-module, as a ring
-  homomorphism into the `k`-linear endomorphisms of the dual.
 * `TauCeti.arTranslate`: the Auslander--Reiten translate `D (Tr)` of a projective presentation,
   carrying the resulting `A`-module structure.
 * `TauCeti.arTranslate.linearEquiv`: the transport of the translate along an isomorphism of
@@ -45,13 +42,10 @@ statement, and it is what licenses the notation `τ M`.
 
 ## Implementation notes
 
-The `A`-action on the dual is *not* installed as an instance on `Module.Dual k N` for a general
-right `A`-module `N`: the underlying type of `Module.Dual k N` is a type of linear maps, which
-already carries the codomain-scaling `Module` instances of `Mathlib.Algebra.Module.LinearMap.Defs`,
-and a second `Module` structure matching every dual would make instance search on those types
-depend on an undetermined right-module structure.  Instead `TauCeti.dualRightAction` is a plain ring
-homomorphism, and the single `Module` instance built from it is the one on the translate, whose
-underlying transpose pins the right-module structure being dualized.
+`TauCeti.dualRightAction` is a plain ring homomorphism rather than a `Module` instance on every
+dual, for the reasons recorded in `TauCeti/LinearAlgebra/Dual/RightAction.lean`; the single
+`Module` instance built from it is the one on the translate, whose underlying transpose pins the
+right-module structure being dualized.
 
 The translate is a reducible abbreviation of the dual rather than a fresh type, so that its
 elements are literally `k`-linear functionals on the transpose and the whole `Module.Dual` API
@@ -61,11 +55,17 @@ finite-dimensionality of a dual are inherited verbatim and are not restated here
 
 ## References
 
-This is sublayer 6D, "the AR translate `τ = D Tr` and AR duality", of Layer 6 of
+This is the `arTranslate M = D (Tr M)` construction of sublayer 6D, "the AR translate `τ = D Tr`
+and AR duality", of Layer 6 of
 [the quiver-representations roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/QuiverRepresentations/README.md),
 which names it as the composite of the transpose of sublayer 6C with the duality
 `D = Hom_k(-, k)`, "well-defined only up to projectives, through minimal presentations and duality
 on finite-dimensional modules".
+
+The other half of 6D — AR duality itself, and the bijection it yields from non-projective
+indecomposables to non-injective indecomposables with inverse `Tr D` — is **not proved here**: it
+needs the finite-dimensional hypotheses and the stable morphism spaces that the rest of sublayer 6C
+supplies, and comes in a later file.
 
 * M. Auslander, I. Reiten, S. O. Smalø, *Representation Theory of Artin Algebras*, Cambridge
   University Press (1995), Section IV.1.
@@ -78,32 +78,6 @@ public section
 namespace TauCeti
 
 universe u v v' w w' x
-
-section Duality
-
-variable (k : Type u) (N : Type w) {A : Type v} [CommSemiring k] [Semiring A] [AddCommMonoid N]
-  [Module k N] [Module Aᵐᵒᵖ N] [SMulCommClass Aᵐᵒᵖ k N]
-
-/-- The **duality** `D = Hom_k(-, k)` turns a right `A`-module `N` into a left `A`-module: the
-scalar `a` sends a functional `φ` to `x ↦ φ (x * a)`.  This records that action as a ring
-homomorphism from `A` to the `k`-linear endomorphisms of `Module.Dual k N`.
-
-Precomposition reverses composition, which is exactly what makes a *right* action on `N` into a
-*left* action on its dual; the hypothesis `SMulCommClass Aᵐᵒᵖ k N` is what makes multiplication by
-`a` a `k`-linear endomorphism of `N` in the first place. -/
-def dualRightAction : A →+* Module.End k (Module.Dual k N) where
-  toFun a := (Module.toModuleEnd k N (MulOpposite.op a)).dualMap
-  map_one' := by ext φ x; simp
-  map_mul' a b := by ext φ x; simp [mul_smul]
-  map_zero' := by ext φ x; simp
-  map_add' a b := by ext φ x; simp [add_smul]
-
-@[simp]
-theorem dualRightAction_apply_apply (a : A) (φ : Module.Dual k N) (x : N) :
-    dualRightAction k N a φ x = φ (MulOpposite.op a • x) :=
-  (rfl)
-
-end Duality
 
 variable {A : Type u} [Ring A] {k : Type x} [CommSemiring k] [Algebra k A]
 
@@ -133,17 +107,14 @@ instance : Module A (arTranslate k p₁) :=
 theorem smul_apply (a : A) (φ : arTranslate k p₁)
     (x : AuslanderReitenTranspose p₁) :
     (a • φ) x = φ (MulOpposite.op a • x) :=
-  (rfl)
+  dualRightAction_apply_apply k (AuslanderReitenTranspose p₁) a φ x
 
 /-- Scalars from `k` act on the translate through `A`, so the two actions on it are the layered
 ones: the `k`-action is the restriction of the `A`-action along the algebra map. -/
 instance : IsScalarTower k A (arTranslate k p₁) where
   smul_assoc c a φ := by
     ext x
-    have hc : MulOpposite.op ((algebraMap k A) c) • x = c • x := by
-      rw [← MulOpposite.algebraMap_apply, algebraMap_smul]
-    rw [LinearMap.smul_apply, smul_apply, smul_apply, Algebra.smul_def,
-      MulOpposite.op_mul, mul_smul, hc, smul_comm, map_smul, smul_eq_mul]
+    simp [Algebra.smul_def, mul_smul]
 
 variable {Q₀ : Type v'} {Q₁ : Type w'} [AddCommMonoid Q₀] [Module A Q₀]
   [AddCommMonoid Q₁] [Module A Q₁]
@@ -153,22 +124,14 @@ variable {q₁ : Q₁ →ₗ[A] Q₀}
 `Aᵐᵒᵖ`-linear equivalence `Tr q₁ ≃ Tr p₁` sends a functional on `Tr p₁` to its composite with that
 equivalence.
 
-The result is `A`-linear precisely because the equivalence is `Aᵐᵒᵖ`-linear: the two ways of moving
-a scalar past it are the two sides of `LinearEquiv.map_smul`. -/
+It is `LinearEquiv.dualMap` of the underlying `k`-linear equivalence, upgraded to the `A`-action
+that the translates carry. -/
 def linearEquiv (e : AuslanderReitenTranspose q₁ ≃ₗ[Aᵐᵒᵖ] AuslanderReitenTranspose p₁) :
-    arTranslate k p₁ ≃ₗ[A] arTranslate k q₁ where
-  toFun φ := φ ∘ₗ (e.restrictScalars k : _ →ₗ[k] _)
-  map_add' _ _ := rfl
-  map_smul' a φ := by
-    ext x
-    simp
-  invFun ψ := ψ ∘ₗ (e.symm.restrictScalars k : _ →ₗ[k] _)
-  left_inv φ := by
-    ext x
-    simp
-  right_inv ψ := by
-    ext x
-    simp
+    arTranslate k p₁ ≃ₗ[A] arTranslate k q₁ :=
+  { (e.restrictScalars k).dualMap with
+    map_smul' := fun a φ => by
+      ext x
+      simp }
 
 @[simp]
 theorem linearEquiv_apply (e : AuslanderReitenTranspose q₁ ≃ₗ[Aᵐᵒᵖ] AuslanderReitenTranspose p₁)
@@ -178,19 +141,17 @@ theorem linearEquiv_apply (e : AuslanderReitenTranspose q₁ ≃ₗ[Aᵐᵒᵖ] 
 
 @[simp]
 theorem linearEquiv_symm (e : AuslanderReitenTranspose q₁ ≃ₗ[Aᵐᵒᵖ] AuslanderReitenTranspose p₁) :
-    (linearEquiv (k := k) e).symm = linearEquiv e.symm := by
-  refine LinearEquiv.ext fun ψ => ?_
-  ext x
-  rfl
+    (linearEquiv (k := k) e).symm = linearEquiv e.symm :=
+  LinearEquiv.ext fun ψ => DFunLike.congr_fun (LinearEquiv.dualMap_symm (f := e.restrictScalars k))
+    ψ
 
 /-- Transport along the identity equivalence of transposes is the identity. -/
 @[simp]
 theorem linearEquiv_refl :
     linearEquiv (k := k) (LinearEquiv.refl Aᵐᵒᵖ (AuslanderReitenTranspose p₁)) =
-      LinearEquiv.refl A (arTranslate k p₁) := by
-  refine LinearEquiv.ext fun φ => ?_
-  ext x
-  simp
+      LinearEquiv.refl A (arTranslate k p₁) :=
+  LinearEquiv.ext fun φ =>
+    DFunLike.congr_fun (LinearEquiv.dualMap_refl (R := k) (M₁ := AuslanderReitenTranspose p₁)) φ
 
 /-- Dualizing is **contravariant**: transporting along a composite of equivalences of transposes is
 the composite of the transports in the reverse order. -/
@@ -199,10 +160,10 @@ theorem linearEquiv_trans {R₀ : Type*} {R₁ : Type*} [AddCommMonoid R₀] [Mo
     [AddCommMonoid R₁] [Module A R₁] {r₁ : R₁ →ₗ[A] R₀}
     (f : AuslanderReitenTranspose r₁ ≃ₗ[Aᵐᵒᵖ] AuslanderReitenTranspose q₁)
     (e : AuslanderReitenTranspose q₁ ≃ₗ[Aᵐᵒᵖ] AuslanderReitenTranspose p₁) :
-    linearEquiv (k := k) (f.trans e) = (linearEquiv (k := k) e).trans (linearEquiv f) := by
-  refine LinearEquiv.ext fun φ => ?_
-  ext x
-  simp
+    linearEquiv (k := k) (f.trans e) = (linearEquiv (k := k) e).trans (linearEquiv f) :=
+  LinearEquiv.ext fun φ =>
+    DFunLike.congr_fun
+      (LinearEquiv.dualMap_trans (f.restrictScalars k) (e.restrictScalars k)).symm φ
 
 end arTranslate
 

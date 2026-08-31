@@ -98,6 +98,13 @@ instance : IsScalarTower k Aᵐᵒᵖ (AuslanderReitenTranspose p₁) :=
 instance : SMulCommClass Aᵐᵒᵖ k (AuslanderReitenTranspose p₁) :=
   inferInstanceAs (SMulCommClass Aᵐᵒᵖ k (Module.Dual A P₁ ⧸ LinearMap.range (p₁.lcomp Aᵐᵒᵖ A)))
 
+/-- A scalar of `k`, viewed in `Aᵐᵒᵖ` through the algebra map, acts on the transpose as it does
+through the `k`-action itself. -/
+@[simp]
+theorem op_algebraMap_smul (c : k) (x : AuslanderReitenTranspose p₁) :
+    MulOpposite.op (algebraMap k A c) • x = c • x := by
+  rw [← MulOpposite.algebraMap_apply, algebraMap_smul]
+
 end Scalars
 
 /-- The quotient map from the dual of the first projective onto its Auslander--Reiten transpose. -/
