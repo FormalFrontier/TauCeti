@@ -6,8 +6,8 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.FieldTheory.PolynomialGaloisGroup
-public import Mathlib.Data.Finite.Perm
-public import Mathlib.GroupTheory.Coset.Card
+import Mathlib.Data.Finite.Perm
+import Mathlib.GroupTheory.Coset.Card
 
 /-!
 # Degree of the root permutation representation
@@ -28,6 +28,8 @@ that the Galois-group order divides the factorial of the polynomial degree.
   splitting field can be numbered by `Fin p.natDegree`.
 * `TauCeti.natCard_galActionHom_range`: the faithful Galois image has the order of the polynomial
   Galois group.
+* `TauCeti.natCard_gal_dvd_factorial_card_rootSet`: the Galois-group order divides the factorial
+  of the number of distinct roots.
 * `TauCeti.natCard_gal_dvd_factorial_natDegree`: the order of a separable polynomial's Galois
   group divides the factorial of its degree.
 
@@ -66,16 +68,17 @@ theorem nonempty_rootSet_splittingField_equiv_fin (p : F[X]) (hsep : p.Separable
 
 /-- The image of the Galois action on the roots in any splitting extension has the same order as
 the polynomial Galois group. -/
+@[simp]
 theorem natCard_galActionHom_range (p : F[X]) (E : Type v) [Field E] [Algebra F E]
     [Fact ((p.map (algebraMap F E)).Splits)] :
     Nat.card (Polynomial.Gal.galActionHom p E).range = Nat.card p.Gal := by
   exact Nat.card_congr
     (MonoidHom.ofInjective (Polynomial.Gal.galActionHom_injective p E)).toEquiv.symm
 
-/-- The order of the Galois group of a separable polynomial divides the factorial of its degree,
-through its faithful action on the distinct roots. -/
-theorem natCard_gal_dvd_factorial_natDegree (p : F[X]) (hsep : p.Separable) :
-    Nat.card p.Gal ∣ p.natDegree.factorial := by
+/-- The order of the Galois group of a polynomial divides the factorial of the number of its
+distinct roots in the splitting field, through the faithful root action. -/
+theorem natCard_gal_dvd_factorial_card_rootSet (p : F[X]) :
+    Nat.card p.Gal ∣ (Fintype.card (p.rootSet p.SplittingField)).factorial := by
   have : Fact ((p.map (algebraMap F p.SplittingField)).Splits) :=
     ⟨IsSplittingField.splits p.SplittingField p⟩
   calc
@@ -83,8 +86,15 @@ theorem natCard_gal_dvd_factorial_natDegree (p : F[X]) (hsep : p.Separable) :
       (natCard_galActionHom_range p p.SplittingField).symm
     _ ∣ Nat.card (Equiv.Perm (p.rootSet p.SplittingField)) :=
       Subgroup.card_subgroup_dvd_card _
-    _ = p.natDegree.factorial := by
-      rw [Nat.card_perm, Nat.card_eq_fintype_card,
-        Polynomial.card_rootSet_eq_natDegree hsep (IsSplittingField.splits p.SplittingField p)]
+    _ = (Fintype.card (p.rootSet p.SplittingField)).factorial := by
+      rw [Nat.card_perm, Nat.card_eq_fintype_card]
+
+/-- The order of the Galois group of a separable polynomial divides the factorial of its degree,
+through its faithful action on the distinct roots. -/
+theorem natCard_gal_dvd_factorial_natDegree (p : F[X]) (hsep : p.Separable) :
+    Nat.card p.Gal ∣ p.natDegree.factorial := by
+  simpa only [Polynomial.card_rootSet_eq_natDegree hsep
+    (IsSplittingField.splits p.SplittingField p)] using
+    natCard_gal_dvd_factorial_card_rootSet p
 
 end TauCeti
