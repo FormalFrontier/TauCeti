@@ -162,7 +162,6 @@ abbrev SpecializeAtNegOne (M : Type*) [AddCommGroup M] [Module (LaurentPolynomia
   LaurentSpecialization laurentEvalNegOne M
 
 /-- At `q = 1`, every Laurent shift has the same specialized class. -/
-@[simp]
 theorem specializeAtOne_T_smul (n : ℤ) (x : M) [Module (LaurentPolynomial ℤ) M] :
     specializeOf laurentEvalOne M ((T n : LaurentPolynomial ℤ) • x) =
       specializeOf laurentEvalOne M x := by
@@ -170,7 +169,6 @@ theorem specializeAtOne_T_smul (n : ℤ) (x : M) [Module (LaurentPolynomial ℤ)
   simp
 
 /-- At `q = -1`, a Laurent shift acts by its sign on the specialized class. -/
-@[simp]
 theorem specializeAtNegOne_T_smul (n : ℤ) (x : M) [Module (LaurentPolynomial ℤ) M] :
     specializeOf laurentEvalNegOne M ((T n : LaurentPolynomial ℤ) • x) =
       negOneZpow n • specializeOf laurentEvalNegOne M x := by
