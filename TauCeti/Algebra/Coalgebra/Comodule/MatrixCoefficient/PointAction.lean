@@ -83,19 +83,19 @@ end Matrix
 
 section Charpoly
 
-variable {R : Type u} {C : Type v} {M : Type w} {i : Type y}
+variable {R : Type u} {C : Type v} {M : Type w}
 variable [CommSemiring R] [Semiring C] [Algebra R C] [Coalgebra R C]
 variable [AddCommMonoid M] [Module R M] [Comodule R C M]
-variable [Finite i]
 
 /-- Composing a point with a morphism of value algebras maps the characteristic polynomial of
 its action along that morphism. -/
+@[simp]
 theorem charpoly_endOfPoint_comp [Module.Free R M] [Module.Finite R M]
     {B D : Type*} [CommRing B] [Algebra R B]
-    [CommRing D] [Algebra R D] (b : Basis i R M) (g : C →ₐ[R] B) (f : B →ₐ[R] D) :
+    [CommRing D] [Algebra R D] (g : C →ₐ[R] B) (f : B →ₐ[R] D) :
     (endOfPoint M (f.comp g)).charpoly = (endOfPoint M g).charpoly.map f := by
   classical
-  let _ := Fintype.ofFinite i
+  let b := Module.Free.chooseBasis R M
   rw [← LinearMap.charpoly_toMatrix (endOfPoint M (f.comp g)) (b.baseChange D),
     ← LinearMap.charpoly_toMatrix (endOfPoint M g) (b.baseChange B),
     toMatrix_endOfPoint, toMatrix_endOfPoint, ← Matrix.charpoly_map, Matrix.map_map]

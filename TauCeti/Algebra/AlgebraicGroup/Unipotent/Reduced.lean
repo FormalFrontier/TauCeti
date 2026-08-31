@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.Unipotent.Basic
 import Mathlib.LinearAlgebra.Charpoly.ToMatrix
+import TauCeti.Algebra.AlgebraicGroup.Representation.UnipotentPoint.Naturality
 import TauCeti.Algebra.Coalgebra.Comodule.MatrixCoefficient.PointAction
 import TauCeti.RingTheory.FiniteType.PointSeparation
 import TauCeti.RingTheory.Smooth.GeometricallyReduced
@@ -28,8 +29,12 @@ commutative algebra over the ground field is unipotent.
   unipotence descends along an injective coordinate morphism with reduced finite-type codomain.
 * `TauCeti.geometricallyUnipotentPointsCommHopfAlgProperty.isUnipotentPoint`: geometric
   unipotence can be evaluated in any commutative algebra.
+* `TauCeti.geometricallyUnipotentPointsCommHopfAlgProperty.iff_forall_isUnipotentPoint`:
+  geometric unipotence can be characterized over any algebraically closed extension.
 * `TauCeti.smoothUnipotentCommHopfAlgProperty.isUnipotentPoint`: the smooth finite-type
   specialization, where reducedness follows from smoothness.
+* `TauCeti.smoothUnipotentCommHopfAlgProperty.iff_smooth_and_forall_isUnipotentPoint`:
+  the corresponding characterization for smooth unipotence.
 
 ## References
 
@@ -119,7 +124,7 @@ private theorem isUnipotent_pointsAction_of_coefficientMatrix_charpoly_eq
       (Comodule.endOfPoint M g.ofConv).charpoly =
           (Comodule.endOfPoint M e).charpoly.map g.ofConv := by
         simpa only [e, AlgHom.comp_id] using
-          (Comodule.charpoly_endOfPoint_comp b e g.ofConv)
+          (Comodule.charpoly_endOfPoint_comp e g.ofConv)
       _ = C.charpoly.map g.ofConv := by
         congr 1
         rw [← LinearMap.charpoly_toMatrix (Comodule.endOfPoint M e) (b.baseChange A),
@@ -152,6 +157,23 @@ theorem isUnipotentPoint
   let b := Module.Free.chooseBasis k M
   exact isUnipotent_pointsAction_of_coefficientMatrix_charpoly_eq M g b
     (coefficientMatrix_charpoly_eq hA M b)
+
+/-- A reduced finite-type Hopf algebra is geometrically unipotent if and only if every point
+valued in any fixed algebraically closed extension is unipotent. -/
+theorem iff_forall_isUnipotentPoint
+    {A : _root_.CommHopfAlgCat.{v} k} [Algebra.FiniteType k A] [IsReduced A]
+    (L : Type w) [Field L] [Algebra k L] [IsAlgClosed L] :
+    geometricallyUnipotentPointsCommHopfAlgProperty k A ↔
+      ∀ g : WithConv (A →ₐ[k] L), HopfAlgebra.IsUnipotentPoint g := by
+  constructor
+  · intro hA g
+    exact isUnipotentPoint hA g
+  · intro hL
+    rw [geometricallyUnipotentPointsCommHopfAlgProperty_iff]
+    intro g
+    let φ : AlgebraicClosure k →ₐ[k] L := IsAlgClosed.lift
+    exact (HopfAlgebra.isUnipotentPoint_mapValue_iff_of_injective g φ φ.injective).mp
+      (hL (AlgHom.mapValue (H := A) φ g))
 
 /-- Geometric unipotence descends along an injective morphism of coordinate Hopf algebras whose
 codomain is reduced and finite type.
@@ -217,6 +239,30 @@ theorem isUnipotentPoint
     exact hA'.2
   exact geometricallyUnipotentPointsCommHopfAlgProperty.isUnipotentPoint
     (A := A.obj) (L := L) hgeom g
+
+/-- A finite-type Hopf algebra is smooth unipotent if and only if it is smooth and every point
+valued in any fixed algebraically closed extension is unipotent. -/
+theorem iff_smooth_and_forall_isUnipotentPoint
+    (L : Type w) [Field L] [Algebra k L] [IsAlgClosed L] :
+    smoothUnipotentCommHopfAlgProperty k A ↔
+      Algebra.Smooth k A ∧
+        ∀ g : WithConv (A →ₐ[k] L), HopfAlgebra.IsUnipotentPoint g := by
+  constructor
+  · intro hA
+    have hA' := (smoothUnipotentCommHopfAlgProperty_iff k A).mp hA
+    let _ : Algebra.Smooth k A := hA'.1
+    let _ : IsReduced A := isReduced_of_smooth_of_field k A
+    refine ⟨hA'.1, ?_⟩
+    exact (geometricallyUnipotentPointsCommHopfAlgProperty.iff_forall_isUnipotentPoint
+      (A := A.obj) L).mp
+        ((geometricallyUnipotentPointsCommHopfAlgProperty_iff k A.obj).mpr hA'.2)
+  · rintro ⟨hsm, hL⟩
+    rw [smoothUnipotentCommHopfAlgProperty_iff]
+    refine ⟨hsm, ?_⟩
+    intro g
+    let φ : AlgebraicClosure k →ₐ[k] L := IsAlgClosed.lift
+    exact (HopfAlgebra.isUnipotentPoint_mapValue_iff_of_injective g φ φ.injective).mp
+      (hL (AlgHom.mapValue (H := A) φ g))
 
 end smoothUnipotentCommHopfAlgProperty
 

@@ -119,7 +119,7 @@ theorem isUnipotentPoint_of_mem_unipotent
         rw [conjugate_apply, charpoly_conjugate]
       _ = (Comodule.endOfPoint M (f.comp g.ofConv)).charpoly := by rw [constPoint_apply]
       _ = (Comodule.endOfPoint M g.ofConv).charpoly.map f :=
-        Comodule.charpoly_endOfPoint_comp b g.ofConv f
+        Comodule.charpoly_endOfPoint_comp g.ofConv f
       _ = G.charpoly.map LaurentPolynomial.C := by
         rw [← LinearMap.charpoly_toMatrix (Comodule.endOfPoint M g.ofConv) (b.baseChange A),
           Comodule.toMatrix_endOfPoint, hf]
