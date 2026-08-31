@@ -70,9 +70,20 @@ characters stated in `rootGeneratorWeight_carrierNode_eq_root_simpleIndex`.
   `TauCetiRoadmap/CFSGStatement/Suggested.lean`: the ambient group, the numbered simple root
   subgroup, and the Frobenius with its pinned equation, all taken on a validated-index subtype.
 
-This is the `suzuki` branch of milestone L0, "pinned ambient groups", of
-`TauCetiRoadmap/CFSGStatement/README.md`, together with the Frobenius half of milestone L1. The
-type-A counterpart is `TauCeti/GroupTheory/SpecificGroups/CFSG/TypeA.lean`.
+## Roadmap
+
+Milestone L0 of `TauCetiRoadmap/CFSGStatement/README.md` asks for the points of the *pinned* simply
+connected Chevalley--Demazure group scheme of `TauCeti.DynkinType.simplyConnectedRootDatum` at the
+diagram the index names, with its root subgroups. **This file does not close L0 on the `suzuki`
+branch, and the rank-two type-`C` carrier is not offered as a substitute for that pinned group.**
+The pinned group scheme, its pinning, and any identification of a carrier with it are Layer 9
+targets of `TauCetiRoadmap/ReductiveGroups/README.md` that the CFSG roadmap consumes rather than
+builds; none of them is proved of `TauCeti.SpStd.groupScheme 1` here or in the files this one
+imports. What this file supplies is the branch's explicit carrier, its numbered root characters read
+in the `B₂` root datum, and the equation `Frob_q (x_i(u)) = x_i(u ^ q)` that milestone L1 asks of an
+ordinary Frobenius factor, each in the shape those milestones state it; they transfer to the L0
+carrier along that Layer 9 identification, and not before. The type-A counterpart is
+`TauCeti/GroupTheory/SpecificGroups/CFSG/TypeA.lean`.
 -/
 
 public section
@@ -103,9 +114,11 @@ def carrierNode : Fin d.1.rank ≃ Fin 2 :=
 
 /-! ## The ambient group and its simple root subgroups -/
 
-/-- **The ambient group of a validated Suzuki index**: the points of the explicit full-weight
-rank-two type-`C` Chevalley carrier over the algebraic closure of the field with two elements. It
-is infinite; no finiteness, reductivity, pinning or maximality statement is attached to it. -/
+/-- **The ambient group this file attaches to a validated Suzuki index**: the points of the explicit
+full-weight rank-two type-`C` Chevalley carrier over the algebraic closure of the field with two
+elements. It is infinite; no finiteness, reductivity, pinning or maximality statement is attached to
+it, and it is not claimed to be the pinned `B₂` group scheme's points that milestone L0 asks for,
+that identification being the Layer 9 target described in the module docstring. -/
 abbrev AmbientGroup : Type := SpStd.points 1 d.1.Closure
 
 /-- The positive simple-root subgroup at the Bourbaki-numbered node `i` of the `B₂` diagram. It is
