@@ -100,16 +100,17 @@ section Decomposition
 /-- Two kernels with the same integral over every rectangle of a partition `Q` have the same
 integral over a rectangle whose sides are parts of two partitions coarser than `Q`. -/
 private theorem rectIntegral_eq_of_le_left_right {P R Q : Finpartition (Set.univ : Set Ω)}
-    (hP : ∀ p ∈ P.parts, MeasurableSet p) (hR : ∀ r ∈ R.parts, MeasurableSet r)
+    (p : P.parts) (r : R.parts) (hp : MeasurableSet (p : Set Ω))
+    (hr : MeasurableSet (r : Set Ω))
     (hQ : ∀ q ∈ Q.parts, MeasurableSet q) (hQP : Q ≤ P) (hQR : Q ≤ R)
     {K L : SymmKernel Ω μ}
     (h : ∀ r s : Q.parts, K.rectIntegral μ (r : Set Ω) (s : Set Ω)
-      = L.rectIntegral μ (r : Set Ω) (s : Set Ω)) (p : P.parts) (r : R.parts) :
+      = L.rectIntegral μ (r : Set Ω) (s : Set Ω)) :
     K.rectIntegral μ (p : Set Ω) (r : Set Ω) = L.rectIntegral μ (p : Set Ω) (r : Set Ω) := by
   rw [SymmKernel.rectIntegral_def, SymmKernel.rectIntegral_def,
-    Finpartition.setIntegral_prod_eq_sum_parts μ Q hQ (hP _ p.property) (hR _ r.property)
+    Finpartition.setIntegral_prod_eq_sum_parts μ Q hQ hp hr
       (SymmKernel.integrable_uncurry μ K).integrableOn,
-    Finpartition.setIntegral_prod_eq_sum_parts μ Q hQ (hP _ p.property) (hR _ r.property)
+    Finpartition.setIntegral_prod_eq_sum_parts μ Q hQ hp hr
       (SymmKernel.integrable_uncurry μ L).integrableOn]
   refine Finset.sum_congr rfl fun rs _ => ?_
   rcases Finpartition.inter_part_eq_self_or_eq_empty_of_le hQP rs.1.property p.property with
@@ -128,13 +129,14 @@ end Decomposition
 /-- Block averaging over `Q` reproduces the integral over any rectangle whose two sides are parts
 of (possibly different) measurable partitions coarser than `Q`. -/
 theorem stepGraphonAvg_rectIntegral_of_le {P R Q : Finpartition (Set.univ : Set Ω)}
-    (hP : ∀ p ∈ P.parts, MeasurableSet p) (hR : ∀ r ∈ R.parts, MeasurableSet r)
+    (p : P.parts) (r : R.parts) (hp : MeasurableSet (p : Set Ω))
+    (hr : MeasurableSet (r : Set Ω))
     (hQ : ∀ q ∈ Q.parts, MeasurableSet q) (hQP : Q ≤ P) (hQR : Q ≤ R)
-    (W : Graphon Ω μ) (p : P.parts) (r : R.parts) :
+    (W : Graphon Ω μ) :
     (stepGraphonAvg (μ := μ) Q hQ W).toSymmKernel.rectIntegral μ (p : Set Ω) (r : Set Ω)
       = W.toSymmKernel.rectIntegral μ (p : Set Ω) (r : Set Ω) :=
-  rectIntegral_eq_of_le_left_right μ hP hR hQ hQP hQR
-    (fun q q' => stepGraphonAvg_rectIntegral Q hQ W q q') p r
+  rectIntegral_eq_of_le_left_right μ p r hp hr hQ hQP hQR
+    (fun q q' => stepGraphonAvg_rectIntegral Q hQ W q q')
 
 variable (P Q : Finpartition (Set.univ : Set Ω))
 
@@ -219,7 +221,8 @@ theorem l2inner_stepGraphonAvg_of_le (hP : ∀ p ∈ P.parts, MeasurableSet p)
       = graphonPartitionEnergy μ P hP W := by
   rw [l2inner_stepGraphonAvg_eq_sum, graphonPartitionEnergy_eq_sum]
   exact Finset.sum_congr rfl fun pq _ => by
-    rw [stepGraphonAvg_rectIntegral_of_le μ hP hP hQ href href W pq.1 pq.2]
+    rw [stepGraphonAvg_rectIntegral_of_le μ pq.1 pq.2 (hP _ pq.1.property)
+      (hP _ pq.2.property) hQ href href W]
 
 /-- **The `L²`-Pythagoras energy increment.**  Refining a partition raises the energy by exactly the
 `L²` norm squared of the change in the block-average step graphon.  This is the quantitative driver

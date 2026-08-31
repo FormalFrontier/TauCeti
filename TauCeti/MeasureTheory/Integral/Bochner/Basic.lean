@@ -49,16 +49,15 @@ namespace TauCeti
 
 namespace MeasureTheory
 
-/-- Cauchy--Schwarz for a real-valued set integral, in squared form. -/
+/-- Cauchy--Schwarz for a real-valued set integral over a set of finite measure, in squared form. -/
 theorem sq_setIntegral_le_measureReal_mul_setIntegral_sq {Ω : Type*} [MeasurableSpace Ω]
-    {μ : Measure Ω} [IsFiniteMeasure μ] (f : Ω → ℝ) (S : Set Ω) (hf : IntegrableOn f S μ)
-    (hf_sq : IntegrableOn (fun x => f x ^ 2) S μ) :
+    {μ : Measure Ω} (f : Ω → ℝ) (S : Set Ω) (hS_top : μ S ≠ ⊤)
+    (hf : IntegrableOn f S μ) (hf_sq : IntegrableOn (fun x => f x ^ 2) S μ) :
     (∫ x in S, f x ∂μ) ^ 2 ≤ μ.real S * ∫ x in S, f x ^ 2 ∂μ := by
   by_cases hS : μ S = 0
   · rw [Measure.restrict_eq_zero.mpr hS]
     simp
-  · have hS_top : μ S ≠ ⊤ := (measure_lt_top μ S).ne
-    have hS_pos : 0 < μ.real S := ENNReal.toReal_pos hS hS_top
+  · have hS_pos : 0 < μ.real S := ENNReal.toReal_pos hS hS_top
     have hconv : ConvexOn ℝ Set.univ (fun x : ℝ => x ^ 2) :=
       Even.convexOn_pow (by norm_num : Even 2)
     have hjensen := hconv.map_set_average_le (continuous_pow 2).continuousOn isClosed_univ

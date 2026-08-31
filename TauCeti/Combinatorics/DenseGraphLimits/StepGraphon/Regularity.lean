@@ -104,8 +104,8 @@ theorem exists_refinement_energy_add_sq_le (P : Finpartition (Set.univ : Set Ω)
   have havg :
       (stepGraphonAvg (μ := μ) Q hQ W).toSymmKernel.rectIntegral μ S T =
         W.toSymmKernel.rectIntegral μ S T := by
-    simpa [pS, pT] using stepGraphonAvg_rectIntegral_of_le μ hPS hPT hQ
-      hQS hQT W pS pT
+    simpa [pS, pT] using stepGraphonAvg_rectIntegral_of_le μ pS pT hS hT hQ
+      hQS hQT W
   let L := (stepGraphonAvg (μ := μ) Q hQ W).toSymmKernel -
     (stepGraphonAvg (μ := μ) P hP W).toSymmKernel
   have hLrect : L.rectIntegral μ S T = D.rectIntegral μ S T := by
