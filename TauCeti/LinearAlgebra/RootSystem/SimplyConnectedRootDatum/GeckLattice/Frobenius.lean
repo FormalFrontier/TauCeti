@@ -48,6 +48,8 @@ subgroup appearing in it is finite, is simple, or is a named finite group.
 * `TauCeti.DynkinType.coe_geckFrobenius`: the endomorphism acts by the entrywise Frobenius.
 * `TauCeti.DynkinType.geckFrobenius_zero` and `TauCeti.DynkinType.geckFrobenius_add`: the iteration
   laws.
+* `TauCeti.DynkinType.coe_geckFrobenius_eq_iterate`: consequently every member of the family is an
+  iterate of the `p`-power one.
 * `TauCeti.DynkinType.geckFrobenius_eq_self_iff`: a carrier point is fixed exactly when all of its
   matrix entries are fixed.
 * `TauCeti.DynkinType.geckFrobenius_geckRootSubgroupMatrix` and
@@ -130,6 +132,17 @@ theorem geckFrobenius_add (m : ℕ) :
       (t.geckFrobenius ht p k A).comp (t.geckFrobenius ht p m A) := by
   rw [geckFrobenius, geckFrobenius, geckFrobenius, iterateFrobenius_add,
     t.geckPointsMap_comp ht]
+
+/-- **Every Frobenius endomorphism of the pinned Geck carrier is an iterate of the `p`-power
+one.** This is the group form of `Frob_(p ^ k) = Frob_p ^ k`, so the `p`-power Frobenius generates
+the whole family and a relation stated at one exponent can be read at another. -/
+theorem coe_geckFrobenius_eq_iterate :
+    ⇑(t.geckFrobenius ht p k A) = (⇑(t.geckFrobenius ht p 1 A))^[k] := by
+  induction k with
+  | zero => rw [geckFrobenius_zero, Function.iterate_zero, MonoidHom.coe_id]
+  | succ n ih =>
+    rw [Function.iterate_succ', ← ih, ← MonoidHom.coe_comp, ← t.geckFrobenius_add ht p 1 A n,
+      Nat.add_comm 1 n]
 
 /-- A point of the pinned Geck carrier is fixed by its Frobenius endomorphism exactly when every
 one of its matrix entries lies in the Frobenius-fixed subring. -/
