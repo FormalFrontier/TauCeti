@@ -64,8 +64,58 @@ with the source rather than checking it against a published number.
 Nothing here asserts that the presented group is nontrivial, finite, simple, of any particular
 order, or isomorphic to another realization. Kim and Michler prove that the commutator subgroup of
 the displayed source presentation is `Fi₂₄'`; Reidemeister--Schreier rewriting transfers that
-presentation to the subgroup. A separate source-to-Lean read-through remains the S1 review
-artifact required by the roadmap.
+presentation to the subgroup. The independent read-through below checks that transfer against the
+cited source; it is an audit artifact, not a Lean theorem identifying the presented group.
+
+## Independent source-to-Lean read-through
+
+An independent read-through used Kim--Michler, Lemma 6.2. The paper presents twelve involutions
+`a,b,c,d,e,f,g,h,i,j,k,l`. Its eleven exponent-three pairs are
+
+```text
+lk, ka, ab, bc, cd, de, ef, fg, gj, dh, hi,
+```
+
+and its fifty-five exponent-two pairs are
+
+```text
+la,lb,lc,ld,le,lf,lg,lj,lh,li,
+kb,kc,kd,ke,kf,kg,kj,kh,ki,
+ac,ad,ae,af,ag,aj,ah,ai,
+bd,be,bf,bg,bj,bh,bi,
+ce,cf,cg,cj,ch,ci, df,dg,dj,
+eg,ej,eh,ei, fj,fh,fi, gh,gi, jh,ji,di.
+```
+
+These are exactly the eleven undirected pairs in `fi24AutomorphismEdges` and their complement;
+`fi24AutomorphismCoxeterMatrix` assigns the edges entry three, every other off-diagonal pair entry
+two, and the diagonal entry one. The two remaining source relations have exactly the letters and
+exponents recorded by `fi24SourceEquationWord_def` and `fi24SourceLongWord_def`:
+
+```text
+l = (a b c d e f h)^9,
+(d c b a k l d e f g j d h i)^17 = 1.
+```
+
+Thus the source's twelve squares, eleven exponent-three pairs, fifty-five exponent-two pairs, and
+two displayed relations account for all `80` entries of `fi24AutomorphismRelators`, with none
+dropped or duplicated.
+
+Lemma 6.2(c) identifies the commutator subgroup and gives the generators `ab` through `ak`. The
+connected exponent-three graph makes all twelve source generators equal in the abelianization,
+while sending each of them to the nontrivial element of `C₂` kills all the source relators. Hence
+that parity map has the commutator subgroup as its index-two kernel. The rewrite was then checked
+definition by definition: `fi24SchreierFactors` toggles the transversal representative after every
+source letter, omits `a`, and records `(ax)⁻¹` and `ax` in alternating positions. Starting in the
+two possible representatives gives the rewrites of `r` and `a r a`. The twelve square relations
+perform the standard elimination of the redundant Schreier generators; each of the remaining
+`66 + 2` source relators contributes both rewrites. This gives exactly the `136` relators generated
+by `fi24PrimeRelators`, retaining `al` so that the source equation for `l` remains visible.
+`fi24PrimePresentation_relatorLetters` exposes the resulting compiled words for kernel-checked
+inspection. This closes the row's S1 source-to-Lean read-through.
+
+The independent `FiniteSimpleGroups` development named by the roadmap does not cover `Fi₂₄'`, so
+the additional explicit-construction comparison does not apply to this row.
 
 ## Main definitions
 
@@ -444,8 +494,9 @@ def fi24PrimePresentation : GroupPresentation where
     Schreier generators and then rewrite trivially. Each of the 66 off-diagonal Coxeter relators \
     and each of the two displayed relations contributes its rewrite and the rewrite of its \
     conjugate by a, for 2*(66+2)=136 relators. Retain al rather than eliminating it with the first \
-    displayed relation, so every target relator remains a direct rewrite of a source relator. A \
-    separate source-to-Lean read-through remains an S1 review obligation."
+    displayed relation, so every target relator remains a direct rewrite of a source relator. The \
+    independent source-to-Lean read-through checked all 80 source relators and the \
+    Reidemeister--Schreier rewrite producing the 136 target relators."
   expectedGeneratorCount := 11
   expectedRelatorCount := 136
   transcribed := fi24PrimeRelators
@@ -485,7 +536,7 @@ theorem fi24PrimePresentation_generatorConvention :
   simp only [fi24PrimePresentation]
 
 /-- The transcription notes recorded for `Fi₂₄'`, including the arithmetic behind the relator
-count and the outstanding read-through obligation. -/
+count and the completed independent read-through. -/
 theorem fi24PrimePresentation_transcriptionNotes :
     fi24PrimePresentation.transcriptionNotes = "Expand the source diagram into 78 Coxeter \
       relators and append its two displayed relations. The twelve square relations eliminate the \
@@ -493,8 +544,9 @@ theorem fi24PrimePresentation_transcriptionNotes :
       off-diagonal Coxeter relators and each of the two displayed relations contributes its \
       rewrite and the rewrite of its conjugate by a, for 2*(66+2)=136 relators. Retain al rather \
       than eliminating it with the first displayed relation, so every target relator remains a \
-      direct rewrite of a source relator. A separate source-to-Lean read-through remains an S1 \
-      review obligation." := by
+      direct rewrite of a source relator. The independent source-to-Lean read-through checked all \
+      80 source relators and the Reidemeister--Schreier rewrite producing the 136 target \
+      relators." := by
   simp only [fi24PrimePresentation]
 
 /-- The generator count of this row: the ten Schreier generators `ab, …, ak` that Kim--Michler
