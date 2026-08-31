@@ -59,7 +59,7 @@ This is exactly the order and grouping of the twenty-four entries in
 `g(bf)³`, `e(abc)³`, `e(acg)⁴`, and `e(abcf)⁷` lie outside their parenthesized powers in both
 the print and Lean. The paper then states `Length = 174`, agreeing with the checked 150 letters
 plus 24 separators. Its following `Consequences` line separately lists twelve words, from `afaf`
-through `(bcde)⁴`; none is part of the defining-relator list or the Lean row. This checks every
+through `(bede)⁴`; none is part of the defining-relator list or the Lean row. This checks every
 source relator, exponent, binding boundary, and the defining-relator/consequence boundary
 independently of the original transcription and closes this row's S1 source-to-Lean read-through.
 
