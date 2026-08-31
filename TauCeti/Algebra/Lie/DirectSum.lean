@@ -27,7 +27,7 @@ finite family of components reassembles to the element it came from. That is
 The file also refines the two ways an external direct sum is transported to Mathlib's Lie module
 structure: along a family of morphisms of the summands (`DirectSum.lieModuleMap`, refining
 `DirectSum.lmap`, and `DirectSum.lieModuleEquivCongrRight`, refining
-`DFinsupp.mapRange.linearEquiv`) and along an equivalence of the index type
+`DirectSum.congrLinearEquiv`) and along an equivalence of the index type
 (`DirectSum.lieModuleEquivCongrLeft`, refining `DirectSum.lequivCongrLeft`). The bracket acts
 summand by summand, so in each case the only thing to check is that Mathlib's underlying linear map
 is equivariant; the `_toLinearMap` and `_toLinearEquiv` lemmas record which map that is, so that
@@ -117,21 +117,18 @@ theorem lieModuleMap_apply (f : ∀ i, P i →ₗ⁅R,L⁆ Q i) (x : ⨁ i, P i)
   (rfl)
 
 /-- **A family of equivalences of the summands, as an equivalence of the external direct sums.**
-Its underlying linear equivalence is Mathlib's `DFinsupp.mapRange.linearEquiv`, whose inverse is
-already the family of inverses. -/
+Its underlying linear equivalence is Mathlib's `DirectSum.congrLinearEquiv`, whose inverse is
+already the family of inverses; equivariance is that of the underlying `DirectSum.lieModuleMap`. -/
 def lieModuleEquivCongrRight (e : ∀ i, P i ≃ₗ⁅R,L⁆ Q i) : (⨁ i, P i) ≃ₗ⁅R,L⁆ ⨁ i, Q i :=
-  { DFinsupp.mapRange.linearEquiv fun i ↦ (e i : P i ≃ₗ[R] Q i) with
-    map_lie' := by
-      intro x m
-      ext i
-      exact (e i : P i →ₗ⁅R,L⁆ Q i).map_lie x (m i) }
+  { congrLinearEquiv fun i ↦ (e i : P i ≃ₗ[R] Q i) with
+    map_lie' := (lieModuleMap fun i ↦ (e i : P i →ₗ⁅R,L⁆ Q i)).map_lie' }
 
 /-- The underlying linear equivalence of a family of equivalences of the summands is Mathlib's
-`DFinsupp.mapRange.linearEquiv`, which is how its API is reached. -/
+`DirectSum.congrLinearEquiv`, which is how its API is reached. -/
 @[simp]
 theorem lieModuleEquivCongrRight_toLinearEquiv (e : ∀ i, P i ≃ₗ⁅R,L⁆ Q i) :
     (lieModuleEquivCongrRight e : (⨁ i, P i) ≃ₗ[R] ⨁ i, Q i)
-      = DFinsupp.mapRange.linearEquiv fun i ↦ (e i : P i ≃ₗ[R] Q i) :=
+      = congrLinearEquiv fun i ↦ (e i : P i ≃ₗ[R] Q i) :=
   (rfl)
 
 @[simp]

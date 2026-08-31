@@ -130,6 +130,7 @@ theorem isotypicMultiplicity_def : isotypicMultiplicity R L M S = finrank R (S �
   (rfl)
 
 /-- **The zero module has multiplicity zero**: the only morphism out of it is the zero morphism. -/
+@[simp]
 theorem isotypicMultiplicity_eq_zero_of_subsingleton [Nontrivial R] [Subsingleton S] :
     isotypicMultiplicity R L M S = 0 :=
   have _ : Subsingleton (S →ₗ⁅R,L⁆ M) :=

@@ -9,8 +9,8 @@ public import TauCeti.Algebra.Lie.HighestWeight.Verma
 public import TauCeti.Algebra.Lie.Multiplicity
 -- Non-public: these supply the inputs of the proofs, never the vocabulary of a statement.
 import TauCeti.Algebra.Lie.HighestWeight.CompleteReducibility
+import TauCeti.Algebra.Lie.HighestWeight.FiniteDimensional
 import TauCeti.Algebra.Lie.HighestWeight.Irreducible
-import TauCeti.Algebra.Lie.HighestWeight.Isotypic
 import TauCeti.Algebra.Lie.Submodule.Decomposition
 
 public section
