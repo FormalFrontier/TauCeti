@@ -399,12 +399,7 @@ graph automorphism is trivial and this is the descent condition `Frob_q (g) = g`
 theorem mem_fixedSubgroup_geckSteinberg_iff (g : ValidLieTypeIndex.GeckGroup d.1) :
     g ∈ fixedSubgroup d.geckSteinberg ↔ d.1.geckFrobenius g = d.geckGraphAut.symm g := by
   rw [mem_fixedSubgroup, geckSteinberg_apply]
-  constructor
-  · intro h
-    conv_rhs => rw [← h]
-    rw [MulEquiv.symm_apply_apply]
-  · intro h
-    rw [h, MulEquiv.apply_symm_apply]
+  exact d.geckGraphAut.eq_symm_apply.symm
 
 /-- **The Steinberg-fixed points are fixed by the twist-order iterate of the Frobenius.** For a
 graph-twisted family this is the containment of the points fixed by `F` in the points fixed by
