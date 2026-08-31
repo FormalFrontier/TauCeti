@@ -25,32 +25,34 @@ and `I ⊗ -`).
 
 namespace TauCeti.RingTheory.Gorenstein
 
-universe u v
+public section
+
+universe u
 
 variable (R : Type u) [Ring R]
 
 /-- Bennis–Mahdou 2007, Def. 1.1(1): strongly complete projective resolution
 `P = ⋯ → P -f→ P -f→ P → ⋯`, `P` projective, `M ≃ Im(f)`. -/
 structure StronglyCompleteProjectiveResolution (R : Type u) [Ring R] where
-  P : Type v
+  P : Type u
   [addGroup : AddCommGroup P]
   [moduleInst : Module R P]
-  [projective : @Module.Projective R _ addGroup.toAddCommMonoid moduleInst]
-  f : @LinearMap R R _ _ addGroup addGroup moduleInst moduleInst P P
+  [projective : Module.Projective R P]
+  f : P →ₗ[R] P
   hf : f.comp f = 0
 
 /-- Def. 1.1(1): `M` is strongly Gorenstein projective. For the `Ext` side see
 Thm 1.4 in this file; the `Ext` vanishing is stated there as an `iff`, not here. -/
-def IsStronglyGorensteinProjective (M : Type v) [AddCommGroup M] [Module R M] : Prop :=
-  ∃ (S : StronglyCompleteProjectiveResolution (R:=R) (v:=v))
+def IsStronglyGorensteinProjective (M : Type u) [AddCommGroup M] [Module R M] : Prop :=
+  ∃ (S : StronglyCompleteProjectiveResolution (R:=R))
     (_ : Nonempty (LinearMap.range S.f ≃ₗ[R] M)), True
 
 /-- Def. 1.1(2): dual — strongly Gorenstein injective (`Hom(E,-)`). -/
-def IsStronglyGorensteinInjective (M : Type v) [AddCommGroup M] [Module R M] : Prop :=
+def IsStronglyGorensteinInjective (M : Type u) [AddCommGroup M] [Module R M] : Prop :=
   True -- placeholder: dual with `Module.Injective`, filled in follow-up
 
 /-- Def. 1.1(3): strongly Gorenstein flat (`I ⊗ -` for injective `I`). -/
-def IsStronglyGorensteinFlat (M : Type v) [AddCommGroup M] [Module R M] : Prop :=
+def IsStronglyGorensteinFlat (M : Type u) [AddCommGroup M] [Module R M] : Prop :=
   True -- placeholder: flat `F`, `I ⊗ -` exact
 
 end TauCeti.RingTheory.Gorenstein

@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.RingTheory.Ideal.Maps
-import TauCeti.RingTheory.Gorenstein.Strongly
+public import TauCeti.RingTheory.Gorenstein.Strongly
 
 /-!
 # Gorenstein dimension inequalities
@@ -20,6 +20,8 @@ roadmap will replace each `trivial` with Holm's proof once `Gpd` lands in
 -/
 
 namespace TauCeti.RingTheory.Gorenstein
+
+public section
 
 theorem gpd_lemma_1_5_1 : True := trivial -- Bennis–Mahdou Lemma 1.5(1), via Holm [13, 2.20, 2.24]
 theorem gpd_lemma_1_5_2 : True := trivial -- Lemma 1.5(2)
