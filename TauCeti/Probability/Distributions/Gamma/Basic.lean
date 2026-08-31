@@ -73,13 +73,13 @@ variable {a r : ℝ}
 /-! ### Reduction to the positive half-line -/
 
 /-- On the positive half-line the gamma density is given by its closed formula. -/
-lemma gammaPDFReal_of_pos {x : ℝ} (hx : 0 < x) :
+private lemma gammaPDFReal_of_pos {x : ℝ} (hx : 0 < x) :
     gammaPDFReal a r x = r ^ a / Real.Gamma a * x ^ (a - 1) * exp (-(r * x)) := by
   rw [gammaPDFReal, ite_eq_left hx.le]
 
 /-- An integral against the gamma law is the set integral of the weighted integrand over
 `(0, ∞)`. -/
-lemma integral_gammaMeasure_eq (ha : 0 < a) (hr : 0 < r) (f : ℝ → ℝ) :
+private lemma integral_gammaMeasure_eq (ha : 0 < a) (hr : 0 < r) (f : ℝ → ℝ) :
     ∫ x, f x ∂gammaMeasure a r =
       ∫ x in Ioi 0, r ^ a / Real.Gamma a * x ^ (a - 1) * exp (-(r * x)) * f x := by
   have hcompl : ∀ x ∉ Ici (0 : ℝ), gammaPDFReal a r x * f x = 0 := by
@@ -93,7 +93,7 @@ lemma integral_gammaMeasure_eq (ha : 0 < a) (hr : 0 < r) (f : ℝ → ℝ) :
 
 /-- Integrability against the gamma law is integrability of the weighted integrand over
 `(0, ∞)`. -/
-lemma integrable_gammaMeasure_iff (ha : 0 < a) (hr : 0 < r) (f : ℝ → ℝ) :
+private lemma integrable_gammaMeasure_iff (ha : 0 < a) (hr : 0 < r) (f : ℝ → ℝ) :
     Integrable f (gammaMeasure a r) ↔
       IntegrableOn
         (fun x ↦ r ^ a / Real.Gamma a * x ^ (a - 1) * exp (-(r * x)) * f x) (Ioi 0) := by
@@ -112,7 +112,8 @@ lemma integrable_gammaMeasure_iff (ha : 0 < a) (hr : 0 < r) (f : ℝ → ℝ) :
     fun h ↦ ⟨hneg, h.congr_fun (fun x hx ↦ (hpos x hx).symm) measurableSet_Ioi⟩⟩
 
 /-- A constant multiple of Euler's Gamma integral, in quotient form. -/
-lemma integral_const_mul_rpow_mul_exp_neg_mul_Ioi (C s b : ℝ) (hs : 0 < s) (hb : 0 < b) :
+private lemma integral_const_mul_rpow_mul_exp_neg_mul_Ioi
+    (C s b : ℝ) (hs : 0 < s) (hb : 0 < b) :
     ∫ x in Ioi 0, C * (x ^ (s - 1) * exp (-(b * x))) = C * Real.Gamma s / b ^ s := by
   rw [integral_const_mul, Real.integral_rpow_mul_exp_neg_mul_Ioi hs hb, one_div,
     Real.inv_rpow hb.le, div_eq_mul_inv]
@@ -143,6 +144,91 @@ theorem integral_pow_gammaMeasure (ha : 0 < a) (hr : 0 < r) (n : ℕ) :
   rw [integral_gammaMeasure_eq ha hr, setIntegral_congr_fun measurableSet_Ioi hcongr,
     integral_const_mul_rpow_mul_exp_neg_mul_Ioi _ _ _ han hr, Real.rpow_add hr,
     Real.rpow_natCast]
+  field_simp
+
+/-- Multiplying a Gamma density by the `n`th power of inversion lowers its shape by `n`. -/
+private lemma gammaWeight_mul_inv_pow (n : ℕ) {x : ℝ} (hx : 0 < x) :
+    r ^ a / Real.Gamma a * x ^ (a - 1) * exp (-(r * x)) * (x⁻¹) ^ n =
+      r ^ a / Real.Gamma a * (x ^ (a - n - 1) * exp (-(r * x))) := by
+  have hinv : (x⁻¹) ^ n = x ^ (-(n : ℝ)) := by
+    rw [inv_pow, ← Real.rpow_natCast, ← Real.rpow_neg hx.le]
+  have hpow : x ^ (a - 1) * x ^ (-(n : ℝ)) = x ^ (a - n - 1) := by
+    rw [← Real.rpow_add hx]
+    congr 1
+    ring
+  rw [hinv]
+  calc
+    r ^ a / Real.Gamma a * x ^ (a - 1) * exp (-(r * x)) * x ^ (-(n : ℝ)) =
+        r ^ a / Real.Gamma a * (x ^ (a - 1) * x ^ (-(n : ℝ)) * exp (-(r * x))) := by
+      ring
+    _ = r ^ a / Real.Gamma a * (x ^ (a - n - 1) * exp (-(r * x))) := by rw [hpow]
+
+/-- Below the shape threshold, inverse powers are integrable under a Gamma law. -/
+private theorem integrable_inv_pow_gammaMeasure (ha : 0 < a) (hr : 0 < r) (n : ℕ)
+    (hn : (n : ℝ) < a) : Integrable (fun x : ℝ ↦ (x⁻¹) ^ n) (gammaMeasure a r) := by
+  rw [integrable_gammaMeasure_iff ha hr]
+  refine IntegrableOn.congr_fun ?_ (fun x hx ↦ (gammaWeight_mul_inv_pow n hx).symm)
+    measurableSet_Ioi
+  have hkernel : IntegrableOn
+      (fun x : ℝ ↦ x ^ (a - n - 1) * exp (-r * x ^ (1 : ℝ))) (Ioi 0) :=
+    integrableOn_rpow_mul_exp_neg_mul_rpow (p := (1 : ℝ)) (s := a - n - 1) (b := r)
+      (by linarith) one_pos hr
+  have hkernel' : IntegrableOn
+      (fun x : ℝ ↦ x ^ (a - n - 1) * exp (-(r * x))) (Ioi 0) := by
+    simpa only [Real.rpow_one, neg_mul] using hkernel
+  exact hkernel'.const_mul _
+
+/-- At or above the shape threshold, inverse powers are not integrable under a Gamma law. -/
+private theorem not_integrable_inv_pow_gammaMeasure (ha : 0 < a) (hr : 0 < r) (n : ℕ)
+    (hn : a ≤ n) : ¬ Integrable (fun x : ℝ ↦ (x⁻¹) ^ n) (gammaMeasure a r) := by
+  rw [integrable_gammaMeasure_iff ha hr]
+  intro hint
+  have hC : 0 < r ^ a / Real.Gamma a := by positivity
+  have hsmall := hint.mono_set (Ioo_subset_Ioi_self : Ioo (0 : ℝ) 1 ⊆ Ioi 0)
+  have hscaled : IntegrableOn
+      (fun x : ℝ ↦ (r ^ a / Real.Gamma a * exp (-r)) * x ^ (a - n - 1))
+      (Ioo 0 1) := by
+    refine Integrable.mono' hsmall (by fun_prop) ?_
+    filter_upwards [ae_restrict_mem measurableSet_Ioo] with x hx
+    have hexp : exp (-r) ≤ exp (-(r * x)) :=
+      Real.exp_le_exp.mpr (by nlinarith [hx.2, hr])
+    have hxpow : 0 ≤ x ^ (a - n - 1) := Real.rpow_nonneg hx.1.le _
+    rw [gammaWeight_mul_inv_pow n hx.1]
+    have hleft : 0 ≤ (r ^ a / Real.Gamma a * exp (-r)) * x ^ (a - n - 1) :=
+      mul_nonneg (mul_nonneg hC.le (Real.exp_pos _).le) hxpow
+    calc
+      ‖(r ^ a / Real.Gamma a * exp (-r)) * x ^ (a - n - 1)‖ =
+          (r ^ a / Real.Gamma a * exp (-r)) * x ^ (a - n - 1) :=
+        Real.norm_of_nonneg hleft
+      _ = (r ^ a / Real.Gamma a * x ^ (a - n - 1)) * exp (-r) := by ring
+      _ ≤ (r ^ a / Real.Gamma a * x ^ (a - n - 1)) * exp (-(r * x)) :=
+        mul_le_mul_of_nonneg_left hexp (mul_nonneg hC.le hxpow)
+      _ = r ^ a / Real.Gamma a * (x ^ (a - n - 1) * exp (-(r * x))) := by ring
+  have hpow := hscaled.const_mul (r ^ a / Real.Gamma a * exp (-r))⁻¹
+  have hpow' : IntegrableOn (fun x : ℝ ↦ x ^ (a - n - 1)) (Ioo 0 1) := by
+    refine IntegrableOn.congr_fun hpow (fun x _ ↦ ?_) measurableSet_Ioo
+    rw [inv_mul_cancel_left₀]
+    positivity
+  rw [intervalIntegral.integrableOn_Ioo_rpow_iff one_pos] at hpow'
+  linarith
+
+/-- The `n`th inverse power is integrable under a Gamma law exactly when `n` is below the
+shape. -/
+theorem integrable_inv_pow_gammaMeasure_iff (ha : 0 < a) (hr : 0 < r) (n : ℕ) :
+    Integrable (fun x : ℝ ↦ (x⁻¹) ^ n) (gammaMeasure a r) ↔ (n : ℝ) < a :=
+  ⟨fun h ↦ lt_of_not_ge fun hn ↦ not_integrable_inv_pow_gammaMeasure ha hr n hn h,
+    integrable_inv_pow_gammaMeasure ha hr n⟩
+
+/-- The `n`th inverse moment of a Gamma law, when `n` is below the shape. -/
+theorem integral_inv_pow_gammaMeasure (ha : 0 < a) (hr : 0 < r) (n : ℕ)
+    (hn : (n : ℝ) < a) :
+    ∫ x, (x⁻¹) ^ n ∂gammaMeasure a r = r ^ n * Real.Gamma (a - n) / Real.Gamma a := by
+  rw [integral_gammaMeasure_eq ha hr,
+    setIntegral_congr_fun measurableSet_Ioi (fun x hx ↦ gammaWeight_mul_inv_pow n hx)]
+  have han : 0 < a - (n : ℝ) := sub_pos.mpr hn
+  rw [integral_const_mul_rpow_mul_exp_neg_mul_Ioi _ _ _ han hr]
+  have hGa : Real.Gamma a ≠ 0 := (Real.Gamma_pos_of_pos ha).ne'
+  rw [Real.rpow_sub hr, Real.rpow_natCast]
   field_simp
 
 /-- The mean of a gamma law with positive shape and rate is `a / r`. -/

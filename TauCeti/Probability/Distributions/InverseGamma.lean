@@ -322,82 +322,12 @@ theorem rnDeriv_inverseGammaMeasure (a r : ℝ) :
 
 /-! ### Moments -/
 
-/-- Multiplying a Gamma density by the `n`th power of inversion lowers its shape by `n`. -/
-private lemma gammaWeight_mul_inv_pow (n : ℕ)
-    {x : ℝ} (hx : 0 < x) :
-    r ^ a / Real.Gamma a * x ^ (a - 1) * Real.exp (-(r * x)) * (x⁻¹) ^ n =
-      r ^ a / Real.Gamma a * (x ^ (a - n - 1) * Real.exp (-(r * x))) := by
-  have hinv : (x⁻¹) ^ n = x ^ (-(n : ℝ)) := by
-    rw [inv_pow, ← Real.rpow_natCast, ← Real.rpow_neg hx.le]
-  have hpow : x ^ (a - 1) * x ^ (-(n : ℝ)) = x ^ (a - n - 1) := by
-    rw [← Real.rpow_add hx]
-    congr 1
-    ring
-  rw [hinv]
-  calc
-    r ^ a / Real.Gamma a * x ^ (a - 1) * Real.exp (-(r * x)) * x ^ (-(n : ℝ)) =
-        r ^ a / Real.Gamma a * (x ^ (a - 1) * x ^ (-(n : ℝ)) *
-          Real.exp (-(r * x))) := by ring
-    _ = r ^ a / Real.Gamma a * (x ^ (a - n - 1) * Real.exp (-(r * x))) := by
-      rw [hpow]
-
-/-- Below the shape threshold, inverse powers are integrable under a Gamma law. -/
-private theorem integrable_inv_pow_gammaMeasure (ha : 0 < a) (hr : 0 < r) (n : ℕ)
-    (hn : (n : ℝ) < a) : Integrable (fun x : ℝ ↦ (x⁻¹) ^ n) (gammaMeasure a r) := by
-  rw [integrable_gammaMeasure_iff ha hr]
-  refine IntegrableOn.congr_fun ?_ (fun x hx ↦ (gammaWeight_mul_inv_pow n hx).symm)
-    measurableSet_Ioi
-  have hkernel : IntegrableOn
-      (fun x : ℝ ↦ x ^ (a - n - 1) * Real.exp (-r * x ^ (1 : ℝ))) (Ioi 0) :=
-    integrableOn_rpow_mul_exp_neg_mul_rpow (p := (1 : ℝ)) (s := a - n - 1) (b := r)
-      (by linarith) one_pos hr
-  have hkernel' : IntegrableOn
-      (fun x : ℝ ↦ x ^ (a - n - 1) * Real.exp (-(r * x))) (Ioi 0) := by
-    simpa only [Real.rpow_one, neg_mul] using hkernel
-  exact hkernel'.const_mul _
-
-/-- At or above the shape threshold, inverse powers are not integrable under a Gamma law. -/
-private theorem not_integrable_inv_pow_gammaMeasure (ha : 0 < a) (hr : 0 < r) (n : ℕ)
-    (hn : a ≤ n) : ¬ Integrable (fun x : ℝ ↦ (x⁻¹) ^ n) (gammaMeasure a r) := by
-  rw [integrable_gammaMeasure_iff ha hr]
-  intro hint
-  have hC : 0 < r ^ a / Real.Gamma a := by positivity
-  have hsmall := hint.mono_set (Ioo_subset_Ioi_self : Ioo (0 : ℝ) 1 ⊆ Ioi 0)
-  have hscaled : IntegrableOn
-      (fun x : ℝ ↦ (r ^ a / Real.Gamma a * Real.exp (-r)) * x ^ (a - n - 1))
-      (Ioo 0 1) := by
-    refine Integrable.mono' hsmall (by fun_prop) ?_
-    filter_upwards [ae_restrict_mem measurableSet_Ioo] with x hx
-    have hexp : Real.exp (-r) ≤ Real.exp (-(r * x)) :=
-      Real.exp_le_exp.mpr (by nlinarith [hx.2, hr])
-    have hxpow : 0 ≤ x ^ (a - n - 1) := Real.rpow_nonneg hx.1.le _
-    rw [gammaWeight_mul_inv_pow n hx.1]
-    have hleft : 0 ≤ (r ^ a / Real.Gamma a * Real.exp (-r)) * x ^ (a - n - 1) :=
-      mul_nonneg (mul_nonneg hC.le (Real.exp_pos _).le) hxpow
-    calc
-      ‖(r ^ a / Real.Gamma a * Real.exp (-r)) * x ^ (a - n - 1)‖ =
-          (r ^ a / Real.Gamma a * Real.exp (-r)) * x ^ (a - n - 1) :=
-        Real.norm_of_nonneg hleft
-      _ =
-          (r ^ a / Real.Gamma a * x ^ (a - n - 1)) * Real.exp (-r) := by ring
-      _ ≤ (r ^ a / Real.Gamma a * x ^ (a - n - 1)) * Real.exp (-(r * x)) :=
-        mul_le_mul_of_nonneg_left hexp (mul_nonneg hC.le hxpow)
-      _ = r ^ a / Real.Gamma a * (x ^ (a - n - 1) * Real.exp (-(r * x))) := by ring
-  have hpow := hscaled.const_mul (r ^ a / Real.Gamma a * Real.exp (-r))⁻¹
-  have hpow' : IntegrableOn (fun x : ℝ ↦ x ^ (a - n - 1)) (Ioo 0 1) := by
-    refine IntegrableOn.congr_fun hpow (fun x _ ↦ ?_) measurableSet_Ioo
-    rw [inv_mul_cancel_left₀]
-    positivity
-  rw [intervalIntegral.integrableOn_Ioo_rpow_iff one_pos] at hpow'
-  linarith
-
 /-- A natural power is integrable under a valid inverse-gamma law exactly below the shape. -/
 theorem integrable_pow_inverseGammaMeasure_iff (ha : 0 < a) (hr : 0 < r) (n : ℕ) :
     Integrable (fun x : ℝ ↦ x ^ n) (inverseGammaMeasure a r) ↔ (n : ℝ) < a := by
   rw [inverseGammaMeasure_of_pos ha hr,
     integrable_map_measure (by fun_prop) measurable_inv.aemeasurable]
-  exact ⟨fun h ↦ lt_of_not_ge fun hn ↦ not_integrable_inv_pow_gammaMeasure ha hr n hn h,
-    integrable_inv_pow_gammaMeasure ha hr n⟩
+  exact TauCeti.integrable_inv_pow_gammaMeasure_iff ha hr n
 
 /-- **Natural moments of a valid inverse-gamma law.**  The `n`th moment exists for `n < a` and
 equals `r ^ n * Gamma (a - n) / Gamma a`. -/
@@ -407,13 +337,7 @@ theorem integral_pow_inverseGammaMeasure (ha : 0 < a) (hr : 0 < r) (n : ℕ)
       r ^ n * Real.Gamma (a - n) / Real.Gamma a := by
   rw [inverseGammaMeasure_of_pos ha hr,
     integral_map measurable_inv.aemeasurable (by fun_prop)]
-  rw [TauCeti.integral_gammaMeasure_eq ha hr,
-    setIntegral_congr_fun measurableSet_Ioi (fun x hx ↦ gammaWeight_mul_inv_pow n hx)]
-  have han : 0 < a - (n : ℝ) := sub_pos.mpr hn
-  rw [TauCeti.integral_const_mul_rpow_mul_exp_neg_mul_Ioi _ _ _ han hr]
-  have hGa : Real.Gamma a ≠ 0 := (Real.Gamma_pos_of_pos ha).ne'
-  rw [Real.rpow_sub hr, Real.rpow_natCast]
-  field_simp
+  exact TauCeti.integral_inv_pow_gammaMeasure ha hr n hn
 
 /-- The mean of an inverse-gamma law is `r / (a - 1)` when `1 < a`. -/
 theorem integral_id_inverseGammaMeasure (hr : 0 < r) (ha : 1 < a) :
