@@ -108,6 +108,7 @@ theorem rootSubgroupPointsOfPair_injective (hij : i ≠ j) :
 /-- On a numbered simple root, the pair-indexed point map is the existing pinned point map. The
 matrix indices are `(rootTarget, rootSource)`, since the corresponding matrix unit sends the
 source basis vector to the target basis vector. -/
+@[simp]
 theorem rootSubgroupPointsOfPair_eq_rootSubgroupPoints (k : Fin r ⊕ Fin r) :
     rootSubgroupPointsOfPair (A := A) r (rootTarget_ne_rootSource r k) =
       rootSubgroupPoints r k A := by
@@ -150,6 +151,32 @@ theorem commutatorElement_rootSubgroupPointsOfPair (hij : i ≠ j) (hjl : j ≠ 
         TauCeti.commutatorElement_transvectionUnit hij hjl hil c d
     _ = (↑(rootSubgroupPointsOfPair (A := A) r hil
           (Multiplicative.ofAdd (c * d))) :
+        Matrix.GeneralLinearGroup (Fin (r + 1)) A) := by
+      rw [coe_rootSubgroupPointsOfPair, toAdd_ofAdd]
+
+/-- The reverse-orientation type-A Chevalley commutator equation inside the carrier:
+`[x_ij(c), x_ki(d)] = x_kj(-(dc))` for three distinct indices. -/
+theorem commutatorElement_rootSubgroupPointsOfPair_reverse
+    (hij : i ≠ j) (hki : k ≠ i) (hkj : k ≠ j) (c d : A) :
+    ⁅rootSubgroupPointsOfPair (A := A) r hij (Multiplicative.ofAdd c),
+        rootSubgroupPointsOfPair (A := A) r hki (Multiplicative.ofAdd d)⁆ =
+      rootSubgroupPointsOfPair (A := A) r hkj
+        (Multiplicative.ofAdd (-(d * c))) := by
+  apply Subtype.ext
+  calc
+    ((↑⁅rootSubgroupPointsOfPair (A := A) r hij (Multiplicative.ofAdd c),
+          rootSubgroupPointsOfPair (A := A) r hki (Multiplicative.ofAdd d)⁆ :
+        Matrix.GeneralLinearGroup (Fin (r + 1)) A)) =
+        ⁅(↑(rootSubgroupPointsOfPair (A := A) r hij (Multiplicative.ofAdd c)) :
+            Matrix.GeneralLinearGroup (Fin (r + 1)) A),
+          (↑(rootSubgroupPointsOfPair (A := A) r hki (Multiplicative.ofAdd d)) :
+            Matrix.GeneralLinearGroup (Fin (r + 1)) A)⁆ :=
+      map_commutatorElement (points r A).subtype _ _
+    _ = TauCeti.transvectionUnit hkj (-(d * c)) := by
+      simpa only [coe_rootSubgroupPointsOfPair, toAdd_ofAdd] using
+        TauCeti.commutatorElement_transvectionUnit_reverse hij hki hkj c d
+    _ = (↑(rootSubgroupPointsOfPair (A := A) r hkj
+          (Multiplicative.ofAdd (-(d * c)))) :
         Matrix.GeneralLinearGroup (Fin (r + 1)) A) := by
       rw [coe_rootSubgroupPointsOfPair, toAdd_ofAdd]
 
@@ -390,6 +417,7 @@ theorem mkQuotient_comp_rootSubgroupCoordinateMapOfPair (hij : i ≠ j) :
 
 /-- For a numbered simple root, the pair-indexed coordinate map is the coordinate map of the
 existing pinned root subgroup. -/
+@[simp]
 theorem rootSubgroupCoordinateMapOfPair_eq_rootSubgroupCoordinateMap
     (k : Fin r ⊕ Fin r) :
     rootSubgroupCoordinateMapOfPair r (rootTarget_ne_rootSource r k) =
@@ -425,6 +453,7 @@ theorem rootSubgroupOfPair_def (hij : i ≠ j) :
 
 /-- On a numbered simple root, the pair-indexed group-scheme morphism is the existing pinned
 root-subgroup morphism. -/
+@[simp]
 theorem rootSubgroupOfPair_eq_rootSubgroup (k : Fin r ⊕ Fin r) :
     rootSubgroupOfPair r (rootTarget_ne_rootSource r k) = rootSubgroup r k := by
   rw [rootSubgroupOfPair_def, rootSubgroup_def,
