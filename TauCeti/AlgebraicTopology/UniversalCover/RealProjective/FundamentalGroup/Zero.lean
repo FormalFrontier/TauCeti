@@ -23,7 +23,6 @@ the fundamental group at its unique point is the trivial group.
 ## Main declarations
 
 * `TauCeti.RealProjectiveSpace.Zero.instUnique`: `RP⁰` has exactly one point.
-* `TauCeti.RealProjectiveSpace.Zero.instContractibleSpace`: `RP⁰` is contractible.
 * `TauCeti.RealProjectiveSpace.Zero.fundamentalGroupMulEquiv`: the fundamental group of `RP⁰`
   is the trivial group `PUnit`.
 * `TauCeti.RealProjectiveSpace.Zero.card_fundamentalGroup`: the fundamental group has one
@@ -48,13 +47,9 @@ namespace TauCeti.RealProjectiveSpace.Zero
 noncomputable section
 
 /-- Zero-dimensional real projective space has exactly one point. -/
-instance instUnique : Unique (RealProjectiveSpace 0) where
-  default := mk 0 (instNonemptySphere 0).some
-  uniq x := subsingleton_zero.elim x _
-
-/-- Zero-dimensional real projective space is contractible. -/
-instance instContractibleSpace : ContractibleSpace (RealProjectiveSpace 0) :=
-  inferInstance
+instance instUnique : Unique (RealProjectiveSpace 0) :=
+  letI : Subsingleton (RealProjectiveSpace 0) := subsingleton_zero
+  uniqueOfSubsingleton (Nonempty.some inferInstance)
 
 /-- **The fundamental group of `RP⁰` is trivial.** At its unique basepoint it is isomorphic to
 the one-element group `PUnit`. -/
@@ -69,12 +64,6 @@ element of `PUnit`. -/
 theorem fundamentalGroupMulEquiv_apply (x : RealProjectiveSpace 0)
     (γ : FundamentalGroup (RealProjectiveSpace 0) x) :
     fundamentalGroupMulEquiv x γ = PUnit.unit :=
-  Subsingleton.elim _ _
-
-/-- Every loop class in `RP⁰` is the identity. -/
-theorem fundamentalGroup_eq_one (x : RealProjectiveSpace 0)
-    (γ : FundamentalGroup (RealProjectiveSpace 0) x) :
-    γ = 1 :=
   Subsingleton.elim _ _
 
 /-- The fundamental group of `RP⁰` has exactly one element. -/
