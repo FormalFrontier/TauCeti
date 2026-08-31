@@ -38,10 +38,12 @@ pinned group; and its order is the superscript in the printed family name, recor
   the Steinberg map of a graph-twisted index composes with the field Frobenius.
 * `TauCeti.GraphTwistedIndex.twistOrder`: the order of that permutation, which is the superscript
   in the family name.
-* `TauCeti.TypeALieIndex.toGraphTwistedIndex`, `TauCeti.TypeCLieIndex.toGraphTwistedIndex`, and
-  `TauCeti.TypeE6LieIndex.toGraphTwistedIndex`: the two type-A families, `Aₙ(q)` and `²Aₙ(q)`, the
-  untwisted type-C family, and the untwisted family `E₆(q)`, as indices of that subtype, so that
-  the permutations above are attached to them.
+* `TauCeti.TypeALieIndex.toGraphTwistedIndex`, `TauCeti.TypeCLieIndex.toGraphTwistedIndex`,
+  `TauCeti.TypeE6LieIndex.toGraphTwistedIndex` and
+  `TauCeti.TypeTwistedE6LieIndex.toGraphTwistedIndex`: the two type-A families, `Aₙ(q)` and
+  `²Aₙ(q)`, the untwisted type-C family, and the two exceptional families `E₆(q)` and `²E₆(q)` on
+  the `E₆` diagram, as indices of that subtype, so that the permutations above are attached to
+  them.
 
 ## Main results
 
@@ -51,6 +53,10 @@ pinned group; and its order is the superscript in the printed family name, recor
   `TauCeti.GraphTwistedIndex.orderOf_diagramPerm` and
   `TauCeti.GraphTwistedIndex.twistOrder_pos`: the twist order annihilates the permutation, is
   exactly its order, and is positive.
+* `TauCeti.TypeE6LieIndex.diagramPerm_toGraphTwistedIndex` and
+  `TauCeti.TypeTwistedE6LieIndex.diagramPerm_toGraphTwistedIndex`: the two families on the `E₆`
+  diagram take the identity and `TauCeti.graphPermE6` respectively, which is the distinction
+  between them.
 
 ## Roadmap
 
@@ -382,5 +388,38 @@ theorem diagramPerm_toGraphTwistedIndex (d : TypeE6LieIndex) :
   exact GraphTwistedIndex.diagramPerm_E6 (LieTypeIndex.valid_E6 q)
 
 end TypeE6LieIndex
+
+namespace TypeTwistedE6LieIndex
+
+open LieTypeIndex (not_usesHalfFrobenius_of_isTypeTwistedE6)
+
+variable (d : TypeTwistedE6LieIndex)
+
+/-- The graph-twisted family `²E₆(q)`, regarded as an ordinary-or-graph-twisted index. It uses no
+half-Frobenius, so it carries a diagram permutation, namely the nontrivial one. -/
+abbrev toGraphTwistedIndex : GraphTwistedIndex :=
+  ⟨d.1, not_usesHalfFrobenius_of_isTypeTwistedE6 d.2⟩
+
+/-- **The diagram permutation of the graph-twisted family `²E₆(q)` is `TauCeti.graphPermE6`**, the
+order-two symmetry of the `E₆` diagram, read in the index's own copy `Fin d.1.rank` of the Bourbaki
+index type. This is what places the family in the `γ₂ ∘ Frob_q` row of milestone L1's table; the
+untwisted family `E₆(q)` takes the identity instead. -/
+@[simp]
+theorem diagramPerm_toGraphTwistedIndex (i : Fin d.1.rank) :
+    d.toGraphTwistedIndex.diagramPerm i =
+      finCongr d.rank_eq_six.symm (graphPermE6 (finCongr d.rank_eq_six i)) := by
+  obtain ⟨q, rfl⟩ := d.exists_eq_of
+  rw [GraphTwistedIndex.diagramPerm_twistedE6 (LieTypeIndex.valid_twistedE6 q)]
+  -- On the introduction form the rank is the literal `6`, so both `finCongr` casts are the
+  -- identity map of `Fin 6` and no `Fin.cast` lemma is needed to remove them.
+  rfl
+
+/-- The twist order of `²E₆(q)` is two, the superscript in the printed family name. -/
+@[simp]
+theorem twistOrder_toGraphTwistedIndex : d.toGraphTwistedIndex.twistOrder = 2 := by
+  obtain ⟨q, rfl⟩ := d.exists_eq_of
+  exact GraphTwistedIndex.twistOrder_twistedE6 (LieTypeIndex.valid_twistedE6 q)
+
+end TypeTwistedE6LieIndex
 
 end TauCeti

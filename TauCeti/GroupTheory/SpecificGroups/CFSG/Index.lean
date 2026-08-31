@@ -35,7 +35,7 @@ order `p ^ (2 * m + 1)`.
   parameter range.
 * `TauCeti.ValidLieTypeIndex`, `TauCeti.SuzukiReeIndex`, `TauCeti.GraphTwistedIndex`,
   `TauCeti.TypeALieIndex`, `TauCeti.TypeCLieIndex`, `TauCeti.TypeE6LieIndex`,
-  `TauCeti.SuzukiLieIndex`, and
+  `TauCeti.TypeTwistedE6LieIndex`, `TauCeti.SuzukiLieIndex`, and
   `TauCeti.UnimodularLieIndex`: the restricted domains consumed by later carrier and endomorphism
   constructions.
 * `TauCeti.SporadicName`: the conventional twenty-six sporadic names.
@@ -289,6 +289,37 @@ theorem not_usesHalfFrobenius_of_isTypeE6 {d : LieTypeIndex} (h : d.IsTypeE6) :
 `E₆` parameter is a duplicate representative, so the family contributes one classification entry
 for each prime power. -/
 theorem valid_E6 (q : PrimePower) : (E6 q).Valid := by simp
+
+/-- Whether a Lie-type index names the graph-twisted exceptional family `²E₆(q)`.
+
+This is a constructor selector, not a mathematical property of a group. It is false on the
+untwisted family `E₆(q)`, which shares the `E₆` diagram but takes the plain Frobenius as its
+Steinberg map, and it asserts no finiteness or simplicity. -/
+def IsTypeTwistedE6 : LieTypeIndex → Prop
+  | .twistedE6 _ => True
+  | _ => False
+
+/-- Characterization of the graph-twisted type-`E₆` constructor. -/
+@[simp] theorem isTypeTwistedE6_iff (d : LieTypeIndex) : d.IsTypeTwistedE6 ↔
+    match d with
+    | .twistedE6 _ => True
+    | _ => False :=
+  Iff.rfl
+
+instance : DecidablePred IsTypeTwistedE6 := fun d => by
+  cases d <;> rw [isTypeTwistedE6_iff] <;> infer_instance
+
+/-- The family `²E₆(q)` does not use a half-Frobenius: it twists the Frobenius by a diagram
+automorphism instead. -/
+theorem not_usesHalfFrobenius_of_isTypeTwistedE6 {d : LieTypeIndex} (h : d.IsTypeTwistedE6) :
+    ¬ d.UsesHalfFrobenius := by
+  cases d <;> simp_all [usesHalfFrobenius_iff]
+
+/-- **Every `²E₆(q)` index is valid.** The `²E₆` row of `InStandardRange` is unrestricted, and no
+`²E₆` parameter is a duplicate representative, so the family contributes one classification entry
+for each prime power. -/
+theorem valid_twistedE6 (q : PrimePower) : (twistedE6 q).Valid := by simp
+
 /-- Whether a Lie-type index names the Suzuki family `²B₂(2^(2m+1))`.
 
 This is a constructor selector, not a mathematical property of a group. The exclusion of `²B₂(2)`
@@ -687,6 +718,16 @@ here; it is retained because the carrier-valued constructions of milestone L0 ta
 this subtype. -/
 abbrev TypeE6LieIndex : Type _ := {d : ValidLieTypeIndex // d.1.IsTypeE6}
 
+/-- A validated index in the graph-twisted exceptional family `²E₆(q)`.
+
+Every `²E₆(q)` is valid, by `TauCeti.LieTypeIndex.valid_twistedE6`, so the outer subtype excludes
+nothing here; it is retained because the carrier-valued constructions of milestone L0 take
+`TauCeti.ValidLieTypeIndex`. The untwisted family `E₆(q)`, which shares the diagram, is not of this
+subtype: the two differ by the diagram automorphism their Steinberg maps compose with, and they are
+built on different carriers, since the `E₆` diagram symmetry does not act on the `27`-dimensional
+minuscule one. -/
+abbrev TypeTwistedE6LieIndex : Type _ := {d : ValidLieTypeIndex // d.1.IsTypeTwistedE6}
+
 /-- A validated index in the Suzuki family `²B₂(2^(2m+1))`.
 
 The outer subtype is important: `²B₂(2)`, the parameter `m = 0`, is excluded from the
@@ -879,6 +920,36 @@ theorem exists_eq_of (d : TypeE6LieIndex) : ∃ q : PrimePower, d = of q := by
   congrArg DynkinType.rank d.dynkinType_eq
 
 end TypeE6LieIndex
+
+/-! ## The graph-twisted family `²E₆(q)` -/
+
+namespace TypeTwistedE6LieIndex
+
+/-- Introduce the index `²E₆(q)`. No validity hypothesis is taken: every `²E₆` parameter is valid
+by `TauCeti.LieTypeIndex.valid_twistedE6`. -/
+abbrev of (q : PrimePower) : TypeTwistedE6LieIndex :=
+  ⟨⟨.twistedE6 q, LieTypeIndex.valid_twistedE6 q⟩,
+    (LieTypeIndex.isTypeTwistedE6_iff _).mpr trivial⟩
+
+/-- Every graph-twisted type-`E₆` index is of the introduction form. This is the eliminator
+matching `of`, so a consumer never repeats the case split over the other constructors. -/
+theorem exists_eq_of (d : TypeTwistedE6LieIndex) : ∃ q : PrimePower, d = of q := by
+  obtain ⟨⟨d, hvalid⟩, hd⟩ := d
+  revert hvalid hd
+  cases d
+  case twistedE6 q => exact fun _ _ => ⟨q, rfl⟩
+  all_goals exact fun _ hd => ((LieTypeIndex.isTypeTwistedE6_iff _).mp hd).elim
+
+/-- The graph-twisted family `²E₆(q)` is built on the diagram `E₆`. -/
+@[simp] theorem dynkinType_eq (d : TypeTwistedE6LieIndex) : d.1.dynkinType = .E6 := by
+  obtain ⟨q, rfl⟩ := d.exists_eq_of
+  exact LieTypeIndex.dynkinType_twistedE6 q
+
+/-- The graph-twisted family `²E₆(q)` has rank six, that being the rank of `E₆`. -/
+@[simp] theorem rank_eq_six (d : TypeTwistedE6LieIndex) : d.1.rank = 6 :=
+  congrArg DynkinType.rank d.dynkinType_eq
+
+end TypeTwistedE6LieIndex
 
 namespace UnimodularLieIndex
 
