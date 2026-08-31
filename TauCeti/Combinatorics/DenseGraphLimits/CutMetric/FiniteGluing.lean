@@ -51,8 +51,6 @@ noncomputable section
 
 open scoped BigOperators ENNReal
 
-namespace TauCeti
-
 universe u v w
 
 variable {α : Type u} {β : Type v} {γ : Type w}
@@ -303,5 +301,3 @@ theorem finiteGluing_map_outer (h : π.map Prod.snd = σ.map Prod.fst) :
       _ = σ.map Prod.snd := by rw [finiteGluing_map_right]
 
 end PMF
-
-end TauCeti
