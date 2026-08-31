@@ -209,9 +209,8 @@ path law forward.  This is the converse-facing form of
 obtained from an already exchangeable array. -/
 theorem map_pairReindex_arrayRowCodingLaw_eq_of_invariant
     (π : Measure (ProbabilityMeasure (ℕ → α))) [IsProbabilityMeasure π]
-    (hπ : ∀ τ : Equiv.Perm ℕ,
-      π.map (fun P => P.map (measurable_reindex (α := α) τ).aemeasurable) = π)
-    (σ τ : Equiv.Perm ℕ) :
+    (σ τ : Equiv.Perm ℕ)
+    (hπ : π.map (fun P => P.map (measurable_reindex (α := α) τ).aemeasurable) = π) :
     (arrayRowCodingLaw π).map
         (fun q =>
           (q.1.map (measurable_reindex (α := α) τ).aemeasurable, pairReindex σ τ q.2)) =
@@ -252,7 +251,7 @@ theorem map_pairReindex_arrayRowCodingLaw_eq_of_invariant
   have hτ : (pathLaw μ' X).map (fun x i => permReindex τ (x i)) = pathLaw μ' X := by
     rw [hpathX]
     have hnat := map_pi_deFinettiBarycenter π (measurable_reindex (α := α) τ)
-    rw [hπ τ] at hnat
+    rw [hπ] at hnat
     calc
       (deFinettiBarycenter π).map (fun x i => permReindex τ (x i)) =
           (deFinettiBarycenter π).map (fun x i k => x i (τ k)) := by
