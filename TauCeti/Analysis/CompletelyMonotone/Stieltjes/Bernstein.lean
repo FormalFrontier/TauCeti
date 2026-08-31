@@ -7,19 +7,18 @@ module
 
 public import TauCeti.Analysis.CompletelyMonotone.Stieltjes.CompletelyMonotone
 public import TauCeti.Analysis.CompletelyMonotone.Bernstein.Basic
-import Mathlib.Analysis.Calculus.ParametricIntegral
-import Mathlib.Analysis.Calculus.Deriv.ZPow
+import Mathlib.MeasureTheory.Integral.DominatedConvergence
 
 /-!
 # From Stieltjes functions to Bernstein functions
 
 If
 
-`f(t) = a / t + b + integral x, (t + x)^(-1) partial mu`,
+`f t = a / t + b + ∫ x, (t + x)⁻¹ ∂μ`,
 
 then its continuously extended product with the parameter is a Bernstein function:
 
-`g(t) = a + b * t + integral x, t / (t + x) partial mu`.
+`g t = a + b * t + ∫ x, t / (t + x) ∂μ`.
 
 On the open half-line this is exactly `t * f(t)`, while `g(0) = a`.  The value at zero is
 essential: the literal product `0 * f(0)` would lose the coefficient of the possible `a / t`
@@ -27,22 +26,30 @@ singularity.  This is the first standard Stieltjes--Bernstein correspondence.
 
 The proof differentiates the integral on the open half-line.  Its derivative is
 
-`integral x, x / (t + x)^2 partial mu`,
+`∫ x, x / (t + x) ^ 2 ∂μ`,
 
 whose derivatives have alternating signs.  Continuity at zero follows by dominated convergence;
-the normalization `mu {0} = 0` removes the only point where `t / (t + x)` does not tend to zero.
+the normalization `μ {0} = 0` removes the only point where `t / (t + x)` does not tend to zero.
 
 ## Main declarations
 
-* `TauCeti.stieltjesBernsteinTransform`: the continuous extension of `t * f(t)` written directly
-  from Stieltjes representing data.
+* `TauCeti.stieltjesBernsteinTransform` and `TauCeti.stieltjesBernsteinTransform_def`: the
+  continuous extension of `t * f(t)` written directly from Stieltjes representing data and its
+  defining equation.
+* `TauCeti.stieltjesBernsteinTransform_zero`: the transform takes the value `a` at zero.
+* `TauCeti.iteratedDeriv_stieltjesBernsteinIntegral`: the iterated derivatives of the integral
+  term at positive parameters.
+* `TauCeti.hasDerivAt_stieltjesBernsteinTransform` and
+  `TauCeti.deriv_stieltjesBernsteinTransform`: the transform has derivative
+  `b + ∫ x, x / (t + x) ^ 2 ∂μ` at positive parameters.
+* `TauCeti.isBernsteinFunction_stieltjesBernsteinIntegral`: the integral term is Bernstein.
 * `TauCeti.isBernsteinFunction_stieltjesBernsteinTransform`: the transform is Bernstein.
-* `TauCeti.RepresentsStieltjes.stieltjesBernsteinTransform_eq_mul`: on `(0, infinity)` the
+* `TauCeti.RepresentsStieltjes.stieltjesBernsteinTransform_eq_mul`: on `(0, ∞)` the
   transform of a Stieltjes representation of `f` is `t * f(t)`.
 * `TauCeti.RepresentsStieltjes.isBernsteinFunction_stieltjesBernsteinTransform`: the transform of
   a Stieltjes representation is Bernstein.
-* `TauCeti.IsStieltjesFunction.exists_isBernsteinFunction_eq_mul`: every Stieltjes function has
-  a Bernstein extension of its product with the parameter on `(0, infinity)`.
+* `TauCeti.IsStieltjesFunction.exists_isBernsteinFunction_eqOn_mul`: every Stieltjes function has
+  a Bernstein extension of its product with the parameter on `(0, ∞)`.
 
 ## References
 
@@ -55,104 +62,74 @@ public section
 noncomputable section
 
 open MeasureTheory Set Filter
-open scoped ContDiff Topology
+open scoped ContDiff NNReal Topology
 
 namespace TauCeti
 
 /-- The candidate Bernstein transform associated to Stieltjes representing data. Under the
 normalization and integrability hypotheses of `isBernsteinFunction_stieltjesBernsteinTransform`,
-it is a Bernstein function and is continuous at zero. For representing data, the later theorem
+it is a Bernstein function and is continuous on `[0, ∞)`. For representing data, the later theorem
 `RepresentsStieltjes.stieltjesBernsteinTransform_eq_mul` identifies it with `t * f t` for
-positive `t`.  The body is `@[expose]`d, so `simp [stieltjesBernsteinTransform]` evaluates it. -/
-@[expose]
-def stieltjesBernsteinTransform (mu : Measure NNReal) (a b : NNReal) (t : Real) : Real :=
-  a + b * t + ∫ x : NNReal, t / (t + x) ∂mu
+positive `t`. Its defining equation is `stieltjesBernsteinTransform_def`. -/
+def stieltjesBernsteinTransform (μ : Measure ℝ≥0) (a b : ℝ≥0) (t : ℝ) : ℝ :=
+  a + b * t + ∫ x : ℝ≥0, t / (t + x) ∂μ
+
+/-- The defining equation for the Stieltjes--Bernstein transform. -/
+lemma stieltjesBernsteinTransform_def (μ : Measure ℝ≥0) (a b : ℝ≥0) (t : ℝ) :
+    stieltjesBernsteinTransform μ a b t = a + b * t + ∫ x : ℝ≥0, t / (t + x) ∂μ :=
+  (rfl)
 
 /-- The Stieltjes--Bernstein transform takes the value `a` at zero. -/
-theorem stieltjesBernsteinTransform_zero (mu : Measure NNReal) (a b : NNReal) :
-    stieltjesBernsteinTransform mu a b 0 = a := by
-  simp [stieltjesBernsteinTransform]
+@[simp]
+theorem stieltjesBernsteinTransform_zero (μ : Measure ℝ≥0) (a b : ℝ≥0) :
+    stieltjesBernsteinTransform μ a b 0 = a := by
+  simp [stieltjesBernsteinTransform_def]
 
-private lemma stieltjesBernsteinIntegral_eq_mul_integral_inv_add (mu : Measure NNReal)
-    (t : Real) :
-    (∫ x : NNReal, t / (t + x) ∂mu) =
-      t * ∫ x : NNReal, (t + x)⁻¹ ∂mu := by
+private lemma stieltjesBernsteinIntegral_eq_mul_integral_inv_add (μ : Measure ℝ≥0)
+    (t : ℝ) :
+    (∫ x : ℝ≥0, t / (t + x) ∂μ) =
+      t * ∫ x : ℝ≥0, (t + x)⁻¹ ∂μ := by
   rw [← integral_const_mul]
   exact integral_congr_ae (Filter.Eventually.of_forall fun x => by simp [div_eq_mul_inv])
 
-private lemma integral_stieltjesBernsteinDerivKernel_eq_sub {mu : Measure NNReal}
-    (hmu : Integrable stieltjesWeight mu) {t : Real} (ht : 0 < t) :
-    (∫ x : NNReal, (x : Real) / (t + x) ^ 2 ∂mu) =
-      (∫ x : NNReal, (t + x)⁻¹ ∂mu) -
-        t * ∫ x : NNReal, (t + x) ^ (-2 : Int) ∂mu := by
-  have hpowInt : Integrable (fun x : NNReal => (t + (x : Real)) ^ (-2 : Int)) mu := by
-    simpa using integrable_zpow_neg_one_sub_add hmu 1 ht
+private lemma integral_mul_zpow_eq_sub {μ : Measure ℝ≥0}
+    (hμ : Integrable stieltjesWeight μ) (n : ℕ) {t : ℝ} (ht : 0 < t) :
+    (∫ x : ℝ≥0, (x : ℝ) * (t + x) ^ (-2 - (n : ℤ)) ∂μ) =
+      (∫ x : ℝ≥0, (t + x) ^ (-1 - (n : ℤ)) ∂μ) -
+        t * ∫ x : ℝ≥0, (t + x) ^ (-2 - (n : ℤ)) ∂μ := by
+  have hexpSucc : -1 - ((n + 1 : ℕ) : ℤ) = -2 - (n : ℤ) := by omega
+  have hpowInt : Integrable (fun x : ℝ≥0 => (t + (x : ℝ)) ^ (-2 - (n : ℤ))) μ := by
+    simpa only [hexpSucc] using integrable_zpow_neg_one_sub_add hμ (n + 1) ht
   rw [← integral_const_mul,
-    ← integral_sub (integrable_inv_add hmu ht) (hpowInt.const_mul t)]
+    ← integral_sub (integrable_zpow_neg_one_sub_add hμ n ht) (hpowInt.const_mul t)]
   exact integral_congr_ae (Filter.Eventually.of_forall fun x => by
-    have htx : t + (x : Real) ≠ 0 :=
-      (add_pos_of_pos_of_nonneg ht x.coe_nonneg).ne'
-    have hzpow : (t + (x : Real)) ^ (-2 : Int) = ((t + (x : Real)) ^ 2)⁻¹ := by
-      rw [zpow_neg, zpow_ofNat]
-    dsimp only
-    rw [hzpow, inv_eq_one_div]
-    field_simp
+    have htx : t + (x : ℝ) ≠ 0 := (add_pos_of_pos_of_nonneg ht x.coe_nonneg).ne'
+    have hexp : -1 - (n : ℤ) = 1 + (-2 - (n : ℤ)) := by omega
+    simp only
+    rw [hexp, zpow_add₀ htx, zpow_one]
     ring)
 
-private lemma contDiffOn_stieltjesBernsteinIntegral {mu : Measure NNReal}
-    (hmu : Integrable stieltjesWeight mu) :
-    ContDiffOn Real ∞ (fun t : Real => ∫ x : NNReal, t / (t + x) ∂mu) (Ioi 0) := by
+private lemma contDiffOn_stieltjesBernsteinIntegral {μ : Measure ℝ≥0}
+    (hμ : Integrable stieltjesWeight μ) :
+    ContDiffOn ℝ ∞ (fun t : ℝ => ∫ x : ℝ≥0, t / (t + x) ∂μ) (Ioi 0) := by
   refine (contDiffOn_id.mul
-    (isCompletelyMonotoneOnIoi_integral_inv_add hmu).contDiffOn).congr fun t _ => ?_
-  simpa only [id_eq] using stieltjesBernsteinIntegral_eq_mul_integral_inv_add mu t
-
-/-- The derivative of the Stieltjes--Bernstein transform at a positive parameter. -/
-theorem hasDerivAt_stieltjesBernsteinTransform {mu : Measure NNReal} {a b : NNReal}
-    (hmu : Integrable stieltjesWeight mu) {t : Real} (ht : 0 < t) :
-    HasDerivAt (stieltjesBernsteinTransform mu a b)
-      ((b : Real) + ∫ x : NNReal, (x : Real) / (t + x) ^ 2 ∂mu) t := by
-  let F := fun u : Real => ∫ x : NNReal, (u + (x : Real))⁻¹ ∂mu
-  have hFdiff : DifferentiableAt Real F t :=
-    ((isCompletelyMonotoneOnIoi_integral_inv_add hmu).contDiffOn.differentiableOn
-      (by simp)).differentiableAt (isOpen_Ioi.mem_nhds ht)
-  have hFderiv : deriv F t = -∫ x : NNReal, (t + (x : Real)) ^ (-2 : Int) ∂mu := by
-    simpa [F, iteratedDeriv_one] using
-      iteratedDeriv_integral_inv_add hmu 1 ht
-  have hjump : HasDerivAt (fun u => u * F u)
-      (∫ x : NNReal, (x : Real) / (t + x) ^ 2 ∂mu) t := by
-    refine ((hasDerivAt_id t).mul hFdiff.hasDerivAt).congr_deriv ?_
-    rw [hFderiv]
-    rw [integral_stieltjesBernsteinDerivKernel_eq_sub hmu ht]
-    simp only [F, id_eq]
-    ring
-  have hlinear : HasDerivAt (fun u : Real => (a : Real) + (b : Real) * u) b t := by
-    simpa using ((hasDerivAt_id t).const_mul (b : Real)).const_add (a : Real)
-  refine ((hlinear.add hjump).congr_of_eventuallyEq ?_).congr_deriv rfl
-  filter_upwards [] with u
-  rw [stieltjesBernsteinTransform,
-    stieltjesBernsteinIntegral_eq_mul_integral_inv_add]
-  rfl
-
-/-- The derivative formula for the Stieltjes--Bernstein transform at a positive parameter. -/
-theorem deriv_stieltjesBernsteinTransform {mu : Measure NNReal} {a b : NNReal}
-    (hmu : Integrable stieltjesWeight mu) {t : Real} (ht : 0 < t) :
-    deriv (stieltjesBernsteinTransform mu a b) t =
-      (b : Real) + ∫ x : NNReal, (x : Real) / (t + x) ^ 2 ∂mu :=
-  (hasDerivAt_stieltjesBernsteinTransform hmu ht).deriv
+    (isCompletelyMonotoneOnIoi_integral_inv_add hμ).contDiffOn).congr fun t _ => ?_
+  simpa only [id_eq] using stieltjesBernsteinIntegral_eq_mul_integral_inv_add μ t
 
 /-- The Leibniz expansion of `t * F t` collapses to two terms, because every derivative of the
 identity beyond the first vanishes. -/
-private lemma iteratedDeriv_succ_id_mul {F : Real → Real} {n : Nat} {t : Real}
-    (hF : ContDiffAt Real (n + 1 : Nat) F t) :
-    iteratedDeriv (n + 1) (fun u : Real => u * F u) t =
-      t * iteratedDeriv (n + 1) F t + ((n : Real) + 1) * iteratedDeriv n F t := by
-  have hmulFun : (fun u : Real => u * F u) = id * F := rfl
-  rw [hmulFun, iteratedDeriv_mul contDiffAt_id hF,
+private lemma iteratedDeriv_succ_id_mul {F : ℝ → ℝ} {n : ℕ} {t : ℝ}
+    (hF : ContDiffAt ℝ (n + 1 : ℕ) F t) :
+    iteratedDeriv (n + 1) (fun u : ℝ => u * F u) t =
+      t * iteratedDeriv (n + 1) F t + ((n : ℝ) + 1) * iteratedDeriv n F t := by
+  have hmul := iteratedDeriv_fun_mul (n := n + 1) (x := t) contDiffAt_id hF
+  simp only [id_eq] at hmul
+  rw [hmul,
     ← Finset.add_sum_erase _ _ (by simp : 0 ∈ Finset.range (n + 1 + 1)),
     ← Finset.add_sum_erase _ _ (by simp : 1 ∈ (Finset.range (n + 1 + 1)).erase 0)]
   have hrest :
       (∑ x ∈ ((Finset.range (n + 1 + 1)).erase 0).erase 1,
-        ((n + 1).choose x : Real) * iteratedDeriv x id t *
+        ((n + 1).choose x : ℝ) * iteratedDeriv x id t *
           iteratedDeriv (n + 1 - x) F t) = 0 := by
     refine Finset.sum_eq_zero fun x hx => ?_
     have hx1 : x ≠ 1 := (Finset.mem_erase.mp hx).1
@@ -161,183 +138,156 @@ private lemma iteratedDeriv_succ_id_mul {F : Real → Real} {n : Nat} {t : Real}
   have hid0 : iteratedDeriv 0 id t = t := by simp
   have hid1 : iteratedDeriv 1 id t = 1 := by simp [iteratedDeriv_one]
   rw [hrest, hid0, hid1]
-  simp only [Nat.choose_zero_right, Nat.choose_one_right, Nat.cast_one, one_mul,
-    Nat.sub_zero, add_zero]
-  rw [Nat.add_sub_cancel, mul_one, Nat.cast_add, Nat.cast_one]
+  simp [Nat.choose_one_right]
 
-/-- Lowering the exponent of a Stieltjes derivative kernel by one costs a factor at most `t`,
-because `t ≤ t + x`. -/
-private lemma mul_integral_zpow_neg_two_sub_le {mu : Measure NNReal}
-    (hmu : Integrable stieltjesWeight mu) (n : Nat) {t : Real} (ht : 0 < t) :
-    (t * ∫ x : NNReal, (t + (x : Real)) ^ (-2 - (n : Int)) ∂mu) ≤
-      ∫ x : NNReal, (t + (x : Real)) ^ (-1 - (n : Int)) ∂mu := by
-  have hexpSucc : -1 - ((n + 1 : Nat) : Int) = -2 - (n : Int) := by omega
-  have hIntSucc : Integrable
-      (fun x : NNReal => (t + (x : Real)) ^ (-2 - (n : Int))) mu := by
-    simpa only [hexpSucc] using integrable_zpow_neg_one_sub_add hmu (n + 1) ht
-  rw [← integral_const_mul]
-  refine integral_mono (hIntSucc.const_mul t)
-    (integrable_zpow_neg_one_sub_add hmu n ht) fun x => ?_
-  have htx : 0 < t + (x : Real) := add_pos_of_pos_of_nonneg ht x.coe_nonneg
-  have hexp : -1 - (n : Int) = 1 + (-2 - (n : Int)) := by omega
-  rw [hexp, zpow_add₀ htx.ne', zpow_one]
-  exact mul_le_mul_of_nonneg_right (le_add_of_nonneg_right x.coe_nonneg)
-    (zpow_nonneg htx.le _)
+/-- The iterated derivatives of the integral term in the Stieltjes--Bernstein transform at a
+positive parameter. -/
+theorem iteratedDeriv_stieltjesBernsteinIntegral {μ : Measure ℝ≥0}
+    (hμ : Integrable stieltjesWeight μ) (n : ℕ) {t : ℝ} (ht : 0 < t) :
+    iteratedDeriv (n + 1) (fun u : ℝ => ∫ x : ℝ≥0, u / (u + x) ∂μ) t =
+      (-1 : ℝ) ^ n * (n + 1).factorial *
+        ∫ x : ℝ≥0, (x : ℝ) * (t + x) ^ (-2 - (n : ℤ)) ∂μ := by
+  let F := fun u : ℝ => ∫ x : ℝ≥0, (u + (x : ℝ))⁻¹ ∂μ
+  have hFdiff : ContDiffAt ℝ (n + 1 : ℕ) F t :=
+    ((isCompletelyMonotoneOnIoi_integral_inv_add hμ).contDiffOn.contDiffAt
+      (isOpen_Ioi.mem_nhds ht)).of_le (by simp)
+  have hjumpEq : (fun u : ℝ => ∫ x : ℝ≥0, u / (u + x) ∂μ) =
+      fun u => u * F u := by
+    funext u
+    exact stieltjesBernsteinIntegral_eq_mul_integral_inv_add μ u
+  rw [hjumpEq, iteratedDeriv_succ_id_mul hFdiff]
+  have hn := iteratedDeriv_integral_inv_add hμ n ht
+  have hn1 := iteratedDeriv_integral_inv_add hμ (n + 1) ht
+  have hexpSucc : -1 - ((n + 1 : ℕ) : ℤ) = -2 - (n : ℤ) := by omega
+  rw [hexpSucc] at hn1
+  rw [hn, hn1, integral_mul_zpow_eq_sub hμ n ht]
+  rw [pow_succ, Nat.factorial_succ]
+  push_cast
+  ring
+
+/-- The derivative of the Stieltjes--Bernstein transform at a positive parameter. -/
+theorem hasDerivAt_stieltjesBernsteinTransform {μ : Measure ℝ≥0} {a b : ℝ≥0}
+    (hμ : Integrable stieltjesWeight μ) {t : ℝ} (ht : 0 < t) :
+    HasDerivAt (stieltjesBernsteinTransform μ a b)
+      ((b : ℝ) + ∫ x : ℝ≥0, (x : ℝ) / (t + x) ^ 2 ∂μ) t := by
+  have hdiff : DifferentiableAt ℝ (fun u : ℝ => ∫ x : ℝ≥0, u / (u + x) ∂μ) t :=
+    ((contDiffOn_stieltjesBernsteinIntegral hμ).differentiableOn (by simp)).differentiableAt
+      (isOpen_Ioi.mem_nhds ht)
+  have hderiv : deriv (fun u : ℝ => ∫ x : ℝ≥0, u / (u + x) ∂μ) t =
+      ∫ x : ℝ≥0, (x : ℝ) / (t + x) ^ 2 ∂μ := by
+    simpa [iteratedDeriv_one, div_eq_mul_inv, zpow_neg, zpow_ofNat] using
+      iteratedDeriv_stieltjesBernsteinIntegral hμ 0 ht
+  have hlinear : HasDerivAt (fun u : ℝ => (a : ℝ) + (b : ℝ) * u) b t := by
+    simpa using ((hasDerivAt_id t).const_mul (b : ℝ)).const_add (a : ℝ)
+  refine (hlinear.add (hdiff.hasDerivAt.congr_deriv hderiv)).congr_of_eventuallyEq ?_
+  filter_upwards with u
+  rw [stieltjesBernsteinTransform_def]
+  simp only [Pi.add_apply]
+
+/-- The derivative formula for the Stieltjes--Bernstein transform at a positive parameter. -/
+theorem deriv_stieltjesBernsteinTransform {μ : Measure ℝ≥0} {a b : ℝ≥0}
+    (hμ : Integrable stieltjesWeight μ) {t : ℝ} (ht : 0 < t) :
+    deriv (stieltjesBernsteinTransform μ a b) t =
+      (b : ℝ) + ∫ x : ℝ≥0, (x : ℝ) / (t + x) ^ 2 ∂μ :=
+  (hasDerivAt_stieltjesBernsteinTransform hμ ht).deriv
 
 private lemma isCompletelyMonotoneOnIoi_deriv_stieltjesBernsteinIntegral
-    {mu : Measure NNReal} (hmu : Integrable stieltjesWeight mu) :
+    {μ : Measure ℝ≥0} (hμ : Integrable stieltjesWeight μ) :
     IsCompletelyMonotoneOnIoi
-      (deriv fun t : Real => ∫ x : NNReal, t / (t + x) ∂mu) := by
-  let F := fun u : Real => ∫ x : NNReal, (u + (x : Real))⁻¹ ∂mu
-  have hFcm : IsCompletelyMonotoneOnIoi F :=
-    isCompletelyMonotoneOnIoi_integral_inv_add hmu
-  have hjumpContDiff : ContDiffOn Real ∞ (fun t => t * F t) (Ioi 0) :=
-    contDiffOn_id.mul hFcm.contDiffOn
-  have hjumpEq : EqOn (fun t : Real => ∫ x : NNReal, t / (t + x) ∂mu)
-      (fun t => t * F t) (Ioi 0) := fun t _ =>
-    stieltjesBernsteinIntegral_eq_mul_integral_inv_add mu t
-  have hderivEq : EqOn
-      (deriv fun t : Real => ∫ x : NNReal, t / (t + x) ∂mu)
-      (deriv fun t => t * F t) (Ioi 0) := fun t ht =>
-    (hjumpEq.eventuallyEq_of_mem (isOpen_Ioi.mem_nhds ht)).deriv_eq
+      (deriv fun t : ℝ => ∫ x : ℝ≥0, t / (t + x) ∂μ) := by
   refine ⟨?_, ?_⟩
-  · rw [contDiffOn_infty_iff_deriv_of_isOpen isOpen_Ioi] at hjumpContDiff
-    exact hjumpContDiff.2.congr hderivEq
+  · exact ((contDiffOn_infty_iff_deriv_of_isOpen isOpen_Ioi).mp
+      (contDiffOn_stieltjesBernsteinIntegral hμ)).2
   · intro n t ht
-    -- Turn the `n`-th derivative of the derivative into the `(n + 1)`-st derivative of
-    -- `t * F t`, and expand the latter by the two-term Leibniz rule.
-    have hFdiff : ContDiffAt Real (n + 1 : Nat) F t :=
-      (hFcm.contDiffOn.contDiffAt (isOpen_Ioi.mem_nhds ht)).of_le (by simp)
-    rw [(hderivEq.eventuallyEq_of_mem
-      (isOpen_Ioi.mem_nhds ht)).iteratedDeriv_eq n, ← iteratedDeriv_succ',
-      iteratedDeriv_succ_id_mul hFdiff]
-    -- Insert the two derivative formulas for `F`; the exponents are `-1 - n` and `-2 - n`.
-    have hn := iteratedDeriv_integral_inv_add hmu n ht
-    have hn1 := iteratedDeriv_integral_inv_add hmu (n + 1) ht
-    have hexpSucc : -1 - ((n + 1 : Nat) : Int) = -2 - (n : Int) := by omega
-    rw [hexpSucc] at hn1
-    rw [hn, hn1]
-    -- The two factors `(-1) ^ n` cancel, leaving `(n + 1)!` times the kernel difference.
-    have hsign : (-1 : Real) ^ n * (-1 : Real) ^ n = 1 := by
+    rw [← iteratedDeriv_succ', iteratedDeriv_stieltjesBernsteinIntegral hμ n ht]
+    have hsign : (-1 : ℝ) ^ n * (-1 : ℝ) ^ n = 1 := by
       rw [← pow_add]
       norm_num [two_mul n]
-    have heq :
-        (-1 : Real) ^ n *
-          (t * ((-1 : Real) ^ (n + 1) * (n + 1).factorial *
-              ∫ x : NNReal, (t + (x : Real)) ^ (-2 - (n : Int)) ∂mu) +
-            ((n : Real) + 1) * ((-1 : Real) ^ n * n.factorial *
-              ∫ x : NNReal, (t + (x : Real)) ^ (-1 - (n : Int)) ∂mu)) =
-          ((n + 1).factorial : Real) *
-            ((∫ x : NNReal, (t + (x : Real)) ^ (-1 - (n : Int)) ∂mu) -
-              t * ∫ x : NNReal,
-                (t + (x : Real)) ^ (-2 - (n : Int)) ∂mu) := by
-      rw [pow_succ, Nat.factorial_succ]
-      push_cast
-      calc
-        _ = ((-1 : Real) ^ n * (-1 : Real) ^ n) * ((n : Real) + 1) * n.factorial *
-              ((∫ x : NNReal, (t + (x : Real)) ^ (-1 - (n : Int)) ∂mu) -
-                t * ∫ x : NNReal,
-                  (t + (x : Real)) ^ (-2 - (n : Int)) ∂mu) := by ring
-        _ = _ := by rw [hsign]; ring
-    rw [heq]
-    exact mul_nonneg (Nat.cast_nonneg _)
-      (sub_nonneg.mpr (mul_integral_zpow_neg_two_sub_le hmu n ht))
+    calc
+      0 ≤ ((n + 1).factorial : ℝ) *
+          ∫ x : ℝ≥0, (x : ℝ) * (t + x) ^ (-2 - (n : ℤ)) ∂μ :=
+        mul_nonneg (Nat.cast_nonneg _) (integral_nonneg fun x : ℝ≥0 =>
+          mul_nonneg x.coe_nonneg (zpow_nonneg (add_nonneg ht.le x.coe_nonneg) _))
+      _ = ((-1 : ℝ) ^ n * (-1 : ℝ) ^ n) * (n + 1).factorial *
+          ∫ x : ℝ≥0, (x : ℝ) * (t + x) ^ (-2 - (n : ℤ)) ∂μ := by rw [hsign, one_mul]
+      _ = _ := by ring
 
 private lemma continuousWithinAt_stieltjesBernsteinIntegral_zero
-    {mu : Measure NNReal} (hzero : mu {0} = 0) (hmu : Integrable stieltjesWeight mu) :
-    ContinuousWithinAt (fun t : Real => ∫ x : NNReal, t / (t + x) ∂mu)
+    {μ : Measure ℝ≥0} (hzero : μ {0} = 0) (hμ : Integrable stieltjesWeight μ) :
+    ContinuousWithinAt (fun t : ℝ => ∫ x : ℝ≥0, t / (t + x) ∂μ)
       (Ici 0) 0 := by
-  -- Expose the filter formulation required by dominated convergence.
-  change Tendsto (fun t : Real => ∫ x : NNReal, t / (t + x) ∂mu) (nhdsWithin 0 (Ici 0))
-    (nhds (∫ x : NNReal, (0 : Real) / (0 + x) ∂mu))
-  have hDCT : Tendsto (fun t : Real => ∫ x : NNReal, t / (t + x) ∂mu)
-      (nhdsWithin 0 (Ici 0)) (nhds (∫ _x : NNReal, (0 : Real) ∂mu)) := by
-    refine tendsto_integral_filter_of_dominated_convergence
-      (μ := mu) (l := nhdsWithin (0 : Real) (Ici 0))
-      (F := fun (t : Real) (x : NNReal) => t / (t + (x : Real)))
-      (f := fun _ : NNReal => (0 : Real))
-      (bound := stieltjesWeight) ?_ ?_ hmu ?_
-    · filter_upwards [eventually_mem_nhdsWithin] with t ht
-      by_cases ht0 : t = 0
-      · subst t
-        simpa using
-          (continuous_const : Continuous fun _ : NNReal => (0 : Real)).aestronglyMeasurable
-      · have htpos : 0 < t := lt_of_le_of_ne ht (Ne.symm ht0)
-        exact (continuous_const.div (continuous_const.add NNReal.continuous_coe)
-          fun x => (add_pos_of_pos_of_nonneg htpos x.coe_nonneg).ne').aestronglyMeasurable
-    · have hlt : ∀ᶠ t in nhdsWithin (0 : Real) (Ici 0), t < 1 :=
-        nhdsWithin_le_nhds (Iio_mem_nhds (by norm_num))
-      filter_upwards [eventually_mem_nhdsWithin, hlt] with t ht ht_one
-      filter_upwards with x
-      rw [Real.norm_eq_abs, abs_of_nonneg (div_nonneg ht (add_nonneg ht x.coe_nonneg))]
-      rw [stieltjesWeight_apply]
-      by_cases ht0 : t = 0
-      · subst t
-        rw [zero_div]
-        exact inv_nonneg.mpr (by positivity)
-      · have htpos : 0 < t := lt_of_le_of_ne ht (Ne.symm ht0)
-        have hden : 0 < t + (x : Real) := add_pos_of_pos_of_nonneg htpos x.coe_nonneg
-        have h1x : 0 < 1 + (x : Real) := by positivity
-        rw [inv_eq_one_div, div_le_div_iff₀ hden h1x]
-        nlinarith [mul_nonneg ht x.coe_nonneg]
-    · have hne : ∀ᵐ x ∂mu, x ≠ 0 := by
-        rw [ae_iff]
-        simp [hzero]
-      filter_upwards [hne] with x hx
-      have hx0 : (x : Real) ≠ 0 := NNReal.coe_ne_zero.mpr hx
-      have hid : Tendsto id (nhdsWithin (0 : Real) (Ici 0)) (nhds 0) :=
-        tendsto_id.mono_left nhdsWithin_le_nhds
-      have hquot := hid.div (hid.add_const (x : Real)) (by simpa using hx0)
-      have hquot' : Tendsto (id / fun y : Real => y + (x : Real))
-          (nhdsWithin 0 (Ici 0)) (nhds 0) := by simpa using hquot
-      refine hquot'.congr' ?_
-      filter_upwards with y
-      rfl
-  simpa using hDCT
+  refine continuousWithinAt_of_dominated (μ := μ) (bound := stieltjesWeight) ?_ ?_ hμ ?_
+  · exact Filter.Eventually.of_forall fun _ =>
+      (measurable_const.div
+        (measurable_const.add NNReal.continuous_coe.measurable)).aestronglyMeasurable
+  · have hlt : ∀ᶠ t in nhdsWithin (0 : ℝ) (Ici 0), t < 1 :=
+      nhdsWithin_le_nhds (Iio_mem_nhds (by norm_num))
+    filter_upwards [eventually_mem_nhdsWithin, hlt] with t ht ht_one
+    filter_upwards with x
+    rw [Real.norm_eq_abs, abs_of_nonneg (div_nonneg ht (add_nonneg ht x.coe_nonneg))]
+    rw [stieltjesWeight_apply]
+    by_cases ht0 : t = 0
+    · subst t
+      rw [zero_div]
+      exact inv_nonneg.mpr (by positivity)
+    · have htpos : 0 < t := lt_of_le_of_ne ht (Ne.symm ht0)
+      have hden : 0 < t + (x : ℝ) := add_pos_of_pos_of_nonneg htpos x.coe_nonneg
+      have h1x : 0 < 1 + (x : ℝ) := by positivity
+      rw [inv_eq_one_div, div_le_div_iff₀ hden h1x]
+      nlinarith [mul_nonneg ht x.coe_nonneg]
+  · have hne : ∀ᵐ x ∂μ, x ≠ 0 := by
+      rw [ae_iff]
+      simp [hzero]
+    filter_upwards [hne] with x hx
+    have hx0 : (x : ℝ) ≠ 0 := NNReal.coe_ne_zero.mpr hx
+    exact (continuousAt_id.div (continuousAt_id.add continuousAt_const)
+      (by simpa using hx0)).continuousWithinAt
 
-private lemma isBernsteinFunction_stieltjesBernsteinIntegral {mu : Measure NNReal}
-    (hzero : mu {0} = 0) (hmu : Integrable stieltjesWeight mu) :
-    IsBernsteinFunction (fun t : Real => ∫ x : NNReal, t / (t + x) ∂mu) := by
+/-- The integral term in the Stieltjes--Bernstein transform is a Bernstein function under the
+normalization and integrability hypotheses on the representing measure. -/
+theorem isBernsteinFunction_stieltjesBernsteinIntegral {μ : Measure ℝ≥0}
+    (hzero : μ {0} = 0) (hμ : Integrable stieltjesWeight μ) :
+    IsBernsteinFunction (fun t : ℝ => ∫ x : ℝ≥0, t / (t + x) ∂μ) := by
   have hjumpCont : ContinuousOn
-      (fun t : Real => ∫ x : NNReal, t / (t + x) ∂mu) (Ici 0) := by
+      (fun t : ℝ => ∫ x : ℝ≥0, t / (t + x) ∂μ) (Ici 0) := by
     intro t ht
     have ht' : 0 ≤ t := ht
     rcases ht'.eq_or_lt with rfl | ht
-    · exact continuousWithinAt_stieltjesBernsteinIntegral_zero hzero hmu
-    · exact ((contDiffOn_stieltjesBernsteinIntegral hmu).contDiffAt
+    · exact continuousWithinAt_stieltjesBernsteinIntegral_zero hzero hμ
+    · exact ((contDiffOn_stieltjesBernsteinIntegral hμ).contDiffAt
         (isOpen_Ioi.mem_nhds ht)).continuousAt.continuousWithinAt
   rw [isBernsteinFunction_iff]
-  exact ⟨hjumpCont, contDiffOn_stieltjesBernsteinIntegral hmu,
+  exact ⟨hjumpCont, contDiffOn_stieltjesBernsteinIntegral hμ,
     fun t ht => integral_nonneg fun x => div_nonneg ht (add_nonneg ht x.coe_nonneg),
-    isCompletelyMonotoneOnIoi_deriv_stieltjesBernsteinIntegral hmu⟩
+    isCompletelyMonotoneOnIoi_deriv_stieltjesBernsteinIntegral hμ⟩
 
 /-- The transform built from normalized Stieltjes representing data is a Bernstein function. -/
-theorem isBernsteinFunction_stieltjesBernsteinTransform {mu : Measure NNReal} {a b : NNReal}
-    (hzero : mu {0} = 0) (hmu : Integrable stieltjesWeight mu) :
-    IsBernsteinFunction (stieltjesBernsteinTransform mu a b) := by
+theorem isBernsteinFunction_stieltjesBernsteinTransform {μ : Measure ℝ≥0} {a b : ℝ≥0}
+    (hzero : μ {0} = 0) (hμ : Integrable stieltjesWeight μ) :
+    IsBernsteinFunction (stieltjesBernsteinTransform μ a b) := by
   apply ((isBernsteinFunction_affine a.coe_nonneg b.coe_nonneg).add
-    (isBernsteinFunction_stieltjesBernsteinIntegral hzero hmu)).congr
+    (isBernsteinFunction_stieltjesBernsteinIntegral hzero hμ)).congr
   intro t _
-  rw [stieltjesBernsteinTransform]
+  rw [stieltjesBernsteinTransform_def]
   simp only [Pi.add_apply]
 
 namespace RepresentsStieltjes
 
-variable {mu : Measure NNReal} {a b : NNReal} {f : Real → Real}
+variable {μ : Measure ℝ≥0} {a b : ℝ≥0} {f : ℝ → ℝ}
 
 /-- Multiplying a represented Stieltjes function by its parameter gives the associated Bernstein
 transform on the open half-line. -/
-theorem stieltjesBernsteinTransform_eq_mul (h : RepresentsStieltjes mu a b f) {t : Real}
-    (ht : 0 < t) : stieltjesBernsteinTransform mu a b t = t * f t := by
-  rw [h.eq_div_add_add_integral_inv_add ht, stieltjesBernsteinTransform]
+theorem stieltjesBernsteinTransform_eq_mul (h : RepresentsStieltjes μ a b f) {t : ℝ}
+    (ht : 0 < t) : stieltjesBernsteinTransform μ a b t = t * f t := by
+  rw [h.eq_div_add_add_integral_inv_add ht, stieltjesBernsteinTransform_def]
   rw [stieltjesBernsteinIntegral_eq_mul_integral_inv_add]
   field_simp [ht.ne']
 
 /-- The transform attached to a Stieltjes representation is a Bernstein function.  Its agreement
 with `t * f(t)` on `(0, ∞)` is `RepresentsStieltjes.stieltjesBernsteinTransform_eq_mul`, and its
 boundary value at zero is `stieltjesBernsteinTransform_zero`. -/
-theorem isBernsteinFunction_stieltjesBernsteinTransform (h : RepresentsStieltjes mu a b f) :
-    IsBernsteinFunction (stieltjesBernsteinTransform mu a b) :=
+theorem isBernsteinFunction_stieltjesBernsteinTransform (h : RepresentsStieltjes μ a b f) :
+    IsBernsteinFunction (stieltjesBernsteinTransform μ a b) :=
   TauCeti.isBernsteinFunction_stieltjesBernsteinTransform
     h.measure_singleton_zero h.integrable_weight
 
@@ -345,15 +295,15 @@ end RepresentsStieltjes
 
 namespace IsStieltjesFunction
 
-variable {f : Real → Real}
+variable {f : ℝ → ℝ}
 
 /-- Every Stieltjes function has a Bernstein extension of its product with the parameter on the
 open positive half-line. -/
-theorem exists_isBernsteinFunction_eq_mul (h : IsStieltjesFunction f) :
-    ∃ g : Real → Real, IsBernsteinFunction g ∧ EqOn g (fun t => t * f t) (Ioi 0) := by
+theorem exists_isBernsteinFunction_eqOn_mul (h : IsStieltjesFunction f) :
+    ∃ g : ℝ → ℝ, IsBernsteinFunction g ∧ EqOn g (fun t => t * f t) (Ioi 0) := by
   rw [isStieltjesFunction_iff] at h
-  obtain ⟨a, b, mu, hrep⟩ := h
-  exact ⟨stieltjesBernsteinTransform mu a b,
+  obtain ⟨a, b, μ, hrep⟩ := h
+  exact ⟨stieltjesBernsteinTransform μ a b,
     hrep.isBernsteinFunction_stieltjesBernsteinTransform,
     fun _ ht => hrep.stieltjesBernsteinTransform_eq_mul ht⟩
 
