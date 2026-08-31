@@ -26,6 +26,8 @@ local identity as an equality of germs at the origin.
 
 * [Lie groups and the Lie algebra correspondence roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/LieGroups/README.md),
   Deliverable A, Layer 3, "Baker--Campbell--Hausdorff".
+* `NormedSpace.map_exp_of_mem_ball` in Mathlib's exponential naturality
+  development, whose `tsum`/`HasSum.map`/termwise-naturality proof pattern is adapted here.
 -/
 
 public section
@@ -64,10 +66,10 @@ end Algebra
 section Normed
 
 variable {𝕂 𝕃 A B : Type*} [NontriviallyNormedField 𝕂] [CharZero 𝕂]
-variable [NontriviallyNormedField 𝕃] [CharZero 𝕃]
+variable [Field 𝕃] [CharZero 𝕃]
 variable [ContinuousSMul ℚ≥0 𝕂]
 variable [NormedRing A] [NormedAlgebra 𝕂 A]
-variable [NormedRing B] [Algebra 𝕃 B]
+variable [Ring B] [Algebra 𝕃 B] [TopologicalSpace B] [IsTopologicalRing B] [T2Space B]
 variable [CompleteSpace A]
 
 /-- Continuous ring homomorphisms commute with `logOneAdd` on the open unit ball. -/
