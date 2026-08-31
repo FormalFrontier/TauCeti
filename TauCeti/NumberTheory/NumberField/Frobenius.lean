@@ -88,14 +88,14 @@ complement of every prime consists of non-zero-divisors, which discharges the re
 hypothesis of the generic theorem.
 -/
 
-/-- **Frobenius elements are unique at an unramified prime.** If `Q` is a nonzero prime of the
+/-- **Frobenius elements are unique at an unramified prime.** If `Q` is a prime of the
 ring of integers of a finite Galois extension `L/K`, then two arithmetic Frobenius elements at
 `Q` coincide whenever `L/K` is unramified at `Q`.
 
 This is the Galois-group form of `AlgHom.IsArithFrobAt.eq_of_isUnramifiedAt`. -/
 theorem isArithFrobAt_eq_of_isUnramifiedAt {K L : Type*} [Field K] [Field L]
     [NumberField K] [NumberField L] [Algebra K L] [IsGalois K L]
-    {σ τ : L ≃ₐ[K] L} {Q : Ideal (𝓞 L)} [Q.IsPrime] (_hQ : Q ≠ ⊥)
+    {σ τ : L ≃ₐ[K] L} {Q : Ideal (𝓞 L)} [Q.IsPrime]
     [Algebra.IsUnramifiedAt (𝓞 K) Q] (hσ : IsArithFrobAt (𝓞 K) σ Q)
     (hτ : IsArithFrobAt (𝓞 K) τ Q) : σ = τ := by
   have heq : MulSemiringAction.toAlgHom (𝓞 K) (𝓞 L) σ =
@@ -107,13 +107,13 @@ theorem isArithFrobAt_eq_of_isUnramifiedAt {K L : Type*} [Field K] [Field L]
   exact (IsGaloisGroup.faithful (𝓞 K)).eq_of_smul_eq_smul fun x ↦
     DFunLike.congr_fun heq x
 
-/-- The Frobenius elements at a nonzero unramified prime form a subsingleton. -/
+/-- The Frobenius elements at an unramified prime form a subsingleton. -/
 theorem subsingleton_isArithFrobAt {K L : Type*} [Field K] [Field L]
     [NumberField K] [NumberField L] [Algebra K L] [IsGalois K L]
-    {Q : Ideal (𝓞 L)} [Q.IsPrime] (_hQ : Q ≠ ⊥)
+    {Q : Ideal (𝓞 L)} [Q.IsPrime]
     [Algebra.IsUnramifiedAt (𝓞 K) Q] :
     Subsingleton {σ : L ≃ₐ[K] L // IsArithFrobAt (𝓞 K) σ Q} where
-  allEq σ τ := Subtype.ext (isArithFrobAt_eq_of_isUnramifiedAt _hQ σ.property τ.property)
+  allEq σ τ := Subtype.ext (isArithFrobAt_eq_of_isUnramifiedAt σ.property τ.property)
 
 /-- **A Frobenius acts on square roots by the Legendre symbol.** Let `K` be a number field,
 `p` an odd prime, and `σ ∈ Gal(K/ℚ)` an arithmetic Frobenius at an ideal `Q` of `𝓞 K` above
