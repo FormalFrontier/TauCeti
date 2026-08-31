@@ -47,22 +47,26 @@ A dominant weight `μ : Fin N → R` is `a + c` for an antitone `a : Fin N → �
 `TauCeti/Algebra/Lie/GeneralLinear/HighestWeight.lean`. Twisting the exterior-power realization of
 `a` by `c` then realizes `μ`, which is
 `TauCeti.exists_isGlHighestWeightVector_of_isGlDominantIntegral`. The realizing module
-`TauCeti.glDominantModule` is finite over `R`, hence finite-dimensional over a field.
+`TauCeti.glTraceTwistedYoungWedge` is finite over `R`, hence finite-dimensional over a field.
 
 ## Main definitions
 
 * `TauCeti.GlTraceTwist`: a `gl n`-module twisted by the character `c · tr`.
 * `TauCeti.GlTraceTwist.linearEquiv`: the underlying `R`-modules of a module and of its twist.
-* `TauCeti.glDominantModule`: the trace twist by `c` of the exterior power in which
+* `TauCeti.glTraceTwistedYoungWedge`: the trace twist by `c` of the exterior power in which
   `TauCeti.exists_isGlHighestWeightVector_natCast` realizes a tuple `a` of natural numbers; for an
-  antitone `a` it realizes the dominant weight `a + c · (1, …, 1)`.
+  antitone `a` it carries a highest weight vector of the dominant weight `a + c · (1, …, 1)`.
+* `TauCeti.glTraceTwistedYoungWedge.linearEquiv`: the underlying `R`-module of that carrier is the
+  exterior power it twists.
 
 ## Main results
 
 * `TauCeti.GlTraceTwist.ofTwist_lie`: the defining equation of the twisted bracket.
 * `TauCeti.isGlHighestWeightVector_toTwist_iff` and its introduction half
   `TauCeti.isGlHighestWeightVector_toTwist`: twisting by `c` shifts the weight of a highest weight
-  vector by `c` in every coordinate, and nothing else.
+  vector by `c` in every coordinate, and nothing else;
+  `TauCeti.glTraceTwistedYoungWedge.isGlHighestWeightVector_linearEquiv_symm` is that introduction
+  rule for the named carrier.
 * `TauCeti.exists_isGlHighestWeightVector_of_isGlDominantIntegral`: **every dominant weight of
   `gl N` is the highest weight of a highest weight vector in a module finite over `R`.**
 
@@ -289,18 +293,68 @@ variable {R : Type u} [CommRing R] [CharZero R] {N : ℕ} {mu : Fin N → R}
 variable {ι : Type*} [Fintype ι] [LinearOrder ι]
 
 variable (R) in
-/-- **The trace twist by `c` of the exterior-power carrier of a tuple `a` of natural numbers**: the
+/-- **The trace twist by `c` of the exterior power realizing a tuple `a` of natural numbers**: the
 exterior power in which `TauCeti.exists_isGlHighestWeightVector_natCast` realizes `a`, twisted by
-`c`. For an antitone `a` it realizes the dominant weight `a + c · (1, …, 1)`, which is
-`TauCeti.exists_isGlHighestWeightVector_of_isGlDominantIntegral`; for an unrestricted `a` it is just
-the twisted exterior power.
+`c`. For an antitone `a` it carries a highest weight vector of the dominant weight
+`a + c · (1, …, 1)`, which is `TauCeti.exists_isGlHighestWeightVector_of_isGlDominantIntegral`; for
+an unrestricted `a` it is just the twisted exterior power.
 
-It is finite over `R`, hence finite-dimensional over a field: instance search reaches
-`Module.Finite R (glDominantModule R a c)` from `exteriorPower.instFinite` through the transported
-instance on `TauCeti.GlTraceTwist`. It is an `abbrev` so that the exterior power stays reducibly
-available, as `EuclideanSpace` keeps `PiLp` available in Mathlib. -/
-abbrev glDominantModule (a : ι → ℕ) (c : R) : Type _ :=
+As with `TauCeti.VermaModule`, the carrier is a definition with its module structures declared one
+by one, so that statements about it are made against this name rather than against the exterior
+power it is built from; the roadmap will later cut that construction down to an irreducible
+quotient.
+`TauCeti.glTraceTwistedYoungWedge.linearEquiv` is the identification of the underlying `R`-modules
+and `TauCeti.glTraceTwistedYoungWedge.isGlHighestWeightVector_linearEquiv_symm` populates it. It is
+finite over `R`, hence finite-dimensional over a field. -/
+-- `@[expose]` is mandated by the compiler for a type synonym carrying instances under the module
+-- system ("locally inferred compilation type differs from type that would be inferred in other
+-- modules ... may need to be `@[expose]`d"); removing it fails the build. Consumers should still
+-- go through `linearEquiv` rather than through the body.
+@[expose]
+def glTraceTwistedYoungWedge (a : ι → ℕ) (c : R) : Type _ :=
   GlTraceTwist ι c (⋀[R]^(∑ i, a i) (ι × Fin (∑ i, a i) → R))
+
+instance (a : ι → ℕ) (c : R) : AddCommGroup (glTraceTwistedYoungWedge R a c) :=
+  inferInstanceAs (AddCommGroup
+    (GlTraceTwist ι c (⋀[R]^(∑ i, a i) (ι × Fin (∑ i, a i) → R))))
+
+instance (a : ι → ℕ) (c : R) : Module R (glTraceTwistedYoungWedge R a c) :=
+  inferInstanceAs (Module R
+    (GlTraceTwist ι c (⋀[R]^(∑ i, a i) (ι × Fin (∑ i, a i) → R))))
+
+noncomputable instance (a : ι → ℕ) (c : R) :
+    LieRingModule (Matrix ι ι R) (glTraceTwistedYoungWedge R a c) :=
+  inferInstanceAs (LieRingModule (Matrix ι ι R)
+    (GlTraceTwist ι c (⋀[R]^(∑ i, a i) (ι × Fin (∑ i, a i) → R))))
+
+instance (a : ι → ℕ) (c : R) : LieModule R (Matrix ι ι R) (glTraceTwistedYoungWedge R a c) :=
+  inferInstanceAs (LieModule R (Matrix ι ι R)
+    (GlTraceTwist ι c (⋀[R]^(∑ i, a i) (ι × Fin (∑ i, a i) → R))))
+
+instance (a : ι → ℕ) (c : R) : Module.Finite R (glTraceTwistedYoungWedge R a c) :=
+  inferInstanceAs (Module.Finite R
+    (GlTraceTwist ι c (⋀[R]^(∑ i, a i) (ι × Fin (∑ i, a i) → R))))
+
+namespace glTraceTwistedYoungWedge
+
+variable (R) in
+/-- **A trace-twisted Young wedge has the exterior power as its underlying `R`-module.** Every
+statement about the carrier is made against this equivalence, so that the definition is not
+unfolded. -/
+def linearEquiv (a : ι → ℕ) (c : R) :
+    glTraceTwistedYoungWedge R a c ≃ₗ[R] ⋀[R]^(∑ i, a i) (ι × Fin (∑ i, a i) → R) :=
+  GlTraceTwist.linearEquiv ι c _
+
+omit [CharZero R] in
+/-- **A highest weight vector of the exterior power gives one of the trace-twisted Young wedge**, of
+the weight shifted by `c` in every coordinate. This is the introduction rule for the carrier; the
+matching elimination rule is `TauCeti.isGlHighestWeightVector_toTwist_iff`. -/
+theorem isGlHighestWeightVector_linearEquiv_symm {a : ι → ℕ} {c : R} {nu : ι → R}
+    {w : ⋀[R]^(∑ i, a i) (ι × Fin (∑ i, a i) → R)} (hw : IsGlHighestWeightVector nu w) :
+    IsGlHighestWeightVector (fun i => nu i + c) ((linearEquiv R a c).symm w) :=
+  isGlHighestWeightVector_toTwist hw
+
+end glTraceTwistedYoungWedge
 
 /-- **Every dominant weight of `gl N` is a highest weight**, in a module finite over `R`: write the
 weight as an antitone tuple of natural numbers translated along the central direction
@@ -308,10 +362,10 @@ weight as an antitone tuple of natural numbers translated along the central dire
 power, and twist by the translation. -/
 theorem exists_isGlHighestWeightVector_of_isGlDominantIntegral (hmu : IsGlDominantIntegral mu) :
     ∃ (a : Fin N → ℕ) (c : R), Antitone a ∧ mu = (fun i => (a i : R) + c) ∧
-      ∃ v : glDominantModule R a c, IsGlHighestWeightVector mu v := by
+      ∃ v : glTraceTwistedYoungWedge R a c, IsGlHighestWeightVector mu v := by
   obtain ⟨a, c, ha, rfl⟩ := hmu.exists_antitone_natCast_add_const
   obtain ⟨w, hw⟩ := exists_isGlHighestWeightVector_natCast (R := R) (ι := Fin N) ha
-  exact ⟨a, c, ha, rfl, _, isGlHighestWeightVector_toTwist hw⟩
+  exact ⟨a, c, ha, rfl, _, glTraceTwistedYoungWedge.isGlHighestWeightVector_linearEquiv_symm hw⟩
 
 end Dominant
 
