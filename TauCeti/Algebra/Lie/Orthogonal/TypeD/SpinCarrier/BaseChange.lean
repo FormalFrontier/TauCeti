@@ -20,8 +20,8 @@ closures to that carrier.
 For every commutative ring `A`, `TauCeti.TypeDSpinCarrier.baseChangeDefiningIdeal` is an ideal in
 `O(GL_(2^n)/A)` whose quotient is canonically the scalar extension of the integral coordinate
 Hopf algebra. The transported numbered root-subgroup maps and weight-torus map factor through
-that quotient. Thus the explicit integral carrier and its pinned generators base-change together;
-none of the data is chosen anew over `A`.
+that quotient. Thus the explicit integral carrier and its distinguished root-subgroup and torus
+maps base-change together; none of the data is chosen anew over `A`.
 
 The defining ideal transported from `ℤ` is contained in the common kernel of the transported
 generators. Equality is not asserted over an arbitrary, possibly non-flat, base: additional
@@ -62,12 +62,15 @@ connected type-`Dₙ` datum.
 * J. E. Humphreys, *Linear Algebraic Groups*, §§26--27.
 * B. Conrad, *Reductive Group Schemes*, §1.
 
-This advances the base-change target in Layer 9 of `TauCetiRoadmap/ReductiveGroups/README.md`,
-"Base change along `ℤ → k` for any commutative ring `k`, and the compatibility of the
-pinning with it". The resulting specialized pinned carrier is an input to milestone L0, "pinned
-ambient groups", of `TauCetiRoadmap/CFSGStatement/README.md`, which reads the carrier of a finite
-group of Lie type off the points of a pinned Chevalley--Demazure group over an algebraic closure.
-The declaration structure follows the sibling specialization for the pinned Geck carrier in
+This supplies a prerequisite for the base-change target in Layer 9 of
+`TauCetiRoadmap/ReductiveGroups/README.md`, "Base change along `ℤ → k` for any commutative ring
+`k`, and the compatibility of the pinning with it": it transports the underlying type-`D`
+carrier and its distinguished generator maps. It does not provide the pinning compatibility or
+a specialized pinned carrier. Those require the subsequent proofs that this carrier is
+reductive, that its torus is maximal with the simply connected type-`Dₙ` root datum, and that the
+maps supply a pinning. Once those prerequisites are established, the declarations here provide
+their underlying scalar-extension data. The declaration structure follows the sibling
+specialization for the pinned Geck carrier in
 `TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.GeckLattice.BaseChange`. Every
 declaration below is the corresponding generic Kostant declaration at this carrier's data; the
 transport reading the generic base-change presentation through a named integral defining ideal is
