@@ -36,7 +36,7 @@ will consume.
 
 * `finiteGluing_apply` gives the formula;
 * `map_prodMap_id_fst_finiteGluing` and `map_snd_finiteGluing` recover the two input laws.
-* `outerGluing_map_fst` and `outerGluing_map_snd` identify the outer coupling's marginals.
+* `map_fst_outerGluing` and `map_snd_outerGluing` identify the outer coupling's marginals.
 
 ## References
 
@@ -156,6 +156,31 @@ private theorem finiteGluing_map_apply (h : π.map Prod.snd = σ.map Prod.fst)
   intro a ha
   by_cases hx : f a = x <;> simp [hx]
 
+/-- The pointwise outer gluing formula. -/
+@[simp]
+theorem outerGluing_apply (h : π.map Prod.snd = σ.map Prod.fst) (a : α) (c : γ) :
+    outerGluing π σ h (a, c) =
+      ∑ b, if π.map Prod.snd b = 0 then 0 else
+        π (a, b) * σ (b, c) / π.map Prod.snd b := by
+  classical
+  rw [outerGluing, finiteGluing_map_apply π σ h
+    (fun p : α × β × γ => (p.1, p.2.2)) (a, c)]
+  apply Finset.sum_bij (fun (x : α × β × γ) _ => x.2.1)
+  · intro x hx
+    simp_all
+  · intro x₁ h₁ x₂ h₂ he
+    rcases x₁ with ⟨a₁, b₁, c₁⟩
+    rcases x₂ with ⟨a₂, b₂, c₂⟩
+    simp_all [Prod.ext_iff]
+  · intro b hb
+    exact ⟨(a, b, c), by simp, rfl⟩
+  · intro x hx
+    rcases x with ⟨a', b', c'⟩
+    have hx' : a' = a ∧ c' = c := by
+      simpa [Prod.ext_iff] using hx
+    rcases hx' with ⟨rfl, rfl⟩
+    rfl
+
 /-- The `(α, β)` marginal of a finite gluing is its first input law. -/
 @[simp]
 theorem map_prodMap_id_fst_finiteGluing (h : π.map Prod.snd = σ.map Prod.fst) :
@@ -257,7 +282,7 @@ theorem map_snd_finiteGluing (h : π.map Prod.snd = σ.map Prod.fst) :
 
 /-- The first marginal of the outer projection is the first marginal of the first input law. -/
 @[simp]
-theorem outerGluing_map_fst (h : π.map Prod.snd = σ.map Prod.fst) :
+theorem map_fst_outerGluing (h : π.map Prod.snd = σ.map Prod.fst) :
     (outerGluing π σ h).map Prod.fst = π.map Prod.fst := by
   have hfun : (Prod.fst : α × γ → α) ∘ (fun p : α × β × γ => (p.1, p.2.2)) =
       Prod.fst ∘ (fun p : α × β × γ => (p.1, p.2.1)) := by
@@ -271,7 +296,7 @@ theorem outerGluing_map_fst (h : π.map Prod.snd = σ.map Prod.fst) :
 
 /-- The second marginal of the outer projection is the second marginal of the second input law. -/
 @[simp]
-theorem outerGluing_map_snd (h : π.map Prod.snd = σ.map Prod.fst) :
+theorem map_snd_outerGluing (h : π.map Prod.snd = σ.map Prod.fst) :
     (outerGluing π σ h).map Prod.snd = σ.map Prod.snd := by
   have hfun : (Prod.snd : α × γ → γ) ∘ (fun p : α × β × γ => (p.1, p.2.2)) =
       Prod.snd ∘ (fun p : α × β × γ => (p.2.1, p.2.2)) := by
