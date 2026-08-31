@@ -61,26 +61,26 @@ morphism `M → M*`, which by Schur's lemma is an equivalence.
 * `TauCeti.nonempty_lieModuleEquiv_dual_iff` and
   `TauCeti.exists_ne_zero_lieInvariant_iff_neg_longestElement_smul_eq`: **the self-duality
   criterion**, in its module and its bilinear-form form.
-* `TauCeti.exists_ne_zero_lieInvariant_irreducibleQuotient_iff`: the same criterion at the named
-  carrier `L(lam)`, for dominant integral `lam` with `M(lam) ≠ 0`.
+* `TauCeti.exists_ne_zero_lieInvariant_irreducibleQuotient_iff_of_vermaGenerator_ne_zero`: the
+  same criterion at the named carrier `L(lam)`, conditional on the currently missing PBW
+  nonvanishing input.
 
 ## References
 
-This is the "self-duality of `L(λ)`" coverage target
-`exists_invariantForm_iff_neg_longest_smul_eq` of
-`TauCetiRoadmap/RepresentationTheory/LieHighestWeight/Suggested.lean`, which the roadmap's Layer 6
-records as the interface the Frobenius-Schur indicator of
+This file supplies the carrier-independent self-duality theorem required by the "self-duality of
+`L(λ)`" coverage target `exists_invariantForm_iff_neg_longest_smul_eq` of
+`TauCetiRoadmap/RepresentationTheory/LieHighestWeight/Suggested.lean`. The roadmap's Layer 6
+records that target as the interface the Frobenius-Schur indicator of
 `TauCetiRoadmap/RepresentationTheory/CompactGroups/README.md` consumes. The pinned statement
 phrases `w₀` as "a Weyl element carrying the dominant cone to its negative" so as not to import a
 length function; `TauCeti.longestElement` is that element, so it is used directly here.
 
-The pinned statement asks for the criterion at `L(lam)` from dominance alone. That form is out of
-reach of the current Layer 3: it entails `M(lam) ≠ 0` for every dominant integral `lam`, since for
-`lam` with `-(w₀ • lam) = lam` it produces a nonzero bilinear form on `L(lam)`, and the zero module
-carries none. That nonvanishing is the freeness half of Poincaré--Birkhoff--Witt, isolated as a
-hypothesis in `TauCeti/Algebra/Lie/HighestWeight/Verma.lean` and unavailable here, so the named
-carrier statement carries `vermaGenerator b lam ≠ 0` alongside dominance, exactly as
-`TauCeti.isIrreducible_irreducibleQuotient` does.
+This does not close the pinned target, which asks for the criterion at `L(lam)` from dominance
+alone. That form entails `M(lam) ≠ 0` for every dominant integral `lam`, since for `lam` with
+`-(w₀ • lam) = lam` it produces a nonzero bilinear form on `L(lam)`, and the zero module carries
+none. The nonvanishing is the freeness half of Poincaré--Birkhoff--Witt, isolated as a hypothesis in
+`TauCeti/Algebra/Lie/HighestWeight/Verma.lean` and assigned to the roadmap's separate Layer 3 PBW
+work. The conditional named-carrier specialization below makes that missing input explicit.
 
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §21.6.
 * N. Bourbaki, *Groupes et algèbres de Lie*, Chapitre VIII, §7.5.
@@ -259,8 +259,8 @@ from `TauCeti.vermaGenerator_ne_zero_of_isHighestWeightVector`. It cannot be dro
 it, dominance makes `L(lam)` finite-dimensional
 (`TauCeti.finiteDimensional_of_isHighestWeightVector_of_isDominantIntegral`), so no
 finite-dimensionality hypothesis is needed. -/
-theorem exists_ne_zero_lieInvariant_irreducibleQuotient_iff (hlam : IsDominantIntegral b lam)
-    (hne : vermaGenerator b lam ≠ 0) :
+theorem exists_ne_zero_lieInvariant_irreducibleQuotient_iff_of_vermaGenerator_ne_zero
+    (hlam : IsDominantIntegral b lam) (hne : vermaGenerator b lam ≠ 0) :
     (∃ Φ : LinearMap.BilinForm K (irreducibleQuotient b lam), Φ ≠ 0 ∧ Φ.lieInvariant L) ↔
       -(longestElement (IsKilling.rootSystem H) b • lam) = lam := by
   have _i := isIrreducible_irreducibleQuotient b lam hne
