@@ -37,14 +37,16 @@ open CategoryTheory Category MonoidalCategory Opposite
 
 namespace TauCeti
 
-universe u
+universe u v₁ v₂ u₁ u₂
 
 noncomputable section
 
 namespace SheafOfModules
 
-variable {C D : Type u} [Category.{u} C] [Category.{u} D]
+variable {C : Type u₁} [Category.{v₁} C] {D : Type u₂} [Category.{v₂} D]
 variable {J : GrothendieckTopology C} {K : GrothendieckTopology D}
+variable [J.HasSheafCompose (forget₂ CommRingCat RingCat.{u})]
+  [K.HasSheafCompose (forget₂ CommRingCat RingCat.{u})]
 variable [HasWeakSheafify J AddCommGrpCat.{u}] [J.WEqualsLocallyBijective AddCommGrpCat.{u}]
 variable [HasWeakSheafify K AddCommGrpCat.{u}] [K.WEqualsLocallyBijective AddCommGrpCat.{u}]
 variable (F : C ⥤ D) [F.IsContinuous J K] [F.IsCocontinuous J K]
@@ -86,36 +88,15 @@ def pushforwardTensorProductIso
       ((pushforwardModule (J := J) (K := K) F R).obj M)
       ((pushforwardModule (J := J) (K := K) F R).obj N)).symm
 
-/-- The generic tensor-product comparison is the composite of the defining tensor-product
-identification, the pushforward-sheafification comparison, and the pushforward tensorator. -/
-theorem pushforwardTensorProductIso_def
-    (M N : SheafOfModules.{u} (ringCatSheaf R)) :
-    pushforwardTensorProductIso F R M N =
-      (pushforwardModule (J := J) (K := K) F R).mapIso (tensorProductIso R M N) ≪≫
-        pushforwardSheafificationIso F (ringCatSheaf R) (M.val ⊗ N.val) ≪≫
-        (PresheafOfModules.sheafification
-          (𝟙 (ringCatSheaf (pushforwardCommRing (J := J) (K := K) F R)).obj)).mapIso
-            (Functor.Monoidal.μIso
-              (PresheafOfModules.pushforward₀OfCommRingCat F R.obj) M.val N.val).symm ≪≫
-        (tensorProductIso (pushforwardCommRing (J := J) (K := K) F R)
-          ((pushforwardModule (J := J) (K := K) F R).obj M)
-          ((pushforwardModule (J := J) (K := K) F R).obj N)).symm := (rfl)
-
 /-- For each object of the site, restriction of a tensor product is isomorphic to the tensor
 product of the restrictions. The coefficient sheaves on the target are definitionally equal after
 unfolding `ringCatSheaf`, `Sheaf.over`, and `sheafPushforwardContinuous`. -/
 def overTensorProductIso (M N : SheafOfModules.{u} (ringCatSheaf R)) (X : D)
+    [(K.over X).HasSheafCompose (forget₂ CommRingCat RingCat.{u})]
     [HasWeakSheafify (K.over X) AddCommGrpCat.{u}]
     [(K.over X).WEqualsLocallyBijective AddCommGrpCat.{u}] :
     (tensorProduct R M N).over X ≅ tensorProduct (R.over X) (M.over X) (N.over X) :=
   pushforwardTensorProductIso (J := K.over X) (K := K) (Over.forget X) R M N
-
-/-- Restriction of tensor products is the slice-site specialization of the generic comparison. -/
-theorem overTensorProductIso_def (M N : SheafOfModules.{u} (ringCatSheaf R)) (X : D)
-    [HasWeakSheafify (K.over X) AddCommGrpCat.{u}]
-    [(K.over X).WEqualsLocallyBijective AddCommGrpCat.{u}] :
-    overTensorProductIso R M N X =
-      pushforwardTensorProductIso (J := K.over X) (K := K) (Over.forget X) R M N := (rfl)
 
 end SheafOfModules
 

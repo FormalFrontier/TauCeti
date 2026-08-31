@@ -30,29 +30,30 @@ open CategoryTheory Category
 
 namespace TauCeti
 
-universe u
+universe u v v₁ u₁
 
 noncomputable section
 
 namespace SheafOfModules
 
-variable {C : Type u} [Category.{u} C] {J : GrothendieckTopology C}
-variable [HasWeakSheafify J AddCommGrpCat.{u}] [J.WEqualsLocallyBijective AddCommGrpCat.{u}]
+variable {C : Type u₁} [Category.{v₁} C] {J : GrothendieckTopology C}
+variable [HasWeakSheafify J AddCommGrpCat.{v}] [J.WEqualsLocallyBijective AddCommGrpCat.{v}]
 
 /-- The sheaf of rings underlying a sheaf of commutative rings on a site; the site-level
 analogue of `AlgebraicGeometry.Scheme.ringCatSheaf`. -/
-abbrev ringCatSheaf (R : Sheaf J CommRingCat.{u}) : Sheaf J RingCat.{u} :=
+abbrev ringCatSheaf (R : Sheaf J CommRingCat.{u})
+    [J.HasSheafCompose (forget₂ CommRingCat RingCat.{u})] : Sheaf J RingCat.{u} :=
   (sheafCompose J (forget₂ CommRingCat RingCat.{u})).obj R
 
 /-- Sheafifying the underlying presheaf of modules of a sheaf of `R`-modules `M`, for a sheaf of
 rings `R`, recovers `M`; this is the counit of the sheafification adjunction. -/
-def sheafificationIso (R : Sheaf J RingCat.{u}) (M : SheafOfModules.{u} R) :
+def sheafificationIso (R : Sheaf J RingCat.{u}) (M : SheafOfModules.{v} R) :
     (PresheafOfModules.sheafification (R := R) (𝟙 R.obj)).obj M.val ≅ M :=
   (asIso (PresheafOfModules.sheafificationAdjunction (𝟙 R.obj)).counit).app M
 
 /-- The forward map of `sheafificationIso` is the counit of the sheafification adjunction. -/
 @[simp]
-theorem sheafificationIso_hom (R : Sheaf J RingCat.{u}) (M : SheafOfModules.{u} R) :
+theorem sheafificationIso_hom (R : Sheaf J RingCat.{u}) (M : SheafOfModules.{v} R) :
     (sheafificationIso R M).hom =
       (PresheafOfModules.sheafificationAdjunction (𝟙 R.obj)).counit.app M := by
   simp only [sheafificationIso]
