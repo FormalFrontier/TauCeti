@@ -383,6 +383,7 @@ distinguished letter `a` is the transversal element, so it contributes no Schrei
 every other source letter contributes one, inverted or not according to the transversal
 representative reached so far. In particular the two rewrites `r` and `a r a` of one source relator
 have the same length, the right-hand side not mentioning `positive`. -/
+@[simp]
 theorem length_toWord_fi24SchreierRewrite (positive : Bool) (r : Relator (Fin 12)) :
     (fi24SchreierRewrite positive r).toWord.length =
       r.toWord.countP fun letter => letter.1 ≠ 0 := by
