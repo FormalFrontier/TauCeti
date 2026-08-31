@@ -404,8 +404,12 @@ theorem lie_cartanGenerator_cartanGenerator {K : Type*} [CommRing K] (i j : Fin 
     ⁅cartanGenerator (K := K) n hn i, cartanGenerator (K := K) n hn j⁆ = 0 := by
   apply Subtype.ext
   rw [LieSubalgebra.coe_bracket, val_cartanGenerator, val_cartanGenerator]
-  ext (a | a) (b | b) <;> by_cases hab : a = b <;>
-    simp [typeDDiagonalMatrix_apply, hab]
+  have hdiag (k : Fin n) :
+      (typeDDiagonalMatrix
+        (fun a => (DynkinType.typeDSimpleRoot n hn k a : K))).IsDiag := by
+    intro a b hab
+    rw [typeDDiagonalMatrix_apply, ite_eq_right hab]
+  exact lie_eq_zero_of_isDiag (hdiag i) (hdiag j)
 
 private theorem lie_raisingMatrix_loweringMatrix_self {K : Type*} [CommRing K] (i : Fin n) :
     ⁅raisingMatrix (K := K) n hn i, loweringMatrix (K := K) n hn i⁆ =
