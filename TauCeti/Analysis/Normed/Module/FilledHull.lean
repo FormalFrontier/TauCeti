@@ -230,7 +230,6 @@ theorem filledHull_sphere_eq_closedBall [Nontrivial E] (c : E) {r : ℝ} (hr : 0
       frontier_closedBall_subset_sphere
 
 /-- The points filled in by a sphere are exactly the open ball it bounds. -/
-@[simp]
 theorem filledHull_sphere_sdiff_sphere [Nontrivial E] (c : E) {r : ℝ} (hr : 0 ≤ r) :
     filledHull (sphere c r) \ sphere c r = ball c r := by
   rw [filledHull_sphere_eq_closedBall c hr, closedBall_sdiff_sphere]
