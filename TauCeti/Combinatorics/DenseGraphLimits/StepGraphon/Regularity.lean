@@ -6,6 +6,7 @@ Authors: Codex
 module
 
 public import TauCeti.Combinatorics.DenseGraphLimits.StepGraphon.Energy
+import TauCeti.MeasureTheory.MeasurableSpace.Finpartition
 
 /-!
 # Frieze--Kannan weak regularity for graphons
@@ -104,7 +105,7 @@ theorem exists_refinement_energy_add_sq_le (P : Finpartition (Set.univ : Set Ω)
   have havg :
       (stepGraphonAvg (μ := μ) Q hQ W).toSymmKernel.rectIntegral μ S T =
         W.toSymmKernel.rectIntegral μ S T := by
-    simpa [pS, pT] using stepGraphonAvg_rectIntegral_of_le μ pS pT hS hT hQ
+    simpa [pS, pT] using stepGraphonAvg_rectIntegral_of_le_of_le μ pS pT hQ
       hQS hQT W
   let L := (stepGraphonAvg (μ := μ) Q hQ W).toSymmKernel -
     (stepGraphonAvg (μ := μ) P hP W).toSymmKernel

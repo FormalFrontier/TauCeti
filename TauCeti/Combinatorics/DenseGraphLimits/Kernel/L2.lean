@@ -37,8 +37,8 @@ the expansion `l2sq_sub` needs no additional side conditions.
 * `TauCeti.DenseGraphLimits.SymmKernel.integrable_mul` is the integrability behind both;
 * `TauCeti.DenseGraphLimits.l2sq_sub` expands the squared seminorm of a difference — the identity
   the Pythagoras energy increment is read off from;
-* `TauCeti.DenseGraphLimits.sq_rectIntegral_le_l2sq` is the Cauchy--Schwarz bound that converts a
-  cut-norm witness into an energy increment;
+* `TauCeti.DenseGraphLimits.sq_rectIntegral_le_measureReal_mul_l2sq` is the finite-measure
+  rectangle Cauchy--Schwarz bound, and `sq_rectIntegral_le_l2sq` is its probability specialization;
 * `TauCeti.DenseGraphLimits.l2sq_le_one_of_abs_le_one` bounds the squared seminorm of a kernel
   with values in `[-1, 1]` over a probability carrier.
 
@@ -198,11 +198,10 @@ theorem l2sq_sub (K L : SymmKernel Ω μ) :
   rw [l2inner_comm μ L K]
   ring
 
-omit [IsFiniteMeasure μ] in
-/-- The square of a kernel's integral over any rectangle is at most its squared `L²` seminorm
-on a probability carrier. -/
-theorem sq_rectIntegral_le_l2sq [IsProbabilityMeasure μ] (K : SymmKernel Ω μ) (S T : Set Ω) :
-    (K.rectIntegral μ S T) ^ 2 ≤ l2sq μ K := by
+/-- The square of a kernel's integral over a rectangle is at most the rectangle's measure times
+the kernel's squared `L²` seminorm. -/
+theorem sq_rectIntegral_le_measureReal_mul_l2sq (K : SymmKernel Ω μ) (S T : Set Ω) :
+    (K.rectIntegral μ S T) ^ 2 ≤ (μ.prod μ).real (S ×ˢ T) * l2sq μ K := by
   rw [SymmKernel.rectIntegral_def, l2sq_def]
   calc
     (∫ p in S ×ˢ T, K p.1 p.2 ∂(μ.prod μ)) ^ 2
@@ -211,12 +210,23 @@ theorem sq_rectIntegral_le_l2sq [IsProbabilityMeasure μ] (K : SymmKernel Ω μ)
       MeasureTheory.sq_setIntegral_le_measureReal_mul_setIntegral_sq _ _
         (measure_ne_top _ _)
         (K.integrable_uncurry μ).integrableOn (K.integrable_sq μ).integrableOn
-    _ ≤ 1 * ∫ p in S ×ˢ T, K p.1 p.2 ^ 2 ∂(μ.prod μ) := by
-      exact mul_le_mul_of_nonneg_right measureReal_le_one
-        (setIntegral_nonneg_of_ae_restrict (ae_of_all _ fun _ => sq_nonneg _))
-    _ ≤ ∫ p, K p.1 p.2 ^ 2 ∂(μ.prod μ) := by
-      rw [one_mul]
-      exact setIntegral_le_integral (K.integrable_sq μ) (ae_of_all _ fun _ => sq_nonneg _)
+    _ ≤ (μ.prod μ).real (S ×ˢ T) * ∫ p, K p.1 p.2 ^ 2 ∂(μ.prod μ) := by
+      exact mul_le_mul_of_nonneg_left
+        (setIntegral_le_integral (K.integrable_sq μ) (ae_of_all _ fun _ => sq_nonneg _))
+        measureReal_nonneg
+
+omit [IsFiniteMeasure μ] in
+/-- The square of a kernel's integral over any rectangle is at most its squared `L²` seminorm
+on a probability carrier. -/
+theorem sq_rectIntegral_le_l2sq [IsProbabilityMeasure μ] (K : SymmKernel Ω μ) (S T : Set Ω) :
+    (K.rectIntegral μ S T) ^ 2 ≤ l2sq μ K := by
+  calc
+    (K.rectIntegral μ S T) ^ 2
+        ≤ (μ.prod μ).real (S ×ˢ T) * l2sq μ K :=
+      sq_rectIntegral_le_measureReal_mul_l2sq μ K S T
+    _ ≤ 1 * l2sq μ K :=
+      mul_le_mul_of_nonneg_right measureReal_le_one (l2sq_nonneg μ K)
+    _ = l2sq μ K := one_mul _
 
 omit [IsFiniteMeasure μ] in
 /-- A kernel with values in `[-1, 1]` has squared `L²` seminorm at most `1` over a probability
