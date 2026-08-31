@@ -204,7 +204,7 @@ def m11Presentation : GroupPresentation where
   source := "C. M. Campbell, G. Havas, C. Ramsay and E. F. Robertson, Nice efficient \
     presentations for all small simple groups and their covers, LMS J. Comput. Math. 7 (2004), \
     266-283"
-  sourceLocator := "Table 2 (p. 269), row M11, with the discussion in Section 5.8 (p. 275); \
+  sourceLocator := "Table 2 (p. 270), row M11, with the discussion in Section 5.8 (p. 275); \
     doi:10.1112/S1461157000001121"
   generatorConvention := "The generators a and b of the source, in that order, so index 0 is a and \
     index 1 is b. An upper-case letter denotes the inverse of the corresponding generator, and \
@@ -239,7 +239,7 @@ theorem m11Presentation_source :
 /-- The locator recorded for `M₁₁`, pointing at the presentation inside its source. -/
 @[simp]
 theorem m11Presentation_sourceLocator :
-    m11Presentation.sourceLocator = "Table 2 (p. 269), row M11, with the discussion in Section 5.8 \
+    m11Presentation.sourceLocator = "Table 2 (p. 270), row M11, with the discussion in Section 5.8 \
       (p. 275); doi:10.1112/S1461157000001121" := by
   simp [m11Presentation]
 
@@ -340,7 +340,7 @@ def m12Presentation : GroupPresentation where
   source := "C. M. Campbell, G. Havas, C. Ramsay and E. F. Robertson, Nice efficient \
     presentations for all small simple groups and their covers, LMS J. Comput. Math. 7 (2004), \
     266-283"
-  sourceLocator := "Table 2 (p. 269), row M12, with the discussion in Section 5.17 (p. 279); \
+  sourceLocator := "Table 2 (p. 270), row M12, with the discussion in Section 5.17 (p. 279); \
     doi:10.1112/S1461157000001121"
   generatorConvention := "The generators a and b of the source, in that order, so index 0 is a and \
     index 1 is b. An upper-case letter denotes the inverse of the corresponding generator, and \
@@ -377,7 +377,7 @@ theorem m12Presentation_source :
 /-- The locator recorded for `M₁₂`, pointing at the presentation inside its source. -/
 @[simp]
 theorem m12Presentation_sourceLocator :
-    m12Presentation.sourceLocator = "Table 2 (p. 269), row M12, with the discussion in Section \
+    m12Presentation.sourceLocator = "Table 2 (p. 270), row M12, with the discussion in Section \
       5.17 (p. 279); doi:10.1112/S1461157000001121" := by
   simp [m12Presentation]
 
