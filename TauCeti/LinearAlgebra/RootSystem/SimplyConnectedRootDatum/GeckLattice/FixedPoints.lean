@@ -173,12 +173,8 @@ theorem coe_geckPointsMulEquivFixedSubgroupGeckFrobenius
     ((t.geckPointsMulEquivFixedSubgroupGeckFrobenius ht p k A g : t.geckPoints ht A) :
         Matrix.GeneralLinearGroup (Fin (t.geckDim ht)) A) =
       Matrix.GeneralLinearGroup.map (frobeniusFixedSubring A p k).subtype g := by
-  rw [geckPointsMulEquivFixedSubgroupGeckFrobenius, MulEquiv.coe_trans, Function.comp_apply,
-    MulEquiv.coe_trans, Function.comp_apply, coe_fixedSubgroupCongr_symm_apply,
-    coe_geckPointsMulEquivHopfIdealPoints_symm,
-    GeneralLinear.coe_frobeniusFixedHopfIdealPointsMulEquiv,
-    GeneralLinear.coe_frobeniusFixedHopfIdealPointsInclusion,
-    coe_geckPointsMulEquivHopfIdealPoints]
+  simp [geckPointsMulEquivFixedSubgroupGeckFrobenius, coe_geckPointsMulEquivHopfIdealPoints,
+    coe_geckPointsMulEquivHopfIdealPoints_symm]
 
 /-- Entrywise, the isomorphism includes each matrix entry of a point over the Frobenius-fixed
 subring into the value ring. -/
