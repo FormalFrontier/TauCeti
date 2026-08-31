@@ -73,8 +73,9 @@ generate a subgroup of `Equiv.Perm (Fin 3510)` with proved order `64561751654400
 simplicity. Both generators have order `13`, so they are not the ATLAS standard pair used by this
 row.
 
-The independent ATLAS 3510-point standard pair has orders `2` and `13`, with product of order `11`.
-Its two source files have respective SHA-256 digests
+The independent ATLAS 3510-point standard pair is given by the files `F22G1-p3510B0.g1` and
+`F22G1-p3510B0.g2`. It has orders `2` and `13`, with product of order `11`, and the two files have
+respective SHA-256 digests
 `5b15ea3939461e4e74cfa544458d32256f4fc8bc1d77a90686863a29e9f09068` and
 `af06024803596bb7f21cf90c577a9a1ed52abacd5b77affb320768d997bc0443`. The pinned pair and the
 ATLAS pair each determine the same rank-three graph: their point stabilizer suborbits have lengths
@@ -119,7 +120,10 @@ to compare with the source, rather than checking it against a recorded number.
 
 * R. A. Wilson, R. A. Parker, J. N. Bray et al., *ATLAS of Finite Group Representations*,
   version 3, presentation `F22G1-P1`,
-  <https://brauer.maths.qmul.ac.uk/Atlas/v3/pres/F22G1-P1>.
+  <https://brauer.maths.qmul.ac.uk/Atlas/v3/pres/F22G1-P1>; the comparison uses its 3510-point
+  standard-generator files
+  <https://brauer.maths.qmul.ac.uk/Atlas/spor/F22/gap/F22G1-p3510B0.g1> and
+  <https://brauer.maths.qmul.ac.uk/Atlas/spor/F22/gap/F22G1-p3510B0.g2>.
 * The relator list and its reduction to the proved `2·Fi₂₂` presentation are recorded in
   <https://brauer.maths.qmul.ac.uk/Atlas/spor/F22/mag/F22G1-P1.M> and
   <https://brauer.maths.qmul.ac.uk/Atlas/spor/F22/mag/2F22G1-P1.M>.
