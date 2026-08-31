@@ -42,9 +42,9 @@ needed: the shift is read off the diagonal matrix units, not off the identity ma
 
 ## Every dominant weight is a highest weight
 
-A dominant weight `μ : Fin N → R` is `a + c` for an antitone `a : Fin N → ℕ` and a scalar `c`
-(`TauCeti.IsGlDominantIntegral.exists_antitone_natCast_add_const`): take `c` to be the last entry
-of `μ` and read the differences `μ i - c` off dominance. Twisting the exterior-power realization of
+A dominant weight `μ : Fin N → R` is `a + c` for an antitone `a : Fin N → ℕ` and a scalar `c`, by
+`TauCeti.IsGlDominantIntegral.exists_antitone_natCast_add_const` in
+`TauCeti/Algebra/Lie/GeneralLinear/HighestWeight.lean`. Twisting the exterior-power realization of
 `a` by `c` then realizes `μ`, which is
 `TauCeti.exists_isGlHighestWeightVector_of_isGlDominantIntegral`. The realizing module
 `TauCeti.glDominantModule` is finite over `R`, hence finite-dimensional over a field.
@@ -53,15 +53,16 @@ of `μ` and read the differences `μ i - c` off dominance. Twisting the exterior
 
 * `TauCeti.GlTraceTwist`: a `gl n`-module twisted by the character `c · tr`.
 * `TauCeti.GlTraceTwist.linearEquiv`: the underlying `R`-modules of a module and of its twist.
-* `TauCeti.glDominantModule`: the twisted exterior power realizing the dominant weight `a + c`.
+* `TauCeti.glDominantModule`: the trace twist by `c` of the exterior power in which
+  `TauCeti.exists_isGlHighestWeightVector_natCast` realizes a tuple `a` of natural numbers; for an
+  antitone `a` it realizes the dominant weight `a + c · (1, …, 1)`.
 
 ## Main results
 
 * `TauCeti.GlTraceTwist.ofTwist_lie`: the defining equation of the twisted bracket.
-* `TauCeti.isGlHighestWeightVector_toTwist`: twisting by `c` shifts the weight of a highest weight
-  vector by `c` in every coordinate.
-* `TauCeti.IsGlDominantIntegral.exists_antitone_natCast_add_const`: a dominant weight is an
-  antitone tuple of natural numbers translated along the central direction.
+* `TauCeti.isGlHighestWeightVector_toTwist_iff` and its introduction half
+  `TauCeti.isGlHighestWeightVector_toTwist`: twisting by `c` shifts the weight of a highest weight
+  vector by `c` in every coordinate, and nothing else.
 * `TauCeti.exists_isGlHighestWeightVector_of_isGlDominantIntegral`: **every dominant weight of
   `gl N` is the highest weight of a highest weight vector in a module finite over `R`.**
 
@@ -246,21 +247,36 @@ variable {R : Type u} [CommRing R] {ι : Type*} [Fintype ι] [LinearOrder ι] {c
 variable {M : Type v} [AddCommGroup M] [Module R M] [LieRingModule (Matrix ι ι R) M]
   [LieModule R (Matrix ι ι R) M] {mu : ι → R} {v : M}
 
-/-- **Twisting shifts a highest weight by the twisting scalar.** The diagonal matrix unit `Eᵢᵢ` has
-trace `1` and the raising matrix units have trace `0`, so the twisted bracket adds `c` to every
-coordinate of the weight and still annihilates the vector along the raising directions. -/
+/-- **Twisting shifts a highest weight by the twisting scalar, and does nothing else.** The diagonal
+matrix unit `Eᵢᵢ` has trace `1` and the raising matrix units have trace `0`, so the twisted bracket
+adds `c` to every coordinate of the weight and still annihilates the vector along the raising
+directions; conversely a highest weight vector of the twist that comes from `M` has a weight of that
+shape, with `c` subtracted back off. This is how a twisted highest weight hypothesis is eliminated,
+without unfolding the bracket. -/
+theorem isGlHighestWeightVector_toTwist_iff :
+    IsGlHighestWeightVector (fun i => mu i + c) (GlTraceTwist.toTwist ι c v) ↔
+      IsGlHighestWeightVector mu v := by
+  constructor
+  · intro hv
+    refine isGlHighestWeightVector_iff.mpr ⟨?_, fun i => ?_, fun i j hij => ?_⟩
+    · exact fun h => hv.ne_zero (GlTraceTwist.ofTwist_injective (by simpa using h))
+    · simpa [Matrix.trace_single_eq_same, add_smul] using
+        congrArg GlTraceTwist.ofTwist (hv.lie_single_self_eq_smul i)
+    · simpa [Matrix.trace_single_eq_of_ne _ _ _ hij.ne] using
+        congrArg GlTraceTwist.ofTwist (hv.lie_single_eq_zero hij)
+  · intro hv
+    refine isGlHighestWeightVector_iff.mpr ⟨?_, fun i => ?_, fun i j hij => ?_⟩
+    · exact fun h => hv.ne_zero (by simpa using congrArg GlTraceTwist.ofTwist h)
+    · exact GlTraceTwist.ofTwist_injective <| by
+        simp [hv.lie_single_self_eq_smul, Matrix.trace_single_eq_same, add_smul]
+    · exact GlTraceTwist.ofTwist_injective <| by
+        simp [hv.lie_single_eq_zero hij, Matrix.trace_single_eq_of_ne _ _ _ hij.ne]
+
+/-- **Twisting shifts a highest weight by the twisting scalar**, the introduction half of
+`TauCeti.isGlHighestWeightVector_toTwist_iff`. -/
 theorem isGlHighestWeightVector_toTwist (hv : IsGlHighestWeightVector mu v) :
-    IsGlHighestWeightVector (fun i => mu i + c) (GlTraceTwist.toTwist ι c v) := by
-  refine isGlHighestWeightVector_iff.mpr ⟨?_, fun i => ?_, fun i j hij => ?_⟩
-  · exact fun h => hv.ne_zero (by simpa using congrArg GlTraceTwist.ofTwist h)
-  · refine GlTraceTwist.ofTwist_injective ?_
-    rw [GlTraceTwist.ofTwist_lie, GlTraceTwist.ofTwist_toTwist, GlTraceTwist.ofTwist_smul,
-      GlTraceTwist.ofTwist_toTwist, hv.lie_single_self_eq_smul, Matrix.trace_single_eq_same,
-      mul_one, add_smul]
-  · refine GlTraceTwist.ofTwist_injective ?_
-    rw [GlTraceTwist.ofTwist_lie, GlTraceTwist.ofTwist_toTwist, hv.lie_single_eq_zero hij,
-      Matrix.trace_single_eq_of_ne _ _ _ hij.ne, mul_zero, zero_smul, GlTraceTwist.ofTwist_zero,
-      add_zero]
+    IsGlHighestWeightVector (fun i => mu i + c) (GlTraceTwist.toTwist ι c v) :=
+  isGlHighestWeightVector_toTwist_iff.mpr hv
 
 end HighestWeight
 
@@ -270,48 +286,32 @@ section Dominant
 
 variable {R : Type u} [CommRing R] [CharZero R] {N : ℕ} {mu : Fin N → R}
 
-/-- **A dominant weight is a tuple of natural numbers translated along the central direction.**
-Subtracting the last entry `c` of a dominant `μ` leaves the differences `μ i - c`, which dominance
-makes natural numbers, and those decrease weakly because the differences `μ i - μ j` along the
-order are natural numbers too. This is the decomposition that the twist by `c` inverts. -/
-theorem IsGlDominantIntegral.exists_antitone_natCast_add_const (hmu : IsGlDominantIntegral mu) :
-    ∃ (a : Fin N → ℕ) (c : R), Antitone a ∧ mu = fun i => (a i : R) + c := by
-  obtain _ | n := N
-  · exact ⟨fun i => i.elim0, 0, fun i => i.elim0, funext fun i => i.elim0⟩
-  set a : Fin (n + 1) → ℕ := fun i => (hmu.exists_natCast_sub_of_le (Fin.le_last i)).choose
-  have key : ∀ i : Fin (n + 1), mu i - mu (Fin.last n) = (a i : R) := fun i =>
-    (hmu.exists_natCast_sub_of_le (Fin.le_last i)).choose_spec
-  refine ⟨a, mu (Fin.last n), fun i j hij => ?_, funext fun i => ?_⟩
-  · obtain ⟨k, hk⟩ := hmu.exists_natCast_sub_of_le hij
-    have hcast : ((a j + k : ℕ) : R) = ((a i : ℕ) : R) := by
-      push_cast
-      linear_combination key i - key j - hk
-    exact Nat.le.intro (Nat.cast_injective hcast)
-  · exact sub_eq_iff_eq_add.mp (key i)
-
 variable {ι : Type*} [Fintype ι] [LinearOrder ι]
 
 variable (R) in
-/-- **The `gl ι`-module realizing the dominant weight `a + c · (1, …, 1)`**: the exterior power in
-which `TauCeti.exists_isGlHighestWeightVector_natCast` realizes the antitone tuple `a` of natural
-numbers, twisted by `c`.
+/-- **The trace twist by `c` of the exterior-power carrier of a tuple `a` of natural numbers**: the
+exterior power in which `TauCeti.exists_isGlHighestWeightVector_natCast` realizes `a`, twisted by
+`c`. For an antitone `a` it realizes the dominant weight `a + c · (1, …, 1)`, which is
+`TauCeti.exists_isGlHighestWeightVector_of_isGlDominantIntegral`; for an unrestricted `a` it is just
+the twisted exterior power.
 
 It is finite over `R`, hence finite-dimensional over a field: instance search reaches
 `Module.Finite R (glDominantModule R a c)` from `exteriorPower.instFinite` through the transported
-instance on `TauCeti.GlTraceTwist`. -/
+instance on `TauCeti.GlTraceTwist`. It is an `abbrev` so that the exterior power stays reducibly
+available, as `EuclideanSpace` keeps `PiLp` available in Mathlib. -/
 abbrev glDominantModule (a : ι → ℕ) (c : R) : Type _ :=
   GlTraceTwist ι c (⋀[R]^(∑ i, a i) (ι × Fin (∑ i, a i) → R))
 
 /-- **Every dominant weight of `gl N` is a highest weight**, in a module finite over `R`: write the
-weight as an antitone tuple of natural numbers translated along the central direction, realize the
-tuple in an exterior power, and twist by the translation. -/
-theorem exists_isGlHighestWeightVector_of_isGlDominantIntegral [Nontrivial R]
-    (hmu : IsGlDominantIntegral mu) :
-    ∃ (a : Fin N → ℕ) (c : R), mu = (fun i => (a i : R) + c) ∧
+weight as an antitone tuple of natural numbers translated along the central direction
+(`TauCeti.IsGlDominantIntegral.exists_antitone_natCast_add_const`), realize the tuple in an exterior
+power, and twist by the translation. -/
+theorem exists_isGlHighestWeightVector_of_isGlDominantIntegral (hmu : IsGlDominantIntegral mu) :
+    ∃ (a : Fin N → ℕ) (c : R), Antitone a ∧ mu = (fun i => (a i : R) + c) ∧
       ∃ v : glDominantModule R a c, IsGlHighestWeightVector mu v := by
   obtain ⟨a, c, ha, rfl⟩ := hmu.exists_antitone_natCast_add_const
   obtain ⟨w, hw⟩ := exists_isGlHighestWeightVector_natCast (R := R) (ι := Fin N) ha
-  exact ⟨a, c, rfl, _, isGlHighestWeightVector_toTwist hw⟩
+  exact ⟨a, c, ha, rfl, _, isGlHighestWeightVector_toTwist hw⟩
 
 end Dominant
 
