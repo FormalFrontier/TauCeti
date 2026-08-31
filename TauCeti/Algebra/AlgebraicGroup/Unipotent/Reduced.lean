@@ -181,7 +181,10 @@ theorem of_injective_of_reduced (f : H ⟶ K) (hf : Function.Injective f.hom)
   have hDcharpoly : (C.map f.hom.toAlgHom.toRingHom).charpoly = P.map (algebraMap k K) := by
     have hcharpoly := coefficientMatrix_charpoly_eq hK N b
     rw [Comodule.coefficientMatrix_corestrict b f.hom.toCoalgHom] at hcharpoly
-    exact hcharpoly
+    have hmap : (f.hom.toCoalgHom : H → K) = f.hom.toAlgHom.toRingHom := by
+      ext
+      rfl
+    simpa only [hmap] using hcharpoly
   -- Injectivity reflects the universal characteristic polynomial identity to the target.
   have hCcharpoly : C.charpoly = P.map (algebraMap k H) := by
     apply Polynomial.map_injective f.hom.toAlgHom.toRingHom hf
