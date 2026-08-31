@@ -34,8 +34,9 @@ order `p ^ (2 * m + 1)`.
 * `TauCeti.LieTypeIndex` and `TauCeti.LieTypeIndex.Valid`: the Lie families and their preferred
   parameter range.
 * `TauCeti.ValidLieTypeIndex`, `TauCeti.SuzukiReeIndex`, `TauCeti.GraphTwistedIndex`,
-  `TauCeti.TypeALieIndex`, `TauCeti.SuzukiLieIndex`, and `TauCeti.UnimodularLieIndex`: the
-  restricted domains consumed by later carrier and endomorphism constructions.
+  `TauCeti.TypeALieIndex`, `TauCeti.SuzukiLieIndex`, `TauCeti.RankTwoBLieIndex`, and
+  `TauCeti.UnimodularLieIndex`: the restricted domains consumed by later carrier and endomorphism
+  constructions.
 * `TauCeti.SporadicName`: the conventional twenty-six sporadic names.
 * `TauCeti.CFSGIndex`: cyclic, alternating, Lie-type, and sporadic entries in the classification
   list.
@@ -87,6 +88,10 @@ def card (q : PrimePower) : ℕ := q.p ^ q.exponent
 /-- The cardinality stored by a prime-power parameter is a prime power in Mathlib's sense. -/
 lemma isPrimePow_card (q : PrimePower) : IsPrimePow q.card :=
   q.prime_p.isPrimePow.pow (Nat.ne_of_gt q.exponent_pos)
+
+/-- A prime-power parameter names a cardinality of at least two. -/
+lemma two_le_card (q : PrimePower) : 2 ≤ q.card :=
+  q.isPrimePow_card.two_le
 
 end PrimePower
 
@@ -372,6 +377,47 @@ theorem exists_eq_of_hasUnimodularDiagram_of_not_usesHalfFrobenius {d : LieTypeI
     ∃ q : PrimePower, d = .E8 q ∨ d = .F4 q ∨ d = .G2 q := by
   cases d <;> simp_all
 
+/-- The Lie-type families built on the rank-two diagram `B₂`, namely the untwisted family `B₂(q)`
+and the Suzuki family `²B₂(2^(2m+1))`.
+
+Like `HasUnimodularDiagram` this constrains the diagram and not the Steinberg map, so it holds both
+of the untwisted family, whose Steinberg map is the `q`-power Frobenius, and of the Suzuki family,
+whose Steinberg map is an odd power of a half-Frobenius. No rank-two `C` index appears: the `C`
+family starts at rank three in `InStandardRange`, so `B₂(q) = C₂(q)` is always named in the `B`
+family. -/
+def HasRankTwoBDiagram : LieTypeIndex → Prop
+  | .B rank _ => rank = 2
+  | .suzuki _ => True
+  | _ => False
+
+/-- Characterization of the families built on the `B₂` diagram. -/
+@[simp] theorem hasRankTwoBDiagram_iff (d : LieTypeIndex) : d.HasRankTwoBDiagram ↔
+    match d with
+    | .B rank _ => rank = 2
+    | .suzuki _ => True
+    | _ => False :=
+  Iff.rfl
+
+instance : DecidablePred HasRankTwoBDiagram := fun d => by
+  cases d <;> rw [hasRankTwoBDiagram_iff] <;> infer_instance
+
+/-- **An index is built on the `B₂` diagram exactly when its underlying Dynkin type is `B 2`.** -/
+theorem hasRankTwoBDiagram_iff_dynkinType (d : LieTypeIndex) :
+    d.HasRankTwoBDiagram ↔ d.dynkinType = .B 2 := by
+  cases d <;> simp
+
+/-- The Suzuki family is built on the `B₂` diagram. -/
+theorem hasRankTwoBDiagram_of_isSuzuki {d : LieTypeIndex} (h : d.IsSuzuki) :
+    d.HasRankTwoBDiagram := by
+  cases d <;> simp_all
+
+/-- **The one untwisted family on the `B₂` diagram.** Removing the Suzuki constructor from the
+previous list leaves `B₂(q)`. -/
+theorem exists_eq_of_hasRankTwoBDiagram_of_not_usesHalfFrobenius {d : LieTypeIndex}
+    (hd : d.HasRankTwoBDiagram) (hf : ¬d.UsesHalfFrobenius) :
+    ∃ q : PrimePower, d = .B 2 q := by
+  cases d <;> simp_all
+
 /-- The characteristic of the field over which the ambient group will be constructed. -/
 def characteristic : LieTypeIndex → ℕ
   | .A _ q | .twistedA _ q | .B _ q | .C _ q | .D _ q | .twistedD _ q
@@ -635,6 +681,16 @@ group rather than a simple one, and `²B₂(2)` is not a `SuzukiLieIndex`. The S
 `TauCeti.SuzukiReeIndex`. -/
 abbrev SuzukiLieIndex : Type _ := {d : ValidLieTypeIndex // d.1.IsSuzuki}
 
+/-- A validated index built on the rank-two diagram `B₂`: the untwisted family `B₂(q)` and the
+Suzuki family `²B₂(2^(2m+1))`.
+
+These are the two branches of the classification list that share a diagram and hence a carrier, so
+this subtype is the domain of the carrier constructions of
+`TauCeti/GroupTheory/SpecificGroups/CFSG/TypeB2.lean`. The outer subtype is important: `B₂(2)`,
+`B₂(3)` and `²B₂(2)` are excluded from the classification list and are not indices of this
+subtype. -/
+abbrev RankTwoBLieIndex : Type _ := {d : ValidLieTypeIndex // d.1.HasRankTwoBDiagram}
+
 namespace TypeALieIndex
 
 /-- Introduce a valid untwisted type-A index. -/
@@ -710,10 +766,22 @@ theorem fieldOrder_pos (d : ValidLieTypeIndex) : 0 < d.fieldOrder :=
 
 end ValidLieTypeIndex
 
-/-! ## The Suzuki family
+/-! ## The families on the `B₂` diagram
 
 This section follows `ValidLieTypeIndex` rather than sitting beside `TypeALieIndex`, because
 `rank_eq_two` reads the numbered data `TauCeti.ValidLieTypeIndex.rank` defined just above. -/
+
+namespace RankTwoBLieIndex
+
+/-- A rank-two type-`B` index names the Dynkin type `B 2`. -/
+@[simp] theorem dynkinType_eq (d : RankTwoBLieIndex) : d.1.dynkinType = .B 2 :=
+  (LieTypeIndex.hasRankTwoBDiagram_iff_dynkinType _).mp d.2
+
+/-- A rank-two type-`B` index has rank two, that being the rank of `B₂`. -/
+@[simp] theorem rank_eq_two (d : RankTwoBLieIndex) : d.1.rank = 2 :=
+  congrArg DynkinType.rank d.dynkinType_eq
+
+end RankTwoBLieIndex
 
 namespace SuzukiLieIndex
 
@@ -731,14 +799,10 @@ theorem exists_eq_of (d : SuzukiLieIndex) :
   case suzuki m => exact fun hvalid _ => ⟨m, hvalid, rfl⟩
   all_goals exact fun _ hs => ((LieTypeIndex.isSuzuki_iff _).mp hs).elim
 
-/-- The Suzuki family is built on the rank-two diagram `B₂`. -/
-@[simp] theorem dynkinType_eq (d : SuzukiLieIndex) : d.1.dynkinType = .B 2 := by
-  obtain ⟨m, hvalid, rfl⟩ := d.exists_eq_of
-  exact LieTypeIndex.dynkinType_suzuki m
-
-/-- The Suzuki family has rank two, that being the rank of `B₂`. -/
-@[simp] theorem rank_eq_two (d : SuzukiLieIndex) : d.1.rank = 2 :=
-  congrArg DynkinType.rank d.dynkinType_eq
+/-- A Suzuki index is built on the rank-two diagram `B₂`, so it carries the diagram data of
+`TauCeti.RankTwoBLieIndex`. -/
+abbrev toRankTwoBLieIndex (d : SuzukiLieIndex) : RankTwoBLieIndex :=
+  ⟨d.1, LieTypeIndex.hasRankTwoBDiagram_of_isSuzuki d.2⟩
 
 /-- The Suzuki family lives in characteristic two. -/
 @[simp] theorem characteristic_eq_two (d : SuzukiLieIndex) : d.1.characteristic = 2 := by
