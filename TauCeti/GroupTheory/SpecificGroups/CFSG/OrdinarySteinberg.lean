@@ -181,11 +181,16 @@ theorem geckGraphAut_pow_twistOrder : d.geckGraphAut ^ d.twistOrder = 1 := by
 case of the nine untwisted families. -/
 theorem geckGraphAut_eq_one_of_diagramPerm_eq_one (h : d.diagramPerm = 1) :
     d.geckGraphAut = 1 := by
-  have h1 : d.geckGraphAut ^ 1 = 1 := by
-    rw [geckGraphAut_def]
-    exact DynkinType.geckGraphAutPoints_pow_eq_one d.1.dynkinType_valid
-      d.diagramPerm_mem_diagramSymmetry d.1.Closure (by rw [pow_one]; exact h)
-  rwa [pow_one] at h1
+  -- The diagram permutation occurs in the type of the membership proof, so it is generalized
+  -- before being rewritten to the identity; the two membership proofs then agree by proof
+  -- irrelevance.
+  have key : ∀ σ : Equiv.Perm (Fin d.1.rank), σ = 1 →
+      ∀ hσ : σ ∈ d.1.dynkinType.diagramSymmetry,
+        d.1.dynkinType.geckGraphAutPoints d.1.dynkinType_valid hσ d.1.Closure = 1 := by
+    rintro σ rfl hσ
+    exact DynkinType.geckGraphAutPoints_one d.1.dynkinType_valid d.1.Closure
+  rw [geckGraphAut_def]
+  exact key _ h d.diagramPerm_mem_diagramSymmetry
 
 /-! ## The ordinary Steinberg map -/
 
