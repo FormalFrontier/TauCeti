@@ -19,6 +19,9 @@ construction is an independent prerequisite for the `U(H)` factor in the Layer 3
 decomposition and the downstream Layer 7 Harish--Chandra projection; it does not construct either
 of those endpoints.
 
+The construction uses Mathlib's `UniversalEnvelopingAlgebra.lift` and `hom_ext`,
+`SymmetricAlgebra.lift` and `algHom_ext`, and `Algebra.isMulCommutative_adjoin` APIs.
+
 ## Main definition
 
 * `TauCeti.UniversalEnvelopingAlgebra.instIsMulCommutativeUniversalEnvelopingAlgebra`:
