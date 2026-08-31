@@ -102,17 +102,15 @@ theorem rootGeneratorWeight_inr_eq_neg_root_simpleIndex (ht : (C (n + 1)).Valid)
       -((C (n + 1)).simplyConnectedRootDatum ht).root
         ((C (n + 1)).simpleIndex ht i) := by
   funext j
+  have h := congrArg Neg.neg
+    (congrFun (rootGeneratorWeight_inl_eq_root_simpleIndex n ht i) j)
+  -- The datum's rank is definitionally `n + 1`; expose the two scalar negations only after
+  -- evaluating the positive-root equality, so no function-level equality crosses that spelling.
   rw [rootGeneratorWeight_inr]
   change -CartanMatrix.C (n + 1) i j =
     -((C (n + 1)).simplyConnectedRootDatum ht).root
       ((C (n + 1)).simpleIndex ht i) j
-  apply congrArg Neg.neg
-  calc
-    CartanMatrix.C (n + 1) i j = (C (n + 1)).cartanMatrix i j := by
-      rw [cartanMatrix_C]
-    _ = ((C (n + 1)).simplyConnectedRootDatum ht).root
-        ((C (n + 1)).simpleIndex ht i) j :=
-      (congrFun (root_simpleIndex (C (n + 1)) ht i) j).symm
+  simpa only [rootGeneratorWeight_inl] using h
 
 /-! ## Pinning equations on matrix-valued points -/
 
