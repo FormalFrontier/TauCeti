@@ -207,7 +207,7 @@ theorem preprojectiveBaseChange_algebraMap (f : k →+* l) (r : k) :
 
 /-- Two ring homomorphisms out of a preprojective algebra are equal if they agree on coefficients
 and on the classes of all doubled paths. -/
-theorem preprojectiveBaseChange_ext {B : Type*} [Ring B]
+theorem preprojectiveAlgebra_ringHom_ext {B : Type*} [Ring B]
     {g h : preprojectiveAlgebra k Q →+* B}
     (hscalar : ∀ r : k,
       g (algebraMap k (preprojectiveAlgebra k Q) r) =
@@ -225,22 +225,23 @@ theorem preprojectiveBaseChange_ext {B : Type*} [Ring B]
       rw [single_eq_smul_ofPath, map_smul]
       simp only [Algebra.smul_def, map_mul, hscalar, hpath]
 
-/- The identity and composition laws make the coefficient map a canonical base-change operation. -/
-
+/-- Base change along the identity coefficient homomorphism is the identity map. -/
 @[simp]
 theorem preprojectiveBaseChange_id :
     preprojectiveBaseChange (RingHom.id k) = RingHom.id (preprojectiveAlgebra k Q) := by
-  apply preprojectiveBaseChange_ext
+  apply preprojectiveAlgebra_ringHom_ext
   · intro r
     simp
   · intro x
     simp
 
+/-- Base change along a composite coefficient homomorphism is the composite of the base-change
+maps. -/
 @[simp]
 theorem preprojectiveBaseChange_comp {m : Type*} [CommRing m] (f : k →+* l) (g : l →+* m) :
     preprojectiveBaseChange (Q := Q) (g.comp f) =
       (preprojectiveBaseChange (Q := Q) g).comp (preprojectiveBaseChange (Q := Q) f) := by
-  apply preprojectiveBaseChange_ext
+  apply preprojectiveAlgebra_ringHom_ext
   · intro r
     simp
   · intro x
