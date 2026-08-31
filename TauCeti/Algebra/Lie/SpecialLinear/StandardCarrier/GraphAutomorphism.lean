@@ -270,13 +270,6 @@ private theorem ambientGraphCoordinateIso_hom_comp_weightTorusCoordinateMap :
 
 /-! ## Descent to the standard carrier -/
 
-/-- The defining Hopf ideal of the full-weight standard carrier. -/
-private noncomputable abbrev definingIdeal :=
-  TauCeti.UniversalEnvelopingAlgebra.kostantToralDefiningIdeal (rootGenerator r)
-    (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
-    (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv)
-    (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r)
-
 /-- The quotient coordinate Hopf algebra underlying the standard carrier. -/
 private noncomputable abbrev carrierCoordinateHopfAlgebra :=
   CommHopfAlgCat.quotient (GeneralLinear.coordinateHopfAlgebra ℤ (r + 1)) (definingIdeal r)

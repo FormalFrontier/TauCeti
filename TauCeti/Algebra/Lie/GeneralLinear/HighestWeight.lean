@@ -51,7 +51,9 @@ and the whole of `𝔫⁺` annihilates (`TauCeti.isGlHighestWeightVector_iff_for
   `TauCeti.isGlDominantIntegral_iff_forall_le` records the two forms as equivalent.
 * `TauCeti.isGlDominantIntegral_intCast`: an antitone integer tuple is dominant — the weights of
   the group level sit inside the dominant ones.
-* `TauCeti.IsGlDominantIntegral.add_const`: dominance is invariant under the central direction.
+* `TauCeti.IsGlDominantIntegral.add_const`: dominance is invariant under the central direction, and
+  `TauCeti.IsGlDominantIntegral.exists_antitone_natCast_add_const` is the converse decomposition:
+  every dominant weight is an antitone tuple of natural numbers translated along that direction.
 * `TauCeti.isGlDominantIntegral_glStaircase` and `TauCeti.glStaircase_ne_intCast`: the staircase is
   dominant and no entry of it is an integer, so dominance genuinely does not force integrality.
 * `TauCeti.IsGlHighestWeightVector.lie_eq_glWeightEquiv_smul` and
@@ -211,6 +213,27 @@ theorem isGlDominantIntegral_intCast {a : Fin n → ℤ} (ha : Antitone a) :
   have h0 : (0 : ℤ) ≤ a i - a j := sub_nonneg.mpr (ha hle)
   refine ⟨(a i - a j).toNat, ?_⟩
   rw [← Int.cast_natCast (R := R), Int.toNat_of_nonneg h0, Int.cast_sub]
+
+/-- **A dominant weight is a tuple of natural numbers translated along the central direction**, the
+converse of `TauCeti.isGlDominantIntegral_intCast` and `TauCeti.IsGlDominantIntegral.add_const`
+together. Subtracting the last entry `c` of a dominant `μ` leaves the differences `μ i - c`, which
+dominance makes natural numbers, and those decrease weakly because the differences `μ i - μ j`
+along the order are natural numbers too. -/
+theorem IsGlDominantIntegral.exists_antitone_natCast_add_const (hmu : IsGlDominantIntegral mu) :
+    ∃ (a : Fin n → ℕ) (c : R), Antitone a ∧ mu = fun i => (a i : R) + c := by
+  obtain _ | m := n
+  · exact ⟨fun i => i.elim0, 0, fun i => i.elim0, funext fun i => i.elim0⟩
+  set a : Fin (m + 1) → ℕ := fun i => (hmu.exists_natCast_sub_of_le (Fin.le_last i)).choose
+  have key : ∀ i : Fin (m + 1), mu i - mu (Fin.last m) = (a i : R) := fun i =>
+    (hmu.exists_natCast_sub_of_le (Fin.le_last i)).choose_spec
+  refine ⟨a, mu (Fin.last m), fun i j hij => ?_, funext fun i => ?_⟩
+  · obtain ⟨k, hk⟩ := hmu.exists_natCast_sub_of_le hij
+    have hcast : ((a j + k : ℕ) : R) = ((a i : ℕ) : R) := by
+      push_cast
+      rw [← key i, ← key j, ← hk]
+      ring
+    exact Nat.le.intro (Nat.cast_injective hcast)
+  · exact sub_eq_iff_eq_add.mp (key i)
 
 /-- Over an index type with at most one element there is no consecutive pair, so every tuple is
 dominant. -/

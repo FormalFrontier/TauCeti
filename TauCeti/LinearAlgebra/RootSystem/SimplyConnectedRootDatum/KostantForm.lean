@@ -79,6 +79,10 @@ not claimed. This file is the numbered input those later steps consume.
   vectors are Cartan weight vectors with integer weights.
 * `TauCeti.DynkinType.lie_lieBasis_h_rootGenerator`: the Cartan action on each numbered root
   generator is given by its integral root.
+* `TauCeti.DynkinType.rootGeneratorWeight_inl_eq_root_simpleIndex` and
+  `TauCeti.DynkinType.rootGeneratorWeight_inr_eq_neg_root_simpleIndex`: that integral root is the
+  simple root of `TauCeti.DynkinType.simplyConnectedRootDatum` with the same Bourbaki node number,
+  respectively its negative.
 * `TauCeti.DynkinType.geckRepresentation_mem_geckOrbit` and
   `TauCeti.DynkinType.span_geckOrbit_eq_top`: the integral orbit is stable under the Kostant form
   and spans the Geck module over `ℚ`.
@@ -187,6 +191,28 @@ def rootGeneratorWeight : Fin t.rank ⊕ Fin t.rank → Fin t.rank → ℤ :=
 @[simp] theorem rootGeneratorWeight_inr (i j : Fin t.rank) :
     t.rootGeneratorWeight ht (.inr i) j = -t.cartanMatrix i j := by
   rw [rootGeneratorWeight, LieAlgebra.Basis.rootGeneratorWeight_inr, lieBasis_A_eq]
+
+/-! The two identifications below read those Cartan-matrix rows as the simple roots of
+`TauCeti.DynkinType.simplyConnectedRootDatum`. They are deliberately not `simp` lemmas: both sides
+are already `simp`-normal, since `rootGeneratorWeight_inl` and `root_simpleIndex` rewrite them to
+the same row, and orienting the identification either way would undo one of them. -/
+
+/-- **The root of the `i`-th numbered raising generator is the `i`-th pinned simple root.** The
+integral character of the pinned Cartan generators through which they act on that generator is the
+simple root of `t.simplyConnectedRootDatum ht` with the same Bourbaki node number. -/
+theorem rootGeneratorWeight_inl_eq_root_simpleIndex (i : Fin t.rank) :
+    t.rootGeneratorWeight ht (.inl i) =
+      (t.simplyConnectedRootDatum ht).root (t.simpleIndex ht i) := by
+  funext j
+  rw [rootGeneratorWeight_inl, root_simpleIndex]
+
+/-- **The root of the `i`-th numbered lowering generator is the negative of the `i`-th pinned
+simple root.** -/
+theorem rootGeneratorWeight_inr_eq_neg_root_simpleIndex (i : Fin t.rank) :
+    t.rootGeneratorWeight ht (.inr i) =
+      -(t.simplyConnectedRootDatum ht).root (t.simpleIndex ht i) := by
+  funext j
+  rw [rootGeneratorWeight_inr, Pi.neg_apply, root_simpleIndex]
 
 /-- **The pinned Cartan generators act on a numbered root generator through its root.** -/
 theorem lie_lieBasis_h_rootGenerator (i : Fin t.rank ⊕ Fin t.rank) (j : Fin t.rank) :

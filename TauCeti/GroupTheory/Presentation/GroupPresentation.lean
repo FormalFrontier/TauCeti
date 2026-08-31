@@ -139,14 +139,19 @@ theorem totalLength_def (P : GroupPresentation) :
     P.totalLength = (P.relators.map List.length).sum := by
   rw [totalLength]
 
-/-- The total length is also the sum of the lengths of the displayed letter words, since forgetting
-the bounds on the generator indices does not change a word's length.
+/-- The displayed letter words have the same lengths as the compiled relator words, since
+forgetting the bounds on the generator indices does not change a word's length.
 
-A row that spells its compiled words out letter by letter therefore gets its length check from that
-one comparison, rather than by unfolding the relator compiler a second time. -/
+A row that spells its compiled words out letter by letter therefore gets its per-relator length
+check from that one comparison, rather than by unfolding the relator compiler a second time. -/
+theorem map_length_relatorLetters (P : GroupPresentation) :
+    P.relatorLetters.map List.length = P.relators.map List.length := by
+  simp [relatorLetters_def, List.map_map, Function.comp_def]
+
+/-- The total length is also the sum of the lengths of the displayed letter words. -/
 theorem sum_map_length_relatorLetters (P : GroupPresentation) :
     (P.relatorLetters.map List.length).sum = P.totalLength := by
-  simp [relatorLetters_def, totalLength_def, List.map_map, Function.comp_def]
+  rw [map_length_relatorLetters, totalLength_def]
 
 /-- Every compiled relator word of a presentation is cyclically reduced.
 
