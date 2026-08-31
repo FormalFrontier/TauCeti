@@ -77,6 +77,7 @@ private theorem scalarRelations_le_ker (ev : LaurentPolynomial ℤ →+* ℤ) (f
     LaurentScalarRelations ev M ≤ f.ker := by
   refine (AddSubgroup.closure_le (f.ker)).2 ?_
   rintro x ⟨r, m, rfl⟩
+  -- View kernel membership as an equality so the compatibility hypothesis can rewrite it.
   change f (r • m - ev r • m) = 0
   rw [map_sub, hf]
   simp
@@ -96,6 +97,7 @@ theorem specializeLift_of (ev : LaurentPolynomial ℤ →+* ℤ) (f : M →+ N)
     [Module (LaurentPolynomial ℤ) M] (hf : IsLaurentLinearAt ev f) (x : M) :
     specializeLift ev f hf (specializeOf ev M x) = f x :=
   by
+    -- Unfold both quotient maps to put the lift in the form of `lift_mk'`.
     change
       (QuotientAddGroup.lift (LaurentScalarRelations ev M) f
         (scalarRelations_le_ker ev f hf)) (↑x : M ⧸ LaurentScalarRelations ev M) = f x
@@ -111,6 +113,7 @@ theorem specializeLift_unique (ev : LaurentPolynomial ℤ →+* ℤ) (f : M →+
   intro y
   induction y using QuotientAddGroup.induction_on' with
   | _ x =>
+    -- Quotient induction presents this class by the canonical representative of `x`.
     change g (specializeOf ev M x) = specializeLift ev f hf (specializeOf ev M x)
     rw [hg, specializeLift_of]
 
