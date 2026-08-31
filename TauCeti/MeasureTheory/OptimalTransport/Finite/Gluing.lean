@@ -30,11 +30,13 @@ will consume.
 ## Main definitions
 
 * `finiteGluing` is the normalized finite gluing, with an explicit zero-mass branch.
+* `outerGluing` is its outer `(α, γ)` projection.
 
 ## Main results
 
 * `finiteGluing_apply` gives the formula;
 * `map_prodMap_id_fst_finiteGluing` and `map_snd_finiteGluing` recover the two input laws.
+* `outerGluing_map_fst` and `outerGluing_map_snd` identify the outer coupling's marginals.
 
 ## References
 
@@ -127,6 +129,10 @@ private theorem finiteGluingWeight_sum (π : PMF (α × β)) (σ : PMF (β × γ
 formula is explicitly set to zero, making the intended value at such atoms visible. -/
 def finiteGluing (h : π.map Prod.snd = σ.map Prod.fst) : PMF (α × β × γ) :=
   PMF.ofFintype (fun p => finiteGluingWeight π σ p.2.1 p.1 p.2.2) (finiteGluingWeight_sum π σ h)
+
+/-- The outer `(α, γ)` projection of a finite gluing. -/
+def outerGluing (h : π.map Prod.snd = σ.map Prod.fst) : PMF (α × γ) :=
+  (finiteGluing π σ h).map (fun p => (p.1, p.2.2))
 
 /-- The pointwise finite gluing formula. -/
 @[simp]
@@ -248,6 +254,34 @@ theorem map_snd_finiteGluing (h : π.map Prod.snd = σ.map Prod.fst) :
             rw [← TauCeti.PMF.map_snd_apply π p.1, mul_comm]
             apply ENNReal.mul_div_cancel_right hb
             exact (π.map Prod.snd).apply_ne_top p.1
+
+/-- The first marginal of the outer projection is the first marginal of the first input law. -/
+@[simp]
+theorem outerGluing_map_fst (h : π.map Prod.snd = σ.map Prod.fst) :
+    (outerGluing π σ h).map Prod.fst = π.map Prod.fst := by
+  have hfun : (Prod.fst : α × γ → α) ∘ (fun p : α × β × γ => (p.1, p.2.2)) =
+      Prod.fst ∘ (fun p : α × β × γ => (p.1, p.2.1)) := by
+    funext p
+    rfl
+  rw [outerGluing, PMF.map_comp]
+  rw [hfun, ← PMF.map_comp]
+  simpa only [Function.comp_apply] using
+    congrArg (fun q : PMF (α × β) => q.map Prod.fst)
+      (map_prodMap_id_fst_finiteGluing π σ h)
+
+/-- The second marginal of the outer projection is the second marginal of the second input law. -/
+@[simp]
+theorem outerGluing_map_snd (h : π.map Prod.snd = σ.map Prod.fst) :
+    (outerGluing π σ h).map Prod.snd = σ.map Prod.snd := by
+  have hfun : (Prod.snd : α × γ → γ) ∘ (fun p : α × β × γ => (p.1, p.2.2)) =
+      Prod.snd ∘ (fun p : α × β × γ => (p.2.1, p.2.2)) := by
+    funext p
+    rfl
+  rw [outerGluing, PMF.map_comp]
+  rw [hfun, ← PMF.map_comp]
+  simpa only [Function.comp_apply] using
+    congrArg (fun q : PMF (β × γ) => q.map Prod.snd)
+      (map_snd_finiteGluing π σ h)
 
 
 end PMF
