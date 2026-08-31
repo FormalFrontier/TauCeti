@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Data.Fin.SuccPredOrder
-public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.B.Datum
 public import TauCeti.RepresentationTheory.Spin.Weight
 
 /-!
@@ -54,25 +53,6 @@ open Set Submodule
 
 /-! ## Integral spin weights -/
 
-private theorem orderSucc_eq_mk_of_lt {n : ℕ} (i : Fin n) (h : (i : ℕ) + 1 < n) :
-    Order.succ i = (⟨(i : ℕ) + 1, h⟩ : Fin n) := by
-  cases n with
-  | zero => exact Fin.elim0 i
-  | succ n =>
-      have hi : i ≠ Fin.last n := by
-        intro hi
-        subst i
-        simp at h
-      obtain ⟨j, rfl⟩ := Fin.eq_castSucc_of_ne_last hi
-      rw [Fin.orderSucc_castSucc]
-      apply Fin.ext
-      rfl
-
-private theorem orderSucc_le_iff {n : ℕ} (i j : Fin n) (h : (i : ℕ) + 1 < n) :
-    Order.succ i ≤ j ↔ (i : ℕ) + 1 ≤ (j : ℕ) := by
-  rw [orderSucc_eq_mk_of_lt i h]
-  exact Fin.mk_le_mk
-
 /-- The weight of a type `Bₙ` spinor basis vector in fundamental-weight coordinates.
 
 The finite set `s` records the positive signs. At a nonterminal node the coordinate is the
@@ -93,52 +73,47 @@ theorem typeBSpinWeight_apply {n : ℕ} (s : Finset (Fin n)) (i : Fin n) :
       else 2 * (if i ∈ s then 1 else 0) - 1 :=
   (rfl)
 
-/-- In rational coordinates, `typeBSpinWeight` is obtained from the orthonormal sign weight by
-pairing with the simple coroot: take an adjacent difference away from the terminal node and
-double the terminal coordinate. -/
-theorem algebraMap_typeBSpinWeight_apply {n : ℕ} (s : Finset (Fin n)) (i : Fin n) :
-    algebraMap ℤ ℚ (typeBSpinWeight s i) =
-      if h : (i : ℕ) + 1 < n then
-        spinWeight ℚ s i - spinWeight ℚ s (⟨(i : ℕ) + 1, h⟩ : Fin n)
-      else spinWeight ℚ s i + spinWeight ℚ s i := by
+/-- The coordinate comparison, in any commutative ring in which `2` is invertible:
+`typeBSpinWeight` is obtained from the orthonormal sign weight by pairing with the simple
+coroot, that is, by taking an adjacent difference away from the terminal node and doubling the
+terminal coordinate. -/
+theorem algebraMap_typeBSpinWeight_apply {K : Type*} [CommRing K] [Invertible (2 : K)] {n : ℕ}
+    (s : Finset (Fin n)) (i : Fin n) :
+    algebraMap ℤ K (typeBSpinWeight s i) =
+      if (i : ℕ) + 1 < n then spinWeight K s i - spinWeight K s (Order.succ i)
+      else spinWeight K s i + spinWeight K s i := by
   classical
   rw [typeBSpinWeight_apply]
   by_cases hnext : (i : ℕ) + 1 < n
-  · rw [ite_eq_left hnext, orderSucc_eq_mk_of_lt i hnext, dite_eq_left hnext]
+  · rw [ite_eq_left hnext, ite_eq_left hnext]
     by_cases hi : i ∈ s
-    · rw [ite_eq_left hi]
-      by_cases hsucc : (⟨(i : ℕ) + 1, hnext⟩ : Fin n) ∈ s
-      · have hweight :
-            spinWeight ℚ s (⟨(i : ℕ) + 1, hnext⟩ : Fin n) = ⅟(2 : ℚ) :=
-          spinWeight_of_mem hsucc
-        rw [ite_eq_left hsucc, sub_self, map_zero, spinWeight_of_mem hi, hweight, sub_self]
-      · rw [ite_eq_right hsucc, sub_zero, map_one]
-        linarith [spinWeight_add_self_of_mem (K := ℚ) hi,
-          spinWeight_add_self_of_notMem (K := ℚ) hsucc]
-    · rw [ite_eq_right hi]
-      by_cases hsucc : (⟨(i : ℕ) + 1, hnext⟩ : Fin n) ∈ s
-      · rw [ite_eq_left hsucc, zero_sub, map_neg, map_one]
-        linarith [spinWeight_add_self_of_notMem (K := ℚ) hi,
-          spinWeight_add_self_of_mem (K := ℚ) hsucc]
-      · have hweight :
-            spinWeight ℚ s (⟨(i : ℕ) + 1, hnext⟩ : Fin n) = -⅟(2 : ℚ) :=
-          spinWeight_of_notMem hsucc
-        rw [ite_eq_right hsucc, sub_self, map_zero, spinWeight_of_notMem hi, hweight, sub_self]
-  · rw [ite_eq_right hnext, dite_eq_right hnext]
+    · by_cases hsucc : Order.succ i ∈ s
+      · rw [ite_eq_left hi, ite_eq_left hsucc, sub_self, map_zero, spinWeight_of_mem hi,
+          spinWeight_of_mem hsucc, sub_self]
+      · have hneg : spinWeight K s (Order.succ i) = -spinWeight K s i := by
+          rw [spinWeight_of_mem hi, spinWeight_of_notMem hsucc]
+        rw [ite_eq_left hi, ite_eq_right hsucc, sub_zero, map_one, hneg, sub_neg_eq_add,
+          spinWeight_add_self_of_mem hi]
+    · by_cases hsucc : Order.succ i ∈ s
+      · have hneg : spinWeight K s (Order.succ i) = -spinWeight K s i := by
+          rw [spinWeight_of_notMem hi, spinWeight_of_mem hsucc, neg_neg]
+        rw [ite_eq_right hi, ite_eq_left hsucc, zero_sub, map_neg, map_one, hneg, sub_neg_eq_add,
+          spinWeight_add_self_of_notMem hi]
+      · rw [ite_eq_right hi, ite_eq_right hsucc, sub_self, map_zero, spinWeight_of_notMem hi,
+          spinWeight_of_notMem hsucc, sub_self]
+  · rw [ite_eq_right hnext, ite_eq_right hnext]
     by_cases hi : i ∈ s
-    · rw [ite_eq_left hi]
+    · rw [ite_eq_left hi, spinWeight_add_self_of_mem hi]
       norm_num
-      exact (spinWeight_add_self_of_mem (K := ℚ) hi).symm
-    · rw [ite_eq_right hi]
+    · rw [ite_eq_right hi, spinWeight_add_self_of_notMem hi]
       norm_num
-      exact (spinWeight_add_self_of_notMem (K := ℚ) hi).symm
 
 /-- The comparison with half-integer spin weights, as an equality of coordinate vectors. -/
-theorem algebraMap_typeBSpinWeight {n : ℕ} (s : Finset (Fin n)) :
-    (fun i : Fin n => algebraMap ℤ ℚ (typeBSpinWeight s i)) =
-      fun i : Fin n => if h : (i : ℕ) + 1 < n then
-        spinWeight ℚ s i - spinWeight ℚ s (⟨(i : ℕ) + 1, h⟩ : Fin n)
-      else spinWeight ℚ s i + spinWeight ℚ s i := by
+theorem algebraMap_typeBSpinWeight {K : Type*} [CommRing K] [Invertible (2 : K)] {n : ℕ}
+    (s : Finset (Fin n)) :
+    (fun i : Fin n => algebraMap ℤ K (typeBSpinWeight s i)) =
+      fun i : Fin n => if (i : ℕ) + 1 < n then spinWeight K s i - spinWeight K s (Order.succ i)
+      else spinWeight K s i + spinWeight K s i := by
   funext i
   exact algebraMap_typeBSpinWeight_apply s i
 
@@ -180,8 +155,9 @@ private theorem typeBSpinWeight_cut_add_univ_eq_single {n : ℕ} (i : Fin n)
   by_cases hjnext : (j : ℕ) + 1 < n
   · have hjnotlast : ¬(j : ℕ) + 1 = n := by omega
     rw [ite_eq_left hjnext, ite_eq_right hjnotlast]
-    simp only [Finset.mem_Iic]
-    simp only [orderSucc_le_iff j i hjnext]
+    have hjnotmax : ¬IsMax j :=
+      not_isMax_of_lt (b := (⟨(j : ℕ) + 1, hjnext⟩ : Fin n)) (by simp [Fin.lt_def])
+    simp only [Finset.mem_Iic, Order.succ_le_iff_of_not_isMax hjnotmax, Fin.lt_def]
     split_ifs <;> omega
   · have hjlast : (j : ℕ) + 1 = n := by omega
     rw [ite_eq_right hjnext, ite_eq_left hjlast]
