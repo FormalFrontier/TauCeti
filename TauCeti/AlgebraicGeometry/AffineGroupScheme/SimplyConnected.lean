@@ -151,7 +151,7 @@ theorem simplyConnectedSemisimpleAffineGroupSchemeProperty_iff_forall_mono
 
 /-- Under the semisimple Hopf/group-scheme anti-equivalence, a morphism is a coordinate central
 isogeny exactly when its image is a group-scheme central isogeny. -/
-private theorem isCentralIsogeny_semisimpleEquiv_map_iff
+theorem isCentralIsogeny_semisimpleEquiv_map_iff
     {H K : (SemisimpleCommHopfAlgCat.{u} k)ᵒᵖ} (f : H ⟶ K) :
     GroupScheme.IsCentralIsogeny
         ((semisimpleAffineGroupSchemeForget k).map

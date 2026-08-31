@@ -108,23 +108,7 @@ theorem surjective (hH : simplyConnectedSemisimpleCommHopfAlgProperty k H)
   let _ : IsIso f.hom.hom := inferInstance
   exact (ConcreteCategory.bijective_of_isIso f.hom.hom).2
 
-/-- The coordinate map of every central isogeny out of a simply connected semisimple group is
-bijective. -/
-theorem bijective (hH : simplyConnectedSemisimpleCommHopfAlgProperty k H)
-    {K : SemisimpleCommHopfAlgCat.{u} k} (f : H ⟶ K)
-    (hf : CommHopfAlgCat.IsCentralIsogeny f.hom.hom) :
-    Function.Bijective f.hom.hom :=
-  ⟨hf.injective, hH.surjective f hf⟩
-
 end simplyConnectedSemisimpleCommHopfAlgProperty
-
-/-- The composite inclusion from semisimple Hopf algebras to commutative Hopf algebras maps a
-morphism to its underlying commutative-Hopf-algebra morphism. -/
-private theorem semisimpleCommHopfAlgForget_map
-    {H K : SemisimpleCommHopfAlgCat.{u} k} (f : H ⟶ K) :
-    (((semisimpleCommHopfAlgProperty k).ι ⋙
-      (finiteTypeCommHopfAlgProperty k).ι).map f) = f.hom.hom :=
-  rfl
 
 /-- A semisimple affine group is simply connected exactly when every coordinate central
 isogeny out of its Hopf algebra is surjective.
@@ -140,12 +124,11 @@ theorem simplyConnectedSemisimpleCommHopfAlgProperty_iff_forall_surjective
   · exact fun hH K f hf ↦ hH.surjective f hf
   · intro hH K f hf
     have : IsIso f.hom.hom :=
-      (ConcreteCategory.isIso_iff_bijective f.hom.hom).2
-        ⟨hf.injective, hH K f hf⟩
+      hf.isIsogeny.isIso_iff_surjective.mpr (hH K f hf)
     let F := (semisimpleCommHopfAlgProperty k).ι ⋙
       (finiteTypeCommHopfAlgProperty k).ι
     let _ : IsIso (F.map f) := by
-      rw [semisimpleCommHopfAlgForget_map]
+      change IsIso f.hom.hom
       exact this
     exact isIso_of_reflects_iso f F
 
