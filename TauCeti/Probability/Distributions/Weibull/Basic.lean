@@ -84,7 +84,10 @@ For invalid parameters this is the zero measure. -/
 def weibullMeasure (k lam : ℝ) : Measure ℝ :=
   volume.withDensity (weibullPDF k lam)
 
-/-- A Weibull measure is Lebesgue measure weighted by its density. -/
+/-- A Weibull measure is Lebesgue measure weighted by its density.
+
+This exposes the defining equation of the opaque public definition for rewriting in downstream
+modules. -/
 theorem weibullMeasure_eq_withDensity (k lam : ℝ) :
     weibullMeasure k lam = volume.withDensity (weibullPDF k lam) := by
   rfl
