@@ -71,6 +71,24 @@ private theorem one_sub_single_diag (i j : Fin 2) (hij : i ≠ j) :
   fin_cases i <;> fin_cases j <;> ext a b <;> fin_cases a <;> fin_cases b <;>
     simp_all [Matrix.single]
 
+omit [NoZeroDivisors K] in
+private theorem smul_one_sub_single_offdiag_mul_entry (r : K) (i j : Fin 2) (hij : i ≠ j) :
+    let A : Matrix (Fin 2) (Fin 2) K := r • 1 - Matrix.single i j 1
+    (A * A) j j = r * r := by
+  dsimp
+  fin_cases i <;> fin_cases j <;>
+    simp_all [Matrix.mul_apply, Matrix.single, Matrix.one_apply]
+
+omit [NoZeroDivisors K] in
+private theorem neg_single_offdiag_mul_smul_one_sub_single_diag_entry
+    (r : K) (i j : Fin 2) (hij : i ≠ j) :
+    let E : Matrix (Fin 2) (Fin 2) K := Matrix.single i j 1
+    let D : Matrix (Fin 2) (Fin 2) K := r • 1 - Matrix.single i i 1
+    ((-E) * D) i j = -r := by
+  dsimp
+  fin_cases i <;> fin_cases j <;>
+    simp_all [Matrix.mul_apply, Matrix.single, Matrix.one_apply]
+
 /-- An anti-multiplicative linear map with scalar translates sends an off-diagonal unit
 to its negative. -/
 theorem map_single_eq_neg_of_ne
@@ -89,8 +107,7 @@ theorem map_single_eq_neg_of_ne
   rw [hf] at hsquare
   have hrii := congr_fun (congr_fun hsquare j) j
   have hrr : r * r = 0 := by
-    simpa [E, Matrix.mul_apply, Fin.sum_univ_two, Matrix.single, Matrix.one_apply,
-      hij, Ne.symm hij] using hrii
+    simpa only [E, smul_one_sub_single_offdiag_mul_entry r i j hij, Matrix.zero_apply] using hrii
   have hr0 : r = 0 := mul_self_eq_zero.mp hrr
   have hneg : f E = -E := by
     rw [hf, hr0]
@@ -115,9 +132,14 @@ theorem map_single_self_eq_single_of_ne
   rw [hDE, hfE, hfD] at hp
   have hpij := congr_fun (congr_fun hp i) j
   have hr1 : r = 1 := by
-    have hr1' : (1 : K) = r := by
-      simpa [D, E, Matrix.mul_apply, Fin.sum_univ_two, Matrix.single, Matrix.one_apply,
-        hij, Ne.symm hij] using hpij
+    have hpij' : (-1 : K) = -r := by
+      have hpij'' := hpij
+      simp only [D] at hpij''
+      rw [neg_single_offdiag_mul_smul_one_sub_single_diag_entry r i j hij] at hpij''
+      calc
+        (-1 : K) = (-(Matrix.single i j (1 : K))) i j := by simp
+        _ = -r := hpij''
+    have hr1' : (1 : K) = r := by simpa using congrArg Neg.neg hpij'
     exact hr1'.symm
   rw [hfD, hr1]
   simpa [D, smul_eq_mul] using one_sub_single_diag i j hij
@@ -155,7 +177,7 @@ theorem linearMap_antimultiplicative_eq_adjugateLinearMap
   refine (Matrix.stdBasis K (Fin 2) (Fin 2)).ext ?_
   rintro ⟨i, j⟩
   rw [Matrix.stdBasis_eq_single]
-  simpa only [adjugateLinearMap, LinearMap.coe_mk, AddHom.coe_mk] using
+  simpa only [adjugateLinearMap_apply] using
     map_single_eq_adjugate f hmul hscalar i j
 
 end NoZeroDivisors

@@ -9,7 +9,7 @@ public import TauCeti.RepresentationTheory.Spin.OddStructure
 
 import TauCeti.LinearAlgebra.CliffordAlgebra.Bivector
 public import TauCeti.LinearAlgebra.CliffordAlgebra.Grading
-import TauCeti.LinearAlgebra.Matrix.AdjugateFinTwo
+public import TauCeti.LinearAlgebra.Matrix.AdjugateFinTwo
 
 
 /-!
@@ -180,47 +180,56 @@ theorem exists_add_reverseEven_eq_smul_one
     _ = (r + r) • (1 : CliffordAlgebra Q) := by rw [Algebra.smul_def, mul_one]
 
 /-- Reversal transported through an algebra equivalence to two-by-two matrices. -/
-noncomputable def reverseMatrix
-    (e : ↥(even Q) ≃ₐ[K] Matrix (Fin 2) (Fin 2) K) :
-    Matrix (Fin 2) (Fin 2) K →ₗ[K] Matrix (Fin 2) (Fin 2) K :=
-  e.toLinearMap.comp ((reverseEven Q).comp e.symm.toLinearMap)
+private noncomputable def reverseMatrix
+    {R : Type u} [CommRing R] {M : Type v} [AddCommGroup M] [Module R M]
+    (q : QuadraticForm R M)
+    (e : ↥(even q) ≃ₐ[R] Matrix (Fin 2) (Fin 2) R) :
+    Matrix (Fin 2) (Fin 2) R →ₗ[R] Matrix (Fin 2) (Fin 2) R :=
+  e.toLinearMap.comp ((reverseEven q).comp e.symm.toLinearMap)
 
-omit [NeZero (2 : K)] [FiniteDimensional K V] in
 /-- Reversal transported to matrices computes from the even-subalgebra reversal. -/
-@[simp] theorem reverseMatrix_apply
-    (e : ↥(even Q) ≃ₐ[K] Matrix (Fin 2) (Fin 2) K) (A : Matrix (Fin 2) (Fin 2) K) :
-    reverseMatrix Q e A = e (reverseEven Q (e.symm A)) := by
+@[simp] private theorem reverseMatrix_apply
+    {R : Type u} [CommRing R] {M : Type v} [AddCommGroup M] [Module R M]
+    (q : QuadraticForm R M)
+    (e : ↥(even q) ≃ₐ[R] Matrix (Fin 2) (Fin 2) R) (A : Matrix (Fin 2) (Fin 2) R) :
+    reverseMatrix q e A = e (reverseEven q (e.symm A)) := by
   simp [reverseMatrix]
 
-omit [NeZero (2 : K)] [FiniteDimensional K V] in
 /-- The transported reversal fixes the matrix unit. -/
-theorem reverseMatrix_map_one
-    (e : ↥(even Q) ≃ₐ[K] Matrix (Fin 2) (Fin 2) K) :
-    reverseMatrix Q e 1 = 1 := by
+private theorem reverseMatrix_map_one
+    {R : Type u} [CommRing R] {M : Type v} [AddCommGroup M] [Module R M]
+    (q : QuadraticForm R M)
+    (e : ↥(even q) ≃ₐ[R] Matrix (Fin 2) (Fin 2) R) :
+    reverseMatrix q e 1 = 1 := by
   simp [reverseMatrix_apply]
 
-omit [NeZero (2 : K)] [FiniteDimensional K V] in
 /-- The transported reversal is an involution. -/
-theorem reverseMatrix_reverseMatrix
-    (e : ↥(even Q) ≃ₐ[K] Matrix (Fin 2) (Fin 2) K) (A : Matrix (Fin 2) (Fin 2) K) :
-    reverseMatrix Q e (reverseMatrix Q e A) = A := by
-  simp [reverseMatrix_apply]
+private theorem reverseMatrix_reverseMatrix
+    {R : Type u} [CommRing R] {M : Type v} [AddCommGroup M] [Module R M]
+    (q : QuadraticForm R M)
+    (e : ↥(even q) ≃ₐ[R] Matrix (Fin 2) (Fin 2) R) (A : Matrix (Fin 2) (Fin 2) R) :
+    reverseMatrix q e (reverseMatrix q e A) = A := by
+  rw [reverseMatrix_apply, reverseMatrix_apply]
+  rw [e.symm_apply_apply]
+  simp only [reverseEven_reverseEven, e.apply_symm_apply]
 
-omit [NeZero (2 : K)] [FiniteDimensional K V] in
 /-- The transported reversal reverses products. -/
-theorem reverseMatrix_mul
-    (e : ↥(even Q) ≃ₐ[K] Matrix (Fin 2) (Fin 2) K) (A B : Matrix (Fin 2) (Fin 2) K) :
-    reverseMatrix Q e (A * B) = reverseMatrix Q e B * reverseMatrix Q e A := by
+private theorem reverseMatrix_mul
+    {R : Type u} [CommRing R] {M : Type v} [AddCommGroup M] [Module R M]
+    (q : QuadraticForm R M)
+    (e : ↥(even q) ≃ₐ[R] Matrix (Fin 2) (Fin 2) R)
+    (A B : Matrix (Fin 2) (Fin 2) R) :
+    reverseMatrix q e (A * B) = reverseMatrix q e B * reverseMatrix q e A := by
   rw [reverseMatrix_apply, reverseMatrix_apply, reverseMatrix_apply]
   rw [← map_mul]
   congr 1
   apply Subtype.ext
   rw [reverseEven_coe, Subalgebra.coe_mul, reverseEven_coe, reverseEven_coe]
   rw [map_mul]
-  exact reverse.map_mul (Q := Q) (e.symm A : CliffordAlgebra Q) (e.symm B : CliffordAlgebra Q)
+  exact reverse.map_mul (Q := q) (e.symm A : CliffordAlgebra q) (e.symm B : CliffordAlgebra q)
 
 /-- Every matrix plus its transported reversal is scalar. -/
-theorem exists_add_reverseMatrix_eq_smul_one
+private theorem exists_add_reverseMatrix_eq_smul_one
     (hV : Module.finrank K V = 3)
     (e : ↥(even Q) ≃ₐ[K] Matrix (Fin 2) (Fin 2) K) (A : Matrix (Fin 2) (Fin 2) K) :
     ∃ r : K, A + reverseMatrix Q e A = r • 1 := by
