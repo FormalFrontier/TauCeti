@@ -11,6 +11,8 @@ public import TauCeti.LinearAlgebra.Matrix.SpecialLinearGroup.Transvection
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal.Basic
 -- `MonoidHom.noncommCoprod` packages products of commuting one-parameter subgroups.
 public import Mathlib.GroupTheory.NoncommCoprod
+-- `Matrix.IsUpperTriangular` and its transvection and identity instances.
+public import Mathlib.LinearAlgebra.Matrix.Block
 -- Non-public: the diagonal-matrix-unit product law is used only in a proof below.
 import TauCeti.LinearAlgebra.Matrix.Diagonal
 import Mathlib.Data.Nat.Dist
@@ -56,6 +58,8 @@ elementary matrices against the diagonal torus.
 
 * `TauCeti.toGL_transvection_eq_transvectionUnit`: the defining equality relating the
   special-linear and general-linear transvection APIs.
+* `TauCeti.isUpperTriangular_transvection_iff`: a transvection with its off-diagonal entry
+  strictly below the diagonal is upper triangular exactly when its parameter vanishes.
 * `TauCeti.transvectionUnit_mem_of_adjacent`: a subgroup containing the adjacent transvections
   in both orientations contains every transvection.
 * `TauCeti.commute_transvectionUnit`: transvections at index pairs that do not chain commute.
@@ -106,6 +110,21 @@ theorem diagonal_mul_transvection_mul_diagonal {v w : n → A} (hvw : ∀ a, v a
 end Products
 
 variable [CommRing A]
+
+/-! ## Triangularity -/
+
+/-- A transvection whose off-diagonal entry lies strictly *below* the diagonal is upper
+triangular exactly when its parameter vanishes. The complementary case, an entry on or above the
+diagonal, is Mathlib's `Matrix.blockTriangular_transvection`. -/
+theorem isUpperTriangular_transvection_iff [Preorder n] (hij : j < i) (c : A) :
+    (transvection i j c).IsUpperTriangular ↔ c = 0 := by
+  refine ⟨fun h => ?_, fun hc => ?_⟩
+  · have hentry := h hij
+    simp only [transvection, Matrix.add_apply, Matrix.one_apply_ne hij.ne',
+      Matrix.single_apply_same, zero_add] at hentry
+    exact hentry
+  · rw [hc, transvection_zero]
+    exact blockTriangular_one
 
 /-! ## Transvections as invertible matrices -/
 

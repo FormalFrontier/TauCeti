@@ -59,6 +59,8 @@ is any group here claimed to be finite or simple.
   coordinate vectors and the roots of the numbered generators.
 * `TauCeti.SlStd.lattice` and `TauCeti.SlStd.latticeBasis`: the standard admissible lattice and its
   coordinate basis.
+* `TauCeti.SlStd.definingIdeal`: the Hopf ideal of `O(GL_{r+1})` cutting out the carrier;
+  `TauCeti.SlStd.points_eq_hopfIdealPointsSubgroup` reads its matrix points off that ideal.
 * `TauCeti.SlStd.groupScheme`, `TauCeti.SlStd.carrierι`, `TauCeti.SlStd.rootSubgroup`,
   `TauCeti.SlStd.weightTorus`, `TauCeti.SlStd.points`, `TauCeti.SlStd.rootSubgroupPoints`, and
   `TauCeti.SlStd.weightTorusPoints`: the carrier, its closed immersion into `GL_{r+1}`, its pinned
@@ -429,6 +431,15 @@ theorem isCartanWeightVector_latticeBasis (k : Fin (r + 1)) :
   rw [coe_latticeBasis]
   exact isCartanWeightVector_single r k
 
+/-- The defining Hopf ideal of the full-weight type-`A_r` carrier, named in the ambient
+coordinate Hopf algebra of `GL_{r+1}`. -/
+noncomputable abbrev definingIdeal :
+    HopfIdeal ℤ (GeneralLinear.coordinateHopfAlgebra ℤ (r + 1)) :=
+  TauCeti.UniversalEnvelopingAlgebra.kostantToralDefiningIdeal (rootGenerator r)
+    (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
+    (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv)
+    (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r)
+
 /-- **The full-weight Chevalley carrier of type `A_r`**: the smallest closed subgroup scheme of
 `GL_{r+1}` over `ℤ` containing the divided-power exponential root subgroups of the numbered
 Chevalley generators of `sl_{r+1}` and the weight torus of the standard lattice. -/
@@ -523,6 +534,12 @@ noncomputable def points (A : Type v) [CommRing A] :
     (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
     (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv)
     (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) A
+
+/-- The carrier points are the general-linear matrix points cut out by the carrier's defining
+Hopf ideal. -/
+theorem points_eq_hopfIdealPointsSubgroup (A : Type v) [CommRing A] :
+    points r A = GeneralLinear.hopfIdealPointsSubgroup (r + 1) (definingIdeal r) A := by
+  rw [points, TauCeti.UniversalEnvelopingAlgebra.kostantToralPointsSubgroup_def]
 
 /-- **The parametrized numbered root subgroup inside the type-`A_r` carrier points.** The
 parameter is read through the canonical multiplicative copy of the additive group of `A`. -/

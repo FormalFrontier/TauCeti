@@ -9,13 +9,14 @@ public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.UpperTriangular.Basic
 public import TauCeti.Algebra.Lie.SpecialLinear.StandardCarrier.DeterminantOne
 
 /-!
-# Upper-triangular points of the type-A full-weight carrier
+# The upper-triangular subgroup of the type-A full-weight carrier
 
 The full-weight type-`A_r` carrier is an explicit closed subgroup scheme of `GL_(r+1)`.  This file
 intersects it scheme-theoretically with the standard upper-triangular subgroup scheme of `GL_(r+1)`.
 On coordinate Hopf algebras, intersection is the join of the two defining Hopf ideals.  The
 resulting `TauCeti.SlStd.upperTriangularGroupScheme` is therefore a closed subgroup scheme of the
-actual Chevalley carrier, not a separately chosen matrix group.
+actual Chevalley carrier, not a separately chosen matrix group; it comes with closed immersions
+into both the carrier and the ambient upper-triangular subgroup scheme of `GL_(r+1)`.
 
 Over every commutative value ring `A`, its embedded matrix points are exactly
 
@@ -23,8 +24,10 @@ Over every commutative value ring `A`, its embedded matrix points are exactly
 SlStd.points r A ∩ upperTriangularGroup (Fin (r + 1)) A.
 ```
 
-The named split torus and every positive simple-root subgroup lie in this intersection.  A
-negative simple-root point lies in it exactly when its parameter is zero.  Thus the construction
+The named split torus and every positive simple-root subgroup factor through this intersection as
+morphisms of group schemes, and their factorizations recompose to the carrier's own pinning
+morphisms.  A negative simple-root *point* lies in the intersection exactly when its parameter is
+zero, so no comparable factorization of a negative root subgroup can exist: the construction
 selects the positive half of the carrier's pinning rather than merely containing all of its
 generators.
 
@@ -37,18 +40,28 @@ the named split torus as maximal requires the reductivity and root-datum structu
   defining Hopf ideals.
 * `TauCeti.SlStd.upperTriangularGroupScheme`: the corresponding closed subgroup scheme.
 * `TauCeti.SlStd.upperTriangularInclusion`: its closed immersion into the type-`A` carrier.
+* `TauCeti.SlStd.upperTriangularAmbientInclusion`: its closed immersion into the upper-triangular
+  subgroup scheme of `GL_(r+1)`.
 * `TauCeti.SlStd.upperTriangularPoints`: its matrix points inside `GL_(r+1)`.
+* `TauCeti.SlStd.rootSubgroupUpperTriangular` and `TauCeti.SlStd.weightTorusUpperTriangular`: the
+  positive numbered root subgroups and the split weight torus, factored through it.
 
 ## Main results
 
 * `TauCeti.SlStd.upperTriangularPoints_eq`: the point group is the intersection of the carrier
   points with the upper-triangular matrices.
-* `TauCeti.SlStd.rootSubgroupPoints_inl_mem_upperTriangularPoints`: every positive numbered root
-  subgroup lies in the intersection.
-* `TauCeti.SlStd.rootSubgroupPoints_inr_mem_upperTriangularPoints_iff`: a negative numbered root
-  subgroup meets it only at the identity.
-* `TauCeti.SlStd.weightTorusPoints_mem_upperTriangularPoints`: the split weight torus lies in the
-  intersection.
+* `TauCeti.SlStd.isUpperTriangular_coe_rootSubgroupPoints_inl` and
+  `TauCeti.SlStd.rootSubgroupPoints_inl_mem_upperTriangularPoints`: every positive numbered root
+  subgroup point lies in the intersection.
+* `TauCeti.SlStd.isUpperTriangular_coe_rootSubgroupPoints_inr_iff` and
+  `TauCeti.SlStd.rootSubgroupPoints_inr_mem_upperTriangularPoints_iff`: a negative numbered root
+  subgroup point lies in it only at the identity.
+* `TauCeti.SlStd.isUpperTriangular_coe_weightTorusPoints` and
+  `TauCeti.SlStd.weightTorusPoints_mem_upperTriangularPoints`: every split weight torus point lies
+  in the intersection.
+* `TauCeti.SlStd.rootSubgroupUpperTriangular_comp_upperTriangularInclusion` and
+  `TauCeti.SlStd.weightTorusUpperTriangular_comp_upperTriangularInclusion`: the scheme-level
+  factorizations recompose to the carrier's pinning morphisms.
 
 ## References
 
@@ -64,7 +77,7 @@ the torus and positive simple-root subgroups for the explicit type-`A` carrier. 
 
 public section
 
-open AlgebraicGeometry CategoryTheory
+open AlgebraicGeometry CategoryTheory WithConv
 
 namespace TauCeti.SlStd
 
@@ -74,26 +87,32 @@ variable (r : ℕ)
 
 /-! ## The scheme-theoretic intersection -/
 
-/-- The defining Hopf ideal of the full-weight type-`A_r` carrier, named in the ambient
-coordinate Hopf algebra of `GL_(r+1)`. -/
-noncomputable abbrev definingIdeal :
-    HopfIdeal ℤ (GeneralLinear.coordinateHopfAlgebra ℤ (r + 1)) :=
-  UniversalEnvelopingAlgebra.kostantToralDefiningIdeal (rootGenerator r)
-    (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
-    (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv)
-    (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r)
-
 /-- The defining ideal of the upper-triangular subgroup of the type-`A_r` carrier.  The join
 imposes both the carrier equations and the vanishing of every coordinate below the diagonal. -/
 noncomputable def upperTriangularDefiningIdeal :
     HopfIdeal ℤ (GeneralLinear.coordinateHopfAlgebra ℤ (r + 1)) :=
   definingIdeal r ⊔ GeneralLinear.UpperTriangular.definingHopfIdeal ℤ (r + 1)
 
+/-- The upper-triangular defining ideal is the join of the carrier and upper-triangular defining
+Hopf ideals. -/
+theorem upperTriangularDefiningIdeal_def :
+    upperTriangularDefiningIdeal r =
+      definingIdeal r ⊔ GeneralLinear.UpperTriangular.definingHopfIdeal ℤ (r + 1) :=
+  (rfl)
+
 /-- The carrier defining ideal is contained in the upper-triangular defining ideal. -/
 theorem definingIdeal_le_upperTriangularDefiningIdeal :
     definingIdeal r ≤ upperTriangularDefiningIdeal r := by
   rw [upperTriangularDefiningIdeal]
   exact le_sup_left
+
+/-- The ambient upper-triangular defining ideal is contained in the upper-triangular defining
+ideal of the carrier. -/
+theorem definingHopfIdeal_le_upperTriangularDefiningIdeal :
+    GeneralLinear.UpperTriangular.definingHopfIdeal ℤ (r + 1) ≤
+      upperTriangularDefiningIdeal r := by
+  rw [upperTriangularDefiningIdeal]
+  exact le_sup_right
 
 /-- The underlying ideal of the upper-triangular carrier is the join of the two underlying
 defining ideals. -/
@@ -123,6 +142,21 @@ instance isClosedImmersion_upperTriangularInclusion :
   unfold upperTriangularInclusion
   infer_instance
 
+/-- The canonical closed immersion of the upper-triangular subgroup scheme of the type-`A_r`
+carrier into the ambient upper-triangular subgroup scheme of `GL_(r+1)`. -/
+noncomputable def upperTriangularAmbientInclusion :
+    upperTriangularGroupScheme r ⟶ GeneralLinear.UpperTriangular.groupScheme ℤ (r + 1) :=
+  CommHopfAlgCat.quotientSpecMapOfLe
+    (GeneralLinear.coordinateHopfAlgebra ℤ (r + 1))
+    (definingHopfIdeal_le_upperTriangularDefiningIdeal r)
+
+/-- The upper-triangular subgroup scheme of the carrier is closed in the ambient upper-triangular
+subgroup scheme of `GL_(r+1)`. -/
+instance isClosedImmersion_upperTriangularAmbientInclusion :
+    IsClosedImmersion (upperTriangularAmbientInclusion r).hom.hom.left := by
+  unfold upperTriangularAmbientInclusion
+  infer_instance
+
 /-- Including the upper-triangular subgroup into the carrier and then into `GL_(r+1)` is the
 quotient-spectrum inclusion cut out by the joined ideal. -/
 @[simp]
@@ -135,6 +169,16 @@ theorem upperTriangularInclusion_comp_carrierι :
     UniversalEnvelopingAlgebra.kostantToralGroupSchemeι_def, ← Category.assoc,
     CommHopfAlgCat.quotientSpecMapOfLe_comp_quotientSpecι]
 
+/-- The two closed immersions of the upper-triangular subgroup scheme agree over `GL_(r+1)`. -/
+@[simp]
+theorem upperTriangularAmbientInclusion_comp_inclusion :
+    upperTriangularAmbientInclusion r ≫ GeneralLinear.UpperTriangular.inclusion ℤ (r + 1) =
+      upperTriangularInclusion r ≫ carrierι r := by
+  rw [upperTriangularInclusion_comp_carrierι, upperTriangularAmbientInclusion,
+    GeneralLinear.UpperTriangular.inclusion, GeneralLinear.weightParabolicInclusion_def,
+    ← Category.assoc, CommHopfAlgCat.quotientSpecMapOfLe_comp_quotientSpecι]
+  rfl
+
 /-! ## Matrix points -/
 
 /-- The matrix points of the upper-triangular subgroup scheme of the type-`A_r` carrier. -/
@@ -143,29 +187,14 @@ noncomputable def upperTriangularPoints (A : Type v) [CommRing A] :
   GeneralLinear.hopfIdealPointsSubgroup (r + 1) (upperTriangularDefiningIdeal r) A
 
 /-- **The upper-triangular points of the carrier are the intersection of the carrier points and
-the invertible upper-triangular matrices.** -/
+the invertible upper-triangular matrices.**  This is the general law that a join of Hopf ideals
+cuts out an intersection of point groups, specialized to the two ideals at hand. -/
 theorem upperTriangularPoints_eq (A : Type v) [CommRing A] :
     upperTriangularPoints r A =
       points r A ⊓ upperTriangularGroup (Fin (r + 1)) A := by
-  ext g
   rw [upperTriangularPoints, upperTriangularDefiningIdeal,
-    GeneralLinear.mem_hopfIdealPointsSubgroup_iff, Subgroup.mem_inf, mem_points_iff,
-    UpperTriangularGroup.mem_iff]
-  have hupper :
-      (∀ x ∈ GeneralLinear.UpperTriangular.definingHopfIdeal ℤ (r + 1),
-          ((GeneralLinear.pointsMulEquiv (R := ℤ) (r + 1)).symm g).ofConv x = 0) ↔
-        (g : Matrix (Fin (r + 1)) (Fin (r + 1)) A).IsUpperTriangular := by
-    rw [← GeneralLinear.mem_hopfIdealPointsSubgroup_iff,
-      GeneralLinear.UpperTriangular.hopfIdealPointsSubgroup_eq,
-      UpperTriangularGroup.mem_iff]
-  constructor
-  · intro hg
-    refine ⟨fun x hx ↦ hg x (Ideal.mem_sup_left hx), hupper.mp ?_⟩
-    exact fun x hx ↦ hg x (Ideal.mem_sup_right hx)
-  · rintro ⟨hcarrier, htri⟩ x hx
-    have hu := hupper.mpr htri
-    obtain ⟨y, hy, z, hz, rfl⟩ := HopfIdeal.mem_sup.mp hx
-    rw [map_add, hcarrier y hy, hu z hz, add_zero]
+    GeneralLinear.hopfIdealPointsSubgroup_sup, ← points_eq_hopfIdealPointsSubgroup,
+    GeneralLinear.UpperTriangular.hopfIdealPointsSubgroup_eq]
 
 /-- Membership in the upper-triangular carrier points means carrier membership together with
 upper triangularity of the underlying matrix. -/
@@ -176,6 +205,52 @@ theorem mem_upperTriangularPoints_iff
       g ∈ points r A ∧ (g : Matrix (Fin (r + 1)) (Fin (r + 1)) A).IsUpperTriangular := by
   rw [upperTriangularPoints_eq, Subgroup.mem_inf, UpperTriangularGroup.mem_iff]
 
+/-! ## Triangularity of the pinning matrices -/
+
+/-- The divided-power exponential matrix of a positive numbered root generator is upper
+triangular: it is a transvection whose only off-diagonal entry sits above the diagonal. -/
+private theorem isUpperTriangular_coe_kostantRootSubgroupMatrix_inl
+    {A : Type*} [CommRing A] (i : Fin r)
+    (q : WithConv (AdditiveGroup.coordinateHopfAlgebra ℤ →ₐ[ℤ] A)) :
+    ((UniversalEnvelopingAlgebra.kostantRootSubgroupMatrix (rootGenerator r)
+          (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
+          (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv) (.inl i)
+          (isNilpotent_rep_rootGenerator r (.inl i)) (latticeBasis r) q :
+        Matrix.GeneralLinearGroup (Fin (r + 1)) A) :
+      Matrix (Fin (r + 1)) (Fin (r + 1)) A).IsUpperTriangular := by
+  rw [kostantRootSubgroupMatrix_eq_transvection, coe_transvectionUnit]
+  simp only [rootTarget_inl, rootSource_inl]
+  exact Matrix.blockTriangular_transvection (b := id) (Fin.castSucc_le_succ i) _
+
+/-- A positive numbered root-subgroup matrix is upper triangular. -/
+theorem isUpperTriangular_coe_rootSubgroupPoints_inl
+    (A : Type v) [CommRing A] (i : Fin r) (u : Multiplicative A) :
+    ((rootSubgroupPoints r (.inl i) A u : Matrix.GeneralLinearGroup (Fin (r + 1)) A) :
+      Matrix (Fin (r + 1)) (Fin (r + 1)) A).IsUpperTriangular := by
+  rw [coe_rootSubgroupPoints]
+  exact isUpperTriangular_coe_kostantRootSubgroupMatrix_inl r i _
+
+/-- A negative numbered root-subgroup matrix is upper triangular exactly when its parameter is
+zero: its only nonzero off-diagonal entry sits below the diagonal. -/
+theorem isUpperTriangular_coe_rootSubgroupPoints_inr_iff
+    (A : Type v) [CommRing A] (i : Fin r) (u : Multiplicative A) :
+    ((rootSubgroupPoints r (.inr i) A u : Matrix.GeneralLinearGroup (Fin (r + 1)) A) :
+        Matrix (Fin (r + 1)) (Fin (r + 1)) A).IsUpperTriangular ↔
+      Multiplicative.toAdd u = 0 := by
+  rw [coe_rootSubgroupPoints, kostantRootSubgroupMatrix_eq_transvection,
+    MulEquiv.apply_symm_apply, coe_transvectionUnit]
+  simp only [rootTarget_inr, rootSource_inr]
+  exact isUpperTriangular_transvection_iff (Fin.castSucc_lt_succ (i := i)) _
+
+/-- A split weight torus matrix is diagonal, hence upper triangular. -/
+theorem isUpperTriangular_coe_weightTorusPoints
+    (A : Type v) [CommRing A] (s : Fin r → Aˣ) :
+    ((weightTorusPoints r A s : Matrix.GeneralLinearGroup (Fin (r + 1)) A) :
+      Matrix (Fin (r + 1)) (Fin (r + 1)) A).IsUpperTriangular := by
+  rw [coe_weightTorusPoints,
+    UniversalEnvelopingAlgebra.kostantTorusMatrix_apply, diagGL_coe]
+  exact Matrix.blockTriangular_diagonal _
+
 /-! ## The positive pinning lies in the intersection -/
 
 /-- Every positive numbered root-subgroup point belongs to the upper-triangular subgroup of the
@@ -185,46 +260,19 @@ theorem rootSubgroupPoints_inl_mem_upperTriangularPoints
     (rootSubgroupPoints r (.inl i) A u : Matrix.GeneralLinearGroup (Fin (r + 1)) A) ∈
       upperTriangularPoints r A := by
   rw [mem_upperTriangularPoints_iff]
-  refine ⟨(rootSubgroupPoints r (.inl i) A u).property, ?_⟩
-  rw [coe_rootSubgroupPoints, kostantRootSubgroupMatrix_eq_transvection,
-    MulEquiv.apply_symm_apply, coe_transvectionUnit]
-  simp only [rootTarget_inl, rootSource_inl]
-  -- `IsUpperTriangular` hides the two matrix indices as implicit `BlockTriangular` arguments.
-  change ∀ ⦃a b : Fin (r + 1)⦄, b < a → Matrix.transvection i.castSucc i.succ
-    (Multiplicative.toAdd u) a b = 0
-  intro a b hba
-  simp only [Matrix.transvection, Matrix.add_apply, Matrix.one_apply, Matrix.single_apply]
-  simp only [hba.ne', ↓reduceIte, zero_add]
-  split
-  · rename_i h
-    obtain ⟨rfl, rfl⟩ := h
-    exact (lt_asymm (Fin.castSucc_lt_succ (i := i)) hba).elim
-  · rfl
+  exact ⟨(rootSubgroupPoints r (.inl i) A u).property,
+    isUpperTriangular_coe_rootSubgroupPoints_inl r A i u⟩
 
-/-- A negative numbered root-subgroup point is upper triangular exactly when its parameter is
-zero.  In particular, the intersection selects the positive, rather than both, halves of the
-pinning. -/
+/-- A negative numbered root-subgroup point lies in the upper-triangular subgroup exactly when
+its parameter is zero.  In particular, the intersection selects the positive, rather than both,
+halves of the pinning. -/
 theorem rootSubgroupPoints_inr_mem_upperTriangularPoints_iff
     (A : Type v) [CommRing A] (i : Fin r) (u : Multiplicative A) :
     (rootSubgroupPoints r (.inr i) A u : Matrix.GeneralLinearGroup (Fin (r + 1)) A) ∈
         upperTriangularPoints r A ↔
       Multiplicative.toAdd u = 0 := by
-  rw [mem_upperTriangularPoints_iff]
-  constructor
-  · rintro ⟨_, htri⟩
-    have hzero := htri (i := i.succ) (j := i.castSucc) (Fin.castSucc_lt_succ (i := i))
-    rw [coe_rootSubgroupPoints, kostantRootSubgroupMatrix_eq_transvection,
-      MulEquiv.apply_symm_apply, coe_transvectionUnit] at hzero
-    simp only [Matrix.transvection, Matrix.add_apply, Matrix.one_apply, Matrix.single_apply,
-      rootTarget_inr, rootSource_inr, (Fin.castSucc_lt_succ (i := i)).ne', ↓reduceIte,
-      zero_add] at hzero
-    exact hzero
-  · intro hu
-    refine ⟨(rootSubgroupPoints r (.inr i) A u).property, ?_⟩
-    rw [coe_rootSubgroupPoints, kostantRootSubgroupMatrix_eq_transvection,
-      MulEquiv.apply_symm_apply, hu,
-      transvectionUnit_zero]
-    exact Matrix.blockTriangular_one
+  rw [mem_upperTriangularPoints_iff, isUpperTriangular_coe_rootSubgroupPoints_inr_iff,
+    and_iff_right (rootSubgroupPoints r (.inr i) A u).property]
 
 /-- Every point of the named split weight torus belongs to the upper-triangular subgroup of the
 type-`A_r` carrier. -/
@@ -233,13 +281,169 @@ theorem weightTorusPoints_mem_upperTriangularPoints
     (weightTorusPoints r A s : Matrix.GeneralLinearGroup (Fin (r + 1)) A) ∈
       upperTriangularPoints r A := by
   rw [mem_upperTriangularPoints_iff]
-  refine ⟨(weightTorusPoints r A s).property, ?_⟩
-  rw [coe_weightTorusPoints,
-    UniversalEnvelopingAlgebra.kostantTorusMatrix_apply, diagGL_coe]
-  -- Expose the implicit row and column of `BlockTriangular` after rewriting to a diagonal matrix.
-  change ∀ ⦃i j : Fin (r + 1)⦄, j < i →
-    Matrix.diagonal (fun k ↦ (torusCharacter s (weight r k) : A)) i j = 0
-  intro i j hji
-  exact Matrix.diagonal_apply_ne _ hji.ne'
+  exact ⟨(weightTorusPoints r A s).property, isUpperTriangular_coe_weightTorusPoints r A s⟩
+
+/-! ## Scheme-level factorization of the positive pinning -/
+
+/-- The coordinate morphism of the numbered root subgroup of the type-`A_r` carrier. -/
+private noncomputable abbrev rootCoordinateMap (k : Fin r ⊕ Fin r) :
+    GeneralLinear.coordinateHopfAlgebra ℤ (r + 1) ⟶ AdditiveGroup.coordinateHopfAlgebra ℤ :=
+  UniversalEnvelopingAlgebra.kostantRootSubgroupCoordinateMap (rootGenerator r)
+    (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
+    (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv) k
+    (isNilpotent_rep_rootGenerator r k) (latticeBasis r)
+
+/-- A positive root-subgroup coordinate map kills the upper-triangular defining ideal: it kills
+the carrier ideal, and its tautological point is the generic upper-triangular transvection. -/
+private theorem upperTriangularDefiningIdeal_le_ker_rootCoordinateMap (i : Fin r) :
+    (upperTriangularDefiningIdeal r).toIdeal ≤
+      RingHom.ker (rootCoordinateMap r (.inl i)).hom.toAlgHom.toRingHom := by
+  rw [upperTriangularDefiningIdeal_toIdeal]
+  refine sup_le (UniversalEnvelopingAlgebra.kostantToralDefiningIdeal_toIdeal_le_root_ker
+    (rootGenerator r) (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
+    (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv)
+    (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) (.inl i)) ?_
+  rw [Ideal.span_le]
+  intro x hx
+  rw [GeneralLinear.UpperTriangular.mem_definingRelationSet_iff] at hx
+  obtain ⟨a, b, hba, rfl⟩ := hx
+  let f := rootCoordinateMap r (.inl i)
+  let q : WithConv (AdditiveGroup.coordinateHopfAlgebra ℤ →ₐ[ℤ]
+      AdditiveGroup.coordinateHopfAlgebra ℤ) :=
+    toConv (AlgHom.id ℤ (AdditiveGroup.coordinateHopfAlgebra ℤ))
+  have hq : q.ofConv = AlgHom.id ℤ (AdditiveGroup.coordinateHopfAlgebra ℤ) :=
+    WithConv.ofConv_toConv _
+  have hpoint : GeneralLinear.pointToGeneralLinear (r + 1)
+      (toConv (q.ofConv.comp f.hom.toAlgHom)) =
+      UniversalEnvelopingAlgebra.kostantRootSubgroupMatrix (rootGenerator r)
+        (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
+        (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv) (.inl i)
+        (isNilpotent_rep_rootGenerator r (.inl i)) (latticeBasis r) q :=
+    UniversalEnvelopingAlgebra.pointsMulEquiv_kostantRootSubgroupCoordinateMap
+      (rootGenerator r) (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
+      (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv) (.inl i)
+      (isNilpotent_rep_rootGenerator r (.inl i)) (latticeBasis r)
+      (AdditiveGroup.coordinateHopfAlgebra ℤ) q
+  have hpoint' : GeneralLinear.pointToGeneralLinear (r + 1) (toConv f.hom.toAlgHom) =
+      UniversalEnvelopingAlgebra.kostantRootSubgroupMatrix (rootGenerator r)
+        (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
+        (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv) (.inl i)
+        (isNilpotent_rep_rootGenerator r (.inl i)) (latticeBasis r) q := by
+    simpa only [hq, AlgHom.id_comp, WithConv.ofConv_toConv] using hpoint
+  have hentry := isUpperTriangular_coe_kostantRootSubgroupMatrix_inl r i q hba
+  rw [← hpoint', GeneralLinear.pointToGeneralLinear_apply, WithConv.ofConv_toConv] at hentry
+  rw [SetLike.mem_coe, RingHom.mem_ker]
+  simpa only [AlgHom.toRingHom_eq_coe, RingHom.coe_coe] using hentry
+
+/-- The weight-torus coordinate map kills the upper-triangular defining ideal: a diagonal matrix
+has no coordinates below the diagonal. -/
+private theorem upperTriangularDefiningIdeal_le_ker_weightTorusCoordinateMap :
+    (upperTriangularDefiningIdeal r).toIdeal ≤
+      RingHom.ker
+        (GeneralLinear.weightTorusCoordinateMap (weight r)).hom.toAlgHom.toRingHom := by
+  rw [upperTriangularDefiningIdeal_toIdeal]
+  refine sup_le (UniversalEnvelopingAlgebra.kostantToralDefiningIdeal_toIdeal_le_torus_ker
+    (rootGenerator r) (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
+    (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv)
+    (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r)) ?_
+  rw [Ideal.span_le]
+  intro x hx
+  rw [GeneralLinear.UpperTriangular.mem_definingRelationSet_iff] at hx
+  obtain ⟨a, b, hba, rfl⟩ := hx
+  have hzero : (GeneralLinear.weightTorusCoordinateMap (weight r)).hom
+      (GeneralLinear.coordinateHopfAlgebraAlgEquiv ℤ (r + 1)
+        (GeneralLinear.coordinateRingMap ℤ (r + 1) (MvPolynomial.X (a, b)))) = 0 := by
+    rw [GeneralLinear.weightTorusCoordinateMap_X]
+    simp only [hba.ne', ↓reduceIte]
+  rw [SetLike.mem_coe, RingHom.mem_ker]
+  simpa only [BialgHom.coe_toAlgHom, AlgHom.toRingHom_eq_coe, RingHom.coe_coe] using hzero
+
+/-- **The positive numbered root subgroup, factored through the upper-triangular subgroup scheme
+of the type-`A_r` carrier.** -/
+noncomputable def rootSubgroupUpperTriangular (i : Fin r) :
+    AdditiveGroup.groupScheme ℤ ⟶ upperTriangularGroupScheme r :=
+  eqToHom (AdditiveGroup.groupScheme_def ℤ) ≫
+    (AlgebraicGeometry.hopfSpec (CommRingCat.of ℤ)).map
+      (CommHopfAlgCat.liftQuotient (upperTriangularDefiningIdeal r)
+        (rootCoordinateMap r (.inl i))
+        (upperTriangularDefiningIdeal_le_ker_rootCoordinateMap r i)).op
+
+/-- **The split weight torus, factored through the upper-triangular subgroup scheme of the
+type-`A_r` carrier.** -/
+noncomputable def weightTorusUpperTriangular :
+    SplitTorus.groupScheme ℤ (Fin r) ⟶ upperTriangularGroupScheme r :=
+  eqToHom (DiagonalizableGroup.groupScheme_def ℤ (SplitTorus.characterGroup (Fin r))) ≫
+    (AlgebraicGeometry.hopfSpec (CommRingCat.of ℤ)).map
+      (CommHopfAlgCat.liftQuotient (upperTriangularDefiningIdeal r)
+        (GeneralLinear.weightTorusCoordinateMap (weight r))
+        (upperTriangularDefiningIdeal_le_ker_weightTorusCoordinateMap r)).op
+
+/-- Factoring a positive root subgroup through the upper-triangular subgroup and then including
+into the carrier recovers the carrier's own root subgroup. -/
+@[simp]
+theorem rootSubgroupUpperTriangular_comp_upperTriangularInclusion (i : Fin r) :
+    rootSubgroupUpperTriangular r i ≫ upperTriangularInclusion r = rootSubgroup r (.inl i) := by
+  have hcoord :
+      CommHopfAlgCat.quotientMapOfLe (GeneralLinear.coordinateHopfAlgebra ℤ (r + 1))
+            (definingIdeal_le_upperTriangularDefiningIdeal r) ≫
+          CommHopfAlgCat.liftQuotient (upperTriangularDefiningIdeal r)
+            (rootCoordinateMap r (.inl i))
+            (upperTriangularDefiningIdeal_le_ker_rootCoordinateMap r i) =
+        UniversalEnvelopingAlgebra.kostantRootSubgroupToralCoordinateMap (rootGenerator r)
+          (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
+          (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv)
+          (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) (.inl i) := by
+    have hker := UniversalEnvelopingAlgebra.kostantToralDefiningIdeal_toIdeal_le_root_ker
+      (rootGenerator r) (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
+      (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv)
+      (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) (.inl i)
+    refine (CommHopfAlgCat.liftQuotient_unique (definingIdeal r) (rootCoordinateMap r (.inl i))
+        hker _ ?_).trans
+      (CommHopfAlgCat.liftQuotient_unique (definingIdeal r) (rootCoordinateMap r (.inl i))
+        hker _ ?_).symm
+    · rw [← Category.assoc, CommHopfAlgCat.mkQuotient_comp_quotientMapOfLe,
+        CommHopfAlgCat.mkQuotient_comp_liftQuotient]
+    · exact UniversalEnvelopingAlgebra.mkQuotient_comp_kostantRootSubgroupToralCoordinateMap
+        (rootGenerator r) (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
+        (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv)
+        (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) (.inl i)
+  rw [rootSubgroupUpperTriangular, upperTriangularInclusion,
+    CommHopfAlgCat.quotientSpecMapOfLe_def, rootSubgroup_def,
+    UniversalEnvelopingAlgebra.kostantRootSubgroupToToral_def, Category.assoc,
+    ← (AlgebraicGeometry.hopfSpec (CommRingCat.of ℤ)).map_comp, ← op_comp, hcoord]
+
+/-- Factoring the split weight torus through the upper-triangular subgroup and then including
+into the carrier recovers the carrier's own weight torus. -/
+@[simp]
+theorem weightTorusUpperTriangular_comp_upperTriangularInclusion :
+    weightTorusUpperTriangular r ≫ upperTriangularInclusion r = weightTorus r := by
+  have hcoord :
+      CommHopfAlgCat.quotientMapOfLe (GeneralLinear.coordinateHopfAlgebra ℤ (r + 1))
+            (definingIdeal_le_upperTriangularDefiningIdeal r) ≫
+          CommHopfAlgCat.liftQuotient (upperTriangularDefiningIdeal r)
+            (GeneralLinear.weightTorusCoordinateMap (weight r))
+            (upperTriangularDefiningIdeal_le_ker_weightTorusCoordinateMap r) =
+        UniversalEnvelopingAlgebra.kostantWeightTorusToralCoordinateMap (rootGenerator r)
+          (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
+          (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv)
+          (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) := by
+    have hker := UniversalEnvelopingAlgebra.kostantToralDefiningIdeal_toIdeal_le_torus_ker
+      (rootGenerator r) (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
+      (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv)
+      (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r)
+    refine (CommHopfAlgCat.liftQuotient_unique (definingIdeal r)
+        (GeneralLinear.weightTorusCoordinateMap (weight r)) hker _ ?_).trans
+      (CommHopfAlgCat.liftQuotient_unique (definingIdeal r)
+        (GeneralLinear.weightTorusCoordinateMap (weight r)) hker _ ?_).symm
+    · rw [← Category.assoc, CommHopfAlgCat.mkQuotient_comp_quotientMapOfLe,
+        CommHopfAlgCat.mkQuotient_comp_liftQuotient]
+    · exact UniversalEnvelopingAlgebra.mkQuotient_comp_kostantWeightTorusToralCoordinateMap
+        (rootGenerator r) (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
+        (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv)
+        (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r)
+  rw [weightTorusUpperTriangular, upperTriangularInclusion,
+    CommHopfAlgCat.quotientSpecMapOfLe_def, weightTorus_def,
+    UniversalEnvelopingAlgebra.kostantWeightTorusToToral_def, Category.assoc,
+    ← (AlgebraicGeometry.hopfSpec (CommRingCat.of ℤ)).map_comp, ← op_comp, hcoord]
 
 end TauCeti.SlStd
