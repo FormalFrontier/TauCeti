@@ -95,6 +95,14 @@ noncomputable def inducedExactStructure [hP : E.IsResolving P] :
     ExactStructure P.FullSubcategory :=
   E.fullSubcategory P hP.isExtensionClosed
 
+/-- A short complex of the resolving subcategory is a conflation exactly when its image in the
+ambient category is a conflation. -/
+@[simp]
+theorem inducedExactStructure_conflation_iff [hP : E.IsResolving P]
+    (S : ShortComplex P.FullSubcategory) :
+    (inducedExactStructure (E := E) (P := P)).Conflation S ↔ E.Conflation (S.map P.ι) :=
+  E.fullSubcategory_conflation_iff hP.isExtensionClosed S
+
 end IsResolving
 
 end ExactStructure
