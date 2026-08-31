@@ -9,14 +9,15 @@ public import TauCeti.Algebra.Lie.E6.Minuscule.GroupScheme
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.Assembly
 
 /-!
-# The type E6 minuscule carrier is pinned by its named root datum
+# Torus characters of the type E6 minuscule carrier in its named root datum
 
 `TauCeti.E6Minuscule.groupScheme` is the full-weight Chevalley carrier obtained from the
 twenty-seven-dimensional minuscule representation of the type-`E₆` Serre presentation. Its
 numbered raising and lowering subgroups and its rank-six split weight torus are explicit, and
 their conjugation equation is stated in terms of the corresponding row of `CartanMatrix.E 6`.
 
-This file identifies that table with the uniform pinned root datum used by downstream consumers.
+This file identifies that table with the uniform simply connected root datum used by downstream
+consumers.
 For a validity proof `ht : TauCeti.DynkinType.E6.Valid`, the root character of the `i`-th raising
 subgroup is
 
@@ -25,8 +26,8 @@ subgroup is
 ```
 
 and the character of the matching lowering subgroup is its negative. Rewriting the carrier's
-conjugation equation by these identifications gives the two pinning equations against the named
-positive and negative simple roots.
+conjugation equation by these identifications gives the two torus conjugation equations against
+the named positive and negative simple roots.
 
 The distinction from the equations already in `GroupScheme.lean` is the dispatcher in the target:
 `DynkinType.simplyConnectedRootDatum` is the root datum reached from a validated Lie-type index,
@@ -36,18 +37,17 @@ two routes use the same Bourbaki numbering and the same character lattice.
 
 This file does not assert reductivity, maximality of the weight torus, existence of all root
 subgroups, or an identification of the carrier with an independently defined algebraic group.
-It packages only the root-subgroup part of the pinning interface that the explicit construction
-already proves.
+It packages only the torus-character compatibility that the explicit construction already proves.
 
 ## Main results
 
 * `TauCeti.E6Minuscule.rootGeneratorWeight_inl_eq_root_simpleIndex`: the raising-subgroup
-  character is the corresponding simple root of the uniform pinned datum.
+  character is the corresponding simple root of the uniform simply connected datum.
 * `TauCeti.E6Minuscule.rootGeneratorWeight_inr_eq_neg_root_simpleIndex`: the lowering-subgroup
   character is the negative of that simple root.
 * `TauCeti.E6Minuscule.weightTorus_conj_rootSubgroup_root_simpleIndex` and
   `TauCeti.E6Minuscule.weightTorus_conj_rootSubgroup_neg_root_simpleIndex`: the positive and
-  negative simple-root pinning equations.
+  negative simple-root torus conjugation equations.
 
 ## References
 
@@ -59,7 +59,7 @@ This advances the "Pinnings" and "Root subgroup maps" targets of Layer 9 of
 `TauCetiRoadmap/ReductiveGroups/README.md`. Its consumer is milestone L0 of
 `TauCetiRoadmap/CFSGStatement/README.md`: `ValidLieTypeIndex.AmbientGroup` must be traceable through
 `ValidLieTypeIndex.dynkinType` to `DynkinType.simplyConnectedRootDatum`, with its root subgroups
-pinned against that same datum.
+identified by characters of that same datum.
 -/
 
 public section
@@ -73,7 +73,7 @@ open DynkinType
 
 /-! ## The numbered subgroups sit at the named simple roots -/
 
-/-- **The `i`-th raising subgroup sits at the `i`-th simple root of the uniform pinned type-`E₆`
+/-- **The `i`-th raising subgroup sits at the `i`-th simple root of the uniform type-`E₆`
 datum.** Its character for the action of the carrier's split weight torus is the root selected by
 the uniform Bourbaki simple-root index. -/
 theorem rootGeneratorWeight_inl_eq_root_simpleIndex (ht : E6.Valid) (i : Fin 6) :
@@ -85,7 +85,7 @@ theorem rootGeneratorWeight_inl_eq_root_simpleIndex (ht : E6.Valid) (i : Fin 6) 
   rw [rootGeneratorWeight_inl]
 
 /-- **The `i`-th lowering subgroup sits at the negative of the `i`-th simple root of the uniform
-pinned type-`E₆` datum.** -/
+type-`E₆` datum.** -/
 theorem rootGeneratorWeight_inr_eq_neg_root_simpleIndex (ht : E6.Valid) (i : Fin 6) :
     rootGeneratorWeight (.inr i) =
       -(E6.simplyConnectedRootDatum ht).root (E6.simpleIndex ht i) :=
@@ -94,12 +94,12 @@ theorem rootGeneratorWeight_inr_eq_neg_root_simpleIndex (ht : E6.Valid) (i : Fin
     rw [rootGeneratorWeight_inr, Pi.neg_apply, rootGeneratorWeight_inl]
   hneg.trans (congrArg Neg.neg (rootGeneratorWeight_inl_eq_root_simpleIndex ht i))
 
-/-! ## The pinning equation against the named simple roots -/
+/-! ## Torus conjugation equations against the named simple roots -/
 
-/-- **The pinning equation of the minuscule carrier at a named positive simple root.** A point of
+/-- **The torus conjugation equation at a named positive simple root.** A point of
 the split weight torus conjugates the raising-subgroup element of parameter `u` at node `i` to the
 same subgroup with parameter `α_i(s)u`, where `α_i` is the corresponding root of the uniform
-pinned simply connected type-`E₆` datum. -/
+simply connected type-`E₆` datum. -/
 theorem weightTorus_conj_rootSubgroup_root_simpleIndex (ht : E6.Valid) (i : Fin 6)
     (A : Type) [CommRing A]
     (s : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of ℤ)) ⟶
@@ -119,7 +119,7 @@ theorem weightTorus_conj_rootSubgroup_root_simpleIndex (ht : E6.Valid) (i : Fin 
   rw [← rootGeneratorWeight_inl_eq_root_simpleIndex]
   exact weightTorus_conj_rootSubgroup (.inl i) A s u
 
-/-- **The pinning equation of the minuscule carrier at a named negative simple root.** A point of
+/-- **The torus conjugation equation at a named negative simple root.** A point of
 the split weight torus conjugates the lowering-subgroup element of parameter `u` at node `i` to
 the same subgroup with parameter `(-α_i)(s)u`. -/
 theorem weightTorus_conj_rootSubgroup_neg_root_simpleIndex (ht : E6.Valid) (i : Fin 6)
