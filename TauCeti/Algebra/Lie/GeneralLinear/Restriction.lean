@@ -22,7 +22,7 @@ The empty-rank case is included. For positive rank the decomposition is supplied
 
 ## Main results
 
-* `TauCeti.isIrreducible_restrict_sl_of_forall_lie_one_eq_smul`: restriction of an irreducible
+* `TauCeti.isIrreducible_restrict_sl_of_forall_one_lie_eq_smul`: restriction of an irreducible
   `gl n` module to `sl n` is irreducible as soon as the identity matrix acts by a scalar.
 * `TauCeti.isIrreducible_restrict_sl`: over an algebraically closed field Schur's lemma supplies
   that scalar, so a finite-dimensional irreducible `gl n` module restricts irreducibly.
@@ -97,7 +97,7 @@ stays irreducible after restriction to `sl n`: the scalars are exactly what the 
 and `gl n` is the sum of `sl n` and the scalar matrices. Neither algebraic closedness nor
 finite-dimensionality is needed, those being what
 `TauCeti.isIrreducible_restrict_sl` uses to produce the scalar. -/
-theorem isIrreducible_restrict_sl_of_forall_lie_one_eq_smul {c : K}
+theorem isIrreducible_restrict_sl_of_forall_one_lie_eq_smul {c : K}
     (hc : ∀ m : M, ⁅(1 : Matrix (Fin n) (Fin n) K), m⁆ = c • m) :
     LieModule.IsIrreducible K (LieAlgebra.SpecialLinear.sl (Fin n) K) M := by
   refine isIrreducible_of_sup_center_eq_top_of_forall_exists_lie_eq_smul K
@@ -110,12 +110,12 @@ variable [IsAlgClosed K] [FiniteDimensional K M]
 /-- A finite-dimensional irreducible representation of `gl n` over an algebraically closed
 characteristic-zero field stays irreducible after restriction to `sl n`: Schur's lemma makes the
 identity matrix act by a scalar, and
-`TauCeti.isIrreducible_restrict_sl_of_forall_lie_one_eq_smul` does the rest. -/
+`TauCeti.isIrreducible_restrict_sl_of_forall_one_lie_eq_smul` does the rest. -/
 theorem isIrreducible_restrict_sl :
     LieModule.IsIrreducible K (LieAlgebra.SpecialLinear.sl (Fin n) K) M := by
   obtain ⟨c, hc⟩ := exists_forall_lie_eq_smul K (Matrix (Fin n) (Fin n) K) M
-    ⟨1, mem_center_matrix_iff.mpr ⟨1, (one_smul K (1 : Matrix (Fin n) (Fin n) K)).symm⟩⟩
-  exact isIrreducible_restrict_sl_of_forall_lie_one_eq_smul hc
+    ⟨1, one_mem_center_matrix K (Fin n)⟩
+  exact isIrreducible_restrict_sl_of_forall_one_lie_eq_smul hc
 
 end Restriction
 

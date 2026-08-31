@@ -64,6 +64,8 @@ and the whole of `𝔫⁺` annihilates (`TauCeti.isGlHighestWeightVector_iff_for
   weight vector, so the elementwise definition loses nothing.
 * `TauCeti.IsGlHighestWeightVector.weight_eq`: a vector is a highest weight vector for at most one
   weight.
+* `TauCeti.IsGlHighestWeightVector.map` and `TauCeti.IsGlHighestWeightVector.congr`: highest weight
+  vectors transport along module morphisms that preserve nonzeroness, in particular equivalences.
 * `TauCeti.isGlHighestWeightVector_coe_iff`: a vector of a Lie submodule is a highest weight vector
   of that submodule exactly when it is one of the ambient module.
 * `TauCeti.isGlHighestWeightVector_single_bot_top`: the highest root vector `E_{⊥⊤}` is a highest
@@ -358,6 +360,13 @@ theorem IsGlHighestWeightVector.map {M' : Type*} [AddCommGroup M'] [Module R M']
   refine isGlHighestWeightVector_iff.mpr ⟨hf, fun i => ?_, fun i j hij => ?_⟩
   · rw [← hmap, hv.lie_single_self_eq_smul, map_smul]
   · rw [← hmap, hv.lie_single_eq_zero hij, map_zero]
+
+/-- **Transport along an equivalence of `gl n R`-modules.** -/
+theorem IsGlHighestWeightVector.congr {M' : Type*} [AddCommGroup M'] [Module R M']
+    [LieRingModule (Matrix n n R) M'] (hv : IsGlHighestWeightVector mu v)
+    (e : M ≃ₗ⁅R,Matrix n n R⁆ M') : IsGlHighestWeightVector mu (e v) :=
+  hv.map (e : M →ₗ⁅R,Matrix n n R⁆ M') fun h =>
+    hv.ne_zero (e.injective (h.trans (map_zero e).symm))
 
 /-- **A vector is a highest weight vector for at most one weight.** The diagonal matrix units read
 the weight off the vector, so two weights of the same nonzero vector agree entry by entry. -/

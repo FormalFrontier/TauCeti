@@ -64,7 +64,7 @@ describes its action.
   irreducibles down to its derived ideal, the centre contributing only the scalars recorded by
   `centralWeight`. Its generalization
   `TauCeti.isIrreducible_of_sup_center_eq_top_of_forall_exists_lie_eq_smul` takes those scalars as
-  a hypothesis instead, and so applies over any field.
+  a hypothesis instead, and so applies over any commutative ring.
 
 ## Implementation notes
 
@@ -114,9 +114,9 @@ end Uniqueness
 
 /-! ### Schur's lemma for Lie modules -/
 
-section Schur
+section ScalarPropagation
 
-variable (K : Type u) [Field K] (L : Type v) [LieRing L] [LieAlgebra K L]
+variable (K : Type u) [CommRing K] (L : Type v) [LieRing L] [LieAlgebra K L]
 variable (M : Type w) [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M]
 variable [LieModule.IsIrreducible K L M]
 
@@ -136,6 +136,14 @@ theorem forall_apply_eq_smul_of_apply_eq_smul (f : M →ₗ⁅K,L⁆ M) {c : K} 
     rwa [hbot, LieSubmodule.mem_bot] at hm₀'
   exact (hmem m).1 (htop ▸ LieSubmodule.mem_top m)
 
+end ScalarPropagation
+
+section Schur
+
+variable (K : Type u) [Field K] (L : Type v) [LieRing L] [LieAlgebra K L]
+variable (M : Type w) [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M]
+variable [LieModule.IsIrreducible K L M]
+
 variable [IsAlgClosed K] [FiniteDimensional K M]
 
 /-- **Schur's lemma for Lie modules.** Over an algebraically closed field, a morphism of a
@@ -154,7 +162,7 @@ end Schur
 
 section CentralEnd
 
-variable (K : Type u) [Field K] (L : Type v) [LieRing L] [LieAlgebra K L]
+variable (K : Type u) [CommRing K] (L : Type v) [LieRing L] [LieAlgebra K L]
 variable (M : Type w) [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M]
 
 /-- **The action of a central element, as a morphism of `L`-modules.** The Leibniz rule
@@ -177,7 +185,7 @@ end CentralEnd
 
 section CentralScalar
 
-variable (K : Type u) [Field K] (L : Type v) [LieRing L] [LieAlgebra K L]
+variable (K : Type u) [CommRing K] (L : Type v) [LieRing L] [LieAlgebra K L]
 variable (M : Type w) [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M]
 variable [LieModule.IsIrreducible K L M]
 
@@ -301,7 +309,7 @@ end Transfer
 
 section Descent
 
-variable (K : Type u) [Field K] (L : Type v) [LieRing L] [LieAlgebra K L]
+variable (K : Type u) [CommRing K] (L : Type v) [LieRing L] [LieAlgebra K L]
 variable (M : Type w) [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M]
 variable [LieModule.IsIrreducible K L M]
 
@@ -334,6 +342,14 @@ theorem isIrreducible_of_sup_center_eq_top_of_forall_exists_lie_eq_smul (L' : Li
   rcases IsSimpleOrder.eq_bot_or_eq_top P' with hbot | htop
   · exact absurd ((LieSubmodule.toSubmodule_eq_bot P).1 (congrArg LieSubmodule.toSubmodule hbot)) hP
   · exact congrArg LieSubmodule.toSubmodule htop
+
+end Descent
+
+section Descent
+
+variable (K : Type u) [Field K] (L : Type v) [LieRing L] [LieAlgebra K L]
+variable (M : Type w) [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M]
+variable [LieModule.IsIrreducible K L M]
 
 variable [IsAlgClosed K] [FiniteDimensional K M]
 

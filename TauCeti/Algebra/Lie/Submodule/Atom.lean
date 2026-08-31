@@ -32,6 +32,8 @@ coatom statement runs the same way along the projection `LieSubmodule.Quotient.m
   generates the whole module.
 * `TauCeti.lieSpan_singleton_eq_top_of_lieSpan_eq`: the generator of a cyclic Lie submodule
   generates that submodule, read as a Lie module in its own right.
+* `TauCeti.eq_top_of_mem_of_lieSpan_singleton_eq_top`: a Lie submodule containing a generator of
+  the ambient module is the whole module.
 * `TauCeti.isIrreducible_quotient_of_isCoatom`: the quotient of a Lie module by a coatom of its
   lattice of Lie submodules is irreducible.
 
@@ -74,6 +76,13 @@ theorem lieSpan_singleton_eq_top_of_lieSpan_eq {N : LieSubmodule R L M} {m : M}
       ⟨⟨m, hm⟩, LieSubmodule.subset_lieSpan rfl, rfl⟩)
   rw [h] at hle
   exact absurd (hlt.trans_le hle) (lt_irrefl _)
+
+/-- **A Lie submodule containing a generator of the ambient module is the whole module.** -/
+theorem eq_top_of_mem_of_lieSpan_singleton_eq_top {N : LieSubmodule R L M} {m : M}
+    (hgen : LieSubmodule.lieSpan R L {m} = ⊤) (hm : m ∈ N) : N = ⊤ := by
+  apply top_unique
+  rw [← hgen]
+  exact LieSubmodule.lieSpan_le.mpr (Set.singleton_subset_iff.mpr hm)
 
 /-- **The irreducible Lie submodules are the atoms.** A Lie submodule `N` of `M` is irreducible as
 a Lie module exactly when it is an atom of `LieSubmodule R L M`, that is, when `N ≠ ⊥` and the only

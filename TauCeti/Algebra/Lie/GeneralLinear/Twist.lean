@@ -356,6 +356,15 @@ theorem isGlHighestWeightVector_linearEquiv_symm {a : ι → ℕ} {c : R} {nu : 
 
 end glTraceTwistedYoungWedge
 
+/-- **An antitone tuple translated along the central direction is a highest weight**, realized in
+the corresponding trace-twisted Young wedge. -/
+theorem exists_isGlHighestWeightVector_glTraceTwistedYoungWedge {a : Fin N → ℕ} {c : R}
+    (ha : Antitone a) (hmu : mu = fun i => (a i : R) + c) :
+    ∃ v : glTraceTwistedYoungWedge R a c, IsGlHighestWeightVector mu v := by
+  subst hmu
+  obtain ⟨w, hw⟩ := exists_isGlHighestWeightVector_natCast (R := R) (ι := Fin N) ha
+  exact ⟨_, glTraceTwistedYoungWedge.isGlHighestWeightVector_linearEquiv_symm hw⟩
+
 /-- **Every dominant weight of `gl N` is a highest weight**, in a module finite over `R`: write the
 weight as an antitone tuple of natural numbers translated along the central direction
 (`TauCeti.IsGlDominantIntegral.exists_antitone_natCast_add_const`), realize the tuple in an exterior
@@ -363,9 +372,8 @@ power, and twist by the translation. -/
 theorem exists_isGlHighestWeightVector_of_isGlDominantIntegral (hmu : IsGlDominantIntegral mu) :
     ∃ (a : Fin N → ℕ) (c : R), Antitone a ∧ mu = (fun i => (a i : R) + c) ∧
       ∃ v : glTraceTwistedYoungWedge R a c, IsGlHighestWeightVector mu v := by
-  obtain ⟨a, c, ha, rfl⟩ := hmu.exists_antitone_natCast_add_const
-  obtain ⟨w, hw⟩ := exists_isGlHighestWeightVector_natCast (R := R) (ι := Fin N) ha
-  exact ⟨a, c, ha, rfl, _, glTraceTwistedYoungWedge.isGlHighestWeightVector_linearEquiv_symm hw⟩
+  obtain ⟨a, c, ha, hac⟩ := hmu.exists_antitone_natCast_add_const
+  exact ⟨a, c, ha, hac, exists_isGlHighestWeightVector_glTraceTwistedYoungWedge ha hac⟩
 
 end Dominant
 
