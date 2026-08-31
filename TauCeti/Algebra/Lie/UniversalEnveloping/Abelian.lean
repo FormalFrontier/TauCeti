@@ -56,7 +56,8 @@ instance instIsMulCommutativeUniversalEnvelopingAlgebra : IsMulCommutative U := 
   intro a b
   let a' : S := ⟨a, by simp only [S, adjoin_range_ι R L]; simp⟩
   let b' : S := ⟨b, by simp only [S, adjoin_range_ι R L]; simp⟩
-  exact congrArg Subtype.val (hS.is_comm.comm a' b')
+  simpa only [Subalgebra.coe_mul, a', b'] using
+    congrArg Subtype.val (hS.is_comm.comm a' b')
 
 private noncomputable def toSymmetricLie : LieHom R L (SymmetricAlgebra R L) :=
   { SymmetricAlgebra.ι R L with
