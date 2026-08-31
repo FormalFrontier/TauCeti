@@ -208,6 +208,16 @@ noncomputable def definingIdeal (hn : 4 ≤ n) :
     (rep_kostantForm_mem_lattice n hn)
     (isNilpotent_rep_rootGenerator n hn) (latticeBasis n) (basisWeight n)
 
+/-- The defining ideal is the one supplied by the generic Kostant toral-closure construction. -/
+theorem definingIdeal_def :
+    definingIdeal n hn =
+      kostantToralDefiningIdeal
+        (TauCeti.serreRootGenerator (CartanMatrix.D n))
+        (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
+        (rep_kostantForm_mem_lattice n hn)
+        (isNilpotent_rep_rootGenerator n hn) (latticeBasis n) (basisWeight n) := by
+  rw [definingIdeal]
+
 /-- The full-weight type-`Dₙ` spin carrier over `ℤ`, obtained as the smallest closed subgroup
 scheme containing the represented numbered root subgroups and weight torus. -/
 noncomputable def groupScheme (hn : 4 ≤ n) : Grp (Over (Spec (CommRingCat.of ℤ))) :=
@@ -305,6 +315,23 @@ noncomputable def weightTorus (hn : 4 ≤ n) :
       (rep_kostantForm_mem_lattice n hn)
       (isNilpotent_rep_rootGenerator n hn) (latticeBasis n) (basisWeight n) =
         groupScheme n hn)
+
+/-- The represented weight torus is the generic factored Kostant torus at the type-`Dₙ` spin
+data. -/
+theorem weightTorus_def :
+    weightTorus n hn =
+      kostantWeightTorusToToral
+          (TauCeti.serreRootGenerator (CartanMatrix.D n))
+          (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
+          (rep_kostantForm_mem_lattice n hn)
+          (isNilpotent_rep_rootGenerator n hn) (latticeBasis n) (basisWeight n) ≫
+        eqToHom (by rfl : kostantToralGroupScheme
+          (TauCeti.serreRootGenerator (CartanMatrix.D n))
+          (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
+          (rep_kostantForm_mem_lattice n hn)
+          (isNilpotent_rep_rootGenerator n hn) (latticeBasis n) (basisWeight n) =
+            groupScheme n hn) := by
+  rw [weightTorus]
 
 /-- Including the weight torus into the ambient general linear group recovers the diagonal torus
 of the spin weights. -/

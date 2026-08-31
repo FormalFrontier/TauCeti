@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Lie.Symplectic.StandardCarrier.Scheme
-public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.GeneralLinearBaseChange
+public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.GLBaseChange
 
 /-!
 # Base change of the full-weight type-C carrier
@@ -71,7 +71,7 @@ declaration structure follows the sibling specialization for the pinned Geck car
 declaration below is the corresponding generic Kostant declaration at this carrier's data; the
 transport reading the generic base-change presentation through a named integral defining ideal is
 the `...OfEq` family of
-`Kostant/RootSubgroup/Scheme/ToralClosure/GeneralLinearBaseChange.lean`, so nothing of that
+`Kostant/RootSubgroup/Scheme/ToralClosure/GLBaseChange.lean`, so nothing of that
 calculation is repeated here.
 -/
 
