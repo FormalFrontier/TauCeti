@@ -100,9 +100,9 @@ variable (d : SuzukiLieIndex)
 
 /-! ## The node correspondence -/
 
-/-- **The Bourbaki node of `B₂` named by a node of the rank-two type-`C` carrier**, and back. It is
-the rank equality `TauCeti.SuzukiLieIndex.rank_eq_two` followed by the swap of the two nodes, the
-swap being what
+/-- **The rank-two type-`C` carrier node corresponding to a Bourbaki-numbered node of `B₂`**, with
+the inverse equivalence giving the correspondence back. It is the rank equality
+`TauCeti.SuzukiLieIndex.rank_eq_two` followed by the swap of the two nodes, the swap being what
 `TauCeti.SpStd.rootGeneratorWeight_inl_eq_root_simpleIndex_B_two` shows the two numberings differ
 by. -/
 def carrierNode : Fin d.1.rank ≃ Fin 2 :=
