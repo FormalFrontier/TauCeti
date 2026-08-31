@@ -97,17 +97,6 @@ noncomputable def baseChangeDefiningIdeal :
     rep_kostantForm_mem_lattice isNilpotent_rep_serreRootGenerator latticeBasis
     e6MinusculeWeight A
 
-/-- The transported defining ideal is the specialization of the generic Kostant toral-closure
-base-change ideal to the minuscule representation. -/
-theorem baseChangeDefiningIdeal_def :
-    baseChangeDefiningIdeal A =
-      kostantToralBaseChangePresentationIdeal
-        (TauCeti.serreRootGenerator (CartanMatrix.E 6)ᵀ)
-        (TauCeti.serreH ℚ (CartanMatrix.E 6)ᵀ) rep lattice.toAddSubgroup
-        rep_kostantForm_mem_lattice isNilpotent_rep_serreRootGenerator latticeBasis
-        e6MinusculeWeight A := by
-  rw [baseChangeDefiningIdeal]
-
 /-- Membership in the transported defining ideal is membership of the corresponding element in
 the base change of the named integral defining ideal. -/
 @[simp]
@@ -116,7 +105,7 @@ theorem mem_baseChangeDefiningIdeal_iff
     x ∈ baseChangeDefiningIdeal A ↔
       (GeneralLinear.coordinateHopfAlgebraBaseChangeIso ℤ A 27).inv.hom x ∈
         CommHopfAlgCat.baseChangeHopfIdeal (K := A) definingIdeal := by
-  rw [baseChangeDefiningIdeal_def, mem_kostantToralBaseChangePresentationIdeal_iff,
+  rw [baseChangeDefiningIdeal, mem_kostantToralBaseChangePresentationIdeal_iff,
     kostantToralBaseChangeIdeal_def, ← definingIdeal_def]
 
 /-- Transporting a pure tensor of a scalar and an integral defining equation produces an equation
@@ -125,7 +114,7 @@ theorem map_tmul_mem_baseChangeDefiningIdeal_of_mem (s : A)
     {y : GeneralLinear.coordinateHopfAlgebra ℤ 27} (hy : y ∈ definingIdeal) :
     (GeneralLinear.coordinateHopfAlgebraBaseChangeIso ℤ A 27).hom.hom
         (s ⊗ₜ[ℤ] y) ∈ baseChangeDefiningIdeal A := by
-  rw [baseChangeDefiningIdeal_def]
+  rw [baseChangeDefiningIdeal]
   exact map_tmul_mem_kostantToralBaseChangePresentationIdeal_of_mem
     (TauCeti.serreRootGenerator (CartanMatrix.E 6)ᵀ)
     (TauCeti.serreH ℚ (CartanMatrix.E 6)ᵀ) rep lattice.toAddSubgroup
@@ -175,17 +164,6 @@ noncomputable def rootSubgroupIntegralCoordinateMap (k : Fin 6 ⊕ Fin 6) :
     (TauCeti.serreH ℚ (CartanMatrix.E 6)ᵀ) rep lattice.toAddSubgroup
     rep_kostantForm_mem_lattice isNilpotent_rep_serreRootGenerator latticeBasis
     e6MinusculeWeight definingIdeal_def k
-
-/-- The integral root-subgroup coordinate map is the generic Kostant map read through the named
-type-`E₆` defining ideal. -/
-theorem rootSubgroupIntegralCoordinateMap_def (k : Fin 6 ⊕ Fin 6) :
-    rootSubgroupIntegralCoordinateMap k =
-      kostantRootSubgroupToralCoordinateMapOfEq
-        (TauCeti.serreRootGenerator (CartanMatrix.E 6)ᵀ)
-        (TauCeti.serreH ℚ (CartanMatrix.E 6)ᵀ) rep lattice.toAddSubgroup
-        rep_kostantForm_mem_lattice isNilpotent_rep_serreRootGenerator latticeBasis
-        e6MinusculeWeight definingIdeal_def k := by
-  rw [rootSubgroupIntegralCoordinateMap]
 
 /-- The integral factored root-subgroup map recovers the represented `k`th root-subgroup
 coordinate map inside `GL₂₇`. -/
@@ -276,17 +254,6 @@ noncomputable def weightTorusIntegralCoordinateMap :
     (TauCeti.serreH ℚ (CartanMatrix.E 6)ᵀ) rep lattice.toAddSubgroup
     rep_kostantForm_mem_lattice isNilpotent_rep_serreRootGenerator latticeBasis
     e6MinusculeWeight definingIdeal_def
-
-/-- The integral weight-torus coordinate map is the generic Kostant map read through the named
-type-`E₆` defining ideal. -/
-theorem weightTorusIntegralCoordinateMap_def :
-    weightTorusIntegralCoordinateMap =
-      kostantWeightTorusToralCoordinateMapOfEq
-        (TauCeti.serreRootGenerator (CartanMatrix.E 6)ᵀ)
-        (TauCeti.serreH ℚ (CartanMatrix.E 6)ᵀ) rep lattice.toAddSubgroup
-        rep_kostantForm_mem_lattice isNilpotent_rep_serreRootGenerator latticeBasis
-        e6MinusculeWeight definingIdeal_def := by
-  rw [weightTorusIntegralCoordinateMap]
 
 /-- The integral factored weight-torus map recovers the represented weight-torus coordinate map
 inside `GL₂₇`. -/
