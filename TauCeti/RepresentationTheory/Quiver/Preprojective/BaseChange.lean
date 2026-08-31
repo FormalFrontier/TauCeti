@@ -205,6 +205,47 @@ theorem preprojectiveBaseChange_algebraMap (f : k →+* l) (r : k) :
     ((algebraMap l (preprojectiveAlgebra l Q)).comp f) r
   exact (preprojectiveBaseChangeAlgHom f).commutes r
 
+/-- Two ring homomorphisms out of a preprojective algebra are equal if they agree on coefficients
+and on the classes of all doubled paths. -/
+theorem preprojectiveBaseChange_ext {B : Type*} [Ring B]
+    {g h : preprojectiveAlgebra k Q →+* B}
+    (hscalar : ∀ r : k,
+      g (algebraMap k (preprojectiveAlgebra k Q) r) =
+        h (algebraMap k (preprojectiveAlgebra k Q) r))
+    (hpath : ∀ x : Quiver.TotalPath (Symmetrify Q),
+      g (preprojectiveMk k Q (ofPath x)) = h (preprojectiveMk k Q (ofPath x))) :
+    g = h := by
+  apply RingHom.ext
+  intro y
+  obtain ⟨x, rfl⟩ := preprojectiveMk_surjective k Q y
+  induction x using PathAlgebra.induction_linear with
+  | zero => simp
+  | add x y hx hy => simp only [map_add, hx, hy]
+  | single x c =>
+      rw [single_eq_smul_ofPath, map_smul]
+      simp only [Algebra.smul_def, map_mul, hscalar, hpath]
+
+/- The identity and composition laws make the coefficient map a canonical base-change operation. -/
+
+@[simp]
+theorem preprojectiveBaseChange_id :
+    preprojectiveBaseChange (RingHom.id k) = RingHom.id (preprojectiveAlgebra k Q) := by
+  apply preprojectiveBaseChange_ext
+  · intro r
+    simp
+  · intro x
+    simp
+
+@[simp]
+theorem preprojectiveBaseChange_comp {m : Type*} [CommRing m] (f : k →+* l) (g : l →+* m) :
+    preprojectiveBaseChange (Q := Q) (g.comp f) =
+      (preprojectiveBaseChange (Q := Q) g).comp (preprojectiveBaseChange (Q := Q) f) := by
+  apply preprojectiveBaseChange_ext
+  · intro r
+    simp
+  · intro x
+    simp
+
 end
 
 end TauCeti
