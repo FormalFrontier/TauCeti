@@ -62,6 +62,8 @@ enveloping-algebra dictionary lives,
 
 * `LieModule.isotypicMultiplicity_eq_sum_of_isInternal`: **the multiplicity is additive over a
   finite decomposition of `M` into Lie submodules.**
+* `LieModule.isotypicMultiplicity_eq_zero_of_subsingleton`: the zero module occurs with
+  multiplicity zero.
 * `LieModule.isotypicMultiplicity_self`: an irreducible module occurs in itself with multiplicity
   one.
 * `LieModule.isotypicMultiplicity_eq_of_lieModuleEquiv` and
@@ -126,6 +128,13 @@ noncomputable def isotypicMultiplicity : ℕ :=
 this is how it is unfolded. -/
 theorem isotypicMultiplicity_def : isotypicMultiplicity R L M S = finrank R (S →ₗ⁅R,L⁆ M) :=
   (rfl)
+
+/-- **The zero module has multiplicity zero**: the only morphism out of it is the zero morphism. -/
+theorem isotypicMultiplicity_eq_zero_of_subsingleton [Nontrivial R] [Subsingleton S] :
+    isotypicMultiplicity R L M S = 0 :=
+  have _ : Subsingleton (S →ₗ⁅R,L⁆ M) :=
+    ⟨fun f g ↦ LieModuleHom.ext fun x ↦ by rw [Subsingleton.elim x 0, map_zero, map_zero]⟩
+  Module.finrank_zero_of_subsingleton
 
 end Def
 

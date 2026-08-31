@@ -9,9 +9,8 @@ public import TauCeti.Algebra.Lie.HighestWeight.Verma
 public import TauCeti.Algebra.Lie.Multiplicity
 -- Non-public: these supply the inputs of the proofs, never the vocabulary of a statement.
 import TauCeti.Algebra.Lie.HighestWeight.CompleteReducibility
-import TauCeti.Algebra.Lie.HighestWeight.Existence
-import TauCeti.Algebra.Lie.HighestWeight.FiniteDimensional
 import TauCeti.Algebra.Lie.HighestWeight.Irreducible
+import TauCeti.Algebra.Lie.HighestWeight.Isotypic
 import TauCeti.Algebra.Lie.Submodule.Decomposition
 
 public section
@@ -55,21 +54,17 @@ counts the summands equivalent to it; those are exactly the summands labelled `�
 classification of the irreducible highest weight modules.
 
 For a weight `λ` whose Verma module vanishes, `L(λ)` is the zero module
-(`TauCeti.subsingleton_irreducibleQuotient`). Both sides are then `0`: the morphism space out of
-the zero module is trivial, and no summand can be labelled `λ`, an irreducible summand being
-nonzero. This case is not vacuous bookkeeping: whether `M(λ) ≠ 0` for every dominant integral `λ`
+(`TauCeti.subsingleton_irreducibleQuotient_iff`). Both sides are then `0`: the multiplicity of the
+zero module is zero, and no summand can be labelled `λ`, an irreducible summand being nonzero.
+This case is not vacuous bookkeeping: whether `M(λ) ≠ 0` for every dominant integral `λ`
 is exactly the Poincaré--Birkhoff--Witt input that
 `TauCeti/Algebra/Lie/HighestWeight/Verma.lean` does not have, and the decomposition below is
 stated so as not to need it.
 
 ## Main results
 
-* `TauCeti.finiteDimensional_irreducibleQuotient`: `L(λ)` is finite-dimensional at a dominant
-  integral `λ` whose Verma module is nonzero.
-* `TauCeti.exists_isDominantIntegral_nonempty_lieModuleEquiv_irreducibleQuotient`: **a
-  finite-dimensional irreducible module is a copy of `L(λ)`** for a dominant integral `λ`.
 * `TauCeti.natCard_eq_isotypicMultiplicity_irreducibleQuotient`: **the summands of a decomposition
-  labelled by `λ` are counted by the multiplicity of `L(λ)`.**
+  labelled by a dominant integral `λ` are counted by the multiplicity of `L(λ)`.**
 * `TauCeti.nonempty_lieModuleEquiv_directSum_irreducibleQuotient`: **the packaged isotypic
   decomposition** `M ≃ ⨁_λ L(λ)^{m λ}`.
 
@@ -79,7 +74,9 @@ This is the packaged-decomposition item of the milestone "isotypic components an
 through the enveloping-algebra dictionary" in the Layer 6 decomposition toolkit of
 `TauCetiRoadmap/RepresentationTheory/LieHighestWeight/README.md`.
 
-* J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §6.3.
+* J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §6.3 (complete
+  reducibility) and §§20.3, 21.2 (the classification of the finite-dimensional irreducible
+  modules).
 -/
 
 namespace TauCeti
@@ -97,40 +94,6 @@ variable {K : Type u} {L : Type v} [Field K] [CharZero K] [IsAlgClosed K]
 
 variable (b : (IsKilling.rootSystem H).Base)
 
-/-! ### `L(lam)` as a finite-dimensional irreducible module
-
-`TauCeti/Algebra/Lie/HighestWeight/FiniteDimensional.lean` proves finite-dimensionality for an
-irreducible highest weight module presented as an arbitrary carrier; it does not know about
-`TauCeti.irreducibleQuotient`, which is built one file later. Reading it at that carrier is
-therefore recorded here, where it is used. -/
-
-/-- **`L(lam)` is finite-dimensional at a dominant integral weight whose Verma module is
-nonzero**: it is then an irreducible highest weight module of dominant integral weight, which is
-`TauCeti.finiteDimensional_of_isHighestWeightVector_of_isDominantIntegral`. -/
-theorem finiteDimensional_irreducibleQuotient {lam : Dual K H} (hlam : IsDominantIntegral b lam)
-    (h : vermaGenerator b lam ≠ 0) : FiniteDimensional K (irreducibleQuotient b lam) :=
-  have _ := isIrreducible_irreducibleQuotient b lam h
-  finiteDimensional_of_isHighestWeightVector_of_isDominantIntegral
-    (isHighestWeightVector_irreducibleQuotientGenerator b lam h) hlam
-
-/-! ### Naming an irreducible module -/
-
-/-- **A finite-dimensional irreducible module is a copy of `L(lam)`, for a dominant integral
-weight `lam`.** It carries a highest weight vector of a dominant integral weight
-(`TauCeti.exists_isHighestWeightVector_and_isDominantIntegral_of_irreducible`), which makes
-`M(lam)` nonzero, and two irreducible modules with highest weight vectors of the same weight are
-equivalent. -/
-theorem exists_isDominantIntegral_nonempty_lieModuleEquiv_irreducibleQuotient
-    [FiniteDimensional K M] [LieModule.IsIrreducible K L M] :
-    ∃ lam : Dual K H, IsDominantIntegral b lam ∧
-      Nonempty (M ≃ₗ⁅K,L⁆ irreducibleQuotient b lam) := by
-  obtain ⟨lam, v, hv, hlam⟩ :=
-    exists_isHighestWeightVector_and_isDominantIntegral_of_irreducible (M := M) b
-  have hne := vermaGenerator_ne_zero_of_isHighestWeightVector b lam hv
-  have _ := isIrreducible_irreducibleQuotient b lam hne
-  exact ⟨lam, hlam, nonempty_lieModuleEquiv_of_isHighestWeightVector hv
-    (isHighestWeightVector_irreducibleQuotientGenerator b lam hne)⟩
-
 /-! ### The multiplicity counts the summands with a given label -/
 
 section Count
@@ -144,7 +107,8 @@ include h hirr hc
 
 /-- **The multiplicity of `L(lam)` counts the summands labelled `lam`.** For a finite
 decomposition of `M` into irreducible Lie submodules, each labelled by a weight whose `L` it is a
-copy of, the number of indices carrying the label `lam` is the multiplicity of `L(lam)` in `M`. -/
+copy of, and for a dominant integral weight `lam`, the number of indices carrying the label `lam`
+is the multiplicity of `L(lam)` in `M`. -/
 theorem natCard_eq_isotypicMultiplicity_irreducibleQuotient {lam : Dual K H}
     (hlam : IsDominantIntegral b lam) :
     Nat.card {i // c i = lam}
@@ -155,19 +119,17 @@ theorem natCard_eq_isotypicMultiplicity_irreducibleQuotient {lam : Dual K H}
     have _ : Nontrivial (N i : Type w) :=
       LieModule.nontrivial_of_isIrreducible (R := K) (L := L) (M := (N i : Type w))
     (hc i).some.symm.toEquiv.nontrivial
-  have hcne : ∀ i, vermaGenerator b (c i) ≠ 0 := fun i ↦
-    vermaGenerator_ne_zero_of_nontrivial_irreducibleQuotient b (c i) (hnontrivial i)
+  have hcne : ∀ i, vermaGenerator b (c i) ≠ 0 := fun i h0 ↦
+    have _ := hnontrivial i
+    not_subsingleton _ ((subsingleton_irreducibleQuotient_iff b (c i)).mpr h0)
   by_cases hne : vermaGenerator b lam = 0
-  · -- `L(lam)` is the zero module: no summand is labelled `lam`, and the morphism space vanishes.
-    have _ := subsingleton_irreducibleQuotient b lam hne
+  · -- `L(lam)` is the zero module: no summand is labelled `lam`, and its multiplicity vanishes.
+    have _ := (subsingleton_irreducibleQuotient_iff b lam).mpr hne
     have _ : IsEmpty {i // c i = lam} := ⟨fun i ↦ hcne i.1 (by rw [i.2]; exact hne)⟩
-    have _ : Subsingleton (irreducibleQuotient b lam →ₗ⁅K,L⁆ M) :=
-      ⟨fun f g ↦ LieModuleHom.ext fun x ↦ by rw [Subsingleton.elim x 0, map_zero, map_zero]⟩
-    rw [Nat.card_of_isEmpty, LieModule.isotypicMultiplicity_def,
-      Module.finrank_zero_of_subsingleton]
+    rw [Nat.card_of_isEmpty, LieModule.isotypicMultiplicity_eq_zero_of_subsingleton]
   · -- `L(lam)` is an irreducible, finite-dimensional module, so the counting theorem applies.
     have _ := isIrreducible_irreducibleQuotient b lam hne
-    have _ := finiteDimensional_irreducibleQuotient b hlam hne
+    have _ := finiteDimensional_irreducibleQuotient_of_isDominantIntegral hlam
     have hset : {i | Nonempty (irreducibleQuotient b lam ≃ₗ⁅K,L⁆ (N i : Type w))}
         = {i | c i = lam} := by
       ext i

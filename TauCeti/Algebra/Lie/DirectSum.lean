@@ -26,15 +26,18 @@ finite family of components reassembles to the element it came from. That is
 
 The file also refines the two ways an external direct sum is transported to Mathlib's Lie module
 structure: along a family of morphisms of the summands (`DirectSum.lieModuleMap`, refining
-`DirectSum.lmap`) and along an equivalence of the index type (`DirectSum.lieModuleEquivCongrLeft`,
-refining `DirectSum.lequivCongrLeft`). The bracket acts summand by summand, so in both cases the
-only thing to check is that Mathlib's underlying linear map is equivariant.
+`DirectSum.lmap`, and `DirectSum.lieModuleEquivCongrRight`, refining
+`DFinsupp.mapRange.linearEquiv`) and along an equivalence of the index type
+(`DirectSum.lieModuleEquivCongrLeft`, refining `DirectSum.lequivCongrLeft`). The bracket acts
+summand by summand, so in each case the only thing to check is that Mathlib's underlying linear map
+is equivariant; the `_toLinearMap` and `_toLinearEquiv` lemmas record which map that is, so that
+Mathlib's API for it stays reachable.
 
 ## Main definitions
 
 * `TauCeti.LieModule.lieModuleHomDirectSumEquiv`: **the morphism space is additive over a direct
   sum in its target**, `(S →ₗ⁅R,L⁆ ⨁ i, Pᵢ) ≃ₗ[R] Π i, (S →ₗ⁅R,L⁆ Pᵢ)`.
-* `DirectSum.lieModuleMap` and `DirectSum.lieModuleEquivCongr`: a family of morphisms,
+* `DirectSum.lieModuleMap` and `DirectSum.lieModuleEquivCongrRight`: a family of morphisms,
   respectively of equivalences, of the summands acts on the external direct sum.
 * `DirectSum.lieModuleEquivCongrLeft`: **reindexing an external direct sum of Lie modules** along
   an equivalence of index types.
@@ -101,22 +104,45 @@ def lieModuleMap (f : ∀ i, P i →ₗ⁅R,L⁆ Q i) : (⨁ i, P i) →ₗ⁅R,
       ext i
       simp [lie_module_bracket_apply] }
 
+/-- The underlying linear map of a family of morphisms of the summands is Mathlib's
+`DirectSum.lmap`, which is how its API is reached. -/
+@[simp]
+theorem lieModuleMap_toLinearMap (f : ∀ i, P i →ₗ⁅R,L⁆ Q i) :
+    (lieModuleMap f : (⨁ i, P i) →ₗ[R] ⨁ i, Q i) = lmap fun i ↦ (f i : P i →ₗ[R] Q i) :=
+  (rfl)
+
 @[simp]
 theorem lieModuleMap_apply (f : ∀ i, P i →ₗ⁅R,L⁆ Q i) (x : ⨁ i, P i) (i : ι) :
     lieModuleMap f x i = f i (x i) :=
   (rfl)
 
 /-- **A family of equivalences of the summands, as an equivalence of the external direct sums.**
-The inverse is the family of inverses. -/
-def lieModuleEquivCongr (e : ∀ i, P i ≃ₗ⁅R,L⁆ Q i) : (⨁ i, P i) ≃ₗ⁅R,L⁆ ⨁ i, Q i :=
-  { lieModuleMap fun i ↦ ((e i : P i →ₗ⁅R,L⁆ Q i)) with
-    invFun := lieModuleMap fun i ↦ ((e i).symm : Q i →ₗ⁅R,L⁆ P i)
-    left_inv := fun x ↦ by ext i; simp
-    right_inv := fun x ↦ by ext i; simp }
+Its underlying linear equivalence is Mathlib's `DFinsupp.mapRange.linearEquiv`, whose inverse is
+already the family of inverses. -/
+def lieModuleEquivCongrRight (e : ∀ i, P i ≃ₗ⁅R,L⁆ Q i) : (⨁ i, P i) ≃ₗ⁅R,L⁆ ⨁ i, Q i :=
+  { DFinsupp.mapRange.linearEquiv fun i ↦ (e i : P i ≃ₗ[R] Q i) with
+    map_lie' := by
+      intro x m
+      ext i
+      exact (e i : P i →ₗ⁅R,L⁆ Q i).map_lie x (m i) }
+
+/-- The underlying linear equivalence of a family of equivalences of the summands is Mathlib's
+`DFinsupp.mapRange.linearEquiv`, which is how its API is reached. -/
+@[simp]
+theorem lieModuleEquivCongrRight_toLinearEquiv (e : ∀ i, P i ≃ₗ⁅R,L⁆ Q i) :
+    (lieModuleEquivCongrRight e : (⨁ i, P i) ≃ₗ[R] ⨁ i, Q i)
+      = DFinsupp.mapRange.linearEquiv fun i ↦ (e i : P i ≃ₗ[R] Q i) :=
+  (rfl)
 
 @[simp]
-theorem lieModuleEquivCongr_apply (e : ∀ i, P i ≃ₗ⁅R,L⁆ Q i) (x : ⨁ i, P i) (i : ι) :
-    lieModuleEquivCongr e x i = e i (x i) :=
+theorem lieModuleEquivCongrRight_apply (e : ∀ i, P i ≃ₗ⁅R,L⁆ Q i) (x : ⨁ i, P i) (i : ι) :
+    lieModuleEquivCongrRight e x i = e i (x i) :=
+  (rfl)
+
+/-- The inverse of a family of equivalences of the summands is the family of inverses. -/
+@[simp]
+theorem lieModuleEquivCongrRight_symm (e : ∀ i, P i ≃ₗ⁅R,L⁆ Q i) :
+    (lieModuleEquivCongrRight e).symm = lieModuleEquivCongrRight fun i ↦ (e i).symm :=
   (rfl)
 
 variable (R L) in
@@ -128,6 +154,15 @@ def lieModuleEquivCongrLeft (h : ι ≃ κ) : (⨁ i, P i) ≃ₗ⁅R,L⁆ ⨁ k
       intro x m
       ext k
       simp [lequivCongrLeft_apply, lie_module_bracket_apply] }
+
+variable (R L) in
+/-- The underlying linear equivalence of a reindexing is Mathlib's `DirectSum.lequivCongrLeft`,
+which is how its API is reached. -/
+@[simp]
+theorem lieModuleEquivCongrLeft_toLinearEquiv (h : ι ≃ κ) :
+    (lieModuleEquivCongrLeft R L (P := P) h : (⨁ i, P i) ≃ₗ[R] ⨁ k, P (h.symm k))
+      = lequivCongrLeft R h :=
+  (rfl)
 
 variable (R L) in
 @[simp]

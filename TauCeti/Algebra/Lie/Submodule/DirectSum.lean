@@ -150,13 +150,15 @@ theorem nonempty_lieModuleEquiv_sigma_of_isInternal [Finite ι] {σ : Type w₃}
   let g : (Σ s : σ, Fin (m s)) ≃ ι :=
     (Equiv.sigmaCongrRight fun s ↦ (Finite.equivFinOfCardEq (hcard s)).symm).trans
       (Equiv.sigmaFiberEquiv c)
-  have hg : ∀ q : Σ s : σ, Fin (m s), c (g q) = q.1 := fun q ↦
-    ((Finite.equivFinOfCardEq (hcard q.1)).symm q.2).2
+  -- `Equiv.sigmaFiberEquiv` is the projection to the element of the fibre, whose defining
+  -- property is that its label is `q.1`.
+  have hg : ∀ q : Σ s : σ, Fin (m s), c (g q) = q.1 := fun q ↦ by
+    simpa [g] using ((Finite.equivFinOfCardEq (hcard q.1)).symm q.2).2
   have e : ∀ q : Σ s : σ, Fin (m s), (N (g q) : Type w) ≃ₗ⁅R,L⁆ S q.1 := fun q ↦
     (hg q ▸ hc (g q) : Nonempty ((N (g q) : Type w) ≃ₗ⁅R,L⁆ S q.1)).some
   exact ⟨(lieModuleEquivOfIsInternal N h).symm.trans
     ((lieModuleEquivCongrLeft R L (P := fun i ↦ (N i : Type w)) g.symm).trans
-      (lieModuleEquivCongr e))⟩
+      (lieModuleEquivCongrRight e))⟩
 
 end DirectSum
 
