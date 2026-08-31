@@ -194,8 +194,8 @@ theorem coe_kostantToralWeightTorusPoints (A : Type v) [CommRing A] (s : κ → 
 
 /-- The pinning equation in the matrix-valued points of the toral Kostant closure. If `e i` has
 Cartan weight `α`, conjugation by the weight-torus point `s` rescales the root-subgroup
-parameter by `α(s)`. -/
-@[simp]
+parameter by `α(s)`. This is not a `simp` lemma: the weight `α` is pinned only by the hypothesis
+`hα`, so `simp` could never infer it from the left-hand side. -/
 theorem kostantToralWeightTorusPoints_conj_rootSubgroupPoints
     (hwt : ∀ x, IsCartanWeightVector h ρ (wt x) ((b x : M) : V))
     {i : I} {α : κ → ℤ} (hα : ∀ j, ⁅h j, e i⁆ = (α j : ℚ) • e i)
