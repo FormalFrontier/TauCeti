@@ -74,6 +74,31 @@ Lean row. This checks every active source relator, inverse, exponent, and the so
 boundary independently of the original transcription and closes this row's S1 source-to-Lean
 read-through.
 
+## Independent comparison with `FiniteSimpleGroups`
+
+The comparison used `finite-simple-groups-lean` at commit
+`7f09e33a9ceef6b59ce03e34cd4f0558c763e325`, whose named permutations `co2a` and `co2b`
+generate a subgroup of `Equiv.Perm (Fin 2300)` with proved order `42305421312000` and proved
+simplicity. Those generators both have order `23`, so they are not the standard pair used by this
+row.
+
+The independent ATLAS 2300-point standard pair has orders `2` and `5`, with product of order `28`.
+The pinned pair and the ATLAS pair each determine the same rank-three graph: their point stabilizer
+suborbits have lengths `1`, `891`, and `1408`, and the nontrivial orbit of length `891` is the
+neighbor set. Canonically labeling the two 891-regular graphs with pynauty transports the ATLAS
+pair into the pinned development's point numbering. Direct permutation calculation then gives
+orders `2`, `5`, and `28` for `a`, `b`, and `ab`, and all ten compiled relators in this module
+evaluate to the identity. Schreier--Sims membership checks put the transported `a,b` in the pinned
+subgroup and put `co2a,co2b` back in `⟨a,b⟩`; the pair therefore generates that subgroup of order
+`42305421312000`.
+
+The check used Python 3.14.6, pynauty 2.8.8.1, and SymPy 1.14.0. Concatenating the transported
+forward image tables for `a` and then `b`, with each image stored as a two-byte little-endian
+integer, has SHA-256
+`0cf39fc1762ee787a2ead7998b38005878df17f450aabf57ce786bec59fa2f22`. This is the independent
+comparison artifact required by S1; no external code or permutation data is imported into Tau
+Ceti.
+
 The row is a sealed definition, so it publishes an equation for each of its fields: the transcribed
 relator expressions with their generator indices written out and this file's private syllable
 abbreviations expanded, and the provenance a manifest row exists to record. Together with
@@ -109,6 +134,9 @@ These field equations and the checks beside them follow the shape that the
   <https://brauer.maths.qmul.ac.uk/Atlas/v3/pres/Co2G1-P1>, with the relators and the
   demonstration of correctness in the Magma source file
   <https://brauer.maths.qmul.ac.uk/Atlas/spor/Co2/mag/Co2G1-P1.M>.
+* KitaKen1, *FiniteSimpleGroups*, `Co2` construction at commit
+  `7f09e33a9ceef6b59ce03e34cd4f0558c763e325`,
+  <https://github.com/KitaKen1/finite-simple-groups-lean>.
 -/
 
 public section
