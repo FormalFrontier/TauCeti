@@ -33,9 +33,9 @@ order `p ^ (2 * m + 1)`.
 * `TauCeti.PrimePower`: a prime and positive exponent, retaining the data needed for a finite field.
 * `TauCeti.LieTypeIndex` and `TauCeti.LieTypeIndex.Valid`: the Lie families and their preferred
   parameter range.
-* `TauCeti.ValidLieTypeIndex`, `TauCeti.SuzukiReeIndex`, `TauCeti.GraphTwistedIndex`, and
-  `TauCeti.TypeALieIndex`: the restricted domains consumed by later carrier and endomorphism
-  constructions.
+* `TauCeti.ValidLieTypeIndex`, `TauCeti.SuzukiReeIndex`, `TauCeti.GraphTwistedIndex`,
+  `TauCeti.TypeALieIndex`, and `TauCeti.UnimodularLieIndex`: the restricted domains consumed by
+  later carrier and endomorphism constructions.
 * `TauCeti.SporadicName`: the conventional twenty-six sporadic names.
 * `TauCeti.CFSGIndex`: cyclic, alternating, Lie-type, and sporadic entries in the classification
   list.
@@ -307,6 +307,47 @@ This is exposed because it appears in the *types* of the numbered data attached 
 @[simp] theorem dynkinType_suzuki (m : ℕ) : (suzuki m).dynkinType = .B 2 :=
   by simp only [dynkinType]
 
+/-- The Lie-type families whose underlying Dynkin diagram has unimodular Cartan matrix, namely
+`E₈`, `F₄` and `G₂`.
+
+Both the untwisted families `E₈(q)`, `F₄(q)`, `G₂(q)` and the Ree families `²G₂(3^(2m+1))`,
+`²F₄(2^(2m+1))` together with the Tits index are included: the predicate constrains the diagram
+and not the Steinberg map. The Suzuki family is the one Suzuki--Ree constructor left out, its
+diagram being `B₂`, whose Cartan matrix has determinant two. -/
+def HasUnimodularDiagram : LieTypeIndex → Prop
+  | .E8 _ | .F4 _ | .G2 _ | .reeG2 _ | .reeF4 _ | .tits => True
+  | _ => False
+
+/-- Characterization of the families with unimodular diagram. -/
+@[simp] theorem hasUnimodularDiagram_iff (d : LieTypeIndex) : d.HasUnimodularDiagram ↔
+    match d with
+    | .E8 _ | .F4 _ | .G2 _ | .reeG2 _ | .reeF4 _ | .tits => True
+    | _ => False :=
+  Iff.rfl
+
+instance : DecidablePred HasUnimodularDiagram := fun d => by
+  cases d <;> rw [hasUnimodularDiagram_iff] <;> infer_instance
+
+/-- **An index has unimodular diagram exactly when its underlying Dynkin type is `E₈`, `F₄` or
+`G₂`.** -/
+theorem hasUnimodularDiagram_iff_dynkinType (d : LieTypeIndex) :
+    d.HasUnimodularDiagram ↔
+      (d.dynkinType = .E8 ∨ d.dynkinType = .F4 ∨ d.dynkinType = .G2) := by
+  cases d <;> simp
+
+/-- **The six families with unimodular diagram.** -/
+theorem exists_eq_of_hasUnimodularDiagram {d : LieTypeIndex} (hd : d.HasUnimodularDiagram) :
+    (∃ q : PrimePower, d = .E8 q ∨ d = .F4 q ∨ d = .G2 q) ∨
+      (∃ m : ℕ, d = .reeG2 m ∨ d = .reeF4 m) ∨ d = .tits := by
+  cases d <;> simp_all
+
+/-- **The three untwisted families with unimodular diagram.** Removing the Suzuki--Ree
+constructors from the previous list leaves `E₈(q)`, `F₄(q)` and `G₂(q)`. -/
+theorem exists_eq_of_hasUnimodularDiagram_of_not_usesHalfFrobenius {d : LieTypeIndex}
+    (hd : d.HasUnimodularDiagram) (hf : ¬d.UsesHalfFrobenius) :
+    ∃ q : PrimePower, d = .E8 q ∨ d = .F4 q ∨ d = .G2 q := by
+  cases d <;> simp_all
+
 /-- The characteristic of the field over which the ambient group will be constructed. -/
 def characteristic : LieTypeIndex → ℕ
   | .A _ q | .twistedA _ q | .B _ q | .C _ q | .D _ q | .twistedD _ q
@@ -548,6 +589,12 @@ abbrev SuzukiReeIndex : Type _ := {d : ValidLieTypeIndex // d.1.UsesHalfFrobeniu
 automorphism. The Suzuki--Ree and Tits branches are excluded. -/
 abbrev GraphTwistedIndex : Type _ := {d : ValidLieTypeIndex // ¬ d.1.UsesHalfFrobenius}
 
+/-- A valid index whose underlying Dynkin diagram has unimodular Cartan matrix: the six branches
+`E₈(q)`, `F₄(q)`, `G₂(q)`, `²G₂(3^(2m+1))`, `²F₄(2^(2m+1))` and `²F₄(2)'`. These are the diagrams
+on which the Geck carrier of the root-systems roadmap has full character span, so this subtype is
+the domain of the lattice results that span buys. -/
+abbrev UnimodularLieIndex : Type _ := {d : ValidLieTypeIndex // d.1.HasUnimodularDiagram}
+
 /-- A validated index in one of the two type-A families `A_r(q)` and `²A_r(q)`.
 
 The outer subtype is important: a raw type-A constructor with an excluded rank or field parameter
@@ -628,6 +675,61 @@ theorem fieldOrder_pos (d : ValidLieTypeIndex) : 0 < d.fieldOrder :=
   d.1.fieldOrder_pos
 
 end ValidLieTypeIndex
+
+namespace UnimodularLieIndex
+
+variable (d : UnimodularLieIndex)
+
+/-- The index `E₈(q)`. -/
+abbrev e8 (q : PrimePower) : UnimodularLieIndex :=
+  ⟨⟨.E8 q, by simp⟩, by simp⟩
+
+/-- The index `F₄(q)`. -/
+abbrev f4 (q : PrimePower) : UnimodularLieIndex :=
+  ⟨⟨.F4 q, by simp⟩, by simp⟩
+
+/-- The index `G₂(q)`, for `q` at least three: `G₂(2)` is excluded from the classification list,
+its recipe producing a group already named `²A₂(3)`. -/
+abbrev g2 (q : PrimePower) (hq : 3 ≤ q.card) : UnimodularLieIndex :=
+  ⟨⟨.G2 q, by
+    simp only [LieTypeIndex.valid_iff, LieTypeIndex.inStandardRange_iff,
+      LieTypeIndex.isDuplicateRepresentative_iff]
+    exact ⟨hq, not_false⟩⟩, by simp⟩
+
+/-- The Ree index `²G₂(3^(2m+1))`, for `m` at least one: `²G₂(3)` is excluded from the
+classification list, its recipe producing a group already named `A₁(8)`. -/
+abbrev reeG2 (m : ℕ) (hm : 1 ≤ m) : UnimodularLieIndex :=
+  ⟨⟨.reeG2 m, by
+    simp only [LieTypeIndex.valid_iff, LieTypeIndex.inStandardRange_iff,
+      LieTypeIndex.isDuplicateRepresentative_iff]
+    exact ⟨hm, not_false⟩⟩, by simp⟩
+
+/-- The Ree index `²F₄(2^(2m+1))`, for `m` at least one: at `m = 0` the recipe returns the Tits
+group `²F₄(2)'`, which the classification list carries under the separate name `tits`. -/
+abbrev reeF4 (m : ℕ) (hm : 1 ≤ m) : UnimodularLieIndex :=
+  ⟨⟨.reeF4 m, by
+    simp only [LieTypeIndex.valid_iff, LieTypeIndex.inStandardRange_iff,
+      LieTypeIndex.isDuplicateRepresentative_iff]
+    exact ⟨hm, not_false⟩⟩, by simp⟩
+
+/-- The Tits index `²F₄(2)'`. -/
+abbrev tits : UnimodularLieIndex :=
+  ⟨⟨.tits, by simp⟩, by simp⟩
+
+/-- The underlying untwisted Dynkin diagram of an index with unimodular diagram. -/
+abbrev dynkinType : DynkinType := d.1.dynkinType
+
+/-- That diagram is a valid Dynkin type, so the pinned Geck carrier of the root-systems roadmap is
+available for it. -/
+theorem dynkinType_valid : d.dynkinType.Valid := d.1.dynkinType_valid
+
+/-- The underlying Dynkin type of an index with unimodular diagram is one of the three unimodular
+types. -/
+theorem dynkinType_eq_E8_or_eq_F4_or_eq_G2 :
+    d.dynkinType = .E8 ∨ d.dynkinType = .F4 ∨ d.dynkinType = .G2 :=
+  (LieTypeIndex.hasUnimodularDiagram_iff_dynkinType d.1.1).mp d.2
+
+end UnimodularLieIndex
 
 /-! ## Executable checks for the range conventions -/
 
