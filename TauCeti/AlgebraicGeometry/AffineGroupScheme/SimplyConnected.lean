@@ -151,7 +151,8 @@ theorem simplyConnectedSemisimpleAffineGroupSchemeProperty_iff_forall_mono
 
 /-- Under the semisimple Hopf/group-scheme anti-equivalence, a morphism is a coordinate central
 isogeny exactly when its image is a group-scheme central isogeny. -/
-theorem isCentralIsogeny_semisimpleEquiv_map_iff
+theorem
+    semisimpleCommHopfAlgCatOpEquivSemisimpleAffineGroupSchemeCat.isCentralIsogeny_map_iff
     {H K : (SemisimpleCommHopfAlgCat.{u} k)ᵒᵖ} (f : H ⟶ K) :
     GroupScheme.IsCentralIsogeny
         ((semisimpleAffineGroupSchemeForget k).map
@@ -180,7 +181,8 @@ theorem simplyConnectedSemisimpleAffineGroupSchemeProperty_inverseImage
     let g : op K ⟶ H := f.op
     have hg : GroupScheme.IsCentralIsogeny
         ((semisimpleAffineGroupSchemeForget k).map (E.functor.map g)) :=
-      (isCentralIsogeny_semisimpleEquiv_map_iff g).2 hf
+      (semisimpleCommHopfAlgCatOpEquivSemisimpleAffineGroupSchemeCat.isCentralIsogeny_map_iff
+        g).2 hf
     let _ : IsIso (E.functor.map g) := hG (E.functor.obj (op K)) (E.functor.map g) hg
     let _ : IsIso g := isIso_of_reflects_iso g E.functor
     exact (isIso_op_iff f).1 (inferInstance : IsIso f.op)
@@ -197,7 +199,9 @@ theorem simplyConnectedSemisimpleAffineGroupSchemeProperty_inverseImage
       rw [Functor.map_comp]
       exact ((GroupScheme.centralIsogenies k).cancel_left_of_respectsIso _ _).2 hf
     have hg' : CommHopfAlgCat.IsCentralIsogeny g'.unop.hom.hom := by
-      apply (isCentralIsogeny_semisimpleEquiv_map_iff g').1
+      apply
+        (semisimpleCommHopfAlgCatOpEquivSemisimpleAffineGroupSchemeCat.isCentralIsogeny_map_iff
+          g').1
       rw [hmap]
       exact hg
     let _ : IsIso g'.unop := hH.isIso g'.unop hg'
