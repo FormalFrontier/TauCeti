@@ -114,7 +114,6 @@ theorem normalizedAbsValue_nonneg (v : Place K) (x : K) : 0 ≤ normalizedAbsVal
   | inl v => exact (NumberField.HeightOneSpectrum.adicAbv K v).nonneg x
   | inr w => exact pow_nonneg (apply_nonneg w x) _
 
-@[simp]
 theorem normalizedAbsValue_eq_zero (v : Place K) {x : K} :
     normalizedAbsValue v x = 0 ↔ x = 0 :=
   map_eq_zero _
