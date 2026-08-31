@@ -10,7 +10,6 @@ public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Points.Basic
 public import TauCeti.Algebra.AlgebraicGroup.Representation.UnipotentPoint.Basic
 public import TauCeti.Algebra.AlgebraicGroup.Unipotent.ClosedSubgroup
 import TauCeti.Algebra.Coalgebra.Comodule.MatrixCoefficient.PointAction
-import Mathlib.LinearAlgebra.Charpoly.ToMatrix
 
 /-!
 # Unipotence of the dynamic unipotent subgroup

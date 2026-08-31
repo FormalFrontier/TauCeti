@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.Unipotent.Basic
-import Mathlib.LinearAlgebra.Charpoly.ToMatrix
 import TauCeti.Algebra.AlgebraicGroup.Representation.UnipotentPoint.Naturality
 import TauCeti.Algebra.Coalgebra.Comodule.MatrixCoefficient.PointAction
 import TauCeti.RingTheory.FiniteType.PointSeparation
@@ -129,7 +128,8 @@ private theorem isUnipotent_pointsAction_of_coefficientMatrix_charpoly_eq
         congr 1
         rw [← LinearMap.charpoly_toMatrix (Comodule.endOfPoint M e) (b.baseChange A),
           Comodule.toMatrix_endOfPoint]
-        congr 1
+        exact congrArg Matrix.charpoly (by
+          simpa only [e, AlgHom.coe_id] using Matrix.map_id C)
       _ = _ := by
         rw [hCcharpoly, Polynomial.map_map]
         congr 1
