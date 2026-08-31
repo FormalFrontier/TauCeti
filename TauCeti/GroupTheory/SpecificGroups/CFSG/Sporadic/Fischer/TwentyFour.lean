@@ -385,9 +385,9 @@ representative reached so far. In particular the two rewrites `r` and `a r a` of
 have the same length, the right-hand side not mentioning `positive`. -/
 @[simp]
 theorem length_toWord_fi24SchreierRewrite (positive : Bool) (r : Relator (Fin 12)) :
-    (fi24SchreierRewrite positive r).toWord.length =
+    (fi24SchreierRewrite positive r).length =
       r.toWord.countP fun letter => letter.1 ≠ 0 := by
-  rw [Relator.length_toWord, fi24SchreierRewrite_def]
+  rw [fi24SchreierRewrite_def]
   exact length_foldr_fi24SchreierFactors positive r.toWord
 
 /-- The `136` relators of the index-two subgroup. The square relations are omitted after their
@@ -599,7 +599,7 @@ private theorem sum_map_length_flatMap_fi24SchreierRewrite (l : List (Relator (F
   | nil => simp
   | cons r l ih =>
     rw [List.flatMap_cons, List.map_append, List.sum_append, ih]
-    simp only [List.map_cons, List.map_nil, List.sum_cons, List.sum_nil, ← Relator.length_toWord,
+    simp only [List.map_cons, List.map_nil, List.sum_cons, List.sum_nil,
       length_toWord_fi24SchreierRewrite]
     ring
 
