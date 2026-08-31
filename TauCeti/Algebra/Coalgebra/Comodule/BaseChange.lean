@@ -52,7 +52,7 @@ open scoped TensorProduct
 
 namespace TauCeti.Comodule
 
-universe u v w x y
+universe u v w x y z
 
 variable {R : Type u} {H : Type v} {M : Type w} (A : Type x)
 variable [CommSemiring R] [CommSemiring A] [Algebra R A]
@@ -68,6 +68,7 @@ noncomputable def baseChangeCoact :
 
 /-- On a pure tensor, the base-changed coaction applies the old coaction and distributes the
 new scalar across the two extended tensor factors. -/
+@[simp]
 theorem baseChangeCoact_tmul (a : A) (m : M) :
     baseChangeCoact (R := R) (H := H) A (a ⊗ₜ[R] m) =
       (TensorProduct.AlgebraTensorModule.distribBaseChange R A M H)
@@ -123,7 +124,9 @@ private theorem tensorTensorTensorComm_one_one (z : H ⊗[R] H) :
   induction z using TensorProduct.induction_on with
   | zero => simp
   | add x y hx hy => simp only [TensorProduct.tmul_add, map_add, hx, hy]
-  | tmul g h => rfl
+  | tmul g h =>
+      simp only [TensorProduct.AlgebraTensorModule.tensorTensorTensorComm_tmul,
+        TensorProduct.AlgebraTensorModule.distribBaseChange_tmul]
 
 private theorem comul_one_tmul (h : H) :
     Coalgebra.comul (R := A) (A := A ⊗[R] H) (1 ⊗ₜ[R] h) =
@@ -178,8 +181,8 @@ private theorem rid_counit_distrib (a : A) (z : M ⊗[R] H) :
       rw [TensorProduct.tmul_smul]
       simp [Algebra.smul_def, mul_comm]
 
-/-- Extending the coefficient Hopf algebra and the underlying module of a comodule along the
-same scalar morphism gives a comodule over the base-changed Hopf algebra. -/
+/-- Extending the coefficient coalgebra and the underlying module of a comodule along the
+same scalar morphism gives a comodule over the base-changed coalgebra. -/
 @[expose, instance_reducible]
 noncomputable def baseChange : Comodule A (A ⊗[R] H) (A ⊗[R] M) where
   coact := baseChangeCoact (R := R) (H := H) A
@@ -201,6 +204,7 @@ noncomputable def baseChange : Comodule A (A ⊗[R] H) (A ⊗[R] M) where
 
 /-- The coaction of the base-changed comodule is scalar extension of the original coaction,
 followed by distribution across the two tensor factors. -/
+@[simp]
 theorem baseChange_coact :
     letI := baseChange (R := R) (H := H) (M := M) A
     coact (R := A) (C := A ⊗[R] H) (M := A ⊗[R] M) =
@@ -212,15 +216,17 @@ theorem baseChange_coact_tmul (a : A) (m : M) :
     letI := baseChange (R := R) (H := H) (M := M) A
     coact (R := A) (C := A ⊗[R] H) (M := A ⊗[R] M) (a ⊗ₜ[R] m) =
       (TensorProduct.AlgebraTensorModule.distribBaseChange R A M H)
-        (a ⊗ₜ[R] coact (R := R) (C := H) (M := M) m) :=
-  baseChangeCoact_tmul (R := R) (H := H) A a m
+        (a ⊗ₜ[R] coact (R := R) (C := H) (M := M) m) := by
+    rw [baseChange_coact]
+    exact baseChangeCoact_tmul (R := R) (H := H) A a m
 
 namespace Hom
 
 variable {N : Type y} [AddCommMonoid N] [Module R N] [Comodule R H N]
+variable {P : Type z} [AddCommMonoid P] [Module R P] [Comodule R H P]
 
-/-- Base change of a comodule morphism, extending both its source and its coefficient coalgebra
-algebra along the same scalar morphism. -/
+/-- Base change of a comodule morphism, extending its source and target modules together with its
+coefficient coalgebra along the same scalar morphism. -/
 @[expose] noncomputable def baseChange (f : Hom R H M N) :
     letI := Comodule.baseChange (R := R) (H := H) (M := M) A
     letI := Comodule.baseChange (R := R) (H := H) (M := N) A
@@ -249,14 +255,44 @@ theorem baseChange_toLinearMap (f : Hom R H M N) :
     (baseChange A f).toLinearMap = f.toLinearMap.baseChange A :=
   rfl
 
+/-- Base change preserves the identity comodule morphism. -/
+@[simp]
+theorem baseChange_id :
+    letI := Comodule.baseChange (R := R) (H := H) (M := M) A
+    baseChange A (id R H M) = id A (A ⊗[R] H) (A ⊗[R] M) := by
+  let _ := Comodule.baseChange (R := R) (H := H) (M := M) A
+  apply ext
+  intro x
+  exact LinearMap.congr_fun (by
+    rw [baseChange_toLinearMap, id_toLinearMap, LinearMap.baseChange_id, id_toLinearMap]) x
+
+/-- Base change preserves composition of comodule morphisms. -/
+@[simp]
+theorem baseChange_comp (g : Hom R H N P) (f : Hom R H M N) :
+    letI := Comodule.baseChange (R := R) (H := H) (M := M) A
+    letI := Comodule.baseChange (R := R) (H := H) (M := N) A
+    letI := Comodule.baseChange (R := R) (H := H) (M := P) A
+    baseChange A (g.comp f) = (baseChange A g).comp (baseChange A f) := by
+  let _ := Comodule.baseChange (R := R) (H := H) (M := M) A
+  let _ := Comodule.baseChange (R := R) (H := H) (M := N) A
+  let _ := Comodule.baseChange (R := R) (H := H) (M := P) A
+  apply ext
+  intro x
+  exact LinearMap.congr_fun (by
+    rw [baseChange_toLinearMap, comp_toLinearMap, LinearMap.baseChange_comp,
+      comp_toLinearMap, baseChange_toLinearMap, baseChange_toLinearMap]) x
+
 /-- A base-changed comodule morphism acts on a pure tensor by applying the original morphism
 to the module factor. -/
 @[simp]
 theorem baseChange_tmul (f : Hom R H M N) (a : A) (m : M) :
     letI := Comodule.baseChange (R := R) (H := H) (M := M) A
     letI := Comodule.baseChange (R := R) (H := H) (M := N) A
-    baseChange A f (a ⊗ₜ[R] m) = a ⊗ₜ[R] f m :=
-  rfl
+    baseChange A f (a ⊗ₜ[R] m) = a ⊗ₜ[R] f m := by
+  let _ := Comodule.baseChange (R := R) (H := H) (M := M) A
+  let _ := Comodule.baseChange (R := R) (H := H) (M := N) A
+  rw [← coe_toLinearMap (baseChange A f), baseChange_toLinearMap,
+    LinearMap.baseChange_tmul, coe_toLinearMap]
 
 end Hom
 
