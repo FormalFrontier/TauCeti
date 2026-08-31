@@ -5,7 +5,7 @@ Authors: Codex
 -/
 module
 
-public import TauCeti.Probability.ProbabilityMassFunction.Finite
+public import TauCeti.MeasureTheory.OptimalTransport.Finite.TransportMatrix
 
 /-!
 # Finite coupling gluing
@@ -66,35 +66,11 @@ private def finiteGluingWeight (π : PMF (α × β)) (σ : PMF (β × γ))
   if π.map Prod.snd b = 0 then 0
   else π (a, b) * σ (b, c) / π.map Prod.snd b
 
-private theorem middleMass_eq_sum (π : PMF (α × β)) (b : β) :
-    (let _ := Fintype.card β; π.map Prod.snd b = ∑ a, π (a, b)) := by
-  classical
-  rw [PMF.map_apply]
-  calc
-    (∑' a : α × β, if b = a.2 then π a else 0) =
-        ∑ a : α, ∑ b' : β, if b = b' then π (a, b') else 0 := by
-      rw [tsum_fintype, Fintype.sum_prod_type]
-    _ = ∑ a : α, π (a, b) := by
-      apply Finset.sum_congr rfl
-      intro a ha
-      simp
-
-private theorem middleMass_eq_sum_right (σ : PMF (β × γ)) (b : β) :
-    (let _ := Fintype.card β; σ.map Prod.fst b = ∑ c, σ (b, c)) := by
-  classical
-  rw [PMF.map_apply]
-  calc
-    (∑' a : β × γ, if b = a.1 then σ a else 0) =
-        ∑ b' : β, ∑ c : γ, if b = b' then σ (b', c) else 0 := by
-      rw [tsum_fintype, Fintype.sum_prod_type]
-    _ = ∑ c : γ, σ (b, c) := by
-      simp
-
 private theorem middleMass_eq_zero_iff (π : PMF (α × β)) (b : β) :
   (let _ := Fintype.card α; let _ := Fintype.card β;
     π.map Prod.snd b = 0 ↔ ∀ a, π (a, b) = 0) := by
   classical
-  rw [middleMass_eq_sum]
+  rw [TauCeti.PMF.map_snd_apply]
   simp
 
 private theorem finiteGluingWeight_sum (π : PMF (α × β)) (σ : PMF (β × γ))
@@ -112,7 +88,7 @@ private theorem finiteGluingWeight_sum (π : PMF (α × β)) (σ : PMF (β × γ
         exact middleMass_eq_zero_iff π b
       rw [hb'] at hb
       have hb' : π.map Prod.snd b = 0 := by
-        rw [middleMass_eq_sum]
+        rw [TauCeti.PMF.map_snd_apply]
         simp [hb]
       rw [hb']
       simp [finiteGluingWeight, hb']
@@ -129,9 +105,9 @@ private theorem finiteGluingWeight_sum (π : PMF (α × β)) (σ : PMF (β × γ
                   simp only [div_eq_mul_inv, Finset.sum_mul]
         _ = π.map Prod.snd b := by
           have hσ : ∑ c, σ (b, c) = π.map Prod.snd b := by
-            rw [← middleMass_eq_sum_right σ b, ← hmid b]
+            rw [← TauCeti.PMF.map_fst_apply σ b, ← hmid b]
           rw [hσ]
-          rw [← middleMass_eq_sum π b]
+          rw [← TauCeti.PMF.map_snd_apply π b]
           apply ENNReal.mul_div_cancel_right hb
           exact (π.map Prod.snd).apply_ne_top b
   calc
@@ -215,7 +191,7 @@ theorem map_prodMap_id_fst_finiteGluing (h : π.map Prod.snd = σ.map Prod.fst) 
                 π.map Prod.snd p.2 := by
                   simp only [div_eq_mul_inv, Finset.sum_mul, Finset.mul_sum]
           _ = π p := by
-            rw [← middleMass_eq_sum_right σ p.2, ← hmid]
+            rw [← TauCeti.PMF.map_fst_apply σ p.2, ← hmid]
             apply ENNReal.mul_div_cancel_right hb
             exact (π.map Prod.snd).apply_ne_top p.2
 
@@ -251,10 +227,10 @@ theorem map_snd_finiteGluing (h : π.map Prod.snd = σ.map Prod.fst) :
           exact middleMass_eq_zero_iff π p.1
         rw [hb'] at hb
         have hmzero : π.map Prod.snd p.1 = 0 := by
-          rw [middleMass_eq_sum]
+          rw [TauCeti.PMF.map_snd_apply]
           simp [hb]
         have hσzero : ∀ c, σ (p.1, c) = 0 := by
-          rw [middleMass_eq_sum_right σ p.1] at hmid
+          rw [TauCeti.PMF.map_fst_apply σ p.1] at hmid
           have hz : ∑ c, σ (p.1, c) = 0 := hmid.symm.trans hmzero
           have hz' : (fun c : γ => σ (p.1, c)) = 0 :=
             (Fintype.sum_eq_zero_iff_of_nonneg
@@ -269,7 +245,7 @@ theorem map_snd_finiteGluing (h : π.map Prod.snd = σ.map Prod.fst) :
                 π.map Prod.snd p.1 := by
                   simp only [div_eq_mul_inv, Finset.sum_mul]
           _ = σ p := by
-            rw [← middleMass_eq_sum π p.1, mul_comm]
+            rw [← TauCeti.PMF.map_snd_apply π p.1, mul_comm]
             apply ENNReal.mul_div_cancel_right hb
             exact (π.map Prod.snd).apply_ne_top p.1
 
