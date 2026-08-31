@@ -33,4 +33,6 @@ theorem gfd_lemma_1_7_1 : True := trivial -- Lemma 1.7(1), coherent, via Holm Pr
 theorem gfd_lemma_1_7_2 : True := trivial -- Lemma 1.7(2)
 theorem gfd_lemma_1_7_3 : True := trivial -- Lemma 1.7(3)
 
+end
+
 end TauCeti.RingTheory.Gorenstein
