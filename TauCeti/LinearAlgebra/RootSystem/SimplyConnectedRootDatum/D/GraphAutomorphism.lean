@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.LinearAlgebra.RootSystem.DiagramPermutations
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.D.SpinWeight
 
 /-!
@@ -332,7 +331,7 @@ theorem typeDGraphAut_weightMap_typeDSpinWeight (hn : 4 ≤ n) (s : Finset (Fin 
       typeDSpinWeight (typeDSpinGraphPerm n (by omega) s) := by
   funext i
   rw [weightMap_typeDGraphAut_apply]
-  exact (typeDSpinWeight_typeDSpinGraphPerm_apply hn s i).symm
+  exact (typeDSpinWeight_typeDSpinGraphPerm_apply (by omega) s i).symm
 
 /-- The root-index action of the type-`D` graph automorphism restricts to the fork swap on the
 pinned simple roots. -/

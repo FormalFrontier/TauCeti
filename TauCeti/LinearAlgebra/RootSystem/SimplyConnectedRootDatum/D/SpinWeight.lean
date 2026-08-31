@@ -188,17 +188,7 @@ of the final orthonormal coordinate. A sign is encoded by membership in the inde
 this takes the symmetric difference with the singleton containing the final index. -/
 def typeDSpinGraphPerm (n : ℕ) (hn : 1 ≤ n) : Equiv.Perm (Finset (Fin n)) :=
   let last : Fin n := ⟨n - 1, by omega⟩
-  let toggle := fun s : Finset (Fin n) => s ∆ {last}
-  {
-    toFun := toggle
-    invFun := toggle
-    left_inv := by
-      intro s
-      exact symmDiff_symmDiff_cancel_right (a := {last}) (b := s)
-    right_inv := by
-      intro s
-      exact symmDiff_symmDiff_cancel_right (a := {last}) (b := s)
-  }
+  (symmDiff_left_involutive {last}).toPerm (· ∆ {last})
 
 /-- An index belongs to the graph-transformed sign set precisely when its old membership agrees
 with not being the final index. Thus membership is unchanged away from the final coordinate and
@@ -228,7 +218,11 @@ theorem typeDSpinGraphPerm_apply_apply (n : ℕ) (hn : 1 ≤ n) (s : Finset (Fin
 @[simp]
 theorem typeDSpinGraphPerm_symm (n : ℕ) (hn : 1 ≤ n) :
     (typeDSpinGraphPerm n hn).symm = typeDSpinGraphPerm n hn :=
-  (rfl)
+  by
+    apply Equiv.ext
+    intro s
+    apply (typeDSpinGraphPerm n hn).injective
+    rw [Equiv.apply_symm_apply, typeDSpinGraphPerm_apply_apply]
 
 /-- The graph permutation exchanges the two half-spin parities: an even sign set is sent to an
 odd one and conversely. -/
@@ -243,7 +237,7 @@ theorem even_card_typeDSpinGraphPerm_iff (n : ℕ) (hn : 1 ≤ n)
         ext i
         simp only [Finset.mem_symmDiff, Finset.mem_singleton, Finset.mem_erase]
         aesop
-      simpa only [typeDSpinGraphPerm, Equiv.coe_fn_mk, last, htoggle]
+      simpa only [typeDSpinGraphPerm, Function.Involutive.coe_toPerm, last, htoggle]
         using Finset.card_erase_add_one hlast
     rw [← hcard, Nat.odd_add_one, Nat.not_odd_iff_even]
   · have hcard : (typeDSpinGraphPerm n hn s).card = s.card + 1 := by
@@ -251,7 +245,7 @@ theorem even_card_typeDSpinGraphPerm_iff (n : ℕ) (hn : 1 ≤ n)
         ext i
         simp only [Finset.mem_symmDiff, Finset.mem_singleton, Finset.mem_insert]
         aesop
-      simpa only [typeDSpinGraphPerm, Equiv.coe_fn_mk, last, htoggle]
+      simpa only [typeDSpinGraphPerm, Function.Involutive.coe_toPerm, last, htoggle]
         using Finset.card_insert_of_notMem hlast
     rw [hcard, Nat.even_add_one, Nat.not_even_iff_odd]
 
@@ -264,7 +258,7 @@ theorem odd_card_typeDSpinGraphPerm_iff (n : ℕ) (hn : 1 ≤ n)
     Nat.not_odd_iff_even]
 
 /-- Toggling the final sign exchanges the two fork coordinates of a type-`D` spin weight. -/
-private theorem typeDSpinWeight_typeDSpinGraphPerm_fork {n : ℕ} (hn : 4 ≤ n)
+private theorem typeDSpinWeight_typeDSpinGraphPerm_fork {n : ℕ} (hn : 2 ≤ n)
     (s : Finset (Fin n)) :
     typeDSpinWeight (typeDSpinGraphPerm n (by omega) s) ⟨n - 2, by omega⟩ =
         typeDSpinWeight s ⟨n - 1, by omega⟩ ∧
@@ -299,15 +293,15 @@ private theorem typeDSpinWeight_typeDSpinGraphPerm_fork {n : ℕ} (hn : 4 ≤ n)
 /-- **The final-sign toggle realizes the type-`D` graph automorphism on spin weights.** Applying
 the fork-node permutation to the fundamental-weight coordinates of a spin weight gives the weight
 indexed by the sign set with its final membership toggled. -/
-theorem typeDSpinWeight_typeDSpinGraphPerm_apply {n : ℕ} (hn : 4 ≤ n)
+theorem typeDSpinWeight_typeDSpinGraphPerm_apply {n : ℕ} (hn : 2 ≤ n)
     (s : Finset (Fin n)) (i : Fin n) :
     typeDSpinWeight (typeDSpinGraphPerm n (by omega) s) i =
-      typeDSpinWeight s (graphPermD n (by omega) i) := by
+      typeDSpinWeight s (graphPermD n hn i) := by
   by_cases hbefore : (i : ℕ) + 2 < n
   · have hnext : (i : ℕ) + 1 < n := by omega
     have hilast : (i : ℕ) ≠ n - 1 := by omega
     have hipenultimate : (i : ℕ) ≠ n - 2 := by omega
-    rw [graphPermD_apply_of_ne_of_ne n (by omega) i hipenultimate hilast,
+    rw [graphPermD_apply_of_ne_of_ne n hn i hipenultimate hilast,
       typeDSpinWeight_apply, typeDSpinWeight_apply, dite_eq_left hnext,
       dite_eq_left hnext]
     have hi_not_last : (i : ℕ) + 1 ≠ n := by omega
@@ -332,26 +326,17 @@ theorem typeDSpinWeight_typeDSpinGraphPerm_apply {n : ℕ} (hn : 4 ≤ n)
       exact (typeDSpinWeight_typeDSpinGraphPerm_fork hn s).2
 
 /-- The type-`D` graph permutation preserves the full family of spin weights as a set. -/
-theorem image_comp_graphPermD_range_typeDSpinWeight {n : ℕ} (hn : 4 ≤ n) :
-    (fun wt : Fin n → ℤ => wt ∘ graphPermD n (by omega)) ''
+theorem image_comp_graphPermD_range_typeDSpinWeight {n : ℕ} (hn : 2 ≤ n) :
+    (fun wt : Fin n → ℤ => wt ∘ graphPermD n hn) ''
         Set.range (typeDSpinWeight (n := n)) =
       Set.range (typeDSpinWeight (n := n)) := by
-  ext wt
-  constructor
-  · rintro ⟨_, ⟨s, rfl⟩, rfl⟩
-    refine ⟨typeDSpinGraphPerm n (by omega) s, ?_⟩
-    funext i
-    simpa only [Function.comp_apply] using
-      typeDSpinWeight_typeDSpinGraphPerm_apply hn s i
-  · rintro ⟨s, rfl⟩
-    refine ⟨typeDSpinWeight (typeDSpinGraphPerm n (by omega) s),
-      ⟨typeDSpinGraphPerm n (by omega) s, rfl⟩, ?_⟩
-    funext i
-    simpa only [Function.comp_apply] using
-      (typeDSpinWeight_typeDSpinGraphPerm_apply hn
-        (typeDSpinGraphPerm n (by omega) s) i).symm.trans
-          (congrArg (fun t => typeDSpinWeight t i)
-            (typeDSpinGraphPerm_apply_apply n (by omega) s))
+  rw [← Set.range_comp]
+  have hcomp :
+      (fun wt : Fin n → ℤ => wt ∘ graphPermD n hn) ∘ typeDSpinWeight =
+        typeDSpinWeight ∘ typeDSpinGraphPerm n (by omega) := by
+    funext s i
+    exact (typeDSpinWeight_typeDSpinGraphPerm_apply hn s i).symm
+  rw [hcomp, Set.range_comp, EquivLike.range_eq_univ, Set.image_univ]
 
 /-! ## A spanning family -/
 
