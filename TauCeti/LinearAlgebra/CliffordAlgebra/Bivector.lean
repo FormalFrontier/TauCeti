@@ -204,6 +204,12 @@ theorem bivector_mem_filtration_two (a b : M) :
   exact Submodule.smul_mem _ _ <|
     Submodule.sub_mem _ (ι_mul_ι_mem_filtration_two Q a b) (ι_mul_ι_mem_filtration_two Q b a)
 
+/-- Clifford reversal negates every bivector. -/
+@[simp] theorem reverse_bivector (a b : M) :
+    reverse (bivector Q a b) = -bivector Q a b := by
+  rw [bivector_def, map_smul, map_sub, reverse.map_mul, reverse.map_mul, reverse_ι, reverse_ι]
+  module
+
 /-- The image of the exterior-square Clifford bivector map lands in any submodule containing every
 Clifford bivector: the decomposable bivectors generate `⋀[R]^2 M`. -/
 theorem bivectorExterior_range_le_of_bivector_mem
@@ -220,6 +226,16 @@ theorem bivectorExterior_range_le_of_bivector_mem
   change bivectorExterior Q (exteriorPower.ιMulti R 2 ![v 0, v 1]) ∈ P
   rw [bivectorExterior_apply_ιMulti]
   exact hP _ _
+
+/-- Clifford reversal negates the image of the exterior-square bivector map. -/
+theorem reverse_bivectorExterior (x : ⋀[R]^2 M) :
+    reverse (bivectorExterior Q x) = -bivectorExterior Q x := by
+  let P : Submodule R (CliffordAlgebra Q) :=
+    LinearMap.eqLocus (reverse (Q := Q)) (-LinearMap.id)
+  have hle : LinearMap.range (bivectorExterior Q) ≤ P :=
+    bivectorExterior_range_le_of_bivector_mem Q P fun a b =>
+      LinearMap.mem_eqLocus.2 (reverse_bivector Q a b)
+  exact hle ⟨x, rfl⟩
 
 /-- The action-normalization identity for the half-normalized Clifford bivector. -/
 theorem bivector_lie_ι (a b x : M) :
