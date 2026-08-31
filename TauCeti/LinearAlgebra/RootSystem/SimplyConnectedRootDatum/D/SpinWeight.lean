@@ -251,6 +251,7 @@ theorem typeDSpinGraphPerm_symm (n : ℕ) (hn : 1 ≤ n) :
 
 /-- The graph permutation exchanges the two half-spin parities: an even sign set is sent to an
 odd one and conversely. -/
+@[simp]
 theorem even_card_typeDSpinGraphPerm_iff (n : ℕ) (hn : 1 ≤ n)
     (s : Finset (Fin n)) :
     Even (typeDSpinGraphPerm n hn s).card ↔ Odd s.card := by
@@ -270,15 +271,50 @@ theorem even_card_typeDSpinGraphPerm_iff (n : ℕ) (hn : 1 ≤ n)
     rw [hcard, Nat.even_add_one, Nat.not_even_iff_odd]
 
 /-- Equivalently, the graph permutation sends odd sign sets to even ones. -/
+@[simp]
 theorem odd_card_typeDSpinGraphPerm_iff (n : ℕ) (hn : 1 ≤ n)
     (s : Finset (Fin n)) :
     Odd (typeDSpinGraphPerm n hn s).card ↔ Even s.card := by
   rw [← Nat.not_even_iff_odd, even_card_typeDSpinGraphPerm_iff,
     Nat.not_odd_iff_even]
 
+/-- Toggling the final sign exchanges the two fork coordinates of a type-`D` spin weight. -/
+private theorem typeDSpinWeight_typeDSpinGraphPerm_fork {n : ℕ} (hn : 4 ≤ n)
+    (s : Finset (Fin n)) :
+    typeDSpinWeight (typeDSpinGraphPerm n (by omega) s) ⟨n - 2, by omega⟩ =
+        typeDSpinWeight s ⟨n - 1, by omega⟩ ∧
+      typeDSpinWeight (typeDSpinGraphPerm n (by omega) s) ⟨n - 1, by omega⟩ =
+        typeDSpinWeight s ⟨n - 2, by omega⟩ := by
+  have hpen_lt : n - 2 + 1 < n := by omega
+  have hlast_not_lt : ¬n - 1 + 1 < n := by omega
+  have hnext :
+      (⟨n - 2 + 1, hpen_lt⟩ : Fin n) = (⟨n - 1, by omega⟩ : Fin n) := by
+    apply Fin.ext
+    dsimp only
+    omega
+  have hprev :
+      (⟨n - 1 - 1, by omega⟩ : Fin n) = (⟨n - 2, by omega⟩ : Fin n) := by
+    apply Fin.ext
+    dsimp only
+    omega
+  have hpen_not_last : n - 2 + 1 ≠ n := by omega
+  have hlast_is_last : n - 1 + 1 = n := Nat.sub_add_cancel (by omega)
+  constructor
+  · rw [typeDSpinWeight_apply, dite_eq_left hpen_lt, hnext,
+      typeDSpinWeight_apply, dite_eq_right hlast_not_lt, hprev]
+    by_cases hp : (⟨n - 2, by omega⟩ : Fin n) ∈ s <;>
+      by_cases hl : (⟨n - 1, by omega⟩ : Fin n) ∈ s <;>
+      simp [mem_typeDSpinGraphPerm_iff, hpen_not_last, hlast_is_last, hp, hl]
+  · rw [typeDSpinWeight_apply, dite_eq_right hlast_not_lt, hprev,
+      typeDSpinWeight_apply, dite_eq_left hpen_lt, hnext]
+    by_cases hp : (⟨n - 2, by omega⟩ : Fin n) ∈ s <;>
+      by_cases hl : (⟨n - 1, by omega⟩ : Fin n) ∈ s <;>
+      simp [mem_typeDSpinGraphPerm_iff, hpen_not_last, hlast_is_last, hp, hl]
+
 /-- **The final-sign toggle realizes the type-`D` graph automorphism on spin weights.** Applying
 the fork-node permutation to the fundamental-weight coordinates of a spin weight gives the weight
 indexed by the sign set with its final membership toggled. -/
+@[simp]
 theorem typeDSpinWeight_typeDSpinGraphPerm_apply {n : ℕ} (hn : 4 ≤ n)
     (s : Finset (Fin n)) (i : Fin n) :
     typeDSpinWeight (typeDSpinGraphPerm n (by omega) s) i =
@@ -301,53 +337,15 @@ theorem typeDSpinWeight_typeDSpinGraphPerm_apply {n : ℕ} (hn : 4 ≤ n)
         apply Fin.ext
         dsimp only
         omega
-      rw [hi]
-      rw [graphPermD_apply_left]
-      have hpen_lt : n - 2 + 1 < n := by omega
-      have hlast_not_lt : ¬n - 1 + 1 < n := by omega
-      have hnext :
-          (⟨n - 2 + 1, hpen_lt⟩ : Fin n) = (⟨n - 1, by omega⟩ : Fin n) := by
-        apply Fin.ext
-        dsimp only
-        omega
-      have hprev :
-          (⟨n - 1 - 1, by omega⟩ : Fin n) = (⟨n - 2, by omega⟩ : Fin n) := by
-        apply Fin.ext
-        dsimp only
-        omega
-      rw [typeDSpinWeight_apply, dite_eq_left hpen_lt, hnext,
-        typeDSpinWeight_apply, dite_eq_right hlast_not_lt, hprev]
-      have hpen_not_last : n - 2 + 1 ≠ n := by omega
-      have hlast_is_last : n - 1 + 1 = n := Nat.sub_add_cancel (by omega)
-      by_cases hp : (⟨n - 2, by omega⟩ : Fin n) ∈ s <;>
-        by_cases hl : (⟨n - 1, by omega⟩ : Fin n) ∈ s <;>
-        simp [mem_typeDSpinGraphPerm_iff, hpen_not_last, hlast_is_last, hp, hl]
+      rw [hi, graphPermD_apply_left]
+      exact (typeDSpinWeight_typeDSpinGraphPerm_fork hn s).1
     · have hlast : (i : ℕ) + 1 = n := by omega
       have hi : i = (⟨n - 1, by omega⟩ : Fin n) := by
         apply Fin.ext
         dsimp only
         omega
-      rw [hi]
-      rw [graphPermD_apply_right]
-      have hlast_not_lt : ¬n - 1 + 1 < n := by omega
-      have hpen_lt : n - 2 + 1 < n := by omega
-      have hprev :
-          (⟨n - 1 - 1, by omega⟩ : Fin n) = (⟨n - 2, by omega⟩ : Fin n) := by
-        apply Fin.ext
-        dsimp only
-        omega
-      have hnext :
-          (⟨n - 2 + 1, hpen_lt⟩ : Fin n) = (⟨n - 1, by omega⟩ : Fin n) := by
-        apply Fin.ext
-        dsimp only
-        omega
-      rw [typeDSpinWeight_apply, dite_eq_right hlast_not_lt, hprev,
-        typeDSpinWeight_apply, dite_eq_left hpen_lt, hnext]
-      have hpen_not_last : n - 2 + 1 ≠ n := by omega
-      have hlast_is_last : n - 1 + 1 = n := Nat.sub_add_cancel (by omega)
-      by_cases hp : (⟨n - 2, by omega⟩ : Fin n) ∈ s <;>
-        by_cases hl : (⟨n - 1, by omega⟩ : Fin n) ∈ s <;>
-        simp [mem_typeDSpinGraphPerm_iff, hpen_not_last, hlast_is_last, hp, hl]
+      rw [hi, graphPermD_apply_right]
+      exact (typeDSpinWeight_typeDSpinGraphPerm_fork hn s).2
 
 /-- The type-`D` graph permutation preserves the full family of spin weights as a set. -/
 theorem image_comp_graphPermD_range_typeDSpinWeight {n : ℕ} (hn : 4 ≤ n) :
