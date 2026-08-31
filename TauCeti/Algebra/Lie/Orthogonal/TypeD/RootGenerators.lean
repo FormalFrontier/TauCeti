@@ -70,6 +70,9 @@ spin lattice, are deliberately left to the next carrier step.
 * The combined-generator interface adapts `LieAlgebra.Basis.rootGenerator`,
   `LieAlgebra.Basis.rootGeneratorWeight`, and `LieAlgebra.Basis.lie_h_rootGenerator` from
   `TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.Basis`.
+* The two named-root identifications follow the formal template of
+  `TauCeti.SpStd.rootGeneratorWeight_inl_eq_root_simpleIndex` and its lowering counterpart in
+  `TauCeti.Algebra.Lie.Symplectic.StandardCarrier.RootDatum`, specialized to type `D`.
 
 This advances the explicit Chevalley--Demazure construction in Layer 9 of
 `TauCetiRoadmap/ReductiveGroups/README.md`. Its consumer is milestone L0, pinned ambient groups,
