@@ -296,6 +296,12 @@ namespace GLSymplecticFin
 
 variable {m R}
 
+/-- A `Fin`-indexed general-linear matrix is symplectic exactly when its reindexing to the two
+standard blocks is symplectic. -/
+theorem mem_iff_reindexGL {M : GL (Fin (m + m)) R} :
+    M ∈ GLSymplecticFin m R ↔ reindexGL m R M ∈ GLSymplectic (Fin m) R :=
+  Iff.rfl
+
 /-- Membership in the `Fin`-indexed symplectic subgroup is the defining condition
 `M J Mᵀ = J` against the transported alternating form. -/
 @[simp]
@@ -1026,6 +1032,24 @@ theorem hom_positiveLong (i : Fin m) :
 @[simp]
 theorem hom_negativeLong (i : Fin m) :
     (RootSubgroupIndex.negativeLong i).hom (R := R) = negativeLongRootTransvectionHom i := by
+  rw [hom]
+
+/-- The difference-root constructor selects the corresponding short-root homomorphism. -/
+@[simp]
+theorem hom_difference (i j : Fin m) (hij : i ≠ j) :
+    (RootSubgroupIndex.difference i j hij).hom (R := R) = differenceShortRootHom hij := by
+  rw [hom]
+
+/-- The positive-sum constructor selects the corresponding short-root homomorphism. -/
+@[simp]
+theorem hom_positiveSum (i j : Fin m) (hij : i < j) :
+    (RootSubgroupIndex.positiveSum i j hij).hom (R := R) = positiveSumShortRootHom hij.ne := by
+  rw [hom]
+
+/-- The negative-sum constructor selects the corresponding short-root homomorphism. -/
+@[simp]
+theorem hom_negativeSum (i j : Fin m) (hij : i < j) :
+    (RootSubgroupIndex.negativeSum i j hij).hom (R := R) = negativeSumShortRootHom hij.ne := by
   rw [hom]
 
 /-- The short constructor selects its family's short-root homomorphism. -/
