@@ -6,9 +6,11 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Probability.Distributions.Beta
+import Mathlib.MeasureTheory.Function.JacobianOneDim
+import Mathlib.MeasureTheory.Measure.Lebesgue.Integral
 
 /-!
-# Euler's beta integral, in real-valued interval form
+# Euler's beta integrals, in real-valued form
 
 Mathlib defines Euler's beta function `ProbabilityTheory.beta` by the Gamma quotient, and proves
 that it is the value of `Complex.betaIntegral`, the complex-valued interval integral of
@@ -19,9 +21,15 @@ integral over `[0, 1]`, the derivative of the kernel `t ^ a * (1 - t) ^ b` it pr
 the splitting of the integrand that raises the second parameter by one. Two parameter identities
 for `Β` itself — symmetry and the unit step in the first parameter — are recorded alongside.
 
+It also records Euler's *second* beta integral, the half-line form
+`∫ x in Ioi 0, x ^ (a - 1) * (1 + x) ^ (-(a + b)) = Β(a, b)`, together with its integrability
+statement, and specialises it to the Cauchy-type kernel `(1 + x ^ 2) ^ (-s)` on the whole line.
+
 These are the analytic prerequisites of
-`TauCeti/Analysis/SpecialFunctions/IncompleteBeta.lean`, and
-`TauCeti/Probability/Distributions/Beta/Basic.lean` uses the beta integral for its moment formula.
+`TauCeti/Analysis/SpecialFunctions/IncompleteBeta.lean`;
+`TauCeti/Probability/Distributions/Beta/Basic.lean` uses the beta integral for its moment formula,
+and `TauCeti/Probability/Distributions/StudentT.lean` normalizes its density with the
+`(1 + x ^ 2) ^ (-s)` form of the second integral.
 
 ## Main results
 
@@ -32,6 +40,12 @@ These are the analytic prerequisites of
 * `TauCeti.hasDerivAt_rpow_mul_one_sub_rpow` — the derivative of `t ^ a * (1 - t) ^ b`;
 * `TauCeti.integral_rpow_mul_one_sub_rpow_add_one_right` — raising the second parameter by one
   splits the integral as a difference;
+* `TauCeti.integrableOn_rpow_mul_one_add_rpow` and `TauCeti.integral_rpow_mul_one_add_rpow` —
+  Euler's second beta integral,
+  `∫ x in Ioi 0, x ^ (a - 1) * (1 + x) ^ (-(a + b)) = Β(a, b)`;
+* `TauCeti.integrable_one_add_sq_rpow` and `TauCeti.integral_one_add_sq_rpow` — the Cauchy-type
+  kernel `(1 + x ^ 2) ^ (-s)` is integrable on the line for `1 / 2 < s`, with total mass
+  `Β(1 / 2, s - 1 / 2)`;
 * `ProbabilityTheory.beta_comm` — symmetry of `Β`;
 * `ProbabilityTheory.beta_one_right` — the value `Β(a, 1) = 1 / a`;
 * `ProbabilityTheory.beta_add_one_left` — the unit step `Β(a + 1, b) = a / (a + b) * Β(a, b)`.
@@ -47,10 +61,18 @@ the right half from the left one by the reflection `t ↦ 1 - t`. The proof of
 `ProbabilityTheory.betaMeasure` in Mathlib, `ProbabilityTheory.lintegral_betaPDF_eq_one`:
 descend from `Complex.betaIntegral` by taking real parts.
 
+Both halves of the second integral are one-dimensional changes of variables, run through
+`MeasureTheory.integral_image_eq_integral_abs_deriv_smul` and its integrability companion. The
+chart `u ↦ u / (1 - u)` carries `(0, 1)` onto `(0, ∞)` and turns the first integrand into the
+second; the chart `t ↦ √t` carries `(0, ∞)` onto itself and turns `(1 + x ^ 2) ^ (-s)` into the
+second integrand with first parameter `1 / 2`. The two halves of the line are folded together by
+`MeasureTheory.integral_comp_abs`, whose reflection argument is reused for integrability below
+`0`.
+
 ## References
 
 * Tau Ceti roadmap, `StandardDistributions`, Layer 2, "Regularized incomplete beta", for which
-  these are the prerequisites.
+  these are the prerequisites, and Layer 3, **Student's t**, which needs the second integral.
 * [NIST Digital Library of Mathematical Functions, §5.12](https://dlmf.nist.gov/5.12).
 -/
 
@@ -147,6 +169,175 @@ theorem integral_rpow_mul_one_sub_rpow_add_one_right (ha : 0 < a) (hb : 0 < b)
   · have h1t : (0 : ℝ) < 1 - t := by linarith
     rw [Real.rpow_sub_one ht0.ne' a, Real.rpow_sub_one h1t.ne' b]
     field_simp
+
+/-! ### Euler's second beta integral -/
+
+section SecondIntegral
+
+variable {s : ℝ}
+
+/-- The chart `u ↦ u / (1 - u)` carries the open unit interval onto the positive half-line. -/
+private lemma image_div_one_sub : (fun u : ℝ => u / (1 - u)) '' Ioo 0 1 = Ioi 0 := by
+  ext x
+  constructor
+  · rintro ⟨u, ⟨hu0, hu1⟩, rfl⟩
+    exact div_pos hu0 (by linarith)
+  · intro hx
+    rw [mem_Ioi] at hx
+    have h1 : (0 : ℝ) < 1 + x := by linarith
+    refine ⟨x / (1 + x), ⟨by positivity, ?_⟩, ?_⟩
+    · rw [div_lt_one h1]
+      linarith
+    · change x / (1 + x) / (1 - x / (1 + x)) = x
+      rw [show (1 : ℝ) - x / (1 + x) = (1 + x)⁻¹ by field_simp; ring]
+      field_simp
+
+/-- The chart `u ↦ u / (1 - u)` is injective on the open unit interval. -/
+private lemma injOn_div_one_sub : InjOn (fun u : ℝ => u / (1 - u)) (Ioo (0 : ℝ) 1) := by
+  intro u hu v hv huv
+  have h1 : (0 : ℝ) < 1 - u := by linarith [hu.2]
+  have h2 : (0 : ℝ) < 1 - v := by linarith [hv.2]
+  rw [show (fun u : ℝ => u / (1 - u)) u = u / (1 - u) from rfl,
+    show (fun u : ℝ => u / (1 - u)) v = v / (1 - v) from rfl,
+    div_eq_div_iff h1.ne' h2.ne'] at huv
+  nlinarith
+
+/-- The derivative of the chart `u ↦ u / (1 - u)`. -/
+private lemma hasDerivAt_div_one_sub {u : ℝ} (hu : u ≠ 1) :
+    HasDerivAt (fun t : ℝ => t / (1 - t)) ((1 - u) ^ 2)⁻¹ u := by
+  have h : (1 : ℝ) - u ≠ 0 := sub_ne_zero_of_ne (Ne.symm hu)
+  have hd : HasDerivAt (fun t : ℝ => 1 - t) (-1) u := by
+    simpa using (hasDerivAt_id u).const_sub (1 : ℝ)
+  refine ((hasDerivAt_id' (x := u)).div hd h).congr_deriv ?_
+  rw [show (1 : ℝ) * (1 - u) - u * -1 = 1 by ring, one_div]
+
+/-- Under the chart `u ↦ u / (1 - u)` the integrand of Euler's second beta integral becomes the
+integrand of Euler's first one. -/
+private lemma abs_deriv_smul_one_add_rpow (a b : ℝ) {u : ℝ} (hu : u ∈ Ioo (0 : ℝ) 1) :
+    |((1 - u) ^ 2)⁻¹| • ((u / (1 - u)) ^ (a - 1) * (1 + u / (1 - u)) ^ (-(a + b))) =
+      u ^ (a - 1) * (1 - u) ^ (b - 1) := by
+  obtain ⟨hu0, hu1⟩ := hu
+  have h1u : (0 : ℝ) < 1 - u := by linarith
+  have hbase : (1 : ℝ) + u / (1 - u) = (1 - u)⁻¹ := by field_simp; ring
+  have e1 : ((1 - u) ^ (2 : ℕ))⁻¹ = (1 - u) ^ (-2 : ℝ) := by
+    rw [show (-2 : ℝ) = -(2 : ℕ) by norm_num, Real.rpow_neg h1u.le, Real.rpow_natCast]
+  have e2 : ((1 - u)⁻¹) ^ (-(a + b)) = (1 - u) ^ (a + b) := by
+    rw [Real.inv_rpow h1u.le, ← Real.rpow_neg h1u.le, neg_neg]
+  have e3 : (1 - u) ^ (-2 : ℝ) * (((1 - u) ^ (a - 1))⁻¹ * (1 - u) ^ (a + b)) =
+      (1 - u) ^ (b - 1) := by
+    rw [← Real.rpow_neg h1u.le, ← Real.rpow_add h1u, ← Real.rpow_add h1u]
+    congr 1
+    ring
+  rw [smul_eq_mul, abs_of_nonneg (by positivity), hbase, Real.div_rpow hu0.le h1u.le, e1, e2,
+    div_eq_mul_inv]
+  calc (1 - u) ^ (-2 : ℝ) * (u ^ (a - 1) * ((1 - u) ^ (a - 1))⁻¹ * (1 - u) ^ (a + b))
+      = u ^ (a - 1) *
+        ((1 - u) ^ (-2 : ℝ) * (((1 - u) ^ (a - 1))⁻¹ * (1 - u) ^ (a + b))) := by ring
+    _ = u ^ (a - 1) * (1 - u) ^ (b - 1) := by rw [e3]
+
+/-- The integrand of Euler's second beta integral is integrable on the positive half-line
+whenever both parameters are positive. -/
+theorem integrableOn_rpow_mul_one_add_rpow (ha : 0 < a) (hb : 0 < b) :
+    IntegrableOn (fun x : ℝ => x ^ (a - 1) * (1 + x) ^ (-(a + b))) (Ioi 0) := by
+  have hIoo : IntegrableOn (fun t : ℝ => t ^ (a - 1) * (1 - t) ^ (b - 1)) (Ioo 0 1) := by
+    refine IntegrableOn.mono_set ?_ Ioo_subset_Ioc_self
+    exact (intervalIntegrable_iff_integrableOn_Ioc_of_le (zero_le_one : (0 : ℝ) ≤ 1)).mp
+      (intervalIntegrable_rpow_mul_one_sub_rpow ha hb ⟨le_rfl, zero_le_one⟩
+        ⟨zero_le_one, le_rfl⟩)
+  rw [← image_div_one_sub,
+    integrableOn_image_iff_integrableOn_abs_deriv_smul measurableSet_Ioo
+      (fun u hu => (hasDerivAt_div_one_sub (ne_of_lt hu.2)).hasDerivWithinAt) injOn_div_one_sub]
+  exact hIoo.congr_fun (fun u hu => (abs_deriv_smul_one_add_rpow a b hu).symm) measurableSet_Ioo
+
+/-- **Euler's second beta integral**: for positive parameters the integral of
+`x ^ (a - 1) * (1 + x) ^ (-(a + b))` over the positive half-line is `Β(a, b)`. -/
+theorem integral_rpow_mul_one_add_rpow (ha : 0 < a) (hb : 0 < b) :
+    ∫ x in Ioi (0 : ℝ), x ^ (a - 1) * (1 + x) ^ (-(a + b)) = beta a b := by
+  rw [← image_div_one_sub,
+    integral_image_eq_integral_abs_deriv_smul measurableSet_Ioo
+      (fun u hu => (hasDerivAt_div_one_sub (ne_of_lt hu.2)).hasDerivWithinAt) injOn_div_one_sub,
+    setIntegral_congr_fun measurableSet_Ioo (fun u hu => abs_deriv_smul_one_add_rpow a b hu),
+    ← integral_rpow_mul_one_sub_rpow ha hb,
+    intervalIntegral.integral_of_le (zero_le_one : (0 : ℝ) ≤ 1)]
+  exact setIntegral_congr_set Ioo_ae_eq_Ioc
+
+/-! ### The Cauchy-type kernel `(1 + x ^ 2) ^ (-s)` -/
+
+/-- The square root carries the positive half-line onto itself. -/
+private lemma image_sqrt_Ioi : Real.sqrt '' Ioi 0 = Ioi 0 := by
+  ext x
+  constructor
+  · rintro ⟨t, ht, rfl⟩
+    exact Real.sqrt_pos.mpr ht
+  · intro hx
+    exact ⟨x ^ 2, mem_Ioi.mpr (pow_pos (mem_Ioi.mp hx) 2), Real.sqrt_sq (mem_Ioi.mp hx).le⟩
+
+/-- The square root is injective on the positive half-line. -/
+private lemma injOn_sqrt_Ioi : InjOn Real.sqrt (Ioi 0) := by
+  intro u hu v hv huv
+  have := congrArg (· ^ 2) huv
+  simpa [Real.sq_sqrt (mem_Ioi.mp hu).le, Real.sq_sqrt (mem_Ioi.mp hv).le] using this
+
+/-- Under the square root the kernel `(1 + x ^ 2) ^ (-s)` becomes the integrand of Euler's second
+beta integral with first parameter `1 / 2`. -/
+private lemma abs_deriv_sqrt_smul (s : ℝ) {t : ℝ} (ht : t ∈ Ioi (0 : ℝ)) :
+    |1 / (2 * Real.sqrt t)| • ((1 + Real.sqrt t ^ 2) ^ (-s)) =
+      2⁻¹ * (t ^ (-(1 / 2) : ℝ) * (1 + t) ^ (-s)) := by
+  have ht0 : (0 : ℝ) < t := ht
+  have hst : (0 : ℝ) < Real.sqrt t := Real.sqrt_pos.mpr ht0
+  have hpow : t ^ (-(1 / 2) : ℝ) = (Real.sqrt t)⁻¹ := by
+    rw [Real.rpow_neg ht0.le, Real.sqrt_eq_rpow]
+  rw [smul_eq_mul, Real.sq_sqrt ht0.le, abs_of_nonneg (by positivity), hpow]
+  field_simp
+
+/-- The Cauchy-type kernel `(1 + x ^ 2) ^ (-s)` is integrable on the positive half-line when
+`1 / 2 < s`. -/
+theorem integrableOn_one_add_sq_rpow_Ioi (hs : 1 / 2 < s) :
+    IntegrableOn (fun x : ℝ => (1 + x ^ 2) ^ (-s)) (Ioi 0) := by
+  have hb : (0 : ℝ) < s - 1 / 2 := by linarith
+  have hbp := integrableOn_rpow_mul_one_add_rpow (a := 1 / 2) (b := s - 1 / 2) (by norm_num) hb
+  rw [show (1 / 2 : ℝ) + (s - 1 / 2) = s by ring, show (1 / 2 : ℝ) - 1 = -(1 / 2) by norm_num]
+    at hbp
+  rw [← image_sqrt_Ioi,
+    integrableOn_image_iff_integrableOn_abs_deriv_smul measurableSet_Ioi
+      (fun t ht => (Real.hasDerivAt_sqrt (ne_of_gt (mem_Ioi.mp ht))).hasDerivWithinAt)
+      injOn_sqrt_Ioi]
+  refine IntegrableOn.congr_fun (hbp.const_mul 2⁻¹) ?_ measurableSet_Ioi
+  intro t ht
+  exact (abs_deriv_sqrt_smul s ht).symm
+
+/-- The Cauchy-type kernel `(1 + x ^ 2) ^ (-s)` is integrable on the line when `1 / 2 < s`. -/
+theorem integrable_one_add_sq_rpow (hs : 1 / 2 < s) :
+    Integrable (fun x : ℝ => (1 + x ^ 2) ^ (-s)) := by
+  have hIoi := integrableOn_one_add_sq_rpow_Ioi hs
+  have hIic : IntegrableOn (fun x : ℝ => (1 + x ^ 2) ^ (-s)) (Iic 0) := by
+    have m : MeasurableEmbedding fun x : ℝ => -x := (Homeomorph.neg ℝ).measurableEmbedding
+    rw [← Measure.map_neg_eq_self (volume : Measure ℝ), m.integrableOn_map_iff]
+    simp only [Function.comp_def, neg_sq, neg_preimage, neg_Iic, neg_zero]
+    exact Iff.mpr integrableOn_Ici_iff_integrableOn_Ioi hIoi
+  rw [← integrableOn_univ, ← Iic_union_Ioi (a := (0 : ℝ))]
+  exact hIic.union hIoi
+
+/-- The total mass of the Cauchy-type kernel `(1 + x ^ 2) ^ (-s)` is `Β(1/2, s - 1/2)`. -/
+theorem integral_one_add_sq_rpow (hs : 1 / 2 < s) :
+    ∫ x : ℝ, (1 + x ^ 2) ^ (-s) = beta (1 / 2) (s - 1 / 2) := by
+  have hb : (0 : ℝ) < s - 1 / 2 := by linarith
+  have hbp := integral_rpow_mul_one_add_rpow (a := 1 / 2) (b := s - 1 / 2) (by norm_num) hb
+  rw [show (1 / 2 : ℝ) + (s - 1 / 2) = s by ring, show (1 / 2 : ℝ) - 1 = -(1 / 2) by norm_num]
+    at hbp
+  have habs : ∫ x : ℝ, (1 + x ^ 2) ^ (-s) = 2 * ∫ x in Ioi (0 : ℝ), (1 + x ^ 2) ^ (-s) := by
+    have h := integral_comp_abs (f := fun y : ℝ => (1 + y ^ 2) ^ (-s))
+    simp only [sq_abs] at h
+    exact h
+  rw [habs, ← image_sqrt_Ioi,
+    integral_image_eq_integral_abs_deriv_smul measurableSet_Ioi
+      (fun t ht => (Real.hasDerivAt_sqrt (ne_of_gt (mem_Ioi.mp ht))).hasDerivWithinAt)
+      injOn_sqrt_Ioi,
+    setIntegral_congr_fun measurableSet_Ioi (fun t ht => abs_deriv_sqrt_smul s ht),
+    integral_const_mul, hbp]
+  ring
+
+end SecondIntegral
 
 end TauCeti
 
