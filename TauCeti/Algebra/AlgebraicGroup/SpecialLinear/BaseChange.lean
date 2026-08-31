@@ -23,6 +23,8 @@ change.
 
 ## Main declarations
 
+* `TauCeti.SpecialLinear.coordinateHopfAlgebraBaseChangeIso_hom_determinantGroupLike`: scalar
+  extension carries the generic determinant to the generic determinant.
 * `TauCeti.SpecialLinear.coordinateHopfAlgebraBaseChangeIso`: base change of the coordinate Hopf
   algebra of `SLₙ`.
 * `TauCeti.SpecialLinear.finiteTypeCoordinateHopfAlgebraBaseChangeIso`: the finite-type form of
@@ -54,7 +56,7 @@ variable (n : ℕ)
 
 /-- The general-linear base-change isomorphism sends the scalar extension of the generic
 determinant to the generic determinant over the new base. -/
-private theorem coordinateHopfAlgebraBaseChangeIso_hom_determinantGroupLike :
+theorem coordinateHopfAlgebraBaseChangeIso_hom_determinantGroupLike :
     (GeneralLinear.coordinateHopfAlgebraBaseChangeIso R K n).hom.hom
         (1 ⊗ₜ[R]
           (GeneralLinear.determinantGroupLike R n :
