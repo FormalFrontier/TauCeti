@@ -73,6 +73,8 @@ private theorem isogenyProperty_pullback
     isogenyProperty (L := L)
       ((Over.pullback (Spec.map (CommRingCat.ofHom (algebraMap k L)))).mapGrp.map
         ((hopfSpec (CommRingCat.of k)).map f.op)) := by
+  -- Unfold the inverse-image/intersection property to the underlying scheme morphisms.
+  -- For the target, this also exposes `hom.hom.left`, where the pullback comparison rewrites.
   change
     IsFinite ((hopfSpec (CommRingCat.of k)).map f.op).hom.hom.left ∧
       Flat ((hopfSpec (CommRingCat.of k)).map f.op).hom.hom.left ∧
