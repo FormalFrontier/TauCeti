@@ -263,15 +263,8 @@ since the native law has finite support. -/
 theorem integrable_map_cast_hypergeometricMeasure {E : Type*} [NormedAddCommGroup E]
     (f : ℝ → E) (N K n : ℕ) :
     Integrable f ((hypergeometricMeasure N K n).map (Nat.cast : ℕ → ℝ)) := by
-  rw [hypergeometricMeasure]
-  split_ifs with h
-  · rw [Measure.map_finset_sum Measurable.of_discrete.aemeasurable]
-    apply integrable_finsetSum_measure.mpr
-    intro k _
-    rw [Measure.map_smul, Measure.map_dirac' Measurable.of_discrete]
-    exact (integrable_dirac (by simp)).smul_measure
-      (hypergeometricWeight_ne_top N K n k h.2)
-  · simp
+  rw [(MeasurableEmbedding.natCast (α := ℝ)).integrable_map_iff]
+  exact integrable_hypergeometricMeasure (fun k ↦ f (k : ℝ)) N K n
 
 /-- Integration against the real-valued cast of a valid hypergeometric law is a finite weighted
 sum. -/
