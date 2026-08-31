@@ -67,7 +67,8 @@ of a finite-dimensional module are Weyl stable
 (`TauCeti.formalCharacter_coeff_weylGroup_smul`) and integral, so `mu` has a Weyl translate
 `nu = w · mu` that is again a weight of the module and is dominant integral
 (`TauCeti.exists_weylGroup_smul_isDominantIntegral_of_genWeightSpace_ne_bot`). The form is Weyl
-invariant (`TauCeti.invForm_weylGroup_smul`), so `⟨mu, mu⟩ = ⟨nu, nu⟩` and the first summand is
+invariant (`RootPairing.InvariantForm.apply_weylGroup_smul`), so
+`⟨mu, mu⟩ = ⟨nu, nu⟩` and the first summand is
 `⟨lam + nu, lam - nu⟩`, which is nonnegative: `lam + nu` is dominant integral and `lam - nu` lies
 in the cone. A nonnegative rational plus a positive one is nonzero.
 
@@ -321,7 +322,8 @@ Expanded through `TauCeti.casimirScalar_eq_add_sum`, the difference is
 nonzero member of the positive root cone. For the first, replace `mu` by the dominant integral
 conjugate `nu = w · mu` of
 `TauCeti.exists_weylGroup_smul_isDominantIntegral_of_genWeightSpace_ne_bot`, which has the same
-length by `TauCeti.invForm_weylGroup_smul`; then `⟨lam, lam⟩ - ⟨nu, nu⟩ = ⟨lam + nu, lam - nu⟩` is
+length by `RootPairing.InvariantForm.apply_weylGroup_smul`; then
+`⟨lam, lam⟩ - ⟨nu, nu⟩ = ⟨lam + nu, lam - nu⟩` is
 nonnegative, `lam + nu` being dominant integral and `lam - nu` a member of the cone. -/
 theorem casimirScalar_ne_casimirScalar_of_genWeightSpace_ne_bot_of_isHighestWeightVector
     (hv : IsHighestWeightVector base lam v) (hgen : LieSubmodule.lieSpan K L {v} = ⊤)
@@ -341,7 +343,10 @@ theorem casimirScalar_ne_casimirScalar_of_genWeightSpace_ne_bot_of_isHighestWeig
     (sub_ne_zero_of_ne (Ne.symm hne))
   -- the constant part of the difference, after replacing `mu` by its dominant conjugate
   have hquad : invForm lam lam - invForm mu mu = invForm (lam + nu) (lam - nu) := by
-    have hlen : invForm mu mu = invForm nu nu := (invForm_weylGroup_smul w mu mu).symm
+    have hlen : invForm mu mu = invForm nu nu := by
+      simpa only [rootInvariantForm_form] using
+        (RootPairing.InvariantForm.apply_weylGroup_smul (IsKilling.rootSystem H)
+          (B := rootInvariantForm (H := H)) w mu mu).symm
     rw [hlen]
     simp only [map_add, map_sub, LinearMap.add_apply]
     rw [(invForm_isSymm (H := H)).eq nu lam]

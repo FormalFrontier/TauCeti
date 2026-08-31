@@ -7,7 +7,6 @@ module
 
 public import Mathlib.Algebra.Lie.Weights.RootSystem
 public import Mathlib.LinearAlgebra.RootSystem.RootPositive
-public import Mathlib.LinearAlgebra.RootSystem.WeylGroup
 
 /-!
 # The invariant form on the weights of a Killing Lie algebra
@@ -60,16 +59,13 @@ that can be stated.
 * `TauCeti.killingExtend_apply_cartan` and `TauCeti.killingExtend_apply_eq_zero`: the extension of
   a weight is the weight itself on `H` and vanishes on every root space of a nonzero weight, so it
   sees the zero-weight component of a vector and nothing else.
-* `TauCeti.invForm_weylGroup_smul`: the form is invariant under the whole Weyl group, so the
-  squared length of a weight depends only on its Weyl orbit.
 
 The compatibility with `LieAlgebra.IsKilling.rootSystem_pairing_apply` — that a Cartan integer is
-`2 ⟨α, β⟩ / ⟨β, β⟩` — and the orthogonality criterion are not
+`2 ⟨α, β⟩ / ⟨β, β⟩` — and the orthogonality criterion and reflection invariance of the form are not
 restated here: `TauCeti.rootInvariantForm` makes them
 `RootPairing.InvariantForm.two_mul_apply_root_root`,
-`RootPairing.InvariantForm.apply_root_root_zero_iff`; reflection invariance is
-`RootPairing.InvariantForm.apply_reflection_reflection`, from which the Weyl invariance above is
-obtained by the generation of the Weyl group by reflections.
+`RootPairing.InvariantForm.apply_root_root_zero_iff` and
+`RootPairing.InvariantForm.apply_reflection_reflection`.
 
 ## Implementation notes
 
@@ -267,29 +263,6 @@ noncomputable def rootInvariantForm : (rootSystem H).InvariantForm where
 
 @[simp]
 theorem rootInvariantForm_form : (rootInvariantForm (H := H)).form = invForm := (rfl)
-
-/-- Weyl invariance of the form, for an automorphism presented together with its membership in the
-Weyl group, which is the form the generation induction is run in. -/
-private theorem invForm_smul_of_mem_weylGroup {w : (rootSystem H).Aut}
-    (hw : w ∈ (rootSystem H).weylGroup) (a b : Module.Dual K H) :
-    invForm (w • a) (w • b) = invForm a b := by
-  induction hw using RootPairing.weylGroup.induction generalizing a b with
-  | mem i =>
-    rw [RootPairing.Equiv.reflection_smul, RootPairing.Equiv.reflection_smul,
-      ← rootInvariantForm_form (H := H)]
-    exact (rootInvariantForm (H := H)).apply_reflection_reflection i a b
-  | one => rw [one_smul, one_smul]
-  | mul x y hx hy ihx ihy => rw [mul_smul, mul_smul, ihx, ihy]
-
-/-- **The invariant form is invariant under the Weyl group.** The form is orthogonal for each
-reflection of the root system, by `TauCeti.rootInvariantForm`, and the reflections generate the
-Weyl group.
-
-This is what makes the squared length `⟨lam, lam⟩` of a weight a function of its Weyl orbit,
-so that a weight and its dominant conjugate have the same length. -/
-theorem invForm_weylGroup_smul (w : (rootSystem H).weylGroup) (a b : Module.Dual K H) :
-    invForm (w • a) (w • b) = invForm a b :=
-  invForm_smul_of_mem_weylGroup w.property a b
 
 /-- **The length of a coroot**: `⟨α^∨, α^∨⟩ ⟨α, α⟩ = 4`, so a long root has a short coroot.
 
