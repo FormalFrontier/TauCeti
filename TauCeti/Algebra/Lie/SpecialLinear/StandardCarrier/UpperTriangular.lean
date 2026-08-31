@@ -193,7 +193,7 @@ theorem upperTriangularPoints_eq (A : Type v) [CommRing A] :
     upperTriangularPoints r A =
       points r A ⊓ upperTriangularGroup (Fin (r + 1)) A := by
   rw [upperTriangularPoints, upperTriangularDefiningIdeal,
-    GeneralLinear.hopfIdealPointsSubgroup_sup, ← points_eq_hopfIdealPointsSubgroup,
+    GeneralLinear.hopfIdealPointsSubgroup_sup, ← points_def,
     GeneralLinear.UpperTriangular.hopfIdealPointsSubgroup_eq]
 
 /-- Membership in the upper-triangular carrier points means carrier membership together with

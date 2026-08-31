@@ -30,6 +30,10 @@ determinant formula `f^μ · ∏_{i < r} βᵢ ! = μ.card ! · ∏_{i < j < r} 
 standard Young tableaux, and multiplying the two gives the multiplicative hook-length formula
 `f^μ · ∏_{c ∈ μ} hookLength μ c = μ.card !`.
 
+The file also records the one interaction between beta-numbers and corners, which the induction
+proving the Frobenius formula runs on: erasing a corner lowers the beta-number of its row by one
+and leaves the other beta-numbers alone.
+
 ## The row-by-row mechanism
 
 Everything reduces to one statement about a single row `i`, proved in
@@ -65,6 +69,8 @@ when `(j, c) ∉ μ`. Disjointness plus a count of both sides then forces the un
 * `YoungDiagram.prod_hookLength_row_mul_prod_betaNumber_sub_eq_factorial`: the identity for one row.
 * `YoungDiagram.prod_hookLength_mul_prod_betaNumber_sub_eq_prod_factorial`: the hook-length
   product identity.
+* `YoungDiagram.IsCorner.betaNumber_erase`: erasing a corner lowers exactly one beta-number, by
+  one.
 
 ## References
 
@@ -227,20 +233,6 @@ theorem prod_hookLength_row_mul_prod_betaNumber_sub_eq_factorial (hr : μ.colLen
 
 /-! ### The hook-length product -/
 
-/-- A product over the cells of a diagram with at most `r` rows, read row by row: the cells are
-fibred over their row index by `Prod.fst`, and the fibre of `i` is the row `μ.row i`. -/
-private theorem prod_cells_eq_prod_range {M : Type*} [CommMonoid M] (hr : μ.colLen 0 ≤ r)
-    (f : ℕ × ℕ → M) :
-    ∏ c ∈ μ.cells, f c = ∏ i ∈ range r, ∏ c ∈ range (μ.rowLen i), f (i, c) := by
-  have hmaps : ∀ c ∈ μ.cells, c.1 ∈ range r := by
-    rintro ⟨a, b⟩ hc
-    exact mem_range.mpr
-      ((mem_iff_lt_colLen.mp ((mem_cells _).mp hc)).trans_le (colLen_le_of_colLen_zero_le hr b))
-  rw [← prod_fiberwise_of_maps_to hmaps f]
-  refine prod_congr rfl fun i _ => ?_
-  -- the fibre of `i` is `YoungDiagram.row`, defined as exactly this filter
-  rw [← row, row_eq_prod, Finset.prod_product, prod_singleton]
-
 /-- **The hook-length product identity.** For a Young diagram `μ` with at most `r` rows, the
 product of all its hook lengths, multiplied by the Vandermonde-style product of the differences of
 its beta-numbers, is the product of the factorials of its beta-numbers.
@@ -253,7 +245,21 @@ theorem prod_hookLength_mul_prod_betaNumber_sub_eq_prod_factorial (μ : YoungDia
     ((∏ c ∈ μ.cells, μ.hookLength c) *
         ∏ i ∈ range r, ∏ j ∈ Ico (i + 1) r, (μ.betaNumber r i - μ.betaNumber r j))
       = ∏ i ∈ range r, (μ.betaNumber r i) ! := by
-  rw [prod_cells_eq_prod_range hr, ← prod_mul_distrib]
+  rw [prod_cells_eq_prod_range μ hr, ← prod_mul_distrib]
   exact prod_congr rfl fun i _ => prod_hookLength_row_mul_prod_betaNumber_sub_eq_factorial hr
+
+/-! ### Erasing a corner -/
+
+/-- Erasing a corner lowers the beta-number of its row by one and leaves the other beta-numbers
+unchanged. -/
+@[simp]
+theorem IsCorner.betaNumber_erase {c : ℕ × ℕ} (h : IsCorner μ c) (r i : ℕ) :
+    (μ.erase c).betaNumber r i
+      = if c.1 = i then μ.betaNumber r i - 1 else μ.betaNumber r i := by
+  have hrow : 0 < μ.rowLen c.1 := by rw [h.rowLen_eq_snd_add_one]; omega
+  rw [betaNumber_def, h.rowLen_erase, betaNumber_def]
+  split_ifs with hi
+  · subst hi; omega
+  · rfl
 
 end YoungDiagram

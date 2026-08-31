@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.Lie.SpecialLinear.StandardCarrier.Basic
+public import TauCeti.Algebra.Lie.SpecialLinear.StandardCarrier.PointsFunctor
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Frobenius
 
 /-!
@@ -39,6 +39,8 @@ fixed-point group is finite or simple.
 
 * `TauCeti.SlStd.coe_frobenius` and `TauCeti.SlStd.coe_frobenius_apply`: the endomorphism acts by
   entrywise Frobenius.
+* `TauCeti.SlStd.frobenius_eq_pointsMap`: it is the functorial point map induced by the iterated
+  Frobenius endomorphism of the value ring.
 * `TauCeti.SlStd.frobenius_rootSubgroupPoints` and `TauCeti.SlStd.frobenius_weightTorusPoints`: the
   equations on the pinned generating root subgroups and split torus.
 * `TauCeti.SlStd.frobenius_zero` and `TauCeti.SlStd.frobenius_add`: the iteration laws.
@@ -123,6 +125,13 @@ theorem coe_frobenius (g : points r A) :
   have h := congrArg Subtype.val (pointsEquivKostantToralPoints_frobenius r p k A g)
   rw [TauCeti.UniversalEnvelopingAlgebra.coe_kostantToralFrobenius] at h
   simpa only [coe_pointsEquivKostantToralPoints] using h
+
+/-- **The carrier Frobenius is the functorial map on points** induced by the iterated Frobenius
+endomorphism of the value ring, so it is an instance of `TauCeti.SlStd.pointsMap` rather than a
+separate endomorphism. -/
+theorem frobenius_eq_pointsMap :
+    frobenius r p k A = pointsMap r (iterateFrobenius A p k) :=
+  MonoidHom.ext fun g => Subtype.ext (by rw [coe_frobenius, coe_pointsMap])
 
 /-- Entrywise, the Frobenius endomorphism raises each matrix coefficient to its
 `p ^ k`-th power. -/

@@ -59,8 +59,10 @@ is any group here claimed to be finite or simple.
   coordinate vectors and the roots of the numbered generators.
 * `TauCeti.SlStd.lattice` and `TauCeti.SlStd.latticeBasis`: the standard admissible lattice and its
   coordinate basis.
-* `TauCeti.SlStd.definingIdeal`: the Hopf ideal of `O(GL_{r+1})` cutting out the carrier;
-  `TauCeti.SlStd.points_eq_hopfIdealPointsSubgroup` reads its matrix points off that ideal.
+* `TauCeti.SlStd.definingIdeal` and `TauCeti.SlStd.definingIdeal_def`: the Hopf ideal cutting the
+  carrier out of the coordinate Hopf algebra of `GL_{r+1}`, in terms of which
+  `TauCeti.SlStd.points_def` presents its points, together with its characterization as the
+  generic Kostant toral defining ideal.
 * `TauCeti.SlStd.groupScheme`, `TauCeti.SlStd.carrierι`, `TauCeti.SlStd.rootSubgroup`,
   `TauCeti.SlStd.weightTorus`, `TauCeti.SlStd.points`, `TauCeti.SlStd.rootSubgroupPoints`, and
   `TauCeti.SlStd.weightTorusPoints`: the carrier, its closed immersion into `GL_{r+1}`, its pinned
@@ -431,14 +433,31 @@ theorem isCartanWeightVector_latticeBasis (k : Fin (r + 1)) :
   rw [coe_latticeBasis]
   exact isCartanWeightVector_single r k
 
-/-- The defining Hopf ideal of the full-weight type-`A_r` carrier, named in the ambient
-coordinate Hopf algebra of `GL_{r+1}`. -/
+/-- The Hopf ideal cutting the type `A_r` carrier out of the coordinate Hopf algebra of
+`GL_{r+1}` over `ℤ`.
+
+Like `TauCeti.SlStd.groupScheme` below, and like the generic
+`TauCeti.UniversalEnvelopingAlgebra.kostantToralGroupScheme` it is cut out of, this is an
+`abbrev`: the descent arguments of
+`TauCeti/Algebra/Lie/SpecialLinear/StandardCarrier/GraphAutomorphism.lean` feed it straight into
+the generic Kostant comap lemmas and the generic toral coordinate maps, which are stated for the
+ideal it names. Consumers that only need to know which ideal this is should rewrite with
+`TauCeti.SlStd.definingIdeal_def` rather than unfold it. -/
 noncomputable abbrev definingIdeal :
-    HopfIdeal ℤ (GeneralLinear.coordinateHopfAlgebra ℤ (r + 1)) :=
+    HopfIdeal ℤ (TauCeti.GeneralLinear.coordinateHopfAlgebra ℤ (r + 1)) :=
   TauCeti.UniversalEnvelopingAlgebra.kostantToralDefiningIdeal (rootGenerator r)
     (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
     (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv)
     (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r)
+
+/-- The defining ideal is the one supplied by the generic Kostant toral-closure construction. -/
+theorem definingIdeal_def :
+    definingIdeal r =
+      TauCeti.UniversalEnvelopingAlgebra.kostantToralDefiningIdeal (rootGenerator r)
+        (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
+        (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv)
+        (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) := by
+  rw [definingIdeal]
 
 /-- **The full-weight Chevalley carrier of type `A_r`**: the smallest closed subgroup scheme of
 `GL_{r+1}` over `ℤ` containing the divided-power exponential root subgroups of the numbered
@@ -535,11 +554,14 @@ noncomputable def points (A : Type v) [CommRing A] :
     (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv)
     (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) A
 
-/-- The carrier points are the general-linear matrix points cut out by the carrier's defining
-Hopf ideal. -/
-theorem points_eq_hopfIdealPointsSubgroup (A : Type v) [CommRing A] :
-    points r A = GeneralLinear.hopfIdealPointsSubgroup (r + 1) (definingIdeal r) A := by
-  rw [points, TauCeti.UniversalEnvelopingAlgebra.kostantToralPointsSubgroup_def]
+/-- The points of the type `A_r` carrier are the invertible matrices cut out by its defining Hopf
+ideal. This is the presentation the functoriality of the points is read off. -/
+theorem points_def (A : Type v) [CommRing A] :
+    points r A =
+      TauCeti.GeneralLinear.hopfIdealPointsSubgroup (r + 1) (definingIdeal r) A := by
+  rw [points, definingIdeal]
+  exact TauCeti.UniversalEnvelopingAlgebra.kostantToralPointsSubgroup_def
+    _ _ _ _ _ _ _ _ A
 
 /-- **The parametrized numbered root subgroup inside the type-`A_r` carrier points.** The
 parameter is read through the canonical multiplicative copy of the additive group of `A`. -/

@@ -91,7 +91,7 @@ instance instContinuousMapClass : ContinuousMapClass (SmoothEmbedding I J n M N)
 
 /-- The bundled `C^n` map underlying a smooth embedding. -/
 @[simp]
-theorem toContMDiffMap_coe (f : SmoothEmbedding I J n M N) :
+theorem coe_toContMDiffMap (f : SmoothEmbedding I J n M N) :
     ⇑f.toContMDiffMap = f := rfl
 
 /-- The continuous map underlying a bundled smooth embedding. -/
@@ -141,7 +141,7 @@ def ofIsSmoothEmbedding (f : M → N) (hf : Manifold.IsSmoothEmbedding I J n f) 
   isSmoothEmbedding_toFun := hf
 
 @[simp]
-theorem ofIsSmoothEmbedding_coe (f : M → N) (hf : Manifold.IsSmoothEmbedding I J n f) :
+theorem coe_ofIsSmoothEmbedding (f : M → N) (hf : Manifold.IsSmoothEmbedding I J n f) :
     ⇑(ofIsSmoothEmbedding (I := I) (J := J) (n := n) f hf) = f := by
   rw [ofIsSmoothEmbedding.eq_def]
   rfl
@@ -167,7 +167,7 @@ theorem id_apply [IsManifold I n M] (x : M) : (id (I := I) (n := n) (M := M)) x 
   rfl
 
 @[simp]
-theorem id_coe [IsManifold I n M] :
+theorem coe_id [IsManifold I n M] :
     ⇑(id (I := I) (n := n) (M := M)) = _root_.id := by
   funext x
   exact id_apply (I := I) (n := n) x
@@ -185,7 +185,7 @@ theorem ofOpens_apply [IsManifold I n M] (s : TopologicalSpace.Opens M) (x : s) 
   rfl
 
 @[simp]
-theorem ofOpens_coe [IsManifold I n M] (s : TopologicalSpace.Opens M) :
+theorem coe_ofOpens [IsManifold I n M] (s : TopologicalSpace.Opens M) :
     ⇑(ofOpens (I := I) (n := n) s) = Subtype.val := by
   funext x
   exact ofOpens_apply (I := I) (n := n) s x
@@ -206,7 +206,7 @@ theorem prodMap_apply [IsManifold I n M] [IsManifold J n N]
   rfl
 
 @[simp]
-theorem prodMap_coe [IsManifold I n M] [IsManifold J n N] [IsManifold I' n M'] [IsManifold J' n N']
+theorem coe_prodMap [IsManifold I n M] [IsManifold J n N] [IsManifold I' n M'] [IsManifold J' n N']
     (f : SmoothEmbedding I J n M N) (g : SmoothEmbedding I' J' n M' N') :
     ⇑(f.prodMap g) = fun x => (f x.1, g x.2) := by
   funext x
@@ -236,7 +236,7 @@ theorem sumInl_apply {M₂ : Type*} [TopologicalSpace M₂] [ChartedSpace H M₂
   rfl
 
 @[simp]
-theorem sumInl_coe {M₂ : Type*} [TopologicalSpace M₂] [ChartedSpace H M₂]
+theorem coe_sumInl {M₂ : Type*} [TopologicalSpace M₂] [ChartedSpace H M₂]
     [IsManifold I n M] [IsManifold I n M₂] :
     ⇑(sumInl (I := I) (n := n) (M := M) (M₂ := M₂)) = Sum.inl := by
   funext x
@@ -257,7 +257,7 @@ theorem sumInr_apply {M₂ : Type*} [TopologicalSpace M₂] [ChartedSpace H M₂
   rfl
 
 @[simp]
-theorem sumInr_coe {M₂ : Type*} [TopologicalSpace M₂] [ChartedSpace H M₂]
+theorem coe_sumInr {M₂ : Type*} [TopologicalSpace M₂] [ChartedSpace H M₂]
     [IsManifold I n M] [IsManifold I n M₂] :
     ⇑(sumInr (I := I) (n := n) (M := M) (M₂ := M₂)) = Sum.inr := by
   funext x

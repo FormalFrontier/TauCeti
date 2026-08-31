@@ -29,6 +29,10 @@ GeometricTopology roadmap's encoding convention. Forgetting smoothness recovers
 
 * `TauCeti.SmoothAmbientIsotopic.refl`, `symm`, and `trans`: smooth ambient isotopy is an
   equivalence relation.
+* `TauCeti.SmoothAmbientIsotopic.final_comp`: a map is smoothly ambient isotopic to its
+  postcomposition with the time-one map of a diffeotopy.
+* `TauCeti.SmoothAmbientIsotopic.precomp`: smooth ambient isotopy is preserved by precomposing
+  both maps with a fixed smooth map.
 * `TauCeti.SmoothAmbientIsotopic.ambientIsotopic`: smooth ambient isotopy implies continuous
   ambient isotopy.
 
@@ -76,6 +80,13 @@ theorem of_diffeotopy (Φ : Diffeotopy J' n N)
     (hΦ : Φ.final.toContMDiffMap.comp f = g) : SmoothAmbientIsotopic f g :=
   ⟨Φ, hΦ⟩
 
+/-- **Transport along a diffeotopy is an ambient isotopy.** A smooth map and its postcomposition
+with the time-one map of a diffeotopy of the codomain are smoothly ambient isotopic: the diffeotopy
+itself is the witness. -/
+theorem final_comp (f : C^n⟮J, M; J', N⟯) (Φ : Diffeotopy J' n N) :
+    SmoothAmbientIsotopic f (Φ.final.toContMDiffMap.comp f) :=
+  ⟨Φ, rfl⟩
+
 /-- Smooth ambient isotopy of smooth maps is reflexive. -/
 @[refl]
 theorem refl (f : C^n⟮J, M; J', N⟯) : SmoothAmbientIsotopic f f := by
@@ -112,6 +123,16 @@ theorem trans (hfg : SmoothAmbientIsotopic f g) (hgh : SmoothAmbientIsotopic g h
       simpa only [Function.comp_apply] using
         congr_fun (_root_.Diffeomorph.coe_trans Φ.final Ψ.final) (f x)
     _ = h x := by rw [hxΦ, hxΨ]
+
+/-- Precomposing two smoothly ambient-isotopic maps with the same smooth map preserves the
+relation: the witnessing diffeotopy of the codomain is unchanged. -/
+theorem precomp {E'' : Type*} [NormedAddCommGroup E''] [NormedSpace ℝ E'']
+    {H'' : Type*} [TopologicalSpace H''] {J'' : ModelWithCorners ℝ E'' H''}
+    {M'' : Type*} [TopologicalSpace M''] [ChartedSpace H'' M'']
+    (hfg : SmoothAmbientIsotopic f g) (k : C^n⟮J'', M''; J, M⟯) :
+    SmoothAmbientIsotopic (f.comp k) (g.comp k) := by
+  obtain ⟨Φ, hΦ⟩ := hfg
+  exact ⟨Φ, ContMDiffMap.ext fun x ↦ DFunLike.congr_fun hΦ (k x)⟩
 
 /-- Smooth ambient isotopy implies continuous ambient isotopy after forgetting smoothness. -/
 theorem ambientIsotopic (hfg : SmoothAmbientIsotopic f g) :

@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.LinearAlgebra.IntegralLattice.Discriminant.Cardinality
+public import TauCeti.LinearAlgebra.Matrix.SmithNormalForm
 
 /-!
 # Smith decomposition of an integral lattice's discriminant group
@@ -22,8 +23,10 @@ L.DiscriminantGroup ≃+ ∏ i, ZMod |aᵢ|.
 This file exposes that decomposition at the integral-lattice interface.  It also records the
 diagonal inclusion matrix in the chosen Smith bases and proves that the product of the orders of
 the cyclic factors is the lattice discriminant.  The current Mathlib Smith API diagonalizes a
-full-rank inclusion but does not normalize its diagonal coefficients into a divisibility chain;
-the normalized invariant-factor statement is consequently later work.
+full-rank inclusion but does not normalize its diagonal coefficients into a divisibility chain.  The
+positive-determinant Gram-matrix branch below consumes Tau Ceti's matrix-level Smith API to expose
+that chain; transporting it to the discriminant quotient and treating a negative determinant remain
+later work.
 
 ## Main declarations
 
@@ -37,6 +40,10 @@ the normalized invariant-factor statement is consequently later work.
   Smith bases.
 * `TauCeti.IntegralLattice.prod_discriminantSmithCoeffNatAbs`: the product of the cyclic orders
   is the lattice discriminant.
+* `TauCeti.IntegralLattice.gramSmithInvariantFactors`: normalized positive Smith factors for a
+  positive-determinant Gram matrix.
+* `TauCeti.IntegralLattice.gramSmithInvariantFactors_dvd`: successive invariant factors divide one
+  another.
 
 ## References
 
@@ -192,5 +199,95 @@ theorem associated_prod_discriminantSmithCoeff_gramDet
     _ = ∏ i, L.discriminantSmithCoeffNatAbs b i := rfl
     _ = L.discriminant := L.prod_discriminantSmithCoeffNatAbs b
     _ = (L.gramDet b).natAbs := L.discriminant_eq_natAbs_gramDet b
+
+/-! ## Normalized factors for positive determinant -/
+
+open Classical in
+private theorem gramSmithWitness (L : IntegralLattice V)
+    {ι : Type v} [Fintype ι] (b : Basis ι ℤ L) (hdet : 0 < L.gramDet b) :
+    ∃ (P Q : Matrix.SpecialLinearGroup (Fin (Fintype.card ι)) ℤ)
+      (d : Fin (Fintype.card ι) → ℤ), (∀ i, 0 < d i) ∧
+        (∀ ⦃i j : Fin (Fintype.card ι)⦄, i ≤ j → d i ∣ d j) ∧
+          (P : Matrix _ _ ℤ) * L.gramMatrix (b.reindex (Fintype.equivFin ι)) *
+              (Q : Matrix _ _ ℤ) = Matrix.diagonal d := by
+  apply Matrix.exists_smith_normal_form_of_det_pos
+    (L.gramMatrix (b.reindex (Fintype.equivFin ι))) (by
+      rw [← L.gramDet_def, L.gramDet_reindex]
+      exact hdet)
+
+open Classical in
+/-- The normalized Smith invariant factors of a positive-determinant Gram matrix.
+
+The positivity and divisibility chain are supplied by the matrix Smith normal form.  The
+positive-determinant hypothesis is the part of the normalization that is currently exposed here;
+the general nonzero-determinant case requires a different normal-form statement for the matrix
+witness, since special-linear operations preserve the sign of the determinant. -/
+noncomputable def gramSmithInvariantFactors (L : IntegralLattice V)
+    {ι : Type v} [Fintype ι] (b : Basis ι ℤ L) (hdet : 0 < L.gramDet b) :
+    Fin (Fintype.card ι) → ℤ :=
+  (L.gramSmithWitness b hdet).choose_spec.choose_spec.choose
+
+open Classical in
+/-- The normalized invariant factors are positive. -/
+theorem gramSmithInvariantFactors_pos (L : IntegralLattice V)
+    {ι : Type v} [Fintype ι] (b : Basis ι ℤ L) (hdet : 0 < L.gramDet b) (i) :
+    0 < L.gramSmithInvariantFactors b hdet i :=
+  (L.gramSmithWitness b hdet).choose_spec.choose_spec.choose_spec.1 i
+
+open Classical in
+/-- The normalized invariant factors form a divisibility chain. -/
+theorem gramSmithInvariantFactors_dvd (L : IntegralLattice V)
+    {ι : Type v} [Fintype ι] (b : Basis ι ℤ L) (hdet : 0 < L.gramDet b)
+    {i j : Fin (Fintype.card ι)} (hij : i ≤ j) :
+    L.gramSmithInvariantFactors b hdet i ∣ L.gramSmithInvariantFactors b hdet j :=
+  (L.gramSmithWitness b hdet).choose_spec.choose_spec.choose_spec.2.1 hij
+
+open Classical in
+/-- The Gram matrix is diagonalized by special-linear row and column operations using the
+normalized invariant factors. -/
+theorem exists_gramSmithInvariantFactors_smith_normal_form (L : IntegralLattice V)
+    {ι : Type v} [Fintype ι]
+    (b : Basis ι ℤ L) (hdet : 0 < L.gramDet b) :
+    ∃ P Q : Matrix.SpecialLinearGroup (Fin (Fintype.card ι)) ℤ,
+      (P : Matrix _ _ ℤ) * L.gramMatrix (b.reindex (Fintype.equivFin ι)) *
+          (Q : Matrix _ _ ℤ) =
+        Matrix.diagonal (L.gramSmithInvariantFactors b hdet) :=
+  ⟨(L.gramSmithWitness b hdet).choose,
+    (L.gramSmithWitness b hdet).choose_spec.choose,
+    (L.gramSmithWitness b hdet).choose_spec.choose_spec.choose_spec.2.2⟩
+
+open Classical in
+/-- The product of the normalized invariant factors is the positive Gram determinant. -/
+theorem prod_gramSmithInvariantFactors_eq_gramDet (L : IntegralLattice V)
+    {ι : Type v} [Fintype ι]
+    (b : Basis ι ℤ L) (hdet : 0 < L.gramDet b) :
+    ∏ i, L.gramSmithInvariantFactors b hdet i = L.gramDet b := by
+  obtain ⟨P, Q, hPQ⟩ := L.exists_gramSmithInvariantFactors_smith_normal_form b hdet
+  have hdetPQ := congrArg Matrix.det hPQ
+  simp only [Matrix.det_mul, Matrix.det_diagonal] at hdetPQ
+  have hgram : (L.gramMatrix (b.reindex (Fintype.equivFin ι))).det =
+      (L.gramMatrix b).det := by
+    calc
+      (L.gramMatrix (b.reindex (Fintype.equivFin ι))).det =
+          L.gramDet (b.reindex (Fintype.equivFin ι)) :=
+        (L.gramDet_def _).symm
+      _ = L.gramDet b := L.gramDet_reindex b (Fintype.equivFin ι)
+      _ = (L.gramMatrix b).det := L.gramDet_def _
+  rw [hgram] at hdetPQ
+  rw [L.gramDet_def]
+  have hP : (P : Matrix (Fin (Fintype.card ι)) (Fin (Fintype.card ι)) ℤ).det = 1 := P.prop
+  have hQ : (Q : Matrix (Fin (Fintype.card ι)) (Fin (Fintype.card ι)) ℤ).det = 1 := Q.prop
+  simpa only [hP, hQ, one_mul, mul_one] using hdetPQ.symm
+
+open Classical in
+/-- For a positive-determinant Gram matrix, the product of the normalized invariant factors is the
+lattice discriminant. -/
+theorem prod_gramSmithInvariantFactors_eq_discriminant (L : IntegralLattice V)
+    {ι : Type v} [Fintype ι]
+    (b : Basis ι ℤ L) (hdet : 0 < L.gramDet b) :
+    ∏ i, L.gramSmithInvariantFactors b hdet i = L.discriminant := by
+  rw [L.prod_gramSmithInvariantFactors_eq_gramDet b hdet,
+    L.discriminant_eq_natAbs_gramDet b]
+  exact (Int.natAbs_of_nonneg (le_of_lt hdet)).symm
 
 end TauCeti.IntegralLattice

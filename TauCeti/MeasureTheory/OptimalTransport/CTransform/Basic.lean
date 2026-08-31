@@ -479,6 +479,13 @@ theorem mk_mem_contactSet_iff :
     (x, y) ∈ contactSet c φ ψ ↔ φ x + ψ y = (c (x, y) : EReal) :=
   mem_contactSet_iff
 
+/-- Membership in the contact set of two real-valued potentials, with all coercions to
+`EReal` eliminated. -/
+theorem mk_mem_contactSet_coe_iff (c : X × Y → ℝ) (φ : X → ℝ) (ψ : Y → ℝ) (x : X) (y : Y) :
+    (x, y) ∈ contactSet c (fun x ↦ (φ x : EReal)) (fun y ↦ (ψ y : EReal)) ↔
+      φ x + ψ y = c (x, y) := by
+  rw [mk_mem_contactSet_iff, ← EReal.coe_add, EReal.coe_eq_coe_iff]
+
 /-- The `c`-superdifferential is the contact set against the `c`-transform. -/
 theorem cSuperdifferential_def (c : X × Y → ℝ) (φ : X → EReal) :
     cSuperdifferential c φ = contactSet c φ (cTransform c φ) := (rfl)

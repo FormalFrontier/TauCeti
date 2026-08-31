@@ -42,6 +42,9 @@ the weight support.
   below a given weight.**
 * `TauCeti.finite_of_forall_reflection_mem_of_sub_mem_posRootCone`: **a set of weights below `lam`,
   integral on the simple coroots and stable under the simple reflections, is finite.**
+* `TauCeti.eq_zero_of_mem_posRootCone_of_forall_coroot'_nonpos`: **the only antidominant member of
+  the positive root cone is zero**, the case `lam = 0` of the first statement applied to all the
+  natural multiples of a member at once.
 
 ## The argument
 
@@ -251,5 +254,56 @@ theorem finite_of_forall_reflection_mem_of_sub_mem_posRootCone {lam : M} {S : Se
   exact mem_of_sub_eq_sum_nsmul_root_of_reflection_stable b hcone hint hrefl hTrefl
     (fun nu hnu hdom => Set.mem_iUnion.mpr ⟨1, nu, ⟨hcone nu hnu, hdom⟩, one_smul _ _⟩)
     _ mu hmu f hf rfl
+
+omit [IsDomain R] in
+/-- **The only antidominant member of the positive root cone is zero.** A nonnegative integer
+combination `nu` of the simple roots on which every simple coroot takes a nonpositive value is
+zero.
+
+The pairings of a member of `Q⁺` with the simple coroots are Cartan integers
+(`TauCeti.exists_intCast_eq_coroot'_of_mem_posRootCone`), so nonpositivity makes every natural
+multiple of `-nu` a dominant weight below `0`. There are only finitely many of those by
+`TauCeti.finite_setOf_dominant_sub_mem_posRootCone`, while the multiples of a nonzero member of
+`Q⁺` are pairwise distinct because their heights are.
+
+This is the statement that separates the dot orbit of `0` from the rest of the negative cone: it
+is what forces the Weyl denominator to be supported on that orbit alone. -/
+theorem eq_zero_of_mem_posRootCone_of_forall_coroot'_nonpos [LinearOrder R]
+    [IsStrictOrderedRing R] {nu : M} (hnu : nu ∈ posRootCone P b)
+    (h : ∀ i ∈ b.support, P.coroot' i nu ≤ 0) : nu = 0 := by
+  by_contra hne
+  -- Nonpositive Cartan integers: every simple coroot takes the value `-n` on `nu` for some `n : ℕ`.
+  have hnat : ∀ i ∈ b.support, ∃ n : ℕ, P.coroot' i nu = -(n : R) := by
+    intro i hi
+    obtain ⟨m, hm⟩ := exists_intCast_eq_coroot'_of_mem_posRootCone P b hnu i
+    have hm0 : m ≤ 0 := by
+      have hle := h i hi
+      rw [hm] at hle
+      exact_mod_cast hle
+    refine ⟨(-m).toNat, ?_⟩
+    rw [hm, ← Int.cast_natCast (R := R) (-m).toNat, Int.toNat_of_nonneg (by omega)]
+    push_cast
+    ring
+  -- The height of `nu` is a positive natural number.
+  obtain ⟨k, hk⟩ := exists_natCast_eq_heightLinearMap_of_mem_posRootCone P b hnu
+  have hk0 : k ≠ 0 := fun hzero =>
+    hne (eq_zero_of_mem_posRootCone_of_heightLinearMap_eq_zero P b hnu (by rw [hk, hzero]; simp))
+  -- All natural multiples of `-nu` are dominant weights below `0`, and they are pairwise distinct.
+  have hmem : ∀ j : ℕ, -(j • nu) ∈ {mu : M | (0 : M) - mu ∈ posRootCone P b ∧
+      ∀ i ∈ b.support, ∃ n : ℕ, P.coroot' i mu = (n : R)} := by
+    intro j
+    refine ⟨by simpa using AddSubmonoid.nsmul_mem _ hnu j, fun i hi => ?_⟩
+    obtain ⟨n, hn⟩ := hnat i hi
+    refine ⟨j * n, ?_⟩
+    rw [map_neg, map_nsmul, hn]
+    push_cast
+    ring
+  have hinj : Function.Injective fun j : ℕ => -(j • nu) := by
+    intro p q hpq
+    have hh := congrArg (heightLinearMap P b) hpq
+    simp only [map_neg, map_nsmul, hk, nsmul_eq_mul, neg_inj] at hh
+    exact_mod_cast mul_right_cancel₀ (Nat.cast_ne_zero.mpr hk0) hh
+  exact Set.infinite_of_injective_forall_mem hinj hmem
+    (finite_setOf_dominant_sub_mem_posRootCone b 0)
 
 end TauCeti

@@ -37,7 +37,9 @@ whose Weyl-group combinatorics is a much later dependency.
 * `TauCeti.weylDenominator_eq_sum_powerset`: expanding the product, `Δ` is the signed sum
   `∑_{T ⊆ Φ⁺} (-1)^{|T|} e^{-∑_{α ∈ T} α}` over the subsets of the positive roots; hence
 * `TauCeti.coeff_weylDenominator_eq_zero`: `Δ` is supported on the negatives of the sums of sets of
-  positive roots, which is the statement that it lives in the negative cone.
+  positive roots, which is the statement that it lives in the negative cone, and
+  `TauCeti.neg_mem_posRootCone_of_coeff_weylDenominator_ne_zero`, that statement read against
+  `TauCeti.posRootCone`.
 
 ## References
 
@@ -100,5 +102,17 @@ theorem coeff_weylDenominator_eq_zero {x : M}
     AddMonoidAlgebra.coeff_single]
   exact Finset.sum_eq_zero fun T hT ↦ Finsupp.single_apply_eq_zero.mpr fun h ↦
     absurd h (hx T (Finset.mem_powerset.mp hT))
+
+/-- **The Weyl denominator is supported on the negative of the positive root cone**: a weight
+carrying a nonzero coefficient of `Δ` is minus a nonnegative integer combination of the simple
+roots. This is `TauCeti.coeff_weylDenominator_eq_zero` read against `TauCeti.posRootCone`, in the
+form the weight-cone arguments of the highest weight theory consume. -/
+theorem neg_mem_posRootCone_of_coeff_weylDenominator_ne_zero {x : M}
+    (hx : (weylDenominator P b).coeff x ≠ 0) : -x ∈ posRootCone P b := by
+  by_contra hcone
+  refine hx (coeff_weylDenominator_eq_zero P b fun T hT hxT ↦ hcone ?_)
+  rw [hxT, neg_neg]
+  exact sum_mem fun i hi ↦
+    root_mem_posRootCone_of_mem_posRoots P b ((mem_posRootsFinset P b i).mp (hT hi))
 
 end TauCeti
