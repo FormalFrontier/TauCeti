@@ -52,9 +52,30 @@ meet the two ATLAS element-order conditions. Both computations are provenance fo
 transcription, not Lean theorems: this file asserts no order, finiteness, simplicity, or
 identification result.
 
-## Main definition
+The row is a sealed definition, so it publishes an equation for each of its fields: the transcribed
+relator expressions with their generator indices written out, and the provenance a manifest row
+exists to record. Together with `TauCeti.GroupPresentation.relators_def` and
+`TauCeti.GroupPresentation.mem_relatorSet_iff` the first of those determines the compiled words and
+the relations defining the presented group, so a consumer reasons about the row without unfolding
+it.
+
+Three decidable checks accompany those equations. The relator lengths and their total record the
+compiled data one word at a time and in aggregate, and cyclic reducedness is what makes such a
+letter count comparable with a published presentation length, since both are measured after free
+and cyclic reduction of each relator. This row has no published length to check against: Bray's
+presentation page for `McL` is one of the 1997 stubs that record `Length ??`, and neither the ATLAS
+page nor its Magma source file gives a figure. The total below therefore states the transcribed
+data for a reviewer to compare with the source, rather than checking it against a recorded number.
+
+## Main definitions and results
 
 * `TauCeti.Sporadic.mclPresentation`: John Bray's ATLAS finite presentation of `McL`.
+* `TauCeti.Sporadic.mclPresentation_transcribed` and the equations for the remaining fields: the
+  characterization of the sealed row.
+* `TauCeti.Sporadic.mclPresentation_map_length_relators`,
+  `TauCeti.Sporadic.mclPresentation_totalLength` and
+  `TauCeti.Sporadic.mclPresentation_relatorsCyclicallyReduced`: the three checks on the compiled
+  words.
 
 ## References
 
@@ -63,6 +84,9 @@ identification result.
   <https://brauer.maths.qmul.ac.uk/Atlas/v3/pres/McLG1-P1>, with the relators and the
   demonstration of correctness in the Magma source file
   <https://brauer.maths.qmul.ac.uk/Atlas/spor/McL/mag/McLG1-P1.M>.
+* J. N. Bray, presentation page for the McLaughlin group,
+  <https://webspace.maths.qmul.ac.uk/j.n.bray/web/Pres/McL.html>, which records `Length ??` and so
+  publishes no letter count for this presentation.
 -/
 
 public section
@@ -138,7 +162,174 @@ def mclPresentation : GroupPresentation where
       .pow (sourceComm a (.pow b 2 ⬝ ab1)) 4,
       .pow (sourceComm a (.pow b 2 ⬝ ab2)) 4 ]
 
+/-- The generator names recorded for `McL`. The row's body is sealed, so this is what lets a
+consumer see that it is a two-generator presentation. -/
+@[simp]
+theorem mclPresentation_generatorNames : mclPresentation.generatorNames = ["a", "b"] := by
+  simp [mclPresentation]
+
+/-- The source recorded for `McL`. The row's body is sealed, so this equation publishes the
+citation itself, rather than only the row's name, to a downstream audit. -/
+@[simp]
+theorem mclPresentation_source :
+    mclPresentation.source = "R. A. Wilson, R. A. Parker, J. N. Bray et al., ATLAS of Finite \
+      Group Representations, version 3; presentation contributed by John Bray" := by
+  simp [mclPresentation]
+
+/-- The locator recorded for `McL`, pointing at the presentation and its demonstration of
+correctness inside the source. -/
+@[simp]
+theorem mclPresentation_sourceLocator :
+    mclPresentation.sourceLocator = "McLG1-P1, \
+      https://brauer.maths.qmul.ac.uk/Atlas/v3/pres/McLG1-P1, with the relator list and the \
+      demonstration of correctness in the Magma source file \
+      https://brauer.maths.qmul.ac.uk/Atlas/spor/McL/mag/McLG1-P1.M" := by
+  simp [mclPresentation]
+
+/-- The generator convention recorded for `McL`, fixing which generator each relator index names
+and which commutator convention the source uses. -/
+@[simp]
+theorem mclPresentation_generatorConvention :
+    mclPresentation.generatorConvention = "The ATLAS standard generators a and b of McL, that is, \
+      a in class 2A and b in class 5A with ab of order 11 and ababababbababbabb of order 7, in \
+      that order, so index 0 is a and index 1 is b. Products are read left to right, negative \
+      exponents denote inverses, and [r,s] denotes r^-1 s^-1 r s." := by
+  simp [mclPresentation]
+
+/-- The transcription notes recorded for `McL`, including which of the source's relators it flags
+as redundant. -/
+@[simp]
+theorem mclPresentation_transcriptionNotes :
+    mclPresentation.transcriptionNotes = "The fifteen words of the source's relator list are \
+      stored as fifteen relators equal to the identity. Three of them, marked R0, R1 and R2 \
+      there, are redundant, and are transcribed because the source's coset enumerations are \
+      easier with them. The source demonstrates correctness by enumerating the 22275 cosets of a \
+      subgroup that centralizes a, then excluding the triple cover 3.McL, whose standard \
+      generators have |AB| = 33 rather than 11. GAP 4.15.1 checks that the fifteen compiled words \
+      vanish on five independent standard generating pairs of the 275-point primitive \
+      representation of McL, taking a and b with centralizers of orders 40320 and 750 and \
+      imposing the two ATLAS element-order conditions." := by
+  simp [mclPresentation]
+
+/-- The generator count `McL`'s source states. With
+`TauCeti.Sporadic.mclPresentation_generatorNames` this makes
+`TauCeti.Sporadic.mclPresentation_matchesMetadata` an equation between two visible numbers. -/
+@[simp]
+theorem mclPresentation_expectedGeneratorCount : mclPresentation.expectedGeneratorCount = 2 := by
+  simp [mclPresentation]
+
+/-- The relator count `McL`'s source states; see
+`TauCeti.Sporadic.mclPresentation_expectedGeneratorCount`. -/
+@[simp]
+theorem mclPresentation_expectedRelatorCount : mclPresentation.expectedRelatorCount = 15 := by
+  simp [mclPresentation]
+
+/-- The relator expressions transcribed for `McL`, with their generator indices written out and
+the private syllable abbreviations of this file expanded.
+
+The row's body is sealed, so this is the equation that characterizes it: with
+`TauCeti.GroupPresentation.relators_def` it determines the compiled words, and with
+`TauCeti.GroupPresentation.mem_relatorSet_iff` it determines the relations defining
+`TauCeti.GroupPresentation.Group`, so a consumer never has to unfold the row. Index `0` is the
+generator `a` and index `1` is `b`, and the bounds come from
+`TauCeti.Sporadic.mclPresentation_generatorNames`. The comments name each relator in the syllables
+`s₁ = ab`, `s₂ = ab²`, `s₋₁ = ab⁻¹` and `s₋₂ = ab⁻²` of the module docstring. -/
+@[simp]
+theorem mclPresentation_transcribed :
+    mclPresentation.transcribed =
+      [
+        -- a²
+        .pow (.gen ⟨0, by simp⟩) 2,
+        -- b⁵
+        .pow (.gen ⟨1, by simp⟩) 5,
+        -- [a,b]⁵, in the source's commutator convention
+        .pow (.comm (.inv (.gen ⟨0, by simp⟩)) (.inv (.gen ⟨1, by simp⟩))) 5,
+        -- s₁¹¹
+        .pow (.gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩) 11,
+        -- s₂¹²
+        .pow (.gen ⟨0, by simp⟩ ⬝ .pow (.gen ⟨1, by simp⟩) 2) 12,
+        -- [a,b²]⁶
+        .pow (.comm (.inv (.gen ⟨0, by simp⟩)) (.inv (.pow (.gen ⟨1, by simp⟩) 2))) 6,
+        -- (s₁s₋₂)⁷
+        .pow ((.gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩) ⬝
+          (.gen ⟨0, by simp⟩ ⬝ .pow (.inv (.gen ⟨1, by simp⟩)) 2)) 7,
+        -- [a, b⁻²s₁s₁s₂]², the redundant relator R0
+        .pow (.comm (.inv (.gen ⟨0, by simp⟩))
+              (.inv (.pow (.inv (.gen ⟨1, by simp⟩)) 2 ⬝
+          (.gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩) ⬝
+          (.gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩) ⬝
+          (.gen ⟨0, by simp⟩ ⬝ .pow (.gen ⟨1, by simp⟩) 2)))) 2,
+        -- [a, b⁻²s₂s₋₁s₁s₂²s₁s₋₁]
+        .comm (.inv (.gen ⟨0, by simp⟩))
+            (.inv (.pow (.inv (.gen ⟨1, by simp⟩)) 2 ⬝
+          (.gen ⟨0, by simp⟩ ⬝ .pow (.gen ⟨1, by simp⟩) 2) ⬝
+          (.gen ⟨0, by simp⟩ ⬝ .inv (.gen ⟨1, by simp⟩)) ⬝
+          (.gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩) ⬝
+          .pow (.gen ⟨0, by simp⟩ ⬝ .pow (.gen ⟨1, by simp⟩) 2) 2 ⬝
+          (.gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩) ⬝
+          (.gen ⟨0, by simp⟩ ⬝ .inv (.gen ⟨1, by simp⟩)))),
+        -- [a, bs₂³]², the redundant relator R1
+        .pow (.comm (.inv (.gen ⟨0, by simp⟩))
+              (.inv (.gen ⟨1, by simp⟩ ⬝
+          .pow (.gen ⟨0, by simp⟩ ⬝ .pow (.gen ⟨1, by simp⟩) 2) 3))) 2,
+        -- [a, b²s₁s₂²]²
+        .pow (.comm (.inv (.gen ⟨0, by simp⟩))
+              (.inv (.pow (.gen ⟨1, by simp⟩) 2 ⬝ (.gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩) ⬝
+          .pow (.gen ⟨0, by simp⟩ ⬝ .pow (.gen ⟨1, by simp⟩) 2) 2))) 2,
+        -- s₁s₂s₋₂s₁s₋₁s₂(s₋₂s₁)²(s₂s₋₂s₂)²
+        (.gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩) ⬝
+          (.gen ⟨0, by simp⟩ ⬝ .pow (.gen ⟨1, by simp⟩) 2) ⬝
+          (.gen ⟨0, by simp⟩ ⬝ .pow (.inv (.gen ⟨1, by simp⟩)) 2) ⬝
+          (.gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩) ⬝
+          (.gen ⟨0, by simp⟩ ⬝ .inv (.gen ⟨1, by simp⟩)) ⬝
+          (.gen ⟨0, by simp⟩ ⬝ .pow (.gen ⟨1, by simp⟩) 2) ⬝
+          .pow ((.gen ⟨0, by simp⟩ ⬝ .pow (.inv (.gen ⟨1, by simp⟩)) 2) ⬝
+          (.gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩)) 2 ⬝
+          .pow ((.gen ⟨0, by simp⟩ ⬝ .pow (.gen ⟨1, by simp⟩) 2) ⬝
+          (.gen ⟨0, by simp⟩ ⬝ .pow (.inv (.gen ⟨1, by simp⟩)) 2) ⬝
+          (.gen ⟨0, by simp⟩ ⬝ .pow (.gen ⟨1, by simp⟩) 2)) 2,
+        -- [a, b²s₂s₋₁s₂]²
+        .pow (.comm (.inv (.gen ⟨0, by simp⟩))
+              (.inv (.pow (.gen ⟨1, by simp⟩) 2 ⬝
+          (.gen ⟨0, by simp⟩ ⬝ .pow (.gen ⟨1, by simp⟩) 2) ⬝
+          (.gen ⟨0, by simp⟩ ⬝ .inv (.gen ⟨1, by simp⟩)) ⬝
+          (.gen ⟨0, by simp⟩ ⬝ .pow (.gen ⟨1, by simp⟩) 2)))) 2,
+        -- [a, b²s₁]⁴
+        .pow (.comm (.inv (.gen ⟨0, by simp⟩))
+              (.inv (.pow (.gen ⟨1, by simp⟩) 2 ⬝ (.gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩)))) 4,
+        -- [a, b²s₂]⁴, the redundant relator R2
+        .pow (.comm (.inv (.gen ⟨0, by simp⟩))
+              (.inv (.pow (.gen ⟨1, by simp⟩) 2 ⬝
+          (.gen ⟨0, by simp⟩ ⬝ .pow (.gen ⟨1, by simp⟩) 2)))) 4 ] := by
+  simp [mclPresentation]
+
 /-- The generator and relator counts recorded for `McL` agree with the transcribed data. -/
-theorem matchesMetadata_mclPresentation : mclPresentation.matchesMetadata := by decide
+theorem mclPresentation_matchesMetadata : mclPresentation.matchesMetadata := by decide
+
+/-- The lengths of the fifteen compiled relator words for `McL`, in the order of the source.
+
+Reading the counts off one relator at a time is what lets a reviewer locate a discrepancy, rather
+than only observe one in the total of `TauCeti.Sporadic.mclPresentation_totalLength`. -/
+theorem mclPresentation_map_length_relators :
+    mclPresentation.relators.map List.length =
+      [2, 5, 20, 22, 36, 36, 35, 40, 40, 44, 44, 43, 44, 40, 48] := by
+  simp [GroupPresentation.relators_def, mclPresentation]
+
+/-- The compiled relator words for `McL` have `499` letters in total. The source records no
+presentation length, so this figure states the transcribed data for a reviewer to compare with the
+source, rather than checking it against a recorded number. -/
+theorem mclPresentation_totalLength : mclPresentation.totalLength = 499 := by
+  rw [GroupPresentation.totalLength_def, mclPresentation_map_length_relators]
+  decide
+
+/-- Every compiled relator word for `McL` is cyclically reduced. This is what makes the letter
+count of `TauCeti.Sporadic.mclPresentation_totalLength` comparable with a published presentation
+length, which is measured after free and cyclic reduction of each relator. -/
+theorem mclPresentation_relatorsCyclicallyReduced :
+    mclPresentation.relatorsCyclicallyReduced := by
+  simp only [GroupPresentation.relatorsCyclicallyReduced_iff, GroupPresentation.relators_def,
+    mclPresentation, List.map_cons, List.map_nil, Relator.toWord_mul, Relator.toWord_pow,
+    Relator.toWord_inv, Relator.toWord_comm, Relator.toWord_gen]
+  decide
 
 end TauCeti.Sporadic
