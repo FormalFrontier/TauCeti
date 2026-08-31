@@ -105,7 +105,7 @@ theorem abs_cutDist_sub_left_le_cutNorm (U U' : Graphon Ω₁ μ₁) (W : Grapho
   rw [abs_le]
   refine ⟨?_, cutDist_sub_le_cutNorm_left U U' W⟩
   have h := cutDist_sub_le_cutNorm_left U' U W
-  rw [cutNorm_sub_comm] at h
+  rw [cutNorm_sub_rev] at h
   linarith
 
 /-- **Stability under replacement on the right carrier.**  If `W` and `W'` are graphons on the
@@ -156,7 +156,7 @@ theorem cutDist_le_add_two_mul_cutNorm_of_le_add (U : Graphon Ω₁ μ₁)
       2 * cutNorm μ₂ (W.toSymmKernel - W'.toSymmKernel) := by
   have hleft := abs_cutDist_sub_right_le_cutNorm U W' W
   have hright := abs_cutDist_sub_left_le_cutNorm W' W X
-  rw [cutNorm_sub_comm] at hleft hright
+  rw [cutNorm_sub_rev] at hleft hright
   linarith [le_abs_self (cutDist U W' - cutDist U W),
     le_abs_self (cutDist W' X - cutDist W X)]
 
