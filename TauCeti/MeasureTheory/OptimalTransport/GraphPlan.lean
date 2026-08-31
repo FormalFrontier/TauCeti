@@ -48,8 +48,8 @@ with measurable singletons.
 
 ## Main statements
 
-* `TauCeti.fst_graphPlan` and `TauCeti.snd_graphPlan` — the two marginals of a graph plan are
-  `μ` and `μ.map T`;
+* `TauCeti.fst_graphPlan` and `TauCeti.snd_graphPlan` — when `T` is `μ`-a.e. measurable, the two
+  marginals of its graph plan are `μ` and `μ.map T`;
 * `TauCeti.isCoupling_graphPlan_iff` — the graph plan of an a.e. measurable `T` couples `μ` and
   `ν` exactly when `ProbabilityTheory.HasLaw T ν μ`;
 * `TauCeti.lintegral_graphPlan` — the change of variables
