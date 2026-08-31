@@ -73,9 +73,11 @@ the source header for the version including the useful redundant relator.
 * `TauCeti.Sporadic.m23Presentation_transcribed` and the equations for the remaining fields: the
   characterization of the sealed row.
 * `TauCeti.Sporadic.m23Presentation_map_length_relators`,
-  `TauCeti.Sporadic.m23Presentation_totalLength` and
-  `TauCeti.Sporadic.m23Presentation_relatorsCyclicallyReduced`: the three checks on the compiled
-  words.
+  `TauCeti.Sporadic.m23Presentation_totalLength`,
+  `TauCeti.Sporadic.m23Presentation_sum_map_length_eraseIdx_relators` and
+  `TauCeti.Sporadic.m23Presentation_relatorsCyclicallyReduced`: the four checks on the compiled
+  words. The two totals are the figures on the source's header line `Length: 190 [or 238].`,
+  whose bracketed alternative is the presence of the redundant eighth relator.
 
 ## References
 
@@ -277,8 +279,20 @@ theorem m23Presentation_totalLength : m23Presentation.totalLength = 238 := by
   rw [GroupPresentation.totalLength_def, m23Presentation_map_length_relators]
   decide
 
+/-- Deleting the redundant eighth relator `(ab·ab²·ab²)⁶` leaves `190` signed letters, which is
+the length the source records for its eight-relator form.
+
+With `TauCeti.Sporadic.m23Presentation_totalLength` this checks the transcription against both of
+the figures on the source's header lines `Length: 190 [or 238].` and `NoRels: 8 [or 9].`, whose
+bracketed alternatives are exactly the presence of this relator. -/
+theorem m23Presentation_sum_map_length_eraseIdx_relators :
+    ((m23Presentation.relators.eraseIdx 7).map List.length).sum = 190 := by
+  simp [GroupPresentation.relators_def, m23Presentation]
+
 /-- Every compiled relator word for `M₂₃` is cyclically reduced. This is what makes
-`TauCeti.Sporadic.m23Presentation_totalLength` comparable with the source's published length. -/
+`TauCeti.Sporadic.m23Presentation_totalLength` and
+`TauCeti.Sporadic.m23Presentation_sum_map_length_eraseIdx_relators` comparable with the source's
+published lengths, which are measured after free and cyclic reduction of each relator. -/
 theorem m23Presentation_relatorsCyclicallyReduced :
     m23Presentation.relatorsCyclicallyReduced := by
   simp only [GroupPresentation.relatorsCyclicallyReduced_iff, GroupPresentation.relators_def,
