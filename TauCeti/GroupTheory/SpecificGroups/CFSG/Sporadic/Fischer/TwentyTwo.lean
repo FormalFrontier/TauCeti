@@ -37,8 +37,34 @@ either choice, while the version 3 presentation page chooses `(ab²)²¹` as tra
 As an independent check, GAP 4.15.1 with AtlasRep 2.1.9 evaluates all thirteen displayed relators
 to the identity on the ATLAS standard generators in the 3510-point permutation representation of
 `Fi₂₂`. This is transcription provenance rather than a Lean theorem: the file asserts no order,
-finiteness, simplicity, or identification result. A separate read-through against the
+finiteness, simplicity, or identification result. A separate comparison with the
 `FiniteSimpleGroups` development named by the roadmap remains part of the S1 review artifact.
+
+## Independent source-to-Lean read-through
+
+An independent read-through used three pinned source artifacts. The version 3 presentation page
+has SHA-256 `3c1d7e85ff959ca95fc97e59b6ee0418f99c43e14bc67dfca18987cd0497d8be`; the Magma files
+`F22G1-P1.M` and `2F22G1-P1.M` have respective SHA-256 digests
+`a7931cf8f277196341023a229924c084c96b0b465e4893f1eb36ba47144cc027` and
+`29a4f5af0e3c545271de76323012e6c1a4c20d252a354e3e7ab2affd70fd3029`.
+
+The presentation page displays the thirteen relators in the exact order shown at the start of this
+module, and every generator, inverse, commutator argument, and exponent agrees with
+`fi22Presentation_transcribed`. The apparent difference in the Magma file is deliberate:
+`F22G1-P1.M` comments out
+
+```text
+(xy²)²¹
+```
+
+as `R1`, activates `(xyxyxy⁻³)⁵` as `R2`, and explicitly says that exactly one of `R1` and `R2`
+is needed. The double-cover file contains the common twelve base relators and records that these
+two words represent the same central involution of `2·Fi₂₂`; killing either gives the simple-group
+presentation. Thus the version 3 page's choice of `R1`, the omission of `R2`, and all twelve
+remaining source-order positions agree exactly with the sealed Lean row. This comparison was
+performed from the pinned source bytes independently of the original transcription and closes
+this row's S1 source-to-Lean read-through. The separate comparison with `FiniteSimpleGroups`
+remains outstanding.
 
 The row is a sealed definition, so it publishes an equation for each of its fields: the transcribed
 relator expressions with their generator indices written out, and the provenance a manifest row
