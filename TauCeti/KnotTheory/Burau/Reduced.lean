@@ -775,7 +775,6 @@ theorem reducedBurauCol_sigma (t : Rˣ) (i : Fin (n - 1)) :
     (reducedBurauColRow_dotProduct_single_of_succ_rev (t : R)) i
 
 /-- The matrix of an elementary braid under the Burau-column reduced homomorphism. -/
-@[simp]
 theorem coe_reducedBurauCol_sigma (t : Rˣ) (i : Fin (n - 1)) :
     (reducedBurauCol n t (BraidGroup.sigma i) : Matrix (Fin (n - 1)) (Fin (n - 1)) R) =
       reducedBurauColMatrix (t : R) i := by
