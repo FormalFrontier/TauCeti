@@ -257,12 +257,13 @@ theorem iff_smooth_and_forall_isUnipotentPoint
       (A := A.obj) L).mp
         ((geometricallyUnipotentPointsCommHopfAlgProperty_iff k A.obj).mpr hA'.2)
   · rintro ⟨hsm, hL⟩
+    let _ : Algebra.Smooth k A := hsm
+    let _ : IsReduced A := isReduced_of_smooth_of_field k A
     rw [smoothUnipotentCommHopfAlgProperty_iff]
     refine ⟨hsm, ?_⟩
-    intro g
-    let φ : AlgebraicClosure k →ₐ[k] L := IsAlgClosed.lift
-    exact (HopfAlgebra.isUnipotentPoint_mapValue_iff_of_injective g φ φ.injective).mp
-      (hL (AlgHom.mapValue (H := A) φ g))
+    exact (geometricallyUnipotentPointsCommHopfAlgProperty_iff k A.obj).mp
+      ((geometricallyUnipotentPointsCommHopfAlgProperty.iff_forall_isUnipotentPoint
+        (A := A.obj) L).mpr hL)
 
 end smoothUnipotentCommHopfAlgProperty
 
