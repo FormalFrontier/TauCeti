@@ -79,7 +79,7 @@ theorem lieSpan_singleton_eq_top_of_lieSpan_eq {N : LieSubmodule R L M} {m : M}
 
 /-- **A Lie submodule containing a generator of the ambient module is the whole module.** -/
 theorem eq_top_of_mem_of_lieSpan_singleton_eq_top {N : LieSubmodule R L M} {m : M}
-    (hgen : LieSubmodule.lieSpan R L {m} = ⊤) (hm : m ∈ N) : N = ⊤ := by
+    (hm : m ∈ N) (hgen : LieSubmodule.lieSpan R L {m} = ⊤) : N = ⊤ := by
   apply top_unique
   rw [← hgen]
   exact LieSubmodule.lieSpan_le.mpr (Set.singleton_subset_iff.mpr hm)

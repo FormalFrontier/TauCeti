@@ -256,8 +256,8 @@ theorem isGlHighestWeightVector_glIrreducibleGenerator (hmu : IsGlDominantIntegr
   refine (isGlHighestWeightVector_glCarrierVector_mem hmu).map _ fun hzero => ?_
   have hmem := (LieSubmodule.Quotient.mk_eq_zero _).mp hzero
   exact (isCoatom_glCarrierCoatom (K := K) hmu).1
-    (eq_top_of_mem_of_lieSpan_singleton_eq_top
-      (lieSpan_singleton_eq_top_of_lieSpan_eq rfl) hmem)
+    (eq_top_of_mem_of_lieSpan_singleton_eq_top hmem
+      (lieSpan_singleton_eq_top_of_lieSpan_eq rfl))
 
 /-- **The distinguished highest weight vector generates `L(mu)`.** -/
 theorem lieSpan_glIrreducibleGenerator_eq_top (hmu : IsGlDominantIntegral mu) :
