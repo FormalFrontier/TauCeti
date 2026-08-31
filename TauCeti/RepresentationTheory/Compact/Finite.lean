@@ -5,7 +5,10 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.RepresentationTheory.AsModule
 public import TauCeti.RepresentationTheory.Compact.Intertwiner.Dimension
+public import TauCeti.RepresentationTheory.Compact.UnitaryModel
+public import TauCeti.RepresentationTheory.Continuous.OrthogonalDecomposition
 public import Mathlib.MeasureTheory.Measure.Count
 public import Mathlib.Probability.UniformOn
 import Mathlib.MeasureTheory.Integral.Bochner.SumMeasure
@@ -81,6 +84,14 @@ measure computation has just identified.
 * `ContRepresentation.character_orthonormal_distinct_sum`: **the off-diagonal branch of the first
   (row) character orthogonality relation as a finite average**. (The column sum over the irreducible
   characters, the second orthogonality relation, is not treated here.)
+* `ContRepresentation.inner_gramOperator_eq_inv_mul_sum`: **the invariant form the unitarian trick
+  averages into existence is the finite average** `|G|⁻¹ ∑ g, ⟪π g v, π g w⟫`, with
+  `ContRepresentation.gramOperator_eq_smul_sum` the same identity at the level of the operator
+  representing it and `ContRepresentation.inner_gramOperator_self_eq_inv_mul_sum` its diagonal.
+* `ContRepresentation.exists_isUnitary_congr_of_finite`: **the unitarian trick for a finite group**,
+  every finite-dimensional representation being conjugate to a unitary one.
+* `ContRepresentation.exists_orthogonal_irreducible_decomposition_of_finite`: **Maschke's theorem in
+  orthogonal form**, the finite shadow of complete reducibility.
 
 The counting identity `|G|⁻¹ ∑ g, χ_π g = dim V^G` that the compact-group character integral
 generalizes then costs one rewrite. It is not given a name: Mathlib already proves it, as
@@ -142,10 +153,13 @@ Schur and character-orthonormality part of that item: `L²(G)` is `G → 𝕜` b
 `schur_orthogonality_self`, `schur_orthogonality_distinct` and
 `schur_orthogonality` become the classical orthogonality relations for matrix coefficients, and
 `character_orthonormal_self` and `character_orthonormal_distinct` become the two branches of
-Mathlib's `Representation.char_orthonormal`, exhibited by the two anonymous `example`s closing the
-file. The two specializations the roadmap item asks for that are still missing are Maschke (the
-finite shadow of complete reducibility) and Peter-Weyl
-(that `peterWeylBasis` is the matrix-coefficient basis of `k[G]`); neither is proved here.
+Mathlib's `Representation.char_orthonormal`, exhibited by two anonymous `example`s. It is finally
+the Maschke part of that item: `exists_orthogonal_irreducible_decomposition` specializes, through
+the finite unitarian trick, to
+`TauCeti.ContRepresentation.exists_orthogonal_irreducible_decomposition_of_finite`, and Mathlib's
+plain semisimplicity is recovered from it in the `example` closing the file. The one specialization
+the roadmap item asks for that is still missing is Peter-Weyl (that `peterWeylBasis` is the
+matrix-coefficient basis of `k[G]`); it is not proved here.
 -/
 
 public section
@@ -676,5 +690,129 @@ example (ρ : ContRepresentation 𝕜 G W) (hρ : Continuous ρ) (hunitary : IsU
     rw [character_apply_inv ρ hρ hunitary, mul_comm])
 
 end CharacterOrthogonality
+
+/-! ### The unitarian trick and Maschke -/
+
+section Unitarization
+
+variable {𝕜 G V : Type*} [RCLike 𝕜] [Group G] [Fintype G] [TopologicalSpace G]
+  [DiscreteTopology G] [MeasurableSpace G] [BorelSpace G]
+  [NormedAddCommGroup V] [InnerProductSpace 𝕜 V] [NormedSpace ℝ V] [SMulCommClass ℝ 𝕜 V]
+  [FiniteDimensional 𝕜 V]
+
+/-- As in the trace section above, completeness of `V` is not an extra hypothesis but a consequence
+of finite-dimensionality, installed locally because Mathlib keeps `FiniteDimensional.complete` out
+of the global instance set. -/
+local instance instCompleteSpaceUnitarization : CompleteSpace V :=
+  FiniteDimensional.complete 𝕜 V
+
+variable (π : ContRepresentation 𝕜 G V) (hπ : Continuous π)
+
+include hπ
+
+/-- **The averaged invariant form of a finite group is the group average**
+`⟪v, w⟫_G = |G|⁻¹ ∑ g, ⟪π g v, π g w⟫`. This is the form Weyl's unitarian trick averages into
+existence, read off the Gram operator that represents it
+(`TauCeti.ContRepresentation.inner_gramOperator`) through
+`TauCeti.integral_haarProb_eq_inv_mul_sum`; for a finite group it is the classical averaging
+`⟪·, ·⟫ ↦ |G|⁻¹ ∑ g, ⟪π g ·, π g ·⟫` of the finite-group proof, and the normalization `|G|⁻¹` is
+the one that fixes the form on the invariants. -/
+theorem inner_gramOperator_eq_inv_mul_sum (v w : V) :
+    ⟪v, gramOperator π hπ w⟫_𝕜 = (Nat.card G : 𝕜)⁻¹ * ∑ g, ⟪π g v, π g w⟫_𝕜 := by
+  rw [inner_gramOperator, integral_haarProb_eq_inv_mul_sum]
+
+/-- **The averaged form of a finite group on the diagonal is the average of `‖π g v‖ ^ 2`.** This is
+the finite form of the positive definiteness that makes the unitarian trick work: the average of
+`|G|` nonnegative reals, one of which is `‖v‖ ^ 2` at `g = 1`, is positive for `v ≠ 0`. Compactness
+of `G` enters the general statement `TauCeti.ContRepresentation.inner_gramOperator_self` twice, once
+to integrate and once to bound the operator norms from below; a finite group needs neither. -/
+theorem inner_gramOperator_self_eq_inv_mul_sum (v : V) :
+    ⟪gramOperator π hπ v, v⟫_𝕜 = (((Nat.card G : ℝ)⁻¹ * ∑ g, ‖π g v‖ ^ 2 : ℝ) : 𝕜) := by
+  rw [inner_gramOperator_self, integral_haarProb, smul_eq_mul]
+
+/-- **The Gram operator of a finite group is the averaged sum of the operators `(π g)† ∘ (π g)`.**
+This is `TauCeti.ContRepresentation.inner_gramOperator_eq_inv_mul_sum` at the level of operators:
+each summand is the Gram operator of the pulled-back form `(v, w) ↦ ⟪π g v, π g w⟫`, and the Haar
+average of the family is their group average. -/
+theorem gramOperator_eq_smul_sum :
+    gramOperator π hπ =
+      (Nat.card G : 𝕜)⁻¹ • ∑ g, (ContinuousLinearMap.adjoint (π g)).comp (π g) := by
+  refine ContinuousLinearMap.ext fun w ↦ ext_inner_left 𝕜 fun v ↦ ?_
+  rw [inner_gramOperator_eq_inv_mul_sum, smul_apply, sum_apply, inner_smul_right, inner_sum]
+  exact congrArg _ (Finset.sum_congr rfl fun g _ ↦
+    (ContinuousLinearMap.adjoint_inner_right (π g) v (π g w)).symm)
+
+end Unitarization
+
+section Maschke
+
+variable {𝕜 G V : Type*} [RCLike 𝕜] [Group G] [Finite G] [TopologicalSpace G]
+  [DiscreteTopology G]
+  [NormedAddCommGroup V] [InnerProductSpace 𝕜 V] [NormedSpace ℝ V] [SMulCommClass ℝ 𝕜 V]
+  [FiniteDimensional 𝕜 V]
+
+/-- **The unitarian trick for a finite group.** Every finite-dimensional representation of a finite
+discrete group on an inner product space is conjugate, by a continuous linear automorphism of the
+carrier, to one preserving the inner product.
+
+This is `TauCeti.ContRepresentation.exists_isUnitary_congr` with the compactness hypotheses
+discharged: a finite discrete group is compact, every representation of it is continuous by
+`continuous_of_discreteTopology`, and the statement mentions no measure, so the proof installs the
+Borel structure it averages against and the caller is left with a bare finite discrete group. The
+form being averaged is the explicit `|G|⁻¹ ∑ g, ⟪π g ·, π g ·⟫` of
+`TauCeti.ContRepresentation.inner_gramOperator_eq_inv_mul_sum`. -/
+theorem exists_isUnitary_congr_of_finite (π : ContRepresentation 𝕜 G V) :
+    ∃ e : V ≃L[𝕜] V, IsUnitary (congr e π) := by
+  let _ : MeasurableSpace G := borel G
+  have _ : BorelSpace G := ⟨rfl⟩
+  exact exists_isUnitary_congr π continuous_of_discreteTopology
+
+/-- **Maschke's theorem in orthogonal form.** A finite-dimensional representation of a finite
+discrete group on an inner product space becomes, after conjugating by a continuous linear
+automorphism `e` of the carrier, a *unitary* representation that is an orthogonal internal direct
+sum of finitely many irreducible subrepresentations, of dimensions adding up to `dim V`.
+
+This is the finite shadow of complete reducibility: unitarity is not assumed but produced, by the
+finite unitarian trick `TauCeti.ContRepresentation.exists_isUnitary_congr_of_finite`, and the
+decomposition is then
+`TauCeti.ContRepresentation.IsUnitary.exists_orthogonal_irreducible_decomposition` with no further
+hypotheses. Conjugating by `e` is unavoidable and is what "Maschke" costs here: Lean fixes one
+inner product on `V`, and a representation of a finite group need not preserve it, only the average
+`|G|⁻¹ ∑ g, ⟪π g ·, π g ·⟫` of its translates. It is the orthogonality that the compact theory
+contributes over Mathlib's Maschke, which produces complements but no inner product; the plain
+semisimplicity is recovered from the unitary model in the `example` below. -/
+theorem exists_orthogonal_irreducible_decomposition_of_finite (π : ContRepresentation 𝕜 G V) :
+    ∃ (e : V ≃L[𝕜] V) (n : ℕ) (U : Fin n → Subrepresentation (congr e π).toRepresentation),
+      IsUnitary (congr e π) ∧
+      (∀ i, (U i).toRepresentation.IsIrreducible) ∧
+      OrthogonalFamily 𝕜 (fun i ↦ (U i).toSubmodule) (fun i ↦ ((U i).toSubmodule).subtypeₗᵢ) ∧
+      DirectSum.IsInternal (fun i ↦ (U i).toSubmodule) ∧
+      Module.finrank 𝕜 V = ∑ i, Module.finrank 𝕜 (U i).toSubmodule := by
+  obtain ⟨e, he⟩ := exists_isUnitary_congr_of_finite π
+  obtain ⟨n, U, hirr, horth, hinternal, hdim⟩ := he.exists_orthogonal_irreducible_decomposition
+  exact ⟨e, n, U, he, hirr, horth, hinternal, hdim⟩
+
+/- **Maschke's theorem.** Every finite-dimensional representation of a finite discrete group on an
+inner product space is semisimple: every subrepresentation has a complement.
+
+No name is claimed, for the same reason as in the counting and orthogonality identities above: this
+is already an instance in Mathlib, for any field in which `|G|` is invertible. What the compact
+theory contributes is the derivation — the unitary model of
+`exists_orthogonal_irreducible_decomposition_of_finite`, whose orthogonal complements are the
+complements Maschke asks for, carried back to `π` along `e`, which is an equivalence of
+representations onto the model by the definition
+`TauCeti.ContRepresentation.congr_apply` of the transported action. That is the sense in which the
+compact complete reducibility of Layer 2 specializes to Maschke. -/
+example (π : ContRepresentation 𝕜 G V) :
+    Representation.IsSemisimpleRepresentation π.toRepresentation := by
+  obtain ⟨e, he⟩ := exists_isUnitary_congr_of_finite π
+  have φ : π.toRepresentation.Equiv (congr e π).toRepresentation :=
+    Representation.Equiv.mk (e : V ≃ₗ[𝕜] V) fun g ↦ LinearMap.ext fun v ↦ by
+      simp [_root_.ContRepresentation.toMonoidHom_apply]
+  have _ := he.isSemisimpleModule_asModule
+  rw [Representation.isSemisimpleRepresentation_iff_isSemisimpleModule_asModule]
+  exact .congr (TauCeti.Representation.asModuleLinearEquivOfEquiv φ)
+
+end Maschke
 
 end ContRepresentation
