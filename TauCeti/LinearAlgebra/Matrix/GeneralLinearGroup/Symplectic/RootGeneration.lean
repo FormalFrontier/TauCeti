@@ -145,22 +145,12 @@ theorem positiveLongRootTransvectionUnit_mem_of_difference_of_long
               (positiveLongRootTransvectionUnit i t *
                 positiveLongRootTransvectionUnit i t) *
               (positiveSumShortRootUnit hir t)⁻¹ := by
-            rw [_root_.mul_inv_rev, show (positiveLongRootTransvectionUnit i (-t))⁻¹ =
-              positiveLongRootTransvectionUnit i t by
-                simpa only [positiveLongRootTransvectionHom_apply, toAdd_ofAdd, toAdd_inv,
-                  neg_neg] using
-                  (map_inv (positiveLongRootTransvectionHom (R := R) i)
-                    (Multiplicative.ofAdd (-t))).symm]
+            rw [_root_.mul_inv_rev, positiveLongRootTransvectionUnit_inv, neg_neg]
             group
         _ = positiveSumShortRootUnit hir t *
               positiveLongRootTransvectionUnit i (t + t) *
               (positiveSumShortRootUnit hir t)⁻¹ := by
-            rw [show positiveLongRootTransvectionUnit i t *
-                positiveLongRootTransvectionUnit i t =
-              positiveLongRootTransvectionUnit i (t + t) by
-                simpa only [positiveLongRootTransvectionHom_apply, toAdd_ofAdd, toAdd_mul] using
-                  ((positiveLongRootTransvectionHom (R := R) i).map_mul
-                    (Multiplicative.ofAdd t) (Multiplicative.ofAdd t)).symm]
+            rw [← positiveLongRootTransvectionUnit_add]
         _ = positiveLongRootTransvectionUnit i (t + t) := by
             rw [(commute_positiveSumShortRootUnit_positiveLongRootTransvectionUnit
               hir t (t + t)).eq]
@@ -210,22 +200,12 @@ theorem negativeLongRootTransvectionUnit_mem_of_difference_of_long
               (negativeLongRootTransvectionUnit i t *
                 negativeLongRootTransvectionUnit i t) *
               (negativeSumShortRootUnit hri (-t))⁻¹ := by
-            rw [_root_.mul_inv_rev, show (negativeLongRootTransvectionUnit i (-t))⁻¹ =
-              negativeLongRootTransvectionUnit i t by
-                simpa only [negativeLongRootTransvectionHom_apply, toAdd_ofAdd, toAdd_inv,
-                  neg_neg] using
-                  (map_inv (negativeLongRootTransvectionHom (R := R) i)
-                    (Multiplicative.ofAdd (-t))).symm]
+            rw [_root_.mul_inv_rev, negativeLongRootTransvectionUnit_inv, neg_neg]
             group
         _ = negativeSumShortRootUnit hri (-t) *
               negativeLongRootTransvectionUnit i (t + t) *
               (negativeSumShortRootUnit hri (-t))⁻¹ := by
-            rw [show negativeLongRootTransvectionUnit i t *
-                negativeLongRootTransvectionUnit i t =
-              negativeLongRootTransvectionUnit i (t + t) by
-                simpa only [negativeLongRootTransvectionHom_apply, toAdd_ofAdd, toAdd_mul] using
-                  ((negativeLongRootTransvectionHom (R := R) i).map_mul
-                    (Multiplicative.ofAdd t) (Multiplicative.ofAdd t)).symm]
+            rw [← negativeLongRootTransvectionUnit_add]
         _ = negativeLongRootTransvectionUnit i (t + t) := by
             rw [(commute_negativeSumShortRootUnit_negativeLongRootTransvectionUnit
               hri (-t) (t + t)).eq]
