@@ -24,7 +24,7 @@ the **hook-content formula**: each cell contributes the quotient of `n` plus its
 its hook length.  This file proves it, in the division-free form
 `TauCeti.weylDimension_weightOfShape_mul_prod_hookLength` and in the quotient form
 `TauCeti.weylDimension_weightOfShape_eq_prod_div`, and extends it to an arbitrary dominant weight
-through the determinant twist (`TauCeti.weylDimension_eq_prod_div`).
+through the determinant twist (`TauCeti.weylDimension_eq_prod_detShiftShape_div_hookLength`).
 
 ## The route
 
@@ -52,10 +52,10 @@ leaves the formula.
 * `TauCeti.weylDimension_weightOfShape_mul_prod_hookLength`: **the hook-content formula**, in
   division-free form over `ℕ`.
 * `TauCeti.weylDimension_weightOfShape_eq_prod_div`: its quotient form over `ℚ`.
-* `TauCeti.weylDimension_eq_prod_div`: the quotient form for an arbitrary dominant weight, whose
-  cells are those of its polynomial part `TauCeti.DominantWeight.detShiftShape`.  The Weyl
-  dimension is unchanged by a determinant twist, and so is each factor, the content and the hook
-  length being read off the same diagram.
+* `TauCeti.weylDimension_eq_prod_detShiftShape_div_hookLength`: the quotient form for an arbitrary
+  dominant weight, whose cells are those of its polynomial part
+  `TauCeti.DominantWeight.detShiftShape`.  The Weyl dimension is unchanged by a determinant twist,
+  and so is each factor, the content and the hook length being read off the same diagram.
 
 ## References
 
@@ -114,16 +114,18 @@ private theorem prod_cells_mul_superFactorial (hμ : μ.colLen 0 ≤ n) :
 differences of the shifted row lengths `λᵢ - i`, the two shifts differing by the constant `n - 1`,
 so the Vandermonde-style product of the former is the numerator of the Weyl dimension formula at
 the weight `μ` determines. -/
-private theorem natCast_prod_betaNumber_sub (n : ℕ) (μ : YoungDiagram) :
-    ((∏ i ∈ range n, ∏ j ∈ Ico (i + 1) n, (μ.betaNumber n i - μ.betaNumber n j) : ℕ) : ℤ)
+private theorem prod_betaNumber_sub_eq_weylDimensionNumerator (n : ℕ) (μ : YoungDiagram) :
+    (∏ i ∈ range n, ∏ j ∈ Ico (i + 1) n,
+        ((μ.betaNumber n i : ℤ) - (μ.betaNumber n j : ℤ)))
       = weylDimensionNumerator (weightOfShape n μ) := by
-  rw [weylDimensionNumerator_eq_prod_prod, Nat.cast_prod,
+  rw [weylDimensionNumerator_eq_prod_prod,
     ← Fin.prod_univ_eq_prod_range
-      (fun i => ((∏ j ∈ Ico (i + 1) n, (μ.betaNumber n i - μ.betaNumber n j) : ℕ) : ℤ)) n]
+      (fun i => ∏ j ∈ Ico (i + 1) n,
+        ((μ.betaNumber n i : ℤ) - (μ.betaNumber n j : ℤ))) n]
   refine Finset.prod_congr rfl fun i _ => ?_
   have hIco : Finset.Ico ((i : ℕ) + 1) n = Finset.Ioo (i : ℕ) n := by
     ext j; simp only [Finset.mem_Ico, Finset.mem_Ioo]; omega
-  rw [Nat.cast_prod, hIco, ← Fin.map_valEmbedding_Ioi, Finset.prod_map]
+  rw [hIco, ← Fin.map_valEmbedding_Ioi, Finset.prod_map]
   refine Finset.prod_congr rfl fun j hj => ?_
   have hij : (i : ℕ) < (j : ℕ) := Fin.lt_def.mp (Finset.mem_Ioi.mp hj)
   have hjn : (j : ℕ) < n := j.isLt
@@ -142,11 +144,10 @@ theorem weylDimension_weightOfShape_mul_prod_hookLength (hμ : μ.colLen 0 ≤ n
   have hnum : weylDimension (weightOfShape n μ) * (n - 1).superFactorial
       = ∏ i ∈ range n, ∏ j ∈ Ico (i + 1) n, (μ.betaNumber n i - μ.betaNumber n j) := by
     have := (weylDimension_mul_superFactorial (weightOfShape n μ)).trans
-      (natCast_prod_betaNumber_sub n μ).symm
+      ((YoungDiagram.cast_prod_betaNumber_sub μ n).trans
+        (prod_betaNumber_sub_eq_weylDimensionNumerator n μ)).symm
     exact_mod_cast this
-  have hsf : 0 < (n - 1).superFactorial := by
-    rw [← prod_range_factorial_sub n]
-    exact Finset.prod_pos fun i _ => Nat.factorial_pos _
+  have hsf : 0 < (n - 1).superFactorial := superFactorial_pos (n - 1)
   refine Nat.eq_of_mul_eq_mul_right hsf ?_
   calc weylDimension (weightOfShape n μ) * (∏ c ∈ μ.cells, μ.hookLength c)
         * (n - 1).superFactorial
@@ -183,7 +184,7 @@ theorem weylDimension_weightOfShape_eq_prod_div (hμ : μ.colLen 0 ≤ n) :
 is a determinant twist of a polynomial one, whose Young diagram is
 `TauCeti.DominantWeight.detShiftShape`; the twist changes neither the Weyl dimension nor the
 diagram, so the hook-content formula holds for every weight, read on that diagram. -/
-theorem weylDimension_eq_prod_div (l : DominantWeight n) :
+theorem weylDimension_eq_prod_detShiftShape_div_hookLength (l : DominantWeight n) :
     (weylDimension l : ℚ)
       = ∏ c ∈ l.detShiftShape.cells,
           (((n : ℚ) + c.2 - c.1) / l.detShiftShape.hookLength c) := by

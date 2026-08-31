@@ -120,7 +120,7 @@ private theorem prod_Ioi_rev {M : Type*} [CommMonoid M] (f : Fin n → Fin n →
 
 /-- The superfactorial is positive: it is a product of factorials.  Mathlib has the superfactorial
 and its factorial-product expansions but not this consequence. -/
-private theorem superFactorial_pos (n : ℕ) : 0 < n.superFactorial := by
+theorem superFactorial_pos (n : ℕ) : 0 < n.superFactorial := by
   rw [← Nat.prod_range_succ_factorial n]
   exact Finset.prod_pos fun i _ => i.factorial_pos
 
