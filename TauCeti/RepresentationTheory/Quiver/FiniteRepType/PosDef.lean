@@ -114,7 +114,6 @@ theorem isoClassDimVector_apply
   (rfl)
 
 /-- **The dimension vector of a class is the dimension vector of any of its members.** -/
-@[simp]
 theorem isoClassDimVector_toSkeleton (M : QuiverRep.{u, v, w, max v w x} k V)
     (hfd : IsFinDim.{u, v, w, max v w x} k V M) (hM : Indecomposable M) :
     isoClassDimVector (toSkeleton
