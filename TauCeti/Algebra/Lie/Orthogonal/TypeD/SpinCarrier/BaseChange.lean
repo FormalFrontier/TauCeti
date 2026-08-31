@@ -6,8 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Lie.Orthogonal.TypeD.SpinCarrier.Basic
-public import
-  TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.GLBaseChange
+public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.GeneralLinearBaseChange
 
 /-!
 # Base change of the full-weight type-D spin carrier
@@ -75,7 +74,7 @@ specialization for the pinned Geck carrier in
 declaration below is the corresponding generic Kostant declaration at this carrier's data; the
 transport reading the generic base-change presentation through a named integral defining ideal is
 the `...OfEq` family of
-`Kostant/RootSubgroup/Scheme/ToralClosure/GLBaseChange.lean`, so nothing of that
+`Kostant/RootSubgroup/Scheme/ToralClosure/GeneralLinearBaseChange.lean`, so nothing of that
 calculation is repeated here.
 -/
 
