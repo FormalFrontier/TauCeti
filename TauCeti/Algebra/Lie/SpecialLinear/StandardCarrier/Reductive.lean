@@ -29,8 +29,8 @@ characteristic.
   commutative Hopf algebra.
 * `TauCeti.SlStd.finiteTypeSpecializationSpecialLinearIso`: its canonical isomorphism with the
   coordinate Hopf algebra of `SL_{r+1}` over an algebraically closed field.
-* `TauCeti.SlStd.reductive_finiteTypeSpecialization`: the specialized type `A_r` carrier is
-  reductive.
+* `TauCeti.SlStd.reductiveCommHopfAlgProperty_finiteTypeSpecialization`: the specialized type
+  `A_r` carrier is reductive.
 
 ## References
 
@@ -53,7 +53,11 @@ universe u
 
 noncomputable section
 
-variable (r : ℕ) (k : Type u) [Field k]
+variable (r : ℕ)
+
+section
+
+variable (k : Type u) [CommRing k]
 
 /-- The specialization of the full-weight type `A_r` carrier to `k`, bundled with its finite-type
 property. It is the quotient of `O(GL_{r+1}/k)` by the transported integral carrier equations. -/
@@ -74,7 +78,9 @@ theorem finiteTypeSpecialization_obj :
         (baseChangeDefiningIdeal r k) := by
   rw [finiteTypeSpecialization]
 
-variable [IsAlgClosed k]
+end
+
+variable (k : Type u) [Field k] [IsAlgClosed k]
 
 /-- Over an algebraically closed field, the specialized full-weight type `A_r` carrier is
 canonically isomorphic to the finite-type coordinate Hopf algebra of `SL_{r+1}`. -/
@@ -86,11 +92,21 @@ noncomputable def finiteTypeSpecializationSpecialLinearIso :
       baseChangeCoordinateSpecialLinearIso r k ≪≫
       eqToIso (SpecialLinear.finiteTypeCoordinateHopfAlgebra_obj k (r + 1)).symm)
 
+/-- The underlying coordinate morphism of the finite-type carrier--special-linear isomorphism is
+the canonical composite obtained from the quotient-coordinate isomorphism. -/
+@[simp]
+theorem finiteTypeSpecializationSpecialLinearIso_hom_hom :
+    (finiteTypeSpecializationSpecialLinearIso r k).hom.hom =
+      (eqToIso (finiteTypeSpecialization_obj r k) ≪≫
+        baseChangeCoordinateSpecialLinearIso r k ≪≫
+        eqToIso (SpecialLinear.finiteTypeCoordinateHopfAlgebra_obj k (r + 1)).symm).hom := by
+  rfl
+
 /-- **The full-weight type `A_r` carrier is reductive over every algebraically closed field.**
 
-The statement is valid in arbitrary characteristic. It transports the geometric reductivity of
+The statement is valid in arbitrary characteristic. It transports the reductivity of
 `SL_{r+1}` across the scheme-theoretic identification of the explicit carrier with `SL_{r+1}`. -/
-theorem reductive_finiteTypeSpecialization :
+theorem reductiveCommHopfAlgProperty_finiteTypeSpecialization :
     reductiveCommHopfAlgProperty k (finiteTypeSpecialization r k) :=
   (reductiveCommHopfAlgProperty k).prop_of_iso
     (finiteTypeSpecializationSpecialLinearIso r k).symm
