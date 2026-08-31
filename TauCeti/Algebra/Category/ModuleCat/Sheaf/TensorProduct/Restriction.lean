@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Category.ModuleCat.Sheaf.TensorProduct.Basic
+public import TauCeti.Algebra.Category.ModuleCat.Sheaf.Restriction
 public import Mathlib.Algebra.Category.ModuleCat.Presheaf.PushforwardZeroMonoidal
 
 /-!
@@ -49,12 +50,19 @@ variable [HasWeakSheafify K AddCommGrpCat.{u}] [K.WEqualsLocallyBijective AddCom
 variable (F : C ⥤ D) [F.IsContinuous J K] [F.IsCocontinuous J K]
 variable (R : Sheaf K CommRingCat.{u})
 
+omit [F.IsCocontinuous J K] [HasWeakSheafify J AddCommGrpCat.{u}]
+  [J.WEqualsLocallyBijective AddCommGrpCat.{u}]
+  [HasWeakSheafify K AddCommGrpCat.{u}] [K.WEqualsLocallyBijective AddCommGrpCat.{u}] in
 /-- Pushforward of a sheaf of commutative rings along a continuous functor. -/
 abbrev pushforwardCommRing : Sheaf J CommRingCat.{u} :=
   (F.sheafPushforwardContinuous CommRingCat.{u} J K).obj R
 
+omit [F.IsCocontinuous J K] [HasWeakSheafify J AddCommGrpCat.{u}]
+  [J.WEqualsLocallyBijective AddCommGrpCat.{u}]
+  [HasWeakSheafify K AddCommGrpCat.{u}] [K.WEqualsLocallyBijective AddCommGrpCat.{u}] in
 /-- Pushforward of modules over a sheaf of commutative rings, with commutativity forgotten on the
-coefficient sheaves. -/
+coefficient sheaves. After unfolding `ringCatSheaf` and `sheafPushforwardContinuous`, the source
+and target coefficient sheaves are definitionally equal. -/
 abbrev pushforwardModule :
     SheafOfModules.{u} (ringCatSheaf R) ⥤
       SheafOfModules.{u} (ringCatSheaf (pushforwardCommRing (J := J) (K := K) F R)) :=
@@ -62,7 +70,6 @@ abbrev pushforwardModule :
 
 /-- For each pair of sheaves of modules, pushforward along a continuous and cocontinuous functor
 commutes with their tensor product. -/
-@[expose]
 def pushforwardTensorProductIso
     (M N : SheafOfModules.{u} (ringCatSheaf R)) :
     (pushforwardModule (J := J) (K := K) F R).obj (tensorProduct R M N) ≅
@@ -79,14 +86,36 @@ def pushforwardTensorProductIso
       ((pushforwardModule (J := J) (K := K) F R).obj M)
       ((pushforwardModule (J := J) (K := K) F R).obj N)).symm
 
+/-- The generic tensor-product comparison is the composite of the defining tensor-product
+identification, the pushforward-sheafification comparison, and the pushforward tensorator. -/
+theorem pushforwardTensorProductIso_def
+    (M N : SheafOfModules.{u} (ringCatSheaf R)) :
+    pushforwardTensorProductIso F R M N =
+      (pushforwardModule (J := J) (K := K) F R).mapIso (tensorProductIso R M N) ≪≫
+        pushforwardSheafificationIso F (ringCatSheaf R) (M.val ⊗ N.val) ≪≫
+        (PresheafOfModules.sheafification
+          (𝟙 (ringCatSheaf (pushforwardCommRing (J := J) (K := K) F R)).obj)).mapIso
+            (Functor.Monoidal.μIso
+              (PresheafOfModules.pushforward₀OfCommRingCat F R.obj) M.val N.val).symm ≪≫
+        (tensorProductIso (pushforwardCommRing (J := J) (K := K) F R)
+          ((pushforwardModule (J := J) (K := K) F R).obj M)
+          ((pushforwardModule (J := J) (K := K) F R).obj N)).symm := (rfl)
+
 /-- For each object of the site, restriction of a tensor product is isomorphic to the tensor
-product of the restrictions. -/
-@[expose]
+product of the restrictions. The coefficient sheaves on the target are definitionally equal after
+unfolding `ringCatSheaf`, `Sheaf.over`, and `sheafPushforwardContinuous`. -/
 def overTensorProductIso (M N : SheafOfModules.{u} (ringCatSheaf R)) (X : D)
     [HasWeakSheafify (K.over X) AddCommGrpCat.{u}]
     [(K.over X).WEqualsLocallyBijective AddCommGrpCat.{u}] :
     (tensorProduct R M N).over X ≅ tensorProduct (R.over X) (M.over X) (N.over X) :=
   pushforwardTensorProductIso (J := K.over X) (K := K) (Over.forget X) R M N
+
+/-- Restriction of tensor products is the slice-site specialization of the generic comparison. -/
+theorem overTensorProductIso_def (M N : SheafOfModules.{u} (ringCatSheaf R)) (X : D)
+    [HasWeakSheafify (K.over X) AddCommGrpCat.{u}]
+    [(K.over X).WEqualsLocallyBijective AddCommGrpCat.{u}] :
+    overTensorProductIso R M N X =
+      pushforwardTensorProductIso (J := K.over X) (K := K) (Over.forget X) R M N := (rfl)
 
 end SheafOfModules
 

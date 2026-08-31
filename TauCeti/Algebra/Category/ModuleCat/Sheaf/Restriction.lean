@@ -5,9 +5,9 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.Algebra.Category.ModuleCat.Sheaf.Defs
 public import Mathlib.Algebra.Category.ModuleCat.Sheaf.Localization
 public import Mathlib.Algebra.Category.ModuleCat.Sheaf.PushforwardContinuous
-public import Mathlib.Algebra.Category.Ring.Limits
 public import Mathlib.CategoryTheory.Sites.PreservesLocallyBijective
 
 /-!
@@ -51,25 +51,6 @@ namespace SheafOfModules
 variable {C : Type u} [Category.{u} C] {J : GrothendieckTopology C}
 variable [HasWeakSheafify J AddCommGrpCat.{u}] [J.WEqualsLocallyBijective AddCommGrpCat.{u}]
 
-/-- The sheaf of rings underlying a sheaf of commutative rings on a site; the site-level
-analogue of `AlgebraicGeometry.Scheme.ringCatSheaf`. -/
-abbrev ringCatSheaf (R : Sheaf J CommRingCat.{u}) : Sheaf J RingCat.{u} :=
-  (sheafCompose J (forget₂ CommRingCat RingCat.{u})).obj R
-
-/-- The sheafification of the underlying presheaf of modules of a sheaf of rings is isomorphic to
-the module; this is the counit of the sheafification adjunction. -/
-def sheafificationIso (R : Sheaf J RingCat.{u}) (M : SheafOfModules.{u} R) :
-    (PresheafOfModules.sheafification (R := R) (𝟙 R.obj)).obj M.val ≅ M :=
-  (asIso (PresheafOfModules.sheafificationAdjunction (𝟙 R.obj)).counit).app M
-
-/-- The forward map of `sheafificationIso` is the counit of the sheafification adjunction. -/
-@[simp]
-theorem sheafificationIso_hom (R : Sheaf J RingCat.{u}) (M : SheafOfModules.{u} R) :
-    (sheafificationIso R M).hom =
-      (PresheafOfModules.sheafificationAdjunction (𝟙 R.obj)).counit.app M := by
-  simp only [sheafificationIso]
-  rfl
-
 section General
 
 variable {D : Type u} [Category.{u} D] {K : GrothendieckTopology D}
@@ -77,26 +58,40 @@ variable (F : C ⥤ D) [F.IsContinuous J K] [F.IsCocontinuous J K]
 variable (R : Sheaf K RingCat.{u})
 variable [HasWeakSheafify K AddCommGrpCat.{u}] [K.WEqualsLocallyBijective AddCommGrpCat.{u}]
 
+omit [F.IsCocontinuous J K] [HasWeakSheafify J AddCommGrpCat.{u}]
+  [J.WEqualsLocallyBijective AddCommGrpCat.{u}]
+  [HasWeakSheafify K AddCommGrpCat.{u}] [K.WEqualsLocallyBijective AddCommGrpCat.{u}] in
 private abbrev pushedRing : Sheaf J RingCat.{u} :=
   (F.sheafPushforwardContinuous RingCat.{u} J K).obj R
 
+omit [F.IsCocontinuous J K] [HasWeakSheafify J AddCommGrpCat.{u}]
+  [J.WEqualsLocallyBijective AddCommGrpCat.{u}]
+  [HasWeakSheafify K AddCommGrpCat.{u}] [K.WEqualsLocallyBijective AddCommGrpCat.{u}] in
 /-- The underlying presheaf of the continuous pushforward is precomposition by the functor
 between sites. -/
 abbrev pushforwardRingIso : F.op ⋙ R.obj ≅
     ((F.sheafPushforwardContinuous RingCat.{u} J K).obj R).obj :=
   Iso.refl _
 
+omit [F.IsCocontinuous J K] [HasWeakSheafify J AddCommGrpCat.{u}]
+  [J.WEqualsLocallyBijective AddCommGrpCat.{u}]
+  [HasWeakSheafify K AddCommGrpCat.{u}] [K.WEqualsLocallyBijective AddCommGrpCat.{u}] in
 private abbrev presheafPushforward :
     PresheafOfModules.{u} R.obj ⥤
       PresheafOfModules.{u} (pushedRing (J := J) (K := K) F R).obj :=
   PresheafOfModules.pushforward (F := F)
     (pushforwardRingIso (J := J) (K := K) F R).inv
 
+omit [F.IsCocontinuous J K] [HasWeakSheafify J AddCommGrpCat.{u}]
+  [J.WEqualsLocallyBijective AddCommGrpCat.{u}]
+  [HasWeakSheafify K AddCommGrpCat.{u}] [K.WEqualsLocallyBijective AddCommGrpCat.{u}] in
 private abbrev sheafPushforward :
     SheafOfModules.{u} R ⥤
       SheafOfModules.{u} (pushedRing (J := J) (K := K) F R) :=
   SheafOfModules.pushforward (J := J) (K := K) (F := F) (𝟙 _)
 
+omit [HasWeakSheafify J AddCommGrpCat.{u}]
+  [J.WEqualsLocallyBijective AddCommGrpCat.{u}] [F.IsCocontinuous J K] in
 /-- The pushforward of a sheafification unit, as a map of presheaves of modules. This is the
 canonical comparison whose sheafification is inverted by `pushforwardSheafificationIso`. -/
 def pushforwardToSheafify (P : PresheafOfModules.{u} R.obj) :
@@ -122,7 +117,9 @@ private theorem toPresheaf_map_pushforwardToSheafify_def
 
 omit [HasWeakSheafify J AddCommGrpCat.{u}]
   [J.WEqualsLocallyBijective AddCommGrpCat.{u}] [F.IsCocontinuous J K] in
-private theorem toPresheaf_map_pushforwardToSheafify
+/-- On underlying presheaves of abelian groups, `pushforwardToSheafify` is the canonical
+sheafification map whiskered by the functor between sites. -/
+theorem toPresheaf_map_pushforwardToSheafify
     (P : PresheafOfModules.{u} R.obj) :
     (PresheafOfModules.toPresheaf _).map
         (pushforwardToSheafify (J := J) (K := K) F R P) =
@@ -141,12 +138,13 @@ private theorem W_toPresheaf_map_pushforwardToSheafify
     ⟨Presheaf.isLocallyInjective_whisker J K F _,
       Presheaf.isLocallySurjective_whisker J K F _⟩
 
-private theorem isIso_sheafification_map_pushforwardToSheafify
+private instance isIso_sheafification_map_pushforwardToSheafify
     (P : PresheafOfModules.{u} R.obj) :
     IsIso ((PresheafOfModules.sheafification
       (R := pushedRing (J := J) (K := K) F R)
       (𝟙 (pushedRing (J := J) (K := K) F R).obj)).map
         (pushforwardToSheafify (J := J) (K := K) F R P)) := by
+  -- `IsIso` is the inverse image of the isomorphism morphism property under sheafification.
   change ((MorphismProperty.isomorphisms _).inverseImage
     (PresheafOfModules.sheafification
       (R := pushedRing (J := J) (K := K) F R)
@@ -164,9 +162,8 @@ def pushforwardSheafificationIso (P : PresheafOfModules.{u} R.obj) :
         (R := (F.sheafPushforwardContinuous RingCat.{u} J K).obj R)
         (𝟙 ((F.sheafPushforwardContinuous RingCat.{u} J K).obj R).obj)).obj
           ((PresheafOfModules.pushforward (F := F)
-            (pushforwardRingIso (J := J) (K := K) F R).inv).obj P) := by
-  letI := isIso_sheafification_map_pushforwardToSheafify (J := J) (K := K) F R P
-  exact (sheafificationIso (pushedRing (J := J) (K := K) F R)
+            (pushforwardRingIso (J := J) (K := K) F R).inv).obj P) :=
+  (sheafificationIso (pushedRing (J := J) (K := K) F R)
       ((sheafPushforward (J := J) (K := K) F R).obj
         ((PresheafOfModules.sheafification (R := R) (𝟙 R.obj)).obj P))).symm ≪≫
     (asIso ((PresheafOfModules.sheafification
@@ -185,9 +182,7 @@ theorem pushforwardSheafificationIso_inv (P : PresheafOfModules.{u} R.obj) :
         (sheafificationIso ((F.sheafPushforwardContinuous RingCat.{u} J K).obj R)
           ((SheafOfModules.pushforward (J := J) (K := K) (F := F) (𝟙 _)).obj
             ((PresheafOfModules.sheafification (R := R) (𝟙 R.obj)).obj P))).hom := by
-  -- This is the inverse of the two displayed factors: `Iso.trans_inv`, `Iso.symm_inv`,
-  -- and `asIso_hom` reduce it to the canonical comparison above.
-  rfl
+  simp [pushforwardSheafificationIso]
 
 end General
 
@@ -202,21 +197,6 @@ def overSheafificationIso (R : Sheaf J RingCat.{u})
         ((PresheafOfModules.pushforward (F := Over.forget X)
           (pushforwardRingIso (J := J.over X) (K := J) (Over.forget X) R).inv).obj P) :=
   pushforwardSheafificationIso (J := J.over X) (K := J) (Over.forget X) R P
-
-/-- The inverse of `overSheafificationIso` is the generic canonical comparison. -/
-theorem overSheafificationIso_inv (R : Sheaf J RingCat.{u})
-    (P : PresheafOfModules.{u} R.obj) (X : C)
-    [HasWeakSheafify (J.over X) AddCommGrpCat.{u}]
-    [(J.over X).WEqualsLocallyBijective AddCommGrpCat.{u}] :
-    (overSheafificationIso R P X).inv =
-      (pushforwardSheafificationIso (J := J.over X) (K := J)
-        (Over.forget X) R P).inv := by
-  rfl
-
-/-- Forgetting commutativity commutes with restriction to a slice site. -/
-def ringCatSheafOverIso (R : Sheaf J CommRingCat.{u}) (X : C) :
-    (ringCatSheaf R).over X ≅ ringCatSheaf (R.over X) :=
-  (fullyFaithfulSheafToPresheaf (J.over X) RingCat.{u}).preimageIso (Iso.refl _)
 
 end SheafOfModules
 

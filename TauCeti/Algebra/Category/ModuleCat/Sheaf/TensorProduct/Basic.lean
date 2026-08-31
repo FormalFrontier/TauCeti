@@ -5,10 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.Category.ModuleCat.Sheaf.Restriction
-public import Mathlib.Algebra.Category.Ring.Limits
+public import TauCeti.Algebra.Category.ModuleCat.Sheaf.Defs
 public import Mathlib.Algebra.Category.ModuleCat.Presheaf.Monoidal
-public import Mathlib.Algebra.Category.ModuleCat.Presheaf.Sheafification
 
 /-!
 # Tensor products of sheaves of modules
