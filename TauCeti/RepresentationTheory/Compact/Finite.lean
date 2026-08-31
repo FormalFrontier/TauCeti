@@ -88,9 +88,11 @@ inequivalent irreducibles, by the vanishing half of Schur's lemma.
 
 ## Implementation notes
 
-Finiteness is spelled `[Finite G]` for the measure-theoretic statements and `[Fintype G]` only from
-`TauCeti.integral_haarProb` on, where a sum over `Finset.univ` appears in the statement itself and a
-`Fintype` instance recovered from `Finite` inside a proof would not be the one indexing that sum.
+Finiteness is spelled `[Finite G]` wherever that suffices — the measure-theoretic statements and the
+equivalence `TauCeti.lpEquivFun` — and `[Fintype G]` only where a sum over `Finset.univ` appears in
+the statement itself, since a `Fintype` instance recovered from `Finite` inside a proof would not be
+the one indexing that sum. The scalars are weakened the same way: `TauCeti.lpEquivFun` needs only
+`[NontriviallyNormedField 𝕜]`, and `[RCLike 𝕜]` appears from the inner-product statements on.
 Cardinalities are written `Nat.card G` throughout, matching the rest of the roadmap;
 `Nat.card_eq_fintype_card` converts.
 
@@ -253,10 +255,10 @@ theorem eq_of_ae_eq_haarProb {α : Type*} [TopologicalSpace α] [T2Space α] {f 
 
 end FullSupport
 
-section InnerProduct
+section LpEquiv
 
-variable (G : Type*) [Group G] [Fintype G] [TopologicalSpace G] [DiscreteTopology G]
-  [MeasurableSpace G] [BorelSpace G] {𝕜 : Type*} [RCLike 𝕜]
+variable (G : Type*) [Group G] [Finite G] [TopologicalSpace G] [DiscreteTopology G]
+  [MeasurableSpace G] [BorelSpace G] {𝕜 : Type*} [NontriviallyNormedField 𝕜]
 
 variable (𝕜) in
 /-- **`L²` of a finite discrete group is the space of all functions on it**: taking underlying
@@ -285,10 +287,18 @@ theorem lpEquivFun_apply (f : Lp 𝕜 2 (haarProb G)) (x : G) : lpEquivFun G �
 
 /-- The inverse of `TauCeti.lpEquivFun` is `ContinuousMap.toLp`, every function on a discrete space
 being continuous. -/
+@[simp]
 theorem lpEquivFun_symm_apply (f : G → 𝕜) :
     (lpEquivFun G 𝕜).symm f =
       ContinuousMap.toLp 2 (haarProb G) 𝕜 ⟨f, continuous_of_discreteTopology⟩ :=
   (rfl)
+
+end LpEquiv
+
+section InnerProduct
+
+variable (G : Type*) [Group G] [Fintype G] [TopologicalSpace G] [DiscreteTopology G]
+  [MeasurableSpace G] [BorelSpace G] {𝕜 : Type*} [RCLike 𝕜]
 
 /-- **The `L²` inner product of a finite discrete group is the normalized Hermitian pairing**
 `|G|⁻¹ ∑ x, conj (f x) * g x`.
