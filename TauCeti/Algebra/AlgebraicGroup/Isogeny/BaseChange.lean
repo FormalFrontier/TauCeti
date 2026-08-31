@@ -34,6 +34,8 @@ pullback with the spectrum of the scalar-extended coordinate morphism.
 
 * W. C. Waterhouse, *Introduction to Affine Group Schemes*, Sections 4 and 16.
 * J. S. Milne, *Algebraic Groups* (2017), Sections 1.f and 18.a.
+* The coordinate proof structure, including its use of `MorphismProperty.overPullbackMap`, is
+  adapted from `TauCeti.AlgebraicGeometry.GroupScheme.CentralIsogeny.BaseChange`.
 
 This supplies scalar-extension stability for the central-isogeny interface in Layer 6,
 "Reductive and semisimple groups", of the ReductiveGroups roadmap. It is used when comparing

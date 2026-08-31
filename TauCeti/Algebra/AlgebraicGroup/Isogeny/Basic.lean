@@ -83,11 +83,11 @@ theorem isCentralIsogeny_iff (f : H ⟶ K) :
         (kernelHopfIdeal f).IsCentral := by
   rw [IsCentralIsogeny, IsIsogeny, and_assoc]
 
-/-- A coordinate morphism is an isogeny exactly when its contravariant Hopf-spectrum map is
-finite, flat, and surjective. This criterion works over an arbitrary commutative base ring. -/
-theorem isIsogeny_iff_isFinite_flat_surjective_hopfSpec_map
+-- This isolates the definitional computation of Mathlib's bundled `hopfSpec` functor at the
+-- morphism-property boundary where the source and target schemes are propositionally aligned.
+private lemma isogeny_conditions_hopfSpec_map_iff
     {H₀ K₀ : _root_.CommHopfAlgCat.{u} R} (f : H₀ ⟶ K₀) :
-    IsIsogeny f ↔
+    f.hom.toAlgHom.Finite ∧ f.hom.toAlgHom.toRingHom.FaithfullyFlat ↔
       AlgebraicGeometry.IsFinite
           ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map f.op).hom.hom.left ∧
         AlgebraicGeometry.Flat
@@ -104,6 +104,20 @@ theorem isIsogeny_iff_isFinite_flat_surjective_hopfSpec_map
   rw [AlgebraicGeometry.IsFinite.SpecMap_iff,
     AlgebraicGeometry.flat_and_surjective_SpecMap_iff]
   rfl
+
+/-- A coordinate morphism is an isogeny exactly when its contravariant Hopf-spectrum map is
+finite, flat, and surjective. This criterion works over an arbitrary commutative base ring. -/
+theorem isIsogeny_iff_isFinite_flat_surjective_hopfSpec_map
+    {H₀ K₀ : _root_.CommHopfAlgCat.{u} R} (f : H₀ ⟶ K₀) :
+    IsIsogeny f ↔
+      AlgebraicGeometry.IsFinite
+          ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map f.op).hom.hom.left ∧
+        AlgebraicGeometry.Flat
+            ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map f.op).hom.hom.left ∧
+          AlgebraicGeometry.Surjective
+            ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map f.op).hom.hom.left := by
+  rw [IsIsogeny]
+  exact isogeny_conditions_hopfSpec_map_iff f
 
 section Field
 
