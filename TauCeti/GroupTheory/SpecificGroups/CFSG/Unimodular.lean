@@ -44,7 +44,10 @@ determinant two, so the Geck carrier is not its simply connected form.
 Identifying the carrier itself with the pinned simply connected Chevalley--Demazure group, and
 proving it reductive, is the Layer 9 work of `TauCetiRoadmap/ReductiveGroups/README.md` that this
 roadmap consumes rather than performs; no declaration below asserts either, nor that a constructed
-group is finite, perfect, or simple.
+group is perfect or simple. The one finiteness statement below is
+`TauCeti.UnimodularExceptionalIndex.finite_fixedSubgroup_steinberg`, about the fixed group `H_d`
+and not about the candidate `TauCeti.UnimodularExceptionalIndex.Group`, and it is a theorem rather
+than an instance for the reason recorded there.
 
 ## Main definitions
 
@@ -67,6 +70,8 @@ group is finite, perfect, or simple.
 * `TauCeti.UnimodularExceptionalIndex.mem_fixedSubgroup_steinberg_iff`: the fixed points of that
   map are the points of the carrier whose matrix entries lie in the field of definition `𝔽_q`
   recorded by `TauCeti.ValidLieTypeIndex.fixedField`.
+* `TauCeti.UnimodularExceptionalIndex.finite_fixedSubgroup_steinberg`: the group `H_d` those fixed
+  points form is finite.
 
 ## References
 
@@ -211,6 +216,18 @@ theorem mem_fixedSubgroup_steinberg_iff (g : ValidLieTypeIndex.GeckGroup d.1.1) 
         d.1.1.fixedField := by
   rw [steinberg_eq_geckFrobenius]
   exact d.1.1.mem_fixedSubgroup_geckFrobenius_iff g
+
+/-- **The group `H_d` of an untwisted unimodular exceptional index is finite**: it is the group of
+points of the Geck carrier over the finite field of definition `𝔽_q`.
+
+This is the first finiteness statement in the `E₈`, `F₄` and `G₂` branches of the recipe, and it
+stops there. It is a theorem and not an instance, and nothing is claimed about
+`TauCeti.UnimodularExceptionalIndex.Group`: milestone I0 of
+`TauCetiRoadmap/CFSGStatement/README.md` asks that no `Finite` instance be attached to a
+classification candidate, and that candidate is the derived central quotient of this group. -/
+theorem finite_fixedSubgroup_steinberg : Finite ↥(fixedSubgroup d.steinberg) := by
+  rw [steinberg_eq_geckFrobenius]
+  exact d.1.1.finite_fixedSubgroup_geckFrobenius
 
 /-- **The candidate simple group of an untwisted unimodular exceptional index**: the derived
 subgroup of the fixed points of its Steinberg map, modulo the centre of that derived subgroup.
