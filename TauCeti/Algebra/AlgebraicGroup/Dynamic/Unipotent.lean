@@ -67,19 +67,6 @@ private theorem charpoly_conjugate {B : Type w} [CommRing B] [Algebra R B]
     simp [LinearEquiv.conj_apply, Comodule.pointsAction_toLinearMap]
   rw [hEnd, LinearEquiv.charpoly_conj]
 
-private theorem charpoly_endOfPoint_comp {B D : Type w} [CommRing B] [Algebra R B]
-    [CommRing D] [Algebra R D] (M : FGComoduleCat.{u, v, u} R H)
-    (b : Basis (Module.Free.ChooseBasisIndex R M) R M) (g : H →ₐ[R] B) (f : B →ₐ[R] D) :
-    (Comodule.endOfPoint M (f.comp g)).charpoly =
-      (Comodule.endOfPoint M g).charpoly.map f := by
-  rw [← LinearMap.charpoly_toMatrix (Comodule.endOfPoint M (f.comp g)) (b.baseChange D),
-    ← LinearMap.charpoly_toMatrix (Comodule.endOfPoint M g) (b.baseChange B),
-    Comodule.toMatrix_endOfPoint, Comodule.toMatrix_endOfPoint, ← Matrix.charpoly_map,
-    Matrix.map_map]
-  apply congrArg Matrix.charpoly
-  ext i j
-  simp [Matrix.map_apply]
-
 /-- Every point of the dynamic unipotent subgroup attached to a cocharacter is unipotent in
 every finite-dimensional representation. -/
 theorem isUnipotentPoint_of_mem_unipotent
@@ -132,7 +119,7 @@ theorem isUnipotentPoint_of_mem_unipotent
         rw [conjugate_apply, charpoly_conjugate]
       _ = (Comodule.endOfPoint M (f.comp g.ofConv)).charpoly := by rw [constPoint_apply]
       _ = (Comodule.endOfPoint M g.ofConv).charpoly.map f :=
-        charpoly_endOfPoint_comp M b g.ofConv f
+        Comodule.charpoly_endOfPoint_comp b g.ofConv f
       _ = G.charpoly.map LaurentPolynomial.C := by
         rw [← LinearMap.charpoly_toMatrix (Comodule.endOfPoint M g.ofConv) (b.baseChange A),
           Comodule.toMatrix_endOfPoint, hf]

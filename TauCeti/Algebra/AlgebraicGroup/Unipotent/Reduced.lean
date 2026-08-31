@@ -114,12 +114,17 @@ private theorem isUnipotent_pointsAction_of_coefficientMatrix_charpoly_eq
   let P : Polynomial k := (Polynomial.X - 1) ^ d
   have hgcharpoly : (Comodule.endOfPoint M g.ofConv).charpoly =
       P.map (algebraMap k L) := by
-    rw [← LinearMap.charpoly_toMatrix (Comodule.endOfPoint M g.ofConv) (b.baseChange L),
-      Comodule.toMatrix_endOfPoint]
-    change (C.map g.ofConv).charpoly = _
+    let e : A →ₐ[k] A := AlgHom.id k A
     calc
-      (C.map g.ofConv).charpoly = C.charpoly.map g.ofConv.toRingHom :=
-        Matrix.charpoly_map C g.ofConv.toRingHom
+      (Comodule.endOfPoint M g.ofConv).charpoly =
+          (Comodule.endOfPoint M e).charpoly.map g.ofConv := by
+        simpa only [e, AlgHom.comp_id] using
+          (Comodule.charpoly_endOfPoint_comp b e g.ofConv)
+      _ = C.charpoly.map g.ofConv := by
+        congr 1
+        rw [← LinearMap.charpoly_toMatrix (Comodule.endOfPoint M e) (b.baseChange A),
+          Comodule.toMatrix_endOfPoint]
+        congr 1
       _ = _ := by
         rw [hCcharpoly, Polynomial.map_map]
         congr 1
@@ -134,10 +139,9 @@ private theorem isUnipotent_pointsAction_of_coefficientMatrix_charpoly_eq
   exact hgcharpoly.trans (by simp [P])
 
 /-- If a reduced finite-type Hopf algebra is geometrically unipotent, every point valued in any
-commutative algebra over the ground field is unipotent.
-
-Thus the particular algebraic closure used in
-`geometricallyUnipotentPointsCommHopfAlgProperty` does not affect the property. -/
+commutative algebra over the ground field is unipotent. In particular, the defining hypothesis
+over the chosen algebraic closure implies unipotence for points over every other algebraically
+closed extension. -/
 theorem isUnipotentPoint
     {A : _root_.CommHopfAlgCat.{v} k} [Algebra.FiniteType k A] [IsReduced A]
     (hA : geometricallyUnipotentPointsCommHopfAlgProperty k A)
