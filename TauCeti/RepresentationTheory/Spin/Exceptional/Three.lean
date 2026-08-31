@@ -194,14 +194,14 @@ omit [NeZero (2 : K)] [FiniteDimensional K V] in
 
 omit [NeZero (2 : K)] [FiniteDimensional K V] in
 /-- The transported reversal fixes the matrix unit. -/
-@[simp] theorem reverseMatrix_map_one
+theorem reverseMatrix_map_one
     (e : ↥(even Q) ≃ₐ[K] Matrix (Fin 2) (Fin 2) K) :
     reverseMatrix Q e 1 = 1 := by
   simp [reverseMatrix_apply]
 
 omit [NeZero (2 : K)] [FiniteDimensional K V] in
 /-- The transported reversal is an involution. -/
-@[simp] theorem reverseMatrix_reverseMatrix
+theorem reverseMatrix_reverseMatrix
     (e : ↥(even Q) ≃ₐ[K] Matrix (Fin 2) (Fin 2) K) (A : Matrix (Fin 2) (Fin 2) K) :
     reverseMatrix Q e (reverseMatrix Q e A) = A := by
   simp [reverseMatrix_apply]
