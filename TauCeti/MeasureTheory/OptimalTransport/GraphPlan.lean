@@ -7,8 +7,9 @@ module
 
 public import Mathlib.MeasureTheory.Integral.Lebesgue.Map
 public import Mathlib.Probability.HasLaw
-public import TauCeti.MeasureTheory.Measure.Dirac
 public import TauCeti.MeasureTheory.OptimalTransport.Coupling
+
+import TauCeti.MeasureTheory.Measure.Dirac
 
 /-!
 # Graph plans: the transport plan induced by a transport map
