@@ -9,6 +9,7 @@ public import TauCeti.Algebra.Lie.GeneralLinear.Restriction
 public import TauCeti.Algebra.Lie.GeneralLinear.Twist
 public import TauCeti.Algebra.Lie.GeneralLinear.Uniqueness
 public import TauCeti.Algebra.Lie.Submodule.Atom
+import TauCeti.Algebra.Lie.Weights.Central
 
 public section
 
@@ -42,8 +43,8 @@ exterior power at all.
 Two choices go into the carrier, the decomposition of `mu` as an antitone tuple of natural numbers
 translated along the central direction and the coatom, and neither is canonical: the decomposition
 is unique only up to a simultaneous shift, and a coatom is unique only when the realizing module is
-already irreducible. Both are therefore made with `Classical.choice`, and the
-carrier is characterized not by its construction but by
+already irreducible. Both are therefore made with `Classical.choice`, and the carrier is
+characterized not by its construction but by
 `TauCeti.nonempty_lieModuleEquiv_glIrreducible`, which identifies it with *any* irreducible module
 carrying a highest weight vector of weight `mu`. Off the dominant weights the carrier is junk —
 still a finite-dimensional `gl N K`-module, but with no claim about it — as with the other
@@ -53,27 +54,34 @@ total-by-convention constructions of the roadmap.
 
 * `TauCeti.glIrreducible K mu`: the named carrier `L(mu)`, with its `K`-module and `gl N K`-module
   structures and its finite-dimensionality.
-* `TauCeti.glIrreducibleGenerator K mu`: its canonical generator, the class of the chosen highest
-  weight vector.
-* `TauCeti.glCarrierData K mu`, `TauCeti.glCarrierVector K mu`, `TauCeti.glCarrierSpan K mu` and
-  `TauCeti.glCarrierCoatom K mu`: the chosen decomposition `mu = a + c`, the chosen highest weight
-  vector in the trace-twisted Young wedge it names, the Lie submodule that vector generates and the
-  chosen coatom the carrier divides by. These are the construction rather than the interface — only
-  the results below should be used about `TauCeti.glIrreducible` — but the module system asks that
-  the ingredients of a public definition be public too.
+* `TauCeti.glIrreducibleGenerator K mu`: its distinguished generator, the class of the chosen
+  highest weight vector. Like the carrier itself it depends on the two choices above, so what is
+  known of it is what the results below say.
+* `TauCeti.glCarrierData K mu`, `TauCeti.glCarrierSpan K mu` and `TauCeti.glCarrierCoatom K mu`:
+  the chosen decomposition `mu = a + c`, the Lie submodule the chosen highest weight vector
+  generates inside the trace-twisted Young wedge that decomposition names, and the chosen coatom
+  the carrier divides by. These are the construction rather than the interface, and the rest of it
+  — the chosen vector and the lemmas about it — is private to this file. These three cannot be:
+  `glCarrierSpan` names `glCarrierData` in its type, and the module instances on
+  `TauCeti.glIrreducible` are transported from `glCarrierSpan ⧸ glCarrierCoatom`, so their bodies,
+  which the module system exposes, must name both. Their own bodies stay unexposed, so nothing
+  outside this file can unfold them, and nothing is claimed about them; likewise
+  `TauCeti.glIrreducible` itself does not unfold outside this file.
 
 ## Main results
 
 * `TauCeti.isIrreducible_glIrreducible`: **`L(mu)` is irreducible** for dominant integral `mu`.
 * `TauCeti.isGlHighestWeightVector_glIrreducibleGenerator`, with its existential form
-  `TauCeti.exists_isGlHighestWeightVector_glIrreducible`: **its canonical generator is a highest
+  `TauCeti.exists_isGlHighestWeightVector_glIrreducible`: **its distinguished generator is a highest
   weight vector of weight `mu`**, which is what ties the carrier to its name.
 * `TauCeti.nonempty_lieModuleEquiv_glIrreducible`: **`L(mu)` is *the* irreducible of highest weight
   `mu`**: every irreducible `gl N K`-module carrying a highest weight vector of weight `mu` is
   isomorphic to it, and `TauCeti.finrank_glIrreducible_le` bounds its dimension by that of any
   finite-dimensional module carrying such a vector.
 * `TauCeti.isIrreducible_glIrreducible_restrict_sl`: **`L(mu)` stays irreducible on restriction to
-  `sl N K`**, over an algebraically closed field.
+  `sl N K`**, over any characteristic-zero field: by
+  `TauCeti.lie_one_glIrreducible_eq_smul` the identity matrix acts by the explicit scalar
+  `∑ i, mu i`, so no algebraic closedness is needed to know that the centre acts by scalars.
 
 ## References
 
@@ -112,13 +120,13 @@ variable (K) in
 natural numbers together with a scalar summing to `mu`, which
 `TauCeti.IsGlDominantIntegral.exists_antitone_natCast_add_const` supplies for a dominant `mu`.
 The decomposition is unique only up to shifting the tuple against the scalar, so one is chosen;
-`TauCeti.glCarrierData_spec` is everything used about it, and off the dominant weights it is
-`(0, 0)`. -/
+its defining property `glCarrierData_spec`, private to this file, is everything used about it, and
+off the dominant weights it is `(0, 0)`. -/
 noncomputable def glCarrierData (mu : Fin N → K) : (Fin N → ℕ) × K :=
   (exists_glCarrierData K mu).choose
 
 /-- The defining property of `TauCeti.glCarrierData`. -/
-theorem glCarrierData_spec (hmu : IsGlDominantIntegral mu) :
+private theorem glCarrierData_spec (hmu : IsGlDominantIntegral mu) :
     Antitone (glCarrierData K mu).1 ∧
       mu = fun i => (((glCarrierData K mu).1 i : K) + (glCarrierData K mu).2) :=
   (exists_glCarrierData K mu).choose_spec hmu
@@ -144,13 +152,13 @@ private theorem exists_glCarrierVector (K : Type u) [Field K] [CharZero K] {N : 
 variable (K) in
 /-- **The chosen highest weight vector of weight `mu`**, inside the trace-twisted Young wedge named
 by `TauCeti.glCarrierData`. For dominant `mu` it is a highest weight vector of weight `mu`
-(`TauCeti.isGlHighestWeightVector_glCarrierVector`); off the dominant weights it is `0`. -/
-noncomputable def glCarrierVector (mu : Fin N → K) :
+(`isGlHighestWeightVector_glCarrierVector`); off the dominant weights it is `0`. -/
+private noncomputable def glCarrierVector (mu : Fin N → K) :
     glTraceTwistedYoungWedge K (glCarrierData K mu).1 (glCarrierData K mu).2 :=
   (exists_glCarrierVector K mu).choose
 
 /-- **The chosen vector realizes a dominant `mu` as a highest weight.** -/
-theorem isGlHighestWeightVector_glCarrierVector (hmu : IsGlDominantIntegral mu) :
+private theorem isGlHighestWeightVector_glCarrierVector (hmu : IsGlDominantIntegral mu) :
     IsGlHighestWeightVector mu (glCarrierVector K mu) :=
   (exists_glCarrierVector K mu).choose_spec hmu
 
@@ -163,11 +171,11 @@ noncomputable def glCarrierSpan (mu : Fin N → K) :
   LieSubmodule.lieSpan K _ {glCarrierVector K mu}
 
 /-- The chosen vector, read inside the Lie submodule it generates. -/
-theorem glCarrierVector_mem_glCarrierSpan : glCarrierVector K mu ∈ glCarrierSpan K mu :=
+private theorem glCarrierVector_mem_glCarrierSpan : glCarrierVector K mu ∈ glCarrierSpan K mu :=
   LieSubmodule.subset_lieSpan rfl
 
 /-- **Inside the module it generates, the chosen vector is again a highest weight vector.** -/
-theorem isGlHighestWeightVector_glCarrierVector_mem (hmu : IsGlDominantIntegral mu) :
+private theorem isGlHighestWeightVector_glCarrierVector_mem (hmu : IsGlDominantIntegral mu) :
     IsGlHighestWeightVector mu
       (⟨glCarrierVector K mu, glCarrierVector_mem_glCarrierSpan⟩ : glCarrierSpan K mu) :=
   isGlHighestWeightVector_coe_iff.mp (isGlHighestWeightVector_glCarrierVector hmu)
@@ -193,13 +201,13 @@ private theorem exists_glCarrierCoatom (K : Type u) [Field K] [CharZero K] {N : 
 variable (K) in
 /-- **The chosen maximal proper Lie submodule** of the module the chosen highest weight vector
 generates. It is a coatom of the lattice of Lie submodules for dominant `mu`
-(`TauCeti.isCoatom_glCarrierCoatom`), and `⊥` off the dominant weights. -/
+(`isCoatom_glCarrierCoatom`, private to this file), and `⊥` off the dominant weights. -/
 noncomputable def glCarrierCoatom (mu : Fin N → K) :
     LieSubmodule K (Matrix (Fin N) (Fin N) K) (glCarrierSpan K mu) :=
   (exists_glCarrierCoatom K mu).choose
 
 /-- **The chosen submodule is a coatom**, for a dominant weight. -/
-theorem isCoatom_glCarrierCoatom (hmu : IsGlDominantIntegral mu) :
+private theorem isCoatom_glCarrierCoatom (hmu : IsGlDominantIntegral mu) :
     IsCoatom (glCarrierCoatom K mu) :=
   (exists_glCarrierCoatom K mu).choose_spec hmu
 
@@ -238,7 +246,9 @@ instance : FiniteDimensional K (glIrreducible K mu) :=
     ((glCarrierSpan K mu) ⧸ (glCarrierCoatom K mu).toSubmodule))
 
 variable (K) in
-/-- **The canonical generator of `L(mu)`**, the class of the chosen highest weight vector. -/
+/-- **The distinguished generator of `L(mu)`**, the class of the chosen highest weight vector. It
+inherits the two choices the carrier is built from and is canonical in no stronger sense; what is
+known of it is `TauCeti.isGlHighestWeightVector_glIrreducibleGenerator`. -/
 noncomputable def glIrreducibleGenerator (mu : Fin N → K) : glIrreducible K mu :=
   LieSubmodule.Quotient.mk' (glCarrierCoatom K mu)
     ⟨glCarrierVector K mu, glCarrierVector_mem_glCarrierSpan⟩
@@ -251,9 +261,9 @@ theorem isIrreducible_glIrreducible (hmu : IsGlDominantIntegral mu) :
     LieModule.IsIrreducible K (Matrix (Fin N) (Fin N) K) (glIrreducible K mu) :=
   isIrreducible_quotient_of_isCoatom (isCoatom_glCarrierCoatom hmu)
 
-/-- **The canonical generator of `L(mu)` is a highest weight vector of weight `mu`**, the statement
-that ties the carrier to its name. It is nonzero because the chosen vector generates the module
-being divided, so a proper submodule cannot contain it. -/
+/-- **The distinguished generator of `L(mu)` is a highest weight vector of weight `mu`**, the
+statement that ties the carrier to its name. It is nonzero because the chosen vector generates the
+module being divided, so a proper submodule cannot contain it. -/
 theorem isGlHighestWeightVector_glIrreducibleGenerator (hmu : IsGlDominantIntegral mu) :
     IsGlHighestWeightVector mu (glIrreducibleGenerator K mu) := by
   refine (isGlHighestWeightVector_glCarrierVector_mem hmu).map _ fun hzero => ?_
@@ -299,12 +309,28 @@ theorem finrank_glIrreducible_le [FiniteDimensional K M] {v : M}
   have := isIrreducible_glIrreducible (K := K) hmu
   finrank_le_of_isGlHighestWeightVector (isGlHighestWeightVector_glIrreducibleGenerator hmu) hv
 
-/-- **`L(mu)` stays irreducible on restriction to `sl N K`**, over an algebraically closed field:
-the centre of `gl N K` acts on it by a scalar, so its `sl N K`-submodules are already
-`gl N K`-submodules. -/
-theorem isIrreducible_glIrreducible_restrict_sl [IsAlgClosed K] (hmu : IsGlDominantIntegral mu) :
+/-- **The identity matrix acts on `L(mu)` by the scalar `∑ i, mu i`.** The generator is a highest
+weight vector, so the diagonal Cartan subalgebra acts on it by the weight; the identity matrix is
+central, so by irreducibility the scalar it takes on the generator is the scalar it takes on every
+vector. -/
+theorem lie_one_glIrreducible_eq_smul (hmu : IsGlDominantIntegral mu) (m : glIrreducible K mu) :
+    ⁅(1 : Matrix (Fin N) (Fin N) K), m⁆ = (∑ i, mu i) • m := by
+  have := isIrreducible_glIrreducible (K := K) hmu
+  have hv := isGlHighestWeightVector_glIrreducibleGenerator (K := K) hmu
+  have hone : (1 : Matrix (Fin N) (Fin N) K) ∈ diagonalCartan K (Fin N) :=
+    mem_diagonalCartan_iff.mpr fun i j hij => Matrix.one_apply_ne hij
+  exact forall_lie_eq_smul_of_lie_eq_smul K (Matrix (Fin N) (Fin N) K) (glIrreducible K mu)
+    ⟨1, mem_center_matrix_iff.mpr ⟨1, (one_smul K (1 : Matrix (Fin N) (Fin N) K)).symm⟩⟩
+    hv.ne_zero (by simpa using hv.lie_eq_smul_of_mem_diagonalCartan hone) m
+
+/-- **`L(mu)` stays irreducible on restriction to `sl N K`**: the identity matrix acts on it by the
+scalar `∑ i, mu i` (`TauCeti.lie_one_glIrreducible_eq_smul`), so the centre of `gl N K` acts by
+scalars and the `sl N K`-submodules are already `gl N K`-submodules. The explicit scalar is what
+lets the statement hold over any characteristic-zero field, algebraic closedness being needed only
+where the scalar has to be produced by Schur's lemma. -/
+theorem isIrreducible_glIrreducible_restrict_sl (hmu : IsGlDominantIntegral mu) :
     LieModule.IsIrreducible K (LieAlgebra.SpecialLinear.sl (Fin N) K) (glIrreducible K mu) :=
   have := isIrreducible_glIrreducible (K := K) hmu
-  isIrreducible_restrict_sl
+  isIrreducible_restrict_sl_of_forall_lie_one_eq_smul (lie_one_glIrreducible_eq_smul hmu)
 
 end TauCeti

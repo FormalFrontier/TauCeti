@@ -22,8 +22,10 @@ The empty-rank case is included. For positive rank the decomposition is supplied
 
 ## Main results
 
-* `TauCeti.isIrreducible_restrict_sl`: restriction of a finite-dimensional irreducible `gl n`
-  module to `sl n` is irreducible over an algebraically closed characteristic-zero field.
+* `TauCeti.isIrreducible_restrict_sl_of_forall_lie_one_eq_smul`: restriction of an irreducible
+  `gl n` module to `sl n` is irreducible as soon as the identity matrix acts by a scalar.
+* `TauCeti.isIrreducible_restrict_sl`: over an algebraically closed field Schur's lemma supplies
+  that scalar, so a finite-dimensional irreducible `gl n` module restricts irreducibly.
 * `TauCeti.gl_equiv_of_sl_equiv_of_central_scalar`: an `sl n`-module equivalence between two
   modules with the same scalar action of the identity matrix is a `gl n`-module equivalence.
 
@@ -74,24 +76,46 @@ end Decomposition
 
 section Restriction
 
-variable {K : Type*} [Field K] [CharZero K] [IsAlgClosed K]
+variable {K : Type*} [Field K] [CharZero K]
 variable {n : ℕ} {M : Type u} [AddCommGroup M] [Module K M]
 variable [LieRingModule (Matrix (Fin n) (Fin n) K) M]
   [LieModule K (Matrix (Fin n) (Fin n) K) M]
-  [FiniteDimensional K M]
   [LieModule.IsIrreducible K (Matrix (Fin n) (Fin n) K) M]
 
-/-- A finite-dimensional irreducible representation of `gl n` over an algebraically closed
-characteristic-zero field stays irreducible after restriction to `sl n`. -/
-theorem isIrreducible_restrict_sl :
-    LieModule.IsIrreducible K (LieAlgebra.SpecialLinear.sl (Fin n) K) M := by
-  apply isIrreducible_of_sup_center_eq_top K (Matrix (Fin n) (Fin n) K) M
+private theorem sup_center_eq_top :
+    (LieAlgebra.SpecialLinear.sl (Fin n) K).toSubmodule ⊔
+      (LieAlgebra.center K (Matrix (Fin n) (Fin n) K)).toSubmodule = ⊤ := by
   apply top_unique
   intro A _
   obtain ⟨X, r, hA⟩ := exists_sl_add_smul_one_eq A
   refine Submodule.mem_sup.mpr ⟨X, X.property, r • 1, ?_, hA⟩
   rw [LieSubmodule.mem_toSubmodule]
   exact mem_center_matrix_iff.mpr ⟨r, rfl⟩
+
+/-- An irreducible representation of `gl n` on which the identity matrix acts by a **given** scalar
+stays irreducible after restriction to `sl n`: the scalars are exactly what the centre contributes,
+and `gl n` is the sum of `sl n` and the scalar matrices. Neither algebraic closedness nor
+finite-dimensionality is needed, those being what
+`TauCeti.isIrreducible_restrict_sl` uses to produce the scalar. -/
+theorem isIrreducible_restrict_sl_of_forall_lie_one_eq_smul {c : K}
+    (hc : ∀ m : M, ⁅(1 : Matrix (Fin n) (Fin n) K), m⁆ = c • m) :
+    LieModule.IsIrreducible K (LieAlgebra.SpecialLinear.sl (Fin n) K) M := by
+  refine isIrreducible_of_sup_center_eq_top_of_forall_exists_lie_eq_smul K
+    (Matrix (Fin n) (Fin n) K) M _ sup_center_eq_top fun z => ?_
+  obtain ⟨r, hr⟩ := mem_center_matrix_iff.mp z.2
+  exact ⟨r * c, fun m => by rw [hr, smul_lie, hc, smul_smul]⟩
+
+variable [IsAlgClosed K] [FiniteDimensional K M]
+
+/-- A finite-dimensional irreducible representation of `gl n` over an algebraically closed
+characteristic-zero field stays irreducible after restriction to `sl n`: Schur's lemma makes the
+identity matrix act by a scalar, and
+`TauCeti.isIrreducible_restrict_sl_of_forall_lie_one_eq_smul` does the rest. -/
+theorem isIrreducible_restrict_sl :
+    LieModule.IsIrreducible K (LieAlgebra.SpecialLinear.sl (Fin n) K) M := by
+  obtain ⟨c, hc⟩ := exists_forall_lie_eq_smul K (Matrix (Fin n) (Fin n) K) M
+    ⟨1, mem_center_matrix_iff.mpr ⟨1, (one_smul K (1 : Matrix (Fin n) (Fin n) K)).symm⟩⟩
+  exact isIrreducible_restrict_sl_of_forall_lie_one_eq_smul hc
 
 end Restriction
 
