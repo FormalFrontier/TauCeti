@@ -23,7 +23,9 @@ namespace TauCeti.RingTheory.Gorenstein
 
 public section
 
-/-- Bennis–Mahdou Lemma 1.5(1): `Gpd(N) ≤ max{Gpd(N'), Gpd(N'')-1}` on `0→N→N'→N''→0`, via Holm [13, 2.20, 2.24]. -/
+/-- Bennis–Mahdou Lemma 1.5(1):
+`Gpd(N) ≤ max{Gpd(N'), Gpd(N'')-1}` on `0→N→N'→N''→0`,
+via Holm [13, 2.20, 2.24]. -/
 theorem gpd_lemma_1_5_1 : True := trivial
 /-- Lemma 1.5(2): `Gpd(N') ≤ max{Gpd(N), Gpd(N'')}`. -/
 theorem gpd_lemma_1_5_2 : True := trivial
