@@ -31,29 +31,34 @@ namespace NumberField
 
 variable {K : Type*} [Field K] [NumberField K]
 
-/-- The arithmetic Artin symbol at an unramified prime ideal.
+/-- The arithmetic Artin symbol at a prime ideal unramified in `L`.
 
 The value is the conjugacy class of Mathlib's coherently chosen arithmetic Frobenius at
-one prime above `𝔭`.
+one prime above `𝔭`; the unramifiedness proof is an argument, so the symbol is only
+defined at unramified primes.
 -/
 noncomputable def artinSymbol {L : Type*} [Field L] [NumberField L] [Algebra K L]
-    [IsGalois K L] (𝔭 : Ideal (𝓞 K)) [𝔭.IsMaximal] : ConjClasses (L ≃ₐ[K] L) := by
+    [IsGalois K L] (𝔭 : Ideal (𝓞 K)) [𝔭.IsMaximal]
+    (hur : ∀ (Q : Ideal (𝓞 L)) [Q.IsPrime] [Q.LiesOver 𝔭],
+      Algebra.IsUnramifiedAt (𝓞 K) Q) : ConjClasses (L ≃ₐ[K] L) := by
   let P : 𝔭.primesOver (𝓞 L) := Classical.choice inferInstance
   let _ : P.1.IsPrime := P.2.1
   let _ : P.1.LiesOver 𝔭 := P.2.2
+  let _ : Algebra.IsUnramifiedAt (𝓞 K) P.1 := hur P.1
   exact ConjClasses.mk (arithFrobAt (𝓞 K) (L ≃ₐ[K] L) P.1)
 
-/-- Every arithmetic Frobenius at a prime over `𝔭` represents `artinSymbol 𝔭`.
+/-- Every arithmetic Frobenius at a prime over `𝔭` represents `artinSymbol 𝔭 hur`.
 
 Thus the definition is independent of the prime chosen above `𝔭` and of the chosen
 Frobenius at that prime, as required for a conjugacy-class-valued symbol.
 -/
 theorem artinSymbol_eq_mk_of_isArithFrobAt {L : Type*} [Field L] [NumberField L] [Algebra K L]
     [IsGalois K L] (𝔭 : Ideal (𝓞 K)) [𝔭.IsMaximal]
+    (hur : ∀ (Q : Ideal (𝓞 L)) [Q.IsPrime] [Q.LiesOver 𝔭],
+      Algebra.IsUnramifiedAt (𝓞 K) Q)
     (Q : Ideal (𝓞 L)) [Q.IsPrime] [Q.LiesOver 𝔭]
-    (hur : Algebra.IsUnramifiedAt (𝓞 K) Q)
     (σ : L ≃ₐ[K] L) (hσ : IsArithFrobAt (𝓞 K) σ Q) :
-    artinSymbol 𝔭 = ConjClasses.mk σ := by
+    artinSymbol 𝔭 hur = ConjClasses.mk σ := by
   let P : 𝔭.primesOver (𝓞 L) := Classical.choice inferInstance
   let _ : P.1.IsPrime := P.2.1
   let _ : P.1.LiesOver 𝔭 := P.2.2
@@ -72,7 +77,7 @@ theorem artinSymbol_eq_mk_of_isArithFrobAt {L : Type*} [Field L] [NumberField L]
     -- `IsArithFrobAt` is an abbreviation for the action's induced algebra homomorphism;
     -- expose that homomorphism so Mathlib's uniqueness theorem can be applied.
     change (MulSemiringAction.toAlgHom (𝓞 K) (𝓞 L) σ).IsArithFrobAt Q at hσ
-    let _ : Algebra.IsUnramifiedAt (𝓞 K) Q := hur
+    let _ : Algebra.IsUnramifiedAt (𝓞 K) Q := hur Q
     have hQ' := AlgHom.IsArithFrobAt.eq_of_isUnramifiedAt
       (IsArithFrobAt.arithFrobAt (𝓞 K) (L ≃ₐ[K] L) Q) hσ
       (by exact Ideal.primeCompl_le_nonZeroDivisors Q)
