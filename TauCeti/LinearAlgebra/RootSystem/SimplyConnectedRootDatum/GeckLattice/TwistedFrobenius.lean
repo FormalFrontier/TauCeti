@@ -42,12 +42,14 @@ Frobenius, the Frobenius at exponent `k * m`. Reading that on fixed subgroups gi
 G(A)^(γ ∘ Frob_q) ≤ G(A)^(Frob_(q ^ m)) = G(frobeniusFixedSubring A p (k * m)),
 ```
 
-over any value ring `A` of exponential characteristic `p`. For `p` prime, `0 < k` and `A` an
-algebraic closure of `ZMod p`, that subring is the field of `q ^ m` elements and the right-hand
-side reads `G(𝔽_(q ^ m))`, so the containment is the carrier-level form of the classical statement
-that a graph-twisted group of Lie type sits inside the untwisted group over the degree-`m`
-extension of its field of definition, with `m = 2` for `²Aₙ`, `²Dₙ` and `²E₆` and `m = 3` for
-`³D₄`. The reverse containment is false: the twisted fixed points are not in general fixed by
+over any value ring `A` of exponential characteristic `p` and any `m` annihilating the symmetry.
+At the permitted value `m = 0` the iterate is the identity and its fixed subring is all of `A`, so
+the containment is vacuous; for `p` prime, `0 < k`, `0 < m` and `A` an algebraic closure of
+`ZMod p`, the subring is the field of `q ^ m` elements, the right-hand side reads `G(𝔽_(q ^ m))`,
+and the containment is the carrier-level form of the classical statement that a graph-twisted group
+of Lie type sits inside the untwisted group over the degree-`m` extension of its field of
+definition, with `m = 2` for `²Aₙ`, `²Dₙ` and `²E₆` and `m = 3` for `³D₄`.
+The reverse containment is false: the twisted fixed points are not in general fixed by
 either factor, and only the easy half, that a point fixed by both factors is fixed by the
 composite, holds.
 
@@ -296,8 +298,9 @@ theorem geckTwistedFrobenius_eq_self_iff (g : t.geckPoints ht A) :
 
 /-- **The points fixed by the twisted Frobenius are fixed by the Frobenius at exponent `k * m`**,
 for `m` any exponent annihilating the diagram symmetry. In the intended application, where `p` is
-prime, `0 < k` and `A` is an algebraic closure of `ZMod p`, that is the Frobenius of the degree-`m`
-extension of the field of `q` elements. -/
+prime, `0 < k`, `0 < m` and `A` is an algebraic closure of `ZMod p`, that is the Frobenius of the
+degree-`m` extension of the field of `q` elements; at the permitted value `m = 0` it is the
+identity and the statement is vacuous. -/
 theorem fixedSubgroup_geckTwistedFrobenius_le_fixedSubgroup_geckFrobenius {m : ℕ}
     (hm : sigma ^ m = 1) :
     fixedSubgroup (t.geckTwistedFrobenius ht hsigma p k A) ≤
@@ -307,10 +310,12 @@ theorem fixedSubgroup_geckTwistedFrobenius_le_fixedSubgroup_geckFrobenius {m : �
   rwa [geckTwistedFrobenius_pow_eq_geckFrobenius ht hsigma p k A hm] at h
 
 /-- **The twisted fixed points, read inside `GLₙ(A)`, are points of the same carrier over the
-Frobenius-fixed subring at exponent `k * m`.** For `p` prime, `0 < k`, `A` an algebraic closure of
-`ZMod p` and `q = p ^ k` that subring is the field of `q ^ m` elements, so this is the containment
-of a graph-twisted group of Lie type in the untwisted group over the degree-`m` extension of its
-field of definition. The containment is strict in general, so no reverse inequality is stated. -/
+Frobenius-fixed subring at exponent `k * m`.** For `p` prime, `0 < k`, `0 < m`, `A` an algebraic
+closure of `ZMod p` and `q = p ^ k` that subring is the field of `q ^ m` elements, so this is the
+containment of a graph-twisted group of Lie type in the untwisted group over the degree-`m`
+extension of its field of definition; at the permitted value `m = 0` the subring is all of `A` and
+the containment is vacuous. The containment is strict in general, so no reverse inequality is
+stated. -/
 theorem map_subtype_fixedSubgroup_geckTwistedFrobenius_le {m : ℕ} (hm : sigma ^ m = 1) :
     (fixedSubgroup (t.geckTwistedFrobenius ht hsigma p k A)).map (t.geckPoints ht A).subtype ≤
       (t.geckPoints ht ↥(frobeniusFixedSubring A p (k * m))).map
@@ -323,7 +328,7 @@ theorem map_subtype_fixedSubgroup_geckTwistedFrobenius_le {m : ℕ} (hm : sigma 
 Frobenius.** The converse fails: the fixed points of the composite are not in general fixed by
 either factor, which is what makes a graph-twisted group of Lie type larger than the untwisted
 group over its own field of definition. -/
-theorem fixedSubgroup_geckFrobenius_inf_fixedSubgroup_geckGraphAutPoints_le_geckTwistedFrobenius :
+theorem fixedSubgroup_inf_fixedSubgroup_le_fixedSubgroup_geckTwistedFrobenius :
     fixedSubgroup (t.geckFrobenius ht p k A) ⊓
         fixedSubgroup (t.geckGraphAutPoints ht hsigma A).toMonoidHom ≤
       fixedSubgroup (t.geckTwistedFrobenius ht hsigma p k A) := by
