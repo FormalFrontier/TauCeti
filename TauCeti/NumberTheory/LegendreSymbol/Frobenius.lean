@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.NumberTheory.LegendreSymbol.Basic
-public import TauCeti.RingTheory.Frobenius
+public import Mathlib.RingTheory.Frobenius
 public import Mathlib.RingTheory.Ideal.Int
 import TauCeti.RingTheory.Ideal.LiesOver
 
