@@ -65,19 +65,6 @@ attribute [local instance high] Algebra.toModule
 
 variable (r : ℕ)
 
-private theorem pointsMulEquiv_mapPoints {A B : CommAlgCat.{v} ℤ} (n : ℕ)
-    (φ : A ⟶ B)
-    (f : HopfAlgebra.points (R := ℤ)
-      (H := GeneralLinear.coordinateHopfAlgebra ℤ n) A) :
-    GeneralLinear.pointsMulEquiv n (HopfAlgebra.mapPoints φ f) =
-      Matrix.GeneralLinearGroup.map φ.hom.toRingHom
-        (GeneralLinear.pointsMulEquiv n f) := by
-  rw [HopfAlgebra.mapPoints_apply]
-  apply Matrix.GeneralLinearGroup.ext
-  intro i j
-  simp [GeneralLinear.pointsMulEquiv_apply,
-    GeneralLinear.pointToGeneralLinear_apply]
-
 /-- A base-ring-valued point satisfies the transported defining equations of the type `A_r`
 carrier exactly when its underlying matrix is a point of the original integral carrier. This
 holds over every commutative base ring. -/
@@ -118,10 +105,14 @@ theorem mem_baseChangeDefiningPointsSubgroup_iff_mem_points
           (GeneralLinear.coordinateHopfAlgebra k (r + 1)) J B q) := by
       dsimp only [qZ]
       rw [← CommHopfAlgCat.mapPoints_quotientPointsHom]
-      have hχ := pointsMulEquiv_mapPoints (r + 1) χ
+      have hχ := @GeneralLinear.pointsMulEquiv_mapValue ℤ _ (r + 1)
+        (↑BZ) (↑C) BZ.commRing C.commRing BZ.algebra C.algebra χ.hom
         (CommHopfAlgCat.quotientPointsHom (GeneralLinear.coordinateHopfAlgebra ℤ (r + 1)) I
           (CommAlgCat.restrictScalarsObj (algebraMap ℤ k) B) qZraw)
-      rw [hχ]
+      rw [@AlgHom.mapValue_apply ℤ
+        (GeneralLinear.coordinateHopfAlgebra ℤ (r + 1)) (↑BZ) _ _ _ _ BZ.algebra
+        (↑C) _ C.algebra χ.hom _] at hχ
+      rw [HopfAlgebra.mapPoints_apply, hχ]
       dsimp only [qZraw]
       rw [← hmatrix]
       apply Matrix.GeneralLinearGroup.ext
@@ -169,10 +160,14 @@ theorem mem_baseChangeDefiningPointsSubgroup_iff_mem_points
       rw [← hmatrix]
       dsimp only [qZraw]
       rw [← CommHopfAlgCat.mapPoints_quotientPointsHom]
-      have hχ := pointsMulEquiv_mapPoints (r + 1) χ
+      have hχ := @GeneralLinear.pointsMulEquiv_mapValue ℤ _ (r + 1)
+        (↑C) (↑BZ) C.commRing BZ.commRing C.algebra BZ.algebra χ.hom
         (CommHopfAlgCat.quotientPointsHom
           (GeneralLinear.coordinateHopfAlgebra ℤ (r + 1)) I (CommAlgCat.of ℤ k) qZ)
-      rw [hχ]
+      rw [@AlgHom.mapValue_apply ℤ
+        (GeneralLinear.coordinateHopfAlgebra ℤ (r + 1)) (↑C) _ _ _ _ C.algebra
+        (↑BZ) _ BZ.algebra χ.hom _] at hχ
+      rw [HopfAlgebra.mapPoints_apply, hχ]
       apply Matrix.GeneralLinearGroup.ext
       intro i j
       change (RingHom.id k) _ = _
