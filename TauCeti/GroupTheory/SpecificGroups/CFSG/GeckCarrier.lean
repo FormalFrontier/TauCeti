@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.GroupTheory.SpecificGroups.CFSG.Frobenius
-public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.GeckLattice.FixedPoints
+public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.GeckLattice.Frobenius
 
 /-!
 # The Geck carrier of a Lie-type index
@@ -32,10 +32,7 @@ Chevalley--Demazure group scheme of `TauCeti.DynkinType.simplyConnectedRootDatum
 of `TauCetiRoadmap/ReductiveGroups/README.md`. The names `TauCeti.ValidLieTypeIndex.AmbientGroup`
 and `TauCeti.ValidLieTypeIndex.simpleRootSubgroup` that L0 asks for are therefore left free, and no
 declaration below asserts that this carrier is reductive, that its root datum is the simply
-connected one, that its weight torus is maximal, or that its point group is finite. That point
-group is generally infinite; what
-`TauCeti.ValidLieTypeIndex.finite_fixedSubgroup_geckFrobenius` says is finite is the subgroup its
-Frobenius fixes.
+connected one, that its weight torus is maximal, or that its point group is finite.
 
 ## Main definitions
 
@@ -55,8 +52,6 @@ Frobenius fixes.
 * `TauCeti.ValidLieTypeIndex.mem_fixedSubgroup_geckFrobenius_iff`: its fixed points are the points
   whose matrix entries lie in the field of definition `𝔽_q` of
   `TauCeti.ValidLieTypeIndex.fixedField`.
-* `TauCeti.ValidLieTypeIndex.finite_fixedSubgroup_geckFrobenius`: they therefore form a finite
-  group, the field of definition being finite.
 
 ## References
 
@@ -194,19 +189,6 @@ theorem mem_fixedSubgroup_geckFrobenius_iff (g : GeckGroup d) :
     d.dynkinType.geckFrobenius_eq_self_iff d.dynkinType_valid _ _ _ g]
   simp only [mem_frobeniusFixedSubring, ValidLieTypeIndex.mem_fixedField,
     d.fieldOrder_eq_characteristic_pow]
-
-/-- **The Frobenius-fixed points of the Geck carrier of a valid Lie-type index form a finite
-group.** The field of definition `𝔽_q` is finite and the fixed points are the carrier's points over
-it, by `TauCeti.DynkinType.geckPointsMulEquivFixedSubgroupGeckFrobenius`.
-
-On the nine untwisted families this group is the `H_d` of milestone L3 of
-`TauCetiRoadmap/CFSGStatement/README.md`, whose Steinberg map is the Frobenius. It is deliberately
-a theorem rather than an instance: milestone I0 asks that no `Finite` instance be attached to a
-classification candidate, and a candidate is a quotient of a subgroup of this group. -/
-theorem finite_fixedSubgroup_geckFrobenius : Finite ↥(fixedSubgroup d.geckFrobenius) := by
-  rw [geckFrobenius_def]
-  exact d.dynkinType.finite_fixedSubgroup_geckFrobenius_of_charP d.dynkinType_valid
-    d.characteristic d.fieldExponent d.Closure d.fieldExponent_pos.ne'
 
 end
 
