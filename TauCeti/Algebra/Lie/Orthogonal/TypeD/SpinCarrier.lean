@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Lie.Orthogonal.TypeD.RootGenerators
-public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.Assembly
 public import TauCeti.RepresentationTheory.Spin.Polarization.SplitEven
 public import TauCeti.RepresentationTheory.Spin.Polarization.TypeD.KostantLattice
 public import
@@ -495,10 +494,17 @@ theorem weightTorus_conj_rootSubgroup (k : Fin n ⊕ Fin n) (A : Type) [CommRing
 The two identifications the equations below rewrite with,
 `TauCeti.TypeDStd.rootGeneratorWeight_inl_eq_root_simpleIndex` and its lowering counterpart, are
 proved beside the weight they name, in
-`TauCeti/Algebra/Lie/Orthogonal/TypeD/RootGenerators.lean`. -/
+`TauCeti/Algebra/Lie/Orthogonal/TypeD/RootGenerators.lean`.
+
+Each equation below is a `simp` lemma of raised priority. Its left-hand side is the `.inl i` or
+`.inr i` instance of the left-hand side of the numbered equation above, which is itself a `simp`
+lemma, so without the raised priority a conjugation at a literal raising or lowering index would
+normalize to the `TauCeti.TypeDStd.rootGeneratorWeight` form and lose the named root a consumer
+indexed by a Dynkin type is reading. -/
 
 /-- On matrix-valued points, conjugation by the spin weight torus rescales the `i`-th raising root
 subgroup through the `i`-th simple root of the pinned type-`Dₙ` datum. -/
+@[simp high]
 theorem weightTorusPoints_conj_rootSubgroupPoints_root_simpleIndex (i : Fin n) (A : Type v)
     [CommRing A] (s : Fin n → Aˣ) (u : Multiplicative A) :
     weightTorusPoints n hn A s * rootSubgroupPoints n hn (.inl i) A u *
@@ -515,6 +521,7 @@ theorem weightTorusPoints_conj_rootSubgroupPoints_root_simpleIndex (i : Fin n) (
 
 /-- On matrix-valued points, conjugation by the spin weight torus rescales the `i`-th lowering root
 subgroup through the negative of the `i`-th simple root of the pinned type-`Dₙ` datum. -/
+@[simp high]
 theorem weightTorusPoints_conj_rootSubgroupPoints_neg_root_simpleIndex (i : Fin n) (A : Type v)
     [CommRing A] (s : Fin n → Aˣ) (u : Multiplicative A) :
     weightTorusPoints n hn A s * rootSubgroupPoints n hn (.inr i) A u *
@@ -531,6 +538,7 @@ theorem weightTorusPoints_conj_rootSubgroupPoints_neg_root_simpleIndex (i : Fin 
 
 /-- Conjugation by the spin weight torus rescales the `i`-th raising root subgroup through the
 `i`-th simple root of the pinned type-`Dₙ` datum. -/
+@[simp high]
 theorem weightTorus_conj_rootSubgroup_root_simpleIndex (i : Fin n) (A : Type) [CommRing A]
     (s : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of ℤ)) ⟶
       (SplitTorus.groupScheme ℤ (Fin n)).X)
@@ -554,6 +562,7 @@ theorem weightTorus_conj_rootSubgroup_root_simpleIndex (i : Fin n) (A : Type) [C
 
 /-- Conjugation by the spin weight torus rescales the `i`-th lowering root subgroup through the
 negative of the `i`-th simple root of the pinned type-`Dₙ` datum. -/
+@[simp high]
 theorem weightTorus_conj_rootSubgroup_neg_root_simpleIndex (i : Fin n) (A : Type) [CommRing A]
     (s : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of ℤ)) ⟶
       (SplitTorus.groupScheme ℤ (Fin n)).X)
