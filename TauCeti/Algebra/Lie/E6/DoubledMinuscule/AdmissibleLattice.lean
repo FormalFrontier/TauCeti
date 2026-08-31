@@ -128,35 +128,27 @@ private theorem ad_pow_int_eq_rat
 /-- The rational doubled minuscule matrices satisfy the type-`E₆` Serre relations. -/
 theorem isSerreSystemQ :
     TauCeti.IsSerreSystem ℚ (CartanMatrix.E 6)ᵀ cartanGeneratorMatrixQ raisingMatrixQ
-      loweringMatrixQ where
-  lie_H_H i j := by
-    have h := congrArg castMatrixLieHom (isSerreSystem.lie_H_H i j)
-    simpa only [LieHom.map_lie, map_zero, cartanGeneratorMatrixQ] using h
-  lie_E_F_self i := by
-    have h := congrArg castMatrixLieHom (isSerreSystem.lie_E_F_self i)
-    simpa only [LieHom.map_lie, raisingMatrixQ, loweringMatrixQ,
-      cartanGeneratorMatrixQ] using h
-  lie_E_F_of_ne i j hij := by
-    have h := congrArg castMatrixLieHom (isSerreSystem.lie_E_F_of_ne i j hij)
-    simpa only [LieHom.map_lie, map_zero, raisingMatrixQ, loweringMatrixQ] using h
-  lie_H_E i j := by
-    have h := congrArg castMatrixLieHom (isSerreSystem.lie_H_E i j)
-    rw [LieHom.map_lie, map_zsmul] at h
-    simpa only [cartanGeneratorMatrixQ, raisingMatrixQ, Int.cast_smul_eq_zsmul] using h
-  lie_H_F i j := by
-    have h := congrArg castMatrixLieHom (isSerreSystem.lie_H_F i j)
-    rw [LieHom.map_lie, map_neg, map_zsmul] at h
-    simpa only [cartanGeneratorMatrixQ, loweringMatrixQ, Int.cast_smul_eq_zsmul] using h
-  ad_pow_lie_E_E i j := by
-    have h := congrArg castMatrixLieHom (isSerreSystem.ad_pow_lie_E_E i j)
-    rw [TauCeti.LieHom.map_ad_pow, map_zero] at h
+      loweringMatrixQ := by
+  have h := isSerreSystem.map castMatrixLieHom
+  have hH : castMatrixLieHom ∘ cartanGeneratorMatrix = cartanGeneratorMatrixQ := by
+    funext i
+    rfl
+  have hE : castMatrixLieHom ∘ raisingMatrix = raisingMatrixQ := by
+    funext i
+    rfl
+  have hF : castMatrixLieHom ∘ loweringMatrix = loweringMatrixQ := by
+    funext i
+    rfl
+  rw [hH, hE, hF] at h
+  refine { h with
+    ad_pow_lie_E_E := ?_
+    ad_pow_lie_F_F := ?_ }
+  · intro i j
     rw [← ad_pow_int_eq_rat]
-    simpa only [LieHom.map_lie, raisingMatrixQ] using h
-  ad_pow_lie_F_F i j := by
-    have h := congrArg castMatrixLieHom (isSerreSystem.ad_pow_lie_F_F i j)
-    rw [TauCeti.LieHom.map_ad_pow, map_zero] at h
+    exact h.ad_pow_lie_E_E i j
+  · intro i j
     rw [← ad_pow_int_eq_rat]
-    simpa only [LieHom.map_lie, loweringMatrixQ] using h
+    exact h.ad_pow_lie_F_F i j
 
 /-- The rational `54`-dimensional doubled minuscule representation. -/
 noncomputable def rationalSerreRepresentation :
