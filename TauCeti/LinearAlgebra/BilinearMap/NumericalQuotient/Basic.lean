@@ -145,13 +145,11 @@ def rightNumericalQuotientMk : M →ₗ[R] RightNumericalQuotient b :=
   (rightRadical b).mkQ
 
 /-- The left numerical quotient map sends an element to its quotient class. -/
-@[simp]
 theorem leftNumericalQuotientMk_apply (x : L) :
     leftNumericalQuotientMk b x = Submodule.Quotient.mk x :=
   Submodule.mkQ_apply (leftRadical b) x
 
 /-- The right numerical quotient map sends an element to its quotient class. -/
-@[simp]
 theorem rightNumericalQuotientMk_apply (y : M) :
     rightNumericalQuotientMk b y = Submodule.Quotient.mk y :=
   Submodule.mkQ_apply (rightRadical b) y
