@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Analysis.CompletelyMonotone.Bernstein.LevyKhintchine.Representation
-public import TauCeti.Analysis.CompletelyMonotone.Laplace.Representation
+import TauCeti.Analysis.CompletelyMonotone.Laplace.Representation
 import TauCeti.Analysis.CompletelyMonotone.Bernstein.OpenHalfLine
 
 /-!
