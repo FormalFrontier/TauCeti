@@ -10,6 +10,7 @@ public import TauCeti.Analysis.Calculus.Morse.GradientFlow
 public import TauCeti.Topology.OmegaLimit
 -- Private: the mean value inequality, Heine--Cantor, monotone convergence and the comparison of
 -- interval integrals are used only inside proofs; no declaration below exposes their APIs.
+import TauCeti.Analysis.Calculus.Gradient
 import Mathlib.Analysis.Calculus.MeanValue
 import Mathlib.Analysis.ODE.Transform
 import Mathlib.Topology.Order.MonotoneConvergence
@@ -301,12 +302,9 @@ theorem exists_tendsto_atTop_of_hasNondegenerateCriticalPointsOn
       fun y hy ↦ ⟨hy.1, (hzero y).mp hy.2⟩
 
 /-- **A negative gradient trajectory confined to a compact set converges backwards to a critical
-point**, provided the critical locus in that set is finite.
-
-This is the time-reversed form of `exists_tendsto_atTop`.  The reversed curve solves the negative
-gradient equation for `-f`, so the critical-point and regularity hypotheses are transported rather
-than reproved.  Together with the forward theorem, this supplies both endpoint limits for a
-trajectory that remains in a compact region, as required when compactifying Morse trajectories.
+point**, provided the critical locus in that set is finite.  Under these compactness, regularity,
+and finiteness hypotheses, this is the backward-time counterpart of `exists_tendsto_atTop` and
+gives a critical endpoint as `t` tends to `-∞`.
 -/
 theorem exists_tendsto_atBot
     (hγ : IsIntegralCurveOn γ (fun _ x ↦ -∇ f x) (Iic 0)) (hK : IsCompact K)
@@ -315,8 +313,7 @@ theorem exists_tendsto_atBot
     ∃ p ∈ K, ∇ f p = 0 ∧ Tendsto γ atBot (𝓝 p) := by
   have hgrad_neg : ∀ y : E, ∇ (-f) y = -∇ f y := by
     intro y
-    apply (toDual ℝ E).injective
-    simp only [toDual_gradient, fderiv_neg, map_neg]
+    simpa using (gradient_const_smul (𝕜 := ℝ) (F := E) (f := f) (x := y) (-1))
   have hγ_rev := hγ.comp_mul (-1)
   have hdomain : {t : ℝ | t * (-1) ∈ Iic (0 : ℝ)} = Ici 0 := by
     ext t
