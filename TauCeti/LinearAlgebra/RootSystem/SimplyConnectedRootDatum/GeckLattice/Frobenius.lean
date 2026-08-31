@@ -51,8 +51,8 @@ subgroup appearing in it is finite, is simple, or is a named finite group.
 * `TauCeti.DynkinType.geckFrobenius_eq_self_iff`: a carrier point is fixed exactly when all of its
   matrix entries are fixed.
 * `TauCeti.DynkinType.geckFrobenius_geckRootSubgroupPoints` and
-  `TauCeti.DynkinType.geckFrobenius_geckTorusMatrix`: the equations on the pinned root subgroups
-  and on the pinned weight torus.
+  `TauCeti.DynkinType.geckFrobenius_geckWeightTorusPoints`: the equations on the pinned root
+  subgroups and on the pinned weight torus.
 * `TauCeti.DynkinType.map_subtype_fixedSubgroup_geckFrobenius_eq`: the Frobenius-fixed points of
   the carrier are its points over the Frobenius-fixed subring.
 
@@ -154,18 +154,15 @@ theorem geckFrobenius_geckRootSubgroupPoints (i : Fin t.rank ⊕ Fin t.rank)
 
 /-- **The Frobenius raises a point of the pinned Geck weight torus to its `p ^ k`-th power.** -/
 @[simp]
-theorem geckFrobenius_geckTorusMatrix (s : Fin t.rank → Aˣ) :
-    t.geckFrobenius ht p k A
-        ⟨diagGL fun i => torusCharacter s (t.geckWeightFin ht i), by
-          simpa only [TauCeti.UniversalEnvelopingAlgebra.kostantTorusMatrix_apply] using
-            t.geckTorusMatrix_mem_geckPoints ht A s⟩ =
-      ⟨t.geckTorusMatrix ht (s ^ p ^ k), t.geckTorusMatrix_mem_geckPoints ht A _⟩ := by
+theorem geckFrobenius_geckWeightTorusPoints (s : Fin t.rank → Aˣ) :
+    t.geckFrobenius ht p k A (t.geckWeightTorusPoints ht A s) =
+      t.geckWeightTorusPoints ht A (s ^ p ^ k) := by
   have hs : (fun j => Units.map (iterateFrobenius A p k : A →* A) (s j)) = s ^ p ^ k := by
     funext j
     exact Units.ext (by
       rw [Units.coe_map, MonoidHom.coe_coe, iterateFrobenius_def, Pi.pow_apply,
         Units.val_pow_eq_pow_val])
-  rw [geckFrobenius, t.geckPointsMap_geckTorusMatrix ht (iterateFrobenius A p k) s, hs]
+  rw [geckFrobenius, t.geckPointsMap_geckWeightTorusPoints ht (iterateFrobenius A p k) s, hs]
 
 /-- **The Frobenius-fixed points of the pinned Geck carrier are its points over the
 Frobenius-fixed subring.** For `p` prime, `0 < k`, `A` an algebraic closure of `ZMod p` and
