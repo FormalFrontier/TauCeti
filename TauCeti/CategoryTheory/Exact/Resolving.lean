@@ -88,7 +88,7 @@ namespace IsResolving
 variable {E P}
 
 /-- A kernel in a conflation between `P`-objects has a finite `P`-resolution. -/
-def finiteResolution_kernel_of_conflation [hP : E.IsResolving P]
+def finiteResolutionKernelOfConflation [hP : E.IsResolving P]
     {S : ShortComplex C} (hS : E.Conflation S) (h₂ : P S.X₂) (h₃ : P S.X₃) :
     E.FiniteResolution P S.X₁ :=
   .base (hP.isClosedUnderKernelsOfDeflations.prop_X₁ hS h₂ h₃)
