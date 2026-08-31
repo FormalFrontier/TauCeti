@@ -214,12 +214,14 @@ private theorem not_integrable_inv_pow_gammaMeasure (ha : 0 < a) (hr : 0 < r) (n
 
 /-- The `n`th inverse power is integrable under a Gamma law exactly when `n` is below the
 shape. -/
+@[simp]
 theorem integrable_inv_pow_gammaMeasure_iff (ha : 0 < a) (hr : 0 < r) (n : ℕ) :
     Integrable (fun x : ℝ ↦ (x⁻¹) ^ n) (gammaMeasure a r) ↔ (n : ℝ) < a :=
   ⟨fun h ↦ lt_of_not_ge fun hn ↦ not_integrable_inv_pow_gammaMeasure ha hr n hn h,
     integrable_inv_pow_gammaMeasure ha hr n⟩
 
 /-- The `n`th inverse moment of a Gamma law, when `n` is below the shape. -/
+@[simp]
 theorem integral_inv_pow_gammaMeasure (ha : 0 < a) (hr : 0 < r) (n : ℕ)
     (hn : (n : ℝ) < a) :
     ∫ x, (x⁻¹) ^ n ∂gammaMeasure a r = r ^ n * Real.Gamma (a - n) / Real.Gamma a := by
