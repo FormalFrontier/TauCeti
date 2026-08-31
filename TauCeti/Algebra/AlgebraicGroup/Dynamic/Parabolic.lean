@@ -7,7 +7,8 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.Hopf.Map
 public import TauCeti.Algebra.AlgebraicGroup.MultiplicativeGroup.Basic
-public import TauCeti.GroupTheory.Commutator
+
+import Mathlib.Algebra.Group.End
 
 /-!
 # The dynamic parabolic, unipotent and Levi subgroups of a cocharacter

@@ -138,10 +138,6 @@ theorem aemeasurable_prodMk_self (hT : AEMeasurable T μ) :
     AEMeasurable (fun x ↦ (x, T x)) μ :=
   aemeasurable_id.prodMk hT
 
-/-- The graph map `x ↦ (x, T x)` is measurable as soon as `T` is. -/
-private theorem measurable_prodMk_self (hT : Measurable T) : Measurable fun x ↦ (x, T x) :=
-  measurable_id.prodMk hT
-
 /-- The graph plan of a measurable set is the mass of the set of points whose graph point lies
 in it. -/
 theorem graphPlan_apply (hT : AEMeasurable T μ) {s : Set (X × Y)} (hs : MeasurableSet s) :
@@ -288,7 +284,10 @@ theorem graphPlan_map {f : Z → X} {μ : Measure Z} (hf : AEMeasurable f μ)
 theorem map_swap_graphPlan_symm (e : X ≃ᵐ Y) (μ : Measure X) :
     (graphPlan e μ).map Prod.swap = graphPlan e.symm (μ.map e) := by
   rw [map_swap_graphPlan e.measurable.aemeasurable, graphPlan_def,
-    Measure.map_map (measurable_prodMk_self e.symm.measurable) e.measurable]
+    Measure.map_map
+      (show Measurable (fun x : Y ↦ (x, e.symm x)) from
+        measurable_id.prodMk e.symm.measurable)
+      e.measurable]
   simp [Function.comp_def]
 
 end Functoriality

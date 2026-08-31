@@ -7,7 +7,8 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.Product
 public import TauCeti.Algebra.Coalgebra.Convolution
-public import TauCeti.GroupTheory.Commutator
+
+import Mathlib.Algebra.Group.End
 
 /-!
 # Conjugation in Hopf-algebra coordinates

@@ -31,8 +31,8 @@ The generic representation `pathLaw_eq_bind_infinitePi_of_mixedIIDWith` needs on
 `deFinettiMeasure μ X` additionally needs a probability base law `[IsProbabilityMeasure μ]` and a
 standard-Borel nonempty state space `[StandardBorelSpace α] [Nonempty α]`, because the canonical
 directing measure is built from a conditional distribution. It takes no measurability or tail-space
-hypothesis: `ProbabilityMeasure.map` is defined for every function. Tail measurability enters only
-the later identification lemmas which prove that this pushforward is the mixing law.
+hypothesis: `ProbabilityMeasure.map` is defined for every function. The later identification uses a
+`MixedIIDWith` witness, whose definition includes coordinatewise a.e. measurability.
 
 No theorem here assumes `[StandardBorelSpace Ω]`, and the specialization below takes the witness as
 an explicit hypothesis rather than deriving it. That is an import boundary, not a mathematical
@@ -78,8 +78,9 @@ Bundling records at the type level that the mixing law is a probability measure,
 downstream weak-topology and convergence APIs, which are stated for `ProbabilityMeasure`; it coerces
 back to `Measure` for the `bind` representation. No measurability is required at construction
 time: `Measure.map` of a non-measurable function is a Dirac mass, so the pushforward of a
-probability measure is always a probability measure. The identifications of this measure with
-the mixing law do use that the directing map is tail-measurable, which it is by construction. -/
+probability measure is always a probability measure. The identification of this measure with the
+mixing law instead uses a `MixedIIDWith` witness, which includes coordinatewise a.e.
+measurability. -/
 def deFinettiMeasure (μ : Measure Ω) [IsProbabilityMeasure μ] (X : ℕ → Ω → α) :
     ProbabilityMeasure (ProbabilityMeasure α) :=
   ProbabilityMeasure.map (⟨μ, inferInstance⟩ : ProbabilityMeasure Ω)
@@ -90,10 +91,9 @@ def deFinettiMeasure (μ : Measure Ω) [IsProbabilityMeasure μ] (X : ℕ → Ω
 theorem deFinettiMeasure_toMeasure {μ : Measure Ω} [IsProbabilityMeasure μ] {X : ℕ → Ω → α} :
     (deFinettiMeasure μ X : Measure (ProbabilityMeasure α))
       = μ.map (directingProbabilityMeasure μ X) := by
-  let P : ProbabilityMeasure Ω := ⟨μ, inferInstance⟩
-  change (P.map (directingProbabilityMeasure μ X)).toMeasure = _
-  rw [ProbabilityMeasure.toMeasure_map]
-  simp only [P, ProbabilityMeasure.coe_mk]
+  simpa only [deFinettiMeasure, ProbabilityMeasure.coe_mk] using
+    ProbabilityMeasure.toMeasure_map
+      (⟨μ, inferInstance⟩ : ProbabilityMeasure Ω)
 
 /-- **The mixture representation against the de Finetti measure.** When the canonical directing
 measure is a mixing representative for `X`, the path law of `X` is the `deFinettiMeasure`-mixture of
