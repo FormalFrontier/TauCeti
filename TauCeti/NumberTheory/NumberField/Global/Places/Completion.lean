@@ -20,9 +20,13 @@ infinite-place map is the norm on `w.Completion` raised to `w.mult`.  The latter
 real places and two at complex places, so its restriction to the number field agrees with the
 normalization used by `NumberField.prod_abs_eq_one`.  These completion-side maps are the local
 factors used by the global idele norm; the single all-places carrier is developed separately.
+
+## References
+
+* [J. Neukirch, *Algebraic Number Theory*][Neukirch1992], Chapter II.
 -/
 
-@[expose] public section
+public section
 noncomputable section
 
 namespace TauCeti.GlobalNumberFields
@@ -38,10 +42,11 @@ section Infinite
 def infiniteCompletionNormalizedAbsValue (w : InfinitePlace K) : w.Completion →*₀ ℝ :=
   (powMonoidWithZeroHom (InfinitePlace.mult_ne_zero (w := w))).comp normHom
 
+/-- Evaluating the normalized absolute value at `x` gives `‖x‖ ^ w.mult`. -/
 @[simp]
 theorem infiniteCompletionNormalizedAbsValue_apply (w : InfinitePlace K) (x : w.Completion) :
     infiniteCompletionNormalizedAbsValue w x = ‖x‖ ^ w.mult :=
-  rfl
+  (rfl)
 
 private lemma norm_algebraMap_infinitePlace_completion (w : InfinitePlace K) (x : K) :
     ‖algebraMap K w.Completion x‖ = w x := by
@@ -51,6 +56,7 @@ private lemma norm_algebraMap_infinitePlace_completion (w : InfinitePlace K) (x 
 
 /-- On the dense copy of `K`, the infinite completion value is the normalized
 infinite-place value. -/
+@[simp]
 theorem infiniteCompletionNormalizedAbsValue_algebraMap (w : InfinitePlace K) (x : K) :
     infiniteCompletionNormalizedAbsValue w (algebraMap K w.Completion x) = w x ^ w.mult := by
   rw [infiniteCompletionNormalizedAbsValue_apply, norm_algebraMap_infinitePlace_completion]
@@ -80,13 +86,14 @@ theorem infiniteCompletionNormalizedAbsValue_of_isComplex
   rw [infiniteCompletionNormalizedAbsValue_apply, hw.mult_eq_two]
 
 /-- The infinite completion value is continuous. -/
-theorem infiniteCompletionNormalizedAbsValue_continuous (w : InfinitePlace K) :
+theorem continuous_infiniteCompletionNormalizedAbsValue (w : InfinitePlace K) :
     Continuous (infiniteCompletionNormalizedAbsValue w : w.Completion → ℝ) := by
-  -- The exponent is a fixed natural number at each place.
-  change Continuous (fun x : w.Completion => ‖x‖ ^ w.mult)
+  rw [show (infiniteCompletionNormalizedAbsValue w : w.Completion → ℝ) =
+      fun x => ‖x‖ ^ w.mult from funext fun x => infiniteCompletionNormalizedAbsValue_apply w x]
   exact continuous_norm.pow _
 
 /-- The infinite completion value vanishes exactly at zero. -/
+@[simp]
 theorem infiniteCompletionNormalizedAbsValue_eq_zero_iff
     (w : InfinitePlace K) (x : w.Completion) :
     infiniteCompletionNormalizedAbsValue w x = 0 ↔ x = 0 := by
