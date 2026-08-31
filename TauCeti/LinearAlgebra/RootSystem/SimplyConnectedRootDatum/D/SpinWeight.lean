@@ -314,7 +314,6 @@ private theorem typeDSpinWeight_typeDSpinGraphPerm_fork {n : ℕ} (hn : 4 ≤ n)
 /-- **The final-sign toggle realizes the type-`D` graph automorphism on spin weights.** Applying
 the fork-node permutation to the fundamental-weight coordinates of a spin weight gives the weight
 indexed by the sign set with its final membership toggled. -/
-@[simp]
 theorem typeDSpinWeight_typeDSpinGraphPerm_apply {n : ℕ} (hn : 4 ≤ n)
     (s : Finset (Fin n)) (i : Fin n) :
     typeDSpinWeight (typeDSpinGraphPerm n (by omega) s) i =
