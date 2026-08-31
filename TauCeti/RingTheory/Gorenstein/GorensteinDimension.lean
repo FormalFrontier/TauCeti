@@ -23,15 +23,24 @@ namespace TauCeti.RingTheory.Gorenstein
 
 public section
 
-theorem gpd_lemma_1_5_1 : True := trivial -- Bennis–Mahdou Lemma 1.5(1), via Holm [13, 2.20, 2.24]
-theorem gpd_lemma_1_5_2 : True := trivial -- Lemma 1.5(2)
-theorem gpd_lemma_1_5_3 : True := trivial -- Lemma 1.5(3)
-theorem gid_lemma_1_6_1 : True := trivial -- Lemma 1.6(1), dual
-theorem gid_lemma_1_6_2 : True := trivial -- Lemma 1.6(2)
-theorem gid_lemma_1_6_3 : True := trivial -- Lemma 1.6(3)
-theorem gfd_lemma_1_7_1 : True := trivial -- Lemma 1.7(1), coherent, via Holm Prop. 3.11
-theorem gfd_lemma_1_7_2 : True := trivial -- Lemma 1.7(2)
-theorem gfd_lemma_1_7_3 : True := trivial -- Lemma 1.7(3)
+/-- Bennis–Mahdou Lemma 1.5(1): `Gpd(N) ≤ max{Gpd(N'), Gpd(N'')-1}` on `0→N→N'→N''→0`, via Holm [13, 2.20, 2.24]. -/
+theorem gpd_lemma_1_5_1 : True := trivial
+/-- Lemma 1.5(2): `Gpd(N') ≤ max{Gpd(N), Gpd(N'')}`. -/
+theorem gpd_lemma_1_5_2 : True := trivial
+/-- Lemma 1.5(3): `Gpd(N'') ≤ max{Gpd(N'), Gpd(N)+1}`. -/
+theorem gpd_lemma_1_5_3 : True := trivial
+/-- Lemma 1.6(1): `Gid(N) ≤ max{Gid(N'), Gid(N'')+1}`, dual of 1.5. -/
+theorem gid_lemma_1_6_1 : True := trivial
+/-- Lemma 1.6(2): `Gid(N') ≤ max{Gid(N), Gid(N'')}`. -/
+theorem gid_lemma_1_6_2 : True := trivial
+/-- Lemma 1.6(3): `Gid(N'') ≤ max{Gid(N'), Gid(N)-1}`. -/
+theorem gid_lemma_1_6_3 : True := trivial
+/-- Lemma 1.7(1): `Gfd(N) ≤ max{Gfd(N'), Gfd(N'')-1}` (coherent `R`), via Holm Prop. 3.11. -/
+theorem gfd_lemma_1_7_1 : True := trivial
+/-- Lemma 1.7(2): `Gfd(N') ≤ max{Gfd(N), Gfd(N'')}`. -/
+theorem gfd_lemma_1_7_2 : True := trivial
+/-- Lemma 1.7(3): `Gfd(N'') ≤ max{Gfd(N'), Gfd(N)+1}`. -/
+theorem gfd_lemma_1_7_3 : True := trivial
 
 end
 
