@@ -56,20 +56,15 @@ instance simple_ofLinearCharacter (χ : G →* kˣ) : Simple (FDRep.of (ofLinear
   rw [FDRep.simple_iff_isIrreducible]
   exact isIrreducible_ofLinearCharacter χ
 
-/-- `Representation.char_ofLinearCharacter` read on the object of `FDRep k G`, which is where the
-isomorphism invariance of the character lives. The two characters agree definitionally, `FDRep.of`
-changing neither the carrier nor the action. -/
-private theorem character_fdRepOf_ofLinearCharacter (χ : G →* kˣ) (g : G) :
-    (FDRep.of (ofLinearCharacter χ)).character g = (χ g : k) :=
-  char_ofLinearCharacter χ g
-
 /-- **Isomorphic linear characters are equal.** An isomorphism of the two one-dimensional
-representations identifies their characters, and the character of `ofLinearCharacter χ` is `χ`. -/
+representations identifies their characters, and the character of `ofLinearCharacter χ` is `χ`.
+The characters of `ofLinearCharacter χ` and of `FDRep.of (ofLinearCharacter χ)` agree
+definitionally, `FDRep.of` changing neither the carrier nor the action. -/
 theorem eq_of_nonempty_iso_ofLinearCharacter {χ φ : G →* kˣ}
     (h : Nonempty (FDRep.of (ofLinearCharacter χ) ≅ FDRep.of (ofLinearCharacter φ))) : χ = φ := by
   obtain ⟨e⟩ := h
-  have hchar := FDRep.char_iso e
   ext g
-  rw [← character_fdRepOf_ofLinearCharacter χ g, ← character_fdRepOf_ofLinearCharacter φ g, hchar]
+  rw [← char_ofLinearCharacter χ g, ← char_ofLinearCharacter φ g]
+  exact congrFun (FDRep.char_iso e) g
 
 end Representation

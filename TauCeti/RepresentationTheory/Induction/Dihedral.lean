@@ -55,7 +55,7 @@ of `D₄`.
 
 `TauCeti.dihedralRotationChar` reads the exponent through `ZMod.val`, so that its values are
 natural-number powers of `ζ`; multiplicativity is then the statement that the exponent may be
-reduced modulo `n`, which is `TauCeti.pow_mod_of_pow_eq_one`. Taking `ζ` in an arbitrary monoid
+reduced modulo `n`, which is Mathlib's `pow_eq_pow_of_modEq`. Taking `ζ` in an arbitrary monoid
 costs nothing and keeps the construction independent of the coefficient field.
 
 The coefficient field of the irreducibility criterion is constrained to `Type` rather than `Type*`:
@@ -83,13 +83,6 @@ section RotationChar
 
 variable {M : Type*} [Monoid M] {n : ℕ} {ζ : M}
 
-/-- A power of a root of unity depends only on the exponent modulo the exponent that annihilates
-it. Mathlib's `pow_mod_orderOf` is the case `n = orderOf ζ`; here `n` is any exponent with
-`ζ ^ n = 1`, which is what the `ZMod n` indexing of the dihedral rotations hands over. -/
-theorem pow_mod_of_pow_eq_one (hζ : ζ ^ n = 1) (m : ℕ) : ζ ^ (m % n) = ζ ^ m := by
-  conv_rhs => rw [← Nat.div_add_mod m n]
-  rw [pow_add, pow_mul, hζ, one_pow, one_mul]
-
 variable [NeZero n]
 
 /-- **The linear character of the rotation subgroup attached to an `n`-th root of unity** `ζ`:
@@ -102,7 +95,8 @@ def dihedralRotationChar (hζ : ζ ^ n = 1) : dihedralRotations n →* M where
     rw [DihedralGroup.one_def, dihedralRotIdx_r, ZMod.val_zero, pow_zero]
   map_mul' x y := by
     change ζ ^ (dihedralRotIdx ((x : DihedralGroup n) * (y : DihedralGroup n))).val = _
-    rw [dihedralRotIdx_mul x.2 y.2, ZMod.val_add, pow_mod_of_pow_eq_one hζ, pow_add]
+    rw [dihedralRotIdx_mul x.2 y.2, ZMod.val_add, pow_eq_pow_of_modEq (Nat.mod_modEq _ n) hζ,
+      pow_add]
 
 @[simp]
 theorem dihedralRotationChar_apply (hζ : ζ ^ n = 1) (i : ZMod n) :
