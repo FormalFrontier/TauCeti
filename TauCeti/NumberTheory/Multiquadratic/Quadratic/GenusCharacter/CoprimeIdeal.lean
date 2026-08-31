@@ -32,7 +32,6 @@ vendored here.
   `ℤˣ`, whose values are the units `1` and `-1`.
 * `genusCharFunCoprimeIdealHom_apply`: the underlying integer value is the genus character of the
   ideal's absolute norm.
-* `genusCharFunCoprimeIdealHom_apply_eq_one_or_eq_neg_one`: the character has no other values.
 -/
 
 public section
@@ -105,14 +104,5 @@ ideal's absolute norm. -/
       genusCharFun t (Ideal.absNorm (I : Ideal (𝓞 K)) : ℤ) := by
   change genusCharFun t (Ideal.absNorm (I : Ideal (𝓞 K)) : ℤ) = _
   rfl
-
-/-- The coprime-ideal genus character has value `1` or `-1`. -/
-theorem genusCharFunCoprimeIdealHom_apply_eq_one_or_eq_neg_one {t : Finset ℤ}
-    (ht : ∀ P ∈ t, IsPrimeDiscriminant P)
-    (I : genusCharFunCoprimeIdealSubmonoid (K := K) t) :
-    genusCharFunCoprimeIdealHom ht I = 1 ∨ genusCharFunCoprimeIdealHom ht I = -1 := by
-  rw [← Units.val_inj, ← Units.val_inj, Units.val_neg, Units.val_one,
-    genusCharFunCoprimeIdealHom_apply]
-  exact genusCharFun_eq_one_or_eq_neg_one ht I.property
 
 end TauCeti.Multiquadratic
