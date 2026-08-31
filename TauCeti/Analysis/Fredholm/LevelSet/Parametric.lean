@@ -174,10 +174,10 @@ the local parameter map. -/
 theorem isFredholm_fderiv_levelSetParameterMap
     (hf : HasStrictFDerivAt f (D₁.coprod D₂) (x, l))
     (hD : Surjective (D₁.coprod D₂))
-    (hker : (D₁.coprod D₂).ker.ClosedComplemented)
     (hxl : f (x, l) = c) (hD₁ : ContinuousLinearMap.IsFredholm D₁) :
-    ContinuousLinearMap.IsFredholm (fderiv K (levelSetParameterMap hf hD hker hxl) 0) := by
-  rw [fderiv_levelSetParameterMap hf hD hker hxl]
+    ContinuousLinearMap.IsFredholm
+      (fderiv K (levelSetParameterMap hf hD (hD₁.closedComplemented_ker_coprod hD) hxl) 0) := by
+  rw [fderiv_levelSetParameterMap]
   exact isFredholm_parameterProj D₁ D₂ hD₁
 
 end RCLike
@@ -209,23 +209,25 @@ theorem exists_mem_nhds_isClosed_isNowhereDense_image_criticalPoints_levelSetPar
     (hcont : ContDiffAt ℝ n f (x, l))
     (hD₁ : ContinuousLinearMap.IsFredholm D₁)
     (hD : Surjective (D₁.coprod D₂))
-    (hker : (D₁.coprod D₂).ker.ClosedComplemented)
     (hxl : f (x, l) = c)
     (hn : ((finrank ℝ D₁.ker * finrank ℝ D₁.ker + 1 : ℕ) : ℕ∞ω) ≤ n) :
     ∃ N ∈ 𝓝 (0 : (D₁.coprod D₂).ker),
-      IsClosed (levelSetParameterMap hf hD hker hxl ''
-        (N ∩ {k | ¬ Surjective (fderiv ℝ (levelSetParameterMap hf hD hker hxl) k)})) ∧
-      IsNowhereDense (levelSetParameterMap hf hD hker hxl ''
-        (N ∩ {k | ¬ Surjective (fderiv ℝ (levelSetParameterMap hf hD hker hxl) k)})) := by
-  let g := levelSetParameterMap hf hD hker hxl
-  have hg : ContDiffAt ℝ n g 0 := contDiffAt_levelSetParameterMap hf hcont hD hker hxl
+      IsClosed (levelSetParameterMap hf hD (hD₁.closedComplemented_ker_coprod hD) hxl ''
+        (N ∩ {k | ¬ Surjective (fderiv ℝ
+          (levelSetParameterMap hf hD (hD₁.closedComplemented_ker_coprod hD) hxl) k)})) ∧
+      IsNowhereDense (levelSetParameterMap hf hD (hD₁.closedComplemented_ker_coprod hD) hxl ''
+        (N ∩ {k | ¬ Surjective (fderiv ℝ
+          (levelSetParameterMap hf hD (hD₁.closedComplemented_ker_coprod hD) hxl) k)})) := by
+  let g := levelSetParameterMap hf hD (hD₁.closedComplemented_ker_coprod hD) hxl
+  have hg : ContDiffAt ℝ n g 0 :=
+    contDiffAt_levelSetParameterMap hf hcont hD (hD₁.closedComplemented_ker_coprod hD) hxl
   have hg' : fderiv ℝ g 0 = parameterProj D₁ D₂ :=
-    fderiv_levelSetParameterMap hf hD hker hxl
+    fderiv_levelSetParameterMap hf hD (hD₁.closedComplemented_ker_coprod hD) hxl
   have hn' :
       ((finrank ℝ (parameterProj D₁ D₂).ker * finrank ℝ (parameterProj D₁ D₂).ker + 1 : ℕ) :
         ℕ∞ω) ≤ n := by
     simpa only [finrank_ker_parameterProj] using hn
-  have hFred := isFredholm_fderiv_levelSetParameterMap hf hD hker hxl hD₁
+  have hFred := isFredholm_fderiv_levelSetParameterMap hf hD hxl hD₁
   have hn'' :
       ((finrank ℝ (fderiv ℝ g 0).ker * finrank ℝ (fderiv ℝ g 0).ker + 1 : ℕ) : ℕ∞ω) ≤ n := by
     rw [hg']
