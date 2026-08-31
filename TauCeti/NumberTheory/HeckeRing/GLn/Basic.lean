@@ -176,10 +176,10 @@ re-proved at each of `Γ₀(N)`, `Γ₁(N)`, `Γ(N)`. -/
 lemma commensurable_map_SLnZ (H : Subgroup (SpecialLinearGroup (Fin n) ℤ)) [H.FiniteIndex] :
     Subgroup.Commensurable (H.map (mapGL ℚ)) (SLnZ n) := by
   constructor
-  · rw [SLnZ, MonoidHom.range_eq_map,
+  · rw [Subgroup.isFiniteRelIndex_iff_relIndex_ne_zero, SLnZ, MonoidHom.range_eq_map,
       Subgroup.relIndex_map_map_of_injective _ _ mapGL_injective, Subgroup.relIndex_top_right]
     exact Subgroup.FiniteIndex.index_ne_zero
-  · rw [SLnZ, MonoidHom.range_eq_map,
+  · rw [Subgroup.isFiniteRelIndex_iff_relIndex_ne_zero, SLnZ, MonoidHom.range_eq_map,
       Subgroup.relIndex_map_map_of_injective _ _ mapGL_injective, Subgroup.relIndex_top_left]
     exact one_ne_zero
 
@@ -549,6 +549,10 @@ lemma mem_commensurator_of_hasIntEntries {g : GL (Fin n) ℚ} (hg : HasIntEntrie
   obtain ⟨A, hA⟩ := hg
   rw [commensurator_mem_iff]
   set H := SLnZ n
+  change (ConjAct.toConjAct g • H).IsFiniteRelIndex H ∧
+    H.IsFiniteRelIndex (ConjAct.toConjAct g • H)
+  rw [Subgroup.isFiniteRelIndex_iff_relIndex_ne_zero,
+    Subgroup.isFiniteRelIndex_iff_relIndex_ne_zero]
   have hAdet_ne : A.det ≠ 0 := det_ne_zero_of_val_eq n g hA
   have hnatAbs_ne : NeZero A.det.natAbs := ⟨Int.natAbs_ne_zero.mpr hAdet_ne⟩
   set K := (SpecialLinearGroup.map (Int.castRingHom (ZMod A.det.natAbs))).ker.map
