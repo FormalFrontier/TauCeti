@@ -19,10 +19,10 @@
 # `lake exe cache get`.
 #
 # Keep the ancestor limit. The search stops only when a lookup succeeds, so a hit reads only the
-# few ancestors between the checkout and main. After a lean-toolchain bump no lookup succeeds.
-# The cache keys each revision map by toolchain, and no ancestor has a map under the new
-# toolchain. The value 0 removes the limit, so the search then reads the full history and finds
-# nothing.
+# few ancestors between the checkout and main. The cache keys each revision map by toolchain, so
+# no lookup succeeds when no published ancestor uses the toolchain of the checkout. A pull
+# request that bumps lean-toolchain has this shape. The value 0 removes the limit, so the search
+# then reads the full history and finds nothing.
 #
 # A TOTAL miss is non-fatal: the build just recompiles from scratch, as when the cache is off.
 # A PARTIAL fetch is non-fatal too, but must not reach the offline build. Since v4.34.0-rc1,

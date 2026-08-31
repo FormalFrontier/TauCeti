@@ -609,9 +609,10 @@ jobs:
           # a lookup succeeds. On a hit the first ancestor that main published succeeds. The
           # search then reads only the few ancestors between this head and main.
           #
-          # After a lean-toolchain bump no lookup succeeds. The cache keys each revision map by
-          # toolchain, and no ancestor has a map under the new toolchain. Without this limit, the
-          # search then reads the full history and finds nothing.
+          # The cache keys each revision map by toolchain. No lookup succeeds when no published
+          # ancestor uses the toolchain of this head. A pull request that bumps lean-toolchain
+          # has this shape, because main published every ancestor of it under the old toolchain.
+          # Without this limit, the search then reads the full history and finds nothing.
           LAKE_CACHE_MAX_REVS: "100"
         run: bash gate/scripts/lake-cache-get.sh pr
 
