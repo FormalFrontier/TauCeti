@@ -120,6 +120,20 @@ private theorem integral_abs_nonneg (K : SymmKernel Ω μ) :
     0 ≤ ∫ p, |K p.1 p.2| ∂(μ.prod μ) :=
   integral_nonneg fun _ => abs_nonneg _
 
+namespace SymmKernel
+
+/-- Multiplying a partial pairing by a measurable `[-1,1]`-valued function preserves
+integrability.  Private: its only consumers are the extremal argument below, which is why it sits
+here rather than with the integration API it is built from. -/
+private theorem integrable_mul_partialIntegral (K : SymmKernel Ω μ)
+    {v w : Ω → ℝ} (hv : Measurable v) (hv1 : ∀ y, v y ∈ Icc (-1 : ℝ) 1)
+    (hw : Measurable w) (hw1 : ∀ x, w x ∈ Icc (-1 : ℝ) 1) :
+    Integrable (fun x => w x * K.partialIntegral μ v x) μ :=
+  (K.integrable_partialIntegral μ hv hv1).bdd_mul hw.aestronglyMeasurable
+    (ae_of_all _ fun x => abs_le.2 (hw1 x))
+
+end SymmKernel
+
 /-- To prove an upper bound on the cut norm, it suffices to prove it for every measurable
 rectangle. -/
 theorem cutNorm_le {K : SymmKernel Ω μ} {C : ℝ}

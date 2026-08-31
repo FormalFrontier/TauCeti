@@ -254,16 +254,6 @@ theorem integrable_partialIntegral [IsFiniteMeasure μ] (K : SymmKernel Ω μ) {
   simp only [one_mul] at h
   exact h
 
-/-- Multiplying a partial pairing by a measurable `[-1,1]`-valued function preserves
-integrability.  Public rather than private to this file, since the cut-norm layer's extremal
-argument consumes it. -/
-theorem integrable_mul_partialIntegral [IsFiniteMeasure μ] (K : SymmKernel Ω μ)
-    {v w : Ω → ℝ} (hv : Measurable v) (hv1 : ∀ y, v y ∈ Icc (-1 : ℝ) 1)
-    (hw : Measurable w) (hw1 : ∀ x, w x ∈ Icc (-1 : ℝ) 1) :
-    Integrable (fun x => w x * K.partialIntegral μ v x) μ :=
-  (K.integrable_partialIntegral μ hv hv1).bdd_mul hw.aestronglyMeasurable
-    (ae_of_all _ fun x => abs_le.2 (hw1 x))
-
 /-- A test integral is the integral of the left test function against the partial pairing.
 
 Only integrability of the product integrand is needed — that is all Fubini asks.  A caller with
