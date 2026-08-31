@@ -123,14 +123,10 @@ theorem simplyConnectedSemisimpleCommHopfAlgProperty_iff_forall_surjective
   constructor
   · exact fun hH K f hf ↦ hH.surjective f hf
   · intro hH K f hf
-    have : IsIso f.hom.hom :=
+    have hIso : IsIso f.hom.hom :=
       hf.isIsogeny.isIso_iff_surjective.mpr (hH K f hf)
-    let F := (semisimpleCommHopfAlgProperty k).ι ⋙
-      (finiteTypeCommHopfAlgProperty k).ι
-    let _ : IsIso (F.map f) := by
-      change IsIso f.hom.hom
-      exact this
-    exact isIso_of_reflects_iso f F
+    exact (ObjectProperty.isIso_hom_iff f).mp <|
+      (ObjectProperty.isIso_hom_iff f.hom).mp hIso
 
 /-- Simple connectivity in Hopf coordinates is invariant under isomorphism. -/
 instance (k : Type u) [Field k] :
