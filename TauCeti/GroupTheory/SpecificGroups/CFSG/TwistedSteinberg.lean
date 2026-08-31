@@ -31,10 +31,11 @@ power of a half-Frobenius.
 ## What milestone L1 asks for, and what is proved here
 
 The roadmap's table sets the Steinberg map of the nine untwisted families to `Frob_q` and that of
-`²Aₙ(q)`, `²Dₙ(q)`, `²E₆(q)` and `³D₄(q)` to `γ ∘ Frob_q`, with the required relations that `γ` has
-the order printed as the superscript in the family name and that `γ` commutes with `Frob_q`, and
-with the defining equation `γ (x_α(t)) = x_{γ α}(t)` on the simple root subgroups. All four are
-below: `TauCeti.GraphTwistedIndex.geckGraphAut_pow_twistOrder`,
+`²Aₙ(q)`, `²Dₙ(q)`, `²E₆(q)` and `³D₄(q)` to `γ ∘ Frob_q`, with the required relations
+`γ ^ 2 = 1` on `²Aₙ`, `²Dₙ` and `²E₆` and `γ ^ 3 = 1` on `³D₄`, that is `γ ^ n = 1` for `n` the
+superscript printed in the family name, and that `γ` commutes with `Frob_q`, and with the defining
+equation `γ (x_α(t)) = x_{γ α}(t)` on the simple root subgroups. All four are below:
+`TauCeti.GraphTwistedIndex.geckGraphAut_pow_twistOrder`,
 `TauCeti.GraphTwistedIndex.geckGraphAut_comp_geckFrobenius`,
 `TauCeti.GraphTwistedIndex.geckGraphAut_geckRootSubgroup_inl`, and, for the composite,
 `TauCeti.GraphTwistedIndex.geckSteinberg_geckRootSubgroup_inl`. The equation on the simple root
