@@ -28,7 +28,8 @@ character with them, so the splitting laws proved there are statements about the
 
 The genus characters of a fundamental discriminant — the products of these characters over the
 prime discriminants of a factorization `D = P₁ ⋯ P_t` — are built on this in
-`TauCeti.NumberTheory.Multiquadratic.Quadratic.GenusCharacter`. The material is classical; see
+`TauCeti.NumberTheory.Multiquadratic.Quadratic.GenusCharacter.Basic`. The material is classical;
+see
 D. A. Cox, *Primes of the Form x² + ny²*, §3.B, and F. Lemmermeyer, *Reciprocity Laws: From Euler
 to Eisenstein*, §2.2.
 
