@@ -88,7 +88,7 @@ def weibullMeasure (k lam : ℝ) : Measure ℝ :=
 
 This exposes the defining equation of the opaque public definition for rewriting in downstream
 modules. -/
-theorem weibullMeasure_eq_withDensity (k lam : ℝ) :
+theorem weibullMeasure_def (k lam : ℝ) :
     weibullMeasure k lam = volume.withDensity (weibullPDF k lam) := by
   rfl
 

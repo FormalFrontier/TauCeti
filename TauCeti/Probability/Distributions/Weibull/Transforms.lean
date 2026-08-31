@@ -181,7 +181,7 @@ private lemma integrable_exp_mul_id_weibullMeasure_of_one_lt_of_scale_pos
   by_cases ht : t ≤ 0
   · exact integrable_exp_mul_id_weibullMeasure_of_nonpos k lam ht
   have htpos : 0 < t := lt_of_not_ge ht
-  rw [weibullMeasure_eq_withDensity, integrable_withDensity_iff (measurable_weibullPDF k lam)
+  rw [weibullMeasure_def, integrable_withDensity_iff (measurable_weibullPDF k lam)
     (ae_of_all _ fun x => by rw [weibullPDF_eq_ofReal]; exact ENNReal.ofReal_lt_top)]
   simp_rw [toReal_weibullPDF]
   have hratio : ∀ᶠ x in atTop, t * x / (x / lam) ^ k < (1 / 2 : ℝ) :=
@@ -247,7 +247,7 @@ theorem integrableExpSet_id_weibullMeasure_of_one_lt (hk : 1 < k) :
 theorem not_integrable_exp_mul_id_weibullMeasure_of_lt_one (hk : 0 < k) (hk' : k < 1)
     (hlam : 0 < lam) (ht : 0 < t) :
     ¬ Integrable (fun x : ℝ => Real.exp (t * x)) (weibullMeasure k lam) := by
-  rw [weibullMeasure_eq_withDensity, integrable_withDensity_iff (measurable_weibullPDF k lam)
+  rw [weibullMeasure_def, integrable_withDensity_iff (measurable_weibullPDF k lam)
     (ae_of_all _ fun x => by rw [weibullPDF_eq_ofReal]; exact ENNReal.ofReal_lt_top)]
   simp_rw [toReal_weibullPDF]
   intro hint
