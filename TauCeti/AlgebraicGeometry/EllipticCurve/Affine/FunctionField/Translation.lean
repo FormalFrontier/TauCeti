@@ -160,12 +160,12 @@ private noncomputable def translationAlgHom (P : (W⁄F).toAffine.Point) :
 private theorem translationAlgHom_mk_C_X (P : (W⁄F).toAffine.Point) :
     translationAlgHom W P (CoordinateRing.mk W (C X)) =
       Point.xCoord (translatedGenericPoint W P) :=
-  CoordinateRing.evalAlgHom_mk_C_X _
+  CoordinateRing.evalAlgHom_of_X _
 
 private theorem translationAlgHom_mk_Y (P : (W⁄F).toAffine.Point) :
     translationAlgHom W P (CoordinateRing.mk W Y) =
       Point.yCoord (translatedGenericPoint W P) :=
-  CoordinateRing.evalAlgHom_mk_Y _
+  CoordinateRing.evalAlgHom_root _
 
 private theorem translationAlgHom_injective (P : (W⁄F).toAffine.Point) :
     Function.Injective (translationAlgHom W P) :=

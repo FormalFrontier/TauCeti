@@ -168,7 +168,7 @@ theorem equation_apply (φ : CoordinatePullback W₁ W₂) :
 satisfying that relation. -/
 noncomputable def ofEquation {x y : W₁.FunctionField}
     (h : (W₂.map (algebraMap F W₁.FunctionField)).Equation x y) : CoordinatePullback W₁ W₂ :=
-  WeierstrassCurve.Affine.CoordinateRing.ofEquation h
+  WeierstrassCurve.Affine.CoordinateRing.evalAlgHom h
 
 /-- `ofEquation` sends the class of `X` to the chosen `x`-coordinate. -/
 @[simp]
@@ -176,7 +176,7 @@ theorem ofEquation_of_X {x y : W₁.FunctionField}
     (h : (W₂.map (algebraMap F W₁.FunctionField)).Equation x y) :
     ofEquation h (AdjoinRoot.of W₂.polynomial X) = x := by
   simpa only [ofEquation] using
-    WeierstrassCurve.Affine.CoordinateRing.ofEquation_of_X h
+    WeierstrassCurve.Affine.CoordinateRing.evalAlgHom_of_X h
 
 /-- `ofEquation` sends the class of `Y` to the chosen `y`-coordinate. -/
 @[simp]
@@ -184,7 +184,7 @@ theorem ofEquation_root {x y : W₁.FunctionField}
     (h : (W₂.map (algebraMap F W₁.FunctionField)).Equation x y) :
     ofEquation h (AdjoinRoot.root W₂.polynomial) = y := by
   simpa only [ofEquation] using
-    WeierstrassCurve.Affine.CoordinateRing.ofEquation_root h
+    WeierstrassCurve.Affine.CoordinateRing.evalAlgHom_root h
 
 /-- **The value of `ofEquation` on an arbitrary class**: the class of a bivariate polynomial `p`
 goes to `p` evaluated at the chosen point. -/
@@ -194,14 +194,14 @@ theorem ofEquation_mk {x y : W₁.FunctionField}
     ofEquation h (CoordinateRing.mk W₂ p) =
       (p.map (mapRingHom (algebraMap F W₁.FunctionField))).evalEval x y := by
   simpa only [ofEquation] using
-    WeierstrassCurve.Affine.CoordinateRing.ofEquation_mk h p
+    WeierstrassCurve.Affine.CoordinateRing.evalAlgHom_mk h p
 
 /-- **`ofEquation` and `equation_apply` are inverse to each other**: every coordinate pullback is
 the one attached to its own pair of coordinate functions. -/
 @[simp]
 theorem ofEquation_equation_apply (φ : CoordinatePullback W₁ W₂) :
     ofEquation (equation_apply φ) = φ :=
-  WeierstrassCurve.Affine.CoordinateRing.ofEquation_equation_ofAlgHom φ
+  WeierstrassCurve.Affine.CoordinateRing.evalAlgHom_equation_ofAlgHom φ
 
 end Equation
 

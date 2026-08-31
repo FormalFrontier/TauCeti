@@ -25,7 +25,6 @@ These statements concern the affine model `WeierstrassCurve.Affine R` itself, no
 
 * `WeierstrassCurve.Affine.CoordinateRing.evalAlgHom`: evaluation of the coordinate ring
   at a point of `W⁄A`, an `R`-algebra homomorphism into `A`.
-* `WeierstrassCurve.Affine.CoordinateRing.ofEquation`: alias for `evalAlgHom`.
 
 ## Main results
 
@@ -127,15 +126,6 @@ theorem algHom_ext {f g : W.CoordinateRing →ₐ[R] A}
     change f (CoordinateRing.mk W Y) = g (CoordinateRing.mk W Y)
     exact hY
 
-/-- Two algebra homomorphisms out of the coordinate ring are equal when they agree on the two
-coordinate functions. -/
-theorem algHom_ext_coords {f g : W.CoordinateRing →ₐ[R] A}
-    (hX : f (_root_.WeierstrassCurve.Affine.CoordinateRing.mk W (C X)) =
-      g (_root_.WeierstrassCurve.Affine.CoordinateRing.mk W (C X)))
-    (hY : f (_root_.WeierstrassCurve.Affine.CoordinateRing.mk W Y) =
-      g (_root_.WeierstrassCurve.Affine.CoordinateRing.mk W Y)) : f = g :=
-  algHom_ext hX hY
-
 /-- **Evaluation of the coordinate ring at a point of the base-changed curve.** A solution
 `(x, y)` of the Weierstrass equation of `W⁄A` is a point of `W` with coordinates in `A`, and
 substituting it into a polynomial function factors through the coordinate ring. -/
@@ -149,12 +139,6 @@ noncomputable def evalAlgHom (h : (W⁄A).toAffine.Equation x y) : W.CoordinateR
     rw [hcoe]
     exact h
 
-/-- A solution of the base-changed Weierstrass equation defines an algebra homomorphism from the
-coordinate ring. -/
-noncomputable abbrev ofEquation {x y : A}
-    (h : (W.map (algebraMap R A)).Equation x y) : W.CoordinateRing →ₐ[R] A :=
-  evalAlgHom (W := W) (x := x) (y := y) h
-
 /-- Evaluating the class of a polynomial in the coordinate ring is mapped polynomial evaluation
 at the given solution of the Weierstrass equation. -/
 @[simp]
@@ -166,7 +150,7 @@ theorem evalAlgHom_mk (h : (W⁄A).toAffine.Equation x y) (p : R[X][Y]) :
 
 /-- Evaluation sends the coordinate-ring class of `X` to the first coordinate `x`. -/
 @[simp]
-theorem evalAlgHom_mk_C_X (h : (W⁄A).toAffine.Equation x y) :
+theorem evalAlgHom_of_X (h : (W⁄A).toAffine.Equation x y) :
     evalAlgHom h (AdjoinRoot.of W.polynomial X) = x := by
   change evalAlgHom h (CoordinateRing.mk W (C X)) = x
   rw [evalAlgHom_mk]
@@ -174,7 +158,7 @@ theorem evalAlgHom_mk_C_X (h : (W⁄A).toAffine.Equation x y) :
 
 /-- Evaluation sends the coordinate-ring class of `Y` to the second coordinate `y`. -/
 @[simp]
-theorem evalAlgHom_mk_Y (h : (W⁄A).toAffine.Equation x y) :
+theorem evalAlgHom_root (h : (W⁄A).toAffine.Equation x y) :
     evalAlgHom h (AdjoinRoot.root W.polynomial) = y := by
   change evalAlgHom h (CoordinateRing.mk W Y) = y
   rw [evalAlgHom_mk]
@@ -185,34 +169,7 @@ original homomorphism. -/
 @[simp]
 theorem evalAlgHom_equation_ofAlgHom (f : W.CoordinateRing →ₐ[R] A) :
     evalAlgHom (equation_of_algHom f) = f :=
-  algHom_ext (evalAlgHom_mk_C_X _) (evalAlgHom_mk_Y _)
-
-/-- `ofEquation` sends the class of `X` to the chosen `x`-coordinate. -/
-@[simp]
-theorem ofEquation_of_X {x y : A} (h : (W.map (algebraMap R A)).Equation x y) :
-    ofEquation h (AdjoinRoot.of W.polynomial X) = x :=
-  evalAlgHom_mk_C_X (W := W) h
-
-/-- `ofEquation` sends the class of `Y` to the chosen `y`-coordinate. -/
-@[simp]
-theorem ofEquation_root {x y : A} (h : (W.map (algebraMap R A)).Equation x y) :
-    ofEquation h (AdjoinRoot.root W.polynomial) = y :=
-  evalAlgHom_mk_Y (W := W) h
-
-/-- The value of `ofEquation` on the class of a bivariate polynomial is evaluation at the chosen
-point. -/
-@[simp]
-theorem ofEquation_mk {x y : A} (h : (W.map (algebraMap R A)).Equation x y) (p : R[X][Y]) :
-    ofEquation h (_root_.WeierstrassCurve.Affine.CoordinateRing.mk W p) =
-      (p.map (mapRingHom (algebraMap R A))).evalEval x y :=
-  evalAlgHom_mk (W := W) h p
-
-/-- Constructing a homomorphism from the equation satisfied by its coordinates recovers the
-original homomorphism. -/
-@[simp]
-theorem ofEquation_equation_ofAlgHom (f : W.CoordinateRing →ₐ[R] A) :
-    ofEquation (equation_of_algHom f) = f :=
-  evalAlgHom_equation_ofAlgHom f
+  algHom_ext (evalAlgHom_of_X _) (evalAlgHom_root _)
 
 section Field
 
