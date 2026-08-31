@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.Frobenius.GeneralLinear
 public import TauCeti.Algebra.Lie.E6.DoubledMinuscule.PointsFunctor
+public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Frobenius
 
 /-!
 # The Frobenius of the doubled type-E6 minuscule carrier
@@ -70,8 +71,11 @@ carrier's root datum, or any finiteness or simplicity statement.
   `TauCeti.Algebra.Lie.Symplectic.StandardCarrier.Frobenius`, and the power law follows
   `TauCeti.DynkinType.geckFrobenius_pow` in
   `TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.GeckLattice.Frobenius`. Every
-  general fact used about entrywise Frobenius on the points cut out by a Hopf ideal is consumed
-  from `TauCeti.Algebra.AlgebraicGroup.Frobenius.GeneralLinear`.
+  general fact used about entrywise Frobenius is consumed rather than reproved: the facts about
+  the points cut out by a Hopf ideal from
+  `TauCeti.Algebra.AlgebraicGroup.Frobenius.GeneralLinear`, and the entrywise Frobenius of a
+  weight-torus matrix from
+  `TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Frobenius`.
 
 ## Roadmap
 
@@ -143,12 +147,10 @@ theorem frobenius_rootSubgroupPoints (i : Fin 6 ⊕ Fin 6) (u : Multiplicative A
 power.** -/
 @[simp]
 theorem frobenius_weightTorusPoints (s : Fin 6 → Aˣ) :
-    frobenius p k A (weightTorusPoints A s) = weightTorusPoints A (s ^ p ^ k) := by
-  have hs : (fun j => Units.map (iterateFrobenius A p k : A →* A) (s j)) = s ^ p ^ k := by
-    funext j
-    ext
-    simp [iterateFrobenius_def]
-  rw [frobenius_eq_pointsMap, pointsMap_weightTorusPoints, hs]
+    frobenius p k A (weightTorusPoints A s) = weightTorusPoints A (s ^ p ^ k) :=
+  Subtype.ext (by
+    rw [coe_frobenius, coe_weightTorusPoints,
+      UniversalEnvelopingAlgebra.map_iterateFrobenius_kostantTorusMatrix, coe_weightTorusPoints])
 
 /-- The zeroth Frobenius iterate is the identity on the doubled minuscule carrier's point
 group. -/
