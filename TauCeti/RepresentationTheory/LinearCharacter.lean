@@ -44,6 +44,7 @@ representation, and its irreducibility is what the Mackey criterion decides.
   is the original character, coerced into the coefficient field.
 * `Representation.isIrreducible_ofLinearCharacter`: a line has no room for a proper nonzero
   subrepresentation.
+* `FDRep.ofLinearCharacter_def`: the bundled representation is the unbundled one, bundled.
 * `FDRep.finrank_ofLinearCharacter`: it is a line.
 * `FDRep.simple_ofLinearCharacter`: it is a simple object of `FDRep k G`, being a line.
 * `FDRep.actionRes_obj_ofLinearCharacter`: restricting along `f : S →* G` gives the
@@ -53,14 +54,12 @@ representation, and its irreducibility is what the Mackey criterion decides.
 
 ## Implementation notes
 
-`FDRep.ofLinearCharacter` is `@[expose]` because it has to be: the carrier of an object of
-`FDRep k G` is part of that object's data, so with the body hidden the two sides of
-`FDRep.ofLinearCharacter_ρ` live in different types and its statement does not elaborate at all.
-Consumers are still expected to go through the lemmas rather than the body. That the carrier is
-the line `k` **on the nose** is recorded once and for all by
-`FDRep.actionRes_obj_ofLinearCharacter`, an honest equality of objects rather than an isomorphism;
-conjugation, restriction and comparison of these objects are then computed inside `G →* kˣ`
-through it and `FDRep.nonempty_iso_ofLinearCharacter_iff`.
+Neither definition is exposed: consumers go through the lemmas rather than the body.
+`FDRep.ofLinearCharacter_def` is the defining equation the dependent API is derived from, and with
+Mathlib's `FDRep.of_ρ'` it recovers the action. That the carrier is the line `k` **on the nose** is
+recorded once and for all by `FDRep.actionRes_obj_ofLinearCharacter`, an honest equality of objects
+rather than an isomorphism; conjugation, restriction and comparison of these objects are then
+computed inside `G →* kˣ` through it and `FDRep.nonempty_iso_ofLinearCharacter_iff`.
 -/
 
 public section
@@ -147,13 +146,14 @@ variable {k : Type u} {G : Type v}
 
 /-- **The one-dimensional representation carrying a linear character, as an object of
 `FDRep k G`.** This is the shape induction consumes. -/
-@[expose]
 noncomputable def ofLinearCharacter [CommRing k] [Monoid G] (χ : G →* kˣ) : FDRep k G :=
   FDRep.of (Representation.ofLinearCharacter χ)
 
-@[simp]
-theorem ofLinearCharacter_ρ [CommRing k] [Monoid G] (χ : G →* kˣ) :
-    (ofLinearCharacter (k := k) χ).ρ = Representation.ofLinearCharacter χ :=
+/-- **The bundled one-dimensional representation is the unbundled one, bundled.** This is the
+defining equation of `FDRep.ofLinearCharacter`; with `FDRep.of_ρ'` it recovers the action, so
+consumers never need to unfold the definition. -/
+theorem ofLinearCharacter_def [CommRing k] [Monoid G] (χ : G →* kˣ) :
+    ofLinearCharacter (k := k) χ = FDRep.of (Representation.ofLinearCharacter χ) :=
   (rfl)
 
 /-- **Restricting a linear character along a homomorphism pulls the character back.** Both sides
@@ -187,14 +187,29 @@ instance simple_ofLinearCharacter [Field k] [Monoid G] (χ : G →* kˣ) :
   FDRep.simple_of_isIrreducible _
 
 /-- **Two one-dimensional representations are isomorphic exactly when their linear characters
-agree.** One direction is that an isomorphism preserves characters, and the character of
-`FDRep.ofLinearCharacter χ` is `χ`; the other is that equal characters give literally the same
-object. -/
+agree.** An isomorphism of lines is multiplication by the unit `f 1`, so equivariance reads
+`χ g * f 1 = ψ g * f 1`, which that unit cancels from; conversely equal characters give literally
+the same object. -/
 @[simp]
-theorem nonempty_iso_ofLinearCharacter_iff [Field k] [Monoid G] (χ ψ : G →* kˣ) :
+theorem nonempty_iso_ofLinearCharacter_iff [CommRing k] [Monoid G] (χ ψ : G →* kˣ) :
     Nonempty (ofLinearCharacter (k := k) χ ≅ ofLinearCharacter ψ) ↔ χ = ψ := by
   refine ⟨fun ⟨e⟩ => MonoidHom.ext fun g => Units.ext ?_, fun h => ⟨h ▸ Iso.refl _⟩⟩
-  have h := congrArg (fun c => c g) (FDRep.char_iso e)
-  simpa using h
+  -- Both objects are the line `k`, so the isomorphism is an automorphism `f` of `k` intertwining
+  -- multiplication by `χ g` with multiplication by `ψ g`.
+  obtain ⟨f, hf⟩ : ∃ f : k ≃ₗ[k] k, ∀ x : k, f ((χ g : k) * x) = (ψ g : k) * f x := by
+    refine ⟨isoToLinearEquiv e, fun x => ?_⟩
+    -- Conjugation of the actions, read at `e x`, says `ψ g * e x = e (χ g * e⁻¹ (e x))`.
+    have h := DFunLike.congr_fun (FDRep.Iso.conj_ρ e g) (isoToLinearEquiv e x)
+    have hx := congrArg (fun y => isoToLinearEquiv e ((ofLinearCharacter (k := k) χ).ρ g y))
+      ((isoToLinearEquiv e).symm_apply_apply x)
+    exact (h.trans hx).symm
+  -- Such an `f` is multiplication by the unit `f 1`, which cancels from `χ g * f 1 = ψ g * f 1`.
+  have hlin : ∀ c : k, f c = c * f 1 := fun c => by
+    conv_lhs => rw [← mul_one c, ← smul_eq_mul]
+    rw [map_smul, smul_eq_mul]
+  have hkey : (χ g : k) * f 1 = (ψ g : k) * f 1 := by
+    have h := hf 1
+    rwa [mul_one, hlin] at h
+  exact f.injective (by rw [hlin (χ g : k), hlin (ψ g : k)]; exact hkey)
 
 end FDRep

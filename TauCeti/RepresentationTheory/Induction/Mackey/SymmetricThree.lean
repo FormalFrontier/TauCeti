@@ -106,14 +106,18 @@ theorem finrank_indFDRep_ofLinearCharacter_alternatingGroup_fin_three
     Module.finrank k (indFDRep (FDRep.ofLinearCharacter (k := k) χ)) = 2 := by
   rw [finrank_indFDRep, FDRep.finrank_ofLinearCharacter, mul_one, alternatingGroup.index_eq_two]
 
-omit [IsAlgClosed k] [CharZero k] in
-/-- **`A₃` has a faithful linear character** over any field with enough roots of unity for the
-exponent of `A₃`: it is cyclic of order three, so a primitive cube root of unity suffices, and an
-algebraically closed field of characteristic zero supplies one. A character of a group of prime
-order is faithful as soon as it is nontrivial, its kernel being a proper subgroup. -/
-theorem exists_monoidHom_alternatingGroup_fin_three_injective
-    [HasEnoughRootsOfUnity k (Monoid.exponent (alternatingGroup (Fin 3)))] :
-    ∃ χ : alternatingGroup (Fin 3) →* kˣ, Function.Injective χ := by
+section Faithful
+
+variable {M : Type*} [CommMonoid M]
+  [HasEnoughRootsOfUnity M (Monoid.exponent (alternatingGroup (Fin 3)))]
+
+/-- **`A₃` has a faithful linear character** valued in any commutative monoid with enough roots of
+unity for the exponent of `A₃`: it is cyclic of order three, so a primitive cube root of unity
+suffices, and an algebraically closed field of characteristic zero supplies one. A character of a
+group of prime order is faithful as soon as it is nontrivial, its kernel being a proper
+subgroup. -/
+theorem exists_monoidHom_alternatingGroup_fin_three_injective :
+    ∃ χ : alternatingGroup (Fin 3) →* Mˣ, Function.Injective χ := by
   have hprime : Fact (Nat.card (alternatingGroup (Fin 3))).Prime := by
     rw [card_alternatingGroup_fin_three]
     exact ⟨Nat.prime_three⟩
@@ -124,12 +128,14 @@ theorem exists_monoidHom_alternatingGroup_fin_three_injective
     Finite.one_lt_card_iff_nontrivial.mp (by rw [card_alternatingGroup_fin_three]; norm_num)
   obtain ⟨a, ha⟩ := exists_ne (1 : alternatingGroup (Fin 3))
   obtain ⟨χ, hχ⟩ :=
-    CommGroup.exists_apply_ne_one_of_hasEnoughRootsOfUnity (alternatingGroup (Fin 3)) k ha
+    CommGroup.exists_apply_ne_one_of_hasEnoughRootsOfUnity (alternatingGroup (Fin 3)) M ha
   -- A nontrivial character of a group of prime order has trivial kernel.
   refine ⟨χ, ?_⟩
   rw [← MonoidHom.ker_eq_bot_iff]
   refine (Subgroup.eq_bot_or_eq_top_of_prime_card χ.ker).resolve_right fun htop => hχ ?_
   have hmem : a ∈ χ.ker := by rw [htop]; exact Subgroup.mem_top a
   simpa using hmem
+
+end Faithful
 
 end TauCeti

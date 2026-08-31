@@ -61,7 +61,9 @@ namespace TauCeti
 
 universe u
 
-variable {k G : Type u} [Field k] [Group G] {N : Subgroup G} [N.Normal]
+section Conjugation
+
+variable {k G : Type u} [CommRing k] [Group G] {N : Subgroup G} [N.Normal]
 
 /-- **Conjugating a one-dimensional representation conjugates its linear character.**  Both sides
 are the line `k` with `x : N` acting by the scalar `χ (g⁻¹ x g)`, so this is an equality of
@@ -86,9 +88,12 @@ theorem nonempty_iso_conjNormalFDRep_ofLinearCharacter_iff (g : G) (χ : N →* 
   rw [conjNormalFDRep_ofLinearCharacter, FDRep.nonempty_iso_ofLinearCharacter_iff]
   exact DFunLike.ext_iff
 
+end Conjugation
+
 section Criterion
 
-variable [Finite G] [IsAlgClosed k] [CharZero k]
+variable {k G : Type u} [Field k] [Group G] {N : Subgroup G} [N.Normal] [Finite G] [IsAlgClosed k]
+  [CharZero k]
 
 /-- **The Mackey irreducibility criterion for an induced linear character.**  For a normal
 subgroup `N ◁ G` and a linear character `χ : N →* kˣ`, the induced representation `Ind_N^G χ` is

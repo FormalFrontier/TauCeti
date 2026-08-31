@@ -120,7 +120,7 @@ theorem char_detFDRep (g : GL (Fin n) k) :
     (detFDRep k n).character g = (Matrix.GeneralLinearGroup.det g : k) := by
   -- The determinant representation is the first determinant power, so its character is that of
   -- `FDRep.ofLinearCharacter (det ^ (1 : ℤ))`.
-  have h : detFDRep k n = detPowerFDRep k n 1 := rfl
+  have h : detFDRep k n = detPowerFDRep k n 1 := (FDRep.ofLinearCharacter_def _).symm
   rw [h, char_detPowerFDRep, zpow_one]
 
 end Field
