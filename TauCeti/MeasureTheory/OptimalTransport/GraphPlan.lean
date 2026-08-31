@@ -284,10 +284,8 @@ theorem graphPlan_map {f : Z → X} {μ : Measure Z} (hf : AEMeasurable f μ)
 theorem map_swap_graphPlan_symm (e : X ≃ᵐ Y) (μ : Measure X) :
     (graphPlan e μ).map Prod.swap = graphPlan e.symm (μ.map e) := by
   rw [map_swap_graphPlan e.measurable.aemeasurable, graphPlan_def,
-    Measure.map_map
-      (show Measurable (fun x : Y ↦ (x, e.symm x)) from
-        measurable_id.prodMk e.symm.measurable)
-      e.measurable]
+    Measure.map_map (g := fun x : Y ↦ (x, e.symm x))
+      (measurable_id.prodMk e.symm.measurable) e.measurable]
   simp [Function.comp_def]
 
 end Functoriality
