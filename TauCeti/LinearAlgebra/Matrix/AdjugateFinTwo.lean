@@ -8,7 +8,7 @@ module
 public import Mathlib.LinearAlgebra.Matrix.Adjugate
 public import Mathlib.LinearAlgebra.Matrix.Determinant.Basic
 public import Mathlib.LinearAlgebra.Matrix.Trace
-public import Mathlib.LinearAlgebra.Matrix.StdBasis
+import Mathlib.LinearAlgebra.Matrix.StdBasis
 
 /-!
 # Adjugation of two-by-two matrices
@@ -48,30 +48,24 @@ noncomputable def adjugateLinearMap :
     adjugateLinearMap A = Matrix.adjugate A := by
   simp [adjugateLinearMap]
 
-section NoZeroDivisors
+section
 
-variable [NoZeroDivisors K]
-
-omit [NoZeroDivisors K] in
 private theorem adjugate_single_diag (i j : Fin 2) (hij : i ≠ j) :
     Matrix.adjugate (Matrix.single i i (1 : K)) = Matrix.single j j (1 : K) := by
   fin_cases i <;> fin_cases j <;> ext a b <;> fin_cases a <;> fin_cases b <;>
     simp_all [Matrix.adjugate_fin_two, Matrix.single]
 
-omit [NoZeroDivisors K] in
 private theorem adjugate_single_offdiag (i j : Fin 2) (hij : i ≠ j) :
     Matrix.adjugate (Matrix.single i j (1 : K)) = -(Matrix.single i j (1 : K)) := by
   fin_cases i <;> fin_cases j <;> ext a b <;> fin_cases a <;> fin_cases b <;>
     simp_all [Matrix.adjugate_fin_two, Matrix.single]
 
-omit [NoZeroDivisors K] in
 private theorem one_sub_single_diag (i j : Fin 2) (hij : i ≠ j) :
     (1 : Matrix (Fin 2) (Fin 2) K) - Matrix.single i i (1 : K) =
       Matrix.single j j (1 : K) := by
   fin_cases i <;> fin_cases j <;> ext a b <;> fin_cases a <;> fin_cases b <;>
     simp_all [Matrix.single]
 
-omit [NoZeroDivisors K] in
 private theorem smul_one_sub_single_offdiag_mul_entry (r : K) (i j : Fin 2) (hij : i ≠ j) :
     let A : Matrix (Fin 2) (Fin 2) K := r • 1 - Matrix.single i j 1
     (A * A) j j = r * r := by
@@ -79,12 +73,19 @@ private theorem smul_one_sub_single_offdiag_mul_entry (r : K) (i j : Fin 2) (hij
   fin_cases i <;> fin_cases j <;>
     simp_all [Matrix.mul_apply, Matrix.single, Matrix.one_apply]
 
-omit [NoZeroDivisors K] in
 private theorem neg_single_offdiag_mul_smul_one_sub_single_diag_entry
     (r : K) (i j : Fin 2) (hij : i ≠ j) :
     let E : Matrix (Fin 2) (Fin 2) K := Matrix.single i j 1
     let D : Matrix (Fin 2) (Fin 2) K := r • 1 - Matrix.single i i 1
     ((-E) * D) i j = -r := by
+  dsimp
+  fin_cases i <;> fin_cases j <;>
+    simp_all [Matrix.mul_apply, Matrix.single, Matrix.one_apply]
+
+private theorem opposite_translate_entry (r s : K) (i j : Fin 2) (hij : i ≠ j) :
+    let E : Matrix (Fin 2) (Fin 2) K := Matrix.single i j 1
+    let F : Matrix (Fin 2) (Fin 2) K := Matrix.single j i 1
+    ((s • 1 - F) * (r • 1 - E)) j i = -r := by
   dsimp
   fin_cases i <;> fin_cases j <;>
     simp_all [Matrix.mul_apply, Matrix.single, Matrix.one_apply]
@@ -100,15 +101,20 @@ theorem map_single_eq_neg_of_ne
   let E : Matrix (Fin 2) (Fin 2) K := Matrix.single i j 1
   obtain ⟨r, hr⟩ := hscalar E
   have hf : f E = r • 1 - E := eq_sub_of_add_eq (by simpa [add_comm] using hr)
-  have hE2 : E * E = 0 := by
-    simpa [E] using Matrix.single_mul_single_of_ne (1 : K) i j i (Ne.symm hij) (1 : K)
-  have hsquare : f E * f E = 0 := by
-    rw [← hmul, hE2, map_zero]
-  rw [hf] at hsquare
-  have hrii := congr_fun (congr_fun hsquare j) j
-  have hrr : r * r = 0 := by
-    simpa only [E, smul_one_sub_single_offdiag_mul_entry r i j hij, Matrix.zero_apply] using hrii
-  have hr0 : r = 0 := mul_self_eq_zero.mp hrr
+  let F : Matrix (Fin 2) (Fin 2) K := Matrix.single j i 1
+  obtain ⟨s, hs⟩ := hscalar F
+  have hfF : f F = s • 1 - F := eq_sub_of_add_eq (by simpa [add_comm] using hs)
+  have hEF : E * F = Matrix.single i i 1 := by simp [E, F]
+  obtain ⟨t, ht⟩ := hscalar (Matrix.single i i 1)
+  have hfD : f (Matrix.single i i 1) = t • 1 - Matrix.single i i 1 :=
+    eq_sub_of_add_eq (by simpa [add_comm] using ht)
+  have hp := hmul E F
+  rw [hEF, hfD, hfF, hf] at hp
+  have hpji := congr_fun (congr_fun hp j) i
+  have hr0 : r = 0 := by
+    have hpji' : (0 : K) = -r := by
+      simpa [E, F, Matrix.mul_apply, Matrix.single, Matrix.one_apply, hij, Ne.symm hij] using hpji
+    exact neg_eq_zero.mp hpji'.symm
   have hneg : f E = -E := by
     rw [hf, hr0]
     simp
@@ -180,7 +186,7 @@ theorem linearMap_antimultiplicative_eq_adjugateLinearMap
   simpa only [adjugateLinearMap_apply] using
     map_single_eq_adjugate f hmul hscalar i j
 
-end NoZeroDivisors
+end
 
 
 end Matrix

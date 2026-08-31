@@ -5,11 +5,15 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.RepresentationTheory.Spin.OddStructure
+import TauCeti.RepresentationTheory.Spin.OddStructure
 
 import TauCeti.LinearAlgebra.CliffordAlgebra.Bivector
 public import TauCeti.LinearAlgebra.CliffordAlgebra.Grading
-public import TauCeti.LinearAlgebra.Matrix.AdjugateFinTwo
+public import Mathlib.LinearAlgebra.Matrix.Adjugate
+public import Mathlib.LinearAlgebra.Matrix.Determinant.Basic
+public import Mathlib.FieldTheory.IsSepClosed
+public import Mathlib.LinearAlgebra.QuadraticForm.Radical
+import TauCeti.LinearAlgebra.Matrix.AdjugateFinTwo
 
 
 /-!
@@ -32,8 +36,8 @@ downstream.
   of characteristic not two.
 * `CliffordAlgebra.reverseEven_eq_adjugate_of_finrank_eq_three`: every such algebra equivalence
   carries reversal to matrix adjugation.
-* `CliffordAlgebra.reverseEven_mul_eq_det_smul_one`: the norm product maps to determinant times
-  one.
+* `CliffordAlgebra.reverseEven_mul_eq_det_smul_one_of_finrank_eq_three`: the norm product maps to
+  determinant times one.
 
 ## References
 
@@ -122,11 +126,14 @@ private theorem disjoint_range_algebraMap_range_bivectorExteriorEven :
 omit [FiniteDimensional K V] in
 private theorem scalarAddBivectorEven_injective :
     Function.Injective (scalarAddBivectorEven Q) := by
-  rw [← LinearMap.ker_eq_bot, scalarAddBivectorEven,
-    LinearMap.ker_coprod_of_disjoint_range _ _
-      (disjoint_range_algebraMap_range_bivectorExteriorEven Q),
-    LinearMap.ker_eq_bot.2 (FaithfulSMul.algebraMap_injective K ↥(even Q)),
-    LinearMap.ker_eq_bot.2 (bivectorExteriorEven_injective Q), Submodule.prod_bot]
+  rw [← LinearMap.ker_eq_bot, scalarAddBivectorEven]
+  have hcoprod := LinearMap.ker_coprod_of_disjoint_range _ _
+    (disjoint_range_algebraMap_range_bivectorExteriorEven Q)
+  have halgebra : LinearMap.ker (Algebra.linearMap K ↥(even Q)) = ⊥ :=
+    LinearMap.ker_eq_bot.2 (FaithfulSMul.algebraMap_injective K ↥(even Q))
+  have hbivector : LinearMap.ker (bivectorExteriorEven Q) = ⊥ :=
+    LinearMap.ker_eq_bot.2 (bivectorExteriorEven_injective Q)
+  rw [hcoprod, halgebra, hbivector, Submodule.prod_bot]
 
 omit [NeZero (2 : K)] in
 /-- The scalar-plus-bivector product has the expected four-dimensional rank in dimension three. -/
@@ -159,7 +166,7 @@ private theorem scalarAddBivectorEquivEven_apply
   LinearEquiv.ofBijective_apply _ _
 
 /-- In dimension three, every even element plus its reversal is scalar. -/
-theorem exists_add_reverseEven_eq_smul_one
+theorem exists_add_reverseEven_eq_smul_one_of_finrank_eq_three
     (hV : Module.finrank K V = 3) (x : ↥(even Q)) :
     ∃ r : K, x + reverseEven Q x = r • 1 := by
   generalize hy : (scalarAddBivectorEquivEven Q hV).symm x = y
@@ -233,7 +240,7 @@ private theorem exists_add_reverseMatrix_eq_smul_one
     (hV : Module.finrank K V = 3)
     (e : ↥(even Q) ≃ₐ[K] Matrix (Fin 2) (Fin 2) K) (A : Matrix (Fin 2) (Fin 2) K) :
     ∃ r : K, A + reverseMatrix Q e A = r • 1 := by
-  obtain ⟨r, hr⟩ := exists_add_reverseEven_eq_smul_one Q hV (e.symm A)
+  obtain ⟨r, hr⟩ := exists_add_reverseEven_eq_smul_one_of_finrank_eq_three Q hV (e.symm A)
   refine ⟨r, ?_⟩
   rw [reverseMatrix_apply]
   calc
@@ -274,7 +281,7 @@ theorem evenEquivMatrixFinTwoOfFinrankEqThree_reverse
 
 omit [IsSepClosed K] in
 /-- The Clifford norm product maps to the matrix determinant times the identity. -/
-theorem reverseEven_mul_eq_det_smul_one
+theorem reverseEven_mul_eq_det_smul_one_of_finrank_eq_three
     (hV : Module.finrank K V = 3)
     (e : ↥(even Q) ≃ₐ[K] Matrix (Fin 2) (Fin 2) K) (x : ↥(even Q)) :
     e (reverseEven Q x * x) = (e x).det • (1 : Matrix (Fin 2) (Fin 2) K) := by
@@ -283,18 +290,18 @@ theorem reverseEven_mul_eq_det_smul_one
 
 omit [IsSepClosed K] in
 /-- The Clifford norm-one equation is equivalent to determinant one. -/
-theorem reverseEven_mul_eq_one_iff_det_eq_one
+theorem reverseEven_mul_eq_one_iff_det_eq_one_of_finrank_eq_three
     (hV : Module.finrank K V = 3)
     (e : ↥(even Q) ≃ₐ[K] Matrix (Fin 2) (Fin 2) K) (x : ↥(even Q)) :
     reverseEven Q x * x = 1 ↔ (e x).det = 1 := by
   constructor
   · intro h
     have hm := congrArg e h
-    rw [reverseEven_mul_eq_det_smul_one Q hV e x, map_one] at hm
+    rw [reverseEven_mul_eq_det_smul_one_of_finrank_eq_three Q hV e x, map_one] at hm
     have h00 := congrArg (fun M : Matrix (Fin 2) (Fin 2) K => M 0 0) hm
     simpa using h00
   · intro hdet
     apply e.injective
-    rw [map_one, reverseEven_mul_eq_det_smul_one Q hV e x, hdet, one_smul]
+    rw [map_one, reverseEven_mul_eq_det_smul_one_of_finrank_eq_three Q hV e x, hdet, one_smul]
 
 end CliffordAlgebra

@@ -235,7 +235,8 @@ theorem bivectorExterior_range_le_of_bivector_mem
   have hle : LinearMap.range (bivectorExterior Q) ≤ P :=
     bivectorExterior_range_le_of_bivector_mem Q P fun a b =>
       LinearMap.mem_eqLocus.2 (reverse_bivector Q a b)
-  exact hle ⟨x, rfl⟩
+  have hx : bivectorExterior Q x ∈ P := hle ⟨x, rfl⟩
+  exact LinearMap.mem_eqLocus.mp hx
 
 /-- The action-normalization identity for the half-normalized Clifford bivector. -/
 theorem bivector_lie_ι (a b x : M) :
