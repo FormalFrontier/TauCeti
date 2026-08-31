@@ -16,7 +16,8 @@ The unreduced Burau representation on `Rⁿ` fixes the row covector
 `(1, t, ..., t ^ (n - 1))`. Its kernel is consequently an invariant submodule of rank `n - 1`;
 the action on that kernel is the **reduced Burau representation**. This file constructs the
 invariant kernel and the reduced representation over an arbitrary commutative ring at an arbitrary
-unit, both in the canonical tail-coordinate system and in the basis of Burau columns.
+unit, both in the canonical tail-coordinate system and in the basis of Burau columns. The latter
+is named with the suffix `BurauCol` to distinguish the two coordinate systems.
 
 For a braid on `n + 1` strands, the coefficient of the zeroth coordinate in the invariant
 covector is `1`. The kernel is therefore canonically free on the remaining `n` coordinates:
@@ -27,8 +28,9 @@ Transporting the kernel action across this equivalence gives
 determinant computations.
 
 In the basis of Burau columns `burauCol t i = t • e i - e (i + 1)`, the action of an elementary
-braid is given by the elementary reduced Burau matrix `TauCeti.KnotTheory.reducedBurauMatrix t i`,
-which is a rank-one perturbation `1 - vecMulVec (Pi.single i 1) (reducedBurauRow t i)`. The
+braid is given by the elementary reduced Burau matrix
+`TauCeti.KnotTheory.reducedBurauColMatrix t i`,
+which is a rank-one perturbation `1 - vecMulVec (Pi.single i 1) (reducedBurauColRow t i)`. The
 pairings `burauRow R i ⬝ᵥ burauCol t j` feed the rank-one calculus of
 `TauCeti/LinearAlgebra/Matrix/OneSubVecMulVec.lean`, yielding the braid relations, the inverse,
 the determinant `-t`, and the Iwahori-Hecke quadratic relation.
@@ -46,11 +48,14 @@ in Layer 4 of the geometric-topology roadmap.
   representation.
 * `TauCeti.KnotTheory.reducedBurauSubrepresentation`: its restriction to the invariant kernel.
 * `TauCeti.KnotTheory.reducedBurau`: the reduced representation in free coordinates.
+* `TauCeti.KnotTheory.reducedBurauCol`: the reduced matrix homomorphism in the basis of Burau
+  columns.
 * `TauCeti.KnotTheory.burauColMatrix`: the `n × (n - 1)` matrix of Burau columns.
 * `TauCeti.KnotTheory.burauCoordMatrix`: an explicit left inverse of `burauColMatrix` at a unit `t`.
-* `TauCeti.KnotTheory.reducedBurauRow`: the pairings of one Burau row against all Burau columns.
-* `TauCeti.KnotTheory.reducedBurauMatrix`: the reduced Burau matrix of an elementary braid.
-* `TauCeti.KnotTheory.reducedBurauGL`: an elementary reduced Burau matrix in `GL (Fin (n - 1)) R`.
+* `TauCeti.KnotTheory.reducedBurauColRow`: the pairings of one Burau row against all Burau columns.
+* `TauCeti.KnotTheory.reducedBurauColMatrix`: the reduced Burau matrix of an elementary braid.
+* `TauCeti.KnotTheory.reducedBurauColGL`: an elementary reduced Burau matrix in
+  `GL (Fin (n - 1)) R`.
 
 ## Main results
 
@@ -59,14 +64,19 @@ in Layer 4 of the geometric-topology roadmap.
   span the invariant kernel `reducedBurauSpace`.
 * `TauCeti.KnotTheory.burauMatrix_mul_burauColMatrix`: the elementary Burau matrix restricts to the
   elementary reduced Burau matrix on the span of the Burau columns.
-* `TauCeti.KnotTheory.reducedBurauMatrix_mul_comm` and
-  `TauCeti.KnotTheory.reducedBurauMatrix_braid`: the two braid relations for the reduced matrices.
-* `TauCeti.KnotTheory.det_reducedBurauMatrix`: the determinant of an elementary reduced Burau matrix
-  is `-t`.
-* `TauCeti.KnotTheory.reducedBurauMatrix_mul_self`: the Iwahori-Hecke quadratic relation.
-* `TauCeti.KnotTheory.reducedBurauMatrix_two`, `TauCeti.KnotTheory.reducedBurauMatrix_three_zero`
-  and `TauCeti.KnotTheory.reducedBurauMatrix_three_one`: explicit reduced matrices on two and
-  three strands.
+* `TauCeti.KnotTheory.burau_mul_burauColMatrix`: the corresponding intertwining identity for every
+  braid.
+* `TauCeti.KnotTheory.reducedBurau_apply_burauColMatrix_mulVec`: comparison of the Burau-column and
+  tail-coordinate reduced representations.
+* `TauCeti.KnotTheory.reducedBurauColMatrix_mul_comm` and
+  `TauCeti.KnotTheory.reducedBurauColMatrix_braid`: the two braid relations for the reduced
+  matrices.
+* `TauCeti.KnotTheory.det_reducedBurauColMatrix`: the determinant of an elementary reduced Burau
+  matrix is `-t`.
+* `TauCeti.KnotTheory.reducedBurauColMatrix_mul_self`: the Iwahori-Hecke quadratic relation.
+* `TauCeti.KnotTheory.reducedBurauColMatrix_two` and the two
+  `TauCeti.KnotTheory.reducedBurauColMatrix_three_*` theorems: explicit reduced matrices on two
+  and three strands.
 
 ## References
 
@@ -362,89 +372,92 @@ theorem burauColMatrix_mulVec_burauCoordMatrix_mulVec (n : ℕ) (t : Rˣ) (x : F
 /-! ### The elementary reduced Burau matrices -/
 
 /-- The pairings of the `i`-th Burau row against all the Burau columns. This is the row in which
-the reduced Burau matrix of `TauCeti.BraidGroup.sigma i` differs from the identity. -/
-def reducedBurauRow (t : R) (i : Fin (n - 1)) : Fin (n - 1) → R :=
+the reduced Burau matrix in the Burau-column basis differs from the identity. -/
+def reducedBurauColRow (t : R) (i : Fin (n - 1)) : Fin (n - 1) → R :=
   fun j => burauRow R i ⬝ᵥ burauCol t j
 
 /-- Pairing a Burau row against the Burau columns is what multiplying into
 `TauCeti.KnotTheory.burauColMatrix` computes. -/
 theorem burauRow_vecMul_burauColMatrix (t : R) (i : Fin (n - 1)) :
-    burauRow R i ᵥ* burauColMatrix n t = reducedBurauRow t i :=
+    burauRow R i ᵥ* burauColMatrix n t = reducedBurauColRow t i :=
   (rfl)
 
-/-- The diagonal value of `TauCeti.KnotTheory.reducedBurauRow` is `t + 1`. -/
+/-- The diagonal value of `TauCeti.KnotTheory.reducedBurauColRow` is `t + 1`. -/
 @[simp]
-theorem reducedBurauRow_self (t : R) (i : Fin (n - 1)) : reducedBurauRow t i i = t + 1 :=
+theorem reducedBurauColRow_self (t : R) (i : Fin (n - 1)) : reducedBurauColRow t i i = t + 1 :=
   burauRow_dotProduct_burauCol_self t i
 
-/-- The value of `TauCeti.KnotTheory.reducedBurauRow` just above the diagonal is `-t`. -/
-theorem reducedBurauRow_of_succ (t : R) {i j : Fin (n - 1)} (h : (i : ℕ) + 1 = j) :
-    reducedBurauRow t i j = -t :=
+/-- The value of `TauCeti.KnotTheory.reducedBurauColRow` just above the diagonal is `-t`. -/
+theorem reducedBurauColRow_of_succ (t : R) {i j : Fin (n - 1)} (h : (i : ℕ) + 1 = j) :
+    reducedBurauColRow t i j = -t :=
   burauRow_dotProduct_burauCol_of_succ t h
 
-/-- The value of `TauCeti.KnotTheory.reducedBurauRow` just below the diagonal is `-1`. -/
-theorem reducedBurauRow_of_succ_rev (t : R) {i j : Fin (n - 1)} (h : (j : ℕ) + 1 = i) :
-    reducedBurauRow t i j = -1 :=
+/-- The value of `TauCeti.KnotTheory.reducedBurauColRow` just below the diagonal is `-1`. -/
+theorem reducedBurauColRow_of_succ_rev (t : R) {i j : Fin (n - 1)} (h : (j : ℕ) + 1 = i) :
+    reducedBurauColRow t i j = -1 :=
   burauRow_dotProduct_burauCol_of_succ_rev t h
 
-/-- Away from the diagonal and its two neighbours `TauCeti.KnotTheory.reducedBurauRow` vanishes. -/
-theorem reducedBurauRow_of_not_adjacent (t : R) {i j : Fin (n - 1)}
-    (h : (i : ℕ) + 2 ≤ j ∨ (j : ℕ) + 2 ≤ i) : reducedBurauRow t i j = 0 :=
+/-- Away from the diagonal and its two neighbours
+`TauCeti.KnotTheory.reducedBurauColRow` vanishes. -/
+theorem reducedBurauColRow_of_not_adjacent (t : R) {i j : Fin (n - 1)}
+    (h : (i : ℕ) + 2 ≤ j ∨ (j : ℕ) + 2 ≤ i) : reducedBurauColRow t i j = 0 :=
   burauRow_dotProduct_burauCol_of_not_adjacent t h
 
-/-- The reduced Burau matrix of the elementary braid `TauCeti.BraidGroup.sigma i` at the parameter
-`t`: the identity outside the `i`-th row, which is `(…, 1, -t, t, …)` with `-t` on the diagonal. -/
-def reducedBurauMatrix (t : R) (i : Fin (n - 1)) : Matrix (Fin (n - 1)) (Fin (n - 1)) R :=
-  1 - vecMulVec (Pi.single i 1) (reducedBurauRow t i)
+/-- The reduced Burau matrix in the Burau-column basis of the elementary braid
+`TauCeti.BraidGroup.sigma i`: the identity outside the `i`-th row, which is
+`(…, 1, -t, t, …)` with `-t` on the diagonal. -/
+def reducedBurauColMatrix (t : R) (i : Fin (n - 1)) : Matrix (Fin (n - 1)) (Fin (n - 1)) R :=
+  1 - vecMulVec (Pi.single i 1) (reducedBurauColRow t i)
 
 /-- The defining formula for an elementary reduced Burau matrix: it differs from the identity by
-the rank-one matrix `vecMulVec (Pi.single i 1) (reducedBurauRow t i)`, supported in the `i`-th
+the rank-one matrix `vecMulVec (Pi.single i 1) (reducedBurauColRow t i)`, supported in the `i`-th
 row. -/
-theorem reducedBurauMatrix_def (t : R) (i : Fin (n - 1)) :
-    reducedBurauMatrix t i = 1 - vecMulVec (Pi.single i 1) (reducedBurauRow t i) :=
+theorem reducedBurauColMatrix_def (t : R) (i : Fin (n - 1)) :
+    reducedBurauColMatrix t i = 1 - vecMulVec (Pi.single i 1) (reducedBurauColRow t i) :=
   (rfl)
 
 /-- The entries of an elementary reduced Burau matrix. -/
-theorem reducedBurauMatrix_apply (t : R) (i a b : Fin (n - 1)) :
-    reducedBurauMatrix t i a b =
-      (if a = b then 1 else 0) - (if a = i then 1 else 0) * reducedBurauRow t i b := by
-  rw [reducedBurauMatrix_def, Matrix.sub_apply, vecMulVec_apply, Matrix.one_apply,
+theorem reducedBurauColMatrix_apply (t : R) (i a b : Fin (n - 1)) :
+    reducedBurauColMatrix t i a b =
+      (if a = b then 1 else 0) - (if a = i then 1 else 0) * reducedBurauColRow t i b := by
+  rw [reducedBurauColMatrix_def, Matrix.sub_apply, vecMulVec_apply, Matrix.one_apply,
     Pi.single_apply]
 
 /-- Outside its `i`-th row an elementary reduced Burau matrix has the rows of the identity. -/
-theorem reducedBurauMatrix_apply_of_ne (t : R) {i a : Fin (n - 1)} (h : a ≠ i) (b : Fin (n - 1)) :
-    reducedBurauMatrix t i a b = if a = b then 1 else 0 := by
-  rw [reducedBurauMatrix_apply, ite_eq_right h, zero_mul, sub_zero]
+theorem reducedBurauColMatrix_apply_of_ne (t : R) {i a : Fin (n - 1)} (h : a ≠ i)
+    (b : Fin (n - 1)) :
+    reducedBurauColMatrix t i a b = if a = b then 1 else 0 := by
+  rw [reducedBurauColMatrix_apply, ite_eq_right h, zero_mul, sub_zero]
 
 /-- The diagonal entry of an elementary reduced Burau matrix in its nontrivial row is `-t`. -/
 @[simp]
-theorem reducedBurauMatrix_apply_self (t : R) (i : Fin (n - 1)) :
-    reducedBurauMatrix t i i i = -t := by
-  rw [reducedBurauMatrix_apply, reducedBurauRow_self]
+theorem reducedBurauColMatrix_apply_self (t : R) (i : Fin (n - 1)) :
+    reducedBurauColMatrix t i i i = -t := by
+  rw [reducedBurauColMatrix_apply, reducedBurauColRow_self]
   simp
 
 /-- The entry just above the diagonal in the nontrivial row of an elementary reduced Burau matrix
 is `t`. -/
-theorem reducedBurauMatrix_apply_of_succ (t : R) {i j : Fin (n - 1)} (h : (i : ℕ) + 1 = j) :
-    reducedBurauMatrix t i i j = t := by
+theorem reducedBurauColMatrix_apply_of_succ (t : R) {i j : Fin (n - 1)} (h : (i : ℕ) + 1 = j) :
+    reducedBurauColMatrix t i i j = t := by
   have hne : i ≠ j := fun hij => by rw [hij] at h; omega
-  rw [reducedBurauMatrix_apply, reducedBurauRow_of_succ t h, ite_eq_right hne]
+  rw [reducedBurauColMatrix_apply, reducedBurauColRow_of_succ t h, ite_eq_right hne]
   simp
 
 /-- The entry just below the diagonal in the nontrivial row of an elementary reduced Burau matrix
 is `1`. -/
-theorem reducedBurauMatrix_apply_of_succ_rev (t : R) {i j : Fin (n - 1)} (h : (j : ℕ) + 1 = i) :
-    reducedBurauMatrix t i i j = 1 := by
+theorem reducedBurauColMatrix_apply_of_succ_rev (t : R) {i j : Fin (n - 1)} (h : (j : ℕ) + 1 = i) :
+    reducedBurauColMatrix t i i j = 1 := by
   have hne : i ≠ j := fun hij => by rw [hij] at h; omega
-  rw [reducedBurauMatrix_apply, reducedBurauRow_of_succ_rev t h, ite_eq_right hne]
+  rw [reducedBurauColMatrix_apply, reducedBurauColRow_of_succ_rev t h, ite_eq_right hne]
   simp
 
 /-- Away from the diagonal and its two neighbours the nontrivial row of an elementary reduced
 Burau matrix vanishes. -/
-theorem reducedBurauMatrix_apply_of_not_adjacent (t : R) {i j : Fin (n - 1)}
-    (h : (i : ℕ) + 2 ≤ j ∨ (j : ℕ) + 2 ≤ i) : reducedBurauMatrix t i i j = 0 := by
+theorem reducedBurauColMatrix_apply_of_not_adjacent (t : R) {i j : Fin (n - 1)}
+    (h : (i : ℕ) + 2 ≤ j ∨ (j : ℕ) + 2 ≤ i) : reducedBurauColMatrix t i i j = 0 := by
   have hne : i ≠ j := fun hij => by rw [hij] at h; omega
-  rw [reducedBurauMatrix_apply, reducedBurauRow_of_not_adjacent t h, ite_eq_right hne]
+  rw [reducedBurauColMatrix_apply, reducedBurauColRow_of_not_adjacent t h, ite_eq_right hne]
   simp
 
 /-! ### The reduced matrices are the restriction of the unreduced ones -/
@@ -452,46 +465,39 @@ theorem reducedBurauMatrix_apply_of_not_adjacent (t : R) {i j : Fin (n - 1)}
 /-- **An elementary Burau matrix restricts to the elementary reduced Burau matrix** on the span of
 the Burau columns. -/
 theorem burauMatrix_mul_burauColMatrix (t : R) (i : Fin (n - 1)) :
-    burauMatrix t i * burauColMatrix n t = burauColMatrix n t * reducedBurauMatrix t i := by
-  rw [burauMatrix_def, reducedBurauMatrix_def, Matrix.sub_mul, Matrix.one_mul, Matrix.mul_sub,
+    burauMatrix t i * burauColMatrix n t = burauColMatrix n t * reducedBurauColMatrix t i := by
+  rw [burauMatrix_def, reducedBurauColMatrix_def, Matrix.sub_mul, Matrix.one_mul, Matrix.mul_sub,
     Matrix.mul_one, vecMulVec_mul, mul_vecMulVec, burauRow_vecMul_burauColMatrix,
     burauColMatrix_mulVec_single]
 
-/-- Multiplication by the matrix of Burau columns is injective, by
-`TauCeti.KnotTheory.burauCoordMatrix_mul_burauColMatrix`. -/
-theorem eq_of_burauColMatrix_mul_eq {t : Rˣ} {X Y : Matrix (Fin (n - 1)) (Fin (n - 1)) R}
-    (h : burauColMatrix n (t : R) * X = burauColMatrix n (t : R) * Y) : X = Y := by
-  have hX := congrArg (fun M => burauCoordMatrix n t * M) h
-  simpa only [← Matrix.mul_assoc, burauCoordMatrix_mul_burauColMatrix, Matrix.one_mul] using hX
-
-/-! ### The reduced Burau matrices on two and three strands -/
+/-! ### The reduced Burau matrices in the Burau-column basis on two and three strands -/
 
 /-- On two strands the reduced Burau representation is one-dimensional, sending the single
 elementary braid to `-t`. -/
-theorem reducedBurauMatrix_two (t : R) (i : Fin (2 - 1)) :
-    reducedBurauMatrix t i = !![-t] := by
+theorem reducedBurauColMatrix_two (t : R) (i : Fin (2 - 1)) :
+    reducedBurauColMatrix t i = !![-t] := by
   ext a b
   fin_cases i
   fin_cases a
   fin_cases b
-  simp [reducedBurauMatrix_apply_self]
+  simp [reducedBurauColMatrix_apply_self]
 
 /-- The reduced Burau matrix of the first elementary braid on three strands. -/
-theorem reducedBurauMatrix_three_zero (t : R) :
-    reducedBurauMatrix t (0 : Fin (3 - 1)) = !![-t, t; 0, 1] := by
-  rw [Matrix.eta_fin_two (reducedBurauMatrix t (0 : Fin (3 - 1))),
-    reducedBurauMatrix_apply_self, reducedBurauMatrix_apply_of_succ t (by decide),
-    reducedBurauMatrix_apply_of_ne t (by decide),
-    reducedBurauMatrix_apply_of_ne t (by decide)]
+theorem reducedBurauColMatrix_three_zero (t : R) :
+    reducedBurauColMatrix t (0 : Fin (3 - 1)) = !![-t, t; 0, 1] := by
+  rw [Matrix.eta_fin_two (reducedBurauColMatrix t (0 : Fin (3 - 1))),
+    reducedBurauColMatrix_apply_self, reducedBurauColMatrix_apply_of_succ t (by decide),
+    reducedBurauColMatrix_apply_of_ne t (by decide),
+    reducedBurauColMatrix_apply_of_ne t (by decide)]
   norm_num
 
 /-- The reduced Burau matrix of the second elementary braid on three strands. -/
-theorem reducedBurauMatrix_three_one (t : R) :
-    reducedBurauMatrix t (1 : Fin (3 - 1)) = !![1, 0; 1, -t] := by
-  rw [Matrix.eta_fin_two (reducedBurauMatrix t (1 : Fin (3 - 1))),
-    reducedBurauMatrix_apply_of_ne t (by decide),
-    reducedBurauMatrix_apply_of_ne t (by decide),
-    reducedBurauMatrix_apply_of_succ_rev t (by decide), reducedBurauMatrix_apply_self]
+theorem reducedBurauColMatrix_three_one (t : R) :
+    reducedBurauColMatrix t (1 : Fin (3 - 1)) = !![1, 0; 1, -t] := by
+  rw [Matrix.eta_fin_two (reducedBurauColMatrix t (1 : Fin (3 - 1))),
+    reducedBurauColMatrix_apply_of_ne t (by decide),
+    reducedBurauColMatrix_apply_of_ne t (by decide),
+    reducedBurauColMatrix_apply_of_succ_rev t (by decide), reducedBurauColMatrix_apply_self]
   norm_num
 
 end Ring
@@ -499,6 +505,18 @@ end Ring
 section CommRing
 
 variable [CommRing R] {n : ℕ}
+
+/-- Every linear combination of the Burau columns belongs to the invariant kernel carrying the
+reduced Burau representation. -/
+theorem burauColMatrix_mulVec_mem_reducedBurauSpace (n : ℕ) (t : R)
+    (c : Fin (n - 1) → R) :
+    burauColMatrix n t *ᵥ c ∈ reducedBurauSpace n t := by
+  rw [mem_reducedBurauSpace_iff]
+  calc
+    _ = (fun k : Fin n => t ^ (k : ℕ)) ⬝ᵥ (burauColMatrix n t *ᵥ c) := rfl
+    _ = ((fun k : Fin n => t ^ (k : ℕ)) ᵥ* burauColMatrix n t) ⬝ᵥ c :=
+      dotProduct_mulVec _ _ _
+    _ = 0 := by rw [geom_vecMul_burauColMatrix_eq_zero]; simp
 
 /-- Coordinates on the reduced Burau space of an `(n + 1)`-strand braid. The tail coordinates
 are free, and the zeroth coordinate is determined by the equation
@@ -664,74 +682,157 @@ theorem reducedBurau_sigma_zero_apply (t : Rˣ) (x : Fin 1 → R) :
 
 /-! ### The braid relations, the inverse and the Hecke relation -/
 
-private theorem reducedBurauRow_dotProduct_single (t : R) (i : Fin (n - 1)) :
-    reducedBurauRow t i ⬝ᵥ Pi.single i 1 = t + 1 := by
-  rw [dotProduct_single_one, reducedBurauRow_self]
+private theorem reducedBurauColRow_dotProduct_single (t : R) (i : Fin (n - 1)) :
+    reducedBurauColRow t i ⬝ᵥ Pi.single i 1 = t + 1 := by
+  rw [dotProduct_single_one, reducedBurauColRow_self]
 
-private theorem reducedBurauRow_dotProduct_single_of_succ (t : R) {i j : Fin (n - 1)}
-    (h : (i : ℕ) + 1 = j) : reducedBurauRow t i ⬝ᵥ Pi.single j 1 = -t := by
-  rw [dotProduct_single_one, reducedBurauRow_of_succ t h]
+private theorem reducedBurauColRow_dotProduct_single_of_succ (t : R) {i j : Fin (n - 1)}
+    (h : (i : ℕ) + 1 = j) : reducedBurauColRow t i ⬝ᵥ Pi.single j 1 = -t := by
+  rw [dotProduct_single_one, reducedBurauColRow_of_succ t h]
 
-private theorem reducedBurauRow_dotProduct_single_of_succ_rev (t : R) {i j : Fin (n - 1)}
-    (h : (i : ℕ) + 1 = j) : reducedBurauRow t j ⬝ᵥ Pi.single i 1 = -1 := by
-  rw [dotProduct_single_one, reducedBurauRow_of_succ_rev t h]
+private theorem reducedBurauColRow_dotProduct_single_of_succ_rev (t : R) {i j : Fin (n - 1)}
+    (h : (i : ℕ) + 1 = j) : reducedBurauColRow t j ⬝ᵥ Pi.single i 1 = -1 := by
+  rw [dotProduct_single_one, reducedBurauColRow_of_succ_rev t h]
 
-private theorem reducedBurauRow_dotProduct_single_of_not_adjacent (t : R) {i j : Fin (n - 1)}
-    (h : (i : ℕ) + 2 ≤ j ∨ (j : ℕ) + 2 ≤ i) : reducedBurauRow t i ⬝ᵥ Pi.single j 1 = 0 := by
-  rw [dotProduct_single_one, reducedBurauRow_of_not_adjacent t h]
+private theorem reducedBurauColRow_dotProduct_single_of_not_adjacent (t : R) {i j : Fin (n - 1)}
+    (h : (i : ℕ) + 2 ≤ j ∨ (j : ℕ) + 2 ≤ i) : reducedBurauColRow t i ⬝ᵥ Pi.single j 1 = 0 := by
+  rw [dotProduct_single_one, reducedBurauColRow_of_not_adjacent t h]
 
 /-- The determinant of an elementary reduced Burau matrix is `-t`, as for the unreduced one. -/
 @[simp]
-theorem det_reducedBurauMatrix (t : R) (i : Fin (n - 1)) : (reducedBurauMatrix t i).det = -t := by
-  rw [reducedBurauMatrix_def, det_one_sub_vecMulVec, reducedBurauRow_dotProduct_single]
+theorem det_reducedBurauColMatrix (t : R) (i : Fin (n - 1)) :
+    (reducedBurauColMatrix t i).det = -t := by
+  rw [reducedBurauColMatrix_def, det_one_sub_vecMulVec, reducedBurauColRow_dotProduct_single]
   ring
 
 /-- **The distant commutation relation** for the elementary reduced Burau matrices. -/
-theorem reducedBurauMatrix_mul_comm (t : R) {i j : Fin (n - 1)}
+theorem reducedBurauColMatrix_mul_comm (t : R) {i j : Fin (n - 1)}
     (h : (i : ℕ) + 2 ≤ j ∨ (j : ℕ) + 2 ≤ i) :
-    reducedBurauMatrix t i * reducedBurauMatrix t j =
-      reducedBurauMatrix t j * reducedBurauMatrix t i :=
-  one_sub_vecMulVec_mul_comm (reducedBurauRow_dotProduct_single_of_not_adjacent t h)
-    (reducedBurauRow_dotProduct_single_of_not_adjacent t h.symm)
+    reducedBurauColMatrix t i * reducedBurauColMatrix t j =
+      reducedBurauColMatrix t j * reducedBurauColMatrix t i :=
+  one_sub_vecMulVec_mul_comm (reducedBurauColRow_dotProduct_single_of_not_adjacent t h)
+    (reducedBurauColRow_dotProduct_single_of_not_adjacent t h.symm)
 
 /-- **The braid relation** for the elementary reduced Burau matrices. -/
-theorem reducedBurauMatrix_braid (t : R) {i j : Fin (n - 1)}
+theorem reducedBurauColMatrix_braid (t : R) {i j : Fin (n - 1)}
     (h : (i : ℕ) + 1 = j ∨ (j : ℕ) + 1 = i) :
-    reducedBurauMatrix t i * reducedBurauMatrix t j * reducedBurauMatrix t i =
-      reducedBurauMatrix t j * reducedBurauMatrix t i * reducedBurauMatrix t j :=
-  one_sub_vecMulVec_braid_of_adjacent t (fun i => Pi.single i (1 : R)) (reducedBurauRow t)
-    (reducedBurauRow_dotProduct_single t) (reducedBurauRow_dotProduct_single_of_succ t)
-    (reducedBurauRow_dotProduct_single_of_succ_rev t) h
+    reducedBurauColMatrix t i * reducedBurauColMatrix t j * reducedBurauColMatrix t i =
+      reducedBurauColMatrix t j * reducedBurauColMatrix t i * reducedBurauColMatrix t j :=
+  one_sub_vecMulVec_braid_of_adjacent t (fun i => Pi.single i (1 : R)) (reducedBurauColRow t)
+    (reducedBurauColRow_dotProduct_single t) (reducedBurauColRow_dotProduct_single_of_succ t)
+    (reducedBurauColRow_dotProduct_single_of_succ_rev t) h
 
 /-- **The quadratic relation** for the elementary reduced Burau matrices, equivalently
 `(x - 1) * (x + t) = 0`. This is the Iwahori-Hecke quadratic relation in the normalisation with
 eigenvalues `1` and `-t`. -/
-theorem reducedBurauMatrix_mul_self (t : R) (i : Fin (n - 1)) :
-    reducedBurauMatrix t i * reducedBurauMatrix t i =
-      (1 - t) • reducedBurauMatrix t i + t • 1 :=
-  one_sub_vecMulVec_mul_self t (reducedBurauRow_dotProduct_single t i)
+theorem reducedBurauColMatrix_mul_self (t : R) (i : Fin (n - 1)) :
+    reducedBurauColMatrix t i * reducedBurauColMatrix t i =
+      (1 - t) • reducedBurauColMatrix t i + t • 1 :=
+  one_sub_vecMulVec_mul_self t (reducedBurauColRow_dotProduct_single t i)
 
-/-! ### The elementary reduced Burau matrices in GL -/
+/-! ### The reduced Burau homomorphism in the Burau-column basis -/
 
 /-- An elementary reduced Burau matrix as an element of the general linear group, with inverse
-`1 - t⁻¹ • vecMulVec (Pi.single i 1) (reducedBurauRow t i)`. -/
-def reducedBurauGL (t : Rˣ) (i : Fin (n - 1)) : GL (Fin (n - 1)) R :=
-  oneSubVecMulVecGL t (Pi.single i 1) (reducedBurauRow (t : R) i)
-    (reducedBurauRow_dotProduct_single (t : R) i)
+`1 - t⁻¹ • vecMulVec (Pi.single i 1) (reducedBurauColRow t i)`. -/
+def reducedBurauColGL (t : Rˣ) (i : Fin (n - 1)) : GL (Fin (n - 1)) R :=
+  oneSubVecMulVecGL t (Pi.single i 1) (reducedBurauColRow (t : R) i)
+    (reducedBurauColRow_dotProduct_single (t : R) i)
 
-/-- The matrix underlying `TauCeti.KnotTheory.reducedBurauGL`. -/
+/-- The matrix underlying `TauCeti.KnotTheory.reducedBurauColGL`. -/
 @[simp]
-theorem coe_reducedBurauGL (t : Rˣ) (i : Fin (n - 1)) :
-    (reducedBurauGL t i : Matrix (Fin (n - 1)) (Fin (n - 1)) R) = reducedBurauMatrix (t : R) i :=
-  by rw [reducedBurauGL, coe_oneSubVecMulVecGL, reducedBurauMatrix_def]
+theorem coe_reducedBurauColGL (t : Rˣ) (i : Fin (n - 1)) :
+    (reducedBurauColGL t i : Matrix (Fin (n - 1)) (Fin (n - 1)) R) =
+      reducedBurauColMatrix (t : R) i :=
+  by rw [reducedBurauColGL, coe_oneSubVecMulVecGL, reducedBurauColMatrix_def]
 
 /-- The nonsingular inverse of an elementary reduced Burau matrix. -/
 @[simp]
-theorem inv_reducedBurauMatrix (t : Rˣ) (i : Fin (n - 1)) :
-    (reducedBurauMatrix (t : R) i)⁻¹ =
-      1 - ((t⁻¹ : Rˣ) : R) • vecMulVec (Pi.single i 1) (reducedBurauRow (t : R) i) := by
-  rw [reducedBurauMatrix_def,
-    inv_one_sub_vecMulVec t (reducedBurauRow_dotProduct_single (t : R) i)]
+theorem inv_reducedBurauColMatrix (t : Rˣ) (i : Fin (n - 1)) :
+    (reducedBurauColMatrix (t : R) i)⁻¹ =
+      1 - ((t⁻¹ : Rˣ) : R) • vecMulVec (Pi.single i 1) (reducedBurauColRow (t : R) i) := by
+  rw [reducedBurauColMatrix_def,
+    inv_one_sub_vecMulVec t (reducedBurauColRow_dotProduct_single (t : R) i)]
+
+/-- The reduced Burau homomorphism in the basis of Burau columns. Its name records the basis to
+distinguish it from `TauCeti.KnotTheory.reducedBurau`, which uses canonical tail coordinates. -/
+def reducedBurauCol (n : ℕ) (t : Rˣ) : BraidGroup n →* GL (Fin (n - 1)) R :=
+  braidHomOfOneSubVecMulVec n t (fun i => Pi.single i 1) (reducedBurauColRow (t : R))
+    (reducedBurauColRow_dotProduct_single (t : R))
+    (reducedBurauColRow_dotProduct_single_of_not_adjacent (t : R))
+    (reducedBurauColRow_dotProduct_single_of_succ (t : R))
+    (reducedBurauColRow_dotProduct_single_of_succ_rev (t : R))
+
+/-- The Burau-column reduced homomorphism takes an elementary braid to its corresponding
+elementary reduced matrix. -/
+@[simp]
+theorem reducedBurauCol_sigma (t : Rˣ) (i : Fin (n - 1)) :
+    reducedBurauCol n t (BraidGroup.sigma i) = reducedBurauColGL t i := by
+  unfold reducedBurauCol reducedBurauColGL
+  exact braidHomOfOneSubVecMulVec_sigma n t (fun i => Pi.single i 1)
+    (reducedBurauColRow (t : R)) (reducedBurauColRow_dotProduct_single (t : R))
+    (reducedBurauColRow_dotProduct_single_of_not_adjacent (t : R))
+    (reducedBurauColRow_dotProduct_single_of_succ (t : R))
+    (reducedBurauColRow_dotProduct_single_of_succ_rev (t : R)) i
+
+/-- The matrix of an elementary braid under the Burau-column reduced homomorphism. -/
+@[simp]
+theorem coe_reducedBurauCol_sigma (t : Rˣ) (i : Fin (n - 1)) :
+    (reducedBurauCol n t (BraidGroup.sigma i) : Matrix (Fin (n - 1)) (Fin (n - 1)) R) =
+      reducedBurauColMatrix (t : R) i := by
+  rw [reducedBurauCol_sigma, coe_reducedBurauColGL]
+
+/-- The determinant of the Burau-column reduced matrix of a braid is `-t` raised to its exponent
+sum, as for the unreduced representation. -/
+theorem det_reducedBurauCol (t : Rˣ) (b : BraidGroup n) :
+    Matrix.GeneralLinearGroup.det (reducedBurauCol n t b) =
+      (-t) ^ Multiplicative.toAdd (ArtinGroup.exponentSum (CoxeterMatrix.A (n - 1)) b) :=
+  det_braidHomOfOneSubVecMulVec n t (fun i => Pi.single i 1) (reducedBurauColRow (t : R))
+    (reducedBurauColRow_dotProduct_single (t : R))
+    (reducedBurauColRow_dotProduct_single_of_not_adjacent (t : R))
+    (reducedBurauColRow_dotProduct_single_of_succ (t : R))
+    (reducedBurauColRow_dotProduct_single_of_succ_rev (t : R)) b
+
+/-- The reduced Burau homomorphism in the Burau-column basis is the restriction of the unreduced
+one to the span of those columns. -/
+theorem burau_mul_burauColMatrix (t : Rˣ) (b : BraidGroup n) :
+    (burau n t b : Matrix (Fin n) (Fin n) R) * burauColMatrix n (t : R) =
+      burauColMatrix n (t : R) *
+        (reducedBurauCol n t b : Matrix (Fin (n - 1)) (Fin (n - 1)) R) := by
+  apply burau_mul_of_forall (ρ := reducedBurauCol n t) _ b
+  intro i
+  rw [coe_reducedBurauCol_sigma]
+  exact burauMatrix_mul_burauColMatrix (t : R) i
+
+/-- The reduced Burau matrix of a braid in the Burau-column basis can be read off from the
+unreduced matrix using the explicit left inverse of the column matrix. -/
+theorem reducedBurauCol_eq (t : Rˣ) (b : BraidGroup n) :
+    (reducedBurauCol n t b : Matrix (Fin (n - 1)) (Fin (n - 1)) R) =
+      burauCoordMatrix n t * (burau n t b : Matrix (Fin n) (Fin n) R) *
+        burauColMatrix n (t : R) := by
+  rw [Matrix.mul_assoc, burau_mul_burauColMatrix, ← Matrix.mul_assoc,
+    burauCoordMatrix_mul_burauColMatrix, Matrix.one_mul]
+
+/-- The Burau-column and tail-coordinate constructions give the same reduced action after the
+coordinate change that takes column coefficients to the tail of their linear combination. -/
+theorem reducedBurau_apply_burauColMatrix_mulVec (n : ℕ) (t : Rˣ)
+    (b : BraidGroup (n + 1)) (c : Fin (n + 1 - 1) → R) :
+    reducedBurau n t b (Fin.tail (burauColMatrix (n + 1) (t : R) *ᵥ c)) =
+      Fin.tail (burauColMatrix (n + 1) (t : R) *ᵥ
+        ((reducedBurauCol (n + 1) t b :
+          Matrix (Fin (n + 1 - 1)) (Fin (n + 1 - 1)) R) *ᵥ c)) := by
+  rw [reducedBurau_apply]
+  have hmem := burauColMatrix_mulVec_mem_reducedBurauSpace (n + 1) (t : R) c
+  let x : ReducedBurauSpace (n + 1) (t : R) :=
+    ⟨burauColMatrix (n + 1) (t : R) *ᵥ c, hmem⟩
+  have hx := (reducedBurauSpaceEquiv n (t : R)).apply_symm_apply x
+  rw [reducedBurauSpaceEquiv_symm_apply] at hx
+  have hx' := congrArg Subtype.val hx
+  change ((reducedBurauSpaceEquiv n (t : R))
+      (Fin.tail (burauColMatrix (n + 1) (t : R) *ᵥ c)) : Fin (n + 1) → R) =
+    burauColMatrix (n + 1) (t : R) *ᵥ c at hx'
+  rw [hx']
+  apply congrArg Fin.tail
+  rw [Matrix.mulVec_mulVec, burau_mul_burauColMatrix, ← Matrix.mulVec_mulVec]
 
 end CommRing
 

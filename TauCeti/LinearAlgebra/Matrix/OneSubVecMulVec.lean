@@ -55,14 +55,15 @@ theorem one_sub_vecMulVec_mul_comm {u₁ v₁ u₂ v₂ : α → R} (h₁₂ : v
   simp only [zero_smul, add_zero]
   abel
 
-/-- Two rank-one perturbations of the identity obey the braid relation when their four pairings
-have the values occurring in the Burau representation. -/
-theorem one_sub_vecMulVec_braid (t : R) {u₁ v₁ u₂ v₂ : α → R} (h₁₁ : v₁ ⬝ᵥ u₁ = t + 1)
-    (h₂₂ : v₂ ⬝ᵥ u₂ = t + 1) (h₁₂ : v₁ ⬝ᵥ u₂ = -t) (h₂₁ : v₂ ⬝ᵥ u₁ = -1) :
+/-- Two rank-one perturbations of the identity obey the braid relation when both self-pairings
+equal one plus the product of the cross-pairings. -/
+theorem one_sub_vecMulVec_braid {u₁ v₁ u₂ v₂ : α → R}
+    (h₁ : v₁ ⬝ᵥ u₁ = 1 + (v₁ ⬝ᵥ u₂) * (v₂ ⬝ᵥ u₁))
+    (h₂ : v₂ ⬝ᵥ u₂ = 1 + (v₁ ⬝ᵥ u₂) * (v₂ ⬝ᵥ u₁)) :
     (1 - vecMulVec u₁ v₁) * (1 - vecMulVec u₂ v₂) * (1 - vecMulVec u₁ v₁) =
       (1 - vecMulVec u₂ v₂) * (1 - vecMulVec u₁ v₁) * (1 - vecMulVec u₂ v₂) := by
   simp only [sub_mul, mul_sub, one_mul, mul_one, vecMulVec_mul_vecMulVec,
-    vecMulVec_smul, smul_mul_assoc, smul_smul, h₁₁, h₂₂, h₁₂, h₂₁]
+    vecMulVec_smul, smul_mul_assoc, smul_smul, h₁, h₂]
   module
 
 /-- The quadratic relation for a rank-one perturbation of the identity whose self-pairing is
@@ -89,6 +90,7 @@ theorem one_sub_vecMulVec_inv_mul (t : Rˣ) {u v : α → R} (h : v ⬝ᵥ u = (
   mul_eq_one_comm.mp (one_sub_vecMulVec_mul_inv t h)
 
 /-- The determinant of a rank-one perturbation of the identity in terms of its self-pairing. -/
+@[simp]
 theorem det_one_sub_vecMulVec (u v : α → R) : (1 - vecMulVec u v).det = 1 - v ⬝ᵥ u := by
   rw [sub_eq_add_neg, ← neg_vecMulVec, vecMulVec_eq Unit,
     det_one_add_replicateCol_mul_replicateRow, dotProduct_neg]

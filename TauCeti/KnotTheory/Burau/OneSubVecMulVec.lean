@@ -9,26 +9,25 @@ public import TauCeti.GroupTheory.SpecificGroups.Braid
 public import TauCeti.LinearAlgebra.Matrix.OneSubVecMulVec
 
 /-!
-# Braid-group representations by the matrices `1 - u ⊗ v`
+# Braid-group homomorphisms from the matrices `1 - u ⊗ v`
 
-This file constructs a braid-group representation from a family of rank-one perturbations of the
-identity `1 - vecMulVec (u i) (v i)`, indexed by the elementary braids, whose pairings have the
-values occurring in the Burau representation. The calculus of a single such matrix, or of a pair
-of them, is in `TauCeti/LinearAlgebra/Matrix/OneSubVecMulVec.lean`; the braid relation in the form
-indexed by adjacent elementary braids is here, since it is the generator adjacency of
+This file constructs a braid-group homomorphism into `GL` from a family of rank-one perturbations
+of the identity `1 - vecMulVec (u i) (v i)`, indexed by the elementary braids, whose pairings have
+the values occurring in the Burau representation. The calculus of a single such matrix, or of a
+pair of them, is in `TauCeti/LinearAlgebra/Matrix/OneSubVecMulVec.lean`; the braid relation in the
+form indexed by adjacent elementary braids is here, since it is the generator adjacency of
 `Fin (n - 1)` that it is phrased in.
 
 ## Main definitions
 
-* `TauCeti.KnotTheory.braidRepresentationOfOneSubVecMulVec`: the braid-group representation
+* `TauCeti.KnotTheory.braidHomOfOneSubVecMulVec`: the braid-group homomorphism into `GL`
   defined by a family with the Burau pairings.
 
 ## Main results
 
 * `TauCeti.KnotTheory.one_sub_vecMulVec_braid_of_adjacent`: the braid relation for two adjacent
   members of such a family.
-* `TauCeti.KnotTheory.det_braidRepresentationOfOneSubVecMulVec`: the determinant character of the
-  representation.
+* `TauCeti.KnotTheory.det_braidHomOfOneSubVecMulVec`: the determinant character of the homomorphism.
 -/
 
 public section
@@ -50,12 +49,20 @@ theorem one_sub_vecMulVec_braid_of_adjacent (t : R) (u v : Fin (n - 1) → α �
     (1 - vecMulVec (u i) (v i)) * (1 - vecMulVec (u j) (v j)) * (1 - vecMulVec (u i) (v i)) =
       (1 - vecMulVec (u j) (v j)) * (1 - vecMulVec (u i) (v i)) * (1 - vecMulVec (u j) (v j)) := by
   rcases h with h | h
-  · exact one_sub_vecMulVec_braid t (hself i) (hself j) (hforward h) (hreverse h)
-  · exact (one_sub_vecMulVec_braid t (hself j) (hself i) (hforward h) (hreverse h)).symm
+  · apply one_sub_vecMulVec_braid
+    · rw [hself, hforward h, hreverse h]
+      ring
+    · rw [hself, hforward h, hreverse h]
+      ring
+  · apply one_sub_vecMulVec_braid
+    · rw [hself, hreverse h, hforward h]
+      ring
+    · rw [hself, hreverse h, hforward h]
+      ring
 
-/-- The braid-group representation associated to a family of rank-one perturbations of the identity
-with the Burau pairings. -/
-def braidRepresentationOfOneSubVecMulVec (n : ℕ) (t : Rˣ) (u v : Fin (n - 1) → α → R)
+/-- The braid-group homomorphism into `GL` associated to a family of rank-one perturbations of the
+identity with the Burau pairings. -/
+def braidHomOfOneSubVecMulVec (n : ℕ) (t : Rˣ) (u v : Fin (n - 1) → α → R)
     (hself : ∀ i, v i ⬝ᵥ u i = (t : R) + 1)
     (hcomm : ∀ {i j : Fin (n - 1)}, (i : ℕ) + 2 ≤ j ∨ (j : ℕ) + 2 ≤ i →
       v i ⬝ᵥ u j = 0)
@@ -70,22 +77,22 @@ def braidRepresentationOfOneSubVecMulVec (n : ℕ) (t : Rˣ) (u v : Fin (n - 1) 
       simp only [Units.val_mul, coe_oneSubVecMulVecGL]
       exact one_sub_vecMulVec_braid_of_adjacent (t : R) u v hself hforward hreverse h))
 
-/-- Such a braid-group representation takes an elementary braid to its corresponding unit. -/
+/-- Such a braid-group homomorphism takes an elementary braid to its corresponding unit. -/
 @[simp]
-theorem braidRepresentationOfOneSubVecMulVec_sigma (n : ℕ) (t : Rˣ) (u v : Fin (n - 1) → α → R)
+theorem braidHomOfOneSubVecMulVec_sigma (n : ℕ) (t : Rˣ) (u v : Fin (n - 1) → α → R)
     (hself : ∀ i, v i ⬝ᵥ u i = (t : R) + 1)
     (hcomm : ∀ {i j : Fin (n - 1)}, (i : ℕ) + 2 ≤ j ∨ (j : ℕ) + 2 ≤ i →
       v i ⬝ᵥ u j = 0)
     (hforward : ∀ {i j : Fin (n - 1)}, (i : ℕ) + 1 = j → v i ⬝ᵥ u j = -(t : R))
     (hreverse : ∀ {i j : Fin (n - 1)}, (i : ℕ) + 1 = j → v j ⬝ᵥ u i = -1)
     (i : Fin (n - 1)) :
-    braidRepresentationOfOneSubVecMulVec n t u v hself hcomm hforward hreverse
+    braidHomOfOneSubVecMulVec n t u v hself hcomm hforward hreverse
         (BraidGroup.sigma i) = oneSubVecMulVecGL t (u i) (v i) (hself i) :=
   BraidGroup.lift_sigma _ _ _ i
 
-/-- The determinant character of a braid-group representation by rank-one perturbations of the
+/-- The determinant character of a braid-group homomorphism by rank-one perturbations of the
 identity with the Burau pairings. -/
-theorem det_braidRepresentationOfOneSubVecMulVec (n : ℕ) (t : Rˣ) (u v : Fin (n - 1) → α → R)
+theorem det_braidHomOfOneSubVecMulVec (n : ℕ) (t : Rˣ) (u v : Fin (n - 1) → α → R)
     (hself : ∀ i, v i ⬝ᵥ u i = (t : R) + 1)
     (hcomm : ∀ {i j : Fin (n - 1)}, (i : ℕ) + 2 ≤ j ∨ (j : ℕ) + 2 ≤ i →
       v i ⬝ᵥ u j = 0)
@@ -93,10 +100,10 @@ theorem det_braidRepresentationOfOneSubVecMulVec (n : ℕ) (t : Rˣ) (u v : Fin 
     (hreverse : ∀ {i j : Fin (n - 1)}, (i : ℕ) + 1 = j → v j ⬝ᵥ u i = -1)
     (b : BraidGroup n) :
     Matrix.GeneralLinearGroup.det
-        (braidRepresentationOfOneSubVecMulVec n t u v hself hcomm hforward hreverse b) =
+        (braidHomOfOneSubVecMulVec n t u v hself hcomm hforward hreverse b) =
       (-t) ^ Multiplicative.toAdd (ArtinGroup.exponentSum (CoxeterMatrix.A (n - 1)) b) := by
   have key : (Matrix.GeneralLinearGroup.det (n := α) (R := R)).comp
-      (braidRepresentationOfOneSubVecMulVec n t u v hself hcomm hforward hreverse) =
+      (braidHomOfOneSubVecMulVec n t u v hself hcomm hforward hreverse) =
       (zpowersHom Rˣ (-t)).comp (ArtinGroup.exponentSum (CoxeterMatrix.A (n - 1))) := by
     refine BraidGroup.hom_ext fun i => ?_
     apply Units.ext
