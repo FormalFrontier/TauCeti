@@ -48,8 +48,6 @@ universe u v
 
 namespace CliffordAlgebra
 
-open TauCeti.Matrix
-
 variable {K : Type u} [Field K] [NeZero (2 : K)]
   {V : Type v} [AddCommGroup V] [Module K V] [FiniteDimensional K V]
   (Q : QuadraticForm K V)
@@ -226,10 +224,10 @@ theorem reverse_eq_adjugate_of_finrank_eq_three
     (e : ↥(even Q) ≃ₐ[K] Matrix (Fin 2) (Fin 2) K) (x : ↥(even Q)) :
     e (reverseEven Q x) = Matrix.adjugate (e x) := by
   have hf := congrArg (fun g : Matrix (Fin 2) (Fin 2) K →ₗ[K] _ => g (e x))
-    (linearMap_antimultiplicative_eq_adjugateMap (reverseMatrix Q e) (reverseMatrix_mul Q e)
+    (Matrix.linearMap_antimultiplicative_eq_adjugateMap (reverseMatrix Q e) (reverseMatrix_mul Q e)
       (exists_add_reverseMatrix_eq_smul_one Q hV e))
   simpa only [reverseMatrix_apply, e.symm_apply_apply, reverseEven_coe,
-    adjugateLinearMap_apply] using hf
+    Matrix.adjugateLinearMap_apply] using hf
 
 variable [IsSepClosed K]
 

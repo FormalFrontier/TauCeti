@@ -21,9 +21,7 @@ the Clifford algebra file so downstream matrix users can reuse them directly.
 
 public section
 
-namespace TauCeti.Matrix
-
-open _root_.Matrix
+namespace Matrix
 
 variable {K : Type*} [Field K]
 
@@ -138,4 +136,4 @@ theorem linearMap_antimultiplicative_eq_adjugateMap
     map_single_eq_adjugate f hmul hscalar i j
 
 
-end TauCeti.Matrix
+end Matrix
