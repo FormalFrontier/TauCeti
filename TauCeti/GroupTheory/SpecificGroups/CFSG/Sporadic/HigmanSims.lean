@@ -48,6 +48,36 @@ centralizer has order `7680`, `b` of order 5 with centralizer of order `500`, an
 `11`. Both computations are provenance for the transcription, not Lean theorems: this file asserts
 no order, finiteness, simplicity, or identification result.
 
+## Independent source-to-Lean read-through
+
+An independent read-through used the bytes of the ATLAS Magma source `HSG1-P1.M` whose SHA-256
+digest is `6f1863b22ce2bf3a4c7dfb4b84200dc614d4b40a5f8f6bd164832ae998d3b25b`. Its constructor
+`G<x,y>` fixes the generator order corresponding to the standard generators `a,b` in this row.
+Writing its words in this module's syllables gives the seven short entries
+
+```text
+a², b⁵, s₁¹¹, s₂¹⁰, [a,b]⁵, [a,bab]³, [a,b²]⁶,
+```
+
+followed, in source order, by
+
+```text
+s₁s₁s₂s₋₁s₋₂s₋₁s₂s₁s₁s₋₂⁴,
+s₁(s₂s₋₂²)²s₂s₁s₂(s₋₁s₂)²,
+s₁s₁s₂²s₁s₋₁²s₁s₂²s₁s₁s₋₂s₋₁s₋₂,
+(s₁s₁s₂s₋₁s₋₂s₁s₁s₋₁)²,
+(s₁s₁s₂)²s₁s₁s₋₁s₁s₁s₂³s₁s₁s₋₁,
+s₁(s₁s₂)³s₁s₁s₂s₋₁s₁s₋₂s₁s₋₁s₂.
+```
+
+These are exactly the thirteen entries of `hsPresentation_transcribed`, including every inverse,
+power, commutator, and source-order position. The Magma file marks the last three as `R1`, `R2`,
+and `R3`, says they are redundant but useful, and keeps them inside the constructor; the Lean row
+therefore correctly retains them. The rendered presentation page omits those three and swaps the
+display order of `[a,bab]³` and `[a,b²]⁶`, while the row deliberately follows the raw Magma order.
+This comparison was performed from the pinned source bytes independently of the original
+transcription and closes this row's S1 source-to-Lean read-through.
+
 ## Independent comparison with `FiniteSimpleGroups`
 
 The comparison used `finite-simple-groups-lean` at commit

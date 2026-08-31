@@ -52,6 +52,33 @@ meet the two ATLAS element-order conditions. Both computations are provenance fo
 transcription, not Lean theorems: this file asserts no order, finiteness, simplicity, or
 identification result.
 
+## Independent source-to-Lean read-through
+
+An independent read-through used the bytes of the ATLAS Magma source `McLG1-P1.M` whose SHA-256
+digest is `84a601b1aecb12c3ab3b96a9f5009e94bec5fe6e1988f9f12cfde37512c59583`. Its constructor
+`G<x,y>` and later assignments `a := x; b := y` fix the generator order used by this row. In the
+module's syllables, its fifteen constructor entries are
+
+```text
+a², b⁵, [a,b]⁵, s₁¹¹, s₂¹², [a,b²]⁶, (s₁s₋₂)⁷,
+[a,b⁻²s₁s₁s₂]²,
+[a,b⁻²s₂s₋₁s₁s₂²s₁s₋₁],
+[a,bs₂³]²,
+[a,b²s₁s₂²]²,
+s₁s₂s₋₂s₁s₋₁s₂(s₋₂s₁)²(s₂s₋₂s₂)²,
+[a,b²s₂s₋₁s₂]²,
+[a,b²s₁]⁴,
+[a,b²s₂]⁴.
+```
+
+They agree entry for entry with `mclPresentation_transcribed`, including every inverse, power,
+commutator, and source-order position. The Magma file labels entries eight, ten, and fifteen as
+the redundant relators `R0`, `R1`, and `R2` but retains them inside the constructor, so the Lean
+row correctly retains all fifteen. The rendered presentation page omits those three and reorders
+some of the short active relations; the row deliberately follows the raw Magma order. This
+comparison was performed from the pinned source bytes independently of the original transcription
+and closes this row's S1 source-to-Lean read-through.
+
 ## Independent comparison with `FiniteSimpleGroups`
 
 The comparison used `finite-simple-groups-lean` at commit
