@@ -150,7 +150,7 @@ theorem AlgHom.IsArithFrobAt.apply_sqrt {φ : S →ₐ[ℤ] S} (H : φ.IsArithFr
 
 /-! ### Uniqueness at unramified primes
 
-The generic group-level uniqueness theorem packages Mathlib's algebra-homomorphism result with
+The generic monoid-level uniqueness theorem packages Mathlib's algebra-homomorphism result with
 the injectivity of a faithful action.  Number-field specializations supply the faithfulness and
 the non-zero-divisor condition for the complement of a prime.
 -/
@@ -159,7 +159,7 @@ the non-zero-divisor condition for the complement of a prime.
 action of `G` on `S` is faithful and the extension is unramified at `Q`, then a Frobenius element
 of `G` at `Q` is unique. -/
 theorem _root_.IsArithFrobAt.eq_of_isUnramifiedAt
-    {R S G : Type*} [CommRing R] [CommRing S] [Algebra R S] [Group G]
+    {R S G : Type*} [CommRing R] [CommRing S] [Algebra R S] [Monoid G]
     [MulSemiringAction G S] [SMulCommClass G R S] [FaithfulSMul G S]
     {Q : Ideal S} [Q.IsPrime] (hQ : Q.primeCompl ≤ S⁰)
     [Algebra.IsUnramifiedAt R Q] [IsNoetherianRing S]
