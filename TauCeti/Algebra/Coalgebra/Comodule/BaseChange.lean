@@ -255,8 +255,13 @@ theorem baseChange_toLinearMap (f : Hom R H M N) :
     (baseChange A f).toLinearMap = f.toLinearMap.baseChange A :=
   rfl
 
-/-- Base change preserves the identity comodule morphism. -/
-@[simp]
+/-- Base change preserves the identity comodule morphism.
+
+This is not a `simp` lemma: once `ComoduleCat` is imported, the `@[simp]` lemma
+`ComoduleCat.ofHom_id` rewrites the bare `Comodule.Hom.id` in the left-hand side to a categorical
+identity. Since `ComoduleCat.ofHom` is a reducible abbreviation, that rewrite applies even though
+the categorical wrapper is not syntactically present here, so tagging this theorem with `@[simp]`
+would make its left-hand side fail the `simpNF` linter. -/
 theorem baseChange_id :
     letI := Comodule.baseChange (R := R) (H := H) (M := M) A
     baseChange A (id R H M) = id A (A ⊗[R] H) (A ⊗[R] M) := by
