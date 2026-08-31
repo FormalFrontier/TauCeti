@@ -95,12 +95,26 @@ diagram the index names, with its root subgroups. **This file does not close L0 
 and the rank-two type-`C` carrier is not offered as a substitute for that pinned group.** The
 pinned group scheme, its pinning, and any identification of a carrier with it are Layer 9 targets of
 `TauCetiRoadmap/ReductiveGroups/README.md` that the CFSG roadmap consumes rather than builds; none
-of them is proved of `TauCeti.SpStd.groupScheme 1` here or in the files this one imports. What this
-file supplies is the branches' explicit carrier, its numbered root characters read in the `B₂` root
-datum, the equation `Frob_q (x_i(u)) = x_i(u ^ q)` that milestone L1 asks of an ordinary Frobenius
-factor, and, on the untwisted branch, the fixed-point, derived-subgroup and central-quotient recipe
-of milestone L3, each in the shape those milestones state it; they transfer to the L0 carrier along
-that Layer 9 identification, and not before. The type-A counterpart is
+of them is proved of `TauCeti.SpStd.groupScheme 1` here or in the files this one imports.
+
+What those files do prove of the carrier is the data such an identification would be read against,
+and never the identification itself: its numbered root subgroups and its full-weight torus are
+closed subgroup schemes, `TauCeti.SpStd.isClosedImmersion_rootSubgroup` and
+`TauCeti.SpStd.isClosedImmersion_weightTorus`; the weights of the standard module through which that
+torus acts span the whole character lattice, `TauCeti.SpStd.span_range_basisWeight_eq_top`, the
+lattice condition that separates the simply connected form from the adjoint one; and conjugation by
+the torus rescales the `i`-th raising subgroup through the `i`-th simple root of the pinned datum,
+`TauCeti.SpStd.weightTorus_conj_rootSubgroup_root_simpleIndex`. Absent is the Layer 9 isomorphism
+theorem for pinned groups, which is what would turn that data into an identification with the
+Chevalley--Demazure group scheme of `TauCeti.DynkinType.simplyConnectedRootDatum`. Until it arrives
+every declaration below is stated of `TauCeti.SpStd.groupScheme 1`, is true of it, and asserts
+nothing of any other group.
+
+What this file supplies is the branches' explicit carrier, its numbered root characters read in the
+`B₂` root datum, the equation `Frob_q (x_i(u)) = x_i(u ^ q)` that milestone L1 asks of an ordinary
+Frobenius factor, and, on the untwisted branch, the fixed-point, derived-subgroup and
+central-quotient recipe of milestone L3, each in the shape those milestones state it; they transfer
+to the L0 carrier along that Layer 9 identification, and not before. The type-A counterpart is
 `TauCeti/GroupTheory/SpecificGroups/CFSG/TypeA.lean`, and the counterpart on the Geck carrier for
 the three unimodular untwisted families is
 `TauCeti/GroupTheory/SpecificGroups/CFSG/Unimodular.lean`.
@@ -136,10 +150,11 @@ def carrierNode : Fin d.1.rank ≃ Fin 2 :=
 
 /-- **The ambient group this file attaches to a validated rank-two type-`B` index**: the points of
 the explicit full-weight rank-two type-`C` Chevalley carrier over the algebraic closure of the prime
-field in the characteristic the index records. It is infinite; no finiteness, reductivity, pinning
-or maximality statement is attached to it, and it is not claimed to be the pinned `B₂` group
+field in the characteristic the index records. It is infinite; no finiteness, reductivity or
+torus-maximality statement is attached to it, and it is not claimed to be the pinned `B₂` group
 scheme's points that milestone L0 asks for, that identification being the Layer 9 target described
-in the module docstring. -/
+in the module docstring, which also lists the closed-immersion, full-weight-lattice and torus
+conjugation equations the carrier is already known to satisfy. -/
 abbrev AmbientGroup : Type := SpStd.points 1 d.1.Closure
 
 /-- The positive simple-root subgroup at the Bourbaki-numbered node `i` of the `B₂` diagram. It is
