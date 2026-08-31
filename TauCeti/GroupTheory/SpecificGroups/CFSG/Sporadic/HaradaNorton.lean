@@ -45,6 +45,31 @@ the freely cancelling boundary `a⁻²a`; the checks below therefore record the 
 letters alongside the freely reduced length of each relator, and prove that every reduced word is
 cyclically reduced. This file asserts no order, finiteness, simplicity, or identification result.
 
+## Independent source-to-Lean read-through
+
+The independent read-through used the bytes of the corrected machine-readable source `HNpb.m`
+whose SHA-256 digest is
+`69a39c69670aa28dd28f2b3c9ec8f44c35086174d97ba4fc073a16ad7ecec596`. The first constructor is
+`G<a,b,c,d,t>`, fixing exactly the generator names and order used by the Lean row. Reading that
+constructor from top to bottom gives
+
+```text
+a⁴, [a²,b], b⁷, (ab²)⁴, a⁻²(abab³)³, ((ab)³ab⁻³)²,
+c²a², [a,c], [bab,c], (bab³c)³,
+d², (ad)², [b,d], d^(cbcb⁻¹)(cd)³,
+t⁵, t^a t², t^c t⁻², [t,b], (dt)³.
+```
+
+These are exactly the nineteen entries of `hnPresentation_transcribed`. In particular, the Lean
+row preserves the corrected twelfth word `(ad)²`; expands the Magma conjugates using
+`r^s = s⁻¹rs`, including the full conjugator `cbcb⁻¹` in the fourteenth word; and uses the source
+commutator `[r,s] = r⁻¹s⁻¹rs`. The same file contains a second nineteen-relator constructor whose
+only changed entry is the fifth, replaced there by `[a,b³]³`; the row explicitly transcribes the
+first presentation and therefore correctly retains `a⁻²(abab³)³`. There are no commented or
+optional entries inside that first constructor. This checks every source relator, inverse,
+exponent, conjugation boundary, and constructor boundary independently of the original
+transcription and closes this row's S1 source-to-Lean read-through.
+
 ## Main definitions and results
 
 * `TauCeti.Sporadic.hnPresentation`: the Bray--Curtis finite presentation of `HN`.
