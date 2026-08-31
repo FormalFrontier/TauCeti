@@ -106,7 +106,7 @@ theorem surjective (hH : simplyConnectedSemisimpleCommHopfAlgProperty k H)
     Function.Surjective f.hom.hom := by
   let _ : IsIso f := hH.isIso f hf
   let _ : IsIso f.hom.hom := inferInstance
-  exact (ConcreteCategory.bijective_of_isIso f.hom.hom).2
+  exact hf.isIsogeny.isIso_iff_surjective.mp inferInstance
 
 end simplyConnectedSemisimpleCommHopfAlgProperty
 
