@@ -45,23 +45,17 @@ An independent read-through used Cambridge University Press's 26-page scan of th
 whose PDF bytes have SHA-256 digest
 `da209040c860db5c0f3bef11a55d5e434beeae3bf9acf18f488b5c8632b23606`. On printed page 162,
 presentation (13.1) names its generators, in order, as `a,b,c,d,e,f,g`. Reading its defining
-relators from left to right across the two printed lines gives
-
-```text
-a², b², c², d², e², f², g²,
-(ac)², (ad)², (ae)², (bd)², (ce)², (dg)², (eg)²,
-(ab)³, (cd)³, (de)³,
-f(ag)³, g(bf)³, (cfg)³, e(abc)³, e(acg)⁴, (bcfcf)³, e(abcf)⁷.
-```
-
-This is exactly the order and grouping of the twenty-four entries in
-`co3Presentation_transcribed`: in particular, the adjacent leading factors in `f(ag)³`,
-`g(bf)³`, `e(abc)³`, `e(acg)⁴`, and `e(abcf)⁷` lie outside their parenthesized powers in both
-the print and Lean. The paper then states `Length = 174`, agreeing with the checked 150 letters
-plus 24 separators. Its following `Consequences` line separately lists twelve words, from `afaf`
-through `(bede)⁴`; none is part of the defining-relator list or the Lean row. This checks every
-source relator, exponent, binding boundary, and the defining-relator/consequence boundary
-independently of the original transcription and closes this row's S1 source-to-Lean read-through.
+relators from left to right gives the same four consecutive blocks as the list above: the seven
+generator squares; the seven pair squares from `(ac)²` through `(eg)²`; the three pair cubes; and
+the seven remaining mixed words, from `f(ag)³` through `e(abcf)⁷`. This is exactly the order and
+grouping of the twenty-four entries in `co3Presentation_transcribed`. In particular, the adjacent
+leading factors in `f(ag)³`, `g(bf)³`, `e(abc)³`, `e(acg)⁴`, and `e(abcf)⁷` lie outside their
+parenthesized powers in both the print and Lean. The paper then states `Length = 174`, agreeing
+with the checked 150 letters plus 24 separators. Its following `Consequences` line separately
+lists twelve words, from `afaf` through `(bede)⁴`; none is part of the defining-relator list or
+the Lean row. This checks every source relator, exponent, binding boundary, and the
+defining-relator/consequence boundary independently of the original transcription and closes this
+row's S1 source-to-Lean read-through without duplicating the audited list.
 
 The row is a sealed definition, so it publishes an equation for each of its fields: the transcribed
 relator expressions with their generator indices written out, and the provenance a manifest row
