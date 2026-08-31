@@ -67,6 +67,7 @@ public section
 namespace TauCeti.DynkinType
 
 open Set Submodule
+open scoped symmDiff
 
 /-! ## Integral spin weights -/
 
@@ -184,24 +185,19 @@ theorem algebraMap_typeDSpinWeight_eq_dotProduct {K : Type*} [CommRing K]
 
 /-- The permutation of the type-`D` spin basis induced by the graph automorphism: toggle the sign
 of the final orthonormal coordinate. A sign is encoded by membership in the indexing finset, so
-this erases the final index when it is present and inserts it when it is absent. -/
+this takes the symmetric difference with the singleton containing the final index. -/
 def typeDSpinGraphPerm (n : ℕ) (hn : 1 ≤ n) : Equiv.Perm (Finset (Fin n)) :=
   let last : Fin n := ⟨n - 1, by omega⟩
-  let toggle := fun s : Finset (Fin n) =>
-    if last ∈ s then s.erase last else insert last s
+  let toggle := fun s : Finset (Fin n) => s ∆ {last}
   {
     toFun := toggle
     invFun := toggle
     left_inv := by
       intro s
-      by_cases hlast : last ∈ s
-      · simp [toggle, hlast]
-      · simp [toggle, hlast]
+      exact symmDiff_symmDiff_cancel_right (a := {last}) (b := s)
     right_inv := by
       intro s
-      by_cases hlast : last ∈ s
-      · simp [toggle, hlast]
-      · simp [toggle, hlast]
+      exact symmDiff_symmDiff_cancel_right (a := {last}) (b := s)
   }
 
 /-- An index belongs to the graph-transformed sign set precisely when its old membership agrees
@@ -210,32 +206,17 @@ reversed there. -/
 @[simp]
 theorem mem_typeDSpinGraphPerm_iff (n : ℕ) (hn : 1 ≤ n) (s : Finset (Fin n)) (i : Fin n) :
     i ∈ typeDSpinGraphPerm n hn s ↔ (i ∈ s ↔ (i : ℕ) + 1 ≠ n) := by
-  by_cases hlast : (⟨n - 1, by omega⟩ : Fin n) ∈ s
-  · simp only [typeDSpinGraphPerm, Equiv.coe_fn_mk, hlast, ite_eq_left,
-      Finset.mem_erase]
-    by_cases hi : i = (⟨n - 1, by omega⟩ : Fin n)
-    · subst i
-      have hval : n - 1 + 1 = n := Nat.sub_add_cancel hn
-      simp [hlast, hval]
-    · have hilast : (i : ℕ) + 1 ≠ n := by
-        intro h
-        apply hi
-        apply Fin.ext
-        dsimp only
-        omega
-      simp [hi, hilast]
-  · simp only [typeDSpinGraphPerm, Equiv.coe_fn_mk, hlast]
-    by_cases hi : i = (⟨n - 1, by omega⟩ : Fin n)
-    · subst i
-      have hval : n - 1 + 1 = n := Nat.sub_add_cancel hn
-      simp [hlast, hval]
-    · have hilast : (i : ℕ) + 1 ≠ n := by
-        intro h
-        apply hi
-        apply Fin.ext
-        dsimp only
-        omega
-      simp [hi, hilast]
+  by_cases hi : i = (⟨n - 1, by omega⟩ : Fin n)
+  · subst i
+    have hval : n - 1 + 1 = n := Nat.sub_add_cancel hn
+    simp [typeDSpinGraphPerm, Finset.mem_symmDiff, hval]
+  · have hilast : (i : ℕ) + 1 ≠ n := by
+      intro h
+      apply hi
+      apply Fin.ext
+      dsimp only
+      omega
+    simp [typeDSpinGraphPerm, Finset.mem_symmDiff, hi, hilast]
 
 /-- Toggling the final sign twice is the identity. -/
 @[simp]
@@ -258,16 +239,20 @@ theorem even_card_typeDSpinGraphPerm_iff (n : ℕ) (hn : 1 ≤ n)
   let last : Fin n := ⟨n - 1, by omega⟩
   by_cases hlast : last ∈ s
   · have hcard : (typeDSpinGraphPerm n hn s).card + 1 = s.card := by
-      simpa only [typeDSpinGraphPerm, Equiv.coe_fn_mk, last, hlast, ite_eq_left]
+      have htoggle : s ∆ {last} = s.erase last := by
+        ext i
+        simp only [Finset.mem_symmDiff, Finset.mem_singleton, Finset.mem_erase]
+        aesop
+      simpa only [typeDSpinGraphPerm, Equiv.coe_fn_mk, last, htoggle]
         using Finset.card_erase_add_one hlast
     rw [← hcard, Nat.odd_add_one, Nat.not_odd_iff_even]
   · have hcard : (typeDSpinGraphPerm n hn s).card = s.card + 1 := by
-      have hlast' : (⟨n - 1, by omega⟩ : Fin n) ∉ s := by
-        simpa only [last] using hlast
-      rw [typeDSpinGraphPerm]
-      dsimp only [Equiv.coe_fn_mk]
-      rw [ite_eq_right hlast']
-      exact Finset.card_insert_of_notMem hlast'
+      have htoggle : s ∆ {last} = insert last s := by
+        ext i
+        simp only [Finset.mem_symmDiff, Finset.mem_singleton, Finset.mem_insert]
+        aesop
+      simpa only [typeDSpinGraphPerm, Equiv.coe_fn_mk, last, htoggle]
+        using Finset.card_insert_of_notMem hlast
     rw [hcard, Nat.even_add_one, Nat.not_even_iff_odd]
 
 /-- Equivalently, the graph permutation sends odd sign sets to even ones. -/
