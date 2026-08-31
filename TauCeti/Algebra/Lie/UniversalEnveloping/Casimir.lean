@@ -10,6 +10,9 @@ public import Mathlib.Algebra.Algebra.Subalgebra.Basic
 public import Mathlib.Algebra.Lie.Killing
 public import Mathlib.LinearAlgebra.BilinearForm.Properties
 
+-- Non-public: the enveloping-algebra dictionary appears only inside proofs.
+import TauCeti.Algebra.Lie.UniversalEnveloping.Module
+
 /-!
 # The Casimir element of a universal enveloping algebra
 
@@ -342,8 +345,9 @@ theorem representation_casimirElement_lie
     (casimirElement_mem_center K L) x m
 
 /-- **The Casimir operator is natural in the module.**  A homomorphism of Lie modules intertwines
-the two Casimir operators, being equivariant for the whole enveloping algebra. -/
-@[simp]
+the two Casimir operators, being equivariant for the whole enveloping algebra.  This is
+`TauCeti.UniversalEnvelopingAlgebra.map_representation`, which carries the `simp` attribute, at the
+Casimir element. -/
 theorem map_representation_casimirElement
     {M : Type w} [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M]
     {N : Type*} [AddCommGroup N] [Module K N] [LieRingModule L N] [LieModule K L N]

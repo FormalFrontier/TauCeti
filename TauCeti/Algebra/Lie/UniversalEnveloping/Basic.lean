@@ -23,8 +23,6 @@ additional structures such as filtrations, bialgebras, or antipodes.
   attached to a Lie module `M`, in particular the adjoint action of `U(L)` on `L` at `M = L`.
 * `TauCeti.UniversalEnvelopingAlgebra.representation_lie_of_mem_center`: a central element of
   `U(L)` acts on a Lie module by a map commuting with the Lie action.
-* `TauCeti.UniversalEnvelopingAlgebra.map_representation`: a homomorphism of Lie modules
-  intertwines the two enveloping-algebra actions.
 * `TauCeti.UniversalEnvelopingAlgebra.lie_map_ι`: an algebra representation maps the bracket of
   canonical Lie generators to the bracket of their images.
 * `TauCeti.UniversalEnvelopingAlgebra.lie_map_ι_eq_smul`: a Lie-bracket eigenvector remains one
@@ -41,7 +39,7 @@ additional structures such as filtrations, bialgebras, or antipodes.
 
 public section
 
-universe u v w x
+universe u v w
 
 namespace TauCeti.UniversalEnvelopingAlgebra
 
@@ -123,8 +121,9 @@ theorem representation_ι_apply (x : L) (m : M) :
   rw [representation_ι, LieModule.toEnd_apply_apply]
 
 /-- **A central element of `U(L)` acts on a Lie module by a map commuting with the Lie action.**
-Centrality is used only against the canonical Lie generators, which is exactly what the Leibniz
-rule for the module structure needs. -/
+Equivalently, `TauCeti.UniversalEnvelopingAlgebra.representation R L M u` is `L`-equivariant, that
+is, a homomorphism of Lie modules. Centrality is used only against the canonical Lie generators,
+which is what the Lie action is read off. -/
 theorem representation_lie_of_mem_center {u : U} (hu : u ∈ Subalgebra.center R U) (x : L) (m : M) :
     representation R L M u ⁅x, m⁆ = ⁅x, representation R L M u m⁆ := by
   have h := congrArg (representation R L M)
@@ -132,29 +131,6 @@ theorem representation_lie_of_mem_center {u : U} (hu : u ∈ Subalgebra.center R
   rw [map_mul, map_mul, representation_ι] at h
   have h₁ := congrArg (fun g : Module.End R M ↦ g m) h
   simpa only [Module.End.mul_apply, LieModule.toEnd_apply_apply] using h₁.symm
-
-variable (N : Type x) [AddCommGroup N] [Module R N] [LieRingModule L N] [LieModule R L N]
-
-/-- **A homomorphism of Lie modules intertwines the enveloping-algebra actions.** Equivariance for
-the canonical Lie generators is the defining property of such a homomorphism, and those generate
-`U(L)` as an algebra. -/
-theorem map_representation (f : M →ₗ⁅R,L⁆ N) (u : U) (m : M) :
-    f (representation R L M u m) = representation R L N u (f m) := by
-  revert m
-  induction u using induction_ι with
-  | ι x =>
-    intro m
-    rw [representation_ι_apply, representation_ι_apply, f.map_lie]
-  | algebraMap r =>
-    intro m
-    rw [AlgHom.commutes, AlgHom.commutes, Module.algebraMap_end_apply,
-      Module.algebraMap_end_apply, map_smul]
-  | add a b ha hb =>
-    intro m
-    rw [map_add, map_add, LinearMap.add_apply, LinearMap.add_apply, map_add, ha, hb]
-  | mul a b ha hb =>
-    intro m
-    rw [map_mul, map_mul, Module.End.mul_apply, Module.End.mul_apply, ha, hb]
 
 variable {R L}
 variable {B : Type w} [Ring B] [Algebra R B]
