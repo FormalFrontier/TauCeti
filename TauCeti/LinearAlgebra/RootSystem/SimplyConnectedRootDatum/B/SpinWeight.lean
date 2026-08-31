@@ -144,15 +144,6 @@ theorem algebraMap_typeBSpinWeight {n : ℕ} (s : Finset (Fin n)) :
 
 /-! ## A spanning family -/
 
-/-- The sign set which is positive through `i` and negative after `i`. Its spin weight is the
-fundamental weight vector at `i`, minus the terminal fundamental weight when `i` is nonterminal. -/
-private def typeBSpinCut {n : ℕ} (i : Fin n) : Finset (Fin n) :=
-  Finset.univ.filter fun j => j ≤ i
-
-private theorem mem_typeBSpinCut_iff {n : ℕ} (i j : Fin n) :
-    j ∈ typeBSpinCut i ↔ j ≤ i := by
-  simp [typeBSpinCut]
-
 /-- The all-positive sign weight has only its terminal fundamental-weight coordinate nonzero. -/
 private theorem typeBSpinWeight_univ_apply {n : ℕ} (i : Fin n) :
     typeBSpinWeight (Finset.univ : Finset (Fin n)) i =
@@ -169,18 +160,18 @@ private theorem typeBSpinWeight_univ_apply {n : ℕ} (i : Fin n) :
 /-- At a terminal node, the corresponding cut sign weight is the coordinate basis vector. -/
 private theorem typeBSpinWeight_cut_eq_single_of_isLast {n : ℕ} (i : Fin n)
     (hi : (i : ℕ) + 1 = n) :
-    typeBSpinWeight (typeBSpinCut i) = Pi.single i 1 := by
+    typeBSpinWeight (Finset.Iic i) = Pi.single i 1 := by
   classical
   funext j
   rw [typeBSpinWeight_apply, Pi.single_apply]
-  simp only [mem_typeBSpinCut_iff]
+  simp only [Finset.mem_Iic]
   split_ifs with hjnext hji hjsucc hjlast hji <;> simp_all <;> omega
 
 /-- At a nonterminal node, adding the all-positive weight to the cut sign weight gives the
 corresponding coordinate basis vector. -/
 private theorem typeBSpinWeight_cut_add_univ_eq_single {n : ℕ} (i : Fin n)
     (hi : (i : ℕ) + 1 < n) :
-    typeBSpinWeight (typeBSpinCut i) +
+    typeBSpinWeight (Finset.Iic i) +
         typeBSpinWeight (Finset.univ : Finset (Fin n)) = Pi.single i 1 := by
   classical
   funext j
@@ -189,12 +180,12 @@ private theorem typeBSpinWeight_cut_add_univ_eq_single {n : ℕ} (i : Fin n)
   by_cases hjnext : (j : ℕ) + 1 < n
   · have hjnotlast : ¬(j : ℕ) + 1 = n := by omega
     rw [ite_eq_left hjnext, ite_eq_right hjnotlast]
-    simp only [mem_typeBSpinCut_iff]
+    simp only [Finset.mem_Iic]
     simp only [orderSucc_le_iff j i hjnext]
     split_ifs <;> omega
   · have hjlast : (j : ℕ) + 1 = n := by omega
     rw [ite_eq_right hjnext, ite_eq_left hjlast]
-    simp only [mem_typeBSpinCut_iff]
+    simp only [Finset.mem_Iic]
     split_ifs <;> omega
 
 /-- **The type `Bₙ` spin weights generate the full simply connected character lattice.**
@@ -211,11 +202,11 @@ theorem span_range_typeBSpinWeight_eq_top (n : ℕ) :
   rw [Pi.basisFun_apply]
   by_cases hi : (i : ℕ) + 1 = n
   · rw [← typeBSpinWeight_cut_eq_single_of_isLast i hi]
-    exact Submodule.subset_span ⟨typeBSpinCut i, rfl⟩
+    exact Submodule.subset_span ⟨Finset.Iic i, rfl⟩
   · have hi' : (i : ℕ) + 1 < n := by omega
     rw [← typeBSpinWeight_cut_add_univ_eq_single i hi']
     exact Submodule.add_mem _
-      (Submodule.subset_span ⟨typeBSpinCut i, rfl⟩)
+      (Submodule.subset_span ⟨Finset.Iic i, rfl⟩)
       (Submodule.subset_span ⟨Finset.univ, rfl⟩)
 
 end TauCeti.DynkinType
