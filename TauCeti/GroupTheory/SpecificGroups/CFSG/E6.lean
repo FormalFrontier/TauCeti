@@ -64,20 +64,12 @@ namespace LieTypeIndex
 
 This is a constructor selector, not a mathematical property of a group. The enclosing
 `ValidLieTypeIndex` supplies the field and validity conditions. -/
-def IsTypeE6 : LieTypeIndex → Prop
+abbrev IsTypeE6 : LieTypeIndex → Prop
   | .E6 _ | .twistedE6 _ => True
   | _ => False
 
-/-- Characterization of the two type-`E₆` constructors. -/
-@[simp]
-theorem isTypeE6_iff (d : LieTypeIndex) : d.IsTypeE6 ↔
-    match d with
-    | .E6 _ | .twistedE6 _ => True
-    | _ => False :=
-  Iff.rfl
-
 instance : DecidablePred IsTypeE6 := fun d => by
-  cases d <;> rw [isTypeE6_iff] <;> infer_instance
+  cases d <;> simp only [IsTypeE6] <;> infer_instance
 
 /-- Neither type-`E₆` family uses a half-Frobenius, so both belong to the ordinary-or-graph-twisted
 lane of the Steinberg construction. -/
@@ -94,11 +86,11 @@ namespace E6LieIndex
 
 /-- Introduce a valid ordinary type-`E₆` index. -/
 abbrev ofE6 (q : PrimePower) (hvalid : (LieTypeIndex.E6 q).Valid) : E6LieIndex :=
-  ⟨⟨.E6 q, hvalid⟩, (LieTypeIndex.isTypeE6_iff _).mpr trivial⟩
+  ⟨⟨.E6 q, hvalid⟩, trivial⟩
 
 /-- Introduce a valid graph-twisted type-`E₆` index. -/
 abbrev ofTwistedE6 (q : PrimePower) (hvalid : (LieTypeIndex.twistedE6 q).Valid) : E6LieIndex :=
-  ⟨⟨.twistedE6 q, hvalid⟩, (LieTypeIndex.isTypeE6_iff _).mpr trivial⟩
+  ⟨⟨.twistedE6 q, hvalid⟩, trivial⟩
 
 /-- Every type-`E₆` index is one of the two introduction forms. -/
 theorem exists_eq_ofE6_or_exists_eq_ofTwistedE6 (d : E6LieIndex) :
@@ -110,7 +102,7 @@ theorem exists_eq_ofE6_or_exists_eq_ofTwistedE6 (d : E6LieIndex) :
   cases d
   case E6 q => exact fun hvalid _ ↦ .inl ⟨q, hvalid, rfl⟩
   case twistedE6 q => exact fun hvalid _ ↦ .inr ⟨q, hvalid, rfl⟩
-  all_goals exact fun _ hE6 ↦ ((LieTypeIndex.isTypeE6_iff _).mp hE6).elim
+  all_goals exact fun _ hE6 ↦ hE6.elim
 
 /-- A type-`E₆` index, regarded as an index with an ordinary or graph-twisted Frobenius. -/
 abbrev toGraphTwistedIndex (d : E6LieIndex) : GraphTwistedIndex :=
@@ -176,6 +168,7 @@ noncomputable def rootSubgroup (d : E6LieIndex)
 
 /-- The indexed root subgroup is the corresponding numbered root subgroup of the minuscule
 carrier. -/
+@[simp]
 theorem rootSubgroup_def (d : E6LieIndex) (k : Fin d.1.rank ⊕ Fin d.1.rank) :
     d.rootSubgroup k = E6Minuscule.rootSubgroupPoints (d.rootNodeEquiv k) d.1.Closure :=
   (rfl)
@@ -187,6 +180,7 @@ noncomputable abbrev simpleRootSubgroup (d : E6LieIndex) (i : Fin d.1.rank) :
 
 /-- A positive simple-root subgroup is the positive numbered root subgroup of the minuscule
 carrier. -/
+@[simp]
 theorem simpleRootSubgroup_def (d : E6LieIndex) (i : Fin d.1.rank) :
     d.simpleRootSubgroup i =
       E6Minuscule.rootSubgroupPoints (.inl (d.nodeEquiv i)) d.1.Closure := by
@@ -199,6 +193,7 @@ noncomputable abbrev negativeSimpleRootSubgroup (d : E6LieIndex) (i : Fin d.1.ra
 
 /-- A negative simple-root subgroup is the negative numbered root subgroup of the minuscule
 carrier. -/
+@[simp]
 theorem negativeSimpleRootSubgroup_def (d : E6LieIndex) (i : Fin d.1.rank) :
     d.negativeSimpleRootSubgroup i =
       E6Minuscule.rootSubgroupPoints (.inr (d.nodeEquiv i)) d.1.Closure := by
