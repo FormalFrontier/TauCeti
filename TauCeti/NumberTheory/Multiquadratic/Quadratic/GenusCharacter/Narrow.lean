@@ -100,6 +100,9 @@ genus character. Suppose nonzero integral ideals `I` and `J` satisfy `(x) I = (y
 is totally positive. If the element norms of `x` and `y` are coprime to the product of the factors
 in `t`, then the genus character has the same value on `N(I)` and `N(J)`.
 
+The nonvanishing hypotheses on `x` and `y` are separate because total positivity is vacuous over
+totally complex fields, where it does not exclude zero.
+
 By `NumberField.NarrowClassGroup.mk0_eq_mk0_iff`, the displayed ideal equality and positivity are
 exactly the data witnessing equality of the narrow classes of `I` and `J`. The extra coprimality
 conditions are the strong-approximation input still needed to package this result as a character
