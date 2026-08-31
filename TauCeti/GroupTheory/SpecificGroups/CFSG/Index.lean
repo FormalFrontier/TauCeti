@@ -726,12 +726,15 @@ theorem exists_eq_ofC (d : TypeCLieIndex) :
 /-- The rank of a validated type-`C` index is at least three. -/
 theorem three_le_rank (d : TypeCLieIndex) : 3 ≤ d.1.rank := by
   obtain ⟨rank, q, hvalid, rfl⟩ := d.exists_eq_ofC
-  exact ((inStandardRange_iff _).mp ((valid_iff _).mp hvalid).1).1
+  simpa only [ValidLieTypeIndex.rank, ValidLieTypeIndex.dynkinType,
+    LieTypeIndex.dynkinType_C, DynkinType.rank_C] using
+      ((inStandardRange_iff _).mp ((valid_iff _).mp hvalid).1).1
 
 /-- A validated type-`C` index has characteristic different from two. -/
 theorem characteristic_ne_two (d : TypeCLieIndex) : d.1.characteristic ≠ 2 := by
   obtain ⟨rank, q, hvalid, rfl⟩ := d.exists_eq_ofC
-  exact ((inStandardRange_iff _).mp ((valid_iff _).mp hvalid).1).2
+  simpa only [ValidLieTypeIndex.characteristic, LieTypeIndex.characteristic_C] using
+    ((inStandardRange_iff _).mp ((valid_iff _).mp hvalid).1).2
 
 end TypeCLieIndex
 
