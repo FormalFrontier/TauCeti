@@ -58,6 +58,30 @@ identification result. The cross-check against the `M24` of the
 `TauCetiRoadmap/CFSGStatement/README.md` asks for on the names that development covers, is still
 recorded below.
 
+## Independent source-to-Lean read-through
+
+An independent read-through used the bytes of the ATLAS Magma source `M24G1-P1.M` whose SHA-256
+digest is `3bf09bbeddfa76f9fedd79ba8264cbd2b4d1d22947412b305cddba3a50798114`. Its constructor
+`G<x,y>` fixes the generator order, and the later assignments `a := x; b := y` confirm that the
+source's `x,y` are the presentation generators called `a,b` here.
+
+The seven active constructor entries, in source order, are
+
+```text
+x², y³, (xy)²³, [x,y]¹², [x,yxy]⁵,
+(xy xy xy⁻¹)³ (xy xy⁻¹ xy⁻¹)³,
+(xy (xy xy⁻¹)³)⁴.
+```
+
+They agree in exponent, inverse placement, and source order with the seven entries of
+`m24Presentation_transcribed`, after substituting `s₁ = ab` and `s₋₁ = ab⁻¹` and using the source
+convention `[x,y] = x⁻¹y⁻¹xy`. Between the sixth and seventh active entries, the Magma file has a
+commented line `[x,y⁻¹xyxy]⁵` labelled redundant but useful. Because the comment delimiters keep
+it outside `Group<x,y | ...>`, omitting it from the seven-relator row is exact, and the ATLAS
+presentation page independently displays those same seven active words. This checks every source
+relator and the only commented-word boundary independently of the original transcription and
+closes this row's S1 source-to-Lean read-through.
+
 ## Independent comparison with `FiniteSimpleGroups`
 
 The comparison used `finite-simple-groups-lean` at commit
