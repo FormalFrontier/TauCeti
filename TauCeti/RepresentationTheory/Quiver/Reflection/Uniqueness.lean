@@ -49,12 +49,6 @@ where it is concentrated at the sink.
 
 ## Main results
 
-* `TauCeti.nonempty_iso_of_isZero_away_of_linearEquiv`: two representations vanishing away from a
-  sink are isomorphic as soon as their vertex spaces at that sink are, and
-  `TauCeti.nonempty_iso_of_dimVector_eq_of_forall_subsingleton`: the same conclusion from equality
-  of dimension vectors.
-* `TauCeti.nonempty_iso_of_nonempty_iso_reflectRep`: **the reflection functor at a sink reflects
-  isomorphisms** between representations whose incoming sums there are onto.
 * `TauCeti.nonempty_iso_of_dimVector_eq_of_indecomposable`: **two finite-dimensional
   indecomposable representations with the same dimension vector are isomorphic**, with
   `TauCeti.nonempty_iso_of_dimVector_eq_of_indecomposable_of_isAcyclic` the same statement over an
@@ -79,108 +73,6 @@ open CategoryTheory
 open _root_.TauCeti.Quiver
 
 universe u v w x
-
-/-! ### Representations concentrated at a sink -/
-
-section Concentrated
-
-variable {k : Type u} {Q : Type v} [Field k] [Quiver.{w} Q]
-variable {M N : QuiverRep.{u, v, w, max v w x} k Q} {i : Q}
-
-/-- **Two representations vanishing away from a sink are isomorphic as soon as their vertex spaces
-at that sink are.** Every component away from `i` is a map between zero objects, and there is no
-naturality condition to check at `i`, since no arrow leaves a sink. -/
-theorem nonempty_iso_of_isZero_away_of_linearEquiv (hi : IsSink i)
-    (hM : ∀ a : Q, a ≠ i → Limits.IsZero (M.obj a))
-    (hN : ∀ a : Q, a ≠ i → Limits.IsZero (N.obj a))
-    (e : M.obj ((Paths.of Q).obj i) ≃ₗ[k] N.obj ((Paths.of Q).obj i)) :
-    Nonempty (M ≅ N) := by
-  classical
-  have eIso : M.obj ((Paths.of Q).obj i) ≅ N.obj ((Paths.of Q).obj i) := e.toModuleIso
-  refine ⟨NatIso.ofComponents (fun a ↦ if h : a = (Paths.of Q).obj i then
-      eqToIso (congrArg M.obj h) ≪≫ eIso ≪≫ eqToIso (congrArg N.obj h).symm
-    else (hM a h).iso (hN a h)) fun {a b} p ↦ ?_⟩
-  by_cases ha : a = (Paths.of Q).obj i
-  · -- a path out of a sink is the identity, so the naturality square is trivial
-    subst ha
-    obtain rfl := hi.eq_of_path p
-    have hMp : M.map p = 𝟙 (M.obj a) := by
-      rw [hi.path_self_eq_nil p]
-      exact M.map_id a
-    have hNp : N.map p = 𝟙 (N.obj a) := by
-      rw [hi.path_self_eq_nil p]
-      exact N.map_id a
-    rw [hMp, hNp]
-    simp
-  · exact (hM a ha).eq_of_src _ _
-
-/-- **A representation concentrated at a sink is isomorphic to every finite-dimensional
-representation with the same dimension vector.** Equality of dimension vectors makes the comparison
-representation vanish wherever `M` does, and matches the two vertex spaces at the sink. Only the
-vertex space of `M` at the sink is asked to be finite-dimensional, since `M` is a subsingleton
-everywhere else; `N` is asked for it at every vertex, to read a vanishing dimension vector there as
-a vanishing vertex space. -/
-theorem nonempty_iso_of_dimVector_eq_of_forall_subsingleton (hi : IsSink i)
-    (hsub : ∀ a : Q, a ≠ i → Subsingleton (M.obj a))
-    (hfdM : FiniteDimensional k (M.obj ((Paths.of Q).obj i)))
-    (hfdN : IsFinDim.{u, v, w, max v w x} k Q N)
-    (hd : dimVector M = dimVector N) : Nonempty (M ≅ N) := by
-  have hfdN' := isFinDim_iff.mp hfdN
-  have hNzero : ∀ a : Q, a ≠ i → Limits.IsZero (N.obj a) := by
-    intro a ha
-    have hMa : Subsingleton (M.obj ((Paths.of Q).obj a)) := hsub a ha
-    have hfdNa := hfdN' ((Paths.of Q).obj a)
-    have h0 : Module.finrank k (N.obj ((Paths.of Q).obj a)) = 0 := by
-      rw [← dimVector_apply, ← congrFun hd a, dimVector_apply]
-      exact Module.finrank_zero_of_subsingleton (R := k)
-    have hss : Subsingleton (N.obj ((Paths.of Q).obj a)) := Module.finrank_zero_iff.mp h0
-    exact @ModuleCat.isZero_of_subsingleton k _ (N.obj a) hss
-  have hfdNi := hfdN' ((Paths.of Q).obj i)
-  have hfr : Module.finrank k (M.obj ((Paths.of Q).obj i))
-      = Module.finrank k (N.obj ((Paths.of Q).obj i)) := by
-    rw [← dimVector_apply, ← dimVector_apply, hd]
-  exact nonempty_iso_of_isZero_away_of_linearEquiv hi
-    (fun a ha ↦ @ModuleCat.isZero_of_subsingleton k _ (M.obj a) (hsub a ha)) hNzero
-    (LinearEquiv.ofFinrankEq _ _ hfr)
-
-end Concentrated
-
-/-! ### Reflection at a sink reflects isomorphisms -/
-
-section Reflect
-
-variable {k : Type u} {Q : Type v} [Field k] [Quiver.{w} Q] [Fintype Q]
-  [∀ a b : Q, Fintype (a ⟶ b)]
-variable {M N : QuiverRep.{u, v, w, max v w x} k Q} {i : Q}
-
-/-- **The reflection functor at a sink reflects isomorphisms**, between representations whose
-incoming sums there are onto. Fullness produces morphisms `f : M ⟶ N` and `g : N ⟶ M` reflecting
-to the two halves of the given isomorphism, and faithfulness turns the two triangle identities
-downstairs into the two upstairs.
-
-The reflection functor is not fully faithful on all of `TauCeti.QuiverRep k Q` -- it annihilates
-the vertex simple at `i` -- so `CategoryTheory.Functor.ReflectsIsomorphisms` and the machinery
-around it, which ask for `Full` and `Faithful` instances, do not apply, and the argument is made
-directly from `TauCeti.reflectionFunctor_map_surjective` and
-`TauCeti.reflectionFunctor_map_injective`. -/
-theorem nonempty_iso_of_nonempty_iso_reflectRep (hi : IsSink i)
-    (hsM : Function.Surjective (incomingSum M i))
-    (hsN : Function.Surjective (incomingSum N i))
-    (h : Nonempty (reflectRep M hi ≅ reflectRep N hi)) : Nonempty (M ≅ N) := by
-  obtain ⟨θ⟩ := h
-  have θ' : (reflectionFunctor i hi).obj M ≅ (reflectionFunctor i hi).obj N :=
-    eqToIso (reflectionFunctor_obj i hi M) ≪≫ θ ≪≫ eqToIso (reflectionFunctor_obj i hi N).symm
-  obtain ⟨f, hf⟩ := reflectionFunctor_map_surjective (M := M) (N := N) hi hsM θ'.hom
-  obtain ⟨g, hg⟩ := reflectionFunctor_map_surjective (M := N) (N := M) hi hsN θ'.inv
-  refine ⟨⟨f, g, ?_, ?_⟩⟩
-  · refine reflectionFunctor_map_injective (M := M) (N := M) hi hsM ?_
-    simp only [Functor.map_comp, hf, hg]
-    exact θ'.hom_inv_id.trans ((reflectionFunctor i hi).map_id M).symm
-  · refine reflectionFunctor_map_injective (M := N) (N := N) hi hsN ?_
-    simp only [Functor.map_comp, hf, hg]
-    exact θ'.inv_hom_id.trans ((reflectionFunctor i hi).map_id N).symm
-
-end Reflect
 
 /-! ### Uniqueness along a sink-admissible list -/
 
