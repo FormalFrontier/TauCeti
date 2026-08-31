@@ -858,17 +858,6 @@ section NormalFDRepAction
 
 variable [CommRing k]
 
-/-- **Conjugating the object carried by a representation precomposes that representation** with
-the conjugating automorphism.  `conjNormalFDRep` is `Action.res` along `MulAut.conjNormal g⁻¹` and
-`FDRep.of` changes neither the carrier nor the action, so the two objects are equal on the nose;
-this states that one definitional step once and for all, so that consumers need not unfold
-`FDRep.of` themselves. -/
-theorem conjNormalFDRep_of {V : Type u} [AddCommGroup V] [Module k V] [Module.Finite k V] (g : G)
-    (ρ : _root_.Representation k N V) :
-    conjNormalFDRep g (FDRep.of ρ) =
-      FDRep.of (ρ.comp (MulAut.conjNormal g⁻¹ : MulAut N).toMonoidHom) :=
-  rfl
-
 /-- The conjugate finite-dimensional action on a normal subgroup, as an honest equality. -/
 @[simp]
 theorem conjNormalFDRep_ρ (g : G) (A : FDRep k N) (x : N) :

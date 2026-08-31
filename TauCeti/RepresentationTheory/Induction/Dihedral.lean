@@ -8,8 +8,7 @@ module
 public import Mathlib.Analysis.Complex.Polynomial.Basic
 public import Mathlib.RingTheory.RootsOfUnity.Complex
 public import TauCeti.GroupTheory.SpecificGroups.Dihedral
-public import TauCeti.RepresentationTheory.Induction.Mackey.Irreducible
-public import TauCeti.RepresentationTheory.Simple.LinearCharacter
+public import TauCeti.RepresentationTheory.Induction.Mackey.LinearCharacter
 
 /-!
 # Inducing a linear character from the rotation subgroup of a dihedral group
@@ -19,14 +18,13 @@ representation induced from it has twice the dimension it was induced from. Indu
 character `ψ` of the rotations therefore produces a two-dimensional representation, and this file
 settles when it is irreducible: exactly when `ψ` is not its own inverse.
 
-The criterion is the Mackey irreducibility criterion for a normal subgroup
-(`TauCeti.simple_indFDRep_iff_of_normal`), which asks that no conjugate `{}^s ψ` with `s` outside
-the subgroup be isomorphic to `ψ`. For the dihedral group the conjugation is completely explicit:
-by `TauCeti.inv_mul_mul_of_notMem_dihedralRotations` an element outside the rotation subgroup
-inverts every rotation, so `{}^s ψ = ψ⁻¹` for *every* such `s`, and the criterion collapses to the
-single condition `ψ ≠ ψ⁻¹`, that some value of `ψ` is not a square root of `1`. Because a linear
-character is determined by the representation it carries, the condition is not only sufficient but
-necessary, and the result is an `iff`.
+The criterion is the Mackey irreducibility criterion for a linear character of a normal subgroup
+(`TauCeti.simple_indFDRep_ofLinearCharacter_iff`), which asks that no element `s` outside the
+subgroup stabilize `ψ`. For the dihedral group the conjugation is completely explicit: by
+`TauCeti.inv_mul_mul_of_notMem_dihedralRotations` an element outside the rotation subgroup inverts
+every rotation, so `{}^s ψ = ψ⁻¹` for *every* such `s`, and the criterion collapses to the single
+condition `ψ ≠ ψ⁻¹`, that some value of `ψ` is not a square root of `1`. That condition is not only
+sufficient but necessary, so the result is an `iff`.
 
 The concrete instance the roadmap asks for is `n = 4`: the character sending the rotation `r 1` of
 `D₄` to `i` has `ψ(r 1)² = -1 ≠ 1`, so it induces the two-dimensional irreducible representation
@@ -60,8 +58,8 @@ reduced modulo `n`, which is Mathlib's `pow_eq_pow_of_modEq`. Taking `ζ` in an 
 costs nothing and keeps the construction independent of the coefficient field.
 
 The coefficient field of the irreducibility criterion is constrained to `Type` rather than `Type*`:
-`TauCeti.simple_indFDRep_iff_of_normal` places the field and the group in a common universe, and
-`DihedralGroup n` lives in `Type`.
+`TauCeti.simple_indFDRep_ofLinearCharacter_iff` places the field and the group in a common
+universe, and `DihedralGroup n` lives in `Type`.
 
 ## References
 
@@ -118,11 +116,12 @@ for every `s` outside the rotation subgroup. This is
 criterion below reads off a single condition on `ψ`. -/
 theorem apply_conjNormal_of_notMem_dihedralRotations (ψ : dihedralRotations n →* M)
     {s : DihedralGroup n} (hs : s ∉ dihedralRotations n) (x : dihedralRotations n) :
-    ψ (MulAut.conjNormal s⁻¹ x) = (ψ x)⁻¹ := by
-  have hx : MulAut.conjNormal s⁻¹ x = x⁻¹ := by
+    ψ (MulAut.conjNormal s x) = (ψ x)⁻¹ := by
+  have hs' : s⁻¹ ∉ dihedralRotations n := fun h => hs (by simpa using inv_mem h)
+  have hx : MulAut.conjNormal s x = x⁻¹ := by
     refine Subtype.ext ?_
-    rw [MulAut.conjNormal_apply, inv_inv]
-    exact inv_mul_mul_of_notMem_dihedralRotations hs x.2
+    rw [MulAut.conjNormal_apply]
+    simpa using inv_mul_mul_of_notMem_dihedralRotations hs' x.2
   rw [hx, map_inv]
 
 end Conjugation
@@ -134,7 +133,7 @@ variable {k : Type} [Field k] {n : ℕ} [NeZero n]
 /-- **The induced representation is two-dimensional**: the rotation subgroup has index `2` and a
 linear character is one-dimensional. -/
 theorem finrank_indFDRep_ofLinearCharacter_dihedralRotations (ψ : dihedralRotations n →* kˣ) :
-    Module.finrank k (indFDRep (FDRep.of (Representation.ofLinearCharacter ψ))) = 2 := by
+    Module.finrank k (indFDRep (FDRep.ofLinearCharacter ψ)) = 2 := by
   rw [finrank_indFDRep, index_dihedralRotations]
   simp
 
@@ -145,37 +144,18 @@ exactly when the character is not its own inverse.** Conjugation by any reflecti
 character, so the Mackey criterion for the normal rotation subgroup asks precisely that `ψ⁻¹ ≠ ψ`,
 which is that some value of `ψ` fails to square to `1`. -/
 theorem simple_indFDRep_ofLinearCharacter_dihedralRotations_iff (ψ : dihedralRotations n →* kˣ) :
-    Simple (indFDRep (FDRep.of (Representation.ofLinearCharacter ψ))) ↔ ∃ x, ψ x ^ 2 ≠ 1 := by
-  rw [simple_indFDRep_iff_of_normal]
-  constructor
-  · rintro ⟨-, h⟩
-    by_contra hc
-    push Not at hc
-    -- Every value of `ψ` squares to `1`, so the conjugate character is `ψ` again and the
-    -- conjugate representation is literally the same object.
-    refine (h (DihedralGroup.sr 0) (sr_notMem_dihedralRotations 0)).false (eqToIso ?_)
-    have hψ : ψ.comp (MulAut.conjNormal (DihedralGroup.sr (0 : ZMod n))⁻¹ :
-        MulAut (dihedralRotations n)).toMonoidHom = ψ :=
-      MonoidHom.ext fun x => by
-        rw [MonoidHom.comp_apply, MulEquiv.coe_toMonoidHom,
-          apply_conjNormal_of_notMem_dihedralRotations ψ (sr_notMem_dihedralRotations 0) x,
-          inv_eq_iff_mul_eq_one, ← sq]
-        exact hc x
-    rw [conjNormalFDRep_of, Representation.ofLinearCharacter_comp, hψ]
-  · rintro ⟨x, hx⟩
-    refine ⟨inferInstance, fun s hs => ⟨fun e => hx ?_⟩⟩
-    -- The conjugate object is the representation of the conjugate character, and isomorphic
-    -- linear characters are equal.
-    have hobj : conjNormalFDRep s (FDRep.of (Representation.ofLinearCharacter ψ)) =
-        FDRep.of (Representation.ofLinearCharacter (ψ.comp
-          (MulAut.conjNormal s⁻¹ : MulAut (dihedralRotations n)).toMonoidHom)) := by
-      rw [conjNormalFDRep_of, Representation.ofLinearCharacter_comp]
-    have hcomp := congrArg (fun φ : dihedralRotations n →* kˣ => φ x)
-      (Representation.eq_of_nonempty_iso_ofLinearCharacter ⟨eqToIso hobj.symm ≪≫ e⟩)
-    rw [MonoidHom.comp_apply, MulEquiv.coe_toMonoidHom,
-      apply_conjNormal_of_notMem_dihedralRotations ψ hs x] at hcomp
-    rw [sq, ← inv_eq_iff_mul_eq_one]
-    exact hcomp
+    Simple (indFDRep (FDRep.ofLinearCharacter ψ)) ↔ ∃ x, ψ x ^ 2 ≠ 1 := by
+  rw [simple_indFDRep_ofLinearCharacter_iff]
+  -- Conjugation by any `s` outside the rotations inverts `ψ`, so `ψ ({}^s x) ≠ ψ x` says exactly
+  -- that `ψ x` is not its own inverse; only the existence of such an `x` is left on either side.
+  have key : ∀ {s : DihedralGroup n}, s ∉ dihedralRotations n →
+      ∀ x : dihedralRotations n, (ψ (MulAut.conjNormal s x) ≠ ψ x ↔ ψ x ^ 2 ≠ 1) := by
+    intro s hs x
+    rw [apply_conjNormal_of_notMem_dihedralRotations ψ hs x, ne_eq, ne_eq,
+      inv_eq_iff_mul_eq_one, ← sq]
+  refine ⟨fun h => ?_, fun ⟨x, hx⟩ s hs => ⟨x, (key hs x).mpr hx⟩⟩
+  obtain ⟨x, hx⟩ := h (DihedralGroup.sr 0) (sr_notMem_dihedralRotations 0)
+  exact ⟨x, (key (sr_notMem_dihedralRotations 0) x).mp hx⟩
 
 end Induction
 
@@ -220,7 +200,7 @@ theorem dihedralFourChar_injective : Function.Injective dihedralFourChar := by
 /-- **The representation of `D₄` induced from a faithful linear character of its rotation subgroup
 is irreducible**, by the Mackey criterion: conjugation by a reflection sends `i` to `-i`. -/
 theorem simple_indFDRep_dihedralFourChar :
-    Simple (indFDRep (FDRep.of (Representation.ofLinearCharacter dihedralFourChar))) := by
+    Simple (indFDRep (FDRep.ofLinearCharacter dihedralFourChar)) := by
   refine (simple_indFDRep_ofLinearCharacter_dihedralRotations_iff dihedralFourChar).mpr
     ⟨⟨DihedralGroup.r 1, r_mem_dihedralRotations 1⟩, fun hc => ?_⟩
   have h : (Complex.I) ^ 2 = 1 := by
@@ -231,8 +211,7 @@ theorem simple_indFDRep_dihedralFourChar :
 /-- **The induced representation of `D₄` is two-dimensional**, so it is *the* two-dimensional
 irreducible representation of `D₄`. -/
 theorem finrank_indFDRep_dihedralFourChar :
-    Module.finrank ℂ
-      (indFDRep (FDRep.of (Representation.ofLinearCharacter dihedralFourChar))) = 2 :=
+    Module.finrank ℂ (indFDRep (FDRep.ofLinearCharacter dihedralFourChar)) = 2 :=
   finrank_indFDRep_ofLinearCharacter_dihedralRotations dihedralFourChar
 
 end DihedralFour
