@@ -95,6 +95,8 @@ theorem isIsogeny_iff_isIsogeny_hopfSpec_map (f : H₀ ⟶ K₀) :
       GroupScheme.IsIsogeny
         ((AlgebraicGeometry.hopfSpec (CommRingCat.of k)).map f.op) := by
   rw [IsIsogeny, GroupScheme.isIsogeny_iff]
+  -- The underlying scheme morphism of `hopfSpec.map f.op` reduces definitionally to the
+  -- `Spec.map` induced by the underlying ring homomorphism of `f`.
   change f.hom.toAlgHom.Finite ∧ f.hom.toAlgHom.toRingHom.FaithfullyFlat ↔
     AlgebraicGeometry.IsFinite
       (AlgebraicGeometry.Spec.map (CommRingCat.ofHom f.hom.toAlgHom.toRingHom)) ∧
@@ -215,6 +217,8 @@ theorem isCentralIsogeny_unit_of_isCocomm (K : _root_.CommHopfAlgCat.{u} R)
     IsCentralIsogeny
       (CommHopfAlgCat.ofHom (Bialgebra.unitBialgHom R K)) := by
   refine ⟨⟨?_, ?_⟩, ?_⟩
+  -- Mathlib has no lemma identifying the ring-hom carrier of `unitBialgHom`; both goals
+  -- reduce definitionally to the corresponding properties of the algebra map.
   · change (algebraMap R K).Finite
     exact RingHom.finite_algebraMap.mpr inferInstance
   · change (algebraMap R K).FaithfullyFlat
