@@ -110,6 +110,9 @@ hypothesis of the generic theorem.
 ring of integers of a finite Galois extension `L/K`, then two arithmetic Frobenius elements at
 `Q` coincide whenever `L/K` is unramified at `Q`.
 
+This is a conditional uniqueness statement and makes no existence assertion, so `Q` need not be
+nonzero.
+
 This is the Galois-group form of `IsArithFrobAt.eq_of_isUnramifiedAt`. -/
 theorem isArithFrobAt_eq_of_isUnramifiedAt {K L : Type*} [Field K] [Field L]
     [NumberField K] [NumberField L] [Algebra K L] [IsGalois K L]
