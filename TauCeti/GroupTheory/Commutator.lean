@@ -43,7 +43,7 @@ variable {G : Type*} [Group G] {X Y : Set G} {N : Subgroup G}
 
 /-- Conjugating by a product is the same as conjugating successively, first by the second
 factor and then by the first. -/
-theorem conj_mul_assoc (a b x : G) :
+theorem conj_mul_eq_conj_conj (a b x : G) :
     a * b * x * (a * b)⁻¹ = a * (b * x * b⁻¹) * a⁻¹ := by
   simp [mul_inv_rev, mul_assoc]
 

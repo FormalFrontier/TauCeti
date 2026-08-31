@@ -306,7 +306,7 @@ theorem conjugationAlgHom_coassoc :
     rw [comp_conjugationAlgHom mulFirst, comp_conjugationAlgHom actSecond,
       hmulFirstLeft, hmulFirstRight, hactSecondLeft, hactSecondRight]
     apply congrArg WithConv.ofConv
-    exact conj_mul_assoc g₁ g₂ x
+    exact conj_mul_eq_conj_conj g₁ g₂ x
   simpa only [mulFirst, actSecond, assoc, c, AlgHom.comp_assoc] using hcoassoc
 
 end HopfAlgebra

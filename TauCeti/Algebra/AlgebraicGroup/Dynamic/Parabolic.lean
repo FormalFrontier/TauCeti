@@ -590,7 +590,8 @@ theorem limit_mem_levi (g : parabolic A l) : limit A l g ∈ levi A l := by
         AlgHom.mapValue (prodSubst R A) (conjugate A l (g : WithConv (H →ₐ[R] A))) := by
       rw [← MonoidHom.comp_apply, ← AlgHom.mapValue_comp, ← prodSubst_comp_toLaurent,
         AlgHom.mapValue_comp, MonoidHom.comp_apply, hF]
-    rw [hl, hr, conjugate_apply, constPoint, mapValue_conjugate, genericPoint, ← conj_mul_assoc,
+    rw [hl, hr, conjugate_apply, constPoint, mapValue_conjugate, genericPoint,
+      ← conj_mul_eq_conj_conj,
       ← map_mul,
       mapValue_conjugate, map_prodSubst_genericUnit, prodSubst_comp_const, prodUnit,
       mul_comm (Units.map (IsScalarTower.toAlgHom R (LaurentPolynomial A)
