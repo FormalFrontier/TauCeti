@@ -26,6 +26,8 @@ surjectivity by a weaker statement about points over the base field.
 
 * `TauCeti.CommHopfAlgCat.IsIsogeny`: a finite faithfully flat coordinate morphism.
 * `TauCeti.CommHopfAlgCat.IsCentralIsogeny`: an isogeny with central kernel Hopf ideal.
+* `TauCeti.CommHopfAlgCat.isIsogeny_iff_isFinite_flat_surjective_hopfSpec_map`: the
+  coordinate isogeny conditions agree with the corresponding scheme-morphism properties.
 * `TauCeti.CommHopfAlgCat.isIsogeny_iff_isIsogeny_hopfSpec_map`: the coordinate and
   group-scheme definitions agree over a field.
 * `TauCeti.CommHopfAlgCat.isCentralIsogeny_iff_isCentralIsogeny_hopfSpec_map`: the analogous
@@ -81,20 +83,17 @@ theorem isCentralIsogeny_iff (f : H ⟶ K) :
         (kernelHopfIdeal f).IsCentral := by
   rw [IsCentralIsogeny, IsIsogeny, and_assoc]
 
-section Field
-
-variable {k : Type u} [Field k] {H₀ K₀ : _root_.CommHopfAlgCat.{u} k}
-
--- This isolates the definitional computation of Mathlib's bundled `hopfSpec` functor at the
--- morphism-property boundary where the source and target schemes are propositionally aligned.
-private lemma isogeny_conditions_hopfSpec_map_iff (f : H₀ ⟶ K₀) :
-    f.hom.toAlgHom.Finite ∧ f.hom.toAlgHom.toRingHom.FaithfullyFlat ↔
+/-- A coordinate morphism is an isogeny exactly when its contravariant Hopf-spectrum map is
+finite, flat, and surjective. This criterion works over an arbitrary commutative base ring. -/
+theorem isIsogeny_iff_isFinite_flat_surjective_hopfSpec_map
+    {H₀ K₀ : _root_.CommHopfAlgCat.{u} R} (f : H₀ ⟶ K₀) :
+    IsIsogeny f ↔
       AlgebraicGeometry.IsFinite
-          ((AlgebraicGeometry.hopfSpec (CommRingCat.of k)).map f.op).hom.hom.left ∧
+          ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map f.op).hom.hom.left ∧
         AlgebraicGeometry.Flat
-            ((AlgebraicGeometry.hopfSpec (CommRingCat.of k)).map f.op).hom.hom.left ∧
+            ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map f.op).hom.hom.left ∧
           AlgebraicGeometry.Surjective
-            ((AlgebraicGeometry.hopfSpec (CommRingCat.of k)).map f.op).hom.hom.left := by
+            ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map f.op).hom.hom.left := by
   change f.hom.toAlgHom.Finite ∧ f.hom.toAlgHom.toRingHom.FaithfullyFlat ↔
     AlgebraicGeometry.IsFinite
       (AlgebraicGeometry.Spec.map (CommRingCat.ofHom f.hom.toAlgHom.toRingHom)) ∧
@@ -106,6 +105,10 @@ private lemma isogeny_conditions_hopfSpec_map_iff (f : H₀ ⟶ K₀) :
     AlgebraicGeometry.flat_and_surjective_SpecMap_iff]
   rfl
 
+section Field
+
+variable {k : Type u} [Field k] {H₀ K₀ : _root_.CommHopfAlgCat.{u} k}
+
 /-- Over a field, the coordinate-algebra definition of an isogeny agrees with the existing
 group-scheme definition after applying the contravariant Hopf spectrum functor. -/
 theorem isIsogeny_iff_isIsogeny_hopfSpec_map (f : H₀ ⟶ K₀) :
@@ -113,7 +116,7 @@ theorem isIsogeny_iff_isIsogeny_hopfSpec_map (f : H₀ ⟶ K₀) :
       GroupScheme.IsIsogeny
         ((AlgebraicGeometry.hopfSpec (CommRingCat.of k)).map f.op) := by
   rw [IsIsogeny, GroupScheme.isIsogeny_iff]
-  exact isogeny_conditions_hopfSpec_map_iff f
+  exact isIsogeny_iff_isFinite_flat_surjective_hopfSpec_map f
 
 /-- Over a field, the coordinate-algebra definition of a central isogeny agrees with the
 existing group-scheme definition after applying the contravariant Hopf spectrum functor. -/
