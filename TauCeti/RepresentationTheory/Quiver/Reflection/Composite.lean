@@ -48,9 +48,11 @@ dichotomy for indecomposables is supplied by
   representation is carried to the zero representation.
 * `TauCeti.isFinDim_reflectionFunctorList_obj` and `TauCeti.isFinDim_coxeterFunctor_obj`:
   pointwise finite-dimensional vertex spaces stay finite-dimensional.
-* `TauCeti.isZero_coxeterFunctor_obj_iff_isZero_reflectionFunctorList_obj`: the Coxeter functor and
-  the composite it transports annihilate the same representations, so a statement about the
-  endofunctor may be proved one reflection at a time.
+* `TauCeti.isZero_coxeterFunctor_obj_iff_isZero_reflectionFunctorList_obj` and
+  `TauCeti.nonempty_iso_coxeterFunctor_obj_iff_nonempty_iso_reflectionFunctorList_obj`: the
+  Coxeter functor and the composite it transports annihilate the same representations and identify
+  the same pairs of them, so a statement about the endofunctor may be proved one reflection at a
+  time.
 * `TauCeti.indecomposable_and_dimVector_reflectionFunctorList_or_isZero` and
   `TauCeti.indecomposable_and_dimVector_coxeterFunctor_or_isZero`: the dichotomy above, for a
   general sink-admissible list and for the Coxeter functor.
@@ -302,6 +304,15 @@ private theorem indecomposable_transportCodomain_obj {q r : _root_.Quiver.{w} V}
   exact Iff.rfl
 
 omit fV in
+private theorem nonempty_iso_transportCodomain_obj {q r : _root_.Quiver.{w} V} (h : r = q)
+    (F : @QuiverRep.{u, v, w, max v w x} k V fld q ⥤ @QuiverRep.{u, v, w, max v w x} k V fld r)
+    (M N : @QuiverRep.{u, v, w, max v w x} k V fld q) :
+    Nonempty ((transportCodomain h F).obj M ≅ (transportCodomain h F).obj N)
+      ↔ Nonempty (F.obj M ≅ F.obj N) := by
+  subst h
+  exact Iff.rfl
+
+omit fV in
 private theorem isZero_transportCodomain_obj {q r : _root_.Quiver.{w} V} (h : r = q)
     (F : @QuiverRep.{u, v, w, max v w x} k V fld q ⥤ @QuiverRep.{u, v, w, max v w x} k V fld r)
     (M : @QuiverRep.{u, v, w, max v w x} k V fld q) :
@@ -402,6 +413,22 @@ theorem isZero_coxeterFunctor_obj_iff_isZero_reflectionFunctorList_obj (q : _roo
     Limits.IsZero ((coxeterFunctor.{u, v, w, x} k q hq hnd hall hl).obj M)
       ↔ Limits.IsZero ((reflectionFunctorList k l q hq hl).obj M) :=
   isZero_transportCodomain_obj _ _ M
+
+/-- **The Coxeter functor identifies two representations exactly when the reflection-functor
+composite along the ordering does.** Like
+`TauCeti.isZero_coxeterFunctor_obj_iff_isZero_reflectionFunctorList_obj`, this only undoes the
+transport of the codomain, so that an isomorphism of Coxeter images may be descended one
+reflection at a time. -/
+theorem nonempty_iso_coxeterFunctor_obj_iff_nonempty_iso_reflectionFunctorList_obj
+    (q : _root_.Quiver.{w} V)
+    (hq : ∀ a b : V, Fintype (@_root_.Quiver.Hom V q a b)) {l : List V} (hnd : l.Nodup)
+    (hall : ∀ v : V, v ∈ l) (hl : Quiver.IsSinkAdmissible q l)
+    (M N : @QuiverRep.{u, v, w, max v w x} k V fld q) :
+    Nonempty ((coxeterFunctor.{u, v, w, x} k q hq hnd hall hl).obj M
+        ≅ (coxeterFunctor.{u, v, w, x} k q hq hnd hall hl).obj N)
+      ↔ Nonempty ((reflectionFunctorList k l q hq hl).obj M
+        ≅ (reflectionFunctorList k l q hq hl).obj N) :=
+  nonempty_iso_transportCodomain_obj _ _ M N
 
 /-- **The Coxeter functor annihilates the zero representation.** -/
 theorem isZero_coxeterFunctor_obj (q : _root_.Quiver.{w} V)

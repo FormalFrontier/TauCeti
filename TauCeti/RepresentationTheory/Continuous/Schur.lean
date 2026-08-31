@@ -5,11 +5,9 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Analysis.Normed.Module.Basic
 public import Mathlib.LinearAlgebra.Trace
-public import Mathlib.RepresentationTheory.Continuous.Basic
 public import Mathlib.RepresentationTheory.Irreducible
-public import Mathlib.Topology.Algebra.Module.FiniteDimension
+public import TauCeti.RepresentationTheory.Continuous.Intertwining
 
 /-!
 # Schur's lemma for continuous intertwiners
@@ -27,15 +25,13 @@ half.
 
 Forgetting continuity is only sound in the direction "continuous intertwiner ↦ intertwiner"; the
 hypothesis of the vanishing half is inequivalence as *continuous* representations, which is the
-weaker of the two hypotheses to discharge. `TauCeti.ContRepresentation.nonempty_equiv_iff` is what
+weaker of the two hypotheses to discharge. `ContRepresentation.nonempty_equiv_iff` is what
 closes the gap: in finite dimensions over a complete field the two notions of equivalence agree,
-because every linear map out of a finite-dimensional normed space is continuous.
+because every linear map out of a finite-dimensional Hausdorff topological vector space is
+continuous.
 
 ## Main statements
 
-* `TauCeti.ContRepresentation.nonempty_equiv_iff`: two finite-dimensional continuous
-  representations are equivalent as continuous representations if and only if they are equivalent
-  as abstract representations.
 * `TauCeti.ContRepresentation.eq_zero_of_isEmpty_equiv`: every continuous intertwiner between
   inequivalent irreducible finite-dimensional representations is zero.
 * `TauCeti.ContRepresentation.exists_eq_smul_one_of_irreducible`: every continuous self-intertwiner
@@ -62,30 +58,11 @@ variable {𝕜 G V W : Type*} [NontriviallyNormedField 𝕜] [CompleteSpace 𝕜
 
 variable {π : ContRepresentation 𝕜 G V} {ρ : ContRepresentation 𝕜 G W}
 
-/-- **Continuity is automatic for finite-dimensional representations.** Two finite-dimensional
-continuous representations over a complete field are equivalent as continuous representations
-exactly when their underlying abstract representations are equivalent.
-
-The forward direction forgets continuity. The reverse direction is where the finite-dimensionality
-is used: a linear equivalence of finite-dimensional normed spaces is a homeomorphism, so an
-abstract equivalence carries no extra data. -/
-theorem nonempty_equiv_iff :
-    Nonempty (_root_.ContRepresentation.Equiv π ρ) ↔
-      Nonempty (Representation.Equiv π.toRepresentation ρ.toRepresentation) := by
-  constructor
-  · rintro ⟨φ⟩
-    refine ⟨Representation.Equiv.mk φ.toContinuousLinearEquiv.toLinearEquiv fun g ↦ ?_⟩
-    ext v
-    exact congr($(φ.isIntertwining g) v)
-  · rintro ⟨φ⟩
-    refine ⟨_root_.ContRepresentation.Equiv.mk φ.toLinearEquiv.toContinuousLinearEquiv fun g ↦ ?_⟩
-    ext v
-    exact congr($(φ.isIntertwining' g) v)
-
 /-- **Schur's lemma, vanishing half.** A continuous intertwiner between inequivalent irreducible
 finite-dimensional continuous representations is zero.
 
-Inequivalence is asked of the continuous representations, which by `nonempty_equiv_iff` is the same
+Inequivalence is asked of the continuous representations, which by
+`_root_.ContRepresentation.nonempty_equiv_iff` is the same
 condition as inequivalence of the underlying abstract representations. No hypothesis on the field
 beyond completeness is needed: this half of Schur's lemma does not need eigenvalues, so it does not
 need algebraic closedness. -/
@@ -96,7 +73,7 @@ theorem eq_zero_of_isEmpty_equiv (hπ : Representation.IsIrreducible π.toRepres
   let : Representation.IsIrreducible π.toRepresentation := hπ
   let : Representation.IsIrreducible ρ.toRepresentation := hρ
   have : IsEmpty (Representation.Equiv π.toRepresentation ρ.toRepresentation) :=
-    ⟨fun φ ↦ hne.false (nonempty_equiv_iff.2 ⟨φ⟩).some⟩
+    ⟨fun φ ↦ hne.false (_root_.ContRepresentation.nonempty_equiv_iff.2 ⟨φ⟩).some⟩
   exact ContIntertwiningMap.toIntertwiningMap_injective (Subsingleton.elim _ _)
 
 end Vanishing

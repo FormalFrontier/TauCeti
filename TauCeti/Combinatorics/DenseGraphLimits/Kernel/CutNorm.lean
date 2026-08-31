@@ -458,6 +458,14 @@ theorem cutNorm_neg (K : SymmKernel Ω μ) : cutNorm μ (-K) = cutNorm μ K := b
   rw [cutNorm_eq_cutNormSet, cutNormSet_def, cutNorm_eq_cutNormSet, cutNormSet_def]
   simp
 
+/-- Reversing a difference does not change its cut norm: `‖K - L‖□ = ‖L - K‖□`.
+
+Deliberately not `@[simp]`: neither argument order is a meaningful canonical form, so there is
+nothing for such a rule to normalize towards. -/
+theorem cutNorm_sub_rev (K L : SymmKernel Ω μ) :
+    cutNorm μ (K - L) = cutNorm μ (L - K) := by
+  rw [← neg_sub L K, cutNorm_neg]
+
 /-- The cut norm satisfies the triangle inequality. -/
 theorem cutNorm_add_le (K L : SymmKernel Ω μ) :
     cutNorm μ (K + L) ≤ cutNorm μ K + cutNorm μ L := by

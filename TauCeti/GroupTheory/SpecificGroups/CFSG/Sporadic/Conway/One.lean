@@ -39,8 +39,45 @@ The library identifies this record as a presentation of `Co₁` originating in P
 whose construction uses low-rank representations and graphs for sporadic groups. The stored data
 is a full presentation of the abstract group, not a semi-presentation for recognizing generators
 in an already constructed group. This file asserts no order, finiteness, simplicity, or
-identification result. A separate source-to-Lean read-through remains part of the S1 review artifact
-required by the roadmap.
+identification result.
+
+## Independent source-to-Lean read-through
+
+An independent read-through used the bytes of `gpl.g` whose SHA-256 digest is
+`8b90a7a65317a585b5b74d015083bd2fa3db8a969c117a220d00d7e8773103c8`. The exact source record is
+
+```text
+presdef := [ "b4h3a3b5c3d3f4c3e4a,b4g4f,e6f6h", ,
+    "a=(cf)^2,e=(bg)^2,b=(ef)^3,d=(bh)^2,d=(eah)^3,\
+     (adfh)^3,(baefg)^3,(cef)^7,(adefcefgh)^(39)",,  ],
+```
+
+`GetGenerators` gives the decoder's first-occurrence order `b,h,a,c,d,f,e,g`; the Lean row instead
+uses the alphabetical order `a,b,c,d,e,f,g,h`. After that explicit renaming, `DeCoxList` and its
+calls to `AddTrivialRelations` and `AddNonEdgeRelations` give the same relation multiset recorded by
+`co1Presentation_relatorLetters`, regrouped by kind. Entries 1--8 are the eight generator squares;
+entries 9--21 are
+
+```text
+(ab)^3,(ae)^4,(ah)^3,(bc)^5,(bg)^4,(bh)^4,(cd)^3,
+(ce)^3,(cf)^4,(df)^3,(ef)^6,(fg)^4,(fh)^6;
+```
+
+and entries 22--36 are the exponent-two nonedges
+
+```text
+ac,ad,af,ag, bd,be,bf, cg,ch, de,dg,dh, eg,eh, gh.
+```
+
+`MakeWordList` compiles an equality `x = y` as `x⁻¹y`. Entries 37--45 are therefore, in source
+order, `a⁻¹(cf)²`, `e⁻¹(bg)²`, `b⁻¹(ef)³`, `d⁻¹(bh)²`, `d⁻¹(eah)³`, `(adfh)³`, `(baefg)³`,
+`(cef)⁷`, and `(adefcefgh)³⁹`. There is no change to any word or exponent and no dropped or
+duplicated relation, only the presentation-irrelevant renaming and regrouping just described. This
+closes the row's S1 source-to-Lean read-through.
+
+The independent `FiniteSimpleGroups` comparison does not apply: at commit
+`7f09e33a9ceef6b59ce03e34cd4f0558c763e325`, that development has sporadic constructions for
+`Co₂` and `Co₃` but not `Co₁`.
 
 The row is a sealed definition, so it publishes an equation for each of its fields: the transcribed
 relator expressions with their generator indices written out and this file's three private relator
@@ -57,6 +94,8 @@ These field equations and the decidable checks beside them follow the shape that
 * `TauCeti.Sporadic.co1Presentation`: the GPL finite presentation of the first Conway group `Co₁`.
 * `TauCeti.Sporadic.co1Presentation_transcribed` and the equations for the remaining fields: the
   characterization of the sealed row.
+* `TauCeti.Sporadic.co1Presentation_relatorLetters`: the forty-five compiled words checked against
+  the decoder output in the independent source-to-Lean read-through.
 * `TauCeti.Sporadic.co1Presentation_map_length_relators`,
   `TauCeti.Sporadic.co1Presentation_totalLength` and
   `TauCeti.Sporadic.co1Presentation_relatorsCyclicallyReduced`: the three checks on the compiled
@@ -68,6 +107,9 @@ These field equations and the decidable checks beside them follow the shape that
   <https://doris.tudelft.nl/~rlindenbergh/GPL/gpl.g>.
 * C. E. Praeger and L. H. Soicher, *Low Rank Representations and Graphs for Sporadic Groups*,
   Cambridge University Press, 1997, Chapter 4, doi:10.1017/CBO9780511526039.005.
+* KitaKen1, `finite-simple-groups-lean`, commit
+  `7f09e33a9ceef6b59ce03e34cd4f0558c763e325`,
+  <https://github.com/KitaKen1/finite-simple-groups-lean/tree/7f09e33a9ceef6b59ce03e34cd4f0558c763e325/FiniteSimpleGroups/Sporadic>.
 -/
 
 public section
@@ -173,8 +215,9 @@ def co1Presentation : GroupPresentation where
     relations, thirteen labeled-edge relations, and fifteen omitted-edge relations. Append the \
     nine words in presdef[3], interpreting each equality as left-hand inverse times right-hand \
     side, and reindex the named generators alphabetically. The expected relator count and total \
-    length are derived from this exact expansion. A separate source-to-Lean read-through remains \
-    an S1 review obligation."
+    length are derived from this exact expansion. The module documentation records the completed \
+    itemized source-to-Lean read-through. FiniteSimpleGroups does not cover Co1, so its separate \
+    permutation-group comparison does not apply."
   expectedGeneratorCount := 8
   expectedRelatorCount := 45
   transcribed := co1NodeAndEdgeRelators ++ co1NonedgeRelators ++ co1AdditionalRelators
@@ -222,8 +265,10 @@ theorem co1Presentation_transcriptionNotes :
       to eight square relations, thirteen labeled-edge relations, and fifteen omitted-edge \
       relations. Append the nine words in presdef[3], interpreting each equality as left-hand \
       inverse times right-hand side, and reindex the named generators alphabetically. The \
-      expected relator count and total length are derived from this exact expansion. A separate \
-      source-to-Lean read-through remains an S1 review obligation." := by
+      expected relator count and total length are derived from this exact expansion. The module \
+      documentation records the completed itemized source-to-Lean read-through. \
+      FiniteSimpleGroups does not cover Co1, so its separate permutation-group comparison does \
+      not apply." := by
   simp [co1Presentation]
 
 /-- The generator count `Co₁`'s source states. With
@@ -305,6 +350,38 @@ theorem co1Presentation_transcribed :
           .gen ⟨2, by simp⟩ ⬝ .gen ⟨4, by simp⟩ ⬝ .gen ⟨5, by simp⟩ ⬝ .gen ⟨6, by simp⟩ ⬝
           .gen ⟨7, by simp⟩) 39 ] := by
   simp [co1Presentation, co1NodeAndEdgeRelators, co1NonedgeRelators, co1AdditionalRelators]
+
+/-- The compiled relator words of `Co₁`, generated from the nodes, edges, nonedges, and nine
+additional words of `GPLTable.Co1.1`. A letter `(i, true)` is generator `i`, while `(i, false)` is
+its inverse. -/
+theorem co1Presentation_relatorLetters :
+    co1Presentation.relatorLetters =
+      let powWord (w : List (Nat × Bool)) (n : ℕ) := (List.replicate n w).flatten
+      let squareWords := (List.range 8).map fun k => powWord [(k, true)] 2
+      let edgeSpecs : List (Nat × Nat × Nat) :=
+        [(0, 1, 3), (0, 4, 4), (0, 7, 3), (1, 2, 5), (1, 6, 4), (1, 7, 4),
+          (2, 3, 3), (2, 4, 3), (2, 5, 4), (3, 5, 3), (4, 5, 6), (5, 6, 4), (5, 7, 6)]
+      let edgeWords := edgeSpecs.map fun (r, s, n) => powWord [(r, true), (s, true)] n
+      let nonedgePairs : List (Nat × Nat) :=
+        [(0, 2), (0, 3), (0, 5), (0, 6), (1, 3), (1, 4), (1, 5), (2, 6),
+          (2, 7), (3, 4), (3, 6), (3, 7), (4, 6), (4, 7), (6, 7)]
+      let nonedgeWords := nonedgePairs.map fun (r, s) => powWord [(r, true), (s, true)] 2
+      squareWords ++ edgeWords ++ nonedgeWords ++
+        [[(0, false)] ++ powWord [(2, true), (5, true)] 2,
+          [(4, false)] ++ powWord [(1, true), (6, true)] 2,
+          [(1, false)] ++ powWord [(4, true), (5, true)] 3,
+          [(3, false)] ++ powWord [(1, true), (7, true)] 2,
+          [(3, false)] ++ powWord [(4, true), (0, true), (7, true)] 3,
+          powWord [(0, true), (3, true), (5, true), (7, true)] 3,
+          powWord [(1, true), (0, true), (4, true), (5, true), (6, true)] 3,
+          powWord [(2, true), (4, true), (5, true)] 7,
+          powWord [(0, true), (3, true), (4, true), (5, true), (2, true), (4, true),
+            (5, true), (6, true), (7, true)] 39] := by
+  simp only [GroupPresentation.relatorLetters_def, GroupPresentation.relators_def,
+    co1Presentation_transcribed, List.map_cons, List.map_nil, Relator.toWord_mul,
+    Relator.toWord_pow, Relator.toWord_gen, Relator.toWord_inv, FreeGroup.invRev,
+    List.map_flatten, List.map_replicate, List.reverse_cons, List.reverse_nil, Bool.not_true,
+    List.cons_append, List.nil_append, List.range_succ, List.range_zero]
 
 /-- The generator and relator counts recorded for `Co₁` agree with the transcribed data. -/
 theorem co1Presentation_matchesMetadata : co1Presentation.matchesMetadata := by

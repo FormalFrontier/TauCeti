@@ -36,7 +36,7 @@ the instance used here, is — but nothing in the transport needs the two to agr
 This supplies the smallness hypothesis that
 `TauCeti/CategoryTheory/GrothendieckGroup/Split.lean` asks of a category before its split
 Grothendieck group is defined, in the case of `FDRep k G`, whose representation-ring
-instantiation is `TauCeti/RepresentationTheory/RepresentationRing.lean`.
+instantiation is `TauCeti/RepresentationTheory/RepresentationRing/Basic.lean`.
 
 ## Main statements
 
