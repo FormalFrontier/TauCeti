@@ -10,8 +10,8 @@ public import TauCeti.Probability.ProbabilityMassFunction.Finite
 /-!
 # Finite coupling gluing
 
-For finite probability spaces, this file gives the elementary gluing formula used by the
-finite-step reduction of the graphon cut-distance triangle inequality.  If `π` is a law on
+For finite probability spaces, this file gives the elementary gluing formula used by finite
+coupling arguments.  If `π` is a law on
 `α × β` and `σ` is a law on `β × γ` with the same `β` marginal, the glued law on
 `α × β × γ` has mass
 
@@ -34,8 +34,7 @@ will consume.
 ## Main results
 
 * `finiteGluing_apply` gives the formula;
-* `finiteGluing_map_left` and `finiteGluing_map_right` recover the two input laws;
-* `finiteGluing_map_outer` records the outer coupling produced by the gluing.
+* `map_prodMap_id_fst_finiteGluing` and `map_snd_finiteGluing` recover the two input laws.
 
 ## References
 
@@ -60,20 +59,17 @@ namespace PMF
 
 variable (π : PMF (α × β)) (σ : PMF (β × γ))
 
-/-- The mass of the middle atom `b` in the first input law. -/
-def finiteGluingMiddleMass (π : PMF (α × β)) (b : β) : ℝ≥0∞ := π.map Prod.snd b
-
 /-- The unnormalised finite gluing weight.  The zero branch is the canonical harmless value at a
 zero-mass middle atom. -/
 private def finiteGluingWeight (π : PMF (α × β)) (σ : PMF (β × γ))
     (b : β) (a : α) (c : γ) : ℝ≥0∞ :=
-  if finiteGluingMiddleMass π b = 0 then 0
-  else π (a, b) * σ (b, c) / finiteGluingMiddleMass π b
+  if π.map Prod.snd b = 0 then 0
+  else π (a, b) * σ (b, c) / π.map Prod.snd b
 
 private theorem middleMass_eq_sum (π : PMF (α × β)) (b : β) :
-    (let _ := Fintype.card β; finiteGluingMiddleMass π b = ∑ a, π (a, b)) := by
+    (let _ := Fintype.card β; π.map Prod.snd b = ∑ a, π (a, b)) := by
   classical
-  rw [finiteGluingMiddleMass, PMF.map_apply]
+  rw [PMF.map_apply]
   calc
     (∑' a : α × β, if b = a.2 then π a else 0) =
         ∑ a : α, ∑ b' : β, if b = b' then π (a, b') else 0 := by
@@ -96,7 +92,7 @@ private theorem middleMass_eq_sum_right (σ : PMF (β × γ)) (b : β) :
 
 private theorem middleMass_eq_zero_iff (π : PMF (α × β)) (b : β) :
   (let _ := Fintype.card α; let _ := Fintype.card β;
-    finiteGluingMiddleMass π b = 0 ↔ ∀ a, π (a, b) = 0) := by
+    π.map Prod.snd b = 0 ↔ ∀ a, π (a, b) = 0) := by
   classical
   rw [middleMass_eq_sum]
   simp
@@ -105,34 +101,34 @@ private theorem finiteGluingWeight_sum (π : PMF (α × β)) (σ : PMF (β × γ
     (h : π.map Prod.snd = σ.map Prod.fst) :
     ∑ p : α × β × γ, finiteGluingWeight π σ p.2.1 p.1 p.2.2 = 1 := by
   classical
-  have hmid : ∀ b, finiteGluingMiddleMass π b = σ.map Prod.fst b := by
+  have hmid : ∀ b, π.map Prod.snd b = σ.map Prod.fst b := by
     intro b
-    simpa only [finiteGluingMiddleMass] using congrArg (fun q : PMF β => q b) h
+    exact congrArg (fun q : PMF β => q b) h
   have hslice : ∀ b, ∑ a, ∑ c,
-      finiteGluingWeight π σ b a c = finiteGluingMiddleMass π b := by
+      finiteGluingWeight π σ b a c = π.map Prod.snd b := by
     intro b
-    by_cases hb : finiteGluingMiddleMass π b = 0
-    · have hb' : finiteGluingMiddleMass π b = 0 ↔ ∀ a, π (a, b) = 0 := by
-        simpa using middleMass_eq_zero_iff π b
+    by_cases hb : π.map Prod.snd b = 0
+    · have hb' : π.map Prod.snd b = 0 ↔ ∀ a, π (a, b) = 0 := by
+        exact middleMass_eq_zero_iff π b
       rw [hb'] at hb
-      have hb' : finiteGluingMiddleMass π b = 0 := by
+      have hb' : π.map Prod.snd b = 0 := by
         rw [middleMass_eq_sum]
         simp [hb]
       rw [hb']
       simp [finiteGluingWeight, hb']
     · simp only [finiteGluingWeight, hb, ↓reduceIte]
       calc
-        ∑ a, ∑ c, π (a, b) * σ (b, c) / finiteGluingMiddleMass π b =
+        ∑ a, ∑ c, π (a, b) * σ (b, c) / π.map Prod.snd b =
             ∑ a, (π (a, b) * ∑ c, σ (b, c)) /
-              finiteGluingMiddleMass π b := by
+              π.map Prod.snd b := by
                 apply Finset.sum_congr rfl
                 intro a ha
                 simp only [div_eq_mul_inv, Finset.sum_mul, Finset.mul_sum]
         _ = ((∑ a, π (a, b)) * (∑ c, σ (b, c))) /
-              finiteGluingMiddleMass π b := by
+              π.map Prod.snd b := by
                   simp only [div_eq_mul_inv, Finset.sum_mul]
-        _ = finiteGluingMiddleMass π b := by
-          have hσ : ∑ c, σ (b, c) = finiteGluingMiddleMass π b := by
+        _ = π.map Prod.snd b := by
+          have hσ : ∑ c, σ (b, c) = π.map Prod.snd b := by
             rw [← middleMass_eq_sum_right σ b, ← hmid b]
           rw [hσ]
           rw [← middleMass_eq_sum π b]
@@ -144,16 +140,15 @@ private theorem finiteGluingWeight_sum (π : PMF (α × β)) (σ : PMF (β × γ
           -- Expand the right-associated product type before swapping the two outer sums.
           simp only [Fintype.sum_prod_type]
           rw [Finset.sum_comm]
-    _ = ∑ b : β, finiteGluingMiddleMass π b := by
+    _ = ∑ b : β, π.map Prod.snd b := by
       apply Finset.sum_congr rfl
       intro b hb
       exact hslice b
     _ = 1 := by
-      simp only [finiteGluingMiddleMass]
       simpa only [tsum_fintype] using (π.map Prod.snd).tsum_coe
 
 /-- The finite gluing of two laws with a common middle marginal.  At a zero-mass middle atom the
-formula is zero; this is the only branch needed to make the construction total. -/
+formula is explicitly set to zero, making the intended value at such atoms visible. -/
 def finiteGluing (h : π.map Prod.snd = σ.map Prod.fst) : PMF (α × β × γ) :=
   PMF.ofFintype (fun p => finiteGluingWeight π σ p.2.1 p.1 p.2.2) (finiteGluingWeight_sum π σ h)
 
@@ -161,9 +156,10 @@ def finiteGluing (h : π.map Prod.snd = σ.map Prod.fst) : PMF (α × β × γ) 
 @[simp]
 theorem finiteGluing_apply (h : π.map Prod.snd = σ.map Prod.fst) (a : α) (b : β) (c : γ) :
     finiteGluing π σ h (a, b, c) =
-      if finiteGluingMiddleMass π b = 0 then 0 else
-        π (a, b) * σ (b, c) / finiteGluingMiddleMass π b := by
-  congr 1
+      if π.map Prod.snd b = 0 then 0 else
+        π (a, b) * σ (b, c) / π.map Prod.snd b := by
+  rw [finiteGluing, PMF.ofFintype_apply]
+  rfl
 
 variable {δ : Type*} [instFintypeδ : Fintype δ] [DecidableEq δ]
 
@@ -179,7 +175,8 @@ private theorem finiteGluing_map_apply (h : π.map Prod.snd = σ.map Prod.fst)
   by_cases hx : f a = x <;> simp [hx]
 
 /-- The `(α, β)` marginal of a finite gluing is its first input law. -/
-theorem finiteGluing_map_left (h : π.map Prod.snd = σ.map Prod.fst) :
+@[simp]
+theorem map_prodMap_id_fst_finiteGluing (h : π.map Prod.snd = σ.map Prod.fst) :
     (finiteGluing π σ h).map (fun p => (p.1, p.2.1)) = π := by
   classical
   apply PMF.ext
@@ -203,19 +200,19 @@ theorem finiteGluing_map_left (h : π.map Prod.snd = σ.map Prod.fst) :
           rcases x with ⟨a, b, c⟩
           simp_all [Prod.ext_iff]
     _ = π p := by
-      have hmid : finiteGluingMiddleMass π p.2 = σ.map Prod.fst p.2 := by
-        simpa only [finiteGluingMiddleMass] using congrArg (fun q : PMF β => q p.2) h
-      by_cases hb : finiteGluingMiddleMass π p.2 = 0
-      · have hb' : finiteGluingMiddleMass π p.2 = 0 ↔ ∀ a, π (a, p.2) = 0 := by
-          simpa using middleMass_eq_zero_iff π p.2
+      have hmid : π.map Prod.snd p.2 = σ.map Prod.fst p.2 := by
+        exact congrArg (fun q : PMF β => q p.2) h
+      by_cases hb : π.map Prod.snd p.2 = 0
+      · have hb' : π.map Prod.snd p.2 = 0 ↔ ∀ a, π (a, p.2) = 0 := by
+          exact middleMass_eq_zero_iff π p.2
         rw [hb'] at hb
         simp [finiteGluingWeight, hb p.1]
       · simp only [finiteGluingWeight, hb, ↓reduceIte]
         calc
           (∑ c, π (p.1, p.2) * σ (p.2, c) /
-              finiteGluingMiddleMass π p.2) =
-              (π (p.1, p.2) * ∑ c, σ (p.2, c)) /
-                finiteGluingMiddleMass π p.2 := by
+              π.map Prod.snd p.2) =
+                (π (p.1, p.2) * ∑ c, σ (p.2, c)) /
+                π.map Prod.snd p.2 := by
                   simp only [div_eq_mul_inv, Finset.sum_mul, Finset.mul_sum]
           _ = π p := by
             rw [← middleMass_eq_sum_right σ p.2, ← hmid]
@@ -223,7 +220,8 @@ theorem finiteGluing_map_left (h : π.map Prod.snd = σ.map Prod.fst) :
             exact (π.map Prod.snd).apply_ne_top p.2
 
 /-- The `(β, γ)` marginal of a finite gluing is its second input law. -/
-theorem finiteGluing_map_right (h : π.map Prod.snd = σ.map Prod.fst) :
+@[simp]
+theorem map_snd_finiteGluing (h : π.map Prod.snd = σ.map Prod.fst) :
     (finiteGluing π σ h).map (fun p => (p.2.1, p.2.2)) = σ := by
   classical
   apply PMF.ext
@@ -246,13 +244,13 @@ theorem finiteGluing_map_right (h : π.map Prod.snd = σ.map Prod.fst) :
         · intro x hx
           simp_all
     _ = σ p := by
-      have hmid : finiteGluingMiddleMass π p.1 = σ.map Prod.fst p.1 := by
-        simpa only [finiteGluingMiddleMass] using congrArg (fun q : PMF β => q p.1) h
-      by_cases hb : finiteGluingMiddleMass π p.1 = 0
-      · have hb' : finiteGluingMiddleMass π p.1 = 0 ↔ ∀ a, π (a, p.1) = 0 := by
-          simpa using middleMass_eq_zero_iff π p.1
+      have hmid : π.map Prod.snd p.1 = σ.map Prod.fst p.1 := by
+        exact congrArg (fun q : PMF β => q p.1) h
+      by_cases hb : π.map Prod.snd p.1 = 0
+      · have hb' : π.map Prod.snd p.1 = 0 ↔ ∀ a, π (a, p.1) = 0 := by
+          exact middleMass_eq_zero_iff π p.1
         rw [hb'] at hb
-        have hmzero : finiteGluingMiddleMass π p.1 = 0 := by
+        have hmzero : π.map Prod.snd p.1 = 0 := by
           rw [middleMass_eq_sum]
           simp [hb]
         have hσzero : ∀ c, σ (p.1, c) = 0 := by
@@ -266,38 +264,14 @@ theorem finiteGluing_map_right (h : π.map Prod.snd = σ.map Prod.fst) :
       · simp only [finiteGluingWeight, hb, ↓reduceIte]
         calc
           (∑ a, π (a, p.1) * σ (p.1, p.2) /
-              finiteGluingMiddleMass π p.1) =
+              π.map Prod.snd p.1) =
               ((∑ a, π (a, p.1)) * σ (p.1, p.2)) /
-                finiteGluingMiddleMass π p.1 := by
+                π.map Prod.snd p.1 := by
                   simp only [div_eq_mul_inv, Finset.sum_mul]
           _ = σ p := by
             rw [← middleMass_eq_sum π p.1, mul_comm]
             apply ENNReal.mul_div_cancel_right hb
             exact (π.map Prod.snd).apply_ne_top p.1
 
-/-- The outer `(α, γ)` marginal of a finite gluing is a coupling of the outer marginals. -/
-theorem finiteGluing_map_outer (h : π.map Prod.snd = σ.map Prod.fst) :
-    ((finiteGluing π σ h).map (fun p => (p.1, p.2.2))).map Prod.fst = π.map Prod.fst ∧
-      ((finiteGluing π σ h).map (fun p => (p.1, p.2.2))).map Prod.snd = σ.map Prod.snd := by
-  classical
-  constructor
-  · rw [PMF.map_comp]
-    calc
-      (finiteGluing π σ h).map (Prod.fst ∘ fun p => (p.1, p.2.2)) =
-          (finiteGluing π σ h).map
-            (Prod.fst ∘ fun p => (p.1, p.2.1)) := by
-              congr 1
-      _ = ((finiteGluing π σ h).map (fun p => (p.1, p.2.1))).map Prod.fst := by
-        rw [PMF.map_comp]
-      _ = π.map Prod.fst := by rw [finiteGluing_map_left]
-  · rw [PMF.map_comp]
-    calc
-      (finiteGluing π σ h).map (Prod.snd ∘ fun p => (p.1, p.2.2)) =
-          (finiteGluing π σ h).map
-            (Prod.snd ∘ fun p => (p.2.1, p.2.2)) := by
-              congr 1
-      _ = ((finiteGluing π σ h).map (fun p => (p.2.1, p.2.2))).map Prod.snd := by
-        rw [PMF.map_comp]
-      _ = σ.map Prod.snd := by rw [finiteGluing_map_right]
 
 end PMF
