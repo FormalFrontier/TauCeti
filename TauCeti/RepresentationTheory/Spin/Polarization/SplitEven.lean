@@ -67,111 +67,152 @@ theorem polar_splitEvenForm (K : Type u) [CommRing K] (n : ℕ)
   simp [QuadraticMap.polar]
   ring
 
+/-- The coordinate axis in the standard split even-dimensional space. -/
+private abbrev splitEvenW (K : Type u) [CommRing K] (n : ℕ) :
+    Submodule K (SplitEvenSpace K n) :=
+  (⊥ : Submodule K (Module.Dual K (Fin n → K))).prod ⊤
+
+/-- The dual-coordinate axis in the standard split even-dimensional space. -/
+private abbrev splitEvenW' (K : Type u) [CommRing K] (n : ℕ) :
+    Submodule K (SplitEvenSpace K n) :=
+  (⊤ : Submodule K (Module.Dual K (Fin n → K))).prod ⊥
+
+/-- The zero orthogonal remainder in the standard split even-dimensional space. -/
+private abbrev splitEvenLine (K : Type u) [CommRing K] (n : ℕ) :
+    Submodule K (SplitEvenSpace K n) := ⊥
+
+/-- The first coordinate-axis equivalence used by the standard split polarization. -/
+private noncomputable def splitEvenWEquiv (K : Type u) [CommRing K] (n : ℕ) :
+    splitEvenW K n ≃ₗ[K] Fin n → K :=
+  { toFun := fun x ↦ x.1.2
+    invFun := fun x ↦ ⟨(0, x), by simp [splitEvenW]⟩
+    left_inv := fun x ↦ by
+      apply Subtype.ext
+      rcases x with ⟨⟨f, x⟩, hx⟩
+      simp only [splitEvenW, Submodule.mem_prod, Submodule.mem_bot, Submodule.mem_top,
+        and_true] at hx
+      subst f
+      rfl
+    right_inv := fun _ ↦ rfl
+    map_add' := fun _ _ ↦ rfl
+    map_smul' := fun _ _ ↦ rfl }
+
+/-- The second coordinate-axis equivalence used by the standard split polarization. -/
+private noncomputable def splitEvenW'Equiv (K : Type u) [CommRing K] (n : ℕ) :
+    splitEvenW' K n ≃ₗ[K] Module.Dual K (Fin n → K) :=
+  { toFun := fun x ↦ x.1.1
+    invFun := fun f ↦ ⟨(f, 0), by simp [splitEvenW']⟩
+    left_inv := fun x ↦ by
+      apply Subtype.ext
+      rcases x with ⟨⟨f, x⟩, hx⟩
+      simp only [splitEvenW', Submodule.mem_prod, Submodule.mem_top, Submodule.mem_bot,
+        true_and] at hx
+      subst x
+      rfl
+    right_inv := fun _ ↦ rfl
+    map_add' := fun _ _ ↦ rfl
+    map_smul' := fun _ _ ↦ rfl }
+
+/-- The coordinate decomposition equivalence used by the standard split polarization. -/
+private noncomputable def splitEvenDecompositionEquiv
+    (K : Type u) [CommRing K] (n : ℕ) :
+    ((splitEvenW K n × splitEvenW' K n) × splitEvenLine K n) ≃ₗ[K] SplitEvenSpace K n :=
+  { toFun := fun x ↦ (x.1.1 : SplitEvenSpace K n) + x.1.2 + x.2
+    invFun := fun x ↦
+      ((⟨(0, x.2), by simp [splitEvenW]⟩, ⟨(x.1, 0), by simp [splitEvenW']⟩),
+        ⟨0, by simp [splitEvenLine]⟩)
+    left_inv := fun x ↦ by
+      rcases x with ⟨⟨⟨⟨f, a⟩, ha⟩, ⟨⟨g, b⟩, hb⟩⟩, ⟨⟨h, c⟩, hc⟩⟩
+      simp only [splitEvenW, Submodule.mem_prod, Submodule.mem_bot, Submodule.mem_top,
+        and_true] at ha
+      simp only [splitEvenW', Submodule.mem_prod, Submodule.mem_top, Submodule.mem_bot,
+        true_and] at hb
+      simp only [splitEvenLine, Submodule.mem_bot, Prod.mk_eq_zero] at hc
+      rcases hc with ⟨rfl, rfl⟩
+      subst f
+      subst b
+      apply Prod.ext
+      · apply Prod.ext
+        · apply Subtype.ext
+          simp
+        · apply Subtype.ext
+          simp
+      · apply Subtype.ext
+        apply Prod.ext <;> rfl
+    right_inv := fun x ↦ by
+      ext <;> simp
+    map_add' := fun x y ↦ by
+      ext <;> simp <;> ring
+    map_smul' := fun a x ↦ by
+      ext <;> simp [smul_add] }
+
+/-- The polar pairing equivalence between the two coordinate axes. -/
+private noncomputable def splitEvenPairingEquiv (K : Type u) [CommRing K] (n : ℕ) :
+    splitEvenW' K n ≃ₗ[K] Module.Dual K (splitEvenW K n) :=
+  (splitEvenW'Equiv K n).trans (splitEvenWEquiv K n).dualMap
+
+private theorem splitEvenPairingEquiv_apply (K : Type u) [CommRing K] (n : ℕ)
+    (y : splitEvenW' K n) (x : splitEvenW K n) :
+    splitEvenPairingEquiv K n y x = QuadraticMap.polar (splitEvenForm K n) x y := by
+  rcases x with ⟨⟨f, x⟩, hx⟩
+  rcases y with ⟨⟨g, y⟩, hy⟩
+  simp only [splitEvenW, Submodule.mem_prod, Submodule.mem_bot, Submodule.mem_top,
+    and_true] at hx
+  simp only [splitEvenW', Submodule.mem_prod, Submodule.mem_top, Submodule.mem_bot,
+    true_and] at hy
+  subst f
+  subst y
+  rw [splitEvenPairingEquiv, LinearEquiv.trans_apply, LinearEquiv.dualMap_apply]
+  simp [splitEvenWEquiv, splitEvenW'Equiv, polar_splitEvenForm]
+
+private theorem splitEvenPairing_separatingLeft (K : Type u) [CommRing K] (n : ℕ)
+    (x : splitEvenW K n)
+    (hx : ∀ y : splitEvenW' K n, QuadraticMap.polar (splitEvenForm K n) x y = 0) :
+    x = 0 := by
+  rcases x with ⟨⟨g, a⟩, hg⟩
+  simp only [splitEvenW, Submodule.mem_prod, Submodule.mem_bot, Submodule.mem_top,
+    and_true] at hg
+  subst g
+  apply (splitEvenWEquiv K n).injective
+  apply (Module.forall_dual_apply_eq_zero_iff K
+    (splitEvenWEquiv K n ⟨(0, a), by simp [splitEvenW]⟩)).1
+  intro f
+  let y : splitEvenW' K n := (splitEvenW'Equiv K n).symm f
+  have hy := hx y
+  simpa [splitEvenWEquiv, splitEvenW'Equiv, y, polar_splitEvenForm] using hy
+
 /-- The canonical polarization of the standard split quadratic space.
 
 The coordinate axis is the first isotropic summand, the dual-coordinate axis is the second,
 and the orthogonal remainder is zero. -/
 noncomputable def splitEvenPolarization (K : Type u) [CommRing K] (n : ℕ) :
     SpinPolarizationData (splitEvenForm K n) := by
-  let W : Submodule K (SplitEvenSpace K n) :=
-    (⊥ : Submodule K (Module.Dual K (Fin n → K))).prod ⊤
-  let W' : Submodule K (SplitEvenSpace K n) :=
-    (⊤ : Submodule K (Module.Dual K (Fin n → K))).prod ⊥
-  let line : Submodule K (SplitEvenSpace K n) := ⊥
-  let eW : W ≃ₗ[K] Fin n → K :=
-    { toFun := fun x ↦ x.1.2
-      invFun := fun x ↦ ⟨(0, x), by simp [W]⟩
-      left_inv := fun x ↦ by
-        apply Subtype.ext
-        rcases x with ⟨⟨f, x⟩, hx⟩
-        simp only [W, Submodule.mem_prod, Submodule.mem_bot, Submodule.mem_top, and_true] at hx
-        subst f
-        rfl
-      right_inv := fun _ ↦ rfl
-      map_add' := fun _ _ ↦ rfl
-      map_smul' := fun _ _ ↦ rfl }
-  let eW' : W' ≃ₗ[K] Module.Dual K (Fin n → K) :=
-    { toFun := fun x ↦ x.1.1
-      invFun := fun f ↦ ⟨(f, 0), by simp [W']⟩
-      left_inv := fun x ↦ by
-        apply Subtype.ext
-        rcases x with ⟨⟨f, x⟩, hx⟩
-        simp only [W', Submodule.mem_prod, Submodule.mem_top, Submodule.mem_bot, true_and] at hx
-        subst x
-        rfl
-      right_inv := fun _ ↦ rfl
-      map_add' := fun _ _ ↦ rfl
-      map_smul' := fun _ _ ↦ rfl }
-  let decomp : ((W × W') × line) ≃ₗ[K] SplitEvenSpace K n :=
-    { toFun := fun x ↦ (x.1.1 : SplitEvenSpace K n) + x.1.2 + x.2
-      invFun := fun x ↦
-        ((⟨(0, x.2), by simp [W]⟩, ⟨(x.1, 0), by simp [W']⟩),
-          ⟨0, by simp [line]⟩)
-      left_inv := fun x ↦ by
-        rcases x with ⟨⟨⟨⟨f, a⟩, ha⟩, ⟨⟨g, b⟩, hb⟩⟩, ⟨⟨h, c⟩, hc⟩⟩
-        simp only [W, Submodule.mem_prod, Submodule.mem_bot, Submodule.mem_top, and_true] at ha
-        simp only [W', Submodule.mem_prod, Submodule.mem_top, Submodule.mem_bot, true_and] at hb
-        simp only [line, Submodule.mem_bot, Prod.mk_eq_zero] at hc
-        rcases hc with ⟨rfl, rfl⟩
-        subst f
-        subst b
-        apply Prod.ext
-        · apply Prod.ext
-          · apply Subtype.ext
-            simp
-          · apply Subtype.ext
-            simp
-        · apply Subtype.ext
-          apply Prod.ext <;> rfl
-      right_inv := fun x ↦ by
-        ext <;> simp
-      map_add' := fun x y ↦ by
-        ext <;> simp <;> ring
-      map_smul' := fun a x ↦ by
-        ext <;> simp [smul_add] }
-  let pairing : W' ≃ₗ[K] Module.Dual K W :=
-    eW'.trans eW.dualMap
   refine
-    { W := W
-      W' := W'
-      line := line
-      decompositionEquiv := decomp
+    { W := splitEvenW K n
+      W' := splitEvenW' K n
+      line := splitEvenLine K n
+      decompositionEquiv := splitEvenDecompositionEquiv K n
       decompositionEquiv_apply := fun x ↦ rfl
       isotropic_W := ?_
       isotropic_W' := ?_
-      pairingEquiv := pairing
-      pairingEquiv_apply := ?_
-      pairing_separatingLeft := ?_
+      pairingEquiv := splitEvenPairingEquiv K n
+      pairingEquiv_apply := splitEvenPairingEquiv_apply K n
+      pairing_separatingLeft := splitEvenPairing_separatingLeft K n
       lineCoordinate := 0
       lineCoordinate_injective := ?_
       lineCoordinate_sq := ?_
       line_orthogonal_W := ?_
       line_orthogonal_W' := ?_ }
   · rintro ⟨⟨f, x⟩, hx⟩
-    simp only [W, Submodule.mem_prod, Submodule.mem_bot, Submodule.mem_top, and_true] at hx
+    simp only [splitEvenW, Submodule.mem_prod, Submodule.mem_bot, Submodule.mem_top,
+      and_true] at hx
     subst f
     simp
   · rintro ⟨⟨f, x⟩, hx⟩
-    simp only [W', Submodule.mem_prod, Submodule.mem_top, Submodule.mem_bot, true_and] at hx
+    simp only [splitEvenW', Submodule.mem_prod, Submodule.mem_top, Submodule.mem_bot,
+      true_and] at hx
     subst x
     simp
-  · rintro ⟨⟨f, x⟩, hx⟩ ⟨⟨g, y⟩, hy⟩
-    simp only [W', Submodule.mem_prod, Submodule.mem_top, Submodule.mem_bot, true_and] at hx
-    simp only [W, Submodule.mem_prod, Submodule.mem_bot, Submodule.mem_top, and_true] at hy
-    subst x
-    subst g
-    rw [LinearEquiv.trans_apply, LinearEquiv.dualMap_apply]
-    simp [eW, eW', polar_splitEvenForm]
-  · intro x hx
-    rcases x with ⟨⟨g, a⟩, hg⟩
-    simp only [W, Submodule.mem_prod, Submodule.mem_bot, Submodule.mem_top, and_true] at hg
-    subst g
-    apply eW.injective
-    apply (Module.forall_dual_apply_eq_zero_iff K (eW ⟨(0, a), by simp [W]⟩)).1
-    intro f
-    let y : W' := eW'.symm f
-    have hy := hx y
-    simpa [eW, eW', y, polar_splitEvenForm] using hy
   · intro x y _
     exact Subsingleton.elim x y
   · intro z
@@ -208,27 +249,12 @@ theorem splitEvenPolarization_line (K : Type u) [CommRing K] (n : ℕ) :
     (splitEvenPolarization K n).line = ⊥ := by
   rw [splitEvenPolarization]
 
-/-- The coordinate equivalence from the first isotropic summand of the standard split
-polarization to `Fin n → K`. -/
-noncomputable def splitEvenWEquiv (K : Type u) [CommRing K] (n : ℕ) :
-    (splitEvenPolarization K n).W ≃ₗ[K] Fin n → K :=
-  { toFun := fun x ↦ x.1.2
-    invFun := fun x ↦ ⟨(0, x), by simp⟩
-    left_inv := fun x ↦ by
-      apply Subtype.ext
-      rcases x with ⟨⟨f, x⟩, hx⟩
-      simp only [splitEvenPolarization_W, Submodule.mem_prod, Submodule.mem_bot,
-        Submodule.mem_top, and_true] at hx
-      subst f
-      rfl
-    right_inv := fun _ ↦ rfl
-    map_add' := fun _ _ ↦ rfl
-    map_smul' := fun _ _ ↦ rfl }
-
 /-- The coordinate basis of the first isotropic summand in the standard split polarization. -/
 noncomputable def splitEvenBasis (K : Type u) [CommRing K] (n : ℕ) :
     Module.Basis (Fin n) K (splitEvenPolarization K n).W :=
-  (Pi.basisFun K (Fin n)).map (splitEvenWEquiv K n).symm
+  (Pi.basisFun K (Fin n)).map <|
+    (splitEvenWEquiv K n).symm.trans
+      (LinearEquiv.ofEq _ _ (splitEvenPolarization_W K n).symm)
 
 /-- A coordinate-basis vector of the first isotropic summand is the corresponding standard
 coordinate vector on the second axis of the split space. -/
@@ -236,6 +262,7 @@ coordinate vector on the second axis of the split space. -/
 theorem coe_splitEvenBasis (K : Type u) [CommRing K] (n : ℕ) (i : Fin n) :
     ((splitEvenBasis K n i : (splitEvenPolarization K n).W) : SplitEvenSpace K n) =
       (0, Pi.single i 1) := by
-  simp [splitEvenBasis, splitEvenWEquiv]
+  rw [splitEvenBasis, Module.Basis.map_apply]
+  simp [splitEvenWEquiv]
 
 end TauCeti

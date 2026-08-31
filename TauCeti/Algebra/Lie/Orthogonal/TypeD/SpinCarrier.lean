@@ -128,6 +128,19 @@ theorem rep_serreKostantForm_mem_lattice
   (polarization n).typeDSpinRep_serreKostantForm_apply_mem_integralLattice
     (polarizationBasis n) hn hu hv
 
+/-- The generic Kostant form for the numbered type-`D` generators preserves the split exterior
+coordinate lattice. -/
+theorem rep_kostantForm_mem_lattice
+    (u : _root_.UniversalEnvelopingAlgebra ℚ
+      (Matrix.ToLieAlgebra ℚ (CartanMatrix.D n)))
+    (hu : u ∈ kostantForm (TauCeti.serreRootGenerator (CartanMatrix.D n))
+      (TauCeti.serreH ℚ (CartanMatrix.D n)))
+    (v : ExteriorAlgebra ℚ (polarization n).W) (hv : v ∈ lattice n) :
+    rep n hn u v ∈ lattice n :=
+  rep_serreKostantForm_mem_lattice n hn (by
+    rw [TauCeti.serreKostantForm_def]
+    exact hu) hv
+
 /-- Every finite-ordinal exterior basis vector has its named integral type-`D` spin weight. -/
 theorem isCartanWeightVector_latticeBasis (i : Fin (dimension n)) :
     IsCartanWeightVector (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn)
@@ -161,31 +174,16 @@ noncomputable def definingIdeal (hn : 4 ≤ n) :
   kostantToralDefiningIdeal
     (TauCeti.serreRootGenerator (CartanMatrix.D n))
     (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
-    (fun _ hu _ hv ↦ rep_serreKostantForm_mem_lattice n hn (by
-      rw [TauCeti.serreKostantForm_def]
-      exact hu) hv)
+    (rep_kostantForm_mem_lattice n hn)
     (isNilpotent_rep_rootGenerator n hn) (latticeBasis n) (basisWeight n)
-
-/-- The defining ideal is the ideal supplied by the generic Kostant toral-closure construction. -/
-theorem definingIdeal_def :
-    definingIdeal n hn = kostantToralDefiningIdeal
-      (TauCeti.serreRootGenerator (CartanMatrix.D n))
-      (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
-      (fun _ hu _ hv ↦ rep_serreKostantForm_mem_lattice n hn (by
-        rw [TauCeti.serreKostantForm_def]
-        exact hu) hv)
-      (isNilpotent_rep_rootGenerator n hn) (latticeBasis n) (basisWeight n) := by
-  rw [definingIdeal]
 
 /-- The full-weight type-`Dₙ` spin carrier over `ℤ`, obtained as the smallest closed subgroup
 scheme containing the represented numbered root subgroups and weight torus. -/
-noncomputable abbrev groupScheme (hn : 4 ≤ n) : Grp (Over (Spec (CommRingCat.of ℤ))) :=
+noncomputable def groupScheme (hn : 4 ≤ n) : Grp (Over (Spec (CommRingCat.of ℤ))) :=
   kostantToralGroupScheme
     (TauCeti.serreRootGenerator (CartanMatrix.D n))
     (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
-    (fun _ hu _ hv ↦ rep_serreKostantForm_mem_lattice n hn (by
-      rw [TauCeti.serreKostantForm_def]
-      exact hu) hv)
+    (rep_kostantForm_mem_lattice n hn)
     (isNilpotent_rep_rootGenerator n hn) (latticeBasis n) (basisWeight n)
 
 /-- The quotient-spectrum presentation of the type-`Dₙ` spin carrier. -/
@@ -197,24 +195,16 @@ theorem groupScheme_def :
 /-- The canonical inclusion of the type-`Dₙ` spin carrier into `GL_(2^n)`. -/
 noncomputable def carrierι (hn : 4 ≤ n) :
     groupScheme n hn ⟶ TauCeti.GeneralLinear.groupScheme ℤ (dimension n) :=
-  kostantToralGroupSchemeι
-    (TauCeti.serreRootGenerator (CartanMatrix.D n))
-    (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
-    (fun _ hu _ hv ↦ rep_serreKostantForm_mem_lattice n hn (by
-      rw [TauCeti.serreKostantForm_def]
-      exact hu) hv)
-    (isNilpotent_rep_rootGenerator n hn) (latticeBasis n) (basisWeight n)
-
-/-- The carrier inclusion is the one supplied by the generic toral-closure construction. -/
-theorem carrierι_def :
-    carrierι n hn = kostantToralGroupSchemeι
+  eqToHom (by rfl : groupScheme n hn = kostantToralGroupScheme
       (TauCeti.serreRootGenerator (CartanMatrix.D n))
       (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
-      (fun _ hu _ hv ↦ rep_serreKostantForm_mem_lattice n hn (by
-        rw [TauCeti.serreKostantForm_def]
-        exact hu) hv)
-      (isNilpotent_rep_rootGenerator n hn) (latticeBasis n) (basisWeight n) := by
-  rw [carrierι]
+      (rep_kostantForm_mem_lattice n hn)
+      (isNilpotent_rep_rootGenerator n hn) (latticeBasis n) (basisWeight n)) ≫
+    kostantToralGroupSchemeι
+      (TauCeti.serreRootGenerator (CartanMatrix.D n))
+      (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
+      (rep_kostantForm_mem_lattice n hn)
+      (isNilpotent_rep_rootGenerator n hn) (latticeBasis n) (basisWeight n)
 
 /-- The type-`Dₙ` spin carrier is a closed subgroup scheme of its ambient general linear group. -/
 instance isClosedImmersion_carrierι : IsClosedImmersion (carrierι n hn).hom.hom.left := by
@@ -227,21 +217,14 @@ noncomputable def rootSubgroup (hn : 4 ≤ n) (k : Fin n ⊕ Fin n) :
   kostantRootSubgroupToToral
     (TauCeti.serreRootGenerator (CartanMatrix.D n))
     (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
-    (fun _ hu _ hv ↦ rep_serreKostantForm_mem_lattice n hn (by
-      rw [TauCeti.serreKostantForm_def]
-      exact hu) hv)
-    (isNilpotent_rep_rootGenerator n hn) (latticeBasis n) (basisWeight n) k
-
-/-- A numbered root subgroup is the one supplied by the generic toral-closure construction. -/
-theorem rootSubgroup_def (k : Fin n ⊕ Fin n) :
-    rootSubgroup n hn k = kostantRootSubgroupToToral
+    (rep_kostantForm_mem_lattice n hn)
+    (isNilpotent_rep_rootGenerator n hn) (latticeBasis n) (basisWeight n) k ≫
+  eqToHom (by rfl : kostantToralGroupScheme
       (TauCeti.serreRootGenerator (CartanMatrix.D n))
       (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
-      (fun _ hu _ hv ↦ rep_serreKostantForm_mem_lattice n hn (by
-        rw [TauCeti.serreKostantForm_def]
-        exact hu) hv)
-      (isNilpotent_rep_rootGenerator n hn) (latticeBasis n) (basisWeight n) k := by
-  rw [rootSubgroup]
+      (rep_kostantForm_mem_lattice n hn)
+      (isNilpotent_rep_rootGenerator n hn) (latticeBasis n) (basisWeight n) =
+        groupScheme n hn)
 
 /-- Including a numbered root subgroup into the ambient general linear group recovers its
 represented Kostant root subgroup. -/
@@ -251,9 +234,7 @@ theorem rootSubgroup_comp_carrierι (k : Fin n ⊕ Fin n) :
       kostantRootSubgroup
         (TauCeti.serreRootGenerator (CartanMatrix.D n))
         (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
-        (fun _ hu _ hv ↦ rep_serreKostantForm_mem_lattice n hn (by
-          rw [TauCeti.serreKostantForm_def]
-          exact hu) hv) k
+        (rep_kostantForm_mem_lattice n hn) k
         (isNilpotent_rep_rootGenerator n hn k) (latticeBasis n) := by
   rw [rootSubgroup, carrierι]
   exact kostantRootSubgroupToToral_comp_ι _ _ _ _ _ _ _ _ k
@@ -264,21 +245,14 @@ noncomputable def weightTorus (hn : 4 ≤ n) :
   kostantWeightTorusToToral
     (TauCeti.serreRootGenerator (CartanMatrix.D n))
     (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
-    (fun _ hu _ hv ↦ rep_serreKostantForm_mem_lattice n hn (by
-      rw [TauCeti.serreKostantForm_def]
-      exact hu) hv)
-    (isNilpotent_rep_rootGenerator n hn) (latticeBasis n) (basisWeight n)
-
-/-- The weight torus is the one supplied by the generic toral-closure construction. -/
-theorem weightTorus_def :
-    weightTorus n hn = kostantWeightTorusToToral
+    (rep_kostantForm_mem_lattice n hn)
+    (isNilpotent_rep_rootGenerator n hn) (latticeBasis n) (basisWeight n) ≫
+  eqToHom (by rfl : kostantToralGroupScheme
       (TauCeti.serreRootGenerator (CartanMatrix.D n))
       (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
-      (fun _ hu _ hv ↦ rep_serreKostantForm_mem_lattice n hn (by
-        rw [TauCeti.serreKostantForm_def]
-        exact hu) hv)
-      (isNilpotent_rep_rootGenerator n hn) (latticeBasis n) (basisWeight n) := by
-  rw [weightTorus]
+      (rep_kostantForm_mem_lattice n hn)
+      (isNilpotent_rep_rootGenerator n hn) (latticeBasis n) (basisWeight n) =
+        groupScheme n hn)
 
 /-- Including the weight torus into the ambient general linear group recovers the diagonal torus
 of the spin weights. -/
@@ -314,9 +288,7 @@ noncomputable def points (hn : 4 ≤ n) (A : Type v) [CommRing A] :
   kostantToralPointsSubgroup
     (TauCeti.serreRootGenerator (CartanMatrix.D n))
     (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
-    (fun _ hu _ hv ↦ rep_serreKostantForm_mem_lattice n hn (by
-      rw [TauCeti.serreKostantForm_def]
-      exact hu) hv)
+    (rep_kostantForm_mem_lattice n hn)
     (isNilpotent_rep_rootGenerator n hn) (latticeBasis n) (basisWeight n) A
 
 /-- The carrier points are exactly the invertible matrices cut out by the defining Hopf ideal. -/
@@ -325,5 +297,16 @@ theorem points_def (A : Type v) [CommRing A] :
       TauCeti.GeneralLinear.hopfIdealPointsSubgroup (dimension n) (definingIdeal n hn) A := by
   rw [points, definingIdeal]
   exact kostantToralPointsSubgroup_def _ _ _ _ _ _ _ _ A
+
+/-- A matrix is a carrier point exactly when its associated convolution point kills the
+defining Hopf ideal. -/
+@[simp]
+theorem mem_points_iff (A : Type v) [CommRing A]
+    (g : _root_.Matrix.GeneralLinearGroup (Fin (dimension n)) A) :
+    g ∈ points n hn A ↔
+      ∀ x ∈ definingIdeal n hn,
+        ((TauCeti.GeneralLinear.pointsMulEquiv (R := ℤ) (dimension n)).symm g).ofConv x = 0 := by
+  rw [points, definingIdeal]
+  exact mem_kostantToralPointsSubgroup_iff _ _ _ _ _ _ _ _ A g
 
 end TauCeti.TypeDSpinCarrier
