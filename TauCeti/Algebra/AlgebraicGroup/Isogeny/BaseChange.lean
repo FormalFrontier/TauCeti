@@ -76,7 +76,7 @@ private theorem isogenyProperty_iff_schemeMap
 
 private theorem isogenyProperty_iff (f : H ⟶ K) :
     isogenyProperty (L := k) ((hopfSpec (CommRingCat.of k)).map f.op) ↔ IsIsogeny f :=
-  (isIsogeny_iff_isFinite_flat_surjective_hopfSpec_map f).symm
+  (isIsogeny_iff_isFinite_and_flat_and_surjective_hopfSpec_map f).symm
 
 private theorem isogenyProperty_pullback
     (f : H ⟶ K) (h : isogenyProperty (L := k) ((hopfSpec (CommRingCat.of k)).map f.op)) :
