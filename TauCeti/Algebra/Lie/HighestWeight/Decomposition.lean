@@ -5,11 +5,12 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.Algebra.Lie.HighestWeight.FiniteDimensional
 public import TauCeti.Algebra.Lie.HighestWeight.Verma
 public import TauCeti.Algebra.Lie.Multiplicity
+public import TauCeti.Algebra.Lie.Weights.FormalCharacter
 -- Non-public: these supply the inputs of the proofs, never the vocabulary of a statement.
 import TauCeti.Algebra.Lie.HighestWeight.CompleteReducibility
-import TauCeti.Algebra.Lie.HighestWeight.FiniteDimensional
 import TauCeti.Algebra.Lie.HighestWeight.Irreducible
 import TauCeti.Algebra.Lie.Submodule.Decomposition
 
@@ -61,12 +62,38 @@ is exactly the Poincaré--Birkhoff--Witt input that
 `TauCeti/Algebra/Lie/HighestWeight/Verma.lean` does not have, and the decomposition below is
 stated so as not to need it.
 
+## The decomposition read on characters
+
+Formal characters are additive over an internal decomposition
+(`TauCeti.formalCharacter_eq_sum_of_isInternal`), so the same regrouping turns the decomposition
+into the character identity `ch M = ∑_λ m_λ · ch L(λ)`, the form in which "decompose `M` into
+irreducibles" becomes a computation. The formal character is defined only for a
+finite-dimensional module, while `L(λ)` is finite-dimensional exactly at a dominant integral `λ`
+(`TauCeti.finiteDimensional_iff_isDominantIntegral_of_isHighestWeightVector`), so the sum does not
+run over all of `Module.Dual K H`: `TauCeti.irreducibleFormalCharacter` names the character of
+`L(λ)` as a function of a weight *bundled with its dominance*, and the sum runs over that subtype.
+`TauCeti.irreducibleFormalCharacter_def` unfolds it wherever the finite-dimensionality instance is
+already at hand, so the definition itself never needs unfolding.
+
+Restricting the sum to the dominant integral weights loses nothing:
+`TauCeti.isotypicMultiplicity_irreducibleQuotient_eq_zero_of_not_isDominantIntegral` says that
+`L(λ)` for a non-dominant `λ` occurs in no finite-dimensional module at all, so every multiplicity
+the sum omits is zero.
+
+## Main definitions
+
+* `TauCeti.irreducibleFormalCharacter`: the formal character of `L(λ)`, at a dominant integral `λ`.
+
 ## Main results
 
 * `TauCeti.natCard_eq_isotypicMultiplicity_irreducibleQuotient`: **the summands of a decomposition
   labelled by a dominant integral `λ` are counted by the multiplicity of `L(λ)`.**
 * `TauCeti.nonempty_lieModuleEquiv_directSum_irreducibleQuotient`: **the packaged isotypic
   decomposition** `M ≃ ⨁_λ L(λ)^{m λ}`.
+* `TauCeti.isotypicMultiplicity_irreducibleQuotient_eq_zero_of_not_isDominantIntegral`: an
+  irreducible highest weight module of non-dominant weight occurs in no finite-dimensional module.
+* `TauCeti.formalCharacter_eq_finsum_isotypicMultiplicity_smul`: **the character of a
+  finite-dimensional module is the multiplicity-weighted sum of the irreducible characters.**
 
 ## References
 
@@ -81,7 +108,8 @@ through the enveloping-algebra dictionary" in the Layer 6 decomposition toolkit 
 
 namespace TauCeti
 
-open LieAlgebra Module
+-- `TauCeti.LieModule` exists in the imports, so the root namespace is named explicitly.
+open LieAlgebra _root_.LieModule Module
 
 open scoped DirectSum
 
@@ -176,5 +204,121 @@ theorem nonempty_lieModuleEquiv_directSum_irreducibleQuotient [FiniteDimensional
       ↔ c i = (s : Dual K H) := fun _ ↦ Subtype.ext_iff
   rw [Nat.card_congr (Equiv.subtypeEquivRight hiff)]
   exact natCard_eq_isotypicMultiplicity_irreducibleQuotient b N hint hirr c hcequiv s.2
+
+/-! ### The character of the irreducible module of a dominant integral weight -/
+
+/-- **The formal character of the irreducible module `L(lam)`** of a dominant integral weight
+`lam`, which `TauCeti.finiteDimensional_irreducibleQuotient_of_isDominantIntegral` makes
+finite-dimensional. The weight is bundled with its dominance so that the character is a function of
+a single argument, and can therefore index a sum. -/
+noncomputable def irreducibleFormalCharacter
+    (lam : {l : Dual K H // IsDominantIntegral b l}) : AddMonoidAlgebra ℤ (Dual K H) :=
+  haveI := finiteDimensional_irreducibleQuotient_of_isDominantIntegral lam.2
+  formalCharacter K H (irreducibleQuotient b lam.1)
+
+-- This private reduction is required by Lean's module system: an exported theorem cannot unfold
+-- the opaque exported definition directly while checking its public signature.
+private theorem irreducibleFormalCharacter_def_aux
+    (lam : {l : Dual K H // IsDominantIntegral b l})
+    [FiniteDimensional K (irreducibleQuotient b lam.1)] :
+    irreducibleFormalCharacter b lam = formalCharacter K H (irreducibleQuotient b lam.1) := rfl
+
+/-- **The character of `L(lam)` is the formal character of `L(lam)`.** With the
+finite-dimensionality instance in hand, `TauCeti.irreducibleFormalCharacter` needs no unfolding. -/
+@[simp]
+theorem irreducibleFormalCharacter_def
+    (lam : {l : Dual K H // IsDominantIntegral b l})
+    [FiniteDimensional K (irreducibleQuotient b lam.1)] :
+    irreducibleFormalCharacter b lam = formalCharacter K H (irreducibleQuotient b lam.1) :=
+  irreducibleFormalCharacter_def_aux b lam
+
+/-! ### The multiplicity-weighted sum of irreducible characters -/
+
+variable {b}
+
+/-- **An irreducible highest weight module of non-dominant weight occurs in no finite-dimensional
+module.** A nonzero morphism out of the irreducible `L(lam)` is injective, so it would make
+`L(lam)` finite-dimensional, hence `lam` dominant integral. -/
+theorem isotypicMultiplicity_irreducibleQuotient_eq_zero_of_not_isDominantIntegral
+    [FiniteDimensional K M] {lam : Dual K H} (hlam : ¬ IsDominantIntegral b lam) :
+    LieModule.isotypicMultiplicity K L M (irreducibleQuotient b lam) = 0 := by
+  by_contra hne
+  -- a nonzero multiplicity produces a nonzero morphism out of `L(lam)`
+  have hsub : ¬ Subsingleton (irreducibleQuotient b lam →ₗ⁅K,L⁆ M) := by
+    intro hsub
+    refine hne ?_
+    rw [LieModule.isotypicMultiplicity_def]
+    have := hsub
+    exact finrank_zero_of_subsingleton
+  obtain ⟨f, hf⟩ : ∃ f : irreducibleQuotient b lam →ₗ⁅K,L⁆ M, f ≠ 0 := by
+    rw [not_subsingleton_iff_nontrivial] at hsub
+    exact exists_ne 0
+  -- so `L(lam)` is nonzero, hence irreducible
+  have h0 : vermaGenerator b lam ≠ 0 := fun h0 ↦ by
+    have := (subsingleton_irreducibleQuotient_iff b lam).mpr h0
+    exact hf (LieModuleHom.ext fun x ↦ by rw [Subsingleton.elim x 0]; simp)
+  have := isIrreducible_irreducibleQuotient b lam h0
+  -- and the morphism is injective, so `L(lam)` is finite-dimensional and `lam` is dominant
+  have hker : f.ker = ⊥ := by
+    refine (IsSimpleOrder.eq_bot_or_eq_top f.ker).resolve_right fun htop ↦ hf ?_
+    refine LieModuleHom.ext fun x ↦ ?_
+    simpa using (htop ▸ LieSubmodule.mem_top x : x ∈ f.ker)
+  have : FiniteDimensional K (irreducibleQuotient b lam) :=
+    Module.Finite.of_injective (f : irreducibleQuotient b lam →ₗ[K] M)
+      ((LieModuleHom.ker_eq_bot f).mp hker)
+  exact hlam ((finiteDimensional_iff_isDominantIntegral_of_isHighestWeightVector
+    (isHighestWeightVector_irreducibleQuotientGenerator b lam h0)).mp inferInstance)
+
+variable (b) in
+/-- **The character of a finite-dimensional module is the multiplicity-weighted sum of the
+irreducible characters.** A decomposition into irreducibles labels each summand by the dominant
+integral weight whose `L(lam)` it is a copy of; characters are additive over the decomposition, and
+the summands carrying a given label are counted by the multiplicity of `L(lam)`
+(`TauCeti.natCard_eq_isotypicMultiplicity_irreducibleQuotient`). -/
+theorem formalCharacter_eq_finsum_isotypicMultiplicity_smul [FiniteDimensional K M] :
+    formalCharacter K H M
+      = ∑ᶠ lam : {l : Dual K H // IsDominantIntegral b l},
+          (LieModule.isotypicMultiplicity K L M (irreducibleQuotient b lam.1) : ℤ) •
+            irreducibleFormalCharacter b lam := by
+  classical
+  have := complementedLattice_lieSubmodule_of_isKilling K L M
+  obtain ⟨k, N, hint, hirr⟩ := exists_isInternal_isIrreducible K L M
+  choose c hcdom hcequiv using fun i ↦
+    have := hirr i
+    exists_isDominantIntegral_nonempty_lieModuleEquiv_irreducibleQuotient
+      (M := (N i : Type w)) b
+  -- the labelling of the summands by dominant integral weights
+  set d : Fin k → {l : Dual K H // IsDominantIntegral b l} := fun i ↦ ⟨c i, hcdom i⟩ with hd
+  have hcard : ∀ lam : {l : Dual K H // IsDominantIntegral b l},
+      (Finset.univ.filter fun i ↦ d i = lam).card
+        = LieModule.isotypicMultiplicity K L M (irreducibleQuotient b lam.1) := by
+    intro lam
+    rw [← natCard_eq_isotypicMultiplicity_irreducibleQuotient b N hint hirr c hcequiv lam.2,
+      Nat.card_eq_fintype_card, Fintype.card_subtype]
+    congr 1
+    ext i
+    simp [hd, Subtype.ext_iff]
+  have hchar : ∀ i, formalCharacter K H (N i : Type w) = irreducibleFormalCharacter b (d i) := by
+    intro i
+    have := finiteDimensional_irreducibleQuotient_of_isDominantIntegral (hcdom i)
+    rw [irreducibleFormalCharacter_def]
+    exact formalCharacter_congr (LieModuleEquiv.restrictLie (hcequiv i).some H)
+  -- the summands with a label outside the image of the labelling are absent, so the sum is finite
+  have hsupp : (Function.support fun lam : {l : Dual K H // IsDominantIntegral b l} ↦
+      (LieModule.isotypicMultiplicity K L M (irreducibleQuotient b lam.1) : ℤ) •
+        irreducibleFormalCharacter b lam) ⊆ (Finset.univ.image d : Finset _) := by
+    intro lam hlam
+    by_contra hmem
+    refine hlam ?_
+    have : (Finset.univ.filter fun i ↦ d i = lam).card = 0 := by
+      refine Finset.card_eq_zero.mpr (Finset.eq_empty_of_forall_notMem fun i hi ↦ hmem ?_)
+      exact Finset.mem_coe.mpr
+        (Finset.mem_image.mpr ⟨i, Finset.mem_univ i, (Finset.mem_filter.mp hi).2⟩)
+    simp only [← hcard lam, this, Nat.cast_zero, zero_smul]
+  rw [finsum_eq_finsetSum_of_support_subset _ hsupp, formalCharacter_eq_sum_of_isInternal hint]
+  simp only [hchar]
+  rw [Finset.sum_comp (fun lam ↦ irreducibleFormalCharacter b lam) d]
+  refine Finset.sum_congr rfl fun lam _ ↦ ?_
+  rw [← Nat.cast_smul_eq_nsmul ℤ, hcard lam]
 
 end TauCeti
