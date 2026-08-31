@@ -53,6 +53,11 @@ changing it requires a separate update of the blocked-rectangle and small-grid d
 * `TauCeti.GridRectangleBetween.all`: all oriented rectangles from `x` to `y`.
 * `TauCeti.GridRectangleBetween.emptyRectangles`: the empty rectangles from `x` to `y`.
 
+## Main results
+
+* `TauCeti.GridRectangleBetween.isEmpty_iff_forall_notMem_cIoo`: emptiness of an oriented
+  rectangle, quantified over the columns strictly inside it.
+
 ## References
 
 This supplies a prerequisite for the Tau Ceti Heegaard Floer roadmap,
@@ -673,6 +678,23 @@ interior. -/
 theorem isEmpty_iff :
     R.IsEmpty ↔ ∀ p ∈ x.pointSet, p ∉ R.toGridRectangle.interior :=
   R.toGridRectangle.isEmptyFor_iff x
+
+/-- A rectangle between states is empty exactly when the source state sends every column strictly
+between its two side columns to a row outside the open arc between its two side rows.
+
+This is the one-dimensional form of emptiness that the rectangle-pairing arguments for the grid
+differential use: it quantifies over columns rather than over grid points. -/
+theorem isEmpty_iff_forall_notMem_cIoo :
+    R.IsEmpty ↔ ∀ c ∈ Grid.cIoo R.left R.right, x c ∉ Grid.cIoo R.bottom R.top := by
+  rw [isEmpty_iff]
+  simp only [GridState.mem_pointSet, GridRectangle.mem_interior, GridRectangle.mem_columnInterior,
+    GridRectangle.mem_rowInterior, toGridRectangle_left, toGridRectangle_right,
+    toGridRectangle_bottom, toGridRectangle_top, not_and]
+  constructor
+  · intro h c hc
+    exact h (c, x c) rfl hc
+  · intro h p hp hc
+    exact hp ▸ h p.1 hc
 
 /-- If a target-state point lies on a side column, then it is not in the associated
 rectangle's interior. -/
