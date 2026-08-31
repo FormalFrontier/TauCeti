@@ -67,7 +67,8 @@ This supplies a prerequisite for the base-change target in Layer 9 of
 carrier and its distinguished generator maps. It does not provide the pinning compatibility or
 a specialized pinned carrier. Those require the subsequent proofs that this carrier is
 reductive, that its torus is maximal with the simply connected type-`Dₙ` root datum, and that the
-maps supply a pinning. Once those prerequisites are established, the declarations here provide
+maps supply a pinning. This file depends only on the already-constructed integral carrier and the
+generic scalar-extension machinery; those subsequent proofs can consume the declarations here as
 their underlying scalar-extension data. The declaration structure follows the sibling
 specialization for the pinned Geck carrier in
 `TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.GeckLattice.BaseChange`. Every
