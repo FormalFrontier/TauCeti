@@ -224,10 +224,25 @@ theorem geckFrobeniusPow_eq_pow (m : ℕ) :
     d.geckFrobeniusPow m = (show Monoid.End _ from d.geckFrobenius) ^ m := by
   rw [geckFrobeniusPow_def, geckFrobenius_def, DynkinType.geckFrobenius_pow]
 
+/-- The zeroth iterate is the identity. -/
+@[simp]
+theorem geckFrobeniusPow_zero : d.geckFrobeniusPow 0 = MonoidHom.id (GeckGroup d) := by
+  rw [geckFrobeniusPow_def, Nat.mul_zero]
+  exact d.dynkinType.geckFrobenius_zero d.dynkinType_valid d.characteristic d.Closure
+
 /-- The first iterate is the Frobenius itself. -/
 @[simp]
 theorem geckFrobeniusPow_one : d.geckFrobeniusPow 1 = d.geckFrobenius := by
   rw [geckFrobeniusPow_eq_pow, pow_one]
+
+/-- **The iterates of the Frobenius add under composition.** As for the
+`TauCeti.DynkinType.geckFrobenius_add` it descends from, this is not a `simp` lemma: neither side
+is a normal form for the other. -/
+theorem geckFrobeniusPow_add (m n : ℕ) :
+    d.geckFrobeniusPow (m + n) = (d.geckFrobeniusPow m).comp (d.geckFrobeniusPow n) := by
+  simp only [geckFrobeniusPow_def, Nat.mul_add]
+  exact d.dynkinType.geckFrobenius_add d.dynkinType_valid d.characteristic
+    (d.fieldExponent * m) d.Closure (d.fieldExponent * n)
 
 /-- **The iterated Frobenius raises every matrix entry to the `q ^ m`-th power.** -/
 @[simp]
