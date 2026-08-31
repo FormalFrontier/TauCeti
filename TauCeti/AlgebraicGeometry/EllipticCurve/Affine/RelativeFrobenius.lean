@@ -119,6 +119,7 @@ theorem relativeFrobenius_comp_map :
   refine AdjoinRoot.ringHom_ext ?_ ?_
   · apply Polynomial.ringHom_ext
     · intro r
+      -- Unfold composition at `C r`, identify its class with `algebraMap r`, and unfold Frobenius.
       change relativeFrobenius p W
           (map W (frobenius R p) (algebraMap R W.CoordinateRing r)) =
         algebraMap R W.CoordinateRing r ^ p
@@ -206,6 +207,7 @@ theorem iterateRelativeFrobenius_comp_map (n : ℕ) :
   refine AdjoinRoot.ringHom_ext ?_ ?_
   · apply Polynomial.ringHom_ext
     · intro r
+      -- Unfold composition at `C r`, identify its class with `algebraMap r`, and unfold Frobenius.
       change iterateRelativeFrobenius p W n
           (map W (iterateFrobenius R p n) (algebraMap R W.CoordinateRing r)) =
         algebraMap R W.CoordinateRing r ^ p ^ n

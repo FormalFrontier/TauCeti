@@ -263,9 +263,9 @@ theorem psiFunctionField_ne_zero_of_Δ_ne_zero (hΔ : W.Δ ≠ 0) {n : ℤ} (hn 
   fun h ↦ WeierstrassCurve.ΨSq_ne_zero_of_Δ_ne_zero W hΔ hn
     (ΨSq_eq_zero_of_psiFunctionField_eq_zero W h)
 
-/-- **The coordinate pullback of `[n]`.** A coordinate pullback out of `W.CoordinateRing` is a
-point of `W` over `W.FunctionField` — `TauCeti.CoordinatePullback.ofEquation` — and the point here
-is `(φₙ/ψₙ², ωₙ/ψₙ³)`, which `equation_mulByInt` says is one.
+/-- **The coordinate pullback of `[n]`.** The point `(φₙ/ψₙ², ωₙ/ψₙ³)` over `W.FunctionField`,
+which `equation_mulByInt` says lies on `W`, defines a pullback through
+`WeierstrassCurve.Affine.CoordinateRing.evalAlgHom`.
 
 The hypothesis is the weakest one the construction uses: `ψₙ` must not vanish at the generic
 point, which is what makes `φₙ/ψₙ²` and `ωₙ/ψₙ³` defined. Two lemmas discharge it —
