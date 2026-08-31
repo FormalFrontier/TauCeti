@@ -78,17 +78,34 @@ private noncomputable def toSymmetric : U →ₐ[R] SymmetricAlgebra R L :=
 private noncomputable def ofSymmetric : SymmetricAlgebra R L →ₐ[R] U := by
   exact SymmetricAlgebra.lift (_root_.UniversalEnvelopingAlgebra.ι R).toLinearMap
 
+private theorem toSymmetric_ι (x : L) :
+    toSymmetric R L (_root_.UniversalEnvelopingAlgebra.ι R x) = SymmetricAlgebra.ι R L x := by
+  change (_root_.UniversalEnvelopingAlgebra.lift R (toSymmetricLie R L))
+      (_root_.UniversalEnvelopingAlgebra.ι R x) = _
+  exact _root_.UniversalEnvelopingAlgebra.lift_ι_apply R (toSymmetricLie R L) x
+
+private theorem ofSymmetric_ι (x : L) :
+    ofSymmetric R L (SymmetricAlgebra.ι R L x) = _root_.UniversalEnvelopingAlgebra.ι R x := by
+  change (SymmetricAlgebra.lift (_root_.UniversalEnvelopingAlgebra.ι R).toLinearMap)
+      (SymmetricAlgebra.ι R L x) = _
+  simpa only [LieHom.coe_toLinearMap] using
+    SymmetricAlgebra.lift_ι_apply (_root_.UniversalEnvelopingAlgebra.ι R).toLinearMap x
+
 private theorem toSymmetric_comp_ofSymmetric :
     (toSymmetric R L).comp (ofSymmetric R L) = AlgHom.id R (SymmetricAlgebra R L) := by
   apply SymmetricAlgebra.algHom_ext
   ext x
-  simp [toSymmetric, ofSymmetric]
+  change toSymmetric R L (ofSymmetric R L (SymmetricAlgebra.ι R L x)) =
+    SymmetricAlgebra.ι R L x
+  rw [ofSymmetric_ι, toSymmetric_ι]
 
 private theorem ofSymmetric_comp_toSymmetric :
     (ofSymmetric R L).comp (toSymmetric R L) = AlgHom.id R U := by
   apply _root_.UniversalEnvelopingAlgebra.hom_ext
   ext x
-  simp [toSymmetric, ofSymmetric]
+  change ofSymmetric R L (toSymmetric R L (_root_.UniversalEnvelopingAlgebra.ι R x)) =
+    _root_.UniversalEnvelopingAlgebra.ι R x
+  rw [toSymmetric_ι, ofSymmetric_ι]
 
 /-- The canonical algebra equivalence from the enveloping algebra of an abelian Lie algebra to its
 symmetric algebra. -/
@@ -100,7 +117,7 @@ noncomputable def equivSymmetricAlgebra : U ≃ₐ[R] SymmetricAlgebra R L :=
 theorem equivSymmetricAlgebra_ι (x : L) :
     equivSymmetricAlgebra R L (_root_.UniversalEnvelopingAlgebra.ι R x) =
       SymmetricAlgebra.ι R L x := by
-  simp [equivSymmetricAlgebra, toSymmetric]
+  rw [equivSymmetricAlgebra, AlgEquiv.ofAlgHom_apply, toSymmetric_ι]
 
 /-- The `simp`-normal form of `equivSymmetricAlgebra_ι`. -/
 @[simp]
@@ -116,6 +133,6 @@ generator. -/
 theorem equivSymmetricAlgebra_symm_ι (x : L) :
     (equivSymmetricAlgebra R L).symm (SymmetricAlgebra.ι R L x) =
       _root_.UniversalEnvelopingAlgebra.ι R x := by
-  simp [equivSymmetricAlgebra, ofSymmetric]
+  rw [equivSymmetricAlgebra, AlgEquiv.ofAlgHom_symm_apply, ofSymmetric_ι]
 
 end TauCeti.UniversalEnvelopingAlgebra
