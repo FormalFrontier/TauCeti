@@ -31,6 +31,7 @@ theorem adjugate_eq_trace_smul_one_sub (A : Matrix (Fin 2) (Fin 2) K) :
   ext i j
   fin_cases i <;> fin_cases j <;> simp
 
+/-- The adjugate as a linear map on `2 × 2` matrices over a field. -/
 noncomputable def adjugateLinearMap :
     Matrix (Fin 2) (Fin 2) K →ₗ[K] Matrix (Fin 2) (Fin 2) K where
   toFun := Matrix.adjugate

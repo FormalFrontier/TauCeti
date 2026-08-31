@@ -152,6 +152,7 @@ private theorem scalarAddBivectorEquivEven_apply
     scalarAddBivectorEquivEven Q hV x = scalarAddBivectorEven Q x :=
   LinearEquiv.ofBijective_apply _ _
 
+/-- Reversal restricted to the even Clifford subalgebra. -/
 def reverseEven : ↥(even Q) →ₗ[K] ↥(even Q) :=
   (reverse (Q := Q)).restrict (p := (even Q).toSubmodule) (q := (even Q).toSubmodule)
     (fun _x hx => (reverse_mem_evenOdd_iff Q).2 hx)
@@ -181,6 +182,7 @@ theorem exists_add_reverseEven_eq_smul_one
     _ = algebraMap K (CliffordAlgebra Q) (r + r) := (map_add _ _ _).symm
     _ = (r + r) • (1 : CliffordAlgebra Q) := by rw [Algebra.smul_def, mul_one]
 
+/-- Reversal transported through an algebra equivalence to two-by-two matrices. -/
 noncomputable def reverseMatrix
     (e : ↥(even Q) ≃ₐ[K] Matrix (Fin 2) (Fin 2) K) :
     Matrix (Fin 2) (Fin 2) K →ₗ[K] Matrix (Fin 2) (Fin 2) K :=
@@ -255,7 +257,6 @@ theorem reverse_mul_eq_det_smul_one
   exact Matrix.adjugate_mul _
 
 omit [IsSepClosed K] in
-@[simp]
 theorem reverse_mul_eq_one_iff_det_eq_one
     (hV : Module.finrank K V = 3)
     (e : ↥(even Q) ≃ₐ[K] Matrix (Fin 2) (Fin 2) K) (x : ↥(even Q)) :
