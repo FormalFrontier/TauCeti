@@ -590,10 +590,15 @@ theorem limit_mem_levi (g : parabolic A l) : limit A l g ∈ levi A l := by
         AlgHom.mapValue (prodSubst R A) (conjugate A l (g : WithConv (H →ₐ[R] A))) := by
       rw [← MonoidHom.comp_apply, ← AlgHom.mapValue_comp, ← prodSubst_comp_toLaurent,
         AlgHom.mapValue_comp, MonoidHom.comp_apply, hF]
-    rw [hl, hr, conjugate_apply, constPoint, mapValue_conjugate, genericPoint,
-      ← conj_mul_eq_conj_conj,
-      ← map_mul,
-      mapValue_conjugate, map_prodSubst_genericUnit, prodSubst_comp_const, prodUnit,
+    rw [hl, hr, conjugate_apply, constPoint, mapValue_conjugate, genericPoint]
+    have hconj (a b x : WithConv (H →ₐ[R]
+        LaurentPolynomial (LaurentPolynomial A))) :
+        a * b * x * (a * b)⁻¹ = a * (b * x * b⁻¹) * a⁻¹ := by
+      simpa only [MulAut.conj_apply, MulAut.mul_apply] using
+        congrArg (fun f : MulAut _ => f x)
+          ((MulAut.conj : _ →* MulAut _).map_mul a b)
+    rw [← hconj, ← map_mul, mapValue_conjugate, map_prodSubst_genericUnit,
+      prodSubst_comp_const, prodUnit,
       mul_comm (Units.map (IsScalarTower.toAlgHom R (LaurentPolynomial A)
         (LaurentPolynomial (LaurentPolynomial A))).toMonoidHom
           (MultiplicativeGroup.genericUnit A))

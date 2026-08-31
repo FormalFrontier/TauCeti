@@ -306,7 +306,9 @@ theorem conjugationAlgHom_coassoc :
     rw [comp_conjugationAlgHom mulFirst, comp_conjugationAlgHom actSecond,
       hmulFirstLeft, hmulFirstRight, hactSecondLeft, hactSecondRight]
     apply congrArg WithConv.ofConv
-    exact conj_mul_eq_conj_conj g₁ g₂ x
+    simpa only [MulAut.conj_apply, MulAut.mul_apply] using
+      congrArg (fun f : MulAut _ => f x)
+        ((MulAut.conj : _ →* MulAut _).map_mul g₁ g₂)
   simpa only [mulFirst, actSecond, assoc, c, AlgHom.comp_assoc] using hcoassoc
 
 end HopfAlgebra

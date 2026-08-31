@@ -47,12 +47,6 @@ open scoped commutatorElement
 
 variable {G : Type*} [Group G] {X Y : Set G} {N : Subgroup G}
 
-/-- Conjugating by a product is the same as conjugating successively, first by the second
-factor and then by the first. -/
-theorem conj_mul_eq_conj_conj (a b x : G) :
-    a * b * x * (a * b)⁻¹ = a * (b * x * b⁻¹) * a⁻¹ := by
-  simp [mul_inv_rev, mul_assoc]
-
 /-- The commutator of two paired products splits into the product of the same-position
 commutators when the cross terms and the resulting commutators commute as required. -/
 theorem commutatorElement_mul_mul_eq_mul_of_commute {a b c d : G}
