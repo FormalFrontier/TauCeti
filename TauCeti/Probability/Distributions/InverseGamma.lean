@@ -330,7 +330,8 @@ theorem integrable_pow_inverseGammaMeasure_iff (ha : 0 < a) (hr : 0 < r) (n : �
     Integrable (fun x : ℝ ↦ x ^ n) (inverseGammaMeasure a r) ↔ (n : ℝ) < a := by
   rw [inverseGammaMeasure_of_pos ha hr,
     integrable_map_measure (by fun_prop) measurable_inv.aemeasurable]
-  exact TauCeti.integrable_inv_pow_gammaMeasure_iff ha hr n
+  change Integrable (fun x : ℝ ↦ (x⁻¹) ^ n) (gammaMeasure a r) ↔ (n : ℝ) < a
+  simpa only [inv_pow] using TauCeti.integrable_inv_pow_gammaMeasure_iff ha hr n
 
 /-- **Natural moments of a valid inverse-gamma law.**  The `n`th moment exists for `n < a` and
 equals `r ^ n * Gamma (a - n) / Gamma a`. -/
@@ -341,7 +342,7 @@ theorem integral_pow_inverseGammaMeasure (ha : 0 < a) (hr : 0 < r) (n : ℕ)
       r ^ n * Real.Gamma (a - n) / Real.Gamma a := by
   rw [inverseGammaMeasure_of_pos ha hr,
     integral_map measurable_inv.aemeasurable (by fun_prop)]
-  exact TauCeti.integral_inv_pow_gammaMeasure ha hr n hn
+  simpa only [inv_pow] using TauCeti.integral_inv_pow_gammaMeasure ha hr n hn
 
 /-- The shifted Gamma recurrence used in inverse-gamma moment simplifications. -/
 private lemma gamma_eq_sub_one_mul_gamma_sub_one (ha : 1 < a) :

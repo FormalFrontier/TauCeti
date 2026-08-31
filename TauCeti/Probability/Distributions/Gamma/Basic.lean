@@ -148,10 +148,10 @@ theorem integral_pow_gammaMeasure (ha : 0 < a) (hr : 0 < r) (n : ℕ) :
 
 /-- Multiplying a Gamma density by the `n`th power of inversion lowers its shape by `n`. -/
 private lemma gammaWeight_mul_inv_pow (n : ℕ) {x : ℝ} (hx : 0 < x) :
-    r ^ a / Real.Gamma a * x ^ (a - 1) * exp (-(r * x)) * (x⁻¹) ^ n =
+    r ^ a / Real.Gamma a * x ^ (a - 1) * exp (-(r * x)) * (x ^ n)⁻¹ =
       r ^ a / Real.Gamma a * (x ^ (a - n - 1) * exp (-(r * x))) := by
-  have hinv : (x⁻¹) ^ n = x ^ (-(n : ℝ)) := by
-    rw [inv_pow, ← Real.rpow_natCast, ← Real.rpow_neg hx.le]
+  have hinv : (x ^ n)⁻¹ = x ^ (-(n : ℝ)) := by
+    rw [← Real.rpow_natCast, ← Real.rpow_neg hx.le]
   have hpow : x ^ (a - 1) * x ^ (-(n : ℝ)) = x ^ (a - n - 1) := by
     rw [← Real.rpow_add hx]
     congr 1
@@ -165,7 +165,7 @@ private lemma gammaWeight_mul_inv_pow (n : ℕ) {x : ℝ} (hx : 0 < x) :
 
 /-- Below the shape threshold, inverse powers are integrable under a Gamma law. -/
 private theorem integrable_inv_pow_gammaMeasure (ha : 0 < a) (hr : 0 < r) (n : ℕ)
-    (hn : (n : ℝ) < a) : Integrable (fun x : ℝ ↦ (x⁻¹) ^ n) (gammaMeasure a r) := by
+    (hn : (n : ℝ) < a) : Integrable (fun x : ℝ ↦ (x ^ n)⁻¹) (gammaMeasure a r) := by
   rw [integrable_gammaMeasure_iff ha hr]
   refine IntegrableOn.congr_fun ?_ (fun x hx ↦ (gammaWeight_mul_inv_pow n hx).symm)
     measurableSet_Ioi
@@ -180,7 +180,7 @@ private theorem integrable_inv_pow_gammaMeasure (ha : 0 < a) (hr : 0 < r) (n : �
 
 /-- At or above the shape threshold, inverse powers are not integrable under a Gamma law. -/
 private theorem not_integrable_inv_pow_gammaMeasure (ha : 0 < a) (hr : 0 < r) (n : ℕ)
-    (hn : a ≤ n) : ¬ Integrable (fun x : ℝ ↦ (x⁻¹) ^ n) (gammaMeasure a r) := by
+    (hn : a ≤ n) : ¬ Integrable (fun x : ℝ ↦ (x ^ n)⁻¹) (gammaMeasure a r) := by
   rw [integrable_gammaMeasure_iff ha hr]
   intro hint
   have hC : 0 < r ^ a / Real.Gamma a := by positivity
@@ -216,7 +216,7 @@ private theorem not_integrable_inv_pow_gammaMeasure (ha : 0 < a) (hr : 0 < r) (n
 shape. -/
 @[simp]
 theorem integrable_inv_pow_gammaMeasure_iff (ha : 0 < a) (hr : 0 < r) (n : ℕ) :
-    Integrable (fun x : ℝ ↦ (x⁻¹) ^ n) (gammaMeasure a r) ↔ (n : ℝ) < a :=
+    Integrable (fun x : ℝ ↦ (x ^ n)⁻¹) (gammaMeasure a r) ↔ (n : ℝ) < a :=
   ⟨fun h ↦ lt_of_not_ge fun hn ↦ not_integrable_inv_pow_gammaMeasure ha hr n hn h,
     integrable_inv_pow_gammaMeasure ha hr n⟩
 
@@ -224,7 +224,7 @@ theorem integrable_inv_pow_gammaMeasure_iff (ha : 0 < a) (hr : 0 < r) (n : ℕ) 
 @[simp]
 theorem integral_inv_pow_gammaMeasure (ha : 0 < a) (hr : 0 < r) (n : ℕ)
     (hn : (n : ℝ) < a) :
-    ∫ x, (x⁻¹) ^ n ∂gammaMeasure a r = r ^ n * Real.Gamma (a - n) / Real.Gamma a := by
+    ∫ x, (x ^ n)⁻¹ ∂gammaMeasure a r = r ^ n * Real.Gamma (a - n) / Real.Gamma a := by
   rw [integral_gammaMeasure_eq ha hr,
     setIntegral_congr_fun measurableSet_Ioi (fun x hx ↦ gammaWeight_mul_inv_pow n hx)]
   have han : 0 < a - (n : ℝ) := sub_pos.mpr hn
