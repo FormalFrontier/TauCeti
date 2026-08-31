@@ -15,9 +15,10 @@ import TauCeti.Algebra.Lie.UniversalEnveloping.Basic
 
 The universal enveloping algebra of an abelian Lie algebra is its symmetric algebra. This file
 constructs the canonical algebra equivalence directly from the two universal properties. This is a
-standalone UEA--symmetric-algebra equivalence prerequisite: it does not claim to provide the Layer 3
-triangular-decomposition isomorphism, non-vacuous Verma-module results, or the downstream Layer 7
-Harish--Chandra endpoint.
+standalone UEA--symmetric-algebra equivalence prerequisite for the Layer 3 PBW and
+triangular-decomposition development, which is consumed transitively by the downstream Layer 7
+Harish--Chandra target. It does not claim to provide that triangular-decomposition isomorphism,
+non-vacuous Verma-module results, or the Harish--Chandra endpoint.
 
 The construction uses Mathlib's `UniversalEnvelopingAlgebra.lift` and `hom_ext`,
 `SymmetricAlgebra.lift` and `algHom_ext`, and `Algebra.isMulCommutative_adjoin` APIs. Its
