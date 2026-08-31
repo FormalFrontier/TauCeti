@@ -38,6 +38,10 @@ type-A Chevalley commutator equations on arbitrary commutative-ring-valued point
 
 * `TauCeti.SlStd.rootSubgroupOfPair_comp_carrierι`: inclusion in `GL_(r+1)` recovers the ambient
   root subgroup.
+* `TauCeti.SlStd.rootSubgroupOfPair_eq_rootSubgroup`: on numbered simple roots, the all-root
+  family agrees with the pinned family.
+* `TauCeti.SlStd.isClosedImmersion_rootSubgroupOfPair`: every root subgroup is a closed copy of
+  the additive group.
 * `TauCeti.SlStd.commute_rootSubgroupPointsOfPair` and
   `TauCeti.SlStd.commutatorElement_rootSubgroupPointsOfPair`: the type-A Chevalley relations.
 
@@ -101,6 +105,18 @@ theorem rootSubgroupPointsOfPair_injective (hij : i ≠ j) :
   exact congrArg (fun g : points r A =>
     (g : Matrix.GeneralLinearGroup (Fin (r + 1)) A)) hcd
 
+/-- On a numbered simple root, the pair-indexed point map is the existing pinned point map. The
+matrix indices are `(rootTarget, rootSource)`, since the corresponding matrix unit sends the
+source basis vector to the target basis vector. -/
+theorem rootSubgroupPointsOfPair_eq_rootSubgroupPoints (k : Fin r ⊕ Fin r) :
+    rootSubgroupPointsOfPair (A := A) r (rootTarget_ne_rootSource r k) =
+      rootSubgroupPoints r k A := by
+  apply MonoidHom.ext
+  intro c
+  apply Subtype.ext
+  rw [coe_rootSubgroupPointsOfPair, coe_rootSubgroupPoints,
+    kostantRootSubgroupMatrix_eq_transvection, MulEquiv.apply_symm_apply]
+
 /-- Root-subgroup values at non-chaining roots commute inside the carrier. -/
 theorem commute_rootSubgroupPointsOfPair (hij : i ≠ j) (hkl : k ≠ l)
     (hjk : j ≠ k) (hli : l ≠ i) (c d : Multiplicative A) :
@@ -120,18 +136,22 @@ theorem commutatorElement_rootSubgroupPointsOfPair (hij : i ≠ j) (hjl : j ≠ 
         rootSubgroupPointsOfPair (A := A) r hjl (Multiplicative.ofAdd d)⁆ =
       rootSubgroupPointsOfPair (A := A) r hil (Multiplicative.ofAdd (c * d)) := by
   apply Subtype.ext
-  change (points r A).subtype
-      ⁅rootSubgroupPointsOfPair (A := A) r hij (Multiplicative.ofAdd c),
-        rootSubgroupPointsOfPair (A := A) r hjl (Multiplicative.ofAdd d)⁆ = _
-  rw [map_commutatorElement]
-  change ⁅(rootSubgroupPointsOfPair (A := A) r hij (Multiplicative.ofAdd c) :
-      Matrix.GeneralLinearGroup (Fin (r + 1)) A),
-      (rootSubgroupPointsOfPair (A := A) r hjl (Multiplicative.ofAdd d) :
-        Matrix.GeneralLinearGroup (Fin (r + 1)) A)⁆ =
-    (rootSubgroupPointsOfPair (A := A) r hil (Multiplicative.ofAdd (c * d)) :
-      Matrix.GeneralLinearGroup (Fin (r + 1)) A)
-  simpa only [coe_rootSubgroupPointsOfPair, toAdd_ofAdd] using
-    TauCeti.commutatorElement_transvectionUnit hij hjl hil c d
+  calc
+    ((↑⁅rootSubgroupPointsOfPair (A := A) r hij (Multiplicative.ofAdd c),
+          rootSubgroupPointsOfPair (A := A) r hjl (Multiplicative.ofAdd d)⁆ :
+        Matrix.GeneralLinearGroup (Fin (r + 1)) A)) =
+        ⁅(↑(rootSubgroupPointsOfPair (A := A) r hij (Multiplicative.ofAdd c)) :
+            Matrix.GeneralLinearGroup (Fin (r + 1)) A),
+          (↑(rootSubgroupPointsOfPair (A := A) r hjl (Multiplicative.ofAdd d)) :
+            Matrix.GeneralLinearGroup (Fin (r + 1)) A)⁆ :=
+      map_commutatorElement (points r A).subtype _ _
+    _ = TauCeti.transvectionUnit hil (c * d) := by
+      simpa only [coe_rootSubgroupPointsOfPair, toAdd_ofAdd] using
+        TauCeti.commutatorElement_transvectionUnit hij hjl hil c d
+    _ = (↑(rootSubgroupPointsOfPair (A := A) r hil
+          (Multiplicative.ofAdd (c * d))) :
+        Matrix.GeneralLinearGroup (Fin (r + 1)) A) := by
+      rw [coe_rootSubgroupPointsOfPair, toAdd_ofAdd]
 
 end Points
 
@@ -185,9 +205,13 @@ private theorem allRootDefiningIdeal_toIdeal_le_rootSubgroupCoordinateMap_ker
   have hpoint := TauCeti.GeneralLinear.mapPointsFunctor_rootSubgroupCoordinateMap_app
     (R := ℤ) hij (CommAlgCat.of ℤ (AdditiveGroup.coordinateHopfAlgebra ℤ)) q
   rw [CommHopfAlgCat.mapPointsFunctor_app_apply] at hpoint
-  change (TauCeti.GeneralLinear.rootSubgroupCoordinateMap
-    (R := ℤ) hij).hom.toAlgHom x = 0
   calc
+    (TauCeti.GeneralLinear.rootSubgroupCoordinateMap
+        (R := ℤ) hij).hom.toAlgHom.toRingHom x =
+        (TauCeti.GeneralLinear.rootSubgroupCoordinateMap
+          (R := ℤ) hij).hom.toAlgHom x :=
+      congrFun (AlgHom.coe_toRingHom
+        (TauCeti.GeneralLinear.rootSubgroupCoordinateMap (R := ℤ) hij).hom.toAlgHom) x
     _ = (toConv (q.ofConv.comp
           (TauCeti.GeneralLinear.rootSubgroupCoordinateMap
             (R := ℤ) hij).hom.toAlgHom)).ofConv x := by
@@ -210,6 +234,145 @@ noncomputable def rootSubgroupCoordinateMapOfPair (hij : i ≠ j) :
     (TauCeti.GeneralLinear.rootSubgroupCoordinateMap hij)
     (allRootDefiningIdeal_toIdeal_le_rootSubgroupCoordinateMap_ker r hij)
 
+/-- The ambient general-linear coordinate map sends the root matrix coordinate to the additive
+coordinate. -/
+private theorem generalLinear_rootSubgroupCoordinateMap_X (hij : i ≠ j) :
+    (TauCeti.GeneralLinear.rootSubgroupCoordinateMap (R := ℤ) hij).hom
+        (TauCeti.GeneralLinear.genericMatrix ℤ (r + 1) i j) =
+      SymmetricAlgebra.ι ℤ ℤ 1 := by
+  let q : WithConv
+      (AdditiveGroup.coordinateHopfAlgebra ℤ →ₐ[ℤ]
+        AdditiveGroup.coordinateHopfAlgebra ℤ) :=
+    toConv (AlgHom.id ℤ (AdditiveGroup.coordinateHopfAlgebra ℤ))
+  have hpoint := TauCeti.GeneralLinear.mapPointsFunctor_rootSubgroupCoordinateMap_app
+    (R := ℤ) hij (CommAlgCat.of ℤ (AdditiveGroup.coordinateHopfAlgebra ℤ)) q
+  have heval := congrArg
+    (fun f : WithConv (TauCeti.GeneralLinear.coordinateHopfAlgebra ℤ (r + 1) →ₐ[ℤ]
+        AdditiveGroup.coordinateHopfAlgebra ℤ) ↦
+      f.ofConv (TauCeti.GeneralLinear.genericMatrix ℤ (r + 1) i j)) hpoint
+  rw [CommHopfAlgCat.mapPointsFunctor_app_apply_apply] at heval
+  have hmatrix := congrArg
+    (fun g : Matrix.GeneralLinearGroup (Fin (r + 1))
+        (AdditiveGroup.coordinateHopfAlgebra ℤ) ↦ g i j)
+    (TauCeti.GeneralLinear.pointsMulEquiv_rootSubgroupPoints (R := ℤ) hij q)
+  rw [TauCeti.GeneralLinear.pointsMulEquiv_apply,
+    TauCeti.GeneralLinear.pointToGeneralLinear_apply] at hmatrix
+  have heval' :
+      (TauCeti.GeneralLinear.rootSubgroupCoordinateMap (R := ℤ) hij).hom
+          (TauCeti.GeneralLinear.genericMatrix ℤ (r + 1) i j) =
+        (TauCeti.GeneralLinear.rootSubgroupPoints hij q).ofConv
+          (TauCeti.GeneralLinear.genericMatrix ℤ (r + 1) i j) := by
+    simpa only [q, WithConv.toConv_ofConv, AlgHom.id_apply] using heval
+  rw [heval']
+  simpa only [q, WithConv.toConv_ofConv, AlgHom.id_apply,
+    TauCeti.GeneralLinear.genericMatrix_apply,
+    TauCeti.coe_transvectionUnit, Matrix.transvection, Matrix.add_apply,
+    Matrix.one_apply, Matrix.single_apply, hij, ite_false, ite_true, true_and, zero_add,
+    AdditiveGroup.toAdd_gaPointsMulEquiv] using hmatrix
+
+/-- The ambient general-linear coordinate map of a root subgroup is surjective. -/
+private theorem generalLinear_rootSubgroupCoordinateMap_surjective (hij : i ≠ j) :
+    Function.Surjective
+      (TauCeti.GeneralLinear.rootSubgroupCoordinateMap (R := ℤ) hij).hom := by
+  have hgen : SymmetricAlgebra.ι ℤ ℤ 1 ∈
+      (TauCeti.GeneralLinear.rootSubgroupCoordinateMap
+        (R := ℤ) hij).hom.toAlgHom.range := by
+    exact (AlgHom.mem_range _).2
+      ⟨TauCeti.GeneralLinear.genericMatrix ℤ (r + 1) i j,
+        generalLinear_rootSubgroupCoordinateMap_X r hij⟩
+  intro y
+  have hy : y ∈ (TauCeti.GeneralLinear.rootSubgroupCoordinateMap
+      (R := ℤ) hij).hom.toAlgHom.range := by
+    exact SymmetricAlgebra.induction (R := ℤ) (M := ℤ)
+      (motive := fun z => z ∈ (TauCeti.GeneralLinear.rootSubgroupCoordinateMap
+        (R := ℤ) hij).hom.toAlgHom.range)
+      (fun z => Subalgebra.algebraMap_mem _ z)
+      (fun z => by
+        have hz : SymmetricAlgebra.ι ℤ ℤ z =
+            z • SymmetricAlgebra.ι ℤ ℤ 1 := by
+          rw [← map_zsmul]
+          congr 1
+          simp
+        rw [hz]
+        exact zsmul_mem hgen z)
+      (fun _ _ hy hz => mul_mem hy hz)
+      (fun _ _ hy hz => add_mem hy hz) y
+  obtain ⟨z, hz⟩ := (AlgHom.mem_range _).1 hy
+  exact ⟨z, hz⟩
+
+/-- On a numbered simple root, the ambient elementary coordinate map is the represented Kostant
+coordinate map. -/
+private theorem generalLinear_rootSubgroupCoordinateMap_eq_kostantRootSubgroupCoordinateMap
+    (k : Fin r ⊕ Fin r) :
+    TauCeti.GeneralLinear.rootSubgroupCoordinateMap
+        (R := ℤ) (rootTarget_ne_rootSource r k) =
+      TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupCoordinateMap
+        (rootGenerator r) (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
+        (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv) k
+        (isNilpotent_rep_rootGenerator r k) (latticeBasis r) := by
+  apply _root_.CommHopfAlgCat.hom_ext
+  apply TauCeti.GeneralLinear.coordinateHopfAlgebra_bialgHom_ext
+  intro a b
+  let q : WithConv
+      (AdditiveGroup.coordinateHopfAlgebra ℤ →ₐ[ℤ]
+        AdditiveGroup.coordinateHopfAlgebra ℤ) :=
+    toConv (AlgHom.id ℤ (AdditiveGroup.coordinateHopfAlgebra ℤ))
+  have hpoint := TauCeti.GeneralLinear.mapPointsFunctor_rootSubgroupCoordinateMap_app
+    (R := ℤ) (rootTarget_ne_rootSource r k)
+    (CommAlgCat.of ℤ (AdditiveGroup.coordinateHopfAlgebra ℤ)) q
+  have hmap := CommHopfAlgCat.mapPointsFunctor_app_apply
+    (TauCeti.GeneralLinear.rootSubgroupCoordinateMap
+      (R := ℤ) (rootTarget_ne_rootSource r k))
+    (CommAlgCat.of ℤ (AdditiveGroup.coordinateHopfAlgebra ℤ)) q
+  have hGL :
+      TauCeti.GeneralLinear.pointToGeneralLinear (r + 1)
+          (toConv (q.ofConv.comp
+            (TauCeti.GeneralLinear.rootSubgroupCoordinateMap
+              (R := ℤ) (rootTarget_ne_rootSource r k)).hom.toAlgHom)) =
+        TauCeti.transvectionUnit (rootTarget_ne_rootSource r k)
+          (Multiplicative.toAdd (AdditiveGroup.gaPointsMulEquiv q)) := by
+    calc
+      _ = TauCeti.GeneralLinear.pointsMulEquiv (r + 1)
+          ((CommHopfAlgCat.mapPointsFunctor
+            (TauCeti.GeneralLinear.rootSubgroupCoordinateMap
+              (R := ℤ) (rootTarget_ne_rootSource r k))).app
+              (CommAlgCat.of ℤ (AdditiveGroup.coordinateHopfAlgebra ℤ)) q) := by
+        rw [← TauCeti.GeneralLinear.pointsMulEquiv_apply]
+        exact congrArg (TauCeti.GeneralLinear.pointsMulEquiv (r + 1)) hmap.symm
+      _ = TauCeti.GeneralLinear.pointsMulEquiv (r + 1)
+          (TauCeti.GeneralLinear.rootSubgroupPoints
+            (rootTarget_ne_rootSource r k) q) :=
+        congrArg (TauCeti.GeneralLinear.pointsMulEquiv (r + 1)) hpoint
+      _ = _ := TauCeti.GeneralLinear.pointsMulEquiv_rootSubgroupPoints
+        (rootTarget_ne_rootSource r k) q
+  have hK :=
+    TauCeti.UniversalEnvelopingAlgebra.pointsMulEquiv_kostantRootSubgroupCoordinateMap
+      (rootGenerator r) (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
+      (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv) k
+      (isNilpotent_rep_rootGenerator r k) (latticeBasis r)
+      (A := AdditiveGroup.coordinateHopfAlgebra ℤ) q
+  have hK' := hK.trans (kostantRootSubgroupMatrix_eq_transvection r k q)
+  have hGLab := congrArg
+    (fun g : Matrix.GeneralLinearGroup (Fin (r + 1))
+        (AdditiveGroup.coordinateHopfAlgebra ℤ) ↦ g a b) hGL
+  have hKab := congrArg
+    (fun g : Matrix.GeneralLinearGroup (Fin (r + 1))
+        (AdditiveGroup.coordinateHopfAlgebra ℤ) ↦ g a b) hK'
+  have hab := hGLab.trans hKab.symm
+  simp only [TauCeti.GeneralLinear.pointToGeneralLinear_apply,
+    AlgHom.comp_apply] at hab
+  -- The universal point `q` is the identity algebra map, so its remaining application is
+  -- definitionally the identity function after the public point-evaluation rewrite above.
+  exact hab.trans (by rfl)
+
+/-- Every pair-indexed root coordinate morphism is surjective. -/
+theorem rootSubgroupCoordinateMapOfPair_surjective (hij : i ≠ j) :
+    Function.Surjective (rootSubgroupCoordinateMapOfPair r hij).hom :=
+  CommHopfAlgCat.liftQuotient_surjective_of_surjective (allRootDefiningIdeal r)
+    (TauCeti.GeneralLinear.rootSubgroupCoordinateMap hij)
+    (allRootDefiningIdeal_toIdeal_le_rootSubgroupCoordinateMap_ker r hij)
+    (generalLinear_rootSubgroupCoordinateMap_surjective r hij)
+
 /-- Precomposing a pair-indexed root coordinate morphism with the carrier quotient map recovers
 the ambient general-linear root coordinate morphism. -/
 @[simp]
@@ -224,6 +387,24 @@ theorem mkQuotient_comp_rootSubgroupCoordinateMapOfPair (hij : i ≠ j) :
       TauCeti.GeneralLinear.rootSubgroupCoordinateMap hij := by
   rw [rootSubgroupCoordinateMapOfPair]
   exact CommHopfAlgCat.mkQuotient_comp_liftQuotient _ _ _
+
+/-- For a numbered simple root, the pair-indexed coordinate map is the coordinate map of the
+existing pinned root subgroup. -/
+theorem rootSubgroupCoordinateMapOfPair_eq_rootSubgroupCoordinateMap
+    (k : Fin r ⊕ Fin r) :
+    rootSubgroupCoordinateMapOfPair r (rootTarget_ne_rootSource r k) =
+      TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupToralCoordinateMap
+        (rootGenerator r) (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
+        (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv)
+        (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) k := by
+  let q := CommHopfAlgCat.mkQuotient
+    (TauCeti.GeneralLinear.coordinateHopfAlgebra ℤ (r + 1)) (allRootDefiningIdeal r)
+  let _ : Epi q := ConcreteCategory.epi_of_surjective q
+    (CommHopfAlgCat.mkQuotient_surjective _ _)
+  rw [← cancel_epi q,
+    mkQuotient_comp_rootSubgroupCoordinateMapOfPair,
+    TauCeti.UniversalEnvelopingAlgebra.mkQuotient_comp_kostantRootSubgroupToralCoordinateMap,
+    generalLinear_rootSubgroupCoordinateMap_eq_kostantRootSubgroupCoordinateMap]
 
 /-- The root subgroup `x_ij : G_a -> SlStd.groupScheme r` attached to the type-A root
 `epsilon_i - epsilon_j`. -/
@@ -241,6 +422,22 @@ theorem rootSubgroupOfPair_def (hij : i ≠ j) :
         (AlgebraicGeometry.hopfSpec (CommRingCat.of ℤ)).map
           (rootSubgroupCoordinateMapOfPair r hij).op :=
   by rw [rootSubgroupOfPair]
+
+/-- On a numbered simple root, the pair-indexed group-scheme morphism is the existing pinned
+root-subgroup morphism. -/
+theorem rootSubgroupOfPair_eq_rootSubgroup (k : Fin r ⊕ Fin r) :
+    rootSubgroupOfPair r (rootTarget_ne_rootSource r k) = rootSubgroup r k := by
+  rw [rootSubgroupOfPair_def, rootSubgroup_def,
+    TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupToToral_def,
+    rootSubgroupCoordinateMapOfPair_eq_rootSubgroupCoordinateMap]
+
+/-- Every pair-indexed root subgroup is a closed copy of the additive group. -/
+instance isClosedImmersion_rootSubgroupOfPair (hij : i ≠ j) :
+    IsClosedImmersion (rootSubgroupOfPair r hij).hom.hom.left := by
+  rw [rootSubgroupOfPair_def]
+  exact (CommHopfAlgCat.isClosedImmersion_eqToHom_comp_hopfSpec_map_iff
+    (AdditiveGroup.groupScheme_def ℤ) (rootSubgroupCoordinateMapOfPair r hij)).2
+      (rootSubgroupCoordinateMapOfPair_surjective r hij)
 
 /-- Including `x_ij` in `GL_(r+1)` recovers the ambient root subgroup attached to
 `epsilon_i - epsilon_j`. -/
@@ -266,9 +463,9 @@ theorem schemePointsMulEquiv_rootSubgroupOfPair_comp_carrierι
         (p ≫ (rootSubgroupOfPair r hij).hom.hom ≫ (carrierι r).hom.hom) =
       TauCeti.transvectionUnit hij
         (Multiplicative.toAdd (AdditiveGroup.schemePointsMulEquiv A p)) := by
-  change TauCeti.GeneralLinear.schemePointsMulEquiv (r + 1) A
-      (p ≫ (rootSubgroupOfPair r hij ≫ carrierι r).hom.hom) = _
-  rw [rootSubgroupOfPair_comp_carrierι]
+  have hcomp := congrArg (fun f => f.hom.hom) (rootSubgroupOfPair_comp_carrierι r hij)
+  simp only [Grp.comp', Mon.comp_hom'] at hcomp
+  rw [hcomp]
   exact TauCeti.GeneralLinear.schemePointsMulEquiv_rootSubgroup A hij p
 
 end Scheme
