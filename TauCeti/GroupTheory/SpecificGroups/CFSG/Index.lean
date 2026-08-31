@@ -34,8 +34,9 @@ order `p ^ (2 * m + 1)`.
 * `TauCeti.LieTypeIndex` and `TauCeti.LieTypeIndex.Valid`: the Lie families and their preferred
   parameter range.
 * `TauCeti.ValidLieTypeIndex`, `TauCeti.SuzukiReeIndex`, `TauCeti.GraphTwistedIndex`,
-  `TauCeti.TypeALieIndex`, `TauCeti.TypeCLieIndex`, and `TauCeti.UnimodularLieIndex`: the restricted
-  domains consumed by later carrier and endomorphism constructions.
+  `TauCeti.TypeALieIndex`, `TauCeti.TypeCLieIndex`, `TauCeti.SuzukiLieIndex`, and
+  `TauCeti.UnimodularLieIndex`: the restricted domains consumed by later carrier and endomorphism
+  constructions.
 * `TauCeti.SporadicName`: the conventional twenty-six sporadic names.
 * `TauCeti.CFSGIndex`: cyclic, alternating, Lie-type, and sporadic entries in the classification
   list.
@@ -261,6 +262,30 @@ instance : DecidablePred IsTypeC := fun d => by
 /-- The untwisted type-C family does not use a half-Frobenius. -/
 theorem not_usesHalfFrobenius_of_isTypeC {d : LieTypeIndex} (h : d.IsTypeC) :
     ¬ d.UsesHalfFrobenius := by
+  cases d <;> simp_all [usesHalfFrobenius_iff]
+
+/-- Whether a Lie-type index names the Suzuki family `²B₂(2^(2m+1))`.
+
+This is a constructor selector, not a mathematical property of a group. The exclusion of `²B₂(2)`
+comes from the enclosing `TauCeti.ValidLieTypeIndex`; no finiteness or simplicity is asserted
+here. -/
+def IsSuzuki : LieTypeIndex → Prop
+  | .suzuki _ => True
+  | _ => False
+
+/-- Characterization of the Suzuki constructor. -/
+@[simp] theorem isSuzuki_iff (d : LieTypeIndex) : d.IsSuzuki ↔
+    match d with
+    | .suzuki _ => True
+    | _ => False :=
+  Iff.rfl
+
+instance : DecidablePred IsSuzuki := fun d => by
+  cases d <;> rw [isSuzuki_iff] <;> infer_instance
+
+/-- The Suzuki family uses a half-Frobenius, so it carries no diagram automorphism. -/
+theorem usesHalfFrobenius_of_isSuzuki {d : LieTypeIndex} (h : d.IsSuzuki) :
+    d.UsesHalfFrobenius := by
   cases d <;> simp_all [usesHalfFrobenius_iff]
 
 /-- The underlying untwisted Dynkin diagram. Twisted types map to the diagram from which they are
@@ -624,6 +649,21 @@ The outer subtype is important: a raw type-A constructor with an excluded rank o
 is not a `TypeALieIndex`. -/
 abbrev TypeALieIndex : Type _ := {d : ValidLieTypeIndex // d.1.IsTypeA}
 
+/-- A validated index in the untwisted type-`C` family `C_r(q)`.
+
+In particular, its rank is at least three and its characteristic is not two. -/
+abbrev TypeCLieIndex : Type _ := {d : ValidLieTypeIndex // d.1.IsTypeC}
+
+/-- A validated index in the Suzuki family `²B₂(2^(2m+1))`.
+
+The outer subtype is important: `²B₂(2)`, the parameter `m = 0`, is excluded from the
+classification list. It is itself the Frobenius group of order twenty, whose derived subgroup is
+cyclic of order five and is its own centre, so the derived-subgroup recipe collapses to the trivial
+group rather than a simple one, and `²B₂(2)` is not a `SuzukiLieIndex`. The Suzuki--Ree relatives
+`²G₂`, `²F₄` and the Tits group are excluded too; they are the other three constructors of
+`TauCeti.SuzukiReeIndex`. -/
+abbrev SuzukiLieIndex : Type _ := {d : ValidLieTypeIndex // d.1.IsSuzuki}
+
 namespace TypeALieIndex
 
 /-- Introduce a valid untwisted type-A index. -/
@@ -699,11 +739,6 @@ theorem fieldOrder_pos (d : ValidLieTypeIndex) : 0 < d.fieldOrder :=
 
 end ValidLieTypeIndex
 
-/-- A validated index in the untwisted type-`C` family `C_r(q)`.
-
-In particular, its rank is at least three and its characteristic is not two. -/
-abbrev TypeCLieIndex : Type _ := {d : ValidLieTypeIndex // d.1.IsTypeC}
-
 namespace TypeCLieIndex
 
 open LieTypeIndex (inStandardRange_iff valid_iff)
@@ -737,6 +772,48 @@ theorem characteristic_ne_two (d : TypeCLieIndex) : d.1.characteristic ≠ 2 := 
     ((inStandardRange_iff _).mp ((valid_iff _).mp hvalid).1).2
 
 end TypeCLieIndex
+
+/-! ## The Suzuki family
+
+This section follows `ValidLieTypeIndex` rather than sitting beside `TypeALieIndex`, because
+`rank_eq_two` reads the numbered data `TauCeti.ValidLieTypeIndex.rank` defined just above. -/
+
+namespace SuzukiLieIndex
+
+/-- Introduce a valid Suzuki index `²B₂(2^(2m+1))`. Validity forces `1 ≤ m`. -/
+abbrev of (m : ℕ) (hvalid : (LieTypeIndex.suzuki m).Valid) : SuzukiLieIndex :=
+  ⟨⟨.suzuki m, hvalid⟩, (LieTypeIndex.isSuzuki_iff _).mpr trivial⟩
+
+/-- Every Suzuki index is of the introduction form. This is the eliminator matching `of`, so a
+consumer never repeats the case split over the other constructors. -/
+theorem exists_eq_of (d : SuzukiLieIndex) :
+    ∃ (m : ℕ) (hvalid : (LieTypeIndex.suzuki m).Valid), d = of m hvalid := by
+  obtain ⟨⟨d, hvalid⟩, hs⟩ := d
+  revert hvalid hs
+  cases d
+  case suzuki m => exact fun hvalid _ => ⟨m, hvalid, rfl⟩
+  all_goals exact fun _ hs => ((LieTypeIndex.isSuzuki_iff _).mp hs).elim
+
+/-- The Suzuki family is built on the rank-two diagram `B₂`. -/
+@[simp] theorem dynkinType_eq (d : SuzukiLieIndex) : d.1.dynkinType = .B 2 := by
+  obtain ⟨m, hvalid, rfl⟩ := d.exists_eq_of
+  exact LieTypeIndex.dynkinType_suzuki m
+
+/-- The Suzuki family has rank two, that being the rank of `B₂`. -/
+@[simp] theorem rank_eq_two (d : SuzukiLieIndex) : d.1.rank = 2 :=
+  congrArg DynkinType.rank d.dynkinType_eq
+
+/-- The Suzuki family lives in characteristic two. -/
+@[simp] theorem characteristic_eq_two (d : SuzukiLieIndex) : d.1.characteristic = 2 := by
+  obtain ⟨m, hvalid, rfl⟩ := d.exists_eq_of
+  exact LieTypeIndex.characteristic_suzuki m
+
+/-- A Suzuki index is a Suzuki--Ree index: its Steinberg map is an odd power of a
+half-Frobenius. -/
+abbrev toSuzukiReeIndex (d : SuzukiLieIndex) : SuzukiReeIndex :=
+  ⟨d.1, LieTypeIndex.usesHalfFrobenius_of_isSuzuki d.2⟩
+
+end SuzukiLieIndex
 
 namespace UnimodularLieIndex
 

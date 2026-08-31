@@ -233,20 +233,6 @@ theorem prod_hookLength_row_mul_prod_betaNumber_sub_eq_factorial (hr : μ.colLen
 
 /-! ### The hook-length product -/
 
-/-- A product over the cells of a diagram with at most `r` rows, read row by row: the cells are
-fibred over their row index by `Prod.fst`, and the fibre of `i` is the row `μ.row i`. -/
-private theorem prod_cells_eq_prod_range {M : Type*} [CommMonoid M] (hr : μ.colLen 0 ≤ r)
-    (f : ℕ × ℕ → M) :
-    ∏ c ∈ μ.cells, f c = ∏ i ∈ range r, ∏ c ∈ range (μ.rowLen i), f (i, c) := by
-  have hmaps : ∀ c ∈ μ.cells, c.1 ∈ range r := by
-    rintro ⟨a, b⟩ hc
-    exact mem_range.mpr
-      ((mem_iff_lt_colLen.mp ((mem_cells _).mp hc)).trans_le (colLen_le_of_colLen_zero_le hr b))
-  rw [← prod_fiberwise_of_maps_to hmaps f]
-  refine prod_congr rfl fun i _ => ?_
-  -- the fibre of `i` is `YoungDiagram.row`, defined as exactly this filter
-  rw [← row, row_eq_prod, Finset.prod_product, prod_singleton]
-
 /-- **The hook-length product identity.** For a Young diagram `μ` with at most `r` rows, the
 product of all its hook lengths, multiplied by the Vandermonde-style product of the differences of
 its beta-numbers, is the product of the factorials of its beta-numbers.
@@ -259,7 +245,7 @@ theorem prod_hookLength_mul_prod_betaNumber_sub_eq_prod_factorial (μ : YoungDia
     ((∏ c ∈ μ.cells, μ.hookLength c) *
         ∏ i ∈ range r, ∏ j ∈ Ico (i + 1) r, (μ.betaNumber r i - μ.betaNumber r j))
       = ∏ i ∈ range r, (μ.betaNumber r i) ! := by
-  rw [prod_cells_eq_prod_range hr, ← prod_mul_distrib]
+  rw [prod_cells_eq_prod_range μ hr, ← prod_mul_distrib]
   exact prod_congr rfl fun i _ => prod_hookLength_row_mul_prod_betaNumber_sub_eq_factorial hr
 
 /-! ### Erasing a corner -/

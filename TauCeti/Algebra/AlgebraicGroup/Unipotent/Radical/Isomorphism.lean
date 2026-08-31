@@ -145,12 +145,8 @@ theorem unipotentRadical_hom_ext {X : FiniteTypeCommHopfAlgCat.{u, u} k}
     {f g : unipotentRadical H ⟶ X}
     (h : unipotentRadicalCoordinateMap H ≫ f = unipotentRadicalCoordinateMap H ≫ g) :
     f = g := by
-  have hsurjective : Function.Surjective (toBialgHom (unipotentRadicalCoordinateMap H)) := by
-    rw [unipotentRadicalCoordinateMap_def]
-    exact CommHopfAlgCat.mkQuotient_surjective H.obj (unipotentRadicalDefiningIdeal H)
-  let _ : Epi (unipotentRadicalCoordinateMap H) :=
-    ConcreteCategory.epi_of_surjective _ hsurjective
-  exact (cancel_epi (unipotentRadicalCoordinateMap H)).mp h
+  rw [unipotentRadicalCoordinateMap_def] at h
+  exact mkQuotient_hom_ext h
 
 /-- The isomorphism induced by the identity isomorphism is the identity on the unipotent
 radical. -/

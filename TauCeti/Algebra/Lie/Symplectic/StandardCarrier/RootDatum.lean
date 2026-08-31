@@ -27,6 +27,10 @@ equations turns the carrier's existing torus-conjugation equations,
 `TauCeti.SpStd.weightTorus_conj_rootSubgroup`, into equations whose exponent is a named simple root
 of that datum, which is the form downstream work states its conventions in.
 
+At rank two this has to be said differently, and the last section says it. `C 2` is not a valid
+Dynkin type, so it names no pinned datum; the rank-two root system is carried by `B 2`, and the
+identification acquires the swap of the two Bourbaki nodes.
+
 This file constructs no pinning: it exhibits neither a Borel subgroup nor a root subgroup for every
 root, and packages no pinning datum. Nothing here asserts that the carrier is reductive, that the
 weight torus is maximal, or that the carrier equals the separately constructed symplectic group
@@ -38,12 +42,17 @@ scheme. No group below is claimed to be finite or simple.
   numbered raising subgroup is the `i`-th simple root of the uniform pinned type-`C` datum.
 * `TauCeti.SpStd.rootGeneratorWeight_inr_eq_neg_root_simpleIndex`: the root character of the `i`-th
   numbered lowering subgroup is the negative of that simple root.
+* `TauCeti.SpStd.rootGeneratorWeight_inl_eq_root_simpleIndex_B_two` and
+  `TauCeti.SpStd.rootGeneratorWeight_inr_eq_neg_root_simpleIndex_B_two`: the same two
+  identifications at rank two, where the datum available is that of `TauCeti.DynkinType.B 2` and
+  the node numbering is moved by the swap of the two Bourbaki nodes.
 
 ## References
 
 * R. W. Carter, *Simple Groups of Lie Type*, §§4.4, 7.1, and 11.3.
 * J. E. Humphreys, *Linear Algebraic Groups*, §§26--27.
-* N. Bourbaki, *Lie Groups and Lie Algebras, Chapters 4--6*, Plate III.
+* N. Bourbaki, *Lie Groups and Lie Algebras, Chapters 4--6*, Plate III for the type-`C` numbering
+  and Plate II for the `B₂` numbering the rank-two statements are read in.
 
 The statements follow the type-`A` identifications in
 `TauCeti/Algebra/Lie/SpecialLinear/StandardCarrier/RootDatum.lean`, added in
@@ -99,5 +108,49 @@ theorem rootGeneratorWeight_inr_eq_neg_root_simpleIndex (ht : (C (n + 1)).Valid)
     funext j
     rw [rootGeneratorWeight_inr, Pi.neg_apply, rootGeneratorWeight_inl]
   hneg.trans (congrArg Neg.neg (rootGeneratorWeight_inl_eq_root_simpleIndex n ht i))
+
+/-! ## The rank-two carrier and the `B₂` datum
+
+`TauCeti.SpStd.groupScheme 1` is the rank-two member of the family, and there the two theorems
+above are unavailable: `TauCeti.DynkinType.C 2` is not a valid Dynkin type, so it has no
+`simplyConnectedRootDatum`. The rank-two root system these two constructor names share is carried
+by `TauCeti.DynkinType.B 2`, and the numbering that matches the two is the swap of the Bourbaki
+nodes, `TauCeti.DynkinType.cartanMatrix_C_two_apply_eq_cartanMatrix_B_two`. The two theorems below
+are therefore the rank-two counterparts of the two above, stated against the `B 2` datum and with
+each node index moved by that swap.
+
+They are not `simp` lemmas, for the same reasons as their higher-rank counterparts. -/
+
+/-- **The `i`-th raising subgroup of the rank-two carrier sits at the simple root of the pinned
+`B₂` datum numbered by the swapped node.** This is the exceptional isomorphism `B₂ ≅ C₂` read on
+the pinned root characters: the character by which the split torus rescales the parameter of the
+`i`-th numbered raising subgroup is the simple root of `TauCeti.DynkinType.B 2` at the other
+node. -/
+theorem rootGeneratorWeight_inl_eq_root_simpleIndex_B_two (ht : (B 2).Valid) (i j : Fin 2) :
+    rootGeneratorWeight 1 (.inl i) j =
+      ((B 2).simplyConnectedRootDatum ht).root
+        ((B 2).simpleIndex ht (Equiv.swap (0 : Fin 2) 1 i)) (Equiv.swap (0 : Fin 2) 1 j) := by
+  -- Both sides are identified with an entry of a standard Cartan matrix, and the two matrices are
+  -- exchanged by the node swap. The `cartanMatrix_B` and `cartanMatrix_C` steps are what carry the
+  -- `DynkinType`-level statement to Mathlib's matrices, the dispatcher itself being unexposed.
+  have hC := cartanMatrix_C_two_apply_eq_cartanMatrix_B_two i j
+  rw [cartanMatrix_B, cartanMatrix_C] at hC
+  -- `root_simpleIndex` is instantiated by hand rather than rewritten with: its index argument has
+  -- the declared type `Fin (B 2).rank`, which the swap of two `Fin 2` literals matches only up to
+  -- unfolding `DynkinType.rank`, and `rw` does not unfold it when it abstracts the motive.
+  have hroot := congrFun (root_simpleIndex (B 2) ht (Equiv.swap (0 : Fin 2) 1 i))
+    (Equiv.swap (0 : Fin 2) 1 j)
+  simp only [cartanMatrix_B] at hroot
+  rw [rootGeneratorWeight_inl, hroot]
+  exact hC
+
+/-- **The `i`-th lowering subgroup of the rank-two carrier sits at the negative of that simple
+root.** -/
+theorem rootGeneratorWeight_inr_eq_neg_root_simpleIndex_B_two (ht : (B 2).Valid) (i j : Fin 2) :
+    rootGeneratorWeight 1 (.inr i) j =
+      -((B 2).simplyConnectedRootDatum ht).root
+        ((B 2).simpleIndex ht (Equiv.swap (0 : Fin 2) 1 i)) (Equiv.swap (0 : Fin 2) 1 j) := by
+  rw [rootGeneratorWeight_inr, ← rootGeneratorWeight_inl 1 i j,
+    rootGeneratorWeight_inl_eq_root_simpleIndex_B_two ht i j]
 
 end TauCeti.SpStd
