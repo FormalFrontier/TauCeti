@@ -129,15 +129,6 @@ theorem isCentralIsogeny_iff_isCentralIsogeny_hopfSpec_map (f : H₀ ⟶ K₀) :
 
 end Ring
 
-/-- An injective coordinate morphism is an isomorphism exactly when it is surjective. -/
-theorem isIso_iff_surjective_of_injective {f : H ⟶ K} (hf : Function.Injective f.hom) :
-    IsIso f ↔ Function.Surjective f.hom := by
-  constructor
-  · intro
-    exact (ConcreteCategory.bijective_of_isIso f).2
-  · intro hsurjective
-    exact (CommHopfAlgCat.isoMk <| BialgEquiv.ofBijective f.hom ⟨hf, hsurjective⟩).isIso_hom
-
 namespace IsIsogeny
 
 variable {f : H ⟶ K}

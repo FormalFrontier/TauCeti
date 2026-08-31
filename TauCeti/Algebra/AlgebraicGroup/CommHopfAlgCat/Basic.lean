@@ -26,6 +26,8 @@ coordinate Hopf algebras acts on points by pre-composition.
 
 ## Main declarations
 
+* `CommHopfAlgCat.isIso_iff_surjective_of_injective`: an injective coordinate morphism is an
+  isomorphism exactly when it is surjective.
 * `CommHopfAlgCat.mapPointsFunctor`: a coordinate morphism `H ⟶ K` induces a natural
   transformation from the points functor of `K` to the points functor of `H`.
 * `CommHopfAlgCat.mapPointsFunctor_comp_app_apply`: pointwise contravariance under composition
@@ -62,6 +64,18 @@ universe u v w
 namespace CommHopfAlgCat
 
 variable {R : Type u} [CommRing R]
+
+/-- An injective coordinate morphism is an isomorphism exactly when it is surjective. -/
+theorem isIso_iff_surjective_of_injective
+    {H K : _root_.CommHopfAlgCat.{v} R} {f : H ⟶ K} (hf : Function.Injective f.hom) :
+    IsIso f ↔ Function.Surjective f.hom := by
+  constructor
+  · intro _ y
+    refine ⟨(inv f).hom y, ?_⟩
+    simp
+  · intro hsurjective
+    exact (_root_.CommHopfAlgCat.isoMk <|
+      BialgEquiv.ofBijective f.hom ⟨hf, hsurjective⟩).isIso_hom
 
 /-- The underlying object `op (CommAlgCat.of R H)` of the group object represented by the
 commutative Hopf algebra `H`, carrying the induced `GrpObj` structure. -/
