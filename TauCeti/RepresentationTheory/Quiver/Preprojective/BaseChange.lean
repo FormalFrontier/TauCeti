@@ -205,26 +205,6 @@ theorem preprojectiveBaseChange_algebraMap (f : k →+* l) (r : k) :
     ((algebraMap l (preprojectiveAlgebra l Q)).comp f) r
   exact (preprojectiveBaseChangeAlgHom f).commutes r
 
-/-- Two ring homomorphisms out of a preprojective algebra are equal if they agree on coefficients
-and on the classes of all doubled paths. -/
-theorem preprojectiveAlgebra_ringHom_ext {B : Type*} [Ring B]
-    {g h : preprojectiveAlgebra k Q →+* B}
-    (hscalar : ∀ r : k,
-      g (algebraMap k (preprojectiveAlgebra k Q) r) =
-        h (algebraMap k (preprojectiveAlgebra k Q) r))
-    (hpath : ∀ x : Quiver.TotalPath (Symmetrify Q),
-      g (preprojectiveMk k Q (ofPath x)) = h (preprojectiveMk k Q (ofPath x))) :
-    g = h := by
-  apply RingHom.ext
-  intro y
-  obtain ⟨x, rfl⟩ := preprojectiveMk_surjective k Q y
-  induction x using PathAlgebra.induction_linear with
-  | zero => simp
-  | add x y hx hy => simp only [map_add, hx, hy]
-  | single x c =>
-      rw [single_eq_smul_ofPath, map_smul]
-      simp only [Algebra.smul_def, map_mul, hscalar, hpath]
-
 /-- Base change along the identity coefficient homomorphism is the identity map. -/
 @[simp]
 theorem preprojectiveBaseChange_id :
