@@ -379,6 +379,7 @@ theorem suspendedStasheffSum_def (n : ℕ) : suspendedStasheffSum m d x n =
     ∑ p ∈ Finset.range (n + 1),
       ∑ s ∈ Finset.Icc 1 (n - p), suspendedStasheffTerm m d x p s (n - p - s) := (rfl)
 
+@[simp]
 theorem suspendedStasheffSum_zero : suspendedStasheffSum m d x 0 = 0 := by
   simp [suspendedStasheffSum_def]
 
