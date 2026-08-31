@@ -66,9 +66,11 @@ has to construct the coding function from an exchangeable array.
 
 ## References
 
-* D. Aldous, "Representations for partially exchangeable arrays of random variables", *Journal of
-  Multivariate Analysis* 11 (1981), 581--598.
-* O. Kallenberg, *Probabilistic Symmetries and Invariance Principles*, Springer, 2005, Chapter 7.
+* D. Aldous, ["Representations for partially exchangeable arrays of random variables"]
+  (https://doi.org/10.1016/0047-259X(81)90099-3), *Journal of Multivariate Analysis* 11
+  (1981), 581--598.
+* O. Kallenberg, [*Probabilistic Symmetries and Invariance Principles*]
+  (https://doi.org/10.1007/0-387-28836-4), Springer, 2005, Chapter 7.
 
 No material is adapted from `cameronfreer/exchangeability`, which treats sequences rather than
 exchangeable arrays.
