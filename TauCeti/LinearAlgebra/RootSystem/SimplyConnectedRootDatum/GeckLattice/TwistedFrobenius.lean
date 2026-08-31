@@ -35,18 +35,21 @@ therefore fixed entrywise by any ring map. So the commutation is
 `TauCeti.DynkinType.geckPointsMap_comp_geckGraphAutPoints`, read at the iterated Frobenius.
 
 Because the two factors commute, the powers of the composite separate: the `m`-th power is
-`γ ^ m ∘ Frob_(q ^ m)`, so a symmetry of order dividing `m` makes it the plain Frobenius of the
-degree-`m` extension. Reading that on fixed subgroups gives the containment
+`γ ^ m ∘ Frob_(q ^ m)`, so a symmetry of order dividing `m` makes it the plain `q ^ m`-power
+Frobenius, the Frobenius at exponent `k * m`. Reading that on fixed subgroups gives the containment
 
 ```text
-G(A)^(γ ∘ Frob_q) ≤ G(A)^(Frob_(q ^ m)) = G(𝔽_(q ^ m)),
+G(A)^(γ ∘ Frob_q) ≤ G(A)^(Frob_(q ^ m)) = G(frobeniusFixedSubring A p (k * m)),
 ```
 
-which is the carrier-level form of the classical statement that a graph-twisted group of Lie type
-sits inside the untwisted group over the degree-`m` extension of its field of definition, with
-`m = 2` for `²Aₙ`, `²Dₙ` and `²E₆` and `m = 3` for `³D₄`. The reverse containment is false: the
-twisted fixed points are not in general fixed by either factor, and only the easy half,
-that a point fixed by both factors is fixed by the composite, holds.
+over any value ring `A` of exponential characteristic `p`. For `p` prime, `0 < k` and `A` an
+algebraic closure of `ZMod p`, that subring is the field of `q ^ m` elements and the right-hand
+side reads `G(𝔽_(q ^ m))`, so the containment is the carrier-level form of the classical statement
+that a graph-twisted group of Lie type sits inside the untwisted group over the degree-`m`
+extension of its field of definition, with `m = 2` for `²Aₙ`, `²Dₙ` and `²E₆` and `m = 3` for
+`³D₄`. The reverse containment is false: the twisted fixed points are not in general fixed by
+either factor, and only the easy half, that a point fixed by both factors is fixed by the
+composite, holds.
 
 Two limitations carry over from the two factors. This is the twisted Frobenius of the *carrier*,
 not of the elementary subgroup its root subgroups generate, and the Geck weights span the root
@@ -220,7 +223,7 @@ theorem geckTwistedFrobenius_zero :
 
 /-- At the identity symmetry the twisted Frobenius is the plain Frobenius. -/
 @[simp]
-theorem geckTwistedFrobenius_one_mem :
+theorem geckTwistedFrobenius_one :
     t.geckTwistedFrobenius ht t.diagramSymmetry.one_mem p k A = t.geckFrobenius ht p k A := by
   rw [geckTwistedFrobenius, geckGraphAutPoints_one]
   exact MonoidHom.id_comp _
@@ -274,6 +277,7 @@ entrywise Frobenius image is its conjugate by the matrix of the pinned coordinat
 This is the twisted form of the descent condition that
 `TauCeti.DynkinType.geckFrobenius_eq_self_iff` records in the untwisted case, where the matrix is
 the identity and the condition is that every entry lies in the Frobenius-fixed subring. -/
+@[simp]
 theorem geckTwistedFrobenius_eq_self_iff (g : t.geckPoints ht A) :
     t.geckTwistedFrobenius ht hsigma p k A g = g ↔
       Matrix.GeneralLinearGroup.map (iterateFrobenius A p k)
@@ -290,8 +294,10 @@ theorem geckTwistedFrobenius_eq_self_iff (g : t.geckPoints ht A) :
   · rw [h]
     group
 
-/-- **The points fixed by the twisted Frobenius are fixed by the Frobenius of the degree-`m`
-extension**, for `m` any exponent annihilating the diagram symmetry. -/
+/-- **The points fixed by the twisted Frobenius are fixed by the Frobenius at exponent `k * m`**,
+for `m` any exponent annihilating the diagram symmetry. In the intended application, where `p` is
+prime, `0 < k` and `A` is an algebraic closure of `ZMod p`, that is the Frobenius of the degree-`m`
+extension of the field of `q` elements. -/
 theorem fixedSubgroup_geckTwistedFrobenius_le_fixedSubgroup_geckFrobenius {m : ℕ}
     (hm : sigma ^ m = 1) :
     fixedSubgroup (t.geckTwistedFrobenius ht hsigma p k A) ≤
@@ -317,7 +323,7 @@ theorem map_subtype_fixedSubgroup_geckTwistedFrobenius_le {m : ℕ} (hm : sigma 
 Frobenius.** The converse fails: the fixed points of the composite are not in general fixed by
 either factor, which is what makes a graph-twisted group of Lie type larger than the untwisted
 group over its own field of definition. -/
-theorem fixedSubgroup_geckFrobenius_inf_le_fixedSubgroup_geckTwistedFrobenius :
+theorem fixedSubgroup_geckFrobenius_inf_fixedSubgroup_geckGraphAutPoints_le_geckTwistedFrobenius :
     fixedSubgroup (t.geckFrobenius ht p k A) ⊓
         fixedSubgroup (t.geckGraphAutPoints ht hsigma A).toMonoidHom ≤
       fixedSubgroup (t.geckTwistedFrobenius ht hsigma p k A) := by
