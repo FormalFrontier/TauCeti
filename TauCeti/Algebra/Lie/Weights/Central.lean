@@ -332,11 +332,13 @@ theorem isIrreducible_of_sup_center_eq_top_of_forall_exists_lie_eq_smul (L' : Li
     { __ := P.toSubmodule
       lie_mem := fun {x m} hm ↦ by
         obtain ⟨y, hy, z, hz, rfl⟩ := hx x
-        obtain ⟨c, hcz⟩ := hc ⟨z, hz⟩
+        -- `hc` speaks of `⟨z, hz⟩ : center K L`, whose coercion back to `L` is `z` only up to
+        -- unfolding; ascribing the type at the destructuring puts the hypothesis in terms of `z`.
+        obtain ⟨c, hcz⟩ : ∃ c : K, ∀ m : M, ⁅z, m⁆ = c • m := hc ⟨z, hz⟩
         rw [add_lie]
         refine P.toSubmodule.add_mem ?_ ?_
         · simpa using P.lie_mem (x := (⟨y, hy⟩ : L')) hm
-        · rw [show ⁅z, m⁆ = c • m from hcz m]
+        · rw [hcz m]
           exact P.toSubmodule.smul_mem c hm }
   refine (LieSubmodule.toSubmodule_eq_top P).1 ?_
   rcases IsSimpleOrder.eq_bot_or_eq_top P' with hbot | htop

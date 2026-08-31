@@ -57,16 +57,11 @@ total-by-convention constructions of the roadmap.
 * `TauCeti.glIrreducibleGenerator K mu`: its distinguished generator, the class of the chosen
   highest weight vector. Like the carrier itself it depends on the two choices above, so what is
   known of it is what the results below say.
-* `TauCeti.glCarrierData K mu`, `TauCeti.glCarrierSpan K mu` and `TauCeti.glCarrierCoatom K mu`:
-  the chosen decomposition `mu = a + c`, the Lie submodule the chosen highest weight vector
-  generates inside the trace-twisted Young wedge that decomposition names, and the chosen coatom
-  the carrier divides by. These are the construction rather than the interface, and the rest of it
-  — the chosen vector and the lemmas about it — is private to this file. These three cannot be:
-  `glCarrierSpan` names `glCarrierData` in its type, and the module instances on
-  `TauCeti.glIrreducible` are transported from `glCarrierSpan ⧸ glCarrierCoatom`, so their bodies,
-  which the module system exposes, must name both. Their own bodies stay unexposed, so nothing
-  outside this file can unfold them, and nothing is claimed about them; likewise
-  `TauCeti.glIrreducible` itself does not unfold outside this file.
+
+The construction itself — the chosen decomposition of `mu`, the chosen highest weight vector, the
+Lie submodule it generates, the chosen coatom, and the lemmas about them — is private to this file
+and is no part of the interface. The data-carrying module instances transported from the quotient
+are marked `@[no_expose]`, which is what lets their bodies name those private constants.
 
 ## Main results
 
@@ -127,7 +122,7 @@ The decomposition is unique only up to shifting the tuple against the scalar, so
 for dominant weights its defining property follows from
 `TauCeti.exists_isGlHighestWeightVector_of_isGlDominantIntegral`. Off the dominant weights it is an
 unspecified choice about which nothing is claimed. -/
-noncomputable def glCarrierData (mu : Fin N → K) : (Fin N → ℕ) × K :=
+private noncomputable def glCarrierData (mu : Fin N → K) : (Fin N → ℕ) × K :=
   (exists_glCarrierData K mu).choose
 
 private theorem exists_glCarrierVector (K : Type u) [Field K] [CharZero K] {N : ℕ}
@@ -156,7 +151,7 @@ private theorem isGlHighestWeightVector_glCarrierVector (hmu : IsGlDominantInteg
 variable (K) in
 /-- **The highest weight module the chosen vector generates**, a finite-dimensional
 `gl N K`-module of which `L(mu)` is a quotient. -/
-noncomputable def glCarrierSpan (mu : Fin N → K) :
+private noncomputable def glCarrierSpan (mu : Fin N → K) :
     LieSubmodule K (Matrix (Fin N) (Fin N) K)
       (glTraceTwistedYoungWedge K (glCarrierData K mu).1 (glCarrierData K mu).2) :=
   LieSubmodule.lieSpan K _ {glCarrierVector K mu}
@@ -171,7 +166,7 @@ private theorem isGlHighestWeightVector_glCarrierVector_mem (hmu : IsGlDominantI
       (⟨glCarrierVector K mu, glCarrierVector_mem_glCarrierSpan⟩ : glCarrierSpan K mu) :=
   isGlHighestWeightVector_coe_iff.mp (isGlHighestWeightVector_glCarrierVector hmu)
 
-instance : FiniteDimensional K (glCarrierSpan K mu) :=
+private instance : FiniteDimensional K (glCarrierSpan K mu) :=
   inferInstanceAs (FiniteDimensional K (glCarrierSpan K mu).toSubmodule)
 
 /-! ### The coatom and the carrier -/
@@ -192,9 +187,9 @@ private theorem exists_glCarrierCoatom (K : Type u) [Field K] [CharZero K] {N : 
 variable (K) in
 /-- **The chosen maximal proper Lie submodule** of the module the chosen highest weight vector
 generates. It is a coatom of the lattice of Lie submodules for dominant `mu`
-(`isCoatom_glCarrierCoatom`, private to this file). Off the dominant weights it is an unspecified
-choice about which nothing is claimed. -/
-noncomputable def glCarrierCoatom (mu : Fin N → K) :
+(`isCoatom_glCarrierCoatom`). Off the dominant weights it is an unspecified choice about which
+nothing is claimed. -/
+private noncomputable def glCarrierCoatom (mu : Fin N → K) :
     LieSubmodule K (Matrix (Fin N) (Fin N) K) (glCarrierSpan K mu) :=
   (exists_glCarrierCoatom K mu).choose
 
@@ -216,13 +211,14 @@ their types. -/
 def glIrreducible (mu : Fin N → K) : Type u :=
   glCarrierSpan K mu ⧸ glCarrierCoatom K mu
 
-noncomputable instance : AddCommGroup (glIrreducible K mu) :=
+@[no_expose] noncomputable instance : AddCommGroup (glIrreducible K mu) :=
   inferInstanceAs (AddCommGroup (glCarrierSpan K mu ⧸ glCarrierCoatom K mu))
 
-noncomputable instance : Module K (glIrreducible K mu) :=
+@[no_expose] noncomputable instance : Module K (glIrreducible K mu) :=
   inferInstanceAs (Module K (glCarrierSpan K mu ⧸ glCarrierCoatom K mu))
 
-noncomputable instance : LieRingModule (Matrix (Fin N) (Fin N) K) (glIrreducible K mu) :=
+@[no_expose] noncomputable instance :
+    LieRingModule (Matrix (Fin N) (Fin N) K) (glIrreducible K mu) :=
   inferInstanceAs (LieRingModule (Matrix (Fin N) (Fin N) K)
     (glCarrierSpan K mu ⧸ glCarrierCoatom K mu))
 
@@ -277,6 +273,27 @@ theorem exists_isGlHighestWeightVector_glIrreducible (hmu : IsGlDominantIntegral
     ∃ v : glIrreducible K mu, IsGlHighestWeightVector mu v :=
   ⟨_, isGlHighestWeightVector_glIrreducibleGenerator hmu⟩
 
+section CommRing
+
+variable {R : Type*} [CommRing R] {nu : Fin N → R}
+variable {M : Type*} [AddCommGroup M] [Module R M]
+  [LieRingModule (Matrix (Fin N) (Fin N) R) M] [LieModule R (Matrix (Fin N) (Fin N) R) M]
+
+/-- **The identity matrix acts by the sum of the highest weight entries** on any irreducible module
+carrying a highest weight vector. The scalar is read off the highest weight vector rather than
+produced by Schur's lemma, so a commutative ring of scalars is all this needs. -/
+theorem forall_one_lie_eq_sum_smul_of_isGlHighestWeightVector
+    [LieModule.IsIrreducible R (Matrix (Fin N) (Fin N) R) M] {v : M}
+    (hv : IsGlHighestWeightVector nu v) (m : M) :
+    ⁅(1 : Matrix (Fin N) (Fin N) R), m⁆ = (∑ i, nu i) • m := by
+  have hone : (1 : Matrix (Fin N) (Fin N) R) ∈ diagonalCartan R (Fin N) :=
+    mem_diagonalCartan_iff.mpr fun i j hij => Matrix.one_apply_ne hij
+  exact forall_lie_eq_smul_of_lie_eq_smul R (Matrix (Fin N) (Fin N) R) M
+    ⟨1, one_mem_center_matrix R (Fin N)⟩
+    hv.ne_zero (by simpa using hv.lie_eq_smul_of_mem_diagonalCartan hone) m
+
+end CommRing
+
 variable {M : Type*} [AddCommGroup M] [Module K M]
   [LieRingModule (Matrix (Fin N) (Fin N) K) M] [LieModule K (Matrix (Fin N) (Fin N) K) M]
 
@@ -301,19 +318,6 @@ theorem finrank_glIrreducible_le [FiniteDimensional K M] {v : M}
     finrank K (glIrreducible K mu) ≤ finrank K M :=
   have := isIrreducible_glIrreducible (K := K) hmu
   finrank_le_of_isGlHighestWeightVector (isGlHighestWeightVector_glIrreducibleGenerator hmu) hv
-
-omit [CharZero K] in
-/-- **The identity matrix acts by the sum of the highest weight entries** on any irreducible module
-carrying a highest weight vector. -/
-theorem forall_one_lie_eq_sum_smul_of_isGlHighestWeightVector
-    [LieModule.IsIrreducible K (Matrix (Fin N) (Fin N) K) M] {v : M}
-    (hv : IsGlHighestWeightVector mu v) (m : M) :
-    ⁅(1 : Matrix (Fin N) (Fin N) K), m⁆ = (∑ i, mu i) • m := by
-  have hone : (1 : Matrix (Fin N) (Fin N) K) ∈ diagonalCartan K (Fin N) :=
-    mem_diagonalCartan_iff.mpr fun i j hij => Matrix.one_apply_ne hij
-  exact forall_lie_eq_smul_of_lie_eq_smul K (Matrix (Fin N) (Fin N) K) M
-    ⟨1, one_mem_center_matrix K (Fin N)⟩
-    hv.ne_zero (by simpa using hv.lie_eq_smul_of_mem_diagonalCartan hone) m
 
 /-- **An irreducible `gl N K`-module carrying a highest weight vector stays irreducible on
 restriction to `sl N K`.** -/
