@@ -175,12 +175,7 @@ theorem representation_eq_smul_of_mem_center_of_lieSpan_eq_top
     { toLinearMap := representation R L M u - c • LinearMap.id
       map_lie' := by
         intro x w
-        have hcomm : ι R x * u = u * ι R x := (Subalgebra.mem_center_iff.mp hu) (ι R x)
-        have h := congrArg (representation R L M) hcomm
-        rw [map_mul, map_mul, representation_ι] at h
-        have hw := congrArg (fun g : Module.End R M ↦ g w) h
-        simp only [Module.End.mul_apply, LieModule.toEnd_apply_apply] at hw
-        simp [hw] }
+        simp [representation_lie_of_mem_center R L M hu x w] }
   have hvker : v ∈ f.ker := by
     rw [LieModuleHom.mem_ker]
     simp [f, hv]
