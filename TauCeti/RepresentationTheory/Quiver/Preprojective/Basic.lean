@@ -525,7 +525,7 @@ theorem preprojectiveMk_surjective : Function.Surjective (preprojectiveMk k Q) :
 
 /-- Two ring homomorphisms out of a preprojective algebra are equal if they agree on coefficients
 and on the classes of all doubled paths. -/
-theorem preprojectiveAlgebra_ringHom_ext {B : Type*} [Ring B]
+theorem preprojectiveAlgebra_ringHom_ext {B : Type*} [Semiring B]
     {g h : preprojectiveAlgebra k Q →+* B}
     (hscalar : ∀ r : k,
       g (algebraMap k (preprojectiveAlgebra k Q) r) =

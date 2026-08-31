@@ -21,8 +21,8 @@ Consequently a ring homomorphism `f : k →+* l` gives a canonical coefficient m
 This is the presentation-level base-change map.  It is deliberately a semilinear `RingHom`: its
 restriction to scalars is `f`, while the target is naturally an `l`-algebra.  The quotient map is
 characterized on every basis path, so the construction does not silently identify `Π_l(Q)` with a
-tensor product.  Such an identification requires a separate flatness or finite-presentation
-argument and is not part of this result.
+tensor product.  Such a tensor-product identification is a separate result and is not part of this
+module.
 
 The relation is preserved because the global preprojective relator is a sum of differences of
 paths with coefficients `1` and `-1`.  The same argument works for loops and parallel arrows,
