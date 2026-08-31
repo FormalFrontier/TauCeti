@@ -416,7 +416,7 @@ private theorem lie_basisPath_succ (d n k : ℕ) (h : d ≤ n) (hk : k < d)
   let a : Fin d := ⟨k, hk⟩
   have hsource : Fin.castLE h ⟨k, hk⟩ = basisPath d n h s (k + 1) a := by
     simp [a, basisPath]
-  rw [← hsource]
+  rw [hsource]
   apply lie_single_basisPath_transition (K := K) d n
     (basisPath d n h s (k + 1)) (basisPath d n h s k)
     (basisPath_strictMono d n h s (k + 1)) a
@@ -491,7 +491,7 @@ private theorem lie_basisPath_reverse (d n k : ℕ) (h : d ≤ n) (hk : k < d)
   have hsource : Set.powersetCard.ofFinEmbEquiv.symm s ⟨k, hk⟩ =
       basisPath d n h s k a := by
     simp [a, basisPath]
-  rw [← hsource]
+  rw [hsource]
   apply lie_single_basisPath_transition (K := K) d n
     (basisPath d n h s k) (basisPath d n h s (k + 1))
     (basisPath_strictMono d n h s k) a
