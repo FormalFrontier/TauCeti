@@ -7,8 +7,8 @@ module
 
 public import TauCeti.RepresentationTheory.CharacterTable.Dixon.ClassData.Cyclic
 public import TauCeti.RepresentationTheory.CharacterTable.Dixon.ClassData.CentralCharacterCount
+public import TauCeti.RepresentationTheory.CharacterTable.Dixon.Cyclotomic.Checker
 public import TauCeti.RepresentationTheory.CharacterTable.Dixon.Lift
-public import TauCeti.RepresentationTheory.CharacterTable.Specification
 
 /-!
 # The cyclotomic Dixon computation for the cyclic group of order three
@@ -126,16 +126,6 @@ theorem cyclicGroupThreeDixonPrimeData_root : cyclicGroupThreeDixonPrimeData.roo
 /-- The numbered conjugacy classes of the cyclic group of order three. -/
 abbrev CyclicGroupThreeClassIndex := Fin (cyclicClassData 3).numClasses
 
-private def cyclicGroupThreeClassIndexEquiv : CyclicGroupThreeClassIndex ≃ Fin 3 :=
-  finCongr (numClasses_cyclicClassData 3)
-
-@[simp]
-private theorem cyclicGroupThreeClassIndexEquiv_symm_apply (i : Fin 3) :
-    cyclicGroupThreeClassIndexEquiv.symm i =
-      ⟨i, by simpa only [numClasses_cyclicClassData] using i.isLt⟩ := by
-  apply Fin.ext
-  rfl
-
 /-- **The exact central and ordinary character table of the cyclic group of order three.**
 Columns are the singleton classes of `0`, `1`, and `2` in that order. Row `i` is the linear
 character sending `Multiplicative.ofAdd j` to `ζ ^ (i * j)`, so rows index the irreducible
@@ -155,14 +145,6 @@ theorem cyclicGroupThreeExactCharacterTable_apply (i j : CyclicGroupThreeClassIn
     cyclicGroupThreeExactCharacterTable i j = Cyclotomic.zeta 3 ^ ((i : ℕ) * (j : ℕ)) := by
   fin_cases i <;> fin_cases j <;> decide
 
-private theorem cyclicGroupThreeExactCharacterTable_apply_reindex (i j : Fin 3) :
-    cyclicGroupThreeExactCharacterTable
-        (cyclicGroupThreeClassIndexEquiv.symm i)
-        (cyclicGroupThreeClassIndexEquiv.symm j) =
-      Cyclotomic.zeta 3 ^ ((i : ℕ) * (j : ℕ)) := by
-  rw [cyclicGroupThreeExactCharacterTable_apply]
-  rfl
-
 /-- Every exact row is normalized at the identity class. -/
 theorem cyclicGroupThreeExactCharacterTable_index_one (i : CyclicGroupThreeClassIndex) :
     cyclicGroupThreeExactCharacterTable i ((cyclicClassData 3).index 1) = 1 := by
@@ -174,6 +156,20 @@ theorem isModularEigenrow_cyclicGroupThreeExactCharacterTable
     (cyclicClassData 3).IsModularEigenrow (cyclicGroupThreeExactCharacterTable i) := by
   rw [(cyclicClassData 3).isModularEigenrow_iff]
   fin_cases i <;> decide
+
+/-- **The exact `C₃` table passes the cyclotomic character-table certificate.**  Its central and
+ordinary tables coincide and all three character degrees are one. -/
+theorem isCyclotomicCharacterTableSpec_cyclicGroupThree :
+    (cyclicClassData 3).IsCyclotomicCharacterTableSpec 3
+      cyclicGroupThreeExactCharacterTable cyclicGroupThreeExactCharacterTable (fun _ => 1) := by
+  decide
+
+/-- The executable exact cyclotomic checker accepts the displayed `C₃` table. -/
+theorem cyclotomicCharacterTableChecker_cyclicGroupThree :
+  (cyclicClassData 3).cyclotomicCharacterTableChecker 3
+      cyclicGroupThreeExactCharacterTable cyclicGroupThreeExactCharacterTable (fun _ => 1) = true :=
+  (cyclicClassData 3).cyclotomicCharacterTableChecker_eq_true_iff 3 _ _ _ |>.2
+    isCyclotomicCharacterTableSpec_cyclicGroupThree
 
 /-- The displayed exact rows reduced at the chosen primitive cube root modulo `7`. -/
 def cyclicGroupThreeModularCentralRows :
@@ -261,8 +257,7 @@ theorem cyclicGroupThreeExactCharacterTable_lift_conjugateResidues
 noncomputable def cyclicGroupThreeComplexCharacterTable :
     Matrix (Fin (Nat.card (ConjClasses (Multiplicative (ZMod 3)))))
       (ConjClasses (Multiplicative (ZMod 3))) ℂ :=
-  (cyclicClassData 3).reindexTableOfMap Cyclotomic.complexEmbedding
-    cyclicGroupThreeExactCharacterTable
+  (cyclicClassData 3).complexTableOfCyclotomic 3 cyclicGroupThreeExactCharacterTable
 
 /-- The embedded table evaluated at arbitrary row and conjugacy-class indices. -/
 @[simp]
@@ -274,7 +269,7 @@ theorem cyclicGroupThreeComplexCharacterTable_apply
         (cyclicGroupThreeExactCharacterTable
           ((finCongr (cyclicClassData 3).numClasses_eq_card_conjClasses).symm i)
           ((cyclicClassData 3).equivConjClasses.symm C)) := by
-  exact (cyclicClassData 3).reindexTableOfMap_apply _ _ _ _
+  exact (cyclicClassData 3).complexTableOfCyclotomic_apply 3 _ _ _
 
 /-- The embedded table evaluated at a numbered row and numbered conjugacy class. -/
 theorem cyclicGroupThreeComplexCharacterTable_apply_classOf
@@ -283,94 +278,13 @@ theorem cyclicGroupThreeComplexCharacterTable_apply_classOf
         (finCongr (cyclicClassData 3).numClasses_eq_card_conjClasses i)
         ((cyclicClassData 3).classOf j) =
       Cyclotomic.complexEmbedding (cyclicGroupThreeExactCharacterTable i j) := by
-  rw [cyclicGroupThreeComplexCharacterTable,
-    (cyclicClassData 3).reindexTableOfMap_apply_classOf]
-
-private theorem cyclicGroupThreeComplexCharacterTable_row_orthonormal
-    (i j : Fin (Nat.card (ConjClasses (Multiplicative (ZMod 3))))) :
-    ∑ C, Nat.card C.carrier * cyclicGroupThreeComplexCharacterTable i C *
-        star (cyclicGroupThreeComplexCharacterTable j C) =
-      if i = j then Nat.card (Multiplicative (ZMod 3)) else 0 := by
-  obtain ⟨i, rfl⟩ :=
-    (finCongr (cyclicClassData 3).numClasses_eq_card_conjClasses).surjective i
-  obtain ⟨j, rfl⟩ :=
-    (finCongr (cyclicClassData 3).numClasses_eq_card_conjClasses).surjective j
-  obtain ⟨i, rfl⟩ := cyclicGroupThreeClassIndexEquiv.symm.surjective i
-  obtain ⟨j, rfl⟩ := cyclicGroupThreeClassIndexEquiv.symm.surjective j
-  have hcard (k : CyclicGroupThreeClassIndex) :
-      Nat.card ((cyclicClassData 3).classOf k).carrier = 1 := by
-    rw [← (cyclicClassData 3).card_classFinset,
-      card_classFinset_cyclicClassData]
-  rw [← (cyclicClassData 3).equivConjClasses.sum_comp]
-  simp only [(cyclicClassData 3).equivConjClasses_apply,
-    cyclicGroupThreeComplexCharacterTable_apply_classOf, hcard, Nat.cast_one, one_mul,
-    Nat.card_eq_fintype_card, Fintype.card_multiplicative, ZMod.card]
-  simp only [Equiv.apply_eq_iff_eq]
-  rw [← cyclicGroupThreeClassIndexEquiv.symm.sum_comp, Fin.sum_univ_three]
-  simp only [cyclicGroupThreeExactCharacterTable_apply_reindex]
-  have hgeom : 1 + Cyclotomic.complexRoot 3 + Cyclotomic.complexRoot 3 ^ 2 = 0 := by
-    simpa [Finset.sum_range_succ] using
-      (Cyclotomic.isPrimitiveRoot_complexRoot (e := 3)).geom_sum_eq_zero (by norm_num)
-  have hred (n : ℕ) : Cyclotomic.complexRoot 3 ^ (n + 3) = Cyclotomic.complexRoot 3 ^ n := by
-    rw [pow_add, Cyclotomic.isPrimitiveRoot_complexRoot.pow_eq_one, mul_one]
-  -- Push the embedding onto `ζ` and rewrite each conjugated entry as a power of `ζ`, so that each
-  -- summand becomes a single power.  Reducing those exponents below `3` with `hred` leaves, in
-  -- each of the nine cases, either `1 + 1 + 1 = 3` or the vanishing geometric sum `hgeom`.
-  simp only [map_pow, Cyclotomic.complexEmbedding_zeta, RCLike.star_def, star_pow,
-    Cyclotomic.conj_complexRoot_eq_pow_sub_one, ← pow_mul, ← pow_add]
-  fin_cases i <;> fin_cases j <;> norm_num [hred] <;> linear_combination hgeom
+  exact (cyclicClassData 3).complexTableOfCyclotomic_apply_classOf 3 _ _ _
 
 /-- The embedded exact `C₃` table satisfies the character-table specification and therefore is
 the complex character table up to a permutation of rows. -/
 theorem isCharacterTableSpec_cyclicGroupThree :
     IsCharacterTableSpec (Multiplicative (ZMod 3))
-      cyclicGroupThreeComplexCharacterTable where
-  exists_degree i := by
-    refine ⟨1, by simp, ?_, by simp⟩
-    obtain ⟨i, rfl⟩ :=
-      (finCongr (cyclicClassData 3).numClasses_eq_card_conjClasses).surjective i
-    rw [← (cyclicClassData 3).classOf_index (1 : Multiplicative (ZMod 3)),
-      cyclicGroupThreeComplexCharacterTable_apply_classOf]
-    rw [cyclicGroupThreeExactCharacterTable_index_one, map_one]
-    norm_num
-  sum_degree_sq := by
-    rw [← (finCongr (cyclicClassData 3).numClasses_eq_card_conjClasses).sum_comp]
-    simp only [← (cyclicClassData 3).classOf_index (1 : Multiplicative (ZMod 3)),
-      cyclicGroupThreeComplexCharacterTable_apply_classOf]
-    simp_rw [cyclicGroupThreeExactCharacterTable_index_one, map_one]
-    norm_num [Nat.card_eq_fintype_card, numClasses_cyclicClassData]
-  row_orthonormal i j := by
-    calc
-      (Nat.card (Multiplicative (ZMod 3)) : ℂ)⁻¹ *
-          ∑ C, Nat.card C.carrier * cyclicGroupThreeComplexCharacterTable i C *
-            star (cyclicGroupThreeComplexCharacterTable j C) =
-          (Nat.card (Multiplicative (ZMod 3)) : ℂ)⁻¹ *
-            (if i = j then Nat.card (Multiplicative (ZMod 3)) else 0) := by
-        rw [cyclicGroupThreeComplexCharacterTable_row_orthonormal]
-      _ = if i = j then 1 else 0 := by
-        split_ifs <;> norm_num [natCard_cyclicGroup_three]
-  row_eigen i := by
-    obtain ⟨i, rfl⟩ :=
-      (finCongr (cyclicClassData 3).numClasses_eq_card_conjClasses).surjective i
-    have heig : IsClassEigenrow ((cyclicClassData 3).reindexModularRow fun j =>
-        Cyclotomic.complexEmbedding (cyclicGroupThreeExactCharacterTable i j)) :=
-      ((cyclicClassData 3).isModularEigenrow_iff_isClassEigenrow _).mp <|
-      (isModularEigenrow_cyclicGroupThreeExactCharacterTable i).map
-        (Cyclotomic.complexEmbedding : Cyclotomic 3 →+* ℂ)
-    suffices centralCharacterRow cyclicGroupThreeComplexCharacterTable
-        (finCongr (cyclicClassData 3).numClasses_eq_card_conjClasses i) =
-          (cyclicClassData 3).reindexModularRow fun j =>
-            Cyclotomic.complexEmbedding (cyclicGroupThreeExactCharacterTable i j) by
-      rwa [this]
-    funext C
-    obtain ⟨j, rfl⟩ := (cyclicClassData 3).equivConjClasses.surjective C
-    rw [centralCharacterRow_apply, (cyclicClassData 3).equivConjClasses_apply,
-      (cyclicClassData 3).reindexModularRow_classOf,
-      cyclicGroupThreeComplexCharacterTable_apply_classOf,
-      ← (cyclicClassData 3).classOf_index (1 : Multiplicative (ZMod 3)),
-      cyclicGroupThreeComplexCharacterTable_apply_classOf,
-      ← (cyclicClassData 3).card_classFinset,
-      card_classFinset_cyclicClassData, Nat.cast_one, one_mul,
-      cyclicGroupThreeExactCharacterTable_index_one, map_one, div_one]
+      cyclicGroupThreeComplexCharacterTable :=
+  isCyclotomicCharacterTableSpec_cyclicGroupThree.isCharacterTableSpec
 
 end TauCeti

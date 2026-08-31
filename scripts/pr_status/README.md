@@ -9,7 +9,7 @@ source of truth:
   carrying emoji that track the same states at a glance.
 
 [`core.py`](core.py) is that source of truth. It derives a PR's status from
-GitHub (PR state, the `build` commit status, the newest repo-associated
+GitHub (PR state, the `build` commit status, the newest
 `<!--tauceti-scoreboard-->` comment's meta JSON, and the review engine's
 `<!--tauceti-review-in-progress-->` marker) and returns a neutral
 `{lifecycle, ci, review, review_inprogress}`. It writes nothing. The two *sinks*
@@ -28,14 +28,17 @@ reactions can never disagree:
 | ci `success`, review pending, no marker | `awaiting-review` | 🟢 |
 
 Both review signals (the scoreboard meta and the in-progress marker) are read
-only from comments by a repo-associated author (OWNER/MEMBER/COLLABORATOR), from
-one comment fetch, so a fork PR author cannot forge status labels or housekeeping
-state. This status-sink policy is deliberately narrower than auto-merge's
-newest-scoreboard policy. Every reconcile
-reads GitHub afresh and drives the sink to the correct state, so the same command
-powers the event-driven workflows and a one-shot backfill, and a transient hiccup
-self-heals on the next event. The only dependencies are python3's standard library
-and an authenticated `gh` CLI, nothing from PyPI.
+from all comments in one fetch. The newest marked scoreboard counts regardless
+of author association, matching the worker and auto-merge: a contributor-posted
+review therefore moves the PR out of `awaiting-review` everywhere at once. Status
+labels and reactions are presentation, not a security boundary; trusted commit
+statuses still enforce build, scope, axiom and bump guards. Destructive
+housekeeping separately calls `core.repo_associated_scoreboard_meta`, retaining
+its OWNER/MEMBER/COLLABORATOR-only close policy. Every reconcile reads GitHub
+afresh and drives the sink to the correct state, so the same command powers the
+event-driven workflows and a one-shot backfill, and a transient hiccup self-heals
+on the next event. The only dependencies are python3's standard library and an
+authenticated `gh` CLI, nothing from PyPI.
 
 ## Labels
 
@@ -53,8 +56,9 @@ in-flight marker (`<!--tauceti-review-in-progress-->`, carrying a `head` and an
 harness MAY post: an unexpired, head-exact marker while the PR is otherwise
 `awaiting-review` shows `review-in-progress`. A harness that posts no marker just
 leaves the PR at `awaiting-review` during review, which is never wrong; and the
-marker's TTL means a crashed review self-heals, since the hourly `sweep` job
-clears the label once the marker expires even if no other event fires.
+marker's TTL means a crashed review self-heals. The hourly `sweep` reconciles
+both review-waiting labels, clearing an expired marker even if no other event
+fires and repairing a missed or newly reinterpreted scoreboard event.
 
 The review verdict itself comes from the scoreboard's durable per-rubric `states`
 map, not the latest round's `runs`: a reply/partial round re-runs only some
@@ -76,8 +80,8 @@ or runs PR head code. Triggers:
   a late `requested` for an old head could force `awaiting-CI` onto a moved PR,
   and a new commit already paints `awaiting-CI` via `synchronize`.)
 - `issue_comment` carrying the scoreboard or in-progress marker.
-- `schedule` (hourly): the `sweep` backstop that clears an expired
-  `review-in-progress`.
+- `schedule` (hourly): the `sweep` backstop for `awaiting-review` and
+  `review-in-progress`, including policy migrations and expired markers.
 - `workflow_dispatch`: manual re-sync of one PR.
 
 ## Zulip reactions

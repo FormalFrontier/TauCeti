@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Quotient.Basic
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.ClosedImmersion
+public import TauCeti.AlgebraicGeometry.AffineGroupScheme.HopfSpec
 
 /-!
 # Closed subgroup schemes from Hopf ideals
@@ -32,6 +33,7 @@ in the same universe, which is reflected in all scheme-level declarations in thi
 ## Main declarations
 
 * `TauCeti.CommHopfAlgCat.quotientSpec`: the group scheme represented by `H ⧸ I`.
+* `TauCeti.CommHopfAlgCat.isAffine_quotientSpec`: its underlying scheme is affine.
 * `TauCeti.CommHopfAlgCat.quotientSpecι`: its group-object morphism to the group scheme
   represented by `H`.
 * `TauCeti.CommHopfAlgCat.isClosedImmersion_quotientSpecι`: the underlying scheme morphism of
@@ -69,6 +71,13 @@ The same-universe restriction on `H` is imposed by Mathlib's current `hopfSpec` 
 noncomputable abbrev quotientSpec (H : _root_.CommHopfAlgCat.{u} R)
     (I : HopfIdeal R H) : Grp (Over (Spec (CommRingCat.of R))) :=
   (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).obj (Opposite.op (quotient H I))
+
+/-- The scheme underlying a Hopf-ideal quotient group scheme is affine: it is the spectrum of
+the quotient Hopf algebra. -/
+instance isAffine_quotientSpec (H : _root_.CommHopfAlgCat.{u} R) (I : HopfIdeal R H) :
+    IsAffine (quotientSpec H I).X.left := by
+  rw [hopfSpec_obj_X_left]
+  exact isAffine_Spec _
 
 /-- The group-object morphism `Spec(H ⧸ I) ⟶ Spec(H)` induced contravariantly by the quotient
 Hopf-algebra morphism `H ⟶ H ⧸ I`. -/

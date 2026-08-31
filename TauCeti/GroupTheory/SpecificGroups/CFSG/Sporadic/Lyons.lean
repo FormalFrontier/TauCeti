@@ -27,7 +27,8 @@ stored as the relator `r * s⁻¹`, which is `TauCeti.Relator.div`. The structur
 preserve the source's powers, conjugates, commutators, and equations. Since their direct compilation
 need not perform free cancellation, decidable checks apply Mathlib's `FreeGroup.reduce` before
 checking the three block lengths and their total, and then check that the reduced words are
-cyclically reduced.
+cyclically reduced. The per-relator length vectors below make each block total auditable in source
+order rather than only as an aggregate.
 
 The proved `TauCeti.Relator.toWord_toFreeGroup` is the audit boundary between the expressions and
 the signed words consumed by `PresentedGroup`. This file asserts no order, finiteness, simplicity,
@@ -393,6 +394,197 @@ private theorem lyPresentation_extensionBlock :
     lyPresentation.transcribed.drop 16 = extensionRelators := by
   rw [lyPresentation_blockDecomposition]
   rfl
+
+/-- The freely reduced lengths of the nine `R_H2` relators, in source order.
+
+Reading the lengths one relator at a time makes the transcription check local: a discrepancy in
+the block total can be traced to a particular displayed relator rather than only to the aggregate
+`TauCeti.Sporadic.lyPresentation_reducedH2Length`. -/
+theorem lyPresentation_reducedH2Lengths :
+    ((lyPresentation.transcribed.take 9).map fun r =>
+      (FreeGroup.reduce r.toWord).length) = [8, 5, 8, 6, 12, 5, 8, 16, 12] := by
+  rw [lyPresentation_h2Block]
+  -- Expose the source-order list before reducing each word; direct reduction does not unfold
+  -- through the list mapper, while the following `change` steps make each audit entry explicit.
+  simp only [h2Relators, lyH2Relators, List.map]
+  simp only [List.cons.injEq]
+  constructor
+  · change (FreeGroup.reduce (Relator.toWord (a.pow 8))).length = 8
+    simp [Relator.toWord_pow]
+  constructor
+  · change (FreeGroup.reduce (Relator.toWord (b.pow 5))).length = 5
+    simp [Relator.toWord_pow]
+  constructor
+  · change (FreeGroup.reduce (Relator.toWord ((a ⬝ b).pow 4))).length = 8
+    simp [Relator.toWord_pow, Relator.toWord_mul]
+  constructor
+  · change (FreeGroup.reduce (Relator.toWord (sourceComm (a.pow 2) b))).length = 6
+    simp [Relator.toWord_inv, Relator.toWord_comm, Relator.toWord_pow,
+      FreeGroup.reduce, FreeGroup.invRev]
+  constructor
+  · change (FreeGroup.reduce (Relator.toWord ((sourceComm a b).pow 3))).length = 12
+    simp [Relator.toWord_pow, Relator.toWord_comm, Relator.toWord_inv,
+      FreeGroup.reduce, FreeGroup.invRev]
+  constructor
+  · change (FreeGroup.reduce (Relator.toWord (c.pow 5))).length = 5
+    simp [Relator.toWord_pow]
+  constructor
+  · change (FreeGroup.reduce
+      (Relator.toWord ((c.conj (a.pow 2)).div (c.pow 3)))).length = 8
+    simp [Relator.toWord_conj, Relator.toWord_div, Relator.toWord_pow,
+      FreeGroup.reduce, FreeGroup.invRev]
+  constructor
+  · change (FreeGroup.reduce (Relator.toWord
+      ((c.conj (b ⬝ a)).div (c.conj (a.pow 2 ⬝ b) ⬝ c ⬝ b ⬝ c ⬝ b.inv)))).length = 16
+    simp [Relator.toWord_conj, Relator.toWord_div, Relator.toWord_pow,
+      FreeGroup.reduce, FreeGroup.invRev]
+  constructor
+  · change (FreeGroup.reduce (Relator.toWord
+      ((c.conj (b.pow 2)).div (c.pow 2 ⬝ c.conj b.inv ⬝ (c.conj b).inv.pow 2)))).length = 12
+    simp [Relator.toWord_conj, Relator.toWord_div, Relator.toWord_pow,
+      FreeGroup.reduce, FreeGroup.invRev]
+  · trivial
+
+/-- The freely reduced lengths of the seven `R_H1` relators, in source order. -/
+theorem lyPresentation_reducedH1Lengths :
+    (((lyPresentation.transcribed.drop 9).take 7).map fun r =>
+      (FreeGroup.reduce r.toWord).length) = [12, 10, 28, 25, 31, 29, 25] := by
+  rw [lyPresentation_h1Block]
+  -- Expose the source-order list before reducing each word; the following `change` steps
+  -- document the individual transcription entries that the audit checks.
+  simp only [h1Relators, lyH1Relators, List.map]
+  simp only [List.cons.injEq]
+  constructor
+  · change (FreeGroup.reduce (Relator.toWord
+      ((Relator.conj (a ⬝ b.inv ⬝ a) d).div (a ⬝ b.inv ⬝ a.pow 5)))).length = 12
+    simp [Relator.toWord_conj, Relator.toWord_div, Relator.toWord_pow,
+      FreeGroup.reduce, FreeGroup.invRev]
+  constructor
+  · change (FreeGroup.reduce (Relator.toWord
+      ((Relator.conj (b.pow 2 ⬝ a.inv) d).div (a.inv.pow 2 ⬝ b.pow 2 ⬝ a.inv)))).length = 10
+    simp [Relator.toWord_conj, Relator.toWord_div, Relator.toWord_pow,
+      FreeGroup.reduce, FreeGroup.invRev]
+  constructor
+  · change (FreeGroup.reduce (Relator.toWord
+      ((Relator.conj (b ⬝ a ⬝ c.inv ⬝ b ⬝ a ⬝ b.inv.pow 2 ⬝ a) (d ⬝ c ⬝ d)).div
+        (a.inv ⬝ b ⬝ a.inv ⬝ b.inv ⬝ a ⬝ b.inv.pow 2 ⬝ a ⬝ c ⬝ b.inv ⬝ c ⬝ b ⬝ a ⬝
+          c.inv)))).length =
+      28
+    simp [Relator.toWord_conj, Relator.toWord_div, Relator.toWord_pow,
+      FreeGroup.reduce, FreeGroup.invRev]
+  constructor
+  · change (FreeGroup.reduce (Relator.toWord
+      ((Relator.conj (a.pow 2 ⬝ c.inv ⬝ b ⬝ a ⬝ c.inv ⬝ b ⬝ a.inv ⬝ b.inv)
+        (d ⬝ c ⬝ d)).div
+        (a.inv.pow 2 ⬝ b.inv ⬝ a.inv ⬝ (b.inv ⬝ c).pow 2 ⬝ b.pow 2)))).length = 25
+    simp [Relator.toWord_conj, Relator.toWord_div, Relator.toWord_pow,
+      FreeGroup.reduce, FreeGroup.invRev]
+  constructor
+  · change (FreeGroup.reduce (Relator.toWord
+      ((Relator.conj (b.pow 2 ⬝ a ⬝ c ⬝ b ⬝ a) (d ⬝ c ⬝ a.inv ⬝ b ⬝ c ⬝ d)).div
+        (a.inv ⬝ b ⬝ a.inv ⬝ b.inv ⬝ a ⬝ b.inv.pow 2 ⬝ c ⬝ a.inv ⬝ b.inv ⬝ c ⬝ b ⬝
+          a)))).length = 31
+    simp [Relator.toWord_conj, Relator.toWord_div, Relator.toWord_pow,
+      FreeGroup.reduce, FreeGroup.invRev]
+  constructor
+  · change (FreeGroup.reduce (Relator.toWord
+      ((Relator.conj (a ⬝ c.inv.pow 2 ⬝ b) (d ⬝ c ⬝ a.inv ⬝ b ⬝ c ⬝ d)).div
+        (a.inv.pow 4 ⬝ b.pow 2 ⬝ c.inv ⬝ b.inv ⬝ a ⬝ b.inv ⬝ c ⬝ a ⬝
+          b.inv)))).length = 29
+    simp [Relator.toWord_conj, Relator.toWord_div, Relator.toWord_pow,
+      FreeGroup.reduce, FreeGroup.invRev]
+  constructor
+  · change (FreeGroup.reduce (Relator.toWord
+      (c ⬝ a.inv ⬝ c.inv ⬝ a ⬝ c.inv ⬝ a.inv ⬝ c ⬝ a ⬝ d.inv ⬝ c.inv ⬝ a.inv ⬝
+        c.inv ⬝ a ⬝ c ⬝ a.inv ⬝ c ⬝ d ⬝ c ⬝ a ⬝ c.inv ⬝ a.inv ⬝ c.inv ⬝ a ⬝ c ⬝
+        d))).length = 25
+    simp [Relator.toWord_mul, Relator.toWord_inv, FreeGroup.reduce, FreeGroup.invRev]
+  · trivial
+
+/-- The freely reduced lengths of the nine `R_G` relators, in source order. -/
+theorem lyPresentation_reducedExtensionLengths :
+    ((lyPresentation.transcribed.drop 16).map fun r =>
+      (FreeGroup.reduce r.toWord).length) = [6, 10, 51, 42, 29, 62, 37, 37, 35] := by
+  rw [lyPresentation_extensionBlock]
+  -- As above, expose the source-order list so every reduced length is checked separately.
+  simp only [extensionRelators, lyExtensionRelators, List.map]
+  simp only [List.cons.injEq]
+  let aInv := a.inv
+  let bInv := b.inv
+  let cInv := c.inv
+  let dInv := d.inv
+  let zInv := z.inv
+  constructor
+  · change (FreeGroup.reduce (Relator.toWord
+      ((Relator.conj a z).div (aInv.pow 3)))).length = 6
+    simp [aInv, Relator.toWord_conj, Relator.toWord_div,
+      FreeGroup.reduce, FreeGroup.invRev]
+  constructor
+  · change (FreeGroup.reduce (Relator.toWord
+      ((Relator.conj a (z ⬝ d ⬝ z)).div (a.pow 3)))).length = 10
+    simp [Relator.toWord_conj, Relator.toWord_div,
+      FreeGroup.reduce, FreeGroup.invRev]
+  constructor
+  · change (FreeGroup.reduce (Relator.toWord
+      ((Relator.conj
+        (cInv ⬝ dInv ⬝ c ⬝ b ⬝ a ⬝ b.pow 2 ⬝ (c ⬝ b).pow 2 ⬝ cInv ⬝ d)
+        (z ⬝ d ⬝ z)).div
+        (cInv ⬝ b ⬝ c.pow 2 ⬝ a ⬝ cInv ⬝ b ⬝ dInv ⬝ c ⬝ a ⬝ cInv ⬝ b ⬝ c ⬝
+          bInv.pow 2 ⬝ c ⬝ a ⬝ c ⬝ dInv ⬝ c ⬝ bInv.pow 2 ⬝ c ⬝ d ⬝ a ⬝
+          dInv ⬝ cInv ⬝ dInv ⬝ c ⬝ b ⬝ aInv ⬝ b)))).length = 51
+    simp [aInv, bInv, cInv, dInv, Relator.toWord_conj, Relator.toWord_div,
+      FreeGroup.reduce, FreeGroup.invRev]
+  constructor
+  · change (FreeGroup.reduce (Relator.toWord
+      ((sourceComm z
+        (dInv ⬝ cInv ⬝ b ⬝ a ⬝ bInv ⬝ d ⬝ c ⬝ d ⬝ cInv ⬝ d ⬝ cInv ⬝ b ⬝
+          a ⬝ bInv ⬝ c ⬝ d ⬝ c ⬝ d)).div
+        (b ⬝ c ⬝ bInv ⬝ cInv)))).length = 42
+    simp [bInv, cInv, dInv, sourceComm, Relator.toWord_comm,
+      Relator.toWord_inv, Relator.toWord_div,
+      Relator.toWord_mul, FreeGroup.reduce, FreeGroup.invRev]
+  constructor
+  · change (FreeGroup.reduce (Relator.toWord
+      ((Relator.conj a (z ⬝ d ⬝ bInv ⬝ z)).div
+        (aInv ⬝ dInv ⬝ cInv ⬝ b ⬝ cInv.pow 2 ⬝ a ⬝ bInv ⬝ c ⬝ a ⬝
+          bInv.pow 2 ⬝ c ⬝ bInv ⬝ c ⬝ a ⬝ cInv ⬝ d ⬝ bInv ⬝ aInv)))).length = 29
+    simp [aInv, bInv, cInv, dInv, Relator.toWord_conj, Relator.toWord_div,
+      FreeGroup.reduce, FreeGroup.invRev]
+  constructor
+  · change (FreeGroup.reduce (Relator.toWord
+      ((Relator.conj
+        (cInv ⬝ aInv ⬝ dInv ⬝ cInv ⬝ b ⬝ a ⬝ bInv ⬝ a ⬝ cInv ⬝ b ⬝ c ⬝ a ⬝
+          cInv ⬝ dInv ⬝ c ⬝ d ⬝ a ⬝ c ⬝ bInv ⬝ a ⬝ b ⬝ a ⬝ c)
+        (z ⬝ d ⬝ bInv ⬝ z)).div
+        (aInv ⬝ c ⬝ aInv.pow 3 ⬝ cInv ⬝ bInv.pow 2 ⬝ cInv ⬝ d ⬝ cInv ⬝ a ⬝
+          cInv ⬝ b.pow 2 ⬝ c ⬝ bInv ⬝ c ⬝ aInv ⬝ cInv ⬝ d ⬝ bInv ⬝ cInv ⬝
+          dInv ⬝ cInv ⬝ b ⬝ a ⬝ b ⬝ d ⬝ c ⬝ aInv)))).length = 62
+    simp [aInv, bInv, cInv, dInv, Relator.toWord_conj, Relator.toWord_div,
+      FreeGroup.reduce, FreeGroup.invRev]
+  constructor
+  · change (FreeGroup.reduce (Relator.toWord
+      ((Relator.conj
+        (aInv ⬝ b ⬝ d ⬝ c ⬝ aInv ⬝ bInv ⬝ a ⬝ b ⬝ aInv ⬝ cInv ⬝ bInv ⬝ c ⬝ a)
+        (z ⬝ d ⬝ c ⬝ d ⬝ z)).div
+        (cInv ⬝ a.pow 3 ⬝ b ⬝ cInv ⬝ bInv ⬝ aInv ⬝ c ⬝ dInv ⬝ cInv ⬝ b ⬝
+          aInv ⬝ bInv)))).length = 37
+    simp [aInv, bInv, cInv, dInv, Relator.toWord_conj, Relator.toWord_div,
+      FreeGroup.reduce, FreeGroup.invRev]
+  constructor
+  · change (FreeGroup.reduce (Relator.toWord
+      ((Relator.conj (dInv ⬝ c ⬝ b ⬝ aInv ⬝ bInv) (z ⬝ d ⬝ c ⬝ d ⬝ z)).div
+        (a ⬝ c ⬝ aInv ⬝ b ⬝ a ⬝ cInv ⬝ b ⬝ c ⬝ a ⬝ cInv ⬝ bInv ⬝ aInv ⬝
+          bInv ⬝ a ⬝ b ⬝ dInv ⬝ c ⬝ a ⬝ cInv ⬝ bInv ⬝ cInv ⬝ a)))).length = 37
+    simp [aInv, bInv, cInv, dInv, Relator.toWord_conj, Relator.toWord_div,
+      FreeGroup.reduce, FreeGroup.invRev]
+  constructor
+  · change (FreeGroup.reduce (Relator.toWord
+      (a ⬝ dInv ⬝ cInv ⬝ b ⬝ aInv.pow 2 ⬝ dInv ⬝ cInv ⬝ bInv.pow 2 ⬝ cInv ⬝
+        d ⬝ cInv ⬝ (a ⬝ cInv).pow 2 ⬝ b ⬝ aInv ⬝ c.pow 2 ⬝ bInv ⬝ c ⬝ dInv ⬝
+        c ⬝ a ⬝ c ⬝ bInv ⬝ a ⬝ dInv ⬝ zInv ⬝ b ⬝ z ⬝ bInv ⬝ z))).length = 35
+    simp [aInv, bInv, cInv, dInv, zInv, Relator.toWord_mul, Relator.toWord_inv,
+      FreeGroup.reduce, FreeGroup.invRev]
+  · trivial
 
 /-- The freely reduced lengths of the first nine relators sum to `80`, as recorded for the
 `R_H2` block in the source. -/

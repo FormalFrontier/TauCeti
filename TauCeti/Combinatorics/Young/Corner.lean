@@ -38,6 +38,8 @@ corner, and only at a cell of `μ` that is a corner, nothing but `c` itself is r
   `YoungDiagram.IsCorner.card_erase`: it drops the number of cells by one.
 * `YoungDiagram.exists_isCorner`: a nonempty Young diagram has a corner, so the corner
   recursions are not vacuous.
+* `YoungDiagram.IsCorner.eq_of_fst_eq`: the corners of a diagram sit in distinct rows, and
+  `YoungDiagram.IsCorner.fst_lt_colLen_zero`: those rows are rows of the diagram.
 * `YoungDiagram.corners_transpose` and `YoungDiagram.erase_transpose`: corners and
   deletion commute with transposition.
 
@@ -228,6 +230,18 @@ theorem colLen_eq_fst_add_one (h : IsCorner μ c) : μ.colLen c.2 = c.1 + 1 := b
   have hbelow := h.below_notMem
   rw [_root_.YoungDiagram.mem_iff_lt_colLen] at hbelow
   omega
+
+/-- A corner is the final cell of its row, so it is determined by the row it lies in: the corners
+of a diagram sit in distinct rows. -/
+theorem eq_of_fst_eq (hc : IsCorner μ c) (hd : IsCorner μ d) (h : c.1 = d.1) : c = d := by
+  have hcr := hc.rowLen_eq_snd_add_one
+  have hdr := hd.rowLen_eq_snd_add_one
+  rw [h] at hcr
+  exact Prod.ext h (by omega)
+
+/-- The row of a corner is one of the rows of the diagram. -/
+theorem fst_lt_colLen_zero (h : IsCorner μ c) : c.1 < μ.colLen 0 :=
+  _root_.YoungDiagram.mem_iff_lt_colLen.mp (μ.up_left_mem le_rfl (Nat.zero_le c.2) h.mem)
 
 end IsCorner
 

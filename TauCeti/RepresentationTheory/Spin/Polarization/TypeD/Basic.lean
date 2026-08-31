@@ -135,48 +135,31 @@ corresponding polarization coordinate. -/
           typeDDiagonalMatrix_mem_typeD (Pi.single i 1)⟩ =
       ⟨P.diagonalBivector b i, P.diagonalBivector_mem_quadraticLieSubalgebra b i⟩ := by
   let _ : Module.Finite K V := Module.Finite.of_basis (P.typeDBasis b hline)
-  apply quadraticLieSubalgebra_ext Q (P.nondegenerate_of_line_eq_bot hline)
-  intro x
-  rw [P.typeDQuadraticEquiv_lie_ι b hline]
-  -- The extensionality goal compares the underlying Clifford commutators.
-  change _ = ⁅P.diagonalBivector b i, CliffordAlgebra.ι Q x⁆
-  rw [P.diagonalBivector_def b, bivector_lie_ι]
-  apply congrArg (CliffordAlgebra.ι Q)
-  let g : Module.End K V :=
-    (Q.polarBilin (P.dualVector b i)).smulRight (b i : V) -
-      (Q.polarBilin (b i : V)).smulRight (P.dualVector b i : V)
-  -- Name the endomorphism produced by the bivector action before comparing it on a basis.
-  change _ = g x
-  apply LinearMap.congr_fun
-  apply (P.typeDBasis b hline).ext
-  rintro (j | j)
-  -- Each branch exposes the matrix action and the corresponding polar-form coordinate of `g`.
-  · change Matrix.toLin (P.typeDBasis b hline) (P.typeDBasis b hline)
-        (typeDDiagonalMatrix (Pi.single i 1))
-        (P.typeDBasis b hline (.inl j)) = g (P.typeDBasis b hline (.inl j))
-    rw [Matrix.toLin_self]
-    simp only [typeDDiagonalMatrix_apply, ite_smul, zero_smul, Finset.sum_ite_eq',
-      Finset.mem_univ, ↓reduceIte, typeDDiagonalValue_inl, typeDBasis_inl]
-    -- Expand `g` on the first isotropic coordinate.
-    change _ = QuadraticMap.polar Q (P.dualVector b i : V) (b j : V) • (b i : V) -
-      QuadraticMap.polar Q (b i : V) (b j : V) • (P.dualVector b i : V)
-    rw [P.polar_W_eq_zero, zero_smul, sub_zero]
-    rw [QuadraticMap.polar_comm, P.polar_dualVector, Pi.single_apply]
-    split <;> simp_all [eq_comm]
-  -- The second coordinate has the opposite diagonal sign.
-  · change Matrix.toLin (P.typeDBasis b hline) (P.typeDBasis b hline)
-        (typeDDiagonalMatrix (Pi.single i 1))
-        (P.typeDBasis b hline (.inr j)) = g (P.typeDBasis b hline (.inr j))
-    rw [Matrix.toLin_self]
-    simp only [typeDDiagonalMatrix_apply, ite_smul, zero_smul, Finset.sum_ite_eq',
-      Finset.mem_univ, ↓reduceIte, typeDDiagonalValue_inr, typeDBasis_inr, neg_smul]
-    -- Expand `g` on the polar-dual coordinate.
-    change _ = QuadraticMap.polar Q (P.dualVector b i : V) (P.dualVector b j : V) •
-        (b i : V) -
-      QuadraticMap.polar Q (b i : V) (P.dualVector b j : V) • (P.dualVector b i : V)
-    rw [P.polar_W'_eq_zero, zero_smul, zero_sub, P.polar_dualVector, neg_inj]
-    rw [Pi.single_apply]
-    split <;> simp_all [eq_comm]
+  have key : P.typeDQuadraticEquiv b hline
+        ⟨typeDDiagonalMatrix (Pi.single i 1),
+          typeDDiagonalMatrix_mem_typeD (Pi.single i 1)⟩ =
+      ⟨bivector Q (b i : V) (P.dualVector b i : V),
+        bivector_mem_quadraticLieSubalgebra Q _ _⟩ := by
+    refine quadraticLieSubalgebra_eq_bivector_of_lie_ι Q
+      (P.nondegenerate_of_line_eq_bot hline) _ _
+      (P.typeDQuadraticEquiv_lie_ι b hline _) (P.typeDBasis b hline) _ _ ?_
+    -- Each branch exposes the matrix action and the corresponding polar-form coordinate.
+    rintro (j | j)
+    · rw [Matrix.toLinAlgEquiv_self]
+      simp only [typeDDiagonalMatrix_apply, ite_smul, zero_smul, Finset.sum_ite_eq',
+        Finset.mem_univ, ↓reduceIte, typeDDiagonalValue_inl, typeDBasis_inl]
+      rw [P.polar_W_eq_zero, zero_smul, sub_zero]
+      rw [QuadraticMap.polar_comm, P.polar_dualVector, Pi.single_apply]
+      split <;> simp_all [eq_comm]
+    -- The second coordinate has the opposite diagonal sign.
+    · rw [Matrix.toLinAlgEquiv_self]
+      simp only [typeDDiagonalMatrix_apply, ite_smul, zero_smul, Finset.sum_ite_eq',
+        Finset.mem_univ, ↓reduceIte, typeDDiagonalValue_inr, typeDBasis_inr, neg_smul]
+      rw [P.polar_W'_eq_zero, zero_smul, zero_sub, P.polar_dualVector, neg_inj]
+      rw [Pi.single_apply]
+      split <;> simp_all [eq_comm]
+  rw [key]
+  exact Subtype.ext (P.diagonalBivector_def b i).symm
 
 /-- The standard diagonal Cartan basis maps to the diagonal Clifford bivectors of the
 polarization. -/

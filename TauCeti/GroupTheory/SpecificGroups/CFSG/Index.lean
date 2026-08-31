@@ -33,7 +33,8 @@ order `p ^ (2 * m + 1)`.
 * `TauCeti.PrimePower`: a prime and positive exponent, retaining the data needed for a finite field.
 * `TauCeti.LieTypeIndex` and `TauCeti.LieTypeIndex.Valid`: the Lie families and their preferred
   parameter range.
-* `TauCeti.ValidLieTypeIndex`, `TauCeti.SuzukiReeIndex`, and `TauCeti.GraphTwistedIndex`: the
+* `TauCeti.ValidLieTypeIndex`, `TauCeti.SuzukiReeIndex`, `TauCeti.GraphTwistedIndex`,
+  `TauCeti.TypeALieIndex`, `TauCeti.SuzukiLieIndex`, and `TauCeti.UnimodularLieIndex`: the
   restricted domains consumed by later carrier and endomorphism constructions.
 * `TauCeti.SporadicName`: the conventional twenty-six sporadic names.
 * `TauCeti.CFSGIndex`: cyclic, alternating, Lie-type, and sporadic entries in the classification
@@ -215,6 +216,54 @@ def UsesHalfFrobenius : LieTypeIndex → Prop
 instance : DecidablePred UsesHalfFrobenius := fun d => by
   cases d <;> rw [usesHalfFrobenius_iff] <;> infer_instance
 
+/-- Whether a Lie-type index belongs to one of the two type-A families, `A_r(q)` or `²A_r(q)`.
+
+This is a constructor selector, not a mathematical property of a group. The small-field and
+duplicate-representative restrictions come from the enclosing `TauCeti.ValidLieTypeIndex`; no
+finiteness or simplicity is asserted here. -/
+def IsTypeA : LieTypeIndex → Prop
+  | .A _ _ | .twistedA _ _ => True
+  | _ => False
+
+/-- Characterization of the two type-A constructors. -/
+@[simp] theorem isTypeA_iff (d : LieTypeIndex) : d.IsTypeA ↔
+    match d with
+    | .A _ _ | .twistedA _ _ => True
+    | _ => False :=
+  Iff.rfl
+
+instance : DecidablePred IsTypeA := fun d => by
+  cases d <;> rw [isTypeA_iff] <;> infer_instance
+
+/-- Neither type-A family uses a half-Frobenius, so both carry a diagram automorphism. -/
+theorem not_usesHalfFrobenius_of_isTypeA {d : LieTypeIndex} (h : d.IsTypeA) :
+    ¬ d.UsesHalfFrobenius := by
+  cases d <;> simp_all [usesHalfFrobenius_iff]
+
+/-- Whether a Lie-type index names the Suzuki family `²B₂(2^(2m+1))`.
+
+This is a constructor selector, not a mathematical property of a group. The exclusion of `²B₂(2)`
+comes from the enclosing `TauCeti.ValidLieTypeIndex`; no finiteness or simplicity is asserted
+here. -/
+def IsSuzuki : LieTypeIndex → Prop
+  | .suzuki _ => True
+  | _ => False
+
+/-- Characterization of the Suzuki constructor. -/
+@[simp] theorem isSuzuki_iff (d : LieTypeIndex) : d.IsSuzuki ↔
+    match d with
+    | .suzuki _ => True
+    | _ => False :=
+  Iff.rfl
+
+instance : DecidablePred IsSuzuki := fun d => by
+  cases d <;> rw [isSuzuki_iff] <;> infer_instance
+
+/-- The Suzuki family uses a half-Frobenius, so it carries no diagram automorphism. -/
+theorem usesHalfFrobenius_of_isSuzuki {d : LieTypeIndex} (h : d.IsSuzuki) :
+    d.UsesHalfFrobenius := by
+  cases d <;> simp_all [usesHalfFrobenius_iff]
+
 /-- The underlying untwisted Dynkin diagram. Twisted types map to the diagram from which they are
 constructed, so all later root indices use the root-systems roadmap's Bourbaki numbering.
 
@@ -282,6 +331,47 @@ This is exposed because it appears in the *types* of the numbered data attached 
 @[simp] theorem dynkinType_suzuki (m : ℕ) : (suzuki m).dynkinType = .B 2 :=
   by simp only [dynkinType]
 
+/-- The Lie-type families whose underlying Dynkin diagram has unimodular Cartan matrix, namely
+`E₈`, `F₄` and `G₂`.
+
+Both the untwisted families `E₈(q)`, `F₄(q)`, `G₂(q)` and the Ree families `²G₂(3^(2m+1))`,
+`²F₄(2^(2m+1))` together with the Tits index are included: the predicate constrains the diagram
+and not the Steinberg map. The Suzuki family is the one Suzuki--Ree constructor left out, its
+diagram being `B₂`, whose Cartan matrix has determinant two. -/
+def HasUnimodularDiagram : LieTypeIndex → Prop
+  | .E8 _ | .F4 _ | .G2 _ | .reeG2 _ | .reeF4 _ | .tits => True
+  | _ => False
+
+/-- Characterization of the families with unimodular diagram. -/
+@[simp] theorem hasUnimodularDiagram_iff (d : LieTypeIndex) : d.HasUnimodularDiagram ↔
+    match d with
+    | .E8 _ | .F4 _ | .G2 _ | .reeG2 _ | .reeF4 _ | .tits => True
+    | _ => False :=
+  Iff.rfl
+
+instance : DecidablePred HasUnimodularDiagram := fun d => by
+  cases d <;> rw [hasUnimodularDiagram_iff] <;> infer_instance
+
+/-- **An index has unimodular diagram exactly when its underlying Dynkin type is `E₈`, `F₄` or
+`G₂`.** -/
+theorem hasUnimodularDiagram_iff_dynkinType (d : LieTypeIndex) :
+    d.HasUnimodularDiagram ↔
+      (d.dynkinType = .E8 ∨ d.dynkinType = .F4 ∨ d.dynkinType = .G2) := by
+  cases d <;> simp
+
+/-- **The six families with unimodular diagram.** -/
+theorem exists_eq_of_hasUnimodularDiagram {d : LieTypeIndex} (hd : d.HasUnimodularDiagram) :
+    (∃ q : PrimePower, d = .E8 q ∨ d = .F4 q ∨ d = .G2 q) ∨
+      (∃ m : ℕ, d = .reeG2 m ∨ d = .reeF4 m) ∨ d = .tits := by
+  cases d <;> simp_all
+
+/-- **The three untwisted families with unimodular diagram.** Removing the Suzuki--Ree
+constructors from the previous list leaves `E₈(q)`, `F₄(q)` and `G₂(q)`. -/
+theorem exists_eq_of_hasUnimodularDiagram_of_not_usesHalfFrobenius {d : LieTypeIndex}
+    (hd : d.HasUnimodularDiagram) (hf : ¬d.UsesHalfFrobenius) :
+    ∃ q : PrimePower, d = .E8 q ∨ d = .F4 q ∨ d = .G2 q := by
+  cases d <;> simp_all
+
 /-- The characteristic of the field over which the ambient group will be constructed. -/
 def characteristic : LieTypeIndex → ℕ
   | .A _ q | .twistedA _ q | .B _ q | .C _ q | .D _ q | .twistedD _ q
@@ -343,6 +433,13 @@ def characteristic : LieTypeIndex → ℕ
 theorem characteristic_prime (d : LieTypeIndex) : d.characteristic.Prime := by
   cases d <;> simp only [characteristic] <;>
     first | exact PrimePower.prime_p _ | decide
+
+/-- The fact instance that equips `ZMod d.characteristic` with its field structure downstream.
+
+It is stated for a bare index rather than for a `TauCeti.ValidLieTypeIndex`, so that it also
+applies at an explicitly written constructor such as `LieTypeIndex.A rank q`: through
+`Subtype.val ?d` the validated form is not a matchable instance key. -/
+instance (d : LieTypeIndex) : Fact d.characteristic.Prime := ⟨d.characteristic_prime⟩
 
 /-- The Frobenius/classification parameter `q`. For ordinary and graph-twisted families this is the
 exponent in `Frob_q`, not the cardinality of the extension field used by a twisted matrix
@@ -516,6 +613,56 @@ abbrev SuzukiReeIndex : Type _ := {d : ValidLieTypeIndex // d.1.UsesHalfFrobeniu
 automorphism. The Suzuki--Ree and Tits branches are excluded. -/
 abbrev GraphTwistedIndex : Type _ := {d : ValidLieTypeIndex // ¬ d.1.UsesHalfFrobenius}
 
+/-- A valid index whose underlying Dynkin diagram has unimodular Cartan matrix: the six branches
+`E₈(q)`, `F₄(q)`, `G₂(q)`, `²G₂(3^(2m+1))`, `²F₄(2^(2m+1))` and `²F₄(2)'`. These are the diagrams
+on which the Geck carrier of the root-systems roadmap has full character span, so this subtype is
+the domain of the lattice results that span buys. -/
+abbrev UnimodularLieIndex : Type _ := {d : ValidLieTypeIndex // d.1.HasUnimodularDiagram}
+
+/-- A validated index in one of the two type-A families `A_r(q)` and `²A_r(q)`.
+
+The outer subtype is important: a raw type-A constructor with an excluded rank or field parameter
+is not a `TypeALieIndex`. -/
+abbrev TypeALieIndex : Type _ := {d : ValidLieTypeIndex // d.1.IsTypeA}
+
+/-- A validated index in the Suzuki family `²B₂(2^(2m+1))`.
+
+The outer subtype is important: `²B₂(2)`, the parameter `m = 0`, is excluded from the
+classification list. It is itself the Frobenius group of order twenty, whose derived subgroup is
+cyclic of order five and is its own centre, so the derived-subgroup recipe collapses to the trivial
+group rather than a simple one, and `²B₂(2)` is not a `SuzukiLieIndex`. The Suzuki--Ree relatives
+`²G₂`, `²F₄` and the Tits group are excluded too; they are the other three constructors of
+`TauCeti.SuzukiReeIndex`. -/
+abbrev SuzukiLieIndex : Type _ := {d : ValidLieTypeIndex // d.1.IsSuzuki}
+
+namespace TypeALieIndex
+
+/-- Introduce a valid untwisted type-A index. -/
+abbrev ofA (rank : ℕ) (q : PrimePower) (hvalid : (LieTypeIndex.A rank q).Valid) :
+    TypeALieIndex :=
+  ⟨⟨.A rank q, hvalid⟩, (LieTypeIndex.isTypeA_iff _).mpr trivial⟩
+
+/-- Introduce a valid graph-twisted type-A index. -/
+abbrev ofTwistedA (rank : ℕ) (q : PrimePower) (hvalid : (LieTypeIndex.twistedA rank q).Valid) :
+    TypeALieIndex :=
+  ⟨⟨.twistedA rank q, hvalid⟩, (LieTypeIndex.isTypeA_iff _).mpr trivial⟩
+
+/-- Every type-A index is one of the two introduction forms. This is the eliminator matching `ofA`
+and `ofTwistedA`, so a consumer never repeats the case split over the other constructors. -/
+theorem exists_eq_ofA_or_exists_eq_ofTwistedA (d : TypeALieIndex) :
+    (∃ (rank : ℕ) (q : PrimePower) (hvalid : (LieTypeIndex.A rank q).Valid),
+        d = ofA rank q hvalid) ∨
+      ∃ (rank : ℕ) (q : PrimePower) (hvalid : (LieTypeIndex.twistedA rank q).Valid),
+        d = ofTwistedA rank q hvalid := by
+  obtain ⟨⟨d, hvalid⟩, hA⟩ := d
+  revert hvalid hA
+  cases d
+  case A rank q => exact fun hvalid _ => .inl ⟨rank, q, hvalid, rfl⟩
+  case twistedA rank q => exact fun hvalid _ => .inr ⟨rank, q, hvalid, rfl⟩
+  all_goals exact fun _ hA => ((LieTypeIndex.isTypeA_iff _).mp hA).elim
+
+end TypeALieIndex
+
 namespace ValidLieTypeIndex
 
 /-- The total Dynkin-diagram map, restricted along the valid-index coercion. -/
@@ -542,9 +689,6 @@ abbrev characteristic (d : ValidLieTypeIndex) : ℕ := d.1.characteristic
 theorem characteristic_prime (d : ValidLieTypeIndex) : d.characteristic.Prime :=
   d.1.characteristic_prime
 
-/-- The fact instance that equips `ZMod d.characteristic` with its field structure downstream. -/
-instance (d : ValidLieTypeIndex) : Fact d.characteristic.Prime := ⟨d.characteristic_prime⟩
-
 /-- The total Frobenius-parameter map, restricted along the valid-index coercion. -/
 abbrev fieldOrder (d : ValidLieTypeIndex) : ℕ := d.1.fieldOrder
 
@@ -565,6 +709,103 @@ theorem fieldOrder_pos (d : ValidLieTypeIndex) : 0 < d.fieldOrder :=
   d.1.fieldOrder_pos
 
 end ValidLieTypeIndex
+
+/-! ## The Suzuki family
+
+This section follows `ValidLieTypeIndex` rather than sitting beside `TypeALieIndex`, because
+`rank_eq_two` reads the numbered data `TauCeti.ValidLieTypeIndex.rank` defined just above. -/
+
+namespace SuzukiLieIndex
+
+/-- Introduce a valid Suzuki index `²B₂(2^(2m+1))`. Validity forces `1 ≤ m`. -/
+abbrev of (m : ℕ) (hvalid : (LieTypeIndex.suzuki m).Valid) : SuzukiLieIndex :=
+  ⟨⟨.suzuki m, hvalid⟩, (LieTypeIndex.isSuzuki_iff _).mpr trivial⟩
+
+/-- Every Suzuki index is of the introduction form. This is the eliminator matching `of`, so a
+consumer never repeats the case split over the other constructors. -/
+theorem exists_eq_of (d : SuzukiLieIndex) :
+    ∃ (m : ℕ) (hvalid : (LieTypeIndex.suzuki m).Valid), d = of m hvalid := by
+  obtain ⟨⟨d, hvalid⟩, hs⟩ := d
+  revert hvalid hs
+  cases d
+  case suzuki m => exact fun hvalid _ => ⟨m, hvalid, rfl⟩
+  all_goals exact fun _ hs => ((LieTypeIndex.isSuzuki_iff _).mp hs).elim
+
+/-- The Suzuki family is built on the rank-two diagram `B₂`. -/
+@[simp] theorem dynkinType_eq (d : SuzukiLieIndex) : d.1.dynkinType = .B 2 := by
+  obtain ⟨m, hvalid, rfl⟩ := d.exists_eq_of
+  exact LieTypeIndex.dynkinType_suzuki m
+
+/-- The Suzuki family has rank two, that being the rank of `B₂`. -/
+@[simp] theorem rank_eq_two (d : SuzukiLieIndex) : d.1.rank = 2 :=
+  congrArg DynkinType.rank d.dynkinType_eq
+
+/-- The Suzuki family lives in characteristic two. -/
+@[simp] theorem characteristic_eq_two (d : SuzukiLieIndex) : d.1.characteristic = 2 := by
+  obtain ⟨m, hvalid, rfl⟩ := d.exists_eq_of
+  exact LieTypeIndex.characteristic_suzuki m
+
+/-- A Suzuki index is a Suzuki--Ree index: its Steinberg map is an odd power of a
+half-Frobenius. -/
+abbrev toSuzukiReeIndex (d : SuzukiLieIndex) : SuzukiReeIndex :=
+  ⟨d.1, LieTypeIndex.usesHalfFrobenius_of_isSuzuki d.2⟩
+
+end SuzukiLieIndex
+
+namespace UnimodularLieIndex
+
+variable (d : UnimodularLieIndex)
+
+/-- The index `E₈(q)`. -/
+abbrev e8 (q : PrimePower) : UnimodularLieIndex :=
+  ⟨⟨.E8 q, by simp⟩, by simp⟩
+
+/-- The index `F₄(q)`. -/
+abbrev f4 (q : PrimePower) : UnimodularLieIndex :=
+  ⟨⟨.F4 q, by simp⟩, by simp⟩
+
+/-- The index `G₂(q)`, for `q` at least three: `G₂(2)` is excluded from the classification list,
+its recipe producing a group already named `²A₂(3)`. -/
+abbrev g2 (q : PrimePower) (hq : 3 ≤ q.card) : UnimodularLieIndex :=
+  ⟨⟨.G2 q, by
+    simp only [LieTypeIndex.valid_iff, LieTypeIndex.inStandardRange_iff,
+      LieTypeIndex.isDuplicateRepresentative_iff]
+    exact ⟨hq, not_false⟩⟩, by simp⟩
+
+/-- The Ree index `²G₂(3^(2m+1))`, for `m` at least one: `²G₂(3)` is excluded from the
+classification list, its recipe producing a group already named `A₁(8)`. -/
+abbrev reeG2 (m : ℕ) (hm : 1 ≤ m) : UnimodularLieIndex :=
+  ⟨⟨.reeG2 m, by
+    simp only [LieTypeIndex.valid_iff, LieTypeIndex.inStandardRange_iff,
+      LieTypeIndex.isDuplicateRepresentative_iff]
+    exact ⟨hm, not_false⟩⟩, by simp⟩
+
+/-- The Ree index `²F₄(2^(2m+1))`, for `m` at least one: at `m = 0` the recipe returns the Tits
+group `²F₄(2)'`, which the classification list carries under the separate name `tits`. -/
+abbrev reeF4 (m : ℕ) (hm : 1 ≤ m) : UnimodularLieIndex :=
+  ⟨⟨.reeF4 m, by
+    simp only [LieTypeIndex.valid_iff, LieTypeIndex.inStandardRange_iff,
+      LieTypeIndex.isDuplicateRepresentative_iff]
+    exact ⟨hm, not_false⟩⟩, by simp⟩
+
+/-- The Tits index `²F₄(2)'`. -/
+abbrev tits : UnimodularLieIndex :=
+  ⟨⟨.tits, by simp⟩, by simp⟩
+
+/-- The underlying untwisted Dynkin diagram of an index with unimodular diagram. -/
+abbrev dynkinType : DynkinType := d.1.dynkinType
+
+/-- That diagram is a valid Dynkin type, so the pinned Geck carrier of the root-systems roadmap is
+available for it. -/
+theorem dynkinType_valid : d.dynkinType.Valid := d.1.dynkinType_valid
+
+/-- The underlying Dynkin type of an index with unimodular diagram is one of the three unimodular
+types. -/
+theorem dynkinType_eq_E8_or_eq_F4_or_eq_G2 :
+    d.dynkinType = .E8 ∨ d.dynkinType = .F4 ∨ d.dynkinType = .G2 :=
+  (LieTypeIndex.hasUnimodularDiagram_iff_dynkinType d.1.1).mp d.2
+
+end UnimodularLieIndex
 
 /-! ## Executable checks for the range conventions -/
 
