@@ -68,11 +68,20 @@ private def finiteGluingWeight (π : PMF (α × β)) (σ : PMF (β × γ))
   if π.map Prod.snd b = 0 then 0
   else π (a, b) * σ (b, c) / π.map Prod.snd b
 
-private theorem middleMass_eq_zero_iff (π : PMF (α × β)) (b : β) :
-  (let _ := Fintype.card α; let _ := Fintype.card β;
-    π.map Prod.snd b = 0 ↔ ∀ a, π (a, b) = 0) := by
+omit instFintypeα instFintypeβ instFintypeγ in
+private theorem middleMass_eq_zero_iff (π : PMF (α × β)) (b : β) [Finite α] :
+    π.map Prod.snd b = 0 ↔ ∀ a, π (a, b) = 0 := by
   classical
+  let _ := Fintype.ofFinite α
   rw [TauCeti.PMF.map_snd_apply]
+  simp
+
+omit instFintypeα instFintypeβ instFintypeγ in
+private theorem map_fst_eq_zero_iff (σ : PMF (β × γ)) (b : β) [Finite γ] :
+    σ.map Prod.fst b = 0 ↔ ∀ c, σ (b, c) = 0 := by
+  classical
+  let _ := Fintype.ofFinite γ
+  rw [TauCeti.PMF.map_fst_apply]
   simp
 
 private theorem finiteGluingWeight_sum (π : PMF (α × β)) (σ : PMF (β × γ))
@@ -86,14 +95,7 @@ private theorem finiteGluingWeight_sum (π : PMF (α × β)) (σ : PMF (β × γ
       finiteGluingWeight π σ b a c = π.map Prod.snd b := by
     intro b
     by_cases hb : π.map Prod.snd b = 0
-    · have hb' : π.map Prod.snd b = 0 ↔ ∀ a, π (a, b) = 0 := by
-        exact middleMass_eq_zero_iff π b
-      rw [hb'] at hb
-      have hb' : π.map Prod.snd b = 0 := by
-        rw [TauCeti.PMF.map_snd_apply]
-        simp [hb]
-      rw [hb']
-      simp [finiteGluingWeight, hb']
+    · simp [finiteGluingWeight, hb]
     · simp only [finiteGluingWeight, hb, ↓reduceIte]
       calc
         ∑ a, ∑ c, π (a, b) * σ (b, c) / π.map Prod.snd b =
@@ -145,11 +147,13 @@ theorem finiteGluing_apply (h : π.map Prod.snd = σ.map Prod.fst) (a : α) (b :
 
 variable {δ : Type*} [instFintypeδ : Fintype δ] [DecidableEq δ]
 
+omit instFintypeδ in
 private theorem finiteGluing_map_apply (h : π.map Prod.snd = σ.map Prod.fst)
-    (f : α × β × γ → δ) (x : δ) :
-    (let _ := Fintype.card δ; (finiteGluing π σ h).map f x =
-      ∑ p with f p = x, finiteGluingWeight π σ p.2.1 p.1 p.2.2) := by
+    (f : α × β × γ → δ) (x : δ) [Finite δ] :
+    (finiteGluing π σ h).map f x =
+      ∑ p with f p = x, finiteGluingWeight π σ p.2.1 p.1 p.2.2 := by
   classical
+  let _ := Fintype.ofFinite δ
   rw [finiteGluing, PMF.map_ofFintype]
   simp only [PMF.ofFintype_apply, Finset.sum_filter]
   apply Finset.sum_congr rfl
@@ -210,10 +214,9 @@ theorem map_prodMap_id_fst_finiteGluing (h : π.map Prod.snd = σ.map Prod.fst) 
       have hmid : π.map Prod.snd p.2 = σ.map Prod.fst p.2 := by
         exact congrArg (fun q : PMF β => q p.2) h
       by_cases hb : π.map Prod.snd p.2 = 0
-      · have hb' : π.map Prod.snd p.2 = 0 ↔ ∀ a, π (a, p.2) = 0 := by
-          exact middleMass_eq_zero_iff π p.2
-        rw [hb'] at hb
-        simp [finiteGluingWeight, hb p.1]
+      · have hπzero : ∀ a, π (a, p.2) = 0 :=
+          (middleMass_eq_zero_iff π p.2).mp hb
+        simp [finiteGluingWeight, hb, hπzero p.1]
       · simp only [finiteGluingWeight, hb, ↓reduceIte]
         calc
           (∑ c, π (p.1, p.2) * σ (p.2, c) /
@@ -254,19 +257,8 @@ theorem map_snd_finiteGluing (h : π.map Prod.snd = σ.map Prod.fst) :
       have hmid : π.map Prod.snd p.1 = σ.map Prod.fst p.1 := by
         exact congrArg (fun q : PMF β => q p.1) h
       by_cases hb : π.map Prod.snd p.1 = 0
-      · have hb' : π.map Prod.snd p.1 = 0 ↔ ∀ a, π (a, p.1) = 0 := by
-          exact middleMass_eq_zero_iff π p.1
-        rw [hb'] at hb
-        have hmzero : π.map Prod.snd p.1 = 0 := by
-          rw [TauCeti.PMF.map_snd_apply]
-          simp [hb]
-        have hσzero : ∀ c, σ (p.1, c) = 0 := by
-          rw [TauCeti.PMF.map_fst_apply σ p.1] at hmid
-          have hz : ∑ c, σ (p.1, c) = 0 := hmid.symm.trans hmzero
-          have hz' : (fun c : γ => σ (p.1, c)) = 0 :=
-            (Fintype.sum_eq_zero_iff_of_nonneg
-              (fun c : γ => (zero_le : (0 : ℝ≥0∞) ≤ σ (p.1, c)))).mp hz
-          exact fun c => congrFun hz' c
+      · have hσzero : ∀ c, σ (p.1, c) = 0 :=
+          (map_fst_eq_zero_iff σ p.1).mp (hmid.symm.trans hb)
         simp [finiteGluingWeight, hb, hσzero p.2]
       · simp only [finiteGluingWeight, hb, ↓reduceIte]
         calc
