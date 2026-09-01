@@ -26,10 +26,6 @@ group scheme.
 
 ## Main results
 
-* `TauCeti.E6DoubledMinuscule.rootGeneratorWeight_inl_eq_root_simpleIndex`: the raising-subgroup
-  character is the corresponding simple root of the uniform simply connected datum.
-* `TauCeti.E6DoubledMinuscule.rootGeneratorWeight_inr_eq_neg_root_simpleIndex`: the
-  lowering-subgroup character is the negative of that simple root.
 * `TauCeti.E6DoubledMinuscule.weightTorus_conj_rootSubgroup_root_simpleIndex` and
   `TauCeti.E6DoubledMinuscule.weightTorus_conj_rootSubgroup_neg_root_simpleIndex`: the doubled
   carrier's torus-conjugation equations at the named positive and negative simple roots.
@@ -60,23 +56,6 @@ namespace TauCeti.E6DoubledMinuscule
 
 open DynkinType
 
-/-! ## The numbered subgroups sit at the named simple roots -/
-
-/-- **The `i`-th raising subgroup sits at the `i`-th simple root of the uniform type-`E₆`
-datum.** The doubled and ordinary minuscule carriers use the same representation-independent
-numbered root character. -/
-theorem rootGeneratorWeight_inl_eq_root_simpleIndex (ht : E6.Valid) (i : Fin 6) :
-    E6Minuscule.rootGeneratorWeight (.inl i) =
-      (E6.simplyConnectedRootDatum ht).root (E6.simpleIndex ht i) :=
-  E6Minuscule.rootGeneratorWeight_inl_eq_root_simpleIndex ht i
-
-/-- **The `i`-th lowering subgroup sits at the negative of the `i`-th simple root of the uniform
-type-`E₆` datum.** -/
-theorem rootGeneratorWeight_inr_eq_neg_root_simpleIndex (ht : E6.Valid) (i : Fin 6) :
-    E6Minuscule.rootGeneratorWeight (.inr i) =
-      -(E6.simplyConnectedRootDatum ht).root (E6.simpleIndex ht i) :=
-  E6Minuscule.rootGeneratorWeight_inr_eq_neg_root_simpleIndex ht i
-
 /-! ## Torus conjugation equations against the named simple roots -/
 
 /-- **The doubled carrier's torus conjugation equation at a named positive simple root.** A point
@@ -99,7 +78,7 @@ theorem weightTorus_conj_rootSubgroup_root_simpleIndex (ht : E6.Valid) (i : Fin 
                 (SplitTorus.schemePointsMulEquiv (R := ℤ) (A := A) s)
                 ((E6.simplyConnectedRootDatum ht).root (E6.simpleIndex ht i)) : A) * u)) ≫
         (rootSubgroup (.inl i)).hom.hom := by
-  rw [← rootGeneratorWeight_inl_eq_root_simpleIndex]
+  rw [← E6Minuscule.rootGeneratorWeight_inl_eq_root_simpleIndex]
   exact weightTorus_conj_rootSubgroup (.inl i) A s u
 
 /-- **The doubled carrier's torus conjugation equation at a named negative simple root.** A point
@@ -121,7 +100,7 @@ theorem weightTorus_conj_rootSubgroup_neg_root_simpleIndex (ht : E6.Valid) (i : 
                 (SplitTorus.schemePointsMulEquiv (R := ℤ) (A := A) s)
                 (-(E6.simplyConnectedRootDatum ht).root (E6.simpleIndex ht i)) : A) * u)) ≫
         (rootSubgroup (.inr i)).hom.hom := by
-  rw [← rootGeneratorWeight_inr_eq_neg_root_simpleIndex]
+  rw [← E6Minuscule.rootGeneratorWeight_inr_eq_neg_root_simpleIndex]
   exact weightTorus_conj_rootSubgroup (.inr i) A s u
 
 end TauCeti.E6DoubledMinuscule
