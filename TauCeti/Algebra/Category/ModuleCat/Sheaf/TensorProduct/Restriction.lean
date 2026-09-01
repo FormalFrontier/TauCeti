@@ -101,6 +101,7 @@ def overTensorProductIso (M N : SheafOfModules.{u} (ringCatSheaf R)) (X : D)
 /-- The forward map of `pushforwardTensorProductIso` is the sheafification comparison composed
 with the tensorator of the pushforward, read through the defining identifications of the two
 tensor products. -/
+@[simp]
 theorem pushforwardTensorProductIso_hom (M N : SheafOfModules.{u} (ringCatSheaf R)) :
     (pushforwardTensorProductIso (J := J) (K := K) F R M N).hom =
       (pushforwardModule (J := J) (K := K) F R).map (tensorProductIso R M N).hom ≫
@@ -119,6 +120,7 @@ theorem pushforwardTensorProductIso_hom (M N : SheafOfModules.{u} (ringCatSheaf 
 
 /-- The forward map of `overTensorProductIso` is the slice-site instance of
 `pushforwardTensorProductIso_hom`. -/
+@[simp]
 theorem overTensorProductIso_hom (M N : SheafOfModules.{u} (ringCatSheaf R)) (X : D)
     [(K.over X).HasSheafCompose (forget₂ CommRingCat RingCat.{u})]
     [HasWeakSheafify (K.over X) AddCommGrpCat.{u}]

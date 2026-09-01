@@ -173,6 +173,7 @@ def pushforwardSheafificationIso (P : PresheafOfModules.{v} R.obj) :
 
 /-- The inverse of `pushforwardSheafificationIso` is the canonical comparison obtained from the
 sheafification unit and counit. -/
+@[simp]
 theorem pushforwardSheafificationIso_inv (P : PresheafOfModules.{v} R.obj) :
     (pushforwardSheafificationIso F R P).inv =
       (PresheafOfModules.sheafification
@@ -200,6 +201,7 @@ def overSheafificationIso (R : Sheaf J RingCat.{u})
 
 /-- The inverse of `overSheafificationIso` is the canonical comparison obtained from the
 sheafification unit and counit, as in `pushforwardSheafificationIso_inv`. -/
+@[simp]
 theorem overSheafificationIso_inv (R : Sheaf J RingCat.{u})
     (P : PresheafOfModules.{v} R.obj) (X : C)
     [HasWeakSheafify (J.over X) AddCommGrpCat.{v}]
