@@ -51,12 +51,14 @@ variable {M : Type*} [TopologicalSpace M] [ChartedSpace H M]
 attribute [local instance] normedAddCommGroupTangentSpaceVectorSpace
   normedSpaceTangentSpaceVectorSpace
 
-/-- A bound on the chart derivative controls the coordinate displacement of a smooth path. -/
+/-- A bound on the chart derivative along a `C¹` path whose image on `[a, b]` lies in the chart
+source controls its coordinate displacement. -/
 theorem enorm_extChartAt_sub_le_mul_pathELength (x : M) {γ : ℝ → M} {a b : ℝ}
     (hab : a ≤ b) (hγ : CMDiff[Icc a b] 1 γ)
     (hγsrc : ∀ t ∈ Icc a b, γ t ∈ (chartAt H x).source)
-    {C : ℝ≥0} (hC : ∀ t ∈ Icc a b, ∀ v,
-      ‖(mfderiv% (extChartAt I x) (γ t)) v‖ₑ ≤ C * ‖v‖ₑ) :
+    {C : ℝ≥0} (hC : ∀ t ∈ Icc a b,
+      ‖(mfderiv% (extChartAt I x) (γ t)) (mfderiv[Icc a b] γ t 1)‖ₑ ≤
+        C * ‖mfderiv[Icc a b] γ t 1‖ₑ) :
     ‖extChartAt I x (γ b) - extChartAt I x (γ a)‖ₑ ≤ C * pathELength I γ a b := by
   rcases hab.eq_or_lt with rfl | hab
   · simp
@@ -78,7 +80,7 @@ theorem enorm_extChartAt_sub_le_mul_pathELength (x : M) {γ : ℝ → M} {a b : 
             ((hγ t ht).mdifferentiableWithinAt one_ne_zero))).derivWithin
               (uniqueDiffOn_Icc hab t ht)
         rw [hderiv, curveVelocityWithin_apply]
-        exact hC t ht (mfderiv[Icc a b] γ t 1)
+        exact hC t ht
       _ = C * pathELength I γ a b := by
         rw [lintegral_const_mul' _ _ ENNReal.coe_ne_top,
           pathELength_eq_lintegral_mfderivWithin_Icc]
