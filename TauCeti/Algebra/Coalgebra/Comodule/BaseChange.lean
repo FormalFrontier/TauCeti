@@ -272,8 +272,8 @@ theorem baseChange_tmul (f : Hom R H M N) (a : A) (m : M) :
     baseChange A f (a ⊗ₜ[R] m) = a ⊗ₜ[R] f m := by
   let _ := Comodule.baseChange (R := R) (H := H) (M := M) A
   let _ := Comodule.baseChange (R := R) (H := H) (M := N) A
-  change (baseChange A f).toLinearMap (a ⊗ₜ[R] m) = a ⊗ₜ[R] f.toLinearMap m
-  rw [baseChange_toLinearMap, LinearMap.baseChange_tmul]
+  rw [← coe_toLinearMap (baseChange A f), ← coe_toLinearMap f,
+    baseChange_toLinearMap, LinearMap.baseChange_tmul]
 
 end Hom
 
