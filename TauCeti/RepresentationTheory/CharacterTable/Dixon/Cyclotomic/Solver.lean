@@ -42,11 +42,11 @@ needs the coefficient bound discussed in the cyclotomic-lift module.
 
 ## Main results
 
-* `conjugateResidueRow_mem_centralCharacterSearch_of_dixonCyclotomicCharacterTable_eq_some`:
+* `conjugateResidueRow_mem_centralCharacterSearch_of_dixonCyclotomicCharacterTable?_eq_some`:
   every conjugate residue row of a returned central table comes from the modular search.
-* `TauCeti.ClassData.isCyclotomicCharacterTableSpec_of_dixonCyclotomicCharacterTable_eq_some`:
+* `TauCeti.ClassData.isCyclotomicCharacterTableSpec_of_dixonCyclotomicCharacterTable?_eq_some`:
   every returned output passes the exact cyclotomic certificate.
-* `TauCeti.ClassData.isCharacterTableSpec_of_dixonCyclotomicCharacterTable_eq_some`: after
+* `TauCeti.ClassData.isCharacterTableSpec_of_dixonCyclotomicCharacterTable?_eq_some`: after
   embedding, every returned table satisfies the complex character-table specification.
 
 ## References
@@ -220,7 +220,7 @@ def dixonCyclotomicCharacterTable? (e : ℕ) (he : e = Monoid.exponent G)
 
 /-- Every conjugate residue row of a successful exact-cyclotomic output is one of the rows
 returned by the modular central-character search. -/
-theorem conjugateResidueRow_mem_centralCharacterSearch_of_dixonCyclotomicCharacterTable_eq_some
+theorem conjugateResidueRow_mem_centralCharacterSearch_of_dixonCyclotomicCharacterTable?_eq_some
     {d : ClassData G} (e : ℕ) (he : e = Monoid.exponent G) (q : DixonPrimeData G)
     {output : d.CyclotomicCharacterTableData e}
     (h : d.dixonCyclotomicCharacterTable? e he q = some output)
@@ -232,7 +232,7 @@ theorem conjugateResidueRow_mem_centralCharacterSearch_of_dixonCyclotomicCharact
 
 /-- Every successful exact-cyclotomic Dixon--Schneider output passes the exact cyclotomic
 character-table specification. -/
-theorem isCyclotomicCharacterTableSpec_of_dixonCyclotomicCharacterTable_eq_some
+theorem isCyclotomicCharacterTableSpec_of_dixonCyclotomicCharacterTable?_eq_some
     {d : ClassData G} (e : ℕ) (he : e = Monoid.exponent G) (q : DixonPrimeData G)
     {output : d.CyclotomicCharacterTableData e}
     (h : d.dixonCyclotomicCharacterTable? e he q = some output) :
@@ -245,13 +245,13 @@ theorem isCyclotomicCharacterTableSpec_of_dixonCyclotomicCharacterTable_eq_some
 
 /-- Every successful exact-cyclotomic Dixon--Schneider output, embedded in `ℂ` and reindexed by
 conjugacy classes, satisfies the complex character-table specification. -/
-theorem isCharacterTableSpec_of_dixonCyclotomicCharacterTable_eq_some
+theorem isCharacterTableSpec_of_dixonCyclotomicCharacterTable?_eq_some
     {d : ClassData G} (e : ℕ) [NeZero e] (he : e = Monoid.exponent G) (q : DixonPrimeData G)
     {output : d.CyclotomicCharacterTableData e}
     (h : d.dixonCyclotomicCharacterTable? e he q = some output) :
     IsCharacterTableSpec G
       (d.complexTableOfCyclotomic e output.table) :=
-  (d.isCyclotomicCharacterTableSpec_of_dixonCyclotomicCharacterTable_eq_some
+  (d.isCyclotomicCharacterTableSpec_of_dixonCyclotomicCharacterTable?_eq_some
     e he q h).isCharacterTableSpec
 
 end ClassData
