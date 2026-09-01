@@ -22,7 +22,6 @@ the fundamental group at its unique point is the trivial group.
 
 ## Main declarations
 
-* `TauCeti.RealProjectiveSpace.Zero.instUnique`: `RP⁰` has exactly one point.
 * `TauCeti.RealProjectiveSpace.Zero.fundamentalGroupMulEquiv`: the fundamental group of `RP⁰`
   is the trivial group `PUnit`.
 * `TauCeti.RealProjectiveSpace.Zero.card_fundamentalGroup`: the fundamental group has one
@@ -45,11 +44,6 @@ public section
 namespace TauCeti.RealProjectiveSpace.Zero
 
 noncomputable section
-
-/-- Zero-dimensional real projective space has exactly one point. -/
-instance instUnique : Unique (RealProjectiveSpace 0) :=
-  letI : Subsingleton (RealProjectiveSpace 0) := subsingleton_zero
-  uniqueOfSubsingleton (Nonempty.some inferInstance)
 
 /-- **The fundamental group of `RP⁰` is trivial.** At its unique basepoint it is isomorphic to
 the one-element group `PUnit`. -/

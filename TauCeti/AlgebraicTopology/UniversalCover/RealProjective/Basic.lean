@@ -41,6 +41,7 @@ provided by `TauCeti.Analysis.Normed.Module.Ball.IntUnitsAction`.
   covering map with group `ℤˣ`.
 * `TauCeti.RealProjectiveSpace.isCoveringMap_mk`: the underlying covering-map statement.
 * `TauCeti.RealProjectiveSpace.subsingleton_zero`: `RP⁰` is a subsingleton.
+* `TauCeti.RealProjectiveSpace.instUnique`: `RP⁰` has exactly one point.
 * `TauCeti.RealProjectiveSpace.instPathConnectedSpace`: `RPⁿ` is path-connected for every `n`.
 -/
 
@@ -230,6 +231,11 @@ lemma subsingleton_zero : Subsingleton (RealProjectiveSpace 0) := by
   · right; exact h_ext_neg u v (by rw [hu, hv, neg_neg])
   · right; exact h_ext_neg u v (by rw [hu, hv])
   · left; exact h_ext u v (by rw [hu, hv])
+
+/-- Zero-dimensional real projective space has exactly one point. -/
+instance instUnique : Unique (RealProjectiveSpace 0) :=
+  letI : Subsingleton (RealProjectiveSpace 0) := subsingleton_zero
+  uniqueOfSubsingleton (Nonempty.some inferInstance)
 
 /-- Real projective space is path-connected for every `n`, as a nonempty subsingleton for `n = 0`
 and as the continuous image of the path-connected unit sphere `Sⁿ` for `1 ≤ n`. -/
