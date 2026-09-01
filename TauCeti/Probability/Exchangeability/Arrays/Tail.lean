@@ -1,0 +1,144 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Claude
+-/
+module
+
+public import TauCeti.Probability.Exchangeability.Arrays.Basic
+public import TauCeti.Probability.Independence.DisjointBlocks
+public import TauCeti.Probability.Process.Tail.Basic
+
+/-!
+# Tail σ-algebras of arrays
+
+This file defines the diagonal tail of an array: the events readable from entries `X (i, j)` with
+both indices arbitrarily large. It is the two-dimensional analogue of the tail σ-algebra of a
+process and cuts both index axes at the same time.
+
+## Main definitions
+
+* `TauCeti.Probability.arrayTailFamily` — the σ-algebra of the entries with both indices at least
+  `n`;
+* `TauCeti.Probability.arrayTail` — the tail σ-algebra of an array, the infimum of the tail family.
+-/
+
+public section
+
+noncomputable section
+
+open MeasureTheory
+
+namespace TauCeti
+
+namespace Probability
+
+variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
+  {X : ℕ × ℕ → Ω → α}
+
+/-- The **tail family** of an array at time `n`: the events readable from the entries `X (i, j)`
+with `n ≤ i` and `n ≤ j`. It is the array analogue of the future σ-algebra `tailFamily` of a
+process, cutting both index axes at once. -/
+@[implicit_reducible]
+def arrayTailFamily (X : ℕ × ℕ → Ω → α) (n : ℕ) : MeasurableSpace Ω :=
+  blockSigma X (Set.Ici n ×ˢ Set.Ici n)
+
+/-- The **tail σ-algebra of an array**: the events readable from the entries with both indices
+arbitrarily large. It is the array analogue of `tailProcess`. -/
+@[implicit_reducible]
+def arrayTail (X : ℕ × ℕ → Ω → α) : MeasurableSpace Ω :=
+  ⨅ n, arrayTailFamily X n
+
+omit [MeasurableSpace Ω] in
+/-- Normal form for the array tail family. -/
+@[simp]
+theorem arrayTailFamily_eq_blockSigma (X : ℕ × ℕ → Ω → α) (n : ℕ) :
+    arrayTailFamily X n = blockSigma X (Set.Ici n ×ˢ Set.Ici n) :=
+  (rfl)
+
+omit [MeasurableSpace Ω] in
+/-- Normal form for the tail σ-algebra of an array. -/
+@[simp]
+theorem arrayTail_eq_iInf_arrayTailFamily (X : ℕ × ℕ → Ω → α) :
+    arrayTail X = ⨅ n, arrayTailFamily X n :=
+  (rfl)
+
+omit [MeasurableSpace Ω] in
+/-- An entry with both indices at least `n` is measurable for the array tail family at `n`. -/
+theorem measurable_arrayTailFamily_of_le {n i j : ℕ} (hi : n ≤ i) (hj : n ≤ j) :
+    Measurable[arrayTailFamily X n] (X (i, j)) := by
+  rw [arrayTailFamily_eq_blockSigma]
+  exact measurable_blockSigma_of_mem ⟨hi, hj⟩
+
+omit [MeasurableSpace Ω] in
+/-- Universal property of the array tail family at `n`. -/
+theorem arrayTailFamily_le_iff {n : ℕ} {m : MeasurableSpace Ω} :
+    arrayTailFamily X n ≤ m ↔
+      ∀ i j, n ≤ i → n ≤ j → Measurable[m] (X (i, j)) := by
+  rw [arrayTailFamily_eq_blockSigma, blockSigma_le_iff]
+  constructor
+  · exact fun h i j hi hj => h (i, j) ⟨hi, hj⟩
+  · exact fun h p hp => h p.1 p.2 hp.1 hp.2
+
+omit [MeasurableSpace Ω] in
+/-- The array tail family decreases. -/
+theorem arrayTailFamily_antitone (X : ℕ × ℕ → Ω → α) : Antitone (arrayTailFamily X) := by
+  intro n m hnm
+  rw [arrayTailFamily_eq_blockSigma, arrayTailFamily_eq_blockSigma]
+  exact blockSigma_mono
+    (Set.prod_mono (Set.Ici_subset_Ici.mpr hnm) (Set.Ici_subset_Ici.mpr hnm))
+
+omit [MeasurableSpace Ω] in
+/-- The tail σ-algebra of an array sits inside every member of its tail family. -/
+theorem arrayTail_le_arrayTailFamily (X : ℕ × ℕ → Ω → α) (n : ℕ) :
+    arrayTail X ≤ arrayTailFamily X n := by
+  rw [arrayTail_eq_iInf_arrayTailFamily]
+  exact iInf_le _ n
+
+omit [MeasurableSpace Ω] in
+/-- Universal property of the array tail σ-algebra. -/
+theorem le_arrayTail_iff {m : MeasurableSpace Ω} :
+    m ≤ arrayTail X ↔ ∀ n, m ≤ arrayTailFamily X n := by
+  rw [arrayTail_eq_iInf_arrayTailFamily, le_iInf_iff]
+
+omit [MeasurableSpace Ω] in
+/-- An event belongs to the array tail exactly when it belongs to every member of the tail
+family. -/
+@[simp]
+theorem measurableSet_arrayTail_iff {s : Set Ω} :
+    MeasurableSet[arrayTail X] s ↔ ∀ n, MeasurableSet[arrayTailFamily X n] s := by
+  rw [arrayTail_eq_iInf_arrayTailFamily, MeasurableSpace.measurableSet_iInf]
+
+/-- A member of the tail family is a sub-σ-algebra of the ambient one when the entries it sees are
+measurable. -/
+theorem arrayTailFamily_le_ambient (n : ℕ)
+    (hX : ∀ p, n ≤ p.1 → n ≤ p.2 → Measurable (X p)) :
+    arrayTailFamily X n ≤ (inferInstance : MeasurableSpace Ω) := by
+  exact arrayTailFamily_le_iff.mpr fun i j hi hj => hX (i, j) hi hj
+
+/-- The tail σ-algebra is a sub-σ-algebra of the ambient one when the entries beyond some cutoff
+are measurable. -/
+theorem arrayTail_le_ambient (n : ℕ)
+    (hX : ∀ p, n ≤ p.1 → n ≤ p.2 → Measurable (X p)) :
+    arrayTail X ≤ (inferInstance : MeasurableSpace Ω) :=
+  (arrayTail_le_arrayTailFamily X n).trans (arrayTailFamily_le_ambient n hX)
+
+omit [MeasurableSpace Ω] in
+/-- **The tail of the diagonal is an array tail event.** The diagonal entries from time `n` on have
+both indices at least `n`, so they generate a sub-σ-algebra of the tail family at `n`. -/
+theorem tailProcess_arrayDiag_le_arrayTail (X : ℕ × ℕ → Ω → α) :
+    tailProcess (arrayDiag X) ≤ arrayTail X := by
+  rw [le_arrayTail_iff]
+  intro n
+  refine (tailProcess_le_tailFamily _ n).trans (tailFamily_le_iff.mpr ?_)
+  intro k hk
+  simpa only [arrayDiag_apply] using
+    (arrayTailFamily_le_iff (X := X) (m := arrayTailFamily X n)).mp le_rfl k k hk hk
+
+end Probability
+
+end TauCeti
+
+end
+
+end

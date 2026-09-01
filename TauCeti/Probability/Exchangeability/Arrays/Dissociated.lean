@@ -68,9 +68,9 @@ These results advance the exchangeable-arrays milestone of
 * `TauCeti.Probability.JointlyDissociated.indep_blockSigma_prod` — square blocks over arbitrary
   disjoint index sets generate independent σ-algebras;
 * `TauCeti.Probability.SeparatelyDissociated.indepFun_apply` and
-  `TauCeti.Probability.JointlyDissociated.indepFun_arrayDiag` — entries in different rows and
+  `TauCeti.Probability.JointlyDissociated.iIndepFun_arrayDiag` — entries in different rows and
   different columns are independent, so in particular the diagonal entries of a jointly dissociated
-  array are pairwise independent;
+  array are mutually independent;
 * `TauCeti.Probability.JointlyDissociated.measure_preimage_eq_zero_or_one_of_const` — a dissociated
   array with all entries equal has an almost surely trivial entry;
 * `TauCeti.Probability.SeparatelyDissociated.measure_preimage_eq_zero_or_one_of_symm` — a symmetric
@@ -170,37 +170,17 @@ theorem JointlyDissociated.indep_blockSigma_prod_of_nonempty (h : JointlyDissoci
     {S T : Set ℕ} (hS : S.Nonempty) (hT : T.Nonempty) (hd : Disjoint S T) :
     Indep (blockSigma X (S ×ˢ S)) (blockSigma X (T ×ˢ T)) μ := by
   classical
-  let e : ℕ → ℕ := fun i => if i ∈ S then i else hS.some
-  let f : ℕ → ℕ := fun i => if i ∈ T then i else hT.some
-  have he : Set.range e = S := by
-    ext i
-    constructor
-    · rintro ⟨j, rfl⟩
-      simp only [e]
-      split_ifs with hj
-      · exact hj
-      · exact hS.some_mem
-    · intro hi
-      exact ⟨i, by simp [e, hi]⟩
-  have hf : Set.range f = T := by
-    ext i
-    constructor
-    · rintro ⟨j, rfl⟩
-      simp only [f]
-      split_ifs with hj
-      · exact hj
-      · exact hT.some_mem
-    · intro hi
-      exact ⟨i, by simp [f, hi]⟩
-  have hindep := jointlyDissociated_iff.mp h e f (by simpa only [he, hf] using hd)
+  obtain ⟨e, he⟩ := (Set.to_countable S).exists_eq_range hS
+  obtain ⟨f, hf⟩ := (Set.to_countable T).exists_eq_range hT
+  have hindep := jointlyDissociated_iff.mp h e f (by simpa only [← he, ← hf] using hd)
   rw [IndepFun_iff_Indep] at hindep
   exact indep_of_indep_of_le hindep
     (blockSigma_le_comap_squareBlock (X := X) (e := e) (by
       intro p hp
-      simpa only [he] using hp))
+      simpa only [← he] using hp))
     (blockSigma_le_comap_squareBlock (X := X) (e := f) (by
       intro p hp
-      simpa only [hf] using hp))
+      simpa only [← hf] using hp))
 
 /-- **Square blocks over arbitrary disjoint index sets are independent.** This is the σ-algebra
 form of joint dissociation. Empty blocks generate the bottom σ-algebra; the normalization
@@ -208,17 +188,13 @@ assumption is needed for the bottom σ-algebra to be independent of every σ-alg
 theorem JointlyDissociated.indep_blockSigma_prod [IsZeroOrProbabilityMeasure μ]
     (h : JointlyDissociated μ X) {S T : Set ℕ} (hd : Disjoint S T) :
     Indep (blockSigma X (S ×ˢ S)) (blockSigma X (T ×ˢ T)) μ := by
-  have hempty : blockSigma X (∅ : Set (ℕ × ℕ)) = ⊥ := by
-    apply le_antisymm
-    · exact blockSigma_le_iff.mpr fun _ hmem => hmem.elim
-    · exact bot_le
   rcases S.eq_empty_or_nonempty with rfl | hS
   · simp only [Set.empty_prod]
-    rw [hempty]
+    rw [blockSigma_empty]
     exact indep_bot_left _
   rcases T.eq_empty_or_nonempty with rfl | hT
   · simp only [Set.empty_prod]
-    rw [hempty]
+    rw [blockSigma_empty]
     exact indep_bot_right _
   exact h.indep_blockSigma_prod_of_nonempty hS hT hd
 
@@ -236,6 +212,31 @@ theorem JointlyDissociated.indepFun_arrayDiag (h : JointlyDissociated μ X) {i i
   rw [arrayDiag_apply, arrayDiag_apply]
   exact (jointlyDissociated_iff.mp h (fun _ => i) (fun _ => i') (by simpa using hi)).comp
     (measurable_pi_apply (0, 0)) (measurable_pi_apply (0, 0))
+
+/-- The diagonal entries of a jointly dissociated array are mutually independent. -/
+theorem JointlyDissociated.iIndepFun_arrayDiag [IsProbabilityMeasure μ]
+    (h : JointlyDissociated μ X) : iIndepFun (arrayDiag X) μ := by
+  rw [iIndepFun_iff]
+  intro t f hf
+  induction t using Finset.induction_on with
+  | empty => simp
+  | @insert i t hi ih =>
+      have hdisj : Disjoint ({i} : Set ℕ) (t : Set ℕ) := by
+        simpa [Set.disjoint_left] using hi
+      have hit := h.indep_blockSigma_prod (S := {i}) (T := (t : Set ℕ)) hdisj
+      have hfi' := hf i (Finset.mem_insert_self i t)
+      rw [arrayDiag_apply] at hfi'
+      have hfi : MeasurableSet[blockSigma X (({i} : Set ℕ) ×ˢ {i})] (f i) :=
+        (measurable_blockSigma_of_mem (Z := X) (by simp)).comap_le _ hfi'
+      have hrest : MeasurableSet[blockSigma X ((t : Set ℕ) ×ˢ (t : Set ℕ))]
+          (⋂ j ∈ t, f j) := by
+        refine t.measurableSet_biInter fun j hj => ?_
+        have hfj := hf j (Finset.mem_insert_of_mem hj)
+        rw [arrayDiag_apply] at hfj
+        exact (measurable_blockSigma_of_mem (Z := X) (by simp [hj])).comap_le _ hfj
+      rw [Finset.prod_insert hi, ← ih fun j hj => hf j (Finset.mem_insert_of_mem hj)]
+      simpa only [Finset.set_biInter_insert] using
+        (Indep_iff _ _ _).mp hit _ _ hfi hrest
 
 /-- A random variable independent of itself generates an almost surely trivial σ-algebra. -/
 private theorem measure_preimage_eq_zero_or_one_of_indepFun_self [IsProbabilityMeasure μ]

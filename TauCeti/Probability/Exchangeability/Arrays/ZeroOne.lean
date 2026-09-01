@@ -5,9 +5,9 @@ Authors: Claude
 -/
 module
 
--- Public: dissociation and process tail σ-algebras appear in theorem statements here.
+-- Public: dissociation and array-tail σ-algebras appear in theorem statements here.
 public import TauCeti.Probability.Exchangeability.Arrays.Dissociated
-public import TauCeti.Probability.Process.Tail.Basic
+public import TauCeti.Probability.Exchangeability.Arrays.Tail
 -- Non-public: the zero-one law for a self-independent event is used only inside a proof.
 import Mathlib.Probability.Independence.ZeroOne
 
@@ -34,18 +34,12 @@ These results advance the exchangeable-arrays milestone of
 representation is the dissociated one, and this is the zero-one law separating it from the general
 form.
 
-## Main definitions
-
-* `TauCeti.Probability.arrayTailFamily` — the σ-algebra of the entries with both indices at least
-  `n`;
-* `TauCeti.Probability.arrayTail` — the tail σ-algebra of an array, the infimum of the tail family.
-
 ## Main results
 
 * `TauCeti.Probability.JointlyDissociated.measure_eq_zero_or_one_of_arrayTail` — **the zero-one
   law**: the tail σ-algebra of a jointly dissociated array is trivial;
 * `TauCeti.Probability.SeparatelyDissociated.measure_eq_zero_or_one_of_arrayTail` — the same for the
-  stronger symmetry.
+  stronger dissociation hypothesis.
 
 ## References
 
@@ -70,97 +64,6 @@ namespace Probability
 variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α] {μ : Measure Ω}
   {X : ℕ × ℕ → Ω → α}
 
-/-- The **tail family** of an array at time `n`: the events readable from the entries `X (i, j)`
-with `n ≤ i` and `n ≤ j`. It is the array analogue of the future σ-algebra `tailFamily` of a
-process, cutting both index axes at once. -/
-@[implicit_reducible]
-def arrayTailFamily (X : ℕ × ℕ → Ω → α) (n : ℕ) : MeasurableSpace Ω :=
-  blockSigma X (Set.Ici n ×ˢ Set.Ici n)
-
-/-- The **tail σ-algebra of an array**: the events readable from the entries with both indices
-arbitrarily large. It is the array analogue of `tailProcess`. -/
-@[implicit_reducible]
-def arrayTail (X : ℕ × ℕ → Ω → α) : MeasurableSpace Ω :=
-  ⨅ n, arrayTailFamily X n
-
-omit [MeasurableSpace Ω] in
-/-- Normal form for the array tail family. -/
-@[simp]
-theorem arrayTailFamily_eq_blockSigma (X : ℕ × ℕ → Ω → α) (n : ℕ) :
-    arrayTailFamily X n = blockSigma X (Set.Ici n ×ˢ Set.Ici n) :=
-  (rfl)
-
-omit [MeasurableSpace Ω] in
-/-- Normal form for the tail σ-algebra of an array. -/
-@[simp]
-theorem arrayTail_eq_iInf_arrayTailFamily (X : ℕ × ℕ → Ω → α) :
-    arrayTail X = ⨅ n, arrayTailFamily X n :=
-  (rfl)
-
-omit [MeasurableSpace Ω] in
-/-- An entry with both indices at least `n` is measurable for the array tail family at `n`. -/
-theorem measurable_arrayTailFamily_of_le {n i j : ℕ} (hi : n ≤ i) (hj : n ≤ j) :
-    Measurable[arrayTailFamily X n] (X (i, j)) := by
-  rw [arrayTailFamily_eq_blockSigma]
-  exact measurable_blockSigma_of_mem ⟨hi, hj⟩
-
-omit [MeasurableSpace Ω] in
-/-- Universal property of the array tail family at `n`. -/
-theorem arrayTailFamily_le_iff {n : ℕ} {m : MeasurableSpace Ω} :
-    arrayTailFamily X n ≤ m ↔
-      ∀ i j, n ≤ i → n ≤ j → Measurable[m] (X (i, j)) := by
-  rw [arrayTailFamily_eq_blockSigma, blockSigma_le_iff]
-  constructor
-  · exact fun h i j hi hj => h (i, j) ⟨hi, hj⟩
-  · exact fun h p hp => h p.1 p.2 hp.1 hp.2
-
-omit [MeasurableSpace Ω] in
-/-- The array tail family decreases. -/
-theorem arrayTailFamily_antitone (X : ℕ × ℕ → Ω → α) : Antitone (arrayTailFamily X) := by
-  intro n m hnm
-  rw [arrayTailFamily_eq_blockSigma, arrayTailFamily_eq_blockSigma]
-  exact blockSigma_mono
-    (Set.prod_mono (Set.Ici_subset_Ici.mpr hnm) (Set.Ici_subset_Ici.mpr hnm))
-
-omit [MeasurableSpace Ω] in
-/-- The tail σ-algebra of an array sits inside every member of its tail family. -/
-theorem arrayTail_le_arrayTailFamily (X : ℕ × ℕ → Ω → α) (n : ℕ) :
-    arrayTail X ≤ arrayTailFamily X n := by
-  rw [arrayTail_eq_iInf_arrayTailFamily]
-  exact iInf_le _ n
-
-omit [MeasurableSpace Ω] in
-/-- Universal property of the array tail σ-algebra. -/
-theorem le_arrayTail_iff {m : MeasurableSpace Ω} :
-    m ≤ arrayTail X ↔ ∀ n, m ≤ arrayTailFamily X n := by
-  rw [arrayTail_eq_iInf_arrayTailFamily, le_iInf_iff]
-
-/-- A member of the tail family is a sub-σ-algebra of the ambient one when the entries it sees are
-measurable. -/
-theorem arrayTailFamily_le_ambient (n : ℕ)
-    (hX : ∀ p, n ≤ p.1 → n ≤ p.2 → Measurable (X p)) :
-    arrayTailFamily X n ≤ (inferInstance : MeasurableSpace Ω) := by
-  exact arrayTailFamily_le_iff.mpr fun i j hi hj => hX (i, j) hi hj
-
-/-- The tail σ-algebra is a sub-σ-algebra of the ambient one when the entries beyond some cutoff
-are measurable. -/
-theorem arrayTail_le_ambient (n : ℕ)
-    (hX : ∀ p, n ≤ p.1 → n ≤ p.2 → Measurable (X p)) :
-    arrayTail X ≤ (inferInstance : MeasurableSpace Ω) :=
-  (arrayTail_le_arrayTailFamily X n).trans (arrayTailFamily_le_ambient n hX)
-
-omit [MeasurableSpace Ω] in
-/-- **The tail of the diagonal is an array tail event.** The diagonal entries from time `n` on have
-both indices at least `n`, so they generate a sub-σ-algebra of the tail family at `n`. -/
-theorem tailProcess_arrayDiag_le_arrayTail (X : ℕ × ℕ → Ω → α) :
-    tailProcess (arrayDiag X) ≤ arrayTail X := by
-  rw [le_arrayTail_iff]
-  intro n
-  refine (tailProcess_le_tailFamily _ n).trans (tailFamily_le_iff.mpr ?_)
-  intro k hk
-  simpa only [arrayDiag_apply] using
-    (arrayTailFamily_le_iff (X := X) (m := arrayTailFamily X n)).mp le_rfl k k hk hk
-
 /-- **A corner of a jointly dissociated array is independent of the complementary tail block.** The
 corner `[0, n] × [0, n]` and the block `[n + 1, ∞) × [n + 1, ∞)` are square blocks over disjoint
 sets of indices. -/
@@ -169,32 +72,42 @@ theorem JointlyDissociated.indep_blockSigma_Iic_arrayTailFamily (h : JointlyDiss
     Indep (blockSigma X (Set.Iic n ×ˢ Set.Iic n)) (arrayTailFamily X (n + 1)) μ := by
   rw [arrayTailFamily_eq_blockSigma]
   exact h.indep_blockSigma_prod_of_nonempty ⟨0, by simp⟩ ⟨n + 1, by simp⟩
-    (Set.disjoint_left.mpr fun i hi hi' =>
-      (Nat.not_succ_le_self n) (hi'.trans hi))
+    ((Set.Iic_disjoint_Ici).2 (Nat.not_succ_le_self n))
 
-/-- **The tail σ-algebra of a jointly dissociated array is independent of itself.** Every corner is
-independent of the tail, the corners are increasing and generate the whole array σ-algebra, and the
-tail sits inside it. -/
-theorem JointlyDissociated.indep_arrayTail_self [IsProbabilityMeasure μ]
-    (h : JointlyDissociated μ X) (hX : ∀ p, Measurable (X p)) :
+/-- **The tail σ-algebra of a jointly dissociated array is independent of itself.** The corners
+above `n` are independent of the tail, increase to the block generated by all entries above `n`,
+and contain the array tail. Only entries beyond that cutoff need to be measurable. -/
+theorem JointlyDissociated.indep_arrayTail_self [IsZeroOrProbabilityMeasure μ]
+    (h : JointlyDissociated μ X) (n : ℕ)
+    (hX : ∀ p, n ≤ p.1 → n ≤ p.2 → Measurable (X p)) :
     Indep (arrayTail X) (arrayTail X) μ := by
-  have hle : ∀ n : ℕ,
-      blockSigma X (Set.Iic n ×ˢ Set.Iic n) ≤ (inferInstance : MeasurableSpace Ω) :=
-    fun _ => blockSigma_le _ fun p _ => hX p
-  have hmono : Monotone fun n : ℕ => blockSigma X (Set.Iic n ×ˢ Set.Iic n) := fun a b hab =>
-    blockSigma_mono (Set.prod_mono (Set.Iic_subset_Iic.mpr hab) (Set.Iic_subset_Iic.mpr hab))
-  have hindep : ∀ n : ℕ, Indep (blockSigma X (Set.Iic n ×ˢ Set.Iic n)) (arrayTail X) μ := fun n =>
-    indep_of_indep_of_le_right (h.indep_blockSigma_Iic_arrayTailFamily n)
-      (arrayTail_le_arrayTailFamily X (n + 1))
+  let corner : ℕ → Set ℕ := fun k => Set.Icc n (n + k)
+  have hle : ∀ k : ℕ,
+      blockSigma X (corner k ×ˢ corner k) ≤ (inferInstance : MeasurableSpace Ω) :=
+    fun _ => blockSigma_le _ fun p hp => hX p hp.1.1 hp.2.1
+  have hmono : Monotone fun k : ℕ => blockSigma X (corner k ×ˢ corner k) := fun a b hab =>
+    blockSigma_mono (Set.prod_mono
+      (Set.Icc_subset_Icc le_rfl (Nat.add_le_add_left hab n))
+      (Set.Icc_subset_Icc le_rfl (Nat.add_le_add_left hab n)))
+  have hindep : ∀ k : ℕ, Indep (blockSigma X (corner k ×ˢ corner k)) (arrayTail X) μ := by
+    intro k
+    apply indep_of_indep_of_le_right _ (arrayTail_le_arrayTailFamily X (n + k + 1))
+    rw [arrayTailFamily_eq_blockSigma]
+    exact h.indep_blockSigma_prod
+      (Set.disjoint_of_subset_left Set.Icc_subset_Iic_self
+        ((Set.Iic_disjoint_Ici).2 (Nat.not_succ_le_self (n + k))))
   have hsup := indep_iSup_of_monotone hindep hle
-    (arrayTail_le_ambient 0 fun p _ _ => hX p) hmono
-  refine indep_of_indep_of_le_left hsup ((arrayTail_le_arrayTailFamily X 0).trans ?_)
+    (arrayTail_le_ambient n hX) hmono
+  refine indep_of_indep_of_le_left hsup ((arrayTail_le_arrayTailFamily X n).trans ?_)
   rw [arrayTailFamily_eq_blockSigma]
-  refine blockSigma_le_iff.mpr fun p _ => ?_
+  refine blockSigma_le_iff.mpr fun p hp => ?_
   exact (measurable_blockSigma_of_mem (Z := X)
-    (S := Set.Iic (max p.1 p.2) ×ˢ Set.Iic (max p.1 p.2))
-    ⟨Set.mem_Iic.mpr (le_max_left p.1 p.2), Set.mem_Iic.mpr (le_max_right p.1 p.2)⟩).mono
-      (le_iSup (fun n : ℕ => blockSigma X (Set.Iic n ×ˢ Set.Iic n)) (max p.1 p.2)) le_rfl
+    (S := corner (max p.1 p.2) ×ˢ corner (max p.1 p.2))
+    ⟨⟨hp.1,
+        (le_max_left p.1 p.2).trans (Nat.le_add_left _ _)⟩,
+      ⟨hp.2,
+        (le_max_right p.1 p.2).trans (Nat.le_add_left _ _)⟩⟩).mono
+      (le_iSup (fun k : ℕ => blockSigma X (corner k ×ˢ corner k)) (max p.1 p.2)) le_rfl
 
 /-- **The zero-one law for a dissociated array.** Every event in the tail σ-algebra of a jointly
 dissociated array has probability `0` or `1`.
@@ -202,47 +115,40 @@ dissociated array has probability `0` or `1`.
 The tail cuts both index axes, as dissociation requires: for the row tail alone the statement is
 false, an array all of whose rows are one common i.i.d. random path being dissociated with a row
 tail that carries the whole path. -/
-theorem JointlyDissociated.measure_eq_zero_or_one_of_arrayTail [IsProbabilityMeasure μ]
-    (h : JointlyDissociated μ X) (hX : ∀ p, Measurable (X p)) {s : Set Ω}
+theorem JointlyDissociated.measure_eq_zero_or_one_of_arrayTail [IsZeroOrProbabilityMeasure μ]
+    (h : JointlyDissociated μ X) (n : ℕ)
+    (hX : ∀ p, n ≤ p.1 → n ≤ p.2 → Measurable (X p)) {s : Set Ω}
     (hs : MeasurableSet[arrayTail X] s) : μ s = 0 ∨ μ s = 1 :=
-  measure_eq_zero_or_one_of_indep_self (h.indep_arrayTail_self hX) hs
+  measure_eq_zero_or_one_of_indep_self (h.indep_arrayTail_self n hX) hs
 
 /-- **The zero-one law for a separately dissociated array**, the corollary of the jointly
-dissociated form at the stronger symmetry. -/
-theorem SeparatelyDissociated.measure_eq_zero_or_one_of_arrayTail [IsProbabilityMeasure μ]
-    (h : SeparatelyDissociated μ X) (hX : ∀ p, Measurable (X p)) {s : Set Ω}
+dissociated form under the stronger dissociation hypothesis. -/
+theorem SeparatelyDissociated.measure_eq_zero_or_one_of_arrayTail [IsZeroOrProbabilityMeasure μ]
+    (h : SeparatelyDissociated μ X) (n : ℕ)
+    (hX : ∀ p, n ≤ p.1 → n ≤ p.2 → Measurable (X p)) {s : Set Ω}
     (hs : MeasurableSet[arrayTail X] s) : μ s = 0 ∨ μ s = 1 :=
-  h.jointlyDissociated.measure_eq_zero_or_one_of_arrayTail hX hs
+  h.jointlyDissociated.measure_eq_zero_or_one_of_arrayTail n hX hs
 
-/-- **The diagonal of a jointly dissociated array has a trivial tail.** -/
+/-- **The diagonal of a jointly dissociated array has a trivial tail.** Only diagonal entries from
+the cutoff `n` onward need to be measurable. -/
 theorem JointlyDissociated.measure_eq_zero_or_one_of_tailProcess_arrayDiag [IsProbabilityMeasure μ]
-    (h : JointlyDissociated μ X) (hX : ∀ i, Measurable (arrayDiag X i)) {s : Set Ω}
+    (h : JointlyDissociated μ X) (n : ℕ)
+    (hX : ∀ i, n ≤ i → Measurable (arrayDiag X i)) {s : Set Ω}
     (hs : MeasurableSet[tailProcess (arrayDiag X)] s) : μ s = 0 ∨ μ s = 1 := by
-  have hindep : iIndepFun (arrayDiag X) μ := by
-    rw [iIndepFun_iff]
-    intro t f hf
-    induction t using Finset.induction_on with
-    | empty => simp
-    | @insert i t hi ih =>
-        have hdisj : Disjoint ({i} : Set ℕ) (t : Set ℕ) := by
-          simpa [Set.disjoint_left] using hi
-        have hit := h.indep_blockSigma_prod (S := {i}) (T := (t : Set ℕ)) hdisj
-        have hfi' := hf i (Finset.mem_insert_self i t)
-        rw [arrayDiag_apply] at hfi'
-        have hfi : MeasurableSet[blockSigma X (({i} : Set ℕ) ×ˢ {i})] (f i) :=
-          (measurable_blockSigma_of_mem (Z := X) (by simp)).comap_le _ hfi'
-        have hrest : MeasurableSet[blockSigma X ((t : Set ℕ) ×ˢ (t : Set ℕ))]
-            (⋂ j ∈ t, f j) := by
-          refine t.measurableSet_biInter fun j hj => ?_
-          have hfj := hf j (Finset.mem_insert_of_mem hj)
-          rw [arrayDiag_apply] at hfj
-          exact (measurable_blockSigma_of_mem (Z := X) (by simp [hj])).comap_le _ hfj
-        rw [Finset.prod_insert hi, ← ih fun j hj => hf j (Finset.mem_insert_of_mem hj)]
-        simpa only [Finset.set_biInter_insert] using
-          (Indep_iff _ _ _).mp hit _ _ hfi hrest
-  rw [tailProcess_eq_limsup] at hs
+  let Y : ℕ → Ω → α := fun k => arrayDiag X (n + k)
+  have hindep : iIndepFun Y μ := h.iIndepFun_arrayDiag.precomp (add_right_injective n)
+  have htail : tailProcess (arrayDiag X) ≤ tailProcess Y := by
+    rw [tailProcess_eq_iInf_tailFamily Y, le_iInf_iff]
+    intro m
+    refine (tailProcess_le_tailFamily _ (n + m)).trans (tailFamily_le_iff.mpr ?_)
+    intro k hk
+    obtain ⟨d, rfl⟩ := Nat.exists_eq_add_of_le ((Nat.le_add_right n m).trans hk)
+    simpa only [Y] using
+      (measurable_tailFamily_of_le (X := Y) (Nat.le_of_add_le_add_left hk))
+  have hs' : MeasurableSet[tailProcess Y] s := htail s hs
+  rw [tailProcess_eq_limsup] at hs'
   exact measure_zero_or_one_of_measurableSet_limsup_atTop
-    (fun i => (hX i).comap_le) hindep.iIndep hs
+    (fun i => (hX (n + i) (Nat.le_add_right n i)).comap_le) hindep.iIndep hs'
 
 end Probability
 
