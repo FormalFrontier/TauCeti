@@ -99,6 +99,9 @@ theorem splitTorusCommHopfAlgProperty_quotient_diagonalTorusDefiningIdeal :
   rw [splitTorusCommHopfAlgProperty_iff]
   exact ⟨n, ⟨(diagonalTorusCoordinateIso k n).symm⟩⟩
 
+grind_pattern splitTorusCommHopfAlgProperty_quotient_diagonalTorusDefiningIdeal =>
+  diagonalTorusDefiningIdeal k n
+
 /-- The quotient coordinate Hopf algebra of the diagonal torus is a torus. -/
 theorem torusCommHopfAlgProperty_quotient_diagonalTorusDefiningIdeal :
     torusCommHopfAlgProperty k
@@ -107,6 +110,9 @@ theorem torusCommHopfAlgProperty_quotient_diagonalTorusDefiningIdeal :
           (finiteTypeCommHopfAlgProperty_iff _).2 inferInstance⟩
         (diagonalTorusDefiningIdeal k n)) :=
   (splitTorusCommHopfAlgProperty_quotient_diagonalTorusDefiningIdeal k n).torus k _
+
+grind_pattern torusCommHopfAlgProperty_quotient_diagonalTorusDefiningIdeal =>
+  diagonalTorusDefiningIdeal k n
 
 /-- The points cut out by `diagonalTorusDefiningIdeal` are exactly the diagonal-torus points. -/
 theorem quotientPointsSubgroup_diagonalTorusDefiningIdeal (A : CommAlgCat.{u} k) :

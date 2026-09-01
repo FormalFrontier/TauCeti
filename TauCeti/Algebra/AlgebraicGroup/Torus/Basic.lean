@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.MultiplicativeType.Basic
 public import TauCeti.Algebra.AlgebraicGroup.SplitTorus.Basic
+import TauCeti.Algebra.Coalgebra.BaseChange
 
 /-!
 # Tori over a field
@@ -128,7 +129,7 @@ variable {R A B : Type*} [CommSemiring R] [Semiring A] [Semiring B]
   [_root_.Bialgebra R A] [_root_.Bialgebra R B]
 
 /-- Cocommutativity transfers across a bialgebra equivalence. -/
-private theorem of_bialgEquiv (e : A ≃ₐc[R] B) [hA : _root_.Coalgebra.IsCocomm R A] :
+theorem of_bialgEquiv (e : A ≃ₐc[R] B) [hA : _root_.Coalgebra.IsCocomm R A] :
     _root_.Coalgebra.IsCocomm R B := by
   constructor
   ext b
@@ -154,58 +155,60 @@ namespace Coalgebra.IsCocomm
 variable {k K H : Type u} [Field k] [Field K] [Algebra k K]
   [CommRing H] [_root_.Bialgebra k H]
 
+private theorem baseChangeTensorBialgEquiv_includeRight (y : H ⊗[k] H) :
+    Bialgebra.TensorProduct.baseChangeTensorBialgEquiv k K H H
+        (Algebra.TensorProduct.includeRight y) =
+      TensorProduct.AlgebraTensorModule.distribBaseChange k K H H
+        (Algebra.TensorProduct.includeRight y) := by
+  induction y using TensorProduct.induction_on with
+  | zero => simp
+  | add x y hx hy => simpa only [map_add] using congrArg₂ (· + ·) hx hy
+  | tmul x y =>
+      rw [Algebra.TensorProduct.includeRight_apply,
+        Bialgebra.TensorProduct.baseChangeTensorBialgEquiv_tmul,
+        TensorProduct.AlgebraTensorModule.distribBaseChange_tmul]
+
+private theorem baseChangeTensorBialgEquiv_includeRight_comm (y : H ⊗[k] H) :
+    Bialgebra.TensorProduct.baseChangeTensorBialgEquiv k K H H
+        (Algebra.TensorProduct.includeRight (TensorProduct.comm k H H y)) =
+      TensorProduct.comm K (K ⊗[k] H) (K ⊗[k] H)
+        (Bialgebra.TensorProduct.baseChangeTensorBialgEquiv k K H H
+          (Algebra.TensorProduct.includeRight y)) := by
+  induction y using TensorProduct.induction_on with
+  | zero => simp
+  | add x y hx hy =>
+      simpa only [map_add, LinearMap.map_add] using congrArg₂ (· + ·) hx hy
+  | tmul x y =>
+      simp only [TensorProduct.comm_tmul, Algebra.TensorProduct.includeRight_apply,
+        Bialgebra.TensorProduct.baseChangeTensorBialgEquiv_tmul]
+
 /-- Cocommutativity descends from a field extension. -/
-private theorem of_baseChange [h : _root_.Coalgebra.IsCocomm K (K ⊗[k] H)] :
+theorem of_baseChange [h : _root_.Coalgebra.IsCocomm K (K ⊗[k] H)] :
     _root_.Coalgebra.IsCocomm k H := by
   constructor
   ext x
   apply Algebra.TensorProduct.includeRight_injective (B := H ⊗[k] H)
     (algebraMap k K).injective
-  apply (Bialgebra.TensorProduct.baseChangeTensorBialgEquiv k K H H).injective
-  have hc := Coalgebra.comm_comul K (1 ⊗ₜ[k] x : K ⊗[k] H)
   let e := Bialgebra.TensorProduct.baseChangeTensorBialgEquiv k K H H
-  have he_comm (y : H ⊗[k] H) :
-      e (1 ⊗ₜ[k] TensorProduct.comm k H H y) =
-        TensorProduct.comm K (K ⊗[k] H) (K ⊗[k] H) (e (1 ⊗ₜ[k] y)) := by
-    induction y using TensorProduct.induction_on with
-    | zero => simp
-    | add x y hx hy =>
-        simpa only [map_add, LinearMap.map_add, TensorProduct.tmul_add] using
-          congrArg₂ (· + ·) hx hy
-    | tmul x y => simp [e]
-  have he (y : H ⊗[k] H) :
-      e (1 ⊗ₜ[k] y) =
-        TensorProduct.AlgebraTensorModule.tensorTensorTensorComm
-          k K k K K K H H ((1 ⊗ₜ[K] 1) ⊗ₜ[k] y) := by
-    induction y using TensorProduct.induction_on with
-    | zero => simp
-    | add x y hx hy =>
-        simpa only [map_add, LinearMap.map_add, TensorProduct.tmul_add] using
-          congrArg₂ (· + ·) hx hy
-    | tmul x y => simp [e]
+  apply e.injective
   have he_comul :
-      e (1 ⊗ₜ[k] Coalgebra.comul (R := k) x) =
-        Coalgebra.comul (R := K) (1 ⊗ₜ[k] x : K ⊗[k] H) := by
-    rw [he]
-    -- Base-change comultiplication is defined by this same tensor rebracketing. No named
-    -- compatibility theorem exposes the equality more abstractly, so this final step is
-    -- intentionally definitional after `he` has made both representations explicit.
-    rfl
-  -- `includeRight` and the base-change tensor equivalence are functions whose composite
-  -- unfolds to the displayed pure tensor. The change only exposes that representation;
-  -- `he_comm`, `he_comul`, and `Coalgebra.comm_comul` carry the mathematical content below.
-  change e (1 ⊗ₜ[k]
-      TensorProduct.comm k H H (Coalgebra.comul (R := k) x)) =
-    e (1 ⊗ₜ[k] Coalgebra.comul (R := k) x)
+      e (Algebra.TensorProduct.includeRight (Coalgebra.comul (R := k) x)) =
+        Coalgebra.comul (R := K) (Algebra.TensorProduct.includeRight x) := by
+    rw [baseChangeTensorBialgEquiv_includeRight]
+    simp only [Algebra.TensorProduct.includeRight_apply]
+    rw [TauCeti.Coalgebra.baseChange_comul_tmul]
   calc
+    e (Algebra.TensorProduct.includeRight
+        (TensorProduct.comm k H H (Coalgebra.comul (R := k) x))) =
+        TensorProduct.comm K (K ⊗[k] H) (K ⊗[k] H)
+          (e (Algebra.TensorProduct.includeRight (Coalgebra.comul (R := k) x))) :=
+      baseChangeTensorBialgEquiv_includeRight_comm (Coalgebra.comul (R := k) x)
     _ = TensorProduct.comm K (K ⊗[k] H) (K ⊗[k] H)
-        (e (1 ⊗ₜ[k] Coalgebra.comul (R := k) x)) :=
-      he_comm (Coalgebra.comul (R := k) x)
-    _ = TensorProduct.comm K (K ⊗[k] H) (K ⊗[k] H)
-        (Coalgebra.comul (R := K) (1 ⊗ₜ[k] x : K ⊗[k] H)) :=
+        (Coalgebra.comul (R := K) (Algebra.TensorProduct.includeRight x)) :=
       congrArg (TensorProduct.comm K (K ⊗[k] H) (K ⊗[k] H)) he_comul
-    _ = Coalgebra.comul (R := K) (1 ⊗ₜ[k] x : K ⊗[k] H) := hc
-    _ = e (1 ⊗ₜ[k] Coalgebra.comul (R := k) x) := he_comul.symm
+    _ = Coalgebra.comul (R := K) (Algebra.TensorProduct.includeRight x) :=
+      Coalgebra.comm_comul K (Algebra.TensorProduct.includeRight x)
+    _ = e (Algebra.TensorProduct.includeRight (Coalgebra.comul (R := k) x)) := he_comul.symm
 
 end Coalgebra.IsCocomm
 

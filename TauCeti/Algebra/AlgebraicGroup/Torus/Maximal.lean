@@ -25,6 +25,10 @@ then `I = J`.
 * J. S. Milne, *Algebraic Groups* (2017), §§12 and 17.
 * A. Borel, *Linear Algebraic Groups*, 2nd ed. (1991), §8.
 
+The isomorphism-invariance API follows the formal organization of
+`TauCeti.Algebra.AlgebraicGroup.Unipotent.Radical.Isomorphism` and
+`TauCeti.Algebra.AlgebraicGroup.Solvable.Radical.Isomorphism`.
+
 This supplies the Hopf-coordinate maximal-torus predicate required by Layer 7, "Borel subgroups,
 maximal tori, and their conjugacy", of the ReductiveGroups roadmap. Existence and conjugacy of
 maximal tori remain to be proved.
@@ -90,26 +94,20 @@ theorem comapOfIso (hI : IsMaximalTorus k K.obj I) (e : H ≅ K) :
   have hJ' : torusCommHopfAlgProperty k (FiniteTypeCommHopfAlgCat.quotient K J') :=
     (torusCommHopfAlgProperty k).prop_of_iso
       (FiniteTypeCommHopfAlgCat.quotientIsoOfIso e.symm J).symm hJ
+  have hJ'comap : J'.comapOfSurjective f hf = J := by
+    dsimp only [J', g, f]
+    simp only [HopfIdeal.comapOfSurjective_comapOfSurjective,
+      ← FiniteTypeCommHopfAlgCat.toBialgHom_comp, e.hom_inv_id,
+      FiniteTypeCommHopfAlgCat.toBialgHom_id, HopfIdeal.comapOfSurjective_id]
   have hJ'I : J' ≤ I := by
-    intro x hx
-    have hx' := HopfIdeal.mem_comapOfSurjective.mp hx
-    have hx'' := HopfIdeal.mem_comapOfSurjective.mp (hJpulled hx')
-    have hcancel : f (g x) = x := by
-      have h := congrArg (fun q : K ⟶ K ↦ FiniteTypeCommHopfAlgCat.toBialgHom q x)
-        e.inv_hom_id
-      simpa only [FiniteTypeCommHopfAlgCat.toBialgHom_comp, BialgHom.comp_apply,
-        FiniteTypeCommHopfAlgCat.toBialgHom_id, BialgHom.coe_id, id_eq] using h
-    rwa [hcancel] at hx''
+    rw [← HopfIdeal.comapOfSurjective_le_comapOfSurjective_iff f hf]
+    rw [hJ'comap]
+    exact hJpulled
   have hIJ' : I ≤ J' := hI.le_of_le hJ' hJ'I
-  intro x hx
-  have hx' := hIJ' (HopfIdeal.mem_comapOfSurjective.mp hx)
-  have hx'' := HopfIdeal.mem_comapOfSurjective.mp hx'
-  have hcancel : g (f x) = x := by
-    have h := congrArg (fun q : H ⟶ H ↦ FiniteTypeCommHopfAlgCat.toBialgHom q x)
-      e.hom_inv_id
-    simpa only [FiniteTypeCommHopfAlgCat.toBialgHom_comp, BialgHom.comp_apply,
-      FiniteTypeCommHopfAlgCat.toBialgHom_id, BialgHom.coe_id, id_eq] using h
-  rwa [hcancel] at hx''
+  calc
+    I.comapOfSurjective f hf ≤ J'.comapOfSurjective f hf :=
+      HopfIdeal.comapOfSurjective_mono f hf hIJ'
+    _ = J := hJ'comap
 
 /-- Maximal-torus status is invariant under pulling the defining ideal back across an ambient
 Hopf-algebra isomorphism. -/
@@ -121,22 +119,9 @@ theorem comapOfIso_iff (e : H ≅ K) (I : HopfIdeal k K.obj) :
   constructor
   · intro hI
     have hback := hI.comapOfIso e.symm
-    have hcancel :
-        (I.comapOfSurjective (FiniteTypeCommHopfAlgCat.toBialgHom e.hom)
-            (ConcreteCategory.bijective_of_isIso e.hom).2).comapOfSurjective
-          (FiniteTypeCommHopfAlgCat.toBialgHom e.symm.hom)
-            (ConcreteCategory.bijective_of_isIso e.symm.hom).2 = I := by
-      ext x
-      simp only [HopfIdeal.mem_comapOfSurjective]
-      have h := congrArg (fun q : K ⟶ K ↦ FiniteTypeCommHopfAlgCat.toBialgHom q x)
-        e.symm.hom_inv_id
-      have h' : (FiniteTypeCommHopfAlgCat.toBialgHom e.hom)
-          ((FiniteTypeCommHopfAlgCat.toBialgHom e.symm.hom) x) = x := by
-        simpa only [Iso.symm_inv, FiniteTypeCommHopfAlgCat.toBialgHom_comp,
-          BialgHom.comp_apply, FiniteTypeCommHopfAlgCat.toBialgHom_id, BialgHom.coe_id,
-          id_eq] using h
-      rw [h']
-    rwa [hcancel] at hback
+    simpa only [HopfIdeal.comapOfSurjective_comapOfSurjective, Iso.symm_hom,
+      ← FiniteTypeCommHopfAlgCat.toBialgHom_comp, e.inv_hom_id,
+      FiniteTypeCommHopfAlgCat.toBialgHom_id, HopfIdeal.comapOfSurjective_id] using hback
   · exact fun hI ↦ hI.comapOfIso e
 
 end IsMaximalTorus
