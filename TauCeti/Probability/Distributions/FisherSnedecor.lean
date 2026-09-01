@@ -10,21 +10,30 @@ public import TauCeti.Probability.Distributions.Beta.Cdf
 /-!
 # Fisher's F distribution
 
+## Main results
+
+* `fisherSnedecorMeasure`
+* `fisherSnedecorMeasure_map`
+* `isProbabilityMeasure_fisherSnedecorMeasure_iff`
+* `fisherSnedecorMap_image_Ioo`
+* `ae_mem_Ioi_fisherSnedecorMeasure`
+* `cdf_fisherSnedecorMeasure_eq`
+
 This file begins the elementary API for Fisher's F law.  For positive degrees of freedom `m` and
-`n`, it realizes the law as the image of a beta law under
+`n`, it realizes the law as the image of `betaMeasure (m / 2) (n / 2)` under
 `u ↦ (n / m) * u / (1 - u)`.  This gives a probability measure and its cumulative distribution
 function without introducing a second probability-law abstraction.  The density and the
 moment and transform formulas are subsequent parts of the roadmap development.
 
 The change of variables is useful in its own right: the inverse map on the positive half-line is
 `x ↦ m * x / (n + m * x)`.  The cdf theorem below records this inverse explicitly, in the same
-regularized-incomplete-beta convention used by the beta and Student's t APIs.
+regularized-incomplete-beta convention used by the beta API.
 
 ## References
 
 * Roadmap: `TauCetiRoadmap/StandardDistributions/README.md`, Layer 3, the **Fisher's F** target.
 * N. L. Johnson, S. Kotz, and N. Balakrishnan, *Continuous Univariate Distributions*, vol. 2,
-  2nd ed., Wiley (1995), chapter 25.
+  2nd ed., Wiley (1995), chapter 27.
 -/
 
 public section
@@ -178,7 +187,8 @@ theorem fisherSnedecorMap_image_Ioo (hm : 0 < m) (hn : 0 < n) :
     exact ⟨fisherSnedecorInv m n x, fisherSnedecorInv_mem_Ioo hm hn hx,
       fisherSnedecorMap_inv hm hn hx⟩
 
-/- The beta-measure-specific preimage calculation is used only to prove the cdf formula. -/
+/-- On the beta law, the preimage of `Iic x` under the beta-to-F map agrees a.e. with
+`Iic (fisherSnedecorInv m n x)` for positive `x`. -/
 private theorem fisherSnedecorMap_preimage_Iic_ae (hm : 0 < m) (hn : 0 < n) {x : ℝ} (hx : 0 < x) :
     fisherSnedecorMap m n ⁻¹' Iic x =ᵐ[betaMeasure (m / 2) (n / 2)]
       Iic (fisherSnedecorInv m n x) := by
@@ -221,8 +231,8 @@ theorem ae_mem_Ioi_fisherSnedecorMeasure (hm : 0 < m) (hn : 0 < n) :
 
 /-! ### The cdf -/
 
-/-- The cdf of the beta-to-F realization is the regularized incomplete beta function at the
-inverse beta-to-F coordinate. -/
+/-- For positive degrees of freedom, the cdf is `0` when `x ≤ 0` and is the regularized
+incomplete beta function at the inverse beta-to-F coordinate when `0 < x`. -/
 theorem cdf_fisherSnedecorMeasure_eq (hm : 0 < m) (hn : 0 < n) (x : ℝ) :
   cdf (fisherSnedecorMeasure m n) x =
       if x ≤ 0 then 0 else
