@@ -21,10 +21,11 @@ is again a decomposition by two rectangles the unblocked differential counts, ca
 weight and passing through a different intermediate grid state.
 
 The relation between the two cuts is packaged as `GridRectangleDecomposition.IsRecut`: the
-rectangles of each cut cover disjoint sets of squares, and the two unions agree. That is exactly
-the amount of information a weight needs: any multiplicative function of squares has the same
-product on the two cuts, and in particular the `O`-monomials multiply to the same polynomial and
-`X`-avoidance transfers.
+rectangles of each cut cover disjoint sets of squares, and the two unions agree. The geometric
+construction separately proves that the two cuts have different intermediate states. The domain
+relation is exactly the amount of information a weight needs: any multiplicative function of
+squares has the same product on the two cuts, and in particular the `O`-monomials multiply to the
+same polynomial and `X`-avoidance transfers.
 
 The geometric input is the cyclic order forced by emptiness
 (`cyclicOrder_of_isEmpty_of_left_eq_left`) and the finite-domain repartition identity for the
@@ -40,7 +41,7 @@ assembly of the disjoint, overlapping and annular cases into `∂⁻ ∘ ∂⁻ 
 ## Main definitions
 
 * `TauCeti.GridRectangleDecomposition.IsRecut`: two two-step decompositions with the same
-  endpoints partition the same set of covered squares, through different intermediate states.
+  endpoints partition the same set of covered squares.
 
 ## Main results
 
@@ -75,15 +76,12 @@ variable {n : ℕ} {x z : GridState n}
 /-! ### Two cuts of the same two-step domain -/
 
 /-- `E` is a *recut* of the two-step decomposition `D`: the two decompositions have the same
-endpoints, each cuts its domain into two rectangles covering disjoint sets of squares, the two
-domains agree, and the two cuts pass through different intermediate grid states.
+endpoints, each cuts its domain into two rectangles covering disjoint sets of squares, and the two
+domains agree.
 
-This is the pairing relation used by the juxtaposition proof of `∂⁻ ∘ ∂⁻ = 0`: the terms of the
-differential square indexed by `D` and by `E` carry the same weight and cancel in characteristic
-two. -/
+This is the domain relation used by the juxtaposition proof of `∂⁻ ∘ ∂⁻ = 0`; the pairing theorem
+additionally requires the two intermediate states to differ. -/
 structure IsRecut (D E : GridRectangleDecomposition x z) : Prop where
-  /-- The two cuts pass through different intermediate grid states. -/
-  middle_ne : E.middle ≠ D.middle
   /-- The two rectangles of `D` cover disjoint sets of squares. -/
   disjoint_coveredSquares :
     Disjoint D.first.toGridRectangle.coveredSquares D.second.toGridRectangle.coveredSquares
@@ -101,7 +99,6 @@ variable {D E : GridRectangleDecomposition x z}
 
 /-- Being a recut is a symmetric relation. -/
 theorem symm (h : D.IsRecut E) : E.IsRecut D where
-  middle_ne := h.middle_ne.symm
   disjoint_coveredSquares := h.disjoint_coveredSquares_recut
   disjoint_coveredSquares_recut := h.disjoint_coveredSquares
   coveredSquares_union_eq := h.coveredSquares_union_eq.symm
@@ -156,6 +153,31 @@ end IsRecut
 
 /-! ### Building the recut -/
 
+/-- If a column belongs to both old column spans, the emptiness of the old rectangles excludes
+its grid-state point from their combined row span. -/
+private theorem notMem_combinedRowSpan_of_mem_bothColumnSpans {a b d c : Fin n}
+    (hrow : x b ∈ Grid.cIoo (x a) (x d))
+    (hfirst : ∀ c ∈ Grid.cIoo a b, x c ∉ Grid.cIoo (x a) (x b))
+    (hsecond : ∀ c ∈ Grid.cIoo a d, c ≠ a → c ≠ b →
+      x c ∉ Grid.cIoo (x b) (x d))
+    (hcab : c ∈ Grid.cIoo a b) (hcad : c ∈ Grid.cIoo a d) :
+    x c ∉ Grid.cIoo (x a) (x d) := by
+  intro hmem
+  have hca : c ≠ a := by
+    rintro rfl
+    exact Grid.left_notMem_cIoo _ _ hcab
+  have hcb : c ≠ b := by
+    rintro rfl
+    exact Grid.right_notMem_cIoo _ _ hcab
+  have hcut : x c ∈ Grid.cIoo (x a) (x b) ∪ insert (x b) (Grid.cIoo (x b) (x d)) := by
+    rw [Grid.cIoo_union_insert_cIoo_eq_cIoo_of_mem_cIoo hrow]
+    exact hmem
+  rw [Finset.mem_union, Finset.mem_insert] at hcut
+  rcases hcut with hcut | hcut | hcut
+  · exact hfirst c hcab hcut
+  · exact hcb (x.toPerm.injective hcut)
+  · exact hsecond c hcad hca hcb hcut
+
 /-- The recut in the configuration where the terminal side of the first rectangle lies strictly
 inside the column span of the second one.
 
@@ -200,9 +222,6 @@ private theorem exists_recut_columnCut {a b d : Fin n}
       GridRectangleBetween.ofSwapColumns_bottom, GridRectangleBetween.ofSwapColumns_top, hmid_a,
       hmid_b]
     intro c hc hmem
-    have hca : c ≠ a := by
-      rintro rfl
-      exact Grid.left_notMem_cIoo _ _ hc
     have hcb : c ≠ b := by
       rintro rfl
       exact Grid.right_notMem_cIoo _ _ hc
@@ -211,14 +230,7 @@ private theorem exists_recut_columnCut {a b d : Fin n}
       rintro rfl
       exact Grid.right_notMem_cIoo _ _ hcad
     rw [GridState.swapColumns_apply, Equiv.swap_apply_of_ne_of_ne hcb hcd] at hmem
-    have hcut : x c ∈ Grid.cIoo (x a) (x b) ∪ insert (x b) (Grid.cIoo (x b) (x d)) := by
-      rw [Grid.cIoo_union_insert_cIoo_eq_cIoo_of_mem_cIoo hrow]
-      exact hmem
-    rw [Finset.mem_union, Finset.mem_insert] at hcut
-    rcases hcut with hcut | hcut | hcut
-    · exact hfirst c hc hcut
-    · exact hcb (x.toPerm.injective hcut)
-    · exact hsecond c hcad hca hcb hcut
+    exact notMem_combinedRowSpan_of_mem_bothColumnSpans hrow hfirst hsecond hc hcad hmem
 
 /-- The recut in the configuration where the terminal side of the second rectangle lies strictly
 inside the column span of the first one.
@@ -250,25 +262,9 @@ private theorem exists_recut_complementaryColumnCut {a b d : Fin n}
   · rw [GridRectangleBetween.isEmpty_iff_forall_notMem_cIoo]
     simp only [GridRectangleBetween.ofSwapColumns_left, GridRectangleBetween.ofSwapColumns_right,
       GridRectangleBetween.ofSwapColumns_bottom, GridRectangleBetween.ofSwapColumns_top]
-    intro c hc hmem
-    have hca : c ≠ a := by
-      rintro rfl
-      exact Grid.left_notMem_cIoo _ _ hc
-    have hcd : c ≠ d := by
-      rintro rfl
-      exact Grid.right_notMem_cIoo _ _ hc
+    intro c hc
     have hcab : c ∈ Grid.cIoo a b := Grid.cIoo_subset_cIoo_of_mem_cIoo_left hcol hc
-    have hcb : c ≠ b := by
-      rintro rfl
-      exact Grid.right_notMem_cIoo _ _ hcab
-    have hcut : x c ∈ Grid.cIoo (x a) (x b) ∪ insert (x b) (Grid.cIoo (x b) (x d)) := by
-      rw [Grid.cIoo_union_insert_cIoo_eq_cIoo_of_mem_cIoo hrow]
-      exact hmem
-    rw [Finset.mem_union, Finset.mem_insert] at hcut
-    rcases hcut with hcut | hcut | hcut
-    · exact hfirst c hcab hcut
-    · exact hcb (x.toPerm.injective hcut)
-    · exact hsecond c hc hca hcb hcut
+    exact notMem_combinedRowSpan_of_mem_bothColumnSpans hrow hfirst hsecond hcab hc
   · rw [GridRectangleBetween.isEmpty_iff_forall_notMem_cIoo]
     simp only [GridRectangleBetween.ofSwapColumns_left, GridRectangleBetween.ofSwapColumns_right,
       GridRectangleBetween.ofSwapColumns_bottom, GridRectangleBetween.ofSwapColumns_top, hmid_d,
@@ -297,7 +293,8 @@ second. -/
 theorem exists_isRecut_of_left_eq_left (D : GridRectangleDecomposition x z)
     (hleft : D.first.left = D.second.left) (hright : D.first.right ≠ D.second.right)
     (hfirst : D.first.IsEmpty) (hsecond : D.second.IsEmpty) :
-    ∃ E : GridRectangleDecomposition x z, D.IsRecut E ∧ E.first.IsEmpty ∧ E.second.IsEmpty := by
+    ∃ E : GridRectangleDecomposition x z,
+      D.IsRecut E ∧ E.middle ≠ D.middle ∧ E.first.IsEmpty ∧ E.second.IsEmpty := by
   have hab : D.first.left ≠ D.first.right := D.first.left_ne_right
   have had : D.first.left ≠ D.second.right := by
     rw [hleft]
@@ -352,12 +349,13 @@ theorem exists_isRecut_of_left_eq_left (D : GridRectangleDecomposition x z)
   rcases hcolcase with hcol | hcol
   · obtain ⟨E, hmidE, hE1, hE2, hEfirst, hEsecond⟩ :=
       exists_recut_columnCut hab had hright hz hcol hrow hfirst' hsecond'
-    refine ⟨E, ⟨?_, hDdisj, ?_, ?_⟩, hEfirst, hEsecond⟩
-    · intro h
+    have hmiddle : E.middle ≠ D.middle := by
+      intro h
       have hval : E.middle D.first.left = D.middle D.first.left := by rw [h]
       rw [hmidE, hmid_first] at hval
       simp only [GridState.swapColumns_apply, Equiv.swap_apply_of_ne_of_ne hab had] at hval
       exact hab (x.toPerm.injective hval)
+    refine ⟨E, ⟨hDdisj, ?_, ?_⟩, hmiddle, hEfirst, hEsecond⟩
     · rw [hE1, hE2]
       exact (GridRectangle.disjoint_coveredSquares_iff _ _).mpr (Or.inl (by
         simpa only [GridRectangle.coveredColumns_def] using
@@ -366,12 +364,13 @@ theorem exists_isRecut_of_left_eq_left (D : GridRectangleDecomposition x z)
       exact (GridRectangle.coveredSquares_union_eq_of_mem_cIoo hcol hrow).symm
   · obtain ⟨E, hmidE, hE1, hE2, hEfirst, hEsecond⟩ :=
       exists_recut_complementaryColumnCut hab had hright hz hcol hrow hfirst' hsecond'
-    refine ⟨E, ⟨?_, hDdisj, ?_, ?_⟩, hEfirst, hEsecond⟩
-    · intro h
+    have hmiddle : E.middle ≠ D.middle := by
+      intro h
       have hval : E.middle D.first.right = D.middle D.first.right := by rw [h]
       rw [hmidE, D.first.map_right] at hval
       simp only [GridState.swapColumns_apply, Equiv.swap_apply_of_ne_of_ne hab.symm hright] at hval
       exact hab (x.toPerm.injective hval).symm
+    refine ⟨E, ⟨hDdisj, ?_, ?_⟩, hmiddle, hEfirst, hEsecond⟩
     · rw [hE1, hE2]
       exact (GridRectangle.disjoint_coveredSquares_iff _ _).mpr (Or.inl (by
         simpa only [GridRectangle.coveredColumns_def] using
@@ -392,15 +391,17 @@ theorem exists_unblockedRectangles_recut_of_left_eq_left (G : GridDiagram n) (R 
     (hfirst : D.first ∈ G.unblockedRectangles x D.middle)
     (hsecond : D.second ∈ G.unblockedRectangles D.middle z) :
     ∃ E : GridRectangleDecomposition x z,
-      E.middle ≠ D.middle ∧ E.first ∈ G.unblockedRectangles x E.middle ∧
-        E.second ∈ G.unblockedRectangles E.middle z ∧
-          G.OMonomial R E.first.toGridRectangle * G.OMonomial R E.second.toGridRectangle =
-            G.OMonomial R D.first.toGridRectangle * G.OMonomial R D.second.toGridRectangle := by
-  obtain ⟨E, hrecut, hEfirst, hEsecond⟩ := D.exists_isRecut_of_left_eq_left hleft hright
+      D.IsRecut E ∧ E.middle ≠ D.middle ∧
+        E.first ∈ G.unblockedRectangles x E.middle ∧
+          E.second ∈ G.unblockedRectangles E.middle z ∧
+            G.OMonomial R E.first.toGridRectangle * G.OMonomial R E.second.toGridRectangle =
+              G.OMonomial R D.first.toGridRectangle * G.OMonomial R D.second.toGridRectangle := by
+  obtain ⟨E, hrecut, hmiddle, hEfirst, hEsecond⟩ :=
+    D.exists_isRecut_of_left_eq_left hleft hright
     (G.isEmpty_of_mem_unblockedRectangles hfirst) (G.isEmpty_of_mem_unblockedRectangles hsecond)
   have hX₁ := G.disjoint_XSet_of_mem_unblockedRectangles hfirst
   have hX₂ := G.disjoint_XSet_of_mem_unblockedRectangles hsecond
-  exact ⟨E, hrecut.middle_ne,
+  exact ⟨E, hrecut, hmiddle,
     (G.mem_unblockedRectangles _).mpr ⟨hEfirst, hrecut.disjoint_XSet_first hX₁ hX₂⟩,
     (G.mem_unblockedRectangles _).mpr ⟨hEsecond, hrecut.disjoint_XSet_second hX₁ hX₂⟩,
     hrecut.OMonomial_mul_OMonomial G R⟩
