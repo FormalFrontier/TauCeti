@@ -335,7 +335,7 @@ theorem suspExp_add3 (a b c : ℕ) (d : ℕ → ℤ) :
       ((∑ i ∈ Finset.range a, ((a : ℤ) + b + c - 1 - i) * d i) +
         ∑ j ∈ Finset.range b, ((c : ℤ) + b - 1 - j) * d (a + j)) +
           ∑ j ∈ Finset.range c, ((c : ℤ) - 1 - j) * d (a + b + j) := by
-  rw [show a + b + c = a + (b + c) by omega, suspExp_add, Finset.sum_range_add, ← add_assoc]
+  rw [add_assoc a b c, suspExp_add, Finset.sum_range_add, ← add_assoc]
   refine congrArg₂ (· + ·) (congrArg₂ (· + ·) ?_ ?_) ?_
   · refine Finset.sum_congr rfl fun i _ ↦ ?_
     push_cast
@@ -344,7 +344,7 @@ theorem suspExp_add3 (a b c : ℕ) (d : ℕ → ℤ) :
     push_cast
     ring
   · refine Finset.sum_congr rfl fun j _ ↦ ?_
-    rw [show a + (b + j) = a + b + j by omega]
+    rw [← add_assoc a b j]
     push_cast
     ring
 

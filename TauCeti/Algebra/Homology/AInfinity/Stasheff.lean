@@ -237,16 +237,17 @@ theorem suspExp_replaceDeg (d : ℕ → ℤ) (p s t : ℕ) :
       push_cast
       ring
     · refine Finset.sum_congr rfl fun j _ ↦ ?_
-      rw [replaceDeg_of_gt _ _ _ (by omega),
-        show p + 1 + j + s - 1 = p + s + j by omega]
+      have hindex : p + 1 + j + s - 1 = p + s + j := by omega
+      rw [replaceDeg_of_gt _ _ _ (by omega), hindex]
   -- Split the exponent of the original tuple into prefix, inner block, and suffix.
   have hB := suspExp_add3 p s t d
   -- Compare the prefix contribution on the two sides of the sign identity.
   have hI : (∑ i ∈ Finset.range p, (d i - 1)) + ∑ i ∈ Finset.range p, ((p : ℤ) + t - i) * d i
       = ((2 - (s : ℤ)) * ∑ i ∈ Finset.range p, d i
           + ∑ i ∈ Finset.range p, ((p : ℤ) + s + t - 1 - i) * d i) - p := by
+    have hcard : ((p : ℤ)) = ∑ _i ∈ Finset.range p, (1 : ℤ) := by simp
     rw [eq_sub_iff_add_eq, Finset.mul_sum, ← Finset.sum_add_distrib, ← Finset.sum_add_distrib,
-      show ((p : ℤ)) = ∑ _i ∈ Finset.range p, (1 : ℤ) by simp, ← Finset.sum_add_distrib]
+      hcard, ← Finset.sum_add_distrib]
     exact Finset.sum_congr rfl fun i _ ↦ by ring
   -- Compare the collapsed inner-block contribution on the two sides.
   have hII : suspExp s (fun j ↦ d (p + j)) + (t : ℤ) * blockDeg d p s
@@ -308,8 +309,8 @@ theorem stasheffTerm_eq_smul_signedOneSlot (p s t : ℕ) :
     rw [Fin.oneSlotEquiv_middle_val, replaceBlock_self]
     simp only [Equiv.symm_apply_apply, Sum.elim_inr, Sum.elim_inl,
       Fin.blockEquiv_middle_val, evalNat_def]
-  · rw [Fin.oneSlotEquiv_suffix_val,
-      replaceBlock_of_gt _ _ _ _ (show p < p + 1 + (j : ℕ) by omega)]
+  · have hsuffix : p < p + 1 + (j : ℕ) := by omega
+    rw [Fin.oneSlotEquiv_suffix_val, replaceBlock_of_gt _ _ _ _ hsuffix]
     simp only [Equiv.symm_apply_apply, Sum.elim_inr, Fin.blockEquiv_suffix_val]
     congr 1
     omega
@@ -434,7 +435,8 @@ theorem suspendedStasheffSum_eq_smul (n : ℕ) :
   refine Finset.sum_congr rfl fun s hs ↦ ?_
   rw [Finset.mem_range] at hp
   rw [Finset.mem_Icc] at hs
-  rw [suspendedStasheffTerm_eq_smul, show p + s + (n - p - s) = n by omega]
+  have harity : p + s + (n - p - s) = n := by omega
+  rw [suspendedStasheffTerm_eq_smul, harity]
 
 /-- The arity-`n` suspended Stasheff sum only reads the first `n` supplied degrees and inputs. -/
 theorem suspendedStasheffSum_congr {e : ℕ → ℤ} {y : ℕ → A} (n : ℕ)
@@ -663,8 +665,8 @@ theorem evalNat_mem_blockDeg {s : ℕ} (f : MultilinearMap R (fun _ : Fin s ↦ 
     (hf : MultilinearMap.IsHomogeneous f (fun _ ↦ 𝒜) 𝒜 (2 - s))
     (p : ℕ) (hx : ∀ j < s, x (p + j) ∈ 𝒜 (d (p + j))) :
     evalNat f (fun j ↦ x (p + j)) ∈ 𝒜 (blockDeg d p s) := by
-  rw [blockDeg_def, ← Fin.sum_univ_eq_sum_range (fun j ↦ d (p + j)) s,
-    show ∀ a : ℤ, a + 2 - s = a + (2 - s) from fun a ↦ by ring, evalNat_def]
+  rw [blockDeg_def, ← Fin.sum_univ_eq_sum_range (fun j ↦ d (p + j)) s, add_sub_assoc,
+    evalNat_def]
   exact hf.map_mem _ _ fun j ↦ hx j j.isLt
 
 /-- **The supplied degrees of a Stasheff term are the actual ones.** If an arity-`s` operation is
