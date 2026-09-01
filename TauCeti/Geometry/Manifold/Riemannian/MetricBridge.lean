@@ -47,10 +47,12 @@ namespace Manifold
 variable {M : Type*} [TopologicalSpace M] [ChartedSpace H M]
   [RiemannianBundle (fun x : M ↦ TangentSpace I x)] [IsManifold I 1 M]
 
+/-- The additive normed-group structure on the tangent space of a model vector space. -/
 local instance normedAddCommGroupTangentSpaceVectorSpace (x : E) :
     NormedAddCommGroup (TangentSpace 𝓘(ℝ, E) x) :=
   inferInstanceAs (NormedAddCommGroup E)
 
+/-- The scalar normed-space structure on the tangent space of a model vector space. -/
 local instance normedSpaceTangentSpaceVectorSpace (x : E) :
     NormedSpace ℝ (TangentSpace 𝓘(ℝ, E) x) :=
   inferInstanceAs (NormedSpace ℝ E)
