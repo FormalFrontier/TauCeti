@@ -69,12 +69,12 @@ variable {𝕂 𝕃 A B : Type*} [NontriviallyNormedField 𝕂] [CharZero 𝕂]
 variable [Field 𝕃] [CharZero 𝕃]
 variable [ContinuousSMul ℚ≥0 𝕂]
 variable [NormedRing A] [NormedAlgebra 𝕂 A]
-variable [Ring B] [Algebra 𝕃 B] [TopologicalSpace B] [IsTopologicalRing B] [T2Space B]
+variable [Ring B] [Algebra 𝕃 B] [TopologicalSpace B] [IsTopologicalRing B]
 variable [CompleteSpace A]
 
 /-- Continuous ring homomorphisms commute with `logOneAdd` on the open unit ball. -/
 theorem map_logOneAdd_of_mem_ball {F : Type*} [FunLike F A B] [RingHomClass F A B]
-    (f : F) (hf : Continuous f) {u : A} (hu : ‖u‖ < 1) :
+    [T2Space B] (f : F) (hf : Continuous f) {u : A} (hu : ‖u‖ < 1) :
     f (logOneAdd 𝕂 A u) = logOneAdd 𝕃 B (f u) := by
   rw [logOneAdd_eq_tsum, logOneAdd_eq_tsum]
   calc
@@ -90,7 +90,7 @@ theorem map_logOneAdd_of_mem_ball {F : Type*} [FunLike F A B] [RingHomClass F A 
 
 /-- A continuous ring homomorphism commutes with `logOneAdd` near the origin. -/
 theorem eventually_map_logOneAdd {F : Type*} [FunLike F A B] [RingHomClass F A B]
-    (f : F) (hf : Continuous f) :
+    [T2Space B] (f : F) (hf : Continuous f) :
     ∀ᶠ u in 𝓝 (0 : A), f (logOneAdd 𝕂 A u) = logOneAdd 𝕃 B (f u) := by
   filter_upwards [Metric.ball_mem_nhds (0 : A) zero_lt_one] with u hu
   exact map_logOneAdd_of_mem_ball (𝕂 := 𝕂) (𝕃 := 𝕃) f hf
@@ -99,7 +99,7 @@ theorem eventually_map_logOneAdd {F : Type*} [FunLike F A B] [RingHomClass F A B
 /-- Continuous ring homomorphisms commute with the germ of `logOneAdd` at the origin. -/
 @[simp]
 theorem map_logOneAdd_germ {F : Type*} [FunLike F A B] [RingHomClass F A B]
-    (f : F) (hf : Continuous f) :
+    [T2Space B] (f : F) (hf : Continuous f) :
     (↑(f ∘ logOneAdd 𝕂 A) : Germ (𝓝 (0 : A)) B) =
       (↑(logOneAdd 𝕃 B) : Germ (𝓝 (0 : B)) B).compTendsto f (by
         exact hf.tendsto' 0 0 (map_zero f)) := by
