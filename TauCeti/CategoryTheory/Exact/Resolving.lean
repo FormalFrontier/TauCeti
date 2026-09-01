@@ -69,6 +69,17 @@ structure IsClosedUnderKernelsOfDeflations : Prop where
   /-- The kernel of a conflation between `P`-objects again satisfies `P`. -/
   prop_X₁ {S : ShortComplex C} (hS : E.Conflation S) (h₂ : P S.X₂) (h₃ : P S.X₃) : P S.X₁
 
+namespace IsClosedUnderKernelsOfDeflations
+
+variable {E P}
+
+/-- A direct summand of a `P`-object belongs to `P` if its complementary summand does. -/
+theorem prop_left_of_prop_biprod (hP : E.IsClosedUnderKernelsOfDeflations P)
+    {X Y : C} (hXY : P (X ⊞ Y)) (hY : P Y) : P X :=
+  hP.prop_X₁ (E.conflation_biprodShortComplex X Y) hXY hY
+
+end IsClosedUnderKernelsOfDeflations
+
 /-- A **resolving subcategory** of an exact category.
 
 The first three parent classes say that `P` is replete and additive. The remaining fields are,
@@ -86,12 +97,6 @@ class IsResolving : Prop extends P.IsClosedUnderIsomorphisms, P.ContainsZero,
 namespace IsResolving
 
 variable {E P}
-
-/-- A kernel in a conflation between `P`-objects has a finite `P`-resolution. -/
-def finiteResolutionKernelOfConflation [hP : E.IsResolving P]
-    {S : ShortComplex C} (hS : E.Conflation S) (h₂ : P S.X₂) (h₃ : P S.X₃) :
-    E.FiniteResolution P S.X₁ :=
-  .base (hP.isClosedUnderKernelsOfDeflations.prop_X₁ hS h₂ h₃)
 
 /-- The exact structure induced on the full subcategory of resolving objects.
 
