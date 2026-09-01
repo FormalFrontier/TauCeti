@@ -356,13 +356,14 @@ theorem isGlHighestWeightVector_linearEquiv_symm {a : ι → ℕ} {c : R} {nu : 
 
 end glTraceTwistedYoungWedge
 
+omit [CharZero R] in
 /-- **An antitone tuple translated along the central direction is a highest weight**, realized in
 the corresponding trace-twisted Young wedge. -/
-theorem exists_isGlHighestWeightVector_glTraceTwistedYoungWedge {a : Fin N → ℕ} {c : R}
-    (ha : Antitone a) (hmu : mu = fun i => (a i : R) + c) :
-    ∃ v : glTraceTwistedYoungWedge R a c, IsGlHighestWeightVector mu v := by
-  subst hmu
-  obtain ⟨w, hw⟩ := exists_isGlHighestWeightVector_natCast (R := R) (ι := Fin N) ha
+theorem exists_isGlHighestWeightVector_glTraceTwistedYoungWedge [Nontrivial R] {a : ι → ℕ} {c : R}
+    {nu : ι → R} (ha : Antitone a) (hnu : nu = fun i => (a i : R) + c) :
+    ∃ v : glTraceTwistedYoungWedge R a c, IsGlHighestWeightVector nu v := by
+  subst hnu
+  obtain ⟨w, hw⟩ := exists_isGlHighestWeightVector_natCast (R := R) (ι := ι) ha
   exact ⟨_, glTraceTwistedYoungWedge.isGlHighestWeightVector_linearEquiv_symm hw⟩
 
 /-- **Every dominant weight of `gl N` is a highest weight**, in a module finite over `R`: write the

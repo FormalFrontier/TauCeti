@@ -40,9 +40,8 @@ realization because the identity acts by one scalar there, but that result is no
 available API used by this construction.
 
 Two choices go into the carrier, the decomposition of `mu` as an antitone tuple of natural numbers
-translated along the central direction and the coatom, and neither is canonical: the decomposition
-is unique only up to a simultaneous shift, and a coatom is unique only when the realizing module is
-already irreducible. Both are therefore made with `Classical.choice`, and the carrier is
+translated along the central direction and the coatom, and the construction singles out neither:
+both are made with `Classical.choice`, and nothing is claimed about which. The carrier is therefore
 characterized not by its construction but by
 `TauCeti.nonempty_lieModuleEquiv_glIrreducible`, which identifies it with *any* irreducible module
 carrying a highest weight vector of weight `mu`. Off the dominant weights the carrier is junk —
@@ -117,7 +116,7 @@ variable (K) in
 /-- **The decomposition of `mu` chosen to realize it as a highest weight**: an antitone tuple of
 natural numbers together with a scalar summing to `mu`, which
 `TauCeti.IsGlDominantIntegral.exists_antitone_natCast_add_const` supplies for a dominant `mu`.
-The decomposition is unique only up to shifting the tuple against the scalar, so one is chosen;
+The decomposition is not unique, so one is chosen;
 for dominant weights its defining property follows from
 `TauCeti.exists_isGlHighestWeightVector_of_isGlDominantIntegral`. Off the dominant weights it is an
 unspecified choice about which nothing is claimed. -/
@@ -175,12 +174,13 @@ private theorem exists_glCarrierCoatom (K : Type u) [Field K] [CharZero K] {N : 
     ∃ P : LieSubmodule K (Matrix (Fin N) (Fin N) K) (glCarrierSpan K mu),
       IsGlDominantIntegral mu → IsCoatom P := by
   by_cases hmu : IsGlDominantIntegral mu
-  · have hcoatomic : IsCoatomic (LieSubmodule K (Matrix (Fin N) (Fin N) K) (glCarrierSpan K mu)) :=
+  · have : Nontrivial (glCarrierSpan K mu) :=
+      nontrivial_of_ne _ _ (isGlHighestWeightVector_glCarrierVector_mem hmu).ne_zero
+    have : IsCoatomic (LieSubmodule K (Matrix (Fin N) (Fin N) K) (glCarrierSpan K mu)) :=
       isCoatomic_of_orderTop_gt_wellFounded wellFounded_gt
-    rcases hcoatomic.eq_top_or_exists_le_coatom ⊥ with hbot | ⟨P, hP, -⟩
-    · exact absurd ((LieSubmodule.eq_bot_iff _).mp hbot.symm _ (LieSubmodule.mem_top _))
-        (isGlHighestWeightVector_glCarrierVector_mem hmu).ne_zero
-    · exact ⟨P, fun _ => hP⟩
+    obtain ⟨P, hP⟩ := IsCoatomic.exists_coatom
+      (α := LieSubmodule K (Matrix (Fin N) (Fin N) K) (glCarrierSpan K mu))
+    exact ⟨P, fun _ => hP⟩
   · exact ⟨⊥, fun h => absurd h hmu⟩
 
 variable (K) in
@@ -313,7 +313,7 @@ where the scalar has to be produced by Schur's lemma. -/
 theorem isIrreducible_glIrreducible_restrict_sl (hmu : IsGlDominantIntegral mu) :
     LieModule.IsIrreducible K (LieAlgebra.SpecialLinear.sl (Fin N) K) (glIrreducible K mu) :=
   let _ := isIrreducible_glIrreducible (K := K) hmu
-  isIrreducible_restrict_sl_of_isGlHighestWeightVector
+  isIrreducible_restrict_sl_of_isGlHighestWeightVector (fun hN => Nat.cast_ne_zero.mpr hN)
     (isGlHighestWeightVector_glIrreducibleGenerator hmu)
 
 end TauCeti
