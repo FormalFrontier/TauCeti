@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Quotient.Basic
-public import TauCeti.Algebra.AlgebraicGroup.Torus.SmoothConnected
+public import TauCeti.Algebra.AlgebraicGroup.Torus.Basic
 
 /-!
 # Maximal tori in Hopf coordinates
@@ -16,14 +16,8 @@ coordinate algebra. This file defines a maximal torus to be a torus closed subgr
 not properly contained in another torus. Thus, if `I` is maximal and `J ≤ I` defines a torus,
 then `I = J`.
 
-The file also records that the coordinate Hopf algebra of a torus is cocommutative. Although
-this is implicit in the definition by geometric splitting, making it available explicitly is
-what lets existing results about commutative closed subgroup schemes consume a torus hypothesis.
-
 ## Main declarations
 
-* `TauCeti.torusCommHopfAlgProperty.isCocomm`: the coordinate Hopf algebra of a torus is
-  cocommutative.
 * `TauCeti.HopfIdeal.IsMaximalTorus`: maximality among torus Hopf ideals.
 
 ## References
@@ -38,107 +32,11 @@ maximal tori remain to be proved.
 
 public section
 
-open CategoryTheory TensorProduct
+open CategoryTheory
 
 namespace TauCeti
 
 universe u
-
-namespace Coalgebra.IsCocomm
-
-variable {R A B : Type*} [CommSemiring R] [Semiring A] [Semiring B]
-  [_root_.Bialgebra R A] [_root_.Bialgebra R B]
-
-/-- Cocommutativity transfers across a bialgebra equivalence. -/
-private theorem of_bialgEquiv (e : A ≃ₐc[R] B) (_hA : _root_.Coalgebra.IsCocomm R A) :
-    _root_.Coalgebra.IsCocomm R B where
-  comm_comp_comul := by
-    ext b
-    apply (TensorProduct.map_bijective e.symm.bijective e.symm.bijective).injective
-    simp only [LinearMap.comp_apply]
-    change TensorProduct.map e.symm.toLinearMap e.symm.toLinearMap
-        (TensorProduct.comm R B B (Coalgebra.comul (R := R) b)) = _
-    rw [TensorProduct.map_comm]
-    have hm :
-        TensorProduct.map e.symm.toLinearMap e.symm.toLinearMap
-            (Coalgebra.comul (R := R) b) =
-          Coalgebra.comul (R := R) (e.symm b) :=
-      CoalgHomClass.map_comp_comul_apply e.symm b
-    rw [hm, Coalgebra.comm_comul]
-
-end Coalgebra.IsCocomm
-
-namespace Coalgebra.IsCocomm
-
-variable {k K H : Type u} [Field k] [Field K] [Algebra k K]
-  [CommRing H] [_root_.Bialgebra k H]
-
-/-- Cocommutativity descends from a field extension. -/
-private theorem of_baseChange (_h : _root_.Coalgebra.IsCocomm K (K ⊗[k] H)) :
-    _root_.Coalgebra.IsCocomm k H where
-  comm_comp_comul := by
-    ext h
-    apply Algebra.TensorProduct.includeRight_injective (B := H ⊗[k] H)
-      (algebraMap k K).injective
-    apply (Bialgebra.TensorProduct.baseChangeTensorBialgEquiv k K H H).injective
-    have hc := Coalgebra.comm_comul K (1 ⊗ₜ[k] h : K ⊗[k] H)
-    let e := Bialgebra.TensorProduct.baseChangeTensorBialgEquiv k K H H
-    have he_comm (x : H ⊗[k] H) :
-        e (1 ⊗ₜ[k] TensorProduct.comm k H H x) =
-          TensorProduct.comm K (K ⊗[k] H) (K ⊗[k] H) (e (1 ⊗ₜ[k] x)) := by
-      induction x using TensorProduct.induction_on with
-      | zero => simp
-      | add x y hx hy =>
-          simpa only [map_add, LinearMap.map_add, TensorProduct.tmul_add] using
-            congrArg₂ (· + ·) hx hy
-      | tmul x y => simp [e]
-    have he (x : H ⊗[k] H) :
-        e (1 ⊗ₜ[k] x) =
-          TensorProduct.AlgebraTensorModule.tensorTensorTensorComm
-            k K k K K K H H ((1 ⊗ₜ[K] 1) ⊗ₜ[k] x) := by
-      induction x using TensorProduct.induction_on with
-      | zero => simp
-      | add x y hx hy =>
-          simpa only [map_add, LinearMap.map_add, TensorProduct.tmul_add] using
-            congrArg₂ (· + ·) hx hy
-      | tmul x y => simp [e]
-    have he_comul :
-        e (1 ⊗ₜ[k] Coalgebra.comul (R := k) h) =
-          Coalgebra.comul (R := K) (1 ⊗ₜ[k] h : K ⊗[k] H) := by
-      rw [he]
-      rfl
-    change e (1 ⊗ₜ[k]
-        TensorProduct.comm k H H (Coalgebra.comul (R := k) h)) =
-      e (1 ⊗ₜ[k] Coalgebra.comul (R := k) h)
-    calc
-      _ = TensorProduct.comm K (K ⊗[k] H) (K ⊗[k] H)
-          (e (1 ⊗ₜ[k] Coalgebra.comul (R := k) h)) :=
-        he_comm (Coalgebra.comul (R := k) h)
-      _ = TensorProduct.comm K (K ⊗[k] H) (K ⊗[k] H)
-          (Coalgebra.comul (R := K) (1 ⊗ₜ[k] h : K ⊗[k] H)) :=
-        congrArg (TensorProduct.comm K (K ⊗[k] H) (K ⊗[k] H)) he_comul
-      _ = Coalgebra.comul (R := K) (1 ⊗ₜ[k] h : K ⊗[k] H) := hc
-      _ = e (1 ⊗ₜ[k] Coalgebra.comul (R := k) h) := he_comul.symm
-
-end Coalgebra.IsCocomm
-
-/-- The coordinate Hopf algebra of a torus is cocommutative. -/
-theorem torusCommHopfAlgProperty.isCocomm
-    (k : Type u) [Field k] (H : FiniteTypeCommHopfAlgCat.{u, u} k)
-    (hH : torusCommHopfAlgProperty k H) :
-    _root_.Coalgebra.IsCocomm k H.obj := by
-  rw [torusCommHopfAlgProperty_iff] at hH
-  obtain ⟨n, ⟨i⟩⟩ := hH
-  let hsplit : _root_.Coalgebra.IsCocomm (AlgebraicClosure k)
-      (DiagonalizableGroup.coordinateRing (AlgebraicClosure k)
-        (SplitTorus.characterGroup (ULift.{u} (Fin n)))).obj := inferInstance
-  let hbase : _root_.Coalgebra.IsCocomm (AlgebraicClosure k)
-      (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H).obj :=
-    Coalgebra.IsCocomm.of_bialgEquiv
-      (_root_.CommHopfAlgCat.ofIso <|
-        (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} (AlgebraicClosure k))
-          (_root_.CommHopfAlgCat.{u} (AlgebraicClosure k))).mapIso i) hsplit
-  exact Coalgebra.IsCocomm.of_baseChange hbase
 
 namespace HopfIdeal
 
@@ -149,14 +47,10 @@ Because coordinate rings reverse arrows, `J ≤ I` says that the subgroup cut ou
 contained in the subgroup cut out by `J`. -/
 def IsMaximalTorus (k : Type u) [Field k] (H : _root_.CommHopfAlgCat.{u} k)
     [Algebra.FiniteType k H] (I : HopfIdeal k H) : Prop :=
-  torusCommHopfAlgProperty k
+  Minimal (fun J : HopfIdeal k H ↦
+    torusCommHopfAlgProperty k
       (FiniteTypeCommHopfAlgCat.quotient
-        ⟨H, (finiteTypeCommHopfAlgProperty_iff H).2 inferInstance⟩ I) ∧
-    ∀ J : HopfIdeal k H,
-      torusCommHopfAlgProperty k
-        (FiniteTypeCommHopfAlgCat.quotient
-          ⟨H, (finiteTypeCommHopfAlgProperty_iff H).2 inferInstance⟩ J) →
-      J ≤ I → I ≤ J
+        ⟨H, (finiteTypeCommHopfAlgProperty_iff H).2 inferInstance⟩ J)) I
 
 /-- The Hopf-ideal criterion for a maximal torus: the quotient is a torus and no strictly larger
 torus closed subgroup contains it. -/
@@ -174,34 +68,78 @@ theorem isMaximalTorus_iff (k : Type u) [Field k] (H : _root_.CommHopfAlgCat.{u}
             J ≤ I → I ≤ J :=
   Iff.rfl
 
-/-- A maximal torus is a torus. -/
-theorem IsMaximalTorus.torus {k : Type u} [Field k]
-    {H : _root_.CommHopfAlgCat.{u} k} [Algebra.FiniteType k H] {I : HopfIdeal k H}
-    (hI : IsMaximalTorus k H I) :
-    torusCommHopfAlgProperty k
-      (FiniteTypeCommHopfAlgCat.quotient
-        ⟨H, (finiteTypeCommHopfAlgProperty_iff H).2 inferInstance⟩ I) :=
-  hI.1
+namespace IsMaximalTorus
 
-/-- A torus containing a maximal torus contains no additional closed subgroup directions. -/
-theorem IsMaximalTorus.le_of_torus_of_le {k : Type u} [Field k]
-    {H : _root_.CommHopfAlgCat.{u} k} [Algebra.FiniteType k H] {I J : HopfIdeal k H}
-    (hI : IsMaximalTorus k H I)
-    (hJ : torusCommHopfAlgProperty k
-      (FiniteTypeCommHopfAlgCat.quotient
-        ⟨H, (finiteTypeCommHopfAlgProperty_iff H).2 inferInstance⟩ J))
-    (hJI : J ≤ I) : I ≤ J :=
-  hI.2 J hJ hJI
+variable {k : Type u} [Field k]
+variable {H K : FiniteTypeCommHopfAlgCat.{u, u} k} {I : HopfIdeal k K.obj}
 
-/-- Any torus containing a maximal torus has the same defining Hopf ideal. -/
-theorem IsMaximalTorus.eq_of_torus_of_le {k : Type u} [Field k]
-    {H : _root_.CommHopfAlgCat.{u} k} [Algebra.FiniteType k H] {I J : HopfIdeal k H}
-    (hI : IsMaximalTorus k H I)
-    (hJ : torusCommHopfAlgProperty k
-      (FiniteTypeCommHopfAlgCat.quotient
-        ⟨H, (finiteTypeCommHopfAlgProperty_iff H).2 inferInstance⟩ J))
-    (hJI : J ≤ I) : J = I :=
-  le_antisymm hJI (hI.le_of_torus_of_le hJ hJI)
+/-- Pulling a maximal torus back across an ambient Hopf-algebra isomorphism gives a maximal
+torus in the source. -/
+theorem comapOfIso (hI : IsMaximalTorus k K.obj I) (e : H ≅ K) :
+    IsMaximalTorus k H.obj
+      (I.comapOfSurjective (FiniteTypeCommHopfAlgCat.toBialgHom e.hom)
+        (ConcreteCategory.bijective_of_isIso e.hom).2) := by
+  let f := FiniteTypeCommHopfAlgCat.toBialgHom e.hom
+  let hf := (ConcreteCategory.bijective_of_isIso e.hom).2
+  let g := FiniteTypeCommHopfAlgCat.toBialgHom e.inv
+  let hg := (ConcreteCategory.bijective_of_isIso e.inv).2
+  refine ⟨(torusCommHopfAlgProperty k).prop_of_iso
+    (FiniteTypeCommHopfAlgCat.quotientIsoOfIso e I).symm hI.prop, ?_⟩
+  intro J hJ hJpulled
+  let J' := J.comapOfSurjective g hg
+  have hJ' : torusCommHopfAlgProperty k (FiniteTypeCommHopfAlgCat.quotient K J') :=
+    (torusCommHopfAlgProperty k).prop_of_iso
+      (FiniteTypeCommHopfAlgCat.quotientIsoOfIso e.symm J).symm hJ
+  have hJ'I : J' ≤ I := by
+    intro x hx
+    have hx' := HopfIdeal.mem_comapOfSurjective.mp hx
+    have hx'' := HopfIdeal.mem_comapOfSurjective.mp (hJpulled hx')
+    have hcancel : f (g x) = x := by
+      have h := congrArg (fun q : K ⟶ K ↦ FiniteTypeCommHopfAlgCat.toBialgHom q x)
+        e.inv_hom_id
+      simpa only [FiniteTypeCommHopfAlgCat.toBialgHom_comp, BialgHom.comp_apply,
+        FiniteTypeCommHopfAlgCat.toBialgHom_id, BialgHom.coe_id, id_eq] using h
+    rwa [hcancel] at hx''
+  have hIJ' : I ≤ J' := hI.le_of_le hJ' hJ'I
+  intro x hx
+  have hx' := hIJ' (HopfIdeal.mem_comapOfSurjective.mp hx)
+  have hx'' := HopfIdeal.mem_comapOfSurjective.mp hx'
+  have hcancel : g (f x) = x := by
+    have h := congrArg (fun q : H ⟶ H ↦ FiniteTypeCommHopfAlgCat.toBialgHom q x)
+      e.hom_inv_id
+    simpa only [FiniteTypeCommHopfAlgCat.toBialgHom_comp, BialgHom.comp_apply,
+      FiniteTypeCommHopfAlgCat.toBialgHom_id, BialgHom.coe_id, id_eq] using h
+  rwa [hcancel] at hx''
+
+/-- Maximal-torus status is invariant under pulling the defining ideal back across an ambient
+Hopf-algebra isomorphism. -/
+theorem comapOfIso_iff (e : H ≅ K) (I : HopfIdeal k K.obj) :
+    IsMaximalTorus k H.obj
+        (I.comapOfSurjective (FiniteTypeCommHopfAlgCat.toBialgHom e.hom)
+          (ConcreteCategory.bijective_of_isIso e.hom).2) ↔
+      IsMaximalTorus k K.obj I := by
+  constructor
+  · intro hI
+    have hback := hI.comapOfIso e.symm
+    have hcancel :
+        (I.comapOfSurjective (FiniteTypeCommHopfAlgCat.toBialgHom e.hom)
+            (ConcreteCategory.bijective_of_isIso e.hom).2).comapOfSurjective
+          (FiniteTypeCommHopfAlgCat.toBialgHom e.symm.hom)
+            (ConcreteCategory.bijective_of_isIso e.symm.hom).2 = I := by
+      ext x
+      simp only [HopfIdeal.mem_comapOfSurjective]
+      have h := congrArg (fun q : K ⟶ K ↦ FiniteTypeCommHopfAlgCat.toBialgHom q x)
+        e.symm.hom_inv_id
+      have h' : (FiniteTypeCommHopfAlgCat.toBialgHom e.hom)
+          ((FiniteTypeCommHopfAlgCat.toBialgHom e.symm.hom) x) = x := by
+        simpa only [Iso.symm_inv, FiniteTypeCommHopfAlgCat.toBialgHom_comp,
+          BialgHom.comp_apply, FiniteTypeCommHopfAlgCat.toBialgHom_id, BialgHom.coe_id,
+          id_eq] using h
+      rw [h']
+    rwa [hcancel] at hback
+  · exact fun hI ↦ hI.comapOfIso e
+
+end IsMaximalTorus
 
 end HopfIdeal
 

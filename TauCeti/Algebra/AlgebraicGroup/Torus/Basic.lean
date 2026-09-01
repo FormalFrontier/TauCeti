@@ -37,6 +37,8 @@ distinguishes tori from general groups of multiplicative type.
   finite-rank split torus over `AlgebraicClosure k`.
 * `TauCeti.splitTorusCommHopfAlgProperty.torus`: every split torus is a torus.
 * `TauCeti.torusCommHopfAlgProperty.multiplicativeType`: every torus is of multiplicative type.
+* `TauCeti.torusCommHopfAlgProperty.isCocomm`: the coordinate Hopf algebra of a torus is
+  cocommutative.
 * `TauCeti.SplitTorus.splitTorus_coordinateRing`: the standard finite-rank split tori satisfy the
   split predicate.
 
@@ -53,7 +55,7 @@ with its Galois action.
 
 public section
 
-open CategoryTheory
+open CategoryTheory TensorProduct
 
 namespace TauCeti
 
@@ -119,6 +121,112 @@ instance (k : Type u) [Field k] :
     (torusCommHopfAlgProperty k).IsClosedUnderIsomorphisms := by
   unfold torusCommHopfAlgProperty
   infer_instance
+
+namespace Coalgebra.IsCocomm
+
+variable {R A B : Type*} [CommSemiring R] [Semiring A] [Semiring B]
+  [_root_.Bialgebra R A] [_root_.Bialgebra R B]
+
+/-- Cocommutativity transfers across a bialgebra equivalence. -/
+private theorem of_bialgEquiv (e : A ≃ₐc[R] B) [hA : _root_.Coalgebra.IsCocomm R A] :
+    _root_.Coalgebra.IsCocomm R B := by
+  constructor
+  ext b
+  apply (TensorProduct.map_bijective e.symm.bijective e.symm.bijective).injective
+  simp only [LinearMap.comp_apply]
+  -- Applying the tensor map to the composite with `TensorProduct.comm` unfolds to this
+  -- expression. There is no propositional compatibility lemma for that coercion-level step;
+  -- the subsequent `TensorProduct.map_comm` is the structural identity used by the proof.
+  change TensorProduct.map e.symm.toLinearMap e.symm.toLinearMap
+      (TensorProduct.comm R B B (Coalgebra.comul (R := R) b)) = _
+  rw [TensorProduct.map_comm]
+  have hm :
+      TensorProduct.map e.symm.toLinearMap e.symm.toLinearMap
+          (Coalgebra.comul (R := R) b) =
+        Coalgebra.comul (R := R) (e.symm b) :=
+    CoalgHomClass.map_comp_comul_apply e.symm b
+  rw [hm, Coalgebra.comm_comul]
+
+end Coalgebra.IsCocomm
+
+namespace Coalgebra.IsCocomm
+
+variable {k K H : Type u} [Field k] [Field K] [Algebra k K]
+  [CommRing H] [_root_.Bialgebra k H]
+
+/-- Cocommutativity descends from a field extension. -/
+private theorem of_baseChange [h : _root_.Coalgebra.IsCocomm K (K ⊗[k] H)] :
+    _root_.Coalgebra.IsCocomm k H := by
+  constructor
+  ext x
+  apply Algebra.TensorProduct.includeRight_injective (B := H ⊗[k] H)
+    (algebraMap k K).injective
+  apply (Bialgebra.TensorProduct.baseChangeTensorBialgEquiv k K H H).injective
+  have hc := Coalgebra.comm_comul K (1 ⊗ₜ[k] x : K ⊗[k] H)
+  let e := Bialgebra.TensorProduct.baseChangeTensorBialgEquiv k K H H
+  have he_comm (y : H ⊗[k] H) :
+      e (1 ⊗ₜ[k] TensorProduct.comm k H H y) =
+        TensorProduct.comm K (K ⊗[k] H) (K ⊗[k] H) (e (1 ⊗ₜ[k] y)) := by
+    induction y using TensorProduct.induction_on with
+    | zero => simp
+    | add x y hx hy =>
+        simpa only [map_add, LinearMap.map_add, TensorProduct.tmul_add] using
+          congrArg₂ (· + ·) hx hy
+    | tmul x y => simp [e]
+  have he (y : H ⊗[k] H) :
+      e (1 ⊗ₜ[k] y) =
+        TensorProduct.AlgebraTensorModule.tensorTensorTensorComm
+          k K k K K K H H ((1 ⊗ₜ[K] 1) ⊗ₜ[k] y) := by
+    induction y using TensorProduct.induction_on with
+    | zero => simp
+    | add x y hx hy =>
+        simpa only [map_add, LinearMap.map_add, TensorProduct.tmul_add] using
+          congrArg₂ (· + ·) hx hy
+    | tmul x y => simp [e]
+  have he_comul :
+      e (1 ⊗ₜ[k] Coalgebra.comul (R := k) x) =
+        Coalgebra.comul (R := K) (1 ⊗ₜ[k] x : K ⊗[k] H) := by
+    rw [he]
+    -- Base-change comultiplication is defined by this same tensor rebracketing. No named
+    -- compatibility theorem exposes the equality more abstractly, so this final step is
+    -- intentionally definitional after `he` has made both representations explicit.
+    rfl
+  -- `includeRight` and the base-change tensor equivalence are functions whose composite
+  -- unfolds to the displayed pure tensor. The change only exposes that representation;
+  -- `he_comm`, `he_comul`, and `Coalgebra.comm_comul` carry the mathematical content below.
+  change e (1 ⊗ₜ[k]
+      TensorProduct.comm k H H (Coalgebra.comul (R := k) x)) =
+    e (1 ⊗ₜ[k] Coalgebra.comul (R := k) x)
+  calc
+    _ = TensorProduct.comm K (K ⊗[k] H) (K ⊗[k] H)
+        (e (1 ⊗ₜ[k] Coalgebra.comul (R := k) x)) :=
+      he_comm (Coalgebra.comul (R := k) x)
+    _ = TensorProduct.comm K (K ⊗[k] H) (K ⊗[k] H)
+        (Coalgebra.comul (R := K) (1 ⊗ₜ[k] x : K ⊗[k] H)) :=
+      congrArg (TensorProduct.comm K (K ⊗[k] H) (K ⊗[k] H)) he_comul
+    _ = Coalgebra.comul (R := K) (1 ⊗ₜ[k] x : K ⊗[k] H) := hc
+    _ = e (1 ⊗ₜ[k] Coalgebra.comul (R := k) x) := he_comul.symm
+
+end Coalgebra.IsCocomm
+
+/-- The coordinate Hopf algebra of a torus is cocommutative. -/
+@[grind →]
+theorem torusCommHopfAlgProperty.isCocomm
+    (k : Type u) [Field k] (H : FiniteTypeCommHopfAlgCat.{u, u} k)
+    (hH : torusCommHopfAlgProperty k H) :
+    _root_.Coalgebra.IsCocomm k H.obj := by
+  rw [torusCommHopfAlgProperty_iff] at hH
+  obtain ⟨n, ⟨i⟩⟩ := hH
+  let hsplit : _root_.Coalgebra.IsCocomm (AlgebraicClosure k)
+      (DiagonalizableGroup.coordinateRing (AlgebraicClosure k)
+        (SplitTorus.characterGroup (ULift.{u} (Fin n)))).obj := inferInstance
+  let hbase : _root_.Coalgebra.IsCocomm (AlgebraicClosure k)
+      (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H).obj :=
+    Coalgebra.IsCocomm.of_bialgEquiv
+      (_root_.CommHopfAlgCat.ofIso <|
+        (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} (AlgebraicClosure k))
+          (_root_.CommHopfAlgCat.{u} (AlgebraicClosure k))).mapIso i) (hA := hsplit)
+  exact Coalgebra.IsCocomm.of_baseChange (h := hbase)
 
 /-- The category of finite-type torus coordinate Hopf algebras over a field.
 

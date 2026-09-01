@@ -9,6 +9,7 @@ public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.DiagonalTorus.ClosedI
 public import TauCeti.Algebra.AlgebraicGroup.Hopf.KernelPoints
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Points.Separation
 public import TauCeti.Algebra.AlgebraicGroup.Torus.Maximal
+public import TauCeti.Algebra.AlgebraicGroup.Torus.SmoothConnected
 
 /-!
 # Maximality of the diagonal torus in the general linear group
@@ -81,11 +82,12 @@ noncomputable def diagonalTorusCoordinateIso :
         (diagonalTorusDefiningIdeal k n) ≅
       DiagonalizableGroup.coordinateRing k
         (SplitTorus.characterGroup (ULift.{u} (Fin n))) := by
-  rw [diagonalTorusDefiningIdeal]
-  exact ObjectProperty.isoMk _ <| _root_.CommHopfAlgCat.isoMk <|
-    HopfIdeal.kerLiftBialgEquiv
-      (diagonalTorusCoordinateMap (R := k) (N := n)).hom
-      (diagonalTorusCoordinateMap_surjective k n)
+  let f := diagonalTorusCoordinateMap (R := k) (N := n)
+  let hf := diagonalTorusCoordinateMap_surjective k n
+  rw [diagonalTorusDefiningIdeal, ← HopfIdeal.comapOfSurjective_bot]
+  exact ObjectProperty.isoMk _ <|
+    CommHopfAlgCat.quotientIsoOfSurjective f hf ⊥ ≪≫
+      CommHopfAlgCat.quotientBotIso _
 
 /-- The quotient coordinate Hopf algebra of the diagonal torus is a split torus of rank `n`. -/
 theorem splitTorusCommHopfAlgProperty_quotient_diagonalTorusDefiningIdeal :
@@ -232,6 +234,7 @@ theorem eq_diagonalTorusDefiningIdeal_of_le_of_isCocomm
 /-- **The diagonal torus of `GL_n` is a maximal torus.** This packages the stronger result that
 no reduced commutative closed subgroup properly containing it exists into the general
 Hopf-ideal maximal-torus predicate. -/
+@[grind =>]
 theorem isMaximalTorus_diagonalTorusDefiningIdeal :
     HopfIdeal.IsMaximalTorus k (coordinateHopfAlgebra k n)
       (diagonalTorusDefiningIdeal k n) := by
