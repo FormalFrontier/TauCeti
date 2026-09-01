@@ -137,15 +137,6 @@ numbering of the type-`C` diagram that the index names, node for node. -/
 abbrev carrierNode (i : Fin d.1.rank) : Fin (d.carrierRank + 1) :=
   Fin.cast d.carrierRank_add_one.symm i
 
-/-- **The Cartan matrix of the diagram a validated type-`C` index names**, entry by entry: it is
-the type-`C` Cartan matrix at the index's rank. This is the projection of the introduction form
-`TauCeti.TypeCLieIndex.ofC` through `TauCeti.DynkinType.cartanMatrix_C`, stated on entries rather
-than on matrices because the rank occurs in the index types of the two nodes. -/
-theorem dynkinType_cartanMatrix_apply (i j : Fin d.1.rank) :
-    d.1.dynkinType.cartanMatrix i j = CartanMatrix.C d.1.rank i j := by
-  obtain ⟨r, q, hvalid, rfl⟩ := d.exists_eq_ofC
-  exact congrFun₂ (DynkinType.cartanMatrix_C r) i j
-
 /-- **The node correspondence transports the type-`C` Cartan matrix.** The entry at a pair of
 carrier nodes is the entry at the pair of Bourbaki nodes they number: `carrierNode` moves no node
 value, only the rank its index type is built on, and `TauCeti.TypeCLieIndex.carrierRank_add_one`
