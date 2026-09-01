@@ -222,6 +222,15 @@ noncomputable def rootSubgroup (k : Fin 7 ⊕ Fin 7) :
     lattice.toAddSubgroup rep_kostantForm_mem_lattice
     isNilpotent_rep_serreRootGenerator latticeBasis e7MinusculeWeight k
 
+/-- The numbered root subgroup is the one supplied by the generic Kostant toral-closure
+construction. -/
+theorem rootSubgroup_def (k : Fin 7 ⊕ Fin 7) :
+    rootSubgroup k =
+      TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupToToral rootGen cartanGen rep
+        lattice.toAddSubgroup rep_kostantForm_mem_lattice
+        isNilpotent_rep_serreRootGenerator latticeBasis e7MinusculeWeight k := by
+  rw [rootSubgroup]
+
 /-- Including a numbered root subgroup into `GL₅₆` recovers its represented Kostant root
 subgroup. -/
 @[simp]
@@ -241,6 +250,14 @@ noncomputable def weightTorus : SplitTorus.groupScheme ℤ (Fin 7) ⟶ groupSche
   TauCeti.UniversalEnvelopingAlgebra.kostantWeightTorusToToral rootGen cartanGen rep
     lattice.toAddSubgroup rep_kostantForm_mem_lattice
     isNilpotent_rep_serreRootGenerator latticeBasis e7MinusculeWeight
+
+/-- The weight torus is the one supplied by the generic Kostant toral-closure construction. -/
+theorem weightTorus_def :
+    weightTorus =
+      TauCeti.UniversalEnvelopingAlgebra.kostantWeightTorusToToral rootGen cartanGen rep
+        lattice.toAddSubgroup rep_kostantForm_mem_lattice
+        isNilpotent_rep_serreRootGenerator latticeBasis e7MinusculeWeight := by
+  rw [weightTorus]
 
 /-- Including the split weight torus into `GL₅₆` recovers the diagonal torus of the minuscule
 weights. -/
