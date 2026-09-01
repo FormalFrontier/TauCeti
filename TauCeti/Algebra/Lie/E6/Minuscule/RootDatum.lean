@@ -85,20 +85,19 @@ the uniform Bourbaki simple-root index. -/
 theorem rootGeneratorWeight_inl_eq_root_simpleIndex (ht : E6.Valid) (i : Fin 6) :
     rootGeneratorWeight (.inl i) =
       (E6.simplyConnectedRootDatum ht).root (E6.simpleIndex ht i) := by
+  -- The dependent root index blocks rewriting the dispatcher equation directly, so both sides
+  -- are identified with the Cartan-matrix row through the carrier's concrete-table lemma.
   refine Eq.trans ?_ (root_simpleIndex E6 ht i).symm
-  rw [cartanMatrix_E6]
-  funext j
-  rw [rootGeneratorWeight_inl]
+  rw [cartanMatrix_E6, rootGeneratorWeight_inl_eq_e6Root_e6SimpleIndex, root_e6SimpleIndex]
 
 /-- **The `i`-th lowering subgroup sits at the negative of the `i`-th simple root of the uniform
 type-`E₆` datum.** -/
 theorem rootGeneratorWeight_inr_eq_neg_root_simpleIndex (ht : E6.Valid) (i : Fin 6) :
     rootGeneratorWeight (.inr i) =
       -(E6.simplyConnectedRootDatum ht).root (E6.simpleIndex ht i) :=
-  have hneg : rootGeneratorWeight (.inr i) = -rootGeneratorWeight (.inl i) := by
-    funext j
-    rw [rootGeneratorWeight_inr, Pi.neg_apply, rootGeneratorWeight_inl]
-  hneg.trans (congrArg Neg.neg (rootGeneratorWeight_inl_eq_root_simpleIndex ht i))
+  (rootGeneratorWeight_inr_eq_neg_e6Root_e6SimpleIndex i).trans
+    (congrArg Neg.neg ((rootGeneratorWeight_inl_eq_e6Root_e6SimpleIndex i).symm.trans
+      (rootGeneratorWeight_inl_eq_root_simpleIndex ht i)))
 
 /-! ## Torus conjugation equations against the named simple roots -/
 
