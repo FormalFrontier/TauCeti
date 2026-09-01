@@ -36,7 +36,8 @@ is asserted here.
   numbered root subgroups.
 * `TauCeti.E6DoubledMinuscule.weightTorus_comp_graphAutomorphism_hom`: its action on the split
   weight torus.
-* `TauCeti.E6DoubledMinuscule.graphAutomorphism_sq`: its order-two relation.
+* `TauCeti.E6DoubledMinuscule.graphAutomorphism_hom_comp_self` and
+  `TauCeti.E6DoubledMinuscule.graphAutomorphism_inv`: its order-two relation on the carrier.
 * `TauCeti.E6DoubledMinuscule.graphAutomorphismPoints`: the same automorphism on matrix-valued
   points.
 * `TauCeti.E6DoubledMinuscule.graphAutomorphismPoints_rootSubgroupPoints` and
@@ -90,7 +91,7 @@ theorem graphRootPerm_inr (i : Fin 6) : graphRootPerm (.inr i) = .inr (graphPerm
   by simp [graphRootPerm]
 
 @[simp]
-theorem graphRootPerm_apply_apply (k : Fin 6 ⊕ Fin 6) :
+theorem graphRootPerm_graphRootPerm (k : Fin 6 ⊕ Fin 6) :
     graphRootPerm (graphRootPerm k) = k := by
   cases k <;> simp only [graphRootPerm_inl, graphRootPerm_inr]
   all_goals rw [← Equiv.Perm.mul_apply, ← pow_two, graphPermE6_sq, Equiv.Perm.one_apply]
@@ -203,6 +204,14 @@ private theorem summandSign_graphPerm (a : Fin 27 ⊕ Fin 27) :
     summandSign (e6DoubledMinusculeGraphPerm a) = -summandSign a := by
   cases a <;> simp
 
+private theorem graphModuleEquiv_involution_apply
+    (v : (Fin 27 ⊕ Fin 27) → ℚ) (a : Fin 27 ⊕ Fin 27) :
+    (basisSign a : ℚ) *
+        ((basisSign (e6DoubledMinusculeGraphPerm a) : ℚ) *
+          v (e6DoubledMinusculeGraphPerm (e6DoubledMinusculeGraphPerm a))) = v a := by
+  rw [basisSign_graphPerm, e6DoubledMinusculeGraphPerm_apply_apply, ← mul_assoc,
+    ← Int.cast_mul, basisSign_sq, Int.cast_one, one_mul]
+
 /-- The signed monomial lift of the type-`E₆` diagram involution to
 `V(ϖ₁) ⊕ V(ϖ₆)`. -/
 def graphModuleEquiv :
@@ -211,16 +220,10 @@ def graphModuleEquiv :
   invFun v a := (basisSign a : ℚ) * v (e6DoubledMinusculeGraphPerm a)
   left_inv v := by
     funext a
-    dsimp only
-    rw [basisSign_graphPerm, e6DoubledMinusculeGraphPerm_apply_apply, ← mul_assoc,
-      ← Int.cast_mul,
-      basisSign_sq, Int.cast_one, one_mul]
+    exact graphModuleEquiv_involution_apply v a
   right_inv v := by
     funext a
-    dsimp only
-    rw [basisSign_graphPerm, e6DoubledMinusculeGraphPerm_apply_apply, ← mul_assoc,
-      ← Int.cast_mul,
-      basisSign_sq, Int.cast_one, one_mul]
+    exact graphModuleEquiv_involution_apply v a
   map_add' v w := by
     funext a
     simp only [Pi.add_apply, mul_add]
@@ -239,9 +242,7 @@ theorem graphModuleEquiv_apply (v : (Fin 27 ⊕ Fin 27) → ℚ) (a : Fin 27 ⊕
 theorem graphModuleEquiv_apply_apply (v : (Fin 27 ⊕ Fin 27) → ℚ) :
     graphModuleEquiv (graphModuleEquiv v) = v := by
   ext a
-  rw [graphModuleEquiv_apply, graphModuleEquiv_apply, basisSign_graphPerm,
-    e6DoubledMinusculeGraphPerm_apply_apply, ← mul_assoc, ← Int.cast_mul, basisSign_sq,
-    Int.cast_one, one_mul]
+  simpa only [graphModuleEquiv_apply] using graphModuleEquiv_involution_apply v a
 
 private theorem weight_graphPerm_graphPerm (b : Fin 27 ⊕ Fin 27) (i : Fin 6) :
     e6DoubledMinusculeWeight (e6DoubledMinusculeGraphPerm b) (graphPermE6 i) =
@@ -392,8 +393,8 @@ def graphMatrixScale (i : Fin 54) : ℤ :=
 
 private theorem coe_smul_latticeBasis (z : ℤ) (a : Fin 27 ⊕ Fin 27) :
     (((z • latticeBasis a : lattice) : (Fin 27 ⊕ Fin 27) → ℚ)) =
-      (z : ℚ) • (((latticeBasis a : lattice) : (Fin 27 ⊕ Fin 27) → ℚ)) :=
-  (rfl)
+      (z : ℚ) • (((latticeBasis a : lattice) : (Fin 27 ⊕ Fin 27) → ℚ)) := by
+  rw [Submodule.coe_smul_of_tower, Int.cast_smul_eq_zsmul]
 
 private theorem graphModuleEquiv_latticeBasis (a : Fin 27 ⊕ Fin 27) :
     graphModuleEquiv (((latticeBasis a : lattice) : (Fin 27 ⊕ Fin 27) → ℚ)) =
@@ -489,8 +490,30 @@ theorem graphAutomorphism_sq : graphAutomorphism ^ 2 = 1 := by
   rw [graphAutomorphism, toralGraphAutomorphism]
   apply kostantToralNumberedSymmetryIso_pow_eq_one
   · funext k
-    exact graphRootPerm_apply_apply k
+    exact graphRootPerm_graphRootPerm k
   · exact graphPermE6_sq
+
+/-- Applying the graph automorphism twice is the identity on the doubled type-`E₆` carrier. -/
+@[reassoc (attr := simp)]
+theorem graphAutomorphism_hom_comp_self :
+    graphAutomorphism.hom ≫ graphAutomorphism.hom = 𝟙 groupScheme := by
+  have h := congrArg Iso.hom graphAutomorphism_sq
+  simp only [pow_two] at h
+  change graphAutomorphism.hom ≫ graphAutomorphism.hom = 𝟙 groupScheme at h
+  exact h
+
+/-- The inverse leg of the doubled type-`E₆` graph automorphism is its forward leg. -/
+@[simp]
+theorem graphAutomorphism_inv : graphAutomorphism.inv = graphAutomorphism.hom := by
+  calc
+    graphAutomorphism.inv = 𝟙 groupScheme ≫ graphAutomorphism.inv :=
+      (Category.id_comp _).symm
+    _ = (graphAutomorphism.hom ≫ graphAutomorphism.hom) ≫
+        graphAutomorphism.inv := by rw [graphAutomorphism_hom_comp_self]
+    _ = graphAutomorphism.hom ≫
+        (graphAutomorphism.hom ≫ graphAutomorphism.inv) := Category.assoc _ _ _
+    _ = graphAutomorphism.hom := by
+      rw [graphAutomorphism.hom_inv_id, Category.comp_id]
 
 /-! ## The graph automorphism on matrix-valued points -/
 
