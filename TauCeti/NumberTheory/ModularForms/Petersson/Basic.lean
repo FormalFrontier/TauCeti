@@ -38,6 +38,9 @@ Mathlib's invariant measure `volume : Measure ℍ` (`dx dy / y²`,
 * `UpperHalfPlane.integrableOn_petersson_fd_left`: integrability of the Petersson integrand of a
   cusp form against a modular form over the standard fundamental domain.
 * `UpperHalfPlane.integrableOn_petersson_slash`: the same for forms slashed by `SL₂(ℤ)`.
+* `UpperHalfPlane.integrableOn_petersson_sl_smul_fd_left` and
+  `UpperHalfPlane.integrableOn_petersson_sl_smul_fd_right`: integrability over every
+  `SL(2, ℤ)`-translate of the standard fundamental domain when either argument is cuspidal.
 * `UpperHalfPlane.peterssonInner_self_eq_ofReal`, `peterssonInner_self_re_nonneg`: the
   self-pairing of any function is the real integral of `‖h τ‖² (Im τ)^k`, hence nonnegative
   over any domain.
@@ -200,6 +203,49 @@ theorem integrableOn_petersson_slash {F F' : Type*} [FunLike F ℍ ℂ] [FunLike
     ((petersson_continuous k (ModularFormClass.continuous f)
       (ModularFormClass.continuous f')).comp hsmul |>.aestronglyMeasurable.restrict)
     C (ae_of_all _ fun τ ↦ hC (δ • τ))
+
+/-- **The Petersson integrand of a cusp form and a modular form is integrable over every
+`SL(2, ℤ)`-translate of `𝒟`.** Transporting the integral back to `𝒟` turns the integrand into
+that of the simultaneously slashed pair, where the cusp-form bound applies. -/
+theorem integrableOn_petersson_sl_smul_fd_left {F F' : Type*} [FunLike F ℍ ℂ]
+    [FunLike F' ℍ ℂ] (k : ℤ) (Γ : Subgroup (GL (Fin 2) ℝ)) [Γ.IsArithmetic]
+    [CuspFormClass F Γ k] [ModularFormClass F' Γ k]
+    (f : F) (f' : F') (γ : SL(2, ℤ)) :
+    IntegrableOn (petersson k ⇑f ⇑f') (γ • fd) volume := by
+  rw [ModularGroup.sl_smul_set, ← Set.image_smul,
+    (measurePreserving_smul (γ : GL (Fin 2) ℝ) volume).integrableOn_image
+      (measurableEmbedding_const_smul (γ : GL (Fin 2) ℝ))]
+  refine (integrableOn_petersson_slash k Γ f f' γ).congr_fun (fun τ _ ↦ ?_)
+    isClosed_fd.measurableSet
+  simp only [Function.comp_apply, petersson_slash_SL, ModularGroup.sl_moeb]
+
+/-- **The Petersson integrand of a modular form and a cusp form is integrable over every
+`SL(2, ℤ)`-translate of `𝒟`.** This is the right-cuspidal counterpart of
+`integrableOn_petersson_sl_smul_fd_left`. -/
+theorem integrableOn_petersson_sl_smul_fd_right {F F' : Type*} [FunLike F ℍ ℂ]
+    [FunLike F' ℍ ℂ] (k : ℤ) (Γ : Subgroup (GL (Fin 2) ℝ)) [Γ.IsArithmetic]
+    [ModularFormClass F Γ k] [CuspFormClass F' Γ k]
+    (f : F) (f' : F') (γ : SL(2, ℤ)) :
+    IntegrableOn (petersson k ⇑f ⇑f') (γ • fd) volume := by
+  have hi : IntegrableOn
+      (fun τ ↦ petersson k (⇑f ∣[k] γ) (⇑f' ∣[k] γ) τ) fd (volume : Measure ℍ) := by
+    obtain ⟨C, hC⟩ := CuspFormClass.petersson_bounded_right k Γ f f'
+    have hslash : (fun τ ↦ petersson k (⇑f ∣[k] γ) (⇑f' ∣[k] γ) τ) =
+        fun τ ↦ petersson k (⇑f) (⇑f') (γ • τ) :=
+      funext fun τ ↦ petersson_slash_SL k _ _ γ τ
+    rw [hslash]
+    have hsmul : Continuous fun τ : ℍ ↦ γ • τ := by
+      simp only [MulAction.compHom_smul_def]
+      exact continuous_const_smul (mapGL ℝ γ)
+    exact IntegrableOn.of_bound ModularGroup.volume_fd_lt_top
+      ((petersson_continuous k (ModularFormClass.continuous f)
+        (ModularFormClass.continuous f')).comp hsmul |>.aestronglyMeasurable.restrict)
+      C (ae_of_all _ fun τ ↦ hC (γ • τ))
+  rw [ModularGroup.sl_smul_set, ← Set.image_smul,
+    (measurePreserving_smul (γ : GL (Fin 2) ℝ) volume).integrableOn_image
+      (measurableEmbedding_const_smul (γ : GL (Fin 2) ℝ))]
+  refine hi.congr_fun (fun τ _ ↦ ?_) isClosed_fd.measurableSet
+  simp only [Function.comp_apply, petersson_slash_SL, ModularGroup.sl_moeb]
 
 /-- Additivity in the second argument. -/
 theorem peterssonInner_add_right (k : ℤ) (D : Set ℍ) (f g₁ g₂ : ℍ → ℂ)

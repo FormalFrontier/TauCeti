@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Analysis.Complex.UpperHalfPlane.MoebiusAction
 public import TauCeti.NumberTheory.ModularForms.Petersson.FiniteIndex
 
 /-!
@@ -58,8 +57,6 @@ union is itself a fundamental domain for `Γ`.
   from one argument of the pairing to the other.
 * `UpperHalfPlane.peterssonInner_slash_slash_SL`: the determinant-one case, where the scalar
   disappears and only the domain moves.
-* `UpperHalfPlane.integrableOn_petersson_sl_smul_fd`: the Petersson integrand of a cusp form
-  and a modular form is integrable over every `SL(2, ℤ)`-translate of `𝒟`.
 * `CuspForm.peterssonInnerCosets_eq_sum_smul_fd`: the coset pairing is a sum of integrals over
   translates of `𝒟`.
 * `CuspForm.peterssonInnerCosets_eq_peterssonInner`: that sum is the single integral of
@@ -146,21 +143,6 @@ theorem peterssonInner_slash_slash_SL (k : ℤ) (γ : SL(2, ℤ)) (S : Set ℍ) 
     sl_smul_set] using peterssonInner_slash_slash_of_det_pos
       (g := (γ : GL (Fin 2) ℝ)) k hdet S f h
 
-/-- **The Petersson integrand of a cusp form and a modular form is integrable over every
-`SL(2, ℤ)`-translate of `𝒟`.** Transporting the integral back to `𝒟` turns the integrand into
-that of the simultaneously slashed pair, where the cusp-form bound applies. -/
-theorem integrableOn_petersson_sl_smul_fd {F F' : Type*} [FunLike F ℍ ℂ] [FunLike F' ℍ ℂ]
-    (k : ℤ) (𝒢 : Subgroup (GL (Fin 2) ℝ)) [𝒢.IsArithmetic]
-    [CuspFormClass F 𝒢 k] [ModularFormClass F' 𝒢 k]
-    (f : F) (f' : F') (γ : SL(2, ℤ)) :
-    IntegrableOn (petersson k ⇑f ⇑f') (γ • fd) volume := by
-  rw [sl_smul_set, ← Set.image_smul,
-    (measurePreserving_smul (γ : GL (Fin 2) ℝ) volume).integrableOn_image
-      (measurableEmbedding_const_smul (γ : GL (Fin 2) ℝ))]
-  refine (integrableOn_petersson_slash k 𝒢 f f' γ).congr_fun (fun τ _ ↦ ?_)
-    isClosed_fd.measurableSet
-  simp only [Function.comp_apply, petersson_slash_SL, ModularGroup.sl_moeb]
-
 end UpperHalfPlane
 
 /-! ### The Petersson product as an integral over a union of translated domains -/
@@ -194,13 +176,13 @@ theorem peterssonInnerCosets_eq_peterssonInner (f g : CuspForm (Γ.map (mapGL �
   rw [UpperHalfPlane.peterssonInner_def, integral_iUnion_fintype
       (fun q ↦ (isOpen_smul_fdo _).measurableSet)
       (ModularGroup.pairwise_disjoint_smul_fdo_out_withCenter Γ)
-      (fun q ↦ (UpperHalfPlane.integrableOn_petersson_sl_smul_fd
+      (fun q ↦ (UpperHalfPlane.integrableOn_petersson_sl_smul_fd_left
         k (Γ.map (mapGL ℝ)) f g _).mono_set (Set.smul_set_mono fdo_subset_fd)),
     peterssonInnerCosets_eq_sum_smul_fd]
   refine Finset.sum_congr rfl fun q _ ↦ ?_
   have hae : ((((q.out)⁻¹ : SL(2, ℤ)) • fd : Set ℍ)) =ᵐ[volume]
       (((q.out)⁻¹ : SL(2, ℤ)) • fdo) := by
-    rw [UpperHalfPlane.sl_smul_set, UpperHalfPlane.sl_smul_set]
+    rw [ModularGroup.sl_smul_set, ModularGroup.sl_smul_set]
     exact (MeasureTheory.smul_set_ae_eq _).mpr fd_ae_eq_fdo
   rw [UpperHalfPlane.peterssonInner_congr_set hae, UpperHalfPlane.peterssonInner_def]
 

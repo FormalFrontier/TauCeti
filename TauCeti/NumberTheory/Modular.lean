@@ -28,6 +28,8 @@ sums of integrals over translates into a single integral over their union.
 * `ModularGroup.volume_frontier_fd`: the frontier of `𝒟` has zero invariant measure.
 * `ModularGroup.fd_ae_eq_fdo`: `𝒟` and `𝒟ᵒ` agree almost everywhere (so set integrals
   over them coincide, via `MeasureTheory.setIntegral_congr_set`).
+* `ModularGroup.sl_smul_set`: the `SL(2, ℤ)`-action on subsets of `ℍ` is the `GL(2, ℝ)`-action
+  along the coercion.
 * `ModularGroup.isOpen_smul_fdo` and `ModularGroup.disjoint_smul_fdo`: the translates of the
   open fundamental domain are open, and two of them are disjoint unless the translating
   elements differ by a sign.
@@ -170,10 +172,16 @@ theorem fd_ae_eq_fdo : (fd : Set ℍ) =ᶠ[ae (volume : Measure ℍ)] fdo :=
 
 /-! ### Disjointness of translates of the open fundamental domain -/
 
+/-- **The `SL(2, ℤ)`-action on subsets of `ℍ` is the `GL(2, ℝ)`-action along the coercion**, the
+pointwise-image counterpart of `ModularGroup.sl_moeb`. This is useful as a rewrite even though
+the two actions are definitionally equal. -/
+@[simp]
+theorem sl_smul_set (γ : SL(2, ℤ)) (S : Set ℍ) : γ • S = (γ : GL (Fin 2) ℝ) • S := (rfl)
+
 /-- Every translate of the open fundamental domain is open: translation is a homeomorphism
 of `ℍ`. -/
 theorem isOpen_smul_fdo (γ : SL(2, ℤ)) : IsOpen (γ • fdo) := by
-  rw [UpperHalfPlane.sl_smul_set]
+  rw [sl_smul_set]
   exact isOpen_fdo.smul _
 
 /-- **Distinct translates of the open fundamental domain are disjoint.** A point of

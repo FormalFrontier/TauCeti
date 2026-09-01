@@ -8,7 +8,7 @@ module
 public import Mathlib.Analysis.Complex.UpperHalfPlane.MoebiusAction
 
 /-!
-# The Möbius action and conjugation at a positive determinant
+# The Möbius-action conjugation at a positive determinant
 
 Mathlib's `UpperHalfPlane.σ` sends a matrix `g : GL(2, ℝ)` to the automorphism of `ℂ` which is
 the identity when `det g` is positive and complex conjugation otherwise. It is the twist that
@@ -24,8 +24,6 @@ unfolded by hand.
 ## Main results
 
 * `UpperHalfPlane.σ_eq_refl_of_det_pos`: `σ g = ContinuousAlgEquiv.refl ℝ ℂ` for `0 < det g`.
-* `UpperHalfPlane.sl_smul_set`: the `SL(2, ℤ)`-action on subsets of `ℍ` is the `GL(2, ℝ)`-action
-  along the coercion.
 
 ## Provenance
 
@@ -35,22 +33,11 @@ project
 commit `2baa76f742bdb4fb8ee323fabba41203bd390e08`, Apache-2.0, Chris Birkbeck), where it
 discharges the `σ` branch for the Hecke slash action. The proof is written against the current
 pin — `if_pos` is deprecated here in favour of `ite_eq_left`.
-
-The set-action compatibility lemma was developed in Tau Ceti and has no counterpart in that
-AINTLIB source.
 -/
 
 public section
 
-open scoped MatrixGroups Pointwise
-
 namespace UpperHalfPlane
-
-/-- **The `SL(2, ℤ)`-action on subsets of `ℍ` is the `GL(2, ℝ)`-action along the coercion**, the
-pointwise-image counterpart of `ModularGroup.sl_moeb`. This is useful as a rewrite even though
-the two actions are definitionally equal. -/
-@[simp]
-theorem sl_smul_set (γ : SL(2, ℤ)) (S : Set ℍ) : γ • S = (γ : GL (Fin 2) ℝ) • S := (rfl)
 
 /-- The Möbius-action conjugation `σ` is the identity on matrices of positive determinant:
 that is the branch its definition picks. On the other branch `σ` is complex conjugation, which
