@@ -168,38 +168,6 @@ theorem measurable_studentTPDFReal (ν : ℝ) : Measurable (studentTPDFReal ν) 
 theorem measurable_studentTPDF (ν : ℝ) : Measurable (studentTPDF ν) :=
   (measurable_studentTPDFReal ν).ennreal_ofReal
 
-/-! ### Normalization -/
-
-/-- Rescaling by `√ν` turns the Student t kernel into the Cauchy-type kernel of
-`TauCeti.integral_one_add_sq_rpow`. -/
-private lemma one_add_sq_div_eq (hν : 0 < ν) (s x : ℝ) :
-    (1 + ((√ν)⁻¹ * x) ^ 2) ^ (-s) = (1 + x ^ 2 / ν) ^ (-s) := by
-  rw [mul_pow, inv_pow, Real.sq_sqrt hν.le, inv_mul_eq_div]
-
-/-- The Student t kernel is integrable on the line. -/
-theorem integrable_one_add_sq_div_rpow (hν : 0 < ν) :
-    Integrable fun x : ℝ => (1 + x ^ 2 / ν) ^ (-((ν + 1) / 2)) := by
-  have hs : (1 : ℝ) / 2 < (ν + 1) / 2 := by linarith
-  have hsν : (√ν)⁻¹ ≠ 0 := inv_ne_zero (Real.sqrt_pos.mpr hν).ne'
-  have h := (integrable_comp_mul_left_iff
-    (fun y : ℝ => (1 + y ^ 2) ^ (-((ν + 1) / 2))) hsν).mpr (integrable_one_add_sq_rpow hs)
-  simpa only [one_add_sq_div_eq hν] using h
-
-/-- **The total mass of the Student t kernel.** Rescaling by `√ν` reduces it to Euler's second
-beta integral. -/
-theorem integral_one_add_sq_div_rpow (hν : 0 < ν) :
-    ∫ x : ℝ, (1 + x ^ 2 / ν) ^ (-((ν + 1) / 2)) =
-      √(ν * π) * Real.Gamma (ν / 2) / Real.Gamma ((ν + 1) / 2) := by
-  have hs : (1 : ℝ) / 2 < (ν + 1) / 2 := by linarith
-  have h := Measure.integral_comp_inv_mul_left
-    (fun y : ℝ => (1 + y ^ 2) ^ (-((ν + 1) / 2))) √ν
-  simp only [one_add_sq_div_eq hν, abs_of_nonneg (Real.sqrt_nonneg ν), smul_eq_mul] at h
-  have hsub : (ν + 1) / 2 - 1 / 2 = ν / 2 := by ring
-  have hsum : (1 : ℝ) / 2 + ν / 2 = (ν + 1) / 2 := by ring
-  rw [h, integral_one_add_sq_rpow hs, hsub, ProbabilityTheory.beta,
-    Real.Gamma_one_half_eq, hsum, Real.sqrt_mul hν.le]
-  ring
-
 /-! ### The measure and its total mass -/
 
 /-- Student's t probability measure with `ν` degrees of freedom.
@@ -221,7 +189,8 @@ theorem studentTMeasure_of_nonpos (hν : ν ≤ 0) : studentTMeasure ν = 0 := b
 /-- The Student t density is integrable on the whole line for every parameter. -/
 theorem integrable_studentTPDFReal (ν : ℝ) : Integrable (studentTPDFReal ν) := by
   by_cases hν : 0 < ν
-  · have h := (integrable_one_add_sq_div_rpow hν).const_mul
+  · have hs : (1 : ℝ) / 2 < (ν + 1) / 2 := by linarith
+    have h := (integrable_one_add_sq_div_rpow hν hs).const_mul
       (Real.Gamma ((ν + 1) / 2) / (√(ν * π) * Real.Gamma (ν / 2)))
     exact (integrable_congr (ae_of_all _ fun y => studentTPDFReal_of_pos hν y)).mpr h
   · have h : studentTPDFReal ν = fun _ => (0 : ℝ) :=
@@ -231,11 +200,15 @@ theorem integrable_studentTPDFReal (ν : ℝ) : Integrable (studentTPDFReal ν) 
 
 /-- The Student t density integrates to `1`. -/
 theorem integral_studentTPDFReal (hν : 0 < ν) : ∫ x, studentTPDFReal ν x = 1 := by
+  have hs : (1 : ℝ) / 2 < (ν + 1) / 2 := by linarith
   have hG1 : Real.Gamma ((ν + 1) / 2) ≠ 0 := (Real.Gamma_pos_of_pos (by linarith)).ne'
   have hG2 : Real.Gamma (ν / 2) ≠ 0 := (Real.Gamma_pos_of_pos (by linarith)).ne'
   have hsq : √(ν * π) ≠ 0 := (Real.sqrt_pos.mpr (by positivity)).ne'
+  have hsub : (ν + 1) / 2 - 1 / 2 = ν / 2 := by ring
+  have hsum : (1 : ℝ) / 2 + ν / 2 = (ν + 1) / 2 := by ring
   simp_rw [studentTPDFReal_of_pos hν]
-  rw [integral_const_mul, integral_one_add_sq_div_rpow hν]
+  rw [integral_const_mul, integral_one_add_sq_div_rpow hν hs, hsub, ProbabilityTheory.beta,
+    Real.Gamma_one_half_eq, hsum, Real.sqrt_mul hν.le]
   field_simp
 
 /-- The `ℝ≥0∞`-valued Student t density has total mass `1`. -/

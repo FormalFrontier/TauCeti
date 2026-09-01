@@ -43,9 +43,10 @@ and `TauCeti/Probability/Distributions/StudentT.lean` normalizes its density wit
 * `TauCeti.integrableOn_rpow_mul_one_add_rpow` and `TauCeti.integral_rpow_mul_one_add_rpow` —
   Euler's second beta integral,
   `∫ x in Ioi 0, x ^ (a - 1) * (1 + x) ^ (-(a + b)) = Β(a, b)`;
-* `TauCeti.integrable_one_add_sq_rpow` and `TauCeti.integral_one_add_sq_rpow` — the Cauchy-type
-  kernel `(1 + x ^ 2) ^ (-s)` is integrable on the line for `1 / 2 < s`, with total mass
-  `Β(1 / 2, s - 1 / 2)`;
+* `TauCeti.integrable_one_add_sq_rpow`, `TauCeti.integral_one_add_sq_rpow`,
+  `TauCeti.integrable_one_add_sq_div_rpow`, and `TauCeti.integral_one_add_sq_div_rpow` — the
+  Cauchy-type kernel `(1 + x ^ 2 / ν) ^ (-s)` is integrable on the line for `0 < ν` and
+  `1 / 2 < s`, with total mass `√ν * Β(1 / 2, s - 1 / 2)`;
 * `ProbabilityTheory.beta_comm` — symmetry of `Β`;
 * `ProbabilityTheory.beta_one_right` — the value `Β(a, 1) = 1 / a`;
 * `ProbabilityTheory.beta_add_one_left` — the unit step `Β(a + 1, b) = a / (a + b) * Β(a, b)`.
@@ -61,13 +62,13 @@ the right half from the left one by the reflection `t ↦ 1 - t`. The proof of
 `ProbabilityTheory.betaMeasure` in Mathlib, `ProbabilityTheory.lintegral_betaPDF_eq_one`:
 descend from `Complex.betaIntegral` by taking real parts.
 
-Both halves of the second integral are one-dimensional changes of variables, run through
+Both changes of variables for the second integral are one-dimensional, run through
 `MeasureTheory.integral_image_eq_integral_abs_deriv_smul` and its integrability companion. The
 chart `u ↦ u / (1 - u)` carries `(0, 1)` onto `(0, ∞)` and turns the first integrand into the
 second; the chart `t ↦ √t` carries `(0, ∞)` onto itself and turns `(1 + x ^ 2) ^ (-s)` into the
-second integrand with first parameter `1 / 2`. The two halves of the line are folded together by
-`MeasureTheory.integral_comp_abs`, whose reflection argument is reused for integrability below
-`0`.
+second integrand with first parameter `1 / 2`. Full-line integrability is an instance of Mathlib's
+`integrable_rpow_neg_one_add_norm_sq`, and the integral value folds the two halves of the line
+together with `MeasureTheory.integral_comp_abs`.
 
 ## References
 
@@ -294,34 +295,23 @@ private lemma abs_deriv_sqrt_smul (s : ℝ) {t : ℝ} (ht : t ∈ Ioi (0 : ℝ))
   rw [smul_eq_mul, Real.sq_sqrt ht0.le, abs_of_nonneg (by positivity), hpow]
   field_simp
 
-/-- The Cauchy-type kernel `(1 + x ^ 2) ^ (-s)` is integrable on the positive half-line when
-`1 / 2 < s`. -/
-theorem integrableOn_one_add_sq_rpow_Ioi (hs : 1 / 2 < s) :
-    IntegrableOn (fun x : ℝ => (1 + x ^ 2) ^ (-s)) (Ioi 0) := by
-  have hb : (0 : ℝ) < s - 1 / 2 := by linarith
-  have hbp := integrableOn_rpow_mul_one_add_rpow (a := 1 / 2) (b := s - 1 / 2) (by norm_num) hb
-  have hsum : (1 / 2 : ℝ) + (s - 1 / 2) = s := by ring
-  have hsub : (1 / 2 : ℝ) - 1 = -(1 / 2) := by norm_num
-  rw [hsum, hsub] at hbp
-  rw [← image_sqrt_Ioi,
-    integrableOn_image_iff_integrableOn_abs_deriv_smul measurableSet_Ioi
-      (fun t ht => (Real.hasDerivAt_sqrt (ne_of_gt (mem_Ioi.mp ht))).hasDerivWithinAt)
-      injOn_sqrt_Ioi]
-  refine IntegrableOn.congr_fun (hbp.const_mul 2⁻¹) ?_ measurableSet_Ioi
-  intro t ht
-  exact (abs_deriv_sqrt_smul s ht).symm
-
 /-- The Cauchy-type kernel `(1 + x ^ 2) ^ (-s)` is integrable on the line when `1 / 2 < s`. -/
 theorem integrable_one_add_sq_rpow (hs : 1 / 2 < s) :
     Integrable (fun x : ℝ => (1 + x ^ 2) ^ (-s)) := by
-  have hIoi := integrableOn_one_add_sq_rpow_Ioi hs
-  have hIic : IntegrableOn (fun x : ℝ => (1 + x ^ 2) ^ (-s)) (Iic 0) := by
-    have m : MeasurableEmbedding fun x : ℝ => -x := (Homeomorph.neg ℝ).measurableEmbedding
-    rw [← Measure.map_neg_eq_self (volume : Measure ℝ), m.integrableOn_map_iff]
-    simp only [Function.comp_def, neg_sq, neg_preimage, neg_Iic, neg_zero]
-    exact Iff.mpr integrableOn_Ici_iff_integrableOn_Ioi hIoi
-  rw [← integrableOn_univ, ← Iic_union_Ioi (a := (0 : ℝ))]
-  exact hIic.union hIoi
+  have hrs : (Module.finrank ℝ ℝ : ℝ) < 2 * s := by
+    simp only [Module.finrank_self]
+    norm_num at hs ⊢
+    linarith
+  convert integrable_rpow_neg_one_add_norm_sq (E := ℝ) (μ := volume) hrs using 1
+  funext x
+  simp only [Real.norm_eq_abs, sq_abs]
+  ring_nf
+
+/-- The Cauchy-type kernel `(1 + x ^ 2) ^ (-s)` is integrable on the positive half-line when
+`1 / 2 < s`. -/
+theorem integrableOn_one_add_sq_rpow_Ioi (hs : 1 / 2 < s) :
+    IntegrableOn (fun x : ℝ => (1 + x ^ 2) ^ (-s)) (Ioi 0) :=
+  (integrable_one_add_sq_rpow hs).integrableOn
 
 /-- The total mass of the Cauchy-type kernel `(1 + x ^ 2) ^ (-s)` is `Β(1/2, s - 1/2)`. -/
 theorem integral_one_add_sq_rpow (hs : 1 / 2 < s) :
@@ -342,6 +332,27 @@ theorem integral_one_add_sq_rpow (hs : 1 / 2 < s) :
     setIntegral_congr_fun measurableSet_Ioi (fun t ht => abs_deriv_sqrt_smul s ht),
     integral_const_mul, hbp]
   ring
+
+/-- Rescaling by `√ν` turns `(1 + x ^ 2 / ν) ^ (-s)` into the Cauchy-type kernel. -/
+private lemma one_add_sq_div_eq {ν : ℝ} (hν : 0 < ν) (s x : ℝ) :
+    (1 + ((√ν)⁻¹ * x) ^ 2) ^ (-s) = (1 + x ^ 2 / ν) ^ (-s) := by
+  rw [mul_pow, inv_pow, Real.sq_sqrt hν.le, inv_mul_eq_div]
+
+/-- The rescaled Cauchy-type kernel is integrable on the line. -/
+theorem integrable_one_add_sq_div_rpow {ν s : ℝ} (hν : 0 < ν) (hs : 1 / 2 < s) :
+    Integrable fun x : ℝ => (1 + x ^ 2 / ν) ^ (-s) := by
+  have hsν : (√ν)⁻¹ ≠ 0 := inv_ne_zero (Real.sqrt_pos.mpr hν).ne'
+  have h := (integrable_comp_mul_left_iff
+    (fun y : ℝ => (1 + y ^ 2) ^ (-s)) hsν).mpr (integrable_one_add_sq_rpow hs)
+  simpa only [one_add_sq_div_eq hν] using h
+
+/-- **The total mass of a rescaled Cauchy-type kernel.** Rescaling by `√ν` reduces it to
+Euler's second beta integral. -/
+theorem integral_one_add_sq_div_rpow {ν s : ℝ} (hν : 0 < ν) (hs : 1 / 2 < s) :
+    ∫ x : ℝ, (1 + x ^ 2 / ν) ^ (-s) = √ν * beta (1 / 2) (s - 1 / 2) := by
+  have h := Measure.integral_comp_inv_mul_left (fun y : ℝ => (1 + y ^ 2) ^ (-s)) √ν
+  simp only [one_add_sq_div_eq hν, abs_of_nonneg (Real.sqrt_nonneg ν), smul_eq_mul] at h
+  rw [h, integral_one_add_sq_rpow hs]
 
 end SecondIntegral
 
