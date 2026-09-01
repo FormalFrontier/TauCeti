@@ -159,21 +159,14 @@ theorem fisherSnedecorMap_image_Ioo (hm : 0 < m) (hn : 0 < n) :
     exact ⟨fisherSnedecorInv m n x, fisherSnedecorMap_inv_mem_Ioo hm hn hx,
       fisherSnedecorInv_map hm hn hx⟩
 
-private theorem betaMeasure_Ioo_ae {a b : ℝ} (_ha : 0 < a) (_hb : 0 < b) :
-    Ioo (0 : ℝ) 1 =ᵐ[betaMeasure a b] Icc (0 : ℝ) 1 := by
-  apply Ioo_ae_eq_Icc'
-  · rw [betaMeasure, withDensity_apply _ (measurableSet_singleton (0 : ℝ))]
-    simp
-  · rw [betaMeasure, withDensity_apply _ (measurableSet_singleton (1 : ℝ))]
-    simp
-
 theorem fisherSnedecorMap_preimage_Iic_ae (hm : 0 < m) (hn : 0 < n) {x : ℝ} (hx : 0 < x) :
     fisherSnedecorMap m n ⁻¹' Iic x =ᵐ[betaMeasure (m / 2) (n / 2)]
       Iic (fisherSnedecorInv m n x) := by
-  have ha : 0 < m / 2 := by linarith
-  have hb : 0 < n / 2 := by linarith
-  have hIoo := betaMeasure_Ioo_ae ha hb
-  filter_upwards [hIoo, ae_mem_Icc_betaMeasure (m / 2) (n / 2)] with u hu hIcc
+  let _ : NullSingletonClass (betaMeasure (m / 2) (n / 2)) := by
+    rw [betaMeasure]
+    infer_instance
+  filter_upwards [(Ioo_ae_eq_Icc : Ioo (0 : ℝ) 1 =ᵐ[betaMeasure (m / 2) (n / 2)] Icc 0 1),
+      ae_mem_Icc_betaMeasure (m / 2) (n / 2)] with u hu hIcc
   have hu01 : u ∈ Ioo (0 : ℝ) 1 := by
     rw [hu]
     exact hIcc
@@ -206,13 +199,16 @@ theorem cdf_fisherSnedecorMeasure_eq (hm : 0 < m) (hn : 0 < n) (x : ℝ) :
     isProbabilityMeasure_fisherSnedecorMeasure hm hn
   let _ : IsProbabilityMeasure (betaMeasure (m / 2) (n / 2)) :=
     isProbabilityMeasureBeta (by linarith) (by linarith)
+  let _ : NullSingletonClass (betaMeasure (m / 2) (n / 2)) := by
+    rw [betaMeasure]
+    infer_instance
   by_cases hx : x ≤ 0
   · rw [ite_eq_left hx]
     rw [cdf_eq_real, fisherSnedecorMeasure_map hm hn,
     map_measureReal_apply (measurable_fisherSnedecorMap m n) measurableSet_Iic]
     have hpre : fisherSnedecorMap m n ⁻¹' Iic x =ᵐ[betaMeasure (m / 2) (n / 2)] ∅ := by
-      filter_upwards [betaMeasure_Ioo_ae (by linarith) (by linarith),
-        ae_mem_Icc_betaMeasure (m / 2) (n / 2)] with u huIoo huIcc
+      filter_upwards [(Ioo_ae_eq_Icc : Ioo (0 : ℝ) 1 =ᵐ[betaMeasure (m / 2) (n / 2)] Icc 0 1),
+          ae_mem_Icc_betaMeasure (m / 2) (n / 2)] with u huIoo huIcc
       have hu01 : u ∈ Ioo (0 : ℝ) 1 := by
         rw [huIoo]
         exact huIcc
