@@ -6,6 +6,8 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Analysis.Semigroups.Generation.Yosida.Basic
+import TauCeti.Analysis.Normed.Operator.Basic
+import TauCeti.Analysis.Normed.Operator.Exponential
 import Mathlib.Topology.UniformSpace.UniformApproximation
 
 /-!
@@ -130,10 +132,7 @@ theorem yosidaLimit_zero (A : X →ₗ.[ℝ] X) (x : X) : yosidaLimit A 0 x = x 
 pointwise, for a bounded operator `B`. -/
 private theorem exp_add_smul_apply (B : X →L[ℝ] X) (s t : ℝ) (x : X) :
     exp ((s + t) • B) x = exp (s • B) (exp (t • B) x) := by
-  let +nondep : NormedAlgebra ℚ (X →L[ℝ] X) := .restrictScalars ℚ ℝ _
-  rw [add_smul, exp_add_of_commute (((Commute.refl B).smul_left s).smul_right t),
-    ContinuousLinearMap.mul_def]
-  rfl
+  exact DFunLike.congr_fun (TauCeti.exp_add_smul B s t) x
 
 /-! ## Shared limit-semigroup scaffolding -/
 
@@ -179,34 +178,10 @@ private theorem yosidaLimit_time_add_of_tendsto_of_norm_le {A : X →ₗ.[ℝ] X
       (𝓝 (yosidaLimit A (s + t) x)))
     (hbound_s : ∀ᶠ lambda in atTop, ‖exp (s • yosidaApproximation A lambda)‖ ≤ M) :
     yosidaLimit A (s + t) x = yosidaLimit A s (yosidaLimit A t x) := by
-  set y := yosidaLimit A t x with hy
-  set z := yosidaLimit A s y with hz
-  have hstep : Tendsto (fun lambda : ℝ => exp ((s + t) • yosidaApproximation A lambda) x - z)
-      atTop (𝓝 0) := by
-    refine squeeze_zero_norm' (a := fun lambda : ℝ =>
-      M * ‖exp (t • yosidaApproximation A lambda) x - y‖ +
-        ‖exp (s • yosidaApproximation A lambda) y - z‖) ?_ ?_
-    · filter_upwards [hbound_s] with lambda hbound
-      have hsplit : exp ((s + t) • yosidaApproximation A lambda) x - z =
-          exp (s • yosidaApproximation A lambda)
-              (exp (t • yosidaApproximation A lambda) x - y) +
-            (exp (s • yosidaApproximation A lambda) y - z) := by
-        rw [map_sub, exp_add_smul_apply]
-        abel
-      rw [hsplit]
-      refine (norm_add_le _ _).trans ?_
-      refine add_le_add ?_ le_rfl
-      exact (ContinuousLinearMap.le_opNorm _ _).trans
-        (mul_le_mul_of_nonneg_right hbound (norm_nonneg _))
-    · have h1 : Tendsto
-          (fun lambda : ℝ => ‖exp (t • yosidaApproximation A lambda) x - y‖) atTop (𝓝 0) :=
-        tendsto_iff_norm_sub_tendsto_zero.mp htend_t
-      have h2 : Tendsto
-          (fun lambda : ℝ => ‖exp (s • yosidaApproximation A lambda) y - z‖) atTop (𝓝 0) :=
-        tendsto_iff_norm_sub_tendsto_zero.mp htend_s
-      simpa using (h1.const_mul M).add h2
   refine tendsto_nhds_unique htend_st ?_
-  simpa using hstep.add_const z
+  have hcomp := TauCeti.ContinuousLinearMap.tendsto_apply_of_eventually_norm_le
+    hbound_s htend_s htend_t
+  simpa only [exp_add_smul_apply] using hcomp
 
 /-- The Yosida limit is continuous in time on a compact interval whenever the approximating
 exponentials converge uniformly there. -/

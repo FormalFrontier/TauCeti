@@ -10,6 +10,9 @@ public import Mathlib.Algebra.Algebra.Subalgebra.Basic
 public import Mathlib.Algebra.Lie.Killing
 public import Mathlib.LinearAlgebra.BilinearForm.Properties
 
+-- Non-public: the enveloping-algebra dictionary appears only inside proofs.
+import TauCeti.Algebra.Lie.UniversalEnveloping.Module
+
 /-!
 # The Casimir element of a universal enveloping algebra
 
@@ -62,6 +65,10 @@ canonical choice this development needs and the one the roadmap pins.
 * `TauCeti.representation_casimirElement_apply_eq_zero_of_isTrivial`: the Casimir element acts by
   zero on a module with trivial Lie action.
 * `TauCeti.ι_mul_casimirElement`: the Casimir element commutes with every canonical Lie generator.
+* `TauCeti.representation_casimirElement_lie`: the Casimir operator of a module commutes with the
+  Lie action.
+* `TauCeti.map_representation_casimirElement`: a homomorphism of Lie modules intertwines the
+  Casimir operators.
 * `TauCeti.casimirElement_mem_center`: **the Casimir element is central in `U(L)`.**
 
 The remaining statement about `casimirElement`, that it acts on a highest weight module of weight
@@ -325,5 +332,28 @@ theorem casimirElement_mem_center :
   | algebraMap r => exact Algebra.commutes r _
   | add x y hx hy => rw [add_mul, mul_add, hx, hy]
   | mul x y hx hy => rw [mul_assoc, hy, ← mul_assoc, hx, mul_assoc]
+
+/-- **The Casimir element commutes with the Lie action.**  This is the centrality of the Casimir
+element, read on a module: the Casimir operator of a module is a homomorphism of Lie modules. -/
+@[simp]
+theorem representation_casimirElement_lie
+    {M : Type w} [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M]
+    (x : L) (m : M) :
+    UniversalEnvelopingAlgebra.representation K L M (casimirElement K L) ⁅x, m⁆ =
+      ⁅x, UniversalEnvelopingAlgebra.representation K L M (casimirElement K L) m⁆ :=
+  UniversalEnvelopingAlgebra.representation_lie_of_mem_center K L M
+    (casimirElement_mem_center K L) x m
+
+/-- **The Casimir operator is natural in the module.**  A homomorphism of Lie modules intertwines
+the two Casimir operators, being equivariant for the whole enveloping algebra.  This is
+`TauCeti.UniversalEnvelopingAlgebra.map_representation`, which carries the `simp` attribute, at the
+Casimir element. -/
+theorem map_representation_casimirElement
+    {M : Type w} [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M]
+    {N : Type*} [AddCommGroup N] [Module K N] [LieRingModule L N] [LieModule K L N]
+    (f : M →ₗ⁅K,L⁆ N) (m : M) :
+    f (UniversalEnvelopingAlgebra.representation K L M (casimirElement K L) m) =
+      UniversalEnvelopingAlgebra.representation K L N (casimirElement K L) (f m) :=
+  UniversalEnvelopingAlgebra.map_representation K L M N f (casimirElement K L) m
 
 end TauCeti

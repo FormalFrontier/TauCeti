@@ -7,7 +7,7 @@ module
 
 public import TauCeti.AlgebraicTopology.SimplicialComplex.Collapse.FaceCount
 public import TauCeti.AlgebraicTopology.SimplicialComplex.Cone
-public import TauCeti.AlgebraicTopology.SimplicialComplex.Subdivision.Stellar
+public import TauCeti.AlgebraicTopology.SimplicialComplex.Subdivision.Stellar.Basic
 import Mathlib.Order.Preorder.Finite
 
 /-!

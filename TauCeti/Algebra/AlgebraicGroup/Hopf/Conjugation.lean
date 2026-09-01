@@ -8,6 +8,8 @@ module
 public import TauCeti.Algebra.AlgebraicGroup.Product
 public import TauCeti.Algebra.Coalgebra.Convolution
 
+import Mathlib.Algebra.Group.End
+
 /-!
 # Conjugation in Hopf-algebra coordinates
 
@@ -28,6 +30,8 @@ a group homomorphism from the product.
 ## Main declarations
 
 * `TauCeti.HopfAlgebra.conjugationAlgHom`: the coordinate algebra morphism of left conjugation.
+* `TauCeti.HopfAlgebra.tensorProduct_map_comp_conjugationAlgHom`: the coordinate conjugation
+  morphism is natural in the Hopf algebra.
 * `TauCeti.HopfAlgebra.productMap_comp_conjugationAlgHom`: evaluation at arbitrary algebra-valued
   points.
 * `TauCeti.HopfAlgebra.conjugationAlgHom_counit_left`: the identity element acts trivially.
@@ -126,6 +130,35 @@ theorem comp_conjugationAlgHom {A : Type w} [CommSemiring A] [Algebra R A]
         productMap_comp_conjugationAlgHom (R := R) (H := H)
           (toConv (phi.comp Algebra.TensorProduct.includeLeft))
           (toConv (phi.comp Algebra.TensorProduct.includeRight))
+
+/-- The coordinate morphism of conjugation is natural in the commutative Hopf algebra. -/
+theorem tensorProduct_map_comp_conjugationAlgHom
+    {K : Type w} [CommSemiring K] [HopfAlgebra R K] (f : H →ₐc[R] K) :
+    (Algebra.TensorProduct.map f.toAlgHom f.toAlgHom).comp
+        (conjugationAlgHom (R := R) (H := H)) =
+      (conjugationAlgHom (R := R) (H := K)).comp f.toAlgHom := by
+  rw [comp_conjugationAlgHom, Algebra.TensorProduct.map_comp_includeLeft,
+    Algebra.TensorProduct.map_comp_includeRight]
+  apply WithConv.toConv_injective
+  simp only [toConv_ofConv]
+  -- Expose precomposition as `mapDomain` so its convolution functoriality can rewrite the target.
+  change _ = AlgHom.mapDomain f (toConv (conjugationAlgHom (R := R) (H := K)))
+  rw [toConv_conjugationAlgHom, map_mul, map_mul, map_inv]
+  have hleft_coe :
+      toConv (Algebra.TensorProduct.includeLeft.comp f.toAlgHom) =
+        AlgHom.mapDomain f (toConv (Bialgebra.TensorProduct.includeLeft
+          (R := R) (H₁ := K) (H₂ := K)).toAlgHom) := by
+    apply WithConv.ofConv_injective
+    ext x
+    simp [AlgHom.mapDomain_apply]
+  have hright_coe :
+      toConv (Algebra.TensorProduct.includeRight.comp f.toAlgHom) =
+        AlgHom.mapDomain f (toConv (Bialgebra.TensorProduct.includeRight
+          (R := R) (H₁ := K) (H₂ := K)).toAlgHom) := by
+    apply WithConv.ofConv_injective
+    ext x
+    simp [AlgHom.mapDomain_apply]
+  rw [hleft_coe, hright_coe]
 
 /-- The identity point acts trivially by conjugation. This is the pointwise product-map form of
 the left-unit law for the coordinate action. -/
@@ -274,10 +307,9 @@ theorem conjugationAlgHom_coassoc :
     rw [comp_conjugationAlgHom mulFirst, comp_conjugationAlgHom actSecond,
       hmulFirstLeft, hmulFirstRight, hactSecondLeft, hactSecondRight]
     apply congrArg WithConv.ofConv
-    exact
-      mul_inv_eq_iff_eq_mul.2
-        ((SemiconjBy.conj_mk g₁ (g₂ * x * g₂⁻¹)).mul_left
-          (SemiconjBy.conj_mk g₂ x)).eq
+    simpa only [MulAut.conj_apply, MulAut.mul_apply] using
+      congrArg (fun f : MulAut _ => f x)
+        ((MulAut.conj : _ →* MulAut _).map_mul g₁ g₂)
   simpa only [mulFirst, actSecond, assoc, c, AlgHom.comp_assoc] using hcoassoc
 
 end HopfAlgebra

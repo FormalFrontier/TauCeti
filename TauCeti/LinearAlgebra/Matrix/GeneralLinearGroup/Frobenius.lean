@@ -57,8 +57,8 @@ variable (p : ℕ) {A : Type*} [CommRing A] [ExpChar A p]
 of its entries lies in the Frobenius-fixed subring.
 
 Stated as the equation `Matrix.GeneralLinearGroup.map (iterateFrobenius A p k) g = g` rather than
-as membership in `TauCeti.fixedSubgroup`, because `TauCeti.mem_fixedSubgroup` is a `simp` lemma
-that rewrites such a membership to this equation; this is the form `simp` reaches, matching
+as membership in `TauCeti.fixedSubgroup`, because the generic equality-locus simplifier rewrites
+such a membership to this equation; this is the form `simp` reaches, matching
 `TauCeti.Bialgebra.iterateFrobeniusPoints_eq_self_iff`. -/
 @[simp]
 theorem map_iterateFrobenius_eq_self_iff (k : ℕ) (g : Matrix.GeneralLinearGroup ι A) :

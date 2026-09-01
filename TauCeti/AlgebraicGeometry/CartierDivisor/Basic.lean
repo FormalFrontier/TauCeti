@@ -26,7 +26,7 @@ unit.
 
 * `Scheme.regularUnitSheaf` and `Scheme.rationalUnitSheaf` are the sheaves of units of `𝒪_X` and
   `𝒦_X`, written additively;
-* `Scheme.toRationalUnitSheaf` is the inclusion `𝒪_X^× ⟶ 𝒦_X^×`;
+* `Scheme.toRationalUnitSheaf` is the monomorphism `𝒪_X^× ⟶ 𝒦_X^×`;
 * `Scheme.cartierDivisorSheaf` is its cokernel in sheaves of abelian groups;
 * `Scheme.CartierDivisor` is the additive group of global sections of that cokernel;
 * `Scheme.principalCartierDivisor` sends a nonzero rational function to its principal Cartier
@@ -73,6 +73,23 @@ def toRationalUnitSheaf : regularUnitSheaf X ⟶ rationalUnitSheaf X :=
   (CategoryTheory.Sheaf.additiveUnitsFunctor (Opens.grothendieckTopology X)).map
     (toRationalFunctionsRing X)
 
+/-- The inclusion of regular units into rational units is injective on sections over every open
+subset of an integral scheme. -/
+theorem toRationalUnitSheaf_app_injective (U : X.Opens) :
+    Function.Injective ((toRationalUnitSheaf X).hom.app (op U)) := by
+  intro f g h
+  apply Additive.toMul.injective
+  apply Units.map_injective (toRationalFunctionsRing_app_injective U)
+  exact congrArg Additive.toMul h
+
+/-- The inclusion `𝒪_X^× ⟶ 𝒦_X^×` of regular units into rational units is a
+monomorphism. -/
+instance : Mono (toRationalUnitSheaf X) := by
+  have hU : ∀ U : (Opens X)ᵒᵖ, Mono ((toRationalUnitSheaf X).hom.app U) := fun U ↦
+    ConcreteCategory.mono_of_injective _ (toRationalUnitSheaf_app_injective X U.unop)
+  have : Mono (toRationalUnitSheaf X).hom := NatTrans.mono_of_mono_app _
+  exact Sheaf.Hom.mono_of_presheaf_mono _ _ (toRationalUnitSheaf X)
+
 /-- The Cartier-divisor sheaf `𝒦_X^× / 𝒪_X^×`. This is the cokernel in the category of sheaves
 of abelian groups, and hence is the sheafification of the pointwise quotient presheaf.
 
@@ -95,6 +112,12 @@ instance : Epi (toCartierDivisorSheaf X) := by
 lemma toRationalUnitSheaf_comp_toCartierDivisorSheaf :
     toRationalUnitSheaf X ≫ toCartierDivisorSheaf X = 0 :=
   cokernel.condition (toRationalUnitSheaf X)
+
+/-- The sequence from regular units to rational units and then to Cartier divisors is exact. -/
+theorem exact_toRationalUnitSheaf_toCartierDivisorSheaf :
+    (ShortComplex.mk (toRationalUnitSheaf X) (toCartierDivisorSheaf X)
+      (toRationalUnitSheaf_comp_toCartierDivisorSheaf X)).Exact :=
+  ShortComplex.exact_cokernel (toRationalUnitSheaf X)
 
 /-- The group of Cartier divisors on `X`, defined as the global sections of
 `𝒦_X^× / 𝒪_X^×`. -/

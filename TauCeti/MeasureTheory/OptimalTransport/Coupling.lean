@@ -114,7 +114,27 @@ theorem measurePreserving_snd (hπ : IsCoupling π μ ν) :
 
 section Integral
 
-variable {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+variable {E : Type*} [NormedAddCommGroup E]
+
+/-- An integrable function of the first marginal remains integrable after composition with the
+first projection from a coupling. -/
+theorem integrable_comp_fst (hπ : IsCoupling π μ ν) {f : X → E} (hf : Integrable f μ) :
+    Integrable (fun p : X × Y ↦ f p.1) π :=
+  hπ.measurePreserving_fst.integrable_comp_of_integrable hf
+
+/-- An integrable function of the second marginal remains integrable after composition with the
+second projection from a coupling. -/
+theorem integrable_comp_snd (hπ : IsCoupling π μ ν) {f : Y → E} (hf : Integrable f ν) :
+    Integrable (fun p : X × Y ↦ f p.2) π :=
+  hπ.measurePreserving_snd.integrable_comp_of_integrable hf
+
+/-- The sum of two integrable marginal functions is integrable against every coupling. -/
+theorem integrable_add_split (hπ : IsCoupling π μ ν) {f : X → E} {g : Y → E}
+    (hf : Integrable f μ) (hg : Integrable g ν) :
+    Integrable (fun p : X × Y ↦ f p.1 + g p.2) π :=
+  (hπ.integrable_comp_fst hf).add (hπ.integrable_comp_snd hg)
+
+variable [NormedSpace ℝ E]
 
 /-- A function of the first coordinate integrates against a coupling as it does against the first
 marginal. -/
@@ -251,9 +271,10 @@ theorem isCoupling_inv_smul_prod [IsFiniteMeasure μ] (h : μ univ = ν univ) :
     exact ⟨by simp, by simp⟩
   · have hinv : (μ univ)⁻¹ * μ univ = 1 := ENNReal.inv_mul_cancel h0 (measure_ne_top μ univ)
     refine ⟨?_, ?_⟩
-    · simp only [Measure.fst, Measure.map_smul, Measure.map_fst_prod, smul_smul, ← h, hinv,
-        one_smul]
-    · simp only [Measure.snd, Measure.map_smul, Measure.map_snd_prod, smul_smul, hinv, one_smul]
+    · rw [Measure.fst, Measure.map_smul _ measurable_fst.aemeasurable, Measure.map_fst_prod,
+        smul_smul, ← h, hinv, one_smul]
+    · rw [Measure.snd, Measure.map_smul _ measurable_snd.aemeasurable, Measure.map_snd_prod,
+        smul_smul, hinv, one_smul]
 
 /-- A finite measure and any measure admit a coupling exactly when they have the same total
 mass. -/
@@ -322,9 +343,9 @@ points under the marginal maps. -/
 theorem isCoupling_toMeasure_iff {μ : ProbabilityMeasure X} {ν : ProbabilityMeasure Y}
     {π : ProbabilityMeasure (X × Y)} :
     IsCoupling π.toMeasure μ.toMeasure ν.toMeasure ↔
-      π.map measurable_fst.aemeasurable = μ ∧ π.map measurable_snd.aemeasurable = ν := by
-  rw [← ProbabilityMeasure.toMeasure_injective.eq_iff (a := π.map measurable_fst.aemeasurable),
-    ← ProbabilityMeasure.toMeasure_injective.eq_iff (a := π.map measurable_snd.aemeasurable),
+      π.map Prod.fst = μ ∧ π.map Prod.snd = ν := by
+  rw [← ProbabilityMeasure.toMeasure_injective.eq_iff (a := π.map Prod.fst),
+    ← ProbabilityMeasure.toMeasure_injective.eq_iff (a := π.map Prod.snd),
     ProbabilityMeasure.toMeasure_map, ProbabilityMeasure.toMeasure_map]
   exact ⟨fun h ↦ ⟨h.fst_eq, h.snd_eq⟩, fun h ↦ ⟨h.1, h.2⟩⟩
 
@@ -362,11 +383,11 @@ instance instNonempty : Nonempty (Coupling μ ν) :=
 
 /-- The first marginal of a bundled coupling. -/
 def fst (π : Coupling μ ν) : ProbabilityMeasure X :=
-  π.1.map measurable_fst.aemeasurable
+  π.1.map Prod.fst
 
 /-- The second marginal of a bundled coupling. -/
 def snd (π : Coupling μ ν) : ProbabilityMeasure Y :=
-  π.1.map measurable_snd.aemeasurable
+  π.1.map Prod.snd
 
 /-- The underlying measure of the first marginal is the pushforward along the first projection.
 This is not a `simp` lemma: `simp` rewrites `π.fst` to `μ` via `fst_eq` instead. -/
@@ -396,7 +417,7 @@ theorem snd_eq (π : Coupling μ ν) : π.snd = ν :=
 
 /-- Exchanging the two coordinates of a bundled coupling. -/
 def swap (π : Coupling μ ν) : Coupling ν μ :=
-  ⟨π.1.map measurable_swap.aemeasurable, by
+  ⟨π.1.map Prod.swap, by
     rw [ProbabilityMeasure.toMeasure_map]
     exact π.2.swap⟩
 
@@ -404,7 +425,7 @@ def swap (π : Coupling μ ν) : Coupling ν μ :=
 coordinate swap. -/
 @[simp]
 theorem coe_swap (π : Coupling μ ν) :
-    (π.swap : ProbabilityMeasure (Y × X)) = π.1.map measurable_swap.aemeasurable :=
+    (π.swap : ProbabilityMeasure (Y × X)) = π.1.map Prod.swap :=
   (rfl)
 
 /-- Exchanging the coordinates twice is the identity. -/

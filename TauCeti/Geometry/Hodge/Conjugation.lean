@@ -25,6 +25,8 @@ complexification models.
 ## Main declarations
 
 * `TauCeti.Hodge.Conjugation`: a conjugate-linear involution of a complex vector space.
+* `TauCeti.Hodge.Conjugation.tensorProduct`: the tensor product of two conjugations.
+* `TauCeti.Hodge.Conjugation.tensorProduct_toEquiv_tmul`: its action on pure tensors.
 * `TauCeti.Hodge.Conjugation.conjFiltration`: the conjugate of a complex filtration.
 * `TauCeti.Hodge.concreteLatticeConj`: conjugation on the tensor model `ℂ ⊗[ℤ] V`.
 * `TauCeti.Hodge.latticeConj`: conjugation on an abstract complex base-change model.
@@ -81,6 +83,51 @@ theorem toEquiv_symm (ω : Conjugation W) : ω.toEquiv.symm = ω.toEquiv := by
 @[simp]
 theorem apply_apply (ω : Conjugation W) (x : W) : ω.toEquiv (ω.toEquiv x) = x :=
   ω.involutive x
+
+section TensorProduct
+
+variable {W₁ : Type u} {W₂ : Type v} [AddCommGroup W₁] [Module ℂ W₁]
+  [AddCommGroup W₂] [Module ℂ W₂]
+
+private def tensorMap (ω₁ : Conjugation W₁) (ω₂ : Conjugation W₂) :
+    W₁ ⊗[ℂ] W₂ →ₛₗ[starRingEnd ℂ] W₁ ⊗[ℂ] W₂ :=
+  TensorProduct.map ω₁.toEquiv ω₂.toEquiv
+
+private theorem tensorMap_involutive (ω₁ : Conjugation W₁) (ω₂ : Conjugation W₂) :
+    Function.Involutive (tensorMap ω₁ ω₂) := by
+  intro x
+  simp only [tensorMap, TensorProduct.map_map]
+  rw [show ω₁.toEquiv.toLinearMap ∘ₛₗ ω₁.toEquiv.toLinearMap = LinearMap.id by
+    ext y
+    simp [Conjugation.apply_apply]]
+  rw [show ω₂.toEquiv.toLinearMap ∘ₛₗ ω₂.toEquiv.toLinearMap = LinearMap.id by
+    ext y
+    simp [Conjugation.apply_apply], TensorProduct.map_id]
+  rfl
+
+/-- The tensor product of two conjugate-linear involutions. -/
+def tensorProduct (ω₁ : Conjugation W₁) (ω₂ : Conjugation W₂) :
+    Conjugation (W₁ ⊗[ℂ] W₂) where
+  toEquiv :=
+    { toFun := tensorMap ω₁ ω₂
+      invFun := tensorMap ω₁ ω₂
+      left_inv := tensorMap_involutive ω₁ ω₂
+      right_inv := tensorMap_involutive ω₁ ω₂
+      map_add' := by simp [tensorMap]
+      map_smul' := by simp [tensorMap] }
+  involutive := tensorMap_involutive ω₁ ω₂
+
+/-- Tensor-product conjugation acts componentwise on pure tensors. -/
+@[simp]
+theorem tensorProduct_toEquiv_tmul (ω₁ : Conjugation W₁) (ω₂ : Conjugation W₂)
+    (x : W₁) (y : W₂) :
+    (ω₁.tensorProduct ω₂).toEquiv (x ⊗ₜ[ℂ] y) = ω₁.toEquiv x ⊗ₜ[ℂ] ω₂.toEquiv y :=
+  by
+    -- Expose the private map so Mathlib's pure-tensor computation lemma can fire.
+    change tensorMap ω₁ ω₂ (x ⊗ₜ[ℂ] y) = _
+    simp [tensorMap]
+
+end TensorProduct
 
 /-- Mapping a complex subspace twice by a conjugation returns the original subspace. -/
 @[simp]
@@ -477,6 +524,19 @@ theorem integralMapToComplex_apply_ι (h₁ : IsBaseChange ℂ ι₁) (ι₂ : V
     integralMapToComplex h₁ ι₂ f (ι₁ x) = ι₂ (f x) :=
   h₁.lift_eq (ι₂ ∘ₗ f) x
 
+/-- The additive homomorphism `(V₁ →ₗ[ℤ] V₂) →+ (W₁ →ₗ[ℂ] W₂)` sending an integral linear map to
+its complexification. -/
+private noncomputable def integralMapToComplexAddMonoidHom (h₁ : IsBaseChange ℂ ι₁)
+    (ι₂ : V₂ →ₗ[ℤ] W₂) : (V₁ →ₗ[ℤ] V₂) →+ (W₁ →ₗ[ℂ] W₂) :=
+  AddMonoidHom.mk' (integralMapToComplex h₁ ι₂) fun _ _ ↦ h₁.algHom_ext _ _ fun x ↦ by simp
+
+/-- The bundled complexification homomorphism acts as `integralMapToComplex`. -/
+@[simp]
+private theorem coe_integralMapToComplexAddMonoidHom (h₁ : IsBaseChange ℂ ι₁)
+    (ι₂ : V₂ →ₗ[ℤ] W₂) :
+    ⇑(integralMapToComplexAddMonoidHom h₁ ι₂) = integralMapToComplex h₁ ι₂ :=
+  rfl
+
 /-- Complexification sends the identity integral map to the identity complex map. -/
 @[simp]
 theorem integralMapToComplex_id (h₁ : IsBaseChange ℂ ι₁) :
@@ -486,45 +546,45 @@ theorem integralMapToComplex_id (h₁ : IsBaseChange ℂ ι₁) :
 /-- Complexification sends the zero integral map to the zero complex map. -/
 @[simp]
 theorem integralMapToComplex_zero (h₁ : IsBaseChange ℂ ι₁) (ι₂ : V₂ →ₗ[ℤ] W₂) :
-    integralMapToComplex h₁ ι₂ (0 : V₁ →ₗ[ℤ] V₂) = 0 :=
-  h₁.algHom_ext _ _ fun x ↦ by simp
+    integralMapToComplex h₁ ι₂ (0 : V₁ →ₗ[ℤ] V₂) = 0 := by
+  simpa using map_zero (integralMapToComplexAddMonoidHom h₁ ι₂)
 
 /-- Complexification preserves addition of integral linear maps. -/
 @[simp]
 theorem integralMapToComplex_add (h₁ : IsBaseChange ℂ ι₁) (ι₂ : V₂ →ₗ[ℤ] W₂)
     (f g : V₁ →ₗ[ℤ] V₂) :
     integralMapToComplex h₁ ι₂ (f + g) =
-      integralMapToComplex h₁ ι₂ f + integralMapToComplex h₁ ι₂ g :=
-  h₁.algHom_ext _ _ fun x ↦ by simp
+      integralMapToComplex h₁ ι₂ f + integralMapToComplex h₁ ι₂ g := by
+  simpa using map_add (integralMapToComplexAddMonoidHom h₁ ι₂) f g
 
 /-- Complexification preserves negation of integral linear maps. -/
 @[simp]
 theorem integralMapToComplex_neg (h₁ : IsBaseChange ℂ ι₁) (ι₂ : V₂ →ₗ[ℤ] W₂)
     (f : V₁ →ₗ[ℤ] V₂) :
-    integralMapToComplex h₁ ι₂ (-f) = -integralMapToComplex h₁ ι₂ f :=
-  h₁.algHom_ext _ _ fun x ↦ by simp
+    integralMapToComplex h₁ ι₂ (-f) = -integralMapToComplex h₁ ι₂ f := by
+  simpa using map_neg (integralMapToComplexAddMonoidHom h₁ ι₂) f
 
 /-- Complexification preserves subtraction of integral linear maps. -/
 @[simp]
 theorem integralMapToComplex_sub (h₁ : IsBaseChange ℂ ι₁) (ι₂ : V₂ →ₗ[ℤ] W₂)
     (f g : V₁ →ₗ[ℤ] V₂) :
     integralMapToComplex h₁ ι₂ (f - g) =
-      integralMapToComplex h₁ ι₂ f - integralMapToComplex h₁ ι₂ g :=
-  h₁.algHom_ext _ _ fun x ↦ by simp
+      integralMapToComplex h₁ ι₂ f - integralMapToComplex h₁ ι₂ g := by
+  simpa using map_sub (integralMapToComplexAddMonoidHom h₁ ι₂) f g
 
 /-- Complexification preserves natural-number multiples of integral linear maps. -/
 @[simp]
 theorem integralMapToComplex_nsmul (h₁ : IsBaseChange ℂ ι₁) (ι₂ : V₂ →ₗ[ℤ] W₂) (k : ℕ)
     (f : V₁ →ₗ[ℤ] V₂) :
-    integralMapToComplex h₁ ι₂ (k • f) = k • integralMapToComplex h₁ ι₂ f :=
-  h₁.algHom_ext _ _ fun x ↦ by simp
+    integralMapToComplex h₁ ι₂ (k • f) = k • integralMapToComplex h₁ ι₂ f := by
+  simpa using map_nsmul (integralMapToComplexAddMonoidHom h₁ ι₂) k f
 
 /-- Complexification preserves integer multiples of integral linear maps. -/
 @[simp]
 theorem integralMapToComplex_zsmul (h₁ : IsBaseChange ℂ ι₁) (ι₂ : V₂ →ₗ[ℤ] W₂) (k : ℤ)
     (f : V₁ →ₗ[ℤ] V₂) :
-    integralMapToComplex h₁ ι₂ (k • f) = k • integralMapToComplex h₁ ι₂ f :=
-  h₁.algHom_ext _ _ fun x ↦ by simp
+    integralMapToComplex h₁ ι₂ (k • f) = k • integralMapToComplex h₁ ι₂ f := by
+  simpa using map_zsmul (integralMapToComplexAddMonoidHom h₁ ι₂) k f
 
 /-- Complexification preserves composition of integral linear maps. -/
 theorem integralMapToComplex_comp (h₁ : IsBaseChange ℂ ι₁) (h₂ : IsBaseChange ℂ ι₂)

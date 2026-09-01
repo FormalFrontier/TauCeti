@@ -243,21 +243,26 @@ theorem geckRootSubgroupCoordinateMap_surjective (i : Fin t.rank ⊕ Fin t.rank)
 scheme-theoretic image is a closed copy of `𝔾ₐ`, as required of the root subgroups in a pinning. -/
 instance isClosedImmersion_geckRootSubgroup (i : Fin t.rank ⊕ Fin t.rank) :
     IsClosedImmersion (t.geckRootSubgroup ht i).hom.hom.left := by
-  let e₁ := (eqToHom (AdditiveGroup.groupScheme_def ℤ)).hom.hom.left
-  let c := ((AlgebraicGeometry.hopfSpec (CommRingCat.of ℤ)).map
-    (t.geckRootSubgroupCoordinateMap ht i).op).hom.hom.left
   let e₂ := (eqToHom (t.geckGroupScheme_def ht).symm).hom.hom.left
-  have hc : IsClosedImmersion c :=
-    (CommHopfAlgCat.isClosedImmersion_hopfSpec_map_iff _).2
+  have hroot :=
+    TauCeti.UniversalEnvelopingAlgebra.isClosedImmersion_kostantRootSubgroupToToral_of_surjective
+      (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
+      (t.geckCoordinateLattice ht).toAddSubgroup
+      (t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht)
+      (t.isNilpotent_geckRepresentation_rootGenerator ht)
+      (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht) i
       (t.geckRootSubgroupCoordinateMap_surjective ht i)
-  have he₁c : IsClosedImmersion (e₁ ≫ c) :=
-    (MorphismProperty.cancel_left_of_respectsIso _ e₁ c).2 hc
-  have he₁ce₂ : IsClosedImmersion ((e₁ ≫ c) ≫ e₂) :=
-    (MorphismProperty.cancel_right_of_respectsIso _ (e₁ ≫ c) e₂).2 he₁c
-  rw [geckRootSubgroup_def,
-    TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupToToral_def]
+  have hcomp :=
+    (MorphismProperty.cancel_right_of_respectsIso _
+      (TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupToToral
+        (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
+        (t.geckCoordinateLattice ht).toAddSubgroup
+        (t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht)
+        (t.isNilpotent_geckRepresentation_rootGenerator ht)
+        (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht) i).hom.hom.left e₂).2 hroot
+  rw [geckRootSubgroup_def]
   simp only [Grp.comp', Mon.comp_hom', Over.comp_left]
-  exact he₁ce₂
+  exact hcomp
 
 /-- Every numbered root-subgroup map into the Geck carrier is a monomorphism. -/
 theorem mono_geckRootSubgroup (i : Fin t.rank ⊕ Fin t.rank) :
@@ -280,12 +285,8 @@ theorem coe_geckRootSubgroupClosedSubgroup (i : Fin t.rank ⊕ Fin t.rank) :
 /-- The bundled numbered root subgroup is canonically isomorphic to the additive group scheme. -/
 noncomputable def geckRootSubgroupClosedSubgroupIso (i : Fin t.rank ⊕ Fin t.rank) :
     ((t.geckRootSubgroupClosedSubgroup ht i).1 :
-      Grp (Over (Spec (CommRingCat.of ℤ)))) ≅ AdditiveGroup.groupScheme ℤ := by
-  exact eqToIso (congrArg
-      (fun P : Subobject (t.geckGroupScheme ht) =>
-        (P : Grp (Over (Spec (CommRingCat.of ℤ)))))
-      (t.coe_geckRootSubgroupClosedSubgroup ht i)) ≪≫
-    Subobject.underlyingIso (t.geckRootSubgroup ht i)
+      Grp (Over (Spec (CommRingCat.of ℤ)))) ≅ AdditiveGroup.groupScheme ℤ :=
+  ClosedSubgroupScheme.mkIso (t.geckRootSubgroup ht i)
 
 /-- The canonical parametrization of the bundled closed subgroup followed by its inclusion is the
 numbered Geck root-subgroup map. -/
@@ -293,20 +294,8 @@ numbered Geck root-subgroup map. -/
 theorem geckRootSubgroupClosedSubgroupIso_inv_comp_arrow (i : Fin t.rank ⊕ Fin t.rank) :
     (t.geckRootSubgroupClosedSubgroupIso ht i).inv ≫
         (t.geckRootSubgroupClosedSubgroup ht i).1.arrow =
-      t.geckRootSubgroup ht i := by
-  have harrow :
-      (eqToIso (congrArg
-        (fun P : Subobject (t.geckGroupScheme ht) =>
-          (P : Grp (Over (Spec (CommRingCat.of ℤ)))))
-        (t.coe_geckRootSubgroupClosedSubgroup ht i))).inv ≫
-          (t.geckRootSubgroupClosedSubgroup ht i).1.arrow =
-        (Subobject.mk (t.geckRootSubgroup ht i)).arrow := by
-    exact Subobject.arrow_congr
-      (Subobject.mk (t.geckRootSubgroup ht i))
-      (t.geckRootSubgroupClosedSubgroup ht i).1
-      (t.coe_geckRootSubgroupClosedSubgroup ht i).symm
-  rw [geckRootSubgroupClosedSubgroupIso, Iso.trans_inv, Category.assoc, harrow,
-    Subobject.underlyingIso_arrow]
+      t.geckRootSubgroup ht i :=
+  ClosedSubgroupScheme.mkIso_inv_comp_arrow (t.geckRootSubgroup ht i)
 
 end
 

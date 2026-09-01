@@ -6,11 +6,12 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Logic.Equiv.Fin.Rotate
+public import TauCeti.Data.ZMod.FinEquiv
 public import TauCeti.NumberTheory.ModularForms.Cusps.Basic
 public import TauCeti.NumberTheory.ModularForms.HeckeSlash.UpperTri.Sum
 
 /-!
-# The upper-triangular Hecke slash sum is invariant under `T`
+# The upper-triangular Hecke slash sum under `T`-invariance
 
 The classical upper-triangular Hecke sum `heckeSlashUpperTri k p f = ∑ b < p, f ∣[k] !![1, b; 0, p]`
 preserves invariance under the translation matrix `T = !![1, 1; 0, 1]`.
@@ -24,6 +25,14 @@ boundary term is absorbed, so slashing the whole sum by `T` cyclically permutes 
 Pointwise on `ℍ`, `f ∣[k] T = f` is the 1-periodicity `f(τ + 1) = f(τ)`, so the upper-triangular
 sum sends 1-periodic functions to 1-periodic functions.
 
+The same absorption proves a second statement about a `T`-invariant `f`: the sum commutes with the
+slash by `scaleRep d = diag(d, 1)` for `d` coprime to `p`. The two slashes do **not** commute
+termwise — `diag(d, 1) · !![1, b; 0, p]` is `!![1, d b; 0, p] · diag(d, 1)`, whose upper entry
+`d b` leaves the range `b < p` — but writing `d b = q p + r` puts the excess into a shift `T ^ q`,
+which the invariance absorbs, and coprimality makes `b ↦ r` a permutation of `Fin p`, so the sum is
+merely reindexed. This is the level-raising half of `Tₚ ∘ V_d = V_d ∘ Tₚ`
+(`HeckeSlash/Degeneracy.lean`).
+
 ## Main results
 
 * `HeckeRing.GL2.upperTriRep_mul_mapGL_T_of_lt`: for `b.val + 1 < p`,
@@ -34,6 +43,23 @@ sum sends 1-periodic functions to 1-periodic functions.
   `heckeSlashUpperTri k p f ∣[k] mapGL ℚ ModularGroup.T = heckeSlashUpperTri k p f`.
 * `HeckeRing.GL2.heckeSlashUpperTri_shift_one`: if `f((1 : ℝ) +ᵥ τ) = f(τ)` for all `τ`, then
   `heckeSlashUpperTri k p f ((1 : ℝ) +ᵥ τ) = heckeSlashUpperTri k p f τ`.
+* `HeckeRing.GL2.heckeSlashUpperTri_slash_scaleRep_comm`: if `f ∣[k] mapGL ℚ ModularGroup.T = f`
+  and `d` is coprime to `p`, then `heckeSlashUpperTri k p (f ∣[k] scaleRep d)` equals
+  `heckeSlashUpperTri k p f ∣[k] scaleRep d`.
+
+## Provenance
+
+`heckeSlashUpperTri_slash_scaleRep_comm` and its helpers adapt the reindexing step of the
+level-raising comparison in the AINTLIB
+[`LeanModularForms`](https://github.com/CBirkbeck/AINTLIB) project, file
+`LeanModularForms/HeckeRIngs/GL2/Newforms/LevelRaiseComm.lean`, commit
+`2baa76f742bdb4fb8ee323fabba41203bd390e08`, Apache-2.0, Chris Birkbeck, lines 66–190
+(`T_p_upper_mod`, `levelRaise_mul_T_p_upper` and `sum_reindex_mul_mod`, feeding
+`heckeT_p_ut_levelRaise`). No proof code is transcribed: that development sums over
+`Finset.range p` by `Finset.sum_nbij` and assumes `p` prime, whereas the statement here indexes by
+`Fin p` through an explicit `Equiv`, assumes only `0 < p` with `Nat.Coprime d p`, and is about a
+bare function rather than a cusp form. Its consumer, and the provenance note for the level-raising
+theorem itself, is `HeckeSlash/Degeneracy.lean`.
 
 ## References
 
@@ -130,6 +156,77 @@ lemma heckeSlashUpperTri_shift_one (f : ℍ → ℂ) (hf : ∀ τ : ℍ, f ((1 :
     rw [zpow_one, Int.cast_one] at ht
     exact ht
   rw [← hT_eval, hTinv]
+
+/-! ### The sum against `diag(d, 1)` -/
+
+section Scale
+
+variable {d : ℕ}
+
+/-- **The commutation of `scaleRep d = diag(d, 1)` past an upper-triangular representative.**
+Both sides are `!![d, d b; 0, p]`: on the right, `d b = q p + r` is split so that the
+representative index `r` is again in range, at the cost of the shift `T ^ q`. -/
+private lemma scaleRep_mul_upperTriRep (hd : 0 < d) (b : Fin p) {q r : ℕ} (hr : r < p)
+    (hqr : d * (b : ℕ) = q * p + r) :
+    scaleRep d * upperTriRep p b =
+      mapGL ℚ (ModularGroup.T ^ q) * (upperTriRep p ⟨r, hr⟩ * scaleRep d) := by
+  have hmod : (d : ℚ) * ((b : ℕ) : ℚ) = (q : ℚ) * (p : ℚ) + (r : ℚ) := by exact_mod_cast hqr
+  apply Units.ext
+  rw [Units.val_mul, Units.val_mul, Units.val_mul, coe_scaleRep d hd, coe_upperTriRep,
+    coe_upperTriRep]
+  ext i j
+  -- three of the four entries close by `simp`; the bullet makes the surviving one explicit, so a
+  -- change in the simp set fails here rather than silently redirecting `linarith`.
+  fin_cases i <;> fin_cases j <;> simp [Matrix.mul_apply, Fin.sum_univ_two]
+  · linarith
+
+/-- Multiplication by `d` modulo `p` permutes `Fin p` when `d` and `p` are coprime. It *is*
+multiplication by the unit `ZMod.unitOfCoprime d hdp` of `ZMod p`, read through
+`ZMod.finEquiv`, so the permutation property is the unit's and nothing is proved here. -/
+private noncomputable def mulModEquiv (hp : 0 < p) (hdp : Nat.Coprime d p) : Fin p ≃ Fin p :=
+  haveI : NeZero p := ⟨hp.ne'⟩
+  (ZMod.finEquiv p).toEquiv.trans <|
+    (Units.mulLeft (ZMod.unitOfCoprime d hdp)).trans (ZMod.finEquiv p).toEquiv.symm
+
+/-- The index the permutation sends `b` to, as a natural number. This is what
+`ZMod.finEquiv_symm_apply_val` is for: the `Fin p` representative of a residue has that
+residue's `val`. -/
+@[simp]
+private lemma coe_mulModEquiv (hp : 0 < p) (hdp : Nat.Coprime d p) (b : Fin p) :
+    (mulModEquiv p hp hdp b : ℕ) = d * (b : ℕ) % p := by
+  have : NeZero p := ⟨hp.ne'⟩
+  simp [mulModEquiv, ZMod.coe_unitOfCoprime, ← Nat.cast_mul, ZMod.val_natCast]
+
+/-- **The upper-triangular slash sum commutes with the slash by `scaleRep d = diag(d, 1)`**, for
+`d` coprime to `p` and any `T`-invariant function. This is the level-raising half of
+`heckeTCuspNat_levelRaise`, stated before the normalising scalar of `V_d` is introduced.
+
+Invariance under `T` alone is all the reindexing consumes: the shift it produces is `T ^ q` for
+the quotient `q` of `d b` by `p`, and those powers are derived from `hT` inside the proof, so no
+level and no explicit power enters the statement. A form invariant under a congruence subgroup
+containing `T` — every `Γ₁(M)` — meets the hypothesis; `HeckeSlash/Degeneracy.lean` is the
+consumer. -/
+@[grind =]
+theorem heckeSlashUpperTri_slash_scaleRep_comm (hd : 0 < d) (hp : 0 < p)
+    (hdp : Nat.Coprime d p) {f : ℍ → ℂ}
+    (hT : f ∣[k] (mapGL ℚ ModularGroup.T : GL (Fin 2) ℚ) = f) :
+    heckeSlashUpperTri k p (f ∣[k] (scaleRep d : GL (Fin 2) ℚ)) =
+      heckeSlashUpperTri k p f ∣[k] (scaleRep d : GL (Fin 2) ℚ) := by
+  have hTpow (q : ℕ) : f ∣[k] (mapGL ℚ (ModularGroup.T ^ q) : GL (Fin 2) ℚ) = f := by
+    rw [ModularForm.rat_slash_mapGL, map_pow, ← zpow_natCast]
+    exact slash_zpow_eq_self_of_slash_eq k f (by rwa [ModularForm.rat_slash_mapGL] at hT) q
+  rw [heckeSlashUpperTri_def, heckeSlashUpperTri_def, SlashAction.sum_slash]
+  rw [← Equiv.sum_comp (mulModEquiv p hp hdp) fun b ↦ (f ∣[k] upperTriRep p b) ∣[k]
+    (scaleRep d : GL (Fin 2) ℚ)]
+  refine Finset.sum_congr rfl fun b _ ↦ ?_
+  -- the reindexed representative is `d b mod p`, by the defining lemma of `mulModEquiv`
+  have hb : mulModEquiv p hp hdp b = ⟨d * (b : ℕ) % p, Nat.mod_lt _ hp⟩ :=
+    Fin.ext (coe_mulModEquiv p hp hdp b)
+  rw [← SlashAction.slash_mul,
+    scaleRep_mul_upperTriRep p hd b (Nat.mod_lt _ hp) (Nat.div_add_mod' (d * (b : ℕ)) p).symm,
+    SlashAction.slash_mul, hTpow, SlashAction.slash_mul, hb]
+
+end Scale
 
 end HeckeRing.GL2
 

@@ -7,6 +7,7 @@ module
 
 public import TauCeti.NumberTheory.Multiquadratic.Degree
 public import TauCeti.FieldTheory.SquareClassGroup
+import TauCeti.Algebra.Group.Units.Basic
 
 /-!
 # Square-class independence as `ZMod 2`-linear independence
@@ -33,15 +34,6 @@ public section
 namespace TauCeti.Multiquadratic
 
 variable {K : Type*} [Field K] {L : Type*} [Field L] [Algebra K L]
-
-/-- A unit is a square iff its underlying field element is. -/
-private theorem isSquare_units_val_iff {u : Kˣ} : IsSquare (u : K) ↔ IsSquare u := by
-  constructor
-  · rintro ⟨x, hx⟩
-    have hx0 : x ≠ 0 := fun h => u.ne_zero (by rw [hx, h, mul_zero])
-    exact ⟨Units.mk0 x hx0, Units.ext (by simpa using hx)⟩
-  · rintro ⟨v, rfl⟩
-    exact ⟨(v : K), by simp⟩
 
 /-- **The multiquadratic degree theorem, restated via linear independence.** If the square classes
 of the radicands `d : ι → Kˣ` are `ZMod 2`-linearly independent, then the field generated over `K`

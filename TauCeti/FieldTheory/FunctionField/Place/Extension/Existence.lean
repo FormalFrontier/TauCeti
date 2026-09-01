@@ -23,7 +23,7 @@ larger function field. Locality ensures that the resulting valuation subring is 
 valuation subrings are integrally closed, it contains the enlarged constant field, so it defines a
 place whose restriction is the original place.
 
-## Main result
+## Main results
 
 * `TauCeti.Place.restrict_surjective`: every place downstairs is the restriction of a place
   upstairs (Stichtenoth, Proposition 3.1.7).

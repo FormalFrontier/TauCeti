@@ -11,6 +11,7 @@ public import Mathlib.RingTheory.Finiteness.Finsupp
 public import TauCeti.FieldTheory.FunctionField.ConstantField
 public import TauCeti.FieldTheory.FunctionField.Divisor.Basic
 public import TauCeti.FieldTheory.FunctionField.Place.Existence
+public import TauCeti.FieldTheory.FunctionField.Place.Filtration
 
 /-!
 # Riemann–Roch spaces
@@ -44,6 +45,8 @@ Fields and Codes*, 2nd ed., Definition 1.4.4 through Definition 1.4.10.
 * `TauCeti.finrank_quotient_riemannRochSpace_le_degree_sub`: for `D ≤ E` the quotient
   `L(E)/L(D)` has dimension at most `deg E - deg D`, equivalently
   `TauCeti.Divisor.dim_le_dim_add_degree_sub`: `ℓ(E) ≤ ℓ(D) + (deg E - deg D)` (Lemma 1.4.8).
+* `TauCeti.rank_quotient_riemannRochSpace_add_dim`: the rank of `L(E)/L(D)` is exactly
+  `ℓ(E) - ℓ(D)`, in the subtraction-free form `rank (L(E)/L(D)) + ℓ(D) = ℓ(E)`.
 * `TauCeti.finiteDimensional_riemannRochSpace` and
   `TauCeti.Divisor.dim_le_degree_posPart_add_one`: `L(D)` is finite-dimensional, with
   `ℓ(D) ≤ deg D⁺ + [algebraicClosure k F : k]` and hence `ℓ(D) ≤ deg D⁺ + 1` over an exact
@@ -177,70 +180,56 @@ private lemma le_add_ofPoint (D : Divisor k F) (P : Place k F) :
   le_add_of_nonneg_right
     (WeilDivisor.isEffective_iff_zero_le.mp (WeilDivisor.isEffective_ofPoint P))
 
-private lemma coe_algebraMap_integers (P : Place k F) (c : k) :
-    ((algebraMap k P.integers c : P.integers) : F) = algebraMap k F c := by
-  rw [IsScalarTower.algebraMap_apply k P.integers F, ValuationSubring.algebraMap_apply]
+/-- `L(D)` bounds the pole at any single place: it sits inside the step `𝔪_P^(-D P)` of the
+order filtration at `P`. -/
+private lemma riemannRochSpace_le_filtration (D : Divisor k F) (P : Place k F) :
+    riemannRochSpace D ≤ P.filtration (-D.coeff P) := fun f hf ↦ by
+  rw [Place.mem_filtration_iff, neg_neg]
+  exact mem_riemannRochSpace_iff.mp hf P
 
-private lemma mul_mem_integers (ht : P.ord t = D.coeff P + 1) (ht0 : t ≠ 0) {x : F}
-    (hx : x ∈ riemannRochSpace (D + WeilDivisor.ofPoint P)) : t * x ∈ P.integers := by
-  rcases eq_or_ne x 0 with rfl | hx0
-  · simp
-  · rw [P.mem_integers_iff_ord_nonneg, P.ord_mul ht0 hx0, ht]
-    have h := (mem_riemannRochSpace_iff_neg_le_ord hx0).mp hx P
-    rw [WeilDivisor.coeff_add, WeilDivisor.coeff_ofPoint_self] at h
-    omega
+/-- The special case of `TauCeti.riemannRochSpace_le_filtration` used to build
+`TauCeti.residueEval`, with the coefficient of `D + P` at `P` computed. -/
+private lemma riemannRochSpace_add_ofPoint_le_filtration (D : Divisor k F) (P : Place k F) :
+    riemannRochSpace (D + WeilDivisor.ofPoint P) ≤ P.filtration (-(D.coeff P + 1)) := by
+  have h := riemannRochSpace_le_filtration (D + WeilDivisor.ofPoint P) P
+  rwa [WeilDivisor.coeff_add, WeilDivisor.coeff_ofPoint_self] at h
+
+/-- Inside `L(D + P)`, belonging to `L(D)` is a condition at `P` alone: away from `P` the two
+divisors agree, so only the pole order at `P` can differ. -/
+private lemma mem_riemannRochSpace_iff_mem_filtration {x : F}
+    (hx : x ∈ riemannRochSpace (D + WeilDivisor.ofPoint P)) :
+    x ∈ riemannRochSpace D ↔ x ∈ P.filtration (-D.coeff P) := by
+  refine ⟨fun h ↦ riemannRochSpace_le_filtration D P h, fun h ↦ ?_⟩
+  rw [Place.mem_filtration_iff, neg_neg] at h
+  rw [mem_riemannRochSpace_iff]
+  intro Q
+  rcases eq_or_ne Q P with rfl | hQ
+  · exact h
+  · have hQ' := mem_riemannRochSpace_iff.mp hx Q
+    rwa [WeilDivisor.coeff_add, WeilDivisor.coeff_ofPoint_of_ne hQ, add_zero] at hQ'
 
 /-- The evaluation map of Stichtenoth's proof of Lemma 1.4.8: for `t` of order `D P + 1` at `P`,
-the map `x ↦ (t · x)(P)` sends `L(D + P)` to the residue field of `P`, and its kernel is
-`L(D)`. -/
+the map `x ↦ (t · x)(P)` sends `L(D + P)` to the residue field of `P`, and its kernel is `L(D)`.
+It is the local map `TauCeti.Place.filtrationResidue` restricted along
+`L(D + P) ≤ 𝔪_P^(-(D P + 1))`. -/
 private noncomputable def residueEval (D : Divisor k F) (P : Place k F) {t : F}
-    (ht : P.ord t = D.coeff P + 1) (ht0 : t ≠ 0) :
-    riemannRochSpace (D + WeilDivisor.ofPoint P) →ₗ[k] P.ResidueField where
-  toFun x := IsScalarTower.toAlgHom k P.integers P.ResidueField
-    ⟨t * (x : F), mul_mem_integers ht ht0 x.2⟩
-  map_add' x y := by
-    rw [← map_add]
-    exact congrArg _ (Subtype.ext (by push_cast; ring))
-  map_smul' c x := by
-    rw [RingHom.id_apply, ← map_smul]
-    exact congrArg _
-      (Subtype.ext (by push_cast [Algebra.smul_def, coe_algebraMap_integers]; ring))
-
-private lemma residueEval_apply (ht : P.ord t = D.coeff P + 1) (ht0 : t ≠ 0)
-    (x : riemannRochSpace (D + WeilDivisor.ofPoint P)) :
-    residueEval D P ht ht0 x =
-      IsLocalRing.residue P.integers ⟨t * (x : F), mul_mem_integers ht ht0 x.2⟩ := (rfl)
-
-private lemma mem_riemannRochSpace_iff_residueEval_eq_zero (ht : P.ord t = D.coeff P + 1)
-    (ht0 : t ≠ 0) (x : riemannRochSpace (D + WeilDivisor.ofPoint P)) :
-    (x : F) ∈ riemannRochSpace D ↔ residueEval D P ht ht0 x = 0 := by
-  rcases eq_or_ne (x : F) 0 with hx0 | hx0
-  · have hx : x = 0 := Subtype.ext hx0
-    simp [hx]
-  · have hres : residueEval D P ht ht0 x = 0 ↔ 0 < P.ord (t * (x : F)) := by
-      rw [residueEval_apply]
-      exact P.residue_eq_zero_iff_ord_pos (f := ⟨t * (x : F), mul_mem_integers ht ht0 x.2⟩)
-        (mul_ne_zero ht0 hx0)
-    rw [hres, P.ord_mul ht0 hx0, ht, mem_riemannRochSpace_iff_neg_le_ord hx0]
-    constructor
-    · intro h
-      have := h P
-      omega
-    · intro h Q
-      rcases eq_or_ne Q P with rfl | hQ
-      · omega
-      · have hQ' := (mem_riemannRochSpace_iff_neg_le_ord hx0).mp x.2 Q
-        rwa [WeilDivisor.coeff_add, WeilDivisor.coeff_ofPoint_of_ne hQ, add_zero] at hQ'
+    (ht : P.ord t = D.coeff P + 1) :
+    riemannRochSpace (D + WeilDivisor.ofPoint P) →ₗ[k] P.ResidueField :=
+  (Place.filtrationResidue (a := -(D.coeff P + 1)) (by rw [neg_neg]; exact ht)).comp
+    (Submodule.inclusion (riemannRochSpace_add_ofPoint_le_filtration D P))
 
 /-- The kernel of `TauCeti.residueEval` is `L(D)`, sitting inside `L(D + P)` as the comap of the
 inclusion `TauCeti.riemannRochSpace_mono`.  This is the structural heart of Stichtenoth's proof of
-Lemma 1.4.8. -/
+Lemma 1.4.8, and here it is `TauCeti.Place.ker_filtrationResidue` read inside `L(D + P)`. -/
 private lemma ker_residueEval (ht : P.ord t = D.coeff P + 1) (ht0 : t ≠ 0) :
-    LinearMap.ker (residueEval D P ht ht0) =
+    LinearMap.ker (residueEval D P ht) =
       Submodule.comap (riemannRochSpace (D + WeilDivisor.ofPoint P)).subtype
         (riemannRochSpace D) := by
+  have hidx : -(D.coeff P + 1) + 1 = -D.coeff P := by ring
   ext x
-  exact (mem_riemannRochSpace_iff_residueEval_eq_zero ht ht0 x).symm
+  rw [LinearMap.mem_ker, residueEval, LinearMap.comp_apply,
+    Place.filtrationResidue_eq_zero_iff _ ht0, Submodule.coe_inclusion, hidx,
+    Submodule.mem_comap, Submodule.subtype_apply, mem_riemannRochSpace_iff_mem_filtration x.2]
 
 /-- Stichtenoth's proof of Lemma 1.4.8 in its one-place form, carrying both conclusions the two
 public statements below project out of: `L(D + P)` stays finite-dimensional, and its dimension
@@ -252,31 +241,27 @@ private lemma finiteDimensional_and_finrank_add_ofPoint_le (hF : IsFunctionField
       Module.finrank k (riemannRochSpace (D + WeilDivisor.ofPoint P)) ≤
         Module.finrank k (riemannRochSpace D) + P.degree := by
   have : FiniteDimensional k P.ResidueField := Place.finiteDimensional_residueField P hF
-  obtain ⟨t, ht0, ht⟩ : ∃ t : F, t ≠ 0 ∧ P.ord t = D.coeff P + 1 := by
-    obtain ⟨t, ht⟩ := P.ord_surjective (D.coeff P + 1)
-    rcases eq_or_ne t 0 with rfl | ht0
-    · exact ⟨1, one_ne_zero, by rw [P.ord_one, ← ht, P.ord_zero]⟩
-    · exact ⟨t, ht0, ht⟩
+  obtain ⟨t, ht0, ht⟩ := P.exists_ne_zero_ord_eq (D.coeff P + 1)
   have hle : riemannRochSpace D ≤ riemannRochSpace (D + WeilDivisor.ofPoint P) :=
     riemannRochSpace_mono (le_add_ofPoint D P)
-  have hkerfin : FiniteDimensional k (LinearMap.ker (residueEval D P ht ht0)) := by
-    rw [ker_residueEval]
+  have hkerfin : FiniteDimensional k (LinearMap.ker (residueEval D P ht)) := by
+    rw [ker_residueEval ht ht0]
     exact Module.Finite.equiv (Submodule.comapSubtypeEquivOfLe hle).symm
-  have hkerrank : Module.finrank k (LinearMap.ker (residueEval D P ht ht0)) =
+  have hkerrank : Module.finrank k (LinearMap.ker (residueEval D P ht)) =
       Module.finrank k (riemannRochSpace D) := by
-    rw [ker_residueEval]
+    rw [ker_residueEval ht ht0]
     exact (Submodule.comapSubtypeEquivOfLe hle).finrank_eq
   have hquotfin : FiniteDimensional k
-      (riemannRochSpace (D + WeilDivisor.ofPoint P) ⧸ LinearMap.ker (residueEval D P ht ht0)) :=
-    Module.Finite.equiv (LinearMap.quotKerEquivRange (residueEval D P ht ht0)).symm
+      (riemannRochSpace (D + WeilDivisor.ofPoint P) ⧸ LinearMap.ker (residueEval D P ht)) :=
+    Module.Finite.equiv (LinearMap.quotKerEquivRange (residueEval D P ht)).symm
   have hfin : FiniteDimensional k (riemannRochSpace (D + WeilDivisor.ofPoint P)) :=
-    Module.Finite.of_submodule_quotient (LinearMap.ker (residueEval D P ht ht0))
+    Module.Finite.of_submodule_quotient (LinearMap.ker (residueEval D P ht))
   refine ⟨hfin, ?_⟩
-  have hquot := Submodule.finrank_quotient_add_finrank (LinearMap.ker (residueEval D P ht ht0))
+  have hquot := Submodule.finrank_quotient_add_finrank (LinearMap.ker (residueEval D P ht))
   have hrange : Module.finrank k
-      (riemannRochSpace (D + WeilDivisor.ofPoint P) ⧸ LinearMap.ker (residueEval D P ht ht0)) ≤
+      (riemannRochSpace (D + WeilDivisor.ofPoint P) ⧸ LinearMap.ker (residueEval D P ht)) ≤
         P.degree := by
-    rw [(LinearMap.quotKerEquivRange (residueEval D P ht ht0)).finrank_eq, Place.degree_eq_finrank]
+    rw [(LinearMap.quotKerEquivRange (residueEval D P ht)).finrank_eq, Place.degree_eq_finrank]
     exact Submodule.finrank_le _
   omega
 
@@ -398,23 +383,49 @@ theorem Divisor.dim_le_dim_add_degree_sub (hF : IsFunctionField k F) {D E : Divi
 
 /-- **Stichtenoth, Lemma 1.4.8** in the quotient form Stichtenoth states it in: for `D ≤ E` the
 quotient `L(E) / L(D)` has dimension at most `deg E - deg D`.  Inside `L(E)` the subspace `L(D)`
-is the comap along the subtype map of the inclusion `TauCeti.riemannRochSpace_mono`; the
+is the trace `Submodule.submoduleOf` of the inclusion `TauCeti.riemannRochSpace_mono`; the
 arithmetic form of the same bound is `TauCeti.Divisor.dim_le_dim_add_degree_sub`. -/
 theorem finrank_quotient_riemannRochSpace_le_degree_sub (hF : IsFunctionField k F)
     {D E : Divisor k F} (h : D ≤ E) :
     (Module.finrank k (riemannRochSpace E ⧸
-        Submodule.comap (riemannRochSpace E).subtype (riemannRochSpace D)) : ℤ) ≤
+        (riemannRochSpace D).submoduleOf (riemannRochSpace E)) : ℤ) ≤
       Divisor.degree E - Divisor.degree D := by
   have := finiteDimensional_riemannRochSpace hF E
   have hsub : Module.finrank k
-      (Submodule.comap (riemannRochSpace E).subtype (riemannRochSpace D)) = Divisor.dim D :=
-    (Submodule.comapSubtypeEquivOfLe (riemannRochSpace_mono h)).finrank_eq.trans
+      ((riemannRochSpace D).submoduleOf (riemannRochSpace E)) = Divisor.dim D :=
+    (Submodule.submoduleOfEquivOfLe (riemannRochSpace_mono h)).finrank_eq.trans
       (Divisor.dim_def D).symm
   have hquot := Submodule.finrank_quotient_add_finrank
-    (Submodule.comap (riemannRochSpace E).subtype (riemannRochSpace D))
+    ((riemannRochSpace D).submoduleOf (riemannRochSpace E))
   have hE : Module.finrank k (riemannRochSpace E) = Divisor.dim E := (Divisor.dim_def E).symm
   have hle := Divisor.dim_le_dim_add_degree_sub hF h
   omega
+
+/-- **Lemma 1.4.8 as an exact count of ranks**: for `D ≤ E` the rank of the quotient
+`L(E) / L(D)` is `ℓ(E) - ℓ(D)`, stated without subtraction as
+
+`rank (L(E)/L(D)) + ℓ(D) = ℓ(E)`.
+
+This is the `Module.rank`-valued companion of
+`TauCeti.finrank_quotient_riemannRochSpace_le_degree_sub`, for use where the ambient module is
+not yet known to be finite-dimensional. -/
+theorem rank_quotient_riemannRochSpace_add_dim (hF : IsFunctionField k F) {D E : Divisor k F}
+    (h : D ≤ E) :
+    Module.rank k (riemannRochSpace E ⧸ (riemannRochSpace D).submoduleOf (riemannRochSpace E)) +
+        (Divisor.dim D : Cardinal) = (Divisor.dim E : Cardinal) := by
+  have hfinE := finiteDimensional_riemannRochSpace hF E
+  have hfinD := finiteDimensional_riemannRochSpace hF D
+  have hsub : Module.rank k ((riemannRochSpace D).submoduleOf (riemannRochSpace E)) =
+      (Divisor.dim D : Cardinal) := by
+    rw [(Submodule.submoduleOfEquivOfLe (riemannRochSpace_mono h)).rank_eq, Divisor.dim_def,
+      Module.finrank_eq_rank]
+  have hdimE : (Divisor.dim E : Cardinal) = Module.rank k (riemannRochSpace E) := by
+    rw [Divisor.dim_def, Module.finrank_eq_rank]
+  have hquot := Submodule.rank_quotient_add_rank
+    ((riemannRochSpace D).submoduleOf (riemannRochSpace E))
+  rw [hsub] at hquot
+  rw [hdimE]
+  exact hquot
 
 /-- **Stichtenoth, Proposition 1.4.9**, with the bound for a general constant field:
 `ℓ(D) ≤ deg D⁺ + [algebraicClosure k F : k]`. -/

@@ -5,6 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.AlgebraicGeometry.Modules.GlobalSections
+public import TauCeti.AlgebraicGeometry.Scheme.Opens
 public import Mathlib.AlgebraicGeometry.FunctionField
 public import Mathlib.AlgebraicGeometry.Modules.Sheaf
 public import Mathlib.AlgebraicGeometry.Stalk
@@ -48,12 +50,21 @@ condition and the `𝒪_X`-module structure automatic.
   the restriction maps between nonempty open subsets are isomorphisms, and
   `TauCeti.AlgebraicGeometry.Scheme.subsingleton_rationalFunctions`, the sections over an empty
   open subset vanish;
+* `TauCeti.AlgebraicGeometry.Scheme.rationalFunctionsMul`, multiplication by a rational function
+  as an endomorphism of `𝒦_X`, obtained by pushing forward multiplication by the corresponding
+  global function on `Spec K(X)`; `rationalFunctionsEquiv_rationalFunctionsMul_app` identifies it
+  with multiplication on sections, and `rationalFunctionsMul_mul` and `rationalFunctionsMul_one`
+  make it multiplicative, so that multiplying by a unit is an automorphism of `𝒦_X`;
 * the module morphism `TauCeti.AlgebraicGeometry.Scheme.toRationalFunctions` is
   `X.germToFunctionField` on sections
   (`TauCeti.AlgebraicGeometry.Scheme.rationalFunctionsEquiv_toRationalFunctions_app`), is
   injective on sections over every open subset of an integral scheme
   (`TauCeti.AlgebraicGeometry.Scheme.toRationalFunctions_app_injective`), and is therefore a
   monomorphism.
+
+The sheaf `𝒪_X(D)` attached to a Weil divisor is the submodule of `𝒦_X` cut out by an order
+bound; it is built in `TauCeti/AlgebraicGeometry/WeilDivisor/Scheme/Sheaf.lean`, and the
+multiplication endomorphisms above are what make it depend only on the divisor class of `D`.
 
 The Cartier divisors of `TauCetiRoadmap/JacobianChallenge/README.md`, Layer A ("Divisors on a
 curve: Weil divisors `⊕_x ℤ` and Cartier divisors; the dictionaries `Cartier ≃ line bundles`
@@ -337,6 +348,80 @@ theorem rationalFunctionsEquiv_toRationalFunctions_app (U : X.Opens) [Nonempty U
     rationalFunctionsEquiv U (Scheme.Modules.Hom.app (toRationalFunctions X) U r) =
       X.germToFunctionField U r := by
   exact ConcreteCategory.congr_hom (app_comp_functionFieldSectionsIso U) r
+
+section Mul
+
+variable (X)
+
+/-- Multiplication by a rational function, as an endomorphism of `𝒦_X`.
+
+It is the pushforward along `Spec K(X) ⟶ X` of multiplication by the corresponding global
+function on `Spec K(X)`, so no sheaf-theoretic gluing is needed to build it. -/
+def rationalFunctionsMul (f : X.functionField) :
+    rationalFunctions X ⟶ rationalFunctions X := by
+  let _ : Nonempty ((⊤ : X.Opens) : Type u) := instNonemptyTop
+  exact (Scheme.Modules.pushforward (fromSpecFunctionField X)).map
+    (Scheme.Modules.globalSectionsSmul (SheafOfModules.unit _)
+      ((rationalFunctionsRingEquiv (X := X) ⊤).symm f))
+
+variable {X}
+
+/-- Multiplication by `f` really is multiplication by `f` on sections. -/
+@[simp]
+theorem rationalFunctionsEquiv_rationalFunctionsMul_app (f : X.functionField) (U : X.Opens)
+    [Nonempty U] (s : Γ(rationalFunctions X, U)) :
+    rationalFunctionsEquiv U (Scheme.Modules.Hom.app (rationalFunctionsMul X f) U s) =
+      f * rationalFunctionsEquiv U s := by
+  let _ : Nonempty ((⊤ : X.Opens) : Type u) := instNonemptyTop
+  -- The pushforward of a scalar multiplication acts on sections over `U` as the scalar
+  -- multiplication over the preimage of `U`, which is multiplication in the ring of sections.
+  have hval : rationalFunctionsSectionsEquiv X U
+      (Scheme.Modules.Hom.app (rationalFunctionsMul X f) U s) =
+      (rationalFunctionsRing X).presheaf.map (homOfLE le_top).op
+          (rationalFunctionsSectionsEquiv X ⊤ ((rationalFunctionsRingEquiv (X := X) ⊤).symm f)) *
+        rationalFunctionsSectionsEquiv X U s :=
+    congrArg (rationalFunctionsSectionsEquiv X U)
+      (ConcreteCategory.congr_hom (Scheme.Modules.globalSectionsSmul_app
+        (SheafOfModules.unit (Spec X.functionField).ringCatSheaf)
+        ((rationalFunctionsRingEquiv (X := X) ⊤).symm f) (fromSpecFunctionField X ⁻¹ᵁ U)) s)
+  rw [rationalFunctionsEquiv_apply, hval, map_mul, rationalFunctionsRingEquiv_map,
+    ← rationalFunctionsEquiv_apply]
+  congr 1
+  exact (rationalFunctionsRingEquiv (X := X) ⊤).apply_symm_apply f
+
+/-- Multiplication by a product is the composite of the two multiplications. -/
+@[simp]
+theorem rationalFunctionsMul_mul (f g : X.functionField) :
+    rationalFunctionsMul X (f * g) = rationalFunctionsMul X g ≫ rationalFunctionsMul X f := by
+  let _ : Nonempty ((⊤ : X.Opens) : Type u) := instNonemptyTop
+  simp only [rationalFunctionsMul, map_mul]
+  let M : (Spec X.functionField).Modules :=
+    SheafOfModules.unit (Spec X.functionField).ringCatSheaf
+  let F := Scheme.Modules.pushforward (fromSpecFunctionField X)
+  let f' : Γ(Spec X.functionField, ⊤) := (rationalFunctionsRingEquiv (X := X) ⊤).symm f
+  let g' : Γ(Spec X.functionField, ⊤) := (rationalFunctionsRingEquiv (X := X) ⊤).symm g
+  -- Unfolding the local names here exposes the pushforward and scalar-multiplication wrappers;
+  -- their laws can then be applied without reasoning sectionwise.
+  change F.map (Scheme.Modules.globalSectionsSmul M (f' * g')) =
+    F.map (Scheme.Modules.globalSectionsSmul M g') ≫
+      F.map (Scheme.Modules.globalSectionsSmul M f')
+  rw [Scheme.Modules.globalSectionsSmul_mul, Functor.map_comp]
+
+/-- Multiplication by `1` is the identity. -/
+@[simp]
+theorem rationalFunctionsMul_one : rationalFunctionsMul X 1 = 𝟙 _ := by
+  let _ : Nonempty ((⊤ : X.Opens) : Type u) := instNonemptyTop
+  simp only [rationalFunctionsMul, map_one]
+  let M : (Spec X.functionField).Modules :=
+    SheafOfModules.unit (Spec X.functionField).ringCatSheaf
+  let F := Scheme.Modules.pushforward (fromSpecFunctionField X)
+  -- As above, this definitional change only exposes the pushforward and scalar-multiplication
+  -- wrappers so their identity laws apply directly.
+  change F.map (Scheme.Modules.globalSectionsSmul M 1) = 𝟙 _
+  rw [Scheme.Modules.globalSectionsSmul_one]
+  exact F.map_id M
+
+end Mul
 
 variable [IsIntegral X]
 

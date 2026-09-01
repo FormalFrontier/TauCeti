@@ -126,8 +126,7 @@ instance instIsFiniteMeasureGlue [IsFiniteMeasure π] [IsFiniteKernel κ] :
 instance instIsProbabilityMeasureGlue [IsProbabilityMeasure π] [IsMarkovKernel κ] :
     IsProbabilityMeasure (glue π κ) := by
   rw [glue]
-  exact MeasureTheory.Measure.isProbabilityMeasure_map
-    MeasurableEquiv.prodAssoc.measurable.aemeasurable
+  infer_instance
 
 /-- The `(X, Y)`-marginal of a gluing is the plan it extends. -/
 @[simp]

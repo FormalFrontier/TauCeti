@@ -80,9 +80,7 @@ private theorem hasCauchyPVAt_inv_sub_ofReal (R : ℝ) :
       (f := fun z : ℂ => (z - 0)⁻¹) (z₀ := 0) (M := ε⁻¹) ?_ ?_ ?_
     · simp [Complex.ofRealCLM.deriv, Complex.ofRealCLM_apply]
     · simp only [Complex.ofRealCLM.deriv, Complex.ofRealCLM_apply]
-      refine (Measurable.ite ?_ ?_ measurable_const).aestronglyMeasurable
-      · exact measurableSet_lt measurable_const (by fun_prop)
-      · fun_prop
+      exact aestronglyMeasurable_truncated (by fun_prop) (by fun_prop)
     · intro t ht
       rw [norm_inv]
       gcongr

@@ -61,6 +61,14 @@ class ReviewState(unittest.TestCase):
 
 
 class ScoreboardMeta(unittest.TestCase):
+    @staticmethod
+    def board(n, updated, association):
+        return {
+            "body": f'<!--tauceti-scoreboard--><!--tauceti-meta:v1 {{"n":{n}}}-->',
+            "updated": updated,
+            "author_association": association,
+        }
+
     def test_parses_meta_with_nested_states(self):
         # Regression: a lazy `\{.*?\}` truncated at the first inner `}` and dropped the whole meta.
         body = ('<!--tauceti-scoreboard-->\n'
@@ -70,13 +78,39 @@ class ScoreboardMeta(unittest.TestCase):
         self.assertEqual(meta.get("states", {}).get("correctness"), "blocking_block")
         self.assertEqual(meta.get("full_rounds"), 2)
 
-    def test_newest_trusted_comment_wins(self):
+    def test_newest_supplied_comment_wins(self):
         old = {"body": '<!--tauceti-scoreboard--><!--tauceti-meta:v1 {"n":1}-->', "updated": "2026-01-01"}
         new = {"body": '<!--tauceti-scoreboard--><!--tauceti-meta:v1 {"n":2}-->', "updated": "2026-02-01"}
         self.assertEqual(core.scoreboard_meta_from([old, new]).get("n"), 2)
 
     def test_no_marker_is_empty(self):
         self.assertEqual(core.scoreboard_meta_from([{"body": "hi", "updated": "x"}]), {})
+
+    def test_status_scoreboard_accepts_newer_contributor_review(self):
+        comments = [
+            self.board(1, "2026-01-01", "MEMBER"),
+            self.board(2, "2026-02-01", "CONTRIBUTOR"),
+        ]
+        with mock.patch.object(core, "issue_comments", return_value=comments):
+            self.assertEqual(core.scoreboard_meta("9").get("n"), 2)
+
+    def test_destructive_selector_keeps_repo_associated_policy(self):
+        comments = [
+            self.board(1, "2026-01-01", "MEMBER"),
+            self.board(2, "2026-02-01", "CONTRIBUTOR"),
+        ]
+        with mock.patch.object(core, "issue_comments", return_value=comments):
+            self.assertEqual(core.repo_associated_scoreboard_meta("9").get("n"), 1)
+
+    def test_issue_comment_fetch_has_no_author_filter(self):
+        raw = json.dumps({
+            "body": "external review",
+            "updated": "2026-02-01",
+            "author_association": "CONTRIBUTOR",
+        })
+        with mock.patch.object(core, "gh_api", return_value=raw) as gh:
+            self.assertEqual(core.issue_comments("9")[0]["author_association"], "CONTRIBUTOR")
+        self.assertNotIn("select(.author_association", gh.call_args.kwargs["jq"])
 
 
 class RoadmapLabels(unittest.TestCase):
@@ -197,22 +231,35 @@ class DerivedLabel(unittest.TestCase):
 
 
 class Derive(unittest.TestCase):
-    """core.derive glues pr_state/ci_status/trusted_comments together; stub them."""
+    """core.derive glues pr_state/ci_status/issue_comments together; stub them."""
 
     def setUp(self):
-        self._saved = (core.pr_state, core.ci_status, core.trusted_comments)
+        self._saved = (core.pr_state, core.ci_status, core.issue_comments)
 
     def tearDown(self):
-        core.pr_state, core.ci_status, core.trusted_comments = self._saved
+        core.pr_state, core.ci_status, core.issue_comments = self._saved
 
     def stub(self, state="open", merged=False, ci="success", comments=None):
         core.pr_state = lambda pr: {"state": state, "merged": merged, "head": "H", "title": "T"}
         core.ci_status = lambda head: ci
-        core.trusted_comments = lambda pr: (comments or [])
+        core.issue_comments = lambda pr: (comments or [])
 
-    def test_open_plumbs_inprogress(self):
+    def test_contributor_scoreboard_drives_review_state(self):
+        self.stub(comments=[{
+            "body": ('<!--tauceti-scoreboard-->'
+                     '<!--tauceti-meta:v1 {"head_sha":"H",'
+                     '"states":{"correctness":"blocking_request"}}-->'),
+            "updated": "2026-02-01",
+            "author_association": "CONTRIBUTOR",
+        }])
+        self.assertEqual(core.derive("1")["review"], "changes")
+
+    def test_contributor_inprogress_marker_drives_status(self):
         self.stub(ci="success",
-                  comments=[{"body": '<!--tauceti-review-in-progress {"head": "H", "expires_at": 9999999999}-->'}])
+                  comments=[{
+                      "body": '<!--tauceti-review-in-progress {"head": "H", "expires_at": 9999999999}-->',
+                      "author_association": "CONTRIBUTOR",
+                  }])
         d = core.derive("1", now=1_700_000_000)
         self.assertEqual(d["lifecycle"], "open")
         self.assertTrue(d["review_inprogress"])
@@ -235,7 +282,7 @@ class Derive(unittest.TestCase):
 
         core.pr_state = boom
         core.ci_status = lambda head: "running"
-        core.trusted_comments = lambda pr: []
+        core.issue_comments = lambda pr: []
         d = core.derive("1", state={"state": "open", "merged": False, "head": "H", "title": "T"})
         self.assertEqual(d["ci"], "running")
         self.assertEqual(called["n"], 0)
