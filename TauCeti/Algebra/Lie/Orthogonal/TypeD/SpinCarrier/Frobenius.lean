@@ -128,6 +128,19 @@ def frobenius : points n hn A →* points n hn A :=
         (isNilpotent_rep_rootGenerator n hn) (latticeBasis n) (basisWeight n) p k A).comp
       (pointsEquivKostantToralPoints n hn A).toMonoidHom)
 
+/-- Along the presentation as generic toral-closure points, the carrier Frobenius is the generic
+Kostant toral Frobenius. Private: it is the transport equation through which the public equations
+below read the generic API, so they do not depend on how the presentation is implemented. -/
+private theorem pointsEquivKostantToralPoints_frobenius (g : points n hn A) :
+    pointsEquivKostantToralPoints n hn A (frobenius n hn p k A g) =
+      kostantToralFrobenius
+        (TauCeti.serreRootGenerator (CartanMatrix.D n))
+        (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
+        (rep_kostantForm_mem_lattice n hn)
+        (isNilpotent_rep_rootGenerator n hn) (latticeBasis n) (basisWeight n) p k A
+        (pointsEquivKostantToralPoints n hn A g) := by
+  simp only [frobenius, MonoidHom.comp_apply, MulEquiv.coe_toMonoidHom, MulEquiv.apply_symm_apply]
+
 /-- The Frobenius endomorphism of the type-`Dₙ` spin carrier acts by entrywise Frobenius.
 
 This is not a `simp` lemma because `coe_frobenius_apply` is the canonical coefficient-level normal
@@ -135,9 +148,9 @@ form. -/
 theorem coe_frobenius (g : points n hn A) :
     (frobenius n hn p k A g : _root_.Matrix.GeneralLinearGroup (Fin (dimension n)) A) =
       _root_.Matrix.GeneralLinearGroup.map (iterateFrobenius A p k) g := by
-  rw [frobenius]
-  simp only [MonoidHom.comp_apply, MulEquiv.coe_toMonoidHom, pointsEquivKostantToralPoints,
-    MulEquiv.subgroupCongr_symm_apply, coe_kostantToralFrobenius, MulEquiv.subgroupCongr_apply]
+  have h := congrArg Subtype.val (pointsEquivKostantToralPoints_frobenius n hn p k A g)
+  rw [coe_kostantToralFrobenius] at h
+  simpa only [coe_pointsEquivKostantToralPoints] using h
 
 /-- Entrywise, the Frobenius endomorphism raises each matrix coefficient to its `p ^ k`-th
 power. -/
