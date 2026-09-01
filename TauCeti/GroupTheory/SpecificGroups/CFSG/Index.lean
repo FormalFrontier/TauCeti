@@ -427,11 +427,17 @@ theorem exists_eq_of_hasUnimodularDiagram_of_not_usesHalfFrobenius {d : LieTypeI
     ∃ q : PrimePower, d = .E8 q ∨ d = .F4 q ∨ d = .G2 q := by
   cases d <;> simp_all
 
-/-- **The one untwisted family on the rank-two diagram `B₂`.** The families whose Dynkin type is
-`B 2` are the untwisted `B₂(q)`, by `dynkinType_B`, and the Suzuki family `²B₂(2^(2m+1))`, by
-`dynkinType_suzuki`; removing the Suzuki constructor, the one of the two using a half-Frobenius,
-leaves `B₂(q)`. No rank-two `C` index appears: the `C` family starts at rank three in
-`InStandardRange`, so `B₂(q) = C₂(q)` is always named in the `B` family. -/
+/-- **The two families on the rank-two diagram `B₂`.** They are the untwisted `B₂(q)` and the
+Suzuki family `²B₂(2^(2m+1))`; the converse inclusions are `dynkinType_B` and `dynkinType_suzuki`.
+No rank-two `C` index appears: the `C` family starts at rank three in `InStandardRange`, so
+`B₂(q) = C₂(q)` is always named in the `B` family. -/
+theorem exists_eq_of_dynkinType_eq_B_two {d : LieTypeIndex} (hd : d.dynkinType = .B 2) :
+    (∃ q : PrimePower, d = .B 2 q) ∨ ∃ m : ℕ, d = .suzuki m := by
+  cases d <;> simp_all
+
+/-- **The one untwisted family on the rank-two diagram `B₂`.** Removing the Suzuki constructor, the
+one of the two families of `exists_eq_of_dynkinType_eq_B_two` using a half-Frobenius, leaves
+`B₂(q)`. -/
 theorem exists_eq_B_of_dynkinType_eq_B_two_of_not_usesHalfFrobenius {d : LieTypeIndex}
     (hd : d.dynkinType = .B 2) (hf : ¬d.UsesHalfFrobenius) :
     ∃ q : PrimePower, d = .B 2 q := by
@@ -869,15 +875,9 @@ theorem exists_eq_ofB_or_exists_eq_ofSuzuki (d : RankTwoBLieIndex) :
     (∃ (q : PrimePower) (hvalid : (LieTypeIndex.B 2 q).Valid), d = ofB q hvalid) ∨
       ∃ (m : ℕ) (hvalid : (LieTypeIndex.suzuki m).Valid), d = ofSuzuki m hvalid := by
   obtain ⟨⟨e, hvalid⟩, hdiag⟩ := d
-  revert hvalid hdiag
-  cases e
-  case B rank q =>
-    intro hvalid hdiag
-    simp only [LieTypeIndex.dynkinType_B, DynkinType.B.injEq] at hdiag
-    subst hdiag
-    exact .inl ⟨q, hvalid, rfl⟩
-  case suzuki m => exact fun hvalid _ => .inr ⟨m, hvalid, rfl⟩
-  all_goals exact fun _ hdiag => by simp at hdiag
+  rcases LieTypeIndex.exists_eq_of_dynkinType_eq_B_two hdiag with ⟨q, rfl⟩ | ⟨m, rfl⟩
+  · exact .inl ⟨q, hvalid, rfl⟩
+  · exact .inr ⟨m, hvalid, rfl⟩
 
 /-- The two branches are disjoint, so the eliminator above splits every index on the `B₂` diagram
 into exactly one of them. -/
