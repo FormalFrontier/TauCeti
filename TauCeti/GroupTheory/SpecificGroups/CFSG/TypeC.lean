@@ -67,6 +67,7 @@ the symplectic group scheme or the pinned simply connected Chevalley--Demazure g
 * `TauCeti.TypeCLieIndex.steinberg`: the Steinberg endomorphism of the family, together with its
   pinned equation `Frob_q (x_i(u)) = x_i(u ^ q)` and the description
   `TauCeti.TypeCLieIndex.mem_fixedSubgroup_steinberg_iff` of the group `H_d` it fixes.
+* `TauCeti.TypeCLieIndex.FixedPoints`: that group `H_d`, the fixed subgroup of the Steinberg map.
 * `TauCeti.TypeCLieIndex.Group`: the milestone L3 quotient `[H_d, H_d] / Z([H_d, H_d])` of that
   fixed group, formed on this carrier.
 
@@ -136,6 +137,30 @@ numbering of the type-`C` diagram that the index names, node for node. -/
 abbrev carrierNode (i : Fin d.1.rank) : Fin (d.carrierRank + 1) :=
   Fin.cast d.carrierRank_add_one.symm i
 
+/-- **The Cartan matrix of the diagram a validated type-`C` index names**, entry by entry: it is
+the type-`C` Cartan matrix at the index's rank. This is the projection of the introduction form
+`TauCeti.TypeCLieIndex.ofC` through `TauCeti.DynkinType.cartanMatrix_C`, stated on entries rather
+than on matrices because the rank occurs in the index types of the two nodes. -/
+theorem dynkinType_cartanMatrix_apply (i j : Fin d.1.rank) :
+    d.1.dynkinType.cartanMatrix i j = CartanMatrix.C d.1.rank i j := by
+  obtain ⟨r, q, hvalid, rfl⟩ := d.exists_eq_ofC
+  exact congrFun₂ (DynkinType.cartanMatrix_C r) i j
+
+/-- **The node correspondence transports the type-`C` Cartan matrix.** The entry at a pair of
+carrier nodes is the entry at the pair of Bourbaki nodes they number: `carrierNode` moves no node
+value, only the rank its index type is built on, and `TauCeti.TypeCLieIndex.carrierRank_add_one`
+identifies the two ranks. -/
+theorem cartanMatrix_C_carrierNode (i j : Fin d.1.rank) :
+    CartanMatrix.C (d.carrierRank + 1) (d.carrierNode i) (d.carrierNode j) =
+      CartanMatrix.C d.1.rank i j := by
+  have hrank : d.1.rank - 1 = d.carrierRank := by
+    have := d.carrierRank_add_one
+    omega
+  -- Both sides are the same table of conditions on the two node values, which `carrierNode` leaves
+  -- unchanged, and on the last node, where the two spellings of the rank agree by `hrank`.
+  simp only [CartanMatrix.C, Matrix.of_apply, carrierNode, Fin.ext_iff, Fin.val_cast,
+    Nat.add_sub_cancel, hrank]
+
 /-! ## The ambient group and its simple root subgroups -/
 
 /-- **The ambient group this file attaches to a validated type-`C` index**: the points of the
@@ -172,33 +197,14 @@ theorem rootGeneratorWeight_carrierNode_eq_root_simpleIndex (i j : Fin d.1.rank)
     SpStd.rootGeneratorWeight d.carrierRank (.inl (d.carrierNode i)) (d.carrierNode j) =
       (d.1.dynkinType.simplyConnectedRootDatum d.1.dynkinType_valid).root
         (d.1.dynkinType.simpleIndex d.1.dynkinType_valid i) j := by
-  obtain ⟨r, q, hvalid, rfl⟩ := d.exists_eq_ofC
-  obtain ⟨n, rfl⟩ : ∃ n, r = n + 1 := by
-    have hr : 3 ≤ r := (ofC r q hvalid).three_le_rank
-    exact ⟨r - 1, by omega⟩
-  -- Once the rank is presented as `n + 1` the upstream identification applies at the carrier rank
-  -- `n`, taking as its validity hypothesis the one the index already carries. The two index
-  -- transports it is applied across are written out as equations of their own, rather than left to
-  -- the unifier: each is a reduction of the introduction form `ofC (n + 1) q hvalid`, and neither
-  -- can be carried by `rw` or `simp only`, the Dynkin type occurring both in the validity proof and
-  -- in the index type `Fin _.rank` of the nodes. That is the same obstruction the upstream lemma
-  -- records: "the dependent root index prevents rewriting the dispatcher equation directly".
-  -- The carrier side: the carrier rank of `ofC (n + 1) q hvalid` is `n`, so `carrierNode` casts
-  -- `Fin (n + 1)` to itself and both root characters are read at the same node.
-  have hcarrier : SpStd.rootGeneratorWeight (ofC (n + 1) q hvalid).carrierRank
-        (.inl ((ofC (n + 1) q hvalid).carrierNode i)) ((ofC (n + 1) q hvalid).carrierNode j) =
-      SpStd.rootGeneratorWeight n (.inl i) j := rfl
-  -- The datum side: the Dynkin type of `ofC (n + 1) q hvalid` is `C (n + 1)`, of rank `n + 1`, so
-  -- both simple roots are read off the same datum at the same node.
-  have hdatum : ((DynkinType.C (n + 1)).simplyConnectedRootDatum
-        (ofC (n + 1) q hvalid).1.dynkinType_valid).root
-        ((DynkinType.C (n + 1)).simpleIndex (ofC (n + 1) q hvalid).1.dynkinType_valid i) j =
-      ((ofC (n + 1) q hvalid).1.dynkinType.simplyConnectedRootDatum
-        (ofC (n + 1) q hvalid).1.dynkinType_valid).root
-        ((ofC (n + 1) q hvalid).1.dynkinType.simpleIndex
-          (ofC (n + 1) q hvalid).1.dynkinType_valid i) j := rfl
-  exact hcarrier.trans ((congrFun (SpStd.rootGeneratorWeight_inl_eq_root_simpleIndex n
-    (ofC (n + 1) q hvalid).1.dynkinType_valid i) j).trans hdatum)
+  -- Both sides are read as entries of the type-`C` Cartan matrix, the carrier's by the upstream
+  -- `SpStd.rootGeneratorWeight_inl` and the datum's by the uniform `DynkinType.root_simpleIndex`,
+  -- which is the same route the upstream identification takes past the dependent root index. The
+  -- two index transports that remain are then the stated equations `cartanMatrix_C_carrierNode`
+  -- and `dynkinType_cartanMatrix_apply`, so no dependent conversion is left to the elaborator.
+  rw [SpStd.rootGeneratorWeight_inl]
+  simp only [DynkinType.root_simpleIndex]
+  rw [d.dynkinType_cartanMatrix_apply, d.cartanMatrix_C_carrierNode]
 
 /-! ## The Steinberg endomorphism -/
 
@@ -268,6 +274,12 @@ theorem mem_fixedSubgroup_steinberg_iff (g : d.AmbientGroup) :
     d.1.fieldOrder_eq_characteristic_pow]
 
 /-! ## The milestone L3 quotient -/
+
+/-- **The group `H_d` of the milestone L3 recipe**: the fixed subgroup of the Steinberg map above.
+`TauCeti.TypeCLieIndex.mem_fixedSubgroup_steinberg_iff` describes it as the points of the standard
+symplectic carrier whose matrix entries lie in the field of definition. No finiteness assertion is
+part of this definition. -/
+abbrev FixedPoints : Type := ↥(fixedSubgroup d.steinberg)
 
 /-- **The milestone L3 quotient on the standard symplectic carrier**: the derived subgroup of the
 fixed points of the Steinberg map above, modulo the centre of that derived subgroup.
