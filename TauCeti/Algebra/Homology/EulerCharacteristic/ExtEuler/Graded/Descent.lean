@@ -69,15 +69,19 @@ variable {P Q : ObjectProperty C} [LocallySmall.{w} C]
 
 private noncomputable def gradedExtEulerRightInvariant
     (hQ : (ExactStructure.abelian C).IsExtensionClosed Q)
-    (h : IsGradedEulerAdmissibleOn.{w} (k := k) (e := e) P Q) (X : P.FullSubcategory) :
-    ExactK0.AdditiveInvariant ((ExactStructure.abelian C).fullSubcategory Q hQ)
-      (LaurentPolynomial ℤ) where
-  obj Y := gradedExtEuler k e (h.isGradedEulerAdmissible X.property Y.property)
-  map_iso {Y Y'} i :=
+    (h : IsGradedEulerAdmissibleOn.{w} (k := k) (e := e) P Q) :
+    ExactK0.RightInvariant P.FullSubcategory
+      ((ExactStructure.abelian C).fullSubcategory Q hQ) (LaurentPolynomial ℤ) where
+  obj X Y := gradedExtEuler k e (h.isGradedEulerAdmissible X.property Y.property)
+  map_iso₁ {X X'} i Y :=
+    gradedExtEuler_of_iso k
+      (h.isGradedEulerAdmissible X.property Y.property)
+      (h.isGradedEulerAdmissible X'.property Y.property) (P.ι.mapIso i) (Iso.refl Y.obj)
+  map_iso₂ X {Y Y'} i :=
     gradedExtEuler_of_iso k
       (h.isGradedEulerAdmissible X.property Y.property)
       (h.isGradedEulerAdmissible X.property Y'.property) (Iso.refl X.obj) (Q.ι.mapIso i)
-  map_conflation {S} hS := by
+  map_conflation₂ X {S} hS := by
     have hc : (ExactStructure.abelian C).Conflation (S.map Q.ι) :=
       (ExactStructure.fullSubcategory_conflation_iff hQ S).mp hS
     have hS' : (S.map Q.ι).ShortExact := (ExactStructure.abelian_conflation _).mp hc
@@ -91,7 +95,7 @@ noncomputable def gradedExtEulerRight
     (hQ : (ExactStructure.abelian C).IsExtensionClosed Q)
     (h : IsGradedEulerAdmissibleOn.{w} (k := k) (e := e) P Q) (X : P.FullSubcategory) :
     ExactK0 ((ExactStructure.abelian C).fullSubcategory Q hQ) →+ LaurentPolynomial ℤ :=
-  ExactK0.lift (gradedExtEulerRightInvariant hQ h X)
+  (gradedExtEulerRightInvariant hQ h).right X
 
 omit [ObjectProperty.EssentiallySmall.{w} P] [P.ContainsZero]
   [P.IsClosedUnderBinaryProducts] in
@@ -104,49 +108,22 @@ theorem gradedExtEulerRight_of
     (Y : Q.FullSubcategory) :
     gradedExtEulerRight hQ h X (ExactK0.of Y) =
       gradedExtEuler k e (h.isGradedEulerAdmissible X.property Y.property) :=
-  ExactK0.lift_of _ Y
+  ExactK0.RightInvariant.right_of _ X Y
 
-omit [ObjectProperty.EssentiallySmall.{w} P] [P.ContainsZero]
-  [P.IsClosedUnderBinaryProducts] in
-private theorem gradedExtEulerRight_congr
-    (hQ : (ExactStructure.abelian C).IsExtensionClosed Q)
-    (h : IsGradedEulerAdmissibleOn.{w} (k := k) (e := e) P Q)
-    {X X' : P.FullSubcategory} (i : X ≅ X') :
-    gradedExtEulerRight hQ h X = gradedExtEulerRight hQ h X' := by
-  refine ExactK0.hom_ext fun Y ↦ ?_
-  rw [gradedExtEulerRight_of, gradedExtEulerRight_of]
-  exact gradedExtEuler_of_iso k
-    (h.isGradedEulerAdmissible X.property Y.property)
-    (h.isGradedEulerAdmissible X'.property Y.property) (P.ι.mapIso i) (Iso.refl Y.obj)
-
-omit [ObjectProperty.EssentiallySmall.{w} P] in
-private theorem gradedExtEulerRight_conflation
-    (hP : (ExactStructure.abelian C).IsExtensionClosed P)
-    (hQ : (ExactStructure.abelian C).IsExtensionClosed Q)
-    (h : IsGradedEulerAdmissibleOn.{w} (k := k) (e := e) P Q)
-    {S : ShortComplex P.FullSubcategory}
-    (hS : ((ExactStructure.abelian C).fullSubcategory P hP).Conflation S) :
-    gradedExtEulerRight hQ h S.X₂ =
-      gradedExtEulerRight hQ h S.X₁ + gradedExtEulerRight hQ h S.X₃ := by
-  refine ExactK0.hom_ext fun Y ↦ ?_
-  simp only [gradedExtEulerRight_of, AddMonoidHom.add_apply]
-  have hc : (ExactStructure.abelian C).Conflation (S.map P.ι) :=
-    (ExactStructure.fullSubcategory_conflation_iff hP S).mp hS
-  have hS' : (S.map P.ι).ShortExact := (ExactStructure.abelian_conflation _).mp hc
-  exact gradedExtEuler_shortExact₁ hS' Y.obj
-    (h.isGradedEulerAdmissible S.X₁.property Y.property)
-    (h.isGradedEulerAdmissible S.X₃.property Y.property)
-
-private noncomputable def gradedExtEulerLeftInvariant
+private noncomputable def gradedExtEulerBiadditiveInvariant
     (hP : (ExactStructure.abelian C).IsExtensionClosed P)
     (hQ : (ExactStructure.abelian C).IsExtensionClosed Q)
     (h : IsGradedEulerAdmissibleOn.{w} (k := k) (e := e) P Q) :
-    ExactK0.AdditiveInvariant ((ExactStructure.abelian C).fullSubcategory P hP)
-      (ExactK0 ((ExactStructure.abelian C).fullSubcategory Q hQ) →+ LaurentPolynomial ℤ) where
-  obj := gradedExtEulerRight hQ h
-  map_iso := fun {_ _} i ↦ gradedExtEulerRight_congr (P := P) (Q := Q) hQ h i
-  map_conflation := fun {_} hS ↦
-    gradedExtEulerRight_conflation (P := P) (Q := Q) hP hQ h hS
+    ExactK0.BiadditiveInvariant ((ExactStructure.abelian C).fullSubcategory P hP)
+      ((ExactStructure.abelian C).fullSubcategory Q hQ) (LaurentPolynomial ℤ) where
+  toRightInvariant := gradedExtEulerRightInvariant hQ h
+  map_conflation₁ {S} hS Y := by
+    have hc : (ExactStructure.abelian C).Conflation (S.map P.ι) :=
+      (ExactStructure.fullSubcategory_conflation_iff hP S).mp hS
+    have hS' : (S.map P.ι).ShortExact := (ExactStructure.abelian_conflation _).mp hc
+    exact gradedExtEuler_shortExact₁ hS' Y.obj
+      (h.isGradedEulerAdmissible S.X₁.property Y.property)
+      (h.isGradedEulerAdmissible S.X₃.property Y.property)
 
 /-- The Laurent-polynomial-valued Ext-Euler pairing on the exact Grothendieck groups of two
 extension-closed subcategories.  It is additive in both variables and is not asserted to be
@@ -157,7 +134,7 @@ noncomputable def gradedExtEulerPairing
     (h : IsGradedEulerAdmissibleOn.{w} (k := k) (e := e) P Q) :
     ExactK0 ((ExactStructure.abelian C).fullSubcategory P hP) →+
       ExactK0 ((ExactStructure.abelian C).fullSubcategory Q hQ) →+ LaurentPolynomial ℤ :=
-  ExactK0.lift (gradedExtEulerLeftInvariant hP hQ h)
+  (gradedExtEulerBiadditiveInvariant hP hQ h).bilift
 
 /-- The descended graded Ext-Euler pairing evaluates on object classes as the original
 object-level characteristic. -/
@@ -169,8 +146,7 @@ theorem gradedExtEulerPairing_of_of
     (Y : Q.FullSubcategory) :
     gradedExtEulerPairing hP hQ h (ExactK0.of X) (ExactK0.of Y) =
       gradedExtEuler k e (h.isGradedEulerAdmissible X.property Y.property) := by
-  rw [gradedExtEulerPairing, ExactK0.lift_of, gradedExtEulerLeftInvariant,
-    gradedExtEulerRight_of]
+  exact ExactK0.BiadditiveInvariant.bilift_of_of _ X Y
 
 /-- The descended pairing is the unique biadditive map with the prescribed values on pairs of
 object classes. -/
@@ -184,7 +160,6 @@ theorem gradedExtEulerPairing_unique
       b (ExactK0.of X) (ExactK0.of Y) =
         gradedExtEuler k e (h.isGradedEulerAdmissible X.property Y.property)) :
     b = gradedExtEulerPairing hP hQ h := by
-  refine ExactK0.hom_ext fun X ↦ ExactK0.hom_ext fun Y ↦ ?_
-  rw [hb, gradedExtEulerPairing_of_of]
+  exact ExactK0.BiadditiveInvariant.bilift_unique _ b hb
 
 end TauCeti
