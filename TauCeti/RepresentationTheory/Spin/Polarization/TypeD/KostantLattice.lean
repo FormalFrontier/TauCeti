@@ -191,20 +191,20 @@ theorem typeDSpinRep_serreE_exteriorBasis_empty {i : Fin n}
   rw [P.typeDSpinRep_serreE_eq_spinAction b hn,
     P.typeDSimpleRootBivector_def b, dite_eq_right hlast, map_mul, Module.End.mul_apply,
     TauCeti.spinAction_ι_wedge, TauCeti.spinAction_ι_wedge]
-  rw [show b.ExteriorAlgebra ∅ = 1 by
+  have hEmpty : b.ExteriorAlgebra (∅ : Finset (Fin n)) = 1 := by
     rw [ExteriorAlgebra.basis_apply]
-    simp, mul_one]
+    simp
+  rw [hEmpty, mul_one]
   rw [← TauCeti.ExteriorAlgebra.basis_singleton,
     ← TauCeti.ExteriorAlgebra.basis_singleton]
   have h := TauCeti.ExteriorAlgebra.basis_singleton_mul_basis_erase b
     ⟨n - 2, by omega⟩ {⟨n - 2, by omega⟩, ⟨n - 1, by omega⟩} (by simp)
-  rw [show ({(⟨n - 2, by omega⟩ : Fin n), ⟨n - 1, by omega⟩} : Finset (Fin n)).erase
-      ⟨n - 2, by omega⟩ = {⟨n - 1, by omega⟩} from Finset.erase_insert (by
-        simp only [Finset.mem_singleton]
-        intro hEq
-        have := congrArg Fin.val hEq
-        dsimp only at this
-        omega)] at h
+  rw [Finset.erase_insert (by
+    simp only [Finset.mem_singleton]
+    intro hEq
+    have := congrArg Fin.val hEq
+    dsimp only at this
+    omega)] at h
   exact h
 
 /-- At the fork node, the negative type-`D` root generator annihilates the last two coordinates
@@ -223,14 +223,12 @@ theorem typeDSpinRep_serreF_exteriorBasis_pair {i : Fin n}
     Module.End.mul_apply, TauCeti.spinAction_ι_contract, P.pairingEquiv_dualVector,
     TauCeti.spinAction_ι_contract, P.pairingEquiv_dualVector,
     TauCeti.ExteriorAlgebra.contractLeft_coord_basis]
-  rw [ite_eq_left (by simp), show
-      ({(⟨n - 2, by omega⟩ : Fin n), ⟨n - 1, by omega⟩} : Finset (Fin n)).erase
-          ⟨n - 2, by omega⟩ = {⟨n - 1, by omega⟩} from Finset.erase_insert (by
-        simp only [Finset.mem_singleton]
-        intro hEq
-        have := congrArg Fin.val hEq
-        dsimp only at this
-        omega), Units.smul_def,
+  rw [ite_eq_left (by simp), Finset.erase_insert (by
+    simp only [Finset.mem_singleton]
+    intro hEq
+    have := congrArg Fin.val hEq
+    dsimp only at this
+    omega), Units.smul_def,
     ← Int.cast_smul_eq_zsmul ℚ, map_smul]
   rw [TauCeti.ExteriorAlgebra.contractLeft_coord_basis]
   simp only [Finset.mem_singleton, ↓reduceIte, Finset.erase_singleton, Units.smul_def,

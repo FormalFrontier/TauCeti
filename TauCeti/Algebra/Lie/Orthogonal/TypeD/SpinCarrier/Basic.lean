@@ -210,7 +210,6 @@ noncomputable def definingIdeal (hn : 4 ≤ n) :
 
 /-- The full-weight type-`Dₙ` spin carrier over `ℤ`, obtained as the smallest closed subgroup
 scheme containing the represented numbered root subgroups and weight torus. -/
-@[expose]
 noncomputable def groupScheme (hn : 4 ≤ n) : Grp (Over (Spec (CommRingCat.of ℤ))) :=
   kostantToralGroupScheme
     (TauCeti.serreRootGenerator (CartanMatrix.D n))
@@ -223,6 +222,15 @@ theorem groupScheme_def :
     groupScheme n hn = CommHopfAlgCat.quotientSpec
       (TauCeti.GeneralLinear.coordinateHopfAlgebra ℤ (dimension n)) (definingIdeal n hn) := by
   rw [groupScheme, definingIdeal]
+
+/-- The type-`Dₙ` carrier is the generic Kostant toral closure for its spin representation. -/
+theorem groupScheme_eq_kostantToralGroupScheme :
+    groupScheme n hn = kostantToralGroupScheme
+      (TauCeti.serreRootGenerator (CartanMatrix.D n))
+      (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
+      (rep_kostantForm_mem_lattice n hn)
+      (isNilpotent_rep_rootGenerator n hn) (latticeBasis n) (basisWeight n) := by
+  rw [groupScheme]
 
 /-- The canonical inclusion of the type-`Dₙ` spin carrier into `GL_(2^n)`. -/
 noncomputable def carrierι (hn : 4 ≤ n) :
@@ -244,7 +252,6 @@ instance isClosedImmersion_carrierι : IsClosedImmersion (carrierι n hn).hom.ho
   exact isClosedImmersion_kostantToralGroupSchemeι _ _ _ _ _ _ _ _
 
 /-- A positive or negative numbered simple-root subgroup of the type-`Dₙ` spin carrier. -/
-@[expose]
 noncomputable def rootSubgroup (hn : 4 ≤ n) (k : Fin n ⊕ Fin n) :
     AdditiveGroup.groupScheme ℤ ⟶ groupScheme n hn :=
   kostantRootSubgroupToToral
@@ -258,6 +265,18 @@ noncomputable def rootSubgroup (hn : 4 ≤ n) (k : Fin n ⊕ Fin n) :
       (rep_kostantForm_mem_lattice n hn)
       (isNilpotent_rep_rootGenerator n hn) (latticeBasis n) (basisWeight n) =
         groupScheme n hn)
+
+/-- The root subgroup is the generic Kostant root subgroup, transported across the carrier's
+quotient-spectrum presentation. -/
+theorem rootSubgroup_def (k : Fin n ⊕ Fin n) :
+    rootSubgroup n hn k =
+      kostantRootSubgroupToToral
+          (TauCeti.serreRootGenerator (CartanMatrix.D n))
+          (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
+          (rep_kostantForm_mem_lattice n hn)
+          (isNilpotent_rep_rootGenerator n hn) (latticeBasis n) (basisWeight n) k ≫
+        eqToHom (groupScheme_eq_kostantToralGroupScheme n hn).symm := by
+  rw [rootSubgroup]
 
 /-- Including a numbered root subgroup into the ambient general linear group recovers its
 represented Kostant root subgroup. -/

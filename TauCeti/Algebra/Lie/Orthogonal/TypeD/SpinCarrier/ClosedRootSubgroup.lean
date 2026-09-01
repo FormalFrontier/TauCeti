@@ -55,6 +55,18 @@ noncomputable section
 
 variable (n : ℕ) (hn : 4 ≤ n)
 
+private noncomputable def transportClosedSubgroup
+    {G H : Grp (Over (Spec (CommRingCat.of ℤ)))} (h : G = H)
+    (S : ClosedSubgroupScheme G) : ClosedSubgroupScheme H :=
+  h ▸ S
+
+private theorem coe_transportClosedSubgroup
+    {G H : Grp (Over (Spec (CommRingCat.of ℤ)))} (h : G = H)
+    (S : ClosedSubgroupScheme G) :
+    (transportClosedSubgroup h S).1 = (Subobject.map (eqToHom h)).obj S.1 := by
+  cases h
+  exact (Subobject.map_id S.1).symm
+
 private noncomputable def basisIndex (s : Finset (Fin n)) : Fin (dimension n) :=
   Fintype.equivFin (Finset (Fin n)) s
 
@@ -168,23 +180,42 @@ theorem rootSubgroupCoordinateMap_surjective (k : Fin n ⊕ Fin n) :
 /-- Every numbered root-subgroup map into the type-`D` full-spin carrier is a closed immersion. -/
 instance isClosedImmersion_rootSubgroup (k : Fin n ⊕ Fin n) :
     IsClosedImmersion (rootSubgroup n hn k).hom.hom.left := by
-  unfold rootSubgroup groupScheme
-  exact TauCeti.UniversalEnvelopingAlgebra.isClosedImmersion_kostantRootSubgroupToToral
+  have hroot := TauCeti.UniversalEnvelopingAlgebra.isClosedImmersion_kostantRootSubgroupToToral
     (TauCeti.serreRootGenerator (CartanMatrix.D n))
     (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
     (rep_kostantForm_mem_lattice n hn) k (isNilpotent_rep_rootGenerator n hn)
     (latticeBasis n) (basisWeight n) (isUnit_rootCoefficient n hn k)
     (rep_rootGenerator_latticeBasis n hn k)
     (rep_rootGenerator_sq_apply_latticeBasis n hn k)
+  rw [← closedSubgroupMorphismProperty_iff
+    (Spec (CommRingCat.of ℤ)) (rootSubgroup n hn k), rootSubgroup_def,
+    (closedSubgroupMorphismProperty (Spec (CommRingCat.of ℤ))).cancel_right_of_respectsIso]
+  exact (closedSubgroupMorphismProperty_iff _ _).2 hroot
 
 /-- Every numbered root-subgroup map into the type-`D` full-spin carrier is a monomorphism. -/
-theorem mono_rootSubgroup (k : Fin n ⊕ Fin n) : Mono (rootSubgroup n hn k) :=
-  mono_of_isClosedImmersion_underlying (rootSubgroup n hn k)
+theorem mono_rootSubgroup (k : Fin n ⊕ Fin n) : Mono (rootSubgroup n hn k) := by
+  have hroot := TauCeti.UniversalEnvelopingAlgebra.mono_kostantRootSubgroupToToral
+    (TauCeti.serreRootGenerator (CartanMatrix.D n))
+    (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
+    (rep_kostantForm_mem_lattice n hn) k (isNilpotent_rep_rootGenerator n hn)
+    (latticeBasis n) (basisWeight n) (isUnit_rootCoefficient n hn k)
+    (rep_rootGenerator_latticeBasis n hn k)
+    (rep_rootGenerator_sq_apply_latticeBasis n hn k)
+  rw [rootSubgroup_def]
+  let _ := hroot
+  infer_instance
 
 /-- A numbered type-`D` full-spin root subgroup, bundled as a closed subgroup scheme. -/
 noncomputable def rootSubgroupClosedSubgroup (k : Fin n ⊕ Fin n) :
     ClosedSubgroupScheme (groupScheme n hn) :=
-  ClosedSubgroupScheme.mk (rootSubgroup n hn k)
+  transportClosedSubgroup (groupScheme_eq_kostantToralGroupScheme n hn).symm
+    (TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupInToral
+      (TauCeti.serreRootGenerator (CartanMatrix.D n))
+      (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
+      (rep_kostantForm_mem_lattice n hn) k (isNilpotent_rep_rootGenerator n hn)
+      (latticeBasis n) (basisWeight n) (isUnit_rootCoefficient n hn k)
+      (rep_rootGenerator_latticeBasis n hn k)
+      (rep_rootGenerator_sq_apply_latticeBasis n hn k))
 
 /-- The bundled closed root subgroup is represented by the numbered root-subgroup morphism. -/
 @[simp]
@@ -192,13 +223,28 @@ theorem coe_rootSubgroupClosedSubgroup (k : Fin n ⊕ Fin n) :
     (rootSubgroupClosedSubgroup n hn k).1 =
       letI := mono_rootSubgroup n hn k
       Subobject.mk (rootSubgroup n hn k) := by
-  exact ClosedSubgroupScheme.coe_mk _
+  let _ := TauCeti.UniversalEnvelopingAlgebra.mono_kostantRootSubgroupToToral
+    (TauCeti.serreRootGenerator (CartanMatrix.D n))
+    (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
+    (rep_kostantForm_mem_lattice n hn) k (isNilpotent_rep_rootGenerator n hn)
+    (latticeBasis n) (basisWeight n) (isUnit_rootCoefficient n hn k)
+    (rep_rootGenerator_latticeBasis n hn k)
+    (rep_rootGenerator_sq_apply_latticeBasis n hn k)
+  let _ := mono_rootSubgroup n hn k
+  rw [rootSubgroupClosedSubgroup, coe_transportClosedSubgroup,
+    TauCeti.UniversalEnvelopingAlgebra.coe_kostantRootSubgroupInToral,
+    Subobject.map_mk]
+  apply Subobject.mk_eq_mk_of_comm _ _ (Iso.refl _)
+  simpa only [Iso.refl_hom, Category.id_comp] using rootSubgroup_def n hn k
 
 /-- The bundled numbered root subgroup is canonically isomorphic to the additive group scheme. -/
 noncomputable def rootSubgroupClosedSubgroupIso (k : Fin n ⊕ Fin n) :
     ((rootSubgroupClosedSubgroup n hn k).1 :
       Grp (Over (Spec (CommRingCat.of ℤ)))) ≅ AdditiveGroup.groupScheme ℤ :=
-  ClosedSubgroupScheme.mkIso (rootSubgroup n hn k)
+  eqToIso (congrArg (fun P : Subobject (groupScheme n hn) =>
+      (P : Grp (Over (Spec (CommRingCat.of ℤ)))))
+    (coe_rootSubgroupClosedSubgroup n hn k)) ≪≫
+    Subobject.underlyingIso (rootSubgroup n hn k)
 
 /-- The canonical parametrization followed by inclusion is the numbered root-subgroup map. -/
 @[simp]
@@ -206,7 +252,18 @@ theorem rootSubgroupClosedSubgroupIso_inv_comp_arrow (k : Fin n ⊕ Fin n) :
     (rootSubgroupClosedSubgroupIso n hn k).inv ≫
         (rootSubgroupClosedSubgroup n hn k).1.arrow =
       rootSubgroup n hn k :=
-  ClosedSubgroupScheme.mkIso_inv_comp_arrow (rootSubgroup n hn k)
+  by
+    have harrow :
+        (eqToIso (congrArg (fun P : Subobject (groupScheme n hn) =>
+          (P : Grp (Over (Spec (CommRingCat.of ℤ)))))
+          (coe_rootSubgroupClosedSubgroup n hn k))).inv ≫
+            (rootSubgroupClosedSubgroup n hn k).1.arrow =
+          (Subobject.mk (rootSubgroup n hn k)).arrow :=
+      Subobject.arrow_congr (Subobject.mk (rootSubgroup n hn k))
+        (rootSubgroupClosedSubgroup n hn k).1
+        (coe_rootSubgroupClosedSubgroup n hn k).symm
+    rw [rootSubgroupClosedSubgroupIso, Iso.trans_inv, Category.assoc, harrow,
+      Subobject.underlyingIso_arrow]
 
 end
 
