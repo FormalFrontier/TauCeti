@@ -60,8 +60,15 @@ def negativeBinomialMeasure (r p : ℝ) : Measure ℕ :=
     Measure.dirac 0
   else 0
 
+/-- In the classical parameter range, the measure is its weighted Dirac sum. -/
+theorem negativeBinomialMeasure_eq_sum_dirac {r p : ℝ} (hr : 0 < r) (hp : 0 < p) (hp1 : p ≤ 1) :
+    negativeBinomialMeasure r p =
+      Measure.sum (fun k => negativeBinomialWeight r p k • Measure.dirac k) := by
+  simp [negativeBinomialMeasure, hr, hp, hp1]
+
+/-- Outside the probability parameter range, the measure is explicitly totalized to zero. -/
 @[simp]
-theorem negativeBinomialMeasure_of_invalid {r p : ℝ}
+theorem negativeBinomialMeasure_eq_zero_of_invalid {r p : ℝ}
     (h : ¬ (0 ≤ r ∧ 0 < p ∧ p ≤ 1)) : negativeBinomialMeasure r p = 0 := by
   rw [negativeBinomialMeasure]
   split_ifs with h₁ h₂
@@ -69,6 +76,7 @@ theorem negativeBinomialMeasure_of_invalid {r p : ℝ}
   · exact (h ⟨h₂.1.ge, h₂.2⟩).elim
   · rfl
 
+/-- The boundary shape `r = 0` is the Dirac law at zero in the valid probability range. -/
 @[simp]
 theorem negativeBinomialMeasure_zero {p : ℝ} (hp : 0 < p) (hp1 : p ≤ 1) :
     negativeBinomialMeasure 0 p = Measure.dirac 0 := by
@@ -79,19 +87,24 @@ private theorem gamma_ratio_eq_multichoose (hr : 0 < r) (k : ℕ) :
   have hpoch : ∀ n : ℕ,
       (ascPochhammer ℕ n).smeval r = Real.Gamma (n + r) / Real.Gamma r := by
     intro n
-    induction n with
-    | zero =>
-        simpa using (div_self (Real.Gamma_pos_of_pos hr).ne').symm
-    | succ n ih =>
-      rw [ascPochhammer_succ_right, Polynomial.smeval_mul, Polynomial.smeval_add,
-        Polynomial.smeval_X, Polynomial.smeval_natCast, ih]
-      have hnr : (n : ℝ) + r ≠ 0 := by positivity
-      simp only [pow_one, nsmul_eq_mul, Nat.cast_add, Nat.cast_one]
-      -- Reassociate the Gamma argument into the form required by `Gamma_add_one`.
-      rw [show (n : ℝ) + 1 + r = (n : ℝ) + r + 1 by ring,
-        Real.Gamma_add_one hnr]
-      field_simp [Real.Gamma_pos_of_pos hr]
-      ring
+    rw [Polynomial.ascPochhammer_smeval_eq_eval]
+    have hz : ∀ m : ℕ, (r : ℂ) ≠ -m := by
+      intro m hm
+      have : r = -(m : ℝ) := by exact_mod_cast congrArg Complex.re hm
+      linarith [hr]
+    have h := Complex.Gamma_add_nat_div_Gamma_eq (n := n) (r : ℂ) hz
+    have hpoly : (ascPochhammer ℂ n).eval (r : ℂ) =
+        Complex.ofRealHom ((ascPochhammer ℝ n).eval r) := by
+      rw [ascPochhammer_eval₂ (S := ℝ) (T := ℂ) Complex.ofRealHom]
+      exact Polynomial.eval₂_at_apply Complex.ofRealHom r
+    have hcomplex : ((Real.Gamma (n + r) / Real.Gamma r : ℝ) : ℂ) =
+        (ascPochhammer ℂ n).eval (r : ℂ) := by
+      have harg : (r : ℂ) + n = ((n + r : ℝ) : ℂ) := by
+        push_cast
+        ring
+      rw [h.symm, harg]
+      simp only [Complex.Gamma_ofReal, Complex.ofReal_div]
+    exact Complex.ofReal_inj.mp (hcomplex.trans hpoly).symm
   have h := Ring.factorial_nsmul_multichoose_eq_ascPochhammer r k
   rw [nsmul_eq_mul, hpoch] at h
   calc
@@ -105,8 +118,12 @@ private theorem negativeBinomialWeightReal_eq_coeff (hr : 0 < r) (k : ℕ) :
       (Ring.multichoose r k : ℝ) * Real.rpow p r * (1 - p) ^ k := by
   rw [negativeBinomialWeightReal, gamma_ratio_eq_multichoose hr k]
 
-private theorem negativeBinomialWeightReal_nonneg (hr : 0 < r) (hp : 0 < p) (hp1 : p ≤ 1)
+private theorem negativeBinomialWeightReal_nonneg (hr : 0 ≤ r) (hp : 0 ≤ p) (hp1 : p ≤ 1)
     (k : ℕ) : 0 ≤ negativeBinomialWeightReal r p k := by
+  rcases hr.eq_or_lt with rfl | hr
+  · simp [negativeBinomialWeightReal]
+  rcases hp.eq_or_lt with rfl | hp
+  · simp [negativeBinomialWeightReal, Real.zero_rpow hr.ne']
   rw [negativeBinomialWeightReal_eq_coeff hr k]
   have hcoeff : 0 ≤ (Ring.multichoose r k : ℝ) := by
     rw [← gamma_ratio_eq_multichoose hr k]
@@ -115,7 +132,8 @@ private theorem negativeBinomialWeightReal_nonneg (hr : 0 < r) (hp : 0 < p) (hp1
   exact mul_nonneg (mul_nonneg hcoeff (Real.rpow_pos_of_pos hp r).le)
     (pow_nonneg (by linarith) k)
 
-theorem negativeBinomialWeight_toReal (hr : 0 < r) (hp : 0 < p) (hp1 : p ≤ 1) (k : ℕ) :
+/-- The real-valued mass agrees with the `toReal` of the nonnegative mass, including boundaries. -/
+theorem negativeBinomialWeight_toReal (hr : 0 ≤ r) (hp : 0 ≤ p) (hp1 : p ≤ 1) (k : ℕ) :
     (negativeBinomialWeight r p k).toReal =
       negativeBinomialWeightReal r p k := by
   rw [negativeBinomialWeight, ENNReal.toReal_ofReal]
@@ -163,27 +181,30 @@ private theorem hasSum_negativeBinomialWeightReal (hr : 0 < r) (hp : 0 < p) (hp1
     simpa only [hcancel'] using hsum2
   exact HasSum.congr_fun hsum3 hweight
 
+/-- The negative-binomial measure is a probability measure in its classical parameter range. -/
 theorem isProbabilityMeasure_negativeBinomialMeasure (hr : 0 ≤ r) (hp : 0 < p) (hp1 : p ≤ 1) :
     IsProbabilityMeasure (negativeBinomialMeasure r p) := by
   rcases hr.eq_or_lt with rfl | hr
   · rw [negativeBinomialMeasure_zero hp hp1]
     infer_instance
-  · rw [negativeBinomialMeasure, ite_eq_left ⟨hr, hp, hp1⟩]
+  · rw [negativeBinomialMeasure_eq_sum_dirac hr hp hp1]
     apply (hasSum_negativeBinomialWeightReal hr hp hp1).isProbabilityMeasure_sum_dirac
     intro k
-    exact negativeBinomialWeightReal_nonneg hr hp hp1 k
+    exact negativeBinomialWeightReal_nonneg hr.le hp.le hp1 k
 
+/-- The singleton mass of the negative-binomial law in its classical parameter range. -/
 @[simp]
 theorem negativeBinomialMeasure_singleton {r p : ℝ} (hr : 0 < r) (hp : 0 < p) (hp1 : p ≤ 1)
     (k : ℕ) : negativeBinomialMeasure r p {k} = negativeBinomialWeight r p k := by
-  rw [negativeBinomialMeasure, ite_eq_left ⟨hr, hp, hp1⟩]
+  rw [negativeBinomialMeasure_eq_sum_dirac hr hp hp1]
   exact Measure.sum_smul_dirac_singleton
 
+/-- The real singleton mass of the negative-binomial law in its classical parameter range. -/
 theorem negativeBinomialMeasure_real_singleton {r p : ℝ} (hr : 0 < r) (hp : 0 < p) (hp1 : p ≤ 1)
     (k : ℕ) :
     (negativeBinomialMeasure r p).real {k} = negativeBinomialWeightReal r p k := by
   rw [measureReal_def, negativeBinomialMeasure_singleton hr hp hp1,
-    negativeBinomialWeight_toReal hr hp hp1]
+    negativeBinomialWeight_toReal hr.le hp.le hp1]
 
 end Probability
 
