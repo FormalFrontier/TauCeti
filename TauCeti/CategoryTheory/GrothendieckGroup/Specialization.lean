@@ -115,10 +115,11 @@ noncomputable def specializeLift (ev : LaurentPolynomial ℤ →+* ℤ) (f : M �
 @[simp]
 theorem specializeLift_of (ev : LaurentPolynomial ℤ →+* ℤ) (f : M →+ N)
     [Module (LaurentPolynomial ℤ) M] (hf : IsLaurentSemilinear ev f) (x : M) :
-    specializeLift ev f hf (specializeOf ev M x) = f x := by
+    specializeLift ev f hf
+        (let _ : Module (LaurentPolynomial ℤ) ℤ := Module.compHom ℤ ev
+         (1 : ℤ) ⊗ₜ[LaurentPolynomial ℤ] x) = f x := by
   let _ : Module (LaurentPolynomial ℤ) N := Module.compHom N ev
   let _ : Module (LaurentPolynomial ℤ) ℤ := Module.compHom ℤ ev
-  rw [specializeOf_eq_tmul]
   simp [specializeLift]
 
 /-- Any additive map with the same values on canonical representatives is this lift. -/
@@ -212,7 +213,9 @@ theorem specializeLift_unique (ev : LaurentPolynomial ℤ →+* ℤ) (f : M →+
 @[simp]
 theorem specializeOf_smul (ev : LaurentPolynomial ℤ →+* ℤ) (r : LaurentPolynomial ℤ) (x : M)
     [Module (LaurentPolynomial ℤ) M] :
-    specializeOf ev M (r • x) = ev r • specializeOf ev M x := by
+    (let _ : Module (LaurentPolynomial ℤ) ℤ := Module.compHom ℤ ev
+     (1 : ℤ) ⊗ₜ[LaurentPolynomial ℤ] (r • x)) =
+      ev r • specializeOf ev M x := by
   let _ : Module (LaurentPolynomial ℤ) ℤ := Module.compHom ℤ ev
   -- Unfolding `specializeOf` and the induced integer action exposes the tensor relation.
   change 1 ⊗ₜ[LaurentPolynomial ℤ] (r • x) = ev r • (1 ⊗ₜ[LaurentPolynomial ℤ] x)
@@ -248,17 +251,17 @@ abbrev SpecializationAtNegOne (M : Type*) [AddCommGroup M] [Module (LaurentPolyn
   LaurentSpecialization laurentEvalNegOne M
 
 /-- At `q = 1`, every Laurent shift has the same specialized class. -/
-@[simp]
 theorem specializeAtOne_T_smul (n : ℤ) (x : M) [Module (LaurentPolynomial ℤ) M] :
-    specializeOf laurentEvalOne M ((T n : LaurentPolynomial ℤ) • x) =
+    (let _ : Module (LaurentPolynomial ℤ) ℤ := Module.compHom ℤ laurentEvalOne
+     (1 : ℤ) ⊗ₜ[LaurentPolynomial ℤ] ((T n : LaurentPolynomial ℤ) • x)) =
       specializeOf laurentEvalOne M x := by
   rw [specializeOf_smul (M := M), laurentEvalOne_T]
   simp
 
 /-- At `q = -1`, a Laurent shift acts by its sign on the specialized class. -/
-@[simp]
 theorem specializeAtNegOne_T_smul (n : ℤ) (x : M) [Module (LaurentPolynomial ℤ) M] :
-    specializeOf laurentEvalNegOne M ((T n : LaurentPolynomial ℤ) • x) =
+    (let _ : Module (LaurentPolynomial ℤ) ℤ := Module.compHom ℤ laurentEvalNegOne
+     (1 : ℤ) ⊗ₜ[LaurentPolynomial ℤ] ((T n : LaurentPolynomial ℤ) • x)) =
       (n.negOnePow : ℤ) • specializeOf laurentEvalNegOne M x := by
   rw [specializeOf_smul (M := M), laurentEvalNegOne_T]
 
