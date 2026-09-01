@@ -162,14 +162,9 @@ the live documentation describes.
 ## Building
 
 ```bash
-export MATHLIB_CACHE_GET_URL="${MATHLIB_CACHE_GET_URL-https://cache.mathlib.org}"
 lake exe cache get   # fetch prebuilt Mathlib oleans
 lake build
 ```
-
-Cache reads default to `cache.mathlib.org`. To use a different endpoint, define
-`MATHLIB_CACHE_GET_URL` before you run the commands. An empty value also counts as a
-choice: the cache tool treats it as unset and uses its default endpoints.
 
 ## Roadmaps
 
