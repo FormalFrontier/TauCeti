@@ -6,8 +6,8 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Probability.Exchangeability.Recurrence.Excursion
--- Non-public: supplies the discrete-measurability instances the change of variables needs.
-import TauCeti.Probability.Exchangeability.MixedIID.Mixture
+import Mathlib.Logic.Equiv.List
+import Mathlib.MeasureTheory.MeasurableSpace.Constructions
 
 /-!
 # Reconstructing a recurrent path from its excursions
@@ -38,6 +38,15 @@ which is the only file in this subtree that reaches the de Finetti summit.
 * `TauCeti.Probability.measurable_pathOfExcursions` — concatenation is measurable;
 * `TauCeti.Probability.pathLaw_eq_map_pathOfExcursions` and its `Recurrent` form — the path law is
   the pushforward of the excursion path law along it.
+
+## References
+
+* P. Diaconis and D. Freedman, "de Finetti's theorem for Markov chains", *Annals of Probability*
+  8 (1980), 115–130.
+* Roadmap: `TauCetiRoadmap/Exchangeability/README.md`, Layer 8, "Markov exchangeability".
+
+No material is adapted from `cameronfreer/exchangeability`, which treats exchangeable rather than
+Markov exchangeable sequences.
 -/
 
 public section
@@ -72,6 +81,10 @@ theorem measurable_pathOfExcursions [Countable α] [MeasurableSingletonClass α]
     refine List.ext_getElem (by simp) fun j hj hj' => ?_
     rw [List.getElem_map, List.getElem_range, List.getElem_ofFn]
   rw [hfac]
+  -- `Fin (i+1) → List α` is discrete: `List α` is countable with measurable singletons, and a
+  -- finite product of such spaces inherits both.
+  have : MeasurableSingletonClass (List α) := inferInstance
+  have : DiscreteMeasurableSpace (Fin (i + 1) → List α) := inferInstance
   exact Measurable.of_discrete.comp (measurable_pi_lambda _ fun j => measurable_pi_apply _)
 
 /-! ## The path law of a recurrent process -/
