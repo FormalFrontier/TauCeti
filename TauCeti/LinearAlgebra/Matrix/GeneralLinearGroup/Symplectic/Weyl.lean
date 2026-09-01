@@ -73,9 +73,16 @@ theorem coe_differenceShortRootWeylElement (hij : i ≠ j) :
       TauCeti.transvectionWeylElement (differenceShortRoot_first_indices_ne hij) *
         (TauCeti.transvectionWeylElement
           (differenceShortRoot_second_indices_ne hij))⁻¹ := by
+  -- The inverse of the second block's Weyl word is that word with opposite parameters.
+  have hinv : (TauCeti.transvectionWeylElement (A := R)
+      (differenceShortRoot_second_indices_ne hij))⁻¹ =
+        TauCeti.transvectionUnit (differenceShortRoot_second_indices_ne hij) (-1) *
+          TauCeti.transvectionUnit (differenceShortRoot_second_indices_ne hij).symm 1 *
+          TauCeti.transvectionUnit (differenceShortRoot_second_indices_ne hij) (-1) := by
+    simp [TauCeti.transvectionWeylElement_def, _root_.mul_inv_rev, mul_assoc]
   rw [differenceShortRootWeylElement, Subgroup.coe_mul, Subgroup.coe_mul,
     coe_differenceShortRootUnit, coe_differenceShortRootUnit (hij := hij.symm),
-    TauCeti.transvectionWeylElement_inv_def, TauCeti.transvectionWeylElement_def]
+    hinv, TauCeti.transvectionWeylElement_def]
   simp only [neg_neg]
   let a := TauCeti.transvectionUnit (differenceShortRoot_first_indices_ne hij) (1 : R)
   let b := TauCeti.transvectionUnit (differenceShortRoot_first_indices_ne hij).symm (-1 : R)

@@ -270,13 +270,6 @@ theorem transvectionWeylElement_def (hij : i ≠ j) :
     transvectionWeylElement (A := A) hij =
       transvectionUnit hij 1 * transvectionUnit hij.symm (-1) * transvectionUnit hij 1 := (rfl)
 
-/-- The inverse of the transvection Weyl element is its three-factor word with opposite
-parameters. -/
-theorem transvectionWeylElement_inv_def (hij : i ≠ j) :
-    (transvectionWeylElement (A := A) hij)⁻¹ =
-      transvectionUnit hij (-1) * transvectionUnit hij.symm 1 * transvectionUnit hij (-1) := by
-  simp [transvectionWeylElement_def, _root_.mul_inv_rev, mul_assoc]
-
 /-- A transvection whose two indices both avoid `i` and `j` commutes with the Weyl representative
 exchanging `i` and `j`: it commutes with each of the three transvections of the defining word. -/
 theorem commute_transvectionUnit_transvectionWeylElement (hij : i ≠ j) (hkl : k ≠ l)
@@ -348,13 +341,21 @@ private theorem transpose_coe_transvectionWeylElement_symm (hij : i ≠ j) :
     by_cases hbi : b = i <;> by_cases hbj : b = j <;>
       simp_all [Matrix.one_apply, eq_comm]
 
+omit [Fintype n] in
+private theorem transpose_transvection (a b : n) (c : A) :
+    (Matrix.transvection a b c).transpose = Matrix.transvection b a c := by
+  simp [Matrix.transvection, Matrix.transpose_add, Matrix.transpose_one,
+    Matrix.transpose_single]
+
 private theorem coe_mul_transvectionWeylElement_symm_apply (hij : i ≠ j) (M : Matrix n n A)
     (a b : n) :
     (M * ((transvectionWeylElement (A := A) hij.symm : GL n A) : Matrix n n A)) a b =
       if b = i then M a j else if b = j then -M a i else M a b := by
-  change ((M *
-    ((transvectionWeylElement (A := A) hij.symm : GL n A) : Matrix n n A)).transpose) b a = _
-  rw [Matrix.transpose_mul, transpose_coe_transvectionWeylElement_symm (A := A) hij,
+  -- Read the entry off the transposed product, where the Weyl factor becomes the left one and
+  -- `coe_transvectionWeylElement_mul_apply` applies.
+  rw [← Matrix.transpose_apply
+        (M * ((transvectionWeylElement (A := A) hij.symm : GL n A) : Matrix n n A)) b a,
+    Matrix.transpose_mul, transpose_coe_transvectionWeylElement_symm (A := A) hij,
     coe_transvectionWeylElement_mul_apply (A := A) hij]
   simp only [Matrix.transpose_apply]
 
@@ -401,19 +402,22 @@ theorem transvectionWeylElement_mul_transvectionUnit_mul_inv_self (hij : i ≠ j
       simp_all [Matrix.transvection, Matrix.single_apply, Matrix.one_apply, eq_comm]
 
 /-- Conjugation by the Weyl representative for `εᵢ-εⱼ` sends the opposite root subgroup
-back to its root subgroup and negates the parameter. -/
+back to its root subgroup and negates the parameter. This is the transpose of
+`TauCeti.transvectionWeylElement_mul_transvectionUnit_mul_inv_self`: transposing a matrix swaps
+the two indices of a transvection and exchanges the two Weyl representatives. -/
 @[simp]
 theorem transvectionWeylElement_mul_transvectionUnit_mul_inv_symm (hij : i ≠ j) (c : A) :
     transvectionWeylElement hij * transvectionUnit hij.symm c *
         transvectionWeylElement hij.symm =
       transvectionUnit hij (-c) := by
+  have hT : (((transvectionWeylElement (A := A) hij : GL n A) : Matrix n n A)).transpose =
+      ((transvectionWeylElement hij.symm : GL n A) : Matrix n n A) :=
+    transpose_coe_transvectionWeylElement_symm (A := A) hij.symm
+  have h := congrArg Matrix.transpose (congrArg Units.val
+    (transvectionWeylElement_mul_transvectionUnit_mul_inv_self (A := A) hij c))
   apply Units.ext
-  ext a b
-  simp only [Units.val_mul, coe_transvectionUnit]
-  rw [coe_transvectionWeylElement_conj_apply]
-  by_cases hai : a = i <;> by_cases haj : a = j <;>
-    by_cases hbi : b = i <;> by_cases hbj : b = j <;>
-      simp_all [Matrix.transvection, Matrix.single_apply, Matrix.one_apply, eq_comm]
+  simpa only [Units.val_mul, coe_transvectionUnit, Matrix.transpose_mul, mul_assoc,
+    transpose_transvection, transpose_coe_transvectionWeylElement_symm (A := A) hij, hT] using h
 
 /-- Conjugation by the Weyl representative exchanging `i` and `j` replaces the left index `j`
 of `xⱼₖ(c)` by `i`. -/
