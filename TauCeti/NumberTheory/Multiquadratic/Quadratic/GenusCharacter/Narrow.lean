@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.NumberTheory.Multiquadratic.Quadratic.GenusCharacter.Basic
+public import TauCeti.NumberTheory.Multiquadratic.Quadratic.GenusCharacter.CoprimeIdeal
 public import TauCeti.NumberTheory.NumberField.TotallyPositive
 public import Mathlib.RingTheory.Ideal.Norm.AbsNorm
 
@@ -38,6 +39,10 @@ and F. Lemmermeyer, *Reciprocity Laws: From Euler to Eisenstein*, §2.2.
 
 * `TauCeti.Multiquadratic.genusCharFun_absNorm_eq_of_span_mul_eq_span_mul`: genus characters agree
   on the norms of two ideals related by a coprime, totally positive principal ratio.
+* `TauCeti.Multiquadratic.genusCharFunCoprimeIdealHom_eq_one_of_eq_span_singleton`: the
+  unit-valued character is trivial on a totally positive coprime principal ideal.
+* `TauCeti.Multiquadratic.genusCharFunCoprimeIdealHom_eq_of_span_mul_eq_span_mul`: the same
+  character is invariant under a coprime narrow comparison.
 -/
 
 public section
@@ -137,5 +142,66 @@ theorem genusCharFun_absNorm_eq_of_span_mul_eq_span_mul {s t : Finset ℤ}
     intro hzero
     exact ((genusCharFun_eq_zero_iff (fun P hP => hs P (hts hP))).mp hzero) hcopAbsY
   exact mul_left_cancel₀ hcharY_ne hchar
+
+/-- **A coprime principal ideal has trivial genus character.** Let `I` be a nonzero integral ideal
+whose absolute norm is coprime to the modulus of a genus character. If `I = (x)` and the norm of
+`x` is also coprime to that modulus, then the coprime-ideal genus character of `I` is `1`.
+
+This is the kernel calculation needed before the character can descend through the narrow class
+group: a totally positive principal ideal is narrow-trivial, and this theorem handles the finite
+coprimality restriction of the arithmetic character. -/
+theorem genusCharFunCoprimeIdealHom_eq_one_of_eq_span_singleton
+    {s t : Finset ℤ} (hs : ∀ P ∈ s, IsPrimeDiscriminant P)
+    (heven : ∀ P ∈ s, ∀ P' ∈ s,
+      IsEvenPrimeDiscriminant P → IsEvenPrimeDiscriminant P' → P = P')
+    (hprod : ∏ P ∈ s, P = fundamentalDiscriminant d)
+    (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
+    (hsf : Squarefree d) (hts : t ⊆ s)
+    (ht : ∀ P ∈ t, IsPrimeDiscriminant P)
+    {I : genusCharFunCoprimeIdealSubmonoid (K := K) t} {x : 𝓞 K}
+    (hx : x ≠ 0) (hpos : NumberField.IsTotallyPositive ((x : K)))
+    (hI : (I : Ideal (𝓞 K)) = Ideal.span {x})
+    (hcop : IsCoprime (Algebra.norm ℤ x) (∏ P ∈ t, P)) :
+    genusCharFunCoprimeIdealHom ht I = 1 := by
+  apply Units.ext
+  rw [genusCharFunCoprimeIdealHom_apply, hI, Ideal.absNorm_span_singleton]
+  have hxK : (x : K) ≠ 0 := by exact_mod_cast hx
+  have hnormposQ : (0 : ℚ) < Algebra.norm ℤ x := by
+    simpa only [Algebra.coe_norm_int] using NumberField.norm_pos_of_isTotallyPositive hxK hpos
+  have hnormpos : 0 < Algebra.norm ℤ x := by exact_mod_cast hnormposQ
+  rw [Int.natCast_natAbs, abs_of_pos hnormpos]
+  exact genusCharFun_norm_eq_one hs heven hprod hmin hgen hsf hts x hcop
+
+/-- **A coprime comparison descends the genus character to narrow classes.** Let `I` and `J` be
+nonzero integral ideals whose absolute norms are coprime to the modulus of a genus character. If
+they are related by a narrow comparison `(x) I = (y) J`, and both principal factors are coprime to
+the modulus, then the corresponding values of
+`genusCharFunCoprimeIdealHom` agree.
+
+This is the quotient-descent datum supplied by the norm calculation above. The extra coprimality
+of `x` and `y` is explicit: equality of narrow classes and coprimality of `I` and `J` alone do not
+force a particular integral numerator and denominator for their positive fractional ratio to be
+coprime to the modulus. Removing that hypothesis is the remaining strong-approximation step in
+the descent to a character of the entire narrow class group. -/
+theorem genusCharFunCoprimeIdealHom_eq_of_span_mul_eq_span_mul
+    {s t : Finset ℤ} (hs : ∀ P ∈ s, IsPrimeDiscriminant P)
+    (heven : ∀ P ∈ s, ∀ P' ∈ s,
+      IsEvenPrimeDiscriminant P → IsEvenPrimeDiscriminant P' → P = P')
+    (hprod : ∏ P ∈ s, P = fundamentalDiscriminant d)
+    (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
+    (hsf : Squarefree d) (hts : t ⊆ s)
+    (ht : ∀ P ∈ t, IsPrimeDiscriminant P)
+    {I J : genusCharFunCoprimeIdealSubmonoid (K := K) t}
+    {x y : 𝓞 K} (hx : x ≠ 0) (hy : y ≠ 0)
+    (hpos : NumberField.IsTotallyPositive ((x : K) * (y : K)))
+    (hIJ : Ideal.span {x} * (I : Ideal (𝓞 K)) =
+      Ideal.span {y} * (J : Ideal (𝓞 K)))
+    (hcopx : IsCoprime (Algebra.norm ℤ x) (∏ P ∈ t, P))
+    (hcopy : IsCoprime (Algebra.norm ℤ y) (∏ P ∈ t, P)) :
+    genusCharFunCoprimeIdealHom ht I = genusCharFunCoprimeIdealHom ht J := by
+  apply Units.ext
+  rw [genusCharFunCoprimeIdealHom_apply, genusCharFunCoprimeIdealHom_apply]
+  exact genusCharFun_absNorm_eq_of_span_mul_eq_span_mul hs heven hprod hmin hgen hsf hts hx hy
+    hpos hIJ hcopx hcopy
 
 end TauCeti.Multiquadratic
