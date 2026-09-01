@@ -31,20 +31,21 @@ map between `G(𝔽)` and `G(A)^F` themselves, and a consumer that wants to read
 recorded here: as soon as the Frobenius-fixed subring is finite the fixed group is finite, which
 over a field of characteristic `p` holds for every nonzero exponent.
 
-Nothing is reproved. The identification already exists for the matrix points that a Hopf ideal cuts
-out of `GLₙ`, as `TauCeti.GeneralLinear.frobeniusFixedHopfIdealPointsMulEquiv`, and this file
-transports it along `TauCeti.SpStd.points_def` into the named type-`C` API, exactly as
-`TauCeti.SpStd.pointsMap` transports `TauCeti.GeneralLinear.mapHopfIdealPointsSubgroup` and
-`TauCeti.SpStd.map_subtype_fixedSubgroup_frobenius_eq` transports
-`TauCeti.GeneralLinear.map_hopfIdealPointsSubgroup_frobeniusFixedSubring`. The transport changes no
-matrix; the one thing it has to check is that the two Frobenius endomorphisms correspond under it,
-which they do because both act entrywise.
+Nothing is reproved, and nothing is rebuilt. The identification already exists for the matrix points
+that a Hopf ideal cuts out of `GLₙ`, as
+`TauCeti.GeneralLinear.frobeniusFixedHopfIdealPointsMulEquiv`, and
+`TauCeti.GeneralLinear.frobeniusFixedMulEquivOfCoeEq` transports it to any carrier presenting its
+point group by a Hopf ideal and its Frobenius entrywise. This file feeds that transport
+`TauCeti.SpStd.points_def` and `TauCeti.SpStd.coe_frobenius`, exactly as `TauCeti.SpStd.pointsMap`
+consumes `TauCeti.GeneralLinear.mapHopfIdealPointsSubgroup` and
+`TauCeti.SpStd.map_subtype_fixedSubgroup_frobenius_eq` consumes
+`TauCeti.GeneralLinear.map_hopfIdealPointsSubgroup_frobeniusFixedSubring`.
 
-Naturality on the pinned generating families is not restated: the isomorphism is the entrywise
-inclusion, by `TauCeti.SpStd.coe_pointsMulEquivFixedSubgroupFrobenius`, so
-`TauCeti.SpStd.pointsMap_rootSubgroupPoints` and `TauCeti.SpStd.pointsMap_weightTorusPoints` at the
-inclusion of `𝔽` already describe its action on the numbered root subgroups and on the weight
-torus.
+Naturality on the pinned generating families is not restated: the isomorphism is the functorial
+point map along the inclusion of `𝔽`, by
+`TauCeti.SpStd.coe_pointsMulEquivFixedSubgroupFrobenius_eq_pointsMap`, so
+`TauCeti.SpStd.pointsMap_rootSubgroupPoints` and `TauCeti.SpStd.pointsMap_weightTorusPoints` at that
+inclusion already describe its action on the numbered root subgroups and on the weight torus.
 
 Two limitations carry over from the file this one builds on. The carrier is not identified with the
 symplectic group scheme, so the fixed group is described as the carrier's points over the fixed
@@ -65,6 +66,10 @@ that a group in sight is perfect, simple, or a named finite group of Lie type.
 * `TauCeti.SpStd.coe_pointsMulEquivFixedSubgroupFrobenius_symm_apply` and
   `TauCeti.SpStd.coe_pointsMulEquivFixedSubgroupFrobenius_symm_apply_apply`: the same read
   backwards, so that a Frobenius-fixed point is recovered from its inverse image entry by entry.
+* `TauCeti.SpStd.coe_pointsMulEquivFixedSubgroupFrobenius_eq_pointsMap` and
+  `TauCeti.SpStd.pointsMap_pointsMulEquivFixedSubgroupFrobenius_symm_apply`: both readings again
+  inside `TauCeti.SpStd.points`, where the isomorphism is `TauCeti.SpStd.pointsMap` along the
+  inclusion of the Frobenius-fixed subring.
 * `TauCeti.SpStd.finite_fixedSubgroup_frobenius` and
   `TauCeti.SpStd.finite_fixedSubgroup_frobenius_of_charP`: the fixed group is finite as soon as the
   Frobenius-fixed subring is, which over a field of characteristic `p` needs only `k ≠ 0`.
@@ -108,40 +113,6 @@ noncomputable section
 
 variable (A : Type v) [CommRing A] [ExpChar A p]
 
-/-! ## The type-`C` carrier as a Hopf-ideal point group -/
-
-/-- The type-`C_(n+1)` point group read as the matrix point group its defining Hopf ideal cuts out,
-which is what `TauCeti.SpStd.points_def` says it is. This is the transport the general results are
-consumed along; it changes no matrix. -/
-private def pointsMulEquivHopfIdealPoints (B : Type v) [CommRing B] :
-    points n B ≃*
-      GeneralLinear.hopfIdealPointsSubgroup ((n + 1) + (n + 1)) (definingIdeal n) B :=
-  MulEquiv.subgroupCongr (points_def n B)
-
-private theorem coe_pointsMulEquivHopfIdealPoints (B : Type v) [CommRing B] (g : points n B) :
-    (pointsMulEquivHopfIdealPoints n B g :
-        Matrix.GeneralLinearGroup (Fin ((n + 1) + (n + 1))) B) =
-      (g : Matrix.GeneralLinearGroup (Fin ((n + 1) + (n + 1))) B) := by
-  rw [pointsMulEquivHopfIdealPoints, MulEquiv.subgroupCongr_apply]
-
-private theorem coe_pointsMulEquivHopfIdealPoints_symm (B : Type v) [CommRing B]
-    (g : GeneralLinear.hopfIdealPointsSubgroup ((n + 1) + (n + 1)) (definingIdeal n) B) :
-    (((pointsMulEquivHopfIdealPoints n B).symm g : points n B) :
-        Matrix.GeneralLinearGroup (Fin ((n + 1) + (n + 1))) B) =
-      (g : Matrix.GeneralLinearGroup (Fin ((n + 1) + (n + 1))) B) := by
-  rw [pointsMulEquivHopfIdealPoints, MulEquiv.subgroupCongr_symm_apply]
-
-/-- The transport intertwines the Frobenius of the type-`C_(n+1)` carrier with the Frobenius of the
-matrix points cut out by its defining Hopf ideal: both act by the entrywise Frobenius. -/
-private theorem pointsMulEquivHopfIdealPoints_comp_frobenius :
-    ((pointsMulEquivHopfIdealPoints n A : points n A →* _).comp (frobenius n p k A)) =
-      (GeneralLinear.iterateFrobeniusHopfIdealPoints ((n + 1) + (n + 1)) p k
-          (definingIdeal n) A).comp
-        (pointsMulEquivHopfIdealPoints n A : points n A →* _) := by
-  refine MonoidHom.ext fun g => Subtype.ext ?_
-  simp only [MonoidHom.comp_apply, MonoidHom.coe_coe, coe_pointsMulEquivHopfIdealPoints,
-    GeneralLinear.coe_iterateFrobeniusHopfIdealPoints, coe_frobenius]
-
 /-! ## The fixed points as points over the fixed subring -/
 
 /-- **The Frobenius-fixed points of the full-weight type-`C_(n+1)` carrier are its points over the
@@ -152,15 +123,16 @@ closure of `ZMod p` this reads `G(𝔽_q) ≃* G(A)^F` with `q = p ^ k`.
 
 It is `TauCeti.GeneralLinear.frobeniusFixedHopfIdealPointsMulEquiv`, the same isomorphism for the
 matrix points cut out by a Hopf ideal, transported along `TauCeti.SpStd.points_def` into the named
-type-`C` API; nothing is reproved. `TauCeti.SpStd.coe_pointsMulEquivFixedSubgroupFrobenius` says
-that the transport leaves the matrices alone, so the isomorphism is the entrywise inclusion. -/
+type-`C` API by `TauCeti.GeneralLinear.frobeniusFixedMulEquivOfCoeEq`; nothing is reproved. The
+transport consumes only that presentation of the point group and the entrywise description
+`TauCeti.SpStd.coe_frobenius` of the carrier Frobenius.
+`TauCeti.SpStd.coe_pointsMulEquivFixedSubgroupFrobenius` says that it leaves the matrices alone, so
+the isomorphism is the entrywise inclusion. -/
 def pointsMulEquivFixedSubgroupFrobenius :
     points n ↥(frobeniusFixedSubring A p k) ≃* ↥(fixedSubgroup (frobenius n p k A)) :=
-  ((pointsMulEquivHopfIdealPoints n ↥(frobeniusFixedSubring A p k)).trans
-      (GeneralLinear.frobeniusFixedHopfIdealPointsMulEquiv ((n + 1) + (n + 1)) p k
-        (definingIdeal n) A)).trans
-    (fixedSubgroupCongr (pointsMulEquivHopfIdealPoints n A)
-      (pointsMulEquivHopfIdealPoints_comp_frobenius n p k A)).symm
+  GeneralLinear.frobeniusFixedMulEquivOfCoeEq ((n + 1) + (n + 1)) p k (definingIdeal n) A
+    (frobenius n p k A) (points_def n A) (points_def n ↥(frobeniusFixedSubring A p k))
+    (coe_frobenius n p k A)
 
 /-- **The isomorphism onto the Frobenius-fixed points includes the matrix entries** of a point over
 the Frobenius-fixed subring into the value ring, and does nothing else. -/
@@ -168,9 +140,10 @@ the Frobenius-fixed subring into the value ring, and does nothing else. -/
 theorem coe_pointsMulEquivFixedSubgroupFrobenius (g : points n ↥(frobeniusFixedSubring A p k)) :
     ((pointsMulEquivFixedSubgroupFrobenius n p k A g : points n A) :
         Matrix.GeneralLinearGroup (Fin ((n + 1) + (n + 1))) A) =
-      Matrix.GeneralLinearGroup.map (frobeniusFixedSubring A p k).subtype g := by
-  simp [pointsMulEquivFixedSubgroupFrobenius, coe_pointsMulEquivHopfIdealPoints,
-    coe_pointsMulEquivHopfIdealPoints_symm]
+      Matrix.GeneralLinearGroup.map (frobeniusFixedSubring A p k).subtype g :=
+  GeneralLinear.coe_frobeniusFixedMulEquivOfCoeEq ((n + 1) + (n + 1)) p k (definingIdeal n) A
+    (frobenius n p k A) (points_def n A) (points_def n ↥(frobeniusFixedSubring A p k))
+    (coe_frobenius n p k A) g
 
 /-- Entrywise, the isomorphism includes each matrix entry of a point over the Frobenius-fixed
 subring into the value ring. -/
@@ -185,6 +158,18 @@ theorem coe_pointsMulEquivFixedSubgroupFrobenius_apply
             ↥(frobeniusFixedSubring A p k)) r c : ↥(frobeniusFixedSubring A p k)) : A) := by
   rw [coe_pointsMulEquivFixedSubgroupFrobenius, Matrix.GeneralLinearGroup.map_apply,
     Subring.coe_subtype]
+
+/-- **The isomorphism is the functorial point map along the inclusion of the Frobenius-fixed
+subring.** This is `TauCeti.SpStd.coe_pointsMulEquivFixedSubgroupFrobenius` read inside `points n A`
+rather than inside `GL_(2n+2)(A)`, which is the level at which the carrier's naturality statements
+`TauCeti.SpStd.pointsMap_rootSubgroupPoints` and `TauCeti.SpStd.pointsMap_weightTorusPoints` are
+made; through it they describe the action of the isomorphism on the numbered root subgroups and on
+the weight torus. -/
+theorem coe_pointsMulEquivFixedSubgroupFrobenius_eq_pointsMap
+    (g : points n ↥(frobeniusFixedSubring A p k)) :
+    (pointsMulEquivFixedSubgroupFrobenius n p k A g : points n A) =
+      pointsMap n (frobeniusFixedSubring A p k).subtype g :=
+  Subtype.ext (by rw [coe_pointsMulEquivFixedSubgroupFrobenius, coe_pointsMap])
 
 /-- **The inverse of the isomorphism reads a Frobenius-fixed point as a point over the
 Frobenius-fixed subring**: including its matrix back into the `A`-valued points returns the point
@@ -212,6 +197,15 @@ theorem coe_pointsMulEquivFixedSubgroupFrobenius_symm_apply_apply
   rw [← coe_pointsMulEquivFixedSubgroupFrobenius_symm_apply,
     Matrix.GeneralLinearGroup.map_apply, Subring.coe_subtype]
 
+/-- The inverse of the isomorphism read inside `points n A`: the functorial point map along the
+inclusion of the Frobenius-fixed subring returns the Frobenius-fixed point one started from. This is
+the `points`-level form of `TauCeti.SpStd.coe_pointsMulEquivFixedSubgroupFrobenius_symm_apply`. -/
+theorem pointsMap_pointsMulEquivFixedSubgroupFrobenius_symm_apply
+    (x : ↥(fixedSubgroup (frobenius n p k A))) :
+    pointsMap n (frobeniusFixedSubring A p k).subtype
+        ((pointsMulEquivFixedSubgroupFrobenius n p k A).symm x) = (x : points n A) := by
+  rw [← coe_pointsMulEquivFixedSubgroupFrobenius_eq_pointsMap, MulEquiv.apply_symm_apply]
+
 /-! ## Finiteness -/
 
 /-- **The Frobenius-fixed points of the full-weight type-`C_(n+1)` carrier form a finite group as
@@ -230,12 +224,10 @@ the subfield has exactly `p ^ k` elements by `TauCeti.card_frobeniusFixedSubfiel
 first point at which the type-`C` carrier produces a finite group; no order formula, perfectness or
 simplicity statement is claimed, and the group is not identified with `Sp_(2n+2)(q)`, an
 identification of the carrier with the symplectic group scheme not being available. -/
-theorem finite_fixedSubgroup_frobenius_of_charP (K : Type v) [Field K] [ExpChar K p]
+theorem finite_fixedSubgroup_frobenius_of_charP (K : Type v) [Field K]
     [Fact p.Prime] [CharP K p] (hk : k ≠ 0) :
     Finite ↥(fixedSubgroup (frobenius n p k K)) :=
-  have : Finite ↥(frobeniusFixedSubring K p k) := by
-    rw [← toSubring_frobeniusFixedSubfield]
-    exact finite_frobeniusFixedSubfield K p k hk
+  have := finite_frobeniusFixedSubring K p k hk
   finite_fixedSubgroup_frobenius n p k K
 
 end
