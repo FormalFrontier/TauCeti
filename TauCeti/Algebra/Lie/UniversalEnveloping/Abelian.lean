@@ -179,11 +179,19 @@ theorem symmetricAlgebraEquiv_ι (x : L) :
       _root_.UniversalEnvelopingAlgebra.ι R x :=
   SymmetricAlgebra.lift_ι_apply _ x
 
-@[simp]
+-- `simp`-normal form is `symmetricAlgebraEquiv_symm_ι'`, because `ι` is reducible to `mkAlgHom`
+-- by the `simp` lemma `UniversalEnvelopingAlgebra.ι_apply`.
 theorem symmetricAlgebraEquiv_symm_ι (x : L) :
     (symmetricAlgebraEquiv R L).symm (_root_.UniversalEnvelopingAlgebra.ι R x) =
       SymmetricAlgebra.ι R L x :=
   (isSymmetricAlgebra_ι R L).equiv_symm_apply x
+
+@[simp]
+theorem symmetricAlgebraEquiv_symm_ι' (x : L) :
+    (symmetricAlgebraEquiv R L).symm
+        (_root_.UniversalEnvelopingAlgebra.mkAlgHom R L (TensorAlgebra.ι R x)) =
+      SymmetricAlgebra.ι R L x := by
+  simpa using symmetricAlgebraEquiv_symm_ι R L x
 
 /-- The enveloping algebra of an abelian Lie algebra which is free as a module is free as a
 module. -/
