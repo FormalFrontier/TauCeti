@@ -203,7 +203,7 @@ omit [TopologicalSpace E] in
 original fibre over the inverse image of the basepoint. -/
 def homeomorphCompFiberEquiv (h : X ≃ₜ Y) (y : Y) :
     (h ∘ p) ⁻¹' {y} ≃ p ⁻¹' {h.symm y} :=
-  Equiv.setCongr <| Set.ext fun _ ↦ by
+  Equiv.Set.congr <| Set.ext fun _ ↦ by
     simp only [Set.mem_preimage, Set.mem_singleton_iff, Function.comp_apply]
     exact h.eq_symm_apply.symm
 

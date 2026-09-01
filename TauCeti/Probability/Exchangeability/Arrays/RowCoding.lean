@@ -118,7 +118,7 @@ instance instIsProbabilityMeasureArrayRowCodingLaw
     (π : Measure (ProbabilityMeasure (ℕ → α))) [IsProbabilityMeasure π] :
     IsProbabilityMeasure (arrayRowCodingLaw π) := by
   rw [arrayRowCodingLaw_def]
-  exact Measure.isProbabilityMeasure_map measurable_arrayRowCoding.aemeasurable
+  infer_instance
 
 /-- The first marginal of the coupled coding law is the supplied law of the random path measure. -/
 @[simp]
@@ -177,7 +177,7 @@ theorem SeparatelyExchangeable.map_pairReindex_arrayRowCodingLaw_eq
     (hν : ConditionallyIIDWith μ (arrayRow X) ν) (σ τ : Equiv.Perm ℕ) :
     (arrayRowCodingLaw (μ.map ν)).map
         (fun q =>
-          (q.1.map (measurable_reindex τ).aemeasurable, pairReindex σ τ q.2)) =
+          (q.1.map (fun x : ℕ → α => fun k => x (τ k)), pairReindex σ τ q.2)) =
       arrayRowCodingLaw (μ.map ν) := by
   have hX : ∀ p, AEMeasurable (X p) μ :=
     aemeasurable_entries_of_conditionallyIIDWith_arrayRow hν
@@ -185,9 +185,9 @@ theorem SeparatelyExchangeable.map_pairReindex_arrayRowCodingLaw_eq
     AEMeasurable.map_map_of_aemeasurable]
   · have hfun :
         ((fun q : ProbabilityMeasure (ℕ → α) × (ℕ × ℕ → α) =>
-            (q.1.map (measurable_reindex τ).aemeasurable, pairReindex σ τ q.2)) ∘
+            (q.1.map (fun x : ℕ → α => fun k => x (τ k)), pairReindex σ τ q.2)) ∘
           fun ω => (ν ω, fun p : ℕ × ℕ => X p ω)) =
-            fun ω => ((ν ω).map (measurable_reindex τ).aemeasurable,
+            fun ω => ((ν ω).map (fun x : ℕ → α => fun k => x (τ k)),
               fun p : ℕ × ℕ => X (σ p.1, τ p.2) ω) := by
           funext ω
           rw [Function.comp_apply]
@@ -210,13 +210,13 @@ obtained from an already exchangeable array. -/
 theorem map_pairReindex_arrayRowCodingLaw_eq_of_col_invariant
     (π : Measure (ProbabilityMeasure (ℕ → α)))
     (σ τ : Equiv.Perm ℕ)
-    (hπ : π.map (fun P => P.map (measurable_reindex (α := α) τ).aemeasurable) = π) :
+    (hπ : π.map (fun P => P.map (permReindex τ)) = π) :
     (arrayRowCodingLaw π).map
         (fun q =>
-          (q.1.map (measurable_reindex (α := α) τ).aemeasurable, pairReindex σ τ q.2)) =
+          (q.1.map (permReindex τ), pairReindex σ τ q.2)) =
       arrayRowCodingLaw π := by
   let f : ProbabilityMeasure (ℕ → α) → ProbabilityMeasure (ℕ → α) :=
-    fun P => P.map (measurable_reindex (α := α) τ).aemeasurable
+    fun P => P.map (permReindex τ)
   let g : (ℕ → (ℕ → α)) → (ℕ → (ℕ → α)) :=
     fun x i => permReindex τ (x (σ i))
   let J : ProbabilityMeasure (ℕ → α) × (ℕ → (ℕ → α)) →
@@ -303,13 +303,13 @@ theorem map_pairReindex_arrayRowCodingLaw_eq_of_col_invariant
   have hJlaw : (iidMixtureLaw π id).map J = iidMixtureLaw π id := by
     rw [hmix, hπ]
   have hH : Measurable fun q : ProbabilityMeasure (ℕ → α) × (ℕ × ℕ → α) =>
-      (q.1.map (measurable_reindex (α := α) τ).aemeasurable, pairReindex σ τ q.2) :=
+      (q.1.map (permReindex τ), pairReindex σ τ q.2) :=
     (TauCeti.MeasureTheory.measurable_probabilityMeasure_map
       (measurable_reindex (α := α) τ)).comp measurable_fst |>.prodMk
       ((measurable_pairReindex σ τ).comp measurable_snd)
   have hcomp :
       (fun q : ProbabilityMeasure (ℕ → α) × (ℕ × ℕ → α) =>
-        (q.1.map (measurable_reindex (α := α) τ).aemeasurable, pairReindex σ τ q.2)) ∘ C =
+        (q.1.map (permReindex τ), pairReindex σ τ q.2)) ∘ C =
       C ∘ J := by
     funext q
     dsimp [C, J]
@@ -320,13 +320,13 @@ theorem map_pairReindex_arrayRowCodingLaw_eq_of_col_invariant
   calc
     (arrayRowCodingLaw π).map
         (fun q =>
-          (q.1.map (measurable_reindex (α := α) τ).aemeasurable, pairReindex σ τ q.2)) =
+          (q.1.map (permReindex τ), pairReindex σ τ q.2)) =
         ((iidMixtureLaw π id).map C).map (fun q =>
-          (q.1.map (measurable_reindex (α := α) τ).aemeasurable, pairReindex σ τ q.2)) := by
+          (q.1.map (permReindex τ), pairReindex σ τ q.2)) := by
       rw [hcode]
     _ = (iidMixtureLaw π id).map
         ((fun q : ProbabilityMeasure (ℕ → α) × (ℕ × ℕ → α) =>
-          (q.1.map (measurable_reindex (α := α) τ).aemeasurable, pairReindex σ τ q.2)) ∘ C) :=
+          (q.1.map (permReindex τ), pairReindex σ τ q.2)) ∘ C) :=
       Measure.map_map hH hC
     _ = (iidMixtureLaw π id).map (C ∘ J) := by rw [hcomp]
     _ = ((iidMixtureLaw π id).map J).map C := (Measure.map_map hC hJ).symm

@@ -35,7 +35,8 @@ order `p ^ (2 * m + 1)`.
   parameter range.
 * `TauCeti.ValidLieTypeIndex`, `TauCeti.SuzukiReeIndex`, `TauCeti.GraphTwistedIndex`,
   `TauCeti.TypeALieIndex`, `TauCeti.TypeCLieIndex`, `TauCeti.TypeE6LieIndex`,
-  `TauCeti.TypeTwistedE6LieIndex`, `TauCeti.SuzukiLieIndex`, and
+  `TauCeti.TypeTwistedE6LieIndex`, `TauCeti.SuzukiLieIndex`, `TauCeti.RankTwoBLieIndex`,
+  `TauCeti.TypeB2LieIndex`, and
   `TauCeti.UnimodularLieIndex`: the restricted domains consumed by later carrier and endomorphism
   constructions.
 * `TauCeti.SporadicName`: the conventional twenty-six sporadic names.
@@ -51,6 +52,12 @@ The declaration structure and definitions adapt the human-authored formal skelet
 `TauCetiRoadmap/CFSGStatement/Suggested.lean`.
 The underlying diagrams reuse the Bourbaki-numbered `TauCeti.DynkinType` supplied by the
 root-systems roadmap.
+
+For the two families on the rank-two diagram `B₂`, the names `B₂(q)` and `²B₂(2^(2m+1))`, the
+retention of the rank-two symplectic family under the `B` name, and the isomorphisms that exclude
+`B₂(2)`, `B₂(3)` and `²B₂(2)` are those of Gorenstein--Lyons--Solomon, Number 1, §2.2, and of the
+Atlas; the diagram itself is N. Bourbaki, *Lie Groups and Lie Algebras, Chapters 4--6*, Plate II at
+rank two.
 -/
 
 public section
@@ -452,6 +459,22 @@ theorem exists_eq_of_hasUnimodularDiagram_of_not_usesHalfFrobenius {d : LieTypeI
     ∃ q : PrimePower, d = .E8 q ∨ d = .F4 q ∨ d = .G2 q := by
   cases d <;> simp_all
 
+/-- **The two families on the rank-two diagram `B₂`.** They are the untwisted `B₂(q)` and the
+Suzuki family `²B₂(2^(2m+1))`; the converse inclusions are `dynkinType_B` and `dynkinType_suzuki`.
+No rank-two `C` index appears: the `C` family starts at rank three in `InStandardRange`, so
+`B₂(q) = C₂(q)` is always named in the `B` family. -/
+theorem exists_eq_of_dynkinType_eq_B_two {d : LieTypeIndex} (hd : d.dynkinType = .B 2) :
+    (∃ q : PrimePower, d = .B 2 q) ∨ ∃ m : ℕ, d = .suzuki m := by
+  cases d <;> simp_all
+
+/-- **The one untwisted family on the rank-two diagram `B₂`.** Removing the Suzuki constructor, the
+one of the two families of `exists_eq_of_dynkinType_eq_B_two` using a half-Frobenius, leaves
+`B₂(q)`. -/
+theorem exists_eq_B_of_dynkinType_eq_B_two_of_not_usesHalfFrobenius {d : LieTypeIndex}
+    (hd : d.dynkinType = .B 2) (hf : ¬d.UsesHalfFrobenius) :
+    ∃ q : PrimePower, d = .B 2 q := by
+  cases d <;> simp_all
+
 /-- The characteristic of the field over which the ambient group will be constructed. -/
 def characteristic : LieTypeIndex → ℕ
   | .A _ q | .twistedA _ q | .B _ q | .C _ q | .D _ q | .twistedD _ q
@@ -738,6 +761,24 @@ group rather than a simple one, and `²B₂(2)` is not a `SuzukiLieIndex`. The S
 `TauCeti.SuzukiReeIndex`. -/
 abbrev SuzukiLieIndex : Type _ := {d : ValidLieTypeIndex // d.1.IsSuzuki}
 
+/-- A validated index built on the rank-two diagram `B₂`: the untwisted family `B₂(q)` and the
+Suzuki family `²B₂(2^(2m+1))`.
+
+The condition constrains the diagram and not the Steinberg map, so it holds both of the untwisted
+family, whose Steinberg map is the `q`-power Frobenius, and of the Suzuki family, whose Steinberg
+map is an odd power of a half-Frobenius. No rank-two `C` index appears: the `C` family starts at
+rank three in `InStandardRange`, so `B₂(q) = C₂(q)` is always named in the `B` family.
+
+This is diagram-level indexing data only; it does not attach the pinned L0 carrier that both
+branches will eventually consume. The outer subtype is important: `B₂(2)`, `B₂(3)` and `²B₂(2)`
+are excluded from the classification list and are not indices of this subtype; those exclusions
+are the small isomorphisms of Gorenstein--Lyons--Solomon, Number 1, §2.2. -/
+abbrev RankTwoBLieIndex : Type _ := {d : ValidLieTypeIndex // d.1.dynkinType = .B 2}
+
+/-- A validated index in the untwisted rank-two family `B₂(q)`. The Suzuki family, which shares the
+diagram, is excluded by the outer predicate. -/
+abbrev TypeB2LieIndex : Type _ := {d : RankTwoBLieIndex // ¬d.1.1.UsesHalfFrobenius}
+
 namespace TypeALieIndex
 
 /-- Introduce a valid untwisted type-A index. -/
@@ -847,10 +888,73 @@ theorem characteristic_ne_two (d : TypeCLieIndex) : d.1.characteristic ≠ 2 := 
 
 end TypeCLieIndex
 
-/-! ## The Suzuki family
+/-! ## The families on the `B₂` diagram
 
 This section follows `ValidLieTypeIndex` rather than sitting beside `TypeALieIndex`, because
 `rank_eq_two` reads the numbered data `TauCeti.ValidLieTypeIndex.rank` defined just above. -/
+
+namespace RankTwoBLieIndex
+
+/-- An index on the `B₂` diagram names the Dynkin type `B 2`. -/
+@[simp] theorem dynkinType_eq (d : RankTwoBLieIndex) : d.1.dynkinType = .B 2 := d.2
+
+/-- An index on the `B₂` diagram has rank two, that being the rank of `B₂`. -/
+@[simp] theorem rank_eq_two (d : RankTwoBLieIndex) : d.1.rank = 2 :=
+  congrArg DynkinType.rank d.dynkinType_eq
+
+/-- Introduce the untwisted branch `B₂(q)`. -/
+abbrev ofB (q : PrimePower) (hvalid : (LieTypeIndex.B 2 q).Valid) : RankTwoBLieIndex :=
+  ⟨⟨.B 2 q, hvalid⟩, by simp⟩
+
+/-- Introduce the Suzuki branch `²B₂(2^(2m+1))`. -/
+abbrev ofSuzuki (m : ℕ) (hvalid : (LieTypeIndex.suzuki m).Valid) : RankTwoBLieIndex :=
+  ⟨⟨.suzuki m, hvalid⟩, by simp⟩
+
+/-- Every index on the `B₂` diagram is one of the two introduction forms. This is the eliminator
+matching `ofB` and `ofSuzuki`, so a consumer never repeats the case split over the other
+constructors. -/
+theorem exists_eq_ofB_or_exists_eq_ofSuzuki (d : RankTwoBLieIndex) :
+    (∃ (q : PrimePower) (hvalid : (LieTypeIndex.B 2 q).Valid), d = ofB q hvalid) ∨
+      ∃ (m : ℕ) (hvalid : (LieTypeIndex.suzuki m).Valid), d = ofSuzuki m hvalid := by
+  obtain ⟨⟨e, hvalid⟩, hdiag⟩ := d
+  rcases LieTypeIndex.exists_eq_of_dynkinType_eq_B_two hdiag with ⟨q, rfl⟩ | ⟨m, rfl⟩
+  · exact .inl ⟨q, hvalid, rfl⟩
+  · exact .inr ⟨m, hvalid, rfl⟩
+
+/-- The two branches are disjoint, so the eliminator above splits every index on the `B₂` diagram
+into exactly one of them. -/
+theorem ofB_ne_ofSuzuki (q : PrimePower) (hq : (LieTypeIndex.B 2 q).Valid) (m : ℕ)
+    (hm : (LieTypeIndex.suzuki m).Valid) : ofB q hq ≠ ofSuzuki m hm := by
+  simp [Subtype.ext_iff]
+
+end RankTwoBLieIndex
+
+namespace TypeB2LieIndex
+
+/-- Introduce a valid untwisted index `B₂(q)`. Validity forces `4 ≤ q.card`, by
+`four_le_fieldOrder` below. -/
+abbrev of (q : PrimePower) (hvalid : (LieTypeIndex.B 2 q).Valid) : TypeB2LieIndex :=
+  ⟨RankTwoBLieIndex.ofB q hvalid, by simp [LieTypeIndex.usesHalfFrobenius_iff]⟩
+
+/-- Every untwisted rank-two type-`B` index is of the introduction form. -/
+theorem exists_eq_of (d : TypeB2LieIndex) :
+    ∃ (q : PrimePower) (hvalid : (LieTypeIndex.B 2 q).Valid), d = of q hvalid := by
+  obtain ⟨⟨⟨e, hvalid⟩, hdiag⟩, hhalf⟩ := d
+  obtain ⟨q, rfl⟩ :=
+    LieTypeIndex.exists_eq_B_of_dynkinType_eq_B_two_of_not_usesHalfFrobenius hdiag hhalf
+  exact ⟨q, hvalid, rfl⟩
+
+/-- The field order of an untwisted rank-two type-`B` index is at least four. The two smaller prime
+powers are excluded from the classification list as duplicate representatives. -/
+theorem four_le_fieldOrder (d : TypeB2LieIndex) : 4 ≤ d.1.1.fieldOrder := by
+  obtain ⟨q, hvalid, rfl⟩ := d.exists_eq_of
+  rw [LieTypeIndex.valid_iff, LieTypeIndex.inStandardRange_iff,
+    LieTypeIndex.isDuplicateRepresentative_iff] at hvalid
+  have h2 := q.isPrimePow_card.two_le
+  simp only [ValidLieTypeIndex.fieldOrder, LieTypeIndex.fieldOrder_B]
+  omega
+
+end TypeB2LieIndex
 
 namespace SuzukiLieIndex
 

@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Algebra.Lie.HighestWeight.Module
 public import TauCeti.Algebra.Lie.Weights.FormalCharacter
+public import TauCeti.LinearAlgebra.RootSystem.Weyl.IntegralDetermination
 public import TauCeti.LinearAlgebra.RootSystem.Weyl.Invariant
 -- `Invertible (2 : K)`, which the alternating-element API asks of the coefficient ring.
 public import Mathlib.Algebra.CharP.Invertible
@@ -43,11 +44,18 @@ the top weight space of a highest weight module is a line and the constant term 
 the positive root cone is pointed, so `lam` admits only the one decomposition.
 
 Together these are the input to the alternation step of the character formula: `ch M · Δ` is an
-alternating element, supported in `lam - Q⁺`, whose coefficient at `lam` is `1`. Identifying it
-with the Weyl numerator `N(lam)` through `TauCeti.IsDotAlternating.eq_weylNumerator` needs two
-further things, neither of them here: that no other weight of the open chamber of the dot action
-carries a nonzero coefficient, and, that chamber being defined over a linearly ordered coefficient
-ring, a passage to the rational form of the weight space.
+alternating element, supported in `lam - Q⁺`, whose coefficient at `lam` is `1`. Being alternating
+and supported in `lam - Q⁺` already pins the element down completely once its coefficients at the
+**dominant integral** weights are known, and the last result below says so. Identifying it with
+the Weyl numerator `N(lam)` therefore comes down to a single further statement, which is not
+proved here: that no dominant integral weight other than `lam` carries a nonzero coefficient.
+
+The determination is read off from
+`TauCeti.IsDotAlternating.eq_of_forall_coeff_dominantIntegral_eq` rather than from the chamber
+statement `TauCeti.IsDotAlternating.eq_of_coeff_openDotDominantChamber_eq`, whose fundamental
+domain is cut out by inequalities and so needs a linear order on the coefficient ring compatible
+with its ring structure: the ring here is an algebraically closed field, which carries no such
+order.
 
 ## Main results
 
@@ -58,6 +66,10 @@ ring, a passage to the rational form of the weight space.
   weight module of weight `lam`, that product is **supported in `lam - Q⁺`**;
 * `coeff_formalCharacter_mul_weylDenominator_eq_one_of_isHighestWeightVector_of_lieSpan_eq_top`:
   and its **coefficient at `lam` is `1`**.
+* `TauCeti.formalCharacter_mul_weylDenominator_eq_of_forall_coeff_isDominantIntegral_eq`: **that
+  product is determined by its coefficients at the dominant integral weights**, with
+  `TauCeti.exists_intCast_eq_coroot'_of_sub_mem_posRootCone` the integrality of the weights below
+  `lam` that the determination consumes.
 
 ## References
 
@@ -198,5 +210,59 @@ theorem coeff_formalCharacter_mul_weylDenominator_eq_one_of_isHighestWeightVecto
   rw [AddMonoidAlgebra.coeff_mul, Finsupp.sum_eq_single lam houter (fun h ↦ by simp [hchar] at h),
     Finsupp.sum_eq_single 0 hinner (fun h ↦ by rw [mul_zero, ite_self]),
     add_zero, ite_eq_left rfl, hchar, coeff_weylDenominator_zero, one_mul]
+
+/-! ### Determination by the dominant integral coefficients -/
+
+omit hgen in
+/-- **Every simple coroot takes an integer value on a weight below `lam`.** The difference
+`lam - chi` lies in `Q⁺`, where the coroot functionals take integer values
+(`TauCeti.exists_intCast_eq_coroot'_of_mem_posRootCone`), and `lam` itself takes natural values on
+the simple coroots, being the weight of a highest weight vector in a finite-dimensional module.
+
+This is the integrality that `TauCeti.IsDotAlternating.eq_of_forall_coeff_dominantIntegral_eq`
+consumes, and it applies to `ch M · Δ` through
+`TauCeti.sub_mem_posRootCone_of_coeff_formalCharacter_mul_weylDenominator_ne_zero`. -/
+theorem exists_intCast_eq_coroot'_of_sub_mem_posRootCone {chi : Dual K H}
+    (hchi : lam - chi ∈ posRootCone (IsKilling.rootSystem H) b)
+    {i : H.root} (hi : i ∈ b.support) :
+    ∃ z : ℤ, (IsKilling.rootSystem H).coroot' i chi = (z : K) := by
+  obtain ⟨n, hn⟩ := isDominantIntegral_iff.mp hv.isDominantIntegral i hi
+  obtain ⟨m, hm⟩ := exists_intCast_eq_coroot'_of_mem_posRootCone (IsKilling.rootSystem H) b hchi i
+  rw [map_sub, rootSystem_coroot'_apply, rootSystem_coroot'_apply, hn] at hm
+  refine ⟨(n : ℤ) - m, ?_⟩
+  rw [rootSystem_coroot'_apply]
+  push_cast
+  linear_combination -hm
+
+/-- **The product of the formal character of a highest weight module with the Weyl denominator is
+determined by its coefficients at the dominant integral weights.**
+
+This is what reduces the Weyl character formula `ch L(lam) · Δ = N(lam)` to a statement about the
+dominant integral weights alone: the two sides are alternating for the dot action and supported in
+`lam - Q⁺`, so `TauCeti.IsDotAlternating.eq_of_forall_coeff_dominantIntegral_eq` identifies them as
+soon as their dominant integral coefficients agree. The two hypotheses on the comparison element
+`g` are exactly the two properties of `ch M · Δ` proved above, so the statement is symmetric in the
+two sides; beyond the dot alternation `hgalt`, no Weyl-orbit and no Weyl-group finiteness
+hypothesis is asked of `g`. Its integrality on the simple coroots is not asked either: it already
+follows from `hgcone`, by `TauCeti.exists_intCast_eq_coroot'_of_sub_mem_posRootCone`. -/
+theorem formalCharacter_mul_weylDenominator_eq_of_forall_coeff_isDominantIntegral_eq
+    {g : AddMonoidAlgebra ℤ (Dual K H)} (hgalt : IsDotAlternating (IsKilling.rootSystem H) b g)
+    (hgcone : ∀ chi : Dual K H, g.coeff chi ≠ 0 →
+      lam - chi ∈ posRootCone (IsKilling.rootSystem H) b)
+    (hagree : ∀ nu : Dual K H, IsDominantIntegral b nu →
+      (formalCharacter K H M * weylDenominator (IsKilling.rootSystem H) b).coeff nu
+        = g.coeff nu) :
+    formalCharacter K H M * weylDenominator (IsKilling.rootSystem H) b = g := by
+  refine IsDotAlternating.eq_of_forall_coeff_dominantIntegral_eq
+    (isDotAlternating_formalCharacter_mul_weylDenominator b) hgalt
+    (fun _ hchi ↦
+      sub_mem_posRootCone_of_coeff_formalCharacter_mul_weylDenominator_ne_zero hv hgen hchi)
+    hgcone
+    (fun _ hchi _ hi ↦ exists_intCast_eq_coroot'_of_sub_mem_posRootCone hv
+      (sub_mem_posRootCone_of_coeff_formalCharacter_mul_weylDenominator_ne_zero hv hgen hchi) hi)
+    (fun _ hchi _ hi ↦ exists_intCast_eq_coroot'_of_sub_mem_posRootCone hv (hgcone _ hchi) hi)
+    fun nu hnu ↦ hagree nu (isDominantIntegral_iff.mpr fun i hi ↦ ?_)
+  obtain ⟨n, hn⟩ := hnu i hi
+  exact ⟨n, by rwa [← rootSystem_coroot'_apply]⟩
 
 end TauCeti

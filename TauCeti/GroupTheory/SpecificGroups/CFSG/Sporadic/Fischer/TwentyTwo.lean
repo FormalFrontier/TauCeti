@@ -37,8 +37,8 @@ either choice, while the version 3 presentation page chooses `(ab²)²¹` as tra
 As an independent check, GAP 4.15.1 with AtlasRep 2.1.9 evaluates all thirteen displayed relators
 to the identity on the ATLAS standard generators in the 3510-point permutation representation of
 `Fi₂₂`. This is transcription provenance rather than a Lean theorem: the file asserts no order,
-finiteness, simplicity, or identification result. A separate comparison with the
-`FiniteSimpleGroups` development named by the roadmap remains part of the S1 review artifact.
+finiteness, simplicity, or identification result. The separate comparison with the
+`FiniteSimpleGroups` development named by the roadmap is recorded below.
 
 ## Independent source-to-Lean read-through
 
@@ -63,8 +63,35 @@ two words represent the same central involution of `2·Fi₂₂`; killing either
 presentation. Thus the version 3 page's choice of `R1`, the omission of `R2`, and all twelve
 remaining source-order positions agree exactly with the sealed Lean row. This comparison was
 performed from the pinned source bytes independently of the original transcription and closes
-this row's S1 source-to-Lean read-through. The separate comparison with `FiniteSimpleGroups`
-remains outstanding.
+this row's S1 source-to-Lean read-through.
+
+## Independent comparison with `FiniteSimpleGroups`
+
+The comparison used `finite-simple-groups-lean` at commit
+`7f09e33a9ceef6b59ce03e34cd4f0558c763e325`, whose named permutations `fi22a` and `fi22b`
+generate a subgroup of `Equiv.Perm (Fin 3510)` with proved order `64561751654400` and proved
+simplicity. Both generators have order `13`, so they are not the ATLAS standard pair used by this
+row.
+
+The independent ATLAS 3510-point standard pair is given by the files `F22G1-p3510B0.g1` and
+`F22G1-p3510B0.g2`. It has orders `2` and `13`, with product of order `11`, and the two files have
+respective SHA-256 digests
+`5b15ea3939461e4e74cfa544458d32256f4fc8bc1d77a90686863a29e9f09068` and
+`af06024803596bb7f21cf90c577a9a1ed52abacd5b77affb320768d997bc0443`. The pinned pair and the
+ATLAS pair each determine the same rank-three graph: their point stabilizer suborbits have lengths
+`1`, `693`, and `2816`, with the length-`693` orbit as the neighbor set. Canonically labeling these
+graphs with pynauty transports the ATLAS pair into the pinned development's point numbering.
+Direct permutation calculation then gives orders `2`, `13`, and `11` for `a`, `b`, and `ab`, and
+all thirteen compiled relators in this module evaluate to the identity. Schreier--Sims membership
+checks put the transported `a,b` in the pinned subgroup and put `fi22a,fi22b` back in `⟨a,b⟩`; the
+pair therefore generates that subgroup of order `64561751654400`.
+
+The check used Python 3.14.6, pynauty 2.8.8.1, and SymPy 1.14.0. Concatenating the transported
+forward image tables for `a` and then `b`, with each image stored as a two-byte little-endian
+integer, has SHA-256
+`66941048d1dd4532444563d0526fb210e2007d31ee8c58c51a9c8e1e8d7061de`. This is the independent
+comparison artifact required by S1; no external code or permutation data is imported into Tau
+Ceti.
 
 The row is a sealed definition, so it publishes an equation for each of its fields: the transcribed
 relator expressions with their generator indices written out, and the provenance a manifest row
@@ -93,10 +120,16 @@ to compare with the source, rather than checking it against a recorded number.
 
 * R. A. Wilson, R. A. Parker, J. N. Bray et al., *ATLAS of Finite Group Representations*,
   version 3, presentation `F22G1-P1`,
-  <https://brauer.maths.qmul.ac.uk/Atlas/v3/pres/F22G1-P1>.
+  <https://brauer.maths.qmul.ac.uk/Atlas/v3/pres/F22G1-P1>; the comparison uses its 3510-point
+  standard-generator files
+  <https://brauer.maths.qmul.ac.uk/Atlas/spor/F22/gap/F22G1-p3510B0.g1> and
+  <https://brauer.maths.qmul.ac.uk/Atlas/spor/F22/gap/F22G1-p3510B0.g2>.
 * The relator list and its reduction to the proved `2·Fi₂₂` presentation are recorded in
   <https://brauer.maths.qmul.ac.uk/Atlas/spor/F22/mag/F22G1-P1.M> and
   <https://brauer.maths.qmul.ac.uk/Atlas/spor/F22/mag/2F22G1-P1.M>.
+* KitaKen1, *FiniteSimpleGroups*, `Fi22` construction at commit
+  `7f09e33a9ceef6b59ce03e34cd4f0558c763e325`,
+  <https://github.com/KitaKen1/finite-simple-groups-lean>.
 * The presentation-row characterization and audit theorem scaffold is adapted from the Janko-row
   formalization in <https://github.com/TauCetiProject/TauCeti/pull/5283>.
 -/
@@ -140,8 +173,9 @@ def fi22Presentation : GroupPresentation where
     (a*b*a*b*a*b^-3)^5 as an interchangeable relator: the proof file identifies both words \
     with the central involution of 2.Fi22 and records successful index-3510 coset enumeration \
     with either one. GAP 4.15.1 with AtlasRep 2.1.9 checks the thirteen displayed relators on \
-    the standard generators of the 3510-point Fi22 permutation representation. A comparison \
-    with the independent FiniteSimpleGroups construction remains an S1 review artifact."
+    the standard generators of the 3510-point Fi22 permutation representation. The independent \
+    comparison with the FiniteSimpleGroups construction is recorded in this module's \
+    documentation."
   expectedGeneratorCount := 2
   expectedRelatorCount := 13
   transcribed :=
@@ -201,8 +235,9 @@ theorem fi22Presentation_transcriptionNotes :
       (a*b*a*b*a*b^-3)^5 as an interchangeable relator: the proof file identifies both words with \
       the central involution of 2.Fi22 and records successful index-3510 coset enumeration with \
       either one. GAP 4.15.1 with AtlasRep 2.1.9 checks the thirteen displayed relators on the \
-      standard generators of the 3510-point Fi22 permutation representation. A comparison with \
-      the independent FiniteSimpleGroups construction remains an S1 review artifact." := by
+      standard generators of the 3510-point Fi22 permutation representation. The independent \
+      comparison with the FiniteSimpleGroups construction is recorded in this module's \
+      documentation." := by
   simp [fi22Presentation]
 
 /-- The generator count `Fi₂₂`'s source states. With

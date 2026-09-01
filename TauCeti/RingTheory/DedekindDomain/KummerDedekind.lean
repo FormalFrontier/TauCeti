@@ -87,7 +87,7 @@ open scoped Classical in
 noncomputable def primesOverEquivNormalizedFactorsMinPolyMk :
     p.primesOver S ≃
       {d : (R ⧸ p)[X] | d ∈ normalizedFactors ((minpoly R x).map (Ideal.Quotient.mk p))} :=
-  (Equiv.setCongr (Set.ext fun _ ↦
+  (Equiv.Set.congr (Set.ext fun _ ↦
     Ideal.mem_primesOver_iff_mem_normalizedFactors S hp0)).trans
       (KummerDedekind.normalizedFactorsMapEquivNormalizedFactorsMinPolyMk hp hp0 hx hx')
 

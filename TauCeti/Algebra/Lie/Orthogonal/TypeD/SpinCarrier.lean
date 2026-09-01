@@ -5,10 +5,12 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.Algebra.Lie.Orthogonal.TypeD.RootGenerators
 public import TauCeti.RepresentationTheory.Spin.Polarization.SplitEven
 public import TauCeti.RepresentationTheory.Spin.Polarization.TypeD.KostantLattice
 public import
   TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Points
+import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Relations
 import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Rigidity
 import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Torus
 
@@ -26,8 +28,18 @@ simple-root subgroups and the represented rank-`n` split torus. In particular, t
 uses the full spin module rather than one half-spin summand, so its weights see both spinor cosets
 of the type-`D` root lattice.
 
-No smoothness, reductivity, maximality of the torus, or identification of the carrier's root datum
-is asserted here. Those are subsequent steps in the pinned Chevalley--Demazure construction.
+Those data are then carried onto matrix-valued points: the numbered root subgroups and the weight
+torus become homomorphisms into `TauCeti.TypeDSpinCarrier.points`, and conjugating one by the
+other rescales its parameter through a character. That character is named: it is the positive or
+negative `i`-th simple root of `TauCeti.DynkinType.simplyConnectedRootDatum` at
+`TauCeti.DynkinType.D n`, the uniform pinned datum a consumer reaches holding only a Dynkin type.
+That naming is what makes the carrier's pinning conventions statable without reference to its
+`2 ^ n`-dimensional spin realization.
+
+No smoothness, reductivity, maximality of the torus, or identification of the carrier's whole root
+datum is asserted here: the equations below concern the simple root characters alone, and exhibit
+neither a Borel subgroup nor a root subgroup for a non-simple root. Those are subsequent steps in
+the pinned Chevalley--Demazure construction.
 
 ## Main declarations
 
@@ -35,6 +47,23 @@ is asserted here. Those are subsequent steps in the pinned Chevalley--Demazure c
 * `TauCeti.TypeDSpinCarrier.rootSubgroup`: its numbered simple-root subgroup morphisms.
 * `TauCeti.TypeDSpinCarrier.weightTorus`: its closed rank-`n` split torus.
 * `TauCeti.TypeDSpinCarrier.points`: its matrix-valued points over a commutative ring.
+* `TauCeti.TypeDSpinCarrier.rootSubgroupPoints` and
+  `TauCeti.TypeDSpinCarrier.weightTorusPoints`: the numbered root subgroups and the weight torus
+  on those matrix-valued points.
+
+## Main results
+
+* `TauCeti.TypeDSpinCarrier.lie_serreH_rootGenerator`: each numbered Serre root generator is a
+  Cartan weight vector, with weight the corresponding row of the type-`D` Cartan matrix for a
+  raising generator and its negative for a lowering generator.
+* `TauCeti.TypeDSpinCarrier.weightTorusPoints_conj_rootSubgroupPoints` and
+  `TauCeti.TypeDSpinCarrier.weightTorus_conj_rootSubgroup`: conjugation by the weight torus
+  rescales the parameter of each numbered root subgroup through that character, on matrix-valued
+  points and on scheme points respectively.
+* `TauCeti.TypeDSpinCarrier.weightTorusPoints_conj_rootSubgroupPoints_root_simpleIndex`,
+  `TauCeti.TypeDSpinCarrier.weightTorus_conj_rootSubgroup_root_simpleIndex`, and their
+  negative-root counterparts: the same equations with the named simple root of
+  `TauCeti.DynkinType.simplyConnectedRootDatum` as their exponent.
 
 ## References
 
@@ -44,9 +73,11 @@ is asserted here. Those are subsequent steps in the pinned Chevalley--Demazure c
 * J. C. Jantzen, *Representations of Algebraic Groups*, II.1--2.
 
 The carrier API follows the formal template of
-`TauCeti.Algebra.Lie.E6.Minuscule.GroupScheme`; the split spin representation, exterior lattice,
-and type-`D` weights are specific to this construction. This advances Layer 9, "The
-Chevalley--Demazure construction", of the ReductiveGroups roadmap and supplies the type-`D`
+`TauCeti.Algebra.Lie.E6.Minuscule.GroupScheme` and
+`TauCeti.Algebra.Lie.Symplectic.StandardCarrier.Scheme`, and the pinning equations below follow
+that of `TauCeti.Algebra.Lie.Symplectic.StandardCarrier.RootDatum`; the split spin representation,
+exterior lattice, and type-`D` weights are specific to this construction. This advances Layer 9,
+"The Chevalley--Demazure construction", of the ReductiveGroups roadmap and supplies the type-`D`
 carrier required by milestone L0 of the CFSGStatement roadmap.
 -/
 
@@ -308,5 +339,200 @@ theorem mem_points_iff (A : Type v) [CommRing A]
         ((TauCeti.GeneralLinear.pointsMulEquiv (R := ℤ) (dimension n)).symm g).ofConv x = 0 := by
   rw [points, definingIdeal]
   exact mem_kostantToralPointsSubgroup_iff _ _ _ _ _ _ _ _ A g
+
+/-- **The parametrized numbered root subgroup inside the type-`Dₙ` spin carrier points.** The
+parameter is read through the canonical multiplicative copy of the additive group of `A`. -/
+noncomputable def rootSubgroupPoints (hn : 4 ≤ n) (k : Fin n ⊕ Fin n) (A : Type v) [CommRing A] :
+    Multiplicative A →* points n hn A :=
+  kostantToralRootSubgroupPoints
+    (TauCeti.serreRootGenerator (CartanMatrix.D n))
+    (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
+    (rep_kostantForm_mem_lattice n hn) (isNilpotent_rep_rootGenerator n hn)
+    (latticeBasis n) (basisWeight n) k A
+
+/-- A numbered root-subgroup point is its represented divided-power exponential matrix. -/
+@[simp]
+theorem coe_rootSubgroupPoints (k : Fin n ⊕ Fin n) (A : Type v) [CommRing A]
+    (u : Multiplicative A) :
+    (rootSubgroupPoints n hn k A u :
+        _root_.Matrix.GeneralLinearGroup (Fin (dimension n)) A) =
+      kostantRootSubgroupMatrix
+        (TauCeti.serreRootGenerator (CartanMatrix.D n))
+        (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
+        (rep_kostantForm_mem_lattice n hn) k (isNilpotent_rep_rootGenerator n hn k)
+        (latticeBasis n)
+        ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm u) := by
+  exact coe_kostantToralRootSubgroupPoints _ _ _ _ _ _ _ _ k A u
+
+/-- **The split spin weight torus inside the type-`Dₙ` spin carrier points.** -/
+noncomputable def weightTorusPoints (hn : 4 ≤ n) (A : Type v) [CommRing A] :
+    (Fin n → Aˣ) →* points n hn A :=
+  kostantToralWeightTorusPoints
+    (TauCeti.serreRootGenerator (CartanMatrix.D n))
+    (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
+    (rep_kostantForm_mem_lattice n hn) (isNilpotent_rep_rootGenerator n hn)
+    (latticeBasis n) (basisWeight n) A
+
+/-- A weight-torus point is the diagonal matrix obtained by evaluating each spin weight. -/
+@[simp]
+theorem coe_weightTorusPoints (A : Type v) [CommRing A] (s : Fin n → Aˣ) :
+    (weightTorusPoints n hn A s :
+        _root_.Matrix.GeneralLinearGroup (Fin (dimension n)) A) =
+      kostantTorusMatrix (lattice n).toAddSubgroup (latticeBasis n) (basisWeight n) s := by
+  exact coe_kostantToralWeightTorusPoints _ _ _ _ _ _ _ _ A s
+
+/-! ## The Cartan action on the numbered root generators -/
+
+/-- The numbered Serre root generators of the type-`Dₙ` presentation are weight vectors for its
+Cartan generators, with the integral weight `TauCeti.TypeDStd.rootGeneratorWeight` already attached
+to the numbering by the split orthogonal Lie algebra. The type-`D` Cartan matrix is symmetric, so
+its row and column readings of that weight agree. -/
+theorem lie_serreH_rootGenerator (k : Fin n ⊕ Fin n) (j : Fin n) :
+    ⁅TauCeti.serreH ℚ (CartanMatrix.D n) j,
+        TauCeti.serreRootGenerator (CartanMatrix.D n) k⁆ =
+      ((TypeDStd.rootGeneratorWeight n k j : ℤ) : ℚ) •
+        TauCeti.serreRootGenerator (CartanMatrix.D n) k := by
+  cases k with
+  | inl i =>
+      rw [TauCeti.lie_serreH_serreRootGenerator_inl,
+        (CartanMatrix.D_isSymm n).apply i j, TypeDStd.rootGeneratorWeight_inl]
+  | inr i =>
+      rw [TauCeti.lie_serreH_serreRootGenerator_inr,
+        (CartanMatrix.D_isSymm n).apply i j, TypeDStd.rootGeneratorWeight_inr]
+
+/-! ## The pinning equation -/
+
+/-- **Conjugation by the spin weight torus acts on each numbered root subgroup through its
+positive or negative simple-root character, on matrix-valued points.** A torus point `s` carries
+the root-subgroup point of parameter `u` to the one of parameter `α_k(s) u`. -/
+@[simp]
+theorem weightTorusPoints_conj_rootSubgroupPoints (k : Fin n ⊕ Fin n) (A : Type v) [CommRing A]
+    (s : Fin n → Aˣ) (u : Multiplicative A) :
+    weightTorusPoints n hn A s * rootSubgroupPoints n hn k A u *
+        (weightTorusPoints n hn A s)⁻¹ =
+      rootSubgroupPoints n hn k A
+        (Multiplicative.ofAdd
+          ((TauCeti.torusCharacter s (TypeDStd.rootGeneratorWeight n k) : A) *
+            Multiplicative.toAdd u)) := by
+  exact kostantToralWeightTorusPoints_conj_rootSubgroupPoints
+    (TauCeti.serreRootGenerator (CartanMatrix.D n))
+    (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
+    (rep_kostantForm_mem_lattice n hn) (isNilpotent_rep_rootGenerator n hn)
+    (latticeBasis n) (basisWeight n) (isCartanWeightVector_latticeBasis n hn)
+    (lie_serreH_rootGenerator n k) A s u
+
+/-- **Conjugation by the spin weight torus acts on each numbered root subgroup through its
+positive or negative simple-root character.** -/
+@[simp]
+theorem weightTorus_conj_rootSubgroup (k : Fin n ⊕ Fin n) (A : Type) [CommRing A]
+    (s : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of ℤ)) ⟶
+      (SplitTorus.groupScheme ℤ (Fin n)).X)
+    (u : A) :
+    (s ≫ (weightTorus n hn).hom.hom) *
+        ((AdditiveGroup.groupSchemePointMulEquiv A)
+            ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm
+              (Multiplicative.ofAdd u)) ≫ (rootSubgroup n hn k).hom.hom) *
+        (s ≫ (weightTorus n hn).hom.hom)⁻¹ =
+      (AdditiveGroup.schemePointsMulEquiv A).symm
+          (Multiplicative.ofAdd
+            ((TauCeti.torusCharacter
+              (SplitTorus.schemePointsMulEquiv (R := ℤ) (A := A) s)
+              (TypeDStd.rootGeneratorWeight n k) : A) * u)) ≫
+        (rootSubgroup n hn k).hom.hom := by
+  rw [weightTorus, rootSubgroup]
+  exact kostantWeightTorusToToral_conj_kostantRootSubgroupToToralParam
+    _ _ _ _ _ _ _ (isCartanWeightVector_latticeBasis n hn)
+    (isNilpotent_rep_rootGenerator n hn) A (lie_serreH_rootGenerator n k) s u
+
+/-! ## The numbered root subgroups sit at the named simple roots
+
+The two identifications the equations below rewrite with,
+`TauCeti.TypeDStd.rootGeneratorWeight_inl_eq_root_simpleIndex` and its lowering counterpart, are
+proved beside the weight they name, in
+`TauCeti/Algebra/Lie/Orthogonal/TypeD/RootGenerators.lean`.
+
+None of the equations below is a `simp` lemma. Their right-hand sides name the character through
+`TauCeti.DynkinType.simplyConnectedRootDatum`, which `simp` unfolds at the `D n` branch, so they
+are not `simp`-normal; the numbered equations above are, and these are explicit rewrite lemmas for
+a consumer holding a Dynkin type, as in
+`TauCeti.SpStd.weightTorus_conj_rootSubgroup_root_simpleIndex`. -/
+
+/-- On matrix-valued points, conjugation by the spin weight torus rescales the `i`-th raising root
+subgroup through the `i`-th simple root of the pinned type-`Dₙ` datum. -/
+theorem weightTorusPoints_conj_rootSubgroupPoints_root_simpleIndex (i : Fin n) (A : Type v)
+    [CommRing A] (s : Fin n → Aˣ) (u : Multiplicative A) :
+    weightTorusPoints n hn A s * rootSubgroupPoints n hn (.inl i) A u *
+        (weightTorusPoints n hn A s)⁻¹ =
+      rootSubgroupPoints n hn (.inl i) A
+        (Multiplicative.ofAdd
+          ((TauCeti.torusCharacter s
+            (((TauCeti.DynkinType.D n).simplyConnectedRootDatum
+                (DynkinType.valid_D.mpr hn)).root
+              ((TauCeti.DynkinType.D n).simpleIndex (DynkinType.valid_D.mpr hn) i)) : A) *
+            Multiplicative.toAdd u)) := by
+  rw [← TypeDStd.rootGeneratorWeight_inl_eq_root_simpleIndex n hn i]
+  exact weightTorusPoints_conj_rootSubgroupPoints n hn (.inl i) A s u
+
+/-- On matrix-valued points, conjugation by the spin weight torus rescales the `i`-th lowering root
+subgroup through the negative of the `i`-th simple root of the pinned type-`Dₙ` datum. -/
+theorem weightTorusPoints_conj_rootSubgroupPoints_neg_root_simpleIndex (i : Fin n) (A : Type v)
+    [CommRing A] (s : Fin n → Aˣ) (u : Multiplicative A) :
+    weightTorusPoints n hn A s * rootSubgroupPoints n hn (.inr i) A u *
+        (weightTorusPoints n hn A s)⁻¹ =
+      rootSubgroupPoints n hn (.inr i) A
+        (Multiplicative.ofAdd
+          ((TauCeti.torusCharacter s
+            (-((TauCeti.DynkinType.D n).simplyConnectedRootDatum
+                (DynkinType.valid_D.mpr hn)).root
+              ((TauCeti.DynkinType.D n).simpleIndex (DynkinType.valid_D.mpr hn) i)) : A) *
+            Multiplicative.toAdd u)) := by
+  rw [← TypeDStd.rootGeneratorWeight_inr_eq_neg_root_simpleIndex n hn i]
+  exact weightTorusPoints_conj_rootSubgroupPoints n hn (.inr i) A s u
+
+/-- Conjugation by the spin weight torus rescales the `i`-th raising root subgroup through the
+`i`-th simple root of the pinned type-`Dₙ` datum. -/
+theorem weightTorus_conj_rootSubgroup_root_simpleIndex (i : Fin n) (A : Type) [CommRing A]
+    (s : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of ℤ)) ⟶
+      (SplitTorus.groupScheme ℤ (Fin n)).X)
+    (u : A) :
+    (s ≫ (weightTorus n hn).hom.hom) *
+        ((AdditiveGroup.groupSchemePointMulEquiv A)
+            ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm
+              (Multiplicative.ofAdd u)) ≫ (rootSubgroup n hn (.inl i)).hom.hom) *
+        (s ≫ (weightTorus n hn).hom.hom)⁻¹ =
+      (AdditiveGroup.schemePointsMulEquiv A).symm
+          (Multiplicative.ofAdd
+            ((TauCeti.torusCharacter
+              (SplitTorus.schemePointsMulEquiv (R := ℤ) (A := A) s)
+              (((TauCeti.DynkinType.D n).simplyConnectedRootDatum
+                  (DynkinType.valid_D.mpr hn)).root
+                ((TauCeti.DynkinType.D n).simpleIndex (DynkinType.valid_D.mpr hn) i)) : A) *
+              u)) ≫
+        (rootSubgroup n hn (.inl i)).hom.hom := by
+  rw [← TypeDStd.rootGeneratorWeight_inl_eq_root_simpleIndex n hn i]
+  exact weightTorus_conj_rootSubgroup n hn (.inl i) A s u
+
+/-- Conjugation by the spin weight torus rescales the `i`-th lowering root subgroup through the
+negative of the `i`-th simple root of the pinned type-`Dₙ` datum. -/
+theorem weightTorus_conj_rootSubgroup_neg_root_simpleIndex (i : Fin n) (A : Type) [CommRing A]
+    (s : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of ℤ)) ⟶
+      (SplitTorus.groupScheme ℤ (Fin n)).X)
+    (u : A) :
+    (s ≫ (weightTorus n hn).hom.hom) *
+        ((AdditiveGroup.groupSchemePointMulEquiv A)
+            ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm
+              (Multiplicative.ofAdd u)) ≫ (rootSubgroup n hn (.inr i)).hom.hom) *
+        (s ≫ (weightTorus n hn).hom.hom)⁻¹ =
+      (AdditiveGroup.schemePointsMulEquiv A).symm
+          (Multiplicative.ofAdd
+            ((TauCeti.torusCharacter
+              (SplitTorus.schemePointsMulEquiv (R := ℤ) (A := A) s)
+              (-((TauCeti.DynkinType.D n).simplyConnectedRootDatum
+                  (DynkinType.valid_D.mpr hn)).root
+                ((TauCeti.DynkinType.D n).simpleIndex (DynkinType.valid_D.mpr hn) i)) : A) *
+              u)) ≫
+        (rootSubgroup n hn (.inr i)).hom.hom := by
+  rw [← TypeDStd.rootGeneratorWeight_inr_eq_neg_root_simpleIndex n hn i]
+  exact weightTorus_conj_rootSubgroup n hn (.inr i) A s u
 
 end TauCeti.TypeDSpinCarrier
