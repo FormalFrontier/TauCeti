@@ -330,8 +330,8 @@ theorem integrable_pow_inverseGammaMeasure_iff (ha : 0 < a) (hr : 0 < r) (n : �
     Integrable (fun x : ℝ ↦ x ^ n) (inverseGammaMeasure a r) ↔ (n : ℝ) < a := by
   rw [inverseGammaMeasure_of_pos ha hr,
     integrable_map_measure (by fun_prop) measurable_inv.aemeasurable]
-  change Integrable (fun x : ℝ ↦ (x⁻¹) ^ n) (gammaMeasure a r) ↔ (n : ℝ) < a
-  simpa only [inv_pow] using TauCeti.integrable_inv_pow_gammaMeasure_iff ha hr n
+  simpa only [Function.comp_def, inv_pow] using
+    TauCeti.integrable_inv_pow_gammaMeasure_iff ha hr n
 
 /-- **Natural moments of a valid inverse-gamma law.**  The `n`th moment exists for `n < a` and
 equals `r ^ n * Gamma (a - n) / Gamma a`. -/
@@ -344,21 +344,19 @@ theorem integral_pow_inverseGammaMeasure (ha : 0 < a) (hr : 0 < r) (n : ℕ)
     integral_map measurable_inv.aemeasurable (by fun_prop)]
   simpa only [inv_pow] using TauCeti.integral_inv_pow_gammaMeasure ha hr n hn
 
-/-- The shifted Gamma recurrence used in inverse-gamma moment simplifications. -/
-private lemma gamma_eq_sub_one_mul_gamma_sub_one (ha : 1 < a) :
-    Real.Gamma a = (a - 1) * Real.Gamma (a - 1) := by
-  calc
-    Real.Gamma a = Real.Gamma ((a - 1) + 1) := by congr 1; ring
-    _ = (a - 1) * Real.Gamma (a - 1) :=
-      Real.Gamma_add_one (by linarith : a - 1 ≠ 0)
-
 /-- The mean of an inverse-gamma law is `r / (a - 1)` when `1 < a`. -/
 @[simp]
 theorem integral_id_inverseGammaMeasure (hr : 0 < r) (ha : 1 < a) :
     ∫ x, x ∂inverseGammaMeasure a r = r / (a - 1) := by
   have h := integral_pow_inverseGammaMeasure (by linarith : 0 < a) hr 1 (by simpa using ha)
   simp only [pow_one, Nat.cast_one] at h
-  rw [h, gamma_eq_sub_one_mul_gamma_sub_one ha]
+  rw [h]
+  have hrec : Real.Gamma a = (a - 1) * Real.Gamma (a - 1) := by
+    calc
+      Real.Gamma a = Real.Gamma ((a - 1) + 1) := by congr 1; ring
+      _ = (a - 1) * Real.Gamma (a - 1) :=
+        Real.Gamma_add_one (by linarith : a - 1 ≠ 0)
+  rw [hrec]
   field_simp [(Real.Gamma_pos_of_pos (by linarith : 0 < a - 1)).ne']
 
 /-- The second raw moment of an inverse-gamma law is
@@ -369,12 +367,16 @@ theorem integral_sq_inverseGammaMeasure (hr : 0 < r) (ha : 2 < a) :
   have h := integral_pow_inverseGammaMeasure (by linarith : 0 < a) hr 2 (by simpa using ha)
   norm_num only [Nat.cast_ofNat] at h
   rw [h]
-  have hrec1 := gamma_eq_sub_one_mul_gamma_sub_one (a := a) (by linarith : 1 < a)
+  have hrec1 : Real.Gamma a = (a - 1) * Real.Gamma (a - 1) := by
+    calc
+      Real.Gamma a = Real.Gamma ((a - 1) + 1) := by congr 1; ring
+      _ = (a - 1) * Real.Gamma (a - 1) :=
+        Real.Gamma_add_one (by linarith : a - 1 ≠ 0)
   have hrec2 : Real.Gamma (a - 1) = (a - 2) * Real.Gamma (a - 2) := by
-    have hrec :=
-      gamma_eq_sub_one_mul_gamma_sub_one (a := a - 1) (by linarith : 1 < a - 1)
-    have harg : a - 1 - 1 = a - 2 := by ring
-    simpa only [harg] using hrec
+    calc
+      Real.Gamma (a - 1) = Real.Gamma ((a - 2) + 1) := by congr 1; ring
+      _ = (a - 2) * Real.Gamma (a - 2) :=
+        Real.Gamma_add_one (by linarith : a - 2 ≠ 0)
   rw [hrec1, hrec2]
   field_simp [(Real.Gamma_pos_of_pos (by linarith : 0 < a - 2)).ne']
 
