@@ -76,8 +76,7 @@ theorem baseChangeCoact_tmul (a : A) (m : M) :
       (TensorProduct.AlgebraTensorModule.distribBaseChange R A M H)
         (a ⊗ₜ[R] coact (R := R) (C := H) (M := M) m) := by
   rw [baseChangeCoact, LinearMap.coe_comp, Function.comp_apply,
-    LinearMap.baseChange_tmul]
-  rfl
+    LinearMap.baseChange_tmul, LinearEquiv.coe_coe]
 
 /-- Collapse a threefold tensor product of scalar extensions to the scalar extension of the
 original threefold tensor product. -/
@@ -204,8 +203,6 @@ theorem baseChange_self :
   apply TensorProduct.AlgebraTensorModule.ext
   intro a h
   rw [baseChangeCoact_tmul, instSelf_coact,
-    TensorProduct.tmul_eq_smul_one_tmul a (Coalgebra.comul (R := R) (A := H) h),
-    TensorProduct.tmul_eq_smul_one_tmul a h, map_smul, map_smul,
     TauCeti.Coalgebra.baseChange_comul_tmul]
 
 namespace Hom
@@ -249,13 +246,8 @@ theorem baseChange_id :
     letI := Comodule.baseChange (R := R) (H := H) (M := M) A
     baseChange A (id R H M) = id A (A ⊗[R] H) (A ⊗[R] M) := by
   let _ := Comodule.baseChange (R := R) (H := H) (M := M) A
-  apply ext
-  intro x
-  have hlin : (baseChange A (id R H M)).toLinearMap =
-      (id A (A ⊗[R] H) (A ⊗[R] M)).toLinearMap := by
-    rw [baseChange_toLinearMap, id_toLinearMap, LinearMap.baseChange_id, id_toLinearMap]
-  rw [← coe_toLinearMap (baseChange A (id R H M)),
-    ← coe_toLinearMap (id A (A ⊗[R] H) (A ⊗[R] M)), hlin]
+  apply toLinearMap_injective
+  rw [baseChange_toLinearMap, id_toLinearMap, LinearMap.baseChange_id, id_toLinearMap]
 
 /-- Base change preserves composition of comodule morphisms. -/
 @[simp]
@@ -267,14 +259,9 @@ theorem baseChange_comp (g : Hom R H N P) (f : Hom R H M N) :
   let _ := Comodule.baseChange (R := R) (H := H) (M := M) A
   let _ := Comodule.baseChange (R := R) (H := H) (M := N) A
   let _ := Comodule.baseChange (R := R) (H := H) (M := P) A
-  apply ext
-  intro x
-  have hlin : (baseChange A (g.comp f)).toLinearMap =
-      ((baseChange A g).comp (baseChange A f)).toLinearMap := by
-    rw [baseChange_toLinearMap, comp_toLinearMap, LinearMap.baseChange_comp,
-      comp_toLinearMap, baseChange_toLinearMap, baseChange_toLinearMap]
-  rw [← coe_toLinearMap (baseChange A (g.comp f)),
-    ← coe_toLinearMap ((baseChange A g).comp (baseChange A f)), hlin]
+  apply toLinearMap_injective
+  rw [baseChange_toLinearMap, comp_toLinearMap, LinearMap.baseChange_comp,
+    comp_toLinearMap, baseChange_toLinearMap, baseChange_toLinearMap]
 
 /-- A base-changed comodule morphism acts on a pure tensor by applying the original morphism
 to the module factor. -/
@@ -285,8 +272,8 @@ theorem baseChange_tmul (f : Hom R H M N) (a : A) (m : M) :
     baseChange A f (a ⊗ₜ[R] m) = a ⊗ₜ[R] f m := by
   let _ := Comodule.baseChange (R := R) (H := H) (M := M) A
   let _ := Comodule.baseChange (R := R) (H := H) (M := N) A
-  rw [← coe_toLinearMap (baseChange A f), baseChange_toLinearMap,
-    LinearMap.baseChange_tmul, coe_toLinearMap]
+  change (baseChange A f).toLinearMap (a ⊗ₜ[R] m) = a ⊗ₜ[R] f.toLinearMap m
+  rw [baseChange_toLinearMap, LinearMap.baseChange_tmul]
 
 end Hom
 
