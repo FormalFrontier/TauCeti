@@ -67,6 +67,8 @@ assignment, a later stage of the roadmap.
   whose degree is the number of `O`-markings the rectangle covers.
 * `TauCeti.GridDiagram.unblockedDifferentialOnGenerator_support_subset`: the differential of a
   generator is supported on the column transpositions of that generator.
+* `TauCeti.GridDiagram.unblockedDifferential_sq_single_apply`: the matrix of `∂⁻ ∘ ∂⁻` is a
+  sum over intermediate states of products of matrix coefficients.
 * `TauCeti.GridDiagram.maslovO_sub_two_mul_card_OColumns_eq_maslovO_sub_one`,
   `TauCeti.GridDiagram.alexander_sub_card_OColumns_eq_alexander`: the differential is homogeneous
   of bidegree `(-1, 0)` once `V_c` is given bidegree `(-2, -1)`.

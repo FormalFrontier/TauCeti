@@ -34,8 +34,8 @@ directions before taking products.
 * `TauCeti.Grid.mem_cIoo_or_mem_cIoo_swap_iff`: a point lies in one opposite arc exactly when
   it is not an endpoint.
 * `TauCeti.Grid.cIoo_union_swap`: the two opposite arcs cover the endpoint complement.
-* `TauCeti.Grid.mem_cIoo_of_mem_cIoo_of_mem_cIoo_swap`: two points separated by a pair of
-  endpoints separate that pair in turn.
+* `TauCeti.Grid.mem_cIoo_of_mem_cIoo_of_mem_cIoo_swap`: if `a` and `b` lie on opposite arcs from
+  `c` to `d`, then `d` lies on the clockwise arc from `a` to `b`.
 * `TauCeti.Grid.card_cIoo_add_card_cIoo_swap`: the two arc lengths add to `n - 2`.
 * `TauCeti.Grid.cIoo_image_rev`: reversing a clockwise open arc by `Fin.rev` gives the clockwise
   open arc with reversed, exchanged endpoints.
@@ -401,7 +401,8 @@ theorem not_mem_cIoo_iff {a b x : Fin n} (h : a ≠ b) :
     · intro hxab
       exact not_mem_cIoo_and_cIoo_swap a b x ⟨hxab, hx⟩
 
-/-- Two points separated by a pair of endpoints separate that pair in turn.
+/-- If `a` and `b` lie on opposite arcs from `c` to `d`, then `d` lies on the clockwise arc from
+`a` to `b`.
 
 If `a` lies on the clockwise arc from `c` to `d` while `b` lies on the opposite arc, then the four
 points occur in the cyclic order `c`, `a`, `d`, `b`, so `d` lies on the clockwise arc from `a` to

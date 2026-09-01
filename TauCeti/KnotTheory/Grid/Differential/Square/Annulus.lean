@@ -26,9 +26,9 @@ differential therefore has no two-step return, and the diagonal entries of the m
 `∂⁻ ∘ ∂⁻` are zero.
 
 The argument never inspects the `O`-markings, so it is insensitive to the weights `V^{O(r)}` and
-runs over an arbitrary commutative coefficient ring, characteristic two included. This is the
-first case of the square-zero argument to be settled for the unblocked complex; the disjoint and
-overlapping cases, where two distinct decompositions must be paired against each other, remain.
+runs over an arbitrary commutative coefficient ring, characteristic two included. The disjoint
+case is settled in `Differential/Square/DoubleTransposition.lean`; only the overlapping case, where
+two rectangles share exactly one side column, remains.
 On a grid of size at most two the annular case already suffices, because there is no room for the
 other two: that consequence is
 `GridDiagram.unblockedDifferential_comp_self_eq_zero_of_le_two` in `SmallGrid/Differential.lean`.

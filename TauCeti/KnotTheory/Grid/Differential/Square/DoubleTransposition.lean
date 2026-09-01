@@ -37,9 +37,14 @@ point for the remaining case: two rectangles sharing exactly one side column,
 
 ## Main results
 
-* `TauCeti.GridRectangleDecomposition.hasDisjointSides_of_disjoint`: every two-step decomposition
-  whose target is the source with two disjoint column transpositions applied has disjoint pairs of
-  side columns.
+The following results are in the `TauCeti.GridDiagram` namespace.
+
+* `unblockedDecompositionWeight_commute`: commuting a disjoint-side
+  decomposition preserves its unblocked weight.
+* `commute_mem_unblockedDecompositions_iff`: commuting preserves whether the
+  unblocked differential counts a decomposition.
+* `sum_unblockedCoefficient_mul_unblockedCoefficient_swapColumns_swapColumns_eq_zero_of_disjoint`:
+  the weighted sum for two disjoint column transpositions vanishes in characteristic two.
 * `unblockedDifferential_sq_single_apply_swapColumns_swapColumns_eq_zero_of_disjoint`: in
   characteristic two, that entry vanishes when the target is the source with two disjoint column
   transpositions applied.
@@ -56,85 +61,18 @@ public section
 
 namespace TauCeti
 
-namespace GridRectangleDecomposition
-
-variable {n : ℕ}
-
-/-- Two disjoint column transpositions move four columns, so no two-step rectangle decomposition
-of the resulting state can share a side column.
-
-The two rectangles of a decomposition fix every column outside their four side columns. Sharing a
-side column would leave only three such columns, and sharing both would return to the source. -/
-theorem hasDisjointSides_of_disjoint (x : GridState n) {a b c d : Fin n} (hab : a ≠ b)
-    (hcd : c ≠ d) (hdisjoint : Disjoint ({a, b} : Finset (Fin n)) {c, d})
-    (D : GridRectangleDecomposition x ((x.swapColumns a b).swapColumns c d)) :
-    D.HasDisjointSides := by
-  obtain ⟨hac, had⟩ : a ≠ c ∧ a ≠ d := by
-    simpa only [Finset.mem_insert, Finset.mem_singleton, not_or] using
-      Finset.disjoint_left.mp hdisjoint (by simp : a ∈ ({a, b} : Finset (Fin n)))
-  obtain ⟨hbc, hbd⟩ : b ≠ c ∧ b ≠ d := by
-    simpa only [Finset.mem_insert, Finset.mem_singleton, not_or] using
-      Finset.disjoint_left.mp hdisjoint (by simp : b ∈ ({a, b} : Finset (Fin n)))
-  -- the four columns the two transpositions move, and their images
-  have hza : (x.swapColumns a b).swapColumns c d a = x b := by
-    simp [GridState.swapColumns_apply, Equiv.swap_apply_of_ne_of_ne hac had]
-  have hzb : (x.swapColumns a b).swapColumns c d b = x a := by
-    simp [GridState.swapColumns_apply, Equiv.swap_apply_of_ne_of_ne hbc hbd]
-  have hzc : (x.swapColumns a b).swapColumns c d c = x d := by
-    simp [GridState.swapColumns_apply, Equiv.swap_apply_of_ne_of_ne had.symm hbd.symm]
-  have hzd : (x.swapColumns a b).swapColumns c d d = x c := by
-    simp [GridState.swapColumns_apply, Equiv.swap_apply_of_ne_of_ne hac.symm hbc.symm]
-  have hmoved : ∀ e ∈ ({a, b, c, d} : Finset (Fin n)),
-      e ∈ D.first.sideColumns ∪ D.second.sideColumns := by
-    intro e he
-    by_contra hnot
-    rw [Finset.mem_union, not_or] at hnot
-    have hfix := D.target_apply_of_notMem_sideColumns hnot.1 hnot.2
-    simp only [Finset.mem_insert, Finset.mem_singleton] at he
-    rcases he with rfl | rfl | rfl | rfl
-    · exact hab (x.toPerm.injective (hza ▸ hfix).symm)
-    · exact hab (x.toPerm.injective (hzb ▸ hfix))
-    · exact hcd (x.toPerm.injective (hzc ▸ hfix).symm)
-    · exact hcd (x.toPerm.injective (hzd ▸ hfix))
-  rcases D.hasDisjointSides_or_hasOneCommonSide_or_eq with hcase | hcase | hcase
-  · exact hcase
-  · exfalso
-    have hinter : D.commonSideColumns = D.first.sideColumns ∩ D.second.sideColumns := by
-      ext e
-      simp
-    have hcard : D.commonSideColumns.card = 1 := by
-      rw [Finset.card_eq_one_iff_existsUnique]
-      simp only [mem_commonSideColumns]
-      exact D.hasOneCommonSide_iff_existsUnique.mp hcase
-    have hsum := Finset.card_union_add_card_inter D.first.sideColumns D.second.sideColumns
-    rw [D.first.card_sideColumns, D.second.card_sideColumns, ← hinter, hcard] at hsum
-    have hfour : ({a, b, c, d} : Finset (Fin n)).card = 4 := by
-      rw [Finset.card_insert_of_notMem (by simp [hab, hac, had]),
-        Finset.card_insert_of_notMem (by simp [hbc, hbd]),
-        Finset.card_insert_of_notMem (by simp [hcd]), Finset.card_singleton]
-    have hle := Finset.card_le_card hmoved
-    rw [hfour] at hle
-    omega
-  · exfalso
-    have hxa : x a = x b := by rw [← hza, hcase]
-    exact hab (x.toPerm.injective hxa)
-
-end GridRectangleDecomposition
-
 namespace GridDiagram
 
 variable {n : ℕ} (G : GridDiagram n) (R : Type*) [CommSemiring R]
 
 /-- Reordering a two-step decomposition with disjoint side columns preserves its weight: the two
 toroidal domains are exchanged. -/
-theorem decompositionWeight_commute {x z : GridState n}
+theorem unblockedDecompositionWeight_commute {x z : GridState n}
     (D : GridRectangleDecomposition x z) (h : D.HasDisjointSides) :
-    G.decompositionWeight R (D.commute h) = G.decompositionWeight R D := by
-  change
-    G.OMonomial R (D.commute h).first.toGridRectangle *
-        G.OMonomial R (D.commute h).second.toGridRectangle =
-      G.OMonomial R D.first.toGridRectangle * G.OMonomial R D.second.toGridRectangle
-  rw [D.commute_first_toGridRectangle h,
+    G.unblockedDecompositionWeight R (D.commute h) =
+      G.unblockedDecompositionWeight R D := by
+  rw [G.unblockedDecompositionWeight_def R, G.unblockedDecompositionWeight_def R,
+    D.commute_first_toGridRectangle h,
     D.commute_second_toGridRectangle h, mul_comm]
 
 /-- Reordering a two-step decomposition with disjoint side columns preserves whether the
@@ -190,7 +128,7 @@ theorem
     (fun D _ => D.commute (GridRectangleDecomposition.hasDisjointSides_of_disjoint x hab hcd
       hdisjoint D)) (fun D _ => ?_) (fun D _ _ => D.commute_ne _) (fun D hD => ?_)
     (fun D _ => ?_)
-  · rw [G.decompositionWeight_commute R D]
+  · rw [G.unblockedDecompositionWeight_commute R D]
     exact CharTwo.add_self_eq_zero _
   · exact (G.commute_mem_unblockedDecompositions_iff D _).mpr hD
   · exact D.commute_commute _

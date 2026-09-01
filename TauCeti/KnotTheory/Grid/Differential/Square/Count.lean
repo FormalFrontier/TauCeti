@@ -41,7 +41,7 @@ the corrected rectangle sets unchanged.
 * `TauCeti.GridDiagram.fullyBlockedDecompositionCount`: the cardinality of this set modulo two.
 * `TauCeti.GridDiagram.unblockedDecompositions`: composable pairs of rectangles counted by the
   unblocked differential.
-* `TauCeti.GridDiagram.decompositionWeight`: the product of their two monomial weights.
+* `TauCeti.GridDiagram.unblockedDecompositionWeight`: the product of their two monomial weights.
 
 ## Main results
 
@@ -115,16 +115,24 @@ variable (R : Type*) [CommSemiring R]
 
 /-- The weight of a two-step rectangle decomposition in the square of the unblocked differential:
 the product of the weights `V^{O(r)}` of its two rectangles. -/
-noncomputable abbrev decompositionWeight {x z : GridState n}
+noncomputable def unblockedDecompositionWeight {x z : GridState n}
     (D : GridRectangleDecomposition x z) :
     MvPolynomial (Fin n) R :=
   G.OMonomial R D.first.toGridRectangle * G.OMonomial R D.second.toGridRectangle
+
+/-- The unblocked decomposition weight is the product of the monomial weights of its two
+rectangles. -/
+theorem unblockedDecompositionWeight_def {x z : GridState n}
+    (D : GridRectangleDecomposition x z) :
+    G.unblockedDecompositionWeight R D =
+      G.OMonomial R D.first.toGridRectangle * G.OMonomial R D.second.toGridRectangle := by
+  rw [unblockedDecompositionWeight]
 
 /-- The two-step matrix entry of the square of the unblocked differential is the sum of the
 weights of the two-step decompositions it counts. -/
 theorem sum_unblockedCoefficient_mul_unblockedCoefficient (x z : GridState n) :
     ∑ y : GridState n, G.unblockedCoefficient R x y * G.unblockedCoefficient R y z =
-      ∑ D ∈ G.unblockedDecompositions x z, G.decompositionWeight R D := by
+      ∑ D ∈ G.unblockedDecompositions x z, G.unblockedDecompositionWeight R D := by
   have hstep : ∀ y : GridState n,
       G.unblockedCoefficient R x y * G.unblockedCoefficient R y z =
         ∑ r₁ ∈ G.unblockedRectangles x y, ∑ r₂ ∈ G.unblockedRectangles y z,
@@ -132,7 +140,7 @@ theorem sum_unblockedCoefficient_mul_unblockedCoefficient (x z : GridState n) :
     rw [G.unblockedCoefficient_def R x y, G.unblockedCoefficient_def R y z,
       Finset.sum_mul_sum]
   rw [Finset.sum_congr rfl fun y (_ : y ∈ Finset.univ) => hstep y]
-  simp only [decompositionWeight]
+  simp only [unblockedDecompositionWeight_def]
   exact (GridRectangleDecomposition.sum_decompositionsOf G.unblockedRectangles x z
     (fun _ r₁ r₂ =>
       G.OMonomial R r₁.toGridRectangle * G.OMonomial R r₂.toGridRectangle)).symm
