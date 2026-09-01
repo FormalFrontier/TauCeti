@@ -174,6 +174,13 @@ jobs:
           # runs the workflow-pinned scripts/check-bump.sh and routes to a human if it is
           # anything other than a forward move (mathlib forward on its nominated branch,
           # transitive pins derived from mathlib, toolchain monotonic).
+          # docbuild/docs/references.bib is permitted too. It is the bibliography doc-gen4
+          # resolves docstring citations against, so a docstring that cites a work no one has
+          # entered renders as a bare bracketed key. Filling that in is the same kind of work as
+          # writing the docstring, and holding it for a human merge stalled exactly that. It is
+          # BibTeX consumed only by the pages build, never by Lake or the harness, so nothing
+          # here executes it. The rest of docbuild/ stays human-owned: lakefile.toml, the pin,
+          # and the two generator scripts all feed the docs build itself.
           # Two independent questions: does this reach outside TauCeti/, and does it change the
           # Lake pins. They used to share an `elif`, so a PR doing both was only ever answered as
           # out-of-scope: BUMP stayed unset, check-bump.sh never ran, and the report step could
@@ -183,7 +190,7 @@ jobs:
           if [ -z "$files" ]; then
             echo "INFRA=1" >> "$GITHUB_ENV"; echo "::warning::no files / unable to list — cannot determine scope, routing to human"
           else
-            if echo "$files" | grep -vqE '^TauCeti/|^TauCeti\.lean$|^lake-manifest\.json$|^lean-toolchain$'; then
+            if echo "$files" | grep -vqE '^TauCeti/|^TauCeti\.lean$|^lake-manifest\.json$|^lean-toolchain$|^docbuild/docs/references\.bib$'; then
               if echo "$files" | grep -qE '^lakefile\.(toml|lean)$'; then
                 echo "HUMAN_LAKEFILE=1" >> "$GITHUB_ENV"
               fi
@@ -837,7 +844,7 @@ jobs:
           elif [ "${{ env.NEWFILE_TOO_LONG }}" = "1" ]; then
             sc_state=failure; sc_desc="a newly added .lean file exceeds 1000 lines — split it (existing files may grow to 1500)"
           else
-            sc_state=success; sc_desc="changes are in scope (TauCeti/ and the allowed root files only)"
+            sc_state=success; sc_desc="changes are in scope (TauCeti/, the allowed root files, and the bibliography only)"
           fi
           post_status scope "$sc_state" "$sc_desc"
 
