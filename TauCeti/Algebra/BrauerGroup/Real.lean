@@ -96,7 +96,8 @@ This is the summit of the real base field target: together with
 `TauCeti.subsingleton_brauerGroup_of_isAlgClosed` and
 `TauCeti.subsingleton_brauerGroup_of_finite` it is the first computed Brauer group of a field with
 a nontrivial one. The isomorphism is characterised by
-`TauCeti.Quaternion.brauerGroupMulEquiv_mk`. -/
+`TauCeti.Quaternion.brauerGroupMulEquiv_mk` and its inverse by
+`TauCeti.Quaternion.brauerGroupMulEquiv_symm_ofAdd_one`. -/
 noncomputable def brauerGroupMulEquiv : BrauerGroup.{0, 0} ℝ ≃* Multiplicative (ZMod 2) :=
   (zmodMulEquivOfGenerator (fun x ↦ zpowers_mk_eq_top ▸ Subgroup.mem_top x)
     card_brauerGroup_eq_two).symm
@@ -108,6 +109,14 @@ generates (`TauCeti.Quaternion.zpowers_mk_eq_top`), this determines the isomorph
 theorem brauerGroupMulEquiv_mk :
     brauerGroupMulEquiv (BrauerGroup.mk (CSA.of ℝ ℍ[ℝ])) = Multiplicative.ofAdd 1 :=
   zmodMulEquivOfGenerator_symm_apply_generator _ _
+
+/-- **The inverse of `TauCeti.Quaternion.brauerGroupMulEquiv` sends the generator
+`Multiplicative.ofAdd 1` of `Multiplicative (ZMod 2)` back to the Brauer class of `ℍ[ℝ]`**, the
+other half of the characterisation in `TauCeti.Quaternion.brauerGroupMulEquiv_mk`. -/
+@[simp]
+theorem brauerGroupMulEquiv_symm_ofAdd_one :
+    brauerGroupMulEquiv.symm (Multiplicative.ofAdd 1) = BrauerGroup.mk (CSA.of ℝ ℍ[ℝ]) := by
+  rw [← brauerGroupMulEquiv_mk, MulEquiv.symm_apply_apply]
 
 end Quaternion
 
