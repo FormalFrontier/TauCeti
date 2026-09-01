@@ -14,7 +14,7 @@ public import Mathlib.GroupTheory.Subgroup.Center
 # Central isogenies of group schemes
 
 For group schemes over the spectrum of a commutative ring, an isogeny is a homomorphism whose
-underlying scheme morphism is finite, flat, and surjective. Over a field, it is central when its
+underlying scheme morphism is finite, flat, and surjective. It is central when its
 scheme-theoretic kernel is central. We express the latter condition intrinsically through the
 functor of points: for every test scheme over the base, every point killed by the homomorphism
 commutes with every other point of the source.
@@ -228,13 +228,13 @@ end IsIsogeny
 
 end Ring
 
-section Field
+section Ring
 
-variable {k : Type u} [Field k]
+variable {k : Type u} [CommRing k]
 variable {G H K : Grp (Over (Spec (CommRingCat.of k)))}
 
-/-- The morphism property of being a central isogeny of group schemes over a field. -/
-def centralIsogenies (k : Type u) [Field k] :
+/-- The morphism property of being a central isogeny of group schemes over a commutative ring. -/
+def centralIsogenies (k : Type u) [CommRing k] :
     MorphismProperty (Grp (Over (Spec (CommRingCat.of k)))) :=
   isogenies k ⊓ hasCentralKernel (Spec (CommRingCat.of k))
 
@@ -314,7 +314,7 @@ theorem isCentralIsogeny_of_isIso (f : G ⟶ H) [IsIso f] : IsCentralIsogeny f :
   (isCentralIsogeny_iff_isIsogeny_and_hasCentralKernel f).mpr
     ⟨isIsogeny_of_isIso f, hasCentralKernel_of_mono f⟩
 
-end Field
+end Ring
 
 end Isogeny
 

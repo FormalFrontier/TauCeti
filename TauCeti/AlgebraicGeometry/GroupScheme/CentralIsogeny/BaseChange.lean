@@ -13,8 +13,8 @@ public import TauCeti.AlgebraicGeometry.GroupScheme.CentralIsogeny.Basic
 This file proves that central kernels of group-scheme morphisms remain central after arbitrary
 base change, by identifying the point groups before and after base change through the pullback
 adjunction. Consequently, isogenies over a commutative ring remain so after base change along a
-morphism between affine bases, while central isogenies over a field remain so after extension of
-the field. For a commutative source, the base-changed isogeny is central without any centrality
+morphism between affine bases, and central isogenies remain so after such a base change. For a
+commutative source, the base-changed isogeny is central without any centrality
 hypothesis. The group-scheme base change is the pullback functor on the over category, lifted to
 group objects.
 
@@ -213,12 +213,13 @@ theorem HasCentralKernel.baseChange
 
 end BaseChange
 
-section Field
+section Ring
 
-variable {k L : Type u} [Field k] [Field L]
+variable {k L : Type u} [CommRing k] [CommRing L]
 variable {G H : Grp (Over (Spec (CommRingCat.of k)))}
 
-/-- Base change along a morphism between spectra of fields preserves central isogenies. -/
+/-- Base change along a morphism between spectra of commutative rings preserves central
+isogenies. -/
 theorem IsCentralIsogeny.baseChange
     (s : Spec (CommRingCat.of L) ⟶ Spec (CommRingCat.of k)) {f : G ⟶ H}
     (hf : IsCentralIsogeny f) :
@@ -236,6 +237,6 @@ theorem IsIsogeny.baseChange_isCentral_of_isCommMonObj
     exact ((Over.pullback s).mapCommMon.obj (.mk G.X)).comm
   exact (hf.baseChange s).isCentral_of_isCommMonObj
 
-end Field
+end Ring
 
 end TauCeti.GroupScheme

@@ -29,7 +29,7 @@ surjectivity by a weaker statement about points over the base field.
 * `TauCeti.CommHopfAlgCat.isIsogeny_iff_isFinite_and_flat_and_surjective_hopfSpec_map`: the
   coordinate isogeny conditions agree with the corresponding scheme-morphism properties.
 * `TauCeti.CommHopfAlgCat.isIsogeny_iff_isIsogeny_hopfSpec_map`: the coordinate and
-  group-scheme definitions agree over a field.
+  group-scheme definitions agree over a commutative ring.
 * `TauCeti.CommHopfAlgCat.isCentralIsogeny_iff_isCentralIsogeny_hopfSpec_map`: the analogous
   bridge for central isogenies.
 * `TauCeti.CommHopfAlgCat.IsIsogeny.mapPointsFunctor_app_surjective`: an isogeny is
@@ -119,12 +119,12 @@ theorem isIsogeny_iff_isFinite_and_flat_and_surjective_hopfSpec_map
   rw [IsIsogeny]
   exact isogeny_conditions_hopfSpec_map_iff f
 
-section Field
+section Ring
 
-variable {k : Type u} [Field k] {H₀ K₀ : _root_.CommHopfAlgCat.{u} k}
+variable {k : Type u} [CommRing k] {H₀ K₀ : _root_.CommHopfAlgCat.{u} k}
 
-/-- Over a field, the coordinate-algebra definition of an isogeny agrees with the existing
-group-scheme definition after applying the contravariant Hopf spectrum functor. -/
+/-- The coordinate-algebra definition of an isogeny agrees with the group-scheme definition
+after applying the contravariant Hopf spectrum functor. -/
 theorem isIsogeny_iff_isIsogeny_hopfSpec_map (f : H₀ ⟶ K₀) :
     IsIsogeny f ↔
       GroupScheme.IsIsogeny
@@ -132,8 +132,8 @@ theorem isIsogeny_iff_isIsogeny_hopfSpec_map (f : H₀ ⟶ K₀) :
   rw [IsIsogeny, GroupScheme.isIsogeny_iff]
   exact isIsogeny_iff_isFinite_and_flat_and_surjective_hopfSpec_map f
 
-/-- Over a field, the coordinate-algebra definition of a central isogeny agrees with the
-existing group-scheme definition after applying the contravariant Hopf spectrum functor. -/
+/-- The coordinate-algebra definition of a central isogeny agrees with the group-scheme
+definition after applying the contravariant Hopf spectrum functor. -/
 theorem isCentralIsogeny_iff_isCentralIsogeny_hopfSpec_map (f : H₀ ⟶ K₀) :
     IsCentralIsogeny f ↔
       GroupScheme.IsCentralIsogeny
@@ -141,7 +141,7 @@ theorem isCentralIsogeny_iff_isCentralIsogeny_hopfSpec_map (f : H₀ ⟶ K₀) :
   rw [IsCentralIsogeny, GroupScheme.isCentralIsogeny_hopfSpec_map_iff,
     isIsogeny_iff_isIsogeny_hopfSpec_map]
 
-end Field
+end Ring
 
 namespace IsIsogeny
 
