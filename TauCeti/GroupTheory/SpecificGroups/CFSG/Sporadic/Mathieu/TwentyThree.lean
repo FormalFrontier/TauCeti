@@ -55,6 +55,37 @@ simplicity, or identification result. The cross-check against the `M23` of the
 `TauCetiRoadmap/CFSGStatement/README.md` asks for on the names that development covers, is still
 recorded below.
 
+## Independent source-to-Lean read-through
+
+An independent read-through used the bytes of the ATLAS Magma source `M23G1-P1.M` whose SHA-256
+digest is `3a4a7b8b116ac25b147b94ce0a6c6a73a730420e9865792d60587bd99cdc0e32`. Its constructor
+`G<x,y>` fixes the generator order, and the later assignments `a := x; b := y` confirm that the
+source's `x,y` are the presentation generators called `a,b` here.
+
+Reading the constructor from top to bottom gives the five short relators
+
+```text
+x², y⁴, (xy)²³, (xy²)⁶, [x,y]⁶,
+```
+
+followed by these four words:
+
+```text
+(xy xy⁻¹ xy²)⁴,
+(xy)³ xy⁻¹ xy² (xy xy⁻¹)² (xy)³ (xy⁻¹)³,
+(xy xy² xy²)⁶,
+(xy xy²)³ (xy² xy⁻¹)² xy xy² xy xy⁻¹ xy².
+```
+
+They agree in exponent, inverse placement, and source order with the nine entries of
+`m23Presentation_transcribed`, after substituting `s₁ = ab`, `s₂ = ab²`, and `s₋₁ = ab⁻¹` and
+using the source convention `[x,y] = x⁻¹y⁻¹xy`. The source places the eighth word inside the
+constructor and labels it redundant but useful; it therefore belongs in this row. Its header's
+`8 [or 9]` relators and lengths `190 [or 238]` are exactly the results of deleting or retaining
+that 48-letter entry in `m23Presentation_map_length_relators`. This checks every source relator and
+the only optional-word boundary independently of the original transcription and closes this row's
+S1 source-to-Lean read-through.
+
 ## Independent comparison with `FiniteSimpleGroups`
 
 The comparison used `finite-simple-groups-lean` at commit

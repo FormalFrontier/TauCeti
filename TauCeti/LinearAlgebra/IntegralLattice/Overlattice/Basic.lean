@@ -185,7 +185,7 @@ theorem coe_intermediateCarrierOfDiscriminantSubgroup_bot :
 theorem coe_intermediateCarrierOfDiscriminantSubgroup_top :
     (L.intermediateCarrierOfDiscriminantSubgroup ⊤).1 = L.dualCarrier := by
   rw [L.intermediateCarrierOfDiscriminantSubgroup_top]
-  exact Set.Icc.coe_top L.carrier L.dualCarrier
+  exact Set.Icc.coe_top L.dualCarrier L.carrier
 
 /-- Passing from a subgroup of `A_L` to its inverse-image carrier and back recovers the subgroup. -/
 @[simp]

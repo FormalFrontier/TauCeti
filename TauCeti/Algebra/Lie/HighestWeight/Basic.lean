@@ -49,6 +49,10 @@ combination of the simple coroots.
 
 ## Main results
 
+* `TauCeti.rootSystem_coroot'_apply`: the coroot functional of the abstract root-pairing API is
+  evaluation at the coroot, the dictionary through which the general root-system results apply to
+  dominance and integrality here.
+
 * `TauCeti.isHighestWeightVector_iff_forall_rootSpace`: it is enough to check that each *positive
   root space* annihilates `v`, the positive nilradical being spanned by them.
 * `TauCeti.IsHighestWeightVector.unique`: a vector is a highest weight vector for at most one
@@ -261,6 +265,17 @@ theorem coe_weight (hv : IsHighestWeightVector b lam v) : (hv.weight : H → K) 
 end IsHighestWeightVector
 
 /-! ### Dominant integral weights -/
+
+/-- **The two coroot interfaces agree.** The root system of a splitting Cartan subalgebra pairs a
+weight with a coroot by evaluation, so the coroot functional `RootPairing.coroot' i` of the
+abstract root-pairing API is evaluation at the coroot of `i`.
+
+This is the dictionary between the root-pairing formulation of dominance and integrality, in which
+the general root-system results are stated, and the Lie-theoretic one used below. -/
+@[simp]
+theorem rootSystem_coroot'_apply (i : H.root) (chi : Dual K H) :
+    (IsKilling.rootSystem H).coroot' i chi = chi ((IsKilling.rootSystem H).coroot i) := by
+  rw [LinearMap.flip_apply, IsKilling.rootSystem_toLinearMap_apply]
 
 variable (b)
 

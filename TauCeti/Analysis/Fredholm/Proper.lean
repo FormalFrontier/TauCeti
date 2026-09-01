@@ -137,7 +137,7 @@ private theorem exists_isCompact_forall_mem_of_norm_le {V : Submodule 𝕜 E}
     (isCompact_closedBall _ _).image V.subtypeL.continuous,
     fun x hx => ⟨⟨P x, hPV x⟩, ?_, V.subtypeL_apply _⟩⟩
   simp only [Metric.mem_closedBall, dist_zero_right]
-  calc ‖(⟨P x, hPV x⟩ : V)‖ = ‖P x‖ := Submodule.coe_norm _
+  calc ‖(⟨P x, hPV x⟩ : V)‖ = ‖P x‖ := (Submodule.norm_coe _).symm
     _ ≤ ‖P‖ * ‖x‖ := P.le_opNorm x
     _ ≤ ‖P‖ * r := by gcongr
 
