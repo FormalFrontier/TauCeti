@@ -104,13 +104,17 @@ private theorem eq_bot_of_dualCoannihilator_eq_top {N : LieSubmodule R L (Dual R
   have hf0 : f = 0 := LinearMap.ext fun m => mem_dualCoannihilator.mp (hall m) f hf
   simp [hf0]
 
-/-! ### Invariant bilinear forms as morphisms to the dual -/
+/-! ### Invariant bilinear forms as morphisms to the dual
+
+The two conversions below are not `@[expose]`: their bodies are implementation, and the `_apply`
+lemmas are the whole characterization a caller needs. That is also why those lemmas unfold the
+definition through `simp` instead of closing by `rfl`, which the module system rejects for an
+exported theorem about an unexposed definition. -/
 
 /-- **The morphism `M → M*` attached to an invariant bilinear form.** A bilinear form on `M` *is* a
 linear map `M → M*`; invariance says it lies in the maximal trivial submodule
 (`LinearMap.BilinForm.lieInvariant_iff`), which `LieModule.maxTrivLinearMapEquivLieModuleHom`
 identifies with the space of morphisms. -/
-@[expose]
 def lieModuleHomOfLieInvariant {Φ : LinearMap.BilinForm R M} (hΦ : Φ.lieInvariant L) :
     M →ₗ⁅R,L⁆ Dual R M :=
   _root_.LieModule.maxTrivLinearMapEquivLieModuleHom
@@ -118,8 +122,8 @@ def lieModuleHomOfLieInvariant {Φ : LinearMap.BilinForm R M} (hΦ : Φ.lieInvar
 
 @[simp]
 theorem lieModuleHomOfLieInvariant_apply {Φ : LinearMap.BilinForm R M} (hΦ : Φ.lieInvariant L)
-    (m : M) : lieModuleHomOfLieInvariant hΦ m = Φ m :=
-  rfl
+    (m : M) : lieModuleHomOfLieInvariant hΦ m = Φ m := by
+  simp [lieModuleHomOfLieInvariant]
 
 @[simp]
 theorem lieModuleHomOfLieInvariant_eq_zero_iff {Φ : LinearMap.BilinForm R M}
@@ -130,14 +134,13 @@ theorem lieModuleHomOfLieInvariant_eq_zero_iff {Φ : LinearMap.BilinForm R M}
 
 /-- **The invariant bilinear form attached to a morphism `M → M*`**, inverse to
 `TauCeti.LieModule.lieModuleHomOfLieInvariant`. -/
-@[expose]
 def bilinFormOfLieModuleHom (f : M →ₗ⁅R,L⁆ Dual R M) : LinearMap.BilinForm R M :=
   (_root_.LieModule.maxTrivLinearMapEquivLieModuleHom.symm f : LinearMap.BilinForm R M)
 
 @[simp]
 theorem bilinFormOfLieModuleHom_apply (f : M →ₗ⁅R,L⁆ Dual R M) (m : M) :
-    bilinFormOfLieModuleHom f m = f m :=
-  rfl
+    bilinFormOfLieModuleHom f m = f m := by
+  simp [bilinFormOfLieModuleHom]
 
 theorem lieInvariant_bilinFormOfLieModuleHom (f : M →ₗ⁅R,L⁆ Dual R M) :
     (bilinFormOfLieModuleHom f).lieInvariant L :=
