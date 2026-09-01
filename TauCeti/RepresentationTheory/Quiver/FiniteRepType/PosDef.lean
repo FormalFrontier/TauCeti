@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.RepresentationTheory.Quiver.Acyclic.TitsForm
-public import TauCeti.RepresentationTheory.Quiver.FiniteRepType.Basic
+public import TauCeti.RepresentationTheory.Quiver.FiniteRepType.DimensionVector
 public import TauCeti.RepresentationTheory.Quiver.Reflection.Uniqueness
 
 /-!
@@ -88,52 +88,6 @@ universe u v w x
 
 variable {k : Type u} {V : Type v} [Field k] [Quiver.{w} V]
 
-/-- **The dimension vector of an isomorphism class of finite-dimensional indecomposable
-representations**, as a vector of integers, the shape in which the Tits form reads it.
-
-It is computed on a class by `TauCeti.isoClassDimVector_toSkeleton`; the chosen representative of
-the class, supplied by `CategoryTheory.fromSkeleton`, is isomorphic to any other, and the dimension
-vector does not see the difference. -/
-noncomputable def isoClassDimVector
-    (X : Skeleton (ObjectProperty.FullSubcategory
-      (fun M : QuiverRep.{u, v, w, max v w x} k V ↦ IsFinDim k V M ∧ Indecomposable M))) :
-    V → ℤ :=
-  fun j ↦ (dimVector ((fromSkeleton _).obj X).obj j : ℤ)
-
-/-- The dimension vector of a class is read off the representative that
-`CategoryTheory.fromSkeleton` chooses. -/
-@[simp]
-theorem isoClassDimVector_apply
-    (X : Skeleton (ObjectProperty.FullSubcategory
-      (fun M : QuiverRep.{u, v, w, max v w x} k V ↦ IsFinDim k V M ∧ Indecomposable M)))
-    (j : V) :
-    isoClassDimVector X j = (dimVector ((fromSkeleton _).obj X).obj j : ℤ) :=
-  -- The parentheses keep this an ordinary proof term rather than an exported `rfl` theorem, which
-  -- would force `TauCeti.isoClassDimVector` to be `@[expose]`.
-  (rfl)
-
-/-- **The dimension vector of a class is the dimension vector of any of its members.** -/
-theorem isoClassDimVector_toSkeleton (M : QuiverRep.{u, v, w, max v w x} k V)
-    (hfd : IsFinDim.{u, v, w, max v w x} k V M) (hM : Indecomposable M) :
-    isoClassDimVector (toSkeleton
-        (⟨M, hfd, hM⟩ : ObjectProperty.FullSubcategory
-          (fun N : QuiverRep.{u, v, w, max v w x} k V ↦ IsFinDim k V N ∧ Indecomposable N))) =
-      fun j ↦ (dimVector M j : ℤ) := by
-  have h : dimVector ((fromSkeleton _).obj (toSkeleton
-      (⟨M, hfd, hM⟩ : ObjectProperty.FullSubcategory
-        (fun N : QuiverRep.{u, v, w, max v w x} k V ↦
-          IsFinDim k V N ∧ Indecomposable N)))).obj = dimVector M :=
-    dimVector_eq_of_iso ((ObjectProperty.ι _).mapIso (fromSkeletonToSkeletonIso _))
-  exact funext fun j ↦ congrArg _ (congrFun h j)
-
-/-- The dimension vector of a class of indecomposables is nonnegative, being a vector of
-dimensions. -/
-theorem isoClassDimVector_nonneg
-    (X : Skeleton (ObjectProperty.FullSubcategory
-      (fun M : QuiverRep.{u, v, w, max v w x} k V ↦ IsFinDim k V M ∧ Indecomposable M))) :
-    0 ≤ isoClassDimVector X :=
-  fun _ ↦ Int.natCast_nonneg _
-
 section Tits
 
 variable [Fintype V] [∀ a b : V, Fintype (a ⟶ b)]
@@ -143,10 +97,14 @@ form of `TauCeti.titsForm_dimVector_eq_one_of_indecomposable_of_isAcyclic`. -/
 theorem titsForm_isoClassDimVector_eq_one (hpd : (titsForm V).PosDef)
     (X : Skeleton (ObjectProperty.FullSubcategory
       (fun M : QuiverRep.{u, v, w, max v w x} k V ↦ IsFinDim k V M ∧ Indecomposable M))) :
-    titsForm V (isoClassDimVector X) = 1 :=
-  titsForm_dimVector_eq_one_of_indecomposable_of_isAcyclic (isAcyclic_of_titsForm_posDef hpd) hpd
-    ((fromSkeleton _).obj X).obj ((fromSkeleton _).obj X).property.2
-    ((fromSkeleton _).obj X).property.1
+    titsForm V (isoClassDimVector X) = 1 := by
+  have hvec : isoClassDimVector X = fun j ↦
+      (dimVector ((fromSkeleton _).obj X).obj j : ℤ) :=
+    funext (isoClassDimVector_apply X)
+  rw [hvec]
+  exact titsForm_dimVector_eq_one_of_indecomposable_of_isAcyclic
+    (isAcyclic_of_titsForm_posDef hpd) hpd ((fromSkeleton _).obj X).obj
+    ((fromSkeleton _).obj X).property.2 ((fromSkeleton _).obj X).property.1
 
 /-- **The Gabriel injection.** Over a finite quiver with positive definite Tits form, two
 isomorphism classes of finite-dimensional indecomposable representations with the same dimension
@@ -170,11 +128,6 @@ theorem isoClassDimVector_injective (hpd : (titsForm V).PosDef) :
     ((fromSkeleton _).obj X).property ((fromSkeleton _).obj Y).property).mpr hiso
   rwa [toSkeleton_fromSkeleton_obj, toSkeleton_fromSkeleton_obj] at hcls
 
-/-- Only finitely many nonnegative integer vectors are roots of a positive definite Tits form. -/
-theorem finite_setOf_nonneg_titsForm_eq_one (hpd : (titsForm V).PosDef) :
-    {d : V → ℤ | 0 ≤ d ∧ titsForm V d = 1}.Finite :=
-  (QuadraticMap.PosDef.finite_setOf_apply_eq hpd 1).subset fun _ hd ↦ hd.2
-
 /-- **The isomorphism classes of finite-dimensional indecomposable representations embed into the
 positive roots of the Tits form**, by the dimension vector. This is the injective half of the
 Gabriel correspondence, packaged; its surjectivity, that every positive root is the dimension
@@ -189,7 +142,7 @@ noncomputable def isoClassDimVectorEmbedding (hpd : (titsForm V).PosDef) :
 
 /-- The vector underlying the Gabriel injection is the dimension vector of the isomorphism class. -/
 @[simp]
-theorem coe_isoClassDimVectorEmbedding (hpd : (titsForm V).PosDef)
+theorem coe_isoClassDimVectorEmbedding_apply (hpd : (titsForm V).PosDef)
     (X : Skeleton (ObjectProperty.FullSubcategory
       (fun M : QuiverRep.{u, v, w, max v w x} k V ↦ IsFinDim k V M ∧ Indecomposable M))) :
     ((isoClassDimVectorEmbedding.{u, v, w, x} (k := k) hpd X :
@@ -206,7 +159,7 @@ infinite family of pairwise non-isomorphic indecomposables. -/
 theorem isFiniteRepType_of_titsForm_posDef (hpd : (titsForm V).PosDef) :
     IsFiniteRepType.{u, v, w, max v w x} k V := by
   have : Finite {d : V → ℤ // 0 ≤ d ∧ titsForm V d = 1} :=
-    (finite_setOf_nonneg_titsForm_eq_one hpd).to_subtype
+    (finite_setOf_nonneg_titsForm_eq_one V hpd).to_subtype
   rw [isFiniteRepType_iff]
   exact Finite.of_injective _ (isoClassDimVectorEmbedding.{u, v, w, x} (k := k) hpd).injective
 
@@ -219,7 +172,7 @@ theorem card_skeleton_indecomposable_le_card_positiveRoots (hpd : (titsForm V).P
         (fun M : QuiverRep.{u, v, w, max v w x} k V ↦ IsFinDim k V M ∧ Indecomposable M))) ≤
       Nat.card {d : V → ℤ // 0 ≤ d ∧ titsForm V d = 1} := by
   have : Finite {d : V → ℤ // 0 ≤ d ∧ titsForm V d = 1} :=
-    (finite_setOf_nonneg_titsForm_eq_one hpd).to_subtype
+    (finite_setOf_nonneg_titsForm_eq_one V hpd).to_subtype
   exact Nat.card_le_card_of_injective _
     (isoClassDimVectorEmbedding.{u, v, w, x} (k := k) hpd).injective
 

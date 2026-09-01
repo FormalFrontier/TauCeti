@@ -14,8 +14,7 @@ public import Mathlib.SetTheory.Cardinal.Finite
 
 This file defines an acyclic quiver to be one whose closed paths are all trivial. It develops
 the elementary path API for excluding directed cycles, including the fact that paths cannot run
-in both directions between distinct vertices. It also records that every nonterminal vertex of a
-path is the source of an arrow along the path, including the corresponding closed-path form.
+in both directions between distinct vertices.
 
 This is the orientation-sensitive notion of acyclicity used for path algebras and quiver
 representations. It is distinct from acyclicity of the underlying undirected graph.
@@ -36,39 +35,6 @@ open Quiver
 universe u v
 
 variable {V : Type u} [Quiver.{v} V]
-
-/-- **Every vertex of a path but its last is the source of an arrow of the path**, and that arrow
-lands on a vertex of the path again. The vertices of a path other than its endpoint are exactly
-those of `List.dropLast` of its vertex list, since the endpoint is the last entry. -/
-theorem exists_hom_mem_vertices_of_mem_dropLast {a b : V} (p : Path a b) :
-    ∀ {u : V}, u ∈ p.vertices.dropLast → ∃ w ∈ p.vertices, Nonempty (u ⟶ w) := by
-  induction p with
-  | nil => intro u hu; simp at hu
-  | @cons b' c p e ih =>
-    intro u hu
-    rw [Path.vertices_cons, List.concat_eq_append, List.dropLast_concat,
-      ← Path.dropLast_append_end_eq p, List.mem_append, List.mem_singleton] at hu
-    rcases hu with hu | rfl
-    · obtain ⟨w, hw, hwe⟩ := ih hu
-      exact ⟨w, (Path.mem_vertices_cons p e).mpr (Or.inl hw), hwe⟩
-    · exact ⟨c, (Path.mem_vertices_cons p e).mpr (Or.inr rfl), ⟨e⟩⟩
-
-/-- **Every vertex of a closed path of positive length is the source of an arrow of the path.**
-The endpoint is excluded by `TauCeti.exists_hom_mem_vertices_of_mem_dropLast`, but on a closed path
-of positive length it reappears as the first vertex, hence inside `List.dropLast` after all. -/
-theorem exists_hom_mem_vertices {a : V} (p : Path a a) (hp : p ≠ Path.nil) {u : V}
-    (hu : u ∈ p.vertices) : ∃ w ∈ p.vertices, Nonempty (u ⟶ w) := by
-  have hlen : 0 < p.length := Nat.pos_of_ne_zero fun h ↦ hp ((Path.length_eq_zero_iff p).mp h)
-  have h0 : 0 < p.vertices.dropLast.length := by
-    rw [List.length_dropLast, Path.vertices_length]
-    omega
-  have hstart : a ∈ p.vertices.dropLast := by
-    have hmem := List.getElem_mem h0
-    rwa [List.getElem_dropLast, Path.getElem_vertices_zero] at hmem
-  rw [← Path.dropLast_append_end_eq p, List.mem_append, List.mem_singleton] at hu
-  rcases hu with hu | rfl
-  · exact exists_hom_mem_vertices_of_mem_dropLast p hu
-  · exact exists_hom_mem_vertices_of_mem_dropLast p hstart
 
 /-- A quiver is acyclic if every closed path is trivial. -/
 def Quiver.IsAcyclic (V : Type u) [Quiver.{v} V] : Prop :=
