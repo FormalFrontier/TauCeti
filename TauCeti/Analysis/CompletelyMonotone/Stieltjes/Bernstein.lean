@@ -7,7 +7,6 @@ module
 
 public import TauCeti.Analysis.CompletelyMonotone.Stieltjes.CompletelyMonotone
 public import TauCeti.Analysis.CompletelyMonotone.Bernstein.Basic
-import Mathlib.MeasureTheory.Integral.DominatedConvergence
 
 /-!
 # From Stieltjes functions to Bernstein functions
@@ -33,16 +32,18 @@ the normalization `μ {0} = 0` removes the only point where `t / (t + x)` does n
 
 ## Main declarations
 
-* `TauCeti.stieltjesBernsteinTransform` and `TauCeti.stieltjesBernsteinTransform_def`: the
+* `TauCeti.stieltjesBernsteinTransform` and `TauCeti.stieltjesBernsteinTransform_apply`: the
   continuous extension of `t * f(t)` written directly from Stieltjes representing data and its
   defining equation.
 * `TauCeti.stieltjesBernsteinTransform_zero`: the transform takes the value `a` at zero.
-* `TauCeti.iteratedDeriv_stieltjesBernsteinIntegral`: the iterated derivatives of the integral
+* `TauCeti.integrable_mul_zpow_neg_two_sub_add`: the derivative kernels of the integral term are
+  integrable at positive parameters.
+* `TauCeti.iteratedDeriv_integral_div_add`: the iterated derivatives of the integral
   term at positive parameters.
 * `TauCeti.hasDerivAt_stieltjesBernsteinTransform` and
   `TauCeti.deriv_stieltjesBernsteinTransform`: the transform has derivative
   `b + ∫ x, x / (t + x) ^ 2 ∂μ` at positive parameters.
-* `TauCeti.isBernsteinFunction_stieltjesBernsteinIntegral`: the integral term is Bernstein.
+* `TauCeti.isBernsteinFunction_integral_div_add`: the integral term is Bernstein.
 * `TauCeti.isBernsteinFunction_stieltjesBernsteinTransform`: the transform is Bernstein.
 * `TauCeti.RepresentsStieltjes.stieltjesBernsteinTransform_eq_mul`: on `(0, ∞)` the
   transform of a Stieltjes representation of `f` is `t * f(t)`.
@@ -70,12 +71,12 @@ namespace TauCeti
 normalization and integrability hypotheses of `isBernsteinFunction_stieltjesBernsteinTransform`,
 it is a Bernstein function and is continuous on `[0, ∞)`. For representing data, the later theorem
 `RepresentsStieltjes.stieltjesBernsteinTransform_eq_mul` identifies it with `t * f t` for
-positive `t`. Its defining equation is `stieltjesBernsteinTransform_def`. -/
+positive `t`. Its defining equation is `stieltjesBernsteinTransform_apply`. -/
 def stieltjesBernsteinTransform (μ : Measure ℝ≥0) (a b : ℝ≥0) (t : ℝ) : ℝ :=
   a + b * t + ∫ x : ℝ≥0, t / (t + x) ∂μ
 
 /-- The defining equation for the Stieltjes--Bernstein transform. -/
-lemma stieltjesBernsteinTransform_def (μ : Measure ℝ≥0) (a b : ℝ≥0) (t : ℝ) :
+lemma stieltjesBernsteinTransform_apply (μ : Measure ℝ≥0) (a b : ℝ≥0) (t : ℝ) :
     stieltjesBernsteinTransform μ a b t = a + b * t + ∫ x : ℝ≥0, t / (t + x) ∂μ :=
   (rfl)
 
@@ -83,7 +84,7 @@ lemma stieltjesBernsteinTransform_def (μ : Measure ℝ≥0) (a b : ℝ≥0) (t 
 @[simp]
 theorem stieltjesBernsteinTransform_zero (μ : Measure ℝ≥0) (a b : ℝ≥0) :
     stieltjesBernsteinTransform μ a b 0 = a := by
-  simp [stieltjesBernsteinTransform_def]
+  simp [stieltjesBernsteinTransform_apply]
 
 private lemma stieltjesBernsteinIntegral_eq_mul_integral_inv_add (μ : Measure ℝ≥0)
     (t : ℝ) :
@@ -91,6 +92,24 @@ private lemma stieltjesBernsteinIntegral_eq_mul_integral_inv_add (μ : Measure �
       t * ∫ x : ℝ≥0, (t + x)⁻¹ ∂μ := by
   rw [← integral_const_mul]
   exact integral_congr_ae (Filter.Eventually.of_forall fun x => by simp [div_eq_mul_inv])
+
+/-- The kernels in the iterated derivative formula for the integral term of the
+Stieltjes--Bernstein transform are integrable at positive parameters. -/
+theorem integrable_mul_zpow_neg_two_sub_add {μ : Measure ℝ≥0}
+    (hμ : Integrable stieltjesWeight μ) (n : ℕ) {t : ℝ} (ht : 0 < t) :
+    Integrable (fun x : ℝ≥0 => (x : ℝ) * (t + x) ^ (-2 - (n : ℤ))) μ := by
+  have hexpSucc : -1 - ((n + 1 : ℕ) : ℤ) = -2 - (n : ℤ) := by omega
+  have hpowInt : Integrable (fun x : ℝ≥0 => (t + (x : ℝ)) ^ (-2 - (n : ℤ))) μ := by
+    simpa only [hexpSucc] using integrable_zpow_neg_one_sub_add hμ (n + 1) ht
+  refine ((integrable_zpow_neg_one_sub_add hμ n ht).sub (hpowInt.const_mul t)).congr ?_
+  filter_upwards with x
+  have htx : t + (x : ℝ) ≠ 0 := (add_pos_of_pos_of_nonneg ht x.coe_nonneg).ne'
+  have hexp : -1 - (n : ℤ) = 1 + (-2 - (n : ℤ)) := by omega
+  change (t + (x : ℝ)) ^ (-1 - (n : ℤ)) -
+      t * (t + (x : ℝ)) ^ (-2 - (n : ℤ)) =
+    (x : ℝ) * (t + x) ^ (-2 - (n : ℤ))
+  rw [hexp, zpow_add₀ htx, zpow_one]
+  ring
 
 private lemma integral_mul_zpow_eq_sub {μ : Measure ℝ≥0}
     (hμ : Integrable stieltjesWeight μ) (n : ℕ) {t : ℝ} (ht : 0 < t) :
@@ -142,7 +161,7 @@ private lemma iteratedDeriv_succ_id_mul {F : ℝ → ℝ} {n : ℕ} {t : ℝ}
 
 /-- The iterated derivatives of the integral term in the Stieltjes--Bernstein transform at a
 positive parameter. -/
-theorem iteratedDeriv_stieltjesBernsteinIntegral {μ : Measure ℝ≥0}
+theorem iteratedDeriv_integral_div_add {μ : Measure ℝ≥0}
     (hμ : Integrable stieltjesWeight μ) (n : ℕ) {t : ℝ} (ht : 0 < t) :
     iteratedDeriv (n + 1) (fun u : ℝ => ∫ x : ℝ≥0, u / (u + x) ∂μ) t =
       (-1 : ℝ) ^ n * (n + 1).factorial *
@@ -176,12 +195,12 @@ theorem hasDerivAt_stieltjesBernsteinTransform {μ : Measure ℝ≥0} {a b : ℝ
   have hderiv : deriv (fun u : ℝ => ∫ x : ℝ≥0, u / (u + x) ∂μ) t =
       ∫ x : ℝ≥0, (x : ℝ) / (t + x) ^ 2 ∂μ := by
     simpa [iteratedDeriv_one, div_eq_mul_inv, zpow_neg, zpow_ofNat] using
-      iteratedDeriv_stieltjesBernsteinIntegral hμ 0 ht
+      iteratedDeriv_integral_div_add hμ 0 ht
   have hlinear : HasDerivAt (fun u : ℝ => (a : ℝ) + (b : ℝ) * u) b t := by
     simpa using ((hasDerivAt_id t).const_mul (b : ℝ)).const_add (a : ℝ)
   refine (hlinear.add (hdiff.hasDerivAt.congr_deriv hderiv)).congr_of_eventuallyEq ?_
   filter_upwards with u
-  rw [stieltjesBernsteinTransform_def]
+  rw [stieltjesBernsteinTransform_apply]
   simp only [Pi.add_apply]
 
 /-- The derivative formula for the Stieltjes--Bernstein transform at a positive parameter. -/
@@ -199,7 +218,7 @@ private lemma isCompletelyMonotoneOnIoi_deriv_stieltjesBernsteinIntegral
   · exact ((contDiffOn_infty_iff_deriv_of_isOpen isOpen_Ioi).mp
       (contDiffOn_stieltjesBernsteinIntegral hμ)).2
   · intro n t ht
-    rw [← iteratedDeriv_succ', iteratedDeriv_stieltjesBernsteinIntegral hμ n ht]
+    rw [← iteratedDeriv_succ', iteratedDeriv_integral_div_add hμ n ht]
     have hsign : (-1 : ℝ) ^ n * (-1 : ℝ) ^ n = 1 := by
       rw [← pow_add]
       norm_num [two_mul n]
@@ -245,7 +264,7 @@ private lemma continuousWithinAt_stieltjesBernsteinIntegral_zero
 
 /-- The integral term in the Stieltjes--Bernstein transform is a Bernstein function under the
 normalization and integrability hypotheses on the representing measure. -/
-theorem isBernsteinFunction_stieltjesBernsteinIntegral {μ : Measure ℝ≥0}
+theorem isBernsteinFunction_integral_div_add {μ : Measure ℝ≥0}
     (hzero : μ {0} = 0) (hμ : Integrable stieltjesWeight μ) :
     IsBernsteinFunction (fun t : ℝ => ∫ x : ℝ≥0, t / (t + x) ∂μ) := by
   have hjumpCont : ContinuousOn
@@ -266,9 +285,9 @@ theorem isBernsteinFunction_stieltjesBernsteinTransform {μ : Measure ℝ≥0} {
     (hzero : μ {0} = 0) (hμ : Integrable stieltjesWeight μ) :
     IsBernsteinFunction (stieltjesBernsteinTransform μ a b) := by
   apply ((isBernsteinFunction_affine a.coe_nonneg b.coe_nonneg).add
-    (isBernsteinFunction_stieltjesBernsteinIntegral hzero hμ)).congr
+    (isBernsteinFunction_integral_div_add hzero hμ)).congr
   intro t _
-  rw [stieltjesBernsteinTransform_def]
+  rw [stieltjesBernsteinTransform_apply]
   simp only [Pi.add_apply]
 
 namespace RepresentsStieltjes
@@ -279,7 +298,7 @@ variable {μ : Measure ℝ≥0} {a b : ℝ≥0} {f : ℝ → ℝ}
 transform on the open half-line. -/
 theorem stieltjesBernsteinTransform_eq_mul (h : RepresentsStieltjes μ a b f) {t : ℝ}
     (ht : 0 < t) : stieltjesBernsteinTransform μ a b t = t * f t := by
-  rw [h.eq_div_add_add_integral_inv_add ht, stieltjesBernsteinTransform_def]
+  rw [h.eq_div_add_add_integral_inv_add ht, stieltjesBernsteinTransform_apply]
   rw [stieltjesBernsteinIntegral_eq_mul_integral_inv_add]
   field_simp [ht.ne']
 
