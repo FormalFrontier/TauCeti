@@ -154,7 +154,12 @@ theorem isIso_iff_surjective (hf : IsIsogeny f) :
     exact (ConcreteCategory.bijective_of_isIso f).2
   · intro hsurjective
     let e := BialgEquiv.ofBijective f.hom ⟨hf.injective, hsurjective⟩
-    exact (CommHopfAlgCat.isoMk e).isIso_hom
+    have he : (CommHopfAlgCat.isoMk e).hom = f := by
+      rw [CommHopfAlgCat.isoMk_hom]
+      apply CommHopfAlgCat.hom_ext
+      rfl
+    rw [← he]
+    infer_instance
 
 /-- A finite coordinate morphism is in particular of finite type. -/
 theorem finiteType (hf : IsIsogeny f) : f.hom.toAlgHom.FiniteType :=
