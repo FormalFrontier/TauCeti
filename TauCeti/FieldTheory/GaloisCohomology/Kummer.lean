@@ -191,7 +191,6 @@ def kummerMap (hn : IsUnit (n : K)) :
   (kummerMapAdd K n hn).toMultiplicativeRight
 
 /-- The additive value underlying `kummerMap a` is `kummerMapAdd (Additive.ofMul a)`. -/
-@[simp]
 theorem toAdd_kummerMap_apply (hn : IsUnit (n : K)) (a : Kˣ) :
     Multiplicative.toAdd (kummerMap K n hn a) =
       kummerMapAdd K n hn (Additive.ofMul a) := by
@@ -297,7 +296,6 @@ theorem kummerClassMap_mk (hn : IsUnit (n : K)) (a : Kˣ) :
   exact QuotientGroup.lift_mk' (powerSubgroup Kˣ n) (by rw [ker_kummerMap hn]) a
 
 /-- The quotient Kummer map sends the named power class of `a` to its Kummer class. -/
-@[simp]
 theorem kummerClassMap_powerClass (hn : IsUnit (n : K)) (a : Kˣ) :
     kummerClassMap K n hn (powerClassHom n a) = kummerMap K n hn a := by
   rw [powerClassHom_apply, kummerClassMap_mk]

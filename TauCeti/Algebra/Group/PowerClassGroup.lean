@@ -102,7 +102,7 @@ representatives. -/
 @[simp]
 theorem powerClassQuotientLift_mk {H : Type*} [Group H] (f : G →* H)
     (hf : powerSubgroup G n ≤ f.ker) (g : G) :
-    powerClassQuotientLift n f hf (powerClassHom n g) = f g := by
+    powerClassQuotientLift n f hf (QuotientGroup.mk g) = f g := by
   exact QuotientGroup.lift_mk' (powerSubgroup G n) hf g
 
 /-- The additive quotient homomorphism `Additive G →+ PowerClassGroup G n`. -/
