@@ -8,7 +8,6 @@ module
 public import TauCeti.Algebra.Lie.E6.DoubledMinuscule.PointsFunctor
 public import
   TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.NumberedSymmetry
-public import TauCeti.CategoryTheory.Aut.Basic
 
 /-!
 # The graph automorphism of the doubled type-E6 minuscule carrier
@@ -46,6 +45,8 @@ is asserted here.
 * `TauCeti.E6DoubledMinuscule.pointsMap_comp_graphAutomorphismPoints`: its naturality in the value
   ring, which makes it commute with Frobenius.
 * `TauCeti.E6DoubledMinuscule.graphAutomorphismPoints_sq`: its pointwise order-two relation.
+* `TauCeti.E6DoubledMinuscule.graphAutomorphismPoints_graphAutomorphismPoints`: the corresponding
+  simp-normal pointwise involution.
 
 ## References
 
@@ -53,9 +54,11 @@ is asserted here.
 * R. W. Carter, *Finite Groups of Lie Type: Conjugacy Classes and Complex Characters*, §1.15.
 * R. W. Carter, *Simple Groups of Lie Type*, §12.2.
 
-This advances the pinnings and pinned-isomorphism targets in Layer 9 of
-`TauCetiRoadmap/ReductiveGroups/README.md`. It supplies the graph part `γ₂` required by milestone
-L1 of `TauCetiRoadmap/CFSGStatement/README.md` for the twisted family `²E₆(q)`.
+This supplies an explicit representation-level input to the pinnings and pinned-isomorphism
+targets in Layer 9 of `TauCetiRoadmap/ReductiveGroups/README.md`. After milestone L0 identifies the
+carrier with the pinned simply connected `E₆` group, this symmetry supplies the graph part `γ₂`
+required by milestone L1 of `TauCetiRoadmap/CFSGStatement/README.md` for the twisted family
+`²E₆(q)`.
 -/
 
 public section
@@ -171,10 +174,9 @@ private theorem graphPerm_reflection (i : Fin 6) (a : Fin 27 ⊕ Fin 27) :
       reflection (graphPermE6 i) (e6DoubledMinusculeGraphPerm a) := by
   apply e6DoubledMinusculeWeight_injective
   funext j
-  have hinv (k : Fin 6) : graphPermE6 (graphPermE6 k) = k := by
-    rw [← Equiv.Perm.mul_apply, ← pow_two, graphPermE6_sq, Equiv.Perm.one_apply]
   have hcart := cartanMatrix_E6_graphPermE6 i (graphPermE6 j)
-  rw [DynkinType.cartanMatrix_E6, hinv] at hcart
+  rw [DynkinType.cartanMatrix_E6, ← Equiv.Perm.mul_apply, ← pow_two, graphPermE6_sq,
+    Equiv.Perm.one_apply] at hcart
   calc
     e6DoubledMinusculeWeight
           (e6DoubledMinusculeGraphPerm (reflection i a)) j =
@@ -190,7 +192,7 @@ private theorem graphPerm_reflection (i : Fin 6) (a : Fin 27 ⊕ Fin 27) :
           CartanMatrix.E 6 (graphPermE6 i) j := by
       rw [e6DoubledMinusculeWeight_e6DoubledMinusculeGraphPerm,
         e6DoubledMinusculeWeight_e6DoubledMinusculeGraphPerm,
-        hinv, hcart]
+        ← Equiv.Perm.mul_apply, ← pow_two, graphPermE6_sq, Equiv.Perm.one_apply, hcart]
     _ = e6DoubledMinusculeWeight
           (reflection (graphPermE6 i) (e6DoubledMinusculeGraphPerm a)) j := by
       rw [congrFun (doubledWeight_reflection (graphPermE6 i)
@@ -241,14 +243,11 @@ theorem graphModuleEquiv_apply_apply (v : (Fin 27 ⊕ Fin 27) → ℚ) :
     e6DoubledMinusculeGraphPerm_apply_apply, ← mul_assoc, ← Int.cast_mul, basisSign_sq,
     Int.cast_one, one_mul]
 
-private theorem graphPermE6_apply_apply (i : Fin 6) :
-    graphPermE6 (graphPermE6 i) = i := by
-  rw [← Equiv.Perm.mul_apply, ← pow_two, graphPermE6_sq, Equiv.Perm.one_apply]
-
 private theorem weight_graphPerm_graphPerm (b : Fin 27 ⊕ Fin 27) (i : Fin 6) :
     e6DoubledMinusculeWeight (e6DoubledMinusculeGraphPerm b) (graphPermE6 i) =
       e6DoubledMinusculeWeight b i := by
-  rw [e6DoubledMinusculeWeight_e6DoubledMinusculeGraphPerm, graphPermE6_apply_apply]
+  rw [e6DoubledMinusculeWeight_e6DoubledMinusculeGraphPerm, ← Equiv.Perm.mul_apply,
+    ← pow_two, graphPermE6_sq, Equiv.Perm.one_apply]
 
 private theorem eq_reflection_graphPerm_iff (a b : Fin 27 ⊕ Fin 27) (i : Fin 6) :
     a = reflection (graphPermE6 i) (e6DoubledMinusculeGraphPerm b) ↔
@@ -263,7 +262,9 @@ private theorem eq_reflection_graphPerm_iff (a b : Fin 27 ⊕ Fin 27) (i : Fin 6
           (e6DoubledMinusculeGraphPerm (e6DoubledMinusculeGraphPerm b)) :=
         graphPerm_reflection (graphPermE6 i) (e6DoubledMinusculeGraphPerm b)
       _ = reflection i b := by
-        rw [graphPermE6_apply_apply, e6DoubledMinusculeGraphPerm_apply_apply]
+        have hi := congrArg (fun σ : Equiv.Perm (Fin 6) => σ i) graphPermE6_sq
+        rw [pow_two, Equiv.Perm.mul_apply, Equiv.Perm.one_apply] at hi
+        rw [hi, e6DoubledMinusculeGraphPerm_apply_apply]
   · intro h
     calc
       a = e6DoubledMinusculeGraphPerm (e6DoubledMinusculeGraphPerm a) := by
@@ -395,16 +396,16 @@ def graphMatrixPerm : Equiv.Perm (Fin 54) :=
 def graphMatrixScale (i : Fin 54) : ℤ :=
   basisSign (matrixIndexEquiv.symm i)
 
+private theorem coe_smul_latticeBasis (z : ℤ) (a : Fin 27 ⊕ Fin 27) :
+    (((z • latticeBasis a : lattice) : (Fin 27 ⊕ Fin 27) → ℚ)) =
+      (z : ℚ) • (((latticeBasis a : lattice) : (Fin 27 ⊕ Fin 27) → ℚ)) :=
+  (rfl)
+
 private theorem graphModuleEquiv_latticeBasis (a : Fin 27 ⊕ Fin 27) :
     graphModuleEquiv (((latticeBasis a : lattice) : (Fin 27 ⊕ Fin 27) → ℚ)) =
       (((basisSign a) • latticeBasis (e6DoubledMinusculeGraphPerm a) : lattice) :
         (Fin 27 ⊕ Fin 27) → ℚ) := by
-  rw [coe_latticeBasis]
-  change graphModuleEquiv (Pi.single a 1) =
-    (basisSign a : ℚ) •
-      (((latticeBasis (e6DoubledMinusculeGraphPerm a) : lattice) :
-        (Fin 27 ⊕ Fin 27) → ℚ))
-  rw [coe_latticeBasis]
+  rw [coe_latticeBasis, coe_smul_latticeBasis, coe_latticeBasis]
   ext b
   simp only [graphModuleEquiv_apply, Pi.single_apply, Pi.smul_apply, smul_eq_mul]
   by_cases h : e6DoubledMinusculeGraphPerm b = a
@@ -467,23 +468,16 @@ private noncomputable def toralGraphAutomorphism :
 
 /-- **The pinned graph automorphism of the doubled type-`E₆` minuscule carrier.** -/
 noncomputable def graphAutomorphism : Aut groupScheme :=
-  Aut.autMulEquivOfIso (eqToIso groupScheme_eq_kostantToral) toralGraphAutomorphism
-
-private theorem graphAutomorphism_hom :
-    graphAutomorphism.hom =
-      eqToHom groupScheme_eq_kostantToral ≫ toralGraphAutomorphism.hom ≫
-        eqToHom groupScheme_eq_kostantToral.symm := by
-  rw [graphAutomorphism, TauCeti.CategoryTheory.autMulEquivOfIso_hom, eqToIso.inv, eqToIso.hom]
+  toralGraphAutomorphism
 
 /-- The graph automorphism renumbers each positive and negative pinned simple-root subgroup by the
 type-`E₆` diagram involution, without changing its additive parameter. -/
 @[reassoc (attr := simp)]
 theorem rootSubgroup_comp_graphAutomorphism_hom (k : Fin 6 ⊕ Fin 6) :
     rootSubgroup k ≫ graphAutomorphism.hom = rootSubgroup (graphRootPerm k) := by
-  rw [graphAutomorphism_hom, toralGraphAutomorphism, ← Category.assoc,
-    rootSubgroup_comp_eqToHom_groupScheme_eq_kostantToral, ← Category.assoc,
-    kostantRootSubgroupToToral_comp_numberedSymmetryIso_hom,
-    kostantRootSubgroupToToral_comp_eqToHom_groupScheme_eq_kostantToral_symm]
+  rw [rootSubgroup_def, graphAutomorphism, toralGraphAutomorphism,
+    kostantRootSubgroupToToral_comp_numberedSymmetryIso_hom]
+  exact (rootSubgroup_def (graphRootPerm k)).symm
 
 /-- The graph automorphism relabels the represented split weight torus by the type-`E₆` diagram
 involution. -/
@@ -491,22 +485,18 @@ involution. -/
 theorem weightTorus_comp_graphAutomorphism_hom :
     weightTorus ≫ graphAutomorphism.hom =
       SplitTorus.relabel ℤ graphPermE6 ≫ weightTorus := by
-  rw [graphAutomorphism_hom, toralGraphAutomorphism, ← Category.assoc,
-    weightTorus_comp_eqToHom_groupScheme_eq_kostantToral, ← Category.assoc,
+  rw [weightTorus_def, graphAutomorphism, toralGraphAutomorphism,
     kostantWeightTorusToToral_comp_numberedSymmetryIso_hom, Equiv.Perm.inv_def,
-    graphPermE6_symm,
-    Category.assoc, kostantWeightTorusToToral_comp_eqToHom_groupScheme_eq_kostantToral_symm]
+    graphPermE6_symm]
 
 /-- **The graph automorphism is an involution.** -/
 @[simp]
 theorem graphAutomorphism_sq : graphAutomorphism ^ 2 = 1 := by
-  have htoral : toralGraphAutomorphism ^ 2 = 1 := by
-    rw [toralGraphAutomorphism]
-    apply kostantToralNumberedSymmetryIso_pow_eq_one
-    · funext k
-      exact graphRootPerm_apply_apply k
-    · exact graphPermE6_sq
-  rw [graphAutomorphism, ← map_pow, htoral, map_one]
+  rw [graphAutomorphism, toralGraphAutomorphism]
+  apply kostantToralNumberedSymmetryIso_pow_eq_one
+  · funext k
+    exact graphRootPerm_apply_apply k
+  · exact graphPermE6_sq
 
 /-! ## The graph automorphism on matrix-valued points -/
 
@@ -518,7 +508,7 @@ noncomputable def graphAutomorphismMatrix (A : Type v) [CommRing A] :
 
 /-- The graph-automorphism matrix has the signed monomial entry formula determined by
 `graphMatrixPerm` and `graphMatrixScale`. -/
-theorem coe_graphAutomorphismMatrix (A : Type v) [CommRing A] (i j : Fin 54) :
+theorem coe_graphAutomorphismMatrix_apply (A : Type v) [CommRing A] (i j : Fin 54) :
     (graphAutomorphismMatrix A : Matrix (Fin 54) (Fin 54) A) i j =
       if i = graphMatrixPerm j then algebraMap ℤ A (graphMatrixScale j) else 0 := by
   exact coe_kostantNumberedSymmetryMatrix_apply_of_monomial lattice.toAddSubgroup matrixBasis
@@ -548,8 +538,9 @@ theorem graphAutomorphismMatrix_sq (A : Type v) [CommRing A] :
 subgroup. -/
 theorem map_points_conj_graphAutomorphismMatrix (A : Type v) [CommRing A] :
     (points A).map (MulAut.conj (graphAutomorphismMatrix A)).toMonoidHom = points A := by
-  rw [points_eq_kostantToralPointsSubgroup]
-  exact map_kostantToralPointsSubgroup_conj_numberedSymmetryMatrix
+  rw [points_def, definingIdeal_def, graphAutomorphismMatrix]
+  simpa only [kostantToralPointsSubgroup_def] using
+    map_kostantToralPointsSubgroup_conj_numberedSymmetryMatrix
     (TauCeti.serreRootGenerator (CartanMatrix.E 6)ᵀ)
     (TauCeti.serreH ℚ (CartanMatrix.E 6)ᵀ) rep lattice.toAddSubgroup
     rep_kostantForm_mem_lattice isNilpotent_rep_serreRootGenerator matrixBasis matrixWeight
@@ -632,16 +623,7 @@ theorem schemePointsMulEquiv_graphAutomorphism_comp_carrierι
       graphAutomorphismMatrix A *
           GeneralLinear.schemePointsMulEquiv 54 A (p ≫ carrierι.hom.hom) *
         (graphAutomorphismMatrix A)⁻¹ := by
-  have hcomp : graphAutomorphism.hom ≫ carrierι =
-      eqToHom groupScheme_eq_kostantToral ≫ toralGraphAutomorphism.hom ≫
-        kostantToralGroupSchemeι
-          (TauCeti.serreRootGenerator (CartanMatrix.E 6)ᵀ)
-          (TauCeti.serreH ℚ (CartanMatrix.E 6)ᵀ) rep lattice.toAddSubgroup
-          rep_kostantForm_mem_lattice isNilpotent_rep_serreRootGenerator matrixBasis
-          matrixWeight := by
-    rw [graphAutomorphism_hom, carrierι_eq_eqToHom_comp_kostantToralGroupSchemeι]
-    simp only [Category.assoc, eqToHom_refl, Category.id_comp]
-  rw [hcomp, carrierι_eq_eqToHom_comp_kostantToralGroupSchemeι, graphAutomorphismMatrix]
+  rw [graphAutomorphism, carrierι_def, graphAutomorphismMatrix]
   simpa only [toralGraphAutomorphism, Grp.comp_hom_hom, Category.assoc] using
     schemePointsMulEquiv_kostantToralNumberedSymmetryIso
       (TauCeti.serreRootGenerator (CartanMatrix.E 6)ᵀ)
@@ -650,7 +632,7 @@ theorem schemePointsMulEquiv_graphAutomorphism_comp_carrierι
       graphRootPerm graphModuleEquiv graphModuleEquiv_mem_lattice_iff
       graphModuleEquiv_ι_rep_serreRootGenerator graphRootPerm.surjective
       graphMatrixPerm graphMatrixScale graphModuleEquiv_matrixBasis graphPermE6
-      matrixWeight_graphMatrixPerm A (p ≫ (eqToHom groupScheme_eq_kostantToral).hom.hom)
+      matrixWeight_graphMatrixPerm A p
 
 /-- The graph automorphism on points is natural in the value ring. In particular, it commutes
 with every iterated Frobenius map. -/
@@ -673,5 +655,13 @@ theorem graphAutomorphismPoints_sq (A : Type v) [CommRing A] :
       rw [Subgroup.coe_pow]
       exact graphAutomorphismMatrix_sq A)
   rw [graphAutomorphismPoints, ← map_pow, hnormalizer, map_one]
+
+/-- Applying the graph automorphism twice to a matrix-valued point is the identity. -/
+@[simp]
+theorem graphAutomorphismPoints_graphAutomorphismPoints
+    (A : Type v) [CommRing A] (g : points A) :
+    graphAutomorphismPoints A (graphAutomorphismPoints A g) = g := by
+  have h := congrArg (fun σ : MulAut (points A) => σ g) (graphAutomorphismPoints_sq A)
+  simpa only [pow_two, MulAut.mul_apply, MulAut.one_apply] using h
 
 end TauCeti.E6DoubledMinuscule

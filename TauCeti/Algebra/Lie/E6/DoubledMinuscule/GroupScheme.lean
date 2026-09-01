@@ -199,17 +199,6 @@ noncomputable abbrev groupScheme : Grp (Over (Spec (CommRingCat.of ℤ))) :=
     (TauCeti.serreH ℚ (CartanMatrix.E 6)ᵀ) rep lattice.toAddSubgroup
     rep_kostantForm_mem_lattice isNilpotent_rep_serreRootGenerator matrixBasis matrixWeight
 
-/-- The doubled carrier is the generic Kostant toral closure specialized to its representation,
-lattice basis, and weight family. -/
-theorem groupScheme_eq_kostantToral :
-    groupScheme =
-      TauCeti.UniversalEnvelopingAlgebra.kostantToralGroupScheme
-        (TauCeti.serreRootGenerator (CartanMatrix.E 6)ᵀ)
-        (TauCeti.serreH ℚ (CartanMatrix.E 6)ᵀ) rep lattice.toAddSubgroup
-        rep_kostantForm_mem_lattice isNilpotent_rep_serreRootGenerator matrixBasis
-        matrixWeight :=
-  (rfl)
-
 /-- The quotient-spectrum presentation of the doubled type-`E₆` minuscule carrier. -/
 theorem groupScheme_def :
     groupScheme = CommHopfAlgCat.quotientSpec
@@ -230,19 +219,6 @@ theorem carrierι_def :
       (TauCeti.serreH ℚ (CartanMatrix.E 6)ᵀ) rep lattice.toAddSubgroup
       rep_kostantForm_mem_lattice isNilpotent_rep_serreRootGenerator matrixBasis matrixWeight := by
   rw [carrierι]
-
-/-- The named carrier inclusion is the generic toral-closure inclusion after transport along
-`groupScheme_eq_kostantToral`. -/
-theorem carrierι_eq_eqToHom_comp_kostantToralGroupSchemeι :
-    carrierι =
-      eqToHom groupScheme_eq_kostantToral ≫
-        TauCeti.UniversalEnvelopingAlgebra.kostantToralGroupSchemeι
-          (TauCeti.serreRootGenerator (CartanMatrix.E 6)ᵀ)
-          (TauCeti.serreH ℚ (CartanMatrix.E 6)ᵀ) rep lattice.toAddSubgroup
-          rep_kostantForm_mem_lattice isNilpotent_rep_serreRootGenerator matrixBasis
-          matrixWeight := by
-  change _ = 𝟙 _ ≫ _
-  rw [Category.id_comp, carrierι_def]
 
 /-- The doubled type-`E₆` minuscule carrier is a closed subgroup scheme of `GL₅₄`. -/
 instance isClosedImmersion_carrierι : IsClosedImmersion carrierι.hom.hom.left := by
@@ -267,32 +243,6 @@ theorem rootSubgroup_def (k : Fin 6 ⊕ Fin 6) :
         rep_kostantForm_mem_lattice isNilpotent_rep_serreRootGenerator matrixBasis matrixWeight
         k := by
   rw [rootSubgroup]
-
-/-- Transporting a numbered root subgroup to the generic toral-closure presentation recovers the
-generic numbered root subgroup. -/
-theorem rootSubgroup_comp_eqToHom_groupScheme_eq_kostantToral (k : Fin 6 ⊕ Fin 6) :
-    rootSubgroup k ≫ eqToHom groupScheme_eq_kostantToral =
-      TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupToToral
-        (TauCeti.serreRootGenerator (CartanMatrix.E 6)ᵀ)
-        (TauCeti.serreH ℚ (CartanMatrix.E 6)ᵀ) rep lattice.toAddSubgroup
-        rep_kostantForm_mem_lattice isNilpotent_rep_serreRootGenerator matrixBasis matrixWeight
-        k := by
-  change _ ≫ 𝟙 _ = _
-  rw [Category.comp_id, rootSubgroup_def]
-
-/-- Transporting a generic numbered root subgroup back gives the named doubled-carrier root
-subgroup. -/
-theorem kostantRootSubgroupToToral_comp_eqToHom_groupScheme_eq_kostantToral_symm
-    (k : Fin 6 ⊕ Fin 6) :
-    TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupToToral
-          (TauCeti.serreRootGenerator (CartanMatrix.E 6)ᵀ)
-          (TauCeti.serreH ℚ (CartanMatrix.E 6)ᵀ) rep lattice.toAddSubgroup
-          rep_kostantForm_mem_lattice isNilpotent_rep_serreRootGenerator matrixBasis matrixWeight
-          k ≫
-        eqToHom groupScheme_eq_kostantToral.symm =
-      rootSubgroup k := by
-  change _ ≫ 𝟙 _ = _
-  rw [Category.comp_id, rootSubgroup_def]
 
 /-- Including a numbered root subgroup into `GL₅₄` recovers its represented divided-power
 exponential subgroup. -/
@@ -323,30 +273,6 @@ theorem weightTorus_def :
         rep_kostantForm_mem_lattice isNilpotent_rep_serreRootGenerator matrixBasis
         matrixWeight := by
   rw [weightTorus]
-
-/-- Transporting the named weight torus to the generic toral-closure presentation recovers the
-generic weight-torus morphism. -/
-theorem weightTorus_comp_eqToHom_groupScheme_eq_kostantToral :
-    weightTorus ≫ eqToHom groupScheme_eq_kostantToral =
-      TauCeti.UniversalEnvelopingAlgebra.kostantWeightTorusToToral
-        (TauCeti.serreRootGenerator (CartanMatrix.E 6)ᵀ)
-        (TauCeti.serreH ℚ (CartanMatrix.E 6)ᵀ) rep lattice.toAddSubgroup
-        rep_kostantForm_mem_lattice isNilpotent_rep_serreRootGenerator matrixBasis
-        matrixWeight := by
-  change _ ≫ 𝟙 _ = _
-  rw [Category.comp_id, weightTorus_def]
-
-/-- Transporting the generic weight torus back gives the named doubled-carrier weight torus. -/
-theorem kostantWeightTorusToToral_comp_eqToHom_groupScheme_eq_kostantToral_symm :
-    TauCeti.UniversalEnvelopingAlgebra.kostantWeightTorusToToral
-          (TauCeti.serreRootGenerator (CartanMatrix.E 6)ᵀ)
-          (TauCeti.serreH ℚ (CartanMatrix.E 6)ᵀ) rep lattice.toAddSubgroup
-          rep_kostantForm_mem_lattice isNilpotent_rep_serreRootGenerator matrixBasis
-          matrixWeight ≫
-        eqToHom groupScheme_eq_kostantToral.symm =
-      weightTorus := by
-  change _ ≫ 𝟙 _ = _
-  rw [Category.comp_id, weightTorus_def]
 
 /-- Including the weight torus into `GL₅₄` recovers the diagonal torus of the doubled minuscule
 weights. -/
@@ -383,16 +309,6 @@ noncomputable def points (A : Type v) [CommRing A] :
     (TauCeti.serreRootGenerator (CartanMatrix.E 6)ᵀ)
     (TauCeti.serreH ℚ (CartanMatrix.E 6)ᵀ) rep lattice.toAddSubgroup
     rep_kostantForm_mem_lattice isNilpotent_rep_serreRootGenerator matrixBasis matrixWeight A
-
-/-- The matrix-valued points are the generic Kostant toral-closure point subgroup specialized to
-the doubled minuscule data. -/
-theorem points_eq_kostantToralPointsSubgroup (A : Type v) [CommRing A] :
-    points A =
-      TauCeti.UniversalEnvelopingAlgebra.kostantToralPointsSubgroup
-        (TauCeti.serreRootGenerator (CartanMatrix.E 6)ᵀ)
-        (TauCeti.serreH ℚ (CartanMatrix.E 6)ᵀ) rep lattice.toAddSubgroup
-        rep_kostantForm_mem_lattice isNilpotent_rep_serreRootGenerator matrixBasis matrixWeight A :=
-  (rfl)
 
 /-- The carrier points are exactly the invertible matrices cut out by the defining Hopf ideal. -/
 theorem points_def (A : Type v) [CommRing A] :
