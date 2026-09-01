@@ -42,51 +42,21 @@ variable {W₁ : Type u} {W₂ : Type v} [AddCommGroup W₁] [Module ℂ W₁]
   [AddCommGroup W₂] [Module ℂ W₂]
 variable {ω₁ : Conjugation W₁} {ω₂ : Conjugation W₂} {n₁ n₂ : ℤ}
 
-private def homConjMap (ω₁ : Conjugation W₁) (ω₂ : Conjugation W₂) :
-    (W₁ →ₗ[ℂ] W₂) →ₛₗ[starRingEnd ℂ] (W₁ →ₗ[ℂ] W₂) where
-  toFun f :=
-    { toFun := fun x ↦ ω₂.toEquiv (f (ω₁.toEquiv x))
-      map_add' := by simp
-      map_smul' := by
-        intro c x
-        simp only [map_smul, map_smulₛₗ]
-        simp }
-  map_add' f g := by
-    ext x
-    simp
-  map_smul' c f := by
-    ext x
-    simp only [LinearMap.smul_apply, map_smulₛₗ]
-    simp
-
-private theorem homConjMap_involutive (f : W₁ →ₗ[ℂ] W₂) :
-    homConjMap ω₁ ω₂ (homConjMap ω₁ ω₂ f) = f := by
-  ext x
-  simp [homConjMap, Conjugation.apply_apply]
-
 /-- Conjugation on the internal Hom, given pointwise by `ω₂ (f (ω₁ x))`. -/
 def homConjugation (ω₁ : Conjugation W₁) (ω₂ : Conjugation W₂) :
     Conjugation (W₁ →ₗ[ℂ] W₂) where
-  toEquiv :=
-    { toFun := homConjMap ω₁ ω₂
-      invFun := homConjMap ω₁ ω₂
-      left_inv := homConjMap_involutive (ω₁ := ω₁) (ω₂ := ω₂)
-      right_inv := homConjMap_involutive (ω₁ := ω₁) (ω₂ := ω₂)
-      map_add' := (homConjMap ω₁ ω₂).map_add
-      map_smul' := by
-        intro c f
-        ext x
-        simp [homConjMap] }
-  involutive := homConjMap_involutive (ω₁ := ω₁) (ω₂ := ω₂)
+  toEquiv := LinearEquiv.arrowCongr ω₁.toEquiv ω₂.toEquiv
+  involutive := by
+    intro f
+    ext x
+    simp only [LinearEquiv.arrowCongr_apply, Conjugation.toEquiv_symm,
+      Conjugation.apply_apply]
 
 @[simp]
 theorem homConjugation_apply (f : W₁ →ₗ[ℂ] W₂) (x : W₁) :
     (homConjugation ω₁ ω₂).toEquiv f x =
       ω₂.toEquiv (f (ω₁.toEquiv x)) :=
-  by
-    -- Unfold the bundled semilinear equivalence to expose its defining pointwise map.
-    change homConjMap ω₁ ω₂ f x = _
-    rfl
+  by simp [homConjugation, LinearEquiv.arrowCongr_apply, Conjugation.toEquiv_symm]
 
 section Finite
 
@@ -95,15 +65,15 @@ variable [FiniteDimensional ℂ W₁]
 private theorem dualTensorHomEquiv_conj (x : Module.Dual ℂ W₁ ⊗[ℂ] W₂) :
     dualTensorHomEquiv ℂ W₁ W₂
         ((ω₁.dual.tensorProduct ω₂).toEquiv x) =
-      homConjMap ω₁ ω₂ (dualTensorHomEquiv ℂ W₁ W₂ x) := by
+      (homConjugation ω₁ ω₂).toEquiv (dualTensorHomEquiv ℂ W₁ W₂ x) := by
   refine TensorProduct.induction_on x (by simp) ?_ (by
     intro x y hx hy
-    simp only [map_add, hx, hy, homConjMap])
+    simp only [map_add, hx, hy])
   intro φ y
   ext x
   simp only [dualTensorHomEquiv, Conjugation.tensorProduct_toEquiv_tmul,
     LinearEquiv.ofBijective_apply, dualTensorHom_apply,
-    Conjugation.dual_toEquiv_apply, Complex.star_def]
+    Conjugation.dual_toEquiv_apply, Complex.star_def, homConjugation_apply]
   -- The tensor--Hom equivalence unfolds to `dualTensorHom` only after extensionality.
   change (starRingEnd ℂ) (φ (ω₁.toEquiv x)) • ω₂.toEquiv y =
     ω₂.toEquiv (φ (ω₁.toEquiv x) • y)
@@ -116,8 +86,6 @@ private theorem homEquiv_conj (f : W₁ →ₗ[ℂ] W₂) :
         ((dualTensorHomEquiv ℂ W₁ W₂).symm f) := by
   apply (dualTensorHomEquiv ℂ W₁ W₂).injective
   rw [LinearEquiv.apply_symm_apply]
-  -- The transported conjugation is definitionally the pointwise map above.
-  change homConjMap ω₁ ω₂ f = _
   simpa using
     (dualTensorHomEquiv_conj (ω₁ := ω₁) (ω₂ := ω₂)
       (x := (dualTensorHomEquiv ℂ W₁ W₂).symm f)).symm
