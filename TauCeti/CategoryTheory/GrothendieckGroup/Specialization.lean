@@ -23,7 +23,8 @@ needs the extra forgetful and Ext data described in the Grothendieck-groups road
 
 * `TauCeti.LaurentSpecialization`: specialization of a Laurent module along a ring homomorphism.
 * `TauCeti.specializeOf` and `TauCeti.specializeLift`: its canonical map and universal factor.
-* `TauCeti.SpecializeAtOne` and `TauCeti.SpecializeAtNegOne`: the two algebraic specializations.
+* `TauCeti.SpecializationAtOne`: specialization at `q = 1`.
+* `TauCeti.SpecializationAtNegOne`: specialization at `q = -1`.
 
 ## Main results
 
@@ -56,9 +57,19 @@ noncomputable def specializeOf (ev : LaurentPolynomial ℤ →+* ℤ) (M : Type*
   letI := Module.compHom ℤ ev
   ((TensorProduct.mk (LaurentPolynomial ℤ) ℤ M) 1).toAddMonoidHom
 
+/-- The tensor representative of the canonical specialization map. -/
+@[simp]
+theorem specializeOf_eq_tmul (ev : LaurentPolynomial ℤ →+* ℤ) (x : M)
+    [Module (LaurentPolynomial ℤ) M] :
+    specializeOf ev M x =
+      (let _ : Module (LaurentPolynomial ℤ) ℤ := Module.compHom ℤ ev
+       (1 : ℤ) ⊗ₜ[LaurentPolynomial ℤ] x) := by
+  let _ : Module (LaurentPolynomial ℤ) ℤ := Module.compHom ℤ ev
+  rfl
+
 /-- A map is compatible with specialization along `ev` when it intertwines Laurent scalars with
 the integer action obtained by evaluating them. -/
-def IsLaurentLinearAt (ev : LaurentPolynomial ℤ →+* ℤ) (f : M →+ N)
+def IsLaurentSemilinear (ev : LaurentPolynomial ℤ →+* ℤ) (f : M →+ N)
     [Module (LaurentPolynomial ℤ) M] : Prop :=
   ∀ r x, f (r • x) = ev r • f x
 
@@ -67,11 +78,58 @@ def IsLaurentLinearAt (ev : LaurentPolynomial ℤ →+* ℤ) (f : M →+ N)
 The compatibility hypothesis is precisely the relation imposed by the tensor product; no
 bijectivity or comparison with another category is inferred. -/
 noncomputable def specializeLift (ev : LaurentPolynomial ℤ →+* ℤ) (f : M →+ N)
-    [Module (LaurentPolynomial ℤ) M] (hf : IsLaurentLinearAt ev f) :
+    [Module (LaurentPolynomial ℤ) M] (hf : IsLaurentSemilinear ev f) :
     LaurentSpecialization ev M →+ N :=
   let _ : Module (LaurentPolynomial ℤ) N := Module.compHom N ev
   let _ : Module (LaurentPolynomial ℤ) ℤ := Module.compHom ℤ ev
   let g : ℤ →ₗ[LaurentPolynomial ℤ] M →ₗ[LaurentPolynomial ℤ] N :=
+    LinearMap.mk₂ (LaurentPolynomial ℤ) (fun z m => z • f m)
+      (by
+        intro z₁ z₂ m
+        -- The outer `Module.compHom` action on `ℤ` is evaluation followed by multiplication.
+        change (z₁ + z₂) • f m = z₁ • f m + z₂ • f m
+        rw [add_smul])
+      (by
+        intro r z m
+        -- The outer `Module.compHom` action on `ℤ` is evaluation followed by multiplication.
+        change (ev r * z) • f m = ev r • (z • f m)
+        rw [mul_smul])
+      (by
+        intro z m₁ m₂
+        rw [map_add, smul_add])
+      (by
+        intro r z m
+        rw [hf]
+        -- The target module is also induced by `ev`, so its scalar action unfolds here.
+        change z • (ev r • f m) = ev r • (z • f m)
+        rw [← mul_smul, ← mul_smul, mul_comm])
+  TensorProduct.liftAddHom
+    (LinearMap.toAddMonoidHom'.comp g.toAddMonoidHom)
+    (by
+      intro r z m
+      -- This is the balancing relation after unfolding both `Module.compHom` actions.
+      change (ev r * z) • f m = z • (f (r • m))
+      rw [hf, smul_smul, mul_comm])
+
+/-- The lift agrees with the original map on the canonical representatives. -/
+@[simp]
+theorem specializeLift_of (ev : LaurentPolynomial ℤ →+* ℤ) (f : M →+ N)
+    [Module (LaurentPolynomial ℤ) M] (hf : IsLaurentSemilinear ev f) (x : M) :
+    specializeLift ev f hf (specializeOf ev M x) = f x := by
+  let _ : Module (LaurentPolynomial ℤ) N := Module.compHom N ev
+  let _ : Module (LaurentPolynomial ℤ) ℤ := Module.compHom ℤ ev
+  rw [specializeOf_eq_tmul]
+  simp [specializeLift]
+
+/-- Any additive map with the same values on canonical representatives is this lift. -/
+theorem specializeLift_unique (ev : LaurentPolynomial ℤ →+* ℤ) (f : M →+ N)
+    [Module (LaurentPolynomial ℤ) M] (hf : IsLaurentSemilinear ev f)
+    (g : LaurentSpecialization ev M →+ N)
+    (hg : ∀ x, g (specializeOf ev M x) = f x) :
+    g = specializeLift ev f hf := by
+  let _ : Module (LaurentPolynomial ℤ) N := Module.compHom N ev
+  let _ : Module (LaurentPolynomial ℤ) ℤ := Module.compHom ℤ ev
+  let b : ℤ →ₗ[LaurentPolynomial ℤ] M →ₗ[LaurentPolynomial ℤ] N :=
     LinearMap.mk₂ (LaurentPolynomial ℤ) (fun z m => z • f m)
       (by
         intro z₁ z₂ m
@@ -89,55 +147,66 @@ noncomputable def specializeLift (ev : LaurentPolynomial ℤ →+* ℤ) (f : M �
         rw [hf]
         change z • (ev r • f m) = ev r • (z • f m)
         rw [← mul_smul, ← mul_smul, mul_comm])
-  (TensorProduct.lift g).toAddMonoidHom
-
-/-- The lift agrees with the original map on the canonical representatives. -/
-@[simp]
-theorem specializeLift_of (ev : LaurentPolynomial ℤ →+* ℤ) (f : M →+ N)
-    [Module (LaurentPolynomial ℤ) M] (hf : IsLaurentLinearAt ev f) (x : M) :
-    specializeLift ev f hf (specializeOf ev M x) = f x := by
-  let _ : Module (LaurentPolynomial ℤ) N := Module.compHom N ev
-  let _ : Module (LaurentPolynomial ℤ) ℤ := Module.compHom ℤ ev
-  rw [show specializeOf ev M x = (1 : ℤ) ⊗ₜ[LaurentPolynomial ℤ] x by rfl]
-  simp [specializeLift]
-
-/-- Any additive map with the same values on canonical representatives is this lift. -/
-theorem specializeLift_unique (ev : LaurentPolynomial ℤ →+* ℤ) (f : M →+ N)
-    [Module (LaurentPolynomial ℤ) M] (hf : IsLaurentLinearAt ev f)
-    (g : LaurentSpecialization ev M →+ N)
-    (hg : ∀ x, g (specializeOf ev M x) = f x) :
-    g = specializeLift ev f hf := by
-  let _ : Module (LaurentPolynomial ℤ) N := Module.compHom N ev
-  let _ : Module (LaurentPolynomial ℤ) ℤ := Module.compHom ℤ ev
-  apply AddMonoidHom.ext
-  intro y
-  induction y using TensorProduct.induction_on with
-  | zero => simp
-  | tmul z x =>
-      have htmul : z ⊗ₜ[LaurentPolynomial ℤ] x =
-          z • ((1 : ℤ) ⊗ₜ[LaurentPolynomial ℤ] x) := by
-        calc
-          z ⊗ₜ[LaurentPolynomial ℤ] x =
-              (z • (1 : ℤ)) ⊗ₜ[LaurentPolynomial ℤ] x := by
-                rw [smul_eq_mul, mul_one]
-          _ = (1 : ℤ) ⊗ₜ[LaurentPolynomial ℤ] (z • x) :=
-            TensorProduct.smul_tmul z 1 x
-          _ = z • ((1 : ℤ) ⊗ₜ[LaurentPolynomial ℤ] x) :=
-            TensorProduct.tmul_smul z 1 x
+  have hg_tmul (z : ℤ) (x : M) :
+      g (z ⊗ₜ[LaurentPolynomial ℤ] x) = z • f x := by
+    have htmul : z ⊗ₜ[LaurentPolynomial ℤ] x =
+        z • ((1 : ℤ) ⊗ₜ[LaurentPolynomial ℤ] x) := by
       calc
-        g (z ⊗ₜ[LaurentPolynomial ℤ] x) =
-            g (z • ((1 : ℤ) ⊗ₜ[LaurentPolynomial ℤ] x)) := congrArg g htmul
-        _ = z • g ((1 : ℤ) ⊗ₜ[LaurentPolynomial ℤ] x) := map_zsmul g z _
-        _ = z • f x := by rw [show ((1 : ℤ) ⊗ₜ[LaurentPolynomial ℤ] x) =
-            specializeOf ev M x by rfl, hg]
-        _ = z • specializeLift ev f hf ((1 : ℤ) ⊗ₜ[LaurentPolynomial ℤ] x) := by
-          rw [show ((1 : ℤ) ⊗ₜ[LaurentPolynomial ℤ] x) = specializeOf ev M x by rfl,
-            specializeLift_of]
-        _ = specializeLift ev f hf (z • ((1 : ℤ) ⊗ₜ[LaurentPolynomial ℤ] x)) :=
-          (map_zsmul (specializeLift ev f hf) z _).symm
-        _ = specializeLift ev f hf (z ⊗ₜ[LaurentPolynomial ℤ] x) := congrArg _ htmul.symm
-  | add x y hx hy =>
-      simpa only [map_add] using congrArg₂ (· + ·) hx hy
+        z ⊗ₜ[LaurentPolynomial ℤ] x =
+            (z • (1 : ℤ)) ⊗ₜ[LaurentPolynomial ℤ] x := by
+              rw [smul_eq_mul, mul_one]
+        _ = (1 : ℤ) ⊗ₜ[LaurentPolynomial ℤ] (z • x) :=
+          TensorProduct.smul_tmul z 1 x
+        _ = z • ((1 : ℤ) ⊗ₜ[LaurentPolynomial ℤ] x) :=
+          TensorProduct.tmul_smul z 1 x
+    calc
+      g (z ⊗ₜ[LaurentPolynomial ℤ] x) =
+          g (z • ((1 : ℤ) ⊗ₜ[LaurentPolynomial ℤ] x)) := congrArg g htmul
+      _ = z • g ((1 : ℤ) ⊗ₜ[LaurentPolynomial ℤ] x) := map_zsmul g z _
+      _ = z • f x := by rw [← specializeOf_eq_tmul, hg]
+  -- The compatibility hypothesis makes an arbitrary additive map out of the tensor product
+  -- linear for the evaluation-induced Laurent action.
+  let g' : LaurentSpecialization ev M →ₗ[LaurentPolynomial ℤ] N :=
+    { g with
+      map_smul' := by
+        intro r y
+        induction y using TensorProduct.induction_on with
+        | zero => simp
+        | tmul z x =>
+            change g (r • (z ⊗ₜ[LaurentPolynomial ℤ] x)) =
+              ev r • g (z ⊗ₜ[LaurentPolynomial ℤ] x)
+            calc
+              g (r • (z ⊗ₜ[LaurentPolynomial ℤ] x)) =
+                  g (z ⊗ₜ[LaurentPolynomial ℤ] (r • x)) :=
+                congrArg g (TensorProduct.tmul_smul r z x).symm
+              _ = z • f (r • x) := hg_tmul z (r • x)
+              _ = z • (ev r • f x) := by rw [hf]
+              _ = ev r • (z • f x) := by rw [smul_comm]
+              _ = ev r • g (z ⊗ₜ[LaurentPolynomial ℤ] x) := by rw [hg_tmul]
+        | add x y hx hy =>
+            calc
+              g (r • (x + y)) = g (r • x + r • y) := by rw [smul_add]
+              _ = g (r • x) + g (r • y) := g.map_add _ _
+              _ = ev r • g x + ev r • g y := congrArg₂ (· + ·) hx hy
+              _ = ev r • (g x + g y) := (smul_add _ _ _).symm
+              _ = ev r • g (x + y) := by rw [g.map_add] }
+  have huniq : g' = TensorProduct.lift b := by
+    apply TensorProduct.lift.unique
+    intro z x
+    change g (z ⊗ₜ[LaurentPolynomial ℤ] x) = z • f x
+    exact hg_tmul z x
+  have huniq' := congrArg LinearMap.toAddMonoidHom huniq
+  change g = (TensorProduct.lift b).toAddMonoidHom at huniq'
+  -- `liftAddHom` is definitionally the additive part of `TensorProduct.lift`; extensionality
+  -- on tensors makes this bridge explicit rather than relying on that conversion.
+  have hbridge : (TensorProduct.lift b).toAddMonoidHom = specializeLift ev f hf := by
+    apply AddMonoidHom.ext
+    intro y
+    induction y using TensorProduct.induction_on with
+    | zero => simp [specializeLift, b, TensorProduct.lift, TensorProduct.liftAux]
+    | tmul z x => simp [specializeLift, b, TensorProduct.lift, TensorProduct.liftAux]
+    | add x y hx hy => simpa only [map_add] using congrArg₂ (· + ·) hx hy
+  exact huniq'.trans hbridge
 
 /-- The scalar relation defining Laurent specialization. -/
 @[simp]
@@ -145,6 +214,7 @@ theorem specializeOf_smul (ev : LaurentPolynomial ℤ →+* ℤ) (r : LaurentPol
     [Module (LaurentPolynomial ℤ) M] :
     specializeOf ev M (r • x) = ev r • specializeOf ev M x := by
   let _ : Module (LaurentPolynomial ℤ) ℤ := Module.compHom ℤ ev
+  -- Unfolding `specializeOf` and the induced integer action exposes the tensor relation.
   change 1 ⊗ₜ[LaurentPolynomial ℤ] (r • x) = ev r • (1 ⊗ₜ[LaurentPolynomial ℤ] x)
   rw [TensorProduct.tmul_smul]
   rfl
@@ -170,14 +240,15 @@ theorem laurentEvalNegOne_T (n : ℤ) : laurentEvalNegOne (T n) = (n.negOnePow :
   rfl
 
 /-- The specialization of a Laurent module at `q = 1`. -/
-abbrev SpecializeAtOne (M : Type*) [AddCommGroup M] [Module (LaurentPolynomial ℤ) M] :=
+abbrev SpecializationAtOne (M : Type*) [AddCommGroup M] [Module (LaurentPolynomial ℤ) M] :=
   LaurentSpecialization laurentEvalOne M
 
 /-- The specialization of a Laurent module at `q = -1`. -/
-abbrev SpecializeAtNegOne (M : Type*) [AddCommGroup M] [Module (LaurentPolynomial ℤ) M] :=
+abbrev SpecializationAtNegOne (M : Type*) [AddCommGroup M] [Module (LaurentPolynomial ℤ) M] :=
   LaurentSpecialization laurentEvalNegOne M
 
 /-- At `q = 1`, every Laurent shift has the same specialized class. -/
+@[simp]
 theorem specializeAtOne_T_smul (n : ℤ) (x : M) [Module (LaurentPolynomial ℤ) M] :
     specializeOf laurentEvalOne M ((T n : LaurentPolynomial ℤ) • x) =
       specializeOf laurentEvalOne M x := by
@@ -185,6 +256,7 @@ theorem specializeAtOne_T_smul (n : ℤ) (x : M) [Module (LaurentPolynomial ℤ)
   simp
 
 /-- At `q = -1`, a Laurent shift acts by its sign on the specialized class. -/
+@[simp]
 theorem specializeAtNegOne_T_smul (n : ℤ) (x : M) [Module (LaurentPolynomial ℤ) M] :
     specializeOf laurentEvalNegOne M ((T n : LaurentPolynomial ℤ) • x) =
       (n.negOnePow : ℤ) • specializeOf laurentEvalNegOne M x := by
