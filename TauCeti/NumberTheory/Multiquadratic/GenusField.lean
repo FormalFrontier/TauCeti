@@ -56,8 +56,8 @@ universe u v
 **genus field** when it is unramified over that subfield at every place and is maximal among
 abelian extensions with those properties.
 
-The finite and infinite conditions are separate because the real quadratic theory replaces the
-last one by the narrow, finite-place-only convention. -/
+This predicate is the ordinary, all-places notion. A narrow genus-field predicate for real
+quadratic fields, imposing only the finite-place condition, remains future work. -/
 structure IsGenusField (d : ℤ) (L : Type u) [Field L] [NumberField L] (y : L) : Prop where
   /-- The chosen element is a square root of the radicand. -/
   root_sq : y ^ 2 = algebraMap ℤ L d
