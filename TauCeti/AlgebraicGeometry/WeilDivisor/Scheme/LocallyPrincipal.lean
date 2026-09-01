@@ -75,6 +75,19 @@ def IsLocallyPrincipal (D : SchemeWeilDivisor X) : Prop :=
     ∀ y : CodimensionOnePoint X, (y : X) ∈ U →
       WeilDivisor.coeff D y = orderAt y g
 
+/-- The defining characterization of local principality: every point of `X` has an open
+neighbourhood on which the coefficients of `D` are the orders of a single nonzero rational
+function.
+
+This provides both the introduction and the elimination rule for `IsLocallyPrincipal`. The body of
+the definition is not exposed outside this module, so consumers cannot obtain the neighbourhood and
+its local equation by unfolding; they use this lemma instead. -/
+lemma isLocallyPrincipal_iff {D : SchemeWeilDivisor X} :
+    IsLocallyPrincipal D ↔ ∀ x : X, ∃ U : X.Opens, x ∈ U ∧ ∃ g : Additive X.functionFieldˣ,
+      ∀ y : CodimensionOnePoint X, (y : X) ∈ U →
+        WeilDivisor.coeff D y = orderAt y g :=
+  (Iff.rfl)
+
 /-- A Weil divisor whose coefficients globally equal the orders of one rational function is
 locally principal. -/
 lemma isLocallyPrincipal_of_forall_coeff_eq {D : SchemeWeilDivisor X}
