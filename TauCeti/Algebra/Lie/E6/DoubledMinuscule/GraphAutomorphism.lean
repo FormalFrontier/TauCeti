@@ -273,23 +273,29 @@ private theorem eq_reflection_graphPerm_iff (a b : Fin 27 ⊕ Fin 27) (i : Fin 6
       _ = reflection (graphPermE6 i) (e6DoubledMinusculeGraphPerm b) :=
         graphPerm_reflection i b
 
-private theorem graphModuleEquiv_raising_entry (i : Fin 6) (a b : Fin 27 ⊕ Fin 27) :
-    (basisSign a : ℚ) * raisingMatrixQ i (e6DoubledMinusculeGraphPerm a) b =
-      raisingMatrixQ (graphPermE6 i) a (e6DoubledMinusculeGraphPerm b) * (basisSign b : ℚ) := by
-  rw [raisingMatrixQ_apply, raisingMatrixQ_apply, weight_graphPerm_graphPerm]
+private theorem graphModuleEquiv_rootMatrix_entry
+    (target : ℤ) (htarget : target ≠ 0)
+    (X : Fin 6 → Matrix (Fin 27 ⊕ Fin 27) (Fin 27 ⊕ Fin 27) ℚ)
+    (hX : ∀ i a b, X i a b =
+      if e6DoubledMinusculeWeight b i = target ∧ a = reflection i b
+      then (summandSign b : ℚ) else 0)
+    (i : Fin 6) (a b : Fin 27 ⊕ Fin 27) :
+    (basisSign a : ℚ) * X i (e6DoubledMinusculeGraphPerm a) b =
+      X (graphPermE6 i) a (e6DoubledMinusculeGraphPerm b) * (basisSign b : ℚ) := by
+  rw [hX, hX, weight_graphPerm_graphPerm]
   have hc :
-      (e6DoubledMinusculeWeight b i = -1 ∧
+      (e6DoubledMinusculeWeight b i = target ∧
           a = reflection (graphPermE6 i) (e6DoubledMinusculeGraphPerm b)) ↔
-        (e6DoubledMinusculeWeight b i = -1 ∧
+        (e6DoubledMinusculeWeight b i = target ∧
           e6DoubledMinusculeGraphPerm a = reflection i b) :=
     and_congr Iff.rfl (eq_reflection_graphPerm_iff a b i)
-  by_cases h : e6DoubledMinusculeWeight b i = -1 ∧
+  by_cases h : e6DoubledMinusculeWeight b i = target ∧
       e6DoubledMinusculeGraphPerm a = reflection i b
   · rw [ite_eq_left h, ite_eq_left (hc.mpr h)]
     have ha : e6DoubledMinusculeWeight
         (e6DoubledMinusculeGraphPerm b) (graphPermE6 i) ≠ 0 := by
       rw [weight_graphPerm_graphPerm, h.1]
-      norm_num
+      exact htarget
     rw [(eq_reflection_graphPerm_iff a b i).mpr h.2,
       basisSign_reflection_of_weight_ne_zero _ _ ha, basisSign_graphPerm,
       summandSign_graphPerm]
@@ -297,59 +303,47 @@ private theorem graphModuleEquiv_raising_entry (i : Fin 6) (a b : Fin 27 ⊕ Fin
     ring_nf
   · rw [ite_eq_right h, ite_eq_right (fun hr => h (hc.mp hr)), mul_zero, zero_mul]
 
+private theorem graphModuleEquiv_raising_entry (i : Fin 6) (a b : Fin 27 ⊕ Fin 27) :
+    (basisSign a : ℚ) * raisingMatrixQ i (e6DoubledMinusculeGraphPerm a) b =
+      raisingMatrixQ (graphPermE6 i) a (e6DoubledMinusculeGraphPerm b) * (basisSign b : ℚ) := by
+  exact graphModuleEquiv_rootMatrix_entry (-1) (by norm_num) raisingMatrixQ
+    raisingMatrixQ_apply i a b
+
 private theorem graphModuleEquiv_lowering_entry (i : Fin 6) (a b : Fin 27 ⊕ Fin 27) :
     (basisSign a : ℚ) * loweringMatrixQ i (e6DoubledMinusculeGraphPerm a) b =
       loweringMatrixQ (graphPermE6 i) a (e6DoubledMinusculeGraphPerm b) * (basisSign b : ℚ) := by
-  rw [loweringMatrixQ_apply, loweringMatrixQ_apply, weight_graphPerm_graphPerm]
-  have hc :
-      (e6DoubledMinusculeWeight b i = 1 ∧
-          a = reflection (graphPermE6 i) (e6DoubledMinusculeGraphPerm b)) ↔
-        (e6DoubledMinusculeWeight b i = 1 ∧
-          e6DoubledMinusculeGraphPerm a = reflection i b) :=
-    and_congr Iff.rfl (eq_reflection_graphPerm_iff a b i)
-  by_cases h : e6DoubledMinusculeWeight b i = 1 ∧
-      e6DoubledMinusculeGraphPerm a = reflection i b
-  · rw [ite_eq_left h, ite_eq_left (hc.mpr h)]
-    have ha : e6DoubledMinusculeWeight
-        (e6DoubledMinusculeGraphPerm b) (graphPermE6 i) ≠ 0 := by
-      rw [weight_graphPerm_graphPerm, h.1]
-      norm_num
-    rw [(eq_reflection_graphPerm_iff a b i).mpr h.2,
-      basisSign_reflection_of_weight_ne_zero _ _ ha, basisSign_graphPerm,
-      summandSign_graphPerm]
-    push_cast
-    ring_nf
-  · rw [ite_eq_right h, ite_eq_right (fun hr => h (hc.mp hr)), mul_zero, zero_mul]
+  exact graphModuleEquiv_rootMatrix_entry 1 (by norm_num) loweringMatrixQ
+    loweringMatrixQ_apply i a b
+
+private theorem graphModuleEquiv_mulVec
+    (X : Fin 6 → Matrix (Fin 27 ⊕ Fin 27) (Fin 27 ⊕ Fin 27) ℚ)
+    (hX : ∀ i a b,
+      (basisSign a : ℚ) * X i (e6DoubledMinusculeGraphPerm a) b =
+        X (graphPermE6 i) a (e6DoubledMinusculeGraphPerm b) * (basisSign b : ℚ))
+    (i : Fin 6) (v : (Fin 27 ⊕ Fin 27) → ℚ) :
+    graphModuleEquiv (X i *ᵥ v) = X (graphPermE6 i) *ᵥ graphModuleEquiv v := by
+  ext a
+  simp only [graphModuleEquiv_apply, Matrix.mulVec, dotProduct]
+  rw [Finset.mul_sum, ← Equiv.sum_comp e6DoubledMinusculeGraphPerm
+    (fun b => X (graphPermE6 i) a b *
+      ((basisSign b : ℚ) * v (e6DoubledMinusculeGraphPerm b)))]
+  apply Finset.sum_congr rfl
+  intro b _
+  rw [e6DoubledMinusculeGraphPerm_apply_apply, basisSign_graphPerm,
+    ← mul_assoc, hX]
+  ring_nf
 
 private theorem graphModuleEquiv_mulVec_raising (i : Fin 6)
     (v : (Fin 27 ⊕ Fin 27) → ℚ) :
     graphModuleEquiv (raisingMatrixQ i *ᵥ v) =
       raisingMatrixQ (graphPermE6 i) *ᵥ graphModuleEquiv v := by
-  ext a
-  simp only [graphModuleEquiv_apply, Matrix.mulVec, dotProduct]
-  rw [Finset.mul_sum, ← Equiv.sum_comp e6DoubledMinusculeGraphPerm
-    (fun b => raisingMatrixQ (graphPermE6 i) a b *
-      ((basisSign b : ℚ) * v (e6DoubledMinusculeGraphPerm b)))]
-  apply Finset.sum_congr rfl
-  intro b _
-  rw [e6DoubledMinusculeGraphPerm_apply_apply, basisSign_graphPerm,
-    ← mul_assoc, graphModuleEquiv_raising_entry]
-  ring_nf
+  exact graphModuleEquiv_mulVec raisingMatrixQ graphModuleEquiv_raising_entry i v
 
 private theorem graphModuleEquiv_mulVec_lowering (i : Fin 6)
     (v : (Fin 27 ⊕ Fin 27) → ℚ) :
     graphModuleEquiv (loweringMatrixQ i *ᵥ v) =
       loweringMatrixQ (graphPermE6 i) *ᵥ graphModuleEquiv v := by
-  ext a
-  simp only [graphModuleEquiv_apply, Matrix.mulVec, dotProduct]
-  rw [Finset.mul_sum, ← Equiv.sum_comp e6DoubledMinusculeGraphPerm
-    (fun b => loweringMatrixQ (graphPermE6 i) a b *
-      ((basisSign b : ℚ) * v (e6DoubledMinusculeGraphPerm b)))]
-  apply Finset.sum_congr rfl
-  intro b _
-  rw [e6DoubledMinusculeGraphPerm_apply_apply, basisSign_graphPerm,
-    ← mul_assoc, graphModuleEquiv_lowering_entry]
-  ring_nf
+  exact graphModuleEquiv_mulVec loweringMatrixQ graphModuleEquiv_lowering_entry i v
 
 private theorem graphModuleEquiv_ι_rep_serreRootGenerator :
     ∀ (k : Fin 6 ⊕ Fin 6) (v : (Fin 27 ⊕ Fin 27) → ℚ),
