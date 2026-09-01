@@ -174,8 +174,7 @@ theorem SeparatelyExchangeable.jointPathLaw_arrayRow_pairReindex_eq [IsFiniteMea
     jointPathLaw μ (arrayRow fun p => X (σ p.1, τ p.2))
         (fun ω => (ν ω).map (fun x : ℕ → α => fun k => x (τ k)))
       = jointPathLaw μ (arrayRow X) ν := by
-  have hX := aemeasurable_of_mixedIIDWith_arrayRow
-    (mixedIIDWith_of_conditionallyIIDWith hν)
+  have hX := aemeasurable_entry_of_aemeasurable_arrayRow hν.aemeasurable
   simp only [arrayRow_eq_entries] at hν ⊢
   exact ((hν.comp_injective σ.injective).map_values
     (measurable_reindex (α := α) τ)).jointPathLaw_eq_of_pathLaw_eq hν
@@ -197,12 +196,10 @@ theorem SeparatelyExchangeable.jointLaw_arrayRow_pairReindex_eq [IsFiniteMeasure
   have hν' : Measurable fun ω => (ν ω).map (fun x : ℕ → α => fun k => x (τ k)) :=
     (TauCeti.MeasureTheory.measurable_probabilityMeasure_map (measurable_reindex τ)).comp
       hν.measurable_directing
+  have hX := aemeasurable_entry_of_aemeasurable_arrayRow hν.aemeasurable
   rw [← map_uncurry_jointPathLaw_arrayRow (X := fun p => X (σ p.1, τ p.2))
-      (fun p => aemeasurable_of_mixedIIDWith_arrayRow
-        (mixedIIDWith_of_conditionallyIIDWith hν) _) hν',
-    ← map_uncurry_jointPathLaw_arrayRow
-      (aemeasurable_of_mixedIIDWith_arrayRow (mixedIIDWith_of_conditionallyIIDWith hν))
-      hν.measurable_directing,
+      (fun p => hX _) hν',
+    ← map_uncurry_jointPathLaw_arrayRow hX hν.measurable_directing,
     h.jointPathLaw_arrayRow_pairReindex_eq hν σ τ]
 
 /-- **Row permutations leave the row directing measure alone.** The rows are the coordinates of the
@@ -257,8 +254,7 @@ theorem SeparatelyExchangeable.jointPathLaw_arrayCol_pairReindex_eq [IsFiniteMea
     jointPathLaw μ (arrayCol fun p => X (σ p.1, τ p.2))
         (fun ω => (ν ω).map (fun x : ℕ → α => fun k => x (σ k)))
       = jointPathLaw μ (arrayCol X) ν := by
-  have hX := aemeasurable_of_mixedIIDWith_arrayCol
-    (mixedIIDWith_of_conditionallyIIDWith hν)
+  have hX := aemeasurable_entry_of_aemeasurable_arrayCol hν.aemeasurable
   simp only [arrayCol_eq_entries] at hν ⊢
   exact ((hν.comp_injective τ.injective).map_values
     (measurable_reindex (α := α) σ)).jointPathLaw_eq_of_pathLaw_eq hν
@@ -275,12 +271,10 @@ theorem SeparatelyExchangeable.jointLaw_arrayCol_pairReindex_eq [IsFiniteMeasure
   have hν' : Measurable fun ω => (ν ω).map (fun x : ℕ → α => fun k => x (σ k)) :=
     (TauCeti.MeasureTheory.measurable_probabilityMeasure_map (measurable_reindex σ)).comp
       hν.measurable_directing
+  have hX := aemeasurable_entry_of_aemeasurable_arrayCol hν.aemeasurable
   rw [← map_uncurrySwap_jointPathLaw_arrayCol (X := fun p => X (σ p.1, τ p.2))
-      (fun p => aemeasurable_of_mixedIIDWith_arrayCol
-        (mixedIIDWith_of_conditionallyIIDWith hν) _) hν',
-    ← map_uncurrySwap_jointPathLaw_arrayCol
-      (aemeasurable_of_mixedIIDWith_arrayCol (mixedIIDWith_of_conditionallyIIDWith hν))
-      hν.measurable_directing,
+      (fun p => hX _) hν',
+    ← map_uncurrySwap_jointPathLaw_arrayCol hX hν.measurable_directing,
     h.jointPathLaw_arrayCol_pairReindex_eq hν σ τ]
 
 /-- **Row permutations push the column directing measure forward.** This is the half of

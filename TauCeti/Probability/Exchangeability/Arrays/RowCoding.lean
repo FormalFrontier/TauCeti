@@ -143,7 +143,7 @@ theorem ConditionallyIIDWith.jointLaw_arrayRow_eq_arrayRowCodingLaw
     (μ.map fun ω => (ν ω, fun p : ℕ × ℕ => X p ω)) =
       arrayRowCodingLaw (μ.map ν) := by
   have hX : ∀ p, AEMeasurable (X p) μ :=
-    aemeasurable_of_mixedIIDWith_arrayRow (mixedIIDWith_of_conditionallyIIDWith h)
+    aemeasurable_entry_of_aemeasurable_arrayRow h.aemeasurable
   rw [← map_uncurry_jointPathLaw_arrayRow hX h.measurable_directing,
     h.jointPathLaw_eq_map_unitIntervalCoding, arrayRowCodingLaw_def]
   have hinner : Measurable fun q : ProbabilityMeasure (ℕ → α) × (ℕ → unitInterval) =>
@@ -169,7 +169,7 @@ theorem SeparatelyExchangeable.map_pairReindex_arrayRowCodingLaw_eq
           (q.1.map (fun x : ℕ → α => fun k => x (τ k)), pairReindex σ τ q.2)) =
       arrayRowCodingLaw (μ.map ν) := by
   have hX : ∀ p, AEMeasurable (X p) μ :=
-    aemeasurable_of_mixedIIDWith_arrayRow (mixedIIDWith_of_conditionallyIIDWith hν)
+    aemeasurable_entry_of_aemeasurable_arrayRow hν.aemeasurable
   rw [← hν.jointLaw_arrayRow_eq_arrayRowCodingLaw,
     AEMeasurable.map_map_of_aemeasurable]
   · have hfun :

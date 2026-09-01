@@ -98,7 +98,8 @@ theorem mixingLaw_map_permReindex_arrayRow_eq_of_col_invariant
     {ν : Ω → ProbabilityMeasure (ℕ → α)} (hν : MixedIIDWith μ (arrayRow X) ν) :
     μ.map (fun ω ↦ (ν ω).map (fun x : ℕ → α => fun k => x (τ k))) = μ.map ν := by
   -- the witness gives row measurability; the entries are its coordinates
-  have hX : ∀ p : ℕ × ℕ, AEMeasurable (X p) μ := aemeasurable_of_mixedIIDWith_arrayRow hν
+  have hX : ∀ p : ℕ × ℕ, AEMeasurable (X p) μ :=
+    aemeasurable_entry_of_aemeasurable_arrayRow hν.aemeasurable
   apply mixingLaw_map_eq_of_blockLaw_map_eq hν (measurable_reindex τ)
   intro m k _
   rw [blockLaw_def, blockLaw_def]
@@ -137,7 +138,8 @@ theorem mixingLaw_map_permReindex_arrayCol_eq_of_row_invariant
     {ν : Ω → ProbabilityMeasure (ℕ → α)} (hν : MixedIIDWith μ (arrayCol X) ν) :
     μ.map (fun ω ↦ (ν ω).map (fun x : ℕ → α => fun k => x (σ k))) = μ.map ν := by
   -- the witness gives column measurability; the entries are its coordinates
-  have hX : ∀ p : ℕ × ℕ, AEMeasurable (X p) μ := aemeasurable_of_mixedIIDWith_arrayCol hν
+  have hX : ∀ p : ℕ × ℕ, AEMeasurable (X p) μ :=
+    aemeasurable_entry_of_aemeasurable_arrayCol hν.aemeasurable
   apply mixingLaw_map_eq_of_blockLaw_map_eq hν (measurable_reindex σ)
   intro m k _
   rw [blockLaw_def, blockLaw_def]
