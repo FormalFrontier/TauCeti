@@ -103,8 +103,8 @@ families, where the carrier does have full character span, that recipe is
   `TauCeti.GraphTwistedIndex.geckSteinberg_pow_geckRootSubgroup`: a power separates, in either
   order, into a power of the graph automorphism and an iterate of the Frobenius, and so renumbers a
   root subgroup by `σ ^ m` and raises its parameter to the `q ^ m`-th power.
-* `TauCeti.GraphTwistedIndex.geckSteinberg_pow_twistOrder`: the order relation
-  `F ^ e = Frob_(q ^ e)` on the Steinberg map itself.
+* `TauCeti.GraphTwistedIndex.geckSteinberg_pow_twistOrder_eq_geckFrobeniusPow`: the order
+  relation `F ^ e = Frob_(q ^ e)` on the Steinberg map itself.
 * `TauCeti.GraphTwistedIndex.fixedSubgroup_geckSteinberg_le_fixedSubgroup_geckFrobeniusPow` and
   `TauCeti.GraphTwistedIndex.mem_frobeniusFixedSubfield_of_mem_fixedSubgroup_geckSteinberg`: the
   Steinberg-fixed points lie among the points over `𝔽_(q ^ e)`, entrywise.
@@ -363,7 +363,7 @@ identification milestone L0 owes, and is not claimed here. On an untwisted famil
 is `1` and the relation is `pow_one` together with
 `TauCeti.ValidLieTypeIndex.geckFrobeniusPow_one`. -/
 @[simp]
-theorem geckSteinberg_pow_twistOrder :
+theorem geckSteinberg_pow_twistOrder_eq_geckFrobeniusPow :
     (show Monoid.End _ from d.geckSteinberg) ^ d.twistOrder =
       d.1.geckFrobeniusPow d.twistOrder := by
   rw [ValidLieTypeIndex.geckFrobeniusPow_def, geckSteinberg_def]
@@ -373,7 +373,8 @@ theorem geckSteinberg_pow_twistOrder :
 
 /-- **The `m`-th power of the Steinberg map renumbers a root subgroup by the `m`-th power of the
 diagram permutation and raises its parameter to the `q ^ m`-th power.** At the twist order the
-renumbering disappears, which is `geckSteinberg_pow_twistOrder` read on the root subgroups. -/
+renumbering disappears, which is `geckSteinberg_pow_twistOrder_eq_geckFrobeniusPow` read on the
+root subgroups. -/
 @[simp]
 theorem geckSteinberg_pow_geckRootSubgroup (m : ℕ) (i : Fin d.1.rank ⊕ Fin d.1.rank)
     (u : Multiplicative d.1.Closure) :
