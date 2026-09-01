@@ -497,10 +497,16 @@ theorem graphAutomorphism_sq : graphAutomorphism ^ 2 = 1 := by
 @[reassoc (attr := simp)]
 theorem graphAutomorphism_hom_comp_self :
     graphAutomorphism.hom ≫ graphAutomorphism.hom = 𝟙 groupScheme := by
-  have h := congrArg Iso.hom graphAutomorphism_sq
-  simp only [pow_two] at h
-  change graphAutomorphism.hom ≫ graphAutomorphism.hom = 𝟙 groupScheme at h
-  exact h
+  calc
+    graphAutomorphism.hom ≫ graphAutomorphism.hom =
+        (graphAutomorphism.trans graphAutomorphism).hom := (Iso.trans_hom _ _).symm
+    _ = (graphAutomorphism * graphAutomorphism).hom :=
+      congrArg Iso.hom
+        (Aut.Aut_mul_def groupScheme graphAutomorphism graphAutomorphism).symm
+    _ = (1 : Aut groupScheme).hom := by
+      rw [← pow_two, graphAutomorphism_sq]
+    _ = (Iso.refl groupScheme).hom := rfl
+    _ = 𝟙 groupScheme := Iso.refl_hom groupScheme
 
 /-- The inverse leg of the doubled type-`E₆` graph automorphism is its forward leg. -/
 @[simp]
