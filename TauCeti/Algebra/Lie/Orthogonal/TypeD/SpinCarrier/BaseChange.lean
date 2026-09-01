@@ -74,10 +74,11 @@ maps supply a pinning. This file depends only on the already-constructed integra
 generic scalar-extension machinery; those subsequent proofs can consume the declarations here as
 their underlying scalar-extension data. The declaration structure follows the sibling
 specialization for the pinned Geck carrier in
-`TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.GeckLattice.BaseChange`. Every
-declaration below is the corresponding generic Kostant declaration at this carrier's data; the
-transport reading the generic base-change presentation through a named integral defining ideal is
-the `...OfEq` family of
+`TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.GeckLattice.BaseChange`. The ideal and
+generator-map declarations below specialize the corresponding generic Kostant declarations at
+this carrier's data; the points equivalences instead use the general Hopf-algebra and
+general-linear points APIs. The transport reading the generic base-change presentation through a
+named integral defining ideal is the `...OfEq` family of
 `Kostant/RootSubgroup/Scheme/ToralClosure/GeneralLinearBaseChange.lean`, so nothing of that
 calculation is repeated here.
 -/

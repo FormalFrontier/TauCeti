@@ -22,6 +22,9 @@ injectivity laws.
   `TauCeti.TypeDSpinCarrier.pointsMap_comp`: functoriality of the induced maps.
 * `TauCeti.TypeDSpinCarrier.pointsMap_injective`: injectivity when the ring homomorphism is
   injective.
+* `TauCeti.TypeDSpinCarrier.pointsMap_rootSubgroupPoints` and
+  `TauCeti.TypeDSpinCarrier.pointsMap_weightTorusPoints`: naturality of the distinguished
+  root-subgroup and weight-torus families.
 
 The interface follows the analogous full-weight type-`A`, type-`C`, and type-`E₆` carrier
 interfaces. It advances the functorial-points target in Layer 9 of the ReductiveGroups roadmap.
@@ -98,6 +101,30 @@ theorem pointsMap_injective {f : A →+* B} (hf : Function.Injective f) :
     ((GeneralLinear.mapHopfIdealPointsSubgroup_injective
       (dimension n) (definingIdeal n hn) hf).comp
         (MulEquiv.subgroupCongr (points_def n hn A)).injective)
+
+/-- The induced map carries a numbered root-subgroup parameter along the homomorphism of value
+rings. -/
+@[simp]
+theorem pointsMap_rootSubgroupPoints (f : A →+* B) (k : Fin n ⊕ Fin n)
+    (u : Multiplicative A) :
+    pointsMap n hn f (rootSubgroupPoints n hn k A u) =
+      rootSubgroupPoints n hn k B
+        (Multiplicative.ofAdd (f (Multiplicative.toAdd u))) := by
+  apply Subtype.ext
+  rw [coe_pointsMap, coe_rootSubgroupPoints, coe_rootSubgroupPoints,
+    UniversalEnvelopingAlgebra.map_kostantRootSubgroupMatrix,
+    AdditiveGroup.mapValue_gaPointsMulEquiv_symm_apply, RingHom.toIntAlgHom_apply]
+
+/-- The induced map carries a point of the split spin weight torus coordinatewise along the
+homomorphism of value rings. -/
+@[simp]
+theorem pointsMap_weightTorusPoints (f : A →+* B) (s : Fin n → Aˣ) :
+    pointsMap n hn f (weightTorusPoints n hn A s) =
+      weightTorusPoints n hn B fun i ↦ Units.map (f : A →* B) (s i) := by
+  apply Subtype.ext
+  rw [coe_pointsMap, coe_weightTorusPoints, coe_weightTorusPoints]
+  exact UniversalEnvelopingAlgebra.map_kostantTorusMatrix
+    (M := (lattice n).toAddSubgroup) (b := latticeBasis n) (wt := basisWeight n) f s
 
 end Map
 
