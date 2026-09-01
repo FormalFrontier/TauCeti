@@ -56,6 +56,7 @@ private lemma norm_algebraMap_infinitePlace_completion (w : InfinitePlace K) (x 
 
 /-- On the dense copy of `K`, the infinite completion value is the normalized
 infinite-place value. -/
+@[simp]
 theorem infiniteCompletionNormalizedAbsValue_algebraMap (w : InfinitePlace K) (x : K) :
     infiniteCompletionNormalizedAbsValue w (algebraMap K w.Completion x) = w x ^ w.mult := by
   rw [infiniteCompletionNormalizedAbsValue_apply, norm_algebraMap_infinitePlace_completion]
@@ -87,11 +88,14 @@ theorem infiniteCompletionNormalizedAbsValue_of_isComplex
 /-- The infinite completion value is continuous. -/
 theorem continuous_infiniteCompletionNormalizedAbsValue (w : InfinitePlace K) :
     Continuous (infiniteCompletionNormalizedAbsValue w : w.Completion → ℝ) := by
-  rw [show (infiniteCompletionNormalizedAbsValue w : w.Completion → ℝ) =
-      fun x => ‖x‖ ^ w.mult from funext fun x => infiniteCompletionNormalizedAbsValue_apply w x]
-  exact continuous_norm.pow _
+  -- `Continuous` does not simplify through the coercion of the bundled hom, so explicitly
+  -- identify its underlying function using the pointwise evaluation theorem.
+  convert continuous_norm.pow w.mult using 1
+  ext x
+  exact infiniteCompletionNormalizedAbsValue_apply w x
 
 /-- The infinite completion value vanishes exactly at zero. -/
+@[simp]
 theorem infiniteCompletionNormalizedAbsValue_eq_zero_iff
     (w : InfinitePlace K) (x : w.Completion) :
     infiniteCompletionNormalizedAbsValue w x = 0 ↔ x = 0 := by
