@@ -135,8 +135,11 @@ def pointsMulEquivFixedSubgroupFrobenius :
     (coe_frobenius n p k A)
 
 /-- **The isomorphism onto the Frobenius-fixed points includes the matrix entries** of a point over
-the Frobenius-fixed subring into the value ring, and does nothing else. -/
-@[simp]
+the Frobenius-fixed subring into the value ring, and does nothing else.
+
+Not a `simp` lemma: `TauCeti.SpStd.coe_pointsMulEquivFixedSubgroupFrobenius_eq_pointsMap` and
+`TauCeti.SpStd.coe_pointsMap` are, and rewriting with those two reaches this right-hand side, so
+`simp` proves this statement already. -/
 theorem coe_pointsMulEquivFixedSubgroupFrobenius (g : points n ↥(frobeniusFixedSubring A p k)) :
     ((pointsMulEquivFixedSubgroupFrobenius n p k A g : points n A) :
         Matrix.GeneralLinearGroup (Fin ((n + 1) + (n + 1))) A) =
@@ -165,6 +168,7 @@ rather than inside `GL_(2n+2)(A)`, which is the level at which the carrier's nat
 `TauCeti.SpStd.pointsMap_rootSubgroupPoints` and `TauCeti.SpStd.pointsMap_weightTorusPoints` are
 made; through it they describe the action of the isomorphism on the numbered root subgroups and on
 the weight torus. -/
+@[simp]
 theorem coe_pointsMulEquivFixedSubgroupFrobenius_eq_pointsMap
     (g : points n ↥(frobeniusFixedSubring A p k)) :
     (pointsMulEquivFixedSubgroupFrobenius n p k A g : points n A) =
@@ -200,6 +204,7 @@ theorem coe_pointsMulEquivFixedSubgroupFrobenius_symm_apply_apply
 /-- The inverse of the isomorphism read inside `points n A`: the functorial point map along the
 inclusion of the Frobenius-fixed subring returns the Frobenius-fixed point one started from. This is
 the `points`-level form of `TauCeti.SpStd.coe_pointsMulEquivFixedSubgroupFrobenius_symm_apply`. -/
+@[simp]
 theorem pointsMap_pointsMulEquivFixedSubgroupFrobenius_symm_apply
     (x : ↥(fixedSubgroup (frobenius n p k A))) :
     pointsMap n (frobeniusFixedSubring A p k).subtype

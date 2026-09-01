@@ -478,7 +478,10 @@ theorem coe_frobeniusFixedMulEquivOfCoeEq (F : P →* P)
     ((frobeniusFixedMulEquivOfCoeEq n p k I A F hP hQ hF g : P) :
         Matrix.GeneralLinearGroup (Fin n) A) =
       Matrix.GeneralLinearGroup.map (frobeniusFixedSubring A p k).subtype g := by
-  simp [frobeniusFixedMulEquivOfCoeEq]
+  rw [frobeniusFixedMulEquivOfCoeEq, MulEquiv.coe_trans, Function.comp_apply, MulEquiv.coe_trans,
+    Function.comp_apply, coe_fixedSubgroupCongr_symm_apply, MulEquiv.subgroupCongr_symm_apply,
+    coe_frobeniusFixedHopfIdealPointsMulEquiv, coe_frobeniusFixedHopfIdealPointsInclusion,
+    MulEquiv.subgroupCongr_apply]
 
 /-- The inverse of the transported isomorphism reads a Frobenius-fixed point as a point over the
 Frobenius-fixed subring: including its matrix back into the `A`-valued points returns the point one
