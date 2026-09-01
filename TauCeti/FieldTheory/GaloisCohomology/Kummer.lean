@@ -264,28 +264,26 @@ variable (K n)
 it to the Kummer isomorphism. -/
 def kummerClassMap (hn : IsUnit (n : K)) :
     PowerClassGroup Kˣ n →+ H1 (AbsoluteGaloisGroup K) (KummerCoeff K n) :=
-  QuotientAddGroup.lift _ (kummerMap K n hn) (ker_kummerMap hn).ge
+  QuotientAddGroup.lift _ (kummerMap K n hn) <| by
+    rw [modNSubgroup_eq_powerSubgroup]
+    exact (ker_kummerMap hn).ge
 
 @[simp]
 theorem kummerClassMap_mk (hn : IsUnit (n : K)) (c : Additive Kˣ) :
-    kummerClassMap K n hn (QuotientAddGroup.mk c) = kummerMap K n hn c :=
+    kummerClassMap K n hn (ModN.mkQ n c) = kummerMap K n hn c :=
   (rfl)
 
 @[simp]
 theorem kummerClassMap_powerClass (hn : IsUnit (n : K)) (a : Kˣ) :
     kummerClassMap K n hn (powerClass n a) = kummerMap K n hn (Additive.ofMul a) := by
-  rw [powerClass_eq_mk, kummerClassMap_mk]
+  rw [powerClass_eq_mk]
+  rfl
 
 /-- **`Kˣ ⧸ (Kˣ)ⁿ` injects into `H¹(G_K, μₙ)`**, the kernel of the Kummer map being exactly the
 `n`th powers. -/
 theorem kummerClassMap_injective (hn : IsUnit (n : K)) :
     Function.Injective (kummerClassMap K n hn) := by
-  refine (injective_iff_map_eq_zero _).2 fun x hx => ?_
-  induction x using QuotientAddGroup.induction_on with
-  | _ c =>
-    rw [kummerClassMap_mk] at hx
-    refine (QuotientAddGroup.eq_zero_iff _).2 ?_
-    rw [← ker_kummerMap hn]
-    exact AddMonoidHom.mem_ker.2 hx
+  exact (QuotientAddGroup.injective_lift_iff _ _ _).2 <|
+    (modNSubgroup_eq_powerSubgroup (G := Kˣ) (n := n)).trans (ker_kummerMap hn).symm
 
 end TauCeti
