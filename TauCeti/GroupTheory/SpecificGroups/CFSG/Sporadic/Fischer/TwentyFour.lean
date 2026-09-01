@@ -53,11 +53,69 @@ relators on eleven generators. `TauCeti.Sporadic.fi24PrimePresentation_matchesMe
 this count, while `TauCeti.Sporadic.even_length_of_mem_fi24AutomorphismRelators` checks that every
 source relator does lie in the index-two subgroup before the rewrite is applied.
 
+The rewrite drops exactly the source letters equal to `a`, which is
+`TauCeti.Sporadic.length_fi24SchreierRewrite`, so the letter count of the row is read off
+the source relators rather than off the rewritten ones:
+`TauCeti.Sporadic.fi24PrimePresentation_totalLength` records the `1076` letters they contribute.
+Neither source publishes a presentation length to check that figure against, and the row claims no
+cyclic reduction of its compiled words, so the count states the transcribed data for comparison
+with the source rather than checking it against a published number.
+
 Nothing here asserts that the presented group is nontrivial, finite, simple, of any particular
 order, or isomorphic to another realization. Kim and Michler prove that the commutator subgroup of
 the displayed source presentation is `Fi₂₄'`; Reidemeister--Schreier rewriting transfers that
-presentation to the subgroup. A separate source-to-Lean read-through remains the S1 review
-artifact required by the roadmap.
+presentation to the subgroup. The independent read-through below checks that transfer against the
+cited source; it is an audit artifact, not a Lean theorem identifying the presented group.
+
+## Independent source-to-Lean read-through
+
+An independent read-through used Kim--Michler, Lemma 6.2. The paper presents twelve involutions
+`a,b,c,d,e,f,g,h,i,j,k,l`. Its eleven exponent-three pairs are
+
+```text
+lk, ka, ab, bc, cd, de, ef, fg, gj, dh, hi,
+```
+
+and its fifty-five exponent-two pairs are
+
+```text
+la,lb,lc,ld,le,lf,lg,lj,lh,li,
+kb,kc,kd,ke,kf,kg,kj,kh,ki,
+ac,ad,ae,af,ag,aj,ah,ai,
+bd,be,bf,bg,bj,bh,bi,
+ce,cf,cg,cj,ch,ci, df,dg,dj,
+eg,ej,eh,ei, fj,fh,fi, gh,gi, jh,ji,di.
+```
+
+These are exactly the eleven undirected pairs in `fi24AutomorphismEdges` and their complement;
+`fi24AutomorphismCoxeterMatrix` assigns the edges entry three, every other off-diagonal pair entry
+two, and the diagonal entry one. The two remaining source relations have exactly the letters and
+exponents recorded by `fi24SourceEquationWord_def` and `fi24SourceLongWord_def`:
+
+```text
+l = (a b c d e f h)^9,
+(d c b a k l d e f g j d h i)^17 = 1.
+```
+
+Thus the source's twelve squares, eleven exponent-three pairs, fifty-five exponent-two pairs, and
+two displayed relations account for all `80` entries of `fi24AutomorphismRelators`, with none
+dropped or duplicated.
+
+Lemma 6.2(c) identifies the commutator subgroup and gives the generators `ab` through `ak`. The
+connected exponent-three graph makes all twelve source generators equal in the abelianization,
+while sending each of them to the nontrivial element of `C₂` kills all the source relators. Hence
+that parity map has the commutator subgroup as its index-two kernel. The rewrite was then checked
+definition by definition: `fi24SchreierFactors` toggles the transversal representative after every
+source letter, omits `a`, and records `(ax)⁻¹` and `ax` in alternating positions. Starting in the
+two possible representatives gives the rewrites of `r` and `a r a`. The twelve square relations
+perform the standard elimination of the redundant Schreier generators; each of the remaining
+`66 + 2` source relators contributes both rewrites. This gives exactly the `136` relators generated
+by `fi24PrimeRelators`, retaining `al` so that the source equation for `l` remains visible.
+`fi24PrimePresentation_relatorLetters` exposes the resulting compiled words for kernel-checked
+inspection. This closes the row's S1 source-to-Lean read-through.
+
+The independent `FiniteSimpleGroups` development named by the roadmap does not cover `Fi₂₄'`, so
+the additional explicit-construction comparison does not apply to this row.
 
 ## Main definitions
 
@@ -353,6 +411,35 @@ theorem fi24SchreierRewrite_def (positive : Bool) (r : Relator (Fin 12)) :
       (fi24SchreierFactors positive r.toWord).foldr .mul (.pow (.gen 0) 0) := by
   simp only [fi24SchreierRewrite, relatorOfFactors]
 
+/-- The assembled rewrite of a source word has one letter for each of its letters other than `a`,
+whichever transversal representative the rewrite starts from. Every emitted factor is a single
+generator or its inverse, and the empty product `(ab)⁰` contributes nothing. -/
+private theorem length_foldr_fi24SchreierFactors (positive : Bool)
+    (w : PresentationWord (Fin 12)) :
+    ((fi24SchreierFactors positive w).foldr Relator.mul ((Relator.gen 0).pow 0)).length =
+      w.countP fun letter => letter.1 ≠ 0 := by
+  induction w generalizing positive with
+  | nil => simp
+  | cons letter w ih =>
+    obtain ⟨i, sign⟩ := letter
+    rw [fi24SchreierFactors_cons, List.countP_cons]
+    by_cases hi : i = 0
+    · subst hi; simpa using ih (!positive)
+    · have h : i.val ≠ 0 := fun hv => hi (Fin.ext hv)
+      cases positive <;> simp [h, hi, ih, Nat.add_comm]
+
+/-- **The Reidemeister--Schreier rewrite keeps exactly the source letters other than `a`.** The
+distinguished letter `a` is the transversal element, so it contributes no Schreier generator, while
+every other source letter contributes one, inverted or not according to the transversal
+representative reached so far. In particular the two rewrites `r` and `a r a` of one source relator
+have the same length, the right-hand side not mentioning `positive`. -/
+@[simp]
+theorem length_fi24SchreierRewrite (positive : Bool) (r : Relator (Fin 12)) :
+    (fi24SchreierRewrite positive r).length =
+      r.toWord.countP fun letter => letter.1 ≠ 0 := by
+  rw [fi24SchreierRewrite_def]
+  exact length_foldr_fi24SchreierFactors positive r.toWord
+
 /-- The `136` relators of the index-two subgroup. The square relations are omitted after their
 standard Tietze elimination of the redundant Schreier generators; the `66` off-diagonal Coxeter
 relations and the two additional relations each contribute a rewrite of `r` and of `a r a`. -/
@@ -407,8 +494,9 @@ def fi24PrimePresentation : GroupPresentation where
     Schreier generators and then rewrite trivially. Each of the 66 off-diagonal Coxeter relators \
     and each of the two displayed relations contributes its rewrite and the rewrite of its \
     conjugate by a, for 2*(66+2)=136 relators. Retain al rather than eliminating it with the first \
-    displayed relation, so every target relator remains a direct rewrite of a source relator. A \
-    separate source-to-Lean read-through remains an S1 review obligation."
+    displayed relation, so every target relator remains a direct rewrite of a source relator. The \
+    independent source-to-Lean read-through checked all 80 source relators and the \
+    Reidemeister--Schreier rewrite producing the 136 target relators."
   expectedGeneratorCount := 11
   expectedRelatorCount := 136
   transcribed := fi24PrimeRelators
@@ -448,7 +536,7 @@ theorem fi24PrimePresentation_generatorConvention :
   simp only [fi24PrimePresentation]
 
 /-- The transcription notes recorded for `Fi₂₄'`, including the arithmetic behind the relator
-count and the outstanding read-through obligation. -/
+count and the completed independent read-through. -/
 theorem fi24PrimePresentation_transcriptionNotes :
     fi24PrimePresentation.transcriptionNotes = "Expand the source diagram into 78 Coxeter \
       relators and append its two displayed relations. The twelve square relations eliminate the \
@@ -456,8 +544,9 @@ theorem fi24PrimePresentation_transcriptionNotes :
       off-diagonal Coxeter relators and each of the two displayed relations contributes its \
       rewrite and the rewrite of its conjugate by a, for 2*(66+2)=136 relators. Retain al rather \
       than eliminating it with the first displayed relation, so every target relator remains a \
-      direct rewrite of a source relator. A separate source-to-Lean read-through remains an S1 \
-      review obligation." := by
+      direct rewrite of a source relator. The independent source-to-Lean read-through checked all \
+      80 source relators and the Reidemeister--Schreier rewrite producing the 136 target \
+      relators." := by
   simp only [fi24PrimePresentation]
 
 /-- The generator count of this row: the ten Schreier generators `ab, …, ak` that Kim--Michler
@@ -498,5 +587,92 @@ theorem fi24PrimePresentation_relatorLetters :
 theorem fi24PrimePresentation_matchesMetadata : fi24PrimePresentation.matchesMetadata := by
   rw [GroupPresentation.matchesMetadata_iff]
   exact ⟨rfl, length_fi24PrimeRelators⟩
+
+/-! ## Letter counts
+
+Every count below is read off the source relators through
+`TauCeti.Sporadic.length_fi24SchreierRewrite` rather than off the rewritten words, which is
+what keeps the arithmetic tied to the eleven-edge diagram a reviewer checks against the source. -/
+
+/-- A repeated list contributes its own count once per repetition. Counting on the base rather than
+on the expansion is what keeps the seventeenth power below tractable. -/
+private theorem countP_flatten_replicate {α : Type*} (p : α → Bool) (n : ℕ) (l : List α) :
+    (List.replicate n l).flatten.countP p = n * l.countP p := by
+  rw [List.countP_flatten, List.map_replicate, List.sum_replicate, smul_eq_mul]
+
+/-- The off-diagonal source relators contain `262` letters other than `a`. A relator `(x y) ^ m`
+contributes `m` letters for each of `x` and `y` different from `a`, so the eleven pairs that use
+`a` contribute `m` and the other fifty-five contribute `2m`. -/
+private theorem sum_countP_fi24SourcePairRelators :
+    (fi24SourcePairRelators.map fun r => r.toWord.countP fun letter => letter.1 ≠ 0).sum = 262 := by
+  rw [fi24SourcePairRelators_def, List.map_map]
+  simp_rw [Function.comp_def, toWord_coxeterRelator, countP_flatten_replicate]
+  simp only [fi24AutomorphismCoxeterMatrix_apply]
+  rw [fi24AutomorphismEdges_def]
+  decide
+
+/-- The source equation for `l` contains `55` letters other than `a`, one for `l` itself and six
+for each of the nine repetitions of `a b c d e f h`. -/
+private theorem countP_toWord_fi24SourceEquationRelator :
+    (fi24SourceEquationRelator.toWord.countP fun letter => letter.1 ≠ 0) = 55 := by
+  have hinv : ∀ w : PresentationWord (Fin 12),
+      ((FreeGroup.invRev w).countP fun letter => letter.1 ≠ 0) =
+        w.countP fun letter => letter.1 ≠ 0 := by
+    intro w; simp [FreeGroup.invRev, Function.comp_def]
+  rw [fi24SourceEquationRelator_def, Relator.toWord_div, List.countP_append, hinv,
+    Relator.toWord_pow, countP_flatten_replicate, fi24SourceEquationWord_def]
+  simp
+
+/-- The final source relation contains `221` letters other than `a`, thirteen for each of the
+seventeen repetitions of `d c b a k l d e f g j d h i`. -/
+private theorem countP_toWord_fi24SourceLongRelator :
+    (fi24SourceLongRelator.toWord.countP fun letter => letter.1 ≠ 0) = 221 := by
+  rw [fi24SourceLongRelator_def, Relator.toWord_pow, countP_flatten_replicate,
+    fi24SourceLongWord_def]
+  simp
+
+/-- The `68` rewritten source relators contain `538` letters other than `a`. -/
+private theorem sum_countP_fi24RewrittenSourceRelators :
+    ((fi24SourcePairRelators ++ fi24AutomorphismAdditionalRelators).map fun r =>
+      r.toWord.countP fun letter => letter.1 ≠ 0).sum = 538 := by
+  rw [List.map_append, List.sum_append, sum_countP_fi24SourcePairRelators,
+    fi24AutomorphismAdditionalRelators_def]
+  simp only [List.map_cons, List.map_nil, List.sum_cons, List.sum_nil,
+    countP_toWord_fi24SourceEquationRelator, countP_toWord_fi24SourceLongRelator]
+  decide
+
+/-- Rewriting a list of source relators doubles the number of surviving letters, since each
+contributes the rewrite of `r` and the rewrite of `a r a`. -/
+private theorem sum_map_length_flatMap_fi24SchreierRewrite (l : List (Relator (Fin 12))) :
+    ((l.flatMap fun r => [fi24SchreierRewrite false r, fi24SchreierRewrite true r]).map
+        Relator.length).sum =
+      2 * (l.map fun r => r.toWord.countP fun letter => letter.1 ≠ 0).sum := by
+  induction l with
+  | nil => simp
+  | cons r l ih =>
+    rw [List.flatMap_cons, List.map_append, List.sum_append, ih]
+    simp only [List.map_cons, List.map_nil, List.sum_cons, List.sum_nil,
+      length_fi24SchreierRewrite]
+    ring
+
+/-- **The compiled relator words of the `Fi₂₄'` row contain `1076` letters in total.**
+
+By `TauCeti.Sporadic.length_fi24SchreierRewrite` the two rewrites of a source relator have
+the same length, namely its number of letters other than `a`, so the total is twice the `538`
+letters the `68` rewritten source relators contribute: `524` from the off-diagonal Coxeter
+relators, `110` from the source equation for `l`, and `442` from the final source relation.
+
+Neither Kim--Michler nor Hall--Soicher publishes a presentation length, so this figure states the
+transcribed data for a reviewer to compare with the source rather than checking it against a
+recorded number. It is a count of compiled letters and not of reduced ones: unlike the other
+sporadic rows this one claims no cyclic reduction of its words, the Reidemeister--Schreier rewrite
+being what stands between a source relator and the word whose letters are counted. -/
+@[simp]
+theorem fi24PrimePresentation_totalLength : fi24PrimePresentation.totalLength = 1076 := by
+  rw [← GroupPresentation.sum_map_length_relatorLetters, fi24PrimePresentation_relatorLetters,
+    List.map_map]
+  simp only [Function.comp_def, List.length_map, Relator.length_toWord]
+  rw [fi24PrimeRelators_def, sum_map_length_flatMap_fi24SchreierRewrite,
+    sum_countP_fi24RewrittenSourceRelators]
 
 end TauCeti.Sporadic

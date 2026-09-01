@@ -247,6 +247,17 @@ lemma Subgroup.exists_pos_nat_integerCuspWidth_eq_mul_strictWidthInfty
 
 end IntegerCuspWidth
 
+/-! ### The strict period `1` of `Γ₁(N)` -/
+
+/-- **`1` is a strict period of `Γ₁(N)`**, viewed in `GL (Fin 2) ℝ`.
+
+This is the side condition the period-`1` `q`-expansion API asks for at every congruence level —
+`ModularForm.qExpansion_smul`, `qExpansion_levelRaise_coeff` and `isCusp_of_mem_strictPeriods` all
+take it as a hypothesis — so it is named here rather than reproved at each use site. -/
+theorem one_mem_strictPeriods_Gamma1_map (N : ℕ) :
+    (1 : ℝ) ∈ ((CongruenceSubgroup.Gamma1 N).map (mapGL ℝ)).strictPeriods := by
+  simp [CongruenceSubgroup.strictPeriods_Gamma1]
+
 end TauCeti
 
 end

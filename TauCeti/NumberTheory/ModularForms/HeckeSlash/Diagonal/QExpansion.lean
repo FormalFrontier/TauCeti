@@ -9,6 +9,8 @@ public import TauCeti.NumberTheory.HeckeRing.GLn.DiagonalCosets
 public import TauCeti.NumberTheory.ModularForms.Degeneracy
 public import TauCeti.NumberTheory.ModularForms.SlashActionRat
 
+import TauCeti.NumberTheory.ModularForms.Cusps.Basic
+
 /-!
 # The `q`-expansion of a rational diagonal slash
 
@@ -131,7 +133,7 @@ theorem _root_.ModularForm.qExpansion_slash_natDiagGL_d_one_coeff_Gamma1
   let _ : NeZero (d * M) := ⟨Nat.mul_ne_zero (NeZero.ne d) (NeZero.ne M)⟩
   refine ModularForm.qExpansion_slash_natDiagGL_d_one_coeff ?_ ?_
     (Gamma1_map_le_conjAct_scaleGL M d) f n <;>
-    simp [CongruenceSubgroup.strictPeriods_Gamma1]
+    exact one_mem_strictPeriods_Gamma1_map _
 
 end TauCeti
 

@@ -47,7 +47,8 @@ this file, as `TauCeti.SU2.genericTorus` does in the weight file.
   same degree, so the `Symᵈ(ℂ²)` are pairwise inequivalent.
 
 Exhaustion -- that every finite-dimensional irreducible representation of `SU(2)` is one of these
--- is *not* proved here; it is the remaining half of the classification.
+-- is *not* proved here; it is the remaining half of the classification, and is
+`TauCeti/RepresentationTheory/SU2/Exhaustion.lean`.
 
 ## References
 
@@ -98,12 +99,6 @@ private noncomputable def mixElement : SU2 := ⟨mixMatrix, mixMatrix_mem⟩
 private theorem coe_mixElement :
     (mixElement : Matrix (Fin 2) (Fin 2) ℂ) = mixMatrix := (rfl)
 
-/-- The rotation acts on a pure symmetric tensor factor by factor. -/
-private theorem symPower_mixElement_tprod (v : Fin d → (Fin 2 → ℂ)) :
-    symPower d mixElement (⨂ₛ[ℂ] i, v i) = ⨂ₛ[ℂ] i, mixMatrix *ᵥ v i := by
-  simp only [symPower_apply, symPowerRep, Representation.symmetricPower_apply_tprod,
-    stdRep_apply_apply, coe_toGL, coe_mixElement]
-
 /-- The coordinates of the image of a standard basis vector are the entries of the matrix. -/
 private theorem repr_mulVec_basisFun (A : Matrix (Fin 2) (Fin 2) ℂ) (k l : Fin 2) :
     (Pi.basisFun ℂ (Fin 2)).repr (A *ᵥ Pi.basisFun ℂ (Fin 2) k) l = A l k := by
@@ -127,13 +122,6 @@ private theorem symFinTwoEquiv_symm_last :
   rw [coe_symFinTwoEquiv_symm_apply, TauCeti.Sym.coe_ofFn, List.ofFn_const, Multiset.coe_replicate]
   simp
 
-/-- Every weight vector is a pure symmetric tensor of standard basis vectors. -/
-private theorem exists_weightBasis_eq_tprod (i : Fin (d + 1)) :
-    ∃ f : Fin d → Fin 2, weightBasis d i = ⨂ₛ[ℂ] j, Pi.basisFun ℂ (Fin 2) (f j) := by
-  obtain ⟨f, hf⟩ := TauCeti.Sym.ofFn_surjective ((symFinTwoEquiv d).symm i)
-  exact ⟨f, by rw [weightBasis_apply, ← hf, Basis.symmetricPower_apply,
-    SymmetricPower.tprodOfSym_ofFn]⟩
-
 /-! ### The rotated weight vectors have nonzero coordinates -/
 
 /-- **The image of a weight vector has a nonzero coordinate at the highest weight.**  The highest
@@ -144,7 +132,7 @@ private theorem repr_symPower_mixElement_weightBasis_last_ne_zero (i : Fin (d + 
     (weightBasis d).repr (symPower d mixElement (weightBasis d i)) (Fin.last d) ≠ 0 := by
   obtain ⟨f, hf⟩ := exists_weightBasis_eq_tprod d i
   rw [hf, weightBasis_eq_reindex, Basis.repr_reindex_apply, symFinTwoEquiv_symm_last,
-    symPower_mixElement_tprod, SymmetricPower.repr_basis_symmetricPower_tprod_ofFn_const]
+    symPower_apply_tprod, coe_mixElement, SymmetricPower.repr_basis_symmetricPower_tprod_ofFn_const]
   exact Finset.prod_ne_zero_iff.2 fun j _ => by
     rw [repr_mulVec_basisFun]; exact mixMatrix_apply_ne_zero 0 (f j)
 
@@ -157,7 +145,7 @@ private theorem repr_symPower_mixElement_weightBasis_last_ne_zero' (i : Fin (d +
       ⨂ₛ[ℂ] (_ : Fin d), Pi.basisFun ℂ (Fin 2) 0 := by
     rw [weightBasis_apply, symFinTwoEquiv_symm_last, Basis.symmetricPower_apply,
       SymmetricPower.tprodOfSym_ofFn]
-  rw [hf, weightBasis_eq_reindex, Basis.repr_reindex_apply, symPower_mixElement_tprod]
+  rw [hf, weightBasis_eq_reindex, Basis.repr_reindex_apply, symPower_apply_tprod, coe_mixElement]
   exact SymmetricPower.repr_basis_symmetricPower_tprod_const_ne_zero _
     (fun l => by rw [repr_mulVec_basisFun]; exact mixMatrix_apply_ne_zero l 0) _
 

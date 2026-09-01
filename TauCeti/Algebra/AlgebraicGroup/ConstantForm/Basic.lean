@@ -64,6 +64,8 @@ a relation between `C` and `Cᵀ`.
 ## Main declarations
 
 * `TauCeti.ConstantForm.relationMatrix`: the matrix of defining relations `X C Xᵀ - C`.
+* `TauCeti.ConstantForm.definingHopfIdeal_toIdeal_le_ker_of_map_genericMatrix_mul_mul_transpose`:
+  a coordinate morphism whose generic matrix `X` satisfies `X C Xᵀ = C` kills the defining ideal.
 * `TauCeti.ConstantForm.definingHopfIdeal`: the Hopf ideal its entries generate.
 * `TauCeti.ConstantForm.coordinateHopfAlgebra` and `TauCeti.ConstantForm.coordinateMap`: the
   quotient coordinate Hopf algebra and the quotient morphism onto it.
@@ -283,6 +285,24 @@ noncomputable def definingHopfIdeal :
 theorem definingHopfIdeal_toIdeal :
     (definingHopfIdeal R n C).toIdeal = Ideal.span (relationSet R n C) := by
   rw [definingHopfIdeal, HopfIdeal.ofSpan_toIdeal]
+
+/-- **A coordinate morphism whose generic matrix `X` satisfies `X C Xᵀ = C` kills the defining
+ideal.** This is the criterion by which a subgroup of `GL n` given by generating morphisms is shown
+to lie in the subgroup scheme preserving `C`: it suffices to evaluate the form relation on the
+generic matrix of each generator. -/
+theorem definingHopfIdeal_toIdeal_le_ker_of_map_genericMatrix_mul_mul_transpose
+    {T : Type*} [CommRing T] [Algebra R T]
+    (phi : GeneralLinear.coordinateHopfAlgebra R n →ₐ[R] T)
+    (hphi : (GeneralLinear.genericMatrix R n).map phi * C.map (algebraMap R T) *
+        ((GeneralLinear.genericMatrix R n).map phi)ᵀ = C.map (algebraMap R T)) :
+    (definingHopfIdeal R n C).toIdeal ≤ RingHom.ker (phi : _ →+* T) := by
+  rw [definingHopfIdeal_toIdeal, Ideal.span_le]
+  intro x hx
+  obtain ⟨a, c, rfl⟩ := (mem_relationSet_iff R n C).mp hx
+  have h := congrFun (congrFun (relationMatrix_map R n C phi) a) c
+  rw [Matrix.map_apply] at h
+  simp only [SetLike.mem_coe, RingHom.mem_ker, RingHom.coe_coe]
+  rw [h, hphi, Matrix.sub_apply, sub_self]
 
 /-- The coordinate Hopf algebra of the subgroup scheme of `GL n` preserving `C`. -/
 noncomputable abbrev coordinateHopfAlgebra : _root_.CommHopfAlgCat.{u} R :=

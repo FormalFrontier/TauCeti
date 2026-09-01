@@ -77,6 +77,8 @@ the values `Q vᵢ` is a unit.
   generator in the span instead.
 * `CliffordAlgebra.prod_map_ι_sq_scalar`: the square of the volume element of a pairwise
   orthogonal list is the scalar `(-1) ^ (n.choose 2) * ∏ᵢ Q vᵢ`.
+* `CliffordAlgebra.ι_mul_ι_mul_self_of_isOrtho`: the two-factor case, the square of the product
+  of two orthogonal generators being the scalar `-(Q a * Q b)`.
 * `CliffordAlgebra.isUnit_prod_map_ι`: an ordered product of generators — orthogonal or not — is
   a unit as soon as the product of the values `Q vᵢ` is.
 
@@ -280,6 +282,14 @@ theorem prod_map_ι_sq_scalar {l : List M} (hl : l.Pairwise Q.IsOrtho) :
           congr 1
           rw [hchoose, List.map_cons, List.prod_cons, pow_add]
           ring
+
+/-- **The square of the product of two orthogonal generators is the scalar `-(Q a * Q b)`.** This
+is `CliffordAlgebra.prod_map_ι_sq_scalar` at the two-element list `[a, b]`, whose sign
+`(-1) ^ Nat.choose 2 2` is the displayed minus. In particular the square vanishes as soon as one
+of the two vectors is isotropic. -/
+theorem ι_mul_ι_mul_self_of_isOrtho {a b : M} (h : Q.IsOrtho a b) :
+    ι Q a * ι Q b * (ι Q a * ι Q b) = -algebraMap R (CliffordAlgebra Q) (Q a * Q b) := by
+  simpa using prod_map_ι_sq_scalar (Q := Q) (l := [a, b]) (by simpa using h)
 
 /-- **An ordered product of generators is a unit as soon as the product of the values `Q vᵢ` is.**
 

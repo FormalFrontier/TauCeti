@@ -8,6 +8,7 @@ module
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Points
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Relations
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Rigidity
+import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Torus
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.GeckLattice.Basic
 
 /-!
@@ -32,8 +33,10 @@ expected to be the adjoint form; those identifications are not formalized here. 
 connected carrier required by milestone L0 of
 `TauCetiRoadmap/CFSGStatement/README.md` needs instead an admissible lattice whose weights generate
 the full weight lattice. That lattice, the Borel, root subgroups for nonsimple roots, the Chevalley
-commutator relations, functoriality of `geckPoints` in the value ring, and the root-datum properties
-that turn a carrier into a pinned split reductive group scheme are the Layer 9 work that remains.
+commutator relations, and the root-datum properties that turn a carrier into a pinned split
+reductive group scheme are the Layer 9 work that remains; the functoriality of `geckPoints` in the
+value ring is supplied by
+`TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.GeckLattice.PointsFunctor`.
 
 This construction supplies part of the interface that Layer 9 of
 `TauCetiRoadmap/ReductiveGroups/README.md` asks for: the closed immersion into `GLₙ`, the root
@@ -58,6 +61,9 @@ statement is asserted.
 * `TauCeti.DynkinType.geckRootSubgroup_comp_ι` and `TauCeti.DynkinType.geckWeightTorus_comp_ι`:
   both families recover their represented morphisms into `GLₙ`.
 * `TauCeti.DynkinType.geckWeightTorus_conj_geckRootSubgroup`: the scheme-level pinning equation.
+* `TauCeti.DynkinType.isClosedImmersion_geckWeightTorus` and
+  `TauCeti.DynkinType.geckTorusPoints_injective`: weights generating the character lattice embed
+  the weight torus in the carrier, on schemes and on points.
 * `TauCeti.DynkinType.geckGroupScheme_hom_ext`: morphisms from the carrier into affine group
   schemes represented by commutative Hopf algebras are determined by their composites with the
   root subgroups and weight torus.
@@ -69,6 +75,8 @@ statement is asserted.
 * `TauCeti.DynkinType.map_geckTorusSubsystemSubgroup_le_geckPoints`: the pointwise group generated
   by the torus and a chosen set of numbered root subgroups lies in the points of the carrier.
 * `TauCeti.DynkinType.geckPoints_def`: the points are the matrices cut out by the defining ideal.
+* `TauCeti.DynkinType.geckPoints_mk_geckTorusMatrix`: the weight-torus matrix and the diagonal
+  matrix of the weight characters are the same point.
 
 ## References
 
@@ -248,6 +256,16 @@ theorem geckWeightTorus_comp_ι :
       GeneralLinear.weightTorus (R := ℤ) (t.geckWeightFin ht) :=
   TauCeti.UniversalEnvelopingAlgebra.kostantWeightTorusToToral_comp_ι _ _ _ _ _ _ _ _
 
+/-- **Weights generating the character lattice embed the weight torus as a closed subgroup scheme
+of the Geck carrier.** The hypothesis fails in general, since the Geck weights generate only the
+root lattice; the types where it holds are settled in
+`TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.GeckLattice.FullWeight`. -/
+theorem isClosedImmersion_geckWeightTorus
+    (hwt : Submodule.span ℤ (Set.range (t.geckWeightFin ht)) = ⊤) :
+    IsClosedImmersion (t.geckWeightTorus ht).hom.hom.left :=
+  TauCeti.UniversalEnvelopingAlgebra.isClosedImmersion_kostantWeightTorusToToral
+    _ _ _ _ _ _ _ _ hwt
+
 /-- **The intrinsic pinning equation for the Geck carrier.** On points over a commutative ring,
 conjugation by a weight-torus point rescales the parameter of a numbered root subgroup by the
 corresponding root character. -/
@@ -315,6 +333,17 @@ abbrev geckTorusPoints (A : CommAlgCat.{v} ℤ) :
   TauCeti.UniversalEnvelopingAlgebra.kostantTorusPoints
     (t.geckCoordinateLattice ht).toAddSubgroup (t.geckCoordinateBasisFin ht)
     (t.geckWeightFin ht) A
+
+/-- **Weights generating the character lattice make the Geck weight torus injective on points**,
+over every value algebra. This is the point-level counterpart of
+`TauCeti.DynkinType.isClosedImmersion_geckWeightTorus`, proved from the same hypothesis rather
+than transported across it: the identification of `Fin t.rank → Aˣ` with the scheme-theoretic
+`A`-points of the split torus, and the compatibility of `geckTorusPoints` with `geckWeightTorus`,
+are not established here. -/
+theorem geckTorusPoints_injective (A : CommAlgCat.{v} ℤ)
+    (hwt : Submodule.span ℤ (Set.range (t.geckWeightFin ht)) = ⊤) :
+    Function.Injective (t.geckTorusPoints ht A) :=
+  TauCeti.UniversalEnvelopingAlgebra.kostantTorusPoints_injective _ _ _ hwt
 
 /-- The parametrized root subgroup for a numbered Geck root generator. -/
 abbrev geckRootSubgroupParam (i : Fin t.rank ⊕ Fin t.rank) (A : CommAlgCat.{v} ℤ) :
@@ -446,6 +475,18 @@ theorem geckTorusMatrix_mem_geckPoints (A : Type v) [CommRing A] (s : Fin t.rank
     t.geckTorusMatrix ht s ∈ t.geckPoints ht A :=
   TauCeti.UniversalEnvelopingAlgebra.kostantTorusMatrix_mem_toralPoints
     _ _ _ _ _ _ _ _ A s
+
+/-- **The two representations of a weight-torus point of the carrier agree**: writing the point
+through `TauCeti.DynkinType.geckTorusMatrix` and writing it as the diagonal matrix of the weight
+characters give the same element of `TauCeti.DynkinType.geckPoints`. Both occur in the pinning
+equations, which state the parameter of a torus point in the second form and its value in the
+first. -/
+theorem geckPoints_mk_geckTorusMatrix (A : Type v) [CommRing A] (s : Fin t.rank → Aˣ) :
+    (⟨t.geckTorusMatrix ht s, t.geckTorusMatrix_mem_geckPoints ht A s⟩ : t.geckPoints ht A) =
+      ⟨diagGL fun i => torusCharacter s (t.geckWeightFin ht i), by
+        simpa only [TauCeti.UniversalEnvelopingAlgebra.kostantTorusMatrix_apply] using
+          t.geckTorusMatrix_mem_geckPoints ht A s⟩ :=
+  Subtype.ext (TauCeti.UniversalEnvelopingAlgebra.kostantTorusMatrix_apply _ _ _ s)
 
 /-- **A pointwise torus-subsystem group lies in the points of the carrier.** The subgroup of
 `Aut_A(A ⊗ M)` generated by the torus and a chosen set of numbered root subgroups, written in

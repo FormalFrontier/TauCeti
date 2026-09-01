@@ -111,7 +111,7 @@ theorem continuousMonoidHom_eq_expUnitHom_of_hasDerivAt
   have hg (t : ℝ) : HasDerivAt g (g t * x) t := hasDerivAt_exp_smul_const x t
   let rightMul : R →L[ℝ] R := ContinuousLinearMap.mulLeftRight ℝ R 1 x
   have hv : ∀ _ : ℝ, LipschitzOnWith ‖rightMul‖₊ rightMul Set.univ :=
-    fun _ => rightMul.lipschitz.lipschitzOnWith
+    fun _ => rightMul.lipschitzWith.lipschitzOnWith
   have hfg : f = g := ODE_solution_unique_univ (K := ‖rightMul‖₊)
     (v := fun _ => rightMul) (s := fun _ => Set.univ) (t₀ := 0) hv
     (fun t => ⟨by simpa [rightMul] using hf t, Set.mem_univ _⟩)

@@ -83,13 +83,13 @@ protected theorem map {Y : ι → Type w} [∀ i, MeasurableSpace (Y i)]
 /-- The pair projection of a multi-marginal coupling has the prescribed first marginal. -/
 theorem fst_map_pair (hπ : IsMultiCoupling π μ) (i j : ι) :
     (π.map fun x ↦ (x i, x j)).fst = μ i := by
-  rw [Measure.fst_map_prodMk (measurable_pi_apply j)]
+  rw [Measure.fst_map_prodMk (measurable_pi_apply i) (measurable_pi_apply j)]
   exact hπ.marginal_eq i
 
 /-- The pair projection of a multi-marginal coupling has the prescribed second marginal. -/
 theorem snd_map_pair (hπ : IsMultiCoupling π μ) (i j : ι) :
     (π.map fun x ↦ (x i, x j)).snd = μ j := by
-  rw [Measure.snd_map_prodMk (measurable_pi_apply i)]
+  rw [Measure.snd_map_prodMk (measurable_pi_apply i) (measurable_pi_apply j)]
   exact hπ.marginal_eq j
 
 end IsMultiCoupling
@@ -137,7 +137,7 @@ theorem coe_pi [Fintype ι] (μ : ∀ i, ProbabilityMeasure (X i)) :
 
 /-- The `i`th marginal of a bundled multi-marginal coupling. -/
 def marginal (π : MultiCoupling μ) (i : ι) : ProbabilityMeasure (X i) :=
-  π.1.map (measurable_pi_apply i).aemeasurable
+  π.1.map (fun x => x i)
 
 /-- The underlying measure of a coordinate marginal is the corresponding pushforward. This is
 not a `simp` lemma: `simp` rewrites `π.marginal i` to `μ i` via `marginal_eq` instead. -/
@@ -161,7 +161,7 @@ theorem ext {π κ : MultiCoupling μ} (h : π.1.toMeasure = κ.1.toMeasure) : �
 injective. -/
 def project {κ : Type w} (π : MultiCoupling μ) (e : κ → ι) :
     MultiCoupling (fun j ↦ μ (e j)) :=
-  ⟨π.1.map (measurable_pi_lambda _ fun j ↦ measurable_pi_apply (e j)).aemeasurable, by
+  ⟨π.1.map (fun x j ↦ x (e j)), by
     simpa only [ProbabilityMeasure.toMeasure_map] using π.2.project e⟩
 
 /-- The underlying probability measure of a coordinate projection is the corresponding
@@ -169,7 +169,7 @@ pushforward. -/
 @[simp]
 theorem coe_project {κ : Type w} (π : MultiCoupling μ) (e : κ → ι) :
     (π.project e : ProbabilityMeasure (∀ j, X (e j))) =
-      π.1.map (measurable_pi_lambda _ fun j ↦ measurable_pi_apply (e j)).aemeasurable :=
+      π.1.map (fun x j ↦ x (e j)) :=
   (rfl)
 
 /-- Projecting along the identity coordinate family leaves a multi-marginal coupling
@@ -201,7 +201,7 @@ def reindex {κ : Type w} (π : MultiCoupling μ) (e : κ ≃ ι) :
 @[simp]
 theorem coe_reindex {κ : Type w} (π : MultiCoupling μ) (e : κ ≃ ι) :
     (π.reindex e : ProbabilityMeasure (∀ j, X (e j))) =
-      π.1.map (measurable_pi_lambda _ fun j ↦ measurable_pi_apply (e j)).aemeasurable :=
+      π.1.map (fun x j ↦ x (e j)) :=
   (rfl)
 
 /-- Reindexing by the identity equivalence leaves a multi-marginal coupling unchanged. -/
@@ -219,12 +219,11 @@ theorem reindex_trans {κ : Type w} {τ : Type*}
 /-- Applying measurable maps coordinatewise to a multi-marginal coupling. -/
 def map {Y : ι → Type w} [∀ i, MeasurableSpace (Y i)] (π : MultiCoupling μ)
     (f : ∀ i, X i → Y i) (hf : ∀ i, Measurable (f i)) :
-    MultiCoupling (fun i ↦ (μ i).map (hf i).aemeasurable) :=
-  ⟨π.1.map (measurable_pi_lambda _ fun i ↦ (hf i).comp (measurable_pi_apply i)).aemeasurable,
+    MultiCoupling (fun i ↦ (μ i).map (f i)) :=
+  ⟨π.1.map (fun x i ↦ f i (x i)),
     by
       simp only [ProbabilityMeasure.toMeasure_map]
-      convert π.2.map f hf using 1
-      all_goals rfl⟩
+      exact π.2.map f hf⟩
 
 /-- The underlying probability measure of a coordinatewise map is the corresponding
 pushforward. -/
@@ -232,7 +231,7 @@ pushforward. -/
 theorem coe_map {Y : ι → Type w} [∀ i, MeasurableSpace (Y i)] (π : MultiCoupling μ)
     (f : ∀ i, X i → Y i) (hf : ∀ i, Measurable (f i)) :
     (π.map f hf : ProbabilityMeasure (∀ i, Y i)) =
-      π.1.map (measurable_pi_lambda _ fun i ↦ (hf i).comp (measurable_pi_apply i)).aemeasurable :=
+      π.1.map (fun x i ↦ f i (x i)) :=
   (rfl)
 
 /-- Mapping every coordinate by the identity leaves the underlying probability measure
@@ -250,14 +249,14 @@ theorem coe_map_id (π : MultiCoupling μ) :
 theorem map_pi [Fintype ι] {Y : ι → Type w} [∀ i, MeasurableSpace (Y i)]
     (μ : ∀ i, ProbabilityMeasure (X i)) (f : ∀ i, X i → Y i)
     (hf : ∀ i, Measurable (f i)) :
-    (pi μ).map f hf = pi (fun i ↦ (μ i).map (hf i).aemeasurable) := by
+    (pi μ).map f hf = pi (fun i ↦ (μ i).map (f i)) := by
   apply ext
   simp only [map, pi, ProbabilityMeasure.toMeasure_map, ProbabilityMeasure.toMeasure_pi]
   exact Measure.pi_map_pi (fun i ↦ (hf i).aemeasurable)
 
 /-- The joint law of coordinates `i` and `j` of a multi-marginal coupling. -/
 def projectPair (π : MultiCoupling μ) (i j : ι) : ProbabilityMeasure (X i × X j) :=
-  π.1.map ((measurable_pi_apply i).prodMk (measurable_pi_apply j)).aemeasurable
+  π.1.map (fun x ↦ (x i, x j))
 
 /-- The underlying measure of a pair projection is the corresponding pushforward. This is not a
 `simp` lemma: `simp` rewrites the marginals of a pair projection through `fst_projectPair` and
@@ -281,7 +280,7 @@ theorem snd_projectPair (π : MultiCoupling μ) (i j : ι) :
 /-- Selecting the same coordinate twice gives its diagonal law. -/
 @[simp]
 theorem projectPair_self (π : MultiCoupling μ) (i : ι) :
-    π.projectPair i i = (μ i).map (measurable_id.prodMk measurable_id).aemeasurable := by
+    π.projectPair i i = (μ i).map (fun x => (x, x)) := by
   apply ProbabilityMeasure.toMeasure_injective
   simp only [projectPair, ProbabilityMeasure.toMeasure_map]
   calc

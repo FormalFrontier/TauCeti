@@ -36,6 +36,8 @@ map it proves that the pieces form an internal decomposition.
   `TauCeti.GradedAlgebra.gradeQuot_mul_gradeQuot_le`: multiplication adds degrees.
 * `TauCeti.GradedAlgebra.gradeQuot_eq_span_image`: the descended piece is the span of the images
   of any spanning family of the original piece.
+* `TauCeti.GradedAlgebra.mem_span_of_mem_gradeQuot`: a spanning result for the original piece
+  descends to the quotient.
 * `TauCeti.GradedAlgebra.gradeQuot_eq_bot_of_le`: a piece whose original grading lies in `I`
   vanishes.
 * `TauCeti.GradedAlgebra.iSupIndep_gradeQuot`, `TauCeti.GradedAlgebra.iSup_gradeQuot_eq_top`, and
@@ -102,6 +104,20 @@ theorem gradeQuot_eq_span_image {i : ι} {s : Set A} (hs : 𝒜 i = Submodule.sp
     gradeQuot 𝒜 I i = Submodule.span R ((Ideal.Quotient.mk I) '' s) := by
   rw [gradeQuot, hs, Submodule.map_span]
   rfl
+
+omit [DecidableEq ι] [AddMonoid ι] [GradedAlgebra 𝒜] in
+/-- A member of a descended piece lies in the span of `t` if the images of a spanning family of
+the original piece lie in that span. -/
+theorem mem_span_of_mem_gradeQuot {i : ι} {s : Set A} (hs : 𝒜 i = Submodule.span R s)
+    {t : Set (A ⧸ I)}
+    (hmem : ∀ z ∈ s, Ideal.Quotient.mk I z ∈ Submodule.span R t)
+    {w : A ⧸ I} (hw : w ∈ gradeQuot 𝒜 I i) :
+    w ∈ Submodule.span R t := by
+  have heq := gradeQuot_eq_span_image 𝒜 I (i := i) hs
+  rw [heq] at hw
+  refine (Submodule.span_le.2 ?_) hw
+  rintro u ⟨z, hz, rfl⟩
+  exact hmem z hz
 
 omit [DecidableEq ι] [AddMonoid ι] [GradedAlgebra 𝒜] in
 /-- A piece whose original grading lies in `I` vanishes in the quotient. -/

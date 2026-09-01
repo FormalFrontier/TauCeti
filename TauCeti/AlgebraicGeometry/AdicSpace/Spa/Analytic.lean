@@ -14,7 +14,7 @@ public import TauCeti.RingTheory.Huber.OpenIdeal
 /-!
 # Analytic points and the analytic locus of `Spa(A, A⁺)`
 
-**Wedhorn, *Adic Spaces* (arXiv:1910.05934v1), Definition 7.39, Remark 7.40(3), and
+**Wedhorn, *Adic Spaces* (arXiv:1910.05934v1), Definition 7.39, Remark 7.40(2), (3), and
 Proposition 7.49.**
 
 This file formalizes the analytic locus of the adic spectrum `Spa(A, A⁺)`.
@@ -34,6 +34,8 @@ This file formalizes the analytic locus of the adic spectrum `Spa(A, A⁺)`.
 * `TauCeti.ValuationSpectrum.spaAnalytic_eq_spa_of_isTateRing` : **Wedhorn Remark 7.40(3)**,
   for a Tate ring `A`, the analytic locus is the entire adic spectrum.
 * `TauCeti.ValuationSpectrum.isOpen_val_preimage_spaAnalytic` : the analytic locus is open.
+* `TauCeti.ValuationSpectrum.isCompact_val_preimage_spaAnalytic` : **Wedhorn Remark 7.40(2)**,
+  the analytic locus is quasi-compact; with the previous result, open and quasi-compact.
 * `TauCeti.ValuationSpectrum.spaAnalytic_eq_biUnion_rationalSubset` : generators of an ideal of
   definition give a finite rational cover of the analytic locus.
 * `TauCeti.ValuationSpectrum.isTateRing_completion_locTopology_of_mem_generators` : the completed
@@ -41,7 +43,7 @@ This file formalizes the analytic locus of the adic spectrum `Spa(A, A⁺)`.
 
 ## References
 
-* T. Wedhorn, *Adic Spaces*, arXiv:1910.05934v1, Definition 7.39, Remark 7.40(3), and
+* T. Wedhorn, *Adic Spaces*, arXiv:1910.05934v1, Definition 7.39, Remark 7.40(2), (3), and
   Proposition 7.49.
 -/
 
@@ -231,6 +233,26 @@ theorem isTateRing_completion_locTopology_of_mem_generators (P : PairOfDefinitio
   exact isTateRing_completion_locTopology_of_isTopologicallyNilpotent P _ (g : A) S hden
     (P.isTopologicallyNilpotent_of_mem_idealOfDefinition
       (hG ▸ Ideal.subset_span (Finset.mem_coe.mpr hg)))
+
+/-- **Wedhorn Remark 7.40(2).** The analytic locus is quasi-compact. A finite generating set of
+the extended ideal of definition gives a finite rational cover of it, and each rational subset in
+that cover is quasi-compact, so their union is. Together with `isOpen_val_preimage_spaAnalytic`
+this is the whole of 7.40(2): the analytic locus is an open quasi-compact subset of `Spa(A, A⁺)`.
+
+Stated for the preimage in `spa Aplus` rather than for `spaAnalytic Aplus : Set (Spv A)`, matching
+`isOpen_val_preimage_spaAnalytic`, because quasi-compactness of a rational subset is available in
+that form. -/
+theorem isCompact_val_preimage_spaAnalytic (P : PairOfDefinition A) (Aplus : Subring A) :
+    IsCompact (Subtype.val ⁻¹' spaAnalytic Aplus : Set (spa Aplus)) := by
+  obtain ⟨T, hT⟩ := P.fg_extendedIdealOfDefinition
+  have hopen : IsOpen (Ideal.span (T : Set A) : Set A) := by
+    rw [hT]
+    exact (P.isOpen_iff_exists_pow_le _).mpr ⟨1, by simp⟩
+  rw [spaAnalytic_eq_biUnion_rationalSubset_of_span_eq_extendedIdealOfDefinition P Aplus T hT,
+    Set.preimage_iUnion₂]
+  exact T.isCompact_biUnion fun t _ ↦
+    isCompact_of_mem_spaRationalFamily_of_pairOfDefinition P
+      (mem_spaRationalFamily_iff.mpr ⟨T, t, hopen, rfl⟩)
 
 end TopologicalRing
 

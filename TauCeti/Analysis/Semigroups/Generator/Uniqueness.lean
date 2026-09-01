@@ -90,8 +90,10 @@ private theorem tendsto_generator_diff_quotient {T : StronglyContinuousSemigroup
     (hy : y ∈ T.generator.domain) (hTa : T.generator ⟨y, hy⟩ = a) (s : ℝ) :
     Tendsto (fun u : ℝ => (u - s)⁻¹ • (T.realOperator (u - s) y - y)) (𝓝[>] s) (𝓝 a) := by
   have hyT : y ∈ T.domain := by rwa [T.generator_domain] at hy
-  have hshift : Tendsto (fun u : ℝ => u - s) (𝓝[>] s) (𝓝[>] 0) := by
-    simpa [sub_eq_add_neg] using tendsto_map (f := fun u : ℝ => u + -s) (x := 𝓝[>] s)
+  have hshift : Tendsto (fun u : ℝ => u - s) (𝓝[>] s) (𝓝[>] 0) :=
+    tendsto_nhdsWithin_of_tendsto_nhds_of_eventually_within _
+      ((Continuous.tendsto' (by fun_prop) s 0 (by simp)).mono_left nhdsWithin_le_nhds)
+      (eventually_nhdsWithin_of_forall fun x hx => Set.mem_Ioi.mpr (sub_pos.mpr hx))
   simpa [Function.comp_def, one_div, hTa] using (T.generator_tendsto ⟨y, hyT⟩).comp hshift
 
 omit [CompleteSpace X] in

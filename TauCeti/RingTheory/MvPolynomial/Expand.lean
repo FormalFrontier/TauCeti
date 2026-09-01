@@ -5,10 +5,10 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Algebra.CharP.Lemmas
 public import Mathlib.Algebra.MvPolynomial.Expand
 public import Mathlib.RingTheory.Finiteness.Basic
 public import Mathlib.RingTheory.MvPolynomial.Basic
+public import Mathlib.RingTheory.MvPolynomial.Expand
 
 /-!
 # Finiteness of `MvPolynomial.expand`
@@ -59,11 +59,9 @@ public section
 
 namespace TauCeti
 
-/-- Multivariate form of the univariate argument in Stacks, Lemma 10.161.13 (tag 032O).
-Proof: "`R′[x^{1/q}]` is finite over `R[x]`" —
-the inductive step of the spanning argument. Every monomial lies in the span, over the image of
-`MvPolynomial.expand n`, of the monomials with all exponents below `n`: write each exponent as
-`n * γ + β` with `β < n`, so that `X ^ (n • γ + β) = expand n (X ^ γ) * X ^ β`. -/
+/-- Every monomial lies in the span, over the image of `MvPolynomial.expand n`, of the monomials
+with all exponents below `n`: write each exponent as `n * γ + β` with `β < n`, so that
+`X ^ (n • γ + β) = expand n (X ^ γ) * X ^ β`. -/
 private theorem MvPolynomial.monomial_mem_span_monomial_lt {σ R : Type*} [CommSemiring R]
     [Finite σ]
     {n : ℕ} (hn : 0 < n) (d : σ →₀ ℕ) (r : R) :
@@ -157,12 +155,17 @@ theorem MvPolynomial.exists_pow_eq_map_expand {σ R S : Type*} [CommSemiring R] 
     · exact ⟨0, fun h ↦ absurd h hi⟩
   choose d hd using hg'
   refine ⟨∑ α ∈ g.support, MvPolynomial.monomial α (d α), ?_⟩
-  -- Frobenius is additive, so the `p ^ n`-th power is taken monomial by monomial
-  rw [sum_pow_char_pow]
-  conv_rhs => rw [MvPolynomial.as_sum g]
-  rw [map_sum, map_sum]
-  refine Finset.sum_congr rfl fun α hα ↦ ?_
-  rw [MvPolynomial.monomial_pow, hd α hα, MvPolynomial.expand_monomial,
-    MvPolynomial.map_monomial]
+  -- the chosen-root polynomial maps under the iterated Frobenius to `map f g`
+  have hmap : MvPolynomial.map (iterateFrobenius S p n)
+      (∑ α ∈ g.support, MvPolynomial.monomial α (d α)) = MvPolynomial.map f g := by
+    rw [map_sum]
+    conv_rhs => rw [MvPolynomial.as_sum g]
+    rw [map_sum]
+    refine Finset.sum_congr rfl fun α hα ↦ ?_
+    rw [MvPolynomial.map_monomial, MvPolynomial.map_monomial, iterateFrobenius_def, hd α hα]
+  -- so Mathlib's Frobenius/expand identity supplies the power, with `map_expand` moving `map`
+  -- past `expand` on each side
+  rw [← MvPolynomial.map_iterateFrobenius_expand (p := p) _ n, MvPolynomial.map_expand, hmap,
+    ← MvPolynomial.map_expand]
 
 end TauCeti

@@ -187,7 +187,7 @@ theorem MarkovExchangeable.exists_pathLaw_eq_map_deFinettiBarycenter [IsProbabil
   have hmix := mixedIIDWith_of_conditionallyIIDWith hν
   have hν_meas : Measurable ν := hmix.measurable_mixingRepresentative
   have hSmeas : MeasurableSet {l : List α | a₀ ∈ l} := MeasurableSet.of_discrete
-  refine ⟨μ.map ν, Measure.isProbabilityMeasure_map hν_meas.aemeasurable, ?_, ?_⟩
+  refine ⟨μ.map ν, inferInstance, ?_, ?_⟩
   · refine (ae_map_iff hν_meas.aemeasurable ?_).2
       hν.ae_measure_setOf_mem_eq_zero_of_excursionProcess
     exact ((Measure.measurable_coe hSmeas).comp measurable_subtype_coe)
