@@ -307,12 +307,6 @@ theorem integrable_one_add_sq_rpow (hs : 1 / 2 < s) :
   simp only [Real.norm_eq_abs, sq_abs]
   ring_nf
 
-/-- The Cauchy-type kernel `(1 + x ^ 2) ^ (-s)` is integrable on the positive half-line when
-`1 / 2 < s`. -/
-theorem integrableOn_one_add_sq_rpow_Ioi (hs : 1 / 2 < s) :
-    IntegrableOn (fun x : ℝ => (1 + x ^ 2) ^ (-s)) (Ioi 0) :=
-  (integrable_one_add_sq_rpow hs).integrableOn
-
 /-- The total mass of the Cauchy-type kernel `(1 + x ^ 2) ^ (-s)` is `Β(1/2, s - 1/2)`. -/
 theorem integral_one_add_sq_rpow (hs : 1 / 2 < s) :
     ∫ x : ℝ, (1 + x ^ 2) ^ (-s) = beta (1 / 2) (s - 1 / 2) := by
