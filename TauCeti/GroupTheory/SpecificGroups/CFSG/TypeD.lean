@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.Lie.Orthogonal.TypeD.SpinCarrier
+public import TauCeti.Algebra.Lie.Orthogonal.TypeD.SpinCarrier.Basic
 public import TauCeti.GroupTheory.SpecificGroups.CFSG.Closure
 
 /-!
