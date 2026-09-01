@@ -36,6 +36,8 @@ theorem mulSupport_sum_type (f : α ⊕ β → M) :
   ext x
   cases x <;> simp [Sum.inl_injective.mem_set_image, Sum.inr_injective.mem_set_image]
 
+/-- Finite multiplicative support on both summands implies finite multiplicative support on their
+disjoint union. -/
 @[to_additive]
 theorem hasFiniteMulSupport_sum_type (hl : HasFiniteMulSupport (f ∘ Sum.inl))
     (hr : HasFiniteMulSupport (f ∘ Sum.inr)) : HasFiniteMulSupport f := by

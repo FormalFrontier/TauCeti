@@ -143,8 +143,8 @@ theorem normalizedAbsValue_inl_algebraMap_eq_one_iff :
 at most `1`. -/
 theorem normalizedAbsValue_inl_le_one_iff (y : K) :
     normalizedAbsValue (Sum.inl v) y ≤ 1 ↔ v.valuation K y ≤ 1 := by
-  rw [normalizedAbsValue_inl, NumberField.HeightOneSpectrum.adicAbv_def,
-    show (1 : ℝ) = ((1 : ℝ≥0) : ℝ) from rfl, NNReal.coe_le_coe]
+  rw [normalizedAbsValue_inl, NumberField.HeightOneSpectrum.adicAbv_def]
+  norm_cast
   exact WithZeroMulInt.toNNReal_le_one_iff
     (NumberField.HeightOneSpectrum.one_lt_absNorm_nnreal v)
 
