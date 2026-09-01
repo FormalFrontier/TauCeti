@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-import Mathlib.CategoryTheory.ConcreteCategory.EpiMono
 public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.FaithfullyFlatPoints
 public import TauCeti.AlgebraicGeometry.GroupScheme.CentralIsogeny.Coordinate
 

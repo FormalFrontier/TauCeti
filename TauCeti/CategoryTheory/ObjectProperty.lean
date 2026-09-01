@@ -63,11 +63,7 @@ theorem inverseImage_functor_inverseImage_inverse
 
 /-- Restricting an equivalence from an opposite category to corresponding object properties,
 then including into the target, agrees with first including into the source and applying the
-original equivalence.
-
-This proof generalizes
-`adjointSemisimpleCommHopfAlgCatOpEquivAdjointSemisimpleAffineGroupSchemeCat.functorCompιIso`.
--/
+original equivalence. -/
 noncomputable def opEquivalenceCongrFullSubcategoryFunctorCompιIso
     {C : Type u₁} [Category.{v₁} C] {D : Type u₂} [Category.{v₂} D]
     (P : ObjectProperty C) (Q : ObjectProperty D) [Q.IsClosedUnderIsomorphisms]
