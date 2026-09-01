@@ -33,8 +33,11 @@ inside the function field, lies in the subalgebra they generate — propagates t
 coordinate ring.
 
 The base map is an arbitrary homomorphism of fields, so `f = algebraMap F K` is base change along
-a field extension and `f = σ` an automorphism is the Galois action on isogenies. Both readings are
-uses of one construction.
+a field extension, while `f = σ` an automorphism is the semilinear transport of an isogeny to the
+conjugate isogeny `W₁.map σ → W₂.map σ`. That transport is the raw material for a Galois action on
+isogenies rather than an action itself: it lands on the conjugate curves, so an action would first
+need the identifications `Wᵢ.map σ = Wᵢ` available for curves defined over the fixed field. Both
+readings are uses of one construction.
 
 ## What is not here
 

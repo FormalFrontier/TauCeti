@@ -38,9 +38,12 @@ over `F(W₁)` — equivalently, by the universal property in `Isogeny/Basic.lea
 pullback — be pushed to a point of `W₂.map f` over `K(W₁.map f)`.
 
 The homomorphism of base fields is an arbitrary `f : F →+* K`, not an `algebraMap`. Base change
-along a field extension is the case `f = algebraMap F K`, while the Galois action on `K(W)` for a
-curve `W` defined over a subfield is the case of an automorphism `f = σ`; a single map covers
-both, and neither reading is built into the statements.
+along a field extension is the case `f = algebraMap F K`, while an automorphism `f = σ` gives the
+semilinear transport of `F(W)` to the function field of the conjugate curve `W.map σ`. The latter
+is the raw material for a Galois action but is not itself one: the target is `K(W.map σ)`, not
+`K(W)`, so an action would additionally need the identification `W.map σ = W` for a curve defined
+over the fixed field together with its coherence laws, and none of that is built into the
+statements here. A single map covers both readings, and neither is built in.
 
 ## Main definitions
 
