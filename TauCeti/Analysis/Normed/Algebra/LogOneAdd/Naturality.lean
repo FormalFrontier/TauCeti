@@ -45,6 +45,7 @@ variable [Ring B] [Algebra 𝕃 B] [TopologicalSpace B] [IsTopologicalRing B]
 
 /-- Ring homomorphisms commute with each homogeneous term of
 `logOneAddSeries`. -/
+@[simp high]
 theorem map_logOneAddSeries_apply {F : Type*} [FunLike F A B] [RingHomClass F A B]
     (f : F) {n : ℕ} (v : Fin n → A) :
     f (logOneAddSeries 𝕂 A n v) = logOneAddSeries 𝕃 B n (f ∘ v) := by
@@ -96,6 +97,7 @@ theorem eventually_map_logOneAdd {F : Type*} [FunLike F A B] [RingHomClass F A B
     (by simpa [Metric.mem_ball, dist_zero_right] using hu)
 
 /-- Continuous ring homomorphisms commute with the germ of `logOneAdd` at the origin. -/
+@[simp]
 theorem map_logOneAdd_germ {F : Type*} [FunLike F A B] [RingHomClass F A B]
     (f : F) (hf : Continuous f) :
     (↑(f ∘ logOneAdd 𝕂 A) : Germ (𝓝 (0 : A)) B) =
