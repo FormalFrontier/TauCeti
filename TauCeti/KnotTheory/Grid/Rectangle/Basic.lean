@@ -462,7 +462,6 @@ theorem toGridRectangle_top : R.toGridRectangle.top = R.top :=
 
 /-- Membership in the interior of an oriented rectangle is membership in the open cyclic
 intervals between its side columns and the corresponding source-state rows. -/
-@[simp]
 theorem mem_toGridRectangle_interior (p : Fin n × Fin n) :
     p ∈ R.toGridRectangle.interior ↔
       p.1 ∈ Grid.cIoo R.left R.right ∧ p.2 ∈ Grid.cIoo (x R.left) (x R.right) := by
