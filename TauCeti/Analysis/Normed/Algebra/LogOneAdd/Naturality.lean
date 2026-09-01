@@ -26,8 +26,7 @@ local identity as an equality of germs at the origin.
 
 * [Lie groups and the Lie algebra correspondence roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/LieGroups/README.md),
   Deliverable A, Layer 3, "Baker--Campbell--Hausdorff".
-* `NormedSpace.map_exp_of_mem_ball` in Mathlib's exponential naturality
-  development, whose `tsum`/`HasSum.map`/termwise-naturality proof pattern is adapted here.
+* `NormedSpace.map_exp_of_mem_ball` in Mathlib's exponential naturality development.
 -/
 
 public section
