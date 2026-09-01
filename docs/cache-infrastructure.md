@@ -41,9 +41,9 @@ Which endpoint serves those downloads is a repository variable. Every workflow t
 tool treats an empty value as unset, so clearing the variable returns reads to the tool's
 default endpoints on the next run, with no code change. The variable bypasses the tool's
 container lookup chain and the tool appends only `/f/<hash>`, so its value must name one
-container namespace — the current write target, not a bare host and not the read-only
-legacy container. For local and radar runs, `scripts/bench/build/run` sets a default for
-the same variable; a value defined beforehand (even an empty one) wins over the default.
+artifact namespace on the serving host, not a bare host. For local and radar runs,
+`scripts/bench/build/run` sets a default for the same variable; a value defined beforehand
+(even an empty one) wins over the default.
 
 ## Cloudflare account
 
