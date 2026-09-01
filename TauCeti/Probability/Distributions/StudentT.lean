@@ -430,12 +430,6 @@ theorem integrable_id_studentTMeasure_iff (hν : 0 < ν) :
     simpa only [pow_one] using hint'
   · exact integrable_id_studentTMeasure_of_one_lt
 
-/-- At or below one degree of freedom, a nondegenerate Student t law has no finite mean. -/
-theorem not_integrable_id_studentTMeasure (hν : 0 < ν) (hν1 : ν ≤ 1) :
-    ¬ Integrable id (studentTMeasure ν) := by
-  rw [integrable_id_studentTMeasure_iff hν]
-  exact not_lt.mpr hν1
-
 /-- The mean of a Student t law with more than one degree of freedom is zero. -/
 @[simp]
 theorem integral_id_studentTMeasure (hν : 1 < ν) :
