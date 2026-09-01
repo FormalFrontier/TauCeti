@@ -660,19 +660,16 @@ theorem variance_id_map_cast_hypergeometricMeasure {N K n : ℕ}
       norm_num [hypergeometricMeasure, hypergeometricWeight, Finset.sum_range_succ]
 
 /-- The real cast of the unique valid empty-population hypergeometric law has mean zero. -/
-@[simp]
 theorem integral_id_map_cast_hypergeometricMeasure_zero :
     ∫ x, x ∂((hypergeometricMeasure 0 0 0).map (Nat.cast : ℕ → ℝ)) = 0 := by
   simp
 
 /-- The real cast of the unique valid empty-population hypergeometric law has variance zero. -/
-@[simp]
 theorem variance_id_map_cast_hypergeometricMeasure_zero :
     variance id ((hypergeometricMeasure 0 0 0).map (Nat.cast : ℕ → ℝ)) = 0 := by
   simp
 
 /-- Every valid hypergeometric law on a population of size one has variance zero. -/
-@[simp]
 theorem variance_id_map_cast_hypergeometricMeasure_of_population_one {K n : ℕ}
     (hK : K ≤ 1) (hn : n ≤ 1) :
     variance id ((hypergeometricMeasure 1 K n).map (Nat.cast : ℕ → ℝ)) = 0 := by
