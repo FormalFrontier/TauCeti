@@ -5,6 +5,9 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.GroupTheory.Perm.Partition
+public import TauCeti.RepresentationTheory.FDRep
+public import TauCeti.RepresentationTheory.Subrepresentation
 public import TauCeti.RepresentationTheory.Symmetric.Specht.Character
 
 /-!
@@ -30,13 +33,15 @@ on it through those scalars.  What differs is where the scalars come from.
   permutation is a column permutation of `t` and rescales `e_t` by its sign
   (`TauCeti.YoungTableau.polytabloid_relabel_of_mem_colSubgroup`).  The scalars are the signs.
 
-As in `TauCeti.RepresentationTheory.Symmetric.Specht.Ideal.Extremes`, which proves the same two
-identifications for the left-ideal presentation `ℚ[Sₙ] c_t`, the shape hypotheses are stated on the
-row and column groups rather than on the diagram: `rowSubgroup t = ⊤` says that all the labels
-share a row, and `colSubgroup t = ⊤` that all of them share a column.  Each is supplied by the
-diagram-level criterion `TauCeti.YoungTableau.rowSubgroup_eq_top_iff` resp.
-`TauCeti.YoungTableau.colSubgroup_eq_top_iff`, and the partition-level results below feed those
-criteria with `TauCeti.colLen_diagramOf_indiscrete_le_one` and
+The two shape hypotheses come in the two equivalent forms that
+`TauCeti.YoungTableau.rowSubgroup_eq_top_iff` and `TauCeti.YoungTableau.colSubgroup_eq_top_iff`
+relate.  A statement whose conclusion mentions a tableau `t` — the polytabloid identities, and the
+description of the Specht module as the line through `e_t` — is stated on the row resp. column
+group of that `t`, as in `TauCeti.RepresentationTheory.Symmetric.Specht.Ideal.Extremes`, which
+proves the same two identifications for the left-ideal presentation `ℚ[Sₙ] c_t`.  A statement
+about `spechtSubrepresentation μ` alone is stated on the diagram, as `μ.colLen 0 ≤ 1` resp.
+`μ.rowLen 0 ≤ 1`, so that no tableau has to be produced to use it; the partition-level results
+below feed those hypotheses with `TauCeti.colLen_diagramOf_indiscrete_le_one` and
 `TauCeti.rowLen_diagramOf_ones_le_one`.  The two hypotheses are compatible rather than exclusive:
 on the empty diagram both hold, and there `Sₙ` is trivial and so are both characters.
 
@@ -48,20 +53,20 @@ either; it is not a line and needs the tabloid combinatorics of the two-row shap
 
 ## Main results
 
-* `TauCeti.YoungTableau.spechtSubrepresentation_toRepresentation_eq_trivial`: **`S^{(n)}` is the
-  trivial representation**, and
-  `TauCeti.YoungTableau.finrank_spechtSubrepresentation_of_rowSubgroup_eq_top` that it is a line.
-* `TauCeti.YoungTableau.spechtSubrepresentation_toRepresentation_apply_of_colSubgroup_eq_top`:
-  **`S^{(1ⁿ)}` is the sign representation**, and
-  `TauCeti.YoungTableau.finrank_spechtSubrepresentation_of_colSubgroup_eq_top` that it too is a
+* `TauCeti.spechtSubrepresentation_toRepresentation_eq_trivial`: **`S^{(n)}` is the trivial
+  representation**, and `TauCeti.finrank_spechtSubrepresentation_of_colLen_le_one` that it is a
   line.
+* `TauCeti.spechtSubrepresentation_toRepresentation_apply_of_rowLen_le_one`: **`S^{(1ⁿ)}` is the
+  sign representation**, and `TauCeti.finrank_spechtSubrepresentation_of_rowLen_le_one` that it too
+  is a line.
 * `TauCeti.spechtModule_indiscrete_ρ_apply`, `TauCeti.finrank_spechtModule_indiscrete`,
   `TauCeti.spechtModule_ones_ρ_apply` and `TauCeti.finrank_spechtModule_ones`: the same four
   statements for the partition-indexed Specht modules `S^{(n)}` and `S^{(1ⁿ)}`.
 * `TauCeti.spechtChar_indiscrete` and `TauCeti.spechtChar_ones`: the two integer characters,
   `χ^{(n)} = 1` and `χ^{(1ⁿ)} = sgn`.
-* `TauCeti.symmetricCharacterTable_indiscrete`: the row of `(n)` in the character table of `Sₙ` is
-  the all-ones row.
+* `TauCeti.symmetricCharacterTable_indiscrete` and `TauCeti.symmetricCharacterTable_ones`: the two
+  extreme rows of the character table of `Sₙ`, the all-ones row and the row of signs, the latter
+  read off the number of parts of the cycle type.
 
 ## References
 
@@ -81,15 +86,34 @@ namespace YoungTableau
 
 variable {μ : YoungDiagram}
 
-/-! ## The polytabloid of a shape with nothing to antisymmetrize over -/
+/-! ## The polytabloids of the two extreme shapes -/
 
-/-- **A polytabloid with trivial column group is the bare tabloid.**  The column antisymmetrizer of
-`t` is then `1`, so there is nothing to antisymmetrize.  A shape with at most one row is the case
-of interest, by `TauCeti.YoungTableau.colSubgroup_eq_bot_of_rowSubgroup_eq_top`. -/
-theorem polytabloid_eq_single_of_colSubgroup_eq_bot (t : YoungTableau μ)
-    (h : colSubgroup t = ⊥) :
-    polytabloid t = MonoidAlgebra.single (tabloid t) (1 : ℚ) := by
-  rw [polytabloid_def, columnAntisymmetrizer_eq_one t h, map_one, Module.End.one_apply]
+/-- Every permutation fixes the polytabloid of a tableau all of whose labels share a row: the
+polytabloid is the bare tabloid, and the row group, which is everything, is its stabilizer. -/
+@[simp]
+theorem permutationModule_ρ_polytabloid_of_rowSubgroup_eq_top (t : YoungTableau μ)
+    (h : rowSubgroup t = ⊤) (σ : Equiv.Perm (Fin μ.card)) :
+    (permutationModule (shapePartition μ)).ρ σ (polytabloid t) = polytabloid t := by
+  have hmem : σ ∈ rowSubgroup t := by rw [h]; exact Subgroup.mem_top σ
+  rw [polytabloid_eq_single_of_colSubgroup_eq_bot t
+      (colSubgroup_eq_bot_of_rowSubgroup_eq_top t h),
+    Representation.ofMulAction_single, smul_tabloid_eq_self_iff.mpr hmem]
+
+/-- Every permutation scales the polytabloid of a tableau all of whose labels share a column by its
+sign: every permutation is then a column permutation of `t`. -/
+@[simp]
+theorem permutationModule_ρ_polytabloid_of_colSubgroup_eq_top (t : YoungTableau μ)
+    (h : colSubgroup t = ⊤) (σ : Equiv.Perm (Fin μ.card)) :
+    (permutationModule (shapePartition μ)).ρ σ (polytabloid t) =
+      ((Equiv.Perm.sign σ : ℤ) : ℚ) • polytabloid t := by
+  have hmem : σ ∈ colSubgroup t := by rw [h]; exact Subgroup.mem_top σ
+  rw [← polytabloid_relabel σ t, polytabloid_relabel_of_mem_colSubgroup hmem]
+
+end YoungTableau
+
+open YoungTableau
+
+variable {μ : YoungDiagram}
 
 /-! ## A Specht module whose generating polytabloid is a group eigenvector
 
@@ -127,74 +151,54 @@ private theorem spechtSubrepresentation_toRepresentation_apply (t : YoungTableau
     exact x.2
   obtain ⟨c, hc⟩ := Submodule.mem_span_singleton.mp hx
   refine Subtype.ext ?_
-  change (permutationModule (shapePartition μ)).ρ σ (x : (permutationModule (shapePartition μ)).V)
-      = ((χ σ • x : (spechtSubrepresentation μ).toSubmodule) :
-        (permutationModule (shapePartition μ)).V)
-  rw [Submodule.coe_smul, ← hc, map_smul, h σ, smul_comm]
+  rw [Subrepresentation.toRepresentation_apply, LinearMap.coe_restrict_apply, Submodule.coe_smul,
+    ← hc, map_smul, h σ, smul_comm]
 
 /-! ## The one-row shape gives the trivial representation -/
 
-/-- Every permutation fixes the polytabloid of a tableau all of whose labels share a row: the
-polytabloid is the bare tabloid, and the row group, which is everything, is its stabilizer. -/
-theorem permutationModule_ρ_polytabloid_of_rowSubgroup_eq_top (t : YoungTableau μ)
-    (h : rowSubgroup t = ⊤) (σ : Equiv.Perm (Fin μ.card)) :
-    (permutationModule (shapePartition μ)).ρ σ (polytabloid t) = polytabloid t := by
-  have hmem : σ ∈ rowSubgroup t := by rw [h]; exact Subgroup.mem_top σ
-  rw [polytabloid_eq_single_of_colSubgroup_eq_bot t
-      (colSubgroup_eq_bot_of_rowSubgroup_eq_top t h),
-    Representation.ofMulAction_single, smul_tabloid_eq_self_iff.mpr hmem]
-
 /-- The Specht module of a shape with at most one row is the line through any of its
 polytabloids. -/
-theorem spechtSubrepresentation_toSubmodule_of_rowSubgroup_eq_top (t : YoungTableau μ)
+theorem spechtSubrepresentation_toSubmodule_eq_span_of_rowSubgroup_eq_top (t : YoungTableau μ)
     (h : rowSubgroup t = ⊤) :
     (spechtSubrepresentation μ).toSubmodule = ℚ ∙ polytabloid t :=
   spechtSubrepresentation_toSubmodule_eq_span (χ := fun _ => 1) t fun σ => by
     rw [one_smul, permutationModule_ρ_polytabloid_of_rowSubgroup_eq_top t h]
 
 /-- The Specht module of a shape with at most one row is a line. -/
-theorem finrank_spechtSubrepresentation_of_rowSubgroup_eq_top (t : YoungTableau μ)
-    (h : rowSubgroup t = ⊤) :
-    finrank ℚ (spechtSubrepresentation μ).toSubmodule = 1 :=
-  finrank_spechtSubrepresentation_eq_one (χ := fun _ => 1) t fun σ => by
-    rw [one_smul, permutationModule_ρ_polytabloid_of_rowSubgroup_eq_top t h]
+theorem finrank_spechtSubrepresentation_of_colLen_le_one (h : μ.colLen 0 ≤ 1) :
+    finrank ℚ (spechtSubrepresentation μ).toSubmodule = 1 := by
+  obtain ⟨t⟩ := YoungTableau.nonempty μ
+  exact finrank_spechtSubrepresentation_eq_one (χ := fun _ => 1) t fun σ => by
+    rw [one_smul,
+      permutationModule_ρ_polytabloid_of_rowSubgroup_eq_top t ((rowSubgroup_eq_top_iff t).mpr h)]
 
 /-- The symmetric group fixes the Specht module of a shape with at most one row pointwise. -/
-theorem spechtSubrepresentation_toRepresentation_apply_of_rowSubgroup_eq_top (t : YoungTableau μ)
-    (h : rowSubgroup t = ⊤) (σ : Equiv.Perm (Fin μ.card))
-    (x : (spechtSubrepresentation μ).toSubmodule) :
+theorem spechtSubrepresentation_toRepresentation_apply_of_colLen_le_one (h : μ.colLen 0 ≤ 1)
+    (σ : Equiv.Perm (Fin μ.card)) (x : (spechtSubrepresentation μ).toSubmodule) :
     (spechtSubrepresentation μ).toRepresentation σ x = x := by
+  obtain ⟨t⟩ := YoungTableau.nonempty μ
   refine (spechtSubrepresentation_toRepresentation_apply (χ := fun _ => 1) t (fun σ => ?_) σ
     x).trans (one_smul ℚ x)
-  rw [one_smul, permutationModule_ρ_polytabloid_of_rowSubgroup_eq_top t h]
+  rw [one_smul,
+    permutationModule_ρ_polytabloid_of_rowSubgroup_eq_top t ((rowSubgroup_eq_top_iff t).mpr h)]
 
 /-- **`S^{(n)}` is the trivial representation**: on a shape with at most one row the symmetric
 group acts trivially on the span of the polytabloids.  Together with
-`TauCeti.YoungTableau.finrank_spechtSubrepresentation_of_rowSubgroup_eq_top` this identifies it as
-the one-dimensional trivial representation. -/
-theorem spechtSubrepresentation_toRepresentation_eq_trivial (t : YoungTableau μ)
-    (h : rowSubgroup t = ⊤) :
+`TauCeti.finrank_spechtSubrepresentation_of_colLen_le_one` this identifies it as the
+one-dimensional trivial representation. -/
+theorem spechtSubrepresentation_toRepresentation_eq_trivial (h : μ.colLen 0 ≤ 1) :
     (spechtSubrepresentation μ).toRepresentation =
       Representation.trivial ℚ (Equiv.Perm (Fin μ.card))
         (spechtSubrepresentation μ).toSubmodule := by
   refine DFunLike.ext _ _ fun σ => LinearMap.ext fun x => ?_
-  rw [spechtSubrepresentation_toRepresentation_apply_of_rowSubgroup_eq_top t h,
+  rw [spechtSubrepresentation_toRepresentation_apply_of_colLen_le_one h,
     Representation.trivial_apply]
 
 /-! ## The one-column shape gives the sign representation -/
 
-/-- Every permutation scales the polytabloid of a tableau all of whose labels share a column by its
-sign: every permutation is then a column permutation of `t`. -/
-theorem permutationModule_ρ_polytabloid_of_colSubgroup_eq_top (t : YoungTableau μ)
-    (h : colSubgroup t = ⊤) (σ : Equiv.Perm (Fin μ.card)) :
-    (permutationModule (shapePartition μ)).ρ σ (polytabloid t) =
-      ((Equiv.Perm.sign σ : ℤ) : ℚ) • polytabloid t := by
-  have hmem : σ ∈ colSubgroup t := by rw [h]; exact Subgroup.mem_top σ
-  rw [← polytabloid_relabel σ t, polytabloid_relabel_of_mem_colSubgroup hmem]
-
 /-- The Specht module of a shape with at most one column is the line through any of its
 polytabloids. -/
-theorem spechtSubrepresentation_toSubmodule_of_colSubgroup_eq_top (t : YoungTableau μ)
+theorem spechtSubrepresentation_toSubmodule_eq_span_of_colSubgroup_eq_top (t : YoungTableau μ)
     (h : colSubgroup t = ⊤) :
     (spechtSubrepresentation μ).toSubmodule = ℚ ∙ polytabloid t :=
   spechtSubrepresentation_toSubmodule_eq_span
@@ -202,91 +206,85 @@ theorem spechtSubrepresentation_toSubmodule_of_colSubgroup_eq_top (t : YoungTabl
     (permutationModule_ρ_polytabloid_of_colSubgroup_eq_top t h)
 
 /-- The Specht module of a shape with at most one column is a line. -/
-theorem finrank_spechtSubrepresentation_of_colSubgroup_eq_top (t : YoungTableau μ)
-    (h : colSubgroup t = ⊤) :
-    finrank ℚ (spechtSubrepresentation μ).toSubmodule = 1 :=
-  finrank_spechtSubrepresentation_eq_one
+theorem finrank_spechtSubrepresentation_of_rowLen_le_one (h : μ.rowLen 0 ≤ 1) :
+    finrank ℚ (spechtSubrepresentation μ).toSubmodule = 1 := by
+  obtain ⟨t⟩ := YoungTableau.nonempty μ
+  exact finrank_spechtSubrepresentation_eq_one
     (χ := fun σ => ((Equiv.Perm.sign σ : ℤ) : ℚ)) t
-    (permutationModule_ρ_polytabloid_of_colSubgroup_eq_top t h)
+    (permutationModule_ρ_polytabloid_of_colSubgroup_eq_top t ((colSubgroup_eq_top_iff t).mpr h))
 
 /-- **`S^{(1ⁿ)}` is the sign representation**: on a shape with at most one column the symmetric
 group acts on the span of the polytabloids through the sign character.  Together with
-`TauCeti.YoungTableau.finrank_spechtSubrepresentation_of_colSubgroup_eq_top` this identifies it as
-the one-dimensional sign representation. -/
-theorem spechtSubrepresentation_toRepresentation_apply_of_colSubgroup_eq_top (t : YoungTableau μ)
-    (h : colSubgroup t = ⊤) (σ : Equiv.Perm (Fin μ.card))
-    (x : (spechtSubrepresentation μ).toSubmodule) :
-    (spechtSubrepresentation μ).toRepresentation σ x = ((Equiv.Perm.sign σ : ℤ) : ℚ) • x :=
-  spechtSubrepresentation_toRepresentation_apply
+`TauCeti.finrank_spechtSubrepresentation_of_rowLen_le_one` this identifies it as the
+one-dimensional sign representation. -/
+theorem spechtSubrepresentation_toRepresentation_apply_of_rowLen_le_one (h : μ.rowLen 0 ≤ 1)
+    (σ : Equiv.Perm (Fin μ.card)) (x : (spechtSubrepresentation μ).toSubmodule) :
+    (spechtSubrepresentation μ).toRepresentation σ x = ((Equiv.Perm.sign σ : ℤ) : ℚ) • x := by
+  obtain ⟨t⟩ := YoungTableau.nonempty μ
+  exact spechtSubrepresentation_toRepresentation_apply
     (χ := fun σ => ((Equiv.Perm.sign σ : ℤ) : ℚ)) t
-    (permutationModule_ρ_polytabloid_of_colSubgroup_eq_top t h) σ x
-
-end YoungTableau
+    (permutationModule_ρ_polytabloid_of_colSubgroup_eq_top t ((colSubgroup_eq_top_iff t).mpr h))
+    σ x
 
 /-! ## The partition-indexed Specht modules of the two extreme partitions -/
-
-open YoungTableau
-
-/-- A tableau of the one-row shape has all its labels in one row. -/
-private theorem rowSubgroup_eq_top_diagramOf_indiscrete (n : ℕ)
-    (t : YoungTableau (diagramOf (Nat.Partition.indiscrete n))) : rowSubgroup t = ⊤ :=
-  (rowSubgroup_eq_top_iff t).mpr (colLen_diagramOf_indiscrete_le_one n)
-
-/-- A tableau of the one-column shape has all its labels in one column. -/
-private theorem colSubgroup_eq_top_diagramOf_ones (n : ℕ)
-    (t : YoungTableau (diagramOf (Nat.Partition.ones n))) : colSubgroup t = ⊤ :=
-  (colSubgroup_eq_top_iff t).mpr (rowLen_diagramOf_ones_le_one n 0)
 
 /-- **`S^{(n)}` is a line.** -/
 @[simp]
 theorem finrank_spechtModule_indiscrete (n : ℕ) :
-    finrank ℚ (spechtModule (Nat.Partition.indiscrete n)) = 1 := by
-  obtain ⟨t⟩ := YoungTableau.nonempty (diagramOf (Nat.Partition.indiscrete n))
-  exact finrank_spechtSubrepresentation_of_rowSubgroup_eq_top t
-    (rowSubgroup_eq_top_diagramOf_indiscrete n t)
+    finrank ℚ (spechtModule (Nat.Partition.indiscrete n)) = 1 :=
+  finrank_spechtSubrepresentation_of_colLen_le_one (colLen_diagramOf_indiscrete_le_one n)
 
-/-- **`S^{(n)}` is the trivial representation**: the symmetric group fixes it pointwise. -/
+/-- **`S^{(n)}` is the trivial representation**: the symmetric group fixes it pointwise.
+
+This is not a `simp` lemma: `TauCeti.spechtModule` is an `abbrev` for an `FDRep.of`, so
+`FDRep.of_ρ'` already rewrites its left-hand side to the action of
+`TauCeti.spechtSubrepresentation` along the relabelling. -/
 theorem spechtModule_indiscrete_ρ_apply (n : ℕ) (σ : Equiv.Perm (Fin n))
     (x : spechtModule (Nat.Partition.indiscrete n)) :
-    (spechtModule (Nat.Partition.indiscrete n)).ρ σ x = x := by
-  obtain ⟨t⟩ := YoungTableau.nonempty (diagramOf (Nat.Partition.indiscrete n))
-  exact spechtSubrepresentation_toRepresentation_apply_of_rowSubgroup_eq_top t
-    (rowSubgroup_eq_top_diagramOf_indiscrete n t) _ x
+    (spechtModule (Nat.Partition.indiscrete n)).ρ σ x = x :=
+  spechtSubrepresentation_toRepresentation_apply_of_colLen_le_one
+    (colLen_diagramOf_indiscrete_le_one n) _ x
+
+/-- **`S^{(n)}` is the trivial representation**, in the extensional form its character is read
+off. -/
+theorem spechtModule_indiscrete_ρ_eq_trivial (n : ℕ) :
+    (spechtModule (Nat.Partition.indiscrete n)).ρ =
+      Representation.trivial ℚ (Equiv.Perm (Fin n))
+        (spechtModule (Nat.Partition.indiscrete n)) :=
+  DFunLike.ext _ _ fun σ => LinearMap.ext fun x => by
+    rw [spechtModule_indiscrete_ρ_apply, Representation.trivial_apply]
 
 /-- **`S^{(1ⁿ)}` is a line.** -/
 @[simp]
 theorem finrank_spechtModule_ones (n : ℕ) :
-    finrank ℚ (spechtModule (Nat.Partition.ones n)) = 1 := by
-  obtain ⟨t⟩ := YoungTableau.nonempty (diagramOf (Nat.Partition.ones n))
-  exact finrank_spechtSubrepresentation_of_colSubgroup_eq_top t
-    (colSubgroup_eq_top_diagramOf_ones n t)
+    finrank ℚ (spechtModule (Nat.Partition.ones n)) = 1 :=
+  finrank_spechtSubrepresentation_of_rowLen_le_one (rowLen_diagramOf_ones_le_one n 0)
 
 /-- **`S^{(1ⁿ)}` is the sign representation**: the symmetric group acts on it through the sign
 character.  The sign is unchanged by the relabelling `Fin n ≃ Fin (diagramOf (1ⁿ)).card` that
-`TauCeti.spechtModule` transports along. -/
+`TauCeti.spechtModule` transports along.
+
+This is not a `simp` lemma, for the reason given at
+`TauCeti.spechtModule_indiscrete_ρ_apply`. -/
 theorem spechtModule_ones_ρ_apply (n : ℕ) (σ : Equiv.Perm (Fin n))
     (x : spechtModule (Nat.Partition.ones n)) :
     (spechtModule (Nat.Partition.ones n)).ρ σ x = ((Equiv.Perm.sign σ : ℤ) : ℚ) • x := by
-  obtain ⟨t⟩ := YoungTableau.nonempty (diagramOf (Nat.Partition.ones n))
-  have h := spechtSubrepresentation_toRepresentation_apply_of_colSubgroup_eq_top t
-    (colSubgroup_eq_top_diagramOf_ones n t)
+  have h := spechtSubrepresentation_toRepresentation_apply_of_rowLen_le_one
+    (rowLen_diagramOf_ones_le_one n 0)
     ((finCongr (card_diagramOf (Nat.Partition.ones n)).symm).permCongrHom σ) x
   rwa [Equiv.permCongrHom_coe, Equiv.Perm.sign_permCongr] at h
 
 /-! ## The two extreme rows of the character table of `Sₙ` -/
 
-/-- **`χ^{(n)} = 1`**: the character of the trivial representation. -/
+/-- **`χ^{(n)} = 1`**: the character of the trivial representation, whose value is the dimension of
+its carrier. -/
 @[simp]
 theorem spechtChar_indiscrete (n : ℕ) (σ : Equiv.Perm (Fin n)) :
     spechtChar (Nat.Partition.indiscrete n) σ = 1 := by
-  have hrho : ((spechtModule (Nat.Partition.indiscrete n)).ρ σ :
-      spechtModule (Nat.Partition.indiscrete n) →ₗ[ℚ]
-        spechtModule (Nat.Partition.indiscrete n)) = LinearMap.id :=
-    LinearMap.ext fun x => spechtModule_indiscrete_ρ_apply n σ x
   have hcast : ((spechtChar (Nat.Partition.indiscrete n) σ : ℤ) : ℚ) = ((1 : ℤ) : ℚ) := by
-    rw [spechtChar_cast, FDRep.character, hrho, LinearMap.trace_id,
-      finrank_spechtModule_indiscrete]
-    norm_num
+    rw [spechtChar_cast, FDRep.character, spechtModule_indiscrete_ρ_eq_trivial]
+    exact (Representation.char_trivial σ).trans (by
+      rw [finrank_spechtModule_indiscrete]; norm_num)
   exact_mod_cast hcast
 
 /-- **`χ^{(1ⁿ)} = sgn`**: the character of the sign representation. -/
@@ -304,12 +302,52 @@ theorem spechtChar_ones (n : ℕ) (σ : Equiv.Perm (Fin n)) :
     norm_num
   exact_mod_cast hcast
 
+/-- **The `(n)` entry of the character table is `1` on every class**, the trivial character taking
+that value everywhere. -/
+@[simp]
+theorem spechtCharValue_indiscrete (n : ℕ) (ν : n.Partition) :
+    spechtCharValue (Nat.Partition.indiscrete n) ν = 1 := by
+  obtain ⟨σ, hσ⟩ := ConjClasses.mk_surjective (partitionEquivConjClasses n ν)
+  rw [spechtCharValue_eq_spechtChar _ _ hσ, spechtChar_indiscrete]
+
+/-- **The `(1ⁿ)` entry of the character table is the sign of the class of cycle type `ν`**, read
+off the number of parts of `ν` by `Equiv.Perm.sign_of_parts_partition`; the parts of
+`Equiv.Perm.partition` include the fixed points, so the correction is the ambient `n`. -/
+@[simp]
+theorem spechtCharValue_ones (n : ℕ) (ν : n.Partition) :
+    spechtCharValue (Nat.Partition.ones n) ν = (-1) ^ (n + Multiset.card ν.parts) := by
+  obtain ⟨σ, hσ⟩ := ConjClasses.mk_surjective (partitionEquivConjClasses n ν)
+  have hparts : Multiset.card σ.partition.parts = Multiset.card ν.parts := by
+    have hcast : ∀ {m : ℕ} (e : n = m) (p : n.Partition),
+        (Equiv.cast (congrArg Nat.Partition e) p).parts = p.parts := by
+      rintro m rfl p
+      rfl
+    have hσpart : σ.partition =
+        Equiv.cast (congrArg Nat.Partition (Fintype.card_fin n).symm) ν := by
+      rw [← permConjClassPartition_mk, hσ, permConjClassPartition_partitionEquivConjClasses]
+    rw [hσpart]
+    exact congrArg Multiset.card (hcast (Fintype.card_fin n).symm ν)
+  rw [spechtCharValue_eq_spechtChar _ _ hσ, spechtChar_ones,
+    Equiv.Perm.sign_of_parts_partition, hparts, Fintype.card_fin]
+  simp
+
 /-- **The row of `(n)` in the character table of `Sₙ` is the all-ones row**, the trivial character
-taking the value `1` on every conjugacy class. -/
+taking the value `1` on every conjugacy class.
+
+This is not a `simp` lemma: `TauCeti.symmetricCharacterTable_apply` already rewrites its left-hand
+side to `TauCeti.spechtCharValue`, where `TauCeti.spechtCharValue_indiscrete` finishes the
+reduction. -/
 theorem symmetricCharacterTable_indiscrete (n : ℕ) (ν : n.Partition) :
     symmetricCharacterTable n (Nat.Partition.indiscrete n) ν = 1 := by
-  obtain ⟨σ, hσ⟩ := ConjClasses.mk_surjective (partitionEquivConjClasses n ν)
-  rw [symmetricCharacterTable_apply, spechtCharValue_eq_spechtChar _ _ hσ,
-    spechtChar_indiscrete]
+  rw [symmetricCharacterTable_apply, spechtCharValue_indiscrete]
+
+/-- **The row of `(1ⁿ)` in the character table of `Sₙ` is the row of signs**, the sign character
+evaluated on the class of cycle type `ν`.
+
+This is not a `simp` lemma, for the reason given at
+`TauCeti.symmetricCharacterTable_indiscrete`. -/
+theorem symmetricCharacterTable_ones (n : ℕ) (ν : n.Partition) :
+    symmetricCharacterTable n (Nat.Partition.ones n) ν = (-1) ^ (n + Multiset.card ν.parts) := by
+  rw [symmetricCharacterTable_apply, spechtCharValue_ones]
 
 end TauCeti
