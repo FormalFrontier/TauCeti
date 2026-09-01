@@ -5,8 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Geometry.Manifold.Riemannian.Distance
-public import TauCeti.Geometry.Manifold.MFDeriv.Curve
+public import Mathlib.Geometry.Manifold.Riemannian.Basic
+import TauCeti.Geometry.Manifold.MFDeriv.Curve
 
 /-!
 # Coordinate displacement is bounded by Riemannian path length
