@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 public import TauCeti.KnotTheory.Grid.Rectangle.Squares
 
 /-!
@@ -32,10 +31,6 @@ The following results are in the `TauCeti.GridRectangle` namespace:
 * `coveredSquares_union_eq_of_mem_cIoo`: the first L-shaped repartition identity.
 * `coveredSquares_union_eq_of_mem_cIoo_complementary_col_cut`: the complementary column-cut
   orientation of the same identity.
-* `prod_coveredSquares_mul_prod_coveredSquares_eq_of_mem_cIoo`: any multiplicative weight is
-  preserved by the first repartition.
-* `prod_coveredSquares_mul_prod_coveredSquares_eq_of_mem_cIoo_complementary_col_cut`: any
-  multiplicative weight is preserved by the complementary column-cut repartition.
 
 ## References
 
@@ -86,62 +81,6 @@ theorem coveredSquares_union_eq_of_mem_cIoo_complementary_col_cut {a b c u v w :
     (product_union_eq_union_product
       (s := Grid.cIco a c) (s' := Grid.cIco c b)
       (t := Grid.cIco v w) (t' := Grid.cIco u v))
-
-/-- Recutting the first L-shaped domain preserves the product of any commutative weight on its
-covered squares. In the unblocked differential, specializing the weight to the variables of the
-covered `O`-markings gives preservation of the product of rectangle monomials. -/
-theorem prod_coveredSquares_mul_prod_coveredSquares_eq_of_mem_cIoo
-    {a b c u v w : Fin n} {M : Type*} [CommMonoid M] (f : Fin n × Fin n → M)
-    (hcol : b ∈ Grid.cIoo a c) (hrow : v ∈ Grid.cIoo u w) :
-    (∏ p ∈ ({ left := a, right := b, bottom := u, top := v } : GridRectangle n).coveredSquares,
-        f p) *
-        ∏ p ∈ ({ left := a, right := c, bottom := v, top := w } : GridRectangle n).coveredSquares,
-          f p =
-      (∏ p ∈ ({ left := b, right := c, bottom := v, top := w } : GridRectangle n).coveredSquares,
-          f p) *
-        ∏ p ∈ ({ left := a, right := b, bottom := u, top := w } : GridRectangle n).coveredSquares,
-          f p := by
-  have hleft : Disjoint
-      ({ left := a, right := b, bottom := u, top := v } : GridRectangle n).coveredSquares
-      ({ left := a, right := c, bottom := v, top := w } : GridRectangle n).coveredSquares :=
-    (disjoint_coveredSquares_iff _ _).mpr (Or.inr (by
-      simpa only [coveredRows_def] using Grid.disjoint_cIco_cIco_of_mem_cIoo hrow))
-  have hright : Disjoint
-      ({ left := b, right := c, bottom := v, top := w } : GridRectangle n).coveredSquares
-      ({ left := a, right := b, bottom := u, top := w } : GridRectangle n).coveredSquares :=
-    (disjoint_coveredSquares_iff _ _).mpr (Or.inl (by
-      simpa only [coveredColumns_def] using
-        (Grid.disjoint_cIco_cIco_of_mem_cIoo hcol).symm))
-  rw [← Finset.prod_union hleft,
-    coveredSquares_union_eq_of_mem_cIoo hcol hrow,
-    Finset.prod_union hright]
-
-/-- Recutting the complementary L-shaped domain preserves the product of any commutative weight
-on its covered squares. -/
-theorem prod_coveredSquares_mul_prod_coveredSquares_eq_of_mem_cIoo_complementary_col_cut
-    {a b c u v w : Fin n} {M : Type*} [CommMonoid M] (f : Fin n × Fin n → M)
-    (hcol : c ∈ Grid.cIoo a b) (hrow : v ∈ Grid.cIoo u w) :
-    (∏ p ∈ ({ left := a, right := b, bottom := u, top := v } : GridRectangle n).coveredSquares,
-        f p) *
-        ∏ p ∈ ({ left := a, right := c, bottom := v, top := w } : GridRectangle n).coveredSquares,
-          f p =
-      (∏ p ∈ ({ left := a, right := c, bottom := u, top := w } : GridRectangle n).coveredSquares,
-          f p) *
-        ∏ p ∈ ({ left := c, right := b, bottom := u, top := v } : GridRectangle n).coveredSquares,
-          f p := by
-  have hleft : Disjoint
-      ({ left := a, right := b, bottom := u, top := v } : GridRectangle n).coveredSquares
-      ({ left := a, right := c, bottom := v, top := w } : GridRectangle n).coveredSquares :=
-    (disjoint_coveredSquares_iff _ _).mpr (Or.inr (by
-      simpa only [coveredRows_def] using Grid.disjoint_cIco_cIco_of_mem_cIoo hrow))
-  have hright : Disjoint
-      ({ left := a, right := c, bottom := u, top := w } : GridRectangle n).coveredSquares
-      ({ left := c, right := b, bottom := u, top := v } : GridRectangle n).coveredSquares :=
-    (disjoint_coveredSquares_iff _ _).mpr (Or.inl (by
-      simpa only [coveredColumns_def] using Grid.disjoint_cIco_cIco_of_mem_cIoo hcol))
-  rw [← Finset.prod_union hleft,
-    coveredSquares_union_eq_of_mem_cIoo_complementary_col_cut hcol hrow,
-    Finset.prod_union hright]
 
 end GridRectangle
 
