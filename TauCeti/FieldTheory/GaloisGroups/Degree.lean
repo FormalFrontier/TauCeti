@@ -19,8 +19,8 @@ is chosen globally: the result is stated as a `Nonempty` equivalence, leaving la
 with reference permutation groups to carry their chosen numbering explicitly.
 
 The Galois action itself is faithful over every splitting extension. Consequently its image has
-the same cardinality as the polynomial Galois group. For a separable polynomial this also shows
-that the Galois-group order divides the factorial of the polynomial degree.
+the same cardinality as the polynomial Galois group, and the Galois-group order divides the
+factorial of the polynomial degree.
 
 ## Main results
 
@@ -30,8 +30,8 @@ that the Galois-group order divides the factorial of the polynomial degree.
   Galois group.
 * `TauCeti.natCard_gal_dvd_factorial_card_rootSet`: the Galois-group order divides the factorial
   of the number of distinct roots.
-* `TauCeti.natCard_gal_dvd_factorial_natDegree`: the order of a separable polynomial's Galois
-  group divides the factorial of its degree.
+* `TauCeti.natCard_gal_dvd_factorial_natDegree`: the order of a polynomial's Galois group divides
+  the factorial of its degree.
 
 The proofs reuse Mathlib's `Polynomial.card_rootSet_eq_natDegree`,
 `Polynomial.Gal.galActionHom_injective`, `MonoidHom.ofInjective`, and Lagrange's theorem. This is
@@ -88,12 +88,13 @@ theorem natCard_gal_dvd_factorial_card_rootSet (p : F[X]) :
     _ = (Fintype.card (p.rootSet p.SplittingField)).factorial := by
       rw [Nat.card_perm, Nat.card_eq_fintype_card]
 
-/-- The order of the Galois group of a separable polynomial divides the factorial of its degree,
-through its faithful action on the distinct roots. -/
-theorem natCard_gal_dvd_factorial_natDegree (p : F[X]) (hsep : p.Separable) :
+/-- The order of the Galois group of a polynomial divides the factorial of its degree, through
+its faithful action on the distinct roots. -/
+theorem natCard_gal_dvd_factorial_natDegree (p : F[X]) :
     Nat.card p.Gal ∣ p.natDegree.factorial := by
-  simpa only [Polynomial.card_rootSet_eq_natDegree hsep
-    (IsSplittingField.splits p.SplittingField p)] using
-    natCard_gal_dvd_factorial_card_rootSet p
+  exact (natCard_gal_dvd_factorial_card_rootSet p).trans
+    (Nat.factorial_dvd_factorial <| by
+      rw [Set.fintypeCard_eq_ncard]
+      exact Polynomial.ncard_rootSet_le p p.SplittingField)
 
 end TauCeti
