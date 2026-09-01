@@ -259,6 +259,44 @@ theorem baseChangePointsMulEquiv_mapPoints {B C : CommAlgCat.{w} A} (f : B ⟶ C
     exact RingHom.ext fun x ↦ AlgHom.restrictScalars_apply ℤ f.hom x
   rw [hring]
 
+/-- Point transport commutes with a coordinate map presented by compatible scalar-extension
+isomorphisms. This is the common categorical argument behind the root-subgroup and weight-torus
+compatibility proofs below; the remaining work in each proof identifies its generator parameter. -/
+private theorem baseChangeIsoPointsMulEquiv_mapPointsFunctor
+    {K : CommHopfAlgCat ℤ} {KA : CommHopfAlgCat.{v} A}
+    (gK : CommHopfAlgCat.baseChange (K := A) K ⟶ KA)
+    (f : CommHopfAlgCat.quotient
+        (GeneralLinear.coordinateHopfAlgebra ℤ (dimension n)) (definingIdeal n hn) ⟶ K)
+    (fA : CommHopfAlgCat.quotient
+        (GeneralLinear.coordinateHopfAlgebra A (dimension n))
+          (baseChangeDefiningIdeal n hn A) ⟶ KA)
+    (hcompat : (baseChangeCoordinateIso n hn A).hom ≫
+      CommHopfAlgCat.baseChangeMap f ≫ gK = fA)
+    (B : CommAlgCat.{w} A)
+    (q : HopfAlgebra.points (R := A) (H := KA) B) :
+    CommHopfAlgCat.baseChangeIsoPointsMulEquiv (baseChangeCoordinateIso n hn A) B
+        (WithConv.toConv (q.ofConv.comp fA.hom.toAlgHom)) =
+      WithConv.toConv
+        ((CommHopfAlgCat.baseChangePointsMulEquiv (K := A) B K
+          (WithConv.toConv (q.ofConv.comp gK.hom.toAlgHom))).ofConv.comp
+            f.hom.toAlgHom) := by
+  apply WithConv.ofConv_injective
+  apply AlgHom.ext
+  intro x
+  rw [CommHopfAlgCat.baseChangeIsoPointsMulEquiv_apply_apply]
+  simp only [AlgHom.comp_apply]
+  rw [CommHopfAlgCat.baseChangePointsMulEquiv_apply_apply]
+  simp only [AlgHom.comp_apply]
+  rw [← hcompat, _root_.CommHopfAlgCat.hom_comp, _root_.CommHopfAlgCat.hom_comp]
+  -- Category composition is stored as nested `BialgHom.comp`, while the isomorphism cancellation
+  -- and pure-tensor rules are stated for applications. This conversion exposes exactly those two
+  -- public interfaces and keeps the representation-dependent proofs below independent of wrappers.
+  change q.ofConv (gK.hom ((CommHopfAlgCat.baseChangeMap f).hom
+      ((baseChangeCoordinateIso n hn A).hom.hom
+        ((baseChangeCoordinateIso n hn A).inv (1 ⊗ₜ[ℤ] x))))) =
+    q.ofConv (gK.hom (1 ⊗ₜ[ℤ] f.hom x))
+  rw [Iso.inv_hom_id_apply, CommHopfAlgCat.baseChangeMap_apply_tmul]
+
 /-! ## The transported root subgroups -/
 
 /-- The integral `k`th root-subgroup coordinate map, with source expressed using the named
@@ -314,11 +352,15 @@ theorem pointsMulEquiv_mapPointsFunctor_rootSubgroupIntegralCoordinateMap
         ((CommHopfAlgCat.mapPointsFunctor
           (rootSubgroupIntegralCoordinateMap n hn k)).app B q) =
       rootSubgroupPoints n hn k B (AdditiveGroup.gaPointsMulEquiv q) := by
+  -- `coordinateHopfAlgebra` is definitionally the symmetric-algebra model used by the public
+  -- additive-points lemmas below; naming that model also fixes the intended `ℤ`-algebra instance.
   change WithConv (SymmetricAlgebra ℤ ℤ →ₐ[ℤ] B) at q
   rw [CommHopfAlgCat.mapPointsFunctor_app_apply]
   apply Subtype.ext
   rw [coe_pointsMulEquiv_apply, coe_rootSubgroupPoints]
   rw [CommHopfAlgCat.quotientPointsHom_apply, GeneralLinear.pointsMulEquiv_apply]
+  -- The preceding public application lemmas leave the quotient and categorical composition
+  -- wrappers folded. This conversion exposes their underlying algebra-hom precomposition.
   change GeneralLinear.pointToGeneralLinear (dimension n)
       (WithConv.toConv (q.ofConv.comp
         ((CommHopfAlgCat.mkQuotient
@@ -342,6 +384,8 @@ theorem pointsMulEquiv_mapPointsFunctor_rootSubgroupIntegralCoordinateMap
       _ = Multiplicative.toAdd u := by
         exact (@AdditiveGroup.toAdd_gaPointsMulEquiv ℤ Int.instCommSemiring B _
           (CommAlgCat.algebra B) q).symm
+  -- The generic Kostant matrix theorem uses `Ring.toIntAlgebra B`, whereas the named point uses
+  -- the definitionally equal algebra carried by `CommAlgCat`; `hu` compares the two parameters.
   change _ = kostantRootSubgroupMatrix
     (TauCeti.serreRootGenerator (CartanMatrix.D n))
     (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
@@ -460,7 +504,6 @@ theorem baseChangePointsMulEquiv_mapPointsFunctor_rootSubgroupToBaseChangeCoordi
         ((CommHopfAlgCat.mapPointsFunctor
           (rootSubgroupToBaseChangeCoordinateMap n hn A k)).app B q) =
       rootSubgroupPoints n hn k B (AdditiveGroup.gaPointsMulEquiv q) := by
-  change WithConv (AdditiveGroup.coordinateHopfAlgebra A →ₐ[A] B) at q
   rw [CommHopfAlgCat.mapPointsFunctor_app_apply]
   let qTensor :=
     WithConv.toConv (q.ofConv.comp
@@ -475,6 +518,8 @@ theorem baseChangePointsMulEquiv_mapPointsFunctor_rootSubgroupToBaseChangeCoordi
     rw [CommHopfAlgCat.baseChangePointsMulEquiv_apply_apply]
     dsimp only [qTensor]
     rw [AlgHom.comp_apply]
+    -- The additive coordinate ring is implemented by a symmetric algebra; this conversion
+    -- exposes the source expected by the public scalar-tensor generator lemma.
     change q.ofConv
         (AdditiveGroup.gaScalarTensorBialgEquiv (k := ℤ) (K := A)
           (1 ⊗ₜ[ℤ] SymmetricAlgebra.ι ℤ ℤ 1)) =
@@ -485,34 +530,14 @@ theorem baseChangePointsMulEquiv_mapPointsFunctor_rootSubgroupToBaseChangeCoordi
     ← pointsMulEquiv_rootSubgroupIntegralCoordinateMap_apply n hn
       (TauCeti.CommAlgCat.restrictScalarsObj (algebraMap ℤ A) B) k qIntegral]
   rw [baseChangePointsMulEquiv, MulEquiv.trans_apply]
-  congr 1
-  apply WithConv.ofConv_injective
-  apply AlgHom.ext
-  intro x
-  rw [CommHopfAlgCat.baseChangeIsoPointsMulEquiv_apply_apply]
-  simp only [AlgHom.comp_apply]
-  dsimp only [qIntegral]
-  rw [CommHopfAlgCat.baseChangePointsMulEquiv_apply_apply]
-  dsimp only [qTensor]
-  rw [AlgHom.comp_apply]
-  congr 1
-  rw [← baseChangeCoordinateIso_hom_comp_rootSubgroupBaseChangeMap n hn A k]
-  rw [_root_.CommHopfAlgCat.hom_comp, _root_.CommHopfAlgCat.hom_comp]
-  change
-    (((CommHopfAlgCat.ofHom
-        (AdditiveGroup.gaScalarTensorBialgEquiv (k := ℤ) (K := A))).hom.comp
-      (CommHopfAlgCat.baseChangeMap
-        (rootSubgroupIntegralCoordinateMap n hn k)).hom).comp
-      (baseChangeCoordinateIso n hn A).hom.hom)
-        ((baseChangeCoordinateIso n hn A).inv (1 ⊗ₜ[ℤ] x)) =
-      (AdditiveGroup.coordinateHopfAlgebraBaseChangeIso ℤ A).hom.hom
-        (1 ⊗ₜ[ℤ] (rootSubgroupIntegralCoordinateMap n hn k).hom x)
-  rw [BialgHom.comp_apply, BialgHom.comp_apply]
-  have hcancel := Iso.inv_hom_id_apply (baseChangeCoordinateIso n hn A) (1 ⊗ₜ[ℤ] x)
-  change (baseChangeCoordinateIso n hn A).hom.hom
-      ((baseChangeCoordinateIso n hn A).inv (1 ⊗ₜ[ℤ] x)) = 1 ⊗ₜ[ℤ] x at hcancel
-  rw [hcancel, CommHopfAlgCat.baseChangeMap_apply_tmul]
-  rfl
+  apply congrArg (pointsMulEquiv n hn
+    (TauCeti.CommAlgCat.restrictScalarsObj (algebraMap ℤ A) B))
+  dsimp only [qIntegral, qTensor]
+  exact baseChangeIsoPointsMulEquiv_mapPointsFunctor n hn A
+    (AdditiveGroup.coordinateHopfAlgebraBaseChangeIso ℤ A).hom
+    (rootSubgroupIntegralCoordinateMap n hn k)
+    (rootSubgroupToBaseChangeCoordinateMap n hn A k)
+    (baseChangeCoordinateIso_hom_comp_rootSubgroupBaseChangeMap n hn A k) B q
 
 /-! ## The transported weight torus -/
 
@@ -572,6 +597,8 @@ theorem pointsMulEquiv_mapPointsFunctor_weightTorusIntegralCoordinateMap
   apply Subtype.ext
   rw [coe_pointsMulEquiv_apply, coe_weightTorusPoints,
     CommHopfAlgCat.quotientPointsHom_apply, GeneralLinear.pointsMulEquiv_apply]
+  -- As in the root-subgroup proof, expose the algebra-hom precomposition hidden by the quotient,
+  -- general-linear points equivalence, and categorical composition wrappers.
   change GeneralLinear.pointToGeneralLinear (dimension n)
       (WithConv.toConv (q.ofConv.comp
         ((CommHopfAlgCat.mkQuotient
@@ -680,8 +707,6 @@ theorem baseChangePointsMulEquiv_mapPointsFunctor_weightTorusToBaseChangeCoordin
         ((CommHopfAlgCat.mapPointsFunctor
           (weightTorusToBaseChangeCoordinateMap n hn A)).app B q) =
       weightTorusPoints n hn B (SplitTorus.pointsMulEquiv q) := by
-  change WithConv
-    (MonoidAlgebra A (SplitTorus.characterGroup (Fin n)) →ₐ[A] B) at q
   rw [CommHopfAlgCat.mapPointsFunctor_app_apply]
   let qTensor :=
     WithConv.toConv (q.ofConv.comp
@@ -700,6 +725,8 @@ theorem baseChangePointsMulEquiv_mapPointsFunctor_weightTorusToBaseChangeCoordin
     dsimp only [qTensor]
     rw [AlgHom.comp_apply]
     congr 1
+    -- The diagonalizable coordinate ring unfolds to a monoid algebra; this conversion exposes
+    -- the pure tensor of a basis character used by the scalar-tensor equivalence lemma.
     change (TauCeti.MonoidAlgebra.scalarTensorBialgEquiv ℤ A)
       (1 ⊗ₜ[ℤ] MonoidAlgebra.single
         (Multiplicative.ofAdd (Finsupp.single i 1)) 1) = _
@@ -709,34 +736,15 @@ theorem baseChangePointsMulEquiv_mapPointsFunctor_weightTorusToBaseChangeCoordin
     ← pointsMulEquiv_weightTorusIntegralCoordinateMap_apply n hn
       (TauCeti.CommAlgCat.restrictScalarsObj (algebraMap ℤ A) B) qIntegral]
   rw [baseChangePointsMulEquiv, MulEquiv.trans_apply]
-  congr 1
-  apply WithConv.ofConv_injective
-  apply AlgHom.ext
-  intro x
-  rw [CommHopfAlgCat.baseChangeIsoPointsMulEquiv_apply_apply]
-  simp only [AlgHom.comp_apply]
-  dsimp only [qIntegral]
-  rw [CommHopfAlgCat.baseChangePointsMulEquiv_apply_apply]
-  dsimp only [qTensor]
-  rw [AlgHom.comp_apply]
-  congr 1
-  rw [← baseChangeCoordinateIso_hom_comp_weightTorusBaseChangeMap n hn A]
-  rw [_root_.CommHopfAlgCat.hom_comp, _root_.CommHopfAlgCat.hom_comp]
-  change
-    ((((DiagonalizableGroup.baseChangeCoordinateHopfAlgebraIso ℤ A
-        (SplitTorus.characterGroup (Fin n))).hom.hom).comp
-      (CommHopfAlgCat.baseChangeMap
-        (weightTorusIntegralCoordinateMap n hn)).hom).comp
-      (baseChangeCoordinateIso n hn A).hom.hom)
-        ((baseChangeCoordinateIso n hn A).inv (1 ⊗ₜ[ℤ] x)) =
-      (DiagonalizableGroup.baseChangeCoordinateHopfAlgebraIso ℤ A
-        (SplitTorus.characterGroup (Fin n))).hom.hom
-        (1 ⊗ₜ[ℤ] (weightTorusIntegralCoordinateMap n hn).hom x)
-  rw [BialgHom.comp_apply, BialgHom.comp_apply]
-  have hcancel := Iso.inv_hom_id_apply (baseChangeCoordinateIso n hn A) (1 ⊗ₜ[ℤ] x)
-  change (baseChangeCoordinateIso n hn A).hom.hom
-      ((baseChangeCoordinateIso n hn A).inv (1 ⊗ₜ[ℤ] x)) = 1 ⊗ₜ[ℤ] x at hcancel
-  rw [hcancel, CommHopfAlgCat.baseChangeMap_apply_tmul]
+  apply congrArg (pointsMulEquiv n hn
+    (TauCeti.CommAlgCat.restrictScalarsObj (algebraMap ℤ A) B))
+  dsimp only [qIntegral, qTensor]
+  exact baseChangeIsoPointsMulEquiv_mapPointsFunctor n hn A
+    (DiagonalizableGroup.baseChangeCoordinateHopfAlgebraIso ℤ A
+      (SplitTorus.characterGroup (Fin n))).hom
+    (weightTorusIntegralCoordinateMap n hn)
+    (weightTorusToBaseChangeCoordinateMap n hn A)
+    (baseChangeCoordinateIso_hom_comp_weightTorusBaseChangeMap n hn A) B q
 
 /-- The closed subgroup of `GL_(2^n)/A` generated by the transported numbered root subgroups and
 the transported weight torus lies in the base change of the integral type-`Dₙ` carrier.
