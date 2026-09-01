@@ -33,6 +33,8 @@ vacuum. The generic Kostant root-subgroup criterion then makes the coordinate ma
 
 ## References
 
+* `TauCeti/Algebra/Lie/E6/Minuscule/ClosedRootSubgroup.lean`, the formal template for
+  the declaration order and proof organization.
 * C. Chevalley, *The Algebraic Theory of Spinors*, Chapter II.
 * J. E. Humphreys, *Linear Algebraic Groups*, Section 26.
 * R. W. Carter, *Simple Groups of Lie Type*, Sections 4.4 and 7.1.
@@ -166,20 +168,14 @@ theorem rootSubgroupCoordinateMap_surjective (k : Fin n ⊕ Fin n) :
 /-- Every numbered root-subgroup map into the type-`D` full-spin carrier is a closed immersion. -/
 instance isClosedImmersion_rootSubgroup (k : Fin n ⊕ Fin n) :
     IsClosedImmersion (rootSubgroup n hn k).hom.hom.left := by
-  have hcomp : IsClosedImmersion
-      ((rootSubgroup n hn k ≫ carrierι n hn).hom.hom.left) := by
-    rw [rootSubgroup_comp_carrierι]
-    exact TauCeti.UniversalEnvelopingAlgebra.isClosedImmersion_kostantRootSubgroup
-      (TauCeti.serreRootGenerator (CartanMatrix.D n))
-      (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
-      (rep_kostantForm_mem_lattice n hn) k (isNilpotent_rep_rootGenerator n hn k)
-      (latticeBasis n) (isUnit_rootCoefficient n hn k)
-      (rep_rootGenerator_latticeBasis n hn k)
-      (rep_rootGenerator_sq_apply_latticeBasis n hn k)
-  simp only [Grp.comp', Mon.comp_hom', Over.comp_left] at hcomp
-  let _ := hcomp
-  exact IsClosedImmersion.of_comp
-    (rootSubgroup n hn k).hom.hom.left (carrierι n hn).hom.hom.left
+  unfold rootSubgroup groupScheme
+  exact TauCeti.UniversalEnvelopingAlgebra.isClosedImmersion_kostantRootSubgroupToToral
+    (TauCeti.serreRootGenerator (CartanMatrix.D n))
+    (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
+    (rep_kostantForm_mem_lattice n hn) k (isNilpotent_rep_rootGenerator n hn)
+    (latticeBasis n) (basisWeight n) (isUnit_rootCoefficient n hn k)
+    (rep_rootGenerator_latticeBasis n hn k)
+    (rep_rootGenerator_sq_apply_latticeBasis n hn k)
 
 /-- Every numbered root-subgroup map into the type-`D` full-spin carrier is a monomorphism. -/
 theorem mono_rootSubgroup (k : Fin n ⊕ Fin n) : Mono (rootSubgroup n hn k) :=

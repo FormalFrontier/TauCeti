@@ -210,6 +210,7 @@ noncomputable def definingIdeal (hn : 4 ≤ n) :
 
 /-- The full-weight type-`Dₙ` spin carrier over `ℤ`, obtained as the smallest closed subgroup
 scheme containing the represented numbered root subgroups and weight torus. -/
+@[expose]
 noncomputable def groupScheme (hn : 4 ≤ n) : Grp (Over (Spec (CommRingCat.of ℤ))) :=
   kostantToralGroupScheme
     (TauCeti.serreRootGenerator (CartanMatrix.D n))
@@ -243,6 +244,7 @@ instance isClosedImmersion_carrierι : IsClosedImmersion (carrierι n hn).hom.ho
   exact isClosedImmersion_kostantToralGroupSchemeι _ _ _ _ _ _ _ _
 
 /-- A positive or negative numbered simple-root subgroup of the type-`Dₙ` spin carrier. -/
+@[expose]
 noncomputable def rootSubgroup (hn : 4 ≤ n) (k : Fin n ⊕ Fin n) :
     AdditiveGroup.groupScheme ℤ ⟶ groupScheme n hn :=
   kostantRootSubgroupToToral
