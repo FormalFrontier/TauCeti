@@ -46,8 +46,10 @@ ones through it.
 ## Main declarations
 
 * `TauCeti.FiniteBilinearModule.orthogonalQuotient`: the finite bilinear module induced on
-  `H⊥ / H`.
+  `H⊥ / (H ∩ H⊥)`.
 * `TauCeti.FiniteBilinearModule.orthogonalQuotient_pairing_mk`: its pairing, on representatives.
+* `TauCeti.FiniteBilinearModule.radical_orthogonalQuotient`: its radical, as the image of the
+  restricted radical.
 * `TauCeti.FiniteBilinearModule.isNondegenerate_orthogonalQuotient_iff`: it is nondegenerate
   exactly when `rad(A) ≤ H`.
 * `TauCeti.FiniteBilinearModule.IsNondegenerate.card_orthogonalQuotient_mul_card_sq`: the order
@@ -71,11 +73,11 @@ universe u
 
 variable (A : FiniteBilinearModule.{u})
 
-/-! ## The induced pairing on `H⊥ / H` -/
+/-! ## The induced pairing on `H⊥ / (H ∩ H⊥)` -/
 
 /-- **The orthogonal quotient of a finite bilinear module.**  The pairing of `A` is restricted to
-`H⊥` and then divided by the copy of `H` sitting inside `H⊥`, which is degenerate for the
-restricted pairing by
+`H⊥` and then divided by the part of `H` lying in `H⊥`, which is degenerate for the restricted
+pairing by
 `TauCeti.FiniteBilinearModule.addSubgroupOf_orthogonalComplement_le_radical_restrict`.
 
 No isotropy hypothesis is needed: `H ∩ H⊥` is always killed by the restricted pairing.  When `H`
@@ -119,6 +121,16 @@ theorem orthogonalQuotient_induction_on (H : AddSubgroup A)
   obtain ⟨x, rfl⟩ := A.orthogonalQuotientMk_surjective H q
   exact mk x
 
+/-- **The radical of the orthogonal quotient** is the image of the radical of the restricted
+pairing. -/
+@[simp]
+theorem radical_orthogonalQuotient (H : AddSubgroup A) :
+    (A.orthogonalQuotient H).radical =
+      ((H ⊔ A.radical).addSubgroupOf (A.orthogonalComplement H)).map
+        (A.orthogonalQuotientMk H) := by
+  unfold orthogonalQuotient orthogonalQuotientMk
+  rw [radical_quotientOfLeRadical, A.radical_restrict_orthogonalComplement]
+
 /-- An element of `H⊥` has zero class in the orthogonal quotient exactly when it lies in `H`. -/
 @[simp]
 theorem orthogonalQuotientMk_eq_zero_iff (H : AddSubgroup A) (x : A.orthogonalComplement H) :
@@ -138,8 +150,8 @@ theorem orthogonalQuotientMk_eq_iff (H : AddSubgroup A) (x y : A.orthogonalCompl
 
 /-! ## Nondegeneracy -/
 
-/-- **Nondegeneracy of the orthogonal quotient.**  The quotient `H⊥ / H` is nondegenerate exactly
-when `H` contains the radical of `A`.
+/-- **Nondegeneracy of the orthogonal quotient.** The quotient `H⊥ / (H ∩ H⊥)` is
+nondegenerate exactly when `H` contains the radical of `A`.
 
 Only the radical can survive: an element of `H⊥` orthogonal to all of `H⊥` lies in `H⊥⊥`, which
 is `H` enlarged by the radical. -/

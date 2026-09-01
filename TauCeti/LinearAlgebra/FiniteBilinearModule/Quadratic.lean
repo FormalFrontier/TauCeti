@@ -892,12 +892,9 @@ theorem IsNondegenerate.isNondegenerate_orthogonalQuotient (hA : A.IsNondegenera
 theorem IsNondegenerate.card_orthogonalQuotient_mul_card_sq (hA : A.IsNondegenerate)
     {H : AddSubgroup A} (hH : A.IsIsotropic H) :
     Nat.card (A.orthogonalQuotient H hH) * Nat.card H ^ 2 = Nat.card A := by
-  rw [show Nat.card (A.orthogonalQuotient H hH) =
-      Nat.card (A.toFiniteBilinearModule.orthogonalQuotient H) from
-    congrArg (fun B : FiniteBilinearModule ↦ Nat.card B)
-      (A.orthogonalQuotient_toFiniteBilinearModule H hH)]
-  exact FiniteBilinearModule.IsNondegenerate.card_orthogonalQuotient_mul_card_sq
-    A.toFiniteBilinearModule hA hH.toFiniteBilinearModule
+  simpa only [A.orthogonalQuotient_toFiniteBilinearModule H hH] using
+    (FiniteBilinearModule.IsNondegenerate.card_orthogonalQuotient_mul_card_sq
+      A.toFiniteBilinearModule hA hH.toFiniteBilinearModule)
 
 /-! ### Transport of an orthogonal quotient along an isometry -/
 

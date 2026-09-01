@@ -33,7 +33,8 @@ rad(A|_S) = S⊥ ∩ S.
 
 Read at `S = H⊥` and combined with the double-complement formula, this says that the pairing
 restricted to `H⊥` has radical `(H + rad(A)) ∩ H⊥`, so in particular it kills the copy of `H`
-sitting inside `H⊥`.  That inclusion is what makes the orthogonal quotient `H⊥ / H` of
+sitting inside `H⊥` when `H` is isotropic.  In general it kills `H ∩ H⊥`, which makes the
+orthogonal quotient `H⊥ / (H ∩ H⊥)` of
 `TauCeti.LinearAlgebra.FiniteBilinearModule.Orthogonal.Quotient` well defined.
 
 ## Main declarations
@@ -43,9 +44,8 @@ sitting inside `H⊥`.  That inclusion is what makes the orthogonal quotient `H�
 * `TauCeti.FiniteBilinearModule.IsNondegenerate.card_mul_card_orthogonalComplement`: the
   cardinality identity `|H| |H⊥| = |A|` for a nondegenerate module.
 * `TauCeti.FiniteBilinearModule.IsLagrangian.card_sq`: a Lagrangian has squared order `|A|`.
-* `TauCeti.FiniteBilinearModule.radical_restrict`: the radical of a restricted pairing.
 * `TauCeti.FiniteBilinearModule.addSubgroupOf_orthogonalComplement_le_radical_restrict`: the
-  copy of `H` inside `H⊥` is degenerate for the restricted pairing.
+  part of `H` lying in `H⊥` is degenerate for the restricted pairing.
 
 ## References
 
@@ -192,27 +192,20 @@ theorem IsLagrangian.card_sq (hH : A.IsLagrangian H) (hA : A.IsNondegenerate) :
     _ = Nat.card H * Nat.card (A.orthogonalComplement H) := congrArg _ hcard
     _ = Nat.card A := IsNondegenerate.card_mul_card_orthogonalComplement A hA H
 
-/-! ## The radical of a restricted pairing -/
-
-/-- **The radical of a restricted pairing.**  Restricting the pairing of `A` to a subgroup `S`
-makes degenerate exactly the vectors of `S` which are orthogonal to all of `S`. -/
-theorem radical_restrict (S : AddSubgroup A) :
-    (A.restrict S).radical = (A.orthogonalComplement S).addSubgroupOf S := by
-  ext x
-  rw [mem_radical_iff, AddSubgroup.mem_addSubgroupOf, A.mem_orthogonalComplement_iff]
-  exact ⟨fun hx y hy ↦ hx ⟨y, hy⟩, fun hx y ↦ hx y.1 y.2⟩
+/-! ## The radical of a pairing restricted to an orthogonal complement -/
 
 /-- The radical of the pairing restricted to `H⊥` is the part of `H + rad(A)` lying in `H⊥`.
 
 This is `radical_restrict` at `S = H⊥`, simplified by the double-complement formula. -/
+@[simp]
 theorem radical_restrict_orthogonalComplement (H : AddSubgroup A) :
     (A.restrict (A.orthogonalComplement H)).radical =
       (H ⊔ A.radical).addSubgroupOf (A.orthogonalComplement H) := by
   rw [A.radical_restrict, A.orthogonalComplement_orthogonalComplement]
 
-/-- The copy of `H` inside `H⊥` is degenerate for the pairing restricted to `H⊥`.
+/-- The part of `H` lying in `H⊥` is degenerate for the pairing restricted to `H⊥`.
 
-This is the inclusion which lets the restricted pairing descend to the quotient `H⊥ / H`. -/
+This is the inclusion which lets the restricted pairing descend to `H⊥ / (H ∩ H⊥)`. -/
 theorem addSubgroupOf_orthogonalComplement_le_radical_restrict (H : AddSubgroup A) :
     H.addSubgroupOf (A.orthogonalComplement H) ≤
       (A.restrict (A.orthogonalComplement H)).radical := by
