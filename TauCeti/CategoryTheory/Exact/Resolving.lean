@@ -27,12 +27,15 @@ own hypotheses.
 
 * `TauCeti.ExactStructure.IsClosedUnderKernelsOfDeflations`: closure of an object property under
   the kernels in `E`-conflations whose middle and quotient lie in the property.
+* `TauCeti.ExactStructure.IsClosedUnderKernelsOfDeflations.prop_left_of_prop_biprod`: a direct
+  summand consequence of kernel closure.
 * `TauCeti.ExactStructure.IsResolving`: the complete resolving-subcategory package.
 * `TauCeti.ExactStructure.IsResolving.inducedExactStructure`: the exact structure induced on the
   full subcategory of resolving objects.
 
-The finite-resolution field is the coverage hypothesis consumed by the general resolution theorem;
-the theorem itself and its Euler-class comparison are downstream of this package.
+The direct-summand theorem above exercises the kernel-closure field. The finite-resolution field is
+the coverage hypothesis consumed by the general resolution theorem; that theorem and its Euler-class
+comparison are downstream of this package.
 
 ## References
 
