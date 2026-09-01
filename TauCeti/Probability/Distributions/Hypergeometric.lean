@@ -40,8 +40,8 @@ as required by the standard-distributions roadmap.
 * `TauCeti.Probability.hypergeometricMeasure_real_Iic`: the native cumulative mass.
 * `TauCeti.Probability.integral_hypergeometricMeasure`: integration as a finite weighted sum.
 * `TauCeti.Probability.integral_id_map_cast_hypergeometricMeasure`: the mean of the real cast law.
-* `TauCeti.Probability.variance_id_map_cast_hypergeometricMeasure`: its variance when `1 < N`,
-  with separate zero-variance results for populations of size zero and one.
+* `TauCeti.Probability.variance_id_map_cast_hypergeometricMeasure`: its variance for every valid
+  parameter triple, with named zero-variance corollaries for populations of size zero and one.
 * `TauCeti.Probability.mgf_id_map_cast_hypergeometricMeasure` and
   `TauCeti.Probability.charFun_map_cast_hypergeometricMeasure`: the finite transform formulas for
   the real-valued cast law.
@@ -362,6 +362,8 @@ private theorem sum_fst_mul_pred_mul_choose_mul_choose (A B r : ℕ) (hr : 2 ≤
         ij.1 * (ij.1 - 1) * A.choose ij.1 * B.choose ij.2 =
       A * (A - 1) * (A + B - 2).choose (r - 2) := by
   obtain ⟨s, rfl⟩ := Nat.exists_eq_add_of_le hr
+  -- For `A = 0` or `A = 1`, every summand vanishes: either the binomial coefficient or
+  -- the falling-factorial multiplier `ij.1 * (ij.1 - 1)` is zero.
   cases A with
   | zero =>
       simp only [Nat.zero_add, Nat.zero_mul]
@@ -383,6 +385,8 @@ private theorem sum_fst_mul_pred_mul_choose_mul_choose (A B r : ℕ) (hr : 2 ≤
           · simp [h]
           · simp [Nat.choose_eq_zero_of_lt h]
       | succ a =>
+          -- For `A = a + 2`, the choose recurrence extracts one factor `a + 2` from each
+          -- summand. The remaining sum is the first-factorial-moment Vandermonde identity.
           have hr : 2 + s = (s + 1) + 1 := by omega
           rw [hr]
           rw [Finset.Nat.sum_antidiagonal_succ]
@@ -494,7 +498,9 @@ private theorem sum_hypergeometricWeight_toReal_mul_pred {N K n : ℕ} (hK : K �
       (n : ℝ) * ((n : ℝ) - 1) * (K : ℝ) * ((K : ℝ) - 1) /
         ((N : ℝ) * ((N : ℝ) - 1)) := by
   by_cases hn2 : 2 ≤ n
-  · have hchooseN : (N.choose n : ℝ) ≠ 0 := by
+  · -- Normalize the weights by `N.choose n`, apply the second-factorial-moment
+    -- Vandermonde identity, and cancel the denominator using two choose recurrences.
+    have hchooseN : (N.choose n : ℝ) ≠ 0 := by
       exact_mod_cast Nat.choose_ne_zero hn
     calc
       _ = ∑ k ∈ Finset.range (n + 1),
@@ -569,19 +575,28 @@ private theorem sum_hypergeometricWeight_toReal_mul_pred {N K n : ℕ} (hK : K �
         rw [hKpred]
         field_simp [hNm1]
         linear_combination (K : ℝ) * ((K : ℝ) - 1) * hchooseR
-  · have hnle : n ≤ 1 := by omega
+  · -- When `n` is zero or one, the falling factorial `k * (k - 1)` vanishes on the support.
+    have hnle : n ≤ 1 := by omega
     interval_cases n <;> norm_num [Finset.sum_range_succ, hypergeometricWeight]
 
-/-- The mean of the real cast of a valid hypergeometric law is `nK / N` when the population
-is nonempty. The only valid empty-population parameters are handled separately below. -/
+/-- The mean of the real cast of a valid hypergeometric law is `nK / N`. This totalized formula
+also covers the unique valid empty-population parameters. -/
 @[simp]
 theorem integral_id_map_cast_hypergeometricMeasure {N K n : ℕ}
-    (hK : K ≤ N) (hn : n ≤ N) (hN : 0 < N) :
+    (hK : K ≤ N) (hn : n ≤ N) :
     ∫ x, x ∂((hypergeometricMeasure N K n).map (Nat.cast : ℕ → ℝ)) =
       (n : ℝ) * (K : ℝ) / (N : ℝ) := by
-  rw [integral_map (by fun_prop) (by fun_prop),
-    integral_hypergeometricMeasure (fun k ↦ (k : ℝ)) hK hn]
-  simpa only [smul_eq_mul] using sum_hypergeometricWeight_toReal_mul hK hn hN
+  by_cases hN : 0 < N
+  · rw [integral_map (by fun_prop) (by fun_prop),
+      integral_hypergeometricMeasure (fun k ↦ (k : ℝ)) hK hn]
+    simpa only [smul_eq_mul] using sum_hypergeometricWeight_toReal_mul hK hn hN
+  · have hN0 : N = 0 := by omega
+    have hK0 : K = 0 := by omega
+    have hn0 : n = 0 := by omega
+    subst N
+    subst K
+    subst n
+    norm_num [hypergeometricMeasure, hypergeometricWeight]
 
 private theorem integral_sq_id_map_cast_hypergeometricMeasure {N K n : ℕ}
     (hK : K ≤ N) (hn : n ≤ N) (hN : 1 < N) :
@@ -616,50 +631,52 @@ private theorem integrable_sq_id_map_cast_hypergeometricMeasure (N K n : ℕ) :
   funext k
   rfl
 
-/-- The variance of the real cast of a valid hypergeometric law for a population with at least
-two elements. The finite-population correction is `(N - n) / (N - 1)`; populations of size zero
-and one are handled separately below. -/
+/-- The variance of the real cast of a valid hypergeometric law. The totalized
+finite-population correction `(N - n) / (N - 1)` also gives zero for populations of size zero
+and one. -/
 @[simp]
 theorem variance_id_map_cast_hypergeometricMeasure {N K n : ℕ}
-    (hK : K ≤ N) (hn : n ≤ N) (hN : 1 < N) :
+    (hK : K ≤ N) (hn : n ≤ N) :
     variance id ((hypergeometricMeasure N K n).map (Nat.cast : ℕ → ℝ)) =
       (n : ℝ) * ((K : ℝ) / (N : ℝ)) * (1 - (K : ℝ) / (N : ℝ)) *
         (((N : ℝ) - (n : ℝ)) / ((N : ℝ) - 1)) := by
-  let _ : IsProbabilityMeasure (hypergeometricMeasure N K n) :=
-    isProbabilityMeasure_hypergeometricMeasure hK hn
-  have hmem : MemLp id 2
-      ((hypergeometricMeasure N K n).map (Nat.cast : ℕ → ℝ)) :=
-    (memLp_two_iff_integrable_sq aestronglyMeasurable_id).2
-      (integrable_sq_id_map_cast_hypergeometricMeasure N K n)
-  rw [variance_eq_sub hmem]
-  simp only [Pi.pow_apply, id_eq]
-  rw [integral_sq_id_map_cast_hypergeometricMeasure hK hn hN,
-    integral_id_map_cast_hypergeometricMeasure hK hn (by omega)]
-  have hNreal : (1 : ℝ) < (N : ℝ) := by exact_mod_cast hN
-  have hNm1 : (N : ℝ) - 1 ≠ 0 := by linarith
-  field_simp [hNm1]
-  ring
+  by_cases hN : 1 < N
+  · let _ : IsProbabilityMeasure (hypergeometricMeasure N K n) :=
+      isProbabilityMeasure_hypergeometricMeasure hK hn
+    have hmem : MemLp id 2
+        ((hypergeometricMeasure N K n).map (Nat.cast : ℕ → ℝ)) :=
+      (memLp_two_iff_integrable_sq aestronglyMeasurable_id).2
+        (integrable_sq_id_map_cast_hypergeometricMeasure N K n)
+    rw [variance_eq_sub hmem]
+    simp only [Pi.pow_apply, id_eq]
+    rw [integral_sq_id_map_cast_hypergeometricMeasure hK hn hN,
+      integral_id_map_cast_hypergeometricMeasure hK hn]
+    have hNreal : (1 : ℝ) < (N : ℝ) := by exact_mod_cast hN
+    have hNm1 : (N : ℝ) - 1 ≠ 0 := by linarith
+    field_simp [hNm1]
+    ring
+  · have hNle : N ≤ 1 := by omega
+    interval_cases N <;> interval_cases K <;> interval_cases n <;>
+      norm_num [hypergeometricMeasure, hypergeometricWeight, Finset.sum_range_succ]
 
 /-- The real cast of the unique valid empty-population hypergeometric law has mean zero. -/
 @[simp]
 theorem integral_id_map_cast_hypergeometricMeasure_zero :
     ∫ x, x ∂((hypergeometricMeasure 0 0 0).map (Nat.cast : ℕ → ℝ)) = 0 := by
-  norm_num [hypergeometricMeasure, hypergeometricWeight]
+  simp
 
 /-- The real cast of the unique valid empty-population hypergeometric law has variance zero. -/
 @[simp]
 theorem variance_id_map_cast_hypergeometricMeasure_zero :
     variance id ((hypergeometricMeasure 0 0 0).map (Nat.cast : ℕ → ℝ)) = 0 := by
-  norm_num [hypergeometricMeasure, hypergeometricWeight]
+  simp
 
-/-- Every valid hypergeometric law on a population of size one has variance zero. This is stated
-separately because the usual formula contains the totalized quotient by `N - 1`. -/
+/-- Every valid hypergeometric law on a population of size one has variance zero. -/
 @[simp]
 theorem variance_id_map_cast_hypergeometricMeasure_of_population_one {K n : ℕ}
     (hK : K ≤ 1) (hn : n ≤ 1) :
     variance id ((hypergeometricMeasure 1 K n).map (Nat.cast : ℕ → ℝ)) = 0 := by
-  interval_cases K <;> interval_cases n <;>
-    simp [hypergeometricMeasure, hypergeometricWeight, Finset.sum_range_succ]
+  simpa using variance_id_map_cast_hypergeometricMeasure (N := 1) hK hn
 
 end Probability
 
