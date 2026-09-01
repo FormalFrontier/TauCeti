@@ -135,6 +135,7 @@ theorem one_eq_bot : (1 : Supernatural) = ⊥ :=
   rfl
 
 /-- Divisibility of supernatural numbers is comparison of every prime exponent. -/
+@[simp]
 theorem dvd_iff_le {m n : Supernatural} : m ∣ n ↔ m ≤ n := by
   constructor
   · rintro ⟨k, rfl⟩ p
@@ -171,16 +172,35 @@ theorem primePower_apply_of_ne {p q : Nat.Primes} (h : q ≠ p) (n : ℕ∞) :
   Pi.single_eq_of_ne (M := fun _ : Nat.Primes ↦ ℕ∞) h n
 
 @[simp]
-theorem primePower_zero (p : Nat.Primes) : primePower p 0 = 1 := by
-  ext q
-  by_cases h : q = p <;> simp [h]
+theorem primePower_zero (p : Nat.Primes) : primePower p 0 = 1 :=
+  Pi.single_zero p
 
 /-- A prime power with a sum of exponents is the product of the two prime powers. -/
 @[simp]
 theorem primePower_add (p : Nat.Primes) (m n : ℕ∞) :
     primePower p (m + n) = primePower p m * primePower p n := by
-  ext q
-  by_cases h : q = p <;> simp [h]
+  apply ext
+  intro q
+  rw [mul_apply]
+  exact congrFun (Pi.single_add (f := fun _ : Nat.Primes ↦ ℕ∞) p m n) q
+
+/-- A rational prime, regarded as the supernatural number having exponent one at that prime. -/
+instance : Coe Nat.Primes Supernatural :=
+  ⟨fun p ↦ primePower p 1⟩
+
+/-- A prime divides a supernatural number exactly when its exponent there is nonzero. -/
+@[simp]
+theorem coe_prime_dvd_iff (p : Nat.Primes) (n : Supernatural) :
+    (p : Supernatural) ∣ n ↔ n p ≠ 0 := by
+  rw [dvd_iff]
+  constructor
+  · intro h
+    exact Order.one_le_iff_ne_zero.mp (by simpa using h p)
+  · intro h q
+    by_cases hq : q = p
+    · subst q
+      simpa using Order.one_le_iff_ne_zero.mpr h
+    · simp [hq]
 
 /-- The `p`-primary part of a supernatural number. -/
 def primaryPart (p : Nat.Primes) (n : Supernatural) : Supernatural :=
@@ -318,7 +338,7 @@ def IsNatural (n : Supernatural) : Prop :=
 /-- A supernatural number is natural exactly when it is the image under `ofNat` of a positive
 natural number.  This is `IsNatural` by definition, and is the form downstream files use, since
 the body of `IsNatural` is not exposed. -/
-theorem isNatural_iff_exists {n : Supernatural} : IsNatural n ↔ ∃ m : ℕ+, ofNat m = n :=
+theorem isNatural_def {n : Supernatural} : IsNatural n ↔ ∃ m : ℕ+, ofNat m = n :=
   Iff.rfl
 
 /-- Every positive natural number gives a natural supernatural number. -/
