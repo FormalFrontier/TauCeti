@@ -5,7 +5,7 @@ Authors: Codex
 -/
 module
 
-public import Mathlib.RingTheory.Coalgebra.TensorProduct
+public import TauCeti.Algebra.Coalgebra.BaseChange
 public import TauCeti.Algebra.Coalgebra.Comodule.Basic
 
 /-!
@@ -36,8 +36,6 @@ needed to compare geometric unipotence before and after a field extension.
 * `TauCeti.Comodule.baseChange`: the induced comodule structure over the base-changed
   coefficient coalgebra, selected explicitly as a local instance.
 * `TauCeti.Comodule.baseChangeCoact_tmul`: the coaction formula on pure tensors.
-* `TauCeti.Comodule.comul_one_tmul`: the comultiplication formula for the base-changed
-  coalgebra on tensors whose scalar factor is one.
 * `TauCeti.Comodule.baseChange_self`: base change of the regular comodule agrees with the
   regular comodule of the base-changed coalgebra.
 * `TauCeti.Comodule.Hom.baseChange`: base change of a comodule morphism.
@@ -120,20 +118,6 @@ private theorem collapseTriple_coact (a : A) (z : M ⊗[R] H) :
       exact collapseTriple_tmul (R := R) (H := H) (M := M) A a
         (coact (R := R) (C := H) (M := M) m) h
 
-/-- The comultiplication of the base-changed coalgebra on a pure tensor whose scalar factor is
-one. -/
-theorem comul_one_tmul (h : H) :
-    Coalgebra.comul (R := A) (A := A ⊗[R] H) (1 ⊗ₜ[R] h) =
-      TensorProduct.AlgebraTensorModule.distribBaseChange R A H H
-        (1 ⊗ₜ[R] Coalgebra.comul (R := R) (A := H) h) := by
-  rw [TensorProduct.comul_tmul, CommSemiring.comul_apply]
-  induction Coalgebra.comul (R := R) (A := H) h using TensorProduct.induction_on with
-  | zero => simp
-  | add x y hx hy => simp only [TensorProduct.tmul_add, map_add, hx, hy]
-  | tmul g k =>
-      simp only [TensorProduct.AlgebraTensorModule.tensorTensorTensorComm_tmul,
-        TensorProduct.AlgebraTensorModule.distribBaseChange_tmul]
-
 omit [Coalgebra R H] [Comodule R H M] in
 private theorem collapseTriple_comulTensor (a : A) (m : M) (z : H ⊗[R] H) :
     collapseTriple (R := R) (H := H) (M := M) A
@@ -157,7 +141,7 @@ private theorem collapseTriple_comul (a : A) (z : M ⊗[R] H) :
   | add x y hx hy => simp only [TensorProduct.tmul_add, map_add, hx, hy]
   | tmul m h =>
       rw [TensorProduct.AlgebraTensorModule.distribBaseChange_tmul,
-        LinearMap.lTensor_tmul, comul_one_tmul,
+        LinearMap.lTensor_tmul, TauCeti.Coalgebra.baseChange_comul_tmul,
         collapseTriple_comulTensor, LinearMap.lTensor_tmul]
 
 omit [Comodule R H M] in
@@ -184,7 +168,7 @@ same scalar morphism gives a comodule over the base-changed coalgebra.
 
 This is deliberately not a global instance because a module can carry multiple coactions.
 Downstream code should select it explicitly, typically as a local instance. -/
-@[expose, instance_reducible]
+@[instance_reducible]
 noncomputable def baseChange : Comodule A (A ⊗[R] H) (A ⊗[R] M) where
   coact := baseChangeCoact (R := R) (H := H) A
   coassoc := by
@@ -209,8 +193,7 @@ followed by distribution across the two tensor factors. -/
 theorem baseChange_coact :
     letI := baseChange (R := R) (H := H) (M := M) A
     coact (R := A) (C := A ⊗[R] H) (M := A ⊗[R] M) =
-      baseChangeCoact (R := R) (H := H) A :=
-  rfl
+      baseChangeCoact (R := R) (H := H) A := (rfl)
 
 /-- Base change of the regular comodule is the regular comodule of the base-changed
 coalgebra. -/
@@ -222,7 +205,8 @@ theorem baseChange_self :
   intro a h
   rw [baseChangeCoact_tmul, instSelf_coact,
     TensorProduct.tmul_eq_smul_one_tmul a (Coalgebra.comul (R := R) (A := H) h),
-    TensorProduct.tmul_eq_smul_one_tmul a h, map_smul, map_smul, comul_one_tmul]
+    TensorProduct.tmul_eq_smul_one_tmul a h, map_smul, map_smul,
+    TauCeti.Coalgebra.baseChange_comul_tmul]
 
 namespace Hom
 
@@ -231,7 +215,7 @@ variable {P : Type z} [AddCommMonoid P] [Module R P] [Comodule R H P]
 
 /-- Base change of a comodule morphism, extending its source and target modules together with its
 coefficient coalgebra along the same scalar morphism. -/
-@[expose] noncomputable def baseChange (f : Hom R H M N) :
+noncomputable def baseChange (f : Hom R H M N) :
     letI := Comodule.baseChange (R := R) (H := H) (M := M) A
     letI := Comodule.baseChange (R := R) (H := H) (M := N) A
     Hom A (A ⊗[R] H) (A ⊗[R] M) (A ⊗[R] N) := by
@@ -256,16 +240,11 @@ underlying linear map. -/
 theorem baseChange_toLinearMap (f : Hom R H M N) :
     letI := Comodule.baseChange (R := R) (H := H) (M := M) A
     letI := Comodule.baseChange (R := R) (H := H) (M := N) A
-    (baseChange A f).toLinearMap = f.toLinearMap.baseChange A :=
-  rfl
+    (baseChange A f).toLinearMap = f.toLinearMap.baseChange A := (rfl)
 
-/-- Base change preserves the identity comodule morphism.
-
-This is not a `simp` lemma: once `ComoduleCat` is imported, the `@[simp]` lemma
-`ComoduleCat.ofHom_id` rewrites the bare `Comodule.Hom.id` in the left-hand side to a categorical
-identity. Since `ComoduleCat.ofHom` is a reducible abbreviation, that rewrite applies even though
-the categorical wrapper is not syntactically present here, so tagging this theorem with `@[simp]`
-would make its left-hand side fail the `simpNF` linter. -/
+/-- Base change preserves the identity comodule morphism. -/
+-- This is not a `simp` lemma: after importing `ComoduleCat`, its `ofHom_id` simp lemma rewrites
+-- the reducibly wrapped `Comodule.Hom.id`, so this theorem would fail the `simpNF` linter.
 theorem baseChange_id :
     letI := Comodule.baseChange (R := R) (H := H) (M := M) A
     baseChange A (id R H M) = id A (A ⊗[R] H) (A ⊗[R] M) := by
