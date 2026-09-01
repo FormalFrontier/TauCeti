@@ -135,16 +135,6 @@ omit [IsTopologicalAddGroup E] [ContinuousSMul 𝕜 E] [IsTopologicalAddGroup Λ
 theorem parameterProj_apply (v : (D₁.coprod D₂).ker) : parameterProj D₁ D₂ v = (v : E × Λ).2 :=
   (rfl)
 
-omit [IsTopologicalAddGroup E] [ContinuousSMul 𝕜 E] [IsTopologicalAddGroup Λ]
-  [ContinuousSMul 𝕜 Λ] [ContinuousSMul 𝕜 F] in
-/-- The parameter projection is the ambient second projection composed with the kernel
-inclusion. -/
-theorem parameterProj_eq_comp_subtypeL :
-    parameterProj D₁ D₂ =
-      (ContinuousLinearMap.snd 𝕜 E Λ).comp (D₁.coprod D₂).ker.subtypeL := by
-  ext v
-  simp
-
 /-! ### Exactness at the candidate tangent space: the kernel of the projection -/
 
 /-- The embedding `x ↦ (x, 0)` of `ker D₁` into the kernel of the total linearization: the formal

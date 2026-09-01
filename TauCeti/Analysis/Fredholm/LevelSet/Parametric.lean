@@ -126,8 +126,11 @@ theorem hasStrictFDerivAt_levelSetParameterMap
   have hchart := hasStrictFDerivAt_coe_levelSetChart_symm hf
     (LinearMap.range_eq_top.mpr hD) hker hxl
   have hcomp := hchart.snd
-  rw [parameterProj_eq_comp_subtypeL]
-  rw [funext fun k ↦ levelSetParameterMap_apply hf hD hker hxl k]
+  have hproj : parameterProj D₁ D₂ =
+      (ContinuousLinearMap.snd K E Λ).comp (D₁.coprod D₂).ker.subtypeL := by
+    ext v
+    simp
+  rw [hproj, funext fun k ↦ levelSetParameterMap_apply hf hD hker hxl k]
   exact hcomp
 
 /-- The Fréchet derivative of the local parameter map at the chart origin is the linear
