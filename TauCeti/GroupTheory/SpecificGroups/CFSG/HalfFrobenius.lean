@@ -168,13 +168,6 @@ theorem halfExponent_eq_zero_iff (e : SuzukiReeIndex) :
 
 /-! ## The Steinberg map on the root datum -/
 
--- The square relation of the selected isogeny, written with the monoid multiplication that the
--- power lemmas of `TauCeti.RootPairingIsogeny` take as their hypothesis.
-private theorem datumSpecialIsogeny_mul_self (e : SuzukiReeIndex) :
-    e.datumSpecialIsogeny * e.datumSpecialIsogeny =
-      RootPairingIsogeny.smulId _ ⟨e.1.characteristic, e.1.characteristic_prime.pos⟩ :=
-  (RootPairingIsogeny.mul_def _ _).trans e.datumSpecialIsogeny_comp_self
-
 /-- **The Steinberg map of a Suzuki--Ree index on its pinned simply connected root datum**: the
 odd power `τ ^ (2 * m + 1)` of the special isogeny selected by the index, written as its
 `fieldExponent`-th power. On the Tits index the exponent is `1` and the map is `τ` itself. -/

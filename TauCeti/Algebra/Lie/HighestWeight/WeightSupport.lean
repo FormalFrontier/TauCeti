@@ -101,13 +101,6 @@ theorem finite_setOf_genWeightSpace_ne_bot_of_isHighestWeightVector
     (hlam : IsDominantIntegral b lam) :
     {chi : H → K | genWeightSpace M chi ≠ ⊥}.Finite := by
   have hgen : LieSubmodule.lieSpan K L {v} = ⊤ := lieSpan_singleton_eq_top_of_ne_zero hv.ne_zero
-  -- The root system of `H` pairs a weight with a coroot by evaluation, so its `coroot'` is
-  -- evaluation at `IsKilling.coroot`; this is the boundary between the two coroot interfaces.
-  have hcoroot' : ∀ (i : H.root) (chi : Dual K H),
-      (IsKilling.rootSystem H).coroot' i chi = chi (IsKilling.coroot (i : Weight K H L)) := by
-    intro i chi
-    rw [LinearMap.flip_apply, IsKilling.rootSystem_toLinearMap_apply,
-      IsKilling.rootSystem_coroot_apply]
   have hS : {chi : Dual K H | genWeightSpace M ((chi : Dual K H) : H → K) ≠ ⊥}.Finite := by
     refine finite_of_forall_reflection_mem_of_sub_mem_posRootCone (lam := lam) b
       (fun chi hchi ↦ ?_) (fun chi hchi i hi ↦ ?_) fun chi hchi i hi ↦ ?_
@@ -115,7 +108,7 @@ theorem finite_setOf_genWeightSpace_ne_bot_of_isHighestWeightVector
         hv hgen hchi
     · obtain ⟨m, hm⟩ := exists_int_apply_coroot_of_genWeightSpace_ne_bot_of_isHighestWeightVector
         hv hlam hi hchi
-      exact ⟨m, by rw [hcoroot' i chi, hm]⟩
+      exact ⟨m, by rw [rootSystem_coroot'_apply, IsKilling.rootSystem_coroot_apply, hm]⟩
     · exact genWeightSpace_rootSystem_reflection_ne_bot hv hlam hi hchi
   refine Set.Finite.subset (hS.image fun psi : Dual K H ↦ (psi : H → K)) fun chi hchi ↦ ?_
   obtain ⟨nu, -, heq⟩ :=

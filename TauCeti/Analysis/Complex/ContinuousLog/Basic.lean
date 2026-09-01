@@ -67,7 +67,7 @@ component of `a` is preconnected, hence entirely good.
 Only one implication of the classical criterion is proved here. Its converse — that a Borsuk map
 with a continuous logarithm on a *bounded* closed `K` forces `a` and `b` into one component of
 `Kᶜ` — is the deeper half, and is proved separately, in
-`TauCeti/Analysis/Complex/PlaneSeparation.lean`, as
+`TauCeti/Analysis/Complex/PlaneSeparation/Basic.lean`, as
 `TauCeti.mem_connectedComponentIn_of_hasContinuousLogOn`. Boundedness is essential there and is
 not assumed here. Nothing below uses that converse, and no statement below is phrased so as to
 presume it; in particular the naive route to it, through winding numbers of curves drawn inside
@@ -93,7 +93,7 @@ intersection, neither of which separates a pair of points, have a union that doe
 either — and Janiszewski is proved by translating "does not separate" into "the Borsuk map has a
 continuous logarithm" and gluing the two logarithms over the connected intersection. This file
 supplies that translation in the direction that holds without duality, together with the gluing;
-`TauCeti/Analysis/Complex/PlaneSeparation.lean` adds the converse direction and assembles the
+`TauCeti/Analysis/Complex/PlaneSeparation/Basic.lean` adds the converse direction and assembles the
 three into `TauCeti.janiszewski`.
 
 The one statement below already phrased in the vocabulary of that development is

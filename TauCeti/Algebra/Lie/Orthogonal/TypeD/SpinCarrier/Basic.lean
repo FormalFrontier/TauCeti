@@ -238,6 +238,15 @@ theorem groupScheme_def :
       (TauCeti.GeneralLinear.coordinateHopfAlgebra ℤ (dimension n)) (definingIdeal n hn) := by
   rw [groupScheme, definingIdeal]
 
+/-- The type-`Dₙ` carrier is the generic Kostant toral closure for its spin representation. -/
+theorem groupScheme_eq_kostantToralGroupScheme :
+    groupScheme n hn = kostantToralGroupScheme
+      (TauCeti.serreRootGenerator (CartanMatrix.D n))
+      (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
+      (rep_kostantForm_mem_lattice n hn)
+      (isNilpotent_rep_rootGenerator n hn) (latticeBasis n) (basisWeight n) := by
+  rw [groupScheme]
+
 /-- The canonical inclusion of the type-`Dₙ` spin carrier into `GL_(2^n)`. -/
 noncomputable def carrierι (hn : 4 ≤ n) :
     groupScheme n hn ⟶ TauCeti.GeneralLinear.groupScheme ℤ (dimension n) :=
@@ -271,6 +280,18 @@ noncomputable def rootSubgroup (hn : 4 ≤ n) (k : Fin n ⊕ Fin n) :
       (rep_kostantForm_mem_lattice n hn)
       (isNilpotent_rep_rootGenerator n hn) (latticeBasis n) (basisWeight n) =
         groupScheme n hn)
+
+/-- The root subgroup is the generic Kostant root subgroup, transported across the carrier's
+quotient-spectrum presentation. -/
+theorem rootSubgroup_def (k : Fin n ⊕ Fin n) :
+    rootSubgroup n hn k =
+      kostantRootSubgroupToToral
+          (TauCeti.serreRootGenerator (CartanMatrix.D n))
+          (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
+          (rep_kostantForm_mem_lattice n hn)
+          (isNilpotent_rep_rootGenerator n hn) (latticeBasis n) (basisWeight n) k ≫
+        eqToHom (groupScheme_eq_kostantToralGroupScheme n hn).symm := by
+  rw [rootSubgroup]
 
 /-- Including a numbered root subgroup into the ambient general linear group recovers its
 represented Kostant root subgroup. -/

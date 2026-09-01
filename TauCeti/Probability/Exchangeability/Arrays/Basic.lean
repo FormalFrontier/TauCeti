@@ -174,6 +174,18 @@ theorem aemeasurable_arrayCol {μ : Measure Ω} {X : ℕ × ℕ → Ω → α}
     (hX : ∀ p, AEMeasurable (X p) μ) (j : ℕ) : AEMeasurable (arrayCol X j) μ :=
   aemeasurable_pi_lambda _ fun i => hX (i, j)
 
+/-- **Entry measurability from row measurability**, the converse of `aemeasurable_arrayRow`.  The
+entries are the coordinates of the rows, so this needs no probabilistic structure; a caller holding
+a mixed or conditional witness passes its `aemeasurable`. -/
+theorem aemeasurable_entry_of_aemeasurable_arrayRow {μ : Measure Ω} {X : ℕ × ℕ → Ω → α}
+    (h : ∀ i, AEMeasurable (arrayRow X i) μ) (p : ℕ × ℕ) : AEMeasurable (X p) μ := by
+  simpa [arrayRow_apply] using (h p.1).eval p.2
+
+/-- **Entry measurability from column measurability**, the converse of `aemeasurable_arrayCol`. -/
+theorem aemeasurable_entry_of_aemeasurable_arrayCol {μ : Measure Ω} {X : ℕ × ℕ → Ω → α}
+    (h : ∀ j, AEMeasurable (arrayCol X j) μ) (p : ℕ × ℕ) : AEMeasurable (X p) μ := by
+  simpa [arrayCol_apply] using (h p.2).eval p.1
+
 /-! ## The two array symmetries -/
 
 /-- **Separate exchangeability.** The law of the array `X` is unchanged when its two axes are
