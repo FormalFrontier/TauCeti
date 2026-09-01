@@ -39,9 +39,7 @@ Which endpoint serves those downloads is a repository variable. Every workflow t
 `lake exe cache get` (`ci.yml`, `pr-build.yml`, `pr-profile.yml`, `nightly-verify.yml`,
 `pages.yml`) exports `MATHLIB_CACHE_GET_URL` from `vars.MATHLIB_CACHE_GET_URL`. The cache
 tool treats an empty value as unset, so clearing the variable returns reads to the tool's
-default endpoints on the next run, with no code change. The variable bypasses the tool's
-container lookup chain and the tool appends only `/f/<hash>`, so its value must name one
-artifact namespace on the serving host, not a bare host. For local and radar runs,
+default endpoints on the next run, with no code change. For local and radar runs,
 `scripts/bench/build/run` sets a default for the same variable; a value defined beforehand
 (even an empty one) wins over the default.
 
