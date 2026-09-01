@@ -5,8 +5,9 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.LinearAlgebra.RootSystem.DominantCone
 public import TauCeti.LinearAlgebra.RootSystem.Weyl.Alternating
+-- Non-public: the positive-cone argument is used only inside a private proof.
+import TauCeti.LinearAlgebra.RootSystem.DominantCone
 
 public section
 
@@ -93,24 +94,18 @@ antidominant member of the positive root cone is `0`. -/
 private theorem eq_zero_of_coeff_weylDenominator_ne_zero {y : M}
     (hy : (weylDenominator P b).coeff y ≠ 0)
     (hdom : y ∈ openDotDominantChamber P b) : y = 0 := by
-  obtain ⟨T, hT, hyT⟩ : ∃ T ⊆ posRootsFinset P b, y = -∑ i ∈ T, P.root i := by
-    by_contra hcon
-    push Not at hcon
-    exact hy (coeff_weylDenominator_eq_zero P b hcon)
-  have hcone : (∑ i ∈ T, P.root i) ∈ posRootCone P b :=
-    AddSubmonoid.sum_mem _ fun i hi =>
-      root_mem_posRootCone_of_mem_posRoots P b ((mem_posRootsFinset P b i).mp (hT hi))
-  have hzero : ∑ i ∈ T, P.root i = 0 := by
+  have hcone := neg_mem_posRootCone_of_coeff_weylDenominator_ne_zero P b hy
+  have hzero : -y = 0 := by
     refine eq_zero_of_mem_posRootCone_of_forall_coroot'_nonpos b hcone fun i hi => ?_
     obtain ⟨m, hm⟩ := exists_intCast_eq_coroot'_of_mem_posRootCone P b hcone i
-    have hlt : P.coroot' i (∑ j ∈ T, P.root j) < 1 := by
+    have hlt : P.coroot' i (-y) < 1 := by
       have h0 := (mem_openDotDominantChamber_iff_neg_one_lt_coroot' P b y).mp hdom i hi
-      rw [hyT, map_neg] at h0
+      rw [map_neg]
       linarith
     rw [hm] at hlt ⊢
     have hm1 : m < 1 := by exact_mod_cast hlt
     exact_mod_cast (by omega : m ≤ 0)
-  rw [hyT, hzero, neg_zero]
+  exact neg_eq_zero.mp hzero
 
 end Cone
 
