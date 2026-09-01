@@ -15,10 +15,10 @@ Real projective zero-space is a single point: the unit sphere in `ℝ¹` consist
 points, and the antipodal quotient identifies them. The sibling modules compute the fundamental
 group of `RP¹` and of `RPⁿ` for `2 ≤ n`; this file supplies the remaining boundary case.
 
-The existing theorem `TauCeti.RealProjectiveSpace.subsingleton_zero` gives uniqueness directly.
-Together with the quotient's nonemptiness, Mathlib's generic contractibility instance for a
-nonempty subsingleton space makes `RP⁰` contractible and hence simply connected. It follows that
-the fundamental group at its unique point is the trivial group.
+The instance `TauCeti.RealProjectiveSpace.instUniqueZero` gives uniqueness directly. Mathlib's
+generic contractibility instance for a nonempty subsingleton space makes `RP⁰` contractible and
+hence simply connected. It follows that the fundamental group at its unique point is the trivial
+group.
 
 ## Main declarations
 
@@ -52,15 +52,8 @@ def fundamentalGroupMulEquiv (x : RealProjectiveSpace 0) :
   letI : Unique (FundamentalGroup (RealProjectiveSpace 0) x) := uniqueOfSubsingleton 1
   MulEquiv.ofUnique
 
-/-- The equivalence from the fundamental group of `RP⁰` takes every loop class to the unique
-element of `PUnit`. -/
-@[simp]
-theorem fundamentalGroupMulEquiv_apply (x : RealProjectiveSpace 0)
-    (γ : FundamentalGroup (RealProjectiveSpace 0) x) :
-    fundamentalGroupMulEquiv x γ = PUnit.unit :=
-  Subsingleton.elim _ _
-
 /-- The fundamental group of `RP⁰` has exactly one element. -/
+@[simp]
 theorem card_fundamentalGroup (x : RealProjectiveSpace 0) :
     Nat.card (FundamentalGroup (RealProjectiveSpace 0) x) = 1 :=
   Nat.card_unique

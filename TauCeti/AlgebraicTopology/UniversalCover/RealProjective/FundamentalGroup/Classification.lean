@@ -50,7 +50,6 @@ noncomputable section
 
 The values are `1` in dimension zero, `0` in dimension one because that fundamental group is
 infinite, and `2` in every dimension at least two. -/
-@[simp]
 theorem card_fundamentalGroup (n : ℕ) (x : RealProjectiveSpace n) :
     Nat.card (FundamentalGroup (RealProjectiveSpace n) x) =
       match n with
@@ -60,8 +59,7 @@ theorem card_fundamentalGroup (n : ℕ) (x : RealProjectiveSpace n) :
   rcases n with _ | n
   · exact Zero.card_fundamentalGroup x
   · rcases n with _ | n
-    · let := Line.infinite_fundamentalGroup x
-      exact Nat.card_eq_zero_of_infinite
+    · exact Line.card_fundamentalGroup x
     · exact card_fundamentalGroup_of_two_le (n + 2) (by omega) x
 
 end
