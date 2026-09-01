@@ -116,6 +116,120 @@ theorem coe_mulEquivGLSymplectic_lowerUnipotent (C : Matrix (Fin m) (Fin m) R)
   rw [← GLSymplectic.coe_mulEquivSymplecticGroup]
   simp [lowerUnipotent]
 
+/-- The entries of an upper unipotent are the entries of the block matrix `[1 B; 0 1]`. -/
+@[simp]
+theorem upperUnipotent_apply (B : Matrix (Fin m) (Fin m) R) (hB : B.IsSymm)
+    (i j : Fin m ⊕ Fin m) :
+    (((upperUnipotent B hB : GLSymplecticFin m R) : GL (Fin (m + m)) R) :
+        Matrix (Fin (m + m)) (Fin (m + m)) R) (finSumFinEquiv i) (finSumFinEquiv j) =
+      Matrix.fromBlocks 1 B 0 1 i j := by
+  have h := congrArg
+    (fun M : GL (Fin m ⊕ Fin m) R => (M : Matrix (Fin m ⊕ Fin m) (Fin m ⊕ Fin m) R) i j)
+    (coe_mulEquivGLSymplectic_upperUnipotent B hB)
+  simpa only [coe_reindexGL, Matrix.submatrix_apply,
+    GLSymplectic.coe_ofSymplecticGroup] using h
+
+/-- The entries of a lower unipotent are the entries of the block matrix `[1 0; C 1]`. -/
+@[simp]
+theorem lowerUnipotent_apply (C : Matrix (Fin m) (Fin m) R) (hC : C.IsSymm)
+    (i j : Fin m ⊕ Fin m) :
+    (((lowerUnipotent C hC : GLSymplecticFin m R) : GL (Fin (m + m)) R) :
+        Matrix (Fin (m + m)) (Fin (m + m)) R) (finSumFinEquiv i) (finSumFinEquiv j) =
+      Matrix.fromBlocks 1 0 C 1 i j := by
+  have h := congrArg
+    (fun M : GL (Fin m ⊕ Fin m) R => (M : Matrix (Fin m ⊕ Fin m) (Fin m ⊕ Fin m) R) i j)
+    (coe_mulEquivGLSymplectic_lowerUnipotent C hC)
+  simpa only [coe_reindexGL, Matrix.submatrix_apply,
+    GLSymplectic.coe_ofSymplecticGroup] using h
+
+/-- The underlying matrix of an upper unipotent is `[1 B; 0 1]`, reindexed by
+`finSumFinEquiv`. -/
+@[simp]
+theorem coe_upperUnipotent (B : Matrix (Fin m) (Fin m) R) (hB : B.IsSymm) :
+    (((upperUnipotent B hB : GLSymplecticFin m R) : GL (Fin (m + m)) R) :
+        Matrix (Fin (m + m)) (Fin (m + m)) R) =
+      (Matrix.fromBlocks 1 B 0 1).submatrix finSumFinEquiv.symm finSumFinEquiv.symm := by
+  ext i j
+  obtain ⟨i, rfl⟩ := finSumFinEquiv.surjective i
+  obtain ⟨j, rfl⟩ := finSumFinEquiv.surjective j
+  simp
+
+/-- The underlying matrix of a lower unipotent is `[1 0; C 1]`, reindexed by
+`finSumFinEquiv`. -/
+@[simp]
+theorem coe_lowerUnipotent (C : Matrix (Fin m) (Fin m) R) (hC : C.IsSymm) :
+    (((lowerUnipotent C hC : GLSymplecticFin m R) : GL (Fin (m + m)) R) :
+        Matrix (Fin (m + m)) (Fin (m + m)) R) =
+      (Matrix.fromBlocks 1 0 C 1).submatrix finSumFinEquiv.symm finSumFinEquiv.symm := by
+  ext i j
+  obtain ⟨i, rfl⟩ := finSumFinEquiv.surjective i
+  obtain ⟨j, rfl⟩ := finSumFinEquiv.surjective j
+  simp
+
+/-- Equality of upper unipotents is equivalent to equality of their symmetric blocks. -/
+@[simp]
+theorem upperUnipotent_inj (B C : Matrix (Fin m) (Fin m) R)
+    (hB : B.IsSymm) (hC : C.IsSymm) :
+    upperUnipotent B hB = upperUnipotent C hC ↔ B = C := by
+  constructor
+  · intro h
+    ext i j
+    have hij := congrArg
+      (fun g : GLSymplecticFin m R =>
+        (((g : GL (Fin (m + m)) R) : Matrix (Fin (m + m)) (Fin (m + m)) R)
+          (finSumFinEquiv (Sum.inl i)) (finSumFinEquiv (Sum.inr j)))) h
+    rw [upperUnipotent_apply, upperUnipotent_apply] at hij
+    simpa using hij
+  · rintro rfl
+    rfl
+
+/-- Equality of lower unipotents is equivalent to equality of their symmetric blocks. -/
+@[simp]
+theorem lowerUnipotent_inj (B C : Matrix (Fin m) (Fin m) R)
+    (hB : B.IsSymm) (hC : C.IsSymm) :
+    lowerUnipotent B hB = lowerUnipotent C hC ↔ B = C := by
+  constructor
+  · intro h
+    ext i j
+    have hij := congrArg
+      (fun g : GLSymplecticFin m R =>
+        (((g : GL (Fin (m + m)) R) : Matrix (Fin (m + m)) (Fin (m + m)) R)
+          (finSumFinEquiv (Sum.inr i)) (finSumFinEquiv (Sum.inl j)))) h
+    rw [lowerUnipotent_apply, lowerUnipotent_apply] at hij
+    simpa using hij
+  · rintro rfl
+    rfl
+
+/-- Upper unipotents commute with change of coefficient ring. -/
+@[simp]
+theorem map_upperUnipotent {S : Type*} [CommRing S] (f : R →+* S)
+    (B : Matrix (Fin m) (Fin m) R) (hB : B.IsSymm) :
+    GLSymplecticFin.map m R f (upperUnipotent B hB) =
+      upperUnipotent (B.map f) (hB.map f) := by
+  apply Subtype.ext
+  apply Matrix.GeneralLinearGroup.ext
+  intro i j
+  obtain ⟨i, rfl⟩ := finSumFinEquiv.surjective i
+  obtain ⟨j, rfl⟩ := finSumFinEquiv.surjective j
+  simp only [GLSymplecticFin.coe_map, Matrix.GeneralLinearGroup.map_apply]
+  rw [upperUnipotent_apply, upperUnipotent_apply]
+  cases i <;> cases j <;> simp [Matrix.one_apply]
+
+/-- Lower unipotents commute with change of coefficient ring. -/
+@[simp]
+theorem map_lowerUnipotent {S : Type*} [CommRing S] (f : R →+* S)
+    (C : Matrix (Fin m) (Fin m) R) (hC : C.IsSymm) :
+    GLSymplecticFin.map m R f (lowerUnipotent C hC) =
+      lowerUnipotent (C.map f) (hC.map f) := by
+  apply Subtype.ext
+  apply Matrix.GeneralLinearGroup.ext
+  intro i j
+  obtain ⟨i, rfl⟩ := finSumFinEquiv.surjective i
+  obtain ⟨j, rfl⟩ := finSumFinEquiv.surjective j
+  simp only [GLSymplecticFin.coe_map, Matrix.GeneralLinearGroup.map_apply]
+  rw [lowerUnipotent_apply, lowerUnipotent_apply]
+  cases i <;> cases j <;> simp [Matrix.one_apply]
+
 /-- Upper unipotent blocks turn addition of symmetric matrices into multiplication. -/
 @[simp]
 theorem upperUnipotent_add (B C : Matrix (Fin m) (Fin m) R)
@@ -288,118 +402,99 @@ private theorem isSymm_sum {ι : Type*} (s : Finset ι)
   intro i hi
   exact (hA i hi).eq
 
-private theorem upperUnipotent_sum_mem {ι : Type*} (H : Subgroup (GLSymplecticFin m R))
-    (s : Finset ι) (A : ι → Matrix (Fin m) (Fin m) R)
-    (hA : ∀ i ∈ s, (A i).IsSymm)
-    (hmem : ∀ (i) (hi : i ∈ s), upperUnipotent (A i) (hA i hi) ∈ H) :
-    upperUnipotent (∑ i ∈ s, A i) (isSymm_sum s A hA) ∈ H := by
+private theorem unipotent_sum_mem {ι : Type*}
+    (U : (B : Matrix (Fin m) (Fin m) R) → B.IsSymm → GLSymplecticFin m R)
+    (hzero : U 0 Matrix.isSymm_zero = 1)
+    (hadd : ∀ (B C : Matrix (Fin m) (Fin m) R) (hB : B.IsSymm) (hC : C.IsSymm),
+      U (B + C) (hB.add hC) = U B hB * U C hC)
+    (H : Subgroup (GLSymplecticFin m R)) (s : Finset ι)
+    (A : ι → Matrix (Fin m) (Fin m) R) (hA : ∀ i ∈ s, (A i).IsSymm)
+    (hmem : ∀ (i) (hi : i ∈ s), U (A i) (hA i hi) ∈ H) :
+    U (∑ i ∈ s, A i) (isSymm_sum s A hA) ∈ H := by
   classical
   induction s using Finset.induction_on with
-  | empty => simp
+  | empty => simpa only [Finset.sum_empty, hzero] using H.one_mem
   | @insert a s ha ih =>
       have haA : (A a).IsSymm := hA a (Finset.mem_insert_self a s)
       have hsA : ∀ i ∈ s, (A i).IsSymm := fun i hi ↦ hA i (Finset.mem_insert_of_mem hi)
-      have hsa : upperUnipotent (A a) haA ∈ H :=
+      have hsa : U (A a) haA ∈ H :=
         hmem a (Finset.mem_insert_self a s)
-      have hss : upperUnipotent (∑ i ∈ s, A i) (isSymm_sum s A hsA) ∈ H :=
+      have hss : U (∑ i ∈ s, A i) (isSymm_sum s A hsA) ∈ H :=
         ih hsA (fun i hi ↦ hmem i (Finset.mem_insert_of_mem hi))
       have hprod := H.mul_mem hsa hss
-      rw [← upperUnipotent_add] at hprod
+      rw [← hadd] at hprod
       simpa only [Finset.sum_insert ha] using hprod
 
-private theorem lowerUnipotent_sum_mem {ι : Type*} (H : Subgroup (GLSymplecticFin m R))
-    (s : Finset ι) (A : ι → Matrix (Fin m) (Fin m) R)
-    (hA : ∀ i ∈ s, (A i).IsSymm)
-    (hmem : ∀ (i) (hi : i ∈ s), lowerUnipotent (A i) (hA i hi) ∈ H) :
-    lowerUnipotent (∑ i ∈ s, A i) (isSymm_sum s A hA) ∈ H := by
+private theorem unipotent_mem_of_root_subgroups
+    (U : (B : Matrix (Fin m) (Fin m) R) → B.IsSymm → GLSymplecticFin m R)
+    (hzero : U 0 Matrix.isSymm_zero = 1)
+    (hadd : ∀ (B C : Matrix (Fin m) (Fin m) R) (hB : B.IsSymm) (hC : C.IsSymm),
+      U (B + C) (hB.add hC) = U B hB * U C hC)
+    (H : Subgroup (GLSymplecticFin m R))
+    (hDiagonal : ∀ (i : Fin m) (c : R),
+      U (Matrix.single i i c) (by simp [Matrix.IsSymm]) ∈ H)
+    (hPair : ∀ {i j : Fin m} (_hij : i < j) (c : R),
+      U (Matrix.single i j c + Matrix.single j i c) (by
+        simp [Matrix.IsSymm, add_comm]) ∈ H)
+    (B : Matrix (Fin m) (Fin m) R) (hB : B.IsSymm) : U B hB ∈ H := by
   classical
-  induction s using Finset.induction_on with
-  | empty => simp
-  | @insert a s ha ih =>
-      have haA : (A a).IsSymm := hA a (Finset.mem_insert_self a s)
-      have hsA : ∀ i ∈ s, (A i).IsSymm := fun i hi ↦ hA i (Finset.mem_insert_of_mem hi)
-      have hsa : lowerUnipotent (A a) haA ∈ H :=
-        hmem a (Finset.mem_insert_self a s)
-      have hss : lowerUnipotent (∑ i ∈ s, A i) (isSymm_sum s A hsA) ∈ H :=
-        ih hsA (fun i hi ↦ hmem i (Finset.mem_insert_of_mem hi))
-      have hprod := H.mul_mem hsa hss
-      rw [← lowerUnipotent_add] at hprod
-      simpa only [Finset.sum_insert ha] using hprod
+  let D (i : Fin m) := Matrix.single i i (B i i)
+  let P (i j : Fin m) := Matrix.single i j (B i j) + Matrix.single j i (B i j)
+  have hD (i : Fin m) : (D i).IsSymm := by
+    simp [D, Matrix.IsSymm]
+  have hP (i j : Fin m) : (P i j).IsSymm := by
+    simp [P, Matrix.IsSymm, add_comm]
+  have hdiag :
+      U (∑ i ∈ Finset.univ, D i)
+        (isSymm_sum Finset.univ D (fun i _ ↦ hD i)) ∈ H :=
+    unipotent_sum_mem U hzero hadd H Finset.univ D (fun i _ ↦ hD i) (fun i _ ↦ by
+      simpa [D] using hDiagonal i (B i i))
+  have hpair (i : Fin m) :
+      U (∑ j ∈ Finset.Ioi i, P i j)
+        (isSymm_sum (Finset.Ioi i) (P i) (fun j _ ↦ hP i j)) ∈ H :=
+    unipotent_sum_mem U hzero hadd H (Finset.Ioi i) (P i) (fun j _ ↦ hP i j)
+      (fun j hj ↦ by
+        have hij : i < j := by simpa using hj
+        simpa [P] using hPair hij (B i j))
+  have hpairs :
+      U (∑ i ∈ Finset.univ, ∑ j ∈ Finset.Ioi i, P i j)
+        (isSymm_sum Finset.univ (fun i ↦ ∑ j ∈ Finset.Ioi i, P i j)
+          (fun i _ ↦ isSymm_sum (Finset.Ioi i) (P i) (fun j _ ↦ hP i j))) ∈ H :=
+    unipotent_sum_mem U hzero hadd H Finset.univ
+      (fun i ↦ ∑ j ∈ Finset.Ioi i, P i j)
+      (fun i _ ↦ isSymm_sum (Finset.Ioi i) (P i) (fun j _ ↦ hP i j))
+      (fun i _ ↦ hpair i)
+  have htotal := H.mul_mem hdiag hpairs
+  rw [← hadd] at htotal
+  have hdecomp := symmetric_eq_sum_diagonal_add_sum_pairs B hB
+  simpa only [D, P, ← hdecomp] using htotal
 
 /-- Every upper unipotent block belongs to a subgroup containing the positive long- and
-sum-root elements. -/
+sum-root elements for canonically ordered pairs. -/
 theorem upperUnipotent_mem_of_root_subgroups (H : Subgroup (GLSymplecticFin m R))
     (hLong : ∀ (i : Fin m) (c : R), positiveLongRootTransvectionUnit i c ∈ H)
-    (hSum : ∀ {i j : Fin m} (hij : i ≠ j) (c : R), positiveSumShortRootUnit hij c ∈ H)
+    (hSum : ∀ {i j : Fin m} (hij : i < j) (c : R),
+      positiveSumShortRootUnit hij.ne c ∈ H)
     (B : Matrix (Fin m) (Fin m) R) (hB : B.IsSymm) : upperUnipotent B hB ∈ H := by
-  classical
-  let D (i : Fin m) := Matrix.single i i (B i i)
-  let P (i j : Fin m) := Matrix.single i j (B i j) + Matrix.single j i (B i j)
-  have hD (i : Fin m) : (D i).IsSymm := by
-    simp [D, Matrix.IsSymm]
-  have hP (i j : Fin m) : (P i j).IsSymm := by
-    simp [P, Matrix.IsSymm, add_comm]
-  have hdiag :
-      upperUnipotent (∑ i ∈ Finset.univ, D i)
-          (isSymm_sum Finset.univ D (fun i _ ↦ hD i)) ∈ H :=
-    upperUnipotent_sum_mem H Finset.univ D (fun i _ ↦ hD i) (fun i _ ↦ by
-      simpa [D] using hLong i (B i i))
-  have hpair (i : Fin m) :
-      upperUnipotent (∑ j ∈ Finset.Ioi i, P i j)
-          (isSymm_sum (Finset.Ioi i) (P i) (fun j _ ↦ hP i j)) ∈ H :=
-    upperUnipotent_sum_mem H (Finset.Ioi i) (P i) (fun j _ ↦ hP i j) (fun j hj ↦ by
-      have hij : i ≠ j := (by simpa using hj : i < j).ne
-      have hroot := hSum hij (B i j)
-      rw [← upperUnipotent_single_add_transpose hij] at hroot
-      simpa [P] using hroot)
-  have hpairs :
-      upperUnipotent (∑ i ∈ Finset.univ, ∑ j ∈ Finset.Ioi i, P i j)
-          (isSymm_sum Finset.univ (fun i ↦ ∑ j ∈ Finset.Ioi i, P i j)
-            (fun i _ ↦ isSymm_sum (Finset.Ioi i) (P i) (fun j _ ↦ hP i j))) ∈ H :=
-    upperUnipotent_sum_mem H Finset.univ (fun i ↦ ∑ j ∈ Finset.Ioi i, P i j)
-      (fun i _ ↦ isSymm_sum (Finset.Ioi i) (P i) (fun j _ ↦ hP i j))
-      (fun i _ ↦ hpair i)
-  have htotal := H.mul_mem hdiag hpairs
-  rw [← upperUnipotent_add] at htotal
-  have hdecomp := symmetric_eq_sum_diagonal_add_sum_pairs B hB
-  simpa only [D, P, ← hdecomp] using htotal
+  apply unipotent_mem_of_root_subgroups upperUnipotent upperUnipotent_zero upperUnipotent_add H
+  · intro i c
+    simpa using hLong i c
+  · intro i j hij c
+    rw [upperUnipotent_single_add_transpose hij.ne]
+    exact hSum hij c
 
 /-- Every lower unipotent block belongs to a subgroup containing the negative long- and
-sum-root elements. -/
+sum-root elements for canonically ordered pairs. -/
 theorem lowerUnipotent_mem_of_root_subgroups (H : Subgroup (GLSymplecticFin m R))
     (hLong : ∀ (i : Fin m) (c : R), negativeLongRootTransvectionUnit i c ∈ H)
-    (hSum : ∀ {i j : Fin m} (hij : i ≠ j) (c : R), negativeSumShortRootUnit hij c ∈ H)
+    (hSum : ∀ {i j : Fin m} (hij : i < j) (c : R),
+      negativeSumShortRootUnit hij.ne c ∈ H)
     (B : Matrix (Fin m) (Fin m) R) (hB : B.IsSymm) : lowerUnipotent B hB ∈ H := by
-  classical
-  let D (i : Fin m) := Matrix.single i i (B i i)
-  let P (i j : Fin m) := Matrix.single i j (B i j) + Matrix.single j i (B i j)
-  have hD (i : Fin m) : (D i).IsSymm := by
-    simp [D, Matrix.IsSymm]
-  have hP (i j : Fin m) : (P i j).IsSymm := by
-    simp [P, Matrix.IsSymm, add_comm]
-  have hdiag :
-      lowerUnipotent (∑ i ∈ Finset.univ, D i)
-          (isSymm_sum Finset.univ D (fun i _ ↦ hD i)) ∈ H :=
-    lowerUnipotent_sum_mem H Finset.univ D (fun i _ ↦ hD i) (fun i _ ↦ by
-      simpa [D] using hLong i (B i i))
-  have hpair (i : Fin m) :
-      lowerUnipotent (∑ j ∈ Finset.Ioi i, P i j)
-          (isSymm_sum (Finset.Ioi i) (P i) (fun j _ ↦ hP i j)) ∈ H :=
-    lowerUnipotent_sum_mem H (Finset.Ioi i) (P i) (fun j _ ↦ hP i j) (fun j hj ↦ by
-      have hij : i ≠ j := (by simpa using hj : i < j).ne
-      have hroot := hSum hij (B i j)
-      rw [← lowerUnipotent_single_add_transpose hij] at hroot
-      simpa [P] using hroot)
-  have hpairs :
-      lowerUnipotent (∑ i ∈ Finset.univ, ∑ j ∈ Finset.Ioi i, P i j)
-          (isSymm_sum Finset.univ (fun i ↦ ∑ j ∈ Finset.Ioi i, P i j)
-            (fun i _ ↦ isSymm_sum (Finset.Ioi i) (P i) (fun j _ ↦ hP i j))) ∈ H :=
-    lowerUnipotent_sum_mem H Finset.univ (fun i ↦ ∑ j ∈ Finset.Ioi i, P i j)
-      (fun i _ ↦ isSymm_sum (Finset.Ioi i) (P i) (fun j _ ↦ hP i j))
-      (fun i _ ↦ hpair i)
-  have htotal := H.mul_mem hdiag hpairs
-  rw [← lowerUnipotent_add] at htotal
-  have hdecomp := symmetric_eq_sum_diagonal_add_sum_pairs B hB
-  simpa only [D, P, ← hdecomp] using htotal
+  apply unipotent_mem_of_root_subgroups lowerUnipotent lowerUnipotent_zero lowerUnipotent_add H
+  · intro i c
+    simpa using hLong i c
+  · intro i j hij c
+    rw [lowerUnipotent_single_add_transpose hij.ne]
+    exact hSum hij c
 
 end TauCeti.GLSymplecticFin
