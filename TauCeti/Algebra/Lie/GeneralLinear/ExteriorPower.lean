@@ -97,6 +97,7 @@ noncomputable scoped instance glLieModule (d : ℕ) {n : Type*} [DecidableEq n] 
   LieModule.compLieHom _ (glLieMap d)
 
 /-- The scoped Lie action is the action represented by `glLieMap`. -/
+@[simp, grind =]
 theorem gl_lie_def (d : ℕ) {n : Type*} [DecidableEq n] [Fintype n]
     (A : Matrix n n K) (x : ⋀[K]^d (n → K)) :
     letI : LieRingModule (Matrix n n K) (⋀[K]^d (n → K)) :=
@@ -506,6 +507,17 @@ theorem lieSpan_basisWedge_eq_top (d n : ℕ) (S : Finset (Fin n)) (hS : S.card 
   exact basisWedge_mem_of_first_mem (K := K) d n h N
     (first_mem_of_basisWedge_mem (K := K) d n h N s
       (LieSubmodule.subset_lieSpan (Set.mem_singleton _))) t
+
+/-- The canonical first basis wedge generates the exterior power as a general-linear Lie module. -/
+theorem lieSpan_firstBasisWedge_eq_top (d n : ℕ) (h : d ≤ n) :
+    letI : LieRingModule (Matrix (Fin n) (Fin n) K) (⋀[K]^d (Fin n → K)) :=
+      glLieRingModule (K := K) (n := Fin n) d
+    LieSubmodule.lieSpan K (Matrix (Fin n) (Fin n) K)
+      {firstBasisWedge (K := K) d n h} = ⊤ := by
+  rw [firstBasisWedge_eq_basisWedge]
+  exact lieSpan_basisWedge_eq_top (K := K) d n
+    (firstBasisSet d n h : Finset (Fin n))
+    (Set.powersetCard.card_eq (firstBasisSet d n h))
 
 end Cyclicity
 
