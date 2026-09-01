@@ -5,7 +5,6 @@ Authors: Codex
 -/
 module
 
-import TauCeti.CategoryTheory.ObjectProperty
 public import TauCeti.Algebra.AlgebraicGroup.SimplyConnected.Basic
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.Semisimple.Reductive
 public import TauCeti.AlgebraicGeometry.GroupScheme.CentralIsogeny.Isomorphism
@@ -232,12 +231,8 @@ noncomputable def functorCompιIso
         (simplyConnectedSemisimpleAffineGroupSchemeProperty k).ι ≅
       (forget₂ (SimplyConnectedSemisimpleCommHopfAlgCat.{u} k)
           (SemisimpleCommHopfAlgCat.{u} k)).op ⋙
-        (semisimpleCommHopfAlgCatOpEquivSemisimpleAffineGroupSchemeCat k).functor := by
-  let P := simplyConnectedSemisimpleCommHopfAlgProperty k
-  let Q := simplyConnectedSemisimpleAffineGroupSchemeProperty k
-  let e := semisimpleCommHopfAlgCatOpEquivSemisimpleAffineGroupSchemeCat k
-  let h := simplyConnectedSemisimpleAffineGroupSchemeProperty_inverseImage k
-  exact P.opEquivalenceCongrFullSubcategoryFunctorCompιIso Q e h
+        (semisimpleCommHopfAlgCatOpEquivSemisimpleAffineGroupSchemeCat k).functor :=
+  Iso.refl _
 
 end simplyConnectedSemisimpleCommHopfAlgCatOpEquivSimplyConnectedSemisimpleAffineGroupSchemeCat
 

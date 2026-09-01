@@ -140,12 +140,17 @@ private noncomputable def
       (forget₂ (LinearlyReductiveCommHopfAlgCat.{u, u} k)
           (CommHopfAlgCat.{u} k)).op ⋙
         (commHopfAlgCatOpEquivAffineGroupSchemeCat
-          (CommRingCat.of k)).functor := by
-  let P := linearlyReductiveCommHopfAlgProperty.{u, u} k
-  let Q := linearlyReductiveAffineGroupSchemeProperty k
-  let e := commHopfAlgCatOpEquivAffineGroupSchemeCat (CommRingCat.of k)
-  let h := linearlyReductiveAffineGroupSchemeProperty_inverseImage k
-  exact P.opEquivalenceCongrFullSubcategoryFunctorCompιIso Q e h
+          (CommRingCat.of k)).functor :=
+  Functor.associator _ _ _ ≪≫
+    Functor.isoWhiskerLeft
+      (ObjectProperty.opEquivalence
+        (linearlyReductiveCommHopfAlgProperty.{u, u} k)).inverse
+      ((linearlyReductiveAffineGroupSchemeProperty k).liftCompιIso _ _) ≪≫
+    (Functor.associator _ _ _).symm ≪≫
+    Functor.isoWhiskerRight
+      ((linearlyReductiveCommHopfAlgProperty.{u, u} k).op.liftCompιIso _ _)
+      (commHopfAlgCatOpEquivAffineGroupSchemeCat
+        (CommRingCat.of k)).functor
 
 /-- The restricted anti-equivalence followed by the inclusions into affine group schemes is
 `hopfSpec` after forgetting the proof of linear reductivity. -/

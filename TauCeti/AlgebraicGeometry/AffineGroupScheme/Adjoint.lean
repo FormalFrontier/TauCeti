@@ -118,6 +118,13 @@ noncomputable def
   let Q := adjointSemisimpleAffineGroupSchemeProperty k
   let e := semisimpleCommHopfAlgCatOpEquivSemisimpleAffineGroupSchemeCat k
   let h := adjointSemisimpleAffineGroupSchemeProperty_inverseImage k
-  exact P.opEquivalenceCongrFullSubcategoryFunctorCompιIso Q e h
+  exact
+    Functor.associator _ _ _ ≪≫
+      Functor.isoWhiskerLeft (ObjectProperty.opEquivalence P).symm.functor
+        (Q.liftCompιIso (P.op.ι ⋙ e.functor) (fun X ↦
+          (congrFun h X.obj).symm.mp X.property)) ≪≫
+      (Functor.associator _ _ _).symm ≪≫
+      Functor.isoWhiskerRight
+        (P.op.liftCompιIso P.ι.op (fun X ↦ X.unop.property)) e.functor
 
 end TauCeti
