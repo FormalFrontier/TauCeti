@@ -198,6 +198,19 @@ def overSheafificationIso (R : Sheaf J RingCat.{u})
           (pushforwardRingIso (J := J.over X) (K := J) (Over.forget X) R).inv).obj P) :=
   pushforwardSheafificationIso (J := J.over X) (K := J) (Over.forget X) R P
 
+/-- The inverse of `overSheafificationIso` is the canonical comparison obtained from the
+sheafification unit and counit, as in `pushforwardSheafificationIso_inv`. -/
+theorem overSheafificationIso_inv (R : Sheaf J RingCat.{u})
+    (P : PresheafOfModules.{v} R.obj) (X : C)
+    [HasWeakSheafify (J.over X) AddCommGrpCat.{v}]
+    [(J.over X).WEqualsLocallyBijective AddCommGrpCat.{v}] :
+    (overSheafificationIso R P X).inv =
+      (PresheafOfModules.sheafification (R := R.over X) (𝟙 (R.over X).obj)).map
+          (pushforwardToSheafify (J := J.over X) (K := J) (Over.forget X) R P) ≫
+        (sheafificationIso (R.over X)
+          (((PresheafOfModules.sheafification (R := R) (𝟙 R.obj)).obj P).over X)).hom :=
+  pushforwardSheafificationIso_inv (J := J.over X) (K := J) (Over.forget X) R P
+
 end SheafOfModules
 
 end

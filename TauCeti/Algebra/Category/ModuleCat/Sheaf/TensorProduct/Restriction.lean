@@ -98,6 +98,43 @@ def overTensorProductIso (M N : SheafOfModules.{u} (ringCatSheaf R)) (X : D)
     (tensorProduct R M N).over X ≅ tensorProduct (R.over X) (M.over X) (N.over X) :=
   pushforwardTensorProductIso (J := K.over X) (K := K) (Over.forget X) R M N
 
+/-- The forward map of `pushforwardTensorProductIso` is the sheafification comparison composed
+with the tensorator of the pushforward, read through the defining identifications of the two
+tensor products. -/
+theorem pushforwardTensorProductIso_hom (M N : SheafOfModules.{u} (ringCatSheaf R)) :
+    (pushforwardTensorProductIso (J := J) (K := K) F R M N).hom =
+      (pushforwardModule (J := J) (K := K) F R).map (tensorProductIso R M N).hom ≫
+        (pushforwardSheafificationIso F (ringCatSheaf R) (M.val ⊗ N.val)).hom ≫
+        (PresheafOfModules.sheafification
+          (𝟙 (ringCatSheaf (pushforwardCommRing (J := J) (K := K) F R)).obj)).map
+            (Functor.Monoidal.μIso
+              (PresheafOfModules.pushforward₀OfCommRingCat F R.obj) M.val N.val).inv ≫
+        (tensorProductIso (pushforwardCommRing (J := J) (K := K) F R)
+          ((pushforwardModule (J := J) (K := K) F R).obj M)
+          ((pushforwardModule (J := J) (K := K) F R).obj N)).inv := by
+  -- `Iso.trans_hom` does not fire: the coefficient sheaf carried by the middle isomorphism is
+  -- only definitionally the one carried by the outer isomorphisms, so `simp` cannot match it,
+  -- and the two sides are identified by unfolding `Iso.trans`.
+  rfl
+
+/-- The forward map of `overTensorProductIso` is the slice-site instance of
+`pushforwardTensorProductIso_hom`. -/
+theorem overTensorProductIso_hom (M N : SheafOfModules.{u} (ringCatSheaf R)) (X : D)
+    [(K.over X).HasSheafCompose (forget₂ CommRingCat RingCat.{u})]
+    [HasWeakSheafify (K.over X) AddCommGrpCat.{u}]
+    [(K.over X).WEqualsLocallyBijective AddCommGrpCat.{u}] :
+    (overTensorProductIso R M N X).hom =
+      (pushforwardModule (J := K.over X) (K := K) (Over.forget X) R).map
+          (tensorProductIso R M N).hom ≫
+        (pushforwardSheafificationIso (J := K.over X) (K := K) (Over.forget X)
+            (ringCatSheaf R) (M.val ⊗ N.val)).hom ≫
+        (PresheafOfModules.sheafification (𝟙 (ringCatSheaf (R.over X)).obj)).map
+            (Functor.Monoidal.μIso
+              (PresheafOfModules.pushforward₀OfCommRingCat (Over.forget X) R.obj)
+              M.val N.val).inv ≫
+        (tensorProductIso (R.over X) (M.over X) (N.over X)).inv :=
+  pushforwardTensorProductIso_hom (J := K.over X) (K := K) (Over.forget X) R M N
+
 end SheafOfModules
 
 end
