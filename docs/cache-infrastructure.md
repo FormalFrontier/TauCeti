@@ -35,6 +35,15 @@ incompatible, bump `mathlib-ltar-v1` once in
 `gh cache delete <key> --repo TauCetiProject/TauCeti`. A failed fetch also retries once with
 `lake exe cache get!`, which forces every linked file to be downloaded and unpacked again.
 
+Which host serves those downloads is a repository variable. Every workflow that runs
+`lake exe cache get` (`ci.yml`, `pr-build.yml`, `pr-profile.yml`, `nightly-verify.yml`,
+`pages.yml`) exports `MATHLIB_CACHE_GET_URL` from `vars.MATHLIB_CACHE_GET_URL`, which an
+operator points at `https://cache.mathlib.org`. The cache tool treats an empty value as
+unset, so clearing the variable returns reads to the tool's default endpoints on the next
+run, with no code change. For local and radar runs, `scripts/bench/build/run` and the
+README's build instructions default the same variable to `https://cache.mathlib.org`; a
+value defined beforehand (even an empty one) wins over the default.
+
 ## Cloudflare account
 
 This table records the required destination. During the 2026 account migration,

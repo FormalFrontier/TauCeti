@@ -3,7 +3,10 @@ set -euxo pipefail
 
 BENCH="scripts/bench"
 
-# Prepare build
+# Prepare build. Mathlib oleans come from cache.mathlib.org; a caller opts out by
+# defining MATHLIB_CACHE_GET_URL first. A defined-but-empty value also counts as a
+# choice: the cache tool treats it as unset and uses its default endpoints.
+export MATHLIB_CACHE_GET_URL="${MATHLIB_CACHE_GET_URL-https://cache.mathlib.org}"
 lake exe cache get
 
 # Run build

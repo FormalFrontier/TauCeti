@@ -42,6 +42,12 @@ concurrency:
   group: pr-build-${{ github.event.pull_request.number || inputs.pr || github.event.merge_group.head_sha }}
   cancel-in-progress: true
 
+env:
+  # Read endpoint for `lake exe cache get`, wired from a repository variable that an operator
+  # points at https://cache.mathlib.org. The cache tool treats unset and empty alike, so
+  # clearing the variable returns reads to the tool's default endpoints on the next run.
+  MATHLIB_CACHE_GET_URL: ${{ vars.MATHLIB_CACHE_GET_URL }}
+
 jobs:
   # Name kept distinct from `build` on purpose — see the header note. The required merge check is the
   # `build` commit STATUS posted in the final step, not this job's auto-created check-run.

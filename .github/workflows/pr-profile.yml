@@ -45,6 +45,12 @@ concurrency:
     }}
   cancel-in-progress: true
 
+env:
+  # Read endpoint for `lake exe cache get`, wired from a repository variable that an operator
+  # points at https://cache.mathlib.org. The cache tool treats unset and empty alike, so
+  # clearing the variable returns reads to the tool's default endpoints on the next run.
+  MATHLIB_CACHE_GET_URL: ${{ vars.MATHLIB_CACHE_GET_URL }}
+
 jobs:
   # Deliberately not named `perf`: the authoritative required context is the
   # commit status posted at the end, not this workflow's automatic check-run.
