@@ -91,11 +91,10 @@ open LieAlgebra Module _root_.LieModule
 
 universe u v w
 
-variable {K : Type u} {L : Type v} [Field K] [CharZero K] [IsAlgClosed K]
+variable {K : Type u} {L : Type v} [Field K] [CharZero K]
   [LieRing L] [LieAlgebra K L] [IsKilling K L] [FiniteDimensional K L]
-  {H : LieSubalgebra K L} [H.IsCartanSubalgebra]
-  {M : Type w} [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M]
-  {b : (IsKilling.rootSystem H).Base} {lam : Dual K H} {v : M}
+  {H : LieSubalgebra K L} [H.IsCartanSubalgebra] [IsTriangularizable K H L]
+  {b : (IsKilling.rootSystem H).Base} {lam : Dual K H}
 
 /-! ### Dominance of the opposite weight -/
 
@@ -120,7 +119,9 @@ theorem IsDominantIntegral.neg_longestElement_smul (hlam : IsDominantIntegral b 
 
 /-! ### The lowest weight -/
 
-variable [_root_.LieModule.IsIrreducible K L M]
+variable [IsAlgClosed K]
+  {M : Type w} [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M] {v : M}
+  [_root_.LieModule.IsIrreducible K L M]
 
 /-- **`w₀ • lam` is the lowest weight of an irreducible highest weight module.** Every weight lies
 above it, in the sense that their difference is a nonnegative combination of the simple roots.
@@ -137,7 +138,7 @@ theorem sub_longestElement_smul_mem_posRootCone_of_genWeightSpace_ne_bot
   have h2 := neg_longestElement_smul_mem_posRootCone h
   rwa [smul_sub, smul_smul_longestElement, neg_sub] at h2
 
-omit [_root_.LieModule.IsIrreducible K L M] in
+omit [IsAlgClosed K] [_root_.LieModule.IsIrreducible K L M] in
 /-- The weight underlying the difference of a weight and a root is the pointwise difference. -/
 private theorem coe_sub_root_rootSystem (x : Dual K H) (i : H.root) :
     ⇑(x - (IsKilling.rootSystem H).root i) = ⇑x - (i : H → K) :=
@@ -161,7 +162,7 @@ theorem genWeightSpace_longestElement_smul_sub_root_eq_bot
 
 variable [FiniteDimensional K M]
 
-omit [CharZero K] [IsKilling K L] [FiniteDimensional K L]
+omit [CharZero K] [IsKilling K L] [FiniteDimensional K L] [IsTriangularizable K H L]
   [_root_.LieModule.IsIrreducible K L M] in
 /-- A linear functional vanishing on every weight space is zero: the weight spaces span. -/
 private theorem eq_zero_of_forall_genWeightSpace {g : Dual K M}
@@ -183,9 +184,10 @@ theorem exists_isHighestWeightVector_dual (hv : IsHighestWeightVector b lam v) :
   -- the lowest weight space is nonzero
   have hmu_ne : genWeightSpace M ⇑mu ≠ ⊥ :=
     genWeightSpace_weylGroup_smul_ne_bot hv hlam w₀ hv.genWeightSpace_ne_bot
-  -- the sum of the other weight spaces is a proper submodule
-  set N : LieSubmodule K H M := ⨆ chi : H → K, ⨆ _ : chi ≠ ⇑mu, genWeightSpace M chi
-  have hdisj : Disjoint (genWeightSpace M ⇑mu) N := iSupIndep_genWeightSpace K H M ⇑mu
+  -- the span of the other weight spaces is a proper submodule
+  set N : LieSubmodule K H M := genWeightSpaceSpan H M {chi | chi ≠ ⇑mu}
+  have hdisj : Disjoint (genWeightSpace M ⇑mu) N :=
+    disjoint_genWeightSpace_genWeightSpaceSpan_ne H M mu
   have hNtop : N ≠ ⊤ := fun h => hmu_ne (by simpa [h] using hdisj)
   have hlt : N.toSubmodule < ⊤ := by
     rw [lt_top_iff_ne_top]
@@ -197,10 +199,8 @@ theorem exists_isHighestWeightVector_dual (hv : IsHighestWeightVector b lam v) :
     rw [hfN] at hmem
     simpa using hmem
   -- `f` kills every weight space other than the lowest one
-  have hkill : ∀ chi : H → K, chi ≠ ⇑mu → ∀ m ∈ genWeightSpace M chi, f m = 0 := by
-    intro chi hchi m hm
-    refine hfN' m ?_
-    exact le_iSup₂ (f := fun chi (_ : chi ≠ ⇑mu) => genWeightSpace M chi) chi hchi hm
+  have hkill : ∀ chi : H → K, chi ≠ ⇑mu → ∀ m ∈ genWeightSpace M chi, f m = 0 :=
+    fun _ hchi _ hm => hfN' _ (genWeightSpace_le_genWeightSpaceSpan hchi hm)
   refine ⟨f, isHighestWeightVector_of_forall_rootSpace hf0 (fun x => ?_) (fun alpha ha x hx => ?_)⟩
   · -- the Cartan subalgebra acts through `-mu`
     refine sub_eq_zero.mp (eq_zero_of_forall_genWeightSpace (H := H) fun chi m hm => ?_)

@@ -33,7 +33,9 @@ positive roots, so it preserves that description.
   the longest-element translate on the coroot functionals.
 * `TauCeti.opposition_mem_support`: **the opposition involution permutes the simple roots.**
 * `TauCeti.neg_longestElement_smul_mem_posRootCone`: **`-w₀` preserves the positive root cone**, the
-  consequence of that permutation for nonnegative combinations of the simple roots.
+  consequence of that permutation for nonnegative combinations of the simple roots;
+  `TauCeti.neg_longestElement_smul_mem_posRootCone_iff` is the resulting `simp` normalisation, `-w₀`
+  being an involution.
 
 ## Implementation notes
 
@@ -179,6 +181,17 @@ theorem neg_longestElement_smul_mem_posRootCone {u : M} (hu : u ∈ posRootCone 
   rw [← root_opposition P b j]
   exact root_mem_posRootCone_of_mem_posRoots P b
     (support_subset_posRoots P b (opposition_mem_support P b hj))
+
+variable {P b} in
+/-- **Membership of the positive root cone is invariant under `-w₀`**: the map preserves the cone
+(`TauCeti.neg_longestElement_smul_mem_posRootCone`) and is an involution, so applying it twice
+returns the original vector. -/
+@[simp]
+theorem neg_longestElement_smul_mem_posRootCone_iff {u : M} :
+    -(longestElement P b • u) ∈ posRootCone P b ↔ u ∈ posRootCone P b := by
+  refine ⟨fun hu => ?_, neg_longestElement_smul_mem_posRootCone⟩
+  have h := neg_longestElement_smul_mem_posRootCone hu
+  rwa [smul_neg, neg_neg, smul_smul_longestElement] at h
 
 /-- **The permutation of the base induced by the opposition involution**: the restriction of
 `TauCeti.opposition` to the simple roots, which it permutes by `TauCeti.opposition_mem_support`. -/
