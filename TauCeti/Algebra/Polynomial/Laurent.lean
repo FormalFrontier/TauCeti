@@ -7,6 +7,7 @@ module
 
 public import Mathlib.Algebra.MonoidAlgebra.Basic
 public import Mathlib.Algebra.Polynomial.Laurent
+public import Mathlib.Algebra.Ring.NegOnePow
 public import Mathlib.Data.Int.Cast.Lemmas
 
 /-!
@@ -31,6 +32,8 @@ monoid, and that automorphism is what a shift-compatible invariant is compared a
 ## Main definitions
 
 * `TauCeti.laurentEval`: evaluation of a Laurent polynomial at a unit of an `R`-algebra.
+* `TauCeti.laurentEvalUnit`, `TauCeti.laurentEvalOne`, and `TauCeti.laurentEvalNegOne`: evaluation
+  at integer units, including the two specializations at `1` and `-1`.
 * `TauCeti.laurentEvalEquiv`: the units of `A` are the `R`-algebra maps `R[T;T⁻¹] →ₐ[R] A`.
 * `TauCeti.laurentTAut`: multiplication by `T` on an `R[T;T⁻¹]`-module, as an additive
   automorphism.
@@ -40,6 +43,7 @@ monoid, and that automorphism is what a shift-compatible invariant is compared a
 * `TauCeti.laurentEval_unique`: an algebra map out of `R[T;T⁻¹]` is determined by its value at `T`.
 * `TauCeti.laurentEval_eq_eval₂`: over a commutative target, this evaluation is Mathlib's
   `LaurentPolynomial.eval₂`.
+* `TauCeti.laurentEvalUnit_T`: evaluation of a Laurent power at an integer unit.
 * `TauCeti.laurentPolynomialC_smul`: a constant Laurent polynomial acts by integer scalar
   multiplication.
 
@@ -173,5 +177,33 @@ lemma laurentPolynomialC_smul (a : ℤ) (x : N) :
   congr 1
 
 end Constants
+
+section IntegerEvaluation
+
+/-- Evaluation of `ℤ[q,q⁻¹]` at an integer unit. -/
+noncomputable def laurentEvalUnit (u : ℤˣ) : LaurentPolynomial ℤ →+* ℤ :=
+  (laurentEval (R := ℤ) u).toRingHom
+
+@[simp]
+theorem laurentEvalUnit_T (u : ℤˣ) (n : ℤ) :
+    laurentEvalUnit u (T n) = ((u ^ n : ℤˣ) : ℤ) := by
+  simp [laurentEvalUnit]
+
+/-- The ring homomorphism `ℤ[q,q⁻¹] →+* ℤ` evaluating a Laurent polynomial at `q = 1`. -/
+noncomputable def laurentEvalOne : LaurentPolynomial ℤ →+* ℤ := laurentEvalUnit 1
+
+@[simp]
+theorem laurentEvalOne_T (n : ℤ) : laurentEvalOne (T n) = 1 := by
+  simp [laurentEvalOne]
+
+/-- The ring homomorphism `ℤ[q,q⁻¹] →+* ℤ` evaluating a Laurent polynomial at `q = -1`. -/
+noncomputable def laurentEvalNegOne : LaurentPolynomial ℤ →+* ℤ := laurentEvalUnit (-1)
+
+@[simp]
+theorem laurentEvalNegOne_T (n : ℤ) :
+    laurentEvalNegOne (T n) = (n.negOnePow : ℤ) := by
+  simp [laurentEvalNegOne, Int.negOnePow_def]
+
+end IntegerEvaluation
 
 end TauCeti
