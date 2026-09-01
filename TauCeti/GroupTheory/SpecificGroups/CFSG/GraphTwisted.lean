@@ -38,10 +38,12 @@ pinned group; and its order is the superscript in the printed family name, recor
   the Steinberg map of a graph-twisted index composes with the field Frobenius.
 * `TauCeti.GraphTwistedIndex.twistOrder`: the order of that permutation, which is the superscript
   in the family name.
-* `TauCeti.TypeALieIndex.toGraphTwistedIndex`, `TauCeti.TypeCLieIndex.toGraphTwistedIndex`, and
-  `TauCeti.TypeE6LieIndex.toGraphTwistedIndex`: the two type-A families, `Aₙ(q)` and `²Aₙ(q)`, the
-  untwisted type-C family, and the untwisted family `E₆(q)`, as indices of that subtype, so that
-  the permutations above are attached to them.
+* `TauCeti.TypeALieIndex.toGraphTwistedIndex`, `TauCeti.TypeCLieIndex.toGraphTwistedIndex`,
+  `TauCeti.TypeE6LieIndex.toGraphTwistedIndex` and
+  `TauCeti.TypeDDiagramLieIndex.toGraphTwistedIndex`: the two type-A families, `Aₙ(q)` and
+  `²Aₙ(q)`, the untwisted type-C family, the untwisted family `E₆(q)`, and the three families on a
+  type-`D` diagram, as indices of that subtype, so that the permutations above are attached to
+  them.
 
 ## Main results
 
@@ -51,6 +53,10 @@ pinned group; and its order is the superscript in the printed family name, recor
   `TauCeti.GraphTwistedIndex.orderOf_diagramPerm` and
   `TauCeti.GraphTwistedIndex.twistOrder_pos`: the twist order annihilates the permutation, is
   exactly its order, and is positive.
+* `TauCeti.TypeDLieIndex.diagramPerm_toGraphTwistedIndex`,
+  `TauCeti.TypeTwistedDLieIndex.twistOrder_toGraphTwistedIndex` and
+  `TauCeti.TypeTrialityD4LieIndex.twistOrder_toGraphTwistedIndex`: the three families on a type-`D`
+  diagram are told apart by an untwisted permutation and by twist orders two and three.
 
 ## Roadmap
 
@@ -382,5 +388,66 @@ theorem diagramPerm_toGraphTwistedIndex (d : TypeE6LieIndex) :
   exact GraphTwistedIndex.diagramPerm_E6 (LieTypeIndex.valid_E6 q)
 
 end TypeE6LieIndex
+
+/-! ### The families on a type-`D` diagram as graph-twisted indices
+
+The three classification-list families on a `Dₙ` diagram all take an ordinary Steinberg map, and
+they are told apart by the permutation it composes with: the identity, the fork exchange, and
+triality. What is recorded below of an abstract index of each subtype is the family-defining
+reading: the permutation itself on the untwisted family, where it is the identity at every rank,
+and its order on the two twisted families, where the permutation lives on `Fin d.1.rank` and the
+pinned `TauCeti.graphPermD` and `TauCeti.trialityPermD4` on `Fin n` and `Fin 4`. Those two
+permutations are named on the constructor form by `GraphTwistedIndex.diagramPerm_twistedD` and
+`GraphTwistedIndex.diagramPerm_trialityD4`, which the eliminators `exists_eq_ofTwistedD` and
+`exists_eq_of` reduce an abstract index to. -/
+
+namespace TypeDDiagramLieIndex
+
+open LieTypeIndex (not_usesHalfFrobenius_of_hasTypeDDiagram)
+
+/-- An index on a type-`D` diagram, regarded as an ordinary-or-graph-twisted index. None of the
+three families uses a half-Frobenius, so each carries a diagram permutation. -/
+abbrev toGraphTwistedIndex (d : TypeDDiagramLieIndex) : GraphTwistedIndex :=
+  ⟨d.1, not_usesHalfFrobenius_of_hasTypeDDiagram d.2⟩
+
+end TypeDDiagramLieIndex
+
+namespace TypeDLieIndex
+
+/-- **The diagram permutation of the untwisted family `Dₙ(q)` is the identity**, which places it in
+the untwisted row of milestone L1's table, where the Steinberg map is `Frob_q` outright. The two
+symmetries of the `Dₙ` diagram belong to `²Dₙ(q)` and, at rank four, to `³D₄(q)`. -/
+@[simp]
+theorem diagramPerm_toGraphTwistedIndex (d : TypeDLieIndex) :
+    d.toTypeDDiagramLieIndex.toGraphTwistedIndex.diagramPerm = 1 := by
+  obtain ⟨rank, q, hvalid, rfl⟩ := d.exists_eq_ofD
+  exact GraphTwistedIndex.diagramPerm_D hvalid
+
+end TypeDLieIndex
+
+namespace TypeTwistedDLieIndex
+
+/-- **The family `²Dₙ(q)` has twist order two**, its diagram permutation being the exchange of the
+two fork nodes of the `Dₙ` diagram. -/
+@[simp]
+theorem twistOrder_toGraphTwistedIndex (d : TypeTwistedDLieIndex) :
+    d.toTypeDDiagramLieIndex.toGraphTwistedIndex.twistOrder = 2 := by
+  obtain ⟨rank, q, hvalid, rfl⟩ := d.exists_eq_ofTwistedD
+  exact GraphTwistedIndex.twistOrder_twistedD hvalid
+
+end TypeTwistedDLieIndex
+
+namespace TypeTrialityD4LieIndex
+
+/-- **The family `³D₄(q)` has twist order three**, its diagram permutation being triality, the
+order-three symmetry of the `D₄` diagram that three-cycles the outer nodes and fixes the centre. It
+is the one family on the classification list whose twist order is three. -/
+@[simp]
+theorem twistOrder_toGraphTwistedIndex (d : TypeTrialityD4LieIndex) :
+    d.toTypeDDiagramLieIndex.toGraphTwistedIndex.twistOrder = 3 := by
+  obtain ⟨q, rfl⟩ := d.exists_eq_of
+  exact GraphTwistedIndex.twistOrder_trialityD4 (LieTypeIndex.valid_trialityD4 q)
+
+end TypeTrialityD4LieIndex
 
 end TauCeti
