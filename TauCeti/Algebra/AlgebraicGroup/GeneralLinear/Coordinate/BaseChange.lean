@@ -10,6 +10,7 @@ public import Mathlib.RingTheory.TensorProduct.MvPolynomial
 public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.BaseChange
 public import TauCeti.Algebra.AlgebraicGroup.FiniteType.BaseChange
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Coordinate.HopfAlgebra
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Determinant
 
 /-!
 # Base change of the general linear coordinate Hopf algebra
@@ -36,6 +37,8 @@ Chevalley--Demazure construction in Layer 9 of the ReductiveGroups roadmap.
 * `TauCeti.GeneralLinear.coordinateHopfAlgebraBaseChangeBialgEquiv`: the bialgebra equivalence.
 * `TauCeti.GeneralLinear.coordinateHopfAlgebraBaseChangeIso`: its bundled
   commutative-Hopf-algebra form, when the extension ring's universe contains the base ring's.
+* `TauCeti.GeneralLinear.coordinateHopfAlgebraBaseChangeIso_hom_determinantGroupLike`: scalar
+  extension carries the generic determinant to the generic determinant.
 * `TauCeti.GeneralLinear.finiteTypeCoordinateHopfAlgebraBaseChangeIso`: the corresponding
   isomorphism of finite-type commutative Hopf algebras.
 * `TauCeti.GeneralLinear.coordinateHopfAlgebraBaseChangeMap_X`: the value on a generic matrix
@@ -327,6 +330,49 @@ theorem coordinateHopfAlgebraBaseChangeIso_hom_apply
     CategoryTheory.Iso.symm_hom, CommHopfAlgCat.ofIsoSelf_inv]
   exact coordinateHopfAlgebraBaseChangeBialgEquiv_tmul_coordinateRingMap R K n s p
 
+/-- The general-linear base-change isomorphism sends the scalar extension of the generic
+determinant to the generic determinant over the new base. -/
+theorem coordinateHopfAlgebraBaseChangeIso_hom_determinantGroupLike
+    (R : Type u) (K : Type max u v) [CommRing R] [CommRing K] [Algebra R K] (n : ℕ) :
+    (coordinateHopfAlgebraBaseChangeIso R K n).hom.hom
+        (1 ⊗ₜ[R] (determinantGroupLike R n : coordinateHopfAlgebra R n)) =
+      (determinantGroupLike K n : coordinateHopfAlgebra K n) := by
+  have hdet :
+      MvPolynomial.map (algebraMap R K)
+          (Matrix.det (Matrix.mvPolynomialX (Fin n) (Fin n) R)) =
+        Matrix.det (Matrix.mvPolynomialX (Fin n) (Fin n) K) := by
+    rw [RingHom.map_det]
+    congr 1
+    funext i j
+    simp [Matrix.mvPolynomialX]
+  rw [determinantGroupLike_val, det_localizedGenericMatrix,
+    coordinateHopfAlgebraBaseChangeIso_hom_apply, determinantGroupLike_val,
+    det_localizedGenericMatrix, hdet, one_smul]
+
+/-- The general-linear base-change isomorphism sends the scalar extension of the bundled generic
+matrix to the bundled generic matrix over the new base. -/
+theorem coordinateHopfAlgebraBaseChangeIso_hom_genericMatrix
+    (R : Type u) (K : Type max u v) [CommRing R] [CommRing K] [Algebra R K] (n : ℕ) :
+    let _ : Algebra R (coordinateHopfAlgebra K n) :=
+      Algebra.compHom _ (algebraMap R K)
+    let _ : IsScalarTower R K (coordinateHopfAlgebra K n) :=
+      IsScalarTower.of_algebraMap_eq' rfl
+    (genericMatrix R n).map
+        (((coordinateHopfAlgebraBaseChangeIso R K n).hom.hom.toAlgHom.restrictScalars R).comp
+          (Algebra.TensorProduct.includeRight :
+            coordinateHopfAlgebra R n →ₐ[R] K ⊗[R] coordinateHopfAlgebra R n)) =
+      genericMatrix K n := by
+  let _ : Algebra R (coordinateHopfAlgebra K n) :=
+    Algebra.compHom _ (algebraMap R K)
+  let _ : IsScalarTower R K (coordinateHopfAlgebra K n) :=
+    IsScalarTower.of_algebraMap_eq' rfl
+  ext i j
+  rw [Matrix.map_apply, genericMatrix_apply, AlgHom.comp_apply,
+    Algebra.TensorProduct.includeRight_apply, genericMatrix_apply]
+  simpa only [AlgHom.coe_restrictScalars', BialgHom.coe_toAlgHom, one_smul,
+    MvPolynomial.map_X] using
+    coordinateHopfAlgebraBaseChangeIso_hom_apply.{u, v} R K n 1 (MvPolynomial.X (i, j))
+
 /-- The inverse categorical base-change isomorphism sends an extended polynomial coordinate back
 to its scalar pure tensor. -/
 @[simp]
@@ -391,11 +437,9 @@ noncomputable def finiteTypeCoordinateHopfAlgebraBaseChangeIso
     (R : Type u) (K : Type max u v) [CommRing R] [CommRing K] [Algebra R K] (n : Nat) :
     FiniteTypeCommHopfAlgCat.baseChange (K := K) (finiteTypeCoordinateHopfAlgebra R n) ≅
       finiteTypeCoordinateHopfAlgebra K n :=
-  ObjectProperty.isoMk _ <|
-    eqToIso (congrArg (CommHopfAlgCat.baseChange (K := K))
-      (finiteTypeCoordinateHopfAlgebra_obj R n)) ≪≫
-    coordinateHopfAlgebraBaseChangeIso R K n ≪≫
-    eqToIso (finiteTypeCoordinateHopfAlgebra_obj K n).symm
+  FiniteTypeCommHopfAlgCat.baseChangeIsoOfObjIso
+    (finiteTypeCoordinateHopfAlgebra_obj R n) (finiteTypeCoordinateHopfAlgebra_obj K n)
+    (coordinateHopfAlgebraBaseChangeIso R K n)
 
 /-- The underlying commutative-Hopf-algebra morphism of the finite-type base-change isomorphism
 is the canonical coordinate-Hopf-algebra base-change isomorphism, with the definitional object
@@ -409,8 +453,8 @@ theorem finiteTypeCoordinateHopfAlgebraBaseChangeIso_hom
           (finiteTypeCoordinateHopfAlgebra_obj R n)) ≪≫
         coordinateHopfAlgebraBaseChangeIso R K n ≪≫
         eqToIso (finiteTypeCoordinateHopfAlgebra_obj K n).symm).hom :=
-  by
-    simp only [finiteTypeCoordinateHopfAlgebraBaseChangeIso,
-      CategoryTheory.ObjectProperty.isoMk_hom, CategoryTheory.ObjectProperty.homMk_hom]
+  FiniteTypeCommHopfAlgCat.baseChangeIsoOfObjIso_hom
+    (finiteTypeCoordinateHopfAlgebra_obj R n) (finiteTypeCoordinateHopfAlgebra_obj K n)
+    (coordinateHopfAlgebraBaseChangeIso R K n)
 
 end TauCeti.GeneralLinear

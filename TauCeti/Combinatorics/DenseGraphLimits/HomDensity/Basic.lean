@@ -38,6 +38,8 @@ here needs a nonempty-carrier hypothesis.
 ## Main results
 
 * `edgeFactor_congr` — an edge factor depends only on the assignment along that edge;
+* `edgeFactor_map` — an edge factor is read along a map of vertex sets by pulling the assignment
+  back;
 * `measurable_prod_edgeFactor`, `prod_edgeFactor_nonneg`, `prod_edgeFactor_le_one` and
   `integrable_prod_edgeFactor` — the basic analytic facts about a finite product of edge factors,
   each edge read in its own graphon.  The integrand of `homDensity` is the special case of one
@@ -110,6 +112,14 @@ theorem edgeFactor_congr (W : Graphon Ω μ) {x y : V → Ω} {e : Sym2 V}
     (h : ∀ v ∈ e, x v = y v) : edgeFactor W x e = edgeFactor W y e := by
   induction e using Sym2.ind with
   | _ a b => rw [edgeFactor_mk, edgeFactor_mk, h a (by simp), h b (by simp)]
+
+omit [Fintype V] in
+/-- Reading an edge after pushing it forward along a map of vertex sets is reading the original
+edge in the pulled-back assignment. -/
+@[simp]
+theorem edgeFactor_map {V' : Type*} (W : Graphon Ω μ) (f : V → V') (x : V' → Ω) (e : Sym2 V) :
+    edgeFactor W x (Sym2.map f e) = edgeFactor W (x ∘ f) e := by
+  induction e using Sym2.ind with | _ a b => simp
 
 omit [Fintype V] in
 /-- A finite product of edge factors, each edge read in its own graphon, depends measurably on the

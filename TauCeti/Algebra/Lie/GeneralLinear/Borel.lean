@@ -9,7 +9,7 @@ public import TauCeti.Algebra.Lie.GeneralLinear.RootSpace
 public import TauCeti.LinearAlgebra.Matrix.Triangular
 
 /-!
-# The standard Borel subalgebra of `gl n R` and its positive nilpotent ideal
+# The standard Borel subalgebra of `gl n R`, and the two nilpotent triangles
 
 Order the index type `n` linearly. The upper triangular matrices form a Lie subalgebra
 `TauCeti.upperTriangular R n` of `gl n R = Matrix n n R`, and the strictly upper triangular
@@ -32,6 +32,14 @@ matrices is the commutator of the diagonals and `R` is commutative. In particula
 triangular matrices are a Lie ideal of the Borel subalgebra,
 `TauCeti.strictUpperTriangularIdeal`.
 
+On the other side of the diagonal, the strictly lower triangular matrices form the opposite
+nilpotent subalgebra `TauCeti.strictLowerTriangular R n = 𝔫⁻`, and together with the Borel
+subalgebra they exhaust `gl n R`
+(`TauCeti.exists_mem_strictLowerTriangular_add_mem_upperTriangular`). That triangular decomposition
+`gl n R = 𝔫⁻ + 𝔟` is what reduces the stability of a submodule of a `gl n R`-module under all of
+`gl n R` to its stability under the two triangles, which is how the highest weight theory of Layer 9
+uses this file.
+
 ## Main definitions
 
 * `TauCeti.upperTriangular R n`: the upper triangular matrices, as a
@@ -41,11 +49,15 @@ triangular matrices are a Lie ideal of the Borel subalgebra,
   Borel subalgebra.
 * `TauCeti.strictUpperTriangularIdeal R n`: the same subalgebra, packaged as a Lie ideal of
   `upperTriangular R n`.
+* `TauCeti.strictLowerTriangular R n`: the strictly lower triangular matrices, as a
+  `LieSubalgebra R (Matrix n n R)`. This is the opposite nilpotent subalgebra `𝔫⁻`.
 
 ## Main results
 
 * `TauCeti.lie_mem_strictUpperTriangular`: the bracket of two upper triangular matrices is strictly
   upper triangular.
+* `TauCeti.exists_mem_strictLowerTriangular_add_mem_upperTriangular`: the triangular decomposition
+  `gl n R = 𝔫⁻ + 𝔟`, in the form the highest weight theory uses it.
 * `TauCeti.upperTriangular_toSubmodule_eq_sup` and
   `TauCeti.disjoint_diagonalCartan_strictUpperTriangular`: the decomposition `𝔟 = 𝔥 ⊕ 𝔫⁺`.
 * `TauCeti.upperTriangular_normalizer_eq_self`: the Borel subalgebra is self-normalizing.
@@ -380,5 +392,63 @@ theorem strictUpperTriangular_toSubmodule_eq_iSup_rootSpace [IsDomain R] (h2 : (
   rw [strictUpperTriangular_toSubmodule_eq_iSup]
   exact iSup_congr fun i => iSup_congr fun j => iSup_congr fun hij =>
     (rootSpace_glWeightSub_eq_span h2 hij.ne).symm
+
+/-! ### The opposite nilpotent subalgebra `𝔫⁻` -/
+
+/-- The strictly lower triangular matrices, as a Lie subalgebra of `gl n R = Matrix n n R`: those
+vanishing on and above the diagonal.
+
+This is the opposite nilpotent subalgebra `𝔫⁻`; it contains the lowering matrix units `Eᵢⱼ` with
+`j < i` (`TauCeti.single_mem_strictLowerTriangular`). It is `TauCeti.strictUpperTriangular R n`
+read for the reversed order on the index type, but that order lives on `nᵒᵈ` rather than on `n`, so
+it is spelled out here rather than transported. Its role is the triangular decomposition
+`gl n R = 𝔫⁻ + 𝔟` of `TauCeti.exists_mem_strictLowerTriangular_add_mem_upperTriangular`: a
+submodule of a `gl n R`-module stable under `𝔫⁻` and under the Borel subalgebra is stable under all
+of `gl n R`. -/
+def strictLowerTriangular : LieSubalgebra R (Matrix n n R) where
+  carrier := {A | ∀ i j, i ≤ j → A i j = 0}
+  add_mem' hA hB := fun i j hij => by simp [hA i j hij, hB i j hij]
+  zero_mem' := fun _ _ _ => rfl
+  smul_mem' c _ hA := fun i j hij => by simp [hA i j hij]
+  lie_mem' {A B} hA hB := by
+    -- a product of strictly lower triangular matrices is strictly lower triangular: the `(i, j)`
+    -- entry sums `A i k * B k j` over `k`, and needs `k < i` and `j < k`, so `j < i`
+    have key : ∀ C D : Matrix n n R, (∀ i j, i ≤ j → C i j = 0) → (∀ i j, i ≤ j → D i j = 0) →
+        ∀ i j, i ≤ j → (C * D) i j = 0 := by
+      intro C D hC hD i j hij
+      rw [Matrix.mul_apply]
+      refine Finset.sum_eq_zero fun k _ => ?_
+      rcases le_or_gt i k with hk | hk
+      · rw [hC i k hk, zero_mul]
+      · rw [hD k j (hk.le.trans hij), mul_zero]
+    intro i j hij
+    rw [LieRing.of_associative_ring_bracket, Matrix.sub_apply, key A B hA hB i j hij,
+      key B A hB hA i j hij, sub_zero]
+
+variable {R n}
+
+/-- The entrywise description of `𝔫⁻`. -/
+@[simp]
+theorem mem_strictLowerTriangular_iff {A : Matrix n n R} :
+    A ∈ strictLowerTriangular R n ↔ ∀ i j, i ≤ j → A i j = 0 := Iff.rfl
+
+/-- A lowering matrix unit `Eᵢⱼ`, `j < i`, lies in `𝔫⁻`. -/
+theorem single_mem_strictLowerTriangular {i j : n} (hij : j < i) (c : R) :
+    single i j c ∈ strictLowerTriangular R n := by
+  intro a b hab
+  simp only [single_apply, ite_eq_right_iff, and_imp]
+  rintro rfl rfl
+  exact absurd hab (not_le.mpr hij)
+
+/-- **The triangular decomposition `gl n R = 𝔫⁻ + 𝔟`**: every matrix is the sum of its strictly
+lower triangular part and an upper triangular matrix. -/
+theorem exists_mem_strictLowerTriangular_add_mem_upperTriangular (A : Matrix n n R) :
+    ∃ x ∈ strictLowerTriangular R n, ∃ y ∈ upperTriangular R n, x + y = A := by
+  refine ⟨Matrix.of fun i j => if j < i then A i j else 0, fun i j hij => ?_,
+    A - Matrix.of fun i j => if j < i then A i j else 0,
+    mem_upperTriangular_iff.mpr fun i j hij => ?_, by abel⟩
+  · simp only [Matrix.of_apply, ite_eq_right_iff]
+    exact fun h => absurd hij (not_le.mpr h)
+  · simp [hij]
 
 end TauCeti

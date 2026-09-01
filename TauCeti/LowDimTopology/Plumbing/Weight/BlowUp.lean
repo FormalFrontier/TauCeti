@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 import Mathlib.Tactic.LinearCombination
+import TauCeti.Data.Int.MulPred
 public import TauCeti.LowDimTopology.Plumbing.BlowUp
 public import TauCeti.LowDimTopology.Plumbing.Weight.Sublevel
 
@@ -77,29 +78,6 @@ conventions and the behaviour of `χ_k` under blowing up follow Némethi,
 public section
 
 namespace TauCeti
-
-/-! ### Arithmetic of the exceptional multiplicity
-
-Two integer facts about the term `s * (s - δ)` by which a blow-up changes the weight function.
--/
-
-/-- Two consecutive integers have nonnegative product: no integer lies strictly between `t - 1`
-and `t`. -/
-private theorem zero_le_mul_sub_one (t : ℤ) : 0 ≤ t * (t - 1) := by
-  rcases le_or_gt t 0 with ht | ht
-  · nlinarith [mul_nonneg (by omega : (0 : ℤ) ≤ -t) (by omega : (0 : ℤ) ≤ 1 - t)]
-  · exact mul_nonneg (by omega) (by omega)
-
-/-- The exceptional term of a unit exceptional value is nonnegative: rescaling by the unit turns
-`s * (s - δ)` into a product of consecutive integers. Nonnegativity fails for the other odd
-exceptional values, where already `1 * (1 - ε) < 0` for `ε ≥ 3`. -/
-private theorem zero_le_mul_sub_units (δ : ℤˣ) (s : ℤ) : 0 ≤ s * (s - (δ : ℤ)) := by
-  have hδ : (δ : ℤ) * (δ : ℤ) = 1 := by
-    rcases Int.units_eq_one_or δ with rfl | rfl <;> norm_num
-  have hEq : ((δ : ℤ) * s) * ((δ : ℤ) * s - 1) = s * (s - (δ : ℤ)) := by
-    linear_combination (s * s) * hδ
-  rw [← hEq]
-  exact zero_le_mul_sub_one _
 
 namespace PlumbingGraph
 
@@ -187,7 +165,7 @@ theorem characteristicWeight_le_blowUpCharacteristic (k : P.characteristicVector
   have hδ : Odd ((δ : ℤ)) := by
     rcases Int.units_eq_one_or δ with rfl | rfl <;> norm_num
   have h := P.two_mul_characteristicWeight_blowUpCharacteristic v k (δ : ℤ) hδ x s
-  have hnn := zero_le_mul_sub_units δ s
+  have hnn := Int.zero_le_mul_sub_units δ s
   linarith
 
 /-- **The infimum of the characteristic weight is a blow-up invariant.** For a characteristic

@@ -5,9 +5,9 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.RepresentationTheory.Invariants
 public import TauCeti.LinearAlgebra.Multilinear.Polarization
 public import TauCeti.LinearAlgebra.SymmetricPower.Basic
+public import TauCeti.RepresentationTheory.Invariants
 public import TauCeti.RepresentationTheory.Symmetric.TensorAction.Basic
 
 /-!
@@ -20,8 +20,10 @@ exactly the span of the **pure powers** `⨂ₜ i, x`, the tensors with the same
 The engine is the polarization identity
 `PiTensorProduct.sum_neg_one_pow_card_smul_tprod_sum_compl`, which writes the full symmetrization
 of a pure tensor as an alternating sum of pure powers and needs no invertibility. Dividing by
-`(#ι)!` then turns the symmetrization into a projection onto the invariants: an invariant tensor is
-the average of its own orbit, so it lies in the span of the pure powers.
+`(#ι)!` then turns the symmetrization into a projection onto the invariants; that step is not
+special to permutations of tensor factors, and is taken here from
+`Representation.range_norm_eq_invariants`, which says that the group sum of any finite-group
+representation has the invariants as its range once the group order is invertible.
 
 This is the spanning half of the double centralizer in Schur-Weyl duality. There `ι` is finite and
 `V` is a finite free module, so that the canonical map `(End V)^{⊗ι} → End (V^{⊗ι})` is an
@@ -136,15 +138,11 @@ theorem invariants_reindexRepresentation (h : IsUnit ((Fintype.card ι)! : R)) :
     (reindexRepresentation R M ι).invariants =
       Submodule.span R (Set.range fun x : M => ⨂ₜ[R] (_ : ι), x) := by
   classical
-  let := h.invertible
+  let : Invertible ((Fintype.card (Equiv.Perm ι) : R)) := by
+    rw [Fintype.card_perm]; exact h.invertible
   refine le_antisymm (fun y hy => ?_) (Submodule.span_le.mpr ?_)
-  · have horbit : ∑ σ : Equiv.Perm ι, reindexRepresentation R M ι σ y =
-        ((Fintype.card ι)! : R) • y := by
-      rw [Finset.sum_congr rfl fun σ _ => hy σ, Finset.sum_const, Finset.card_univ,
-        Fintype.card_perm, ← Nat.cast_smul_eq_nsmul R]
-    have := Submodule.smul_mem _ (⅟((Fintype.card ι)! : R))
-      (horbit ▸ sum_reindexRepresentation_mem_span y)
-    rwa [smul_smul, invOf_mul_self, one_smul] at this
+  · obtain ⟨z, rfl⟩ := (Representation.range_norm_eq_invariants _).ge hy
+    simpa [Representation.norm, LinearMap.sum_apply] using sum_reindexRepresentation_mem_span z
   · rintro _ ⟨x, rfl⟩
     exact tprod_const_mem_invariants x
 

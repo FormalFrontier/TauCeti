@@ -80,12 +80,14 @@ Roadmap: EllipticCurves, the Layers 0-1 target *Function-field foundations and i
 (`TauCetiRoadmap/EllipticCurves/README.md:1096`), which names
 `RingTheory/IntegralClosure/NormalizationFinite` among the three supports of D. Angdinata's
 isogeny development. The file
-`TauCeti/AlgebraicGeometry/EllipticCurve/Isogeny/IntermediateRing/Dedekind.lean` records the
-missing piece precisely: its Dedekind conclusion carries a separability hypothesis only because
+`TauCeti/AlgebraicGeometry/EllipticCurve/Isogeny/IntermediateRing/Dedekind.lean` recorded the
+missing piece precisely: its Dedekind conclusion carried a separability hypothesis only because
 every Mathlib route to Noetherianity of an integral closure sits under the section variable
 `[Algebra.IsSeparable K L]` declared at `Mathlib/RingTheory/DedekindDomain/IntegralClosure.lean`
-line 147. This file lands the Noetherian half of that module and removes that obstruction;
-finiteness of the normalization (the Nagata/N-2 half) is separate and is not proved here.
+line 147. This file lands the Noetherian half of that module and removes that obstruction, and
+`TauCeti/RingTheory/DedekindDomain/IntegralClosure.lean` assembles the Dedekind conclusion from it,
+so that hypothesis is gone. Finiteness of the normalization (the Nagata/N-2 half) is separate and
+is not proved here.
 
 This is original mathematics for the project, not a port. The pinned Mathlib has no Krull–Akizuki
 and no `IsNagata` / `IsJapanese` / `IsExcellent`. AINTLIB (`github.com/CBirkbeck/AINTLIB`,

@@ -18,10 +18,11 @@ The alternating Alexander *state sum* of a grid diagram is
 
 one term for each of the `n!` grid states. For odd-component diagrams, this corresponds to the
 graded Euler characteristic of the grid chain module after identifying `T` with a square root of
-the usual Alexander variable; that identification with `Grading/Chain.lean` is not formalized
-here. This file evaluates the state sum in closed form: it is a sign times a monomial times the
-determinant of an explicit `n × n` matrix of monomials read off the diagram. Two facts combine to
-produce the determinant.
+the usual Alexander variable; that identification is
+`TauCeti.OddComponentGridDiagram.gradedEulerChar_eq_stateSum` in
+`Grid/EulerCharacteristic.lean`. This file evaluates the state sum in closed form: it is a sign
+times a monomial times the determinant of an explicit `n × n` matrix of monomials read off the
+diagram. Two facts combine to produce the determinant.
 
 *The sign is the sign of a permutation.* A grid state is a permutation of the columns, and
 `GridDiagram.negOnePow_maslovOℤ` says that `(-1)^{M_O(x)}` is that permutation's sign, up to a
@@ -150,8 +151,9 @@ by twice their Alexander gradings.
 
 The exponents are values of `GridDiagram.alexanderTwoℤ`, so the variable `T` is a square root of
 the usual Alexander variable. For odd-component diagrams, this state sum corresponds to the
-graded Euler characteristic of the grid chain module after that change of variable; the
-identification with `Grading/Chain.lean` is not formalized here. -/
+graded Euler characteristic of the grid chain module after that change of variable; this is
+`TauCeti.OddComponentGridDiagram.gradedEulerChar_eq_stateSum` in
+`Grid/EulerCharacteristic.lean`. -/
 noncomputable def stateSum : ℤ[T;T⁻¹] :=
   ∑ x : GridState n, (G.maslovOℤ x).negOnePow • T (G.alexanderTwoℤ x)
 

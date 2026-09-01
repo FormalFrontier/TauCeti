@@ -271,6 +271,30 @@ theorem infinityPlace.algebraMap_eq_sq (r : RatFunc F) :
   rw [infinityPlace_apply, Algebra.norm_algebraMap, finrank_functionField, map_pow]
 
 open scoped Classical in
+/-- **The valuation at infinity of a nonzero rational function of `x`** is `exp` of twice its
+degree: `v_∞ r = exp (2 * r.intDegree)`, which is `ord_∞ r = -2 * r.intDegree`.
+
+The factor two is the ramification index of the place at infinity over the infinite place of
+`F(x)`, so a nonzero rational function of `x` lies in the maximal ideal at infinity exactly when
+its degree is negative. -/
+theorem infinityPlace_algebraMap_ratFunc {r : RatFunc F} (hr : r ≠ 0) :
+    infinityPlace W (algebraMap (RatFunc F) W.FunctionField r) =
+      WithZero.exp (2 * r.intDegree) := by
+  rw [infinityPlace.algebraMap_eq_sq, RatFunc.inftyValuation_apply,
+    RatFunc.inftyValuation_of_nonzero F hr, ← WithZero.exp_nsmul]
+  ring_nf
+
+open scoped Classical in
+/-- **The valuation at infinity of a polynomial in `x`** is `exp` of twice its degree: a nonzero
+polynomial of degree `n` has a pole of order `2 * n` at infinity. `infinityPlace.X` is the case
+`p = X`. -/
+theorem infinityPlace_algebraMap_polynomial {p : F[X]} (hp : p ≠ 0) :
+    infinityPlace W (algebraMap F[X] W.FunctionField p) =
+      WithZero.exp (2 * (p.natDegree : ℤ)) := by
+  rw [IsScalarTower.algebraMap_apply F[X] (RatFunc F) W.FunctionField,
+    infinityPlace_algebraMap_ratFunc W (by simpa using hp), RatFunc.intDegree_polynomial]
+
+open scoped Classical in
 /-- **The valuation is trivial on the base field**: a nonzero constant has value `1`, so `v_∞`
 restricted to `F` is trivial. The analogue of `RatFunc.inftyValuation.C`. -/
 theorem infinityPlace.C {c : F} (hc : c ≠ 0) :

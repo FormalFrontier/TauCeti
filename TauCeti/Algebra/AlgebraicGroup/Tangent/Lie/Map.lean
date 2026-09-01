@@ -5,8 +5,10 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.LinearAlgebra.Dimension.Finrank
 public import TauCeti.Algebra.AlgebraicGroup.Tangent.DerivationMap
 public import TauCeti.Algebra.AlgebraicGroup.Tangent.Lie.Basic
+import Mathlib.LinearAlgebra.FiniteDimensional.Lemmas
 
 /-!
 # The differential is a Lie algebra morphism
@@ -23,6 +25,10 @@ termwise; the algebra half already entered in `derivationComp`, which needs
 
 * `TauCeti.derivationComp_bracket`: the differential preserves the bracket.
 * `TauCeti.derivationCompLieHom`: the differential as a morphism of Lie algebras.
+* `TauCeti.derivationCompLieHom_injective_of_surjective`: the differential of a surjective
+  bialgebra morphism is injective.
+* `TauCeti.derivationCompLieHom_bijective_of_surjective_of_finrank_eq`: a surjective
+  bialgebra morphism between equal-dimensional tangent Lie algebras induces a bijection.
 -/
 
 public section
@@ -128,24 +134,11 @@ noncomputable def derivationCompLieHom (φ : A' →ₐc[R] A) :
   map_smul' b d := by
     ext a
     apply (Bialgebra.CounitAlgebra.algEquivSelf R A' B).injective
-    calc
-      _ = Bialgebra.CounitAlgebra.algEquivSelf R A B
-          ((b • d) ((φ : A' →ₐ[R] A) a)) := by
-        rw [derivationComp_apply]
-        exact (Bialgebra.CounitAlgebra.algEquivSelf_apply R A' B _).trans
-          (Bialgebra.CounitAlgebra.algEquivSelf_apply R A B _).symm
-      _ = b * Bialgebra.CounitAlgebra.algEquivSelf R A B (d ((φ : A' →ₐ[R] A) a)) :=
-        algEquivSelf_derivation_smul_apply (R := R) (A := A) b d _
-      _ = b * Bialgebra.CounitAlgebra.algEquivSelf R A' B
-          (derivationComp (B := B) φ d a) := by
-        congr 1
-        rw [derivationComp_apply]
-        exact (Bialgebra.CounitAlgebra.algEquivSelf_apply R A B _).trans
-          (Bialgebra.CounitAlgebra.algEquivSelf_apply R A' B _).symm
-      _ = _ := by
-        simpa only [RingHom.id_apply] using
-          (algEquivSelf_derivation_smul_apply (R := R) (A := A') b
-            (derivationComp (B := B) φ d) a).symm
+    rw [algEquivSelf_derivationComp_apply,
+      algEquivSelf_derivation_smul_apply,
+      algEquivSelf_derivation_smul_apply,
+      algEquivSelf_derivationComp_apply]
+    simp only [RingHom.id_apply]
   map_lie' := derivationComp_bracket φ _ _
 
 @[simp]
@@ -156,6 +149,14 @@ lemma derivationCompLieHom_apply (φ : A' →ₐc[R] A)
   -- its definitional unfolding once, explicitly.
   change derivationComp (B := B) φ d = _
   rfl
+
+/-- The differential of a surjective bialgebra morphism is injective. -/
+theorem derivationCompLieHom_injective_of_surjective (φ : A' →ₐc[R] A)
+    (hφ : Function.Surjective φ) :
+    Function.Injective (derivationCompLieHom (B := B) φ) := by
+  intro d e hde
+  apply derivationComp_injective_of_surjective φ hφ
+  simpa only [derivationCompLieHom_apply] using hde
 
 /-- The bundled differential along the identity is the identity Lie morphism. -/
 @[simp]
@@ -177,5 +178,29 @@ theorem derivationCompLieHom_comp {A'' : Type*} [CommRing A''] [Bialgebra R A'']
     LinearMap.coe_comp, Function.comp_apply]
 
 end LieHom
+
+section FiniteDimensional
+
+variable {k A A' : Type*} [Field k] [CommRing A] [Bialgebra k A]
+  [CommRing A'] [Bialgebra k A']
+  [Module.Finite k (Derivation k A (Bialgebra.CounitAlgebra k A k))]
+  [Module.Finite k (Derivation k A' (Bialgebra.CounitAlgebra k A' k))]
+
+/-- A surjective bialgebra morphism between equal-dimensional tangent Lie algebras induces a
+bijection on tangent Lie algebras. -/
+theorem derivationCompLieHom_bijective_of_surjective_of_finrank_eq
+    (φ : A' →ₐc[k] A) (hφ : Function.Surjective φ)
+    (hfinrank :
+      Module.finrank k (Derivation k A (Bialgebra.CounitAlgebra k A k)) =
+        Module.finrank k (Derivation k A' (Bialgebra.CounitAlgebra k A' k))) :
+    Function.Bijective (derivationCompLieHom (B := k) φ) := by
+  have hinjective := derivationCompLieHom_injective_of_surjective (B := k) φ hφ
+  refine ⟨hinjective, ?_⟩
+  simpa only [LieHom.coe_toLinearMap] using
+    (LinearMap.injective_iff_surjective_of_finrank_eq_finrank
+      (f := (derivationCompLieHom (B := k) φ : _ →ₗ[k] _)) hfinrank).mp
+      (by simpa only [LieHom.coe_toLinearMap] using hinjective)
+
+end FiniteDimensional
 
 end TauCeti

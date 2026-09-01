@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.Algebra.Lie.SkewAdjoint
 public import Mathlib.Algebra.Lie.Classical
 public import Mathlib.LinearAlgebra.QuadraticForm.Basic
 
@@ -69,16 +70,10 @@ private theorem lieEquivMatrix'_mem_skewAdjoint (J : Matrix n n R)
     (f : Module.End R (n → R)) :
     lieEquivMatrix' f ∈ skewAdjointMatricesLieSubalgebra J ↔
       f ∈ skewAdjointLieSubalgebra (Matrix.toLinearMap₂' R J) := by
-  rw [mem_skewAdjointMatricesLieSubalgebra, mem_skewAdjointMatricesSubmodule]
-  -- Expose matrix skew-adjointness as the `IsAdjointPair` relation used by the bridge theorem.
-  change Matrix.IsAdjointPair J J (LinearMap.toMatrix' f) (-LinearMap.toMatrix' f) ↔
-    f ∈ (Matrix.toLinearMap₂' R J).skewAdjointSubmodule
-  rw [LinearMap.mem_skewAdjointSubmodule]
-  -- Expose linear-map skew-adjointness in the same adjoint-pair representation.
-  change Matrix.IsAdjointPair J J (LinearMap.toMatrix' f) (-LinearMap.toMatrix' f) ↔
-    LinearMap.IsAdjointPair (Matrix.toLinearMap₂' R J) (Matrix.toLinearMap₂' R J) f (-f)
-  simpa using (isAdjointPair_toLinearMap₂' (R := R) (J := J) (J' := J)
-    (A := LinearMap.toMatrix' f) (A' := -(LinearMap.toMatrix' f))).symm
+  apply mem_skewAdjointMatricesLieSubalgebra_toMatrix_iff
+    (Pi.basisFun R n) (Matrix.toLinearMap₂' R J)
+  rw [LinearMap.BilinForm.toMatrix_basisFun]
+  exact LinearMap.toMatrix'_toLinearMap₂' J
 
 variable [Invertible (2 : R)]
 

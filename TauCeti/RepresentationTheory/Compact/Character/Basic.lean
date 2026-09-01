@@ -8,6 +8,7 @@ module
 public import TauCeti.RepresentationTheory.Compact.SchurOrthogonality
 public import TauCeti.RepresentationTheory.Continuous.Character
 import Mathlib.MeasureTheory.Integral.Bochner.ContinuousLinearMap
+import TauCeti.RepresentationTheory.Irreducible
 
 /-!
 # Orthonormality of the characters of a compact group

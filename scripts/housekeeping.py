@@ -25,9 +25,10 @@ is never auto-closed. By design these jobs do NOT spare human-touched PRs — an
 adds `keep`. A failed close makes the job exit nonzero.
 
 A scoreboard is trusted only if it carries the `tauceti-scoreboard` marker AND its author is
-repo-associated (OWNER/MEMBER/COLLABORATOR) — the same trust the worker applies. The reviewer and the
-PR author are frequently the same account (the worker reviews its own roadmap PRs), so trust is by
-association, not by "not the author": an external author cannot forge a repo-associated comment.
+repo-associated (OWNER/MEMBER/COLLABORATOR). This destructive close policy is deliberately stricter
+than the worker and auto-merge scoreboard readers. The reviewer and the PR author are frequently the
+same account, so trust is by association, not by "not the author": an external author cannot forge a
+repo-associated comment that makes housekeeping close a PR.
 
 Env: GH_TOKEN (a token that can close PRs), REPO (owner/name), optional DRY_RUN=1, REVIEW_BUDGET,
 BUDGET_LABEL, STALE_DAYS, EMPTY_QUIET_MINUTES.
@@ -41,9 +42,9 @@ import sys
 
 REPO = os.environ["REPO"]
 
-# The trusted-scoreboard parse lives once, in the pr_status package; import it rather than keeping a
-# second copy here (the two had drifted on the meta regex). This script is parameterised by $REPO, so
-# point core's reads at the same repo.
+# The scoreboard parse and explicit repo-associated selector live once, in the pr_status package;
+# import them rather than keeping a second copy here (the parsers had drifted before). This script is
+# parameterised by $REPO, so point core's reads at the same repo.
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "pr_status"))
 import core  # noqa: E402
 
@@ -120,10 +121,11 @@ def parse_ts(s: str) -> datetime.datetime:
 def latest_scoreboard_meta(pr: int):
     """The meta block of the newest TRUSTED review scoreboard comment, or None. Trust = the
     `tauceti-scoreboard` marker AND a repo-associated author (so an external author cannot forge a
-    verdict). Delegates to the shared `core.scoreboard_meta` so that parse lives in one place; fails
-    safe (None) on any API/parse error, so a hiccup never causes a wrong close."""
+    verdict). Delegates to the shared `core.repo_associated_scoreboard_meta` so both the parse and the
+    destructive trust policy live in one place; fails safe (None) on any API/parse error, so a hiccup
+    never causes a wrong close."""
     try:
-        return core.scoreboard_meta(pr) or None
+        return core.repo_associated_scoreboard_meta(pr) or None
     except Exception as e:
         print(f"#{pr}: scoreboard fetch failed ({e}); leaving it", file=sys.stderr)
         return None

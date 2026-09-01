@@ -48,7 +48,7 @@ two normal unipotent-radical candidates.
 
 public section
 
-open CategoryTheory Opposite WithConv
+open CategoryTheory MonoidalCategory CartesianMonoidalCategory Opposite WithConv
 open scoped CategoryTheory.MonObj
 
 namespace TauCeti.CommHopfAlgCat

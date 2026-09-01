@@ -107,6 +107,12 @@ theorem dominates_of_forall_swap_smul_ne {lam : YoungDiagram} (t : YoungTableau 
 
 /-! ## The column antisymmetrizer acting on a tabloid -/
 
+/-- Classical decidability of membership in the column group, used to form its finite sum, as in
+`TauCeti/RepresentationTheory/Symmetric/Symmetrizer.lean`. -/
+noncomputable local instance {lam : YoungDiagram} (t : YoungTableau lam) :
+    DecidablePred (· ∈ colSubgroup t) :=
+  Classical.decPred _
+
 /-- **The column antisymmetrizer kills a tabloid fixed by an odd column permutation.**  The
 antisymmetrizer absorbs such a permutation up to its sign, which is `-1`, while the tabloid is
 left alone, so the value is its own negative. -/
@@ -119,14 +125,11 @@ theorem asAlgebraHom_columnAntisymmetrizer_single_eq_zero {lam : YoungDiagram}
   have hfix' : (permutationModule μ).ρ p (MonoidAlgebra.single q (1 : ℚ)) =
       MonoidAlgebra.single q 1 := by
     rw [Representation.ofMulAction_single, hfix]
-  have hneg : columnAntisymmetrizer t * MonoidAlgebra.single p (1 : ℚ) =
-      -columnAntisymmetrizer t := by
-    rw [mul_columnAntisymmetrizer_right t ⟨p, hp⟩, hsign]
-    simp
   -- the permutation module is a `ℚ`-vector space, so doubling is injective on it
   have : IsAddTorsionFree (permutationModule μ) := .of_module_rat _
-  exact Representation.asAlgebraHom_eq_zero_of_mul_single_eq_neg
-    (nsmul_right_injective two_ne_zero) _ hfix' hneg
+  rw [columnAntisymmetrizer_eq_subgroupCharSum]
+  exact asAlgebraHom_subgroupCharSum_apply_eq_zero _ _ (nsmul_right_injective two_ne_zero) _ hp
+    (by simp [hsign]) hfix'
 
 /-- **James's dominance lemma.**  If the column antisymmetrizer of a `lam`-tableau `t` does not
 annihilate the `μ`-tabloid `q`, then the shape of `t` dominates `μ`.

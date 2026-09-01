@@ -74,6 +74,8 @@ import subprocess
 import sys
 import time
 
+from lake_cache_probe import exact_map_url
+
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "pr_status"))
 import zulip as zp  # noqa: E402
 
@@ -221,8 +223,7 @@ def cache_published(toolchain, sha):
     host answers python's default user agent with 403 while answering curl with 200, so a
     urllib probe reports every commit as uncached and the whole report becomes noise.
     Found by running the tool, not by reading it."""
-    scope = toolchain.replace("/", "--").replace(":", "---")
-    url = f"{REVISIONS}/{REPO}/tc/{scope}/{sha}.jsonl"
+    url = exact_map_url(REVISIONS, toolchain, sha, REPO)
     out = subprocess.run(["curl", "-s", "-o", "/dev/null", "-w", "%{http_code}",
                           "--max-time", "30", url], capture_output=True, text=True)
     if out.returncode != 0:
@@ -289,7 +290,8 @@ older entries.
 If a tag does not match the rule, the tool reports it and changes nothing.
 """ % EARLIEST_RELEASE
 
-STATUSES = ("tagged", "ready", "pending", "blocked", "unreachable", "out-of-scope")
+STATUSES = ("tagged", "ready", "pending", "ahead", "blocked", "unreachable",
+            "out-of-scope")
 
 
 def audit(ref=None):
@@ -302,6 +304,7 @@ def audit(ref=None):
     if not by_release:
         raise RuntimeError("main has never run on a Lean release toolchain")
     oldest = min(by_release, key=release_key)
+    newest_era = max(by_release, key=release_key)   # the toolchain main is on now
     rows = []
 
     for release in sorted(set(mathlib_releases()) | set(by_release), key=release_key):
@@ -309,7 +312,7 @@ def audit(ref=None):
             continue          # predates this repository entirely; not our business
         era = by_release.get(release)
         if era is None:
-            rows.append(_unreachable_row(release, tags))
+            rows.append(_unreachable_row(release, tags, newest_era))
             continue
         sha = era["commit"]
         row = dict(era, status=None, reason=None, mathlib_rev=mathlib_pin(sha),
@@ -352,7 +355,7 @@ def audit(ref=None):
     return rows
 
 
-def _unreachable_row(release, tags):
+def _unreachable_row(release, tags, newest_era=None):
     """A release main never ran on. There is no commit to tag and nothing will construct
     one, so the only useful thing the report can do is say so and why."""
     row = {"release": release, "toolchain": toolchain_for(release), "commit": None,
@@ -383,6 +386,16 @@ def _unreachable_row(release, tags):
     if release_key(release) < release_key(EARLIEST_RELEASE):
         row["status"] = "out-of-scope"
         row["reason"] = f"predates {EARLIEST_RELEASE}, before the Lake cache existed"
+        return row
+    if newest_era and release_key(release) > release_key(newest_era):
+        # Ahead of main, not stepped over. `unreachable` reads as permanent and the report
+        # files it under "no tag is possible", which is the opposite of the truth: the bump
+        # has not arrived yet, and this will be tagged like any other release when it does.
+        # Mathlib tags a release as soon as Lean cuts it, so this is the normal state for
+        # days or weeks rather than an exception.
+        row["status"] = "ahead"
+        row["reason"] = (f"mathlib has tagged it, but main is still on {newest_era}; "
+                         "nothing to do until the bump gets there")
     return row
 
 
@@ -396,10 +409,12 @@ def state_digest(rows):
     Over (release, status) only, so rewording a reason or the policy text does not read as
     a change. `pending` releases are left out entirely: a release whose CI has not finished
     is not news, and including it would post a message on every bump saying "wait", then
-    another when the waiting ended. `out-of-scope` is left out because it never changes."""
+    another when the waiting ended. `ahead` likewise: mathlib tags a release the moment Lean
+    cuts one and main reaches it days or weeks later, so posting then would announce
+    something nobody here can act on. `out-of-scope` is left out because it never changes."""
     interesting = sorted((r["release"], r["status"], r.get("commit"), r.get("ci"))
                          for r in rows
-                         if r["status"] not in ("pending", "out-of-scope"))
+                         if r["status"] not in ("pending", "ahead", "out-of-scope"))
     return hashlib.sha256(repr(interesting).encode()).hexdigest()[:16]
 
 
@@ -437,6 +452,10 @@ def render(rows, include_policy=True, collapse_old=False):
     if blocked:
         lines += ["", "Needing a human:", ""]
         lines += [f"    {r['release']}: {r['reason']}" for r in blocked]
+    ahead = [r for r in rows if r["status"] == "ahead"]
+    if ahead:
+        lines += ["", "Ahead of main, and will be tagged when the bump arrives:", ""]
+        lines += [f"    {r['release']}: {r['reason']}" for r in ahead]
     unreachable = [r for r in rows if r["status"] == "unreachable"]
     if unreachable:
         lines += ["", "No tag is possible for these, and none will be constructed:", ""]
@@ -497,6 +516,9 @@ def create_tag(row, dry_run=False):
 # --- waiting, and posting to Zulip ------------------------------------------
 
 MARKER_RE = re.compile(r"<!--toolchain-tags:v1 ([0-9a-f]{16})-->\s*\Z")
+BRIEF_COMMAND = "python3 scripts/toolchain_tags.py --brief"
+SHELL_FENCE = f"```shell\n{BRIEF_COMMAND}\n```"
+OLD_FENCE = f"```\n{BRIEF_COMMAND}\n```"
 
 
 def wait_for_ci(sha, timeout_minutes=180, poll_seconds=120, sleep=None):
@@ -523,8 +545,8 @@ def log(message):
     print(message, flush=True)
 
 
-def last_posted_digest(z, bot_id):
-    """The digest carried by this account's newest message in the topic, or None.
+def last_posted_report(z, bot_id):
+    """This account's newest marked message and its digest, or (None, None).
 
     The previous state lives in the topic rather than in a file, so the poster keeps no
     state of its own and a wiped topic simply reposts."""
@@ -537,8 +559,8 @@ def last_posted_digest(z, bot_id):
             continue
         match = MARKER_RE.search(message["content"])
         if match:
-            return match.group(1)
-    return None
+            return message, match.group(1)
+    return None, None
 
 
 def post_content(rows, digest):
@@ -546,14 +568,15 @@ def post_content(rows, digest):
     body = render(rows, include_policy=False, collapse_old=True).rstrip()
     # The command shown must be the one that produced what is shown. --brief is exactly
     # this transformation, so someone can paste it and get the same thing back.
-    return (f"```\npython3 scripts/toolchain_tags.py --brief\n```\n"
+    return (f"{SHELL_FENCE}\n"
             f"```text\n{body}\n```\n"
             f"<!--toolchain-tags:v1 {digest}-->")
 
 
 def post_if_changed(rows, dry_run=False):
-    """Post the report when the state has changed since the last message. Returns True if
-    a message was posted."""
+    """Repair a legacy command fence, then post when the state changed.
+
+    Returns True only if a new message was posted."""
     digest = state_digest(rows)
     content = post_content(rows, digest)
     if dry_run:
@@ -567,7 +590,13 @@ def post_if_changed(rows, dry_run=False):
         raise RuntimeError("ZULIP_EMAIL / ZULIP_API_KEY are not set")
     z = zp.Zulip(email, api_key, site)
     zp.check(z)
-    previous = last_posted_digest(z, z.my_user_id())
+    message, previous = last_posted_report(z, z.my_user_id())
+    # One-time migration for reports posted before the command fence specified `shell`.
+    # It can be removed after the existing old-style report has been repaired.
+    if message and OLD_FENCE in message["content"]:
+        corrected = message["content"].replace(OLD_FENCE, SHELL_FENCE, 1)
+        log(f"correcting the shell fence in message {message['id']}")
+        z.update_message(message["id"], corrected)
     if previous == digest:
         log(f"state unchanged since the last post ({digest}); saying nothing")
         return False

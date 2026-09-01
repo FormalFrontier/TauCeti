@@ -34,8 +34,10 @@ is the special case that matters downstream.
   (pseudo)metric space structures of a preconnected Riemannian manifold, refining
   `PseudoEMetricSpace.ofRiemannianMetric` and `EMetricSpace.ofRiemannianMetric`; both satisfy
   `IsRiemannianManifold I M`.
-* `TauCeti.IsRiemannianManifold.dist_le_toReal_pathELength`: the ambient distance of a Riemannian
-  manifold, read through `IsRiemannianManifold.out`, is bounded by the length of any `C¹` path.
+* `TauCeti.IsRiemannianManifold.edist_le_pathELength` and
+  `TauCeti.IsRiemannianManifold.dist_le_toReal_pathELength`: the ambient (extended) distance of a
+  Riemannian manifold, read through `IsRiemannianManifold.out`, is bounded by the length of any
+  `C¹` path.
 * `TauCeti.Manifold.le_riemannianEDist_of_forall_le_pathELength`: the extended distance is bounded
   below by any bound valid for the lengths of *all* `C¹` curves joining two points, since it is the
   infimum of those lengths.
@@ -156,6 +158,21 @@ end Manifold
 
 namespace IsRiemannianManifold
 
+section PseudoEMetric
+
+variable {M : Type*} [PseudoEMetricSpace M] [ChartedSpace H M]
+  [RiemannianBundle (fun x : M ↦ TangentSpace I x)] [IsRiemannianManifold I M]
+
+/-- In a Riemannian manifold, the ambient extended distance between the endpoints of a `C¹` path
+is at most the length of that path. This is `Manifold.riemannianEDist_le_pathELength` read through
+`IsRiemannianManifold.out`. -/
+theorem edist_le_pathELength {γ : ℝ → M} {a b : ℝ} (hγ : CMDiff[Icc a b] 1 γ) (hab : a ≤ b) :
+    edist (γ a) (γ b) ≤ pathELength I γ a b := by
+  rw [IsRiemannianManifold.out (I := I) (γ a) (γ b)]
+  exact riemannianEDist_le_pathELength hγ rfl rfl hab
+
+end PseudoEMetric
+
 section PseudoMetric
 
 variable {M : Type*} [PseudoMetricSpace M] [ChartedSpace H M]
@@ -173,8 +190,9 @@ above by the length of any `C¹` path of finite length between the two points. -
 theorem dist_le_toReal_pathELength {γ : ℝ → M} {a b : ℝ} {x y : M} (hγ : CMDiff[Icc a b] 1 γ)
     (ha : γ a = x) (hb : γ b = y) (hab : a ≤ b) (h : pathELength I γ a b ≠ ⊤) :
     dist x y ≤ (pathELength I γ a b).toReal := by
-  rw [dist_edist, IsRiemannianManifold.out (I := I) x y]
-  exact ENNReal.toReal_mono h (riemannianEDist_le_pathELength hγ ha hb hab)
+  subst ha hb
+  rw [dist_edist]
+  exact ENNReal.toReal_mono h (edist_le_pathELength hγ hab)
 
 variable (I) in
 /-- In a Riemannian manifold whose ambient distance is an ordinary one, any bound `r` on the

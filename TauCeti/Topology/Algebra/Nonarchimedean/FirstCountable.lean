@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Topology.Algebra.Nonarchimedean.Basic
+public import TauCeti.Topology.Algebra.Nonarchimedean.OpenAddSubgroupBasis
 
 /-!
 # A first-countable nonarchimedean group has a decreasing basis of open subgroups
@@ -57,13 +57,7 @@ is the one the proof consumes. -/
 theorem exists_antitone_basis_openAddSubgroup [(𝓝 (0 : G)).IsCountablyGenerated]
     [NonarchimedeanAddGroup G] :
     ∃ V : ℕ → OpenAddSubgroup G, (𝓝 (0 : G)).HasAntitoneBasis fun n ↦ (V n : Set G) := by
-  have hb : (𝓝 (0 : G)).HasBasis (fun _ : OpenAddSubgroup G ↦ True) fun V ↦ (V : Set G) := by
-    refine Filter.hasBasis_iff.mpr fun S ↦ ⟨fun hS ↦ ?_, ?_⟩
-    · obtain ⟨V, hV⟩ := NonarchimedeanAddGroup.is_nonarchimedean S hS
-      exact ⟨V, trivial, hV⟩
-    · rintro ⟨V, -, hV⟩
-      exact Filter.mem_of_superset (V.isOpen.mem_nhds V.zero_mem) hV
-  obtain ⟨V, -, hV⟩ := hb.exists_antitone_subbasis
+  obtain ⟨V, -, hV⟩ := (nhds_zero_hasBasis_openAddSubgroup G).exists_antitone_subbasis
   exact ⟨V, hV⟩
 
 end NonarchimedeanAddGroup

@@ -211,9 +211,7 @@ private theorem signHom_bijective [Finite ι] [NeZero (2 : K)]
     (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i))
     (hindep : ∀ S : Finset ι, S.Nonempty → ¬ IsSquare (∏ i ∈ S, d i)) :
     Function.Bijective (signHom (K := K) root hroot) := by
-  have := isSplittingField hroot
-  have : FiniteDimensional K (adjoin K (Set.range root)) :=
-    IsSplittingField.finiteDimensional _ (definingPolynomial d)
+  have := finiteDimensional_adjoin_range hroot
   have := isGalois hroot
   let := Fintype.ofFinite ι
   rw [Fintype.bijective_iff_injective_and_card]

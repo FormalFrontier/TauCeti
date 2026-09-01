@@ -12,8 +12,9 @@ public import TauCeti.RepresentationTheory.ClassicalGroups.Diagonal
 
 The **diagonal torus** `TauCeti.diagonalTorus k n` of `GL n k`, the subgroup of invertible
 diagonal matrices, is built in
-`TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal`, where its three descriptions — as the
-range of `TauCeti.diagGL`, by diagonality of the matrix, and as its own centralizer — are proved.
+`TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal.Basic`, where its three descriptions —
+as the range of `TauCeti.diagGL`, by diagonality of the matrix, and as its own centralizer — are
+proved.
 What is recorded here is its action on the coordinate lines `k ∙ eᵢ` of the standard
 representation: every torus element scales `eᵢ` by its `i`-th diagonal entry
 (`TauCeti.stdRep_apply_basisFun_of_mem_diagonalTorus`), so each line is stable

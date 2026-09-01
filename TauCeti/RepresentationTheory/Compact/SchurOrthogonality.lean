@@ -7,8 +7,8 @@ module
 
 public import TauCeti.RepresentationTheory.Compact.Intertwiner.Basic
 public import TauCeti.RepresentationTheory.Continuous.Schur
-public import TauCeti.RepresentationTheory.Irreducible
 public import Mathlib.Analysis.InnerProductSpace.Trace
+import TauCeti.RepresentationTheory.Irreducible
 
 /-!
 # Schur orthogonality for irreducible compact-group representations
@@ -78,22 +78,11 @@ theorem averageOperator_eq_finrank_inv_mul_trace_smul_id
     averageOperator π hπ π hπ T =
       ((Module.finrank 𝕜 V : 𝕜)⁻¹ * LinearMap.trace 𝕜 V (T : V →ₗ[𝕜] V)) •
         ContinuousLinearMap.id 𝕜 V := by
-  let : Representation.IsIrreducible π.toRepresentation := hirr
-  obtain ⟨c, hc⟩ := exists_eq_smul_one_of_irreducible π hirr
-    (averageIntertwiner π hπ π hπ T)
-  have hc := congrArg ContIntertwiningMap.toContinuousLinearMap hc
-  simp only [toContinuousLinearMap_averageIntertwiner,
-    ContIntertwiningMap.toContinuousLinearMap_smul,
-    ContIntertwiningMap.toContinuousLinearMap_one, ContinuousLinearMap.one_def] at hc
-  have htrace := trace_averageOperator π hπ T
-  rw [hc] at htrace
   have hdim : (Module.finrank 𝕜 V : 𝕜) ≠ 0 :=
     Representation.IsIrreducible.natCast_finrank_ne_zero hirr
-  have hc' : c = (Module.finrank 𝕜 V : 𝕜)⁻¹ *
-      LinearMap.trace 𝕜 V (T : V →ₗ[𝕜] V) := by
-    apply (eq_inv_mul_iff_mul_eq₀ hdim).2
-    simpa [mul_comm] using htrace
-  rw [hc, hc']
+  have h := π.eq_finrank_inv_mul_trace_smul_id_of_irreducible hdim hirr
+    (averageIntertwiner π hπ π hπ T)
+  rwa [toContinuousLinearMap_averageIntertwiner, trace_averageOperator] at h
 
 end Average
 

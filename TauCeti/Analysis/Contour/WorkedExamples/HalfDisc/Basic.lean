@@ -11,7 +11,7 @@ import TauCeti.Analysis.Contour.Crossing.Finiteness
 public import TauCeti.Analysis.Contour.Winding.Number.Circle
 public import TauCeti.Analysis.Contour.Winding.Number.Concat
 public import TauCeti.Analysis.Contour.Winding.Number.Reparam
-public import TauCeti.Analysis.Contour.Winding.Number.Segment
+public import TauCeti.Analysis.Contour.Winding.Number.Segment.Basic
 
 /-!
 # The half-disc boundary contour

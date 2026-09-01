@@ -6,6 +6,8 @@ Authors: The Tau Ceti contributors
 module
 
 import Mathlib.LinearAlgebra.PiTensorProduct.Basis
+import TauCeti.Data.Fin.Basic
+
 public import TauCeti.LinearAlgebra.TensorSquare
 public import TauCeti.LinearAlgebra.ExteriorPower
 public import TauCeti.RepresentationTheory.ExteriorPower
@@ -111,6 +113,7 @@ private theorem mk_comp_toTensorPower {R : Type} {M : Type*}
     toTensorPower_ιMulti_two, map_sub, hswap, sub_self]
   simp
 
+/-- The symmetric-square map to the quotient of the tensor square by alternating tensors. -/
 private noncomputable def symToAlternatingQuotient {R : Type} {M : Type*}
     [Field R] [AddCommGroup M] [Module R M] :
     Sym[R]^2 M →ₗ[R]

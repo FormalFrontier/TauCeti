@@ -180,7 +180,7 @@ theorem IsAdmissible.mul {I : Ideal A} {T₁ T₂ : Finset A} {u₁ u₂ : A}
     IsAdmissible I (insert u₁ T₁ * insert u₂ T₂) (u₁ * u₂) := by
   rw [isAdmissible_iff, Set.insert_eq_self.mpr (Finset.mem_coe.mpr
       (Finset.mul_mem_mul (Finset.mem_insert_self u₁ T₁) (Finset.mem_insert_self u₂ T₂))),
-    Finset.coe_mul, ← Ideal.span_mul_span', Ideal.radical_mul]
+    Finset.coe_mul, ← Ideal.span_mul_span, Ideal.radical_mul]
   exact le_inf (by simpa using h₁) (by simpa using h₂)
 
 /-! ### Wedhorn 7.5(ii): the rational subsets are a basis -/

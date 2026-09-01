@@ -7,7 +7,7 @@ module
 
 public import Mathlib.RingTheory.Valuation.Integral
 public import TauCeti.FieldTheory.FunctionField.Place.Basic
-public import TauCeti.RingTheory.DedekindDomain.AdicValuation
+public import TauCeti.RingTheory.DedekindDomain.AdicValuation.Basic
 
 /-!
 # Affine models: a place finite on a Dedekind subring is one of its height one primes
