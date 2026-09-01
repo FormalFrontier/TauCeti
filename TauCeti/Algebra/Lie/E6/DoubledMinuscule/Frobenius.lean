@@ -7,7 +7,9 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.Frobenius.GeneralLinear
 public import TauCeti.Algebra.Lie.E6.DoubledMinuscule.PointsFunctor
-public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Frobenius
+-- The toral-closure Frobenius is used only inside the proof of `frobenius_weightTorusPoints`, so
+-- it is imported privately rather than re-exported to consumers of this module.
+import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Frobenius
 
 /-!
 # The Frobenius of the doubled type-E6 minuscule carrier
