@@ -59,6 +59,8 @@ the irreducibility it yields.
 * `TauCeti.YoungTableau.tabloid_eq_iff_rowIndex_eq`: two tableaux have the same tabloid exactly when
   they put every label in the same row.
 * `TauCeti.YoungTableau.polytabloid_relabel`: relabeling translates the polytabloid.
+* `TauCeti.YoungTableau.polytabloid_eq_single_of_colSubgroup_eq_bot`: with nothing to
+  antisymmetrize over, the polytabloid is the bare tabloid.
 * `TauCeti.YoungTableau.polytabloid_coeff_eq_zero_of_forall_ne`: only the tabloids reachable from
   `{t}` by a column permutation occur in `e_t`.
 * `TauCeti.YoungTableau.polytabloid_ne_zero` and
@@ -177,6 +179,15 @@ theorem polytabloid_def (t : YoungTableau μ) :
       (permutationModule (shapePartition μ)).ρ.asAlgebraHom (columnAntisymmetrizer t)
         (MonoidAlgebra.single (tabloid t) 1) :=
   (rfl)
+
+/-- **A polytabloid with trivial column group is the bare tabloid.**  The column antisymmetrizer of
+`t` is then `1`, so there is nothing to antisymmetrize.  A shape with at most one row is the case
+of interest, by `TauCeti.YoungTableau.colSubgroup_eq_bot_of_rowSubgroup_eq_top`. -/
+@[simp]
+theorem polytabloid_eq_single_of_colSubgroup_eq_bot (t : YoungTableau μ)
+    (h : colSubgroup t = ⊥) :
+    polytabloid t = MonoidAlgebra.single (tabloid t) (1 : ℚ) := by
+  rw [polytabloid_def, columnAntisymmetrizer_eq_one t h, map_one, Module.End.one_apply]
 
 /-- The polytabloid is the signed sum of the tabloids obtained from `{t}` by the column group. -/
 theorem polytabloid_eq_sum (t : YoungTableau μ) :

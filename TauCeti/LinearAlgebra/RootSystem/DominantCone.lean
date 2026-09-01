@@ -36,10 +36,19 @@ values on the simple coroots and are stable under the simple reflections, none o
 that the module is finite-dimensional; the theorem below turns those three facts into finiteness of
 the weight support.
 
+The raising step is itself worth naming, because a Weyl translate carries more information than a
+cardinality: under the same three hypotheses every member has a Weyl-group element taking it to a
+dominant member of the set
+(`TauCeti.exists_weylGroup_smul_dominant_of_forall_reflection_mem_of_sub_mem_posRootCone`).
+Finiteness is the corollary obtained by forgetting which translate was used.
+
 ## Main results
 
 * `TauCeti.finite_setOf_dominant_sub_mem_posRootCone`: **only finitely many dominant weights lie
   below a given weight.**
+* `TauCeti.exists_weylGroup_smul_dominant_of_forall_reflection_mem_of_sub_mem_posRootCone`: **a
+  member of a set of weights below `lam`, integral on the simple coroots and stable under the
+  simple reflections, has a dominant Weyl translate in the set.**
 * `TauCeti.finite_of_forall_reflection_mem_of_sub_mem_posRootCone`: **a set of weights below `lam`,
   integral on the simple coroots and stable under the simple reflections, is finite.**
 * `TauCeti.eq_zero_of_mem_posRootCone_of_forall_coroot'_nonpos`: **the only antidominant member of
@@ -54,11 +63,12 @@ vector `c` solves the Cartan inequality of the transposed Cartan matrix, whose s
 finite; the right-hand side of the inequality is manufactured from one member of the set, which is
 why the argument begins by disposing of the empty case.
 
-For the second statement, if `mu` is a member on which `αᵢ^∨` takes a negative value, then
+For the other two, if `mu` is a member on which `αᵢ^∨` takes a negative value, then
 `sᵢ mu = mu - ⟨mu, αᵢ^∨⟩ αᵢ` is again a member and `lam - sᵢ mu` has strictly smaller height: the
 simple roots are linearly independent, so the coefficient vectors of the two differences agree
 except at `i`, where the coefficient drops by `-⟨mu, αᵢ^∨⟩ ≥ 1`. Induction on that height therefore
-writes every member as a Weyl translate of a dominant member.
+writes every member as a Weyl translate of a dominant member, which is the second statement;
+finiteness follows because both the dominant members and the Weyl group are finite.
 
 ## References
 
@@ -220,15 +230,58 @@ private theorem mem_of_sub_eq_sum_nsmul_root_of_reflection_stable {lam : M} {S T
     have hback : P.reflection i (P.reflection i mu) = mu := P.reflection_same i mu
     exact hback ▸ hTrefl i _ hmem
 
+omit [Finite ι] [IsDomain R] [P.IsRootSystem] [P.IsCrystallographic] in
+/-- **A member of a reflection-stable set of weights below a weight has a dominant Weyl
+translate in the set.** Let `S` be a set of weights with `lam - mu` in the positive root cone for
+every `mu ∈ S`, on which every simple coroot takes integer values, and which every simple
+reflection carries into itself. Then every `mu ∈ S` has a Weyl-group element `w` for which `w • mu`
+again lies in `S` and every simple coroot takes a natural value on it.
+
+A member on which some simple coroot is negative is moved by the corresponding reflection strictly
+closer to `lam`, so the induction on the height of `lam - mu` stops exactly at a dominant member;
+the set of weights admitting such a `w` is reflection stable, which is what lets the induction run
+inside it.
+
+`TauCeti.exists_mem_dominantChamber` is the same statement for an arbitrary weight, with dominance
+read as `0 ≤ ⟨mu, αᵢ^∨⟩` and no reference to `lam`; it needs a `[LinearOrder R]` on the coefficient
+ring, which is exactly what the weight space of a Lie algebra over an algebraically closed field
+does not carry. Here dominance is instead the order-free condition that each `⟨mu, αᵢ^∨⟩` is a
+natural number, which the hypotheses on `S` make available, and the cone below `lam` replaces the
+maximization argument. -/
+theorem exists_weylGroup_smul_dominant_of_forall_reflection_mem_of_sub_mem_posRootCone
+    {lam : M} {S : Set M}
+    (hcone : ∀ mu ∈ S, lam - mu ∈ posRootCone P b)
+    (hint : ∀ mu ∈ S, ∀ i ∈ b.support, ∃ z : ℤ, P.coroot' i mu = (z : R))
+    (hrefl : ∀ mu ∈ S, ∀ i ∈ b.support, P.reflection i mu ∈ S)
+    {mu : M} (hmu : mu ∈ S) :
+    ∃ w : P.weylGroup, w • mu ∈ S ∧
+      ∀ i ∈ b.support, ∃ n : ℕ, P.coroot' i (w • mu) = (n : R) := by
+  classical
+  -- Undoing a reflection by appending it to the Weyl-group element on the right.
+  have hsmul : ∀ (i : ι) (x : M) (w : P.weylGroup),
+      (w * RootPairing.weylGroup.ofIdx P i) • P.reflection i x = w • x := fun i x w ↦ by
+    rw [mul_smul, RootPairing.weylGroup.ofIdx_smul, RootPairing.Equiv.reflection_smul,
+      P.reflection_same]
+  -- the weights admitting such a translate, a reflection-stable set containing the dominant ones
+  set T : Set M := {y : M | ∃ w : P.weylGroup, w • y ∈ S ∧
+    ∀ j ∈ b.support, ∃ n : ℕ, P.coroot' j (w • y) = (n : R)}
+  have hTrefl : ∀ (i : ι) (x : M), x ∈ T → P.reflection i x ∈ T := by
+    rintro i x ⟨w, hw, hdom⟩
+    exact ⟨w * RootPairing.weylGroup.ofIdx P i, by rwa [hsmul], by rw [hsmul]; exact hdom⟩
+  obtain ⟨f, hf⟩ := (mem_posRootCone P b).mp (hcone mu hmu)
+  exact mem_of_sub_eq_sum_nsmul_root_of_reflection_stable b hcone hint hrefl hTrefl
+    (fun nu hnu hdom ↦ ⟨1, by rwa [one_smul], by simpa only [one_smul] using hdom⟩)
+    _ mu hmu f hf rfl
+
 /-- **A reflection-stable set of weights below a weight is finite.** Let `S` be a set of weights
 with `lam - mu` in the positive root cone for every `mu ∈ S`, on which every simple coroot takes
 integer values, and which every simple reflection carries into itself. Then `S` is finite.
 
 Stability is what replaces dominance in
-`TauCeti.finite_setOf_dominant_sub_mem_posRootCone`: a member on which some simple coroot is
-negative is moved by the corresponding reflection to a member strictly closer to `lam`, so
-induction on the height of `lam - mu` exhibits every member as a Weyl translate of a dominant
-member, and both the dominant members and the Weyl group are finite. -/
+`TauCeti.finite_setOf_dominant_sub_mem_posRootCone`: every member is a Weyl translate of a
+dominant member by
+`TauCeti.exists_weylGroup_smul_dominant_of_forall_reflection_mem_of_sub_mem_posRootCone`, and both
+the dominant members and the Weyl group are finite. -/
 theorem finite_of_forall_reflection_mem_of_sub_mem_posRootCone {lam : M} {S : Set M}
     (hcone : ∀ mu ∈ S, lam - mu ∈ posRootCone P b)
     (hint : ∀ mu ∈ S, ∀ i ∈ b.support, ∃ z : ℤ, P.coroot' i mu = (z : R))
@@ -236,24 +289,13 @@ theorem finite_of_forall_reflection_mem_of_sub_mem_posRootCone {lam : M} {S : Se
     S.Finite := by
   classical
   have : Finite P.weylGroup := RootPairing.finite_weylGroup P
-  set D : Set M := {mu : M | lam - mu ∈ posRootCone P b ∧
-    ∀ i ∈ b.support, ∃ n : ℕ, P.coroot' i mu = (n : R)}
-  set T : Set M := ⋃ w : P.weylGroup, (fun x ↦ w • x) '' D with hTdef
-  have hT : T.Finite :=
-    Set.finite_iUnion fun w ↦ (finite_setOf_dominant_sub_mem_posRootCone b lam).image _
-  -- The union of the Weyl translates of the dominant members is reflection stable.
-  have hTrefl : ∀ (i : ι) (x : M), x ∈ T → P.reflection i x ∈ T := by
-    intro i x hx
-    simp only [hTdef, Set.mem_iUnion, Set.mem_image] at hx ⊢
-    obtain ⟨w, v, hv, rfl⟩ := hx
-    refine ⟨RootPairing.weylGroup.ofIdx P i * w, v, hv, ?_⟩
-    rw [mul_smul]
-    simp
-  refine hT.subset fun mu hmu ↦ ?_
-  obtain ⟨f, hf⟩ := (mem_posRootCone P b).mp (hcone mu hmu)
-  exact mem_of_sub_eq_sum_nsmul_root_of_reflection_stable b hcone hint hrefl hTrefl
-    (fun nu hnu hdom => Set.mem_iUnion.mpr ⟨1, nu, ⟨hcone nu hnu, hdom⟩, one_smul _ _⟩)
-    _ mu hmu f hf rfl
+  refine Set.Finite.subset (Set.finite_iUnion fun w : P.weylGroup ↦
+    (finite_setOf_dominant_sub_mem_posRootCone b lam).image fun x ↦ w⁻¹ • x)
+    fun mu hmu ↦ Set.mem_iUnion.mpr ?_
+  obtain ⟨w, hwS, hwdom⟩ :=
+    exists_weylGroup_smul_dominant_of_forall_reflection_mem_of_sub_mem_posRootCone b hcone hint
+      hrefl hmu
+  exact ⟨w, w • mu, ⟨hcone _ hwS, hwdom⟩, inv_smul_smul w mu⟩
 
 omit [IsDomain R] in
 /-- **The only antidominant member of the positive root cone is zero.** A nonnegative integer

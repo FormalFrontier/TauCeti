@@ -38,6 +38,11 @@ generation theorem and is not asserted here.
   root-generated point subgroup is contained in the toral point subgroup.
 * `TauCeti.UniversalEnvelopingAlgebra.kostantTorusMatrix_mem_toralPoints`: every represented
   weight-torus point lies in the toral closure.
+* `TauCeti.UniversalEnvelopingAlgebra.kostantToralRootSubgroupPoints` and
+  `TauCeti.UniversalEnvelopingAlgebra.kostantToralWeightTorusPoints`: the canonical root-subgroup
+  and weight-torus homomorphisms into the toral-closure points.
+* `TauCeti.UniversalEnvelopingAlgebra.kostantToralWeightTorusPoints_conj_rootSubgroupPoints`:
+  the pinning equation in those matrix-valued points.
 * `TauCeti.UniversalEnvelopingAlgebra.map_kostantTorusSubsystemSubgroup_le_toralPoints`: every
   pointwise torus--root-subgroup join lies in the assembled scheme's points.
 
@@ -144,6 +149,75 @@ theorem kostantTorusMatrix_mem_toralPoints
     (kostantToralDefiningIdeal e h ρ M hM hnil b wt)
     (GeneralLinear.weightTorusCoordinateMap wt)
     (kostantToralDefiningIdeal_toIdeal_le_torus_ker e h ρ M hM hnil b wt) A p
+
+/-! ### The canonical subgroups of the toral-closure points -/
+
+/-- The canonical root-subgroup homomorphism into the matrix-valued points of the toral Kostant
+closure. The parameter is read through the multiplicative copy of the additive group. -/
+noncomputable def kostantToralRootSubgroupPoints (i : I) (A : Type v) [CommRing A] :
+    Multiplicative A →* kostantToralPointsSubgroup e h ρ M hM hnil b wt A :=
+  MonoidHom.codRestrict
+    ((kostantRootSubgroupMatrix e h ρ M hM i (hnil i) b).comp
+      (AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm.toMonoidHom)
+    (kostantToralPointsSubgroup e h ρ M hM hnil b wt A) fun _u ↦
+      kostantGeneratedPointsSubgroup_le_toralPoints e h ρ M hM hnil b wt A
+        (kostantRootSubgroupMatrix_mem_generatedPoints e h ρ M hM hnil b A i _)
+
+/-- The canonical toral-closure root-subgroup point is its represented divided-power exponential
+matrix. -/
+@[simp]
+theorem coe_kostantToralRootSubgroupPoints (i : I) (A : Type v) [CommRing A]
+    (u : Multiplicative A) :
+    (kostantToralRootSubgroupPoints e h ρ M hM hnil b wt i A u :
+        Matrix.GeneralLinearGroup (Fin n) A) =
+      kostantRootSubgroupMatrix e h ρ M hM i (hnil i) b
+        ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm u) := by
+  rw [kostantToralRootSubgroupPoints]
+  rfl
+
+/-- The canonical weight-torus homomorphism into the matrix-valued points of the toral Kostant
+closure. -/
+noncomputable def kostantToralWeightTorusPoints (A : Type v) [CommRing A] :
+    (κ → Aˣ) →* kostantToralPointsSubgroup e h ρ M hM hnil b wt A :=
+  MonoidHom.codRestrict (kostantTorusMatrix M b wt)
+    (kostantToralPointsSubgroup e h ρ M hM hnil b wt A)
+      (kostantTorusMatrix_mem_toralPoints e h ρ M hM hnil b wt A)
+
+/-- The canonical toral-closure weight-torus point is its diagonal weight matrix. -/
+@[simp]
+theorem coe_kostantToralWeightTorusPoints (A : Type v) [CommRing A] (s : κ → Aˣ) :
+    (kostantToralWeightTorusPoints e h ρ M hM hnil b wt A s :
+        Matrix.GeneralLinearGroup (Fin n) A) =
+      kostantTorusMatrix M b wt s := by
+  rw [kostantToralWeightTorusPoints]
+  rfl
+
+/-- The pinning equation in the matrix-valued points of the toral Kostant closure. If `e i` has
+Cartan weight `α`, conjugation by the weight-torus point `s` rescales the root-subgroup
+parameter by `α(s)`. This is not a `simp` lemma: the weight `α` is pinned only by the hypothesis
+`hα`, so `simp` could never infer it from the left-hand side. -/
+theorem kostantToralWeightTorusPoints_conj_rootSubgroupPoints
+    (hwt : ∀ x, IsCartanWeightVector h ρ (wt x) ((b x : M) : V))
+    {i : I} {α : κ → ℤ} (hα : ∀ j, ⁅h j, e i⁆ = (α j : ℚ) • e i)
+    (A : Type v) [CommRing A] (s : κ → Aˣ) (u : Multiplicative A) :
+    kostantToralWeightTorusPoints e h ρ M hM hnil b wt A s *
+        kostantToralRootSubgroupPoints e h ρ M hM hnil b wt i A u *
+        (kostantToralWeightTorusPoints e h ρ M hM hnil b wt A s)⁻¹ =
+      kostantToralRootSubgroupPoints e h ρ M hM hnil b wt i A
+        (Multiplicative.ofAdd
+          ((torusCharacter s α : A) * Multiplicative.toAdd u)) := by
+  have hmul := kostantTorusPoints_mul_kostantRootSubgroupPoints e h ρ M hM b wt hwt hα
+    (hnil i) s ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm u)
+    ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm
+      (Multiplicative.ofAdd ((torusCharacter s α : A) * Multiplicative.toAdd u))) (by simp)
+  have hmatrix := congrArg
+    (Units.map (LinearMap.toMatrixAlgEquiv (b.baseChange A)).toMonoidHom) hmul
+  apply Subtype.ext
+  simp only [Subgroup.coe_mul, Subgroup.coe_inv, coe_kostantToralWeightTorusPoints,
+    coe_kostantToralRootSubgroupPoints]
+  rw [mul_inv_eq_iff_eq_mul, ← basisMatrix_kostantTorusPoints M b wt (A := A) s]
+  rw [kostantRootSubgroupMatrix_def, MonoidHom.comp_apply, MonoidHom.comp_apply]
+  simpa only [map_mul, MulEquiv.toMonoidHom_eq_coe] using hmatrix
 
 /-- After writing automorphisms in the basis `b`, every subgroup generated by a set of represented
 root subgroups together with the weight torus lies in the points of the toral closure. -/
