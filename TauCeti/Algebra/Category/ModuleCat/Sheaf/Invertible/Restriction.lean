@@ -25,8 +25,10 @@ step for the local-triviality formulation of invertible sheaves.
   along a morphism into its covering object;
 * `SheafOfModules.LocalTrivializations.ofRefinement` transports an entire atlas to any cover
   equipped with refinement arrows into the original cover.
-* `SheafOfModules.LocalTrivializations.commonRefinement` transports two atlases to a supplied
-  common refinement, with both resulting atlases using the same cover.
+* `SheafOfModules.LocalTrivializations.ofCommonRefinement` transports two atlases to a supplied
+  common refinement;
+* `SheafOfModules.LocalTrivializations.commonRefinement` uses the standard cover-theoretic
+  common refinement to transport two atlases.
 
 The common refinement of two atlases can therefore carry both sets of trivializations on the
 same cover. Together with compatibility of tensor products with restriction, this is the final
@@ -125,41 +127,86 @@ for an arbitrary supplied `CommonRefinement` because choosing such a refinement 
 the site, not of the sheaves.
 
 The input is supplied rather than chosen by this operation so that the result preserves the
-actual refinement data needed by later compatibility proofs. For sites where a common refinement
-is constructed canonically, use `CoversTop.commonRefinement`. -/
-@[expose]
-def commonRefinement (t : LocalTrivializations M) (s : LocalTrivializations N)
+actual refinement data needed by later compatibility proofs. For the standard cover-theoretic
+construction, use `CoversTop.commonRefinement`. -/
+def ofCommonRefinement (t : LocalTrivializations M) (s : LocalTrivializations N)
     (r : GrothendieckTopology.CoversTop.CommonRefinement J t.X s.X) :
     LocalTrivializations M × LocalTrivializations N :=
   (t.ofRefinement r.X r.coversTop r.leftIndex r.left,
     s.ofRefinement r.X r.coversTop r.rightIndex r.right)
 
-/-- The left atlas produced by `commonRefinement` is the restriction of the first atlas. -/
+/-! The following projections expose the shared cover without requiring clients to unfold the
+supplied-refinement construction. -/
+
+/-- The first transported atlas uses the supplied refinement's indexing type. -/
 @[simp]
-lemma commonRefinement_fst (t : LocalTrivializations M) (s : LocalTrivializations N)
+lemma ofCommonRefinement_fst_I (t : LocalTrivializations M) (s : LocalTrivializations N)
     (r : GrothendieckTopology.CoversTop.CommonRefinement J t.X s.X) :
-    (t.commonRefinement s r).1 = t.ofRefinement r.X r.coversTop r.leftIndex r.left :=
-  rfl
+    (t.ofCommonRefinement s r).1.I = r.I :=
+  by simp only [ofCommonRefinement, ofRefinement_I]
 
-/-- The right atlas produced by `commonRefinement` is the restriction of the second atlas. -/
+/-- The second transported atlas uses the supplied refinement's indexing type. -/
 @[simp]
-lemma commonRefinement_snd (t : LocalTrivializations M) (s : LocalTrivializations N)
+lemma ofCommonRefinement_snd_I (t : LocalTrivializations M) (s : LocalTrivializations N)
     (r : GrothendieckTopology.CoversTop.CommonRefinement J t.X s.X) :
-    (t.commonRefinement s r).2 = s.ofRefinement r.X r.coversTop r.rightIndex r.right :=
-  rfl
+    (t.ofCommonRefinement s r).2.I = r.I :=
+  by simp only [ofCommonRefinement, ofRefinement_I]
 
-/-- The two atlases produced by `commonRefinement` use the same indexing type. -/
-lemma commonRefinement_I (t : LocalTrivializations M) (s : LocalTrivializations N)
+/-- The first transported atlas uses the supplied refinement's covering objects. -/
+@[simp]
+lemma ofCommonRefinement_fst_X (t : LocalTrivializations M) (s : LocalTrivializations N)
     (r : GrothendieckTopology.CoversTop.CommonRefinement J t.X s.X) :
-    (t.commonRefinement s r).1.I = (t.commonRefinement s r).2.I := by
-  rw [commonRefinement_fst, commonRefinement_snd, ofRefinement_I, ofRefinement_I]
+    (t.ofCommonRefinement s r).1.X =
+      fun j ↦ r.X ((ofCommonRefinement_fst_I t s r).mp j) := by
+  simp only [ofCommonRefinement, ofRefinement_X]
 
-/-- Transport two local-trivialization atlases to the canonical common refinement of their
-covering families. -/
-noncomputable def commonRefinementOf (t : LocalTrivializations M) (s : LocalTrivializations N) :
+/-- The second transported atlas uses the supplied refinement's covering objects. -/
+@[simp]
+lemma ofCommonRefinement_snd_X (t : LocalTrivializations M) (s : LocalTrivializations N)
+    (r : GrothendieckTopology.CoversTop.CommonRefinement J t.X s.X) :
+    (t.ofCommonRefinement s r).2.X =
+      fun j ↦ r.X ((ofCommonRefinement_snd_I t s r).mp j) := by
+  simp only [ofCommonRefinement, ofRefinement_X]
+
+/-! The standard construction also has field projections so downstream users need not unfold its
+choice-dependent implementation. -/
+
+/-- Transport two local-trivialization atlases to the common refinement selected by the standard
+cover-theoretic construction for their covering families. -/
+noncomputable def commonRefinement (t : LocalTrivializations M) (s : LocalTrivializations N) :
     LocalTrivializations M × LocalTrivializations N :=
-  t.commonRefinement s
+  t.ofCommonRefinement s
     (GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop)
+
+/-- The first standard transport uses the selected refinement's indexing type. -/
+@[simp]
+lemma commonRefinement_fst_I (t : LocalTrivializations M) (s : LocalTrivializations N) :
+    (t.commonRefinement s).1.I =
+      (GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop).I :=
+  by simp only [commonRefinement, ofCommonRefinement_fst_I]
+
+/-- The second standard transport uses the selected refinement's indexing type. -/
+@[simp]
+lemma commonRefinement_snd_I (t : LocalTrivializations M) (s : LocalTrivializations N) :
+    (t.commonRefinement s).2.I =
+      (GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop).I :=
+  by simp only [commonRefinement, ofCommonRefinement_snd_I]
+
+/-- The first standard transport uses the selected refinement's covering objects. -/
+@[simp]
+lemma commonRefinement_fst_X (t : LocalTrivializations M) (s : LocalTrivializations N) :
+    (t.commonRefinement s).1.X =
+      fun j ↦ (GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop).X
+        ((commonRefinement_fst_I t s).mp j) := by
+  simp only [commonRefinement, ofCommonRefinement_fst_X]
+
+/-- The second standard transport uses the selected refinement's covering objects. -/
+@[simp]
+lemma commonRefinement_snd_X (t : LocalTrivializations M) (s : LocalTrivializations N) :
+    (t.commonRefinement s).2.X =
+      fun j ↦ (GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop).X
+        ((commonRefinement_snd_I t s).mp j) := by
+  simp only [commonRefinement, ofCommonRefinement_snd_X]
 
 /-- The trivializations of a refined atlas are obtained by restricting the chosen old
 trivializations along the refinement arrows. -/
