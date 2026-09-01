@@ -177,17 +177,28 @@ theorem rootGeneratorWeight_carrierNode_eq_root_simpleIndex (i j : Fin d.1.rank)
     have hr : 3 ≤ r := (ofC r q hvalid).three_le_rank
     exact ⟨r - 1, by omega⟩
   -- Once the rank is presented as `n + 1` the upstream identification applies at the carrier rank
-  -- `n`, taking as its validity hypothesis the one the index already carries. `convert` leaves the
-  -- two reductions that matching uses, one per side of the equation, rather than discharging both
-  -- of them silently inside a single `exact`.
-  convert congrFun (SpStd.rootGeneratorWeight_inl_eq_root_simpleIndex n
-    (ofC (n + 1) q hvalid).1.dynkinType_valid i) j using 2
-  · -- The carrier side: the carrier rank of `ofC (n + 1) q hvalid` is `n`, so `carrierNode` casts
-    -- `Fin (n + 1)` to itself and both root characters are read at the same node.
-    rfl
-  · -- The datum side: the Dynkin type of `ofC (n + 1) q hvalid` is `C (n + 1)`, and its rank is
-    -- `n + 1`, so both simple roots are read off the same datum at the same node.
-    rfl
+  -- `n`, taking as its validity hypothesis the one the index already carries. The two index
+  -- transports it is applied across are written out as equations of their own, rather than left to
+  -- the unifier: each is a reduction of the introduction form `ofC (n + 1) q hvalid`, and neither
+  -- can be carried by `rw` or `simp only`, the Dynkin type occurring both in the validity proof and
+  -- in the index type `Fin _.rank` of the nodes. That is the same obstruction the upstream lemma
+  -- records: "the dependent root index prevents rewriting the dispatcher equation directly".
+  -- The carrier side: the carrier rank of `ofC (n + 1) q hvalid` is `n`, so `carrierNode` casts
+  -- `Fin (n + 1)` to itself and both root characters are read at the same node.
+  have hcarrier : SpStd.rootGeneratorWeight (ofC (n + 1) q hvalid).carrierRank
+        (.inl ((ofC (n + 1) q hvalid).carrierNode i)) ((ofC (n + 1) q hvalid).carrierNode j) =
+      SpStd.rootGeneratorWeight n (.inl i) j := rfl
+  -- The datum side: the Dynkin type of `ofC (n + 1) q hvalid` is `C (n + 1)`, of rank `n + 1`, so
+  -- both simple roots are read off the same datum at the same node.
+  have hdatum : ((DynkinType.C (n + 1)).simplyConnectedRootDatum
+        (ofC (n + 1) q hvalid).1.dynkinType_valid).root
+        ((DynkinType.C (n + 1)).simpleIndex (ofC (n + 1) q hvalid).1.dynkinType_valid i) j =
+      ((ofC (n + 1) q hvalid).1.dynkinType.simplyConnectedRootDatum
+        (ofC (n + 1) q hvalid).1.dynkinType_valid).root
+        ((ofC (n + 1) q hvalid).1.dynkinType.simpleIndex
+          (ofC (n + 1) q hvalid).1.dynkinType_valid i) j := rfl
+  exact hcarrier.trans ((congrFun (SpStd.rootGeneratorWeight_inl_eq_root_simpleIndex n
+    (ofC (n + 1) q hvalid).1.dynkinType_valid i) j).trans hdatum)
 
 /-! ## The Steinberg endomorphism -/
 
