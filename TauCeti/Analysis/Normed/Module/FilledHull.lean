@@ -42,14 +42,13 @@ off from infinity is itself small*, with no regularity asked of `K`.
 
 ## Roadmap role
 
-The filled hull is the vocabulary in which the open frontier item of layer **L5** of
-`TauCetiRoadmap/ConformalMapping/README.md` is stated; see the roadmap section of
-`TauCeti/Topology/FilledHull.lean`. The step waiting on that item is the one bounding the piece a
-crosscut cuts off from a Jordan domain: the file
-`TauCeti/Analysis/Complex/Conformal/Crosscut/SmallJordanCurve.lean` encloses a short image crosscut
-in an arbitrarily small Jordan curve `J`, and the cut-off piece is a connected set disjoint from
-`J`; once separation says it is the inside of `J` that the piece falls on,
-`TauCeti.IsPreconnected.diam_le_diam_of_disjoint` makes it no wider than `J`.
+The filled hull is the vocabulary in which the enclosure step of layer **L5** of
+`TauCetiRoadmap/ConformalMapping/README.md` is stated. That step is now unconditional: the
+preconnectedness/winding-number route in `TauCeti/Analysis/Complex/Conformal/Crosscut/Inside.lean`
+places one image piece of a crosscut in the filled hull without plane separation. In the diameter
+bound that follows, `TauCeti/Analysis/Complex/Conformal/Crosscut/SmallJordanCurve.lean` encloses a
+short image crosscut in an arbitrarily small Jordan curve `J`, and
+`TauCeti.IsPreconnected.diam_le_diam_of_disjoint` makes the cut-off piece no wider than `J`.
 
 This is a different route to a diameter bound from `TauCeti.diam_le_diam_of_frontier_subset` of
 `TauCeti/Analysis/Normed/Module/DiamFrontier.lean`, which bounds a set by *any* bounded set
