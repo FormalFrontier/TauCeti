@@ -6,10 +6,9 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Homology.EulerCharacteristic.ExtEuler.Graded.Additivity
-public import TauCeti.CategoryTheory.GrothendieckGroup.Abelian
 
 /-!
-# Descent of the graded Ext-Euler characteristic to K₀
+# Preliminary exact-K₀ descent of the graded Ext-Euler characteristic
 
 For extension-closed object properties `P` and `Q`, pointwise graded Euler-admissibility makes the
 Laurent-polynomial-valued Ext-Euler characteristic additive on every conflation in either
@@ -17,8 +16,9 @@ subcategory.  The universal property of exact `K₀` therefore gives a biadditiv
 their Grothendieck groups.
 
 The two groups remain distinct because the pairing need not be symmetric.  This file records only
-biadditivity.  The action of the grading shift and the resulting sesquilinear structure belong to
-the q-Euler layer built on top of this pairing.
+biadditivity on ordinary exact `K₀`.  Descent to graded `K₀` additionally requires shift identities
+and shift-closed subcategories; those belong to the later sesquilinear packaging of this preliminary
+pairing.
 
 ## Main definitions
 
@@ -34,7 +34,7 @@ the q-Euler layer built on top of this pairing.
 
 ## References
 
-* `TauCetiRoadmap/GrothendieckEulerForms/README.md`, Layer 5, "Graded Ext and graded descent".
+* `TauCetiRoadmap/GrothendieckEulerForms/README.md`, Layer 6, "q-Euler form".
 -/
 
 public section
@@ -95,6 +95,8 @@ noncomputable def gradedExtEulerRight
 
 omit [ObjectProperty.EssentiallySmall.{w} P] [P.ContainsZero]
   [P.IsClosedUnderBinaryProducts] in
+/-- `gradedExtEulerRight` evaluates on an object class as the object-level graded Ext-Euler
+characteristic. -/
 @[simp]
 theorem gradedExtEulerRight_of
     (hQ : (ExactStructure.abelian C).IsExtensionClosed Q)

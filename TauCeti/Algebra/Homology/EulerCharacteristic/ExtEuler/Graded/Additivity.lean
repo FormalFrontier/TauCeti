@@ -37,7 +37,7 @@ is graded Euler-admissible whenever both outer terms are.
   exact Ext sequences underlying ordinary Euler additivity.
 * Zsuzsanna Dancso and Anthony Licata, "Koszul algebras and flow lattices", Section 2.2, for the
   Laurent-polynomial-valued Ext-Euler form.
-* `TauCetiRoadmap/GrothendieckEulerForms/README.md`, Layer 5, "Graded Ext and graded descent".
+* `TauCetiRoadmap/GrothendieckEulerForms/README.md`, Layer 6, "q-Euler form".
 -/
 
 public section
@@ -141,6 +141,7 @@ theorem IsGradedEulerAdmissible.of_shortExact₂' (hS : S.ShortExact) {Y : C}
 
 /-- The coefficient of `q^j` in the graded Ext-Euler characteristic is the ordinary Ext-Euler
 characteristic against the target shifted by `-j`. -/
+@[simp]
 theorem coeff_gradedExtEuler_eq_extEuler {X Y : C}
     (h : IsGradedEulerAdmissible.{w} k e X Y) (j : ℤ) :
     (gradedExtEuler k e h).coeff j = extEuler.{w} k (h.isEulerAdmissible (-j)) := by
