@@ -58,7 +58,7 @@ open AlgebraicGeometry CategoryTheory TensorProduct
 
 namespace TauCeti.UniversalEnvelopingAlgebra
 
-universe u w
+universe u v w
 
 -- Match tensor products to the `ℤ`-algebra structure used by scalar extension.
 attribute [local instance high] Algebra.toModule
@@ -76,19 +76,41 @@ variable {n : ℕ} (b : Module.Basis (Fin n) ℤ M)
 variable (wt : Fin n → κ → ℤ)
 
 /-- The coordinate Hopf algebra receiving a root-subgroup or weight-torus generator map. -/
-private noncomputable def kostantToralGeneratorCodomain (j : Sum I Unit) :
+noncomputable abbrev kostantToralGeneratorCodomain {J : Type v} (j : Sum J Unit) :
     _root_.CommHopfAlgCat ℤ :=
   match j with
   | .inl _ => AdditiveGroup.coordinateHopfAlgebra ℤ
   | .inr _ => (DiagonalizableGroup.coordinateRing ℤ (SplitTorus.characterGroup κ)).obj
 
-/-- The family consisting of every root-subgroup coordinate map and the weight-torus map. -/
-private noncomputable def kostantToralGeneratorMap (j : Sum I Unit) :
+/-- The family consisting of reindexed root-subgroup coordinate maps and the weight-torus map. -/
+noncomputable def kostantToralGeneratorMap {J : Type v} (r : J → I)
+    (hnilJ : ∀ j, IsNilpotent
+      (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e (r j))))) (j : Sum J Unit) :
     GeneralLinear.coordinateHopfAlgebra ℤ n ⟶
-      kostantToralGeneratorCodomain (I := I) (κ := κ) j :=
+      kostantToralGeneratorCodomain (κ := κ) j :=
   match j with
-  | .inl i => kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b
+  | .inl j => kostantRootSubgroupCoordinateMap e h ρ M hM (r j) (hnilJ j) b
   | .inr _ => GeneralLinear.weightTorusCoordinateMap wt
+
+/-- The root-indexed members of the toral generator family are the represented root-subgroup
+coordinate maps. -/
+@[simp]
+theorem kostantToralGeneratorMap_inl {J : Type v} (r : J → I)
+    (hnilJ : ∀ j, IsNilpotent
+      (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e (r j))))) (j : J) :
+    kostantToralGeneratorMap e h ρ M hM b wt r hnilJ (.inl j) =
+      kostantRootSubgroupCoordinateMap e h ρ M hM (r j) (hnilJ j) b := by
+  rfl
+
+/-- The final member of the toral generator family is the represented weight-torus coordinate
+map. -/
+@[simp]
+theorem kostantToralGeneratorMap_inr {J : Type v} (r : J → I)
+    (hnilJ : ∀ j, IsNilpotent
+      (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e (r j))))) :
+    kostantToralGeneratorMap e h ρ M hM b wt r hnilJ (.inr ()) =
+      GeneralLinear.weightTorusCoordinateMap wt := by
+  rfl
 
 /-- The defining Hopf ideal of the closed subgroup scheme generated jointly by the represented
 Kostant root subgroups and the represented weight torus. It is the largest Hopf ideal killed by
@@ -96,7 +118,7 @@ all of those coordinate maps. -/
 noncomputable def kostantToralDefiningIdeal :
     HopfIdeal ℤ (GeneralLinear.coordinateHopfAlgebra ℤ n) :=
   CommHopfAlgCat.commonKernelHopfIdeal
-    (kostantToralGeneratorMap e h ρ M hM hnil b wt)
+    (kostantToralGeneratorMap e h ρ M hM b wt id hnil)
 
 /-- A Hopf ideal lies in the toral defining ideal exactly when every root-subgroup coordinate map
 and the weight-torus coordinate map kill it. -/
@@ -134,14 +156,15 @@ theorem kostantToralDefiningIdeal_comapOfSurjective_le_of_comp_eq
     (kostantToralDefiningIdeal e h ρ M hM hnil b wt).comapOfSurjective φ.hom hφ ≤
       kostantToralDefiningIdeal e h ρ M hM hnil b wt := by
   refine CommHopfAlgCat.comapOfSurjective_commonKernelHopfIdeal_le_of_comp_eq_comp
-    (kostantToralGeneratorMap e h ρ M hM hnil b wt) φ hφ
+    (kostantToralGeneratorMap e h ρ M hM b wt id hnil) φ hφ
     (fun j => match j with | .inl i => .inl (s i) | .inr _ => .inr ())
     (fun j => match j with | .inl _ => 𝟙 _ | .inr _ => t) ?_ ?_
   · rintro (i | u)
     · exact fun _ _ hxy => hxy
     · exact ht
   · rintro (i | u)
-    · simpa only [kostantToralGeneratorMap, kostantToralGeneratorCodomain, Category.comp_id]
+    · simpa only [kostantToralGeneratorMap, kostantToralGeneratorCodomain, id_eq,
+        Category.comp_id]
         using hroot i
     · simpa only [kostantToralGeneratorMap, kostantToralGeneratorCodomain] using htorus
 
@@ -210,7 +233,7 @@ noncomputable def kostantRootSubgroupToralCoordinateMap (i : I) :
         (kostantToralDefiningIdeal e h ρ M hM hnil b wt) ⟶
       AdditiveGroup.coordinateHopfAlgebra ℤ :=
   CommHopfAlgCat.commonKernelLift
-    (kostantToralGeneratorMap e h ρ M hM hnil b wt) (.inl i)
+    (kostantToralGeneratorMap e h ρ M hM b wt id hnil) (.inl i)
 
 /-- Composing the quotient morphism with a factored root coordinate map recovers the represented
 root-subgroup coordinate map. -/
@@ -221,7 +244,7 @@ theorem mkQuotient_comp_kostantRootSubgroupToralCoordinateMap (i : I) :
         kostantRootSubgroupToralCoordinateMap e h ρ M hM hnil b wt i =
       kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b :=
   CommHopfAlgCat.mkQuotient_comp_commonKernelLift
-    (kostantToralGeneratorMap e h ρ M hM hnil b wt) (.inl i)
+    (kostantToralGeneratorMap e h ρ M hM b wt id hnil) (.inl i)
 
 /-- A surjective root-subgroup coordinate map remains surjective after factoring through the
 toral closure. -/
@@ -231,7 +254,7 @@ theorem kostantRootSubgroupToralCoordinateMap_surjective_of_surjective (i : I)
     Function.Surjective
       (kostantRootSubgroupToralCoordinateMap e h ρ M hM hnil b wt i).hom :=
   CommHopfAlgCat.commonKernelLift_surjective_of_surjective
-    (kostantToralGeneratorMap e h ρ M hM hnil b wt) (.inl i) hi
+    (kostantToralGeneratorMap e h ρ M hM b wt id hnil) (.inl i) hi
 
 /-- The coordinate map through which the represented weight torus factors into the toral
 closure. -/
@@ -240,7 +263,7 @@ noncomputable def kostantWeightTorusToralCoordinateMap :
         (kostantToralDefiningIdeal e h ρ M hM hnil b wt) ⟶
       (DiagonalizableGroup.coordinateRing ℤ (SplitTorus.characterGroup κ)).obj :=
   CommHopfAlgCat.commonKernelLift
-    (kostantToralGeneratorMap e h ρ M hM hnil b wt) (.inr ())
+    (kostantToralGeneratorMap e h ρ M hM b wt id hnil) (.inr ())
 
 /-- Composing the quotient morphism with the factored torus coordinate map recovers the weight
 torus coordinate map. -/
@@ -251,7 +274,7 @@ theorem mkQuotient_comp_kostantWeightTorusToralCoordinateMap :
         kostantWeightTorusToralCoordinateMap e h ρ M hM hnil b wt =
       GeneralLinear.weightTorusCoordinateMap wt :=
   CommHopfAlgCat.mkQuotient_comp_commonKernelLift
-    (kostantToralGeneratorMap e h ρ M hM hnil b wt) (.inr ())
+    (kostantToralGeneratorMap e h ρ M hM b wt id hnil) (.inr ())
 
 /-- The `i`th represented Kostant root subgroup, factored through the toral closure. -/
 noncomputable def kostantRootSubgroupToToral (i : I) :
