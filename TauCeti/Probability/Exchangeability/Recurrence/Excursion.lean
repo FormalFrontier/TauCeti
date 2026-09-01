@@ -176,7 +176,7 @@ theorem measure_setOf_excursionPrefix_eq {bs : List (List α)}
     (h0 : ∀ᵐ ω ∂μ, X 0 ω = a₀) (havoid : ∀ e ∈ bs, a₀ ∉ e) :
     μ {ω | excursionPrefix (fun n => X n ω) a₀ bs.length = bs} =
       μ {ω | ∀ i ≤ loopSteps bs, X i ω = loopPathAt a₀ bs i} := by
-  refine (measure_congr (Filter.eventuallyEq_set.2 ?_)).symm
+  refine (measure_congr (Filter.eventuallyEqSet_iff.2 ?_)).symm
   filter_upwards [h0, hvisit] with ω hω0 hω
   exact eqOn_loopPathAt_iff_excursionPrefix_eq havoid hω hω0
 

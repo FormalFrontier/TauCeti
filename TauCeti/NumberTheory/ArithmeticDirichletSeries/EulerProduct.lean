@@ -28,8 +28,9 @@ coefficients: no convergence hypothesis enters, and the passage to an infinite p
 functions is a later step.
 
 The richer `EulerProductData` package required by Layer 3.1 is not defined here: it must also carry
-a finite bad set and the hypotheses that transport an ideal product through `normCoeff`. The
-canonical factors developed here are prerequisites for that package, not a substitute for it.
+a finite bad set and bundle the coprime-multiplicativity and analytic local hypotheses. The formal
+transport through `normCoeff` is proved here from multiplicativity, so the eventual package can
+expose that theorem without storing an unconstrained equality field.
 
 ## Main definitions
 
@@ -46,6 +47,9 @@ canonical factors developed here are prerequisites for that package, not a subst
 * `TauCeti.IdealArithmeticFunction.normCoeff_supportedPart`: the **finite Euler product**
   `normCoeff (supportedPart f S) = ∏ P ∈ S, localArithmeticFactor f P` for a multiplicative `f`
   and a finite set `S` of height-one primes.
+* `TauCeti.IdealArithmeticFunction.normCoeff_eq_eulerProduct`: the norm coefficients of a
+  multiplicative ideal arithmetic function are Mathlib's formal Euler product of its canonical
+  local factors.
 
 ## Implementation notes
 
@@ -71,7 +75,9 @@ This is the canonical-local-factor prerequisite for Layer **3.1** and the whole 
 is derived here rather than stored. The remaining Layer 3.1 target defines `EulerProductData` with
 its finite bad set and `normCoeff` transport hypotheses, supplies extensionality, and constructs
 restriction, product, conjugation, trivial-weight, and general multiplicative-weight operations.
-Layer 3.3 then passes to the directed limit of finite prime sets under absolute convergence.
+The formal transport theorem `normCoeff_eq_eulerProduct` supplies the coefficient identity that
+package will expose. Layer 3.3 then evaluates it on an absolute-convergence half-plane and passes
+to the analytic product of the local series.
 
 ## References
 
@@ -413,6 +419,43 @@ theorem normCoeff_supportedPart (hf : f.IsMultiplicative)
   | insert P S hPS ih =>
       rw [Finset.coe_insert, supportedPart_insert hf (by simpa using hPS), normCoeff_convolution,
         ih, normCoeff_supportedPart_singleton, Finset.prod_insert hPS, mul_comm]
+
+/-- At a fixed coefficient, restricting to a sufficiently large finite set of prime ideals does
+not change the norm coefficient. One may take all prime ideals of norm at most `n`: every prime
+divisor of an ideal of norm `n` belongs to that finite set. -/
+theorem eventually_normCoeff_supportedPart_eq (f : IdealArithmeticFunction K) (n : ℕ) :
+    ∀ᶠ S : Finset (HeightOneSpectrum (𝓞 K)) in Filter.atTop,
+      normCoeff K (supportedPart f (S : Set (HeightOneSpectrum (𝓞 K)))) n =
+        normCoeff K f n := by
+  classical
+  let T : Finset (HeightOneSpectrum (𝓞 K)) :=
+    (Northcott.finite_le
+      (h := fun P : HeightOneSpectrum (𝓞 K) ↦ Ideal.absNorm P.asIdeal) n).toFinset
+  filter_upwards [Filter.eventually_ge_atTop T] with S hTS
+  rw [normCoeff_eq_sum_normFiber, normCoeff_eq_sum_normFiber]
+  refine Finset.sum_congr rfl fun A hA ↦ supportedPart_apply_of_isPrimeTo_compl ?_
+  rw [Ideal.isPrimeTo_iff]
+  refine ⟨nonZeroDivisors.coe_ne_zero A, fun P hP hPdvd ↦ hP ?_⟩
+  have hnormP : Ideal.absNorm P.asIdeal ≤ n := by
+    have hnormdvd : Ideal.absNorm P.asIdeal ∣ Ideal.absNorm (A : Ideal (𝓞 K)) :=
+      Ideal.absNorm_dvd_absNorm_of_le (Ideal.dvd_iff_le.mp hPdvd)
+    have hnormA : Ideal.absNorm (A : Ideal (𝓞 K)) = n := (mem_normFiber K).mp hA
+    rw [hnormA] at hnormdvd
+    exact Nat.le_of_dvd (hnormA ▸ Ideal.absNorm_pos_of_nonZeroDivisors A) hnormdvd
+  exact hTS ((Northcott.finite_le
+    (h := fun P : HeightOneSpectrum (𝓞 K) ↦ Ideal.absNorm P.asIdeal) n).mem_toFinset.mpr hnormP)
+
+/-- **The formal Euler product of norm coefficients.** The norm coefficients of a multiplicative
+ideal arithmetic function are Mathlib's `ArithmeticFunction.eulerProduct` of the canonical local
+arithmetic factors. This is an equality of arithmetic functions; the analytic infinite product
+obtained after evaluating their `LSeries` is the separate absolute-convergence step of Layer 3.3. -/
+theorem normCoeff_eq_eulerProduct (hf : f.IsMultiplicative) :
+    normCoeff K f = ArithmeticFunction.eulerProduct f.localArithmeticFactor := by
+  ext n
+  obtain ⟨S, hcoeff, hprod⟩ := ((eventually_normCoeff_supportedPart_eq f n).and
+    (tendsTo_eulerProduct_localArithmeticFactor f hf.map_one n)).exists
+  rw [normCoeff_supportedPart hf S] at hcoeff
+  exact hcoeff.symm.trans hprod
 
 end IdealArithmeticFunction
 

@@ -12,6 +12,7 @@ public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal.Basic
 -- `MonoidHom.noncommCoprod` packages products of commuting one-parameter subgroups.
 public import Mathlib.GroupTheory.NoncommCoprod
 -- Non-public: the diagonal-matrix-unit product law is used only in a proof below.
+import TauCeti.GroupTheory.Commutator
 import TauCeti.LinearAlgebra.Matrix.Diagonal
 
 /-!
@@ -53,6 +54,10 @@ elementary matrices against the diagonal torus.
 
 ## Main results
 
+* `TauCeti.toGL_transvection_eq_transvectionUnit`: the defining equality relating the
+  special-linear and general-linear transvection APIs.
+* `TauCeti.transvectionUnit_mem_of_adjacent`: a subgroup containing the adjacent transvections
+  in both orientations contains every transvection.
 * `TauCeti.commute_transvectionUnit`: transvections at index pairs that do not chain commute.
 * `TauCeti.commutatorElement_transvectionUnit` and
   `TauCeti.commutatorElement_transvectionUnit_reverse`: the commutators of two chaining
@@ -120,6 +125,16 @@ def transvectionUnit (hij : i ≠ j) (c : A) : GL n A :=
 theorem coe_transvectionUnit (hij : i ≠ j) (c : A) :
     (transvectionUnit hij c : Matrix n n A) = transvection i j c :=
   (rfl)
+
+/-- Viewing a special-linear transvection in the general linear group gives
+`TauCeti.transvectionUnit`. -/
+theorem toGL_transvection_eq_transvectionUnit (hij : i ≠ j) (c : A) :
+    SpecialLinearGroup.toGL (SpecialLinearGroup.transvection hij c) =
+      transvectionUnit hij c := by
+  apply GeneralLinearGroup.ext
+  intro p q
+  rw [SpecialLinearGroup.coe_GL_coe_matrix, coe_transvectionUnit]
+  rfl
 
 /-- The transvection of parameter zero is the identity. -/
 @[simp]
@@ -224,6 +239,19 @@ theorem commutatorElement_transvectionUnit_reverse
     _ = (transvectionUnit hkj (d * c))⁻¹ := by
       rw [commutatorElement_transvectionUnit hki hij hkj]
     _ = transvectionUnit hkj (-(d * c)) := transvectionUnit_inv hkj (d * c)
+
+/-- If a subgroup of `GL (Fin (m + 1), A)` contains every adjacent transvection in both
+orientations, then it contains every elementary transvection. -/
+theorem transvectionUnit_mem_of_adjacent {m : ℕ}
+    (H : Subgroup (Matrix.GeneralLinearGroup (Fin (m + 1)) A))
+    (hadjacent : ∀ {i j : Fin (m + 1)} (hij : i ≠ j) (c : A),
+      i.val + 1 = j.val ∨ j.val + 1 = i.val → transvectionUnit hij c ∈ H)
+    {i j : Fin (m + 1)} (hij : i ≠ j) (c : A) : transvectionUnit hij c ∈ H := by
+  exact Subgroup.mem_of_adjacent_of_commutator H
+    (fun hij c => transvectionUnit hij c)
+    (fun hij hjk hik a => by
+      simpa using commutatorElement_transvectionUnit hij hjk hik a 1)
+    hadjacent hij c
 
 end Unit
 

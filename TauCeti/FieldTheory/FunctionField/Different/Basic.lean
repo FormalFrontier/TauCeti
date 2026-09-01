@@ -27,12 +27,12 @@ That multiplicity is the definition used here, and no complementary module is re
 The local model `𝒪_P ⊆ 𝒪'_P` is a pair of affine models in the sense of
 `TauCeti/FieldTheory/FunctionField/AffineModel/`, the smallest one that sees `P`: `𝒪_P` is a
 discrete valuation ring with fraction field `F`, and `𝒪'_P` is a Dedekind domain, module-finite
-over it, with fraction field `F'`.  The identification of the extension-theoretic data of `P'`
-with the ideal-theoretic data of its centre on `𝒪'_P` is then the affine-model dictionary of
-`TauCeti/FieldTheory/FunctionField/AffineModel/Extension.lean`.  The action of `𝒪_P` on `F'` is
-deliberately not a global instance — for `F' = F` it would compete with the action of a valuation
-subring on its own field — so it, and the scalar tower it sits in, are provided as `local`
-instances to be reinstalled by consumers.
+over it, with fraction field `F'`.  It is constructed in
+`TauCeti/FieldTheory/FunctionField/Place/Extension/Basic.lean`; the action of `𝒪_P` on `F'`
+and the scalar tower it sits in are deliberately not global instances, so they are reinstalled
+here as `local` instances.  The identification of the extension-theoretic data of `P'` with the
+ideal-theoretic data of its centre on `𝒪'_P` is then the affine-model dictionary of
+`TauCeti/FieldTheory/FunctionField/AffineModel/Extension.lean`.
 
 Separability of `F' / F` is the hypothesis of record for the different: without it the
 complementary module degenerates.  Nothing here needs an exactness hypothesis on the constant
@@ -40,9 +40,6 @@ fields, and nothing needs `k` perfect.
 
 ## Main definitions
 
-* `TauCeti.Place.algebraIntegersExtension` and `TauCeti.Place.isScalarTowerIntegersExtension`: the
-  action of the valuation ring of a place of `F / k` on an extension field `F'`, to be installed
-  with `attribute [local instance 10]`.
 * `TauCeti.Place.centerIntegralClosure`: the centre of `P'` on the local model `𝒪'_P`.
 * `TauCeti.Place.differentExponent`: the different exponent `d(P' ∣ P)` (Stichtenoth,
   Definition 3.4.3).
@@ -83,74 +80,6 @@ universe u u' v v'
 variable {k : Type u} {k' : Type u'} {F : Type v} {F' : Type v'}
 variable [Field k] [Field F] [Field F']
 variable [Algebra k F] [Algebra F F']
-
-section LocalModel
-
-variable (F') (P : Place k F)
-
-/-- **The valuation ring of a place of `F / k` acts on an extension field `F'`**, through `F`.
-
-This is not a global instance: for `F' = F` it would compete with the action of a valuation
-subring on its own field.  Install it, together with
-`TauCeti.Place.isScalarTowerIntegersExtension`, with `attribute [local instance 10]` in any file
-that works with the local model of the extension at `P` — at low priority, so that the case
-`F' = F` still resolves to the valuation subring's own action, as the fraction-field instances
-expect. -/
-@[instance_reducible]
-noncomputable def algebraIntegersExtension : Algebra (P.integers) F' :=
-  ((algebraMap F F').comp (algebraMap (P.integers) F)).toAlgebra
-
-attribute [local instance 10] algebraIntegersExtension
-
-/-- The action of `TauCeti.Place.algebraIntegersExtension` on `F'` factors through `F`. -/
-theorem isScalarTowerIntegersExtension : IsScalarTower (P.integers) F F' :=
-  .of_algebraMap_eq fun _ ↦ rfl
-
-attribute [local instance 10] isScalarTowerIntegersExtension
-
-theorem algebraMap_integersExtension_injective :
-    Function.Injective (algebraMap (P.integers) F') := by
-  rw [IsScalarTower.algebraMap_eq (P.integers) F F', RingHom.coe_comp]
-  exact (algebraMap F F').injective.comp (FaithfulSMul.algebraMap_injective (P.integers) F)
-
-instance isTorsionFree_integersExtension : Module.IsTorsionFree (P.integers) F' :=
-  Module.IsTorsionFree.comap (M := F') (algebraMap (P.integers) F')
-    (fun _ hr ↦ isRegular_iff_ne_zero'.mpr fun h ↦ isRegular_iff_ne_zero'.mp hr
-      (algebraMap_integersExtension_injective F' P (by simpa using h)))
-    (fun r m ↦ (Algebra.smul_def r m).symm)
-
-variable [FiniteDimensional F F'] [Algebra.IsSeparable F F']
-
-/-- The local model `𝒪'_P` — the integral closure of `𝒪_P` in `F'` — has fraction field `F'`. -/
-instance isFractionRing_integralClosure :
-    IsFractionRing (integralClosure (P.integers) F') F' :=
-  IsIntegralClosure.isFractionRing_of_finite_extension (P.integers) F F' _
-
-/-- The local model `𝒪'_P` is a Dedekind domain. -/
-instance isDedekindDomain_integralClosure :
-    IsDedekindDomain (integralClosure (P.integers) F') :=
-  integralClosure.isDedekindDomain (A := P.integers) (K := F) (L := F')
-
-/-- The local model `𝒪'_P` is module-finite over `𝒪_P`. -/
-instance moduleFinite_integralClosure :
-    Module.Finite (P.integers) (integralClosure (P.integers) F') :=
-  IsIntegralClosure.finite (A := P.integers) (K := F) (L := F') _
-
-/-- Separability of `F' / F`, transported to the fraction fields over which Mathlib states the
-different ideal. -/
-instance isSeparable_fractionRing_integralClosure :
-    Algebra.IsSeparable (FractionRing (P.integers))
-      (FractionRing (integralClosure (P.integers) F')) := by
-  refine Algebra.IsSeparable.of_equiv_equiv (FractionRing.algEquiv (P.integers) F).symm.toRingEquiv
-    (FractionRing.algEquiv (integralClosure (P.integers) F') F').symm.toRingEquiv ?_
-  apply IsLocalization.ringHom_ext (P.integers)⁰
-  ext a
-  simp only [RingHom.coe_comp, Function.comp_apply, RingHom.coe_coe, AlgEquiv.coe_ringEquiv,
-    AlgEquiv.commutes, ← IsScalarTower.algebraMap_apply]
-  rw [IsScalarTower.algebraMap_apply (P.integers) (integralClosure (P.integers) F') F',
-    AlgEquiv.commutes, ← IsScalarTower.algebraMap_apply]
-
-end LocalModel
 
 section DifferentExponent
 

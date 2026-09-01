@@ -36,9 +36,8 @@ formula itself:
 That `⨁_{p,q} I^{p,q}` is the whole space, and the recovery `W_k = ⨆_{p+q ≤ k} I^{p,q}` of the
 weight filtration, are proved in `TauCeti/Geometry/Hodge/Mixed/Decomposition.lean`, which needs
 the pure Hodge structure carried by the graded pieces and so cannot be part of this file. What
-remains of Deligne's theorem after that module is the recovery `F^p = ⨆_{p' ≥ p} ⨆_{q'} I^{p',q'}`
-of the Hodge filtration and the conjugation symmetry `I^{p,q} ≡ conj I^{q,p}` modulo lower
-bidegree.
+remains of Deligne's theorem after that module is the conjugation symmetry
+`I^{p,q} ≡ conj I^{q,p}` modulo lower bidegree.
 
 ## Main declarations
 

@@ -15,7 +15,7 @@ on a scheme. It also records the restriction of this action to the base ring for
 commutative ring.
 
 These constructions are independent of sheaf cohomology. They supply the scalar actions used by
-`TauCeti.AlgebraicGeometry.Cohomology.Module`.
+`TauCeti.AlgebraicGeometry.Cohomology.Module.Basic`.
 -/
 
 public section

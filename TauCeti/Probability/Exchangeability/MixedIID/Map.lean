@@ -56,8 +56,8 @@ pushforward `fun ω => (ν ω).map f`. -/
 theorem MixedIIDWith.map_values {μ : Measure Ω} {X : ι → Ω → α}
     {ν : Ω → ProbabilityMeasure α} (h : MixedIIDWith μ X ν)
     {f : α → β} (hf : Measurable f) :
-    MixedIIDWith μ (fun i ω => f (X i ω)) fun ω => (ν ω).map hf.aemeasurable := by
-  refine MixedIIDWith.intro ?_ ?_
+    MixedIIDWith μ (fun i ω => f (X i ω)) fun ω => (ν ω).map f := by
+  refine MixedIIDWith.intro (fun i => hf.comp_aemeasurable (h.aemeasurable i)) ?_ ?_
   · -- The pushforward mixing representative is measurable in the Giry structure.
     exact (TauCeti.MeasureTheory.measurable_probabilityMeasure_map hf).comp
       h.measurable_mixingRepresentative
@@ -79,10 +79,9 @@ theorem MixedIIDWith.map_values {μ : Measure Ω} {X : ι → Ω → α}
             ((ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure).map
               fun x : Fin m → α => fun i => f (x i) := TauCeti.MeasureTheory.map_bind hg hFmeas
       _ = μ.bind fun ω =>
-            (ProbabilityMeasure.pi fun _ : Fin m => (ν ω).map hf.aemeasurable).toMeasure := by
+            (ProbabilityMeasure.pi fun _ : Fin m => (ν ω).map f).toMeasure := by
             refine congrArg (μ.bind ·) (funext fun ω => ?_)
-            have : IsProbabilityMeasure ((ν ω : Measure α).map f) :=
-              (ν ω : Measure α).isProbabilityMeasure_map hf.aemeasurable
+            have : IsProbabilityMeasure ((ν ω : Measure α).map f) := inferInstance
             simp only [ProbabilityMeasure.toMeasure_pi, ProbabilityMeasure.toMeasure_map]
             exact Measure.pi_map_pi fun _ : Fin m => hf.aemeasurable
 
@@ -102,7 +101,8 @@ theorem mixedIID_of_mixedIID_pathLaw {μ : Measure Ω} {X : ℕ → Ω → α}
   obtain ⟨ν, hν⟩ := h.exists_mixingRepresentative
   have hφ : Measurable (fun ω => fun i => X i ω : Ω → ℕ → α) := measurable_pi_lambda _ hX_meas
   refine MixedIID.of_mixingRepresentative
-    (MixedIIDWith.intro (hν.measurable_mixingRepresentative.comp hφ) ?_)
+    (MixedIIDWith.intro (fun i => (hX_meas i).aemeasurable)
+      (hν.measurable_mixingRepresentative.comp hφ) ?_)
   intro m k hk
   have hcoord : Measurable (fun p : ℕ → α => fun i : Fin m => p (k i)) :=
     measurable_pi_lambda _ fun i => measurable_pi_apply (k i)

@@ -72,6 +72,13 @@ variable {f g h : SmoothEmbedding I J n M N}
 def SmoothAmbientIsotopic (f g : SmoothEmbedding I J n M N) : Prop :=
   TauCeti.SmoothAmbientIsotopic f.toContMDiffMap g.toContMDiffMap
 
+/-- Smooth ambient isotopy of embeddings is exactly the general relation
+`TauCeti.SmoothAmbientIsotopic` on the underlying bundled smooth maps. -/
+theorem smoothAmbientIsotopic_iff_toContMDiffMap :
+    SmoothAmbientIsotopic f g ↔
+      TauCeti.SmoothAmbientIsotopic f.toContMDiffMap g.toContMDiffMap :=
+  Iff.rfl
+
 /-- Smooth ambient isotopy is witnessed by a diffeotopy whose final diffeomorphism carries the
 first embedding pointwise to the second. -/
 theorem smoothAmbientIsotopic_def :
@@ -81,13 +88,13 @@ theorem smoothAmbientIsotopic_def :
     obtain ⟨Φ, hΦ⟩ := TauCeti.smoothAmbientIsotopic_def.mp hfg
     refine ⟨Φ, fun x ↦ ?_⟩
     simpa only [ContMDiffMap.comp_apply, _root_.Diffeomorph.coe_coe,
-      SmoothEmbedding.toContMDiffMap_coe] using
+      SmoothEmbedding.coe_toContMDiffMap] using
       DFunLike.congr_fun hΦ x
   · rintro ⟨Φ, hΦ⟩
     apply TauCeti.smoothAmbientIsotopic_def.mpr
     refine ⟨Φ, ContMDiffMap.ext fun x ↦ ?_⟩
     simpa only [ContMDiffMap.comp_apply, _root_.Diffeomorph.coe_coe,
-      SmoothEmbedding.toContMDiffMap_coe] using hΦ x
+      SmoothEmbedding.coe_toContMDiffMap] using hΦ x
 
 namespace SmoothAmbientIsotopic
 

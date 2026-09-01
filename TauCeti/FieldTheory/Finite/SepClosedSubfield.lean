@@ -76,7 +76,7 @@ of `X ^ p ^ n - X`, a separable polynomial of degree `p ^ n`. The public form of
 `coe_frobeniusFixedSubfield_eq_rootSet`. -/
 private def frobeniusFixedSubfieldEquivRootSet (hn : n ≠ 0) :
     frobeniusFixedSubfield K p n ≃ (X ^ p ^ n - X : K[X]).rootSet K :=
-  Equiv.setCongr (coe_frobeniusFixedSubfield_eq_rootSet K p n hn)
+  Equiv.Set.congr (coe_frobeniusFixedSubfield_eq_rootSet K p n hn)
 
 /-- The Frobenius-fixed subfield of a field of characteristic `p` is finite once `n ≠ 0`, being a
 set of roots of a nonzero polynomial. This is not an instance: at `n = 0` the subfield is the whole

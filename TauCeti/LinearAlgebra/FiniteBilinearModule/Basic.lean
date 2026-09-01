@@ -673,7 +673,7 @@ def orthogonalComplement (H : AddSubgroup A) : AddSubgroup A :=
 @[simp]
 theorem mem_orthogonalComplement_iff (H : AddSubgroup A) (x : A) :
     x ∈ A.orthogonalComplement H ↔ ∀ y ∈ H, A.pairing x y = 0 := by
-  rw [orthogonalComplement, Submodule.mem_toAddSubgroup, Submodule.mem_orthogonalBilin_iff]
+  rw [orthogonalComplement, Submodule.mem_toAddSubgroup, Submodule.mem_orthogonalBilin]
   simp_rw [toBilin_apply, A.pairing_comm]
   exact ⟨fun h y hy ↦ h y hy, fun h y hy ↦ h y hy⟩
 

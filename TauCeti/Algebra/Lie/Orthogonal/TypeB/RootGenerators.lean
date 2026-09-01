@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Lie.Orthogonal.TypeB.DiagonalCartan
+public import TauCeti.LinearAlgebra.Matrix.ToLin
 
 /-!
 # Simple-root generators for the split orthogonal Lie algebra of type B
@@ -65,6 +66,46 @@ def typeBLongRootMatrix (i j : ι) (_hij : i ≠ j) :
   single (.inr (.inl i)) (.inr (.inl j)) 1 -
     single (.inr (.inr j)) (.inr (.inr i)) 1
 
+omit [Fintype ι] in
+/-- The long type-`B` root matrix as a difference of two matrix units. -/
+theorem typeBLongRootMatrix_def (i j : ι) (hij : i ≠ j) :
+    typeBLongRootMatrix (K := K) i j hij =
+      single (.inr (.inl i)) (.inr (.inl j)) 1 -
+        single (.inr (.inr j)) (.inr (.inr i)) 1 :=
+  (rfl)
+
+/-- The long-root matrix sends a coordinate basis vector to the difference of its two selected
+coordinates. -/
+theorem toLinAlgEquiv_typeBLongRootMatrix_apply_basis {M : Type*} [AddCommGroup M] [Module K M]
+    (bas : Module.Basis (Unit ⊕ ι ⊕ ι) K M) (i j : ι) (hij : i ≠ j)
+    (c : Unit ⊕ ι ⊕ ι) :
+    Matrix.toLinAlgEquiv bas (typeBLongRootMatrix i j hij) (bas c) =
+      (if .inr (.inl j) = c then bas (.inr (.inl i)) else 0) -
+        if .inr (.inr i) = c then bas (.inr (.inr j)) else 0 := by
+  rw [typeBLongRootMatrix, map_sub, LinearMap.sub_apply,
+    toLinAlgEquiv_single_apply_basis, toLinAlgEquiv_single_apply_basis]
+  simp
+
+/-- Two long type-`B` root matrices bracket to zero when their directed index pairs cannot
+concatenate in either order. -/
+theorem typeBLongRootMatrix_lie_longRootMatrix_of_ne (i j k l : ι)
+    (hij : i ≠ j) (hkl : k ≠ l) (hjk : j ≠ k) (hil : i ≠ l) :
+    ⁅typeBLongRootMatrix (K := K) i j hij, typeBLongRootMatrix (K := K) k l hkl⁆ = 0 := by
+  rw [LieRing.of_associative_ring_bracket]
+  simp [typeBLongRootMatrix_def, mul_sub, sub_mul, Matrix.single_mul_single_of_ne,
+    hjk, hjk.symm, hil, hil.symm]
+
+/-- The bracket of two concatenated long type-`B` root matrices is the long root matrix for the
+concatenated index pair. -/
+theorem typeBLongRootMatrix_lie_longRootMatrix_chain (i j k l : ι)
+    (hij : i ≠ j) (hkl : k ≠ l) (hjk : j = k) (hil : i ≠ l) :
+    ⁅typeBLongRootMatrix (K := K) i j hij, typeBLongRootMatrix (K := K) k l hkl⁆ =
+      typeBLongRootMatrix (K := K) i l hil := by
+  subst k
+  rw [LieRing.of_associative_ring_bracket]
+  simp [typeBLongRootMatrix_def, mul_sub, sub_mul, Matrix.single_mul_single_same,
+    Matrix.single_mul_single_of_ne, hil, hil.symm]
+
 /-- The long-root matrix is skew-adjoint for the split odd orthogonal form. -/
 theorem typeBLongRootMatrix_mem_typeB (i j : ι) (hij : i ≠ j) :
     typeBLongRootMatrix (K := K) i j hij ∈ LieAlgebra.Orthogonal.typeB ι K := by
@@ -107,6 +148,15 @@ theorem coe_typeBLongCorootGenerator (i j : ι) (hij : i ≠ j) :
       Matrix (Unit ⊕ ι ⊕ ι) (Unit ⊕ ι ⊕ ι) K) = typeBLongCorootMatrix i j hij :=
   (rfl)
 
+/-- The long coroot has coordinate vector `εᵢ - εⱼ` in the split diagonal Cartan. -/
+theorem typeBLongCorootGenerator_eq_diagonal (i j : ι) (hij : i ≠ j) :
+    typeBLongCorootGenerator (K := K) i j hij =
+      ((typeBDiagonalEquiv (K := K) (ι := ι) (Pi.single i 1 - Pi.single j 1) :
+        typeBDiagonalCartan K ι) : LieAlgebra.Orthogonal.typeB ι K) := by
+  apply Subtype.ext
+  rw [coe_typeBDiagonalEquiv_apply]
+  rfl
+
 /-- Opposite long-root vectors bracket to their diagonal coroot. -/
 @[simp]
 theorem typeBLongRootGenerator_lie_swap (i j : ι) (hij : i ≠ j) :
@@ -142,9 +192,71 @@ normalization adapted to the middle coefficient `2` in `LieAlgebra.Orthogonal.JB
 def typeBShortRootMatrix (i : ι) : Matrix (Unit ⊕ ι ⊕ ι) (Unit ⊕ ι ⊕ ι) K :=
   single (.inr (.inl i)) (.inl ()) 2 - single (.inl ()) (.inr (.inr i)) 1
 
+omit [Fintype ι] in
+/-- The positive short type-`B` root matrix as `2 Eᵢ₀ - E₀,₋ᵢ`. -/
+theorem typeBShortRootMatrix_def (i : ι) :
+    typeBShortRootMatrix (K := K) i =
+      single (.inr (.inl i)) (.inl ()) 2 - single (.inl ()) (.inr (.inr i)) 1 :=
+  (rfl)
+
 /-- The ambient root matrix for the opposite short root `-εᵢ`. -/
-def typeBShortNegativeRootMatrix (i : ι) : Matrix (Unit ⊕ ι ⊕ ι) (Unit ⊕ ι ⊕ ι) K :=
+def typeBShortNegativeRootMatrix (i : ι) :
+    Matrix (Unit ⊕ ι ⊕ ι) (Unit ⊕ ι ⊕ ι) K :=
   single (.inl ()) (.inr (.inl i)) 1 - single (.inr (.inr i)) (.inl ()) 2
+
+omit [Fintype ι] in
+/-- The negative short type-`B` root matrix as `E₀ᵢ - 2 E₋ᵢ,₀`. -/
+theorem typeBShortNegativeRootMatrix_def (i : ι) :
+    typeBShortNegativeRootMatrix (K := K) i =
+      single (.inl ()) (.inr (.inl i)) 1 - single (.inr (.inr i)) (.inl ()) 2 :=
+  (rfl)
+
+/-- The positive short-root matrix has its two nonzero coordinate-basis actions in the middle and
+negative summands. -/
+theorem toLinAlgEquiv_typeBShortRootMatrix_apply_basis {M : Type*} [AddCommGroup M] [Module K M]
+    (bas : Module.Basis (Unit ⊕ ι ⊕ ι) K M) (i : ι) (c : Unit ⊕ ι ⊕ ι) :
+    Matrix.toLinAlgEquiv bas (typeBShortRootMatrix i) (bas c) =
+      (if .inl () = c then (2 : K) • bas (.inr (.inl i)) else 0) -
+        if .inr (.inr i) = c then bas (.inl ()) else 0 := by
+  rw [typeBShortRootMatrix, map_sub, LinearMap.sub_apply,
+    toLinAlgEquiv_single_apply_basis, toLinAlgEquiv_single_apply_basis]
+  simp
+
+/-- The negative short-root matrix has its two nonzero coordinate-basis actions in the positive and
+middle summands. -/
+theorem toLinAlgEquiv_typeBShortNegativeRootMatrix_apply_basis {M : Type*} [AddCommGroup M]
+    [Module K M] (bas : Module.Basis (Unit ⊕ ι ⊕ ι) K M) (i : ι)
+    (c : Unit ⊕ ι ⊕ ι) :
+    Matrix.toLinAlgEquiv bas (typeBShortNegativeRootMatrix i) (bas c) =
+      (if .inr (.inl i) = c then bas (.inl ()) else 0) -
+        if .inl () = c then (2 : K) • bas (.inr (.inr i)) else 0 := by
+  rw [typeBShortNegativeRootMatrix, map_sub, LinearMap.sub_apply,
+    toLinAlgEquiv_single_apply_basis, toLinAlgEquiv_single_apply_basis]
+  simp
+
+/-- The bracket of a positive short type-`B` root matrix with a long root matrix. -/
+theorem typeBShortRootMatrix_lie_longRootMatrix (i k l : ι) (hkl : k ≠ l) :
+    ⁅typeBShortRootMatrix (K := K) i, typeBLongRootMatrix (K := K) k l hkl⁆ =
+      -(if i = l then typeBShortRootMatrix (K := K) k else 0) := by
+  rw [LieRing.of_associative_ring_bracket]
+  split_ifs with hil
+  · subst l
+    simp [typeBShortRootMatrix_def, typeBLongRootMatrix_def, mul_sub, sub_mul,
+      Matrix.single_mul_single_same, Matrix.single_mul_single_of_ne]
+  · simp [typeBShortRootMatrix_def, typeBLongRootMatrix_def, mul_sub, sub_mul,
+      Matrix.single_mul_single_of_ne, hil, Ne.symm hil]
+
+/-- The bracket of a negative short type-`B` root matrix with a long root matrix. -/
+theorem typeBShortNegativeRootMatrix_lie_longRootMatrix (i k l : ι) (hkl : k ≠ l) :
+    ⁅typeBShortNegativeRootMatrix (K := K) i, typeBLongRootMatrix (K := K) k l hkl⁆ =
+      if i = k then typeBShortNegativeRootMatrix (K := K) l else 0 := by
+  rw [LieRing.of_associative_ring_bracket]
+  split_ifs with hik
+  · subst k
+    simp [typeBShortNegativeRootMatrix_def, typeBLongRootMatrix_def, mul_sub, sub_mul,
+      Matrix.single_mul_single_same, Matrix.single_mul_single_of_ne]
+  · simp [typeBShortNegativeRootMatrix_def, typeBLongRootMatrix_def, mul_sub, sub_mul,
+      Matrix.single_mul_single_of_ne, hik, Ne.symm hik]
 
 /-- The positive short-root matrix is skew-adjoint for the split odd orthogonal form. -/
 theorem typeBShortRootMatrix_mem_typeB (i : ι) :
@@ -190,6 +302,56 @@ theorem coe_typeBShortNegativeRootGenerator (i : ι) :
       Matrix (Unit ⊕ ι ⊕ ι) (Unit ⊕ ι ⊕ ι) K) = typeBShortNegativeRootMatrix i :=
   (rfl)
 
+/-! ### Diagonal action on root generators -/
+
+/-- A split diagonal element acts on the long-root vector of weight `εᵢ - εⱼ` by that
+weight. -/
+@[simp]
+theorem typeBDiagonalEquiv_lie_longRootGenerator (d : ι → K) (i j : ι) (hij : i ≠ j) :
+    ⁅(⟨typeBDiagonalMatrix d, typeBDiagonalMatrix_mem_typeB d⟩ :
+        LieAlgebra.Orthogonal.typeB ι K), typeBLongRootGenerator (K := K) i j hij⁆ =
+      (d i - d j) • typeBLongRootGenerator i j hij := by
+  apply Subtype.ext
+  -- The subtype bracket reduces definitionally to the ambient matrix commutator.
+  change typeBDiagonalMatrix d * typeBLongRootMatrix i j hij -
+      typeBLongRootMatrix i j hij * typeBDiagonalMatrix d =
+        (d i - d j) • typeBLongRootMatrix i j hij
+  ext (a | (a | a)) (b | (b | b)) <;>
+    simp [typeBLongRootMatrix, typeBDiagonalMatrix_apply, Matrix.mul_apply,
+      Matrix.single_apply, sub_eq_add_neg]
+  all_goals
+    by_cases hia : i = a <;> by_cases hja : j = a <;>
+      by_cases hib : i = b <;> by_cases hjb : j = b <;> simp_all <;> aesop
+
+/-- A split diagonal element acts on the positive short-root vector of weight `εᵢ`. -/
+@[simp]
+theorem typeBDiagonalEquiv_lie_shortRootGenerator (d : ι → K) (i : ι) :
+    ⁅(⟨typeBDiagonalMatrix d, typeBDiagonalMatrix_mem_typeB d⟩ :
+        LieAlgebra.Orthogonal.typeB ι K), typeBShortRootGenerator (K := K) i⁆ =
+      d i • typeBShortRootGenerator i := by
+  apply Subtype.ext
+  -- The subtype bracket reduces definitionally to the ambient matrix commutator.
+  change typeBDiagonalMatrix d * typeBShortRootMatrix i -
+      typeBShortRootMatrix i * typeBDiagonalMatrix d = d i • typeBShortRootMatrix i
+  ext (a | (a | a)) (b | (b | b)) <;>
+    simp [typeBShortRootMatrix, typeBDiagonalMatrix_apply, Matrix.mul_apply,
+      Matrix.single_apply] <;> aesop
+
+/-- A split diagonal element acts on the negative short-root vector of weight `-εᵢ`. -/
+@[simp]
+theorem typeBDiagonalEquiv_lie_shortNegativeRootGenerator (d : ι → K) (i : ι) :
+    ⁅(⟨typeBDiagonalMatrix d, typeBDiagonalMatrix_mem_typeB d⟩ :
+        LieAlgebra.Orthogonal.typeB ι K), typeBShortNegativeRootGenerator (K := K) i⁆ =
+      -(d i) • typeBShortNegativeRootGenerator i := by
+  apply Subtype.ext
+  -- The subtype bracket reduces definitionally to the ambient matrix commutator.
+  change typeBDiagonalMatrix d * typeBShortNegativeRootMatrix i -
+      typeBShortNegativeRootMatrix i * typeBDiagonalMatrix d =
+        -(d i) • typeBShortNegativeRootMatrix i
+  ext (a | (a | a)) (b | (b | b)) <;>
+    simp [typeBShortNegativeRootMatrix, typeBDiagonalMatrix_apply, Matrix.mul_apply,
+      Matrix.single_apply] <;> aesop
+
 /-- The diagonal short coroot `2εᵢ` in the standard type-`B` coordinates. -/
 def typeBShortCorootMatrix (i : ι) : Matrix (Unit ⊕ ι ⊕ ι) (Unit ⊕ ι ⊕ ι) K :=
   typeBDiagonalMatrix (2 • Pi.single i 1)
@@ -203,6 +365,15 @@ theorem coe_typeBShortCorootGenerator (i : ι) :
     (typeBShortCorootGenerator (K := K) i :
       Matrix (Unit ⊕ ι ⊕ ι) (Unit ⊕ ι ⊕ ι) K) = typeBShortCorootMatrix i :=
   (rfl)
+
+/-- The short coroot has coordinate vector `2εᵢ` in the split diagonal Cartan. -/
+theorem typeBShortCorootGenerator_eq_diagonal (i : ι) :
+    typeBShortCorootGenerator (K := K) i =
+      ((typeBDiagonalEquiv (K := K) (ι := ι) (2 • Pi.single i 1) :
+        typeBDiagonalCartan K ι) : LieAlgebra.Orthogonal.typeB ι K) := by
+  apply Subtype.ext
+  rw [coe_typeBDiagonalEquiv_apply]
+  rfl
 
 /-- The positive and negative short-root vectors bracket to the short coroot. -/
 @[simp]

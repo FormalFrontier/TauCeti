@@ -68,10 +68,51 @@ the involutory generators off it as those carrying an explicit square relator, a
 `TauCeti.Sporadic.Thompson.generatorsWithSquareRelator_eq` identifies those five as `a, b, c, d, e`.
 A transposed or dropped power relator would show up in one of these.
 
-Correctness of the transcription beyond that is a review obligation, exactly as the roadmap
-describes: a reviewer reads the six lists below against Theorem 3.1 of the source. Note that the
-source states that some of its relators are redundant, kept for clarity or to help the enumeration,
-so the list is deliberately not minimal.
+The letter counts of the compiled words are checked in the same spirit. Reading them off one relator
+at a time locates a discrepancy at the relator that carries it, rather than only in the total. Three
+of the thirty-nine compiled words are not reduced, and all three are equations `w₁ = w₂` compiled as
+`w₁ w₂⁻¹` whose two sides cancel at the junction: the last relator of group (2), and the last two of
+group (6). Their five cancelling pairs are the ten letters by which the compiled count `300` exceeds
+the reduced count `290`. Free reduction leaves every relator cyclically reduced, which is what makes
+the reduced figure the one comparable with a published presentation length, since such a length is
+measured after free and cyclic reduction.
+
+This row records no such length: none is transcribed from the source into the metadata below, and
+Bray's presentation page for `Th`, which in any case describes a different two-generator
+presentation, prints `Length ??`. The figures below therefore state the transcribed data for a
+reviewer to compare with the source, rather than checking it against a recorded number.
+
+## Independent source-to-Lean read-through
+
+An independent read-through used the PDF whose SHA-256 digest is
+`4701d82bcba1f9b2db8793af9170d97269cc2a18aa3265fd92406879b0ce160e`. Theorem 3.1 displays the
+following six groups of relators:
+
+```text
+(1) a², b², c², d², e², (ab)³, (ae)², (bc)³, (bd)², (be)²,
+    a = (cd)⁴, (ce)², (de)³, (bcde)⁸;
+(2) s⁷, [s,a], [s,b], [s,c], (sd)², [e,s] = e^(s³);
+(3) t³, [t,a], [t,b], [t,c], [t,d], [t,e], s^t = s²;
+(4) u² = ac, [u,a], [u,c], [u,e], (d e d^u)², [u,(ac)^b] = e,
+    [u^d,(ac)^b] = u e (ac)^b u^d e c;
+(5) t^u = t⁻¹;
+(6) [e,u^(s²)], ac = (us)³ = [u,s]⁴,
+    (d u^(s²))⁴ = a c c^d c^(d e s⁻¹) c^(d e s²).
+```
+
+Reading each source line against `relatorsOne` through `relatorsSix` found the same letters,
+order, exponents, equations, conjugations, and commutators. In particular, the chained equality in
+(6) becomes its two equations and no extra relation. The translation uses `.pow` for powers,
+`.div` for the source's equation `w₁ = w₂`, `.conj` for `w₁ ^ w₂`, and `sourceCommutator` for the
+source convention `[w₁,w₂] = w₁⁻¹w₂⁻¹w₁w₂`; the characteristic free-group lemmas cited above
+check those three nontrivial notation choices. `relatorList` concatenates the six source groups in
+order, and their checked lengths give `14 + 6 + 7 + 7 + 1 + 4 = 39`, with none dropped or
+duplicated. This closes the row's S1 source-to-Lean read-through.
+
+The independent `FiniteSimpleGroups` development named by the roadmap does not cover `Th`, so the
+additional explicit-construction comparison does not apply to this row. The source states that
+some relators are redundant, kept for clarity or to help the enumeration, so the list is
+deliberately not minimal.
 
 ## Main definitions
 
@@ -84,6 +125,15 @@ so the list is deliberately not minimal.
 * `TauCeti.Sporadic.Thompson.generatorsWithSquareRelator`: the generators carrying an explicit
   square relator in the transcribed data.
 
+## Main results
+
+* `TauCeti.Sporadic.Thompson.map_length_relators_presentation` and
+  `TauCeti.Sporadic.Thompson.totalLength_presentation`: the letter counts of the compiled words.
+* `TauCeti.Sporadic.Thompson.map_length_reduce_relators_presentation` and
+  `TauCeti.Sporadic.Thompson.reducedTotalLength_presentation`: the same counts after free reduction.
+* `TauCeti.Sporadic.Thompson.isCyclicallyReduced_reduce_of_mem_presentation_relators`: the reduced
+  words are cyclically reduced.
+
 ## References
 
 This fills one of the twenty-six rows owed by milestone S1 of
@@ -92,10 +142,15 @@ admissible source for each sporadic name. The source is
 
 * G. Havas, L. H. Soicher and R. A. Wilson, *A presentation for the Thompson sporadic simple
   group*, in *Groups and Computation III* (Columbus, OH, 1999), Ohio State University Mathematical
-  Research Institute Publications **8**, de Gruyter, Berlin, 2001, 193--200.
+  Research Institute Publications **8**, de Gruyter, Berlin, 2001, 193--200,
+  <https://webspace.maths.qmul.ac.uk/r.a.wilson/pubs_files/Thpres2web.pdf>.
 
 Theorem 3.1 there states the presentation as relators (1) to (6) and proves that the group it
 presents is `Th`.
+
+* J. N. Bray, presentation page for the Thompson group,
+  <https://webspace.maths.qmul.ac.uk/j.n.bray/web/Pres/Th.html>, which records
+  `Length ??, 2-generator, ?-relator` and so publishes no letter count.
 -/
 
 public section
@@ -261,7 +316,9 @@ def presentation : GroupPresentation where
     prints no total, so the expected relator count is the sum 14 + 6 + 7 + 7 + 1 + 4 of the \
     displayed groups; the chain ac = (us)³ = [u, s]⁴ in group (6) is counted as its two equations. \
     The source states that some of its relators are redundant, kept for clarity or to aid the \
-    coset enumeration, so the list is deliberately not minimal."
+    coset enumeration, so the list is deliberately not minimal. The independent source-to-Lean \
+    read-through checked all six groups and 39 relators. The FiniteSimpleGroups permutation \
+    construction does not cover Th."
   expectedGeneratorCount := 8
   expectedRelatorCount := 39
   transcribed := relatorList
@@ -324,5 +381,83 @@ of `TauCeti.Sporadic.Thompson.matchesMetadata_presentation` do not see. -/
 theorem cosetTableColumns :
     generatorsWithSquareRelator.length +
       2 * (presentation.generatorCount - generatorsWithSquareRelator.length) = 11 := rfl
+
+/-! ### The letter counts of the compiled words -/
+
+/-- The lengths of the thirty-nine compiled relator words for `Th`, in the order of the source's six
+displayed groups.
+
+Reading the counts off one relator at a time is what lets a reviewer locate a discrepancy, rather
+than only observe one in the total of `TauCeti.Sporadic.Thompson.totalLength_presentation`. -/
+theorem map_length_relators_presentation :
+    presentation.relators.map List.length =
+      [2, 2, 2, 2, 2, 6, 4, 6, 4, 4, 9, 4, 6, 32,
+        7, 4, 4, 4, 4, 11,
+        3, 4, 4, 4, 4, 4, 5,
+        4, 4, 4, 4, 10, 11, 25,
+        4,
+        12, 8, 22, 45] := by
+  simp only [GroupPresentation.relators_def, presentation, relatorList, relatorsOne, relatorsTwo,
+    relatorsThree, relatorsFour, relatorsFive, relatorsSix, sourceCommutator, Relator.conj,
+    Relator.div, List.map_cons, List.map_nil, List.append_assoc, List.cons_append, List.nil_append,
+    Relator.toWord_gen, Relator.toWord_inv, Relator.toWord_mul, Relator.toWord_pow,
+    Relator.toWord_comm]
+  decide
+
+/-- The compiled relator words for `Th` have `300` letters in total. Three of them are not reduced,
+so `TauCeti.Sporadic.Thompson.reducedTotalLength_presentation` and not this figure is the one to
+compare with a published presentation length. -/
+theorem totalLength_presentation : presentation.totalLength = 300 := by
+  rw [GroupPresentation.totalLength_def, map_length_relators_presentation]
+  decide
+
+/-- The lengths of the thirty-nine compiled relator words for `Th` after free reduction.
+
+Three entries differ from `TauCeti.Sporadic.Thompson.map_length_relators_presentation`: the last
+relator of group (2) and the last two of group (6), each an equation whose two sides cancel where
+they are concatenated. -/
+theorem map_length_reduce_relators_presentation :
+    (presentation.relators.map fun w => (FreeGroup.reduce w).length) =
+      [2, 2, 2, 2, 2, 6, 4, 6, 4, 4, 9, 4, 6, 32,
+        7, 4, 4, 4, 4, 9,
+        3, 4, 4, 4, 4, 4, 5,
+        4, 4, 4, 4, 10, 11, 25,
+        4,
+        12, 8, 18, 41] := by
+  simp only [GroupPresentation.relators_def, presentation, relatorList, relatorsOne, relatorsTwo,
+    relatorsThree, relatorsFour, relatorsFive, relatorsSix, sourceCommutator, Relator.conj,
+    Relator.div, List.map_cons, List.map_nil, List.append_assoc, List.cons_append, List.nil_append,
+    Relator.toWord_gen, Relator.toWord_inv, Relator.toWord_mul, Relator.toWord_pow,
+    Relator.toWord_comm]
+  decide
+
+/-- The freely reduced relator words for `Th` have `290` letters in total. No length is recorded for
+this presentation to compare it with, so this figure states the transcribed data for a reviewer to
+check against the source rather than against a published number. -/
+theorem reducedTotalLength_presentation :
+    (presentation.relators.map fun w => (FreeGroup.reduce w).length).sum = 290 := by
+  rw [map_length_reduce_relators_presentation]
+  decide
+
+/-- Free reduction makes every compiled relator word for `Th` cyclically reduced.
+
+This is what makes the letter count of
+`TauCeti.Sporadic.Thompson.reducedTotalLength_presentation` comparable with a published
+presentation length, which is measured after free and cyclic reduction of each relator. -/
+theorem isCyclicallyReduced_reduce_of_mem_presentation_relators :
+    ∀ w ∈ presentation.relators, FreeGroup.IsCyclicallyReduced (FreeGroup.reduce w) := by
+  -- The check runs through `List.all` rather than by `decide` on the bounded quantifier directly.
+  -- The compiled relator list of this row is a large enough term that the `Decidable` instance of
+  -- the quantifier is not synthesized on it, whereas the Boolean equation below needs only the
+  -- decidable equality of `Bool` and the pointwise instance at a single bound word.
+  have h : (presentation.relators.all fun w =>
+      decide (FreeGroup.IsCyclicallyReduced (FreeGroup.reduce w))) = true := by
+    simp only [GroupPresentation.relators_def, presentation, relatorList, relatorsOne, relatorsTwo,
+      relatorsThree, relatorsFour, relatorsFive, relatorsSix, sourceCommutator, Relator.conj,
+      Relator.div, List.map_cons, List.map_nil, List.append_assoc, List.cons_append,
+      List.nil_append, Relator.toWord_gen, Relator.toWord_inv, Relator.toWord_mul,
+      Relator.toWord_pow, Relator.toWord_comm]
+    decide
+  exact fun w hw => of_decide_eq_true (List.all_eq_true.mp h w hw)
 
 end TauCeti.Sporadic.Thompson

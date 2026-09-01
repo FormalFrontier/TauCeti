@@ -76,12 +76,6 @@ open MvPowerSeries
 
 variable {R : Type*} [CommRing R] (W : WeierstrassCurve R)
 
-/-- The two-variable family that substitutes `formalThirdRoot` for the single variable of a
-one-variable series. -/
-theorem hasSubst_formalThirdRoot :
-    HasSubst (fun _ : Unit ↦ formalThirdRoot W) :=
-  hasSubst_of_constantCoeff_zero fun _ ↦ constantCoeff_formalThirdRoot W
-
 /-- The **addition series** of the chord construction: `F(z₁, z₂) = ι(z₃(z₁, z₂))`, the
 parameter of the sum of the points with parameters `z₁` and `z₂`.
 
@@ -104,6 +98,7 @@ theorem constantCoeff_formalAdd : constantCoeff (formalAdd W) = 0 :=
 
 /-- **The addition series is symmetric**: `F(z₂, z₁) = F(z₁, z₂)`. The chord through two points
 does not depend on their order, so the formal group law is commutative. -/
+@[simp]
 theorem rename_swap_formalAdd : rename Sum.swap (formalAdd W) = formalAdd W := by
   rw [formalAdd_def, rename_eq_subst,
     subst_comp_subst_apply (hasSubst_formalThirdRoot W) (HasSubst.X_comp _)]

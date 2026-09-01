@@ -384,7 +384,7 @@ theorem hewittSavage_trivial_of_iIndep {μ : Measure Ω} {X : ℕ → Ω → α}
   have hX : ∀ i, AEMeasurable (X i) μ := fun i => (hident i).aemeasurable_fst
   have : IsProbabilityMeasure (pathLaw μ X) := by
     rw [pathLaw_def]
-    exact Measure.isProbabilityMeasure_map (aemeasurable_pi_lambda _ hX)
+    infer_instance
   have hexch : ExchangeableLaw (pathLaw μ X) :=
     (exchangeable_iff_exchangeableLaw_pathLaw hX).mp
       (Exchangeable.of_iIndepFun_identDistrib h_indep hident)

@@ -50,8 +50,9 @@ theorem norm_prod_le_one {ι R : Type*} [SeminormedCommRing R] [NormOneClass R] 
   | empty => simp
   | insert j s hj ih =>
       rw [Finset.prod_insert hj]
-      exact (norm_mul_le _ _).trans (mul_le_one₀ (hb j (Finset.mem_insert_self j s))
-        (norm_nonneg _) (ih fun i hi => hb i (Finset.mem_insert_of_mem hi)))
+      exact (norm_mul_le _ _).trans
+        ((mul_le_of_le_one_left (norm_nonneg _) (hb j (Finset.mem_insert_self j s))).trans
+          (ih fun i hi => hb i (Finset.mem_insert_of_mem hi)))
 
 /-- **Telescoping bound for a product of unit-ball elements.** If `‖a i‖ ≤ 1` and `‖b i‖ ≤ 1` for
 every `i ∈ s`, then the difference of the products is at most the sum of the pointwise
