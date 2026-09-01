@@ -65,11 +65,9 @@ theorem ofBijective_apply (f : M →ₗ⁅R,L⁆ N) (hf : Function.Bijective f) 
 /-- **An equivalence of `L`-modules is an equivalence of `L'`-modules** for a Lie subalgebra
 `L' ≤ L`, with the same underlying map. This is Mathlib's `LieModuleHom.restrictLie` for
 equivalences. -/
-def restrictLie [LieAlgebra R L] (e : M ≃ₗ⁅R,L⁆ N) (L' : LieSubalgebra R L) : M ≃ₗ⁅R,L'⁆ N where
-  __ := (e : M →ₗ⁅R,L⁆ N).restrictLie L'
-  invFun := e.invFun
-  left_inv := e.left_inv
-  right_inv := e.right_inv
+noncomputable def restrictLie [LieAlgebra R L] (e : M ≃ₗ⁅R,L⁆ N) (L' : LieSubalgebra R L) :
+    M ≃ₗ⁅R,L'⁆ N :=
+  ofBijective ((e : M →ₗ⁅R,L⁆ N).restrictLie L') ⟨e.injective, e.surjective⟩
 
 @[simp]
 theorem coe_restrictLie [LieAlgebra R L] (e : M ≃ₗ⁅R,L⁆ N) (L' : LieSubalgebra R L) :

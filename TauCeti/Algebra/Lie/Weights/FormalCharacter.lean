@@ -13,10 +13,9 @@ public import TauCeti.Algebra.Lie.Weights.TensorProduct
 public import TauCeti.Algebra.Lie.Weights.WeylInvariance
 public import TauCeti.LinearAlgebra.Dimension.DirectSum
 public import TauCeti.LinearAlgebra.TensorProduct.Decomposition
--- Non-public: these supply the inputs of the direct-sum additivity proof, never the vocabulary of
+-- Non-public: this supplies the inputs of the direct-sum additivity proof, never the vocabulary of
 -- a statement.
 import TauCeti.Algebra.Lie.Submodule.DirectSum
-import TauCeti.Algebra.Lie.Submodule.Finrank
 
 public section
 

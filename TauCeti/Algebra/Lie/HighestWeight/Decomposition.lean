@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Lie.HighestWeight.FiniteDimensional
-public import TauCeti.Algebra.Lie.HighestWeight.Verma
 public import TauCeti.Algebra.Lie.Multiplicity
 public import TauCeti.Algebra.Lie.Weights.FormalCharacter
 -- Non-public: these supply the inputs of the proofs, never the vocabulary of a statement.
@@ -68,8 +67,11 @@ Formal characters are additive over an internal decomposition
 (`TauCeti.formalCharacter_eq_sum_of_isInternal`), so the same regrouping turns the decomposition
 into the character identity `ch M = ∑_λ m_λ · ch L(λ)`, the form in which "decompose `M` into
 irreducibles" becomes a computation. The formal character is defined only for a
-finite-dimensional module, while `L(λ)` is finite-dimensional exactly at a dominant integral `λ`
-(`TauCeti.finiteDimensional_iff_isDominantIntegral_of_isHighestWeightVector`), so the sum does not
+finite-dimensional module, and `L(λ)` is finite-dimensional at every dominant integral `λ`
+(`TauCeti.finiteDimensional_irreducibleQuotient_of_isDominantIntegral`); at a non-dominant `λ` it
+is infinite-dimensional as soon as `M(λ) ≠ 0`, that being what gives it a highest weight vector
+(`TauCeti.finiteDimensional_iff_isDominantIntegral_of_isHighestWeightVector`), and otherwise it is
+the zero module, which is finite-dimensional but occurs in nothing. So the sum does not
 run over all of `Module.Dual K H`: `TauCeti.irreducibleFormalCharacter` names the character of
 `L(λ)` as a function of a weight *bundled with its dominance*, and the sum runs over that subtype.
 `TauCeti.irreducibleFormalCharacter_def` unfolds it wherever the finite-dimensionality instance is
@@ -86,8 +88,8 @@ vacuous.
 
 Restricting the sum to the dominant integral weights loses nothing:
 `TauCeti.isotypicMultiplicity_irreducibleQuotient_eq_zero_of_not_isDominantIntegral` says that
-`L(λ)` for a non-dominant `λ` occurs in no finite-dimensional module at all, so every multiplicity
-the sum omits is zero.
+`L(λ)` for a non-dominant `λ` has multiplicity zero in every finite-dimensional module, so every
+multiplicity the sum omits is zero.
 
 ## Main definitions
 
@@ -99,8 +101,8 @@ the sum omits is zero.
   labelled by a dominant integral `λ` are counted by the multiplicity of `L(λ)`.**
 * `TauCeti.nonempty_lieModuleEquiv_directSum_irreducibleQuotient`: **the packaged isotypic
   decomposition** `M ≃ ⨁_λ L(λ)^{m λ}`.
-* `TauCeti.isotypicMultiplicity_irreducibleQuotient_eq_zero_of_not_isDominantIntegral`: an
-  irreducible highest weight module of non-dominant weight occurs in no finite-dimensional module.
+* `TauCeti.isotypicMultiplicity_irreducibleQuotient_eq_zero_of_not_isDominantIntegral`: `L(λ)` of
+  a non-dominant weight `λ` has multiplicity zero in every finite-dimensional module.
 * `TauCeti.irreducibleFormalCharacter_eq_zero_iff` and
   `TauCeti.isIrreducible_irreducibleQuotient_of_irreducibleFormalCharacter_ne_zero`: the character
   of `L(lam)` vanishes exactly when `M(lam)` does, so **a nonzero character is the character of an
@@ -250,6 +252,7 @@ theorem irreducibleFormalCharacter_def
 /-- **The character of `L(lam)` vanishes exactly when `M(lam)` does.** The character records the
 dimension of `L(lam)`, and `L(lam)` is the zero module exactly when `M(lam)` is
 (`TauCeti.subsingleton_irreducibleQuotient_iff`). -/
+@[simp]
 theorem irreducibleFormalCharacter_eq_zero_iff
     (lam : {l : Dual K H // IsDominantIntegral b l}) :
     irreducibleFormalCharacter b lam = 0 ↔ vermaGenerator b lam.1 = 0 := by
@@ -284,9 +287,11 @@ theorem irreducibleFormalCharacter_zero_ne_zero :
 
 variable {b}
 
-/-- **An irreducible highest weight module of non-dominant weight occurs in no finite-dimensional
-module.** A nonzero morphism out of the irreducible `L(lam)` is injective, so it would make
-`L(lam)` finite-dimensional, hence `lam` dominant integral. -/
+/-- **`L(lam)` of a non-dominant weight has multiplicity zero in every finite-dimensional
+module.** A nonzero multiplicity gives a nonzero morphism out of `L(lam)`, which in particular
+makes `L(lam)` nonzero, hence irreducible (`TauCeti.isIrreducible_irreducibleQuotient`); that
+morphism is then injective, so it would make `L(lam)` finite-dimensional, hence `lam` dominant
+integral. -/
 theorem isotypicMultiplicity_irreducibleQuotient_eq_zero_of_not_isDominantIntegral
     [FiniteDimensional K M] {lam : Dual K H} (hlam : ¬ IsDominantIntegral b lam) :
     LieModule.isotypicMultiplicity K L M (irreducibleQuotient b lam) = 0 := by

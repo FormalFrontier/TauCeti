@@ -17,7 +17,10 @@ closed field of characteristic zero, `H` a Cartan subalgebra and `b` a base of i
 For dominant integral weights `lam` and `mu` the tensor product `L(lam) ⊗ L(mu)` is a
 finite-dimensional `L`-module, so Weyl's theorem decomposes it into irreducibles; the
 **tensor multiplicity** `TauCeti.tensorMultiplicity b lam mu nu` is the number of copies of
-`L(nu)` in that decomposition, the structure constant `c^nu_{lam mu}`.
+`L(nu)` in that decomposition, the structure constant `c^nu_{lam mu}`. The definition itself, and
+the lemmas reading irreducibility off a nonzero multiplicity, ask only for a triangularizable
+Cartan subalgebra; algebraic closure enters with the character identity, which calls on Weyl's
+complete reducibility theorem.
 
 The theorem about it is the character identity
 
@@ -90,9 +93,12 @@ open LieAlgebra Module
 
 universe u v
 
-variable {K : Type u} {L : Type v} [Field K] [CharZero K] [IsAlgClosed K]
+-- Algebraic closure is not assumed here: the highest weight theory of
+-- `TauCeti/Algebra/Lie/HighestWeight/Verma.lean` that the definition rests on asks only for a
+-- triangularizable Cartan subalgebra. It is assumed in the character-identity section below.
+variable {K : Type u} {L : Type v} [Field K] [CharZero K]
   [LieRing L] [LieAlgebra K L] [IsKilling K L] [FiniteDimensional K L]
-  {H : LieSubalgebra K L} [H.IsCartanSubalgebra]
+  {H : LieSubalgebra K L} [H.IsCartanSubalgebra] [_root_.LieModule.IsTriangularizable K H L]
 
 variable (b : (IsKilling.rootSystem H).Base)
 
@@ -149,6 +155,17 @@ theorem isIrreducible_irreducibleQuotient_right_of_tensorMultiplicity_ne_zero
   rw [tensorMultiplicity_def]
   exact LieModule.isotypicMultiplicity_eq_zero_of_subsingleton_module K L _ _
 
+/-! ### The character identity
+
+The character of `L(lam)` is the character of a decomposition into irreducibles, so from here on
+the field is algebraically closed: that is what Weyl's complete reducibility theorem is available
+over in `TauCeti/Algebra/Lie/HighestWeight/Decomposition.lean`.
+-/
+
+section CharacterIdentity
+
+variable [IsAlgClosed K]
+
 /-- **The character identity for a tensor product of irreducibles**: the product of the characters
 of `L(lam)` and `L(mu)` is the sum of the characters of the `L(nu)`, weighted by the tensor
 multiplicities.
@@ -179,19 +196,23 @@ theorem exists_tensorMultiplicity_ne_zero (lam mu : {l : Dual K H // IsDominantI
   have _ := finiteDimensional_irreducibleQuotient_of_isDominantIntegral mu.2
   by_contra hall
   push Not at hall
-  have hid := irreducibleFormalCharacter_mul_eq_finsum_tensorMultiplicity_smul b lam mu
+  -- every term of the sum vanishes, so the product of the two characters does
   have hzero : ∀ nu : {l : Dual K H // IsDominantIntegral b l},
       (tensorMultiplicity b lam.1 mu.1 nu.1 : ℤ) • irreducibleFormalCharacter b nu = 0 := by
     intro nu
     rw [hall nu]
     simp
-  -- every term of the sum vanishes, so the product of the two characters does
-  rw [finsum_congr hzero, finsum_zero, irreducibleFormalCharacter_def,
-    irreducibleFormalCharacter_def, ← formalCharacter_tensor, formalCharacter_eq_zero_iff,
-    Module.finrank_tensorProduct, Nat.mul_eq_zero, Module.finrank_zero_iff,
-    Module.finrank_zero_iff, subsingleton_irreducibleQuotient_iff,
-    subsingleton_irreducibleQuotient_iff] at hid
-  exact hid.elim hlam hmu
+  have hprod : irreducibleFormalCharacter b lam * irreducibleFormalCharacter b mu = 0 := by
+    rw [irreducibleFormalCharacter_mul_eq_finsum_tensorMultiplicity_smul b lam mu,
+      finsum_congr hzero, finsum_zero]
+  -- characters are multiplicative on tensor products, so this is the character of `L(lam) ⊗ L(mu)`
+  -- vanishing, which says that the tensor product is zero-dimensional
+  rw [irreducibleFormalCharacter_def, irreducibleFormalCharacter_def, ← formalCharacter_tensor,
+    formalCharacter_eq_zero_iff, Module.finrank_tensorProduct] at hprod
+  -- so one of the two factors is zero-dimensional, that is, one of the Verma modules vanishes
+  rcases Nat.mul_eq_zero.mp hprod with h | h
+  · exact hlam ((subsingleton_irreducibleQuotient_iff b lam.1).mp (Module.finrank_zero_iff.mp h))
+  · exact hmu ((subsingleton_irreducibleQuotient_iff b mu.1).mp (Module.finrank_zero_iff.mp h))
 
 /-- **At the zero weight the hypothesis of `TauCeti.exists_tensorMultiplicity_ne_zero` holds
 outright**, with no appeal to Poincaré--Birkhoff--Witt: the trivial one-dimensional module makes
@@ -203,5 +224,7 @@ theorem exists_tensorMultiplicity_zero_ne_zero :
   exists_tensorMultiplicity_ne_zero b ⟨0, isDominantIntegral_zero⟩ ⟨0, isDominantIntegral_zero⟩
     (isHighestWeightVector_vermaGenerator_zero b).ne_zero
     (isHighestWeightVector_vermaGenerator_zero b).ne_zero
+
+end CharacterIdentity
 
 end TauCeti
