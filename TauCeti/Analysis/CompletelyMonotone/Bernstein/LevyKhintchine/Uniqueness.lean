@@ -147,6 +147,7 @@ private lemma levyMeasure_eq_of_derivativeMeasure_eq
 
 /-- Two admissible Levy--Khintchine exponents agree on the nonnegative half-line exactly when
 their killing coefficients, drift coefficients, and Levy measures agree. -/
+@[simp]
 theorem bernsteinLevyKhintchineExponent_eqOn_iff
     {a b c d : ℝ} (hb : 0 ≤ b) (hd : 0 ≤ d) {μ ν : Measure ℝ≥0}
     (hμ : IsBernsteinLevyMeasure μ) (hν : IsBernsteinLevyMeasure ν) :
