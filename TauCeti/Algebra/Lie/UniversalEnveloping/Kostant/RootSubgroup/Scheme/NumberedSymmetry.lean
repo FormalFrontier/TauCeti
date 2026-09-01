@@ -487,6 +487,8 @@ theorem kostantNumberedSymmetryMatrix_conj_diagGL (basisPerm : Equiv.Perm (Fin n
             (basisDiagonal (b.baseChange A) w)) = diagGL w := by
     apply Units.ext
     rw [Units.coe_map]
+    -- The multiplicative-equivalence coercion remains folded after `Units.coe_map`; expose its
+    -- underlying `toMatrix` expression so the basis-diagonal matrix theorem applies.
     change LinearMap.toMatrix (b.baseChange A) (b.baseChange A)
         (basisDiagonal (b.baseChange A) w).toLinearMap = _
     rw [toMatrix_basisDiagonal, diagGL_coe]
