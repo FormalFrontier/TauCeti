@@ -5,25 +5,18 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.Lie.Symplectic.StandardCarrier.Frobenius
 public import TauCeti.Algebra.Lie.Symplectic.StandardCarrier.RootDatum
-public import TauCeti.GroupTheory.FixedPointCandidate
-public import TauCeti.GroupTheory.SpecificGroups.CFSG.Frobenius
+public import TauCeti.GroupTheory.SpecificGroups.CFSG.Closure
 
 /-!
-# The untwisted family `Cₙ(q)` on the standard symplectic carrier
+# The standard symplectic carrier of a validated type-`C` index
 
-The untwisted family `Cₙ(q)` is built on the type-`C` diagram of rank `n`, and Tau Ceti's explicit
-full-weight Chevalley carrier for that diagram is `TauCeti.SpStd.groupScheme`, the Kostant toral
-closure of the standard representation of `sp_(2n)` inside `GL_(2n)` over `ℤ`. This file runs the
-classification recipe on it: for a validated type-`C` index it supplies the group of
-algebraic-closure-valued points of that carrier, its Bourbaki-numbered simple root subgroups, the
-Steinberg endomorphism milestone L1 prescribes for an untwisted family, and the group milestone L3
-builds from it,
-
-```text
-H_d = fixedSubgroup d.steinberg,        d.Group = [H_d, H_d] / Z([H_d, H_d]).
-```
+The type-`C` branch of the classification list is built on the type-`C` diagram of rank `n`, and
+Tau Ceti's explicit full-weight Chevalley carrier for that diagram is `TauCeti.SpStd.groupScheme`,
+the Kostant toral closure of the standard representation of `sp_(2n)` inside `GL_(2n)` over `ℤ`.
+This file attaches that carrier to a validated type-`C` index: the group of algebraic-closure-valued
+points of the carrier at the index's rank, its Bourbaki-numbered simple root subgroups, and the
+reading of their root characters in the type-`C` root datum the index names.
 
 The carrier is indexed by `n` in the spelling `C (n + 1)`, so a validated index of rank `r` uses
 the carrier at `TauCeti.TypeCLieIndex.carrierRank`, which is `r - 1`. That subtraction is harmless
@@ -36,51 +29,33 @@ node of the carrier. The two numberings agree node for node, so
 character of the `i`-th raising subgroup as the `i`-th simple root of the type-`C` root datum the
 index names.
 
-The Steinberg map is the `q`-power Frobenius outright. That is what L1's table asks of an untwisted
-family, and `TauCeti.TypeCLieIndex.diagramPerm_eq_one` is the check that the diagram permutation
-this index carries is indeed trivial: the type-`C` diagram has no symmetry, and no classification
-family is graph-twisted over it.
-
 The rank-two member of the same carrier family is *not* reached from here. `TauCeti.DynkinType.C 2`
 is not a valid Dynkin type, the rank-two root system being carried by `B 2`, and correspondingly a
 validated type-`C` index has rank at least three. The rank-two carrier serves the Suzuki family
 instead, in `TauCeti/GroupTheory/SpecificGroups/CFSG/TypeB2.lean`, where the node correspondence
-acquires the swap of the two Bourbaki nodes. Neither is the untwisted family `Bₙ(q)` built here:
-it is a different classification-list constructor on a different diagram, and in characteristic two
-it coincides with `Cₙ(q)`, which is why `TauCeti.LieTypeIndex.InStandardRange` restricts the `C`
-family to odd characteristic. That restriction is recorded by
-`TauCeti.TypeCLieIndex.characteristic_ne_two` and is not used below: the carrier, its Frobenius and
-the recipe are insensitive to it.
+acquires the swap of the two Bourbaki nodes.
 
 Nothing here asserts that the carrier is reductive, that its weight torus is maximal, that it is
 the symplectic group scheme or the pinned simply connected Chevalley--Demazure group scheme of type
-`Cₙ`, or that any group below is finite, perfect, or simple.
+`Cₙ`, or that its point group is finite.
 
 ## Main declarations
 
 * `TauCeti.TypeCLieIndex.AmbientGroup`: the algebraic-closure-valued points of the standard
-  symplectic carrier at the index's rank, the group the recipe is run inside.
+  symplectic carrier at the index's rank.
 * `TauCeti.TypeCLieIndex.simpleRootSubgroup`: its positive simple-root subgroup at a
   Bourbaki-numbered node, with
   `TauCeti.TypeCLieIndex.rootGeneratorWeight_carrierNode_eq_root_simpleIndex` identifying the
   character of that subgroup with the corresponding simple root of the type-`C` root datum.
-* `TauCeti.TypeCLieIndex.steinberg`: the Steinberg endomorphism of the family, together with its
-  pinned equation `Frob_q (x_i(u)) = x_i(u ^ q)` and the description
-  `TauCeti.TypeCLieIndex.mem_fixedSubgroup_steinberg_iff` of the group `H_d` it fixes.
-* `TauCeti.TypeCLieIndex.FixedPoints`: that group `H_d`, the fixed subgroup of the Steinberg map.
-* `TauCeti.TypeCLieIndex.Group`: the milestone L3 quotient `[H_d, H_d] / Z([H_d, H_d])` of that
-  fixed group, formed on this carrier.
 
 ## References
 
 * R. W. Carter, *Simple Groups of Lie Type*, §§4.4 and 11.3.
-* R. W. Carter, *Finite Groups of Lie Type: Conjugacy Classes and Complex Characters*, §1.17.
 * N. Bourbaki, *Lie Groups and Lie Algebras, Chapters 4--6*, Plate III, for the numbering of the
   type-`C` diagram that the root subgroups below are indexed by.
-* The target signatures realized here follow the human-authored formal skeleton
-  `TauCetiRoadmap/CFSGStatement/Suggested.lean`: the ambient group, the numbered simple root
-  subgroup, the Steinberg map with its pinned equation, and the fixed-point candidate, all taken
-  on a validated-index subtype.
+* The signatures realized here follow the human-authored formal skeleton
+  `TauCetiRoadmap/CFSGStatement/Suggested.lean`: the ambient group and the numbered simple root
+  subgroup, both taken on a validated-index subtype.
 
 ## Roadmap
 
@@ -91,14 +66,11 @@ and the standard symplectic carrier is not offered as a substitute for that pinn
 pinned group scheme, its pinning, and any identification of a carrier with it are Layer 9 targets of
 `TauCetiRoadmap/ReductiveGroups/README.md` that the CFSG roadmap consumes rather than builds; none
 of them is proved of `TauCeti.SpStd.groupScheme` here or in the files this one imports. What this
-file supplies is the branch's explicit carrier, its numbered root characters read in the type-`C`
-root datum, the equation `Frob_q (x_i(u)) = x_i(u ^ q)` that milestone L1 asks of an untwisted
-family, and the milestone L3 recipe run on it, each in the shape those milestones state it; they
-transfer to the L0 carrier along that Layer 9 identification, and not before. The counterparts on
-the other branches already assembled are
-`TauCeti/GroupTheory/SpecificGroups/CFSG/TypeA.lean`,
-`TauCeti/GroupTheory/SpecificGroups/CFSG/TypeE6.lean` and
-`TauCeti/GroupTheory/SpecificGroups/CFSG/Unimodular.lean`.
+file supplies is the material that identification will be made against on the `C` branch: the
+branch's explicit carrier, its numbered simple root subgroups, and their root characters read as the
+simple roots of the type-`C` root datum. The milestone L1 Steinberg map of the untwisted family
+`Cₙ(q)` and the milestone L3 quotient built from it are *not* stated here; they wait on L0's pinned
+carrier for this branch.
 -/
 
 public section
@@ -156,10 +128,9 @@ theorem cartanMatrix_C_carrierNode (i j : Fin d.1.rank) :
 
 /-- **The ambient group this file attaches to a validated type-`C` index**: the points of the
 explicit full-weight standard symplectic Chevalley carrier at the index's rank, over the algebraic
-closure of its prime field. It is infinite; no finiteness, reductivity, pinning or maximality
-statement is attached to it, and it is not claimed to be the pinned type-`Cₙ` group scheme's points
-that milestone L0 asks for, that identification being the Layer 9 target described in the module
-docstring. -/
+closure of its prime field. No finiteness, reductivity, pinning or maximality statement is attached
+to it, and it is not claimed to be the pinned type-`Cₙ` group scheme's points that milestone L0 asks
+for, that identification being the Layer 9 target described in the module docstring. -/
 abbrev AmbientGroup : Type := SpStd.points d.carrierRank d.1.Closure
 
 /-- The positive simple-root subgroup at the Bourbaki-numbered node `i` of the type-`C` diagram. It
@@ -170,9 +141,7 @@ def simpleRootSubgroup (i : Fin d.1.rank) :
 
 /-- The simple-root subgroup is the carrier's numbered raising subgroup at the corresponding
 carrier node. This is the equation through which the upstream root-subgroup API reaches
-`simpleRootSubgroup`. It is not a `simp` lemma: `steinberg_simpleRootSubgroup` is the normal form
-the pinned equations of this file are stated against, and unfolding to
-`TauCeti.SpStd.rootSubgroupPoints` would keep it from firing. -/
+`simpleRootSubgroup`, whose definition itself stays sealed. -/
 theorem simpleRootSubgroup_def (i : Fin d.1.rank) :
     d.simpleRootSubgroup i =
       SpStd.rootSubgroupPoints d.carrierRank (.inl (d.carrierNode i)) d.1.Closure :=
@@ -196,95 +165,6 @@ theorem rootGeneratorWeight_carrierNode_eq_root_simpleIndex (i j : Fin d.1.rank)
   rw [SpStd.rootGeneratorWeight_inl]
   simp only [DynkinType.root_simpleIndex]
   rw [d.dynkinType_cartanMatrix_apply, d.cartanMatrix_C_carrierNode]
-
-/-! ## The Steinberg endomorphism -/
-
-/-- **The Steinberg endomorphism of a validated type-`C` index**: the `q`-power Frobenius of the
-ambient group, `q` being the field order the index records. The family is untwisted, so no diagram
-automorphism and no half-Frobenius enters; `TauCeti.TypeCLieIndex.diagramPerm_eq_one` is the check
-that the diagram permutation this index carries is trivial. -/
-def steinberg : d.AmbientGroup →* d.AmbientGroup :=
-  SpStd.frobenius d.carrierRank d.1.characteristic d.1.fieldExponent d.1.Closure
-
-/-- The Steinberg map of a type-`C` index is the carrier's Frobenius at the exponent the index
-records. This is its unfolding lemma; the definition itself stays sealed.
-
-It is deliberately not a `simp` lemma: `steinberg_simpleRootSubgroup` and `coe_steinberg_apply` are
-the normal forms the pinned equations of this file are stated against, and unfolding to
-`TauCeti.SpStd.frobenius` would keep them from firing. -/
-theorem steinberg_def :
-    d.steinberg = SpStd.frobenius d.carrierRank d.1.characteristic d.1.fieldExponent d.1.Closure :=
-  (rfl)
-
-/-- The Steinberg map acts on the ambient group by raising every matrix entry to the `q`-th
-power. -/
-@[simp]
-theorem coe_steinberg_apply (g : d.AmbientGroup)
-    (r c : Fin (d.carrierRank + 1 + (d.carrierRank + 1))) :
-    ((d.steinberg g : Matrix.GeneralLinearGroup
-          (Fin (d.carrierRank + 1 + (d.carrierRank + 1))) d.1.Closure) :
-        Matrix (Fin (d.carrierRank + 1 + (d.carrierRank + 1)))
-          (Fin (d.carrierRank + 1 + (d.carrierRank + 1))) d.1.Closure) r c =
-      ((g : Matrix.GeneralLinearGroup
-          (Fin (d.carrierRank + 1 + (d.carrierRank + 1))) d.1.Closure) :
-        Matrix (Fin (d.carrierRank + 1 + (d.carrierRank + 1)))
-          (Fin (d.carrierRank + 1 + (d.carrierRank + 1))) d.1.Closure) r c ^
-        d.1.fieldOrder := by
-  rw [steinberg_def, d.1.fieldOrder_eq_characteristic_pow]
-  exact SpStd.coe_frobenius_apply _ _ _ _ g r c
-
-/-- **The Steinberg map fixes the Bourbaki numbering of a simple-root subgroup and raises its
-parameter to the `q`-th power**, that is, `Frob_q (x_i(u)) = x_i(u ^ q)`. This is the equation
-milestone L1 asks of the untwisted families. -/
-@[simp]
-theorem steinberg_simpleRootSubgroup (i : Fin d.1.rank) (u : Multiplicative d.1.Closure) :
-    d.steinberg (d.simpleRootSubgroup i u) =
-      d.simpleRootSubgroup i
-        (Multiplicative.ofAdd (Multiplicative.toAdd u ^ d.1.fieldOrder)) := by
-  rw [steinberg_def, simpleRootSubgroup_def, SpStd.frobenius_rootSubgroupPoints,
-    d.1.fieldOrder_eq_characteristic_pow]
-
-/-- **A point of the ambient group is fixed by the Steinberg map exactly when all of its matrix
-entries lie in the field of definition.** Writing `𝔽_q` for
-`TauCeti.ValidLieTypeIndex.fixedField`, the copy of the field of `q` elements inside the algebraic
-closure, the group `H_d` that the milestone L3 recipe is run on below is therefore the group of
-points of the standard symplectic carrier whose entries lie in `𝔽_q`.
-
-This is not a `simp` lemma: `TauCeti.fixedSubgroup` is `MonoidHom.eqLocus` against the identity, so
-`simp` rewrites its left-hand side to `d.steinberg g = g` through `MonoidHom.mem_eqLocus`, and the
-`simpNF` linter rejects the annotation. -/
-theorem mem_fixedSubgroup_steinberg_iff (g : d.AmbientGroup) :
-    g ∈ fixedSubgroup d.steinberg ↔
-      ∀ r c, ((g : Matrix.GeneralLinearGroup
-          (Fin (d.carrierRank + 1 + (d.carrierRank + 1))) d.1.Closure) :
-        Matrix (Fin (d.carrierRank + 1 + (d.carrierRank + 1)))
-          (Fin (d.carrierRank + 1 + (d.carrierRank + 1))) d.1.Closure) r c ∈
-        d.1.fixedField := by
-  rw [mem_fixedSubgroup, steinberg_def, SpStd.frobenius_eq_self_iff]
-  simp only [mem_frobeniusFixedSubring, ValidLieTypeIndex.mem_fixedField,
-    d.1.fieldOrder_eq_characteristic_pow]
-
-/-! ## The milestone L3 quotient -/
-
-/-- **The group `H_d` of the milestone L3 recipe**: the fixed subgroup of the Steinberg map above.
-`TauCeti.TypeCLieIndex.mem_fixedSubgroup_steinberg_iff` describes it as the points of the standard
-symplectic carrier whose matrix entries lie in the field of definition. No finiteness assertion is
-part of this definition. -/
-abbrev FixedPoints : Type := ↥(fixedSubgroup d.steinberg)
-
-/-- **The milestone L3 quotient on the standard symplectic carrier**: the derived subgroup of the
-fixed points of the Steinberg map above, modulo the centre of that derived subgroup.
-
-This is the shape milestone L3 asks of the untwisted family `Cₙ(q)`, formed on the standard
-symplectic carrier rather than on the pinned simply connected Chevalley--Demazure group scheme that
-milestone L0 asks for. It becomes the candidate simple group of that family along the Layer 9
-identification of the two carriers described in the module docstring, and not before; it is not
-offered as that candidate here. Nothing below asserts that it is finite, perfect, or simple. -/
-abbrev Group : Type := FixedPointCandidate d.steinberg
-
-/-- Milestone L3 asks every valid branch to carry a group instance; the quotient construction
-supplies it. -/
-example : _root_.Group d.Group := inferInstance
 
 end
 
