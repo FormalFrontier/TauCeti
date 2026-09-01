@@ -53,6 +53,9 @@ the pinned Chevalley--Demazure construction.
 
 ## Main results
 
+* `TauCeti.TypeDSpinCarrier.definingIdeal_def`: the defining Hopf ideal is the generic Kostant
+  toral-closure ideal of the represented data, the equation along which the generic toral-closure
+  API reaches this carrier.
 * `TauCeti.TypeDSpinCarrier.lie_serreH_rootGenerator`: each numbered Serre root generator is a
   Cartan weight vector, with weight the corresponding row of the type-`D` Cartan matrix for a
   raising generator and its negative for a lowering generator.
@@ -207,6 +210,18 @@ noncomputable def definingIdeal (hn : 4 ≤ n) :
     (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
     (rep_kostantForm_mem_lattice n hn)
     (isNilpotent_rep_rootGenerator n hn) (latticeBasis n) (basisWeight n)
+
+/-- The defining Hopf ideal of the type-`Dₙ` spin carrier is the generic Kostant toral-closure
+ideal of its represented root generators, exterior lattice basis and spin weights. This is the
+equation through which the generic toral-closure API reaches the named carrier. -/
+theorem definingIdeal_def :
+    definingIdeal n hn =
+      kostantToralDefiningIdeal
+        (TauCeti.serreRootGenerator (CartanMatrix.D n))
+        (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
+        (rep_kostantForm_mem_lattice n hn)
+        (isNilpotent_rep_rootGenerator n hn) (latticeBasis n) (basisWeight n) := by
+  rw [definingIdeal]
 
 /-- The full-weight type-`Dₙ` spin carrier over `ℤ`, obtained as the smallest closed subgroup
 scheme containing the represented numbered root subgroups and weight torus. -/
