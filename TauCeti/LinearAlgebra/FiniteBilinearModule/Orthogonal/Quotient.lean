@@ -53,7 +53,7 @@ ones through it.
 * `TauCeti.FiniteBilinearModule.isNondegenerate_orthogonalQuotient_iff`: it is nondegenerate
   exactly when `rad(A) ≤ H`.
 * `TauCeti.FiniteBilinearModule.IsNondegenerate.card_orthogonalQuotient_mul_card_sq`: the order
-  computation `|H⊥ / H| · |H|² = |A|`.
+  computation `|H⊥ / H| · |H|² = |A|`, for a nondegenerate module and an isotropic subgroup.
 * `TauCeti.FiniteBilinearModule.card_orthogonalQuotient_eq_one_iff_isLagrangian`: the quotient of
   an isotropic subgroup is trivial exactly when that subgroup is Lagrangian.
 

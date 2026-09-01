@@ -43,7 +43,8 @@ orthogonal quotient `H⊥ / (H ∩ H⊥)` of
   `H⊥⊥ = H ⊔ rad(A)`.
 * `TauCeti.FiniteBilinearModule.IsNondegenerate.card_mul_card_orthogonalComplement`: the
   cardinality identity `|H| |H⊥| = |A|` for a nondegenerate module.
-* `TauCeti.FiniteBilinearModule.IsLagrangian.card_sq`: a Lagrangian has squared order `|A|`.
+* `TauCeti.FiniteBilinearModule.IsLagrangian.card_sq`: a Lagrangian subgroup of a nondegenerate
+  module has squared order `|A|`.
 * `TauCeti.FiniteBilinearModule.addSubgroupOf_orthogonalComplement_le_radical_restrict`: the
   part of `H` lying in `H⊥` is degenerate for the restricted pairing.
 
