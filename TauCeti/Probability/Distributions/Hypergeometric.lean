@@ -357,6 +357,46 @@ private theorem sum_fst_mul_choose_mul_choose (A B r : ℕ) (hr : 0 < r) :
         _ = (a + 1) * (a + 1 + B - 1).choose (s + 1 - 1) := by
           simp
 
+private theorem sum_fst_mul_pred_mul_choose_mul_choose_add_two (a B s : ℕ) :
+    ∑ ij ∈ Finset.HasAntidiagonal.antidiagonal (2 + s),
+        ij.1 * (ij.1 - 1) * (a + 2).choose ij.1 * B.choose ij.2 =
+      (a + 2) * (a + 2 - 1) * (a + 2 + B - 2).choose (2 + s - 2) := by
+  -- Extract one factor `a + 2` with the choose recurrence, reducing the remaining sum to
+  -- the first falling-factorial Vandermonde identity.
+  have hr : 2 + s = (s + 1) + 1 := by omega
+  rw [hr, Finset.Nat.sum_antidiagonal_succ]
+  simp only [Nat.zero_mul, zero_add, Nat.add_sub_cancel]
+  calc
+    (∑ p ∈ Finset.HasAntidiagonal.antidiagonal (s + 1),
+        (p.1 + 1) * p.1 * (a + 2).choose (p.1 + 1) * B.choose p.2) =
+        (a + 2) * ∑ p ∈ Finset.HasAntidiagonal.antidiagonal (s + 1),
+          p.1 * (a + 1).choose p.1 * B.choose p.2 := by
+      rw [Finset.mul_sum]
+      apply Finset.sum_congr rfl
+      intro p hp
+      have hchoose : (p.1 + 1) * (a + 2).choose (p.1 + 1) =
+          (a + 2) * (a + 1).choose p.1 := by
+        calc
+          _ = (a + 2).choose (p.1 + 1) * (p.1 + 1) := Nat.mul_comm _ _
+          _ = _ := by simpa only [Nat.add_assoc] using
+            (Nat.add_one_mul_choose_eq (a + 1) p.1).symm
+      calc
+        _ = p.1 * ((p.1 + 1) * (a + 2).choose (p.1 + 1)) * B.choose p.2 := by
+          ring
+        _ = p.1 * ((a + 2) * (a + 1).choose p.1) * B.choose p.2 := by rw [hchoose]
+        _ = _ := by ring
+    _ = (a + 2) * ((a + 1) * (a + 1 + B - 1).choose (s + 1 - 1)) := by
+      rw [sum_fst_mul_choose_mul_choose (a + 1) B (s + 1) (by omega)]
+    _ = (a + 2) * (a + 2 - 1) *
+        (a + 2 + B - 2).choose (s + 1 + 1 - 2) := by
+      have haPred : a + 2 - 1 = a + 1 := by omega
+      have haBPred : a + 2 + B - 2 = a + B := by omega
+      have hsPred : s + 1 + 1 - 2 = s := by omega
+      have haBPred' : a + 1 + B - 1 = a + B := by omega
+      have hsPred' : s + 1 - 1 = s := by omega
+      rw [haPred, haBPred, hsPred, haBPred', hsPred']
+      ring
+
 private theorem sum_fst_mul_pred_mul_choose_mul_choose (A B r : ℕ) (hr : 2 ≤ r) :
     ∑ ij ∈ Finset.HasAntidiagonal.antidiagonal r,
         ij.1 * (ij.1 - 1) * A.choose ij.1 * B.choose ij.2 =
@@ -385,43 +425,7 @@ private theorem sum_fst_mul_pred_mul_choose_mul_choose (A B r : ℕ) (hr : 2 ≤
           · simp [h]
           · simp [Nat.choose_eq_zero_of_lt h]
       | succ a =>
-          -- For `A = a + 2`, the choose recurrence extracts one factor `a + 2` from each
-          -- summand. The remaining sum is the first-factorial-moment Vandermonde identity.
-          have hr : 2 + s = (s + 1) + 1 := by omega
-          rw [hr]
-          rw [Finset.Nat.sum_antidiagonal_succ]
-          simp only [Nat.zero_mul, zero_add, Nat.add_sub_cancel]
-          calc
-            (∑ p ∈ Finset.HasAntidiagonal.antidiagonal (s + 1),
-                (p.1 + 1) * p.1 * (a + 2).choose (p.1 + 1) * B.choose p.2) =
-                (a + 2) * ∑ p ∈ Finset.HasAntidiagonal.antidiagonal (s + 1),
-                  p.1 * (a + 1).choose p.1 * B.choose p.2 := by
-              rw [Finset.mul_sum]
-              apply Finset.sum_congr rfl
-              intro p hp
-              have hchoose : (p.1 + 1) * (a + 2).choose (p.1 + 1) =
-                    (a + 2) * (a + 1).choose p.1 := by
-                calc
-                  _ = (a + 2).choose (p.1 + 1) * (p.1 + 1) := Nat.mul_comm _ _
-                  _ = _ := by simpa only [Nat.add_assoc] using
-                    (Nat.add_one_mul_choose_eq (a + 1) p.1).symm
-              calc
-                _ = p.1 * ((p.1 + 1) * (a + 2).choose (p.1 + 1)) * B.choose p.2 := by
-                  ring
-                _ = p.1 * ((a + 2) * (a + 1).choose p.1) * B.choose p.2 := by
-                  rw [hchoose]
-                _ = _ := by ring
-            _ = (a + 2) * ((a + 1) * (a + 1 + B - 1).choose (s + 1 - 1)) := by
-              rw [sum_fst_mul_choose_mul_choose (a + 1) B (s + 1) (by omega)]
-            _ = (a + 2) * (a + 2 - 1) *
-                (a + 2 + B - 2).choose (s + 2 - 2) := by
-              have haPred : a + 2 - 1 = a + 1 := by omega
-              have haBPred : a + 2 + B - 2 = a + B := by omega
-              have hsPred : s + 2 - 2 = s := by omega
-              have haBPred' : a + 1 + B - 1 = a + B := by omega
-              have hsPred' : s + 1 - 1 = s := by omega
-              rw [haPred, haBPred, hsPred, haBPred', hsPred']
-              ring
+          exact sum_fst_mul_pred_mul_choose_mul_choose_add_two a B s
 
 private theorem sum_range_mul_choose_mul_choose {N K n : ℕ} (hK : K ≤ N) (hn : 0 < n) :
     ∑ k ∈ Finset.range (n + 1), k * K.choose k * (N - K).choose (n - k) =
@@ -491,6 +495,39 @@ private theorem sum_hypergeometricWeight_toReal_mul {N K n : ℕ} (hK : K ≤ N)
       field_simp
       linear_combination (K : ℝ) * hchooseR
 
+private theorem cast_mul_pred_mul_choose_pred_pred {N n : ℕ} (hn2 : 2 ≤ n) (hn : n ≤ N) :
+    (N : ℝ) * ((N : ℝ) - 1) * ((N - 2).choose (n - 2) : ℝ) =
+      (N.choose n : ℝ) * (n : ℝ) * ((n : ℝ) - 1) := by
+  have hNtwo : 2 ≤ N := hn2.trans hn
+  have hNpos : 0 < N := by omega
+  have hnpos : 0 < n := by omega
+  have hchoose₁ : N * (N - 1).choose (n - 1) = N.choose n * n := by
+    obtain ⟨M, rfl⟩ := Nat.exists_eq_succ_of_ne_zero hNpos.ne'
+    obtain ⟨m, rfl⟩ := Nat.exists_eq_succ_of_ne_zero hnpos.ne'
+    exact Nat.add_one_mul_choose_eq M m
+  have hchoose₂ : (N - 1) * (N - 2).choose (n - 2) =
+      (N - 1).choose (n - 1) * (n - 1) := by
+    obtain ⟨M, hM⟩ := Nat.exists_eq_add_of_le hNtwo
+    obtain ⟨m, hm⟩ := Nat.exists_eq_add_of_le hn2
+    subst N
+    subst n
+    simpa [Nat.add_comm, Nat.add_left_comm, Nat.add_assoc] using
+      Nat.add_one_mul_choose_eq M m
+  have h₁ : (N : ℝ) * ((N - 1).choose (n - 1) : ℝ) =
+      (N.choose n : ℝ) * (n : ℝ) := by exact_mod_cast hchoose₁
+  have h₂ : ((N : ℝ) - 1) * ((N - 2).choose (n - 2) : ℝ) =
+      ((N - 1).choose (n - 1) : ℝ) * ((n : ℝ) - 1) := by
+    have h₂' : ((N - 1 : ℕ) : ℝ) * ((N - 2).choose (n - 2) : ℝ) =
+        ((N - 1).choose (n - 1) : ℝ) * ((n - 1 : ℕ) : ℝ) := by
+      exact_mod_cast hchoose₂
+    simpa [Nat.cast_sub (by omega : 1 ≤ N), Nat.cast_sub (by omega : 1 ≤ n)] using h₂'
+  calc
+    _ = (N : ℝ) * (((N : ℝ) - 1) * ((N - 2).choose (n - 2) : ℝ)) := by ring
+    _ = (N : ℝ) * (((N - 1).choose (n - 1) : ℝ) * ((n : ℝ) - 1)) := by rw [h₂]
+    _ = ((N : ℝ) * ((N - 1).choose (n - 1) : ℝ)) * ((n : ℝ) - 1) := by ring
+    _ = ((N.choose n : ℝ) * (n : ℝ)) * ((n : ℝ) - 1) := by rw [h₁]
+    _ = _ := by ring
+
 private theorem sum_hypergeometricWeight_toReal_mul_pred {N K n : ℕ} (hK : K ≤ N) (hn : n ≤ N)
     (hN : 1 < N) :
     ∑ k ∈ Finset.range (n + 1),
@@ -528,44 +565,6 @@ private theorem sum_hypergeometricWeight_toReal_mul_pred {N K n : ℕ} (hK : K �
         rw [sum_range_mul_pred_mul_choose_mul_choose hK hn2]
       _ = (n : ℝ) * ((n : ℝ) - 1) * (K : ℝ) * ((K : ℝ) - 1) /
           ((N : ℝ) * ((N : ℝ) - 1)) := by
-        have hNpos : 0 < N := by omega
-        have hnpos : 0 < n := by omega
-        have hNpred : 0 < N - 1 := by omega
-        have hnpred : 0 < n - 1 := by omega
-        have hchoose₁ : N * (N - 1).choose (n - 1) = N.choose n * n := by
-          obtain ⟨M, rfl⟩ := Nat.exists_eq_succ_of_ne_zero hNpos.ne'
-          obtain ⟨m, rfl⟩ := Nat.exists_eq_succ_of_ne_zero hnpos.ne'
-          exact Nat.add_one_mul_choose_eq M m
-        have hchoose₂ : (N - 1) * (N - 2).choose (n - 2) =
-            (N - 1).choose (n - 1) * (n - 1) := by
-          have hNtwo : 2 ≤ N := by omega
-          obtain ⟨M, hM⟩ := Nat.exists_eq_add_of_le hNtwo
-          obtain ⟨m, hm⟩ := Nat.exists_eq_add_of_le hn2
-          subst N
-          subst n
-          simpa [Nat.add_comm, Nat.add_left_comm, Nat.add_assoc] using
-            Nat.add_one_mul_choose_eq M m
-        have hchooseR : (N : ℝ) * ((N : ℝ) - 1) *
-              ((N - 2).choose (n - 2) : ℝ) =
-            (N.choose n : ℝ) * (n : ℝ) * ((n : ℝ) - 1) := by
-          have h₁ : (N : ℝ) * ((N - 1).choose (n - 1) : ℝ) =
-              (N.choose n : ℝ) * (n : ℝ) := by exact_mod_cast hchoose₁
-          have h₂ : ((N : ℝ) - 1) * ((N - 2).choose (n - 2) : ℝ) =
-              ((N - 1).choose (n - 1) : ℝ) * ((n : ℝ) - 1) := by
-            have h₂' : ((N - 1 : ℕ) : ℝ) * ((N - 2).choose (n - 2) : ℝ) =
-                ((N - 1).choose (n - 1) : ℝ) * ((n - 1 : ℕ) : ℝ) := by
-              exact_mod_cast hchoose₂
-            simpa [Nat.cast_sub (by omega : 1 ≤ N),
-              Nat.cast_sub (by omega : 1 ≤ n)] using h₂'
-          calc
-            _ = (N : ℝ) * (((N : ℝ) - 1) *
-                ((N - 2).choose (n - 2) : ℝ)) := by ring
-            _ = (N : ℝ) * (((N - 1).choose (n - 1) : ℝ) *
-                ((n : ℝ) - 1)) := by rw [h₂]
-            _ = ((N : ℝ) * ((N - 1).choose (n - 1) : ℝ)) *
-                ((n : ℝ) - 1) := by ring
-            _ = ((N.choose n : ℝ) * (n : ℝ)) * ((n : ℝ) - 1) := by rw [h₁]
-            _ = _ := by ring
         have hKpred : (K : ℝ) * ((K - 1 : ℕ) : ℝ) =
             (K : ℝ) * ((K : ℝ) - 1) := by
           cases K <;> norm_num [Nat.cast_sub]
@@ -574,7 +573,8 @@ private theorem sum_hypergeometricWeight_toReal_mul_pred {N K n : ℕ} (hK : K �
         push_cast
         rw [hKpred]
         field_simp [hNm1]
-        linear_combination (K : ℝ) * ((K : ℝ) - 1) * hchooseR
+        linear_combination (K : ℝ) * ((K : ℝ) - 1) *
+          cast_mul_pred_mul_choose_pred_pred hn2 hn
   · -- When `n` is zero or one, the falling factorial `k * (k - 1)` vanishes on the support.
     have hnle : n ≤ 1 := by omega
     interval_cases n <;> norm_num [Finset.sum_range_succ, hypergeometricWeight]
