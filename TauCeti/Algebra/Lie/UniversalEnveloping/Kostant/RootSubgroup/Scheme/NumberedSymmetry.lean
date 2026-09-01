@@ -149,16 +149,7 @@ theorem kostantNumberedSymmetryMatrix_pow_eq_one (A : Type v) [CommRing A] {m : 
     kostantNumberedSymmetryMatrix M b θ hθM A ^ m = 1 := by
   have hm' : ∀ x, (θ.toAddEquiv.toIntLinearEquiv ^ m) x = x := by
     intro x
-    have hpow : ∀ r : ℕ, ∀ y : V,
-        (θ.toAddEquiv.toIntLinearEquiv ^ r) y = (θ ^ r) y := by
-      intro r
-      induction r with
-      | zero => simp
-      | succ r ih =>
-          intro y
-          rw [pow_succ, LinearEquiv.mul_apply, pow_succ, LinearEquiv.mul_apply, ih]
-          rfl
-    exact (hpow m x).trans (hm x)
+    exact (LinearEquiv.toAddEquiv_toIntLinearEquiv_pow_apply θ m x).trans (hm x)
   have hunit := AddEquiv.baseChangeInvariantRestrictUnit_pow_eq_one
     (R := A) θ.toAddEquiv M hθM hm'
   have hmatrix := congrArg

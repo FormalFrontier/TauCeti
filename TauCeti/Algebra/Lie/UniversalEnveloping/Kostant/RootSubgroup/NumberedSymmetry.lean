@@ -212,16 +212,7 @@ theorem kostantElementaryNumberedSymmetryAut_pow_eq_one (A : CommAlgCat.{w} ℤ)
         group
   have hn' : ∀ v, (θ.toAddEquiv.toIntLinearEquiv ^ n) v = v := by
     intro v
-    have hpowθ : ∀ m : ℕ, ∀ w : V,
-        (θ.toAddEquiv.toIntLinearEquiv ^ m) w = (θ ^ m) w := by
-      intro m
-      induction m with
-      | zero => simp
-      | succ m ih =>
-          intro w
-          rw [pow_succ, LinearEquiv.mul_apply, pow_succ, LinearEquiv.mul_apply, ih]
-          rfl
-    exact (hpowθ n v).trans (hn v)
+    exact (LinearEquiv.toAddEquiv_toIntLinearEquiv_pow_apply θ n v).trans (hn v)
   rw [hpow n g, baseChangeInvariantRestrictUnit_pow_eq_one θ.toAddEquiv M hθM hn', one_mul,
     inv_one, mul_one]
   rfl
