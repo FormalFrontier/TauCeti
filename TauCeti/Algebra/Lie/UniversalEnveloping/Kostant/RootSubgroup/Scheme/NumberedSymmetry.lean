@@ -460,20 +460,55 @@ theorem kostantNumberedSymmetryMatrix_conj_diagGL (basisPerm : Equiv.Perm (Fin n
     kostantNumberedSymmetryMatrix M b θ hθM A * diagGL d *
         (kostantNumberedSymmetryMatrix M b θ hθM A)⁻¹ =
       diagGL (fun i => d (basisPerm⁻¹ i)) := by
-  have hinter : kostantNumberedSymmetryMatrix M b θ hθM A * diagGL d =
-      diagGL (fun i => d (basisPerm⁻¹ i)) *
-        kostantNumberedSymmetryMatrix M b θ hθM A := by
+  let Θ : (A ⊗[ℤ] M) ≃ₗ[A] (A ⊗[ℤ] M) :=
+    (AddEquiv.invariantRestrict θ.toAddEquiv M hθM).baseChange ℤ A M M
+  have hbasis' : ∀ i, AddEquiv.invariantRestrict θ.toAddEquiv M hθM (b i) =
+      basisScale i • b (basisPerm i) := by
+    intro i
+    apply Subtype.ext
+    rw [AddEquiv.coe_invariantRestrict_apply]
+    exact hbasis i
+  have hbase : ∀ i, Θ ((b.baseChange A) i) =
+      algebraMap ℤ A (basisScale i) • (b.baseChange A) (basisPerm i) :=
+    AddEquiv.baseChange_invariantRestrict_map_baseChange_basis
+      M b θ.toAddEquiv hθM basisPerm basisScale hbasis'
+  have hconj : Θ * basisDiagonal (b.baseChange A) d * Θ⁻¹ =
+      basisDiagonal (b.baseChange A) (fun i => d (basisPerm⁻¹ i)) :=
+    conj_basisDiagonal_of_map_basis (b.baseChange A) d
+      (fun i => d (basisPerm⁻¹ i)) (fun i => algebraMap ℤ A (basisScale i))
+      basisPerm Θ hbase (fun i => by simp)
+  have hmatrix := congrArg
+    (fun ψ : (A ⊗[ℤ] M) ≃ₗ[A] (A ⊗[ℤ] M) =>
+      Units.map (LinearMap.toMatrixAlgEquiv (b.baseChange A)).toMonoidHom
+        (LinearMap.GeneralLinearGroup.ofLinearEquiv ψ)) hconj
+  have hdiag (w : Fin n → Aˣ) :
+      Units.map (LinearMap.toMatrixAlgEquiv (b.baseChange A)).toMonoidHom
+          (LinearMap.GeneralLinearGroup.ofLinearEquiv
+            (basisDiagonal (b.baseChange A) w)) = diagGL w := by
     apply Units.ext
-    ext i j
-    simp only [Units.val_mul, diagGL_coe, Matrix.mul_diagonal, Matrix.diagonal_mul]
-    rw [coe_kostantNumberedSymmetryMatrix_apply_of_monomial
-      M b θ hθM basisPerm basisScale hbasis]
-    by_cases hij : i = basisPerm j
-    · subst i
-      simp
-      ring
-    · simp [hij]
-  rw [hinter, mul_assoc, mul_inv_cancel, mul_one]
+    rw [Units.coe_map]
+    change LinearMap.toMatrix (b.baseChange A) (b.baseChange A)
+        (basisDiagonal (b.baseChange A) w).toLinearMap = _
+    rw [toMatrix_basisDiagonal, diagGL_coe]
+  have hΘ :
+      Units.map (LinearMap.toMatrixAlgEquiv (b.baseChange A)).toMonoidHom
+          (LinearMap.GeneralLinearGroup.ofLinearEquiv Θ) =
+        kostantNumberedSymmetryMatrix M b θ hθM A := by
+    rw [kostantNumberedSymmetryMatrix]
+    apply Units.ext
+    simp only [Units.coe_map]
+    have hval :
+        (LinearMap.GeneralLinearGroup.ofLinearEquiv Θ : Module.End A (A ⊗[ℤ] M)) =
+          (AddEquiv.baseChangeInvariantRestrictUnit
+            (R := A) θ.toAddEquiv M hθM : Module.End A (A ⊗[ℤ] M)) := by
+      apply LinearMap.ext
+      intro z
+      rw [LinearMap.GeneralLinearGroup.coe_ofLinearEquiv,
+        AddEquiv.val_baseChangeInvariantRestrictUnit_apply]
+    exact congrArg (LinearMap.toMatrixAlgEquiv (b.baseChange A)) hval
+  simp only [LinearMap.GeneralLinearGroup.ofLinearEquiv_mul,
+    LinearMap.GeneralLinearGroup.ofLinearEquiv_inv, map_mul, map_inv] at hmatrix
+  rwa [hΘ, hdiag d, hdiag (fun i => d (basisPerm⁻¹ i))] at hmatrix
 
 /-- **A monomial-basis numbered symmetry carries the represented weight torus of a weight family
 to the weight torus of the relabelled family.** The scalar coefficients do not affect diagonal
