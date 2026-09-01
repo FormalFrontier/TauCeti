@@ -143,7 +143,7 @@ lemma one_sub_conj_mul_ne_zero_of_norm_lt_one {z w : ℂ}
   (isUnit_one_sub_of_norm_lt_one (x := (starRingEnd ℂ) w * z)
     (by
       rw [norm_mul, norm_conj]
-      exact mul_lt_one_of_nonneg_of_lt_one_right hw.le (norm_nonneg _) hz)).ne_zero
+      exact (mul_le_of_le_one_left (norm_nonneg _) hw.le).trans_lt hz)).ne_zero
 
 /-- For points in the open unit ball, the denominator in the pseudo-hyperbolic expression is
 nonzero. -/

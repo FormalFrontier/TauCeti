@@ -567,8 +567,8 @@ theorem points_def (A : Type v) [CommRing A] :
 parameter is read through the canonical multiplicative copy of the additive group of `A`. -/
 noncomputable def rootSubgroupPoints (i : Fin r ⊕ Fin r) (A : Type v) [CommRing A] :
     Multiplicative A →* points r A :=
-  TauCeti.UniversalEnvelopingAlgebra.kostantToralRootSubgroupPoints (rootGenerator r)
-    (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
+  TauCeti.UniversalEnvelopingAlgebra.kostantToralRootSubgroupPoints
+    (rootGenerator r) (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
     (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv)
     (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) i A
 
@@ -581,17 +581,15 @@ theorem coe_rootSubgroupPoints (i : Fin r ⊕ Fin r) (A : Type v) [CommRing A]
         (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
         (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv) i
         (isNilpotent_rep_rootGenerator r i) (latticeBasis r)
-        ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm u) :=
-  TauCeti.UniversalEnvelopingAlgebra.coe_kostantToralRootSubgroupPoints
-    (rootGenerator r) (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
-    (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv)
-    (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) i A u
+        ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm u) := by
+  exact TauCeti.UniversalEnvelopingAlgebra.coe_kostantToralRootSubgroupPoints
+    _ _ _ _ _ _ _ _ i A u
 
 /-- **The split weight torus inside the type-`A_r` carrier points.** -/
 noncomputable def weightTorusPoints (A : Type v) [CommRing A] :
     (Fin r → Aˣ) →* points r A :=
-  TauCeti.UniversalEnvelopingAlgebra.kostantToralWeightTorusPoints (rootGenerator r)
-    (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
+  TauCeti.UniversalEnvelopingAlgebra.kostantToralWeightTorusPoints
+    (rootGenerator r) (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
     (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv)
     (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) A
 
@@ -601,11 +599,9 @@ weights. -/
 theorem coe_weightTorusPoints (A : Type v) [CommRing A] (s : Fin r → Aˣ) :
     (weightTorusPoints r A s : Matrix.GeneralLinearGroup (Fin (r + 1)) A) =
       TauCeti.UniversalEnvelopingAlgebra.kostantTorusMatrix
-        (lattice r).toAddSubgroup (latticeBasis r) (weight r) s :=
-  TauCeti.UniversalEnvelopingAlgebra.coe_kostantToralWeightTorusPoints
-    (rootGenerator r) (cartanGenerator r) (rep r) (lattice r).toAddSubgroup
-    (fun _ hu _ hv => rep_kostantForm_mem_lattice r hu hv)
-    (isNilpotent_rep_rootGenerator r) (latticeBasis r) (weight r) A s
+        (lattice r).toAddSubgroup (latticeBasis r) (weight r) s := by
+  exact TauCeti.UniversalEnvelopingAlgebra.coe_kostantToralWeightTorusPoints
+    _ _ _ _ _ _ _ _ A s
 
 /-- A matrix is a point of the type `A_r` carrier exactly when the associated convolution point
 kills its toral defining Hopf ideal. -/

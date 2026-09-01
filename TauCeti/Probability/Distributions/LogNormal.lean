@@ -110,7 +110,7 @@ theorem logNormalMeasure_map_exp (m : ℝ) (v : ℝ≥0) :
 instance isProbabilityMeasure_logNormalMeasure (m : ℝ) (v : ℝ≥0) :
     IsProbabilityMeasure (logNormalMeasure m v) := by
   rw [logNormalMeasure_map_exp]
-  exact Measure.isProbabilityMeasure_map measurable_exp.aemeasurable
+  infer_instance
 
 /-- At the singular boundary `v = 0` the log-normal law is the Dirac mass at `exp m`. -/
 @[simp]

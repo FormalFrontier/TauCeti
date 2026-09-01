@@ -46,8 +46,7 @@ theorem isMulRightInvariant_of_isHaarMeasure_of_isProbabilityMeasure (μ : Measu
     have : (Measure.map (· * g) μ).IsHaarMeasure :=
       Measure.isHaarMeasure_map_mul_right μ g
     have : IsProbabilityMeasure (Measure.map (· * g) μ) :=
-      Measure.isProbabilityMeasure_map
-        (continuous_id.mul continuous_const).measurable.aemeasurable
+      inferInstance
     exact Measure.isHaarMeasure_eq_of_isProbabilityMeasure _ _
 
 /-- Every probability Haar measure on a locally compact group is invariant under inversion. -/
@@ -62,7 +61,7 @@ theorem isInvInvariant_of_isHaarMeasure_of_isProbabilityMeasure (μ : Measure G)
     toIsOpenPosMeasure := inferInstance }
   let : IsProbabilityMeasure μ.inv := by
     rw [Measure.inv_def]
-    exact Measure.isProbabilityMeasure_map measurable_inv.aemeasurable
+    infer_instance
   exact Measure.isHaarMeasure_eq_of_isProbabilityMeasure _ _
 
 end LocallyCompactGroup

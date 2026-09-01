@@ -35,6 +35,29 @@ ATLAS 2058-point standard generators; those generators yield a simple group of o
 `4030387200`. This computation is provenance for the transcription, not a Lean theorem. This file
 asserts no order, finiteness, simplicity, or identification result.
 
+## Independent source-to-Lean read-through
+
+An independent read-through used the bytes of the ATLAS Magma source `HeG1-P1.M` whose SHA-256
+digest is `6ab1294d2599ce209cb9ef53e433cdb40342244ac387c425d0682be6ab55e374`. Its constructor
+`G<x,y>` and following assignments `a := x; b := y` fix the source generator order.
+
+The rendered presentation page lists the seven active words in this order:
+
+```text
+a², b⁷, (ab)¹⁷, [a,b]⁶, [a,b³]⁵,
+[a,babab⁻¹abab],
+(ab)⁴ab²ab⁻³ababab⁻¹ab³ab⁻²ab².
+```
+
+These are exactly the seven entries of `hePresentation_transcribed`, after expanding the source
+commutator `[r,s]` as `r⁻¹s⁻¹rs` and the two private long-word abbreviations. The Magma
+constructor writes the same active words in `x,y`, but places the long commutator before
+`[x,y³]⁵` and `[x,y]⁶`; the Lean row deliberately follows the rendered page's order. It also
+comments out three other words, marking each redundant and two of them possibly useful, so none
+belongs to the active relator list. This checks every source relator, inverse, exponent, both
+source-order renderings, and the active/commented boundary independently of the original
+transcription and closes this row's S1 source-to-Lean read-through.
+
 ## Independent comparison with the ATLAS permutation data
 
 The independent comparison used the ATLAS representation `HeG1-p2058B0`, a primitive action on

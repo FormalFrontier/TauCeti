@@ -194,9 +194,6 @@ theorem cdf_max_iid [IsProbabilityMeasure μ] (hindep : iIndepFun X P)
   have hmax : AEMeasurable (fun ω => Finset.univ.sup' Finset.univ_nonempty fun i => X i ω) P :=
     aemeasurable_max fun i => (hlaw i).aemeasurable
   have _ : IsProbabilityMeasure P := (hlaw (Classical.arbitrary ι)).isProbabilityMeasure
-  have _ : IsProbabilityMeasure
-      (P.map fun ω => Finset.univ.sup' Finset.univ_nonempty fun i => X i ω) :=
-    Measure.isProbabilityMeasure_map hmax
   rw [cdf_eq_real, map_measureReal_apply_of_aemeasurable hmax measurableSet_Iic,
     ← measureReal_setOf_max_le_iid hindep hlaw x]
   rfl
@@ -210,9 +207,6 @@ theorem cdf_min_iid [IsProbabilityMeasure μ] (hindep : iIndepFun X P)
   have hmin : AEMeasurable (fun ω => Finset.univ.inf' Finset.univ_nonempty fun i => X i ω) P :=
     aemeasurable_min fun i => (hlaw i).aemeasurable
   have _ : IsProbabilityMeasure P := (hlaw (Classical.arbitrary ι)).isProbabilityMeasure
-  have _ : IsProbabilityMeasure
-      (P.map fun ω => Finset.univ.inf' Finset.univ_nonempty fun i => X i ω) :=
-    Measure.isProbabilityMeasure_map hmin
   rw [cdf_eq_real, map_measureReal_apply_of_aemeasurable hmin measurableSet_Iic,
     ← measureReal_setOf_min_le_iid hindep hlaw x]
   rfl
@@ -232,9 +226,6 @@ theorem hasLaw_min_iid_expMeasure (hr : 0 < r) (hindep : iIndepFun X P)
   have hmin : AEMeasurable (fun ω => Finset.univ.inf' Finset.univ_nonempty fun i => X i ω) P :=
     aemeasurable_min fun i => (hlaw i).aemeasurable
   have _ : IsProbabilityMeasure P := (hlaw (Classical.arbitrary ι)).isProbabilityMeasure
-  have _ : IsProbabilityMeasure
-      (P.map fun ω => Finset.univ.inf' Finset.univ_nonempty fun i => X i ω) :=
-    Measure.isProbabilityMeasure_map hmin
   refine ⟨hmin, ?_⟩
   refine Measure.eq_of_cdf _ _ ?_
   ext x

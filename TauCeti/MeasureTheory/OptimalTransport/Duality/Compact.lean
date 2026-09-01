@@ -190,7 +190,6 @@ values weighted by the masses of the fibres. -/
 private theorem integral_comp_eq_sum (μ : Measure X) [IsProbabilityMeasure μ] {n : ℕ}
     {q : X → Fin n} (hq : Measurable q) (a : Fin n → ℝ) :
     ∫ x, a (q x) ∂μ = ∑ i, (μ (q ⁻¹' {i})).toReal * a i := by
-  have : IsProbabilityMeasure (μ.map q) := Measure.isProbabilityMeasure_map hq.aemeasurable
   rw [← integral_map hq.aemeasurable (Measurable.of_discrete (f := a)).aestronglyMeasurable,
     integral_fintype Integrable.of_finite]
   refine Finset.sum_congr rfl fun i _ ↦ ?_
@@ -226,14 +225,16 @@ private theorem isCoupling_glue {n m : ℕ} {qX : X → Fin n} {qY : Y → Fin m
     rcases eq_or_ne (T i j) 0 with h | h
     · simp [h]
     · have := ProbabilityTheory.cond_isProbabilityMeasure (col_fiber_ne_zero hpν T h)
-      rw [Measure.map_smul, Measure.map_fst_prod, measure_univ, one_smul]
+      rw [Measure.map_smul _ measurable_fst.aemeasurable, Measure.map_fst_prod,
+        measure_univ, one_smul]
   have hmapsnd : ∀ i j, Measure.map Prod.snd
       (T i j • (μ[|qX ⁻¹' {i}]).prod (ν[|qY ⁻¹' {j}])) = T i j • ν[|qY ⁻¹' {j}] := by
     intro i j
     rcases eq_or_ne (T i j) 0 with h | h
     · simp [h]
     · have := ProbabilityTheory.cond_isProbabilityMeasure (row_fiber_ne_zero hpμ T h)
-      rw [Measure.map_smul, Measure.map_snd_prod, measure_univ, one_smul]
+      rw [Measure.map_smul _ measurable_snd.aemeasurable, Measure.map_snd_prod,
+        measure_univ, one_smul]
   refine { fst_eq := ?_, snd_eq := ?_ }
   · rw [Measure.fst]
     have hstep : Measure.map Prod.fst
