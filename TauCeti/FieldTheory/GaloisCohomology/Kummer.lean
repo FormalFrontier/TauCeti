@@ -42,11 +42,15 @@ What is not here is surjectivity, which is Hilbert 90 for `Kˢ/K` and needs the 
 `H¹` as a colimit over the finite quotients of `G_K`. Surjectivity is the only missing input for
 the Kummer isomorphism `Kˣ ⧸ (Kˣ)ⁿ ≅ H¹(G_K, μₙ)`.
 
+This implements targets 4 and 5 and the multiplicativity and kernel parts of target 6 in Layer 9
+of the human-authored `TauCetiRoadmap/ProfiniteCohomology/README.md` and `Suggested.lean`.
+
 ## Main definitions
 
 * `TauCeti.kummerCocycle`: the cocycle `g ↦ g α / α` attached to a choice of `n`th root, and
   `TauCeti.kummerCocycleClass` its class in `H¹(G_K, μₙ)`.
-* `TauCeti.kummerMap`: the Kummer map `Kˣ → H¹(G_K, μₙ)`, written additively on `Additive Kˣ`.
+* `TauCeti.kummerMap`: the multiplicative Kummer map
+  `Kˣ →* Multiplicative (H¹(G_K, μₙ))`.
 * `TauCeti.kummerClassMap`: the induced map on the power classes `Kˣ ⧸ (Kˣ)ⁿ`.
 
 ## Main results
@@ -56,7 +60,7 @@ the Kummer isomorphism `Kˣ ⧸ (Kˣ)ⁿ ≅ H¹(G_K, μₙ)`.
 * `TauCeti.kummerMap_eq_kummerCocycleClass`: the Kummer class of `a` is the class of
   `g ↦ g α / α`.
 * `TauCeti.ker_kummerMap`: the kernel of the Kummer map is `(Kˣ)ⁿ`, with
-  `TauCeti.kummerMap_eq_zero_iff` the pointwise form.
+  `TauCeti.kummerMap_eq_one_iff` the pointwise form.
 * `TauCeti.kummerClassMap_injective`: `Kˣ ⧸ (Kˣ)ⁿ` injects into `H¹(G_K, μₙ)`.
 
 ## References
@@ -79,12 +83,6 @@ variable {K : Type*} [Field K] {n : ℕ}
 
 Nothing in this section needs `n` to be invertible in `K`: the input is a chosen `n`th root of the
 given unit, and invertibility of `n` is only what produces one. -/
-
-/-- A unit of the base field is fixed by the absolute Galois group once pushed into `Kˢ`. -/
-theorem smul_units_map_algebraMap (g : AbsoluteGaloisGroup K) (a : Kˣ) :
-    g • Units.map (algebraMap K (SeparableClosure K)).toMonoidHom a =
-      Units.map (algebraMap K (SeparableClosure K)).toMonoidHom a :=
-  Units.ext (AlgEquiv.commutes g (a : K))
 
 variable {a : Kˣ} {α β : (SeparableClosure K)ˣ}
 
@@ -110,9 +108,8 @@ theorem toMul_kummerCocycle
     ((kummerCocycle hα g).toMul : (SeparableClosure K)ˣ) = g • α * α⁻¹ :=
   (rfl)
 
-/-- The Kummer cocycle lies over the coboundary of `α` in the units of `Kˢ`. This one computation
-is what the cocycle identity, the continuity, and the connecting-map description all run
-through. -/
+/-- The coefficient inclusion of the Kummer cocycle is the coboundary ratio `g • α - α` in the
+units of `Kˢ`. -/
 theorem kummerCoeffIncl_kummerCocycle
     (hα : α ^ n = Units.map (algebraMap K (SeparableClosure K)).toMonoidHom a)
     (g : AbsoluteGaloisGroup K) :
@@ -122,9 +119,7 @@ theorem kummerCoeffIncl_kummerCocycle
     rw [toMul_kummerCoeffIncl, toMul_kummerCocycle, toMul_sub, Additive.toMul_smul,
       toMul_ofMul, div_eq_mul_inv]
 
-/-- **The Kummer cocycle is a continuous `1`-cocycle.** Both halves descend along the injection
-`μₙ ↪ (Kˢ)ˣ` from the coboundary `d⁰ α` it lies over: continuity because an injection of discrete
-spaces reflects continuity, and the cocycle identity because `d¹ (d⁰ α) = 0`. -/
+/-- **The Kummer ratio `g ↦ g α / α` is a continuous `1`-cocycle** with values in `μₙ`. -/
 theorem kummerCocycle_mem_Z1
     (hα : α ^ n = Units.map (algebraMap K (SeparableClosure K)).toMonoidHom a) :
     kummerCocycle hα ∈ Z1 (AbsoluteGaloisGroup K) (KummerCoeff K n) := by
@@ -177,17 +172,38 @@ theorem kummerCocycleClass_congr
 
 variable (K n)
 
-/-- **The Kummer map** `Kˣ → H¹(G_K, μₙ)`, written additively on `Additive Kˣ`: the degree-zero
-connecting homomorphism of the Kummer sequence, precomposed with the identification of `Kˣ` with
-the invariants of `(Kˢ)ˣ`. -/
-def kummerMap (hn : IsUnit (n : K)) :
+/-- The additive form of the Kummer connecting homomorphism, used to construct `kummerMap`. -/
+def kummerMapAdd (hn : IsUnit (n : K)) :
     Additive Kˣ →+ H1 (AbsoluteGaloisGroup K) (KummerCoeff K n) :=
   (kummerShortExact K n hn).explicitDelta0.comp (baseUnitsEquivInvariants K).toAddMonoidHom
 
-theorem kummerMap_apply (hn : IsUnit (n : K)) (c : Additive Kˣ) :
-    kummerMap K n hn c =
+/-- The additive Kummer map is the degree-zero connecting homomorphism after identifying base
+units with the invariants of the separable-closure units. -/
+theorem kummerMapAdd_apply (hn : IsUnit (n : K)) (c : Additive Kˣ) :
+    kummerMapAdd K n hn c =
       (kummerShortExact K n hn).explicitDelta0 (baseUnitsEquivInvariants K c) :=
   (rfl)
+
+/-- **The Kummer map** `Kˣ →* Multiplicative (H¹(G_K, μₙ))`: the degree-zero connecting
+homomorphism of the Kummer sequence, written in the multiplicative API specified by the roadmap. -/
+def kummerMap (hn : IsUnit (n : K)) :
+    Kˣ →* Multiplicative (H1 (AbsoluteGaloisGroup K) (KummerCoeff K n)) :=
+  (kummerMapAdd K n hn).toMultiplicativeRight
+
+/-- The additive value underlying `kummerMap a` is `kummerMapAdd (Additive.ofMul a)`. -/
+@[simp]
+theorem toAdd_kummerMap_apply (hn : IsUnit (n : K)) (a : Kˣ) :
+    Multiplicative.toAdd (kummerMap K n hn a) =
+      kummerMapAdd K n hn (Additive.ofMul a) := by
+  exact congrArg Multiplicative.toAdd
+    (AddMonoidHom.toMultiplicativeRight_apply_apply (kummerMapAdd K n hn) a)
+
+/-- The multiplicative Kummer map is the type-tagged additive connecting map on each unit. -/
+@[simp]
+theorem kummerMap_apply (hn : IsUnit (n : K)) (a : Kˣ) :
+    kummerMap K n hn a =
+      Multiplicative.ofAdd (kummerMapAdd K n hn (Additive.ofMul a)) := by
+  exact AddMonoidHom.toMultiplicativeRight_apply_apply (kummerMapAdd K n hn) a
 
 variable {K n}
 
@@ -206,8 +222,8 @@ theorem exists_pow_eq_units_map (hn : IsUnit (n : K)) (a : Kˣ) :
 on every unit. -/
 theorem kummerMap_eq_kummerCocycleClass (hn : IsUnit (n : K))
     (hα : α ^ n = Units.map (algebraMap K (SeparableClosure K)).toMonoidHom a) :
-    kummerMap K n hn (Additive.ofMul a) = kummerCocycleClass hα := by
-  rw [kummerMap_apply]
+    Multiplicative.toAdd (kummerMap K n hn a) = kummerCocycleClass hα := by
+  rw [toAdd_kummerMap_apply, kummerMapAdd_apply]
   refine (kummerShortExact K n hn).explicitDelta0_apply _
     (b := (Additive.ofMul α : UnitsCoeff K)) (Additive.toMul.injective ?_)
     (kummerCocycle_mem_Z1 hα) fun g => ?_
@@ -229,19 +245,18 @@ theorem explicitCoeff0_baseUnitsEquivInvariants (hn : IsUnit (n : K)) (c : Addit
       toMul_unitsCoeffPow, toMul_coe_baseUnitsEquivInvariants,
       toMul_coe_baseUnitsEquivInvariants, toMul_ofMul, map_pow]
 
-/-- **The kernel of the Kummer map is `(Kˣ)ⁿ`.** Exactness at `H⁰(G_K, (Kˢ)ˣ)` says the kernel of
-`δ⁰` is the image of the `n`th power map on invariants, and
+/-- **The kernel of the additive Kummer map is `(Kˣ)ⁿ`.** Exactness at
+`H⁰(G_K, (Kˢ)ˣ)` says the kernel of `δ⁰` is the image of the `n`th power map on invariants, and
 `TauCeti.explicitCoeff0_baseUnitsEquivInvariants` reads that image off in `Kˣ`. -/
-theorem ker_kummerMap (hn : IsUnit (n : K)) :
-    (kummerMap K n hn).ker = (powMonoidHom n : Kˣ →* Kˣ).range.toAddSubgroup := by
-  have hker : ∀ c : Additive Kˣ, kummerMap K n hn c = 0 ↔
+theorem ker_kummerMapAdd (hn : IsUnit (n : K)) :
+    (kummerMapAdd K n hn).ker = (powerSubgroup Kˣ n).toAddSubgroup := by
+  have hker : ∀ c : Additive Kˣ, kummerMapAdd K n hn c = 0 ↔
       baseUnitsEquivInvariants K c ∈ (explicitCoeff0 (AbsoluteGaloisGroup K) (UnitsCoeff K)
         (kummerShortExact K n hn).projDistribMulActionHom).range := fun c => by
     rw [(kummerShortExact K n hn).explicitLongExact_H0C]
     exact (AddMonoidHom.mem_ker (f := (kummerShortExact K n hn).explicitDelta0)).symm
   ext c
-  rw [AddMonoidHom.mem_ker, hker, Additive.mem_toAddSubgroup, MonoidHom.mem_range]
-  simp only [powMonoidHom_apply]
+  rw [AddMonoidHom.mem_ker, hker, Additive.mem_toAddSubgroup, mem_powerSubgroup_iff]
   refine ⟨fun ⟨u, hu⟩ => ?_, fun ⟨v, hv⟩ => ⟨baseUnitsEquivInvariants K (Additive.ofMul v), ?_⟩⟩
   · obtain ⟨d, rfl⟩ := (baseUnitsEquivInvariants K).surjective u
     rw [explicitCoeff0_baseUnitsEquivInvariants] at hu
@@ -249,11 +264,18 @@ theorem ker_kummerMap (hn : IsUnit (n : K)) :
   · rw [explicitCoeff0_baseUnitsEquivInvariants, toMul_ofMul, hv]
     exact congrArg (baseUnitsEquivInvariants K) (Additive.ofMul.apply_symm_apply c)
 
+/-- **The kernel of the multiplicative Kummer map is `(Kˣ)ⁿ`.** -/
+theorem ker_kummerMap (hn : IsUnit (n : K)) :
+    (kummerMap K n hn).ker = powerSubgroup Kˣ n := by
+  ext a
+  rw [MonoidHom.mem_ker, kummerMap_apply, ofAdd_eq_one, ← AddMonoidHom.mem_ker,
+    ker_kummerMapAdd, Additive.mem_toAddSubgroup]
+  simp only [toMul_ofMul]
+
 /-- **A unit has trivial Kummer class exactly when it is an `n`th power in `K`.** -/
-theorem kummerMap_eq_zero_iff (hn : IsUnit (n : K)) (a : Kˣ) :
-    kummerMap K n hn (Additive.ofMul a) = 0 ↔ ∃ b : Kˣ, b ^ n = a := by
-  rw [← AddMonoidHom.mem_ker, ker_kummerMap, Additive.mem_toAddSubgroup, MonoidHom.mem_range]
-  simp only [powMonoidHom_apply, toMul_ofMul]
+theorem kummerMap_eq_one_iff (hn : IsUnit (n : K)) (a : Kˣ) :
+    kummerMap K n hn a = 1 ↔ ∃ b : Kˣ, b ^ n = a := by
+  rw [← MonoidHom.mem_ker, ker_kummerMap, mem_powerSubgroup_iff]
 
 /-! ### The Kummer map on power classes -/
 
@@ -263,27 +285,27 @@ variable (K n)
 (`TauCeti.kummerClassMap_injective`); surjectivity, which needs Hilbert 90, is what would upgrade
 it to the Kummer isomorphism. -/
 def kummerClassMap (hn : IsUnit (n : K)) :
-    PowerClassGroup Kˣ n →+ H1 (AbsoluteGaloisGroup K) (KummerCoeff K n) :=
-  QuotientAddGroup.lift _ (kummerMap K n hn) <| by
-    rw [modNSubgroup_eq_powerSubgroup]
-    exact (ker_kummerMap hn).ge
+    powerClassQuotient Kˣ n →*
+      Multiplicative (H1 (AbsoluteGaloisGroup K) (KummerCoeff K n)) :=
+  QuotientGroup.lift (powerSubgroup Kˣ n) (kummerMap K n hn) <| by
+    rw [ker_kummerMap hn]
 
+/-- The quotient Kummer map agrees with `kummerMap` on representatives. -/
 @[simp]
-theorem kummerClassMap_mk (hn : IsUnit (n : K)) (c : Additive Kˣ) :
-    kummerClassMap K n hn (ModN.mkQ n c) = kummerMap K n hn c :=
-  (rfl)
+theorem kummerClassMap_mk (hn : IsUnit (n : K)) (a : Kˣ) :
+    kummerClassMap K n hn (QuotientGroup.mk a) = kummerMap K n hn a := by
+  exact QuotientGroup.lift_mk' (powerSubgroup Kˣ n) (by rw [ker_kummerMap hn]) a
 
+/-- The quotient Kummer map sends the named power class of `a` to its Kummer class. -/
 @[simp]
 theorem kummerClassMap_powerClass (hn : IsUnit (n : K)) (a : Kˣ) :
-    kummerClassMap K n hn (powerClass n a) = kummerMap K n hn (Additive.ofMul a) := by
-  rw [powerClass_eq_mk]
-  rfl
+    kummerClassMap K n hn (powerClassHom n a) = kummerMap K n hn a := by
+  rw [powerClassHom_apply, kummerClassMap_mk]
 
 /-- **`Kˣ ⧸ (Kˣ)ⁿ` injects into `H¹(G_K, μₙ)`**, the kernel of the Kummer map being exactly the
 `n`th powers. -/
 theorem kummerClassMap_injective (hn : IsUnit (n : K)) :
     Function.Injective (kummerClassMap K n hn) := by
-  exact (QuotientAddGroup.injective_lift_iff _ _ _).2 <|
-    (modNSubgroup_eq_powerSubgroup (G := Kˣ) (n := n)).trans (ker_kummerMap hn).symm
+  exact (QuotientGroup.injective_lift_iff _ _ _).2 (ker_kummerMap hn).symm
 
 end TauCeti
