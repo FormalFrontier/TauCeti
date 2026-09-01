@@ -22,8 +22,8 @@ pairing.
 
 ## Main definitions
 
-* `TauCeti.IsGradedEulerAdmissibleOn`: every pair in two object properties is graded
-  Euler-admissible.
+* `TauCeti.gradedExtEulerRight`: the graded Ext-Euler characteristic with its first argument
+  fixed, descended to exact `K₀` in the second variable.
 * `TauCeti.gradedExtEulerPairing`: the graded Ext-Euler characteristic descended to exact `K₀` in
   both variables.
 
@@ -48,29 +48,15 @@ universe w v u t
 variable {C : Type u} [Category.{v} C] [Abelian C] {k : Type t} [Field k] [Linear k C]
   [HasExt.{w} C] {e : C ≌ C}
 
-/-- Every pair of objects in `P × Q` is graded Euler-admissible.  The internal-support and
-cohomological bounds may depend on the pair. -/
-structure IsGradedEulerAdmissibleOn (P Q : ObjectProperty C) : Prop where
-  /-- Each pair drawn from `P` and `Q` is graded Euler-admissible. -/
-  isGradedEulerAdmissible ⦃X Y : C⦄ (hX : P X) (hY : Q Y) :
-    IsGradedEulerAdmissible.{w} k e X Y
-
-/-- Graded Euler-admissibility on two object properties restricts to smaller properties. -/
-theorem IsGradedEulerAdmissibleOn.mono {P P' Q Q' : ObjectProperty C}
-    (h : IsGradedEulerAdmissibleOn.{w} (k := k) (e := e) P Q)
-    (hP : P' ≤ P) (hQ : Q' ≤ Q) :
-    IsGradedEulerAdmissibleOn.{w} (k := k) (e := e) P' Q' :=
-  ⟨fun _ _ hX hY ↦ h.isGradedEulerAdmissible (hP _ hX) (hQ _ hY)⟩
-
 variable {P Q : ObjectProperty C} [LocallySmall.{w} C]
   [ObjectProperty.EssentiallySmall.{w} P] [ObjectProperty.EssentiallySmall.{w} Q]
   [P.ContainsZero] [P.IsClosedUnderBinaryProducts]
   [Q.ContainsZero] [Q.IsClosedUnderBinaryProducts]
 
-private noncomputable def gradedExtEulerRightInvariant
+private noncomputable def gradedExtEulerRightAdditiveInvariant
     (hQ : (ExactStructure.abelian C).IsExtensionClosed Q)
     (h : IsGradedEulerAdmissibleOn.{w} (k := k) (e := e) P Q) :
-    ExactK0.RightInvariant P.FullSubcategory
+    ExactK0.RightAdditiveInvariant P.FullSubcategory
       ((ExactStructure.abelian C).fullSubcategory Q hQ) (LaurentPolynomial ℤ) where
   obj X Y := gradedExtEuler k e (h.isGradedEulerAdmissible X.property Y.property)
   map_iso₁ {X X'} i Y :=
@@ -95,7 +81,7 @@ noncomputable def gradedExtEulerRight
     (hQ : (ExactStructure.abelian C).IsExtensionClosed Q)
     (h : IsGradedEulerAdmissibleOn.{w} (k := k) (e := e) P Q) (X : P.FullSubcategory) :
     ExactK0 ((ExactStructure.abelian C).fullSubcategory Q hQ) →+ LaurentPolynomial ℤ :=
-  (gradedExtEulerRightInvariant hQ h).right X
+  (gradedExtEulerRightAdditiveInvariant hQ h).rightLift X
 
 omit [ObjectProperty.EssentiallySmall.{w} P] [P.ContainsZero]
   [P.IsClosedUnderBinaryProducts] in
@@ -108,7 +94,7 @@ theorem gradedExtEulerRight_of
     (Y : Q.FullSubcategory) :
     gradedExtEulerRight hQ h X (ExactK0.of Y) =
       gradedExtEuler k e (h.isGradedEulerAdmissible X.property Y.property) :=
-  ExactK0.RightInvariant.right_of _ X Y
+  ExactK0.RightAdditiveInvariant.rightLift_of _ X Y
 
 private noncomputable def gradedExtEulerBiadditiveInvariant
     (hP : (ExactStructure.abelian C).IsExtensionClosed P)
@@ -116,7 +102,7 @@ private noncomputable def gradedExtEulerBiadditiveInvariant
     (h : IsGradedEulerAdmissibleOn.{w} (k := k) (e := e) P Q) :
     ExactK0.BiadditiveInvariant ((ExactStructure.abelian C).fullSubcategory P hP)
       ((ExactStructure.abelian C).fullSubcategory Q hQ) (LaurentPolynomial ℤ) where
-  toRightInvariant := gradedExtEulerRightInvariant hQ h
+  toRightAdditiveInvariant := gradedExtEulerRightAdditiveInvariant hQ h
   map_conflation₁ {S} hS Y := by
     have hc : (ExactStructure.abelian C).Conflation (S.map P.ι) :=
       (ExactStructure.fullSubcategory_conflation_iff hP S).mp hS

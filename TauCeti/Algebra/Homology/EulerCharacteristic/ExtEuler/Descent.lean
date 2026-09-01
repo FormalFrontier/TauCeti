@@ -240,10 +240,10 @@ variable {P Q : ObjectProperty C} [LocallySmall.{w} C]
   [P.ContainsZero] [P.IsClosedUnderBinaryProducts]
   [Q.ContainsZero] [Q.IsClosedUnderBinaryProducts]
 
-private noncomputable def extEulerRightInvariant
+private noncomputable def extEulerRightAdditiveInvariant
     (hQ : (ExactStructure.abelian C).IsExtensionClosed Q)
     (h : IsEulerAdmissibleOn.{w} k P Q) :
-    ExactK0.RightInvariant P.FullSubcategory
+    ExactK0.RightAdditiveInvariant P.FullSubcategory
       ((ExactStructure.abelian C).fullSubcategory Q hQ) ℤ where
   obj X Y := extEuler.{w} k (h.isEulerAdmissible X.property Y.property)
   map_iso₁ {X X'} e Y :=
@@ -267,7 +267,7 @@ noncomputable def extEulerRight
     (hQ : (ExactStructure.abelian C).IsExtensionClosed Q)
     (h : IsEulerAdmissibleOn.{w} k P Q) (X : P.FullSubcategory) :
     ExactK0 ((ExactStructure.abelian C).fullSubcategory Q hQ) →+ ℤ :=
-  (extEulerRightInvariant hQ h).right X
+  (extEulerRightAdditiveInvariant hQ h).rightLift X
 
 omit [ObjectProperty.EssentiallySmall.{w} P] [P.ContainsZero]
   [P.IsClosedUnderBinaryProducts] in
@@ -278,7 +278,7 @@ theorem extEulerRight_of
     (Y : Q.FullSubcategory) :
     extEulerRight hQ h X (ExactK0.of Y) =
       extEuler.{w} k (h.isEulerAdmissible X.property Y.property) :=
-  ExactK0.RightInvariant.right_of _ X Y
+  ExactK0.RightAdditiveInvariant.rightLift_of _ X Y
 
 private noncomputable def extEulerBiadditiveInvariant
     (hP : (ExactStructure.abelian C).IsExtensionClosed P)
@@ -286,7 +286,7 @@ private noncomputable def extEulerBiadditiveInvariant
     (h : IsEulerAdmissibleOn.{w} k P Q) :
     ExactK0.BiadditiveInvariant ((ExactStructure.abelian C).fullSubcategory P hP)
       ((ExactStructure.abelian C).fullSubcategory Q hQ) ℤ where
-  toRightInvariant := extEulerRightInvariant hQ h
+  toRightAdditiveInvariant := extEulerRightAdditiveInvariant hQ h
   map_conflation₁ {S} hS Y := by
     have hc : (ExactStructure.abelian C).Conflation (S.map P.ι) :=
       (ExactStructure.fullSubcategory_conflation_iff hP S).mp hS
