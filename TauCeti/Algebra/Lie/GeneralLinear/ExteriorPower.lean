@@ -36,6 +36,10 @@ makes the wedge of the first `d` standard basis vectors in `Kⁿ` a highest-weig
   wedge of a set of standard basis vectors.
 * `exteriorPower.isGlHighestWeightVector_firstBasisWedge`: over a nontrivial ring, the first basis
   wedge is a highest-weight vector when `d ≤ n`.
+* `exteriorPower.lieSpan_basisWedge_eq_top`: over a commutative ring, every standard basis wedge
+  generates the full exterior power.
+* `exteriorPower.isIrreducible_glLieModule`: over a field, the standard exterior-power
+  representation is irreducible when `d ≤ n`.
 
 ## Roadmap context
 
@@ -45,8 +49,11 @@ while Layer 8 uses the `sl₉` action on `⋀³(K⁹)` in the Vinberg model of `
 
 ## References
 
-The exterior-power construction and its cyclicity and irreducibility argument follow the standard
-general-linear treatment in Goodman--Wallach, especially §§5.5 and 9.1, and Fulton--Harris §15.5.
+Goodman--Wallach, especially §§5.5 and 9.1, and Fulton--Harris §15.5 provide the
+characteristic-zero representation-theoretic background. The matrix-unit path and diagonal
+projector arguments here establish cyclicity over a commutative ring and irreducibility over an
+arbitrary field. The diagonal-factor and list-product projector proof plan follows the
+occupation/vacancy projector construction in `TauCeti.LinearAlgebra.ExteriorAlgebra.End`.
 -/
 
 public section
@@ -96,15 +103,6 @@ theorem gl_lie_def (d : ℕ) {n : Type*} [DecidableEq n] [Fintype n]
       glLieRingModule (K := K) (n := n) d
     ⁅A, x⁆ = glLieMap d A x := by
   rw [LieRingModule.compLieHom_apply, Module.End.lie_apply]
-
-private theorem single_mulVec_basis (n : ℕ) (i j k : Fin n) :
-    Matrix.single i j 1 *ᵥ (Pi.single k 1 : Fin n → K) =
-      if j = k then Pi.single i 1 else 0 := by
-  rw [Matrix.single_mulVec_eq]
-  by_cases hjk : j = k
-  · subst j
-    simp
-  · simp [hjk]
 
 section BasisWedge
 
@@ -285,16 +283,6 @@ section Cyclicity
 
 variable {K : Type*} [CommRing K]
 
-private theorem lie_single_self_basisWedge_family (d n : ℕ)
-    (s : Set.powersetCard (Fin n) d) (i : Fin n) :
-    letI : LieRingModule (Matrix (Fin n) (Fin n) K) (⋀[K]^d (Fin n → K)) :=
-      glLieRingModule (K := K) (n := Fin n) d
-    ⁅Matrix.single i i (1 : K),
-      ιMulti_family K d (Pi.basisFun K (Fin n)) s⁆ =
-        if i ∈ s.1 then ιMulti_family K d (Pi.basisFun K (Fin n)) s else 0 := by
-  simpa [basisWedge] using
-    (lie_single_self_basisWedge (K := K) s.1 s.2 i)
-
 private noncomputable def basisPath (d n : ℕ) (h : d ≤ n)
     (s : Set.powersetCard (Fin n) d) (k : ℕ) (l : Fin d) : Fin n :=
   if l.val < k then Fin.castLE h l else Set.powersetCard.ofFinEmbEquiv.symm s l
@@ -351,7 +339,7 @@ private theorem lie_single_basisFamily (d n : ℕ) (v : Fin d → Fin n)
           (Pi.single (Function.update v a i l) (1 : K) : Fin n → K)) := by
   classical
   rw [gl_lie_def, glLieMap_apply_ιMulti]
-  simp only [single_mulVec_basis]
+  simp only [Matrix.single_mulVec_eq, Pi.single_apply, eq_comm]
   rw [Finset.sum_eq_single a]
   · congr 1
     funext l
@@ -363,7 +351,8 @@ private theorem lie_single_basisFamily (d n : ℕ) (v : Fin d → Fin n)
   · intro l _ hla
     have hcol : v a ≠ v l := fun h ↦ hla (hv h.symm)
     simp only [hcol, ite_false]
-    exact (ιMulti K d).map_update_zero _ _
+    simpa only [mul_zero, zero_smul] using (ιMulti K d).map_update_zero
+      (fun k ↦ (Pi.single (v k) (1 : K) : Fin n → K)) l
   · simp
 
 private theorem lie_single_basisPath_transition (d n : ℕ) (v w : Fin d → Fin n)
@@ -423,7 +412,7 @@ private theorem basisWedge_mem_of_first_mem (d n : ℕ) (h : d ≤ n)
     (N : LieSubmodule K (Matrix (Fin n) (Fin n) K) (⋀[K]^d (Fin n → K)))
     (hfirst : firstBasisWedge (K := K) d n h ∈ N)
     (s : Set.powersetCard (Fin n) d) :
-    ιMulti_family K d (Pi.basisFun K (Fin n)) s ∈ N := by
+    basisWedge K s.1 (Set.powersetCard.card_eq s) ∈ N := by
   classical
   let _ : LieRingModule (Matrix (Fin n) (Fin n) K) (⋀[K]^d (Fin n → K)) :=
     glLieRingModule (K := K) (n := Fin n) d
@@ -441,28 +430,8 @@ private theorem basisWedge_mem_of_first_mem (d n : ℕ) (h : d ≤ n)
         exact N.lie_mem ih)
       (Nat.zero_le d) hd
   rw [basisPath_zero] at hzero
-  rw [ιMulti_family]
-  convert hzero using 1
-  apply congrArg (ιMulti K d)
-  funext l x
-  simp [Pi.basisFun_apply, Pi.single_apply]
-
-/-- The first basis wedge generates the exterior power as a general-linear Lie module. -/
-theorem lieSpan_firstBasisWedge_eq_top (d n : ℕ) (h : d ≤ n) :
-    letI : LieRingModule (Matrix (Fin n) (Fin n) K) (⋀[K]^d (Fin n → K)) :=
-      glLieRingModule (K := K) (n := Fin n) d
-    LieSubmodule.lieSpan K (Matrix (Fin n) (Fin n) K)
-      {firstBasisWedge (K := K) d n h} = ⊤ := by
-  classical
-  let N := LieSubmodule.lieSpan K (Matrix (Fin n) (Fin n) K)
-    {firstBasisWedge (K := K) d n h}
-  apply (LieSubmodule.toSubmodule_eq_top N).mp
-  rw [eq_top_iff, ← ((Pi.basisFun K (Fin n)).exteriorPower d).span_eq,
-    Submodule.span_le]
-  rintro _ ⟨s, rfl⟩
-  rw [exteriorPower.basis_apply]
-  exact basisWedge_mem_of_first_mem (K := K) d n h N
-    (LieSubmodule.subset_lieSpan (Set.mem_singleton _)) s
+  rw [basisWedge_eq_ιMulti]
+  simpa only [Set.powersetCard.ofFinEmbEquiv_symm_apply] using hzero
 
 private theorem lie_basisPath_reverse (d n k : ℕ) (h : d ≤ n) (hk : k < d)
     (s : Set.powersetCard (Fin n) d) :
@@ -494,7 +463,7 @@ private theorem lie_basisPath_reverse (d n k : ℕ) (h : d ≤ n) (hk : k < d)
 private theorem first_mem_of_basisWedge_mem (d n : ℕ) (h : d ≤ n)
     (N : LieSubmodule K (Matrix (Fin n) (Fin n) K) (⋀[K]^d (Fin n → K)))
     (s : Set.powersetCard (Fin n) d)
-    (hs : ιMulti_family K d (Pi.basisFun K (Fin n)) s ∈ N) :
+    (hs : basisWedge K s.1 (Set.powersetCard.card_eq s) ∈ N) :
     firstBasisWedge (K := K) d n h ∈ N := by
   classical
   let _ : LieRingModule (Matrix (Fin n) (Fin n) K) (⋀[K]^d (Fin n → K)) :=
@@ -502,11 +471,8 @@ private theorem first_mem_of_basisWedge_mem (d n : ℕ) (h : d ≤ n)
   have hzero : ιMulti K d (fun l ↦
       (Pi.single (basisPath d n h s 0 l) (1 : K) : Fin n → K)) ∈ N := by
     rw [basisPath_zero]
-    rw [ιMulti_family] at hs
-    convert hs using 1
-    apply congrArg (ιMulti K d)
-    funext l x
-    simp [Pi.basisFun_apply, Pi.single_apply]
+    rw [basisWedge_eq_ιMulti] at hs
+    simpa only [Set.powersetCard.ofFinEmbEquiv_symm_apply] using hs
   have hmem : ∀ k, k ≤ d →
       ιMulti K d (fun l ↦
         (Pi.single (basisPath d n h s k l) (1 : K) : Fin n → K)) ∈ N := by
@@ -519,6 +485,27 @@ private theorem first_mem_of_basisWedge_mem (d n : ℕ) (h : d ≤ n)
   have htop := hmem d le_rfl
   rw [basisPath_top, ← firstBasisWedge_eq_ιMulti] at htop
   exact htop
+
+/-- Every standard basis wedge generates the exterior power as a general-linear Lie module. -/
+theorem lieSpan_basisWedge_eq_top (d n : ℕ) (S : Finset (Fin n)) (hS : S.card = d) :
+    letI : LieRingModule (Matrix (Fin n) (Fin n) K) (⋀[K]^d (Fin n → K)) :=
+      glLieRingModule (K := K) (n := Fin n) d
+    LieSubmodule.lieSpan K (Matrix (Fin n) (Fin n) K)
+      {basisWedge K S hS} = ⊤ := by
+  classical
+  have h : d ≤ n := by
+    simpa only [hS, Fintype.card_fin] using S.card_le_univ
+  let s : Set.powersetCard (Fin n) d := ⟨S, hS⟩
+  let N := LieSubmodule.lieSpan K (Matrix (Fin n) (Fin n) K)
+    {basisWedge K S hS}
+  apply (LieSubmodule.toSubmodule_eq_top N).mp
+  rw [eq_top_iff, ← ((Pi.basisFun K (Fin n)).exteriorPower d).span_eq,
+    Submodule.span_le]
+  rintro _ ⟨t, rfl⟩
+  rw [exteriorPower.basis_apply]
+  exact basisWedge_mem_of_first_mem (K := K) d n h N
+    (first_mem_of_basisWedge_mem (K := K) d n h N s
+      (LieSubmodule.subset_lieSpan (Set.mem_singleton _))) t
 
 end Cyclicity
 
@@ -540,8 +527,10 @@ private theorem diagonalFactor_apply (d n : ℕ)
         ιMulti_family K d (Pi.basisFun K (Fin n)) t else 0 := by
   classical
   rw [diagonalFactor]
+  have haction := lie_single_self_basisWedge (K := K) t.1 t.2 i
+  rw [basisWedge_eq_ιMulti_family t.1 (Set.powersetCard.card_eq t)] at haction
   by_cases his : i ∈ s.1 <;> by_cases hit : i ∈ t.1
-  all_goals simp [his, hit, ← gl_lie_def, lie_single_self_basisWedge_family]
+  all_goals simp [his, hit, ← gl_lie_def, haction]
 
 private noncomputable def diagonalProjector (d n : ℕ)
     (s : Set.powersetCard (Fin n) d) : Module.End K (⋀[K]^d (Fin n → K)) :=
@@ -561,10 +550,7 @@ private theorem diagonalProjector_apply (d n : ℕ)
     intro u
     induction u with
     | nil => simp
-    | cons i u ih =>
-      rw [List.map_cons, List.prod_cons, Module.End.mul_apply, ih, map_smul,
-        diagonalFactor_apply, List.map_cons, List.prod_cons]
-      split <;> simp_all
+    | cons i u ih => simp [Module.End.mul_apply, ih, diagonalFactor_apply]
   rw [diagonalProjector, hprod]
   by_cases hst : s = t
   · subst t
@@ -590,30 +576,32 @@ private theorem diagonalProjector_mem (d n : ℕ)
   let _ : LieRingModule (Matrix (Fin n) (Fin n) K) (⋀[K]^d (Fin n → K)) :=
     glLieRingModule (K := K) (n := Fin n) d
   rw [diagonalProjector]
+  have hfactor (i : Fin n) {y : ⋀[K]^d (Fin n → K)} (hy : y ∈ N) :
+      diagonalFactor (K := K) d n s i y ∈ N := by
+    rw [diagonalFactor]
+    by_cases his : i ∈ s.1
+    · simp only [his, ite_true]
+      rw [← gl_lie_def]
+      exact N.lie_mem hy
+    · simp only [his, ite_false, LinearMap.sub_apply, Module.End.one_apply]
+      rw [← gl_lie_def]
+      exact N.sub_mem hy (N.lie_mem hy)
   have hmem : ∀ u : List (Fin n),
       (u.map fun i ↦ diagonalFactor (K := K) d n s i).prod x ∈ N := by
     intro u
     induction u with
     | nil => simpa using hx
-    | cons i u ih =>
-      rw [List.map_cons, List.prod_cons, Module.End.mul_apply, diagonalFactor]
-      by_cases his : i ∈ s.1
-      · simp only [his, ite_true]
-        rw [← gl_lie_def]
-        exact N.lie_mem ih
-      · simp only [his, ite_false]
-        rw [LinearMap.sub_apply, Module.End.one_apply, ← gl_lie_def]
-        exact N.sub_mem ih (N.lie_mem ih)
+    | cons i u ih => simpa [Module.End.mul_apply] using hfactor i ih
   exact hmem (List.ofFn id)
 
 private theorem exists_basisWedge_mem_of_nonzero_mem (d n : ℕ)
     (N : LieSubmodule K (Matrix (Fin n) (Fin n) K) (⋀[K]^d (Fin n → K)))
     {x : ⋀[K]^d (Fin n → K)} (hx : x ∈ N) (hx0 : x ≠ 0) :
     ∃ s : Set.powersetCard (Fin n) d,
-      ιMulti_family K d (Pi.basisFun K (Fin n)) s ∈ N := by
+      basisWedge K s.1 (Set.powersetCard.card_eq s) ∈ N := by
   classical
   let B := (Pi.basisFun K (Fin n)).exteriorPower d
-  have hre : B.repr x ≠ 0 := fun h ↦ hx0 (B.repr.injective (h.trans (map_zero B.repr).symm))
+  have hre : B.repr x ≠ 0 := (B.repr.map_ne_zero_iff).2 hx0
   obtain ⟨s, hs⟩ := Finsupp.ne_iff.mp hre
   have hproj : diagonalProjector (K := K) d n s x =
       (B.repr x s) • ιMulti_family K d (Pi.basisFun K (Fin n)) s := by
@@ -628,16 +616,15 @@ private theorem exists_basisWedge_mem_of_nonzero_mem (d n : ℕ)
   have hmem := diagonalProjector_mem (K := K) d n N s hx
   rw [hproj] at hmem
   refine ⟨s, ?_⟩
+  rw [basisWedge_eq_ιMulti_family]
   have hunit := N.smul_mem (B.repr x s)⁻¹ hmem
   rw [smul_smul, inv_mul_cancel₀ hs, one_smul] at hunit
   exact hunit
 
-/-- The standard general-linear action on an exterior power is irreducible. -/
+/-- The standard general-linear action on an exterior power is irreducible when `d ≤ n`. -/
 theorem isIrreducible_glLieModule (d n : ℕ) (h : d ≤ n) :
     letI : LieRingModule (Matrix (Fin n) (Fin n) K) (⋀[K]^d (Fin n → K)) :=
       glLieRingModule (K := K) (n := Fin n) d
-    letI : LieModule K (Matrix (Fin n) (Fin n) K) (⋀[K]^d (Fin n → K)) :=
-      glLieModule (K := K) (n := Fin n) d
     LieModule.IsIrreducible K (Matrix (Fin n) (Fin n) K) (⋀[K]^d (Fin n → K)) := by
   classical
   let _ : Nontrivial (⋀[K]^d (Fin n → K)) :=
@@ -647,10 +634,9 @@ theorem isIrreducible_glLieModule (d n : ℕ) (h : d ≤ n) :
     hN ((LieSubmodule.toSubmodule_eq_bot N).mp h)
   obtain ⟨x, hx, hx0⟩ := Submodule.exists_mem_ne_zero_of_ne_bot hN'
   obtain ⟨s, hs⟩ := exists_basisWedge_mem_of_nonzero_mem (K := K) d n N hx hx0
-  have hfirst := first_mem_of_basisWedge_mem (K := K) d n h N s hs
   apply top_unique
-  rw [← lieSpan_firstBasisWedge_eq_top (K := K) d n h]
-  exact LieSubmodule.lieSpan_le.mpr (by simpa using hfirst)
+  rw [← lieSpan_basisWedge_eq_top (K := K) d n s.1 (Set.powersetCard.card_eq s)]
+  exact LieSubmodule.lieSpan_le.mpr (by simpa using hs)
 
 
 end Irreducibility
