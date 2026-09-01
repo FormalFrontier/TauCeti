@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+import Mathlib.CategoryTheory.ConcreteCategory.EpiMono
 public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.FaithfullyFlatPoints
 public import TauCeti.AlgebraicGeometry.GroupScheme.CentralIsogeny.Coordinate
 
@@ -148,8 +149,13 @@ theorem injective (hf : IsIsogeny f) : Function.Injective f.hom :=
 
 /-- An isogeny is an isomorphism exactly when its coordinate map is surjective. -/
 theorem isIso_iff_surjective (hf : IsIsogeny f) :
-    IsIso f ↔ Function.Surjective f.hom :=
-  isIso_iff_surjective_of_injective hf.injective
+    IsIso f ↔ Function.Surjective f.hom := by
+  constructor
+  · intro
+    exact (ConcreteCategory.bijective_of_isIso f).2
+  · intro hsurjective
+    let e := BialgEquiv.ofBijective f.hom ⟨hf.injective, hsurjective⟩
+    exact (CommHopfAlgCat.isoMk e).isIso_hom
 
 /-- A finite coordinate morphism is in particular of finite type. -/
 theorem finiteType (hf : IsIsogeny f) : f.hom.toAlgHom.FiniteType :=

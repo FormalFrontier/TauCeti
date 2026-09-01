@@ -25,6 +25,9 @@ between full subcategories.
 
 * `CategoryTheory.ObjectProperty.inverseImage_functor_inverseImage_inverse`: pulling an
   isomorphism-invariant property backward along both functors of an equivalence recovers it.
+* `CategoryTheory.ObjectProperty.opEquivalenceCongrFullSubcategoryFunctorCompιIso`: the
+  equivalence obtained by restricting an equivalence from an opposite category commutes with the
+  inclusions of the restricted properties.
 * `CategoryTheory.ObjectProperty.isClosedUnderIsomorphisms_of_containsZero`: a property holding
   for a zero object and closed under binary products is closed under isomorphisms.
 * `CategoryTheory.ObjectProperty.isClosedUnderBinaryProducts_of_prop_biprod`: for a replete
@@ -57,6 +60,23 @@ theorem inverseImage_functor_inverseImage_inverse
     (P.inverseImage e.inverse).inverseImage e.functor = P := by
   ext X
   exact (P.prop_iff_of_iso (e.unitIso.app X)).symm
+
+/-- Restricting an equivalence from an opposite category to corresponding object properties,
+then including into the target, agrees with first including into the source and applying the
+original equivalence. -/
+noncomputable def opEquivalenceCongrFullSubcategoryFunctorCompιIso
+    {C : Type u₁} [Category.{v₁} C] {D : Type u₂} [Category.{v₂} D]
+    (P : ObjectProperty C) (Q : ObjectProperty D) [Q.IsClosedUnderIsomorphisms]
+    (e : Cᵒᵖ ≌ D) (h : Q.inverseImage e.functor = P.op) :
+    ((ObjectProperty.opEquivalence P).symm.trans (e.congrFullSubcategory h)).functor ⋙ Q.ι ≅
+      P.ι.op ⋙ e.functor :=
+  Functor.associator _ _ _ ≪≫
+    Functor.isoWhiskerLeft (ObjectProperty.opEquivalence P).symm.functor
+      (Q.liftCompιIso (P.op.ι ⋙ e.functor) (fun X ↦
+        (congrFun h X.obj).symm.mp X.property)) ≪≫
+    (Functor.associator _ _ _).symm ≪≫
+    Functor.isoWhiskerRight
+      (P.op.liftCompιIso P.ι.op (fun X ↦ X.unop.property)) e.functor
 
 /-- **A property holding for a zero object and closed under binary products is closed under
 isomorphisms.** An isomorphism `e : X ≅ Y` exhibits `Y` as a product of a zero object with `X`,
