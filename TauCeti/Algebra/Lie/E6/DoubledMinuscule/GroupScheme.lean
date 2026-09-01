@@ -270,7 +270,6 @@ theorem rootSubgroup_def (k : Fin 6 ⊕ Fin 6) :
 
 /-- Transporting a numbered root subgroup to the generic toral-closure presentation recovers the
 generic numbered root subgroup. -/
-@[simp]
 theorem rootSubgroup_comp_eqToHom_groupScheme_eq_kostantToral (k : Fin 6 ⊕ Fin 6) :
     rootSubgroup k ≫ eqToHom groupScheme_eq_kostantToral =
       TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupToToral
@@ -283,7 +282,6 @@ theorem rootSubgroup_comp_eqToHom_groupScheme_eq_kostantToral (k : Fin 6 ⊕ Fin
 
 /-- Transporting a generic numbered root subgroup back gives the named doubled-carrier root
 subgroup. -/
-@[simp]
 theorem kostantRootSubgroupToToral_comp_eqToHom_groupScheme_eq_kostantToral_symm
     (k : Fin 6 ⊕ Fin 6) :
     TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupToToral
@@ -328,7 +326,6 @@ theorem weightTorus_def :
 
 /-- Transporting the named weight torus to the generic toral-closure presentation recovers the
 generic weight-torus morphism. -/
-@[simp]
 theorem weightTorus_comp_eqToHom_groupScheme_eq_kostantToral :
     weightTorus ≫ eqToHom groupScheme_eq_kostantToral =
       TauCeti.UniversalEnvelopingAlgebra.kostantWeightTorusToToral
@@ -340,7 +337,6 @@ theorem weightTorus_comp_eqToHom_groupScheme_eq_kostantToral :
   rw [Category.comp_id, weightTorus_def]
 
 /-- Transporting the generic weight torus back gives the named doubled-carrier weight torus. -/
-@[simp]
 theorem kostantWeightTorusToToral_comp_eqToHom_groupScheme_eq_kostantToral_symm :
     TauCeti.UniversalEnvelopingAlgebra.kostantWeightTorusToToral
           (TauCeti.serreRootGenerator (CartanMatrix.E 6)ᵀ)
