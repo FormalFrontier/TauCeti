@@ -32,8 +32,8 @@ inclusion.
 * `TauCeti.integrable_exp_neg_mul_abs`: `exp (-(a * |·|))` is integrable when `0 < a`.
 * `TauCeti.integrable_exp_mul_of_ae_nonneg_of_nonpos`: a nonpositive exponential rate is
   integrable under a finite measure supported on the nonnegative half-line.
-* `TauCeti.not_integrable_of_eventually_one_le_atTop`: an eventually-at-least-one real function
-  is not Lebesgue integrable.
+* `TauCeti.not_integrable_of_eventually_one_le_norm_atTop`: a function whose norm is eventually
+  at least one is not Lebesgue integrable.
 -/
 
 public section
@@ -56,14 +56,13 @@ theorem integrable_exp_mul_of_ae_nonneg_of_nonpos {Ω : Type*} [MeasurableSpace 
   rw [Real.norm_eq_abs, abs_of_pos (Real.exp_pos _), Real.exp_le_one_iff]
   exact mul_nonpos_of_nonpos_of_nonneg ht hω
 
-/-- A real-valued function that is eventually at least one at `atTop` is not Lebesgue
-integrable. -/
-theorem not_integrable_of_eventually_one_le_atTop {f : ℝ → ℝ}
-    (hf : ∀ᶠ x in atTop, 1 ≤ f x) : ¬ Integrable f volume := by
+/-- A function whose norm is eventually at least one at `atTop` is not Lebesgue integrable. -/
+theorem not_integrable_of_eventually_one_le_norm_atTop {E : Type*} [NormedAddCommGroup E]
+    {f : ℝ → E} (hf : ∀ᶠ x in atTop, 1 ≤ ‖f x‖) : ¬ Integrable f volume := by
   intro hint
   obtain ⟨a, ha⟩ := eventually_atTop.mp hf
   have hone : IntegrableOn (fun _ : ℝ => (1 : ℝ)) (Ioi a) volume := by
-    refine Integrable.mono' hint.integrableOn (by fun_prop) ?_
+    refine Integrable.mono' hint.norm.integrableOn (by fun_prop) ?_
     filter_upwards [ae_restrict_mem measurableSet_Ioi] with x hx
     simpa only [norm_one] using ha x hx.le
   rw [integrableOn_const_iff] at hone

@@ -120,47 +120,27 @@ private lemma tendsto_mul_rpow_mul_exp_atTop (hk : 0 < k)
 private def weibullPDFRealHalfDecay (k lam x : ℝ) : ℝ :=
   (k / lam) * (x / lam) ^ (k - 1) * Real.exp (-(x / lam) ^ k / 2)
 
-/-- Halving the Weibull decay still leaves an integrable function on the positive half-line. -/
+/-- Halving the Weibull decay still leaves an integrable function on the positive half-line.
+
+Up to a constant the density is `x ^ (k - 1) * exp (-b * x ^ k)` with `b = lam ^ (-k) / 2`, so
+Mathlib's `integrableOn_rpow_mul_exp_neg_mul_rpow` applies directly. -/
 private lemma integrableOn_weibullPDFRealHalfDecay (hk : 0 < k) (hlam : 0 < lam) :
     IntegrableOn (weibullPDFRealHalfDecay k lam) (Ioi 0) := by
-  let c : ℝ := 2 ^ k⁻¹
-  have hc : 0 < c := Real.rpow_pos_of_pos (by norm_num) _
-  have hscale : 0 < lam * c := mul_pos hlam hc
-  have hcpow : c ^ k = 2 := by
-    dsimp only [c]
-    rw [← Real.rpow_mul (by norm_num : (0 : ℝ) ≤ 2), inv_mul_cancel₀ hk.ne', Real.rpow_one]
-  have hc_mul : c * c ^ (k - 1) = 2 := by
-    calc
-      c * c ^ (k - 1) = c ^ 1 * c ^ (k - 1) := by rw [Real.rpow_one]
-      _ = c ^ (1 + (k - 1)) := (Real.rpow_add hc 1 (k - 1)).symm
-      _ = c ^ k := by congr 1; ring
-      _ = 2 := hcpow
-  refine IntegrableOn.congr_fun
-    ((integrable_weibullPDFReal k (lam * c)).integrableOn.const_mul 2) (fun x hx => ?_)
-      measurableSet_Ioi
-  rw [weibullPDFReal_of_pos hk hscale hx]
-  have hdiv : x / (lam * c) = (x / lam) / c := by field_simp
-  have hpower : (x / (lam * c)) ^ k = (x / lam) ^ k / 2 := by
-    rw [hdiv, Real.div_rpow (div_pos hx hlam).le hc.le, hcpow]
-  have hprefactor :
-      2 * ((k / (lam * c)) * (x / (lam * c)) ^ (k - 1)) =
-        (k / lam) * (x / lam) ^ (k - 1) := by
-    rw [hdiv, Real.div_rpow (div_pos hx hlam).le hc.le]
-    calc
-      2 * (k / (lam * c) * ((x / lam) ^ (k - 1) / c ^ (k - 1))) =
-          (2 / (c * c ^ (k - 1))) * ((k / lam) * (x / lam) ^ (k - 1)) := by ring
-      _ = (k / lam) * (x / lam) ^ (k - 1) := by rw [hc_mul]; norm_num
-  simp only [weibullPDFRealHalfDecay]
-  rw [hpower]
-  have hneg_div : -((x / lam) ^ k / 2) = -(x / lam) ^ k / 2 := by ring
-  rw [hneg_div]
-  calc
-    2 * (k / (lam * c) * (x / (lam * c)) ^ (k - 1) *
-        Real.exp (-(x / lam) ^ k / 2)) =
-        (2 * (k / (lam * c) * (x / (lam * c)) ^ (k - 1))) *
-          Real.exp (-(x / lam) ^ k / 2) := by ring
-    _ = (k / lam) * (x / lam) ^ (k - 1) * Real.exp (-(x / lam) ^ k / 2) := by
-      rw [hprefactor]
+  have hb : 0 < lam ^ (-k) / 2 := by
+    have := Real.rpow_pos_of_pos hlam (-k)
+    linarith
+  have hbase := integrableOn_rpow_mul_exp_neg_mul_rpow (s := k - 1) (p := k)
+    (b := lam ^ (-k) / 2) (by linarith) hk hb
+  refine IntegrableOn.congr_fun (hbase.const_mul ((k / lam) / lam ^ (k - 1)))
+    (fun x hx => ?_) measurableSet_Ioi
+  have hx0 : 0 < x := hx
+  have hpow : (x / lam) ^ (k - 1) = x ^ (k - 1) / lam ^ (k - 1) :=
+    Real.div_rpow hx0.le hlam.le _
+  have hexp : -(x / lam) ^ k / 2 = -(lam ^ (-k) / 2) * x ^ k := by
+    rw [Real.div_rpow hx0.le hlam.le, Real.rpow_neg hlam.le]
+    ring
+  simp only [weibullPDFRealHalfDecay, hpow, hexp]
+  ring
 
 /-- Regroup the two exponential factors in a density comparison. -/
 private lemma exp_mul_mul_exp_neg (c t x p : ℝ) :
@@ -275,7 +255,8 @@ theorem not_integrable_exp_mul_id_weibullMeasure_of_lt_one (hk : 0 < k) (hk' : k
           ((k / lam) * (x / lam) ^ (k - 1) * Real.exp (-(x / lam) ^ k)) :=
             (exp_mul_mul_exp_neg ((k / lam) * (x / lam) ^ (k - 1)) t x
               ((x / lam) ^ k)).symm
-  exact not_integrable_of_eventually_one_le_atTop hev hint
+  exact not_integrable_of_eventually_one_le_norm_atTop
+    (hev.mono fun x hx => by rw [Real.norm_eq_abs]; exact hx.trans (le_abs_self _)) hint
 
 /-- For a sublinear Weibull law, exponential integrability is equivalent to a nonpositive rate. -/
 @[simp]
