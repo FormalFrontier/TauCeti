@@ -101,6 +101,9 @@ noncomputable def brauerGroupMulEquiv : BrauerGroup.{0, 0} ℝ ≃* Multiplicati
   (zmodMulEquivOfGenerator (fun x ↦ zpowers_mk_eq_top ▸ Subgroup.mem_top x)
     card_brauerGroup_eq_two).symm
 
+/-- **The characterisation of `TauCeti.Quaternion.brauerGroupMulEquiv`**: it sends the Brauer class
+of `ℍ[ℝ]` to `Multiplicative.ofAdd 1`, the generator of `Multiplicative (ZMod 2)`. Since that class
+generates (`TauCeti.Quaternion.zpowers_mk_eq_top`), this determines the isomorphism. -/
 @[simp]
 theorem brauerGroupMulEquiv_mk :
     brauerGroupMulEquiv (BrauerGroup.mk (CSA.of ℝ ℍ[ℝ])) = Multiplicative.ofAdd 1 :=

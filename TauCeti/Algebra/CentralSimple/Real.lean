@@ -5,14 +5,17 @@ Authors: The Tau Ceti contributors
 -/
 module
 
--- `TauCeti.Algebra.CentralSimple.MaximalSubfield` is imported publicly: `TauCeti.Algebra.deg`
--- occurs in the degree bound below, and the maximal subfield it produces is what bounds that
--- degree. It re-exports the whole degree and splitting-field stack for central simple algebras.
-public import TauCeti.Algebra.CentralSimple.MaximalSubfield
+-- `TauCeti.Algebra.CentralSimple.Degree` is imported publicly: `TauCeti.Algebra.deg` occurs in the
+-- degree bound below, and `TauCeti.Algebra.deg_sq` is what turns that bound into a dimension
+-- count. It re-exports `Mathlib.Algebra.Central.Basic`, hence `Algebra.IsCentral`.
+public import TauCeti.Algebra.CentralSimple.Degree
 -- `Mathlib.Algebra.QuaternionBasis` is imported publicly because `ℍ[ℝ]` occurs in the statement of
 -- the classification; the quaternion basis it adds is what builds the isomorphism.
 public import Mathlib.Algebra.QuaternionBasis
--- Non-public: the classification of the algebraic extensions of `ℝ` is used only inside proofs.
+-- Non-public: the maximal subfield supplying the degree bound
+-- (`TauCeti.Algebra.exists_subalgebra_isField_finrank_eq_deg`) and the classification of the
+-- algebraic extensions of `ℝ` are both used only inside proofs.
+import TauCeti.Algebra.CentralSimple.MaximalSubfield
 import Mathlib.Analysis.Complex.Polynomial.Basic
 
 public section
@@ -129,12 +132,48 @@ theorem exists_mul_self_eq_algebraMap_add_smul (y : D) :
     rw [map_mul, map_add, map_smul, AlgEquiv.commutes]
     exact hz
 
+omit [FiniteDimensional ℝ D] in
+/-- **A non-real element whose square is a real scalar rescales to a square root of `-1`**: if
+`u * u = algebraMap ℝ D r` and `u` is not itself a real scalar, then `c • u` squares to `-1` for
+some real `c`.
+
+The scalar `r` is negative, since `r ≥ 0` would factor `u * u - r` as `(u - √r) * (u + √r)`, which
+in a division ring forces `u = ±√r` and so puts `u` in `ℝ`. Then `c = (√(-r))⁻¹` normalises the
+square.
+
+This is the private engine shared by the two square roots of `-1` built below,
+`TauCeti.exists_mul_self_eq_neg_one` and
+`TauCeti.exists_mul_self_eq_neg_one_and_mul_eq_neg_mul`. -/
+private theorem exists_smul_mul_self_eq_neg_one {u : D} {r : ℝ}
+    (hu : u * u = algebraMap ℝ D r) (hbot : u ∉ (⊥ : Subalgebra ℝ D)) :
+    ∃ c : ℝ, (c • u) * (c • u) = -1 := by
+  -- A nonnegative square would factor and force `u` into `ℝ`.
+  have hr : r < 0 := by
+    by_contra hge
+    have hs : Real.sqrt r * Real.sqrt r = r := Real.mul_self_sqrt (not_lt.1 hge)
+    have hfactor : (u - algebraMap ℝ D (Real.sqrt r)) * (u + algebraMap ℝ D (Real.sqrt r)) = 0 := by
+      have hcomm : u * algebraMap ℝ D (Real.sqrt r) = algebraMap ℝ D (Real.sqrt r) * u :=
+        (Algebra.commutes _ _).symm
+      rw [sub_mul, mul_add, mul_add, hcomm, hu, ← map_mul, hs]
+      abel
+    rcases mul_eq_zero.1 hfactor with h0 | h0
+    · exact hbot (by rw [sub_eq_zero.1 h0]; exact Subalgebra.algebraMap_mem _ _)
+    · have hueq : u = -algebraMap ℝ D (Real.sqrt r) := eq_neg_of_add_eq_zero_left h0
+      exact hbot (by rw [hueq]; exact neg_mem (Subalgebra.algebraMap_mem _ _))
+  -- Rescale so that the square becomes `-1`.
+  have hsq : Real.sqrt (-r) * Real.sqrt (-r) = -r := Real.mul_self_sqrt (by linarith)
+  have hne : Real.sqrt (-r) ≠ 0 := (Real.sqrt_pos.2 (by linarith)).ne'
+  have hscal : (Real.sqrt (-r))⁻¹ * (Real.sqrt (-r))⁻¹ * r = -1 := by
+    field_simp
+    linarith [hsq]
+  exact ⟨(Real.sqrt (-r))⁻¹, by
+    rw [smul_mul_smul_comm, hu, Algebra.smul_def, ← map_mul, hscal, map_neg, map_one]⟩
+
 /-- **A finite-dimensional real division algebra that is not `ℝ` contains a square root of `-1`.**
 
 Take any `y` outside the copy of `ℝ`, write `y * y = a + b * y`, and complete the square: the
-element `u = y - b / 2` has `u * u` a real scalar `r`, and `r` is negative because a nonnegative `r`
-would factor `u * u - r` as `(u - √r) * (u + √r)` and put `u`, hence `y`, in `ℝ`. Rescaling `u` by
-`(√(-r))⁻¹` normalises the square to `-1`. -/
+element `u = y - b / 2` has `u * u` a real scalar, and `u` is again outside `ℝ`, so
+`exists_smul_mul_self_eq_neg_one` rescales it to a square root of `-1`. -/
 theorem exists_mul_self_eq_neg_one (h : finrank ℝ D ≠ 1) : ∃ i : D, i * i = -1 := by
   -- Some `y` is not a real scalar.
   obtain ⟨y, hy⟩ : ∃ y : D, y ∉ (⊥ : Subalgebra ℝ D) := by
@@ -151,31 +190,11 @@ theorem exists_mul_self_eq_neg_one (h : finrank ℝ D ≠ 1) : ∃ i : D, i * i 
     rw [hudef, sub_mul, mul_sub, mul_sub, hab, hcy, hyc, hrdef, map_add, map_mul]
     module
   -- `u` is not a real scalar either, since `y = u + b / 2` is not.
-  have hune : u ∉ (⊥ : Subalgebra ℝ D) := fun hmem ↦ hy (by
-    rw [show y = u + algebraMap ℝ D (b / 2) by rw [hudef]; abel]
-    exact add_mem hmem (Subalgebra.algebraMap_mem _ _))
-  -- A nonnegative square would factor and force `u` into `ℝ`.
-  have hr : r < 0 := by
-    by_contra hge
-    have hs : Real.sqrt r * Real.sqrt r = r := Real.mul_self_sqrt (not_lt.1 hge)
-    have hfactor : (u - algebraMap ℝ D (Real.sqrt r)) * (u + algebraMap ℝ D (Real.sqrt r)) = 0 := by
-      have hcomm : u * algebraMap ℝ D (Real.sqrt r) = algebraMap ℝ D (Real.sqrt r) * u :=
-        (Algebra.commutes _ _).symm
-      rw [sub_mul, mul_add, mul_add, hcomm, hu, ← map_mul, hs]
-      abel
-    rcases mul_eq_zero.1 hfactor with h0 | h0
-    · exact hune (by rw [sub_eq_zero.1 h0]; exact Subalgebra.algebraMap_mem _ _)
-    · exact hune (by
-        rw [show u = -algebraMap ℝ D (Real.sqrt r) from eq_neg_of_add_eq_zero_left h0]
-        exact neg_mem (Subalgebra.algebraMap_mem _ _))
-  -- Rescale so that the square becomes `-1`.
-  refine ⟨(Real.sqrt (-r))⁻¹ • u, ?_⟩
-  have hsq : Real.sqrt (-r) * Real.sqrt (-r) = -r := Real.mul_self_sqrt (by linarith)
-  have hne : Real.sqrt (-r) ≠ 0 := (Real.sqrt_pos.2 (by linarith)).ne'
-  have hscal : (Real.sqrt (-r))⁻¹ * (Real.sqrt (-r))⁻¹ * r = -1 := by
-    field_simp
-    linarith [hsq]
-  rw [smul_mul_smul_comm, hu, Algebra.smul_def, ← map_mul, hscal, map_neg, map_one]
+  have hune : u ∉ (⊥ : Subalgebra ℝ D) := fun hmem ↦ by
+    have hyu : y = u + algebraMap ℝ D (b / 2) := by rw [hudef]; abel
+    exact hy (hyu ▸ add_mem hmem (Subalgebra.algebraMap_mem _ _))
+  obtain ⟨c, hc⟩ := exists_smul_mul_self_eq_neg_one hu hune
+  exact ⟨c • u, hc⟩
 
 /-- **A square root of `-1` that does not commute with everything has an anticommuting partner**:
 if `i * i = -1` and some `x` fails to commute with `i`, then there is a `j` with `j * j = -1` and
@@ -184,9 +203,9 @@ if `i * i = -1` and some `x` fails to commute with `i`, then there is a `j` with
 The partner is built from `x` as follows. The element `j₀ = x + i * x * i` satisfies
 `i * j₀ = i * x - x * i = -(j₀ * i)`, so it is nonzero and anticommutes with `i`. Its square
 commutes with `i`, so in the quadratic `j₀ * j₀ = a + b * j₀` the linear coefficient `b` must
-vanish, `i * j₀` being nonzero. The remaining scalar `a` is negative, since `a ≥ 0` would factor
-`j₀ * j₀ - a` and force `j₀` into `ℝ`, where it would commute with `i`. Rescaling `j₀` by
-`(√(-a))⁻¹` normalises its square to `-1`. -/
+vanish, `i * j₀` being nonzero. So `j₀ * j₀` is a real scalar while `j₀` itself is not, `j₀` being a
+scalar only if it commuted with `i`; `exists_smul_mul_self_eq_neg_one` then rescales `j₀` to a
+square root of `-1`, and rescaling keeps the anticommutation. -/
 theorem exists_mul_self_eq_neg_one_and_mul_eq_neg_mul {i x : D} (hi : i * i = -1)
     (hx : x * i ≠ i * x) : ∃ j : D, j * j = -1 ∧ i * j = -(j * i) := by
   obtain ⟨j, hjdef⟩ : ∃ j : D, j = x + i * x * i := ⟨_, rfl⟩
@@ -224,8 +243,7 @@ theorem exists_mul_self_eq_neg_one_and_mul_eq_neg_mul {i x : D} (hi : i * i = -1
     · linarith
     · exact absurd h0 hijne
   rw [hb, zero_smul, add_zero] at hab
-  -- A real scalar would commute with `i`, so `j` is not one; and a nonnegative square would
-  -- factor and make it one.
+  -- A real scalar would commute with `i`, so `j` is not one.
   have hjnotbot : j ∉ (⊥ : Subalgebra ℝ D) := by
     intro hmem
     obtain ⟨t, ht⟩ := Algebra.mem_bot.1 hmem
@@ -241,28 +259,9 @@ theorem exists_mul_self_eq_neg_one_and_mul_eq_neg_mul {i x : D} (hi : i * i = -1
     rcases smul_eq_zero.1 hzero with h0 | h0
     · norm_num at h0
     · exact h0
-  have ha : a < 0 := by
-    by_contra hge
-    have hs : Real.sqrt a * Real.sqrt a = a := Real.mul_self_sqrt (not_lt.1 hge)
-    have hfactor : (j - algebraMap ℝ D (Real.sqrt a)) * (j + algebraMap ℝ D (Real.sqrt a)) = 0 := by
-      have hc : j * algebraMap ℝ D (Real.sqrt a) = algebraMap ℝ D (Real.sqrt a) * j :=
-        (Algebra.commutes _ _).symm
-      rw [sub_mul, mul_add, mul_add, hc, hab, ← map_mul, hs]
-      abel
-    rcases mul_eq_zero.1 hfactor with h0 | h0
-    · exact hjnotbot (by rw [sub_eq_zero.1 h0]; exact Subalgebra.algebraMap_mem _ _)
-    · exact hjnotbot (by
-        rw [show j = -algebraMap ℝ D (Real.sqrt a) from eq_neg_of_add_eq_zero_left h0]
-        exact neg_mem (Subalgebra.algebraMap_mem _ _))
-  -- Rescale so that the square becomes `-1`.
-  have hsqa : Real.sqrt (-a) * Real.sqrt (-a) = -a := Real.mul_self_sqrt (by linarith)
-  have hnea : Real.sqrt (-a) ≠ 0 := (Real.sqrt_pos.2 (by linarith)).ne'
-  have hscal : (Real.sqrt (-a))⁻¹ * (Real.sqrt (-a))⁻¹ * a = -1 := by
-    field_simp
-    linarith [hsqa]
-  refine ⟨(Real.sqrt (-a))⁻¹ • j, ?_, ?_⟩
-  · rw [smul_mul_smul_comm, hab, Algebra.smul_def, ← map_mul, hscal, map_neg, map_one]
-  · rw [mul_smul_comm, smul_mul_assoc, hanti, smul_neg]
+  -- Rescale so that the square becomes `-1`; rescaling preserves anticommutation with `i`.
+  obtain ⟨c, hc⟩ := exists_smul_mul_self_eq_neg_one hab hjnotbot
+  exact ⟨c • j, hc, by rw [mul_smul_comm, smul_mul_assoc, hanti, smul_neg]⟩
 
 end Quadratic
 
@@ -332,12 +331,13 @@ theorem nonempty_algEquiv_real_or_quaternion (D : Type*) [DivisionRing D] [Algeb
       rwa [Algebra.IsCentral.center_eq_bot] at hmem
     -- The anticommuting partner, and the quaternion basis the pair forms.
     obtain ⟨j, hj, hanti⟩ := exists_mul_self_eq_neg_one_and_mul_eq_neg_mul hi hx
+    have hanti' : j * i = -(i * j) := by rw [hanti]; abel
     let q : QuaternionAlgebra.Basis D (-1 : ℝ) 0 (-1) :=
       { i := i, j := j, k := i * j
         i_mul_i := by rw [hi]; simp
         j_mul_j := by rw [hj]; simp
         i_mul_j := rfl
-        j_mul_i := by rw [show j * i = -(i * j) by rw [hanti]; abel]; simp }
+        j_mul_i := by rw [hanti']; simp }
     have f : ℍ[ℝ] →ₐ[ℝ] D := q.liftHom
     have hinj : Function.Injective f := f.toRingHom.injective
     have hfr : finrank ℝ ℍ[ℝ] = finrank ℝ D := by
