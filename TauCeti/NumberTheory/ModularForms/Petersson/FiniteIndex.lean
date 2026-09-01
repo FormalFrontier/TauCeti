@@ -48,8 +48,6 @@ positive-definite Hermitian form is all that the adjoint theory downstream needs
   every form by one and the same unimodular constant.
 * `CuspForm.peterssonInner_slash_of_mem_withCenter`: the summand is independent of the coset
   representative, which is what makes the sum well defined.
-* `ModularGroup.pairwise_disjoint_smul_fdo_out_withCenter`: the translates of `𝒟ᵒ` indexed by
-  the cosets of `Γ·{±I}` are pairwise disjoint.
 * `CuspForm.peterssonInnerCosets_conj_symm`: Hermitian symmetry.
 * `CuspForm.peterssonInnerCosets_add_left`/`_right`, `_smul_right`, `_smul_left`:
   sesquilinearity.
@@ -62,9 +60,6 @@ Ported from the AINTLIB `LeanModularForms` project
 bespoke hyperbolic measure replaced by the `volume` of `ℍ` used throughout TauCeti, and
 stated for an arbitrary finite-index subgroup rather than only `Γ₁(N)`.
 
-The pairwise-disjointness theorem was developed in Tau Ceti and has no counterpart in that
-AINTLIB source.
-
 ## References
 
 * [F. Diamond and J. Shurman, *A first course in modular forms*][diamondshurman2005],
@@ -76,7 +71,7 @@ public section
 open MeasureTheory UpperHalfPlane ModularGroup Complex
 open Matrix.SpecialLinearGroup
 
-open scoped MatrixGroups ModularForm ComplexConjugate Pointwise
+open scoped MatrixGroups ModularForm ComplexConjugate
 
 namespace Subgroup
 
@@ -87,30 +82,6 @@ noncomputable instance fintypeQuotientWithCenter {Γ : Subgroup SL(2, ℤ)} [Γ.
   Subgroup.fintypeQuotientOfFiniteIndex
 
 end Subgroup
-
-namespace ModularGroup
-
-/-- **The translates of `𝒟ᵒ` indexed by the cosets of `Γ·{±I}` are pairwise disjoint.** By
-`ModularGroup.disjoint_smul_fdo` it suffices that the chosen representatives of two distinct
-cosets differ neither by `1` nor by `−1`; and both `1` and `−1` lie in `Γ·{±I}`, so either
-coincidence would identify the two cosets. -/
-theorem pairwise_disjoint_smul_fdo_out_withCenter (Γ : Subgroup SL(2, ℤ)) :
-    Pairwise (Function.onFun Disjoint
-      fun q : SL(2, ℤ) ⧸ Γ.withCenter ↦ ((q.out)⁻¹ • fdo)) := by
-  intro q₁ q₂ hq
-  refine disjoint_smul_fdo ?_ ?_ <;> rw [inv_inv] <;> intro h <;> apply hq
-  · rw [← Quotient.out_eq q₁, ← Quotient.out_eq q₂, mul_inv_eq_one.mp h]
-  · have hneg : q₁.out = -q₂.out := by
-      rw [mul_inv_eq_iff_eq_mul] at h
-      simpa using h
-    rw [← Quotient.out_eq q₁, ← Quotient.out_eq q₂, hneg]
-    refine QuotientGroup.eq.mpr ?_
-    have hcalc : (-q₂.out)⁻¹ * q₂.out = -1 := by rw [← neg_inv, neg_mul, inv_mul_cancel]
-    rw [hcalc]
-    exact Γ.center_le_withCenter
-      (Matrix.SpecialLinearGroup.mem_center_iff_eq_one_or_eq_neg_one.mpr (Or.inr rfl))
-
-end ModularGroup
 
 namespace CuspForm
 
