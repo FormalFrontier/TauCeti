@@ -338,7 +338,8 @@ commensurates `H₂`, which is commensurable with `H₁`. -/
 noncomputable instance {Δ : Submonoid G} {H₁ H₂ : Subgroup G} [IsHeckeTriple Δ H₁ H₂]
     (g : Δ) : Fintype (DecompQuotient H₁ H₂ (g : G)) :=
   Subgroup.fintypeOfIndexNeZero
-    (IsHeckeTriple.commensurable_conjAct_right g).1.relIndex_ne_zero
+    (Subgroup.isFiniteRelIndex_iff_finiteIndex.mp
+      (IsHeckeTriple.commensurable_conjAct_right g).1).index_ne_zero
 
 /-- Conjugating the *left* subgroup by the inverse of an element of `Δ` gives a subgroup
 commensurable with the right one. This is `commensurable_conjAct_right` on the other flank:
@@ -363,7 +364,8 @@ instance {Δ : Submonoid G} {H₁ H₂ : Subgroup G} [IsHeckeTriple Δ H₁ H₂
     Finite (DecompQuotient H₂ H₁ (g : G)⁻¹) :=
   @Finite.of_fintype _
     (Subgroup.fintypeOfIndexNeZero
-      (IsHeckeTriple.commensurable_conjAct_inv_left g).1.relIndex_ne_zero)
+      (Subgroup.isFiniteRelIndex_iff_finiteIndex.mp
+        (IsHeckeTriple.commensurable_conjAct_inv_left g).1).index_ne_zero)
 
 end IsHeckeTriple
 

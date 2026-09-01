@@ -239,7 +239,7 @@ theorem ExchangeableAt.finiteDeFinetti
         m.choose 2 / n := by
   let _ : IsProbabilityMeasure (prefixLaw μ X n) := by
     rw [prefixLaw_def, blockLaw_def]
-    exact Measure.isProbabilityMeasure_map (aemeasurable_pi_lambda _ hX)
+    infer_instance
   rw [← h.sampleWithoutReplacement_eq_prefixLaw hmn hX]
   constructor
   · simpa using sampleWithoutReplacement_le_sampleWithReplacement_add

@@ -11,6 +11,7 @@ public import TauCeti.Probability.Exchangeability.Arrays.DeFinetti
 -- Public: the coding map and the barycenter identity it satisfies appear in every statement.
 public import TauCeti.Probability.DeFinetti.Coding
 -- Non-public: the mixture form of a row path law is used only inside proofs.
+import TauCeti.MeasureTheory.Measure.Measurability
 import TauCeti.Probability.Exchangeability.MixedIID.Mixture
 
 /-!
@@ -132,7 +133,7 @@ leaves the law alone exactly because `π` is invariant under that pushforward. -
 theorem separatelyExchangeable_unitIntervalCoding
     (π : Measure (ProbabilityMeasure (ℕ → α))) [IsProbabilityMeasure π]
     (hπ : ∀ τ : Equiv.Perm ℕ,
-      π.map (fun P => P.map (measurable_reindex (α := α) τ).aemeasurable) = π) :
+      π.map (fun P => P.map (fun x : ℕ → α => fun k => x (τ k))) = π) :
     SeparatelyExchangeable
         (π.prod (Measure.infinitePi fun _ : ℕ => (volume : Measure unitInterval)))
       fun p q => unitIntervalCoding (ℕ → α) q.1 (q.2 p.1) p.2 := by
@@ -174,7 +175,7 @@ theorem SeparatelyExchangeable.exists_arrayLaw_eq_map_unitIntervalCoding
     ∃ π : ProbabilityMeasure (ProbabilityMeasure (ℕ → α)),
       (∀ τ : Equiv.Perm ℕ,
           (π : Measure (ProbabilityMeasure (ℕ → α))).map
-            (fun P => P.map (measurable_reindex (α := α) τ).aemeasurable) = π) ∧
+            (fun P => P.map (fun x : ℕ → α => fun k => x (τ k))) = π) ∧
         (μ.map fun ω p => X p ω) =
           ((π : Measure (ProbabilityMeasure (ℕ → α))).prod
               (Measure.infinitePi fun _ : ℕ => (volume : Measure unitInterval))).map
@@ -183,11 +184,11 @@ theorem SeparatelyExchangeable.exists_arrayLaw_eq_map_unitIntervalCoding
   have hν_meas : Measurable ν :=
     (mixedIIDWith_of_conditionallyIIDWith hν).measurable_mixingRepresentative
   have hprob : IsProbabilityMeasure (μ.map ν) :=
-    Measure.isProbabilityMeasure_map hν_meas.aemeasurable
+    inferInstance
   refine ⟨⟨μ.map ν, hprob⟩, fun τ => ?_, ?_⟩
   · have hmap : Measurable fun P : ProbabilityMeasure (ℕ → α) =>
-        P.map (measurable_reindex (α := α) τ).aemeasurable :=
-      ((Measure.measurable_map _ (measurable_reindex τ)).comp measurable_subtype_coe).subtype_mk
+        P.map (fun x : ℕ → α => fun k => x (τ k)) :=
+      TauCeti.MeasureTheory.measurable_probabilityMeasure_map (measurable_reindex τ)
     simp only [ProbabilityMeasure.coe_mk]
     rw [AEMeasurable.map_map_of_aemeasurable hmap.aemeasurable hν_meas.aemeasurable]
     exact hinv τ
@@ -208,7 +209,7 @@ theorem separatelyExchangeable_iff_exists_coding {μ : Measure Ω} [IsProbabilit
       ∃ π : ProbabilityMeasure (ProbabilityMeasure (ℕ → α)),
         (∀ τ : Equiv.Perm ℕ,
             (π : Measure (ProbabilityMeasure (ℕ → α))).map
-              (fun P => P.map (measurable_reindex (α := α) τ).aemeasurable) = π) ∧
+              (fun P => P.map (fun x : ℕ → α => fun k => x (τ k))) = π) ∧
           (μ.map fun ω p => X p ω) =
             ((π : Measure (ProbabilityMeasure (ℕ → α))).prod
                 (Measure.infinitePi fun _ : ℕ => (volume : Measure unitInterval))).map

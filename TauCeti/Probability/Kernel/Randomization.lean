@@ -192,7 +192,7 @@ theorem exists_measurable_map_map_prod_volume_eq_map_prodMk
   refine ⟨f, hf, hcode.trans ?_⟩
   ext s hs
   rw [Measure.map_apply_of_aemeasurable (hX.prodMk hY) hs,
-    compProd_map_condDistrib hY, Measure.map_apply_of_aemeasurable (hX.prodMk hY) hs]
+    compProd_map_condDistrib hX hY, Measure.map_apply_of_aemeasurable (hX.prodMk hY) hs]
 
 /-- **Functional representation with fresh independent noise.** A pair `(X, Y)` on a finite
 measure space has the same law as `(X, f(X, U))`, where `U` is an independent uniform variable
