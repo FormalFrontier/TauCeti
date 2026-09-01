@@ -216,9 +216,33 @@ theorem SeparatelyDissociated.measure_eq_zero_or_one_of_arrayTail [IsProbability
 
 /-- **The diagonal of a jointly dissociated array has a trivial tail.** -/
 theorem JointlyDissociated.measure_eq_zero_or_one_of_tailProcess_arrayDiag [IsProbabilityMeasure μ]
-    (h : JointlyDissociated μ X) (hX : ∀ p, Measurable (X p)) {s : Set Ω}
-    (hs : MeasurableSet[tailProcess (arrayDiag X)] s) : μ s = 0 ∨ μ s = 1 :=
-  h.measure_eq_zero_or_one_of_arrayTail hX (tailProcess_arrayDiag_le_arrayTail X s hs)
+    (h : JointlyDissociated μ X) (hX : ∀ i, Measurable (arrayDiag X i)) {s : Set Ω}
+    (hs : MeasurableSet[tailProcess (arrayDiag X)] s) : μ s = 0 ∨ μ s = 1 := by
+  have hindep : iIndepFun (arrayDiag X) μ := by
+    rw [iIndepFun_iff]
+    intro t f hf
+    induction t using Finset.induction_on with
+    | empty => simp
+    | @insert i t hi ih =>
+        have hdisj : Disjoint ({i} : Set ℕ) (t : Set ℕ) := by
+          simpa [Set.disjoint_left] using hi
+        have hit := h.indep_blockSigma_prod (S := {i}) (T := (t : Set ℕ)) hdisj
+        have hfi' := hf i (Finset.mem_insert_self i t)
+        rw [arrayDiag_apply] at hfi'
+        have hfi : MeasurableSet[blockSigma X (({i} : Set ℕ) ×ˢ {i})] (f i) :=
+          (measurable_blockSigma_of_mem (Z := X) (by simp)).comap_le _ hfi'
+        have hrest : MeasurableSet[blockSigma X ((t : Set ℕ) ×ˢ (t : Set ℕ))]
+            (⋂ j ∈ t, f j) := by
+          refine t.measurableSet_biInter fun j hj => ?_
+          have hfj := hf j (Finset.mem_insert_of_mem hj)
+          rw [arrayDiag_apply] at hfj
+          exact (measurable_blockSigma_of_mem (Z := X) (by simp [hj])).comap_le _ hfj
+        rw [Finset.prod_insert hi, ← ih fun j hj => hf j (Finset.mem_insert_of_mem hj)]
+        simpa only [Finset.set_biInter_insert] using
+          (Indep_iff _ _ _).mp hit _ _ hfi hrest
+  rw [tailProcess_eq_limsup] at hs
+  exact measure_zero_or_one_of_measurableSet_limsup_atTop
+    (fun i => (hX i).comap_le) hindep.iIndep hs
 
 end Probability
 
