@@ -8,6 +8,7 @@ module
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.DiagonalTorus.ClosedImmersion
 public import TauCeti.Algebra.AlgebraicGroup.Hopf.KernelPoints
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Points.Separation
+public import TauCeti.Algebra.AlgebraicGroup.Torus.Maximal
 
 /-!
 # Maximality of the diagonal torus in the general linear group
@@ -30,10 +31,16 @@ whereas the competing subgroup below need not itself be a torus or connected.
 
 * `TauCeti.GeneralLinear.diagonalTorusDefiningIdeal`: the Hopf ideal cutting out the diagonal
   torus in `GL_n`.
+* `TauCeti.GeneralLinear.diagonalTorusCoordinateIso`: its coordinate quotient is the standard
+  Laurent Hopf algebra.
+* `TauCeti.GeneralLinear.splitTorusCommHopfAlgProperty_quotient_diagonalTorusDefiningIdeal`:
+  its quotient coordinate Hopf algebra is a split torus.
 * `TauCeti.GeneralLinear.quotientPointsSubgroup_diagonalTorusDefiningIdeal`: its points are the
   range of the diagonal-torus point morphism.
 * `TauCeti.GeneralLinear.eq_diagonalTorusDefiningIdeal_of_le_of_isCocomm`: no larger reduced
   commutative closed subgroup contains the diagonal torus.
+* `TauCeti.GeneralLinear.isMaximalTorus_diagonalTorusDefiningIdeal`: the diagonal torus is a
+  maximal torus in the Hopf-ideal API.
 
 ## References
 
@@ -65,6 +72,39 @@ noncomputable def diagonalTorusDefiningIdeal :
     HopfIdeal k (coordinateHopfAlgebra k n) :=
   HopfIdeal.kerOfSurjective (diagonalTorusCoordinateMap (R := k) (N := n)).hom
     (diagonalTorusCoordinateMap_surjective k n)
+
+/-- The quotient by the diagonal-torus defining ideal is its Laurent coordinate Hopf algebra. -/
+noncomputable def diagonalTorusCoordinateIso :
+    FiniteTypeCommHopfAlgCat.quotient
+        ⟨coordinateHopfAlgebra k n,
+          (finiteTypeCommHopfAlgProperty_iff _).2 inferInstance⟩
+        (diagonalTorusDefiningIdeal k n) ≅
+      DiagonalizableGroup.coordinateRing k
+        (SplitTorus.characterGroup (ULift.{u} (Fin n))) := by
+  rw [diagonalTorusDefiningIdeal]
+  exact ObjectProperty.isoMk _ <| _root_.CommHopfAlgCat.isoMk <|
+    HopfIdeal.kerLiftBialgEquiv
+      (diagonalTorusCoordinateMap (R := k) (N := n)).hom
+      (diagonalTorusCoordinateMap_surjective k n)
+
+/-- The quotient coordinate Hopf algebra of the diagonal torus is a split torus of rank `n`. -/
+theorem splitTorusCommHopfAlgProperty_quotient_diagonalTorusDefiningIdeal :
+    splitTorusCommHopfAlgProperty k
+      (FiniteTypeCommHopfAlgCat.quotient
+        ⟨coordinateHopfAlgebra k n,
+          (finiteTypeCommHopfAlgProperty_iff _).2 inferInstance⟩
+        (diagonalTorusDefiningIdeal k n)) := by
+  rw [splitTorusCommHopfAlgProperty_iff]
+  exact ⟨n, ⟨(diagonalTorusCoordinateIso k n).symm⟩⟩
+
+/-- The quotient coordinate Hopf algebra of the diagonal torus is a torus. -/
+theorem torusCommHopfAlgProperty_quotient_diagonalTorusDefiningIdeal :
+    torusCommHopfAlgProperty k
+      (FiniteTypeCommHopfAlgCat.quotient
+        ⟨coordinateHopfAlgebra k n,
+          (finiteTypeCommHopfAlgProperty_iff _).2 inferInstance⟩
+        (diagonalTorusDefiningIdeal k n)) :=
+  (splitTorusCommHopfAlgProperty_quotient_diagonalTorusDefiningIdeal k n).torus k _
 
 /-- The points cut out by `diagonalTorusDefiningIdeal` are exactly the diagonal-torus points. -/
 theorem quotientPointsSubgroup_diagonalTorusDefiningIdeal (A : CommAlgCat.{u} k) :
@@ -188,6 +228,25 @@ theorem eq_diagonalTorusDefiningIdeal_of_le_of_isCocomm
   let _ : IsReduced (CommHopfAlgCat.quotient H D) :=
     isReduced_quotient_diagonalTorusDefiningIdeal k n
   exact HopfIdeal.eq_of_quotientPointsSubgroup_eq hpoints
+
+/-- **The diagonal torus of `GL_n` is a maximal torus.** This packages the stronger result that
+no reduced commutative closed subgroup properly containing it exists into the general
+Hopf-ideal maximal-torus predicate. -/
+theorem isMaximalTorus_diagonalTorusDefiningIdeal :
+    HopfIdeal.IsMaximalTorus k (coordinateHopfAlgebra k n)
+      (diagonalTorusDefiningIdeal k n) := by
+  rw [HopfIdeal.isMaximalTorus_iff]
+  refine ⟨torusCommHopfAlgProperty_quotient_diagonalTorusDefiningIdeal k n, ?_⟩
+  intro I hI hID
+  let _ : IsReduced
+      (CommHopfAlgCat.quotient (coordinateHopfAlgebra k n) I) :=
+    hI.geometricallyReduced.isReduced
+  let _ : Coalgebra.IsCocomm k
+      (CommHopfAlgCat.quotient (coordinateHopfAlgebra k n) I) :=
+    hI.isCocomm k _
+  have hEq := eq_diagonalTorusDefiningIdeal_of_le_of_isCocomm k n I hID
+  subst I
+  exact le_rfl
 
 end
 
