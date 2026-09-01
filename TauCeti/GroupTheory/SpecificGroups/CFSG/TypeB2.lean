@@ -37,8 +37,10 @@ the `q`-power Frobenius on the same ambient group, at the field order `q = 2^(2m
 records.
 
 Nor is the untwisted family `B₂(q)` built here, although it is the other classification-list family
-on this diagram and would use the same carrier and the same Frobenius: the branch its Steinberg map
-needs is separate work, and this file adds no index subtype for it.
+on this diagram and would share the carrier. The two families differ in their Steinberg maps: the
+untwisted one takes the `q`-power Frobenius itself, where the Suzuki family takes the odd power
+`τ ^ (2m+1)` of the special isogeny. `TauCeti.TypeB2LieIndex` supplies the untwisted validated index
+subtype, but attaching the L0 carrier and its Steinberg map is separate work.
 
 Nothing here asserts that the carrier is reductive, that its weight torus is maximal, that it is
 the symplectic group scheme, or that any group below is finite, perfect, or simple. In particular

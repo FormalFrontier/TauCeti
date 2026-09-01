@@ -57,7 +57,7 @@ instance instTopologicalSpaceRealCliffordAlgebra (Q : QuadraticForm ℝ V) :
 /-- A real Clifford algebra is a topological additive group for its real module topology. -/
 instance instIsTopologicalAddGroupRealCliffordAlgebra (Q : QuadraticForm ℝ V) :
     IsTopologicalAddGroup (CliffordAlgebra Q) :=
-  IsModuleTopology.topologicalAddGroup ℝ _
+  IsModuleTopology.isTopologicalAddGroup ℝ _
 
 /-- Clifford reversal is continuous for the real module topology. -/
 @[fun_prop]

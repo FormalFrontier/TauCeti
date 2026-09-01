@@ -199,8 +199,9 @@ def excursionLaw (κ : Kernel α α) [IsMarkovKernel κ] (a₀ : α) : Measure (
   (markovChainLaw (Measure.dirac a₀) κ).map fun x => excursion x a₀ 0
 
 /-- The excursion law is a probability measure, being the law of a random word. -/
-instance isProbabilityMeasure_excursionLaw : IsProbabilityMeasure (excursionLaw κ a₀) :=
-  Measure.isProbabilityMeasure_map (measurable_excursion a₀ 0).aemeasurable
+instance isProbabilityMeasure_excursionLaw : IsProbabilityMeasure (excursionLaw κ a₀) := by
+  rw [excursionLaw]
+  infer_instance
 
 /-- The excursion law evaluated on a set of words. Every set of words is measurable, the state
 space being countable and discrete. -/
@@ -395,8 +396,9 @@ theorem conditionallyIIDWith_excursionProcess
       (excursionProcess (fun n (x : ℕ → α) => x n) a₀)
       (fun _ => ⟨excursionLaw κ a₀, isProbabilityMeasure_excursionLaw⟩) :=
   conditionallyIIDWith_const_iff_iIndepFun_and_map_eq.2
-    ⟨iIndepFun_excursionProcess hret, fun k => map_excursionProcess_eq_excursionLaw k
-      (hret.mono fun _ hx => exists_visitCount_of_infinite hx (k + 1))⟩
+    ⟨aemeasurable_excursionProcess_eval _ a₀, iIndepFun_excursionProcess hret,
+      fun k => map_excursionProcess_eq_excursionLaw k
+        (hret.mono fun _ hx => exists_visitCount_of_infinite hx (k + 1))⟩
 
 /-- **A recurrent Markov chain is the concatenation of i.i.d. excursions.** Drawing excursions
 independently from the excursion law and concatenating them reproduces the chain: the chain is

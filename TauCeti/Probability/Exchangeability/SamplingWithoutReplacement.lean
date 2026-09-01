@@ -118,7 +118,7 @@ theorem isProbabilityMeasure_sampleWithoutReplacement {ι κ : Type*} [Finite κ
   let _ : IsProbabilityMeasure (uniformOn E) :=
     isProbabilityMeasure_uniformOn (Set.toFinite E) ⟨e, e.injective⟩
   rw [sampleWithoutReplacement_def]
-  exact Measure.isProbabilityMeasure_map measurable_reindexPopulation.aemeasurable
+  infer_instance
 
 /-- Evaluating the without-replacement law averages the selected population laws over uniform
 injective selections. -/
