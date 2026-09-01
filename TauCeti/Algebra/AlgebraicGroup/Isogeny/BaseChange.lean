@@ -53,47 +53,6 @@ universe u
 variable {k L : Type u} [CommRing k] [CommRing L] [Algebra k L]
 variable {H K : _root_.CommHopfAlgCat.{u} k}
 
-/-- The conjunction of scheme-morphism properties underlying a coordinate isogeny. -/
-private def isogenyProperty : MorphismProperty (Grp (Over (Spec (CommRingCat.of L)))) :=
-  ((@IsFinite ⊓ (@Flat ⊓ @Surjective)) : MorphismProperty Scheme).inverseImage
-    (Grp.forget _ ⋙ Over.forget _)
-
-private instance : isogenyProperty (L := L).RespectsIso := by
-  unfold isogenyProperty
-  let _ : MorphismProperty.RespectsIso
-      (@Flat ⊓ @Surjective : MorphismProperty Scheme) :=
-    MorphismProperty.RespectsIso.inf @Flat @Surjective
-  let _ : MorphismProperty.RespectsIso
-      (@IsFinite ⊓ (@Flat ⊓ @Surjective) : MorphismProperty Scheme) :=
-    MorphismProperty.RespectsIso.inf @IsFinite (@Flat ⊓ @Surjective)
-  infer_instance
-
-private theorem isogenyProperty_pullback
-    (f : H ⟶ K) (h : isogenyProperty (L := k) ((hopfSpec (CommRingCat.of k)).map f.op)) :
-    isogenyProperty (L := L)
-      ((Over.pullback (Spec.map (CommRingCat.ofHom (algebraMap k L)))).mapGrp.map
-        ((hopfSpec (CommRingCat.of k)).map f.op)) := by
-  -- Unfold the inverse-image/intersection property to the underlying scheme morphisms.
-  -- For the target, this also exposes `hom.hom.left`, where the pullback comparison rewrites.
-  change
-    IsFinite ((hopfSpec (CommRingCat.of k)).map f.op).hom.hom.left ∧
-      Flat ((hopfSpec (CommRingCat.of k)).map f.op).hom.hom.left ∧
-        Surjective ((hopfSpec (CommRingCat.of k)).map f.op).hom.hom.left at h
-  change
-    IsFinite
-        (((Over.pullback (Spec.map (CommRingCat.ofHom (algebraMap k L)))).mapGrp.map
-          ((hopfSpec (CommRingCat.of k)).map f.op)).hom.hom.left) ∧
-      Flat
-          (((Over.pullback (Spec.map (CommRingCat.ofHom (algebraMap k L)))).mapGrp.map
-            ((hopfSpec (CommRingCat.of k)).map f.op)).hom.hom.left) ∧
-        Surjective
-          (((Over.pullback (Spec.map (CommRingCat.ofHom (algebraMap k L)))).mapGrp.map
-            ((hopfSpec (CommRingCat.of k)).map f.op)).hom.hom.left)
-  rw [Functor.mapGrp_map_hom_hom]
-  exact ⟨MorphismProperty.overPullbackMap _ _ h.1,
-    MorphismProperty.overPullbackMap _ _ h.2.1,
-    MorphismProperty.overPullbackMap _ _ h.2.2⟩
-
 private theorem groupSchemeProperty_hopfSpec_baseChange
     (P : MorphismProperty (Grp (Over (Spec (CommRingCat.of L))))) [P.RespectsIso]
     (f : H ⟶ K)
@@ -115,9 +74,12 @@ private theorem groupSchemeProperty_hopfSpec_baseChange
 theorem IsIsogeny.baseChange {f : H ⟶ K} (hf : IsIsogeny f) :
     IsIsogeny (baseChangeMap (K := L) f) := by
   apply (isIsogeny_iff_isFinite_and_flat_and_surjective_hopfSpec_map _).2
-  exact groupSchemeProperty_hopfSpec_baseChange isogenyProperty f <|
-    isogenyProperty_pullback f <|
-      (isIsogeny_iff_isFinite_and_flat_and_surjective_hopfSpec_map f).1 hf
+  exact (GroupScheme.isIsogeny_iff _).1 <|
+    groupSchemeProperty_hopfSpec_baseChange (GroupScheme.isogenies L) f <|
+      GroupScheme.IsIsogeny.baseChange
+        (Spec.map (CommRingCat.ofHom (algebraMap k L))) <|
+          (GroupScheme.isIsogeny_iff _).2 <|
+            (isIsogeny_iff_isFinite_and_flat_and_surjective_hopfSpec_map f).1 hf
 
 /-- Scalar extension of a coordinate morphism preserves central isogenies of affine group
 schemes. -/
