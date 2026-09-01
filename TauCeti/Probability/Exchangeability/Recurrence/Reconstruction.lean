@@ -12,16 +12,24 @@ import TauCeti.Probability.Exchangeability.MixedIID.Mixture
 /-!
 # Reconstructing a recurrent path from its excursions
 
-A recurrent process that starts at `a₀` returns to it infinitely often, so it is spelled out by its
-excursions and nothing else: reading the excursions off a path and concatenating them back are
-mutually inverse.  This file turns that bijection into an identity of laws,
+A recurrent process that starts at `a₀` returns to it infinitely often, so concatenating its
+excursions recovers the path: `pathOfExcursions_excursion` is the identity used here, and it needs
+exactly that recurrence.  This file turns it into an identity of laws,
 
 ```text
 pathLaw μ X = (pathLaw of the excursion process).map (pathOfExcursions a₀)
 ```
 
-and nothing more.  It is deliberately independent of de Finetti: the reconstruction is a change of
-variables along a measurable bijection, and holds whether or not the excursion law is a mixture.
+and nothing more.
+
+Only that direction is established.  Concatenation is not injective on arbitrary excursion
+sequences — a word containing `a₀` is split further when the excursions are read back — so the
+converse `excursion_pathOfExcursions` carries the hypothesis that the words avoid `a₀`, and is not
+used here.  What the identity above needs is a pushforward along a measurable map that is a.e. left
+inverse to reading the excursions off, not a bijection.
+
+The file is deliberately independent of de Finetti: this is a change of variables, and holds
+whether or not the excursion law is a mixture.
 The representation theorem that identifies that law as a mixture is in `Recurrence.Representation`,
 which is the only file in this subtree that reaches the de Finetti summit.
 
