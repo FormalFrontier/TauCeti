@@ -96,10 +96,6 @@ def card (q : PrimePower) : ℕ := q.p ^ q.exponent
 lemma isPrimePow_card (q : PrimePower) : IsPrimePow q.card :=
   q.prime_p.isPrimePow.pow (Nat.ne_of_gt q.exponent_pos)
 
-/-- A prime-power parameter names a cardinality of at least two. -/
-lemma two_le_card (q : PrimePower) : 2 ≤ q.card :=
-  q.isPrimePow_card.two_le
-
 end PrimePower
 
 /-- The families of finite groups of Lie type, with ranks given by Dynkin subscripts.
@@ -431,44 +427,13 @@ theorem exists_eq_of_hasUnimodularDiagram_of_not_usesHalfFrobenius {d : LieTypeI
     ∃ q : PrimePower, d = .E8 q ∨ d = .F4 q ∨ d = .G2 q := by
   cases d <;> simp_all
 
-/-- The Lie-type families built on the rank-two diagram `B₂`, namely the untwisted family `B₂(q)`
-and the Suzuki family `²B₂(2^(2m+1))`.
-
-Like `HasUnimodularDiagram` this constrains the diagram and not the Steinberg map, so it holds both
-of the untwisted family, whose Steinberg map is the `q`-power Frobenius, and of the Suzuki family,
-whose Steinberg map is an odd power of a half-Frobenius. No rank-two `C` index appears: the `C`
-family starts at rank three in `InStandardRange`, so `B₂(q) = C₂(q)` is always named in the `B`
-family. -/
-def HasRankTwoBDiagram : LieTypeIndex → Prop
-  | .B rank _ => rank = 2
-  | .suzuki _ => True
-  | _ => False
-
-/-- Characterization of the families built on the `B₂` diagram. -/
-@[simp] theorem hasRankTwoBDiagram_iff (d : LieTypeIndex) : d.HasRankTwoBDiagram ↔
-    match d with
-    | .B rank _ => rank = 2
-    | .suzuki _ => True
-    | _ => False :=
-  Iff.rfl
-
-instance : DecidablePred HasRankTwoBDiagram := fun d => by
-  cases d <;> rw [hasRankTwoBDiagram_iff] <;> infer_instance
-
-/-- **An index is built on the `B₂` diagram exactly when its underlying Dynkin type is `B 2`.** -/
-theorem hasRankTwoBDiagram_iff_dynkinType (d : LieTypeIndex) :
-    d.HasRankTwoBDiagram ↔ d.dynkinType = .B 2 := by
-  cases d <;> simp
-
-/-- The Suzuki family is built on the `B₂` diagram. -/
-theorem hasRankTwoBDiagram_of_isSuzuki {d : LieTypeIndex} (h : d.IsSuzuki) :
-    d.HasRankTwoBDiagram := by
-  cases d <;> simp_all
-
-/-- **The one untwisted family on the `B₂` diagram.** Removing the Suzuki constructor from the
-previous list leaves `B₂(q)`. -/
-theorem exists_eq_of_hasRankTwoBDiagram_of_not_usesHalfFrobenius {d : LieTypeIndex}
-    (hd : d.HasRankTwoBDiagram) (hf : ¬d.UsesHalfFrobenius) :
+/-- **The one untwisted family on the rank-two diagram `B₂`.** The families whose Dynkin type is
+`B 2` are the untwisted `B₂(q)`, by `dynkinType_B`, and the Suzuki family `²B₂(2^(2m+1))`, by
+`dynkinType_suzuki`; removing the Suzuki constructor, the one of the two using a half-Frobenius,
+leaves `B₂(q)`. No rank-two `C` index appears: the `C` family starts at rank three in
+`InStandardRange`, so `B₂(q) = C₂(q)` is always named in the `B` family. -/
+theorem exists_eq_B_of_dynkinType_eq_B_two_of_not_usesHalfFrobenius {d : LieTypeIndex}
+    (hd : d.dynkinType = .B 2) (hf : ¬d.UsesHalfFrobenius) :
     ∃ q : PrimePower, d = .B 2 q := by
   cases d <;> simp_all
 
@@ -751,11 +716,16 @@ abbrev SuzukiLieIndex : Type _ := {d : ValidLieTypeIndex // d.1.IsSuzuki}
 /-- A validated index built on the rank-two diagram `B₂`: the untwisted family `B₂(q)` and the
 Suzuki family `²B₂(2^(2m+1))`.
 
+The condition constrains the diagram and not the Steinberg map, so it holds both of the untwisted
+family, whose Steinberg map is the `q`-power Frobenius, and of the Suzuki family, whose Steinberg
+map is an odd power of a half-Frobenius. No rank-two `C` index appears: the `C` family starts at
+rank three in `InStandardRange`, so `B₂(q) = C₂(q)` is always named in the `B` family.
+
 This is diagram-level indexing data only; it does not attach the pinned L0 carrier that both
 branches will eventually consume. The outer subtype is important: `B₂(2)`, `B₂(3)` and `²B₂(2)`
 are excluded from the classification list and are not indices of this subtype; those exclusions
 are the small isomorphisms of Gorenstein--Lyons--Solomon, Number 1, §2.2. -/
-abbrev RankTwoBLieIndex : Type _ := {d : ValidLieTypeIndex // d.1.HasRankTwoBDiagram}
+abbrev RankTwoBLieIndex : Type _ := {d : ValidLieTypeIndex // d.1.dynkinType = .B 2}
 
 /-- A validated index in the untwisted rank-two family `B₂(q)`. The Suzuki family, which shares the
 diagram, is excluded by the outer predicate. -/
@@ -878,8 +848,7 @@ This section follows `ValidLieTypeIndex` rather than sitting beside `TypeALieInd
 namespace RankTwoBLieIndex
 
 /-- An index on the `B₂` diagram names the Dynkin type `B 2`. -/
-@[simp] theorem dynkinType_eq (d : RankTwoBLieIndex) : d.1.dynkinType = .B 2 :=
-  (LieTypeIndex.hasRankTwoBDiagram_iff_dynkinType _).mp d.2
+@[simp] theorem dynkinType_eq (d : RankTwoBLieIndex) : d.1.dynkinType = .B 2 := d.2
 
 /-- An index on the `B₂` diagram has rank two, that being the rank of `B₂`. -/
 @[simp] theorem rank_eq_two (d : RankTwoBLieIndex) : d.1.rank = 2 :=
@@ -904,7 +873,7 @@ theorem exists_eq_ofB_or_exists_eq_ofSuzuki (d : RankTwoBLieIndex) :
   cases e
   case B rank q =>
     intro hvalid hdiag
-    simp only [LieTypeIndex.hasRankTwoBDiagram_iff] at hdiag
+    simp only [LieTypeIndex.dynkinType_B, DynkinType.B.injEq] at hdiag
     subst hdiag
     exact .inl ⟨q, hvalid, rfl⟩
   case suzuki m => exact fun hvalid _ => .inr ⟨m, hvalid, rfl⟩
@@ -930,7 +899,7 @@ theorem exists_eq_of (d : TypeB2LieIndex) :
     ∃ (q : PrimePower) (hvalid : (LieTypeIndex.B 2 q).Valid), d = of q hvalid := by
   obtain ⟨⟨⟨e, hvalid⟩, hdiag⟩, hhalf⟩ := d
   obtain ⟨q, rfl⟩ :=
-    LieTypeIndex.exists_eq_of_hasRankTwoBDiagram_of_not_usesHalfFrobenius hdiag hhalf
+    LieTypeIndex.exists_eq_B_of_dynkinType_eq_B_two_of_not_usesHalfFrobenius hdiag hhalf
   exact ⟨q, hvalid, rfl⟩
 
 /-- The field order of an untwisted rank-two type-`B` index is at least four. The two smaller prime
@@ -939,7 +908,7 @@ theorem four_le_fieldOrder (d : TypeB2LieIndex) : 4 ≤ d.1.1.fieldOrder := by
   obtain ⟨q, hvalid, rfl⟩ := d.exists_eq_of
   rw [LieTypeIndex.valid_iff, LieTypeIndex.inStandardRange_iff,
     LieTypeIndex.isDuplicateRepresentative_iff] at hvalid
-  have h2 := q.two_le_card
+  have h2 := q.isPrimePow_card.two_le
   simp only [ValidLieTypeIndex.fieldOrder, LieTypeIndex.fieldOrder_B]
   omega
 
