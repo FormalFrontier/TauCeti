@@ -28,8 +28,8 @@ The length-one case is the looplessness `TauCeti.isEmpty_hom_self_of_titsForm_po
 reflection identities need, proved there directly from the arrow count at a single vertex.
 
 The generic path facts used in the counting argument are
-`TauCeti.Quiver.Path.exists_hom_mem_vertices_of_mem_dropLast` and
-`TauCeti.Quiver.Path.exists_hom_mem_vertices`, from
+`TauCeti.exists_hom_mem_path_vertices_of_mem_dropLast` and
+`TauCeti.exists_hom_mem_path_vertices`, from
 `TauCeti.RepresentationTheory.Quiver.FirstArrow`.
 
 ## Main result
@@ -95,7 +95,7 @@ theorem isAcyclic_of_titsForm_posDef (hpd : (titsForm V).PosDef) : Quiver.IsAcyc
   have hrow : ∀ u ∈ S, (1 : ℤ) ≤ ∑ v : V, (Fintype.card (u ⟶ v) : ℤ) * (d u * d v) := by
     intro u hu
     obtain ⟨w, hw, ⟨e⟩⟩ :=
-      TauCeti.Quiver.Path.exists_hom_mem_vertices p hp ((hmem u).mp hu)
+      TauCeti.exists_hom_mem_path_vertices p hp ((hmem u).mp hu)
     refine le_trans ?_ (Finset.single_le_sum
       (f := fun v ↦ (Fintype.card (u ⟶ v) : ℤ) * (d u * d v))
       (fun v _ ↦ hterm u v) (Finset.mem_univ w))

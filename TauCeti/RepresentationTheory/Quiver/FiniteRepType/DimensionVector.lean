@@ -80,13 +80,13 @@ theorem isoClassDimVector_apply
 /-- **The dimension vector of a class is the dimension vector of any of its members.** -/
 @[simp]
 theorem isoClassDimVector_toSkeleton (M : QuiverRep.{u, v, w, max v w x} k V)
-    (hfd : IsFinDim.{u, v, w, max v w x} k V M) (hM : Indecomposable M) :
+    (hfd : ∀ j, FiniteDimensional k (M.obj j)) (hM : Indecomposable M) :
     isoClassDimVector (toSkeleton
-        (⟨M, hfd, hM⟩ : ObjectProperty.FullSubcategory
+        (⟨M, isFinDim_iff.mpr hfd, hM⟩ : ObjectProperty.FullSubcategory
           (fun N : QuiverRep.{u, v, w, max v w x} k V ↦ IsFinDim k V N ∧ Indecomposable N))) =
       fun j ↦ (dimVector M j : ℤ) := by
   have h : dimVector ((fromSkeleton _).obj (toSkeleton
-      (⟨M, hfd, hM⟩ : ObjectProperty.FullSubcategory
+      (⟨M, isFinDim_iff.mpr hfd, hM⟩ : ObjectProperty.FullSubcategory
         (fun N : QuiverRep.{u, v, w, max v w x} k V ↦
           IsFinDim k V N ∧ Indecomposable N)))).obj = dimVector M :=
     dimVector_eq_of_iso ((ObjectProperty.ι _).mapIso (fromSkeletonToSkeletonIso _))

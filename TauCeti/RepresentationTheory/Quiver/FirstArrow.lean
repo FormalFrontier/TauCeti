@@ -28,9 +28,9 @@ by its *last* arrow instead, and the two feed the two sides of the Euler form of
 
 ## Main results
 
-* `TauCeti.Quiver.Path.exists_hom_mem_vertices_of_mem_dropLast`: every occurrence in a path's
+* `TauCeti.exists_hom_mem_path_vertices_of_mem_dropLast`: every occurrence in a path's
   vertex list except its final occurrence is the source of an arrow landing on the path.
-* `TauCeti.Quiver.Path.exists_hom_mem_vertices`: every vertex visited by a nontrivial closed path is
+* `TauCeti.exists_hom_mem_path_vertices`: every vertex visited by a nontrivial closed path is
   the source of an arrow landing on the path.
 * `TauCeti.card_path_eq_ite_add_sum_firstArrow`: the path count `#(a → j)` equals
   `∑_b #(a ⟶ b) · #(b → j)`, plus `1` when `a = j` for the trivial path.
@@ -66,12 +66,10 @@ universe u v
 
 variable {V : Type u} [Quiver.{v} V]
 
-namespace Quiver.Path
-
 /-- **Every occurrence in a path's vertex list except the final one is the source of an arrow of
 the path**, and that arrow lands on a vertex of the path again. The final entry of the vertex list
 is the occurrence removed by `List.dropLast`; the endpoint vertex may still occur earlier. -/
-theorem exists_hom_mem_vertices_of_mem_dropLast {a b : V} (p : _root_.Quiver.Path a b) :
+theorem exists_hom_mem_path_vertices_of_mem_dropLast {a b : V} (p : Quiver.Path a b) :
     ∀ {u : V}, u ∈ p.vertices.dropLast → ∃ w ∈ p.vertices, Nonempty (u ⟶ w) := by
   induction p with
   | nil => intro u hu; simp at hu
@@ -87,8 +85,8 @@ theorem exists_hom_mem_vertices_of_mem_dropLast {a b : V} (p : _root_.Quiver.Pat
 /-- **Every vertex of a closed path of positive length is the source of an arrow of the path.**
 `List.dropLast` removes the final endpoint occurrence. On a nontrivial closed path the same vertex
 also occurs initially, so it remains in `List.dropLast` and the preceding result applies. -/
-theorem exists_hom_mem_vertices {a : V} (p : _root_.Quiver.Path a a)
-    (hp : p ≠ _root_.Quiver.Path.nil) {u : V}
+theorem exists_hom_mem_path_vertices {a : V} (p : Quiver.Path a a)
+    (hp : p ≠ Quiver.Path.nil) {u : V}
     (hu : u ∈ p.vertices) : ∃ w ∈ p.vertices, Nonempty (u ⟶ w) := by
   have hlen : 0 < p.length := Nat.pos_of_ne_zero fun h ↦
     hp ((_root_.Quiver.Path.length_eq_zero_iff p).mp h)
@@ -100,10 +98,8 @@ theorem exists_hom_mem_vertices {a : V} (p : _root_.Quiver.Path a a)
     rwa [List.getElem_dropLast, _root_.Quiver.Path.getElem_vertices_zero] at hmem
   rw [← _root_.Quiver.Path.dropLast_append_end_eq p, List.mem_append, List.mem_singleton] at hu
   rcases hu with hu | rfl
-  · exact exists_hom_mem_vertices_of_mem_dropLast p hu
-  · exact exists_hom_mem_vertices_of_mem_dropLast p hstart
-
-end Quiver.Path
+  · exact exists_hom_mem_path_vertices_of_mem_dropLast p hu
+  · exact exists_hom_mem_path_vertices_of_mem_dropLast p hstart
 
 /-- The forward map of the first-arrow decomposition, by recursion on the path: a path
 `p.cons e` whose initial segment `p` is trivial has `e` for its first arrow and nothing left over,
