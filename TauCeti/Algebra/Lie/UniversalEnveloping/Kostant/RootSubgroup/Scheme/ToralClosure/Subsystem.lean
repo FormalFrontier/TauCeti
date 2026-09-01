@@ -90,6 +90,27 @@ noncomputable def kostantTorusSubsystemDefiningIdeal (S : Set I)
   CommHopfAlgCat.commonKernelHopfIdeal
     (kostantToralGeneratorMap e h ρ M hM b wt (fun i : S => i.1) hnilS)
 
+/-- The subsystem defining ideal is the common-kernel Hopf ideal of the selected root-subgroup
+coordinate maps and the weight-torus coordinate map. -/
+theorem kostantTorusSubsystemDefiningIdeal_def (S : Set I)
+    (hnilS : ∀ i : S, IsNilpotent
+      (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i.1)))) :
+    kostantTorusSubsystemDefiningIdeal e h ρ M hM b wt S hnilS =
+      CommHopfAlgCat.commonKernelHopfIdeal
+        ((fun j : Sum S Unit =>
+          match j with
+          | .inl i => kostantRootSubgroupCoordinateMap e h ρ M hM i.1 (hnilS i) b
+          | .inr _ => GeneralLinear.weightTorusCoordinateMap (R := ℤ) wt) :
+          (j : Sum S Unit) → GeneralLinear.coordinateHopfAlgebra ℤ n ⟶
+            kostantToralGeneratorCodomain (κ := κ) j) := by
+  rw [kostantTorusSubsystemDefiningIdeal]
+  congr 1
+  funext j
+  rcases j with i | u
+  · exact kostantToralGeneratorMap_inl e h ρ M hM b wt _ hnilS i
+  · rcases u with ⟨⟩
+    exact kostantToralGeneratorMap_inr e h ρ M hM b wt _ hnilS
+
 /-- A Hopf ideal lies in the subsystem defining ideal exactly when the selected root-subgroup
 maps and the weight-torus map kill it. This is the coordinate universal property of the closed
 carrier. -/
@@ -119,7 +140,7 @@ theorem le_kostantTorusSubsystemDefiningIdeal_iff (S : Set I)
 
 /-- Enlarging the selected set can only shrink its common-kernel defining ideal. Equivalently,
 the associated closed subgroup scheme grows with the selected root set. -/
-theorem kostantTorusSubsystemDefiningIdeal_le_of_subset {S T : Set I}
+theorem kostantTorusSubsystemDefiningIdeal_ge_of_subset {S T : Set I}
     (hnilS : ∀ i : S, IsNilpotent
       (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i.1))))
     (hnilT : ∀ i : T, IsNilpotent
@@ -236,7 +257,7 @@ noncomputable def kostantTorusSubsystemMapOfSubset {S T : Set I}
     kostantTorusSubsystemGroupScheme e h ρ M hM b wt S hnilS ⟶
       kostantTorusSubsystemGroupScheme e h ρ M hM b wt T hnilT :=
   CommHopfAlgCat.quotientSpecMapOfLe (GeneralLinear.coordinateHopfAlgebra ℤ n)
-    (kostantTorusSubsystemDefiningIdeal_le_of_subset e h ρ M hM b wt hnilS hnilT hST)
+    (kostantTorusSubsystemDefiningIdeal_ge_of_subset e h ρ M hM b wt hnilS hnilT hST)
 
 /-- The subsystem map induced by a reflexive set inclusion is the identity. -/
 @[simp]
@@ -497,6 +518,23 @@ theorem kostantRootSubgroupToTorusSubsystem_comp_ι (S : Set I)
     rw [← (AlgebraicGeometry.hopfSpec (CommRingCat.of ℤ)).map_comp,
       ← op_comp, mkQuotient_comp_kostantRootSubgroupTorusSubsystemCoordinateMap]
 
+/-- Factoring a selected root subgroup through nested subsystem carriers is natural in the
+selected root set. -/
+@[simp]
+theorem kostantRootSubgroupToTorusSubsystem_comp_mapOfSubset {S T : Set I}
+    (hnilS : ∀ i : S, IsNilpotent
+      (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i.1))))
+    (hnilT : ∀ i : T, IsNilpotent
+      (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i.1)))) (hST : S ⊆ T)
+    {i : I} (hi : i ∈ S) :
+    kostantRootSubgroupToTorusSubsystem e h ρ M hM b wt S hnilS hi ≫
+        kostantTorusSubsystemMapOfSubset e h ρ M hM b wt hnilS hnilT hST =
+      kostantRootSubgroupToTorusSubsystem e h ρ M hM b wt T hnilT (hST hi) := by
+  apply (cancel_mono (kostantTorusSubsystemGroupSchemeι e h ρ M hM b wt T hnilT)).1
+  rw [Category.assoc, kostantTorusSubsystemMapOfSubset_comp_ι,
+    kostantRootSubgroupToTorusSubsystem_comp_ι,
+    kostantRootSubgroupToTorusSubsystem_comp_ι]
+
 /-- Factoring a selected root subgroup through its subsystem and then into the full toral closure
 agrees with the direct toral factorization. -/
 @[simp]
@@ -532,6 +570,45 @@ theorem kostantWeightTorusToTorusSubsystem_def (S : Set I)
           (kostantWeightTorusTorusSubsystemCoordinateMap e h ρ M hM b wt S hnilS).op := by
   rw [kostantWeightTorusToTorusSubsystem]
 
+/-- A surjective represented weight-torus coordinate map remains surjective after factoring
+through a subsystem carrier. -/
+theorem kostantWeightTorusTorusSubsystemCoordinateMap_surjective_of_surjective (S : Set I)
+    (hnilS : ∀ i : S, IsNilpotent
+      (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i.1))))
+    (htorus : Function.Surjective (GeneralLinear.weightTorusCoordinateMap (R := ℤ) wt).hom) :
+    Function.Surjective
+      (kostantWeightTorusTorusSubsystemCoordinateMap e h ρ M hM b wt S hnilS).hom := by
+  apply CommHopfAlgCat.commonKernelLift_surjective_of_surjective
+  simpa only [kostantToralGeneratorMap_inr] using htorus
+
+/-- The represented weight torus is a closed subgroup of its subsystem carrier whenever its
+factored coordinate map is surjective. -/
+theorem isClosedImmersion_kostantWeightTorusToTorusSubsystem_of_surjective (S : Set I)
+    (hnilS : ∀ i : S, IsNilpotent
+      (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i.1))))
+    (htorus : Function.Surjective
+      (kostantWeightTorusTorusSubsystemCoordinateMap e h ρ M hM b wt S hnilS).hom) :
+    IsClosedImmersion
+      (kostantWeightTorusToTorusSubsystem e h ρ M hM b wt S hnilS).hom.hom.left := by
+  rw [kostantWeightTorusToTorusSubsystem_def]
+  exact (CommHopfAlgCat.isClosedImmersion_eqToHom_comp_hopfSpec_map_iff
+    (DiagonalizableGroup.groupScheme_def ℤ (SplitTorus.characterGroup κ))
+    (kostantWeightTorusTorusSubsystemCoordinateMap e h ρ M hM b wt S hnilS)).2 htorus
+
+/-- Spanning weights represent the weight torus as a closed subgroup of every subsystem
+carrier. -/
+theorem isClosedImmersion_kostantWeightTorusToTorusSubsystem (S : Set I)
+    (hnilS : ∀ i : S, IsNilpotent
+      (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i.1))))
+    (hwt : Submodule.span ℤ (Set.range wt) = ⊤) :
+    IsClosedImmersion
+      (kostantWeightTorusToTorusSubsystem e h ρ M hM b wt S hnilS).hom.hom.left :=
+  isClosedImmersion_kostantWeightTorusToTorusSubsystem_of_surjective
+    e h ρ M hM b wt S hnilS
+      (kostantWeightTorusTorusSubsystemCoordinateMap_surjective_of_surjective
+        e h ρ M hM b wt S hnilS
+          (GeneralLinear.weightTorusCoordinateMap_surjective wt hwt))
+
 /-- Factoring the weight torus through a subsystem carrier and then including into `GLₙ`
 recovers the represented weight-torus morphism. -/
 @[simp]
@@ -546,6 +623,22 @@ theorem kostantWeightTorusToTorusSubsystem_comp_ι (S : Set I)
   slice_lhs 2 3 =>
     rw [← (AlgebraicGeometry.hopfSpec (CommRingCat.of ℤ)).map_comp,
       ← op_comp, mkQuotient_comp_kostantWeightTorusTorusSubsystemCoordinateMap]
+
+/-- Factoring the weight torus through nested subsystem carriers is natural in the selected
+root set. -/
+@[simp]
+theorem kostantWeightTorusToTorusSubsystem_comp_mapOfSubset {S T : Set I}
+    (hnilS : ∀ i : S, IsNilpotent
+      (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i.1))))
+    (hnilT : ∀ i : T, IsNilpotent
+      (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i.1)))) (hST : S ⊆ T) :
+    kostantWeightTorusToTorusSubsystem e h ρ M hM b wt S hnilS ≫
+        kostantTorusSubsystemMapOfSubset e h ρ M hM b wt hnilS hnilT hST =
+      kostantWeightTorusToTorusSubsystem e h ρ M hM b wt T hnilT := by
+  apply (cancel_mono (kostantTorusSubsystemGroupSchemeι e h ρ M hM b wt T hnilT)).1
+  rw [Category.assoc, kostantTorusSubsystemMapOfSubset_comp_ι,
+    kostantWeightTorusToTorusSubsystem_comp_ι,
+    kostantWeightTorusToTorusSubsystem_comp_ι]
 
 /-- Factoring the weight torus through a subsystem and then into the full toral closure agrees
 with the direct toral factorization. -/
