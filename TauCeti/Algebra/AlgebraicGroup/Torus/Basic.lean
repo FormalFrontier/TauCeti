@@ -8,6 +8,7 @@ module
 public import TauCeti.Algebra.AlgebraicGroup.MultiplicativeType.Basic
 public import TauCeti.Algebra.AlgebraicGroup.SplitTorus.Basic
 import TauCeti.Algebra.Coalgebra.BaseChange
+import TauCeti.Algebra.Coalgebra.Cocommutative
 
 /-!
 # Tori over a field
@@ -56,7 +57,7 @@ with its Galois action.
 
 public section
 
-open CategoryTheory TensorProduct
+open CategoryTheory
 
 namespace TauCeti
 
@@ -122,95 +123,6 @@ instance (k : Type u) [Field k] :
     (torusCommHopfAlgProperty k).IsClosedUnderIsomorphisms := by
   unfold torusCommHopfAlgProperty
   infer_instance
-
-namespace Coalgebra.IsCocomm
-
-variable {R A B : Type*} [CommSemiring R] [Semiring A] [Semiring B]
-  [_root_.Bialgebra R A] [_root_.Bialgebra R B]
-
-/-- Cocommutativity transfers across a bialgebra equivalence. -/
-theorem of_bialgEquiv (e : A ≃ₐc[R] B) [hA : _root_.Coalgebra.IsCocomm R A] :
-    _root_.Coalgebra.IsCocomm R B := by
-  constructor
-  ext b
-  apply (TensorProduct.map_bijective e.symm.bijective e.symm.bijective).injective
-  simp only [LinearMap.comp_apply]
-  -- Applying the tensor map to the composite with `TensorProduct.comm` unfolds to this
-  -- expression. There is no propositional compatibility lemma for that coercion-level step;
-  -- the subsequent `TensorProduct.map_comm` is the structural identity used by the proof.
-  change TensorProduct.map e.symm.toLinearMap e.symm.toLinearMap
-      (TensorProduct.comm R B B (Coalgebra.comul (R := R) b)) = _
-  rw [TensorProduct.map_comm]
-  have hm :
-      TensorProduct.map e.symm.toLinearMap e.symm.toLinearMap
-          (Coalgebra.comul (R := R) b) =
-        Coalgebra.comul (R := R) (e.symm b) :=
-    CoalgHomClass.map_comp_comul_apply e.symm b
-  rw [hm, Coalgebra.comm_comul]
-
-end Coalgebra.IsCocomm
-
-namespace Coalgebra.IsCocomm
-
-variable {k K H : Type u} [Field k] [Field K] [Algebra k K]
-  [CommRing H] [_root_.Bialgebra k H]
-
-private theorem baseChangeTensorBialgEquiv_includeRight (y : H ⊗[k] H) :
-    Bialgebra.TensorProduct.baseChangeTensorBialgEquiv k K H H
-        (Algebra.TensorProduct.includeRight y) =
-      TensorProduct.AlgebraTensorModule.distribBaseChange k K H H
-        (Algebra.TensorProduct.includeRight y) := by
-  induction y using TensorProduct.induction_on with
-  | zero => simp
-  | add x y hx hy => simpa only [map_add] using congrArg₂ (· + ·) hx hy
-  | tmul x y =>
-      rw [Algebra.TensorProduct.includeRight_apply,
-        Bialgebra.TensorProduct.baseChangeTensorBialgEquiv_tmul,
-        TensorProduct.AlgebraTensorModule.distribBaseChange_tmul]
-
-private theorem baseChangeTensorBialgEquiv_includeRight_comm (y : H ⊗[k] H) :
-    Bialgebra.TensorProduct.baseChangeTensorBialgEquiv k K H H
-        (Algebra.TensorProduct.includeRight (TensorProduct.comm k H H y)) =
-      TensorProduct.comm K (K ⊗[k] H) (K ⊗[k] H)
-        (Bialgebra.TensorProduct.baseChangeTensorBialgEquiv k K H H
-          (Algebra.TensorProduct.includeRight y)) := by
-  induction y using TensorProduct.induction_on with
-  | zero => simp
-  | add x y hx hy =>
-      simpa only [map_add, LinearMap.map_add] using congrArg₂ (· + ·) hx hy
-  | tmul x y =>
-      simp only [TensorProduct.comm_tmul, Algebra.TensorProduct.includeRight_apply,
-        Bialgebra.TensorProduct.baseChangeTensorBialgEquiv_tmul]
-
-/-- Cocommutativity descends from a field extension. -/
-theorem of_baseChange [h : _root_.Coalgebra.IsCocomm K (K ⊗[k] H)] :
-    _root_.Coalgebra.IsCocomm k H := by
-  constructor
-  ext x
-  apply Algebra.TensorProduct.includeRight_injective (B := H ⊗[k] H)
-    (algebraMap k K).injective
-  let e := Bialgebra.TensorProduct.baseChangeTensorBialgEquiv k K H H
-  apply e.injective
-  have he_comul :
-      e (Algebra.TensorProduct.includeRight (Coalgebra.comul (R := k) x)) =
-        Coalgebra.comul (R := K) (Algebra.TensorProduct.includeRight x) := by
-    rw [baseChangeTensorBialgEquiv_includeRight]
-    simp only [Algebra.TensorProduct.includeRight_apply]
-    rw [TauCeti.Coalgebra.baseChange_comul_tmul]
-  calc
-    e (Algebra.TensorProduct.includeRight
-        (TensorProduct.comm k H H (Coalgebra.comul (R := k) x))) =
-        TensorProduct.comm K (K ⊗[k] H) (K ⊗[k] H)
-          (e (Algebra.TensorProduct.includeRight (Coalgebra.comul (R := k) x))) :=
-      baseChangeTensorBialgEquiv_includeRight_comm (Coalgebra.comul (R := k) x)
-    _ = TensorProduct.comm K (K ⊗[k] H) (K ⊗[k] H)
-        (Coalgebra.comul (R := K) (Algebra.TensorProduct.includeRight x)) :=
-      congrArg (TensorProduct.comm K (K ⊗[k] H) (K ⊗[k] H)) he_comul
-    _ = Coalgebra.comul (R := K) (Algebra.TensorProduct.includeRight x) :=
-      Coalgebra.comm_comul K (Algebra.TensorProduct.includeRight x)
-    _ = e (Algebra.TensorProduct.includeRight (Coalgebra.comul (R := k) x)) := he_comul.symm
-
-end Coalgebra.IsCocomm
 
 /-- The coordinate Hopf algebra of a torus is cocommutative. -/
 @[grind →]
