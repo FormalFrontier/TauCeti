@@ -137,19 +137,13 @@ theorem laurentEvalOne_T (n : ℤ) : laurentEvalOne (T n) = 1 := by
   rw [laurentEvalOne, LaurentPolynomial.eval₂_T]
   simp
 
-/-- The unit `-1` used to evaluate Laurent monomials. -/
-private def laurentNegOneUnit : ℤˣ := ⟨-1, -1, by norm_num, by norm_num⟩
-
 /-- Evaluation of a Laurent monomial at `q = -1`. -/
 noncomputable def laurentEvalNegOne : LaurentPolynomial ℤ →+* ℤ :=
-  LaurentPolynomial.eval₂ (RingHom.id ℤ) laurentNegOneUnit
-
-/-- The integer represented by `(-1)^n` for an integer exponent. -/
-def negOneZpow (n : ℤ) : ℤ := ((laurentNegOneUnit ^ n : ℤˣ) : ℤ)
+  LaurentPolynomial.eval₂ (RingHom.id ℤ) (-1 : ℤˣ)
 
 /-- The `q = -1` evaluation of a Laurent monomial is its sign `(-1)^n`. -/
 @[simp]
-theorem laurentEvalNegOne_T (n : ℤ) : laurentEvalNegOne (T n) = negOneZpow n := by
+theorem laurentEvalNegOne_T (n : ℤ) : laurentEvalNegOne (T n) = (n.negOnePow : ℤ) := by
   rw [laurentEvalNegOne, LaurentPolynomial.eval₂_T]
   rfl
 
@@ -171,7 +165,7 @@ theorem specializeAtOne_T_smul (n : ℤ) (x : M) [Module (LaurentPolynomial ℤ)
 /-- At `q = -1`, a Laurent shift acts by its sign on the specialized class. -/
 theorem specializeAtNegOne_T_smul (n : ℤ) (x : M) [Module (LaurentPolynomial ℤ) M] :
     specializeOf laurentEvalNegOne M ((T n : LaurentPolynomial ℤ) • x) =
-      negOneZpow n • specializeOf laurentEvalNegOne M x := by
+      (n.negOnePow : ℤ) • specializeOf laurentEvalNegOne M x := by
   rw [specializeOf_smul (M := M), laurentEvalNegOne_T]
 
 end TauCeti
