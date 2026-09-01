@@ -96,8 +96,6 @@ theorem Recurrent.pathLaw_eq_map_pathOfExcursions [Countable α] [MeasurableSing
   have h := hωinf 0
   rwa [hω0] at h
 
-/-! ## Excursion laws avoid the base state -/
-
 
 end Probability
 

@@ -7,21 +7,16 @@ module
 
 public import TauCeti.Probability.DeFinetti.Barycenter
 public import TauCeti.Probability.Exchangeability.Recurrence.Reconstruction
-public import TauCeti.Probability.DeFinetti.Theorem
 -- Non-public: the mixture form of a path law is used only inside proofs.
 import TauCeti.Probability.Exchangeability.MixedIID.Mixture
 
 /-!
 # A recurrent Markov exchangeable process is a mixture of processes with i.i.d. excursions
 
-A recurrent process that starts at a state `a₀` returns to it infinitely often, so it is spelled
-out by its excursions and by nothing else: reading the excursions off the path and concatenating
-them back are mutually inverse (`TauCeti.pathOfExcursions_excursion` and
-`TauCeti.excursion_pathOfExcursions`). This file turns that bijection into an identity of laws.
-The path law of the process is the image of the path law of its excursion process under
-concatenation (`TauCeti.Probability.Recurrent.pathLaw_eq_map_pathOfExcursions`), and for a
-**Markov exchangeable** process the excursion process is exchangeable, hence conditionally i.i.d.
-The resulting representation is
+`Recurrence.Reconstruction` establishes that the path law of a recurrent process is the image of
+its excursion law under concatenation.  This file supplies the other half: for a **Markov
+exchangeable** process the excursion process is exchangeable, hence conditionally i.i.d., so that
+excursion law is a mixture.  Combining the two gives the representation
 
 ```text
 pathLaw μ X = (deFinettiBarycenter π).map (pathOfExcursions a₀)
@@ -42,11 +37,8 @@ remaining input of the Diaconis–Freedman representation
 
 ## Main results
 
-* `TauCeti.Probability.measurable_pathOfExcursions`: concatenating excursions is measurable over a
-  countable discrete state space.
-* `TauCeti.Probability.pathLaw_eq_map_pathOfExcursions`: the path law of a process that almost
-  surely starts at and returns infinitely often to `a₀` is the image of its excursion law under
-  concatenation.
+* `TauCeti.Probability.MarkovExchangeable.conditionallyIID_excursionProcess`: de Finetti applied to
+  the excursion process of a recurrent Markov exchangeable process.
 * `TauCeti.Probability.ConditionallyIIDWith.ae_measure_setOf_mem_eq_zero_of_excursionProcess`: a
   directing measure of an excursion process almost surely charges no word through the base state.
 * `TauCeti.Probability.MarkovExchangeable.exists_pathLaw_eq_map_deFinettiBarycenter`: **a recurrent
@@ -75,7 +67,7 @@ namespace Probability
 variable {Ω α : Type*} [MeasurableSpace Ω] [MeasurableSpace α]
   {μ : Measure Ω} {X : ℕ → Ω → α} {a₀ : α}
 
-/-! ## Measurability of the concatenation map -/
+/-! ## De Finetti for the excursions -/
 
 /-- **De Finetti for the excursions of a recurrent Markov exchangeable process.** The excursions
 away from the initial state are conditionally i.i.d. finite words.
