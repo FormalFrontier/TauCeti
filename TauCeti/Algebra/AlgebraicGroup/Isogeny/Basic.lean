@@ -26,8 +26,6 @@ surjectivity by a weaker statement about points over the base field.
 
 * `TauCeti.CommHopfAlgCat.IsIsogeny`: a finite faithfully flat coordinate morphism.
 * `TauCeti.CommHopfAlgCat.IsCentralIsogeny`: an isogeny with central kernel Hopf ideal.
-* `TauCeti.CommHopfAlgCat.isIsogeny_iff_isFinite_and_flat_and_surjective_hopfSpec_map`: the
-  coordinate isogeny conditions agree with the corresponding scheme-morphism properties.
 * `TauCeti.CommHopfAlgCat.isIsogeny_iff_isIsogeny_hopfSpec_map`: the coordinate and
   group-scheme definitions agree over a commutative ring.
 * `TauCeti.CommHopfAlgCat.isCentralIsogeny_iff_isCentralIsogeny_hopfSpec_map`: the analogous
@@ -105,20 +103,6 @@ private lemma isogeny_conditions_hopfSpec_map_iff
     AlgebraicGeometry.flat_and_surjective_SpecMap_iff]
   rfl
 
-/-- A coordinate morphism is an isogeny exactly when its contravariant Hopf-spectrum map is
-finite, flat, and surjective. This criterion works over an arbitrary commutative base ring. -/
-theorem isIsogeny_iff_isFinite_and_flat_and_surjective_hopfSpec_map
-    {H₀ K₀ : _root_.CommHopfAlgCat.{u} R} (f : H₀ ⟶ K₀) :
-    IsIsogeny f ↔
-      AlgebraicGeometry.IsFinite
-          ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map f.op).hom.hom.left ∧
-        AlgebraicGeometry.Flat
-            ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map f.op).hom.hom.left ∧
-          AlgebraicGeometry.Surjective
-            ((AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map f.op).hom.hom.left := by
-  rw [IsIsogeny]
-  exact isogeny_conditions_hopfSpec_map_iff f
-
 section Ring
 
 variable {k : Type u} [CommRing k] {H₀ K₀ : _root_.CommHopfAlgCat.{u} k}
@@ -130,7 +114,7 @@ theorem isIsogeny_iff_isIsogeny_hopfSpec_map (f : H₀ ⟶ K₀) :
       GroupScheme.IsIsogeny
         ((AlgebraicGeometry.hopfSpec (CommRingCat.of k)).map f.op) := by
   rw [IsIsogeny, GroupScheme.isIsogeny_iff]
-  exact isIsogeny_iff_isFinite_and_flat_and_surjective_hopfSpec_map f
+  exact isogeny_conditions_hopfSpec_map_iff f
 
 /-- The coordinate-algebra definition of a central isogeny agrees with the group-scheme
 definition after applying the contravariant Hopf spectrum functor. -/

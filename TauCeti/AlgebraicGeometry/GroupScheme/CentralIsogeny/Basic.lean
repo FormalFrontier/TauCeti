@@ -19,10 +19,10 @@ scheme-theoretic kernel is central. We express the latter condition intrinsicall
 functor of points: for every test scheme over the base, every point killed by the homomorphism
 commutes with every other point of the source.
 
-Quantifying over all test schemes is essential. Centrality only on points over the base field
-would miss infinitesimal points and need not describe a central subgroup scheme. The functorial
-definition below is equivalent, by Yoneda, to factorization of the kernel through the
-scheme-theoretic centre once that closed subgroup has been constructed.
+Quantifying over all test schemes is essential. Centrality only on base-ring-valued points would
+miss infinitesimal points and need not describe a central subgroup scheme. The functorial definition
+below is equivalent, by Yoneda, to factorization of the kernel through the scheme-theoretic centre
+once that closed subgroup has been constructed.
 
 The API records the equivalent pointwise statement that the kernel of every induced group
 homomorphism is contained in the ordinary group centre. It also shows that isomorphisms have

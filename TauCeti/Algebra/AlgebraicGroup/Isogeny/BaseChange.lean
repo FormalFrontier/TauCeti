@@ -61,7 +61,7 @@ private theorem groupSchemeProperty_hopfSpec_baseChange
         ((hopfSpec (CommRingCat.of k)).map f.op))) :
     P
       ((hopfSpec (CommRingCat.of L)).map (baseChangeMap (K := L) f).op) := by
-  have hnat := AffineGroupSchemeCat.hopfSpecBaseChangeGrpIso_natural
+  have hnat := AffineGroupSchemeCat.hopfSpecBaseChangeGrpIso_hom_naturality
     (R := k) (S := L) f
   have hcomp := MorphismProperty.RespectsIso.postcomp P
     (AffineGroupSchemeCat.hopfSpecBaseChangeGrpIso (R := k) (S := L) H).hom _ h
@@ -73,27 +73,20 @@ private theorem groupSchemeProperty_hopfSpec_baseChange
 /-- Scalar extension of a coordinate morphism preserves isogenies of affine group schemes. -/
 theorem IsIsogeny.baseChange {f : H ⟶ K} (hf : IsIsogeny f) :
     IsIsogeny (baseChangeMap (K := L) f) := by
-  apply (isIsogeny_iff_isFinite_and_flat_and_surjective_hopfSpec_map _).2
-  exact (GroupScheme.isIsogeny_iff _).1 <|
-    groupSchemeProperty_hopfSpec_baseChange (GroupScheme.isogenies L) f <|
-      GroupScheme.IsIsogeny.baseChange
-        (Spec.map (CommRingCat.ofHom (algebraMap k L))) <|
-          (GroupScheme.isIsogeny_iff _).2 <|
-            (isIsogeny_iff_isFinite_and_flat_and_surjective_hopfSpec_map f).1 hf
+  apply (isIsogeny_iff_isIsogeny_hopfSpec_map _).2
+  apply groupSchemeProperty_hopfSpec_baseChange (GroupScheme.isogenies L) f
+  exact GroupScheme.IsIsogeny.baseChange
+    (Spec.map (CommRingCat.ofHom (algebraMap k L)))
+    ((isIsogeny_iff_isIsogeny_hopfSpec_map f).1 hf)
 
 /-- Scalar extension of a coordinate morphism preserves central isogenies of affine group
 schemes. -/
 theorem IsCentralIsogeny.baseChange {f : H ⟶ K} (hf : IsCentralIsogeny f) :
     IsCentralIsogeny (baseChangeMap (K := L) f) := by
-  apply (isCentralIsogeny_iff _).2
-  have hiso := hf.isIsogeny.baseChange (L := L)
-  refine ⟨hiso.finite, hiso.faithfullyFlat, ?_⟩
-  rw [← GroupScheme.hasCentralKernel_hopfSpec_map_iff]
-  apply groupSchemeProperty_hopfSpec_baseChange
-    (GroupScheme.hasCentralKernel (Spec (CommRingCat.of L))) f
-  exact GroupScheme.HasCentralKernel.baseChange
+  apply (isCentralIsogeny_iff_isCentralIsogeny_hopfSpec_map _).2
+  apply groupSchemeProperty_hopfSpec_baseChange (GroupScheme.centralIsogenies L) f
+  exact GroupScheme.IsCentralIsogeny.baseChange
     (Spec.map (CommRingCat.ofHom (algebraMap k L)))
-    ((GroupScheme.hasCentralKernel_hopfSpec_map_iff f).2
-      hf.isCentral_kernelHopfIdeal)
+    ((isCentralIsogeny_iff_isCentralIsogeny_hopfSpec_map f).1 hf)
 
 end TauCeti.CommHopfAlgCat
