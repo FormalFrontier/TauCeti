@@ -55,6 +55,12 @@ It packages only the torus-character compatibility that the explicit constructio
 * J. E. Humphreys, *Linear Algebraic Groups*, Sections 26--27.
 * N. Bourbaki, *Lie Groups and Lie Algebras, Chapters 4--6*, Plate V.
 
+The root-identification proofs and torus-conjugation wrapper patterns are adapted from
+`TauCeti/Algebra/Lie/SpecialLinear/StandardCarrier/RootDatum.lean`, added in
+[TauCetiProject/TauCeti#5198](https://github.com/TauCetiProject/TauCeti/pull/5198), and
+`TauCeti/Algebra/Lie/Symplectic/StandardCarrier/RootDatum.lean`, developed in
+[TauCetiProject/TauCeti#5203](https://github.com/TauCetiProject/TauCeti/pull/5203).
+
 This advances the "Pinnings" and "Root subgroup maps" targets of Layer 9 of
 `TauCetiRoadmap/ReductiveGroups/README.md`. Its consumer is milestone L0 of
 `TauCetiRoadmap/CFSGStatement/README.md`: `ValidLieTypeIndex.AmbientGroup` must be traceable through
