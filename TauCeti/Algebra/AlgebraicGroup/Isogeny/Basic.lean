@@ -153,11 +153,14 @@ theorem isIso_iff_surjective (hf : IsIsogeny f) :
   · intro
     exact (ConcreteCategory.bijective_of_isIso f).2
   · intro hsurjective
-    let e := BialgEquiv.ofBijective f.hom ⟨hf.injective, hsurjective⟩
+    let hbijective : Function.Bijective f.hom := ⟨hf.injective, hsurjective⟩
+    let e := BialgEquiv.ofBijective f.hom hbijective
     have he : (CommHopfAlgCat.isoMk e).hom = f := by
       rw [CommHopfAlgCat.isoMk_hom]
       apply CommHopfAlgCat.hom_ext
-      rfl
+      apply BialgHom.ext
+      intro x
+      exact congrFun (BialgEquiv.coe_ofBijective f.hom hbijective) x
     rw [← he]
     infer_instance
 
