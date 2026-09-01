@@ -105,15 +105,6 @@ theorem map_logOneAdd_germ {F : Type*} [FunLike F A B] [RingHomClass F A B]
   filter_upwards [eventually_map_logOneAdd (𝕂 := 𝕂) (𝕃 := 𝕃) f hf] with u hu
   exact hu
 
-/-- The same-field logarithm germ equation is a simplifier rule. -/
-@[simp high]
-private theorem map_logOneAdd_germ_sameField {F : Type*} [FunLike F A B]
-    [ContinuousMapClass F A B] [RingHomClass F A B] (f : F) [Algebra 𝕂 B] :
-    (↑(f ∘ logOneAdd 𝕂 A) : Germ (𝓝 (0 : A)) B) =
-      (↑(logOneAdd 𝕂 B) : Germ (𝓝 (0 : B)) B).compTendsto f (by
-        exact (map_continuous f).tendsto' 0 0 (map_zero f)) :=
-  map_logOneAdd_germ (𝕂 := 𝕂) (𝕃 := 𝕂) f (map_continuous f)
-
 end Normed
 
 end NormedSpace
