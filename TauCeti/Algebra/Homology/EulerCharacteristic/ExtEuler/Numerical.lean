@@ -123,7 +123,6 @@ theorem extEulerRightNumericalQuotientMk_apply
 
 /-- The left radical of the Ext-Euler pairing, characterized by vanishing against every class on
 the right. -/
-@[simp]
 theorem mem_extEulerLeftRadical_iff
     (x : ExactK0 ((ExactStructure.abelian C).fullSubcategory P hP)) :
     x ∈ leftRadical (extEulerBilinear hP hQ h) ↔
@@ -132,7 +131,6 @@ theorem mem_extEulerLeftRadical_iff
 
 /-- The right radical of the Ext-Euler pairing, characterized by vanishing against every class on
 the left. -/
-@[simp]
 theorem mem_extEulerRightRadical_iff
     (y : ExactK0 ((ExactStructure.abelian C).fullSubcategory Q hQ)) :
     y ∈ rightRadical (extEulerBilinear hP hQ h) ↔
@@ -201,7 +199,6 @@ theorem extEulerNumericalPairing_mk (x : ExactK0 ((ExactStructure.abelian C).ful
 
 /- The class-level computation is stated separately so callers can use the ordinary Ext-Euler
    value without first naming the descended pairing. -/
-@[simp]
 theorem extEulerNumericalPairing_of_of (X : P.FullSubcategory) (Y : Q.FullSubcategory) :
     extEulerNumericalPairing hP hQ h
         (extEulerLeftNumericalQuotientMk hP hQ h (ExactK0.of X))
