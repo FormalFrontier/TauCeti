@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Homology.EulerCharacteristic.ExtEuler.Descent
-public import TauCeti.LinearAlgebra.BilinearMap.NumericalQuotient.Functoriality
+public import TauCeti.LinearAlgebra.BilinearMap.NumericalQuotient.Basic
 
 /-!
 # Numerical quotients of the Ext-Euler pairing
@@ -109,18 +109,6 @@ noncomputable def extEulerRightNumericalQuotientMk :
       ExtEulerRightNumericalQuotient hP hQ h :=
   rightNumericalQuotientMk (extEulerBilinear hP hQ h)
 
-/-- The left Ext-Euler quotient map is the canonical submodule quotient map on representatives. -/
-theorem extEulerLeftNumericalQuotientMk_apply
-    (x : ExactK0 ((ExactStructure.abelian C).fullSubcategory P hP)) :
-    extEulerLeftNumericalQuotientMk hP hQ h x = Submodule.Quotient.mk x :=
-  leftNumericalQuotientMk_apply (extEulerBilinear hP hQ h) x
-
-/-- The right Ext-Euler quotient map is the canonical submodule quotient map on representatives. -/
-theorem extEulerRightNumericalQuotientMk_apply
-    (y : ExactK0 ((ExactStructure.abelian C).fullSubcategory Q hQ)) :
-    extEulerRightNumericalQuotientMk hP hQ h y = Submodule.Quotient.mk y :=
-  rightNumericalQuotientMk_apply (extEulerBilinear hP hQ h) y
-
 /-- The left radical of the Ext-Euler pairing, characterized by vanishing against every class on
 the right. -/
 theorem mem_extEulerLeftRadical_iff
@@ -167,6 +155,8 @@ variable (hP : (ExactStructure.abelian C).IsExtensionClosed P)
   (hQ : (ExactStructure.abelian C).IsExtensionClosed Q)
   (h : IsEulerAdmissibleOn.{w} k P Q)
 
+/-- The left Ext-Euler numerical pairing evaluates on a quotient representative as the descended
+Ext-Euler pairing. -/
 @[simp]
 theorem extEulerLeftNumericalPairing_mk
     (x : ExactK0 ((ExactStructure.abelian C).fullSubcategory P hP))
@@ -177,6 +167,8 @@ theorem extEulerLeftNumericalPairing_mk
   rw [extEulerLeftNumericalPairing, extEulerLeftNumericalQuotientMk,
     leftNumericalPairing_mk, extEulerBilinear_apply]
 
+/-- The right Ext-Euler numerical pairing evaluates on a quotient representative as the descended
+Ext-Euler pairing. -/
 @[simp]
 theorem extEulerRightNumericalPairing_mk
     (x : ExactK0 ((ExactStructure.abelian C).fullSubcategory P hP))
@@ -187,6 +179,8 @@ theorem extEulerRightNumericalPairing_mk
   rw [extEulerRightNumericalPairing, extEulerRightNumericalQuotientMk,
     rightNumericalPairing_mk, extEulerBilinear_apply]
 
+/-- The Ext-Euler numerical pairing evaluates on two quotient representatives as the descended
+Ext-Euler pairing. -/
 @[simp]
 theorem extEulerNumericalPairing_mk (x : ExactK0 ((ExactStructure.abelian C).fullSubcategory P hP))
     (y : ExactK0 ((ExactStructure.abelian C).fullSubcategory Q hQ)) :
@@ -197,8 +191,8 @@ theorem extEulerNumericalPairing_mk (x : ExactK0 ((ExactStructure.abelian C).ful
   rw [extEulerNumericalPairing, extEulerLeftNumericalQuotientMk,
     extEulerRightNumericalQuotientMk, numericalPairing_mk, extEulerBilinear_apply]
 
-/- The class-level computation is stated separately so callers can use the ordinary Ext-Euler
-   value without first naming the descended pairing. -/
+/-- The Ext-Euler numerical pairing evaluates on classes of objects as the ordinary Ext-Euler
+characteristic. -/
 theorem extEulerNumericalPairing_of_of (X : P.FullSubcategory) (Y : Q.FullSubcategory) :
     extEulerNumericalPairing hP hQ h
         (extEulerLeftNumericalQuotientMk hP hQ h (ExactK0.of X))
@@ -206,11 +200,12 @@ theorem extEulerNumericalPairing_of_of (X : P.FullSubcategory) (Y : Q.FullSubcat
       extEuler.{w} k (h.isEulerAdmissible X.property Y.property) := by
   rw [extEulerNumericalPairing_mk, extEulerPairing_of_of]
 
-/-- The two one-sided Ext-Euler numerical pairings have the expected separating side. -/
+/-- The left numerical Ext-Euler pairing separates its left argument. -/
 theorem extEulerLeftNumericalPairing_separatingLeft :
     (extEulerLeftNumericalPairing hP hQ h).SeparatingLeft :=
   leftNumericalPairing_separatingLeft (extEulerBilinear hP hQ h)
 
+/-- The right numerical Ext-Euler pairing separates its right argument. -/
 theorem extEulerRightNumericalPairing_separatingRight :
     (extEulerRightNumericalPairing hP hQ h).SeparatingRight :=
   rightNumericalPairing_separatingRight (extEulerBilinear hP hQ h)
