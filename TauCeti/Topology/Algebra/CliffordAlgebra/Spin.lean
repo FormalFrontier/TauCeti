@@ -86,7 +86,7 @@ element. -/
 theorem continuous_spinVectorAction_apply [TopologicalSpace V] [IsModuleTopology ℝ V]
     (Q : QuadraticForm ℝ V) (v : V) :
     Continuous (fun x : spinGroup Q => spinVectorAction Q x v) := by
-  let _ : IsTopologicalAddGroup V := IsModuleTopology.topologicalAddGroup ℝ V
+  let _ : IsTopologicalAddGroup V := IsModuleTopology.isTopologicalAddGroup ℝ V
   have hval : Continuous (fun x : spinGroup Q => (x : CliffordAlgebra Q)) :=
     continuous_subtype_val
   have hstar : Continuous (fun x : spinGroup Q => star (x : CliffordAlgebra Q)) :=

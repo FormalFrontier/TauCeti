@@ -134,7 +134,7 @@ omit [MeasurableSpace Ω] in
 /-- Pushing a probability measure on path space forward by the identity permutation of time does
 nothing. This is what specialises the pair-reindexing laws below to a single axis. -/
 private theorem map_permReindex_one (P : ProbabilityMeasure (ℕ → α)) :
-    P.map (measurable_reindex (α := α) (1 : Equiv.Perm ℕ)).aemeasurable = P :=
+    P.map (fun x : ℕ → α => fun k => x ((1 : Equiv.Perm ℕ) k)) = P :=
   ProbabilityMeasure.toMeasure_injective (by simp)
 
 /-- Reassembling the array from its row process turns the joint law of a random measure and the row
@@ -172,7 +172,7 @@ theorem SeparatelyExchangeable.jointPathLaw_arrayRow_pairReindex_eq [IsFiniteMea
     (h : SeparatelyExchangeable μ X) (hX : ∀ p, AEMeasurable (X p) μ)
     (hν : ConditionallyIIDWith μ (arrayRow X) ν) (σ τ : Equiv.Perm ℕ) :
     jointPathLaw μ (arrayRow fun p => X (σ p.1, τ p.2))
-        (fun ω => (ν ω).map (measurable_reindex τ).aemeasurable)
+        (fun ω => (ν ω).map (fun x : ℕ → α => fun k => x (τ k)))
       = jointPathLaw μ (arrayRow X) ν := by
   simp only [arrayRow_eq_entries] at hν ⊢
   exact ((hν.comp_injective σ.injective).map_values
@@ -189,10 +189,10 @@ the columns are coordinates *inside* each row path, so permuting them acts on `�
 theorem SeparatelyExchangeable.jointLaw_arrayRow_pairReindex_eq [IsFiniteMeasure μ]
     (h : SeparatelyExchangeable μ X) (hX : ∀ p, AEMeasurable (X p) μ)
     (hν : ConditionallyIIDWith μ (arrayRow X) ν) (σ τ : Equiv.Perm ℕ) :
-    (μ.map fun ω => ((ν ω).map (measurable_reindex τ).aemeasurable,
+    (μ.map fun ω => ((ν ω).map (fun x : ℕ → α => fun k => x (τ k)),
         fun p : ℕ × ℕ => X (σ p.1, τ p.2) ω))
       = μ.map fun ω => (ν ω, fun p : ℕ × ℕ => X p ω) := by
-  have hν' : Measurable fun ω => (ν ω).map (measurable_reindex (α := α) τ).aemeasurable :=
+  have hν' : Measurable fun ω => (ν ω).map (fun x : ℕ → α => fun k => x (τ k)) :=
     (TauCeti.MeasureTheory.measurable_probabilityMeasure_map (measurable_reindex τ)).comp
       hν.measurable_directing
   rw [← map_uncurry_jointPathLaw_arrayRow (X := fun p => X (σ p.1, τ p.2)) (fun p => hX _) hν',
@@ -218,7 +218,7 @@ theorem SeparatelyExchangeable.jointLaw_arrayRow_rowReindex_eq [IsFiniteMeasure 
 theorem SeparatelyExchangeable.jointLaw_arrayRow_colReindex_eq [IsFiniteMeasure μ]
     (h : SeparatelyExchangeable μ X) (hX : ∀ p, AEMeasurable (X p) μ)
     (hν : ConditionallyIIDWith μ (arrayRow X) ν) (τ : Equiv.Perm ℕ) :
-    (μ.map fun ω => ((ν ω).map (measurable_reindex τ).aemeasurable,
+    (μ.map fun ω => ((ν ω).map (fun x : ℕ → α => fun k => x (τ k)),
         fun p : ℕ × ℕ => X (p.1, τ p.2) ω))
       = μ.map fun ω => (ν ω, fun p : ℕ × ℕ => X p ω) :=
   h.jointLaw_arrayRow_pairReindex_eq hX hν 1 τ
@@ -234,7 +234,7 @@ theorem SeparatelyExchangeable.exists_directing_arrayRow_jointLaw_equivariant
     (h : SeparatelyExchangeable μ X) (hX : ∀ p, AEMeasurable (X p) μ) :
     ∃ ν : Ω → ProbabilityMeasure (ℕ → α), ConditionallyIIDWith μ (arrayRow X) ν ∧
       ∀ σ τ : Equiv.Perm ℕ,
-        (μ.map fun ω => ((ν ω).map (measurable_reindex τ).aemeasurable,
+        (μ.map fun ω => ((ν ω).map (fun x : ℕ → α => fun k => x (τ k)),
             fun p : ℕ × ℕ => X (σ p.1, τ p.2) ω))
           = μ.map fun ω => (ν ω, fun p : ℕ × ℕ => X p ω) := by
   obtain ⟨ν, hν⟩ := (h.conditionallyIID_arrayRow hX).exists_directing
@@ -249,7 +249,7 @@ theorem SeparatelyExchangeable.jointPathLaw_arrayCol_pairReindex_eq [IsFiniteMea
     (h : SeparatelyExchangeable μ X) (hX : ∀ p, AEMeasurable (X p) μ)
     (hν : ConditionallyIIDWith μ (arrayCol X) ν) (σ τ : Equiv.Perm ℕ) :
     jointPathLaw μ (arrayCol fun p => X (σ p.1, τ p.2))
-        (fun ω => (ν ω).map (measurable_reindex σ).aemeasurable)
+        (fun ω => (ν ω).map (fun x : ℕ → α => fun k => x (σ k)))
       = jointPathLaw μ (arrayCol X) ν := by
   simp only [arrayCol_eq_entries] at hν ⊢
   exact ((hν.comp_injective τ.injective).map_values
@@ -261,10 +261,10 @@ theorem SeparatelyExchangeable.jointPathLaw_arrayCol_pairReindex_eq [IsFiniteMea
 theorem SeparatelyExchangeable.jointLaw_arrayCol_pairReindex_eq [IsFiniteMeasure μ]
     (h : SeparatelyExchangeable μ X) (hX : ∀ p, AEMeasurable (X p) μ)
     (hν : ConditionallyIIDWith μ (arrayCol X) ν) (σ τ : Equiv.Perm ℕ) :
-    (μ.map fun ω => ((ν ω).map (measurable_reindex σ).aemeasurable,
+    (μ.map fun ω => ((ν ω).map (fun x : ℕ → α => fun k => x (σ k)),
         fun p : ℕ × ℕ => X (σ p.1, τ p.2) ω))
       = μ.map fun ω => (ν ω, fun p : ℕ × ℕ => X p ω) := by
-  have hν' : Measurable fun ω => (ν ω).map (measurable_reindex (α := α) σ).aemeasurable :=
+  have hν' : Measurable fun ω => (ν ω).map (fun x : ℕ → α => fun k => x (σ k)) :=
     (TauCeti.MeasureTheory.measurable_probabilityMeasure_map (measurable_reindex σ)).comp
       hν.measurable_directing
   rw [← map_uncurrySwap_jointPathLaw_arrayCol (X := fun p => X (σ p.1, τ p.2)) (fun p => hX _) hν',
@@ -276,7 +276,7 @@ theorem SeparatelyExchangeable.jointLaw_arrayCol_pairReindex_eq [IsFiniteMeasure
 theorem SeparatelyExchangeable.jointLaw_arrayCol_rowReindex_eq [IsFiniteMeasure μ]
     (h : SeparatelyExchangeable μ X) (hX : ∀ p, AEMeasurable (X p) μ)
     (hν : ConditionallyIIDWith μ (arrayCol X) ν) (σ : Equiv.Perm ℕ) :
-    (μ.map fun ω => ((ν ω).map (measurable_reindex σ).aemeasurable,
+    (μ.map fun ω => ((ν ω).map (fun x : ℕ → α => fun k => x (σ k)),
         fun p : ℕ × ℕ => X (σ p.1, p.2) ω))
       = μ.map fun ω => (ν ω, fun p : ℕ × ℕ => X p ω) :=
   h.jointLaw_arrayCol_pairReindex_eq hX hν σ 1
@@ -299,7 +299,7 @@ theorem SeparatelyExchangeable.exists_directing_arrayCol_jointLaw_equivariant
     (h : SeparatelyExchangeable μ X) (hX : ∀ p, AEMeasurable (X p) μ) :
     ∃ ν : Ω → ProbabilityMeasure (ℕ → α), ConditionallyIIDWith μ (arrayCol X) ν ∧
       ∀ σ τ : Equiv.Perm ℕ,
-        (μ.map fun ω => ((ν ω).map (measurable_reindex σ).aemeasurable,
+        (μ.map fun ω => ((ν ω).map (fun x : ℕ → α => fun k => x (σ k)),
             fun p : ℕ × ℕ => X (σ p.1, τ p.2) ω))
           = μ.map fun ω => (ν ω, fun p : ℕ × ℕ => X p ω) := by
   obtain ⟨ν, hν⟩ := (h.conditionallyIID_arrayCol hX).exists_directing

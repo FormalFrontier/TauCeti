@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.FieldTheory.IsAlgClosed.Basic
+public import Mathlib.LinearAlgebra.Charpoly.ToMatrix
 public import TauCeti.Algebra.Coalgebra.Comodule.MatrixCoefficient.Matrix
 public import TauCeti.Algebra.Coalgebra.Comodule.PointsAction
 public import TauCeti.LinearAlgebra.Matrix.Triangular
@@ -29,6 +30,8 @@ found on geometric points to an actual flag by subcomodules.
 
 * `TauCeti.Comodule.toMatrix_endOfPoint`: the matrix of a point action is the evaluated
   coefficient matrix.
+* `TauCeti.Comodule.charpoly_endOfPoint_comp`: characteristic polynomials of point actions
+  commute with scalar extension.
 * `TauCeti.Comodule.coefficientMatrix_isUpperTriangular_iff_forall_toMatrix_endOfPoint`:
   pointwise detection of upper triangularity.
 * `TauCeti.Comodule.coefficientMatrix_isUpperUnitriangular_iff_forall_toMatrix_endOfPoint`:
@@ -77,6 +80,30 @@ theorem toMatrix_endOfPoint (b : Basis i R M) (g : C →ₐ[R] A) :
   simp [Finsupp.single_apply]
 
 end Matrix
+
+section Charpoly
+
+variable {R : Type u} {C : Type v} {M : Type w}
+variable [CommSemiring R] [Semiring C] [Algebra R C] [Coalgebra R C]
+variable [AddCommMonoid M] [Module R M] [Comodule R C M]
+
+/-- Composing a point with a morphism of value algebras maps the characteristic polynomial of
+its action along that morphism. -/
+@[simp]
+theorem charpoly_endOfPoint_comp [Module.Free R M] [Module.Finite R M]
+    {B D : Type*} [CommRing B] [Algebra R B]
+    [CommRing D] [Algebra R D] (g : C →ₐ[R] B) (f : B →ₐ[R] D) :
+    (endOfPoint M (f.comp g)).charpoly = (endOfPoint M g).charpoly.map f := by
+  classical
+  let b := Module.Free.chooseBasis R M
+  rw [← LinearMap.charpoly_toMatrix (endOfPoint M (f.comp g)) (b.baseChange D),
+    ← LinearMap.charpoly_toMatrix (endOfPoint M g) (b.baseChange B),
+    toMatrix_endOfPoint, toMatrix_endOfPoint, ← Matrix.charpoly_map, Matrix.map_map]
+  apply congrArg Matrix.charpoly
+  ext p q
+  simp [Matrix.map_apply]
+
+end Charpoly
 
 section PointSeparation
 

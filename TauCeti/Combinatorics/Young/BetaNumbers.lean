@@ -5,6 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.Algebra.BigOperators.Intervals
+public import Mathlib.Algebra.BigOperators.Ring.Finset
 public import Mathlib.Combinatorics.Young.YoungDiagram
 
 /-!
@@ -15,7 +17,8 @@ Fix a Young diagram `μ` and a bound `r` on its number of rows. The `i`-th **bet
 `r - 1 - i` of rows of the bounding `r`-row strip that lie below it. Adding that shift to the weakly
 decreasing row lengths makes the beta-numbers strictly decrease across the indices `i < j < r`
 inside the bound, so those `r` numbers are pairwise distinct; that is the whole point of the
-construction, and it is all this file proves.
+construction.  This file also records that the natural-number product of their differences casts
+to the corresponding integer product.
 
 Beta-numbers are the bookkeeping device behind the Frobenius determinant formula and the
 Frame-Robinson-Thrall route to the hook-length formula. Their relation to hook lengths --- for the
@@ -32,6 +35,8 @@ hook-length API and is developed in `TauCeti/Combinatorics/Young/HookLength/Beta
 * `YoungDiagram.betaNumber_lt_betaNumber`: the beta-numbers strictly decrease across the indices
   `i < j < r` inside the bound.
 * `YoungDiagram.injOn_betaNumber`: the beta-numbers of the indices `i < r` are pairwise distinct.
+* `YoungDiagram.cast_prod_betaNumber_sub`: casts the product of beta-number differences from
+  `ℕ` to `ℤ`.
 
 ## References
 
@@ -76,5 +81,20 @@ theorem strictAntiOn_betaNumber (μ : YoungDiagram) (r : ℕ) :
 theorem injOn_betaNumber (μ : YoungDiagram) (r : ℕ) :
     Set.InjOn (μ.betaNumber r) (Set.Iio r) :=
   (μ.strictAntiOn_betaNumber r).injOn
+
+open Finset
+
+/-- The Vandermonde-style product of the differences of the beta-numbers is computed by the same
+formula over `ℤ`, the differences being nonnegative. -/
+theorem cast_prod_betaNumber_sub (μ : YoungDiagram) (r : ℕ) :
+    ((∏ k ∈ range r, ∏ l ∈ Ico (k + 1) r, (μ.betaNumber r k - μ.betaNumber r l) : ℕ) : ℤ)
+      = ∏ k ∈ range r, ∏ l ∈ Ico (k + 1) r,
+          ((μ.betaNumber r k : ℤ) - (μ.betaNumber r l : ℤ)) := by
+  rw [Nat.cast_prod]
+  refine Finset.prod_congr rfl fun k _ => ?_
+  rw [Nat.cast_prod]
+  refine Finset.prod_congr rfl fun l hl => ?_
+  rw [mem_Ico] at hl
+  exact Nat.cast_sub (μ.betaNumber_lt_betaNumber (by omega) hl.2).le
 
 end YoungDiagram

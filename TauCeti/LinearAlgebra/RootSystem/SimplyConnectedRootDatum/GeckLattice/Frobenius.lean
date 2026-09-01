@@ -46,8 +46,9 @@ subgroup appearing in it is finite, is simple, or is a named finite group.
 ## Main results
 
 * `TauCeti.DynkinType.coe_geckFrobenius`: the endomorphism acts by the entrywise Frobenius.
-* `TauCeti.DynkinType.geckFrobenius_zero` and `TauCeti.DynkinType.geckFrobenius_add`: the iteration
-  laws.
+* `TauCeti.DynkinType.geckFrobenius_zero`, `TauCeti.DynkinType.geckFrobenius_add` and
+  `TauCeti.DynkinType.geckFrobenius_pow`: the iteration laws, the last of them saying that
+  exponents multiply under taking powers in the endomorphism monoid.
 * `TauCeti.DynkinType.geckFrobenius_eq_self_iff`: a carrier point is fixed exactly when all of its
   matrix entries are fixed.
 * `TauCeti.DynkinType.geckFrobenius_geckRootSubgroupMatrix` and
@@ -130,6 +131,17 @@ theorem geckFrobenius_add (m : ℕ) :
       (t.geckFrobenius ht p k A).comp (t.geckFrobenius ht p m A) := by
   rw [geckFrobenius, geckFrobenius, geckFrobenius, iterateFrobenius_add,
     t.geckPointsMap_comp ht]
+
+/-- **Frobenius exponents multiply under taking powers**: the `m`-th power of the `p ^ k`-power
+Frobenius of the pinned Geck carrier, in the endomorphism monoid of its points, is its
+`p ^ (k * m)`-power Frobenius. -/
+-- `Monoid.End` is definitionally a bundled `MonoidHom`; the `show` picks its composition monoid
+-- structure before the power is elaborated.
+theorem geckFrobenius_pow (m : ℕ) :
+    (show Monoid.End _ from t.geckFrobenius ht p k A) ^ m = t.geckFrobenius ht p (k * m) A := by
+  induction m with
+  | zero => rw [pow_zero, Nat.mul_zero, geckFrobenius_zero]; rfl
+  | succ m ih => rw [pow_succ, ih, Nat.mul_succ, t.geckFrobenius_add ht p (k * m) A k]; rfl
 
 /-- A point of the pinned Geck carrier is fixed by its Frobenius endomorphism exactly when every
 one of its matrix entries lies in the Frobenius-fixed subring. -/

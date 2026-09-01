@@ -151,14 +151,22 @@ theorem exists_forall_inner_matrixCoeffLp_eq [IsAlgClosed 𝕜] (hunitary : IsUn
   have hcomm : ∀ (g : G) (v : V), T (π g v) = π g (T v) :=
     (isIntertwiningMap_of_inner_matrixCoeffLp_eq hπ hunitary hf T hT).isIntertwining
   -- Schur's lemma turns it into a scalar.
-  obtain ⟨c, hc⟩ := exists_eq_smul_one_of_irreducible π hirr
-    { toContinuousLinearMap := LinearMap.toContinuousLinearMap T
-      isIntertwining' := fun g ↦ by ext v; simpa using hcomm g v }
-  have hc' := congrArg ContIntertwiningMap.toContinuousLinearMap hc
-  simp only [ContIntertwiningMap.toContinuousLinearMap_smul,
-    ContIntertwiningMap.toContinuousLinearMap_one, ContinuousLinearMap.one_def] at hc'
+  let f : Representation.IntertwiningMap π.toRepresentation π.toRepresentation :=
+    T.intertwiningMap_of_isIntertwiningMap π.toRepresentation π.toRepresentation hcomm
+  let f' : ContIntertwiningMap π π :=
+    (_root_.ContRepresentation.intertwiningMapEquiv (π := π) (ρ := π)).symm f
+  obtain ⟨c, hc⟩ := exists_eq_smul_one_of_irreducible π hirr f'
   refine ⟨c, fun v w ↦ ?_⟩
-  have hTv : T v = c • v := by simpa using congrArg (fun F : V →L[𝕜] V ↦ F v) hc'
+  have hTv : T v = c • v := by
+    calc
+      T v = f v :=
+        (LinearMap.toIntertwiningMap π.toRepresentation π.toRepresentation T hcomm v).symm
+      _ = f' v :=
+        (_root_.ContRepresentation.intertwiningMapEquiv_symm_apply_apply f v).symm
+      _ = (c • (1 : ContIntertwiningMap π π)) v :=
+        congrArg (fun g : ContIntertwiningMap π π ↦ g v) hc
+      _ = c • v := by
+        rw [ContIntertwiningMap.smul_apply, ContIntertwiningMap.one_apply]
   rw [← hT v w, hTv, inner_smul_right]
 
 end Scalar

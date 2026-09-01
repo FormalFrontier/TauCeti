@@ -91,6 +91,14 @@ theorem weightBasis_apply (i : Fin (d + 1)) :
       (Pi.basisFun ℂ (Fin 2)).symmetricPower d ((symFinTwoEquiv d).symm i) :=
   Module.Basis.reindex_apply _ _ _
 
+/-- **Every weight vector is a pure symmetric tensor of standard basis vectors**: some ordering of
+the unordered tuple indexing it lists its factors. -/
+theorem exists_weightBasis_eq_tprod (i : Fin (d + 1)) :
+    ∃ f : Fin d → Fin 2, weightBasis d i = ⨂ₛ[ℂ] j, Pi.basisFun ℂ (Fin 2) (f j) := by
+  obtain ⟨f, hf⟩ := TauCeti.Sym.ofFn_surjective ((symFinTwoEquiv d).symm i)
+  exact ⟨f, by rw [weightBasis_apply, ← hf, Module.Basis.symmetricPower_apply,
+    SymmetricPower.tprodOfSym_ofFn]⟩
+
 /-- **The weight** of the `i`-th weight vector: the torus element `diag(z, z⁻¹)` acts on it by
 `z^{2i - d}`.  As `i` runs over `Fin (d + 1)` these are the `d + 1` integers
 `-d, 2 - d, …, d - 2, d`. -/

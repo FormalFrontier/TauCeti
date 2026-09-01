@@ -37,6 +37,8 @@ needs: distinct dominant weights lie in distinct dot orbits.
 * `TauCeti.dotActionPerm`: the same, packaged as a group homomorphism into `Equiv.Perm M`. The dot
   action is not registered as a `MulAction` instance, since the weight space already carries the
   linear action of the Weyl group.
+* `TauCeti.openDotDominantChamber`: the open dominant chamber of the dot action, the weights whose
+  `ρ`-shift is strictly dominant, equivalently those with `-1 < ⟨x, αᵢ^∨⟩` for every simple root.
 
 ## Main results
 
@@ -45,6 +47,11 @@ needs: distinct dominant weights lie in distinct dot orbits.
 * `TauCeti.dotAction_ofIdx`: a simple reflection acts by `sᵢ ⬝ x = x - (⟨x, αᵢ^∨⟩ + 1) αᵢ`, and
   `TauCeti.coroot'_dotAction_ofIdx`: it sends the pairing `⟨x, αᵢ^∨⟩` to `-⟨x, αᵢ^∨⟩ - 2`.
 * `TauCeti.dotAction_ofIdx_eq_self_iff`: the wall of `sᵢ` for the dot action is `⟨x, αᵢ^∨⟩ = -1`.
+* `TauCeti.eq_one_of_dotAction_eq_self_of_mem_openDotDominantChamber`,
+  `TauCeti.eq_of_dotAction_eq_of_mem_openDotDominantChamber` and
+  `TauCeti.dotAction_injective_of_mem_openDotDominantChamber`: **the dot action is free on its own
+  open dominant chamber**, which for a general coefficient ring may be strictly larger than the
+  closed dominant chamber.
 * `TauCeti.eq_one_of_dotAction_mem_dominantChamber` and
   `TauCeti.eq_one_of_dotAction_eq_self_of_mem_dominantChamber`: **the dot action is free on the
   closed dominant chamber**, and no nontrivial element keeps a dominant weight dominant.
@@ -236,7 +243,33 @@ theorem dotAction_ofIdx_eq_self_iff {i : ι} (hi : i ∈ b.support) (x : M) :
 
 end Reduced
 
-/-! ### Freeness on the dominant chamber -/
+/-! ### The open dominant chamber of the dot action -/
+
+section DotChamber
+
+variable [LinearOrder R]
+
+/-- The **open dominant chamber of the dot action**: the weights whose `ρ`-shift is strictly
+dominant, equivalently (`TauCeti.mem_openDotDominantChamber_iff_neg_one_lt_coroot'`) those with
+`-1 < ⟨x, αᵢ^∨⟩` for every simple root `αᵢ`.
+
+This, and not `TauCeti.dominantChamber`, is the region the dot action is free on for a general
+coefficient ring: the walls of the dot action sit at `⟨x, αᵢ^∨⟩ = -1`
+(`TauCeti.dotAction_ofIdx_eq_self_iff`), so this is the open chamber the dot action cuts out. Every
+dominant weight lies in it (`TauCeti.dominantChamber_subset_openDotDominantChamber`), and the
+containment may be strict; for integral weights the two conditions agree, since `-1 < ⟨x, αᵢ^∨⟩`
+then forces `0 ≤ ⟨x, αᵢ^∨⟩`. -/
+def openDotDominantChamber : Set M := {x | x + weylVector P b ∈ openDominantChamber P b}
+
+/-- Membership in the open dominant chamber of the dot action, as the strict dominance of the
+`ρ`-shift. -/
+@[simp]
+lemma mem_openDotDominantChamber (x : M) :
+    x ∈ openDotDominantChamber P b ↔ x + weylVector P b ∈ openDominantChamber P b := Iff.rfl
+
+end DotChamber
+
+/-! ### Freeness on the chambers -/
 
 section Ordered
 
@@ -251,7 +284,65 @@ theorem smul_add_weylVector_mem_dominantChamber {w : P.weylGroup} {x : M}
   exact add_mem_dominantChamber P b hw
     (openDominantChamber_subset_dominantChamber P b (weylVector_mem_openDominantChamber P b))
 
+/-- **The open dominant chamber of the dot action is cut out by `-1 < ⟨x, αᵢ^∨⟩`**, the walls of
+the simple reflections for the dot action (`TauCeti.dotAction_ofIdx_eq_self_iff`). -/
+lemma mem_openDotDominantChamber_iff_neg_one_lt_coroot' (x : M) :
+    x ∈ openDotDominantChamber P b ↔ ∀ i ∈ b.support, -1 < P.coroot' i x := by
+  rw [mem_openDotDominantChamber, mem_openDominantChamber]
+  refine forall₂_congr fun i hi ↦ ?_
+  rw [coroot'_add_weylVector P b hi]
+  constructor <;> intro h <;> linarith
+
+/-- **A dominant weight lies in the open dominant chamber of the dot action**, since the `ρ`-shift
+of a dominant weight is strictly dominant. -/
+lemma dominantChamber_subset_openDotDominantChamber :
+    dominantChamber P b ⊆ openDotDominantChamber P b :=
+  fun x hx ↦ (mem_openDotDominantChamber P b x).mpr (add_weylVector_mem_openDominantChamber P b hx)
+
+/-- The origin lies in the open dominant chamber of the dot action. -/
+lemma zero_mem_openDotDominantChamber : (0 : M) ∈ openDotDominantChamber P b :=
+  dominantChamber_subset_openDotDominantChamber P b (zero_mem_dominantChamber P b)
+
 variable [P.flip.IsReduced]
+
+/-! ### Freeness on the open chamber of the dot action -/
+
+/-- **The dot action is free on its own open dominant chamber**: a Weyl-group element fixing a
+weight with strictly dominant `ρ`-shift is the identity.
+
+This is the linear freeness on the open dominant chamber, transported along the `ρ`-shift; the
+freeness on the closed dominant chamber below is its special case, since a dominant weight has a
+strictly dominant `ρ`-shift. -/
+theorem eq_one_of_dotAction_eq_self_of_mem_openDotDominantChamber (w : P.weylGroup) {x : M}
+    (hx : x ∈ openDotDominantChamber P b) (hw : dotAction P b w x = x) : w = 1 :=
+  eq_one_of_smul_eq_self_of_mem_openDominantChamber P b w ((mem_openDotDominantChamber P b x).mp hx)
+    ((dotAction_eq_self_iff P b).mp hw)
+
+/-- **A weight in the open chamber of the dot action is the only such weight in its dot orbit.**
+This is the separation statement the alternating elements of the group algebra consume: distinct
+weights of the open dot chamber lie in distinct dot orbits. -/
+theorem eq_of_dotAction_eq_of_mem_openDotDominantChamber {w : P.weylGroup} {x y : M}
+    (hx : x ∈ openDotDominantChamber P b) (hy : y ∈ openDotDominantChamber P b)
+    (h : dotAction P b w x = y) : y = x := by
+  have hone : w = 1 :=
+    eq_one_of_smul_mem_dominantChamber P b w ((mem_openDotDominantChamber P b x).mp hx)
+      (openDominantChamber_subset_dominantChamber P b
+        (by rw [← dotAction_add_weylVector, h]; exact (mem_openDotDominantChamber P b y).mp hy))
+  rw [← h, hone, dotAction_one]
+
+/-- **The dot orbit map of a weight in the open dot chamber is injective**: no two Weyl-group
+elements carry it to the same place. -/
+theorem dotAction_injective_of_mem_openDotDominantChamber {x : M}
+    (hx : x ∈ openDotDominantChamber P b) :
+    Function.Injective fun w : P.weylGroup ↦ dotAction P b w x := by
+  intro v w (h : dotAction P b v x = dotAction P b w x)
+  have key : dotAction P b (w⁻¹ * v) x = x := by
+    rw [dotAction_mul, h, dotAction_inv_dotAction]
+  have := eq_one_of_dotAction_eq_self_of_mem_openDotDominantChamber P b (w⁻¹ * v) hx key
+  rw [inv_mul_eq_one] at this
+  exact this.symm
+
+/-! ### Freeness on the closed dominant chamber -/
 
 /-- **A Weyl-group element carrying a dominant weight to a dominant weight for the dot action is
 the identity.** Unlike the linear action, where a weight on a wall of the chamber is fixed by the
@@ -266,7 +357,8 @@ theorem eq_one_of_dotAction_mem_dominantChamber (w : P.weylGroup) {x : M}
 dominant weight for the dot action is the identity. -/
 theorem eq_one_of_dotAction_eq_self_of_mem_dominantChamber (w : P.weylGroup) {x : M}
     (hx : x ∈ dominantChamber P b) (hw : dotAction P b w x = x) : w = 1 :=
-  eq_one_of_dotAction_mem_dominantChamber P b w hx (by rw [hw]; exact hx)
+  eq_one_of_dotAction_eq_self_of_mem_openDotDominantChamber P b w
+    (dominantChamber_subset_openDotDominantChamber P b hx) hw
 
 /-- A Weyl-group element carrying a dominant weight to a dominant weight for the dot action fixes
 it. -/

@@ -158,8 +158,7 @@ theorem MixedIID.existsUnique_mixingLaw {μ : Measure Ω} [IsProbabilityMeasure 
         fun P => Measure.infinitePi fun _ : ℕ => (P : Measure α) := by
   obtain ⟨ν, hν⟩ := h.exists_mixingRepresentative
   let π : ProbabilityMeasure (ProbabilityMeasure α) :=
-    ProbabilityMeasure.map (⟨μ, inferInstance⟩ : ProbabilityMeasure Ω)
-      hν.measurable_mixingRepresentative.aemeasurable
+    ProbabilityMeasure.map (⟨μ, inferInstance⟩ : ProbabilityMeasure Ω) ν
   refine ⟨π, ?_, ?_⟩
   · change pathLaw μ X = (Measure.map ν μ).bind
       fun P => Measure.infinitePi fun _ : ℕ => (P : Measure α)

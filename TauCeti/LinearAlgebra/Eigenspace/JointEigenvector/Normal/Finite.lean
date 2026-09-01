@@ -19,8 +19,9 @@ index. Each element of that kernel preserves every nonzero joint weight space by
 This is the finite-action bridge in the Lie--Kolchin argument. The remaining connectedness step is
 to show that the ambient algebraic group acts trivially on this finite set.
 
-## Main declaration
+## Main declarations
 
+* `NonzeroJointWeight`: the characters whose joint weight space is nonzero.
 * `finiteIndex_ker_nonzeroJointWeightAction`: for a normal subgroup, the kernel of the ambient
   permutation action on its nonzero joint weights has finite index.
 
@@ -38,14 +39,21 @@ namespace TauCeti
 
 variable {G K V : Type*} [Group G] [Field K] [AddCommGroup V] [Module K V]
 
+/-- The characters of a subgroup whose joint weight space in a representation is nonzero. -/
+abbrev NonzeroJointWeight (N : Subgroup G) (ρ : G →* Module.End K V) :=
+  {χ : N →* Kˣ // (⨅ n : N, (ρ n).eigenspace (χ n)) ≠ ⊥}
+
+/-- A finite-dimensional representation has only finitely many nonzero joint weights. -/
+instance instFiniteNonzeroJointWeight [FiniteDimensional K V]
+    (N : Subgroup G) (ρ : G →* Module.End K V) : Finite (NonzeroJointWeight N ρ) :=
+  finite_nonzeroJointWeights (ρ.comp N.subtype)
+
 /-- The kernel of the permutation action on nonzero normal-subgroup weights has finite index in
 the ambient group. -/
 theorem finiteIndex_ker_nonzeroJointWeightAction [FiniteDimensional K V]
     (N : Subgroup G) [N.Normal]
     (ρ : G →* Module.End K V) :
     (nonzeroJointWeightAction N ρ).ker.FiniteIndex := by
-  let _ : Finite {χ : N →* Kˣ // (⨅ n : N, (ρ n).eigenspace (χ n)) ≠ ⊥} :=
-    finite_nonzeroJointWeights (ρ.comp N.subtype)
   exact Subgroup.finiteIndex_ker (nonzeroJointWeightAction N ρ)
 
 end TauCeti

@@ -83,6 +83,19 @@ theorem mem_kernelHopfIdeal_of_mem_augmentation (f : H ⟶ K) {x : H}
     (hx : Coalgebra.counit (R := R) x = 0) : f.hom x ∈ kernelHopfIdeal f :=
   HopfIdeal.mem_map_of_mem f.hom ((HopfIdeal.mem_augmentation R H).mpr hx)
 
+/-- The kernel Hopf ideal of a surjective coordinate morphism is the augmentation ideal.
+This applies in particular to isomorphisms and identifies their group-scheme kernel with the
+trivial subgroup. -/
+theorem kernelHopfIdeal_eq_augmentation_of_surjective (f : H ⟶ K)
+    (hf : Function.Surjective f.hom) :
+    kernelHopfIdeal f = HopfIdeal.augmentation R K := by
+  apply le_antisymm
+    (HopfIdeal.le_augmentation (R := R) K (kernelHopfIdeal f)) fun y hy ↦ ?_
+  obtain ⟨x, rfl⟩ := hf y
+  rw [HopfIdeal.mem_augmentation] at hy
+  apply mem_kernelHopfIdeal_of_mem_augmentation f
+  simpa only [CoalgHomClass.counit_comp_apply] using hy
+
 -- Mathlib has no application lemma for `Bialgebra.unitBialgHom`; this contains its
 -- definitional unfolding to `algebraMap` in one place (upstream candidate).
 private lemma unitBialgHom_apply {A : Type*} [Semiring A] [Bialgebra R A] (r : R) :

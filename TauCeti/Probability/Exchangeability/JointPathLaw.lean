@@ -58,17 +58,17 @@ theorem jointPathLaw_def (μ : Measure Ω) (X : ℕ → Ω → α) (ν : Ω → 
 -- simp rewrites this left-hand side away before the lemma could fire and `simpNF` rejects the
 -- annotation; `grind` is not subject to that normalisation.
 @[grind =>]
-theorem map_fst_jointPathLaw (hX : ∀ i, AEMeasurable (X i) μ) :
+theorem map_fst_jointPathLaw (hν : AEMeasurable ν μ) (hX : ∀ i, AEMeasurable (X i) μ) :
     (jointPathLaw μ X ν).map Prod.fst = μ.map ν := by
   rw [jointPathLaw_def]
-  exact Measure.fst_map_prodMk₀ (aemeasurable_pi_lambda _ hX)
+  exact Measure.fst_map_prodMk₀ hν (aemeasurable_pi_lambda _ hX)
 
 /-- The second marginal of the joint path law is the law of the path. -/
 @[grind =>]
-theorem map_snd_jointPathLaw (hν : AEMeasurable ν μ) :
+theorem map_snd_jointPathLaw (hν : AEMeasurable ν μ) (hX : ∀ i, AEMeasurable (X i) μ) :
     (jointPathLaw μ X ν).map Prod.snd = pathLaw μ X := by
   rw [jointPathLaw_def, pathLaw_def]
-  exact Measure.snd_map_prodMk₀ hν
+  exact Measure.snd_map_prodMk₀ hν (aemeasurable_pi_lambda _ hX)
 
 /-- The prefix pushforward of the joint path law is the joint block law of the first `n`
 coordinates. -/
