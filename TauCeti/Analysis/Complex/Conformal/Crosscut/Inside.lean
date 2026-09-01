@@ -111,10 +111,10 @@ theorem exists_pos_forall_mem_image_inter_ball_and_image_sdiff_closedBall {U : S
     dsimp only [ψ]
     simp only [Complex.ofReal_zero, mul_zero, zero_add, hgf z₀ hz₀b,
       hnorm]
+  have hρsq : (0 : ℝ) < ρ ^ 2 := sq_pos_of_pos hρ
   have hev : ∀ᶠ t : ℝ in 𝓝 0,
       |ψ t - ρ ^ 2 - t * (2 * ρ ^ 2)| ≤ ρ ^ 2 * |t| := by
-    have := (hasDerivAt_iff_isLittleO.mp hψ).def
-      (show (0 : ℝ) < ρ ^ 2 by positivity)
+    have := (hasDerivAt_iff_isLittleO.mp hψ).def hρsq
     simp only [hψ0, sub_zero, Real.norm_eq_abs] at this
     exact this
   have hΩev : ∀ᶠ t : ℝ in 𝓝 0, v * t + f z₀ ∈ f '' U := by
@@ -130,7 +130,7 @@ theorem exists_pos_forall_mem_image_inter_ball_and_image_sdiff_closedBall {U : S
     rw [abs_of_neg ht.2] at hsq
     have hle := (abs_le.mp hsq).2
     have hlt : ψ t < ρ ^ 2 := by
-      have := mul_neg_of_pos_of_neg (show 0 < ρ ^ 2 by positivity) ht.2
+      have := mul_neg_of_pos_of_neg hρsq ht.2
       linarith
     refine ⟨g (v * t + f z₀), ⟨hgmem _ hmem, ?_⟩, hfg _ hmem⟩
     rw [mem_ball, dist_eq_norm]
@@ -142,7 +142,7 @@ theorem exists_pos_forall_mem_image_inter_ball_and_image_sdiff_closedBall {U : S
     rw [abs_of_pos ht.1] at hsq
     have hle := (abs_le.mp hsq).1
     have hgt : ρ ^ 2 < ψ t := by
-      have := mul_pos (show 0 < ρ ^ 2 by positivity) ht.1
+      have := mul_pos hρsq ht.1
       linarith
     refine ⟨g (v * t + f z₀), ⟨hgmem _ hmem, fun hcb => ?_⟩,
       hfg _ hmem⟩
