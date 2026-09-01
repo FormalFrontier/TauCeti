@@ -5,7 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.NumberTheory.Multiquadratic.Quadratic.GenusCharacter.Narrow
+public import TauCeti.NumberTheory.Multiquadratic.Quadratic.GenusCharacter.Basic
+public import Mathlib.RingTheory.Ideal.Norm.AbsNorm
 
 /-!
 # Genus characters on coprime ideals
@@ -51,20 +52,18 @@ def genusCharFunCoprimeIdealSubmonoid (t : Finset ℤ) :
     Submonoid ((Ideal (𝓞 K))⁰) where
   carrier := {I | IsCoprime (Ideal.absNorm (I : Ideal (𝓞 K)) : ℤ) (∏ P ∈ t, P)}
   one_mem' := by
+    -- Unfold the carrier predicate to expose the ideal norm's monoid-one law.
     change IsCoprime (Ideal.absNorm (1 : Ideal (𝓞 K)) : ℤ) (∏ P ∈ t, P)
     rw [map_one]
     exact isCoprime_one_left
   mul_mem' := by
     intro I J hI hJ
-    change IsCoprime (Ideal.absNorm (I : Ideal (𝓞 K)) : ℤ) (∏ P ∈ t, P) at hI
-    change IsCoprime (Ideal.absNorm (J : Ideal (𝓞 K)) : ℤ) (∏ P ∈ t, P) at hJ
-    change IsCoprime (Ideal.absNorm ((I * J : (Ideal (𝓞 K))⁰) : Ideal (𝓞 K)) : ℤ)
-      (∏ P ∈ t, P)
-    have habs : Ideal.absNorm ((I * J : (Ideal (𝓞 K))⁰) : Ideal (𝓞 K)) =
-        Ideal.absNorm (I : Ideal (𝓞 K)) * Ideal.absNorm (J : Ideal (𝓞 K)) := by
-      rw [Submonoid.coe_mul, map_mul]
-    rw [habs, Nat.cast_mul]
-    exact hI.mul_left hJ
+    have hI' : IsCoprime (Ideal.absNorm (I : Ideal (𝓞 K)) : ℤ) (∏ P ∈ t, P) := by
+      simpa only [Set.mem_ofPred_eq] using hI
+    have hJ' : IsCoprime (Ideal.absNorm (J : Ideal (𝓞 K)) : ℤ) (∏ P ∈ t, P) := by
+      simpa only [Set.mem_ofPred_eq] using hJ
+    simpa only [Set.mem_ofPred_eq, Submonoid.coe_mul, map_mul, Nat.cast_mul] using
+      hI'.mul_left hJ'
 
 /-- Membership in the coprime-ideal submonoid is coprimality of the absolute norm with the
 genus modulus. -/
@@ -92,8 +91,11 @@ noncomputable def genusCharFunCoprimeIdealHom {t : Finset ℤ}
     apply Units.ext
     rw [Units.val_mkOfMulEqOne, Units.val_mul, Units.val_mkOfMulEqOne,
       Units.val_mkOfMulEqOne]
-    change genusCharFun t (Ideal.absNorm ((I : Ideal (𝓞 K)) * (J : Ideal (𝓞 K))) : ℤ) = _
-    rw [map_mul Ideal.absNorm, Nat.cast_mul, genusCharFun_mul_right]
+    have habs : Ideal.absNorm ((I : Ideal (𝓞 K)) * (J : Ideal (𝓞 K))) =
+        Ideal.absNorm (I : Ideal (𝓞 K)) * Ideal.absNorm (J : Ideal (𝓞 K)) :=
+      map_mul Ideal.absNorm _ _
+    simp only [Submonoid.coe_mul]
+    rw [habs, Nat.cast_mul, genusCharFun_mul_right]
 
 /-- The underlying integer of the coprime-ideal genus character is the genus character of the
 ideal's absolute norm. -/
@@ -102,7 +104,20 @@ ideal's absolute norm. -/
     (I : genusCharFunCoprimeIdealSubmonoid (K := K) t) :
     (genusCharFunCoprimeIdealHom ht I : ℤ) =
       genusCharFun t (Ideal.absNorm (I : Ideal (𝓞 K)) : ℤ) := by
-  change genusCharFun t (Ideal.absNorm (I : Ideal (𝓞 K)) : ℤ) = _
-  rfl
+  simp only [genusCharFunCoprimeIdealHom, MonoidHom.coe_mk, OneHom.coe_mk,
+    Units.val_mkOfMulEqOne]
+
+/-- The coprime-ideal genus character has value `1` or `-1`. -/
+theorem genusCharFunCoprimeIdealHom_eq_one_or_eq_neg_one {t : Finset ℤ}
+    (ht : ∀ P ∈ t, IsPrimeDiscriminant P)
+    (I : genusCharFunCoprimeIdealSubmonoid (K := K) t) :
+    genusCharFunCoprimeIdealHom ht I = 1 ∨ genusCharFunCoprimeIdealHom ht I = -1 := by
+  rcases genusCharFun_eq_one_or_eq_neg_one ht I.property with h | h
+  · left
+    apply Units.ext
+    simpa only [Units.val_one, genusCharFunCoprimeIdealHom_apply] using h
+  · right
+    apply Units.ext
+    simpa only [Units.val_neg, Units.val_one, genusCharFunCoprimeIdealHom_apply] using h
 
 end TauCeti.Multiquadratic
