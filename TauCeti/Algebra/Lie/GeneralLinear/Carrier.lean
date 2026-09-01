@@ -31,7 +31,7 @@ that an irreducible one exists at all. The complete-reducibility API currently a
 applies to Killing-semisimple Lie algebras over algebraically closed fields, not directly to
 `gl N K`; this file instead uses a quotient construction available at the stated generality. The Lie
 submodule `v` generates is finite-dimensional, so its lattice of Lie submodules has a coatom, and
-`TauCeti.isIrreducible_quotient_of_isCoatom` makes the quotient by that coatom irreducible, with
+`TauCeti.isIrreducible_quotient_iff_isCoatom` makes the quotient by that coatom irreducible, with
 the class of `v` a highest weight vector of weight `mu` still.
 
 This quotient route avoids requiring a separate complete-reducibility transfer from `sl N K` to
@@ -246,7 +246,7 @@ noncomputable def glIrreducibleGenerator (mu : Fin N → K) : glIrreducible K mu
 a coatom of its lattice of Lie submodules. -/
 theorem isIrreducible_glIrreducible (hmu : IsGlDominantIntegral mu) :
     LieModule.IsIrreducible K (Matrix (Fin N) (Fin N) K) (glIrreducible K mu) :=
-  isIrreducible_quotient_of_isCoatom (isCoatom_glCarrierCoatom hmu)
+  isIrreducible_quotient_iff_isCoatom.mpr (isCoatom_glCarrierCoatom hmu)
 
 /-- **The distinguished generator of `L(mu)` is a highest weight vector of weight `mu`**, the
 statement that ties the carrier to its name. It is nonzero because the chosen vector generates the

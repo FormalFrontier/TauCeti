@@ -61,7 +61,7 @@ goes through.
   `TauCeti.eq_top_of_maximalSubmodule_lt_of_isHighestWeightVector_of_lieSpan_eq_top` anything
   strictly above it is everything.
 * `TauCeti.isCoatom_maximalSubmodule_of_isHighestWeightVector_of_lieSpan_eq_top`: **it is a coatom**
-  of the lattice of Lie submodules, so by `TauCeti.isIrreducible_quotient_of_isCoatom` the quotient
+  of the lattice of Lie submodules, so by `TauCeti.isIrreducible_quotient_iff_isCoatom` the quotient
   by it is irreducible.
 * `TauCeti.isIrreducible_quotient_maximalSubmodule_of_isHighestWeightVector_of_lieSpan_eq_top`:
   **the quotient by it is irreducible**, and
@@ -456,7 +456,7 @@ maximal submodule being a coatom. -/
 theorem isIrreducible_quotient_maximalSubmodule_of_isHighestWeightVector_of_lieSpan_eq_top
     (hv : IsHighestWeightVector b lam v) (hgen : LieSubmodule.lieSpan K L {v} = ⊤) :
     LieModule.IsIrreducible K L (M ⧸ maximalSubmodule H M lam) :=
-  isIrreducible_quotient_of_isCoatom
+  isIrreducible_quotient_iff_isCoatom.mpr
     (isCoatom_maximalSubmodule_of_isHighestWeightVector_of_lieSpan_eq_top hv hgen)
 
 variable {Q : Type x} [AddCommGroup Q] [Module K Q] [LieRingModule L Q] [LieModule K L Q]
