@@ -32,7 +32,7 @@ not to this identity.
 
 All three of the weight map, the coweight map and the index bijection are monoid homomorphisms out
 of this monoid, the coweight map into the opposite endomorphism monoid because `comp` reverses on
-that component. This is the same shape as `RootPairing.Hom.weightHom`,
+that component. These declarations adapt the Mathlib API `RootPairing.Hom.weightHom`,
 `RootPairing.Hom.coweightHom` and `RootPairing.Hom.indexHom` for the endomorphism monoid of a root
 pairing, and the powers of all three components are `map_pow`.
 
@@ -69,6 +69,8 @@ come from.
 
 ## References
 
+* Scott Carnahan, `Mathlib/LinearAlgebra/RootSystem/Hom.lean`, for the `RootPairing.Hom`
+  endomorphism monoid API adapted here.
 * Schémas en groupes (SGA 3), Exposé XXI, 6.8.
 * R. Steinberg, *Endomorphisms of linear algebraic groups*, Memoirs AMS 80 (1968), §11.
 
