@@ -174,6 +174,25 @@ theorem aemeasurable_arrayCol {μ : Measure Ω} {X : ℕ × ℕ → Ω → α}
     (hX : ∀ p, AEMeasurable (X p) μ) (j : ℕ) : AEMeasurable (arrayCol X j) μ :=
   aemeasurable_pi_lambda _ fun i => hX (i, j)
 
+/-- **A row-process witness supplies measurability of every array entry.**  The entries are the
+coordinates of the rows, and a mixed i.i.d. witness already forces those to be a.e. measurable, so
+no separate hypothesis is needed alongside one.  Stated at `MixedIIDWith`, so a conditional witness
+reaches it through `mixedIIDWith_of_conditionallyIIDWith`. -/
+theorem aemeasurable_of_mixedIIDWith_arrayRow {μ : Measure Ω} {X : ℕ × ℕ → Ω → α}
+    {ν : Ω → ProbabilityMeasure (ℕ → α)} (h : MixedIIDWith μ (arrayRow X) ν) (p : ℕ × ℕ) :
+    AEMeasurable (X p) μ := by
+  have hentry : AEMeasurable (fun ω => arrayRow X p.1 ω p.2) μ :=
+    (measurable_pi_apply p.2).comp_aemeasurable (h.aemeasurable p.1)
+  simpa [arrayRow_apply] using hentry
+
+/-- The column form of `aemeasurable_of_mixedIIDWith_arrayRow`. -/
+theorem aemeasurable_of_mixedIIDWith_arrayCol {μ : Measure Ω} {X : ℕ × ℕ → Ω → α}
+    {ν : Ω → ProbabilityMeasure (ℕ → α)} (h : MixedIIDWith μ (arrayCol X) ν) (p : ℕ × ℕ) :
+    AEMeasurable (X p) μ := by
+  have hentry : AEMeasurable (fun ω => arrayCol X p.2 ω p.1) μ :=
+    (measurable_pi_apply p.1).comp_aemeasurable (h.aemeasurable p.2)
+  simpa [arrayCol_apply] using hentry
+
 /-! ## The two array symmetries -/
 
 /-- **Separate exchangeability.** The law of the array `X` is unchanged when its two axes are
