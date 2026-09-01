@@ -24,6 +24,8 @@ structure, while `hom_tmul_mem` gives the useful elementary generators of its Ho
 This is the `Hom` companion in Layer L0 of `TauCetiRoadmap/HodgeStructures/README.md`.  The
 finite-dimensional hypothesis is the precise hypothesis needed by the tensor--Hom equivalence;
 the pure Hodge structure itself remains unrestricted in dimension.
+
+The construction follows Peters--Steenbrink, *Mixed Hodge Structures*, Chapter 2.
 -/
 
 public section
@@ -135,6 +137,8 @@ noncomputable def hom (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
     (dualTensorHomEquiv ℂ W₁ W₂).symm
       (homEquiv_conj (ω₁ := ω₁) (ω₂ := ω₂))
 
+/-- The internal-Hom piece is the comap of the corresponding dual-tensor-product piece under the
+inverse tensor--Hom equivalence. -/
 @[simp]
 theorem hom_piece (hs₁ : HodgeStructureOn W₁ ω₁ n₁) (hs₂ : HodgeStructureOn W₂ ω₂ n₂)
     (p : ℤ) :
@@ -142,17 +146,6 @@ theorem hom_piece (hs₁ : HodgeStructureOn W₁ ω₁ n₁) (hs₂ : HodgeStruc
       ((hs₁.dual.tensorProduct hs₂).piece p).comap
         (dualTensorHomEquiv ℂ W₁ W₂).symm.toLinearMap := by
   exact HodgeStructureOn.comap_piece _ _ _ _
-
-/-- Membership in the internal Hom piece is membership of the inverse image in the tensor-product
-piece. This is not a `simp` lemma: `hom_piece` already rewrites the left-hand side to a comap,
-from which the simp set reaches the same right-hand side. -/
-theorem mem_hom_piece_iff (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
-    (hs₂ : HodgeStructureOn W₂ ω₂ n₂) (p : ℤ) (f : W₁ →ₗ[ℂ] W₂) :
-    f ∈ (hs₁.hom hs₂).piece p ↔
-      (dualTensorHomEquiv ℂ W₁ W₂).symm f ∈
-        (hs₁.dual.tensorProduct hs₂).piece p := by
-  rw [hom_piece]
-  rfl
 
 /-- A pure tensor `φ ⊗ y` gives a homogeneous map in the internal Hom. -/
 theorem hom_tmul_mem (hs₁ : HodgeStructureOn W₁ ω₁ n₁) (hs₂ : HodgeStructureOn W₂ ω₂ n₂)
