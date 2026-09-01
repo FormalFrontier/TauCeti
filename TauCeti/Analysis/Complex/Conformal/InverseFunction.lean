@@ -93,7 +93,7 @@ theorem hasDerivAt_invFunOn {f : ℂ → ℂ} {U : Set ℂ}
 /-- **The chain rule for an inverse along a segment.** Composing `g` with the affine segment
 `t ↦ d * n * t + w` gives a curve whose derivative at `t = 0` is `n`, when `g` has derivative
 `d⁻¹` at `w` and `d ≠ 0`. -/
-theorem hasDerivAt_comp_segment_of_hasDerivAt_inv {g : ℂ → ℂ} {w d : ℂ}
+private theorem hasDerivAt_comp_segment_of_hasDerivAt_inv {g : ℂ → ℂ} {w d : ℂ}
     (hd0 : d ≠ 0) (hg : HasDerivAt g d⁻¹ w) (n : ℂ) :
     HasDerivAt (fun t : ℝ => g (d * n * t + w)) n 0 := by
   have h1 : HasDerivAt (fun t : ℝ => d * n * (t : ℂ) + w)
