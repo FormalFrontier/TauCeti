@@ -141,8 +141,7 @@ private theorem collapseTriple_comul (a : A) (z : M ⊗[R] H) :
   | add x y hx hy => simp only [TensorProduct.tmul_add, map_add, hx, hy]
   | tmul m h =>
       rw [TensorProduct.AlgebraTensorModule.distribBaseChange_tmul,
-        LinearMap.lTensor_tmul, TensorProduct.comul_tmul, CommSemiring.comul_apply,
-        TauCeti.Coalgebra.baseChange_comul_tmul,
+        LinearMap.lTensor_tmul, TauCeti.Coalgebra.baseChange_comul_tmul,
         collapseTriple_comulTensor, LinearMap.lTensor_tmul]
 
 omit [Comodule R H M] in
@@ -207,7 +206,6 @@ theorem baseChange_self :
   rw [baseChangeCoact_tmul, instSelf_coact,
     TensorProduct.tmul_eq_smul_one_tmul a (Coalgebra.comul (R := R) (A := H) h),
     TensorProduct.tmul_eq_smul_one_tmul a h, map_smul, map_smul,
-    TensorProduct.comul_tmul, CommSemiring.comul_apply,
     TauCeti.Coalgebra.baseChange_comul_tmul]
 
 namespace Hom
