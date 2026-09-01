@@ -108,10 +108,7 @@ noncomputable def reverseOpAlgEquiv : pathAlgebra k Q ≃ₐ[k] (pathAlgebra k Q
       apply AlgHom.ext
       intro z
       obtain ⟨y, rfl⟩ := MulOpposite.op_surjective z
-      -- `AlgHom.opComm` and composition are hidden behind coercions here; expose their
-      -- applications definitionally so their computation lemmas can rewrite below.
-      change reverseOpAlgHom k Q
-          (AlgHom.opComm (reverseOpAlgHom k Q) (op y)) = op y
+      rw [AlgHom.comp_apply, AlgHom.id_apply]
       induction y using induction_linear with
       | zero => simp
       | add y₁ y₂ h₁ h₂ => rw [op_add, map_add, map_add, h₁, h₂]
@@ -121,8 +118,7 @@ noncomputable def reverseOpAlgEquiv : pathAlgebra k Q ≃ₐ[k] (pathAlgebra k Q
             unop_op, reverseOpAlgHom_ofPath, Quiver.TotalPath.reverse_reverse])
     (algHom_ext k fun x ↦ by
       rw [AlgHom.comp_apply, reverseOpAlgHom_ofPath, AlgHom.opComm_apply_apply, unop_op,
-        reverseOpAlgHom_ofPath, Quiver.TotalPath.reverse_reverse]
-      rfl)
+        reverseOpAlgHom_ofPath, Quiver.TotalPath.reverse_reverse, AlgHom.id_apply, unop_op])
 
 /-- The path-reversal isomorphism sends a basis path to the opposite of its reverse. -/
 @[simp]

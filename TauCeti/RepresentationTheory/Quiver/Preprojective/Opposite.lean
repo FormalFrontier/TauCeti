@@ -114,11 +114,8 @@ private noncomputable def preprojectiveReversePathAlgHom :
 
 private theorem preprojectiveReversePathAlgHom_relator :
     preprojectiveReversePathAlgHom k Q (preprojectiveRelator k Q) = 0 := by
-  rw [preprojectiveReversePathAlgHom, AlgHom.comp_apply]
-  -- Expose the coerced `AlgEquiv` application so its characteristic lemma can rewrite it.
-  change (AlgHom.op (preprojectiveMk k Q))
-    (reverseOpAlgEquiv k (Symmetrify Q) (preprojectiveRelator k Q)) = 0
-  rw [reverseOpAlgEquiv_preprojectiveRelator]
+  rw [preprojectiveReversePathAlgHom, AlgHom.comp_apply, AlgEquiv.toAlgHom_apply,
+    reverseOpAlgEquiv_preprojectiveRelator]
   simp
 
 /-- The path-reversal homomorphism from a preprojective algebra to its opposite, obtained by
@@ -138,12 +135,8 @@ private theorem preprojectiveReverseOpAlgHom_preprojectiveMk_ofPath
     preprojectiveReverseOpAlgHom k Q (preprojectiveMk k Q (ofPath x)) =
       op (preprojectiveMk k Q (ofPath x.reverse)) := by
   rw [preprojectiveReverseOpAlgHom_preprojectiveMk, preprojectiveReversePathAlgHom,
-    AlgHom.comp_apply]
-  -- Expose the coerced `AlgEquiv` application so its path formula can rewrite it.
-  change (AlgHom.op (preprojectiveMk k Q))
-    (reverseOpAlgEquiv k (Symmetrify Q) (ofPath x)) = _
-  rw [reverseOpAlgEquiv_ofPath]
-  rfl
+    AlgHom.comp_apply, AlgEquiv.toAlgHom_apply, reverseOpAlgEquiv_ofPath,
+    AlgHom.op_apply_apply, unop_op]
 
 private theorem preprojectiveReverseOpAlgHom_opComm_op_preprojectiveMk_ofPath
     (x : Quiver.TotalPath (Symmetrify Q)) :
@@ -208,8 +201,7 @@ theorem preprojectiveOpAlgEquiv_preprojectiveMk (x : pathAlgebra k (Symmetrify Q
       (AlgHom.op (preprojectiveMk k Q)) (reverseOpAlgEquiv k (Symmetrify Q) x) := by
   rw [preprojectiveOpAlgEquiv, AlgEquiv.ofAlgHom_apply,
     preprojectiveReverseOpAlgHom_preprojectiveMk, preprojectiveReversePathAlgHom,
-    AlgHom.comp_apply]
-  rfl
+    AlgHom.comp_apply, AlgEquiv.toAlgHom_apply]
 
 /-- On the opposite of an arbitrary path-algebra representative, the inverse opposite-algebra
 isomorphism reverses the representative before applying the quotient map. -/
@@ -219,10 +211,8 @@ theorem preprojectiveOpAlgEquiv_symm_op_preprojectiveMk (x : pathAlgebra k (Symm
       preprojectiveMk k Q (unop (reverseOpAlgEquiv k (Symmetrify Q) x)) := by
   rw [preprojectiveOpAlgEquiv, AlgEquiv.ofAlgHom_symm, AlgEquiv.ofAlgHom_apply,
     AlgHom.opComm_apply_apply, unop_op, preprojectiveReverseOpAlgHom_preprojectiveMk,
-    preprojectiveReversePathAlgHom, AlgHom.comp_apply]
-  -- Expose the coerced `AlgEquiv` application so `AlgHom.op` can compute on it.
-  change unop ((AlgHom.op (preprojectiveMk k Q)) (reverseOpAlgEquiv k (Symmetrify Q) x)) = _
-  rw [AlgHom.op_apply_apply, unop_op]
+    preprojectiveReversePathAlgHom, AlgHom.comp_apply, AlgEquiv.toAlgHom_apply,
+    AlgHom.op_apply_apply, unop_op]
 
 /- The generator formulas below specialize the two representative rules above, which are the simp
 normal forms: `simp` derives each of them from those rules, so they carry no `@[simp]` attribute
@@ -234,8 +224,8 @@ theorem preprojectiveOpAlgEquiv_preprojectiveMk_ofPath
     (x : Quiver.TotalPath (Symmetrify Q)) :
     preprojectiveOpAlgEquiv k Q (preprojectiveMk k Q (ofPath x)) =
       op (preprojectiveMk k Q (ofPath x.reverse)) := by
-  rw [preprojectiveOpAlgEquiv_preprojectiveMk, reverseOpAlgEquiv_ofPath]
-  rfl
+  rw [preprojectiveOpAlgEquiv_preprojectiveMk, reverseOpAlgEquiv_ofPath,
+    AlgHom.op_apply_apply, unop_op]
 
 /-- The inverse opposite-algebra isomorphism reverses a path representative as well. -/
 theorem preprojectiveOpAlgEquiv_symm_op_preprojectiveMk_ofPath
