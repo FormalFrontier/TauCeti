@@ -193,14 +193,6 @@ noncomputable def simplyBlockedCoefficient (i : Fin n) (x y : GridState n) :
   MvPolynomial.killCompl (f := Subtype.val) Subtype.val_injective
     (G.unblockedCoefficient R x y)
 
-/-- A simply blocked coefficient is the corresponding `GC⁻` coefficient specialized at
-`V_i = 0`. -/
-theorem simplyBlockedCoefficient_def (i : Fin n) (x y : GridState n) :
-    G.simplyBlockedCoefficient R i x y =
-      MvPolynomial.killCompl (f := Subtype.val) Subtype.val_injective
-        (G.unblockedCoefficient R x y) := by
-  rw [simplyBlockedCoefficient]
-
 /-- The simply blocked coefficient is the finite sum over the contributing rectangles. Terms
 covering the blocked marking disappear; the other terms survive under `MvPolynomial.killCompl`. -/
 theorem simplyBlockedCoefficient_eq_sum (i : Fin n) (x y : GridState n) :
@@ -209,7 +201,7 @@ theorem simplyBlockedCoefficient_eq_sum (i : Fin n) (x y : GridState n) :
         MvPolynomial.killCompl (f := Subtype.val) Subtype.val_injective
           (G.OMonomial R r.toGridRectangle) := by
   classical
-  rw [simplyBlockedCoefficient_def, G.unblockedCoefficient_def R, map_sum]
+  rw [simplyBlockedCoefficient, G.unblockedCoefficient_def R, map_sum]
   symm
   apply Finset.sum_subset (G.simplyBlockedRectangles_subset_unblockedRectangles i x y)
   intro r hr hri
@@ -241,11 +233,6 @@ theorem simplyBlockedDifferentialOnGenerator_apply (i : Fin n) (x y : GridState 
   · intro hy
     exact (hy (Finset.mem_univ y)).elim
 
-/-- The simply blocked differential of a generator has no self-term. -/
-theorem simplyBlockedDifferentialOnGenerator_apply_self (i : Fin n) (x : GridState n) :
-    G.simplyBlockedDifferentialOnGenerator R i x x = 0 := by
-  simp
-
 /-- The simply blocked differential of a generator is supported on its column transpositions. -/
 theorem simplyBlockedDifferentialOnGenerator_support_subset (i : Fin n) (x : GridState n) :
     (G.simplyBlockedDifferentialOnGenerator R i x).support ⊆ x.columnSwapNeighbors := by
@@ -254,7 +241,7 @@ theorem simplyBlockedDifferentialOnGenerator_support_subset (i : Fin n) (x : Gri
   apply G.unblockedDifferentialOnGenerator_support_subset R x
   rw [Finsupp.mem_support_iff, G.unblockedDifferentialOnGenerator_apply R]
   intro hzero
-  rw [G.simplyBlockedCoefficient_def R i x y, hzero, map_zero] at hy
+  rw [simplyBlockedCoefficient, hzero, map_zero] at hy
   exact hy rfl
 
 /-- Specializing the unblocked differential of a generator gives its simply blocked
@@ -268,7 +255,7 @@ theorem simplyBlockedSpecialization_unblockedDifferentialOnGenerator (i : Fin n)
   rw [simplyBlockedSpecialization_apply,
     G.simplyBlockedDifferentialOnGenerator_apply R i x y,
     G.unblockedDifferentialOnGenerator_apply R x y]
-  exact G.simplyBlockedCoefficient_def R i x y
+  rw [simplyBlockedCoefficient]
 
 /-- The linear map obtained from the `GC⁻` differential by setting `V_i = 0`.  For a knot grid it
 is the differential underlying the future simply blocked chain complex `GĈ`; square-zero,
@@ -288,12 +275,6 @@ theorem simplyBlockedDifferential_single (i : Fin n) (x : GridState n) :
     G.simplyBlockedDifferential R i (Finsupp.single x 1) =
       G.simplyBlockedDifferentialOnGenerator R i x := by
   rw [simplyBlockedDifferential, Finsupp.lsum_single]
-  simp
-
-/-- The matrix coefficient on a single generator is the specialized unblocked coefficient. -/
-theorem simplyBlockedDifferential_single_apply (i : Fin n) (x y : GridState n) :
-    G.simplyBlockedDifferential R i (Finsupp.single x 1) y =
-      G.simplyBlockedCoefficient R i x y := by
   simp
 
 /-- The simply blocked differential is the finite sum of its generator rows over the support of
@@ -333,7 +314,7 @@ theorem simplyBlockedSpecialization_unblockedDifferential (i : Fin n)
       intro y
       rw [simplyBlockedSpecialization_apply, G.unblockedDifferential_apply_apply,
         G.simplyBlockedDifferential_apply_apply]
-      simp [simplyBlockedCoefficient_def]
+      simp [simplyBlockedCoefficient]
 
 end GridDiagram
 
