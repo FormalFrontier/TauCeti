@@ -143,7 +143,9 @@ theorem hom_piece (hs₁ : HodgeStructureOn W₁ ω₁ n₁) (hs₂ : HodgeStruc
         (dualTensorHomEquiv ℂ W₁ W₂).symm.toLinearMap := by
   exact HodgeStructureOn.comap_piece _ _ _ _
 
-@[simp]
+/-- Membership in the internal Hom piece is membership of the inverse image in the tensor-product
+piece. This is not a `simp` lemma: `hom_piece` already rewrites the left-hand side to a comap,
+from which the simp set reaches the same right-hand side. -/
 theorem mem_hom_piece_iff (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
     (hs₂ : HodgeStructureOn W₂ ω₂ n₂) (p : ℤ) (f : W₁ →ₗ[ℂ] W₂) :
     f ∈ (hs₁.hom hs₂).piece p ↔
