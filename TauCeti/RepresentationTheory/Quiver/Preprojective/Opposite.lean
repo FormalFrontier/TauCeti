@@ -20,6 +20,8 @@ isomorphism takes the class of the path to the opposite of the class of its reve
 
 * `TauCeti.reverseOpAlgEquiv_preprojectiveRelator`: path reversal preserves the preprojective
   relator, up to passage to the opposite algebra.
+* `TauCeti.reverseOpAlgEquiv_localPreprojectiveRelator`: the same statement for each local
+  relator.
 * `TauCeti.preprojectiveOpAlgEquiv`: the preprojective algebra is isomorphic to its opposite.
 
 ## References
@@ -78,6 +80,16 @@ theorem reverseOpAlgEquiv_preprojectiveRelator :
   simp only [map_sum, map_sub, reverseOpAlgEquiv_headBacktrackElem,
     reverseOpAlgEquiv_tailBacktrackElem, Finset.op_sum, op_sub]
 
+/-- Path reversal preserves each local preprojective relator, up to passage to the opposite path
+algebra. -/
+@[simp]
+theorem reverseOpAlgEquiv_localPreprojectiveRelator (v : Q) :
+    reverseOpAlgEquiv k (Symmetrify Q) (localPreprojectiveRelator k v) =
+      op (localPreprojectiveRelator k v) := by
+  rw [← preprojectiveRelator_vertexCorner_eq_localPreprojectiveRelator,
+    doubledVertexIdempotent_def, map_mul, map_mul, reverseOpAlgEquiv_vertexIdempotent,
+    reverseOpAlgEquiv_preprojectiveRelator, ← op_mul, ← op_mul, mul_assoc]
+
 end Relator
 
 section Quotient
@@ -129,7 +141,35 @@ private theorem preprojectiveReverseOpAlgHom_opComm_op_preprojectiveMk_ofPath
     AlgHom.opComm (preprojectiveReverseOpAlgHom k Q)
         (op (preprojectiveMk k Q (ofPath x))) =
       preprojectiveMk k Q (ofPath x.reverse) := by
-  simp [AlgHom.opComm, preprojectiveReverseOpAlgHom_preprojectiveMk_ofPath]
+  rw [AlgHom.opComm_apply_apply, unop_op,
+    preprojectiveReverseOpAlgHom_preprojectiveMk_ofPath, unop_op]
+
+private theorem preprojectiveReverseOpAlgHom_involutive_preprojectiveMk
+    (x : pathAlgebra k (Symmetrify Q)) :
+    (preprojectiveReverseOpAlgHom k Q
+          (AlgHom.opComm (preprojectiveReverseOpAlgHom k Q)
+            (op (preprojectiveMk k Q x))) = op (preprojectiveMk k Q x)) ∧
+      (AlgHom.opComm (preprojectiveReverseOpAlgHom k Q)
+          (preprojectiveReverseOpAlgHom k Q (preprojectiveMk k Q x)) =
+        preprojectiveMk k Q x) := by
+  induction x using PathAlgebra.induction_linear with
+  | zero => simp
+  | add x₁ x₂ h₁ h₂ =>
+      obtain ⟨h₁₁, h₁₂⟩ := h₁
+      obtain ⟨h₂₁, h₂₂⟩ := h₂
+      constructor
+      · rw [map_add, op_add, map_add, map_add, h₁₁, h₂₁]
+      · rw [map_add, map_add, map_add, h₁₂, h₂₂]
+  | single x c =>
+      constructor
+      · rw [single_eq_smul_ofPath, map_smul, op_smul, map_smul, map_smul,
+          preprojectiveReverseOpAlgHom_opComm_op_preprojectiveMk_ofPath,
+          preprojectiveReverseOpAlgHom_preprojectiveMk_ofPath,
+          Quiver.TotalPath.reverse_reverse]
+      · rw [single_eq_smul_ofPath, map_smul, map_smul, map_smul,
+          preprojectiveReverseOpAlgHom_preprojectiveMk_ofPath,
+          preprojectiveReverseOpAlgHom_opComm_op_preprojectiveMk_ofPath,
+          Quiver.TotalPath.reverse_reverse]
 
 /-- **The additive preprojective algebra is isomorphic to its opposite algebra.** The isomorphism
 is induced by reversing every path of the doubled quiver. -/
@@ -143,27 +183,13 @@ noncomputable def preprojectiveOpAlgEquiv :
       obtain ⟨y, rfl⟩ := MulOpposite.op_surjective z
       obtain ⟨x, rfl⟩ := preprojectiveMk_surjective k Q y
       simp only [AlgHom.comp_apply, AlgHom.id_apply]
-      induction x using PathAlgebra.induction_linear with
-      | zero => simp
-      | add x₁ x₂ h₁ h₂ => rw [map_add, op_add, map_add, map_add, h₁, h₂]
-      | single x c =>
-          rw [single_eq_smul_ofPath, map_smul, op_smul, map_smul, map_smul,
-            preprojectiveReverseOpAlgHom_opComm_op_preprojectiveMk_ofPath,
-            preprojectiveReverseOpAlgHom_preprojectiveMk_ofPath,
-            Quiver.TotalPath.reverse_reverse])
+      exact (preprojectiveReverseOpAlgHom_involutive_preprojectiveMk k Q x).1)
     (by
       apply AlgHom.ext
       intro y
       obtain ⟨x, rfl⟩ := preprojectiveMk_surjective k Q y
       simp only [AlgHom.comp_apply, AlgHom.id_apply]
-      induction x using PathAlgebra.induction_linear with
-      | zero => simp
-      | add x₁ x₂ h₁ h₂ => rw [map_add, map_add, map_add, h₁, h₂]
-      | single x c =>
-          rw [single_eq_smul_ofPath, map_smul, map_smul, map_smul,
-            preprojectiveReverseOpAlgHom_preprojectiveMk_ofPath,
-            preprojectiveReverseOpAlgHom_opComm_op_preprojectiveMk_ofPath,
-            Quiver.TotalPath.reverse_reverse])
+      exact (preprojectiveReverseOpAlgHom_involutive_preprojectiveMk k Q x).2)
 
 /-- On an arbitrary path-algebra representative, the opposite-algebra isomorphism reverses the
 representative before applying the opposite of the quotient map. -/
@@ -197,7 +223,7 @@ theorem preprojectiveOpAlgEquiv_symm_op_preprojectiveMk_ofPath
 /-- The opposite-algebra isomorphism fixes every vertex idempotent class, up to passage to the
 opposite algebra. -/
 @[simp]
-theorem preprojectiveOpAlgEquiv_doubledVertexIdempotent (i : Q) :
+theorem preprojectiveOpAlgEquiv_preprojectiveMk_doubledVertexIdempotent (i : Q) :
     preprojectiveOpAlgEquiv k Q (preprojectiveMk k Q (doubledVertexIdempotent k i)) =
       op (preprojectiveMk k Q (doubledVertexIdempotent k i)) := by
   rw [doubledVertexIdempotent_def, vertexIdempotent_eq_single, ← ofPath_eq_single,
@@ -206,7 +232,7 @@ theorem preprojectiveOpAlgEquiv_doubledVertexIdempotent (i : Q) :
 
 /-- The opposite-algebra isomorphism sends a doubled arrow class to the opposite of the class of
 its formal reverse. -/
-theorem preprojectiveOpAlgEquiv_ofArrow {i j : Symmetrify Q} (a : i ⟶ j) :
+theorem preprojectiveOpAlgEquiv_preprojectiveMk_ofArrow {i j : Symmetrify Q} (a : i ⟶ j) :
     preprojectiveOpAlgEquiv k Q (preprojectiveMk k Q (ofArrow a)) =
       op (preprojectiveMk k Q (ofArrow (Quiver.reverse a))) := by
   rw [ofArrow_eq_ofPath, preprojectiveOpAlgEquiv_preprojectiveMk_ofPath,
