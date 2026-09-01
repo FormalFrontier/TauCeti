@@ -190,23 +190,35 @@ def typeDSpinGraphPerm (n : ℕ) (hn : 1 ≤ n) : Equiv.Perm (Finset (Fin n)) :=
   let last : Fin n := ⟨n - 1, by omega⟩
   (symmDiff_left_involutive {last}).toPerm (· ∆ {last})
 
+/-- The type-`D` spin graph permutation acts by symmetric difference with the final index. -/
+theorem typeDSpinGraphPerm_apply (n : ℕ) (hn : 1 ≤ n) (s : Finset (Fin n)) :
+    typeDSpinGraphPerm n hn s = s ∆ {(⟨n - 1, by omega⟩ : Fin n)} :=
+  by simp [typeDSpinGraphPerm]
+
+private theorem symmDiff_singleton_eq_erase_or_insert {α : Type*} [DecidableEq α]
+    (s : Finset α) (a : α) :
+    s ∆ {a} = if a ∈ s then s.erase a else insert a s := by
+  ext x
+  by_cases ha : a ∈ s <;> simp [Finset.mem_symmDiff, ha] <;> aesop
+
 /-- An index belongs to the graph-transformed sign set precisely when its old membership agrees
 with not being the final index. Thus membership is unchanged away from the final coordinate and
 reversed there. -/
 @[simp]
 theorem mem_typeDSpinGraphPerm_iff (n : ℕ) (hn : 1 ≤ n) (s : Finset (Fin n)) (i : Fin n) :
     i ∈ typeDSpinGraphPerm n hn s ↔ (i ∈ s ↔ (i : ℕ) + 1 ≠ n) := by
+  rw [typeDSpinGraphPerm_apply]
   by_cases hi : i = (⟨n - 1, by omega⟩ : Fin n)
   · subst i
     have hval : n - 1 + 1 = n := Nat.sub_add_cancel hn
-    simp [typeDSpinGraphPerm, Finset.mem_symmDiff, hval]
+    simp [Finset.mem_symmDiff, hval]
   · have hilast : (i : ℕ) + 1 ≠ n := by
       intro h
       apply hi
       apply Fin.ext
       dsimp only
       omega
-    simp [typeDSpinGraphPerm, Finset.mem_symmDiff, hi, hilast]
+    simp [Finset.mem_symmDiff, hi, hilast]
 
 /-- Toggling the final sign twice is the identity. -/
 @[simp]
@@ -233,19 +245,13 @@ theorem even_card_typeDSpinGraphPerm_iff (n : ℕ) (hn : 1 ≤ n)
   let last : Fin n := ⟨n - 1, by omega⟩
   by_cases hlast : last ∈ s
   · have hcard : (typeDSpinGraphPerm n hn s).card + 1 = s.card := by
-      have htoggle : s ∆ {last} = s.erase last := by
-        ext i
-        simp only [Finset.mem_symmDiff, Finset.mem_singleton, Finset.mem_erase]
-        aesop
-      simpa only [typeDSpinGraphPerm, Function.Involutive.coe_toPerm, last, htoggle]
+      rw [typeDSpinGraphPerm_apply, symmDiff_singleton_eq_erase_or_insert, ite_eq_left hlast]
+      simpa only [last]
         using Finset.card_erase_add_one hlast
     rw [← hcard, Nat.odd_add_one, Nat.not_odd_iff_even]
   · have hcard : (typeDSpinGraphPerm n hn s).card = s.card + 1 := by
-      have htoggle : s ∆ {last} = insert last s := by
-        ext i
-        simp only [Finset.mem_symmDiff, Finset.mem_singleton, Finset.mem_insert]
-        aesop
-      simpa only [typeDSpinGraphPerm, Function.Involutive.coe_toPerm, last, htoggle]
+      rw [typeDSpinGraphPerm_apply, symmDiff_singleton_eq_erase_or_insert, ite_eq_right hlast]
+      simpa only [last]
         using Finset.card_insert_of_notMem hlast
     rw [hcard, Nat.even_add_one, Nat.not_even_iff_odd]
 
