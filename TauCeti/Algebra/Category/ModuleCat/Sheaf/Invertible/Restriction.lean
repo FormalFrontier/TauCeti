@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Algebra.Category.ModuleCat.Sheaf.Invertible.LocalTriviality
 public import TauCeti.Algebra.Category.ModuleCat.Sheaf.Free
+public import TauCeti.CategoryTheory.Sites.CoversTop
 public import Mathlib.Algebra.Category.ModuleCat.Sheaf.PushforwardContinuous
 
 /-!
@@ -24,12 +25,16 @@ step for the local-triviality formulation of invertible sheaves.
   along a morphism into its covering object;
 * `SheafOfModules.LocalTrivializations.ofRefinement` transports an entire atlas to any cover
   equipped with refinement arrows into the original cover.
+* `SheafOfModules.LocalTrivializations.commonRefinement` transports two atlases to a supplied
+  common refinement, with both resulting atlases using the same cover.
 
 The common refinement of two atlases can therefore carry both sets of trivializations on the
 same cover. Together with compatibility of tensor products with restriction, this is the final
 local-triviality input for closure of invertible sheaves under tensor product. That closure is
 needed for the Picard group in `TauCetiRoadmap/JacobianChallenge/README.md`, Layer A, item
-"Invertible sheaves on a scheme; the Picard group `Pic X` under `⊗`".
+"Invertible sheaves on a scheme; the Picard group `Pic X` under `⊗`". The tensor/restriction
+comparison itself is deliberately not asserted here: it belongs with the sheafified tensor
+product API, where its construction and coherence can be reviewed independently.
 
 No formalization is vendored. The construction reuses Mathlib's `SheafOfModules.overMap`,
 `SheafOfModules.overFunctorMap`, and `SheafOfModules.overMapUnitIso`, and the standard
@@ -73,7 +78,7 @@ def overMapFreePUnitIso {X Y : C} (f : Y ⟶ X) :
 
 namespace LocalTrivializations
 
-variable {M : SheafOfModules.{u} R}
+variable {M N : SheafOfModules.{u} R}
 
 /-- Restrict one member of a local trivialization atlas along a morphism into its covering
 object. The resulting isomorphism trivializes `M` over the source of that morphism. -/
@@ -110,6 +115,51 @@ lemma ofRefinement_X (t : LocalTrivializations M) {I : Type u₁} (Y : I → C)
     (t.ofRefinement Y coversTop index map).X =
       fun j ↦ Y ((ofRefinement_I t Y coversTop index map).mp j) :=
   (rfl)
+
+/-- Transport two local-trivialization atlases to a supplied common refinement.
+
+The two returned atlases have definitionally the same indexing type and covering objects. Their
+trivializations are the restrictions of the original ones along the two arrows in `r`. This is
+the local-geometric step used before tensoring two line bundles on a common cover; it is stated
+for an arbitrary supplied `CommonRefinement` because choosing such a refinement is a property of
+the site, not of the sheaves.
+
+The input is supplied rather than chosen by this operation so that the result preserves the
+actual refinement data needed by later compatibility proofs. For sites where a common refinement
+is constructed canonically, use `CoversTop.commonRefinement`. -/
+@[expose]
+def commonRefinement (t : LocalTrivializations M) (s : LocalTrivializations N)
+    (r : GrothendieckTopology.CoversTop.CommonRefinement J t.X s.X) :
+    LocalTrivializations M × LocalTrivializations N :=
+  (t.ofRefinement r.X r.coversTop r.leftIndex r.left,
+    s.ofRefinement r.X r.coversTop r.rightIndex r.right)
+
+/-- The left atlas produced by `commonRefinement` is the restriction of the first atlas. -/
+@[simp]
+lemma commonRefinement_fst (t : LocalTrivializations M) (s : LocalTrivializations N)
+    (r : GrothendieckTopology.CoversTop.CommonRefinement J t.X s.X) :
+    (t.commonRefinement s r).1 = t.ofRefinement r.X r.coversTop r.leftIndex r.left :=
+  rfl
+
+/-- The right atlas produced by `commonRefinement` is the restriction of the second atlas. -/
+@[simp]
+lemma commonRefinement_snd (t : LocalTrivializations M) (s : LocalTrivializations N)
+    (r : GrothendieckTopology.CoversTop.CommonRefinement J t.X s.X) :
+    (t.commonRefinement s r).2 = s.ofRefinement r.X r.coversTop r.rightIndex r.right :=
+  rfl
+
+/-- The two atlases produced by `commonRefinement` use the same indexing type. -/
+lemma commonRefinement_I (t : LocalTrivializations M) (s : LocalTrivializations N)
+    (r : GrothendieckTopology.CoversTop.CommonRefinement J t.X s.X) :
+    (t.commonRefinement s r).1.I = (t.commonRefinement s r).2.I := by
+  rw [commonRefinement_fst, commonRefinement_snd, ofRefinement_I, ofRefinement_I]
+
+/-- Transport two local-trivialization atlases to the canonical common refinement of their
+covering families. -/
+noncomputable def commonRefinementOf (t : LocalTrivializations M) (s : LocalTrivializations N) :
+    LocalTrivializations M × LocalTrivializations N :=
+  t.commonRefinement s
+    (GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop)
 
 /-- The trivializations of a refined atlas are obtained by restricting the chosen old
 trivializations along the refinement arrows. -/
