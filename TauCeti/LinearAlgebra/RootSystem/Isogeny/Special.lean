@@ -157,7 +157,7 @@ noncomputable def b2SpecialIsogeny :
 the relation `τ ^ 2 = Frob_p` that identifies the exceptional isogeny in characteristic `p`; the
 square relation is the root-datum input for constructing the exceptional Steinberg endomorphisms
 used to define the Suzuki groups. -/
-theorem b2SpecialIsogeny_mul_self :
+@[simp] theorem b2SpecialIsogeny_mul_self :
     b2SpecialIsogeny * b2SpecialIsogeny =
       RootPairingIsogeny.smulId (typeBSimplyConnectedRootDatum 2) 2 := by
   rw [RootPairingIsogeny.mul_def]
@@ -273,7 +273,7 @@ def g2SpecialIsogeny :
 
 /-- **The square of the special isogeny of `G₂` is scaling by three.** This is the root-datum form
 of the relation `τ ^ 2 = Frob_p` that identifies the exceptional isogeny in characteristic `p`. -/
-theorem g2SpecialIsogeny_mul_self :
+@[simp] theorem g2SpecialIsogeny_mul_self :
     g2SpecialIsogeny * g2SpecialIsogeny =
       RootPairingIsogeny.smulId g2SimplyConnectedRootDatum 3 := by
   rw [RootPairingIsogeny.mul_def]
@@ -359,7 +359,7 @@ noncomputable def f4SpecialIsogeny :
 
 /-- **The square of the special isogeny of `F₄` is scaling by two.** This is the root-datum form of
 the relation `τ ^ 2 = Frob_p` that identifies the exceptional isogeny in characteristic `p`. -/
-theorem f4SpecialIsogeny_mul_self :
+@[simp] theorem f4SpecialIsogeny_mul_self :
     f4SpecialIsogeny * f4SpecialIsogeny =
       RootPairingIsogeny.smulId f4SimplyConnectedRootDatum 2 := by
   rw [RootPairingIsogeny.mul_def]
