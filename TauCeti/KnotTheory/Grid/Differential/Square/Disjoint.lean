@@ -315,6 +315,23 @@ private theorem mem_interior_second_iff (D : GridRectangleDecomposition x z)
     D.first.map_of_ne D.second.left hll.symm hrl.symm,
     D.first.map_of_ne D.second.right hlr.symm hrr.symm]
 
+/-- To transfer emptiness between states that differ only in two columns, it suffices to rule out
+the source-state points on those columns; every other point transfers directly. -/
+private theorem isEmptyFor_of_eq_away {u v : GridState n} (R : GridRectangle n)
+    (a b : Fin n) (ha : (a, u a) ∉ R.interior) (hb : (b, u b) ∉ R.interior)
+    (haway : ∀ p : Fin n × Fin n, p.1 ≠ a → p.1 ≠ b →
+      (p ∈ u.pointSet ↔ p ∈ v.pointSet)) (hv : R.IsEmptyFor v) : R.IsEmptyFor u := by
+  rw [R.isEmptyFor_iff]
+  intro p hp hmem
+  have hpu : u p.1 = p.2 := (u.mem_pointSet p).mp hp
+  by_cases hpa : p.1 = a
+  · apply ha
+    simpa [hpa, ← hpu] using hmem
+  by_cases hpb : p.1 = b
+  · apply hb
+    simpa [hpb, ← hpu] using hmem
+  exact (R.isEmptyFor_iff v).mp hv p ((haway p hpa hpb).mp hp) hmem
+
 /-- Reordering two empty rectangles with disjoint side columns leaves the new first rectangle
 empty.
 
@@ -336,15 +353,12 @@ theorem isEmpty_commute_first (D : GridRectangleDecomposition x z) (h : D.HasDis
       x D.first.left ∈ Grid.cIoo (x D.second.left) (x D.second.right)) :=
     fun hc => D.second.not_mem_interior_of_isEmpty h₂ D.first.right_bottom_mem_target
       (hmid₂.mpr hc)
-  rw [GridRectangleBetween.isEmpty_iff]
-  intro p hp hmem
-  rw [D.commute_first_toGridRectangle h, D.mem_interior_second_iff h] at hmem
-  obtain ⟨hcol, hrow⟩ := hmem
-  have hpx : x p.1 = p.2 := (x.mem_pointSet p).mp hp
-  by_cases hpleft : p.1 = D.first.left
-  · -- the source point on the initial side column of the first rectangle
-    rw [← hpx] at hrow
-    rw [hpleft] at hcol hrow
+  rw [GridRectangleBetween.IsEmpty, D.commute_first_toGridRectangle h]
+  apply isEmptyFor_of_eq_away (u := x) (v := D.middle) D.second.toGridRectangle
+    D.first.left D.first.right
+  · intro hmem
+    rw [D.mem_interior_second_iff h] at hmem
+    obtain ⟨hcol, hrow⟩ := hmem
     have hsep := endpoints_mem_cIoo_of_separation D.second.left_ne_right
       (x.toPerm.injective.ne D.second.left_ne_right) hrl hrr
       (x.toPerm.injective.ne hrl) (x.toPerm.injective.ne hrr)
@@ -352,10 +366,9 @@ theorem isEmpty_commute_first (D : GridRectangleDecomposition x z) (h : D.HasDis
     exact D.first.not_mem_interior_of_isEmpty h₁
       ((x.mk_mem_pointSet D.second.right (x D.second.right)).mpr rfl)
       ((D.first.mem_toGridRectangle_interior _).mpr ⟨hsep.1, hsep.2.2.1⟩)
-  by_cases hpright : p.1 = D.first.right
-  · -- the source point on the terminal side column of the first rectangle
-    rw [← hpx] at hrow
-    rw [hpright] at hcol hrow
+  · intro hmem
+    rw [D.mem_interior_second_iff h] at hmem
+    obtain ⟨hcol, hrow⟩ := hmem
     have hsep := endpoints_mem_cIoo_of_separation D.second.left_ne_right
       (x.toPerm.injective.ne D.second.left_ne_right) hll hlr
       (x.toPerm.injective.ne hll) (x.toPerm.injective.ne hlr)
@@ -363,10 +376,9 @@ theorem isEmpty_commute_first (D : GridRectangleDecomposition x z) (h : D.HasDis
     exact D.first.not_mem_interior_of_isEmpty h₁
       ((x.mk_mem_pointSet D.second.left (x D.second.left)).mpr rfl)
       ((D.first.mem_toGridRectangle_interior _).mpr ⟨hsep.2.1, hsep.2.2.2⟩)
-  · -- away from the first pair of side columns the two states agree
-    exact D.second.not_mem_interior_of_isEmpty h₂
-      ((D.first.mem_target_pointSet_iff_of_ne hpleft hpright).mpr hp)
-      ((D.mem_interior_second_iff h p).mpr ⟨hcol, hrow⟩)
+  · intro p hleft hright
+    exact (D.first.mem_target_pointSet_iff_of_ne hleft hright).symm
+  · exact h₂
 
 /-- Reordering two empty rectangles with disjoint side columns leaves the new second rectangle
 empty.
@@ -389,41 +401,34 @@ theorem isEmpty_commute_second (D : GridRectangleDecomposition x z) (h : D.HasDi
     fun hc => D.first.not_mem_interior_of_isEmpty h₁
       ((x.mk_mem_pointSet D.second.right (x D.second.right)).mpr rfl)
       ((D.first.mem_toGridRectangle_interior _).mpr hc)
-  rw [GridRectangleBetween.isEmpty_iff]
-  intro p hp hmem
-  rw [D.commute_second_toGridRectangle h, D.first.mem_toGridRectangle_interior] at hmem
-  obtain ⟨hcol, hrow⟩ := hmem
-  have hpx : x (Equiv.swap D.second.left D.second.right p.1) = p.2 := by
-    have := ((D.commute h).middle.mem_pointSet p).mp hp
-    rwa [D.commute_middle h, GridState.swapColumns_apply] at this
-  by_cases hpleft : p.1 = D.second.left
-  · -- the point of the new source state on the initial side column of the second rectangle
-    rw [hpleft, Equiv.swap_apply_left] at hpx
-    rw [← hpx] at hrow
-    rw [hpleft] at hcol
+  rw [GridRectangleBetween.IsEmpty, D.commute_second_toGridRectangle h]
+  apply isEmptyFor_of_eq_away (u := (D.commute h).middle) (v := x)
+    D.first.toGridRectangle D.second.left D.second.right
+  · intro hmem
+    rw [D.first.mem_toGridRectangle_interior] at hmem
+    obtain ⟨hcol, hrow⟩ := hmem
+    rw [D.commute_middle h, GridState.swapColumns_apply, Equiv.swap_apply_left] at hrow
     have hsep := endpoints_mem_cIoo_of_separation D.first.left_ne_right
       (x.toPerm.injective.ne D.first.left_ne_right) hlr.symm hrr.symm
       (x.toPerm.injective.ne hll.symm) (x.toPerm.injective.ne hrl.symm)
       (fun hd => hout₂ ⟨hd, hrow⟩) (fun hxc => hout₁ ⟨hcol, hxc⟩) hcol hrow
     exact D.second.not_mem_interior_of_isEmpty h₂ D.first.right_bottom_mem_target
       ((D.mem_interior_second_iff h _).mpr ⟨hsep.1, hsep.2.2.2⟩)
-  by_cases hpright : p.1 = D.second.right
-  · -- the point of the new source state on the terminal side column of the second rectangle
-    rw [hpright, Equiv.swap_apply_right] at hpx
-    rw [← hpx] at hrow
-    rw [hpright] at hcol
+  · intro hmem
+    rw [D.first.mem_toGridRectangle_interior] at hmem
+    obtain ⟨hcol, hrow⟩ := hmem
+    rw [D.commute_middle h, GridState.swapColumns_apply, Equiv.swap_apply_right] at hrow
     have hsep := endpoints_mem_cIoo_of_separation D.first.left_ne_right
       (x.toPerm.injective.ne D.first.left_ne_right) hll.symm hrl.symm
       (x.toPerm.injective.ne hlr.symm) (x.toPerm.injective.ne hrr.symm)
       (fun hc => hout₁ ⟨hc, hrow⟩) (fun hxd => hout₂ ⟨hcol, hxd⟩) hcol hrow
     exact D.second.not_mem_interior_of_isEmpty h₂ D.first.left_top_mem_target
       ((D.mem_interior_second_iff h _).mpr ⟨hsep.2.1, hsep.2.2.1⟩)
-  · -- away from the second pair of side columns the two states agree
-    exact D.first.not_mem_interior_of_isEmpty h₁
-      (((D.commute h).first.mem_target_pointSet_iff_of_ne
-        (by simpa only [commute_first_left] using hpleft)
-        (by simpa only [commute_first_right] using hpright)).mp hp)
-      ((D.first.mem_toGridRectangle_interior p).mpr ⟨hcol, hrow⟩)
+  · intro p hleft hright
+    exact (D.commute h).first.mem_target_pointSet_iff_of_ne
+      (by simpa only [commute_first_left] using hleft)
+      (by simpa only [commute_first_right] using hright)
+  · exact h₁
 
 end GridRectangleDecomposition
 
