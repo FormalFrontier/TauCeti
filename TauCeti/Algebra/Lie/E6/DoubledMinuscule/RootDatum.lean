@@ -62,6 +62,7 @@ open DynkinType
 of the split weight torus conjugates the raising-subgroup element of parameter `u` at node `i` to
 the same subgroup with parameter `α_i(s)u`, where `α_i` belongs to the uniform simply connected
 type-`E₆` datum. -/
+@[simp]
 theorem weightTorus_conj_rootSubgroup_root_simpleIndex (ht : E6.Valid) (i : Fin 6)
     (A : Type) [CommRing A]
     (s : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of ℤ)) ⟶
@@ -84,6 +85,7 @@ theorem weightTorus_conj_rootSubgroup_root_simpleIndex (ht : E6.Valid) (i : Fin 
 /-- **The doubled carrier's torus conjugation equation at a named negative simple root.** A point
 of the split weight torus acts on the lowering subgroup through the negative simple-root
 character. -/
+@[simp]
 theorem weightTorus_conj_rootSubgroup_neg_root_simpleIndex (ht : E6.Valid) (i : Fin 6)
     (A : Type) [CommRing A]
     (s : (Spec (CommRingCat.of A)).asOver (Spec (CommRingCat.of ℤ)) ⟶
