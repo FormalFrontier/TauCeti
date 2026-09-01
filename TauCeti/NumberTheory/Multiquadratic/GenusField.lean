@@ -8,6 +8,7 @@ module
 public import TauCeti.NumberTheory.Multiquadratic.CandidateGenusField.GaloisGroup
 public import TauCeti.NumberTheory.Multiquadratic.CandidateGenusField.InfinitePlace
 public import TauCeti.NumberTheory.Multiquadratic.Unramified.Maximality
+import TauCeti.FieldTheory.Trace
 
 /-!
 # The genus field of an imaginary quadratic field
@@ -105,10 +106,8 @@ theorem exists_algEquiv_apply_eq (hL : IsGenusField.{u, v} d L y)
   have hML : Module.finrank ℚ M ≤ Module.finrank ℚ L :=
     LinearMap.finrank_le_finrank_of_injective (f := ψ.toLinearMap) ψ.injective
   have hrank : Module.finrank ℚ L = Module.finrank ℚ M := le_antisymm hLM hML
-  have hsurj : Function.Surjective φ :=
-    (LinearMap.injective_iff_surjective_of_finrank_eq_finrank hrank
-      (f := φ.toLinearMap)).mp φ.injective
-  exact ⟨AlgEquiv.ofBijective φ ⟨φ.injective, hsurj⟩, hφ⟩
+  refine ⟨TauCeti.AlgHom.toAlgEquivOfFinrankEq φ hrank, ?_⟩
+  simpa using hφ
 
 end IsGenusField
 
@@ -128,11 +127,8 @@ private theorem exists_algHom_apply_eq_of_sq_eq {d : ℤ} {L : Type u} [Field L]
     norm_num
   have hyint : IsIntegral ℚ y := IsIntegral.of_finite ℚ y
   have hmin : minpoly ℚ y = Polynomial.X ^ 2 - Polynomial.C ((d : ℤ) : ℚ) := by
-    symm
-    refine Polynomial.eq_of_monic_of_dvd_of_natDegree_le (minpoly.monic hyint)
-      (Polynomial.monic_X_pow_sub_C _ (by norm_num)) (minpoly.dvd ℚ y ?_) ?_
-    · simp [hyQ]
-    · rw [Polynomial.natDegree_X_pow_sub_C, ← adjoin.finrank hyint, hydegree]
+    apply TauCeti.Algebra.minpoly_eq_X_sq_sub_C_of_sq_eq_of_natDegree_eq_two hyQ
+    rw [← adjoin.finrank hyint, hydegree]
   have hroot : Polynomial.aeval (φ z) (minpoly ℚ y) = 0 := by
     have hφz : (φ z) ^ 2 = algebraMap ℚ L ((d : ℤ) : ℚ) := by
       rw [← map_pow, hzQ, φ.commutes]
