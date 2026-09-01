@@ -24,8 +24,8 @@ points then promotes the pointwise isomorphism to an isomorphism of coordinate H
 
 ## Main declarations
 
-* `componentCoordinateIsoOfIdentityComponentEqAugmentation`: a finite-type affine group with
-  trivial identity component is the constant group on its connected components.
+* `componentCoordinateIsoOfIdentityComponentHopfIdealEqAugmentation`: a finite-type affine group
+  with trivial identity component is the constant group on its connected components.
 * `moduleFinite_of_identityComponentHopfIdeal_eq_augmentation`: its coordinate algebra is
   finite-dimensional.
 * `algebraEtale_of_identityComponentHopfIdeal_eq_augmentation`: its coordinate algebra is
@@ -67,7 +67,7 @@ private theorem componentPointsHom_injective_of_identityComponentHopfIdeal_eq_au
   rw [kernelHopfIdeal_componentCoordinateHom, hH] at hmem
   exact CommHopfAlgCat.eq_one_of_mem_quotientPointsSubgroup_augmentation H.obj A hmem
 
-private theorem bijective_componentPointsHom_of_identityComponentHopfIdeal_eq_augmentation
+private theorem componentPointsHom_bijective_of_identityComponentHopfIdeal_eq_augmentation
     (H : FiniteTypeCommHopfAlgCat.{u, u} k)
     (hH : HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H) =
       HopfIdeal.augmentation k H) (A : CommAlgCat.{u} k) :
@@ -75,7 +75,8 @@ private theorem bijective_componentPointsHom_of_identityComponentHopfIdeal_eq_au
   ⟨componentPointsHom_injective_of_identityComponentHopfIdeal_eq_augmentation H hH A,
     componentPointsHom_surjective H A⟩
 
-private theorem isIso_mapPointsFunctor_componentCoordinateHom_of_identityComponentEqAugmentation
+private theorem
+    isIso_mapPointsFunctor_componentCoordinateHom_of_identityComponentHopfIdealEqAugmentation
     (H : FiniteTypeCommHopfAlgCat.{u, u} k)
     (hH : HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H) =
       HopfIdeal.augmentation k H) :
@@ -88,7 +89,7 @@ private theorem isIso_mapPointsFunctor_componentCoordinateHom_of_identityCompone
         componentPointsHom H A g := by
     rw [CommHopfAlgCat.mapPointsFunctor_app_apply, componentPointsHom_apply]
   have hb :=
-    bijective_componentPointsHom_of_identityComponentHopfIdeal_eq_augmentation H hH A
+    componentPointsHom_bijective_of_identityComponentHopfIdeal_eq_augmentation H hH A
   constructor
   · intro x y hxy
     apply hb.1
@@ -107,7 +108,7 @@ private theorem
   let f := componentCoordinateHom H
   let _ : IsIso ((CommHopfAlgCat.pointsFunctor.{u, u, u} (R := k)).map f.op) := by
     rw [CommHopfAlgCat.pointsFunctor_map, Quiver.Hom.unop_op]
-    exact isIso_mapPointsFunctor_componentCoordinateHom_of_identityComponentEqAugmentation
+    exact isIso_mapPointsFunctor_componentCoordinateHom_of_identityComponentHopfIdealEqAugmentation
       H hH
   let _ : IsIso f.op :=
     (Functor.FullyFaithful.ofFullyFaithful
@@ -116,7 +117,7 @@ private theorem
 
 /-- A finite-type affine group over an algebraically closed field with trivial identity
 component is canonically the constant group on the connected components of its spectrum. -/
-noncomputable def componentCoordinateIsoOfIdentityComponentEqAugmentation
+noncomputable def componentCoordinateIsoOfIdentityComponentHopfIdealEqAugmentation
     (H : FiniteTypeCommHopfAlgCat.{u, u} k)
     (hH : HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H) =
       HopfIdeal.augmentation k H) :
@@ -129,13 +130,13 @@ noncomputable def componentCoordinateIsoOfIdentityComponentEqAugmentation
 /-- The forward morphism of the component-coordinate isomorphism is the canonical component
 coordinate morphism. -/
 @[simp]
-theorem componentCoordinateIsoOfIdentityComponentEqAugmentation_hom
+theorem componentCoordinateIsoOfIdentityComponentHopfIdealEqAugmentation_hom
     (H : FiniteTypeCommHopfAlgCat.{u, u} k)
     (hH : HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H) =
       HopfIdeal.augmentation k H) :
-    (componentCoordinateIsoOfIdentityComponentEqAugmentation H hH).hom =
+    (componentCoordinateIsoOfIdentityComponentHopfIdealEqAugmentation H hH).hom =
       componentCoordinateHom H := by
-  rfl
+  rw [componentCoordinateIsoOfIdentityComponentHopfIdealEqAugmentation, asIso_hom]
 
 /-- The coordinate algebra of a finite-type affine group over an algebraically closed field is
 finite-dimensional when its identity component is the trivial subgroup scheme. -/
@@ -144,7 +145,7 @@ theorem moduleFinite_of_identityComponentHopfIdeal_eq_augmentation
     (hH : HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H) =
       HopfIdeal.augmentation k H) :
     Module.Finite k H := by
-  let e := componentCoordinateIsoOfIdentityComponentEqAugmentation H hH
+  let e := componentCoordinateIsoOfIdentityComponentHopfIdealEqAugmentation H hH
   let eLinear : ConstantGroup.coordinateRing k
       (ConnectedComponents (PrimeSpectrum H)) ≃ₗ[k] H :=
     LinearEquiv.ofBijective e.hom.hom.toLinearMap
@@ -158,7 +159,7 @@ theorem algebraEtale_of_identityComponentHopfIdeal_eq_augmentation
     (hH : HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H) =
       HopfIdeal.augmentation k H) :
     Algebra.Etale k H := by
-  let e := componentCoordinateIsoOfIdentityComponentEqAugmentation H hH
+  let e := componentCoordinateIsoOfIdentityComponentHopfIdealEqAugmentation H hH
   let eAlg : ConstantGroup.coordinateRing k
       (ConnectedComponents (PrimeSpectrum H)) ≃ₐ[k] H :=
     AlgEquiv.ofBijective e.hom.hom.toAlgHom
