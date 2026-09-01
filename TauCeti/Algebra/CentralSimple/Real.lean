@@ -96,16 +96,6 @@ section Quadratic
 
 variable {D : Type*} [DivisionRing D] [Algebra ℝ D] [FiniteDimensional ℝ D]
 
-omit [FiniteDimensional ℝ D] in
-/-- **An element of a real algebra that is its own negative is zero.**
-
-This is the cancellation step used twice below: both the linear coefficient of the quadratic
-satisfied by an anticommuting element and the product `i * j` of a commuting *and* anticommuting
-pair come out equal to their own negatives. -/
-private theorem eq_zero_of_eq_neg {z : D} (h : z = -z) : z = 0 := by
-  have h2 : (2 : ℝ) • z = 0 := by rw [two_smul]; exact eq_neg_iff_add_eq_zero.1 h
-  exact (smul_eq_zero.1 h2).resolve_left (by norm_num)
-
 /-- **Every element of a finite-dimensional real division algebra satisfies a monic real
 quadratic**: `y * y = a + b * y` for real `a` and `b`.
 
@@ -226,6 +216,9 @@ scalar only if it commuted with `i`; `exists_smul_mul_self_eq_neg_one` then resc
 square root of `-1`, and rescaling keeps the anticommutation. -/
 theorem exists_mul_self_eq_neg_one_and_mul_eq_neg_mul {i x : D} (hi : i * i = -1)
     (hx : x * i ≠ i * x) : ∃ j : D, j * j = -1 ∧ i * j = -(j * i) := by
+  -- Two elements below come out equal to their own negatives; `CharZero.eq_neg_self_iff` then makes
+  -- them zero, `D` being of characteristic zero as a faithful `ℝ`-algebra.
+  have : CharZero D := Algebra.charZero_of_charZero ℝ D
   obtain ⟨j, hjdef⟩ : ∃ j : D, j = x + i * x * i := ⟨_, rfl⟩
   have hij : i * j = i * x - x * i := by
     have hstep : i * (i * x * i) = -(x * i) := by
@@ -254,14 +247,14 @@ theorem exists_mul_self_eq_neg_one_and_mul_eq_neg_mul {i x : D} (hi : i * i = -1
       rw [hab, add_mul, smul_mul_assoc, hjii, smul_neg, ← sub_eq_add_neg]
     rw [h1, h2, sub_eq_add_neg] at hcomm
     have hz : b • (i * j) = -(b • (i * j)) := add_left_cancel hcomm
-    exact (smul_eq_zero.1 (eq_zero_of_eq_neg hz)).resolve_right hijne
+    exact (smul_eq_zero.1 (CharZero.eq_neg_self_iff.1 hz)).resolve_right hijne
   rw [hb, zero_smul, add_zero] at hab
   -- A real scalar would commute with `i`, so `j` is not one: `i * j` would be its own negative.
   have hjnotbot : j ∉ (⊥ : Subalgebra ℝ D) := by
     intro hmem
     obtain ⟨t, ht⟩ := Algebra.mem_bot.1 hmem
     have hcomm' : i * j = j * i := by rw [← ht]; exact (Algebra.commutes t i).symm
-    exact hijne (eq_zero_of_eq_neg (hanti.trans (by rw [hcomm'])))
+    exact hijne (CharZero.eq_neg_self_iff.1 (hanti.trans (by rw [hcomm'])))
   -- Rescale so that the square becomes `-1`; rescaling preserves anticommutation with `i`.
   obtain ⟨c, hc⟩ := exists_smul_mul_self_eq_neg_one hab hjnotbot
   exact ⟨c • j, hc, by rw [mul_smul_comm, smul_mul_assoc, hanti, smul_neg]⟩
