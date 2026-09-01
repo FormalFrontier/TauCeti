@@ -42,6 +42,17 @@ chamber makes `ρ - ν` strictly dominant, which bounds every `⟨ν, αᵢ^∨�
 pairings are integers, hence nonpositive; and the only antidominant member of the positive root
 cone is `0` (`TauCeti.eq_zero_of_mem_posRootCone_of_forall_coroot'_nonpos`).
 
+## The coefficient ring
+
+Everything below is stated over a linearly ordered coefficient ring, which is where the chamber
+geometry the proof runs through lives: `TauCeti.openDotDominantChamber` is defined through
+`TauCeti.openDominantChamber`, whose *definition* already asks for `[LinearOrder R]`, and
+`TauCeti.IsDotAlternating.eq_weylNumerator` is stated over an ordered ring. The identity therefore
+specializes directly to an ordered root pairing — a rational or a real one — but not, without a
+base change, to one over an unordered field such as `ℂ`. Carrying it there is a scalar-restriction
+question about `RootPairing.restrictScalars'`, which produces a pairing on the span of the roots
+rather than on the ambient weight module, and is not attempted here.
+
 ## Main results
 
 * `TauCeti.weylDenominator_eq_weylNumerator_zero`: **the Weyl denominator identity**, `Δ = N(0)`.
