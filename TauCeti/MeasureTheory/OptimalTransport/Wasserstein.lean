@@ -70,7 +70,8 @@ for a standard Borel structure, which is what the gluing lemma consumes.
   finite nonzero exponent, between finite measures that admit a coupling, the infimum is attained;
 * `TauCeti.wassersteinEDist_eq_zero_iff` — on a Polish metric space and for a finite nonzero
   exponent, `W_p (μ, ν) = 0` exactly when `μ = ν`, with
-  `TauCeti.wassersteinEDist_top_eq_zero_iff` giving the probability-measure endpoint.
+  `TauCeti.wassersteinEDist_top_eq_zero_iff` giving the endpoint `p = ∞` for a probability
+  source.
 
 ## Implementation notes
 
@@ -248,7 +249,7 @@ theorem hasFiniteMoment_def :
   Iff.rfl
 
 /-- Finite `p`-moment at a specified basepoint implies the existential finite-moment condition. -/
-theorem MemLp.hasFiniteMoment {x : X} (h : MemLp (fun y ↦ edist x y) p ν) :
+theorem hasFiniteMoment_of_memLp {x : X} (h : MemLp (fun y ↦ edist x y) p ν) :
     HasFiniteMoment p ν :=
   ⟨x, h⟩
 
@@ -537,8 +538,12 @@ theorem exists_isCoupling_eLpNorm_eq_wassersteinEDist (hp0 : p ≠ 0) (hp : p �
   let _ : IsProbabilityMeasure ν' := hν'eq ▸ inferInstance
   have smul_coupling {c : ℝ≥0∞} {σ : Measure (X × X)} {μ ν : Measure X}
       (hσ : IsCoupling σ μ ν) : IsCoupling (c • σ) (c • μ) (c • ν) :=
-    ⟨by simpa only [Measure.fst, Measure.map_smul] using congrArg (c • ·) hσ.fst_eq,
-      by simpa only [Measure.snd, Measure.map_smul] using congrArg (c • ·) hσ.snd_eq⟩
+    ⟨by
+        simpa only [Measure.fst, Measure.map_smul c measurable_fst.aemeasurable] using
+          congrArg (c • ·) hσ.fst_eq,
+      by
+        simpa only [Measure.snd, Measure.map_smul c measurable_snd.aemeasurable] using
+          congrArg (c • ·) hσ.snd_eq⟩
   -- Normalise the marginals, optimise the resulting probability problem, and rescale its plan.
   obtain ⟨π, hπ⟩ := exists_isOptimalCoupling_edist_rpow μ' ν' p.toReal
   have hscaled : IsCoupling (m • π) μ ν := by
@@ -584,9 +589,10 @@ theorem wassersteinEDist_eq_zero_iff (hp0 : p ≠ 0) (hp : p ≠ ∞) (μ ν : M
   rw [← hπ.fst_eq, ← hπ.snd_eq, Measure.fst, Measure.snd, Measure.map_congr hdiag]
 
 /-- **Separation at the infinite exponent.** On a Polish metric space, the infinite-exponent
-Wasserstein distance between probability measures vanishes exactly when they are equal. -/
-theorem wassersteinEDist_top_eq_zero_iff (μ ν : Measure X)
-    [IsProbabilityMeasure μ] [IsProbabilityMeasure ν] :
+Wasserstein distance from a probability measure vanishes exactly when the two measures are equal.
+Only the first measure has to be a probability measure: when the distance vanishes the second one
+is equal to it, hence a probability measure too. -/
+theorem wassersteinEDist_top_eq_zero_iff (μ ν : Measure X) [IsProbabilityMeasure μ] :
     wassersteinEDist ∞ μ ν = 0 ↔ μ = ν := by
   refine ⟨fun h ↦ (wassersteinEDist_eq_zero_iff one_ne_zero ENNReal.one_ne_top μ ν).1 ?_,
     fun h ↦ h ▸ wassersteinEDist_self measurable_edist ∞ μ⟩
