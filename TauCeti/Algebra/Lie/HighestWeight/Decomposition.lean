@@ -75,6 +75,15 @@ run over all of `Module.Dual K H`: `TauCeti.irreducibleFormalCharacter` names th
 `TauCeti.irreducibleFormalCharacter_def` unfolds it wherever the finite-dimensionality instance is
 already at hand, so the definition itself never needs unfolding.
 
+The missing Poincaré--Birkhoff--Witt input does not make that character an unknown quantity.
+`TauCeti.irreducibleFormalCharacter_eq_zero_iff` says it vanishes exactly when `M(λ)` does, so a
+weight contributing to a character identity has an irreducible `L(λ)`
+(`TauCeti.isIrreducible_irreducibleQuotient_of_irreducibleFormalCharacter_ne_zero`) and a weight
+not contributing has the zero module, with the zero multiplicity that a decomposition into
+irreducibles gives it. At `λ = 0` the input is available outright, so
+`TauCeti.irreducibleFormalCharacter_zero_ne_zero` is unconditional and the character API is not
+vacuous.
+
 Restricting the sum to the dominant integral weights loses nothing:
 `TauCeti.isotypicMultiplicity_irreducibleQuotient_eq_zero_of_not_isDominantIntegral` says that
 `L(λ)` for a non-dominant `λ` occurs in no finite-dimensional module at all, so every multiplicity
@@ -92,6 +101,12 @@ the sum omits is zero.
   decomposition** `M ≃ ⨁_λ L(λ)^{m λ}`.
 * `TauCeti.isotypicMultiplicity_irreducibleQuotient_eq_zero_of_not_isDominantIntegral`: an
   irreducible highest weight module of non-dominant weight occurs in no finite-dimensional module.
+* `TauCeti.irreducibleFormalCharacter_eq_zero_iff` and
+  `TauCeti.isIrreducible_irreducibleQuotient_of_irreducibleFormalCharacter_ne_zero`: the character
+  of `L(lam)` vanishes exactly when `M(lam)` does, so **a nonzero character is the character of an
+  irreducible module.**
+* `TauCeti.irreducibleFormalCharacter_zero_ne_zero`: **the character of `L(0)` is nonzero**, with
+  no appeal to Poincaré--Birkhoff--Witt.
 * `TauCeti.formalCharacter_eq_finsum_isotypicMultiplicity_smul`: **the character of a
   finite-dimensional module is the multiplicity-weighted sum of the irreducible characters.**
 
@@ -231,6 +246,39 @@ theorem irreducibleFormalCharacter_def
     [FiniteDimensional K (irreducibleQuotient b lam.1)] :
     irreducibleFormalCharacter b lam = formalCharacter K H (irreducibleQuotient b lam.1) :=
   irreducibleFormalCharacter_def_aux b lam
+
+/-- **The character of `L(lam)` vanishes exactly when `M(lam)` does.** The character records the
+dimension of `L(lam)`, and `L(lam)` is the zero module exactly when `M(lam)` is
+(`TauCeti.subsingleton_irreducibleQuotient_iff`). -/
+theorem irreducibleFormalCharacter_eq_zero_iff
+    (lam : {l : Dual K H // IsDominantIntegral b l}) :
+    irreducibleFormalCharacter b lam = 0 ↔ vermaGenerator b lam.1 = 0 := by
+  have _ := finiteDimensional_irreducibleQuotient_of_isDominantIntegral lam.2
+  rw [irreducibleFormalCharacter_def, formalCharacter_eq_zero_iff, Module.finrank_zero_iff,
+    subsingleton_irreducibleQuotient_iff]
+
+/-- **A nonzero character is the character of an honest irreducible module.** The character being
+nonzero says exactly that `M(lam) ≠ 0`, which is what
+`TauCeti.isIrreducible_irreducibleQuotient` asks for; so wherever
+`TauCeti.irreducibleFormalCharacter` contributes to an identity, the module it is the character of
+is irreducible. -/
+theorem isIrreducible_irreducibleQuotient_of_irreducibleFormalCharacter_ne_zero
+    {lam : {l : Dual K H // IsDominantIntegral b l}}
+    (h : irreducibleFormalCharacter b lam ≠ 0) :
+    LieModule.IsIrreducible K L (irreducibleQuotient b lam.1) :=
+  isIrreducible_irreducibleQuotient b lam.1 fun h0 ↦
+    h ((irreducibleFormalCharacter_eq_zero_iff b lam).mpr h0)
+
+/-- **The character of `L(0)` is nonzero, unconditionally.** The trivial one-dimensional module is
+a highest weight module of weight `0`, so `M(0) ≠ 0` with no appeal to
+Poincaré--Birkhoff--Witt (`TauCeti.isHighestWeightVector_vermaGenerator_zero`). With
+`TauCeti.isIrreducible_irreducibleQuotient_of_irreducibleFormalCharacter_ne_zero` this exhibits a
+weight at which `L(lam)` is an honest irreducible with a nonzero character, so no statement about
+`TauCeti.irreducibleFormalCharacter` is vacuous. -/
+theorem irreducibleFormalCharacter_zero_ne_zero :
+    irreducibleFormalCharacter b ⟨0, isDominantIntegral_zero⟩ ≠ 0 := fun h ↦
+  (isHighestWeightVector_vermaGenerator_zero b).ne_zero
+    ((irreducibleFormalCharacter_eq_zero_iff b _).mp h)
 
 /-! ### The multiplicity-weighted sum of irreducible characters -/
 

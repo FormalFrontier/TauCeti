@@ -30,15 +30,24 @@ multiplicity-weighted sum of the irreducible characters
 multiplicities computable from characters, and the identity a Pieri or Littlewood-Richardson rule
 evaluates.
 
-Nothing here asserts that `L(nu)` is nonzero. Whether `M(nu) ≠ 0`, equivalently `L(nu) ≠ 0`
+Nothing here *assumes* that `L(nu)` is nonzero. Whether `M(nu) ≠ 0`, equivalently `L(nu) ≠ 0`
 (`TauCeti.subsingleton_irreducibleQuotient_iff`), is the Poincaré--Birkhoff--Witt input that
 `TauCeti/Algebra/Lie/HighestWeight/Verma.lean` does not have and that the roadmap stages as a
 sub-project of its own; as in `TauCeti/Algebra/Lie/HighestWeight/Decomposition.lean`, the
-statements here are arranged so as not to need it. At a weight whose Verma module vanishes `L(nu)`
-is the zero module and `c^nu_{lam mu}` is `0`
-(`LieModule.isotypicMultiplicity_eq_zero_of_subsingleton`), so that weight contributes nothing and
-the identity holds either way; PBW would sharpen what the identity says about such a weight without
-changing any statement below.
+statements here are arranged so as not to need it. That arrangement does not leave the
+multiplicities undetermined, and it does not make the identity a statement about zero modules:
+
+* at a weight whose Verma module vanishes `L(nu)` is the zero module and `c^nu_{lam mu}` is `0`
+  (`LieModule.isotypicMultiplicity_eq_zero_of_subsingleton`), the correct count of copies of a zero
+  module in a decomposition into irreducibles, so that weight contributes nothing to the sum;
+* conversely every weight that *does* contribute has `M(nu) ≠ 0`, so `L(nu)` there is genuinely
+  irreducible (`TauCeti.isIrreducible_irreducibleQuotient_of_tensorMultiplicity_ne_zero`), and the
+  same holds of the two characters on the left
+  (`TauCeti.isIrreducible_irreducibleQuotient_of_irreducibleFormalCharacter_ne_zero`);
+* and the identity is not vacuous: `TauCeti.irreducibleFormalCharacter_zero_ne_zero` proves
+  without any appeal to PBW that `L(0)` is a nonzero irreducible with a nonzero character.
+
+PBW would enlarge the set of weights known to contribute, without changing any statement below.
 
 ## Main definitions
 
@@ -48,6 +57,8 @@ changing any statement below.
 
 * `TauCeti.irreducibleFormalCharacter_mul_eq_finsum_tensorMultiplicity_smul`: **the character
   identity** `ch L(lam) · ch L(mu) = ∑_nu c^nu_{lam mu} · ch L(nu)`.
+* `TauCeti.isIrreducible_irreducibleQuotient_of_tensorMultiplicity_ne_zero`: a weight with a
+  nonzero tensor multiplicity has an irreducible `L(nu)`.
 
 ## References
 
@@ -95,6 +106,18 @@ theorem tensorMultiplicity_def (lam mu nu : Dual K H) :
     tensorMultiplicity b lam mu nu = LieModule.isotypicMultiplicity K L
       (irreducibleQuotient b lam ⊗[K] irreducibleQuotient b mu) (irreducibleQuotient b nu) :=
   tensorMultiplicity_def_aux b lam mu nu
+
+/-- **A nonzero tensor multiplicity counts copies of an honest irreducible.** Were `L(nu)` the zero
+module, its multiplicity would vanish (`LieModule.isotypicMultiplicity_eq_zero_of_subsingleton`),
+so every weight that contributes to the character identity has `M(nu) ≠ 0`, and `L(nu)` there is
+irreducible. -/
+theorem isIrreducible_irreducibleQuotient_of_tensorMultiplicity_ne_zero {lam mu nu : Dual K H}
+    (h : tensorMultiplicity b lam mu nu ≠ 0) :
+    LieModule.IsIrreducible K L (irreducibleQuotient b nu) := by
+  refine isIrreducible_irreducibleQuotient b nu fun h0 ↦ h ?_
+  have _ := (subsingleton_irreducibleQuotient_iff b nu).mpr h0
+  rw [tensorMultiplicity_def]
+  exact LieModule.isotypicMultiplicity_eq_zero_of_subsingleton K L _ _
 
 /-- **The character identity for a tensor product of irreducibles**: the product of the characters
 of `L(lam)` and `L(mu)` is the sum of the characters of the `L(nu)`, weighted by the tensor
