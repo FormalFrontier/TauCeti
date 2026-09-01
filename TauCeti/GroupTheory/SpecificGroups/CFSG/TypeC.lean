@@ -119,7 +119,10 @@ of rank `r` is the one at `r - 1`. The subtraction never truncates, `r` being at
 identification that recovers `r`. -/
 def carrierRank : ℕ := d.1.rank - 1
 
-/-- The carrier rank of a validated type-`C` index is one less than its rank. -/
+/-- The carrier rank of a validated type-`C` index is one less than its rank. It is oriented
+towards `TauCeti.ValidLieTypeIndex.rank`, so that `simp` normalizes the successor of the carrier
+rank to the rank the index's own Bourbaki index type is built on. -/
+@[simp]
 theorem carrierRank_add_one : d.carrierRank + 1 = d.1.rank := by
   have := d.three_le_rank
   -- The body is unexposed, so the subtraction has to be unfolded before `omega` sees it.
@@ -173,11 +176,18 @@ theorem rootGeneratorWeight_carrierNode_eq_root_simpleIndex (i j : Fin d.1.rank)
   obtain ⟨n, rfl⟩ : ∃ n, r = n + 1 := by
     have hr : 3 ≤ r := (ofC r q hvalid).three_le_rank
     exact ⟨r - 1, by omega⟩
-  -- Once the rank is presented as `n + 1`, the Dynkin type of `ofC (n + 1) q hvalid` reduces to
-  -- `C (n + 1)`, its rank to `n + 1` and its carrier rank to `n`, so the two `Fin.cast`s are the
-  -- identity and the goal is the upstream identification at the carrier rank `n`. The validity
-  -- proofs are then interchangeable by proof irrelevance.
-  exact congrFun (SpStd.rootGeneratorWeight_inl_eq_root_simpleIndex n _ i) j
+  -- Once the rank is presented as `n + 1` the upstream identification applies at the carrier rank
+  -- `n`, taking as its validity hypothesis the one the index already carries. `convert` leaves the
+  -- two reductions that matching uses, one per side of the equation, rather than discharging both
+  -- of them silently inside a single `exact`.
+  convert congrFun (SpStd.rootGeneratorWeight_inl_eq_root_simpleIndex n
+    (ofC (n + 1) q hvalid).1.dynkinType_valid i) j using 2
+  · -- The carrier side: the carrier rank of `ofC (n + 1) q hvalid` is `n`, so `carrierNode` casts
+    -- `Fin (n + 1)` to itself and both root characters are read at the same node.
+    rfl
+  · -- The datum side: the Dynkin type of `ofC (n + 1) q hvalid` is `C (n + 1)`, and its rank is
+    -- `n + 1`, so both simple roots are read off the same datum at the same node.
+    rfl
 
 /-! ## The Steinberg endomorphism -/
 
