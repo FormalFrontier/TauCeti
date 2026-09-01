@@ -42,10 +42,16 @@ variable {m n x : ℝ}
 
 /-! ### The beta-to-F transformation -/
 
-/-- The monotone transformation from a beta variable to an F variable. -/
+/-- The formula for the transformation from a beta variable to an F variable.
+
+For positive `m` and `n`, this function is strictly monotone on `Ioo 0 1` and maps that
+interval to `Ioi 0`. -/
 def fisherSnedecorMap (m n : ℝ) (u : ℝ) : ℝ := (n / m) * u / (1 - u)
 
-/-- The inverse transformation on the positive half-line. -/
+/-- The formula for the inverse transformation on the positive half-line.
+
+For positive `m` and `n`, this is the inverse of `fisherSnedecorMap m n` between `Ioi 0` and
+`Ioo 0 1`. -/
 def fisherSnedecorInv (m n : ℝ) (x : ℝ) : ℝ := m * x / (n + m * x)
 
 /-- The Fisher--Snedecor law with degrees of freedom `m` and `n`.  Invalid parameters are
@@ -56,16 +62,19 @@ def fisherSnedecorMeasure (m n : ℝ) : Measure ℝ :=
     (betaMeasure (m / 2) (n / 2)).map (fisherSnedecorMap m n)
   else 0
 
+/-- For invalid degrees of freedom, the Fisher--Snedecor measure is zero. -/
 @[simp]
 theorem fisherSnedecorMeasure_of_not_pos (h : ¬ (0 < m ∧ 0 < n)) :
     fisherSnedecorMeasure m n = 0 := by
   simp [fisherSnedecorMeasure, h]
 
+/-- For positive degrees of freedom, the Fisher--Snedecor measure is the beta-to-F pushforward. -/
 theorem fisherSnedecorMeasure_map (hm : 0 < m) (hn : 0 < n) :
     fisherSnedecorMeasure m n =
       (betaMeasure (m / 2) (n / 2)).map (fisherSnedecorMap m n) := by
   simp [fisherSnedecorMeasure, hm, hn]
 
+/-- The Fisher--Snedecor measure is a probability measure for positive degrees of freedom. -/
 theorem isProbabilityMeasure_fisherSnedecorMeasure (hm : 0 < m) (hn : 0 < n) :
     IsProbabilityMeasure (fisherSnedecorMeasure m n) := by
   rw [fisherSnedecorMeasure_map hm hn]
@@ -73,6 +82,8 @@ theorem isProbabilityMeasure_fisherSnedecorMeasure (hm : 0 < m) (hn : 0 < n) :
     isProbabilityMeasureBeta (by linarith) (by linarith)
   infer_instance
 
+/-- The Fisher--Snedecor measure is a probability measure exactly when both degrees of freedom
+are positive. -/
 @[simp]
 theorem isProbabilityMeasure_fisherSnedecorMeasure_iff :
     IsProbabilityMeasure (fisherSnedecorMeasure m n) ↔ 0 < m ∧ 0 < n := by
@@ -90,6 +101,7 @@ theorem isProbabilityMeasure_fisherSnedecorMeasure_iff :
   · rintro ⟨hm, hn⟩
     exact isProbabilityMeasure_fisherSnedecorMeasure hm hn
 
+/-- The beta-to-F transformation is measurable for all parameter values. -/
 theorem measurable_fisherSnedecorMap (m n : ℝ) :
     Measurable (fisherSnedecorMap m n) := by
   unfold fisherSnedecorMap
@@ -97,6 +109,7 @@ theorem measurable_fisherSnedecorMap (m n : ℝ) :
 
 /-! ### Support and the inverse -/
 
+/-- For positive degrees of freedom, the beta-to-F map sends `Ioo 0 1` into `Ioi 0`. -/
 theorem fisherSnedecorMap_mem_Ioi (hm : 0 < m) (hn : 0 < n) {u : ℝ}
     (hu : u ∈ Ioo (0 : ℝ) 1) :
     fisherSnedecorMap m n u ∈ Ioi 0 := by
@@ -104,6 +117,7 @@ theorem fisherSnedecorMap_mem_Ioi (hm : 0 < m) (hn : 0 < n) {u : ℝ}
   unfold fisherSnedecorMap
   exact div_pos (mul_pos (div_pos hn hm) hu0) (sub_pos.mpr hu1)
 
+/-- For positive degrees of freedom, the beta-to-F map is strictly monotone on `Ioo 0 1`. -/
 theorem fisherSnedecorMap_strictMonoOn (hm : 0 < m) (hn : 0 < n) :
     StrictMonoOn (fisherSnedecorMap m n) (Ioo (0 : ℝ) 1) := by
   intro u hu v hv huv
@@ -114,14 +128,16 @@ theorem fisherSnedecorMap_strictMonoOn (hm : 0 < m) (hn : 0 < n) :
   apply (div_lt_div_iff₀ (sub_pos.mpr hu1) (sub_pos.mpr hv1)).2
   nlinarith [mul_pos hnm (sub_pos.mpr huv)]
 
-theorem fisherSnedecorMap_inv (hm : 0 < m) (hn : 0 < n) {u : ℝ}
+/-- On `Ioo 0 1`, the inverse transformation after the beta-to-F map is the identity. -/
+theorem fisherSnedecorInv_map (hm : 0 < m) (hn : 0 < n) {u : ℝ}
     (hu : u ∈ Ioo (0 : ℝ) 1) :
     fisherSnedecorInv m n (fisherSnedecorMap m n u) = u := by
   unfold fisherSnedecorInv fisherSnedecorMap
   field_simp [ne_of_gt hm, ne_of_gt hn, ne_of_gt (sub_pos.mpr hu.2)]
   ring
 
-theorem fisherSnedecorInv_map (hm : 0 < m) (hn : 0 < n) {x : ℝ}
+/-- On `Ioi 0`, the beta-to-F map after the inverse transformation is the identity. -/
+theorem fisherSnedecorMap_inv (hm : 0 < m) (hn : 0 < n) {x : ℝ}
     (hx : 0 < x) :
     fisherSnedecorMap m n (fisherSnedecorInv m n x) = x := by
   unfold fisherSnedecorInv fisherSnedecorMap
@@ -133,7 +149,8 @@ theorem fisherSnedecorInv_map (hm : 0 < m) (hn : 0 < n) {x : ℝ}
   field_simp [ne_of_gt hm, ne_of_gt hn, ne_of_gt hden, ne_of_gt hden']
   ring
 
-theorem fisherSnedecorMap_inv_mem_Ioo (hm : 0 < m) (hn : 0 < n) {x : ℝ} (hx : 0 < x) :
+/-- For positive degrees of freedom, the inverse transformation maps `Ioi 0` into `Ioo 0 1`. -/
+theorem fisherSnedecorInv_mem_Ioo (hm : 0 < m) (hn : 0 < n) {x : ℝ} (hx : 0 < x) :
     fisherSnedecorInv m n x ∈ Ioo (0 : ℝ) 1 := by
   unfold fisherSnedecorInv
   constructor
@@ -141,6 +158,7 @@ theorem fisherSnedecorMap_inv_mem_Ioo (hm : 0 < m) (hn : 0 < n) {x : ℝ} (hx : 
   · rw [div_lt_one (by positivity)]
     nlinarith
 
+/-- For positive degrees of freedom, the beta-to-F map is nonnegative on `Icc 0 1`. -/
 theorem fisherSnedecorMap_nonneg_on (hm : 0 < m) (hn : 0 < n) {u : ℝ}
     (hu : u ∈ Icc (0 : ℝ) 1) :
     0 ≤ fisherSnedecorMap m n u := by
@@ -149,6 +167,7 @@ theorem fisherSnedecorMap_nonneg_on (hm : 0 < m) (hn : 0 < n) {u : ℝ}
   · exact div_nonneg (mul_nonneg (div_pos hn hm).le hu0) (sub_nonneg.mpr hu1'.le)
   · simp [fisherSnedecorMap]
 
+/-- For positive degrees of freedom, the beta-to-F map sends `Ioo 0 1` onto `Ioi 0`. -/
 theorem fisherSnedecorMap_image_Ioo (hm : 0 < m) (hn : 0 < n) :
     fisherSnedecorMap m n '' Ioo (0 : ℝ) 1 = Ioi 0 := by
   ext x
@@ -156,10 +175,11 @@ theorem fisherSnedecorMap_image_Ioo (hm : 0 < m) (hn : 0 < n) :
   · rintro ⟨u, hu, rfl⟩
     exact fisherSnedecorMap_mem_Ioi hm hn hu
   · intro hx
-    exact ⟨fisherSnedecorInv m n x, fisherSnedecorMap_inv_mem_Ioo hm hn hx,
-      fisherSnedecorInv_map hm hn hx⟩
+    exact ⟨fisherSnedecorInv m n x, fisherSnedecorInv_mem_Ioo hm hn hx,
+      fisherSnedecorMap_inv hm hn hx⟩
 
-theorem fisherSnedecorMap_preimage_Iic_ae (hm : 0 < m) (hn : 0 < n) {x : ℝ} (hx : 0 < x) :
+/- The beta-measure-specific preimage calculation is used only to prove the cdf formula. -/
+private theorem fisherSnedecorMap_preimage_Iic_ae (hm : 0 < m) (hn : 0 < n) {x : ℝ} (hx : 0 < x) :
     fisherSnedecorMap m n ⁻¹' Iic x =ᵐ[betaMeasure (m / 2) (n / 2)]
       Iic (fisherSnedecorInv m n x) := by
   let _ : NullSingletonClass (betaMeasure (m / 2) (n / 2)) := by
@@ -186,6 +206,18 @@ theorem fisherSnedecorMap_preimage_Iic_ae (hm : 0 < m) (hn : 0 < n) {x : ℝ} (h
     have h' : u * (n + m * x) ≤ m * x := (le_div_iff₀ h₂).mp h
     field_simp at h' ⊢
     nlinarith
+
+/-- For positive degrees of freedom, the Fisher--Snedecor law is almost surely positive. -/
+theorem ae_mem_Ioi_fisherSnedecorMeasure (hm : 0 < m) (hn : 0 < n) :
+    ∀ᵐ x ∂fisherSnedecorMeasure m n, x ∈ Ioi 0 := by
+  let _ : NullSingletonClass (betaMeasure (m / 2) (n / 2)) := by
+    rw [betaMeasure]
+    infer_instance
+  rw [fisherSnedecorMeasure_map hm hn, ae_map_iff
+    (measurable_fisherSnedecorMap m n).aemeasurable (by measurability)]
+  filter_upwards [(Ioo_ae_eq_Icc : Ioo (0 : ℝ) 1 =ᵐ[betaMeasure (m / 2) (n / 2)] Icc 0 1),
+      ae_mem_Icc_betaMeasure (m / 2) (n / 2)] with u hu hIcc
+  exact fisherSnedecorMap_mem_Ioi hm hn (by rw [hu]; exact hIcc)
 
 /-! ### The cdf -/
 
