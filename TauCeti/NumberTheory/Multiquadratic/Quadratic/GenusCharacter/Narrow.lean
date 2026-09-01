@@ -5,10 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.NumberTheory.Multiquadratic.Quadratic.GenusCharacter.Basic
 public import TauCeti.NumberTheory.Multiquadratic.Quadratic.GenusCharacter.CoprimeIdeal
 public import TauCeti.NumberTheory.NumberField.TotallyPositive
-public import Mathlib.RingTheory.Ideal.Norm.AbsNorm
 
 /-!
 # Genus characters and narrow-equivalent ideals
@@ -144,8 +142,9 @@ theorem genusCharFun_absNorm_eq_of_span_mul_eq_span_mul {s t : Finset ℤ}
   exact mul_left_cancel₀ hcharY_ne hchar
 
 /-- **A coprime principal ideal has trivial genus character.** Let `I` be a nonzero integral ideal
-whose absolute norm is coprime to the modulus of a genus character. If `I = (x)` and the norm of
-`x` is also coprime to that modulus, then the coprime-ideal genus character of `I` is `1`.
+whose absolute norm is coprime to the modulus of a genus character. If `I = (x)` for a totally
+positive `x`, then the coprime-ideal genus character of `I` is `1`; the corresponding properties of
+`x` follow from those of `I`.
 
 This is the kernel calculation needed before the character can descend through the narrow class
 group: a totally positive principal ideal is narrow-trivial, and this theorem handles the finite
@@ -157,18 +156,27 @@ theorem genusCharFunCoprimeIdealHom_eq_one_of_eq_span_singleton
     (hprod : ∏ P ∈ s, P = fundamentalDiscriminant d)
     (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
     (hsf : Squarefree d) (hts : t ⊆ s)
-    (ht : ∀ P ∈ t, IsPrimeDiscriminant P)
     {I : genusCharFunCoprimeIdealSubmonoid (K := K) t} {x : 𝓞 K}
-    (hx : x ≠ 0) (hpos : NumberField.IsTotallyPositive ((x : K)))
-    (hI : (I : Ideal (𝓞 K)) = Ideal.span {x})
-    (hcop : IsCoprime (Algebra.norm ℤ x) (∏ P ∈ t, P)) :
-    genusCharFunCoprimeIdealHom ht I = 1 := by
+    (hpos : NumberField.IsTotallyPositive ((x : K)))
+    (hI : (I : Ideal (𝓞 K)) = Ideal.span {x}) :
+    genusCharFunCoprimeIdealHom (fun P hP => hs P (hts hP)) I = 1 := by
+  have hx : x ≠ 0 := by
+    have hI0 : (I : Ideal (𝓞 K)) ≠ 0 :=
+      mem_nonZeroDivisors_iff_ne_zero.mp I.1.property
+    intro hx
+    apply hI0
+    simp [hI, hx]
   apply Units.ext
   rw [genusCharFunCoprimeIdealHom_apply, hI, Ideal.absNorm_span_singleton]
   have hxK : (x : K) ≠ 0 := by exact_mod_cast hx
   have hnormposQ : (0 : ℚ) < Algebra.norm ℤ x := by
     simpa only [Algebra.coe_norm_int] using NumberField.norm_pos_of_isTotallyPositive hxK hpos
   have hnormpos : 0 < Algebra.norm ℤ x := by exact_mod_cast hnormposQ
+  have hcop : IsCoprime (Algebra.norm ℤ x) (∏ P ∈ t, P) := by
+    have hIcop : IsCoprime (Ideal.absNorm (I : Ideal (𝓞 K)) : ℤ) (∏ P ∈ t, P) :=
+      (mem_genusCharFunCoprimeIdealSubmonoid_iff I.1).mp I.property
+    rw [hI, Ideal.absNorm_span_singleton, Int.natCast_natAbs, abs_of_pos hnormpos] at hIcop
+    exact hIcop
   rw [Int.natCast_natAbs, abs_of_pos hnormpos]
   exact genusCharFun_norm_eq_one hs heven hprod hmin hgen hsf hts x hcop
 
@@ -190,7 +198,6 @@ theorem genusCharFunCoprimeIdealHom_eq_of_span_mul_eq_span_mul
     (hprod : ∏ P ∈ s, P = fundamentalDiscriminant d)
     (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
     (hsf : Squarefree d) (hts : t ⊆ s)
-    (ht : ∀ P ∈ t, IsPrimeDiscriminant P)
     {I J : genusCharFunCoprimeIdealSubmonoid (K := K) t}
     {x y : 𝓞 K} (hx : x ≠ 0) (hy : y ≠ 0)
     (hpos : NumberField.IsTotallyPositive ((x : K) * (y : K)))
@@ -198,7 +205,8 @@ theorem genusCharFunCoprimeIdealHom_eq_of_span_mul_eq_span_mul
       Ideal.span {y} * (J : Ideal (𝓞 K)))
     (hcopx : IsCoprime (Algebra.norm ℤ x) (∏ P ∈ t, P))
     (hcopy : IsCoprime (Algebra.norm ℤ y) (∏ P ∈ t, P)) :
-    genusCharFunCoprimeIdealHom ht I = genusCharFunCoprimeIdealHom ht J := by
+    genusCharFunCoprimeIdealHom (fun P hP => hs P (hts hP)) I =
+      genusCharFunCoprimeIdealHom (fun P hP => hs P (hts hP)) J := by
   apply Units.ext
   rw [genusCharFunCoprimeIdealHom_apply, genusCharFunCoprimeIdealHom_apply]
   exact genusCharFun_absNorm_eq_of_span_mul_eq_span_mul hs heven hprod hmin hgen hsf hts hx hy
