@@ -55,6 +55,9 @@ connected type-`Dₙ` datum.
 * `TauCeti.TypeDSpinCarrier.hopfSpec_map_rootSubgroupIntegralCoordinateMap_op` and
   `TauCeti.TypeDSpinCarrier.hopfSpec_map_weightTorusIntegralCoordinateMap_op`: those integral
   maps represent the carrier's existing root-subgroup and weight-torus morphisms.
+* `baseChangePointsMulEquiv_mapPointsFunctor_rootSubgroupToBaseChangeCoordinateMap` and
+  `baseChangePointsMulEquiv_mapPointsFunctor_weightTorusToBaseChangeCoordinateMap`:
+  the transported coordinate maps induce the named root-subgroup and weight-torus points.
 * `TauCeti.TypeDSpinCarrier.baseChangeDefiningIdeal_le_commonKernel`: the transported carrier
   contains the subgroup generated after base change by those maps.
 
@@ -185,61 +188,6 @@ theorem mkQuotient_comp_baseChangeCoordinateIso_hom :
 
 /-! ## Points of the base-changed carrier -/
 
-/-- At a bundled `ℤ`-algebra, the named type-`Dₙ` carrier points are the general-linear
-subgroup cut out by the defining ideal. -/
-private theorem points_eq_hopfIdealPointsSubgroup (B : CommAlgCat.{w} ℤ) :
-    points n hn B =
-      GeneralLinear.hopfIdealPointsSubgroup (dimension n) (definingIdeal n hn) B := by
-  rw [points_def n hn B]
-  congr 1
-  exact Subsingleton.elim _ _
-
-/-- The points of the integral carrier coordinate Hopf algebra are its named matrix points. -/
-private def integralPointsMulEquiv (B : CommAlgCat.{w} ℤ) :
-    HopfAlgebra.points
-        (R := ℤ) (H := CommHopfAlgCat.quotient
-          (GeneralLinear.coordinateHopfAlgebra ℤ (dimension n)) (definingIdeal n hn)) B ≃*
-      points n hn B :=
-  (GeneralLinear.hopfIdealPointsSubgroupMulEquiv (dimension n)
-      (definingIdeal n hn) B).trans
-    (MulEquiv.subgroupCongr (points_eq_hopfIdealPointsSubgroup n hn B)).symm
-
-/-- The integral points equivalence preserves the ambient invertible matrix. -/
-private theorem coe_integralPointsMulEquiv_apply (B : CommAlgCat.{w} ℤ)
-    (q : HopfAlgebra.points
-      (R := ℤ) (H := CommHopfAlgCat.quotient
-        (GeneralLinear.coordinateHopfAlgebra ℤ (dimension n)) (definingIdeal n hn)) B) :
-    (integralPointsMulEquiv n hn B q : Matrix.GeneralLinearGroup (Fin (dimension n)) B) =
-      GeneralLinear.pointsMulEquiv (dimension n)
-        (CommHopfAlgCat.quotientPointsHom
-          (GeneralLinear.coordinateHopfAlgebra ℤ (dimension n)) (definingIdeal n hn)
-          B q) := by
-  simp only [integralPointsMulEquiv, MulEquiv.trans_apply,
-    MulEquiv.subgroupCongr_symm_apply]
-  exact GeneralLinear.coe_hopfIdealPointsSubgroupMulEquiv_apply
-    (dimension n) (definingIdeal n hn) B q
-
-/-- The integral points equivalence is natural in the value algebra. -/
-private theorem integralPointsMulEquiv_mapPoints {B C : CommAlgCat.{w} ℤ} (f : B ⟶ C)
-    (q : HopfAlgebra.points
-      (R := ℤ) (H := CommHopfAlgCat.quotient
-        (GeneralLinear.coordinateHopfAlgebra ℤ (dimension n)) (definingIdeal n hn)) B) :
-    integralPointsMulEquiv n hn C
-        (HopfAlgebra.mapPoints
-          (H := CommHopfAlgCat.quotient
-            (GeneralLinear.coordinateHopfAlgebra ℤ (dimension n)) (definingIdeal n hn))
-          f q) =
-      pointsMap n hn f.hom.toRingHom (integralPointsMulEquiv n hn B q) := by
-  apply Subtype.ext
-  rw [coe_pointsMap]
-  simp only [integralPointsMulEquiv, MulEquiv.trans_apply,
-    MulEquiv.subgroupCongr_symm_apply]
-  exact (congrArg Subtype.val
-      (GeneralLinear.hopfIdealPointsSubgroupMulEquiv_mapPoints
-        (dimension n) (definingIdeal n hn) f q)).trans
-    (GeneralLinear.coe_mapHopfIdealPointsSubgroup
-      (dimension n) (definingIdeal n hn) f.hom _)
-
 /-- The points of the base-changed type-`Dₙ` carrier over a commutative `A`-algebra are its
 matrix-valued carrier points over that algebra. -/
 noncomputable def baseChangePointsMulEquiv (B : CommAlgCat.{w} A) :
@@ -249,7 +197,7 @@ noncomputable def baseChangePointsMulEquiv (B : CommAlgCat.{w} A) :
           (baseChangeDefiningIdeal n hn A)) B ≃*
       points n hn B :=
   (CommHopfAlgCat.baseChangeIsoPointsMulEquiv (baseChangeCoordinateIso n hn A) B).trans
-    (integralPointsMulEquiv n hn
+    (pointsMulEquiv n hn
       (TauCeti.CommAlgCat.restrictScalarsObj (algebraMap ℤ A) B))
 
 /-- The base-change points equivalence preserves the ambient invertible matrix. -/
@@ -265,7 +213,7 @@ theorem coe_baseChangePointsMulEquiv_apply (B : CommAlgCat.{w} A)
         (CommHopfAlgCat.quotientPointsHom
           (GeneralLinear.coordinateHopfAlgebra A (dimension n))
           (baseChangeDefiningIdeal n hn A) B q) := by
-  rw [baseChangePointsMulEquiv, MulEquiv.trans_apply, coe_integralPointsMulEquiv_apply]
+  rw [baseChangePointsMulEquiv, MulEquiv.trans_apply, coe_pointsMulEquiv_apply]
   exact GeneralLinear.pointsMulEquiv_quotientPointsHom_baseChangeIsoPointsMulEquiv
     (dimension n) (definingIdeal n hn) (baseChangeDefiningIdeal n hn A)
     (baseChangeCoordinateIso n hn A) (mkQuotient_comp_baseChangeCoordinateIso_hom n hn A) B q
@@ -301,7 +249,7 @@ theorem baseChangePointsMulEquiv_mapPoints {B C : CommAlgCat.{w} A} (f : B ⟶ C
       pointsMap n hn f.hom.toRingHom (baseChangePointsMulEquiv n hn A B q) := by
   simp only [baseChangePointsMulEquiv, MulEquiv.trans_apply]
   rw [CommHopfAlgCat.baseChangeIsoPointsMulEquiv_mapPoints,
-    integralPointsMulEquiv_mapPoints n hn
+    pointsMulEquiv_mapPoints n hn
       ((TauCeti.CommAlgCat.restrictScalars (algebraMap ℤ A)).map f)]
   have hring :
       ((TauCeti.CommAlgCat.restrictScalars (algebraMap ℤ A)).map f).hom.toRingHom =
@@ -355,6 +303,82 @@ theorem mkQuotient_comp_rootSubgroupIntegralCoordinateMap (k : Fin n ⊕ Fin n) 
     (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
     (rep_kostantForm_mem_lattice n hn)
     (isNilpotent_rep_rootGenerator n hn) (latticeBasis n) (basisWeight n) (definingIdeal_def n hn) k
+
+/-- On points, the integral factored coordinate map is the named numbered root subgroup. -/
+@[simp]
+theorem pointsMulEquiv_mapPointsFunctor_rootSubgroupIntegralCoordinateMap
+    (B : CommAlgCat.{w} ℤ) (k : Fin n ⊕ Fin n)
+    (q : HopfAlgebra.points
+      (R := ℤ) (H := AdditiveGroup.coordinateHopfAlgebra ℤ) B) :
+    pointsMulEquiv n hn B
+        ((CommHopfAlgCat.mapPointsFunctor
+          (rootSubgroupIntegralCoordinateMap n hn k)).app B q) =
+      rootSubgroupPoints n hn k B (AdditiveGroup.gaPointsMulEquiv q) := by
+  change WithConv (SymmetricAlgebra ℤ ℤ →ₐ[ℤ] B) at q
+  rw [CommHopfAlgCat.mapPointsFunctor_app_apply]
+  apply Subtype.ext
+  rw [coe_pointsMulEquiv_apply, coe_rootSubgroupPoints]
+  rw [CommHopfAlgCat.quotientPointsHom_apply, GeneralLinear.pointsMulEquiv_apply]
+  change GeneralLinear.pointToGeneralLinear (dimension n)
+      (WithConv.toConv (q.ofConv.comp
+        ((CommHopfAlgCat.mkQuotient
+          (GeneralLinear.coordinateHopfAlgebra ℤ (dimension n)) (definingIdeal n hn) ≫
+            rootSubgroupIntegralCoordinateMap n hn k).hom :
+          GeneralLinear.coordinateHopfAlgebra ℤ (dimension n) →ₐ[ℤ]
+            AdditiveGroup.coordinateHopfAlgebra ℤ))) = _
+  rw [mkQuotient_comp_rootSubgroupIntegralCoordinateMap]
+  let q' := WithConv.toConv q.ofConv.toRingHom.toIntAlgHom
+  let u : Multiplicative B := AdditiveGroup.gaPointsMulEquiv q
+  let u' := (@AdditiveGroup.gaPointsMulEquiv ℤ Int.instCommSemiring B _
+    (Ring.toIntAlgebra B)) q'
+  have hu : u' = u := by
+    apply Multiplicative.toAdd.injective
+    calc
+      Multiplicative.toAdd u' = q'.ofConv (SymmetricAlgebra.ι ℤ ℤ 1) := by
+        exact @AdditiveGroup.toAdd_gaPointsMulEquiv ℤ Int.instCommSemiring B _
+          (Ring.toIntAlgebra B) q'
+      _ = q.ofConv (SymmetricAlgebra.ι ℤ ℤ 1) :=
+        RingHom.toIntAlgHom_apply q.ofConv.toRingHom _
+      _ = Multiplicative.toAdd u := by
+        exact (@AdditiveGroup.toAdd_gaPointsMulEquiv ℤ Int.instCommSemiring B _
+          (CommAlgCat.algebra B) q).symm
+  change _ = kostantRootSubgroupMatrix
+    (TauCeti.serreRootGenerator (CartanMatrix.D n))
+    (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
+    (rep_kostantForm_mem_lattice n hn) k (isNilpotent_rep_rootGenerator n hn k)
+    (latticeBasis n)
+      ((@AdditiveGroup.gaPointsMulEquiv ℤ Int.instCommSemiring B _
+        (Ring.toIntAlgebra B)).symm u)
+  rw [← hu]
+  have hcancel :
+      (@AdditiveGroup.gaPointsMulEquiv ℤ Int.instCommSemiring B _
+        (Ring.toIntAlgebra B)).symm u' = q' := by
+    exact (@AdditiveGroup.gaPointsMulEquiv ℤ Int.instCommSemiring B _
+      (Ring.toIntAlgebra B)).symm_apply_apply q'
+  rw [hcancel]
+  have hroot := pointsMulEquiv_kostantRootSubgroupCoordinateMap
+    (TauCeti.serreRootGenerator (CartanMatrix.D n))
+    (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
+    (rep_kostantForm_mem_lattice n hn) k (isNilpotent_rep_rootGenerator n hn k)
+    (latticeBasis n) B q'
+  rw [← hroot]
+  apply Matrix.GeneralLinearGroup.ext
+  intro i j
+  rw [GeneralLinear.pointToGeneralLinear_apply, GeneralLinear.pointToGeneralLinear_apply]
+  exact RingHom.toIntAlgHom_apply q.ofConv.toRingHom _
+
+/-- Explicit precomposition form of
+`pointsMulEquiv_mapPointsFunctor_rootSubgroupIntegralCoordinateMap`. -/
+private theorem pointsMulEquiv_rootSubgroupIntegralCoordinateMap_apply
+    (B : CommAlgCat.{w} ℤ) (k : Fin n ⊕ Fin n)
+    (q : HopfAlgebra.points
+      (R := ℤ) (H := AdditiveGroup.coordinateHopfAlgebra ℤ) B) :
+    pointsMulEquiv n hn B
+        (WithConv.toConv (q.ofConv.comp
+          (rootSubgroupIntegralCoordinateMap n hn k).hom.toAlgHom)) =
+      rootSubgroupPoints n hn k B (AdditiveGroup.gaPointsMulEquiv q) := by
+  rw [← CommHopfAlgCat.mapPointsFunctor_app_apply]
+  exact pointsMulEquiv_mapPointsFunctor_rootSubgroupIntegralCoordinateMap n hn B k q
 
 /-- The integral factored root-subgroup coordinate map represents the carrier's `k`th numbered
 root subgroup: its spectrum is `TauCeti.TypeDSpinCarrier.rootSubgroup`, read through the
@@ -426,6 +450,70 @@ theorem baseChangeCoordinateIso_hom_comp_rootSubgroupBaseChangeMap
     (isNilpotent_rep_rootGenerator n hn) (latticeBasis n) (basisWeight n) A
     (definingIdeal_def n hn) k
 
+/-- On points, the transported factored coordinate map is the named numbered root subgroup. -/
+@[simp]
+theorem baseChangePointsMulEquiv_mapPointsFunctor_rootSubgroupToBaseChangeCoordinateMap
+    (B : CommAlgCat.{w} A) (k : Fin n ⊕ Fin n)
+    (q : HopfAlgebra.points
+      (R := A) (H := AdditiveGroup.coordinateHopfAlgebra A) B) :
+    baseChangePointsMulEquiv n hn A B
+        ((CommHopfAlgCat.mapPointsFunctor
+          (rootSubgroupToBaseChangeCoordinateMap n hn A k)).app B q) =
+      rootSubgroupPoints n hn k B (AdditiveGroup.gaPointsMulEquiv q) := by
+  change WithConv (AdditiveGroup.coordinateHopfAlgebra A →ₐ[A] B) at q
+  rw [CommHopfAlgCat.mapPointsFunctor_app_apply]
+  let qTensor :=
+    WithConv.toConv (q.ofConv.comp
+      (AdditiveGroup.coordinateHopfAlgebraBaseChangeIso ℤ A).hom.hom.toAlgHom)
+  let qIntegral := CommHopfAlgCat.baseChangePointsMulEquiv (K := A) B
+    (AdditiveGroup.coordinateHopfAlgebra ℤ) qTensor
+  have hparam : AdditiveGroup.gaPointsMulEquiv qIntegral =
+      AdditiveGroup.gaPointsMulEquiv q := by
+    apply Multiplicative.toAdd.injective
+    rw [AdditiveGroup.toAdd_gaPointsMulEquiv, AdditiveGroup.toAdd_gaPointsMulEquiv]
+    dsimp only [qIntegral]
+    rw [CommHopfAlgCat.baseChangePointsMulEquiv_apply_apply]
+    dsimp only [qTensor]
+    rw [AlgHom.comp_apply]
+    change q.ofConv
+        (AdditiveGroup.gaScalarTensorBialgEquiv (k := ℤ) (K := A)
+          (1 ⊗ₜ[ℤ] SymmetricAlgebra.ι ℤ ℤ 1)) =
+      q.ofConv (SymmetricAlgebra.ι A A 1)
+    rw [AdditiveGroup.gaScalarTensorBialgEquiv_tmul_ι]
+    simp
+  rw [← hparam,
+    ← pointsMulEquiv_rootSubgroupIntegralCoordinateMap_apply n hn
+      (TauCeti.CommAlgCat.restrictScalarsObj (algebraMap ℤ A) B) k qIntegral]
+  rw [baseChangePointsMulEquiv, MulEquiv.trans_apply]
+  congr 1
+  apply WithConv.ofConv_injective
+  apply AlgHom.ext
+  intro x
+  rw [CommHopfAlgCat.baseChangeIsoPointsMulEquiv_apply_apply]
+  simp only [AlgHom.comp_apply]
+  dsimp only [qIntegral]
+  rw [CommHopfAlgCat.baseChangePointsMulEquiv_apply_apply]
+  dsimp only [qTensor]
+  rw [AlgHom.comp_apply]
+  congr 1
+  rw [← baseChangeCoordinateIso_hom_comp_rootSubgroupBaseChangeMap n hn A k]
+  rw [_root_.CommHopfAlgCat.hom_comp, _root_.CommHopfAlgCat.hom_comp]
+  change
+    (((CommHopfAlgCat.ofHom
+        (AdditiveGroup.gaScalarTensorBialgEquiv (k := ℤ) (K := A))).hom.comp
+      (CommHopfAlgCat.baseChangeMap
+        (rootSubgroupIntegralCoordinateMap n hn k)).hom).comp
+      (baseChangeCoordinateIso n hn A).hom.hom)
+        ((baseChangeCoordinateIso n hn A).inv (1 ⊗ₜ[ℤ] x)) =
+      (AdditiveGroup.coordinateHopfAlgebraBaseChangeIso ℤ A).hom.hom
+        (1 ⊗ₜ[ℤ] (rootSubgroupIntegralCoordinateMap n hn k).hom x)
+  rw [BialgHom.comp_apply, BialgHom.comp_apply]
+  have hcancel := Iso.inv_hom_id_apply (baseChangeCoordinateIso n hn A) (1 ⊗ₜ[ℤ] x)
+  change (baseChangeCoordinateIso n hn A).hom.hom
+      ((baseChangeCoordinateIso n hn A).inv (1 ⊗ₜ[ℤ] x)) = 1 ⊗ₜ[ℤ] x at hcancel
+  rw [hcancel, CommHopfAlgCat.baseChangeMap_apply_tmul]
+  rfl
+
 /-! ## The transported weight torus -/
 
 /-- The integral weight-torus coordinate map, with source expressed using the named type-`Dₙ`
@@ -467,6 +555,50 @@ theorem mkQuotient_comp_weightTorusIntegralCoordinateMap :
     (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
     (rep_kostantForm_mem_lattice n hn)
     (isNilpotent_rep_rootGenerator n hn) (latticeBasis n) (basisWeight n) (definingIdeal_def n hn)
+
+/-- On points, the integral factored coordinate map is the named spin weight torus. -/
+@[simp]
+theorem pointsMulEquiv_mapPointsFunctor_weightTorusIntegralCoordinateMap
+    (B : CommAlgCat.{w} ℤ)
+    (q : HopfAlgebra.points
+      (R := ℤ)
+      (H := (DiagonalizableGroup.coordinateRing ℤ
+        (SplitTorus.characterGroup (Fin n))).obj) B) :
+    pointsMulEquiv n hn B
+        ((CommHopfAlgCat.mapPointsFunctor
+          (weightTorusIntegralCoordinateMap n hn)).app B q) =
+      weightTorusPoints n hn B (SplitTorus.pointsMulEquiv q) := by
+  rw [CommHopfAlgCat.mapPointsFunctor_app_apply]
+  apply Subtype.ext
+  rw [coe_pointsMulEquiv_apply, coe_weightTorusPoints,
+    CommHopfAlgCat.quotientPointsHom_apply, GeneralLinear.pointsMulEquiv_apply]
+  change GeneralLinear.pointToGeneralLinear (dimension n)
+      (WithConv.toConv (q.ofConv.comp
+        ((CommHopfAlgCat.mkQuotient
+          (GeneralLinear.coordinateHopfAlgebra ℤ (dimension n)) (definingIdeal n hn) ≫
+            weightTorusIntegralCoordinateMap n hn).hom :
+          GeneralLinear.coordinateHopfAlgebra ℤ (dimension n) →ₐ[ℤ]
+            MonoidAlgebra ℤ (SplitTorus.characterGroup (Fin n))))) = _
+  rw [mkQuotient_comp_weightTorusIntegralCoordinateMap]
+  rw [← GeneralLinear.pointsMulEquiv_apply,
+    ← CommHopfAlgCat.mapPointsFunctor_app_apply,
+    GeneralLinear.pointsMulEquiv_mapPointsFunctor_weightTorusCoordinateMap,
+    kostantTorusMatrix_apply]
+
+/-- Explicit precomposition form of
+`pointsMulEquiv_mapPointsFunctor_weightTorusIntegralCoordinateMap`. -/
+private theorem pointsMulEquiv_weightTorusIntegralCoordinateMap_apply
+    (B : CommAlgCat.{w} ℤ)
+    (q : HopfAlgebra.points
+      (R := ℤ)
+      (H := (DiagonalizableGroup.coordinateRing ℤ
+        (SplitTorus.characterGroup (Fin n))).obj) B) :
+    pointsMulEquiv n hn B
+        (WithConv.toConv (q.ofConv.comp
+          (weightTorusIntegralCoordinateMap n hn).hom.toAlgHom)) =
+      weightTorusPoints n hn B (SplitTorus.pointsMulEquiv q) := by
+  rw [← CommHopfAlgCat.mapPointsFunctor_app_apply]
+  exact pointsMulEquiv_mapPointsFunctor_weightTorusIntegralCoordinateMap n hn B q
 
 /-- The integral factored weight-torus coordinate map represents the carrier's weight torus: its
 spectrum is `TauCeti.TypeDSpinCarrier.weightTorus`, read through the quotient-spectrum
@@ -535,6 +667,76 @@ theorem baseChangeCoordinateIso_hom_comp_weightTorusBaseChangeMap :
     (rep_kostantForm_mem_lattice n hn)
     (isNilpotent_rep_rootGenerator n hn) (latticeBasis n) (basisWeight n) A
     (definingIdeal_def n hn)
+
+/-- On points, the transported factored weight-torus map is the named spin weight torus. -/
+@[simp]
+theorem baseChangePointsMulEquiv_mapPointsFunctor_weightTorusToBaseChangeCoordinateMap
+    (B : CommAlgCat.{w} A)
+    (q : HopfAlgebra.points
+      (R := A)
+      (H := (DiagonalizableGroup.coordinateRing A
+        (SplitTorus.characterGroup (Fin n))).obj) B) :
+    baseChangePointsMulEquiv n hn A B
+        ((CommHopfAlgCat.mapPointsFunctor
+          (weightTorusToBaseChangeCoordinateMap n hn A)).app B q) =
+      weightTorusPoints n hn B (SplitTorus.pointsMulEquiv q) := by
+  change WithConv
+    (MonoidAlgebra A (SplitTorus.characterGroup (Fin n)) →ₐ[A] B) at q
+  rw [CommHopfAlgCat.mapPointsFunctor_app_apply]
+  let qTensor :=
+    WithConv.toConv (q.ofConv.comp
+      (DiagonalizableGroup.baseChangeCoordinateHopfAlgebraIso ℤ A
+        (SplitTorus.characterGroup (Fin n))).hom.hom.toAlgHom)
+  let qIntegral := CommHopfAlgCat.baseChangePointsMulEquiv (K := A) B
+    (DiagonalizableGroup.coordinateRing ℤ
+      (SplitTorus.characterGroup (Fin n))).obj qTensor
+  have hparam : SplitTorus.pointsMulEquiv qIntegral =
+      SplitTorus.pointsMulEquiv q := by
+    funext i
+    apply Units.ext
+    rw [SplitTorus.pointsMulEquiv_apply_coe, SplitTorus.pointsMulEquiv_apply_coe]
+    dsimp only [qIntegral]
+    rw [CommHopfAlgCat.baseChangePointsMulEquiv_apply_apply]
+    dsimp only [qTensor]
+    rw [AlgHom.comp_apply]
+    congr 1
+    change (TauCeti.MonoidAlgebra.scalarTensorBialgEquiv ℤ A)
+      (1 ⊗ₜ[ℤ] MonoidAlgebra.single
+        (Multiplicative.ofAdd (Finsupp.single i 1)) 1) = _
+    rw [TauCeti.MonoidAlgebra.scalarTensorBialgEquiv_tmul]
+    simp
+  rw [← hparam,
+    ← pointsMulEquiv_weightTorusIntegralCoordinateMap_apply n hn
+      (TauCeti.CommAlgCat.restrictScalarsObj (algebraMap ℤ A) B) qIntegral]
+  rw [baseChangePointsMulEquiv, MulEquiv.trans_apply]
+  congr 1
+  apply WithConv.ofConv_injective
+  apply AlgHom.ext
+  intro x
+  rw [CommHopfAlgCat.baseChangeIsoPointsMulEquiv_apply_apply]
+  simp only [AlgHom.comp_apply]
+  dsimp only [qIntegral]
+  rw [CommHopfAlgCat.baseChangePointsMulEquiv_apply_apply]
+  dsimp only [qTensor]
+  rw [AlgHom.comp_apply]
+  congr 1
+  rw [← baseChangeCoordinateIso_hom_comp_weightTorusBaseChangeMap n hn A]
+  rw [_root_.CommHopfAlgCat.hom_comp, _root_.CommHopfAlgCat.hom_comp]
+  change
+    ((((DiagonalizableGroup.baseChangeCoordinateHopfAlgebraIso ℤ A
+        (SplitTorus.characterGroup (Fin n))).hom.hom).comp
+      (CommHopfAlgCat.baseChangeMap
+        (weightTorusIntegralCoordinateMap n hn)).hom).comp
+      (baseChangeCoordinateIso n hn A).hom.hom)
+        ((baseChangeCoordinateIso n hn A).inv (1 ⊗ₜ[ℤ] x)) =
+      (DiagonalizableGroup.baseChangeCoordinateHopfAlgebraIso ℤ A
+        (SplitTorus.characterGroup (Fin n))).hom.hom
+        (1 ⊗ₜ[ℤ] (weightTorusIntegralCoordinateMap n hn).hom x)
+  rw [BialgHom.comp_apply, BialgHom.comp_apply]
+  have hcancel := Iso.inv_hom_id_apply (baseChangeCoordinateIso n hn A) (1 ⊗ₜ[ℤ] x)
+  change (baseChangeCoordinateIso n hn A).hom.hom
+      ((baseChangeCoordinateIso n hn A).inv (1 ⊗ₜ[ℤ] x)) = 1 ⊗ₜ[ℤ] x at hcancel
+  rw [hcancel, CommHopfAlgCat.baseChangeMap_apply_tmul]
 
 /-- The closed subgroup of `GL_(2^n)/A` generated by the transported numbered root subgroups and
 the transported weight torus lies in the base change of the integral type-`Dₙ` carrier.
