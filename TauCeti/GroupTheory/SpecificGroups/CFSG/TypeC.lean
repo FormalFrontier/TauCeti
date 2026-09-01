@@ -18,8 +18,8 @@ full-weight Chevalley carrier for that diagram is `TauCeti.SpStd.groupScheme`, t
 closure of the standard representation of `sp_(2n)` inside `GL_(2n)` over `ℤ`. This file runs the
 classification recipe on it: for a validated type-`C` index it supplies the group of
 algebraic-closure-valued points of that carrier, its Bourbaki-numbered simple root subgroups, the
-Steinberg endomorphism milestone L1 prescribes for an untwisted family, and the candidate group
-milestone L3 builds from it,
+Steinberg endomorphism milestone L1 prescribes for an untwisted family, and the group milestone L3
+builds from it,
 
 ```text
 H_d = fixedSubgroup d.steinberg,        d.Group = [H_d, H_d] / Z([H_d, H_d]).
@@ -67,7 +67,8 @@ the symplectic group scheme or the pinned simply connected Chevalley--Demazure g
 * `TauCeti.TypeCLieIndex.steinberg`: the Steinberg endomorphism of the family, together with its
   pinned equation `Frob_q (x_i(u)) = x_i(u ^ q)` and the description
   `TauCeti.TypeCLieIndex.mem_fixedSubgroup_steinberg_iff` of the group `H_d` it fixes.
-* `TauCeti.TypeCLieIndex.Group`: the classification candidate `[H_d, H_d] / Z([H_d, H_d])`.
+* `TauCeti.TypeCLieIndex.Group`: the milestone L3 quotient `[H_d, H_d] / Z([H_d, H_d])` of that
+  fixed group, formed on this carrier.
 
 ## References
 
@@ -245,14 +246,16 @@ theorem mem_fixedSubgroup_steinberg_iff (g : d.AmbientGroup) :
   simp only [mem_frobeniusFixedSubring, ValidLieTypeIndex.mem_fixedField,
     d.1.fieldOrder_eq_characteristic_pow]
 
-/-! ## The classification candidate -/
+/-! ## The milestone L3 quotient -/
 
-/-- **The candidate simple group of the untwisted family `Cₙ(q)`**: the derived subgroup of the
-fixed points of its Steinberg map, modulo the centre of that derived subgroup.
+/-- **The milestone L3 quotient on the standard symplectic carrier**: the derived subgroup of the
+fixed points of the Steinberg map above, modulo the centre of that derived subgroup.
 
-This is the milestone L3 recipe on the `C` branch, run on the standard symplectic carrier. Nothing
-below asserts that it is finite, perfect, or simple, nor that the carrier is the one milestone L0
-asks for. -/
+This is the shape milestone L3 asks of the untwisted family `Cₙ(q)`, formed on the standard
+symplectic carrier rather than on the pinned simply connected Chevalley--Demazure group scheme that
+milestone L0 asks for. It becomes the candidate simple group of that family along the Layer 9
+identification of the two carriers described in the module docstring, and not before; it is not
+offered as that candidate here. Nothing below asserts that it is finite, perfect, or simple. -/
 abbrev Group : Type := FixedPointCandidate d.steinberg
 
 /-- Milestone L3 asks every valid branch to carry a group instance; the quotient construction
