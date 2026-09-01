@@ -33,8 +33,8 @@ namespace NumberField
 variable {K L L' : Type*} [Field K] [Field L] [Field L'] [Algebra K L] [Algebra K L']
 
 /-- Unramifiedness at a prime is invariant under the induced map on rings of integers. -/
-theorem isUnramifiedAt_map_ringOfIntegersAlgEquiv (e : L ≃ₐ[K] L') (p : Ideal (𝓞 K))
-    (Q : Ideal (𝓞 L)) [Q.IsPrime] [Q.LiesOver p]
+theorem isUnramifiedAt_map_ringOfIntegersAlgEquiv (e : L ≃ₐ[K] L')
+    (Q : Ideal (𝓞 L)) [Q.IsPrime]
     (hQ : Algebra.IsUnramifiedAt (𝓞 K) Q) :
     Algebra.IsUnramifiedAt (𝓞 K) (Q.map (RingOfIntegers.mapAlgEquiv e)) := by
   let eO := RingOfIntegers.mapAlgEquiv e
@@ -140,8 +140,7 @@ theorem isUnramifiedAt_map_ringOfIntegersAlgEquiv_iff (e : L ≃ₐ[K] L') (p : 
     let Q' : Ideal (𝓞 L') := Q.map (eO : 𝓞 L →+* 𝓞 L')
     let _ : Q'.IsPrime := Ideal.map_isPrime_of_equiv eO
     let _ : Q'.LiesOver p := Ideal.map_equiv_liesOver Q p eO
-    have hQ := isUnramifiedAt_map_ringOfIntegersAlgEquiv (e := e.symm) (p := p)
-      (Q := Q') hQ'
+    have hQ := isUnramifiedAt_map_ringOfIntegersAlgEquiv (e := e.symm) (Q := Q') hQ'
     have heO : RingOfIntegers.mapAlgEquiv e.symm = eO.symm := by
       apply AlgEquiv.ext
       intro x
@@ -152,6 +151,6 @@ theorem isUnramifiedAt_map_ringOfIntegersAlgEquiv_iff (e : L ≃ₐ[K] L') (p : 
       dsimp [Q']
       exact Ideal.map_of_equiv eO.toRingEquiv
     simpa only [hmap] using hQ
-  · exact isUnramifiedAt_map_ringOfIntegersAlgEquiv e p Q
+  · exact isUnramifiedAt_map_ringOfIntegersAlgEquiv e Q
 
 end NumberField
