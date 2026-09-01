@@ -32,6 +32,7 @@ the solvable radical of `R(H)` is all of `R(H)`.
 
 * J. S. Milne, *Algebraic Groups* (2017), Proposition 6.42 and Sections 6.45--6.46.
 * A. Borel, *Linear Algebraic Groups*, Section 11.21.
+* Formal template: `TauCeti.Algebra.AlgebraicGroup.Unipotent.Radical.Characteristic`.
 
 This supplies the characteristic and idempotence API for the solvable-radical construction in
 Layer 6, "Reductive and semisimple groups", of the ReductiveGroups roadmap.
@@ -62,22 +63,22 @@ is geometrically connected, smooth, and has a solvable group of geometric points
   let e := FiniteTypeCommHopfAlgCat.quotientBotIso H
   let e' := (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} k)
     (_root_.CommHopfAlgCat.{u} k)).mapIso e
+  have hconnected :=
+    (geometricallyConnectedCommHopfAlgProperty k).prop_iff_of_iso e'
+  have hsmooth :
+      Algebra.Smooth k (FiniteTypeCommHopfAlgCat.quotient H ⊥) ↔ Algebra.Smooth k H :=
+    (smoothCommHopfAlgProperty_iff _).symm.trans <|
+      ((smoothCommHopfAlgProperty k).prop_iff_of_iso e').trans
+        (smoothCommHopfAlgProperty_iff _)
+  have hsolvable :=
+    (geometricallySolvablePointsCommHopfAlgProperty k).prop_iff_of_iso e'
   constructor
   · intro h
-    exact ⟨
-      (geometricallyConnectedCommHopfAlgProperty k).prop_of_iso e' h.geometricallyConnected,
-      (smoothCommHopfAlgProperty_iff _).mp <|
-        (smoothCommHopfAlgProperty k).prop_of_iso e'
-          ((smoothCommHopfAlgProperty_iff _).mpr h.smooth),
-      (geometricallySolvablePointsCommHopfAlgProperty k).prop_of_iso e'
-        h.geometricallySolvable⟩
-  · rintro ⟨hconnected, hsmooth, hsolvable⟩
+    exact ⟨hconnected.mp h.geometricallyConnected, hsmooth.mp h.smooth,
+      hsolvable.mp h.geometricallySolvable⟩
+  · rintro ⟨hconnected', hsmooth', hsolvable'⟩
     exact IsSolvableRadicalCandidate.mk HopfIdeal.isNormal_bot
-      ((geometricallyConnectedCommHopfAlgProperty k).prop_of_iso e'.symm hconnected)
-      ((smoothCommHopfAlgProperty_iff _).mp <|
-        (smoothCommHopfAlgProperty k).prop_of_iso e'.symm
-          ((smoothCommHopfAlgProperty_iff _).mpr hsmooth))
-      ((geometricallySolvablePointsCommHopfAlgProperty k).prop_of_iso e'.symm hsolvable)
+      (hconnected.mpr hconnected') (hsmooth.mpr hsmooth') (hsolvable.mpr hsolvable')
 
 end HopfIdeal
 
@@ -95,16 +96,9 @@ The equality is stated on defining Hopf ideals: the zero ideal cuts out the whol
       geometricallyConnectedCommHopfAlgProperty k H.obj ∧
         Algebra.Smooth k H ∧
         geometricallySolvablePointsCommHopfAlgProperty k H.obj := by
-  constructor
-  · intro h
-    have hcandidate := isSolvableRadicalCandidate_solvableRadicalDefiningIdeal H
-    rw [h, HopfIdeal.isSolvableRadicalCandidate_bot_iff] at hcandidate
-    exact hcandidate
-  · intro h
-    apply le_antisymm
-    · exact solvableRadicalDefiningIdeal_le H ⊥
-        ((HopfIdeal.isSolvableRadicalCandidate_bot_iff H).2 h)
-    · exact bot_le
+  rw [eq_comm, eq_solvableRadicalDefiningIdeal_iff,
+    HopfIdeal.isSolvableRadicalCandidate_bot_iff]
+  simp only [bot_le, implies_true, and_true]
 
 /-- The solvable radical of the solvable radical is the whole solvable radical. Equivalently,
 the solvable-radical construction is idempotent on defining ideals. -/
