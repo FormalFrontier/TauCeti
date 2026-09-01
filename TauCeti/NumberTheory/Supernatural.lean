@@ -145,10 +145,15 @@ theorem dvd_iff_le {m n : Supernatural} : m ∣ n ↔ m ≤ n := by
     ext p
     exact (add_tsub_cancel_of_le (h p)).symm
 
+/-- One supernatural number is at most another exactly when each exponent is at most the
+corresponding exponent of the other. -/
+theorem le_iff {m n : Supernatural} : m ≤ n ↔ ∀ p, m p ≤ n p :=
+  Pi.le_def
+
 /-- A supernatural number divides another exactly when each exponent is at most the
 corresponding exponent of the other. -/
 theorem dvd_iff {m n : Supernatural} : m ∣ n ↔ ∀ p, m p ≤ n p :=
-  dvd_iff_le.trans Pi.le_def
+  dvd_iff_le.trans le_iff
 
 /-- The exponent of a supernatural number at a given prime. -/
 def exponent (p : Nat.Primes) : Supernatural →o ℕ∞ :=
@@ -188,11 +193,14 @@ theorem primePower_add (p : Nat.Primes) (m n : ℕ∞) :
 instance : Coe Nat.Primes Supernatural :=
   ⟨fun p ↦ primePower p 1⟩
 
-/-- A prime divides a supernatural number exactly when its exponent there is nonzero. -/
+/-- A prime is at most a supernatural number exactly when its exponent there is nonzero.
+
+This is the simp-normal form of `coe_prime_dvd_iff`, since `dvd_iff_le` rewrites divisibility
+of supernatural numbers to comparison. -/
 @[simp]
-theorem coe_prime_dvd_iff (p : Nat.Primes) (n : Supernatural) :
-    (p : Supernatural) ∣ n ↔ n p ≠ 0 := by
-  rw [dvd_iff]
+theorem coe_prime_le_iff (p : Nat.Primes) (n : Supernatural) :
+    (p : Supernatural) ≤ n ↔ n p ≠ 0 := by
+  rw [le_iff]
   constructor
   · intro h
     exact Order.one_le_iff_ne_zero.mp (by simpa using h p)
@@ -201,6 +209,11 @@ theorem coe_prime_dvd_iff (p : Nat.Primes) (n : Supernatural) :
     · subst q
       simpa using Order.one_le_iff_ne_zero.mpr h
     · simp [hq]
+
+/-- A prime divides a supernatural number exactly when its exponent there is nonzero. -/
+theorem coe_prime_dvd_iff (p : Nat.Primes) (n : Supernatural) :
+    (p : Supernatural) ∣ n ↔ n p ≠ 0 :=
+  dvd_iff_le.trans (coe_prime_le_iff p n)
 
 /-- The `p`-primary part of a supernatural number. -/
 def primaryPart (p : Nat.Primes) (n : Supernatural) : Supernatural :=
@@ -282,11 +295,14 @@ def ofNatMonoidHom : ℕ+ →* Supernatural where
 theorem ofNatMonoidHom_apply (n : ℕ+) : ofNatMonoidHom n = ofNat n :=
   (rfl)
 
-/-- Divisibility of positive natural numbers agrees with divisibility of their supernatural
-images. -/
+/-- Divisibility of positive natural numbers agrees with comparison of their supernatural
+images.
+
+This is the simp-normal form of `ofNat_dvd_ofNat_iff`, since `dvd_iff_le` rewrites divisibility
+of supernatural numbers to comparison. -/
 @[simp]
-theorem ofNat_dvd_ofNat_iff {m n : ℕ+} : ofNat m ∣ ofNat n ↔ m ∣ n := by
-  rw [dvd_iff]
+theorem ofNat_le_ofNat_iff {m n : ℕ+} : ofNat m ≤ ofNat n ↔ m ∣ n := by
+  rw [le_iff]
   constructor
   · intro h
     rw [PNat.dvd_iff, ← Nat.factorization_le_iff_dvd m.ne_zero n.ne_zero]
@@ -302,6 +318,11 @@ theorem ofNat_dvd_ofNat_iff {m n : ℕ+} : ofNat m ∣ ofNat n ↔ m ∣ n := by
     rw [Nat.factorization_def _ p.prop, Nat.factorization_def _ p.prop] at hp
     rw [ofNat_apply, ofNat_apply, ENat.natCast_le_natCast]
     exact hp
+
+/-- Divisibility of positive natural numbers agrees with divisibility of their supernatural
+images. -/
+theorem ofNat_dvd_ofNat_iff {m n : ℕ+} : ofNat m ∣ ofNat n ↔ m ∣ n :=
+  dvd_iff_le.trans ofNat_le_ofNat_iff
 
 /-- The positive-natural embedding takes gcd to the supernatural gcd. -/
 @[simp]
