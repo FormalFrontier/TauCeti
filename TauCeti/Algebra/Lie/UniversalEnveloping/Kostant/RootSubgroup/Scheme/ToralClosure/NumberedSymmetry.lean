@@ -43,7 +43,8 @@ including into `GLₙ` is that same matrix conjugation.
 Both hypotheses hold for the coordinate permutation that a Dynkin-diagram symmetry induces on
 Geck's lattice: it permutes the coordinate basis by the induced permutation of the Cartan
 coordinates and of the roots, and it permutes the Geck weights contragrediently. Allowing monomial
-basis actions also covers pinned lifts, such as the doubled `E₆` symmetry, that require signs.
+basis actions also covers pinned lifts, such as the graph symmetry used for `²E₆`, that require
+signs.
 
 Nothing here assumes that `σ` or `τ` comes from a diagram symmetry, that the weights are those of
 an admissible lattice, or that the carrier is reductive.

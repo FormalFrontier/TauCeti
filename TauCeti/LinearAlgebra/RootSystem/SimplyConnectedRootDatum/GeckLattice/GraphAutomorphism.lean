@@ -124,18 +124,6 @@ private theorem geckDiagramModuleEquiv_ι_geckRepresentation_rootGenerator
     simpa only [_root_.UniversalEnvelopingAlgebra.ι_apply] using
       t.geckDiagramModuleEquiv_geckRepresentation_rootGenerator ht hsigma i v
 
-/-- The Geck-module symmetry is monomial in the coordinate basis, with every scaling coefficient
-equal to one. -/
-private theorem geckDiagramModuleEquiv_geckCoordinateBasisFin_monomial
-    (hsigma : sigma ∈ t.diagramSymmetry) (i : Fin (t.geckDim ht)) :
-    t.geckDiagramModuleEquiv ht hsigma
-        (((t.geckCoordinateBasisFin ht) i : t.geckCoordinateLattice ht) :
-          t.GeckIndex ht → ℚ) =
-      (((1 : ℤ) • (t.geckCoordinateBasisFin ht) (t.geckDiagramFinPerm ht hsigma i) :
-          t.geckCoordinateLattice ht) : t.GeckIndex ht → ℚ) := by
-  simp only [one_smul]
-  exact t.geckDiagramModuleEquiv_geckCoordinateBasisFin ht hsigma i
-
 /-- The Kostant toral-closure symmetry of the pinned Geck data. -/
 private def toralGraphAut (hsigma : sigma ∈ t.diagramSymmetry) :
     Aut (TauCeti.UniversalEnvelopingAlgebra.kostantToralGroupScheme
@@ -156,7 +144,9 @@ private def toralGraphAut (hsigma : sigma ∈ t.diagramSymmetry) :
     (diagramRootGeneratorPerm sigma).surjective
     (t.geckDiagramFinPerm ht hsigma)
     (fun _ => 1)
-    (geckDiagramModuleEquiv_geckCoordinateBasisFin_monomial ht hsigma)
+    (fun i => by
+      simpa only [one_smul] using
+        t.geckDiagramModuleEquiv_geckCoordinateBasisFin ht hsigma i)
     sigma (t.geckWeightFin_geckDiagramFinPerm ht hsigma)
 
 /-- **The graph automorphism of the pinned Geck carrier** attached to a symmetry of its
@@ -264,7 +254,9 @@ theorem coe_geckGraphAutMatrix (hsigma : sigma ∈ t.diagramSymmetry) (A : Type 
   rw [geckGraphAutMatrix]
   rw [UniversalEnvelopingAlgebra.coe_kostantNumberedSymmetryMatrix_apply_of_monomial _ _ _ _
       (t.geckDiagramFinPerm ht hsigma) (fun _ => 1)
-      (geckDiagramModuleEquiv_geckCoordinateBasisFin_monomial ht hsigma) A i j]
+      (fun k => by
+        simpa only [one_smul] using
+          t.geckDiagramModuleEquiv_geckCoordinateBasisFin ht hsigma k) A i j]
   simp [Equiv.Perm.permMatrix, PEquiv.toMatrix_apply, Equiv.eq_symm_apply, eq_comm]
 
 /-- The matrix of the pinned Geck coordinate permutation commutes with extension of the value
@@ -321,7 +313,9 @@ theorem map_geckPoints_conj_geckGraphAutMatrix (hsigma : sigma ∈ t.diagramSymm
     (diagramRootGeneratorPerm sigma).surjective
     (t.geckDiagramFinPerm ht hsigma)
     (fun _ => 1)
-    (geckDiagramModuleEquiv_geckCoordinateBasisFin_monomial ht hsigma)
+    (fun i => by
+      simpa only [one_smul] using
+        t.geckDiagramModuleEquiv_geckCoordinateBasisFin ht hsigma i)
     sigma (t.geckWeightFin_geckDiagramFinPerm ht hsigma) A
 
 /-- The matrix of the pinned coordinate permutation, as an element of the normalizer of the points
@@ -399,7 +393,9 @@ theorem schemePointsMulEquiv_geckGraphAut_comp_geckGroupSchemeι
       (diagramRootGeneratorPerm sigma).surjective
       (t.geckDiagramFinPerm ht hsigma)
       (fun _ => 1)
-      (geckDiagramModuleEquiv_geckCoordinateBasisFin_monomial ht hsigma)
+      (fun i => by
+        simpa only [one_smul] using
+          t.geckDiagramModuleEquiv_geckCoordinateBasisFin ht hsigma i)
       sigma (t.geckWeightFin_geckDiagramFinPerm ht hsigma) A
       (p ≫ (eqToHom (t.geckGroupScheme_def ht)).hom.hom)
 
@@ -459,7 +455,9 @@ theorem geckGraphAutPoints_geckTorusMatrix (hsigma : sigma ∈ t.diagramSymmetry
     (t.geckDiagramModuleEquiv_mem_geckCoordinateLattice_iff ht hsigma)
     (t.geckDiagramFinPerm ht hsigma)
     (fun _ => 1)
-    (geckDiagramModuleEquiv_geckCoordinateBasisFin_monomial ht hsigma) A
+    (fun i => by
+      simpa only [one_smul] using
+        t.geckDiagramModuleEquiv_geckCoordinateBasisFin ht hsigma i) A
     (fun i => torusCharacter s (t.geckWeightFin ht i))
   refine Subtype.ext ?_
   rw [coe_geckGraphAutPoints]
