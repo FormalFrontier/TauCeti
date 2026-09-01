@@ -68,8 +68,9 @@ definition. Hence `supportedPart` is a plain ideal arithmetic function.
 This is the canonical-local-factor foundation for Layer **3.1** and the whole of Layer **3.2**
 ("Finite products first") of `TauCetiRoadmap/ArithmeticDirichletSeries/README.md`; the local series
 is derived here rather than stored. `EulerProduct/Data.lean` bundles this canonical information
-with its finite bad-prime condition. Layer 3.3 then evaluates the formal factors as analytic
-functions and passes to their infinite product under absolute convergence.
+as a multiplicative coefficient system; finite bad-prime data remains deferred. Layer 3.3 then
+evaluates the formal factors as analytic functions and passes to their infinite product under
+absolute convergence.
 
 ## References
 

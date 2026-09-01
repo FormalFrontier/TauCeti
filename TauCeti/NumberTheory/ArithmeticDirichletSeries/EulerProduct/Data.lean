@@ -28,7 +28,7 @@ canonical local factors. Analytic convergence of the evaluated factors belongs t
 * `TauCeti.EulerProductData` bundles a multiplicative ideal coefficient system.
 * `TauCeti.EulerProductData.ofMultiplicativeIdealWeight` regards a degree-one ideal weight as
   Euler-product data.
-* Pointwise multiplication, complex conjugation, and restriction away from finitely many primes
+* Pointwise multiplication, complex conjugation, and restriction away from sets of primes
   preserve the bundle.
 
 ## Roadmap role
@@ -77,6 +77,40 @@ theorem ext {D E : EulerProductData K} (h : ∀ I, D I = E I) : D = E := by
       have hDE : D = E := funext h
       subst E
       rfl
+
+/-- The canonical local power series of bundled Euler-product data at a height-one prime. -/
+noncomputable def localPowerSeries (D : EulerProductData K)
+    (P : HeightOneSpectrum (𝓞 K)) : PowerSeries ℂ :=
+  D.toIdealArithmeticFunction.localPowerSeries P
+
+/-- Coefficients of the bundled local power series are the prime-power values of the data. -/
+@[simp]
+theorem coeff_localPowerSeries (D : EulerProductData K)
+    (P : HeightOneSpectrum (𝓞 K)) (n : ℕ) :
+    PowerSeries.coeff n (D.localPowerSeries P) =
+      D ⟨P.asIdeal ^ n, mem_nonZeroDivisors_of_ne_zero (pow_ne_zero n P.ne_bot)⟩ :=
+  IdealArithmeticFunction.coeff_localPowerSeries D.toIdealArithmeticFunction P n
+
+/-- The canonical local arithmetic factor of bundled Euler-product data at a height-one prime. -/
+noncomputable def localArithmeticFactor (D : EulerProductData K)
+    (P : HeightOneSpectrum (𝓞 K)) : ArithmeticFunction ℂ :=
+  D.toIdealArithmeticFunction.localArithmeticFactor P
+
+/-- At a power of `N(P)`, the bundled local arithmetic factor is the corresponding prime-power
+coefficient. -/
+@[simp]
+theorem localArithmeticFactor_apply_pow (D : EulerProductData K)
+    (P : HeightOneSpectrum (𝓞 K)) (n : ℕ) :
+    D.localArithmeticFactor P (Ideal.absNorm P.asIdeal ^ n) =
+      D ⟨P.asIdeal ^ n, mem_nonZeroDivisors_of_ne_zero (pow_ne_zero n P.ne_bot)⟩ :=
+  IdealArithmeticFunction.localArithmeticFactor_apply_pow D.toIdealArithmeticFunction P n
+
+/-- The norm coefficients of bundled Euler-product data are the formal Euler product of its
+canonical local arithmetic factors. -/
+theorem normCoeff_eq_eulerProduct (D : EulerProductData K) :
+    normCoeff K D.toIdealArithmeticFunction =
+      ArithmeticFunction.eulerProduct D.localArithmeticFactor :=
+  IdealArithmeticFunction.normCoeff_eq_eulerProduct D.isMultiplicative
 
 /-- A completely multiplicative ideal weight supplies Euler-product data. -/
 noncomputable def ofMultiplicativeIdealWeight (χ : MultiplicativeIdealWeight K) :
@@ -134,6 +168,8 @@ noncomputable instance : StarMul (EulerProductData K) where
     simp
   star_mul D E := by
     ext I
+    -- `star_apply` cannot be used while this `StarMul` instance is still being constructed, so
+    -- expose the pointwise scalar identity by definitional reduction of the bundle operations.
     change star (D I * E I) = star (E I) * star (D I)
     exact star_mul (D I) (E I)
 
@@ -141,21 +177,32 @@ noncomputable instance : StarMul (EulerProductData K) where
 theorem star_apply (D : EulerProductData K) (I : (Ideal (𝓞 K))⁰) :
     (star D) I = star (D I) := (rfl)
 
-/-- Restrict Euler-product data away from a finite set of height-one primes, leaving its
+/-- Restrict Euler-product data away from a set of height-one primes, leaving its
 coefficients unchanged on ideals prime to that set and setting the others to zero. -/
 noncomputable def restrict (D : EulerProductData K)
-    (S : Set (HeightOneSpectrum (𝓞 K))) (hS : S.Finite) : EulerProductData K :=
-  D * ofMultiplicativeIdealWeight (MultiplicativeIdealWeight.ofBadPrimes S hS)
+    (S : Set (HeightOneSpectrum (𝓞 K))) : EulerProductData K where
+  toIdealArithmeticFunction :=
+    IdealArithmeticFunction.supportedPart D.toIdealArithmeticFunction Sᶜ
+  isMultiplicative := D.isMultiplicative.supportedPart Sᶜ
 
 open scoped Classical in
 @[simp]
-theorem restrict_apply (D : EulerProductData K) {S : Set (HeightOneSpectrum (𝓞 K))}
-    (hS : S.Finite) (I : (Ideal (𝓞 K))⁰) :
-    D.restrict S hS I = if Ideal.IsPrimeTo (I : Ideal (𝓞 K)) S then D I else 0 := by
+theorem restrict_apply (D : EulerProductData K) (S : Set (HeightOneSpectrum (𝓞 K)))
+    (I : (Ideal (𝓞 K))⁰) :
+    D.restrict S I = if Ideal.IsPrimeTo (I : Ideal (𝓞 K)) S then D I else 0 := by
   classical
-  rw [restrict, mul_apply, ofMultiplicativeIdealWeight_apply,
-    MultiplicativeIdealWeight.ofBadPrimes_apply]
-  by_cases hI : Ideal.IsPrimeTo (I : Ideal (𝓞 K)) S <;> simp [hI]
+  change IdealArithmeticFunction.supportedPart D.toIdealArithmeticFunction Sᶜ I = _
+  by_cases hI : Ideal.IsPrimeTo (I : Ideal (𝓞 K)) S
+  · have hI' : Ideal.IsPrimeTo (I : Ideal (𝓞 K)) (Sᶜ)ᶜ := by
+      simpa only [compl_compl] using hI
+    simpa only [hI, ↓reduceIte] using
+      (IdealArithmeticFunction.supportedPart_apply_of_isPrimeTo_compl
+        (f := D.toIdealArithmeticFunction) (S := Sᶜ) (A := I) hI')
+  · have hI' : ¬ Ideal.IsPrimeTo (I : Ideal (𝓞 K)) (Sᶜ)ᶜ := by
+      simpa only [compl_compl] using hI
+    simpa only [hI, ↓reduceIte] using
+      (IdealArithmeticFunction.supportedPart_apply_of_not_isPrimeTo_compl
+        (f := D.toIdealArithmeticFunction) (S := Sᶜ) (A := I) hI')
 
 end EulerProductData
 
