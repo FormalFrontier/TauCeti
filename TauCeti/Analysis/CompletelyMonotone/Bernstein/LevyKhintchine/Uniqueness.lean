@@ -150,10 +150,13 @@ their killing coefficients, drift coefficients, and Levy measures agree. -/
 @[simp]
 theorem bernsteinLevyKhintchineExponent_eqOn_iff
     {a b c d : ℝ} (hb : 0 ≤ b) (hd : 0 ≤ d) {μ ν : Measure ℝ≥0}
-    (hμ : IsBernsteinLevyMeasure μ) (hν : IsBernsteinLevyMeasure ν) :
+    (hμ : μ {0} = 0 ∧ Integrable (fun x : ℝ≥0 => min 1 (x : ℝ)) μ)
+    (hν : ν {0} = 0 ∧ Integrable (fun x : ℝ≥0 => min 1 (x : ℝ)) ν) :
     EqOn (bernsteinLevyKhintchineExponent a b μ)
         (bernsteinLevyKhintchineExponent c d ν) (Ici 0) ↔
       a = c ∧ b = d ∧ μ = ν := by
+  have hμ' : IsBernsteinLevyMeasure μ := isBernsteinLevyMeasure_iff.mpr hμ
+  have hν' : IsBernsteinLevyMeasure ν := isBernsteinLevyMeasure_iff.mpr hν
   constructor
   · intro hexponent
     have ha : a = c := by
@@ -162,14 +165,14 @@ theorem bernsteinLevyKhintchineExponent_eqOn_iff
         (deriv (bernsteinLevyKhintchineExponent c d ν)) (Ioi 0) :=
       (hexponent.mono Ioi_subset_Ici_self).deriv isOpen_Ioi
     have hrepμ := representsLaplaceOnIoi_deriv_bernsteinLevyKhintchineExponent
-      (a := a) hb hμ.integrable_min_one
+      (a := a) hb hμ.2
     have hrepν := representsLaplaceOnIoi_deriv_bernsteinLevyKhintchineExponent
-      (a := c) hd hν.integrable_min_one
+      (a := c) hd hν.2
     have hmeasure : bernsteinLevyKhintchineDerivativeMeasure b μ =
         bernsteinLevyKhintchineDerivativeMeasure d ν :=
       hrepμ.unique (hrepν.congr hderiv)
     exact ⟨ha, drift_eq_of_derivativeMeasure_eq hb hd hmeasure,
-        levyMeasure_eq_of_derivativeMeasure_eq hb hd hμ hν hmeasure⟩
+        levyMeasure_eq_of_derivativeMeasure_eq hb hd hμ' hν' hmeasure⟩
   · rintro ⟨rfl, rfl, rfl⟩
     exact fun _ _ => rfl
 
@@ -190,7 +193,8 @@ theorem IsBernsteinFunction.existsUnique_bernsteinLevyKhintchineExponent
   refine ⟨a, b, μ, ha, hb, hμ, hrep, fun c d ν hd hν hrep' => ?_⟩
   have hexponent : EqOn (bernsteinLevyKhintchineExponent c d ν)
       (bernsteinLevyKhintchineExponent a b μ) (Ici 0) := hrep'.symm.trans hrep
-  exact (bernsteinLevyKhintchineExponent_eqOn_iff hd hb hν hμ).mp hexponent
+  exact (bernsteinLevyKhintchineExponent_eqOn_iff hd hb
+    (isBernsteinLevyMeasure_iff.mp hν) (isBernsteinLevyMeasure_iff.mp hμ)).mp hexponent
 
 end TauCeti
 
