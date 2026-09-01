@@ -176,8 +176,6 @@ private theorem exists_glCarrierCoatom (K : Type u) [Field K] [CharZero K] {N : 
   by_cases hmu : IsGlDominantIntegral mu
   · have : Nontrivial (glCarrierSpan K mu) :=
       nontrivial_of_ne _ _ (isGlHighestWeightVector_glCarrierVector_mem hmu).ne_zero
-    have : IsCoatomic (LieSubmodule K (Matrix (Fin N) (Fin N) K) (glCarrierSpan K mu)) :=
-      isCoatomic_of_orderTop_gt_wellFounded wellFounded_gt
     obtain ⟨P, hP⟩ := IsCoatomic.exists_coatom
       (α := LieSubmodule K (Matrix (Fin N) (Fin N) K) (glCarrierSpan K mu))
     exact ⟨P, fun _ => hP⟩
