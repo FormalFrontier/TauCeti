@@ -7,7 +7,7 @@ module
 
 public import Mathlib.NumberTheory.RamificationInertia.Galois
 public import Mathlib.RingTheory.Frobenius
-public import TauCeti.NumberTheory.NumberField.Frobenius
+public import TauCeti.NumberTheory.NumberField.Frobenius.Basic
 public import TauCeti.NumberTheory.NumberField.AutomorphismAction
 
 /-!

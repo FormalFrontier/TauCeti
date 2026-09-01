@@ -32,6 +32,41 @@ namespace NumberField
 
 variable {K L L' : Type*} [Field K] [Field L] [Field L'] [Algebra K L] [Algebra K L']
 
+namespace RingOfIntegers
+
+/-- The induced ring-of-integers equivalence agrees with the ambient algebra equivalence. -/
+@[simp]
+theorem mapAlgEquiv_apply (e : L ≃ₐ[K] L') (x : 𝓞 L) :
+    (mapAlgEquiv e x : L') = e (x : L) := rfl
+
+/-- The inverse induced ring-of-integers equivalence agrees with the ambient inverse. -/
+@[simp]
+theorem mapAlgEquiv_symm_apply (e : L ≃ₐ[K] L') (x : 𝓞 L') :
+    ((mapAlgEquiv e).symm x : L) = e.symm (x : L') := rfl
+
+/-- The induced ring-of-integers equivalence for an inverse is the inverse equivalence. -/
+theorem mapAlgEquiv_symm (e : L ≃ₐ[K] L') :
+    mapAlgEquiv e.symm = (mapAlgEquiv e).symm := by
+  apply AlgEquiv.ext
+  intro x
+  apply RingOfIntegers.ext
+  rfl
+
+end RingOfIntegers
+
+private theorem under_map_ringOfIntegersAlgEquiv (e : L ≃ₐ[K] L')
+    (Q : Ideal (𝓞 L)) :
+    (Q.map (RingOfIntegers.mapAlgEquiv e)).under (𝓞 K) = Q.under (𝓞 K) := by
+  let eO := RingOfIntegers.mapAlgEquiv e
+  rw [Ideal.under_def, Ideal.under_def]
+  change Ideal.comap (algebraMap (𝓞 K) (𝓞 L'))
+    (Q.map (eO.toRingEquiv : 𝓞 L →+* 𝓞 L')) = _
+  rw [Ideal.map_comap_of_equiv]
+  ext x
+  simp only [Ideal.mem_comap]
+  rw [← eO.commutes]
+  simp
+
 /-- Unramifiedness at a prime is invariant under the induced map on rings of integers. -/
 theorem isUnramifiedAt_map_ringOfIntegersAlgEquiv (e : L ≃ₐ[K] L')
     (Q : Ideal (𝓞 L)) [Q.IsPrime]
@@ -50,8 +85,8 @@ theorem isUnramifiedAt_map_ringOfIntegersAlgEquiv (e : L ≃ₐ[K] L')
 
 /-- An arithmetic Frobenius is transported to the conjugate automorphism at the transported
 prime.  The exponent is unchanged because the two primes have the same contraction to `𝓞 K`. -/
-theorem isArithFrobAt_map_ringOfIntegersAlgEquiv (e : L ≃ₐ[K] L') (p : Ideal (𝓞 K))
-    (Q : Ideal (𝓞 L)) [Q.IsPrime] [Q.LiesOver p]
+theorem isArithFrobAt_map_ringOfIntegersAlgEquiv (e : L ≃ₐ[K] L')
+    (Q : Ideal (𝓞 L)) [Q.IsPrime]
     (τ : L ≃ₐ[K] L)
     (hτ : IsArithFrobAt (𝓞 K) τ Q) :
     IsArithFrobAt (𝓞 K) (e.autCongr τ)
@@ -59,7 +94,6 @@ theorem isArithFrobAt_map_ringOfIntegersAlgEquiv (e : L ≃ₐ[K] L') (p : Ideal
   let eO := RingOfIntegers.mapAlgEquiv e
   let Q' : Ideal (𝓞 L') := Q.map (eO : 𝓞 L →+* 𝓞 L')
   let _ : Q'.IsPrime := Ideal.map_isPrime_of_equiv eO
-  let _ : Q'.LiesOver p := Ideal.map_equiv_liesOver Q p eO
   -- Unfold `IsArithFrobAt` to expose the action-level formulation we transport.
   change (MulSemiringAction.toAlgHom (𝓞 K) (𝓞 L')
     (e.symm.trans (τ.trans e))).IsArithFrobAt Q'
@@ -72,7 +106,8 @@ theorem isArithFrobAt_map_ringOfIntegersAlgEquiv (e : L ≃ₐ[K] L') (p : Ideal
       (MulSemiringAction.toAlgHom (𝓞 K) (𝓞 L) τ) (eO.symm x) := by
     apply RingOfIntegers.ext
     have heO_apply (z : 𝓞 L') : (eO.symm z : L) = e.symm (z : L') := by
-      rfl
+      change ((RingOfIntegers.mapAlgEquiv e).symm z : L) = e.symm (z : L')
+      exact RingOfIntegers.mapAlgEquiv_symm_apply e z
     rw [heO_apply]
     simp only [MulSemiringAction.toAlgHom_apply, algebraMap_smul_eq_apply,
       AlgEquiv.trans_apply]
@@ -80,7 +115,7 @@ theorem isArithFrobAt_map_ringOfIntegersAlgEquiv (e : L ≃ₐ[K] L') (p : Ideal
     change e.symm (e (τ (e.symm (x : L')))) = τ (e.symm (x : L'))
     simp
   have hunder : Q'.under (𝓞 K) = Q.under (𝓞 K) :=
-    (Q'.over_def p).symm.trans (Q.over_def p)
+    under_map_ringOfIntegersAlgEquiv e Q
   rw [hunder]
   -- The mapped ideal is represented by the underlying ring equivalence here.
   change _ ∈ Ideal.map eO.toRingEquiv Q
@@ -94,9 +129,10 @@ theorem isArithFrobAt_map_ringOfIntegersAlgEquiv (e : L ≃ₐ[K] L') (p : Ideal
 
 /-- The Frobenius transport theorem is an equivalence when the transported prime is written as the
 map of the original one. -/
+@[simp]
 theorem isArithFrobAt_map_ringOfIntegersAlgEquiv_iff
-    (e : L ≃ₐ[K] L') (p : Ideal (𝓞 K))
-    (Q : Ideal (𝓞 L)) [Q.IsPrime] [Q.LiesOver p]
+    (e : L ≃ₐ[K] L')
+    (Q : Ideal (𝓞 L)) [Q.IsPrime]
     (τ : L ≃ₐ[K] L) :
     IsArithFrobAt (𝓞 K) (e.autCongr τ) (Q.map (RingOfIntegers.mapAlgEquiv e)) ↔
       IsArithFrobAt (𝓞 K) τ Q := by
@@ -105,14 +141,10 @@ theorem isArithFrobAt_map_ringOfIntegersAlgEquiv_iff
     let eO := RingOfIntegers.mapAlgEquiv e
     let Q' : Ideal (𝓞 L') := Q.map (eO : 𝓞 L →+* 𝓞 L')
     let _ : Q'.IsPrime := Ideal.map_isPrime_of_equiv eO
-    let _ : Q'.LiesOver p := Ideal.map_equiv_liesOver Q p eO
-    have hτ' := isArithFrobAt_map_ringOfIntegersAlgEquiv (e := e.symm) (p := p)
+    have hτ' := isArithFrobAt_map_ringOfIntegersAlgEquiv (e := e.symm)
       (Q := Q') (τ := e.autCongr τ) hσ
     have heO : RingOfIntegers.mapAlgEquiv e.symm = eO.symm := by
-      apply AlgEquiv.ext
-      intro x
-      apply RingOfIntegers.ext
-      rfl
+      simpa [eO] using RingOfIntegers.mapAlgEquiv_symm e
     rw [heO] at hτ'
     -- Expose the double conjugation before cancelling the inverse equivalence.
     change IsArithFrobAt (𝓞 K) ((e.symm).autCongr (e.autCongr τ))
@@ -127,11 +159,12 @@ theorem isArithFrobAt_map_ringOfIntegersAlgEquiv_iff
       Ideal.map_of_equiv eO.toRingEquiv
     rw [hmap] at hτ'
     exact hτ'
-  · exact isArithFrobAt_map_ringOfIntegersAlgEquiv e p Q τ
+  · exact isArithFrobAt_map_ringOfIntegersAlgEquiv e Q τ
 
 /-- Unramifiedness is likewise invariant in both directions under the induced prime bijection. -/
-theorem isUnramifiedAt_map_ringOfIntegersAlgEquiv_iff (e : L ≃ₐ[K] L') (p : Ideal (𝓞 K))
-    (Q : Ideal (𝓞 L)) [Q.IsPrime] [Q.LiesOver p] :
+@[simp]
+theorem isUnramifiedAt_map_ringOfIntegersAlgEquiv_iff (e : L ≃ₐ[K] L')
+    (Q : Ideal (𝓞 L)) [Q.IsPrime] :
     Algebra.IsUnramifiedAt (𝓞 K) (Q.map (RingOfIntegers.mapAlgEquiv e)) ↔
       Algebra.IsUnramifiedAt (𝓞 K) Q := by
   constructor
@@ -139,13 +172,9 @@ theorem isUnramifiedAt_map_ringOfIntegersAlgEquiv_iff (e : L ≃ₐ[K] L') (p : 
     let eO := RingOfIntegers.mapAlgEquiv e
     let Q' : Ideal (𝓞 L') := Q.map (eO : 𝓞 L →+* 𝓞 L')
     let _ : Q'.IsPrime := Ideal.map_isPrime_of_equiv eO
-    let _ : Q'.LiesOver p := Ideal.map_equiv_liesOver Q p eO
     have hQ := isUnramifiedAt_map_ringOfIntegersAlgEquiv (e := e.symm) (Q := Q') hQ'
     have heO : RingOfIntegers.mapAlgEquiv e.symm = eO.symm := by
-      apply AlgEquiv.ext
-      intro x
-      apply RingOfIntegers.ext
-      rfl
+      simpa [eO] using RingOfIntegers.mapAlgEquiv_symm e
     have hmap : Q'.map (RingOfIntegers.mapAlgEquiv e.symm) = Q := by
       rw [heO]
       dsimp [Q']
