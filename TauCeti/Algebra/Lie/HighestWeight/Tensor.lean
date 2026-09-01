@@ -40,12 +40,17 @@ multiplicities undetermined, and it does not make the identity a statement about
 * at a weight whose Verma module vanishes `L(nu)` is the zero module and `c^nu_{lam mu}` is `0`
   (`LieModule.isotypicMultiplicity_eq_zero_of_subsingleton`), the correct count of copies of a zero
   module in a decomposition into irreducibles, so that weight contributes nothing to the sum;
-* conversely every weight that *does* contribute has `M(nu) ≠ 0`, so `L(nu)` there is genuinely
-  irreducible (`TauCeti.isIrreducible_irreducibleQuotient_of_tensorMultiplicity_ne_zero`), and the
-  same holds of the two characters on the left
-  (`TauCeti.isIrreducible_irreducibleQuotient_of_irreducibleFormalCharacter_ne_zero`);
-* and the identity is not vacuous: `TauCeti.irreducibleFormalCharacter_zero_ne_zero` proves
-  without any appeal to PBW that `L(0)` is a nonzero irreducible with a nonzero character.
+* conversely a nonzero `c^nu_{lam mu}` forces *all three* of `L(lam)`, `L(mu)` and `L(nu)` to be
+  nonzero, hence irreducible
+  (`TauCeti.isIrreducible_irreducibleQuotient_of_tensorMultiplicity_ne_zero` and its two companions
+  for the factors), so a multiplicity that is not visibly `0` counts copies of an honest irreducible
+  inside a tensor product of two honest irreducibles;
+* the identity never degenerates to `0 = 0`: as soon as `M(lam) ≠ 0` and `M(mu) ≠ 0` some
+  `c^nu_{lam mu}` is nonzero (`TauCeti.exists_tensorMultiplicity_ne_zero`), because
+  `L(lam) ⊗ L(mu)` is then a nonzero finite-dimensional module;
+* and that hypothesis is met unconditionally at `lam = mu = 0`
+  (`TauCeti.exists_tensorMultiplicity_zero_ne_zero`), where `M(0) ≠ 0` comes from the trivial
+  module rather than from PBW.
 
 PBW would enlarge the set of weights known to contribute, without changing any statement below.
 
@@ -57,8 +62,13 @@ PBW would enlarge the set of weights known to contribute, without changing any s
 
 * `TauCeti.irreducibleFormalCharacter_mul_eq_finsum_tensorMultiplicity_smul`: **the character
   identity** `ch L(lam) · ch L(mu) = ∑_nu c^nu_{lam mu} · ch L(nu)`.
-* `TauCeti.isIrreducible_irreducibleQuotient_of_tensorMultiplicity_ne_zero`: a weight with a
-  nonzero tensor multiplicity has an irreducible `L(nu)`.
+* `TauCeti.isIrreducible_irreducibleQuotient_of_tensorMultiplicity_ne_zero`,
+  `TauCeti.isIrreducible_irreducibleQuotient_left_of_tensorMultiplicity_ne_zero` and
+  `TauCeti.isIrreducible_irreducibleQuotient_right_of_tensorMultiplicity_ne_zero`: a nonzero tensor
+  multiplicity makes all three of `L(lam)`, `L(mu)`, `L(nu)` irreducible.
+* `TauCeti.exists_tensorMultiplicity_ne_zero`: **some tensor multiplicity is nonzero** whenever the
+  two Verma modules are, so the character identity is not a statement about zero modules.
+* `TauCeti.exists_tensorMultiplicity_zero_ne_zero`: some `c^nu_{0 0}` is nonzero, unconditionally.
 
 ## References
 
@@ -119,6 +129,26 @@ theorem isIrreducible_irreducibleQuotient_of_tensorMultiplicity_ne_zero {lam mu 
   rw [tensorMultiplicity_def]
   exact LieModule.isotypicMultiplicity_eq_zero_of_subsingleton K L _ _
 
+/-- **A nonzero tensor multiplicity makes the left factor an honest irreducible.** Were `L(lam)`
+the zero module, so would be `L(lam) ⊗ L(mu)`, in which nothing has a nonzero multiplicity. -/
+theorem isIrreducible_irreducibleQuotient_left_of_tensorMultiplicity_ne_zero
+    {lam mu nu : Dual K H} (h : tensorMultiplicity b lam mu nu ≠ 0) :
+    LieModule.IsIrreducible K L (irreducibleQuotient b lam) := by
+  refine isIrreducible_irreducibleQuotient b lam fun h0 ↦ h ?_
+  have _ := (subsingleton_irreducibleQuotient_iff b lam).mpr h0
+  rw [tensorMultiplicity_def]
+  exact LieModule.isotypicMultiplicity_eq_zero_of_subsingleton_module K L _ _
+
+/-- **A nonzero tensor multiplicity makes the right factor an honest irreducible.** Were `L(mu)`
+the zero module, so would be `L(lam) ⊗ L(mu)`, in which nothing has a nonzero multiplicity. -/
+theorem isIrreducible_irreducibleQuotient_right_of_tensorMultiplicity_ne_zero
+    {lam mu nu : Dual K H} (h : tensorMultiplicity b lam mu nu ≠ 0) :
+    LieModule.IsIrreducible K L (irreducibleQuotient b mu) := by
+  refine isIrreducible_irreducibleQuotient b mu fun h0 ↦ h ?_
+  have _ := (subsingleton_irreducibleQuotient_iff b mu).mpr h0
+  rw [tensorMultiplicity_def]
+  exact LieModule.isotypicMultiplicity_eq_zero_of_subsingleton_module K L _ _
+
 /-- **The character identity for a tensor product of irreducibles**: the product of the characters
 of `L(lam)` and `L(mu)` is the sum of the characters of the `L(nu)`, weighted by the tensor
 multiplicities.
@@ -137,5 +167,41 @@ theorem irreducibleFormalCharacter_mul_eq_finsum_tensorMultiplicity_smul
   rw [irreducibleFormalCharacter_def, irreducibleFormalCharacter_def,
     ← formalCharacter_tensor]
   exact formalCharacter_eq_finsum_isotypicMultiplicity_smul b
+
+/-- **The character identity is never a statement about zero modules.** If the two Verma modules
+`M(lam)` and `M(mu)` are nonzero then `L(lam) ⊗ L(mu)` is a nonzero finite-dimensional module, so
+at least one tensor multiplicity is nonzero, and the sum
+`ch L(lam) · ch L(mu) = ∑_nu c^nu_{lam mu} · ch L(nu)` has a term that survives. -/
+theorem exists_tensorMultiplicity_ne_zero (lam mu : {l : Dual K H // IsDominantIntegral b l})
+    (hlam : vermaGenerator b lam.1 ≠ 0) (hmu : vermaGenerator b mu.1 ≠ 0) :
+    ∃ nu : {l : Dual K H // IsDominantIntegral b l}, tensorMultiplicity b lam.1 mu.1 nu.1 ≠ 0 := by
+  have _ := finiteDimensional_irreducibleQuotient_of_isDominantIntegral lam.2
+  have _ := finiteDimensional_irreducibleQuotient_of_isDominantIntegral mu.2
+  by_contra hall
+  push Not at hall
+  have hid := irreducibleFormalCharacter_mul_eq_finsum_tensorMultiplicity_smul b lam mu
+  have hzero : ∀ nu : {l : Dual K H // IsDominantIntegral b l},
+      (tensorMultiplicity b lam.1 mu.1 nu.1 : ℤ) • irreducibleFormalCharacter b nu = 0 := by
+    intro nu
+    rw [hall nu]
+    simp
+  -- every term of the sum vanishes, so the product of the two characters does
+  rw [finsum_congr hzero, finsum_zero, irreducibleFormalCharacter_def,
+    irreducibleFormalCharacter_def, ← formalCharacter_tensor, formalCharacter_eq_zero_iff,
+    Module.finrank_tensorProduct, Nat.mul_eq_zero, Module.finrank_zero_iff,
+    Module.finrank_zero_iff, subsingleton_irreducibleQuotient_iff,
+    subsingleton_irreducibleQuotient_iff] at hid
+  exact hid.elim hlam hmu
+
+/-- **At the zero weight the hypothesis of `TauCeti.exists_tensorMultiplicity_ne_zero` holds
+outright**, with no appeal to Poincaré--Birkhoff--Witt: the trivial one-dimensional module makes
+`M(0) ≠ 0` (`TauCeti.isHighestWeightVector_vermaGenerator_zero`). So there is a weight at which the
+character identity relates honest nonzero irreducibles with a nonzero structure constant. -/
+theorem exists_tensorMultiplicity_zero_ne_zero :
+    ∃ nu : {l : Dual K H // IsDominantIntegral b l},
+      tensorMultiplicity b (0 : Dual K H) 0 nu.1 ≠ 0 :=
+  exists_tensorMultiplicity_ne_zero b ⟨0, isDominantIntegral_zero⟩ ⟨0, isDominantIntegral_zero⟩
+    (isHighestWeightVector_vermaGenerator_zero b).ne_zero
+    (isHighestWeightVector_vermaGenerator_zero b).ne_zero
 
 end TauCeti
