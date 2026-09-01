@@ -206,10 +206,13 @@ theorem mem_finitary_of_finite_setOf_apply_ne {ι β : Type*} {τ : ι → Equiv
     (hτ : {p : ι × β | τ p.1 p.2 ≠ p.2}.Finite) (a : ι) : τ a ∈ finitary β := by
   rw [mem_finitary]
   let f : β ↪ ι × β := ⟨Prod.mk a, fun _ _ h => (Prod.mk.inj h).2⟩
+  have hf : f ⁻¹' {p : ι × β | τ p.1 p.2 ≠ p.2} = {b : β | τ a b ≠ b} := by
+    ext b
+    change τ a b ≠ b ↔ τ a b ≠ b
+    rfl
   have hne : {b : β | τ a b ≠ b}.Finite := by
-    have hpre := Set.Finite.preimage_embedding f hτ
-    change {b : β | τ a b ≠ b}.Finite at hpre
-    exact hpre
+    rw [← hf]
+    exact Set.Finite.preimage_embedding f hτ
   simpa [MulAction.fixedBy, Equiv.Perm.smul_def, Set.compl_ofPred] using hne
 
 /-- Finite total support of a row-wise family implies that only finitely many rows are
@@ -227,11 +230,7 @@ theorem finite_setOf_ne_one_of_finite_setOf_apply_ne {ι β : Type*}
 
 /-- **A family of permutations can be matched on finitely many indexed points by a family with
 finite total support.** Given `π : ι → Equiv.Perm β` and finitely many pairs `(i, b)`, there is a
-family `τ` agreeing with `π` at every listed pair and moving only finitely many pairs altogether.
-
-The family `τ` is the identity outside the finitely many first coordinates occurring in `F`; in
-each remaining fibre it is obtained by extending the two finite embeddings `b ↦ b` and
-`b ↦ π i b`. -/
+family `τ` agreeing with `π` at every listed pair and moving only finitely many pairs altogether. -/
 theorem exists_prodShear_mem_finitary_apply_eq_on_finset {ι β : Type*}
     (π : ι → Equiv.Perm β) (F : Finset (ι × β)) :
     ∃ τ : ι → Equiv.Perm β,

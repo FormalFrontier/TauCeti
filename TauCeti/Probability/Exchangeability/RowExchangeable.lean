@@ -143,12 +143,7 @@ theorem rowExchangeable_def :
 omit [Countable ι] in
 /-- **It suffices to check row exchangeability for permutation families of finite total support.**
 For a finite base measure and an a.e.-measurable array, invariance under every family `π` that
-moves only finitely many cells `(a, k)` implies invariance under arbitrary row-wise permutations.
-
-Indeed, a finite-dimensional marginal reads only finitely many cells. On those cells an arbitrary
-family agrees with a family of finite total support
-(`Equiv.Perm.exists_prodShear_mem_finitary_apply_eq_on_finset`), so the restricted laws agree;
-Mathlib's finite-dimensional-law uniqueness then gives equality of the full array laws. -/
+moves only finitely many cells `(a, k)` implies invariance under arbitrary row-wise permutations. -/
 theorem rowExchangeable_iff_forall_prodShear_mem_finitary [IsFiniteMeasure μ]
     (hY : AEMeasurable (fun ω => fun p : ι × ℕ => Y p ω) μ) :
     RowExchangeable μ Y ↔
