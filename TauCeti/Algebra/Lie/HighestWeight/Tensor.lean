@@ -30,6 +30,16 @@ multiplicity-weighted sum of the irreducible characters
 multiplicities computable from characters, and the identity a Pieri or Littlewood-Richardson rule
 evaluates.
 
+Nothing here asserts that `L(nu)` is nonzero. Whether `M(nu) ≠ 0`, equivalently `L(nu) ≠ 0`
+(`TauCeti.subsingleton_irreducibleQuotient_iff`), is the Poincaré--Birkhoff--Witt input that
+`TauCeti/Algebra/Lie/HighestWeight/Verma.lean` does not have and that the roadmap stages as a
+sub-project of its own; as in `TauCeti/Algebra/Lie/HighestWeight/Decomposition.lean`, the
+statements here are arranged so as not to need it. At a weight whose Verma module vanishes `L(nu)`
+is the zero module and `c^nu_{lam mu}` is `0`
+(`LieModule.isotypicMultiplicity_eq_zero_of_subsingleton`), so that weight contributes nothing and
+the identity holds either way; PBW would sharpen what the identity says about such a weight without
+changing any statement below.
+
 ## Main definitions
 
 * `TauCeti.tensorMultiplicity`: the multiplicity `c^nu_{lam mu}` of `L(nu)` in `L(lam) ⊗ L(mu)`.
