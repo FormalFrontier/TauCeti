@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.Lie.Orthogonal.TypeD.SpinCarrier.Basic
+public import TauCeti.Algebra.Lie.Orthogonal.TypeD.SpinCarrier.PointsFunctor
 public import
   TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Frobenius
 
@@ -43,6 +43,8 @@ spin group scheme, or that any fixed-point group is finite or simple.
 
 * `TauCeti.TypeDSpinCarrier.coe_frobenius` and `TauCeti.TypeDSpinCarrier.coe_frobenius_apply`: the
   endomorphism acts by entrywise Frobenius.
+* `TauCeti.TypeDSpinCarrier.frobenius_eq_pointsMap`: it is the functorial point map induced by the
+  iterated Frobenius endomorphism of the value ring.
 * `TauCeti.TypeDSpinCarrier.frobenius_rootSubgroupPoints` and
   `TauCeti.TypeDSpinCarrier.frobenius_weightTorusPoints`: the equations on the pinned generating
   root subgroups and split spin weight torus.
@@ -152,6 +154,13 @@ theorem coe_frobenius (g : points n hn A) :
   rw [coe_kostantToralFrobenius] at h
   simpa only [coe_pointsEquivKostantToralPoints] using h
 
+/-- **The carrier Frobenius is the functorial map on points** induced by the iterated Frobenius
+endomorphism of the value ring, so it is an instance of `TauCeti.TypeDSpinCarrier.pointsMap` rather
+than a separate endomorphism. -/
+theorem frobenius_eq_pointsMap :
+    frobenius n hn p k A = pointsMap n hn (iterateFrobenius A p k) :=
+  MonoidHom.ext fun g => Subtype.ext (by rw [coe_frobenius, coe_pointsMap])
+
 /-- Entrywise, the Frobenius endomorphism raises each matrix coefficient to its `p ^ k`-th
 power. -/
 @[simp]
@@ -192,17 +201,30 @@ theorem frobenius_weightTorusPoints (s : Fin n → Aˣ) :
 /-- The zeroth Frobenius iterate is the identity on the type-`Dₙ` spin carrier's point group. -/
 @[simp]
 theorem frobenius_zero : frobenius n hn p 0 A = MonoidHom.id _ := by
-  refine MonoidHom.ext fun g =>
-    Subtype.ext (_root_.Matrix.GeneralLinearGroup.ext fun r c => ?_)
-  rw [coe_frobenius_apply, MonoidHom.id_apply, pow_zero, pow_one]
+  refine MonoidHom.ext fun g => (pointsEquivKostantToralPoints n hn A).injective ?_
+  rw [pointsEquivKostantToralPoints_frobenius]
+  have h := DFunLike.congr_fun
+    (kostantToralFrobenius_zero
+      (TauCeti.serreRootGenerator (CartanMatrix.D n))
+      (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
+      (rep_kostantForm_mem_lattice n hn)
+      (isNilpotent_rep_rootGenerator n hn) (latticeBasis n) (basisWeight n) p A)
+    (pointsEquivKostantToralPoints n hn A g)
+  simpa only [MonoidHom.id_apply] using h
 
 /-- Frobenius iterates add under composition on the type-`Dₙ` spin carrier's point group. -/
 theorem frobenius_add (m : ℕ) :
     frobenius n hn p (k + m) A = (frobenius n hn p k A).comp (frobenius n hn p m A) := by
-  refine MonoidHom.ext fun g =>
-    Subtype.ext (_root_.Matrix.GeneralLinearGroup.ext fun r c => ?_)
-  rw [coe_frobenius_apply, MonoidHom.comp_apply, coe_frobenius_apply, coe_frobenius_apply,
-    ← pow_mul, ← pow_add, Nat.add_comm k m]
+  refine MonoidHom.ext fun g => (pointsEquivKostantToralPoints n hn A).injective ?_
+  rw [pointsEquivKostantToralPoints_frobenius, MonoidHom.comp_apply,
+    pointsEquivKostantToralPoints_frobenius, pointsEquivKostantToralPoints_frobenius]
+  exact DFunLike.congr_fun
+    (kostantToralFrobenius_add
+      (TauCeti.serreRootGenerator (CartanMatrix.D n))
+      (TauCeti.serreH ℚ (CartanMatrix.D n)) (rep n hn) (lattice n).toAddSubgroup
+      (rep_kostantForm_mem_lattice n hn)
+      (isNilpotent_rep_rootGenerator n hn) (latticeBasis n) (basisWeight n) p k A m)
+    (pointsEquivKostantToralPoints n hn A g)
 
 /-- A type-`Dₙ` spin carrier point is fixed by Frobenius exactly when all of its matrix entries lie
 in the Frobenius-fixed subring. -/
