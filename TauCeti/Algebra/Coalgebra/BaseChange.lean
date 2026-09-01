@@ -31,6 +31,7 @@ variable [CommSemiring R] [CommSemiring A] [Algebra R A]
 variable [AddCommMonoid H] [Module R H] [CoalgebraStruct R H]
 
 /-- The comultiplication of a base-changed coalgebra on a pure tensor. -/
+@[simp]
 theorem baseChange_comul_tmul (a : A) (h : H) :
     Coalgebra.comul (R := A) (A := A ⊗[R] H) (a ⊗ₜ[R] h) =
       TensorProduct.AlgebraTensorModule.distribBaseChange R A H H
