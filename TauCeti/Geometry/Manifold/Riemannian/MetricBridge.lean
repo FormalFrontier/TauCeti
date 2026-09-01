@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Geometry.Manifold.Riemannian.Distance
+public import TauCeti.Geometry.Manifold.MFDeriv.Curve
 
 /-!
 # Coordinate displacement is bounded by Riemannian path length
@@ -47,15 +48,8 @@ namespace Manifold
 variable {M : Type*} [TopologicalSpace M] [ChartedSpace H M]
   [RiemannianBundle (fun x : M ↦ TangentSpace I x)] [IsManifold I 1 M]
 
-/-- The additive normed-group structure on the tangent space of a model vector space. -/
-local instance normedAddCommGroupTangentSpaceVectorSpace (x : E) :
-    NormedAddCommGroup (TangentSpace 𝓘(ℝ, E) x) :=
-  inferInstanceAs (NormedAddCommGroup E)
-
-/-- The scalar normed-space structure on the tangent space of a model vector space. -/
-local instance normedSpaceTangentSpaceVectorSpace (x : E) :
-    NormedSpace ℝ (TangentSpace 𝓘(ℝ, E) x) :=
-  inferInstanceAs (NormedSpace ℝ E)
+attribute [local instance] normedAddCommGroupTangentSpaceVectorSpace
+  normedSpaceTangentSpaceVectorSpace
 
 /-- A bound on the chart derivative controls the coordinate displacement of a smooth path. -/
 theorem enorm_extChartAt_sub_le_mul_pathELength (x : M) {γ : ℝ → M} {a b : ℝ}
@@ -76,22 +70,14 @@ theorem enorm_extChartAt_sub_le_mul_pathELength (x : M) {γ : ℝ → M} {a b : 
           ∫⁻ t in Icc a b, ‖derivWithin γ' (Icc a b) t‖ₑ := by
         apply enorm_sub_le_lintegral_derivWithin_Icc_of_contDiffOn_Icc _ hab.le
         rwa [← contMDiffOn_iff_contDiffOn]
-      _ = ∫⁻ t in Icc a b, ‖mfderiv[Icc a b] γ' t 1‖ₑ := by
-        simp_rw [← fderivWithin_derivWithin, mfderivWithin_eq_fderivWithin]
-        rfl
       _ ≤ ∫⁻ t in Icc a b, C * ‖mfderiv[Icc a b] γ t 1‖ₑ := by
         apply setLIntegral_mono' measurableSet_Icc (fun t ht ↦ ?_)
-        have hderiv : mfderiv[Icc a b] γ' t =
-            (mfderiv% (extChartAt I x) (γ t)) ∘L (mfderiv[Icc a b] γ t) := by
-          apply mfderiv_comp_mfderivWithin
-          · exact mdifferentiableAt_extChartAt (hγsrc t ht)
-          · exact (hγ t ht).mdifferentiableWithinAt one_ne_zero
-          · rw [uniqueMDiffWithinAt_iff_uniqueDiffWithinAt]
-            exact uniqueDiffOn_Icc hab _ ht
-        have hderiv_apply : mfderiv[Icc a b] γ' t 1 =
-            (mfderiv% (extChartAt I x) (γ t)) (mfderiv[Icc a b] γ t 1) :=
-          congr($hderiv 1)
-        rw [hderiv_apply]
+        have hderiv := (TauCeti.Manifold.hasDerivWithinAt_comp_curve
+          (mdifferentiableAt_extChartAt (hγsrc t ht))
+          (hasMFDerivWithinAt_curveVelocityWithin
+            ((hγ t ht).mdifferentiableWithinAt one_ne_zero))).derivWithin
+              (uniqueDiffOn_Icc hab t ht)
+        rw [hderiv, curveVelocityWithin_apply]
         exact hC t ht (mfderiv[Icc a b] γ t 1)
       _ = C * pathELength I γ a b := by
         rw [lintegral_const_mul' _ _ ENNReal.coe_ne_top,
