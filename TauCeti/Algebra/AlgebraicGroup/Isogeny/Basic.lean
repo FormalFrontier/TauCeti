@@ -153,16 +153,17 @@ theorem isIso_iff_surjective (hf : IsIsogeny f) :
   · intro
     exact (ConcreteCategory.bijective_of_isIso f).2
   · intro hsurjective
-    let hbijective : Function.Bijective f.hom := ⟨hf.injective, hsurjective⟩
-    let e := BialgEquiv.ofBijective f.hom hbijective
-    have he : (CommHopfAlgCat.isoMk e).hom = f := by
-      rw [CommHopfAlgCat.isoMk_hom]
-      apply CommHopfAlgCat.hom_ext
-      apply BialgHom.ext
-      intro x
-      exact congrFun (BialgEquiv.coe_ofBijective f.hom hbijective) x
-    rw [← he]
-    infer_instance
+    let e := BialgEquiv.ofBijective f.hom ⟨hf.injective, hsurjective⟩
+    let i : H ≅ K :=
+      { hom := f
+        inv := CommHopfAlgCat.ofHom e.symm
+        hom_inv_id := by
+          ext x
+          exact e.symm_apply_apply x
+        inv_hom_id := by
+          ext x
+          exact e.apply_symm_apply x }
+    exact i.isIso_hom
 
 /-- A finite coordinate morphism is in particular of finite type. -/
 theorem finiteType (hf : IsIsogeny f) : f.hom.toAlgHom.FiniteType :=
