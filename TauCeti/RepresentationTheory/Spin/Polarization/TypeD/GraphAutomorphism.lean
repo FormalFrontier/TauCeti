@@ -162,7 +162,6 @@ theorem quadraticForm_typeDGraphVector (hn : 2 ≤ n) : Q (P.typeDGraphVector b 
   ring
 
 /-- The Clifford generator of the graph vector squares to `-1`. -/
-@[simp]
 theorem ι_typeDGraphVector_mul_self (hn : 2 ≤ n) :
     ι Q (P.typeDGraphVector b hn) * ι Q (P.typeDGraphVector b hn) = -1 := by
   rw [ι_sq_scalar, quadraticForm_typeDGraphVector, map_neg, map_one]
@@ -529,7 +528,6 @@ theorem typeDGraphOperator_mem_integralLattice (hn : 2 ≤ n) {x : ExteriorAlgeb
 /-- **The graph operator preserves the spinor lattice in both directions**, since its square is
 `-1` and the lattice is a subgroup. This is the lattice-invariance datum that the numbered-symmetry
 construction of a Chevalley--Demazure carrier consumes. -/
-@[simp]
 theorem typeDGraphOperator_mem_integralLattice_iff (hn : 2 ≤ n) {x : ExteriorAlgebra ℚ P.W} :
     P.typeDGraphOperator b hn x ∈ TauCeti.ExteriorAlgebra.integralLattice b ↔
       x ∈ TauCeti.ExteriorAlgebra.integralLattice b := by
