@@ -11,7 +11,7 @@ import Mathlib.Analysis.InnerProductSpace.Calculus
 import Mathlib.MeasureTheory.Integral.CircleIntegral
 import TauCeti.Analysis.Complex.Conformal.Crosscut.Basic
 public import TauCeti.Analysis.Complex.Conformal.Crosscut.Image
-import TauCeti.Analysis.Complex.Conformal.InverseFunction
+import TauCeti.Analysis.Complex.Conformal.Inverse.Function
 import TauCeti.Analysis.Contour.Winding.Separation
 import TauCeti.Topology.MetricSpace.Cut
 
