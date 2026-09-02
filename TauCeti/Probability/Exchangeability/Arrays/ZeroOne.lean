@@ -25,6 +25,10 @@ increase to the σ-algebra of all entries with both indices at least `n`, that i
 `arrayTailFamily X n`, which contains `arrayTail X`. So the array tail is independent of everything
 readable above the cutoff, in particular of itself, and is therefore trivial.
 
+The same argument run along the diagonal — corners `{(i, i) : n ≤ i ≤ n + k}` against the square
+block over `[n + k + 1, ∞)` — makes the tail of the diagonal process `arrayDiag X` trivial as well,
+and it asks only the diagonal entries beyond the cutoff to be measurable.
+
 Two disjointness conditions per pair of blocks is what dissociation asks for, and `arrayTail` is
 built to supply them: it is the **corner** tail, cutting *both* index axes at `n`. The row tail
 `⨅ n, blockSigma X ([n, ∞) × ℕ)` is genuinely not trivial for a dissociated array — an array whose
@@ -43,8 +47,10 @@ form.
   particular `TauCeti.Probability.JointlyDissociated.indep_arrayTail_self` of itself;
 * `TauCeti.Probability.JointlyDissociated.measure_eq_zero_or_one_of_arrayTail` — **the zero-one
   law**: the tail σ-algebra of a jointly dissociated array is trivial;
-* `TauCeti.Probability.JointlyDissociated.measure_eq_zero_or_one_of_tailProcess_arrayDiag` — the
-  corollary for the diagonal process, whose tail is an array tail event.
+* `TauCeti.Probability.JointlyDissociated.indep_tailProcess_arrayDiag_self` and
+  `TauCeti.Probability.JointlyDissociated.measure_eq_zero_or_one_of_tailProcess_arrayDiag` — the
+  same argument along the diagonal, giving a trivial tail for the diagonal process under
+  measurability of the diagonal entries alone.
 
 ## References
 
@@ -117,13 +123,47 @@ theorem JointlyDissociated.measure_eq_zero_or_one_of_arrayTail [IsZeroOrProbabil
     (hs : MeasurableSet[arrayTail X] s) : μ s = 0 ∨ μ s = 1 :=
   measure_eq_zero_or_one_of_indep_self (h.indep_arrayTail_self n hX) hs
 
-/-- **The diagonal of a jointly dissociated array has a trivial tail.** The tail of the diagonal
-process is an array tail event, so this is the zero-one law read along the diagonal. -/
+/-- **The tail σ-algebra of the diagonal of a jointly dissociated array is independent of
+itself.** This is the corner argument of `JointlyDissociated.indep_arrayTail_self` run along the
+diagonal: the diagonal corners `{(i, i) : n ≤ i ≤ n + k}` are read by the square block over
+`[n, n + k]`, the diagonal tail by the square block over `[n + k + 1, ∞)`
+(`tailProcess_arrayDiag_le_arrayTail`), and the corners exhaust the diagonal tail. Only the
+*diagonal* entries beyond the cutoff need to be measurable. -/
+theorem JointlyDissociated.indep_tailProcess_arrayDiag_self [IsZeroOrProbabilityMeasure μ]
+    (h : JointlyDissociated μ X) (n : ℕ) (hX : ∀ i, n ≤ i → Measurable (X (i, i))) :
+    Indep (tailProcess (arrayDiag X)) (tailProcess (arrayDiag X)) μ := by
+  let corner : ℕ → MeasurableSpace Ω := fun k => blockSigma (arrayDiag X) (Set.Icc n (n + k))
+  have hle : ∀ k, corner k ≤ (inferInstance : MeasurableSpace Ω) := fun _ =>
+    blockSigma_le _ fun i hi => by
+      simpa only [arrayDiag_apply] using hX i hi.1
+  have hmono : Monotone corner := fun a b hab =>
+    blockSigma_mono (Set.Icc_subset_Icc le_rfl (Nat.add_le_add_left hab n))
+  have hexhaust : tailProcess (arrayDiag X) ≤ ⨆ k, corner k := by
+    refine (tailProcess_le_tailFamily _ n).trans (tailFamily_le_iff.mpr fun i hi => ?_)
+    exact (measurable_blockSigma_of_mem (Z := arrayDiag X) (S := Set.Icc n (n + (i - n)))
+      ⟨hi, by omega⟩).mono (le_iSup corner (i - n)) le_rfl
+  have hindep : ∀ k, Indep (corner k) (tailProcess (arrayDiag X)) μ := by
+    intro k
+    have htail : tailProcess (arrayDiag X) ≤
+        blockSigma X (Set.Ici (n + k + 1) ×ˢ Set.Ici (n + k + 1)) := by
+      rw [← arrayTailFamily_eq_blockSigma]
+      exact (tailProcess_arrayDiag_le_arrayTail X).trans
+        (arrayTail_le_arrayTailFamily X (n + k + 1))
+    exact indep_of_indep_of_le (h.indep_blockSigma_prod_self
+        (Set.disjoint_of_subset_left Set.Icc_subset_Iic_self
+          ((Set.Iic_disjoint_Ici).2 (Nat.not_succ_le_self (n + k)))))
+      (blockSigma_arrayDiag_le_blockSigma_prod_self X _) htail
+  exact indep_of_indep_of_le_left
+    (indep_iSup_of_monotone hindep hle (hexhaust.trans (iSup_le hle)) hmono) hexhaust
+
+/-- **The diagonal of a jointly dissociated array has a trivial tail.** Every event in the tail
+σ-algebra of the diagonal process has probability `0` or `1`. Unlike the zero-one law for the
+array tail, this needs only the *diagonal* entries beyond the cutoff to be measurable. -/
 theorem JointlyDissociated.measure_eq_zero_or_one_of_tailProcess_arrayDiag
     [IsZeroOrProbabilityMeasure μ] (h : JointlyDissociated μ X) (n : ℕ)
-    (hX : ∀ p, n ≤ p.1 → n ≤ p.2 → Measurable (X p)) {s : Set Ω}
+    (hX : ∀ i, n ≤ i → Measurable (X (i, i))) {s : Set Ω}
     (hs : MeasurableSet[tailProcess (arrayDiag X)] s) : μ s = 0 ∨ μ s = 1 :=
-  h.measure_eq_zero_or_one_of_arrayTail n hX (tailProcess_arrayDiag_le_arrayTail X s hs)
+  measure_eq_zero_or_one_of_indep_self (h.indep_tailProcess_arrayDiag_self n hX) hs
 
 end Probability
 

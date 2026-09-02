@@ -41,6 +41,8 @@ These definitions support the exchangeable-arrays milestone of
   family;
 * `TauCeti.Probability.arrayTail_le_ambient` — the array tail is a sub-σ-algebra of the ambient one
   as soon as the entries beyond some cutoff are measurable;
+* `TauCeti.Probability.blockSigma_arrayDiag_le_blockSigma_prod_self` — a block of diagonal entries
+  is read by the square block over the same index set;
 * `TauCeti.Probability.tailProcess_arrayDiag_le_arrayTail` — the tail of the diagonal process is an
   array tail event.
 -/
@@ -158,6 +160,15 @@ theorem arrayTail_le_ambient (n : ℕ)
     (hX : ∀ p, n ≤ p.1 → n ≤ p.2 → Measurable (X p)) :
     arrayTail X ≤ (inferInstance : MeasurableSpace Ω) :=
   (arrayTail_le_arrayTailFamily X n).trans (arrayTailFamily_le_ambient n hX)
+
+omit [MeasurableSpace Ω] in
+/-- **The diagonal entries indexed by `S` are read by the square block over `S`.** The entry
+`arrayDiag X i` is `X (i, i)`, and `(i, i)` lies in `S ×ˢ S` for every `i ∈ S`. -/
+theorem blockSigma_arrayDiag_le_blockSigma_prod_self (X : ℕ × ℕ → Ω → α) (S : Set ℕ) :
+    blockSigma (arrayDiag X) S ≤ blockSigma X (S ×ˢ S) :=
+  blockSigma_le_iff.mpr fun i hi => by
+    simpa only [arrayDiag_apply] using
+      measurable_blockSigma_of_mem (Z := X) (S := S ×ˢ S) (i := (i, i)) ⟨hi, hi⟩
 
 omit [MeasurableSpace Ω] in
 /-- **The tail of the diagonal is an array tail event.** The diagonal entries from time `n` on have
