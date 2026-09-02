@@ -96,9 +96,7 @@ theorem baseChange (H : FiniteTypeCommHopfAlgCat.{u, u} k)
         (Comodule.coefficientMatrix (C := H) b).map f := by
       ext i j
       rw [Matrix.map_apply, Matrix.map_apply]
-      change 1 ⊗ₜ[k] Comodule.coefficientMatrix (C := H) b i j =
-        (Algebra.TensorProduct.includeRight : H →ₐ[k] K ⊗[k] H)
-          (Comodule.coefficientMatrix (C := H) b i j)
+      rw [TensorProduct.mk_apply]
       exact (Algebra.TensorProduct.includeRight_apply _).symm
     rw [hmatrix, Matrix.charpoly_map, hC]
     simp only [Polynomial.map_pow, Polynomial.map_sub, Polynomial.map_X,
