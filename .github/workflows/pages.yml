@@ -366,6 +366,13 @@ jobs:
           key: web-lake-${{ runner.os }}-${{ hashFiles('web/lake-manifest.json', 'web/lean-toolchain', 'web/examples/lake-manifest.json', 'web/examples/lean-toolchain') }}
           restore-keys: web-lake-${{ runner.os }}-
 
+      # Re-checked: this job runs many steps between the first fetch and this one, any of
+      # which could append to $GITHUB_ENV, so the earlier check does not still speak for the
+      # environment here.
+      - name: Re-check the Mathlib cache endpoint against the reviewed allowlist
+        working-directory: ${{ github.workspace }}
+        run: bash scripts/check-cache-endpoint.sh
+
       - name: Fetch Mathlib oleans (examples project)
         working-directory: web/examples
         run: lake exe cache get

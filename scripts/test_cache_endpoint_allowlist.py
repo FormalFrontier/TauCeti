@@ -109,6 +109,26 @@ def main() -> None:
         "empty higher-precedence variables are not treated as set",
     )
 
+    print("normalisation trims exactly what Char.isWhitespace does, no wider")
+    for name, ch in (("space", " "), ("tab", "\t"), ("CR", "\r"), ("LF", "\n")):
+        check(
+            run(f"{ch}https://cache.mathlib.org{ch}") == 0,
+            f"a surrounding {name} is trimmed, as trimAscii trims it",
+        )
+    for name, ch in (("vertical tab", "\v"), ("form feed", "\f"),
+                     ("an em space", "\u2003")):
+        check(
+            run(f"{ch}https://cache.mathlib.org{ch}") != 0,
+            f"{name} is NOT trimmed, since trimAscii keeps it and the tool would "
+            f"resolve a different URL",
+        )
+
+    print("the allowlist file is parsed the way the tool would read a value")
+    check(
+        run("https://cache.math lib.org") != 0,
+        "an entry with internal whitespace cannot be matched",
+    )
+
     print("every cache-fetching job checks before it fetches")
     for name, job in CACHE_JOBS.items():
         text = (WORKFLOWS / name).read_text()
@@ -118,17 +138,32 @@ def main() -> None:
             i for i, l in enumerate(lines)
             if "lake exe cache get" in l and not l.strip().startswith("#")
         ]
-        check(len(checks) == 1, f"{name}: has exactly one check step")
-        if len(checks) != 1 or not uses:
+        check(bool(checks), f"{name}: has a check step")
+        if not checks or not uses:
             continue
-        check(
-            all(checks[0] < u for u in uses),
-            f"{name}: the check precedes every `lake exe cache get`",
-        )
+        # Every fetch needs a check between it and the previous fetch, not merely one check
+        # somewhere earlier in the job: steps in between can append to $GITHUB_ENV, so a
+        # single early check stops speaking for the environment once anything runs after it.
+        # Group by enclosing step: a `run:` block that calls `cache get` and then `cache get!`
+        # is one fetch for this purpose, since nothing can run between them.
+        starts = [i for i, l in enumerate(lines) if re.match(r"^      - name: ", l)]
+
+        def step_of(i: int) -> int:
+            return max([j for j in starts if j <= i], default=-1)
+
+        fetch_steps = sorted({step_of(u) for u in uses})
+        check_steps = sorted({step_of(c) for c in checks})
+        prev = -1
+        for f in fetch_steps:
+            check(
+                any(prev < c < f for c in check_steps),
+                f"{name}: a check guards the fetch step at line {f + 1}",
+            )
+            prev = f
         check(
             all(job_at(lines, u) == job for u in uses)
-            and job_at(lines, checks[0]) == job,
-            f"{name}: the check shares the {job} job with every fetch",
+            and all(job_at(lines, c) == job for c in checks),
+            f"{name}: the checks share the {job} job with every fetch",
         )
         check(
             f"MATHLIB_CACHE_BASE_URL: ${{{{ vars.MATHLIB_CACHE_BASE_URL }}}}" in text,
