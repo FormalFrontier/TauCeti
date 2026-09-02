@@ -95,8 +95,8 @@ theorem comapOfIso (hI : IsMaximalTorus k K.obj I) (e : H ≅ K) :
     (torusCommHopfAlgProperty k).prop_of_iso
       (FiniteTypeCommHopfAlgCat.quotientIsoOfIso e.symm J).symm hJ
   have hJ'comap : J'.comapOfSurjective f hf = J := by
-    exact HopfIdeal.comapOfSurjective_iso_inv_hom J
-      ((forget₂ (FiniteTypeCommHopfAlgCat.{u, u} k)
+    exact HopfIdeal.comapOfSurjective_bialgEquiv_symm_apply J
+      (_root_.CommHopfAlgCat.ofIso <| (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} k)
         (_root_.CommHopfAlgCat.{u} k)).mapIso e)
   have hJ'I : J' ≤ I := by
     rw [← HopfIdeal.comapOfSurjective_le_comapOfSurjective_iff f hf]
@@ -120,11 +120,17 @@ theorem comapOfIso_iff (e : H ≅ K) (I : HopfIdeal k K.obj) :
     have hback := hI.comapOfIso e.symm
     let e' := (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} k)
       (_root_.CommHopfAlgCat.{u} k)).mapIso e
+    let e'' := _root_.CommHopfAlgCat.ofIso e'
+    -- `toBialgHom` for a finite-type morphism is definitionally the bialgebra morphism of
+    -- its image under this forgetful functor. No propositional compatibility lemma exists
+    -- for this reducible full-subcategory wrapper.
     change IsMaximalTorus k K.obj
       (HopfIdeal.comapOfSurjective
-        (I.comapOfSurjective e'.hom.hom (ConcreteCategory.bijective_of_isIso e'.hom).2)
-        e'.inv.hom (ConcreteCategory.bijective_of_isIso e'.inv).2) at hback
-    rw [HopfIdeal.comapOfSurjective_iso_hom_inv I e'] at hback
+        (I.comapOfSurjective e''.toBialgHom
+          (HopfIdeal.bialgEquiv_toBialgHom_surjective e''))
+        e''.symm.toBialgHom
+          (HopfIdeal.bialgEquiv_toBialgHom_surjective e''.symm)) at hback
+    rw [HopfIdeal.comapOfSurjective_bialgEquiv_apply_symm I e''] at hback
     exact hback
   · exact fun hI ↦ hI.comapOfIso e
 

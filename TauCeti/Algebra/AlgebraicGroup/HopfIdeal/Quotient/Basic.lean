@@ -308,27 +308,7 @@ namespace HopfIdeal
 open CategoryTheory
 
 variable {R : Type u} [CommRing R]
-variable {H K : _root_.CommHopfAlgCat.{v} R}
-
-/-- Pulling a Hopf ideal back along an isomorphism and then along its inverse recovers the
-original ideal. -/
-theorem comapOfSurjective_iso_inv_hom (I : HopfIdeal R H) (e : H ≅ K) :
-    comapOfSurjective
-        (I.comapOfSurjective e.inv.hom (ConcreteCategory.bijective_of_isIso e.inv).2)
-        e.hom.hom (ConcreteCategory.bijective_of_isIso e.hom).2 = I := by
-  ext h
-  simp only [mem_comapOfSurjective]
-  rw [_root_.CommHopfAlgCat.inv_hom_apply]
-
-/-- Pulling a Hopf ideal back along an isomorphism and then back along the inverse is the
-original ideal. -/
-theorem comapOfSurjective_iso_hom_inv (I : HopfIdeal R K) (e : H ≅ K) :
-    comapOfSurjective
-        (I.comapOfSurjective e.hom.hom (ConcreteCategory.bijective_of_isIso e.hom).2)
-        e.inv.hom (ConcreteCategory.bijective_of_isIso e.inv).2 = I := by
-  ext k
-  simp only [mem_comapOfSurjective]
-  rw [_root_.CommHopfAlgCat.hom_inv_apply]
+variable {H : _root_.CommHopfAlgCat.{v} R}
 
 /-- A Hopf ideal is invariant under an ambient automorphism if both the automorphism and its
 inverse pull it into itself. -/

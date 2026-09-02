@@ -9,7 +9,7 @@ public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.DiagonalTorus.ClosedI
 public import TauCeti.Algebra.AlgebraicGroup.Hopf.KernelPoints
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Points.Separation
 public import TauCeti.Algebra.AlgebraicGroup.Torus.Maximal
-public import TauCeti.Algebra.AlgebraicGroup.Torus.SmoothConnected
+import TauCeti.Algebra.AlgebraicGroup.Torus.SmoothConnected
 import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.BaseChange
 
 /-!
@@ -128,6 +128,9 @@ private theorem mkQuotient_comp_diagonalTorusCoordinateIso_hom_commHopfAlgCat :
       (_root_.CommHopfAlgCat.{u} k)).map f)
     (mkQuotient_comp_diagonalTorusCoordinateIso_hom k n)
   rw [Functor.map_comp] at h
+  -- A morphism in an `ObjectProperty.FullSubcategory` is definitionally its underlying
+  -- morphism, so applying the forgetful functor changes only the wrapper. There is no
+  -- propositional rewrite lemma for this reducible coercion.
   change CommHopfAlgCat.mkQuotient (coordinateHopfAlgebra k n)
       (diagonalTorusDefiningIdeal k n) ≫
         ((forget₂ (FiniteTypeCommHopfAlgCat.{u, u} k)
@@ -160,6 +163,8 @@ private theorem map_baseChangeHopfIdeal_diagonalTorusDefiningIdeal
     rw [← (CommHopfAlgCat.baseChangeFunctor (K := K)).map_comp]
     exact congrArg (CommHopfAlgCat.baseChangeMap (K := K)) hq
   have hdiag := diagonalTorusCoordinateMap_baseChange (N := n) k K
+  -- The local names `e` and `t` abbreviate exactly the isomorphisms in the preceding theorem;
+  -- exposing them is a definitional conversion, with no propositional equality to rewrite.
   change e.inv ≫
       CommHopfAlgCat.baseChangeMap (K := K)
         (diagonalTorusCoordinateMap (R := k) (N := n)) ≫ t.hom =
