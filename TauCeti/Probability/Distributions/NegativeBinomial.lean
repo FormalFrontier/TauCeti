@@ -124,7 +124,8 @@ private theorem gamma_ratio_eq_multichoose (hr : 0 < r) (k : ℕ) :
     _ = ((k.factorial : ℝ) * Ring.multichoose r k) / k.factorial := by rw [← h]
     _ = Ring.multichoose r k := by field_simp
 
-private theorem negativeBinomialWeightReal_eq_coeff (hr : 0 < r) (k : ℕ) :
+/-- The real negative-binomial mass in its multichoose coefficient form. -/
+theorem negativeBinomialWeightReal_eq_coeff (hr : 0 < r) (k : ℕ) :
     negativeBinomialWeightReal r p k =
       (Ring.multichoose r k : ℝ) * Real.rpow p r * (1 - p) ^ k := by
   rw [negativeBinomialWeightReal, ite_eq_right hr.ne', gamma_ratio_eq_multichoose hr k]
