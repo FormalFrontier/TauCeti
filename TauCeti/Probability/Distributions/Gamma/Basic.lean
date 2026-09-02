@@ -19,10 +19,10 @@ import TauCeti.Probability.Distributions.PDFInstances
 
 This file develops the elementary moment theory of Mathlib's gamma distribution. For a positive
 shape `a` and a positive rate `r` it computes every natural raw moment, the mean and the variance,
-the exact set of rates at which an exponential moment exists, and the moment- and
-cumulant-generating functions on that set. It also identifies the law of a positive rescaling: only
-the rate moves, and it moves by the scaling factor. Finally, it proves that the convolution of two
-gamma laws with the same rate adds their shape parameters.
+every natural inverse moment that exists, the exact set of rates at which an exponential moment
+exists, and the moment- and cumulant-generating functions on that set. It also identifies the law
+of a positive rescaling: only the rate moves, and it moves by the scaling factor. Finally, it
+proves that the convolution of two gamma laws with the same rate adds their shape parameters.
 
 The moment and transform computations go through the same two reductions. The measure
 `gammaMeasure a r` is
@@ -33,12 +33,17 @@ integral through `Real.integral_rpow_mul_exp_neg_mul_Ioi`, whose shape
 `x ^ (s - 1) * exp (-(b * x))` they match after collecting exponents: a factor `x ^ n` shifts the
 shape from `a` to `a + n`, and a factor `exp (t * x)` shifts the rate from `r` to `r - t`. The
 second shift explains the exponential moment domain: it is exactly the half-line on which the
-shifted rate is still positive.
+shifted rate is still positive. A factor `(x ^ n)⁻¹` shifts the shape the other way, from `a` to
+`a - n`, and Euler's integral converges exactly when that shifted shape is still positive, which is
+the inverse-moment threshold `n < a`.
 
 ## Main results
 
 * `TauCeti.integral_pow_gammaMeasure` — the natural raw moments, `Γ (a + n) / (Γ a * r ^ n)`, with
   `TauCeti.integral_id_gammaMeasure` and `TauCeti.integral_sq_gammaMeasure` as the first two cases;
+* `TauCeti.integrable_inv_pow_gammaMeasure_iff` — the `n`th inverse power is integrable exactly
+  below the shape, `n < a`, and `TauCeti.integral_inv_pow_gammaMeasure` — that inverse moment is
+  `r ^ n * Γ (a - n) / Γ a`;
 * `TauCeti.variance_id_gammaMeasure` — the variance is `a / r ^ 2`;
 * `TauCeti.integrable_exp_mul_id_gammaMeasure` and
   `TauCeti.not_integrable_exp_mul_id_gammaMeasure` —
@@ -164,8 +169,9 @@ private lemma gammaWeight_mul_inv_pow (n : ℕ) {x : ℝ} (hx : 0 < x) :
     _ = r ^ a / Real.Gamma a * (x ^ (a - n - 1) * exp (-(r * x))) := by rw [hpow]
 
 /-- Below the shape threshold, inverse powers are integrable under a Gamma law. -/
-private theorem integrable_inv_pow_gammaMeasure (ha : 0 < a) (hr : 0 < r) (n : ℕ)
+private theorem integrable_inv_pow_gammaMeasure (hr : 0 < r) (n : ℕ)
     (hn : (n : ℝ) < a) : Integrable (fun x : ℝ ↦ (x ^ n)⁻¹) (gammaMeasure a r) := by
+  have ha : 0 < a := lt_of_le_of_lt (Nat.cast_nonneg n) hn
   rw [integrable_gammaMeasure_iff ha hr]
   refine IntegrableOn.congr_fun ?_ (fun x hx ↦ (gammaWeight_mul_inv_pow n hx).symm)
     measurableSet_Ioi
@@ -218,13 +224,14 @@ shape. -/
 theorem integrable_inv_pow_gammaMeasure_iff (ha : 0 < a) (hr : 0 < r) (n : ℕ) :
     Integrable (fun x : ℝ ↦ (x ^ n)⁻¹) (gammaMeasure a r) ↔ (n : ℝ) < a :=
   ⟨fun h ↦ lt_of_not_ge fun hn ↦ not_integrable_inv_pow_gammaMeasure ha hr n hn h,
-    integrable_inv_pow_gammaMeasure ha hr n⟩
+    integrable_inv_pow_gammaMeasure hr n⟩
 
 /-- The `n`th inverse moment of a Gamma law, when `n` is below the shape. -/
 @[simp]
-theorem integral_inv_pow_gammaMeasure (ha : 0 < a) (hr : 0 < r) (n : ℕ)
+theorem integral_inv_pow_gammaMeasure (hr : 0 < r) (n : ℕ)
     (hn : (n : ℝ) < a) :
     ∫ x, (x ^ n)⁻¹ ∂gammaMeasure a r = r ^ n * Real.Gamma (a - n) / Real.Gamma a := by
+  have ha : 0 < a := lt_of_le_of_lt (Nat.cast_nonneg n) hn
   rw [integral_gammaMeasure_eq ha hr,
     setIntegral_congr_fun measurableSet_Ioi (fun x hx ↦ gammaWeight_mul_inv_pow n hx)]
   have han : 0 < a - (n : ℝ) := sub_pos.mpr hn

@@ -246,7 +246,7 @@ private lemma ofReal_abs_inv_deriv_mul_inverseGammaPDF
     _ = ENNReal.ofReal (gammaPDFReal a r x) := by
       simp only [inv_pow, inv_inv, ← mul_assoc,
         inv_mul_cancel₀ (pow_ne_zero 2 hx.ne'), one_mul]
-    _ = gammaPDF a r x := rfl
+    _ = gammaPDF a r x := by rw [gammaPDF]
 
 /-- **The density of an inverse-gamma law**, including the zero density at invalid parameters. -/
 theorem inverseGammaMeasure_eq_withDensity (a r : ℝ) :
@@ -336,22 +336,28 @@ theorem integrable_pow_inverseGammaMeasure_iff (ha : 0 < a) (hr : 0 < r) (n : �
 /-- **Natural moments of a valid inverse-gamma law.**  The `n`th moment exists for `n < a` and
 equals `r ^ n * Gamma (a - n) / Gamma a`. -/
 @[simp]
-theorem integral_pow_inverseGammaMeasure (ha : 0 < a) (hr : 0 < r) (n : ℕ)
+theorem integral_pow_inverseGammaMeasure (hr : 0 < r) (n : ℕ)
     (hn : (n : ℝ) < a) :
     ∫ x, x ^ n ∂inverseGammaMeasure a r =
       r ^ n * Real.Gamma (a - n) / Real.Gamma a := by
+  have ha : 0 < a := lt_of_le_of_lt (Nat.cast_nonneg n) hn
   rw [inverseGammaMeasure_of_pos ha hr,
     integral_map measurable_inv.aemeasurable (by fun_prop)]
-  simpa only [inv_pow] using TauCeti.integral_inv_pow_gammaMeasure ha hr n hn
+  simpa only [inv_pow] using TauCeti.integral_inv_pow_gammaMeasure hr n hn
+
+/-- Mathlib's Gamma recurrence `Real.Gamma_add_one`, shifted to the form `Γ b = (b - 1) * Γ (b - 1)`
+in which the inverse-gamma moment formulas need to normalize `Real.Gamma`. -/
+private lemma Gamma_eq_sub_one_mul_Gamma_sub_one {b : ℝ} (hb : b - 1 ≠ 0) :
+    Real.Gamma b = (b - 1) * Real.Gamma (b - 1) := by
+  simpa using Real.Gamma_add_one hb
 
 /-- The mean of an inverse-gamma law is `r / (a - 1)` when `1 < a`. -/
 @[simp]
 theorem integral_id_inverseGammaMeasure (hr : 0 < r) (ha : 1 < a) :
     ∫ x, x ∂inverseGammaMeasure a r = r / (a - 1) := by
-  have h := integral_pow_inverseGammaMeasure (by linarith : 0 < a) hr 1 (by simpa using ha)
+  have h := integral_pow_inverseGammaMeasure hr 1 (by simpa using ha)
   simp only [pow_one, Nat.cast_one] at h
-  rw [h, show Real.Gamma a = (a - 1) * Real.Gamma (a - 1) by
-    simpa using Real.Gamma_add_one (by linarith : a - 1 ≠ 0)]
+  rw [h, Gamma_eq_sub_one_mul_Gamma_sub_one (by linarith : a - 1 ≠ 0)]
   field_simp [(Real.Gamma_pos_of_pos (by linarith : 0 < a - 1)).ne']
 
 /-- The second raw moment of an inverse-gamma law is
@@ -359,13 +365,11 @@ theorem integral_id_inverseGammaMeasure (hr : 0 < r) (ha : 1 < a) :
 @[simp high]
 theorem integral_sq_inverseGammaMeasure (hr : 0 < r) (ha : 2 < a) :
     ∫ x, x ^ 2 ∂inverseGammaMeasure a r = r ^ 2 / ((a - 1) * (a - 2)) := by
-  have h := integral_pow_inverseGammaMeasure (by linarith : 0 < a) hr 2 (by simpa using ha)
+  have h := integral_pow_inverseGammaMeasure hr 2 (by simpa using ha)
+  have hsub : a - 1 - 1 = a - 2 := by ring
   norm_num only [Nat.cast_ofNat] at h
-  rw [h, show Real.Gamma a = (a - 1) * Real.Gamma (a - 1) by
-      simpa using Real.Gamma_add_one (by linarith : a - 1 ≠ 0),
-    show Real.Gamma (a - 1) = (a - 2) * Real.Gamma (a - 2) by
-      simpa [show a - 2 + 1 = a - 1 by ring] using
-        Real.Gamma_add_one (by linarith : a - 2 ≠ 0)]
+  rw [h, Gamma_eq_sub_one_mul_Gamma_sub_one (by linarith : a - 1 ≠ 0),
+    Gamma_eq_sub_one_mul_Gamma_sub_one (by linarith : a - 1 - 1 ≠ 0), hsub]
   field_simp [(Real.Gamma_pos_of_pos (by linarith : 0 < a - 2)).ne']
 
 /-- The variance of an inverse-gamma law is
