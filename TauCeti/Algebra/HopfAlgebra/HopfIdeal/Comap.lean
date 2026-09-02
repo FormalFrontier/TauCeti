@@ -274,8 +274,8 @@ theorem bialgEquiv_toBialgHom_surjective (e : H ≃ₐc[R] K) :
     Function.Surjective e.toBialgHom := by
   intro k
   refine ⟨e.symm k, ?_⟩
-  change e (e.symm k) = k
-  exact e.apply_symm_apply k
+  simpa only [BialgEquiv.toBialgHom_eq_coe, BialgEquiv.coe_toBialgHom] using
+    e.apply_symm_apply k
 
 /-- Pulling a Hopf ideal back along a bialgebra equivalence and then along its inverse recovers the
 original ideal. -/
@@ -286,8 +286,8 @@ theorem comapOfSurjective_bialgEquiv_symm_apply (I : HopfIdeal R H) (e : H ≃�
         e.toBialgHom (bialgEquiv_toBialgHom_surjective e) = I := by
   ext h
   rw [mem_comapOfSurjective, mem_comapOfSurjective]
-  change e.symm (e h) ∈ I ↔ h ∈ I
-  rw [e.symm_apply_apply]
+  simp only [BialgEquiv.toBialgHom_eq_coe, BialgEquiv.coe_toBialgHom,
+    e.symm_apply_apply]
 
 /-- Pulling a Hopf ideal back along a bialgebra equivalence and then back along the inverse is the
 original ideal. -/
@@ -299,8 +299,8 @@ theorem comapOfSurjective_bialgEquiv_apply_symm (I : HopfIdeal R K) (e : H ≃�
           (bialgEquiv_toBialgHom_surjective e.symm) = I := by
   ext k
   rw [mem_comapOfSurjective, mem_comapOfSurjective]
-  change e (e.symm k) ∈ I ↔ k ∈ I
-  rw [e.apply_symm_apply]
+  simp only [BialgEquiv.toBialgHom_eq_coe, BialgEquiv.coe_toBialgHom,
+    e.apply_symm_apply]
 
 section Field
 

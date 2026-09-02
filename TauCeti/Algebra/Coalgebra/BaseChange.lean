@@ -5,7 +5,6 @@ Authors: Codex
 -/
 module
 
-public import Mathlib.RingTheory.Bialgebra.Basic
 public import Mathlib.RingTheory.Coalgebra.TensorProduct
 import Mathlib.LinearAlgebra.Basis.VectorSpace
 import Mathlib.RingTheory.Flat.Basic
