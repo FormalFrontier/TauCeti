@@ -115,13 +115,14 @@ theorem integer_mulValuation : (mulValuation K).integer = 𝒪[K] := by
 /-- `𝒪[K]` is the ring of integers of `mulValuation K`, as a `Valuation.Integers` statement.
 This is the gateway to Mathlib's `Valuation.Integers` API: divisibility in `𝒪[K]` against the
 order on values, units against value `1`, and irreducibles against value `< 1`. -/
-theorem mulValuation_integers : (mulValuation K).Integers 𝒪[K] where
-  hom_inj := Subtype.val_injective
-  map_le_one x := by
-    rw [← Valuation.mem_integer_iff, integer_mulValuation]; exact x.2
-  exists_of_le_one {r} hr := by
-    rw [← Valuation.mem_integer_iff, integer_mulValuation] at hr
-    exact ⟨⟨r, hr⟩, rfl⟩
+theorem mulValuation_integers : (mulValuation K).Integers 𝒪[K] := by
+  -- This transports Mathlib's `Valuation.integer.integers` along `integer_mulValuation`.
+  -- Rewriting the goal with it directly is motive-incorrect, because the `Algebra` instance
+  -- in `Valuation.Integers` depends on the subring, so generalize the subring and substitute.
+  have H : ∀ O : Subring K, (mulValuation K).integer = O → (mulValuation K).Integers O := by
+    rintro O rfl
+    exact Valuation.integer.integers _
+  exact H _ (integer_mulValuation K)
 
 /-- A uniformizer of `K`, that is an irreducible element of the discrete valuation ring `𝒪[K]`,
 has multiplicative value `WithZero.exp (-1)`: the value group of `mulValuation K` is generated
