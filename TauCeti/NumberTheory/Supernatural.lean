@@ -11,6 +11,7 @@ public import Mathlib.Data.ENat.Monoid
 public import Mathlib.Data.Nat.MaxPowDiv
 public import Mathlib.Data.PNat.Prime
 import Mathlib.Data.Nat.Factorization.Basic
+import Mathlib.NumberTheory.Padics.PadicVal.Basic
 
 /-!
 # Supernatural numbers
@@ -28,6 +29,7 @@ exponent.
 ## Main definitions
 
 * `Supernatural`: supernatural numbers as prime-indexed extended-natural exponent functions.
+* `Supernatural.ofFun`: the supernatural number with prescribed exponent at each prime.
 * `Supernatural.ofNat`: the supernatural number attached to a positive natural number.
 * `Supernatural.primePower`: the supernatural prime power `p ^ n`, including `p ^ infinity`.
 * `Supernatural.primaryPart`: the `p`-primary part of a supernatural number.
@@ -54,9 +56,12 @@ namespace TauCeti
 /-- A supernatural number is a formal product of rational primes with exponents in `\mathbb{N}_∞`.
 
 This is a separate type, rather than an abbreviation for a function type, because multiplication
-of supernatural numbers is pointwise addition of exponents.  The exponent function is exposed:
-building a supernatural number from its exponents, as `profiniteOrder` will, is part of the API,
-while the operations and instances below are opaque and characterized by the pointwise lemmas. -/
+of supernatural numbers is pointwise addition of exponents, not the pointwise multiplication a
+function type carries.  As for Mathlib's `Matrix`, the body of the synonym is exposed, since the
+operations are pointwise operations of the underlying function type and can only be defined, and
+their pointwise characterizations only stated, with the synonym transparent.  The operations and
+instances themselves are opaque and are used through the pointwise lemmas below; `ofFun` is the
+named constructor building a supernatural number from its exponents. -/
 @[expose]
 def Supernatural := Nat.Primes → ℕ∞
 
@@ -68,6 +73,17 @@ instance : CoeFun Supernatural fun _ ↦ Nat.Primes → ℕ∞ := ⟨id⟩
 @[ext]
 theorem ext {m n : Supernatural} (h : ∀ p, m p = n p) : m = n :=
   funext h
+
+/-- The supernatural number with prescribed exponent at each prime.
+
+This is the named constructor for downstream definitions such as `profiniteOrder`, playing the
+role that `Matrix.of` plays for `Matrix`. -/
+def ofFun (f : Nat.Primes → ℕ∞) : Supernatural :=
+  f
+
+@[simp]
+theorem ofFun_apply (f : Nat.Primes → ℕ∞) (p : Nat.Primes) : ofFun f p = f p :=
+  (rfl)
 
 noncomputable instance : CompleteLattice Supernatural :=
   inferInstanceAs (CompleteLattice (Nat.Primes → ℕ∞))
@@ -269,11 +285,9 @@ multiplication of supernatural numbers, that is, into addition of exponents. -/
 @[simp]
 theorem ofNat_mul (m n : ℕ+) : ofNat (m * n) = ofNat m * ofNat n := by
   ext p
-  have h := DFunLike.congr_fun (Nat.factorization_mul m.ne_zero n.ne_zero) (p : ℕ)
-  rw [Finsupp.add_apply, Nat.factorization_def _ p.prop, Nat.factorization_def _ p.prop,
-    Nat.factorization_def _ p.prop] at h
-  rw [mul_apply, ofNat_apply, ofNat_apply, ofNat_apply]
-  exact_mod_cast h
+  have : Fact (p : ℕ).Prime := ⟨p.prop⟩
+  rw [mul_apply, ofNat_apply, ofNat_apply, ofNat_apply, PNat.mul_coe,
+    padicValNat.mul m.ne_zero n.ne_zero, Nat.cast_add]
 
 /-- Prime factorization embeds positive natural numbers injectively into supernatural numbers. -/
 theorem ofNat_injective : Function.Injective ofNat := by
