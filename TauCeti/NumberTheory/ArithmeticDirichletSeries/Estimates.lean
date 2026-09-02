@@ -8,6 +8,7 @@ module
 public import Mathlib.NumberTheory.LSeries.Convergence
 public import Mathlib.NumberTheory.LSeries.SumCoeff
 public import Mathlib.NumberTheory.NumberField.Ideal.Asymptotics
+public import TauCeti.NumberTheory.ArithmeticDirichletSeries.Regroup
 public import TauCeti.NumberTheory.ArithmeticDirichletSeries.Trivial
 
 /-!
@@ -44,6 +45,8 @@ of a convergent series of nonnegative terms must become arbitrarily small.
   `NumberField.dedekindZeta` is the `LSeries` of.  That system counts *all* integral ideals, so it
   differs from the trivial norm coefficients at `n = 0` and the two statements are related only
   through the `n ≠ 0` congruence `LSeries.abscissaOfAbsConv_congr`.
+* `TauCeti.summable_absNorm_asIdeal_rpow_neg`: the real-variable corollary that the prime-indexed
+  series `∑_𝔭 N(𝔭)⁻ˢ` converges for `1 < s`.
 
 ## Implementation notes
 
@@ -76,6 +79,7 @@ namespace TauCeti
 
 open Filter
 open scoped nonZeroDivisors NumberField Topology
+open IsDedekindDomain (HeightOneSpectrum)
 
 variable (K : Type*) [Field K] [NumberField K]
 
@@ -424,5 +428,32 @@ theorem LSeriesSummable_dedekindZetaCoeff_iff {s : ℂ} :
     LSeriesSummable (fun n ↦ (dedekindZetaCoeff K n : ℂ)) s ↔ 1 < s.re := by
   rw [← LSeriesSummable_normCoeff_one_iff K]
   exact LSeriesSummable_congr s fun {n} hn ↦ by rw [normCoeff_one_apply, ite_eq_right hn]
+
+/-! ### The prime-indexed Dirichlet series -/
+
+open scoped ComplexOrder in
+/-- The Dirichlet series `∑_I N(I)⁻ˢ` over the nonzero integral ideals converges for `1 < s`.
+This is the real-variable form of `TauCeti.LSeriesSummable_normCoeff_one_iff`, obtained from it
+through the absence of cancellation inside a norm fibre. -/
+private theorem summable_absNorm_rpow_neg {s : ℝ} (hs : 1 < s) :
+    Summable fun I : (Ideal (𝓞 K))⁰ ↦ (Ideal.absNorm (I : Ideal (𝓞 K)) : ℝ) ^ (-s) := by
+  have h : LSeriesSummable (normCoeff K (1 : IdealArithmeticFunction K)) (s : ℂ) := by
+    rw [LSeriesSummable_normCoeff_one_iff]
+    simpa using hs
+  have h₂ := summable_idealTerm_of_nonneg K 1 (fun _ ↦ zero_le_one) h
+  rw [← summable_norm_iff] at h₂
+  refine h₂.congr fun I ↦ ?_
+  rw [norm_idealTerm, Real.rpow_neg (Nat.cast_nonneg _)]
+  simp
+
+/-- **The prime-indexed Dirichlet series converges to the right of `1`.** Every height-one prime
+is a nonzero ideal, so this follows from the convergence of the ideal-indexed series. -/
+theorem summable_absNorm_asIdeal_rpow_neg {s : ℝ} (hs : 1 < s) :
+    Summable fun P : HeightOneSpectrum (𝓞 K) ↦ (Ideal.absNorm P.asIdeal : ℝ) ^ (-s) := by
+  have hinj : Function.Injective fun P : HeightOneSpectrum (𝓞 K) ↦
+      (⟨P.asIdeal, mem_nonZeroDivisors_of_ne_zero P.ne_bot⟩ : (Ideal (𝓞 K))⁰) :=
+    fun _ _ h ↦ HeightOneSpectrum.ext (congrArg Subtype.val h)
+  -- The composite is the summand up to the projection `↑⟨P.asIdeal, _⟩ = P.asIdeal`.
+  exact ((summable_absNorm_rpow_neg K hs).comp_injective hinj).congr fun _ ↦ rfl
 
 end TauCeti

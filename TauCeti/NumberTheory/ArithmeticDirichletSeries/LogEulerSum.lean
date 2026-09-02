@@ -9,7 +9,6 @@ public import Mathlib.Analysis.SpecialFunctions.Log.Deriv
 public import Mathlib.NumberTheory.NumberField.DirichletDensity
 public import TauCeti.NumberTheory.ArithmeticDirichletSeries.Counting
 public import TauCeti.NumberTheory.ArithmeticDirichletSeries.Estimates
-public import TauCeti.NumberTheory.ArithmeticDirichletSeries.Regroup
 
 /-!
 # The logarithmic Euler sum of a set of prime ideals
@@ -36,8 +35,6 @@ more than twice the convergent sum `∑_𝔭 N(𝔭)⁻²`.
 
 ## Main results
 
-* `TauCeti.summable_absNorm_asIdeal_rpow_neg`: the prime-indexed series `∑_𝔭 N(𝔭)⁻ˢ` converges
-  for `1 < s`, so that `NumberField.Set.primeIdealZetaSum` is not a junk value there.
 * `TauCeti.primeIdealZetaSum_le_primeIdealLogEulerSum`: the logarithmic sum dominates the prime
   sum.
 * `TauCeti.primeIdealLogEulerSum_sub_primeIdealZetaSum_le`: the excess is at most
@@ -66,7 +63,7 @@ public section
 
 namespace TauCeti
 
-open scoped ComplexOrder nonZeroDivisors NumberField
+open scoped NumberField
 open Filter Topology
 open IsDedekindDomain (HeightOneSpectrum)
 
@@ -94,43 +91,14 @@ private theorem neg_log_one_sub_sub_self_le {x : ℝ} (hx₀ : 0 ≤ x) (hx : x 
     nlinarith
   linarith
 
-/-! ### Summability of the prime-indexed Dirichlet series -/
-
-/-- The Dirichlet series `∑_I N(I)⁻ˢ` over the nonzero integral ideals converges for `1 < s`.
-This is the real-variable form of `TauCeti.LSeriesSummable_normCoeff_one_iff`, obtained from it
-through the absence of cancellation inside a norm fibre. -/
-private theorem summable_absNorm_rpow_neg {s : ℝ} (hs : 1 < s) :
-    Summable fun I : (Ideal (𝓞 K))⁰ ↦ (Ideal.absNorm (I : Ideal (𝓞 K)) : ℝ) ^ (-s) := by
-  have h : LSeriesSummable (normCoeff K (1 : IdealArithmeticFunction K)) (s : ℂ) := by
-    rw [LSeriesSummable_normCoeff_one_iff]
-    simpa using hs
-  have h₂ := summable_idealTerm_of_nonneg K 1 (fun _ ↦ zero_le_one) h
-  rw [← summable_norm_iff] at h₂
-  refine h₂.congr fun I ↦ ?_
-  rw [norm_idealTerm, Real.rpow_neg (Nat.cast_nonneg _)]
-  simp
-
-/-- **The prime-indexed Dirichlet series converges to the right of `1`.** Every height-one prime
-is a nonzero ideal, so this follows from the convergence of the ideal-indexed series. -/
-theorem summable_absNorm_asIdeal_rpow_neg {s : ℝ} (hs : 1 < s) :
-    Summable fun P : HeightOneSpectrum (𝓞 K) ↦ (Ideal.absNorm P.asIdeal : ℝ) ^ (-s) := by
-  have hinj : Function.Injective fun P : HeightOneSpectrum (𝓞 K) ↦
-      (⟨P.asIdeal, mem_nonZeroDivisors_of_ne_zero P.ne_bot⟩ : (Ideal (𝓞 K))⁰) :=
-    fun _ _ h ↦ HeightOneSpectrum.ext (congrArg Subtype.val h)
-  -- The composite is the summand up to the projection `↑⟨P.asIdeal, _⟩ = P.asIdeal`.
-  exact ((summable_absNorm_rpow_neg K hs).comp_injective hinj).congr fun _ ↦ rfl
-
-/-- The restriction to a set `S` of primes of the convergent series `∑_𝔭 N(𝔭)⁻ˢ`. -/
-theorem summable_absNorm_asIdeal_rpow_neg_subtype (S : Set (HeightOneSpectrum (𝓞 K))) {s : ℝ}
-    (hs : 1 < s) : Summable fun P : S ↦ (Ideal.absNorm P.1.asIdeal : ℝ) ^ (-s) :=
-  (summable_absNorm_asIdeal_rpow_neg K hs).subtype S
+variable {K}
 
 /-! ### The local parameter at a height-one prime -/
 
 /-- The local parameter `N(𝔭)⁻ˢ` is positive. -/
 theorem absNorm_asIdeal_rpow_neg_pos (P : HeightOneSpectrum (𝓞 K)) (s : ℝ) :
     0 < (Ideal.absNorm P.asIdeal : ℝ) ^ (-s) :=
-  Real.rpow_pos_of_pos (by linarith [two_le_absNorm_asIdeal_real P]) _
+  Real.rpow_pos_of_pos (absNorm_asIdeal_real_pos P) _
 
 /-- The local parameter `N(𝔭)⁻ˢ` is smaller than `1` as soon as `0 < s`, because `N(𝔭) ≥ 2`. -/
 theorem absNorm_asIdeal_rpow_neg_lt_one {s : ℝ} (hs : 0 < s) (P : HeightOneSpectrum (𝓞 K)) :
@@ -138,7 +106,7 @@ theorem absNorm_asIdeal_rpow_neg_lt_one {s : ℝ} (hs : 0 < s) (P : HeightOneSpe
   Real.rpow_lt_one_of_one_lt_of_neg (by linarith [two_le_absNorm_asIdeal_real P]) (by linarith)
 
 /-- For `1 ≤ s` the local parameter `N(𝔭)⁻ˢ` is at most `1/2`, because `N(𝔭) ≥ 2`. -/
-theorem absNorm_asIdeal_rpow_neg_le_half {s : ℝ} (hs : 1 ≤ s) (P : HeightOneSpectrum (𝓞 K)) :
+theorem absNorm_asIdeal_rpow_neg_le_one_half {s : ℝ} (hs : 1 ≤ s) (P : HeightOneSpectrum (𝓞 K)) :
     (Ideal.absNorm P.asIdeal : ℝ) ^ (-s) ≤ 1 / 2 := by
   have h₂ := two_le_absNorm_asIdeal_real P
   have hpow : (2 : ℝ) ^ s ≤ (Ideal.absNorm P.asIdeal : ℝ) ^ s :=
@@ -166,7 +134,7 @@ theorem absNorm_asIdeal_rpow_neg_le_neg_log_one_sub {s : ℝ} (hs : 0 < s)
     (P : HeightOneSpectrum (𝓞 K)) :
     (Ideal.absNorm P.asIdeal : ℝ) ^ (-s)
       ≤ -Real.log (1 - (Ideal.absNorm P.asIdeal : ℝ) ^ (-s)) :=
-  self_le_neg_log_one_sub (absNorm_asIdeal_rpow_neg_lt_one K hs P)
+  self_le_neg_log_one_sub (absNorm_asIdeal_rpow_neg_lt_one hs P)
 
 /-- **The local higher-prime-power contribution is at most `2 N(𝔭)⁻²`**, uniformly in `s ≥ 1`.
 This is the estimate that makes the whole prime-power correction bounded. -/
@@ -175,9 +143,11 @@ theorem neg_log_one_sub_sub_absNorm_asIdeal_rpow_neg_le {s : ℝ} (hs : 1 ≤ s)
     -Real.log (1 - (Ideal.absNorm P.asIdeal : ℝ) ^ (-s))
         - (Ideal.absNorm P.asIdeal : ℝ) ^ (-s)
       ≤ 2 * (Ideal.absNorm P.asIdeal : ℝ) ^ (-2 : ℝ) := by
-  refine (neg_log_one_sub_sub_self_le (absNorm_asIdeal_rpow_neg_pos K P s).le
-    (absNorm_asIdeal_rpow_neg_le_half K hs P)).trans ?_
-  exact mul_le_mul_of_nonneg_left (sq_absNorm_asIdeal_rpow_neg_le K hs P) (by norm_num)
+  refine (neg_log_one_sub_sub_self_le (absNorm_asIdeal_rpow_neg_pos P s).le
+    (absNorm_asIdeal_rpow_neg_le_one_half hs P)).trans ?_
+  exact mul_le_mul_of_nonneg_left (sq_absNorm_asIdeal_rpow_neg_le hs P) (by norm_num)
+
+variable (K)
 
 /-! ### The logarithmic Euler sum -/
 
@@ -186,6 +156,8 @@ height-one primes.  For `S = Set.univ` this is the series that the Euler product
 identify with `log ζ_K(s)`. -/
 noncomputable def primeIdealLogEulerSum (S : Set (HeightOneSpectrum (𝓞 K))) (s : ℝ) : ℝ :=
   ∑' P : S, -Real.log (1 - (Ideal.absNorm P.1.asIdeal : ℝ) ^ (-s))
+
+variable {K}
 
 /-- Defining equation of `TauCeti.primeIdealLogEulerSum`. -/
 theorem primeIdealLogEulerSum_def (S : Set (HeightOneSpectrum (𝓞 K))) (s : ℝ) :
@@ -206,44 +178,44 @@ theorem summable_neg_log_one_sub_sub_absNorm_asIdeal_rpow_neg
     Summable fun P : S ↦ -Real.log (1 - (Ideal.absNorm P.1.asIdeal : ℝ) ^ (-s))
       - (Ideal.absNorm P.1.asIdeal : ℝ) ^ (-s) := by
   refine Summable.of_nonneg_of_le (fun P ↦ by
-      linarith [absNorm_asIdeal_rpow_neg_le_neg_log_one_sub K (by linarith : (0 : ℝ) < s) P.1])
-    (fun P ↦ neg_log_one_sub_sub_absNorm_asIdeal_rpow_neg_le K hs P.1) ?_
-  exact ((summable_absNorm_asIdeal_rpow_neg_subtype K S (by norm_num : (1 : ℝ) < 2)).mul_left 2)
+      linarith [absNorm_asIdeal_rpow_neg_le_neg_log_one_sub (by linarith : (0 : ℝ) < s) P.1])
+    (fun P ↦ neg_log_one_sub_sub_absNorm_asIdeal_rpow_neg_le hs P.1) ?_
+  exact ((summable_absNorm_asIdeal_rpow_neg K (by norm_num : (1 : ℝ) < 2)).subtype S).mul_left 2
 
 /-- The logarithmic Euler sum converges for `1 < s`. -/
 theorem summable_neg_log_one_sub_absNorm_asIdeal_rpow_neg
     (S : Set (HeightOneSpectrum (𝓞 K))) {s : ℝ} (hs : 1 < s) :
     Summable fun P : S ↦ -Real.log (1 - (Ideal.absNorm P.1.asIdeal : ℝ) ^ (-s)) := by
-  have h := (summable_neg_log_one_sub_sub_absNorm_asIdeal_rpow_neg K S hs.le).add
-    (summable_absNorm_asIdeal_rpow_neg_subtype K S hs)
+  have h := (summable_neg_log_one_sub_sub_absNorm_asIdeal_rpow_neg S hs.le).add
+    ((summable_absNorm_asIdeal_rpow_neg K hs).subtype S)
   simpa using h
 
 /-- The logarithmic Euler sum is nonnegative. -/
 theorem primeIdealLogEulerSum_nonneg (S : Set (HeightOneSpectrum (𝓞 K))) {s : ℝ} (hs : 0 < s) :
     0 ≤ primeIdealLogEulerSum K S s :=
   tsum_nonneg fun P ↦
-    (absNorm_asIdeal_rpow_neg_pos K P.1 s).le.trans
-      (absNorm_asIdeal_rpow_neg_le_neg_log_one_sub K hs P.1)
+    (absNorm_asIdeal_rpow_neg_pos P.1 s).le.trans
+      (absNorm_asIdeal_rpow_neg_le_neg_log_one_sub hs P.1)
 
 /-- **The logarithmic Euler sum dominates the prime sum.** -/
 theorem primeIdealZetaSum_le_primeIdealLogEulerSum
     (S : Set (HeightOneSpectrum (𝓞 K))) {s : ℝ} (hs : 1 < s) :
     NumberField.Set.primeIdealZetaSum S s ≤ primeIdealLogEulerSum K S s := by
   rw [NumberField.Set.primeIdealZetaSum_def, primeIdealLogEulerSum_def]
-  exact (summable_absNorm_asIdeal_rpow_neg_subtype K S hs).tsum_le_tsum
-    (fun P ↦ absNorm_asIdeal_rpow_neg_le_neg_log_one_sub K (by linarith) P.1)
-    (summable_neg_log_one_sub_absNorm_asIdeal_rpow_neg K S hs)
+  exact ((summable_absNorm_asIdeal_rpow_neg K hs).subtype S).tsum_le_tsum
+    (fun P ↦ absNorm_asIdeal_rpow_neg_le_neg_log_one_sub (by linarith) P.1)
+    (summable_neg_log_one_sub_absNorm_asIdeal_rpow_neg S hs)
 
 /-- **The excess of the logarithmic Euler sum over the prime sum is the higher-prime-power
 contribution**, term by term. -/
-theorem primeIdealLogEulerSum_sub_primeIdealZetaSum
+theorem primeIdealLogEulerSum_sub_primeIdealZetaSum_eq_tsum
     (S : Set (HeightOneSpectrum (𝓞 K))) {s : ℝ} (hs : 1 < s) :
     primeIdealLogEulerSum K S s - NumberField.Set.primeIdealZetaSum S s
       = ∑' P : S, (-Real.log (1 - (Ideal.absNorm P.1.asIdeal : ℝ) ^ (-s))
           - (Ideal.absNorm P.1.asIdeal : ℝ) ^ (-s)) := by
   rw [primeIdealLogEulerSum_def, NumberField.Set.primeIdealZetaSum_def]
-  exact ((summable_neg_log_one_sub_absNorm_asIdeal_rpow_neg K S hs).tsum_sub
-    (summable_absNorm_asIdeal_rpow_neg_subtype K S hs)).symm
+  exact ((summable_neg_log_one_sub_absNorm_asIdeal_rpow_neg S hs).tsum_sub
+    ((summable_absNorm_asIdeal_rpow_neg K hs).subtype S)).symm
 
 /-- **The higher-prime-power contribution is bounded**, uniformly in the set `S` of primes and in
 the exponent `s > 1`: it never exceeds twice the convergent sum `∑_𝔭 N(𝔭)⁻²`.
@@ -256,13 +228,13 @@ theorem primeIdealLogEulerSum_sub_primeIdealZetaSum_le
     primeIdealLogEulerSum K S s - NumberField.Set.primeIdealZetaSum S s
       ≤ 2 * NumberField.Set.primeIdealZetaSum (Set.univ : Set (HeightOneSpectrum (𝓞 K))) 2 := by
   have hsum2 := summable_absNorm_asIdeal_rpow_neg K (by norm_num : (1 : ℝ) < 2)
-  rw [primeIdealLogEulerSum_sub_primeIdealZetaSum K S hs,
+  rw [primeIdealLogEulerSum_sub_primeIdealZetaSum_eq_tsum S hs,
     NumberField.Set.primeIdealZetaSum_def,
     tsum_univ fun P : HeightOneSpectrum (𝓞 K) ↦ (Ideal.absNorm P.asIdeal : ℝ) ^ (-2 : ℝ),
     ← tsum_mul_left]
-  refine le_trans ((summable_neg_log_one_sub_sub_absNorm_asIdeal_rpow_neg K S hs.le).tsum_le_tsum
-    (fun P ↦ neg_log_one_sub_sub_absNorm_asIdeal_rpow_neg_le K hs.le P.1)
-    ((summable_absNorm_asIdeal_rpow_neg_subtype K S (by norm_num : (1 : ℝ) < 2)).mul_left 2)) ?_
+  refine le_trans ((summable_neg_log_one_sub_sub_absNorm_asIdeal_rpow_neg S hs.le).tsum_le_tsum
+    (fun P ↦ neg_log_one_sub_sub_absNorm_asIdeal_rpow_neg_le hs.le P.1)
+    (((summable_absNorm_asIdeal_rpow_neg K (by norm_num : (1 : ℝ) < 2)).subtype S).mul_left 2)) ?_
   exact Summable.tsum_subtype_le _ S (fun _ ↦ by positivity) (hsum2.mul_left 2)
 
 /-- **The logarithmic Euler sum and the prime sum differ by a bounded amount.** -/
@@ -271,12 +243,12 @@ theorem abs_primeIdealLogEulerSum_sub_primeIdealZetaSum_le
     |primeIdealLogEulerSum K S s - NumberField.Set.primeIdealZetaSum S s|
       ≤ 2 * NumberField.Set.primeIdealZetaSum (Set.univ : Set (HeightOneSpectrum (𝓞 K))) 2 := by
   rw [abs_le]
-  refine ⟨?_, primeIdealLogEulerSum_sub_primeIdealZetaSum_le K S hs⟩
+  refine ⟨?_, primeIdealLogEulerSum_sub_primeIdealZetaSum_le S hs⟩
   have h₀ : 0 ≤ 2 * NumberField.Set.primeIdealZetaSum
       (Set.univ : Set (HeightOneSpectrum (𝓞 K))) 2 := by
     have := NumberField.Set.primeIdealZetaSum_nonneg (Set.univ : Set (HeightOneSpectrum (𝓞 K))) 2
     linarith
-  linarith [primeIdealZetaSum_le_primeIdealLogEulerSum K S hs]
+  linarith [primeIdealZetaSum_le_primeIdealLogEulerSum S hs]
 
 /-- **The `O(1)` form of the higher-prime-power estimate as `s → 1⁺`**, which is how Layer 7.2
 consumes it. -/
@@ -287,6 +259,6 @@ theorem isBigO_primeIdealLogEulerSum_sub_primeIdealZetaSum
   refine Asymptotics.isBigO_iff.mpr
     ⟨2 * NumberField.Set.primeIdealZetaSum (Set.univ : Set (HeightOneSpectrum (𝓞 K))) 2, ?_⟩
   filter_upwards [self_mem_nhdsWithin] with s hs
-  simpa using abs_primeIdealLogEulerSum_sub_primeIdealZetaSum_le K S hs
+  simpa using abs_primeIdealLogEulerSum_sub_primeIdealZetaSum_le S hs
 
 end TauCeti
