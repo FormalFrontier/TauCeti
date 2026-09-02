@@ -552,35 +552,6 @@ theorem transitionCount_pathOfReindexedSuccessors (π : α → Equiv.Perm ℕ) (
   simp only [Finset.mem_filter, Finset.mem_univ, true_and, Fin.val_castSucc, Fin.val_succ]
   rw [reindexStepEquiv_source π x m hmaps hlast i, reindexStepEquiv_target π x m hmaps hlast i]
 
-/-- Packaged form: `TauCeti.visitCount_pathOfReindexedSuccessors_lt_visitCount` under
-`TauCeti.LastExitAdmissible`. -/
-theorem LastExitAdmissible.visitCount_pathOfReindexedSuccessors_lt_visitCount
-    {π : α → Equiv.Perm ℕ} {x : ℕ → α} {m : ℕ} (h : LastExitAdmissible π x m) :
-    ∀ i < m, visitCount (pathOfReindexedSuccessors π x) (pathOfReindexedSuccessors π x i) i <
-      visitCount x (pathOfReindexedSuccessors π x i) m :=
-  TauCeti.visitCount_pathOfReindexedSuccessors_lt_visitCount π x m h.1 h.2
-
-/-- Packaged form: `TauCeti.visitCount_pathOfReindexedSuccessors` under
-`TauCeti.LastExitAdmissible`. -/
-theorem LastExitAdmissible.visitCount_pathOfReindexedSuccessors
-    {π : α → Equiv.Perm ℕ} {x : ℕ → α} {m : ℕ} (h : LastExitAdmissible π x m) (a : α) :
-    visitCount (pathOfReindexedSuccessors π x) a m = visitCount x a m :=
-  TauCeti.visitCount_pathOfReindexedSuccessors π x m h.1 h.2 a
-
-/-- Packaged form: `TauCeti.pathOfReindexedSuccessors_eq` under `TauCeti.LastExitAdmissible`. -/
-theorem LastExitAdmissible.pathOfReindexedSuccessors_eq
-    {π : α → Equiv.Perm ℕ} {x : ℕ → α} {m : ℕ} (h : LastExitAdmissible π x m) :
-    pathOfReindexedSuccessors π x m = x m :=
-  TauCeti.pathOfReindexedSuccessors_eq π x m h.1 h.2
-
-/-- Packaged form: `TauCeti.transitionCount_pathOfReindexedSuccessors` under
-`TauCeti.LastExitAdmissible`. -/
-theorem LastExitAdmissible.transitionCount_pathOfReindexedSuccessors
-    {π : α → Equiv.Perm ℕ} {x : ℕ → α} {m : ℕ} (h : LastExitAdmissible π x m) (a b : α) :
-    transitionCount (fun i : Fin (m + 1) => pathOfReindexedSuccessors π x i) a b =
-      transitionCount (fun i : Fin (m + 1) => x i) a b :=
-  TauCeti.transitionCount_pathOfReindexedSuccessors π x m h.1 h.2 a b
-
 end TauCeti
 
 end
