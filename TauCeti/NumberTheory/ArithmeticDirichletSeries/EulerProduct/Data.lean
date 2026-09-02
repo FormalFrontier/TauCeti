@@ -96,6 +96,14 @@ noncomputable def localArithmeticFactor (D : EulerProductData K)
     (P : HeightOneSpectrum (𝓞 K)) : ArithmeticFunction ℂ :=
   D.toIdealArithmeticFunction.localArithmeticFactor P
 
+/-- The bundled local arithmetic factor is Mathlib's arithmetic function associated to the
+bundled local power series at `P`. -/
+theorem localArithmeticFactor_def (D : EulerProductData K)
+    (P : HeightOneSpectrum (𝓞 K)) :
+    D.localArithmeticFactor P =
+      ArithmeticFunction.ofPowerSeries (Ideal.absNorm P.asIdeal) (D.localPowerSeries P) :=
+  IdealArithmeticFunction.localArithmeticFactor_def D.toIdealArithmeticFunction P
+
 /-- At a power of `N(P)`, the bundled local arithmetic factor is the corresponding prime-power
 coefficient. -/
 @[simp]
