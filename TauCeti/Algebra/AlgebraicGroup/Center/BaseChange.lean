@@ -87,6 +87,7 @@ theorem baseChangeHopfIdeal_centerDefiningIdeal
 
 The statement uses the augmentation ideal, which cuts out the identity subgroup. Thus it detects
 the full center scheme, including infinitesimal structure invisible on field-valued points. -/
+@[simp]
 theorem centerDefiningIdeal_baseChange_eq_augmentation_iff
     (H : _root_.CommHopfAlgCat.{v} k) :
     centerDefiningIdeal (baseChange (K := K) H) =
