@@ -117,7 +117,6 @@ theorem lift_unique (ev : R →+* A) (f : M →ₛₗ[ev] N)
     (hg : ∀ x, g (of ev M x) = f x) : g = lift ev f := by
   exact hom_ext ev fun x => (hg x).trans (lift_of ev f x).symm
 
-@[simp]
 theorem of_smul (ev : R →+* A) (r : R) (x : M) :
     of ev M (r • x) = ev r • of ev M x :=
   (of ev M).map_smulₛₗ r x
@@ -130,7 +129,6 @@ variable {M N : Type*} [AddCommGroup M] [AddCommGroup N]
   [Module (LaurentPolynomial ℤ) M]
 
 /-- At a unit `u`, a Laurent shift acts by the corresponding integer power on specialization. -/
-@[simp]
 theorem LaurentSpecialization.of_T_smul (u : ℤˣ) (n : ℤ) (x : M) :
     LaurentSpecialization.of (laurentEvalUnit u) M
         ((T n : LaurentPolynomial ℤ) • x) =
@@ -138,7 +136,6 @@ theorem LaurentSpecialization.of_T_smul (u : ℤˣ) (n : ℤ) (x : M) :
         LaurentSpecialization.of (laurentEvalUnit u) M x := by
   rw [LaurentSpecialization.of_smul, laurentEvalUnit_T]
 
-@[simp]
 theorem LaurentSpecialization.of_T_smul_atOne (n : ℤ) (x : M) :
     LaurentSpecialization.of laurentEvalOne M
         ((T n : LaurentPolynomial ℤ) • x) =
@@ -146,7 +143,6 @@ theorem LaurentSpecialization.of_T_smul_atOne (n : ℤ) (x : M) :
   rw [LaurentSpecialization.of_smul, laurentEvalOne_T]
   simp
 
-@[simp]
 theorem LaurentSpecialization.of_T_smul_atNegOne (n : ℤ) (x : M) :
     LaurentSpecialization.of laurentEvalNegOne M
         ((T n : LaurentPolynomial ℤ) • x) =
