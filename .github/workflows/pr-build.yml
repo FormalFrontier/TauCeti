@@ -270,7 +270,7 @@ jobs:
           # leaves it unset and the lookup runs as before: unknown means look, never means skip.
           if [ "$toolchain_changed" = "1" ]; then
             echo "TOOLCHAIN_CHANGED=1" >> "$GITHUB_ENV"
-            echo "::notice::PR moves lean-toolchain — the Lake cache lookup will be skipped, since the revision maps are keyed by toolchain and every published ancestor was built under the old one"
+            echo "::notice::PR moves lean-toolchain — the Lake cache lookup will ask about this revision only, since the maps are keyed by toolchain and every ancestor was published under the old one"
           fi
 
           # The report step runs under `if: always()`. Mark successful completion explicitly so an
@@ -632,19 +632,24 @@ jobs:
           # environment variables; the script hands it the endpoints through a `--service` config.
           PUBLIC_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT_PUBLIC }}
           PUBLIC_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT_PUBLIC }}
-          # A candidate that moves lean-toolchain cannot hit: the revision maps are keyed by
-          # toolchain and every published ancestor was built under the old one. Say so up front
-          # rather than paying a request per ancestor to rediscover it. The scope guard above
-          # answers this from the immutable tree entries at the merge base and the head, and
-          # leaves it unset whenever it could not read them, so unknown means look.
-          LAKE_CACHE_SKIP: ${{ env.TOOLCHAIN_CHANGED == '1' && '1' || '' }}
-          # A backstop for lookups that are futile for some reason we have not characterised,
-          # not a workaround for the toolchain case above. Overrunning it is indistinguishable
-          # from a genuine miss, and a miss costs a full recompile (~2h) against the ~4 minutes
-          # a 1000-ancestor walk costs at the observed request rate — so it is sized to be
-          # reached only by something genuinely unexpected. At main's current rate this is about
-          # three weeks of history, against roughly 39 hours for the 100 it replaces.
-          LAKE_CACHE_MAX_REVS: "1000"
+          # How far back it is worth asking, which depends on whether an ancestor could hold
+          # a usable map at all. The maps are keyed by toolchain, so once lean-toolchain moves
+          # every ancestor was published under the old one and walking them cannot hit: ask
+          # about HEAD alone and stop. HEAD itself is still worth one request, because a
+          # merge-group re-run of a bump that already built once finds its own published
+          # outputs there — the case an outright skip would recompile from scratch.
+          #
+          # Otherwise a walk can pay, so bound it only as a backstop against something we have
+          # not characterised. Overrunning the bound is indistinguishable from a genuine miss,
+          # and a miss costs a full recompile (~2h) against the ~4 minutes a 1000-revision walk
+          # costs at the rate observed in the run that motivated #5396 — so it is sized to be
+          # reached only by the genuinely unexpected. At main's current rate 1000 is about three
+          # weeks of history, against roughly 39 hours for the 100 it replaces.
+          #
+          # The scope guard above answers the toolchain question from the immutable tree entries
+          # at the merge base and the head, and leaves it unset whenever it could not read them,
+          # so unknown falls through to the walk rather than to the single lookup.
+          LAKE_CACHE_MAX_REVS: ${{ env.TOOLCHAIN_CHANGED == '1' && '1' || '1000' }}
         run: bash gate/scripts/lake-cache-get.sh pr
 
       - name: Prepare trusted read-only Lean watchdog toolchain

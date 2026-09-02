@@ -12,17 +12,16 @@
 #
 # Anonymous GETs from the PUBLIC read host (a different host than the S3 API endpoint the
 # trusted upload uses). Looks up the root-package oleans for the checkout's revision --
-# backtracking up to LAKE_CACHE_MAX_REVS ancestors (default 100; 0 means the complete available
-# history), and unpacks them into $LAKE_CACHE_DIR. This is trusted, publisher-built data: no token
-# is in reach and no PR code runs (the caller attests the declarative lakefile first). Mathlib's
-# oleans are NOT here; they come from
-# `lake exe cache get`.
+# backtracking up to LAKE_CACHE_MAX_REVS revisions from HEAD (default 100; 0 means the complete
+# available history), and unpacks them into $LAKE_CACHE_DIR. This is trusted, publisher-built
+# data: no token is in reach and no PR code runs (the caller attests the declarative lakefile
+# first). Mathlib's oleans are NOT here; they come from `lake exe cache get`.
 #
-# The limit is a backstop, not the answer to a known-futile lookup: use LAKE_CACHE_SKIP=1 for
-# that (see below). The search stops as soon as a lookup succeeds, so a hit reads only the few
-# ancestors between the checkout and a published one. Size the backstop generously: overrunning
-# it is reported as a total miss, and a total miss costs a full recompile, which is far dearer
-# than the extra requests a longer walk would have made.
+# Callers choose the limit, because only they know whether a walk can pay. The search stops as
+# soon as a lookup succeeds, so where a hit is likely it reads only the few revisions between
+# HEAD and a published one. Size it generously otherwise: overrunning the limit is reported as
+# a total miss, and a total miss costs a full recompile, far dearer than the extra requests a
+# longer walk would have made. `1` asks about HEAD alone and never walks.
 #
 # A TOTAL miss is non-fatal: the build just recompiles from scratch, as when the cache is off.
 # A PARTIAL fetch is non-fatal too, but must not reach the offline build. Since v4.34.0-rc1,
@@ -71,33 +70,6 @@ discard_cache() {
   return 0
 }
 
-# Hand the caller's build the no-cache configuration. Empty is NOT off: Lake parses an empty
-# LAKE_ARTIFACT_CACHE as "unspecified" and then defaults artifact-cache reads to true, and an
-# empty LAKE_CACHE_DIR falls back to the workspace's own .lake/cache. Say false explicitly.
-disable_cache_for_build() {
-  {
-    echo "LAKE_ARTIFACT_CACHE=false"
-    echo "LAKE_RESTORE_ARTIFACTS=false"
-    echo "LAKE_CACHE_DIR="
-  } >> "${GITHUB_ENV:-/dev/null}"
-}
-
-# LAKE_CACHE_SKIP=1 short-circuits the lookup for a caller that already knows it cannot hit.
-# The revision maps are keyed by toolchain, so a candidate that moves lean-toolchain has no
-# eligible ancestor by construction: every published ancestor was built under the old one.
-# Walking them anyway costs a request per ancestor and finds nothing.
-#
-# This deliberately takes the SAME exit as a miss -- discard, then disable -- rather than
-# skipping the step in the workflow. The caller enables the cache (LAKE_ARTIFACT_CACHE=true,
-# LAKE_RESTORE_ARTIFACTS=true, LAKE_CACHE_DIR=...) in an earlier step, so a step-level `if:`
-# would leave the build reading an enabled-but-empty cache. Only this path turns it back off.
-if [ "${LAKE_CACHE_SKIP:-}" = "1" ]; then
-  echo "::notice::LAKE_CACHE_SKIP=1 — the candidate changes lean-toolchain, so no ancestor can hold a cache under it; skipping the lookup and building TauCeti/ from scratch"
-  discard_cache
-  disable_cache_for_build
-  exit 0
-fi
-
 # Lake v4.34.0-rc1 and later correctly return failure when any transfer, lookup, or hash check
 # fails. Successful artifacts have already been verified and atomically installed, so they are
 # safe to retain for the next attempt.
@@ -134,5 +106,13 @@ if [ "$clean" != 1 ]; then
   # Discarding it restores the no-cache path exactly.
   echo "::warning::lake cache get did not complete cleanly; discarding the cache and building TauCeti/ from scratch"
   discard_cache
-  disable_cache_for_build
+  # Empty is NOT off: Lake parses an empty LAKE_ARTIFACT_CACHE as "unspecified" and then defaults
+  # artifact-cache reads to true, and an empty LAKE_CACHE_DIR falls back to the workspace's own
+  # .lake/cache. Say false explicitly rather than relying on the directory above having just been
+  # deleted.
+  {
+    echo "LAKE_ARTIFACT_CACHE=false"
+    echo "LAKE_RESTORE_ARTIFACTS=false"
+    echo "LAKE_CACHE_DIR="
+  } >> "${GITHUB_ENV:-/dev/null}"
 fi
