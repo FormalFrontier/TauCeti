@@ -10,14 +10,22 @@ public import TauCeti.Probability.Distributions.Beta.Cdf
 /-!
 # Fisher's F distribution
 
+## Main definitions
+
+* `fisherSnedecorMeasure` — the Fisher--Snedecor probability measure.
+* `fisherSnedecorMap` — the beta-to-F transformation.
+* `fisherSnedecorMapInv` — its inverse on the positive half-line.
+
 ## Main results
 
-* `fisherSnedecorMeasure`
-* `fisherSnedecorMeasure_eq_map`
-* `isProbabilityMeasure_fisherSnedecorMeasure_iff`
-* `fisherSnedecorMap_image_Ioo`
-* `ae_mem_Ioi_fisherSnedecorMeasure`
-* `cdf_fisherSnedecorMeasure_eq`
+* `fisherSnedecorMeasure_eq_map` — the beta pushforward characterization.
+* `isProbabilityMeasure_fisherSnedecorMeasure_iff` — the exact parameter range for a probability
+  measure.
+* `fisherSnedecorMap_image_Ioo` — the image of the open unit interval.
+* `fisherSnedecorMap_strictMonoOn` — strict monotonicity below one.
+* `fisherSnedecorMapInv_map` and `fisherSnedecorMap_mapInv` — the inverse identities.
+* `ae_mem_Ioi_fisherSnedecorMeasure` — positivity almost surely.
+* `cdf_fisherSnedecorMeasure_eq` — the closed-form cumulative distribution function.
 
 This file begins the elementary API for Fisher's F law.  For positive degrees of freedom `m` and
 `n`, it realizes the law as the image of `betaMeasure (m / 2) (n / 2)` under
@@ -71,9 +79,9 @@ def fisherSnedecorMapInv (m n : ℝ) (x : ℝ) : ℝ := m * x / (n + m * x)
 theorem fisherSnedecorMapInv_def (m n x : ℝ) :
     fisherSnedecorMapInv m n x = m * x / (n + m * x) := (rfl)
 
-/-- The Fisher--Snedecor law with degrees of freedom `m` and `n`.  Invalid parameters are
-the zero measure; for valid parameters this is the beta law pushed forward by the standard
-beta-to-F transformation. -/
+/-- The Fisher--Snedecor law with numerator degrees of freedom `m` and denominator degrees of
+freedom `n`.  It is the law of `(U / m) / (V / n)` for independent chi-squared variables with
+degrees of freedom `m` and `n`; it is the zero measure unless `0 < m` and `0 < n`. -/
 def fisherSnedecorMeasure (m n : ℝ) : Measure ℝ :=
   if 0 < m ∧ 0 < n then
     (betaMeasure (m / 2) (n / 2)).map (fisherSnedecorMap m n)
@@ -108,7 +116,8 @@ theorem isProbabilityMeasure_fisherSnedecorMeasure_iff :
   · intro h
     by_contra hmn
     rw [fisherSnedecorMeasure_of_not_pos hmn] at h
-    exact (@IsProbabilityMeasure.ne_zero ℝ _ 0 h) rfl
+    let _ : IsProbabilityMeasure (0 : Measure ℝ) := h
+    exact (IsProbabilityMeasure.ne_zero (0 : Measure ℝ)) rfl
   · rintro ⟨hm, hn⟩
     exact isProbabilityMeasure_fisherSnedecorMeasure hm hn
 
@@ -116,18 +125,14 @@ theorem isProbabilityMeasure_fisherSnedecorMeasure_iff :
 @[fun_prop]
 theorem measurable_fisherSnedecorMap (m n : ℝ) :
     Measurable (fisherSnedecorMap m n) := by
-  rw [show fisherSnedecorMap m n = (fun u : ℝ => (n / m) * u / (1 - u)) by
-    funext u
-    exact fisherSnedecorMap_def m n u]
+  unfold fisherSnedecorMap
   fun_prop
 
 /-- The beta-to-F inverse transformation is measurable for all parameter values. -/
 @[fun_prop]
 theorem measurable_fisherSnedecorMapInv (m n : ℝ) :
     Measurable (fisherSnedecorMapInv m n) := by
-  rw [show fisherSnedecorMapInv m n = (fun x : ℝ => m * x / (n + m * x)) by
-    funext x
-    exact fisherSnedecorMapInv_def m n x]
+  unfold fisherSnedecorMapInv
   fun_prop
 
 /-! ### Support and the inverse -/
@@ -188,16 +193,6 @@ theorem fisherSnedecorMap_image_Ioo (hm : 0 < m) (hn : 0 < n) :
     exact ⟨fisherSnedecorMapInv m n x, fisherSnedecorMapInv_mem_Ioo hm hn hx,
       fisherSnedecorMap_mapInv (ne_of_gt hm) (ne_of_gt hn) (ne_of_gt hden)⟩
 
-private theorem ae_mem_Ioo_betaMeasure (α β : ℝ) :
-    ∀ᵐ u ∂betaMeasure α β, u ∈ Ioo (0 : ℝ) 1 := by
-  let _ : NullSingletonClass (betaMeasure α β) := by
-    rw [betaMeasure]
-    infer_instance
-  filter_upwards [(Ioo_ae_eq_Icc : Ioo (0 : ℝ) 1 =ᵐ[betaMeasure α β] Icc 0 1),
-      ae_mem_Icc_betaMeasure α β] with u hu hIcc
-  rw [hu]
-  exact hIcc
-
 /-- On the beta law, the preimage of `Iic x` under the beta-to-F map agrees a.e. with
 `Iic (fisherSnedecorMapInv m n x)` for positive `x`. -/
 private theorem fisherSnedecorMap_preimage_Iic_ae (hm : 0 < m) (hn : 0 < n) {x : ℝ} (hx : 0 < x) :
@@ -209,9 +204,10 @@ private theorem fisherSnedecorMap_preimage_Iic_ae (hm : 0 < m) (hn : 0 < n) {x :
   have hden : 0 < n + m * x := add_pos hn (mul_pos hm hx)
   have h_inv := fisherSnedecorMap_mapInv (x := x) (ne_of_gt hm) (ne_of_gt hn)
     (ne_of_gt hden)
-  nth_rewrite 1 [← h_inv]
-  exact (fisherSnedecorMap_strictMonoOn hm hn).le_iff_le hu.2
+  have key := (fisherSnedecorMap_strictMonoOn hm hn).le_iff_le hu.2
     (fisherSnedecorMapInv_mem_Ioo hm hn hx).2
+  rw [h_inv] at key
+  exact key
 
 /-- For positive degrees of freedom, the Fisher--Snedecor law is almost surely positive. -/
 theorem ae_mem_Ioi_fisherSnedecorMeasure (hm : 0 < m) (hn : 0 < n) :
@@ -224,11 +220,11 @@ theorem ae_mem_Ioi_fisherSnedecorMeasure (hm : 0 < m) (hn : 0 < n) :
 /-! ### The cdf -/
 
 /-- For positive degrees of freedom, the cdf is `0` when `x ≤ 0` and is the regularized
-incomplete beta function at the inverse beta-to-F coordinate when `0 < x`. -/
+incomplete beta function at `m * x / (n + m * x)` when `0 < x`. -/
 theorem cdf_fisherSnedecorMeasure_eq (hm : 0 < m) (hn : 0 < n) (x : ℝ) :
   cdf (fisherSnedecorMeasure m n) x =
       if x ≤ 0 then 0 else
-      regularizedIncompleteBeta (m / 2) (n / 2) (fisherSnedecorMapInv m n x) := by
+      regularizedIncompleteBeta (m / 2) (n / 2) (m * x / (n + m * x)) := by
   let _ : IsProbabilityMeasure (fisherSnedecorMeasure m n) :=
     isProbabilityMeasure_fisherSnedecorMeasure hm hn
   let _ : IsProbabilityMeasure (betaMeasure (m / 2) (n / 2)) :=
@@ -251,7 +247,8 @@ theorem cdf_fisherSnedecorMeasure_eq (hm : 0 < m) (hn : 0 < n) (x : ℝ) :
       map_measureReal_apply (measurable_fisherSnedecorMap m n) measurableSet_Iic,
       measureReal_congr (fisherSnedecorMap_preimage_Iic_ae hm hn hx')]
     rw [← cdf_eq_real]
-    exact cdf_betaMeasure_eq (by linarith) (by linarith) _
+    simpa only [fisherSnedecorMapInv_def] using
+      cdf_betaMeasure_eq (by linarith) (by linarith) _
 
 end Probability
 
