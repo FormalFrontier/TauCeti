@@ -572,7 +572,7 @@ private theorem coindFun2_smul (g h : G) (u : U) (x : G) :
   rw [e1, e2, e3, show (u * w x)⁻¹ * (u * w (x * g)) = (w x)⁻¹ * w (x * g) by group,
     show (u * w (x * g))⁻¹ * (u * w (x * g * h)) = (w (x * g))⁻¹ * w (x * g * h) by group, mul_smul]
 
-/-- **The inverse Shapiro cochain in degree two.** From a continuous `2`-cocycle `c` of `U` and a
+/-- **The inverse Shapiro cochain in degree two.** From a continuous `2`-cochain `c` of `U` and a
 continuous factorization `w` of `G` over the right cosets of `U`, the `2`-cochain of `G` with
 coefficients in `Coind_U^G A` whose value at `(g, h)` is the function
 `x ↦ w x • c ((w x)⁻¹ * w (x * g), (w (x * g))⁻¹ * w (x * g * h))`, that is, the homogeneous form of
