@@ -402,9 +402,7 @@ theorem transvectionWeylElement_mul_transvectionUnit_mul_inv_self (hij : i ≠ j
       simp_all [Matrix.transvection, Matrix.single_apply, Matrix.one_apply, eq_comm]
 
 /-- Conjugation by the Weyl representative for `εᵢ-εⱼ` sends the opposite root subgroup
-back to its root subgroup and negates the parameter. This is the transpose of
-`TauCeti.transvectionWeylElement_mul_transvectionUnit_mul_inv_self`: transposing a matrix swaps
-the two indices of a transvection and exchanges the two Weyl representatives. -/
+back to its root subgroup and negates the parameter. -/
 @[simp]
 theorem transvectionWeylElement_mul_transvectionUnit_mul_inv_symm (hij : i ≠ j) (c : A) :
     transvectionWeylElement hij * transvectionUnit hij.symm c *
