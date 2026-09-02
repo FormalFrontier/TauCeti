@@ -13,8 +13,16 @@
 #
 # Values are matched exactly. A base URL names the host serving Mathlib's container
 # namespace, with NO container path: the cache tool appends `/mathlib4-master/f/<hash>`
-# and falls back to `/mathlib4/f/<hash>`. Leaving the variable unset uses the tool's own
-# default endpoints and is always allowed.
+# and falls back to `/mathlib4/f/<hash>`. Leaving the variable unset is always allowed and
+# means the tool's own default, `defaultGetBaseURL` in Cache/Infra.lean, which in the pinned
+# Mathlib is `https://lakecache.blob.core.windows.net`.
 
-# Mathlib's canonical read mirror, validated upstream in leanprover-community/mathlib4#42657.
+# The read mirror this project's operators selected. The host is an operator decision, not
+# an upstream one: the pinned Mathlib never names it, and upstream's own default base is the
+# Azure storage account above. It entered this repository with
+# https://github.com/TauCetiProject/TauCeti/pull/5425, which pointed the then-current
+# `MATHLIB_CACHE_GET_URL` at `https://cache.mathlib.org/mathlib4`; the line below is the base
+# form of that same host, with the container path dropped because the cache tool appends it.
+# What IS upstream is the `MATHLIB_CACHE_BASE_URL` mechanism the line is selected through:
+# leanprover-community/mathlib4#42657, commit `edae46c8` in the pinned checkout.
 https://cache.mathlib.org

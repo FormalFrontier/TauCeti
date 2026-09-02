@@ -12,6 +12,12 @@
 # Unset or empty is allowed and means "use the cache tool's own default endpoints" -- the
 # tool treats empty as unset, so this is the no-configuration state, not a bypass.
 #
+# Two other cache variables fail the build outright when set to a non-empty value:
+# MATHLIB_CACHE_GET_URL, which the allowlisted base never reaches, and MATHLIB_CACHE_FROM,
+# which keeps the base but replaces the container chain. See the refusals below for why.
+# An operator who still has the superseded MATHLIB_CACHE_GET_URL variable defined has to
+# clear it, or every build fails here.
+#
 # Run with no arguments; reads MATHLIB_CACHE_BASE_URL from the environment.
 set -euo pipefail
 
@@ -19,7 +25,8 @@ ALLOWLIST="$(dirname "$0")/cache-endpoint-allowlist.txt"
 
 # Normalise exactly as the cache tool does before it uses the value, so this checks the
 # string the tool will actually read rather than the raw one. Mathlib's `normalizeBaseURL`
-# is `v.trimAscii.dropEndWhile '/'`, then treats the empty result as unset, and its
+# (`Cache/Infra.lean`, which `getBaseURLFrom` and so `Container.getURL` read the value
+# through) is `v.trimAscii.dropEndWhile '/'`, then treats the empty result as unset, and its
 # `Char.isWhitespace` is exactly space, tab, CR and LF. Trimming any wider set -- which is
 # what `[[:space:]]` means in a UTF-8 locale, where it also covers vertical tab, form feed
 # and the Unicode spaces -- would accept a value the tool then resolves to a different URL.
@@ -35,20 +42,34 @@ normalize() {
 
 VALUE="$(normalize "${MATHLIB_CACHE_BASE_URL:-}")"
 
-# The allowlist governs MATHLIB_CACHE_BASE_URL, but that is only the LAST of the cache
-# tool's read-endpoint inputs. Its precedence is MATHLIB_CACHE_GET_URL, then --cache-from,
-# then MATHLIB_CACHE_FROM, then the container chain that BASE_URL rebases. A higher one set
-# anywhere in this job would decide the endpoint without ever consulting the allowlist, so
-# refuse rather than check a value that is not the one in force. No workflow here sets them;
-# this keeps that true if one ever starts.
-for higher in MATHLIB_CACHE_GET_URL MATHLIB_CACHE_FROM; do
-  # Normalised, because the tool treats a whitespace-only value as unset too; refusing one
-  # would fail a build the tool would have run unaffected.
-  if [ -n "$(normalize "${!higher-}")" ]; then
-    echo "::error title=A higher-precedence cache endpoint is set::$higher is set, and it outranks MATHLIB_CACHE_BASE_URL in the cache tool's read-endpoint precedence, so the allowlist would not govern where this build fetches from. Unset it, or route the endpoint through MATHLIB_CACHE_BASE_URL and scripts/cache-endpoint-allowlist.txt."
-    exit 1
-  fi
-done
+# Two other read-endpoint inputs are refused outright. `effectiveGetURLs` in Mathlib's
+# `Cache/Requests.lean` resolves the read chain, and its docstring lists the precedence
+# "(most specific wins)": MATHLIB_CACHE_GET_URL, the `--cache-from` CLI flag,
+# MATHLIB_CACHE_FROM, then the default container chain. The two env vars are refused for
+# different reasons, so they get different messages. No workflow here sets either; these
+# checks keep that true if one ever starts. (`--cache-from` is a flag on the `cache` command
+# line, not something this script can observe; no `lake exe cache get` call here passes it.)
+#
+# Both are normalised first, because the tool treats a whitespace-only value as unset too;
+# refusing one would fail a build the tool would have run unaffected.
+
+# MATHLIB_CACHE_GET_URL returns a single flat URL and never consults the base at all, so it
+# decides the host outright and the allowlist never governs the fetch.
+if [ -n "$(normalize "${MATHLIB_CACHE_GET_URL-}")" ]; then
+  echo "::error title=A cache endpoint that bypasses the allowlist is set::MATHLIB_CACHE_GET_URL is set. It names one flat read endpoint and bypasses MATHLIB_CACHE_BASE_URL entirely, so the allowlist would not govern where this build fetches from. Unset it, and route the endpoint through MATHLIB_CACHE_BASE_URL and scripts/cache-endpoint-allowlist.txt."
+  exit 1
+fi
+
+# MATHLIB_CACHE_FROM does keep the base: its branch of `effectiveGetURLs` ends in
+# `chainWithGetURLs`, whose URLs are `{getBaseURL}/{azureContainerName}`, so the host stays
+# the allowlisted one. What it replaces is the container chain, and that chain is
+# trust-ordered (see the `Container` docstrings in `Cache/Infra.lean`): it can put a
+# container any fork's PR build writes to, such as 'forks', ahead of the master container
+# this project builds against. Refusing it keeps the containers a reviewed decision too.
+if [ -n "$(normalize "${MATHLIB_CACHE_FROM-}")" ]; then
+  echo "::error title=A cache container override is set::MATHLIB_CACHE_FROM is set. Reads would still resolve under the allowlisted base, but it replaces the cache tool's trust-ordered container chain, which can put a less-trusted container such as 'forks' ahead of master. Unset it; which containers this project reads is a reviewed decision, not a repository-variable one."
+  exit 1
+fi
 
 if [ -z "$VALUE" ]; then
   echo "MATHLIB_CACHE_BASE_URL is unset; reads use the cache tool's default endpoints"

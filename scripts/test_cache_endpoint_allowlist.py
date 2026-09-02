@@ -8,6 +8,8 @@ The properties that matter:
 * an allowlisted value is accepted after the same normalisation the cache tool applies, so
   the check judges the string the tool will actually read;
 * anything else fails, including the near-misses a prefix or suffix rule would admit;
+* a non-empty `MATHLIB_CACHE_GET_URL` or `MATHLIB_CACHE_FROM` fails outright rather than
+  quietly deciding the read chain behind the allowlist's back;
 * every workflow that fetches the Mathlib cache runs the check first, from its trusted
   checkout, and none still reads the superseded `MATHLIB_CACHE_GET_URL`.
 
@@ -91,7 +93,7 @@ def main() -> None:
         "a container path is refused (a base URL names the host alone)",
     )
 
-    print("a higher-precedence read variable is refused, not silently outranked")
+    print("the other two read-endpoint variables are refused, each for its own reason")
     check(
         run(None, MATHLIB_CACHE_GET_URL="https://evil.invalid") != 0,
         "MATHLIB_CACHE_GET_URL set with no base is refused",
@@ -99,6 +101,13 @@ def main() -> None:
     check(
         run("https://cache.mathlib.org", MATHLIB_CACHE_GET_URL="https://evil.invalid") != 0,
         "MATHLIB_CACHE_GET_URL is refused even beside an allowlisted base",
+    )
+    # MATHLIB_CACHE_FROM keeps the allowlisted base (its branch of `effectiveGetURLs` ends in
+    # `chainWithGetURLs`, whose URLs are `{getBaseURL}/{container}`); it is refused because it
+    # replaces the trust-ordered container chain, not because it moves the host.
+    check(
+        run("https://cache.mathlib.org", MATHLIB_CACHE_FROM="forks") != 0,
+        "MATHLIB_CACHE_FROM is refused even beside an allowlisted base",
     )
     check(
         run(None, MATHLIB_CACHE_FROM="master") != 0,
@@ -185,6 +194,8 @@ def main() -> None:
         step = re.search(
             r"^      - name: Check the Mathlib cache endpoint against the reviewed allowlist\n"
             r"(?:^ +#.*\n)*"
+            r"(?:^        if: .+\n)?"
+            r"(?:^ +#.*\n)*"
             r"(?:^        working-directory: (.+)\n)?"
             r"(?:^ +#.*\n)*"
             r"^        run: bash (\S+)\n",
@@ -207,6 +218,23 @@ def main() -> None:
             f"bash {prefix}scripts/check-cache-endpoint.sh" in text,
             f"{name}: runs {prefix}scripts/check-cache-endpoint.sh",
         )
+
+    print("a step consuming a conditional checkout carries that checkout's own condition")
+    # pr-build.yml checks out gate/ only under `if: env.INFRA != '1'`. A consumer without the
+    # same condition aborts an INFRA-routed run with a shell "No such file or directory"
+    # instead of the guard's verdict, which reads as the guard failing.
+    text = (WORKFLOWS / "pr-build.yml").read_text()
+    gate_steps = [
+        m for m in re.finditer(
+            r"^      - name: .+\n((?:^ {8}.*\n|^ +#.*\n)*)", text, re.M)
+        if "gate/" in m.group(1) or "path: gate" in m.group(1)
+    ]
+    check(
+        bool(gate_steps) and all(
+            re.search(r"^        if: .*INFRA != '1'", m.group(1), re.M)
+            for m in gate_steps),
+        "pr-build.yml: every gate/ step is guarded by env.INFRA != '1'",
+    )
 
     if failures:
         print(f"\n{len(failures)} check(s) failed")

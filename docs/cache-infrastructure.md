@@ -42,7 +42,18 @@ Every workflow that runs `lake exe cache get` (`ci.yml`, `pr-build.yml`, `pr-pro
 `scripts/cache-endpoint-allowlist.txt` before fetching anything. The cache tool treats an
 empty value as unset, so clearing the variable returns reads to its default endpoints on the
 next run, with no code change; pointing it somewhere new means adding that endpoint to the
-allowlist in a pull request first.
+allowlist in a pull request first. The three PR-facing workflows run the validator and read
+the allowlist from their trusted checkout (`gate/` for `pr-build.yml` and `pr-profile.yml`,
+`fresh/` for `nightly-verify.yml`), so a candidate's own edit to either does not govern its
+build.
+
+The same check refuses two other cache variables outright: a non-empty `MATHLIB_CACHE_GET_URL`
+or `MATHLIB_CACHE_FROM` fails the build rather than being silently honoured. `GET_URL` names
+one flat endpoint and never consults the base, so the allowlist would not govern the fetch at
+all; `FROM` does keep the allowlisted base but replaces the cache tool's trust-ordered
+container chain, which can put a container any fork's PR build writes to ahead of master. An
+operator who still has the superseded `MATHLIB_CACHE_GET_URL` repository variable defined has
+to clear it.
 
 The split matters because the endpoint decides which bytes this project's CI imports and
 executes, and Mathlib's `Cache/SECURITY.md` puts a substituted read endpoint outside its
@@ -55,7 +66,9 @@ an operator switch; the set of endpoints it can select stays a reviewed decision
 container namespace onto the given host and keeps the `mathlib4-master` to `mathlib4`
 fallback, while `GET_URL` names one flat endpoint and discards the chain (it exists for
 external tools that only expose that shape). A base value therefore names the host with no
-container path — `https://cache.mathlib.org`, not `https://cache.mathlib.org/mathlib4`.
+container path: `https://cache.mathlib.org`, not `https://cache.mathlib.org/mathlib4`. That
+host is an operator choice recorded in `scripts/cache-endpoint-allowlist.txt`, not an upstream
+default; the pinned Mathlib's own default base is `https://lakecache.blob.core.windows.net`.
 
 Local and radar runs set nothing: `scripts/bench/build/run` inherits whatever the environment
 provides and otherwise uses the cache tool's defaults.

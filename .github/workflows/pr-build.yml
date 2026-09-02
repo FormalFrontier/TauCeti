@@ -44,11 +44,12 @@ concurrency:
 
 env:
   # Read endpoint for `lake exe cache get`, wired from a repository variable and constrained
-  # to scripts/cache-endpoint-allowlist.txt by the check step in the job below. The cache tool
-  # treats unset and empty alike, so clearing the variable returns reads to the tool's
-  # default endpoints on the next run. `BASE_URL` rather than `GET_URL`: it rebases Mathlib's
-  # container namespace onto the given host and keeps the master -> legacy fallback, where
-  # `GET_URL` names a single flat endpoint and discards the chain.
+  # by the check step in the job below to gate/scripts/cache-endpoint-allowlist.txt -- the copy
+  # in that job's trusted checkout, not the candidate's. The cache tool treats unset and empty
+  # alike, so clearing the variable returns reads to the tool's default endpoints on the next
+  # run. `BASE_URL` rather than `GET_URL`: it rebases Mathlib's container namespace onto the
+  # given host and keeps the master -> legacy fallback, where `GET_URL` names a single flat
+  # endpoint and discards the chain.
   MATHLIB_CACHE_BASE_URL: ${{ vars.MATHLIB_CACHE_BASE_URL }}
 
 jobs:
@@ -516,18 +517,22 @@ jobs:
           # excludes it and the cache directory is not mounted, so the sandbox never receives it.
           project-dir: pr
 
+      # The endpoint below decides which host serves the oleans this job imports, so refuse
+      # anything the repository has not reviewed before a single byte is fetched. Unset is
+      # allowed and means the cache tool's own defaults. The validator and its allowlist come
+      # from gate/, the workflow-pinned trusted checkout, so a candidate's own edit to either
+      # does not govern its build. Skipped on an INFRA-routed run, which is the one path where
+      # gate/ was never checked out; that run fetches nothing either.
+      - name: Check the Mathlib cache endpoint against the reviewed allowlist
+        if: ${{ env.INFRA != '1' }}
+        run: bash gate/scripts/check-cache-endpoint.sh
+
       # `lake exe cache get` runs the `cache` exe built from the pinned Mathlib, unsandboxed,
       # with network (to download oleans) but deliberately NO token in env. For a normal PR that
       # pin is inherited from its trusted merge base. For a validated bump it is the new pin — which
       # bump-guard proved is a *forward commit on Mathlib's own master* (same repo, never a fork),
       # so the code run here is still trusted Mathlib master under the project's "track master"
       # policy; only the PR's TauCeti/ code stays untrusted and runs solely under landrun below.
-      # The endpoint below decides which host serves the oleans this job imports, so refuse
-      # anything the repository has not reviewed before a single byte is fetched. Unset is
-      # allowed and means the cache tool's own defaults.
-      - name: Check the Mathlib cache endpoint against the reviewed allowlist
-        run: bash gate/scripts/check-cache-endpoint.sh
-
       - name: Fetch Mathlib with the (bump-validated) config (network, no token; no PR code)
         if: ${{ env.INFRA != '1' }}
         # `set -o pipefail` is not optional here. A `run:` step with no explicit `shell:`
