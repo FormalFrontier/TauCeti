@@ -97,7 +97,6 @@ noncomputable scoped instance glLieModule (d : ℕ) {n : Type*} [DecidableEq n] 
   LieModule.compLieHom _ (glLieMap d)
 
 /-- The scoped Lie action is the action represented by `glLieMap`. -/
-@[simp, grind =]
 theorem gl_lie_def (d : ℕ) {n : Type*} [DecidableEq n] [Fintype n]
     (A : Matrix n n K) (x : ⋀[K]^d (n → K)) :
     letI : LieRingModule (Matrix n n K) (⋀[K]^d (n → K)) :=
@@ -330,7 +329,7 @@ private theorem basisPath_strictMono (d n : ℕ) (h : d ≤ n)
     simp only [basisPath, ha, hb, ite_false]
     exact (Set.powersetCard.ofFinEmbEquiv.symm s).strictMono hab
 
-private theorem lie_single_basisFamily (d n : ℕ) (v : Fin d → Fin n)
+private theorem lie_single_basis_family (d n : ℕ) (v : Fin d → Fin n)
     (hv : Function.Injective v) (a : Fin d) (i : Fin n) :
     letI : LieRingModule (Matrix (Fin n) (Fin n) K) (⋀[K]^d (Fin n → K)) :=
       glLieRingModule (K := K) (n := Fin n) d
@@ -366,7 +365,7 @@ private theorem lie_single_basisPath_transition (d n : ℕ) (v w : Fin d → Fin
         (Pi.single (v l) (1 : K) : Fin n → K))⁆ =
         ιMulti K d (fun l ↦
           (Pi.single (w l) (1 : K) : Fin n → K)) := by
-  rw [lie_single_basisFamily (K := K) d n v hv.injective a]
+  rw [lie_single_basis_family (K := K) d n v hv.injective a]
   exact congrArg (ιMulti K d) (congrArg (fun f ↦
     fun l ↦ (Pi.single (f l) (1 : K) : Fin n → K)) hupdate)
 
@@ -541,8 +540,23 @@ private theorem diagonalFactor_apply (d n : ℕ)
   rw [diagonalFactor]
   have haction := lie_single_self_basisWedge (K := K) t.1 t.2 i
   rw [basisWedge_eq_ιMulti_family t.1 (Set.powersetCard.card_eq t)] at haction
-  by_cases his : i ∈ s.1 <;> by_cases hit : i ∈ t.1
-  all_goals simp [his, hit, ← gl_lie_def, haction]
+  by_cases his : i ∈ s.1
+  · by_cases hit : i ∈ t.1
+    · simp only [his, hit, ite_true, eq_self]
+      rw [← gl_lie_def, haction]
+      simp only [hit, ite_true, one_smul]
+    · simp only [his, hit, ite_true, true_ne_false]
+      rw [← gl_lie_def, haction]
+      simp only [hit, ite_false, zero_smul]
+  · by_cases hit : i ∈ t.1
+    · simp only [his, hit, ite_false, false_ne_true]
+      rw [LinearMap.sub_apply]
+      rw [← gl_lie_def, haction]
+      simp only [hit, ite_true, Module.End.one_apply, one_smul, sub_self]
+    · simp only [his, hit, ite_false, eq_self]
+      rw [LinearMap.sub_apply]
+      rw [← gl_lie_def, haction]
+      simp only [hit, ite_false, Module.End.one_apply, zero_smul, sub_zero, ite_true]
 
 private noncomputable def diagonalProjector (d n : ℕ)
     (s : Set.powersetCard (Fin n) d) : Module.End K (⋀[K]^d (Fin n → K)) :=
@@ -562,7 +576,12 @@ private theorem diagonalProjector_apply (d n : ℕ)
     intro u
     induction u with
     | nil => simp
-    | cons i u ih => simp [Module.End.mul_apply, ih, diagonalFactor_apply]
+    | cons i u ih =>
+      simp only [List.map_cons, List.prod_cons, Module.End.mul_apply, ih]
+      rw [map_smul, diagonalFactor_apply]
+      by_cases h : (i ∈ s.1) = (i ∈ t.1)
+      · simp only [h, ite_true, one_mul]
+      · simp only [h, ite_false, zero_mul, smul_zero, zero_smul]
   rw [diagonalProjector, hprod]
   by_cases hst : s = t
   · subst t
