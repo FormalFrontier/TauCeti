@@ -104,7 +104,7 @@ theorem _root_.Polynomial.Monic.resultant_derivative {f : R[X]} (hf : f.Monic) :
 
 /-- For monic `f`, `f.resultant g` does not depend on which valid upper bound is supplied for the
 degree of `g`. -/
-private theorem Polynomial.Monic.resultant_of_le {f g : R[X]} (hf : f.Monic) {n : ℕ}
+private theorem _root_.Polynomial.Monic.resultant_of_le {f g : R[X]} (hf : f.Monic) {n : ℕ}
     (hn : g.natDegree ≤ n) : f.resultant g f.natDegree n = f.resultant g := by
   have hn' : n = g.natDegree + (n - g.natDegree) :=
     (Nat.add_sub_cancel' hn).symm
@@ -217,25 +217,25 @@ theorem _root_.Polynomial.Monic.discr_mul {f g : R[X]} (hf : f.Monic) (hg : g.Mo
   have hresf : f.resultant (f * g).derivative f.natDegree d =
       f.resultant f.derivative * f.resultant g := by
     rw [derivative_mul, resultant_add_mul_right _ _ _ _ _ hpf le_rfl,
-      Polynomial.Monic.resultant_of_le hf hmul_f,
-      ← Polynomial.Monic.resultant_of_le hf natDegree_mul_le,
+      hf.resultant_of_le hmul_f,
+      ← hf.resultant_of_le natDegree_mul_le,
       resultant_mul_right _ _ _ _ le_rfl]
   have hresg : g.resultant (f * g).derivative g.natDegree d =
       g.resultant f * g.resultant g.derivative := by
     rw [derivative_mul, mul_comm f.derivative g, add_comm,
       resultant_add_mul_right _ _ _ _ _ hpg le_rfl,
-      Polynomial.Monic.resultant_of_le hg hmul_g,
-      ← Polynomial.Monic.resultant_of_le hg natDegree_mul_le,
+      hg.resultant_of_le hmul_g,
+      ← hg.resultant_of_le natDegree_mul_le,
       resultant_mul_right _ _ _ _ le_rfl]
   have hmul := resultant_mul_left f g (f * g).derivative d hderiv
   rw [hresf, hresg] at hmul
   have hfd : f.resultant f.derivative =
       (-1) ^ (f.natDegree * (f.natDegree - 1) / 2) * f.discr := by
-    rw [← Polynomial.Monic.resultant_of_le hf (natDegree_derivative_le f),
+    rw [← hf.resultant_of_le (natDegree_derivative_le f),
       hf.resultant_derivative]
   have hgd : g.resultant g.derivative =
       (-1) ^ (g.natDegree * (g.natDegree - 1) / 2) * g.discr := by
-    rw [← Polynomial.Monic.resultant_of_le hg (natDegree_derivative_le g),
+    rw [← hg.resultant_of_le (natDegree_derivative_le g),
       hg.resultant_derivative]
   have hcomm : g.resultant f = (-1) ^ (g.natDegree * f.natDegree) * f.resultant g :=
     resultant_comm g f g.natDegree f.natDegree
@@ -395,7 +395,7 @@ resultant of `f` with `f.derivative`: separability is coprimality of that pair, 
 theorem _root_.Polynomial.Monic.isUnit_discr_iff {f : R[X]} (hf : f.Monic) :
     IsUnit f.discr ↔ f.Separable := by
   rw [separable_def, ← isUnit_resultant_iff_isCoprime hf,
-    ← Polynomial.Monic.resultant_of_le hf (natDegree_derivative_le f),
+    ← hf.resultant_of_le (natDegree_derivative_le f),
     hf.resultant_derivative,
     IsUnit.mul_iff]
   simp [isUnit_one.neg.pow]
