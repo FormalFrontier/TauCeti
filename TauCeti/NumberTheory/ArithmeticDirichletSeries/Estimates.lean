@@ -8,6 +8,7 @@ module
 public import Mathlib.NumberTheory.LSeries.Convergence
 public import Mathlib.NumberTheory.LSeries.SumCoeff
 public import Mathlib.NumberTheory.NumberField.Ideal.Asymptotics
+public import TauCeti.NumberTheory.ArithmeticDirichletSeries.Regroup
 public import TauCeti.NumberTheory.ArithmeticDirichletSeries.Trivial
 
 /-!
@@ -39,6 +40,9 @@ of a convergent series of nonnegative terms must become arbitrarily small.
 * `TauCeti.abscissaOfAbsConv_normCoeff_one`: the abscissa of absolute convergence of the trivial
   ideal weight is exactly `1`; `TauCeti.LSeriesSummable_normCoeff_one_iff` is the sharp
   convergence criterion.
+* `TauCeti.summable_absNorm_rpow_neg_iff`: the same criterion in real-variable form, over the
+  nonzero integral ideals themselves rather than over their norm fibres: `∑ N(I) ^ (-x)`
+  converges exactly for `x > 1`.
 * `TauCeti.abscissaOfAbsConv_dedekindZetaCoeff` and `TauCeti.LSeriesSummable_dedekindZetaCoeff_iff`
   are the same two statements for `TauCeti.dedekindZetaCoeff`, the coefficient system Mathlib's
   `NumberField.dedekindZeta` is the `LSeries` of.  That system counts *all* integral ideals, so it
@@ -424,5 +428,32 @@ theorem LSeriesSummable_dedekindZetaCoeff_iff {s : ℂ} :
     LSeriesSummable (fun n ↦ (dedekindZetaCoeff K n : ℂ)) s ↔ 1 < s.re := by
   rw [← LSeriesSummable_normCoeff_one_iff K]
   exact LSeriesSummable_congr s fun {n} hn ↦ by rw [normCoeff_one_apply, ite_eq_right hn]
+
+/-! ### The Dedekind zeta series in real form -/
+
+/-- At a real point the ideal terms of the trivial weight have absolute value `N(I) ^ (-x)`, so the
+two families are summable together. -/
+private theorem summable_idealTerm_one_iff (x : ℝ) :
+    Summable (idealTerm K (1 : IdealArithmeticFunction K) (x : ℂ)) ↔
+      Summable fun I : (Ideal (𝓞 K))⁰ ↦ (Ideal.absNorm (I : Ideal (𝓞 K)) : ℝ) ^ (-x) := by
+  rw [← summable_norm_iff]
+  refine summable_congr fun I ↦ ?_
+  rw [norm_idealTerm, Complex.ofReal_re, Pi.one_apply, norm_one,
+    Real.rpow_neg (Nat.cast_nonneg _), one_div]
+
+open scoped ComplexOrder in
+/-- **The Dedekind zeta series in real form.** The sum of `N(I) ^ (-x)` over the nonzero integral
+ideals of `𝓞 K` converges exactly for `x > 1`.
+
+This is the real-variable shadow of `TauCeti.LSeriesSummable_normCoeff_one_iff`: the trivial weight
+is nonnegative, so no cancellation occurs inside a norm fibre and the ungrouped ideal-indexed sum
+converges precisely where the regrouped Dedekind zeta series does. -/
+theorem summable_absNorm_rpow_neg_iff {x : ℝ} :
+    Summable (fun I : (Ideal (𝓞 K))⁰ ↦ (Ideal.absNorm (I : Ideal (𝓞 K)) : ℝ) ^ (-x)) ↔ 1 < x := by
+  rw [← summable_idealTerm_one_iff K x]
+  refine ⟨fun h ↦ ?_, fun h ↦ ?_⟩
+  · simpa using (LSeriesSummable_normCoeff_one_iff K).mp (LSeriesSummable_normCoeff K h)
+  · exact summable_idealTerm_of_nonneg K 1 (fun _ ↦ zero_le_one)
+      ((LSeriesSummable_normCoeff_one_iff K).mpr (by simpa using h))
 
 end TauCeti

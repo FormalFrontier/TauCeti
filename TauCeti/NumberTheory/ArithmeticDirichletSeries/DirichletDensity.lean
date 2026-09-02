@@ -7,7 +7,6 @@ module
 
 public import Mathlib.NumberTheory.NumberField.DirichletDensity
 public import TauCeti.NumberTheory.ArithmeticDirichletSeries.Estimates
-public import TauCeti.NumberTheory.ArithmeticDirichletSeries.Regroup
 public import TauCeti.NumberTheory.NumberField.PrimeIdeal
 -- See the implementation notes: this second, private import is what lets
 -- `NumberField.Set.hasDirichletDensity_iff_tendsto` be stated at all.
@@ -20,16 +19,15 @@ Mathlib defines the partial sum `NumberField.Set.primeIdealZetaSum S s = ∑_{�
 over a set `S` of height-one primes of `𝓞 K`, and says that `S` has Dirichlet density `δ` when the
 ratio `primeIdealZetaSum S s / primeIdealZetaSum univ s` tends to `δ` as `s → 1⁺`. What Mathlib
 does not record is that those sums converge at all: their summability is exactly the convergence
-of the Dedekind zeta series to the right of `1`. This file supplies that input and spends it on
-the part of the density calculus that does not need the all-prime asymptotic of the denominator.
+of the Dedekind zeta series to the right of `1`, which is
+`TauCeti.summable_absNorm_rpow_neg_iff`. This file restricts that convergence to the prime family
+and spends it on the part of the density calculus that does not need the all-prime asymptotic of
+the denominator.
 
 ## Main results
 
-* `TauCeti.summable_absNorm_rpow_neg_iff`: the sum of `N(I) ^ (-x)` over the *nonzero integral
-  ideals* of `𝓞 K` converges exactly for `x > 1`; this is the real-variable form of
-  `TauCeti.LSeriesSummable_normCoeff_one_iff`.
-* `NumberField.summable_absNorm_rpow_neg` and `NumberField.Set.summable_absNorm_rpow_neg`: hence
-  the prime-ideal family, and each of its subfamilies, is summable at every real `s > 1`.
+* `NumberField.summable_absNorm_rpow_neg` and `NumberField.Set.summable_absNorm_rpow_neg`: the
+  prime-ideal family, and each of its subfamilies, is summable at every real `s > 1`.
 * `NumberField.Set.primeIdealZetaSum_mono`, `NumberField.Set.primeIdealZetaSum_union`,
   `NumberField.Set.primeIdealZetaSum_add_primeIdealZetaSum_compl` and
   `NumberField.Set.primeIdealZetaSum_univ_pos`: monotonicity, additivity over a disjoint union,
@@ -56,7 +54,13 @@ without making this file's public interface depend on it, and states the unfoldi
 `NumberField.Set.hasDirichletDensity_iff_tendsto`. Every proof below goes through that lemma into
 the `Filter.Tendsto` API rather than through definitional unfolding. The two bound predicates
 defined here are opaque downstream for the same reason, so each comes with a characteristic
-`_iff` lemma restating its defining eventual inequality.
+`_iff` lemma restating its defining eventual inequality. Those two are `@[simp]`, as the
+predicates they characterize are introduced here; `NumberField.Set.hasDirichletDensity_iff_tendsto`
+deliberately is not, because `NumberField.Set.HasDirichletDensity` is Mathlib's and Mathlib's own
+API for it (`NumberField.Set.hasDirichletDensity_empty`,
+`NumberField.Set.HasDirichletDensity.nonneg`,
+`NumberField.Set.HasDirichletDensity.dirichletDensity_eq`) treats it as an atom, so a global simp
+lemma unfolding it would put those lemmas out of reach of `simp`.
 
 The partial sums are unfolded with Mathlib's `NumberField.Set.primeIdealZetaSum_def`, and the
 general `tsum` lemmas are then handed the summand `fun 𝔭 ↦ N(𝔭) ^ (-s)` explicitly, sparing them
@@ -96,39 +100,6 @@ public section
 
 open Filter IsDedekindDomain NumberField Set Topology
 open scoped nonZeroDivisors NumberField
-
-namespace TauCeti
-
-variable (K : Type*) [Field K] [NumberField K]
-
-/-! ### The Dedekind zeta series in real form -/
-
-/-- At a real point the ideal terms of the trivial weight have absolute value `N(I) ^ (-x)`, so the
-two families are summable together. -/
-private theorem summable_idealTerm_one_iff (x : ℝ) :
-    Summable (idealTerm K (1 : IdealArithmeticFunction K) (x : ℂ)) ↔
-      Summable fun I : (Ideal (𝓞 K))⁰ ↦ (Ideal.absNorm (I : Ideal (𝓞 K)) : ℝ) ^ (-x) := by
-  rw [← summable_norm_iff]
-  refine summable_congr fun I ↦ ?_
-  rw [norm_idealTerm, Complex.ofReal_re, Pi.one_apply, norm_one,
-    Real.rpow_neg (Nat.cast_nonneg _), one_div]
-
-open scoped ComplexOrder in
-/-- **The Dedekind zeta series in real form.** The sum of `N(I) ^ (-x)` over the nonzero integral
-ideals of `𝓞 K` converges exactly for `x > 1`.
-
-This is the real-variable shadow of `TauCeti.LSeriesSummable_normCoeff_one_iff`: the trivial weight
-is nonnegative, so no cancellation occurs inside a norm fibre and the ungrouped ideal-indexed sum
-converges precisely where the regrouped Dedekind zeta series does. -/
-theorem summable_absNorm_rpow_neg_iff {x : ℝ} :
-    Summable (fun I : (Ideal (𝓞 K))⁰ ↦ (Ideal.absNorm (I : Ideal (𝓞 K)) : ℝ) ^ (-x)) ↔ 1 < x := by
-  rw [← summable_idealTerm_one_iff K x]
-  refine ⟨fun h ↦ ?_, fun h ↦ ?_⟩
-  · simpa using (LSeriesSummable_normCoeff_one_iff K).mp (LSeriesSummable_normCoeff K h)
-  · exact summable_idealTerm_of_nonneg K 1 (fun _ ↦ zero_le_one)
-      ((LSeriesSummable_normCoeff_one_iff K).mpr (by simpa using h))
-
-end TauCeti
 
 namespace NumberField
 
@@ -236,6 +207,7 @@ def IsUpperDirichletDensityBound (S : Set (HeightOneSpectrum (𝓞 K))) (δ : �
 
 /-- Characterization of `NumberField.Set.IsLowerDirichletDensityBound`: it is exactly the family
 of eventual lower bounds `δ - ε` on the density ratio. -/
+@[simp]
 theorem isLowerDirichletDensityBound_iff :
     S.IsLowerDirichletDensityBound δ ↔
       ∀ ε > 0, ∀ᶠ s : ℝ in 𝓝[>] 1,
@@ -245,6 +217,7 @@ theorem isLowerDirichletDensityBound_iff :
 
 /-- Characterization of `NumberField.Set.IsUpperDirichletDensityBound`: it is exactly the family
 of eventual upper bounds `δ + ε` on the density ratio. -/
+@[simp]
 theorem isUpperDirichletDensityBound_iff :
     S.IsUpperDirichletDensityBound δ ↔
       ∀ ε > 0, ∀ᶠ s : ℝ in 𝓝[>] 1,
@@ -282,7 +255,7 @@ theorem hasDirichletDensity_of_upperBound_of_lowerBound (hup : S.IsUpperDirichle
   constructor <;> linarith
 
 /-- Having Dirichlet density `δ` is exactly having `δ` as both an upper and a lower bound. -/
-theorem hasDirichletDensity_iff :
+theorem hasDirichletDensity_iff_upperBound_and_lowerBound :
     S.HasDirichletDensity δ ↔
       S.IsUpperDirichletDensityBound δ ∧ S.IsLowerDirichletDensityBound δ :=
   ⟨fun h ↦ ⟨h.isUpperDirichletDensityBound, h.isLowerDirichletDensityBound⟩,
