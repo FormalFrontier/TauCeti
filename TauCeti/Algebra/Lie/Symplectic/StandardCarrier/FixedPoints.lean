@@ -97,8 +97,12 @@ Frobenius is the case a consumer asks for first" in Layer 9 of
 `TauCetiRoadmap/ReductiveGroups/README.md`, by naming an isomorphism onto the group that
 endomorphism fixes, from the points over the fixed subring. Its consumer is milestone L3 of
 `TauCetiRoadmap/CFSGStatement/README.md`, which takes the derived central quotient of
-`H_d = fixedSubgroup d.steinberg` on the three classification-list families carried by this
-carrier, `C_n(q)`, `B₂(q)` and `²B₂(2^(2m+1))`.
+`H_d = fixedSubgroup d.steinberg`. The families this isomorphism serves directly are the untwisted
+`C_n(q)` and `B₂(q)`, whose Steinberg endomorphism is the Frobenius treated here. The Suzuki family
+`²B₂(2^(2m+1))` is carried by the same carrier but is not among them: its Steinberg endomorphism is
+the twisted one built from the special isogeny, and no isomorphism for the subgroup it fixes is
+established here. Reading `H_d` on that branch through the carrier's points awaits the group-scheme
+lift of the special isogeny and a twisted counterpart of the result below.
 -/
 
 public section
