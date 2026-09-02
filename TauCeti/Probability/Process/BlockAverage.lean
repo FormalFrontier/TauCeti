@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Order.Filter.AtTopBot.Basic
-public import Mathlib.Data.Real.Basic
+public import Mathlib.Basic.Real.Basic
 public import Mathlib.Algebra.Order.BigOperators.Expect
 public import Mathlib.Dynamics.BirkhoffSum.Average
 import Mathlib.Algebra.BigOperators.Fin

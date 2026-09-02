@@ -10,8 +10,6 @@ public import TauCeti.Algebra.Lie.Weights.Borel
 import TauCeti.Algebra.Lie.Weights.Eigenvector
 public import TauCeti.Algebra.Lie.Weights.Integrality
 
-public section
-
 /-!
 # Highest weight vectors and dominant integral weights
 
@@ -97,6 +95,8 @@ definition of Layer 4 of
 
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §20.2.
 -/
+
+public section
 
 namespace TauCeti
 

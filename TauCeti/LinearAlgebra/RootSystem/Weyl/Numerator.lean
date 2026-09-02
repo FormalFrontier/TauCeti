@@ -10,8 +10,6 @@ public import Mathlib.Data.Int.Order.Units
 public import TauCeti.LinearAlgebra.RootSystem.Weyl.DotAction
 public import TauCeti.LinearAlgebra.RootSystem.Weyl.Sign
 
-public section
-
 /-!
 # The Weyl numerator
 
@@ -84,6 +82,8 @@ specialization rather than a rebuild.
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, Ch. VI, §24.
 * J.-P. Serre, *Complex Semisimple Lie Algebras*, Ch. VII.
 -/
+
+public section
 
 namespace TauCeti
 

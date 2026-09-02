@@ -10,8 +10,6 @@ public import Mathlib.Topology.ContinuousMap.Weierstrass
 public import TauCeti.RepresentationTheory.SU2.ConjugacyClasses
 public import TauCeti.RepresentationTheory.SU2.SymmetricPower
 
-public section
-
 /-!
 # The characters of the symmetric powers span the class functions of `SU(2)`
 
@@ -80,6 +78,8 @@ representations, so that the character orthogonality of
 * T. Bröcker, T. tom Dieck, *Representations of Compact Lie Groups*, Springer GTM 98 (1985),
   Chapter II, §5.
 -/
+
+public section
 
 open Matrix Polynomial
 

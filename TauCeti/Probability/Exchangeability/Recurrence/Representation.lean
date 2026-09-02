@@ -100,7 +100,7 @@ theorem ConditionallyIIDWith.ae_measure_setOf_mem_eq_zero_of_excursionProcess
       (Set.univ.pi fun _ : Fin 1 => S) = 0 := by
     have hf : AEMeasurable
         (fun ω => fun _ : Fin 1 => excursionProcess X a₀ 0 ω) μ :=
-      aemeasurable_pi_lambda _ fun _ => h.aemeasurable 0
+      AEMeasurable.of_eval fun _ => h.aemeasurable 0
     rw [blockLaw_def, Measure.map_apply_of_aemeasurable hf
       (MeasurableSet.univ_pi fun _ => hSmeas)]
     convert measure_empty (μ := μ)

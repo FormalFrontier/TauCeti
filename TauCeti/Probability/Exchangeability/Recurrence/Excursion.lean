@@ -155,7 +155,7 @@ theorem measurable_excursion (a₀ : α) (k : ℕ) :
 theorem aemeasurable_excursionProcess {μ : Measure Ω} {X : ℕ → Ω → α}
     (hX : ∀ i, AEMeasurable (X i) μ) (a₀ : α) (k : ℕ) :
     AEMeasurable (excursionProcess X a₀ k) μ :=
-  (measurable_excursion a₀ k).comp_aemeasurable (aemeasurable_pi_lambda _ hX)
+  (measurable_excursion a₀ k).comp_aemeasurable (AEMeasurable.of_eval hX)
 
 end Measurability
 

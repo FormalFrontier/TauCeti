@@ -8,8 +8,6 @@ module
 public import Mathlib.Algebra.Lie.DirectSum
 public import TauCeti.Algebra.Lie.Basic
 
-public section
-
 /-!
 # External direct sums of Lie modules
 
@@ -57,6 +55,8 @@ Schur's lemma, and with which `TauCeti/Algebra/Lie/Multiplicity.lean` reads a mu
 irreducibles by isomorphism type, in
 `TauCeti/Algebra/Lie/Submodule/DirectSum.lean`.
 -/
+
+public section
 
 open scoped DirectSum
 

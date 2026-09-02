@@ -7,8 +7,8 @@ module
 
 public import Mathlib.Combinatorics.Quiver.Cast
 public import Mathlib.Combinatorics.Quiver.Path.Vertices
-public import Mathlib.Data.Finite.Prod
-public import Mathlib.Data.Finite.Sigma
+public import Mathlib.Basic.Finite.Prod
+public import Mathlib.Basic.Finite.Sigma
 public import Mathlib.SetTheory.Cardinal.Finite
 
 /-!

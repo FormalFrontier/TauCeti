@@ -209,16 +209,16 @@ theorem SeparatelyDissociated.map_values (h : SeparatelyDissociated μ X) {g : �
     (hg : Measurable g) : SeparatelyDissociated μ fun p ω => g (X p ω) :=
   separatelyDissociated_iff.mpr fun e f e' f' he hf =>
     (separatelyDissociated_iff.mp h e f e' f' he hf).comp
-      (measurable_pi_lambda _ fun p => hg.comp (measurable_pi_apply p))
-      (measurable_pi_lambda _ fun p => hg.comp (measurable_pi_apply p))
+      (Measurable.of_eval fun p => hg.comp (measurable_pi_apply p))
+      (Measurable.of_eval fun p => hg.comp (measurable_pi_apply p))
 
 /-- Joint dissociation is preserved by a measurable coordinatewise pushforward of the entries. -/
 theorem JointlyDissociated.map_values (h : JointlyDissociated μ X) {g : α → β}
     (hg : Measurable g) : JointlyDissociated μ fun p ω => g (X p ω) :=
   jointlyDissociated_iff.mpr fun e e' he =>
     (jointlyDissociated_iff.mp h e e' he).comp
-      (measurable_pi_lambda _ fun p => hg.comp (measurable_pi_apply p))
-      (measurable_pi_lambda _ fun p => hg.comp (measurable_pi_apply p))
+      (Measurable.of_eval fun p => hg.comp (measurable_pi_apply p))
+      (Measurable.of_eval fun p => hg.comp (measurable_pi_apply p))
 
 /-- **Dissociation passes to rectangular blocks** along injective index maps: a block of a block is
 a block, and an injection carries disjoint index sets to disjoint index sets. -/
@@ -279,7 +279,7 @@ theorem JointlyDissociated.separatelyDissociated_arrayBlockPair
       x (Equiv.natSumNatEquivNat (Sum.inr p.2),
         Equiv.natSumNatEquivNat (Sum.inl p.1)))
   have hread : Measurable read :=
-    measurable_pi_lambda _ fun p => (measurable_pi_apply _).prodMk (measurable_pi_apply _)
+    Measurable.of_eval fun p => (measurable_pi_apply _).prodMk (measurable_pi_apply _)
   have hleft :
       read ∘ (fun ω p => X (g₁ p.1, g₁ p.2) ω) =
         fun ω p => arrayBlockPair X e f (e₁ p.1, f₁ p.2) ω := by
@@ -341,7 +341,7 @@ theorem separatelyDissociated_of_iIndepFun (hX : iIndepFun X μ) (hX_meas : ∀ 
   refine separatelyDissociated_iff.mpr fun e f e' f' he _ => ?_
   have key : ∀ a b : ℕ → ℕ, Measurable[blockSigma X (Set.range a ×ˢ Set.range b)]
       fun ω (p : ℕ × ℕ) => X (a p.1, b p.2) ω := fun a b =>
-    @measurable_pi_lambda _ _ _ (blockSigma X (Set.range a ×ˢ Set.range b)) _ _ fun p =>
+    @Measurable.of_eval _ _ _ (blockSigma X (Set.range a ×ˢ Set.range b)) _ _ fun p =>
       measurable_blockSigma_of_mem (Z := X) (S := Set.range a ×ˢ Set.range b)
         ⟨⟨p.1, rfl⟩, ⟨p.2, rfl⟩⟩
   exact indepFun_of_measurable_blockSigma (hX.precomp Subtype.val_injective)

@@ -9,8 +9,6 @@ public import Mathlib.Data.Fintype.EquivFin
 public import Mathlib.RingTheory.MvPolynomial.Homogeneous
 public import TauCeti.Combinatorics.Young.Kostka
 
-public section
-
 /-!
 # Schur polynomials
 
@@ -79,6 +77,8 @@ involution, and it lives downstream in
 * [Schur--Weyl roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/SchurWeyl/README.md),
   Layer 7.
 -/
+
+public section
 
 namespace TauCeti
 
@@ -186,10 +186,11 @@ variable {N R μ}
 `s_μ` is the image in `R` of the number of semistandard tableaux of shape `μ` whose content
 is `d`. -/
 theorem coeff_diagramSchurPoly (d : Fin N →₀ ℕ) :
-    coeff d (diagramSchurPoly N R μ)
+    (diagramSchurPoly N R μ).coeff d
       = (diagramKostkaNumber μ (Finsupp.mapDomain Fin.val d) : R) := by
   classical
-  rw [diagramSchurPoly, coeff_sum]
+  rw [diagramSchurPoly]
+  rw [coeff_sum]
   simp only [coeff_monomial]
   rw [Finset.sum_boole, ← BoundedSSYT.card_weight_eq d, Nat.card_eq_fintype_card,
     Fintype.card_subtype]
@@ -210,7 +211,7 @@ namely of a Kostka number, and casts of natural numbers are preserved by semirin
 theorem map_diagramSchurPoly {S : Type*} [CommSemiring S] (f : R →+* S) :
     MvPolynomial.map f (diagramSchurPoly N R μ) = diagramSchurPoly N S μ := by
   ext d
-  rw [coeff_map, coeff_diagramSchurPoly, coeff_diagramSchurPoly, map_natCast]
+  rw [MvPolynomial.coeff_map, coeff_diagramSchurPoly, coeff_diagramSchurPoly, map_natCast]
 
 /-- **A Schur polynomial of a shape taller than its alphabet vanishes**, there being no tableau to
 sum over. -/
@@ -276,7 +277,7 @@ private theorem degree_rowLenWeight_lt (h : N < μ.colLen 0) :
 highest-weight tableau, whose `i`-th row consists of `i`s, is the unique tableau of shape `μ`
 whose content is the row lengths of `μ`. -/
 theorem coeff_diagramSchurPoly_rowLenWeight (h : μ.colLen 0 ≤ N) :
-    coeff (rowLenWeight N μ) (diagramSchurPoly N R μ) = 1 := by
+    (diagramSchurPoly N R μ).coeff (rowLenWeight N μ) = 1 := by
   rw [coeff_diagramSchurPoly, mapDomain_rowLenWeight h, diagramKostkaNumber_rowLen, Nat.cast_one]
 
 /-- **A Schur polynomial of a shape no taller than its alphabet is nonzero.** -/
@@ -284,8 +285,8 @@ theorem diagramSchurPoly_ne_zero [Nontrivial R] (h : μ.colLen 0 ≤ N) :
     diagramSchurPoly N R μ ≠ 0 := by
   intro hz
   have h1 := coeff_diagramSchurPoly_rowLenWeight (R := R) h
-  rw [hz, coeff_zero] at h1
-  exact zero_ne_one h1
+  rw [hz] at h1
+  simp at h1
 
 /-- **A Schur polynomial vanishes exactly for a shape taller than its alphabet.** -/
 theorem diagramSchurPoly_eq_zero_iff [Nontrivial R] :
@@ -298,7 +299,7 @@ the row lengths of `μ` does not occur in `s_μ`. For partitions this is the van
 outside the dominance order, `TauCeti.kostkaNumber_eq_zero_of_not_dominates`. -/
 theorem coeff_diagramSchurPoly_eq_zero_of_sum_lt {d : Fin N →₀ ℕ} {k : ℕ}
     (h : (μ.rowLens.take k).sum < ∑ i ∈ Finset.range k, Finsupp.mapDomain Fin.val d i) :
-    coeff d (diagramSchurPoly N R μ) = 0 := by
+    (diagramSchurPoly N R μ).coeff d = 0 := by
   have hzero : diagramKostkaNumber μ (Finsupp.mapDomain Fin.val d) = 0 := by
     by_contra hne
     exact absurd (sum_le_sum_take_rowLens_of_diagramKostkaNumber_ne_zero hne k) (not_le.mpr h)
@@ -324,7 +325,7 @@ coefficient of `s_μ` at the exponent recording the parts of `ν` is the image i
 The row bound is what makes the exponent record all of `ν`: an alphabet shorter than the number of
 parts of `ν` would truncate it. -/
 theorem coeff_diagramSchurPoly_diagramOf (h : (diagramOf ν).colLen 0 ≤ N) :
-    coeff (rowLenWeight N (diagramOf ν)) (diagramSchurPoly N R (diagramOf μ))
+    (diagramSchurPoly N R (diagramOf μ)).coeff (rowLenWeight N (diagramOf ν))
       = (kostkaNumber μ ν : R) := by
   rw [coeff_diagramSchurPoly, mapDomain_rowLenWeight h, kostkaNumber_def]
 
@@ -333,7 +334,7 @@ parts of `ν` occurs in `s_μ` only if `μ` dominates `ν`. No row bound is need
 short to record all of `ν` truncates the exponent to one of degree less than `n`, where `s_μ`
 vanishes by homogeneity. -/
 theorem coeff_diagramSchurPoly_diagramOf_eq_zero_of_not_dominates (hd : ¬ Dominates μ ν) :
-    coeff (rowLenWeight N (diagramOf ν)) (diagramSchurPoly N R (diagramOf μ)) = 0 := by
+    (diagramSchurPoly N R (diagramOf μ)).coeff (rowLenWeight N (diagramOf ν)) = 0 := by
   rcases le_or_gt ((diagramOf ν).colLen 0) N with h | h
   · rw [coeff_diagramSchurPoly_diagramOf μ ν h, kostkaNumber_eq_zero_of_not_dominates hd,
       Nat.cast_zero]
@@ -381,16 +382,16 @@ variable (μ ν : n.Partition)
 exponent obtained from `d` by the ordering of the alphabet, the coefficient of `s_μ` is the image
 in `R` of the Kostka number of `μ` and the content that `d` extends to by zero. -/
 theorem coeff_schurPoly_mapDomain (d : Fin (Fintype.card σ) →₀ ℕ) :
-    coeff (Finsupp.mapDomain (Fintype.equivFin σ).symm d) (schurPoly σ R μ)
+    (schurPoly σ R μ).coeff (Finsupp.mapDomain (Fintype.equivFin σ).symm d)
       = (diagramKostkaNumber (diagramOf μ) (Finsupp.mapDomain Fin.val d) : R) := by
-  rw [schurPoly, coeff_rename_mapDomain _ (Fintype.equivFin σ).symm.injective,
+  rw [schurPoly, MvPolynomial.coeff_rename_mapDomain _ (Fintype.equivFin σ).symm.injective,
     coeff_diagramSchurPoly]
 
 /-- **The coefficients of a Schur polynomial in a finite alphabet are the Kostka numbers**: the
 coefficient of `s_μ` at an arbitrary exponent `d` is the image in `R` of the Kostka number of `μ`
 and the content obtained from `d` by numbering the alphabet with `Fintype.equivFin`. -/
 theorem coeff_schurPoly (d : σ →₀ ℕ) :
-    coeff d (schurPoly σ R μ)
+    (schurPoly σ R μ).coeff d
       = (diagramKostkaNumber (diagramOf μ)
           (Finsupp.mapDomain (fun x => (Fintype.equivFin σ x : ℕ)) d) : R) := by
   have hd : Finsupp.mapDomain (Fintype.equivFin σ).symm
@@ -406,16 +407,16 @@ of `s_μ` at the exponent recording the parts of `ν` is the image in `R` of `K_
 is what makes the exponent record all of `ν`: an alphabet with fewer letters than `ν` has parts
 would truncate the record. -/
 theorem coeff_schurPoly_partWeight (h : (diagramOf ν).colLen 0 ≤ Fintype.card σ) :
-    coeff (partWeight σ ν) (schurPoly σ R μ) = (kostkaNumber μ ν : R) := by
+    (schurPoly σ R μ).coeff (partWeight σ ν) = (kostkaNumber μ ν : R) := by
   rw [partWeight, coeff_schurPoly_mapDomain, mapDomain_rowLenWeight h, kostkaNumber_def]
 
-/-- **The Schur polynomials are triangular for the dominance order**: the exponent recording the
-parts of `ν` occurs in `s_μ` only if `μ` dominates `ν`. No row bound is needed: an alphabet too
-short to record all of `ν` truncates the exponent to one of degree less than `n`, where `s_μ`
-vanishes by homogeneity. -/
+/-- **Schur polynomials are triangular for dominance**: the exponent recording the parts of `ν`
+occurs in `s_μ` only if `μ` dominates `ν`. No row bound needed: an alphabet too short to record all
+of `ν` truncates the exponent to degree less than `n`, where `s_μ` vanishes by homogeneity. -/
 theorem coeff_schurPoly_partWeight_eq_zero_of_not_dominates (hd : ¬ Dominates μ ν) :
-    coeff (partWeight σ ν) (schurPoly σ R μ) = 0 := by
-  rw [partWeight, schurPoly, coeff_rename_mapDomain _ (Fintype.equivFin σ).symm.injective]
+    (schurPoly σ R μ).coeff (partWeight σ ν) = 0 := by
+  rw [partWeight, schurPoly]
+  rw [MvPolynomial.coeff_rename_mapDomain _ (Fintype.equivFin σ).symm.injective]
   exact coeff_diagramSchurPoly_diagramOf_eq_zero_of_not_dominates μ ν hd
 
 /-- Scalars pass through a Schur polynomial: every coefficient is the cast of a natural number,

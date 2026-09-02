@@ -64,7 +64,7 @@ theorem MixedIIDWith.map_values {μ : Measure Ω} {X : ι → Ω → α}
   · intro m k hk
     have hXk : ∀ i : Fin m, AEMeasurable (X (k i)) μ := fun i => h.aemeasurable (k i)
     have hFmeas : Measurable fun x : Fin m → α => fun i => f (x i) :=
-      measurable_pi_lambda _ fun i => hf.comp (measurable_pi_apply i)
+      Measurable.of_eval fun i => hf.comp (measurable_pi_apply i)
     have hg : AEMeasurable
         (fun ω => (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure) μ :=
       MeasureTheory.aemeasurable_probabilityMeasure_pi_toMeasure_of_measurable (fun _ : Fin m => ν)
@@ -99,13 +99,13 @@ theorem mixedIID_of_mixedIID_pathLaw {μ : Measure Ω} {X : ℕ → Ω → α}
     (h : MixedIID (pathLaw μ X) fun n p => p n) :
     MixedIID μ X := by
   obtain ⟨ν, hν⟩ := h.exists_mixingRepresentative
-  have hφ : Measurable (fun ω => fun i => X i ω : Ω → ℕ → α) := measurable_pi_lambda _ hX_meas
+  have hφ : Measurable (fun ω => fun i => X i ω : Ω → ℕ → α) := Measurable.of_eval hX_meas
   refine MixedIID.of_mixingRepresentative
     (MixedIIDWith.intro (fun i => (hX_meas i).aemeasurable)
       (hν.measurable_mixingRepresentative.comp hφ) ?_)
   intro m k hk
   have hcoord : Measurable (fun p : ℕ → α => fun i : Fin m => p (k i)) :=
-    measurable_pi_lambda _ fun i => measurable_pi_apply (k i)
+    Measurable.of_eval fun i => measurable_pi_apply (k i)
   have hg : Measurable
       (fun p : ℕ → α => (ProbabilityMeasure.pi fun _ : Fin m => ν p).toMeasure) :=
     TauCeti.MeasureTheory.measurable_probabilityMeasure_pi_const_toMeasure ν

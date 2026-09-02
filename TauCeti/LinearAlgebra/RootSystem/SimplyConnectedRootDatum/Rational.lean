@@ -10,8 +10,6 @@ public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Irreducible
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.Assembly
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.Reduced
 
-public section
-
 /-!
 # The rational root system of a Dynkin type
 
@@ -62,6 +60,8 @@ root-system input of the Chevalley basis in Layer 9, "pinned Chevalley--Demazure
 `ℤ`", of `TauCetiRoadmap/ReductiveGroups/README.md`, whose consumer is milestone L0 of the
 `CFSGStatement` roadmap.
 -/
+
+public section
 
 namespace TauCeti.DynkinType
 

@@ -115,7 +115,7 @@ theorem mixingLaw_map_permReindex_arrayRow_eq_of_col_invariant
     rw [arrayRow_apply]
   rw [hleft, hright]
   let F : (ℕ × ℕ → α) → (Fin m → ℕ → α) := fun x i j ↦ x (k i, j)
-  have hF : Measurable F := measurable_pi_lambda _ fun i ↦ measurable_pi_lambda _ fun j ↦
+  have hF : Measurable F := Measurable.of_eval fun i ↦ Measurable.of_eval fun j ↦
     measurable_pi_apply (k i, j)
   rw [← map_map_array (X := fun p ↦ X (p.1, τ p.2)) (fun p ↦ hX _) hF,
     ← map_map_array hX hF, hcol]
@@ -155,7 +155,7 @@ theorem mixingLaw_map_permReindex_arrayCol_eq_of_row_invariant
     rw [arrayCol_apply]
   rw [hleft, hright]
   let F : (ℕ × ℕ → α) → (Fin m → ℕ → α) := fun x j i ↦ x (i, k j)
-  have hF : Measurable F := measurable_pi_lambda _ fun j ↦ measurable_pi_lambda _ fun i ↦
+  have hF : Measurable F := Measurable.of_eval fun j ↦ Measurable.of_eval fun i ↦
     measurable_pi_apply (i, k j)
   rw [← map_map_array (X := fun p ↦ X (σ p.1, p.2)) (fun p ↦ hX _) hF,
     ← map_map_array hX hF, hrow]

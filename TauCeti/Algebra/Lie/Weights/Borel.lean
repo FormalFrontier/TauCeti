@@ -9,8 +9,6 @@ public import Mathlib.Algebra.Lie.Weights.RootSystem
 public import TauCeti.Algebra.Lie.Weights.Span
 public import TauCeti.LinearAlgebra.RootSystem.Positive
 
-public section
-
 /-!
 # The nilradicals and the Borel subalgebra of a positive system
 
@@ -87,6 +85,8 @@ induced from.
 
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §10.1.
 -/
+
+public section
 
 namespace TauCeti
 

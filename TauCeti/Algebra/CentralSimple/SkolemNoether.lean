@@ -17,7 +17,7 @@ public import Mathlib.RingTheory.TensorProduct.Basic
 -- modules over a simple Artinian algebra and finiteness of a tensor product are used only inside
 -- proofs, and the matrix, complex and quaternion modules only by the worked examples at the end.
 import Mathlib.Algebra.Central.Matrix
-import Mathlib.Data.Complex.Basic
+import Mathlib.Basic.Complex.Basic
 import Mathlib.RingTheory.SimpleRing.Matrix
 import Mathlib.RingTheory.TensorProduct.Finite
 import TauCeti.Algebra.Central.Quaternion

@@ -258,7 +258,7 @@ omit [Countable α] [IsMarkovKernel κ] in
 private theorem aemeasurable_excursionProcess_pi (μ : Measure (ℕ → α)) (a₀ : α) :
     AEMeasurable
       (fun (x : ℕ → α) => fun k => excursionProcess (fun n (y : ℕ → α) => y n) a₀ k x) μ :=
-  aemeasurable_pi_lambda _ fun k => aemeasurable_excursionProcess_eval μ a₀ k
+  AEMeasurable.of_eval fun k => aemeasurable_excursionProcess_eval μ a₀ k
 
 omit [MeasurableSpace α] [Countable α] [MeasurableSingletonClass α] in
 /-- Prescribing the first `m` excursions of a path is prescribing them coordinatewise. -/
@@ -370,7 +370,7 @@ theorem map_excursionProcess_eq_excursionLaw (k : ℕ)
     (prefixLaw_excursionProcess_eq_pi (k + 1) hvisit)
   rw [prefixLaw_def, blockLaw_def,
     (measurable_pi_apply i).aemeasurable.map_map_of_aemeasurable
-      (aemeasurable_pi_lambda _ fun j => aemeasurable_excursionProcess_eval _ a₀ j.val),
+      (AEMeasurable.of_eval fun j => aemeasurable_excursionProcess_eval _ a₀ j.val),
     hcoord, Measure.pi_map_eval] at h
   simpa using h
 

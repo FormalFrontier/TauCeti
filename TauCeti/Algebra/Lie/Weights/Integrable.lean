@@ -12,8 +12,6 @@ public import TauCeti.LinearAlgebra.Eigenspace.Semisimple
 public import TauCeti.LinearAlgebra.Eigenspace.Separation
 public import Mathlib.Algebra.Lie.Weights.Killing
 
-public section
-
 /-!
 # The weights of an integrable module are stable under the root reflections
 
@@ -77,6 +75,8 @@ classification of finite-dimensional irreducibles", of
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §21.2.
 * V. G. Kac, *Infinite Dimensional Lie Algebras*, 3rd ed., §3.6.
 -/
+
+public section
 
 namespace TauCeti
 
