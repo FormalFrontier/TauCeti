@@ -12,7 +12,6 @@ public import Mathlib.Probability.Moments.Basic
 public import Mathlib.Probability.Moments.IntegrableExpMul
 public import Mathlib.Probability.Moments.Variance
 import TauCeti.Analysis.Fourier.ExpNegAbs
-import TauCeti.MeasureTheory.Integral.Bochner.Basic
 import Mathlib.Analysis.SpecialFunctions.Gaussian.GaussianIntegral
 import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
 import Mathlib.MeasureTheory.Function.JacobianOneDim
@@ -313,9 +312,11 @@ theorem rnDeriv_laplaceMeasure (μ b : ℝ) :
 private lemma measureReal_laplaceMeasure {s : Set ℝ} (hs : MeasurableSet s)
     (hint : IntegrableOn (laplacePDFReal μ b) s) :
     (laplaceMeasure μ b).real s = ∫ y in s, laplacePDFReal μ b y := by
-  rw [laplaceMeasure_eq_withDensity]
-  exact measureReal_withDensity_ofReal
-    (ae_of_all _ fun y => laplacePDFReal_nonneg μ b y) hs hint
+  rw [measureReal_def, laplaceMeasure_eq_withDensity, withDensity_apply _ hs]
+  simp_rw [laplacePDF_eq_ofReal]
+  rw [← ofReal_integral_eq_lintegral_ofReal hint
+      (ae_of_all _ fun y => laplacePDFReal_nonneg μ b y),
+    ENNReal.toReal_ofReal (integral_nonneg fun y => laplacePDFReal_nonneg μ b y)]
 
 /-- The upper tail of a Laplace law above its location. -/
 theorem measureReal_Ioi_laplaceMeasure (hb : 0 < b) (hx : μ ≤ x) :
@@ -349,7 +350,10 @@ private lemma integrable_comp_abs {f : ℝ → ℝ} (hf : IntegrableOn f (Ioi 0)
   have hIoi : IntegrableOn (fun y : ℝ => f |y|) (Ioi 0) :=
     hf.congr_fun (fun y hy => by rw [abs_of_pos hy]) measurableSet_Ioi
   have hIic : IntegrableOn (fun y : ℝ => f |y|) (Iic 0) := by
-    have h := MeasureTheory.integrableOn_comp_neg_Iic_iff_Ioi.mpr hIoi
+    have hemb : MeasurableEmbedding fun y : ℝ => -y := (Homeomorph.neg ℝ).measurableEmbedding
+    have h := ((Measure.measurePreserving_neg (volume : Measure ℝ)).integrableOn_comp_preimage
+      hemb (f := fun u : ℝ => f |u|) (s := Ici (0 : ℝ))).2
+      (Iff.mpr integrableOn_Ici_iff_integrableOn_Ioi hIoi)
     simpa [Function.comp_def, abs_neg] using h
   rw [← integrableOn_univ, ← Iic_union_Ioi (a := (0 : ℝ))]
   exact hIic.union hIoi

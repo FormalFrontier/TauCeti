@@ -355,10 +355,11 @@ theorem rnDeriv_weibullMeasure (k lam : ℝ) :
 /-- Integrating the density computes the real mass of a measurable set. -/
 private lemma measureReal_weibullMeasure {s : Set ℝ} (hs : MeasurableSet s) :
     (weibullMeasure k lam).real s = ∫ y in s, weibullPDFReal k lam y := by
-  rw [weibullMeasure]
-  exact measureReal_withDensity_ofReal
-    (ae_of_all _ fun y ↦ weibullPDFReal_nonneg k lam y) hs
-    (integrable_weibullPDFReal k lam).integrableOn
+  rw [measureReal_def, weibullMeasure, withDensity_apply _ hs]
+  simp_rw [weibullPDF_eq_ofReal]
+  rw [← ofReal_integral_eq_lintegral_ofReal (integrable_weibullPDFReal k lam).integrableOn
+      (ae_of_all _ fun y ↦ weibullPDFReal_nonneg k lam y),
+    ENNReal.toReal_ofReal (integral_nonneg fun y ↦ weibullPDFReal_nonneg k lam y)]
 
 /-- The real upper-tail mass of a valid Weibull law. -/
 theorem measureReal_Ioi_weibullMeasure (hk : 0 < k) (hlam : 0 < lam) (hx : 0 < x) :
