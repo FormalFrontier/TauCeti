@@ -42,11 +42,8 @@ variable {V : Type u} [AddCommGroup V]
 all its iterates. -/
 theorem toIntLinearEquiv_pow_apply (θ : V ≃+ V) (n : ℕ) (v : V) :
     (θ.toIntLinearEquiv ^ n) v = (θ : V → V)^[n] v := by
-  induction n generalizing v with
-  | zero => simp
-  | succ n ih =>
-      rw [pow_succ, LinearEquiv.mul_apply, Function.iterate_succ_apply, ih]
-      simp only [AddEquiv.coe_toIntLinearEquiv]
+  simpa only [AddEquiv.coe_toIntLinearEquiv] using
+    LinearEquiv.pow_apply θ.toIntLinearEquiv n v
 
 end AddEquiv
 
