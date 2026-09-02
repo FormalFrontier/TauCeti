@@ -40,8 +40,8 @@ as required by the standard-distributions roadmap.
 * `TauCeti.Probability.hypergeometricMeasure_real_Iic`: the native cumulative mass.
 * `TauCeti.Probability.integral_hypergeometricMeasure`: integration as a finite weighted sum.
 * `TauCeti.Probability.integral_id_map_cast_hypergeometricMeasure`: the mean of the real cast law.
-* `TauCeti.Probability.variance_id_map_cast_hypergeometricMeasure`: its variance for every valid
-  parameter triple, with named zero-variance corollaries for populations of size zero and one.
+* `TauCeti.Probability.variance_id_map_cast_hypergeometricMeasure`: its variance when `1 < N`,
+  with separate zero-variance results for populations of size zero and one.
 * `TauCeti.Probability.mgf_id_map_cast_hypergeometricMeasure` and
   `TauCeti.Probability.charFun_map_cast_hypergeometricMeasure`: the finite transform formulas for
   the real-valued cast law.
@@ -259,69 +259,7 @@ theorem hypergeometricMeasure_real_Iic_eq_sum (hK : K ≤ N) (hn : n ≤ N) (k :
   rw [hypergeometricMeasure_real_Iic]
   exact Finset.sum_congr rfl fun j _ ↦ hypergeometricMeasure_real_singleton hK hn j
 
-/-! ## Transforms of the real-valued cast law -/
-
-/-- Every function on `ℝ` is integrable against the real-valued cast of a hypergeometric law,
-since the native law has finite support. -/
-@[simp]
-theorem integrable_map_cast_hypergeometricMeasure {E : Type*} [NormedAddCommGroup E]
-    (f : ℝ → E) (N K n : ℕ) :
-    Integrable f ((hypergeometricMeasure N K n).map (Nat.cast : ℕ → ℝ)) := by
-  rw [(MeasurableEmbedding.natCast (α := ℝ)).integrable_map_iff]
-  exact integrable_hypergeometricMeasure (fun k ↦ f (k : ℝ)) N K n
-
-/-- Integration against the real-valued cast of a valid hypergeometric law is a finite weighted
-sum. -/
-theorem integral_map_cast_hypergeometricMeasure {E : Type*} [NormedAddCommGroup E]
-    [NormedSpace ℝ E] [CompleteSpace E] (f : ℝ → E) (hK : K ≤ N) (hn : n ≤ N) :
-    ∫ x, f x ∂(hypergeometricMeasure N K n).map (Nat.cast : ℕ → ℝ) =
-      ∑ k ∈ Finset.range (n + 1),
-        (hypergeometricWeight N K n k).toReal • f (k : ℝ) := by
-  rw [integral_map Measurable.of_discrete.aemeasurable
-      (integrable_map_cast_hypergeometricMeasure f N K n).aestronglyMeasurable,
-    integral_hypergeometricMeasure (fun k ↦ f (k : ℝ)) hK hn]
-
-/-- The real-valued cast of every hypergeometric law has all exponential moments. This includes
-the invalid parameter range, where the totalized law is the zero measure. -/
-@[simp]
-theorem integrableExpSet_id_map_cast_hypergeometricMeasure (N K n : ℕ) :
-    integrableExpSet id ((hypergeometricMeasure N K n).map (Nat.cast : ℕ → ℝ)) = Set.univ := by
-  ext t
-  simp only [integrableExpSet, Set.mem_univ, iff_true]
-  exact integrable_map_cast_hypergeometricMeasure (fun x : ℝ ↦ Real.exp (t * id x)) N K n
-
-/-- The moment-generating function of the real-valued cast of a valid hypergeometric law, as the
-finite sum of its masses against the exponential kernel. -/
-theorem mgf_id_map_cast_hypergeometricMeasure (hK : K ≤ N) (hn : n ≤ N) (t : ℝ) :
-    mgf id ((hypergeometricMeasure N K n).map (Nat.cast : ℕ → ℝ)) t =
-      ∑ k ∈ Finset.range (n + 1),
-        (hypergeometricWeight N K n k).toReal * Real.exp (t * (k : ℝ)) := by
-  rw [mgf, integral_map_cast_hypergeometricMeasure _ hK hn]
-  simp only [id_eq, smul_eq_mul]
-
-/-- The cumulant-generating function of the real-valued cast of a valid hypergeometric law is the
-real logarithm of its finite-sum moment-generating function. -/
-theorem cgf_id_map_cast_hypergeometricMeasure (hK : K ≤ N) (hn : n ≤ N) (t : ℝ) :
-    cgf id ((hypergeometricMeasure N K n).map (Nat.cast : ℕ → ℝ)) t =
-      Real.log (∑ k ∈ Finset.range (n + 1),
-        (hypergeometricWeight N K n k).toReal * Real.exp (t * (k : ℝ))) := by
-  rw [cgf, mgf_id_map_cast_hypergeometricMeasure hK hn]
-
-/-- The characteristic function of the real-valued cast of a valid hypergeometric law, as the
-finite sum of its masses against the complex exponential kernel. -/
-theorem charFun_map_cast_hypergeometricMeasure (hK : K ≤ N) (hn : n ≤ N) (t : ℝ) :
-    charFun ((hypergeometricMeasure N K n).map (Nat.cast : ℕ → ℝ)) t =
-      ∑ k ∈ Finset.range (n + 1),
-        (hypergeometricWeight N K n k).toReal *
-          Complex.exp (((k : ℝ) * t) * Complex.I) := by
-  rw [charFun_apply, integral_map_cast_hypergeometricMeasure _ hK hn]
-  apply Finset.sum_congr rfl
-  intro k _
-  rw [Complex.real_smul]
-  simp only [Real.inner_apply]
-  congr 2
-  push_cast
-  ring
+/-! ## Moments of the real-valued cast law -/
 
 private theorem sum_fst_mul_choose_mul_choose (A B r : ℕ) (hr : 0 < r) :
     ∑ ij ∈ Finset.HasAntidiagonal.antidiagonal r,
@@ -579,24 +517,16 @@ private theorem sum_hypergeometricWeight_toReal_mul_pred {N K n : ℕ} (hK : K �
     have hnle : n ≤ 1 := by omega
     interval_cases n <;> norm_num [Finset.sum_range_succ, hypergeometricWeight]
 
-/-- The mean of the real cast of a valid hypergeometric law is `nK / N`. This totalized formula
-also covers the unique valid empty-population parameters. -/
+/-- The mean of the real cast of a valid hypergeometric law is `nK / N` when the population
+is nonempty. The only valid empty-population parameters are handled separately below. -/
 @[simp]
 theorem integral_id_map_cast_hypergeometricMeasure {N K n : ℕ}
-    (hK : K ≤ N) (hn : n ≤ N) :
+    (hK : K ≤ N) (hn : n ≤ N) (hN : 0 < N) :
     ∫ x, x ∂((hypergeometricMeasure N K n).map (Nat.cast : ℕ → ℝ)) =
       (n : ℝ) * (K : ℝ) / (N : ℝ) := by
-  by_cases hN : 0 < N
-  · rw [integral_map (by fun_prop) (by fun_prop),
-      integral_hypergeometricMeasure (fun k ↦ (k : ℝ)) hK hn]
-    simpa only [smul_eq_mul] using sum_hypergeometricWeight_toReal_mul hK hn hN
-  · have hN0 : N = 0 := by omega
-    have hK0 : K = 0 := by omega
-    have hn0 : n = 0 := by omega
-    subst N
-    subst K
-    subst n
-    norm_num [hypergeometricMeasure, hypergeometricWeight]
+  rw [integral_map (by fun_prop) (by fun_prop),
+    integral_hypergeometricMeasure (fun k ↦ (k : ℝ)) hK hn]
+  simpa only [smul_eq_mul] using sum_hypergeometricWeight_toReal_mul hK hn hN
 
 private theorem integral_sq_id_map_cast_hypergeometricMeasure {N K n : ℕ}
     (hK : K ≤ N) (hn : n ≤ N) (hN : 1 < N) :
@@ -631,49 +561,114 @@ private theorem integrable_sq_id_map_cast_hypergeometricMeasure (N K n : ℕ) :
   funext k
   rfl
 
-/-- The variance of the real cast of a valid hypergeometric law. The totalized
-finite-population correction `(N - n) / (N - 1)` also gives zero for populations of size zero
-and one. -/
+/-- The variance of the real cast of a valid hypergeometric law for a population with at least
+two elements. The finite-population correction is `(N - n) / (N - 1)`; populations of size zero
+and one are handled separately below. -/
 @[simp]
 theorem variance_id_map_cast_hypergeometricMeasure {N K n : ℕ}
-    (hK : K ≤ N) (hn : n ≤ N) :
+    (hK : K ≤ N) (hn : n ≤ N) (hN : 1 < N) :
     variance id ((hypergeometricMeasure N K n).map (Nat.cast : ℕ → ℝ)) =
       (n : ℝ) * ((K : ℝ) / (N : ℝ)) * (1 - (K : ℝ) / (N : ℝ)) *
         (((N : ℝ) - (n : ℝ)) / ((N : ℝ) - 1)) := by
-  by_cases hN : 1 < N
-  · let _ : IsProbabilityMeasure (hypergeometricMeasure N K n) :=
-      isProbabilityMeasure_hypergeometricMeasure hK hn
-    have hmem : MemLp id 2
-        ((hypergeometricMeasure N K n).map (Nat.cast : ℕ → ℝ)) :=
-      (memLp_two_iff_integrable_sq aestronglyMeasurable_id).2
-        (integrable_sq_id_map_cast_hypergeometricMeasure N K n)
-    rw [variance_eq_sub hmem]
-    simp only [Pi.pow_apply, id_eq]
-    rw [integral_sq_id_map_cast_hypergeometricMeasure hK hn hN,
-      integral_id_map_cast_hypergeometricMeasure hK hn]
-    have hNreal : (1 : ℝ) < (N : ℝ) := by exact_mod_cast hN
-    have hNm1 : (N : ℝ) - 1 ≠ 0 := by linarith
-    field_simp [hNm1]
-    ring
-  · have hNle : N ≤ 1 := by omega
-    interval_cases N <;> interval_cases K <;> interval_cases n <;>
-      norm_num [hypergeometricMeasure, hypergeometricWeight, Finset.sum_range_succ]
+  let _ : IsProbabilityMeasure (hypergeometricMeasure N K n) :=
+    isProbabilityMeasure_hypergeometricMeasure hK hn
+  have hmem : MemLp id 2
+      ((hypergeometricMeasure N K n).map (Nat.cast : ℕ → ℝ)) :=
+    (memLp_two_iff_integrable_sq aestronglyMeasurable_id).2
+      (integrable_sq_id_map_cast_hypergeometricMeasure N K n)
+  rw [variance_eq_sub hmem]
+  simp only [Pi.pow_apply, id_eq]
+  rw [integral_sq_id_map_cast_hypergeometricMeasure hK hn hN,
+    integral_id_map_cast_hypergeometricMeasure hK hn (by omega)]
+  have hNreal : (1 : ℝ) < (N : ℝ) := by exact_mod_cast hN
+  have hNm1 : (N : ℝ) - 1 ≠ 0 := by linarith
+  field_simp [hNm1]
+  ring
 
 /-- The real cast of the unique valid empty-population hypergeometric law has mean zero. -/
+@[simp]
 theorem integral_id_map_cast_hypergeometricMeasure_zero :
     ∫ x, x ∂((hypergeometricMeasure 0 0 0).map (Nat.cast : ℕ → ℝ)) = 0 := by
-  simp
+  norm_num [hypergeometricMeasure, hypergeometricWeight]
 
 /-- The real cast of the unique valid empty-population hypergeometric law has variance zero. -/
+@[simp]
 theorem variance_id_map_cast_hypergeometricMeasure_zero :
     variance id ((hypergeometricMeasure 0 0 0).map (Nat.cast : ℕ → ℝ)) = 0 := by
-  simp
+  norm_num [hypergeometricMeasure, hypergeometricWeight]
 
-/-- Every valid hypergeometric law on a population of size one has variance zero. -/
+/-- Every valid hypergeometric law on a population of size one has variance zero. This is stated
+separately because the usual formula contains the totalized quotient by `N - 1`. -/
+@[simp]
 theorem variance_id_map_cast_hypergeometricMeasure_of_population_one {K n : ℕ}
     (hK : K ≤ 1) (hn : n ≤ 1) :
     variance id ((hypergeometricMeasure 1 K n).map (Nat.cast : ℕ → ℝ)) = 0 := by
-  simpa using variance_id_map_cast_hypergeometricMeasure (N := 1) hK hn
+  interval_cases K <;> interval_cases n <;>
+    simp [hypergeometricMeasure, hypergeometricWeight, Finset.sum_range_succ]
+
+/-! ## Transforms of the real-valued cast law -/
+
+/-- Every function on `ℝ` is integrable against the real-valued cast of a hypergeometric law,
+since the native law has finite support. -/
+@[simp]
+theorem integrable_map_cast_hypergeometricMeasure {E : Type*} [NormedAddCommGroup E]
+    (f : ℝ → E) (N K n : ℕ) :
+    Integrable f ((hypergeometricMeasure N K n).map (Nat.cast : ℕ → ℝ)) := by
+  rw [(MeasurableEmbedding.natCast (α := ℝ)).integrable_map_iff]
+  exact integrable_hypergeometricMeasure (fun k ↦ f (k : ℝ)) N K n
+
+/-- Integration against the real-valued cast of a valid hypergeometric law is a finite weighted
+sum. -/
+theorem integral_map_cast_hypergeometricMeasure {E : Type*} [NormedAddCommGroup E]
+    [NormedSpace ℝ E] [CompleteSpace E] (f : ℝ → E) (hK : K ≤ N) (hn : n ≤ N) :
+    ∫ x, f x ∂(hypergeometricMeasure N K n).map (Nat.cast : ℕ → ℝ) =
+      ∑ k ∈ Finset.range (n + 1),
+        (hypergeometricWeight N K n k).toReal • f (k : ℝ) := by
+  rw [integral_map Measurable.of_discrete.aemeasurable
+      (integrable_map_cast_hypergeometricMeasure f N K n).aestronglyMeasurable,
+    integral_hypergeometricMeasure (fun k ↦ f (k : ℝ)) hK hn]
+
+/-- The real-valued cast of every hypergeometric law has all exponential moments. This includes
+the invalid parameter range, where the totalized law is the zero measure. -/
+@[simp]
+theorem integrableExpSet_id_map_cast_hypergeometricMeasure (N K n : ℕ) :
+    integrableExpSet id ((hypergeometricMeasure N K n).map (Nat.cast : ℕ → ℝ)) = Set.univ := by
+  ext t
+  simp only [integrableExpSet, Set.mem_univ, iff_true]
+  exact integrable_map_cast_hypergeometricMeasure (fun x : ℝ ↦ Real.exp (t * id x)) N K n
+
+/-- The moment-generating function of the real-valued cast of a valid hypergeometric law, as the
+finite sum of its masses against the exponential kernel. -/
+theorem mgf_id_map_cast_hypergeometricMeasure (hK : K ≤ N) (hn : n ≤ N) (t : ℝ) :
+    mgf id ((hypergeometricMeasure N K n).map (Nat.cast : ℕ → ℝ)) t =
+      ∑ k ∈ Finset.range (n + 1),
+        (hypergeometricWeight N K n k).toReal * Real.exp (t * (k : ℝ)) := by
+  rw [mgf, integral_map_cast_hypergeometricMeasure _ hK hn]
+  simp only [id_eq, smul_eq_mul]
+
+/-- The cumulant-generating function of the real-valued cast of a valid hypergeometric law is the
+real logarithm of its finite-sum moment-generating function. -/
+theorem cgf_id_map_cast_hypergeometricMeasure (hK : K ≤ N) (hn : n ≤ N) (t : ℝ) :
+    cgf id ((hypergeometricMeasure N K n).map (Nat.cast : ℕ → ℝ)) t =
+      Real.log (∑ k ∈ Finset.range (n + 1),
+        (hypergeometricWeight N K n k).toReal * Real.exp (t * (k : ℝ))) := by
+  rw [cgf, mgf_id_map_cast_hypergeometricMeasure hK hn]
+
+/-- The characteristic function of the real-valued cast of a valid hypergeometric law, as the
+finite sum of its masses against the complex exponential kernel. -/
+theorem charFun_map_cast_hypergeometricMeasure (hK : K ≤ N) (hn : n ≤ N) (t : ℝ) :
+    charFun ((hypergeometricMeasure N K n).map (Nat.cast : ℕ → ℝ)) t =
+      ∑ k ∈ Finset.range (n + 1),
+        (hypergeometricWeight N K n k).toReal *
+          Complex.exp (((k : ℝ) * t) * Complex.I) := by
+  rw [charFun_apply, integral_map_cast_hypergeometricMeasure _ hK hn]
+  apply Finset.sum_congr rfl
+  intro k _
+  rw [Complex.real_smul]
+  simp only [Real.inner_apply]
+  congr 2
+  push_cast
+  ring
 
 end Probability
 
