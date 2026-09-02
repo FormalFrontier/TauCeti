@@ -105,6 +105,13 @@ integral closure `𝒪'_P` inside `F'` (Stichtenoth, Section III.3). -/
 def IsIntegralBasis {ι : Type*} (b : Basis ι F F') : Prop :=
   Submodule.span (P.integers) (Set.range b) = (integralClosure (P.integers) F').toSubmodule
 
+/-- Unfolding of `TauCeti.Place.IsIntegralBasis`: a basis is an integral basis at `P` exactly when
+its `𝒪_P`-span is the local integral closure `𝒪'_P`. -/
+theorem isIntegralBasis_iff_span_eq {ι : Type*} (b : Basis ι F F') :
+    P.IsIntegralBasis F' b ↔ Submodule.span (P.integers) (Set.range b) =
+      (integralClosure (P.integers) F').toSubmodule :=
+  (Iff.rfl)
+
 /-- A basis is an integral basis at `P` exactly when integrality over `𝒪_P` is equivalent to all
 of its coordinates lying in `𝒪_P`. -/
 theorem isIntegralBasis_iff_isIntegral_iff_repr_mem {ι : Type*} (b : Basis ι F F') :
