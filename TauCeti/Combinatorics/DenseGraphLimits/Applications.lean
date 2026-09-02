@@ -6,6 +6,7 @@ Authors: Codex
 module
 
 public import TauCeti.Combinatorics.DenseGraphLimits.HomDensity.SmallGraphs
+import Mathlib.Probability.Moments.Variance
 
 /-!
 # Extremal inequalities for graphons
@@ -84,34 +85,14 @@ private theorem integrable_graphonDegree_sq (W : Graphon Ω μ) :
 
 private theorem integral_graphonDegree_sq_ge (W : Graphon Ω μ) :
     (∫ x, graphonDegree W x ∂μ) ^ 2 ≤ ∫ x, graphonDegree W x ^ 2 ∂μ := by
-  let d : Ω → ℝ := graphonDegree W
-  let e : ℝ := ∫ x, d x ∂μ
-  have hd : Integrable d μ := integrable_graphonDegree W
-  have hd2 : Integrable (fun x => d x ^ 2) μ := integrable_graphonDegree_sq W
-  have hvar : 0 ≤ ∫ x, (d x - e) ^ 2 ∂μ :=
-    integral_nonneg fun x => sq_nonneg (d x - e)
-  have hexpand : (∫ x, (d x - e) ^ 2 ∂μ) =
-      (∫ x, d x ^ 2 ∂μ) - 2 * e * (∫ x, d x ∂μ) + e ^ 2 := by
-    have hpoint : (fun x => (d x - e) ^ 2) =
-        (fun x => d x ^ 2 - (2 * (e * d x))) + (fun _ : Ω => e ^ 2) := by
-      funext x
-      simp only [Pi.add_apply]
-      ring
-    rw [hpoint]
-    -- Expose the pointwise sum so the integral linearity lemma can match its two summands.
-    change (∫ x, (d x ^ 2 - 2 * (e * d x)) + e ^ 2 ∂μ) = _
-    have hmul : Integrable (fun x => 2 * (e * d x)) μ := by
-      simpa only [smul_eq_mul, mul_assoc] using (hd.const_mul e).const_mul 2
-    have hsub : Integrable (fun x => d x ^ 2 - 2 * (e * d x)) μ := hd2.sub hmul
-    rw [integral_add hsub (integrable_const _)]
-    rw [integral_sub hd2 ((hd.const_mul e).const_mul 2), integral_const,
-      integral_const_mul, integral_const_mul]
-    simp only [smul_eq_mul, measureReal_def, IsProbabilityMeasure.measure_univ,
-      ENNReal.toReal_one]
-    ring
-  dsimp [d, e] at hvar hexpand ⊢
-  rw [hexpand] at hvar
-  nlinarith
+  -- Nonnegativity of the variance, in the form `E[d]² ≤ E[d²]`.
+  have hLp : MemLp (graphonDegree W) 2 μ :=
+    (memLp_two_iff_integrable_sq
+      (integrable_graphonDegree W).aestronglyMeasurable).2 (integrable_graphonDegree_sq W)
+  have h := ProbabilityTheory.variance_nonneg (graphonDegree W) μ
+  rw [ProbabilityTheory.variance_eq_sub hLp] at h
+  simp only [Pi.pow_apply] at h
+  linarith
 
 private theorem integrable_triple_graphon_product (W : Graphon Ω μ) :
     Integrable (fun p : Ω × Ω × Ω =>

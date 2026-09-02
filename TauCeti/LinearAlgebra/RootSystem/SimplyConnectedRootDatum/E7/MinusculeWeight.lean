@@ -153,6 +153,30 @@ theorem e7MinusculeReflection_apply_apply (i : Fin 7) (a : Fin 56) :
     e7MinusculeReflection i (e7MinusculeReflection i a) = a :=
   e7MinusculeReflectionIndex_involutive i a
 
+private theorem e7MinusculeWeight_distinguished_neg_one_step (i : Fin 7) :
+    e7MinusculeWeight (![8, 5, 6, 4, 3, 2, 1] i) i = -1 ∧
+      e7MinusculeReflection i (![8, 5, 6, 4, 3, 2, 1] i) =
+        ![6, 4, 4, 3, 2, 1, 0] i := by
+  fin_cases i <;> decide
+
+private theorem e7MinusculeWeight_distinguished_one_step (i : Fin 7) :
+    e7MinusculeWeight (![6, 4, 4, 3, 2, 1, 0] i) i = 1 ∧
+      e7MinusculeReflection i (![6, 4, 4, 3, 2, 1, 0] i) =
+        ![8, 5, 6, 4, 3, 2, 1] i := by
+  fin_cases i <;> decide
+
+/-- Every simple coroot has pairing `-1` with some minuscule weight. -/
+theorem exists_e7MinusculeWeight_apply_eq_neg_one (i : Fin 7) :
+    ∃ a, e7MinusculeWeight a i = -1 :=
+  ⟨![8, 5, 6, 4, 3, 2, 1] i,
+    (e7MinusculeWeight_distinguished_neg_one_step i).1⟩
+
+/-- Every simple coroot has pairing `1` with some minuscule weight. -/
+theorem exists_e7MinusculeWeight_apply_eq_one (i : Fin 7) :
+    ∃ a, e7MinusculeWeight a i = 1 :=
+  ⟨![6, 4, 4, 3, 2, 1, 0] i,
+    (e7MinusculeWeight_distinguished_one_step i).1⟩
+
 private theorem e7MinusculeWeight_reflection_table (i : Fin 7) (a : Fin 56) :
     e7MinusculeWeight (e7MinusculeReflection i a) =
       e7MinusculeWeight a - e7MinusculeWeight a i • CartanMatrix.E 7 i := by

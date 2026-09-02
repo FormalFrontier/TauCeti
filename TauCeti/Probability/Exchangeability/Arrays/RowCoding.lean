@@ -78,17 +78,6 @@ section CodingLaw
 
 variable [StandardBorelSpace α] [Nonempty α]
 
-omit [StandardBorelSpace α] [Nonempty α] in
-/-- A row-process witness supplies measurability of every array entry. -/
-private theorem aemeasurable_entries_of_conditionallyIIDWith_arrayRow
-    {μ : Measure Ω} {X : ℕ × ℕ → Ω → α}
-    {ν : Ω → ProbabilityMeasure (ℕ → α)}
-    (h : ConditionallyIIDWith μ (arrayRow X) ν) (p : ℕ × ℕ) :
-    AEMeasurable (X p) μ := by
-  have hentry : AEMeasurable (fun ω => arrayRow X p.1 ω p.2) μ :=
-    (measurable_pi_apply p.2).comp_aemeasurable (h.aemeasurable p.1)
-  simpa [arrayRow_apply] using hentry
-
 /-- The measurable map which retains a path law and uses one independent uniform variable to
 sample each row from it. -/
 theorem measurable_arrayRowCoding :
@@ -154,7 +143,7 @@ theorem ConditionallyIIDWith.jointLaw_arrayRow_eq_arrayRowCodingLaw
     (μ.map fun ω => (ν ω, fun p : ℕ × ℕ => X p ω)) =
       arrayRowCodingLaw (μ.map ν) := by
   have hX : ∀ p, AEMeasurable (X p) μ :=
-    aemeasurable_entries_of_conditionallyIIDWith_arrayRow h
+    aemeasurable_entry_of_aemeasurable_arrayRow h.aemeasurable
   rw [← map_uncurry_jointPathLaw_arrayRow hX h.measurable_directing,
     h.jointPathLaw_eq_map_unitIntervalCoding, arrayRowCodingLaw_def]
   have hinner : Measurable fun q : ProbabilityMeasure (ℕ → α) × (ℕ → unitInterval) =>
@@ -180,7 +169,7 @@ theorem SeparatelyExchangeable.map_pairReindex_arrayRowCodingLaw_eq
           (q.1.map (fun x : ℕ → α => fun k => x (τ k)), pairReindex σ τ q.2)) =
       arrayRowCodingLaw (μ.map ν) := by
   have hX : ∀ p, AEMeasurable (X p) μ :=
-    aemeasurable_entries_of_conditionallyIIDWith_arrayRow hν
+    aemeasurable_entry_of_aemeasurable_arrayRow hν.aemeasurable
   rw [← hν.jointLaw_arrayRow_eq_arrayRowCodingLaw,
     AEMeasurable.map_map_of_aemeasurable]
   · have hfun :
@@ -195,7 +184,7 @@ theorem SeparatelyExchangeable.map_pairReindex_arrayRowCodingLaw_eq
           funext p
           simp only [pairReindex_apply]
     rw [hfun]
-    exact h.jointLaw_arrayRow_pairReindex_eq hX hν σ τ
+    exact h.jointLaw_arrayRow_pairReindex_eq hν σ τ
   · exact ((TauCeti.MeasureTheory.measurable_probabilityMeasure_map
       (measurable_reindex τ)).comp measurable_fst).prodMk
         ((measurable_pairReindex σ τ).comp measurable_snd) |>.aemeasurable

@@ -1021,6 +1021,15 @@ theorem exists_eq_ofC (d : TypeCLieIndex) :
   case C rank q => exact fun hvalid _ => ⟨rank, q, hvalid, rfl⟩
   all_goals exact fun _ hC => False.elim hC
 
+/-- **The Cartan matrix of the diagram a validated type-`C` index names**, entry by entry: it is
+the type-`C` Cartan matrix at the index's rank. This is the projection of the introduction form
+`TauCeti.TypeCLieIndex.ofC` through `TauCeti.DynkinType.cartanMatrix_C`, stated on entries rather
+than on matrices because the rank occurs in the index types of the two nodes. -/
+theorem dynkinType_cartanMatrix_apply (d : TypeCLieIndex) (i j : Fin d.1.rank) :
+    d.1.dynkinType.cartanMatrix i j = CartanMatrix.C d.1.rank i j := by
+  obtain ⟨rank, q, hvalid, rfl⟩ := d.exists_eq_ofC
+  exact congrFun₂ (DynkinType.cartanMatrix_C rank) i j
+
 /-- The rank of a validated type-`C` index is at least three. -/
 theorem three_le_rank (d : TypeCLieIndex) : 3 ≤ d.1.rank := by
   obtain ⟨rank, q, hvalid, rfl⟩ := d.exists_eq_ofC
