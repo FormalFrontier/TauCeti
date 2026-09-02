@@ -184,6 +184,7 @@ theorem compl_fixedBy_prodCongrRight {ι β : Type*} {τ : ι → Equiv.Perm β}
 row by row.** The permutation of `ι × β` induced by `τ : ι → Equiv.Perm β` moves only finitely many
 cells iff only finitely many rows of `τ` are nontrivial and every row moves only finitely many
 points. -/
+@[simp]
 theorem mem_finitary_prodCongrRight_iff {ι β : Type*} {τ : ι → Equiv.Perm β} :
     Equiv.prodCongrRight τ ∈ finitary (ι × β) ↔
       {a | τ a ≠ 1}.Finite ∧ ∀ a, τ a ∈ finitary β := by
