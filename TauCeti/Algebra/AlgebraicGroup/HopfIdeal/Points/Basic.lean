@@ -182,6 +182,17 @@ theorem eq_one_of_mem_quotientPointsSubgroup_augmentation (H : _root_.CommHopfAl
   rw [hzero, AlgHom.commutes]
   exact (AlgHom.convOne_apply x).symm
 
+/-- The subgroup of points cut out by the augmentation ideal consists exactly of the identity
+point. -/
+@[simp]
+theorem mem_quotientPointsSubgroup_augmentation_iff (H : _root_.CommHopfAlgCat.{v} R)
+    (A : CommAlgCat.{w} R) (g : HopfAlgebra.points (R := R) (H := H) A) :
+    g ∈ quotientPointsSubgroup H (HopfIdeal.augmentation R H) A ↔ g = 1 := by
+  constructor
+  · exact eq_one_of_mem_quotientPointsSubgroup_augmentation H A
+  · rintro rfl
+    exact Subgroup.one_mem _
+
 /-- Precomposition by a bijective bialgebra morphism identifies the points cut out by a Hopf
 ideal with the points cut out by its pullback. -/
 theorem mapDomainMulEquiv_mem_quotientPointsSubgroup_comapOfSurjective_iff
