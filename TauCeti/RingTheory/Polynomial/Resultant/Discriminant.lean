@@ -111,16 +111,42 @@ private theorem _root_.Polynomial.Monic.resultant_of_le {f g : R[X]} (hf : f.Mon
   conv_lhs => rw [hn']
   rw [resultant_add_right_deg _ _ _ _ _ le_rfl, coeff_natDegree, hf.leadingCoeff, one_pow, one_mul]
 
+private noncomputable def Polynomial.sylvesterDerivIndexEquiv {f : R[X]} (φ : R →+* S)
+    (hdeg : (f.map φ).natDegree = f.natDegree) :
+    Fin ((f.map φ).natDegree - 1 + (f.map φ).natDegree) ≃
+      Fin (f.natDegree - 1 + f.natDegree) :=
+  finCongr (by rw [hdeg])
+
+@[simp]
+private theorem Polynomial.sylvesterDerivIndexEquiv_symm_val {f : R[X]} (φ : R →+* S)
+    (hdeg : (f.map φ).natDegree = f.natDegree)
+    (i : Fin (f.natDegree - 1 + f.natDegree)) :
+    ((sylvesterDerivIndexEquiv φ hdeg).symm i : ℕ) = i := rfl
+
+private theorem Polynomial.sylvesterDerivIndexEquiv_symm_castAdd {f : R[X]} (φ : R →+* S)
+    (hdeg : (f.map φ).natDegree = f.natDegree) (j : Fin (f.natDegree - 1)) :
+    (sylvesterDerivIndexEquiv φ hdeg).symm (Fin.castAdd f.natDegree j) =
+      Fin.castAdd (f.map φ).natDegree (Fin.cast (congrArg (· - 1) hdeg.symm) j) := by
+  apply Fin.ext
+  rfl
+
+private theorem Polynomial.sylvesterDerivIndexEquiv_symm_natAdd {f : R[X]} (φ : R →+* S)
+    (hdeg : (f.map φ).natDegree = f.natDegree) (j : Fin f.natDegree) :
+    (sylvesterDerivIndexEquiv φ hdeg).symm (Fin.natAdd (f.natDegree - 1) j) =
+      Fin.natAdd ((f.map φ).natDegree - 1) (Fin.cast hdeg.symm j) := by
+  apply Fin.ext
+  simp [sylvesterDerivIndexEquiv, hdeg]
+
+/-- Mapping coefficients preserves `sylvesterDeriv` after transporting its degree-dependent
+indices. The definition must be unfolded here because Mathlib supplies `sylvester_map_map`, but
+no corresponding map lemma for the modified bottom row of `sylvesterDeriv`. -/
 private theorem Polynomial.sylvesterDeriv_map_reindex {f : R[X]} (φ : R →+* S)
     (hdeg : (f.map φ).natDegree = f.natDegree) :
-    Matrix.reindex (finCongr (by rw [hdeg])) (finCongr (by rw [hdeg]))
+    Matrix.reindex (sylvesterDerivIndexEquiv φ hdeg) (sylvesterDerivIndexEquiv φ hdeg)
       (f.map φ).sylvesterDeriv = φ.mapMatrix f.sylvesterDeriv := by
   classical
-  let e : Fin ((f.map φ).natDegree - 1 + (f.map φ).natDegree) ≃
-      Fin (f.natDegree - 1 + f.natDegree) := finCongr (by rw [hdeg])
-  change Matrix.reindex e e (f.map φ).sylvesterDeriv = φ.mapMatrix f.sylvesterDeriv
   ext i j
-  simp only [e, Matrix.reindex_apply, Matrix.submatrix_apply, RingHom.mapMatrix_apply,
+  simp only [Matrix.reindex_apply, Matrix.submatrix_apply, RingHom.mapMatrix_apply,
     Matrix.map_apply, sylvesterDeriv, hdeg]
   by_cases hzero : f.natDegree = 0
   · simp [hzero]
@@ -135,23 +161,12 @@ private theorem Polynomial.sylvesterDeriv_map_reindex {f : R[X]} (φ : R →+* S
     · simp only [Matrix.updateRow_apply, Fin.ext_iff, hi, ite_false]
       induction j using Fin.addCases with
       | left j =>
-          let j' : Fin ((f.map φ).natDegree - 1) :=
-            Fin.cast (congrArg (· - 1) hdeg.symm) j
-          have hj : e.symm (Fin.castAdd f.natDegree j) =
-              Fin.castAdd (f.map φ).natDegree j' := by
-            apply Fin.ext
-            rfl
-          rw [hj]
-          simp [j', hdeg, hi, sylvester, derivative_map]
+          rw [sylvesterDerivIndexEquiv_symm_castAdd φ hdeg j]
+          simp [sylvesterDerivIndexEquiv, hdeg, hi, sylvester, derivative_map]
           split_ifs <;> simp
       | right j =>
-          let j' : Fin (f.map φ).natDegree := Fin.cast hdeg.symm j
-          have hj : e.symm (Fin.natAdd (f.natDegree - 1) j) =
-              Fin.natAdd ((f.map φ).natDegree - 1) j' := by
-            apply Fin.ext
-            simp [e, j', hdeg]
-          rw [hj]
-          simp [j', hdeg, hi, sylvester, derivative_map]
+          rw [sylvesterDerivIndexEquiv_symm_natAdd φ hdeg j]
+          simp [sylvesterDerivIndexEquiv, hdeg, hi, sylvester, derivative_map]
           split_ifs <;> simp
 
 /-- Base change of the discriminant along a ring morphism that preserves the degree. -/
@@ -162,8 +177,7 @@ theorem _root_.Polynomial.discr_map_of_natDegree_eq {f : R[X]} (φ : R →+* S)
   simp only [discr, hdeg, map_mul, map_pow, map_neg, map_one]
   congr 1
   rw [RingHom.map_det]
-  let e : Fin ((f.map φ).natDegree - 1 + (f.map φ).natDegree) ≃
-      Fin (f.natDegree - 1 + f.natDegree) := finCongr (by rw [hdeg])
+  let e := Polynomial.sylvesterDerivIndexEquiv φ hdeg
   rw [← Matrix.det_reindex_self e]
   congr 1
   exact Polynomial.sylvesterDeriv_map_reindex φ hdeg
