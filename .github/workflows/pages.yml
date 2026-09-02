@@ -286,6 +286,8 @@ jobs:
       # anything the repository has not reviewed before a single byte is fetched. Unset is
       # allowed and means the cache tool's own defaults.
       - name: Check the Mathlib cache endpoint against the reviewed allowlist
+        # This job's steps default to `web/`; the script is at the repository root.
+        working-directory: ${{ github.workspace }}
         run: bash scripts/check-cache-endpoint.sh
 
       - name: Fetch Mathlib oleans (docs project)

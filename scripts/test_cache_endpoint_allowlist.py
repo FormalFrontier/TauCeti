@@ -119,6 +119,31 @@ def main() -> None:
             f"{name}: no longer reads the superseded MATHLIB_CACHE_GET_URL",
         )
 
+    print("the check resolves its script path against the job's working directory")
+    for name in CACHE_JOBS:
+        text = (WORKFLOWS / name).read_text()
+        # A job whose steps default to some other directory must be overridden on the check
+        # step, or `bash scripts/check-cache-endpoint.sh` resolves against the wrong root and
+        # the guard fails open with "No such file" on a path nobody looks at.
+        job_default = re.search(
+            r"^    defaults:\n      run:\n        working-directory: (.+)", text, re.M)
+        step = re.search(
+            r"^      - name: Check the Mathlib cache endpoint against the reviewed allowlist\n"
+            r"(?:^ +#.*\n)*"
+            r"(?:^        working-directory: (.+)\n)?"
+            r"(?:^ +#.*\n)*"
+            r"^        run: bash (\S+)\n",
+            text, re.M)
+        check(step is not None, f"{name}: the check step parses as expected")
+        if step is None:
+            continue
+        if job_default:
+            check(
+                step.group(1) is not None,
+                f"{name}: the check step overrides the job's "
+                f"working-directory ({job_default.group(1)})",
+            )
+
     print("the PR-facing workflows validate with their trusted checkout, not the candidate's")
     for name, prefix in (("pr-build.yml", "gate/"), ("pr-profile.yml", "gate/"),
                          ("nightly-verify.yml", "fresh/")):
