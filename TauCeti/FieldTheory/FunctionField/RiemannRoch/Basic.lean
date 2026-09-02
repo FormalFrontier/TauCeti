@@ -40,6 +40,8 @@ Fields and Codes*, 2nd ed., Definition 1.4.4 through Definition 1.4.10.
   an exact constant field, `L(0) = k` (`TauCeti.riemannRochSpace_zero_of_isIntegrallyClosedIn`,
   Lemma 1.4.7(a)).
 * `TauCeti.riemannRochSpace_eq_bot_of_lt_zero`: `L(D) = 0` for `D < 0` (Lemma 1.4.7(b)).
+* `TauCeti.mem_riemannRochSpace_zsmul_ofPoint_iff`: membership in `L(m · P)` for a single place
+  `P`, as a pole bound at `P` together with regularity everywhere else.
 * `TauCeti.finrank_riemannRochSpace_add_ofPoint_le`: adding one place to a divisor raises `ℓ`
   by at most the degree of that place (Lemma 1.4.8, the one-place-at-a-time estimate).
 * `TauCeti.finrank_quotient_riemannRochSpace_le_degree_sub`: for `D ≤ E` the quotient
@@ -113,6 +115,22 @@ theorem mem_riemannRochSpace_iff_neg_le_ord {D : Divisor k F} {f : F} (hf : f �
   refine forall_congr' fun P ↦ ?_
   rw [P.valuation_eq_exp_neg_ord hf, WithZero.exp_le_exp]
   omega
+
+/-- Membership in the Riemann–Roch space of a multiple `m · P` of a single place: away from the
+junk value `ord_P 0 = 0`, the functions of `L(m · P)` are those with a pole of order at most `m`
+at `P` and no pole anywhere else. -/
+theorem mem_riemannRochSpace_zsmul_ofPoint_iff {P : Place k F} {m : ℤ} {f : F} (hf : f ≠ 0) :
+    f ∈ riemannRochSpace (m • WeilDivisor.ofPoint P : Divisor k F) ↔
+      -m ≤ P.ord f ∧ ∀ Q : Place k F, Q ≠ P → 0 ≤ Q.ord f := by
+  rw [mem_riemannRochSpace_iff_neg_le_ord hf]
+  constructor
+  · refine fun h ↦ ⟨?_, fun Q hQ ↦ ?_⟩
+    · simpa using h P
+    · simpa [WeilDivisor.coeff_ofPoint_of_ne hQ] using h Q
+  · rintro ⟨hP, hQ⟩ Q
+    rcases eq_or_ne Q P with rfl | h
+    · simpa using hP
+    · simpa [WeilDivisor.coeff_ofPoint_of_ne h] using hQ Q h
 
 /-- Enlarging a divisor enlarges its Riemann–Roch space (Stichtenoth, Lemma 1.4.8, first
 part). -/
