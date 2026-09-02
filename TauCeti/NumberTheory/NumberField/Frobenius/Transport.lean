@@ -134,7 +134,8 @@ theorem isArithFrobAt_map_ringOfIntegersAlgEquiv_iff
     (e : L ≃ₐ[K] L')
     (Q : Ideal (𝓞 L)) [Q.IsPrime]
     (τ : L ≃ₐ[K] L) :
-    IsArithFrobAt (𝓞 K) (e.autCongr τ) (Q.map (RingOfIntegers.mapAlgEquiv e)) ↔
+    IsArithFrobAt (𝓞 K) (e.symm.trans (τ.trans e))
+      (Q.map (RingOfIntegers.mapAlgEquiv e)) ↔
       IsArithFrobAt (𝓞 K) τ Q := by
   constructor
   · intro hσ
