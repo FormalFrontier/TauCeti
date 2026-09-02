@@ -95,10 +95,9 @@ theorem comapOfIso (hI : IsMaximalTorus k K.obj I) (e : H ≅ K) :
     (torusCommHopfAlgProperty k).prop_of_iso
       (FiniteTypeCommHopfAlgCat.quotientIsoOfIso e.symm J).symm hJ
   have hJ'comap : J'.comapOfSurjective f hf = J := by
-    dsimp only [J', g, f]
-    simp only [HopfIdeal.comapOfSurjective_comapOfSurjective,
-      ← FiniteTypeCommHopfAlgCat.toBialgHom_comp, e.hom_inv_id,
-      FiniteTypeCommHopfAlgCat.toBialgHom_id, HopfIdeal.comapOfSurjective_id]
+    exact HopfIdeal.comapOfSurjective_iso_inv_hom J
+      ((forget₂ (FiniteTypeCommHopfAlgCat.{u, u} k)
+        (_root_.CommHopfAlgCat.{u} k)).mapIso e)
   have hJ'I : J' ≤ I := by
     rw [← HopfIdeal.comapOfSurjective_le_comapOfSurjective_iff f hf]
     rw [hJ'comap]
@@ -119,9 +118,14 @@ theorem comapOfIso_iff (e : H ≅ K) (I : HopfIdeal k K.obj) :
   constructor
   · intro hI
     have hback := hI.comapOfIso e.symm
-    simpa only [HopfIdeal.comapOfSurjective_comapOfSurjective, Iso.symm_hom,
-      ← FiniteTypeCommHopfAlgCat.toBialgHom_comp, e.inv_hom_id,
-      FiniteTypeCommHopfAlgCat.toBialgHom_id, HopfIdeal.comapOfSurjective_id] using hback
+    let e' := (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} k)
+      (_root_.CommHopfAlgCat.{u} k)).mapIso e
+    change IsMaximalTorus k K.obj
+      (HopfIdeal.comapOfSurjective
+        (I.comapOfSurjective e'.hom.hom (ConcreteCategory.bijective_of_isIso e'.hom).2)
+        e'.inv.hom (ConcreteCategory.bijective_of_isIso e'.inv).2) at hback
+    rw [HopfIdeal.comapOfSurjective_iso_hom_inv I e'] at hback
+    exact hback
   · exact fun hI ↦ hI.comapOfIso e
 
 end IsMaximalTorus
