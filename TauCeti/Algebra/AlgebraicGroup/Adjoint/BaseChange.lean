@@ -54,7 +54,6 @@ namespace adjointSemisimpleCommHopfAlgProperty
 The proof that the base-changed finite-type Hopf algebra is semisimple is kept as an explicit
 hypothesis, since preservation of semisimplicity is logically separate from the center
 calculation. -/
-@[simp]
 theorem baseChange_iff
     (H : SemisimpleCommHopfAlgCat.{u} k)
     (hsemisimple : semisimpleCommHopfAlgProperty K
