@@ -105,15 +105,10 @@ private theorem
     (hH : HopfAlgebra.identityComponentHopfIdeal (k := k) (H := H) =
       HopfIdeal.augmentation k H) :
     IsIso (componentCoordinateHom H) := by
-  let f := componentCoordinateHom H
-  let _ : IsIso ((CommHopfAlgCat.pointsFunctor.{u, u, u} (R := k)).map f.op) := by
-    rw [CommHopfAlgCat.pointsFunctor_map, Quiver.Hom.unop_op]
-    exact isIso_mapPointsFunctor_componentCoordinateHom_of_identityComponentHopfIdealEqAugmentation
+  let _ :=
+    isIso_mapPointsFunctor_componentCoordinateHom_of_identityComponentHopfIdealEqAugmentation
       H hH
-  let _ : IsIso f.op :=
-    (Functor.FullyFaithful.ofFullyFaithful
-      (CommHopfAlgCat.pointsFunctor.{u, u, u} (R := k))).isIso_of_isIso_map f.op
-  exact isIso_of_op f
+  exact CommHopfAlgCat.isIso_of_isIso_mapPointsFunctor (componentCoordinateHom H)
 
 /-- A finite-type affine group over an algebraically closed field with trivial identity
 component is canonically the constant group on the connected components of its spectrum. -/
