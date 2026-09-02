@@ -81,15 +81,9 @@ namespace IsDGAlgebra
 /-- The **cycles** of a differential graded algebra: the kernel of the differential.  It is a
 subalgebra because the differential annihilates the image of the ground ring and, by the Leibniz
 rule applied componentwise, a product of cycles is a cycle. -/
-def cycles (h : IsDGAlgebra 𝒜 d) : Subalgebra R A where
-  carrier := {a | d a = 0}
-  mul_mem' ha hb := h.map_mul_eq_zero_of_map_eq_zero ha hb
-  one_mem' := h.map_one_eq_zero
-  add_mem' {a b} ha hb := by
-    simp only [Set.mem_ofPred_eq] at ha hb
-    simp only [Set.mem_ofPred_eq, map_add, ha, hb, add_zero]
-  zero_mem' := map_zero d
-  algebraMap_mem' := h.map_algebraMap
+def cycles (h : IsDGAlgebra 𝒜 d) : Subalgebra R A :=
+  (LinearMap.ker d).toSubalgebra h.map_one_eq_zero
+    fun _ _ ha hb => h.map_mul_eq_zero_of_map_eq_zero ha hb
 
 @[simp]
 lemma mem_cycles (h : IsDGAlgebra 𝒜 d) {a : A} : a ∈ h.cycles ↔ d a = 0 := Iff.rfl
@@ -241,13 +235,18 @@ lemma mem_cohomologyGrading (h : IsDGAlgebra 𝒜 d) {p : ℤ} {x : h.Cohomology
   (GradedAlgebra.mem_gradeQuot_iff h.cyclesDeg h.boundaries.asIdeal).trans (by
     simp only [h.mem_cyclesDeg])
 
+/-- A cohomology class vanishes exactly when the cycle representing it is a boundary: the kernel
+of the quotient map onto the cohomology algebra is the ideal of boundaries. -/
+theorem quotientMk_eq_zero_iff (h : IsDGAlgebra 𝒜 d) {z : h.cycles} :
+    Ideal.Quotient.mk h.boundaries.asIdeal z = 0 ↔ z ∈ h.boundaries :=
+  Ideal.Quotient.eq_zero_iff_mem.trans TwoSidedIdeal.mem_asIdeal
+
 /-- The class of a differential vanishes in cohomology. -/
 @[simp]
 theorem quotientMk_map_eq_zero (h : IsDGAlgebra 𝒜 d) (a : A) :
     Ideal.Quotient.mk h.boundaries.asIdeal
         (⟨d a, h.map_mem_cycles a⟩ : h.cycles) = 0 :=
-  Ideal.Quotient.eq_zero_iff_mem.mpr
-    (TwoSidedIdeal.mem_asIdeal.mpr (h.map_mem_boundaries a))
+  h.quotientMk_eq_zero_iff.mpr (h.map_mem_boundaries a)
 
 /-- **The cohomology of a differential graded algebra is a graded algebra.**  This is the generic
 grading on a quotient by a homogeneous ideal. -/
