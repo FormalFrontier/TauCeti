@@ -84,7 +84,10 @@ No isotropy hypothesis is needed: `H ∩ H⊥` is always killed by the restricte
 is isotropic, so that `H ≤ H⊥`, this is the classical `H⊥ / H`.
 
 Exposed for the same reason as `quotientOfLeRadical`, on which it is built: so that its carrier
-reduces to the `Submodule` quotient and maps out of it are definable. -/
+reduces to the `Submodule` quotient and maps out of it are definable with `Submodule.liftQ`,
+`Submodule.mapQ` and `Submodule.Quotient.equiv`.  Exposure is also what identifies this package
+with the quadratic one on the nose, which is how
+`TauCeti.FiniteQuadraticModule.orthogonalQuotient_toFiniteBilinearModule` holds by `rfl`. -/
 @[expose] noncomputable def orthogonalQuotient (H : AddSubgroup A) : FiniteBilinearModule :=
   (A.restrict (A.orthogonalComplement H)).quotientOfLeRadical
     (H.addSubgroupOf (A.orthogonalComplement H))
