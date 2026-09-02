@@ -147,8 +147,10 @@ def linearEquiv (e : AuslanderReitenTranspose q₁ ≃ₗ[Aᵐᵒᵖ] AuslanderR
 @[simp]
 theorem linearEquiv_apply (e : AuslanderReitenTranspose q₁ ≃ₗ[Aᵐᵒᵖ] AuslanderReitenTranspose p₁)
     (φ : AuslanderReitenTranslate k p₁) (x : AuslanderReitenTranspose q₁) :
-    linearEquiv (k := k) e φ x = φ (e x) :=
-  (rfl)
+    linearEquiv (k := k) e φ x = φ (e x) := by
+  -- unfolding `linearEquiv` leaves `LinearEquiv.dualMap` of `e.restrictScalars k`, evaluated by
+  -- `LinearEquiv.dualMap_apply`
+  simp [linearEquiv, LinearEquiv.dualMap_apply]
 
 @[simp]
 theorem linearEquiv_symm (e : AuslanderReitenTranspose q₁ ≃ₗ[Aᵐᵒᵖ] AuslanderReitenTranspose p₁) :

@@ -58,7 +58,9 @@ def dualRightAction : A →+* Module.End k (Module.Dual k N) where
 
 @[simp]
 theorem dualRightAction_apply_apply (a : A) (φ : Module.Dual k N) (x : N) :
-    dualRightAction k N a φ x = φ (MulOpposite.op a • x) :=
-  (rfl)
+    dualRightAction k N a φ x = φ (MulOpposite.op a • x) := by
+  -- unfolding `dualRightAction` leaves `LinearMap.dualMap` of multiplication by `a`, evaluated by
+  -- `LinearMap.dualMap_apply`
+  simp [dualRightAction, LinearMap.dualMap_apply]
 
 end TauCeti
