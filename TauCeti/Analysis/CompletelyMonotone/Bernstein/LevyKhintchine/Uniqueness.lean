@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Analysis.CompletelyMonotone.Bernstein.LevyKhintchine.Representation
-import TauCeti.Analysis.CompletelyMonotone.Laplace.Representation
 import TauCeti.Analysis.CompletelyMonotone.Bernstein.OpenHalfLine
 
 /-!
@@ -27,7 +26,7 @@ coefficient is already the value of the exponent at zero.
 
 * `TauCeti.bernsteinLevyKhintchineExponent_eqOn_iff`: two admissible Levy--Khintchine exponents
   agree on `[0, infinity)` exactly when their three parameters agree.
-* `TauCeti.IsBernsteinFunction.existsUnique_bernsteinLevyKhintchineExponent`: every Bernstein
+* `TauCeti.IsBernsteinFunction.existsUnique_eqOn_bernsteinLevyKhintchineExponent`: every Bernstein
   function has a unique Levy--Khintchine triplet.
 
 ## References
@@ -147,16 +146,12 @@ private lemma levyMeasure_eq_of_derivativeMeasure_eq
 
 /-- Two admissible Levy--Khintchine exponents agree on the nonnegative half-line exactly when
 their killing coefficients, drift coefficients, and Levy measures agree. -/
-@[simp]
 theorem bernsteinLevyKhintchineExponent_eqOn_iff
     {a b c d : ℝ} (hb : 0 ≤ b) (hd : 0 ≤ d) {μ ν : Measure ℝ≥0}
-    (hμ : μ {0} = 0 ∧ Integrable (fun x : ℝ≥0 => min 1 (x : ℝ)) μ)
-    (hν : ν {0} = 0 ∧ Integrable (fun x : ℝ≥0 => min 1 (x : ℝ)) ν) :
+    (hμ : IsBernsteinLevyMeasure μ) (hν : IsBernsteinLevyMeasure ν) :
     EqOn (bernsteinLevyKhintchineExponent a b μ)
         (bernsteinLevyKhintchineExponent c d ν) (Ici 0) ↔
       a = c ∧ b = d ∧ μ = ν := by
-  have hμ' : IsBernsteinLevyMeasure μ := isBernsteinLevyMeasure_iff.mpr hμ
-  have hν' : IsBernsteinLevyMeasure ν := isBernsteinLevyMeasure_iff.mpr hν
   constructor
   · intro hexponent
     have ha : a = c := by
@@ -165,21 +160,21 @@ theorem bernsteinLevyKhintchineExponent_eqOn_iff
         (deriv (bernsteinLevyKhintchineExponent c d ν)) (Ioi 0) :=
       (hexponent.mono Ioi_subset_Ici_self).deriv isOpen_Ioi
     have hrepμ := representsLaplaceOnIoi_deriv_bernsteinLevyKhintchineExponent
-      (a := a) hb hμ.2
+      (a := a) hb hμ.integrable_min_one
     have hrepν := representsLaplaceOnIoi_deriv_bernsteinLevyKhintchineExponent
-      (a := c) hd hν.2
+      (a := c) hd hν.integrable_min_one
     have hmeasure : bernsteinLevyKhintchineDerivativeMeasure b μ =
         bernsteinLevyKhintchineDerivativeMeasure d ν :=
       hrepμ.unique (hrepν.congr hderiv)
     exact ⟨ha, drift_eq_of_derivativeMeasure_eq hb hd hmeasure,
-        levyMeasure_eq_of_derivativeMeasure_eq hb hd hμ' hν' hmeasure⟩
+        levyMeasure_eq_of_derivativeMeasure_eq hb hd hμ hν hmeasure⟩
   · rintro ⟨rfl, rfl, rfl⟩
     exact fun _ _ => rfl
 
 /-- Every Bernstein function has a Levy--Khintchine triplet, and any other admissible triplet
 representing it on the nonnegative half-line has the same killing coefficient, drift coefficient,
 and Levy measure. -/
-theorem IsBernsteinFunction.existsUnique_bernsteinLevyKhintchineExponent
+theorem IsBernsteinFunction.existsUnique_eqOn_bernsteinLevyKhintchineExponent
     {f : ℝ → ℝ} (hf : IsBernsteinFunction f) :
     ∃ a b : ℝ, ∃ μ : Measure ℝ≥0,
       0 ≤ a ∧ 0 ≤ b ∧ IsBernsteinLevyMeasure μ ∧
@@ -193,8 +188,7 @@ theorem IsBernsteinFunction.existsUnique_bernsteinLevyKhintchineExponent
   refine ⟨a, b, μ, ha, hb, hμ, hrep, fun c d ν hd hν hrep' => ?_⟩
   have hexponent : EqOn (bernsteinLevyKhintchineExponent c d ν)
       (bernsteinLevyKhintchineExponent a b μ) (Ici 0) := hrep'.symm.trans hrep
-  exact (bernsteinLevyKhintchineExponent_eqOn_iff hd hb
-    (isBernsteinLevyMeasure_iff.mp hν) (isBernsteinLevyMeasure_iff.mp hμ)).mp hexponent
+  exact (bernsteinLevyKhintchineExponent_eqOn_iff hd hb hν hμ).mp hexponent
 
 end TauCeti
 
