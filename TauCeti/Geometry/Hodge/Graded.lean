@@ -484,12 +484,9 @@ theorem gradedComplexEquiv_symm_latticeConj (hWQ : Monotone WQ) (k : ℤ)
     (gradedComplexEquiv hℚ hℂ WQ hWQ k).symm ((gradedComplexConjugation hℚ hℂ WQ k).toEquiv y) =
       (latticeConjugation (isBaseChange_ratTensorMap ℂ (weightGradedRat WQ k))).toEquiv
         ((gradedComplexEquiv hℚ hℂ WQ hWQ k).symm y) := by
-  simpa only [latticeConjugation_toEquiv_apply] using Conjugation.symm_intertwines
-    (latticeConjugation (isBaseChange_ratTensorMap ℂ (weightGradedRat WQ k)))
-    (gradedComplexConjugation hℚ hℂ WQ k)
-    (gradedComplexEquiv hℚ hℂ WQ hWQ k)
-    (fun x => by simpa only [latticeConjugation_toEquiv_apply] using
-      gradedComplexEquiv_latticeConj hℚ hℂ WQ hWQ k x) y
+  apply (gradedComplexEquiv hℚ hℂ WQ hWQ k).injective
+  rw [LinearEquiv.apply_symm_apply, latticeConjugation_toEquiv_apply,
+    gradedComplexEquiv_latticeConj hℚ hℂ WQ hWQ k, LinearEquiv.apply_symm_apply]
 
 end RationalGradedConjugation
 

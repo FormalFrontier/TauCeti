@@ -250,15 +250,6 @@ theorem map_comap_eq_comap_map {W' : Type v} [AddCommGroup W'] [Module ℂ W']
     rw [he y, ← hzy, ω'.apply_apply]
     exact hz
 
-/-- The inverse of a linear equivalence intertwines the inverse conjugations when the equivalence
-intertwines the conjugations. -/
-theorem symm_intertwines {W' : Type v} [AddCommGroup W'] [Module ℂ W']
-    (ω : Conjugation W) (ω' : Conjugation W') (e : W ≃ₗ[ℂ] W')
-    (he : ∀ x, e (ω.toEquiv x) = ω'.toEquiv (e x)) (y : W') :
-    e.symm (ω'.toEquiv y) = ω.toEquiv (e.symm y) := by
-  apply e.injective
-  rw [e.apply_symm_apply, he, e.apply_symm_apply]
-
 /-- The conjugation induced on a quotient by a stable complex subspace is involutive. -/
 private theorem quotient_involutive (ω : Conjugation W) {U : Submodule ℂ W}
     (hU : ∀ x ∈ U, ω.toEquiv x ∈ U) :

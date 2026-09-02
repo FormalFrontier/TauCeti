@@ -83,9 +83,11 @@ private noncomputable def homAux (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
     HodgeStructureOn (W₁ →ₗ[ℂ] W₂) (ω₁.hom ω₂) (-n₁ + n₂) :=
   (hs₁.dual.tensorProduct hs₂).comap
     (dualTensorHomEquiv ℂ W₁ W₂).symm
-    (Conjugation.symm_intertwines (ω₁.dual.tensorProduct ω₂) (ω₁.hom ω₂)
-      (dualTensorHomEquiv ℂ W₁ W₂)
-      (dualTensorHomEquiv_conj (ω₁ := ω₁) (ω₂ := ω₂)))
+    (fun y ↦ (show Function.Semiconj (dualTensorHomEquiv ℂ W₁ W₂)
+        (ω₁.dual.tensorProduct ω₂).toEquiv (ω₁.hom ω₂).toEquiv from
+      dualTensorHomEquiv_conj (ω₁ := ω₁) (ω₂ := ω₂)).inverse_left
+      (dualTensorHomEquiv ℂ W₁ W₂).symm_apply_apply
+      (dualTensorHomEquiv ℂ W₁ W₂).apply_symm_apply y)
 
 /-- The internal Hom of two pure Hodge structures, of weight `n₂ - n₁` (that is, `-n₁ + n₂`).
 
@@ -104,9 +106,12 @@ private theorem homAux_piece (m : ℤ) (h : m = -n₁ + n₂)
         (dualTensorHomEquiv ℂ W₁ W₂).symm.toLinearMap := by
   cases h
   exact HodgeStructureOn.comap_piece (dualTensorHomEquiv ℂ W₁ W₂).symm
-    (Conjugation.symm_intertwines (ω₁.dual.tensorProduct ω₂) (ω₁.hom ω₂)
-      (dualTensorHomEquiv ℂ W₁ W₂)
-      (dualTensorHomEquiv_conj (ω₁ := ω₁) (ω₂ := ω₂))) (hs₁.dual.tensorProduct hs₂) p
+    (fun y ↦ (show Function.Semiconj (dualTensorHomEquiv ℂ W₁ W₂)
+        (ω₁.dual.tensorProduct ω₂).toEquiv (ω₁.hom ω₂).toEquiv from
+      dualTensorHomEquiv_conj (ω₁ := ω₁) (ω₂ := ω₂)).inverse_left
+      (dualTensorHomEquiv ℂ W₁ W₂).symm_apply_apply
+      (dualTensorHomEquiv ℂ W₁ W₂).apply_symm_apply y)
+    (hs₁.dual.tensorProduct hs₂) p
 
 /-- The internal-Hom piece is the comap of the corresponding dual-tensor-product piece under the
 inverse tensor--Hom equivalence. -/
