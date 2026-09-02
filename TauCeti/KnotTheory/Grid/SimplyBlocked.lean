@@ -83,22 +83,6 @@ theorem simplyBlockedSpecialization_apply {n : ℕ} (R : Type*) [CommSemiring R]
       Finsupp.mapRange_apply]
     exact congrFun (RingHom.coe_toSemilinearMap _) (c x)
 
-/-- Specialization sends a single unblocked generator coefficient to its specialization. -/
-@[simp]
-theorem simplyBlockedSpecialization_single {n : ℕ} (R : Type*) [CommSemiring R] (i : Fin n)
-    (x : GridState n) (a : MvPolynomial (Fin n) R) :
-    simplyBlockedSpecialization R i (Finsupp.single x a) =
-      Finsupp.single x
-        (MvPolynomial.killCompl (f := Subtype.val) Subtype.val_injective a) := by
-  classical
-  apply Finsupp.ext
-  intro y
-  rw [simplyBlockedSpecialization_apply]
-  by_cases hxy : x = y
-  · subst y
-    simp
-  · simp [hxy]
-
 namespace GridDiagram
 
 variable {n : ℕ} (G : GridDiagram n)
@@ -145,15 +129,6 @@ theorem killCompl_OMonomial_eq_monomial_of_notMem {i : Fin n} {r : GridRectangle
     simp [hdc]
   exact ⟨⟨c, fun hci => hi (hci ▸ hcO)⟩, rfl⟩
 
-/-- A rectangle avoiding the blocked `O`-marking has nonzero weight after specialization. -/
-theorem killCompl_OMonomial_ne_zero_of_notMem [Nontrivial R] {i : Fin n}
-    {r : GridRectangle n} (hi : i ∉ G.OColumns r) :
-    MvPolynomial.killCompl (R := R) (f := Subtype.val)
-      (Subtype.val_injective : Function.Injective (Subtype.val : SimplyBlockedVariable i → Fin n))
-      (G.OMonomial R r) ≠ 0 := by
-  rw [G.killCompl_OMonomial_eq_monomial_of_notMem R hi]
-  simp
-
 /-- The rectangles counted after blocking column `i`: unblocked rectangles which do not cover
 the `O`-marking in column `i`. -/
 noncomputable def simplyBlockedRectangles (i : Fin n) (x y : GridState n) :
@@ -176,12 +151,6 @@ theorem mem_simplyBlockedRectangles (i : Fin n) {x y : GridState n}
 theorem simplyBlockedRectangles_subset_unblockedRectangles (i : Fin n) (x y : GridState n) :
     G.simplyBlockedRectangles i x y ⊆ G.unblockedRectangles x y :=
   Finset.filter_subset _ _
-
-/-- At most two rectangles contribute to a simply blocked matrix coefficient. -/
-theorem card_simplyBlockedRectangles_le_two (i : Fin n) (x y : GridState n) :
-    (G.simplyBlockedRectangles i x y).card ≤ 2 :=
-  (Finset.card_le_card (G.simplyBlockedRectangles_subset_unblockedRectangles i x y)).trans
-    (G.card_unblockedRectangles_le_two x y)
 
 /-- There are no simply blocked rectangles from a grid state to itself. -/
 @[simp]
@@ -312,12 +281,13 @@ theorem simplyBlockedSpecialization_unblockedDifferential (i : Fin n)
         (simplyBlockedSpecialization R i).map_add,
         (G.simplyBlockedDifferential R i).map_add, ih]
       congr 1
-      rw [simplyBlockedSpecialization_single]
       apply Finsupp.ext
       intro y
       rw [simplyBlockedSpecialization_apply, G.unblockedDifferential_apply_apply,
-        G.simplyBlockedDifferential_apply_apply]
-      simp [simplyBlockedCoefficient]
+        G.simplyBlockedDifferential_apply_apply, simplyBlockedSpecialization,
+        Finsupp.mapRange.linearMap_apply, Finsupp.mapRange_single]
+      simp only [Finsupp.sum_single_index, zero_mul, map_mul, simplyBlockedCoefficient]
+      rfl
 
 end GridDiagram
 
