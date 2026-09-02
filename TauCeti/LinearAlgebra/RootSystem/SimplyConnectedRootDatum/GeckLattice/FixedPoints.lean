@@ -160,8 +160,10 @@ theorem coe_geckPointsMulEquivFixedSubgroupGeckFrobenius_symm_apply
     (x : ↥(fixedSubgroup (t.geckFrobenius ht p k A))) :
     Matrix.GeneralLinearGroup.map (frobeniusFixedSubring A p k).subtype
         ((t.geckPointsMulEquivFixedSubgroupGeckFrobenius ht p k A).symm x) =
-      ((x : t.geckPoints ht A) : Matrix.GeneralLinearGroup (Fin (t.geckDim ht)) A) := by
-  rw [← coe_geckPointsMulEquivFixedSubgroupGeckFrobenius, MulEquiv.apply_symm_apply]
+      ((x : t.geckPoints ht A) : Matrix.GeneralLinearGroup (Fin (t.geckDim ht)) A) :=
+  GeneralLinear.coe_frobeniusFixedMulEquivOfCoeEq_symm_apply (t.geckDim ht) p k
+    (t.geckDefiningIdeal ht) A (t.geckFrobenius ht p k A) (t.geckPoints_def ht A)
+    (t.geckPoints_def ht ↥(frobeniusFixedSubring A p k)) (t.coe_geckFrobenius ht p k A) x
 
 /-- Entrywise, the point over the Frobenius-fixed subring produced by the inverse of the
 isomorphism has the entries of the Frobenius-fixed point it came from. -/

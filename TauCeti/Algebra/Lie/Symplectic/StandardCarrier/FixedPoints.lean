@@ -183,8 +183,10 @@ theorem coe_pointsMulEquivFixedSubgroupFrobenius_symm_apply
     (x : ↥(fixedSubgroup (frobenius n p k A))) :
     Matrix.GeneralLinearGroup.map (frobeniusFixedSubring A p k).subtype
         ((pointsMulEquivFixedSubgroupFrobenius n p k A).symm x) =
-      ((x : points n A) : Matrix.GeneralLinearGroup (Fin ((n + 1) + (n + 1))) A) := by
-  rw [← coe_pointsMulEquivFixedSubgroupFrobenius, MulEquiv.apply_symm_apply]
+      ((x : points n A) : Matrix.GeneralLinearGroup (Fin ((n + 1) + (n + 1))) A) :=
+  GeneralLinear.coe_frobeniusFixedMulEquivOfCoeEq_symm_apply ((n + 1) + (n + 1)) p k
+    (definingIdeal n) A (frobenius n p k A) (points_def n A)
+    (points_def n ↥(frobeniusFixedSubring A p k)) (coe_frobenius n p k A) x
 
 /-- Entrywise, the point over the Frobenius-fixed subring produced by the inverse of the
 isomorphism has the entries of the Frobenius-fixed point it came from. -/
