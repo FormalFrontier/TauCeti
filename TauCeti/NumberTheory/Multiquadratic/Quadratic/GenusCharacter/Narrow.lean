@@ -159,13 +159,25 @@ theorem genusCharFunCoprimeIdealHom_eq_of_span_mul_eq_span_mul
     (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
     (hsf : Squarefree d) (hts : t ⊆ s)
     {I J : genusCharFunCoprimeIdealSubmonoid (K := K) t}
-    {x y : 𝓞 K} (hx : x ≠ 0) (hy : y ≠ 0)
+    {x y : 𝓞 K} (hy : y ≠ 0)
     (hpos : NumberField.IsTotallyPositive ((x : K) * (y : K)))
     (hIJ : Ideal.span {x} * (I : Ideal (𝓞 K)) =
       Ideal.span {y} * (J : Ideal (𝓞 K)))
     (hcopy : IsCoprime (Algebra.norm ℤ y) (∏ P ∈ t, P)) :
     genusCharFunCoprimeIdealHom (fun P hP => hs P (hts hP)) I =
       genusCharFunCoprimeIdealHom (fun P hP => hs P (hts hP)) J := by
+  have hx : x ≠ 0 := by
+    have hJ0 : (J : Ideal (𝓞 K)) ≠ 0 :=
+      mem_nonZeroDivisors_iff_ne_zero.mp J.1.property
+    have hspany : Ideal.span ({y} : Set (𝓞 K)) ≠ 0 := by
+      rw [ne_eq, Ideal.zero_eq_bot, Ideal.span_singleton_eq_bot]
+      exact hy
+    have hprod : Ideal.span ({y} : Set (𝓞 K)) * (J : Ideal (𝓞 K)) ≠ 0 :=
+      mul_ne_zero hspany hJ0
+    intro hx
+    apply hprod
+    rw [← hIJ, hx]
+    simp
   have hnorm := congrArg Ideal.absNorm hIJ
   rw [map_mul, map_mul, Ideal.absNorm_span_singleton, Ideal.absNorm_span_singleton] at hnorm
   have hnorm' :
@@ -225,7 +237,7 @@ theorem genusCharFunCoprimeIdealHom_eq_one_of_eq_span_singleton
     rw [hnorm', Int.natCast_natAbs] at hIcop
     exact (IsCoprime.abs_left_iff _ _).mp hIcop
   have hcomp := genusCharFunCoprimeIdealHom_eq_of_span_mul_eq_span_mul hs heven hprod hmin hgen
-    hsf hts (I := I) (J := 1) (x := 1) (y := x) (by simp) hx (by simpa using hpos)
+    hsf hts (I := I) (J := 1) (x := 1) (y := x) hx (by simpa using hpos)
     (by simp [hI]) hcop
   simpa only [map_one] using hcomp
 
