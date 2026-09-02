@@ -118,13 +118,18 @@ theorem hom_piece (hs₁ : HodgeStructureOn W₁ ω₁ n₁) (hs₂ : HodgeStruc
   unfold hom
   exact homAux_piece (n₂ - n₁) (by omega) hs₁ hs₂ p
 
+end Finite
+
 /-- The tensor--Hom equivalence sends a pure tensor to the corresponding rank-one map. -/
 @[simp]
 theorem dualTensorHomEquiv_tmul (φ : Module.Dual ℂ W₁) (y : W₂) :
-    dualTensorHomEquiv ℂ W₁ W₂ (φ ⊗ₜ[ℂ] y) = φ.smulRight y := by
+    dualTensorHom ℂ W₁ W₂ (φ ⊗ₜ[ℂ] y) = φ.smulRight y := by
   ext x
-  simp only [dualTensorHomEquiv, LinearEquiv.ofBijective_apply, dualTensorHom_apply,
-    LinearMap.smulRight_apply]
+  simp only [dualTensorHom_apply, LinearMap.smulRight_apply]
+
+section Finite
+
+variable [FiniteDimensional ℂ W₁]
 
 /-- A map in the degree-`p` internal-Hom piece sends the degree-`a` source component into the
 degree-`a + p` target component. -/
@@ -147,7 +152,7 @@ theorem hom_piece_apply_mem (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
       LinearMap.applyₗ_apply_apply]
     -- Expose the equivalence coercion so its pure-tensor application lemma can be used.
     change (dualTensorHomEquiv ℂ W₁ W₂ (φ ⊗ₜ[ℂ] y)) x ∈ hs₂.piece (a + p)
-    rw [dualTensorHomEquiv_tmul, LinearMap.smulRight_apply]
+    simp only [dualTensorHomEquiv, LinearEquiv.ofBijective_apply, dualTensorHom_apply]
     by_cases har : a = -r
     · have hdeg : p - r = a + p := by omega
       exact (hs₂.piece (a + p)).smul_mem (φ x) (hdeg ▸ hy)
