@@ -118,7 +118,7 @@ private theorem W1p0.isCompactOperator_valueExtendByZeroL (hp : p ≠ ∞)
     intro epsilon hepsilon
     obtain ⟨delta, hdelta, hbound⟩ :=
       W1p0.exists_pos_forall_eLpNorm_value_extendByZeroL_comp_add_sub_le_of_norm_le
-        (S := ball (0 : W1p0 mu Omega p) 1) hp zero_le_one
+        (S := ball (0 : W1p0 mu Omega p) 1) (C := 1) hp
         (fun u hu => (mem_ball_zero_iff.1 hu).le) hepsilon
     refine ⟨delta, hdelta, fun f hf h hh => ?_⟩
     obtain ⟨u, hu, rfl⟩ := hf

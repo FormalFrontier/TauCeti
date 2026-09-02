@@ -233,7 +233,7 @@ common `δ > 0` such that every zero extension `\tilde{u}` satisfies
 When `Ω` is bounded, `TauCeti.W1p0.value_extendByZeroL_ae_eq_zero_compl` also supplies fixed
 bounded support for the family. -/
 theorem W1p0.exists_pos_forall_eLpNorm_value_extendByZeroL_comp_add_sub_le_of_gradient_le
-    {Omega : Opens E} (hp : p ≠ ∞) {S : Set (W1p0 mu Omega p)} {C : ℝ} (hC : 0 ≤ C)
+    {Omega : Opens E} (hp : p ≠ ∞) {S : Set (W1p0 mu Omega p)} {C : ℝ}
     (hS : ∀ u ∈ S, ‖W1p.gradient (u : W1p mu Omega p)‖ ≤ C)
     {epsilon : ℝ≥0∞} (hepsilon : 0 < epsilon) :
     ∃ delta > 0, ∀ u ∈ S, ∀ h : E, ‖h‖ < delta →
@@ -241,6 +241,9 @@ theorem W1p0.exists_pos_forall_eLpNorm_value_extendByZeroL_comp_add_sub_le_of_gr
         W1p.value (W1p0.extendByZeroL le_top u : W1p mu ⊤ p) (x + h) -
           W1p.value (W1p0.extendByZeroL le_top u : W1p mu ⊤ p) x) p mu
         ≤ epsilon := by
+  rcases S.eq_empty_or_nonempty with rfl | ⟨u, hu⟩
+  · exact ⟨1, zero_lt_one, by simp⟩
+  have hC : 0 ≤ C := (norm_nonneg _).trans (hS u hu)
   rcases eq_or_ne epsilon ∞ with rfl | hepsilon_top
   · exact ⟨1, zero_lt_one, fun _ _ _ _ => le_top⟩
   let delta := epsilon.toReal / (C + 1)
@@ -263,15 +266,15 @@ theorem W1p0.exists_pos_forall_eLpNorm_value_extendByZeroL_comp_add_sub_le_of_gr
 the graph-norm-bounded corollary of
 `TauCeti.W1p0.exists_pos_forall_eLpNorm_value_extendByZeroL_comp_add_sub_le_of_gradient_le`. -/
 theorem W1p0.exists_pos_forall_eLpNorm_value_extendByZeroL_comp_add_sub_le_of_norm_le
-    {Omega : Opens E} (hp : p ≠ ∞) {S : Set (W1p0 mu Omega p)} {C : ℝ} (hC : 0 ≤ C)
+    {Omega : Opens E} (hp : p ≠ ∞) {S : Set (W1p0 mu Omega p)} {C : ℝ}
     (hS : ∀ u ∈ S, ‖u‖ ≤ C) {epsilon : ℝ≥0∞} (hepsilon : 0 < epsilon) :
     ∃ delta > 0, ∀ u ∈ S, ∀ h : E, ‖h‖ < delta →
       eLpNorm (fun x =>
         W1p.value (W1p0.extendByZeroL le_top u : W1p mu ⊤ p) (x + h) -
           W1p.value (W1p0.extendByZeroL le_top u : W1p mu ⊤ p) x) p mu
         ≤ epsilon := by
-  apply W1p0.exists_pos_forall_eLpNorm_value_extendByZeroL_comp_add_sub_le_of_gradient_le hp hC
-    (epsilon := epsilon) _ hepsilon
+  refine W1p0.exists_pos_forall_eLpNorm_value_extendByZeroL_comp_add_sub_le_of_gradient_le hp
+    (C := C) (epsilon := epsilon) ?_ hepsilon
   intro u hu
   exact (W1p.norm_gradient_le (u : W1p mu Omega p)).trans (hS u hu)
 
