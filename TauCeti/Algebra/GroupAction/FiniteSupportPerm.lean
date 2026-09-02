@@ -180,54 +180,36 @@ theorem compl_fixedBy_prodCongrRight {ι β : Type*} {τ : ι → Equiv.Perm β}
   ext ⟨a, b⟩
   simp [MulAction.mem_fixedBy, Equiv.Perm.smul_def]
 
-/-- A row-wise family has finite total support exactly when the permutation it induces on the
-product belongs to the finitary symmetric group there. -/
+/-- **A row-wise family is finitely supported on the product exactly when it is finitely supported
+row by row.** The permutation of `ι × β` induced by `τ : ι → Equiv.Perm β` moves only finitely many
+cells iff only finitely many rows of `τ` are nontrivial and every row moves only finitely many
+points. -/
 theorem mem_finitary_prodCongrRight_iff {ι β : Type*} {τ : ι → Equiv.Perm β} :
     Equiv.prodCongrRight τ ∈ finitary (ι × β) ↔
-      {p : ι × β | τ p.1 p.2 ≠ p.2}.Finite := by
-  rw [mem_finitary, compl_fixedBy_prodCongrRight]
-
-/-- A family supported on finitely many rows, with finite support in each row, has finite total
-support on the product. -/
-theorem finite_setOf_apply_ne {ι β : Type*} {τ : ι → Equiv.Perm β}
-    (hrows : {a | τ a ≠ 1}.Finite)
-    (hsupp : ∀ a, τ a ≠ 1 → τ a ∈ finitary β) :
-    {p : ι × β | τ p.1 p.2 ≠ p.2}.Finite := by
-  let S : Set (ι × β) := ⋃ a ∈ {a | τ a ≠ 1},
-    Prod.mk a '' (MulAction.fixedBy β (τ a))ᶜ
-  have hS : S.Finite := hrows.biUnion fun a ha =>
-    (mem_finitary.mp (hsupp a ha)).image (Prod.mk a)
-  refine hS.subset fun p hp => ?_
-  have hrow : τ p.1 ≠ 1 := by
-    intro hτ
-    simp [hτ] at hp
-  refine Set.mem_iUnion.2 ⟨p.1, Set.mem_iUnion.2 ⟨hrow, p.2, ?_, rfl⟩⟩
-  simpa [MulAction.mem_fixedBy, Equiv.Perm.smul_def] using hp
-
-/-- Finite total support of a row-wise family implies finite support in every row. -/
-theorem mem_finitary_of_finite_setOf_apply_ne {ι β : Type*} {τ : ι → Equiv.Perm β}
-    (hτ : {p : ι × β | τ p.1 p.2 ≠ p.2}.Finite) (a : ι) : τ a ∈ finitary β := by
-  rw [mem_finitary]
-  let f : β ↪ ι × β := Function.Embedding.sectR a β
-  have hf : f ⁻¹' {p : ι × β | τ p.1 p.2 ≠ p.2} = {b : β | τ a b ≠ b} := by
-    simp [f]
-  have hne : {b : β | τ a b ≠ b}.Finite := by
-    rw [← hf]
-    exact Set.Finite.preimage_embedding f hτ
-  simpa [MulAction.fixedBy, Equiv.Perm.smul_def, Set.compl_ofPred] using hne
-
-/-- Finite total support of a row-wise family implies that only finitely many rows are
-nontrivial. -/
-theorem finite_setOf_ne_one_of_finite_setOf_apply_ne {ι β : Type*}
-    {τ : ι → Equiv.Perm β} (hτ : {p : ι × β | τ p.1 p.2 ≠ p.2}.Finite) :
-    {a | τ a ≠ 1}.Finite := by
+      {a | τ a ≠ 1}.Finite ∧ ∀ a, τ a ∈ finitary β := by
   classical
-  refine (hτ.image Prod.fst).subset fun a ha => ?_
-  by_contra hnot
-  apply ha
-  ext b
-  by_contra hb
-  exact hnot ⟨(a, b), hb, rfl⟩
+  rw [mem_finitary, compl_fixedBy_prodCongrRight]
+  constructor
+  · intro hτ
+    refine ⟨(hτ.image Prod.fst).subset fun a ha => ?_, fun a => ?_⟩
+    · by_contra hnot
+      apply ha
+      ext b
+      by_contra hb
+      exact hnot ⟨(a, b), hb, rfl⟩
+    · have hrow : Prod.mk a ⁻¹' {p : ι × β | τ p.1 p.2 ≠ p.2} = (MulAction.fixedBy β (τ a))ᶜ := by
+        ext b
+        simp [MulAction.mem_fixedBy, Equiv.Perm.smul_def]
+      exact mem_finitary.mpr (hrow ▸ hτ.preimage (Prod.mk_right_injective a).injOn)
+  · rintro ⟨hrows, hsupp⟩
+    have hS : (⋃ a ∈ {a | τ a ≠ 1}, Prod.mk a '' (MulAction.fixedBy β (τ a))ᶜ).Finite :=
+      hrows.biUnion fun a _ => (mem_finitary.mp (hsupp a)).image (Prod.mk a)
+    refine hS.subset fun p hp => ?_
+    have hrow : τ p.1 ≠ 1 := by
+      intro hτ
+      simp [hτ] at hp
+    refine Set.mem_iUnion.2 ⟨p.1, Set.mem_iUnion.2 ⟨hrow, p.2, ?_, rfl⟩⟩
+    simpa [MulAction.mem_fixedBy, Equiv.Perm.smul_def] using hp
 
 /-- **A family of permutations can be matched on finitely many indexed points by a family with
 finite total support.** Given `π : ι → Equiv.Perm β` and finitely many pairs `(i, b)`, there is a
@@ -246,13 +228,13 @@ theorem exists_prodCongrRight_mem_finitary_apply_eq_on_finset {ι β : Type*}
     exact exists_finite_compl_fixedBy_apply_eq_on_finset (π a) _
   choose σ hσ using hexists
   let τ : ι → Equiv.Perm β := fun a => if a ∈ rows then σ a else 1
-  refine ⟨τ, mem_finitary_prodCongrRight_iff.mpr (finite_setOf_apply_ne ?_ ?_), ?_⟩
+  refine ⟨τ, mem_finitary_prodCongrRight_iff.mpr ⟨?_, ?_⟩, ?_⟩
   · refine rows.finite_toSet.subset fun a ha => ?_
     by_contra hnot
     have hnot' : a ∉ rows := by simpa using hnot
     have hτ : τ a = 1 := by simp only [τ, hnot', ↓reduceIte]
     exact ha hτ
-  · intro a _
+  · intro a
     rw [mem_finitary]
     by_cases ha : a ∈ rows
     · simpa [τ, ha] using (hσ a).1
