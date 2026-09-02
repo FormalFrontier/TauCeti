@@ -18,8 +18,6 @@ property.  It is independent of any particular coefficient ring or source of the
 
 public section
 
-namespace TauCeti
-
 open scoped TensorProduct
 
 variable {R A M N : Type*} [CommSemiring R] [CommSemiring A]
@@ -30,7 +28,7 @@ abbrev RingHom.baseChangeModule (ev : R →+* A) (M : Type*) [AddCommMonoid M] [
   letI := ev.toAlgebra
   A ⊗[R] M
 
-namespace RingHom.baseChangeModule
+namespace _root_.RingHom.baseChangeModule
 
 /-- The canonical semilinear map from an `R`-module to its scalar extension along `ev`. -/
 noncomputable def of (ev : R →+* A) (M : Type*) [AddCommMonoid M] [Module R M] :
@@ -93,11 +91,11 @@ noncomputable def lift (ev : R →+* A) (f : M →ₛₗ[ev] N)
 /-- The lift computes to the original semilinear map on canonical elements. -/
 @[simp]
 theorem lift_of (ev : R →+* A) (f : M →ₛₗ[ev] N) (x : M) :
-    lift ev f (of ev M x) = f x := by
+    letI := ev.toAlgebra
+    lift ev f ((1 : A) ⊗ₜ[R] x) = f x := by
   let _ : Algebra R A := ev.toAlgebra
   let _ : Module R N := Module.compHom N ev
   let _ : IsScalarTower R A N := IsScalarTower.of_compHom R A N
-  rw [of_apply]
   change (LinearMap.liftBaseChange A _) (1 ⊗ₜ[R] x) = f x
   apply LinearMap.liftBaseChange_one_tmul
 
@@ -114,8 +112,8 @@ the existence half of this universal property. -/
 theorem lift_unique (ev : R →+* A) (f : M →ₛₗ[ev] N)
     (g : RingHom.baseChangeModule ev M →ₗ[A] N)
     (hg : ∀ x, g (of ev M x) = f x) : g = lift ev f := by
-  exact hom_ext ev fun x => (hg x).trans (lift_of ev f x).symm
+  exact hom_ext ev fun x => (hg x).trans (by
+    rw [of_apply]
+    exact (lift_of ev f x).symm)
 
-end RingHom.baseChangeModule
-
-end TauCeti
+end _root_.RingHom.baseChangeModule
