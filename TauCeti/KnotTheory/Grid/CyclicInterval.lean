@@ -45,8 +45,8 @@ directions before taking products.
 * `TauCeti.Grid.disjoint_cIco_cIco_of_mem_cIoo`: the two pieces of such a cut are disjoint.
 * `TauCeti.Grid.cIoo_union_insert_cIoo_eq_cIoo_of_mem_cIoo`: an interior point cuts an open arc
   into two open arcs and the cutting point itself.
-* `TauCeti.Grid.cIoo_subset_cIoo_of_mem_cIoo_left`,
-  `TauCeti.Grid.cIoo_subset_cIoo_of_mem_cIoo_right`: the two pieces of that cut are contained in
+* `TauCeti.Grid.cIoo_subset_cIoo_right_of_mem_cIoo`,
+  `TauCeti.Grid.cIoo_subset_cIoo_left_of_mem_cIoo`: the two pieces of that cut are contained in
   the arc they cut.
 * `TauCeti.Grid.Noninterleaving`: two endpoint pairs lie on the same cyclic side of each other.
 * `TauCeti.Grid.noninterleaving_rev`: non-interleaving is preserved by reversing every endpoint
@@ -415,13 +415,13 @@ theorem cIoo_union_insert_cIoo_eq_cIoo_of_mem_cIoo {a b c : Fin n} (h : b ∈ cI
   split_ifs at h ⊢ <;> omega
 
 /-- The initial piece of a cut open arc is contained in the whole arc. -/
-theorem cIoo_subset_cIoo_of_mem_cIoo_left {a b c : Fin n} (h : b ∈ cIoo a c) :
+theorem cIoo_subset_cIoo_right_of_mem_cIoo {a b c : Fin n} (h : b ∈ cIoo a c) :
     cIoo a b ⊆ cIoo a c := by
   rw [← cIoo_union_insert_cIoo_eq_cIoo_of_mem_cIoo h]
   exact Finset.subset_union_left
 
 /-- The terminal piece of a cut open arc is contained in the whole arc. -/
-theorem cIoo_subset_cIoo_of_mem_cIoo_right {a b c : Fin n} (h : b ∈ cIoo a c) :
+theorem cIoo_subset_cIoo_left_of_mem_cIoo {a b c : Fin n} (h : b ∈ cIoo a c) :
     cIoo b c ⊆ cIoo a c := by
   rw [← cIoo_union_insert_cIoo_eq_cIoo_of_mem_cIoo h]
   exact Finset.subset_union_right.trans' (Finset.subset_insert _ _)

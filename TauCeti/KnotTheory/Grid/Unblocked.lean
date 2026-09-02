@@ -183,8 +183,7 @@ theorem OMonomial_eq_prod_coveredSquares (r : GridRectangle n) :
       ∏ p ∈ r.coveredSquares,
         if p ∈ G.OSet then MvPolynomial.X p.1 else (1 : MvPolynomial (Fin n) R) := by
   classical
-  rw [OMonomial, ← Finset.prod_filter, Finset.filter_mem_eq_inter, Finset.inter_comm,
-    G.OSet_inter_coveredSquares r,
+  rw [OMonomial, Finset.prod_ite_mem, Finset.inter_comm, G.OSet_inter_coveredSquares r,
     Finset.prod_image fun _ _ _ _ hab => congrArg Prod.fst hab]
 
 /-- The weight of a rectangle has total degree the number of `O`-markings the rectangle covers.
