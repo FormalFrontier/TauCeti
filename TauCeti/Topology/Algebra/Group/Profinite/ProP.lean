@@ -25,6 +25,7 @@ separate topological fact is supplied by `QuotientGroup.instTotallyDisconnectedS
 ## Main results
 
 * `IsProP`: every quotient by an open normal subgroup is a `p`-group.
+* `isProP_def`: the defining characterization, for consumers that cannot unfold `IsProP`.
 * `IsPGroup.isProP`: an abstract `p`-group with any topology is pro-`p`.
 * `isProP_iff_isPGroup`: for a discrete topology, pro-`p` agrees with `IsPGroup`.
 * `IsProP.of_surjective`: a continuous surjective image of a pro-`p` group is pro-`p`.
@@ -48,6 +49,13 @@ def IsProP (p : ℕ) (G : Type u) [Group G] [TopologicalSpace G] : Prop :=
   ∀ U : OpenNormalSubgroup G, IsPGroup p (G ⧸ U.toSubgroup)
 
 variable {p : ℕ}
+
+/-- A group is pro-`p` exactly when each of its quotients by an open normal subgroup is a
+`p`-group.  This is `IsProP` by definition, and is the form downstream files use, since the
+body of `IsProP` is not exposed. -/
+theorem isProP_def {G : Type u} [Group G] [TopologicalSpace G] :
+    IsProP p G ↔ ∀ U : OpenNormalSubgroup G, IsPGroup p (G ⧸ U.toSubgroup) :=
+  Iff.rfl
 
 namespace IsPGroup
 
