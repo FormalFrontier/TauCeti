@@ -183,8 +183,10 @@ theorem compl_fixedBy_prodCongrRight {ι β : Type*} {τ : ι → Equiv.Perm β}
 /-- **A row-wise family is finitely supported on the product exactly when it is finitely supported
 row by row.** The permutation of `ι × β` induced by `τ : ι → Equiv.Perm β` moves only finitely many
 cells iff only finitely many rows of `τ` are nontrivial and every row moves only finitely many
-points. -/
-@[simp]
+points.
+
+This is deliberately not a `simp` lemma: `mem_finitary` is already `simp`, so the left-hand side
+is not in simp-normal form and the `simpNF` linter rejects the attribute. -/
 theorem mem_finitary_prodCongrRight_iff {ι β : Type*} {τ : ι → Equiv.Perm β} :
     Equiv.prodCongrRight τ ∈ finitary (ι × β) ↔
       {a | τ a ≠ 1}.Finite ∧ ∀ a, τ a ∈ finitary β := by
