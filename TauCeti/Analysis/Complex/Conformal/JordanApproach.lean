@@ -7,74 +7,48 @@ module
 
 public import TauCeti.Analysis.Complex.Conformal.InverseBoundaryCluster
 public import TauCeti.Analysis.Complex.Conformal.JordanDomain
+public import TauCeti.Analysis.Complex.Conformal.Caratheodory
+public import TauCeti.Analysis.Complex.Conformal.BoundaryCorrespondence
 public import TauCeti.Analysis.Complex.PlaneSeparation.Basic
 public import TauCeti.Topology.Circle.Arc
 public import TauCeti.Topology.JordanCurve.Subcontinuum
-public import TauCeti.Topology.UniformlyLocallyConnected
 
 /-!
-# Preconnected approach regions from local connectedness
+# Preconnected approach regions for Jordan domains
 
-`IsPreconnectedApproachAt U a` asks, for every neighbourhood `s` of `a`, for a
-neighbourhood `t ⊆ s` whose trace `U ∩ t` is preconnected.  The neighbourhood
-`t` is *not* required to be a ball, and this file exploits that freedom.
+A Jordan domain has preconnected approach regions at every boundary point.
+The proof uses Janiszewski's theorem (`TauCeti.janiszewski`) and one arc
+lemma, avoiding plane separation and Schoenflies entirely.
 
-## Why the ball statement is false
+Given `a ∈ frontier U` with `U` a Jordan domain, take an open arc
+`W ⊆ frontier U ∩ ball a r` through `a` whose complement `frontier U \ W`
+is closed and preconnected.  Set `S := frontier U` and
+`T := sphere a r ∪ (frontier U \ W)`.  Then `S ∩ T = frontier U \ W` is
+preconnected, `S` does not separate points of `U`, and `T` does not
+separate points of `ball a ρ` for small `ρ`; Janiszewski puts both in one
+component of `(S ∪ T)ᶜ ⊆ U ∩ ball a r`.
 
-The earlier draft `JordanApproach.lean` isolated the gap as
-"`U ∩ ball a ε` is preconnected for every `ε > 0`".  That is false for a
-horseshoe-shaped Jordan domain with `a` at the tip of one arm: for `ε`
-larger than the gap between the arms, `U ∩ ball a ε` has two components.
-Torhorst's theorem gives *local connectedness* — some small connected
-neighbourhood — not connectedness of every ball trace.
-
-## The correct reduction
-
-`isPreconnectedApproachAt_of_forall_exists_isPreconnected_superset`: it is
-enough that for every `ε > 0` some preconnected `C ⊆ U ∩ ball a ε` swallow
-`U ∩ ball a δ` for a `δ > 0`.  The witness is `t := ball a δ ∪ C`, whose
-trace on `U` is exactly `C`.
-
-Two consumers:
-* `IsUniformlyLocallyConnected.isPreconnectedApproachAt` — Tau Ceti's uniform
-  local connectedness (`TauCeti/Topology/UniformlyLocallyConnected.lean`)
-  gives preconnected approach regions at every point.
-* `IsJordanDomain.isPreconnectedApproachAt` — for a Jordan domain, via
-  Janiszewski's theorem (`TauCeti.janiszewski`) and one arc lemma.
-
-## The Jordan case: Janiszewski, not Schoenflies
-
-With `J := frontier U`, take an open arc `W ⊆ J ∩ ball a r` through `a` whose
-complement `J \ W` is closed and preconnected.  Put `S := J` and
-`T := sphere a r ∪ (J \ W)`.  Then `S ∩ T = J \ W` is preconnected, `S` does
-not separate two points of `U`, and `T` does not separate two points of a
-small ball around `a`; Janiszewski puts both points in one component of
-`(J ∪ sphere a r)ᶜ`, which lies in `U ∩ ball a r` because `U` is clopen in
-`Jᶜ` and `ball a r` is clopen in `(sphere a r)ᶜ`.  This is
-`IsJordanDomain.exists_isPreconnected_inter_ball_subset_of_arc`, proved.
-
-The arc is supplied by
-`IsJordanCurve.exists_subset_ball_isClosed_isPreconnected_sdiff`: a Jordan
-curve has, inside any ball around one of its points, an open arc through
-that point whose complementary arc is closed and preconnected.  It is built
-from `compl_circleExp_image_Icc` (`TauCeti/Topology/Circle/Arc.lean`) through
-the parametrization `jordanParam`.  Nothing in this file is left unproved.
+Combined with `injOn_closedBall_of_isPreconnected_image_approach` from
+`InverseBoundaryCluster.lean`, this gives boundary injectivity of the
+Riemann map of a Jordan domain, and with `closureHomeomorph` from
+`BoundaryCorrespondence.lean`, the homeomorphism of closures.
 
 ## Main results
 
-* `TauCeti.isPreconnectedApproachAt_of_forall_exists_isPreconnected_superset`
-* `TauCeti.IsUniformlyLocallyConnected.isPreconnectedApproachAt`
-* `TauCeti.IsJordanCurve.exists_subset_ball_isClosed_isPreconnected_sdiff`
-* `TauCeti.IsJordanDomain.exists_isPreconnected_inter_ball_subset_of_arc`
+* `TauCeti.IsJordanCurve.exists_isClosed_isPreconnected_notMem_sdiff_subset_ball`
+  — a Jordan curve admits a closed preconnected arc missing any given point,
+  whose complement lies in a given ball around it.
 * `TauCeti.IsJordanDomain.isPreconnectedApproachAt`
-* `TauCeti.IsJordanDomain.injOn_closedBall_of_conformal`
+  — a Jordan domain has preconnected approach regions at every boundary point.
+* `TauCeti.injOn_closedBall_of_isJordanCurve_frontier`
+  — boundary injectivity of the Riemann map, Jordan case.
+* `TauCeti.exists_homeomorph_closedBall_closure_of_isJordanCurve_frontier`
+  — the Riemann map extends to a homeomorphism of the closures.
 -/
 
 @[expose] public section
 
 open Set Metric Topology Function Filter Bornology Real
-
-noncomputable section
 
 namespace TauCeti
 
@@ -88,7 +62,8 @@ variable {X : Type*} [PseudoMetricSpace X]
 neighbourhood is `ball a δ ∪ C`, whose trace on `U` is `C`. -/
 theorem isPreconnectedApproachAt_of_forall_exists_isPreconnected_superset
     {U : Set X} {a : X}
-    (h : ∀ ε > 0, ∃ δ > 0, ∃ C ⊆ U ∩ ball a ε, IsPreconnected C ∧ U ∩ ball a δ ⊆ C) :
+    (h : ∀ ε > 0, ∃ δ > 0, ∃ C ⊆ U ∩ ball a ε,
+      IsPreconnected C ∧ U ∩ ball a δ ⊆ C) :
     IsPreconnectedApproachAt U a := by
   intro s hs
   obtain ⟨ε, hε, hεs⟩ := Metric.mem_nhds_iff.mp hs
@@ -106,60 +81,23 @@ theorem isPreconnectedApproachAt_of_forall_exists_isPreconnected_superset
     rw [heq]
     exact hCpre
 
-/-- **Uniform local connectedness gives preconnected approach regions at every
-point.**  Points `a` outside `closure U` are trivial (empty trace); at points
-of `closure U` the joining sets of `TauCeti.IsUniformlyLocallyConnected` through
-a base point `x₀ ∈ U ∩ ball a ρ` are united as in
-`TauCeti.IsUniformlyLocallyConnected.exists_isConnected_superset`. -/
-theorem IsUniformlyLocallyConnected.isPreconnectedApproachAt {U : Set X}
-    (h : IsUniformlyLocallyConnected U) (a : X) : IsPreconnectedApproachAt U a := by
-  refine isPreconnectedApproachAt_of_forall_exists_isPreconnected_superset fun ε hε => ?_
-  obtain ⟨δ, hδ, hjoin⟩ := h.exists_isConnected (by positivity : (0 : ℝ) < ε / 3)
-  set ρ : ℝ := min (δ / 2) (ε / 3) with hρ
-  have hρ₀ : 0 < ρ := lt_min (by positivity) (by positivity)
-  have hρδ : ρ ≤ δ / 2 := min_le_left _ _
-  have hρε : ρ ≤ ε / 3 := min_le_right _ _
-  refine ⟨ρ, hρ₀, ?_⟩
-  by_cases hne : (U ∩ ball a ρ).Nonempty
-  · obtain ⟨x₀, hx₀U, hx₀a⟩ := hne
-    -- every preconnected subset of `U` through `x₀` staying within `ε / 3` of it
-    set 𝒞 : Set (Set X) :=
-      {T | T ⊆ U ∧ IsPreconnected T ∧ x₀ ∈ T ∧ ∀ z ∈ T, dist z x₀ ≤ ε / 3} with h𝒞
-    refine ⟨⋃₀ 𝒞, ?_, isPreconnected_sUnion x₀ 𝒞 (fun T hT => hT.2.2.1) fun T hT => hT.2.1, ?_⟩
-    · rintro z ⟨T, hT, hzT⟩
-      refine ⟨hT.1 hzT, mem_ball.mpr ?_⟩
-      calc dist z a ≤ dist z x₀ + dist x₀ a := dist_triangle _ _ _
-        _ < ε / 3 + ρ := add_lt_add_of_le_of_lt (hT.2.2.2 z hzT) (mem_ball.mp hx₀a)
-        _ ≤ ε / 3 + ε / 3 := by linarith
-        _ < ε := by linarith
-    · rintro y ⟨hyU, hya⟩
-      have hxy : dist x₀ y < δ := by
-        calc dist x₀ y ≤ dist x₀ a + dist a y := dist_triangle _ _ _
-          _ < ρ + ρ := add_lt_add (mem_ball.mp hx₀a) (by rw [dist_comm]; exact mem_ball.mp hya)
-          _ ≤ δ := by linarith
-      obtain ⟨T, hTU, hTconn, hx₀T, hyT, hTsmall⟩ := hjoin x₀ hx₀U y hyU hxy
-      exact ⟨T, ⟨hTU, hTconn.isPreconnected, hx₀T, fun z hz => hTsmall z hz x₀ hx₀T⟩, hyT⟩
-  · rw [not_nonempty_iff_eq_empty] at hne
-    exact ⟨∅, empty_subset _, isPreconnected_empty, hne.subset⟩
-
 /-! ### Jordan domains -/
 
 variable {U : Set ℂ} {a : ℂ}
 
-/-- **A small open arc of a Jordan curve has a closed preconnected complement.**
-Inside any ball around a point `a` of a Jordan curve `J` there is an arc `W ∋ a`,
-open in `J`, whose complement `J \ W` is closed and preconnected — the closed
-complementary arc.
+/-- **A Jordan curve has, near any of its points, a closed preconnected arc
+missing that point whose complement lies in a given ball around it.**  The
+closed arc `S` is the image of a closed circle arc under the Jordan
+parametrization, chosen small enough that its complement `J \ S` — the open
+window through `a` — stays inside `ball a r`.
 
-The closed arc is built directly: parametrize `J` by `jordanParam e`, pick an
-angle `θ₀` over `a`, and let `S` be the image of the closed arc of angles
+`S` is built directly: parametrize `J` by `jordanParam e`, pick an angle
+`θ₀` over `a`, and let `S` be the image of the closed arc of angles
 `Icc (θ₀ + η) (θ₀ - η + 2π)`, compact and preconnected as a continuous image
-of an interval.  Then `W := J \ S` is the image of the open window
-`Ioo (θ₀ - η) (θ₀ + η)` by `compl_circleExp_image_Icc`, which continuity at
-`θ₀` keeps inside `ball a r`. -/
-theorem IsJordanCurve.exists_subset_ball_isClosed_isPreconnected_sdiff
+of an interval; continuity at `θ₀` keeps its complement inside `ball a r`. -/
+theorem IsJordanCurve.exists_isClosed_isPreconnected_notMem_sdiff_subset_ball
     {J : Set ℂ} (hJ : IsJordanCurve J) (ha : a ∈ J) {r : ℝ} (hr : 0 < r) :
-    ∃ W ⊆ J ∩ ball a r, a ∈ W ∧ IsClosed (J \ W) ∧ IsPreconnected (J \ W) := by
+    ∃ S ⊆ J, IsClosed S ∧ IsPreconnected S ∧ a ∉ S ∧ J \ S ⊆ ball a r := by
   obtain ⟨e⟩ := isJordanCurve_iff.mp hJ
   set g : Circle → ℂ := jordanParam e with hg
   have hginj : Injective g := jordanParam_injective e
@@ -183,15 +121,24 @@ theorem IsJordanCurve.exists_subset_ball_isClosed_isPreconnected_sdiff
     (isCompact_Icc.image Circle.exp.continuous).image hgc
   have hSpre : IsPreconnected S :=
     (isPreconnected_Icc.image _ Circle.exp.continuous.continuousOn).image _ hgc.continuousOn
-  refine ⟨J \ S, ?_, ?_, ?_, ?_⟩
-  · -- `J \ S = g '' Kᶜ ⊆ ball a r`
+  have hab : θ₀ + η ≤ θ₀ - η + 2 * π := by linarith [pi_pos]
+  have hlt : (θ₀ - η + 2 * π) - (θ₀ + η) < 2 * π := by linarith
+  refine ⟨S, hSJ, hScompact.isClosed, hSpre, ?_, ?_⟩
+  · -- `a ∉ S`
+    rintro ⟨u, huK, hu⟩
+    have : u = Circle.exp θ₀ := hginj (hu.trans hga.symm)
+    subst this
+    obtain ⟨θ, hθ, hθeq⟩ := huK
+    have hnot : Circle.exp θ₀ ∈ (Circle.exp '' Icc (θ₀ + η) (θ₀ - η + 2 * π))ᶜ := by
+      rw [compl_circleExp_image_Icc hab hlt]
+      refine ⟨θ₀ + 2 * π, ⟨by linarith, by linarith⟩, ?_⟩
+      rw [Circle.exp_add, Circle.exp_two_pi, mul_one]
+    exact hnot ⟨θ, hθ, hθeq⟩
+  · -- `J \ S ⊆ ball a r`
     rintro z ⟨hzJ, hzS⟩
-    refine ⟨hzJ, ?_⟩
     rw [← hgrange] at hzJ
     obtain ⟨u, rfl⟩ := hzJ
     have huK : u ∉ K := fun h => hzS ⟨u, h, rfl⟩
-    have hab : θ₀ + η ≤ θ₀ - η + 2 * π := by linarith [pi_pos]
-    have hlt : (θ₀ - η + 2 * π) - (θ₀ + η) < 2 * π := by linarith
     have hu : u ∈ Circle.exp '' Ioo (θ₀ - η + 2 * π) (θ₀ + η + 2 * π) := by
       have := compl_circleExp_image_Icc hab hlt
       rw [← hK] at this
@@ -207,23 +154,6 @@ theorem IsJordanCurve.exists_subset_ball_isClosed_isPreconnected_sdiff
     apply hη
     rw [Real.dist_eq, abs_lt]
     constructor <;> linarith [hθ.1, hθ.2]
-  · -- `a ∈ J \ S`
-    refine ⟨ha, fun h => ?_⟩
-    obtain ⟨u, huK, hu⟩ := h
-    have : u = Circle.exp θ₀ := hginj (hu.trans hga.symm)
-    subst this
-    obtain ⟨θ, hθ, hθeq⟩ := huK
-    have hab : θ₀ + η ≤ θ₀ - η + 2 * π := by linarith [pi_pos]
-    have hlt : (θ₀ - η + 2 * π) - (θ₀ + η) < 2 * π := by linarith
-    have hnot : Circle.exp θ₀ ∈ (Circle.exp '' Icc (θ₀ + η) (θ₀ - η + 2 * π))ᶜ := by
-      rw [compl_circleExp_image_Icc hab hlt]
-      refine ⟨θ₀ + 2 * π, ⟨by linarith, by linarith⟩, ?_⟩
-      rw [Circle.exp_add, Circle.exp_two_pi, mul_one]
-    exact hnot ⟨θ, hθ, hθeq⟩
-  · have : J \ (J \ S) = S := by rw [sdiff_sdiff_cancel_left hSJ]
-    rw [this]; exact hScompact.isClosed
-  · have : J \ (J \ S) = S := by rw [sdiff_sdiff_cancel_left hSJ]
-    rw [this]; exact hSpre
 
 /-- **Janiszewski step.**  Given an open arc `W` of the boundary through `a`,
 inside `ball a r`, with closed preconnected complement, the trace `U ∩ ball a δ`
@@ -233,14 +163,15 @@ lies in one preconnected subset of `U ∩ ball a r` for some `δ > 0`.
 bounded with `S ∩ T = frontier U \ W`; neither separates two points of
 `U ∩ ball a δ`, so by `TauCeti.janiszewski` both lie in one component of
 `(S ∪ T)ᶜ`, which sits inside `U ∩ ball a r`. -/
-theorem IsJordanDomain.exists_isPreconnected_inter_ball_subset_of_arc
+private theorem IsJordanDomain.exists_isPreconnected_inter_ball_subset_of_arc
     (hU : IsJordanDomain U) {r : ℝ} (hr : 0 < r) {W : Set ℂ}
     (hWJ : W ⊆ frontier U ∩ ball a r) (haW : a ∈ W)
     (hclosed : IsClosed (frontier U \ W)) (hpre : IsPreconnected (frontier U \ W)) :
     ∃ δ > 0, ∃ C ⊆ U ∩ ball a r, IsPreconnected C ∧ U ∩ ball a δ ⊆ C := by
   set J := frontier U with hJ
   -- a radius whose ball misses the complementary arc
-  obtain ⟨ρ, hρ₀, hρr, hρdisj⟩ : ∃ ρ > 0, ρ ≤ r ∧ Disjoint (ball a ρ) (J \ W) := by
+  obtain ⟨ρ, hρ₀, hρr, hρdisj⟩ :
+      ∃ ρ > 0, ρ ≤ r ∧ Disjoint (ball a ρ) (J \ W) := by
     rcases (J \ W).eq_empty_or_nonempty with hne | hne
     · exact ⟨r, hr, le_rfl, by rw [hne]; exact disjoint_empty _⟩
     · have haJW : a ∉ J \ W := fun h => h.2 haW
@@ -322,13 +253,18 @@ theorem IsJordanDomain.exists_isPreconnected_inter_ball_subset_of_arc
     (isBounded_sphere.union (hSb.subset sdiff_subset)) (hST ▸ hpre) hSsep hTsep
 
 /-- **A Jordan domain is locally connected at each boundary point.**  The arc
-lemma supplies the open arc, the Janiszewski step does the rest. -/
+lemma supplies the closed complementary arc, the Janiszewski step does the
+rest. -/
 theorem IsJordanDomain.exists_isPreconnected_inter_ball_subset
     (hU : IsJordanDomain U) (ha : a ∈ frontier U) {ε : ℝ} (hε : 0 < ε) :
     ∃ δ > 0, ∃ C ⊆ U ∩ ball a ε, IsPreconnected C ∧ U ∩ ball a δ ⊆ C := by
-  obtain ⟨W, hWJ, haW, hclosed, hpre⟩ :=
-    hU.isJordanCurve_frontier.exists_subset_ball_isClosed_isPreconnected_sdiff ha hε
-  exact hU.exists_isPreconnected_inter_ball_subset_of_arc hε hWJ haW hclosed hpre
+  obtain ⟨S, hSJ, hSclosed, hSpre, haS, hball⟩ :=
+    hU.isJordanCurve_frontier.exists_isClosed_isPreconnected_notMem_sdiff_subset_ball ha hε
+  have hcancel : frontier U \ (frontier U \ S) = S := sdiff_sdiff_cancel_left hSJ
+  refine hU.exists_isPreconnected_inter_ball_subset_of_arc hε
+    (fun z hz => ⟨hz.1, hball hz⟩) ⟨ha, haS⟩ ?_ ?_
+  · rw [hcancel]; exact hSclosed
+  · rw [hcancel]; exact hSpre
 
 /-- **A Jordan domain has preconnected approach regions at every boundary
 point.** -/
@@ -353,5 +289,45 @@ theorem IsJordanDomain.injOn_closedBall_of_conformal
     InjOn F (closedBall c r) :=
   injOn_closedBall_of_isPreconnected_image_approach hr hfd hfi hFc hFf
     fun _ ha => hJ.isPreconnectedApproachAt ha
+
+/-- **Boundary injectivity, Jordan case**, in the hypothesis shape of
+`TauCeti.exists_continuousOn_closedBall_eqOn_of_isJordanCurve_frontier`. -/
+theorem injOn_closedBall_of_isJordanCurve_frontier (hr : 0 < r)
+    (hf : DifferentiableOn ℂ f (ball c r)) (hinj : InjOn f (ball c r))
+    (hb : IsBounded (f '' ball c r)) (hJf : IsJordanCurve (frontier (f '' ball c r)))
+    (hFc : ContinuousOn F (closedBall c r)) (hFf : EqOn F f (ball c r)) :
+    InjOn F (closedBall c r) := by
+  have hJ : IsJordanDomain (f '' ball c r) :=
+    { isOpen := isOpen_image_of_differentiableOn_of_injOn isOpen_ball hf hinj
+      isConnected := IsConnected.image ⟨nonempty_ball.mpr hr, (convex_ball c r).isPreconnected⟩
+        f hf.continuousOn
+      isBounded := hb
+      isJordanCurve_frontier := hJf }
+  exact hJ.injOn_closedBall_of_conformal hr hf hinj hFc hFf
+
+/-- **The Riemann map of a Jordan domain extends to a homeomorphism of the
+closures.** -/
+theorem exists_homeomorph_closedBall_closure_of_isJordanCurve_frontier {Ω : Set ℂ}
+    (hΩo : IsOpen Ω) (hΩc : IsSimplyConnected Ω) (hΩb : IsBounded Ω)
+    (hΩJ : IsJordanCurve (frontier Ω)) :
+    ∃ g : ℂ → ℂ, ContinuousOn g (closedBall 0 1) ∧ DifferentiableOn ℂ g (ball 0 1) ∧
+      BijOn g (ball 0 1) Ω ∧
+      ∃ e : closedBall (0 : ℂ) 1 ≃ₜ closure Ω,
+        ∀ z : closedBall (0 : ℂ) 1, (e z : ℂ) = g z := by
+  obtain ⟨g, hgc, hgd, hgbij⟩ :=
+    exists_continuousOn_closedBall_bijOn_ball_of_isJordanCurve_frontier hΩo hΩc hΩb hΩJ
+  have himg : g '' ball 0 1 = Ω := hgbij.image_eq
+  have hgi : InjOn g (closedBall 0 1) :=
+    injOn_closedBall_of_isJordanCurve_frontier one_pos hgd hgbij.injOn (himg ▸ hΩb)
+      (himg ▸ hΩJ) hgc fun _ _ => rfl
+  have hcl : closure (ball (0 : ℂ) 1) = closedBall 0 1 := closure_ball 0 one_ne_zero
+  have hgc' : ContinuousOn g (closure (ball (0 : ℂ) 1)) := by rwa [hcl]
+  have hgi' : InjOn g (closure (ball (0 : ℂ) 1)) := by rwa [hcl]
+  have himg' : closure (g '' ball 0 1) = closure Ω := by rw [himg]
+  refine ⟨g, hgc, hgd, hgbij, (Homeomorph.setCongr hcl.symm).trans
+    ((closureHomeomorph isBounded_ball hgc' (fun _ _ => rfl) hgi').trans
+      (Homeomorph.setCongr himg')), fun z => ?_⟩
+  simp only [Homeomorph.trans_apply]
+  exact coe_closureHomeomorph_apply isBounded_ball hgc' (fun _ _ => rfl) hgi' _
 
 end TauCeti
