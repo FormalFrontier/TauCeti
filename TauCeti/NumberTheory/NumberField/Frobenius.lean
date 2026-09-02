@@ -73,7 +73,7 @@ private theorem exists_isArithFrobAt_aux {L : Type*} [Field L] [NumberField L]
     [MulSemiringAction G (𝓞 L)] [SMulCommClass G R (𝓞 L)]
     [Algebra.IsInvariant R (𝓞 L) G] (Q : Ideal (𝓞 L)) [Q.IsPrime] (hQ : Q ≠ ⊥) :
     ∃ σ : G, IsArithFrobAt R σ Q := by
-  have : Q.IsMaximal := Ring.DimensionLEOne.maximalOfPrime hQ ‹Q.IsPrime›
+  let _ : Finite (𝓞 L ⧸ Q) := Ring.HasFiniteQuotients.finiteQuotient hQ
   exact IsArithFrobAt.exists_of_isInvariant R G Q
 
 variable (K) in
