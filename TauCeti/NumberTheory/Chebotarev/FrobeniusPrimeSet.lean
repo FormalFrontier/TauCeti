@@ -7,7 +7,6 @@ module
 
 public import TauCeti.NumberTheory.Chebotarev.RamifiedPrimes
 public import TauCeti.NumberTheory.NumberField.ArtinSymbol
-public import TauCeti.NumberTheory.NumberField.Frobenius
 
 /-!
 # The unramified primes carrying a prescribed Artin class
@@ -62,7 +61,7 @@ a cofinite set, which is how the crossing argument produces exact densities.
 public section
 
 open Ideal
-open scoped NumberField Pointwise
+open scoped NumberField
 
 open IsDedekindDomain (HeightOneSpectrum)
 
@@ -116,7 +115,7 @@ theorem isUnramifiedAt_of_mem_frobeniusPrimeSet {𝔭 : HeightOneSpectrum (𝓞 
     {C : ConjClasses (L ≃ₐ[K] L)} (h : 𝔭 ∈ frobeniusPrimeSet K L C)
     (Q : Ideal (𝓞 L)) [Q.IsPrime] [Q.LiesOver 𝔭.asIdeal] :
     Algebra.IsUnramifiedAt (𝓞 K) Q :=
-  h.choose Q
+  (mem_frobeniusPrimeSet_iff.mp h).elim fun hur _ ↦ hur Q
 
 /-- No ramified prime carries an Artin class: the fibres avoid `ramifiedPrimes K L`. -/
 theorem frobeniusPrimeSet_subset_compl_ramifiedPrimes (C : ConjClasses (L ≃ₐ[K] L)) :
@@ -137,10 +136,10 @@ theorem mem_frobeniusPrimeSet_mk_of_isArithFrobAt {𝔭 : HeightOneSpectrum (�
 /-- **Every representative is realized.** If `𝔭` lies in the fibre of the class of `σ`, then `σ`
 itself — not merely some conjugate of it — is an arithmetic Frobenius at some prime of `𝓞 L`
 above `𝔭`. -/
-theorem exists_isArithFrobAt_of_mem_frobeniusPrimeSet {𝔭 : HeightOneSpectrum (𝓞 K)}
+theorem exists_isArithFrobAt_of_mem_frobeniusPrimeSet_mk {𝔭 : HeightOneSpectrum (𝓞 K)}
     {σ : L ≃ₐ[K] L} (h : 𝔭 ∈ frobeniusPrimeSet K L (ConjClasses.mk σ)) :
     ∃ Q : 𝔭.asIdeal.primesOver (𝓞 L), IsArithFrobAt (𝓞 K) σ Q.1 := by
-  obtain ⟨hur, hC⟩ := h
+  obtain ⟨hur, hC⟩ := mem_frobeniusPrimeSet_iff.mp h
   exact exists_isArithFrobAt_of_artinSymbol_eq_mk 𝔭.asIdeal hur hC
 
 /-- **The fibre of a class, read off from any one representative.** For `𝔭` unramified in `L`,
@@ -151,15 +150,16 @@ theorem mem_frobeniusPrimeSet_mk_iff_exists_isArithFrobAt {𝔭 : HeightOneSpect
       Algebra.IsUnramifiedAt (𝓞 K) Q) (σ : L ≃ₐ[K] L) :
     𝔭 ∈ frobeniusPrimeSet K L (ConjClasses.mk σ) ↔
       ∃ Q : 𝔭.asIdeal.primesOver (𝓞 L), IsArithFrobAt (𝓞 K) σ Q.1 :=
-  ⟨exists_isArithFrobAt_of_mem_frobeniusPrimeSet, fun ⟨Q, hσ⟩ ↦
+  ⟨exists_isArithFrobAt_of_mem_frobeniusPrimeSet_mk, fun ⟨Q, hσ⟩ ↦
     mem_frobeniusPrimeSet_mk_of_isArithFrobAt hur Q.1 hσ⟩
 
 /-- **Distinct classes have disjoint fibres.** A prime unramified in `L` has one Artin class. -/
 theorem disjoint_frobeniusPrimeSet {C D : ConjClasses (L ≃ₐ[K] L)} (h : C ≠ D) :
     Disjoint (frobeniusPrimeSet K L C) (frobeniusPrimeSet K L D) := by
   rw [Set.disjoint_left]
-  rintro 𝔭 ⟨_, hC⟩ ⟨_, hD⟩
-  exact h (hC.symm.trans hD)
+  intro 𝔭 h𝔭C h𝔭D
+  obtain ⟨hur, hC⟩ := mem_frobeniusPrimeSet_iff.mp h𝔭C
+  exact h (hC.symm.trans ((mem_frobeniusPrimeSet_iff_artinSymbol_eq hur D).mp h𝔭D))
 
 variable (K L) in
 /-- The fibres of the Artin class are pairwise disjoint. -/
