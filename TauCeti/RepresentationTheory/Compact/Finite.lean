@@ -775,13 +775,13 @@ subrepresentations, of dimensions adding up to `dim V`, which are moreover pairw
 for an invariant inner product `⟪e ·, e ·⟫` obtained from the given one by a continuous linear
 automorphism `e` of the carrier.
 
-This is the finite shadow of complete reducibility: unitarity is not assumed but produced, by the
-finite unitarian trick `ContRepresentation.exists_isUnitary_congr_of_finite`, the decomposition of
-the resulting unitary model is
-`TauCeti.ContRepresentation.IsUnitary.exists_orthogonal_irreducible_decomposition` with no further
-hypotheses, and every block is then pulled back along `e`, which is an equivalence of
-representations `π ≃ congr e π` by `ContRepresentation.congrEquiv`. The blocks are therefore
-subrepresentations of `π` itself.
+This is the finite shadow of complete reducibility, and all that is finite about it is the
+production of `e`: unitarity is not assumed but produced, by the finite unitarian trick
+`ContRepresentation.exists_isUnitary_congr_of_finite`, and the decomposition of `π` itself is then
+`TauCeti.ContRepresentation.IsUnitary.exists_orthogonal_irreducible_decomposition_of_congr`, which
+decomposes the unitary model and carries every block back along the equivalence of representations
+`ContRepresentation.congrEquiv : π.Equiv (congr e π)` for an arbitrary group. The blocks are
+therefore subrepresentations of `π` itself.
 
 Distorting the inner product by `e` is unavoidable and is what "Maschke" costs here: Lean fixes one
 inner product on `V`, and a representation of a finite group need not preserve it, only the average
@@ -799,41 +799,8 @@ theorem exists_orthogonal_irreducible_decomposition_of_finite (π : ContRepresen
       DirectSum.IsInternal (fun i ↦ (U i).toSubmodule) ∧
       Module.finrank 𝕜 V = ∑ i, Module.finrank 𝕜 (U i).toSubmodule := by
   obtain ⟨e, he⟩ := exists_isUnitary_congr_of_finite π
-  obtain ⟨n, U, hirr, horth, hinternal, hdim⟩ := he.exists_orthogonal_irreducible_decomposition
-  -- `e` intertwines `π` with `congr e π` — that is `ContRepresentation.congrEquiv` — so a block
-  -- of the unitary model pulls back along `e` to a subrepresentation of `π` itself.
-  have hint : ∀ (g : G) (v : V),
-      ((congr e π).toRepresentation : Representation 𝕜 G V) g ((e : V ≃ₗ[𝕜] V) v)
-        = (e : V ≃ₗ[𝕜] V) ((π.toRepresentation : Representation 𝕜 G V) g v) := fun g v ↦ by
-    simp [_root_.ContRepresentation.toMonoidHom_apply]
-  have hmem : ∀ (i : Fin n) (v : V),
-      v ∈ (U i).toSubmodule.map ((e : V ≃ₗ[𝕜] V).symm : V →ₗ[𝕜] V) ↔
-        (e : V ≃ₗ[𝕜] V) v ∈ (U i).toSubmodule := fun i v ↦ Submodule.mem_map_equiv _
-  have hinv : ∀ (i : Fin n) (g : G) ⦃v : V⦄,
-      v ∈ (U i).toSubmodule.map ((e : V ≃ₗ[𝕜] V).symm : V →ₗ[𝕜] V) →
-        (π.toRepresentation : Representation 𝕜 G V) g v ∈
-          (U i).toSubmodule.map ((e : V ≃ₗ[𝕜] V).symm : V →ₗ[𝕜] V) := by
-    intro i g v hv
-    refine (hmem i _).mpr ?_
-    rw [← hint g v]
-    exact (U i).apply_mem_toSubmodule g ((hmem i v).mp hv)
-  refine ⟨e, n, fun i ↦ ⟨(U i).toSubmodule.map ((e : V ≃ₗ[𝕜] V).symm : V →ₗ[𝕜] V), hinv i⟩,
-    he, fun i ↦ ?_, fun i j hij v hv w hw ↦ ?_, ?_, ?_⟩
-  · exact Representation.isIrreducible_of_linearEquiv
-      ((e : V ≃ₗ[𝕜] V).symm.submoduleMap (U i).toSubmodule)
-      (fun g x ↦ Subtype.ext (by
-        conv_rhs => rw [Subrepresentation.toRepresentation_apply]
-        simp [Subrepresentation.toRepresentation_apply, LinearEquiv.submoduleMap_apply,
-          LinearMap.coe_restrict_apply, _root_.ContRepresentation.toMonoidHom_apply])) (hirr i)
-  · exact horth hij ⟨_, (hmem i v).mp hv⟩ ⟨_, (hmem j w).mp hw⟩
-  · obtain ⟨hindep, htop⟩ :=
-      (DirectSum.isInternal_submodule_iff_iSupIndep_and_iSup_eq_top _).mp hinternal
-    refine (DirectSum.isInternal_submodule_iff_iSupIndep_and_iSup_eq_top _).mpr
-      ⟨hindep.map_orderIso (Submodule.orderIsoMapComap (e : V ≃ₗ[𝕜] V).symm), ?_⟩
-    rw [← Submodule.map_iSup, htop, Submodule.map_top, LinearEquiv.range]
-  · rw [hdim]
-    exact Finset.sum_congr rfl fun i _ ↦
-      ((e : V ≃ₗ[𝕜] V).symm.submoduleMap (U i).toSubmodule).finrank_eq
+  obtain ⟨n, U, hU⟩ := he.exists_orthogonal_irreducible_decomposition_of_congr
+  exact ⟨e, n, U, he, hU⟩
 
 end Maschke
 
