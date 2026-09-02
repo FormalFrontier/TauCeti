@@ -149,7 +149,7 @@ theorem fisherSnedecorMap_strictMonoOn (hm : 0 < m) (hn : 0 < n) :
   apply (div_lt_div_iff₀ (sub_pos.mpr hu) (sub_pos.mpr hv)).2
   nlinarith [mul_pos hnm (sub_pos.mpr huv)]
 
-/-- If `m`, `n`, and `1 - u` are nonzero, the inverse transformation after the
+/-- If `m ≠ 0`, `n ≠ 0`, and `u ≠ 1`, the inverse transformation after the
 beta-to-F map is the identity. -/
 theorem fisherSnedecorMapInv_map (hm : m ≠ 0) (hn : n ≠ 0) {u : ℝ}
     (hu : u ≠ 1) :
@@ -158,8 +158,8 @@ theorem fisherSnedecorMapInv_map (hm : m ≠ 0) (hn : n ≠ 0) {u : ℝ}
   field_simp [hm, hn, sub_ne_zero.mpr (Ne.symm hu)]
   ring
 
-/-- If `m`, `n`, and `n + m * x` are nonzero, the beta-to-F map after the inverse
-transformation is the identity. -/
+/-- If `m ≠ 0`, `n ≠ 0`, and `n + m * x ≠ 0`, the beta-to-F map after the
+inverse transformation is the identity. -/
 theorem fisherSnedecorMap_mapInv (hm : m ≠ 0) (hn : n ≠ 0) {x : ℝ}
     (hden : n + m * x ≠ 0) :
     fisherSnedecorMap m n (fisherSnedecorMapInv m n x) = x := by
