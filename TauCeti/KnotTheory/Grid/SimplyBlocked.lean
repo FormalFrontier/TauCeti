@@ -78,7 +78,10 @@ theorem simplyBlockedSpecialization_apply {n : ℕ} (R : Type*) [CommSemiring R]
     (c : GridChainMinus R n) (x : GridState n) :
     simplyBlockedSpecialization R i c x =
       MvPolynomial.killCompl (f := Subtype.val) Subtype.val_injective (c x) :=
-  (rfl)
+  by
+    rw [simplyBlockedSpecialization, Finsupp.mapRange.linearMap_apply,
+      Finsupp.mapRange_apply]
+    exact congrFun (RingHom.coe_toSemilinearMap _) (c x)
 
 /-- Specialization sends a single unblocked generator coefficient to its specialization. -/
 @[simp]
