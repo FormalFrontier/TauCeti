@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.AlgebraicGeometry.WeilDivisor.Scheme.Principal
 public import TauCeti.AlgebraicGeometry.WeilDivisor.Scheme.Sheaf
 import Mathlib.Tactic.Abel
 
