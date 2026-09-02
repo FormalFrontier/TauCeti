@@ -121,8 +121,8 @@ theorem ExchangeableFamily.comp_injective {μ : Measure Ω} {X : ι → Ω → �
     (h : ExchangeableFamily μ X) {f : κ → ι} (hf : Function.Injective f) :
     ExchangeableFamily μ fun j => X (f j) := by
   refine ExchangeableFamily.intro fun m k l hk hl => ?_
-  simpa only [blockLaw_def, Function.comp_apply] using
-    h.blockLaw_eq (f ∘ k) (f ∘ l) (hf.comp hk) (hf.comp hl)
+  exact (blockLaw_comp μ X f k).trans
+    ((h.blockLaw_eq (f ∘ k) (f ∘ l) (hf.comp hk) (hf.comp hl)).trans (blockLaw_comp μ X f l).symm)
 
 /-- **An exchangeable family has one and the same law along any two injective reindexings.** The
 finite-block equalities that define `ExchangeableFamily` are exactly the finite-dimensional laws of

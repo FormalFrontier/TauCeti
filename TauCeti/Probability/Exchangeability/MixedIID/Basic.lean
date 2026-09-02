@@ -243,8 +243,7 @@ theorem MixedIIDWith.comp_injective {μ : Measure Ω} {X : ι → Ω → α}
     (hf : Function.Injective f) : MixedIIDWith μ (fun j => X (f j)) ν := by
   refine MixedIIDWith.intro (fun j => h.aemeasurable (f j))
     h.measurable_mixingRepresentative fun m k hk => ?_
-  simpa only [blockLaw_def, Function.comp_apply] using
-    h.blockLaw_eq_mixture (f ∘ k) (hf.comp hk)
+  exact (blockLaw_comp μ X f k).trans (h.blockLaw_eq_mixture (f ∘ k) (hf.comp hk))
 
 /-- **Reindexing a mixed i.i.d. family along an injection**, existential form. -/
 theorem MixedIID.comp_injective {μ : Measure Ω} {X : ι → Ω → α} (h : MixedIID μ X) {f : κ → ι}
