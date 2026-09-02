@@ -173,8 +173,12 @@ theorem measurable_studentTPDF (ν : ℝ) : Measurable (studentTPDF ν) :=
 /-- Student's t probability measure with `ν` degrees of freedom.
 
 For `ν ≤ 0` this is the zero measure, not a probability measure; see
-`studentTMeasure_of_nonpos`. -/
-def studentTMeasure (ν : ℝ) : Measure ℝ :=
+`studentTMeasure_of_nonpos`.
+
+This is *defined* as Lebesgue measure with density `studentTPDF ν`; the definition
+is exposed so that downstream code can rewrite `studentTMeasure ν` to
+`volume.withDensity (studentTPDF ν)` by definitional equality. -/
+abbrev studentTMeasure (ν : ℝ) : Measure ℝ :=
   volume.withDensity (studentTPDF ν)
 
 /-- Outside the valid parameter range Student's t law is the zero measure. -/
