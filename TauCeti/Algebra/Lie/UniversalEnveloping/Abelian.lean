@@ -36,11 +36,14 @@ monomials `∏ᵢ ι(b i) ^ nᵢ` are an `R`-basis of it
 (`TauCeti.UniversalEnvelopingAlgebra.basisMonomials`). That is the Poincaré--Birkhoff--Witt
 ordered-monomial theorem for an abelian Lie algebra: the ordering of a monomial carries no
 information here, since the generators commute, so a monomial is recorded by its exponent
-function `n : κ →₀ ℕ` rather than by a sorted word. In particular `ι` is injective on `L` when `L`
-is free as an `R`-module (`TauCeti.UniversalEnvelopingAlgebra.ι_injective`); for a general Lie
-algebra, injectivity is a corollary of Poincaré--Birkhoff--Witt, which over a commutative ring
-still needs `L` to be free (or at least projective) as an `R`-module, and is unconditional only
-over a field.
+function `n : κ →₀ ℕ` rather than by a sorted word.
+
+The comparison also makes `ι` injective on any abelian `L`
+(`TauCeti.UniversalEnvelopingAlgebra.ι_injective`), with no hypothesis on `L` as a module: it
+identifies `ι` with the canonical map `L → S(L)`, which the square-zero extension `R ⊕ L` retracts.
+For a general Lie algebra injectivity is instead a corollary of Poincaré--Birkhoff--Witt, which
+over a commutative ring needs `L` to be free (or at least projective) as an `R`-module, and is
+unconditional only over a field.
 
 ## Where it is used
 
@@ -67,9 +70,10 @@ about a non-abelian `L`.
   the symmetric algebra of `L`**, with the resulting algebra isomorphism `S(L) ≃ₐ[R] U(L)`.
 * `TauCeti.UniversalEnvelopingAlgebra.mvPolynomialEquiv`: for a basis of `L`, the identification of
   `U(L)` with a polynomial algebra.
+* `TauCeti.UniversalEnvelopingAlgebra.ι_injective`: `ι` is injective, with no hypothesis on `L` as
+  an `R`-module.
 * `TauCeti.UniversalEnvelopingAlgebra.basisMonomials`: the monomial basis of `U(L)`, with
-  `TauCeti.UniversalEnvelopingAlgebra.linearIndependent_ι_basis` and
-  `TauCeti.UniversalEnvelopingAlgebra.ι_injective`.
+  `TauCeti.UniversalEnvelopingAlgebra.linearIndependent_ι_basis`.
 
 ## References
 
@@ -146,8 +150,8 @@ private theorem liftSym_ι (x : L) :
 private theorem liftSym_comp_liftι :
     (liftSym R L).comp (liftι R L) = AlgHom.id R (SymmetricAlgebra R L) := by
   ext x
-  change liftSym R L (liftι R L (SymmetricAlgebra.ι R L x)) = SymmetricAlgebra.ι R L x
-  rw [liftι_ι, liftSym_ι]
+  simp only [LinearMap.coe_comp, LinearMap.coe_coe, AlgHom.coe_comp, Function.comp_apply,
+    AlgHom.coe_id, id_eq, liftι_ι, liftSym_ι]
 
 private theorem liftSym_liftι (s : SymmetricAlgebra R L) : liftSym R L (liftι R L s) = s :=
   AlgHom.congr_fun (liftSym_comp_liftι R L) s
@@ -156,9 +160,8 @@ private theorem liftSym_liftι (s : SymmetricAlgebra R L) : liftSym R L (liftι 
 -- canonical generators of `U(L)`.
 private theorem liftι_comp_liftSym : (liftι R L).comp (liftSym R L) = AlgHom.id R U := by
   ext x
-  change liftι R L (liftSym R L (_root_.UniversalEnvelopingAlgebra.ι R x)) =
-    _root_.UniversalEnvelopingAlgebra.ι R x
-  rw [liftSym_ι, liftι_ι]
+  simp only [LieHom.comp_apply, AlgHom.toLieHom_apply, AlgHom.comp_apply, AlgHom.id_apply,
+    liftSym_ι, liftι_ι]
 
 private theorem liftι_liftSym (a : U) : liftι R L (liftSym R L a) = a :=
   AlgHom.congr_fun (liftι_comp_liftSym R L) a
@@ -203,6 +206,26 @@ theorem symmetricAlgebraEquiv_symm_ι' (x : L) :
         (_root_.UniversalEnvelopingAlgebra.mkAlgHom R L (TensorAlgebra.ι R x)) =
       SymmetricAlgebra.ι R L x := by
   simpa using symmetricAlgebraEquiv_symm_ι R L x
+
+/-- The canonical map of a module into its symmetric algebra is injective. The `R`-linear map
+`x ↦ TrivSqZeroExt.inr x` into the square-zero extension `R ⊕ M`, which is a commutative
+`R`-algebra, lifts to `S(M)` and retracts `SymmetricAlgebra.ι` along `TrivSqZeroExt.snd`. This is
+the symmetric-algebra analogue of Mathlib's `TensorAlgebra.ι_leftInverse`. -/
+private theorem symmetricAlgebra_ι_injective {S : Type*} [CommRing S] {M : Type*} [AddCommGroup M]
+    [Module S M] : Function.Injective (SymmetricAlgebra.ι S M) := by
+  let : Module Sᵐᵒᵖ M := Module.compHom _ ((RingHom.id S).fromOpposite mul_comm)
+  have : IsCentralScalar S M := ⟨fun _ _ ↦ rfl⟩
+  exact Function.LeftInverse.injective (g := (TrivSqZeroExt.sndHom S M).comp
+    (SymmetricAlgebra.lift (TrivSqZeroExt.inrHom S M)).toLinearMap) fun x ↦ by simp
+
+/-- **The canonical map of an abelian Lie algebra into its enveloping algebra is injective.** Under
+the comparison it is the canonical map `L → S(L)`, which is injective for every module. For a
+general Lie algebra injectivity is instead a corollary of the Poincaré--Birkhoff--Witt theorem,
+which over a commutative ring needs `L` to be free (or at least projective) as an `R`-module. -/
+theorem ι_injective :
+    Function.Injective (_root_.UniversalEnvelopingAlgebra.ι R : L → U) := fun x y h ↦
+  symmetricAlgebra_ι_injective <| by
+    rw [← symmetricAlgebraEquiv_symm_ι R L x, ← symmetricAlgebraEquiv_symm_ι R L y, h]
 
 /-- The enveloping algebra of an abelian Lie algebra which is free as a module is free as a
 module. -/
@@ -250,13 +273,6 @@ theorem mvPolynomialEquiv_toAlgHom (b : Basis κ R L) :
       MvPolynomial.aeval fun i ↦ _root_.UniversalEnvelopingAlgebra.ι R (b i) :=
   MvPolynomial.algHom_ext fun i ↦ by simp
 
-/-- The pointwise form of `TauCeti.UniversalEnvelopingAlgebra.mvPolynomialEquiv_toAlgHom`: the
-polynomial identification evaluates a polynomial at the canonical generators. -/
-theorem mvPolynomialEquiv_apply (b : Basis κ R L) (p : MvPolynomial κ R) :
-    mvPolynomialEquiv R L b p =
-      MvPolynomial.aeval (fun i ↦ _root_.UniversalEnvelopingAlgebra.ι R (b i)) p :=
-  AlgHom.congr_fun (mvPolynomialEquiv_toAlgHom R L b) p
-
 /-- The basis vector of Mathlib's `Module.Basis.symmetricAlgebra` at an exponent function `n` is
 the monomial `∏ᵢ ι (b i) ^ nᵢ` in the canonical generators of the symmetric algebra. Mathlib
 characterizes that basis only through its `Module.Basis.repr`. -/
@@ -280,29 +296,12 @@ theorem basisMonomials_apply (b : Basis κ R L) (n : κ →₀ ℕ) :
     AlgEquiv.toLinearEquiv_apply, map_finsuppProd, map_pow, symmetricAlgebraEquiv_ι]
 
 /-- **The images of a basis of an abelian Lie algebra are linearly independent in the enveloping
-algebra**: they are the images of the variables under the polynomial identification. -/
+algebra**: `ι` is an injective linear map. -/
 theorem linearIndependent_ι_basis (b : Basis κ R L) :
     LinearIndependent R fun i : κ ↦ (_root_.UniversalEnvelopingAlgebra.ι R (b i) : U) := by
-  have h := (MvPolynomial.linearIndependent_X (σ := κ) (R := R)).map'
-    (mvPolynomialEquiv R L b).toLinearEquiv.toLinearMap
-    (LinearMap.ker_eq_bot_of_injective (mvPolynomialEquiv R L b).injective)
+  have h := b.linearIndependent.map'
+    ((_root_.UniversalEnvelopingAlgebra.ι R : L →ₗ⁅R⁆ U) : L →ₗ[R] U)
+    (LinearMap.ker_eq_bot_of_injective (ι_injective R L))
   simpa [Function.comp_def] using h
-
-/-- **The canonical map of an abelian Lie algebra into its enveloping algebra is injective**, when
-the Lie algebra is free as a module. For a general Lie algebra this is a corollary of the
-Poincaré--Birkhoff--Witt theorem, which over a commutative ring `R` needs `L` to be free (or at
-least projective) as an `R`-module; over a field it is unconditional. -/
-theorem ι_injective [Module.Free R L] :
-    Function.Injective (_root_.UniversalEnvelopingAlgebra.ι R : L → U) := by
-  obtain ⟨b⟩ : Nonempty (Basis (Module.Free.ChooseBasisIndex R L) R L) :=
-    ⟨Module.Free.chooseBasis R L⟩
-  have hconstr : (b.constr R fun i ↦ (_root_.UniversalEnvelopingAlgebra.ι R (b i) : U)) =
-      ((_root_.UniversalEnvelopingAlgebra.ι R : L →ₗ⁅R⁆ U) : L →ₗ[R] U) :=
-    b.constr_eq R fun _ ↦ rfl
-  have h : Function.Injective
-      ⇑(b.constr R fun i ↦ (_root_.UniversalEnvelopingAlgebra.ι R (b i) : U)) :=
-    b.injective_constr_of_linearIndependent (linearIndependent_ι_basis R L b)
-  rw [hconstr] at h
-  exact h
 
 end TauCeti.UniversalEnvelopingAlgebra
