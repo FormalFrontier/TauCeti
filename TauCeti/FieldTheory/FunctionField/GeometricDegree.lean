@@ -251,13 +251,25 @@ degree. -/
 theorem finrank_constantCompositum_eq_finrank_of_isSeparable (hex : IsIntegrallyClosedIn k F)
     [FiniteDimensional k k'] [Algebra.IsSeparable k k'] :
     Module.finrank F (constantCompositum F k' F') = Module.finrank k k' := by
+  -- separability makes `k' / k` simple: let `β` generate it, and work with its image in `F'`
   obtain ⟨β, hβ⟩ := Field.exists_primitive_element k k'
   have hβint : IsIntegral k β := Algebra.IsIntegral.isIntegral β
   have hαint : IsIntegral k (algebraMap k' F' β) := hβint.map (IsScalarTower.toAlgHom k k' F')
-  rw [constantCompositum_eq_adjoin_simple F k' F' hβ,
-    finrank_adjoin_simple_eq_finrank_adjoin_simple_of_isIntegrallyClosedIn hex hαint,
-    adjoin.finrank hαint, minpoly.algebraMap_eq (algebraMap k' F').injective β,
-    ← adjoin.finrank hβint, hβ, IntermediateField.finrank_top']
+  have hminpoly : minpoly k (algebraMap k' F' β) = minpoly k β :=
+    minpoly.algebraMap_eq (algebraMap k' F').injective β
+  calc Module.finrank F (constantCompositum F k' F')
+      -- the compositum is `F` with the image of the generator adjoined
+      = Module.finrank F F⟮algebraMap k' F' β⟯ := by
+        rw [constantCompositum_eq_adjoin_simple F k' F' hβ]
+      -- exactness of `k` in `F`: adjoining a constant costs the same over `F` as over `k`
+    _ = Module.finrank k k⟮algebraMap k' F' β⟯ :=
+        finrank_adjoin_simple_eq_finrank_adjoin_simple_of_isIntegrallyClosedIn hex hαint
+      -- both degrees are the degree of the minimal polynomial of the generator, which the
+      -- embedding `k' → F'` does not change
+    _ = (minpoly k β).natDegree := by rw [adjoin.finrank hαint, hminpoly]
+    _ = Module.finrank k k⟮β⟯ := (adjoin.finrank hβint).symm
+      -- and `β` generates `k'`
+    _ = Module.finrank k k' := by rw [hβ, IntermediateField.finrank_top']
 
 end LinearDisjoint
 
