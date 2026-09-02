@@ -59,8 +59,10 @@ private theorem under_map_ringOfIntegersAlgEquiv (e : L ≃ₐ[K] L')
     (Q.map (RingOfIntegers.mapAlgEquiv e)).under (𝓞 K) = Q.under (𝓞 K) := by
   let eO := RingOfIntegers.mapAlgEquiv e
   rw [Ideal.under_def, Ideal.under_def]
-  change Ideal.comap (algebraMap (𝓞 K) (𝓞 L'))
-    (Q.map (eO.toRingEquiv : 𝓞 L →+* 𝓞 L')) = _
+  have hmap : Q.map (RingOfIntegers.mapAlgEquiv e) =
+      Q.map (eO.toRingEquiv : 𝓞 L →+* 𝓞 L') := by
+    rfl
+  rw [hmap]
   rw [Ideal.map_comap_of_equiv]
   ext x
   simp only [Ideal.mem_comap]
@@ -86,14 +88,13 @@ theorem isUnramifiedAt_map_ringOfIntegersAlgEquiv (e : L ≃ₐ[K] L')
 /-- An arithmetic Frobenius is transported to the conjugate automorphism at the transported
 prime.  The exponent is unchanged because the two primes have the same contraction to `𝓞 K`. -/
 theorem isArithFrobAt_map_ringOfIntegersAlgEquiv (e : L ≃ₐ[K] L')
-    (Q : Ideal (𝓞 L)) [Q.IsPrime]
+    (Q : Ideal (𝓞 L))
     (τ : L ≃ₐ[K] L)
     (hτ : IsArithFrobAt (𝓞 K) τ Q) :
     IsArithFrobAt (𝓞 K) (e.autCongr τ)
       (Q.map (RingOfIntegers.mapAlgEquiv e)) := by
   let eO := RingOfIntegers.mapAlgEquiv e
   let Q' : Ideal (𝓞 L') := Q.map (eO : 𝓞 L →+* 𝓞 L')
-  let _ : Q'.IsPrime := Ideal.map_isPrime_of_equiv eO
   -- Unfold `IsArithFrobAt` to expose the action-level formulation we transport.
   change (MulSemiringAction.toAlgHom (𝓞 K) (𝓞 L')
     (e.symm.trans (τ.trans e))).IsArithFrobAt Q'
@@ -106,8 +107,7 @@ theorem isArithFrobAt_map_ringOfIntegersAlgEquiv (e : L ≃ₐ[K] L')
       (MulSemiringAction.toAlgHom (𝓞 K) (𝓞 L) τ) (eO.symm x) := by
     apply RingOfIntegers.ext
     have heO_apply (z : 𝓞 L') : (eO.symm z : L) = e.symm (z : L') := by
-      change ((RingOfIntegers.mapAlgEquiv e).symm z : L) = e.symm (z : L')
-      exact RingOfIntegers.mapAlgEquiv_symm_apply e z
+      simpa only [eO] using RingOfIntegers.mapAlgEquiv_symm_apply e z
     rw [heO_apply]
     simp only [MulSemiringAction.toAlgHom_apply, algebraMap_smul_eq_apply,
       AlgEquiv.trans_apply]
@@ -132,7 +132,7 @@ map of the original one. -/
 @[simp]
 theorem isArithFrobAt_map_ringOfIntegersAlgEquiv_iff
     (e : L ≃ₐ[K] L')
-    (Q : Ideal (𝓞 L)) [Q.IsPrime]
+    (Q : Ideal (𝓞 L))
     (τ : L ≃ₐ[K] L) :
     IsArithFrobAt (𝓞 K) (e.symm.trans (τ.trans e))
       (Q.map (RingOfIntegers.mapAlgEquiv e)) ↔
@@ -141,7 +141,6 @@ theorem isArithFrobAt_map_ringOfIntegersAlgEquiv_iff
   · intro hσ
     let eO := RingOfIntegers.mapAlgEquiv e
     let Q' : Ideal (𝓞 L') := Q.map (eO : 𝓞 L →+* 𝓞 L')
-    let _ : Q'.IsPrime := Ideal.map_isPrime_of_equiv eO
     have hτ' := isArithFrobAt_map_ringOfIntegersAlgEquiv (e := e.symm)
       (Q := Q') (τ := e.autCongr τ) hσ
     have heO : RingOfIntegers.mapAlgEquiv e.symm = eO.symm := by
