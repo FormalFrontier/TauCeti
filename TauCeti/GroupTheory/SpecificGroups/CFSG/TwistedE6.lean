@@ -205,18 +205,17 @@ Steinberg map `γ₂ ∘ Frob_q`, and on this branch the two genuinely differ: t
 simple-root subgroups through the diagram permutation the index carries, which is
 `TauCeti.graphPermE6` by `TauCeti.TypeTwistedE6LieIndex.diagramPerm_toGraphTwistedIndex` and has
 order two by `TauCeti.orderOf_graphPermE6`. This is the right-hand factor of that composite,
-and the fixed subgroup formed from it below is correspondingly the untwisted one, not the `H_d`
-that milestone L3 runs its recipe on for this branch. -/
+and the subgroup of points it fixes, characterized below, is correspondingly the untwisted one,
+not the `H_d` that milestone L3 runs its recipe on for this branch. -/
 def frobenius : d.AmbientGroup →* d.AmbientGroup :=
   E6DoubledMinuscule.frobenius d.1.characteristic d.1.fieldExponent d.1.Closure
 
 /-- The Frobenius of a `²E₆` index is the doubled minuscule carrier's Frobenius at the exponent the
-index records. This is its unfolding lemma; the definition itself stays sealed.
-
-It is deliberately not a `simp` lemma: `frobenius_simpleRootSubgroup` and `coe_frobenius_apply` are
-the normal forms the pinned equations of this file are stated against, and unfolding to
-`TauCeti.E6DoubledMinuscule.frobenius` would keep them from firing, as it does on the branches
-already assembled. -/
+index records. This is its unfolding lemma; the definition itself stays sealed. -/
+-- Not `@[simp]`: `frobenius_simpleRootSubgroup` and `coe_frobenius_apply` are the normal forms the
+-- pinned equations of this file are stated against, and unfolding to
+-- `TauCeti.E6DoubledMinuscule.frobenius` would keep them from firing, as it does on the branches
+-- already assembled.
 theorem frobenius_def :
     d.frobenius = E6DoubledMinuscule.frobenius d.1.characteristic d.1.fieldExponent d.1.Closure :=
   (rfl)
@@ -250,12 +249,11 @@ theorem frobenius_simpleRootSubgroup (i : Fin d.1.rank) (u : Multiplicative d.1.
 `TauCeti.ValidLieTypeIndex.fixedField`, the copy of the field of `q` elements inside the algebraic
 closure, the Frobenius-fixed subgroup is therefore the group of points of the doubled minuscule
 carrier with coordinates in `𝔽_q`. It is not the group `H_d` that milestone L3 runs its recipe on
-for this branch, which is cut out by the twisted composite `γ₂ ∘ Frob_q` instead.
-
-As for `TauCeti.ValidLieTypeIndex.mem_fixedSubgroup_geckFrobenius_iff`, this is not a `simp` lemma:
-`TauCeti.fixedSubgroup` is `MonoidHom.eqLocus` against the identity, so `simp` rewrites its
-left-hand side to `d.frobenius g = g` through `MonoidHom.mem_eqLocus`, and the `simpNF` linter
-rejects the annotation. -/
+for this branch, which is cut out by the twisted composite `γ₂ ∘ Frob_q` instead. -/
+-- Not `@[simp]`, as for `TauCeti.ValidLieTypeIndex.mem_fixedSubgroup_geckFrobenius_iff`:
+-- `TauCeti.fixedSubgroup` is `MonoidHom.eqLocus` against the identity, so `simp` rewrites the
+-- left-hand side to `d.frobenius g = g` through `MonoidHom.mem_eqLocus`, and the `simpNF` linter
+-- rejects the annotation.
 theorem mem_fixedSubgroup_frobenius_iff (g : d.AmbientGroup) :
     g ∈ fixedSubgroup d.frobenius ↔
       ∀ r c, ((g : Matrix.GeneralLinearGroup (Fin 54) d.1.Closure) :
