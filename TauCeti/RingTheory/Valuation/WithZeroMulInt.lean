@@ -38,22 +38,23 @@ variable {K : Type*} [DivisionRing K] {v w : Valuation K ℤᵐ⁰}
 wherever `w` does: no value of `v` fits strictly between `exp (-1)` and `1`. -/
 private theorem eq_exp_neg_one_of_isEquiv (h : v.IsEquiv w) (hv : Function.Surjective v) {a : K}
     (ha : w a = exp (-1)) : v a = exp (-1) := by
+  have hexp : (exp (-1) : ℤᵐ⁰) < 1 := by rw [← exp_zero, exp_lt_exp]; omega
   have hva : v a ≠ 0 := by simp [h.eq_zero, ha]
   obtain ⟨m, hm⟩ : ∃ m : ℤ, v a = exp m := ⟨log (v a), (exp_log hva).symm⟩
   have hm0 : m < 0 := by
-    have : v a < 1 := by simp [h.lt_one_iff_lt_one, ha]
-    simpa [hm] using this
+    have hlt : v a < 1 := h.lt_one_iff_lt_one.mpr (by rw [ha]; exact hexp)
+    rwa [hm, ← exp_zero, exp_lt_exp] at hlt
   by_contra hne
   rw [hm] at hne
   simp only [exp_inj] at hne
   obtain ⟨b, hb⟩ := hv (exp (-1))
-  have hwb : w a < w b := h.lt_iff_lt.mp (by rw [hm, hb]; simpa using lt_of_le_of_ne (by omega) hne)
+  have hwb : w a < w b := h.lt_iff_lt.mp (by rw [hm, hb, exp_lt_exp]; omega)
   obtain ⟨n, hn⟩ : ∃ n : ℤ, w b = exp n := by
     refine ⟨log (w b), (exp_log ?_).symm⟩
     simp [← h.eq_zero, hb]
   have hn0 : n < 0 := by
-    have : w b < 1 := by simp [← h.lt_one_iff_lt_one, hb]
-    simpa [hn] using this
+    have hlt : w b < 1 := h.lt_one_iff_lt_one.mp (by rw [hb]; exact hexp)
+    rwa [hn, ← exp_zero, exp_lt_exp] at hlt
   rw [ha, hn, exp_lt_exp] at hwb
   omega
 

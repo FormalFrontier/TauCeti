@@ -130,15 +130,15 @@ theorem mulValuation_irreducible {π : 𝒪[K]} (hπ : Irreducible π) :
   have hπ0 : mulValuation K (π : K) ≠ 0 := by
     simpa [hcoe] using (hints.valuation_irreducible_pos hπ).ne'
   obtain ⟨m, hm⟩ : ∃ m : ℤ, mulValuation K (π : K) = exp m := ⟨log _, (exp_log hπ0).symm⟩
-  rw [hm, exp_lt_one_iff] at hπ1
+  rw [hm, ← exp_zero, exp_lt_exp] at hπ1
   rw [hm, exp_inj]
   by_contra hne
   -- The remaining possibility is `m < -1`; then an element of value `exp (-1)` would be a
   -- proper divisor of `π` inside `𝒪[K]`, contradicting irreducibility.
   obtain ⟨b, hb⟩ := mulValuation_surjective K (exp (-1))
   have hbmem : b ∈ 𝒪[K] := by
-    rw [← integer_mulValuation, Valuation.mem_integer_iff, hb]
-    simp
+    rw [← integer_mulValuation, Valuation.mem_integer_iff, hb, ← exp_zero, exp_le_exp]
+    omega
   obtain ⟨β, hb'⟩ : ∃ β : 𝒪[K], mulValuation K (β : K) = exp (-1) := ⟨⟨b, hbmem⟩, hb⟩
   have hdvd : β ∣ π := by
     rw [hints.dvd_iff_le, hcoe, hcoe, hb', hm, exp_le_exp]
