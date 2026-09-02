@@ -6,7 +6,9 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.UpperTriangular.Basic
+public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Quotient.Order
 public import TauCeti.Algebra.Lie.SpecialLinear.StandardCarrier.DeterminantOne
+public import TauCeti.Algebra.Lie.SpecialLinear.StandardCarrier.PointsFunctor
 
 /-!
 # The upper-triangular subgroup of the type-A full-weight carrier
@@ -43,6 +45,10 @@ the named split torus as maximal requires the reductivity and root-datum structu
 * `TauCeti.SlStd.upperTriangularAmbientInclusion`: its closed immersion into the upper-triangular
   subgroup scheme of `GL_(r+1)`.
 * `TauCeti.SlStd.upperTriangularPoints`: its matrix points inside `GL_(r+1)`.
+* `TauCeti.SlStd.upperTriangularPointsMulEquiv`, `TauCeti.SlStd.upperTriangularPointsMap`,
+  `TauCeti.SlStd.upperTriangularPointsFunctor` and
+  `TauCeti.SlStd.upperTriangularPointsNatIso`: those matrix points as the functor of points of
+  the subgroup scheme, represented by its coordinate Hopf algebra.
 * `TauCeti.SlStd.rootSubgroupUpperTriangular` and `TauCeti.SlStd.weightTorusUpperTriangular`: the
   positive numbered root subgroups and the split weight torus, factored through it.
 
@@ -50,6 +56,9 @@ the named split torus as maximal requires the reductivity and root-datum structu
 
 * `TauCeti.SlStd.upperTriangularPoints_eq`: the point group is the intersection of the carrier
   points with the upper-triangular matrices.
+* `TauCeti.SlStd.coe_upperTriangularPointsMulEquiv_apply` and
+  `TauCeti.SlStd.coe_pointsMulEquiv_mapPointsFunctor_quotientMapOfLe`: the point representation
+  is compatible with the inclusions into `GL_(r+1)` and into the carrier.
 * `TauCeti.SlStd.isUpperTriangular_coe_rootSubgroupPoints_positive` and
   `TauCeti.SlStd.rootSubgroupPoints_positive_mem_upperTriangularPoints`: every positive numbered
   root subgroup point lies in the intersection.
@@ -93,7 +102,7 @@ open AlgebraicGeometry CategoryTheory WithConv
 
 namespace TauCeti.SlStd
 
-universe v
+universe v v'
 
 variable (r : ℕ)
 
@@ -198,6 +207,206 @@ theorem mem_upperTriangularPoints_iff
     g ∈ upperTriangularPoints r A ↔
       g ∈ points r A ∧ (g : Matrix (Fin (r + 1)) (Fin (r + 1)) A).IsUpperTriangular := by
   rw [upperTriangularPoints_eq, Subgroup.mem_inf, UpperTriangularGroup.mem_iff]
+
+/-! ## The functor of points -/
+
+/-- The upper-triangular carrier points are the general-linear point subgroup cut out by the
+joined defining ideal.  This is the presentation the functoriality of the points is read off. -/
+private theorem upperTriangularPoints_def (A : Type v) [CommRing A] :
+    upperTriangularPoints r A =
+      GeneralLinear.hopfIdealPointsSubgroup (r + 1) (upperTriangularDefiningIdeal r) A :=
+  (rfl)
+
+/-- At a bundled `ℤ`-algebra, the named upper-triangular carrier points are the general-linear
+point subgroup cut out by the joined defining ideal, read at the algebra's own structure map. -/
+private theorem upperTriangularPoints_eq_hopfIdealPointsSubgroup (A : CommAlgCat.{v} ℤ) :
+    upperTriangularPoints r A =
+      GeneralLinear.hopfIdealPointsSubgroup (r + 1) (upperTriangularDefiningIdeal r) A := by
+  rw [upperTriangularPoints_def]
+  congr 1
+  exact Subsingleton.elim _ _
+
+/-- **The points of the coordinate Hopf algebra of the upper-triangular subgroup scheme are its
+named matrix points.**  The subgroup scheme is therefore represented by that Hopf algebra in the
+matrix presentation the pinning statements below are stated in. -/
+noncomputable def upperTriangularPointsMulEquiv (A : CommAlgCat.{v} ℤ) :
+    HopfAlgebra.points
+        (R := ℤ) (H := CommHopfAlgCat.quotient
+          (GeneralLinear.coordinateHopfAlgebra ℤ (r + 1)) (upperTriangularDefiningIdeal r)) A ≃*
+      upperTriangularPoints r A :=
+  (GeneralLinear.hopfIdealPointsSubgroupMulEquiv (r + 1) (upperTriangularDefiningIdeal r) A).trans
+    (MulEquiv.subgroupCongr (upperTriangularPoints_eq_hopfIdealPointsSubgroup r A)).symm
+
+/-- A point of the upper-triangular subgroup scheme, read through
+`TauCeti.SlStd.upperTriangularPointsMulEquiv`, is its ambient `GL_(r+1)`-point viewed as an
+invertible matrix. -/
+@[simp]
+theorem coe_upperTriangularPointsMulEquiv_apply (A : CommAlgCat.{v} ℤ)
+    (q : HopfAlgebra.points
+      (R := ℤ) (H := CommHopfAlgCat.quotient
+        (GeneralLinear.coordinateHopfAlgebra ℤ (r + 1)) (upperTriangularDefiningIdeal r)) A) :
+    (upperTriangularPointsMulEquiv r A q : Matrix.GeneralLinearGroup (Fin (r + 1)) A) =
+      GeneralLinear.pointsMulEquiv (r + 1)
+        (CommHopfAlgCat.quotientPointsHom (GeneralLinear.coordinateHopfAlgebra ℤ (r + 1))
+          (upperTriangularDefiningIdeal r) A q) := by
+  simp only [upperTriangularPointsMulEquiv, MulEquiv.trans_apply,
+    MulEquiv.subgroupCongr_symm_apply]
+  exact GeneralLinear.coe_hopfIdealPointsSubgroupMulEquiv_apply (r + 1)
+    (upperTriangularDefiningIdeal r) A q
+
+/-- Including the ambient Hopf-algebra point underlying the inverse of
+`TauCeti.SlStd.upperTriangularPointsMulEquiv` recovers the point corresponding to the underlying
+matrix. -/
+@[simp]
+theorem quotientPointsHom_upperTriangularPointsMulEquiv_symm (A : CommAlgCat.{v} ℤ)
+    (g : upperTriangularPoints r A) :
+    CommHopfAlgCat.quotientPointsHom
+        (GeneralLinear.coordinateHopfAlgebra ℤ (r + 1)) (upperTriangularDefiningIdeal r) A
+        ((upperTriangularPointsMulEquiv r A).symm g) =
+      (GeneralLinear.pointsMulEquiv (R := ℤ) (r + 1)).symm
+        (g : Matrix.GeneralLinearGroup (Fin (r + 1)) A) := by
+  simp only [upperTriangularPointsMulEquiv, MulEquiv.symm_trans_apply, MulEquiv.symm_symm]
+  rw [GeneralLinear.quotientPointsHom_hopfIdealPointsSubgroupMulEquiv_symm,
+    MulEquiv.subgroupCongr_apply]
+
+/-- **The point representation is compatible with the closed immersion into the carrier.**
+Pushing a point of the upper-triangular subgroup scheme into the carrier along the coordinate
+morphism underlying `TauCeti.SlStd.upperTriangularInclusion` does not change its matrix. -/
+theorem coe_pointsMulEquiv_mapPointsFunctor_quotientMapOfLe (A : CommAlgCat.{v} ℤ)
+    (q : HopfAlgebra.points
+      (R := ℤ) (H := CommHopfAlgCat.quotient
+        (GeneralLinear.coordinateHopfAlgebra ℤ (r + 1)) (upperTriangularDefiningIdeal r)) A) :
+    (pointsMulEquiv r A
+          ((CommHopfAlgCat.mapPointsFunctor (CommHopfAlgCat.quotientMapOfLe
+            (GeneralLinear.coordinateHopfAlgebra ℤ (r + 1))
+            (definingIdeal_le_upperTriangularDefiningIdeal r))).app A q) :
+        Matrix.GeneralLinearGroup (Fin (r + 1)) A) =
+      (upperTriangularPointsMulEquiv r A q : Matrix.GeneralLinearGroup (Fin (r + 1)) A) := by
+  have hcarrier := coe_pointsMulEquiv_apply r A
+    ((CommHopfAlgCat.mapPointsFunctor (CommHopfAlgCat.quotientMapOfLe
+      (GeneralLinear.coordinateHopfAlgebra ℤ (r + 1))
+      (definingIdeal_le_upperTriangularDefiningIdeal r))).app A q)
+  rw [hcarrier, coe_upperTriangularPointsMulEquiv_apply,
+    CommHopfAlgCat.quotientPointsHom_mapPointsFunctor_quotientMapOfLe_app]
+
+/-- The map on upper-triangular carrier points induced by a homomorphism of value rings.  It is
+`TauCeti.GeneralLinear.mapHopfIdealPointsSubgroup` at the joined defining ideal, hence the
+entrywise map. -/
+noncomputable def upperTriangularPointsMap {A : Type v} {B : Type v'} [CommRing A] [CommRing B]
+    (f : A →+* B) : upperTriangularPoints r A →* upperTriangularPoints r B :=
+  ((MulEquiv.subgroupCongr (upperTriangularPoints_def r B)).symm.toMonoidHom).comp
+    ((GeneralLinear.mapHopfIdealPointsSubgroup (r + 1) (upperTriangularDefiningIdeal r)
+        f.toIntAlgHom).comp
+      (MulEquiv.subgroupCongr (upperTriangularPoints_def r A)).toMonoidHom)
+
+/-- The induced map on upper-triangular carrier points is the entrywise map. -/
+@[simp]
+theorem coe_upperTriangularPointsMap {A : Type v} {B : Type v'} [CommRing A] [CommRing B]
+    (f : A →+* B) (g : upperTriangularPoints r A) :
+    (upperTriangularPointsMap r f g : Matrix.GeneralLinearGroup (Fin (r + 1)) B) =
+      Matrix.GeneralLinearGroup.map f g := by
+  -- `mapHopfIdealPointsSubgroup` is stated for the `ℤ`-algebra map induced by `f`, whose
+  -- underlying ring homomorphism is `f` again.
+  have hring : f.toIntAlgHom.toRingHom = f := RingHom.ext (RingHom.toIntAlgHom_apply f)
+  rw [upperTriangularPointsMap]
+  simp only [MonoidHom.comp_apply, MulEquiv.coe_toMonoidHom, MulEquiv.subgroupCongr_symm_apply,
+    GeneralLinear.coe_mapHopfIdealPointsSubgroup, MulEquiv.subgroupCongr_apply, hring]
+
+/-- The identity homomorphism of value rings induces the identity on upper-triangular carrier
+points. -/
+@[simp]
+theorem upperTriangularPointsMap_id (A : Type v) [CommRing A] :
+    upperTriangularPointsMap r (RingHom.id A) = MonoidHom.id (upperTriangularPoints r A) := by
+  have hid : (RingHom.id A).toIntAlgHom = AlgHom.id ℤ A := AlgHom.ext fun _ ↦ rfl
+  rw [upperTriangularPointsMap, hid, GeneralLinear.mapHopfIdealPointsSubgroup_id]
+  apply MonoidHom.ext
+  intro g
+  exact (MulEquiv.subgroupCongr (upperTriangularPoints_def r A)).symm_apply_apply g
+
+/-- The induced maps on upper-triangular carrier points compose. -/
+@[simp]
+theorem upperTriangularPointsMap_comp {A : Type v} {B : Type v'} {C : Type*}
+    [CommRing A] [CommRing B] [CommRing C] (f : A →+* B) (g : B →+* C) :
+    upperTriangularPointsMap r (g.comp f) =
+      (upperTriangularPointsMap r g).comp (upperTriangularPointsMap r f) := by
+  have hcomp : (g.comp f).toIntAlgHom = g.toIntAlgHom.comp f.toIntAlgHom :=
+    AlgHom.ext fun _ ↦ rfl
+  apply MonoidHom.ext
+  intro x
+  simp only [upperTriangularPointsMap, MonoidHom.comp_apply, MulEquiv.coe_toMonoidHom, hcomp,
+    GeneralLinear.mapHopfIdealPointsSubgroup_comp, MulEquiv.apply_symm_apply]
+
+/-- The group-valued functor of matrix points of the upper-triangular subgroup scheme of the
+type-`A_r` carrier. -/
+noncomputable def upperTriangularPointsFunctor : CommAlgCat.{v} ℤ ⥤ GrpCat.{v} where
+  obj A := GrpCat.of (upperTriangularPoints r A)
+  map f := GrpCat.ofHom (upperTriangularPointsMap r f.hom.toRingHom)
+  map_id A := congrArg GrpCat.ofHom (upperTriangularPointsMap_id r A)
+  map_comp f g :=
+    congrArg GrpCat.ofHom (upperTriangularPointsMap_comp r f.hom.toRingHom g.hom.toRingHom)
+
+/-- The object part of the upper-triangular points functor is the named point group. -/
+@[simp]
+theorem upperTriangularPointsFunctor_obj (A : CommAlgCat.{v} ℤ) :
+    (upperTriangularPointsFunctor r).obj A = GrpCat.of (upperTriangularPoints r A) :=
+  (rfl)
+
+/-- The pointwise identification with quotient Hopf-algebra points is natural in the value
+algebra. -/
+@[simp]
+theorem upperTriangularPointsMulEquiv_mapPoints {A B : CommAlgCat.{v} ℤ} (f : A ⟶ B)
+    (q : HopfAlgebra.points
+      (R := ℤ) (H := CommHopfAlgCat.quotient
+        (GeneralLinear.coordinateHopfAlgebra ℤ (r + 1)) (upperTriangularDefiningIdeal r)) A) :
+    upperTriangularPointsMulEquiv r B
+        (HopfAlgebra.mapPoints
+          (H := CommHopfAlgCat.quotient
+            (GeneralLinear.coordinateHopfAlgebra ℤ (r + 1)) (upperTriangularDefiningIdeal r))
+          f q) =
+      upperTriangularPointsMap r f.hom.toRingHom (upperTriangularPointsMulEquiv r A q) := by
+  apply Subtype.ext
+  rw [coe_upperTriangularPointsMap]
+  simp only [upperTriangularPointsMulEquiv, MulEquiv.trans_apply,
+    MulEquiv.subgroupCongr_symm_apply]
+  exact (congrArg Subtype.val (GeneralLinear.hopfIdealPointsSubgroupMulEquiv_mapPoints (r + 1)
+      (upperTriangularDefiningIdeal r) f q)).trans
+    (GeneralLinear.coe_mapHopfIdealPointsSubgroup (r + 1) (upperTriangularDefiningIdeal r)
+      f.hom _)
+
+/-- **The coordinate Hopf algebra of the upper-triangular subgroup scheme represents its matrix
+points functor.** -/
+noncomputable def upperTriangularPointsNatIso :
+    HopfAlgebra.pointsFunctor
+        (R := ℤ) (H := CommHopfAlgCat.quotient
+          (GeneralLinear.coordinateHopfAlgebra ℤ (r + 1)) (upperTriangularDefiningIdeal r)) ≅
+      upperTriangularPointsFunctor r :=
+  NatIso.ofComponents (fun A => (upperTriangularPointsMulEquiv r A).toGrpIso)
+    (by
+      intro A B f
+      ext q
+      exact upperTriangularPointsMulEquiv_mapPoints r f q)
+
+/-- The forward component of the representing natural isomorphism is the pointwise
+identification. -/
+@[simp]
+theorem upperTriangularPointsNatIso_hom_app_apply (A : CommAlgCat.{v} ℤ)
+    (q : HopfAlgebra.points
+      (R := ℤ) (H := CommHopfAlgCat.quotient
+        (GeneralLinear.coordinateHopfAlgebra ℤ (r + 1)) (upperTriangularDefiningIdeal r)) A) :
+    eqToHom (upperTriangularPointsFunctor_obj r A)
+        ((upperTriangularPointsNatIso r).hom.app A q) =
+      upperTriangularPointsMulEquiv r A q :=
+  (rfl)
+
+/-- The inverse component of the representing natural isomorphism is the inverse pointwise
+identification. -/
+@[simp]
+theorem upperTriangularPointsNatIso_inv_app_apply (A : CommAlgCat.{v} ℤ)
+    (g : upperTriangularPoints r A) :
+    (upperTriangularPointsNatIso r).inv.app A
+        (eqToHom (upperTriangularPointsFunctor_obj r A).symm g) =
+      (upperTriangularPointsMulEquiv r A).symm g :=
+  (rfl)
 
 /-! ## Triangularity of the pinning matrices -/
 
