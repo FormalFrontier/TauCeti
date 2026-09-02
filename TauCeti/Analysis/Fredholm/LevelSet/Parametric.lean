@@ -23,9 +23,10 @@ This file calculates that map's derivative at the chart origin. It is exactly
 `TauCeti.parameterProj D₁ D₂`, the linear parameter projection developed in
 `TauCeti.Analysis.Fredholm.Parametric`. Every statement about that linear map therefore transfers
 to the derivative at the origin: it is surjective exactly when `D₁` is, by
-`TauCeti.parameterProj_surjective_iff`; it has the same index as `D₁`, by
-`TauCeti.index_parameterProj`; and over a complete `RCLike` field it is Fredholm as soon as `D₁`
-is, by `TauCeti.isFredholm_fderiv_levelSetParameterMap`. The final theorem applies local
+`TauCeti.surjective_fderiv_levelSetParameterMap_iff`; it has the same index as `D₁`, by
+`TauCeti.index_fderiv_levelSetParameterMap`; and over a complete `RCLike` field it is Fredholm as
+soon as `D₁` is, by `TauCeti.isFredholm_fderiv_levelSetParameterMap`. The final theorem applies
+local
 Sard--Smale to show that, inside the chart target, nearby critical values of the parameter map
 form a closed nowhere dense set. The identification of criticality with failure of regularity for
 the fixed-parameter equation is proved only at the chart origin; the nearby critical-value
@@ -44,6 +45,10 @@ smooth compatibility and a countable cover, and is not asserted here.
   the parameter projection of the universal level set.
 * `TauCeti.exists_apply_eq_of_levelSetParameterMap`: every value of the local parameter map is a
   parameter at which the equation has a solution.
+* `TauCeti.surjective_fderiv_levelSetParameterMap_iff`: the chart origin is a regular point of the
+  local parameter map exactly when the fixed-parameter linearization is surjective.
+* `TauCeti.index_fderiv_levelSetParameterMap`: that derivative has the index of the
+  fixed-parameter linearization.
 * `TauCeti.isFredholm_fderiv_levelSetParameterMap`: over a complete `RCLike` field, that
   derivative is Fredholm as soon as the fixed-parameter linearization is.
 * `TauCeti.exists_mem_nhds_isClosed_isNowhereDense_image_criticalPoints_levelSetParameterMap`:
@@ -177,6 +182,32 @@ theorem fderiv_levelSetParameterMap
     fderiv K (levelSetParameterMap hf hD hker hxl) 0 = parameterProj D₁ D₂ :=
   (hasStrictFDerivAt_levelSetParameterMap hf hD hker hxl).hasFDerivAt.fderiv
 
+/-- **Regularity at the chart origin.** The derivative of the local parameter map at the chart
+origin is surjective exactly when the fixed-parameter linearization is. This is the
+transversality criterion the parametric package is aimed at, transported to the nonlinear map by
+`TauCeti.fderiv_levelSetParameterMap`. -/
+theorem surjective_fderiv_levelSetParameterMap_iff
+    (hf : HasStrictFDerivAt f (D₁.coprod D₂) (x, l))
+    (hD : Surjective (D₁.coprod D₂))
+    (hker : (D₁.coprod D₂).ker.ClosedComplemented)
+    (hxl : f (x, l) = c) :
+    Surjective (fderiv K (levelSetParameterMap hf hD hker hxl) 0) ↔ Surjective D₁ := by
+  rw [fderiv_levelSetParameterMap]
+  exact parameterProj_surjective_iff D₁ D₂ hD
+
+/-- The derivative of the local parameter map at the chart origin has the same index as the
+fixed-parameter linearization. Neither map is assumed Fredholm: both indices are differences of
+`Module.finrank`s, junk values included. -/
+theorem index_fderiv_levelSetParameterMap
+    (hf : HasStrictFDerivAt f (D₁.coprod D₂) (x, l))
+    (hD : Surjective (D₁.coprod D₂))
+    (hker : (D₁.coprod D₂).ker.ClosedComplemented)
+    (hxl : f (x, l) = c) :
+    ContinuousLinearMap.index (fderiv K (levelSetParameterMap hf hD hker hxl) 0) =
+      ContinuousLinearMap.index D₁ := by
+  rw [fderiv_levelSetParameterMap]
+  exact index_parameterProj D₁ D₂ hD
+
 section RCLike
 
 variable [IsRCLikeNormedField K] [CompleteSpace K]
@@ -213,9 +244,8 @@ extension of `TauCeti.levelSetParameterMap`.
 
 Here criticality is defined intrinsically for the local parameter map. Its equivalence with
 failure of surjectivity of the fixed-parameter linearization has only been established at the
-chart origin, by `TauCeti.fderiv_levelSetParameterMap` and
-`TauCeti.parameterProj_surjective_iff`, so this result does not yet identify nearby critical
-values with non-regular parameters of the original equation.
+chart origin, by `TauCeti.surjective_fderiv_levelSetParameterMap_iff`, so this result does not yet
+identify nearby critical values with non-regular parameters of the original equation.
 
 The differentiability threshold is the one currently supplied by
 `TauCeti.exists_mem_nhds_isClosed_isNowhereDense_image_criticalPoints`, rewritten using the fact
