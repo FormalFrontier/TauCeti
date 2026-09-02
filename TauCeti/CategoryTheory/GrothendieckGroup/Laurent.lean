@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.Polynomial.Laurent
+public import TauCeti.Algebra.Polynomial.Laurent.Basic
 public import TauCeti.CategoryTheory.GrothendieckGroup.Graded
 
 /-!

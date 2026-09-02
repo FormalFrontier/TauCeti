@@ -5,33 +5,24 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.LinearAlgebra.TensorProduct.Basic
-public import Mathlib.RingTheory.TensorProduct.Basic
-public import Mathlib.Algebra.Ring.NegOnePow
-public import TauCeti.Algebra.Polynomial.Laurent
+public import TauCeti.Algebra.Polynomial.Laurent.Basic
+public import TauCeti.Algebra.TensorProduct.RingHomBaseChange
 
 /-!
 # Specialization of Laurent modules
 
-This file provides scalar extension of a Laurent module along evaluation maps.  For the
-coefficient ring `ℤ[q,q⁻¹]`, the two distinguished evaluations are `laurentEvalOne` and
-`laurentEvalNegOne`; the resulting shift formulas record the specializations at `q = 1` and
-`q = -1`.  The construction is stated for an arbitrary ring homomorphism and uses Mathlib's
-base-change universal property.
-
-## Main definitions
-
-* `TauCeti.LaurentSpecialization`: scalar extension along a ring homomorphism.
-* `TauCeti.LaurentSpecialization.of`: the canonical map into the scalar extension.
-* `TauCeti.LaurentSpecialization.lift`: the universal scalar-linear factor.
+This file applies scalar extension of a module along evaluation maps.  For the coefficient ring
+`ℤ[q,q⁻¹]`, the two distinguished evaluations are `laurentEvalOne` and `laurentEvalNegOne`; the
+resulting shift formulas record the specializations at `q = 1` and `q = -1`.
 
 ## Main results
 
-* `TauCeti.LaurentSpecialization.lift_of` and
-  `TauCeti.LaurentSpecialization.lift_unique`: the universal property.
-* `TauCeti.LaurentSpecialization.of_smul`: the defining scalar relation.
-* `TauCeti.LaurentSpecialization.of_T_smul`: the shift/sign formula, with its `q = ±1`
-  specializations.
+* `TauCeti.RingHom.baseChangeModule_laurentEval_T_smul`: a Laurent shift acts by the corresponding
+  integer-unit power after evaluation.
+* `TauCeti.RingHom.baseChangeModule_laurentEvalOne_T_smul`: at `q = 1`, a Laurent shift acts
+  trivially.
+* `TauCeti.RingHom.baseChangeModule_laurentEvalNegOne_T_smul`: at `q = -1`, a Laurent shift acts
+  by the sign `n.negOnePow`.
 
 ## References
 
@@ -46,110 +37,36 @@ public section
 namespace TauCeti
 
 open LaurentPolynomial
-open scoped TensorProduct
 
-variable {R A M N : Type*} [CommSemiring R] [CommSemiring A]
-  [AddCommMonoid M] [Module R M] [AddCommMonoid N] [Module A N]
+variable {M : Type*} [AddCommMonoid M] [Module (LaurentPolynomial ℤ) M]
 
-/-- Scalar extension of an `R`-module along `ev : R →+* A`. -/
-abbrev LaurentSpecialization (ev : R →+* A) (M : Type*) [AddCommMonoid M] [Module R M] :=
-  letI := ev.toAlgebra
-  A ⊗[R] M
-
-namespace LaurentSpecialization
-
-/-- The canonical semilinear map from an `R`-module to its scalar extension along `ev`. -/
-noncomputable def of (ev : R →+* A) (M : Type*) [AddCommMonoid M] [Module R M] :
-    M →ₛₗ[ev] LaurentSpecialization ev M := by
-  letI := ev.toAlgebra
-  exact
-    { toAddHom := (TensorProduct.mk R A M 1).toAddMonoidHom
-      map_smul' := by
-        intro r x
-        -- The scalar action on the first tensor factor is evaluation through `ev`.
-        change (1 : A) ⊗ₜ[R] (r • x) = ev r • ((1 : A) ⊗ₜ[R] x)
-        rw [TensorProduct.tmul_smul]
-        rfl }
-
-/-- The scalar-linear map induced by a semilinear map through scalar extension. -/
-noncomputable def lift (ev : R →+* A) (f : M →ₛₗ[ev] N)
-    : LaurentSpecialization ev M →ₗ[A] N := by
-  let _ : Algebra R A := ev.toAlgebra
-  let _ : Module R N := Module.compHom N ev
-  let _ : IsScalarTower R A N :=
-    { smul_assoc := by
-        intro r a n
-        -- The restricted scalar action on `N` is evaluation followed by multiplication.
-        change (ev r * a) • n = ev r • (a • n)
-        rw [mul_smul] }
-  let f' : M →ₗ[R] N :=
-    { f with
-      map_smul' := by
-        intro r x
-        -- The target's restricted scalar action is the action through `ev`.
-        change f (r • x) = ev r • f x
-        exact f.map_smulₛₗ r x }
-  exact f'.liftBaseChange A
-
-@[simp]
-theorem lift_of (ev : R →+* A) (f : M →ₛₗ[ev] N) (x : M) :
-    lift ev f (of ev M x) = f x := by
-  simp [lift, of]
-
-/-- Two scalar-linear maps out of a scalar extension agree if they agree on canonical elements. -/
-theorem hom_ext (ev : R →+* A) {g₁ g₂ : LaurentSpecialization ev M →ₗ[A] N}
-    (h : ∀ x, g₁ (of ev M x) = g₂ (of ev M x)) : g₁ = g₂ := by
-  let _ : Algebra R A := ev.toAlgebra
-  let _ : Module R N := Module.compHom N ev
-  let _ : IsScalarTower R A N :=
-    { smul_assoc := by
-        intro r a n
-        -- The restricted scalar action on `N` is evaluation followed by multiplication.
-        change (ev r * a) • n = ev r • (a • n)
-        rw [mul_smul] }
-  apply (LinearMap.liftBaseChangeEquiv A).symm.injective
-  ext x
-  simpa [of] using h x
-
-/-- The universal property of scalar extension for a semilinear map. -/
-theorem lift_unique (ev : R →+* A) (f : M →ₛₗ[ev] N)
-    (g : LaurentSpecialization ev M →ₗ[A] N)
-    (hg : ∀ x, g (of ev M x) = f x) : g = lift ev f := by
-  exact hom_ext ev fun x => (hg x).trans (lift_of ev f x).symm
-
-theorem of_smul (ev : R →+* A) (r : R) (x : M) :
-    of ev M (r • x) = ev r • of ev M x :=
-  (of ev M).map_smulₛₗ r x
-
-end LaurentSpecialization
-
-section LaurentIntegerSpecialization
-
-variable {M N : Type*} [AddCommGroup M] [AddCommGroup N]
-  [Module (LaurentPolynomial ℤ) M]
-
-/-- At a unit `u`, a Laurent shift acts by the corresponding integer power on specialization. -/
-theorem LaurentSpecialization.of_T_smul (u : ℤˣ) (n : ℤ) (x : M) :
-    LaurentSpecialization.of (laurentEvalUnit u) M
+/-- At a unit `u`, a Laurent shift acts by the corresponding integer power on base change. -/
+theorem RingHom.baseChangeModule_laurentEval_T_smul (u : ℤˣ) (n : ℤ) (x : M) :
+    RingHom.baseChangeModule.of ((laurentEval (R := ℤ) u).toRingHom) M
         ((T n : LaurentPolynomial ℤ) • x) =
       ((u ^ n : ℤˣ) : ℤ) •
-        LaurentSpecialization.of (laurentEvalUnit u) M x := by
-  rw [LaurentSpecialization.of_smul, laurentEvalUnit_T]
+        RingHom.baseChangeModule.of ((laurentEval (R := ℤ) u).toRingHom) M x := by
+  rw [(RingHom.baseChangeModule.of _ _).map_smulₛₗ]
+  change laurentEval (R := ℤ) u (T n) • _ = _
+  rw [laurentEval_T]
 
-theorem LaurentSpecialization.of_T_smul_atOne (n : ℤ) (x : M) :
-    LaurentSpecialization.of laurentEvalOne M
+/-- At `q = 1`, a Laurent shift acts trivially after base change. -/
+theorem RingHom.baseChangeModule_laurentEvalOne_T_smul (n : ℤ) (x : M) :
+    RingHom.baseChangeModule.of laurentEvalOne M
         ((T n : LaurentPolynomial ℤ) • x) =
-      LaurentSpecialization.of laurentEvalOne M x := by
-  rw [LaurentSpecialization.of_smul, laurentEvalOne_T]
-  simp
+      RingHom.baseChangeModule.of laurentEvalOne M x := by
+  rw [laurentEvalOne_def]
+  rw [RingHom.baseChangeModule_laurentEval_T_smul]
+  rw [one_zpow, Units.val_one, one_smul]
 
-theorem LaurentSpecialization.of_T_smul_atNegOne (n : ℤ) (x : M) :
-    LaurentSpecialization.of laurentEvalNegOne M
+/-- At `q = -1`, a Laurent shift acts by the sign `n.negOnePow` after base change. -/
+theorem RingHom.baseChangeModule_laurentEvalNegOne_T_smul (n : ℤ) (x : M) :
+    RingHom.baseChangeModule.of laurentEvalNegOne M
         ((T n : LaurentPolynomial ℤ) • x) =
-      (n.negOnePow : ℤ) •
-      LaurentSpecialization.of laurentEvalNegOne M x := by
-  rw [LaurentSpecialization.of_smul, laurentEvalNegOne_T]
-
-end LaurentIntegerSpecialization
+    (n.negOnePow : ℤ) •
+      RingHom.baseChangeModule.of laurentEvalNegOne M x := by
+  rw [laurentEvalNegOne_def]
+  rw [RingHom.baseChangeModule_laurentEval_T_smul]
+  simp [Int.negOnePow_def]
 
 end TauCeti
