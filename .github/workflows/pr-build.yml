@@ -42,6 +42,12 @@ concurrency:
   group: pr-build-${{ github.event.pull_request.number || inputs.pr || github.event.merge_group.head_sha }}
   cancel-in-progress: true
 
+env:
+  # Read endpoint for `lake exe cache get`, wired from a repository variable. The cache tool
+  # treats unset and empty alike, so clearing the variable returns reads to the tool's
+  # default endpoints on the next run.
+  MATHLIB_CACHE_GET_URL: ${{ vars.MATHLIB_CACHE_GET_URL }}
+
 jobs:
   # Name kept distinct from `build` on purpose — see the header note. The required merge check is the
   # `build` commit STATUS posted in the final step, not this job's auto-created check-run.
@@ -174,6 +180,13 @@ jobs:
           # runs the workflow-pinned scripts/check-bump.sh and routes to a human if it is
           # anything other than a forward move (mathlib forward on its nominated branch,
           # transitive pins derived from mathlib, toolchain monotonic).
+          # docbuild/docs/references.bib is permitted too. It is the bibliography doc-gen4
+          # resolves docstring citations against, so a docstring that cites a work no one has
+          # entered renders as a bare bracketed key. Filling that in is the same kind of work as
+          # writing the docstring, and holding it for a human merge stalled exactly that. It is
+          # BibTeX consumed only by the pages build, never by Lake or the harness, so nothing
+          # here executes it. The rest of docbuild/ stays human-owned: lakefile.toml, the pin,
+          # and the two generator scripts all feed the docs build itself.
           # Two independent questions: does this reach outside TauCeti/, and does it change the
           # Lake pins. They used to share an `elif`, so a PR doing both was only ever answered as
           # out-of-scope: BUMP stayed unset, check-bump.sh never ran, and the report step could
@@ -183,7 +196,7 @@ jobs:
           if [ -z "$files" ]; then
             echo "INFRA=1" >> "$GITHUB_ENV"; echo "::warning::no files / unable to list — cannot determine scope, routing to human"
           else
-            if echo "$files" | grep -vqE '^TauCeti/|^TauCeti\.lean$|^lake-manifest\.json$|^lean-toolchain$'; then
+            if echo "$files" | grep -vqE '^TauCeti/|^TauCeti\.lean$|^lake-manifest\.json$|^lean-toolchain$|^docbuild/docs/references\.bib$'; then
               if echo "$files" | grep -qE '^lakefile\.(toml|lean)$'; then
                 echo "HUMAN_LAKEFILE=1" >> "$GITHUB_ENV"
               fi
@@ -326,10 +339,11 @@ jobs:
           persist-credentials: false
           fetch-depth: 1
 
-      # Full history is intentional. lake cache get --max-revs=0 walks all available ancestors
-      # until it reaches a published main commit, then Lake's input hashes invalidate only changed
-      # modules and their downstream dependents. The checkout is the immutable event head itself:
-      # no refs/pull/N/merge, no local merge, and no source/config overlay.
+      # Full history is intentional. lake cache get walks ancestors until it reaches a published
+      # main commit, then Lake's input hashes invalidate only changed modules and their downstream
+      # dependents. The cache step below limits how many ancestors it reads. The checkout is the
+      # immutable event head itself: no refs/pull/N/merge, no local merge, and no source/config
+      # overlay.
       - name: Checkout the exact candidate head (untrusted contents, no credentials)
         if: ${{ env.INFRA != '1' }}
         uses: actions/checkout@v4
@@ -604,7 +618,16 @@ jobs:
           # environment variables; the script hands it the endpoints through a `--service` config.
           PUBLIC_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT_PUBLIC }}
           PUBLIC_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT_PUBLIC }}
-          LAKE_CACHE_MAX_REVS: "0"
+          # This limit stops the search after 100 ancestors. The search otherwise stops only when
+          # a lookup succeeds. On a hit the first ancestor that main published succeeds. The
+          # search then reads only the few ancestors between this head and main.
+          #
+          # The cache keys each revision map by toolchain. A lookup therefore succeeds only when
+          # a published ancestor uses the same toolchain as this head. A pull request that bumps
+          # lean-toolchain has no such ancestor, because main published all of its ancestors
+          # under the old toolchain. Without this limit, the search reads the full history and
+          # finds nothing.
+          LAKE_CACHE_MAX_REVS: "100"
         run: bash gate/scripts/lake-cache-get.sh pr
 
       - name: Prepare trusted read-only Lean watchdog toolchain
@@ -837,7 +860,7 @@ jobs:
           elif [ "${{ env.NEWFILE_TOO_LONG }}" = "1" ]; then
             sc_state=failure; sc_desc="a newly added .lean file exceeds 1000 lines — split it (existing files may grow to 1500)"
           else
-            sc_state=success; sc_desc="changes are in scope (TauCeti/ and the allowed root files only)"
+            sc_state=success; sc_desc="changes are in scope (TauCeti/, the allowed root files, and the bibliography only)"
           fi
           post_status scope "$sc_state" "$sc_desc"
 

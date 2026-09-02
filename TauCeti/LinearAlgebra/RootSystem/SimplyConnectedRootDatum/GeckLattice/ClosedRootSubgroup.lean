@@ -21,6 +21,10 @@ divided-power coefficient vanishes.
 
 ## Main declarations
 
+* `TauCeti.DynkinType.geckRootSubgroupMatrix_apply`: a distinguished matrix entry recovers the
+  parameter of a numbered root subgroup.
+* `TauCeti.DynkinType.geckRootSubgroupPoints_injective`: every numbered root-subgroup map on
+  points is injective.
 * `TauCeti.DynkinType.geckRootSubgroupCoordinateMap_surjective`: the coordinate map of every
   numbered Geck root subgroup is surjective.
 * `TauCeti.DynkinType.isClosedImmersion_geckRootSubgroup`: every numbered root-subgroup map
@@ -45,6 +49,8 @@ open AlgebraicGeometry CategoryTheory WithConv
 
 namespace TauCeti.DynkinType
 
+universe v
+
 noncomputable section
 
 attribute [local instance] TauCeti.moduleNNRat
@@ -52,11 +58,11 @@ attribute [local instance] TauCeti.moduleNNRat
 variable (t : DynkinType) (ht : t.Valid)
 
 /-- The finite coordinate row corresponding to a numbered simple root. -/
-private abbrev geckRootRow (i : Fin t.rank) : Fin (t.geckDim ht) :=
+abbrev geckRootRow (i : Fin t.rank) : Fin (t.geckDim ht) :=
   Fintype.equivFin (t.GeckIndex ht) (.inl (t.simpleSupportEquiv ht i))
 
 /-- The finite coordinate column that recovers a numbered root-subgroup parameter. -/
-private abbrev geckRootColumn (i : Fin t.rank ⊕ Fin t.rank) : Fin (t.geckDim ht) :=
+abbrev geckRootColumn (i : Fin t.rank ⊕ Fin t.rank) : Fin (t.geckDim ht) :=
   match i with
   | .inl i =>
       Fintype.equivFin (t.GeckIndex ht)
@@ -135,8 +141,10 @@ private theorem two_le_nilpotencyClass_geckRootOperator
   rw [pow_one] at hone
   exact hx hone
 
-private theorem geckRootSubgroupMatrix_apply (i : Fin t.rank ⊕ Fin t.rank)
-    (A : Type) [CommRing A]
+/-- The distinguished root row and column of a represented numbered root subgroup recover its
+additive parameter. -/
+theorem geckRootSubgroupMatrix_apply (i : Fin t.rank ⊕ Fin t.rank)
+    (A : Type v) [CommRing A]
     (q : WithConv (SymmetricAlgebra ℤ ℤ →ₐ[ℤ] A)) :
     t.geckRootSubgroupMatrix ht i q
         (t.geckRootRow ht (Sum.elim id id i)) (t.geckRootColumn ht i) =
@@ -151,6 +159,19 @@ private theorem geckRootSubgroupMatrix_apply (i : Fin t.rank ⊕ Fin t.rank)
   · intro hnot
     have htwo := t.two_le_nilpotencyClass_geckRootOperator ht i
     exact (hnot (Finset.mem_range.mpr htwo)).elim
+
+/-- **Every parametrized numbered root subgroup in the Geck carrier points is injective.** -/
+theorem geckRootSubgroupPoints_injective (i : Fin t.rank ⊕ Fin t.rank)
+    (A : Type v) [CommRing A] : Function.Injective (t.geckRootSubgroupPoints ht i A) := by
+  intro u u' huu'
+  have hentry := congrArg
+    (fun g : t.geckPoints ht A =>
+      (((g : Matrix.GeneralLinearGroup (Fin (t.geckDim ht)) A) :
+        Matrix (Fin (t.geckDim ht)) (Fin (t.geckDim ht)) A)
+          (t.geckRootRow ht (Sum.elim id id i)) (t.geckRootColumn ht i))) huu'
+  apply Multiplicative.toAdd.injective
+  simpa only [t.coe_geckRootSubgroupPoints ht, t.geckRootSubgroupMatrix_apply ht,
+    (AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).apply_symm_apply] using hentry
 
 /-- The coordinate map of a numbered root subgroup before passage to the toral closure. -/
 private abbrev geckRepresentedRootCoordinateMap (i : Fin t.rank ⊕ Fin t.rank) :=

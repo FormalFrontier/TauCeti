@@ -70,7 +70,7 @@ Chevalley--Demazure group schemes, and hence the finite groups themselves, are s
   `TauCeti.SuzukiReeIndex.datumSpecialIsogeny_coweightMap_coroot_simpleIndex`: the defining
   relation of the exceptional isogeny on the simple roots and on the simple coroots, in the
   exponent convention of the CFSG roadmap.
-* `TauCeti.SuzukiReeIndex.datumSpecialIsogeny_comp_self`: its square is scaling by the defining
+* `TauCeti.SuzukiReeIndex.datumSpecialIsogeny_mul_self`: its square is scaling by the defining
   characteristic, which is the root-datum form of `τ ^ 2 = Frob_p`.
 
 ## Roadmap and references
@@ -118,11 +118,11 @@ private def congrIsogeny {ι R M N : Type*} [CommRing R] [AddCommGroup M] [Modul
   coroot_coweightMap := by subst h; exact f.coroot_coweightMap
 
 /-- A square relation transports along an equality of root pairings. -/
-private theorem congrIsogeny_comp_self {ι M N : Type*} [AddCommGroup M] [AddCommGroup N]
+private theorem congrIsogeny_mul_self {ι M N : Type*} [AddCommGroup M] [AddCommGroup N]
     [Module.Free ℤ M] [Module.Finite ℤ M] [Module.Free ℤ N] [Module.Finite ℤ N]
     {P Q : RootDatum ι M N} (h : P = Q) (f : RootPairingIsogeny Q Q)
-    (c : ℕ+) (hf : f.comp f = RootPairingIsogeny.smulId Q c) :
-    (congrIsogeny h f).comp (congrIsogeny h f) = RootPairingIsogeny.smulId P c := by
+    (c : ℕ+) (hf : f * f = RootPairingIsogeny.smulId Q c) :
+    congrIsogeny h f * congrIsogeny h f = RootPairingIsogeny.smulId P c := by
   subst h
   exact hf
 
@@ -492,8 +492,8 @@ theorem datumSpecialIsogeny_coweightMap_coroot_simpleIndex (e : SuzukiReeIndex)
 /-- **The square of the selected isogeny is scaling by the defining characteristic.** This is the
 root-datum form of `τ ^ 2 = Frob_p`, uniformly over the four half-Frobenius families; the odd
 powers of `τ` that cut out the Suzuki, Ree and Tits groups are read off it. -/
-@[simp] theorem datumSpecialIsogeny_comp_self (e : SuzukiReeIndex) :
-    e.datumSpecialIsogeny.comp e.datumSpecialIsogeny =
+@[simp] theorem datumSpecialIsogeny_mul_self (e : SuzukiReeIndex) :
+    e.datumSpecialIsogeny * e.datumSpecialIsogeny =
       RootPairingIsogeny.smulId _ ⟨e.1.characteristic, e.1.characteristic_prime.pos⟩ := by
   obtain ⟨⟨d, hvalid⟩, hhalf⟩ := e
   cases d <;> try simp at hhalf
@@ -502,29 +502,29 @@ powers of `τ` that cut out the Suzuki, Ree and Tits groups are read off it. -/
         (ValidLieTypeIndex.characteristic_prime _).pos⟩ := by
       refine PNat.coe_injective ?_
       simp [ValidLieTypeIndex.characteristic]
-    exact congrIsogeny_comp_self (simplyConnectedRootDatum_B 2 _) b2SpecialIsogeny _
-      (hc ▸ b2SpecialIsogeny_comp_self)
+    exact congrIsogeny_mul_self (simplyConnectedRootDatum_B 2 _) b2SpecialIsogeny _
+      (hc ▸ b2SpecialIsogeny_mul_self)
   case reeG2 =>
     have hc : (3 : ℕ+) = ⟨ValidLieTypeIndex.characteristic ⟨_, hvalid⟩,
         (ValidLieTypeIndex.characteristic_prime _).pos⟩ := by
       refine PNat.coe_injective ?_
       simp [ValidLieTypeIndex.characteristic]
-    exact congrIsogeny_comp_self (simplyConnectedRootDatum_G2 _) g2SpecialIsogeny _
-      (hc ▸ g2SpecialIsogeny_comp_self)
+    exact congrIsogeny_mul_self (simplyConnectedRootDatum_G2 _) g2SpecialIsogeny _
+      (hc ▸ g2SpecialIsogeny_mul_self)
   case reeF4 =>
     have hc : (2 : ℕ+) = ⟨ValidLieTypeIndex.characteristic ⟨_, hvalid⟩,
         (ValidLieTypeIndex.characteristic_prime _).pos⟩ := by
       refine PNat.coe_injective ?_
       simp [ValidLieTypeIndex.characteristic]
-    exact congrIsogeny_comp_self (simplyConnectedRootDatum_F4 _) f4SpecialIsogeny _
-      (hc ▸ f4SpecialIsogeny_comp_self)
+    exact congrIsogeny_mul_self (simplyConnectedRootDatum_F4 _) f4SpecialIsogeny _
+      (hc ▸ f4SpecialIsogeny_mul_self)
   case tits =>
     have hc : (2 : ℕ+) = ⟨ValidLieTypeIndex.characteristic ⟨_, hvalid⟩,
         (ValidLieTypeIndex.characteristic_prime _).pos⟩ := by
       refine PNat.coe_injective ?_
       simp [ValidLieTypeIndex.characteristic]
-    exact congrIsogeny_comp_self (simplyConnectedRootDatum_F4 _) f4SpecialIsogeny _
-      (hc ▸ f4SpecialIsogeny_comp_self)
+    exact congrIsogeny_mul_self (simplyConnectedRootDatum_F4 _) f4SpecialIsogeny _
+      (hc ▸ f4SpecialIsogeny_mul_self)
 
 end SuzukiReeIndex
 

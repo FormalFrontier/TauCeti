@@ -65,6 +65,10 @@ concurrency:
 env:
   # Run JavaScript actions on Node 24 (Node 20 is deprecated on GitHub runners).
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  # Read endpoint for `lake exe cache get`, wired from a repository variable. The cache tool
+  # treats unset and empty alike, so clearing the variable returns reads to the tool's
+  # default endpoints on the next run.
+  MATHLIB_CACHE_GET_URL: ${{ vars.MATHLIB_CACHE_GET_URL }}
 
 jobs:
   # Named `build-site`, not `build`, to keep every job name distinct from the required `build` commit

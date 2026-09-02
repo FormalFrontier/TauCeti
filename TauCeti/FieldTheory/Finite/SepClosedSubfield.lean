@@ -27,6 +27,8 @@ extension of the prime field.
 
 ## Main results
 
+* `TauCeti.finite_frobeniusFixedSubfield` and `TauCeti.finite_frobeniusFixedSubring`: over any field
+  of characteristic `p` and for `n ≠ 0` it is finite, being a set of roots of `X ^ p ^ n - X`.
 * `TauCeti.card_frobeniusFixedSubfield`: over a separably closed field and for `n ≠ 0` it has
   exactly `p ^ n` elements.
 * `TauCeti.eq_frobeniusFixedSubfield_of_natCard`: it is the unique subfield with that many elements.
@@ -83,6 +85,17 @@ set of roots of a nonzero polynomial. This is not an instance: at `n = 0` the su
 of `K`, which need not be finite. -/
 theorem finite_frobeniusFixedSubfield (hn : n ≠ 0) : Finite (frobeniusFixedSubfield K p n) :=
   .of_equiv _ (frobeniusFixedSubfieldEquivRootSet K p n hn).symm
+
+/-- The Frobenius-fixed *subring* of a field of characteristic `p` is finite once `n ≠ 0`. This is
+`TauCeti.finite_frobeniusFixedSubfield` read through
+`TauCeti.toSubring_frobeniusFixedSubfield`, the two having the same elements; it is the form a
+consumer working with `TauCeti.frobeniusFixedSubring` over a field asks for. Not an instance, for
+the reason given at `TauCeti.finite_frobeniusFixedSubfield`. -/
+theorem finite_frobeniusFixedSubring (hn : n ≠ 0) : Finite ↥(frobeniusFixedSubring K p n) :=
+  have := finite_frobeniusFixedSubfield K p n hn
+  .of_equiv _ (Equiv.subtypeEquivRight fun a =>
+    by rw [← Subfield.mem_toSubring, toSubring_frobeniusFixedSubfield] :
+      ↥(frobeniusFixedSubfield K p n) ≃ ↥(frobeniusFixedSubring K p n))
 
 /-- **Uniqueness of the subfield of `q` elements.** A subfield with `p ^ n` elements of a field of
 characteristic `p` is the subfield fixed by the `p ^ n`-power Frobenius.

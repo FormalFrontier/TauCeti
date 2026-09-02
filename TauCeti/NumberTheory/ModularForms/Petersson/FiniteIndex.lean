@@ -210,8 +210,8 @@ theorem peterssonInnerCosets_add_right (f g₁ g₂ : CuspForm (Γ.map (mapGL �
   refine Finset.sum_congr rfl fun q _ ↦ ?_
   rw [FunLike.coe_add, SlashAction.add_slash]
   exact peterssonInner_add_right k fd _ _ _
-    (integrableOn_petersson_slash k _ f g₁ (q.out)⁻¹)
-    (integrableOn_petersson_slash k _ f g₂ (q.out)⁻¹)
+    (integrableOn_petersson_slash_left k _ f g₁ (q.out)⁻¹)
+    (integrableOn_petersson_slash_left k _ f g₂ (q.out)⁻¹)
 
 /-- Complex-linearity in the second argument. -/
 @[simp]
