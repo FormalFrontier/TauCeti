@@ -1235,6 +1235,23 @@ theorem dynkinType_eq : d.1.dynkinType = .D d.1.rank := by
   rw [hrank]
   exact hn
 
+/-- **The Cartan matrix of the diagram a validated index on a type-`D` diagram names**, entry by
+entry: it is the type-`D` Cartan matrix at the index's rank. Like
+`TauCeti.TypeCLieIndex.dynkinType_cartanMatrix_apply` it is stated on entries rather than on
+matrices, because the rank occurs in the index types of the two nodes, so the matrix-level equation
+`TauCeti.TypeDDiagramLieIndex.dynkinType_eq` cannot be rewritten with directly. -/
+theorem dynkinType_cartanMatrix_apply (i j : Fin d.1.rank) :
+    d.1.dynkinType.cartanMatrix i j = CartanMatrix.D d.1.rank i j := by
+  obtain ⟨⟨e, hvalid⟩, he⟩ := d
+  -- After reverting the two hypotheses and the two nodes, each of whose types mentions the index,
+  -- the constructor split reduces the rank on both sides to the constructor's own rank parameter.
+  revert i j hvalid he
+  cases e
+  case D n q => exact fun _ _ i j => congrFun₂ (DynkinType.cartanMatrix_D n) i j
+  case twistedD n q => exact fun _ _ i j => congrFun₂ (DynkinType.cartanMatrix_D n) i j
+  case trialityD4 q => exact fun _ _ i j => congrFun₂ (DynkinType.cartanMatrix_D 4) i j
+  all_goals exact fun _ he => ((LieTypeIndex.hasTypeDDiagram_iff _).mp he).elim
+
 /-- **The rank of a validated index on a type-`D` diagram is at least four.** This is the range on
 which `Dₙ` is a valid Dynkin type, `D₂` being `A₁ × A₁` and `D₃` being `A₃` relabelled, and it is
 the hypothesis the type-`D` carrier of the reductive-groups roadmap takes. -/

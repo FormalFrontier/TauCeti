@@ -42,9 +42,9 @@ the two element types.
 
 Naturality on the pinned generating families is not restated: the isomorphism is the entrywise
 inclusion, by `TauCeti.DynkinType.coe_geckPointsMulEquivFixedSubgroupGeckFrobenius`, so
-`TauCeti.DynkinType.geckPointsMap_geckRootSubgroupMatrix` and
-`TauCeti.DynkinType.geckPointsMap_geckTorusMatrix` at the inclusion of `𝔽` already describe its
-action on the numbered root subgroups and on the weight torus.
+`TauCeti.DynkinType.geckPointsMap_geckRootSubgroupPoints` and
+`TauCeti.DynkinType.geckPointsMap_geckWeightTorusPoints` at the inclusion of `𝔽` already describe
+its action on the numbered root subgroups and on the weight torus.
 
 Two limitations carry over from the file this one builds on. The Geck carrier is built from the
 adjoint module, so outside the types `E₈`, `F₄` and `G₂` its weights span the root lattice rather
