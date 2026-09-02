@@ -18,7 +18,7 @@ local identity as an equality of germs at the origin.
 ## Main results
 
 * `NormedSpace.map_logOneAddSeries_apply`: naturality of each homogeneous term.
-* `NormedSpace.map_logOneAdd_of_mem_ball`: naturality on the open unit ball.
+* `NormedSpace.map_logOneAdd_of_norm_lt_one`: naturality on the open unit ball.
 * `NormedSpace.eventually_map_logOneAdd`: naturality near the origin.
 * `NormedSpace.map_logOneAdd_germ`: naturality as an equality of germs.
 
@@ -72,7 +72,7 @@ variable [Ring B] [Algebra 𝕃 B] [TopologicalSpace B] [IsTopologicalRing B]
 variable [CompleteSpace A]
 
 /-- Continuous ring homomorphisms commute with `logOneAdd` on the open unit ball. -/
-theorem map_logOneAdd_of_mem_ball {F : Type*} [FunLike F A B] [RingHomClass F A B]
+theorem map_logOneAdd_of_norm_lt_one {F : Type*} [FunLike F A B] [RingHomClass F A B]
     [T2Space B] (f : F) (hf : Continuous f) {u : A} (hu : ‖u‖ < 1) :
     f (logOneAdd 𝕂 A u) = logOneAdd 𝕃 B (f u) := by
   rw [logOneAdd_eq_tsum, logOneAdd_eq_tsum]
@@ -92,7 +92,7 @@ theorem eventually_map_logOneAdd {F : Type*} [FunLike F A B] [RingHomClass F A B
     [T2Space B] (f : F) (hf : Continuous f) :
     ∀ᶠ u in 𝓝 (0 : A), f (logOneAdd 𝕂 A u) = logOneAdd 𝕃 B (f u) := by
   filter_upwards [Metric.ball_mem_nhds (0 : A) zero_lt_one] with u hu
-  exact map_logOneAdd_of_mem_ball (𝕂 := 𝕂) (𝕃 := 𝕃) f hf
+  exact map_logOneAdd_of_norm_lt_one (𝕂 := 𝕂) (𝕃 := 𝕃) f hf
     (by simpa [Metric.mem_ball, dist_zero_right] using hu)
 
 /-- Continuous ring homomorphisms commute with the germ of `logOneAdd` at the origin. -/
@@ -104,6 +104,18 @@ theorem map_logOneAdd_germ {F : Type*} [FunLike F A B] [RingHomClass F A B]
   rw [Germ.coe_compTendsto, Germ.coe_eq]
   filter_upwards [eventually_map_logOneAdd (𝕂 := 𝕂) (𝕃 := 𝕃) f hf] with u hu
   exact hu
+
+/- The same-field logarithm germ equation is the simplifier boundary.  The
+generic theorem above intentionally remains explicit because its target field
+does not occur in the left-hand side. -/
+@[simp high]
+private theorem map_logOneAdd_germ_sameField {F : Type*} [FunLike F A B]
+    [ContinuousMapClass F A B] [RingHomClass F A B] [T2Space B] (f : F)
+    [Algebra 𝕂 B] :
+    (↑(f ∘ logOneAdd 𝕂 A) : Germ (𝓝 (0 : A)) B) =
+      (↑(logOneAdd 𝕂 B) : Germ (𝓝 (0 : B)) B).compTendsto f (by
+        exact (map_continuous f).tendsto' 0 0 (map_zero f)) :=
+  map_logOneAdd_germ (𝕂 := 𝕂) (𝕃 := 𝕂) f (map_continuous f)
 
 end Normed
 
