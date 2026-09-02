@@ -270,6 +270,7 @@ jobs:
           # leaves it unset and the lookup runs as before: unknown means look, never means skip.
           if [ "$toolchain_changed" = "1" ]; then
             echo "TOOLCHAIN_CHANGED=1" >> "$GITHUB_ENV"
+            echo "::notice::PR moves lean-toolchain — the Lake cache lookup will be skipped, since the revision maps are keyed by toolchain and every published ancestor was built under the old one"
           fi
 
           # The report step runs under `if: always()`. Mark successful completion explicitly so an
