@@ -478,10 +478,13 @@ theorem coe_frobeniusFixedMulEquivOfCoeEq (F : P →* P)
     ((frobeniusFixedMulEquivOfCoeEq n p k I A F hP hQ hF g : P) :
         Matrix.GeneralLinearGroup (Fin n) A) =
       Matrix.GeneralLinearGroup.map (frobeniusFixedSubring A p k).subtype g := by
-  rw [frobeniusFixedMulEquivOfCoeEq, MulEquiv.coe_trans, Function.comp_apply, MulEquiv.coe_trans,
-    Function.comp_apply, coe_fixedSubgroupCongr_symm_apply, MulEquiv.subgroupCongr_symm_apply,
-    coe_frobeniusFixedHopfIdealPointsMulEquiv, coe_frobeniusFixedHopfIdealPointsInclusion,
-    MulEquiv.subgroupCongr_apply]
+  -- The transport is the threefold composite of the presentation `hQ`, the isomorphism for the
+  -- Hopf-ideal points and the presentation `hP` read backwards; each factor contributes exactly
+  -- one of the coercion equations below.
+  simp only [frobeniusFixedMulEquivOfCoeEq, MulEquiv.trans_apply,
+    coe_fixedSubgroupCongr_symm_apply, MulEquiv.subgroupCongr_symm_apply,
+    MulEquiv.subgroupCongr_apply, coe_frobeniusFixedHopfIdealPointsMulEquiv,
+    coe_frobeniusFixedHopfIdealPointsInclusion]
 
 /-- The inverse of the transported isomorphism reads a Frobenius-fixed point as a point over the
 Frobenius-fixed subring: including its matrix back into the `A`-valued points returns the point one
