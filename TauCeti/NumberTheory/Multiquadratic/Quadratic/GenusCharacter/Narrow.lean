@@ -141,10 +141,58 @@ theorem genusCharFun_absNorm_eq_of_span_mul_eq_span_mul {s t : Finset ℤ}
     exact ((genusCharFun_eq_zero_iff (fun P hP => hs P (hts hP))).mp hzero) hcopAbsY
   exact mul_left_cancel₀ hcharY_ne hchar
 
-/-- **A coprime principal ideal has trivial genus character.** Let `I` be a nonzero integral ideal
-whose absolute norm is coprime to the modulus of a genus character. If `I = (x)` for a totally
-positive `x`, then the coprime-ideal genus character of `I` is `1`; the corresponding properties of
-`x` follow from those of `I`.
+/-- **The unit-valued genus character is invariant under a coprime narrow-principal comparison.**
+Let `I` and `J` be
+nonzero integral ideals whose absolute norms are coprime to the modulus of a genus character. If
+they are related by a narrow comparison `(x) I = (y) J`, and the principal factor `y` is coprime
+to the modulus, then the corresponding values of
+`genusCharFunCoprimeIdealHom` agree.
+
+The explicit coprimality condition on one principal factor is the remaining strong-approximation
+input needed to remove the coprimality restriction when constructing a character on the narrow
+class group. -/
+theorem genusCharFunCoprimeIdealHom_eq_of_span_mul_eq_span_mul
+    {s t : Finset ℤ} (hs : ∀ P ∈ s, IsPrimeDiscriminant P)
+    (heven : ∀ P ∈ s, ∀ P' ∈ s,
+      IsEvenPrimeDiscriminant P → IsEvenPrimeDiscriminant P' → P = P')
+    (hprod : ∏ P ∈ s, P = fundamentalDiscriminant d)
+    (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
+    (hsf : Squarefree d) (hts : t ⊆ s)
+    {I J : genusCharFunCoprimeIdealSubmonoid (K := K) t}
+    {x y : 𝓞 K} (hx : x ≠ 0) (hy : y ≠ 0)
+    (hpos : NumberField.IsTotallyPositive ((x : K) * (y : K)))
+    (hIJ : Ideal.span {x} * (I : Ideal (𝓞 K)) =
+      Ideal.span {y} * (J : Ideal (𝓞 K)))
+    (hcopy : IsCoprime (Algebra.norm ℤ y) (∏ P ∈ t, P)) :
+    genusCharFunCoprimeIdealHom (fun P hP => hs P (hts hP)) I =
+      genusCharFunCoprimeIdealHom (fun P hP => hs P (hts hP)) J := by
+  have hnorm := congrArg Ideal.absNorm hIJ
+  rw [map_mul, map_mul, Ideal.absNorm_span_singleton, Ideal.absNorm_span_singleton] at hnorm
+  have hnorm' :
+      ((Algebra.norm ℤ x).natAbs : ℤ) * Ideal.absNorm (I : Ideal (𝓞 K)) =
+        ((Algebra.norm ℤ y).natAbs : ℤ) * Ideal.absNorm (J : Ideal (𝓞 K)) := by
+    exact_mod_cast hnorm
+  have hcopAbsX : IsCoprime ((Algebra.norm ℤ x).natAbs : ℤ) (∏ P ∈ t, P) := by
+    have hJcop : IsCoprime (Ideal.absNorm (J : Ideal (𝓞 K)) : ℤ) (∏ P ∈ t, P) :=
+      (mem_genusCharFunCoprimeIdealSubmonoid_iff J.1).mp J.property
+    have hcopAbsX' :
+        IsCoprime (((Algebra.norm ℤ y).natAbs : ℤ) * Ideal.absNorm (J : Ideal (𝓞 K)))
+          (∏ P ∈ t, P) := by
+      simpa only [Int.natCast_natAbs] using hcopy.abs_left.mul_left hJcop
+    rw [← hnorm'] at hcopAbsX'
+    exact hcopAbsX'.of_mul_left_left
+  have hcopx : IsCoprime (Algebra.norm ℤ x) (∏ P ∈ t, P) := by
+    apply (IsCoprime.abs_left_iff _ _).mp
+    simpa only [Int.natCast_natAbs] using hcopAbsX
+  apply Units.ext
+  rw [genusCharFunCoprimeIdealHom_apply, genusCharFunCoprimeIdealHom_apply]
+  exact genusCharFun_absNorm_eq_of_span_mul_eq_span_mul hs heven hprod hmin hgen hsf hts hx hy
+    hpos hIJ hcopx hcopy
+
+/-- **A principal ideal with a totally positive generator, coprime to the modulus, has trivial
+genus character.** Let `I` be a nonzero integral ideal whose absolute norm is coprime to the
+modulus of a genus character. If `I = (x)` for a totally positive `x`, then the coprime-ideal genus
+character of `I` is `1`; the corresponding properties of `x` follow from those of `I`.
 
 This is the kernel calculation needed before the character can descend through the narrow class
 group: a totally positive principal ideal is narrow-trivial, and this theorem handles the finite
@@ -166,50 +214,19 @@ theorem genusCharFunCoprimeIdealHom_eq_one_of_eq_span_singleton
     intro hx
     apply hI0
     simp [hI, hx]
-  apply Units.ext
-  rw [genusCharFunCoprimeIdealHom_apply, hI, Ideal.absNorm_span_singleton]
-  have hxK : (x : K) ≠ 0 := by exact_mod_cast hx
-  have hnormposQ : (0 : ℚ) < Algebra.norm ℤ x := by
-    simpa only [Algebra.coe_norm_int] using NumberField.norm_pos_of_isTotallyPositive hxK hpos
-  have hnormpos : 0 < Algebra.norm ℤ x := by exact_mod_cast hnormposQ
   have hcop : IsCoprime (Algebra.norm ℤ x) (∏ P ∈ t, P) := by
     have hIcop : IsCoprime (Ideal.absNorm (I : Ideal (𝓞 K)) : ℤ) (∏ P ∈ t, P) :=
       (mem_genusCharFunCoprimeIdealSubmonoid_iff I.1).mp I.property
-    rw [hI, Ideal.absNorm_span_singleton, Int.natCast_natAbs, abs_of_pos hnormpos] at hIcop
-    exact hIcop
-  rw [Int.natCast_natAbs, abs_of_pos hnormpos]
-  exact genusCharFun_norm_eq_one hs heven hprod hmin hgen hsf hts x hcop
-
-/-- **A coprime comparison descends the genus character to narrow classes.** Let `I` and `J` be
-nonzero integral ideals whose absolute norms are coprime to the modulus of a genus character. If
-they are related by a narrow comparison `(x) I = (y) J`, and both principal factors are coprime to
-the modulus, then the corresponding values of
-`genusCharFunCoprimeIdealHom` agree.
-
-This is the quotient-descent datum supplied by the norm calculation above. The extra coprimality
-of `x` and `y` is explicit: equality of narrow classes and coprimality of `I` and `J` alone do not
-force a particular integral numerator and denominator for their positive fractional ratio to be
-coprime to the modulus. Removing that hypothesis is the remaining strong-approximation step in
-the descent to a character of the entire narrow class group. -/
-theorem genusCharFunCoprimeIdealHom_eq_of_span_mul_eq_span_mul
-    {s t : Finset ℤ} (hs : ∀ P ∈ s, IsPrimeDiscriminant P)
-    (heven : ∀ P ∈ s, ∀ P' ∈ s,
-      IsEvenPrimeDiscriminant P → IsEvenPrimeDiscriminant P' → P = P')
-    (hprod : ∏ P ∈ s, P = fundamentalDiscriminant d)
-    (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
-    (hsf : Squarefree d) (hts : t ⊆ s)
-    {I J : genusCharFunCoprimeIdealSubmonoid (K := K) t}
-    {x y : 𝓞 K} (hx : x ≠ 0) (hy : y ≠ 0)
-    (hpos : NumberField.IsTotallyPositive ((x : K) * (y : K)))
-    (hIJ : Ideal.span {x} * (I : Ideal (𝓞 K)) =
-      Ideal.span {y} * (J : Ideal (𝓞 K)))
-    (hcopx : IsCoprime (Algebra.norm ℤ x) (∏ P ∈ t, P))
-    (hcopy : IsCoprime (Algebra.norm ℤ y) (∏ P ∈ t, P)) :
-    genusCharFunCoprimeIdealHom (fun P hP => hs P (hts hP)) I =
-      genusCharFunCoprimeIdealHom (fun P hP => hs P (hts hP)) J := by
-  apply Units.ext
-  rw [genusCharFunCoprimeIdealHom_apply, genusCharFunCoprimeIdealHom_apply]
-  exact genusCharFun_absNorm_eq_of_span_mul_eq_span_mul hs heven hprod hmin hgen hsf hts hx hy
-    hpos hIJ hcopx hcopy
+    have hnorm := congrArg Ideal.absNorm hI
+    rw [Ideal.absNorm_span_singleton] at hnorm
+    have hnorm' : (Ideal.absNorm (I : Ideal (𝓞 K)) : ℤ) =
+        ((Algebra.norm ℤ x).natAbs : ℤ) := by
+      exact_mod_cast hnorm
+    rw [hnorm', Int.natCast_natAbs] at hIcop
+    exact (IsCoprime.abs_left_iff _ _).mp hIcop
+  have hcomp := genusCharFunCoprimeIdealHom_eq_of_span_mul_eq_span_mul hs heven hprod hmin hgen
+    hsf hts (I := I) (J := 1) (x := 1) (y := x) (by simp) hx (by simpa using hpos)
+    (by simp [hI]) hcop
+  simpa only [map_one] using hcomp
 
 end TauCeti.Multiquadratic
