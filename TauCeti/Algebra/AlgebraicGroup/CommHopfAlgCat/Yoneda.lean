@@ -203,7 +203,7 @@ The double-opposite equivalence presents the covariant functor on `CommAlgCat R`
 the opposite category. -/
 noncomputable abbrev pointsGroupPresheaf (H : _root_.CommHopfAlgCat.{v} R) :
     ((CommAlgCat.{v} R)ᵒᵖ)ᵒᵖ ⥤ GrpCat.{v} :=
-  (opOpEquivalence (CommAlgCat.{v} R)).functor ⋙
+  unopUnop (CommAlgCat.{v} R) ⋙
     pointsFunctor (R := R) (H := H)
 
 /-- The underlying type-valued presheaf of convolution points of a commutative Hopf algebra. -/

@@ -37,7 +37,12 @@ Mathlib's invariant measure `volume : Measure ℍ` (`dx dy / y²`,
 * `UpperHalfPlane.peterssonInner_conj_symm`: Hermitian symmetry.
 * `UpperHalfPlane.integrableOn_petersson_fd_left`: integrability of the Petersson integrand of a
   cusp form against a modular form over the standard fundamental domain.
-* `UpperHalfPlane.integrableOn_petersson_slash`: the same for forms slashed by `SL₂(ℤ)`.
+* `UpperHalfPlane.integrableOn_petersson_slash_left` and
+  `UpperHalfPlane.integrableOn_petersson_slash_right`: the same for forms slashed by `SL₂(ℤ)`
+  when either argument is cuspidal.
+* `UpperHalfPlane.integrableOn_petersson_sl_smul_fd_left` and
+  `UpperHalfPlane.integrableOn_petersson_sl_smul_fd_right`: integrability over every
+  `SL(2, ℤ)`-translate of the standard fundamental domain when either argument is cuspidal.
 * `UpperHalfPlane.peterssonInner_self_eq_ofReal`, `peterssonInner_self_re_nonneg`: the
   self-pairing of any function is the real integral of `‖h τ‖² (Im τ)^k`, hence nonnegative
   over any domain.
@@ -179,9 +184,10 @@ theorem peterssonInner_self_re_nonneg (k : ℤ) (D : Set ℍ)
   exact setIntegral_nonneg_of_ae_restrict <| ae_of_all _ fun τ ↦
     mul_nonneg (normSq_nonneg _) (zpow_nonneg (UpperHalfPlane.im_pos τ).le _)
 
-/-- The Petersson integrand of slashed forms is integrable over `𝒟`: slashing by an element
-of `SL₂(ℤ)` moves the integrand along the action, where the cusp-form bound still applies. -/
-theorem integrableOn_petersson_slash {F F' : Type*} [FunLike F ℍ ℂ] [FunLike F' ℍ ℂ]
+/-- The Petersson integrand of a slashed cusp form and modular form is integrable over `𝒟`:
+slashing by an element of `SL₂(ℤ)` moves the integrand along the action, where the cusp-form
+bound still applies. -/
+theorem integrableOn_petersson_slash_left {F F' : Type*} [FunLike F ℍ ℂ] [FunLike F' ℍ ℂ]
     (k : ℤ) (Γ : Subgroup (GL (Fin 2) ℝ)) [Γ.IsArithmetic]
     [CuspFormClass F Γ k] [ModularFormClass F' Γ k]
     (f : F) (f' : F') (δ : SL(2, ℤ)) :
@@ -200,6 +206,50 @@ theorem integrableOn_petersson_slash {F F' : Type*} [FunLike F ℍ ℂ] [FunLike
     ((petersson_continuous k (ModularFormClass.continuous f)
       (ModularFormClass.continuous f')).comp hsmul |>.aestronglyMeasurable.restrict)
     C (ae_of_all _ fun τ ↦ hC (δ • τ))
+
+/-- The Petersson integrand of a slashed modular form and cusp form is integrable over `𝒟`:
+the mirror of `integrableOn_petersson_slash_left`, obtained from it by the conjugate symmetry
+`UpperHalfPlane.petersson_symm` of the integrand, complex conjugation being an `ℝ`-linear
+isometry of `ℂ`. -/
+theorem integrableOn_petersson_slash_right {F F' : Type*} [FunLike F ℍ ℂ] [FunLike F' ℍ ℂ]
+    (k : ℤ) (Γ : Subgroup (GL (Fin 2) ℝ)) [Γ.IsArithmetic]
+    [ModularFormClass F Γ k] [CuspFormClass F' Γ k]
+    (f : F) (f' : F') (δ : SL(2, ℤ)) :
+    IntegrableOn (fun τ ↦ petersson k (⇑f ∣[k] δ) (⇑f' ∣[k] δ) τ) fd (volume : Measure ℍ) := by
+  have h : IntegrableOn (fun τ ↦ conj (petersson k (⇑f' ∣[k] δ) (⇑f ∣[k] δ) τ)) fd
+      (volume : Measure ℍ) :=
+    (Complex.conjCLE : ℂ →L[ℝ] ℂ).integrable_comp
+      (integrableOn_petersson_slash_left k Γ f' f δ)
+  simpa only [← petersson_symm] using h
+
+/-- **The Petersson integrand of a cusp form and a modular form is integrable over every
+`SL(2, ℤ)`-translate of `𝒟`.** Transporting the integral back to `𝒟` turns the integrand into
+that of the simultaneously slashed pair, where the cusp-form bound applies. -/
+theorem integrableOn_petersson_sl_smul_fd_left {F F' : Type*} [FunLike F ℍ ℂ]
+    [FunLike F' ℍ ℂ] (k : ℤ) (Γ : Subgroup (GL (Fin 2) ℝ)) [Γ.IsArithmetic]
+    [CuspFormClass F Γ k] [ModularFormClass F' Γ k]
+    (f : F) (f' : F') (γ : SL(2, ℤ)) :
+    IntegrableOn (petersson k ⇑f ⇑f') (γ • fd) volume := by
+  rw [ModularGroup.sl_smul_set, ← Set.image_smul,
+    (measurePreserving_smul (γ : GL (Fin 2) ℝ) volume).integrableOn_image
+      (measurableEmbedding_const_smul (γ : GL (Fin 2) ℝ))]
+  refine (integrableOn_petersson_slash_left k Γ f f' γ).congr_fun (fun τ _ ↦ ?_)
+    isClosed_fd.measurableSet
+  simp only [Function.comp_apply, petersson_slash_SL, ModularGroup.sl_moeb]
+
+/-- **The Petersson integrand of a modular form and a cusp form is integrable over every
+`SL(2, ℤ)`-translate of `𝒟`.** This is the right-cuspidal counterpart of
+`integrableOn_petersson_sl_smul_fd_left`, obtained from it by the same conjugate symmetry of the
+integrand as `integrableOn_petersson_slash_right`. -/
+theorem integrableOn_petersson_sl_smul_fd_right {F F' : Type*} [FunLike F ℍ ℂ]
+    [FunLike F' ℍ ℂ] (k : ℤ) (Γ : Subgroup (GL (Fin 2) ℝ)) [Γ.IsArithmetic]
+    [ModularFormClass F Γ k] [CuspFormClass F' Γ k]
+    (f : F) (f' : F') (γ : SL(2, ℤ)) :
+    IntegrableOn (petersson k ⇑f ⇑f') (γ • fd) volume := by
+  have h : IntegrableOn (fun τ ↦ conj (petersson k ⇑f' ⇑f τ)) (γ • fd) (volume : Measure ℍ) :=
+    (Complex.conjCLE : ℂ →L[ℝ] ℂ).integrable_comp
+      (integrableOn_petersson_sl_smul_fd_left k Γ f' f γ)
+  simpa only [← petersson_symm] using h
 
 /-- Additivity in the second argument. -/
 theorem peterssonInner_add_right (k : ℤ) (D : Set ℍ) (f g₁ g₂ : ℍ → ℂ)

@@ -1021,6 +1021,15 @@ theorem exists_eq_ofC (d : TypeCLieIndex) :
   case C rank q => exact fun hvalid _ => ⟨rank, q, hvalid, rfl⟩
   all_goals exact fun _ hC => False.elim hC
 
+/-- **The Cartan matrix of the diagram a validated type-`C` index names**, entry by entry: it is
+the type-`C` Cartan matrix at the index's rank. This is the projection of the introduction form
+`TauCeti.TypeCLieIndex.ofC` through `TauCeti.DynkinType.cartanMatrix_C`, stated on entries rather
+than on matrices because the rank occurs in the index types of the two nodes. -/
+theorem dynkinType_cartanMatrix_apply (d : TypeCLieIndex) (i j : Fin d.1.rank) :
+    d.1.dynkinType.cartanMatrix i j = CartanMatrix.C d.1.rank i j := by
+  obtain ⟨rank, q, hvalid, rfl⟩ := d.exists_eq_ofC
+  exact congrFun₂ (DynkinType.cartanMatrix_C rank) i j
+
 /-- The rank of a validated type-`C` index is at least three. -/
 theorem three_le_rank (d : TypeCLieIndex) : 3 ≤ d.1.rank := by
   obtain ⟨rank, q, hvalid, rfl⟩ := d.exists_eq_ofC
@@ -1225,6 +1234,23 @@ theorem dynkinType_eq : d.1.dynkinType = .D d.1.rank := by
     simp only [ValidLieTypeIndex.rank, ValidLieTypeIndex.dynkinType, hn, DynkinType.rank_D]
   rw [hrank]
   exact hn
+
+/-- **The Cartan matrix of the diagram a validated index on a type-`D` diagram names**, entry by
+entry: it is the type-`D` Cartan matrix at the index's rank. Like
+`TauCeti.TypeCLieIndex.dynkinType_cartanMatrix_apply` it is stated on entries rather than on
+matrices, because the rank occurs in the index types of the two nodes, so the matrix-level equation
+`TauCeti.TypeDDiagramLieIndex.dynkinType_eq` cannot be rewritten with directly. -/
+theorem dynkinType_cartanMatrix_apply (i j : Fin d.1.rank) :
+    d.1.dynkinType.cartanMatrix i j = CartanMatrix.D d.1.rank i j := by
+  obtain ⟨⟨e, hvalid⟩, he⟩ := d
+  -- After reverting the two hypotheses and the two nodes, each of whose types mentions the index,
+  -- the constructor split reduces the rank on both sides to the constructor's own rank parameter.
+  revert i j hvalid he
+  cases e
+  case D n q => exact fun _ _ i j => congrFun₂ (DynkinType.cartanMatrix_D n) i j
+  case twistedD n q => exact fun _ _ i j => congrFun₂ (DynkinType.cartanMatrix_D n) i j
+  case trialityD4 q => exact fun _ _ i j => congrFun₂ (DynkinType.cartanMatrix_D 4) i j
+  all_goals exact fun _ he => ((LieTypeIndex.hasTypeDDiagram_iff _).mp he).elim
 
 /-- **The rank of a validated index on a type-`D` diagram is at least four.** This is the range on
 which `Dₙ` is a valid Dynkin type, `D₂` being `A₁ × A₁` and `D₃` being `A₃` relabelled, and it is

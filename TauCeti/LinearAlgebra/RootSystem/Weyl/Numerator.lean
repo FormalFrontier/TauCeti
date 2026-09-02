@@ -42,7 +42,8 @@ are what makes the numerator *alternating*, which is the content of
 
 ## Main results
 
-* `TauCeti.weylNumerator_dotAction`: **the numerator is alternating**, `N(v ⬝ λ) = sgn(v) · N(λ)`.
+* `TauCeti.weylNumerator_dotAction`: **the numerator is alternating**, `N(v ⬝ λ) = sgn(v) · N(λ)`;
+  `TauCeti.coeff_weylNumerator_dotAction` is the corresponding coefficient transformation rule.
 * `TauCeti.weylNumerator_eq_zero_of_dotAction_eq_self`: a weight fixed by an odd element of the
   Weyl group has vanishing numerator, and `TauCeti.weylNumerator_eq_zero_of_coroot'_eq_neg_one`:
   so does a weight on a wall `⟨λ, αᵢ^∨⟩ = -1` of a simple reflection for the dot action, which is
@@ -55,8 +56,7 @@ are what makes the numerator *alternating*, which is the content of
   is exactly the dot orbit and has `|W|` elements, and the numerator does not vanish. A **dominant**
   weight has an injective dot orbit map by
   `TauCeti.dotAction_eq_dotAction_iff_of_mem_dominantChamber`, whence
-  `TauCeti.coeff_weylNumerator_dotAction`, `TauCeti.support_coeff_weylNumerator`,
-  `TauCeti.card_support_coeff_weylNumerator` and
+  `TauCeti.support_coeff_weylNumerator`, `TauCeti.card_support_coeff_weylNumerator` and
   `TauCeti.weylNumerator_ne_zero_of_mem_dominantChamber`.
 
 ## Implementation notes
@@ -136,6 +136,26 @@ theorem weylNumerator_dotAction (v : P.weylGroup) (lam : M) :
   have hsign : weylSign P b v * weylSign P b (w * v) = weylSign P b w := by
     rw [map_mul, mul_left_comm, Int.units_mul_self, mul_one]
   rw [← dotAction_mul, AddMonoidAlgebra.smul_single', ← Units.val_mul, hsign]
+
+/-- **The coefficients of the Weyl numerator transform by the sign character under the dot
+action:** `[e^{w ⬝ x}] N(λ) = sgn(w) [e^x] N(λ)`. -/
+@[simp]
+theorem coeff_weylNumerator_dotAction (lam : M) (w : P.weylGroup) (x : M) :
+    (weylNumerator P b lam).coeff (dotAction P b w x) =
+      (weylSign P b w : ℤ) * (weylNumerator P b lam).coeff x := by
+  simp only [weylNumerator_def, AddMonoidAlgebra.coeff_sum, Finsupp.finsetSum_apply,
+    AddMonoidAlgebra.coeff_single, Finset.mul_sum]
+  refine Fintype.sum_bijective (w⁻¹ * ·) (Group.mulLeft_bijective w⁻¹) _ _ fun v ↦ ?_
+  have hsign : weylSign P b w * weylSign P b (w⁻¹ * v) = weylSign P b v := by
+    rw [← map_mul, mul_inv_cancel_left]
+  have hdot : dotAction P b (w⁻¹ * v) lam = x ↔ dotAction P b v lam = dotAction P b w x := by
+    rw [dotAction_mul]
+    exact ⟨fun h ↦ by rw [← h, dotAction_dotAction_inv],
+      fun h ↦ by rw [h, dotAction_inv_dotAction]⟩
+  by_cases hv : dotAction P b v lam = dotAction P b w x
+  · rw [hv, Finsupp.single_eq_same, (hdot.mpr hv), Finsupp.single_eq_same, ← Units.val_mul, hsign]
+  · rw [Finsupp.single_eq_of_ne (Ne.symm hv),
+      Finsupp.single_eq_of_ne (Ne.symm fun h ↦ hv (hdot.mp h)), mul_zero]
 
 /-- **A weight fixed by an odd Weyl-group element has vanishing numerator.** The alternating
 identity turns such a fixed point into `N(λ) = -N(λ)`, and `ℤ[M]` is torsion-free. -/
@@ -225,6 +245,14 @@ section Dominant
 variable [Invertible (2 : R)] [P.IsCrystallographic] [P.IsReduced] [Fintype P.weylGroup]
   [LinearOrder R] [IsStrictOrderedRing R] [P.flip.IsReduced]
 
+/-- **The numerator of a weight of the open dot chamber has coefficient `1` there.** -/
+@[simp]
+theorem coeff_weylNumerator_self_of_mem_openDotDominantChamber {lam : M}
+    (hlam : lam ∈ openDotDominantChamber P b) : (weylNumerator P b lam).coeff lam = 1 := by
+  have h := coeff_weylNumerator_dotAction_of_injective P b
+    (dotAction_injective_of_mem_openDotDominantChamber P b hlam) 1
+  rwa [dotAction_one, map_one, Units.val_one] at h
+
 omit [Fintype P.weylGroup] in
 /-- The dot orbit map of a dominant weight is injective: a dominant weight is reached from itself
 by a unique Weyl-group element. -/
@@ -232,15 +260,6 @@ private lemma injective_dotAction_of_mem_dominantChamber {lam : M}
     (hlam : lam ∈ dominantChamber P b) :
     Function.Injective fun w : P.weylGroup ↦ dotAction P b w lam :=
   fun _ _ h ↦ ((dotAction_eq_dotAction_iff_of_mem_dominantChamber P b hlam hlam).mp h).2
-
-/-- **The coefficients of the numerator of a dominant weight are the signs.** No two Weyl-group
-elements carry a dominant weight to the same place, so the term of `w` sits alone at `w ⬝ λ`. -/
-@[simp]
-theorem coeff_weylNumerator_dotAction {lam : M} (hlam : lam ∈ dominantChamber P b)
-    (w : P.weylGroup) :
-    (weylNumerator P b lam).coeff (dotAction P b w lam) = ((weylSign P b w : ℤ)) :=
-  coeff_weylNumerator_dotAction_of_injective P b
-    (injective_dotAction_of_mem_dominantChamber P b hlam) w
 
 /-- **The numerator of a dominant weight is supported exactly on its dot orbit.** -/
 theorem support_coeff_weylNumerator [DecidableEq M] {lam : M}

@@ -127,21 +127,8 @@ theorem isDotAlternating_weylDenominator : IsDotAlternating P b (weylDenominator
 /-- **The Weyl numerator of any weight is alternating.** Reindexing the defining sum by `v ↦ w⁻¹v`
 matches the term at `w ⬝ x` with the term at `x`, at the cost of the sign of `w`. -/
 theorem isDotAlternating_weylNumerator [Fintype P.weylGroup] (lam : M) :
-    IsDotAlternating P b (weylNumerator P b lam) := by
-  intro w x
-  simp only [weylNumerator_def, AddMonoidAlgebra.coeff_sum, Finsupp.finsetSum_apply,
-    AddMonoidAlgebra.coeff_single, Finset.mul_sum]
-  refine Fintype.sum_bijective (w⁻¹ * ·) (Group.mulLeft_bijective w⁻¹) _ _ fun v ↦ ?_
-  have hsign : weylSign P b w * weylSign P b (w⁻¹ * v) = weylSign P b v := by
-    rw [← map_mul, mul_inv_cancel_left]
-  have hdot : dotAction P b (w⁻¹ * v) lam = x ↔ dotAction P b v lam = dotAction P b w x := by
-    rw [dotAction_mul]
-    exact ⟨fun h ↦ by rw [← h, dotAction_dotAction_inv],
-      fun h ↦ by rw [h, dotAction_inv_dotAction]⟩
-  by_cases hv : dotAction P b v lam = dotAction P b w x
-  · rw [hv, Finsupp.single_eq_same, (hdot.mpr hv), Finsupp.single_eq_same, ← Units.val_mul, hsign]
-  · rw [Finsupp.single_eq_of_ne (Ne.symm hv),
-      Finsupp.single_eq_of_ne (Ne.symm fun h ↦ hv (hdot.mp h)), mul_zero]
+    IsDotAlternating P b (weylNumerator P b lam) :=
+  coeff_weylNumerator_dotAction P b lam
 
 variable {P b} {f g : AddMonoidAlgebra ℤ M}
 
@@ -233,14 +220,6 @@ variable [Invertible (2 : R)] [P.IsCrystallographic] [P.IsReduced]
 section Numerator
 
 variable [P.flip.IsReduced] [Fintype P.weylGroup]
-
-/-- **The numerator of a weight of the open dot chamber has coefficient `1` there.** -/
-@[simp]
-theorem coeff_weylNumerator_self_of_mem_openDotDominantChamber {lam : M}
-    (hlam : lam ∈ openDotDominantChamber P b) : (weylNumerator P b lam).coeff lam = 1 := by
-  have h := coeff_weylNumerator_dotAction_of_injective P b
-    (dotAction_injective_of_mem_openDotDominantChamber P b hlam) 1
-  rwa [dotAction_one, map_one, Units.val_one] at h
 
 /-- **The numerator of a weight of the open dot chamber vanishes at every other weight of that
 chamber**: the chamber meets each dot orbit at most once. -/

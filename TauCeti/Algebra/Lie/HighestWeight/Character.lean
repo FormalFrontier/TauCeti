@@ -11,8 +11,6 @@ public import TauCeti.LinearAlgebra.RootSystem.Weyl.IntegralDetermination
 public import TauCeti.LinearAlgebra.RootSystem.Weyl.Invariant
 -- `Invertible (2 : K)`, which the alternating-element API asks of the coefficient ring.
 public import Mathlib.Algebra.CharP.Invertible
--- Non-public: the constant term of the Weyl denominator is used only inside a proof.
-import TauCeti.LinearAlgebra.RootSystem.Weyl.Denominator.Identity
 
 public section
 

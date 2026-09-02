@@ -8,6 +8,7 @@ module
 public import Mathlib.Combinatorics.Quiver.Basic
 public import Mathlib.Algebra.BigOperators.Ring.Finset
 public import Mathlib.LinearAlgebra.QuadraticForm.Basic
+public import TauCeti.LinearAlgebra.QuadraticForm.PosDef
 public import TauCeti.RepresentationTheory.Quiver.FirstArrow
 public import TauCeti.RepresentationTheory.Quiver.LastArrow
 import Mathlib.Tactic.Ring
@@ -91,6 +92,11 @@ public def titsForm : QuadraticMap ℤ (Q → ℤ) ℤ :=
 @[simp]
 public theorem titsForm_def (d : Q → ℤ) : titsForm Q d = eulerForm Q d d :=
   LinearMap.BilinMap.toQuadraticMap_apply _ _
+
+/-- Only finitely many nonnegative integer vectors are roots of a positive definite Tits form. -/
+public theorem finite_setOf_nonneg_titsForm_eq_one (hpd : (titsForm Q).PosDef) :
+    {d : Q → ℤ | 0 ≤ d ∧ titsForm Q d = 1}.Finite :=
+  (QuadraticMap.PosDef.finite_setOf_apply_eq hpd 1).subset fun _ hd ↦ hd.2
 
 /-- The symmetric bilinear form obtained by polarizing the Tits form. -/
 public def titsPolarForm : LinearMap.BilinForm ℤ (Q → ℤ) :=
