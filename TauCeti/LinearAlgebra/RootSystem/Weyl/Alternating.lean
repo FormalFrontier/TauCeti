@@ -58,8 +58,7 @@ every result below.
 ## Main results
 
 * `TauCeti.isDotAlternating_weylNumerator` and `TauCeti.isDotAlternating_weylDenominator`: the Weyl
-  numerator of any weight, and the Weyl denominator, are alternating;
-  `TauCeti.coeff_weylNumerator_dotAction` is the numerator's coefficient-level simplification rule.
+  numerator of any weight, and the Weyl denominator, are alternating.
 * `TauCeti.IsDotAlternating.eq_of_coeff_openDotDominantChamber_eq`: an alternating element is
   determined by its coefficients on the open chamber of the dot action.
 * `TauCeti.IsDotAlternating.eq_sum_weylNumerator`: **an alternating element is the sum of the Weyl
@@ -128,21 +127,8 @@ theorem isDotAlternating_weylDenominator : IsDotAlternating P b (weylDenominator
 /-- **The Weyl numerator of any weight is alternating.** Reindexing the defining sum by `v ↦ w⁻¹v`
 matches the term at `w ⬝ x` with the term at `x`, at the cost of the sign of `w`. -/
 theorem isDotAlternating_weylNumerator [Fintype P.weylGroup] (lam : M) :
-    IsDotAlternating P b (weylNumerator P b lam) := by
-  intro w x
-  simp only [weylNumerator_def, AddMonoidAlgebra.coeff_sum, Finsupp.finsetSum_apply,
-    AddMonoidAlgebra.coeff_single, Finset.mul_sum]
-  refine Fintype.sum_bijective (w⁻¹ * ·) (Group.mulLeft_bijective w⁻¹) _ _ fun v ↦ ?_
-  have hsign : weylSign P b w * weylSign P b (w⁻¹ * v) = weylSign P b v := by
-    rw [← map_mul, mul_inv_cancel_left]
-  have hdot : dotAction P b (w⁻¹ * v) lam = x ↔ dotAction P b v lam = dotAction P b w x := by
-    rw [dotAction_mul]
-    exact ⟨fun h ↦ by rw [← h, dotAction_dotAction_inv],
-      fun h ↦ by rw [h, dotAction_inv_dotAction]⟩
-  by_cases hv : dotAction P b v lam = dotAction P b w x
-  · rw [hv, Finsupp.single_eq_same, (hdot.mpr hv), Finsupp.single_eq_same, ← Units.val_mul, hsign]
-  · rw [Finsupp.single_eq_of_ne (Ne.symm hv),
-      Finsupp.single_eq_of_ne (Ne.symm fun h ↦ hv (hdot.mp h)), mul_zero]
+    IsDotAlternating P b (weylNumerator P b lam) :=
+  coeff_weylNumerator_dotAction P b lam
 
 variable {P b} {f g : AddMonoidAlgebra ℤ M}
 
@@ -196,15 +182,6 @@ theorem coeff_eq_zero_of_coroot'_eq_neg_one (hf : IsDotAlternating P b f) {i : �
 
 end IsDotAlternating
 
-variable (P b) in
-/-- **The coefficients of the Weyl numerator transform by the sign character under the dot
-action:** `[e^{w ⬝ x}] N(λ) = sgn(w) [e^x] N(λ)`. -/
-@[simp]
-theorem coeff_weylNumerator_dotAction [Fintype P.weylGroup] (lam : M) (w : P.weylGroup) (x : M) :
-    (weylNumerator P b lam).coeff (dotAction P b w x) =
-      (weylSign P b w : ℤ) * (weylNumerator P b lam).coeff x :=
-  (isDotAlternating_weylNumerator P b lam).coeff_dotAction w x
-
 /-- A finite sum of alternating elements is alternating. -/
 theorem isDotAlternating_sum {α : Type*} {s : Finset α} {g : α → AddMonoidAlgebra ℤ M}
     (hg : ∀ a ∈ s, IsDotAlternating P b (g a)) : IsDotAlternating P b (∑ a ∈ s, g a) :=
@@ -243,14 +220,6 @@ variable [Invertible (2 : R)] [P.IsCrystallographic] [P.IsReduced]
 section Numerator
 
 variable [P.flip.IsReduced] [Fintype P.weylGroup]
-
-/-- **The numerator of a weight of the open dot chamber has coefficient `1` there.** -/
-@[simp]
-theorem coeff_weylNumerator_self_of_mem_openDotDominantChamber {lam : M}
-    (hlam : lam ∈ openDotDominantChamber P b) : (weylNumerator P b lam).coeff lam = 1 := by
-  have h := coeff_weylNumerator_dotAction_of_injective P b
-    (dotAction_injective_of_mem_openDotDominantChamber P b hlam) 1
-  rwa [dotAction_one, map_one, Units.val_one] at h
 
 /-- **The numerator of a weight of the open dot chamber vanishes at every other weight of that
 chamber**: the chamber meets each dot orbit at most once. -/
