@@ -170,6 +170,19 @@ noncomputable def testIntegral (K : SymmKernel Ω μ) (u v : Ω → ℝ) : ℝ :
 theorem testIntegral_def (K : SymmKernel Ω μ) (u v : Ω → ℝ) :
     K.testIntegral μ u v = ∫ p, u p.1 * v p.2 * K p.1 p.2 ∂(μ.prod μ) := (rfl)
 
+/-- The pointwise domination behind both the integrability and the `L¹` bound of the test
+integrand: against `[-1,1]`-valued test functions, `|u x * v y * K x y| ≤ |K x y|`. -/
+private theorem abs_testIntegrand_le (K : SymmKernel Ω μ) {u v : Ω → ℝ}
+    (hu1 : ∀ x, u x ∈ Icc (-1 : ℝ) 1) (hv1 : ∀ y, v y ∈ Icc (-1 : ℝ) 1) (p : Ω × Ω) :
+    |u p.1 * v p.2 * K p.1 p.2| ≤ |K p.1 p.2| := by
+  rw [abs_mul, abs_mul]
+  calc |u p.1| * |v p.2| * |K p.1 p.2|
+      ≤ 1 * 1 * |K p.1 p.2| := by
+        gcongr
+        · exact abs_le.2 (hu1 p.1)
+        · exact abs_le.2 (hv1 p.2)
+    _ = |K p.1 p.2| := by ring
+
 /-- The integrand of a test integral is integrable when the test functions are measurable and
 `[-1,1]`-valued: it is then dominated pointwise by `|K|`, which is integrable. -/
 theorem integrable_testIntegrand [IsFiniteMeasure μ] (K : SymmKernel Ω μ) {u v : Ω → ℝ}
@@ -179,13 +192,8 @@ theorem integrable_testIntegrand [IsFiniteMeasure μ] (K : SymmKernel Ω μ) {u 
   refine Integrable.mono' K.integrable_uncurry.abs
     (((hu.comp measurable_fst).mul (hv.comp measurable_snd)).mul
       K.measurable).aestronglyMeasurable (ae_of_all _ fun p => ?_)
-  rw [Real.norm_eq_abs, abs_mul, abs_mul]
-  calc |u p.1| * |v p.2| * |K p.1 p.2|
-      ≤ 1 * 1 * |K p.1 p.2| := by
-        gcongr
-        · exact abs_le.2 (hu1 p.1)
-        · exact abs_le.2 (hv1 p.2)
-    _ = |K p.1 p.2| := by ring
+  rw [Real.norm_eq_abs]
+  exact K.abs_testIntegrand_le μ hu1 hv1 p
 
 /-- Every `[-1,1]`-test integral is bounded by the `L¹` norm of the kernel.  This is the bound that
 makes the signed cut norm's supremum a supremum of a bounded set. -/
@@ -196,14 +204,7 @@ theorem abs_testIntegral_le_integral_abs [IsFiniteMeasure μ] (K : SymmKernel Ω
   rw [testIntegral_def]
   refine abs_integral_le_integral_abs.trans ?_
   refine integral_mono (K.integrable_testIntegrand μ hu hv hu1 hv1).abs
-    K.integrable_uncurry.abs fun p => ?_
-  rw [abs_mul, abs_mul]
-  calc |u p.1| * |v p.2| * |K p.1 p.2|
-      ≤ 1 * 1 * |K p.1 p.2| := by
-        gcongr
-        · exact abs_le.2 (hu1 p.1)
-        · exact abs_le.2 (hv1 p.2)
-    _ = |K p.1 p.2| := by ring
+    K.integrable_uncurry.abs fun p => K.abs_testIntegrand_le μ hu1 hv1 p
 
 /-- Testing against two indicator functions recovers the rectangle integral.  This is what makes
 the set form of the cut norm a special case of the signed form. -/
