@@ -120,7 +120,6 @@ lemma mem_smulOrbit {g β : Δ} {x : HeckeCoset Δ ⊥ H} :
 
 /-- Membership in an orbit, tested at an arbitrary representative: the left coset `ξH` lies
 in the orbit of `g` on `wH` iff `w⁻¹ * ξ` lies in the double coset `HgH`. -/
-@[simp]
 lemma mk_bot_mem_smulOrbit_iff {g w ξ : Δ} :
     mk ⊥ H ξ ∈ smulOrbit H g w ↔
       ((w : G))⁻¹ * (ξ : G) ∈ doubleCoset (g : G) (H : Set G) H := by
