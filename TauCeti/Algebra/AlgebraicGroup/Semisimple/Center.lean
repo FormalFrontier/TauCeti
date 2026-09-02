@@ -31,8 +31,6 @@ constructed, no separate solvability argument is needed to show that it is trivi
 * `TauCeti.semisimpleCommHopfAlgProperty.eq_augmentation_of_isCentral`: every smooth
   geometrically connected central closed subgroup of a semisimple group's geometric fibre is
   trivial.
-* `TauCeti.semisimpleCommHopfAlgProperty.centerDefiningIdeal_eq_augmentation`: a smooth
-  geometrically connected centre of the geometric fibre is trivial.
 
 ## References
 
@@ -84,34 +82,6 @@ theorem eq_augmentation_of_isCentral
     (AlgebraicClosure k)
       (FiniteTypeCommHopfAlgCat.quotient
         (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H) I).obj
-
-/-- If the centre of a semisimple affine group's geometric fibre is smooth and geometrically
-connected, then it is the identity subgroup.
-
-This is the canonical-centre specialization of `eq_augmentation_of_isCentral`. It does not claim
-that centres of semisimple groups are connected or smooth; both properties are explicit because
-they can fail, especially smoothness in positive characteristic. -/
-theorem centerDefiningIdeal_eq_augmentation
-    (hH : semisimpleCommHopfAlgProperty k H)
-    (hconnected : geometricallyConnectedCommHopfAlgProperty (AlgebraicClosure k)
-      (FiniteTypeCommHopfAlgCat.quotient
-        (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H)
-        (CommHopfAlgCat.centerDefiningIdeal
-          (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H).obj)).obj)
-    (hsmooth : Algebra.Smooth (AlgebraicClosure k)
-      (FiniteTypeCommHopfAlgCat.quotient
-        (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H)
-        (CommHopfAlgCat.centerDefiningIdeal
-          (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H).obj))) :
-    CommHopfAlgCat.centerDefiningIdeal
-        (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H).obj =
-      HopfIdeal.augmentation (AlgebraicClosure k)
-        (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H) :=
-  hH.eq_augmentation_of_isCentral
-    (CommHopfAlgCat.centerDefiningIdeal
-      (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H).obj)
-    (CommHopfAlgCat.isCentral_centerDefiningIdeal
-      (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H).obj) hconnected hsmooth
 
 end semisimpleCommHopfAlgProperty
 
