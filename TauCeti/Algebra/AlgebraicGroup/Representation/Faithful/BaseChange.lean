@@ -43,11 +43,11 @@ open scoped TensorProduct
 
 namespace TauCeti.Comodule
 
-universe u
+universe u v
 
 noncomputable section
 
-variable {k K H M : Type u} [CommRing k] [CommRing K] [Algebra k K]
+variable {k H M : Type u} {K : Type max u v} [CommRing k] [CommRing K] [Algebra k K]
 variable [CommRing H] [HopfAlgebra k H]
 variable [AddCommMonoid M] [Module k M] [Comodule k H M]
 
