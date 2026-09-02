@@ -222,37 +222,13 @@ private theorem card_filter_smulOrbit_eq_card_decomp (g₁ g₂ β ξ : Δ) :
       Nat.card {i : DecompQuotient H H (g₁ : G) |
         ((i.out : G) * (g₁ : G))⁻¹ * ((β : G)⁻¹ * (ξ : G)) ∈
           doubleCoset (g₂ : G) (H : Set G) H} := by
-  let orbitMap : DecompQuotient H H (g₁ : G) → HeckeCoset Δ ⊥ H := fun i ↦
-    mk ⊥ H ⟨(β : G) * i.out * g₁,
-      Δ.mul_mem (Δ.mul_mem β.2 (IsHeckeTriple.mem_of_mem_left H i.out.2)) g₁.2⟩
-  let f : {i : DecompQuotient H H (g₁ : G) |
-      ((i.out : G) * (g₁ : G))⁻¹ * ((β : G)⁻¹ * (ξ : G)) ∈
-        doubleCoset (g₂ : G) (H : Set G) H} →
-      {x // x ∈ (smulOrbit H g₁ β).filter fun i ↦ mk ⊥ H ξ ∈ smulOrbit H g₂ i.rep} :=
-    fun i ↦ ⟨orbitMap i, Finset.mem_filter.mpr ⟨mem_smulOrbit.mpr ⟨i, rfl⟩, by
-      rw [smulOrbit_congr g₂ (mk_rep (orbitMap i)), mk_bot_mem_smulOrbit_iff]
-      have hbase : ((β : G) * (i.1.out : G) * (g₁ : G))⁻¹ * (ξ : G) =
-          ((i.1.out : G) * (g₁ : G))⁻¹ * ((β : G)⁻¹ * (ξ : G)) := by group
-      rw [hbase]
-      exact i.2⟩⟩
-  have hf : Function.Bijective f := by
-    constructor
-    · intro i j hij
-      apply Subtype.ext
-      exact smulOrbit_map_injective g₁ β (congrArg Subtype.val hij)
-    · intro y
-      obtain ⟨hy₁, hy₂⟩ := Finset.mem_filter.mp y.2
-      obtain ⟨i, hi⟩ := mem_smulOrbit.mp hy₁
-      have hcond : ((i.out : G) * (g₁ : G))⁻¹ * ((β : G)⁻¹ * (ξ : G)) ∈
-          doubleCoset (g₂ : G) (H : Set G) H := by
-        rw [← hi, smulOrbit_congr g₂ (mk_rep _), mk_bot_mem_smulOrbit_iff] at hy₂
-        have hbase : ((β : G) * (i.out : G) * (g₁ : G))⁻¹ * (ξ : G) =
-            ((i.out : G) * (g₁ : G))⁻¹ * ((β : G)⁻¹ * (ξ : G)) := by group
-        rwa [hbase] at hy₂
-      refine ⟨⟨i, hcond⟩, ?_⟩
-      exact Subtype.ext hi
-  rw [Nat.card_eq_fintype_card, ← Fintype.card_coe]
-  exact Fintype.card_congr (Equiv.ofBijective f hf).symm
+  rw [Nat.card_eq_fintype_card, Fintype.card_subtype, smulOrbit_eq_image,
+    Finset.filter_image, Finset.card_image_of_injective _ (smulOrbit_map_injective g₁ β)]
+  refine congrArg Finset.card (Finset.filter_congr fun i _ ↦ ?_)
+  have hbase : ((β : G) * (i.out : G) * (g₁ : G))⁻¹ * (ξ : G) =
+      ((i.out : G) * (g₁ : G))⁻¹ * ((β : G)⁻¹ * (ξ : G)) := by group
+  rw [smulOrbit_congr g₂ (mk_rep _), mk_bot_mem_smulOrbit_iff, hbase]
+  exact Iff.rfl
 
 open Classical in
 /-- **Shimura's pair count** (the heart of Proposition 3.4): the number of cosets in the
