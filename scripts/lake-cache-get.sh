@@ -6,7 +6,11 @@
 # Usage: bash scripts/lake-cache-get.sh <project-dir>
 #
 # Reads PUBLIC_ARTIFACT_ENDPOINT / PUBLIC_REVISION_ENDPOINT from the environment (the
-# LAKE_CACHE_*_PUBLIC repo variables). Expects LAKE_CACHE_DIR to be <project-dir>/.lake/cache.
+# LAKE_CACHE_*_PUBLIC repo variables), defaulting to the public cache both this project's CI and
+# its contributors read. The defaults exist so a contributor can run this from a checkout with no
+# setup: the endpoints are public, anonymous and not secret. CI still passes them explicitly, and
+# reaches this script only when those repo variables are set, so the defaults never decide what CI
+# does. Expects LAKE_CACHE_DIR to be <project-dir>/.lake/cache.
 # On an unclean outcome it discards the cache and appends the LAKE_* disable lines to
 # $GITHUB_ENV, so the caller's build proceeds exactly as if the cache were switched off.
 #
@@ -35,8 +39,8 @@
 set -euo pipefail
 
 PROJECT_DIR="${1:?usage: lake-cache-get.sh <project-dir>}"
-: "${PUBLIC_ARTIFACT_ENDPOINT:?PUBLIC_ARTIFACT_ENDPOINT is required}"
-: "${PUBLIC_REVISION_ENDPOINT:?PUBLIC_REVISION_ENDPOINT is required}"
+PUBLIC_ARTIFACT_ENDPOINT="${PUBLIC_ARTIFACT_ENDPOINT:-https://cache.taucetiproject.org/artifacts}"
+PUBLIC_REVISION_ENDPOINT="${PUBLIC_REVISION_ENDPOINT:-https://cache.taucetiproject.org/revisions}"
 LAKE_CACHE_MAX_REVS="${LAKE_CACHE_MAX_REVS:-100}"
 case "$LAKE_CACHE_MAX_REVS" in
   ''|*[!0-9]*) echo "::error::LAKE_CACHE_MAX_REVS must be a natural number"; exit 1 ;;
