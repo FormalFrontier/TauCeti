@@ -73,6 +73,8 @@ statement is asserted.
 * `TauCeti.DynkinType.geckTorusPoints_conj_geckRootSubgroupParam`: the pinning equation, with the
   root of a raising generator the corresponding pinned Cartan-matrix row and that of a lowering
   generator its negative.
+* `TauCeti.DynkinType.geckWeightTorusPoints_conj_geckRootSubgroupPoints`: the same pinning equation
+  inside the points of the carrier.
 * `TauCeti.DynkinType.map_geckElementarySubgroup_conj_geckTorusPoints`: the torus normalizes the
   elementary group.
 * `TauCeti.DynkinType.map_geckTorusSubsystemSubgroup_le_geckPoints`: the pointwise group generated
@@ -528,6 +530,27 @@ theorem coe_geckWeightTorusPoints (A : Type v) [CommRing A] (s : Fin t.rank → 
     (t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht)
     (t.isNilpotent_geckRepresentation_rootGenerator ht)
     (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht) A s
+
+/-- **The pinning equation inside the points of the Geck carrier.** Conjugation by a represented
+weight-torus point rescales a numbered root-subgroup parameter by the corresponding root
+character. -/
+@[simp]
+theorem geckWeightTorusPoints_conj_geckRootSubgroupPoints
+    (i : Fin t.rank ⊕ Fin t.rank) (A : Type v) [CommRing A]
+    (s : Fin t.rank → Aˣ) (u : Multiplicative A) :
+    t.geckWeightTorusPoints ht A s * t.geckRootSubgroupPoints ht i A u *
+        (t.geckWeightTorusPoints ht A s)⁻¹ =
+      t.geckRootSubgroupPoints ht i A
+        (Multiplicative.ofAdd
+          ((torusCharacter s (t.rootGeneratorWeight ht i) : A) * Multiplicative.toAdd u)) :=
+  TauCeti.UniversalEnvelopingAlgebra.kostantToralWeightTorusPoints_conj_rootSubgroupPoints
+    (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
+    (t.geckCoordinateLattice ht).toAddSubgroup
+    (t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht)
+    (t.isNilpotent_geckRepresentation_rootGenerator ht)
+    (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht)
+    (t.isCartanWeightVector_geckCoordinateBasisFin ht)
+    (fun j => t.lie_lieBasis_h_rootGenerator ht i j) A s u
 
 /-- **The two representations of a weight-torus point of the carrier agree**: writing the point
 through `TauCeti.DynkinType.geckTorusMatrix` and writing it as the diagonal matrix of the weight
