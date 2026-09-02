@@ -25,12 +25,13 @@ services on top of Mathlib's `RingTheory/Frobenius.lean`:
   (`IsArithFrobAt.exists_of_isInvariant` with the number-field instances discharged: the
   residue field of a nonzero prime is finite, and the Galois action on `𝓞 L` has invariants
   `𝓞 K`);
-* **rational-prime existence** — for a Galois number field `K/ℚ`, a `ℤ`-carrier Frobenius exists
-  at every prime over `(p)`;
+* **rational-prime existence** — for a Galois number field `K/ℚ`, a Frobenius relative to the
+  base ring `ℤ` exists at every prime over `(p)`, with exponent `p`. This is distinct from the
+  relative theorem at `K = ℚ`, whose base-ring carrier is `𝓞 ℚ`, not `ℤ`;
 * **uniqueness** — for a finite Galois extension `L/K` of number fields, two Frobenius elements
   of `Gal(L/K)` at an unramified prime `Q` of `𝓞 L` are equal, by combining Mathlib's
   integral-ring uniqueness theorem with the faithfulness of the Galois action; and
-* **the square-root action** — for a Galois number field `K/ℚ`, `p` odd, and `x ∈ K` with
+* **the square-root action** — for a number field `K`, `p` odd, and `x ∈ K` with
   `x² = d ∈ ℤ`, `p ∤ d`, a
   Frobenius at any ideal `Q` over `p` satisfies `σ x = legendreSym p d • x`, transporting the
   `𝓞 K`-level computation `TauCeti.AlgHom.IsArithFrobAt.apply_sqrt` along the Galois action
@@ -84,7 +85,9 @@ theorem exists_isArithFrobAt {L : Type*} [Field L] [NumberField L] [Algebra K L]
     ∃ σ : L ≃ₐ[K] L, IsArithFrobAt (𝓞 K) σ Q :=
   exists_isArithFrobAt_aux (𝓞 K) (L ≃ₐ[K] L) Q hQ
 
-/-- A `ℤ`-carrier Frobenius exists at every prime of `𝓞 K` lying over a rational prime. -/
+/-- A Frobenius relative to the base ring `ℤ` exists at every prime of `𝓞 K` lying over the
+rational prime `(p)`; its exponent is therefore `p`. This is distinct from
+`exists_isArithFrobAt ℚ`, whose base-ring carrier is `𝓞 ℚ` rather than `ℤ`. -/
 theorem exists_isArithFrobAt_int_of_liesOver [IsGalois ℚ K] {p : ℕ} [Fact p.Prime]
     (Q : Ideal (𝓞 K)) [Q.IsPrime] [Q.LiesOver (span {(p : ℤ)})] :
     ∃ σ : K ≃ₐ[ℚ] K, IsArithFrobAt ℤ σ Q := by
