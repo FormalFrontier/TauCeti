@@ -298,11 +298,17 @@ private theorem isBorelOverField_iff (F : Type u) [Field F]
     exact ⟨⟨hsmooth, hconnected, hsolvable⟩,
       fun J hJ hJI ↦ hmax J hJ.1 hJ.2.1 hJ.2.2 hJI⟩
 
-private theorem isBorelOverField_comapOfIso
+/-- A minimal quotient property is preserved when its ambient finite-type Hopf algebra is
+replaced by an isomorphic one. The property itself is transported across the induced quotient
+isomorphism, while competing Hopf ideals are pulled back along the inverse ambient isomorphism. -/
+private theorem minimal_quotientProperty_comapOfIso
     {F : Type u} [Field F]
+    (P : ObjectProperty (_root_.CommHopfAlgCat.{u} F)) [P.IsClosedUnderIsomorphisms]
     {H L : FiniteTypeCommHopfAlgCat.{u, u} F} {I : HopfIdeal F L.obj}
-    (hI : isBorelOverField F L I) (e : H ≅ L) :
-    isBorelOverField F H
+    (hI : Minimal (fun J : HopfIdeal F L.obj ↦
+      P (FiniteTypeCommHopfAlgCat.quotient L J).obj) I) (e : H ≅ L) :
+    Minimal (fun J : HopfIdeal F H.obj ↦
+      P (FiniteTypeCommHopfAlgCat.quotient H J).obj)
       (I.comapOfSurjective (FiniteTypeCommHopfAlgCat.toBialgHom e.hom)
         (ConcreteCategory.bijective_of_isIso e.hom).2) := by
   let f := FiniteTypeCommHopfAlgCat.toBialgHom e.hom
@@ -311,39 +317,47 @@ private theorem isBorelOverField_comapOfIso
   let hg := (ConcreteCategory.bijective_of_isIso e.inv).2
   let forget : FiniteTypeCommHopfAlgCat.{u, u} F ⥤ _root_.CommHopfAlgCat.{u} F :=
     forget₂ (FiniteTypeCommHopfAlgCat.{u, u} F) (_root_.CommHopfAlgCat.{u} F)
-  rw [isBorelOverField_iff] at hI ⊢
-  refine ⟨(smoothCommHopfAlgProperty F).prop_of_iso
-      (forget.mapIso (FiniteTypeCommHopfAlgCat.quotientIsoOfIso e I)).symm hI.1,
-    (geometricallyConnectedCommHopfAlgProperty F).prop_of_iso
-      (forget.mapIso (FiniteTypeCommHopfAlgCat.quotientIsoOfIso e I)).symm hI.2.1,
-    (geometricallySolvablePointsCommHopfAlgProperty F).prop_of_iso
-      (forget.mapIso (FiniteTypeCommHopfAlgCat.quotientIsoOfIso e I)).symm hI.2.2.1, ?_⟩
-  intro J hJsmooth hJconnected hJsolvable hJpulled
+  refine ⟨P.prop_of_iso
+      (forget.mapIso (FiniteTypeCommHopfAlgCat.quotientIsoOfIso e I)).symm hI.prop, ?_⟩
+  intro J hJ hJpulled
   let J' := J.comapOfSurjective g hg
-  have hJ'smooth : smoothCommHopfAlgProperty F
-      (FiniteTypeCommHopfAlgCat.quotient L J').obj :=
-    (smoothCommHopfAlgProperty F).prop_of_iso
-      (forget.mapIso (FiniteTypeCommHopfAlgCat.quotientIsoOfIso e.symm J)).symm hJsmooth
-  have hJ'connected : geometricallyConnectedCommHopfAlgProperty F
-      (FiniteTypeCommHopfAlgCat.quotient L J').obj :=
-    (geometricallyConnectedCommHopfAlgProperty F).prop_of_iso
-      (forget.mapIso (FiniteTypeCommHopfAlgCat.quotientIsoOfIso e.symm J)).symm hJconnected
-  have hJ'solvable : geometricallySolvablePointsCommHopfAlgProperty F
-      (FiniteTypeCommHopfAlgCat.quotient L J').obj :=
-    (geometricallySolvablePointsCommHopfAlgProperty F).prop_of_iso
-      (forget.mapIso (FiniteTypeCommHopfAlgCat.quotientIsoOfIso e.symm J)).symm hJsolvable
+  have hJ' : P (FiniteTypeCommHopfAlgCat.quotient L J').obj :=
+    P.prop_of_iso
+      (forget.mapIso (FiniteTypeCommHopfAlgCat.quotientIsoOfIso e.symm J)).symm hJ
   have hJ'comap : J'.comapOfSurjective f hf = J :=
     HopfIdeal.comapOfSurjective_bialgEquiv_symm_apply J
-      (_root_.CommHopfAlgCat.ofIso <| (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} F)
-        (_root_.CommHopfAlgCat.{u} F)).mapIso e)
+      (_root_.CommHopfAlgCat.ofIso <| forget.mapIso e)
   have hJ'I : J' ≤ I := by
     rw [← HopfIdeal.comapOfSurjective_le_comapOfSurjective_iff f hf, hJ'comap]
     exact hJpulled
-  have hIJ' : I ≤ J' := hI.2.2.2 J' hJ'smooth hJ'connected hJ'solvable hJ'I
+  have hIJ' : I ≤ J' := hI.le_of_le hJ' hJ'I
   calc
     I.comapOfSurjective f hf ≤ J'.comapOfSurjective f hf :=
       HopfIdeal.comapOfSurjective_mono f hf hIJ'
     _ = J := hJ'comap
+
+private theorem isBorelOverField_comapOfIso
+    {F : Type u} [Field F]
+    {H L : FiniteTypeCommHopfAlgCat.{u, u} F} {I : HopfIdeal F L.obj}
+    (hI : isBorelOverField F L I) (e : H ≅ L) :
+    isBorelOverField F H
+      (I.comapOfSurjective (FiniteTypeCommHopfAlgCat.toBialgHom e.hom)
+        (ConcreteCategory.bijective_of_isIso e.hom).2) := by
+  let P : ObjectProperty (_root_.CommHopfAlgCat.{u} F) :=
+    smoothCommHopfAlgProperty F ⊓
+      (geometricallyConnectedCommHopfAlgProperty F ⊓
+        geometricallySolvablePointsCommHopfAlgProperty F)
+  change Minimal (fun J : HopfIdeal F L.obj ↦
+    P (FiniteTypeCommHopfAlgCat.quotient L J).obj) I at hI
+  change Minimal (fun J : HopfIdeal F H.obj ↦
+    P (FiniteTypeCommHopfAlgCat.quotient H J).obj)
+      (I.comapOfSurjective (FiniteTypeCommHopfAlgCat.toBialgHom e.hom)
+        (ConcreteCategory.bijective_of_isIso e.hom).2)
+  exact minimal_quotientProperty_comapOfIso P hI e
+
+/-- The named `GL₂` Borel subgroup is the rank-two upper-triangular subgroup. -/
+private theorem gl2Borel_eq_upperTriangularGroup (F : Type u) [CommRing F] :
+    GL2Borel F = upperTriangularGroup (Fin 2) F := rfl
 
 /-- Over a field, the upper-triangular subgroup of `GL₂` is maximal among smooth geometrically
 connected solvable closed subgroups. -/
@@ -362,8 +376,8 @@ private theorem isBorelOverField_definingHopfIdeal :
   let K := AlgebraicClosure k
   let P := GeneralLinear.hopfIdealPointsSubgroup 2 I K
   have hBP : GL2Borel K ≤ P := by
-    change upperTriangularGroup (Fin 2) K ≤ P
-    rw [← UpperTriangular.hopfIdealPointsSubgroup_eq k 2]
+    rw [gl2Borel_eq_upperTriangularGroup,
+      ← UpperTriangular.hopfIdealPointsSubgroup_eq k 2]
     exact GeneralLinear.hopfIdealPointsSubgroup_le_of_le 2 hIB K
   let e := GeneralLinear.hopfIdealPointsSubgroupMulEquiv 2 I (CommAlgCat.of k K)
   rw [geometricallySolvablePointsCommHopfAlgProperty_iff] at hIsolvable
