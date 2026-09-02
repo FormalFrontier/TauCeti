@@ -116,8 +116,7 @@ theorem tendsto_eLpNorm_one_of_tendsto_integral_norm_sub {Ω E ι : Type*} [Meas
 /-- Reflection in the origin relates integrability on the two half-lines: a function is
 integrable on the positive half-line iff its reflection `x ↦ g (-x)` is integrable on the
 nonpositive half-line. -/
-theorem integrableOn_comp_neg_Iic_iff_Ioi {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
-    {g : ℝ → E} :
+theorem integrableOn_comp_neg_Iic_iff_Ioi {E : Type*} [NormedAddCommGroup E] {g : ℝ → E} :
     IntegrableOn (fun x : ℝ => g (-x)) (Set.Iic (0 : ℝ)) ↔
       IntegrableOn g (Set.Ioi (0 : ℝ)) := by
   have hmp := Measure.measurePreserving_neg (volume : Measure ℝ)
