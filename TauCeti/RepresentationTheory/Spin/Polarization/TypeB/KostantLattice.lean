@@ -45,7 +45,9 @@ Chevalley carrier in Layer 9 of the ReductiveGroups roadmap. That carrier is con
 
 * `TauCeti.SpinPolarizationData.typeBSpinRep_simpleRootGenerator_sq`: the represented
   simple-root operators are square-zero.
-* `TauCeti.SpinPolarizationData.typeBSpinCorootWeight` and
+* `TauCeti.SpinPolarizationData.typeBSpinCorootWeight`, with its values
+  `TauCeti.SpinPolarizationData.typeBSpinCorootWeight_last` and
+  `TauCeti.SpinPolarizationData.typeBSpinCorootWeight_castSucc`, and
   `TauCeti.SpinPolarizationData.spinAction_typeBQuadraticEquiv_typeBSimpleCorootGenerator_basis`:
   the integral eigenvalues of the numbered simple coroots on the exterior basis.
 * `TauCeti.SpinPolarizationData.typeBSpinRep_kostantForm_apply_mem_integralLattice`: the
@@ -121,6 +123,21 @@ def typeBSpinCorootWeight (s : Finset (Fin (n + 1))) (i : Fin (n + 1)) : ℤ :=
   Fin.lastCases (if Fin.last n ∈ s then 1 else -1)
     (fun j ↦ (if j.castSucc ∈ s then 1 else 0) - if j.succ ∈ s then 1 else 0) i
 
+/-- At the terminal short node the coroot weight is `1` or `-1` according to whether that node is
+occupied. -/
+@[simp]
+theorem typeBSpinCorootWeight_last (s : Finset (Fin (n + 1))) :
+    typeBSpinCorootWeight s (Fin.last n) = if Fin.last n ∈ s then 1 else -1 := by
+  rw [typeBSpinCorootWeight, Fin.lastCases_last]
+
+/-- Away from the terminal node the coroot weight is the adjacent difference of occupation
+numbers. -/
+@[simp]
+theorem typeBSpinCorootWeight_castSucc (s : Finset (Fin (n + 1))) (j : Fin n) :
+    typeBSpinCorootWeight s j.castSucc =
+      (if j.castSucc ∈ s then 1 else 0) - if j.succ ∈ s then 1 else 0 := by
+  rw [typeBSpinCorootWeight, Fin.lastCases_castSucc]
+
 /-- A difference of two spin weights is the corresponding difference of occupation numbers: the
 halves cancel. -/
 private theorem spinWeight_sub_spinWeight {ι : Type*} [DecidableEq ι] (s : Finset ι) (a c : ι) :
@@ -149,11 +166,11 @@ theorem spinAction_typeBQuadraticEquiv_typeBSimpleCorootGenerator_basis
   refine Fin.lastCases ?_ (fun j ↦ ?_) i
   · rw [typeBSimpleCorootGenerator_last,
       P.spinAction_typeBQuadraticEquiv_typeBShortCorootGenerator_basis b z hz]
-    by_cases hlast : Fin.last n ∈ s <;> simp [typeBSpinCorootWeight, hlast]
+    by_cases hlast : Fin.last n ∈ s <;> simp [hlast]
   · rw [typeBSimpleCorootGenerator_castSucc,
       P.spinAction_typeBQuadraticEquiv_typeBLongCorootGenerator_basis b z hz,
       spinWeight_sub_spinWeight]
-    simp [typeBSpinCorootWeight]
+    simp
 
 end Quadratic
 

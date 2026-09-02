@@ -37,6 +37,7 @@ type-`B` carrier in Layer 9, "The Chevalley--Demazure construction", of
 
 * `TauCeti.SpinPolarizationData.typeBSpinLieRep`: the spin representation of the split type-`B`
   matrix Lie algebra.
+* `TauCeti.SpinPolarizationData.typeBSpinLieRep_apply`: its value on a matrix.
 * `TauCeti.SpinPolarizationData.typeBSpinRep`: its extension to the universal enveloping algebra.
 * `TauCeti.SpinPolarizationData.typeBSpinRep_ι`: the extension evaluated on a Lie generator.
 
@@ -69,6 +70,16 @@ noncomputable def typeBSpinLieRep :
   (spinAction Q P).toLieHom.comp <|
     (quadraticLieSubalgebra Q).incl.comp (P.typeBQuadraticEquiv b z hz).toLieHom
 
+/-- The spin representation sends a type-`B` matrix to the spin action of its quadratic Clifford
+realization. -/
+@[simp]
+theorem typeBSpinLieRep_apply (x : LieAlgebra.Orthogonal.typeB ι K) :
+    P.typeBSpinLieRep b z hz x =
+      spinAction Q P (P.typeBQuadraticEquiv b z hz x : CliffordAlgebra Q) := by
+  rw [typeBSpinLieRep, LieHom.comp_apply, LieHom.comp_apply, LieSubalgebra.coe_incl,
+    AlgHom.toLieHom_apply]
+  rfl
+
 /-- The type-`B` spin representation extended to the universal enveloping algebra. -/
 noncomputable def typeBSpinRep :
     _root_.UniversalEnvelopingAlgebra K (LieAlgebra.Orthogonal.typeB ι K) →ₐ[K]
@@ -84,9 +95,7 @@ theorem typeBSpinRep_ι (x : LieAlgebra.Orthogonal.typeB ι K) :
           (LieAlgebra.Orthogonal.typeB ι K) (TensorAlgebra.ι K x)) =
       spinAction Q P (P.typeBQuadraticEquiv b z hz x : CliffordAlgebra Q) := by
   rw [typeBSpinRep, _root_.UniversalEnvelopingAlgebra.lift_ι_apply',
-    typeBSpinLieRep, LieHom.comp_apply, LieHom.comp_apply, LieSubalgebra.coe_incl,
-    AlgHom.toLieHom_apply]
-  rfl
+    P.typeBSpinLieRep_apply b z hz]
 
 end SpinPolarizationData
 
