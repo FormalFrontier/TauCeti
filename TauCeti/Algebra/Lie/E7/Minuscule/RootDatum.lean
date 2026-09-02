@@ -6,7 +6,6 @@ Authors: Codex
 module
 
 public import TauCeti.Algebra.Lie.E7.Minuscule.Carrier
-public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.Assembly
 
 /-!
 # Torus characters of the type-E7 minuscule carrier in its named root datum
