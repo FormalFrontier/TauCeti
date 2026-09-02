@@ -8,7 +8,7 @@ module
 public import TauCeti.NumberTheory.Multiquadratic.CandidateGenusField.GaloisGroup
 public import TauCeti.NumberTheory.Multiquadratic.CandidateGenusField.InfinitePlace
 public import TauCeti.NumberTheory.Multiquadratic.Unramified.Maximality
-import TauCeti.FieldTheory.Trace
+import TauCeti.FieldTheory.Minpoly
 
 /-!
 # The genus field of an imaginary quadratic field

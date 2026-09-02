@@ -8,7 +8,7 @@ module
 public import TauCeti.NumberTheory.Multiquadratic.CandidateGenusField.GaloisGroup
 public import TauCeti.NumberTheory.Multiquadratic.CandidateGenusField.Relative.Degree
 public import TauCeti.NumberTheory.Multiquadratic.Unramified.Basic
-import TauCeti.FieldTheory.Trace
+import TauCeti.FieldTheory.Minpoly
 import TauCeti.NumberTheory.Multiquadratic.Unramified.Maximality
 
 /-!

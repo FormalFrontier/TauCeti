@@ -8,6 +8,7 @@ module
 public import Mathlib.NumberTheory.NumberField.Basic
 public import Mathlib.RingTheory.Discriminant
 public import Mathlib.RingTheory.Trace.Basic
+import TauCeti.FieldTheory.Minpoly
 
 /-!
 # Trace lemmas for field extensions
@@ -16,8 +17,6 @@ This file collects reusable trace facts for finite field extensions.
 
 ## Main results
 
-* `TauCeti.Algebra.minpoly_eq_X_sq_sub_C_of_sq_eq_of_natDegree_eq_two`: the minimal polynomial
-  of a quadratic element whose square is in the base field.
 * `NumberField.trace_eq_zero_of_sq_ratCast`: the number-field
   specialization saying that `x² ∈ ℚ`, `x ∉ ℚ` implies `Tr x = 0`.
 * `TauCeti.Algebra.trace_eq_zero_of_sq_algebraMap_of_not_mem_range`: the corresponding
@@ -41,18 +40,6 @@ open Module Polynomial
 namespace TauCeti
 
 namespace Algebra
-
-/-- The minimal polynomial of a quadratic element whose square is `r` is `X² - r`. -/
-theorem minpoly_eq_X_sq_sub_C_of_sq_eq_of_natDegree_eq_two {F L : Type*} [Field F] [Field L]
-    [Algebra F L] [FiniteDimensional F L] {x : L} {r : F}
-    (hx2 : x ^ 2 = algebraMap F L r) (hdegree : (minpoly F x).natDegree = 2) :
-    minpoly F x = X ^ 2 - C r := by
-  symm
-  refine Polynomial.eq_of_monic_of_dvd_of_natDegree_le
-    (minpoly.monic (Algebra.IsIntegral.isIntegral x))
-    (Polynomial.monic_X_pow_sub_C r (by norm_num)) (minpoly.dvd F x ?_) ?_
-  · simp [hx2]
-  · rw [hdegree, Polynomial.natDegree_X_pow_sub_C]
 
 /-- In a finite field extension, an element outside the base field whose square lies in the
 base field has trace zero. -/
