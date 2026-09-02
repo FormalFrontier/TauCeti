@@ -4,6 +4,12 @@
 % `[A. Author, *Title*][key]`, which doc-gen4 resolves against this file. A key with no
 % entry here renders as a bare bracketed word, so every key used under `TauCeti/` needs one.
 % Keys are ordered alphabetically.
+%
+% Nine keys are shared with mathlib4's `docs/references.bib` (Apache 2.0): bourbaki1968,
+% diamondshurman2005, grinberg_clifford_2016, humphreys1972, serre1965, serre1973,
+% shimura1971, silverman2009 and wedhorn_adic. Those key names, and the key/year pairings
+% that do not match the edition cited (bourbaki1968, serre1965), follow Mathlib; the entries
+% below are written out in this file's format.
 
 @book{bourbaki1968,
   author    = {Bourbaki, Nicolas},
@@ -200,8 +206,10 @@
 }
 
 @misc{wedhorn_adic,
-  author = {Wedhorn, Torsten},
-  title  = {Adic Spaces},
-  year   = {2019},
-  eprint = {arXiv:1910.05934}
+  author        = {Wedhorn, Torsten},
+  title         = {Adic Spaces},
+  year          = {2019},
+  eprint        = {1910.05934},
+  archiveprefix = {arXiv},
+  url           = {https://arxiv.org/abs/1910.05934}
 }
