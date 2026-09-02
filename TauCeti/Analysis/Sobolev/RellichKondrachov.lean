@@ -89,21 +89,6 @@ private theorem W1p0.coeFn_valueExtendByZeroL_eq_value (u : W1p0 mu Omega p) :
       (W1p.value (W1p0.extendByZeroL le_top u : W1p mu (⊤ : Opens E) p) : E → ℝ) :=
   funext fun _ => by rw [W1p0.valueExtendByZeroL_apply, coeFn_castLpₗᵢ, W1p0.valueL_apply]
 
-private theorem W1p0.coeFn_valueExtendByZeroL (u : W1p0 mu Omega p) :
-    (W1p0.valueExtendByZeroL u : E → ℝ) =ᵐ[mu]
-      (Omega : Set E).indicator (W1p.value (u : W1p mu Omega p) : E → ℝ) := by
-  rw [W1p0.coeFn_valueExtendByZeroL_eq_value, W1p0.value_extendByZeroL]
-  simpa only [Opens.coe_top, Measure.restrict_univ] using
-    coeFn_extendByZeroLpₗᵢ ℝ Omega.isOpen.measurableSet
-      (SetLike.coe_subset_coe.mpr (le_top : Omega ≤ ⊤)) (W1p.value (u : W1p mu Omega p))
-
-private theorem W1p0.eLpNorm_valueExtendByZeroL_comp_add_sub_le_mul_enorm_gradient (hp : p ≠ ∞)
-    (u : W1p0 mu Omega p) (h : E) :
-    eLpNorm (fun x => W1p0.valueExtendByZeroL u (x + h) - W1p0.valueExtendByZeroL u x) p mu
-      ≤ ‖h‖ₑ * ‖W1p.gradient (u : W1p mu Omega p)‖ₑ := by
-  rw [W1p0.coeFn_valueExtendByZeroL_eq_value]
-  exact W1p0.eLpNorm_value_extendByZeroL_comp_add_sub_le_mul_enorm_gradient hp h u
-
 private theorem W1p0.isCompactOperator_valueExtendByZeroL (hp : p ≠ ∞)
     (hOmega : IsBounded (Omega : Set E)) :
     IsCompactOperator
@@ -115,10 +100,8 @@ private theorem W1p0.isCompactOperator_valueExtendByZeroL (hp : p ≠ ∞)
   have hsupp : ∀ f ∈ S, ∀ᵐ x ∂mu, x ∉ (Omega : Set E) → f x = 0 := by
     intro f hf
     obtain ⟨u, hu, rfl⟩ := hf
-    filter_upwards [W1p0.coeFn_valueExtendByZeroL (mu := mu) (Omega := Omega) (p := p) u]
-      with x hx
-    intro hxOmega
-    rw [hx, indicator_of_notMem hxOmega]
+    rw [W1p0.coeFn_valueExtendByZeroL_eq_value]
+    exact W1p0.value_extendByZeroL_ae_eq_zero_compl u
   have hbdd : ∀ f ∈ S, eLpNorm f p mu ≤ 1 := by
     intro f hf
     obtain ⟨u, hu, rfl⟩ := hf
@@ -133,30 +116,14 @@ private theorem W1p0.isCompactOperator_valueExtendByZeroL (hp : p ≠ ∞)
   have htrans : ∀ epsilon : ENNReal, 0 < epsilon → ∃ delta > 0, ∀ f ∈ S, ∀ h : E,
       ‖h‖ < delta → eLpNorm (fun x => f (x + h) - f x) p mu ≤ epsilon := by
     intro epsilon hepsilon
-    let eta : ENNReal := min epsilon 1
-    have heta_pos : 0 < eta := lt_min hepsilon zero_lt_one
-    have heta_top : eta ≠ ∞ := (min_le_right epsilon 1).trans_lt ENNReal.one_lt_top |>.ne
-    refine ⟨eta.toReal, ENNReal.toReal_pos heta_pos.ne' heta_top, fun f hf h hh => ?_⟩
+    obtain ⟨delta, hdelta, hbound⟩ :=
+      W1p0.exists_pos_forall_eLpNorm_value_extendByZeroL_comp_add_sub_le_of_norm_le
+        (S := ball (0 : W1p0 mu Omega p) 1) hp zero_le_one
+        (fun u hu => (mem_ball_zero_iff.1 hu).le) hepsilon
+    refine ⟨delta, hdelta, fun f hf h hh => ?_⟩
     obtain ⟨u, hu, rfl⟩ := hf
-    rw [mem_ball, dist_zero_right] at hu
-    have hh' : ‖h‖ₑ ≤ eta := by
-      rw [← ofReal_norm]
-      exact (ENNReal.ofReal_le_iff_le_toReal heta_top).2 hh.le
-    have hu' : ‖u‖ₑ ≤ 1 :=
-      calc ‖u‖ₑ ≤ ‖(1 : ℝ)‖ₑ := enorm_le_iff_norm_le.mpr (by simpa using hu.le)
-        _ = 1 := by simp
-    calc
-      eLpNorm (fun x => W1p0.valueExtendByZeroL u (x + h) -
-          W1p0.valueExtendByZeroL u x) p mu
-          ≤ ‖h‖ₑ * ‖W1p.gradient (u : W1p mu Omega p)‖ₑ :=
-            W1p0.eLpNorm_valueExtendByZeroL_comp_add_sub_le_mul_enorm_gradient
-              (mu := mu) (Omega := Omega) hp u h
-      _ ≤ ‖h‖ₑ * ‖u‖ₑ := by
-        gcongr
-        exact enorm_le_iff_norm_le.mpr (W1p.norm_gradient_le _)
-      _ ≤ eta * 1 := mul_le_mul' hh' hu'
-      _ = eta := mul_one eta
-      _ ≤ epsilon := min_le_left _ _
+    rw [W1p0.coeFn_valueExtendByZeroL_eq_value]
+    exact hbound u hu h hh
   -- The criterion makes the extended image relatively compact.
   have hcompact : IsCompact (closure S) :=
     isCompact_closure_of_comp_add_sub_of_isBounded_of_ae_eq_zero_compl

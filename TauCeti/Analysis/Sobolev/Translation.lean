@@ -54,7 +54,7 @@ records the result directly in terms of the original gradient:
 `‖\tilde{u}(· + h) - \tilde{u}‖_p ≤ ‖h‖ ‖∇u‖_p`,
 
 where `\tilde{u}` is the zero extension of `u`. The zero extension vanishes almost everywhere
-off `Ω`, as recorded by `TauCeti.W1p0.value_extendByZeroL_eq_zero_ae_compl`, so its support is
+off `Ω`, as recorded by `TauCeti.W1p0.value_extendByZeroL_ae_eq_zero_compl`, so its support is
 contained in `Ω` up to a null set. When `Ω` is bounded, this containment and the translation
 estimate give the fixed-bounded-support and translation inputs for Fréchet--Kolmogorov.
 
@@ -66,10 +66,10 @@ estimate give the fixed-bounded-support and translation inputs for Fréchet--Kol
   estimate for the zero extension of a function in `W^{1,p}_0(Ω)`.
 * `TauCeti.W1p0.eLpNorm_value_extendByZeroL_comp_add_sub_le_mul_enorm`: the graph-norm form of the
   zero-extension translation estimate.
-* `TauCeti.W1p0.exists_pos_eLpNorm_value_extendByZeroL_comp_add_sub_le_of_gradient_le`: zero
-  extensions of a gradient-bounded family have uniformly small translation increments.
-* `TauCeti.W1p0.exists_pos_eLpNorm_value_extendByZeroL_comp_add_sub_le`: zero extensions of a
-  norm-bounded family have uniformly small translation increments.
+* `TauCeti.W1p0.exists_pos_forall_eLpNorm_value_extendByZeroL_comp_add_sub_le_of_gradient_le`:
+  zero extensions of a gradient-bounded family have uniformly small translation increments.
+* `TauCeti.W1p0.exists_pos_forall_eLpNorm_value_extendByZeroL_comp_add_sub_le_of_norm_le`:
+  zero extensions of a norm-bounded family have uniformly small translation increments.
 
 ## References
 
@@ -230,9 +230,9 @@ common `δ > 0` such that every zero extension `\tilde{u}` satisfies
 
 `‖\tilde{u}(· + h) - \tilde{u}‖_p ≤ ε` whenever `‖h‖ < δ`.
 
-When `Ω` is bounded, `TauCeti.W1p0.value_extendByZeroL_eq_zero_ae_compl` also supplies fixed
+When `Ω` is bounded, `TauCeti.W1p0.value_extendByZeroL_ae_eq_zero_compl` also supplies fixed
 bounded support for the family. -/
-theorem W1p0.exists_pos_eLpNorm_value_extendByZeroL_comp_add_sub_le_of_gradient_le
+theorem W1p0.exists_pos_forall_eLpNorm_value_extendByZeroL_comp_add_sub_le_of_gradient_le
     {Omega : Opens E} (hp : p ≠ ∞) {S : Set (W1p0 mu Omega p)} {C : ℝ} (hC : 0 ≤ C)
     (hS : ∀ u ∈ S, ‖W1p.gradient (u : W1p mu Omega p)‖ ≤ C)
     {epsilon : ℝ≥0∞} (hepsilon : 0 < epsilon) :
@@ -261,8 +261,8 @@ theorem W1p0.exists_pos_eLpNorm_value_extendByZeroL_comp_add_sub_le_of_gradient_
 
 /-- **Uniform smallness of translation increments for a norm-bounded Sobolev family.** This is
 the graph-norm-bounded corollary of
-`TauCeti.W1p0.exists_pos_eLpNorm_value_extendByZeroL_comp_add_sub_le_of_gradient_le`. -/
-theorem W1p0.exists_pos_eLpNorm_value_extendByZeroL_comp_add_sub_le
+`TauCeti.W1p0.exists_pos_forall_eLpNorm_value_extendByZeroL_comp_add_sub_le_of_gradient_le`. -/
+theorem W1p0.exists_pos_forall_eLpNorm_value_extendByZeroL_comp_add_sub_le_of_norm_le
     {Omega : Opens E} (hp : p ≠ ∞) {S : Set (W1p0 mu Omega p)} {C : ℝ} (hC : 0 ≤ C)
     (hS : ∀ u ∈ S, ‖u‖ ≤ C) {epsilon : ℝ≥0∞} (hepsilon : 0 < epsilon) :
     ∃ delta > 0, ∀ u ∈ S, ∀ h : E, ‖h‖ < delta →
@@ -270,10 +270,11 @@ theorem W1p0.exists_pos_eLpNorm_value_extendByZeroL_comp_add_sub_le
         W1p.value (W1p0.extendByZeroL le_top u : W1p mu ⊤ p) (x + h) -
           W1p.value (W1p0.extendByZeroL le_top u : W1p mu ⊤ p) x) p mu
         ≤ epsilon := by
-  apply W1p0.exists_pos_eLpNorm_value_extendByZeroL_comp_add_sub_le_of_gradient_le hp hC
+  apply W1p0.exists_pos_forall_eLpNorm_value_extendByZeroL_comp_add_sub_le_of_gradient_le hp hC
     (epsilon := epsilon) _ hepsilon
   intro u hu
   exact (W1p.norm_gradient_le (u : W1p mu Omega p)).trans (hS u hu)
+
 end Sobolev
 
 end TauCeti
