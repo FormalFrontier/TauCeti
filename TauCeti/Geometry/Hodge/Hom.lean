@@ -112,6 +112,8 @@ theorem hom_F (hs₁ : HodgeStructureOn W₁ ω₁ n₁) (hs₂ : HodgeStructure
     (hs₁.hom hs₂).F p =
       ((hs₁.dual.tensorProduct hs₂).F p).comap
         (dualTensorHomEquiv ℂ W₁ W₂).symm.toLinearMap := by
+  /- The `F` field of `hom` projects to `homAux.F` by definitional equality,
+     since `hom` is defined via a structure update on `homAux`. -/
   change (homAux hs₁ hs₂).F p = _
   exact HodgeStructureOn.comap_F (dualTensorHomEquiv ℂ W₁ W₂).symm
     (dualTensorHomEquiv_symm_conj (ω₁ := ω₁) (ω₂ := ω₂))
