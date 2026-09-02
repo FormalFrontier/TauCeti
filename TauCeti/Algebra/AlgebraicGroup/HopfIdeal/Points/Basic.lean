@@ -170,7 +170,7 @@ lemma mem_quotientPointsSubgroup_iff (H : _root_.CommHopfAlgCat.{v} R)
 /-- A point killing the augmentation ideal is the identity point: the trivial subgroup has only
 the identity over every value algebra. -/
 theorem eq_one_of_mem_quotientPointsSubgroup_augmentation (H : _root_.CommHopfAlgCat.{v} R)
-    (A : CommAlgCat.{v} R) {g : HopfAlgebra.points (R := R) (H := H) A}
+    (A : CommAlgCat.{w} R) {g : HopfAlgebra.points (R := R) (H := H) A}
     (hg : g ∈ quotientPointsSubgroup H (HopfIdeal.augmentation R ↥H) A) : g = 1 := by
   refine WithConv.ofConv_injective (AlgHom.ext fun x ↦ ?_)
   have hx : x - algebraMap R ↥H (Coalgebra.counit (R := R) x) ∈
