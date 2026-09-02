@@ -7,7 +7,8 @@ module
 
 public import Mathlib.Algebra.DirectSum.Decomposition
 public import Mathlib.Algebra.Ring.NegOnePow
-public import TauCeti.Algebra.DirectSum.Internal
+public import Mathlib.RingTheory.Finiteness.Basic
+import TauCeti.Algebra.DirectSum.Internal
 
 /-!
 # Internally graded modules
@@ -52,7 +53,7 @@ open scoped DirectSum
 
 namespace TauCeti
 
-universe u v
+universe u v w
 
 variable (R : Type u) (M : Type v) [Semiring R] [AddCommMonoid M] [Module R M]
 
@@ -82,18 +83,49 @@ theorem ext : ∀ {G H : InternalGrading R M}, (∀ p, G.piece p = H.piece p) �
 noncomputable instance (G : InternalGrading R M) : DirectSum.Decomposition G.piece :=
   G.isInternal.chooseDecomposition
 
+/-- An additive map that vanishes on every homogeneous piece except degree `i` sees only the
+degree-`i` component of each argument. -/
+theorem map_eq_map_decompose {N : Type w} [AddCommMonoid N] (G : InternalGrading R M)
+    (f : M →+ N) {i : ℤ}
+    (hf : ∀ j (x : M), x ∈ G.piece j → j ≠ i → f x = 0) (x : M) :
+    f x = f (DirectSum.decompose G.piece x i : M) := by
+  classical
+  conv_lhs => rw [← DirectSum.sum_support_decompose G.piece x]
+  rw [map_sum]
+  refine Finset.sum_eq_single i (fun j _ hj ↦ ?_) fun hi ↦ ?_
+  · exact hf j _ (DirectSum.decompose G.piece x j).2 hj
+  · rw [DFinsupp.notMem_support_iff.mp hi, Submodule.coe_zero, map_zero]
+
 end InternalGrading
 
 section FiniteSupport
 
 variable {R : Type u} {M : Type v} [Semiring R] [AddCommMonoid M] [Module R M]
 
+private theorem InternalGrading.finite_piece_ne_bot_aux (G : InternalGrading R M)
+    [Module.Finite R M] : {p | G.piece p ≠ ⊥}.Finite :=
+  Submodule.finite_ne_bot_of_iSupIndep_of_fg G.isInternal.submodule_iSupIndep
+    (by rw [G.isInternal.submodule_iSup_eq_top]; exact Module.Finite.fg_top)
+
 /-- A finitely generated internally graded module has only finitely many nonzero homogeneous
 pieces. -/
 theorem InternalGrading.finite_piece_ne_bot (G : InternalGrading R M) [Module.Finite R M] :
     {p | G.piece p ≠ ⊥}.Finite :=
-  Submodule.finite_ne_bot_of_iSupIndep_of_fg G.isInternal.submodule_iSupIndep
-    (by rw [G.isInternal.submodule_iSup_eq_top]; exact Module.Finite.fg_top)
+  G.finite_piece_ne_bot_aux
+
+/-- Summing the homogeneous components over the finite set of nonzero pieces reconstructs the
+original element. -/
+theorem InternalGrading.sum_decompose_toFinset (G : InternalGrading R M)
+    (hG : {p | G.piece p ≠ ⊥}.Finite) (x : M) :
+    ∑ p ∈ hG.toFinset, (DirectSum.decompose G.piece x p : M) = x := by
+  classical
+  conv_rhs => rw [← DirectSum.sum_support_decompose G.piece x]
+  refine (Finset.sum_subset (fun p hp ↦ ?_) fun p _ hp ↦ ?_).symm
+  · refine hG.mem_toFinset.mpr fun hbot ↦ DFinsupp.mem_support_iff.mp hp
+      (Submodule.coe_eq_zero.mp
+        ((Submodule.eq_bot_iff _).mp hbot _ (DirectSum.decompose G.piece x p).2))
+  · rw [DFinsupp.notMem_support_iff.mp hp]
+    simp
 
 end FiniteSupport
 

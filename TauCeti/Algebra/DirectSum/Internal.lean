@@ -7,7 +7,7 @@ module
 
 public import Mathlib.Algebra.DirectSum.Decomposition
 public import Mathlib.RingTheory.Finiteness.Basic
-public import TauCeti.Order.CompactlyGenerated
+import TauCeti.Order.CompactlyGenerated
 
 /-!
 # Internal direct sums from explicit equivalences
@@ -168,11 +168,17 @@ theorem DirectSum.isInternal_of_lof {R ι M : Type*} [Semiring R] [DecidableEq �
 -- `DirectSum.IsInternal.submodule_iSup_eq_top`; the converse implication, and with it
 -- `DirectSum.isInternal_submodule_iff_iSupIndep_and_iSup_eq_top`, needs `[Ring R]` and
 -- `[AddCommGroup M]`.
+private theorem Submodule.finite_ne_bot_of_iSupIndep_of_fg_aux
+    {R ι M : Type*} [Semiring R] [AddCommMonoid M]
+    [Module R M] {A : ι → Submodule R M} (hAi : iSupIndep A) (hAf : (⨆ i, A i).FG) :
+    {i | A i ≠ ⊥}.Finite :=
+  finite_ne_bot_of_iSupIndep_of_isCompactElement hAi ((Submodule.fg_iff_compact _).mp hAf)
+
 /-- An independent family of submodules spanning a finitely generated submodule has only finitely
 many nonzero members. -/
 theorem Submodule.finite_ne_bot_of_iSupIndep_of_fg {R ι M : Type*} [Semiring R] [AddCommMonoid M]
     [Module R M] {A : ι → Submodule R M} (hAi : iSupIndep A) (hAf : (⨆ i, A i).FG) :
     {i | A i ≠ ⊥}.Finite :=
-  finite_ne_bot_of_iSupIndep_of_isCompactElement hAi ((Submodule.fg_iff_compact _).mp hAf)
+  Submodule.finite_ne_bot_of_iSupIndep_of_fg_aux hAi hAf
 
 end TauCeti

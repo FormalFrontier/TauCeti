@@ -10,7 +10,7 @@ public import Mathlib.LinearAlgebra.DirectSum.Finsupp
 public import Mathlib.RingTheory.Coalgebra.MonoidAlgebra
 public import TauCeti.Algebra.Coalgebra.Comodule.PointsAction
 public import TauCeti.Algebra.Coalgebra.Subcomodule.Basic
-public import TauCeti.Algebra.DirectSum.Internal
+import TauCeti.Algebra.DirectSum.Internal
 import TauCeti.Algebra.Coalgebra.Subcomodule.Induced
 
 /-!
@@ -537,6 +537,11 @@ theorem range_weightProj (g : G) :
   rintro _ ⟨v, rfl⟩
   exact weightProj_mem_weightSpace g v
 
+private theorem finite_setOf_weightSpace_ne_bot_aux [Module.Finite R V] :
+    {g : G | weightSpace R G V g ≠ ⊥}.Finite :=
+  Submodule.finite_ne_bot_of_iSupIndep_of_fg (iSupIndep_weightSpace R G V)
+    (by rw [iSup_weightSpace_eq_top R G V]; exact Module.Finite.fg_top)
+
 /-- **A comodule over `R[G]` that is finitely generated as a module has only finitely many
 weights.**
 
@@ -545,8 +550,7 @@ weights, and for the adjoint representation of an affine group scheme under a sp
 the finiteness of the set of roots. -/
 theorem finite_setOf_weightSpace_ne_bot [Module.Finite R V] :
     {g : G | weightSpace R G V g ≠ ⊥}.Finite :=
-  Submodule.finite_ne_bot_of_iSupIndep_of_fg (iSupIndep_weightSpace R G V)
-    (by rw [iSup_weightSpace_eq_top R G V]; exact Module.Finite.fg_top)
+  finite_setOf_weightSpace_ne_bot_aux R G V
 
 end WeightSpace
 

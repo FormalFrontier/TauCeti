@@ -43,16 +43,18 @@ The construction follows the graded-dual convention used for DG and `A∞` objec
   degree-`-p` homogeneous component of its argument.
 * `InternalGrading.finite_dualPiece_ne_bot`: the dual grading has finitely many nonzero pieces as
   soon as the original one does.
+* `InternalGrading.iSupIndep_dualPiece`: the dual pieces are independent, without a finiteness
+  hypothesis.
+* `InternalGrading.dual_decompose_apply`: the degree-`p` component of a functional evaluates an
+  arbitrary vector through its original degree-`-p` component.
 * `InternalGrading.dual_decompose_apply_of_mem_piece`: on the degree-`q` piece, a functional agrees
   with its own degree-`-q` homogeneous component.
 
 ## Implementation notes
 
-The pieces, their identification with duals of the primal pieces, and their independence all live
-over a commutative semiring. Assembling them into an `InternalGrading` uses
-`DirectSum.isInternal_submodule_of_iSupIndep_of_iSup_eq_top`, which Mathlib states only for
-`[Ring R]` and `[AddCommGroup M]` — as it notes there, the implication fails over a general
-semiring — so `InternalGrading.dual` itself is stated over a commutative ring.
+The construction lives over a commutative semiring. Although independence and spanning do not in
+general assemble an internal direct sum without additive inverses, injectivity of the canonical map
+for these dual pieces follows directly by evaluating each summand on its matching primal piece.
 
 This supplies the dual grading for Layer 0 of the `DGAInfinity` roadmap; the finite-projective
 identifications of duals of tensor products remain.
@@ -109,14 +111,9 @@ private theorem projection_apply (G : InternalGrading R M) (p : ℤ) (x : M) :
 argument: it annihilates every other component of the decomposition. -/
 theorem dualPiece_apply_eq_apply_decompose (G : InternalGrading R M) {p : ℤ}
     {φ : Module.Dual R M} (hφ : φ ∈ G.dualPiece p) (x : M) :
-    φ x = φ (DirectSum.decompose G.piece x (-p) : M) := by
-  classical
-  conv_lhs => rw [← DirectSum.sum_support_decompose G.piece x]
-  rw [map_sum]
-  refine Finset.sum_eq_single (-p) (fun q _ hq ↦ ?_) fun hq ↦ ?_
-  · exact (mem_dualPiece_iff G p φ).mp hφ q _ (DirectSum.decompose G.piece x q).2 hq
-  · rw [DFinsupp.notMem_support_iff.mp hq]
-    simp
+    φ x = φ (DirectSum.decompose G.piece x (-p) : M) :=
+  G.map_eq_map_decompose φ.toAddMonoidHom
+    (fun q y hy hq ↦ (mem_dualPiece_iff G p φ).mp hφ q y hy hq) x
 
 /-- Restricting a functional of dual degree `p` to the degree-`-p` piece identifies `G.dualPiece p`
 with the linear dual of that piece: the restriction determines the functional, and every functional
@@ -178,22 +175,13 @@ theorem finite_dualPiece_ne_bot (G : InternalGrading R M) (hG : {p | G.piece p �
 private theorem iSup_dualPiece_eq_top (G : InternalGrading R M)
     (hG : {p | G.piece p ≠ ⊥}.Finite) : ⨆ p, G.dualPiece p = ⊤ := by
   classical
-  have hsum : ∀ x : M, ∑ p ∈ hG.toFinset, (DirectSum.decompose G.piece x p : M) = x := by
-    intro x
-    conv_rhs => rw [← DirectSum.sum_support_decompose G.piece x]
-    refine (Finset.sum_subset (fun p hp ↦ ?_) fun p _ hp ↦ ?_).symm
-    · refine hG.mem_toFinset.mpr fun hbot ↦ DFinsupp.mem_support_iff.mp hp
-        (Submodule.coe_eq_zero.mp
-          ((Submodule.eq_bot_iff _).mp hbot _ (DirectSum.decompose G.piece x p).2))
-    · rw [DFinsupp.notMem_support_iff.mp hp]
-      simp
   refine top_unique fun φ _ ↦ ?_
   have hφ : ∑ p ∈ hG.toFinset,
       LinearMap.comp φ ((G.piece p).subtype ∘ₗ projection G p) = φ := by
     refine LinearMap.ext fun x ↦ ?_
     simp only [LinearMap.sum_apply, LinearMap.comp_apply, Submodule.subtype_apply,
       projection_apply]
-    rw [← map_sum, hsum x]
+    rw [← map_sum, G.sum_decompose_toFinset hG x]
   rw [← hφ]
   refine Submodule.sum_mem _ fun p _ ↦ le_iSup (fun q ↦ G.dualPiece q) (-p) ?_
   rw [mem_dualPiece_iff]
@@ -201,7 +189,9 @@ private theorem iSup_dualPiece_eq_top (G : InternalGrading R M)
   simp only [LinearMap.comp_apply, Submodule.subtype_apply, projection_apply]
   rw [DirectSum.decompose_of_mem_ne G.piece hx (by simpa using hq), map_zero]
 
-private theorem iSupIndep_dualPiece (G : InternalGrading R M) :
+/-- The pieces of the graded dual are independent, even when the original grading has infinitely
+many nonzero pieces. -/
+theorem iSupIndep_dualPiece (G : InternalGrading R M) :
     iSupIndep G.dualPiece := by
   intro p
   rw [Submodule.disjoint_def]
@@ -223,12 +213,6 @@ private theorem iSupIndep_dualPiece (G : InternalGrading R M) :
     exact hφ_on_p x x.property
   · exact hφp q x x.property hq
 
-end DualPiece
-
-section Construction
-
-variable [CommRing R] [AddCommGroup M] [Module R M]
-
 /-- The internal grading on the linear dual of a module whose grading has only finitely many
 nonzero pieces.
 
@@ -237,8 +221,37 @@ piece. -/
 noncomputable def dual (G : InternalGrading R M) (hG : {p | G.piece p ≠ ⊥}.Finite) :
     InternalGrading R (Module.Dual R M) where
   piece := G.dualPiece
-  isInternal := DirectSum.isInternal_submodule_of_iSupIndep_of_iSup_eq_top
-    G.iSupIndep_dualPiece (G.iSup_dualPiece_eq_top hG)
+  isInternal := by
+    -- Mathlib defines `IsInternal` using the additive canonical map; `coeLinearMap` below has the
+    -- same underlying function and lets the module-level range API prove surjectivity.
+    constructor
+    · intro a b hab
+      have hab' : DirectSum.coeLinearMap G.dualPiece a =
+          DirectSum.coeLinearMap G.dualPiece b := hab
+      apply DirectSum.ext
+      intro p
+      apply Subtype.ext
+      apply LinearMap.ext
+      intro x
+      rw [dualPiece_apply_eq_apply_decompose G (a p).2,
+        dualPiece_apply_eq_apply_decompose G (b p).2]
+      have hcomponent : ∀ c : ⨁ p, G.dualPiece p,
+          DirectSum.coeLinearMap G.dualPiece c
+            (DirectSum.decompose G.piece x (-p) : M) =
+            (c p : Module.Dual R M) (DirectSum.decompose G.piece x (-p) : M) := by
+        classical
+        intro c
+        rw [DirectSum.coeLinearMap_eq_dfinsuppSum, DFinsupp.sum, LinearMap.sum_apply]
+        refine Finset.sum_eq_single p (fun q _ hpq ↦ ?_) fun hp ↦ ?_
+        · exact dualPiece_apply_eq_zero_of_mem_piece_of_add_ne_zero G (c q).2
+            (DirectSum.decompose G.piece x (-p)).2 (by omega)
+        · rw [DFinsupp.notMem_support_iff.mp hp]
+          simp
+      rw [← hcomponent a, hab', hcomponent b]
+    · have hsurj : Function.Surjective (DirectSum.coeLinearMap G.dualPiece) := by
+        rw [← LinearMap.range_eq_top, DirectSum.range_coeLinearMap,
+          G.iSup_dualPiece_eq_top hG]
+      exact hsurj
 
 /-- The degree-`p` piece of the dual grading is `dualPiece G p`. -/
 @[simp]
@@ -253,19 +266,27 @@ theorem dual_decompose_apply_of_mem_piece (G : InternalGrading R M)
     (hx : x ∈ G.piece q) :
     ((DirectSum.decompose (G.dual hG).piece φ (-q) : (G.dual hG).piece (-q)) :
       Module.Dual R M) x = φ x := by
-  classical
-  have happ := congrArg (fun ψ : Module.Dual R M ↦ ψ x)
-    (DirectSum.sum_support_decompose (G.dual hG).piece φ)
-  simp only [LinearMap.sum_apply] at happ
-  rw [← happ]
   symm
-  refine Finset.sum_eq_single (-q) (fun p _ hp ↦ ?_) fun hp ↦ ?_
-  · exact dualPiece_apply_eq_zero_of_mem_piece_of_add_ne_zero G
-      (DirectSum.decompose (G.dual hG).piece φ p).2 hx (by omega)
-  · rw [DFinsupp.notMem_support_iff.mp hp]
-    simp
+  exact (G.dual hG).map_eq_map_decompose (LinearMap.applyₗ x).toAddMonoidHom
+    (fun p ψ hψ hp ↦ dualPiece_apply_eq_zero_of_mem_piece_of_add_ne_zero G
+      (by simpa only [dual_piece] using hψ) hx (by omega)) φ
 
-end Construction
+/-- The degree-`p` component of a functional evaluates an arbitrary vector by first taking its
+original degree-`-p` homogeneous component. -/
+@[simp]
+theorem dual_decompose_apply (G : InternalGrading R M)
+    (hG : {p | G.piece p ≠ ⊥}.Finite) (φ : Module.Dual R M) (p : ℤ) (x : M) :
+    ((DirectSum.decompose (G.dual hG).piece φ p : (G.dual hG).piece p) :
+      Module.Dual R M) x = φ (DirectSum.decompose G.piece x (-p) : M) := by
+  rw [dualPiece_apply_eq_apply_decompose G
+    (by exact (DirectSum.decompose (G.dual hG).piece φ p).2)]
+  have h := dual_decompose_apply_of_mem_piece G hG φ
+    (DirectSum.decompose G.piece x (-p)).2
+  have hp : - -p = p := by omega
+  rw [hp] at h
+  exact h
+
+end DualPiece
 
 end InternalGrading
 

@@ -19,7 +19,7 @@ generation.
   is a compact element has only finitely many nonzero members. Compactness confines the whole
   family to a finite subfamily, and independence then forces every index outside it to be `⊥`.
   This is the compactness variant of Mathlib's
-  `CompleteLattice.WellFoundedGT.finite_ne_bot_of_iSupIndep`, which instead assumes the ascending
+  `WellFoundedGT.finite_ne_bot_of_iSupIndep`, which instead assumes the ascending
   chain condition.
 * `TauCeti.iSupIndep.iSup₂_inf_iSup_eq_iSup₂`: a partial supremum of an independent family
   meets the total supremum of a pointwise dominated family in its corresponding partial supremum.
