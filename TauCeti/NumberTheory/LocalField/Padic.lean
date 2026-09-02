@@ -62,7 +62,7 @@ instance instCompatibleNormedFieldValuation :
     · rw [_root_.NormedField.valuation_apply, _root_.NormedField.valuation_apply,
         ← NNReal.coe_le_coe, coe_nnnorm, coe_nnnorm, Padic.norm_eq_zpow_neg_valuation hx,
         Padic.norm_eq_zpow_neg_valuation hy, zpow_le_zpow_iff_right₀ (mod_cast hp.out.one_lt)]
-      simp [Padic.mulValuation, hx, hy]
+      simp [Padic.mulValuation, hx, hy, inv_le_inv₀]
 
 /-- The `p`-adic metric topology on `ℚ_[p]` is the topology of its valuation. -/
 instance instIsValuativeTopology : IsValuativeTopology ℚ_[p] :=
@@ -102,8 +102,10 @@ theorem residueFieldEquiv_residue (x : 𝒪[ℚ_[p]]) :
   simp [residueFieldEquiv, IsLocalRing.ResidueField.map_residue,
     PadicInt.toZMod_eq_residueField_comp_residue]
 
-/-- The residue cardinality of `ℚ_[p]` is `p`. -/
-@[simp]
+/-- The residue cardinality of `ℚ_[p]` is `p`.
+
+This is not a `simp` lemma: `Nat.card_eq_fintype_card` rewrites the left-hand side, so the
+statement is not in `simp`-normal form. -/
 theorem card_residueField : Nat.card 𝓀[ℚ_[p]] = p := by
   rw [Nat.card_congr (residueFieldEquiv p).toEquiv, Nat.card_zmod]
 
