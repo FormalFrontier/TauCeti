@@ -28,8 +28,8 @@ character of those subgroups with the corresponding simple root of the `E₆` ro
 that the involution of the fifty-four doubled coordinates realizes on the doubled weight family the
 diagram permutation the index itself carries, and builds the `q`-power Frobenius factor `Frob_q` of
 the branch's Steinberg map, with the pinned equation `Frob_q (x_i(u)) = x_i(u ^ q)` on the numbered
-simple-root subgroups and the description of the points it fixes as those whose fifty-four doubled
-coordinates lie in the field of definition `𝔽_q`.
+simple-root subgroups and the description of the points it fixes as those all of whose `54 × 54`
+matrix entries lie in the field of definition `𝔽_q`.
 
 The Steinberg map itself is *not* here, and neither is the candidate group of milestone L3. It is
 the composite `γ₂ ∘ Frob_q`, and the factor still owed on this carrier is `γ₂`, the automorphism
@@ -59,7 +59,7 @@ mentioned is finite, perfect, or simple.
 * `TauCeti.TypeTwistedE6LieIndex.frobenius_simpleRootSubgroup`: the pinned equation
   `Frob_q (x_i(u)) = x_i(u ^ q)`, milestone L1's requirement on the Frobenius factor.
 * `TauCeti.TypeTwistedE6LieIndex.mem_fixedSubgroup_frobenius_iff`: a point is fixed by `Frob_q`
-  exactly when its fifty-four doubled coordinates lie in the field of definition.
+  exactly when all entries of its `54 × 54` matrix lie in the field of definition.
 * `TauCeti.TypeTwistedE6LieIndex.e6DoubledMinusculeWeight_e6DoubledMinusculeGraphPerm_diagramPerm`:
   the coordinate involution of the doubled index set is equivariant for the diagram permutation
   that the index itself carries, read in the index's copy `Fin d.1.rank` of the Bourbaki index
@@ -221,8 +221,8 @@ theorem frobenius_def :
     d.frobenius = E6DoubledMinuscule.frobenius d.1.characteristic d.1.fieldExponent d.1.Closure :=
   (rfl)
 
-/-- The Frobenius acts on the ambient group by raising each of the fifty-four doubled matrix
-coordinates to the `q`-th power. This is the coefficient-level form from which the commutation of
+/-- The Frobenius acts on the ambient group by raising each entry of the `54 × 54` matrix of a
+point to the `q`-th power. This is the coefficient-level form from which the commutation of
 `Frob_q` with a coordinate symmetry of the carrier is read. -/
 @[simp]
 theorem coe_frobenius_apply (g : d.AmbientGroup) (r c : Fin 54) :
@@ -245,8 +245,8 @@ theorem frobenius_simpleRootSubgroup (i : Fin d.1.rank) (u : Multiplicative d.1.
   rw [frobenius_def, simpleRootSubgroup_def, E6DoubledMinuscule.frobenius_rootSubgroupPoints,
     ValidLieTypeIndex.fieldOrder_eq_characteristic_pow]
 
-/-- **A point of the ambient group is fixed by the Frobenius exactly when all fifty-four of its
-doubled matrix coordinates lie in the field of definition.** Writing `𝔽_q` for
+/-- **A point of the ambient group is fixed by the Frobenius exactly when every entry of its
+`54 × 54` matrix lies in the field of definition.** Writing `𝔽_q` for
 `TauCeti.ValidLieTypeIndex.fixedField`, the copy of the field of `q` elements inside the algebraic
 closure, the Frobenius-fixed subgroup is therefore the group of points of the doubled minuscule
 carrier with coordinates in `𝔽_q`. It is not the group `H_d` that milestone L3 runs its recipe on
