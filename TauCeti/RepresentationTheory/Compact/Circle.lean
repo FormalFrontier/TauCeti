@@ -47,7 +47,7 @@ theory's normalization, not new API, and naming them would duplicate
   `AddCircle.haarAddCircle`.
 * `TauCeti.isUnitary_fourierRep`, `TauCeti.isIrreducible_fourierRep`: each `fourierRep T n` is a
   unitary irreducible representation.
-* `TauCeti.character_fourierRep_apply`: the character of `fourierRep T n` is `fourier n`.
+* `TauCeti.character_fourierRep`: the character of `fourierRep T n` is `fourier n`.
 * `TauCeti.contIntertwiningMap_fourierRep_eq_zero_of_ne`: for `m ≠ n` there is no nonzero
   continuous intertwiner `fourierRep T n → fourierRep T m`, so the Fourier representations are
   pairwise inequivalent.
@@ -154,14 +154,24 @@ theorem isIrreducible_fourierRep (n : ℤ) :
 
 /-- **The character of the `n`-th Fourier representation is `fourier n`.** A one-dimensional
 representation is its own character; this is `Representation.char_ofLinearCharacter` read through
-`TauCeti.toRepresentation_fourierRep`. -/
-theorem character_fourierRep_apply (n : ℤ) (x : Multiplicative (AddCircle T)) :
-    ContRepresentation.character (fourierRep T n) (continuous_fourierRep T n) x =
-      fourier n (Multiplicative.toAdd x) := by
-  have h : ContRepresentation.character (fourierRep T n) (continuous_fourierRep T n) x =
-      (fourierRep T n).toRepresentation.character x :=
-    congrFun (ContRepresentation.coe_character _ _) x
-  rw [h, toRepresentation_fourierRep, Representation.char_ofLinearCharacter, coe_fourierChar]
+`TauCeti.toRepresentation_fourierRep`.
+
+The equation is stated between continuous maps rather than pointwise because that is the spelling
+`simp` can normalize with: `TauCeti.ContRepresentation.character_apply` is itself `@[simp]`, so a
+pointwise `character (fourierRep T n) _ x = _` is not in simp-normal form and `simpNF` rejects the
+tag on it, whereas the unapplied left-hand side is a subterm of the pointwise one and rewrites it
+too. This is how `TauCeti.SU2.character_symPowerModel` is stated for the same reason. -/
+@[simp]
+theorem character_fourierRep (n : ℤ) :
+    ContRepresentation.character (fourierRep T n) (continuous_fourierRep T n) = fourier n :=
+  ContinuousMap.ext fun x => by
+    have h : ContRepresentation.character (fourierRep T n) (continuous_fourierRep T n) x =
+        (fourierRep T n).toRepresentation.character x :=
+      congrFun (ContRepresentation.coe_character _ _) x
+    rw [h, toRepresentation_fourierRep, Representation.char_ofLinearCharacter]
+    -- `Multiplicative (AddCircle T)` is `AddCircle T`, so `fourier n (Multiplicative.toAdd x)`
+    -- and `fourier n x` are the same term.
+    exact coe_fourierChar T n x
 
 /-- **The Fourier representations are pairwise inequivalent.** For `m ≠ n` every continuous
 intertwiner `fourierRep T n → fourierRep T m` vanishes: such a map is multiplication by its value
@@ -214,7 +224,7 @@ theorem inner_characterLp_fourierRep (m n : ℤ) :
     exact orthonormal_iff_ite.mp orthonormal_fourier m n
   rw [ContRepresentation.characterLp_def, ContRepresentation.characterLp_def,
     ContinuousMap.inner_toLp, haarProb_eq_haarAddCircle]
-  simp only [character_fourierRep_apply]
+  simp only [character_fourierRep]
   exact key
 
 /-- **The character-orthonormality half of the acceptance criterion.** The characters of the
