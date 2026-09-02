@@ -25,8 +25,8 @@ step for the local-triviality formulation of invertible sheaves.
   along a morphism into its covering object;
 * `SheafOfModules.LocalTrivializations.ofRefinement` transports an entire atlas to any cover
   equipped with refinement arrows into the original cover.
-* `SheafOfModules.LocalTrivializations.ofCommonRefinementPair` transports two atlases to a
-  supplied common refinement.
+* `SheafOfModules.LocalTrivializations.ofCommonRefinement` transports two atlases to a supplied
+  common refinement.
 
 The common refinement of two atlases can therefore carry both sets of trivializations on the
 same cover. Together with compatibility of tensor products with restriction, this is the final
@@ -128,73 +128,58 @@ lemma ofRefinement_iso (t : LocalTrivializations M) {I : Type u₁} (Y : I → C
           (map ((ofRefinement_I t Y coversTop index map).mp j))) :=
   (rfl)
 
+/-- Two local-trivialization atlases transported to a common cover.
+
+The `refinement` field records the common cover and both refinement maps. The two families of
+trivializations are indexed directly by `refinement.I`, so the resulting atlases share their
+indexing type and covering objects without dependent casts. -/
+structure CommonRefinementPair (t : LocalTrivializations M) (s : LocalTrivializations N) where
+  /-- The common cover used by both transported atlases. -/
+  refinement : GrothendieckTopology.CoversTop.CommonRefinement J t.X s.X
+  /-- The transported trivializations for `t`. -/
+  fstIso (i : refinement.I) :
+    _root_.SheafOfModules.free (R := R.over (refinement.X i)) PUnit ≅ M.over (refinement.X i)
+  /-- The transported trivializations for `s`. -/
+  sndIso (i : refinement.I) :
+    _root_.SheafOfModules.free (R := R.over (refinement.X i)) PUnit ≅ N.over (refinement.X i)
+
+/-- The first atlas in a common-refinement pair. -/
+def CommonRefinementPair.fst (p : CommonRefinementPair (M := M) (N := N) t s) :
+    LocalTrivializations M where
+  I := p.refinement.I
+  X := p.refinement.X
+  coversTop := p.refinement.coversTop
+  iso := p.fstIso
+
+/-- The second atlas in a common-refinement pair. -/
+def CommonRefinementPair.snd (p : CommonRefinementPair (M := M) (N := N) t s) :
+    LocalTrivializations N where
+  I := p.refinement.I
+  X := p.refinement.X
+  coversTop := p.refinement.coversTop
+  iso := p.sndIso
+
 /-- Transport two local-trivialization atlases to a supplied common refinement.
 
-The two returned atlases have the same indexing type and covering objects. Their trivializations
-are the restrictions of the original ones along the two arrows in `r`. This is stated for an
-arbitrary supplied `CommonRefinement` because choosing such a refinement is a property of the
-site, not of the sheaves. The input preserves the actual refinement data needed by later
-compatibility proofs. For the standard cover-theoretic construction, use
-`GrothendieckTopology.CoversTop.commonRefinement`. -/
-def ofCommonRefinementPair (t : LocalTrivializations M) (s : LocalTrivializations N)
+The transported trivializations are the restrictions of the original ones along the two arrows
+in `r`. This accepts an arbitrary supplied `CommonRefinement` because choosing such a refinement
+is a property of the site, not of the sheaves. For the standard cover-theoretic construction, use
+`commonRefinement`. -/
+def ofCommonRefinement (t : LocalTrivializations M) (s : LocalTrivializations N)
     (r : GrothendieckTopology.CoversTop.CommonRefinement J t.X s.X) :
-    LocalTrivializations M × LocalTrivializations N :=
-  (t.ofRefinement r.X r.coversTop r.leftIndex r.left,
-    s.ofRefinement r.X r.coversTop r.rightIndex r.right)
+    CommonRefinementPair t s where
+  refinement := r
+  fstIso i := t.isoOver (r.leftIndex i) (r.left i)
+  sndIso i := s.isoOver (r.rightIndex i) (r.right i)
 
-/-- The first transported atlas uses the supplied refinement's indexing type. -/
-@[simp]
-lemma ofCommonRefinementPair_fst_I (t : LocalTrivializations M) (s : LocalTrivializations N)
-    (r : GrothendieckTopology.CoversTop.CommonRefinement J t.X s.X) :
-    (t.ofCommonRefinementPair s r).1.I = r.I :=
-  (rfl)
+/-- Transport two local-trivialization atlases to the canonical common refinement of their covers.
 
-/-- The second transported atlas uses the supplied refinement's indexing type. -/
-@[simp]
-lemma ofCommonRefinementPair_snd_I (t : LocalTrivializations M) (s : LocalTrivializations N)
-    (r : GrothendieckTopology.CoversTop.CommonRefinement J t.X s.X) :
-    (t.ofCommonRefinementPair s r).2.I = r.I :=
-  (rfl)
-
-/-- The first transported atlas uses the supplied refinement's covering objects. -/
-@[simp]
-lemma ofCommonRefinementPair_fst_X (t : LocalTrivializations M) (s : LocalTrivializations N)
-    (r : GrothendieckTopology.CoversTop.CommonRefinement J t.X s.X) :
-    (t.ofCommonRefinementPair s r).1.X =
-      fun j ↦ r.X ((ofCommonRefinementPair_fst_I t s r).mp j) :=
-  (rfl)
-
-/-- The second transported atlas uses the supplied refinement's covering objects. -/
-@[simp]
-lemma ofCommonRefinementPair_snd_X (t : LocalTrivializations M) (s : LocalTrivializations N)
-    (r : GrothendieckTopology.CoversTop.CommonRefinement J t.X s.X) :
-    (t.ofCommonRefinementPair s r).2.X =
-      fun j ↦ r.X ((ofCommonRefinementPair_snd_I t s r).mp j) :=
-  (rfl)
-
-/-- The first transported trivialization is the restriction along the supplied left refinement
-arrow. -/
-@[simp]
-lemma ofCommonRefinementPair_fst_iso (t : LocalTrivializations M) (s : LocalTrivializations N)
-    (r : GrothendieckTopology.CoversTop.CommonRefinement J t.X s.X)
-    (j : (t.ofCommonRefinementPair s r).1.I) :
-    (t.ofCommonRefinementPair s r).1.iso j =
-      cast (by rw [ofCommonRefinementPair_fst_X])
-        (t.isoOver (r.leftIndex ((ofCommonRefinementPair_fst_I t s r).mp j))
-          (r.left ((ofCommonRefinementPair_fst_I t s r).mp j))) :=
-  (rfl)
-
-/-- The second transported trivialization is the restriction along the supplied right refinement
-arrow. -/
-@[simp]
-lemma ofCommonRefinementPair_snd_iso (t : LocalTrivializations M) (s : LocalTrivializations N)
-    (r : GrothendieckTopology.CoversTop.CommonRefinement J t.X s.X)
-    (j : (t.ofCommonRefinementPair s r).2.I) :
-    (t.ofCommonRefinementPair s r).2.iso j =
-      cast (by rw [ofCommonRefinementPair_snd_X])
-        (s.isoOver (r.rightIndex ((ofCommonRefinementPair_snd_I t s r).mp j))
-          (r.right ((ofCommonRefinementPair_snd_I t s r).mp j))) :=
-  (rfl)
+This uses `GrothendieckTopology.CoversTop.commonRefinement`; use `ofCommonRefinement` when the
+refinement data is supplied by another construction. -/
+noncomputable def commonRefinement (t : LocalTrivializations M) (s : LocalTrivializations N) :
+    CommonRefinementPair t s :=
+  t.ofCommonRefinement s
+    (GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop)
 
 end LocalTrivializations
 
