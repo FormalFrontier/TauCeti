@@ -7,7 +7,7 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.Yoneda
 public import TauCeti.Algebra.AlgebraicGroup.Connected.ComponentGroup.Representable
-import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Central
+import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Points.Basic
 
 /-!
 # Finite groups with trivial identity component
