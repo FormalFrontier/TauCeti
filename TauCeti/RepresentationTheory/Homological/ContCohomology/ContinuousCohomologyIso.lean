@@ -521,18 +521,6 @@ noncomputable abbrev homogeneousSc₁ : ShortComplex (TopModuleCat k) :=
     ((TopRep.homogeneousCochains X).d 1 2)
     ((TopRep.homogeneousCochains X).d_comp_d 0 1 2)
 
-/-- The short complex `TauCeti.ContCohomology.homogeneousSc₁` has `f = d⁰`, so the corestriction of
-its concrete left homology data is the degree-zero differential. This is
-`CategoryTheory.ShortComplex.coe_topModuleCatLeftHomologyData_f'` with the differential spelled out,
-which is the form the rewrites below match against.
-
-Not `@[simp]`: the ambient cochain types reduce through
-`CategoryTheory.Functor.mapHomologicalComplex_obj_X`, so this left-hand side is not in simp normal
-form. -/
-theorem coe_homogeneousLeftHomologyData₁_f' (m : (TopRep.homogeneousCochains X).X 0) :
-    ((homogeneousSc₁ X).topModuleCatLeftHomologyData.f'.hom m).1
-      = ((TopRep.homogeneousCochains X).d 0 1).hom m := (rfl)
-
 /-- **The quotient presentation of the canonical side.** Continuous cohomology in degree one is the
 cokernel, in `TopModuleCat k`, of the degree-zero differential corestricted to the homogeneous
 `1`-cocycles: the honest `ker d ⧸ im d`, with the subspace topology on the numerator and the
@@ -593,18 +581,22 @@ noncomputable def homogeneousCocycleEquiv₁ :
     rw [Submodule.coe_add, ← map_add]
     congr 1
 
--- Not `@[simp]`, for the reason recorded at
--- `TauCeti.ContCohomology.coe_homogeneousLeftHomologyData₁_f'`.
 /-- The homogeneous `1`-cocycle attached to a continuous one is its image under the chain-level
-dictionary. -/
+dictionary.
+
+Not `@[simp]`: the homogeneous cochain types are spelled through
+`CategoryTheory.Functor.mapHomologicalComplex_obj_X`, which `simp` reduces further, so this
+left-hand side is not in simp normal form. The same obstruction keeps the rules below that bind a
+homogeneous cochain off `@[simp]`. -/
 theorem coe_homogeneousCocycleEquiv₁ (z : Z1 G M) :
     (homogeneousCocycleEquiv₁ G M z).1
       = homogeneousCochainEquiv₁ G M ⟨(z : G → M), Z1_le_C1 G M z.2⟩ := (rfl)
 
--- Not `@[simp]`, for the reason recorded at
--- `TauCeti.ContCohomology.coe_homogeneousLeftHomologyData₁_f'`.
 /-- The continuous `1`-cocycle attached to a homogeneous one is the underlying function of its
-image under the inverse of the chain-level dictionary. -/
+image under the inverse of the chain-level dictionary.
+
+Not `@[simp]`, for the reason recorded at
+`TauCeti.ContCohomology.coe_homogeneousCocycleEquiv₁`. -/
 theorem coe_homogeneousCocycleEquiv₁_symm
     (τ : TopModuleCat.ker (homogeneousSc₁ (ofDiscreteModule ℤ G M)).g) :
     (((homogeneousCocycleEquiv₁ G M).symm τ : Z1 G M) : G → M)
@@ -626,7 +618,7 @@ theorem map_homogeneousCocycleEquiv₁_B1 :
   · intro hτ
     obtain ⟨m, hm⟩ := mem_B1_iff.1 hτ
     refine ⟨homogeneousCochainEquiv₀ G M m, Subtype.ext ?_⟩
-    rw [coe_homogeneousLeftHomologyData₁_f']
+    rw [ShortComplex.coe_topModuleCatLeftHomologyData_f']
     have h1 : (⟨d0 G M m, mem_C1_iff.2 (continuous_d0_apply m)⟩ : C1 G M)
         = (homogeneousCochainEquiv₁ G M).symm τ.1 := by
       refine Subtype.ext ?_
@@ -638,7 +630,8 @@ theorem map_homogeneousCocycleEquiv₁_B1 :
       ⟨(homogeneousCochainEquiv₀ G M).symm w, (homogeneousCochainEquiv₀ G M).apply_symm_apply w⟩
     have hw' : ((TopRep.homogeneousCochains (ofDiscreteModule ℤ G M)).d 0 1).hom
         (homogeneousCochainEquiv₀ G M m) = τ.1 := by
-      rw [← coe_homogeneousLeftHomologyData₁_f', hw]
+      rw [← ShortComplex.coe_topModuleCatLeftHomologyData_f'
+        (S := homogeneousSc₁ (ofDiscreteModule ℤ G M)), hw]
     have h3 : (homogeneousCochainEquiv₁ G M).symm τ.1
         = ⟨d0 G M m, mem_C1_iff.2 (continuous_d0_apply m)⟩ := by
       rw [← hw', homogeneousCochainEquiv₀_d, AddEquiv.symm_apply_apply]
@@ -670,7 +663,7 @@ This is the value of `QuotientAddGroup.congr` on a class, whose multiplicative f
 the cokernel; both readings are definitional.
 
 Not `@[simp]`, for the reason recorded at
-`TauCeti.ContCohomology.coe_homogeneousLeftHomologyData₁_f'`: the cokernel this lands in is spelled
+`TauCeti.ContCohomology.coe_homogeneousCocycleEquiv₁`: the cokernel this lands in is spelled
 through the ambient cochain types, which reduce further, so this left-hand side is not in simp
 normal form. -/
 theorem explicitH1AddEquivCoker_mk (z : Z1 G M) :
@@ -707,7 +700,7 @@ theorem explicitH1AddEquivContinuousCohomology_mk (z : Z1 G M) :
 continuous one attached to it.
 
 Not `@[simp]`, for the reason recorded at
-`TauCeti.ContCohomology.coe_homogeneousLeftHomologyData₁_f'`: the homogeneous `1`-cocycle `τ` is
+`TauCeti.ContCohomology.coe_homogeneousCocycleEquiv₁`: the homogeneous `1`-cocycle `τ` is
 typed through the ambient cochain types, which reduce further, so this left-hand side is not in
 simp normal form. The forward rule above has no such binder and is `@[simp]`. -/
 theorem explicitH1AddEquivContinuousCohomology_symm_mk
@@ -752,6 +745,36 @@ noncomputable def explicitH1IsoContinuousCohomology [CompactSpace G] :
   simp only [explicitH1IsoContinuousCohomology, TopModuleCat.ofIso, TopModuleCat.hom_ofHom,
     ContinuousLinearEquiv.coe_coe]
   exact AddEquiv.trans_apply (discreteH1Equiv G M) (explicitH1AddEquivContinuousCohomology G M) x
+
+/-- The inverse of the comparison in `TopModuleCat ℤ` is the inverse of the additive comparison,
+read back into `TauCeti.ContCohomology.DiscreteH1`. -/
+@[simp] theorem explicitH1IsoContinuousCohomology_inv_apply [CompactSpace G]
+    (y : continuousCohomology 1 (ofDiscreteModule ℤ G M)) :
+    (explicitH1IsoContinuousCohomology G M).inv y
+      = (discreteH1Equiv G M).symm ((explicitH1AddEquivContinuousCohomology G M).symm y) := by
+  simp only [explicitH1IsoContinuousCohomology, TopModuleCat.ofIso, TopModuleCat.hom_ofHom,
+    ContinuousLinearEquiv.coe_coe]
+  exact AddEquiv.symm_trans_apply (discreteH1Equiv G M)
+    (explicitH1AddEquivContinuousCohomology G M) y
+
+/-- The inverse comparison in `TopModuleCat ℤ` sends the class of a homogeneous `1`-cocycle to the
+class, in `TauCeti.ContCohomology.DiscreteH1`, of the continuous one attached to it.
+
+Not `@[simp]`, for the reason recorded at
+`TauCeti.ContCohomology.coe_homogeneousCocycleEquiv₁`: the homogeneous `1`-cocycle `τ` is typed
+through the ambient cochain types, which reduce further, so this left-hand side is not in simp
+normal form. It is the composite of the `@[simp]` rule
+`TauCeti.ContCohomology.explicitH1IsoContinuousCohomology_inv_apply` with
+`TauCeti.ContCohomology.explicitH1AddEquivContinuousCohomology_symm_mk`, which is what a consumer
+rewrites with. -/
+theorem explicitH1IsoContinuousCohomology_inv_mk [CompactSpace G]
+    (τ : TopModuleCat.ker (homogeneousSc₁ (ofDiscreteModule ℤ G M)).g) :
+    (explicitH1IsoContinuousCohomology G M).inv
+        ((continuousCohomologyIsoCoker₁ (ofDiscreteModule ℤ G M)).inv (Submodule.Quotient.mk τ))
+      = (discreteH1Equiv G M).symm
+          (((homogeneousCocycleEquiv₁ G M).symm τ : Z1 G M) : H1 G M) := by
+  rw [explicitH1IsoContinuousCohomology_inv_apply,
+    explicitH1AddEquivContinuousCohomology_symm_mk]
 
 end DegreeOne
 
