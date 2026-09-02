@@ -127,9 +127,11 @@ theorem comapOfIso_iff (e : H ≅ K) (I : HopfIdeal k K.obj) :
     change IsMaximalTorus k K.obj
       (HopfIdeal.comapOfSurjective
         (I.comapOfSurjective e''.toBialgHom
-          (HopfIdeal.bialgEquiv_toBialgHom_surjective e''))
+          (by simpa only [BialgEquiv.toBialgHom_eq_coe, BialgEquiv.coe_toBialgHom] using
+            EquivLike.surjective e''))
         e''.symm.toBialgHom
-          (HopfIdeal.bialgEquiv_toBialgHom_surjective e''.symm)) at hback
+          (by simpa only [BialgEquiv.toBialgHom_eq_coe, BialgEquiv.coe_toBialgHom] using
+            EquivLike.surjective e''.symm)) at hback
     rw [HopfIdeal.comapOfSurjective_bialgEquiv_apply_symm I e''] at hback
     exact hback
   · exact fun hI ↦ hI.comapOfIso e

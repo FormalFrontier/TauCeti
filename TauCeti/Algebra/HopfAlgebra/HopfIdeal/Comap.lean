@@ -269,21 +269,16 @@ theorem comapOfSurjective_comapOfSurjective (I : HopfIdeal R L) (g : K →ₐc[R
   rw [mem_comapOfSurjective, mem_comapOfSurjective, mem_comapOfSurjective, BialgHom.coe_comp]
   rfl
 
-/-- The bialgebra morphism underlying a bialgebra equivalence is surjective. -/
-theorem bialgEquiv_toBialgHom_surjective (e : H ≃ₐc[R] K) :
-    Function.Surjective e.toBialgHom := by
-  intro k
-  refine ⟨e.symm k, ?_⟩
-  simpa only [BialgEquiv.toBialgHom_eq_coe, BialgEquiv.coe_toBialgHom] using
-    e.apply_symm_apply k
-
 /-- Pulling a Hopf ideal back along a bialgebra equivalence and then along its inverse recovers the
 original ideal. -/
 theorem comapOfSurjective_bialgEquiv_symm_apply (I : HopfIdeal R H) (e : H ≃ₐc[R] K) :
     comapOfSurjective
         (I.comapOfSurjective e.symm.toBialgHom
-          (bialgEquiv_toBialgHom_surjective e.symm))
-        e.toBialgHom (bialgEquiv_toBialgHom_surjective e) = I := by
+          (by simpa only [BialgEquiv.toBialgHom_eq_coe, BialgEquiv.coe_toBialgHom] using
+            EquivLike.surjective e.symm))
+        e.toBialgHom
+          (by simpa only [BialgEquiv.toBialgHom_eq_coe, BialgEquiv.coe_toBialgHom] using
+            EquivLike.surjective e) = I := by
   ext h
   rw [mem_comapOfSurjective, mem_comapOfSurjective]
   simp only [BialgEquiv.toBialgHom_eq_coe, BialgEquiv.coe_toBialgHom,
@@ -294,9 +289,11 @@ original ideal. -/
 theorem comapOfSurjective_bialgEquiv_apply_symm (I : HopfIdeal R K) (e : H ≃ₐc[R] K) :
     comapOfSurjective
         (I.comapOfSurjective e.toBialgHom
-          (bialgEquiv_toBialgHom_surjective e))
+          (by simpa only [BialgEquiv.toBialgHom_eq_coe, BialgEquiv.coe_toBialgHom] using
+            EquivLike.surjective e))
         e.symm.toBialgHom
-          (bialgEquiv_toBialgHom_surjective e.symm) = I := by
+          (by simpa only [BialgEquiv.toBialgHom_eq_coe, BialgEquiv.coe_toBialgHom] using
+            EquivLike.surjective e.symm) = I := by
   ext k
   rw [mem_comapOfSurjective, mem_comapOfSurjective]
   simp only [BialgEquiv.toBialgHom_eq_coe, BialgEquiv.coe_toBialgHom,
