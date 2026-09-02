@@ -6,8 +6,8 @@ Authors: The Tau Ceti contributors
 module
 
 import Mathlib.Analysis.Analytic.Constructions
-public import Mathlib.Topology.Germ
 public import TauCeti.Analysis.Normed.Algebra.LogOneAdd.Inverse
+public import TauCeti.Analysis.Normed.Algebra.LogOneAdd.Naturality
 
 /-!
 # The local Baker--Campbell--Hausdorff map
@@ -33,6 +33,8 @@ representative is analytic at the origin.
 * `NormedSpace.localBCH_tendsto`: the germ tends to zero at the origin.
 * `NormedSpace.eq_localBCH_of_tendsto_of_map_exp_eq`: uniqueness among germs
   tending to zero with the same exponential image.
+* `NormedSpace.map_localBCH`: continuous ring homomorphisms commute with the
+  local BCH germ.
 
 ## References
 
@@ -137,5 +139,31 @@ theorem eq_localBCH_of_tendsto_of_map_exp_eq (f : Germ (𝓝 ((0, 0) : A × A)) 
       filter_upwards [hf.eventually (eventually_logOneAdd_exp_sub_one A), hmap'] with p hp hmap_p
       rw [← hmap_p]
       exact hp.symm
+
+section Naturality
+
+variable {B : Type*} [NormedRing B] [NormedAlgebra ℝ B] [CompleteSpace B]
+
+/-- Continuous ring homomorphisms commute with the local
+Baker--Campbell--Hausdorff germ. -/
+@[simp high]
+theorem map_localBCH {F : Type*} [FunLike F A B] [RingHomClass F A B]
+    (f : F) (hf : Continuous f) :
+    (localBCH A).map f =
+      (localBCH B).compTendsto (Prod.map f f) (by
+        exact (hf.prodMap hf).tendsto'
+          (0, 0) (0, 0) (by simp)) := by
+  let _ : NormedAlgebra ℚ A := NormedAlgebra.restrictScalars ℚ ℝ A
+  let _ : NormedAlgebra ℚ B := NormedAlgebra.restrictScalars ℚ ℝ B
+  rw [localBCH_def, Germ.map_coe, localBCH_def, Germ.coe_compTendsto, Germ.coe_eq]
+  filter_upwards [(tendsto_exp_mul_exp_sub_one A).eventually
+    (eventually_map_logOneAdd (𝕂 := ℝ) (𝕃 := ℝ) f hf)] with p hp
+  dsimp only [Function.comp_apply, Prod.map]
+  rw [hp]
+  have hx : f (exp p.1) = exp (f p.1) := map_exp f hf p.1
+  have hy : f (exp p.2) = exp (f p.2) := map_exp f hf p.2
+  rw [map_sub, map_mul, map_one, hx, hy]
+
+end Naturality
 
 end NormedSpace

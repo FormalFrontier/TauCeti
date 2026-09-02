@@ -59,6 +59,11 @@ field distinct weights stay distinct (`TauCeti.weightChar_injective`).
   evaluation of the reflected character.
 * `TauCeti.weightChar_injective`: over an infinite field, distinct weights give distinct
   characters of the torus.
+* `TauCeti.eq_of_span_eq_top_of_torusCharacter_eq`: dually, weights generating the whole character
+  lattice separate the points of the torus, over any coefficient ring.
+* `TauCeti.basisDiagonalHom_injective` and `TauCeti.basisWeightTorus_injective`: a diagonal
+  automorphism determines its scaling units, so spanning weights make the represented weight torus
+  a monomorphism.
 
 ## References
 
@@ -326,6 +331,37 @@ theorem weightChar_injective {K : Type*} [Field K] [Infinite K] :
   simp only [weightChar_apply, torusCharacter_mulSingle] at hval
   rw [zpow_sub, hval, mul_inv_cancel]
 
+/-! ## Separating torus points -/
+
+/-- **Spanning weights separate the points of the split torus.** If a family of characters
+generates the whole character lattice `κ → ℤ`, then two points at which every one of them takes
+the same value are equal.
+
+This and `TauCeti.weightChar_injective` separate in opposite variables, and their hypotheses are
+not comparable: here the family of weights is asked to be plentiful and the coefficient ring is
+arbitrary, there a single pair of weights is separated at the cost of an infinite field. -/
+theorem eq_of_span_eq_top_of_torusCharacter_eq {wt : ι → κ → ℤ}
+    (hwt : Submodule.span ℤ (Set.range wt) = ⊤) {s t : κ → Rˣ}
+    (h : ∀ i, torusCharacter s (wt i) = torusCharacter t (wt i)) : s = t := by
+  classical
+  have key : ∀ μ : κ → ℤ, torusCharacter s μ = torusCharacter t μ := by
+    intro μ
+    have hμ : μ ∈ Submodule.span ℤ (Set.range wt) := by rw [hwt]; exact Submodule.mem_top
+    induction hμ using Submodule.span_induction with
+    | mem _ hx => obtain ⟨i, rfl⟩ := hx; exact h i
+    | zero => rw [torusCharacter_zero, torusCharacter_zero]
+    | add x y _ _ hx hy => rw [torusCharacter_add, torusCharacter_add, hx, hy]
+    | smul a x _ hx => rw [torusCharacter_zsmul, torusCharacter_zsmul, hx]
+  funext c
+  have hc := key (Pi.single c 1)
+  rwa [← weightChar_apply R, ← weightChar_apply R, weightChar_single, weightChar_single] at hc
+
+/-- **Spanning weights make the family of characters of the split torus injective on points.** -/
+theorem torusCharacterHom_injective {wt : ι → κ → ℤ}
+    (hwt : Submodule.span ℤ (Set.range wt) = ⊤) :
+    Function.Injective (torusCharacterHom (R := R) wt) := fun _ _ hst =>
+  eq_of_span_eq_top_of_torusCharacter_eq hwt fun i => congrFun hst i
+
 end TorusCharacter
 
 /-! ## Diagonal automorphisms -/
@@ -380,6 +416,15 @@ noncomputable def basisDiagonalHom (b : Basis ι R M) : (ι → Rˣ) →* (M ≃
 /-- The homomorphism of diagonal automorphisms evaluates to `TauCeti.basisDiagonal`. -/
 @[simp] theorem basisDiagonalHom_apply (b : Basis ι R M) (w : ι → Rˣ) :
     basisDiagonalHom b w = basisDiagonal b w := (rfl)
+
+/-- **A diagonal automorphism determines its scaling units**: reading off the `i`-th coordinate of
+the image of the `i`-th basis vector recovers the `i`-th unit. -/
+theorem basisDiagonalHom_injective (b : Basis ι R M) :
+    Function.Injective (basisDiagonalHom b) := by
+  intro v w hvw
+  funext i
+  refine Units.ext ?_
+  simpa using congrArg (fun f : M ≃ₗ[R] M => b.repr (f (b i)) i) hvw
 
 /-- A diagonal automorphism scales each coordinate by its corresponding unit. -/
 theorem repr_basisDiagonal (b : Basis ι R M) (w : ι → Rˣ) (m : M) (i : ι) :
@@ -497,6 +542,13 @@ theorem basisWeightTorus_apply_of_repr_eq_zero (b : Basis ι R M) (wt : ι → �
     basisWeightTorus b wt s m = (torusCharacter s μ : R) • m := by
   rw [basisWeightTorus_apply]
   exact basisDiagonal_apply_of_repr_eq_zero b _ fun i hi => hm i fun hwt => hi (by rw [hwt])
+
+/-- **Spanning weights make the represented weight torus a monomorphism**: distinct points of
+`𝔾ₘ^κ` then act by distinct automorphisms of `M`. -/
+theorem basisWeightTorus_injective (b : Basis ι R M) {wt : ι → κ → ℤ}
+    (hwt : Submodule.span ℤ (Set.range wt) = ⊤) :
+    Function.Injective (basisWeightTorus b wt) :=
+  (basisDiagonalHom_injective b).comp (torusCharacterHom_injective hwt)
 
 end WeightTorus
 

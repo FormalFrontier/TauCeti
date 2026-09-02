@@ -44,9 +44,53 @@ This computation is provenance rather than a Lean theorem: the file asserts no o
 simplicity, or identification result. The independent `FiniteSimpleGroups` development named by
 the roadmap does not cover `J₄`, so no cross-check against that development is available.
 
-## Main definition
+## Independent source-to-Lean read-through
+
+An independent read-through used the bytes of the ATLAS Magma source `J4G2-P1.M` whose SHA-256
+digest is `0ed9ed620f24b22490d2cb32f202ecbeb422ff665b4614b9ad8c6a6d7b118135`. Its constructor
+`G<x,y,t>` fixes exactly the three-generator order published by `j4Presentation_generatorNames`.
+
+The first seven constructor entries are, one for one, the seven active `M₂₄`-presentation words
+on `x,y` displayed above. The remaining five entries extend them in this source order:
+
+```text
+t²,
+[t,x],
+[t, yxy (xy⁻¹)² (xy)³],
+(y t^(yxy⁻¹xyxy⁻¹x))³,
+((yxyxyxy)³ t t^((xy)³y(xy)⁶y))².
+```
+
+They agree with entries eight through twelve of `j4Presentation_transcribed`. In the last two,
+expanding each source conjugate `t^s` as `s⁻¹ts` gives precisely `sourceConj t firstConjugator`
+and `sourceConj t secondConjugator`; the two conjugating words agree letter for letter with the
+Magma file. None of the twelve constructor entries is commented out or marked redundant. This
+checks every source relator, inverse, exponent, conjugating word, and source-order position
+independently of the original transcription and closes this row's S1 source-to-Lean read-through.
+
+The row is a sealed definition, so it publishes an equation for each of its fields: the transcribed
+relator expressions with their generator indices written out, and the provenance a manifest row
+exists to record. Together with `TauCeti.GroupPresentation.relators_def` and
+`TauCeti.GroupPresentation.mem_relatorSet_iff` the first of those determines the compiled words and
+the relations defining the presented group, so a consumer reasons about the row without unfolding
+it.
+
+Three decidable checks accompany those equations. The relator lengths and their total record the
+compiled data one word at a time and in aggregate, and cyclic reducedness is what makes such a
+letter count comparable with a published presentation length, since both are measured after free
+and cyclic reduction of each relator. This row records no published length, so the total here
+states the transcription for a reviewer to compare with the source, rather than checking it against
+a recorded number.
+
+## Main definitions and results
 
 * `TauCeti.Sporadic.j4Presentation`: John Bray's ATLAS finite presentation of `J₄`.
+* `TauCeti.Sporadic.j4Presentation_transcribed` and the equations for the remaining fields: the
+  characterization of the sealed row.
+* `TauCeti.Sporadic.j4Presentation_map_length_relators`,
+  `TauCeti.Sporadic.j4Presentation_totalLength` and
+  `TauCeti.Sporadic.j4Presentation_relatorsCyclicallyReduced`: the three checks on the compiled
+  words.
 
 ## References
 
@@ -134,8 +178,154 @@ def j4Presentation : GroupPresentation where
       .pow (.pow (y ⬝ x ⬝ y ⬝ x ⬝ y ⬝ x ⬝ y) 3 ⬝ t ⬝
         sourceConj t secondConjugator) 2 ]
 
+/-- The generator names recorded for `J₄`. The row's body is sealed, so this is what lets a
+consumer see that it is a three-generator presentation. -/
+@[simp]
+theorem j4Presentation_generatorNames : j4Presentation.generatorNames = ["x", "y", "t"] := by
+  simp [j4Presentation]
+
+/-- The source recorded for `J₄`. The row's body is sealed, so this equation is what publishes the
+citation itself, rather than only the row's name, to a downstream audit. -/
+@[simp]
+theorem j4Presentation_source :
+    j4Presentation.source = "S. W. Bolt, J. N. Bray, and R. T. Curtis, Symmetric presentation of \
+      the Janko group J4, J. London Math. Soc. 76 (2007), 683-701; R. A. Wilson, R. A. Parker, \
+      J. N. Bray et al., ATLAS of Finite Group Representations, version 3" := by
+  simp [j4Presentation]
+
+/-- The locator recorded for `J₄`, pointing at the presentation inside its sources. -/
+@[simp]
+theorem j4Presentation_sourceLocator :
+    j4Presentation.sourceLocator = "Bolt-Bray-Curtis, Section 5, doi:10.1112/jlms/jdm086; ATLAS \
+      presentation J4G2-P1, https://brauer.maths.qmul.ac.uk/Atlas/v3/pres/J4G2-P1; relator list \
+      and enumeration notes, https://brauer.maths.qmul.ac.uk/Atlas/spor/J4/mag/J4G2-P1.M" := by
+  simp [j4Presentation]
+
+/-- The generator convention recorded for `J₄`, fixing which generator each relator index names and
+which commutator and conjugation conventions the source uses. -/
+@[simp]
+theorem j4Presentation_generatorConvention :
+    j4Presentation.generatorConvention = "The ATLAS type II standard generators x, y, and t of \
+      J4, in that order, so indices 0, 1, and 2 are x, y, and t. Products are read left to right, \
+      negative exponents denote inverses, [r,s] denotes r^-1 s^-1 r s, and r^s denotes \
+      s^-1 r s." := by
+  simp [j4Presentation]
+
+/-- The transcription notes recorded for `J₄`. -/
+@[simp]
+theorem j4Presentation_transcriptionNotes :
+    j4Presentation.transcriptionNotes = "The twelve words are stored in the order of the ATLAS \
+      Magma file; none is marked redundant. Source conjugates are expanded as s^-1*r*s, while \
+      products and natural powers remain structured. GAP 4.15.1 with AtlasRep 2.1.9 checks the \
+      twelve compiled words on type II generators obtained by the ATLAS restandardization program \
+      from the 112-dimensional characteristic-two matrix representation of J4. The source's \
+      double-coset route enumerates 3980549947 cosets of the involution centralizer." := by
+  simp [j4Presentation]
+
+/-- The generator count `J₄`'s source states. With
+`TauCeti.Sporadic.j4Presentation_generatorNames` this is what makes
+`TauCeti.Sporadic.j4Presentation_matchesMetadata` an equation between two visible numbers. -/
+@[simp]
+theorem j4Presentation_expectedGeneratorCount : j4Presentation.expectedGeneratorCount = 3 := by
+  simp [j4Presentation]
+
+/-- The relator count `J₄`'s source states; see
+`TauCeti.Sporadic.j4Presentation_expectedGeneratorCount`. -/
+@[simp]
+theorem j4Presentation_expectedRelatorCount : j4Presentation.expectedRelatorCount = 12 := by
+  simp [j4Presentation]
+
+/-- The relator expressions transcribed for `J₄`, with their generator indices written out and the
+private abbreviations of this file expanded.
+
+The row's body is sealed, so this is the equation that characterizes it: with
+`TauCeti.GroupPresentation.relators_def` it determines the compiled words, and with
+`TauCeti.GroupPresentation.mem_relatorSet_iff` it determines the relations defining
+`TauCeti.GroupPresentation.Group`, so a consumer never has to unfold the row. Indices `0`, `1` and
+`2` are the generators `x`, `y` and `t`, and the bounds come from
+`TauCeti.Sporadic.j4Presentation_generatorNames`. Each source conjugate `r^s` appears as the
+bracketed `s⁻¹rs`, since the stored expression is a tree and not a flat word. -/
+@[simp]
+theorem j4Presentation_transcribed :
+    j4Presentation.transcribed =
+      [ -- x²
+        .pow (.gen ⟨0, by simp⟩) 2,
+        -- y³
+        .pow (.gen ⟨1, by simp⟩) 3,
+        -- (xy)²³
+        .pow (.gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩) 23,
+        -- [x,y]¹², in the source's commutator convention
+        .pow (.comm (.inv (.gen ⟨0, by simp⟩)) (.inv (.gen ⟨1, by simp⟩))) 12,
+        -- [x,yxy]⁵
+        .pow (.comm (.inv (.gen ⟨0, by simp⟩))
+          (.inv (.gen ⟨1, by simp⟩ ⬝ .gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩))) 5,
+        -- (xyxyxy⁻¹)³(xyxy⁻¹xy⁻¹)³
+        .pow (.gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩ ⬝ .gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩ ⬝
+          .gen ⟨0, by simp⟩ ⬝ .inv (.gen ⟨1, by simp⟩)) 3 ⬝
+          .pow (.gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩ ⬝ .gen ⟨0, by simp⟩ ⬝
+            .inv (.gen ⟨1, by simp⟩) ⬝ .gen ⟨0, by simp⟩ ⬝ .inv (.gen ⟨1, by simp⟩)) 3,
+        -- (xy(xyxy⁻¹)³)⁴
+        .pow (.gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩ ⬝
+          .pow (.gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩ ⬝ .gen ⟨0, by simp⟩ ⬝
+            .inv (.gen ⟨1, by simp⟩)) 3) 4,
+        -- t²
+        .pow (.gen ⟨2, by simp⟩) 2,
+        -- [t,x]
+        .comm (.inv (.gen ⟨2, by simp⟩)) (.inv (.gen ⟨0, by simp⟩)),
+        -- [t,yxy(xy⁻¹)²(xy)³]
+        .comm (.inv (.gen ⟨2, by simp⟩))
+          (.inv (.gen ⟨1, by simp⟩ ⬝ .gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩ ⬝
+            .pow (.gen ⟨0, by simp⟩ ⬝ .inv (.gen ⟨1, by simp⟩)) 2 ⬝
+            .pow (.gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩) 3)),
+        -- (y t^(yxy⁻¹xyxy⁻¹x))³
+        .pow (.gen ⟨1, by simp⟩ ⬝
+          (.inv (.gen ⟨1, by simp⟩ ⬝ .gen ⟨0, by simp⟩ ⬝ .inv (.gen ⟨1, by simp⟩) ⬝
+              .gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩ ⬝ .gen ⟨0, by simp⟩ ⬝
+              .inv (.gen ⟨1, by simp⟩) ⬝ .gen ⟨0, by simp⟩) ⬝
+            .gen ⟨2, by simp⟩ ⬝
+            (.gen ⟨1, by simp⟩ ⬝ .gen ⟨0, by simp⟩ ⬝ .inv (.gen ⟨1, by simp⟩) ⬝
+              .gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩ ⬝ .gen ⟨0, by simp⟩ ⬝
+              .inv (.gen ⟨1, by simp⟩) ⬝ .gen ⟨0, by simp⟩))) 3,
+        -- ((yxyxyxy)³ t t^((xy)³y(xy)⁶y))²
+        .pow (.pow (.gen ⟨1, by simp⟩ ⬝ .gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩ ⬝
+            .gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩ ⬝ .gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩) 3 ⬝
+          .gen ⟨2, by simp⟩ ⬝
+          (.inv (.pow (.gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩) 3 ⬝ .gen ⟨1, by simp⟩ ⬝
+              .pow (.gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩) 6 ⬝ .gen ⟨1, by simp⟩) ⬝
+            .gen ⟨2, by simp⟩ ⬝
+            (.pow (.gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩) 3 ⬝ .gen ⟨1, by simp⟩ ⬝
+              .pow (.gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩) 6 ⬝ .gen ⟨1, by simp⟩))) 2 ] := by
+  simp [j4Presentation]
+
 /-- The generator and relator counts recorded for `J₄` agree with the transcribed data. -/
-theorem matchesMetadata_j4Presentation : j4Presentation.matchesMetadata := by
+theorem j4Presentation_matchesMetadata : j4Presentation.matchesMetadata := by
+  decide
+
+/-- The lengths of the twelve compiled relator words for `J₄`, in the order of the ATLAS Magma
+file.
+
+Reading the counts off one relator at a time is what lets a reviewer locate a discrepancy, rather
+than only observe one in the total of `TauCeti.Sporadic.j4Presentation_totalLength`. -/
+theorem j4Presentation_map_length_relators :
+    j4Presentation.relators.map List.length =
+      [2, 3, 46, 48, 40, 36, 56, 2, 4, 28, 54, 126] := by
+  simp [GroupPresentation.relators_def, j4Presentation]
+
+/-- The compiled relator words for `J₄` have `445` letters in total. The row records no published
+length, so this figure states the transcribed data for a reviewer to compare with the source,
+rather than checking it against a recorded number. -/
+theorem j4Presentation_totalLength : j4Presentation.totalLength = 445 := by
+  rw [GroupPresentation.totalLength_def, j4Presentation_map_length_relators]
+  decide
+
+/-- Every compiled relator word for `J₄` is cyclically reduced. This is what makes the letter count
+of `TauCeti.Sporadic.j4Presentation_totalLength` comparable with a published presentation length,
+which is measured after free and cyclic reduction of each relator. -/
+theorem j4Presentation_relatorsCyclicallyReduced :
+    j4Presentation.relatorsCyclicallyReduced := by
+  simp only [GroupPresentation.relatorsCyclicallyReduced_iff, GroupPresentation.relators_def,
+    j4Presentation, List.map_cons, List.map_nil, Relator.toWord_mul, Relator.toWord_pow,
+    Relator.toWord_inv, Relator.toWord_comm, Relator.toWord_gen]
   decide
 
 end TauCeti.Sporadic

@@ -45,6 +45,38 @@ namespace TauCeti
 
 namespace FundamentalGroup
 
+open CategoryTheory in
+/-- The inverse basepoint-change equivalence is represented by conjugation with the reverse path.
+This path-quotient formula is the interface for computations with the equivalence. -/
+lemma _root_.FundamentalGroup.fundamentalGroupMulEquivOfPath_symm_apply
+    {X : Type*} [TopologicalSpace X] {x₀ x₁ : X}
+    (γ : Path x₀ x₁) (g : _root_.FundamentalGroup X x₁) :
+    (_root_.FundamentalGroup.fundamentalGroupMulEquivOfPath γ).symm g =
+      Path.Homotopic.Quotient.trans (Path.Homotopic.Quotient.mk γ)
+        (Path.Homotopic.Quotient.trans g (Path.Homotopic.Quotient.mk γ).symm) := by
+  let γq : Path.Homotopic.Quotient x₀ x₁ := Path.Homotopic.Quotient.mk γ
+  let α : FundamentalGroupoid.mk x₀ ≅ FundamentalGroupoid.mk x₁ :=
+    (Groupoid.isoEquivHom _ _).symm γq
+  have hα_hom : α.hom = γq := by
+    exact (Groupoid.isoEquivHom (FundamentalGroupoid.mk x₀)
+      (FundamentalGroupoid.mk x₁)).apply_symm_apply γq
+  have hα_inv : α.inv = γq.symm := by
+    apply (cancel_mono γq).1
+    calc
+      α.inv ≫ γq = α.inv ≫ α.hom := by rw [hα_hom]
+      _ = 𝟙 (FundamentalGroupoid.mk x₁) := α.inv_hom_id
+      _ = γq.symm ≫ γq := by
+        rw [FundamentalGroupoid.id_eq_path_refl]
+        exact (Path.Homotopic.Quotient.symm_trans γq).symm
+  rw [MulEquiv.symm_apply_eq]
+  have hconj : Path.Homotopic.Quotient.trans γq
+      (Path.Homotopic.Quotient.trans g γq.symm) = α.symm.conj g := by
+    rw [CategoryTheory.Iso.conj_apply, CategoryTheory.Iso.symm_inv,
+      CategoryTheory.Iso.symm_hom, hα_hom, hα_inv]
+    simp only [FundamentalGroupoid.comp_eq]
+  rw [hconj]
+  exact (α.self_symm_conj g).symm
+
 variable {X : Type*} [TopologicalSpace X] {x₀ x₁ : X}
 
 /-- The subgroup of `π₁(X, x₁)` obtained from `H ≤ π₁(X, x₀)` by changing basepoint along a

@@ -51,7 +51,7 @@ theorem measurable_sum_smul_dirac {β ι α : Type*} [MeasurableSpace β] [Measu
 structure that `ProbabilityMeasure` inherits as a subtype of `Measure`. -/
 theorem measurable_probabilityMeasure_map {α β : Type*} [MeasurableSpace α] [MeasurableSpace β]
     {f : α → β} (hf : Measurable f) :
-    Measurable fun P : ProbabilityMeasure α => P.map hf.aemeasurable :=
+    Measurable fun P : ProbabilityMeasure α => P.map f :=
   ((Measure.measurable_map f hf).comp measurable_subtype_coe).subtype_mk
 
 end MeasureTheory

@@ -104,8 +104,7 @@ theorem norm_le_one (hf : IsPointedDiscInjectionOn f Ω z₀) {z : ℂ} (hz : z 
 neighbourhood of each point, which by the local injectivity criterion forces `deriv f z ≠ 0`. -/
 theorem deriv_ne_zero (hf : IsPointedDiscInjectionOn f Ω z₀) (hΩo : IsOpen Ω) {z : ℂ} (hz : z ∈ Ω) :
     deriv f z ≠ 0 :=
-  (exists_injOn_nhds_iff_deriv_ne_zero
-    (hf.differentiableOn.analyticOnNhd hΩo z hz)).mp ⟨Ω, hΩo.mem_nhds hz, hf.injOn⟩
+  deriv_ne_zero_of_injOn hf.differentiableOn hΩo hf.injOn hz
 
 end IsPointedDiscInjectionOn
 

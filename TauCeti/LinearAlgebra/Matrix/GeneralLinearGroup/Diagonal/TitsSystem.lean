@@ -187,6 +187,54 @@ private theorem gl2_tits_exists_conj_not_mem
   simp [gl2WeylNormalizer, Units.val_mul, GL2Borel.coe_mk, Matrix.mul_apply,
     Fin.sum_univ_two]
 
+/-- The intersection `B ∩ N` is normal in `N`: under `gl2_borel_comap_normalizer_eq_diagonal` it
+is the diagonal torus, which is normal in its own normalizer. Stated as an instance because the
+Weyl quotient `N ⧸ (B ∩ N)` is only a group once it is available. -/
+private instance :
+    ((GL2Borel k).comap (GL2DiagonalNormalizer k).subtype).Normal := by
+  rw [gl2_borel_comap_normalizer_eq_diagonal]
+  exact Subgroup.normal_in_normalizer
+
+/-- The class of the Weyl permutation matrix generates the Weyl quotient `N ⧸ (B ∩ N)` of `GL₂`. -/
+private theorem gl2_closure_simple : Subgroup.closure ({QuotientGroup.mk (gl2WeylNormalizer k)} :
+    Set (GL2DiagonalNormalizer k ⧸ (GL2Borel k).comap (GL2DiagonalNormalizer k).subtype)) = ⊤ := by
+  apply top_unique
+  intro s _
+  obtain ⟨g, rfl⟩ := QuotientGroup.mk'_surjective
+    ((GL2Borel k).comap (GL2DiagonalNormalizer k).subtype) s
+  have hg : g ∈ Subgroup.closure
+      (((GL2Borel k).comap (GL2DiagonalNormalizer k).subtype :
+          Set (GL2DiagonalNormalizer k)) ∪ {gl2WeylNormalizer k}) := by
+    rw [gl2_normalizer_closure]
+    exact Subgroup.mem_top g
+  have hmap : QuotientGroup.mk'
+        ((GL2Borel k).comap (GL2DiagonalNormalizer k).subtype) g ∈
+      (Subgroup.closure
+        (((GL2Borel k).comap (GL2DiagonalNormalizer k).subtype :
+            Set (GL2DiagonalNormalizer k)) ∪ {gl2WeylNormalizer k})).map
+          (QuotientGroup.mk'
+            ((GL2Borel k).comap (GL2DiagonalNormalizer k).subtype)) :=
+    ⟨g, hg, rfl⟩
+  rw [MonoidHom.map_closure] at hmap
+  exact ((Subgroup.closure_le
+    (Subgroup.closure
+      ({QuotientGroup.mk (gl2WeylNormalizer k)} :
+        Set (GL2DiagonalNormalizer k ⧸
+          (GL2Borel k).comap (GL2DiagonalNormalizer k).subtype)))).mpr (fun x hx ↦ by
+    obtain ⟨y, hy, rfl⟩ := hx
+    rcases hy with hy | hy
+    · have hqy : QuotientGroup.mk'
+          ((GL2Borel k).comap (GL2DiagonalNormalizer k).subtype) y = 1 :=
+        (QuotientGroup.eq_one_iff y).mpr hy
+      rw [hqy]
+      exact (Subgroup.closure
+        ({QuotientGroup.mk (gl2WeylNormalizer k)} :
+          Set (GL2DiagonalNormalizer k ⧸
+            (GL2Borel k).comap (GL2DiagonalNormalizer k).subtype))).one_mem
+    · rw [Set.mem_singleton_iff] at hy
+      subst y
+      exact Subgroup.subset_closure (Set.mem_singleton _))) hmap
+
 /-- The standard rank-one Tits system of `GL₂(k)`: `B` is the upper-triangular subgroup,
 `N` is the diagonal-torus normalizer, and its unique simple reflection is represented by the
 Weyl permutation matrix. -/
@@ -195,49 +243,10 @@ def gl2TitsSystem : TitsSystem (GL (Fin 2) k) where
   subgroupN := GL2DiagonalNormalizer k
   closure_subgroupB_union_subgroupN := gl2_borel_normalizer_closure k
   intersection_normal := by
-    rw [← Subgroup.comap_subtype, gl2_borel_comap_normalizer_eq_diagonal]
-    exact Subgroup.normal_in_normalizer
+    rw [← Subgroup.comap_subtype]
+    infer_instance
   simple := {QuotientGroup.mk (gl2WeylNormalizer k)}
-  closure_simple := by
-    let _ : ((GL2Borel k).comap (GL2DiagonalNormalizer k).subtype).Normal := by
-      rw [gl2_borel_comap_normalizer_eq_diagonal]
-      exact Subgroup.normal_in_normalizer
-    apply top_unique
-    intro s _
-    obtain ⟨g, rfl⟩ := QuotientGroup.mk'_surjective
-      ((GL2Borel k).comap (GL2DiagonalNormalizer k).subtype) s
-    have hg : g ∈ Subgroup.closure
-        (((GL2Borel k).comap (GL2DiagonalNormalizer k).subtype :
-            Set (GL2DiagonalNormalizer k)) ∪ {gl2WeylNormalizer k}) := by
-      rw [gl2_normalizer_closure]
-      exact Subgroup.mem_top g
-    have hmap : QuotientGroup.mk'
-          ((GL2Borel k).comap (GL2DiagonalNormalizer k).subtype) g ∈
-        (Subgroup.closure
-          (((GL2Borel k).comap (GL2DiagonalNormalizer k).subtype :
-              Set (GL2DiagonalNormalizer k)) ∪ {gl2WeylNormalizer k})).map
-            (QuotientGroup.mk'
-              ((GL2Borel k).comap (GL2DiagonalNormalizer k).subtype)) :=
-      ⟨g, hg, rfl⟩
-    rw [MonoidHom.map_closure] at hmap
-    exact ((Subgroup.closure_le
-      (Subgroup.closure
-        ({QuotientGroup.mk (gl2WeylNormalizer k)} :
-          Set (GL2DiagonalNormalizer k ⧸
-            (GL2Borel k).comap (GL2DiagonalNormalizer k).subtype)))).mpr (fun x hx ↦ by
-      obtain ⟨y, hy, rfl⟩ := hx
-      rcases hy with hy | hy
-      · have hqy : QuotientGroup.mk'
-            ((GL2Borel k).comap (GL2DiagonalNormalizer k).subtype) y = 1 :=
-          (QuotientGroup.eq_one_iff y).mpr hy
-        rw [hqy]
-        exact (Subgroup.closure
-          ({QuotientGroup.mk (gl2WeylNormalizer k)} :
-            Set (GL2DiagonalNormalizer k ⧸
-              (GL2Borel k).comap (GL2DiagonalNormalizer k).subtype))).one_mem
-      · rw [Set.mem_singleton_iff] at hy
-        subst y
-        exact Subgroup.subset_closure (Set.mem_singleton _))) hmap
+  closure_simple := gl2_closure_simple k
   exists_simpleRep_sq_mem s hs := by
     rw [Set.mem_singleton_iff] at hs
     refine ⟨gl2WeylNormalizer k, hs.symm, ?_⟩

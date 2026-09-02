@@ -60,10 +60,9 @@ one, which is not proved here (see the Roadmap section below).
   `TauCeti.serre_hom_ext`: `TauCeti.serreLift` sends the generators to the given Serre system, and
   is the unique homomorphism doing so; `TauCeti.serre_equiv_ext` is the same extensionality
   principle for equivalences out of the presented algebra.
-* `TauCeti.IsSerreSystem.submatrix`, `TauCeti.IsSerreSystem.perm` and
-  `TauCeti.IsSerreSystem.neg_swap`: a Serre system stays one after reindexing along an injective
-  map of index sets (a permutation preserving the matrix, in the second) or after the signed
-  exchange of the raising and lowering families.
+* `TauCeti.IsSerreSystem.map`, `TauCeti.IsSerreSystem.submatrix`, `TauCeti.IsSerreSystem.perm` and
+  `TauCeti.IsSerreSystem.neg_swap`: Serre systems are preserved by Lie homomorphisms, reindexing,
+  and the signed exchange of the raising and lowering families.
 * `TauCeti.serreLift_eq_id`: lifting the generators along their own Serre system is the identity.
 * `TauCeti.lieSpan_serreGenerators_eq_top`: the generators generate the presented algebra.
 
@@ -290,11 +289,26 @@ section Stability
 variable {R CM} {H E F : B → L} {σ : Equiv.Perm B}
 
 omit [DecidableEq B] in
-/-- If the `n`-fold adjoint action of `x` annihilates `y`, then so does that of `-x`. -/
-private theorem ad_neg_pow_apply_eq_zero {x y : L} {n : ℕ} (h : (ad R L x ^ n) y = 0) :
-    (ad R L (-x) ^ n) y = 0 := by
-  have hneg : ad R L (-x) = (-1 : R) • ad R L x := by rw [map_neg, neg_smul, one_smul]
-  rw [hneg, smul_pow, LinearMap.smul_apply, h, smul_zero]
+/-- The image of a Serre system under a Lie algebra homomorphism is a Serre system. -/
+theorem IsSerreSystem.map {L' : Type*} [LieRing L'] [LieAlgebra R L']
+    (h : IsSerreSystem R CM H E F) (f : L →ₗ⁅R⁆ L') :
+    IsSerreSystem R CM (f ∘ H) (f ∘ E) (f ∘ F) where
+  lie_H_H i j := by
+    simp only [Function.comp_apply, ← f.map_lie, h.lie_H_H i j, map_zero]
+  lie_E_F_self i := by
+    simp only [Function.comp_apply, ← f.map_lie, h.lie_E_F_self i]
+  lie_E_F_of_ne i j hij := by
+    simp only [Function.comp_apply, ← f.map_lie, h.lie_E_F_of_ne i j hij, map_zero]
+  lie_H_E i j := by
+    simp only [Function.comp_apply, ← f.map_lie, h.lie_H_E i j, map_zsmul]
+  lie_H_F i j := by
+    simp only [Function.comp_apply, ← f.map_lie, h.lie_H_F i j, map_neg, map_zsmul]
+  ad_pow_lie_E_E i j := by
+    simp only [Function.comp_apply, ← f.map_lie, ← LieHom.map_ad_pow,
+      h.ad_pow_lie_E_E i j, map_zero]
+  ad_pow_lie_F_F i j := by
+    simp only [Function.comp_apply, ← f.map_lie, ← LieHom.map_ad_pow,
+      h.ad_pow_lie_F_F i j, map_zero]
 
 omit [DecidableEq B] in
 /-- Reindexing a Serre system along an injective map of index sets gives a Serre system for the

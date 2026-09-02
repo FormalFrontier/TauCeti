@@ -326,8 +326,8 @@ theorem IsProConstructible.quasiSeparatedSpace (hs : IsProConstructible s) :
     QuasiSeparatedSpace s := by
   refine QuasiSeparatedSpace.of_isTopologicalBasis
     (b := fun U : {U : Set X // IsOpen U ∧ IsCompact U} ↦ ((↑) : s → X) ⁻¹' U.1) ?_ ?_
-  · have h := (PrespectralSpace.isTopologicalBasis (X := X)).isInducing
-      (f := ((↑) : s → X)) IsEmbedding.subtypeVal.isInducing
+  · have h := Topology.IsInducing.isTopologicalBasis (f := ((↑) : s → X))
+      IsEmbedding.subtypeVal.isInducing (PrespectralSpace.isTopologicalBasis (X := X))
     convert h using 1
     ext V
     simp [Set.range, Subtype.exists, eq_comm]

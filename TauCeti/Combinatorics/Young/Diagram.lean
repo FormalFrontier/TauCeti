@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.BigOperators.Group.Finset.Basic
+public import Mathlib.Algebra.BigOperators.Group.Finset.Sigma
 public import Mathlib.Combinatorics.Young.YoungDiagram
 public import Mathlib.Data.Finset.Powerset
 public import Mathlib.Data.List.GetD
@@ -23,7 +24,8 @@ the rows exhaust the cells, the row lengths also determine the diagram
 `YoungDiagram.card_filter_fst_lt_filter_snd_eq` counts the cells of the first `k` rows
 lying in a fixed column.  The same row-by-row reading applies to any property of the cells, not
 only to counting them all: `YoungDiagram.card_filter_cells` counts the cells satisfying a
-predicate one row at a time.
+predicate one row at a time, and `YoungDiagram.prod_cells_eq_prod_range` reads a product over the
+cells the same way.
 
 The partial sums are the shape of every dominance statement about partitions, since dominance
 compares partial sums of decreasingly sorted parts, and the sorted parts of a partition are the
@@ -162,6 +164,23 @@ theorem card_filter_cells (μ : _root_.YoungDiagram) (p : ℕ × ℕ → Prop) [
     simp only [Finset.disjoint_left, Finset.mem_image, Finset.mem_filter, Finset.mem_range]
     rintro c ⟨j, -, rfl⟩ ⟨j', -, hj'⟩
     exact hyz (congrArg Prod.fst hj').symm
+
+/-- **A product over the cells of a Young diagram, read row by row.**  The cells are fibred over
+their row index by `Prod.fst`, and the fibre of `i` is the row `YoungDiagram.row μ i`, which is
+`{i} ×ˢ Finset.range (μ.rowLen i)`.  The range of rows is any range containing all of them, as in
+`YoungDiagram.card_eq_sum_range_rowLen`; a row past the last one contributes an empty product. -/
+theorem prod_cells_eq_prod_range {M : Type*} [CommMonoid M] (μ : _root_.YoungDiagram) {N : ℕ}
+    (hN : μ.colLen 0 ≤ N) (f : ℕ × ℕ → M) :
+    ∏ c ∈ μ.cells, f c = ∏ i ∈ Finset.range N, ∏ j ∈ Finset.range (μ.rowLen i), f (i, j) := by
+  have hmaps : ∀ c ∈ μ.cells, c.1 ∈ Finset.range N := by
+    rintro ⟨a, b⟩ hc
+    exact Finset.mem_range.mpr ((_root_.YoungDiagram.mem_iff_lt_colLen.mp hc).trans_le
+      ((μ.colLen_anti 0 b b.zero_le).trans hN))
+  rw [← Finset.prod_fiberwise_of_maps_to hmaps f]
+  refine Finset.prod_congr rfl fun i _ => ?_
+  -- the fibre of `i` is `YoungDiagram.row`, defined as exactly this filter
+  rw [← _root_.YoungDiagram.row, _root_.YoungDiagram.row_eq_prod, Finset.prod_product,
+    Finset.prod_singleton]
 
 /-- The first `k` entries of `YoungDiagram.rowLens` count the cells in the first `k` rows.  This
 is `YoungDiagram.sum_range_rowLen_eq_card_filter_fst` with the truncation taken on the

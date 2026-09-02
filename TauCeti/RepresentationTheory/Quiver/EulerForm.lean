@@ -8,6 +8,7 @@ module
 public import Mathlib.Combinatorics.Quiver.Basic
 public import Mathlib.Algebra.BigOperators.Ring.Finset
 public import Mathlib.LinearAlgebra.QuadraticForm.Basic
+public import TauCeti.LinearAlgebra.QuadraticForm.PosDef
 public import TauCeti.RepresentationTheory.Quiver.FirstArrow
 public import TauCeti.RepresentationTheory.Quiver.LastArrow
 import Mathlib.Tactic.Ring
@@ -91,6 +92,11 @@ public def titsForm : QuadraticMap ℤ (Q → ℤ) ℤ :=
 @[simp]
 public theorem titsForm_def (d : Q → ℤ) : titsForm Q d = eulerForm Q d d :=
   LinearMap.BilinMap.toQuadraticMap_apply _ _
+
+/-- Only finitely many nonnegative integer vectors are roots of a positive definite Tits form. -/
+public theorem finite_setOf_nonneg_titsForm_eq_one (hpd : (titsForm Q).PosDef) :
+    {d : Q → ℤ | 0 ≤ d ∧ titsForm Q d = 1}.Finite :=
+  (QuadraticMap.PosDef.finite_setOf_apply_eq hpd 1).subset fun _ hd ↦ hd.2
 
 /-- The symmetric bilinear form obtained by polarizing the Tits form. -/
 public def titsPolarForm : LinearMap.BilinForm ℤ (Q → ℤ) :=
@@ -230,6 +236,18 @@ public theorem titsForm_single (i : Q) :
     titsForm Q (Pi.single i 1) = 1 - (Fintype.card (i ⟶ i) : ℤ) := by
   rw [titsForm_def, eulerForm_single_single]
   simp
+
+omit [DecidableEq Q] in
+/-- **A positive definite Tits form has no loops.** The simple dimension vector `αᵢ` has
+`q(αᵢ) = 1 - #(i ⟶ i)`, which a loop at `i` makes non-positive. -/
+public theorem isEmpty_hom_self_of_titsForm_posDef (hpd : (titsForm Q).PosDef) (i : Q) :
+    IsEmpty (i ⟶ i) := by
+  classical
+  have hne : (Pi.single i 1 : Q → ℤ) ≠ 0 := fun h ↦ by simpa using congrFun h i
+  have hpos := hpd _ hne
+  rw [titsForm_single] at hpos
+  rw [← Fintype.card_eq_zero_iff]
+  omega
 
 /-- A loopless vertex has a simple dimension vector of Tits norm one, that is, `αᵢ` is a root. -/
 public theorem titsForm_single_of_isEmpty {i : Q} (h : IsEmpty (i ⟶ i)) :

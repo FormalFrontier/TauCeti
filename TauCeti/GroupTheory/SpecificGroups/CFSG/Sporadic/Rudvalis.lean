@@ -40,12 +40,44 @@ structured expressions and the signed words used by `PresentedGroup`.
 
 The source artifact also gives subgroup generators for enumeration over `²F₄(2)`. They are not
 part of the abstract presentation and are therefore recorded in the metadata but not inserted as
-relations. This file asserts no order, finiteness, simplicity, or identification result. A separate
-source-to-Lean read-through remains part of the S1 review artifact required by the roadmap.
+relations. An independent line-by-line read-through against the pinned source file and its pinned
+`tcfrontend.c` parser found an exact match after the parser's documented involution normalization.
+The parser's alphabet is `1 = u`, `2 = v = v⁻¹`, `3 = t = t⁻¹`, and `4 = u⁻¹`; after putting its
+implicit `v²` and `t²` relations first, its ten explicit outputs are the signed words in
+`TauCeti.Sporadic.ruPresentation_relatorLetters`. This closes the source-to-Lean read-through for
+the row. The separate `FiniteSimpleGroups` cross-check does not apply because that development does
+not cover `Ru`. This file asserts no order, finiteness, simplicity, or identification result.
 
-## Main definition
+## The letter counts
+
+Further decidable checks accompany the count check on the transcribed data. The lengths of the
+compiled relator words, one at a time and in aggregate, record the transcription as written, so a
+dropped or duplicated letter shows up at the relator that carries it. Exactly one of those words is
+not reduced: in the twelfth relator, the tenth source word `(uvtv[(uv)⁻¹tuv,u]²)²`, each of the two
+halves puts the `v` ending its prefix `uvtv` against the `v⁻¹` that opens `[(uv)⁻¹tuv,u]`, and those
+two cancelling pairs are the four letters by which the compiled count `290` exceeds the reduced
+count `286`. Free reduction leaves every relator cyclically reduced, which is what makes the reduced
+figure the one comparable with a published presentation length, since such a length is measured
+after free and cyclic reduction.
+
+No length is recorded to compare it with: none of the five `tcenum` sections described above carries
+a letter count, and Bray's presentation page for `Ru`, which in any case describes a different
+two-generator presentation, prints `Length ??`. The figures below therefore state the transcribed
+data for a reviewer to compare with the source, rather than checking it against a recorded number.
+
+## Main definitions and results
 
 * `TauCeti.Sporadic.ruPresentation`: Soicher's finite presentation of the Rudvalis group `Ru`.
+* `TauCeti.Sporadic.ruPresentation_transcribed` and the equations for the remaining fields: the
+  characterization of the sealed row.
+* `TauCeti.Sporadic.ruPresentation_relatorLetters`: the twelve compiled words checked against the
+  pinned parser output in the independent source-to-Lean read-through.
+* `TauCeti.Sporadic.ruPresentation_map_length_relators` and
+  `TauCeti.Sporadic.ruPresentation_totalLength`: the letter counts of the compiled words.
+* `TauCeti.Sporadic.ruPresentation_map_length_reduce_relators` and
+  `TauCeti.Sporadic.ruPresentation_reducedTotalLength`: the same counts after free reduction.
+* `TauCeti.Sporadic.isCyclicallyReduced_reduce_of_mem_ruPresentation_relators`: the reduced words
+  are cyclically reduced.
 
 ## References
 
@@ -55,6 +87,9 @@ source-to-Lean read-through remains part of the S1 review artifact required by t
 * L. H. Soicher, `tcenum`, presentation file `presentations/Ru`, commit
   `fb9dd89130fca8ad7dc4a92537c96ce7b30b62f1`,
   <https://github.com/lhsoicher/tcenum/blob/fb9dd89130fca8ad7dc4a92537c96ce7b30b62f1/presentations/Ru>.
+* J. N. Bray, presentation page for the Rudvalis group,
+  <https://webspace.maths.qmul.ac.uk/j.n.bray/web/Pres/Ru.html>, which records `Length ??` and so
+  publishes no letter count.
 -/
 
 public section
@@ -109,7 +144,11 @@ def ruPresentation : GroupPresentation where
     source's fifth section. The third-section words t, u, and ((uvu)^-1*t*u*v*u*v*t*v*\
     [t,u]^2*v*t*v)^2 only generate the subgroup used for enumeration over twisted F4(2), so they \
     are metadata rather than relations. The fourth section is empty and hence supplies no \
-    Coxeter relations. A separate source-to-Lean read-through remains an S1 review obligation."
+    Coxeter relations. An independent line-by-line read-through against the pinned source and its \
+    tcfrontend.c parser found exact equality after its documented involution normalization: in \
+    the parser output alphabet 1 is u, 2 is both v and v^-1, 3 is both t and t^-1, and 4 is u^-1. \
+    FiniteSimpleGroups does not cover Ru, so its separate permutation-group cross-check does not \
+    apply."
   expectedGeneratorCount := 3
   expectedRelatorCount := 12
   transcribed :=
@@ -160,8 +199,11 @@ theorem ruPresentation_transcriptionNotes :
       words in the source's fifth section. The third-section words t, u, and \
       ((uvu)^-1*t*u*v*u*v*t*v*[t,u]^2*v*t*v)^2 only generate the subgroup used for enumeration \
       over twisted F4(2), so they are metadata rather than relations. The fourth section is empty \
-      and hence supplies no Coxeter relations. A separate source-to-Lean read-through remains an \
-      S1 review obligation." := by
+      and hence supplies no Coxeter relations. An independent line-by-line read-through against \
+      the pinned source and its tcfrontend.c parser found exact equality after its documented \
+      involution normalization: in the parser output alphabet 1 is u, 2 is both v and v^-1, 3 is \
+      both t and t^-1, and 4 is u^-1. FiniteSimpleGroups does not cover Ru, so its separate \
+      permutation-group cross-check does not apply." := by
   simp [ruPresentation]
 
 /-- The generator count recorded in the `Ru` presentation artifact. -/
@@ -222,6 +264,119 @@ theorem ruPresentation_transcribed :
 
 /-- The generator and relator counts recorded for `Ru` agree with the transcribed data. -/
 theorem ruPresentation_matchesMetadata : ruPresentation.matchesMetadata := by
+  decide
+
+/-! ### The letter counts of the compiled words -/
+
+/-- The twelve compiled relator words for `Ru`, spelled out in the order recorded by the Lean row.
+A letter `(i, true)` is generator `i` and `(i, false)` is its inverse, so indices `0`, `1`, and `2`
+are `u`, `v`, and `t`.
+
+This is the independent source-to-Lean read-through artifact. Running the pinned source's
+`tcfrontend.c` on `presentations/Ru` emits the final ten words below with `1 = u`,
+`2 = v = v⁻¹`, `3 = t = t⁻¹`, and `4 = u⁻¹`; its involution table supplies the leading `v²` and
+`t²` words. The lists below preserve the formal inverse signs that the parser deliberately
+collapses for `v` and `t`; applying that documented normalization reproduces its output exactly. -/
+theorem ruPresentation_relatorLetters :
+    ruPresentation.relatorLetters =
+      [[(1, true), (1, true)],
+        [(2, true), (2, true)],
+        [(0, true), (0, true), (0, true), (0, true)],
+        [(0, true), (1, true), (0, true), (1, true), (0, true), (1, true), (0, true),
+          (1, true), (0, true), (1, true), (0, true), (1, true), (0, true), (1, true)],
+        [(0, true), (0, true), (1, true), (0, true), (0, true), (1, true), (0, true),
+          (0, true), (1, true)],
+        [(2, false), (1, false), (0, false), (1, false), (2, true), (1, true), (0, true),
+          (1, true)],
+        [(2, false), (0, false), (1, false), (0, true), (2, true), (0, false), (1, true),
+          (0, true)],
+        [(0, true), (2, true), (0, true), (2, true), (0, true), (2, true), (0, true),
+          (2, true), (0, true), (2, true), (0, true), (2, true), (0, true), (2, true),
+          (0, true), (2, true), (0, true), (2, true), (0, true), (2, true)],
+        [(0, true), (1, true), (0, true), (2, true), (0, true), (1, true), (0, true),
+          (2, true), (0, true), (1, true), (0, true), (2, true), (0, true), (1, true),
+          (0, true), (2, true), (0, true), (1, true), (0, true), (2, true), (0, true),
+          (1, true), (0, true), (2, true), (0, true), (1, true), (0, true), (2, true),
+          (0, true), (1, true), (0, true), (2, true), (0, true), (1, true), (0, true),
+          (2, true), (0, true), (1, true), (0, true), (2, true), (0, true), (1, true),
+          (0, true), (2, true), (0, true), (1, true), (0, true), (2, true), (0, true),
+          (1, true), (0, true), (2, true)],
+        [(0, true), (2, false), (0, true), (2, true), (0, false), (0, false), (0, false),
+          (2, false), (0, true), (0, true), (2, false), (0, true), (2, true), (0, false),
+          (0, false), (0, false), (2, true), (0, true), (0, true), (0, true), (2, false),
+          (0, false), (2, true), (0, true), (2, false), (0, true), (2, true), (0, false),
+          (0, false), (0, false), (2, false), (0, true), (0, true), (2, false), (0, true),
+          (2, true), (0, false), (0, false), (0, false), (2, true), (0, true), (0, true),
+          (0, true), (2, false), (0, false), (2, true), (0, true), (2, false), (0, true),
+          (2, true), (0, false), (0, false), (0, false), (2, false), (0, true), (0, true),
+          (2, false), (0, true), (2, true), (0, false), (0, false), (0, false), (2, true),
+          (0, true), (0, true), (0, true), (2, false), (0, false), (2, true)],
+        [(0, true), (1, false), (0, false), (2, true), (0, true), (1, true), (2, true),
+          (0, true), (0, true), (2, true), (0, true), (0, true), (2, true), (0, true),
+          (0, true), (2, true), (0, true), (0, true), (1, false), (0, false), (2, true),
+          (0, true), (1, true), (0, true), (1, false), (0, false), (2, true), (0, true),
+          (1, true), (2, true), (0, true), (0, true), (2, true), (0, true), (0, true),
+          (2, true), (0, true), (0, true), (2, true), (0, true), (0, true), (1, false),
+          (0, false), (2, true), (0, true), (1, true)],
+        [(0, true), (1, true), (2, true), (1, true), (1, false), (0, false), (2, false),
+          (0, true), (1, true), (0, false), (1, false), (0, false), (2, true), (0, true),
+          (1, true), (0, true), (1, false), (0, false), (2, false), (0, true), (1, true),
+          (0, false), (1, false), (0, false), (2, true), (0, true), (1, true), (0, true),
+          (0, true), (1, true), (2, true), (1, true), (1, false), (0, false), (2, false),
+          (0, true), (1, true), (0, false), (1, false), (0, false), (2, true), (0, true),
+          (1, true), (0, true), (1, false), (0, false), (2, false), (0, true), (1, true),
+          (0, false), (1, false), (0, false), (2, true), (0, true), (1, true), (0, true)]] := by
+  simp only [GroupPresentation.relatorLetters_def, GroupPresentation.relators_def,
+    ruPresentation_transcribed, List.map_cons, List.map_nil, Relator.toWord_gen,
+    Relator.toWord_inv, Relator.toWord_mul, Relator.toWord_pow, Relator.toWord_comm,
+    FreeGroup.invRev]
+  decide
+
+/-- The lengths of the twelve compiled relator words for `Ru`, in the source's order.
+
+Reading the counts off one relator at a time is what lets a reviewer locate a discrepancy, rather
+than only observe one in the total of `TauCeti.Sporadic.ruPresentation_totalLength`. -/
+theorem ruPresentation_map_length_relators :
+    ruPresentation.relators.map List.length = [2, 2, 4, 14, 9, 8, 8, 20, 52, 69, 46, 56] := by
+  rw [← GroupPresentation.map_length_relatorLetters, ruPresentation_relatorLetters]
+  decide
+
+/-- The compiled relator words for `Ru` have `290` letters in total. The twelfth of them is not
+reduced, so `TauCeti.Sporadic.ruPresentation_reducedTotalLength` and not this figure is the one to
+compare with a published presentation length. -/
+theorem ruPresentation_totalLength : ruPresentation.totalLength = 290 := by
+  rw [GroupPresentation.totalLength_def, ruPresentation_map_length_relators]
+  decide
+
+/-- The lengths of the twelve compiled relator words for `Ru` after free reduction. Only the
+twelfth entry differs from `TauCeti.Sporadic.ruPresentation_map_length_relators`, by the two
+cancelling pairs its two halves each contribute. -/
+theorem ruPresentation_map_length_reduce_relators :
+    (ruPresentation.relators.map fun w => (FreeGroup.reduce w).length) =
+      [2, 2, 4, 14, 9, 8, 8, 20, 52, 69, 46, 52] := by
+  simp only [GroupPresentation.relators_def, ruPresentation_transcribed, List.map_cons,
+    List.map_nil, Relator.toWord_gen, Relator.toWord_inv, Relator.toWord_mul, Relator.toWord_pow,
+    Relator.toWord_comm]
+  decide
+
+/-- The freely reduced relator words for `Ru` have `286` letters in total. No length is recorded for
+this presentation to compare it with, so this figure states the transcribed data for a reviewer to
+check against the source rather than against a published number. -/
+theorem ruPresentation_reducedTotalLength :
+    (ruPresentation.relators.map fun w => (FreeGroup.reduce w).length).sum = 286 := by
+  rw [ruPresentation_map_length_reduce_relators]
+  decide
+
+/-- Free reduction makes every compiled relator word for `Ru` cyclically reduced.
+
+This is what makes the letter count of `TauCeti.Sporadic.ruPresentation_reducedTotalLength`
+comparable with a published presentation length, which is measured after free and cyclic reduction
+of each relator. -/
+theorem isCyclicallyReduced_reduce_of_mem_ruPresentation_relators :
+    ∀ w ∈ ruPresentation.relators, FreeGroup.IsCyclicallyReduced (FreeGroup.reduce w) := by
+  simp only [GroupPresentation.relators_def, ruPresentation_transcribed, List.map_cons,
+    List.map_nil, Relator.toWord_gen, Relator.toWord_inv, Relator.toWord_mul, Relator.toWord_pow,
+    Relator.toWord_comm]
   decide
 
 end TauCeti.Sporadic

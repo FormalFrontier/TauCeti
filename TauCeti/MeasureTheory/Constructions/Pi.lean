@@ -142,7 +142,7 @@ theorem measurePreserving_update_update (μ : ∀ i, Measure (α i))
   let _ : IsProbabilityMeasure (@Measure.pi (Subtype p) (fun i => α i) (Subtype.fintype p)
       (fun i => inferInstance) fun i => μ i) := by
     rw [← hpi, ← hselected.map_eq]
-    exact Measure.isProbabilityMeasure_map hselected.measurable.aemeasurable
+    infer_instance
   have hrest := measurePreserving_snd.comp hsplit
   have hcombine := (hselected.prod hrest).comp
     (Measure.measurePreserving_swap (μ := Measure.pi μ) (ν := (μ a).prod (μ b)))

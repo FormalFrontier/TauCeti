@@ -52,21 +52,14 @@ namespace TauCeti.Sl2Std
 
 open TauCeti.UniversalEnvelopingAlgebra
 
+/-- The two root vectors in the standard basis of `sl₂`. -/
 local notation "e" => ![slFinTwoBasis ℚ 0, slFinTwoBasis ℚ 1]
+/-- The Cartan vector in the standard basis of `sl₂`. -/
 local notation "h" => ![slFinTwoBasis ℚ 2]
+/-- The standard two-dimensional representation of the enveloping algebra of `sl₂`. -/
 local notation "ρ" => repEnveloping ℚ 1
+/-- The coordinate basis of the integral lattice in the standard two-dimensional representation. -/
 local notation "b" => integralLatticeAddSubgroupBasis 1
-
-private theorem toGL_transvection_eq_transvectionUnit {A : Type*} [CommRing A]
-    {i j : Fin 2} (hij : i ≠ j) (t : A) :
-    Matrix.SpecialLinearGroup.toGL (Matrix.SpecialLinearGroup.transvection hij t) =
-      TauCeti.transvectionUnit hij t := by
-  -- `transvectionUnit` is opaque outside its defining module, whose public coercion equation is
-  -- `coe_transvectionUnit`; compare the two `GL₂` elements through their underlying matrices.
-  apply Matrix.GeneralLinearGroup.ext
-  intro r s
-  rw [TauCeti.coe_transvectionUnit]
-  rfl
 
 private theorem kostantRootSubgroupMatrix_apply_rankOne {A : Type*} [CommRing A]
     (i r s : Fin 2) (t : Multiplicative A) :
@@ -139,7 +132,7 @@ theorem map_kostantElementarySubgroup_le_range_toGL (A : Type) [CommRing A] :
   have hrev : i ≠ i.rev := by fin_cases i <;> decide
   rw [← (AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm_apply_apply q,
     kostantRootSubgroupMatrix_eq_transvectionUnit]
-  exact ⟨_, toGL_transvection_eq_transvectionUnit hrev _⟩
+  exact ⟨_, TauCeti.toGL_transvection_eq_transvectionUnit hrev _⟩
 
 /-- **The rank-one elementary-group identification for the Kostant construction.** Over a field,
 the matrix image of the elementary group constructed from the standard two-dimensional `sl₂`

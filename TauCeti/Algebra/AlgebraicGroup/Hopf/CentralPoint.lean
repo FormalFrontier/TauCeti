@@ -68,11 +68,11 @@ namespace TauCeti
 
 namespace HopfAlgebra
 
-universe u v
+universe u v w
 
 section Definition
 
-variable {R : Type u} {H : Type v} {A : Type v}
+variable {R : Type u} {H : Type v} {A : Type w}
 variable [CommRing R] [Ring H] [_root_.Bialgebra R H] [CommRing A] [Algebra R A]
 
 /-- A point `g` of `Spec H` with values in `A` is **central** when, for every `R`-algebra map
@@ -80,28 +80,39 @@ variable [CommRing R] [Ring H] [_root_.Bialgebra R H] [CommRing A] [Algebra R A]
 of `Spec H`.
 
 Commuting with the points over `A` alone is a strictly weaker condition and does not describe a
-subgroup scheme; this is why the value algebra is quantified over. Restricting the quantifier to
-`Type v` loses nothing: `TauCeti.HopfAlgebra.isCentralPoint_iff_commute_includeRight` shows that
-the single value algebra `A ⊗[R] H` already decides centrality. -/
+subgroup scheme; this is why the value algebra is quantified over. The quantified value algebras
+live in `Type (max v w)`, which contains the universal test algebra `A ⊗[R] H`.
+`TauCeti.HopfAlgebra.isCentralPoint_iff_commute_includeRight` shows, when the coordinate and value
+algebras are in the same universe, that this single value algebra already decides centrality. -/
 def IsCentralPoint (g : WithConv (H →ₐ[R] A)) : Prop :=
-  ∀ ⦃B : Type v⦄ [CommRing B] [Algebra R B] (φ : A →ₐ[R] B) (h : WithConv (H →ₐ[R] B)),
+  ∀ ⦃B : Type (max v w)⦄ [CommRing B] [Algebra R B] (φ : A →ₐ[R] B)
+    (h : WithConv (H →ₐ[R] B)),
     Commute (AlgHom.mapValue φ g) h
 
 /-- Centrality, restated as the defining condition. -/
 theorem isCentralPoint_def (g : WithConv (H →ₐ[R] A)) :
     IsCentralPoint g ↔
-      ∀ ⦃B : Type v⦄ [CommRing B] [Algebra R B] (φ : A →ₐ[R] B) (h : WithConv (H →ₐ[R] B)),
+      ∀ ⦃B : Type (max v w)⦄ [CommRing B] [Algebra R B] (φ : A →ₐ[R] B)
+        (h : WithConv (H →ₐ[R] B)),
         Commute (AlgHom.mapValue φ g) h :=
   Iff.rfl
 
 /-- A central point commutes with every point over its own value algebra. -/
 theorem IsCentralPoint.commute {g : WithConv (H →ₐ[R] A)} (hg : IsCentralPoint g)
     (h : WithConv (H →ₐ[R] A)) : Commute g h := by
-  simpa using hg (AlgHom.id R A) h
+  let e : A ≃ₐ[R] ULift.{v} A := ULift.algEquiv.symm
+  have hc := hg e.toAlgHom (AlgHom.mapValue e.toAlgHom h)
+  have hc' := hc.map (AlgHom.mapValue (H := H) e.symm.toAlgHom)
+  have hback (x : WithConv (H →ₐ[R] A)) :
+      AlgHom.mapValue (H := H) e.symm.toAlgHom (AlgHom.mapValue e.toAlgHom x) = x := by
+    apply ofConv_injective
+    ext a
+    simp [AlgHom.mapValue_apply, e]
+  simpa only [hback] using hc'
 
 /-- Centrality is preserved by change of value algebra. -/
 theorem IsCentralPoint.mapValue {g : WithConv (H →ₐ[R] A)} (hg : IsCentralPoint g)
-    {B : Type v} [CommRing B] [Algebra R B] (φ : A →ₐ[R] B) :
+    {B : Type (max v w)} [CommRing B] [Algebra R B] (φ : A →ₐ[R] B) :
     IsCentralPoint (AlgHom.mapValue φ g) := by
   intro C _ _ ψ h
   rw [← MonoidHom.comp_apply, ← AlgHom.mapValue_comp]
@@ -167,7 +178,7 @@ end Definition
 
 section Group
 
-variable {R : Type u} {H : Type v} {A : Type v}
+variable {R : Type u} {H : Type v} {A : Type w}
 variable [CommRing R] [Ring H] [_root_.HopfAlgebra R H] [CommRing A] [Algebra R A]
 
 /-- The inverse of a central point is central. -/
@@ -204,7 +215,8 @@ noncomputable instance instIsMulCommutativeCenter : IsMulCommutative (center R H
   IsMulCommutative.of_setLike_mul_comm fun _ ha b _ ↦ ((mem_center.mp ha).commute b).eq
 
 /-- The center is natural in the value algebra. -/
-theorem mapValue_mem_center {B : Type v} [CommRing B] [Algebra R B] (φ : A →ₐ[R] B)
+theorem mapValue_mem_center {B : Type (max v w)} [CommRing B] [Algebra R B]
+    (φ : A →ₐ[R] B)
     {g : WithConv (H →ₐ[R] A)} (hg : g ∈ center R H A) :
     AlgHom.mapValue φ g ∈ center R H B :=
   (mem_center.mp hg).mapValue φ

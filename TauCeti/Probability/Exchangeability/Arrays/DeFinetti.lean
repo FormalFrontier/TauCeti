@@ -107,7 +107,7 @@ theorem SeparatelyExchangeable.exists_directing_arrayRow_mixingLaw_invariant
     (h : SeparatelyExchangeable μ X) (hX : ∀ p, AEMeasurable (X p) μ) :
     ∃ ν : Ω → ProbabilityMeasure (ℕ → α), ConditionallyIIDWith μ (arrayRow X) ν ∧
       ∀ τ : Equiv.Perm ℕ,
-        μ.map (fun ω ↦ (ν ω).map (measurable_reindex τ).aemeasurable) = μ.map ν := by
+        μ.map (fun ω ↦ (ν ω).map (fun x : ℕ → α => fun k => x (τ k))) = μ.map ν := by
   obtain ⟨ν, hν⟩ := (h.conditionallyIID_arrayRow hX).exists_directing
   exact ⟨ν, hν, fun τ ↦
     h.mixingLaw_map_permReindex_arrayRow_eq (mixedIIDWith_of_conditionallyIIDWith hν) τ⟩
@@ -119,7 +119,7 @@ theorem SeparatelyExchangeable.exists_directing_arrayCol_mixingLaw_invariant
     (h : SeparatelyExchangeable μ X) (hX : ∀ p, AEMeasurable (X p) μ) :
     ∃ ν : Ω → ProbabilityMeasure (ℕ → α), ConditionallyIIDWith μ (arrayCol X) ν ∧
       ∀ σ : Equiv.Perm ℕ,
-        μ.map (fun ω ↦ (ν ω).map (measurable_reindex σ).aemeasurable) = μ.map ν := by
+        μ.map (fun ω ↦ (ν ω).map (fun x : ℕ → α => fun k => x (σ k))) = μ.map ν := by
   obtain ⟨ν, hν⟩ := (h.conditionallyIID_arrayCol hX).exists_directing
   exact ⟨ν, hν, fun σ ↦
     h.mixingLaw_map_permReindex_arrayCol_eq (mixedIIDWith_of_conditionallyIIDWith hν) σ⟩

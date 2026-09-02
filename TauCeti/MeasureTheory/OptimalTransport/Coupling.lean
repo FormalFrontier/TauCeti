@@ -271,9 +271,10 @@ theorem isCoupling_inv_smul_prod [IsFiniteMeasure μ] (h : μ univ = ν univ) :
     exact ⟨by simp, by simp⟩
   · have hinv : (μ univ)⁻¹ * μ univ = 1 := ENNReal.inv_mul_cancel h0 (measure_ne_top μ univ)
     refine ⟨?_, ?_⟩
-    · simp only [Measure.fst, Measure.map_smul, Measure.map_fst_prod, smul_smul, ← h, hinv,
-        one_smul]
-    · simp only [Measure.snd, Measure.map_smul, Measure.map_snd_prod, smul_smul, hinv, one_smul]
+    · rw [Measure.fst, Measure.map_smul _ measurable_fst.aemeasurable, Measure.map_fst_prod,
+        smul_smul, ← h, hinv, one_smul]
+    · rw [Measure.snd, Measure.map_smul _ measurable_snd.aemeasurable, Measure.map_snd_prod,
+        smul_smul, hinv, one_smul]
 
 /-- A finite measure and any measure admit a coupling exactly when they have the same total
 mass. -/
@@ -342,9 +343,9 @@ points under the marginal maps. -/
 theorem isCoupling_toMeasure_iff {μ : ProbabilityMeasure X} {ν : ProbabilityMeasure Y}
     {π : ProbabilityMeasure (X × Y)} :
     IsCoupling π.toMeasure μ.toMeasure ν.toMeasure ↔
-      π.map measurable_fst.aemeasurable = μ ∧ π.map measurable_snd.aemeasurable = ν := by
-  rw [← ProbabilityMeasure.toMeasure_injective.eq_iff (a := π.map measurable_fst.aemeasurable),
-    ← ProbabilityMeasure.toMeasure_injective.eq_iff (a := π.map measurable_snd.aemeasurable),
+      π.map Prod.fst = μ ∧ π.map Prod.snd = ν := by
+  rw [← ProbabilityMeasure.toMeasure_injective.eq_iff (a := π.map Prod.fst),
+    ← ProbabilityMeasure.toMeasure_injective.eq_iff (a := π.map Prod.snd),
     ProbabilityMeasure.toMeasure_map, ProbabilityMeasure.toMeasure_map]
   exact ⟨fun h ↦ ⟨h.fst_eq, h.snd_eq⟩, fun h ↦ ⟨h.1, h.2⟩⟩
 
@@ -382,11 +383,11 @@ instance instNonempty : Nonempty (Coupling μ ν) :=
 
 /-- The first marginal of a bundled coupling. -/
 def fst (π : Coupling μ ν) : ProbabilityMeasure X :=
-  π.1.map measurable_fst.aemeasurable
+  π.1.map Prod.fst
 
 /-- The second marginal of a bundled coupling. -/
 def snd (π : Coupling μ ν) : ProbabilityMeasure Y :=
-  π.1.map measurable_snd.aemeasurable
+  π.1.map Prod.snd
 
 /-- The underlying measure of the first marginal is the pushforward along the first projection.
 This is not a `simp` lemma: `simp` rewrites `π.fst` to `μ` via `fst_eq` instead. -/
@@ -416,7 +417,7 @@ theorem snd_eq (π : Coupling μ ν) : π.snd = ν :=
 
 /-- Exchanging the two coordinates of a bundled coupling. -/
 def swap (π : Coupling μ ν) : Coupling ν μ :=
-  ⟨π.1.map measurable_swap.aemeasurable, by
+  ⟨π.1.map Prod.swap, by
     rw [ProbabilityMeasure.toMeasure_map]
     exact π.2.swap⟩
 
@@ -424,7 +425,7 @@ def swap (π : Coupling μ ν) : Coupling ν μ :=
 coordinate swap. -/
 @[simp]
 theorem coe_swap (π : Coupling μ ν) :
-    (π.swap : ProbabilityMeasure (Y × X)) = π.1.map measurable_swap.aemeasurable :=
+    (π.swap : ProbabilityMeasure (Y × X)) = π.1.map Prod.swap :=
   (rfl)
 
 /-- Exchanging the coordinates twice is the identity. -/

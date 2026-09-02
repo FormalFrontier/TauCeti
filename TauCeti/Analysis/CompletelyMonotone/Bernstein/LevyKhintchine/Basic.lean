@@ -6,9 +6,9 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.MeasureTheory.Integral.Bochner.Basic
-public import Mathlib.MeasureTheory.Measure.Dirac
+public import Mathlib.MeasureTheory.Measure.Dirac.Basic
 public import TauCeti.Analysis.CompletelyMonotone.Bernstein.Basic
-import TauCeti.Analysis.CompletelyMonotone.Laplace.Representation
+public import TauCeti.Analysis.CompletelyMonotone.Laplace.Representation
 import Mathlib.Analysis.Calculus.ParametricIntegral
 
 /-!
@@ -31,14 +31,17 @@ terms, is a Bernstein function.
 * `TauCeti.IsBernsteinLevyMeasure`: the standard integrability and no-atom-at-zero condition.
 * `TauCeti.bernsteinLevyJumpExponent`: the jump part of a Bernstein function's
   Levy--Khintchine representation.
+* `TauCeti.bernsteinLevyDerivativeMeasure`: coordinate-weighting of a Levy measure, whose
+  Laplace transform is the derivative of the jump exponent; it is inverted by
+  `TauCeti.withDensity_inv_bernsteinLevyDerivativeMeasure`.
 * `TauCeti.isBernsteinFunction_bernsteinLevyJumpExponent`: an integrable Levy jump exponent is
   a Bernstein function.
 * `TauCeti.isBernsteinFunction_bernsteinLevyKhintchineExponent`: adding
   nonnegative killing and drift terms preserves the Bernstein property.
 
 Existence of the converse triplet is proved in
-`TauCeti.Analysis.CompletelyMonotone.Bernstein.LevyKhintchine.Representation`; uniqueness remains
-separate.
+`TauCeti.Analysis.CompletelyMonotone.Bernstein.LevyKhintchine.Representation`, and uniqueness in
+`TauCeti.Analysis.CompletelyMonotone.Bernstein.LevyKhintchine.Uniqueness`.
 
 ## References
 
@@ -199,10 +202,30 @@ theorem bernsteinLevyJumpExponent_zero_measure (t : ℝ) :
 
 /-- Weighting a Bernstein Levy measure by the coordinate gives the measure whose Laplace
 transform is the derivative of its jump exponent. -/
-private noncomputable def bernsteinLevyDerivativeMeasure (μ : Measure ℝ≥0) : Measure ℝ≥0 :=
+noncomputable def bernsteinLevyDerivativeMeasure (μ : Measure ℝ≥0) : Measure ℝ≥0 :=
   μ.withDensity fun x : ℝ≥0 => (x : ℝ≥0∞)
 
-private lemma integrable_exp_neg_mul_bernsteinLevyDerivativeMeasure
+/-- The mass that the coordinate-weighted Levy measure assigns to a measurable set. -/
+@[simp]
+theorem bernsteinLevyDerivativeMeasure_apply (μ : Measure ℝ≥0) {s : Set ℝ≥0}
+    (hs : MeasurableSet s) :
+    bernsteinLevyDerivativeMeasure μ s = ∫⁻ x in s, (x : ℝ≥0∞) ∂μ := by
+  rw [bernsteinLevyDerivativeMeasure, withDensity_apply _ hs]
+
+/-- Dividing out the coordinate weight recovers a Levy measure from its coordinate-weighted
+counterpart, since the weight is invertible away from the zero-mass point `0`. -/
+theorem withDensity_inv_bernsteinLevyDerivativeMeasure {μ : Measure ℝ≥0} (hμ : μ {0} = 0) :
+    (bernsteinLevyDerivativeMeasure μ).withDensity (fun x : ℝ≥0 => (x : ℝ≥0∞)⁻¹) = μ := by
+  rw [bernsteinLevyDerivativeMeasure]
+  refine withDensity_inv_same (by fun_prop) ?_ ?_
+  · rw [ae_iff]
+    simpa only [ENNReal.coe_eq_zero, not_ne_iff, ofPred_eq_eq_singleton] using hμ
+  · filter_upwards with x
+    simp
+
+/-- The exponential kernel is integrable against a coordinate-weighted Levy measure at every
+positive parameter. -/
+theorem integrable_exp_neg_mul_bernsteinLevyDerivativeMeasure
     {μ : Measure ℝ≥0} (hμ : Integrable (fun x : ℝ≥0 => min 1 (x : ℝ)) μ)
     {t : ℝ} (ht : 0 < t) :
     Integrable (fun x : ℝ≥0 => Real.exp (-(t * (x : ℝ))))
@@ -212,7 +235,9 @@ private lemma integrable_exp_neg_mul_bernsteinLevyDerivativeMeasure
   simpa only [ENNReal.coe_toReal, mul_comm] using
     integrable_mul_exp_neg_mul_of_integrable_min_one hμ ht
 
-private lemma laplaceTransform_bernsteinLevyDerivativeMeasure
+/-- The Laplace transform of the coordinate-weighted Levy measure is the exponentially damped
+first moment of the original measure. -/
+theorem laplaceTransform_bernsteinLevyDerivativeMeasure
     (μ : Measure ℝ≥0) (t : ℝ) :
     laplaceTransform (bernsteinLevyDerivativeMeasure μ) t =
       ∫ x : ℝ≥0, (x : ℝ) * Real.exp (-(t * (x : ℝ))) ∂μ := by
@@ -220,7 +245,19 @@ private lemma laplaceTransform_bernsteinLevyDerivativeMeasure
     integral_withDensity_eq_integral_toReal_smul (by fun_prop) (by simp)]
   simp only [ENNReal.coe_toReal, smul_eq_mul]
 
-private theorem continuousOn_bernsteinLevyJumpExponent {μ : Measure ℝ≥0}
+/-- The coordinate-weighted Levy measure represents the exponentially damped first moment of the
+original measure by its Laplace transform on the positive half-line. -/
+theorem representsLaplaceOnIoi_bernsteinLevyDerivativeMeasure {μ : Measure ℝ≥0}
+    (hμ : Integrable (fun x : ℝ≥0 => min 1 (x : ℝ)) μ) :
+    RepresentsLaplaceOnIoi (bernsteinLevyDerivativeMeasure μ)
+      (fun t => ∫ x : ℝ≥0, (x : ℝ) * Real.exp (-(t * (x : ℝ))) ∂μ) :=
+  representsLaplaceOnIoi_iff.mpr
+    ⟨fun _ ht => integrable_exp_neg_mul_bernsteinLevyDerivativeMeasure hμ ht,
+      fun t _ => (laplaceTransform_bernsteinLevyDerivativeMeasure μ t).symm⟩
+
+/-- The Levy jump exponent of a measure with integrable truncated coordinate is continuous on
+the nonnegative half-line, including at the endpoint `0`. -/
+theorem continuousOn_bernsteinLevyJumpExponent {μ : Measure ℝ≥0}
     (hμ : Integrable (fun x : ℝ≥0 => min 1 (x : ℝ)) μ) :
     ContinuousOn (bernsteinLevyJumpExponent μ) (Ici 0) := by
   intro t ht
@@ -298,13 +335,9 @@ private theorem differentiableAt_bernsteinLevyJumpExponent {μ : Measure ℝ≥0
 
 private theorem isCompletelyMonotoneOnIoi_deriv_bernsteinLevyJumpExponent
     {μ : Measure ℝ≥0} (hμ : Integrable (fun x : ℝ≥0 => min 1 (x : ℝ)) μ) :
-    IsCompletelyMonotoneOnIoi (deriv (bernsteinLevyJumpExponent μ)) := by
-  have hcm : IsCompletelyMonotoneOnIoi (laplaceTransform (bernsteinLevyDerivativeMeasure μ)) :=
-    isCompletelyMonotoneOnIoi_laplaceTransform _ fun _ ht =>
-      integrable_exp_neg_mul_bernsteinLevyDerivativeMeasure hμ ht
-  exact hcm.congr fun t ht => by
-    rw [deriv_bernsteinLevyJumpExponent hμ ht,
-      laplaceTransform_bernsteinLevyDerivativeMeasure]
+    IsCompletelyMonotoneOnIoi (deriv (bernsteinLevyJumpExponent μ)) :=
+  ((representsLaplaceOnIoi_bernsteinLevyDerivativeMeasure hμ).congr fun _ ht =>
+    deriv_bernsteinLevyJumpExponent hμ ht).isCompletelyMonotoneOnIoi
 
 /-- Integrability of `min 1 x` suffices for the Levy jump exponent to be a Bernstein function.
 No condition at the origin is needed, because an atom at zero contributes the identically zero

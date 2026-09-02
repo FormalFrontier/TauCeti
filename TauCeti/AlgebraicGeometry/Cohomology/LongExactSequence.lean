@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.AlgebraicGeometry.Cohomology.Basic
-public import TauCeti.AlgebraicGeometry.Cohomology.Module
+public import TauCeti.AlgebraicGeometry.Cohomology.Module.Base
 public import TauCeti.AlgebraicGeometry.Modules.Sheaf
 public import TauCeti.CategoryTheory.Sites.SheafCohomology.LongExactSequence
 

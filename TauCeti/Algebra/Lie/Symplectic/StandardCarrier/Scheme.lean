@@ -220,22 +220,10 @@ point kills the carrier's defining Hopf ideal. -/
 parameter is read through the canonical multiplicative copy of the additive group of `A`. -/
 noncomputable def rootSubgroupPoints (k : Fin (n + 1) ⊕ Fin (n + 1)) (A : Type v) [CommRing A] :
     Multiplicative A →* points n A :=
-  MonoidHom.codRestrict
-    ((TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupMatrix (rootGenerator n)
-      (cartanGenerator n) (rep n) (lattice n).toAddSubgroup
-      (fun _ hu _ hv => rep_kostantForm_mem_lattice n hu hv) k (isNilpotent_rep_rootGenerator n k)
-      (latticeBasis n)).comp
-        (AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm.toMonoidHom)
-    (points n A) fun u => by
-      rw [points]
-      exact TauCeti.UniversalEnvelopingAlgebra.kostantGeneratedPointsSubgroup_le_toralPoints
-        (rootGenerator n) (cartanGenerator n) (rep n) (lattice n).toAddSubgroup
-        (fun _ hu _ hv => rep_kostantForm_mem_lattice n hu hv) (isNilpotent_rep_rootGenerator n)
-        (latticeBasis n) (basisWeight n) A
-        (TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupMatrix_mem_generatedPoints
-          (rootGenerator n) (cartanGenerator n) (rep n) (lattice n).toAddSubgroup
-          (fun _ hu _ hv => rep_kostantForm_mem_lattice n hu hv) (isNilpotent_rep_rootGenerator n)
-          (latticeBasis n) A k _)
+  TauCeti.UniversalEnvelopingAlgebra.kostantToralRootSubgroupPoints
+    (rootGenerator n) (cartanGenerator n) (rep n) (lattice n).toAddSubgroup
+    (fun _ hu _ hv => rep_kostantForm_mem_lattice n hu hv) (isNilpotent_rep_rootGenerator n)
+    (latticeBasis n) (basisWeight n) k A
 
 /-- A numbered root-subgroup point is the corresponding divided-power exponential matrix. -/
 @[simp] theorem coe_rootSubgroupPoints (k : Fin (n + 1) ⊕ Fin (n + 1)) (A : Type v) [CommRing A]
@@ -247,20 +235,17 @@ noncomputable def rootSubgroupPoints (k : Fin (n + 1) ⊕ Fin (n + 1)) (A : Type
         (fun _ hu _ hv => rep_kostantForm_mem_lattice n hu hv) k
         (isNilpotent_rep_rootGenerator n k)
         (latticeBasis n)
-        ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm u) := (rfl)
+        ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm u) := by
+  exact TauCeti.UniversalEnvelopingAlgebra.coe_kostantToralRootSubgroupPoints
+    _ _ _ _ _ _ _ _ k A u
 
 /-- **The split weight torus inside the type-`C_(n+1)` carrier points.** -/
 noncomputable def weightTorusPoints (A : Type v) [CommRing A] :
     (Fin (n + 1) → Aˣ) →* points n A :=
-  MonoidHom.codRestrict
-    (TauCeti.UniversalEnvelopingAlgebra.kostantTorusMatrix
-      (lattice n).toAddSubgroup (latticeBasis n) (basisWeight n))
-    (points n A) fun s => by
-      rw [points]
-      exact TauCeti.UniversalEnvelopingAlgebra.kostantTorusMatrix_mem_toralPoints
-        (rootGenerator n) (cartanGenerator n) (rep n) (lattice n).toAddSubgroup
-        (fun _ hu _ hv => rep_kostantForm_mem_lattice n hu hv) (isNilpotent_rep_rootGenerator n)
-        (latticeBasis n) (basisWeight n) A s
+  TauCeti.UniversalEnvelopingAlgebra.kostantToralWeightTorusPoints
+    (rootGenerator n) (cartanGenerator n) (rep n) (lattice n).toAddSubgroup
+    (fun _ hu _ hv => rep_kostantForm_mem_lattice n hu hv) (isNilpotent_rep_rootGenerator n)
+    (latticeBasis n) (basisWeight n) A
 
 /-- A split-torus point is the diagonal matrix whose entries are its values on the standard-module
 weights. -/
@@ -268,7 +253,9 @@ weights. -/
     (weightTorusPoints n A s :
         _root_.Matrix.GeneralLinearGroup (Fin ((n + 1) + (n + 1))) A) =
       TauCeti.UniversalEnvelopingAlgebra.kostantTorusMatrix
-        (lattice n).toAddSubgroup (latticeBasis n) (basisWeight n) s := (rfl)
+        (lattice n).toAddSubgroup (latticeBasis n) (basisWeight n) s := by
+  exact TauCeti.UniversalEnvelopingAlgebra.coe_kostantToralWeightTorusPoints
+    _ _ _ _ _ _ _ _ A s
 
 /-- The coordinate-algebra map representing a numbered root subgroup is surjective. -/
 private theorem representedRootCoordinateMap_surjective

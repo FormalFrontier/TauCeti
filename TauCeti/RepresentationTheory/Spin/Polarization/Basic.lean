@@ -38,8 +38,13 @@ giving `dim W = l` both in dimension `2l` (type `Dₗ`) and in dimension `2l + 1
 * `TauCeti.SpinPolarizationData.polar_W_eq_zero` and
   `TauCeti.SpinPolarizationData.polar_W'_eq_zero`: the polar form vanishes on each isotropic
   summand.
+* `TauCeti.SpinPolarizationData.isOrtho_W_line` and
+  `TauCeti.SpinPolarizationData.isOrtho_line_W'`: the orthogonal remainder is orthogonal to each
+  isotropic summand.
 * `TauCeti.SpinPolarizationData.polar_dualVector`: the dual vectors pair with the chosen basis by
   the Kronecker delta.
+* `TauCeti.SpinPolarizationData.isOrtho_basis_dualVector`: off the diagonal a basis vector is
+  orthogonal to a dual vector.
 * `TauCeti.SpinPolarizationData.dualBasis_apply`: the dual basis has `dualVector` as its underlying
   family.
 * `TauCeti.SpinPolarizationData.finrank_eq_two_mul_finrank_W_add_finrank_line` and
@@ -172,6 +177,19 @@ theorem polar_W'_eq_zero (x y : P.W') : QuadraticMap.polar Q (x : V) (y : V) = 0
   have h : Q ((x : V) + (y : V)) = 0 := by simpa using P.isotropic_W' (x + y)
   simp [QuadraticMap.polar, h]
 
+/-! ### The remainder is orthogonal to both isotropic summands -/
+
+/-- A vector of the first isotropic summand is orthogonal to the remainder. -/
+theorem isOrtho_W_line (x : P.W) (z : P.line) : Q.IsOrtho (x : V) (z : V) := by
+  rw [← QuadraticMap.isOrtho_polarBilin, QuadraticMap.polarBilin_apply_apply,
+    QuadraticMap.polar_comm]
+  exact P.line_orthogonal_W z x
+
+/-- The remainder is orthogonal to the second isotropic summand. -/
+theorem isOrtho_line_W' (z : P.line) (y : P.W') : Q.IsOrtho (z : V) (y : V) := by
+  rw [← QuadraticMap.isOrtho_polarBilin, QuadraticMap.polarBilin_apply_apply]
+  exact P.line_orthogonal_W' z y
+
 /-! ### The dual isotropic vectors of a basis -/
 
 variable {ι : Type*} [DecidableEq ι] (b : Module.Basis ι K P.W)
@@ -217,6 +235,15 @@ theorem polar_dualVector_self (i : ι) :
     QuadraticMap.polar Q (b i : V) (P.dualVector b i : V) = 1 := by
   classical
   simp
+
+omit [DecidableEq ι] in
+/-- Off the diagonal a basis vector of `W` is orthogonal to a dual vector. -/
+theorem isOrtho_basis_dualVector {i j : ι} (hij : i ≠ j) :
+    Q.IsOrtho (b i : V) (P.dualVector b j : V) := by
+  classical
+  rw [← QuadraticMap.isOrtho_polarBilin, QuadraticMap.polarBilin_apply_apply,
+    P.polar_dualVector b j i]
+  simp [hij]
 
 end Isotropic
 

@@ -26,6 +26,8 @@ specialized constructions that import this generic API.
   schemes.
 * `TauCeti.ClosedSubgroupScheme`: closed subgroup subobjects of a group scheme.
 * `TauCeti.ClosedSubgroupScheme.mk`: the closed subgroup represented by a closed immersion.
+* `TauCeti.ClosedSubgroupScheme.mkIso`: the canonical isomorphism of that closed subgroup with the
+  source of the immersion.
 -/
 
 public section
@@ -101,6 +103,27 @@ lemma coe_mk {K : Grp (Over X)} (i : K ⟶ G)
   by
     unfold mk
     rfl
+
+/-- The closed subgroup represented by a closed immersion is canonically isomorphic to the source
+of that immersion. -/
+noncomputable def mkIso {K : Grp (Over X)} (i : K ⟶ G)
+    [IsClosedImmersion i.hom.hom.left] :
+    ((mk i).1 : Grp (Over X)) ≅ K :=
+  eqToIso (congrArg (fun P : Subobject G => (P : Grp (Over X))) (coe_mk i)) ≪≫
+    Subobject.underlyingIso i
+
+/-- The canonical parametrization of a closed subgroup followed by its inclusion is the closed
+immersion representing it. -/
+@[simp]
+lemma mkIso_inv_comp_arrow {K : Grp (Over X)} (i : K ⟶ G)
+    [IsClosedImmersion i.hom.hom.left] :
+    (mkIso i).inv ≫ (mk i).1.arrow = i := by
+  have harrow :
+      (eqToIso (congrArg (fun P : Subobject G => (P : Grp (Over X))) (coe_mk i))).inv ≫
+          (mk i).1.arrow =
+        (Subobject.mk i).arrow :=
+    Subobject.arrow_congr (Subobject.mk i) (mk i).1 (coe_mk i).symm
+  rw [mkIso, Iso.trans_inv, Category.assoc, harrow, Subobject.underlyingIso_arrow]
 
 end ClosedSubgroupScheme
 

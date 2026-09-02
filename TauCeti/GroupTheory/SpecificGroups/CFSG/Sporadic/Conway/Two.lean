@@ -13,7 +13,8 @@ public import TauCeti.GroupTheory.Presentation.GroupPresentation
 This file carries the `Co₂` row of the sporadic presentation data required by milestone S1 of
 `TauCetiRoadmap/CFSGStatement/README.md`. It records John Bray's ATLAS version 3 presentation of
 the second Conway group on its standard generators `a` and `b` as a `TauCeti.GroupPresentation`,
-together with the source, the generator convention, transcription notes, and the expected counts.
+together with the source, the generator convention, transcription notes, the expected counts, and
+decidable checks on the transcription.
 
 Writing `s₁ = ab`, `s₂ = ab²`, `s₋₁ = ab⁻¹` and `s₋₂ = ab⁻²` for the four syllables that occur, the
 ten transcribed relators are
@@ -49,9 +50,86 @@ that is, pairs generating the group with `a` an involution whose centralizer has
 provenance for the transcription, not Lean theorems: this file asserts no order, finiteness,
 simplicity, or identification result.
 
-## Main definition
+## Independent source-to-Lean read-through
+
+An independent read-through used the bytes of the ATLAS Magma source `Co2G1-P1.M` whose SHA-256
+digest is `85179f5887ea4f86b3ca5ed0f37cafdca9512f7fb85cbd52d91ad26b27833c5b`. Its constructor
+`G<x,y>` fixes the source generator order, and the assignments `a := x; b := y` immediately after
+the constructor confirm the names used by this Lean row.
+
+Reading the active constructor entries from top to bottom gives
+
+```text
+x², y⁵, (xy²)⁹, [x,y]⁴, [x,y²]⁴, [x,yxy]³,
+[x,yxy²xy]², [x,yxy⁻²]³, [x,y⁻²xyxy⁻²]²,
+(xyxy²xy⁻¹xy⁻²)⁷.
+```
+
+These are exactly the ten entries of `co2Presentation_transcribed`, after identifying `x,y` with
+`a,b`, substituting the four displayed syllable abbreviations, and expanding the source
+commutator `[r,s]` as `r⁻¹s⁻¹rs`. Between the ninth and tenth active entries the Magma file
+comments out `[x,y²xy²]³` with the note "Redundant, but useful."; the presentation page places
+the same word in an HTML element of class `redundant`. It is therefore correctly absent from the
+Lean row. This checks every active source relator, inverse, exponent, and the sole optional-word
+boundary independently of the original transcription and closes this row's S1 source-to-Lean
+read-through.
+
+## Independent comparison with `FiniteSimpleGroups`
+
+The comparison used `finite-simple-groups-lean` at commit
+`7f09e33a9ceef6b59ce03e34cd4f0558c763e325`, whose named permutations `co2a` and `co2b`
+generate a subgroup of `Equiv.Perm (Fin 2300)` with proved order `42305421312000` and proved
+simplicity. Those generators both have order `23`, so they are not the standard pair used by this
+row.
+
+The independent ATLAS 2300-point standard pair is given by the files `Co2G1-p2300B0.g1` and
+`Co2G1-p2300B0.g2`, whose bytes have respective SHA-256 digests
+`388e0c3c1e66fefe7c75f6155dc7d84d30b4a91ee52b028c5902416a06c21d39` and
+`2ab89fcfc29455a03b7027c8a93c8dc832ac1259dfee712ef5fffc9cab56e527`. The pair has orders `2`
+and `5`, with product of order `28`.
+The pinned pair and the ATLAS pair each determine the same rank-three graph: their point stabilizer
+suborbits have lengths `1`, `891`, and `1408`, and the nontrivial orbit of length `891` is the
+neighbor set. Canonically labeling the two 891-regular graphs with pynauty transports the ATLAS
+pair into the pinned development's point numbering. Direct permutation calculation then gives
+orders `2`, `5`, and `28` for `a`, `b`, and `ab`, and all ten compiled relators in this module
+evaluate to the identity. Schreier--Sims membership checks put the transported `a,b` in the pinned
+subgroup and put `co2a,co2b` back in `⟨a,b⟩`; the pair therefore generates that subgroup of order
+`42305421312000`.
+
+The check used Python 3.14.6, pynauty 2.8.8.1, and SymPy 1.14.0. Concatenating the transported
+forward image tables for `a` and then `b`, with each image stored as a two-byte little-endian
+integer, has SHA-256
+`0cf39fc1762ee787a2ead7998b38005878df17f450aabf57ce786bec59fa2f22`. This is the independent
+comparison artifact required by S1; no external code or permutation data is imported into Tau
+Ceti.
+
+The row is a sealed definition, so it publishes an equation for each of its fields: the transcribed
+relator expressions with their generator indices written out and this file's private syllable
+abbreviations expanded, and the provenance a manifest row exists to record. Together with
+`TauCeti.GroupPresentation.relators_def` and `TauCeti.GroupPresentation.mem_relatorSet_iff` the
+first of those determines the compiled words and the relations defining the presented group, so a
+consumer reasons about the row without unfolding it.
+
+Three decidable checks accompany those equations. The relator lengths and their total record the
+compiled data one word at a time and in aggregate, and cyclic reducedness is what makes such a
+letter count comparable with a published presentation length, which is normally measured on freely
+reduced relators: a cyclically reduced word is in particular freely reduced, so its letter count is
+already that reduced length. This row records no published length, so the total here
+states the transcription for a reviewer to compare with the source, rather than checking it
+against a recorded number.
+
+These field equations and the checks beside them follow the shape that the
+`TauCeti.GroupTheory.SpecificGroups.CFSG.Sporadic.Janko` modules established for a manifest row.
+
+## Main definitions and results
 
 * `TauCeti.Sporadic.co2Presentation`: John Bray's ATLAS finite presentation of `Co₂`.
+* `TauCeti.Sporadic.co2Presentation_transcribed` and the equations for the remaining fields: the
+  characterization of the sealed row.
+* `TauCeti.Sporadic.co2Presentation_map_length_relators`,
+  `TauCeti.Sporadic.co2Presentation_totalLength` and
+  `TauCeti.Sporadic.co2Presentation_relatorsCyclicallyReduced`: the three checks on the compiled
+  words.
 
 ## References
 
@@ -59,7 +137,13 @@ simplicity, or identification result.
   version 3, presentation `Co2G1-P1`, contributed by John Bray,
   <https://brauer.maths.qmul.ac.uk/Atlas/v3/pres/Co2G1-P1>, with the relators and the
   demonstration of correctness in the Magma source file
-  <https://brauer.maths.qmul.ac.uk/Atlas/spor/Co2/mag/Co2G1-P1.M>.
+  <https://brauer.maths.qmul.ac.uk/Atlas/spor/Co2/mag/Co2G1-P1.M>; the comparison uses its
+  2300-point standard-generator files
+  <https://brauer.maths.qmul.ac.uk/Atlas/spor/Co2/gap/Co2G1-p2300B0.g1> and
+  <https://brauer.maths.qmul.ac.uk/Atlas/spor/Co2/gap/Co2G1-p2300B0.g2>.
+* KitaKen1, *FiniteSimpleGroups*, `Co2` construction at commit
+  `7f09e33a9ceef6b59ce03e34cd4f0558c763e325`,
+  <https://github.com/KitaKen1/finite-simple-groups-lean>.
 -/
 
 public section
@@ -131,7 +215,139 @@ def co2Presentation : GroupPresentation where
       .pow (sourceComm a (.pow (.inv b) 2 ⬝ ab1 ⬝ abNeg2)) 2,
       .pow (ab1 ⬝ ab2 ⬝ abNeg1 ⬝ abNeg2) 7 ]
 
+/-- The generator names recorded for `Co₂`. The row's body is sealed, so this is what lets a
+consumer see that it is a two-generator presentation. -/
+@[simp]
+theorem co2Presentation_generatorNames : co2Presentation.generatorNames = ["a", "b"] := by
+  simp [co2Presentation]
+
+/-- The source recorded for `Co₂`. The row's body is sealed, so this equation is what publishes the
+citation itself, rather than only the row's name, to a downstream audit. -/
+@[simp]
+theorem co2Presentation_source :
+    co2Presentation.source = "R. A. Wilson, R. A. Parker, J. N. Bray et al., ATLAS of Finite \
+      Group Representations, version 3; presentation contributed by John Bray" := by
+  simp [co2Presentation]
+
+/-- The locator recorded for `Co₂`, pointing at the presentation inside its source. -/
+@[simp]
+theorem co2Presentation_sourceLocator :
+    co2Presentation.sourceLocator = "Co2G1-P1, \
+      https://brauer.maths.qmul.ac.uk/Atlas/v3/pres/Co2G1-P1, with the relator list and the \
+      demonstration of correctness in the Magma source file \
+      https://brauer.maths.qmul.ac.uk/Atlas/spor/Co2/mag/Co2G1-P1.M" := by
+  simp [co2Presentation]
+
+/-- The generator convention recorded for `Co₂`, fixing which generator each relator index names
+and which commutator convention the source uses. -/
+@[simp]
+theorem co2Presentation_generatorConvention :
+    co2Presentation.generatorConvention = "The ATLAS standard generators a and b of Co2, that is, \
+      a in class 2A and b in class 5A with ab of order 28, in that order, so index 0 is a and \
+      index 1 is b. Products are read left to right, negative exponents denote inverses, and \
+      [r,s] denotes r^-1 s^-1 r s." := by
+  simp [co2Presentation]
+
+/-- The transcription notes recorded for `Co₂`. -/
+@[simp]
+theorem co2Presentation_transcriptionNotes :
+    co2Presentation.transcriptionNotes = "The ten words of the source's relator list are stored \
+      as ten relators equal to the identity. The source's eleventh displayed word \
+      (x,y^2*x*y^2)^3 is struck out of the relator list, shown struck through on the presentation \
+      page and commented out as 'Redundant, but useful.' in the Magma file, so it lies outside \
+      the relator list and is not transcribed. The source demonstrates correctness with and \
+      without that word, enumerating in each case the 56925 cosets of a subgroup that centralizes \
+      a, which is the index of the involution centralizer [2^9].S6(2) in Co2. GAP 4.15.1 checks \
+      that the ten compiled words vanish on five independent standard generating pairs of the \
+      2300-point primitive representation of Co2, taking a with centralizer of order 743178240, \
+      b of order 5 with centralizer of order 3000, and ab of order 28." := by
+  simp [co2Presentation]
+
+/-- The generator count `Co₂`'s source states. With
+`TauCeti.Sporadic.co2Presentation_generatorNames` this is what makes
+`TauCeti.Sporadic.co2Presentation_matchesMetadata` an equation between two visible numbers. -/
+@[simp]
+theorem co2Presentation_expectedGeneratorCount : co2Presentation.expectedGeneratorCount = 2 := by
+  simp [co2Presentation]
+
+/-- The relator count `Co₂`'s source states; see
+`TauCeti.Sporadic.co2Presentation_expectedGeneratorCount`. -/
+@[simp]
+theorem co2Presentation_expectedRelatorCount : co2Presentation.expectedRelatorCount = 10 := by
+  simp [co2Presentation]
+
+/-- The relator expressions transcribed for `Co₂`, with their generator indices written out and the
+private syllable abbreviations of this file expanded.
+
+The row's body is sealed, so this is the equation that characterizes it: with
+`TauCeti.GroupPresentation.relators_def` it determines the compiled words, and with
+`TauCeti.GroupPresentation.mem_relatorSet_iff` it determines the relations defining
+`TauCeti.GroupPresentation.Group`, so a consumer never has to unfold the row. Index `0` is the
+generator `a` and index `1` is `b`, and the bounds come from
+`TauCeti.Sporadic.co2Presentation_generatorNames`. Each commutator appears applied to the two
+inverses, which is the source's convention `[r,s] = r⁻¹s⁻¹rs` written in Mathlib's bracket. -/
+@[simp]
+theorem co2Presentation_transcribed :
+    co2Presentation.transcribed =
+      [ -- a²
+        .pow (.gen ⟨0, by simp⟩) 2,
+        -- b⁵
+        .pow (.gen ⟨1, by simp⟩) 5,
+        -- (ab²)⁹
+        .pow (.gen ⟨0, by simp⟩ ⬝ .pow (.gen ⟨1, by simp⟩) 2) 9,
+        -- [a,b]⁴
+        .pow (.comm (.inv (.gen ⟨0, by simp⟩)) (.inv (.gen ⟨1, by simp⟩))) 4,
+        -- [a,b²]⁴
+        .pow (.comm (.inv (.gen ⟨0, by simp⟩)) (.inv (.pow (.gen ⟨1, by simp⟩) 2))) 4,
+        -- [a,bab]³
+        .pow (.comm (.inv (.gen ⟨0, by simp⟩))
+          (.inv (.gen ⟨1, by simp⟩ ⬝ .gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩))) 3,
+        -- [a,b(ab²)(ab)]²
+        .pow (.comm (.inv (.gen ⟨0, by simp⟩))
+          (.inv (.gen ⟨1, by simp⟩ ⬝ (.gen ⟨0, by simp⟩ ⬝ .pow (.gen ⟨1, by simp⟩) 2) ⬝
+            (.gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩)))) 2,
+        -- [a,b(ab⁻²)]³
+        .pow (.comm (.inv (.gen ⟨0, by simp⟩))
+          (.inv (.gen ⟨1, by simp⟩ ⬝
+            (.gen ⟨0, by simp⟩ ⬝ .pow (.inv (.gen ⟨1, by simp⟩)) 2)))) 3,
+        -- [a,b⁻²(ab)(ab⁻²)]²
+        .pow (.comm (.inv (.gen ⟨0, by simp⟩))
+          (.inv (.pow (.inv (.gen ⟨1, by simp⟩)) 2 ⬝ (.gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩) ⬝
+            (.gen ⟨0, by simp⟩ ⬝ .pow (.inv (.gen ⟨1, by simp⟩)) 2)))) 2,
+        -- ((ab)(ab²)(ab⁻¹)(ab⁻²))⁷
+        .pow ((.gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩) ⬝
+          (.gen ⟨0, by simp⟩ ⬝ .pow (.gen ⟨1, by simp⟩) 2) ⬝
+          (.gen ⟨0, by simp⟩ ⬝ .inv (.gen ⟨1, by simp⟩)) ⬝
+          (.gen ⟨0, by simp⟩ ⬝ .pow (.inv (.gen ⟨1, by simp⟩)) 2)) 7 ] := by
+  simp [co2Presentation]
+
 /-- The generator and relator counts recorded for `Co₂` agree with the transcribed data. -/
-theorem matchesMetadata_co2Presentation : co2Presentation.matchesMetadata := by decide
+theorem co2Presentation_matchesMetadata : co2Presentation.matchesMetadata := by decide
+
+/-- The lengths of the ten compiled relator words for `Co₂`, in the order of the source.
+
+Reading the counts off one relator at a time is what lets a reviewer locate a discrepancy, rather
+than only observe one in the total of `TauCeti.Sporadic.co2Presentation_totalLength`. -/
+theorem co2Presentation_map_length_relators :
+    co2Presentation.relators.map List.length = [2, 5, 27, 16, 24, 24, 28, 30, 32, 70] := by
+  simp [GroupPresentation.relators_def, co2Presentation]
+
+/-- The compiled relator words for `Co₂` have `258` letters in total. This row records no published
+length, so this figure states the transcribed data for a reviewer to compare with the source,
+rather than checking it against a recorded number. -/
+theorem co2Presentation_totalLength : co2Presentation.totalLength = 258 := by
+  rw [GroupPresentation.totalLength_def, co2Presentation_map_length_relators]
+  decide
+
+/-- Every compiled relator word for `Co₂` is cyclically reduced, hence by
+`FreeGroup.IsCyclicallyReduced.isReduced` freely reduced. This is what makes the letter count of
+`TauCeti.Sporadic.co2Presentation_totalLength` comparable with a published presentation length,
+which is normally measured on freely reduced relators. -/
+theorem co2Presentation_relatorsCyclicallyReduced :
+    co2Presentation.relatorsCyclicallyReduced := by
+  simp only [GroupPresentation.relatorsCyclicallyReduced_iff, GroupPresentation.relators_def,
+    co2Presentation, List.map_cons, List.map_nil, Relator.toWord_mul, Relator.toWord_pow,
+    Relator.toWord_inv, Relator.toWord_comm, Relator.toWord_gen]
+  decide
 
 end TauCeti.Sporadic

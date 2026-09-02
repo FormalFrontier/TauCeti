@@ -9,6 +9,7 @@ public import TauCeti.RepresentationTheory.Quiver.Reflection.Admissible
 public import TauCeti.RepresentationTheory.Quiver.Reflection.Coxeter
 public import TauCeti.RepresentationTheory.Quiver.Reflection.EulerForm
 public import TauCeti.RepresentationTheory.Quiver.Reflection.FullyFaithful
+public import TauCeti.RepresentationTheory.Quiver.Representation.FiniteDimensional
 
 /-!
 # The Coxeter functor
@@ -40,10 +41,18 @@ dichotomy for indecomposables is supplied by
 
 ## Main results
 
-* `TauCeti.reflectionFunctorList_nil` and `TauCeti.reflectionFunctorList_cons`: the composite is
-  the identity on the empty list and peels off one reflection functor at a time.
+* `TauCeti.reflectionFunctorList_nil`, `TauCeti.reflectionFunctorList_cons` and
+  `TauCeti.reflectionFunctorList_cons_obj`: the composite is the identity on the empty list and
+  peels off one reflection functor -- on objects, one `TauCeti.reflectRep` -- at a time.
 * `TauCeti.isZero_reflectionFunctorList_obj` and `TauCeti.isZero_coxeterFunctor_obj`: the zero
   representation is carried to the zero representation.
+* `TauCeti.isFinDim_reflectionFunctorList_obj` and `TauCeti.isFinDim_coxeterFunctor_obj`:
+  pointwise finite-dimensional vertex spaces stay finite-dimensional.
+* `TauCeti.isZero_coxeterFunctor_obj_iff_isZero_reflectionFunctorList_obj` and
+  `TauCeti.nonempty_iso_coxeterFunctor_obj_iff_nonempty_iso_reflectionFunctorList_obj`: the
+  Coxeter functor and the composite it transports annihilate the same representations and identify
+  the same pairs of them, so a statement about the endofunctor may be proved one reflection at a
+  time.
 * `TauCeti.indecomposable_and_dimVector_reflectionFunctorList_or_isZero` and
   `TauCeti.indecomposable_and_dimVector_coxeterFunctor_or_isZero`: the dichotomy above, for a
   general sink-admissible list and for the Coxeter functor.
@@ -136,6 +145,23 @@ theorem reflectionFunctorList_cons (i : V) (l : List V) (q : _root_.Quiver.{w} V
   rw [reflectionFunctorList]
   congr
 
+/-- **The composite along a cons, on objects.** The first stage is `TauCeti.reflectRep` by
+`TauCeti.reflectionFunctor_obj`, so the composite along `i :: l` is the composite along `l`
+evaluated at the reflected representation. This is the step every stagewise induction along a
+sink-admissible list opens with. -/
+theorem reflectionFunctorList_cons_obj (i : V) (l : List V) (q : _root_.Quiver.{w} V)
+    (hq : ∀ a b : V, Fintype (@_root_.Quiver.Hom V q a b))
+    (hl : Quiver.IsSinkAdmissible q (i :: l))
+    (M : @QuiverRep.{u, v, w, max v w x} k V fld q) :
+    (reflectionFunctorList.{u, v, w, x} k (i :: l) q hq hl).obj M
+      = (reflectionFunctorList k l (Quiver.reflectAt q i) (@instFintypeReflectHom V q hq i)
+          (Quiver.isSinkAdmissible_cons.mp hl).2).obj
+        (@reflectRep k V fld q fV hq M i (Quiver.isSinkAdmissible_cons.mp hl).1) := by
+  let : _root_.Quiver.{w} V := q
+  let : ∀ a b : V, Fintype (@_root_.Quiver.Hom V q a b) := hq
+  rw [reflectionFunctorList_cons]
+  exact congrArg _ (reflectionFunctor_obj i (Quiver.isSinkAdmissible_cons.mp hl).1 M)
+
 /-- **A composite of reflections annihilates the zero representation.** Only the vanishing of the
 vertex spaces is used at each stage, through `TauCeti.isZero_reflectRep`. -/
 theorem isZero_reflectionFunctorList_obj :
@@ -156,6 +182,31 @@ theorem isZero_reflectionFunctorList_obj :
       rw [reflectionFunctor_obj]
       exact isZero_reflectRep M (Quiver.isSinkAdmissible_cons.mp hl).1 fun a _ ↦
         ModuleCat.subsingleton_of_isZero ((Functor.isZero_iff M).mp hM a)
+
+/-- **A composite of reflections preserves pointwise finite-dimensionality.** Each stage is
+`TauCeti.finiteDimensional_reflectRep_obj`; carrying this along the composite is what lets a later
+stage apply the dimension-vector identities, which need finite-dimensional vertex spaces. -/
+theorem isFinDim_reflectionFunctorList_obj :
+    ∀ (l : List V) (q : _root_.Quiver.{w} V)
+      (hq : ∀ a b : V, Fintype (@_root_.Quiver.Hom V q a b))
+      (hl : Quiver.IsSinkAdmissible q l) (M : @QuiverRep.{u, v, w, max v w x} k V fld q),
+      @IsFinDim.{u, v, w, max v w x} k V fld q M →
+      @IsFinDim.{u, v, w, max v w x} k V fld (Quiver.reflectList q l)
+        ((reflectionFunctorList k l q hq hl).obj M)
+  | [], q, hq, hl, M, hfd => by
+      rw [reflectionFunctorList_nil]
+      exact hfd
+  | i :: l, q, hq, hl, M, hfd => by
+      let : _root_.Quiver.{w} V := q
+      let : ∀ a b : V, Fintype (@_root_.Quiver.Hom V q a b) := hq
+      rw [reflectionFunctorList_cons]
+      refine isFinDim_reflectionFunctorList_obj l (Quiver.reflectAt q i)
+        (@instFintypeReflectHom V q hq i) (Quiver.isSinkAdmissible_cons.mp hl).2
+        ((reflectionFunctor i (Quiver.isSinkAdmissible_cons.mp hl).1).obj M) ?_
+      rw [reflectionFunctor_obj]
+      exact (@isFinDim_iff.{u, v, w, max v w x} k V fld (Quiver.reflectAt q i) _).mpr
+        (finiteDimensional_reflectRep_obj M (Quiver.isSinkAdmissible_cons.mp hl).1
+          ((@isFinDim_iff.{u, v, w, max v w x} k V fld q M).mp hfd))
 
 /-! ### The action on an indecomposable representation -/
 
@@ -190,9 +241,8 @@ theorem indecomposable_and_dimVector_reflectionFunctorList_or_isZero [DecidableE
       obtain ⟨hi, hl'⟩ := Quiver.isSinkAdmissible_cons.mp hl
       have key : (reflectionFunctorList.{u, v, w, x} k (i :: l) q hq hl).obj M
           = (reflectionFunctorList k l (Quiver.reflectAt q i)
-              (@instFintypeReflectHom V q hq i) hl').obj (reflectRep M hi) := by
-        rw [reflectionFunctorList_cons]
-        exact congrArg _ (reflectionFunctor_obj i hi M)
+              (@instFintypeReflectHom V q hq i) hl').obj (reflectRep M hi) :=
+        reflectionFunctorList_cons_obj i l q hq hl M
       rw [key]
       rcases incomingSum_surjective_or_forall_subsingleton hi hM with hs | hsub
       · have hRdim : (fun j : V ↦
@@ -228,7 +278,7 @@ theorem indecomposable_and_dimVector_reflectionFunctorList_or_isZero [DecidableE
 /-- A functor into the representations of the quiver structure `r`, read as a functor into the
 representations of `q` along an equality `r = q`. It is only used to bring the composite of the
 reflection functors along a sink-admissible *ordering* back to its own quiver, where
-`TauCeti.Quiver.reflectList_eq_self` supplies the equality; the three lemmas below are its whole
+`TauCeti.Quiver.reflectList_eq_self` supplies the equality; the lemmas below are its whole
 interface, and each is the transport applied to a reflexive equality. -/
 private noncomputable def transportCodomain {q r : _root_.Quiver.{w} V} (h : r = q)
     (F : @QuiverRep.{u, v, w, max v w x} k V fld q ⥤ @QuiverRep.{u, v, w, max v w x} k V fld r) :
@@ -254,10 +304,28 @@ private theorem indecomposable_transportCodomain_obj {q r : _root_.Quiver.{w} V}
   exact Iff.rfl
 
 omit fV in
+private theorem nonempty_iso_transportCodomain_obj {q r : _root_.Quiver.{w} V} (h : r = q)
+    (F : @QuiverRep.{u, v, w, max v w x} k V fld q ⥤ @QuiverRep.{u, v, w, max v w x} k V fld r)
+    (M N : @QuiverRep.{u, v, w, max v w x} k V fld q) :
+    Nonempty ((transportCodomain h F).obj M ≅ (transportCodomain h F).obj N)
+      ↔ Nonempty (F.obj M ≅ F.obj N) := by
+  subst h
+  exact Iff.rfl
+
+omit fV in
 private theorem isZero_transportCodomain_obj {q r : _root_.Quiver.{w} V} (h : r = q)
     (F : @QuiverRep.{u, v, w, max v w x} k V fld q ⥤ @QuiverRep.{u, v, w, max v w x} k V fld r)
     (M : @QuiverRep.{u, v, w, max v w x} k V fld q) :
     Limits.IsZero ((transportCodomain h F).obj M) ↔ Limits.IsZero (F.obj M) := by
+  subst h
+  exact Iff.rfl
+
+omit fV in
+private theorem isFinDim_transportCodomain_obj {q r : _root_.Quiver.{w} V} (h : r = q)
+    (F : @QuiverRep.{u, v, w, max v w x} k V fld q ⥤ @QuiverRep.{u, v, w, max v w x} k V fld r)
+    (M : @QuiverRep.{u, v, w, max v w x} k V fld q) :
+    @IsFinDim.{u, v, w, max v w x} k V fld q ((transportCodomain h F).obj M)
+      ↔ @IsFinDim.{u, v, w, max v w x} k V fld r (F.obj M) := by
   subst h
   exact Iff.rfl
 
@@ -323,6 +391,45 @@ theorem intCast_dimVector_coxeterFunctor_obj (q : _root_.Quiver.{w} V)
   congrArg (fun c : V → ℕ ↦ fun j : V ↦ (c j : ℤ))
     (dimVector_coxeterFunctor_obj q hq hnd hall hl M)
 
+/-- **The Coxeter functor preserves pointwise finite-dimensionality**, since the composite of the
+reflection functors it transports does. -/
+theorem isFinDim_coxeterFunctor_obj (q : _root_.Quiver.{w} V)
+    (hq : ∀ a b : V, Fintype (@_root_.Quiver.Hom V q a b)) {l : List V} (hnd : l.Nodup)
+    (hall : ∀ v : V, v ∈ l) (hl : Quiver.IsSinkAdmissible q l)
+    (M : @QuiverRep.{u, v, w, max v w x} k V fld q)
+    (hfd : @IsFinDim.{u, v, w, max v w x} k V fld q M) :
+    @IsFinDim.{u, v, w, max v w x} k V fld q
+      ((coxeterFunctor.{u, v, w, x} k q hq hnd hall hl).obj M) :=
+  (isFinDim_transportCodomain_obj _ _ M).mpr (isFinDim_reflectionFunctorList_obj l q hq hl M hfd)
+
+/-- **The Coxeter functor annihilates a representation exactly when the reflection-functor
+composite along the ordering does.** The two differ only by the transport of the codomain along
+`TauCeti.Quiver.reflectList_eq_self`, so this is what lets a statement about the endofunctor be
+proved one reflection at a time. -/
+theorem isZero_coxeterFunctor_obj_iff_isZero_reflectionFunctorList_obj (q : _root_.Quiver.{w} V)
+    (hq : ∀ a b : V, Fintype (@_root_.Quiver.Hom V q a b)) {l : List V} (hnd : l.Nodup)
+    (hall : ∀ v : V, v ∈ l) (hl : Quiver.IsSinkAdmissible q l)
+    (M : @QuiverRep.{u, v, w, max v w x} k V fld q) :
+    Limits.IsZero ((coxeterFunctor.{u, v, w, x} k q hq hnd hall hl).obj M)
+      ↔ Limits.IsZero ((reflectionFunctorList k l q hq hl).obj M) :=
+  isZero_transportCodomain_obj _ _ M
+
+/-- **The Coxeter functor identifies two representations exactly when the reflection-functor
+composite along the ordering does.** Like
+`TauCeti.isZero_coxeterFunctor_obj_iff_isZero_reflectionFunctorList_obj`, this only undoes the
+transport of the codomain, so that an isomorphism of Coxeter images may be descended one
+reflection at a time. -/
+theorem nonempty_iso_coxeterFunctor_obj_iff_nonempty_iso_reflectionFunctorList_obj
+    (q : _root_.Quiver.{w} V)
+    (hq : ∀ a b : V, Fintype (@_root_.Quiver.Hom V q a b)) {l : List V} (hnd : l.Nodup)
+    (hall : ∀ v : V, v ∈ l) (hl : Quiver.IsSinkAdmissible q l)
+    (M N : @QuiverRep.{u, v, w, max v w x} k V fld q) :
+    Nonempty ((coxeterFunctor.{u, v, w, x} k q hq hnd hall hl).obj M
+        ≅ (coxeterFunctor.{u, v, w, x} k q hq hnd hall hl).obj N)
+      ↔ Nonempty ((reflectionFunctorList k l q hq hl).obj M
+        ≅ (reflectionFunctorList k l q hq hl).obj N) :=
+  nonempty_iso_transportCodomain_obj _ _ M N
+
 /-- **The Coxeter functor annihilates the zero representation.** -/
 theorem isZero_coxeterFunctor_obj (q : _root_.Quiver.{w} V)
     (hq : ∀ a b : V, Fintype (@_root_.Quiver.Hom V q a b)) {l : List V} (hnd : l.Nodup)
@@ -359,8 +466,9 @@ unchanged by a simple reflection at a loopless vertex, hence by the whole Coxete
 (`TauCeti.titsForm_vertexPreReflectionList`), and no vertex of a repetition-free sink-admissible
 list carries a loop (`TauCeti.Quiver.IsSinkAdmissible.isEmpty_hom_self`). So on an indecomposable
 representation the Coxeter functor either annihilates it or leaves the Tits form of its dimension
-vector alone. This preserved invariant is used by the Layer 5 reflection induction, whose descent
-measure is root height. -/
+vector alone. This preserved invariant feeds the finite-orbit descent theorem
+`TauCeti.exists_vertexPreReflectionList_pow_apply_neg`, which forces a nonzero dimension vector out
+of the nonnegative cone after finitely many Coxeter passes. -/
 theorem titsForm_dimVector_coxeterFunctor_obj (q : _root_.Quiver.{w} V)
     (hq : ∀ a b : V, Fintype (@_root_.Quiver.Hom V q a b)) {l : List V} (hnd : l.Nodup)
     (hall : ∀ v : V, v ∈ l) (hl : Quiver.IsSinkAdmissible q l)

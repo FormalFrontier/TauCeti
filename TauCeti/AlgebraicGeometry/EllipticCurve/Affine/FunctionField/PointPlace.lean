@@ -197,11 +197,9 @@ theorem degree_infinity : (infinity W).degree = 1 := by
     · have hAc0 : A - RatFunc.C c ≠ 0 := by
         intro h
         simp [h] at hAc
-      rw [WeierstrassCurve.Affine.infinityPlace.algebraMap_eq_sq,
-        sq_lt_one_iff₀ zero_le, RatFunc.inftyValuation_apply,
-        RatFunc.inftyValuation_of_nonzero F hAc0, ← WithZero.exp_zero,
-        WithZero.exp_lt_exp]
-      exact hAc
+      rw [WeierstrassCurve.Affine.infinityPlace_algebraMap_ratFunc W hAc0,
+        ← WithZero.exp_zero, WithZero.exp_lt_exp]
+      omega
   have hBval : W.infinityPlace
       (algebraMap (RatFunc F) W.FunctionField B *
         algebraMap W.CoordinateRing W.FunctionField
@@ -210,12 +208,10 @@ theorem degree_infinity : (infinity W).degree = 1 := by
     · simp [hB]
     · by_cases hB0 : B = 0
       · simp [hB0]
-      · have hBnegative : 2 * B.intDegree + 3 < 0 := by omega
-        rw [map_mul, WeierstrassCurve.Affine.infinityPlace.algebraMap_eq_sq,
-          RatFunc.inftyValuation_apply, RatFunc.inftyValuation_of_nonzero F hB0,
-          WeierstrassCurve.Affine.infinityPlace.mk_Y, ← WithZero.exp_nsmul,
-          ← WithZero.exp_add, ← WithZero.exp_zero, WithZero.exp_lt_exp]
-        simpa [two_nsmul] using hBnegative
+      · rw [map_mul, WeierstrassCurve.Affine.infinityPlace_algebraMap_ratFunc W hB0,
+          WeierstrassCurve.Affine.infinityPlace.mk_Y, ← WithZero.exp_add,
+          ← WithZero.exp_zero, WithZero.exp_lt_exp]
+        omega
   calc
     W.infinityPlace (f - algebraMap F W.FunctionField c) =
         W.infinityPlace

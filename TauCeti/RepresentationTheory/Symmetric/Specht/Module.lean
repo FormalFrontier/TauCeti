@@ -59,6 +59,8 @@ the irreducibility it yields.
 * `TauCeti.YoungTableau.tabloid_eq_iff_rowIndex_eq`: two tableaux have the same tabloid exactly when
   they put every label in the same row.
 * `TauCeti.YoungTableau.polytabloid_relabel`: relabeling translates the polytabloid.
+* `TauCeti.YoungTableau.polytabloid_eq_single_of_colSubgroup_eq_bot`: with nothing to
+  antisymmetrize over, the polytabloid is the bare tabloid.
 * `TauCeti.YoungTableau.polytabloid_coeff_eq_zero_of_forall_ne`: only the tabloids reachable from
   `{t}` by a column permutation occur in `e_t`.
 * `TauCeti.YoungTableau.polytabloid_ne_zero` and
@@ -178,6 +180,15 @@ theorem polytabloid_def (t : YoungTableau μ) :
         (MonoidAlgebra.single (tabloid t) 1) :=
   (rfl)
 
+/-- **A polytabloid with trivial column group is the bare tabloid.**  The column antisymmetrizer of
+`t` is then `1`, so there is nothing to antisymmetrize.  A shape with at most one row is the case
+of interest, by `TauCeti.YoungTableau.colSubgroup_eq_bot_of_rowSubgroup_eq_top`. -/
+@[simp]
+theorem polytabloid_eq_single_of_colSubgroup_eq_bot (t : YoungTableau μ)
+    (h : colSubgroup t = ⊥) :
+    polytabloid t = MonoidAlgebra.single (tabloid t) (1 : ℚ) := by
+  rw [polytabloid_def, columnAntisymmetrizer_eq_one t h, map_one, Module.End.one_apply]
+
 /-- The polytabloid is the signed sum of the tabloids obtained from `{t}` by the column group. -/
 theorem polytabloid_eq_sum (t : YoungTableau μ) :
     polytabloid t =
@@ -197,6 +208,21 @@ theorem polytabloid_relabel (σ : Equiv.Perm (Fin μ.card)) (t : YoungTableau μ
     tabloid_relabel]
   simp only [Module.End.mul_apply, Representation.ofMulAction_single, smul_smul,
     inv_mul_cancel, one_smul]
+
+/-- **Relabeling by a column permutation of `t` scales the polytabloid by its sign**:
+`e_{qt} = sgn(q) e_t` for `q` in the column group of `t`.  So the tableaux in one column-group
+orbit all carry, up to sign, the same polytabloid.
+
+This is not a `simp` lemma: its left-hand side is the one of
+`TauCeti.YoungTableau.polytabloid_relabel`, which applies to every permutation. -/
+theorem polytabloid_relabel_of_mem_colSubgroup {t : YoungTableau μ}
+    {q : Equiv.Perm (Fin μ.card)} (hq : q ∈ colSubgroup t) :
+    polytabloid (relabel q t) = ((Equiv.Perm.sign q : ℤ) : ℚ) • polytabloid t := by
+  have hmul : MonoidAlgebra.single q (1 : ℚ) * columnAntisymmetrizer t =
+      ((Equiv.Perm.sign q : ℤ) : ℚ) • columnAntisymmetrizer t :=
+    mul_columnAntisymmetrizer_left t ⟨q, hq⟩
+  rw [polytabloid_relabel, polytabloid_def, ← Representation.asAlgebraHom_single_one,
+    ← Module.End.mul_apply, ← map_mul, hmul, map_smul, LinearMap.smul_apply]
 
 /-- The coefficient, in the polytabloid `e_t`, of the tabloid obtained from `{t}` by a column
 permutation `q` of `t` is the sign of `q`. -/

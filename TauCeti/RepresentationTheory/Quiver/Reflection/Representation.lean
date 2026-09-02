@@ -8,6 +8,7 @@ module
 public import TauCeti.RepresentationTheory.Quiver.Reflection.Basic
 public import TauCeti.RepresentationTheory.Quiver.Reflection.DimensionVector
 public import TauCeti.RepresentationTheory.Quiver.Representation.DimensionVector
+public import TauCeti.RepresentationTheory.Quiver.Representation.FiniteDimensional
 public import Mathlib.LinearAlgebra.FiniteDimensional.Lemmas
 import Mathlib.CategoryTheory.PathCategory.MorphismProperty
 
@@ -70,6 +71,10 @@ representation concentrated at `i` whose space at `i` is nontrivial, of which th
   every vertex and on the whole reflection.
 * `TauCeti.finiteDimensional_reflectRep_obj`: reflection preserves finite-dimensionality of the
   vertex spaces.
+* `TauCeti.nonempty_iso_of_isZero_away_of_linearEquiv` and
+  `TauCeti.nonempty_iso_of_dimVector_eq_of_forall_subsingleton`: two representations concentrated
+  at the same sink are isomorphic as soon as their vertex spaces there are, respectively as soon
+  as their dimension vectors agree.
 
 ## Implementation notes
 
@@ -799,5 +804,69 @@ theorem dimVector_reflectRep_self_eq_zero {i : Q} (hi : IsSink i)
   exact Module.finrank_zero_of_subsingleton (R := k)
 
 end Concentrated
+
+/-! ### Comparing two representations concentrated at the same sink -/
+
+section ConcentratedComparison
+
+variable {M N : QuiverRep.{u, v, w, max v w x} k Q} {i : Q}
+
+/-- **Two representations vanishing away from a sink are isomorphic as soon as their vertex spaces
+at that sink are.** Every component away from `i` is a map between zero objects, and there is no
+naturality condition to check at `i`, since no arrow leaves a sink. -/
+theorem nonempty_iso_of_isZero_away_of_linearEquiv (hi : IsSink i)
+    (hM : ∀ a : Q, a ≠ i → Limits.IsZero (M.obj a))
+    (hN : ∀ a : Q, a ≠ i → Limits.IsZero (N.obj a))
+    (e : M.obj ((Paths.of Q).obj i) ≃ₗ[k] N.obj ((Paths.of Q).obj i)) :
+    Nonempty (M ≅ N) := by
+  classical
+  have eIso : M.obj ((Paths.of Q).obj i) ≅ N.obj ((Paths.of Q).obj i) := e.toModuleIso
+  refine ⟨NatIso.ofComponents (fun a ↦ if h : a = (Paths.of Q).obj i then
+      eqToIso (congrArg M.obj h) ≪≫ eIso ≪≫ eqToIso (congrArg N.obj h).symm
+    else (hM a h).iso (hN a h)) fun {a b} p ↦ ?_⟩
+  by_cases ha : a = (Paths.of Q).obj i
+  · -- a path out of a sink is the identity, so the naturality square is trivial
+    subst ha
+    obtain rfl := hi.eq_of_path p
+    have hMp : M.map p = 𝟙 (M.obj a) := by
+      rw [hi.path_self_eq_nil p]
+      exact M.map_id a
+    have hNp : N.map p = 𝟙 (N.obj a) := by
+      rw [hi.path_self_eq_nil p]
+      exact N.map_id a
+    rw [hMp, hNp]
+    simp
+  · exact (hM a ha).eq_of_src _ _
+
+/-- **A representation concentrated at a sink is isomorphic to every finite-dimensional
+representation with the same dimension vector.** Equality of dimension vectors makes the comparison
+representation vanish wherever `M` does, and matches the two vertex spaces at the sink. Only the
+vertex space of `M` at the sink is asked to be finite-dimensional, since `M` is a subsingleton
+everywhere else; `N` is asked for it at every vertex, to read a vanishing dimension vector there as
+a vanishing vertex space. -/
+theorem nonempty_iso_of_dimVector_eq_of_forall_subsingleton (hi : IsSink i)
+    (hsub : ∀ a : Q, a ≠ i → Subsingleton (M.obj a))
+    (hfdM : FiniteDimensional k (M.obj ((Paths.of Q).obj i)))
+    (hfdN : IsFinDim.{u, v, w, max v w x} k Q N)
+    (hd : dimVector M = dimVector N) : Nonempty (M ≅ N) := by
+  have hfdN' := isFinDim_iff.mp hfdN
+  have hNzero : ∀ a : Q, a ≠ i → Limits.IsZero (N.obj a) := by
+    intro a ha
+    have hMa : Subsingleton (M.obj ((Paths.of Q).obj a)) := hsub a ha
+    have hfdNa := hfdN' ((Paths.of Q).obj a)
+    have h0 : Module.finrank k (N.obj ((Paths.of Q).obj a)) = 0 := by
+      rw [← dimVector_apply, ← congrFun hd a, dimVector_apply]
+      exact Module.finrank_zero_of_subsingleton (R := k)
+    have hss : Subsingleton (N.obj ((Paths.of Q).obj a)) := Module.finrank_zero_iff.mp h0
+    exact @ModuleCat.isZero_of_subsingleton k _ (N.obj a) hss
+  have hfdNi := hfdN' ((Paths.of Q).obj i)
+  have hfr : Module.finrank k (M.obj ((Paths.of Q).obj i))
+      = Module.finrank k (N.obj ((Paths.of Q).obj i)) := by
+    rw [← dimVector_apply, ← dimVector_apply, hd]
+  exact nonempty_iso_of_isZero_away_of_linearEquiv hi
+    (fun a ha ↦ @ModuleCat.isZero_of_subsingleton k _ (M.obj a) (hsub a ha)) hNzero
+    (LinearEquiv.ofFinrankEq _ _ hfr)
+
+end ConcentratedComparison
 
 end TauCeti
