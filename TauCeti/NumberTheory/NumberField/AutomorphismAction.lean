@@ -74,28 +74,4 @@ instance RingOfIntegers.smulCommClass : SMulCommClass (F ≃ₐ[K] F) (𝓞 K) (
     rw [← IsScalarTower.algebraMap_apply (𝓞 K) (𝓞 F) F,
       IsScalarTower.algebraMap_apply (𝓞 K) K F, AlgEquiv.commutes]
 
-variable {L L' : Type*} [Field L] [Field L'] [Algebra K L] [Algebra K L']
-
-namespace RingOfIntegers
-
-/-- The induced ring-of-integers equivalence agrees with the ambient algebra equivalence. -/
-@[simp]
-theorem mapAlgEquiv_apply (e : L ≃ₐ[K] L') (x : 𝓞 L) :
-    (mapAlgEquiv e x : L') = e (x : L) := rfl
-
-/-- The inverse induced ring-of-integers equivalence agrees with the ambient inverse. -/
-@[simp]
-theorem mapAlgEquiv_symm_apply (e : L ≃ₐ[K] L') (x : 𝓞 L') :
-    ((mapAlgEquiv e).symm x : L) = e.symm (x : L') := rfl
-
-/-- The induced ring-of-integers equivalence for an inverse is the inverse equivalence. -/
-theorem mapAlgEquiv_symm (e : L ≃ₐ[K] L') :
-    mapAlgEquiv e.symm = (mapAlgEquiv e).symm := by
-  apply AlgEquiv.ext
-  intro x
-  apply RingOfIntegers.ext
-  rfl
-
-end RingOfIntegers
-
 end NumberField

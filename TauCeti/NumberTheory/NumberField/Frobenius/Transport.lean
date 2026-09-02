@@ -5,9 +5,9 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.NumberTheory.NumberField.Basic
 public import Mathlib.RingTheory.Frobenius
 public import TauCeti.NumberTheory.NumberField.AutomorphismAction
+public import TauCeti.NumberTheory.NumberField.RingOfIntegers.Equiv
 
 /-!
 # Transporting relative Frobenius data across an isomorphism
@@ -127,15 +127,13 @@ theorem isArithFrobAt_map_ringOfIntegersAlgEquiv_iff
     have hτ' := isArithFrobAt_map_ringOfIntegersAlgEquiv (e := e.symm)
       (Q := Q') (τ := e.autCongr τ) hσ
     have heO : RingOfIntegers.mapAlgEquiv e.symm = eO.symm := by
-      simpa [eO] using RingOfIntegers.mapAlgEquiv_symm e
+      simp [eO]
     rw [heO] at hτ'
     -- Expose the double conjugation before cancelling the inverse equivalence.
     change IsArithFrobAt (𝓞 K) ((e.symm).autCongr (e.autCongr τ))
       (Q'.map eO.symm) at hτ'
     have hconj : (e.symm).autCongr (e.autCongr τ) = τ := by
-      ext x
-      simp only [AlgEquiv.autCongr_apply, AlgEquiv.trans_apply, e.symm_apply_apply,
-        AlgEquiv.symm_symm]
+      simpa only [← AlgEquiv.autCongr_symm] using (e.autCongr).symm_apply_apply τ
     rw [hconj] at hτ'
     dsimp [Q'] at hτ'
     have hmap : (Q.map (eO : 𝓞 L →+* 𝓞 L')).map eO.symm = Q :=
@@ -157,7 +155,7 @@ theorem isUnramifiedAt_map_ringOfIntegersAlgEquiv_iff (e : L ≃ₐ[K] L')
     let _ : Q'.IsPrime := Ideal.map_isPrime_of_equiv eO
     have hQ := isUnramifiedAt_map_ringOfIntegersAlgEquiv (e := e.symm) (Q := Q') hQ'
     have heO : RingOfIntegers.mapAlgEquiv e.symm = eO.symm := by
-      simpa [eO] using RingOfIntegers.mapAlgEquiv_symm e
+      simp [eO]
     have hmap : Q'.map (RingOfIntegers.mapAlgEquiv e.symm) = Q := by
       rw [heO]
       dsimp [Q']
