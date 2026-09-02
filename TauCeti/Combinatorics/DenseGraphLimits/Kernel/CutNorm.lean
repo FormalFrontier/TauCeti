@@ -115,10 +115,48 @@ theorem cutNormSet_def (K : SymmKernel Ω μ) :
       ⨆ (S : Set Ω) (_ : MeasurableSet S) (T : Set Ω) (_ : MeasurableSet T),
         |K.rectIntegral μ S T| := (rfl)
 
-omit [IsFiniteMeasure μ] in
-private theorem integral_abs_nonneg (K : SymmKernel Ω μ) :
-    0 ≤ ∫ p, |K p.1 p.2| ∂(μ.prod μ) :=
-  integral_nonneg fun _ => abs_nonneg _
+/-! ### The bundled normal forms
+
+The public definitions index their suprema by sets and test functions *together with* proof
+arguments, which is the roadmap's displayed formula and stays. Internally, every argument about
+either supremum goes through a single supremum over a bundled index, so that introduction and
+elimination are one-step `le_ciSup_of_le` / `Real.iSup_le` applications instead of a descent
+through four or six binders. Nothing here is public. -/
+
+/-- A measurable set, bundled with its measurability. -/
+private abbrev MeasurableSubset (Ω : Type*) [MeasurableSpace Ω] := {S : Set Ω // MeasurableSet S}
+
+/-- The integrand of `cutNormSet` on a bundled pair. -/
+private noncomputable def setIntegrand (K : SymmKernel Ω μ)
+    (ST : MeasurableSubset Ω × MeasurableSubset Ω) : ℝ :=
+  |K.rectIntegral μ ST.1.1 ST.2.1|
+
+private theorem setIntegrand_le (K : SymmKernel Ω μ)
+    (ST : MeasurableSubset Ω × MeasurableSubset Ω) :
+    setIntegrand μ K ST ≤ ∫ p, |K p.1 p.2| ∂(μ.prod μ) :=
+  K.abs_rectIntegral_le_integral_abs μ _ _
+
+private theorem bddAbove_setIntegrand (K : SymmKernel Ω μ) :
+    BddAbove (range (setIntegrand μ K)) :=
+  ⟨_, by rintro _ ⟨ST, rfl⟩; exact setIntegrand_le μ K ST⟩
+
+/-- `cutNormSet` as one supremum over bundled pairs. -/
+private theorem cutNormSet_eq_iSup_pair (K : SymmKernel Ω μ) :
+    cutNormSet μ K = ⨆ ST, setIntegrand μ K ST := by
+  have hC0 : 0 ≤ ∫ p, |K p.1 p.2| ∂(μ.prod μ) := integral_nonneg fun _ => abs_nonneg _
+  rw [cutNormSet_def, ciSup_prod (bddAbove_setIntegrand μ K)]
+  have inner : ∀ S' : MeasurableSubset Ω,
+      (⨆ T' : MeasurableSubset Ω, setIntegrand μ K (S', T'))
+        = ⨆ (T : Set Ω) (_ : MeasurableSet T), |K.rectIntegral μ S'.1 T| := fun S' =>
+    ciSup_subtype ⟨_, by rintro _ ⟨T', rfl⟩; exact setIntegrand_le μ K (S', T')⟩
+      (by rw [Real.sSup_empty]; exact Real.iSup_nonneg fun _ => abs_nonneg _)
+  simp_rw [inner]
+  symm
+  refine ciSup_subtype ⟨∫ p, |K p.1 p.2| ∂(μ.prod μ), ?_⟩ ?_
+  · rintro _ ⟨S', rfl⟩
+    exact Real.iSup_le (fun T => Real.iSup_le (fun _ => setIntegrand_le μ K (S', ⟨T, ‹_›⟩)) hC0) hC0
+  · rw [Real.sSup_empty]
+    exact Real.iSup_nonneg fun _ => Real.iSup_nonneg fun _ => Real.iSup_nonneg fun _ => abs_nonneg _
 
 namespace SymmKernel
 
@@ -140,51 +178,15 @@ theorem cutNorm_le {K : SymmKernel Ω μ} {C : ℝ}
     (h : ∀ S, MeasurableSet S → ∀ T, MeasurableSet T → |K.rectIntegral μ S T| ≤ C) :
     cutNorm μ K ≤ C := by
   have hC : 0 ≤ C := by simpa using h ∅ MeasurableSet.empty ∅ MeasurableSet.empty
-  rw [cutNorm_eq_cutNormSet, cutNormSet_def]
-  apply Real.iSup_le _ hC
-  intro S
-  apply Real.iSup_le _ hC
-  intro hS
-  apply Real.iSup_le _ hC
-  intro T
-  apply Real.iSup_le _ hC
-  exact h S hS T
-
-private theorem iSup_measurableSet_right_le_integral_abs
-    (K : SymmKernel Ω μ) (S T : Set Ω) :
-    (⨆ (_ : MeasurableSet T), |K.rectIntegral μ S T|) ≤
-      ∫ p, |K p.1 p.2| ∂(μ.prod μ) :=
-  Real.iSup_le (fun _ => K.abs_rectIntegral_le_integral_abs μ S T) (integral_abs_nonneg μ K)
-
-private theorem iSup_right_le_integral_abs (K : SymmKernel Ω μ) (S : Set Ω) :
-    (⨆ (T : Set Ω) (_ : MeasurableSet T), |K.rectIntegral μ S T|) ≤
-      ∫ p, |K p.1 p.2| ∂(μ.prod μ) :=
-  Real.iSup_le (fun T => iSup_measurableSet_right_le_integral_abs μ K S T)
-    (integral_abs_nonneg μ K)
-
-private theorem iSup_measurableSet_left_le_integral_abs
-    (K : SymmKernel Ω μ) (S : Set Ω) :
-    (⨆ (_ : MeasurableSet S) (T : Set Ω) (_ : MeasurableSet T),
-      |K.rectIntegral μ S T|) ≤ ∫ p, |K p.1 p.2| ∂(μ.prod μ) :=
-  Real.iSup_le (fun _ => iSup_right_le_integral_abs μ K S) (integral_abs_nonneg μ K)
-
-private theorem bddAbove_range_of_forall_le {I : Sort*} {f : I → ℝ} {C : ℝ}
-    (h : ∀ i, f i ≤ C) : BddAbove (range f) :=
-  ⟨C, Set.forall_mem_range.2 h⟩
+  rw [cutNorm_eq_cutNormSet, cutNormSet_eq_iSup_pair]
+  exact Real.iSup_le (fun ST => h _ ST.1.2 _ ST.2.2) hC
 
 /-- Every measurable rectangle integral is bounded by the cut norm. -/
 theorem abs_rectIntegral_le_cutNorm (K : SymmKernel Ω μ) {S T : Set Ω}
     (hS : MeasurableSet S) (hT : MeasurableSet T) :
     |K.rectIntegral μ S T| ≤ cutNorm μ K := by
-  rw [cutNorm_eq_cutNormSet, cutNormSet_def]
-  apply le_ciSup_of_le (bddAbove_range_of_forall_le fun S =>
-    iSup_measurableSet_left_le_integral_abs μ K S) S
-  apply le_ciSup_of_le (bddAbove_range_of_forall_le fun _ =>
-    iSup_right_le_integral_abs μ K S) hS
-  apply le_ciSup_of_le (bddAbove_range_of_forall_le fun T =>
-    iSup_measurableSet_right_le_integral_abs μ K S T) T
-  exact le_ciSup (bddAbove_range_of_forall_le fun _ =>
-    K.abs_rectIntegral_le_integral_abs μ S T) hT
+  rw [cutNorm_eq_cutNormSet, cutNormSet_eq_iSup_pair]
+  exact le_ciSup_of_le (bddAbove_setIntegrand μ K) (⟨S, hS⟩, ⟨T, hT⟩) le_rfl
 
 /-- The cut norm is at most `C` exactly when every measurable rectangle integral is. -/
 theorem cutNorm_le_iff {K : SymmKernel Ω μ} {C : ℝ} :
@@ -206,9 +208,8 @@ theorem exists_lt_abs_rectIntegral (K : SymmKernel Ω μ) {c : ℝ} (h : c < cut
 
 /-- The cut norm is nonnegative. -/
 theorem cutNorm_nonneg (K : SymmKernel Ω μ) : 0 ≤ cutNorm μ K := by
-  rw [cutNorm_eq_cutNormSet, cutNormSet_def]
-  exact Real.iSup_nonneg fun _ => Real.iSup_nonneg fun _ =>
-    Real.iSup_nonneg fun _ => Real.iSup_nonneg fun _ => abs_nonneg _
+  rw [cutNorm_eq_cutNormSet, cutNormSet_eq_iSup_pair]
+  exact Real.iSup_nonneg fun _ => abs_nonneg _
 
 /-- The cut norm is bounded by the integral of the absolute value of the kernel. -/
 theorem cutNorm_le_integral_abs (K : SymmKernel Ω μ) :
@@ -382,43 +383,72 @@ theorem cutNormSigned_def (K : SymmKernel Ω μ) :
         (v : Ω → ℝ) (_ : Measurable v) (_ : ∀ y, v y ∈ Icc (-1 : ℝ) 1),
         |K.testIntegral μ u v| := (rfl)
 
-/-  The supremum defining `cutNormSigned` has six binders, so bounding it from below at a chosen
-pair of test functions needs the range at each level to be bounded above.  The five private lemmas
-below strip one binder each, all with the same `L¹` bound; they play the role that
-`iSup_right_le_integral_abs` and its siblings play for `cutNorm`. -/
-private theorem iSup_mem_right_le_integral_abs (K : SymmKernel Ω μ) (u v : Ω → ℝ)
-    (hu : Measurable u) (hu1 : ∀ x, u x ∈ Icc (-1 : ℝ) 1) (hv : Measurable v) :
-    (⨆ (_ : ∀ y, v y ∈ Icc (-1 : ℝ) 1), |K.testIntegral μ u v|) ≤
-      ∫ p, |K p.1 p.2| ∂(μ.prod μ) :=
-  Real.iSup_le (fun hv1 => K.abs_testIntegral_le_integral_abs μ hu hv hu1 hv1)
-    (integral_abs_nonneg μ K)
+/-- A measurable function, bundled with its measurability. -/
+private abbrev MeasurableFun (Ω : Type*) [MeasurableSpace Ω] := {u : Ω → ℝ // Measurable u}
 
-private theorem iSup_measurable_right_le_integral_abs (K : SymmKernel Ω μ) (u v : Ω → ℝ)
-    (hu : Measurable u) (hu1 : ∀ x, u x ∈ Icc (-1 : ℝ) 1) :
-    (⨆ (_ : Measurable v) (_ : ∀ y, v y ∈ Icc (-1 : ℝ) 1), |K.testIntegral μ u v|) ≤
-      ∫ p, |K p.1 p.2| ∂(μ.prod μ) :=
-  Real.iSup_le (fun hv => iSup_mem_right_le_integral_abs μ K u v hu hu1 hv)
-    (integral_abs_nonneg μ K)
+/-- A signed cut test: a measurable function together with a `[-1,1]` bound. Two levels rather
+than one conjunction, so that each of the two proof binders of `cutNormSigned` is collapsed by the
+same `ciSup_subtype` step. -/
+private abbrev SignedTest (Ω : Type*) [MeasurableSpace Ω] :=
+  {u : MeasurableFun Ω // ∀ x, u.1 x ∈ Icc (-1 : ℝ) 1}
 
-private theorem iSup_fun_right_le_integral_abs (K : SymmKernel Ω μ) (u : Ω → ℝ)
-    (hu : Measurable u) (hu1 : ∀ x, u x ∈ Icc (-1 : ℝ) 1) :
-    (⨆ (v : Ω → ℝ) (_ : Measurable v) (_ : ∀ y, v y ∈ Icc (-1 : ℝ) 1),
-      |K.testIntegral μ u v|) ≤ ∫ p, |K p.1 p.2| ∂(μ.prod μ) :=
-  Real.iSup_le (fun v => iSup_measurable_right_le_integral_abs μ K u v hu hu1)
-    (integral_abs_nonneg μ K)
+/-- The integrand of `cutNormSigned` on a bundled pair. -/
+private noncomputable def signedIntegrand (K : SymmKernel Ω μ) (uv : SignedTest Ω × SignedTest Ω) :
+    ℝ :=
+  |K.testIntegral μ uv.1.1.1 uv.2.1.1|
 
-private theorem iSup_mem_left_le_integral_abs (K : SymmKernel Ω μ) (u : Ω → ℝ)
-    (hu : Measurable u) :
-    (⨆ (_ : ∀ x, u x ∈ Icc (-1 : ℝ) 1) (v : Ω → ℝ) (_ : Measurable v)
-      (_ : ∀ y, v y ∈ Icc (-1 : ℝ) 1), |K.testIntegral μ u v|) ≤
-      ∫ p, |K p.1 p.2| ∂(μ.prod μ) :=
-  Real.iSup_le (fun hu1 => iSup_fun_right_le_integral_abs μ K u hu hu1) (integral_abs_nonneg μ K)
+private theorem signedIntegrand_le (K : SymmKernel Ω μ) (uv : SignedTest Ω × SignedTest Ω) :
+    signedIntegrand μ K uv ≤ ∫ p, |K p.1 p.2| ∂(μ.prod μ) :=
+  K.abs_testIntegral_le_integral_abs μ uv.1.1.2 uv.2.1.2 uv.1.2 uv.2.2
 
-private theorem iSup_measurable_left_le_integral_abs (K : SymmKernel Ω μ) (u : Ω → ℝ) :
-    (⨆ (_ : Measurable u) (_ : ∀ x, u x ∈ Icc (-1 : ℝ) 1) (v : Ω → ℝ) (_ : Measurable v)
-      (_ : ∀ y, v y ∈ Icc (-1 : ℝ) 1), |K.testIntegral μ u v|) ≤
-      ∫ p, |K p.1 p.2| ∂(μ.prod μ) :=
-  Real.iSup_le (fun hu => iSup_mem_left_le_integral_abs μ K u hu) (integral_abs_nonneg μ K)
+private theorem bddAbove_signedIntegrand (K : SymmKernel Ω μ) :
+    BddAbove (range (signedIntegrand μ K)) :=
+  ⟨_, by rintro _ ⟨uv, rfl⟩; exact signedIntegrand_le μ K uv⟩
+
+/-- `cutNormSigned` as one supremum over bundled pairs. Each of the six binders of the displayed
+formula is one `ciSup_subtype` collapse, with the `L¹` bound supplying boundedness throughout. -/
+private theorem cutNormSigned_eq_iSup_pair (K : SymmKernel Ω μ) :
+    cutNormSigned μ K = ⨆ uv, signedIntegrand μ K uv := by
+  set C := ∫ p, |K p.1 p.2| ∂(μ.prod μ) with hC
+  have hC0 : 0 ≤ C := integral_nonneg fun _ => abs_nonneg _
+  have hle : ∀ uv, signedIntegrand μ K uv ≤ C := signedIntegrand_le μ K
+  have hnn : ∀ uv, 0 ≤ signedIntegrand μ K uv := fun _ => abs_nonneg _
+  -- collapse the `v` side, inner two binders first
+  have inner_mem : ∀ (u' : SignedTest Ω) (w : MeasurableFun Ω),
+      (⨆ (_ : ∀ y, w.1 y ∈ Icc (-1 : ℝ) 1), signedIntegrand μ K (u', ⟨w, ‹_›⟩))
+        = ⨆ (_ : ∀ y, w.1 y ∈ Icc (-1 : ℝ) 1), |K.testIntegral μ u'.1.1 w.1| :=
+    fun _ _ => rfl
+  have inner_v : ∀ u' : SignedTest Ω,
+      (⨆ v' : SignedTest Ω, signedIntegrand μ K (u', v'))
+        = ⨆ (v : Ω → ℝ) (_ : Measurable v) (_ : ∀ y, v y ∈ Icc (-1 : ℝ) 1),
+            |K.testIntegral μ u'.1.1 v| := by
+    intro u'
+    rw [ciSup_subtype ⟨C, by rintro _ ⟨v', rfl⟩; exact hle _⟩
+      (by rw [Real.sSup_empty]; exact Real.iSup_nonneg fun _ => hnn _)]
+    simp_rw [inner_mem]
+    exact ciSup_subtype
+      ⟨C, by rintro _ ⟨w, rfl⟩; exact Real.iSup_le (fun _ => hle (u', ⟨w, ‹_›⟩)) hC0⟩
+      (by rw [Real.sSup_empty]
+          exact Real.iSup_nonneg fun _ => Real.iSup_nonneg fun _ => abs_nonneg _)
+  rw [cutNormSigned_def, ciSup_prod (bddAbove_signedIntegrand μ K)]
+  simp_rw [inner_v]
+  -- collapse the `u` side
+  have hv_le : ∀ u : Ω → ℝ, Measurable u → (∀ x, u x ∈ Icc (-1 : ℝ) 1) →
+      (⨆ (v : Ω → ℝ) (_ : Measurable v) (_ : ∀ y, v y ∈ Icc (-1 : ℝ) 1),
+        |K.testIntegral μ u v|) ≤ C := fun u hu hu1 =>
+    Real.iSup_le (fun v => Real.iSup_le (fun hv => Real.iSup_le
+      (fun hv1 => K.abs_testIntegral_le_integral_abs μ hu hv hu1 hv1) hC0) hC0) hC0
+  have hv_nn : ∀ u : Ω → ℝ, 0 ≤ ⨆ (v : Ω → ℝ) (_ : Measurable v) (_ : ∀ y, v y ∈ Icc (-1 : ℝ) 1),
+      |K.testIntegral μ u v| := fun _ =>
+    Real.iSup_nonneg fun _ => Real.iSup_nonneg fun _ => Real.iSup_nonneg fun _ => abs_nonneg _
+  symm
+  -- outer level: `SignedTest` to a bundled measurable function plus its `[-1,1]` bound
+  rw [ciSup_subtype ⟨C, by rintro _ ⟨u', rfl⟩; exact hv_le u'.1.1 u'.1.2 u'.2⟩
+    (by rw [Real.sSup_empty]; exact Real.iSup_nonneg fun _ => hv_nn _)]
+  -- inner level: the bundled measurable function to a function plus its measurability
+  exact ciSup_subtype
+    ⟨C, by rintro _ ⟨w, rfl⟩; exact Real.iSup_le (fun hP => hv_le w.1 w.2 hP) hC0⟩
+    (by rw [Real.sSup_empty]; exact Real.iSup_nonneg fun _ => Real.iSup_nonneg fun _ => hv_nn _)
 
 /-- Every `[-1,1]`-test integral is bounded by the signed cut norm.  This is the introduction rule
 for the supremum, mirroring `abs_rectIntegral_le_cutNorm`. -/
@@ -426,19 +456,8 @@ theorem abs_testIntegral_le_cutNormSigned (K : SymmKernel Ω μ) {u v : Ω → �
     (hu : Measurable u) (hv : Measurable v)
     (hu1 : ∀ x, u x ∈ Icc (-1 : ℝ) 1) (hv1 : ∀ y, v y ∈ Icc (-1 : ℝ) 1) :
     |K.testIntegral μ u v| ≤ cutNormSigned μ K := by
-  rw [cutNormSigned_def]
-  refine le_ciSup_of_le (bddAbove_range_of_forall_le fun u' =>
-    iSup_measurable_left_le_integral_abs μ K u') u ?_
-  refine le_ciSup_of_le (bddAbove_range_of_forall_le fun _ =>
-    iSup_mem_left_le_integral_abs μ K u hu) hu ?_
-  refine le_ciSup_of_le (bddAbove_range_of_forall_le fun _ =>
-    iSup_fun_right_le_integral_abs μ K u hu hu1) hu1 ?_
-  refine le_ciSup_of_le (bddAbove_range_of_forall_le fun v' =>
-    iSup_measurable_right_le_integral_abs μ K u v' hu hu1) v ?_
-  refine le_ciSup_of_le (bddAbove_range_of_forall_le fun _ =>
-    iSup_mem_right_le_integral_abs μ K u v hu hu1 hv) hv ?_
-  exact le_ciSup (bddAbove_range_of_forall_le fun _ =>
-    K.abs_testIntegral_le_integral_abs μ hu hv hu1 hv1) hv1
+  rw [cutNormSigned_eq_iSup_pair]
+  exact le_ciSup_of_le (bddAbove_signedIntegrand μ K) (⟨⟨u, hu⟩, hu1⟩, ⟨⟨v, hv⟩, hv1⟩) le_rfl
 
 /-- To prove an upper bound on the signed cut norm, it suffices to prove it for every pair of
 measurable `[-1,1]`-valued test functions.  Nonnegativity of the bound is not a hypothesis: it
@@ -451,16 +470,13 @@ theorem cutNormSigned_le {K : SymmKernel Ω μ} {C : ℝ}
   have hC : 0 ≤ C := by
     simpa [SymmKernel.testIntegral_def] using
       h 0 0 measurable_const measurable_const hzero hzero
-  rw [cutNormSigned_def]
-  exact Real.iSup_le (fun u => Real.iSup_le (fun hu => Real.iSup_le (fun hu1 =>
-    Real.iSup_le (fun v => Real.iSup_le (fun hv => Real.iSup_le (fun hv1 =>
-      h u v hu hv hu1 hv1) hC) hC) hC) hC) hC) hC
+  rw [cutNormSigned_eq_iSup_pair]
+  exact Real.iSup_le (fun uv => h _ _ uv.1.1.2 uv.2.1.2 uv.1.2 uv.2.2) hC
 
 /-- The signed cut norm is nonnegative. -/
 theorem cutNormSigned_nonneg (K : SymmKernel Ω μ) : 0 ≤ cutNormSigned μ K := by
-  rw [cutNormSigned_def]
-  exact Real.iSup_nonneg fun _ => Real.iSup_nonneg fun _ => Real.iSup_nonneg fun _ =>
-    Real.iSup_nonneg fun _ => Real.iSup_nonneg fun _ => Real.iSup_nonneg fun _ => abs_nonneg _
+  rw [cutNormSigned_eq_iSup_pair]
+  exact Real.iSup_nonneg fun _ => abs_nonneg _
 
 /-- The signed cut norm is bounded by the `L¹` norm of the kernel, as the cut norm is. -/
 theorem cutNormSigned_le_integral_abs (K : SymmKernel Ω μ) :
