@@ -159,6 +159,21 @@ theorem baseChangeHopfIdeal_le_iff (halg : Function.Injective (algebraMap k K))
     exact HopfIdeal.mem_toIdeal.mp ((mkQuotient_eq_zero_iff H J' x).mp hzero)
   · exact baseChangeHopfIdeal_mono
 
+section FieldExtension
+
+variable {F : Type u} {E : Type w} [Field F] [Field E] [Algebra F E]
+variable {A : _root_.CommHopfAlgCat.{v} F}
+
+/-- Extension of the ground field reflects equality of Hopf ideals. -/
+theorem baseChangeHopfIdeal_injective :
+    Function.Injective
+      (baseChangeHopfIdeal (K := E) : HopfIdeal F A → HopfIdeal E (baseChange (K := E) A)) :=
+  fun J J' hJJ' ↦ le_antisymm
+    ((baseChangeHopfIdeal_le_iff (algebraMap F E).injective).mp hJJ'.le)
+    ((baseChangeHopfIdeal_le_iff (algebraMap F E).injective).mp hJJ'.ge)
+
+end FieldExtension
+
 /-- If a Hopf ideal is killed by a morphism, its base change is killed by the base change of that
 morphism. This is the ideal-theoretic form of compatibility between closed subgroup
 factorizations and base change. -/
