@@ -90,7 +90,8 @@ measure computation has just identified.
 * `ContRepresentation.exists_isUnitary_congr_of_finite`: **the unitarian trick for a finite group**,
   every finite-dimensional representation being conjugate to a unitary one.
 * `ContRepresentation.exists_orthogonal_irreducible_decomposition_of_finite`: **Maschke's theorem in
-  orthogonal form**, the finite shadow of complete reducibility.
+  orthogonal form**, the finite shadow of complete reducibility: `π` itself is an internal direct
+  sum of irreducible subrepresentations, orthogonal for the averaged inner product.
 
 The counting identity `|G|⁻¹ ∑ g, χ_π g = dim V^G` that the compact-group character integral
 generalizes then costs one rewrite. It is not given a name: Mathlib already proves it, as
@@ -132,9 +133,8 @@ character one uses Mathlib's `Representation.character`, which is by
 `TauCeti.ContRepresentation.coe_character` the function underlying `character π hπ`. Those
 statements mention no measure either, so they ask for no measurable structure on `G`: their proofs
 install `borel G` themselves, and the caller is left with a bare finite discrete group. The two
-Maschke statements go one step further: being about the transported representations `congr e π`,
-they mention no topology on `G` at all, so their proof installs the discrete topology as well and
-the caller is left with a bare finite group.
+Maschke statements go one step further: mentioning no topology on `G` at all, they have their proof
+install the discrete topology as well, and the caller is left with a bare finite group.
 
 The scalar in the averaged sums is real, not `𝕜`: the Bochner integral being specialized is an
 `ℝ`-integral, and `V` is not assumed to be an `ℝ`-`𝕜`-scalar tower. The conversion is confined to
@@ -158,12 +158,13 @@ Schur and character-orthonormality part of that item: `L²(G)` is `G → 𝕜` b
 Mathlib's `Representation.char_orthonormal`, exhibited by two anonymous `example`s. It is finally
 the Maschke part of that item: `exists_orthogonal_irreducible_decomposition` specializes, through
 the finite unitarian trick, to
-`ContRepresentation.exists_orthogonal_irreducible_decomposition_of_finite`. What that
-specialization adds to Mathlib's Maschke — which is already an instance, for every field in which
-`|G|` is invertible, and hence is not restated here — is the orthogonality of the summands, which
-needs the inner product Mathlib's complements do not see. The one specialization the roadmap item
-asks for that is still missing is Peter-Weyl (that `peterWeylBasis` is the matrix-coefficient basis
-of `k[G]`); it is not proved here.
+`ContRepresentation.exists_orthogonal_irreducible_decomposition_of_finite`, whose blocks are
+subrepresentations of the given representation, carried back along the unitarizing equivalence
+`ContRepresentation.congrEquiv`. What that specialization adds to Mathlib's Maschke — which is
+already an instance, for every field in which `|G|` is invertible, and hence is not restated
+here — is the orthogonality of the summands, which needs the inner product Mathlib's complements
+do not see. The one specialization the roadmap item asks for that is still missing is Peter-Weyl
+(that `peterWeylBasis` is the matrix-coefficient basis of `k[G]`); it is not proved here.
 -/
 
 public section
@@ -722,8 +723,10 @@ theorem inner_gramOperator_eq_inv_mul_sum (v w : V) :
 /-- **The averaged form of a finite group on the diagonal is the average of `‖π g v‖ ^ 2`.** This is
 the finite form of the positive definiteness that makes the unitarian trick work: the average of
 `|G|` nonnegative reals, one of which is `‖v‖ ^ 2` at `g = 1`, is positive for `v ≠ 0`. Compactness
-of `G` enters the general statement `TauCeti.ContRepresentation.inner_gramOperator_self` twice, once
-to integrate and once to bound the operator norms from below; a finite group needs neither. -/
+of `G` enters the general statement `TauCeti.ContRepresentation.inner_gramOperator_self` only to
+make `g ↦ ‖π g v‖ ^ 2` integrable; it is the *strict* positivity
+`TauCeti.ContRepresentation.re_inner_gramOperator_self_pos` that also needs the compactness bound
+on the operator norms from below. A finite group needs neither. -/
 theorem inner_gramOperator_self_eq_inv_mul_sum (v : V) :
     ⟪gramOperator π hπ v, v⟫_𝕜 = (((Nat.card G : ℝ)⁻¹ * ∑ g, ‖π g v‖ ^ 2 : ℝ) : 𝕜) := by
   rw [inner_gramOperator_self, integral_haarProb, smul_eq_mul]
@@ -766,33 +769,71 @@ theorem exists_isUnitary_congr_of_finite (π : ContRepresentation 𝕜 G V) :
   have _ : BorelSpace G := ⟨rfl⟩
   exact exists_isUnitary_congr π continuous_of_discreteTopology
 
-/-- **Maschke's theorem in orthogonal form.** A finite-dimensional representation of a finite
-group on an inner product space becomes, after conjugating by a continuous linear automorphism `e`
-of the carrier, a *unitary* representation that is an orthogonal internal direct sum of finitely
-many irreducible subrepresentations, of dimensions adding up to `dim V`.
+/-- **Maschke's theorem in orthogonal form.** A finite-dimensional representation `π` of a finite
+group on an inner product space is an internal direct sum of finitely many irreducible
+subrepresentations, of dimensions adding up to `dim V`, which are moreover pairwise *orthogonal*
+for an invariant inner product `⟪e ·, e ·⟫` obtained from the given one by a continuous linear
+automorphism `e` of the carrier.
 
 This is the finite shadow of complete reducibility: unitarity is not assumed but produced, by the
-finite unitarian trick `ContRepresentation.exists_isUnitary_congr_of_finite`, and the decomposition
-is then
+finite unitarian trick `ContRepresentation.exists_isUnitary_congr_of_finite`, the decomposition of
+the resulting unitary model is
 `TauCeti.ContRepresentation.IsUnitary.exists_orthogonal_irreducible_decomposition` with no further
-hypotheses. Conjugating by `e` is unavoidable and is what "Maschke" costs here: Lean fixes one
+hypotheses, and every block is then pulled back along `e`, which is an equivalence of
+representations `π ≃ congr e π` by `ContRepresentation.congrEquiv`. The blocks are therefore
+subrepresentations of `π` itself.
+
+Distorting the inner product by `e` is unavoidable and is what "Maschke" costs here: Lean fixes one
 inner product on `V`, and a representation of a finite group need not preserve it, only the average
-`|G|⁻¹ ∑ g, ⟪π g ·, π g ·⟫` of its translates. It is the orthogonality that the compact theory
-contributes over Mathlib's Maschke, which produces complements but no inner product; the plain
-semisimplicity is not restated here, being already a Mathlib instance for every field in which
-`|G|` is invertible. A statement about the model is carried back to `π` along `e`, which is an
-equivalence of representations `π ≃ congr e π` by the definition
-`TauCeti.ContRepresentation.congr_apply` of the transported action. -/
+`|G|⁻¹ ∑ g, ⟪π g ·, π g ·⟫` of its translates. So the blocks need not be orthogonal for `⟪·, ·⟫`,
+and orthogonality is stated for the invariant form `⟪e ·, e ·⟫` that the unitarian trick produces —
+equivalently, their images under `e` are the orthogonal family decomposing the unitary model
+`congr e π`. It is that orthogonality which the compact theory contributes over Mathlib's Maschke,
+which produces complements but no inner product; the plain semisimplicity is not restated here,
+being already a Mathlib instance for every field in which `|G|` is invertible. -/
 theorem exists_orthogonal_irreducible_decomposition_of_finite (π : ContRepresentation 𝕜 G V) :
-    ∃ (e : V ≃L[𝕜] V) (n : ℕ) (U : Fin n → Subrepresentation (congr e π).toRepresentation),
+    ∃ (e : V ≃L[𝕜] V) (n : ℕ) (U : Fin n → Subrepresentation π.toRepresentation),
       IsUnitary (congr e π) ∧
       (∀ i, (U i).toRepresentation.IsIrreducible) ∧
-      OrthogonalFamily 𝕜 (fun i ↦ (U i).toSubmodule) (fun i ↦ ((U i).toSubmodule).subtypeₗᵢ) ∧
+      (Pairwise fun i j ↦ ∀ v ∈ (U i).toSubmodule, ∀ w ∈ (U j).toSubmodule, ⟪e v, e w⟫_𝕜 = 0) ∧
       DirectSum.IsInternal (fun i ↦ (U i).toSubmodule) ∧
       Module.finrank 𝕜 V = ∑ i, Module.finrank 𝕜 (U i).toSubmodule := by
   obtain ⟨e, he⟩ := exists_isUnitary_congr_of_finite π
   obtain ⟨n, U, hirr, horth, hinternal, hdim⟩ := he.exists_orthogonal_irreducible_decomposition
-  exact ⟨e, n, U, he, hirr, horth, hinternal, hdim⟩
+  -- `e` intertwines `π` with `congr e π` — that is `ContRepresentation.congrEquiv` — so a block
+  -- of the unitary model pulls back along `e` to a subrepresentation of `π` itself.
+  have hint : ∀ (g : G) (v : V),
+      ((congr e π).toRepresentation : Representation 𝕜 G V) g ((e : V ≃ₗ[𝕜] V) v)
+        = (e : V ≃ₗ[𝕜] V) ((π.toRepresentation : Representation 𝕜 G V) g v) := fun g v ↦ by
+    simp [_root_.ContRepresentation.toMonoidHom_apply]
+  have hmem : ∀ (i : Fin n) (v : V),
+      v ∈ (U i).toSubmodule.map ((e : V ≃ₗ[𝕜] V).symm : V →ₗ[𝕜] V) ↔
+        (e : V ≃ₗ[𝕜] V) v ∈ (U i).toSubmodule := fun i v ↦ Submodule.mem_map_equiv _
+  have hinv : ∀ (i : Fin n) (g : G) ⦃v : V⦄,
+      v ∈ (U i).toSubmodule.map ((e : V ≃ₗ[𝕜] V).symm : V →ₗ[𝕜] V) →
+        (π.toRepresentation : Representation 𝕜 G V) g v ∈
+          (U i).toSubmodule.map ((e : V ≃ₗ[𝕜] V).symm : V →ₗ[𝕜] V) := by
+    intro i g v hv
+    refine (hmem i _).mpr ?_
+    rw [← hint g v]
+    exact (U i).apply_mem_toSubmodule g ((hmem i v).mp hv)
+  refine ⟨e, n, fun i ↦ ⟨(U i).toSubmodule.map ((e : V ≃ₗ[𝕜] V).symm : V →ₗ[𝕜] V), hinv i⟩,
+    he, fun i ↦ ?_, fun i j hij v hv w hw ↦ ?_, ?_, ?_⟩
+  · exact Representation.isIrreducible_of_linearEquiv
+      ((e : V ≃ₗ[𝕜] V).symm.submoduleMap (U i).toSubmodule)
+      (fun g x ↦ Subtype.ext (by
+        conv_rhs => rw [Subrepresentation.toRepresentation_apply]
+        simp [Subrepresentation.toRepresentation_apply, LinearEquiv.submoduleMap_apply,
+          LinearMap.coe_restrict_apply, _root_.ContRepresentation.toMonoidHom_apply])) (hirr i)
+  · exact horth hij ⟨_, (hmem i v).mp hv⟩ ⟨_, (hmem j w).mp hw⟩
+  · obtain ⟨hindep, htop⟩ :=
+      (DirectSum.isInternal_submodule_iff_iSupIndep_and_iSup_eq_top _).mp hinternal
+    refine (DirectSum.isInternal_submodule_iff_iSupIndep_and_iSup_eq_top _).mpr
+      ⟨hindep.map_orderIso (Submodule.orderIsoMapComap (e : V ≃ₗ[𝕜] V).symm), ?_⟩
+    rw [← Submodule.map_iSup, htop, Submodule.map_top, LinearEquiv.range]
+  · rw [hdim]
+    exact Finset.sum_congr rfl fun i _ ↦
+      ((e : V ≃ₗ[𝕜] V).symm.submoduleMap (U i).toSubmodule).finrank_eq
 
 end Maschke
 

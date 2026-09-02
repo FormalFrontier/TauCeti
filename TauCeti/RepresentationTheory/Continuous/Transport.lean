@@ -27,6 +27,8 @@ so nothing is lost by pinning a model.
 ## Main definitions
 
 * `TauCeti.ContRepresentation.congr`: the transported representation `e ∘ π · ∘ e⁻¹`.
+* `ContRepresentation.congrEquiv`: the equivalence of continuous representations `π ≃ congr e π`
+  witnessed by `e` itself, which is what carries a statement about the transport back to `π`.
 
 ## Main statements
 
@@ -167,3 +169,33 @@ end CongrAdjoint
 end ContRepresentation
 
 end TauCeti
+
+namespace ContRepresentation
+
+variable {𝕜 G V W : Type*} [NormedField 𝕜] [Monoid G]
+  [NormedAddCommGroup V] [NormedSpace 𝕜 V] [NormedAddCommGroup W] [NormedSpace 𝕜 W]
+
+/-- **The transport of a representation is equivalent to it**, along `e` itself: `e` intertwines
+`π` with `TauCeti.ContRepresentation.congr e π` by the very definition of the transported action.
+
+This is the bundled form of that observation, and it is what carries a statement about the
+transport back to `π`: an `Equiv` is an isomorphism in the category of continuous representations,
+so `π` and `congr e π` have the same subrepresentation lattice, the same irreducible constituents
+and the same character. It lives in the root `ContRepresentation` namespace, rather than beside
+`congr` in `TauCeti.ContRepresentation`, so that dot notation on Mathlib's `ContRepresentation`
+elaborates. -/
+noncomputable def congrEquiv (e : V ≃L[𝕜] W) (π : ContRepresentation 𝕜 G V) :
+    π.Equiv (TauCeti.ContRepresentation.congr e π) :=
+  .mk e fun g ↦ ContinuousLinearMap.ext fun v ↦ by simp
+
+@[simp]
+theorem congrEquiv_toContinuousLinearEquiv (e : V ≃L[𝕜] W) (π : ContRepresentation 𝕜 G V) :
+    (congrEquiv e π).toContinuousLinearEquiv = e :=
+  (rfl)
+
+@[simp]
+theorem congrEquiv_apply (e : V ≃L[𝕜] W) (π : ContRepresentation 𝕜 G V) (v : V) :
+    congrEquiv e π v = e v :=
+  (rfl)
+
+end ContRepresentation
