@@ -33,9 +33,12 @@ Natural moments reduce to Euler's Gamma integral.
 ## Main definitions and results
 
 * `weibullPDFReal`, `weibullPDF` and `weibullMeasure` define the density and law;
+* `weibullMeasure_def` exposes the defining `withDensity` equation, and
+  `integrable_weibullMeasure_iff` and `integral_weibullMeasure_eq` transfer integrability and
+  integrals against the law to the density;
 * `isProbabilityMeasure_weibullMeasure_iff` characterizes the valid parameter range;
-* `ae_pos_weibullMeasure` records that every Weibull measure is concentrated on the positive
-  half-line;
+* `weibullMeasure_Iic_zero` and `ae_pos_weibullMeasure` record that every Weibull measure is
+  concentrated on the positive half-line;
 * `cdf_weibullMeasure_eq` gives the closed cdf;
 * `integral_pow_weibullMeasure` gives every natural moment;
 * `integral_id_weibullMeasure` and `variance_id_weibullMeasure` give the mean and variance;
@@ -86,8 +89,9 @@ def weibullMeasure (k lam : ℝ) : Measure ℝ :=
 
 /-- A Weibull measure is Lebesgue measure weighted by its density.
 
-This exposes the defining equation of the opaque public definition for rewriting in downstream
-modules. -/
+This exposes the defining equation of the opaque public definition, whose body cannot be unfolded
+outside this module; `integrable_weibullMeasure_iff` and `integral_weibullMeasure_eq` are the
+derived forms a consumer usually wants. -/
 theorem weibullMeasure_def (k lam : ℝ) :
     weibullMeasure k lam = volume.withDensity (weibullPDF k lam) := by
   rfl
@@ -222,6 +226,25 @@ parameters, where `weibullMeasure` is the zero measure. -/
 theorem ae_pos_weibullMeasure (k lam : ℝ) : ∀ᵐ x ∂weibullMeasure k lam, 0 < x := by
   rw [ae_iff]
   simpa only [not_lt, ← Iic_def] using weibullMeasure_Iic_zero k lam
+
+/-- **Integrability transfer.** A function is integrable against a Weibull measure exactly when
+its density-weighted version is Lebesgue integrable. This holds at every parameter, the zero
+measure included, and is the form in which downstream files should meet `weibullMeasure`. -/
+theorem integrable_weibullMeasure_iff (k lam : ℝ) {g : ℝ → ℝ} :
+    Integrable g (weibullMeasure k lam) ↔
+      Integrable (fun x ↦ g x * weibullPDFReal k lam x) := by
+  rw [weibullMeasure_def, integrable_withDensity_iff (measurable_weibullPDF k lam)
+    (ae_of_all _ fun x ↦ by rw [weibullPDF_eq_ofReal]; exact ENNReal.ofReal_lt_top)]
+  simp_rw [toReal_weibullPDF]
+
+/-- **Integral transfer.** An integral against a Weibull measure is the density-weighted Lebesgue
+integral. This holds at every parameter, the zero measure included. -/
+theorem integral_weibullMeasure_eq (k lam : ℝ) (g : ℝ → ℝ) :
+    ∫ x, g x ∂weibullMeasure k lam = ∫ x, weibullPDFReal k lam x * g x := by
+  rw [weibullMeasure_def, integral_withDensity_eq_integral_toReal_smul
+    (measurable_weibullPDF k lam)
+    (ae_of_all _ fun x ↦ by rw [weibullPDF_eq_ofReal]; exact ENNReal.ofReal_lt_top)]
+  simp_rw [toReal_weibullPDF, smul_eq_mul]
 
 /-! ### Normalization and tails -/
 
@@ -509,9 +532,7 @@ theorem integrable_pow_weibullMeasure (k lam : ℝ) (n : ℕ) :
     Integrable (fun y ↦ y ^ n) (weibullMeasure k lam) := by
   by_cases hvalid : 0 < k ∧ 0 < lam
   · rcases hvalid with ⟨hk, hlam⟩
-    rw [weibullMeasure, integrable_withDensity_iff (measurable_weibullPDF k lam)
-      (ae_of_all _ fun _ ↦ ENNReal.ofReal_lt_top)]
-    simp_rw [toReal_weibullPDF]
+    rw [integrable_weibullMeasure_iff]
     exact (integrable_weibullPDFReal_mul_pow hk hlam n).congr
       (ae_of_all _ fun y ↦ by ring)
   · simp [weibullMeasure_of_not_pos hvalid]
@@ -521,10 +542,7 @@ theorem integrable_pow_weibullMeasure (k lam : ℝ) (n : ℕ) :
 theorem integral_pow_weibullMeasure (hk : 0 < k) (hlam : 0 < lam) (n : ℕ) :
     ∫ y, y ^ n ∂weibullMeasure k lam =
       lam ^ n * Real.Gamma (1 + (n : ℝ) / k) := by
-  rw [weibullMeasure, integral_withDensity_eq_integral_toReal_smul
-    (measurable_weibullPDF k lam) (ae_of_all _ fun _ ↦ ENNReal.ofReal_lt_top)]
-  simp_rw [toReal_weibullPDF, smul_eq_mul]
-  rw [← integral_add_compl (s := Iic (0 : ℝ)) measurableSet_Iic
+  rw [integral_weibullMeasure_eq, ← integral_add_compl (s := Iic (0 : ℝ)) measurableSet_Iic
       (integrable_weibullPDFReal_mul_pow hk hlam n), compl_Iic]
   have hleft : ∫ y in Iic (0 : ℝ), weibullPDFReal k lam y * y ^ n = 0 := by
     exact integral_eq_zero_of_ae (ae_restrict_mem measurableSet_Iic |>.mono

@@ -221,8 +221,7 @@ private theorem not_integrable_exp_mul_cauchyPDFReal_of_pos (x₀ : ℝ) (hγ : 
         field_simp
       _ ≤ Real.exp (t * x) * cauchyPDFReal x₀ γ x :=
         mul_le_mul_of_nonneg_left hpdf (Real.exp_pos _).le
-  exact not_integrable_of_eventually_one_le_norm_atTop
-    (hbound.mono fun x hx => by rw [Real.norm_eq_abs]; exact hx.trans (le_abs_self _)) hint
+  exact not_integrable_of_eventually_one_le_atTop hbound hint
 
 /-- A nondegenerate Cauchy law has no first absolute moment. -/
 theorem not_integrable_id_cauchyMeasure (x₀ : ℝ) (hγ : γ ≠ 0) :

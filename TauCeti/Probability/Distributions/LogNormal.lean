@@ -347,8 +347,8 @@ theorem variance_id_logNormalMeasure (m : ℝ) (v : ℝ≥0) :
 /-- For nonpositive `t` the moment-generating integrand of a log-normal law is bounded by `1` on
 the support, hence integrable. -/
 theorem integrable_exp_mul_logNormalMeasure (m : ℝ) (v : ℝ≥0) (ht : t ≤ 0) :
-  Integrable (fun x => Real.exp (t * x)) (logNormalMeasure m v) := by
-  exact integrable_exp_mul_of_ae_nonneg_of_nonpos (X := id) (by fun_prop)
+    Integrable (fun x => Real.exp (t * x)) (logNormalMeasure m v) :=
+  integrable_exp_mul_of_ae_le_of_nonpos (X := id) (by fun_prop)
     ((ae_pos_logNormalMeasure m v).mono fun _ hx => hx.le) ht
 
 /-- The growth statement behind the failure of the positive exponential moments: against the
@@ -407,8 +407,7 @@ theorem not_integrable_exp_mul_logNormalMeasure (m : ℝ) (hv : v ≠ 0) (ht : 0
           mul_le_mul_of_nonneg_left key (by positivity)
       _ = Real.exp (t * Real.exp x)
             * ((√(2 * π * (v : ℝ)))⁻¹ * Real.exp (-(x - m) ^ 2 / (2 * (v : ℝ)))) := by ring
-  exact not_integrable_of_eventually_one_le_norm_atTop
-    (hev.mono fun x hx => by rw [Real.norm_eq_abs]; exact hx.trans (le_abs_self _)) hint
+  exact not_integrable_of_eventually_one_le_atTop hev hint
 
 /-- **The exponential-integrability domain of a log-normal law with nonzero log-variance is the
 nonpositive half-line.** -/

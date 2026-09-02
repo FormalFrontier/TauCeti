@@ -7,6 +7,7 @@ module
 
 public import Mathlib.Analysis.SpecialFunctions.Gaussian.GaussianIntegral
 public import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
+import Mathlib.Probability.Moments.Basic
 
 /-!
 # Exponential integrals on the real line
@@ -14,7 +15,9 @@ public import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
 This file records integrability and evaluation of exponential integrands on a half-line or the
 whole real line: natural powers multiplied by an exponentially decaying factor, the exact rate at
 which a bare exponential is integrable on a right half-line, integrability of the two-sided
-exponential, and general comparison criteria for exponential integrands and tail lower bounds.
+exponential, and general comparison criteria for tail lower bounds. It also carries a
+measure-agnostic exponential-integrability criterion, stated for a random variable on an arbitrary
+measurable space rather than for the line.
 
 Mathlib supplies the *sufficient* direction of the right-half-line integrability criterion,
 `integrableOn_exp_mul_Ioi`, for a negative rate.  `integrableOn_exp_mul_Ioi_iff` adds the converse,
@@ -30,10 +33,13 @@ inclusion.
 * `TauCeti.integrableOn_exp_mul_Iic_iff`: `exp (a * ·)` is integrable on `(-∞, c]` exactly when
   `0 < a`.
 * `TauCeti.integrable_exp_neg_mul_abs`: `exp (-(a * |·|))` is integrable when `0 < a`.
-* `TauCeti.integrable_exp_mul_of_ae_nonneg_of_nonpos`: a nonpositive exponential rate is
-  integrable under a finite measure supported on the nonnegative half-line.
-* `TauCeti.not_integrable_of_eventually_one_le_norm_atTop`: a function whose norm is eventually
-  at least one is not Lebesgue integrable.
+* `TauCeti.integrable_exp_mul_of_ae_le_of_nonpos`: `exp (t * X ·)` is integrable for `t ≤ 0`
+  whenever the random variable `X` is almost everywhere bounded below under a finite measure on
+  any measurable space.
+* `TauCeti.not_integrableOn_Ioi_of_eventually_one_le_norm`: a function whose norm is eventually
+  at least one is not integrable on any right half-line, hence, in
+  `TauCeti.not_integrable_of_eventually_one_le_norm_atTop` and
+  `TauCeti.not_integrable_of_eventually_one_le_atTop`, not Lebesgue integrable.
 -/
 
 public section
@@ -45,28 +51,41 @@ open Filter MeasureTheory Set
 namespace TauCeti
 
 /-- Under a finite measure, the exponential of a nonpositive multiple of an almost everywhere
-nonnegative random variable is integrable. -/
-theorem integrable_exp_mul_of_ae_nonneg_of_nonpos {Ω : Type*} [MeasurableSpace Ω]
-    {X : Ω → ℝ} {μ : Measure Ω} [IsFiniteMeasure μ] (hX : AEStronglyMeasurable X μ)
-    (hX_nonneg : ∀ᵐ ω ∂μ, 0 ≤ X ω) {t : ℝ} (ht : t ≤ 0) :
+bounded below random variable is integrable.
+
+This is Mathlib's `ProbabilityTheory.integrable_exp_mul_of_le` reflected through `X ↦ -X`. -/
+theorem integrable_exp_mul_of_ae_le_of_nonpos {Ω : Type*} [MeasurableSpace Ω]
+    {X : Ω → ℝ} {μ : Measure Ω} [IsFiniteMeasure μ] (hX : AEMeasurable X μ)
+    {b : ℝ} (hb : ∀ᵐ ω ∂μ, b ≤ X ω) {t : ℝ} (ht : t ≤ 0) :
     Integrable (fun ω => Real.exp (t * X ω)) μ := by
-  refine Integrable.mono' (integrable_const 1)
-    (Real.continuous_exp.comp_aestronglyMeasurable (hX.const_mul t)) ?_
-  filter_upwards [hX_nonneg] with ω hω
-  rw [Real.norm_eq_abs, abs_of_pos (Real.exp_pos _), Real.exp_le_one_iff]
-  exact mul_nonpos_of_nonpos_of_nonneg ht hω
+  simpa only [Pi.neg_apply, neg_mul_neg] using
+    ProbabilityTheory.integrable_exp_mul_of_le (-t) (-b) (neg_nonneg.mpr ht) hX.neg
+      (by filter_upwards [hb] with ω hω using neg_le_neg hω)
+
+/-- A function whose norm is eventually at least one at `atTop` is not integrable on any right
+half-line: it is bounded below in norm on a set of infinite measure. -/
+theorem not_integrableOn_Ioi_of_eventually_one_le_norm {E : Type*} [NormedAddCommGroup E]
+    {f : ℝ → E} (c : ℝ) (hf : ∀ᶠ x in atTop, 1 ≤ ‖f x‖) : ¬ IntegrableOn f (Ioi c) := by
+  intro hint
+  obtain ⟨a, ha⟩ := eventually_atTop.mp hf
+  have htail : IntegrableOn f (Ioi (max a c)) := hint.mono_set (Ioi_subset_Ioi (le_max_right a c))
+  have hone : IntegrableOn (fun _ : ℝ => (1 : ℝ)) (Ioi (max a c)) volume := by
+    refine Integrable.mono' htail.norm (by fun_prop) ?_
+    filter_upwards [ae_restrict_mem measurableSet_Ioi] with x hx
+    simpa only [norm_one] using ha x ((le_max_left a c).trans hx.le)
+  rw [integrableOn_const_iff] at hone
+  simp [Real.volume_Ioi] at hone
 
 /-- A function whose norm is eventually at least one at `atTop` is not Lebesgue integrable. -/
 theorem not_integrable_of_eventually_one_le_norm_atTop {E : Type*} [NormedAddCommGroup E]
-    {f : ℝ → E} (hf : ∀ᶠ x in atTop, 1 ≤ ‖f x‖) : ¬ Integrable f volume := by
-  intro hint
-  obtain ⟨a, ha⟩ := eventually_atTop.mp hf
-  have hone : IntegrableOn (fun _ : ℝ => (1 : ℝ)) (Ioi a) volume := by
-    refine Integrable.mono' hint.norm.integrableOn (by fun_prop) ?_
-    filter_upwards [ae_restrict_mem measurableSet_Ioi] with x hx
-    simpa only [norm_one] using ha x hx.le
-  rw [integrableOn_const_iff] at hone
-  simp [Real.volume_Ioi] at hone
+    {f : ℝ → E} (hf : ∀ᶠ x in atTop, 1 ≤ ‖f x‖) : ¬ Integrable f volume := fun hint =>
+  not_integrableOn_Ioi_of_eventually_one_le_norm 0 hf hint.integrableOn
+
+/-- A real function that is eventually at least one at `atTop` is not Lebesgue integrable. -/
+theorem not_integrable_of_eventually_one_le_atTop {f : ℝ → ℝ}
+    (hf : ∀ᶠ x in atTop, 1 ≤ f x) : ¬ Integrable f volume :=
+  not_integrable_of_eventually_one_le_norm_atTop
+    (hf.mono fun x hx => by rw [Real.norm_eq_abs]; exact hx.trans (le_abs_self _))
 
 /-- Natural powers times an exponentially decaying factor are integrable on `(0, ∞)`. -/
 theorem integrableOn_pow_mul_exp_neg_mul_Ioi (n : ℕ) {b : ℝ} (hb : 0 < b) :
@@ -110,20 +129,6 @@ theorem integrable_exp_neg_mul_abs {a : ℝ} (ha : 0 < a) :
   rw [← integrableOn_univ, ← Iic_union_Ioi (a := (0 : ℝ))]
   exact hIic.union hIoi
 
-
-/-- At a nonnegative rate the integrand is bounded below by a positive constant on `(c, ∞)`, a set
-of infinite measure, so it is not integrable there. -/
-private theorem not_integrableOn_exp_mul_Ioi {a c : ℝ} (ha : 0 ≤ a) :
-    ¬ IntegrableOn (fun x : ℝ => Real.exp (a * x)) (Set.Ioi c) := by
-  intro h
-  have hsub : Set.Ioi c ⊆ {x : ℝ | Real.exp (a * c) ≤ Real.exp (a * x)} := by
-    intro x hx
-    exact Real.exp_le_exp.2 (by nlinarith [le_of_lt (Set.mem_Ioi.mp hx)])
-  have h1 : (volume.restrict (Set.Ioi c)) (Set.Ioi c) < ⊤ :=
-    lt_of_le_of_lt (measure_mono hsub) (h.measure_ge_lt_top (Real.exp_pos (a * c)))
-  rw [Measure.restrict_apply_self, Real.volume_Ioi] at h1
-  exact absurd h1 (by simp)
-
 /-- **The exact integrability rate.**  `fun x => exp (a * x)` is integrable on `(c, ∞)` precisely
 when the rate is negative.  Mathlib's `integrableOn_exp_mul_Ioi` is the `←` direction. -/
 @[simp]
@@ -131,7 +136,10 @@ theorem integrableOn_exp_mul_Ioi_iff {a c : ℝ} :
     IntegrableOn (fun x : ℝ => Real.exp (a * x)) (Set.Ioi c) ↔ a < 0 := by
   refine ⟨fun h => ?_, fun ha => integrableOn_exp_mul_Ioi ha c⟩
   by_contra hne
-  exact not_integrableOn_exp_mul_Ioi (not_lt.mp hne) h
+  refine not_integrableOn_Ioi_of_eventually_one_le_norm c ?_ h
+  filter_upwards [eventually_ge_atTop (0 : ℝ)] with x hx
+  rw [Real.norm_eq_abs, abs_of_pos (Real.exp_pos _), Real.one_le_exp_iff]
+  exact mul_nonneg (not_lt.mp hne) hx
 
 /-- **The exact integrability rate on a left half-line.** `fun x => exp (a * x)` is integrable
 on `(-∞, c]` precisely when the rate is positive. -/

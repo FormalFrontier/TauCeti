@@ -27,6 +27,9 @@ Weibull law with an exponential law also gives the mgf `(1 - lam * t)⁻¹` and 
 
 * `TauCeti.Probability.integrable_exp_mul_id_weibullMeasure_of_nonpos`: every nonpositive
   exponential rate is integrable;
+* `TauCeti.Probability.integrable_exp_mul_id_weibullMeasure_of_one_lt` and
+  `TauCeti.Probability.not_integrable_exp_mul_id_weibullMeasure_of_lt_one`: the one-sided
+  statements in the superlinear and sublinear regimes;
 * `TauCeti.Probability.integrable_exp_mul_id_weibullMeasure_iff_of_lt_one` and
   `TauCeti.Probability.integrable_exp_mul_id_weibullMeasure_one_iff`: the exact integrability
   criteria in the sublinear and shape-one regimes;
@@ -116,31 +119,22 @@ private lemma tendsto_mul_rpow_mul_exp_atTop (hk : 0 < k)
   filter_upwards [eventually_gt_atTop (0 : ℝ)] with x hx
   exact (mul_rpow_mul_exp_eq hx hlam k t).symm
 
-/-- The Weibull density with its exponential decay halved. -/
-private def weibullPDFRealHalfDecay (k lam x : ℝ) : ℝ :=
-  (k / lam) * (x / lam) ^ (k - 1) * Real.exp (-(x / lam) ^ k / 2)
-
-/-- Halving the Weibull decay still leaves an integrable function on the positive half-line.
-
-Up to a constant the density is `x ^ (k - 1) * exp (-b * x ^ k)` with `b = lam ^ (-k) / 2`, so
-Mathlib's `integrableOn_rpow_mul_exp_neg_mul_rpow` applies directly. -/
-private lemma integrableOn_weibullPDFRealHalfDecay (hk : 0 < k) (hlam : 0 < lam) :
-    IntegrableOn (weibullPDFRealHalfDecay k lam) (Ioi 0) := by
-  have hb : 0 < lam ^ (-k) / 2 := by
-    have := Real.rpow_pos_of_pos hlam (-k)
-    linarith
-  have hbase := integrableOn_rpow_mul_exp_neg_mul_rpow (s := k - 1) (p := k)
-    (b := lam ^ (-k) / 2) (by linarith) hk hb
-  refine IntegrableOn.congr_fun (hbase.const_mul ((k / lam) / lam ^ (k - 1)))
-    (fun x hx => ?_) measurableSet_Ioi
-  have hx0 : 0 < x := hx
-  have hpow : (x / lam) ^ (k - 1) = x ^ (k - 1) / lam ^ (k - 1) :=
-    Real.div_rpow hx0.le hlam.le _
-  have hexp : -(x / lam) ^ k / 2 = -(lam ^ (-k) / 2) * x ^ k := by
-    rw [Real.div_rpow hx0.le hlam.le, Real.rpow_neg hlam.le]
+/-- Halving the Weibull decay only rescales the law: it is twice the Weibull density at scale
+`lam * 2 ^ k⁻¹`, whose integrability is `integrable_weibullPDFReal`. -/
+private lemma two_mul_weibullPDFReal_scale_eq (hk : 0 < k) (hlam : 0 < lam) (hx : 0 < x) :
+    2 * weibullPDFReal k (lam * 2 ^ k⁻¹) x =
+      (k / lam) * (x / lam) ^ (k - 1) * Real.exp (-(x / lam) ^ k / 2) := by
+  have hc : (0 : ℝ) < (2 : ℝ) ^ k⁻¹ := Real.rpow_pos_of_pos two_pos _
+  have hck : ((2 : ℝ) ^ k⁻¹) ^ k = 2 := by
+    rw [← Real.rpow_mul zero_le_two, inv_mul_cancel₀ hk.ne', Real.rpow_one]
+  have hpow : ∀ y : ℝ, (x / (lam * 2 ^ k⁻¹)) ^ y
+      = (x / lam) ^ y / ((2 : ℝ) ^ k⁻¹) ^ y := fun y => by
+    rw [Real.div_rpow hx.le (by positivity), Real.mul_rpow hlam.le hc.le,
+      Real.div_rpow hx.le hlam.le]
     ring
-  simp only [weibullPDFRealHalfDecay, hpow, hexp]
-  ring
+  rw [weibullPDFReal_of_pos hk (by positivity) hx, hpow k, hck, hpow (k - 1),
+    Real.rpow_sub hc, hck, Real.rpow_one]
+  field_simp
 
 /-- Regroup the two exponential factors in a density comparison. -/
 private lemma exp_mul_mul_exp_neg (c t x p : ℝ) :
@@ -150,9 +144,8 @@ private lemma exp_mul_mul_exp_neg (c t x p : ℝ) :
 
 /-- Every nonpositive exponential rate is integrable under a Weibull measure. -/
 theorem integrable_exp_mul_id_weibullMeasure_of_nonpos (k lam : ℝ) (ht : t ≤ 0) :
-    Integrable (fun x : ℝ => Real.exp (t * x)) (weibullMeasure k lam) := by
-  exact integrable_exp_mul_of_ae_nonneg_of_nonpos
-    (X := id) (by fun_prop)
+    Integrable (fun x : ℝ => Real.exp (t * x)) (weibullMeasure k lam) :=
+  integrable_exp_mul_of_ae_le_of_nonpos (X := id) (by fun_prop)
     ((ae_pos_weibullMeasure k lam).mono fun _ hx => hx.le) ht
 
 private lemma integrable_exp_mul_id_weibullMeasure_of_one_lt_of_scale_pos
@@ -161,9 +154,7 @@ private lemma integrable_exp_mul_id_weibullMeasure_of_one_lt_of_scale_pos
   by_cases ht : t ≤ 0
   · exact integrable_exp_mul_id_weibullMeasure_of_nonpos k lam ht
   have htpos : 0 < t := lt_of_not_ge ht
-  rw [weibullMeasure_def, integrable_withDensity_iff (measurable_weibullPDF k lam)
-    (ae_of_all _ fun x => by rw [weibullPDF_eq_ofReal]; exact ENNReal.ofReal_lt_top)]
-  simp_rw [toReal_weibullPDF]
+  rw [integrable_weibullMeasure_iff]
   have hratio : ∀ᶠ x in atTop, t * x / (x / lam) ^ k < (1 / 2 : ℝ) :=
     (tendsto_order.1 (tendsto_mul_div_rpow_atTop hk hlam t)).2 _ (by norm_num)
   obtain ⟨a, ha⟩ := eventually_atTop.mp (hratio.and (eventually_gt_atTop (0 : ℝ)))
@@ -178,15 +169,15 @@ private lemma integrable_exp_mul_id_weibullMeasure_of_one_lt_of_scale_pos
   -- On the tail, superlinear decay dominates the positive exponential factor.
   have htail : IntegrableOn
       (fun x : ℝ => Real.exp (t * x) * weibullPDFReal k lam x) (Ioi a) := by
-    have hdom := (integrableOn_weibullPDFRealHalfDecay (lt_trans zero_lt_one hk) hlam).mono_set
-      (Ioi_subset_Ioi (ha a le_rfl).2.le)
+    have hdom := ((integrable_weibullPDFReal k (lam * 2 ^ k⁻¹)).const_mul 2).integrableOn
+      (s := Ioi a)
     refine Integrable.mono' hdom (by fun_prop) ?_
     filter_upwards [ae_restrict_mem measurableSet_Ioi] with x hx
     have hxa : a ≤ x := le_of_lt hx
     have hxpos : 0 < x := (ha x hxa).2
     have hpower : 0 < (x / lam) ^ k := Real.rpow_pos_of_pos (div_pos hxpos hlam) k
     have hlin : t * x ≤ (x / lam) ^ k / 2 := by
-      simpa [div_eq_mul_inv, mul_comm] using (div_le_iff₀ hpower).mp (ha x hxa).1.le
+      linarith [(div_le_iff₀ hpower).mp (ha x hxa).1.le]
     rw [Real.norm_eq_abs,
       abs_of_nonneg (mul_nonneg (Real.exp_pos _).le (weibullPDFReal_nonneg k lam x)),
       weibullPDFReal_of_pos (lt_trans zero_lt_one hk) hlam hxpos]
@@ -202,8 +193,8 @@ private lemma integrable_exp_mul_id_weibullMeasure_of_one_lt_of_scale_pos
               Real.exp (-(x / lam) ^ k / 2) := by
             gcongr
             linarith
-      _ = (k / lam) * (x / lam) ^ (k - 1) *
-              Real.exp (-(x / lam) ^ k / 2) := by ring
+      _ = 2 * weibullPDFReal k (lam * 2 ^ k⁻¹) x :=
+            (two_mul_weibullPDFReal_scale_eq (lt_trans zero_lt_one hk) hlam hxpos).symm
   rw [← integrableOn_univ, ← Iic_union_Ioi (a := a)]
   exact hlocal.union htail
 
@@ -217,7 +208,6 @@ theorem integrable_exp_mul_id_weibullMeasure_of_one_lt (hk : 1 < k) (t : ℝ) :
     exact integrable_zero_measure
 
 /-- For a superlinear Weibull law, the exponential-integrability domain is all of `ℝ`. -/
-@[simp]
 theorem integrableExpSet_id_weibullMeasure_of_one_lt (hk : 1 < k) :
     integrableExpSet id (weibullMeasure k lam) = univ := by
   ext t
@@ -227,9 +217,7 @@ theorem integrableExpSet_id_weibullMeasure_of_one_lt (hk : 1 < k) :
 theorem not_integrable_exp_mul_id_weibullMeasure_of_lt_one (hk : 0 < k) (hk' : k < 1)
     (hlam : 0 < lam) (ht : 0 < t) :
     ¬ Integrable (fun x : ℝ => Real.exp (t * x)) (weibullMeasure k lam) := by
-  rw [weibullMeasure_def, integrable_withDensity_iff (measurable_weibullPDF k lam)
-    (ae_of_all _ fun x => by rw [weibullPDF_eq_ofReal]; exact ENNReal.ofReal_lt_top)]
-  simp_rw [toReal_weibullPDF]
+  rw [integrable_weibullMeasure_iff]
   intro hint
   have hsmall : ∀ᶠ x in atTop, (x / lam) ^ k / x < t / 2 :=
     (tendsto_order.1 (tendsto_rpow_div_id_atTop hk' hlam)).2 _ (by positivity)
@@ -255,20 +243,17 @@ theorem not_integrable_exp_mul_id_weibullMeasure_of_lt_one (hk : 0 < k) (hk' : k
           ((k / lam) * (x / lam) ^ (k - 1) * Real.exp (-(x / lam) ^ k)) :=
             (exp_mul_mul_exp_neg ((k / lam) * (x / lam) ^ (k - 1)) t x
               ((x / lam) ^ k)).symm
-  exact not_integrable_of_eventually_one_le_norm_atTop
-    (hev.mono fun x hx => by rw [Real.norm_eq_abs]; exact hx.trans (le_abs_self _)) hint
+  exact not_integrable_of_eventually_one_le_atTop hev hint
 
 /-- For a sublinear Weibull law, exponential integrability is equivalent to a nonpositive rate. -/
-@[simp]
 theorem integrable_exp_mul_id_weibullMeasure_iff_of_lt_one (hk : 0 < k) (hk' : k < 1)
     (hlam : 0 < lam) (t : ℝ) :
-    Integrable (fun x : ℝ => Real.exp (t * x)) (weibullMeasure k lam) ↔ t ≤ 0 := by
-  exact ⟨fun h => not_lt.mp fun ht =>
+    Integrable (fun x : ℝ => Real.exp (t * x)) (weibullMeasure k lam) ↔ t ≤ 0 :=
+  ⟨fun h => not_lt.mp fun ht =>
     not_integrable_exp_mul_id_weibullMeasure_of_lt_one hk hk' hlam ht h,
     integrable_exp_mul_id_weibullMeasure_of_nonpos k lam⟩
 
 /-- For a sublinear Weibull law, the exponential-integrability domain is `(-∞, 0]`. -/
-@[simp]
 theorem integrableExpSet_id_weibullMeasure_of_lt_one (hk : 0 < k) (hk' : k < 1)
     (hlam : 0 < lam) : integrableExpSet id (weibullMeasure k lam) = Iic 0 := by
   ext t
