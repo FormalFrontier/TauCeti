@@ -153,8 +153,8 @@ theorem IndepFun.pgf_add {X Y : Ω → ℕ} (hXY : IndepFun X Y μ) (t : ℝ)
   have hindep : IndepFun (fun ω => t ^ X ω) (fun ω => t ^ Y ω) μ :=
     hXY.comp (measurable_id.const_pow t) (measurable_id.const_pow t)
   simp_rw [pgf_def, Pi.add_apply, pow_add]
-  simpa only [ContinuousLinearMap.mul_apply'] using
-    hindep.integral_bilin hXt hYt (ContinuousLinearMap.mul ℝ ℝ)
+  exact hindep.integral_mul_eq_mul_integral hXt.aestronglyMeasurable
+    hYt.aestronglyMeasurable
 
 /-- Under a finite measure, on `[-1, 1]` the probability-generating function of a
 sum of two independent natural-number-valued random variables is the product of their generating
