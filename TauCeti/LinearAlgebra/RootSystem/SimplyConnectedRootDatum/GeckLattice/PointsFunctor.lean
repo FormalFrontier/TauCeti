@@ -51,9 +51,9 @@ appearing in it is finite, is simple, or is a named finite group.
   functoriality laws.
 * `TauCeti.DynkinType.geckPointsMap_injective`: an injective homomorphism of value rings induces
   an injective map of points.
-* `TauCeti.DynkinType.geckPointsMap_geckRootSubgroupMatrix` and
-  `TauCeti.DynkinType.geckPointsMap_geckTorusMatrix`: the equations on the pinned root subgroups
-  and on the pinned weight torus.
+* `TauCeti.DynkinType.geckPointsMap_geckRootSubgroupPoints` and
+  `TauCeti.DynkinType.geckPointsMap_geckWeightTorusPoints`: the equations on the pinned root
+  subgroups and on the pinned weight torus.
 
 ## References
 
@@ -149,41 +149,30 @@ theorem geckPointsMap_injective {f : A →+* B} (hf : Function.Injective f) :
   refine Subtype.ext (Matrix.GeneralLinearGroup.ext fun r c => hf ?_)
   rw [← coe_geckPointsMap_apply, ← coe_geckPointsMap_apply, hxy]
 
-/-- **The induced map carries the parameter of a numbered Geck root subgroup along the
-homomorphism of value rings.** This is the naturality of the pinned simple root subgroups, the
-form in which a consumer states its conventions. -/
+/-- **The induced map carries a numbered root-subgroup point along the homomorphism of value
+rings.** -/
 @[simp]
-theorem geckPointsMap_geckRootSubgroupMatrix (f : A →+* B) (i : Fin t.rank ⊕ Fin t.rank)
-    (u : Multiplicative A) :
-    t.geckPointsMap ht f
-        ⟨t.geckRootSubgroupMatrix ht i
-            ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm u),
-          t.geckRootSubgroupMatrix_mem_geckPoints ht A i _⟩ =
-      ⟨t.geckRootSubgroupMatrix ht i
-          ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := B)).symm
-            (Multiplicative.ofAdd (f (Multiplicative.toAdd u)))),
-        t.geckRootSubgroupMatrix_mem_geckPoints ht B i _⟩ :=
-  Subtype.ext (by
-    rw [coe_geckPointsMap, TauCeti.UniversalEnvelopingAlgebra.map_kostantRootSubgroupMatrix,
-      AdditiveGroup.mapValue_gaPointsMulEquiv_symm_apply, RingHom.toIntAlgHom_apply])
+theorem geckPointsMap_geckRootSubgroupPoints (f : A →+* B)
+    (i : Fin t.rank ⊕ Fin t.rank) (u : Multiplicative A) :
+    t.geckPointsMap ht f (t.geckRootSubgroupPoints ht i A u) =
+      t.geckRootSubgroupPoints ht i B
+        (Multiplicative.ofAdd (f (Multiplicative.toAdd u))) := by
+  refine Subtype.ext ?_
+  rw [coe_geckPointsMap, coe_geckRootSubgroupPoints, coe_geckRootSubgroupPoints,
+    TauCeti.UniversalEnvelopingAlgebra.map_kostantRootSubgroupMatrix,
+    AdditiveGroup.mapValue_gaPointsMulEquiv_symm_apply, RingHom.toIntAlgHom_apply]
 
 /-- **The induced map carries a point of the pinned Geck weight torus along the homomorphism of
-value rings**, parameter by parameter. The left-hand side is stated on the underlying diagonal
-matrix, which is the simp normal form of a torus point. -/
+value rings**, parameter by parameter. -/
 @[simp]
-theorem geckPointsMap_geckTorusMatrix (f : A →+* B) (s : Fin t.rank → Aˣ) :
-    t.geckPointsMap ht f
-        ⟨diagGL fun i => torusCharacter s (t.geckWeightFin ht i), by
-          simpa only [TauCeti.UniversalEnvelopingAlgebra.kostantTorusMatrix_apply] using
-            t.geckTorusMatrix_mem_geckPoints ht A s⟩ =
-      ⟨t.geckTorusMatrix ht fun j => Units.map (f : A →* B) (s j),
-        t.geckTorusMatrix_mem_geckPoints ht B _⟩ :=
-  Subtype.ext (by
-    rw [coe_geckPointsMap]
-    simpa only [TauCeti.UniversalEnvelopingAlgebra.kostantTorusMatrix_apply] using
-      TauCeti.UniversalEnvelopingAlgebra.map_kostantTorusMatrix
-        (M := (t.geckCoordinateLattice ht).toAddSubgroup) (b := t.geckCoordinateBasisFin ht)
-        (wt := t.geckWeightFin ht) f s)
+theorem geckPointsMap_geckWeightTorusPoints (f : A →+* B) (s : Fin t.rank → Aˣ) :
+    t.geckPointsMap ht f (t.geckWeightTorusPoints ht A s) =
+      t.geckWeightTorusPoints ht B (fun j => Units.map (f : A →* B) (s j)) := by
+  refine Subtype.ext ?_
+  rw [coe_geckPointsMap, coe_geckWeightTorusPoints, coe_geckWeightTorusPoints]
+  exact TauCeti.UniversalEnvelopingAlgebra.map_kostantTorusMatrix
+    (M := (t.geckCoordinateLattice ht).toAddSubgroup) (b := t.geckCoordinateBasisFin ht)
+    (wt := t.geckWeightFin ht) f s
 
 end Map
 

@@ -5,9 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Algebra.Category.Ring.Limits
+public import TauCeti.Algebra.Category.ModuleCat.Sheaf.Defs
 public import Mathlib.Algebra.Category.ModuleCat.Presheaf.Monoidal
-public import Mathlib.Algebra.Category.ModuleCat.Presheaf.Sheafification
 
 /-!
 # Tensor products of sheaves of modules
@@ -29,8 +28,6 @@ that structure is transported to presheaves of modules over the sheaf of rings u
   `R`-modules;
 * `SheafOfModules.tensorProductIso R M N` is its defining identification with the
   sheafification of the sectionwise tensor product of the underlying presheaves of modules;
-* `SheafOfModules.sheafificationIso R M` identifies the sheafification of the underlying
-  presheaf of modules of `M` with `M`;
 * `SheafOfModules.tensorProductCongrLeft/right` transport an isomorphism of one argument
   through the tensor product;
 * `SheafOfModules.tensorProductUnitIsoLeft/right` identify `R ⊗ M` and `M ⊗ R` with `M`;
@@ -54,20 +51,16 @@ open CategoryTheory Category Limits MonoidalCategory Opposite
 
 namespace TauCeti
 
-universe u
+universe u v₁ u₁
 
 noncomputable section
 
-variable {C : Type u} [Category.{u} C] {J : GrothendieckTopology C}
+variable {C : Type u₁} [Category.{v₁} C] {J : GrothendieckTopology C}
+variable [J.HasSheafCompose (forget₂ CommRingCat RingCat.{u})]
 variable [HasWeakSheafify J AddCommGrpCat.{u}] [J.WEqualsLocallyBijective AddCommGrpCat.{u}]
 variable (R : Sheaf J CommRingCat.{u})
 
 namespace SheafOfModules
-
-/-- The sheaf of rings underlying a sheaf of commutative rings on a site; the site-level
-analogue of `AlgebraicGeometry.Scheme.ringCatSheaf`. -/
-abbrev ringCatSheaf : Sheaf J RingCat.{u} :=
-  (sheafCompose J (forget₂ CommRingCat RingCat.{u})).obj R
 
 /-- The monoidal category structure on presheaves of modules over the sheaf of rings
 underlying a sheaf of commutative rings, obtained from Mathlib's monoidal structure on
@@ -122,23 +115,6 @@ def tensorProductIso (M N : SheafOfModules.{u} (ringCatSheaf R)) :
       (PresheafOfModules.sheafification (𝟙 (ringCatSheaf R).obj)).obj (M.val ⊗ N.val) :=
   Iso.refl _
 
-/-- The sheafification of the underlying presheaf of modules of a sheaf of `R`-modules is
-isomorphic to the module; this is the counit of the sheafification adjunction. -/
-def sheafificationIso (M : SheafOfModules.{u} (ringCatSheaf R)) :
-    (PresheafOfModules.sheafification (𝟙 (ringCatSheaf R).obj)).obj M.val ≅ M :=
-  (asIso
-    (PresheafOfModules.sheafificationAdjunction (𝟙 (ringCatSheaf R).obj)).counit).app M
-
-/-- The forward map of `sheafificationIso` is the counit of the sheafification
-adjunction. -/
-@[simp]
-theorem sheafificationIso_hom (M : SheafOfModules.{u} (ringCatSheaf R)) :
-    (sheafificationIso R M).hom =
-      (PresheafOfModules.sheafificationAdjunction
-        (𝟙 (ringCatSheaf R).obj)).counit.app M := by
-  simp only [sheafificationIso]
-  rfl
-
 /-- An isomorphism of the first argument transports through the tensor product. -/
 def tensorProductCongrLeft {M M' N : SheafOfModules.{u} (ringCatSheaf R)} (e : M ≅ M') :
     tensorProduct R M N ≅ tensorProduct R M' N :=
@@ -154,14 +130,14 @@ def tensorProductUnitIsoLeft (M : SheafOfModules.{u} (ringCatSheaf R)) :
     tensorProduct R (_root_.SheafOfModules.unit (ringCatSheaf R)) M ≅ M :=
   (tensorProductIso R _ M).symm ≪≫
     (PresheafOfModules.sheafification (𝟙 (ringCatSheaf R).obj)).mapIso (λ_ M.val) ≪≫
-      sheafificationIso R M
+      sheafificationIso (ringCatSheaf R) M
 
 /-- Tensoring with the sheaf of rings itself (on the right) does nothing. -/
 def tensorProductUnitIsoRight (M : SheafOfModules.{u} (ringCatSheaf R)) :
     tensorProduct R M (_root_.SheafOfModules.unit (ringCatSheaf R)) ≅ M :=
   (tensorProductIso R M _).symm ≪≫
     (PresheafOfModules.sheafification (𝟙 (ringCatSheaf R).obj)).mapIso (ρ_ M.val) ≪≫
-      sheafificationIso R M
+      sheafificationIso (ringCatSheaf R) M
 
 /-- Symmetry of the tensor product of sheaves of `R`-modules. -/
 def tensorProductComm (M N : SheafOfModules.{u} (ringCatSheaf R)) :

@@ -10,7 +10,7 @@ public import TauCeti.Probability.Exchangeability.ConditionallyIID.Const
 public import TauCeti.Probability.Exchangeability.Recurrence.Excursion
 public import TauCeti.Probability.Process.MarkovChain
 -- Non-public: the reconstruction of a path from its excursions is used only inside a proof.
-import TauCeti.Probability.Exchangeability.Recurrence.Representation
+import TauCeti.Probability.Exchangeability.Recurrence.Reconstruction
 
 /-!
 # The excursions of a recurrent Markov chain are i.i.d.

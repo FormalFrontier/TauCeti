@@ -23,10 +23,11 @@ This file supplies it. The isomorphism
 G(𝔽) ≃* G(A)^F,        𝔽 = frobeniusFixedSubring A p k,
 ```
 
-is the general one transported along `TauCeti.DynkinType.geckPoints_def`, exactly as
-`TauCeti.DynkinType.geckPointsMap` transports
+is the general one transported by `TauCeti.GeneralLinear.frobeniusFixedMulEquivOfCoeEq`, which is
+fed `TauCeti.DynkinType.geckPoints_def` and `TauCeti.DynkinType.coe_geckFrobenius`, exactly as
+`TauCeti.DynkinType.geckPointsMap` consumes
 `TauCeti.GeneralLinear.mapHopfIdealPointsSubgroup` and
-`TauCeti.DynkinType.map_subtype_fixedSubgroup_geckFrobenius_eq` transports
+`TauCeti.DynkinType.map_subtype_fixedSubgroup_geckFrobenius_eq` consumes
 `TauCeti.GeneralLinear.map_hopfIdealPointsSubgroup_frobeniusFixedSubring`. Nothing is reproved: the
 transport changes no matrix, and the one thing it has to check is that the two Frobenius
 endomorphisms correspond under it, which they do because both act entrywise.
@@ -41,9 +42,9 @@ the two element types.
 
 Naturality on the pinned generating families is not restated: the isomorphism is the entrywise
 inclusion, by `TauCeti.DynkinType.coe_geckPointsMulEquivFixedSubgroupGeckFrobenius`, so
-`TauCeti.DynkinType.geckPointsMap_geckRootSubgroupMatrix` and
-`TauCeti.DynkinType.geckPointsMap_geckTorusMatrix` at the inclusion of `𝔽` already describe its
-action on the numbered root subgroups and on the weight torus.
+`TauCeti.DynkinType.geckPointsMap_geckRootSubgroupPoints` and
+`TauCeti.DynkinType.geckPointsMap_geckWeightTorusPoints` at the inclusion of `𝔽` already describe
+its action on the numbered root subgroups and on the weight torus.
 
 Two limitations carry over from the file this one builds on. The Geck carrier is built from the
 adjoint module, so outside the types `E₈`, `F₄` and `G₂` its weights span the root lattice rather
@@ -103,42 +104,6 @@ noncomputable section
 
 variable (A : Type v) [CommRing A] [ExpChar A p]
 
-/-! ## The Geck carrier as a Hopf-ideal point group -/
-
-/-- The Geck point group read as the matrix point group its defining Hopf ideal cuts out, which is
-what `TauCeti.DynkinType.geckPoints_def` says it is. This is the transport the general results are
-consumed along; it changes no matrix. -/
-private def geckPointsMulEquivHopfIdealPoints (B : Type v) [CommRing B] :
-    t.geckPoints ht B ≃*
-      GeneralLinear.hopfIdealPointsSubgroup (t.geckDim ht) (t.geckDefiningIdeal ht) B :=
-  MulEquiv.subgroupCongr (t.geckPoints_def ht B)
-
-private theorem coe_geckPointsMulEquivHopfIdealPoints (B : Type v) [CommRing B]
-    (g : t.geckPoints ht B) :
-    (geckPointsMulEquivHopfIdealPoints t ht B g :
-        Matrix.GeneralLinearGroup (Fin (t.geckDim ht)) B) =
-      (g : Matrix.GeneralLinearGroup (Fin (t.geckDim ht)) B) := by
-  rw [geckPointsMulEquivHopfIdealPoints, MulEquiv.subgroupCongr_apply]
-
-private theorem coe_geckPointsMulEquivHopfIdealPoints_symm (B : Type v) [CommRing B]
-    (g : GeneralLinear.hopfIdealPointsSubgroup (t.geckDim ht) (t.geckDefiningIdeal ht) B) :
-    (((geckPointsMulEquivHopfIdealPoints t ht B).symm g : t.geckPoints ht B) :
-        Matrix.GeneralLinearGroup (Fin (t.geckDim ht)) B) =
-      (g : Matrix.GeneralLinearGroup (Fin (t.geckDim ht)) B) := by
-  rw [geckPointsMulEquivHopfIdealPoints, MulEquiv.subgroupCongr_symm_apply]
-
-/-- The transport intertwines the Frobenius of the Geck carrier with the Frobenius of the matrix
-points cut out by its defining Hopf ideal: both act by the entrywise Frobenius. -/
-private theorem geckPointsMulEquivHopfIdealPoints_comp_geckFrobenius :
-    ((geckPointsMulEquivHopfIdealPoints t ht A :
-          t.geckPoints ht A →* _).comp (t.geckFrobenius ht p k A)) =
-      (GeneralLinear.iterateFrobeniusHopfIdealPoints (t.geckDim ht) p k
-          (t.geckDefiningIdeal ht) A).comp
-        (geckPointsMulEquivHopfIdealPoints t ht A : t.geckPoints ht A →* _) := by
-  refine MonoidHom.ext fun g => Subtype.ext ?_
-  simp only [MonoidHom.comp_apply, MonoidHom.coe_coe, coe_geckPointsMulEquivHopfIdealPoints,
-    GeneralLinear.coe_iterateFrobeniusHopfIdealPoints, coe_geckFrobenius]
-
 /-! ## The fixed points as points over the fixed subring -/
 
 /-- **The Frobenius-fixed points of the pinned Geck carrier are its points over the Frobenius-fixed
@@ -148,18 +113,18 @@ images in `GLₙ(A)` recorded by
 algebraic closure of `ZMod p` this reads `G(𝔽_q) ≃* G(A)^F` with `q = p ^ k`.
 
 It is `TauCeti.GeneralLinear.frobeniusFixedHopfIdealPointsMulEquiv`, the same isomorphism for the
-matrix points cut out by a Hopf ideal, transported along
-`TauCeti.DynkinType.geckPoints_def` into the named Geck API; nothing is reproved.
+matrix points cut out by a Hopf ideal, transported into the named Geck API by
+`TauCeti.GeneralLinear.frobeniusFixedMulEquivOfCoeEq`, which consumes only the presentation
+`TauCeti.DynkinType.geckPoints_def` of the point group and the entrywise description
+`TauCeti.DynkinType.coe_geckFrobenius` of the carrier Frobenius; nothing is reproved.
 `TauCeti.DynkinType.coe_geckPointsMulEquivFixedSubgroupGeckFrobenius` says that the transport
 leaves the matrices alone, so the isomorphism is the entrywise inclusion. -/
 def geckPointsMulEquivFixedSubgroupGeckFrobenius :
     t.geckPoints ht ↥(frobeniusFixedSubring A p k) ≃*
       ↥(fixedSubgroup (t.geckFrobenius ht p k A)) :=
-  ((geckPointsMulEquivHopfIdealPoints t ht ↥(frobeniusFixedSubring A p k)).trans
-      (GeneralLinear.frobeniusFixedHopfIdealPointsMulEquiv (t.geckDim ht) p k
-        (t.geckDefiningIdeal ht) A)).trans
-    (fixedSubgroupCongr (geckPointsMulEquivHopfIdealPoints t ht A)
-      (t.geckPointsMulEquivHopfIdealPoints_comp_geckFrobenius ht p k A)).symm
+  GeneralLinear.frobeniusFixedMulEquivOfCoeEq (t.geckDim ht) p k (t.geckDefiningIdeal ht) A
+    (t.geckFrobenius ht p k A) (t.geckPoints_def ht A)
+    (t.geckPoints_def ht ↥(frobeniusFixedSubring A p k)) (t.coe_geckFrobenius ht p k A)
 
 /-- **The isomorphism onto the Frobenius-fixed points includes the matrix entries** of a point over
 the Frobenius-fixed subring into the value ring, and does nothing else. -/
@@ -168,9 +133,10 @@ theorem coe_geckPointsMulEquivFixedSubgroupGeckFrobenius
     (g : t.geckPoints ht ↥(frobeniusFixedSubring A p k)) :
     ((t.geckPointsMulEquivFixedSubgroupGeckFrobenius ht p k A g : t.geckPoints ht A) :
         Matrix.GeneralLinearGroup (Fin (t.geckDim ht)) A) =
-      Matrix.GeneralLinearGroup.map (frobeniusFixedSubring A p k).subtype g := by
-  simp [geckPointsMulEquivFixedSubgroupGeckFrobenius, coe_geckPointsMulEquivHopfIdealPoints,
-    coe_geckPointsMulEquivHopfIdealPoints_symm]
+      Matrix.GeneralLinearGroup.map (frobeniusFixedSubring A p k).subtype g :=
+  GeneralLinear.coe_frobeniusFixedMulEquivOfCoeEq (t.geckDim ht) p k (t.geckDefiningIdeal ht) A
+    (t.geckFrobenius ht p k A) (t.geckPoints_def ht A)
+    (t.geckPoints_def ht ↥(frobeniusFixedSubring A p k)) (t.coe_geckFrobenius ht p k A) g
 
 /-- Entrywise, the isomorphism includes each matrix entry of a point over the Frobenius-fixed
 subring into the value ring. -/
@@ -194,8 +160,10 @@ theorem coe_geckPointsMulEquivFixedSubgroupGeckFrobenius_symm_apply
     (x : ↥(fixedSubgroup (t.geckFrobenius ht p k A))) :
     Matrix.GeneralLinearGroup.map (frobeniusFixedSubring A p k).subtype
         ((t.geckPointsMulEquivFixedSubgroupGeckFrobenius ht p k A).symm x) =
-      ((x : t.geckPoints ht A) : Matrix.GeneralLinearGroup (Fin (t.geckDim ht)) A) := by
-  rw [← coe_geckPointsMulEquivFixedSubgroupGeckFrobenius, MulEquiv.apply_symm_apply]
+      ((x : t.geckPoints ht A) : Matrix.GeneralLinearGroup (Fin (t.geckDim ht)) A) :=
+  GeneralLinear.coe_frobeniusFixedMulEquivOfCoeEq_symm_apply (t.geckDim ht) p k
+    (t.geckDefiningIdeal ht) A (t.geckFrobenius ht p k A) (t.geckPoints_def ht A)
+    (t.geckPoints_def ht ↥(frobeniusFixedSubring A p k)) (t.coe_geckFrobenius ht p k A) x
 
 /-- Entrywise, the point over the Frobenius-fixed subring produced by the inverse of the
 isomorphism has the entries of the Frobenius-fixed point it came from. -/

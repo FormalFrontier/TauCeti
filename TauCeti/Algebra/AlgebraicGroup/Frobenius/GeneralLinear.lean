@@ -44,6 +44,9 @@ which needs no coordinate ring, is
   matrix points valued in the Frobenius-fixed subring.
 * `TauCeti.GeneralLinear.frobeniusFixedHopfIdealPointsMulEquiv`: the resulting isomorphism onto the
   Frobenius-fixed points.
+* `TauCeti.GeneralLinear.frobeniusFixedMulEquivOfCoeEq`: that isomorphism transported to a named
+  carrier, from a presentation of its point group by a Hopf ideal and an entrywise description of
+  its Frobenius.
 
 ## Main results
 
@@ -59,6 +62,9 @@ which needs no coordinate ring, is
 * `TauCeti.GeneralLinear.map_hopfIdealPointsSubgroup_frobeniusFixedSubring` and
   `TauCeti.GeneralLinear.range_frobeniusFixedHopfIdealPointsInclusion`: those fixed points are the
   points of the same subgroup scheme over the Frobenius-fixed subring.
+* `TauCeti.GeneralLinear.coe_frobeniusFixedMulEquivOfCoeEq` and
+  `TauCeti.GeneralLinear.coe_frobeniusFixedMulEquivOfCoeEq_symm_apply`: the transported isomorphism
+  is the entrywise inclusion of the Frobenius-fixed subring, read in both directions.
 
 ## Roadmap
 
@@ -418,5 +424,82 @@ theorem coe_frobeniusFixedHopfIdealPointsMulEquiv_symm_apply_apply
     frobeniusFixedHopfIdealPointsInclusion_frobeniusFixedHopfIdealPointsMulEquiv_symm_apply]
 
 end RationalPoints
+
+section Transport
+
+variable (I : HopfIdeal ℤ (coordinateHopfAlgebra ℤ n)) (A : Type w) [CommRing A] [ExpChar A p]
+  {P : Subgroup (Matrix.GeneralLinearGroup (Fin n) A)}
+  {Q : Subgroup (Matrix.GeneralLinearGroup (Fin n) ↥(frobeniusFixedSubring A p k))}
+
+/-- Reading a point group presented by a Hopf ideal as the matrix points that ideal cuts out
+intertwines a Frobenius acting entrywise with
+`TauCeti.GeneralLinear.iterateFrobeniusHopfIdealPoints`. Private: it is the hypothesis check inside
+`TauCeti.GeneralLinear.frobeniusFixedMulEquivOfCoeEq` and has no use apart from it. -/
+private theorem subgroupCongr_comp_eq_of_coe_eq (F : P →* P)
+    (hP : P = hopfIdealPointsSubgroup n I A)
+    (hF : ∀ g : P, (F g : Matrix.GeneralLinearGroup (Fin n) A) =
+      Matrix.GeneralLinearGroup.map (iterateFrobenius A p k) g) :
+    ((MulEquiv.subgroupCongr hP : P →* ↥(hopfIdealPointsSubgroup n I A)).comp F) =
+      (iterateFrobeniusHopfIdealPoints n p k I A).comp
+        (MulEquiv.subgroupCongr hP : P →* ↥(hopfIdealPointsSubgroup n I A)) := by
+  refine MonoidHom.ext fun g => Subtype.ext ?_
+  simp only [MonoidHom.comp_apply, MonoidHom.coe_coe, MulEquiv.subgroupCongr_apply,
+    coe_iterateFrobeniusHopfIdealPoints, hF]
+
+/-- **The rational points of a named carrier are its Frobenius-fixed points**, for any carrier whose
+point group is presented by a Hopf ideal and whose Frobenius acts entrywise.
+
+This is `TauCeti.GeneralLinear.frobeniusFixedHopfIdealPointsMulEquiv` transported along the two
+presentations `hP` and `hQ`. A carrier supplies them, together with the entrywise description `hF`
+of its own Frobenius, and reads off the isomorphism `G(𝔽) ≃* G(A)^F` in its own API without
+reproving anything; `TauCeti.GeneralLinear.coe_frobeniusFixedMulEquivOfCoeEq` says that the
+transport changes no matrix. It is the `MulEquiv` counterpart of
+`TauCeti.map_subtype_fixedSubgroup_of_coe_eq`, which describes the same fixed points as a subgroup
+of `GLₙ(A)` rather than as a group in its own right. -/
+noncomputable def frobeniusFixedMulEquivOfCoeEq (F : P →* P)
+    (hP : P = hopfIdealPointsSubgroup n I A)
+    (hQ : Q = hopfIdealPointsSubgroup n I ↥(frobeniusFixedSubring A p k))
+    (hF : ∀ g : P, (F g : Matrix.GeneralLinearGroup (Fin n) A) =
+      Matrix.GeneralLinearGroup.map (iterateFrobenius A p k) g) :
+    Q ≃* ↥(fixedSubgroup F) :=
+  ((MulEquiv.subgroupCongr hQ).trans
+      (frobeniusFixedHopfIdealPointsMulEquiv n p k I A)).trans
+    (fixedSubgroupCongr (MulEquiv.subgroupCongr hP)
+      (subgroupCongr_comp_eq_of_coe_eq n p k I A F hP hF)).symm
+
+/-- The transported isomorphism onto the Frobenius-fixed points includes the matrix entries of a
+point over the Frobenius-fixed subring into the value ring, and does nothing else. -/
+@[simp]
+theorem coe_frobeniusFixedMulEquivOfCoeEq (F : P →* P)
+    (hP : P = hopfIdealPointsSubgroup n I A)
+    (hQ : Q = hopfIdealPointsSubgroup n I ↥(frobeniusFixedSubring A p k))
+    (hF : ∀ g : P, (F g : Matrix.GeneralLinearGroup (Fin n) A) =
+      Matrix.GeneralLinearGroup.map (iterateFrobenius A p k) g) (g : Q) :
+    ((frobeniusFixedMulEquivOfCoeEq n p k I A F hP hQ hF g : P) :
+        Matrix.GeneralLinearGroup (Fin n) A) =
+      Matrix.GeneralLinearGroup.map (frobeniusFixedSubring A p k).subtype g := by
+  -- The transport is the threefold composite of the presentation `hQ`, the isomorphism for the
+  -- Hopf-ideal points and the presentation `hP` read backwards; each factor contributes exactly
+  -- one of the coercion equations below.
+  simp only [frobeniusFixedMulEquivOfCoeEq, MulEquiv.trans_apply,
+    coe_fixedSubgroupCongr_symm_apply, MulEquiv.subgroupCongr_symm_apply,
+    MulEquiv.subgroupCongr_apply, coe_frobeniusFixedHopfIdealPointsMulEquiv,
+    coe_frobeniusFixedHopfIdealPointsInclusion]
+
+/-- The inverse of the transported isomorphism reads a Frobenius-fixed point as a point over the
+Frobenius-fixed subring: including its matrix back into the `A`-valued points returns the point one
+started from. -/
+@[simp]
+theorem coe_frobeniusFixedMulEquivOfCoeEq_symm_apply (F : P →* P)
+    (hP : P = hopfIdealPointsSubgroup n I A)
+    (hQ : Q = hopfIdealPointsSubgroup n I ↥(frobeniusFixedSubring A p k))
+    (hF : ∀ g : P, (F g : Matrix.GeneralLinearGroup (Fin n) A) =
+      Matrix.GeneralLinearGroup.map (iterateFrobenius A p k) g) (x : ↥(fixedSubgroup F)) :
+    Matrix.GeneralLinearGroup.map (frobeniusFixedSubring A p k).subtype
+        ((frobeniusFixedMulEquivOfCoeEq n p k I A F hP hQ hF).symm x) =
+      ((x : P) : Matrix.GeneralLinearGroup (Fin n) A) := by
+  rw [← coe_frobeniusFixedMulEquivOfCoeEq n p k I A F hP hQ hF, MulEquiv.apply_symm_apply]
+
+end Transport
 
 end TauCeti.GeneralLinear

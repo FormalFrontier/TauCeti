@@ -5,138 +5,168 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.NumberTheory.Multiquadratic.FundamentalDiscriminant.OfSquarefree
-public import Mathlib.FieldTheory.IntermediateField.Adjoin.Basic
-import TauCeti.NumberTheory.Multiquadratic.FundamentalDiscriminant.Factorization
-import TauCeti.NumberTheory.Multiquadratic.Quadratic.Subfield
+public import TauCeti.NumberTheory.Multiquadratic.CandidateGenusField.GaloisGroup
+public import TauCeti.NumberTheory.Multiquadratic.CandidateGenusField.InfinitePlace
+public import TauCeti.NumberTheory.Multiquadratic.Unramified.Maximality
+import TauCeti.FieldTheory.Minpoly
 
 /-!
-# A square root of the radicand in the prime-discriminant compositum
+# The genus field of an imaginary quadratic field
 
-For an integer `d`, the *candidate genus field* of `ℚ(√d)` is the compositum of the quadratic
-fields `ℚ(√(radicand D*))` over the prime discriminants `D*` dividing the fundamental discriminant
-`fundamentalDiscriminant d`. This file proves the square-class fact underlying the genus-field
-construction: that compositum contains an element squaring to `d`. Identifying this compositum
-with the genus field itself (the maximal unramified abelian extension) is later work; here we only
-establish that a square root of `d` lies in it.
+This file gives an intrinsic characterization of the genus field and proves that the
+prime-discriminant compositum `candidateGenusField hd` has that characterization when `d < 0`.
 
-The argument is a square-class computation. Writing `M = adjoin ℚ (root)` for the roots of the
-radicands, the product of all the roots squares to the product of the radicands, which — because
-each prime discriminant is its radicand or four times it, and `fundamentalDiscriminant d = c² · d`
-— lies in the square class of `d`. Scaling that product root by the appropriate rational produces
-an element of `M` squaring to `d`.
+For a chosen square root `y² = d` in an abelian extension `L / ℚ`, the predicate
+`TauCeti.Multiquadratic.IsGenusField d L y` says that:
 
-Combined with the degree theorem `Prime/Discriminant/Independence` (the compositum has degree
-`2ᵗ`), this is a step toward exhibiting the genus field as a multiquadratic extension of `ℚ(√d)`.
+* `y` generates a quadratic subfield of `L`;
+* `L` is unramified over that subfield at every finite and infinite place; and
+* every other abelian extension of `ℚ` with these properties embeds into `L` over `ℚ`, carrying
+  its chosen square root to `y`.
 
-The description of the genus field as the compositum of the prime-discriminant quadratic fields is
-classical; see D. A. Cox, *Primes of the Form x² + ny²*, and F. Lemmermeyer, *Reciprocity Laws*.
+The last clause is the maximality in the classical definition. It is stated by a universal
+property, rather than by choosing a maximal element of a collection of fields. The theorem
+`IsGenusField.exists_algEquiv_apply_eq` makes the resulting root-preserving uniqueness explicit.
 
-## Main results
+For squarefree negative `d`, `isGenusField_candidateGenusField` assembles the existing arithmetic
+and archimedean inputs. The finite-prime theorem is `isUnramifiedIn_candidateGenusField`, the
+infinite-place theorem is
+`isUnramifiedAtInfinitePlaces_candidateGenusField`, and maximality is
+`nonempty_algHom_candidateGenusField`.
 
-* `TauCeti.Multiquadratic.exists_mem_adjoin_sq_eq_of_prod_primeDiscriminant_eq`: for a finset of
-  prime discriminants whose product is `fundamentalDiscriminant d`, the compositum of the roots of
-  their radicands contains an element squaring to `d`.
-* `TauCeti.Multiquadratic.exists_finset_primeDiscriminant_and_exists_mem_adjoin_sq_eq_of_squarefree`
-  packages that with the factorization: for squarefree `d`, the prime-discriminant factorization of
-  `fundamentalDiscriminant d` exists (with its at-most-one-even property) and its radicand
-  compositum contains an element squaring to `d`.
+This completes the definition and maximality part of Layer 3 of the Multiquadratic roadmap in the
+imaginary quadratic case. Identifying the relative Galois group with the elementary-two quotient
+of the class group still requires the Artin map.
+
+## References
+
+* D. A. Cox, *Primes of the Form x² + ny²*, Section 6.A.
+* F. Lemmermeyer, *Reciprocity Laws: From Euler to Eisenstein*, Section 2.2.
 -/
 
 public section
 
+open IntermediateField NumberField
+open scoped NumberField
+
 namespace TauCeti.Multiquadratic
 
-open Finset
+universe u v
 
-/-- A prime discriminant is a nonzero square (`1` or `2²`) times its radicand. -/
-private lemma primeDiscriminant_eq_sq_mul_radicand {P : ℤ} (hP : IsPrimeDiscriminant P) :
-    ∃ c : ℤ, c ≠ 0 ∧ P = c ^ 2 * primeDiscriminantRadicand P := by
-  rcases primeDiscriminant_eq_radicand_or_eq_four_mul_radicand hP with h | h
-  · exact ⟨1, one_ne_zero, by linear_combination h⟩
-  · exact ⟨2, two_ne_zero, by linear_combination h⟩
+/-- An abelian extension `L / ℚ`, with a chosen quadratic subfield generated by `y² = d`, is a
+**genus field** when it is unramified over that subfield at every place and is maximal among
+abelian extensions with those properties.
 
-/-- The product of the radicands of prime discriminants whose product is
-`fundamentalDiscriminant d` is a nonzero rational square times `d`. -/
-theorem exists_prod_radicand_eq_sq_mul_of_prod_primeDiscriminant_eq {d : ℤ} {s : Finset ℤ}
-    (hs : ∀ P ∈ s, IsPrimeDiscriminant P) (hprod : ∏ P ∈ s, P = fundamentalDiscriminant d) :
-    ∃ a : ℚ, a ≠ 0 ∧
-      (∏ P ∈ s.attach, ((primeDiscriminantRadicand P.val : ℤ) : ℚ)) =
-        a ^ 2 * ((d : ℤ) : ℚ) := by
-  classical
-  choose c hc0 hcP using fun (P : ℤ) (hP : IsPrimeDiscriminant P) =>
-    primeDiscriminant_eq_sq_mul_radicand hP
-  let C : ℤ := ∏ P ∈ s.attach, c P.1 (hs P.1 P.2)
-  let R : ℤ := ∏ P ∈ s.attach, primeDiscriminantRadicand P.1
-  have hCprod : ∏ P ∈ s, P = C ^ 2 * R := by
-    dsimp only [C, R]
-    rw [← Finset.prod_pow, ← Finset.prod_mul_distrib,
-      ← Finset.prod_attach s (fun P => P)]
-    exact Finset.prod_congr rfl fun P _ => hcP P.1 (hs P.1 P.2)
-  obtain ⟨c0, hc0ne, hfd⟩ := exists_sq_mul_eq_fundamentalDiscriminant d
-  have hCne : C ≠ 0 :=
-    Finset.prod_ne_zero_iff.mpr fun P _ => hc0 P.1 (hs P.1 P.2)
-  have hkey : C ^ 2 * R = c0 ^ 2 * d := by rw [← hCprod, hprod, hfd]
-  let a : ℚ := (c0 : ℚ) / (C : ℚ)
-  have hCQ : (C : ℚ) ≠ 0 := Int.cast_ne_zero.mpr hCne
-  have hc0Q : (c0 : ℚ) ≠ 0 :=
-    Int.cast_ne_zero.mpr (by rcases hc0ne with h | h <;> simp [h])
-  have hane : a ≠ 0 := div_ne_zero hc0Q hCQ
-  have hcast : (C : ℚ) ^ 2 * (R : ℚ) = (c0 : ℚ) ^ 2 * ((d : ℤ) : ℚ) := by
-    exact_mod_cast hkey
-  have hRa : (R : ℚ) = a ^ 2 * ((d : ℤ) : ℚ) := by
-    dsimp only [a]
-    rw [div_pow]
-    field_simp
-    linear_combination hcast
-  refine ⟨a, hane, ?_⟩
-  rw [← Int.cast_prod]
-  exact hRa
+This predicate is the ordinary, all-places notion. A narrow genus-field predicate for real
+quadratic fields, imposing only the finite-place condition, remains future work. -/
+structure IsGenusField (d : ℤ) (L : Type u) [Field L] [NumberField L] (y : L) : Prop where
+  /-- The chosen element is a square root of the radicand. -/
+  root_sq : y ^ 2 = algebraMap ℤ L d
+  /-- The chosen root generates a quadratic subfield. -/
+  finrank_adjoin : Module.finrank ℚ (adjoin ℚ {y} : IntermediateField ℚ L) = 2
+  /-- The ambient extension is abelian and Galois over `ℚ`. -/
+  isAbelianGalois : IsAbelianGalois ℚ L
+  /-- The extension is unramified at every finite prime over its quadratic subfield. -/
+  isUnramifiedAtFinitePlaces :
+    ∀ q : Ideal (𝓞 (adjoin ℚ {y} : IntermediateField ℚ L)),
+      q.IsPrime → q ≠ ⊥ → Algebra.IsUnramifiedIn (𝓞 L) q
+  /-- The extension is unramified at every infinite place over its quadratic subfield. -/
+  isUnramifiedAtInfinitePlaces :
+    IsUnramifiedAtInfinitePlaces (adjoin ℚ {y} : IntermediateField ℚ L) L
+  /-- Root-preserving maximality among abelian extensions unramified at every place over
+  `ℚ(√d)`. -/
+  maximal :
+    ∀ {M : Type v} [Field M] [NumberField M] [IsAbelianGalois ℚ M] {z : M},
+      z ^ 2 = algebraMap ℤ M d →
+      (∀ q : Ideal (𝓞 (adjoin ℚ {z} : IntermediateField ℚ M)),
+        q.IsPrime → q ≠ ⊥ → Algebra.IsUnramifiedIn (𝓞 M) q) →
+      IsUnramifiedAtInfinitePlaces (adjoin ℚ {z} : IntermediateField ℚ M) M →
+      ∃ φ : M →ₐ[ℚ] L, φ z = y
 
-/-- **A square root of `d` in the prime-discriminant compositum.** Let `d : ℤ` and let `s` be a
-finite set of prime discriminants whose product is the fundamental discriminant
-`fundamentalDiscriminant d`. For any chosen square roots `root` of the radicands of the members of
-`s` in a field `L` over `ℚ`, the compositum `adjoin ℚ (Set.range root)` contains an element
-squaring to `d`. This is the square-class containment underlying the genus-field construction. -/
-theorem exists_mem_adjoin_sq_eq_of_prod_primeDiscriminant_eq {d : ℤ} {s : Finset ℤ}
-    (hs : ∀ P ∈ s, IsPrimeDiscriminant P) (hprod : ∏ P ∈ s, P = fundamentalDiscriminant d)
-    {L : Type*} [Field L] [Algebra ℚ L] (root : {P // P ∈ s} → L) (hroot : ∀ P : {P // P ∈ s},
-      root P ^ 2 = algebraMap ℚ L ((primeDiscriminantRadicand P.val : ℤ) : ℚ)) :
-    ∃ x ∈ IntermediateField.adjoin ℚ (Set.range root), x ^ 2 = algebraMap ℚ L ((d : ℤ) : ℚ) := by
-  classical
-  obtain ⟨a, hane, hRa⟩ :=
-    exists_prod_radicand_eq_sq_mul_of_prod_primeDiscriminant_eq hs hprod
-  -- The product of all roots lies in `M` and squares to the product of the radicands.
-  set x0 : L := ∏ P ∈ s.attach, root P with hx0
-  have hx0mem : x0 ∈ IntermediateField.adjoin ℚ (Set.range root) := prod_root_mem_adjoin s.attach
-  have hx0sq : x0 ^ 2 =
-      algebraMap ℚ L (∏ P ∈ s.attach,
-        ((primeDiscriminantRadicand P.val : ℤ) : ℚ)) := by
-    rw [hx0, prod_root_sq hroot s.attach]
-  -- Scale by `a⁻¹` to land a square root of `d`.
-  have ha_inv_sq : a⁻¹ ^ 2 * a ^ 2 = 1 := by rw [← mul_pow, inv_mul_cancel₀ hane, one_pow]
-  refine ⟨algebraMap ℚ L a⁻¹ * x0, mul_mem (IntermediateField.algebraMap_mem _ _) hx0mem, ?_⟩
-  rw [mul_pow, hx0sq, hRa, ← map_pow, ← map_mul]
-  congr 1
-  rw [← mul_assoc, ha_inv_sq, one_mul]
+namespace IsGenusField
 
-/-- **The prime-discriminant compositum of a squarefree radicand contains a square root of `d`.**
-For squarefree `d`, the fundamental discriminant `fundamentalDiscriminant d` factors into a finite
-set `s` of prime discriminants, and for any roots of their radicands the compositum contains an
-element squaring to `d`. This packages `exists_mem_adjoin_sq_eq_of_prod_primeDiscriminant_eq` with
-the factorization `IsFundamentalDiscriminant.exists_finset_primeDiscriminant`, so callers need only
-supply `d` squarefree. -/
-theorem exists_finset_primeDiscriminant_and_exists_mem_adjoin_sq_eq_of_squarefree {d : ℤ}
-    (hd : Squarefree d) :
-    ∃ s : Finset ℤ, (∀ P ∈ s, IsPrimeDiscriminant P) ∧
-      (∀ P ∈ s, ∀ Q ∈ s, IsEvenPrimeDiscriminant P → IsEvenPrimeDiscriminant Q → P = Q) ∧
-      ∏ P ∈ s, P = fundamentalDiscriminant d ∧
-      ∀ {L : Type*} [Field L] [Algebra ℚ L] (root : {P // P ∈ s} → L),
-        (∀ P, root P ^ 2 = algebraMap ℚ L ((primeDiscriminantRadicand P.val : ℤ) : ℚ)) →
-          ∃ x ∈ IntermediateField.adjoin ℚ (Set.range root), x ^ 2 = algebraMap ℚ L ((d : ℤ) : ℚ) :=
-  have ⟨s, hs, hev, hprod⟩ :=
-    (isFundamentalDiscriminant_fundamentalDiscriminant hd).exists_finset_primeDiscriminant
-  ⟨s, hs, hev, hprod, fun root hroot =>
-    exists_mem_adjoin_sq_eq_of_prod_primeDiscriminant_eq hs hprod root hroot⟩
+variable {d : ℤ}
+variable {L : Type u} [Field L] [NumberField L]
+variable {M : Type v} [Field M] [NumberField M]
+variable {y : L} {z : M}
+
+/-- Any two genus fields for the same radicand are isomorphic as `ℚ`-algebras by an equivalence
+carrying one chosen square root to the other. -/
+theorem exists_algEquiv_apply_eq (hL : IsGenusField.{u, v} d L y)
+    (hM : IsGenusField.{v, u} d M z) :
+    ∃ e : L ≃ₐ[ℚ] M, e y = z := by
+  let _ : IsAbelianGalois ℚ L := hL.isAbelianGalois
+  let _ : IsAbelianGalois ℚ M := hM.isAbelianGalois
+  obtain ⟨φ, hφ⟩ := hM.maximal hL.root_sq
+    hL.isUnramifiedAtFinitePlaces hL.isUnramifiedAtInfinitePlaces
+  obtain ⟨ψ, _⟩ := hL.maximal hM.root_sq
+    hM.isUnramifiedAtFinitePlaces hM.isUnramifiedAtInfinitePlaces
+  have hLM : Module.finrank ℚ L ≤ Module.finrank ℚ M :=
+    LinearMap.finrank_le_finrank_of_injective (f := φ.toLinearMap) φ.injective
+  have hML : Module.finrank ℚ M ≤ Module.finrank ℚ L :=
+    LinearMap.finrank_le_finrank_of_injective (f := ψ.toLinearMap) ψ.injective
+  have hrank : Module.finrank ℚ L = Module.finrank ℚ M := le_antisymm hLM hML
+  refine ⟨TauCeti.algEquivOfFinrankEq φ hrank, ?_⟩
+  simpa using hφ
+
+end IsGenusField
+
+private theorem exists_algHom_apply_eq_of_sq_eq {d : ℤ} {L : Type u} [Field L]
+    [NumberField L] [IsGalois ℚ L] {y : L}
+    (hy : y ^ 2 = algebraMap ℤ L d)
+    (hydegree : Module.finrank ℚ (adjoin ℚ {y} : IntermediateField ℚ L) = 2)
+    {M : Type v} [Field M] [NumberField M] {z : M}
+    (hz : z ^ 2 = algebraMap ℤ M d) (hφ : Nonempty (M →ₐ[ℚ] L)) :
+    ∃ φ : M →ₐ[ℚ] L, φ z = y := by
+  obtain ⟨φ⟩ := hφ
+  have hyQ : y ^ 2 = algebraMap ℚ L ((d : ℤ) : ℚ) := by
+    rw [hy, IsScalarTower.algebraMap_apply ℤ ℚ L]
+    norm_num
+  have hzQ : z ^ 2 = algebraMap ℚ M ((d : ℤ) : ℚ) := by
+    rw [hz, IsScalarTower.algebraMap_apply ℤ ℚ M]
+    norm_num
+  have hyint : IsIntegral ℚ y := IsIntegral.of_finite ℚ y
+  have hmin : minpoly ℚ y = Polynomial.X ^ 2 - Polynomial.C ((d : ℤ) : ℚ) := by
+    apply TauCeti.Algebra.minpoly_eq_X_sq_sub_C_of_sq_eq_of_natDegree_eq_two hyQ
+    rw [← adjoin.finrank hyint, hydegree]
+  have hroot : Polynomial.aeval (φ z) (minpoly ℚ y) = 0 := by
+    have hφz : (φ z) ^ 2 = algebraMap ℚ L ((d : ℤ) : ℚ) := by
+      rw [← map_pow, hzQ, φ.commutes]
+    simp [hmin, hφz]
+  obtain ⟨σ, hσ⟩ := minpoly.exists_algEquiv_of_root (IsAlgebraic.of_finite ℚ y) hroot
+  exact ⟨σ.toAlgHom.comp φ, hσ⟩
+
+/-- **The prime-discriminant compositum is the genus field in the imaginary quadratic case.**
+For a squarefree negative integer `d`, `candidateGenusField hd` is abelian over `ℚ`, is unramified
+at every place over its embedded copy of `ℚ(√d)`, and admits a root-preserving embedding from
+every other abelian extension with those properties. -/
+theorem isGenusField_candidateGenusField {d : ℤ} (hd : Squarefree d) (hneg : d < 0) :
+    IsGenusField.{0, v} d (candidateGenusField hd) (candidateGenusFieldBaseRoot hd) := by
+  have hnsq : ¬ IsSquare ((d : ℤ) : ℚ) := not_isSquare_of_neg (by exact_mod_cast hneg)
+  refine
+    { root_sq := ?_
+      finrank_adjoin := ?_
+      isAbelianGalois := inferInstance
+      isUnramifiedAtFinitePlaces := ?_
+      isUnramifiedAtInfinitePlaces := ?_
+      maximal := ?_ }
+  · rw [candidateGenusFieldBaseRoot_sq hd, IsScalarTower.algebraMap_apply ℤ ℚ]
+    norm_num
+  · rw [← candidateGenusFieldBase_def hd]
+    exact finrank_candidateGenusFieldBase hd hnsq
+  · rw [← candidateGenusFieldBase_def hd]
+    exact fun q hq _ ↦ isUnramifiedIn_candidateGenusField hd hnsq q
+  · rw [← candidateGenusFieldBase_def hd]
+    exact isUnramifiedAtInfinitePlaces_candidateGenusField hd hneg
+  · intro M _ _ _ z hz hfinite _
+    apply exists_algHom_apply_eq_of_sq_eq
+      (by
+        rw [candidateGenusFieldBaseRoot_sq hd, IsScalarTower.algebraMap_apply ℤ ℚ]
+        norm_num)
+      (by
+        rw [← candidateGenusFieldBase_def hd]
+        exact finrank_candidateGenusFieldBase hd hnsq)
+      hz
+    exact nonempty_algHom_candidateGenusField hd hnsq hz hfinite
 
 end TauCeti.Multiquadratic

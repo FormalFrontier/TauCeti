@@ -158,10 +158,8 @@ theorem DifferentiableOn.differentiableOn_toOpenPartialHomeomorph_symm
 theorem DifferentiableOn.conformalAt_of_isOpen_of_injOn
     (hf : DifferentiableOn ℂ f U) (hU : IsOpen U) (hinj : InjOn f U)
     {z : ℂ} (hz : z ∈ U) : ConformalAt f z := by
-  have hfz : AnalyticAt ℂ f z := hf.analyticAt (hU.mem_nhds hz)
-  have hderiv : deriv f z ≠ 0 :=
-    (exists_injOn_nhds_iff_deriv_ne_zero hfz).mp ⟨U, hU.mem_nhds hz, hinj⟩
-  exact hfz.differentiableAt.conformalAt hderiv
+  exact (hf.analyticAt (hU.mem_nhds hz)).differentiableAt.conformalAt
+    (deriv_ne_zero_of_injOn hf hU hinj hz)
 
 /-- The open partial homeomorphism associated to an injective holomorphic map is conformal on its
 source. -/
