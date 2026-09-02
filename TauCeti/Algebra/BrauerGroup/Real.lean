@@ -124,8 +124,8 @@ end Quaternion
 
 section Examples
 
-/-- **The Brauer group of `ℝ` is not the trivial group but is finite**, in contrast with the two
-Brauer groups already computed: `TauCeti.subsingleton_brauerGroup_of_isAlgClosed` for `ℂ` and
+/-- **The Brauer group of `ℝ` is not the trivial group**, in contrast with the two Brauer groups
+already computed: `TauCeti.subsingleton_brauerGroup_of_isAlgClosed` for `ℂ` and
 `TauCeti.subsingleton_brauerGroup_of_finite` for a finite field. -/
 example : Nat.card (BrauerGroup.{0, 0} ℝ) ≠ 1 := by
   rw [Quaternion.card_brauerGroup_eq_two]
