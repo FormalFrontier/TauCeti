@@ -18,8 +18,8 @@ the Suzuki family `²B₂(2^(2m+1))`. They share a diagram, so they share a carr
 `TauCeti.RankTwoBLieIndex` is the subtype that collects exactly them. This file supplies, for every
 such index, the group of algebraic-closure-valued points of Tau Ceti's explicit full-weight type-`C`
 Chevalley carrier at its rank-two member, `TauCeti.SpStd.groupScheme 1`, together with that group's
-Bourbaki-numbered simple root subgroups and its `q`-power Frobenius; and it then runs the
-classification recipe on the untwisted branch, where the Frobenius *is* the Steinberg map.
+Bourbaki-numbered simple root subgroups and its `q`-power Frobenius; and it then runs the milestone
+L3 recipe on the untwisted branch, on that carrier, where the Frobenius *is* the Steinberg map.
 
 The rank-two type-`C` carrier is not a substitution for the diagram the families name: the two
 constructor names `B 2` and `C 2` denote the same rank-two root system, which is why
@@ -44,7 +44,9 @@ twist by. So `TauCeti.TypeB2LieIndex.steinberg` is the shared Frobenius, and the
 H_d = fixedSubgroup d.steinberg,        d.Group = [H_d, H_d] / Z([H_d, H_d])
 ```
 
-closes on this branch. A validated untwisted index has `4 ≤ q`, by
+runs on this branch, on the rank-two type-`C` carrier. What it produces reads as the candidate
+simple group of `B₂(q)` only along the Layer 9 identification of that carrier with the pinned group
+that milestone L0 asks for, and not before. A validated untwisted index has `4 ≤ q`, by
 `TauCeti.TypeB2LieIndex.four_le_fieldOrder`: the classification list carries the two smaller
 parameters under other names, `B₂(2)` under `A₆` and `B₂(3)` under `²A₃(2)`, so they are dropped
 from the index rather than from the construction.
@@ -79,8 +81,9 @@ characters stated in `rootGeneratorWeight_carrierNode_eq_root_simpleIndex`.
   description, and its pinned equation `Frob_q (x_i(u)) = x_i(u ^ q)`.
 * `TauCeti.RankTwoBLieIndex.mem_fixedSubgroup_frobenius_iff`: its fixed points are the points whose
   matrix entries lie in the field of definition `𝔽_q`.
-* `TauCeti.TypeB2LieIndex.steinberg` and `TauCeti.TypeB2LieIndex.Group`: the Steinberg
-  endomorphism of the untwisted family `B₂(q)` and the candidate group milestone L3 builds from it.
+* `TauCeti.TypeB2LieIndex.steinberg` and `TauCeti.TypeB2LieIndex.Group`: the milestone L1 Steinberg
+  endomorphism of the untwisted branch and the milestone L3 quotient formed from it, both on the
+  rank-two type-`C` carrier rather than on the pinned group milestone L0 asks for.
 
 ## References
 
@@ -249,10 +252,14 @@ variable (d : TypeB2LieIndex)
 
 /-! ## The Steinberg endomorphism of the untwisted family -/
 
-/-- **The Steinberg endomorphism of a validated untwisted index `B₂(q)`**: the `q`-power Frobenius
-of the ambient group, `q` being the field order the index records. The family is untwisted, so no
-diagram automorphism and no half-Frobenius enters; `diagramPerm_toGraphTwistedIndex` is the check
-that its diagram permutation is trivial. -/
+/-- **The milestone L1 Steinberg endomorphism of a validated untwisted index on the `B₂` diagram,
+formed on the rank-two type-`C` carrier**: the `q`-power Frobenius of the ambient group, `q` being
+the field order the index records. The family is untwisted, so no diagram automorphism and no
+half-Frobenius enters; `diagramPerm_toGraphTwistedIndex` is the check that its diagram permutation
+is trivial.
+
+It is the Steinberg map of `B₂(q)` on the pinned carrier milestone L0 asks for only along the
+Layer 9 identification of the two carriers described in the module docstring, and not before. -/
 def steinberg : d.1.AmbientGroup →* d.1.AmbientGroup := d.1.frobenius
 
 /-- The Steinberg map of an untwisted `B₂` index is the Frobenius that both families on the `B₂`
@@ -282,14 +289,16 @@ theorem mem_fixedSubgroup_steinberg_iff (g : d.1.AmbientGroup) :
   rw [steinberg_def]
   exact d.1.mem_fixedSubgroup_frobenius_iff g
 
-/-! ## The classification candidate -/
+/-! ## The milestone L3 quotient -/
 
-/-- **The candidate simple group of the untwisted family `B₂(q)`**: the derived subgroup of the
-fixed points of its Steinberg map, modulo the centre of that derived subgroup.
+/-- **The milestone L3 quotient on the rank-two type-`C` carrier**: the derived subgroup of the
+fixed points of the Steinberg map above, modulo the centre of that derived subgroup.
 
-This is the milestone L3 recipe on the `B₂` branch, run on the rank-two type-`C` carrier. Nothing
-below asserts that it is finite, perfect, or simple, nor that the carrier is the one milestone L0
-asks for. -/
+This is the shape milestone L3 asks of the untwisted family `B₂(q)`, formed on the rank-two type-`C`
+carrier rather than on the pinned simply connected Chevalley--Demazure group scheme that milestone
+L0 asks for. It becomes the candidate simple group of that family along the Layer 9 identification
+of the two carriers described in the module docstring, and not before; it is not offered as that
+candidate here. Nothing below asserts that it is finite, perfect, or simple. -/
 abbrev Group : Type := FixedPointCandidate d.steinberg
 
 /-- Milestone L3 asks every valid branch to carry a group instance; the quotient construction
