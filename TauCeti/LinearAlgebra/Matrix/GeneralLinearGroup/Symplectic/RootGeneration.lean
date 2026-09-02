@@ -34,8 +34,6 @@ characteristic two.
 
 * `TauCeti.GLSymplecticFin.positiveLongRootTransvectionUnit_mem_of_difference_of_long` and its
   negative analogue transport one long-root subgroup to a target index by Weyl conjugation.
-* `TauCeti.GLSymplecticFin.positiveSumShortRootUnit_mem_of_difference_of_long` and its negative
-  analogue generate the two sum-root families.
 * `TauCeti.GLSymplecticFin.RootSubgroupIndex.hom_apply_mem_of_difference_of_long` packages the
   result for every standard symplectic root subgroup.
 * `TauCeti.GLSymplecticFin.RootSubgroupIndex.hom_apply_mem_of_adjacent_of_long` reduces the
@@ -54,9 +52,6 @@ branch consumed by milestone L0 of `TauCetiRoadmap/CFSGStatement/README.md`.
 -/
 
 public section
-
-open Matrix
-open scoped commutatorElement
 
 namespace TauCeti.GLSymplecticFin
 
@@ -101,34 +96,6 @@ theorem negativeLongRootTransvectionUnit_mem_of_difference_of_long
     have hconj := H.mul_mem (H.mul_mem hw hpivot) (H.inv_mem hw)
     simpa only [w, differenceShortRootWeylElement_inv,
       differenceShortRootWeylElement_mul_negativeLongRootTransvectionUnit_mul_inv] using hconj
-
-/-- A positive-sum short-root element lies in a subgroup containing the corresponding
-difference-root element at parameter `1` and the two long-root elements used to isolate it. -/
-theorem positiveSumShortRootUnit_mem_of_difference_of_long
-    (H : Subgroup (GLSymplecticFin m R)) (hij : i ≠ j) (c : R)
-    (hdifference : differenceShortRootUnit hij 1 ∈ H)
-    (hlongj : positiveLongRootTransvectionUnit j c ∈ H)
-    (hlongi : positiveLongRootTransvectionUnit i c ∈ H) :
-    positiveSumShortRootUnit hij c ∈ H := by
-  have hproduct := H.commutator_le_self
-    (Subgroup.commutator_mem_commutator hdifference hlongj)
-  rw [commutatorElement_differenceShortRootUnit_positiveLongRootTransvectionUnit] at hproduct
-  have hisolate := H.mul_mem hproduct (H.inv_mem hlongi)
-  simpa only [one_mul, one_pow, mul_assoc, mul_inv_cancel, mul_one] using hisolate
-
-/-- A negative-sum short-root element lies in a subgroup containing the corresponding
-difference-root element at parameter `1` and the two long-root elements used to isolate it. -/
-theorem negativeSumShortRootUnit_mem_of_difference_of_long
-    (H : Subgroup (GLSymplecticFin m R)) (hij : i ≠ j) (c : R)
-    (hdifference : differenceShortRootUnit hij 1 ∈ H)
-    (hlongi : negativeLongRootTransvectionUnit i (-c) ∈ H)
-    (hlongj : negativeLongRootTransvectionUnit j (-c) ∈ H) :
-    negativeSumShortRootUnit hij c ∈ H := by
-  have hproduct := H.commutator_le_self
-    (Subgroup.commutator_mem_commutator hdifference hlongi)
-  rw [commutatorElement_differenceShortRootUnit_negativeLongRootTransvectionUnit] at hproduct
-  have hisolate := H.mul_mem hproduct (H.inv_mem hlongj)
-  simpa only [one_mul, one_pow, neg_neg, mul_assoc, mul_inv_cancel, mul_one] using hisolate
 
 namespace RootSubgroupIndex
 
