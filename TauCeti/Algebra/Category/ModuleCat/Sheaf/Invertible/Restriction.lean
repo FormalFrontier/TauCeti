@@ -135,6 +135,36 @@ def ofCommonRefinement (t : LocalTrivializations M) (s : LocalTrivializations N)
   (t.ofRefinement r.X r.coversTop r.leftIndex r.left,
     s.ofRefinement r.X r.coversTop r.rightIndex r.right)
 
+/-- The first transported atlas uses the supplied refinement's indexing type. -/
+@[simp]
+lemma ofCommonRefinement_fst_I (t : LocalTrivializations M) (s : LocalTrivializations N)
+    (r : GrothendieckTopology.CoversTop.CommonRefinement J t.X s.X) :
+    (t.ofCommonRefinement s r).1.I = r.I :=
+  by simp only [ofCommonRefinement, ofRefinement_I]
+
+/-- The second transported atlas uses the supplied refinement's indexing type. -/
+@[simp]
+lemma ofCommonRefinement_snd_I (t : LocalTrivializations M) (s : LocalTrivializations N)
+    (r : GrothendieckTopology.CoversTop.CommonRefinement J t.X s.X) :
+    (t.ofCommonRefinement s r).2.I = r.I :=
+  by simp only [ofCommonRefinement, ofRefinement_I]
+
+/-- The first transported atlas uses the supplied refinement's covering objects. -/
+@[simp]
+lemma ofCommonRefinement_fst_X (t : LocalTrivializations M) (s : LocalTrivializations N)
+    (r : GrothendieckTopology.CoversTop.CommonRefinement J t.X s.X) :
+    (t.ofCommonRefinement s r).1.X =
+      fun j ↦ r.X ((ofCommonRefinement_fst_I t s r).mp j) := by
+  simp only [ofCommonRefinement, ofRefinement_X]
+
+/-- The second transported atlas uses the supplied refinement's covering objects. -/
+@[simp]
+lemma ofCommonRefinement_snd_X (t : LocalTrivializations M) (s : LocalTrivializations N)
+    (r : GrothendieckTopology.CoversTop.CommonRefinement J t.X s.X) :
+    (t.ofCommonRefinement s r).2.X =
+      fun j ↦ r.X ((ofCommonRefinement_snd_I t s r).mp j) := by
+  simp only [ofCommonRefinement, ofRefinement_X]
+
 /-! The standard construction also has transport lemmas so downstream users need not unfold its
 choice-dependent implementation. -/
 
@@ -144,6 +174,36 @@ noncomputable def commonRefinement (t : LocalTrivializations M) (s : LocalTrivia
     LocalTrivializations M × LocalTrivializations N :=
   t.ofCommonRefinement s
     (GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop)
+
+/-- The first standard transport uses the selected refinement's indexing type. -/
+@[simp]
+lemma commonRefinement_fst_I (t : LocalTrivializations M) (s : LocalTrivializations N) :
+    (t.commonRefinement s).1.I =
+      (GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop).I :=
+  by simp only [commonRefinement, ofCommonRefinement_fst_I]
+
+/-- The second standard transport uses the selected refinement's indexing type. -/
+@[simp]
+lemma commonRefinement_snd_I (t : LocalTrivializations M) (s : LocalTrivializations N) :
+    (t.commonRefinement s).2.I =
+      (GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop).I :=
+  by simp only [commonRefinement, ofCommonRefinement_snd_I]
+
+/-- The first standard transport uses the selected refinement's covering objects. -/
+@[simp]
+lemma commonRefinement_fst_X (t : LocalTrivializations M) (s : LocalTrivializations N) :
+    (t.commonRefinement s).1.X =
+      fun j ↦ (GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop).X
+        ((commonRefinement_fst_I t s).mp j) := by
+  simp only [commonRefinement, ofCommonRefinement_fst_X]
+
+/-- The second standard transport uses the selected refinement's covering objects. -/
+@[simp]
+lemma commonRefinement_snd_X (t : LocalTrivializations M) (s : LocalTrivializations N) :
+    (t.commonRefinement s).2.X =
+      fun j ↦ (GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop).X
+        ((commonRefinement_snd_I t s).mp j) := by
+  simp only [commonRefinement, ofCommonRefinement_snd_X]
 
 /-- The trivializations of a refined atlas are obtained by restricting the chosen old
 trivializations along the refinement arrows. -/
@@ -162,76 +222,37 @@ arrow. -/
 @[simp]
 lemma ofCommonRefinement_fst_iso (t : LocalTrivializations M) (s : LocalTrivializations N)
     (r : GrothendieckTopology.CoversTop.CommonRefinement J t.X s.X)
-    (j : r.I) :
-    (t.ofCommonRefinement s r).1.iso
-        (cast (by simp only [ofCommonRefinement, ofRefinement_I]) j) =
-      cast (by
-        unfold ofCommonRefinement
-        cases ofRefinement_X t r.X r.coversTop r.leftIndex r.left
-        rfl)
-        (t.isoOver
-          (r.leftIndex ((ofRefinement_I t r.X r.coversTop r.leftIndex r.left).mp
-            (cast (by rw [ofRefinement_I]) j)))
-          (r.left ((ofRefinement_I t r.X r.coversTop r.leftIndex r.left).mp
-            (cast (by rw [ofRefinement_I]) j)))) := by
+    (j : (t.ofCommonRefinement s r).1.I) :
+    (t.ofCommonRefinement s r).1.iso j =
+      cast (by rw [ofCommonRefinement_fst_X])
+        (t.isoOver (r.leftIndex ((ofCommonRefinement_fst_I t s r).mp j))
+          (r.left ((ofCommonRefinement_fst_I t s r).mp j))) := by
   unfold ofCommonRefinement
-  convert ofRefinement_iso t r.X r.coversTop r.leftIndex r.left
-    (cast (by rw [ofRefinement_I]) j) using 1
+  convert ofRefinement_iso t r.X r.coversTop r.leftIndex r.left j using 1
 
 /-- The second transported trivialization is the restriction along the supplied right refinement
 arrow. -/
 @[simp]
 lemma ofCommonRefinement_snd_iso (t : LocalTrivializations M) (s : LocalTrivializations N)
     (r : GrothendieckTopology.CoversTop.CommonRefinement J t.X s.X)
-    (j : r.I) :
-    (t.ofCommonRefinement s r).2.iso
-        (cast (by simp only [ofCommonRefinement, ofRefinement_I]) j) =
-      cast (by
-        unfold ofCommonRefinement
-        cases ofRefinement_X s r.X r.coversTop r.rightIndex r.right
-        rfl)
-        (s.isoOver
-          (r.rightIndex ((ofRefinement_I s r.X r.coversTop r.rightIndex r.right).mp
-            (cast (by rw [ofRefinement_I]) j)))
-          (r.right ((ofRefinement_I s r.X r.coversTop r.rightIndex r.right).mp
-            (cast (by rw [ofRefinement_I]) j)))) := by
+    (j : (t.ofCommonRefinement s r).2.I) :
+    (t.ofCommonRefinement s r).2.iso j =
+      cast (by rw [ofCommonRefinement_snd_X])
+        (s.isoOver (r.rightIndex ((ofCommonRefinement_snd_I t s r).mp j))
+          (r.right ((ofCommonRefinement_snd_I t s r).mp j))) := by
   unfold ofCommonRefinement
-  convert ofRefinement_iso s r.X r.coversTop r.rightIndex r.right
-    (cast (by rw [ofRefinement_I]) j) using 1
+  convert ofRefinement_iso s r.X r.coversTop r.rightIndex r.right j using 1
 
 /-- The first standard transported trivialization is the restriction along the selected left
 refinement arrow. -/
 @[simp]
 lemma commonRefinement_fst_iso (t : LocalTrivializations M) (s : LocalTrivializations N)
-    (j : (GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop).I) :
-    (t.commonRefinement s).1.iso
-        (cast (by
-          unfold commonRefinement
-          simp only [ofCommonRefinement, ofRefinement_I]) j) =
-      cast (by
-        unfold commonRefinement
-        unfold ofCommonRefinement
-        cases ofRefinement_X t
-          (GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop).X
-          (GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop).coversTop
-          (GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop).leftIndex
-          (GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop).left
-        rfl)
-        (t.isoOver
-          ((GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop).leftIndex
-            ((ofRefinement_I t
-              (GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop).X
-              (GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop).coversTop
-              (GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop).leftIndex
-              (GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop).left).mp
-              (cast (by rw [ofRefinement_I]) j)))
-          ((GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop).left
-            ((ofRefinement_I t
-              (GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop).X
-              (GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop).coversTop
-              (GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop).leftIndex
-              (GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop).left).mp
-              (cast (by rw [ofRefinement_I]) j)))) := by
+    (j : (t.commonRefinement s).1.I) :
+    (t.commonRefinement s).1.iso j =
+      let r := GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop
+      cast (by rw [commonRefinement_fst_X])
+        (t.isoOver (r.leftIndex ((commonRefinement_fst_I t s).mp j))
+          (r.left ((commonRefinement_fst_I t s).mp j))) := by
   unfold commonRefinement
   convert ofCommonRefinement_fst_iso t s
     (GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop) j using 1
@@ -240,35 +261,12 @@ lemma commonRefinement_fst_iso (t : LocalTrivializations M) (s : LocalTrivializa
 refinement arrow. -/
 @[simp]
 lemma commonRefinement_snd_iso (t : LocalTrivializations M) (s : LocalTrivializations N)
-    (j : (GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop).I) :
-    (t.commonRefinement s).2.iso
-        (cast (by
-          unfold commonRefinement
-          simp only [ofCommonRefinement, ofRefinement_I]) j) =
-      cast (by
-        unfold commonRefinement
-        unfold ofCommonRefinement
-        cases ofRefinement_X s
-          (GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop).X
-          (GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop).coversTop
-          (GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop).rightIndex
-          (GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop).right
-        rfl)
-        (s.isoOver
-          ((GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop).rightIndex
-            ((ofRefinement_I s
-              (GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop).X
-              (GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop).coversTop
-              (GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop).rightIndex
-              (GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop).right).mp
-              (cast (by rw [ofRefinement_I]) j)))
-          ((GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop).right
-            ((ofRefinement_I s
-              (GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop).X
-              (GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop).coversTop
-              (GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop).rightIndex
-              (GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop).right).mp
-              (cast (by rw [ofRefinement_I]) j)))) := by
+    (j : (t.commonRefinement s).2.I) :
+    (t.commonRefinement s).2.iso j =
+      let r := GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop
+      cast (by rw [commonRefinement_snd_X])
+        (s.isoOver (r.rightIndex ((commonRefinement_snd_I t s).mp j))
+          (r.right ((commonRefinement_snd_I t s).mp j))) := by
   unfold commonRefinement
   convert ofCommonRefinement_snd_iso t s
     (GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop) j using 1
