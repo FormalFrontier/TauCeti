@@ -8,9 +8,7 @@ module
 public import TauCeti.Analysis.Complex.Conformal.Inverse.BoundaryCluster
 public import TauCeti.Analysis.Complex.Conformal.Jordan.Domain
 public import TauCeti.Analysis.Complex.Conformal.Caratheodory
-public import TauCeti.Analysis.Complex.Conformal.BoundaryCorrespondence
 public import TauCeti.Analysis.Complex.PlaneSeparation.Basic
-public import TauCeti.Topology.Circle.Arc
 public import TauCeti.Topology.JordanCurve.SmallArc
 public import TauCeti.Topology.JordanCurve.Subcontinuum
 
@@ -47,40 +45,11 @@ Riemann map of a Jordan domain, and with `closureHomeomorph` from
   — the Riemann map extends to a homeomorphism of the closures.
 -/
 
-@[expose] public section
+public section
 
 open Set Metric Topology Function Filter Bornology Real
 
 namespace TauCeti
-
-/-! ### The reduction -/
-
-variable {X : Type*} [PseudoMetricSpace X]
-
-/-- **Local connectedness gives preconnected approach regions.**  If for every
-`ε > 0` some preconnected `C ⊆ U ∩ ball a ε` contains `U ∩ ball a δ` for a
-`δ > 0`, then `U` has preconnected approach regions at `a`.  The witness
-neighbourhood is `ball a δ ∪ C`, whose trace on `U` is `C`. -/
-theorem isPreconnectedApproachAt_of_forall_exists_isPreconnected_superset
-    {U : Set X} {a : X}
-    (h : ∀ ε > 0, ∃ δ > 0, ∃ C ⊆ U ∩ ball a ε,
-      IsPreconnected C ∧ U ∩ ball a δ ⊆ C) :
-    IsPreconnectedApproachAt U a := by
-  intro s hs
-  obtain ⟨ε, hε, hεs⟩ := Metric.mem_nhds_iff.mp hs
-  obtain ⟨δ, hδ, C, hCU, hCpre, hsub⟩ := h ε hε
-  refine ⟨ball a (min δ ε) ∪ C,
-    mem_of_superset (ball_mem_nhds a (lt_min hδ hε)) subset_union_left, ?_, ?_⟩
-  · exact union_subset ((ball_subset_ball (min_le_right δ ε)).trans hεs)
-      ((hCU.trans inter_subset_right).trans hεs)
-  · have heq : U ∩ (ball a (min δ ε) ∪ C) = C := by
-      apply subset_antisymm
-      · rintro z ⟨hzU, hz | hz⟩
-        · exact hsub ⟨hzU, ball_subset_ball (min_le_left δ ε) hz⟩
-        · exact hz
-      · exact fun z hz => ⟨(hCU hz).1, Or.inr hz⟩
-    rw [heq]
-    exact hCpre
 
 /-! ### Jordan domains -/
 
@@ -99,7 +68,7 @@ private theorem IsJordanDomain.exists_isPreconnected_inter_ball_subset_of_arc
     (hWJ : W ⊆ frontier U ∩ ball a r) (haW : a ∈ W)
     (hclosed : IsClosed (frontier U \ W)) (hpre : IsPreconnected (frontier U \ W)) :
     ∃ δ > 0, ∃ C ⊆ U ∩ ball a r, IsPreconnected C ∧ U ∩ ball a δ ⊆ C := by
-  set J := frontier U with hJ
+  set J := frontier U
   -- a radius whose ball misses the complementary arc
   obtain ⟨ρ, hρ₀, hρr, hρdisj⟩ :
       ∃ ρ > 0, ρ ≤ r ∧ Disjoint (ball a ρ) (J \ W) := by

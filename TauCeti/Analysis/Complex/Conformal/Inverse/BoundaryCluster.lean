@@ -7,7 +7,7 @@ module
 
 public import TauCeti.Analysis.Complex.Conformal.MonotoneExtension
 public import TauCeti.Analysis.Complex.Conformal.Biholomorph
-import all TauCeti.Analysis.Complex.Conformal.Biholomorph
+import TauCeti.Analysis.Complex.Conformal.ImageSimplyConnected
 
 /-!
 # Boundary injectivity via inverse cluster sets
@@ -43,7 +43,7 @@ Adapted from D. Cureton, `sphere-six-complex`,
 * Ch. Pommerenke, *Boundary Behaviour of Conformal Maps*, Ch. 2.
 -/
 
-@[expose] public section
+public section
 
 open Set Metric Topology Function Filter
 
@@ -57,6 +57,36 @@ the set is preconnected.  This is the exact local input in the
 cluster-set continuum theorem. -/
 def IsPreconnectedApproachAt (U : Set X) (a : X) : Prop :=
   ∀ s ∈ nhds a, ∃ t ∈ nhds a, t ⊆ s ∧ IsPreconnected (U ∩ t)
+
+theorem isPreconnectedApproachAt_def {U : Set X} {a : X} :
+    IsPreconnectedApproachAt U a ↔
+      ∀ s ∈ 𝓝 a, ∃ t ∈ 𝓝 a, t ⊆ s ∧ IsPreconnected (U ∩ t) :=
+  Iff.rfl
+
+/-- **Local connectedness gives preconnected approach regions.**  If for every
+`ε > 0` some preconnected `C ⊆ U ∩ ball a ε` contains `U ∩ ball a δ` for a
+`δ > 0`, then `U` has preconnected approach regions at `a`.  The witness
+neighbourhood is `ball a δ ∪ C`, whose trace on `U` is `C`. -/
+theorem isPreconnectedApproachAt_of_forall_exists_isPreconnected_superset
+    {Y : Type*} [PseudoMetricSpace Y] {U : Set Y} {a : Y}
+    (h : ∀ ε > 0, ∃ δ > 0, ∃ C ⊆ U ∩ ball a ε,
+      IsPreconnected C ∧ U ∩ ball a δ ⊆ C) :
+    IsPreconnectedApproachAt U a := by
+  intro s hs
+  obtain ⟨ε, hε, hεs⟩ := Metric.mem_nhds_iff.mp hs
+  obtain ⟨δ, hδ, C, hCU, hCpre, hsub⟩ := h ε hε
+  refine ⟨ball a (min δ ε) ∪ C,
+    mem_of_superset (ball_mem_nhds a (lt_min hδ hε)) subset_union_left, ?_, ?_⟩
+  · exact union_subset ((ball_subset_ball (min_le_right δ ε)).trans hεs)
+      ((hCU.trans inter_subset_right).trans hεs)
+  · have heq : U ∩ (ball a (min δ ε) ∪ C) = C := by
+      apply subset_antisymm
+      · rintro z ⟨hzU, hz | hz⟩
+        · exact hsub ⟨hzU, ball_subset_ball (min_le_left δ ε) hz⟩
+        · exact hz
+      · exact fun z hz => ⟨(hCU hz).1, Or.inr hz⟩
+    rw [heq]
+    exact hCpre
 
 /-! ### Cluster-set identification and fibre theorems -/
 
@@ -105,7 +135,7 @@ theorem clusterSetOn_invFunOn_eq_boundary_fiber
       exact hz'.tendsto_comp' hF_tendsto
     have hFg : F ∘ g =ᶠ[l] id := by
       filter_upwards [self_mem_nhdsWithin] with y hy
-      change F (g y) = y
+      simp only [Function.comp_apply, id_eq]
       rw [hFf (hgU hy), hright hy]
     have hzid : MapClusterPt (F z) l id :=
       hzF.congrFun hFg
@@ -254,11 +284,7 @@ theorem injOn_closedBall_of_isPreconnected_image_approach
     exact h
   have hfdF : DifferentiableOn ℂ F (ball c r) :=
     hfd.congr fun z hz ↦ hFf hz
-  have hfiF : InjOn F (ball c r) := by
-    intro x hx y hy hxy
-    apply hfi hx hy
-    rw [← hFf hx, ← hFf hy]
-    exact hxy
+  have hfiF : InjOn F (ball c r) := hfi.congr hFf.symm
   exact injOn_closedBall_of_isPreconnected_boundary_fiber
     hr hFc hfdF hfiF hpre
 
