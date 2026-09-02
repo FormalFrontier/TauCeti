@@ -75,15 +75,15 @@ section Fin
 variable {n : ℕ} (hn : 2 ≤ n)
 
 /-- The boundary of the `n`-cube is connected for `2 ≤ n`. -/
-theorem isConnected_cubeBoundary_fin : IsConnected (Cube.boundary (Fin n)) :=
+theorem isConnected_cubeBoundary_fin (hn : 2 ≤ n) : IsConnected (Cube.boundary (Fin n)) :=
   (isPathConnected_cubeBoundary_fin hn).isConnected
 
 /-- The boundary of the `n`-cube is preconnected for `2 ≤ n`. -/
-theorem isPreconnected_cubeBoundary_fin : IsPreconnected (Cube.boundary (Fin n)) :=
+theorem isPreconnected_cubeBoundary_fin (hn : 2 ≤ n) : IsPreconnected (Cube.boundary (Fin n)) :=
   (isConnected_cubeBoundary_fin hn).isPreconnected
 
 /-- Any two points of the boundary of the `n`-cube can be joined inside it. -/
-theorem joinedIn_cubeBoundary_fin {x y : I^(Fin n)}
+theorem joinedIn_cubeBoundary_fin (hn : 2 ≤ n) {x y : I^(Fin n)}
     (hx : x ∈ Cube.boundary (Fin n)) (hy : y ∈ Cube.boundary (Fin n)) :
     JoinedIn (Cube.boundary (Fin n)) x y :=
   (isPathConnected_cubeBoundary_fin hn).joinedIn x hx y hy
