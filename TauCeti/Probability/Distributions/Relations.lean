@@ -8,7 +8,6 @@ module
 public import Mathlib.Probability.CDF
 public import Mathlib.Probability.HasLaw
 public import Mathlib.Probability.Independence.Basic
-public import TauCeti.Probability.Distributions.Exponential
 
 /-!
 # The extremes of an independent identically distributed family
@@ -29,10 +28,10 @@ formula acquires the default value that an empty family would force on a `Finset
 equal factors, which is where the two powers come from. The minimum is then read off its
 complementary event, which is why its formula is the one with the two subtractions.
 
-As an application, the minimum of a finite independent identically distributed exponential family
-is again exponential, with the rates added: `hasLaw_min_iid_expMeasure`. This is the
-`d`-fold form of `TauCeti.Probability.hasLaw_min_expMeasure_of_indepFun`, which handles two
-independent exponentials of possibly different rates.
+This file is generic in the common law `μ` and imports no particular family. The exponential
+specialisation — the minimum of `d` i.i.d. exponentials of rate `r` is exponential of rate
+`d * r` — lives with the exponential family, in `Distributions.Exponential`, as
+`hasLaw_min_iid_expMeasure`.
 
 ## Main results
 
@@ -43,8 +42,8 @@ independent exponentials of possibly different rates.
   `(1 - cdf μ x) ^ d`, hence is at most `x` with probability `1 - (1 - cdf μ x) ^ d`;
 * `TauCeti.Probability.cdf_max_iid`, `TauCeti.Probability.cdf_min_iid` — the same two formulas for
   the laws of the two extremes;
-* `TauCeti.Probability.hasLaw_min_iid_expMeasure` — the minimum of `d` independent exponentials of
-  rate `r` is exponential of rate `d * r`.
+* `TauCeti.Probability.aemeasurable_min` — the minimum of an a.e.-measurable finite family is
+  a.e. measurable, the one measurability fact a family specialisation needs.
 
 A general theory of order statistics is outside the scope of the roadmap target below.
 
@@ -99,8 +98,9 @@ private theorem aemeasurable_max (hX : ∀ i, AEMeasurable (X i) P) :
   exact Finset.sup'_congr _ rfl fun i _ => hω i
 
 /-- The minimum of an almost-everywhere measurable finite family is almost everywhere
-measurable. -/
-private theorem aemeasurable_min (hX : ∀ i, AEMeasurable (X i) P) :
+measurable. Public: a specialisation to a particular family needs this to state `HasLaw` of the
+minimum, and Mathlib has `Finset.measurable_sup'` but no `inf'` counterpart. -/
+theorem aemeasurable_min (hX : ∀ i, AEMeasurable (X i) P) :
     AEMeasurable (fun ω => Finset.univ.inf' Finset.univ_nonempty fun i => X i ω) P := by
   refine ⟨fun ω => Finset.univ.inf' Finset.univ_nonempty fun i => (hX i).mk (X i) ω,
     measurable_min fun i => (hX i).measurable_mk, ?_⟩
@@ -210,32 +210,6 @@ theorem cdf_min_iid [IsProbabilityMeasure μ] (hindep : iIndepFun X P)
   rw [cdf_eq_real, map_measureReal_apply_of_aemeasurable hmin measurableSet_Iic,
     ← measureReal_setOf_min_le_iid hindep hlaw x]
   rfl
-
-/-- The minimum of `d` independent exponential variables of a common positive rate `r` is
-exponential of rate `d * r`. This is the `d`-fold form of
-`TauCeti.Probability.hasLaw_min_expMeasure_of_indepFun`, which allows two different rates. -/
-theorem hasLaw_min_iid_expMeasure (hr : 0 < r) (hindep : iIndepFun X P)
-    (hlaw : ∀ i, HasLaw (X i) (expMeasure r) P) :
-    HasLaw (fun ω => Finset.univ.inf' Finset.univ_nonempty fun i => X i ω)
-      (expMeasure ((Fintype.card ι : ℝ) * r)) P := by
-  have hd : (0 : ℝ) < Fintype.card ι := by
-    exact_mod_cast Fintype.card_pos_iff.2 ‹Nonempty ι›
-  have _ : IsProbabilityMeasure (expMeasure r) := isProbabilityMeasure_expMeasure hr
-  have _ : IsProbabilityMeasure (expMeasure ((Fintype.card ι : ℝ) * r)) :=
-    isProbabilityMeasure_expMeasure (mul_pos hd hr)
-  have hmin : AEMeasurable (fun ω => Finset.univ.inf' Finset.univ_nonempty fun i => X i ω) P :=
-    aemeasurable_min fun i => (hlaw i).aemeasurable
-  have _ : IsProbabilityMeasure P := (hlaw (Classical.arbitrary ι)).isProbabilityMeasure
-  refine ⟨hmin, ?_⟩
-  refine Measure.eq_of_cdf _ _ ?_
-  ext x
-  rw [cdf_min_iid hindep hlaw x, cdf_expMeasure_eq hr x,
-    cdf_expMeasure_eq (mul_pos hd hr) x]
-  by_cases hx : 0 ≤ x
-  · rw [ite_eq_left hx, ite_eq_left hx, sub_sub_cancel, ← Real.exp_nat_mul]
-    congr 2
-    ring
-  · rw [ite_eq_right hx, ite_eq_right hx, sub_zero, one_pow, sub_self]
 
 end Probability
 
