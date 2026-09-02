@@ -66,9 +66,9 @@ universe u v
 
 variable {V : Type u} [Quiver.{v} V]
 
-/-- **Every occurrence in a path's vertex list except the final one is the source of an arrow of
-the path**, and that arrow lands on a vertex of the path again. The final entry of the vertex list
-is the occurrence removed by `List.dropLast`; the endpoint vertex may still occur earlier. -/
+/-- **Every occurrence in a path's vertex list except the final one is the source of an arrow to
+another vertex visited by the path.** The final entry of the vertex list is the occurrence removed
+by `List.dropLast`; the endpoint vertex may still occur earlier. -/
 theorem exists_hom_mem_path_vertices_of_mem_dropLast {a b : V} (p : Quiver.Path a b) :
     ∀ {u : V}, u ∈ p.vertices.dropLast → ∃ w ∈ p.vertices, Nonempty (u ⟶ w) := by
   induction p with
@@ -82,9 +82,10 @@ theorem exists_hom_mem_path_vertices_of_mem_dropLast {a b : V} (p : Quiver.Path 
       exact ⟨w, (_root_.Quiver.Path.mem_vertices_cons p e).mpr (Or.inl hw), hwe⟩
     · exact ⟨c, (_root_.Quiver.Path.mem_vertices_cons p e).mpr (Or.inr rfl), ⟨e⟩⟩
 
-/-- **Every vertex of a closed path of positive length is the source of an arrow of the path.**
-`List.dropLast` removes the final endpoint occurrence. On a nontrivial closed path the same vertex
-also occurs initially, so it remains in `List.dropLast` and the preceding result applies. -/
+/-- **Every vertex of a closed path of positive length is the source of an arrow to another vertex
+visited by the path.** `List.dropLast` removes the final endpoint occurrence. On a nontrivial
+closed path the same vertex also occurs initially, so it remains in `List.dropLast` and the
+preceding result applies. -/
 theorem exists_hom_mem_path_vertices {a : V} (p : Quiver.Path a a)
     (hp : p ≠ Quiver.Path.nil) {u : V}
     (hu : u ∈ p.vertices) : ∃ w ∈ p.vertices, Nonempty (u ⟶ w) := by
