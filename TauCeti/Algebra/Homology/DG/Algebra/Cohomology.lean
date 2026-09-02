@@ -143,18 +143,15 @@ theorem isInternal_cyclesDeg (h : IsDGAlgebra 𝒜 d) : DirectSum.IsInternal h.c
   DirectSum.isInternal_submodule_of_iSupIndep_of_iSup_eq_top h.iSupIndep_cyclesDeg
     h.iSup_cyclesDeg_eq_top
 
-instance instGradedMonoidCyclesDeg (h : IsDGAlgebra 𝒜 d) :
-    SetLike.GradedMonoid h.cyclesDeg where
-  one_mem := by
-    simpa only [mem_cyclesDeg, Subalgebra.coe_one] using SetLike.one_mem_graded 𝒜
-  mul_mem _ _ x y hx hy := by
-    rw [h.mem_cyclesDeg] at hx hy ⊢
-    simpa only [Subalgebra.coe_mul] using SetLike.mul_mem_graded hx hy
-
 /-- The cycles inherit the grading of the ambient differential graded algebra. -/
 noncomputable instance instGradedAlgebraCyclesDeg (h : IsDGAlgebra 𝒜 d) :
     GradedAlgebra h.cyclesDeg :=
-  { h.instGradedMonoidCyclesDeg, h.isInternal_cyclesDeg.chooseDecomposition with }
+  { h.isInternal_cyclesDeg.chooseDecomposition with
+    one_mem := by
+      simpa only [mem_cyclesDeg, Subalgebra.coe_one] using SetLike.one_mem_graded 𝒜
+    mul_mem := fun _ _ _ _ hx hy => by
+      rw [h.mem_cyclesDeg] at hx hy ⊢
+      simpa only [Subalgebra.coe_mul] using SetLike.mul_mem_graded hx hy }
 
 /-- The **boundaries** of a differential graded algebra: the image of the differential, viewed
 inside the cycles.  It is a two-sided ideal there: a cycle times a boundary is a boundary by the
