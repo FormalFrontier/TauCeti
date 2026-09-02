@@ -44,11 +44,13 @@ def check(cond: bool, what: str) -> None:
         failures.append(what)
 
 
-def run(value: str | None):
+def run(value: str | None, **higher: str):
     env = dict(os.environ)
-    env.pop("MATHLIB_CACHE_BASE_URL", None)
+    for name in ("MATHLIB_CACHE_BASE_URL", "MATHLIB_CACHE_GET_URL", "MATHLIB_CACHE_FROM"):
+        env.pop(name, None)
     if value is not None:
         env["MATHLIB_CACHE_BASE_URL"] = value
+    env.update(higher)
     return subprocess.run(
         ["bash", str(CHECK)], env=env, capture_output=True, text=True
     ).returncode
@@ -87,6 +89,24 @@ def main() -> None:
     check(
         run("https://cache.mathlib.org/mathlib4") != 0,
         "a container path is refused (a base URL names the host alone)",
+    )
+
+    print("a higher-precedence read variable is refused, not silently outranked")
+    check(
+        run(None, MATHLIB_CACHE_GET_URL="https://evil.invalid") != 0,
+        "MATHLIB_CACHE_GET_URL set with no base is refused",
+    )
+    check(
+        run("https://cache.mathlib.org", MATHLIB_CACHE_GET_URL="https://evil.invalid") != 0,
+        "MATHLIB_CACHE_GET_URL is refused even beside an allowlisted base",
+    )
+    check(
+        run(None, MATHLIB_CACHE_FROM="master") != 0,
+        "MATHLIB_CACHE_FROM is refused",
+    )
+    check(
+        run(None, MATHLIB_CACHE_GET_URL="", MATHLIB_CACHE_FROM="") == 0,
+        "empty higher-precedence variables are not treated as set",
     )
 
     print("every cache-fetching job checks before it fetches")

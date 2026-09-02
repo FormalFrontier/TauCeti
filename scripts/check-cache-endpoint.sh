@@ -23,6 +23,19 @@ ALLOWLIST="$(dirname "$0")/cache-endpoint-allowlist.txt"
 VALUE="${MATHLIB_CACHE_BASE_URL:-}"
 VALUE="$(printf '%s' "$VALUE" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's:/*$::')"
 
+# The allowlist governs MATHLIB_CACHE_BASE_URL, but that is only the LAST of the cache
+# tool's read-endpoint inputs. Its precedence is MATHLIB_CACHE_GET_URL, then --cache-from,
+# then MATHLIB_CACHE_FROM, then the container chain that BASE_URL rebases. A higher one set
+# anywhere in this job would decide the endpoint without ever consulting the allowlist, so
+# refuse rather than check a value that is not the one in force. No workflow here sets them;
+# this keeps that true if one ever starts.
+for higher in MATHLIB_CACHE_GET_URL MATHLIB_CACHE_FROM; do
+  if [ -n "$(eval "printf '%s' \"\${$higher:-}\"")" ]; then
+    echo "::error title=A higher-precedence cache endpoint is set::$higher is set, and it outranks MATHLIB_CACHE_BASE_URL in the cache tool's read-endpoint precedence, so the allowlist would not govern where this build fetches from. Unset it, or route the endpoint through MATHLIB_CACHE_BASE_URL and scripts/cache-endpoint-allowlist.txt."
+    exit 1
+  fi
+done
+
 if [ -z "$VALUE" ]; then
   echo "MATHLIB_CACHE_BASE_URL is unset; reads use the cache tool's default endpoints"
   exit 0
