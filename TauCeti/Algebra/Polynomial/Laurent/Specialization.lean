@@ -17,11 +17,11 @@ resulting shift formulas record the specializations at `q = 1` and `q = -1`.
 
 ## Main results
 
-* `TauCeti.RingHom.baseChangeModule_laurentEval_T_smul`: a Laurent shift acts by the corresponding
+* `RingHom.baseChangeModule.of_laurentEval_T_smul`: a Laurent shift acts by the corresponding
   integer-unit power after evaluation.
-* `TauCeti.RingHom.baseChangeModule_laurentEvalOne_T_smul`: at `q = 1`, a Laurent shift acts
+* `RingHom.baseChangeModule.of_laurentEvalOne_T_smul`: at `q = 1`, a Laurent shift acts
   trivially.
-* `TauCeti.RingHom.baseChangeModule_laurentEvalNegOne_T_smul`: at `q = -1`, a Laurent shift acts
+* `RingHom.baseChangeModule.of_laurentEvalNegOne_T_smul`: at `q = -1`, a Laurent shift acts
   by the sign `n.negOnePow`.
 
 ## References
@@ -38,35 +38,39 @@ namespace TauCeti
 
 open LaurentPolynomial
 
-variable {M : Type*} [AddCommMonoid M] [Module (LaurentPolynomial ℤ) M]
-
 /-- At a unit `u`, a Laurent shift acts by the corresponding integer power on base change. -/
-theorem RingHom.baseChangeModule_laurentEval_T_smul (u : ℤˣ) (n : ℤ) (x : M) :
-    _root_.RingHom.baseChangeModule.of ((laurentEval (R := ℤ) u).toRingHom) M
-        ((T n : LaurentPolynomial ℤ) • x) =
-      ((u ^ n : ℤˣ) : ℤ) •
-        _root_.RingHom.baseChangeModule.of ((laurentEval (R := ℤ) u).toRingHom) M x := by
+theorem _root_.RingHom.baseChangeModule.of_laurentEval_T_smul
+    {R A M : Type*} [CommSemiring R] [CommSemiring A] [Algebra R A]
+    [AddCommMonoid M] [Module (LaurentPolynomial R) M] (u : Aˣ) (n : ℤ) (x : M) :
+    _root_.RingHom.baseChangeModule.of ((laurentEval (R := R) u).toRingHom) M
+        ((T n : LaurentPolynomial R) • x) =
+      ((u ^ n : Aˣ) : A) •
+        _root_.RingHom.baseChangeModule.of ((laurentEval (R := R) u).toRingHom) M x := by
   rw [(_root_.RingHom.baseChangeModule.of _ _).map_smulₛₗ]
-  change laurentEval (R := ℤ) u (T n) • _ = _
-  rw [laurentEval_T]
+  simpa only [AlgHom.toRingHom_eq_coe, AlgHom.coe_toRingHom] using
+    congrArg (fun a : A => a •
+      _root_.RingHom.baseChangeModule.of ((laurentEval (R := R) u).toRingHom) M x)
+      (laurentEval_T (R := R) u n)
 
 /-- At `q = 1`, a Laurent shift acts trivially after base change. -/
-theorem RingHom.baseChangeModule_laurentEvalOne_T_smul (n : ℤ) (x : M) :
+theorem _root_.RingHom.baseChangeModule.of_laurentEvalOne_T_smul
+    {M : Type*} [AddCommMonoid M] [Module (LaurentPolynomial ℤ) M] (n : ℤ) (x : M) :
     _root_.RingHom.baseChangeModule.of laurentEvalOne M
         ((T n : LaurentPolynomial ℤ) • x) =
       _root_.RingHom.baseChangeModule.of laurentEvalOne M x := by
-  rw [laurentEvalOne_def]
-  rw [RingHom.baseChangeModule_laurentEval_T_smul]
+  simp only [TauCeti.laurentEvalOne]
+  rw [RingHom.baseChangeModule.of_laurentEval_T_smul]
   rw [one_zpow, Units.val_one, one_smul]
 
 /-- At `q = -1`, a Laurent shift acts by the sign `n.negOnePow` after base change. -/
-theorem RingHom.baseChangeModule_laurentEvalNegOne_T_smul (n : ℤ) (x : M) :
+theorem _root_.RingHom.baseChangeModule.of_laurentEvalNegOne_T_smul
+    {M : Type*} [AddCommMonoid M] [Module (LaurentPolynomial ℤ) M] (n : ℤ) (x : M) :
     _root_.RingHom.baseChangeModule.of laurentEvalNegOne M
         ((T n : LaurentPolynomial ℤ) • x) =
     (n.negOnePow : ℤ) •
       _root_.RingHom.baseChangeModule.of laurentEvalNegOne M x := by
-  rw [laurentEvalNegOne_def]
-  rw [RingHom.baseChangeModule_laurentEval_T_smul]
+  simp only [TauCeti.laurentEvalNegOne]
+  rw [RingHom.baseChangeModule.of_laurentEval_T_smul]
   simp [Int.negOnePow_def]
 
 end TauCeti

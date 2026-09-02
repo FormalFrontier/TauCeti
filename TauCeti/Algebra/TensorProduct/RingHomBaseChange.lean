@@ -5,8 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.LinearAlgebra.TensorProduct.Basic
-public import Mathlib.RingTheory.TensorProduct.Basic
 public import Mathlib.RingTheory.IsTensorProduct
 
 /-!
@@ -50,14 +48,6 @@ theorem of_apply (ev : R →+* A) (M : Type*) [AddCommMonoid M] [Module R M] (x 
     of ev M x = (1 : A) ⊗ₜ[R] x := by
   simp [of]
 
-/-- A pure tensor is a scalar multiple of a canonical element. -/
-theorem tmul_eq_smul_of (ev : R →+* A) (a : A) (x : M) :
-    letI := ev.toAlgebra
-    a ⊗ₜ[R] x = a • of ev M x := by
-  let _ : Algebra R A := ev.toAlgebra
-  rw [of_apply]
-  exact TensorProduct.tmul_eq_smul_one_tmul a x
-
 /-- An element of a scalar extension can be handled by zero, scalar multiples of canonical
 elements, and addition. -/
 @[elab_as_elim]
@@ -71,7 +61,7 @@ theorem induction_on (ev : R →+* A) (M : Type*) [AddCommMonoid M] [Module R M]
   | zero => exact h_zero
   | add x y hx hy => exact h_add x y hx hy
   | tmul a x =>
-      rw [tmul_eq_smul_of]
+      rw [TensorProduct.tmul_eq_smul_one_tmul, ← of_apply ev M x]
       exact h_smul a x
 
 /-- The scalar-linear map induced by a semilinear map through scalar extension. -/
@@ -84,7 +74,6 @@ noncomputable def lift (ev : R →+* A) (f : M →ₛₗ[ev] N)
     { f with
       map_smul' := by
         intro r x
-        change f (r • x) = ev r • f x
         exact f.map_smulₛₗ r x }
   exact f'.liftBaseChange A
 
@@ -96,8 +85,9 @@ theorem lift_of (ev : R →+* A) (f : M →ₛₗ[ev] N) (x : M) :
   let _ : Algebra R A := ev.toAlgebra
   let _ : Module R N := Module.compHom N ev
   let _ : IsScalarTower R A N := IsScalarTower.of_compHom R A N
-  change (LinearMap.liftBaseChange A _) (1 ⊗ₜ[R] x) = f x
-  apply LinearMap.liftBaseChange_one_tmul
+  simpa only [lift, LinearMap.coe_mk, AddHom.coe_mk, LinearMap.coe_toAddHom] using
+    (LinearMap.liftBaseChange_one_tmul (A := A)
+      (l := ({ f with map_smul' := fun r x => f.map_smulₛₗ r x } : M →ₗ[R] N)) x)
 
 /-- Two scalar-linear maps out of a scalar extension agree if they agree on canonical elements. -/
 theorem hom_ext (ev : R →+* A) {g₁ g₂ : RingHom.baseChangeModule ev M →ₗ[A] N}

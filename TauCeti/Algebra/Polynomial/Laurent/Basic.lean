@@ -181,37 +181,27 @@ end Constants
 section IntegerEvaluation
 
 /-- The ring homomorphism `ℤ[q,q⁻¹] →+* ℤ` evaluating a Laurent polynomial at `q = 1`. -/
-noncomputable def laurentEvalOne : LaurentPolynomial ℤ →+* ℤ :=
+noncomputable abbrev laurentEvalOne : LaurentPolynomial ℤ →+* ℤ :=
   (laurentEval (R := ℤ) (1 : ℤˣ)).toRingHom
 
-/-- The defining expression for `laurentEvalOne`. -/
-theorem laurentEvalOne_def :
-    laurentEvalOne = (laurentEval (R := ℤ) (1 : ℤˣ)).toRingHom := by
-  simp [laurentEvalOne]
-
+/-- `T n` evaluates to `1` at `q = 1`. -/
 @[simp]
 theorem laurentEvalOne_T (n : ℤ) : laurentEvalOne (T n) = 1 := by
-  rw [laurentEvalOne_def]
-  change laurentEval (R := ℤ) (1 : ℤˣ) (T n) = 1
-  rw [laurentEval_T]
-  simp
+  rw [laurentEvalOne, AlgHom.toRingHom_eq_coe]
+  simpa only [AlgHom.coe_toRingHom, one_zpow, Units.val_one] using
+    (laurentEval_T (R := ℤ) (1 : ℤˣ) n)
 
 /-- The ring homomorphism `ℤ[q,q⁻¹] →+* ℤ` evaluating a Laurent polynomial at `q = -1`. -/
-noncomputable def laurentEvalNegOne : LaurentPolynomial ℤ →+* ℤ :=
+noncomputable abbrev laurentEvalNegOne : LaurentPolynomial ℤ →+* ℤ :=
   (laurentEval (R := ℤ) (-1 : ℤˣ)).toRingHom
 
-/-- The defining expression for `laurentEvalNegOne`. -/
-theorem laurentEvalNegOne_def :
-    laurentEvalNegOne = (laurentEval (R := ℤ) (-1 : ℤˣ)).toRingHom := by
-  simp [laurentEvalNegOne]
-
+/-- `T n` evaluates to `n.negOnePow` at `q = -1`. -/
 @[simp]
 theorem laurentEvalNegOne_T (n : ℤ) :
     laurentEvalNegOne (T n) = (n.negOnePow : ℤ) := by
-  rw [laurentEvalNegOne_def]
-  change laurentEval (R := ℤ) (-1 : ℤˣ) (T n) = (n.negOnePow : ℤ)
-  rw [laurentEval_T]
-  simp [Int.negOnePow_def]
+  rw [laurentEvalNegOne, AlgHom.toRingHom_eq_coe]
+  simpa only [AlgHom.coe_toRingHom, Int.negOnePow_def] using
+    (laurentEval_T (R := ℤ) (-1 : ℤˣ) n)
 
 end IntegerEvaluation
 
