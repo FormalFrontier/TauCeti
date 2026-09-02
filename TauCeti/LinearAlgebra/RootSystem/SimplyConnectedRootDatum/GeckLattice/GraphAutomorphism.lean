@@ -424,7 +424,7 @@ theorem geckGraphAutPoints_pow_geckRootSubgroupMatrix (hsigma : sigma ∈ t.diag
       ⟨t.geckRootSubgroupMatrix ht ((diagramRootGeneratorPerm sigma ^ m) i)
           ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm u),
         t.geckRootSubgroupMatrix_mem_geckPoints ht A _ _⟩ := by
-  induction m generalizing i with
+  induction m with
   | zero => simp
   | succ m ih =>
       rw [pow_succ', MulAut.mul_apply, ih, geckGraphAutPoints_geckRootSubgroupMatrix,

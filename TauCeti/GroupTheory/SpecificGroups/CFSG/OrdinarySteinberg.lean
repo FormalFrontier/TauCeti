@@ -88,6 +88,8 @@ families, where the carrier does have full character span, that recipe is
 
 * `TauCeti.GraphTwistedIndex.geckGraphAut_geckRootSubgroup`: the graph automorphism renumbers the
   root subgroups by the diagram permutation and leaves their parameters alone.
+* `TauCeti.GraphTwistedIndex.geckGraphAut_pow_geckRootSubgroup`: its `m`-th power renumbers them by
+  `σ ^ m`.
 * `TauCeti.GraphTwistedIndex.geckGraphAut_pow_twistOrder`: the twist order of the index annihilates
   the graph automorphism.
 * `TauCeti.GraphTwistedIndex.geckGraphAut_comp_geckFrobenius`: the graph automorphism commutes with
@@ -200,15 +202,10 @@ theorem geckGraphAut_geckRootSubgroup (i : Fin d.1.rank ⊕ Fin d.1.rank)
     (u : Multiplicative d.1.Closure) :
     d.geckGraphAut (d.1.geckRootSubgroup i u) =
       d.1.geckRootSubgroup (DynkinType.diagramRootGeneratorPerm d.diagramPerm i) u := by
-  -- Both sides are read through `ValidLieTypeIndex.coe_geckRootSubgroup`, since the body of
-  -- `ValidLieTypeIndex.geckRootSubgroup` is not exposed.
-  have h := congrArg Subtype.val (d.1.dynkinType.geckGraphAutPoints_geckRootSubgroupMatrix
-    d.1.dynkinType_valid d.diagramPerm_mem_diagramSymmetry d.1.Closure i u)
-  rw [DynkinType.coe_geckGraphAutPoints] at h
-  refine Subtype.ext ?_
-  rw [coe_geckGraphAut, ValidLieTypeIndex.coe_geckRootSubgroup,
-    ValidLieTypeIndex.coe_geckRootSubgroup]
-  exact h
+  rw [geckGraphAut_def]
+  simp only [ValidLieTypeIndex.geckRootSubgroup_eq_mk]
+  exact d.1.dynkinType.geckGraphAutPoints_geckRootSubgroupMatrix d.1.dynkinType_valid
+    d.diagramPerm_mem_diagramSymmetry d.1.Closure i u
 
 /-- **The twist order recorded by an index annihilates its graph automorphism.** This is `γ ^ 2 = 1`
 for `²Aₙ`, `²Dₙ` and `²E₆`, `γ ^ 3 = 1` for `³D₄`, and the trivial relation on an untwisted family,
@@ -309,18 +306,6 @@ are at the layer below in `TauCeti.DynkinType.geckTwistedFrobenius_pow`. `Monoid
 definitionally a bundled `MonoidHom`, and the `show` in each statement below picks its composition
 monoid structure before the power is elaborated. -/
 
-/-- A root-subgroup point of the carrier, in the explicit shape the equations one layer down are
-stated in. The body of `TauCeti.ValidLieTypeIndex.geckRootSubgroup` is not exposed here, so this is
-the bridge to `TauCeti.DynkinType.geckRootSubgroupMatrix`, and it stays local to this file. -/
-private theorem geckRootSubgroup_eq_mk (i : Fin d.1.rank ⊕ Fin d.1.rank)
-    (u : Multiplicative d.1.Closure) :
-    d.1.geckRootSubgroup i u =
-      ⟨d.1.dynkinType.geckRootSubgroupMatrix d.1.dynkinType_valid i
-          ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := d.1.Closure)).symm u),
-        d.1.dynkinType.geckRootSubgroupMatrix_mem_geckPoints d.1.dynkinType_valid d.1.Closure
-          i _⟩ :=
-  Subtype.ext (d.1.coe_geckRootSubgroup i u)
-
 /-- **The `m`-th power of the graph automorphism renumbers the root subgroups by the `m`-th power
 of the diagram permutation**, again leaving their parameters alone. -/
 @[simp]
@@ -329,7 +314,7 @@ theorem geckGraphAut_pow_geckRootSubgroup (m : ℕ) (i : Fin d.1.rank ⊕ Fin d.
     (d.geckGraphAut ^ m) (d.1.geckRootSubgroup i u) =
       d.1.geckRootSubgroup ((DynkinType.diagramRootGeneratorPerm d.diagramPerm ^ m) i) u := by
   rw [geckGraphAut_def]
-  simp only [geckRootSubgroup_eq_mk]
+  simp only [ValidLieTypeIndex.geckRootSubgroup_eq_mk]
   exact d.1.dynkinType.geckGraphAutPoints_pow_geckRootSubgroupMatrix d.1.dynkinType_valid
     d.diagramPerm_mem_diagramSymmetry d.1.Closure m i u
 
@@ -385,7 +370,7 @@ theorem geckSteinberg_pow_geckRootSubgroup (m : ℕ) (i : Fin d.1.rank ⊕ Fin d
       d.1.geckRootSubgroup ((DynkinType.diagramRootGeneratorPerm d.diagramPerm ^ m) i)
         (Multiplicative.ofAdd (Multiplicative.toAdd u ^ d.1.fieldOrder ^ m)) := by
   rw [geckSteinberg_def, d.1.fieldOrder_eq_characteristic_pow, ← pow_mul]
-  simp only [geckRootSubgroup_eq_mk]
+  simp only [ValidLieTypeIndex.geckRootSubgroup_eq_mk]
   exact DynkinType.geckTwistedFrobenius_pow_geckRootSubgroupMatrix d.1.dynkinType_valid
     d.diagramPerm_mem_diagramSymmetry d.1.characteristic d.1.fieldExponent d.1.Closure m i u
 

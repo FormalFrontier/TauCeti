@@ -47,6 +47,8 @@ connected one, that its weight torus is maximal, or that its point group is fini
 
 ## Main results
 
+* `TauCeti.ValidLieTypeIndex.geckRootSubgroup_eq_mk`: a root-subgroup point in the explicit shape
+  the pinned Geck carrier states its equations in.
 * `TauCeti.ValidLieTypeIndex.coe_geckFrobenius_apply`: the Frobenius raises every matrix entry to
   the `q`-th power.
 * `TauCeti.ValidLieTypeIndex.geckFrobenius_geckRootSubgroup`: it raises the parameter of every
@@ -135,6 +137,17 @@ theorem coe_geckRootSubgroup (i : Fin d.dynkinType.rank ⊕ Fin d.dynkinType.ran
         ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := d.Closure)).symm u) := by
   rw [geckRootSubgroup]
   rfl
+
+/-- A root-subgroup point of the Geck point group, in the explicit shape the equations of the
+pinned Geck carrier are stated in one layer down. The body of `geckRootSubgroup` is not exposed,
+so this is the bridge to `TauCeti.DynkinType.geckRootSubgroupMatrix`. -/
+theorem geckRootSubgroup_eq_mk (i : Fin d.dynkinType.rank ⊕ Fin d.dynkinType.rank)
+    (u : Multiplicative d.Closure) :
+    d.geckRootSubgroup i u =
+      ⟨d.dynkinType.geckRootSubgroupMatrix d.dynkinType_valid i
+          ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := d.Closure)).symm u),
+        d.dynkinType.geckRootSubgroupMatrix_mem_geckPoints d.dynkinType_valid d.Closure i _⟩ :=
+  Subtype.ext (d.coe_geckRootSubgroup i u)
 
 /-! ## The Frobenius endomorphism -/
 

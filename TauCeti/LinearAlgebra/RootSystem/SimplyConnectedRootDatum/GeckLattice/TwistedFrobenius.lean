@@ -88,7 +88,8 @@ reproved.
 * `TauCeti.DynkinType.geckTwistedFrobenius_geckTorusMatrix`: the equation on the pinned weight
   torus.
 * `TauCeti.DynkinType.geckFrobenius_pow` and `TauCeti.DynkinType.geckTwistedFrobenius_pow`: the
-  powers of the two endomorphisms, the second separating into `γ ^ m ∘ Frob_(q ^ m)`, and, by
+  powers of the two endomorphisms, the second separating into `γ ^ m ∘ Frob_(q ^ m)`, pointwise in
+  `TauCeti.DynkinType.geckTwistedFrobenius_pow_apply`, and, by
   `TauCeti.DynkinType.geckTwistedFrobenius_pow_eq_geckFrobenius_comp`, into the same composite in
   the other order.
 * `TauCeti.DynkinType.geckTwistedFrobenius_pow_geckRootSubgroupMatrix`: the defining equation on
@@ -265,6 +266,17 @@ theorem geckTwistedFrobenius_pow (m : ℕ) :
   -- The remaining goal is the same product read as a composition.
   rfl
 
+/-- The `m`-th power of the twisted Frobenius applies the Frobenius `Frob_(q ^ m)` first and then
+the `m`-th power of the graph automorphism. This is the power form of
+`TauCeti.DynkinType.geckTwistedFrobenius_apply`. -/
+-- As above, the `show` selects the composition monoid structure before the power is elaborated.
+theorem geckTwistedFrobenius_pow_apply (m : ℕ) (g : t.geckPoints ht A) :
+    ((show Monoid.End _ from t.geckTwistedFrobenius ht hsigma p k A) ^ m) g =
+      (t.geckGraphAutPoints ht hsigma A ^ m) (t.geckFrobenius ht p (k * m) A g) := by
+  rw [geckTwistedFrobenius_pow]
+  -- A composition of monoid homomorphisms applied at a point is the two applications in turn.
+  rfl
+
 /-- **The powers of the twisted Frobenius separate in the other order too**: the `m`-th power of
 `γ ∘ Frob_q` is also `Frob_(q ^ m) ∘ γ ^ m`, since its two factors commute. This is the power form
 of `TauCeti.DynkinType.geckTwistedFrobenius_eq_geckFrobenius_comp`. -/
@@ -273,17 +285,14 @@ theorem geckTwistedFrobenius_pow_eq_geckFrobenius_comp (m : ℕ) :
     (show Monoid.End _ from t.geckTwistedFrobenius ht hsigma p k A) ^ m =
       (t.geckFrobenius ht p (k * m) A).comp
         (t.geckGraphAutPoints ht hsigma A ^ m).toMonoidHom := by
-  -- The two factors commute, so their powers commute and the separated product may be read in
-  -- either order.
+  -- The graph automorphism commutes with the Frobenius at every exponent, so it commutes with
+  -- `Frob_(q ^ m)`, and the separated product of `geckTwistedFrobenius_pow` may be read in either
+  -- order.
   have hcomm : Commute (show Monoid.End _ from (t.geckGraphAutPoints ht hsigma A).toMonoidHom)
-      (show Monoid.End _ from t.geckFrobenius ht p k A) :=
-    geckGraphAutPoints_comp_geckFrobenius ht hsigma p k A
-  have hmul : (show Monoid.End _ from t.geckTwistedFrobenius ht hsigma p k A) =
-      (show Monoid.End _ from (t.geckGraphAutPoints ht hsigma A).toMonoidHom) *
-        (show Monoid.End _ from t.geckFrobenius ht p k A) := rfl
-  rw [hmul, hcomm.mul_pow, (hcomm.pow_pow m m).eq, toMonoidHom_pow, geckFrobenius_pow]
-  -- The remaining goal is the same product read as a composition.
-  rfl
+      (show Monoid.End _ from t.geckFrobenius ht p (k * m) A) :=
+    geckGraphAutPoints_comp_geckFrobenius ht hsigma p (k * m) A
+  rw [geckTwistedFrobenius_pow, ← toMonoidHom_pow]
+  exact (hcomm.pow_left m).eq
 
 /-- **The `m`-th power of the twisted Frobenius raises the parameter of a numbered Geck root
 subgroup to its `p ^ (k * m)`-th power and renumbers it by the `m`-th power of the diagram
@@ -301,14 +310,8 @@ theorem geckTwistedFrobenius_pow_geckRootSubgroupMatrix (m : ℕ) (i : Fin t.ran
           ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm
             (Multiplicative.ofAdd (Multiplicative.toAdd u ^ p ^ (k * m)))),
         t.geckRootSubgroupMatrix_mem_geckPoints ht A _ _⟩ := by
-  -- The separation of the power is read pointwise, through the composition monoid structure the
-  -- `show` selects.
-  have h : ∀ g : t.geckPoints ht A,
-      ((show Monoid.End _ from t.geckTwistedFrobenius ht hsigma p k A) ^ m) g =
-        (t.geckGraphAutPoints ht hsigma A ^ m) (t.geckFrobenius ht p (k * m) A g) := fun g => by
-    rw [geckTwistedFrobenius_pow]
-    rfl
-  rw [h, geckFrobenius_geckRootSubgroupMatrix, geckGraphAutPoints_pow_geckRootSubgroupMatrix]
+  rw [geckTwistedFrobenius_pow_apply, geckFrobenius_geckRootSubgroupMatrix,
+    geckGraphAutPoints_pow_geckRootSubgroupMatrix]
 
 /-- **A diagram symmetry of order dividing `m` makes the `m`-th power of the twisted Frobenius the
 plain Frobenius `Frob_(q ^ m)`.** This is the order relation a graph-twisted Steinberg map is
