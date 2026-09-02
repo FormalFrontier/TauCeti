@@ -28,6 +28,8 @@ on `ArithmeticFunction ℂ`.
   ideal and `0` elsewhere.
 * `TauCeti.Ideal.divisorsAntidiagonal A` is the finite set of pairs `(B, C)` of nonzero ideals with
   `B * C = A`; it is the ideal analogue of Mathlib's `Nat.divisorsAntidiagonal`.
+* `TauCeti.Ideal.divisors A` is its first projection, the finite set of nonzero ideals dividing
+  `A`; it is the ideal analogue of Mathlib's `Nat.divisors`.
 * `TauCeti.IdealArithmeticFunction.convolution f g` is the ideal Dirichlet convolution.
 * `TauCeti.IdealArithmeticFunction.convolutionPow f n` is the `n`-fold convolution power of `f`.
 
@@ -39,6 +41,9 @@ on `ArithmeticFunction ℂ`.
   `TauCeti.IdealArithmeticFunction.convolution_delta`: the convolution monoid laws.
 * `TauCeti.IdealArithmeticFunction.convolution_add` and
   `TauCeti.IdealArithmeticFunction.add_convolution`: bilinearity over pointwise addition.
+* `TauCeti.Ideal.sum_divisorsAntidiagonal_fst` and
+  `TauCeti.Ideal.sum_divisorsAntidiagonal_snd`: a sum over the antidiagonal that depends on only
+  one of the two factors is a sum over the divisors.
 * `TauCeti.IdealArithmeticFunction.convolution_one_one_ne_mul`: ideal convolution is not the
   pointwise product.
 * `TauCeti.normCoeff_delta`, `TauCeti.normCoeff_convolution`, and
@@ -202,6 +207,51 @@ theorem one_lt_card_divisorsAntidiagonal {A : (Ideal (𝓞 K))⁰} (hA : A ≠ 1
   refine Finset.one_lt_card.mpr ⟨(1, A), by simp, (A, 1), by simp, ?_⟩
   simp only [ne_eq, Prod.mk.injEq, not_and]
   exact fun h => absurd h.symm hA
+
+/-! ### The divisors of a nonzero ideal -/
+
+/-- The **divisors** of a nonzero ideal `A`: the finite set of nonzero ideals dividing `A`. It is
+the first projection of `TauCeti.Ideal.divisorsAntidiagonal`, and the ideal analogue of Mathlib's
+`Nat.divisors`. -/
+noncomputable def divisors (A : (Ideal (𝓞 K))⁰) : Finset ((Ideal (𝓞 K))⁰) :=
+  (divisorsAntidiagonal A).image Prod.fst
+
+/-- A nonzero ideal is a divisor of `A` exactly when it divides `A`. -/
+@[simp]
+theorem mem_divisors {A B : (Ideal (𝓞 K))⁰} :
+    B ∈ divisors A ↔ (B : Ideal (𝓞 K)) ∣ (A : Ideal (𝓞 K)) := by
+  refine ⟨fun hB ↦ ?_, fun ⟨C, hC⟩ ↦ ?_⟩
+  · obtain ⟨p, hp, rfl⟩ := Finset.mem_image.mp hB
+    exact fst_dvd_of_mem_divisorsAntidiagonal hp
+  · have hC0 : C ≠ 0 := fun h ↦
+      nonZeroDivisors.coe_ne_zero A (by rw [hC, h, mul_zero])
+    exact Finset.mem_image.mpr
+      ⟨(B, ⟨C, mem_nonZeroDivisors_of_ne_zero hC0⟩),
+        mem_divisorsAntidiagonal.mpr (Subtype.ext (by simpa using hC.symm)), rfl⟩
+
+/-- The unit ideal is its own only divisor. -/
+@[simp]
+theorem divisors_one : divisors (1 : (Ideal (𝓞 K))⁰) = {1} := by
+  rw [divisors, divisorsAntidiagonal_one, Finset.image_singleton]
+
+/-- A sum over the antidiagonal of `A` that depends only on the first factor is a sum over the
+divisors of `A`. -/
+theorem sum_divisorsAntidiagonal_fst {M : Type*} [AddCommMonoid M] (A : (Ideal (𝓞 K))⁰)
+    (f : (Ideal (𝓞 K))⁰ → M) :
+    ∑ p ∈ divisorsAntidiagonal A, f p.1 = ∑ B ∈ divisors A, f B := by
+  refine (Finset.sum_image fun p hp q hq hpq ↦ Prod.ext hpq ?_).symm
+  refine mul_left_cancel (a := p.1) ?_
+  rw [mem_divisorsAntidiagonal.mp hp, ← mem_divisorsAntidiagonal.mp hq, hpq]
+
+/-- A sum over the antidiagonal of `A` that depends only on the second factor is a sum over the
+divisors of `A`. -/
+theorem sum_divisorsAntidiagonal_snd {M : Type*} [AddCommMonoid M] (A : (Ideal (𝓞 K))⁰)
+    (f : (Ideal (𝓞 K))⁰ → M) :
+    ∑ p ∈ divisorsAntidiagonal A, f p.2 = ∑ B ∈ divisors A, f B := by
+  rw [← sum_divisorsAntidiagonal_fst]
+  exact Finset.sum_nbij' Prod.swap Prod.swap (fun p hp ↦ swap_mem_divisorsAntidiagonal hp)
+    (fun p hp ↦ swap_mem_divisorsAntidiagonal hp) (fun _ _ ↦ Prod.swap_swap _)
+    (fun _ _ ↦ Prod.swap_swap _) (fun _ _ ↦ rfl)
 
 end Ideal
 

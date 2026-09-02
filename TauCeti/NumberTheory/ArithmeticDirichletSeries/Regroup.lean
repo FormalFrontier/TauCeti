@@ -180,11 +180,18 @@ theorem idealAbscissaOfAbsConv_def (f : IdealArithmeticFunction K) :
     idealAbscissaOfAbsConv K f = sInf (Real.toEReal '' {x : ℝ | Summable (idealTerm K f x)}) :=
   (rfl)
 
+/-- Strictly to the right of the ideal-indexed abscissa the series already converges absolutely at
+some real point further to the left. This is the ideal analogue of Mathlib's
+`LSeriesSummable_lt_re_of_abscissaOfAbsConv_lt_re`. -/
+theorem exists_summable_idealTerm_lt_re {f : IdealArithmeticFunction K} {s : ℂ}
+    (hs : idealAbscissaOfAbsConv K f < s.re) :
+    ∃ x : ℝ, Summable (idealTerm K f x) ∧ x < s.re := by
+  simpa [idealAbscissaOfAbsConv, sInf_lt_iff] using hs
+
 /-- The ideal-indexed series converges absolutely strictly to the right of its abscissa. -/
 theorem summable_idealTerm_of_idealAbscissaOfAbsConv_lt_re {f : IdealArithmeticFunction K} {s : ℂ}
     (hs : idealAbscissaOfAbsConv K f < s.re) : Summable (idealTerm K f s) := by
-  obtain ⟨y, hy, hys⟩ : ∃ y : ℝ, Summable (idealTerm K f y) ∧ y < s.re := by
-    simpa [idealAbscissaOfAbsConv, sInf_lt_iff] using hs
+  obtain ⟨y, hy, hys⟩ := exists_summable_idealTerm_lt_re K hs
   exact summable_idealTerm_of_re_le_re K (Complex.ofReal_re y ▸ hys.le) hy
 
 /-- A point of absolute convergence bounds the ideal-indexed abscissa. -/
