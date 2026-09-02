@@ -12,15 +12,35 @@ public import TauCeti.Probability.Process.Tail.Basic
 /-!
 # Tail σ-algebras of arrays
 
-This file defines the diagonal tail of an array: the events readable from entries `X (i, j)` with
+This file defines the corner tail of an array: the events readable from entries `X (i, j)` with
 both indices arbitrarily large. It is the two-dimensional analogue of the tail σ-algebra of a
-process and cuts both index axes at the same time.
+process, cutting both index axes at the same time, and it is the σ-algebra the zero-one law for a
+dissociated array in `Arrays.ZeroOne` is stated for. Cutting both axes is what dissociation asks
+for: two square blocks are independent only when their index sets are disjoint, so a one-axis cut
+would not do.
+
+The corner tail is not the tail of the diagonal process `arrayDiag X`; it contains it
+(`tailProcess_arrayDiag_le_arrayTail`) and is in general strictly larger, since it also reads the
+off-diagonal entries above the cutoff.
+
+These definitions support the exchangeable-arrays milestone of
+`TauCetiRoadmap/Exchangeability/README.md`, Layer 8.
 
 ## Main definitions
 
 * `TauCeti.Probability.arrayTailFamily` — the σ-algebra of the entries with both indices at least
   `n`;
 * `TauCeti.Probability.arrayTail` — the tail σ-algebra of an array, the infimum of the tail family.
+
+## Main results
+
+* `TauCeti.Probability.arrayTailFamily_le_iff` and `TauCeti.Probability.le_arrayTail_iff` — the
+  universal properties of the two σ-algebras;
+* `TauCeti.Probability.arrayTailFamily_antitone` — the tail family decreases;
+* `TauCeti.Probability.arrayTail_le_ambient` — the array tail is a sub-σ-algebra of the ambient one
+  as soon as the entries beyond some cutoff are measurable;
+* `TauCeti.Probability.tailProcess_arrayDiag_le_arrayTail` — the tail of the diagonal process is an
+  array tail event.
 -/
 
 public section
@@ -125,15 +145,16 @@ theorem arrayTail_le_ambient (n : ℕ)
 
 omit [MeasurableSpace Ω] in
 /-- **The tail of the diagonal is an array tail event.** The diagonal entries from time `n` on have
-both indices at least `n`, so they generate a sub-σ-algebra of the tail family at `n`. -/
+both indices at least `n`, so they generate a sub-σ-algebra of the tail family at `n`. The
+inclusion is not an equality: the array tail also reads the off-diagonal entries above the
+cutoff. -/
 theorem tailProcess_arrayDiag_le_arrayTail (X : ℕ × ℕ → Ω → α) :
     tailProcess (arrayDiag X) ≤ arrayTail X := by
   rw [le_arrayTail_iff]
   intro n
   refine (tailProcess_le_tailFamily _ n).trans (tailFamily_le_iff.mpr ?_)
   intro k hk
-  simpa only [arrayDiag_apply] using
-    (arrayTailFamily_le_iff (X := X) (m := arrayTailFamily X n)).mp le_rfl k k hk hk
+  simpa only [arrayDiag_apply] using measurable_arrayTailFamily_of_le (X := X) hk hk
 
 end Probability
 
