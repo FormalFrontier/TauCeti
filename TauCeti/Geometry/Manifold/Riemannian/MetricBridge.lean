@@ -41,6 +41,7 @@ namespace TauCeti
 
 variable
   {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+  {F : Type*} [NormedAddCommGroup F] [NormedSpace ℝ F]
   {H : Type*} [TopologicalSpace H] {I : ModelWithCorners ℝ E H}
 
 namespace Manifold
@@ -51,31 +52,29 @@ variable {M : Type*} [TopologicalSpace M] [ChartedSpace H M]
 attribute [local instance] normedAddCommGroupTangentSpaceVectorSpace
   normedSpaceTangentSpaceVectorSpace
 
-/-- A bound on the chart differential applied to the within-derivative of a `C¹` path whose image
-on `[a, b]` lies in `(chartAt H x).source` controls its coordinate displacement. -/
-theorem enorm_extChartAt_sub_le_mul_pathELength (x : M) {γ : ℝ → M} {a b : ℝ}
+omit [IsManifold I 1 M] in
+/-- A bound on the differential of a vector-valued function applied to the within-derivative of a
+`C¹` path controls the displacement of the function along that path. -/
+theorem enorm_sub_le_mul_pathELength {f : M → F} {γ : ℝ → M} {a b : ℝ}
     (hab : a ≤ b) (hγ : CMDiff[Icc a b] 1 γ)
-    (hγsrc : ∀ t ∈ Icc a b, γ t ∈ (chartAt H x).source)
+    (hf : CMDiff[Icc a b] 1 (f ∘ γ))
+    (hfdiff : ∀ t ∈ Icc a b, MDifferentiableAt I 𝓘(ℝ, F) f (γ t))
     {C : ℝ≥0} (hC : ∀ t ∈ Icc a b,
-      ‖(mfderiv% (extChartAt I x) (γ t)) (mfderiv[Icc a b] γ t 1)‖ₑ ≤
+      ‖(mfderiv% f (γ t)) (mfderiv[Icc a b] γ t 1)‖ₑ ≤
         C * ‖mfderiv[Icc a b] γ t 1‖ₑ) :
-    ‖extChartAt I x (γ b) - extChartAt I x (γ a)‖ₑ ≤ C * pathELength I γ a b := by
+    ‖f (γ b) - f (γ a)‖ₑ ≤ C * pathELength I γ a b := by
   rcases hab.eq_or_lt with rfl | hab
   · simp
-  let γ' := extChartAt I x ∘ γ
-  have hγ' : CMDiff[Icc a b] 1 γ' := by
-    exact contMDiffOn_extChartAt.comp (I' := I) (t := (chartAt H x).source)
-      hγ (fun t ht ↦ hγsrc t ht)
-  have hbound : ‖γ' b - γ' a‖ₑ ≤ C * pathELength I γ a b := by
+  have hbound : ‖(f ∘ γ) b - (f ∘ γ) a‖ₑ ≤ C * pathELength I γ a b := by
     calc
-      ‖γ' b - γ' a‖ₑ ≤
-          ∫⁻ t in Icc a b, ‖derivWithin γ' (Icc a b) t‖ₑ := by
+      ‖(f ∘ γ) b - (f ∘ γ) a‖ₑ ≤
+          ∫⁻ t in Icc a b, ‖derivWithin (f ∘ γ) (Icc a b) t‖ₑ := by
         apply enorm_sub_le_lintegral_derivWithin_Icc_of_contDiffOn_Icc _ hab.le
         rwa [← contMDiffOn_iff_contDiffOn]
       _ ≤ ∫⁻ t in Icc a b, C * ‖mfderiv[Icc a b] γ t 1‖ₑ := by
         apply setLIntegral_mono' measurableSet_Icc (fun t ht ↦ ?_)
         have hderiv := (TauCeti.Manifold.hasDerivWithinAt_comp_curve
-          (mdifferentiableAt_extChartAt (hγsrc t ht))
+          (hfdiff t ht)
           (hasMFDerivWithinAt_curveVelocityWithin
             ((hγ t ht).mdifferentiableWithinAt one_ne_zero))).derivWithin
               (uniqueDiffOn_Icc hab t ht)
@@ -84,7 +83,21 @@ theorem enorm_extChartAt_sub_le_mul_pathELength (x : M) {γ : ℝ → M} {a b : 
       _ = C * pathELength I γ a b := by
         rw [lintegral_const_mul' _ _ ENNReal.coe_ne_top,
           pathELength_eq_lintegral_mfderivWithin_Icc]
-  simpa [γ'] using hbound
+  simpa using hbound
+
+/-- A chart-valued instance of `enorm_sub_le_mul_pathELength`. -/
+theorem enorm_extChartAt_sub_le_mul_pathELength (x : M) {γ : ℝ → M} {a b : ℝ}
+    (hab : a ≤ b) (hγ : CMDiff[Icc a b] 1 γ)
+    (hγsrc : ∀ t ∈ Icc a b, γ t ∈ (chartAt H x).source)
+    {C : ℝ≥0} (hC : ∀ t ∈ Icc a b,
+      ‖(mfderiv% (extChartAt I x) (γ t)) (mfderiv[Icc a b] γ t 1)‖ₑ ≤
+        C * ‖mfderiv[Icc a b] γ t 1‖ₑ) :
+    ‖extChartAt I x (γ b) - extChartAt I x (γ a)‖ₑ ≤ C * pathELength I γ a b := by
+  apply enorm_sub_le_mul_pathELength hab hγ
+  · exact contMDiffOn_extChartAt.comp (I' := I) (t := (chartAt H x).source)
+      hγ (fun t ht ↦ hγsrc t ht)
+  · exact fun t ht ↦ mdifferentiableAt_extChartAt (hγsrc t ht)
+  · exact hC
 
 end Manifold
 end TauCeti
