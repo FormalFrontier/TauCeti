@@ -345,9 +345,9 @@ private theorem isBorelOverField_comapOfIso
       HopfIdeal.comapOfSurjective_mono f hf hIJ'
     _ = J := hJ'comap
 
-/-- Over an algebraically closed field, the upper-triangular subgroup of `GL₂` is maximal among
-smooth geometrically connected solvable closed subgroups. -/
-private theorem isBorelOverField_definingHopfIdeal [IsAlgClosed k] :
+/-- Over a field, the upper-triangular subgroup of `GL₂` is maximal among smooth geometrically
+connected solvable closed subgroups. -/
+private theorem isBorelOverField_definingHopfIdeal :
     isBorelOverField k
       ⟨GeneralLinear.coordinateHopfAlgebra k 2,
         (finiteTypeCommHopfAlgProperty_iff _).2 inferInstance⟩
