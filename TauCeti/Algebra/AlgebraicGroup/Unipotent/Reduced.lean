@@ -7,7 +7,7 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.Unipotent.Basic
 import TauCeti.Algebra.AlgebraicGroup.Representation.UnipotentPoint.Naturality
-import TauCeti.Algebra.Coalgebra.Comodule.MatrixCoefficient.PointAction
+public import TauCeti.Algebra.Coalgebra.Comodule.MatrixCoefficient.PointAction
 import TauCeti.RingTheory.FiniteType.PointSeparation
 import TauCeti.RingTheory.Smooth.GeometricallyReduced
 
@@ -59,7 +59,9 @@ variable {H K : _root_.CommHopfAlgCat.{v} k}
 
 attribute [local instance 1100] Module.Free.of_divisionRing
 
-private theorem coefficientMatrix_charpoly_eq
+/-- For a geometrically unipotent reduced finite-type Hopf algebra, the characteristic polynomial
+of every universal coefficient matrix is a power of `X - 1`. -/
+theorem coefficientMatrix_charpoly_eq
     {A : _root_.CommHopfAlgCat.{v} k} [Algebra.FiniteType k A] [IsReduced A]
     (hA : geometricallyUnipotentPointsCommHopfAlgProperty k A)
     (M : FGComoduleCat.{u, v, u} k A) {ι : Type w} [Fintype ι] [DecidableEq ι]
@@ -104,7 +106,9 @@ private theorem coefficientMatrix_charpoly_eq
       rw [Polynomial.coeff_map, Polynomial.coeff_map]
       exact (q.commutes (P.coeff r)).symm
 
-private theorem isUnipotent_pointsAction_of_coefficientMatrix_charpoly_eq
+/-- A universal `X - 1` characteristic-polynomial identity makes the action of every point on
+the comodule unipotent. -/
+theorem isUnipotent_pointsAction_of_coefficientMatrix_charpoly_eq
     {A : _root_.CommHopfAlgCat.{v} k} {L : Type w} [CommRing L] [Algebra k L]
     (M : FGComoduleCat.{u, v, u} k A) (g : WithConv (A →ₐ[k] L))
     {ι : Type*} [Fintype ι] [DecidableEq ι] (b : _root_.Module.Basis ι k M)
