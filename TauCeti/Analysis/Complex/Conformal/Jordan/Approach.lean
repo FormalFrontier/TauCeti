@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Analysis.Complex.Conformal.Inverse.BoundaryCluster
-public import TauCeti.Analysis.Complex.Conformal.JordanDomain
+public import TauCeti.Analysis.Complex.Conformal.Jordan.Domain
 public import TauCeti.Analysis.Complex.Conformal.Caratheodory
 public import TauCeti.Analysis.Complex.Conformal.BoundaryCorrespondence
 public import TauCeti.Analysis.Complex.PlaneSeparation.Basic

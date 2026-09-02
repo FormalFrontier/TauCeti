@@ -43,7 +43,7 @@ domain with locally connected boundary extends continuously to the closed disc �
 of a crosscut, and what it asks of the boundary is exactly a uniform `ε`–`δ` supply of small
 connected sets joining nearby boundary points. The boundary of a bounded domain is compact, so the
 equivalence proved here converts the roadmap's hypothesis into that form once and for all; the
-conformal consequences are in `TauCeti/Analysis/Complex/Conformal/JordanDomain.lean` and
+conformal consequences are in `TauCeti/Analysis/Complex/Conformal/Jordan/Domain.lean` and
 `TauCeti/Analysis/Complex/Conformal/LocallyConnectedBoundary.lean`.
 
 Nothing here is specific to that application: the definition and both implications are stated for
