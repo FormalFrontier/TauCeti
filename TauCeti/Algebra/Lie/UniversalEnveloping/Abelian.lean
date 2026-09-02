@@ -141,19 +141,27 @@ private theorem liftSym_ι (x : L) :
     liftSym R L (_root_.UniversalEnvelopingAlgebra.ι R x) = SymmetricAlgebra.ι R L x :=
   (_root_.UniversalEnvelopingAlgebra.lift_ι_apply R _ x).trans (toSymmetricAlgebra_apply R L x)
 
-private theorem liftSym_liftι (s : SymmetricAlgebra R L) : liftSym R L (liftι R L s) = s := by
-  induction s using SymmetricAlgebra.induction with
-  | algebraMap r => rw [AlgHom.commutes, AlgHom.commutes]
-  | ι x => rw [liftι_ι, liftSym_ι]
-  | mul a b ha hb => rw [map_mul, map_mul, ha, hb]
-  | add a b ha hb => rw [map_add, map_add, ha, hb]
+-- `ext` is `SymmetricAlgebra.algHom_ext`: the two sides agree once they agree on the canonical
+-- generators of `S(L)`.
+private theorem liftSym_comp_liftι :
+    (liftSym R L).comp (liftι R L) = AlgHom.id R (SymmetricAlgebra R L) := by
+  ext x
+  change liftSym R L (liftι R L (SymmetricAlgebra.ι R L x)) = SymmetricAlgebra.ι R L x
+  rw [liftι_ι, liftSym_ι]
 
-private theorem liftι_liftSym (a : U) : liftι R L (liftSym R L a) = a := by
-  induction a using induction_ι R L with
-  | ι x => rw [liftSym_ι, liftι_ι]
-  | algebraMap r => rw [AlgHom.commutes, AlgHom.commutes]
-  | add a b ha hb => rw [map_add, map_add, ha, hb]
-  | mul a b ha hb => rw [map_mul, map_mul, ha, hb]
+private theorem liftSym_liftι (s : SymmetricAlgebra R L) : liftSym R L (liftι R L s) = s :=
+  AlgHom.congr_fun (liftSym_comp_liftι R L) s
+
+-- `ext` is `UniversalEnvelopingAlgebra.hom_ext`: the two sides agree once they agree on the
+-- canonical generators of `U(L)`.
+private theorem liftι_comp_liftSym : (liftι R L).comp (liftSym R L) = AlgHom.id R U := by
+  ext x
+  change liftι R L (liftSym R L (_root_.UniversalEnvelopingAlgebra.ι R x)) =
+    _root_.UniversalEnvelopingAlgebra.ι R x
+  rw [liftSym_ι, liftι_ι]
+
+private theorem liftι_liftSym (a : U) : liftι R L (liftSym R L a) = a :=
+  AlgHom.congr_fun (liftι_comp_liftSym R L) a
 
 /-- **The canonical map of an abelian Lie algebra into its enveloping algebra exhibits the
 enveloping algebra as the symmetric algebra.** The two universal properties describe the same
@@ -249,6 +257,14 @@ theorem mvPolynomialEquiv_apply (b : Basis κ R L) (p : MvPolynomial κ R) :
       MvPolynomial.aeval (fun i ↦ _root_.UniversalEnvelopingAlgebra.ι R (b i)) p :=
   AlgHom.congr_fun (mvPolynomialEquiv_toAlgHom R L b) p
 
+/-- The basis vector of Mathlib's `Module.Basis.symmetricAlgebra` at an exponent function `n` is
+the monomial `∏ᵢ ι (b i) ^ nᵢ` in the canonical generators of the symmetric algebra. Mathlib
+characterizes that basis only through its `Module.Basis.repr`. -/
+private theorem basis_symmetricAlgebra_apply {S : Type*} [CommSemiring S] {M : Type*}
+    [AddCommMonoid M] [Module S M] (b : Basis κ S M) (n : κ →₀ ℕ) :
+    b.symmetricAlgebra n = n.prod fun i k ↦ SymmetricAlgebra.ι S M (b i) ^ k := by
+  simp [Basis.symmetricAlgebra, MvPolynomial.monomial_eq, map_finsuppProd]
+
 /-- **The monomials in a basis of an abelian Lie algebra are a basis of its enveloping algebra.**
 This is the Poincaré--Birkhoff--Witt ordered-monomial theorem in the abelian case, where a monomial
 is determined by its exponent function because the generators commute. -/
@@ -260,9 +276,8 @@ canonical generators. -/
 @[simp]
 theorem basisMonomials_apply (b : Basis κ R L) (n : κ →₀ ℕ) :
     basisMonomials R L b n = n.prod fun i k ↦ _root_.UniversalEnvelopingAlgebra.ι R (b i) ^ k := by
-  have hb : basisMonomials R L b n = mvPolynomialEquiv R L b (MvPolynomial.monomial n 1) := by
-    simp [basisMonomials, mvPolynomialEquiv, Basis.symmetricAlgebra]
-  rw [hb, mvPolynomialEquiv_apply, MvPolynomial.aeval_monomial, map_one, one_mul]
+  simp only [basisMonomials, Basis.map_apply, basis_symmetricAlgebra_apply,
+    AlgEquiv.toLinearEquiv_apply, map_finsuppProd, map_pow, symmetricAlgebraEquiv_ι]
 
 /-- **The images of a basis of an abelian Lie algebra are linearly independent in the enveloping
 algebra**: they are the images of the variables under the polynomial identification. -/
