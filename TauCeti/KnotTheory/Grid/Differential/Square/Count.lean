@@ -122,6 +122,7 @@ noncomputable def unblockedDecompositionWeight {x z : GridState n}
 
 /-- The unblocked decomposition weight is the product of the monomial weights of its two
 rectangles. -/
+@[simp]
 theorem unblockedDecompositionWeight_def {x z : GridState n}
     (D : GridRectangleDecomposition x z) :
     G.unblockedDecompositionWeight R D =
