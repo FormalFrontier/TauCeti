@@ -11,6 +11,7 @@ public import TauCeti.Analysis.Complex.Conformal.Caratheodory
 public import TauCeti.Analysis.Complex.Conformal.BoundaryCorrespondence
 public import TauCeti.Analysis.Complex.PlaneSeparation.Basic
 public import TauCeti.Topology.Circle.Arc
+public import TauCeti.Topology.JordanCurve.SmallArc
 public import TauCeti.Topology.JordanCurve.Subcontinuum
 
 /-!
@@ -35,7 +36,7 @@ Riemann map of a Jordan domain, and with `closureHomeomorph` from
 
 ## Main results
 
-* `TauCeti.IsJordanCurve.exists_isClosed_isPreconnected_notMem_sdiff_subset_ball`
+* `TauCeti.IsJordanCurve.exists_isCompact_isPreconnected_notMem_sdiff_subset_ball`
   — a Jordan curve admits a closed preconnected arc missing any given point,
   whose complement lies in a given ball around it.
 * `TauCeti.IsJordanDomain.isPreconnectedApproachAt`
@@ -188,12 +189,12 @@ rest. -/
 theorem IsJordanDomain.exists_isPreconnected_inter_ball_subset
     (hU : IsJordanDomain U) (ha : a ∈ frontier U) {ε : ℝ} (hε : 0 < ε) :
     ∃ δ > 0, ∃ C ⊆ U ∩ ball a ε, IsPreconnected C ∧ U ∩ ball a δ ⊆ C := by
-  obtain ⟨S, hSJ, hSclosed, hSpre, haS, hball⟩ :=
-    hU.isJordanCurve_frontier.exists_isClosed_isPreconnected_notMem_sdiff_subset_ball ha hε
+  obtain ⟨S, hSJ, hScompact, hSpre, haS, hball⟩ :=
+    hU.isJordanCurve_frontier.exists_isCompact_isPreconnected_notMem_sdiff_subset_ball ha hε
   have hcancel : frontier U \ (frontier U \ S) = S := sdiff_sdiff_cancel_left hSJ
   refine hU.exists_isPreconnected_inter_ball_subset_of_arc hε
     (fun z hz => ⟨hz.1, hball hz⟩) ⟨ha, haS⟩ ?_ ?_
-  · rw [hcancel]; exact hSclosed
+  · rw [hcancel]; exact hScompact.isClosed
   · rw [hcancel]; exact hSpre
 
 /-- **A Jordan domain has preconnected approach regions at every boundary

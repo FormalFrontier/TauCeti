@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.Topology.Circle.Arc
 public import TauCeti.Topology.Circle.Metric
 public import TauCeti.Topology.JordanCurve.Separation
 import Mathlib.Topology.UniformSpace.HeineCantor
@@ -438,5 +439,69 @@ theorem IsJordanCurve.exists_pos_forall_exists_path_injective_diam_le (h : IsJor
     exact (image_subset_range _ _).trans (range_jordanParam e).subset
   · rw [range_comp]
     exact hη _ hdiam
+
+/-- **A Jordan curve has, near any of its points, a compact preconnected arc
+missing that point whose complement lies in a given ball around it.**  The
+compact arc `S` is the image of a closed circle arc under the Jordan
+parametrization, chosen small enough that its complement `C \ S` — the open
+window through `a` — stays inside `ball a r`.
+
+`S` is built directly: parametrize `C` by `jordanParam e`, pick an angle
+`θ₀` over `a`, and let `S` be the image of the closed arc of angles
+`Icc (θ₀ + η) (θ₀ - η + 2π)`, compact and preconnected as a continuous image
+of an interval; continuity at `θ₀` keeps its complement inside `ball a r`. -/
+theorem IsJordanCurve.exists_isCompact_isPreconnected_notMem_sdiff_subset_ball
+    (hJ : IsJordanCurve C) {a : X} (ha : a ∈ C) {r : ℝ} (hr : 0 < r) :
+    ∃ S ⊆ C, IsCompact S ∧ IsPreconnected S ∧ a ∉ S ∧ C \ S ⊆ ball a r := by
+  obtain ⟨e⟩ := isJordanCurve_iff.mp hJ
+  set g : Circle → X := jordanParam e
+  have hginj : Function.Injective g := jordanParam_injective e
+  have hgrange : range g = C := range_jordanParam e
+  have hgc : Continuous g := continuous_jordanParam e
+  obtain ⟨u₀, hu₀⟩ : a ∈ range g := by rw [hgrange]; exact ha
+  obtain ⟨θ₀, hθ₀⟩ := Circle.exp_surjective u₀
+  have hga : g (Circle.exp θ₀) = a := by rw [hθ₀, hu₀]
+  have hcont : ContinuousAt (fun θ : ℝ => g (Circle.exp θ)) θ₀ :=
+    (hgc.comp Circle.exp.continuous).continuousAt
+  obtain ⟨η₀, hη₀, hη⟩ := Metric.continuousAt_iff.mp hcont r hr
+  set η : ℝ := min η₀ (π / 2)
+  have hηpos : 0 < η := lt_min hη₀ (by positivity)
+  have hηle : η ≤ π / 2 := min_le_right _ _
+  have hηη₀ : η ≤ η₀ := min_le_left _ _
+  set K : Set Circle := Circle.exp '' Icc (θ₀ + η) (θ₀ - η + 2 * π)
+  set S : Set X := g '' K
+  have hSC : S ⊆ C := by rw [← hgrange]; exact image_subset_range _ _
+  have hScompact : IsCompact S :=
+    (isCompact_Icc.image Circle.exp.continuous).image hgc
+  have hSpre : IsPreconnected S :=
+    (isPreconnected_Icc.image _ Circle.exp.continuous.continuousOn).image _ hgc.continuousOn
+  have hab : θ₀ + η ≤ θ₀ - η + 2 * π := by linarith [Real.pi_pos]
+  have hlt : (θ₀ - η + 2 * π) - (θ₀ + η) < 2 * π := by linarith
+  refine ⟨S, hSC, hScompact, hSpre, ?_, ?_⟩
+  · rintro ⟨u, huK, hu⟩
+    have : u = Circle.exp θ₀ := hginj (hu.trans hga.symm)
+    subst this
+    obtain ⟨θ, hθ, hθeq⟩ := huK
+    have hnot : Circle.exp θ₀ ∈ (Circle.exp '' Icc (θ₀ + η) (θ₀ - η + 2 * π))ᶜ := by
+      rw [compl_circleExp_image_Icc hab hlt]
+      refine ⟨θ₀ + 2 * π, ⟨by linarith, by linarith⟩, ?_⟩
+      rw [Circle.exp_add, Circle.exp_two_pi, mul_one]
+    exact hnot ⟨θ, hθ, hθeq⟩
+  · rintro z ⟨hzC, hzS⟩
+    rw [← hgrange] at hzC
+    obtain ⟨u, rfl⟩ := hzC
+    have huK : u ∉ K := fun h => hzS ⟨u, h, rfl⟩
+    have hu : u ∈ Circle.exp '' Ioo (θ₀ - η + 2 * π) (θ₀ + η + 2 * π) := by
+      have huK' : u ∈ (Circle.exp '' Icc (θ₀ + η) (θ₀ - η + 2 * π))ᶜ := huK
+      rwa [compl_circleExp_image_Icc hab hlt] at huK'
+    obtain ⟨θ, hθ, rfl⟩ := hu
+    have hshift : Circle.exp θ = Circle.exp (θ - 2 * π) := by
+      have hθ2 : θ = (θ - 2 * π) + 2 * π := by ring
+      conv_lhs => rw [hθ2]
+      rw [Circle.exp_add, Circle.exp_two_pi, mul_one]
+    rw [hshift, mem_ball, ← hga]
+    apply hη
+    rw [Real.dist_eq, abs_lt]
+    constructor <;> linarith [hθ.1, hθ.2]
 
 end TauCeti
