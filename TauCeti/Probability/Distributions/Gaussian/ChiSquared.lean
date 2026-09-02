@@ -27,7 +27,7 @@ chi-squared law.
 
 ## Main results
 
-* `TauCeti.Probability.map_sq_gaussianReal` — the square of the standard Gaussian measure is
+* `TauCeti.Probability.gaussianReal_map_sq` — the square of the standard Gaussian measure is
   `chiSquaredMeasure 1`;
 * `TauCeti.Probability.iIndepFun.hasLaw_sum_sq_gaussian` — a finite sum of independent squared
   standard Gaussian variables has the corresponding chi-squared law.
@@ -64,7 +64,8 @@ private theorem measureReal_Ioc_standardGaussian {a b : ℝ} (hab : a ≤ b) :
 
 /-- The image of the standard Gaussian law under squaring is the chi-squared law with one degree
 of freedom. -/
-theorem map_sq_gaussianReal :
+@[simp]
+theorem gaussianReal_map_sq :
     (gaussianReal 0 1).map (fun x : ℝ ↦ x ^ 2) = chiSquaredMeasure 1 := by
   let _ : IsProbabilityMeasure (chiSquaredMeasure 1) :=
     isProbabilityMeasure_chiSquaredMeasure zero_le_one
@@ -112,7 +113,7 @@ theorem iIndepFun.hasLaw_sum_sq_gaussian (hindep : iIndepFun X P)
     HasLaw (fun omega ↦ ∑ i, X i omega ^ 2) (chiSquaredMeasure (Fintype.card iota)) P := by
   have hsquareLaw :
       HasLaw (fun x : ℝ ↦ x ^ 2) (chiSquaredMeasure 1) (gaussianReal 0 1) :=
-    ⟨by fun_prop, map_sq_gaussianReal⟩
+    ⟨by fun_prop, gaussianReal_map_sq⟩
   have hlawSq (i : iota) :
       HasLaw (fun omega ↦ X i omega ^ 2) (chiSquaredMeasure 1) P := by
     simpa [Function.comp_def] using hsquareLaw.comp (hlaw i)
