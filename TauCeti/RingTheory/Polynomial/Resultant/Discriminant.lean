@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.CubicDiscriminant
-public import Mathlib.Algebra.MvPolynomial.Basic
+import Mathlib.Algebra.MvPolynomial.Basic
 public import Mathlib.Algebra.Order.BigOperators.Group.LocallyFinite
 public import Mathlib.FieldTheory.Separable
 public import Mathlib.RingTheory.Localization.FractionRing
@@ -40,15 +40,15 @@ separable.
 * `Polynomial.Monic.prod_roots_eval_derivative`: the product of the derivative over the root
   multiset, which is the discriminant up to the same sign. This is the shape in which the
   discriminant of a minimal polynomial is a norm.
-* `Polynomial.Monic.discr_map`: base change. For monic `f` and any ring morphism `φ`,
-  `(f.map φ).discr = φ f.discr`. Monicity is what keeps the degree, and hence the size of the
-  Sylvester matrix, from dropping.
+* `Polynomial.discr_map_of_natDegree_eq`, `Polynomial.Monic.discr_map`: base change whenever the
+  degree is preserved, with monicity as a convenient sufficient condition.
 * `Polynomial.Monic.isUnit_discr_iff`, `Polynomial.Monic.discr_ne_zero_iff`,
   `Polynomial.Monic.discr_ne_zero_iff_separable_map`: a monic polynomial is separable exactly
   when its discriminant is a unit; over a field that reads `discr f ≠ 0`, and over a domain the
   correct statement passes to the fraction field.
-* `Cubic.discr_toPoly`: the two discriminants of a cubic agree, so that `Cubic.discr` and
-  `Polynomial.discr` may be used interchangeably. The two worked instances
+* `Cubic.discr_toPoly`: the two discriminants of a cubic with nonzero leading coefficient agree,
+  so that `Cubic.discr` and `Polynomial.discr` may be used interchangeably in degree three. The
+  two worked instances
   `Polynomial.discr_X_pow_three_sub_three_mul_X_sub_one` and
   `Polynomial.discr_X_pow_three_sub_two` compute `81` and `-108`, the square and the nonsquare
   discriminant that separate the two transitive groups in degree three.
@@ -98,8 +98,7 @@ theorem _root_.Polynomial.Monic.resultant_derivative {f : R[X]} (hf : f.Monic) :
       (-1) ^ (f.natDegree * (f.natDegree - 1) / 2) * f.discr := by
   rcases Nat.eq_zero_or_pos f.natDegree with h | h
   · obtain rfl := eq_one_of_monic_natDegree_zero hf h
-    have h1 : (1 : R[X]).discr = 1 := by
-      rw [show (1 : R[X]) = C 1 from (map_one C).symm, discr_C]
+    have h1 : (1 : R[X]).discr = 1 := by simpa using discr_C (R := R) 1
     simp [h1]
   · rw [resultant_deriv (natDegree_pos_iff_degree_pos.mp h), hf.leadingCoeff, mul_one]
 
@@ -110,21 +109,65 @@ which the Sylvester matrix of the discriminant uses; in characteristic `p` they 
 theorem _root_.Polynomial.Monic.resultant_derivative_of_le {f : R[X]} (hf : f.Monic) {n : ℕ}
     (hn : f.derivative.natDegree ≤ n) :
     f.resultant f.derivative f.natDegree n = f.resultant f.derivative := by
-  conv_lhs => rw [show n = f.derivative.natDegree + (n - f.derivative.natDegree) from
-    (Nat.add_sub_cancel' hn).symm]
+  have hn' : n = f.derivative.natDegree + (n - f.derivative.natDegree) :=
+    (Nat.add_sub_cancel' hn).symm
+  conv_lhs => rw [hn']
   rw [resultant_add_right_deg _ _ _ _ _ le_rfl, coeff_natDegree, hf.leadingCoeff, one_pow, one_mul]
 
-/-- Base change of the discriminant along a ring morphism `φ`, for a monic polynomial. Monicity
-keeps the degree, so the Sylvester matrix of `f.map φ` is the image of the Sylvester matrix
-of `f`. -/
+/-- Base change of the discriminant along a ring morphism that preserves the degree. -/
+theorem _root_.Polynomial.discr_map_of_natDegree_eq {f : R[X]} (φ : R →+* S)
+    (hdeg : (f.map φ).natDegree = f.natDegree) :
+    (f.map φ).discr = φ f.discr := by
+  classical
+  simp only [discr, hdeg, map_mul, map_pow, map_neg, map_one]
+  congr 1
+  rw [RingHom.map_det]
+  let e : Fin ((f.map φ).natDegree - 1 + (f.map φ).natDegree) ≃
+      Fin (f.natDegree - 1 + f.natDegree) := finCongr (by rw [hdeg])
+  rw [← Matrix.det_reindex_self e]
+  apply congrArg Matrix.det
+  ext i j
+  simp only [e, Matrix.reindex_apply, Matrix.submatrix_apply, RingHom.mapMatrix_apply,
+    Matrix.map_apply, sylvesterDeriv, hdeg]
+  by_cases hzero : f.natDegree = 0
+  · simp [hzero]
+  · simp only [hzero, ↓reduceDIte]
+    by_cases hi : (i : ℕ) = 2 * f.natDegree - 2
+    · by_cases hj₁ : (j : ℕ) = f.natDegree - 2
+      · simp [Matrix.updateRow_apply, Fin.ext_iff, hi, hj₁]
+      · by_cases hj₂ : (j : ℕ) = 2 * f.natDegree - 2
+        · simp [Matrix.updateRow_apply, Fin.ext_iff, hi, hj₂]
+          split_ifs <;> simp
+        · simp [Matrix.updateRow_apply, Fin.ext_iff, hi, hj₁, hj₂]
+    · simp only [Matrix.updateRow_apply, Fin.ext_iff, hi, ite_false]
+      induction j using Fin.addCases with
+      | left j =>
+          let j' : Fin ((f.map φ).natDegree - 1) :=
+            Fin.cast (congrArg (· - 1) hdeg.symm) j
+          have hj : e.symm (Fin.castAdd f.natDegree j) =
+              Fin.castAdd (f.map φ).natDegree j' := by
+            apply Fin.ext
+            rfl
+          rw [hj]
+          simp [j', hdeg, hi, sylvester, derivative_map]
+          split_ifs <;> simp
+      | right j =>
+          let j' : Fin (f.map φ).natDegree := Fin.cast hdeg.symm j
+          have hj : e.symm (Fin.natAdd (f.natDegree - 1) j) =
+              Fin.natAdd ((f.map φ).natDegree - 1) j' := by
+            apply Fin.ext
+            simp [e, j', hdeg]
+          rw [hj]
+          simp [j', hdeg, hi, sylvester, derivative_map]
+          split_ifs <;> simp
+
+/-- Base change of the discriminant along a ring morphism, for a monic polynomial. Monicity
+ensures that the degree is preserved. -/
+@[simp]
 theorem _root_.Polynomial.Monic.discr_map {f : R[X]} (hf : f.Monic) (φ : R →+* S) :
     (f.map φ).discr = φ f.discr := by
   nontriviality S
-  have hd : (f.map φ).natDegree = f.natDegree := hf.natDegree_map φ
-  have key := (hf.map φ).resultant_derivative
-  rw [hd, derivative_map, resultant_map_map, hf.resultant_derivative, map_mul, map_pow, map_neg,
-    map_one] at key
-  exact (isUnit_one.neg.pow (f.natDegree * (f.natDegree - 1) / 2)).mul_right_injective key.symm
+  exact Polynomial.discr_map_of_natDegree_eq φ (hf.natDegree_map φ)
 
 /-! ### The root-product formula -/
 
@@ -149,9 +192,10 @@ private theorem discr_prod_X_sub_C_of_isDomain [IsDomain R] {n : ℕ} (r : Fin n
   have hdeg : f.natDegree = n := by simp [hfdef]
   have hsplits : f.Splits := Splits.prod fun i _ ↦ Splits.X_sub_C (r i)
   have hroots : f.roots = univ.val.map r := by
+    -- Expose the composition needed by `Multiset.map_map`.
+    have hcomp : (fun i ↦ (X - C (r i) : R[X])) = (fun a ↦ X - C a) ∘ r := rfl
     rw [hfdef, Finset.prod_eq_multiset_prod,
-      show (fun i ↦ (X - C (r i) : R[X])) = (fun a ↦ X - C a) ∘ r from rfl,
-      ← Multiset.map_map, roots_multiset_prod_X_sub_C]
+      hcomp, ← Multiset.map_map, roots_multiset_prod_X_sub_C]
   -- The derivative of `f` at the root `r i` is the product of the other root differences.
   have hderiv : ∀ i, eval (r i) f.derivative = ∏ j ∈ univ.erase i, (r i - r j) := by
     intro i
@@ -171,9 +215,10 @@ private theorem discr_prod_X_sub_C_of_isDomain [IsDomain R] {n : ℕ} (r : Fin n
     fun i j _ ↦ by ring
   rw [Finset.prod_congr rfl fun i _ ↦ Finset.prod_congr rfl (hsign i), hdeg] at key
   simp only [Finset.prod_mul_distrib, Finset.prod_const, Finset.prod_pow_eq_pow_sum] at key
-  rw [show ∑ i : Fin n, #(Ioi i) = n * (n - 1) / 2 by
+  have hcard : ∑ i : Fin n, #(Ioi i) = n * (n - 1) / 2 := by
     simp only [Fin.card_Ioi, Fin.sum_univ_eq_sum_range fun i ↦ n - 1 - i]
-    rw [Finset.sum_range_reflect (fun i ↦ i) n, Finset.sum_range_id]] at key
+    rw [Finset.sum_range_reflect (fun i ↦ i) n, Finset.sum_range_id]
+  rw [hcard] at key
   exact ((isUnit_one.neg.pow (n * (n - 1) / 2)).mul_right_injective key)
 
 /-- **The root-product formula for the discriminant.** The discriminant of a product of linear
@@ -217,7 +262,8 @@ coefficient formula `Polynomial.discr_of_degree_eq_two` gives `(a + b) ^ 2 - 4 *
 value, so the two agree with no sign correction. -/
 theorem _root_.Polynomial.discr_X_sub_C_mul_X_sub_C (a b : R) :
     ((X - C a) * (X - C b)).discr = (a - b) ^ 2 := by
-  simpa [Fin.prod_univ_two, show Ioi (1 : Fin 2) = ∅ by decide] using
+  have hIoi : Ioi (1 : Fin 2) = ∅ := by decide
+  simpa [Fin.prod_univ_two, hIoi] using
     Polynomial.discr_prod_X_sub_C ![a, b]
 
 /-! ### Separability -/
@@ -225,6 +271,7 @@ theorem _root_.Polynomial.discr_X_sub_C_mul_X_sub_C (a b : R) :
 /-- A monic polynomial is separable exactly when its discriminant is a unit. Both sides read the
 resultant of `f` with `f.derivative`: separability is coprimality of that pair, and
 `Polynomial.isUnit_resultant_iff_isCoprime` turns coprimality into a unit resultant. -/
+@[simp]
 theorem _root_.Polynomial.Monic.isUnit_discr_iff {f : R[X]} (hf : f.Monic) :
     IsUnit f.discr ↔ f.Separable := by
   rw [separable_def, ← isUnit_resultant_iff_isCoprime hf,
@@ -236,12 +283,14 @@ theorem _root_.Polynomial.Monic.isUnit_discr_iff {f : R[X]} (hf : f.Monic) :
 
 ⚠ The field hypothesis is not decoration: `Polynomial.not_separable_X_pow_two_sub_one` records a
 monic polynomial over `ℤ` with nonzero discriminant that is not separable. -/
+@[simp]
 theorem _root_.Polynomial.Monic.discr_ne_zero_iff {K : Type*} [Field K] {f : K[X]}
     (hf : f.Monic) : f.discr ≠ 0 ↔ f.Separable := by
   rw [← hf.isUnit_discr_iff, isUnit_iff_ne_zero]
 
 /-- Over a domain, the discriminant of a monic polynomial is nonzero exactly when the polynomial
 becomes separable over the fraction field. This is the form every use over `ℤ` takes. -/
+@[simp]
 theorem _root_.Polynomial.Monic.discr_ne_zero_iff_separable_map (K : Type*) [Field K]
     [Algebra R K] [IsFractionRing R K] {f : R[X]} (hf : f.Monic) :
     f.discr ≠ 0 ↔ (f.map (algebraMap R K)).Separable := by
@@ -268,9 +317,10 @@ theorem _root_.Polynomial.not_separable_X_pow_two_sub_one : ¬ (X ^ 2 - 1 : ℤ[
 
 /-! ### Comparison with the discriminant of a cubic -/
 
-/-- The discriminant of a cubic, in the sense of `Cubic.discr`, is the discriminant of the
-associated polynomial. The two conventions agree on the nose, with no normalization to monic and
-no sign. -/
+/-- For a cubic with nonzero leading coefficient, the discriminant in the sense of `Cubic.discr`
+is the discriminant of the associated degree-three polynomial. The two conventions agree on the
+nose, with no normalization to monic and no sign. -/
+@[simp]
 theorem _root_.Cubic.discr_toPoly {P : Cubic R} (ha : P.a ≠ 0) : P.toPoly.discr = P.discr := by
   rw [discr_of_degree_eq_three (P.degree_of_a_ne_zero ha), P.coeff_eq_a, P.coeff_eq_b,
     P.coeff_eq_c, P.coeff_eq_d, Cubic.discr]
