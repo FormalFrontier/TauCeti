@@ -11,8 +11,8 @@ public import TauCeti.GroupTheory.Coxeter.Basic
 /-!
 # The strong exchange condition
 
-Let `cs : CoxeterSystem M W` be a Coxeter system, let `ω` be a reduced word and let `t` be a
-reflection of `W`, that is, a conjugate of a simple reflection. The **strong exchange condition**
+Let `cs : CoxeterSystem M W` be a Coxeter system, let `ω` be a word, reduced or not, and let `t` be
+a reflection of `W`, that is, a conjugate of a simple reflection. The **strong exchange condition**
 says that if left multiplication by `t` shortens `π ω`, then `t * π ω` is spelled by `ω` with
 exactly one letter deleted:
 
@@ -22,7 +22,8 @@ The letter to delete is located by the left inversion sequence `cs.leftInvSeq ω
 entry `s_{i_1} ⋯ s_{i_j} ⋯ s_{i_1}` is precisely the reflection that deleting the `j`-th letter
 performs (`CoxeterSystem.getD_leftInvSeq_mul_wordProd`). Mathlib proves that every entry of the
 inversion sequence of a reduced word is a left inversion; the content here is the converse, that
-the inversion sequence of a reduced word lists **all** the left inversions.
+every left inversion occurs in the inversion sequence of any word — so that for a reduced word the
+two lists agree.
 
 The **exchange condition** (the case of a simple reflection) and the **deletion condition** (a word
 that is not reduced can be shortened by deleting two of its letters) follow.
@@ -63,27 +64,33 @@ number of times.
 
 ## Main results
 
+* `TauCeti.mem_rightInvSeq_of_isRightInversion` and `TauCeti.mem_leftInvSeq_of_isLeftInversion`:
+  **every inversion occurs in the inversion sequence** of any word spelling the element.
 * `TauCeti.mem_rightInvSeq_iff_isRightInversion` and `TauCeti.mem_leftInvSeq_iff_isLeftInversion`:
   **the inversion sequence of a reduced word lists exactly the inversions** of the element it
   spells.
-* `TauCeti.strongExchange` and `TauCeti.strongExchange'`: **the strong exchange condition**, in its
-  left and right multiplication forms.
-* `TauCeti.exchangeCondition`: **the exchange condition**, the case of a simple reflection.
+* `TauCeti.strongExchange` and `TauCeti.strongExchange_right`: **the strong exchange condition**,
+  in its left and right multiplication forms.
+* `TauCeti.exchangeCondition` and `TauCeti.exchangeCondition_right`: **the exchange condition**,
+  the case of a simple reflection, where the shortened word is again reduced.
 * `TauCeti.deletionCondition`: **the deletion condition**, that a word which is not reduced
   spells the same element as the word with two of its letters deleted.
 
 ## Implementation notes
 
-The cocycle machinery is kept private. What it computes is determined by the two membership
-characterisations above, which say that the parity of `t` in the inversion sequence of a reduced
-word is `1` exactly when `t` is an inversion, so nothing is lost by exposing those instead; and the
-construction needs `DecidableEq W`, which none of the statements below do.
+The cocycle machinery is kept private. What it computes is determined by the membership statements
+above, which say that the parity of `t` in the inversion sequence of a reduced word is `1` exactly
+when `t` is an inversion, so nothing is lost by exposing those instead; and the construction needs
+`DecidableEq W`, which none of the statements below do.
 
 ## References
 
 This is the "strong exchange condition" item of Layer 3 ("the missing Coxeter combinatorics") of
-`TauCetiRoadmap/RepresentationTheory/RootSystems/README.md`, and fills the corresponding TODO of
-`Mathlib/GroupTheory/Coxeter/Basic.lean`. The root-system-level statement for a Weyl group, proved
+`TauCetiRoadmap/RepresentationTheory/RootSystems/README.md`. It discharges the remark of
+`Mathlib/GroupTheory/Coxeter/Inversion.lean` that the inversion sequence of a reduced word for `w`
+consists of all of the inversions of `w`, which Mathlib states but does not prove; the TODO of
+`Mathlib/GroupTheory/Coxeter/Basic.lean` is about Matsumoto's theorem and remains open. The
+root-system-level statement for a Weyl group, proved
 from the geometry of the positive roots rather than from the cocycle, is
 `TauCeti.exists_wordProd_eraseIdx_eq_mul_ofIdx` in
 `TauCeti/LinearAlgebra/RootSystem/Inversions/StrongExchange.lean`; it does not imply the present
@@ -340,58 +347,87 @@ end Cocycle
 
 /-! ### The inversion sequence lists the inversions -/
 
-/-- **The right inversion sequence of a reduced word lists exactly the right inversions** of the
-element it spells. The forward implication is
-`CoxeterSystem.isRightInversion_of_mem_rightInvSeq`; the converse is the strong exchange condition
-in its membership form. -/
-theorem mem_rightInvSeq_iff_isRightInversion {ω : List B} (hω : cs.IsReduced ω) {t : W} :
-    t ∈ ris ω ↔ cs.IsRightInversion (π ω) t := by
+/-- **Every right inversion occurs in the right inversion sequence** of any word spelling the
+element. This is the strong exchange condition in its membership form; no reducedness is needed. -/
+theorem mem_rightInvSeq_of_isRightInversion (ω : List B) {t : W}
+    (ht : cs.IsRightInversion (π ω) t) : t ∈ ris ω := by
   classical
-  refine ⟨cs.isRightInversion_of_mem_rightInvSeq hω, fun h ↦ ?_⟩
   by_contra hmem
-  have hp := reflectionParity_of_isRightInversion cs h
+  have hp := reflectionParity_of_isRightInversion cs ht
   rw [reflectionParity_wordProd, List.count_eq_zero.mpr hmem, Nat.cast_zero] at hp
   exact zero_ne_one hp
+
+/-- **Every left inversion occurs in the left inversion sequence** of any word spelling the
+element. -/
+theorem mem_leftInvSeq_of_isLeftInversion (ω : List B) {t : W}
+    (ht : cs.IsLeftInversion (π ω) t) : t ∈ lis ω := by
+  rw [← List.mem_reverse, ← cs.rightInvSeq_reverse]
+  refine mem_rightInvSeq_of_isRightInversion cs _ ?_
+  rwa [cs.wordProd_reverse, CoxeterSystem.isRightInversion_inv_iff]
+
+/-- **The right inversion sequence of a reduced word lists exactly the right inversions** of the
+element it spells. The forward implication is
+`CoxeterSystem.isRightInversion_of_mem_rightInvSeq`; the converse holds for any word. -/
+theorem mem_rightInvSeq_iff_isRightInversion {ω : List B} (hω : cs.IsReduced ω) {t : W} :
+    t ∈ ris ω ↔ cs.IsRightInversion (π ω) t :=
+  ⟨cs.isRightInversion_of_mem_rightInvSeq hω, mem_rightInvSeq_of_isRightInversion cs ω⟩
 
 /-- **The left inversion sequence of a reduced word lists exactly the left inversions** of the
 element it spells. -/
 theorem mem_leftInvSeq_iff_isLeftInversion {ω : List B} (hω : cs.IsReduced ω) {t : W} :
-    t ∈ lis ω ↔ cs.IsLeftInversion (π ω) t := by
-  rw [← List.mem_reverse, ← cs.rightInvSeq_reverse,
-    mem_rightInvSeq_iff_isRightInversion cs hω.reverse, cs.wordProd_reverse,
-    CoxeterSystem.isRightInversion_inv_iff]
+    t ∈ lis ω ↔ cs.IsLeftInversion (π ω) t :=
+  ⟨cs.isLeftInversion_of_mem_leftInvSeq hω, mem_leftInvSeq_of_isLeftInversion cs ω⟩
 
 /-! ### The strong exchange condition -/
 
-/-- **The strong exchange condition.** If a reflection `t` shortens the element spelled by the
-reduced word `ω` on the left, then `t * π ω` is spelled by `ω` with one letter deleted. -/
-theorem strongExchange {ω : List B} (hω : cs.IsReduced ω) {t : W}
-    (ht : cs.IsLeftInversion (π ω) t) :
+/-- **The strong exchange condition.** If a reflection `t` shortens the element spelled by the word
+`ω` on the left, then `t * π ω` is spelled by `ω` with one letter deleted. The word `ω` need not be
+reduced. -/
+theorem strongExchange {ω : List B} {t : W} (ht : cs.IsLeftInversion (π ω) t) :
     ∃ j < ω.length, t * π ω = π (ω.eraseIdx j) := by
-  obtain ⟨j, hj, hjt⟩ :=
-    List.mem_iff_getElem.mp ((mem_leftInvSeq_iff_isLeftInversion cs hω).mpr ht)
+  obtain ⟨j, hj, hjt⟩ := List.mem_iff_getElem.mp (mem_leftInvSeq_of_isLeftInversion cs ω ht)
   rw [cs.length_leftInvSeq] at hj
   refine ⟨j, hj, ?_⟩
   rw [← hjt, ← List.getD_eq_getElem (lis ω) 1 (by rw [cs.length_leftInvSeq]; exact hj),
     cs.getD_leftInvSeq_mul_wordProd]
 
 /-- **The strong exchange condition**, in the form for multiplication on the right. -/
-theorem strongExchange' {ω : List B} (hω : cs.IsReduced ω) {t : W}
-    (ht : cs.IsRightInversion (π ω) t) :
+theorem strongExchange_right {ω : List B} {t : W} (ht : cs.IsRightInversion (π ω) t) :
     ∃ j < ω.length, π ω * t = π (ω.eraseIdx j) := by
-  obtain ⟨j, hj, hjt⟩ :=
-    List.mem_iff_getElem.mp ((mem_rightInvSeq_iff_isRightInversion cs hω).mpr ht)
+  obtain ⟨j, hj, hjt⟩ := List.mem_iff_getElem.mp (mem_rightInvSeq_of_isRightInversion cs ω ht)
   rw [cs.length_rightInvSeq] at hj
   refine ⟨j, hj, ?_⟩
   rw [← hjt, ← List.getD_eq_getElem (ris ω) 1 (by rw [cs.length_rightInvSeq]; exact hj),
     cs.wordProd_mul_getD_rightInvSeq]
 
 /-- **The exchange condition**: if a simple reflection is a left descent of the element spelled by
-a reduced word, then multiplying by it deletes one letter of the word. -/
+a reduced word, then multiplying by it deletes one letter of the word, and the shortened word is
+again reduced. Unlike in `strongExchange`, the length drops by exactly one here, so the hypothesis
+that `ω` is reduced buys the reducedness of `ω.eraseIdx j`. -/
 theorem exchangeCondition {ω : List B} (hω : cs.IsReduced ω) {i : B}
     (hi : cs.IsLeftDescent (π ω) i) :
-    ∃ j < ω.length, cs.simple i * π ω = π (ω.eraseIdx j) :=
-  strongExchange cs hω ((cs.isLeftInversion_simple_iff_isLeftDescent _ i).mpr hi)
+    ∃ j < ω.length, cs.simple i * π ω = π (ω.eraseIdx j) ∧ cs.IsReduced (ω.eraseIdx j) := by
+  obtain ⟨j, hj, hje⟩ :=
+    strongExchange cs ((cs.isLeftInversion_simple_iff_isLeftDescent _ i).mpr hi)
+  refine ⟨j, hj, hje, ?_⟩
+  have hlen : (ω.eraseIdx j).length + 1 = ω.length := List.length_eraseIdx_add_one hj
+  have hl : ℓ (π (ω.eraseIdx j)) + 1 = ω.length := by
+    rw [← hje, cs.isLeftDescent_iff.mp hi, hω.eq]
+  -- `IsReduced` is a length equation.
+  exact show ℓ (π (ω.eraseIdx j)) = (ω.eraseIdx j).length from by omega
+
+/-- **The exchange condition**, in the form for multiplication on the right. -/
+theorem exchangeCondition_right {ω : List B} (hω : cs.IsReduced ω) {i : B}
+    (hi : cs.IsRightDescent (π ω) i) :
+    ∃ j < ω.length, π ω * cs.simple i = π (ω.eraseIdx j) ∧ cs.IsReduced (ω.eraseIdx j) := by
+  obtain ⟨j, hj, hje⟩ :=
+    strongExchange_right cs ((cs.isRightInversion_simple_iff_isRightDescent _ i).mpr hi)
+  refine ⟨j, hj, hje, ?_⟩
+  have hlen : (ω.eraseIdx j).length + 1 = ω.length := List.length_eraseIdx_add_one hj
+  have hl : ℓ (π (ω.eraseIdx j)) + 1 = ω.length := by
+    rw [← hje, cs.isRightDescent_iff.mp hi, hω.eq]
+  -- `IsReduced` is a length equation.
+  exact show ℓ (π (ω.eraseIdx j)) = (ω.eraseIdx j).length from by omega
 
 /-! ### The deletion condition -/
 
@@ -426,8 +462,7 @@ theorem deletionCondition {ω : List B} (hω : ¬ cs.IsReduced ω) :
     -- `IsReduced` is a length equation, so the prefix of length `k + 1` would be reduced.
     exact hk (show ℓ (π (List.take (k + 1) ω)) = (List.take (k + 1) ω).length from by
       rw [hprod, hcon, hred.eq, hlenk, hlen1])
-  obtain ⟨j, hj, hje⟩ := strongExchange' cs hred
-    ((cs.isRightInversion_simple_iff_isRightDescent _ _).mpr hdesc)
+  obtain ⟨j, hj, hje, -⟩ := exchangeCondition_right cs hred hdesc
   rw [hlenk] at hj
   refine ⟨j, k, hj, hklt, ?_⟩
   have hera : (ω.eraseIdx k).eraseIdx j
