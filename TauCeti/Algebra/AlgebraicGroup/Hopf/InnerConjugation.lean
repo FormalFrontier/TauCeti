@@ -220,7 +220,8 @@ theorem mapPointsFunctor_innerConjugationIso_hom
 
 /-- On points, the coordinate inner automorphism acts by conjugation by the extended rational
 point. -/
-@[simp]
+-- Not `@[simp]`: `mapPointsFunctor_innerConjugationIso_hom` already rewrites the left-hand
+-- side before this applied form can fire.
 theorem mapPointsFunctor_innerConjugationIso_hom_app_apply
     (g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R))
     (A : CommAlgCat.{u} R) (x : HopfAlgebra.points (R := R) (H := H) A) :
