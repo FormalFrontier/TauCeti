@@ -105,6 +105,9 @@ families, where the carrier does have full character span, that recipe is
   root subgroup by `σ ^ m` and raises its parameter to the `q ^ m`-th power.
 * `TauCeti.GraphTwistedIndex.geckSteinberg_pow_twistOrder_eq_geckFrobeniusPow`: the order
   relation `F ^ e = Frob_(q ^ e)` on the Steinberg map itself.
+* `TauCeti.GraphTwistedIndex.mem_fixedSubgroup_geckSteinberg_iff`: a point is Steinberg-fixed
+  exactly when its entrywise Frobenius image is its conjugate by the matrix of the pinned
+  coordinate permutation.
 * `TauCeti.GraphTwistedIndex.fixedSubgroup_geckSteinberg_le_fixedSubgroup_geckFrobeniusPow` and
   `TauCeti.GraphTwistedIndex.mem_frobeniusFixedSubfield_of_mem_fixedSubgroup_geckSteinberg`: the
   Steinberg-fixed points lie among the points over `𝔽_(q ^ e)`, entrywise.
@@ -387,6 +390,32 @@ theorem geckSteinberg_pow_geckRootSubgroup (m : ℕ) (i : Fin d.1.rank ⊕ Fin d
     d.diagramPerm_mem_diagramSymmetry d.1.characteristic d.1.fieldExponent d.1.Closure m i u
 
 /-! ## The fixed points of the Steinberg map -/
+
+/-- **A point of the Geck point group is fixed by the Steinberg map exactly when its entrywise
+`q`-power Frobenius image is its conjugate by the matrix of the pinned coordinate permutation.**
+This is the graph-twisted form of the descent condition that
+`TauCeti.ValidLieTypeIndex.mem_fixedSubgroup_geckFrobenius_iff` records on the nine untwisted
+families, where the matrix is the identity and the condition is that every entry lies in `𝔽_q`.
+
+As for that lemma, this is deliberately not a `simp` lemma: `TauCeti.fixedSubgroup` is
+`MonoidHom.eqLocus` against the identity, so `simp` rewrites its left-hand side to
+`d.geckSteinberg g = g` through the Mathlib `simp` lemma `MonoidHom.mem_eqLocus`, and the `simpNF`
+linter rejects the annotation. -/
+theorem mem_fixedSubgroup_geckSteinberg_iff (g : ValidLieTypeIndex.GeckGroup d.1) :
+    g ∈ fixedSubgroup d.geckSteinberg ↔
+      Matrix.GeneralLinearGroup.map
+          (iterateFrobenius d.1.Closure d.1.characteristic d.1.fieldExponent)
+          (g : Matrix.GeneralLinearGroup
+            (Fin (d.1.dynkinType.geckDim d.1.dynkinType_valid)) d.1.Closure) =
+        (d.1.dynkinType.geckGraphAutMatrix d.1.dynkinType_valid
+            d.diagramPerm_mem_diagramSymmetry d.1.Closure)⁻¹ *
+          (g : Matrix.GeneralLinearGroup
+            (Fin (d.1.dynkinType.geckDim d.1.dynkinType_valid)) d.1.Closure) *
+          d.1.dynkinType.geckGraphAutMatrix d.1.dynkinType_valid
+            d.diagramPerm_mem_diagramSymmetry d.1.Closure := by
+  rw [mem_fixedSubgroup, geckSteinberg_def,
+    d.1.dynkinType.geckTwistedFrobenius_eq_self_iff d.1.dynkinType_valid
+      d.diagramPerm_mem_diagramSymmetry _ _ _ g]
 
 /-- **The Steinberg-fixed points are fixed by the twist-order iterate of the Frobenius.** For a
 graph-twisted family this is the containment of the points fixed by `F` in the points fixed by
