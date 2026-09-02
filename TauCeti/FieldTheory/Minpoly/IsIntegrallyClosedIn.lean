@@ -24,7 +24,8 @@ costs exactly what adjoining them to `k` costs.
 
 ## Main results
 
-* `TauCeti.minpoly.map_eq_of_isIntegrallyClosedIn`: `minpoly F x` is the image of `minpoly k x`.
+* `TauCeti.minpoly.map_algebraMap_of_isIntegrallyClosedIn`: `minpoly F x` is the image of
+  `minpoly k x`.
 * `TauCeti.IntermediateField.finrank_adjoin_simple_eq_finrank_adjoin_simple_of_isIntegrallyClosedIn`
   : `[F⟮x⟯ : F] = [k⟮x⟯ : k]`.
 
@@ -56,7 +57,7 @@ is algebraic over `k` has the same minimal polynomial over `F` as over `k`.
 Without the hypothesis only the divisibility `minpoly F x ∣ (minpoly k x).map (algebraMap k F)`
 holds; the content is that the coefficients of the left-hand factor, being integral over `k` and
 lying in `F`, are constants. -/
-theorem minpoly.map_eq_of_isIntegrallyClosedIn (hex : IsIntegrallyClosedIn k F) {x : E}
+theorem minpoly.map_algebraMap_of_isIntegrallyClosedIn (hex : IsIntegrallyClosedIn k F) {x : E}
     (hx : IsIntegral k x) : (minpoly k x).map (algebraMap k F) = minpoly F x := by
   -- make the exactness hypothesis available to instance search
   have := hex
@@ -78,7 +79,7 @@ theorem IntermediateField.finrank_adjoin_simple_eq_finrank_adjoin_simple_of_isIn
     (hex : IsIntegrallyClosedIn k F) {x : E} (hx : IsIntegral k x) :
     Module.finrank F F⟮x⟯ = Module.finrank k k⟮x⟯ := by
   rw [adjoin.finrank hx.tower_top, adjoin.finrank hx,
-    ← minpoly.map_eq_of_isIntegrallyClosedIn hex hx,
+    ← minpoly.map_algebraMap_of_isIntegrallyClosedIn hex hx,
     Polynomial.natDegree_map_eq_of_injective (algebraMap k F).injective]
 
 end Field

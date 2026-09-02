@@ -252,8 +252,9 @@ divided through by `[k' : k]`.
 The separability hypothesis is the one carried by
 `TauCeti.Place.sum_ramificationIdx_mul_relativeDegree_eq_finrank_of_isSeparable`.
 
-The hypothesis `h` is supplied by `TauCeti.finrank_constantCompositum_eq_finrank` whenever `k' / k`
-is finite separable and `k` is the exact constant field of `F`, and by
+The hypothesis `h` is supplied by
+`TauCeti.finrank_constantCompositum_eq_finrank_of_isSeparable` whenever `k' / k` is finite
+separable and `k` is the exact constant field of `F`, and by
 `TauCeti.finrank_constantCompositum_eq_finrank_of_linearDisjoint` from Mathlib's
 `IntermediateField.LinearDisjoint`.  Together with the section's `[FiniteDimensional F F']` it
 forces `[k' : k]` to be finite and positive, which is what licenses the division; no separate
@@ -265,7 +266,8 @@ theorem degree_conorm
     have : 0 < Module.finrank k k' := h ▸ Module.finrank_pos
     exact_mod_cast this.ne'
   refine mul_left_cancel₀ hne ?_
-  rw [finrank_mul_degree_conorm k' F' D, finrank_eq_geometricDegree_mul_finrank F k' F' h]
+  rw [finrank_mul_degree_conorm k' F' D,
+    finrank_eq_geometricDegree_mul_finrank_of_finrank_constantCompositum_eq F k' F' h]
   push_cast
   ring
 
