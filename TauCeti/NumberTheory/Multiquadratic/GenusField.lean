@@ -83,6 +83,8 @@ structure IsGenusField (d : ℤ) (L : Type u) [Field L] [NumberField L] (y : L) 
       IsUnramifiedAtInfinitePlaces (adjoin ℚ {z} : IntermediateField ℚ M) M →
       ∃ φ : M →ₐ[ℚ] L, φ z = y
 
+attribute [simp] IsGenusField.root_sq IsGenusField.finrank_adjoin
+
 namespace IsGenusField
 
 variable {d : ℤ}
