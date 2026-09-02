@@ -51,8 +51,8 @@ variable {M : Type*} [TopologicalSpace M] [ChartedSpace H M]
 attribute [local instance] normedAddCommGroupTangentSpaceVectorSpace
   normedSpaceTangentSpaceVectorSpace
 
-/-- A bound on the chart derivative along a `C¹` path whose image on `[a, b]` lies in the chart
-source controls its coordinate displacement. -/
+/-- A bound on the chart differential applied to the within-derivative of a `C¹` path whose image
+on `[a, b]` lies in `(chartAt H x).source` controls its coordinate displacement. -/
 theorem enorm_extChartAt_sub_le_mul_pathELength (x : M) {γ : ℝ → M} {a b : ℝ}
     (hab : a ≤ b) (hγ : CMDiff[Icc a b] 1 γ)
     (hγsrc : ∀ t ∈ Icc a b, γ t ∈ (chartAt H x).source)
