@@ -120,14 +120,14 @@ theorem lie_cartanGenerator_rootGenerator (k : Fin 7 ⊕ Fin 7) (j : Fin 7) :
           congrArg (fun z : ℤ => ((z : ℚ) • rootGen (.inr i))) hweight.symm
 
 /-- A coordinate vector on which each numbered simple root generator acts with coefficient one. -/
-private def rootSource : Fin 7 ⊕ Fin 7 → Fin 56
-  | .inl i => ![8, 5, 6, 4, 3, 2, 1] i
-  | .inr i => ![6, 4, 4, 3, 2, 1, 0] i
+private noncomputable def rootSource : Fin 7 ⊕ Fin 7 → Fin 56
+  | .inl i => (exists_e7MinusculeWeight_apply_eq_neg_one i).choose
+  | .inr i => (exists_e7MinusculeWeight_apply_eq_one i).choose
 
 /-- The target of the distinguished nonzero step of a numbered simple root generator. -/
-private def rootTarget : Fin 7 ⊕ Fin 7 → Fin 56
-  | .inl i => ![6, 4, 4, 3, 2, 1, 0] i
-  | .inr i => ![8, 5, 6, 4, 3, 2, 1] i
+private noncomputable def rootTarget : Fin 7 ⊕ Fin 7 → Fin 56
+  | .inl i => e7MinusculeReflection i (rootSource (.inl i))
+  | .inr i => e7MinusculeReflection i (rootSource (.inr i))
 
 /-- A numbered simple root generator sends its distinguished source basis vector to its target
 with coefficient one. -/
@@ -143,17 +143,15 @@ private theorem rep_rootGenerator_latticeBasis (k : Fin 7 ⊕ Fin 7) :
         Matrix.mulVec_single_one]
       ext a
       simp only [Matrix.col_apply, raisingMatrixRat_apply]
-      obtain ⟨hweight, hreflection⟩ :=
-        e7MinusculeWeight_distinguished_neg_one_step i
-      simp [Pi.single_apply, rootSource, rootTarget, hweight, hreflection]
+      have hweight := (exists_e7MinusculeWeight_apply_eq_neg_one i).choose_spec
+      simp [Pi.single_apply, rootSource, rootTarget, hweight]
   | inr i =>
       rw [TauCeti.serreRootGenerator_inr, rationalSerreRepresentation_serreF,
         Matrix.mulVec_single_one]
       ext a
       simp only [Matrix.col_apply, loweringMatrixRat_apply]
-      obtain ⟨hweight, hreflection⟩ :=
-        e7MinusculeWeight_distinguished_one_step i
-      simp [Pi.single_apply, rootSource, rootTarget, hweight, hreflection]
+      have hweight := (exists_e7MinusculeWeight_apply_eq_one i).choose_spec
+      simp [Pi.single_apply, rootSource, rootTarget, hweight]
 
 /-- Applying a numbered simple root generator twice in the minuscule representation gives zero. -/
 private theorem rep_rootGenerator_rep_rootGenerator_eq_zero
