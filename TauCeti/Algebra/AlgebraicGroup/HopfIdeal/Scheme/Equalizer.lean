@@ -22,6 +22,13 @@ through `equalizerSpec` in exactly one way. The factorization is the image under
 coequalizer factorization on coordinate Hopf algebras, and its uniqueness comes from full
 faithfulness of `hopfSpec` together with uniqueness of that factorization.
 
+Full faithfulness of `hopfSpec` also transports the coordinate rigidity principle of
+`TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Equalizer` to affine group schemes: a homomorphism out
+of `Spec Q` is determined by its coordinate preimage, and that preimage is pinned down by the
+represented morphisms of coordinate morphisms out of `Q`. The two lemmas recording this are stated
+for a single coordinate morphism, so that a consumer whose generating family is heterogeneous can
+combine them with whatever coordinate extensionality principle its carrier provides.
+
 ## Main declarations
 
 * `TauCeti.CommHopfAlgCat.equalizerSpec` and `TauCeti.CommHopfAlgCat.equalizerSpecι`: the equalizer
@@ -31,6 +38,9 @@ faithfulness of `hopfSpec` together with uniqueness of that factorization.
   `TauCeti.CommHopfAlgCat.liftEqualizerSpec_comp_equalizerSpecι` and
   `TauCeti.CommHopfAlgCat.liftEqualizerSpec_unique`: the universal property of that cone among
   affine group schemes.
+* `TauCeti.CommHopfAlgCat.preimage_unop_comp_eq_of_hopfSpec_map_comp_eq` and
+  `TauCeti.CommHopfAlgCat.hom_ext_of_preimage_unop_eq`: the two halves of the transport of a
+  coordinate rigidity principle through `hopfSpec`.
 
 ## References
 
@@ -147,6 +157,38 @@ theorem liftEqualizerSpec_unique (f g : H ⟶ K)
     liftEqualizer_unique _ _ _ hn
   rw [liftEqualizerSpec, ← hpre, Quiver.Hom.op_unop,
     (hopfSpec.fullyFaithful (R := CommRingCat.of R)).map_preimage]
+
+/-- **Coordinate rigidity transports through `hopfSpec`, one generator at a time.** If two
+homomorphisms of affine group schemes out of `Spec Q` agree after composing with the homomorphism
+represented by a coordinate morphism `c : Q ⟶ K`, then their coordinate preimages agree after
+composing with `c`. -/
+theorem preimage_unop_comp_eq_of_hopfSpec_map_comp_eq {Q : _root_.CommHopfAlgCat.{u} R}
+    (c : Q ⟶ K)
+    (φ ψ : (hopfSpec (CommRingCat.of R)).obj (Opposite.op Q) ⟶
+      (hopfSpec (CommRingCat.of R)).obj (Opposite.op Y))
+    (hc : (hopfSpec (CommRingCat.of R)).map c.op ≫ φ =
+      (hopfSpec (CommRingCat.of R)).map c.op ≫ ψ) :
+    ((hopfSpec.fullyFaithful (R := CommRingCat.of R)).preimage φ).unop ≫ c =
+      ((hopfSpec.fullyFaithful (R := CommRingCat.of R)).preimage ψ).unop ≫ c := by
+  refine Quiver.Hom.op_inj
+    ((hopfSpec.fullyFaithful (R := CommRingCat.of R)).map_injective ?_)
+  rw [op_comp, op_comp, Functor.map_comp, Functor.map_comp, Quiver.Hom.op_unop,
+    Quiver.Hom.op_unop, (hopfSpec.fullyFaithful (R := CommRingCat.of R)).map_preimage,
+    (hopfSpec.fullyFaithful (R := CommRingCat.of R)).map_preimage]
+  exact hc
+
+/-- **Coordinate rigidity transports through `hopfSpec`.** Two homomorphisms of affine group
+schemes between Hopf spectra are equal as soon as their coordinate preimages are. -/
+theorem hom_ext_of_preimage_unop_eq {Q : _root_.CommHopfAlgCat.{u} R}
+    (φ ψ : (hopfSpec (CommRingCat.of R)).obj (Opposite.op Q) ⟶
+      (hopfSpec (CommRingCat.of R)).obj (Opposite.op Y))
+    (h : ((hopfSpec.fullyFaithful (R := CommRingCat.of R)).preimage φ).unop =
+      ((hopfSpec.fullyFaithful (R := CommRingCat.of R)).preimage ψ).unop) :
+    φ = ψ := by
+  have hop : (hopfSpec.fullyFaithful (R := CommRingCat.of R)).preimage φ =
+      (hopfSpec.fullyFaithful (R := CommRingCat.of R)).preimage ψ := Quiver.Hom.unop_inj h
+  rw [← (hopfSpec.fullyFaithful (R := CommRingCat.of R)).map_preimage φ,
+    ← (hopfSpec.fullyFaithful (R := CommRingCat.of R)).map_preimage ψ, hop]
 
 end CommHopfAlgCat
 
