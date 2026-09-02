@@ -132,7 +132,12 @@ theorem comapOfIso_iff (e : H ≅ K) (I : HopfIdeal k K.obj) :
         e''.symm.toBialgHom
           (by simpa only [BialgEquiv.toBialgHom_eq_coe, BialgEquiv.coe_toBialgHom] using
             EquivLike.surjective e''.symm)) at hback
-    rw [HopfIdeal.comapOfSurjective_bialgEquiv_apply_symm I e''] at hback
+    have he := HopfIdeal.comapOfSurjective_bialgEquiv_symm_apply I e''.symm
+    have he_symm_symm : e''.symm.symm = e'' := by
+      ext
+      rfl
+    simp only [he_symm_symm] at he
+    rw [he] at hback
     exact hback
   · exact fun hI ↦ hI.comapOfIso e
 

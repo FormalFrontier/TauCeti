@@ -19,10 +19,6 @@ This file records formulas for the coalgebra structure on a scalar extension `A 
 
 * `TauCeti.Coalgebra.baseChange_comul_tmul`: the comultiplication of a scalar extension on
   pure tensors.
-* `TauCeti.Coalgebra.IsCocomm.baseChangeTensorBialgEquiv_includeRight`: compatibility of the
-  tensor base-change equivalence with the canonical inclusion.
-* `TauCeti.Coalgebra.IsCocomm.baseChangeTensorBialgEquiv_includeRight_comm`: compatibility of
-  that equivalence with the tensor swap.
 * `TauCeti.Coalgebra.IsCocomm.of_baseChange`: cocommutativity descends from a field extension.
 -/
 
@@ -65,7 +61,7 @@ variable {k : Type u} {K : Type v} {H : Type w} [Field k] [Field K] [Algebra k K
 
 /-- The tensor bialgebra base-change equivalence agrees with distributivity over base change on
 elements coming from the original tensor square. -/
-theorem baseChangeTensorBialgEquiv_includeRight (y : H ⊗[k] H) :
+private theorem baseChangeTensorBialgEquiv_includeRight (y : H ⊗[k] H) :
     TauCeti.Bialgebra.TensorProduct.baseChangeTensorBialgEquiv k K H H
         (Algebra.TensorProduct.includeRight y) =
       TensorProduct.AlgebraTensorModule.distribBaseChange k K H H
@@ -80,7 +76,7 @@ theorem baseChangeTensorBialgEquiv_includeRight (y : H ⊗[k] H) :
 
 /-- The tensor bialgebra base-change equivalence carries the tensor swap of an element from the
 original tensor square to the tensor swap of its image. -/
-theorem baseChangeTensorBialgEquiv_includeRight_comm (y : H ⊗[k] H) :
+private theorem baseChangeTensorBialgEquiv_includeRight_comm (y : H ⊗[k] H) :
     TauCeti.Bialgebra.TensorProduct.baseChangeTensorBialgEquiv k K H H
         (Algebra.TensorProduct.includeRight (TensorProduct.comm k H H y)) =
       TensorProduct.comm K (K ⊗[k] H) (K ⊗[k] H)
