@@ -35,8 +35,8 @@ the letterwise tuple operation that applies it on a half-open index interval.
 ## Main results
 
 * `TauCeti.InternalGrading.ext`: internal gradings are determined by their homogeneous pieces.
-* `TauCeti.InternalGrading.finite_setOfPred_piece_ne_bot`: a finitely generated internally graded
-  module has only finitely many nonzero homogeneous pieces.
+* `TauCeti.InternalGrading.finite_piece_ne_bot`: a finitely generated internally graded module has
+  only finitely many nonzero homogeneous pieces.
 * `TauCeti.InternalGrading.koszulTwist_apply_of_mem`: the twist acts by the Koszul scalar on
   each homogeneous piece.
 * `TauCeti.InternalGrading.koszulTwist_comp`: twists compose by adding the twist parameters.
@@ -90,9 +90,10 @@ variable {R : Type u} {M : Type v} [Semiring R] [AddCommMonoid M] [Module R M]
 
 /-- A finitely generated internally graded module has only finitely many nonzero homogeneous
 pieces. -/
-theorem InternalGrading.finite_setOfPred_piece_ne_bot (G : InternalGrading R M)
-    [Module.Finite R M] : {p | G.piece p ≠ ⊥}.Finite :=
-  finite_setOfPred_ne_bot G.isInternal.submodule_iSupIndep G.isInternal.submodule_iSup_eq_top
+theorem InternalGrading.finite_piece_ne_bot (G : InternalGrading R M) [Module.Finite R M] :
+    {p | G.piece p ≠ ⊥}.Finite :=
+  Submodule.finite_ne_bot_of_iSupIndep_of_fg G.isInternal.submodule_iSupIndep
+    (by rw [G.isInternal.submodule_iSup_eq_top]; exact Module.Finite.fg_top)
 
 end FiniteSupport
 

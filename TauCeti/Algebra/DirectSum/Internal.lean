@@ -7,6 +7,7 @@ module
 
 public import Mathlib.Algebra.DirectSum.Decomposition
 public import Mathlib.RingTheory.Finiteness.Basic
+public import TauCeti.Order.CompactlyGenerated
 
 /-!
 # Internal direct sums from explicit equivalences
@@ -15,9 +16,9 @@ This file provides reusable infrastructure for direct sums of submodules.  The g
 `DirectSum.piInclusion`, `DirectSum.piSubmodule`, and `DirectSum.piSubmoduleEquiv` declarations
 describe their componentwise inclusion and range, while `DirectSum.isInternal_of_lof` gives a
 criterion for proving that a family of submodules is an internal direct sum by identifying its
-summands with the components of a linear equivalence.  The file also records that such a
-decomposition of a finitely generated module has only finitely many nonzero summands,
-`TauCeti.finite_setOfPred_ne_bot`.
+summands with the components of a linear equivalence.  The file also specializes the compactness
+bound `TauCeti.finite_ne_bot_of_iSupIndep_of_isCompactElement` to submodules,
+`TauCeti.Submodule.finite_ne_bot_of_iSupIndep_of_fg`.
 -/
 
 public section
@@ -160,29 +161,18 @@ theorem DirectSum.isInternal_of_lof {R ι M : Type*} [Semiring R] [DecidableEq �
   rw [DirectSum.isInternal_iff_bijective_coeLinearMap, hcoe]
   exact F.bijective
 
--- The decomposition is spelled as `iSupIndep A` together with `⨆ i, A i = ⊤` rather than as
--- `DirectSum.IsInternal`, which carries a `DecidableEq` hypothesis on the index type that the
--- proof does not need; `DirectSum.isInternal_submodule_iff_iSupIndep_and_iSup_eq_top` converts
--- between the two.
-/-- An internal direct-sum decomposition of a finitely generated module has only finitely many
-nonzero summands. -/
-theorem finite_setOfPred_ne_bot {R ι M : Type*} [Semiring R] [AddCommMonoid M] [Module R M]
-    {A : ι → Submodule R M} (hAi : iSupIndep A) (hAt : ⨆ i, A i = ⊤) [Module.Finite R M] :
-    {i | A i ≠ ⊥}.Finite := by
-  have hcompact : IsCompactElement (⊤ : Submodule R M) :=
-    (Submodule.fg_iff_compact _).mp Module.Finite.fg_top
-  obtain ⟨s, hs⟩ := CompleteLattice.IsCompactElement.exists_finset_of_le_iSup
-    (Submodule R M) hcompact A (by rw [hAt])
-  refine s.finite_toSet.subset fun i hi ↦ ?_
-  by_contra his
-  apply hi
-  rw [eq_bot_iff]
-  intro x hx
-  have hx' : x ∈ ⨆ j ∈ s, A j := hs Submodule.mem_top
-  have hle : (⨆ j ∈ s, A j) ≤ ⨆ j, ⨆ (_ : j ≠ i), A j := by
-    refine iSup_le fun j ↦ iSup_le fun hj ↦ le_iSup_of_le j ?_
-    exact le_iSup_of_le (fun hji ↦ his (hji ▸ hj)) le_rfl
-  have hxbot := (hAi i).le_bot ⟨hx, hle hx'⟩
-  simpa only [Submodule.mem_bot] using hxbot
+-- The decomposition is spelled as `iSupIndep A` together with a finiteness hypothesis on
+-- `⨆ i, A i` rather than as `DirectSum.IsInternal`, which carries a `DecidableEq` hypothesis on
+-- the index type that the proof does not need.  Over a semiring an internal decomposition supplies
+-- the two hypotheses through `DirectSum.IsInternal.submodule_iSupIndep` and
+-- `DirectSum.IsInternal.submodule_iSup_eq_top`; the converse implication, and with it
+-- `DirectSum.isInternal_submodule_iff_iSupIndep_and_iSup_eq_top`, needs `[Ring R]` and
+-- `[AddCommGroup M]`.
+/-- An independent family of submodules spanning a finitely generated submodule has only finitely
+many nonzero members. -/
+theorem Submodule.finite_ne_bot_of_iSupIndep_of_fg {R ι M : Type*} [Semiring R] [AddCommMonoid M]
+    [Module R M] {A : ι → Submodule R M} (hAi : iSupIndep A) (hAf : (⨆ i, A i).FG) :
+    {i | A i ≠ ⊥}.Finite :=
+  finite_ne_bot_of_iSupIndep_of_isCompactElement hAi ((Submodule.fg_iff_compact _).mp hAf)
 
 end TauCeti

@@ -10,6 +10,7 @@ public import Mathlib.LinearAlgebra.DirectSum.Finsupp
 public import Mathlib.RingTheory.Coalgebra.MonoidAlgebra
 public import TauCeti.Algebra.Coalgebra.Comodule.PointsAction
 public import TauCeti.Algebra.Coalgebra.Subcomodule.Basic
+public import TauCeti.Algebra.DirectSum.Internal
 import TauCeti.Algebra.Coalgebra.Subcomodule.Induced
 
 /-!
@@ -543,24 +544,9 @@ For a representation of the diagonalizable group `D(G)` this is the finiteness o
 weights, and for the adjoint representation of an affine group scheme under a split torus it is
 the finiteness of the set of roots. -/
 theorem finite_setOf_weightSpace_ne_bot [Module.Finite R V] :
-    {g : G | weightSpace R G V g ≠ ⊥}.Finite := by
-  classical
-  obtain ⟨S, hS⟩ := Module.Finite.fg_top (R := R) (M := V)
-  refine Set.Finite.subset
-    (S.biUnion fun v => (weightDecomposition R G V v).support).finite_toSet fun g hg => ?_
-  by_contra hgS
-  refine hg (le_antisymm ?_ bot_le)
-  have hgS' : g ∉ S.biUnion fun v => (weightDecomposition R G V v).support := by
-    simpa using hgS
-  rw [Finset.mem_biUnion] at hgS'
-  push Not at hgS'
-  rw [← range_weightProj R G V g, LinearMap.range_eq_map, ← hS, Submodule.map_span,
-    Submodule.span_le]
-  rintro _ ⟨v, hv, rfl⟩
-  have : weightDecomposition R G V v g = 0 :=
-    Finsupp.notMem_support_iff.mp (hgS' v (Finset.mem_coe.mp hv))
-  rw [weightDecomposition_apply] at this
-  simp [this]
+    {g : G | weightSpace R G V g ≠ ⊥}.Finite :=
+  Submodule.finite_ne_bot_of_iSupIndep_of_fg (iSupIndep_weightSpace R G V)
+    (by rw [iSup_weightSpace_eq_top R G V]; exact Module.Finite.fg_top)
 
 end WeightSpace
 
