@@ -18,11 +18,12 @@ only obstruction to recovering `H` from its orthogonal complement:
 H⊥⊥ = H + rad(A).
 ```
 
-The proof first quotients the pairing by its radical.  The induced finite bilinear module is
-nondegenerate, so restriction of characters shows that `|H| |H⊥| = |A|`.  Applying this
-identity in the radical quotient gives the general double-complement formula.  In particular,
-for a nondegenerate module, double orthogonal complementation is the identity and a Lagrangian
-subgroup has order whose square is the order of the ambient group.
+The cardinality identity `|H| |H⊥| = |A|`, which restriction of characters proves, is not
+available for a degenerate `A`; it holds only when `A` is nondegenerate.  The proof therefore
+first quotients the pairing by its radical, applies the identity in that quotient — which is
+nondegenerate — and reads the outcome back in `A`, where it gives the general double-complement
+formula.  In particular, for a nondegenerate module, double orthogonal complementation is the
+identity and a Lagrangian subgroup has order whose square is the order of the ambient group.
 
 The file closes with the degeneracy of a restricted pairing.  Restricting the pairing to a
 subgroup `S` makes exactly the vectors of `S ∩ S⊥` degenerate:
