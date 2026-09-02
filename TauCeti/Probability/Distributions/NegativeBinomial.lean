@@ -61,11 +61,21 @@ def negativeBinomialMeasure (r p : ℝ) : Measure ℕ :=
     Measure.dirac 0
   else 0
 
-/-- In the classical parameter range, the measure is its weighted Dirac sum. -/
-theorem negativeBinomialMeasure_eq_sum_dirac {r p : ℝ} (hr : 0 < r) (hp : 0 < p) (hp1 : p ≤ 1) :
+/-- In the valid parameter range, the measure is its weighted Dirac sum, including `r = 0`. -/
+theorem negativeBinomialMeasure_eq_sum_dirac {r p : ℝ} (hr : 0 ≤ r) (hp : 0 < p) (hp1 : p ≤ 1) :
     negativeBinomialMeasure r p =
       Measure.sum (fun k => negativeBinomialWeight r p k • Measure.dirac k) := by
-  simp [negativeBinomialMeasure, hr, hp, hp1]
+  rcases hr.eq_or_lt with rfl | hr
+  · have hmeasure : negativeBinomialMeasure 0 p = Measure.dirac 0 := by
+      simp [negativeBinomialMeasure, hp, hp1]
+    rw [hmeasure, ← Measure.sum_smul_dirac (Measure.dirac 0)]
+    congr 1
+    funext k
+    by_cases hk : k = 0
+    · subst k
+      simp [negativeBinomialWeight, negativeBinomialWeightReal]
+    · simp [negativeBinomialWeight, negativeBinomialWeightReal, hk]
+  · simp [negativeBinomialMeasure, hr, hp, hp1]
 
 /-- Outside the probability parameter range, the measure is explicitly totalized to zero. -/
 @[simp]
@@ -189,7 +199,7 @@ theorem isProbabilityMeasure_negativeBinomialMeasure (hr : 0 ≤ r) (hp : 0 < p)
   rcases hr.eq_or_lt with rfl | hr
   · rw [negativeBinomialMeasure_zero hp hp1]
     infer_instance
-  · rw [negativeBinomialMeasure_eq_sum_dirac hr hp hp1]
+  · rw [negativeBinomialMeasure_eq_sum_dirac hr.le hp hp1]
     apply (hasSum_negativeBinomialWeightReal hr hp hp1).isProbabilityMeasure_sum_dirac
     intro k
     exact negativeBinomialWeightReal_nonneg hr.le hp.le hp1 k
@@ -204,7 +214,7 @@ theorem negativeBinomialMeasure_singleton {r p : ℝ} (hr : 0 ≤ r) (hp : 0 < p
     · subst k
       simp [negativeBinomialWeight, negativeBinomialWeightReal]
     · simp [negativeBinomialWeight, negativeBinomialWeightReal, hk]
-  · rw [negativeBinomialMeasure_eq_sum_dirac hr hp hp1]
+  · rw [negativeBinomialMeasure_eq_sum_dirac hr.le hp hp1]
     exact Measure.sum_smul_dirac_singleton
 
 /-- The real singleton mass of the negative-binomial law in its valid parameter range. -/
