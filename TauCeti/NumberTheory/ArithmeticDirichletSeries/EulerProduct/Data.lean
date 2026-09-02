@@ -105,6 +105,16 @@ theorem localArithmeticFactor_apply_pow (D : EulerProductData K)
       D ⟨P.asIdeal ^ n, mem_nonZeroDivisors_of_ne_zero (pow_ne_zero n P.ne_bot)⟩ :=
   IdealArithmeticFunction.localArithmeticFactor_apply_pow D.toIdealArithmeticFunction P n
 
+/-- Away from the powers of `N(P)`, the bundled local arithmetic factor vanishes. Together with
+`localArithmeticFactor_apply_pow` this determines it at every natural number. -/
+@[simp]
+theorem localArithmeticFactor_apply_eq_zero_of_not_exists_pow_eq (D : EulerProductData K)
+    (P : HeightOneSpectrum (𝓞 K)) {m : ℕ}
+    (hm : ¬ ∃ n : ℕ, Ideal.absNorm P.asIdeal ^ n = m) :
+    D.localArithmeticFactor P m = 0 :=
+  IdealArithmeticFunction.localArithmeticFactor_apply_eq_zero_of_not_exists_pow_eq
+    D.toIdealArithmeticFunction P hm
+
 /-- The norm coefficients of bundled Euler-product data are the formal Euler product of its
 canonical local arithmetic factors. -/
 theorem normCoeff_eq_eulerProduct (D : EulerProductData K) :
@@ -137,13 +147,10 @@ theorem mul_apply (D E : EulerProductData K) (I : (Ideal (𝓞 K))⁰) :
 noncomputable instance : One (EulerProductData K) where
   one := ofMultiplicativeIdealWeight 1
 
-/-- The trivial Euler-product data is constructed from the trivial multiplicative ideal weight. -/
-theorem one_eq_ofMultiplicativeIdealWeight :
-    (1 : EulerProductData K) = ofMultiplicativeIdealWeight 1 := rfl
-
 @[simp]
 theorem one_apply (I : (Ideal (𝓞 K))⁰) : (1 : EulerProductData K) I = 1 := by
-  rw [one_eq_ofMultiplicativeIdealWeight, ofMultiplicativeIdealWeight_apply]
+  have hone : (1 : EulerProductData K) = ofMultiplicativeIdealWeight 1 := rfl
+  rw [hone, ofMultiplicativeIdealWeight_apply]
   have hI : (I : Ideal (𝓞 K)) ≠ ⊥ := nonZeroDivisors.coe_ne_zero I
   simp [MultiplicativeIdealWeight.one_apply, hI]
 
@@ -179,7 +186,7 @@ theorem star_apply (D : EulerProductData K) (I : (Ideal (𝓞 K))⁰) :
 
 /-- Restrict Euler-product data away from a set of height-one primes, leaving its
 coefficients unchanged on ideals prime to that set and setting the others to zero. -/
-noncomputable def restrict (D : EulerProductData K)
+noncomputable def restrictAway (D : EulerProductData K)
     (S : Set (HeightOneSpectrum (𝓞 K))) : EulerProductData K where
   toIdealArithmeticFunction :=
     IdealArithmeticFunction.supportedPart D.toIdealArithmeticFunction Sᶜ
@@ -187,10 +194,14 @@ noncomputable def restrict (D : EulerProductData K)
 
 open scoped Classical in
 @[simp]
-theorem restrict_apply (D : EulerProductData K) (S : Set (HeightOneSpectrum (𝓞 K)))
+theorem restrictAway_apply (D : EulerProductData K) (S : Set (HeightOneSpectrum (𝓞 K)))
     (I : (Ideal (𝓞 K))⁰) :
-    D.restrict S I = if Ideal.IsPrimeTo (I : Ideal (𝓞 K)) S then D I else 0 := by
+    D.restrictAway S I = if Ideal.IsPrimeTo (I : Ideal (𝓞 K)) S then D I else 0 := by
   classical
+  -- The bundle's `CoeFun` coercion is the `toIdealArithmeticFunction` projection, so the goal is
+  -- definitionally a statement about `IdealArithmeticFunction.supportedPart`. No simp lemma
+  -- exposes that projection through `restrictAway`, so reduce to it once here and then argue
+  -- entirely through the `supportedPart` interface.
   change IdealArithmeticFunction.supportedPart D.toIdealArithmeticFunction Sᶜ I = _
   by_cases hI : Ideal.IsPrimeTo (I : Ideal (𝓞 K)) S
   · have hI' : Ideal.IsPrimeTo (I : Ideal (𝓞 K)) (Sᶜ)ᶜ := by
