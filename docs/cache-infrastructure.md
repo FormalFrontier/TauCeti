@@ -35,13 +35,30 @@ incompatible, bump `mathlib-ltar-v1` once in
 `gh cache delete <key> --repo TauCetiProject/TauCeti`. A failed fetch also retries once with
 `lake exe cache get!`, which forces every linked file to be downloaded and unpacked again.
 
-Which endpoint serves those downloads is a repository variable. Every workflow that runs
-`lake exe cache get` (`ci.yml`, `pr-build.yml`, `pr-profile.yml`, `nightly-verify.yml`,
-`pages.yml`) exports `MATHLIB_CACHE_GET_URL` from `vars.MATHLIB_CACHE_GET_URL`. The cache
-tool treats an empty value as unset, so clearing the variable returns reads to the tool's
-default endpoints on the next run, with no code change. For local and radar runs,
-`scripts/bench/build/run` sets a default for the same variable; a value defined beforehand
-(even an empty one) wins over the default.
+Which endpoint serves those downloads is a repository variable, chosen from a reviewed set.
+Every workflow that runs `lake exe cache get` (`ci.yml`, `pr-build.yml`, `pr-profile.yml`,
+`nightly-verify.yml`, `pages.yml`) exports `MATHLIB_CACHE_BASE_URL` from
+`vars.MATHLIB_CACHE_BASE_URL`, and the job checks it against
+`scripts/cache-endpoint-allowlist.txt` before fetching anything. The cache tool treats an
+empty value as unset, so clearing the variable returns reads to its default endpoints on the
+next run, with no code change; pointing it somewhere new means adding that endpoint to the
+allowlist in a pull request first.
+
+The split matters because the endpoint decides which bytes this project's CI imports and
+executes, and Mathlib's `Cache/SECURITY.md` puts a substituted read endpoint outside its
+threat model: the named host chooses what it serves, and the cache validates keys rather than
+bytes. A repository variable is editable by anyone with write access, while the allowlist sits
+under `scripts/`, which `AGENTS.md` makes human-owned and human-reviewed. The variable stays
+an operator switch; the set of endpoints it can select stays a reviewed decision.
+
+`MATHLIB_CACHE_BASE_URL` rather than `MATHLIB_CACHE_GET_URL`: the base form rebases Mathlib's
+container namespace onto the given host and keeps the `mathlib4-master` to `mathlib4`
+fallback, while `GET_URL` names one flat endpoint and discards the chain (it exists for
+external tools that only expose that shape). A base value therefore names the host with no
+container path — `https://cache.mathlib.org`, not `https://cache.mathlib.org/mathlib4`.
+
+Local and radar runs set nothing: `scripts/bench/build/run` inherits whatever the environment
+provides and otherwise uses the cache tool's defaults.
 
 ## Cloudflare account
 

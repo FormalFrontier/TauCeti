@@ -51,10 +51,13 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  # Read endpoint for `lake exe cache get`, wired from a repository variable. The cache tool
+  # Read endpoint for `lake exe cache get`, wired from a repository variable and constrained
+  # to scripts/cache-endpoint-allowlist.txt by the check step in the job below. The cache tool
   # treats unset and empty alike, so clearing the variable returns reads to the tool's
-  # default endpoints on the next run.
-  MATHLIB_CACHE_GET_URL: ${{ vars.MATHLIB_CACHE_GET_URL }}
+  # default endpoints on the next run. `BASE_URL` rather than `GET_URL`: it rebases Mathlib's
+  # container namespace onto the given host and keeps the master -> legacy fallback, where
+  # `GET_URL` names a single flat endpoint and discards the chain.
+  MATHLIB_CACHE_BASE_URL: ${{ vars.MATHLIB_CACHE_BASE_URL }}
 
 jobs:
   # No secrets reach this job. It builds and executes repository code, including a build restored
@@ -159,6 +162,12 @@ jobs:
         uses: ./fresh/.github/actions/restore-mathlib-ltars
         with:
           project-dir: fresh
+
+      # The endpoint below decides which host serves the oleans this job imports, so refuse
+      # anything the repository has not reviewed before a single byte is fetched. Unset is
+      # allowed and means the cache tool's own defaults.
+      - name: Check the Mathlib cache endpoint against the reviewed allowlist
+        run: bash fresh/scripts/check-cache-endpoint.sh
 
       - name: Fetch Mathlib oleans for both workspaces
         run: |

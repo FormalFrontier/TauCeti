@@ -43,10 +43,13 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  # Read endpoint for `lake exe cache get`, wired from a repository variable. The cache tool
+  # Read endpoint for `lake exe cache get`, wired from a repository variable and constrained
+  # to scripts/cache-endpoint-allowlist.txt by the check step in the job below. The cache tool
   # treats unset and empty alike, so clearing the variable returns reads to the tool's
-  # default endpoints on the next run.
-  MATHLIB_CACHE_GET_URL: ${{ vars.MATHLIB_CACHE_GET_URL }}
+  # default endpoints on the next run. `BASE_URL` rather than `GET_URL`: it rebases Mathlib's
+  # container namespace onto the given host and keeps the master -> legacy fallback, where
+  # `GET_URL` names a single flat endpoint and discards the chain.
+  MATHLIB_CACHE_BASE_URL: ${{ vars.MATHLIB_CACHE_BASE_URL }}
 
 jobs:
   # Name kept distinct from `build` on purpose — see the header note. The required merge check is the
@@ -519,6 +522,12 @@ jobs:
       # bump-guard proved is a *forward commit on Mathlib's own master* (same repo, never a fork),
       # so the code run here is still trusted Mathlib master under the project's "track master"
       # policy; only the PR's TauCeti/ code stays untrusted and runs solely under landrun below.
+      # The endpoint below decides which host serves the oleans this job imports, so refuse
+      # anything the repository has not reviewed before a single byte is fetched. Unset is
+      # allowed and means the cache tool's own defaults.
+      - name: Check the Mathlib cache endpoint against the reviewed allowlist
+        run: bash gate/scripts/check-cache-endpoint.sh
+
       - name: Fetch Mathlib with the (bump-validated) config (network, no token; no PR code)
         if: ${{ env.INFRA != '1' }}
         # `set -o pipefail` is not optional here. A `run:` step with no explicit `shell:`

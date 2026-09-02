@@ -1,0 +1,20 @@
+# Endpoints the Mathlib cache may be read from, one per line.
+#
+# The `MATHLIB_CACHE_BASE_URL` repository variable selects one of these; any other value
+# fails the build. The variable exists so an operator can move read traffic without a
+# deploy, and this file exists so the set of hosts they can move it to is reviewed: a
+# repository variable is editable by anyone with write access, while this file is under
+# `scripts/`, which AGENTS.md makes human-owned and human-reviewed.
+#
+# The bytes a read endpoint serves are trusted -- oleans run code when imported, and the
+# cache validates keys, not bytes (see Cache/SECURITY.md in Mathlib, which puts a
+# substituted read endpoint outside its threat model). Adding a line here is therefore a
+# change to what this project's CI will execute.
+#
+# Values are matched exactly. A base URL names the host serving Mathlib's container
+# namespace, with NO container path: the cache tool appends `/mathlib4-master/f/<hash>`
+# and falls back to `/mathlib4/f/<hash>`. Leaving the variable unset uses the tool's own
+# default endpoints and is always allowed.
+
+# Mathlib's canonical read mirror, validated upstream in leanprover-community/mathlib4#42657.
+https://cache.mathlib.org
