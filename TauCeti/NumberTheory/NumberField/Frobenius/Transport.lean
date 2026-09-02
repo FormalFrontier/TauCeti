@@ -21,6 +21,11 @@ construction indexed by relative Frobenius classes is transported along that iso
 
 The prime-ideal map is used rather than a second prime carrier.  In particular, the statements
 remain conditional at a prime and do not assign a Frobenius to a ramified prime.
+
+## References
+
+* [Chebotarev roadmap, Layer 2](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/Chebotarev/README.md)
+  specifies the extension-isomorphism equivariance supplied here.
 -/
 
 public section
@@ -31,28 +36,6 @@ open scoped NumberField
 namespace NumberField
 
 variable {K L L' : Type*} [Field K] [Field L] [Field L'] [Algebra K L] [Algebra K L']
-
-namespace RingOfIntegers
-
-/-- The induced ring-of-integers equivalence agrees with the ambient algebra equivalence. -/
-@[simp]
-theorem mapAlgEquiv_apply (e : L ≃ₐ[K] L') (x : 𝓞 L) :
-    (mapAlgEquiv e x : L') = e (x : L) := rfl
-
-/-- The inverse induced ring-of-integers equivalence agrees with the ambient inverse. -/
-@[simp]
-theorem mapAlgEquiv_symm_apply (e : L ≃ₐ[K] L') (x : 𝓞 L') :
-    ((mapAlgEquiv e).symm x : L) = e.symm (x : L') := rfl
-
-/-- The induced ring-of-integers equivalence for an inverse is the inverse equivalence. -/
-theorem mapAlgEquiv_symm (e : L ≃ₐ[K] L') :
-    mapAlgEquiv e.symm = (mapAlgEquiv e).symm := by
-  apply AlgEquiv.ext
-  intro x
-  apply RingOfIntegers.ext
-  rfl
-
-end RingOfIntegers
 
 private theorem under_map_ringOfIntegersAlgEquiv (e : L ≃ₐ[K] L')
     (Q : Ideal (𝓞 L)) :
