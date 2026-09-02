@@ -24,8 +24,6 @@ base-change universal property.
 * `TauCeti.LaurentSpecialization`: scalar extension along a ring homomorphism.
 * `TauCeti.LaurentSpecialization.of`: the canonical map into the scalar extension.
 * `TauCeti.LaurentSpecialization.lift`: the universal scalar-linear factor.
-* `TauCeti.LaurentSpecializationAtOne` and `TauCeti.LaurentSpecializationAtNegOne`: the two
-  specializations of a Laurent module at `q = 1` and `q = -1`.
 
 ## Main results
 
@@ -68,23 +66,17 @@ noncomputable def of (ev : R →+* A) (M : Type*) [AddCommMonoid M] [Module R M]
     { toAddHom := (TensorProduct.mk R A M 1).toAddMonoidHom
       map_smul' := by
         intro r x
+        -- The scalar action on the first tensor factor is evaluation through `ev`.
         change (1 : A) ⊗ₜ[R] (r • x) = ev r • ((1 : A) ⊗ₜ[R] x)
         rw [TensorProduct.tmul_smul]
         rfl }
 
-/-- The tensor representative of `LaurentSpecialization.of`. -/
-theorem of_apply (ev : R →+* A) (x : M) :
-    of ev M x =
-      (let _ := ev.toAlgebra; (1 : A) ⊗ₜ[R] x) := by
-  let _ := ev.toAlgebra
-  rfl
-
 /-- The scalar-linear map induced by a semilinear map through scalar extension. -/
 noncomputable def lift (ev : R →+* A) (f : M →ₛₗ[ev] N)
     : LaurentSpecialization ev M →ₗ[A] N := by
-  letI : Algebra R A := ev.toAlgebra
-  letI : Module R N := Module.compHom N ev
-  letI : IsScalarTower R A N :=
+  let _ : Algebra R A := ev.toAlgebra
+  let _ : Module R N := Module.compHom N ev
+  let _ : IsScalarTower R A N :=
     { smul_assoc := by
         intro r a n
         -- The restricted scalar action on `N` is evaluation followed by multiplication.
@@ -104,39 +96,28 @@ theorem lift_of (ev : R →+* A) (f : M →ₛₗ[ev] N) (x : M) :
     lift ev f (of ev M x) = f x := by
   simp [lift, of]
 
-private lemma tmul_eq_smul (a : A) (x : M) [Algebra R A] :
-    (a : A) ⊗ₜ[R] x = a • ((1 : A) ⊗ₜ[R] x) := by
-  rw [TensorProduct.smul_tmul']
-  simp
-
 /-- Two scalar-linear maps out of a scalar extension agree if they agree on canonical elements. -/
 theorem hom_ext (ev : R →+* A) {g₁ g₂ : LaurentSpecialization ev M →ₗ[A] N}
     (h : ∀ x, g₁ (of ev M x) = g₂ (of ev M x)) : g₁ = g₂ := by
-  apply LinearMap.ext
-  intro y
-  induction y using TensorProduct.induction_on with
-  | zero => simp
-  | tmul a x =>
-      rw [tmul_eq_smul, map_smul, map_smul]
-      simpa [of] using congrArg (fun z => a • z) (h x)
-  | add x y hx hy => rw [map_add, map_add, hx, hy]
+  let _ : Algebra R A := ev.toAlgebra
+  let _ : Module R N := Module.compHom N ev
+  let _ : IsScalarTower R A N :=
+    { smul_assoc := by
+        intro r a n
+        -- The restricted scalar action on `N` is evaluation followed by multiplication.
+        change (ev r * a) • n = ev r • (a • n)
+        rw [mul_smul] }
+  apply (LinearMap.liftBaseChangeEquiv A).symm.injective
+  ext x
+  simpa [of] using h x
 
 /-- The universal property of scalar extension for a semilinear map. -/
 theorem lift_unique (ev : R →+* A) (f : M →ₛₗ[ev] N)
     (g : LaurentSpecialization ev M →ₗ[A] N)
     (hg : ∀ x, g (of ev M x) = f x) : g = lift ev f := by
-  let _ := ev.toAlgebra
-  apply LinearMap.ext
-  intro y
-  induction y using TensorProduct.induction_on with
-  | zero => simp
-  | tmul a x =>
-      rw [tmul_eq_smul, map_smul, map_smul]
-      have hg' : g ((1 : A) ⊗ₜ[R] x) = f x := by simpa [of] using hg x
-      have hlift : lift ev f ((1 : A) ⊗ₜ[R] x) = f x := by simp [lift]
-      rw [hg', hlift]
-  | add x y hx hy => rw [map_add, map_add, hx, hy]
+  exact hom_ext ev fun x => (hg x).trans (lift_of ev f x).symm
 
+@[simp]
 theorem of_smul (ev : R →+* A) (r : R) (x : M) :
     of ev M (r • x) = ev r • of ev M x :=
   (of ev M).map_smulₛₗ r x
@@ -148,20 +129,8 @@ section LaurentIntegerSpecialization
 variable {M N : Type*} [AddCommGroup M] [AddCommGroup N]
   [Module (LaurentPolynomial ℤ) M]
 
-/-- Scalar extension of a Laurent module at a unit of `ℤ`. -/
-abbrev LaurentSpecializationAt (u : ℤˣ) (M : Type*) [AddCommGroup M]
-    [Module (LaurentPolynomial ℤ) M] :=
-  LaurentSpecialization (laurentEvalUnit u) M
-
-/-- The scalar extension of a Laurent module at `q = 1`. -/
-abbrev LaurentSpecializationAtOne (M : Type*) [AddCommGroup M]
-    [Module (LaurentPolynomial ℤ) M] := LaurentSpecialization laurentEvalOne M
-
-/-- The scalar extension of a Laurent module at `q = -1`. -/
-abbrev LaurentSpecializationAtNegOne (M : Type*) [AddCommGroup M]
-    [Module (LaurentPolynomial ℤ) M] := LaurentSpecialization laurentEvalNegOne M
-
 /-- At a unit `u`, a Laurent shift acts by the corresponding integer power on specialization. -/
+@[simp]
 theorem LaurentSpecialization.of_T_smul (u : ℤˣ) (n : ℤ) (x : M) :
     LaurentSpecialization.of (laurentEvalUnit u) M
         ((T n : LaurentPolynomial ℤ) • x) =
@@ -169,6 +138,7 @@ theorem LaurentSpecialization.of_T_smul (u : ℤˣ) (n : ℤ) (x : M) :
         LaurentSpecialization.of (laurentEvalUnit u) M x := by
   rw [LaurentSpecialization.of_smul, laurentEvalUnit_T]
 
+@[simp]
 theorem LaurentSpecialization.of_T_smul_atOne (n : ℤ) (x : M) :
     LaurentSpecialization.of laurentEvalOne M
         ((T n : LaurentPolynomial ℤ) • x) =
@@ -176,6 +146,7 @@ theorem LaurentSpecialization.of_T_smul_atOne (n : ℤ) (x : M) :
   rw [LaurentSpecialization.of_smul, laurentEvalOne_T]
   simp
 
+@[simp]
 theorem LaurentSpecialization.of_T_smul_atNegOne (n : ℤ) (x : M) :
     LaurentSpecialization.of laurentEvalNegOne M
         ((T n : LaurentPolynomial ℤ) • x) =
