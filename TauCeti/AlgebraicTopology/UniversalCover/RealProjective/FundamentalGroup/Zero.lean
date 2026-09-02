@@ -55,11 +55,8 @@ def fundamentalGroupMulEquiv (x : RealProjectiveSpace 0) :
 /-- The fundamental group of `RP⁰` has exactly one element. -/
 @[simp]
 theorem card_fundamentalGroup (x : RealProjectiveSpace 0) :
-    @Fintype.card (FundamentalGroup (RealProjectiveSpace 0) x) (Fintype.ofFinite _) = 1 := by
-  let _ := Fintype.ofFinite (FundamentalGroup (RealProjectiveSpace 0) x)
-  rw [Fintype.card_congr
-    (fundamentalGroupMulEquiv x : _ ≃* PUnit.{1}).toEquiv]
-  rfl
+    Nat.card (FundamentalGroup (RealProjectiveSpace 0) x) = 1 :=
+  Nat.card_unique
 
 end
 
