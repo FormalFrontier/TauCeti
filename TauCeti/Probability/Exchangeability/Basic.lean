@@ -110,11 +110,10 @@ theorem blockLaw_def (μ : Measure Ω) (X : ι → Ω → α) {m : ℕ} (k : Fin
     blockLaw μ X k = μ.map (fun ω i => X (k i) ω) :=
   (rfl)
 
--- Annotated `@[grind =>]` rather than `@[simp]`, for the same reason as the preimage form below:
--- `blockLaw_def` is the simp normal form, and this rule would be shadowed by it.
+-- Not `@[simp]`: `blockLaw_def` is the simp normal form, and this rule would be shadowed by it.
+-- Used by `rw`, as an ordinary equation.
 /-- Reindexing the family along `f` and then selecting the block `k` is selecting the block
 `f ∘ k` of the original family: the two spellings are the same measure. -/
-@[grind =>]
 theorem blockLaw_comp (μ : Measure Ω) (X : ι → Ω → α) (f : κ → ι) {m : ℕ} (k : Fin m → κ) :
     blockLaw μ (fun j ω => X (f j) ω) k = blockLaw μ X (f ∘ k) :=
   (rfl)
