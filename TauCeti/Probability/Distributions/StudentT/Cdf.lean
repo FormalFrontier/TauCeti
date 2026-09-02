@@ -49,158 +49,6 @@ variable {ν q x t : ℝ}
 
 /-! ### The cumulative distribution function -/
 
-/-- Integrating the density computes the real mass of a measurable set under a Student t law. -/
-private lemma measureReal_studentTMeasure (hν : 0 < ν) {s : Set ℝ} (hs : MeasurableSet s) :
-    (studentTMeasure ν).real s = ∫ y in s, studentTPDFReal ν y := by
-  have hint : IntegrableOn (studentTPDFReal ν) s :=
-    (integrable_studentTPDFReal ν).integrableOn
-  have hnn : 0 ≤ᵐ[volume.restrict s] studentTPDFReal ν :=
-    ae_of_all _ fun _ => studentTPDFReal_nonneg ν _
-  have hdef : ∀ y, studentTPDF ν y = ENNReal.ofReal (studentTPDFReal ν y) := fun y => by
-    rw [studentTPDF_of_pos hν y, studentTPDFReal_of_pos hν y]
-  have hof : ∫⁻ y in s, studentTPDF ν y =
-      ENNReal.ofReal (∫ y in s, studentTPDFReal ν y) := by
-    have hcong : ∫⁻ y in s, studentTPDF ν y =
-        ∫⁻ y in s, ENNReal.ofReal (studentTPDFReal ν y) :=
-      setLIntegral_congr_fun hs fun y _ => hdef y
-    rw [hcong]
-    exact (ofReal_integral_eq_lintegral_ofReal hint hnn).symm
-  rw [Measure.real, studentTMeasure, withDensity_apply _ hs, hof]
-  exact ENNReal.toReal_ofReal
-    (setIntegral_nonneg_of_ae (ae_of_all _ fun _ => studentTPDFReal_nonneg ν _))
-
-/-- The chart `u ↦ u / (1 - u)` is strictly increasing on `(-∞, 1)`. -/
-private lemma strictMonoOn_div_one_sub :
-    StrictMonoOn (fun u : ℝ => u / (1 - u)) (Set.Iio 1) := by
-  intro u hui v hvi huv
-  have hu1 : u < 1 := hui
-  have hv1 : v < 1 := hvi
-  have h1 : 0 < 1 - u := by linarith
-  have h2 : 0 < 1 - v := by linarith
-  have h3 : u * (1 - v) < v * (1 - u) := by nlinarith
-  have hden : 0 < (1 - u) * (1 - v) := by positivity
-  calc u / (1 - u)
-       = (u * (1 - v)) / ((1 - u) * (1 - v)) := by field_simp [h1.ne', h2.ne']
-    _ < (v * (1 - u)) / ((1 - u) * (1 - v)) := by
-      exact div_lt_div_of_pos_right h3 hden
-    _ = v / (1 - v) := by field_simp [h1.ne', h2.ne']
-
-/-- The chart `u ↦ u / (1 - u)` is injective on `(u₀, 1)`. -/
-private lemma injOn_div_one_sub_Ioi {u0 : ℝ} (_hu0 : u0 < 1) :
-    InjOn (fun u : ℝ => u / (1 - u)) (Ioo u0 1) :=
-  strictMonoOn_div_one_sub.injOn.mono fun _ hx =>
-    (Set.mem_Ioo.mp hx).2
-
-/-- The chart `u ↦ u / (1 - u)` carries `(u₀, 1)` onto `(u₀ / (1 - u₀), ∞)`. -/
-private lemma image_div_one_sub_Ioi {u0 : ℝ} (hu0 : 0 ≤ u0) (hu1 : u0 < 1) :
-    (fun u : ℝ => u / (1 - u)) '' Ioo u0 1 = Ioi (u0 / (1 - u0)) := by
-  have hden0 : 0 < 1 - u0 := by linarith
-  set y0 : ℝ := u0 / (1 - u0) with hy0_def
-  have hfy0 : u0 / (1 - u0) = y0 := by
-    simp only [hy0_def]
-  ext w
-  simp only [mem_image, mem_Ioo, mem_Ioi]
-  constructor
-  · rintro ⟨u, ⟨huu0, hu1'⟩, rfl⟩
-    have hsm : y0 < u / (1 - u) := by
-      have hmono : StrictMonoOn (fun x : ℝ => x / (1 - x)) (Set.Iio 1) :=
-        strictMonoOn_div_one_sub
-      have h_a : u0 ∈ Set.Iio 1 := Set.mem_Iio.mpr hu1
-      have h_b : u ∈ Set.Iio 1 := Set.mem_Iio.mpr hu1'
-      have h : u0 / (1 - u0) < u / (1 - u) := hmono h_a h_b huu0
-      rw [hfy0] at h
-      exact h
-    exact hsm
-  · intro hw
-    have hthr : y0 < w := hw
-    have hwp : 0 < w := by
-      have h0 : 0 ≤ y0 := by positivity
-      linarith
-    have h1 : 0 < 1 + w := by linarith
-    let u : ℝ := w / (1 + w)
-    have hden : 1 - u = (1 + w)⁻¹ := by
-      simp only [u]
-      field_simp [h1.ne']; ring
-    have hu_eq : u / (1 - u) = w := by
-      rw [hden]
-      simp only [u]
-      field_simp [h1.ne']
-    have hu_lt_one : u < 1 := by
-      simp only [u]
-      rw [div_lt_one h1]; linarith
-    have hu_nonneg : 0 ≤ u := by positivity
-    have hu0_lt : u0 < u := by
-      have hmono : StrictMonoOn (fun x : ℝ => x / (1 - x)) (Set.Iio 1) :=
-        strictMonoOn_div_one_sub
-      have h_a : u0 ∈ Set.Iio 1 := Set.mem_Iio.mpr hu1
-      have h_b : u ∈ Set.Iio 1 := Set.mem_Iio.mpr hu_lt_one
-      have h : u0 / (1 - u0) < u / (1 - u) := by
-        rw [hfy0, hu_eq]; exact hthr
-      exact (hmono.lt_iff_lt h_a h_b).mp h
-    exact ⟨u, ⟨hu0_lt, hu_lt_one⟩, hu_eq⟩
-
-/-- The derivative of the chart `u ↦ u / (1 - u)` is `(1 - u) ^ (-2)`. -/
-private lemma hasDerivAt_div_one_sub {u : ℝ} (hu : u ≠ 1) :
-    HasDerivAt (fun t : ℝ => t / (1 - t)) ((1 - u) ^ 2)⁻¹ u := by
-  have h : (1 : ℝ) - u ≠ 0 := sub_ne_zero_of_ne (Ne.symm hu)
-  have hd : HasDerivAt (fun t : ℝ => 1 - t) (-1) u := by
-    simpa using (hasDerivAt_id u).const_sub (1 : ℝ)
-  refine ((hasDerivAt_id' (x := u)).div hd h).congr_deriv ?_
-  have hnum : (1 : ℝ) * (1 - u) - u * -1 = 1 := by ring
-  rw [hnum, one_div]
-
-/-- Under the chart `u ↦ u / (1 - u)`, the second beta-integral kernel with parameters
-`1/2, ν/2` becomes the incomplete-beta integrand. -/
-private lemma abs_deriv_smul_betaKernel (ν : ℝ) {u : ℝ} (hu : u ∈ Ioo (0 : ℝ) 1) :
-    |((1 - u) ^ 2)⁻¹| •
-        ((u / (1 - u)) ^ (-(1 / 2 : ℝ)) * (1 + u / (1 - u)) ^ (-((ν + 1) / 2))) =
-      u ^ (-(1 / 2 : ℝ)) * (1 - u) ^ (ν / 2 - 1) := by
-  set s := (ν + 1) / 2 with hs
-  obtain ⟨hu0, hu1⟩ := hu
-  have h1u : 0 < 1 - u := by linarith
-  have hbase : (1 : ℝ) + u / (1 - u) = (1 - u)⁻¹ := by field_simp; ring
-  have e1 : ((1 - u) ^ (2 : ℕ))⁻¹ = (1 - u) ^ (-2 : ℝ) := by
-    have hnat : (1 - u) ^ (2 : ℕ) = (1 - u) ^ (2 : ℝ) :=
-      (Real.rpow_natCast (1 - u) 2).symm
-    rw [hnat]
-    have h : (1 - u) ^ (-2 : ℝ) = ((1 - u) ^ (2 : ℝ))⁻¹ := Real.rpow_neg h1u.le 2
-    exact h.symm
-  have e2 : ((1 - u)⁻¹) ^ (-s) = (1 - u) ^ s := by
-    rw [Real.inv_rpow h1u.le]
-    have h : (((1 - u) ^ (-s))⁻¹) = (1 - u) ^ s := by
-      rw [← Real.rpow_neg h1u.le]
-      have hneg : -(-s) = s := by ring
-      rw [hneg]
-    exact h
-  have e4 : (u / (1 - u)) ^ (-(1 / 2 : ℝ)) =
-      u ^ (-(1 / 2 : ℝ)) * (1 - u) ^ (1 / 2 : ℝ) := by
-    rw [Real.div_rpow hu0.le h1u.le]
-    have hinv : ((1 - u) ^ (-(1 / 2 : ℝ)))⁻¹ = (1 - u) ^ (1 / 2 : ℝ) := by
-      rw [← Real.rpow_neg h1u.le]
-      have hneg : -(-(1 / 2 : ℝ)) = (1 / 2 : ℝ) := by ring
-      rw [hneg]
-    rw [div_eq_mul_inv, hinv]
-  rw [smul_eq_mul, abs_of_nonneg (by positivity), hbase, e1, e4, e2]
-  have hexp : (-2 : ℝ) + (1 / 2 : ℝ) + s = ν / 2 - 1 := by dsimp only [s]; ring
-  have hc1 : (1 - u) ^ (1 / 2 : ℝ) * (1 - u) ^ s = (1 - u) ^ ((1 / 2 : ℝ) + s) := by
-    rw [← Real.rpow_add h1u]
-  have hc2 : (1 - u) ^ (-2 : ℝ) * (1 - u) ^ ((1 / 2 : ℝ) + s) =
-      (1 - u) ^ ((-2 : ℝ) + (1 / 2 : ℝ) + s) := by
-    have h : (1 - u) ^ (-2 : ℝ) * (1 - u) ^ ((1 / 2 : ℝ) + s) =
-        (1 - u) ^ ((-2 : ℝ) + ((1 / 2 : ℝ) + s)) := by
-      rw [← Real.rpow_add h1u]
-    rw [h]
-    have h2 : (-2 : ℝ) + ((1 / 2 : ℝ) + s) = (-2 : ℝ) + (1 / 2 : ℝ) + s := by ring
-    rw [h2]
-  calc
-    (1 - u) ^ (-2 : ℝ) * ((u ^ (-(1 / 2 : ℝ)) * (1 - u) ^ (1 / 2 : ℝ)) * (1 - u) ^ s)
-      = u ^ (-(1 / 2 : ℝ)) *
-          ((1 - u) ^ (-2 : ℝ) * ((1 - u) ^ (1 / 2 : ℝ) * (1 - u) ^ s)) := by ring
-    _ = u ^ (-(1 / 2 : ℝ)) *
-          ((1 - u) ^ (-2 : ℝ) * (1 - u) ^ ((1 / 2 : ℝ) + s)) := by rw [hc1]
-    _ = u ^ (-(1 / 2 : ℝ)) * (1 - u) ^ ((-2 : ℝ) + (1 / 2 : ℝ) + s) := by rw [hc2]
-    _ = u ^ (-(1 / 2 : ℝ)) * (1 - u) ^ (ν / 2 - 1) := by rw [hexp]
-
 /-- The upper-tail integral of a valid Student t density: for `0 ≤ y`,
 `P(y < T) = (1 - I_{y²/(ν+y²)}(1/2, ν/2)) / 2`. -/
 private lemma integral_Ioi_studentTPDFReal_tail (hν : 0 < ν) {y : ℝ} (hy : 0 ≤ y) :
@@ -289,7 +137,12 @@ private lemma integral_Ioi_studentTPDFReal_tail (hν : 0 < ν) {y : ℝ} (hy : 0
         (u / (1 - u)) ^ (-(1 / 2 : ℝ)) * (1 + u / (1 - u)) ^ (-s) := by
       simp [k0]
     rw [hk0]
-    exact abs_deriv_smul_betaKernel ν (hsub hu)
+    have hs' : s = (1 / 2 : ℝ) + ν / 2 := by dsimp only [s]; ring
+    have ha : (1 / 2 : ℝ) - 1 = -(1 / 2 : ℝ) := by ring
+    have hb : -((1 / 2 : ℝ) + ν / 2) = -s := by rw [← hs']
+    have hkey := abs_deriv_smul_one_add_rpow (1 / 2 : ℝ) (ν / 2) (hsub hu)
+    rw [ha, hb] at hkey
+    exact hkey
   have hcov' : EqOn (fun u : ℝ => ((1 - u) ^ 2)⁻¹ • k0 (u / (1 - u))) k (Ioo u0 1) := by
     intro u hu
     have hc : ((1 - u) ^ 2)⁻¹ = |((1 - u) ^ 2)⁻¹| := (hhabs u hu).symm
@@ -414,7 +267,15 @@ theorem cdf_studentTMeasure_eq (hν : 0 < ν) (x : ℝ) :
       (studentTMeasure ν).real (Ioi y) =
         (1 / 2 : ℝ) * (1 - regularizedIncompleteBeta (1 / 2) (ν / 2) (y ^ 2 / (ν + y ^ 2))) := by
     intro y hy
-    rw [measureReal_studentTMeasure hν measurableSet_Ioi, integral_Ioi_studentTPDFReal_tail hν hy]
+    have hpdf : studentTPDF ν = fun x => ENNReal.ofReal (studentTPDFReal ν x) := by
+      funext x
+      rw [studentTPDF_of_pos hν x, ← studentTPDFReal_of_pos hν x]
+    have hreal : (studentTMeasure ν).real (Ioi y) = ∫ z in Ioi y, studentTPDFReal ν z := by
+      rw [studentTMeasure, hpdf]
+      exact measureReal_withDensity_ofReal
+        (ae_of_all _ fun _ => studentTPDFReal_nonneg ν _) measurableSet_Ioi
+        (integrable_studentTPDFReal ν).integrableOn
+    rw [hreal, integral_Ioi_studentTPDFReal_tail hν hy]
   by_cases hx : 0 ≤ x
   · -- nonnegative branch: `cdf = 1 - tail`, and the reflection formula swaps the beta parameters
     have hrefl : regularizedIncompleteBeta (1 / 2) (ν / 2) (x ^ 2 / (ν + x ^ 2)) =

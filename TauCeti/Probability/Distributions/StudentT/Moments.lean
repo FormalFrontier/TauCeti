@@ -9,6 +9,7 @@ public import TauCeti.Probability.Distributions.StudentT.WeightedIntegral
 public import Mathlib.Probability.Moments.IntegrableExpMul
 public import Mathlib.Probability.Moments.Variance
 import TauCeti.Analysis.SpecialFunctions.Beta
+import TauCeti.MeasureTheory.Integral.Bochner.Basic
 import Mathlib.MeasureTheory.Function.JacobianOneDim
 import Mathlib.MeasureTheory.Function.L1Space.Integrable
 import Mathlib.MeasureTheory.Measure.Lebesgue.Integral
@@ -295,60 +296,40 @@ private theorem integral_Ioi_pow_mul_studentTPDFReal (hν : 0 < ν) (hq1 : -1 < 
     rw [h4, integral_rpow_mul_one_add_rpow ha hb]
   exact h3
 
-/-! ### Reflection across the origin -/
+/-! ### Reflection across the origin
 
-/-- Reflection in the origin relates integrability on the two half-lines for an odd function. -/
-private lemma integrableOn_reflect_odd_Iic_iff_Ioi {g : ℝ → ℝ} (hneg : ∀ x, g (-x) = -g x) :
-    IntegrableOn g (Iic (0 : ℝ)) ↔ IntegrableOn g (Ioi (0 : ℝ)) := by
-  have hmp := Measure.measurePreserving_neg (volume : Measure ℝ)
-  have hpre : (fun z : ℝ => -z) ⁻¹' (Ici (0 : ℝ)) = Iic (0 : ℝ) := by
-    ext z
-    simp
-  have h1 : IntegrableOn (fun x : ℝ => g (-x)) (Iic (0 : ℝ)) ↔
-      IntegrableOn g (Ici (0 : ℝ)) := by
-    rw [← hpre]
-    exact hmp.integrableOn_comp_preimage (Homeomorph.neg ℝ).measurableEmbedding
-  have h2 : (fun x : ℝ => g (-x)) = fun x : ℝ => -g x := funext hneg
+Reflection in the origin for half-line integrability is `integrableOn_comp_neg_Iic_iff_Ioi`;
+the density is even, so the two half-lines carry the same weighted integrals. -/
+
+/-- Reflection in the origin relates integrability on the two half-lines for a function whose
+reflection `x ↦ g (-x)` is `h` (`h = -g` for odd `g`, `h = g` for even `g`). -/
+private lemma integrableOn_reflect_Iic_iff_Ioi {g h : ℝ → ℝ} (hreflect : ∀ x, g (-x) = h x) :
+    IntegrableOn g (Iic (0 : ℝ)) ↔ IntegrableOn h (Ioi (0 : ℝ)) := by
+  have h3 : ∀ x, h (-x) = g x := fun x => by
+    have h4 : g (-(-x)) = h (-x) := hreflect (-x)
+    have h5 : -(-x) = x := by ring
+    rw [h5] at h4
+    exact h4.symm
+  have h1 : IntegrableOn (fun x : ℝ => h (-x)) (Iic (0 : ℝ)) ↔
+      IntegrableOn h (Ioi (0 : ℝ)) := MeasureTheory.integrableOn_comp_neg_Iic_iff_Ioi
+  have h2 : (fun x : ℝ => h (-x)) = g := funext h3
   rw [h2] at h1
-  have h3 : IntegrableOn (fun x : ℝ => -g x) (Iic (0 : ℝ)) ↔
-      IntegrableOn g (Iic (0 : ℝ)) := integrableOn_neg_iff
-  rw [h3] at h1
-  rw [h1, integrableOn_Ici_iff_integrableOn_Ioi]
+  exact h1
 
-/-- Reflection in the origin relates integrability on the two half-lines for an even function. -/
-private lemma integrableOn_reflect_even_Iic_iff_Ioi {g : ℝ → ℝ} (heven : ∀ x, g (-x) = g x) :
-    IntegrableOn g (Iic (0 : ℝ)) ↔ IntegrableOn g (Ioi (0 : ℝ)) := by
-  have hmp := Measure.measurePreserving_neg (volume : Measure ℝ)
-  have hpre : (fun z : ℝ => -z) ⁻¹' (Ici (0 : ℝ)) = Iic (0 : ℝ) := by
-    ext z
-    simp
-  have h1 : IntegrableOn (fun x : ℝ => g (-x)) (Iic (0 : ℝ)) ↔
-      IntegrableOn g (Ici (0 : ℝ)) := by
-    rw [← hpre]
-    exact hmp.integrableOn_comp_preimage (Homeomorph.neg ℝ).measurableEmbedding
-  have h2 : (fun x : ℝ => g (-x)) = g := funext heven
-  rw [h2] at h1
-  rw [h1, integrableOn_Ici_iff_integrableOn_Ioi]
-
-/-- For an odd integrable function, the integral over the nonpositive half-line is the negative of
-the integral over the positive half-line. -/
-private lemma setIntegral_Iic_odd_eq_neg_Ioi {g : ℝ → ℝ} (_hg : Integrable g)
-    (hneg : ∀ x, g (-x) = -g x) :
-    ∫ x in Iic (0 : ℝ), g x = -∫ x in Ioi (0 : ℝ), g x := by
-  have hmp := Measure.measurePreserving_neg (volume : Measure ℝ)
-  have himg : (fun x : ℝ => -x) '' Iic (0 : ℝ) = Ici (0 : ℝ) := by
-    ext y; simp
-  have h := hmp.setIntegral_image_emb (Homeomorph.neg ℝ).measurableEmbedding g (Iic (0 : ℝ))
-  rw [himg] at h
-  have h3 : (fun x : ℝ => g (-x)) = fun x : ℝ => -g x := funext hneg
-  have h4 : ∫ x in Iic (0 : ℝ), g (-x) = -∫ x in Iic (0 : ℝ), g x := by
-    rw [h3]
-    simpa using integral_neg g
-  rw [h4] at h
-  have h5 : ∫ x in Ici (0 : ℝ), g x = ∫ x in Ioi (0 : ℝ), g x := by
-    rw [setIntegral_congr_set Ioi_ae_eq_Ici.symm]
-  rw [h5] at h
-  linarith
+/-- A Student t law presented as Lebesgue measure with the real-valued density: the
+`withDensity` integrability bridge specialized to `studentTPDFReal`. -/
+private lemma integrable_studentTMeasure_iff {f : ℝ → ℝ} (hν : 0 < ν) :
+    Integrable f (studentTMeasure ν) ↔
+      Integrable (fun x : ℝ => studentTPDFReal ν x * f x) := by
+  have hpdf : studentTPDF ν = fun x => ENNReal.ofReal (studentTPDFReal ν x) := by
+    funext x
+    exact (studentTPDF_of_pos hν x).trans (by rw [studentTPDFReal_of_pos hν x])
+  have hden : studentTMeasure ν =
+      volume.withDensity (fun x : ℝ => ENNReal.ofReal (studentTPDFReal ν x)) := by
+    rw [studentTMeasure, hpdf]
+  rw [hden]
+  exact integrable_withDensity_ofReal_iff (measurable_studentTPDFReal ν)
+    (ae_of_all _ fun _ => studentTPDFReal_nonneg ν _)
 
 /-! ### Integrability of the identity and of the square -/
 
@@ -356,9 +337,6 @@ private lemma setIntegral_Iic_odd_eq_neg_Ioi {g : ℝ → ℝ} (_hg : Integrable
 freedom exceeds `1`. -/
 theorem integrable_id_studentTMeasure_iff (hν : 0 < ν) :
     Integrable id (studentTMeasure ν) ↔ 1 < ν := by
-  -- `studentTMeasure ν` *is* `volume.withDensity (studentTPDF ν)` by the definition in
-  -- Basic.lean; work throughout with the withDensity measure and conclude via the
-  -- definitional equality
   let g : ℝ → ℝ := fun x => studentTPDFReal ν x * x
   have hodd : ∀ x, g (-x) = -g x := by
     intro x
@@ -373,25 +351,16 @@ theorem integrable_id_studentTMeasure_iff (hν : 0 < ν) :
       simp [g, Real.rpow_one]
     rw [h2] at h1
     exact h1
+  have hIic : IntegrableOn g (Iic (0 : ℝ)) ↔ IntegrableOn g (Ioi (0 : ℝ)) :=
+    (integrableOn_reflect_Iic_iff_Ioi hodd).trans integrableOn_neg_iff
   have hfull : Integrable g ↔ IntegrableOn g (Ioi (0 : ℝ)) := by
-    rw [← integrableOn_univ, ← Iic_union_Ioi, integrableOn_union,
-      integrableOn_reflect_odd_Iic_iff_Ioi hodd]
+    rw [← integrableOn_univ, ← Iic_union_Ioi, integrableOn_union]
+    rw [hIic]
     exact and_self_iff
-  have hlt : ∀ᵐ x : ℝ ∂volume, studentTPDF ν x < ⊤ :=
-    ae_of_all _ fun x => by
-      rw [studentTPDF_of_pos hν x]
-      exact ENNReal.ofReal_lt_top
-  have h : Integrable (fun x : ℝ => (id x : ℝ) * (studentTPDF ν x).toReal) volume ↔
-      Integrable id (volume.withDensity (studentTPDF ν)) :=
-    (integrable_withDensity_iff (measurable_studentTPDF ν) hlt).symm
-  have hfeq : (fun x : ℝ => (id x : ℝ) * (studentTPDF ν x).toReal) = g := by
-    funext x
-    have hto : (studentTPDF ν x).toReal = studentTPDFReal ν x := toReal_studentTPDF ν x
-    simp [g, hto]; ring
-  rw [hfeq] at h
-  -- `studentTMeasure ν = volume.withDensity (studentTPDF ν)` by definition in Basic.lean
-  -- (`abbrev studentTMeasure`), so the two terms are definitionally equal
-  exact h.symm.trans (hfull.trans hIoi)
+  have h : Integrable id (studentTMeasure ν) ↔ Integrable g := by
+    have h' := integrable_studentTMeasure_iff hν (f := id)
+    simpa [g, id_eq] using h'
+  exact (h.trans hfull).trans hIoi
 
 /-- The identity is not integrable under a Student t law with at most one degree of freedom:
 the mean does not exist. -/
@@ -400,59 +369,26 @@ theorem not_integrable_id_studentTMeasure (hν0 : 0 < ν) (hν1 : ν ≤ 1) :
   rw [integrable_id_studentTMeasure_iff hν0]
   exact not_lt.mpr hν1
 
-/-- The mean of a Student t law with more than one degree of freedom is `0`: the density is even
-and the identity is integrable. -/
+/-- The mean of a Student t law with more than one degree of freedom is `0`: the law is invariant
+under reflection in the origin, so the integral of the identity equals its own negative. -/
 theorem integral_id_studentTMeasure (hν : 1 < ν) :
     ∫ x, x ∂studentTMeasure ν = 0 := by
   have hν0 : 0 < ν := by linarith
-  let g : ℝ → ℝ := fun x => studentTPDFReal ν x * x
-  have hodd : ∀ x, g (-x) = -g x := by
-    intro x
-    have h : g (-x) = studentTPDFReal ν (-x) * (-x) := by rfl
-    rw [h, studentTPDFReal_neg]; ring
-  have hq1 : -1 < (1 : ℝ) := by norm_num
-  have hgIoi0 : IntegrableOn (fun x : ℝ => studentTPDFReal ν x * x ^ (1 : ℝ)) (Ioi (0 : ℝ)) :=
-    (integrableOn_pow_mul_studentTPDFReal_Ioi_iff hν0 hq1).mpr (by linarith)
-  have hgeq : (fun x : ℝ => studentTPDFReal ν x * x ^ (1 : ℝ)) = g := by
-    funext x
-    simp [g, Real.rpow_one]
-  have hgIoi : IntegrableOn g (Ioi (0 : ℝ)) := by
-    rw [← hgeq]
-    exact hgIoi0
-  have hgIic : IntegrableOn g (Iic (0 : ℝ)) :=
-    (integrableOn_reflect_odd_Iic_iff_Ioi hodd).mpr hgIoi
-  have hint : Integrable g := by
-    rw [← integrableOn_univ, ← Iic_union_Ioi]
-    exact hgIic.union hgIoi
-  have hsum : ∫ x in Iic (0 : ℝ), g x = -∫ x in Ioi (0 : ℝ), g x :=
-    setIntegral_Iic_odd_eq_neg_Ioi hint hodd
-  have h_add : (∫ x in Iic (0 : ℝ), g x) + ∫ x in Ioi (0 : ℝ), g x = 0 := by
-    have h : (∫ x in Iic (0 : ℝ), g x) = -∫ x in Ioi (0 : ℝ), g x := hsum
-    rw [h]; ring
-  have huniv : ∫ x, g x = 0 := by
-    have h9 : (∫ x in Iic (0 : ℝ), g x) + ∫ x in (Iic (0 : ℝ))ᶜ, g x = ∫ x, g x :=
-      integral_add_compl (s := Iic (0 : ℝ)) measurableSet_Iic hint
-    have h10 : ∫ x in (Iic (0 : ℝ))ᶜ, g x = ∫ x in Ioi (0 : ℝ), g x := by
-      rw [compl_Iic]
-    linarith [h_add, h9, h10]
-  have hlt : ∀ᵐ x : ℝ ∂volume, studentTPDF ν x < ⊤ :=
-    ae_of_all _ fun x => by
-      rw [studentTPDF_of_pos hν0 x]
-      exact ENNReal.ofReal_lt_top
-  have hfinal : ∫ x, x ∂studentTMeasure ν = ∫ x, g x := by
-    have hmsr : studentTMeasure ν = volume.withDensity (studentTPDF ν) := by rfl
-    rw [hmsr]
-    have h : ∫ x, (x : ℝ) ∂volume.withDensity (studentTPDF ν) =
-        ∫ x, (studentTPDF ν x).toReal • (x : ℝ) :=
-      integral_withDensity_eq_integral_toReal_smul
-        (measurable_studentTPDF ν) hlt (id)
-    rw [h]
-    have hfeq : (fun x : ℝ => (studentTPDF ν x).toReal • (x : ℝ)) = g := by
-      funext x
-      have hto : (studentTPDF ν x).toReal = studentTPDFReal ν x := toReal_studentTPDF ν x
-      simp [g, hto, smul_eq_mul]
-    rw [hfeq]
-  rw [hfinal, huniv]
+  have hint : Integrable id (studentTMeasure ν) :=
+    (integrable_id_studentTMeasure_iff hν0).mpr hν
+  have hmap : (studentTMeasure ν).map (fun x : ℝ => -x) = studentTMeasure ν :=
+    studentTMeasure_map_neg ν
+  have hneg : (∫ x : ℝ, x ∂studentTMeasure ν) = - (∫ x : ℝ, x ∂studentTMeasure ν) := by
+    have hkey : Integrable (fun x : ℝ => x) ((studentTMeasure ν).map (fun x : ℝ => -x)) := by
+      rw [hmap]
+      exact hint
+    calc
+      (∫ x : ℝ, x ∂studentTMeasure ν)
+        = ∫ x : ℝ, x ∂(studentTMeasure ν).map (fun x : ℝ => -x) := by rw [hmap]
+      _ = ∫ x : ℝ, (-x : ℝ) ∂studentTMeasure ν := by
+        rw [integral_map measurable_neg.aemeasurable hkey.aestronglyMeasurable]
+      _ = - (∫ x : ℝ, x ∂studentTMeasure ν) := integral_neg _
+  linarith
 
 /-- Squaring is integrable under a Student t law exactly when the number of degrees of freedom
 exceeds `2`. -/
@@ -471,23 +407,11 @@ theorem integrable_sq_studentTMeasure_iff (hν : 0 < ν) :
     exact integrableOn_pow_mul_studentTPDFReal_Ioi_iff hν hq1
   have hfull : Integrable g ↔ IntegrableOn g (Ioi (0 : ℝ)) := by
     rw [← integrableOn_univ, ← Iic_union_Ioi, integrableOn_union,
-      integrableOn_reflect_even_Iic_iff_Ioi heven]
+      integrableOn_reflect_Iic_iff_Ioi heven]
     exact and_self_iff
-  have hlt : ∀ᵐ x : ℝ ∂volume, studentTPDF ν x < ⊤ :=
-    ae_of_all _ fun x => by
-      rw [studentTPDF_of_pos hν x]
-      exact ENNReal.ofReal_lt_top
-  have h : Integrable (fun x : ℝ => x ^ 2) (volume.withDensity (studentTPDF ν)) ↔
-      Integrable (fun x : ℝ => (x ^ 2) * (studentTPDF ν x).toReal) volume :=
-    integrable_withDensity_iff (measurable_studentTPDF ν) hlt
-  have hfeq : (fun x : ℝ => (x ^ 2) * (studentTPDF ν x).toReal) = g := by
-    funext x
-    have hto : (studentTPDF ν x).toReal = studentTPDFReal ν x := toReal_studentTPDF ν x
-    simp [g, hto]; ring
-  rw [hfeq] at h
-  -- the goal is `Integrable (x^2) (studentTMeasure ν) ↔ 2 < ν`, and
-  -- `studentTMeasure ν = volume.withDensity (studentTPDF ν)` by definition
-  exact h.trans (hfull.trans hIoi)
+  have h : Integrable (fun x : ℝ => x ^ 2) (studentTMeasure ν) ↔ Integrable g := by
+    simpa [g, mul_comm] using integrable_studentTMeasure_iff hν
+  rw [h, hfull, hIoi]
 
 /-- At most two degrees of freedom, the second raw moment of a Student t law diverges. -/
 theorem not_integrable_sq_studentTMeasure (hν0 : 0 < ν) (hν2 : ν ≤ 2) :
@@ -626,22 +550,14 @@ private lemma integral_Ioi_sq_mul_studentTPDFReal (hν : 2 < ν) :
 theorem integral_sq_studentTMeasure (hν : 2 < ν) :
     ∫ x, x ^ 2 ∂studentTMeasure ν = ν / (ν - 2) := by
   have hν0 : 0 < ν := by linarith
+  let g : ℝ → ℝ := fun x => studentTPDFReal ν x * x ^ 2
+  have h2 : Integrable g :=
+    (integrable_studentTMeasure_iff hν0).mp <|
+      (integrable_sq_studentTMeasure_iff hν0).mpr hν
   have hlt : ∀ᵐ x : ℝ ∂volume, studentTPDF ν x < ⊤ :=
     ae_of_all _ fun x => by
       rw [studentTPDF_of_pos hν0 x]
       exact ENNReal.ofReal_lt_top
-  have h2 : Integrable (fun x : ℝ => studentTPDFReal ν x * x ^ 2) := by
-    have h := integrable_sq_studentTMeasure_iff hν0
-    have h' : Integrable (fun x : ℝ => x ^ 2) (volume.withDensity (studentTPDF ν)) ↔
-        Integrable (fun x : ℝ => (x ^ 2) * (studentTPDF ν x).toReal) :=
-      integrable_withDensity_iff (measurable_studentTPDF ν) hlt
-    have hfeq : (fun x : ℝ => (x ^ 2) * (studentTPDF ν x).toReal) =
-        fun x : ℝ => studentTPDFReal ν x * x ^ 2 := by
-      funext x
-      have hto : (studentTPDF ν x).toReal = studentTPDFReal ν x := toReal_studentTPDF ν x
-      simp [hto]; ring
-    rw [hfeq] at h'
-    exact h'.mp (h.mpr hν)
   have hfull : ∫ x, studentTPDFReal ν x * x ^ 2 =
       2 * ∫ x in Ioi (0 : ℝ), studentTPDFReal ν x * x ^ 2 := by
     have h := integral_comp_abs (f := fun y : ℝ => studentTPDFReal ν y * y ^ 2)
@@ -700,169 +616,40 @@ theorem variance_id_studentTMeasure (hν : 2 < ν) :
 
 /-! ### Exponential moments -/
 
-/-- For large enough positive `x`, the Student t density dominates a positive constant multiple
-of `x ^ (-(ν + 1))`. -/
-private lemma eventually_studentTPDFReal_ge_rpow (hν : 0 < ν) :
-    ∀ᶠ x in atTop,
-      (Real.Gamma ((ν + 1) / 2) / (Real.sqrt (ν * Real.pi) * Real.Gamma (ν / 2))) *
-          (ν / (ν + 1)) ^ ((ν + 1) / 2) ≤
-        studentTPDFReal ν x * x ^ (ν + 1) := by
-  set s := (ν + 1) / 2 with hs
-  set C := Real.Gamma s / (Real.sqrt (ν * Real.pi) * Real.Gamma (ν / 2)) with hC
-  set c := C * (ν / (ν + 1)) ^ s with hc
-  filter_upwards [eventually_ge_atTop (1 : ℝ)] with x hx
-  have hx0 : 0 < x := by linarith
-  have hνpos : 0 < ((ν + 1) / ν) * x ^ 2 := by positivity
-  have hle : 1 + x ^ 2 / ν ≤ ((ν + 1) / ν) * x ^ 2 := by
-    have h1 : (1 : ℝ) ≤ x ^ 2 := by nlinarith
-    have h2 : x ^ 2 + x ^ 2 / ν = ((ν + 1) / ν) * x ^ 2 := by
-      field_simp [hν.ne']
-    linarith
-  have hle2 : 0 < 1 + x ^ 2 / ν := by positivity
-  have hspos : 0 < s := by dsimp only [s]; linarith
-  have hpos1 : 0 < (ν + 1) / ν := by positivity
-  have hpos2 : 0 < ν / (ν + 1) := by positivity
-  set A := (1 + x ^ 2 / ν) ^ s
-  set B := (((ν + 1) / ν) * x ^ 2) ^ s
-  have hApos : 0 < A := Real.rpow_pos_of_pos hle2 s
-  have hBpos : 0 < B := Real.rpow_pos_of_pos hνpos s
-  have hdecr : (1 + x ^ 2 / ν) ^ (-s) ≥ (((ν + 1) / ν) * x ^ 2) ^ (-s) := by
-    -- `t ↦ t^(-s)` is decreasing on `(0, ∞)` for `s > 0`: the smaller base has the
-    -- larger reciprocal power
-    have hp : A ≤ B := Real.rpow_le_rpow (by positivity) hle hspos.le
-    have ha : ∀ (y : ℝ), 0 < y → y ^ (-s) = (y ^ s)⁻¹ := fun y hy =>
-      Real.rpow_neg hy.le s
-    rw [ha (1 + x ^ 2 / ν) hle2, ha (((ν + 1) / ν) * x ^ 2) hνpos]
-    have h9 : 1 / B ≤ 1 / A := one_div_le_one_div_of_le hApos hp
-    have h10 : A⁻¹ ≥ B⁻¹ := by
-      rw [inv_eq_one_div, inv_eq_one_div]
-      exact h9
-    exact h10
-  have h_inv : ((ν + 1) / ν) * (ν / (ν + 1)) = 1 := by field_simp [hν.ne']
-  have h3 : (((ν + 1) / ν) * x ^ 2) ^ (-s) =
-      (ν / (ν + 1)) ^ s * x ^ (-(ν + 1)) := by
-    have h4 : (((ν + 1) / ν) * x ^ 2) ^ (-s) =
-        (((ν + 1) / ν) ^ (-s)) * (x ^ 2) ^ (-s) := by
-      rw [Real.mul_rpow hpos1.le (by positivity)]
-    have h6 : (((ν + 1) / ν) ^ s) * ((ν / (ν + 1)) ^ s) = 1 := by
-      rw [← Real.mul_rpow hpos1.le hpos2.le, h_inv, Real.one_rpow]
-    have h7 : ((ν / (ν + 1)) ^ s) = (((ν + 1) / ν) ^ s)⁻¹ :=
-      eq_inv_of_mul_eq_one_right h6
-    have h5 : ((ν + 1) / ν) ^ (-s) = (ν / (ν + 1)) ^ s := by
-      rw [Real.rpow_neg hpos1.le, h7.symm]
-    have h9 : (x ^ 2) ^ (-s) = x ^ (-(ν + 1)) := by
-      rw [← Real.rpow_two, ← Real.rpow_mul hx0.le,
-        show 2 * (-s) = -(ν + 1) by dsimp only [s]; ring]
-    rw [h4, h5, h9]
-  have hge : (1 + x ^ 2 / ν) ^ (-s) ≥ (ν / (ν + 1)) ^ s * x ^ (-(ν + 1)) := by
-    calc (1 + x ^ 2 / ν) ^ (-s)
-        ≥ (((ν + 1) / ν) * x ^ 2) ^ (-s) := hdecr
-      _ = (ν / (ν + 1)) ^ s * x ^ (-(ν + 1)) := h3
-  have hCpos : 0 < C := by
-    rw [hC]
-    exact studentT_const_pos hν
-  have hmain : C * (1 + x ^ 2 / ν) ^ (-s) ≥
-      C * ((ν / (ν + 1)) ^ s * x ^ (-(ν + 1))) :=
-    mul_le_mul_of_nonneg_left hge hCpos.le
-  have hpdf : studentTPDFReal ν x = C * (1 + x ^ 2 / ν) ^ (-s) := by
-    rw [studentTPDFReal_of_pos hν, hC]
-  have h4 : studentTPDFReal ν x ≥ c * x ^ (-(ν + 1)) := by
-    rw [hpdf]
-    have hc' : c * x ^ (-(ν + 1)) = C * ((ν / (ν + 1)) ^ s * x ^ (-(ν + 1))) := by
-      rw [hc, hC]; ring
-    rw [hc']
-    exact hmain
-  have hexp_add : -(ν + 1) + (ν + 1) = 0 := by ring
-  have h5 : (c * x ^ (-(ν + 1))) * x ^ (ν + 1) = c := by
-    have h6 : x ^ (-(ν + 1)) * x ^ (ν + 1) = 1 := by
-      rw [← Real.rpow_add hx0, hexp_add, Real.rpow_zero]
-    rw [mul_assoc, h6, mul_one]
-  calc c
-      = (c * x ^ (-(ν + 1))) * x ^ (ν + 1) := h5.symm
-    _ ≤ studentTPDFReal ν x * x ^ (ν + 1) :=
-      mul_le_mul_of_nonneg_right h4 (by positivity)
-
-/-- The exponential of a positive multiple of the identity is not integrable against the Student
-t density: the polynomial tail cannot absorb `exp (t * x)`. -/
-private theorem not_integrable_exp_mul_studentTPDFReal_of_pos (hν : 0 < ν) {t : ℝ} (ht : 0 < t) :
-    ¬ Integrable (fun x : ℝ => Real.exp (t * x) * studentTPDFReal ν x) := by
-  set s := (ν + 1) / 2
-  set C := Real.Gamma s / (Real.sqrt (ν * Real.pi) * Real.Gamma (ν / 2))
-  set c := C * (ν / (ν + 1)) ^ s with hc
-  have hc_pos : 0 < c := by positivity
-  intro hint
-  have hlarge : ∀ᶠ x in atTop, 1 / c ≤ Real.exp (t * x) / x ^ (ν + 1) :=
-    (tendsto_exp_mul_div_rpow_atTop (ν + 1) t ht).eventually_ge_atTop (1 / c)
-  have hbound : ∀ᶠ x in atTop, (1 : ℝ) ≤ Real.exp (t * x) * studentTPDFReal ν x := by
-    filter_upwards [eventually_studentTPDFReal_ge_rpow hν, hlarge,
-      eventually_ge_atTop (1 : ℝ)] with x hpdf hexp _
-    have hx0 : 0 < x := by linarith
-    have h10 : x ^ (ν + 1) * x ^ (-(ν + 1)) = 1 := by
-      rw [← Real.rpow_add hx0, show (ν + 1) + (-(ν + 1)) = 0 by ring, Real.rpow_zero]
-    have h6 : c * x ^ (-(ν + 1)) ≤ studentTPDFReal ν x := by
-      have h7 : c ≤ studentTPDFReal ν x * x ^ (ν + 1) := hpdf
-      have h8 : c * x ^ (-(ν + 1)) ≤
-          (studentTPDFReal ν x * x ^ (ν + 1)) * x ^ (-(ν + 1)) :=
-        mul_le_mul_of_nonneg_right h7 (Real.rpow_nonneg hx0.le _)
-      have h9 : (studentTPDFReal ν x * x ^ (ν + 1)) * x ^ (-(ν + 1)) =
-          studentTPDFReal ν x := by
-        rw [mul_assoc, h10, mul_one]
-      rw [h9] at h8
-      exact h8
-    have hxinv : x ^ (-(ν + 1)) = (x ^ (ν + 1))⁻¹ := Real.rpow_neg hx0.le _
-    have h11 : c * (Real.exp (t * x) / x ^ (ν + 1)) =
-        Real.exp (t * x) * (c * x ^ (-(ν + 1))) := by
-      rw [hxinv]
-      ring
-    calc (1 : ℝ) = c * (1 / c) := by field_simp [hc_pos.ne']
-      _ ≤ c * (Real.exp (t * x) / x ^ (ν + 1)) :=
-        mul_le_mul_of_nonneg_left hexp hc_pos.le
-      _ = Real.exp (t * x) * (c * x ^ (-(ν + 1))) := h11
-      _ ≤ Real.exp (t * x) * studentTPDFReal ν x :=
-        mul_le_mul_of_nonneg_left h6 (Real.exp_pos _).le
-  obtain ⟨a, ha⟩ := eventually_atTop.mp hbound
-  have hg : IntegrableOn (fun x : ℝ => Real.exp (t * x) * studentTPDFReal ν x) (Ioi a) :=
-    hint.integrableOn
-  have hone : IntegrableOn (fun _ : ℝ => (1 : ℝ)) (Ioi a) := by
-    refine hg.mono' (by fun_prop) ?_
-    filter_upwards [ae_restrict_mem measurableSet_Ioi] with x hx
-    simpa using ha x hx.le
-  rw [integrableOn_const_iff, Real.volume_Ioi] at hone
-  simp at hone
-
 /-- The exponential of a nonzero multiple of the identity is not integrable under a Student t
-law. -/
+law: if `exp (t * x)` and `exp (-t * x)` were both integrable, then every moment would be
+finite, contradicting the sharp moment threshold `q < ν`. -/
 theorem not_integrable_exp_mul_id_studentTMeasure (hν : 0 < ν) {t : ℝ} (ht : t ≠ 0) :
     ¬ Integrable (fun x : ℝ => Real.exp (t * x)) (studentTMeasure ν) := by
-  have hlt : ∀ᵐ x : ℝ ∂volume, studentTPDF ν x < ⊤ := by
-    filter_upwards with x
-    rw [studentTPDF_of_pos hν]
-    exact ENNReal.ofReal_lt_top
-  have hfeq : (fun x : ℝ => Real.exp (t * x) * (studentTPDF ν x).toReal) =
-      fun x : ℝ => Real.exp (t * x) * studentTPDFReal ν x := by
-    funext x
-    have hto : (studentTPDF ν x).toReal = studentTPDFReal ν x := toReal_studentTPDF ν x
-    rw [hto]
-  have hiff : Integrable (fun x : ℝ => Real.exp (t * x)) (studentTMeasure ν) ↔
-      Integrable (fun x : ℝ => Real.exp (t * x) * studentTPDFReal ν x) := by
-    rw [integrable_withDensity_iff (measurable_studentTPDF ν) hlt, hfeq]
-  rw [hiff]
   intro hint
-  rcases lt_or_gt_of_ne ht with ht | ht
-  · -- negative rate: reflection in the origin carries the positive-tail divergence to this one
-    let g : ℝ → ℝ := fun y => Real.exp (-t * y) * studentTPDFReal ν y
-    have hgm : AEStronglyMeasurable g volume := by fun_prop
-    have hmp : MeasurePreserving (fun x : ℝ => -x) volume volume :=
-      Measure.measurePreserving_neg volume
-    have h : Integrable (g ∘ fun x : ℝ => -x) volume ↔ Integrable g volume :=
-      hmp.integrable_comp hgm
-    have heq : (g ∘ fun x : ℝ => -x) = fun x : ℝ => Real.exp (t * x) * studentTPDFReal ν x := by
-      funext x
-      have harg : -t * (-x) = t * x := by ring
-      simp only [Function.comp_apply, g, harg, studentTPDFReal_neg]
-    rw [heq] at h
-    exact not_integrable_exp_mul_studentTPDFReal_of_pos hν (neg_pos.mpr ht) (h.mp hint)
-  · exact not_integrable_exp_mul_studentTPDFReal_of_pos hν ht hint
+  -- reflection in the origin turns the rate `t` into `-t`
+  have hmap : (studentTMeasure ν).map (fun x : ℝ => -x) = studentTMeasure ν :=
+    studentTMeasure_map_neg ν
+  have hkey : Integrable (fun y : ℝ => Real.exp (t * y))
+      ((studentTMeasure ν).map (fun x : ℝ => -x)) := by
+    rw [hmap]
+    exact hint
+  have hcomp : Integrable (fun x : ℝ => Real.exp (t * (-x))) (studentTMeasure ν) :=
+    (integrable_map_measure hkey.aestronglyMeasurable measurable_neg.aemeasurable).mp hkey
+  have hneg : Integrable (fun x : ℝ => Real.exp (-t * x)) (studentTMeasure ν) := by
+    simpa [mul_neg] using hcomp
+  -- both one-sided exponential moments would force every polynomial moment to be finite
+  have hmom : Integrable (fun x : ℝ => |x| ^ ν) (studentTMeasure ν) :=
+    integrable_rpow_abs_of_integrable_exp_mul ht hint hneg hν.le
+  have hden : Integrable (fun x : ℝ => studentTPDFReal ν x * |x| ^ ν) :=
+    (integrable_studentTMeasure_iff hν (f := fun x : ℝ => |x| ^ ν)).mp hmom
+  have hIoi : IntegrableOn (fun x : ℝ => studentTPDFReal ν x * x ^ ν) (Ioi (0 : ℝ)) := by
+    have h1 : IntegrableOn (fun x : ℝ => studentTPDFReal ν x * |x| ^ ν) (Ioi (0 : ℝ)) :=
+      hden.integrableOn
+    have h2 : ∀ x ∈ Ioi (0 : ℝ), studentTPDFReal ν x * |x| ^ ν = studentTPDFReal ν x * x ^ ν := by
+      intro x hx
+      have hx0 : 0 < x := hx
+      have habs : |x| = x := abs_of_pos hx0
+      rw [habs]
+    exact h1.congr_fun h2 measurableSet_Ioi
+  have hq : -1 < ν := by linarith
+  have : ν < ν := (integrableOn_pow_mul_studentTPDFReal_Ioi_iff hν hq).mp hIoi
+  linarith
 
 /-- The exponential integrand of a Student t law is integrable exactly at rate zero. -/
 @[simp]

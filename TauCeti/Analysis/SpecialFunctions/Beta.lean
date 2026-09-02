@@ -43,6 +43,11 @@ and `TauCeti/Probability/Distributions/StudentT.lean` normalizes its density wit
 * `TauCeti.integrableOn_rpow_mul_one_add_rpow` and `TauCeti.integral_rpow_mul_one_add_rpow` —
   Euler's second beta integral,
   `∫ x in Ioi 0, x ^ (a - 1) * (1 + x) ^ (-(a + b)) = Β(a, b)`;
+* `TauCeti.strictMonoOn_div_one_sub`, `TauCeti.injOn_div_one_sub_Ioi`,
+  `TauCeti.image_div_one_sub_Ioi`, `TauCeti.hasDerivAt_div_one_sub`, and
+  `TauCeti.abs_deriv_smul_one_add_rpow` — the chart `u ↦ u / (1 - u)` carrying `(u₀, 1)` onto
+  `(u₀ / (1 - u₀), ∞)`, with its injectivity, image, derivative, and the change-of-variables
+  identity between the two beta integrands;
 * `TauCeti.integrable_one_add_sq_rpow`, `TauCeti.integral_one_add_sq_rpow`,
   `TauCeti.integrable_one_add_sq_div_rpow`, and `TauCeti.integral_one_add_sq_div_rpow` — the
   Cauchy-type kernel `(1 + x ^ 2 / ν) ^ (-s)` is integrable on the line for `0 < ν` and
@@ -177,36 +182,57 @@ section SecondIntegral
 
 variable {s : ℝ}
 
-/-- The chart `u ↦ u / (1 - u)` carries the open unit interval onto the positive half-line. -/
-private lemma image_div_one_sub : (fun u : ℝ => u / (1 - u)) '' Ioo 0 1 = Ioi 0 := by
-  ext x
+/-- The chart `u ↦ u / (1 - u)` is strictly increasing on `(-∞, 1)`. -/
+lemma strictMonoOn_div_one_sub : StrictMonoOn (fun u : ℝ => u / (1 - u)) (Set.Iio 1) := by
+  intro u hui v hvi huv
+  have hu1 : u < 1 := hui
+  have hv1 : v < 1 := hvi
+  have h1 : 0 < 1 - u := by linarith
+  have h2 : 0 < 1 - v := by linarith
+  have h3 : u * (1 - v) < v * (1 - u) := by nlinarith
+  have hden : 0 < (1 - u) * (1 - v) := by positivity
+  calc u / (1 - u)
+       = (u * (1 - v)) / ((1 - u) * (1 - v)) := by field_simp [h1.ne', h2.ne']
+    _ < (v * (1 - u)) / ((1 - u) * (1 - v)) := by
+      exact div_lt_div_of_pos_right h3 hden
+    _ = v / (1 - v) := by field_simp [h1.ne', h2.ne']
+
+/-- The chart `u ↦ u / (1 - u)` is injective on `(u₀, 1)`. -/
+lemma injOn_div_one_sub_Ioi {u0 : ℝ} (_hu0 : u0 < 1) :
+    InjOn (fun u : ℝ => u / (1 - u)) (Ioo u0 1) :=
+  strictMonoOn_div_one_sub.injOn.mono fun _ hx => (Set.mem_Ioo.mp hx).2
+
+/-- The chart `u ↦ u / (1 - u)` carries `(u₀, 1)` onto `(u₀ / (1 - u₀), ∞)` for `0 ≤ u₀ < 1`. -/
+lemma image_div_one_sub_Ioi {u0 : ℝ} (hu0 : 0 ≤ u0) (hu1 : u0 < 1) :
+    (fun u : ℝ => u / (1 - u)) '' Ioo u0 1 = Ioi (u0 / (1 - u0)) := by
+  ext w
+  simp only [mem_image, mem_Ioo, mem_Ioi]
   constructor
-  · rintro ⟨u, ⟨hu0, hu1⟩, rfl⟩
-    exact div_pos hu0 (by linarith)
-  · intro hx
-    rw [mem_Ioi] at hx
-    have h1 : (0 : ℝ) < 1 + x := by linarith
-    refine ⟨x / (1 + x), ⟨by positivity, ?_⟩, ?_⟩
-    · rw [div_lt_one h1]
+  · rintro ⟨u, ⟨huu0, hu1'⟩, rfl⟩
+    have h_a : u0 ∈ Set.Iio 1 := Set.mem_Iio.mpr hu1
+    have h_b : u ∈ Set.Iio 1 := Set.mem_Iio.mpr hu1'
+    exact strictMonoOn_div_one_sub h_a h_b huu0
+  · intro hw
+    have hwp : 0 < w := by
+      have h0 : 0 ≤ u0 / (1 - u0) := by positivity
       linarith
-    · have hden : (1 : ℝ) - x / (1 + x) = (1 + x)⁻¹ := by
-        field_simp
-        ring
-      have himage : x / (1 + x) / (1 - x / (1 + x)) = x := by
-        rw [hden]
-        field_simp
-      exact himage
+    have h1 : 0 < 1 + w := by linarith
+    let u : ℝ := w / (1 + w)
+    have hden : 1 - u = (1 + w)⁻¹ := by
+      simp only [u]; field_simp [h1.ne']; ring
+    have hu_eq : u / (1 - u) = w := by
+      rw [hden]; simp only [u]; field_simp [h1.ne']
+    have hu_lt_one : u < 1 := by
+      simp only [u]; rw [div_lt_one h1]; linarith
+    have hu0_lt : u0 < u := by
+      have h_a : u0 ∈ Set.Iio 1 := Set.mem_Iio.mpr hu1
+      have h_b : u ∈ Set.Iio 1 := Set.mem_Iio.mpr hu_lt_one
+      have h : u0 / (1 - u0) < u / (1 - u) := by rw [hu_eq]; exact hw
+      exact (strictMonoOn_div_one_sub.lt_iff_lt h_a h_b).mp h
+    exact ⟨u, ⟨hu0_lt, hu_lt_one⟩, hu_eq⟩
 
-/-- The chart `u ↦ u / (1 - u)` is injective on the open unit interval. -/
-private lemma injOn_div_one_sub : InjOn (fun u : ℝ => u / (1 - u)) (Ioo (0 : ℝ) 1) := by
-  intro u hu v hv huv
-  have h1 : (0 : ℝ) < 1 - u := by linarith [hu.2]
-  have h2 : (0 : ℝ) < 1 - v := by linarith [hv.2]
-  rw [div_eq_div_iff h1.ne' h2.ne'] at huv
-  nlinarith
-
-/-- The derivative of the chart `u ↦ u / (1 - u)`. -/
-private lemma hasDerivAt_div_one_sub {u : ℝ} (hu : u ≠ 1) :
+/-- The derivative of the chart `u ↦ u / (1 - u)` is `(1 - u) ^ (-2)`. -/
+lemma hasDerivAt_div_one_sub {u : ℝ} (hu : u ≠ 1) :
     HasDerivAt (fun t : ℝ => t / (1 - t)) ((1 - u) ^ 2)⁻¹ u := by
   have h : (1 : ℝ) - u ≠ 0 := sub_ne_zero_of_ne (Ne.symm hu)
   have hd : HasDerivAt (fun t : ℝ => 1 - t) (-1) u := by
@@ -217,7 +243,7 @@ private lemma hasDerivAt_div_one_sub {u : ℝ} (hu : u ≠ 1) :
 
 /-- Under the chart `u ↦ u / (1 - u)` the integrand of Euler's second beta integral becomes the
 integrand of Euler's first one. -/
-private lemma abs_deriv_smul_one_add_rpow (a b : ℝ) {u : ℝ} (hu : u ∈ Ioo (0 : ℝ) 1) :
+lemma abs_deriv_smul_one_add_rpow (a b : ℝ) {u : ℝ} (hu : u ∈ Ioo (0 : ℝ) 1) :
     |((1 - u) ^ 2)⁻¹| • ((u / (1 - u)) ^ (a - 1) * (1 + u / (1 - u)) ^ (-(a + b))) =
       u ^ (a - 1) * (1 - u) ^ (b - 1) := by
   obtain ⟨hu0, hu1⟩ := hu
@@ -249,18 +275,26 @@ theorem integrableOn_rpow_mul_one_add_rpow (ha : 0 < a) (hb : 0 < b) :
     exact (intervalIntegrable_iff_integrableOn_Ioc_of_le (zero_le_one : (0 : ℝ) ≤ 1)).mp
       (intervalIntegrable_rpow_mul_one_sub_rpow ha hb ⟨le_rfl, zero_le_one⟩
         ⟨zero_le_one, le_rfl⟩)
-  rw [← image_div_one_sub,
+  have hchart : (fun u : ℝ => u / (1 - u)) '' Ioo (0 : ℝ) 1 = Ioi (0 : ℝ) := by
+    rw [image_div_one_sub_Ioi (u0 := 0) le_rfl zero_lt_one]
+    norm_num
+  rw [← hchart,
     integrableOn_image_iff_integrableOn_abs_deriv_smul measurableSet_Ioo
-      (fun u hu => (hasDerivAt_div_one_sub (ne_of_lt hu.2)).hasDerivWithinAt) injOn_div_one_sub]
+      (fun u hu => (hasDerivAt_div_one_sub (ne_of_lt hu.2)).hasDerivWithinAt)
+      (injOn_div_one_sub_Ioi zero_lt_one)]
   exact hIoo.congr_fun (fun u hu => (abs_deriv_smul_one_add_rpow a b hu).symm) measurableSet_Ioo
 
 /-- **Euler's second beta integral**: for positive parameters the integral of
 `x ^ (a - 1) * (1 + x) ^ (-(a + b))` over the positive half-line is `Β(a, b)`. -/
 theorem integral_rpow_mul_one_add_rpow (ha : 0 < a) (hb : 0 < b) :
     ∫ x in Ioi (0 : ℝ), x ^ (a - 1) * (1 + x) ^ (-(a + b)) = beta a b := by
-  rw [← image_div_one_sub,
+  have hchart : (fun u : ℝ => u / (1 - u)) '' Ioo (0 : ℝ) 1 = Ioi (0 : ℝ) := by
+    rw [image_div_one_sub_Ioi (u0 := 0) le_rfl zero_lt_one]
+    norm_num
+  rw [← hchart,
     integral_image_eq_integral_abs_deriv_smul measurableSet_Ioo
-      (fun u hu => (hasDerivAt_div_one_sub (ne_of_lt hu.2)).hasDerivWithinAt) injOn_div_one_sub,
+      (fun u hu => (hasDerivAt_div_one_sub (ne_of_lt hu.2)).hasDerivWithinAt)
+      (injOn_div_one_sub_Ioi zero_lt_one),
     setIntegral_congr_fun measurableSet_Ioo (fun u hu => abs_deriv_smul_one_add_rpow a b hu),
     ← integral_rpow_mul_one_sub_rpow ha hb,
     intervalIntegral.integral_of_le (zero_le_one : (0 : ℝ) ≤ 1)]
