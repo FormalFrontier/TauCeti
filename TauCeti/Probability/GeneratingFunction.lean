@@ -25,7 +25,7 @@ and establishes its basic measure-theoretic API.  The central results relate it 
 moment-generating function and show that it turns sums of independent random variables into
 products.  The file then identifies the generating function of a finite measure on `ℕ` with the
 sum of the power series carrying its singleton masses, so that the generating function is analytic
-on the open unit interval and its Taylor coefficients at the origin recover those masses;
+on `(-1, 1)` and its Taylor coefficients at the origin recover those masses;
 consequently a law on `ℕ` is determined by its generating function near `0`.  Finally it computes
 the generating functions of the standard discrete families: Bernoulli, binomial, Poisson, and
 geometric, the last one on its exact integrability domain.
@@ -145,8 +145,9 @@ theorem integrable_pow_of_abs_le_one [IsFiniteMeasure μ] {X : Ω → ℕ} (hX :
 variables is the product of their generating functions whenever both factor integrands are
 integrable.
 
-The integrability hypotheses are essential to the public statement: without them Mathlib's
-totalized integral still gives an equality, but it need not express a product of expectations. -/
+The integrability hypotheses deliberately restrict the public statement so that it expresses a
+product of genuine expectations.  Mathlib's totalized integral gives the same equality without
+these hypotheses, but in the non-integrable cases it is merely an artifact of totalization. -/
 theorem IndepFun.pgf_add {X Y : Ω → ℕ} (hXY : IndepFun X Y μ) (t : ℝ)
     (hXt : Integrable (fun ω => t ^ X ω) μ) (hYt : Integrable (fun ω => t ^ Y ω) μ) :
     pgf (X + Y) μ t = pgf X μ t * pgf Y μ t := by
@@ -265,8 +266,7 @@ theorem hasFPowerSeriesOnBall_pgf (ν : Measure ℕ) [IsFiniteMeasure ν] :
     simpa only [ofScalars_apply_eq, smul_eq_mul, zero_add] using
       hasSum_pgf ν hy'.le
 
-/-- The probability-generating function of a finite measure on `ℕ` is analytic on the open unit
-interval. -/
+/-- The probability-generating function of a finite measure on `ℕ` is analytic on `(-1, 1)`. -/
 theorem analyticOnNhd_pgf (ν : Measure ℕ) [IsFiniteMeasure ν] :
     AnalyticOnNhd ℝ (pgf id ν) (Set.Ioo (-1) 1) :=
   (hasFPowerSeriesOnBall_pgf ν).analyticOnNhd.mono fun x hx => by
@@ -312,7 +312,7 @@ theorem measure_eq_of_pgf_eventuallyEq {ν ν' : Measure ℕ} [IsFiniteMeasure �
   exact mul_left_cancel₀ (Nat.cast_ne_zero.mpr n.factorial_ne_zero) hderiv
 
 /-- A finite measure on `ℕ`, in particular a probability measure, is determined by its
-probability-generating function on the open unit interval. -/
+probability-generating function on `(-1, 1)`. -/
 theorem measure_eq_of_pgf_eqOn {ν ν' : Measure ℕ} [IsFiniteMeasure ν] [IsFiniteMeasure ν']
     (h : Set.EqOn (pgf id ν) (pgf id ν') (Set.Ioo (-1) 1)) : ν = ν' :=
   measure_eq_of_pgf_eventuallyEq
@@ -331,8 +331,8 @@ theorem identDistrib_of_pgf_eventuallyEq {Ω' : Type*} [MeasurableSpace Ω'] {P 
   rw [pgf_map hX, pgf_map hY]
   exact ht
 
-/-- Two natural-number-valued random variables whose probability-generating functions agree on the
-open unit interval are identically distributed. -/
+/-- Two natural-number-valued random variables whose probability-generating functions agree on
+`(-1, 1)` are identically distributed. -/
 theorem identDistrib_of_pgf_eqOn {Ω' : Type*} [MeasurableSpace Ω'] {P : Measure Ω} {Q : Measure Ω'}
     [IsFiniteMeasure P] [IsFiniteMeasure Q] {X : Ω → ℕ} {Y : Ω' → ℕ}
     (hX : AEMeasurable X P) (hY : AEMeasurable Y Q)
