@@ -104,7 +104,7 @@ theorem baseChange (H : FiniteTypeCommHopfAlgCat.{u, u} k)
   intro g
   apply (HopfAlgebra.isUnipotentPoint_iff_isUnipotent_pointsAction_of_isFaithful
     MK (Comodule.IsFaithful.baseChange (K := K) hM) g).2
-  exact isUnipotent_pointsAction_of_coefficientMatrix_charpoly_eq MK g bK hCK
+  exact Comodule.isUnipotent_pointsAction_of_coefficientMatrix_charpoly_eq g bK hCK
 
 end smoothUnipotentCommHopfAlgProperty
 

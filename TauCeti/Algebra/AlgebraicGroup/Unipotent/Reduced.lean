@@ -106,47 +106,6 @@ theorem coefficientMatrix_charpoly_eq
       rw [Polynomial.coeff_map, Polynomial.coeff_map]
       exact (q.commutes (P.coeff r)).symm
 
-/-- A universal `X - 1` characteristic-polynomial identity makes the action of every point on
-the comodule unipotent. -/
-theorem isUnipotent_pointsAction_of_coefficientMatrix_charpoly_eq
-    {A : _root_.CommHopfAlgCat.{v} k} {L : Type w} [CommRing L] [Algebra k L]
-    (M : FGComoduleCat.{u, v, u} k A) (g : WithConv (A →ₐ[k] L))
-    {ι : Type*} [Fintype ι] [DecidableEq ι] (b : _root_.Module.Basis ι k M)
-    (hCcharpoly : (Comodule.coefficientMatrix (C := A) b).charpoly =
-      ((Polynomial.X - (1 : Polynomial k)) ^ Module.finrank k M).map
-        (algebraMap k A)) :
-    LinearMap.GeneralLinearGroup.IsUnipotent
-      (LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g)) := by
-  let C := Comodule.coefficientMatrix (C := A) b
-  let d := Module.finrank k M
-  let P : Polynomial k := (Polynomial.X - 1) ^ d
-  have hgcharpoly : (Comodule.endOfPoint M g.ofConv).charpoly =
-      P.map (algebraMap k L) := by
-    let e : A →ₐ[k] A := AlgHom.id k A
-    calc
-      (Comodule.endOfPoint M g.ofConv).charpoly =
-          (Comodule.endOfPoint M e).charpoly.map g.ofConv := by
-        simpa only [e, AlgHom.comp_id] using
-          (Comodule.charpoly_endOfPoint_comp e g.ofConv)
-      _ = C.charpoly.map g.ofConv := by
-        congr 1
-        rw [← LinearMap.charpoly_toMatrix (Comodule.endOfPoint M e) (b.baseChange A),
-          Comodule.toMatrix_endOfPoint]
-        exact congrArg Matrix.charpoly (by
-          simpa only [e, AlgHom.coe_id] using Matrix.map_id C)
-      _ = _ := by
-        rw [hCcharpoly, Polynomial.map_map]
-        congr 1
-        ext x
-        exact g.ofConv.commutes x
-  apply LinearMap.GeneralLinearGroup.isUnipotent_of_charpoly_eq (n := d)
-  have hcoe :
-      ((LinearMap.GeneralLinearGroup.ofLinearEquiv (Comodule.pointsAction M g)) :
-        Module.End _ _) = Comodule.endOfPoint M g.ofConv :=
-    Comodule.pointsAction_toLinearMap M g
-  rw [hcoe]
-  exact hgcharpoly.trans (by simp [P])
-
 /-- If a reduced finite-type Hopf algebra is geometrically unipotent, every point valued in any
 commutative algebra over the ground field is unipotent. In particular, the defining hypothesis
 over the chosen algebraic closure implies unipotence for points over every other algebraically
@@ -159,7 +118,7 @@ theorem isUnipotentPoint
   rw [HopfAlgebra.isUnipotentPoint_def]
   intro M
   let b := Module.Free.chooseBasis k M
-  exact isUnipotent_pointsAction_of_coefficientMatrix_charpoly_eq M g b
+  exact Comodule.isUnipotent_pointsAction_of_coefficientMatrix_charpoly_eq g b
     (coefficientMatrix_charpoly_eq hA M b)
 
 /-- A reduced finite-type Hopf algebra is geometrically unipotent if and only if every point
@@ -220,7 +179,7 @@ theorem of_injective_of_reduced (f : H ⟶ K) (hf : Function.Injective f.hom)
     congr 1
     ext x
     exact (f.hom.toAlgHom.commutes x).symm
-  exact isUnipotent_pointsAction_of_coefficientMatrix_charpoly_eq M g b hCcharpoly
+  exact Comodule.isUnipotent_pointsAction_of_coefficientMatrix_charpoly_eq g b hCcharpoly
 
 end geometricallyUnipotentPointsCommHopfAlgProperty
 

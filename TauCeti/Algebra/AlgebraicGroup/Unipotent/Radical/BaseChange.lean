@@ -74,17 +74,8 @@ theorem baseChange (hI : IsUnipotentRadicalCandidate H I) :
     exact geometricallyConnectedCommHopfAlgProperty.baseChange k K _ hI.geometricallyConnected
   · have hbase := smoothUnipotentCommHopfAlgProperty.baseChange (K := K)
       (FiniteTypeCommHopfAlgCat.quotient H I) hI.smoothUnipotent
-    have hbase' := (smoothUnipotentCommHopfAlgProperty_iff K _).mp hbase
-    rw [smoothUnipotentCommHopfAlgProperty_iff]
-    constructor
-    · rw [← smoothCommHopfAlgProperty_iff]
-      apply (smoothCommHopfAlgProperty K).prop_of_iso qIso.symm
-      rw [smoothCommHopfAlgProperty_iff]
-      exact hbase'.1
-    · rw [← geometricallyUnipotentPointsCommHopfAlgProperty_iff]
-      apply (geometricallyUnipotentPointsCommHopfAlgProperty K).prop_of_iso qIso.symm
-      rw [geometricallyUnipotentPointsCommHopfAlgProperty_iff]
-      exact hbase'.2
+    exact (smoothUnipotentCommHopfAlgProperty K).prop_of_iso
+      (CategoryTheory.ObjectProperty.isoMk (finiteTypeCommHopfAlgProperty K) qIso.symm) hbase
 
 end HopfIdeal.IsUnipotentRadicalCandidate
 
