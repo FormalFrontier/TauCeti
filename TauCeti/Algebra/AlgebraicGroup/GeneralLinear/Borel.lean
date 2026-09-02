@@ -5,7 +5,14 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.Algebra.AlgebraicGroup.Borel.Basic
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.UpperTriangular.Basic
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.UpperTriangular.SmoothConnected
+public import TauCeti.Algebra.AlgebraicGroup.Solvable.UpperTriangular
+import Mathlib.GroupTheory.IsPerfect
+import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Points.Separation
+import TauCeti.Algebra.AlgebraicGroup.Smooth.GeometricallyReduced
+import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Bruhat
 
 /-!
 # The upper-triangular Borel subgroup scheme of `GL₂`
@@ -35,6 +42,8 @@ arbitrary commutative base ring.
 * `TauCeti.GeneralLinear.Borel.coordinateHopfAlgebra`: the quotient coordinate Hopf algebra.
 * `TauCeti.GeneralLinear.Borel.groupScheme`: the resulting closed subgroup scheme of `GL₂`.
 * `TauCeti.GeneralLinear.Borel.inclusion`: its closed immersion into the named `GL₂` group scheme.
+* `TauCeti.GeneralLinear.Borel.isBorel_definingHopfIdeal`: the upper-triangular subgroup is a
+  Borel subgroup over every field.
 
 ## References
 
@@ -167,5 +176,115 @@ theorem finiteTypeCoordinateHopfAlgebra_obj :
 /-- The structural morphism of the Borel subgroup scheme is locally of finite type. -/
 instance locallyOfFiniteType_groupScheme :
     AlgebraicGeometry.LocallyOfFiniteType (groupScheme R).X.hom := by infer_instance
+
+section Field
+
+variable {k : Type u} [Field k]
+
+private theorem not_isSolvable_generalLinear_two
+    (F : Type u) [Field F] [Infinite F] :
+    ¬ Group.IsSolvable (GL (Fin 2) F) := by
+  let S : Set F := {0} ∪ {1} ∪ {-1}
+  let U := {x : F // x ∈ Sᶜ}
+  let _ : Infinite U := (Set.toFinite S).infinite_compl.to_subtype
+  obtain ⟨a, _, _⟩ := exists_pair_ne U
+  have ha0 : (a : F) ≠ 0 := by
+    intro h
+    apply a.property
+    simp [S, h]
+  have ha1 : (a : F) ^ 2 ≠ 1 := by
+    rw [sq_ne_one_iff]
+    constructor
+    · intro h
+      apply a.property
+      simp [S, h]
+    · intro h
+      apply a.property
+      simp [S, h]
+  let _ : Group.IsPerfect (Matrix.SpecialLinearGroup (Fin 2) F) :=
+    ⟨Matrix.SL2.commutator_eq_top ha0 ha1⟩
+  let t : Matrix.SpecialLinearGroup (Fin 2) F :=
+    Matrix.SpecialLinearGroup.transvection (show (0 : Fin 2) ≠ 1 by decide) 1
+  have ht : t ≠ 1 := by
+    intro ht
+    have hentry := congrArg
+      (fun s : Matrix.SpecialLinearGroup (Fin 2) F ↦ (s : Matrix (Fin 2) (Fin 2) F) 0 1) ht
+    simp [t, Matrix.SpecialLinearGroup.transvection_coe, Matrix.single] at hentry
+  let _ : Nontrivial (Matrix.SpecialLinearGroup (Fin 2) F) := ⟨t, 1, ht⟩
+  intro hGL
+  let _ : Group.IsSolvable (GL (Fin 2) F) := hGL
+  exact Group.IsPerfect.not_isSolvable (Matrix.SpecialLinearGroup (Fin 2) F) <|
+    Group.isSolvable_of_isSolvable_injective
+      (f := Matrix.SpecialLinearGroup.toGL) Matrix.SpecialLinearGroup.toGL_injective
+
+private theorem le_gl2Borel_of_isSolvable
+    {F : Type u} [Field F] [Infinite F]
+    (P : Subgroup (GL (Fin 2) F)) [Group.IsSolvable P]
+    (hBP : GL2Borel F ≤ P) : P ≤ GL2Borel F := by
+  by_contra hPB
+  obtain ⟨g, hgP, hgB⟩ := SetLike.not_le_iff_exists.mp hPB
+  obtain ⟨x, hx, y, hy, hxy⟩ :=
+    DoubleCoset.mem_doubleCoset.mp (GL2Borel.mem_doubleCoset_weyl_of_notMem hgB)
+  have hwP : GL2WeylElement F ∈ P := by
+    have hxP := hBP hx
+    have hyP := hBP hy
+    have hprod : x⁻¹ * g * y⁻¹ ∈ P := mul_mem (mul_mem (inv_mem hxP) hgP) (inv_mem hyP)
+    convert hprod using 1
+    rw [hxy]
+    group
+  have hclosure :
+      Subgroup.closure (insert (GL2WeylElement F) (GL2Borel F : Set (GL (Fin 2) F))) ≤ P :=
+    (Subgroup.closure_le P).mpr (Set.insert_subset_iff.mpr ⟨hwP, hBP⟩)
+  rw [GL2Borel.closure_insert_gl2WeylElement_eq_top] at hclosure
+  have hPtop : P = ⊤ := top_unique hclosure
+  apply not_isSolvable_generalLinear_two F
+  apply Group.isSolvable_of_surjective (f := P.subtype)
+  intro g
+  refine ⟨⟨g, ?_⟩, rfl⟩
+  rw [hPtop]
+  exact Subgroup.mem_top g
+
+/-- **The upper-triangular subgroup scheme of `GL₂` is a Borel subgroup over every field.** It is
+smooth, geometrically connected, and geometrically solvable, and every
+smooth geometrically connected solvable closed subgroup containing it is equal to it. -/
+theorem isBorel_definingHopfIdeal :
+    HopfIdeal.IsBorel k (GeneralLinear.coordinateHopfAlgebra k 2) (definingHopfIdeal k) := by
+  rw [HopfIdeal.isBorel_iff]
+  refine ⟨UpperTriangular.smoothCommHopfAlgProperty_coordinateHopfAlgebra 2 k,
+    UpperTriangular.geometricallyConnectedCommHopfAlgProperty_coordinateHopfAlgebra 2 k,
+    UpperTriangular.geometricallySolvablePointsCommHopfAlgProperty_coordinateHopfAlgebra k 2,
+    ?_⟩
+  intro I hIsmooth _ hIsolvable hIB
+  let H := GeneralLinear.coordinateHopfAlgebra k 2
+  let K := AlgebraicClosure k
+  let P := GeneralLinear.hopfIdealPointsSubgroup 2 I K
+  have hBP : GL2Borel K ≤ P := by
+    change upperTriangularGroup (Fin 2) K ≤ P
+    rw [← UpperTriangular.hopfIdealPointsSubgroup_eq k 2]
+    exact GeneralLinear.hopfIdealPointsSubgroup_le_of_le 2 hIB K
+  let e := GeneralLinear.hopfIdealPointsSubgroupMulEquiv 2 I (CommAlgCat.of k K)
+  rw [geometricallySolvablePointsCommHopfAlgProperty_iff] at hIsolvable
+  let _ : Group.IsSolvable
+      (HopfAlgebra.points (R := k) (H := CommHopfAlgCat.quotient H I)
+        (CommAlgCat.of k K)) := hIsolvable
+  let _ : Group.IsSolvable P :=
+    Group.isSolvable_of_isSolvable_injective (f := e.symm.toMonoidHom) e.symm.injective
+  have hPB : P ≤ GL2Borel K := le_gl2Borel_of_isSolvable P hBP
+  let _ : IsReduced (CommHopfAlgCat.quotient H I) :=
+    ((smoothCommHopfAlgProperty_iff_geometricallyReduced k
+      (CommHopfAlgCat.quotient H I)).mp hIsmooth).isReduced
+  apply HopfIdeal.le_of_quotientPointsSubgroup_le (K := K)
+  intro q hq
+  have hqP : GeneralLinear.pointsMulEquiv 2 q ∈ P :=
+    GeneralLinear.pointsMulEquiv_mem_hopfIdealPointsSubgroup 2 I K q hq
+  have hqB : GeneralLinear.pointsMulEquiv 2 q ∈
+      GeneralLinear.hopfIdealPointsSubgroup 2 (definingHopfIdeal k) K := by
+    rw [UpperTriangular.hopfIdealPointsSubgroup_eq k 2]
+    exact hPB hqP
+  rw [GeneralLinear.mem_hopfIdealPointsSubgroup_iff] at hqB
+  rw [CommHopfAlgCat.mem_quotientPointsSubgroup_iff]
+  simpa only [MulEquiv.symm_apply_apply] using hqB
+
+end Field
 
 end TauCeti.GeneralLinear.Borel
