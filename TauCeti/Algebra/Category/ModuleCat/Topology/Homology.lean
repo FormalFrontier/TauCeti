@@ -92,6 +92,24 @@ noncomputable def topModuleCatHomologyIso :
     S.homology ≅ TopModuleCat.coker (topModuleCatLeftHomologyData S).f' :=
   (topModuleCatLeftHomologyData S).homologyIso
 
+/-- `topModuleCatHomologyIso` identifies the projection `S.homologyπ` onto homology with the
+projection `TopModuleCat.cokerπ` onto `ker g ⧸ im f`, read along the identification of `S.cycles`
+with `ker g`. -/
+@[reassoc (attr := simp)]
+theorem homologyπ_comp_topModuleCatHomologyIso_hom :
+    S.homologyπ ≫ (topModuleCatHomologyIso S).hom
+      = (topModuleCatLeftHomologyData S).cyclesIso.hom ≫
+        TopModuleCat.cokerπ (topModuleCatLeftHomologyData S).f' :=
+  (topModuleCatLeftHomologyData S).homologyπ_comp_homologyIso_hom
+
+/-- The form of `homologyπ_comp_topModuleCatHomologyIso_hom` facing the inverse isomorphism: the
+projection onto `ker g ⧸ im f`, followed back into homology, is `S.homologyπ`. -/
+@[reassoc (attr := simp)]
+theorem cokerπ_comp_topModuleCatHomologyIso_inv :
+    TopModuleCat.cokerπ (topModuleCatLeftHomologyData S).f' ≫ (topModuleCatHomologyIso S).inv
+      = (topModuleCatLeftHomologyData S).cyclesIso.inv ≫ S.homologyπ :=
+  (topModuleCatLeftHomologyData S).π_comp_homologyIso_inv
+
 /-- The cycles of a short complex of topological modules with discrete middle term are discrete. -/
 theorem discreteTopology_cycles [DiscreteTopology S.X₂] : DiscreteTopology S.cycles :=
   -- the point of the kernel fork is `TopModuleCat.ker S.g` by definition, but not syntactically,

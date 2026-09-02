@@ -49,9 +49,9 @@ it is what makes the canonical side discrete, by
 `TauCeti.discreteTopology_continuousCohomology`. Total disconnectedness is not used in this degree.
 
 The explicit side has to be *given* the discrete topology rather than left with the quotient of the
-pointwise topology on `G → M`, which is not discrete for an infinite profinite `G`; that is what
-`TauCeti.ContCohomology.DiscreteH1` is for, and the categorical statement below is stated against
-it.
+pointwise topology on `G → M`, which need not be discrete for an infinite profinite `G`; that is
+what `TauCeti.ContCohomology.DiscreteH1` is for, and the categorical statement below is stated
+against it.
 
 ## Main definitions
 
@@ -70,6 +70,8 @@ it.
   canonical side, `continuousCohomology 1 X` as an honest cokernel `ker d ⧸ im d` in
   `TopModuleCat k`. It concerns the canonical side alone, so it is stated for an arbitrary
   `X : TopRep k G`, and only used at `X = ofDiscreteModule ℤ G M`.
+* `TauCeti.ContCohomology.explicitH1AddEquivCoker`: the explicit `H¹(G, M) = Z¹/B¹` is that
+  cokernel, the cocycle dictionary passed to the quotients.
 * `TauCeti.ContCohomology.explicitH1AddEquivContinuousCohomology`,
   `TauCeti.ContCohomology.explicitH1IsoContinuousCohomology`: the comparison in degree one, as an
   additive equivalence over an arbitrary topological group and as an isomorphism in
@@ -541,6 +543,16 @@ noncomputable def continuousCohomologyIsoCoker₁ :
   (TopRep.homogeneousCochains X).homologyIsoSc' 0 1 2 (by simp) (by simp)
     ≪≫ (homogeneousSc₁ X).topModuleCatHomologyIso
 
+/-- The additive equivalence underlying the inverse of the quotient presentation is its `inv`.
+
+Mathlib's `CategoryTheory.Iso.toContinuousLinearEquiv` is built from `Iso.hom` and has no
+application lemma, so this records the reading once, in the form the comparison below rewrites
+with. -/
+theorem continuousCohomologyIsoCoker₁_symm_toAddEquiv_apply
+    (y : TopModuleCat.coker (homogeneousSc₁ X).topModuleCatLeftHomologyData.f') :
+    (continuousCohomologyIsoCoker₁ X).symm.toContinuousLinearEquiv.toLinearEquiv.toAddEquiv y
+      = (continuousCohomologyIsoCoker₁ X).inv y := (rfl)
+
 end CanonicalDegreeOne
 
 section DegreeOne
@@ -633,6 +645,38 @@ theorem map_homogeneousCocycleEquiv₁_B1 :
     rw [coe_homogeneousCocycleEquiv₁_symm, h3]
     exact d0_mem_B1 m
 
+/-- **The two quotients agree.** The explicit `H¹(G, M) = Z¹/B¹` is the cokernel that presents
+the canonical side, the cocycle dictionary passed to the quotients by
+`TauCeti.ContCohomology.map_homogeneousCocycleEquiv₁_B1`.
+
+Its codomain is spelled as the cokernel `TopModuleCat.coker`, a quotient by a submodule, where
+`QuotientAddGroup.congr` produces the quotient by the underlying additive subgroup; the two are the
+same type, and giving the equivalence this type once here is what keeps the composite below free of
+a coercion between them.
+
+The comparison with `continuousCohomology 1` is this followed by
+`TauCeti.ContCohomology.continuousCohomologyIsoCoker₁`. -/
+noncomputable def explicitH1AddEquivCoker :
+    H1 G M ≃+
+      TopModuleCat.coker
+        (homogeneousSc₁ (ofDiscreteModule ℤ G M)).topModuleCatLeftHomologyData.f' :=
+  QuotientAddGroup.congr _ _ (homogeneousCocycleEquiv₁ G M) (map_homogeneousCocycleEquiv₁_B1 G M)
+
+/-- The class of a continuous `1`-cocycle goes to the class of the homogeneous `1`-cocycle attached
+to it.
+
+This is the value of `QuotientAddGroup.congr` on a class, whose multiplicative form
+`QuotientGroup.congr_mk` carries no `@[to_additive]`, read through the `Submodule.Quotient.mk` of
+the cokernel; both readings are definitional.
+
+Not `@[simp]`, for the reason recorded at
+`TauCeti.ContCohomology.coe_homogeneousLeftHomologyData₁_f'`: the cokernel this lands in is spelled
+through the ambient cochain types, which reduce further, so this left-hand side is not in simp
+normal form. -/
+theorem explicitH1AddEquivCoker_mk (z : Z1 G M) :
+    explicitH1AddEquivCoker G M (z : H1 G M)
+      = Submodule.Quotient.mk (homogeneousCocycleEquiv₁ G M z) := (rfl)
+
 /-- **Layer 3, degree one against the canonical object, additively.** The explicit `H¹(G, M)` is
 Mathlib's `continuousCohomology 1` of the canonical object attached to `M`.
 
@@ -642,33 +686,37 @@ this to an isomorphism of *topological* modules, in
 `TauCeti.ContCohomology.explicitH1IsoContinuousCohomology`. -/
 noncomputable def explicitH1AddEquivContinuousCohomology :
     H1 G M ≃+ continuousCohomology 1 (ofDiscreteModule ℤ G M) :=
-  ((QuotientAddGroup.congr _ _ (homogeneousCocycleEquiv₁ G M)
-        (map_homogeneousCocycleEquiv₁_B1 G M)).trans
-      (AddEquiv.refl (TopModuleCat.coker
-        (homogeneousSc₁ (ofDiscreteModule ℤ G M)).topModuleCatLeftHomologyData.f'))).trans
+  (explicitH1AddEquivCoker G M).trans
     (continuousCohomologyIsoCoker₁
       (ofDiscreteModule ℤ G M)).symm.toContinuousLinearEquiv.toLinearEquiv.toAddEquiv
 
--- Not `@[simp]`: `TauCeti.ContCohomology.H1pi` is `QuotientAddGroup.mk'`, which `simp` unfolds by
--- `QuotientAddGroup.mk'_apply`, so this left-hand side is not in simp normal form. It is the
--- characteristic rule for the comparison and is used through explicit rewrites.
 /-- The comparison sends the class of a continuous `1`-cocycle to the class of the homogeneous
-`1`-cocycle attached to it. -/
-theorem explicitH1AddEquivContinuousCohomology_H1pi (z : Z1 G M) :
-    explicitH1AddEquivContinuousCohomology G M (H1pi G M z)
+`1`-cocycle attached to it. `TauCeti.ContCohomology.H1pi` is `QuotientAddGroup.mk'`, which `simp`
+unfolds by `QuotientAddGroup.mk'_apply`, so the class is spelled here as the coercion, which is the
+form the rest of the explicit `H¹` API — `TauCeti.ContCohomology.H1pi_eq_iff` and
+`TauCeti.ContCohomology.H1pi_eq_zero_iff` — is stated in. -/
+@[simp]
+theorem explicitH1AddEquivContinuousCohomology_mk (z : Z1 G M) :
+    explicitH1AddEquivContinuousCohomology G M (z : H1 G M)
       = (continuousCohomologyIsoCoker₁ (ofDiscreteModule ℤ G M)).inv
           (Submodule.Quotient.mk (homogeneousCocycleEquiv₁ G M z)) := by
-  -- spell out the composite the comparison is defined to be, then peel off its two outer factors
-  change (continuousCohomologyIsoCoker₁
-      (ofDiscreteModule ℤ G M)).symm.toContinuousLinearEquiv.toLinearEquiv.toAddEquiv
-        (((QuotientAddGroup.congr _ _ (homogeneousCocycleEquiv₁ G M)
-            (map_homogeneousCocycleEquiv₁_B1 G M)).trans (AddEquiv.refl _)) (H1pi G M z)) = _
-  rw [AddEquiv.trans_apply, AddEquiv.refl_apply]
-  -- two definitional steps are left, neither of which Mathlib names: the value of
-  -- `QuotientAddGroup.congr` on a class, whose multiplicative form `QuotientGroup.congr_mk'` is
-  -- itself `rfl` and carries no `@[to_additive]`, read through the `Submodule.Quotient.mk` of the
-  -- cokernel; and the value of `CategoryTheory.Iso.toContinuousLinearEquiv`, which is `Iso.hom`
-  rfl
+  rw [explicitH1AddEquivContinuousCohomology, AddEquiv.trans_apply, explicitH1AddEquivCoker_mk,
+    continuousCohomologyIsoCoker₁_symm_toAddEquiv_apply]
+
+/-- The inverse comparison sends the class of a homogeneous `1`-cocycle to the class of the
+continuous one attached to it.
+
+Not `@[simp]`, for the reason recorded at
+`TauCeti.ContCohomology.coe_homogeneousLeftHomologyData₁_f'`: the homogeneous `1`-cocycle `τ` is
+typed through the ambient cochain types, which reduce further, so this left-hand side is not in
+simp normal form. The forward rule above has no such binder and is `@[simp]`. -/
+theorem explicitH1AddEquivContinuousCohomology_symm_mk
+    (τ : TopModuleCat.ker (homogeneousSc₁ (ofDiscreteModule ℤ G M)).g) :
+    (explicitH1AddEquivContinuousCohomology G M).symm
+        ((continuousCohomologyIsoCoker₁ (ofDiscreteModule ℤ G M)).inv (Submodule.Quotient.mk τ))
+      = (((homogeneousCocycleEquiv₁ G M).symm τ : Z1 G M) : H1 G M) := by
+  rw [AddEquiv.symm_apply_eq, explicitH1AddEquivContinuousCohomology_mk,
+    (homogeneousCocycleEquiv₁ G M).apply_symm_apply]
 
 /-- **Degree one, as topological `ℤ`-modules.** Both sides are discrete — the explicit side by
 construction, the canonical side by `TauCeti.discreteTopology_continuousCohomology` — so the
