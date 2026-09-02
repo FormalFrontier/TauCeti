@@ -36,7 +36,7 @@ through.
   `WeierstrassCurve.Affine.CoordinateRing.map_root` and
   `WeierstrassCurve.Affine.CoordinateRing.map_algebraMap`: `map W f` fixes the two coordinates and
   is compatible with the scalars — it is a map of `R`-algebras up to `f` itself.
-* `WeierstrassCurve.Affine.CoordinateRing.map_id_eq`,
+* `WeierstrassCurve.Affine.CoordinateRing.map_id`,
   `WeierstrassCurve.Affine.CoordinateRing.map_map`, and its homomorphism-level companion
   `map_comp_map`: `map` is a functor in `f`. The curve
   equalities `W.map (RingHom.id R) = W` and `(W.map f).map g = W.map (g.comp f)` hold
@@ -168,7 +168,7 @@ lemma map_algebraMap (f : R →+* S) (r : R) :
 
 /-- **`CoordinateRing.map` along the identity is the identity.** -/
 @[simp]
-lemma map_id_eq : map W (RingHom.id R) = RingHom.id W.CoordinateRing :=
+lemma map_id : map W (RingHom.id R) = RingHom.id W.CoordinateRing :=
   RingHom.ext fun z ↦ by
     induction z using AdjoinRoot.induction_on with
     | ih p =>

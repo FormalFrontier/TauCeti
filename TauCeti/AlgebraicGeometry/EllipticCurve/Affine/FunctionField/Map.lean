@@ -59,7 +59,7 @@ statements here. A single map covers both readings, and neither is built in.
 * `WeierstrassCurve.Affine.FunctionField.map_genericX` and
   `WeierstrassCurve.Affine.FunctionField.map_genericY`: it sends the generic point of `W` to the
   generic point of `W.map f`.
-* `WeierstrassCurve.Affine.FunctionField.map_id_eq`,
+* `WeierstrassCurve.Affine.FunctionField.map_id`,
   `WeierstrassCurve.Affine.FunctionField.map_map`, and its homomorphism-level companion
   `map_comp_map`: functoriality in `f`.
 * `WeierstrassCurve.Affine.FunctionField.map_map_algebraMap`: the commuting square above, at the
@@ -140,9 +140,9 @@ theorem map_genericY : map W f W.genericY = (W.map f).genericY := by
 
 /-- **`FunctionField.map` along the identity is the identity.** -/
 @[simp]
-theorem map_id_eq : map W (RingHom.id F) = RingHom.id W.FunctionField :=
+theorem map_id : map W (RingHom.id F) = RingHom.id W.FunctionField :=
   IsFractionRing.ringHom_ext (A := W.CoordinateRing) fun z ↦ by
-    rw [map_algebraMap_coordinateRing, CoordinateRing.map_id_eq]
+    rw [map_algebraMap_coordinateRing, CoordinateRing.map_id]
     rfl
 
 /-- **`FunctionField.map` is functorial.** As for `CoordinateRing.map_comp_map`, the curve equality

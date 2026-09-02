@@ -163,9 +163,9 @@ theorem id_map (W : WeierstrassCurve.Affine F) (f : F →+* K) :
 @[simp]
 theorem map_id (φ : CoordinatePullback W₁ W₂) : φ.map (RingHom.id F) = φ := by
   apply CoordinateRing.algHom_ext
-  · rw [map_of_X, FunctionField.map_id_eq]
+  · rw [map_of_X, FunctionField.map_id]
     rfl
-  · rw [map_root, FunctionField.map_id_eq]
+  · rw [map_root, FunctionField.map_id]
     rfl
 
 /-- **Base change of a coordinate pullback is functorial in the base map.** -/
