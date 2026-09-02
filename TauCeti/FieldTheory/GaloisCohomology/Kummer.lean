@@ -296,8 +296,8 @@ theorem kummerClassMap_mk (hn : IsUnit (n : K)) (a : Kˣ) :
   exact QuotientGroup.lift_mk' (powerSubgroup Kˣ n) (by rw [ker_kummerMap hn]) a
 
 /-- The quotient Kummer map sends the named power class of `a` to its Kummer class. -/
-theorem kummerClassMap_powerClass (hn : IsUnit (n : K)) (a : Kˣ) :
-    kummerClassMap K n hn (powerClassHom n a) = kummerMap K n hn a := by
+theorem kummerClassMap_powerClassHom (hn : IsUnit (n : K)) (a : Kˣ) :
+    kummerClassMap K n hn (powerClassHom Kˣ n a) = kummerMap K n hn a := by
   rw [powerClassHom_apply, kummerClassMap_mk]
 
 /-- **`Kˣ ⧸ (Kˣ)ⁿ` injects into `H¹(G_K, μₙ)`**, the kernel of the Kummer map being exactly the
