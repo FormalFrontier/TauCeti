@@ -57,7 +57,7 @@ theorem card_fundamentalGroup (n : ℕ) (x : RealProjectiveSpace n) :
       | 1 => 0
       | _ + 2 => 2 := by
   rcases n with _ | n
-  · simp
+  · exact Zero.card_fundamentalGroup x
   · rcases n with _ | n
     · exact Line.card_fundamentalGroup x
     · exact card_fundamentalGroup_of_two_le (n + 2) (by omega) x
