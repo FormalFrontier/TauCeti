@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.NumberTheory.LocalField.Basic
-public import TauCeti.RingTheory.Valuation.WithZeroMulInt
+public import TauCeti.RingTheory.Valuation.Discrete.Order
 
 /-!
 # The normalized valuation of a nonarchimedean local field
@@ -48,6 +48,13 @@ pins the two concrete normalizations of that valuation and relates them.
 Mathlib's convention makes the two normalizations differ by a sign: `v_K` is *minus* the
 logarithm of `mulValuation K`. `toAdd_normalizedValuation` is the single lemma that translates
 between them, and every statement mixing the two goes through it.
+
+## References
+
+* J.-P. Serre, *Corps Locaux*, Ch. I, §1 (the normalized valuation of a local field and the
+  value at a uniformizer).
+* J. Neukirch, *Algebraic Number Theory*, Ch. II, §3 (the normalized valuation `v_K` and its
+  unit criterion).
 -/
 
 public section
@@ -95,8 +102,8 @@ theorem mulValuation_surjective : Function.Surjective (mulValuation K) := by
 class of `K`. In particular it does not depend on the choice `valueGroupWithZeroIsoInt` makes. -/
 theorem eq_mulValuation (v : Valuation K ℤᵐ⁰) [v.Compatible] (hv : Function.Surjective v) :
     v = mulValuation K :=
-  (ValuativeRel.isEquiv v (mulValuation K)).eq_of_surjective hv
-    (mulValuation_surjective K)
+  Valuation.eq_of_isEquiv_of_surjective hv (mulValuation_surjective K)
+    (ValuativeRel.isEquiv v (mulValuation K))
 
 /-- The ring of integers of `mulValuation K` is `𝒪[K]`. -/
 @[simp]
@@ -119,6 +126,7 @@ theorem mulValuation_integers : (mulValuation K).Integers 𝒪[K] where
 /-- A uniformizer of `K`, that is an irreducible element of the discrete valuation ring `𝒪[K]`,
 has multiplicative value `WithZero.exp (-1)`: the value group of `mulValuation K` is generated
 by the value at a uniformizer. -/
+@[simp]
 theorem mulValuation_irreducible {π : 𝒪[K]} (hπ : Irreducible π) :
     mulValuation K (π : K) = exp (-1) := by
   have hints := mulValuation_integers K
@@ -201,6 +209,7 @@ theorem normalizedValuation_surjective : Function.Surjective (normalizedValuatio
 /-- The normalized valuation of `x` is trivial — that is, `v_K(x) = 0` after decoding with
 `Multiplicative.toAdd` — exactly when `x` has valuation `1`. The form phrased on `𝒪[K]` is
 `normalizedValuation_eq_one_iff_isUnit`. -/
+@[simp]
 theorem normalizedValuation_eq_one_iff (x : Kˣ) :
     normalizedValuation K x = 1 ↔ valuation K (x : K) = 1 := by
   rw [← (ValuativeRel.isEquiv (mulValuation K) (valuation K)).eq_one_iff_eq_one,
@@ -215,8 +224,9 @@ theorem normalizedValuation_eq_one_iff_isUnit {u : 𝒪[K]} (hu : (u : K) ≠ 0)
   exact ((mulValuation_integers K).isUnit_iff_valuation_eq_one).symm
 
 /-- The uniformizer equation: a uniformizer has normalized valuation `Multiplicative.ofAdd 1`. -/
-theorem normalizedValuation_irreducible {π : 𝒪[K]} (hπ : Irreducible π) (hπ0 : (π : K) ≠ 0) :
-    normalizedValuation K (Units.mk0 (π : K) hπ0) = Multiplicative.ofAdd 1 := by
+@[simp]
+theorem normalizedValuation_irreducible {π : 𝒪[K]} (hπ : Irreducible π) :
+    normalizedValuation K (Units.mk0 (π : K) hπ.coe_ne_zero) = Multiplicative.ofAdd 1 := by
   apply Multiplicative.toAdd.injective
   rw [toAdd_normalizedValuation]
   simp [mulValuation_irreducible K hπ]
