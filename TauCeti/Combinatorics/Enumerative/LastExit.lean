@@ -423,19 +423,20 @@ consumes a successor entry that the original prefix consumes too: at each time `
 reconstruction has visited its current state strictly fewer times than the original prefix visits
 it before `m`.
 
-This is Lemma 1(b) of Fortini, Ladelli, Petris, and Regazzini. The proof is by strong induction on
-`i`. Were the two counts equal at `i`, the reconstruction would have used up the row of its current
-state, hence end where the original prefix does; the maximal index `r < m` at which the original
-prefix is still ahead then carries the *last* visit of `x` to `x r`, whose entry `hlast` fixes — so
-the reconstruction cannot have consumed it, contradicting the arrival balance at `x (r + 1)`. This
-is the only place the fixed-last hypothesis is used. -/
+This is Lemma 1(b) of Fortini, Ladelli, Petris, and Regazzini. -/
 theorem visitCount_pathOfReindexedSuccessors_lt_visitCount (π : α → Equiv.Perm ℕ) (x : ℕ → α)
-    (m : ℕ) (hmaps : ∀ a k, k < visitCount x a m → π a k < visitCount x a m)
-    (hlast : ∀ a, 0 < visitCount x a m →
-      π a (visitCount x a m - 1) = visitCount x a m - 1) :
+    (m : ℕ) (h : LastExitAdmissible π x m) :
     ∀ i < m, visitCount (pathOfReindexedSuccessors π x) (pathOfReindexedSuccessors π x i) i <
       visitCount x (pathOfReindexedSuccessors π x i) m := by
+  have hmaps : ∀ a k, k < visitCount x a m → π a k < visitCount x a m :=
+    fun _ _ hk => h.maps_lt_visitCount hk
+  have hlast : ∀ a, 0 < visitCount x a m →
+      π a (visitCount x a m - 1) = visitCount x a m - 1 :=
+    fun _ ha => h.apply_visitCount_sub_one ha
   intro i hi
+  -- The proof is by strong induction on `i`. If the counts were equal, the reconstruction would
+  -- end where the original prefix does. Its last deficient row then gives a fixed last exit which
+  -- the reconstruction cannot have consumed, contradicting the arrival balance at the next state.
   induction i using Nat.strong_induction_on with
   | h t ih =>
     have hused : ∀ j < t, visitCount (pathOfReindexedSuccessors π x)
@@ -479,7 +480,7 @@ private def reindexStepEquiv (π : α → Equiv.Perm ℕ) (x : ℕ → α) (m : 
     (hlast : ∀ a, 0 < visitCount x a m →
       π a (visitCount x a m - 1) = visitCount x a m - 1) : Fin m ≃ Fin m :=
   (reindexStepEmbedding π x m m
-    (visitCount_pathOfReindexedSuccessors_lt_visitCount π x m hmaps hlast)
+    (visitCount_pathOfReindexedSuccessors_lt_visitCount π x m ⟨hmaps, hlast⟩)
     hmaps).equivOfFiniteSelfEmbedding
 
 /-- The value of `TauCeti.reindexStepEquiv`. This is the only place its body is unfolded. -/
@@ -489,7 +490,7 @@ private theorem reindexStepEquiv_apply (π : α → Equiv.Perm ℕ) (x : ℕ →
       π a (visitCount x a m - 1) = visitCount x a m - 1) (i : Fin m) :
     reindexStepEquiv π x m hmaps hlast i =
       reindexStepEmbedding π x m m
-        (visitCount_pathOfReindexedSuccessors_lt_visitCount π x m hmaps hlast) hmaps i :=
+        (visitCount_pathOfReindexedSuccessors_lt_visitCount π x m ⟨hmaps, hlast⟩) hmaps i :=
   by
     rw [reindexStepEquiv, ← Equiv.coe_toEmbedding,
       Function.Embedding.toEmbedding_equivOfFiniteSelfEmbedding]
@@ -515,11 +516,14 @@ private theorem reindexStepEquiv_target (π : α → Equiv.Perm ℕ) (x : ℕ �
 /-- A last-exit reindexing uses each prescribed successor row exactly as often as the original
 finite prefix. -/
 theorem visitCount_pathOfReindexedSuccessors (π : α → Equiv.Perm ℕ) (x : ℕ → α) (m : ℕ)
-    (hmaps : ∀ a k, k < visitCount x a m → π a k < visitCount x a m)
-    (hlast : ∀ a, 0 < visitCount x a m →
-      π a (visitCount x a m - 1) = visitCount x a m - 1) (a : α) :
+    (h : LastExitAdmissible π x m) (a : α) :
     visitCount (pathOfReindexedSuccessors π x) a m = visitCount x a m := by
   classical
+  have hmaps : ∀ b k, k < visitCount x b m → π b k < visitCount x b m :=
+    fun _ _ hk => h.maps_lt_visitCount hk
+  have hlast : ∀ b, 0 < visitCount x b m →
+      π b (visitCount x b m - 1) = visitCount x b m - 1 :=
+    fun _ hb => h.apply_visitCount_sub_one hb
   rw [visitCount_def, visitCount_def, occCount_eq_card_filter, occCount_eq_card_filter,
     ← Fintype.card_coe, ← Fintype.card_coe]
   refine Fintype.card_congr ((reindexStepEquiv π x m hmaps hlast).subtypeEquiv fun i => ?_)
@@ -529,23 +533,24 @@ theorem visitCount_pathOfReindexedSuccessors (π : α → Equiv.Perm ℕ) (x : �
 /-- A finite path reconstructed after last-exit reindexing has the same endpoint as the original
 prefix. -/
 theorem pathOfReindexedSuccessors_eq (π : α → Equiv.Perm ℕ) (x : ℕ → α) (m : ℕ)
-    (hmaps : ∀ a k, k < visitCount x a m → π a k < visitCount x a m)
-    (hlast : ∀ a, 0 < visitCount x a m →
-      π a (visitCount x a m - 1) = visitCount x a m - 1) :
-    pathOfReindexedSuccessors π x m = x m :=
+    (h : LastExitAdmissible π x m) : pathOfReindexedSuccessors π x m = x m :=
   pathOfReindexedSuccessors_eq_of_visitCount_eq π x m m
-    (visitCount_pathOfReindexedSuccessors_lt_visitCount π x m hmaps hlast) hmaps
-    (visitCount_pathOfReindexedSuccessors π x m hmaps hlast (pathOfReindexedSuccessors π x m))
+    (visitCount_pathOfReindexedSuccessors_lt_visitCount π x m h)
+    (fun _ _ hk => h.maps_lt_visitCount hk)
+    (visitCount_pathOfReindexedSuccessors π x m h (pathOfReindexedSuccessors π x m))
 
 /-- A finite path reconstructed after last-exit reindexing has the same transition counts as the
 original prefix. -/
 theorem transitionCount_pathOfReindexedSuccessors (π : α → Equiv.Perm ℕ) (x : ℕ → α) (m : ℕ)
-    (hmaps : ∀ a k, k < visitCount x a m → π a k < visitCount x a m)
-    (hlast : ∀ a, 0 < visitCount x a m →
-      π a (visitCount x a m - 1) = visitCount x a m - 1) (a b : α) :
+    (h : LastExitAdmissible π x m) (a b : α) :
     transitionCount (fun i : Fin (m + 1) => pathOfReindexedSuccessors π x i) a b =
       transitionCount (fun i : Fin (m + 1) => x i) a b := by
   classical
+  have hmaps : ∀ c k, k < visitCount x c m → π c k < visitCount x c m :=
+    fun _ _ hk => h.maps_lt_visitCount hk
+  have hlast : ∀ c, 0 < visitCount x c m →
+      π c (visitCount x c m - 1) = visitCount x c m - 1 :=
+    fun _ hc => h.apply_visitCount_sub_one hc
   rw [transitionCount_eq_card_filter, transitionCount_eq_card_filter,
     ← Fintype.card_coe, ← Fintype.card_coe]
   refine Fintype.card_congr ((reindexStepEquiv π x m hmaps hlast).subtypeEquiv fun i => ?_)
