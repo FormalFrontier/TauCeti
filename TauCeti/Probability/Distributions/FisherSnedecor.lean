@@ -209,13 +209,17 @@ private theorem fisherSnedecorMap_preimage_Iic_ae (hm : 0 < m) (hn : 0 < n) {x :
   rw [h_inv] at key
   exact key
 
-/-- For positive degrees of freedom, the Fisher--Snedecor law is almost surely positive. -/
-theorem ae_mem_Ioi_fisherSnedecorMeasure (hm : 0 < m) (hn : 0 < n) :
+/-- The Fisher--Snedecor law is almost surely positive, including vacuously for invalid
+parameters. -/
+theorem ae_mem_Ioi_fisherSnedecorMeasure (m n : ℝ) :
     ∀ᵐ x ∂fisherSnedecorMeasure m n, x ∈ Ioi 0 := by
-  rw [fisherSnedecorMeasure_eq_map hm hn, ae_map_iff
-    (measurable_fisherSnedecorMap m n).aemeasurable (by measurability)]
-  filter_upwards [ae_mem_Ioo_betaMeasure (m / 2) (n / 2)] with u hu
-  exact fisherSnedecorMap_mem_Ioi hm hn hu
+  by_cases h : 0 < m ∧ 0 < n
+  · rw [fisherSnedecorMeasure_eq_map h.1 h.2, ae_map_iff
+      (measurable_fisherSnedecorMap m n).aemeasurable (by measurability)]
+    filter_upwards [ae_mem_Ioo_betaMeasure (m / 2) (n / 2)] with u hu
+    exact fisherSnedecorMap_mem_Ioi h.1 h.2 hu
+  · rw [fisherSnedecorMeasure_of_not_pos h]
+    simp
 
 /-! ### The cdf -/
 
@@ -233,7 +237,7 @@ theorem cdf_fisherSnedecorMeasure_eq (hm : 0 < m) (hn : 0 < n) (x : ℝ) :
   · rw [ite_eq_left hx]
     rw [cdf_eq_real]
     have hpre : (Iic x : Set ℝ) =ᵐ[fisherSnedecorMeasure m n] ∅ := by
-      filter_upwards [ae_mem_Ioi_fisherSnedecorMeasure hm hn] with y hy
+      filter_upwards [ae_mem_Ioi_fisherSnedecorMeasure m n] with y hy
       apply propext
       constructor
       · intro hyx
