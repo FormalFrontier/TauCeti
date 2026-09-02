@@ -7,7 +7,7 @@ module
 
 public import Mathlib.Algebra.DirectSum.Decomposition
 public import Mathlib.Algebra.Ring.NegOnePow
-public import Mathlib.RingTheory.Finiteness.Basic
+public import TauCeti.Algebra.DirectSum.Internal
 
 /-!
 # Internally graded modules
@@ -22,10 +22,9 @@ Mathlib already provides the direct-sum equivalence and its induction principle 
 the proof that it is internal; the instance below makes Mathlib's decomposition API available
 without duplicating it.
 
-The file also records that an internal direct-sum decomposition of a finitely generated module has
-only finitely many nonzero summands, the Koszul twist operator used to encode Koszul signs on
-homogeneous elements, and the letterwise tuple operation that applies it on a half-open index
-interval.
+The file also records that a finitely generated internally graded module has only finitely many
+nonzero pieces, the Koszul twist operator used to encode Koszul signs on homogeneous elements, and
+the letterwise tuple operation that applies it on a half-open index interval.
 
 ## Main definitions
 
@@ -36,8 +35,6 @@ interval.
 ## Main results
 
 * `TauCeti.InternalGrading.ext`: internal gradings are determined by their homogeneous pieces.
-* `TauCeti.finite_setOfPred_ne_bot`: an internal direct-sum decomposition of a finitely generated
-  module has only finitely many nonzero summands.
 * `TauCeti.InternalGrading.finite_setOfPred_piece_ne_bot`: a finitely generated internally graded
   module has only finitely many nonzero homogeneous pieces.
 * `TauCeti.InternalGrading.koszulTwist_apply_of_mem`: the twist acts by the Koszul scalar on
@@ -90,32 +87,6 @@ end InternalGrading
 section FiniteSupport
 
 variable {R : Type u} {M : Type v} [Semiring R] [AddCommMonoid M] [Module R M]
-
-/-- An internal direct-sum decomposition of a finitely generated module has only finitely many
-nonzero summands.
-
-The whole module is a compact element of its lattice of submodules, so it is already the supremum
-of finitely many summands; independence then forces every summand outside that finite set to be
-trivial.  The decomposition is spelled as `iSupIndep` together with `⨆ i, A i = ⊤`, which is what
-the argument uses and which avoids the `DecidableEq` hypothesis carried by
-`DirectSum.IsInternal`. -/
-theorem finite_setOfPred_ne_bot {ι : Type*} {A : ι → Submodule R M} (hAi : iSupIndep A)
-    (hAt : ⨆ i, A i = ⊤) [Module.Finite R M] : {i | A i ≠ ⊥}.Finite := by
-  have hcompact : IsCompactElement (⊤ : Submodule R M) :=
-    (Submodule.fg_iff_compact _).mp Module.Finite.fg_top
-  obtain ⟨s, hs⟩ := CompleteLattice.IsCompactElement.exists_finset_of_le_iSup
-    (Submodule R M) hcompact A (by rw [hAt])
-  refine s.finite_toSet.subset fun i hi ↦ ?_
-  by_contra his
-  apply hi
-  rw [eq_bot_iff]
-  intro x hx
-  have hx' : x ∈ ⨆ j ∈ s, A j := hs Submodule.mem_top
-  have hle : (⨆ j ∈ s, A j) ≤ ⨆ j, ⨆ (_ : j ≠ i), A j := by
-    refine iSup_le fun j ↦ iSup_le fun hj ↦ le_iSup_of_le j ?_
-    exact le_iSup_of_le (fun hji ↦ his (hji ▸ hj)) le_rfl
-  have hxbot := (hAi i).le_bot ⟨hx, hle hx'⟩
-  simpa only [Submodule.mem_bot] using hxbot
 
 /-- A finitely generated internally graded module has only finitely many nonzero homogeneous
 pieces. -/

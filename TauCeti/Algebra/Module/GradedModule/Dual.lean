@@ -263,7 +263,8 @@ theorem dual_decompose_apply_of_mem_piece (G : InternalGrading R M)
       intro p hp
       refine dualPiece_apply_eq_zero_of_mem_piece_of_add_ne_zero G
         (DirectSum.decompose (G.dual hG).piece φ p).2 hx fun hpq ↦ ?_
-      exact hmem (by rwa [show (-q : ℤ) = p by omega])
+      have hp' : p = -q := by omega
+      exact hmem (hp' ▸ hp)
     rw [hzero, Finset.sum_eq_zero hall]
     simp
 
