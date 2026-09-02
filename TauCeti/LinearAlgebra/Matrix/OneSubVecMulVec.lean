@@ -111,6 +111,7 @@ theorem coe_oneSubVecMulVecGL (t : Rˣ) (u v : α → R) (h : v ⬝ᵥ u = (t : 
   (rfl)
 
 /-- The inverse of a rank-one perturbation of the identity whose self-pairing is `t + 1`. -/
+@[simp]
 theorem inv_one_sub_vecMulVec (t : Rˣ) {u v : α → R} (h : v ⬝ᵥ u = (t : R) + 1) :
     (1 - vecMulVec u v)⁻¹ = 1 - ((t⁻¹ : Rˣ) : R) • vecMulVec u v :=
   Matrix.inv_eq_right_inv (one_sub_vecMulVec_mul_inv t h)
