@@ -55,6 +55,12 @@ lemma le_iff {D E : WeilDivisor X} : D ≤ E ↔ ∀ x, coeff D x ≤ coeff E x 
 lemma coeff_le_coeff {D E : WeilDivisor X} (h : D ≤ E) (x : X) : coeff D x ≤ coeff E x :=
   le_iff.mp h x
 
+/-- Integer multiples of a point divisor increase with the multiplier. -/
+lemma zsmul_ofPoint_le_zsmul_ofPoint (x : X) {m n : ℤ} (h : m ≤ n) :
+    (m • ofPoint x : WeilDivisor X) ≤ n • ofPoint x := by
+  rw [← single_eq_zsmul_ofPoint, ← single_eq_zsmul_ofPoint]
+  exact Finsupp.single_le_single.mpr h
+
 /-- A negative integer multiple of a point divisor is strictly negative. -/
 lemma zsmul_ofPoint_lt_zero (x : X) {n : ℤ} (hn : n < 0) : n • ofPoint x < 0 := by
   rw [← single_eq_zsmul_ofPoint]
