@@ -25,7 +25,7 @@ Exercise 2.
 public section
 
 open Ideal
-open scoped NumberField
+open scoped NumberField Pointwise
 
 namespace NumberField
 
@@ -89,5 +89,22 @@ theorem artinSymbol_eq_mk_of_isArithFrobAt {L : Type*} [Field L] [NumberField L]
       NumberField.algebraMap_smul_eq_apply, NumberField.algebraMap_smul_eq_apply] at hQ''
     simpa [galRestrict_apply, algebraMap_galRestrict_apply] using hQ''
   simpa [hQeq] using hconj
+
+/-- Every representative of `artinSymbol 𝔭 hur` is an arithmetic Frobenius at some prime above
+`𝔭`. -/
+theorem exists_isArithFrobAt_of_artinSymbol_eq_mk {L : Type*} [Field L] [NumberField L]
+    [Algebra K L] [IsGalois K L] (𝔭 : Ideal (𝓞 K)) [𝔭.IsMaximal]
+    (hur : ∀ (Q : Ideal (𝓞 L)) [Q.IsPrime] [Q.LiesOver 𝔭],
+      Algebra.IsUnramifiedAt (𝓞 K) Q) {σ : L ≃ₐ[K] L}
+    (h : artinSymbol 𝔭 hur = ConjClasses.mk σ) :
+    ∃ Q : 𝔭.primesOver (𝓞 L), IsArithFrobAt (𝓞 K) σ Q.1 := by
+  obtain ⟨Q₀, _, _⟩ := (inferInstance : Nonempty (𝔭.primesOver (𝓞 L)))
+  obtain ⟨σ₀, hσ₀⟩ := exists_isArithFrobAt_of_isGalois (K := K) Q₀
+    (Ideal.ne_bot_of_liesOver_of_ne_bot
+      (𝔭.bot_lt_of_maximal (RingOfIntegers.not_isField K)).ne' Q₀)
+  have hconj : IsConj σ₀ σ := ConjClasses.mk_eq_mk_iff_isConj.mp
+    ((artinSymbol_eq_mk_of_isArithFrobAt 𝔭 hur Q₀ σ₀ hσ₀).symm.trans h)
+  obtain ⟨τ, hτ⟩ := isConj_iff.mp hconj
+  exact ⟨Ideal.primesOver.mk 𝔭 (τ • Q₀), hτ ▸ hσ₀.conj τ⟩
 
 end NumberField
