@@ -26,13 +26,13 @@ n_{i,j} = x_{eᵢ-eⱼ}(1) x_{eⱼ-eᵢ}(-1) x_{eᵢ-eⱼ}(1)
 represents the Weyl reflection exchanging `i` and `j`, so conjugation by it carries
 `x_{±2eⱼ}(c)` to `x_{±2eᵢ}(c)`. The sum roots are then isolated from the multiply-laced
 Chevalley commutator relations. In particular, the numbered adjacent difference roots and the
-final long root generate every root subgroup in all characteristics, including characteristic
-two.
+final pair of opposite long roots generate every root subgroup in all characteristics, including
+characteristic two.
 
 ## Main results
 
 * `TauCeti.GLSymplecticFin.positiveLongRootTransvectionUnit_mem_of_difference_of_long` and its
-  negative analogue propagate one long-root subgroup to every index by Weyl conjugation.
+  negative analogue transport one long-root subgroup to a target index by Weyl conjugation.
 * `TauCeti.GLSymplecticFin.positiveSumShortRootUnit_mem_of_difference_of_long` and its negative
   analogue generate the two sum-root families.
 * `TauCeti.GLSymplecticFin.RootSubgroupIndex.hom_apply_mem_of_difference_of_long` packages the
@@ -63,38 +63,40 @@ universe u
 
 variable {R : Type u} [CommRing R] {m : ℕ} {i j : Fin m}
 
-/-- If a subgroup contains every difference-root element and the positive long-root subgroup at
-`r`, then it contains every positive long-root element. -/
+/-- If a subgroup contains the two difference-root elements forming the Weyl word from `r` to `i`
+and the positive long-root subgroup at `r`, then it contains the positive long-root subgroup at
+`i`. -/
 theorem positiveLongRootTransvectionUnit_mem_of_difference_of_long
-    (H : Subgroup (GLSymplecticFin m R)) (r : Fin m)
-    (hdifference : ∀ {i j : Fin m} (hij : i ≠ j) (c : R),
-      differenceShortRootUnit hij c ∈ H)
+    (H : Subgroup (GLSymplecticFin m R)) (r i : Fin m)
+    (hforward : ∀ hir : i ≠ r, differenceShortRootUnit hir 1 ∈ H)
+    (hbackward : ∀ hir : i ≠ r, differenceShortRootUnit hir.symm (-1) ∈ H)
     (hpivot : ∀ c : R, positiveLongRootTransvectionUnit r c ∈ H)
-    (i : Fin m) (c : R) : positiveLongRootTransvectionUnit i c ∈ H := by
+    (c : R) : positiveLongRootTransvectionUnit i c ∈ H := by
   by_cases hir : i = r
   · subst i
     exact hpivot c
   · let w := differenceShortRootWeylElement (R := R) hir
     have hw : w ∈ H := differenceShortRootWeylElement_mem H hir
-      (hdifference hir) (hdifference (Ne.symm hir))
+      (hforward hir) (hbackward hir)
     have hconj := H.mul_mem (H.mul_mem hw (hpivot c)) (H.inv_mem hw)
     simpa only [w, differenceShortRootWeylElement_inv,
       differenceShortRootWeylElement_mul_positiveLongRootTransvectionUnit_mul_inv] using hconj
 
-/-- If a subgroup contains every difference-root element and the negative long-root subgroup at
-`r`, then it contains every negative long-root element. -/
+/-- If a subgroup contains the two difference-root elements forming the Weyl word from `r` to `i`
+and the negative long-root subgroup at `r`, then it contains the negative long-root subgroup at
+`i`. -/
 theorem negativeLongRootTransvectionUnit_mem_of_difference_of_long
-    (H : Subgroup (GLSymplecticFin m R)) (r : Fin m)
-    (hdifference : ∀ {i j : Fin m} (hij : i ≠ j) (c : R),
-      differenceShortRootUnit hij c ∈ H)
+    (H : Subgroup (GLSymplecticFin m R)) (r i : Fin m)
+    (hforward : ∀ hir : i ≠ r, differenceShortRootUnit hir 1 ∈ H)
+    (hbackward : ∀ hir : i ≠ r, differenceShortRootUnit hir.symm (-1) ∈ H)
     (hpivot : ∀ c : R, negativeLongRootTransvectionUnit r c ∈ H)
-    (i : Fin m) (c : R) : negativeLongRootTransvectionUnit i c ∈ H := by
+    (c : R) : negativeLongRootTransvectionUnit i c ∈ H := by
   by_cases hir : i = r
   · subst i
     exact hpivot c
   · let w := differenceShortRootWeylElement (R := R) hir
     have hw : w ∈ H := differenceShortRootWeylElement_mem H hir
-      (hdifference hir) (hdifference (Ne.symm hir))
+      (hforward hir) (hbackward hir)
     have hconj := H.mul_mem (H.mul_mem hw (hpivot c)) (H.inv_mem hw)
     simpa only [w, differenceShortRootWeylElement_inv,
       differenceShortRootWeylElement_mul_negativeLongRootTransvectionUnit_mul_inv] using hconj
@@ -141,10 +143,10 @@ theorem hom_apply_mem_of_difference_of_long
     (root : RootSubgroupIndex m) (c : Multiplicative R) : root.hom c ∈ H := by
   have hp (i : Fin m) (a : R) : positiveLongRootTransvectionUnit i a ∈ H :=
     positiveLongRootTransvectionUnit_mem_of_difference_of_long
-      H r hdifference hpositive i a
+      H r i (fun hir => hdifference hir 1) (fun hir => hdifference hir.symm (-1)) hpositive a
   have hn (i : Fin m) (a : R) : negativeLongRootTransvectionUnit i a ∈ H :=
     negativeLongRootTransvectionUnit_mem_of_difference_of_long
-      H r hdifference hnegative i a
+      H r i (fun hir => hdifference hir 1) (fun hir => hdifference hir.symm (-1)) hnegative a
   cases root with
   | positiveLong i =>
       simpa only [hom_positiveLong, positiveLongRootTransvectionHom_apply] using hp i c.toAdd
