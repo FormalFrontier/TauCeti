@@ -19,11 +19,13 @@ the unipotent radical of the upper-triangular affine group.
 
 ## Main declaration
 
-* `TauCeti.GeneralLinear.UpperTriangular.mem_upperUnitriangularDefiningPointsSubgroup_iff`:
+* `TauCeti.GeneralLinear.UpperTriangular.mem_upperUnitriangularPointsSubgroup_iff`:
   the relative weight-unipotent ideal cuts out exactly the existing upper-unitriangular matrix
   group over every commutative value algebra.
-* `TauCeti.GeneralLinear.UpperTriangular.unipotentRadicalDefiningIdeal`:
-  the relative upper-unitriangular Hopf ideal is the unipotent-radical defining ideal.
+* `TauCeti.GeneralLinear.UpperTriangular.
+    unipotentRadicalDefiningIdeal_finiteTypeCoordinateHopfAlgebra`:
+  after identifying the finite-type package's object with the upper-triangular coordinate
+  algebra, the relative upper-unitriangular Hopf ideal is the unipotent-radical defining ideal.
 
 ## References
 
@@ -46,22 +48,22 @@ noncomputable section
 
 /-- The Hopf ideal in the upper-triangular coordinate algebra cutting out the
 upper-unitriangular subgroup. -/
-noncomputable abbrev upperUnitriangularDefiningHopfIdeal
+noncomputable abbrev upperUnitriangularHopfIdeal
     (R : Type u) [CommRing R] (n : ℕ) : HopfIdeal R (coordinateHopfAlgebra R n) :=
   GeneralLinear.Dynamic.weightUnipotentInParabolicHopfIdeal R (weights n)
 
 /-- The relative weight-unipotent ideal cuts out exactly the existing upper-unitriangular
 matrix group, compatibly with the upper-triangular inclusion into `GL_n`. -/
 @[simp]
-theorem mem_upperUnitriangularDefiningPointsSubgroup_iff
+theorem mem_upperUnitriangularPointsSubgroup_iff
     (R : Type u) [CommRing R] (n : ℕ) {A : Type v} [CommRing A] [Algebra R A]
     (f : HopfAlgebra.points (R := R) (H := coordinateHopfAlgebra R n)
       (CommAlgCat.of R A)) :
     f ∈ CommHopfAlgCat.quotientPointsSubgroup (coordinateHopfAlgebra R n)
-        (upperUnitriangularDefiningHopfIdeal R n) (CommAlgCat.of R A) ↔
+        (upperUnitriangularHopfIdeal R n) (CommAlgCat.of R A) ↔
       (pointsMulEquiv (R := R) (n := n) (A := A) f : GL (Fin n) A) ∈
         upperUnitriangularGroup (Fin n) A := by
-  rw [upperUnitriangularDefiningHopfIdeal,
+  rw [upperUnitriangularHopfIdeal,
     GeneralLinear.Dynamic.mem_weightUnipotentInParabolicPointsSubgroup_iff,
     GeneralLinear.mem_weightUnipotentDefiningPointsSubgroup_iff,
     UpperUnitriangularGroup.mem_iff, Matrix.isUpperUnitriangular_def,
@@ -84,35 +86,43 @@ theorem mem_upperUnitriangularDefiningPointsSubgroup_iff
     · have hji : j < i := (weights_lt_weights_iff n i j).mp hij
       simpa [Matrix.one_apply, hji.ne'] using htri hji
 
-/-- The identified upper-unitriangular Hopf ideal in the finite-type coordinate algebra of the
-standard upper-triangular group. -/
-noncomputable def upperUnitriangularHopfIdeal (k : Type u) [Field k] (n : ℕ) :
-    HopfIdeal k (finiteTypeCoordinateHopfAlgebra k n).obj :=
-  let e : finiteTypeCoordinateHopfAlgebra k n ≅
-      GeneralLinear.weightParabolicFiniteTypeCoordinateHopfAlgebra k (weights n) :=
-    ObjectProperty.isoMk _ <| eqToIso <|
-      finiteTypeCoordinateHopfAlgebra_obj k n |>.trans <|
-        (GeneralLinear.weightParabolicFiniteTypeCoordinateHopfAlgebra_obj k (weights n)).symm
-  (GeneralLinear.weightUnipotentInParabolicFiniteTypeHopfIdeal k (weights n)).comapOfSurjective
-    (FiniteTypeCommHopfAlgCat.toBialgHom e.hom)
-    (ConcreteCategory.bijective_of_isIso e.hom).2
-
 /-- **The unipotent radical of the standard upper-triangular group is its
-upper-unitriangular subgroup.** The latter is the finite-type form of the relative ideal
-identified pointwise by `mem_upperUnitriangularDefiningPointsSubgroup_iff`. -/
-theorem unipotentRadicalDefiningIdeal (k : Type u) [Field k] (n : ℕ) :
-    FiniteTypeCommHopfAlgCat.unipotentRadicalDefiningIdeal
-        (finiteTypeCoordinateHopfAlgebra k n) =
+upper-unitriangular subgroup.** The relative ideal is identified pointwise by
+`mem_upperUnitriangularPointsSubgroup_iff`; the pullback presents the finite-type radical in that
+relative coordinate algebra. -/
+@[simp]
+theorem unipotentRadicalDefiningIdeal_finiteTypeCoordinateHopfAlgebra
+    (k : Type u) [Field k] (n : ℕ) :
+    (FiniteTypeCommHopfAlgCat.unipotentRadicalDefiningIdeal
+        (finiteTypeCoordinateHopfAlgebra k n)).comapOfSurjective
+      (eqToHom (finiteTypeCoordinateHopfAlgebra_obj k n).symm).hom
+      (ConcreteCategory.bijective_of_isIso
+        (eqToHom (finiteTypeCoordinateHopfAlgebra_obj k n).symm)).2 =
       upperUnitriangularHopfIdeal k n := by
   let e : finiteTypeCoordinateHopfAlgebra k n ≅
       GeneralLinear.weightParabolicFiniteTypeCoordinateHopfAlgebra k (weights n) :=
     ObjectProperty.isoMk _ <| eqToIso <|
       finiteTypeCoordinateHopfAlgebra_obj k n |>.trans <|
         (GeneralLinear.weightParabolicFiniteTypeCoordinateHopfAlgebra_obj k (weights n)).symm
-  rw [← FiniteTypeCommHopfAlgCat.comapOfSurjective_unipotentRadicalDefiningIdeal e,
+  have hRadical :=
+    FiniteTypeCommHopfAlgCat.comapOfSurjective_unipotentRadicalDefiningIdeal e
+  have hWeight :=
     unipotentRadicalDefiningIdeal_weightParabolicFiniteTypeCoordinateHopfAlgebra
-      k (weights n) (weights_injective n)]
-  dsimp [e, upperUnitriangularHopfIdeal]
+      k (weights n) (weights_injective n)
+  ext x
+  rw [HopfIdeal.mem_comapOfSurjective, ← hRadical, HopfIdeal.mem_comapOfSurjective]
+  have hx := congrArg (fun I ↦ x ∈ I) hWeight
+  rw [HopfIdeal.mem_comapOfSurjective] at hx
+  have hcomp :
+      eqToHom (finiteTypeCoordinateHopfAlgebra_obj k n).symm ≫ e.hom.hom =
+        eqToHom
+          (GeneralLinear.weightParabolicFiniteTypeCoordinateHopfAlgebra_obj
+            k (weights n)).symm := by
+    simp only [e, ObjectProperty.isoMk_hom, ObjectProperty.homMk_hom, eqToIso.hom]
+    rw [eqToHom_trans]
+  change e.hom.hom ((eqToHom (finiteTypeCoordinateHopfAlgebra_obj k n).symm).hom x) ∈ _ ↔ _
+  rw [← ConcreteCategory.comp_apply, hcomp]
+  exact iff_of_eq hx
 
 end
 

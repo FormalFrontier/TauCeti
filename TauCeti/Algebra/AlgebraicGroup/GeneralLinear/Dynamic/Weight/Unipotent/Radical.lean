@@ -7,7 +7,7 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Dynamic.Weight.Levi.DiagonalTorus
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Dynamic.Weight.Levi.Kernel
-public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Dynamic.Weight.Parabolic.Geometry
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Weight.Unipotent.Geometry
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Dynamic.Weight.Unipotent.Pointwise
 public import TauCeti.Algebra.AlgebraicGroup.Unipotent.Radical.DiagonalizableQuotient
 import TauCeti.Algebra.AlgebraicGroup.Unipotent.Radical.Isomorphism
@@ -28,7 +28,8 @@ claimed equality of Hopf ideals.
 
 * `TauCeti.GeneralLinear.
     unipotentRadicalDefiningIdeal_weightParabolicFiniteTypeCoordinateHopfAlgebra`:
-  the unipotent radical of an injective-weight parabolic is its weight-unipotent kernel.
+  after identifying the finite-type package's object with the weight-parabolic coordinate
+  algebra, the unipotent radical is its weight-unipotent kernel.
 
 ## References
 
@@ -41,7 +42,7 @@ This completes the unipotent-radical calculation for injective-weight parabolics
 
 public section
 
-open CategoryTheory TauCeti.GeneralLinear.Dynamic
+open CategoryTheory TauCeti.GeneralLinear.Dynamic TauCeti.FiniteTypeCommHopfAlgCat
 
 namespace TauCeti.GeneralLinear
 
@@ -51,29 +52,17 @@ noncomputable section
 
 variable {N : ℕ}
 
-/-- The weight-unipotent ideal, regarded as an ideal in the finite-type package of the
-weight-parabolic coordinate Hopf algebra. -/
-noncomputable def weightUnipotentInParabolicFiniteTypeHopfIdeal
-    (k : Type u) [Field k] (w : Fin N → ℤ) :
-    HopfIdeal k (weightParabolicFiniteTypeCoordinateHopfAlgebra k w).obj :=
-  let H : FiniteTypeCommHopfAlgCat.{u, u} k :=
-    ⟨weightParabolicCoordinateHopfAlgebra k w,
-      weightParabolicFiniteTypeCoordinateHopfAlgebra_obj k w ▸
-        (weightParabolicFiniteTypeCoordinateHopfAlgebra k w).property⟩
-  let e : weightParabolicFiniteTypeCoordinateHopfAlgebra k w ≅ H :=
-    ObjectProperty.isoMk _
-      (eqToIso (weightParabolicFiniteTypeCoordinateHopfAlgebra_obj k w))
-  (weightUnipotentInParabolicHopfIdeal k w).comapOfSurjective
-    (FiniteTypeCommHopfAlgCat.toBialgHom e.hom)
-    (ConcreteCategory.bijective_of_isIso e.hom).2
-
-/-- **The unipotent radical of an injective-weight parabolic is its weight-unipotent
-subgroup.** -/
+/-- **The unipotent radical of an injective-weight parabolic is its weight-unipotent subgroup.**
+The pullback along the displayed object equality presents the result in the coordinate algebra
+where the canonical weight-unipotent ideal is defined. -/
 theorem unipotentRadicalDefiningIdeal_weightParabolicFiniteTypeCoordinateHopfAlgebra
     (k : Type u) [Field k] (w : Fin N → ℤ) (hw : Function.Injective w) :
-    FiniteTypeCommHopfAlgCat.unipotentRadicalDefiningIdeal
-        (weightParabolicFiniteTypeCoordinateHopfAlgebra k w) =
-      weightUnipotentInParabolicFiniteTypeHopfIdeal k w := by
+    (FiniteTypeCommHopfAlgCat.unipotentRadicalDefiningIdeal
+        (weightParabolicFiniteTypeCoordinateHopfAlgebra k w)).comapOfSurjective
+      (eqToHom (weightParabolicFiniteTypeCoordinateHopfAlgebra_obj k w).symm).hom
+      (ConcreteCategory.bijective_of_isIso
+        (eqToHom (weightParabolicFiniteTypeCoordinateHopfAlgebra_obj k w).symm)).2 =
+      weightUnipotentInParabolicHopfIdeal k w := by
   let H : FiniteTypeCommHopfAlgCat.{u, u} k :=
     ⟨weightParabolicCoordinateHopfAlgebra k w,
       weightParabolicFiniteTypeCoordinateHopfAlgebra_obj k w ▸
@@ -113,13 +102,22 @@ theorem unipotentRadicalDefiningIdeal_weightParabolicFiniteTypeCoordinateHopfAlg
   have hRaw : FiniteTypeCommHopfAlgCat.unipotentRadicalDefiningIdeal H = I := by
     rw [← hker]
     exact
-      FiniteTypeCommHopfAlgCat.unipotentRadicalDefiningIdeal_eq_kernelHopfIdeal_of_diagonalizable
-        H G f (hker ▸ hI)
+      unipotentRadicalDefiningIdeal_eq_kernelHopfIdeal_of_geometricallySemisimple
+        H (DiagonalizableGroup.coordinateRing k G)
+          (DiagonalizableGroup.geometricallySemisimplePointsCommHopfAlgProperty k G)
+          f (hker ▸ hI)
   let e : weightParabolicFiniteTypeCoordinateHopfAlgebra k w ≅ H :=
     ObjectProperty.isoMk _
       (eqToIso (weightParabolicFiniteTypeCoordinateHopfAlgebra_obj k w))
-  rw [← FiniteTypeCommHopfAlgCat.comapOfSurjective_unipotentRadicalDefiningIdeal e, hRaw]
-  rfl
+  -- The finite-type package is opaque across modules, so align its explicit object isomorphism
+  -- with the pullback displayed in the theorem statement.
+  change
+    (FiniteTypeCommHopfAlgCat.unipotentRadicalDefiningIdeal
+      (weightParabolicFiniteTypeCoordinateHopfAlgebra k w)).comapOfSurjective
+        (FiniteTypeCommHopfAlgCat.toBialgHom e.symm.hom)
+        (ConcreteCategory.bijective_of_isIso e.symm.hom).2 = I
+  rw [FiniteTypeCommHopfAlgCat.comapOfSurjective_unipotentRadicalDefiningIdeal e.symm]
+  exact hRaw
 
 end
 
