@@ -55,23 +55,21 @@ variable {m n x : ℝ}
 
 For positive `m` and `n`, this function is strictly monotone on `Iio 1` and maps `Ioo 0 1`
 onto `Ioi 0`. -/
-@[expose]
 def fisherSnedecorMap (m n : ℝ) (u : ℝ) : ℝ := (n / m) * u / (1 - u)
 
 /-- The defining formula for `fisherSnedecorMap`. -/
 theorem fisherSnedecorMap_def (m n u : ℝ) :
-    fisherSnedecorMap m n u = (n / m) * u / (1 - u) := rfl
+    fisherSnedecorMap m n u = (n / m) * u / (1 - u) := (rfl)
 
 /-- The formula for the inverse transformation on the positive half-line.
 
 For positive `m` and `n`, this is the inverse of `fisherSnedecorMap m n` between `Ioi 0` and
 `Ioo 0 1`. -/
-@[expose]
 def fisherSnedecorMapInv (m n : ℝ) (x : ℝ) : ℝ := m * x / (n + m * x)
 
 /-- The defining formula for `fisherSnedecorMapInv`. -/
 theorem fisherSnedecorMapInv_def (m n x : ℝ) :
-    fisherSnedecorMapInv m n x = m * x / (n + m * x) := rfl
+    fisherSnedecorMapInv m n x = m * x / (n + m * x) := (rfl)
 
 /-- The Fisher--Snedecor law with degrees of freedom `m` and `n`.  Invalid parameters are
 the zero measure; for valid parameters this is the beta law pushed forward by the standard
@@ -118,14 +116,18 @@ theorem isProbabilityMeasure_fisherSnedecorMeasure_iff :
 @[fun_prop]
 theorem measurable_fisherSnedecorMap (m n : ℝ) :
     Measurable (fisherSnedecorMap m n) := by
-  change Measurable (fun u : ℝ => (n / m) * u / (1 - u))
+  rw [show fisherSnedecorMap m n = (fun u : ℝ => (n / m) * u / (1 - u)) by
+    funext u
+    exact fisherSnedecorMap_def m n u]
   fun_prop
 
 /-- The beta-to-F inverse transformation is measurable for all parameter values. -/
 @[fun_prop]
 theorem measurable_fisherSnedecorMapInv (m n : ℝ) :
     Measurable (fisherSnedecorMapInv m n) := by
-  change Measurable (fun x : ℝ => m * x / (n + m * x))
+  rw [show fisherSnedecorMapInv m n = (fun x : ℝ => m * x / (n + m * x)) by
+    funext x
+    exact fisherSnedecorMapInv_def m n x]
   fun_prop
 
 /-! ### Support and the inverse -/
@@ -147,25 +149,22 @@ theorem fisherSnedecorMap_strictMonoOn (hm : 0 < m) (hn : 0 < n) :
   apply (div_lt_div_iff₀ (sub_pos.mpr hu) (sub_pos.mpr hv)).2
   nlinarith [mul_pos hnm (sub_pos.mpr huv)]
 
-/-- For `u < 1`, the inverse transformation after the beta-to-F map is the identity. -/
-theorem fisherSnedecorMapInv_map (hm : 0 < m) (hn : 0 < n) {u : ℝ}
-    (hu : u < 1) :
+/-- If `m`, `n`, and `1 - u` are nonzero, the inverse transformation after the
+beta-to-F map is the identity. -/
+theorem fisherSnedecorMapInv_map (hm : m ≠ 0) (hn : n ≠ 0) {u : ℝ}
+    (hu : u ≠ 1) :
     fisherSnedecorMapInv m n (fisherSnedecorMap m n u) = u := by
   rw [fisherSnedecorMapInv_def, fisherSnedecorMap_def]
-  field_simp [ne_of_gt hm, ne_of_gt hn, ne_of_gt (sub_pos.mpr hu)]
+  field_simp [hm, hn, sub_ne_zero.mpr (Ne.symm hu)]
   ring
 
-/-- For `0 ≤ x`, the beta-to-F map after the inverse transformation is the identity. -/
-theorem fisherSnedecorMap_inv (hm : 0 < m) (hn : 0 < n) {x : ℝ}
-    (hx : 0 ≤ x) :
+/-- If `m`, `n`, and `n + m * x` are nonzero, the beta-to-F map after the inverse
+transformation is the identity. -/
+theorem fisherSnedecorMap_mapInv (hm : m ≠ 0) (hn : n ≠ 0) {x : ℝ}
+    (hden : n + m * x ≠ 0) :
     fisherSnedecorMap m n (fisherSnedecorMapInv m n x) = x := by
   rw [fisherSnedecorMap_def, fisherSnedecorMapInv_def]
-  have hden : 0 < n + m * x := by positivity
-  have hden' : 0 < 1 - m * x / (n + m * x) := by
-    -- This identity exposes the positive denominator needed for the inverse map.
-    rw [show 1 - m * x / (n + m * x) = n / (n + m * x) by field_simp; ring]
-    exact div_pos hn hden
-  field_simp [ne_of_gt hm, ne_of_gt hn, ne_of_gt hden, ne_of_gt hden']
+  field_simp [hm, hn, hden]
   ring
 
 /-- For positive degrees of freedom, the inverse transformation maps `Ioi 0` into `Ioo 0 1`. -/
@@ -185,8 +184,9 @@ theorem fisherSnedecorMap_image_Ioo (hm : 0 < m) (hn : 0 < n) :
   · rintro ⟨u, hu, rfl⟩
     exact fisherSnedecorMap_mem_Ioi hm hn hu
   · intro hx
+    have hden : 0 < n + m * x := add_pos hn (mul_pos hm hx)
     exact ⟨fisherSnedecorMapInv m n x, fisherSnedecorMapInv_mem_Ioo hm hn hx,
-      fisherSnedecorMap_inv hm hn hx.le⟩
+      fisherSnedecorMap_mapInv (ne_of_gt hm) (ne_of_gt hn) (ne_of_gt hden)⟩
 
 private theorem ae_mem_Ioo_betaMeasure (α β : ℝ) :
     ∀ᵐ u ∂betaMeasure α β, u ∈ Ioo (0 : ℝ) 1 := by
@@ -206,7 +206,10 @@ private theorem fisherSnedecorMap_preimage_Iic_ae (hm : 0 < m) (hn : 0 < n) {x :
   filter_upwards [ae_mem_Ioo_betaMeasure (m / 2) (n / 2)] with u hu
   simp only [mem_preimage, mem_Iic]
   apply propext
-  nth_rewrite 1 [← fisherSnedecorMap_inv hm hn hx.le]
+  have hden : 0 < n + m * x := add_pos hn (mul_pos hm hx)
+  have h_inv := fisherSnedecorMap_mapInv (x := x) (ne_of_gt hm) (ne_of_gt hn)
+    (ne_of_gt hden)
+  nth_rewrite 1 [← h_inv]
   exact (fisherSnedecorMap_strictMonoOn hm hn).le_iff_le hu.2
     (fisherSnedecorMapInv_mem_Ioo hm hn hx).2
 
