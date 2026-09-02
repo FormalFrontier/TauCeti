@@ -64,8 +64,6 @@ estimate give the fixed-bounded-support and translation inputs for Fréchet--Kol
   on `W^{1,p}_0(ℝⁿ)`.
 * `TauCeti.W1p0.eLpNorm_value_extendByZeroL_comp_add_sub_le_mul_enorm_gradient`: the translation
   estimate for the zero extension of a function in `W^{1,p}_0(Ω)`.
-* `TauCeti.W1p0.eLpNorm_value_extendByZeroL_comp_add_sub_le_mul_enorm`: the graph-norm form of the
-  zero-extension translation estimate.
 * `TauCeti.W1p0.exists_pos_forall_eLpNorm_value_extendByZeroL_comp_add_sub_le_of_gradient_le`:
   zero extensions of a gradient-bounded family have uniformly small translation increments.
 * `TauCeti.W1p0.exists_pos_forall_eLpNorm_value_extendByZeroL_comp_add_sub_le_of_norm_le`:
@@ -207,22 +205,6 @@ theorem W1p0.eLpNorm_value_extendByZeroL_comp_add_sub_le_mul_enorm_gradient {Ome
   rw [W1p0.gradient_extendByZeroL]
   exact enorm_eq_iff_norm_eq.2 ((extendByZeroLpₗᵢ ℝ mu Omega.isOpen.measurableSet
     (SetLike.coe_subset_coe.mpr (le_top : Omega ≤ ⊤))).norm_map _)
-
-/-- The graph-norm form of the zero-extension translation estimate. The `W^{1,p}` norm controls
-the gradient component, so `‖\tilde{u}(· + h) - \tilde{u}‖_p ≤ ‖h‖ ‖u‖_{W^{1,p}}`. This is the
-uniform estimate used for norm-bounded families in Rellich--Kondrachov. -/
-theorem W1p0.eLpNorm_value_extendByZeroL_comp_add_sub_le_mul_enorm
-    {Omega : Opens E} (hp : p ≠ ∞) (h : E) (u : W1p0 mu Omega p) :
-    eLpNorm (fun x =>
-      W1p.value (W1p0.extendByZeroL le_top u : W1p mu ⊤ p) (x + h) -
-        W1p.value (W1p0.extendByZeroL le_top u : W1p mu ⊤ p) x) p mu
-      ≤ ‖h‖ₑ * ‖u‖ₑ := by
-  refine (W1p0.eLpNorm_value_extendByZeroL_comp_add_sub_le_mul_enorm_gradient hp h u).trans ?_
-  apply mul_le_mul_right
-  have hgradient : ‖W1p.gradient (u : W1p mu Omega p)‖ ≤ ‖u‖ :=
-    W1p.norm_gradient_le (u : W1p mu Omega p)
-  rw [← ofReal_norm, ← ofReal_norm]
-  exact ENNReal.ofReal_mono hgradient
 
 /-- **Uniform smallness of translation increments for a gradient-bounded Sobolev family.** If
 every `u ∈ S ⊆ W^{1,p}_0(Ω)` has gradient norm at most `C`, then for every `ε > 0` there is a
