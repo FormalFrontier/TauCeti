@@ -206,6 +206,20 @@ def ofRefinement (t : LocalTrivializations M) (s : LocalTrivializations N)
   fstIso := (t.ofRefinement r.X r.coversTop r.leftIndex r.left).iso
   sndIso := (s.ofRefinement r.X r.coversTop r.rightIndex r.right).iso
 
+/-- The first atlas of a supplied common-refinement pair is the corresponding refined atlas. -/
+@[simp]
+lemma ofRefinement_fst (t : LocalTrivializations M) (s : LocalTrivializations N)
+    (r : GrothendieckTopology.CoversTop.CommonRefinement J t.X s.X) :
+    (ofRefinement t s r).fst = t.ofRefinement r.X r.coversTop r.leftIndex r.left :=
+  (rfl)
+
+/-- The second atlas of a supplied common-refinement pair is the corresponding refined atlas. -/
+@[simp]
+lemma ofRefinement_snd (t : LocalTrivializations M) (s : LocalTrivializations N)
+    (r : GrothendieckTopology.CoversTop.CommonRefinement J t.X s.X) :
+    (ofRefinement t s r).snd = s.ofRefinement r.X r.coversTop r.rightIndex r.right :=
+  (rfl)
+
 /-- Transport two local-trivialization atlases to the canonical common refinement of their covers.
 
 This uses `GrothendieckTopology.CoversTop.commonRefinement`; use `ofRefinement` when the
@@ -214,6 +228,26 @@ noncomputable def of (t : LocalTrivializations M) (s : LocalTrivializations N) :
     CommonRefinementPair M N :=
   ofRefinement t s
     (GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop)
+
+/-- The first atlas of the canonical pair is the corresponding canonical refinement. -/
+@[simp]
+lemma of_fst (t : LocalTrivializations M) (s : LocalTrivializations N) :
+    (of t s).fst =
+      t.ofRefinement (GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop).X
+        (GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop).coversTop
+        (GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop).leftIndex
+        (GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop).left :=
+  (rfl)
+
+/-- The second atlas of the canonical pair is the corresponding canonical refinement. -/
+@[simp]
+lemma of_snd (t : LocalTrivializations M) (s : LocalTrivializations N) :
+    (of t s).snd =
+      s.ofRefinement (GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop).X
+        (GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop).coversTop
+        (GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop).rightIndex
+        (GrothendieckTopology.CoversTop.commonRefinement t.coversTop s.coversTop).right :=
+  (rfl)
 
 end CommonRefinementPair
 
