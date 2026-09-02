@@ -7,7 +7,6 @@ module
 
 public import TauCeti.Algebra.Lie.Symplectic.StandardCarrier.Frobenius
 public import TauCeti.Algebra.Lie.Symplectic.StandardCarrier.RootDatum
-public import TauCeti.GroupTheory.FixedPointCandidate
 public import TauCeti.GroupTheory.SpecificGroups.CFSG.Frobenius
 
 /-!
@@ -18,8 +17,8 @@ the Suzuki family `²B₂(2^(2m+1))`. They share a diagram, so they share a carr
 `TauCeti.RankTwoBLieIndex` is the subtype that collects exactly them. This file supplies, for every
 such index, the group of algebraic-closure-valued points of Tau Ceti's explicit full-weight type-`C`
 Chevalley carrier at its rank-two member, `TauCeti.SpStd.groupScheme 1`, together with that group's
-Bourbaki-numbered simple root subgroups and its `q`-power Frobenius; and it then runs the milestone
-L3 recipe on the untwisted branch, on that carrier, where the Frobenius *is* the Steinberg map.
+Bourbaki-numbered simple root subgroups, its `q`-power Frobenius, and the description of the points
+that Frobenius fixes.
 
 The rank-two type-`C` carrier is not a substitution for the diagram the families name: the two
 constructor names `B 2` and `C 2` denote the same rank-two root system, which is why
@@ -32,33 +31,32 @@ correspondence `TauCeti.RankTwoBLieIndex.carrierNode` composes the rank equality
 the two nodes, and every numbered object below is indexed by `Fin d.1.rank`, the upstream Bourbaki
 index type of the index's own Dynkin type, rather than by a node of the carrier.
 
-## Why only one of the two branches gets a candidate group
+## What the shared Frobenius is for on each branch
 
 The two families differ exactly in the endomorphism whose fixed points milestone L3 takes. On the
 untwisted branch that endomorphism is the `q`-power Frobenius outright, which is what milestone L1's
 table asks of an untwisted family and what `TauCeti.TypeB2LieIndex.diagramPerm_toGraphTwistedIndex`
 checks: the diagram permutation the index carries is trivial, the `B₂` diagram having no symmetry to
-twist by. So `TauCeti.TypeB2LieIndex.steinberg` is the shared Frobenius, and the recipe
+twist by. On the Suzuki branch it is instead `τ ^ (2m+1)` for the special isogeny `τ` of the pinned
+`B₂` group scheme in characteristic two, which milestone L2 consumes from Layer 9 of the
+reductive-groups roadmap and does not build; what this file supplies towards it is the second factor
+of the relation `τ ^ 2 = Frob_p` that identifies `τ`. Either way the map below is the `q`-power
+Frobenius, at the field order the index records, on the very carrier those fixed points will be
+taken in. A Suzuki index reaches all of it through `TauCeti.SuzukiLieIndex.toRankTwoBLieIndex`.
+
+Neither branch gets a Steinberg map or a milestone L3 quotient here, and neither gets a candidate
+simple group. Milestone L1 asks for the Steinberg endomorphism of the points of the *pinned* simply
+connected group scheme, and the quotient
 
 ```text
-H_d = fixedSubgroup d.steinberg,        d.Group = [H_d, H_d] / Z([H_d, H_d])
+H_d = fixedSubgroup (Steinberg map),        [H_d, H_d] / Z([H_d, H_d])
 ```
 
-runs on this branch, on the rank-two type-`C` carrier. What it produces reads as the candidate
-simple group of `B₂(q)` only along the Layer 9 identification of that carrier with the pinned group
-that milestone L0 asks for, and not before. A validated untwisted index has `4 ≤ q`, by
-`TauCeti.TypeB2LieIndex.four_le_fieldOrder`: the classification list carries the two smaller
-parameters under other names, `B₂(2)` under `A₆` and `B₂(3)` under `²A₃(2)`, so they are dropped
-from the index rather than from the construction.
-
-On the Suzuki branch the Steinberg endomorphism is instead `τ ^ (2m+1)` for the special isogeny `τ`
-of the pinned `B₂` group scheme in characteristic two, which milestone L2 consumes from Layer 9 of
-the reductive-groups roadmap and does not build; no such map is formed here, and hence no candidate
-group either. What this file provides on that path is the second factor of the relation
-`τ ^ 2 = Frob_p` that identifies `τ`: `TauCeti.RankTwoBLieIndex.frobenius` is the `q`-power
-Frobenius, at the field order `q = 2^(2m+1)` a Suzuki index records, on the very carrier the
-Suzuki fixed points will be taken in. A Suzuki index reaches all of it through
-`TauCeti.SuzukiLieIndex.toRankTwoBLieIndex`.
+that milestone L3 forms is taken of the fixed points of that endomorphism, so neither is stated of
+the rank-two type-`C` carrier before the Layer 9 identification of the two carriers exists. What is
+named below is named after what it is: `TauCeti.RankTwoBLieIndex.frobenius` is the Frobenius of this
+carrier, and `TauCeti.RankTwoBLieIndex.mem_fixedSubgroup_frobenius_iff` describes the group it fixes
+as the points whose matrix entries lie in the field of definition `𝔽_q`.
 
 Nothing here asserts that the carrier is reductive, that its weight torus is maximal, that it is
 the symplectic group scheme, or that any group below is finite, perfect, or simple. In particular
@@ -81,9 +79,6 @@ characters stated in `rootGeneratorWeight_carrierNode_eq_root_simpleIndex`.
   description, and its pinned equation `Frob_q (x_i(u)) = x_i(u ^ q)`.
 * `TauCeti.RankTwoBLieIndex.mem_fixedSubgroup_frobenius_iff`: its fixed points are the points whose
   matrix entries lie in the field of definition `𝔽_q`.
-* `TauCeti.TypeB2LieIndex.steinberg` and `TauCeti.TypeB2LieIndex.Group`: the milestone L1 Steinberg
-  endomorphism of the untwisted branch and the milestone L3 quotient formed from it, both on the
-  rank-two type-`C` carrier rather than on the pinned group milestone L0 asks for.
 
 ## References
 
@@ -94,8 +89,9 @@ characters stated in `rootGeneratorWeight_carrierNode_eq_root_simpleIndex`.
   of the two rank-two diagrams that the node correspondence below moves between.
 * The target signatures realized here follow the human-authored formal skeleton
   `TauCetiRoadmap/CFSGStatement/Suggested.lean`: the ambient group, the numbered simple root
-  subgroup, the Frobenius with its pinned equation, and the fixed-point recipe, all taken on a
-  validated-index subtype.
+  subgroup, and the Frobenius with its pinned equation, all taken on a validated-index subtype. The
+  skeleton's fixed-point recipe is not realized here, its Steinberg map being one of the pinned
+  carrier.
 
 ## Roadmap
 
@@ -108,9 +104,11 @@ targets of `TauCetiRoadmap/ReductiveGroups/README.md` that the CFSG roadmap cons
 builds; none of them is proved of `TauCeti.SpStd.groupScheme 1` here or in the files this one
 imports. What this file supplies is the branches' explicit carrier, its numbered root characters
 read in the `B₂` root datum, the equation `Frob_q (x_i(u)) = x_i(u ^ q)` that milestone L1 asks of
-an ordinary Frobenius factor, and, on the untwisted branch, the milestone L3 recipe run on that
-Frobenius, each in the shape those milestones state it; they transfer to the L0 carrier along that
-Layer 9 identification, and not before. The counterparts on the branches already assembled are
+an ordinary Frobenius factor, and the field-of-definition description of the points that Frobenius
+fixes, each in the shape those milestones state it; they transfer to the L0 carrier along that
+Layer 9 identification, and not before. Neither the milestone L1 Steinberg map of the untwisted
+family `B₂(q)` nor the milestone L3 quotient built from it is stated here; both wait on that L0
+carrier. The counterparts on the branches already assembled are
 `TauCeti/GroupTheory/SpecificGroups/CFSG/TypeA.lean`,
 `TauCeti/GroupTheory/SpecificGroups/CFSG/TypeE6.lean` and
 `TauCeti/GroupTheory/SpecificGroups/CFSG/Unimodular.lean`.
@@ -186,10 +184,11 @@ theorem rootGeneratorWeight_carrierNode_eq_root_simpleIndex (ht : (B 2).Valid)
 /-! ## The Frobenius endomorphism -/
 
 /-- **The `q`-power Frobenius endomorphism of the ambient group of an index on the `B₂` diagram**,
-for `q` the field order the index records. On the untwisted family `B₂(q)` it is the Steinberg map
-itself, by `TauCeti.TypeB2LieIndex.steinberg_def`. On the Suzuki family it is not: there the
-Steinberg map is the odd power `τ ^ (2m+1)` of the special isogeny, and this is the map that odd
-power squares to. -/
+for `q` the field order the index records. It is the map from which the Steinberg endomorphism of
+either family on this diagram is built once the milestone L0 carrier is available: on the untwisted
+family `B₂(q)` that endomorphism is the `q`-power Frobenius outright, and on the Suzuki family it is
+the odd power `τ ^ (2m+1)` of the special isogeny, whose square is the Frobenius. Neither is formed
+here. -/
 def frobenius : d.AmbientGroup →* d.AmbientGroup :=
   SpStd.frobenius 1 d.1.characteristic d.1.fieldExponent d.1.Closure
 
@@ -243,70 +242,5 @@ theorem mem_fixedSubgroup_frobenius_iff (g : d.AmbientGroup) :
 end
 
 end RankTwoBLieIndex
-
-namespace TypeB2LieIndex
-
-noncomputable section
-
-variable (d : TypeB2LieIndex)
-
-/-! ## The Steinberg endomorphism of the untwisted family -/
-
-/-- **The milestone L1 Steinberg endomorphism of a validated untwisted index on the `B₂` diagram,
-formed on the rank-two type-`C` carrier**: the `q`-power Frobenius of the ambient group, `q` being
-the field order the index records. The family is untwisted, so no diagram automorphism and no
-half-Frobenius enters; `diagramPerm_toGraphTwistedIndex` is the check that its diagram permutation
-is trivial.
-
-It is the Steinberg map of `B₂(q)` on the pinned carrier milestone L0 asks for only along the
-Layer 9 identification of the two carriers described in the module docstring, and not before. -/
-def steinberg : d.1.AmbientGroup →* d.1.AmbientGroup := d.1.frobenius
-
-/-- The Steinberg map of an untwisted `B₂` index is the Frobenius that both families on the `B₂`
-diagram share. This is its unfolding lemma; the definition itself stays sealed, and it is through
-this equation that the ambient-group API of `TauCeti.RankTwoBLieIndex` reaches the Steinberg
-map. -/
-theorem steinberg_def : d.steinberg = d.1.frobenius := (rfl)
-
-/-- **The Steinberg map fixes the Bourbaki numbering of a simple-root subgroup and raises its
-parameter to the `q`-th power**, that is, `Frob_q (x_i(u)) = x_i(u ^ q)`. This is the equation
-milestone L1 asks of the untwisted families, on this branch. -/
-@[simp]
-theorem steinberg_simpleRootSubgroup (i : Fin d.1.1.rank) (u : Multiplicative d.1.1.Closure) :
-    d.steinberg (d.1.simpleRootSubgroup i u) =
-      d.1.simpleRootSubgroup i
-        (Multiplicative.ofAdd (Multiplicative.toAdd u ^ d.1.1.fieldOrder)) := by
-  rw [steinberg_def]
-  exact d.1.frobenius_simpleRootSubgroup i u
-
-/-- **A point of the ambient group is fixed by the Steinberg map exactly when all of its matrix
-entries lie in the field of definition**, so the group `H_d` that the milestone L3 recipe is run on
-below is the group of points of the rank-two type-`C` carrier whose entries lie in `𝔽_q`. -/
-theorem mem_fixedSubgroup_steinberg_iff (g : d.1.AmbientGroup) :
-    g ∈ fixedSubgroup d.steinberg ↔
-      ∀ r c, ((g : Matrix.GeneralLinearGroup (Fin 4) d.1.1.Closure) :
-        Matrix (Fin 4) (Fin 4) d.1.1.Closure) r c ∈ d.1.1.fixedField := by
-  rw [steinberg_def]
-  exact d.1.mem_fixedSubgroup_frobenius_iff g
-
-/-! ## The milestone L3 quotient -/
-
-/-- **The milestone L3 quotient on the rank-two type-`C` carrier**: the derived subgroup of the
-fixed points of the Steinberg map above, modulo the centre of that derived subgroup.
-
-This is the shape milestone L3 asks of the untwisted family `B₂(q)`, formed on the rank-two type-`C`
-carrier rather than on the pinned simply connected Chevalley--Demazure group scheme that milestone
-L0 asks for. It becomes the candidate simple group of that family along the Layer 9 identification
-of the two carriers described in the module docstring, and not before; it is not offered as that
-candidate here. Nothing below asserts that it is finite, perfect, or simple. -/
-abbrev Group : Type := FixedPointCandidate d.steinberg
-
-/-- Milestone L3 asks every valid branch to carry a group instance; the quotient construction
-supplies it. -/
-example : _root_.Group d.Group := inferInstance
-
-end
-
-end TypeB2LieIndex
 
 end TauCeti
