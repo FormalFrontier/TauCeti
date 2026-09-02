@@ -41,8 +41,9 @@ hypothesis.
 * `hasPDF_of_hasLaw_studentTMeasure`, `pdf_eq_studentTPDF_of_hasLaw_studentTMeasure` and
   `rnDeriv_studentTMeasure` — the `HasPDF` bridge, the density, and the Radon–Nikodym derivative;
 * `studentTMeasure_map_neg` — the law is invariant under reflection in the origin;
-* `integrable_id_studentTMeasure_iff` and `integral_id_studentTMeasure` — the mean exists exactly
-  when `1 < ν`, and then equals zero;
+* `integrable_id_studentTMeasure_iff` and `integral_id_studentTMeasure` — within the nondegenerate
+  family the mean exists exactly when `1 < ν`, while its Bochner integral is zero for every
+  parameter;
 * `integrable_sq_studentTMeasure_iff`, `integral_sq_studentTMeasure` and
   `variance_id_studentTMeasure` — the second moment exists exactly when `2 < ν`, and then both it
   and the variance equal `ν / (ν - 2)`;
@@ -430,27 +431,24 @@ theorem integrable_id_studentTMeasure_iff (hν : 0 < ν) :
     simpa only [pow_one] using hint'
   · exact integrable_id_studentTMeasure_of_one_lt
 
-/-- The mean of a Student t law with more than one degree of freedom is zero. -/
+/-- The Bochner integral of the identity under a Student t measure is zero for every parameter,
+including by convention when the identity is not integrable. -/
 @[simp]
-theorem integral_id_studentTMeasure (hν : 1 < ν) :
+theorem integral_id_studentTMeasure (ν : ℝ) :
     ∫ x, x ∂studentTMeasure ν = 0 := by
-  have hint_id := integrable_id_studentTMeasure_of_one_lt hν
-  have hint : Integrable (fun x : ℝ => x) (studentTMeasure ν) := by
-    refine hint_id.congr (ae_of_all _ fun x => ?_)
-    rfl
-  have hpres : MeasurePreserving (fun x : ℝ => -x)
-      (studentTMeasure ν) (studentTMeasure ν) :=
-    ⟨measurable_neg, studentTMeasure_map_neg ν⟩
-  have hrefl : ∫ x, -x ∂studentTMeasure ν = ∫ x, x ∂studentTMeasure ν := by
-    simpa only [Function.comp_apply, id_eq] using
-      hpres.integral_comp (Homeomorph.neg ℝ).measurableEmbedding id
-  have hneg : Integrable (fun x : ℝ => -x) (studentTMeasure ν) := by
-    refine hint.neg.congr (ae_of_all _ fun x => ?_)
-    rfl
-  have hsum : (∫ x, x ∂studentTMeasure ν) + ∫ x, -x ∂studentTMeasure ν = 0 := by
-    rw [← integral_add hint hneg]
-    simp
-  linarith
+  by_cases hint : Integrable (fun x : ℝ => x) (studentTMeasure ν)
+  · have hpres : MeasurePreserving (fun x : ℝ => -x)
+        (studentTMeasure ν) (studentTMeasure ν) :=
+      ⟨measurable_neg, studentTMeasure_map_neg ν⟩
+    have hrefl : ∫ x, -x ∂studentTMeasure ν = ∫ x, x ∂studentTMeasure ν := by
+      simpa only [Function.comp_apply, id_eq] using
+        hpres.integral_comp (Homeomorph.neg ℝ).measurableEmbedding id
+    have hneg : Integrable (fun x : ℝ => -x) (studentTMeasure ν) := hint.neg
+    have hsum : (∫ x, x ∂studentTMeasure ν) + ∫ x, -x ∂studentTMeasure ν = 0 := by
+      rw [← integral_add hint hneg]
+      simp
+    linarith
+  · exact integral_undef hint
 
 private lemma studentTKernel_sq (hν : 0 < ν) (x : ℝ) :
     x ^ 2 * (1 + x ^ 2 / ν) ^ (-((ν + 1) / 2)) =
@@ -629,7 +627,7 @@ theorem variance_id_studentTMeasure (hν : 2 < ν) :
       (by simpa using integrable_sq_studentTMeasure_of_two_lt hν)
   rw [variance_eq_sub hmem]
   simp only [Pi.pow_apply, id_eq]
-  rw [integral_sq_studentTMeasure hν, integral_id_studentTMeasure (by linarith)]
+  rw [integral_sq_studentTMeasure hν, integral_id_studentTMeasure]
   ring
 
 /-! ### One degree of freedom -/
