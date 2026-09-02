@@ -120,8 +120,13 @@ theorem unipotentRadicalDefiningIdeal_finiteTypeCoordinateHopfAlgebra
             k (weights n)).symm := by
     simp only [e, ObjectProperty.isoMk_hom, ObjectProperty.homMk_hom, eqToIso.hom]
     rw [eqToHom_trans]
-  change e.hom.hom ((eqToHom (finiteTypeCoordinateHopfAlgebra_obj k n).symm).hom x) ∈ _ ↔ _
-  rw [← ConcreteCategory.comp_apply, hcomp]
+  have hcomp_apply :
+      e.hom.hom ((eqToHom (finiteTypeCoordinateHopfAlgebra_obj k n).symm).hom x) =
+        (eqToHom
+          (GeneralLinear.weightParabolicFiniteTypeCoordinateHopfAlgebra_obj
+            k (weights n)).symm).hom x := by
+    rw [← ConcreteCategory.comp_apply, hcomp]
+  rw [hcomp_apply]
   exact iff_of_eq hx
 
 end
