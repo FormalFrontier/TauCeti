@@ -455,8 +455,8 @@ def dihedralRotationChar (hζ : ζ ^ n = 1) : dihedralRotations n →* M :=
 
 @[simp]
 theorem dihedralRotationChar_apply (hζ : ζ ^ n = 1) (x : dihedralRotations n) :
-    dihedralRotationChar hζ x = ζ ^ (Multiplicative.toAdd (dihedralRotationsMulEquiv n x)).val :=
-  (rfl)
+    dihedralRotationChar hζ x = ζ ^ (Multiplicative.toAdd (dihedralRotationsMulEquiv n x)).val := by
+  simp [dihedralRotationChar, AddChar.zmodChar_apply]
 
 /-- The character sends the rotation `r i` to `ζ ^ i`. -/
 theorem dihedralRotationChar_r (hζ : ζ ^ n = 1) (i : ZMod n) :
