@@ -8,8 +8,6 @@ module
 public import Mathlib.MeasureTheory.Integral.Bochner.Set
 import Mathlib.Analysis.Convex.Integral
 import Mathlib.Analysis.Convex.Mul
-public import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
-public import Mathlib.MeasureTheory.Measure.Lebesgue.Integral
 
 /-!
 # Additional lemmas for the Bochner integral
@@ -26,8 +24,6 @@ extended-nonnegative Lebesgue integrals.
 
 * `sq_setIntegral_le_measureReal_mul_setIntegral_sq` is Cauchy--Schwarz for a real-valued set
   integral, in squared form.
-* `integrableOn_comp_neg_Iic_iff_Ioi` relates integrability of a reflected function on the
-  nonpositive half-line to integrability of the function itself on the positive half-line.
 
 ## `L¹` convergence
 
@@ -112,20 +108,6 @@ theorem tendsto_eLpNorm_one_of_tendsto_integral_norm_sub {Ω E ι : Type*} [Meas
     simp [Pi.sub_apply]
   simp_rw [heq]
   simpa [Function.comp_def] using (ENNReal.continuous_ofReal.tendsto 0).comp h
-
-/-- Reflection in the origin relates integrability on the two half-lines: a function is
-integrable on the positive half-line iff its reflection `x ↦ g (-x)` is integrable on the
-nonpositive half-line. -/
-theorem integrableOn_comp_neg_Iic_iff_Ioi {E : Type*} [NormedAddCommGroup E] {g : ℝ → E} :
-    IntegrableOn (fun x : ℝ => g (-x)) (Set.Iic (0 : ℝ)) ↔
-      IntegrableOn g (Set.Ioi (0 : ℝ)) := by
-  have hmp := Measure.measurePreserving_neg (volume : Measure ℝ)
-  have hpre : (fun x : ℝ => -x) ⁻¹' (Set.Ici (0 : ℝ)) = Set.Iic (0 : ℝ) := by ext z; simp
-  have h1 : IntegrableOn (fun x : ℝ => g (-x)) (Set.Iic (0 : ℝ)) ↔
-      IntegrableOn g (Set.Ici (0 : ℝ)) := by
-    rw [← hpre]
-    exact hmp.integrableOn_comp_preimage (Homeomorph.neg ℝ).measurableEmbedding
-  rw [h1, integrableOn_Ici_iff_integrableOn_Ioi]
 
 end MeasureTheory
 

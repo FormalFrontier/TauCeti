@@ -8,7 +8,6 @@ module
 public import TauCeti.Probability.Distributions.StudentT.WeightedIntegral
 public import Mathlib.Probability.Moments.IntegrableExpMul
 import TauCeti.Analysis.SpecialFunctions.Beta
-import TauCeti.MeasureTheory.Integral.Bochner.Basic
 import Mathlib.MeasureTheory.Function.JacobianOneDim
 import Mathlib.MeasureTheory.Function.L1Space.Integrable
 import Mathlib.MeasureTheory.Measure.Lebesgue.Integral
