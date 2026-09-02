@@ -27,7 +27,11 @@ namespace TauCeti
 
 open Function Set
 
-variable {α β M : Type*} [CommMonoid M] {f : α ⊕ β → M}
+variable {α β M : Type*} {f : α ⊕ β → M}
+
+section One
+
+variable [One M]
 
 @[to_additive]
 theorem mulSupport_sum_type (f : α ⊕ β → M) :
@@ -43,6 +47,10 @@ theorem hasFiniteMulSupport_sum_type (hl : HasFiniteMulSupport (f ∘ Sum.inl))
     (hr : HasFiniteMulSupport (f ∘ Sum.inr)) : HasFiniteMulSupport f := by
   rw [HasFiniteMulSupport, mulSupport_sum_type]
   exact (Set.Finite.image _ hl).union (Set.Finite.image _ hr)
+
+end One
+
+variable [CommMonoid M]
 
 /-- A product over a disjoint union of index types splits as the product of the two partial
 products, provided both partial families have finite multiplicative support. -/
