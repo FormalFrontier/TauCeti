@@ -8,6 +8,7 @@ module
 public import TauCeti.Algebra.AlgebraicGroup.Representation.Faithful.BaseChange
 public import TauCeti.Algebra.AlgebraicGroup.Representation.UnipotentPoint.Faithful
 public import TauCeti.Algebra.AlgebraicGroup.Unipotent.Reduced
+import TauCeti.Algebra.Coalgebra.Comodule.MatrixCoefficient.PointAction
 import TauCeti.RingTheory.Smooth.GeometricallyReduced
 
 /-!

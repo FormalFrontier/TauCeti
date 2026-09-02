@@ -6,8 +6,9 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.Unipotent.Basic
+public import TauCeti.Algebra.Coalgebra.Comodule.MatrixCoefficient.Matrix
 import TauCeti.Algebra.AlgebraicGroup.Representation.UnipotentPoint.Naturality
-public import TauCeti.Algebra.Coalgebra.Comodule.MatrixCoefficient.PointAction
+import TauCeti.Algebra.Coalgebra.Comodule.MatrixCoefficient.PointAction
 import TauCeti.RingTheory.FiniteType.PointSeparation
 import TauCeti.RingTheory.Smooth.GeometricallyReduced
 
