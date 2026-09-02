@@ -48,8 +48,11 @@ cluster-set property that produces the continuous extension in the first place â
 `Conformal/ClusterSet.lean` records both as still missing, which is why
 `TauCeti.injOn_closure_of_injOn_frontier` there carries boundary injectivity as a hypothesis. So no
 boundary-injectivity claim is discharged by this file; what it adds is the analytic
-non-degeneracy input that the missing step will consume, and there is at present no lemma in the
-repository or in Mathlib that bridges the two.
+non-degeneracy input that the missing step will consume.
+
+The L5 milestone is now complete via `Conformal/Jordan/Approach.lean`, which takes the
+Janiszewski route (preconnected approach regions) rather than the classical two-arc argument,
+so this file's analytic input is consumed through a different path than described above.
 
 ## Main results
 

@@ -17,7 +17,8 @@ public import TauCeti.Topology.JordanCurve.Subcontinuum
 
 A Jordan domain has preconnected approach regions at every boundary point.
 The proof uses Janiszewski's theorem (`TauCeti.janiszewski`) and one arc
-lemma, avoiding plane separation and Schoenflies entirely.
+lemma; it avoids the Jordan curve theorem and Schoenflies by using
+Janiszewski.
 
 Given `a ∈ frontier U` with `U` a Jordan domain, take an open arc
 `W ⊆ frontier U ∩ ball a r` through `a` whose complement `frontier U \ W`
@@ -28,21 +29,33 @@ separate points of `ball a ρ` for small `ρ`; Janiszewski puts both in one
 component of `(S ∪ T)ᶜ ⊆ U ∩ ball a r`.
 
 Combined with `injOn_closedBall_of_isPreconnected_image_approach` from
-`InverseBoundaryCluster.lean`, this gives boundary injectivity of the
-Riemann map of a Jordan domain, and with `closureHomeomorph` from
+`Inverse/BoundaryCluster.lean`, this gives injectivity on the closed disc
+for the Riemann map of a Jordan domain, and with `closureHomeomorph` from
 `BoundaryCorrespondence.lean`, the homeomorphism of closures.
+
+## Input
+
+* `TauCeti.IsJordanCurve.exists_isCompact_isPreconnected_notMem_sdiff_subset_ball`
+  (`JordanCurve/SmallArc.lean`) — a Jordan curve admits a compact preconnected
+  arc missing any given point, whose complement lies in a given ball.
 
 ## Main results
 
-* `TauCeti.IsJordanCurve.exists_isCompact_isPreconnected_notMem_sdiff_subset_ball`
-  — a Jordan curve admits a closed preconnected arc missing any given point,
-  whose complement lies in a given ball around it.
 * `TauCeti.IsJordanDomain.isPreconnectedApproachAt`
   — a Jordan domain has preconnected approach regions at every boundary point.
 * `TauCeti.injOn_closedBall_of_isJordanCurve_frontier`
-  — boundary injectivity of the Riemann map, Jordan case.
+  — injectivity on the closed disc for the Riemann map, Jordan case.
 * `TauCeti.exists_homeomorph_closedBall_closure_of_isJordanCurve_frontier`
   — the Riemann map extends to a homeomorphism of the closures.
+
+## References
+
+* C. Carathéodory, *Über die gegenseitige Beziehung der Ränder bei der konformen Abbildung*,
+  Math. Ann. **73** (1913).
+* Layer L5 is absent from
+  [mathlib4#33505](https://github.com/leanprover-community/mathlib4/pull/33505), the in-progress
+  human-curated Riemann-mapping-theorem effort, and Mathlib has no boundary correspondence for
+  conformal maps, so this is new Lean formalization.
 -/
 
 public section
@@ -152,7 +165,7 @@ private theorem IsJordanDomain.exists_isPreconnected_inter_ball_subset_of_arc
   exact janiszewski isClosed_frontier (isClosed_sphere.union hclosed) hSb
     (isBounded_sphere.union (hSb.subset sdiff_subset)) (hST ▸ hpre) hSsep hTsep
 
-/-- **A Jordan domain is locally connected at each boundary point.**  The arc
+/-- **A Jordan domain is locally connected from within at each boundary point.**  The arc
 lemma supplies the closed complementary arc, the Janiszewski step does the
 rest. -/
 theorem IsJordanDomain.exists_isPreconnected_inter_ball_subset
