@@ -43,8 +43,6 @@ form.
   particular `TauCeti.Probability.JointlyDissociated.indep_arrayTail_self` of itself;
 * `TauCeti.Probability.JointlyDissociated.measure_eq_zero_or_one_of_arrayTail` — **the zero-one
   law**: the tail σ-algebra of a jointly dissociated array is trivial;
-* `TauCeti.Probability.SeparatelyDissociated.measure_eq_zero_or_one_of_arrayTail` — the same for the
-  stronger dissociation hypothesis;
 * `TauCeti.Probability.JointlyDissociated.measure_eq_zero_or_one_of_tailProcess_arrayDiag` — the
   corollary for the diagonal process, whose tail is an array tail event.
 
@@ -90,21 +88,12 @@ theorem JointlyDissociated.indep_arrayTailFamily_arrayTail [IsZeroOrProbabilityM
     intro k
     apply indep_of_indep_of_le_right _ (arrayTail_le_arrayTailFamily X (n + k + 1))
     rw [arrayTailFamily_eq_blockSigma]
-    exact h.indep_blockSigma_prod
+    exact h.indep_blockSigma_prod_self
       (Set.disjoint_of_subset_left Set.Icc_subset_Iic_self
         ((Set.Iic_disjoint_Ici).2 (Nat.not_succ_le_self (n + k))))
   have hsup := indep_iSup_of_monotone hindep hle
     (arrayTail_le_ambient n hX) hmono
-  refine indep_of_indep_of_le_left hsup ?_
-  rw [arrayTailFamily_eq_blockSigma]
-  refine blockSigma_le_iff.mpr fun p hp => ?_
-  exact (measurable_blockSigma_of_mem (Z := X)
-    (S := corner (max p.1 p.2) ×ˢ corner (max p.1 p.2))
-    ⟨⟨hp.1,
-        (le_max_left p.1 p.2).trans (Nat.le_add_left _ _)⟩,
-      ⟨hp.2,
-        (le_max_right p.1 p.2).trans (Nat.le_add_left _ _)⟩⟩).mono
-      (le_iSup (fun k : ℕ => blockSigma X (corner k ×ˢ corner k)) (max p.1 p.2)) le_rfl
+  exact indep_of_indep_of_le_left hsup (arrayTailFamily_le_iSup_Icc X n)
 
 /-- **The tail σ-algebra of a jointly dissociated array is independent of itself**, the special
 case of `JointlyDissociated.indep_arrayTailFamily_arrayTail` in which the left σ-algebra is cut
@@ -127,14 +116,6 @@ theorem JointlyDissociated.measure_eq_zero_or_one_of_arrayTail [IsZeroOrProbabil
     (hX : ∀ p, n ≤ p.1 → n ≤ p.2 → Measurable (X p)) {s : Set Ω}
     (hs : MeasurableSet[arrayTail X] s) : μ s = 0 ∨ μ s = 1 :=
   measure_eq_zero_or_one_of_indep_self (h.indep_arrayTail_self n hX) hs
-
-/-- **The zero-one law for a separately dissociated array**, the corollary of the jointly
-dissociated form under the stronger dissociation hypothesis. -/
-theorem SeparatelyDissociated.measure_eq_zero_or_one_of_arrayTail [IsZeroOrProbabilityMeasure μ]
-    (h : SeparatelyDissociated μ X) (n : ℕ)
-    (hX : ∀ p, n ≤ p.1 → n ≤ p.2 → Measurable (X p)) {s : Set Ω}
-    (hs : MeasurableSet[arrayTail X] s) : μ s = 0 ∨ μ s = 1 :=
-  h.jointlyDissociated.measure_eq_zero_or_one_of_arrayTail n hX hs
 
 /-- **The diagonal of a jointly dissociated array has a trivial tail.** The tail of the diagonal
 process is an array tail event, so this is the zero-one law read along the diagonal. -/

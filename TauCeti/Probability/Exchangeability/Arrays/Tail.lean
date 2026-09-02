@@ -37,6 +37,8 @@ These definitions support the exchangeable-arrays milestone of
 * `TauCeti.Probability.arrayTailFamily_le_iff` and `TauCeti.Probability.le_arrayTail_iff` — the
   universal properties of the two σ-algebras;
 * `TauCeti.Probability.arrayTailFamily_antitone` — the tail family decreases;
+* `TauCeti.Probability.arrayTailFamily_le_iSup_Icc` — finite corners exhaust a member of the tail
+  family;
 * `TauCeti.Probability.arrayTail_le_ambient` — the array tail is a sub-σ-algebra of the ambient one
   as soon as the entries beyond some cutoff are measurable;
 * `TauCeti.Probability.tailProcess_arrayDiag_le_arrayTail` — the tail of the diagonal process is an
@@ -107,6 +109,20 @@ theorem arrayTailFamily_antitone (X : ℕ × ℕ → Ω → α) : Antitone (arra
   rw [arrayTailFamily_eq_blockSigma, arrayTailFamily_eq_blockSigma]
   exact blockSigma_mono
     (Set.prod_mono (Set.Ici_subset_Ici.mpr hnm) (Set.Ici_subset_Ici.mpr hnm))
+
+omit [MeasurableSpace Ω] in
+/-- The finite corners above `n` exhaust the array tail family at `n`. -/
+theorem arrayTailFamily_le_iSup_Icc (X : ℕ × ℕ → Ω → α) (n : ℕ) :
+    arrayTailFamily X n ≤
+      ⨆ k, blockSigma X (Set.Icc n (n + k) ×ˢ Set.Icc n (n + k)) := by
+  rw [arrayTailFamily_le_iff]
+  intro i j hi hj
+  exact (measurable_blockSigma_of_mem (Z := X)
+    (S := Set.Icc n (n + max i j) ×ˢ Set.Icc n (n + max i j))
+    ⟨⟨hi, (le_max_left i j).trans (Nat.le_add_left _ _)⟩,
+      ⟨hj, (le_max_right i j).trans (Nat.le_add_left _ _)⟩⟩).mono
+    (le_iSup (fun k : ℕ =>
+      blockSigma X (Set.Icc n (n + k) ×ˢ Set.Icc n (n + k))) (max i j)) le_rfl
 
 omit [MeasurableSpace Ω] in
 /-- The tail σ-algebra of an array sits inside every member of its tail family. -/
