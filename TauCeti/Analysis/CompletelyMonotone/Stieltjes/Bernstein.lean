@@ -105,9 +105,7 @@ theorem integrable_mul_zpow_neg_two_sub_add {μ : Measure ℝ≥0}
   filter_upwards with x
   have htx : t + (x : ℝ) ≠ 0 := (add_pos_of_pos_of_nonneg ht x.coe_nonneg).ne'
   have hexp : -1 - (n : ℤ) = 1 + (-2 - (n : ℤ)) := by omega
-  change (t + (x : ℝ)) ^ (-1 - (n : ℤ)) -
-      t * (t + (x : ℝ)) ^ (-2 - (n : ℤ)) =
-    (x : ℝ) * (t + x) ^ (-2 - (n : ℤ))
+  simp only [Pi.sub_apply]
   rw [hexp, zpow_add₀ htx, zpow_one]
   ring
 
