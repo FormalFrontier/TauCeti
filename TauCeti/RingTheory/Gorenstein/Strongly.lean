@@ -198,11 +198,9 @@ theorem prodContraction_prodShift_add (p : M × M) :
 
 theorem range_prodShift :
     LinearMap.range (prodShift R M) = LinearMap.range (LinearMap.inl R M M) := by
-  refine Submodule.ext fun q => ⟨?_, ?_⟩
-  · rintro ⟨p, rfl⟩
-    exact ⟨p.2, rfl⟩
-  · rintro ⟨x, rfl⟩
-    exact ⟨(0, x), rfl⟩
+  unfold prodShift
+  exact LinearMap.range_comp_of_range_eq_top _
+    (LinearMap.range_eq_top_of_surjective _ Prod.snd_surjective)
 
 /-- The image of `prodShift` is a copy of `M`. -/
 noncomputable def rangeProdShiftEquiv : LinearMap.range (prodShift R M) ≃ₗ[R] M :=
