@@ -290,67 +290,53 @@ theorem map_lowerUnipotent {S : Type*} [CommRing S] (f : R →+* S)
 @[simp]
 theorem upperUnipotent_add (B C : Matrix (Fin m) (Fin m) R)
     (hB : B.IsSymm) (hC : C.IsSymm) :
-  upperUnipotent (B + C) (hB.add hC) = upperUnipotent B hB * upperUnipotent C hC := by
-  apply Subtype.ext
-  apply Matrix.GeneralLinearGroup.ext
-  intro i j
-  change
-    ((((upperUnipotent (B + C) (hB.add hC) : GLSymplecticFin m R) : GL (Fin (m + m)) R) :
-        Matrix (Fin (m + m)) (Fin (m + m)) R) i j) =
-      (((((upperUnipotent B hB : GLSymplecticFin m R) : GL (Fin (m + m)) R) :
-          Matrix (Fin (m + m)) (Fin (m + m)) R) *
-        (((upperUnipotent C hC : GLSymplecticFin m R) : GL (Fin (m + m)) R) :
-          Matrix (Fin (m + m)) (Fin (m + m)) R)) i j)
-  rw [coe_upperUnipotent, coe_upperUnipotent, coe_upperUnipotent]
-  exact congrFun (congrFun (unipotentBlock_add_reindex true B C) i) j
+    upperUnipotent (B + C) (hB.add hC) = upperUnipotent B hB * upperUnipotent C hC := by
+  refine Subtype.ext (Units.ext ?_)
+  rw [Subgroup.coe_mul, Units.val_mul, coe_upperUnipotent, coe_upperUnipotent,
+    coe_upperUnipotent]
+  exact unipotentBlock_add_reindex true B C
 
 /-- Lower unipotent blocks turn addition of symmetric matrices into multiplication. -/
 @[simp]
 theorem lowerUnipotent_add (B C : Matrix (Fin m) (Fin m) R)
     (hB : B.IsSymm) (hC : C.IsSymm) :
-  lowerUnipotent (B + C) (hB.add hC) = lowerUnipotent B hB * lowerUnipotent C hC := by
-  apply Subtype.ext
-  apply Matrix.GeneralLinearGroup.ext
-  intro i j
-  change
-    ((((lowerUnipotent (B + C) (hB.add hC) : GLSymplecticFin m R) : GL (Fin (m + m)) R) :
-        Matrix (Fin (m + m)) (Fin (m + m)) R) i j) =
-      (((((lowerUnipotent B hB : GLSymplecticFin m R) : GL (Fin (m + m)) R) :
-          Matrix (Fin (m + m)) (Fin (m + m)) R) *
-        (((lowerUnipotent C hC : GLSymplecticFin m R) : GL (Fin (m + m)) R) :
-          Matrix (Fin (m + m)) (Fin (m + m)) R)) i j)
-  rw [coe_lowerUnipotent, coe_lowerUnipotent, coe_lowerUnipotent]
-  exact congrFun (congrFun (unipotentBlock_add_reindex false B C) i) j
+    lowerUnipotent (B + C) (hB.add hC) = lowerUnipotent B hB * lowerUnipotent C hC := by
+  refine Subtype.ext (Units.ext ?_)
+  rw [Subgroup.coe_mul, Units.val_mul, coe_lowerUnipotent, coe_lowerUnipotent,
+    coe_lowerUnipotent]
+  exact unipotentBlock_add_reindex false B C
 
 /-- The upper unipotent attached to the zero matrix is the identity. -/
 @[simp]
 theorem upperUnipotent_zero :
     upperUnipotent (0 : Matrix (Fin m) (Fin m) R) Matrix.isSymm_zero = 1 := by
-  apply Subtype.ext
-  apply Matrix.GeneralLinearGroup.ext
-  intro i j
-  change
-    ((((upperUnipotent (0 : Matrix (Fin m) (Fin m) R) Matrix.isSymm_zero :
-        GLSymplecticFin m R) : GL (Fin (m + m)) R) :
-      Matrix (Fin (m + m)) (Fin (m + m)) R) i j) =
-        (1 : Matrix (Fin (m + m)) (Fin (m + m)) R) i j
-  rw [coe_upperUnipotent]
-  exact congrFun (congrFun (unipotentBlock_zero_reindex true) i) j
+  refine Subtype.ext (Units.ext ?_)
+  rw [Subgroup.coe_one, Units.val_one, coe_upperUnipotent]
+  exact unipotentBlock_zero_reindex true
 
 /-- The lower unipotent attached to the zero matrix is the identity. -/
 @[simp]
 theorem lowerUnipotent_zero :
     lowerUnipotent (0 : Matrix (Fin m) (Fin m) R) Matrix.isSymm_zero = 1 := by
-  apply Subtype.ext
-  apply Matrix.GeneralLinearGroup.ext
-  intro i j
-  change
-    ((((lowerUnipotent (0 : Matrix (Fin m) (Fin m) R) Matrix.isSymm_zero :
-        GLSymplecticFin m R) : GL (Fin (m + m)) R) :
-      Matrix (Fin (m + m)) (Fin (m + m)) R) i j) =
-        (1 : Matrix (Fin (m + m)) (Fin (m + m)) R) i j
-  rw [coe_lowerUnipotent]
-  exact congrFun (congrFun (unipotentBlock_zero_reindex false) i) j
+  refine Subtype.ext (Units.ext ?_)
+  rw [Subgroup.coe_one, Units.val_one, coe_lowerUnipotent]
+  exact unipotentBlock_zero_reindex false
+
+/-- The inverse of an upper unipotent is the upper unipotent of the negated block. -/
+@[simp]
+theorem inv_upperUnipotent (B : Matrix (Fin m) (Fin m) R) (hB : B.IsSymm) :
+    (upperUnipotent B hB)⁻¹ = upperUnipotent (-B) hB.neg := by
+  refine inv_eq_of_mul_eq_one_right ?_
+  rw [← upperUnipotent_add]
+  simp
+
+/-- The inverse of a lower unipotent is the lower unipotent of the negated block. -/
+@[simp]
+theorem inv_lowerUnipotent (C : Matrix (Fin m) (Fin m) R) (hC : C.IsSymm) :
+    (lowerUnipotent C hC)⁻¹ = lowerUnipotent (-C) hC.neg := by
+  refine inv_eq_of_mul_eq_one_right ?_
+  rw [← lowerUnipotent_add]
+  simp
 
 /-! ## Root matrices -/
 
