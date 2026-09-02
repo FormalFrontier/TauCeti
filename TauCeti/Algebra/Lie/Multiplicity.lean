@@ -64,7 +64,7 @@ enveloping-algebra dictionary lives,
   finite decomposition of `M` into Lie submodules.**
 * `LieModule.isotypicMultiplicity_eq_zero_of_subsingleton`: the zero module occurs with
   multiplicity zero.
-* `LieModule.isotypicMultiplicity_eq_zero_of_subsingleton_module`: everything occurs in the zero
+* `LieModule.isotypicMultiplicity_eq_zero_of_subsingleton_codomain`: everything occurs in the zero
   module with multiplicity zero.
 * `LieModule.isotypicMultiplicity_self`: an irreducible module occurs in itself with multiplicity
   one.
@@ -142,7 +142,7 @@ theorem isotypicMultiplicity_eq_zero_of_subsingleton [Nontrivial R] [Subsingleto
 /-- **Everything occurs in the zero module with multiplicity zero**: the only morphism into it is
 the zero morphism. -/
 @[simp]
-theorem isotypicMultiplicity_eq_zero_of_subsingleton_module [Nontrivial R] [Subsingleton M] :
+theorem isotypicMultiplicity_eq_zero_of_subsingleton_codomain [Nontrivial R] [Subsingleton M] :
     isotypicMultiplicity R L M S = 0 :=
   have _ : Subsingleton (S →ₗ⁅R,L⁆ M) :=
     ⟨fun _ _ ↦ LieModuleHom.ext fun _ ↦ Subsingleton.elim _ _⟩

@@ -71,8 +71,11 @@ noncomputable def restrictLie [LieAlgebra R L] (e : M ≃ₗ⁅R,L⁆ N) (L' : L
 
 @[simp]
 theorem coe_restrictLie [LieAlgebra R L] (e : M ≃ₗ⁅R,L⁆ N) (L' : LieSubalgebra R L) :
-    ⇑(restrictLie e L') = e :=
-  (rfl)
+    ⇑(restrictLie e L') = e := by
+  funext m
+  refine (ofBijective_apply ((e : M →ₗ⁅R,L⁆ N).restrictLie L') _ m).trans ?_
+  rw [LieModuleHom.coe_restrictLie]
+  rfl
 
 section CongrRight
 

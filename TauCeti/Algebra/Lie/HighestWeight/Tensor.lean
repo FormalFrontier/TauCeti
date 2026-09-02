@@ -14,10 +14,11 @@ public section
 
 Let `L` be a finite-dimensional Lie algebra with non-degenerate Killing form over an algebraically
 closed field of characteristic zero, `H` a Cartan subalgebra and `b` a base of its root system.
-For dominant integral weights `lam` and `mu` the tensor product `L(lam) ⊗ L(mu)` is a
-finite-dimensional `L`-module, so Weyl's theorem decomposes it into irreducibles; the
-**tensor multiplicity** `TauCeti.tensorMultiplicity b lam mu nu` is the number of copies of
-`L(nu)` in that decomposition, the structure constant `c^nu_{lam mu}`. The definition itself, and
+The **tensor multiplicity** `TauCeti.tensorMultiplicity b lam mu nu` is the dimension of the space
+of morphisms `L(nu) →ₗ⁅K,L⁆ L(lam) ⊗ L(mu)`. For dominant integral `lam` and `mu` the tensor
+product is a finite-dimensional `L`-module, so Weyl's theorem decomposes it into irreducibles, and
+at a `nu` with `L(nu)` nonzero, hence irreducible, that dimension is the number of copies of
+`L(nu)` in the decomposition, the structure constant `c^nu_{lam mu}`. The definition itself, and
 the lemmas reading irreducibility off a nonzero multiplicity, ask only for a triangularizable
 Cartan subalgebra; algebraic closure enters with the character identity, which calls on Weyl's
 complete reducibility theorem.
@@ -102,9 +103,15 @@ variable {K : Type u} {L : Type v} [Field K] [CharZero K]
 
 variable (b : (IsKilling.rootSystem H).Base)
 
-/-- **The tensor multiplicity** `c^nu_{lam mu}`: the number of copies of `L(nu)` in the
-decomposition of `L(lam) ⊗ L(mu)` into irreducibles, that is the multiplicity of `L(nu)` in the
-tensor product in the sense of `LieModule.isotypicMultiplicity`. -/
+/-- **The tensor multiplicity** `c^nu_{lam mu}`: the multiplicity of `L(nu)` in
+`L(lam) ⊗ L(mu)` in the sense of `LieModule.isotypicMultiplicity`, that is the dimension of the
+space of morphisms `L(nu) →ₗ⁅K,L⁆ L(lam) ⊗ L(mu)`.
+
+It is the number of copies of `L(nu)` in a decomposition of the tensor product into irreducibles
+when that reading is available: `lam` and `mu` dominant integral, so that the tensor product is
+finite-dimensional and completely reducible, and `L(nu)` nonzero, hence irreducible. At a `nu`
+whose Verma module vanishes it is `0`
+(`LieModule.isotypicMultiplicity_eq_zero_of_subsingleton`). -/
 noncomputable def tensorMultiplicity (lam mu nu : Dual K H) : ℕ :=
   LieModule.isotypicMultiplicity K L
     (irreducibleQuotient b lam ⊗[K] irreducibleQuotient b mu) (irreducibleQuotient b nu)
@@ -143,7 +150,7 @@ theorem isIrreducible_irreducibleQuotient_left_of_tensorMultiplicity_ne_zero
   refine isIrreducible_irreducibleQuotient b lam fun h0 ↦ h ?_
   have _ := (subsingleton_irreducibleQuotient_iff b lam).mpr h0
   rw [tensorMultiplicity_def]
-  exact LieModule.isotypicMultiplicity_eq_zero_of_subsingleton_module K L _ _
+  exact LieModule.isotypicMultiplicity_eq_zero_of_subsingleton_codomain K L _ _
 
 /-- **A nonzero tensor multiplicity makes the right factor an honest irreducible.** Were `L(mu)`
 the zero module, so would be `L(lam) ⊗ L(mu)`, in which nothing has a nonzero multiplicity. -/
@@ -153,7 +160,7 @@ theorem isIrreducible_irreducibleQuotient_right_of_tensorMultiplicity_ne_zero
   refine isIrreducible_irreducibleQuotient b mu fun h0 ↦ h ?_
   have _ := (subsingleton_irreducibleQuotient_iff b mu).mpr h0
   rw [tensorMultiplicity_def]
-  exact LieModule.isotypicMultiplicity_eq_zero_of_subsingleton_module K L _ _
+  exact LieModule.isotypicMultiplicity_eq_zero_of_subsingleton_codomain K L _ _
 
 /-! ### The character identity
 
@@ -166,9 +173,10 @@ section CharacterIdentity
 
 variable [IsAlgClosed K]
 
-/-- **The character identity for a tensor product of irreducibles**: the product of the characters
-of `L(lam)` and `L(mu)` is the sum of the characters of the `L(nu)`, weighted by the tensor
-multiplicities.
+/-- **The character identity for a tensor product of highest weight modules**: the product of the
+characters of `L(lam)` and `L(mu)` is the sum of the characters of the `L(nu)`, weighted by the
+tensor multiplicities. The weights at which `L(nu)` is nonzero, hence irreducible, are the ones
+that contribute: elsewhere both the character and the multiplicity vanish.
 
 Formal characters are multiplicative on tensor products, so the left-hand side is the character of
 `L(lam) ⊗ L(mu)`; that module is finite-dimensional, so its character is the

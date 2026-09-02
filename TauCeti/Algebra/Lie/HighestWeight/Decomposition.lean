@@ -224,10 +224,15 @@ theorem nonempty_lieModuleEquiv_directSum_irreducibleQuotient [FiniteDimensional
 
 /-! ### The character of the irreducible module of a dominant integral weight -/
 
-/-- **The formal character of the irreducible module `L(lam)`** of a dominant integral weight
+/-- **The formal character of the highest weight module `L(lam)`** of a dominant integral weight
 `lam`, which `TauCeti.finiteDimensional_irreducibleQuotient_of_isDominantIntegral` makes
 finite-dimensional. The weight is bundled with its dominance so that the character is a function of
-a single argument, and can therefore index a sum. -/
+a single argument, and can therefore index a sum.
+
+`L(lam)` is irreducible exactly where it is nonzero, which is exactly where this character is
+nonzero (`TauCeti.irreducibleFormalCharacter_eq_zero_iff` and
+`TauCeti.isIrreducible_irreducibleQuotient_of_irreducibleFormalCharacter_ne_zero`); at a `lam`
+whose Verma module vanishes this is the character `0` of the zero module. -/
 noncomputable def irreducibleFormalCharacter
     (lam : {l : Dual K H // IsDominantIntegral b l}) : AddMonoidAlgebra ℤ (Dual K H) :=
   haveI := finiteDimensional_irreducibleQuotient_of_isDominantIntegral lam.2
