@@ -14,13 +14,13 @@ public import TauCeti.NumberTheory.ArithmeticDirichletSeries.VonMangoldt
 /-!
 # The logarithmic derivative of the Dirichlet series of an ideal weight
 
-For a completely multiplicative ideal weight `χ`, the von Mangoldt transform `χ Λ` is the
-coefficient system of the logarithmic derivative of the Dirichlet series of `χ`: on the half-plane
-where the ideal-indexed series of `χ` converges absolutely,
-`(∑_A χ(A) Λ(A) N(A)^{-s}) L(s) = -L'(s)`, hence `∑_A χ(A) Λ(A) N(A)^{-s} = -L'(s) / L(s)` at every
-point of that half-plane at which `L(s) ≠ 0`.  The nonvanishing is an explicit hypothesis of the
-quotient forms below: it is not proved here, since for the Dedekind zeta function it is the Euler
-product of Layer 3.
+For a completely multiplicative ideal arithmetic function `χ` — a multiplicative ideal weight, for
+instance — the von Mangoldt transform `χ Λ` is the coefficient system of the logarithmic derivative
+of the Dirichlet series of `χ`: on the half-plane where the ideal-indexed series of `χ` converges
+absolutely, `(∑_A χ(A) Λ(A) N(A)^{-s}) L(s) = -L'(s)`, hence
+`∑_A χ(A) Λ(A) N(A)^{-s} = -L'(s) / L(s)` at every point of that half-plane at which `L(s) ≠ 0`.
+The nonvanishing is an explicit hypothesis of the quotient forms below: it is not proved here,
+since for the Dedekind zeta function it is the Euler product of Layer 3.
 
 The proof is purely algebraic apart from one convergence estimate. The divisor sum
 `TauCeti.IdealArithmeticFunction.convolution_vonMangoldt_one` identifies `Λ ⋆ 1` with the ideal
@@ -28,7 +28,8 @@ logarithm, complete multiplicativity twists that identity into
 `(χ Λ) ⋆ χ = (log N) χ`, regrouping by absolute norm turns the ideal convolution into Mathlib's
 Dirichlet convolution, and the absolute norm is constant on a norm fibre, so the regrouped
 `(log N) χ` is exactly Mathlib's `LSeries.logMul` of the regrouped `χ`. No Euler product is
-needed.
+needed.  Nothing beyond complete multiplicativity is used, so none of this asks for the finiteness
+condition carried by `TauCeti.MultiplicativeIdealWeight`.
 
 ## Main results
 
@@ -36,14 +37,14 @@ needed.
   regrouping of `f`.
 * `TauCeti.summable_idealTerm_vonMangoldtTransform`: the ideal-indexed series of the von Mangoldt
   transform of `f` converges absolutely wherever that of `f` does.
-* `TauCeti.MultiplicativeIdealWeight.convolution_vonMangoldtTransform`: the convolution identity
-  `(χ Λ) ⋆ χ = (log N) χ` for a completely multiplicative weight.
-* `TauCeti.MultiplicativeIdealWeight.LSeries_normCoeff_vonMangoldtTransform_mul_eq_neg_deriv`:
-  the identity in product form, on the whole half-plane and with no nonvanishing hypothesis.
-* `TauCeti.MultiplicativeIdealWeight.LSeries_normCoeff_vonMangoldtTransform_eq_neg_logDeriv`:
-  the logarithmic derivative identity, assuming `L(s) ≠ 0`.
-* `TauCeti.LSeries_normCoeff_vonMangoldt_eq_neg_logDeriv_dedekindZeta`: its instance at the trivial
-  weight, `-ζ_K'(s) / ζ_K(s) = ∑_A Λ(A) N(A)^{-s}` for `Re s > 1` with `ζ_K(s) ≠ 0`.
+* `TauCeti.IdealArithmeticFunction.convolution_vonMangoldtTransform`: the convolution identity
+  `(χ Λ) ⋆ χ = (log N) χ` for a completely multiplicative `χ`.
+* `TauCeti.LSeries_normCoeff_vonMangoldtTransform_mul_eq_neg_deriv`: the identity in product form,
+  on the whole half-plane and with no nonvanishing hypothesis.
+* `TauCeti.LSeries_normCoeff_vonMangoldtTransform_eq_neg_logDeriv`: the logarithmic derivative
+  identity, assuming `L(s) ≠ 0`.
+* `TauCeti.LSeries_normCoeff_vonMangoldt_eq_neg_logDeriv_dedekindZeta`: its instance at the
+  constant-one weight, `-ζ_K'(s) / ζ_K(s) = ∑_A Λ(A) N(A)^{-s}` for `Re s > 1` with `ζ_K(s) ≠ 0`.
 
 ## Roadmap role
 
@@ -136,91 +137,89 @@ theorem summable_idealTerm_vonMangoldtTransform {f : IdealArithmeticFunction K} 
 
 /-! ### The logarithmic derivative -/
 
-namespace MultiplicativeIdealWeight
+namespace IdealArithmeticFunction
 
-/-- **The convolution identity behind the logarithmic derivative.** For a completely multiplicative
-weight `χ`, convolving the von Mangoldt transform `χ Λ` with `χ` gives the pointwise product of the
-ideal logarithm with `χ`. It is the divisor sum `Λ ⋆ 1 = log N`, twisted by `χ`. -/
-theorem convolution_vonMangoldtTransform (χ : MultiplicativeIdealWeight K) :
-    IdealArithmeticFunction.convolution χ.toIdealArithmeticFunction.vonMangoldtTransform
-        χ.toIdealArithmeticFunction =
-      IdealArithmeticFunction.log * χ.toIdealArithmeticFunction := by
+/-- **The convolution identity behind the logarithmic derivative.** For a completely
+multiplicative ideal arithmetic function `f`, convolving the von Mangoldt transform `f Λ` with `f`
+gives the pointwise product of the ideal logarithm with `f`. It is the divisor sum `Λ ⋆ 1 = log N`,
+twisted by `f`.
+
+Only complete multiplicativity enters, so the hypothesis is stated for a bare ideal arithmetic
+function; a `TauCeti.MultiplicativeIdealWeight` supplies it through its multiplicativity. -/
+theorem convolution_vonMangoldtTransform {f : IdealArithmeticFunction K}
+    (hf : ∀ A B : (Ideal (𝓞 K))⁰, f (A * B) = f A * f B) :
+    convolution f.vonMangoldtTransform f = log * f := by
   funext A
-  rw [Pi.mul_apply, ← IdealArithmeticFunction.convolution_vonMangoldt_one,
-    IdealArithmeticFunction.convolution_apply, IdealArithmeticFunction.convolution_apply,
+  rw [Pi.mul_apply, ← convolution_vonMangoldt_one, convolution_apply, convolution_apply,
     Finset.sum_mul]
   refine Finset.sum_congr rfl fun p hp ↦ ?_
-  have hA : (A : Ideal (𝓞 K)) = (p.1 : Ideal (𝓞 K)) * (p.2 : Ideal (𝓞 K)) := by
-    rw [← Ideal.mem_divisorsAntidiagonal.mp hp]; simp
-  simp only [IdealArithmeticFunction.vonMangoldtTransform_apply, Pi.one_apply,
-    toIdealArithmeticFunction_apply, hA, _root_.map_mul]
+  have hA : A = p.1 * p.2 := (Ideal.mem_divisorsAntidiagonal.mp hp).symm
+  simp only [vonMangoldtTransform_apply, Pi.one_apply, hA, hf]
   ring
 
+end IdealArithmeticFunction
+
 /-- Regrouping the convolution identity by absolute norm identifies the Dirichlet-convolution
-product of the two regrouped coefficient systems with `LSeries.logMul` of the regrouping of `χ`. -/
-theorem normCoeff_vonMangoldtTransform_mul (χ : MultiplicativeIdealWeight K) :
-    ((normCoeff K χ.toIdealArithmeticFunction.vonMangoldtTransform *
-        normCoeff K χ.toIdealArithmeticFunction : ArithmeticFunction ℂ) : ℕ → ℂ) =
-      LSeries.logMul (normCoeff K χ.toIdealArithmeticFunction) := by
-  rw [← normCoeff_convolution, convolution_vonMangoldtTransform, normCoeff_log_mul]
+product of the two regrouped coefficient systems with `LSeries.logMul` of the regrouping of `f`. -/
+theorem normCoeff_vonMangoldtTransform_mul {f : IdealArithmeticFunction K}
+    (hf : ∀ A B : (Ideal (𝓞 K))⁰, f (A * B) = f A * f B) :
+    ((normCoeff K f.vonMangoldtTransform * normCoeff K f : ArithmeticFunction ℂ) : ℕ → ℂ) =
+      LSeries.logMul (normCoeff K f) := by
+  rw [← normCoeff_convolution, IdealArithmeticFunction.convolution_vonMangoldtTransform hf,
+    normCoeff_log_mul]
 
 /-- **The von Mangoldt transform is the coefficient system of the logarithmic derivative**, in
-product form: on the half-plane of absolute convergence of the ideal-indexed series of `χ`, the
-`LSeries` of the regrouped `χ Λ` times the `LSeries` of the regrouped `χ` is `-L'`. -/
-theorem LSeries_normCoeff_vonMangoldtTransform_mul_eq_neg_deriv
-    (χ : MultiplicativeIdealWeight K) {s : ℂ}
-    (hs : idealAbscissaOfAbsConv K χ.toIdealArithmeticFunction < s.re) :
-    LSeries (normCoeff K χ.toIdealArithmeticFunction.vonMangoldtTransform) s *
-        LSeries (normCoeff K χ.toIdealArithmeticFunction) s =
-      -deriv (LSeries (normCoeff K χ.toIdealArithmeticFunction)) s := by
-  have habs : LSeries.abscissaOfAbsConv (normCoeff K χ.toIdealArithmeticFunction) < s.re :=
+product form: on the half-plane of absolute convergence of the ideal-indexed series of a completely
+multiplicative `f`, the `LSeries` of the regrouped `f Λ` times the `LSeries` of the regrouped `f`
+is `-L'`. -/
+theorem LSeries_normCoeff_vonMangoldtTransform_mul_eq_neg_deriv {f : IdealArithmeticFunction K}
+    (hf : ∀ A B : (Ideal (𝓞 K))⁰, f (A * B) = f A * f B) {s : ℂ}
+    (hs : idealAbscissaOfAbsConv K f < s.re) :
+    LSeries (normCoeff K f.vonMangoldtTransform) s * LSeries (normCoeff K f) s =
+      -deriv (LSeries (normCoeff K f)) s := by
+  have habs : LSeries.abscissaOfAbsConv (normCoeff K f) < s.re :=
     lt_of_le_of_lt (abscissaOfAbsConv_normCoeff_le K _) hs
   rw [← ArithmeticFunction.LSeries_mul'
       (LSeriesSummable_normCoeff K (summable_idealTerm_vonMangoldtTransform hs))
       (LSeriesSummable_normCoeff K (summable_idealTerm_of_idealAbscissaOfAbsConv_lt_re K hs)),
-    normCoeff_vonMangoldtTransform_mul, LSeries_deriv habs, neg_neg]
+    normCoeff_vonMangoldtTransform_mul hf, LSeries_deriv habs, neg_neg]
 
 /-- **The exact coefficient identity for the logarithmic derivative.** On the half-plane of
-absolute convergence of the ideal-indexed series of a completely multiplicative weight `χ`, and
-away from the zeros of its `LSeries`, the `LSeries` of the regrouped von Mangoldt transform `χ Λ`
-is the negative of the logarithmic derivative.
+absolute convergence of the ideal-indexed series of a completely multiplicative ideal arithmetic
+function `f`, and away from the zeros of its `LSeries`, the `LSeries` of the regrouped von Mangoldt
+transform `f Λ` is the negative of the logarithmic derivative.
 
 Every prime power carries a coefficient here; removing the higher prime powers is a later
 estimate, not a simplification of this identity. -/
-theorem LSeries_normCoeff_vonMangoldtTransform_eq_neg_logDeriv
-    (χ : MultiplicativeIdealWeight K) {s : ℂ}
-    (hs : idealAbscissaOfAbsConv K χ.toIdealArithmeticFunction < s.re)
-    (hL : LSeries (normCoeff K χ.toIdealArithmeticFunction) s ≠ 0) :
-    LSeries (normCoeff K χ.toIdealArithmeticFunction.vonMangoldtTransform) s =
-      -logDeriv (LSeries (normCoeff K χ.toIdealArithmeticFunction)) s := by
+theorem LSeries_normCoeff_vonMangoldtTransform_eq_neg_logDeriv {f : IdealArithmeticFunction K}
+    (hf : ∀ A B : (Ideal (𝓞 K))⁰, f (A * B) = f A * f B) {s : ℂ}
+    (hs : idealAbscissaOfAbsConv K f < s.re) (hL : LSeries (normCoeff K f) s ≠ 0) :
+    LSeries (normCoeff K f.vonMangoldtTransform) s =
+      -logDeriv (LSeries (normCoeff K f)) s := by
   rw [logDeriv_apply, ← neg_div, eq_div_iff hL]
-  exact LSeries_normCoeff_vonMangoldtTransform_mul_eq_neg_deriv χ hs
-
-end MultiplicativeIdealWeight
+  exact LSeries_normCoeff_vonMangoldtTransform_mul_eq_neg_deriv hf hs
 
 /-! ### The Dedekind zeta function -/
 
 /-- **The logarithmic derivative of the Dedekind zeta function**: for `Re s > 1` and away from the
 zeros of `ζ_K`, the Dirichlet series with the ideal von Mangoldt coefficients is `-ζ_K'/ζ_K`.
 
-This is the trivial-weight instance of
-`TauCeti.MultiplicativeIdealWeight.LSeries_normCoeff_vonMangoldtTransform_eq_neg_logDeriv`, whose
-absolute-convergence hypothesis is `1 < Re s` here by `TauCeti.idealAbscissaOfAbsConv_one`. The
-nonvanishing hypothesis is genuinely assumed: `ζ_K` has no zero on `Re s > 1`, but that is the
-Euler product of Layer 3 and is not available yet. -/
+This is the constant-one instance of
+`TauCeti.LSeries_normCoeff_vonMangoldtTransform_eq_neg_logDeriv`, whose absolute-convergence
+hypothesis is `1 < Re s` here by `TauCeti.idealAbscissaOfAbsConv_one`. The nonvanishing hypothesis
+is genuinely assumed: `ζ_K` has no zero on `Re s > 1`, but that is the Euler product of Layer 3 and
+is not available yet. -/
 theorem LSeries_normCoeff_vonMangoldt_eq_neg_logDeriv_dedekindZeta {s : ℂ} (hs : 1 < s.re)
     (hζ : NumberField.dedekindZeta K s ≠ 0) :
     LSeries (normCoeff K (IdealArithmeticFunction.vonMangoldt : IdealArithmeticFunction K)) s =
       -logDeriv (NumberField.dedekindZeta K) s := by
   have hzeta : NumberField.dedekindZeta K = LSeries (normCoeff K (1 : IdealArithmeticFunction K)) :=
     funext (dedekindZeta_eq_LSeries_normCoeff_one K)
-  have hone := MultiplicativeIdealWeight.toIdealArithmeticFunction_one (K := K)
-  have hs' : idealAbscissaOfAbsConv K
-      (1 : MultiplicativeIdealWeight K).toIdealArithmeticFunction < s.re := by
-    rw [hone, idealAbscissaOfAbsConv_one]
+  have hs' : idealAbscissaOfAbsConv K (1 : IdealArithmeticFunction K) < s.re := by
+    rw [idealAbscissaOfAbsConv_one]
     exact_mod_cast hs
-  have := MultiplicativeIdealWeight.LSeries_normCoeff_vonMangoldtTransform_eq_neg_logDeriv
-    (1 : MultiplicativeIdealWeight K) hs' (by rwa [hone, ← hzeta])
-  rwa [hone, IdealArithmeticFunction.vonMangoldtTransform_one, ← hzeta] at this
+  have := LSeries_normCoeff_vonMangoldtTransform_eq_neg_logDeriv
+    (f := (1 : IdealArithmeticFunction K)) (fun A B ↦ by simp) hs' (by rwa [← hzeta])
+  rwa [IdealArithmeticFunction.vonMangoldtTransform_one, ← hzeta] at this
 
 end TauCeti

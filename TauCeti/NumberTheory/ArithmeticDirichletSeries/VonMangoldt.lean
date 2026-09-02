@@ -37,7 +37,7 @@ ideal arithmetic function, and proves its divisor sum: summing it over the divis
 * `TauCeti.IdealArithmeticFunction.vonMangoldtTransform_ne_zero_iff` identifies the support of
   the transform, and its specialization in `TauCeti.MultiplicativeIdealWeight` describes this as
   the good prime powers for a completely multiplicative weight.
-* `TauCeti.IdealArithmeticFunction.sum_vonMangoldt_divisors` and
+* `TauCeti.IdealArithmeticFunction.vonMangoldt_sum` and
   `TauCeti.IdealArithmeticFunction.convolution_vonMangoldt_one`: the divisor sum `Λ ⋆ 1 = log N`,
   the ideal analogue of Mathlib's `ArithmeticFunction.vonMangoldt_mul_zeta`.
 
@@ -268,32 +268,37 @@ theorem norm_vonMangoldt_le_norm_log (A : (Ideal (𝓞 K))⁰) :
     exact norm_nonneg _
 
 /-- The logarithm of the absolute norm of a product of nonzero ideals is the sum of the logarithms
-of their absolute norms. -/
-private theorem log_absNorm_multiset_prod :
-    ∀ {t : Multiset (Ideal (𝓞 K))}, t.prod ≠ 0 →
-      (Real.log (Ideal.absNorm t.prod) : ℂ) =
-        (t.map fun P ↦ (Real.log (Ideal.absNorm P) : ℂ)).sum := by
-  intro t
-  induction t using Multiset.induction with
-  | empty => simp
-  | cons a t ih =>
-    intro ht
-    have ha0 : a ≠ 0 := fun h ↦ ht <| by rw [Multiset.prod_cons, h, zero_mul]
-    have hp0 : t.prod ≠ 0 := fun h ↦ ht <| by rw [Multiset.prod_cons, h, mul_zero]
-    have ha : Ideal.absNorm a ≠ 0 := fun h ↦
-      ha0 ((Ideal.absNorm_eq_zero_iff.mp h).trans Ideal.zero_eq_bot.symm)
-    have hp : Ideal.absNorm t.prod ≠ 0 := fun h ↦
-      hp0 ((Ideal.absNorm_eq_zero_iff.mp h).trans Ideal.zero_eq_bot.symm)
-    rw [Multiset.prod_cons, _root_.map_mul, Multiset.map_cons, Multiset.sum_cons, ← ih hp0,
-      Nat.cast_mul, Real.log_mul (mod_cast ha) (mod_cast hp), Complex.ofReal_add]
+of their absolute norms.  This is Mathlib's `Real.log_multiset_prod`, transported along the
+multiplicativity of the absolute norm. -/
+private theorem log_absNorm_multiset_prod {t : Multiset (Ideal (𝓞 K))} (ht : t.prod ≠ 0) :
+    (Real.log (Ideal.absNorm t.prod) : ℂ) =
+      (t.map fun P ↦ (Real.log (Ideal.absNorm P) : ℂ)).sum := by
+  have hne : ∀ x ∈ t.map fun P ↦ (Ideal.absNorm P : ℝ), x ≠ 0 := by
+    rintro _ hx
+    obtain ⟨P, hP, rfl⟩ := Multiset.mem_map.mp hx
+    have hP0 : P ≠ 0 := fun h ↦ ht (zero_dvd_iff.mp (h ▸ Multiset.dvd_prod hP))
+    exact Nat.cast_ne_zero.mpr fun h ↦
+      hP0 ((Ideal.absNorm_eq_zero_iff.mp h).trans Ideal.zero_eq_bot.symm)
+  have hcast : ((Ideal.absNorm t.prod : ℕ) : ℝ) = (t.map fun P ↦ (Ideal.absNorm P : ℝ)).prod := by
+    rw [map_multiset_prod, Nat.cast_multiset_prod, Multiset.map_map]
+    rfl
+  have hreal : Real.log (Ideal.absNorm t.prod) =
+      (t.map fun P ↦ Real.log (Ideal.absNorm P)).sum := by
+    rw [hcast, Real.log_multiset_prod hne, Multiset.map_map]
+    rfl
+  rw [hreal]
+  simpa [Multiset.map_map] using
+    map_multiset_sum Complex.ofRealHom (t.map fun P ↦ Real.log (Ideal.absNorm P))
 
 open Finset UniqueFactorizationMonoid in
 /-- **The divisor sum of the ideal von Mangoldt function.** Summing `Λ` over the divisors of a
 nonzero ideal `A` gives `log N(A)`.
 
 The prime-power divisors of `A` are exactly the ideals `P ^ k` with `P` a prime factor of `A` and
-`1 ≤ k ≤ v_P(A)`, and `Λ (P ^ k) = log N(P)`, so the sum is `∑ v_P(A) log N(P) = log N(A)`. -/
-theorem sum_vonMangoldt_divisors (A : (Ideal (𝓞 K))⁰) :
+`1 ≤ k ≤ v_P(A)`, and `Λ (P ^ k) = log N(P)`, so the sum is `∑ v_P(A) log N(P) = log N(A)`.
+
+This is the ideal analogue of Mathlib's `ArithmeticFunction.vonMangoldt_sum`. -/
+theorem vonMangoldt_sum (A : (Ideal (𝓞 K))⁰) :
     ∑ B ∈ Ideal.divisors A, (vonMangoldt : IdealArithmeticFunction K) B = log A := by
   classical
   have hA0 : (A : Ideal (𝓞 K)) ≠ 0 := nonZeroDivisors.coe_ne_zero A
@@ -351,7 +356,7 @@ theorem sum_vonMangoldt_divisors (A : (Ideal (𝓞 K))⁰) :
       refine ⟨⟨⟨P, mem_nonZeroDivisors_of_ne_zero hP.ne_zero⟩, k⟩,
         ⟨hPS, hk, (hpow _ hPS k).mp (hPB ▸ hdvd)⟩, Subtype.ext ?_⟩
       simpa using hPB
-  have hprod : m.prod = (A : Ideal (𝓞 K)) := associated_iff_eq.mp (prod_normalizedFactors hA0)
+  have hprod : m.prod = (A : Ideal (𝓞 K)) := Ideal.prod_normalizedFactors_eq_self hA0
   calc ∑ B ∈ Ideal.divisors A, (vonMangoldt : IdealArithmeticFunction K) B
       = ∑ B ∈ T, vonMangoldt B :=
         (Finset.sum_filter_of_ne fun B _ hB ↦
@@ -387,7 +392,7 @@ theorem convolution_vonMangoldt_one :
     convolution (vonMangoldt : IdealArithmeticFunction K) 1 = log := by
   funext A
   simpa using (Ideal.sum_divisorsAntidiagonal_fst A
-    (vonMangoldt : IdealArithmeticFunction K)).trans (sum_vonMangoldt_divisors A)
+    (vonMangoldt : IdealArithmeticFunction K)).trans (vonMangoldt_sum A)
 
 end IdealArithmeticFunction
 
