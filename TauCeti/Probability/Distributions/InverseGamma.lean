@@ -350,13 +350,8 @@ theorem integral_id_inverseGammaMeasure (hr : 0 < r) (ha : 1 < a) :
     ∫ x, x ∂inverseGammaMeasure a r = r / (a - 1) := by
   have h := integral_pow_inverseGammaMeasure (by linarith : 0 < a) hr 1 (by simpa using ha)
   simp only [pow_one, Nat.cast_one] at h
-  rw [h]
-  have hrec : Real.Gamma a = (a - 1) * Real.Gamma (a - 1) := by
-    calc
-      Real.Gamma a = Real.Gamma ((a - 1) + 1) := by congr 1; ring
-      _ = (a - 1) * Real.Gamma (a - 1) :=
-        Real.Gamma_add_one (by linarith : a - 1 ≠ 0)
-  rw [hrec]
+  rw [h, show Real.Gamma a = (a - 1) * Real.Gamma (a - 1) by
+    simpa using Real.Gamma_add_one (by linarith : a - 1 ≠ 0)]
   field_simp [(Real.Gamma_pos_of_pos (by linarith : 0 < a - 1)).ne']
 
 /-- The second raw moment of an inverse-gamma law is
@@ -366,18 +361,11 @@ theorem integral_sq_inverseGammaMeasure (hr : 0 < r) (ha : 2 < a) :
     ∫ x, x ^ 2 ∂inverseGammaMeasure a r = r ^ 2 / ((a - 1) * (a - 2)) := by
   have h := integral_pow_inverseGammaMeasure (by linarith : 0 < a) hr 2 (by simpa using ha)
   norm_num only [Nat.cast_ofNat] at h
-  rw [h]
-  have hrec1 : Real.Gamma a = (a - 1) * Real.Gamma (a - 1) := by
-    calc
-      Real.Gamma a = Real.Gamma ((a - 1) + 1) := by congr 1; ring
-      _ = (a - 1) * Real.Gamma (a - 1) :=
-        Real.Gamma_add_one (by linarith : a - 1 ≠ 0)
-  have hrec2 : Real.Gamma (a - 1) = (a - 2) * Real.Gamma (a - 2) := by
-    calc
-      Real.Gamma (a - 1) = Real.Gamma ((a - 2) + 1) := by congr 1; ring
-      _ = (a - 2) * Real.Gamma (a - 2) :=
-        Real.Gamma_add_one (by linarith : a - 2 ≠ 0)
-  rw [hrec1, hrec2]
+  rw [h, show Real.Gamma a = (a - 1) * Real.Gamma (a - 1) by
+      simpa using Real.Gamma_add_one (by linarith : a - 1 ≠ 0),
+    show Real.Gamma (a - 1) = (a - 2) * Real.Gamma (a - 2) by
+      simpa [show a - 2 + 1 = a - 1 by ring] using
+        Real.Gamma_add_one (by linarith : a - 2 ≠ 0)]
   field_simp [(Real.Gamma_pos_of_pos (by linarith : 0 < a - 2)).ne']
 
 /-- The variance of an inverse-gamma law is
