@@ -45,7 +45,7 @@ maximal torus. -/
 theorem conjugate (hI : IsMaximalTorus k H.obj I)
     (g : HopfAlgebra.points (R := k) (H := H.obj) (CommAlgCat.of k k)) :
     IsMaximalTorus k H.obj (I.conjugate g) := by
-  rw [HopfIdeal.conjugate_eq_comapOfSurjective]
+  unfold _root_.TauCeti.HopfIdeal.conjugate
   exact hI.comapOfIso (ObjectProperty.isoMk (finiteTypeCommHopfAlgProperty k)
     (CommHopfAlgCat.innerConjugationIso H.obj g))
 

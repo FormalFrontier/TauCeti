@@ -53,20 +53,11 @@ variable {H : _root_.CommHopfAlgCat.{u} R}
 The inverse image is taken along the coordinate pullback for `x ↦ g x g⁻¹`. Since coordinate
 rings are contravariant, this ideal cuts out the direct image of the subgroup under that
 automorphism. -/
-noncomputable def conjugate (I : HopfIdeal R H)
+@[expose] noncomputable def conjugate (I : HopfIdeal R H)
     (g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R)) : HopfIdeal R H :=
   I.comapOfSurjective (CommHopfAlgCat.innerConjugationIso H g).hom.hom
     (ConcreteCategory.bijective_of_isIso
       (CommHopfAlgCat.innerConjugationIso H g).hom).2
-
-/-- The conjugate ideal is the inverse image along the coordinate inner automorphism. -/
-theorem conjugate_eq_comapOfSurjective (I : HopfIdeal R H)
-    (g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R)) :
-    I.conjugate g =
-      I.comapOfSurjective (CommHopfAlgCat.innerConjugationIso H g).hom.hom
-        (ConcreteCategory.bijective_of_isIso
-          (CommHopfAlgCat.innerConjugationIso H g).hom).2 := by
-  rfl
 
 /-- Membership in the conjugate defining ideal is membership after applying the coordinate
 inner automorphism. -/
@@ -74,7 +65,7 @@ inner automorphism. -/
 theorem mem_conjugate_iff (I : HopfIdeal R H)
     (g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R)) (x : H) :
     x ∈ I.conjugate g ↔ (CommHopfAlgCat.innerConjugationIso H g).hom.hom x ∈ I := by
-  rw [conjugate_eq_comapOfSurjective, mem_comapOfSurjective]
+  rw [conjugate, mem_comapOfSurjective]
 
 private theorem mapDomainMulEquiv_innerConjugation_apply
     (g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R))
@@ -104,6 +95,8 @@ theorem mem_quotientPointsSubgroup_conjugate_iff (I : HopfIdeal R H)
   have h := CommHopfAlgCat.mapDomainMulEquiv_mem_quotientPointsSubgroup_comapOfSurjective_iff
     f hf.1 hf.2 I A x
   rw [mapDomainMulEquiv_innerConjugation_apply g hf] at h
+  -- The transport theorem reconstructs the bundled coordinate object from its carrier, whereas
+  -- `conjugate` retains the original bundle. Expose their definitionally equal subgroup statement.
   change _ ∈ CommHopfAlgCat.quotientPointsSubgroup H (I.conjugate g) A ↔ _ at h
   exact h
 
@@ -124,21 +117,28 @@ theorem conjugate_one (I : HopfIdeal R H) :
   rw [mem_conjugate_iff, CommHopfAlgCat.innerConjugationIso_one]
   rfl
 
-/-- Conjugating by `g⁻¹` undoes conjugation by `g`. -/
+/-- Successive conjugation first by `g` and then by `h` is conjugation by `h * g`. The reversed
+order comes from the contravariance of defining ideals. -/
 @[simp]
+theorem conjugate_conjugate (I : HopfIdeal R H)
+    (g h : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R)) :
+    (I.conjugate g).conjugate h = I.conjugate (h * g) := by
+  ext x
+  rw [mem_conjugate_iff, mem_conjugate_iff, mem_conjugate_iff,
+    CommHopfAlgCat.innerConjugationIso_mul]
+  rfl
+
+/-- Conjugating by `g⁻¹` undoes conjugation by `g`. -/
 theorem conjugate_inv_conjugate (I : HopfIdeal R H)
     (g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R)) :
     (I.conjugate g).conjugate g⁻¹ = I := by
-  ext x
-  rw [mem_conjugate_iff, mem_conjugate_iff, CommHopfAlgCat.innerConjugationIso_inv]
-  simp
+  rw [conjugate_conjugate, inv_mul_cancel g, conjugate_one]
 
 /-- Conjugating by `g` undoes conjugation by `g⁻¹`. -/
-@[simp]
 theorem conjugate_conjugate_inv (I : HopfIdeal R H)
     (g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R)) :
     (I.conjugate g⁻¹).conjugate g = I := by
-  simpa only [inv_inv] using conjugate_inv_conjugate I g⁻¹
+  rw [conjugate_conjugate, mul_inv_cancel g, conjugate_one]
 
 /-- Conjugation by a rational point as an order automorphism of defining Hopf ideals. -/
 noncomputable def conjugateOrderIso
@@ -150,13 +150,17 @@ noncomputable def conjugateOrderIso
   right_inv I := conjugate_conjugate_inv I g
   map_rel_iff' := by
     intro I J
+    -- `OrderIso` stores this field through `toFun`; expose the displayed conjugation operation
+    -- before applying monotonicity and inverse cancellation.
     change I.conjugate g ≤ J.conjugate g ↔ I ≤ J
     constructor
     · intro h
-      have := conjugate_mono g⁻¹ h
-      change (I.conjugate g).conjugate g⁻¹ ≤ (J.conjugate g).conjugate g⁻¹ at this
-      rw [conjugate_inv_conjugate, conjugate_inv_conjugate] at this
-      exact this
+      have h' := conjugate_mono g⁻¹ h
+      -- The inferred function arguments of `conjugate_mono` remain hidden in `h'`; expose the
+      -- iterated conjugations so their cancellation lemmas rewrite directly.
+      change (I.conjugate g).conjugate g⁻¹ ≤ (J.conjugate g).conjugate g⁻¹ at h'
+      rw [conjugate_inv_conjugate, conjugate_inv_conjugate] at h'
+      exact h'
     · intro h
       exact conjugate_mono g h
 

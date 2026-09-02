@@ -92,8 +92,20 @@ theorem mapPoints_extendPoint {A B : CommAlgCat.{u} R} (f : A ⟶ B)
     HopfAlgebra.mapPoints (H := H) f (extendPoint H A g) = extendPoint H B g := by
   apply WithConv.ofConv_injective
   ext x
-  change f.hom (algebraMap R A (g.ofConv x)) = algebraMap R B (g.ofConv x)
+  simp only [extendPoint, AlgHom.mapValue_apply,
+    WithConv.ofConv_toConv, AlgHom.comp_apply]
   exact f.hom.commutes (g.ofConv x)
+
+/-- Mapping a conjugate by an extended rational point commutes with extension to the target value
+algebra. This isolates the group-homomorphism normalization used in the naturality proof below. -/
+private theorem mapPoints_conjugate_extendPoint {A B : CommAlgCat.{u} R} (f : A ⟶ B)
+    (g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R))
+    (x : HopfAlgebra.points (R := R) (H := H) A) :
+    HopfAlgebra.mapPoints (H := H) f
+        (extendPoint H A g * x * (extendPoint H A g)⁻¹) =
+      extendPoint H B g * HopfAlgebra.mapPoints (H := H) f x * (extendPoint H B g)⁻¹ := by
+  rw [HopfAlgebra.mapPoints_mul, HopfAlgebra.mapPoints_mul, HopfAlgebra.mapPoints_inv,
+    mapPoints_extendPoint]
 
 /-- Conjugation by the extension of a rational point, as an automorphism of `A`-valued points. -/
 noncomputable def innerConjugationPointIso
@@ -131,11 +143,12 @@ noncomputable def innerConjugationPointsIso
     apply MonoidHom.ext
     intro x
     let x' : HopfAlgebra.points (R := R) (H := H) A := x
+    -- `NatIso.ofComponents` stores this naturality square through the categorical wrappers for
+    -- `GrpCat`; expose its pointwise form so the named point-map laws apply.
     change (innerConjugationPointIso H g B).hom (HopfAlgebra.mapPoints (H := H) f x') =
       HopfAlgebra.mapPoints (H := H) f ((innerConjugationPointIso H g A).hom x')
-    rw [innerConjugationPointIso_hom_apply, innerConjugationPointIso_hom_apply,
-      HopfAlgebra.mapPoints_mul, HopfAlgebra.mapPoints_mul, HopfAlgebra.mapPoints_inv,
-      mapPoints_extendPoint]
+    rw [innerConjugationPointIso_hom_apply, innerConjugationPointIso_hom_apply]
+    exact (mapPoints_conjugate_extendPoint H f g x').symm
 
 /-- Conjugation by the identity point is the identity automorphism of the functor of points. -/
 @[simp]
@@ -150,8 +163,32 @@ theorem innerConjugationPointsIso_one :
   apply MonoidHom.ext
   intro x
   let x' : HopfAlgebra.points (R := R) (H := H) A := x
+  -- The components of `innerConjugationPointsIso` are stored as `GrpCat` morphisms; expose the
+  -- underlying conjugation formula before applying its computation lemma.
   change extendPoint H A 1 * x' * (extendPoint H A 1)⁻¹ = x'
-  simp
+  simp only [extendPoint_one, inv_one, one_mul, mul_one]
+
+/-- Conjugation by a product is successive conjugation, first by the second point and then by the
+first. -/
+@[simp]
+theorem innerConjugationPointsIso_mul
+    (g h : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R)) :
+    innerConjugationPointsIso H (g * h) =
+      (innerConjugationPointsIso H h).trans (innerConjugationPointsIso H g) := by
+  apply Iso.ext
+  apply NatTrans.ext
+  funext A
+  apply GrpCat.hom_ext
+  apply MonoidHom.ext
+  intro x
+  let x' : HopfAlgebra.points (R := R) (H := H) A := x
+  -- As above, remove only the `NatIso.ofComponents`/`GrpCat` wrappers to compare the two
+  -- conjugation automorphisms on an arbitrary point.
+  change (MulAut.conj (extendPoint H A (g * h))) x' =
+    (MulAut.conj (extendPoint H A g)) ((MulAut.conj (extendPoint H A h)) x')
+  rw [extendPoint_mul]
+  exact congrArg (fun f : MulAut _ ↦ f x') ((MulAut.conj : _ →* MulAut _).map_mul
+    (extendPoint H A g) (extendPoint H A h))
 
 /-- Conjugation by an inverse point is inverse to conjugation by the original point. -/
 @[simp]
@@ -165,6 +202,8 @@ theorem innerConjugationPointsIso_inv
   apply MonoidHom.ext
   intro x
   let x' : HopfAlgebra.points (R := R) (H := H) A := x
+  -- The two sides are hidden behind the component projections of the natural isomorphisms;
+  -- expose the pointwise formulas so the named hom/inverse computation lemmas apply.
   change extendPoint H A g⁻¹ * x' * (extendPoint H A g⁻¹)⁻¹ =
     (innerConjugationPointIso H g A).inv x'
   rw [innerConjugationPointIso_inv_apply]
@@ -194,9 +233,27 @@ theorem innerConjugationIso_one :
         (1 : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R)) =
       Iso.refl H := by
   apply Iso.ext
+  -- `innerConjugationIso` is assembled fieldwise from the recovered coordinate maps, so expose
+  -- its `hom` field before applying their identity law.
   change homOfPointsMap (innerConjugationPointsIso H 1).hom = 𝟙 H
   rw [innerConjugationPointsIso_one]
   exact homOfPointsMap_id H
+
+/-- Coordinate pullback reverses the pointwise composition order: the coordinate automorphism for
+conjugation by `g * h` is the composite for `g` followed by the one for `h`. -/
+@[simp]
+theorem innerConjugationIso_mul
+    (g h : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R)) :
+    innerConjugationIso H (g * h) =
+      (innerConjugationIso H g).trans (innerConjugationIso H h) := by
+  apply Iso.ext
+  -- Expose the `homOfPointsMap` fields so its explicit contravariant composition law applies.
+  change homOfPointsMap (innerConjugationPointsIso H (g * h)).hom =
+    homOfPointsMap (innerConjugationPointsIso H g).hom ≫
+      homOfPointsMap (innerConjugationPointsIso H h).hom
+  have hmul := congrArg Iso.hom (innerConjugationPointsIso_mul H g h)
+  simp only [Iso.trans_hom] at hmul
+  rw [hmul, homOfPointsMap_comp]
 
 /-- The coordinate automorphism for conjugation by an inverse point is the inverse coordinate
 automorphism. -/
@@ -205,6 +262,8 @@ theorem innerConjugationIso_inv
     (g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R)) :
     innerConjugationIso H g⁻¹ = (innerConjugationIso H g).symm := by
   apply Iso.ext
+  -- As in the identity and multiplication laws, expose the fieldwise construction before using
+  -- the corresponding functor-of-points equality.
   change homOfPointsMap (innerConjugationPointsIso H g⁻¹).hom =
     homOfPointsMap (innerConjugationPointsIso H g).inv
   rw [innerConjugationPointsIso_inv]
