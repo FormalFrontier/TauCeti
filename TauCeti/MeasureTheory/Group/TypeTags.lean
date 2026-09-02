@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.MeasureTheory.Measure.Haar.Basic
-public import Mathlib.MeasureTheory.Constructions.BorelSpace.Basic
 
 /-!
 # Measure theory on the multiplicative type tag
