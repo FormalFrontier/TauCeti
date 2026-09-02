@@ -22,12 +22,8 @@ separate structure theorem: this file proves that no further argument about the 
 once that hypothesis is available. The result concerns the full center scheme, not only its
 points over either field.
 
-## Main declarations
+## Main declaration
 
-* `TauCeti.adjointSemisimpleCommHopfAlgProperty.baseChange`: extension of the base field
-  preserves adjointness.
-* `TauCeti.adjointSemisimpleCommHopfAlgProperty.of_baseChange`: adjointness descends from a
-  field extension.
 * `TauCeti.adjointSemisimpleCommHopfAlgProperty.baseChange_iff`: adjointness of a semisimple
   affine group is equivalent to adjointness after a field extension.
 
@@ -58,6 +54,7 @@ namespace adjointSemisimpleCommHopfAlgProperty
 The proof that the base-changed finite-type Hopf algebra is semisimple is kept as an explicit
 hypothesis, since preservation of semisimplicity is logically separate from the center
 calculation. -/
+@[simp]
 theorem baseChange_iff
     (H : SemisimpleCommHopfAlgCat.{u} k)
     (hsemisimple : semisimpleCommHopfAlgProperty K
@@ -68,26 +65,6 @@ theorem baseChange_iff
   rw [adjointSemisimpleCommHopfAlgProperty_iff,
     adjointSemisimpleCommHopfAlgProperty_iff]
   exact CommHopfAlgCat.centerDefiningIdeal_baseChange_eq_augmentation_iff H.obj.obj
-
-variable {H : SemisimpleCommHopfAlgCat.{u} k}
-
-/-- Extension of the base field preserves adjointness once the base-changed group is known to be
-semisimple. -/
-theorem baseChange (hH : adjointSemisimpleCommHopfAlgProperty k H)
-    (hsemisimple : semisimpleCommHopfAlgProperty K
-      (FiniteTypeCommHopfAlgCat.baseChange (K := K) H.obj)) :
-    adjointSemisimpleCommHopfAlgProperty K
-      ⟨FiniteTypeCommHopfAlgCat.baseChange (K := K) H.obj, hsemisimple⟩ :=
-  (baseChange_iff H hsemisimple).2 hH
-
-/-- Adjointness after a field extension implies adjointness over the original field. -/
-theorem of_baseChange
-    (hsemisimple : semisimpleCommHopfAlgProperty K
-      (FiniteTypeCommHopfAlgCat.baseChange (K := K) H.obj))
-    (hH : adjointSemisimpleCommHopfAlgProperty K
-      ⟨FiniteTypeCommHopfAlgCat.baseChange (K := K) H.obj, hsemisimple⟩) :
-    adjointSemisimpleCommHopfAlgProperty k H :=
-  (baseChange_iff H hsemisimple).1 hH
 
 end adjointSemisimpleCommHopfAlgProperty
 

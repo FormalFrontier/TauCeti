@@ -95,6 +95,6 @@ theorem centerDefiningIdeal_baseChange_eq_augmentation_iff
       centerDefiningIdeal H = HopfIdeal.augmentation k H := by
   rw [← baseChangeHopfIdeal_centerDefiningIdeal,
     ← baseChangeHopfIdeal_augmentation]
-  exact baseChangeHopfIdeal_inj _ _
+  exact baseChangeHopfIdeal_injective.eq_iff
 
 end TauCeti.CommHopfAlgCat

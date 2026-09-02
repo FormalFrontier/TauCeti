@@ -182,7 +182,8 @@ theorem baseChangeHopfIdeal_le_iff_of_faithfullyFlat (J J' : HopfIdeal k H) :
     have hcomp : (Algebra.TensorProduct.comm k K H).toRingHom.comp
         Algebra.TensorProduct.includeRight.toRingHom = algebraMap H (H ⊗[k] K) := by
       ext x
-      rfl
+      exact DFunLike.congr_fun
+        (Algebra.TensorProduct.comm_comp_includeRight k K H) x
     have hmap : J.toIdeal.map (algebraMap H (H ⊗[k] K)) ≤
         J'.toIdeal.map (algebraMap H (H ⊗[k] K)) := by
       rw [← hcomp, ← Ideal.map_map, ← Ideal.map_map]
@@ -199,12 +200,6 @@ theorem baseChangeHopfIdeal_injective :
   fun J J' hJJ' ↦ le_antisymm
     ((baseChangeHopfIdeal_le_iff_of_faithfullyFlat J J').mp hJJ'.le)
     ((baseChangeHopfIdeal_le_iff_of_faithfullyFlat J' J).mp hJJ'.ge)
-
-/-- Faithfully flat base change preserves and reflects equality of Hopf ideals. -/
-@[simp]
-theorem baseChangeHopfIdeal_inj (J J' : HopfIdeal k H) :
-    baseChangeHopfIdeal (K := K) J = baseChangeHopfIdeal (K := K) J' ↔ J = J' :=
-  baseChangeHopfIdeal_injective.eq_iff
 
 end FaithfullyFlat
 
