@@ -11,7 +11,7 @@ public import TauCeti.LinearAlgebra.Dual.RightAction
 /-!
 # The Auslander--Reiten translate
 
-For an algebra `A` over a commutative ring `k`, the **duality** `D = Hom_k(-, k)` turns a right
+For an algebra `A` over a commutative semiring `k`, the **duality** `D = Hom_k(-, k)` turns a right
 `A`-module into a left `A`-module, by `TauCeti.dualRightAction`.  This file applies that duality to
 the Auslander--Reiten transpose to define the **Auslander--Reiten translate**
 
@@ -23,22 +23,26 @@ transpose is a right `A`-module, so the translate is a left `A`-module again, as
 
 The translate is attached to a *presentation*, not directly to `M`: like the transpose it is
 well defined only because a minimal projective presentation is unique up to isomorphism of the whole
-diagram.  `TauCeti.IsMinimalProjectivePresentation.nonempty_linearEquiv_arTranslate` is that
-statement, and it is what licenses the notation `τ M`.
+diagram.  `TauCeti.IsMinimalProjectivePresentation.nonempty_linearEquiv_auslanderReitenTranslate` is
+that statement, and it is what licenses the notation `τ M`.
 
 ## Main definitions
 
-* `TauCeti.arTranslate`: the Auslander--Reiten translate `D (Tr)` of a projective presentation,
-  carrying the resulting `A`-module structure.
-* `TauCeti.arTranslate.linearEquiv`: the transport of the translate along an isomorphism of
-  transposes, contravariant by `TauCeti.arTranslate.linearEquiv_trans`.
+* `TauCeti.AuslanderReitenTranslate`: the `k`-dual `D (Tr)` of the Auslander--Reiten transpose of a
+  linear map `p₁ : P₁ → P₀`, carrying the resulting `A`-module structure.  It is the
+  Auslander--Reiten translate of `M` when `p₁` is the first map of a minimal projective presentation
+  of `M`.
+* `TauCeti.AuslanderReitenTranslate.linearEquiv`: the transport of the translate along an
+  isomorphism of transposes, contravariant by
+  `TauCeti.AuslanderReitenTranslate.linearEquiv_trans`.
 
 ## Main results
 
-* `TauCeti.IsMinimalProjectivePresentation.nonempty_linearEquiv_arTranslate`: the translate is
-  independent, up to `A`-linear equivalence, of the chosen minimal projective presentation.
-* `TauCeti.IsMinimalProjectivePresentation.subsingleton_arTranslate_of_projective`: the translate of
-  a projective module vanishes.
+* `TauCeti.IsMinimalProjectivePresentation.nonempty_linearEquiv_auslanderReitenTranslate`: the
+  translate is independent, up to `A`-linear equivalence, of the chosen minimal projective
+  presentation.
+* `TauCeti.IsMinimalProjectivePresentation.subsingleton_auslanderReitenTranslate_of_projective`: the
+  translate of a projective module vanishes.
 
 ## Implementation notes
 
@@ -51,7 +55,12 @@ The translate is a reducible abbreviation of the dual rather than a fresh type, 
 elements are literally `k`-linear functionals on the transpose and the whole `Module.Dual` API
 applies to it unchanged: extensionality, the dimension count `Subspace.dual_finrank_eq` and the
 finite-dimensionality of a dual are inherited verbatim and are not restated here.  Only the
-`A`-action is new, and it is described by the single lemma `TauCeti.arTranslate.smul_apply`.
+`A`-action is new, and it is described by the single lemma
+`TauCeti.AuslanderReitenTranslate.smul_apply`.
+
+The name `arTranslate` is deliberately left free: the roadmap pins it for the *object-level*
+translate `arTranslate k Q M` of a representation, which this presentation-level construction will
+supply once the stable category is available.
 
 ## References
 
@@ -81,40 +90,43 @@ universe u v v' w w' x
 
 variable {A : Type u} [Ring A] {k : Type x} [CommSemiring k] [Algebra k A]
 
+section Translate
+
 variable {P₀ : Type v} {P₁ : Type w} [AddCommMonoid P₀] [Module A P₀]
   [AddCommMonoid P₁] [Module A P₁]
 
-/-- The **Auslander--Reiten translate** `τ = D Tr` of a projective presentation whose first map is
-`p₁ : P₁ → P₀`: the `k`-dual of its Auslander--Reiten transpose.  The transpose is a right
-`A`-module, so `TauCeti.dualRightAction` makes the translate a left `A`-module.
+/-- The **Auslander--Reiten translate** `τ = D Tr` attached to a linear map `p₁ : P₁ → P₀`: the
+`k`-dual of its Auslander--Reiten transpose.  The transpose is a right `A`-module, so
+`TauCeti.dualRightAction` makes the translate a left `A`-module.
 
-As with the transpose, minimality is not needed to form it; it is used by
-`TauCeti.IsMinimalProjectivePresentation.nonempty_linearEquiv_arTranslate` to show that the result
-is independent, up to equivalence, of the chosen presentation of a module. -/
-abbrev arTranslate (k : Type x) [CommSemiring k] [Algebra k A] (p₁ : P₁ →ₗ[A] P₀) : Type _ :=
+When `p₁` is the first map of a minimal projective presentation `P₁ → P₀ → M → 0`, this is the
+Auslander--Reiten translate of `M`: no exactness or projectivity is needed to form it, and
+minimality enters only through
+`TauCeti.IsMinimalProjectivePresentation.nonempty_linearEquiv_auslanderReitenTranslate`, which shows
+that the result is then independent, up to equivalence, of the chosen presentation. -/
+abbrev AuslanderReitenTranslate (k : Type x) [CommSemiring k] [Algebra k A]
+    (p₁ : P₁ →ₗ[A] P₀) : Type _ :=
   Module.Dual k (AuslanderReitenTranspose p₁)
 
-namespace arTranslate
+namespace AuslanderReitenTranslate
 
 variable {p₁ : P₁ →ₗ[A] P₀}
 
-instance : Module A (arTranslate k p₁) :=
+instance : Module A (AuslanderReitenTranslate k p₁) :=
   Module.compHom (Module.Dual k (AuslanderReitenTranspose p₁))
     (dualRightAction k (AuslanderReitenTranspose p₁))
 
 /-- The `A`-action on the translate is precomposition with the right action on the transpose. -/
 @[simp]
-theorem smul_apply (a : A) (φ : arTranslate k p₁)
+theorem smul_apply (a : A) (φ : AuslanderReitenTranslate k p₁)
     (x : AuslanderReitenTranspose p₁) :
     (a • φ) x = φ (MulOpposite.op a • x) :=
   dualRightAction_apply_apply k (AuslanderReitenTranspose p₁) a φ x
 
 /-- Scalars from `k` act on the translate through `A`, so the two actions on it are the layered
 ones: the `k`-action is the restriction of the `A`-action along the algebra map. -/
-instance : IsScalarTower k A (arTranslate k p₁) where
-  smul_assoc c a φ := by
-    ext x
-    simp [Algebra.smul_def, mul_smul]
+instance : IsScalarTower k A (AuslanderReitenTranslate k p₁) :=
+  IsScalarTower.of_algebraMap_smul fun c φ => by ext x; simp
 
 variable {Q₀ : Type v'} {Q₁ : Type w'} [AddCommMonoid Q₀] [Module A Q₀]
   [AddCommMonoid Q₁] [Module A Q₁]
@@ -122,12 +134,11 @@ variable {q₁ : Q₁ →ₗ[A] Q₀}
 
 /-- An equivalence of transposes dualizes to an equivalence of translates, contravariantly: an
 `Aᵐᵒᵖ`-linear equivalence `Tr q₁ ≃ Tr p₁` sends a functional on `Tr p₁` to its composite with that
-equivalence.
-
-It is `LinearEquiv.dualMap` of the underlying `k`-linear equivalence, upgraded to the `A`-action
-that the translates carry. -/
+equivalence. -/
 def linearEquiv (e : AuslanderReitenTranspose q₁ ≃ₗ[Aᵐᵒᵖ] AuslanderReitenTranspose p₁) :
-    arTranslate k p₁ ≃ₗ[A] arTranslate k q₁ :=
+    AuslanderReitenTranslate k p₁ ≃ₗ[A] AuslanderReitenTranslate k q₁ :=
+  -- `LinearEquiv.dualMap` of the underlying `k`-linear equivalence, upgraded to the `A`-action that
+  -- the translates carry.
   { (e.restrictScalars k).dualMap with
     map_smul' := fun a φ => by
       ext x
@@ -135,7 +146,7 @@ def linearEquiv (e : AuslanderReitenTranspose q₁ ≃ₗ[Aᵐᵒᵖ] AuslanderR
 
 @[simp]
 theorem linearEquiv_apply (e : AuslanderReitenTranspose q₁ ≃ₗ[Aᵐᵒᵖ] AuslanderReitenTranspose p₁)
-    (φ : arTranslate k p₁) (x : AuslanderReitenTranspose q₁) :
+    (φ : AuslanderReitenTranslate k p₁) (x : AuslanderReitenTranspose q₁) :
     linearEquiv (k := k) e φ x = φ (e x) :=
   (rfl)
 
@@ -149,7 +160,7 @@ theorem linearEquiv_symm (e : AuslanderReitenTranspose q₁ ≃ₗ[Aᵐᵒᵖ] A
 @[simp]
 theorem linearEquiv_refl :
     linearEquiv (k := k) (LinearEquiv.refl Aᵐᵒᵖ (AuslanderReitenTranspose p₁)) =
-      LinearEquiv.refl A (arTranslate k p₁) :=
+      LinearEquiv.refl A (AuslanderReitenTranslate k p₁) :=
   LinearEquiv.ext fun φ =>
     DFunLike.congr_fun (LinearEquiv.dualMap_refl (R := k) (M₁ := AuslanderReitenTranspose p₁)) φ
 
@@ -165,25 +176,35 @@ theorem linearEquiv_trans {R₀ : Type*} {R₁ : Type*} [AddCommMonoid R₀] [Mo
     DFunLike.congr_fun
       (LinearEquiv.dualMap_trans (f.restrictScalars k) (e.restrictScalars k)).symm φ
 
-end arTranslate
+end AuslanderReitenTranslate
+
+end Translate
 
 namespace IsMinimalProjectivePresentation
 
 variable {M : Type*} [AddCommGroup M] [Module A M]
 variable {P₀ : Type v} [AddCommGroup P₀] [Module A P₀]
-variable {P₁ : Type w} [AddCommGroup P₁] [Module A P₁]
+
+section Projective
+
+variable {P₁ : Type w} [AddCommMonoid P₁] [Module A P₁]
 variable {p₁ : P₁ →ₗ[A] P₀} {p₀ : P₀ →ₗ[A] M}
 
 /-- The Auslander--Reiten translate of a projective module vanishes: its transpose already does,
 and the dual of a subsingleton is a subsingleton. -/
-theorem subsingleton_arTranslate_of_projective [Module.Projective A M]
-    (h : IsMinimalProjectivePresentation p₁ p₀) : Subsingleton (arTranslate k p₁) := by
-  have hs : Subsingleton (AuslanderReitenTranspose p₁) :=
+theorem subsingleton_auslanderReitenTranslate_of_projective [Module.Projective A M]
+    (h : IsMinimalProjectivePresentation p₁ p₀) :
+    Subsingleton (AuslanderReitenTranslate k p₁) :=
+  let _ : Subsingleton (AuslanderReitenTranspose p₁) :=
     h.subsingleton_auslanderReitenTranspose_of_projective
-  refine ⟨fun φ ψ => ?_⟩
-  ext x
-  rw [hs.allEq x 0, map_zero, map_zero]
+  inferInstance
 
+end Projective
+
+section Comparison
+
+variable {P₁ : Type w} [AddCommGroup P₁] [Module A P₁]
+variable {p₁ : P₁ →ₗ[A] P₀} {p₀ : P₀ →ₗ[A] M}
 variable {Q₀ : Type v'} {Q₁ : Type w'} [AddCommGroup Q₀] [Module A Q₀]
   [AddCommGroup Q₁] [Module A Q₁]
 variable {q₁ : Q₁ →ₗ[A] Q₀} {q₀ : Q₀ →ₗ[A] M}
@@ -191,10 +212,12 @@ variable {q₁ : Q₁ →ₗ[A] Q₀} {q₀ : Q₀ →ₗ[A] M}
 /-- **The Auslander--Reiten translate is well defined**: it is independent, up to `A`-linear
 equivalence, of the chosen minimal projective presentation of a module.  This is the statement that
 licenses writing `τ M` for a module `M`. -/
-theorem nonempty_linearEquiv_arTranslate (h : IsMinimalProjectivePresentation p₁ p₀)
+theorem nonempty_linearEquiv_auslanderReitenTranslate (h : IsMinimalProjectivePresentation p₁ p₀)
     (h' : IsMinimalProjectivePresentation q₁ q₀) :
-    Nonempty (arTranslate k p₁ ≃ₗ[A] arTranslate k q₁) :=
-  (h'.nonempty_linearEquiv_auslanderReitenTranspose h).map arTranslate.linearEquiv
+    Nonempty (AuslanderReitenTranslate k p₁ ≃ₗ[A] AuslanderReitenTranslate k q₁) :=
+  (h'.nonempty_linearEquiv_auslanderReitenTranspose h).map AuslanderReitenTranslate.linearEquiv
+
+end Comparison
 
 end IsMinimalProjectivePresentation
 

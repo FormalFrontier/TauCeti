@@ -10,10 +10,10 @@ public import Mathlib.LinearAlgebra.Dual.Defs
 /-!
 # The dual of a right module as a left module
 
-For a right module `N` over a ring `A` whose right action commutes with a base ring `k`, the
-duality `D = Hom_k(-, k)` turns `N` into a *left* `A`-module: a scalar `a` acts on a functional `φ`
-by precomposition with multiplication by `a`, `(a • φ) x = φ (x * a)`.  Precomposition reverses
-composition, which is exactly what exchanges the two sides.
+For a right module `N` over a semiring `A` whose right action commutes with a base commutative
+semiring `k`, the duality `D = Hom_k(-, k)` turns `N` into a *left* `A`-module: a scalar `a` acts on
+a functional `φ` by precomposition with multiplication by `a`, `(a • φ) x = φ (x * a)`.
+Precomposition reverses composition, which is exactly what exchanges the two sides.
 
 This file records that action as the ring homomorphism `TauCeti.dualRightAction`.
 
