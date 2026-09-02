@@ -8,6 +8,7 @@ module
 public import Mathlib.GroupTheory.FiniteAbelian.Duality
 public import Mathlib.RingTheory.RootsOfUnity.AlgebraicallyClosed
 public import TauCeti.GroupTheory.Perm.FinThree
+public import TauCeti.RepresentationTheory.Induction.LinearCharacter
 public import TauCeti.RepresentationTheory.Induction.Mackey.LinearCharacter
 public import TauCeti.RepresentationTheory.Induction.Mackey.Reducible
 

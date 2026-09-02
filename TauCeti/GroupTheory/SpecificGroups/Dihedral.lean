@@ -26,7 +26,7 @@ Finally it names the **rotation subgroup**, which Mathlib does not have either. 
 the kernel of the reflection parity, so that its normality is Mathlib's `MonoidHom.normal_ker` and
 its index is the order of the parity group; the defining dihedral relation is then recorded as
 `TauCeti.conj_eq_inv_of_notMem_dihedralRotations`, that conjugation by anything outside it inverts
-every rotation. Its cyclic coordinate `TauCeti.dihedralRotationsEquiv` carries Mathlib's
+every rotation. Its cyclic coordinate `TauCeti.dihedralRotationsMulEquiv` carries Mathlib's
 `AddChar.zmodChar` over to the linear characters `TauCeti.dihedralRotationChar` of the rotation
 subgroup, and conjugation by a reflection inverts each of them.
 
@@ -38,7 +38,7 @@ subgroup, and conjugation by a reflection inverts each of them.
 * `TauCeti.dihedralGroupMulEquiv`: that homomorphism as an isomorphism, when the two involutions
   generate `G` and neither is the identity.
 * `TauCeti.dihedralReflectionParity`, `TauCeti.dihedralRotations`: the reflection parity and the
-  rotation subgroup it cuts out, with `TauCeti.dihedralRotationsEquiv` its cyclic coordinate.
+  rotation subgroup it cuts out, with `TauCeti.dihedralRotationsMulEquiv` its cyclic coordinate.
 * `TauCeti.dihedralRotationChar`: the character of the rotation subgroup sending `r i` to `ζ ^ i`,
   for `ζ` an `n`-th root of unity.
 
@@ -51,11 +51,12 @@ subgroup, and conjugation by a reflection inverts each of them.
   by two involutions other than the identity is the dihedral group of order twice the order of
   their product.**
 * `TauCeti.index_dihedralRotations`: the rotation subgroup has index `2`.
-* `TauCeti.conj_eq_inv_of_notMem_dihedralRotations`: **conjugation by a reflection inverts every
-  rotation.**
+* `TauCeti.conj_eq_inv_of_notMem_dihedralRotations` and
+  `TauCeti.conjNormal_eq_inv_of_notMem_dihedralRotations`: **conjugation by a reflection inverts
+  every rotation**, in the ambient group and inside the rotation subgroup.
 * `TauCeti.dihedralRotationChar_injective`: the character attached to a *primitive* `n`-th root of
   unity is faithful.
-* `TauCeti.apply_conjNormal_eq_inv_of_notMem_dihedralRotations`: **conjugating a character of the
+* `TauCeti.map_conjNormal_eq_inv_of_notMem_dihedralRotations`: **conjugating a character of the
   rotation subgroup by a reflection inverts it.**
 -/
 
@@ -326,8 +327,9 @@ theorem dihedralReflectionParity_surjective (n : ℕ) :
   · exact ⟨DihedralGroup.sr 0, by simpa using congrArg Multiplicative.ofAdd hy.symm⟩
 
 /-- The **rotation subgroup** of `DihedralGroup n`, the kernel of the reflection parity. It is
-normal of index `2`, and `TauCeti.dihedralRotationsEquiv` identifies it with
-`Multiplicative (ZMod n)`, so it is cyclic and in particular commutative. -/
+normal of index `2`, and `TauCeti.dihedralRotationsMulEquiv` identifies it with
+`Multiplicative (ZMod n)`, so it is cyclic (`TauCeti.dihedralRotations_isCyclic`) and in particular
+commutative. -/
 def dihedralRotations (n : ℕ) : Subgroup (DihedralGroup n) :=
   (dihedralReflectionParity n).ker
 
@@ -379,10 +381,21 @@ theorem conj_eq_inv_of_notMem_dihedralRotations {s g : DihedralGroup n}
       DihedralGroup.inv_r]
     exact congrArg DihedralGroup.r (by ring)
 
+/-- **Conjugation by a reflection inverts every rotation, inside the rotation subgroup**: this is
+`TauCeti.conj_eq_inv_of_notMem_dihedralRotations` read as an equality in `dihedralRotations n`,
+where the conjugation action of the ambient group on a normal subgroup lives. -/
+@[simp]
+theorem conjNormal_eq_inv_of_notMem_dihedralRotations {s : DihedralGroup n}
+    (hs : s ∉ dihedralRotations n) (x : dihedralRotations n) :
+    MulAut.conjNormal s x = x⁻¹ :=
+  Subtype.ext (by
+    rw [MulAut.conjNormal_apply]
+    simpa using conj_eq_inv_of_notMem_dihedralRotations hs x.2)
+
 /-- The **rotation index** of a dihedral element: the index `i` of a rotation `r i`, and the junk
 value `0` on a reflection. This is the ambient pattern match only; the interface is
-`TauCeti.dihedralRotationsEquiv`, which reads the index off an element of the rotation subgroup and
-so never meets the junk value. -/
+`TauCeti.dihedralRotationsMulEquiv`, which reads the index off an element of the rotation subgroup
+and so never meets the junk value. -/
 private def dihedralRotationIndex {n : ℕ} : DihedralGroup n → ZMod n
   | DihedralGroup.r i => i
   | DihedralGroup.sr _ => 0
@@ -405,7 +418,7 @@ private theorem dihedralRotationIndex_mul {g h : DihedralGroup n} (hg : g ∈ di
 /-- **The rotation subgroup is `ZMod n` written multiplicatively**: the rotation `r i` has
 coordinate `i`. This is the canonical coordinate on `TauCeti.dihedralRotations`, and it is what
 lets a character of the rotation subgroup be named by a single `n`-th root of unity. -/
-def dihedralRotationsEquiv (n : ℕ) : dihedralRotations n ≃* Multiplicative (ZMod n) where
+def dihedralRotationsMulEquiv (n : ℕ) : dihedralRotations n ≃* Multiplicative (ZMod n) where
   toFun x := Multiplicative.ofAdd (dihedralRotationIndex (x : DihedralGroup n))
   invFun i := ⟨DihedralGroup.r (Multiplicative.toAdd i), r_mem_dihedralRotations _⟩
   left_inv x := Subtype.ext (r_dihedralRotationIndex x.2)
@@ -413,16 +426,21 @@ def dihedralRotationsEquiv (n : ℕ) : dihedralRotations n ≃* Multiplicative (
   map_mul' x y := congrArg Multiplicative.ofAdd (dihedralRotationIndex_mul x.2 y.2)
 
 @[simp]
-theorem dihedralRotationsEquiv_r (i : ZMod n) :
-    dihedralRotationsEquiv n ⟨DihedralGroup.r i, r_mem_dihedralRotations i⟩ =
+theorem dihedralRotationsMulEquiv_r (i : ZMod n) :
+    dihedralRotationsMulEquiv n ⟨DihedralGroup.r i, r_mem_dihedralRotations i⟩ =
       Multiplicative.ofAdd i :=
   (rfl)
 
 @[simp]
-theorem coe_dihedralRotationsEquiv_symm (i : Multiplicative (ZMod n)) :
-    ((dihedralRotationsEquiv n).symm i : DihedralGroup n) =
+theorem coe_dihedralRotationsMulEquiv_symm (i : Multiplicative (ZMod n)) :
+    ((dihedralRotationsMulEquiv n).symm i : DihedralGroup n) =
       DihedralGroup.r (Multiplicative.toAdd i) :=
   (rfl)
+
+/-- The rotation subgroup is cyclic, `Multiplicative (ZMod n)` being so; in particular it is
+commutative. -/
+instance dihedralRotations_isCyclic (n : ℕ) : IsCyclic (dihedralRotations n) :=
+  isCyclic_of_surjective _ (dihedralRotationsMulEquiv n).symm.surjective
 
 section Character
 
@@ -431,19 +449,19 @@ variable {M : Type*} [CommMonoid M] {ζ : M} [NeZero n]
 /-- **The character of the rotation subgroup attached to an `n`-th root of unity** `ζ`: the
 rotation `r i` is sent to `ζ ^ i`, the exponent being the canonical representative of `i` in
 `ZMod n`. It is Mathlib's `AddChar.zmodChar` read through the cyclic coordinate
-`TauCeti.dihedralRotationsEquiv`. -/
+`TauCeti.dihedralRotationsMulEquiv`. -/
 def dihedralRotationChar (hζ : ζ ^ n = 1) : dihedralRotations n →* M :=
-  (AddChar.toMonoidHomEquiv (AddChar.zmodChar n hζ)).comp (dihedralRotationsEquiv n).toMonoidHom
+  (AddChar.toMonoidHomEquiv (AddChar.zmodChar n hζ)).comp (dihedralRotationsMulEquiv n).toMonoidHom
 
 @[simp]
 theorem dihedralRotationChar_apply (hζ : ζ ^ n = 1) (x : dihedralRotations n) :
-    dihedralRotationChar hζ x = ζ ^ (Multiplicative.toAdd (dihedralRotationsEquiv n x)).val :=
+    dihedralRotationChar hζ x = ζ ^ (Multiplicative.toAdd (dihedralRotationsMulEquiv n x)).val :=
   (rfl)
 
 /-- The character sends the rotation `r i` to `ζ ^ i`. -/
 theorem dihedralRotationChar_r (hζ : ζ ^ n = 1) (i : ZMod n) :
     dihedralRotationChar hζ ⟨DihedralGroup.r i, r_mem_dihedralRotations i⟩ = ζ ^ i.val := by
-  rw [dihedralRotationChar_apply, dihedralRotationsEquiv_r, toAdd_ofAdd]
+  rw [dihedralRotationChar_apply, dihedralRotationsMulEquiv_r, toAdd_ofAdd]
 
 /-- **The character attached to a *primitive* `n`-th root of unity is faithful**: two rotations
 with the same image have exponents below `n` with the same power of `ζ`, hence equal exponents. -/
@@ -452,7 +470,7 @@ theorem dihedralRotationChar_injective (h : IsPrimitiveRoot ζ n) :
   intro x y hxy
   rw [dihedralRotationChar_apply, dihedralRotationChar_apply] at hxy
   have hval := ZMod.val_injective n (h.pow_inj (ZMod.val_lt _) (ZMod.val_lt _) hxy)
-  exact (dihedralRotationsEquiv n).injective (Multiplicative.toAdd.injective hval)
+  exact (dihedralRotationsMulEquiv n).injective (Multiplicative.toAdd.injective hval)
 
 end Character
 
@@ -462,17 +480,17 @@ variable {M : Type*} [Group M]
 
 /-- **Conjugating a character of the rotation subgroup by a reflection inverts it**: `{}^s ψ = ψ⁻¹`
 for every `s` outside the rotation subgroup. This is
-`TauCeti.conj_eq_inv_of_notMem_dihedralRotations` transported along `ψ`, and it is what lets the
+`TauCeti.conjNormal_eq_inv_of_notMem_dihedralRotations` read through `ψ`, and it is what lets the
 Mackey criterion for an induced character of the rotation subgroup read off a single condition
-on `ψ`. -/
-theorem apply_conjNormal_eq_inv_of_notMem_dihedralRotations
+on `ψ`.
+
+Not a `simp` lemma: with `TauCeti.conjNormal_eq_inv_of_notMem_dihedralRotations` tagged, `simp`
+already rewrites this left-hand side through `map_inv`, so tagging it too is a `simpNF`
+violation. -/
+theorem map_conjNormal_eq_inv_of_notMem_dihedralRotations
     (ψ : dihedralRotations n →* M) {s : DihedralGroup n} (hs : s ∉ dihedralRotations n)
     (x : dihedralRotations n) : ψ (MulAut.conjNormal s x) = (ψ x)⁻¹ := by
-  have hx : MulAut.conjNormal s x = x⁻¹ :=
-    Subtype.ext (by
-      rw [MulAut.conjNormal_apply]
-      simpa using conj_eq_inv_of_notMem_dihedralRotations hs x.2)
-  rw [hx, map_inv]
+  rw [conjNormal_eq_inv_of_notMem_dihedralRotations hs, map_inv]
 
 end CharacterConjugation
 
