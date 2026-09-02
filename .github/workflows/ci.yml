@@ -70,6 +70,7 @@ jobs:
           python3 scripts/test_attest_pr_config.py
           python3 scripts/test_profile_workflow.py
           python3 scripts/test_lake_cache_probe.py
+          python3 scripts/test_lake_cache_get.py
           PYTHONPATH=. python3 scripts/perf/test_perf.py
           PYTHONPATH=scripts python3 scripts/test_claims_access.py
           python3 scripts/test_lint_dot_notation.py
