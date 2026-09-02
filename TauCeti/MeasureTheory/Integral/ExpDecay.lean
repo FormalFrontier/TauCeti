@@ -7,7 +7,6 @@ module
 
 public import Mathlib.Analysis.SpecialFunctions.Gaussian.GaussianIntegral
 public import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
-import Mathlib.Probability.Moments.Basic
 
 /-!
 # Exponential integrals on the real line
@@ -15,9 +14,7 @@ import Mathlib.Probability.Moments.Basic
 This file records integrability and evaluation of exponential integrands on a half-line or the
 whole real line: natural powers multiplied by an exponentially decaying factor, the exact rate at
 which a bare exponential is integrable on a right half-line, integrability of the two-sided
-exponential, and general comparison criteria for tail lower bounds. It also carries a
-measure-agnostic exponential-integrability criterion, stated for a random variable on an arbitrary
-measurable space rather than for the line.
+exponential, and general comparison criteria for tail lower bounds.
 
 Mathlib supplies the *sufficient* direction of the right-half-line integrability criterion,
 `integrableOn_exp_mul_Ioi`, for a negative rate.  `integrableOn_exp_mul_Ioi_iff` adds the converse,
@@ -33,9 +30,6 @@ inclusion.
 * `TauCeti.integrableOn_exp_mul_Iic_iff`: `exp (a * ·)` is integrable on `(-∞, c]` exactly when
   `0 < a`.
 * `TauCeti.integrable_exp_neg_mul_abs`: `exp (-(a * |·|))` is integrable when `0 < a`.
-* `TauCeti.integrable_exp_mul_of_ae_le_of_nonpos`: `exp (t * X ·)` is integrable for `t ≤ 0`
-  whenever the random variable `X` is almost everywhere bounded below under a finite measure on
-  any measurable space.
 * `TauCeti.not_integrableOn_Ioi_of_eventually_one_le_norm`: a function whose norm is eventually
   at least one is not integrable on any right half-line, hence, in
   `TauCeti.not_integrable_of_eventually_one_le_norm_atTop` and
@@ -49,18 +43,6 @@ noncomputable section
 open Filter MeasureTheory Set
 
 namespace TauCeti
-
-/-- Under a finite measure, the exponential of a nonpositive multiple of an almost everywhere
-bounded below random variable is integrable.
-
-This is Mathlib's `ProbabilityTheory.integrable_exp_mul_of_le` reflected through `X ↦ -X`. -/
-theorem integrable_exp_mul_of_ae_le_of_nonpos {Ω : Type*} [MeasurableSpace Ω]
-    {X : Ω → ℝ} {μ : Measure Ω} [IsFiniteMeasure μ] (hX : AEMeasurable X μ)
-    {b : ℝ} (hb : ∀ᵐ ω ∂μ, b ≤ X ω) {t : ℝ} (ht : t ≤ 0) :
-    Integrable (fun ω => Real.exp (t * X ω)) μ := by
-  simpa only [Pi.neg_apply, neg_mul_neg] using
-    ProbabilityTheory.integrable_exp_mul_of_le (-t) (-b) (neg_nonneg.mpr ht) hX.neg
-      (by filter_upwards [hb] with ω hω using neg_le_neg hω)
 
 /-- A function whose norm is eventually at least one at `atTop` is not integrable on any right
 half-line: it is bounded below in norm on a set of infinite measure. -/

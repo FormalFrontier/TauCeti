@@ -11,7 +11,6 @@ public import TauCeti.Probability.Distributions.Gaussian.Cdf
 public import TauCeti.Probability.Distributions.Measurability
 public import Mathlib.Probability.Moments.Variance
 import Mathlib.MeasureTheory.Function.JacobianOneDim
-import TauCeti.MeasureTheory.Integral.ExpDecay
 
 /-!
 # The log-normal distribution
@@ -347,9 +346,11 @@ theorem variance_id_logNormalMeasure (m : ℝ) (v : ℝ≥0) :
 /-- For nonpositive `t` the moment-generating integrand of a log-normal law is bounded by `1` on
 the support, hence integrable. -/
 theorem integrable_exp_mul_logNormalMeasure (m : ℝ) (v : ℝ≥0) (ht : t ≤ 0) :
-    Integrable (fun x => Real.exp (t * x)) (logNormalMeasure m v) :=
-  integrable_exp_mul_of_ae_le_of_nonpos (X := id) (by fun_prop)
-    ((ae_pos_logNormalMeasure m v).mono fun _ hx => hx.le) ht
+    Integrable (fun x => Real.exp (t * x)) (logNormalMeasure m v) := by
+  refine Integrable.mono' (integrable_const 1) (by fun_prop) ?_
+  filter_upwards [ae_pos_logNormalMeasure m v] with x hx
+  rw [Real.norm_eq_abs, abs_of_pos (Real.exp_pos _), Real.exp_le_one_iff]
+  nlinarith [hx.le]
 
 /-- The growth statement behind the failure of the positive exponential moments: against the
 Gaussian exponent `-(x - m) ^ 2 / (2 * v)`, the term `t * exp x` wins for every `t > 0`. -/
@@ -407,7 +408,14 @@ theorem not_integrable_exp_mul_logNormalMeasure (m : ℝ) (hv : v ≠ 0) (ht : 0
           mul_le_mul_of_nonneg_left key (by positivity)
       _ = Real.exp (t * Real.exp x)
             * ((√(2 * π * (v : ℝ)))⁻¹ * Real.exp (-(x - m) ^ 2 / (2 * (v : ℝ)))) := by ring
-  exact not_integrable_of_eventually_one_le_atTop hev hint
+  obtain ⟨a, ha⟩ := eventually_atTop.mp hev
+  have hone : IntegrableOn (fun _ : ℝ => (1 : ℝ)) (Ioi a) volume := by
+    refine Integrable.mono' hint.integrableOn (by fun_prop) ?_
+    filter_upwards [ae_restrict_mem measurableSet_Ioi] with x hx
+    rw [Real.norm_eq_abs, abs_one]
+    exact ha x hx.le
+  rw [integrableOn_const_iff] at hone
+  simp [Real.volume_Ioi] at hone
 
 /-- **The exponential-integrability domain of a log-normal law with nonzero log-variance is the
 nonpositive half-line.** -/

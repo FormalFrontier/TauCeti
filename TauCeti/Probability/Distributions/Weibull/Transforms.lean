@@ -7,7 +7,7 @@ module
 
 public import TauCeti.Probability.Distributions.Weibull.Basic
 public import TauCeti.Probability.Distributions.Exponential
-public import Mathlib.Probability.Moments.IntegrableExpMul
+public import TauCeti.Probability.Moments.IntegrableExpMul
 import TauCeti.MeasureTheory.Integral.ExpDecay
 
 /-!
@@ -208,6 +208,7 @@ theorem integrable_exp_mul_id_weibullMeasure_of_one_lt (hk : 1 < k) (t : ℝ) :
     exact integrable_zero_measure
 
 /-- For a superlinear Weibull law, the exponential-integrability domain is all of `ℝ`. -/
+@[simp]
 theorem integrableExpSet_id_weibullMeasure_of_one_lt (hk : 1 < k) :
     integrableExpSet id (weibullMeasure k lam) = univ := by
   ext t
@@ -246,6 +247,7 @@ theorem not_integrable_exp_mul_id_weibullMeasure_of_lt_one (hk : 0 < k) (hk' : k
   exact not_integrable_of_eventually_one_le_atTop hev hint
 
 /-- For a sublinear Weibull law, exponential integrability is equivalent to a nonpositive rate. -/
+@[simp]
 theorem integrable_exp_mul_id_weibullMeasure_iff_of_lt_one (hk : 0 < k) (hk' : k < 1)
     (hlam : 0 < lam) (t : ℝ) :
     Integrable (fun x : ℝ => Real.exp (t * x)) (weibullMeasure k lam) ↔ t ≤ 0 :=
@@ -254,6 +256,7 @@ theorem integrable_exp_mul_id_weibullMeasure_iff_of_lt_one (hk : 0 < k) (hk' : k
     integrable_exp_mul_id_weibullMeasure_of_nonpos k lam⟩
 
 /-- For a sublinear Weibull law, the exponential-integrability domain is `(-∞, 0]`. -/
+@[simp]
 theorem integrableExpSet_id_weibullMeasure_of_lt_one (hk : 0 < k) (hk' : k < 1)
     (hlam : 0 < lam) : integrableExpSet id (weibullMeasure k lam) = Iic 0 := by
   ext t
@@ -278,6 +281,7 @@ theorem integrableExpSet_id_weibullMeasure_one (hlam : 0 < lam) :
 /-- **The exponential-integrability trichotomy for a valid Weibull law.** The domain is all of
 `ℝ` above shape one, is open with endpoint `lam⁻¹` at shape one, and is `(-∞, 0]` below shape
 one. -/
+@[simp]
 theorem integrableExpSet_id_weibullMeasure (hk : 0 < k) (hlam : 0 < lam) :
     integrableExpSet id (weibullMeasure k lam) =
       if k < 1 then Iic 0 else if k = 1 then Iio lam⁻¹ else univ := by

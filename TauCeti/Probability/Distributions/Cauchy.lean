@@ -7,7 +7,6 @@ module
 
 import Mathlib.Analysis.Fourier.Inversion
 import Mathlib.MeasureTheory.Function.JacobianOneDim
-import TauCeti.MeasureTheory.Integral.ExpDecay
 public import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
 public import Mathlib.Probability.Distributions.Cauchy
 public import Mathlib.Probability.HasLaw
@@ -221,7 +220,13 @@ private theorem not_integrable_exp_mul_cauchyPDFReal_of_pos (x₀ : ℝ) (hγ : 
         field_simp
       _ ≤ Real.exp (t * x) * cauchyPDFReal x₀ γ x :=
         mul_le_mul_of_nonneg_left hpdf (Real.exp_pos _).le
-  exact not_integrable_of_eventually_one_le_atTop hbound hint
+  obtain ⟨a, ha⟩ := eventually_atTop.mp hbound
+  have hone : IntegrableOn (fun _ : ℝ ↦ (1 : ℝ)) (Ioi a) volume := by
+    refine Integrable.mono' hint.integrableOn (by fun_prop) ?_
+    filter_upwards [ae_restrict_mem measurableSet_Ioi] with x hx
+    simpa only [norm_one] using ha x hx.le
+  rw [integrableOn_const_iff] at hone
+  simp [Real.volume_Ioi] at hone
 
 /-- A nondegenerate Cauchy law has no first absolute moment. -/
 theorem not_integrable_id_cauchyMeasure (x₀ : ℝ) (hγ : γ ≠ 0) :
