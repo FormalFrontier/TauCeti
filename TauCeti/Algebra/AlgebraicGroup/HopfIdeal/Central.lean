@@ -69,7 +69,7 @@ open TensorProduct WithConv
 
 namespace TauCeti
 
-universe u v
+universe u v w
 
 namespace HopfIdeal
 
@@ -142,7 +142,7 @@ variable {R : Type u} [CommRing R]
 /-- Every point cut out by a central Hopf ideal is a central point of the ambient group, over
 every value algebra. -/
 theorem isCentralPoint_of_mem_quotientPointsSubgroup (H : _root_.CommHopfAlgCat.{v} R)
-    (I : HopfIdeal R H) (hI : I.IsCentral) (A : CommAlgCat.{v} R)
+    (I : HopfIdeal R H) (hI : I.IsCentral) (A : CommAlgCat.{w} R)
     {g : HopfAlgebra.points (R := R) (H := H) A} (hg : g ∈ quotientPointsSubgroup H I A) :
     HopfAlgebra.IsCentralPoint g := by
   rw [HopfAlgebra.isCentralPoint_def]

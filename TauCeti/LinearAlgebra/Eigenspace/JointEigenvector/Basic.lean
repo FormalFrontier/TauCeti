@@ -46,6 +46,9 @@ components of `M_k(Γ₁(N))`.
   independent (with no further hypotheses), exhaust the space when semisimple, and
   decompose every invariant submodule — with the character-indexed forms (`…_unitHom…`)
   for group representations.
+* `finite_nonzeroJointWeights`, `natCard_nonzeroJointWeights_le_finrank`: a finite-dimensional
+  representation has finitely many nonzero joint weights, with their number bounded by its
+  dimension.
 * `iSup_iInf_eigenspace_unitHom_eq_top_of_commGroup`,
   `iSup_inf_iInf_eigenspace_unitHom_of_invariant_of_commGroup`: for a finite commutative `G`
   with `[HasEnoughRootsOfUnity K (Monoid.exponent G)]` and `IsUnit (Nat.card G : K)`, the
@@ -244,6 +247,26 @@ lemma iSupIndep_iInf_eigenspace_unitHom :
     iSupIndep fun χ₀ : G →* Kˣ ↦ ⨅ g, (ρ g).eigenspace (χ₀ g) :=
   (iSupIndep_iInf_eigenspace (fun g ↦ ρ g)).comp
     fun _ _ h ↦ MonoidHom.ext fun g ↦ Units.ext (congr_fun h g)
+
+/-- A finite-dimensional representation has only finitely many characters with nonzero joint
+weight space. Distinct character-indexed joint eigenspaces are independent, so a
+finite-dimensional space can contain only finitely many nonzero ones. -/
+noncomputable instance finite_nonzeroJointWeights [FiniteDimensional K V]
+    (ρ : G →* Module.End K V) :
+    Finite {χ : G →* Kˣ // (⨅ g : G, (ρ g).eigenspace (χ g)) ≠ ⊥} := by
+  exact @Finite.of_fintype _
+    iSupIndep_iInf_eigenspace_unitHom.fintypeNeBotOfFiniteDimensional
+
+/-- The number of characters with nonzero joint weight space in a finite-dimensional
+representation is bounded by the dimension of the representation. -/
+theorem natCard_nonzeroJointWeights_le_finrank [FiniteDimensional K V]
+    (ρ : G →* Module.End K V) :
+    Nat.card {χ : G →* Kˣ // (⨅ g : G, (ρ g).eigenspace (χ g)) ≠ ⊥} ≤
+      Module.finrank K V := by
+  let _ : Fintype {χ : G →* Kˣ // (⨅ g : G, (ρ g).eigenspace (χ g)) ≠ ⊥} :=
+    iSupIndep_iInf_eigenspace_unitHom.fintypeNeBotOfFiniteDimensional
+  rw [Nat.card_eq_fintype_card]
+  exact iSupIndep_iInf_eigenspace_unitHom.subtype_ne_bot_le_finrank
 
 /-- **Character-indexed decomposition of a finite-dimensional invariant submodule**,
 assuming only that the restricted representation is semisimple. -/

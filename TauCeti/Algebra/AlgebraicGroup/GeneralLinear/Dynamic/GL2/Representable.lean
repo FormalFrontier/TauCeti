@@ -8,7 +8,7 @@ module
 public import TauCeti.Algebra.AlgebraicGroup.Dynamic.Functor
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Borel
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Dynamic.GL2.Subgroups
-public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Dynamic.Weight.Parabolic
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Dynamic.Weight.Parabolic.Basic
 
 /-!
 # Representability of the dynamic subgroups of `GL₂`

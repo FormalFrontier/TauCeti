@@ -12,11 +12,17 @@
 #
 # Anonymous GETs from the PUBLIC read host (a different host than the S3 API endpoint the
 # trusted upload uses). Looks up the root-package oleans for the checkout's revision --
-# backtracking up to LAKE_CACHE_MAX_REVS ancestors (default 100; 0 means the complete available
-# history), and unpacks them into $LAKE_CACHE_DIR. This is trusted, publisher-built data: no token
+# backtracking up to LAKE_CACHE_MAX_REVS ancestors (default 100), and unpacks them into
+# $LAKE_CACHE_DIR. This is trusted, publisher-built data: no token
 # is in reach and no PR code runs (the caller attests the declarative lakefile first). Mathlib's
 # oleans are NOT here; they come from
 # `lake exe cache get`.
+#
+# Keep the ancestor limit. The search stops only when a lookup succeeds, so a hit reads only the
+# few ancestors between the checkout and main. The cache keys each revision map by toolchain. A
+# lookup therefore succeeds only when a published ancestor uses the same toolchain as the
+# checkout. A pull request that bumps lean-toolchain has no such ancestor. The value 0 removes
+# the limit, so the search reads the full history and finds nothing.
 #
 # A TOTAL miss is non-fatal: the build just recompiles from scratch, as when the cache is off.
 # A PARTIAL fetch is non-fatal too, but must not reach the offline build. Since v4.34.0-rc1,

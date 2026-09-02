@@ -47,6 +47,8 @@ finite-dimensionality is needed for that. It is needed for the other half of the
 * `TauCeti.reflectionFunctor_map_injective`, `TauCeti.reflectionFunctor_map_surjective` and
   `TauCeti.reflectionFunctor_map_bijective`: **the reflection functor at a sink is fully faithful**
   on the representations whose incoming sum there is onto.
+* `TauCeti.nonempty_iso_of_nonempty_iso_reflectRep`: **the reflection functor at a sink reflects
+  isomorphisms** between representations whose incoming sums there are onto.
 * `TauCeti.indecomposable_reflectRep`: **reflection at a sink preserves indecomposability**, under
   the same hypothesis.
 * `TauCeti.indecomposable_reflectRep_of_not_nonempty_iso_simpleRep`: the same statement with the
@@ -375,6 +377,33 @@ every indecomposable representation other than the vertex simple `Sᵢ`. -/
 theorem reflectionFunctor_map_bijective (hs : Function.Surjective (incomingSum M i)) :
     Function.Bijective fun η : M ⟶ N ↦ (reflectionFunctor i hi).map η :=
   ⟨reflectionFunctor_map_injective hi hs, reflectionFunctor_map_surjective hi hs⟩
+
+/-- **The reflection functor at a sink reflects isomorphisms**, between representations whose
+incoming sums there are onto. Fullness produces morphisms `f : M ⟶ N` and `g : N ⟶ M` reflecting
+to the two halves of the given isomorphism, and faithfulness turns the two triangle identities
+downstairs into the two upstairs.
+
+The reflection functor is not fully faithful on all of `TauCeti.QuiverRep k Q` -- it annihilates
+the vertex simple at `i` -- so `CategoryTheory.Functor.ReflectsIsomorphisms` and the machinery
+around it, which ask for `Full` and `Faithful` instances, do not apply, and the argument is made
+directly from `TauCeti.reflectionFunctor_map_surjective` and
+`TauCeti.reflectionFunctor_map_injective`. -/
+theorem nonempty_iso_of_nonempty_iso_reflectRep
+    (hsM : Function.Surjective (incomingSum M i))
+    (hsN : Function.Surjective (incomingSum N i))
+    (h : Nonempty (reflectRep M hi ≅ reflectRep N hi)) : Nonempty (M ≅ N) := by
+  obtain ⟨θ⟩ := h
+  have θ' : (reflectionFunctor i hi).obj M ≅ (reflectionFunctor i hi).obj N :=
+    eqToIso (reflectionFunctor_obj i hi M) ≪≫ θ ≪≫ eqToIso (reflectionFunctor_obj i hi N).symm
+  obtain ⟨f, hf⟩ := reflectionFunctor_map_surjective (M := M) (N := N) hi hsM θ'.hom
+  obtain ⟨g, hg⟩ := reflectionFunctor_map_surjective (M := N) (N := M) hi hsN θ'.inv
+  refine ⟨⟨f, g, ?_, ?_⟩⟩
+  · refine reflectionFunctor_map_injective (M := M) (N := M) hi hsM ?_
+    simp only [Functor.map_comp, hf, hg]
+    exact θ'.hom_inv_id.trans ((reflectionFunctor i hi).map_id M).symm
+  · refine reflectionFunctor_map_injective (M := N) (N := N) hi hsN ?_
+    simp only [Functor.map_comp, hf, hg]
+    exact θ'.inv_hom_id.trans ((reflectionFunctor i hi).map_id N).symm
 
 /-- **Reflection at a sink preserves indecomposability**, as soon as the sum of the arrows into the
 sink is onto. Reflection is additive and bijective on the endomorphisms of `M`, so it matches the

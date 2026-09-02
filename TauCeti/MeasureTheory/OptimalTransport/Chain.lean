@@ -77,10 +77,9 @@ private theorem map_zero_chainMeasure
     funext x
     rfl
   have hprefix : (chainMeasure pi).map (frestrictLe 0) = (pi 0).fst.map e.symm := by
-    rw [chainMeasure, Kernel.trajMeasure, MeasureTheory.Measure.map_comp,
+    rw [chainMeasure, Kernel.trajMeasure,
+      MeasureTheory.Measure.map_comp _ _ (measurable_frestrictLe 0),
       Kernel.traj_map_frestrictLe, Kernel.partialTraj_self, MeasureTheory.Measure.id_comp]
-    · rfl
-    · exact measurable_frestrictLe 0
   calc
     (chainMeasure pi).map (fun x ↦ x 0)
         = ((chainMeasure pi).map (frestrictLe 0)).map e := by
@@ -144,7 +143,7 @@ instance prefixChainMeasure.instIsProbabilityMeasure
     (pi : ∀ n, Measure (X n × X (n + 1))) [∀ n, IsProbabilityMeasure (pi n)] (N : ℕ) :
     IsProbabilityMeasure (prefixChainMeasure pi N) := by
   rw [prefixChainMeasure]
-  exact Measure.isProbabilityMeasure_map (measurable_frestrictLe N).aemeasurable
+  infer_instance
 
 /-- Projecting a finite prefix further gives the corresponding shorter prefix. -/
 theorem map_frestrictLe₂_prefixChainMeasure

@@ -50,9 +50,11 @@
 # rules, and docBlame itself exempts private declarations.
 #
 # So that new default linters added upstream are not silently missed, the docstring
-# scan driver re-derives the default set from the environment and FAILS if it no
-# longer equals $LINTERS + docBlame — a Batteries/Mathlib bump that changes the
-# default linter set turns into a loud CI failure asking for a human update here.
+# scan driver re-derives the default set from the environment and FAILS unless it
+# equals one of the explicitly approved sets below. There are temporarily two sets
+# while the Mathlib bump that adds tacticAlt crosses the trusted-script boundary:
+# current main's set and that set plus tacticAlt. Any other Batteries/Mathlib change
+# still turns into a loud CI failure asking for a human update here.
 # The docstring check itself runs as a
 # generated LEGACY (non-module) driver with plain imports: with a non-module root,
 # Lean imports the whole closure at the `private` olean level, where both docstrings
@@ -150,8 +152,9 @@
 #   * The docstring scan prints one `DOCSCAN <decl> ...` line per violation, one
 #     `DOCSCAN-ALL <decl> <status>` line per scanned declaration, one
 #     `NOLINT <linter> <decl>` line per TauCeti `@[nolint]` application, and exactly
-#     one summary line ending in a per-run random nonce marker, carrying its own
-#     counts for ALL of these. We require exit 0, EXACTLY ONE summary line, every
+#     one selected-linter-set line and one summary line, each ending in a per-run
+#     random nonce marker, with the summary carrying its own counts for ALL of these.
+#     We require exit 0, EXACTLY ONE of each nonce-bearing line, every
 #     count to match its line tally, the calibration guards above (sentinels,
 #     baseline coverage, scanned floor, at least one visible docstring), and the
 #     nolint pairs to be allowlisted. Forged DOCSCAN/DOCSCAN-ALL/NOLINT lines break
@@ -227,14 +230,21 @@ fi
 NONCE="$(od -An -N16 -tx8 /dev/urandom | tr -d ' \n')" || fail "nonce generation failed"
 MARKER="LINTENV-DRIVER-COMPLETE-$NONCE"
 DOCMARKER="DOCSCAN-COMPLETE-$NONCE"
+LINTERSETMARKER="LINTERSET-COMPLETE-$NONCE"
 
-# The default environment-linter set minus docBlame (see the header comment), sorted.
-# The docstring-scan driver verifies this against the environment and fails if the
-# default set drifts, so a stale list here cannot silently narrow the lint.
-LINTERS="checkType defsWithUnderscore deprecatedNoSince impossibleInstance nonClassInstance simpComm simpNF structureInType subsetDotNotationLinter synTaut tacticDocs unusedArguments unusedHavesSuffices"
+# The explicitly approved default environment-linter sets minus docBlame (see the
+# header comment), sorted. The second is the first plus tacticAlt, which was added by
+# Mathlib #41818. Keeping both during the bump lets the workflow-pinned copy from
+# current main lint both the current pin and the candidate's newer pin. Once the bump
+# lands, a follow-up may collapse these back to a single set.
+LINTERS_BASE="checkType defsWithUnderscore deprecatedNoSince impossibleInstance nonClassInstance simpComm simpNF structureInType subsetDotNotationLinter synTaut tacticDocs unusedArguments unusedHavesSuffices"
+LINTERS_TACTIC_ALT="checkType defsWithUnderscore deprecatedNoSince impossibleInstance nonClassInstance simpComm simpNF structureInType subsetDotNotationLinter synTaut tacticAlt tacticDocs unusedArguments unusedHavesSuffices"
 
-# $LINTERS rendered as Lean string literals, for the freshness guard in the driver.
-LINTERS_LEAN=$(printf '"%s", ' $LINTERS | sed 's/, $//')
+# Both approved sets rendered as Lean string literals, for the freshness guard in
+# the driver. The shell selects the same set only after the nonce-bearing driver
+# output proves which exact set the imported environment exposes.
+LINTERS_BASE_LEAN=$(printf '"%s", ' $LINTERS_BASE | sed 's/, $//')
+LINTERS_TACTIC_ALT_LEAN=$(printf '"%s", ' $LINTERS_TACTIC_ALT | sed 's/, $//')
 
 MODULE_IMPORT_LIST="$TMP/modules.txt"
 . "$TRUSTED_SCRIPTS/source-modules.sh"
@@ -273,16 +283,23 @@ open Lean in
 run_meta do
   let env ← getEnv
   -- Freshness guard (see the header comment): the explicit \`#lint only\` list in
-  -- scripts/lint-env.sh must still equal the default linter set minus docBlame.
-  let expected : Array String := #[$LINTERS_LEAN]
+  -- scripts/lint-env.sh must equal one of the approved default sets minus docBlame.
+  let base : Array String := #[$LINTERS_BASE_LEAN]
+  let withTacticAlt : Array String := #[$LINTERS_TACTIC_ALT_LEAN]
   let mut actual : Array String := #[]
   for (name, _, dflt) in Batteries.Tactic.Lint.batteriesLinterExt.getState env do
     if dflt && name != \`docBlame then actual := actual.push s!"{name}"
   actual := actual.qsort (· < ·)
-  unless actual == expected do
-    throwError "the default env-linter set changed: scripts/lint-env.sh runs {expected} \
-      but the environment's defaults minus docBlame are {actual}; update LINTERS in \
-      scripts/lint-env.sh (and triage any new linter's findings)"
+  let selected :=
+    if actual == base then some "base"
+    else if actual == withTacticAlt then some "tacticAlt"
+    else none
+  let some selected := selected | throwError
+    "the default env-linter set changed: scripts/lint-env.sh approves {base} or \
+      {withTacticAlt}, but the environment's defaults minus docBlame are {actual}; \
+      update the approved LINTERS sets in scripts/lint-env.sh (and triage any new \
+      linter's findings)"
+  IO.println s!"LINTERSET {selected} $LINTERSETMARKER"
   let modNames := env.allImportedModuleNames
   let candidates : Array Name := env.constants.fold (init := #[]) fun acc declName _ =>
     match env.getModuleIdxFor? declName with
@@ -338,6 +355,17 @@ if ! run_lean "$DOCDRIVER" > "$TMP/docscan.txt" 2>&1; then
   cat "$TMP/docscan.txt"
   fail "driver failure: the docstring-scan driver did not elaborate cleanly — see output above"
 fi
+nsets=$(grep -c "^LINTERSET \(base\|tacticAlt\) $LINTERSETMARKER\$" "$TMP/docscan.txt" || true)
+if [ "${nsets:-0}" -ne 1 ]; then
+  cat "$TMP/docscan.txt"
+  fail "driver failure: expected exactly 1 selected-linter-set line, found ${nsets:-0}"
+fi
+selected_linters=$(sed -n "s/^LINTERSET \(base\|tacticAlt\) $LINTERSETMARKER\$/\1/p" "$TMP/docscan.txt")
+case "$selected_linters" in
+  base) LINTERS="$LINTERS_BASE" ;;
+  tacticAlt) LINTERS="$LINTERS_TACTIC_ALT" ;;
+  *) fail "internal error: unrecognized selected linter set '$selected_linters'" ;;
+esac
 nsummaries=$(grep -c "^DOCSCAN-SUMMARY scanned=[0-9]* documented=[0-9]* undocumented=[0-9]* nolints=[0-9]* $DOCMARKER\$" "$TMP/docscan.txt" || true)
 if [ "${nsummaries:-0}" -ne 1 ]; then
   cat "$TMP/docscan.txt"

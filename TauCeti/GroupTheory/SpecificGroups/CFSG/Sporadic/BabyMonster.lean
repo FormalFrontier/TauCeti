@@ -50,8 +50,41 @@ below records that chain of attributions rather than reproving any part of it.
 Nothing here asserts that the presented group is nontrivial, finite or simple, that it has any
 particular order, or that it is isomorphic to any other construction of the Baby Monster. The
 roadmap's independent permutation-group cross-check does not cover `B`, whose smallest faithful
-permutation representation has degree `13 571 955 000`, so for this row an independent
-source-to-Lean read-through remains the whole of the S1 review obligation.
+permutation representation has degree `13 571 955 000`. The independent source-to-Lean
+read-through below therefore supplies the whole of this row's S1 review obligation.
+
+## Independent source-to-Lean read-through
+
+An independent read-through used Breuer--Magaard--Wilson, Section 3.1, in arXiv:1902.07758v2. The
+source numbers eleven involutions `t₁` through `t₁₁` and lists the exponent-three pairs
+
+```text
+(1,2), (2,3), (3,4), (4,5), (5,6), (6,7), (7,8), (5,9), (9,10), (10,11).
+```
+
+After the source's one-based numbering is shifted to `Fin 11`, these are exactly the ten
+undirected pairs in `edges_eq`. The source assigns exponent two to every other pair `i < j`, which
+is exactly the complement selected by `coxeterMatrix_apply`; the diagonal entries supply the
+eleven square relations. Thus the Coxeter list contains the source's `11 + 10 + 45 = 66`
+relations, with none dropped or duplicated.
+
+The source next displays the spider word
+
+```text
+(t₅ t₄ t₃ t₅ t₆ t₇ t₅ t₉ t₁₀)^10
+```
+
+and the two words
+
+```text
+(t₅ t₄ t₃ t₆ t₇ t₈ t₉)^9,  (t₅ t₄ t₃ t₆ t₉ t₁₀ t₁₁)^9.
+```
+
+Their letters, order, and exponents agree exactly with `spiderRelator_eq`,
+`extraRelatorOne_eq`, and `extraRelatorTwo_eq`. The source states that the Coxeter relations plus
+the spider relation present `2 × 2·B`, and that adjoining the last two relations presents `B`.
+`relatorList_def` appends precisely those three words in that order, giving the checked total
+`66 + 3 = 69`. This closes the row's S1 source-to-Lean read-through.
 
 ## Main definitions
 
@@ -71,6 +104,14 @@ source-to-Lean read-through remains the whole of the S1 review obligation.
   the shape itself.
 * `TauCeti.Sporadic.BabyMonster.length_relatorList` and
   `TauCeti.Sporadic.BabyMonster.matchesMetadata_presentation`: the transcription count checks.
+* `TauCeti.Sporadic.BabyMonster.presentation_totalLength`: the compiled relator words contain `478`
+  letters, of which `262` come from the Coxeter relators, by
+  `TauCeti.Sporadic.BabyMonster.sum_map_length_coxeterRelators`, and the rest from the three
+  adjoined relators. The source records no presentation length, so this is transcribed data stated
+  for comparison with the source rather than a check against a published figure.
+* `TauCeti.Sporadic.BabyMonster.presentation_relatorsCyclicallyReduced`: every compiled word is
+  cyclically reduced, which is what makes that letter count comparable with a published
+  presentation length at all.
 * `TauCeti.Sporadic.BabyMonster.mulEquivPresentedGroupCoxeterAppend`: the row presents the Coxeter
   group of the diagram cut down by the three adjoined relations, which is the shape of the source's
   statement.
@@ -206,7 +247,6 @@ def spiderRelator : Relator (Fin 11) :=
   .pow (t5 ⬝ t4 ⬝ t3 ⬝ t5 ⬝ t6 ⬝ t7 ⬝ t5 ⬝ t9 ⬝ t10) 10
 
 /-- The spider relator spelled out in the numbered alphabet. -/
-@[simp]
 theorem spiderRelator_eq :
     spiderRelator =
       .pow (.gen 4 ⬝ .gen 3 ⬝ .gen 2 ⬝ .gen 4 ⬝ .gen 5 ⬝ .gen 6 ⬝ .gen 4 ⬝ .gen 8 ⬝ .gen 9) 10 := by
@@ -217,7 +257,6 @@ spider relation to pass from `2 × 2·B` to `B`. -/
 def extraRelatorOne : Relator (Fin 11) := .pow (t5 ⬝ t4 ⬝ t3 ⬝ t6 ⬝ t7 ⬝ t8 ⬝ t9) 9
 
 /-- The first adjoined relator spelled out in the numbered alphabet. -/
-@[simp]
 theorem extraRelatorOne_eq :
     extraRelatorOne =
       .pow (.gen 4 ⬝ .gen 3 ⬝ .gen 2 ⬝ .gen 5 ⬝ .gen 6 ⬝ .gen 7 ⬝ .gen 8) 9 := by
@@ -228,7 +267,6 @@ spider relation to pass from `2 × 2·B` to `B`. -/
 def extraRelatorTwo : Relator (Fin 11) := .pow (t5 ⬝ t4 ⬝ t3 ⬝ t6 ⬝ t9 ⬝ t10 ⬝ t11) 9
 
 /-- The second adjoined relator spelled out in the numbered alphabet. -/
-@[simp]
 theorem extraRelatorTwo_eq :
     extraRelatorTwo =
       .pow (.gen 4 ⬝ .gen 3 ⬝ .gen 2 ⬝ .gen 5 ⬝ .gen 8 ⬝ .gen 9 ⬝ .gen 10) 9 := by
@@ -284,8 +322,8 @@ def presentation : GroupPresentation where
     spider relation, which presents 2 x 2.B, and then its two further relations, which present B. \
     The source displays its relations by family rather than as a numbered list and records no \
     total length, so the expected relator count is the sum 11 + 55 + 1 + 2 over those families. \
-    The independent FiniteSimpleGroups permutation construction does not cover B, so a \
-    source-to-Lean read-through remains an S1 review obligation for this row."
+    The independent source-to-Lean read-through checked the 66 Coxeter relations and all three \
+    adjoined relators. The FiniteSimpleGroups permutation construction does not cover B."
   expectedGeneratorCount := 11
   expectedRelatorCount := 69
   transcribed := relatorList
@@ -314,6 +352,87 @@ theorem length_relatorList : relatorList.length = 69 := by
 /-- **The recorded generator and relator counts agree with the transcribed data.** -/
 theorem matchesMetadata_presentation : presentation.matchesMetadata :=
   (GroupPresentation.matchesMetadata_iff presentation).mpr ⟨by decide, length_relatorList⟩
+
+/-! ### Letter counts -/
+
+/-- The spider relator compiles to `10 · 9 = 90` letters. -/
+@[simp]
+theorem length_spiderRelator : spiderRelator.length = 90 := by
+  simp [spiderRelator_eq]
+
+/-- The first adjoined relator compiles to `9 · 7 = 63` letters. -/
+@[simp]
+theorem length_extraRelatorOne : extraRelatorOne.length = 63 := by
+  simp [extraRelatorOne_eq]
+
+/-- The second adjoined relator compiles to `9 · 7 = 63` letters. -/
+@[simp]
+theorem length_extraRelatorTwo : extraRelatorTwo.length = 63 := by
+  simp [extraRelatorTwo_eq]
+
+/-- **The Coxeter relators of the `Y₄₃₃` diagram contain `262` letters.** A relator `(tᵢ tⱼ) ^ m`
+contributes `2m`, so the eleven involution relators contribute `2` each, the ten edges `6` each,
+and the forty-five remaining pairs of distinct nodes `4` each: `22 + 60 + 180`. Reading the count
+off the Coxeter matrix rather than off the expanded relators is what ties it to the transcribed
+edge list. -/
+@[simp]
+theorem sum_map_length_coxeterRelators :
+    ((coxeterRelators coxeterMatrix).map fun r => r.length).sum = 262 := by
+  rw [coxeterRelators_def, coxeterRelatorsOfList_def, List.map_map]
+  simp_rw [Function.comp_def, ← Relator.length_toWord, length_toWord_coxeterRelator]
+  simp only [coxeterMatrix_apply]
+  rw [edges_eq]
+  decide
+
+/-- **The compiled relator words of the row contain `478` letters in total**, the `262` letters of
+the Coxeter relators together with the `90 + 63 + 63` letters of the three adjoined relators.
+
+The source displays its relations by family and records no presentation length, so this figure
+states the transcribed data for a reviewer to compare with the source rather than checking it
+against a published number. -/
+@[simp]
+theorem presentation_totalLength : presentation.totalLength = 478 := by
+  have key : ((relatorList.map Relator.toWord).map List.length).sum = 478 := by
+    rw [relatorList_def]
+    simp only [List.map_append, List.sum_append, List.map_map, Function.comp_def,
+      adjoinedRelators_def, List.map_cons, List.map_nil, List.sum_cons, List.sum_nil,
+      Relator.length_toWord, length_spiderRelator, length_extraRelatorOne,
+      length_extraRelatorTwo, sum_map_length_coxeterRelators]
+    decide
+  rw [GroupPresentation.totalLength_def, GroupPresentation.relators_def, presentation_transcribed]
+  exact key
+
+/-- **Every expression in the `Y₄₃₃` relator list compiles to a cyclically reduced word.** The
+Coxeter relators are cyclically reduced for any Coxeter matrix, and each adjoined relator is a
+power whose base is a product of generators with no inverse, so no letter of it can cancel against
+its neighbour or against the last letter of the word. -/
+theorem isCyclicallyReduced_toWord_of_mem_relatorList (r : Relator (Fin 11))
+    (hr : r ∈ relatorList) : FreeGroup.IsCyclicallyReduced r.toWord := by
+  rw [relatorList_def, List.mem_append] at hr
+  rcases hr with hr | hr
+  · obtain ⟨i, j, rfl⟩ := mem_coxeterRelators_iff.mp hr
+    exact isCyclicallyReduced_toWord_coxeterRelator coxeterMatrix _ _
+  · simp only [adjoinedRelators_def, List.mem_cons, List.not_mem_nil, or_false] at hr
+    rcases hr with rfl | rfl | rfl
+    · rw [spiderRelator_eq]
+      exact Relator.isCyclicallyReduced_toWord_pow
+        (by simp [FreeGroup.IsCyclicallyReduced, FreeGroup.IsReduced]) _
+    · rw [extraRelatorOne_eq]
+      exact Relator.isCyclicallyReduced_toWord_pow
+        (by simp [FreeGroup.IsCyclicallyReduced, FreeGroup.IsReduced]) _
+    · rw [extraRelatorTwo_eq]
+      exact Relator.isCyclicallyReduced_toWord_pow
+        (by simp [FreeGroup.IsCyclicallyReduced, FreeGroup.IsReduced]) _
+
+/-- **Every compiled relator word of the row is cyclically reduced**, which is what makes the
+letter count of `TauCeti.Sporadic.BabyMonster.presentation_totalLength` comparable with the usual
+presentation-length convention, under which a relator is measured after free and cyclic
+reduction. -/
+theorem presentation_relatorsCyclicallyReduced : presentation.relatorsCyclicallyReduced := by
+  rw [GroupPresentation.relatorsCyclicallyReduced_iff, GroupPresentation.relators_def]
+  intro w hw
+  obtain ⟨r, hr, rfl⟩ := List.mem_map.mp hw
+  exact isCyclicallyReduced_toWord_of_mem_relatorList r (presentation_transcribed ▸ hr)
 
 /-- **The row presents the Coxeter group of the `Y₄₃₃` diagram cut down by the three adjoined
 relations**, which is the shape in which the source states the presentation: the Coxeter relations

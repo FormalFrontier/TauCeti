@@ -50,6 +50,12 @@ concurrency:
   # from-source build but before the report wastes the expensive part.
   cancel-in-progress: false
 
+env:
+  # Read endpoint for `lake exe cache get`, wired from a repository variable. The cache tool
+  # treats unset and empty alike, so clearing the variable returns reads to the tool's
+  # default endpoints on the next run.
+  MATHLIB_CACHE_GET_URL: ${{ vars.MATHLIB_CACHE_GET_URL }}
+
 jobs:
   # No secrets reach this job. It builds and executes repository code, including a build restored
   # from the public cache, so anything it can read is code-reachable. Reporting lives in a separate

@@ -50,6 +50,6 @@ lemma Gamma0Map_toHomUnits_of_dvd {M N : ℕ} (h : M ∣ N) (γ : ↥(Gamma0 N))
     (Gamma0Map M).toHomUnits ⟨(γ : SL(2, ℤ)), hγ⟩ =
       ZMod.unitsMap h ((Gamma0Map N).toHomUnits γ) := by
   ext
-  simp [Gamma0Map, ZMod.unitsMap_def]
+  simp [Gamma0Map_apply, ZMod.unitsMap_def]
 
 end CongruenceSubgroup

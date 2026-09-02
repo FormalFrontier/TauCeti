@@ -55,6 +55,12 @@ of the general inhomogeneous formula
   bidegree `(1,1)` it holds only on classes, with the sign `-1`.
 * `TauCeti.ContCohomology.explicitCup11_comm_of_neg_eq_self`: the `2`-torsion specialization, in
   which the `(1,1)` cup is symmetric.
+* `TauCeti.ContCohomology.explicitCup_assoc000` and its nine siblings: **associativity**
+  `(x ⌣_{μ₁} y) ⌣_{μ₂} z = x ⌣_{ν₂} (y ⌣_{ν₁} z)`, one theorem for each tridegree `(p, q, r)`
+  with `p + q + r ≤ 2`, the three digits of the name being that tridegree. Each holds already on
+  cochains.
+* `TauCeti.ContCohomology.explicitCup_assoc000_mul` and its nine siblings: the same ten
+  identities for a topological `G`-ring `R`, all four pairings its multiplication.
 
 ## Implementation notes
 
@@ -93,9 +99,17 @@ and `N` are discrete, which is the case in every arithmetic application, but it 
 hypothesis rather than derived so that the shapes are available at the general topological
 coefficients the explicit complex is built for.
 
-This implements the "six low-degree shapes" and "graded commutativity" milestones of Layer 8 of
-the human-authored roadmap at
-`TauCetiRoadmap/ProfiniteCohomology/README.md`, whose §3 fixes the six formulas and whose
+Associativity is stated relative to four `G`-equivariant biadditive pairings
+`μ₁ : A →+ B →+ D`, `μ₂ : D →+ C →+ E`, `ν₁ : B →+ C →+ F` and `ν₂ : A →+ F →+ E`: these four are
+what it takes to type the two composites, and the coefficient identity
+`μ₂ (μ₁ a b) c = ν₂ a (ν₁ b c)` is the hypothesis that identifies them. The
+`(1,0)` and `(0,0)` shapes are in the family because the instances `explicitCup_assoc110` and
+`explicitCup_assoc100` need them on their right-hand sides.
+
+This implements the "six low-degree shapes", "graded commutativity" and "associativity"
+milestones of Layer 8 of the human-authored roadmap at
+`TauCetiRoadmap/ProfiniteCohomology/README.md`, whose §3 fixes the six formulas, whose Layer 8
+fixes the ten associativity instances and the `G`-ring specialization, and whose
 `Suggested.lean` fixes the names `explicitCup00`, `explicitCup01`, `explicitCup10`,
 `explicitCup02`, `explicitCup11` and `explicitCup20`.
 
@@ -104,8 +118,8 @@ the human-authored roadmap at
 * J. Neukirch, A. Schmidt, K. Wingberg, *Cohomology of Number Fields*, 2nd ed., I §4: the cup
   product on inhomogeneous cochains and its low-degree formulas, and (1.4.4) for graded
   commutativity.
-* K. Brown, *Cohomology of Groups*, V §3: the cochain-level cup product, and (3.6) for graded
-  commutativity.
+* K. Brown, *Cohomology of Groups*, V §3: the cochain-level cup product, (3.5) for associativity
+  and (3.6) for graded commutativity.
 -/
 
 public section
@@ -770,5 +784,458 @@ theorem explicitCup11_comm_of_neg_eq_self (hP : ∀ x : P, -x = x) (a : H1 G M) 
   rw [explicitCup11_eq_neg_flip G M N P μ hμ hequiv a b, hneg]
 
 end CommOneOne
+
+/-! ### Associativity
+
+Typing the two sides of an associativity statement needs four `G`-equivariant biadditive pairings
+`μ₁ : A →+ B →+ D`, `μ₂ : D →+ C →+ E`, `ν₁ : B →+ C →+ F` and `ν₂ : A →+ F →+ E`. The coefficient
+identity `μ₂ (μ₁ a b) c = ν₂ a (ν₁ b c)` is not part of that: it is the hypothesis under which
+the two well-typed composites are equal. The ten instances below are the ten
+tridegrees `(p, q, r)` with `p + q + r ≤ 2`, each named `explicitCup_assoc` followed by the three
+digits `p`, `q`, `r`. Each holds already on cochains; the classes are equal because their
+representatives are.
+
+Where the right-hand side cups `y` and `z` together first, the left-hand side carries the
+translation factor of the general inhomogeneous formula on `y` and on `z` separately while the
+right-hand side carries a single one on `y ⌣_{ν₁} z`. The equivariance of `ν₁` is what merges
+them, and that is what the proofs of `explicitCup_assoc100`, `explicitCup_assoc200`,
+`explicitCup_assoc110` and `explicitCup_assoc101` use it for. -/
+
+universe uA uB uC uD uE uF
+
+section AssocZero
+
+variable (G : Type uG) [Group G]
+  (A : Type uA) [AddCommGroup A] [DistribMulAction G A]
+  (B : Type uB) [AddCommGroup B] [DistribMulAction G B]
+  (C : Type uC) [AddCommGroup C] [DistribMulAction G C]
+  (D : Type uD) [AddCommGroup D] [DistribMulAction G D]
+  (E : Type uE) [AddCommGroup E] [DistribMulAction G E]
+  (F : Type uF) [AddCommGroup F] [DistribMulAction G F]
+  (μ₁ : A →+ B →+ D) (hequiv₁ : ∀ (g : G) (a : A) (b : B), μ₁ (g • a) (g • b) = g • μ₁ a b)
+  (μ₂ : D →+ C →+ E) (hequiv₂ : ∀ (g : G) (d : D) (c : C), μ₂ (g • d) (g • c) = g • μ₂ d c)
+  (ν₁ : B →+ C →+ F) (hequiv₃ : ∀ (g : G) (b : B) (c : C), ν₁ (g • b) (g • c) = g • ν₁ b c)
+  (ν₂ : A →+ F →+ E) (hequiv₄ : ∀ (g : G) (a : A) (f : F), ν₂ (g • a) (g • f) = g • ν₂ a f)
+  (hassoc : ∀ (a : A) (b : B) (c : C), μ₂ (μ₁ a b) c = ν₂ a (ν₁ b c))
+
+include hassoc in
+/-- **Associativity of the cup product in tridegree `(0,0,0)`**, where all three classes are
+invariant elements and the identity is the coefficient identity itself. -/
+theorem explicitCup_assoc000 (x : H0 G A) (y : H0 G B) (z : H0 G C) :
+    explicitCup00 G D C E μ₂ hequiv₂ (explicitCup00 G A B D μ₁ hequiv₁ x y) z =
+      explicitCup00 G A F E ν₂ hequiv₄ x (explicitCup00 G B C F ν₁ hequiv₃ y z) :=
+  Subtype.ext (by simp [hassoc])
+
+end AssocZero
+
+section AssocFirstZero
+
+/-! The tridegrees `(0,0,r)`: the first two factors are invariant, so `μ₁` is used only through
+the `(0,0)` cup and no continuity of it is needed. -/
+
+variable (G : Type uG) [Group G] [TopologicalSpace G] [ContinuousMul G]
+  (A : Type uA) [AddCommGroup A] [TopologicalSpace A] [DistribMulAction G A]
+  (B : Type uB) [AddCommGroup B] [TopologicalSpace B] [DistribMulAction G B]
+  (C : Type uC) [AddCommGroup C] [TopologicalSpace C] [IsTopologicalAddGroup C]
+    [DistribMulAction G C] [ContinuousSMul G C]
+  (D : Type uD) [AddCommGroup D] [TopologicalSpace D] [DistribMulAction G D]
+  (E : Type uE) [AddCommGroup E] [TopologicalSpace E] [IsTopologicalAddGroup E]
+    [DistribMulAction G E] [ContinuousSMul G E]
+  (F : Type uF) [AddCommGroup F] [TopologicalSpace F] [IsTopologicalAddGroup F]
+    [DistribMulAction G F] [ContinuousSMul G F]
+  (μ₁ : A →+ B →+ D) (hequiv₁ : ∀ (g : G) (a : A) (b : B), μ₁ (g • a) (g • b) = g • μ₁ a b)
+  (μ₂ : D →+ C →+ E) (hμ₂ : Continuous fun p : D × C => μ₂ p.1 p.2)
+    (hequiv₂ : ∀ (g : G) (d : D) (c : C), μ₂ (g • d) (g • c) = g • μ₂ d c)
+  (ν₁ : B →+ C →+ F) (hν₁ : Continuous fun p : B × C => ν₁ p.1 p.2)
+    (hequiv₃ : ∀ (g : G) (b : B) (c : C), ν₁ (g • b) (g • c) = g • ν₁ b c)
+  (ν₂ : A →+ F →+ E) (hν₂ : Continuous fun p : A × F => ν₂ p.1 p.2)
+    (hequiv₄ : ∀ (g : G) (a : A) (f : F), ν₂ (g • a) (g • f) = g • ν₂ a f)
+  (hassoc : ∀ (a : A) (b : B) (c : C), μ₂ (μ₁ a b) c = ν₂ a (ν₁ b c))
+
+include hassoc in
+omit [ContinuousMul G] in
+/-- **Associativity of the cup product in tridegree `(0,0,1)`.** -/
+theorem explicitCup_assoc001 (x : H0 G A) (y : H0 G B) (z : H1 G C) :
+    explicitCup01 G D C E μ₂ hμ₂ hequiv₂ (explicitCup00 G A B D μ₁ hequiv₁ x y) z =
+      explicitCup01 G A F E ν₂ hν₂ hequiv₄ x (explicitCup01 G B C F ν₁ hν₁ hequiv₃ y z) := by
+  induction z using QuotientAddGroup.induction_on with
+  | _ c =>
+    simp only [explicitCup01_mk]
+    exact congrArg (fun w : Z1 G E => (w : H1 G E))
+      (Subtype.ext (funext fun _ => by simp [hassoc]))
+
+include hassoc in
+/-- **Associativity of the cup product in tridegree `(0,0,2)`**, the degree-`2` counterpart of
+`TauCeti.ContCohomology.explicitCup_assoc001`. -/
+theorem explicitCup_assoc002 (x : H0 G A) (y : H0 G B) (z : H2 G C) :
+    explicitCup02 G D C E μ₂ hμ₂ hequiv₂ (explicitCup00 G A B D μ₁ hequiv₁ x y) z =
+      explicitCup02 G A F E ν₂ hν₂ hequiv₄ x (explicitCup02 G B C F ν₁ hν₁ hequiv₃ y z) := by
+  induction z using QuotientAddGroup.induction_on with
+  | _ c =>
+    simp only [explicitCup02_mk]
+    exact congrArg (fun w : Z2 G E => (w : H2 G E))
+      (Subtype.ext (funext fun _ => by simp [hassoc]))
+
+end AssocFirstZero
+
+section AssocMiddle
+
+/-! The tridegrees `(0,q,0)`: the outer factors are invariant. -/
+
+variable (G : Type uG) [Group G] [TopologicalSpace G] [ContinuousMul G]
+  (A : Type uA) [AddCommGroup A] [TopologicalSpace A] [DistribMulAction G A]
+  (B : Type uB) [AddCommGroup B] [TopologicalSpace B] [IsTopologicalAddGroup B]
+    [DistribMulAction G B] [ContinuousSMul G B]
+  (C : Type uC) [AddCommGroup C] [TopologicalSpace C] [DistribMulAction G C]
+  (D : Type uD) [AddCommGroup D] [TopologicalSpace D] [IsTopologicalAddGroup D]
+    [DistribMulAction G D] [ContinuousSMul G D]
+  (E : Type uE) [AddCommGroup E] [TopologicalSpace E] [IsTopologicalAddGroup E]
+    [DistribMulAction G E] [ContinuousSMul G E]
+  (F : Type uF) [AddCommGroup F] [TopologicalSpace F] [IsTopologicalAddGroup F]
+    [DistribMulAction G F] [ContinuousSMul G F]
+  (μ₁ : A →+ B →+ D) (hμ₁ : Continuous fun p : A × B => μ₁ p.1 p.2)
+    (hequiv₁ : ∀ (g : G) (a : A) (b : B), μ₁ (g • a) (g • b) = g • μ₁ a b)
+  (μ₂ : D →+ C →+ E) (hμ₂ : Continuous fun p : D × C => μ₂ p.1 p.2)
+    (hequiv₂ : ∀ (g : G) (d : D) (c : C), μ₂ (g • d) (g • c) = g • μ₂ d c)
+  (ν₁ : B →+ C →+ F) (hν₁ : Continuous fun p : B × C => ν₁ p.1 p.2)
+    (hequiv₃ : ∀ (g : G) (b : B) (c : C), ν₁ (g • b) (g • c) = g • ν₁ b c)
+  (ν₂ : A →+ F →+ E) (hν₂ : Continuous fun p : A × F => ν₂ p.1 p.2)
+    (hequiv₄ : ∀ (g : G) (a : A) (f : F), ν₂ (g • a) (g • f) = g • ν₂ a f)
+  (hassoc : ∀ (a : A) (b : B) (c : C), μ₂ (μ₁ a b) c = ν₂ a (ν₁ b c))
+
+include hassoc in
+omit [ContinuousMul G] in
+/-- **Associativity of the cup product in tridegree `(0,1,0)`.** -/
+theorem explicitCup_assoc010 (x : H0 G A) (y : H1 G B) (z : H0 G C) :
+    explicitCup10 G D C E μ₂ hμ₂ hequiv₂ (explicitCup01 G A B D μ₁ hμ₁ hequiv₁ x y) z =
+      explicitCup01 G A F E ν₂ hν₂ hequiv₄ x (explicitCup10 G B C F ν₁ hν₁ hequiv₃ y z) := by
+  induction y using QuotientAddGroup.induction_on with
+  | _ b =>
+    simp only [explicitCup01_mk, explicitCup10_mk]
+    exact congrArg (fun w : Z1 G E => (w : H1 G E))
+      (Subtype.ext (funext fun _ => by simp [hassoc]))
+
+include hassoc in
+/-- **Associativity of the cup product in tridegree `(0,2,0)`**, the degree-`2` counterpart of
+`TauCeti.ContCohomology.explicitCup_assoc010`. -/
+theorem explicitCup_assoc020 (x : H0 G A) (y : H2 G B) (z : H0 G C) :
+    explicitCup20 G D C E μ₂ hμ₂ hequiv₂ (explicitCup02 G A B D μ₁ hμ₁ hequiv₁ x y) z =
+      explicitCup02 G A F E ν₂ hν₂ hequiv₄ x (explicitCup20 G B C F ν₁ hν₁ hequiv₃ y z) := by
+  induction y using QuotientAddGroup.induction_on with
+  | _ b =>
+    simp only [explicitCup02_mk, explicitCup20_mk]
+    exact congrArg (fun w : Z2 G E => (w : H2 G E))
+      (Subtype.ext (funext fun _ => by simp [hassoc]))
+
+end AssocMiddle
+
+section AssocLastZero
+
+/-! The tridegrees `(p,0,0)`: the last two factors are invariant, so `ν₁` is used only through the
+`(0,0)` cup. The translation factor of the general formula sits on `ν₁ b c`, and it is
+`hequiv₃` that moves it onto the two factors separately. -/
+
+variable (G : Type uG) [Group G] [TopologicalSpace G] [ContinuousMul G]
+  (A : Type uA) [AddCommGroup A] [TopologicalSpace A] [IsTopologicalAddGroup A]
+    [DistribMulAction G A] [ContinuousSMul G A]
+  (B : Type uB) [AddCommGroup B] [TopologicalSpace B] [DistribMulAction G B]
+  (C : Type uC) [AddCommGroup C] [TopologicalSpace C] [DistribMulAction G C]
+  (D : Type uD) [AddCommGroup D] [TopologicalSpace D] [IsTopologicalAddGroup D]
+    [DistribMulAction G D] [ContinuousSMul G D]
+  (E : Type uE) [AddCommGroup E] [TopologicalSpace E] [IsTopologicalAddGroup E]
+    [DistribMulAction G E] [ContinuousSMul G E]
+  (F : Type uF) [AddCommGroup F] [TopologicalSpace F] [DistribMulAction G F]
+  (μ₁ : A →+ B →+ D) (hμ₁ : Continuous fun p : A × B => μ₁ p.1 p.2)
+    (hequiv₁ : ∀ (g : G) (a : A) (b : B), μ₁ (g • a) (g • b) = g • μ₁ a b)
+  (μ₂ : D →+ C →+ E) (hμ₂ : Continuous fun p : D × C => μ₂ p.1 p.2)
+    (hequiv₂ : ∀ (g : G) (d : D) (c : C), μ₂ (g • d) (g • c) = g • μ₂ d c)
+  (ν₁ : B →+ C →+ F) (hequiv₃ : ∀ (g : G) (b : B) (c : C), ν₁ (g • b) (g • c) = g • ν₁ b c)
+  (ν₂ : A →+ F →+ E) (hν₂ : Continuous fun p : A × F => ν₂ p.1 p.2)
+    (hequiv₄ : ∀ (g : G) (a : A) (f : F), ν₂ (g • a) (g • f) = g • ν₂ a f)
+  (hassoc : ∀ (a : A) (b : B) (c : C), μ₂ (μ₁ a b) c = ν₂ a (ν₁ b c))
+
+include hassoc in
+omit [ContinuousMul G] in
+/-- **Associativity of the cup product in tridegree `(1,0,0)`.** -/
+theorem explicitCup_assoc100 (x : H1 G A) (y : H0 G B) (z : H0 G C) :
+    explicitCup10 G D C E μ₂ hμ₂ hequiv₂ (explicitCup10 G A B D μ₁ hμ₁ hequiv₁ x y) z =
+      explicitCup10 G A F E ν₂ hν₂ hequiv₄ x (explicitCup00 G B C F ν₁ hequiv₃ y z) := by
+  induction x using QuotientAddGroup.induction_on with
+  | _ a =>
+    simp only [explicitCup10_mk]
+    exact congrArg (fun w : Z1 G E => (w : H1 G E))
+      (Subtype.ext (funext fun _ => by simp [hassoc, hequiv₃]))
+
+include hassoc in
+/-- **Associativity of the cup product in tridegree `(2,0,0)`**, the degree-`2` counterpart of
+`TauCeti.ContCohomology.explicitCup_assoc100`. -/
+theorem explicitCup_assoc200 (x : H2 G A) (y : H0 G B) (z : H0 G C) :
+    explicitCup20 G D C E μ₂ hμ₂ hequiv₂ (explicitCup20 G A B D μ₁ hμ₁ hequiv₁ x y) z =
+      explicitCup20 G A F E ν₂ hν₂ hequiv₄ x (explicitCup00 G B C F ν₁ hequiv₃ y z) := by
+  induction x using QuotientAddGroup.induction_on with
+  | _ a =>
+    simp only [explicitCup20_mk]
+    exact congrArg (fun w : Z2 G E => (w : H2 G E))
+      (Subtype.ext (funext fun _ => by simp [hassoc, hequiv₃]))
+
+end AssocLastZero
+
+section AssocZeroOneOne
+
+variable (G : Type uG) [Group G] [TopologicalSpace G] [ContinuousMul G]
+  (A : Type uA) [AddCommGroup A] [TopologicalSpace A] [DistribMulAction G A]
+  (B : Type uB) [AddCommGroup B] [TopologicalSpace B] [IsTopologicalAddGroup B]
+    [DistribMulAction G B] [ContinuousSMul G B]
+  (C : Type uC) [AddCommGroup C] [TopologicalSpace C] [IsTopologicalAddGroup C]
+    [DistribMulAction G C] [ContinuousSMul G C]
+  (D : Type uD) [AddCommGroup D] [TopologicalSpace D] [IsTopologicalAddGroup D]
+    [DistribMulAction G D] [ContinuousSMul G D]
+  (E : Type uE) [AddCommGroup E] [TopologicalSpace E] [IsTopologicalAddGroup E]
+    [DistribMulAction G E] [ContinuousSMul G E]
+  (F : Type uF) [AddCommGroup F] [TopologicalSpace F] [IsTopologicalAddGroup F]
+    [DistribMulAction G F] [ContinuousSMul G F]
+  (μ₁ : A →+ B →+ D) (hμ₁ : Continuous fun p : A × B => μ₁ p.1 p.2)
+    (hequiv₁ : ∀ (g : G) (a : A) (b : B), μ₁ (g • a) (g • b) = g • μ₁ a b)
+  (μ₂ : D →+ C →+ E) (hμ₂ : Continuous fun p : D × C => μ₂ p.1 p.2)
+    (hequiv₂ : ∀ (g : G) (d : D) (c : C), μ₂ (g • d) (g • c) = g • μ₂ d c)
+  (ν₁ : B →+ C →+ F) (hν₁ : Continuous fun p : B × C => ν₁ p.1 p.2)
+    (hequiv₃ : ∀ (g : G) (b : B) (c : C), ν₁ (g • b) (g • c) = g • ν₁ b c)
+  (ν₂ : A →+ F →+ E) (hν₂ : Continuous fun p : A × F => ν₂ p.1 p.2)
+    (hequiv₄ : ∀ (g : G) (a : A) (f : F), ν₂ (g • a) (g • f) = g • ν₂ a f)
+  (hassoc : ∀ (a : A) (b : B) (c : C), μ₂ (μ₁ a b) c = ν₂ a (ν₁ b c))
+
+include hassoc in
+/-- **Associativity of the cup product in tridegree `(0,1,1)`.** The `(1,1)` cup appears on the
+right-hand side and its translation factor is common to both sides, the outer factor being
+invariant. -/
+theorem explicitCup_assoc011 (x : H0 G A) (y : H1 G B) (z : H1 G C) :
+    explicitCup11 G D C E μ₂ hμ₂ hequiv₂ (explicitCup01 G A B D μ₁ hμ₁ hequiv₁ x y) z =
+      explicitCup02 G A F E ν₂ hν₂ hequiv₄ x (explicitCup11 G B C F ν₁ hν₁ hequiv₃ y z) := by
+  induction y using QuotientAddGroup.induction_on with
+  | _ b =>
+    induction z using QuotientAddGroup.induction_on with
+    | _ c =>
+      simp only [explicitCup01_mk, explicitCup11_mk, explicitCup02_mk]
+      exact congrArg (fun w : Z2 G E => (w : H2 G E))
+        (Subtype.ext (funext fun _ => by simp [hassoc]))
+
+end AssocZeroOneOne
+
+section AssocOneOneZero
+
+variable (G : Type uG) [Group G] [TopologicalSpace G] [ContinuousMul G]
+  (A : Type uA) [AddCommGroup A] [TopologicalSpace A] [IsTopologicalAddGroup A]
+    [DistribMulAction G A] [ContinuousSMul G A]
+  (B : Type uB) [AddCommGroup B] [TopologicalSpace B] [IsTopologicalAddGroup B]
+    [DistribMulAction G B] [ContinuousSMul G B]
+  (C : Type uC) [AddCommGroup C] [TopologicalSpace C] [DistribMulAction G C]
+  (D : Type uD) [AddCommGroup D] [TopologicalSpace D] [IsTopologicalAddGroup D]
+    [DistribMulAction G D] [ContinuousSMul G D]
+  (E : Type uE) [AddCommGroup E] [TopologicalSpace E] [IsTopologicalAddGroup E]
+    [DistribMulAction G E] [ContinuousSMul G E]
+  (F : Type uF) [AddCommGroup F] [TopologicalSpace F] [IsTopologicalAddGroup F]
+    [DistribMulAction G F] [ContinuousSMul G F]
+  (μ₁ : A →+ B →+ D) (hμ₁ : Continuous fun p : A × B => μ₁ p.1 p.2)
+    (hequiv₁ : ∀ (g : G) (a : A) (b : B), μ₁ (g • a) (g • b) = g • μ₁ a b)
+  (μ₂ : D →+ C →+ E) (hμ₂ : Continuous fun p : D × C => μ₂ p.1 p.2)
+    (hequiv₂ : ∀ (g : G) (d : D) (c : C), μ₂ (g • d) (g • c) = g • μ₂ d c)
+  (ν₁ : B →+ C →+ F) (hν₁ : Continuous fun p : B × C => ν₁ p.1 p.2)
+    (hequiv₃ : ∀ (g : G) (b : B) (c : C), ν₁ (g • b) (g • c) = g • ν₁ b c)
+  (ν₂ : A →+ F →+ E) (hν₂ : Continuous fun p : A × F => ν₂ p.1 p.2)
+    (hequiv₄ : ∀ (g : G) (a : A) (f : F), ν₂ (g • a) (g • f) = g • ν₂ a f)
+  (hassoc : ∀ (a : A) (b : B) (c : C), μ₂ (μ₁ a b) c = ν₂ a (ν₁ b c))
+
+include hassoc in
+/-- **Associativity of the cup product in tridegree `(1,1,0)`.** This is the instance that forces
+the `(1,0)` shape into the family: the right-hand side cups the invariant `z` onto `y` in
+bidegree `(1,0)` before pairing with `x`. The two translation factors match by `mul_smul` and the
+equivariance of `ν₁`. -/
+theorem explicitCup_assoc110 (x : H1 G A) (y : H1 G B) (z : H0 G C) :
+    explicitCup20 G D C E μ₂ hμ₂ hequiv₂ (explicitCup11 G A B D μ₁ hμ₁ hequiv₁ x y) z =
+      explicitCup11 G A F E ν₂ hν₂ hequiv₄ x (explicitCup10 G B C F ν₁ hν₁ hequiv₃ y z) := by
+  induction x using QuotientAddGroup.induction_on with
+  | _ a =>
+    induction y using QuotientAddGroup.induction_on with
+    | _ b =>
+      simp only [explicitCup11_mk, explicitCup20_mk, explicitCup10_mk]
+      exact congrArg (fun w : Z2 G E => (w : H2 G E))
+        (Subtype.ext (funext fun _ => by simp [hassoc, mul_smul, hequiv₃]))
+
+end AssocOneOneZero
+
+section AssocOneZeroOne
+
+variable (G : Type uG) [Group G] [TopologicalSpace G] [ContinuousMul G]
+  (A : Type uA) [AddCommGroup A] [TopologicalSpace A] [IsTopologicalAddGroup A]
+    [DistribMulAction G A] [ContinuousSMul G A]
+  (B : Type uB) [AddCommGroup B] [TopologicalSpace B] [DistribMulAction G B]
+  (C : Type uC) [AddCommGroup C] [TopologicalSpace C] [IsTopologicalAddGroup C]
+    [DistribMulAction G C] [ContinuousSMul G C]
+  (D : Type uD) [AddCommGroup D] [TopologicalSpace D] [IsTopologicalAddGroup D]
+    [DistribMulAction G D] [ContinuousSMul G D]
+  (E : Type uE) [AddCommGroup E] [TopologicalSpace E] [IsTopologicalAddGroup E]
+    [DistribMulAction G E] [ContinuousSMul G E]
+  (F : Type uF) [AddCommGroup F] [TopologicalSpace F] [IsTopologicalAddGroup F]
+    [DistribMulAction G F] [ContinuousSMul G F]
+  (μ₁ : A →+ B →+ D) (hμ₁ : Continuous fun p : A × B => μ₁ p.1 p.2)
+    (hequiv₁ : ∀ (g : G) (a : A) (b : B), μ₁ (g • a) (g • b) = g • μ₁ a b)
+  (μ₂ : D →+ C →+ E) (hμ₂ : Continuous fun p : D × C => μ₂ p.1 p.2)
+    (hequiv₂ : ∀ (g : G) (d : D) (c : C), μ₂ (g • d) (g • c) = g • μ₂ d c)
+  (ν₁ : B →+ C →+ F) (hν₁ : Continuous fun p : B × C => ν₁ p.1 p.2)
+    (hequiv₃ : ∀ (g : G) (b : B) (c : C), ν₁ (g • b) (g • c) = g • ν₁ b c)
+  (ν₂ : A →+ F →+ E) (hν₂ : Continuous fun p : A × F => ν₂ p.1 p.2)
+    (hequiv₄ : ∀ (g : G) (a : A) (f : F), ν₂ (g • a) (g • f) = g • ν₂ a f)
+  (hassoc : ∀ (a : A) (b : B) (c : C), μ₂ (μ₁ a b) c = ν₂ a (ν₁ b c))
+
+include hassoc in
+/-- **Associativity of the cup product in tridegree `(1,0,1)`**, the last of the ten instances
+with `p + q + r ≤ 2`. -/
+theorem explicitCup_assoc101 (x : H1 G A) (y : H0 G B) (z : H1 G C) :
+    explicitCup11 G D C E μ₂ hμ₂ hequiv₂ (explicitCup10 G A B D μ₁ hμ₁ hequiv₁ x y) z =
+      explicitCup11 G A F E ν₂ hν₂ hequiv₄ x (explicitCup01 G B C F ν₁ hν₁ hequiv₃ y z) := by
+  induction x using QuotientAddGroup.induction_on with
+  | _ a =>
+    induction z using QuotientAddGroup.induction_on with
+    | _ c =>
+      simp only [explicitCup10_mk, explicitCup11_mk, explicitCup01_mk]
+      exact congrArg (fun w : Z2 G E => (w : H2 G E))
+        (Subtype.ext (funext fun _ => by simp [hassoc, hequiv₃]))
+
+end AssocOneZeroOne
+
+section AssocRing
+
+/-! ### Associativity for a topological `G`-ring
+
+The specialization the applications use: one coefficient ring `R` acted on by ring
+automorphisms, all four pairings its multiplication `AddMonoidHom.mul`, and the coefficient
+identity `mul_assoc`. The continuity and equivariance a pairing has to come with are
+`continuous_mul` and `smul_mul'`, which apply to `AddMonoidHom.mul` as they stand. Each of the
+ten statements below is the corresponding general statement instantiated there. -/
+
+universe uR
+
+variable (G : Type uG) [Group G] [TopologicalSpace G] [ContinuousMul G]
+  (R : Type uR) [Ring R] [TopologicalSpace R] [IsTopologicalRing R] [MulSemiringAction G R]
+  [ContinuousSMul G R]
+
+omit [TopologicalSpace G] [ContinuousMul G] [TopologicalSpace R] [IsTopologicalRing R]
+  [ContinuousSMul G R] in
+/-- **Associativity of the ring cup product in tridegree `(0,0,0)`.** -/
+theorem explicitCup_assoc000_mul (x y z : H0 G R) :
+    explicitCup00 G R R R AddMonoidHom.mul (fun g a b => (smul_mul' g a b).symm)
+        (explicitCup00 G R R R AddMonoidHom.mul (fun g a b => (smul_mul' g a b).symm) x y) z =
+      explicitCup00 G R R R AddMonoidHom.mul (fun g a b => (smul_mul' g a b).symm) x
+        (explicitCup00 G R R R AddMonoidHom.mul (fun g a b => (smul_mul' g a b).symm) y z) :=
+  explicitCup_assoc000 G R R R R R R _ _ _ _ _ _ _ _ mul_assoc x y z
+
+omit [ContinuousMul G] in
+/-- **Associativity of the ring cup product in tridegree `(0,0,1)`.** -/
+theorem explicitCup_assoc001_mul (x y : H0 G R) (z : H1 G R) :
+    explicitCup01 G R R R AddMonoidHom.mul continuous_mul
+        (fun g a b => (smul_mul' g a b).symm)
+        (explicitCup00 G R R R AddMonoidHom.mul (fun g a b => (smul_mul' g a b).symm) x y) z =
+      explicitCup01 G R R R AddMonoidHom.mul continuous_mul
+        (fun g a b => (smul_mul' g a b).symm) x
+        (explicitCup01 G R R R AddMonoidHom.mul continuous_mul
+          (fun g a b => (smul_mul' g a b).symm) y z) :=
+  explicitCup_assoc001 G R R R R R R _ _ _ _ _ _ _ _ _ _ _ mul_assoc x y z
+
+/-- **Associativity of the ring cup product in tridegree `(0,0,2)`.** -/
+theorem explicitCup_assoc002_mul (x y : H0 G R) (z : H2 G R) :
+    explicitCup02 G R R R AddMonoidHom.mul continuous_mul
+        (fun g a b => (smul_mul' g a b).symm)
+        (explicitCup00 G R R R AddMonoidHom.mul (fun g a b => (smul_mul' g a b).symm) x y) z =
+      explicitCup02 G R R R AddMonoidHom.mul continuous_mul
+        (fun g a b => (smul_mul' g a b).symm) x
+        (explicitCup02 G R R R AddMonoidHom.mul continuous_mul
+          (fun g a b => (smul_mul' g a b).symm) y z) :=
+  explicitCup_assoc002 G R R R R R R _ _ _ _ _ _ _ _ _ _ _ mul_assoc x y z
+
+omit [ContinuousMul G] in
+/-- **Associativity of the ring cup product in tridegree `(0,1,0)`.** -/
+theorem explicitCup_assoc010_mul (x : H0 G R) (y : H1 G R) (z : H0 G R) :
+    explicitCup10 G R R R AddMonoidHom.mul continuous_mul
+        (fun g a b => (smul_mul' g a b).symm)
+        (explicitCup01 G R R R AddMonoidHom.mul continuous_mul
+          (fun g a b => (smul_mul' g a b).symm) x y) z =
+      explicitCup01 G R R R AddMonoidHom.mul continuous_mul
+        (fun g a b => (smul_mul' g a b).symm) x
+        (explicitCup10 G R R R AddMonoidHom.mul continuous_mul
+          (fun g a b => (smul_mul' g a b).symm) y z) :=
+  explicitCup_assoc010 G R R R R R R _ _ _ _ _ _ _ _ _ _ _ _ mul_assoc x y z
+
+/-- **Associativity of the ring cup product in tridegree `(0,2,0)`.** -/
+theorem explicitCup_assoc020_mul (x : H0 G R) (y : H2 G R) (z : H0 G R) :
+    explicitCup20 G R R R AddMonoidHom.mul continuous_mul
+        (fun g a b => (smul_mul' g a b).symm)
+        (explicitCup02 G R R R AddMonoidHom.mul continuous_mul
+          (fun g a b => (smul_mul' g a b).symm) x y) z =
+      explicitCup02 G R R R AddMonoidHom.mul continuous_mul
+        (fun g a b => (smul_mul' g a b).symm) x
+        (explicitCup20 G R R R AddMonoidHom.mul continuous_mul
+          (fun g a b => (smul_mul' g a b).symm) y z) :=
+  explicitCup_assoc020 G R R R R R R _ _ _ _ _ _ _ _ _ _ _ _ mul_assoc x y z
+
+omit [ContinuousMul G] in
+/-- **Associativity of the ring cup product in tridegree `(1,0,0)`.** -/
+theorem explicitCup_assoc100_mul (x : H1 G R) (y z : H0 G R) :
+    explicitCup10 G R R R AddMonoidHom.mul continuous_mul
+        (fun g a b => (smul_mul' g a b).symm)
+        (explicitCup10 G R R R AddMonoidHom.mul continuous_mul
+          (fun g a b => (smul_mul' g a b).symm) x y) z =
+      explicitCup10 G R R R AddMonoidHom.mul continuous_mul
+        (fun g a b => (smul_mul' g a b).symm) x
+        (explicitCup00 G R R R AddMonoidHom.mul (fun g a b => (smul_mul' g a b).symm) y z) :=
+  explicitCup_assoc100 G R R R R R R _ _ _ _ _ _ _ _ _ _ _ mul_assoc x y z
+
+/-- **Associativity of the ring cup product in tridegree `(2,0,0)`.** -/
+theorem explicitCup_assoc200_mul (x : H2 G R) (y z : H0 G R) :
+    explicitCup20 G R R R AddMonoidHom.mul continuous_mul
+        (fun g a b => (smul_mul' g a b).symm)
+        (explicitCup20 G R R R AddMonoidHom.mul continuous_mul
+          (fun g a b => (smul_mul' g a b).symm) x y) z =
+      explicitCup20 G R R R AddMonoidHom.mul continuous_mul
+        (fun g a b => (smul_mul' g a b).symm) x
+        (explicitCup00 G R R R AddMonoidHom.mul (fun g a b => (smul_mul' g a b).symm) y z) :=
+  explicitCup_assoc200 G R R R R R R _ _ _ _ _ _ _ _ _ _ _ mul_assoc x y z
+
+/-- **Associativity of the ring cup product in tridegree `(0,1,1)`.** -/
+theorem explicitCup_assoc011_mul (x : H0 G R) (y z : H1 G R) :
+    explicitCup11 G R R R AddMonoidHom.mul continuous_mul
+        (fun g a b => (smul_mul' g a b).symm)
+        (explicitCup01 G R R R AddMonoidHom.mul continuous_mul
+          (fun g a b => (smul_mul' g a b).symm) x y) z =
+      explicitCup02 G R R R AddMonoidHom.mul continuous_mul
+        (fun g a b => (smul_mul' g a b).symm) x
+        (explicitCup11 G R R R AddMonoidHom.mul continuous_mul
+          (fun g a b => (smul_mul' g a b).symm) y z) :=
+  explicitCup_assoc011 G R R R R R R _ _ _ _ _ _ _ _ _ _ _ _ mul_assoc x y z
+
+/-- **Associativity of the ring cup product in tridegree `(1,1,0)`.** -/
+theorem explicitCup_assoc110_mul (x y : H1 G R) (z : H0 G R) :
+    explicitCup20 G R R R AddMonoidHom.mul continuous_mul
+        (fun g a b => (smul_mul' g a b).symm)
+        (explicitCup11 G R R R AddMonoidHom.mul continuous_mul
+          (fun g a b => (smul_mul' g a b).symm) x y) z =
+      explicitCup11 G R R R AddMonoidHom.mul continuous_mul
+        (fun g a b => (smul_mul' g a b).symm) x
+        (explicitCup10 G R R R AddMonoidHom.mul continuous_mul
+          (fun g a b => (smul_mul' g a b).symm) y z) :=
+  explicitCup_assoc110 G R R R R R R _ _ _ _ _ _ _ _ _ _ _ _ mul_assoc x y z
+
+/-- **Associativity of the ring cup product in tridegree `(1,0,1)`.** -/
+theorem explicitCup_assoc101_mul (x : H1 G R) (y : H0 G R) (z : H1 G R) :
+    explicitCup11 G R R R AddMonoidHom.mul continuous_mul
+        (fun g a b => (smul_mul' g a b).symm)
+        (explicitCup10 G R R R AddMonoidHom.mul continuous_mul
+          (fun g a b => (smul_mul' g a b).symm) x y) z =
+      explicitCup11 G R R R AddMonoidHom.mul continuous_mul
+        (fun g a b => (smul_mul' g a b).symm) x
+        (explicitCup01 G R R R AddMonoidHom.mul continuous_mul
+          (fun g a b => (smul_mul' g a b).symm) y z) :=
+  explicitCup_assoc101 G R R R R R R _ _ _ _ _ _ _ _ _ _ _ _ mul_assoc x y z
+
+end AssocRing
 
 end TauCeti.ContCohomology

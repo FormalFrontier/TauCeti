@@ -131,6 +131,110 @@ private theorem sum_block_ne_zero_and_ord_le (P' : Place k' F') {ι : Type*} [Fi
     _ = ((l₀ : ℕ) : ℤ) := by
         rw [hT, P'.ord_mul hA₀ne (pow_ne_zero _ ht0), P'.ord_pow, hA₀ord, ht, mul_one, zero_add]
 
+/-- **The products `w i j * τ i ^ l` are `F`-linearly independent across the whole fibre.** Given,
+at each place `Q i` over `P`, a prime element `τ i` for `Q i` that is integral at the other places
+of the family, and lifts `w i j` of a family of residues independent over the residue field of `P`,
+each of order at least `e(Q m ∣ P)` at every other place `Q m`, the `e(Q i ∣ P) · f(Q i ∣ P)`
+products `w i j * τ i ^ l` are linearly independent over `F` **jointly over all of `i`** — which is
+what distinguishes this from the one-place
+`TauCeti.Place.linearIndependent_mul_pow_of_linearIndependent_residue` in `Extension/Basic.lean`.
+Counting the resulting `∑ i, e(Q i ∣ P) · f(Q i ∣ P)` products is what gives the fundamental
+inequality. -/
+private theorem linearIndependent_mul_pow_of_forall_linearIndependent_residue {ι : Type*}
+    [Finite ι] {Q : ι → Place k' F'} {P : Place k F}
+    (hQP : ∀ i, (Q i).restrict k F = P)
+    {τ : ι → F'} (hτone : ∀ i, (Q i).ord (τ i) = 1)
+    (hτint : ∀ i m, m ≠ i → 0 ≤ (Q m).ord (τ i))
+    {w : ∀ i, Fin (relativeDegree k F (Q i)) → F'} (hwmem : ∀ i j, w i j ∈ (Q i).integers)
+    (hwN : ∀ (i : ι) (j : Fin (relativeDegree k F (Q i))) (m : ι), m ≠ i →
+      (ramificationIdx F (Q m) : ℤ) ≤ (Q m).ord (w i j))
+    (hindres : ∀ i, LinearIndependent ((Q i).restrict k F).ResidueField
+      fun j ↦ IsLocalRing.residue (Q i).integers (⟨w i j, hwmem i j⟩ : (Q i).integers)) :
+    LinearIndependent F
+      (fun p : Σ i : ι, Fin (relativeDegree k F (Q i)) × Fin (ramificationIdx F (Q i)) ↦
+        w p.1 p.2.1 * τ p.1 ^ (p.2.2 : ℕ)) := by
+  classical
+  have _ : Fintype ι := Fintype.ofFinite ι
+  set V : (Σ i : ι, Fin (relativeDegree k F (Q i)) × Fin (ramificationIdx F (Q i))) → F' :=
+    fun p ↦ w p.1 p.2.1 * τ p.1 ^ (p.2.2 : ℕ) with hV
+  rw [Fintype.linearIndependent_iff]
+  intro g hg
+  by_contra hex
+  obtain ⟨p₁, hp₁⟩ := not_forall.mp hex
+  -- Pick a coefficient of least order at `P` among the nonzero ones and divide by it.
+  obtain ⟨⟨i₀, j₀, l₀⟩, hg₀, hbP⟩ := P.exists_ne_zero_forall_div_mem_integers g hp₁
+  have hbmem : ∀ p, g p / g ⟨i₀, j₀, l₀⟩ ∈ ((Q i₀).restrict k F).integers := fun p ↦ by
+    rw [hQP i₀]
+    exact hbP p
+  set b : (Σ i : ι, Fin (relativeDegree k F (Q i)) × Fin (ramificationIdx F (Q i))) →
+    ((Q i₀).restrict k F).integers := fun p ↦ ⟨g p / g ⟨i₀, j₀, l₀⟩, hbmem p⟩
+  have hbcoe : ∀ p, ((b p : F)) = g p / g ⟨i₀, j₀, l₀⟩ := fun _ ↦ rfl
+  have hb₀ : b ⟨i₀, j₀, l₀⟩ = 1 := Subtype.ext (by simp [hbcoe, div_self hg₀])
+  -- The relation splits into one block per place of the family, and the blocks sum to zero.
+  set Z : ι → F' := fun i ↦
+    ∑ q : Fin (relativeDegree k F (Q i)) × Fin (ramificationIdx F (Q i)),
+      algebraMap F F' ((b ⟨i, q⟩ : F)) * V ⟨i, q⟩ with hZ
+  have hZsum : ∑ i, Z i = 0 := by
+    have hgsum : ∑ p, algebraMap F F' ((b p : F)) * V p = 0 := by
+      have hterm : ∑ p, algebraMap F F' ((b p : F)) * V p =
+          (algebraMap F F' (g ⟨i₀, j₀, l₀⟩))⁻¹ * ∑ p, g p • V p := by
+        rw [Finset.mul_sum]
+        refine Finset.sum_congr rfl fun p _ ↦ ?_
+        rw [hbcoe, div_eq_inv_mul, map_mul, map_inv₀, Algebra.smul_def]
+        ring
+      rw [hterm, hg, mul_zero]
+    calc ∑ i, Z i = ∑ p, algebraMap F F' ((b p : F)) * V p := by
+          simp only [hZ]
+          rw [Finset.sum_sigma', Finset.univ_sigma_univ]
+      _ = 0 := hgsum
+  -- The block at `i₀` is nonzero of order less than the ramification index there. Unfolding `Z`
+  -- and `V` is what puts it in the shape the block lemma speaks about.
+  obtain ⟨hZne, hZord⟩ : Z i₀ ≠ 0 ∧ (Q i₀).ord (Z i₀) ≤ ((l₀ : ℕ) : ℤ) := by
+    have hblock := sum_block_ne_zero_and_ord_le k F (Q i₀)
+      (fun j ↦ (⟨w i₀ j, hwmem i₀ j⟩ : (Q i₀).integers)) (hindres i₀)
+      (fun q ↦ b ⟨i₀, q⟩) (j₀ := j₀) (l₀ := l₀) (hb₀ ▸ isUnit_one) (hτone i₀)
+    simpa only [hZ, hV] using hblock
+  -- Every other block has order at least `e(Q i₀ ∣ P)` at `Q i₀`.
+  have hZm : ∀ m, m ≠ i₀ →
+      (Q i₀).valuation (Z m) ≤ WithZero.exp (-(ramificationIdx F (Q i₀) : ℤ)) := by
+    intro m hm
+    simp only [hZ]
+    refine Valuation.map_sum_le _ fun q _ ↦ ?_
+    have hb1 : (Q i₀).valuation (algebraMap F F' ((b ⟨m, q⟩ : F))) ≤ 1 := by
+      refine (Q i₀).mem_integers_iff.mp ((Q i₀).mem_integers_iff_ord_nonneg.mpr ?_)
+      rw [ord_algebraMap_restrict k F (Q i₀) ((b ⟨m, q⟩ : F))]
+      exact mul_nonneg (by positivity)
+        (((Q i₀).restrict k F).mem_integers_iff_ord_nonneg.mp (b ⟨m, q⟩).2)
+    have hwval : (Q i₀).valuation (w m q.1) ≤
+        WithZero.exp (-(ramificationIdx F (Q i₀) : ℤ)) := by
+      have hne : w m q.1 ≠ 0 := by
+        intro h
+        have hh := hwN m q.1 i₀ (Ne.symm hm)
+        have he := ramificationIdx_pos (F := F) (Q i₀)
+        rw [h, ord_zero] at hh
+        omega
+      rw [(Q i₀).valuation_eq_exp_neg_ord hne]
+      exact WithZero.exp_le_exp.2 (neg_le_neg (hwN m q.1 i₀ (Ne.symm hm)))
+    have hτval : (Q i₀).valuation (τ m ^ (q.2 : ℕ)) ≤ 1 := by
+      rw [map_pow]
+      exact pow_le_one' ((Q i₀).mem_integers_iff.mp
+        ((Q i₀).mem_integers_iff_ord_nonneg.mpr (hτint m i₀ (Ne.symm hm)))) _
+    simp only [hV]
+    rw [map_mul, map_mul]
+    exact (mul_le_of_le_one_left' hb1).trans ((mul_le_of_le_one_right' hτval).trans hwval)
+  -- The strict triangle inequality contradicts `∑ i, Z i = 0`.
+  have hlt : ∀ m ∈ (Finset.univ : Finset ι) \ {i₀},
+      (Q i₀).valuation (Z m) < (Q i₀).valuation (Z i₀) := by
+    intro m hmem
+    simp only [Finset.mem_sdiff, Finset.mem_singleton] at hmem
+    refine lt_of_le_of_lt (hZm m hmem.2) ?_
+    rw [(Q i₀).valuation_eq_exp_neg_ord hZne, WithZero.exp_lt_exp]
+    have hl₀ : (l₀ : ℕ) < ramificationIdx F (Q i₀) := l₀.2
+    omega
+  have hval := (Q i₀).valuation.map_sum_eq_of_lt (Finset.mem_univ i₀) hlt
+  rw [hZsum, map_zero] at hval
+  exact ((Valuation.ne_zero_iff _).mpr hZne) hval.symm
+
 /-- **The fundamental inequality**, for a family of places indexed by a finite type. This is the
 form the proof produces; `TauCeti.Place.sum_ramificationIdx_mul_relativeDegree_le_finrank` is the
 `Finset` restatement used elsewhere. -/
@@ -140,13 +244,10 @@ private theorem sum_relativeDegree_mul_ramificationIdx_le_finrank {ι : Type*} [
     ∑ i, relativeDegree k F (Q i) * ramificationIdx F (Q i) ≤ Module.finrank F F' := by
   classical
   set N : ℕ := Module.finrank F F' with hNdef
-  have hN1 : 1 ≤ N := Module.finrank_pos
   -- A function with a simple zero at `Q i` and a unit value at every other place of the family.
   obtain ⟨τ, hτ⟩ : ∃ τ : ι → F', ∀ i m, (Q m).ord (τ i) = if m = i then 1 else 0 := by
     choose τ hτ using fun i : ι ↦ exists_forall_ord_eq hQ fun m ↦ if m = i then (1 : ℤ) else 0
     exact ⟨τ, hτ⟩
-  have hτone : ∀ i, (Q i).ord (τ i) = 1 := fun i ↦ by simpa using hτ i i
-  have hτ0 : ∀ i, τ i ≠ 0 := fun i h ↦ by simpa [h] using hτone i
   -- Lifts to `𝒪_{Q i}` of a basis of the residue field extension at `Q i`, …
   choose z hz using fun i : ι ↦ exists_linearIndependent_residue k F (Q i)
   -- … moved by weak approximation away from the other places of the family.
@@ -182,92 +283,12 @@ private theorem sum_relativeDegree_mul_ramificationIdx_le_finrank {ι : Type*} [
       rwa [map_sub, sub_eq_zero] at hzero
     simpa only [hwres] using hz i
   -- The candidate independent family: `e(Q i ∣ P) · f(Q i ∣ P)` functions for each `i`.
-  set V : (Σ i : ι, Fin (relativeDegree k F (Q i)) × Fin (ramificationIdx F (Q i))) → F' :=
-    fun p ↦ w p.1 p.2.1 * τ p.1 ^ (p.2.2 : ℕ) with hV
-  have hind : LinearIndependent F V := by
-    rw [Fintype.linearIndependent_iff]
-    intro g hg
-    by_contra hex
-    obtain ⟨p₁, hp₁⟩ := not_forall.mp hex
-    -- Pick a coefficient of least order at `P` among the nonzero ones and divide by it.
-    set S : Finset (Σ i : ι, Fin (relativeDegree k F (Q i)) × Fin (ramificationIdx F (Q i))) :=
-      {p | g p ≠ 0} with hS
-    obtain ⟨p₀, hp₀S, hp₀min⟩ :=
-      S.exists_min_image (fun p ↦ P.ord (g p)) ⟨p₁, by simp [hS, hp₁]⟩
-    obtain ⟨i₀, j₀, l₀⟩ := p₀
-    have hg₀ : g ⟨i₀, j₀, l₀⟩ ≠ 0 := by simpa [hS] using hp₀S
-    have hbmem : ∀ p, g p / g ⟨i₀, j₀, l₀⟩ ∈ ((Q i₀).restrict k F).integers := by
-      intro p
-      rw [hQP i₀, P.mem_integers_iff_ord_nonneg]
-      rcases eq_or_ne (g p) 0 with h | h
-      · simp [h]
-      · rw [P.ord_div h hg₀]
-        have := hp₀min p (by simp [hS, h])
-        omega
-    set b : (Σ i : ι, Fin (relativeDegree k F (Q i)) × Fin (ramificationIdx F (Q i))) →
-      ((Q i₀).restrict k F).integers := fun p ↦ ⟨g p / g ⟨i₀, j₀, l₀⟩, hbmem p⟩ with hb
-    have hbcoe : ∀ p, ((b p : F)) = g p / g ⟨i₀, j₀, l₀⟩ := fun _ ↦ rfl
-    have hb₀ : b ⟨i₀, j₀, l₀⟩ = 1 := Subtype.ext (by simp [hbcoe, div_self hg₀])
-    -- The relation splits into one block per place of the family, and the blocks sum to zero.
-    set Z : ι → F' := fun i ↦
-      ∑ q : Fin (relativeDegree k F (Q i)) × Fin (ramificationIdx F (Q i)),
-        algebraMap F F' ((b ⟨i, q⟩ : F)) * V ⟨i, q⟩ with hZ
-    have hZsum : ∑ i, Z i = 0 := by
-      have hgsum : ∑ p, algebraMap F F' ((b p : F)) * V p = 0 := by
-        have hterm : ∑ p, algebraMap F F' ((b p : F)) * V p =
-            (algebraMap F F' (g ⟨i₀, j₀, l₀⟩))⁻¹ * ∑ p, g p • V p := by
-          rw [Finset.mul_sum]
-          refine Finset.sum_congr rfl fun p _ ↦ ?_
-          rw [hbcoe, div_eq_inv_mul, map_mul, map_inv₀, Algebra.smul_def]
-          ring
-        rw [hterm, hg, mul_zero]
-      calc ∑ i, Z i = ∑ p, algebraMap F F' ((b p : F)) * V p := by
-            simp only [hZ]
-            rw [Finset.sum_sigma', Finset.univ_sigma_univ]
-        _ = 0 := hgsum
-    -- The block at `i₀` is nonzero of order less than the ramification index there; the type
-    -- ascription is what identifies `Z i₀` with the sum the block lemma speaks about.
-    obtain ⟨hZne, hZord⟩ : Z i₀ ≠ 0 ∧ (Q i₀).ord (Z i₀) ≤ ((l₀ : ℕ) : ℤ) :=
-      sum_block_ne_zero_and_ord_le k F (Q i₀)
-        (fun j ↦ (⟨w i₀ j, hwmem i₀ j⟩ : (Q i₀).integers)) (hindres i₀)
-        (fun q ↦ b ⟨i₀, q⟩) (j₀ := j₀) (l₀ := l₀) (hb₀ ▸ isUnit_one) (hτone i₀)
-    -- Every other block has order at least `[F' : F]` at `Q i₀`.
-    have hZm : ∀ m, m ≠ i₀ → (Q i₀).valuation (Z m) ≤ WithZero.exp (-(N : ℤ)) := by
-      intro m hm
-      simp only [hZ]
-      refine Valuation.map_sum_le _ fun q _ ↦ ?_
-      have hb1 : (Q i₀).valuation (algebraMap F F' ((b ⟨m, q⟩ : F))) ≤ 1 := by
-        refine (Q i₀).mem_integers_iff.mp ((Q i₀).mem_integers_iff_ord_nonneg.mpr ?_)
-        rw [ord_algebraMap_restrict k F (Q i₀) ((b ⟨m, q⟩ : F))]
-        exact mul_nonneg (by positivity)
-          (((Q i₀).restrict k F).mem_integers_iff_ord_nonneg.mp (b ⟨m, q⟩).2)
-      have hwval : (Q i₀).valuation (w m q.1) = WithZero.exp (-(N : ℤ)) := by
-        have hne : w m q.1 ≠ 0 := by
-          intro h
-          have hh := hwN m q.1 i₀ (Ne.symm hm)
-          rw [h, ord_zero] at hh
-          omega
-        rw [(Q i₀).valuation_eq_exp_neg_ord hne, hwN m q.1 i₀ (Ne.symm hm)]
-      have hτval : (Q i₀).valuation (τ m ^ (q.2 : ℕ)) = 1 := by
-        rw [map_pow, (Q i₀).valuation_eq_exp_neg_ord (hτ0 m), hτ m i₀]
-        simp [Ne.symm hm]
-      simp only [hV]
-      rw [map_mul, map_mul, hwval, hτval, mul_one]
-      exact mul_le_of_le_one_left' hb1
-    -- The strict triangle inequality contradicts `∑ i, Z i = 0`.
-    have hlt : ∀ m ∈ (Finset.univ : Finset ι) \ {i₀},
-        (Q i₀).valuation (Z m) < (Q i₀).valuation (Z i₀) := by
-      intro m hmem
-      simp only [Finset.mem_sdiff, Finset.mem_singleton] at hmem
-      refine lt_of_le_of_lt (hZm m hmem.2) ?_
-      rw [(Q i₀).valuation_eq_exp_neg_ord hZne, WithZero.exp_lt_exp]
-      have hl₀ : (l₀ : ℕ) < ramificationIdx F (Q i₀) := l₀.2
-      have hle : ramificationIdx F (Q i₀) ≤ Module.finrank F F' :=
-        ramificationIdx_le_finrank F (Q i₀)
-      omega
-    have hval := (Q i₀).valuation.map_sum_eq_of_lt (Finset.mem_univ i₀) hlt
-    rw [hZsum, map_zero] at hval
-    exact ((Valuation.ne_zero_iff _).mpr hZne) hval.symm
+  have hind :=
+    linearIndependent_mul_pow_of_forall_linearIndependent_residue k F hQP
+      (fun i ↦ by simpa using hτ i i) (fun i m hm ↦ by simp [hτ i m, hm]) hwmem
+      (fun i j m hm ↦ by
+        rw [hwN i j m hm, hNdef]
+        exact_mod_cast ramificationIdx_le_finrank F (Q m)) hindres
   simpa [Fintype.card_sigma, Fintype.card_prod] using hind.fintype_card_le_finrank
 
 /-- **The fundamental inequality** (Stichtenoth, Theorem 3.1.11): the ramification indices and

@@ -21,18 +21,34 @@ known but no particular basis is: for `Module.finrank K M = n`, an isomorphism
 
 `Module.End K M ≃ₐ[K] Matrix (Fin n) (Fin n) K`.
 
+In the other direction it records how a matrix unit acts on the basis it is read in, which is the
+computation every matrix model of a Lie algebra performs on its root vectors.
+
 ## Main results
 
 * `TauCeti.Algebra.endAlgEquivMatrix`: the above, read off the basis
   `Module.finBasisOfFinrankEq`.
+* `TauCeti.toLinAlgEquiv_single_apply_basis`: the endomorphism of a matrix unit sends a basis
+  vector to a single coordinate.
 
-It is used to turn the Azumaya isomorphism of a finite-dimensional central simple algebra into a
-matrix algebra in `TauCeti/Algebra/CentralSimple/Opposite.lean`.
+The first is used to turn the Azumaya isomorphism of a finite-dimensional central simple algebra
+into a matrix algebra in `TauCeti/Algebra/CentralSimple/Opposite.lean`.
 -/
 
 public section
 
 namespace TauCeti
+
+/-- **A matrix unit acts on a basis by a single coordinate.** The endomorphism attached to
+`Matrix.single p q v` sends the basis vector indexed by the column `q` to `v • bas p`, and every
+other basis vector to `0`. -/
+theorem toLinAlgEquiv_single_apply_basis {R : Type*} [CommRing R] {M : Type*} [AddCommGroup M]
+    [Module R M] {n : Type*} [Fintype n] [DecidableEq n]
+    (bas : Module.Basis n R M) (p q : n) (v : R) (c : n) :
+    Matrix.toLinAlgEquiv bas (Matrix.single p q v) (bas c) =
+      (if q = c then v else 0) • bas p := by
+  rw [Matrix.toLinAlgEquiv_self]
+  simp [Matrix.single_apply, ite_and, ite_smul]
 
 namespace Algebra
 

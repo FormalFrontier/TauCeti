@@ -43,8 +43,10 @@ single coordinate patch at a multiplicity-free coefficient tuple,
 `TauCeti/Analysis/Polynomial/SimpleRoots/Basic.lean`. Its assembly across the blocks that a chart
 below splits a tuple into, along the regrouping `e`, is
 `TauCeti.Sym.analyticAt_piSigmaConstHomeomorph_coeffEquiv_map_coeffEquiv_symm` in
-`TauCeti/Analysis/Polynomial/SimpleRoots/Family.lean`. The case of colliding points is not done;
-there the degree-`m i` elementary symmetric coordinates genuinely appear.
+`TauCeti/Analysis/Polynomial/SimpleRoots/Family.lean`. At colliding points, polynomial-induced
+coordinate maps are handled by `TauCeti.Sym.analyticOnNhd_coeffEquiv_map_eval_coeffEquiv_symm` in
+`TauCeti/Analysis/Polynomial/SymmetricPower.lean`; the case of a general holomorphic coordinate
+change remains open.
 
 ## Main declarations
 
