@@ -57,7 +57,7 @@ needed; the rest is the elementary Frobenius argument.
 ## Main results
 
 * `TauCeti.exists_mul_self_eq_algebraMap_add_smul`: every element of a finite-dimensional real
-  division algebra satisfies a monic real quadratic.
+  algebra that is a domain satisfies a monic real quadratic.
 * `TauCeti.exists_mul_self_eq_neg_one`: such an algebra other than `ℝ` contains a square root
   of `-1`.
 * `TauCeti.exists_mul_self_eq_neg_one_and_mul_eq_neg_mul`: a square root of `-1` that is not
@@ -72,6 +72,10 @@ Mathlib's `NormedAlgebra.Real.exists_isMonicOfDegree_two_and_aeval_eq_zero` is t
 relation, but it is stated for an element of a normed `ℝ`-algebra whose norm is multiplicative.
 That hypothesis is not available here, `D` carrying no norm; the relation is therefore reproved
 from the finite-dimensionality of `ℝ[y]`.
+
+The three quadratic lemmas are stated for a domain rather than a division ring: no inverse in `D`
+is ever taken, only inverses of real scalars, so `[Ring D] [IsDomain D]` is what the arguments
+use. The division algebras of Frobenius' theorem supply those instances.
 
 ## References
 
@@ -94,9 +98,9 @@ open scoped _root_.Quaternion
 
 section Quadratic
 
-variable {D : Type*} [DivisionRing D] [Algebra ℝ D] [FiniteDimensional ℝ D]
+variable {D : Type*} [Ring D] [IsDomain D] [Algebra ℝ D] [FiniteDimensional ℝ D]
 
-/-- **Every element of a finite-dimensional real division algebra satisfies a monic real
+/-- **Every element of a finite-dimensional real algebra that is a domain satisfies a monic real
 quadratic**: `y * y = a + b * y` for real `a` and `b`.
 
 The subalgebra `ℝ[y]` is a commutative domain of finite dimension over `ℝ`, hence a field, hence
@@ -142,7 +146,7 @@ omit [FiniteDimensional ℝ D] in
 some real `c`.
 
 The scalar `r` is negative, since `r ≥ 0` would make `u` and the scalar `√r` two commuting elements
-with the same square, which in a division ring forces `u = ±√r`
+with the same square, which in a domain forces `u = ±√r`
 (`Commute.mul_self_eq_mul_self_iff`) and so puts `u` in `ℝ`. Then `c = (√(-r))⁻¹` normalises the
 square.
 
@@ -172,7 +176,8 @@ private theorem exists_smul_mul_self_eq_neg_one {u : D} {r : ℝ}
   exact ⟨(Real.sqrt (-r))⁻¹, by
     rw [smul_mul_smul_comm, hu, Algebra.smul_def, ← map_mul, hscal, map_neg, map_one]⟩
 
-/-- **A finite-dimensional real division algebra that is not `ℝ` contains a square root of `-1`.**
+/-- **A finite-dimensional real algebra that is a domain and is not `ℝ` contains a square root
+of `-1`.**
 
 Take any `y` outside the copy of `ℝ`, write `y * y = a + b * y`, and complete the square: the
 element `u = y - b / 2` has `u * u` a real scalar, and `u` is again outside `ℝ`, so
