@@ -43,7 +43,8 @@ namespace Probability
 
 /-- The real coefficient in the negative-binomial mass at `k`. -/
 def negativeBinomialWeightReal (r p : ℝ) (k : ℕ) : ℝ :=
-  Real.Gamma (k + r) / (k.factorial * Real.Gamma r) * Real.rpow p r * (1 - p) ^ k
+  if r = 0 then if k = 0 then 1 else 0
+  else Real.Gamma (k + r) / (k.factorial * Real.Gamma r) * Real.rpow p r * (1 - p) ^ k
 
 /-- The `ℝ≥0∞`-valued negative-binomial mass at `k`. -/
 def negativeBinomialWeight (r p : ℝ) (k : ℕ) : ℝ≥0∞ :=
@@ -116,14 +117,15 @@ private theorem gamma_ratio_eq_multichoose (hr : 0 < r) (k : ℕ) :
 private theorem negativeBinomialWeightReal_eq_coeff (hr : 0 < r) (k : ℕ) :
     negativeBinomialWeightReal r p k =
       (Ring.multichoose r k : ℝ) * Real.rpow p r * (1 - p) ^ k := by
-  rw [negativeBinomialWeightReal, gamma_ratio_eq_multichoose hr k]
+  rw [negativeBinomialWeightReal, ite_eq_right hr.ne', gamma_ratio_eq_multichoose hr k]
 
 private theorem negativeBinomialWeightReal_nonneg (hr : 0 ≤ r) (hp : 0 ≤ p) (hp1 : p ≤ 1)
     (k : ℕ) : 0 ≤ negativeBinomialWeightReal r p k := by
   rcases hr.eq_or_lt with rfl | hr
-  · simp [negativeBinomialWeightReal]
+  · simp only [negativeBinomialWeightReal]
+    split_ifs <;> norm_num
   rcases hp.eq_or_lt with rfl | hp
-  · simp [negativeBinomialWeightReal, Real.zero_rpow hr.ne']
+  · simp [negativeBinomialWeightReal, hr.ne', Real.zero_rpow hr.ne']
   rw [negativeBinomialWeightReal_eq_coeff hr k]
   have hcoeff : 0 ≤ (Ring.multichoose r k : ℝ) := by
     rw [← gamma_ratio_eq_multichoose hr k]
@@ -192,19 +194,25 @@ theorem isProbabilityMeasure_negativeBinomialMeasure (hr : 0 ≤ r) (hp : 0 < p)
     intro k
     exact negativeBinomialWeightReal_nonneg hr.le hp.le hp1 k
 
-/-- The singleton mass of the negative-binomial law in its classical parameter range. -/
+/-- The singleton mass of the negative-binomial law in its valid parameter range. -/
 @[simp]
-theorem negativeBinomialMeasure_singleton {r p : ℝ} (hr : 0 < r) (hp : 0 < p) (hp1 : p ≤ 1)
+theorem negativeBinomialMeasure_singleton {r p : ℝ} (hr : 0 ≤ r) (hp : 0 < p) (hp1 : p ≤ 1)
     (k : ℕ) : negativeBinomialMeasure r p {k} = negativeBinomialWeight r p k := by
-  rw [negativeBinomialMeasure_eq_sum_dirac hr hp hp1]
-  exact Measure.sum_smul_dirac_singleton
+  rcases hr.eq_or_lt with rfl | hr
+  · rw [negativeBinomialMeasure_zero hp hp1]
+    by_cases hk : k = 0
+    · subst k
+      simp [negativeBinomialWeight, negativeBinomialWeightReal]
+    · simp [negativeBinomialWeight, negativeBinomialWeightReal, hk]
+  · rw [negativeBinomialMeasure_eq_sum_dirac hr hp hp1]
+    exact Measure.sum_smul_dirac_singleton
 
-/-- The real singleton mass of the negative-binomial law in its classical parameter range. -/
-theorem negativeBinomialMeasure_real_singleton {r p : ℝ} (hr : 0 < r) (hp : 0 < p) (hp1 : p ≤ 1)
+/-- The real singleton mass of the negative-binomial law in its valid parameter range. -/
+theorem negativeBinomialMeasure_real_singleton {r p : ℝ} (hr : 0 ≤ r) (hp : 0 < p) (hp1 : p ≤ 1)
     (k : ℕ) :
     (negativeBinomialMeasure r p).real {k} = negativeBinomialWeightReal r p k := by
   rw [measureReal_def, negativeBinomialMeasure_singleton hr hp hp1,
-    negativeBinomialWeight_toReal hr.le hp.le hp1]
+    negativeBinomialWeight_toReal hr hp.le hp1]
 
 end Probability
 
