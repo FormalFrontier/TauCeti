@@ -40,6 +40,8 @@ smooth compatibility and a countable cover, and is not asserted here.
 
 * `TauCeti.hasStrictFDerivAt_levelSetParameterMap`: the derivative at the chart origin is the
   linear parameter projection.
+* `TauCeti.levelSetParameterMap_levelSetChart`: on the chart source, the local parameter map is
+  the parameter projection of the universal level set.
 * `TauCeti.exists_apply_eq_of_levelSetParameterMap`: every value of the local parameter map is a
   parameter at which the equation has a solution.
 * `TauCeti.isFredholm_fderiv_levelSetParameterMap`: over a complete `RCLike` field, that
@@ -103,6 +105,20 @@ theorem levelSetParameterMap_zero
     (hxl : f (x, l) = c) :
     levelSetParameterMap hf hD hker hxl 0 = l := by
   rw [levelSetParameterMap_apply, levelSetChart_symm_zero]
+
+/-- On the source of the level-set chart, the local parameter map really is the parameter
+projection of the universal level set: it sends the chart image of a solution `z` back to the
+parameter component of `z`. -/
+theorem levelSetParameterMap_levelSetChart
+    (hf : HasStrictFDerivAt f (D₁.coprod D₂) (x, l))
+    (hD : Surjective (D₁.coprod D₂))
+    (hker : (D₁.coprod D₂).ker.ClosedComplemented)
+    (hxl : f (x, l) = c) {z : ↥{z | f z = c}}
+    (hz : z ∈ (levelSetChart hf (LinearMap.range_eq_top.mpr hD) hker hxl).source) :
+    levelSetParameterMap hf hD hker hxl
+        (levelSetChart hf (LinearMap.range_eq_top.mpr hD) hker hxl z) = ((z : E × Λ)).2 := by
+  rw [levelSetParameterMap_apply,
+    (levelSetChart hf (LinearMap.range_eq_top.mpr hD) hker hxl).left_inv hz]
 
 /-- Every value of the local parameter map is a parameter for which the equation has a solution:
 the chart parametrizes the universal level set, so the point it produces solves the equation at
