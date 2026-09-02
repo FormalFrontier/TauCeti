@@ -53,6 +53,7 @@ def fundamentalGroupMulEquiv (x : RealProjectiveSpace 0) :
   MulEquiv.ofUnique
 
 /-- The fundamental group of `RP⁰` has exactly one element. -/
+-- This needs no `@[simp]`: `Nat.card_unique` already proves it, so `simpNF` rejects the duplicate.
 theorem card_fundamentalGroup (x : RealProjectiveSpace 0) :
     Nat.card (FundamentalGroup (RealProjectiveSpace 0) x) = 1 := by
   calc

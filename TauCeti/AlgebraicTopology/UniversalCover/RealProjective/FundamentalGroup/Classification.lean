@@ -50,6 +50,7 @@ noncomputable section
 
 The values are `1` in dimension zero, `0` in dimension one because that fundamental group is
 infinite, and `2` in every dimension at least two. -/
+-- This is not a simp lemma: for symbolic `n`, its right-hand side is a stuck match on `n`.
 theorem card_fundamentalGroup (n : ℕ) (x : RealProjectiveSpace n) :
     Nat.card (FundamentalGroup (RealProjectiveSpace n) x) =
       match n with
