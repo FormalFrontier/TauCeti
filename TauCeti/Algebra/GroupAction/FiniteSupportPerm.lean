@@ -28,9 +28,9 @@ The finitary symmetric group on a countable index type is itself countable; coun
 lets an action of it be handled one group element at a time under a filter closed under countable
 intersections (Mathlib's `CountableInterFilter`), such as the a.e. filter of a measure.
 
-The file also supplies `Equiv.Perm.exists_prodShear_mem_finitary_apply_eq_on_finset`: finitely many
-values of an arbitrary family of permutations can be matched by a family whose product shear moves
-only finitely many indexed points altogether.
+The file also supplies `Equiv.Perm.exists_prodCongrRight_mem_finitary_apply_eq_on_finset`:
+finitely many values of an arbitrary family of permutations can be matched by a family whose
+induced permutation of the product moves only finitely many indexed points altogether.
 -/
 
 public section
@@ -172,17 +172,20 @@ theorem exists_finite_compl_fixedBy_apply_eq_on_finset {β : Type*} (π : Equiv.
   obtain ⟨σ, hσ, hval⟩ := exists_finite_compl_fixedBy_apply_eq f g
   exact ⟨σ, hσ, fun b hb => by simpa [f, g] using hval ⟨b, hb⟩⟩
 
-/-- A row-wise family has finite total support exactly when its product shear belongs to the
-finitary symmetric group on the product. -/
-theorem mem_finitary_prodShear_iff {ι β : Type*} {τ : ι → Equiv.Perm β} :
-    Equiv.prodShear (Equiv.refl ι) τ ∈ finitary (ι × β) ↔
+/-- The support of a row-wise family, read on the product, is the set of cells that the family
+moves in their own row. -/
+@[simp]
+theorem compl_fixedBy_prodCongrRight {ι β : Type*} {τ : ι → Equiv.Perm β} :
+    (MulAction.fixedBy (ι × β) (Equiv.prodCongrRight τ))ᶜ = {p : ι × β | τ p.1 p.2 ≠ p.2} := by
+  ext ⟨a, b⟩
+  simp [MulAction.mem_fixedBy, Equiv.Perm.smul_def]
+
+/-- A row-wise family has finite total support exactly when the permutation it induces on the
+product belongs to the finitary symmetric group there. -/
+theorem mem_finitary_prodCongrRight_iff {ι β : Type*} {τ : ι → Equiv.Perm β} :
+    Equiv.prodCongrRight τ ∈ finitary (ι × β) ↔
       {p : ι × β | τ p.1 p.2 ≠ p.2}.Finite := by
-  rw [mem_finitary]
-  have hset : (MulAction.fixedBy (ι × β) (Equiv.prodShear (Equiv.refl ι) τ))ᶜ =
-      {p : ι × β | τ p.1 p.2 ≠ p.2} := by
-    ext ⟨a, b⟩
-    simp [MulAction.mem_fixedBy, Equiv.Perm.smul_def]
-  rw [hset]
+  rw [mem_finitary, compl_fixedBy_prodCongrRight]
 
 /-- A family supported on finitely many rows, with finite support in each row, has finite total
 support on the product. -/
@@ -205,11 +208,9 @@ theorem finite_setOf_apply_ne {ι β : Type*} {τ : ι → Equiv.Perm β}
 theorem mem_finitary_of_finite_setOf_apply_ne {ι β : Type*} {τ : ι → Equiv.Perm β}
     (hτ : {p : ι × β | τ p.1 p.2 ≠ p.2}.Finite) (a : ι) : τ a ∈ finitary β := by
   rw [mem_finitary]
-  let f : β ↪ ι × β := ⟨Prod.mk a, fun _ _ h => (Prod.mk.inj h).2⟩
+  let f : β ↪ ι × β := Function.Embedding.sectR a β
   have hf : f ⁻¹' {p : ι × β | τ p.1 p.2 ≠ p.2} = {b : β | τ a b ≠ b} := by
-    ext b
-    change τ a b ≠ b ↔ τ a b ≠ b
-    rfl
+    simp [f]
   have hne : {b : β | τ a b ≠ b}.Finite := by
     rw [← hf]
     exact Set.Finite.preimage_embedding f hτ
@@ -231,10 +232,10 @@ theorem finite_setOf_ne_one_of_finite_setOf_apply_ne {ι β : Type*}
 /-- **A family of permutations can be matched on finitely many indexed points by a family with
 finite total support.** Given `π : ι → Equiv.Perm β` and finitely many pairs `(i, b)`, there is a
 family `τ` agreeing with `π` at every listed pair and moving only finitely many pairs altogether. -/
-theorem exists_prodShear_mem_finitary_apply_eq_on_finset {ι β : Type*}
+theorem exists_prodCongrRight_mem_finitary_apply_eq_on_finset {ι β : Type*}
     (π : ι → Equiv.Perm β) (F : Finset (ι × β)) :
     ∃ τ : ι → Equiv.Perm β,
-      Equiv.prodShear (Equiv.refl ι) τ ∈ finitary (ι × β) ∧
+      Equiv.prodCongrRight τ ∈ finitary (ι × β) ∧
       ∀ p ∈ F, τ p.1 p.2 = π p.1 p.2 := by
   classical
   let rows : Finset ι := F.image Prod.fst
@@ -245,7 +246,7 @@ theorem exists_prodShear_mem_finitary_apply_eq_on_finset {ι β : Type*}
     exact exists_finite_compl_fixedBy_apply_eq_on_finset (π a) _
   choose σ hσ using hexists
   let τ : ι → Equiv.Perm β := fun a => if a ∈ rows then σ a else 1
-  refine ⟨τ, mem_finitary_prodShear_iff.mpr (finite_setOf_apply_ne ?_ ?_), ?_⟩
+  refine ⟨τ, mem_finitary_prodCongrRight_iff.mpr (finite_setOf_apply_ne ?_ ?_), ?_⟩
   · refine rows.finite_toSet.subset fun a ha => ?_
     by_contra hnot
     have hnot' : a ∉ rows := by simpa using hnot

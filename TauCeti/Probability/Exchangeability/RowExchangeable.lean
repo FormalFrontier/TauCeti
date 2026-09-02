@@ -46,8 +46,8 @@ representation of Markov exchangeable processes consumes.
 * `TauCeti.Probability.RowExchangeable.fullyExchangeable_row` and
   `TauCeti.Probability.RowExchangeable.fullyExchangeable_arrayColumn`: each row, and the column
   process, is fully exchangeable;
-* `TauCeti.Probability.rowExchangeable_iff_forall_prodShear_mem_finitary`: it suffices to check
-  families of row permutations whose product shear moves only finitely many cells altogether;
+* `TauCeti.Probability.rowExchangeable_iff_forall_prodCongrRight_mem_finitary`: it suffices to
+  check families of row permutations that move only finitely many cells altogether;
 * `TauCeti.Probability.RowExchangeable.map_values`: closure under coordinatewise pushforward;
 * `TauCeti.Probability.RowExchangeable.measure_setOf_forall_pair_eq`: the combinatorial core —
   the probability that each row of a finite set lands in its own target set at two prescribed
@@ -144,11 +144,11 @@ omit [Countable ι] in
 /-- **It suffices to check row exchangeability for permutation families of finite total support.**
 For a finite base measure and an a.e.-measurable array, invariance under every family `π` that
 moves only finitely many cells `(a, k)` implies invariance under arbitrary row-wise permutations. -/
-theorem rowExchangeable_iff_forall_prodShear_mem_finitary [IsFiniteMeasure μ]
+theorem rowExchangeable_iff_forall_prodCongrRight_mem_finitary [IsFiniteMeasure μ]
     (hY : AEMeasurable (fun ω => fun p : ι × ℕ => Y p ω) μ) :
     RowExchangeable μ Y ↔
       ∀ π : ι → Equiv.Perm ℕ,
-        Equiv.prodShear (Equiv.refl ι) π ∈ Equiv.Perm.finitary (ι × ℕ) →
+        Equiv.prodCongrRight π ∈ Equiv.Perm.finitary (ι × ℕ) →
         (μ.map fun ω (p : ι × ℕ) => Y (p.1, π p.1 p.2) ω) =
           μ.map fun ω (p : ι × ℕ) => Y p ω := by
   constructor
@@ -157,23 +157,19 @@ theorem rowExchangeable_iff_forall_prodShear_mem_finitary [IsFiniteMeasure μ]
   · intro h
     rw [rowExchangeable_def]
     intro π
-    have hπ : Measurable (fun y : ι × ℕ → α =>
-        fun p : ι × ℕ => y (p.1, π p.1 p.2)) :=
-      measurable_pi_lambda _ fun p => measurable_pi_apply (p.1, π p.1 p.2)
-    have hleft : AEMeasurable (fun ω => fun p : ι × ℕ => Y (p.1, π p.1 p.2) ω) μ :=
-      hπ.comp_aemeasurable hY
-    rw [ProbabilityTheory.map_eq_iff_forall_finset_map_restrict_eq hleft hY]
+    have hshift : ∀ ρ : ι → Equiv.Perm ℕ,
+        AEMeasurable (fun ω => fun p : ι × ℕ => Y (p.1, ρ p.1 p.2) ω) μ := by
+      intro ρ
+      have hρ : Measurable (fun y : ι × ℕ → α =>
+          fun p : ι × ℕ => y (p.1, ρ p.1 p.2)) :=
+        measurable_pi_lambda _ fun p => measurable_pi_apply (p.1, ρ p.1 p.2)
+      exact hρ.comp_aemeasurable hY
+    rw [ProbabilityTheory.map_eq_iff_forall_finset_map_restrict_eq (hshift π) hY]
     intro F
     obtain ⟨τ, hτfin, hτ⟩ :=
-      Equiv.Perm.exists_prodShear_mem_finitary_apply_eq_on_finset π F
-    have hτmeas : Measurable (fun y : ι × ℕ → α =>
-        fun p : ι × ℕ => y (p.1, τ p.1 p.2)) :=
-      measurable_pi_lambda _ fun p => measurable_pi_apply (p.1, τ p.1 p.2)
-    have hτleft : AEMeasurable
-        (fun ω => fun p : ι × ℕ => Y (p.1, τ p.1 p.2) ω) μ :=
-      hτmeas.comp_aemeasurable hY
+      Equiv.Perm.exists_prodCongrRight_mem_finitary_apply_eq_on_finset π F
     have hτmap := (ProbabilityTheory.map_eq_iff_forall_finset_map_restrict_eq
-      hτleft hY).mp (h τ hτfin) F
+      (hshift τ) hY).mp (h τ hτfin) F
     have heq : (fun ω => F.restrict fun p : ι × ℕ => Y (p.1, τ p.1 p.2) ω) =
         fun ω => F.restrict fun p : ι × ℕ => Y (p.1, π p.1 p.2) ω := by
       funext ω p
@@ -181,18 +177,6 @@ theorem rowExchangeable_iff_forall_prodShear_mem_finitary [IsFiniteMeasure μ]
       simpa only [Finset.restrict_def] using
         congrArg (fun k => Y (q.1, k) ω) (hτ q hq)
     rwa [heq] at hτmap
-
-/-- Coordinatewise form of
-`TauCeti.Probability.rowExchangeable_iff_forall_prodShear_mem_finitary` for a countable row
-type. -/
-theorem rowExchangeable_iff_forall_prodShear_mem_finitary_of_coordinatewise
-    [IsFiniteMeasure μ] (hY : ∀ p, AEMeasurable (Y p) μ) :
-    RowExchangeable μ Y ↔
-      ∀ π : ι → Equiv.Perm ℕ,
-        Equiv.prodShear (Equiv.refl ι) π ∈ Equiv.Perm.finitary (ι × ℕ) →
-        (μ.map fun ω (p : ι × ℕ) => Y (p.1, π p.1 p.2) ω) =
-          μ.map fun ω (p : ι × ℕ) => Y p ω :=
-  rowExchangeable_iff_forall_prodShear_mem_finitary (aemeasurable_pi_lambda _ hY)
 
 /-- Every column of an array with a.e. measurable entries is a.e. measurable. -/
 theorem aemeasurable_arrayColumn (hY : ∀ p, AEMeasurable (Y p) μ) (k : ℕ) :
