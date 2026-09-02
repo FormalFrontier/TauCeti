@@ -34,8 +34,9 @@ every vertex without repetition and the polarized Tits form has trivial radical,
 whenever the Tits form is anisotropic, and so for a quiver of ADE type, where the Tits form is
 positive definite and `QuadraticMap.PosDef.anisotropic` applies. This is the engine of the
 Bernstein-Gelfand-Ponomarev proof of Gabriel's theorem that forbids a nonzero dimension vector from
-being carried to itself after a full pass of the Coxeter functor. The separate positive-root height
-argument supplies the descent to a vertex simple.
+being carried to itself after a full pass of the Coxeter functor. The finite-orbit argument in
+`TauCeti.exists_vertexPreReflectionList_pow_apply_neg` supplies the descent to a vertex simple
+without first passing through root-system combinatorics.
 
 ## Main definitions and results
 
@@ -318,9 +319,10 @@ only the zero vector**, as soon as the word of vertices it is taken along is rep
 exhausts the vertices.
 
 This fixed-point obstruction is one input to the reflection induction behind Gabriel's theorem: no
-nonzero dimension vector survives a full pass of the Coxeter functor unchanged. The descent itself
-requires a separate positive-root height argument. An anisotropic Tits form has trivial radical,
-which is the form the hypothesis takes in
+nonzero dimension vector survives a full pass of the Coxeter functor unchanged. For a positive
+definite Tits form, `TauCeti.exists_vertexPreReflectionList_pow_apply_neg` combines this obstruction
+with a finite-orbit argument to supply the descent without a separate root-height argument. An
+anisotropic Tits form has trivial radical, which is the form the hypothesis takes in
 `TauCeti.vertexPreReflectionList_eq_self_iff_of_anisotropic`. -/
 theorem vertexPreReflectionList_eq_self_iff
     (hsep : LinearMap.SeparatingRight (titsPolarForm Q)) {l : List Q} (hnd : l.Nodup)

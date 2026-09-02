@@ -29,7 +29,8 @@ The second is that a homomorphism transports an iterated adjoint action,
 `TauCeti.LieHom.map_ad_pow`. Relations of a presentation are frequently written as the vanishing of
 `(ad x) ^ n y` — Serre's relations for a Cartan matrix are the standard example — and such a
 relation says nothing about the presented algebra until it is known to be carried along by the map
-that checks it.
+that checks it. The companion `TauCeti.ad_neg_pow_apply_eq_zero` transports such a vanishing result
+from `x` to `-x`.
 
 The third is that a free Lie algebra is generated, as a Lie subalgebra, by its generators:
 `TauCeti.FreeLieAlgebra.lieSpan_range_of_eq_top`. This is what makes the images of the generators
@@ -46,6 +47,8 @@ generate the presented algebra, rather than merely determine maps out of it.
 * `TauCeti.LieIdeal.liftQ_comp_mkQ` and `TauCeti.LieIdeal.lieHom_qext`: the lifted homomorphism
   restricts to the original one along the quotient map, and is the only homomorphism that does.
 * `TauCeti.LieHom.map_ad_pow`: a homomorphism carries `(ad x) ^ n y` to `(ad (f x)) ^ n (f y)`.
+* `TauCeti.ad_neg_pow_apply_eq_zero`: negating the element acting by `ad` preserves the vanishing of
+  an iterated adjoint action.
 * `TauCeti.FreeLieAlgebra.lieSpan_range_of_eq_top`: the generators of a free Lie algebra generate it
   as a Lie subalgebra.
 
@@ -170,6 +173,15 @@ theorem map_ad_pow (f : L →ₗ⁅R⁆ L') (x : L) (n : ℕ) (y : L) :
     rw [ih, f.map_lie]
 
 end LieHom
+
+variable {R L : Type*} [CommRing R] [LieRing L] [LieAlgebra R L]
+
+/-- If the `n`-fold adjoint action of `x` annihilates `y`, then so does that of `-x`. -/
+theorem ad_neg_pow_apply_eq_zero {x y : L} {n : ℕ} (h : (LieAlgebra.ad R L x ^ n) y = 0) :
+    (LieAlgebra.ad R L (-x) ^ n) y = 0 := by
+  have hneg : LieAlgebra.ad R L (-x) = (-1 : R) • LieAlgebra.ad R L x := by
+    rw [map_neg, neg_smul, one_smul]
+  rw [hneg, smul_pow, LinearMap.smul_apply, h, smul_zero]
 
 namespace FreeLieAlgebra
 

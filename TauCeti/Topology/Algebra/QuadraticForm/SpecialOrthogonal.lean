@@ -60,7 +60,7 @@ instance _root_.TauCeti.QuadraticMap.instIsTopologicalGroupSpecialOrthogonalGrou
     [IsTopologicalRing R]
     (Q : QuadraticMap R (n → R) N) :
     IsTopologicalGroup (specialOrthogonalGroup Q) :=
-  topologicalGroup_induced (specialOrthogonalToGeneralLinear Q)
+  isTopologicalGroup_induced (specialOrthogonalToGeneralLinear Q)
 
 /-- A special orthogonal group in Hausdorff coordinates is Hausdorff. -/
 instance _root_.TauCeti.QuadraticMap.instT2SpaceSpecialOrthogonalGroupPi [T2Space R]

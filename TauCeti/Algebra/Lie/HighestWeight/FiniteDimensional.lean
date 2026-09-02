@@ -6,7 +6,11 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Lie.HighestWeight.Multiplicity
+public import TauCeti.Algebra.Lie.HighestWeight.Verma
 public import TauCeti.Algebra.Lie.HighestWeight.WeightSupport
+-- Non-public: these supply the inputs of the proofs, never the vocabulary of a statement.
+import TauCeti.Algebra.Lie.HighestWeight.Existence
+import TauCeti.Algebra.Lie.HighestWeight.Irreducible
 import TauCeti.Algebra.Lie.Submodule.Atom
 
 public section
@@ -31,20 +35,30 @@ The weight-cone decomposition of a highest weight module says that these spaces 
 module. Their finite supremum is therefore finitely generated, which proves the result without
 assuming finite-dimensionality of the ambient module at any intermediate step.
 
+The criterion is then read at the named carrier `TauCeti.irreducibleQuotient b lam`, that is
+`L(lam)`, in the two directions a consumer wants: **`L(lam)` is finite-dimensional whenever `lam`
+is dominant integral**, with no side condition on the Verma module `M(lam)` because `L(lam)` is the
+zero module when `M(lam)` vanishes; and conversely **every finite-dimensional irreducible module is
+a copy of `L(lam)` for a dominant integral `lam`**, which is the classification of the
+finite-dimensional irreducibles.
+
 ## Main results
 
 * `TauCeti.finiteDimensional_of_isHighestWeightVector_of_isDominantIntegral`: the difficult
   implication, from dominance to finite-dimensionality.
 * `TauCeti.finiteDimensional_iff_isDominantIntegral_of_isHighestWeightVector`: the complete
   finite-dimensionality criterion for an irreducible highest weight module.
+* `TauCeti.finiteDimensional_irreducibleQuotient_of_isDominantIntegral`: **`L(lam)` is
+  finite-dimensional at a dominant integral weight**, unconditionally.
+* `TauCeti.exists_isDominantIntegral_nonempty_lieModuleEquiv_irreducibleQuotient`: **a
+  finite-dimensional irreducible module is a copy of `L(lam)`** for a dominant integral `lam`.
 
 ## References
 
 This closes the **finite-dimensionality** milestone of Layer 4 of
 `TauCetiRoadmap/RepresentationTheory/LieHighestWeight/README.md`. It is the last assembly step in
 the proof that the irreducible highest weight module `L(lam)` is finite-dimensional precisely for
-dominant integral `lam`; applying it to the canonical irreducible quotient of the Verma module
-additionally requires that quotient's highest weight vector to be nonzero.
+dominant integral `lam`.
 
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §21.2.
 -/
@@ -114,5 +128,37 @@ theorem finiteDimensional_iff_isDominantIntegral_of_isHighestWeightVector
     let _ := hM
     exact hv.isDominantIntegral
   · exact finiteDimensional_of_isHighestWeightVector_of_isDominantIntegral hv
+
+/-! ### The criterion at the named carrier `L(lam)` -/
+
+/-- **`L(lam)` is finite-dimensional at a dominant integral weight.** When `M(lam)` is nonzero,
+`L(lam)` is an irreducible highest weight module of dominant integral weight, and
+`TauCeti.finiteDimensional_of_isHighestWeightVector_of_isDominantIntegral` applies; otherwise
+`L(lam)` is the zero module. No hypothesis on `M(lam)` is needed either way. -/
+theorem finiteDimensional_irreducibleQuotient_of_isDominantIntegral
+    (hlam : IsDominantIntegral b lam) : FiniteDimensional K (irreducibleQuotient b lam) := by
+  by_cases h : vermaGenerator b lam = 0
+  · have _ := (subsingleton_irreducibleQuotient_iff b lam).mpr h
+    exact Module.finite_of_rank_eq_zero (rank_subsingleton' K _)
+  · have _ := isIrreducible_irreducibleQuotient b lam h
+    exact finiteDimensional_of_isHighestWeightVector_of_isDominantIntegral
+      (isHighestWeightVector_irreducibleQuotientGenerator b lam h) hlam
+
+variable (b) in
+/-- **A finite-dimensional irreducible module is a copy of `L(lam)`, for a dominant integral
+weight `lam`.** It carries a highest weight vector of a dominant integral weight
+(`TauCeti.exists_isHighestWeightVector_and_isDominantIntegral_of_irreducible`), which makes
+`M(lam)` nonzero, and two irreducible modules with highest weight vectors of the same weight are
+equivalent. -/
+theorem exists_isDominantIntegral_nonempty_lieModuleEquiv_irreducibleQuotient
+    [FiniteDimensional K M] :
+    ∃ lam : Dual K H, IsDominantIntegral b lam ∧
+      Nonempty (M ≃ₗ⁅K,L⁆ irreducibleQuotient b lam) := by
+  obtain ⟨lam, v, hv, hlam⟩ :=
+    exists_isHighestWeightVector_and_isDominantIntegral_of_irreducible (M := M) b
+  have hne := vermaGenerator_ne_zero_of_isHighestWeightVector b lam hv
+  have _ := isIrreducible_irreducibleQuotient b lam hne
+  exact ⟨lam, hlam, nonempty_lieModuleEquiv_of_isHighestWeightVector hv
+    (isHighestWeightVector_irreducibleQuotientGenerator b lam hne)⟩
 
 end TauCeti

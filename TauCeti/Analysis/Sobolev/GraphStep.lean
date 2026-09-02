@@ -322,7 +322,7 @@ theorem norm_weakFDeriv_le (base : X →L[ℝ] Lp F p (mu.restrict Omega))
 theorem norm_sq_eq_norm_prev_sq_add_norm_weakFDeriv_sq
     (base : X →L[ℝ] Lp F p (mu.restrict Omega)) (u : WeakDerivStep mu Omega p base) :
     ‖u‖ ^ 2 = ‖prev base u‖ ^ 2 + ‖weakFDeriv base u‖ ^ 2 := by
-  rw [Submodule.coe_norm, prev_coe, weakFDeriv_coe]
+  rw [← Submodule.norm_coe, prev_coe, weakFDeriv_coe]
   exact WithLp.prod_norm_sq_eq_of_L2 u.1
 
 /-- A weak-derivative graph step over a complete preceding space is complete because it is a

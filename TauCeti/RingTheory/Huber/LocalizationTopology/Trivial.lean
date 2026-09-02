@@ -194,7 +194,7 @@ theorem locTopology_denom_one [IsTopologicalRing A]
       (fun _ : ℕ ↦ True) fun n ↦ ((P.adjoin T hTpb).idealImage n : Set A) := by
     simpa only [locIdealImage_denom_one_powerBounded P T hTpb] using
       hasBasis_nhds_zero_locTopology P T 1 A (hasDenominatorPower_denom_one P T A)
-  have hgroup := @IsTopologicalRing.to_topologicalAddGroup A _
+  have hgroup := @IsTopologicalRing.isTopologicalAddGroup A _
     (locTopology P T 1 A (hasDenominatorPower_denom_one P T A))
     (isTopologicalRing_locTopology P T 1 A (hasDenominatorPower_denom_one P T A))
   exact IsTopologicalAddGroup.ext hgroup inferInstance

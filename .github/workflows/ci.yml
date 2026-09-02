@@ -20,6 +20,12 @@ concurrency:
   group: main-ci-cache-publisher
   cancel-in-progress: false
 
+env:
+  # Read endpoint for `lake exe cache get`, wired from a repository variable. The cache tool
+  # treats unset and empty alike, so clearing the variable returns reads to the tool's
+  # default endpoints on the next run.
+  MATHLIB_CACHE_GET_URL: ${{ vars.MATHLIB_CACHE_GET_URL }}
+
 jobs:
   build:
     runs-on: ubuntu-latest

@@ -98,6 +98,7 @@ theorem constantCoeff_formalAdd : constantCoeff (formalAdd W) = 0 :=
 
 /-- **The addition series is symmetric**: `F(z₂, z₁) = F(z₁, z₂)`. The chord through two points
 does not depend on their order, so the formal group law is commutative. -/
+@[simp]
 theorem rename_swap_formalAdd : rename Sum.swap (formalAdd W) = formalAdd W := by
   rw [formalAdd_def, rename_eq_subst,
     subst_comp_subst_apply (hasSubst_formalThirdRoot W) (HasSubst.X_comp _)]

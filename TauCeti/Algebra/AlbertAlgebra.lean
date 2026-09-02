@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.Octonion
+public import TauCeti.Algebra.Octonion.Basic
 
 /-!
 # The split Albert algebra
@@ -82,9 +82,10 @@ This builds the split Albert algebra of Layer 8 of
 `x ∘ y = ½(x y + y x)`, a `27`-dimensional exceptional Jordan algebra"), whose `Suggested.lean` pins
 it as `AlbertAlgebra`, `finrank_albertAlgebra`, `albertTrace`, `traceZeroAlbert` and
 `finrank_traceZeroAlbert`; those are the declarations below, named inside the `AlbertAlgebra`
-namespace, as the split octonions of `TauCeti/Algebra/Octonion.lean` are named inside `Octonion`.
-That roadmap's `## Ordering` marks this unit as buildable from scratch at any time, independently of
-every other layer. The pinned clauses `isCommJordan_albertAlgebra`, `finrank_derivationAlbert` and
+namespace, as the split octonions of `TauCeti/Algebra/Octonion/Basic.lean` are named inside
+`Octonion`. That roadmap's `## Ordering` marks this unit as buildable from scratch at any time,
+independently of every other layer. The pinned clauses `isCommJordan_albertAlgebra`,
+`finrank_derivationAlbert` and
 `derivationAlbert_equiv_f4` are not proved here.
 
 The model is P. Jordan, J. von Neumann and E. Wigner, *On an algebraic generalization of the quantum

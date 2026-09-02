@@ -268,7 +268,7 @@ Nothing here asserts that such a subgroup exists. -/
 theorem IsTISubgroup.isComplement'_of_coe_eq_frobeniusKernel [Finite G] (hH : IsTISubgroup H)
     {N : Subgroup G} (hN : (N : Set G) = frobeniusKernel H) : N.IsComplement' H := by
   have hcard : Nat.card N * Nat.card H = Nat.card G := by
-    have hcardN : Nat.card N = Nat.card (frobeniusKernel H) := Nat.card_congr (Equiv.setCongr hN)
+    have hcardN : Nat.card N = Nat.card (frobeniusKernel H) := Nat.card_congr (Equiv.Set.congr hN)
     rw [hcardN, hH.natCard_frobeniusKernel]
     exact H.index_mul_card
   refine Subgroup.isComplement'_of_card_mul_and_disjoint hcard (Subgroup.disjoint_def.2 ?_)

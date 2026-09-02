@@ -176,10 +176,10 @@ re-proved at each of `Γ₀(N)`, `Γ₁(N)`, `Γ(N)`. -/
 lemma commensurable_map_SLnZ (H : Subgroup (SpecialLinearGroup (Fin n) ℤ)) [H.FiniteIndex] :
     Subgroup.Commensurable (H.map (mapGL ℚ)) (SLnZ n) := by
   constructor
-  · rw [SLnZ, MonoidHom.range_eq_map,
+  · rw [Subgroup.isFiniteRelIndex_iff_relIndex_ne_zero, SLnZ, MonoidHom.range_eq_map,
       Subgroup.relIndex_map_map_of_injective _ _ mapGL_injective, Subgroup.relIndex_top_right]
     exact Subgroup.FiniteIndex.index_ne_zero
-  · rw [SLnZ, MonoidHom.range_eq_map,
+  · rw [Subgroup.isFiniteRelIndex_iff_relIndex_ne_zero, SLnZ, MonoidHom.range_eq_map,
       Subgroup.relIndex_map_map_of_injective _ _ mapGL_injective, Subgroup.relIndex_top_left]
     exact one_ne_zero
 
@@ -557,12 +557,22 @@ lemma mem_commensurator_of_hasIntEntries {g : GL (Fin n) ℚ} (hg : HasIntEntrie
   have hK_le_gH : K ≤ ConjAct.toConjAct g • H := congruence_ker_image_le_conj n g A hA
   have hK_le_ginvH : K ≤ ConjAct.toConjAct g⁻¹ • H :=
     congruence_ker_image_le_conj_inv n g A hA
-  refine ⟨ne_zero_of_dvd_ne_zero hK_relIndex (Subgroup.relIndex_dvd_of_le_left H hK_le_gH), ?_⟩
+  have hbridge : ConjAct.toConjAct g • H = MulAut.conj g • H := by
+    ext x
+    rw [Subgroup.mem_pointwise_smul_iff_inv_smul_mem, Subgroup.mem_pointwise_smul_iff_inv_smul_mem,
+      ← map_inv MulAut.conj, ← ConjAct.toConjAct_inv, ConjAct.toConjAct_smul_eq_mulAut_conj]
+    rw [MulAut.smul_def]
+  have hgH_relIndex : (ConjAct.toConjAct g • H).relIndex H ≠ 0 :=
+    ne_zero_of_dvd_ne_zero hK_relIndex (Subgroup.relIndex_dvd_of_le_left H hK_le_gH)
   have h1 : ConjAct.toConjAct g⁻¹ • (ConjAct.toConjAct g • H) = H := by
     rw [smul_smul, ← map_mul, inv_mul_cancel, map_one, one_smul]
-  rw [(Subgroup.relIndex_pointwise_smul (ConjAct.toConjAct g⁻¹) H
-    (ConjAct.toConjAct g • H)).symm.trans (by rw [h1])]
-  exact ne_zero_of_dvd_ne_zero hK_relIndex (Subgroup.relIndex_dvd_of_le_left H hK_le_ginvH)
+  have hH_relIndex : H.relIndex (ConjAct.toConjAct g • H) ≠ 0 := by
+    rw [(Subgroup.relIndex_pointwise_smul (ConjAct.toConjAct g⁻¹) H
+      (ConjAct.toConjAct g • H)).symm.trans (by rw [h1])]
+    exact ne_zero_of_dvd_ne_zero hK_relIndex (Subgroup.relIndex_dvd_of_le_left H hK_le_ginvH)
+  rw [hbridge] at hgH_relIndex hH_relIndex
+  exact ⟨Subgroup.isFiniteRelIndex_iff_relIndex_ne_zero.mpr hgH_relIndex,
+    Subgroup.isFiniteRelIndex_iff_relIndex_ne_zero.mpr hH_relIndex⟩
 
 /-- `Δ ⊆ commensurator(SL_n(ℤ))`, by projection: a positive-determinant integral matrix is
 in particular integral. -/

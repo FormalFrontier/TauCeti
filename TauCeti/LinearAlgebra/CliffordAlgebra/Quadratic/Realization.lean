@@ -27,6 +27,9 @@ canonical bivector action rather than from a basis-dependent inverse.
   basis whose Gram matrix is specified.
 * `CliffordAlgebra.quadraticLieSubalgebra_ext`: quadratic elements are
   determined by their commutator action on Clifford generators.
+* `CliffordAlgebra.quadraticLieSubalgebra_eq_bivector_of_lie_ι`: the resulting recognition
+  criterion, identifying a quadratic element with the Clifford bivector of two vectors from its
+  commutator action on a basis.
 
 ## References
 
@@ -218,5 +221,35 @@ theorem quadraticLieSubalgebra_ext (Q : QuadraticForm K V) (hQ : Q.Nondegenerate
   have hb := soEquivQuadratic_lie_ι Q hQ (e.symm b) x
   rw [e.apply_symm_apply] at ha hb
   exact ha.symm.trans ((h x).trans hb)
+
+/-- **Recognizing a quadratic Clifford element as the bivector of two vectors.** A quadratic
+element whose commutator action on the Clifford generators is an endomorphism `f` is the bivector
+of `x` and `y` as soon as `f` is the infinitesimal rotation
+`v ↦ polar Q y v • x - polar Q x v • y` on some basis.
+
+This is the shared shell of every root-vector and Cartan-generator identification in a matrix
+model of an orthogonal Lie algebra: `f` is the matrix endomorphism supplied by
+`CliffordAlgebra.skewAdjointMatricesEquivQuadratic_lie_ι`, and only the matrix computation differs
+between the identifications. -/
+theorem quadraticLieSubalgebra_eq_bivector_of_lie_ι (Q : QuadraticForm K V) (hQ : Q.Nondegenerate)
+    (a : quadraticLieSubalgebra Q) (f : Module.End K V)
+    (hf : ∀ v : V, ⁅(a : CliffordAlgebra Q), ι Q v⁆ = ι Q (f v))
+    {n : Type w} (bas : Module.Basis n K V) (x y : V)
+    (h : ∀ c : n, f (bas c) =
+        QuadraticMap.polar Q y (bas c) • x - QuadraticMap.polar Q x (bas c) • y) :
+    a = ⟨bivector Q x y, bivector_mem_quadraticLieSubalgebra Q x y⟩ := by
+  apply quadraticLieSubalgebra_ext Q hQ
+  intro v
+  rw [hf v]
+  simp only [bivector_lie_ι]
+  apply congrArg (ι Q)
+  -- Both sides are values of a linear map at `v`, so compare those maps on the basis.
+  have hlin : f = (Q.polarBilin y).smulRight x - (Q.polarBilin x).smulRight y := by
+    apply bas.ext
+    intro c
+    rw [h c]
+    simp
+  rw [hlin]
+  simp
 
 end CliffordAlgebra

@@ -161,7 +161,7 @@ theorem tangentAd_mulInvariantExp_apply (X Y : GroupLieAlgebra I G) :
     simpa only [g, A] using
       hasDerivAt_exp_adContinuousLinearMap_apply (I := I) (G := G) X Y t
   have hv : ∀ _ : ℝ, LipschitzOnWith ‖A‖₊ A univ :=
-    fun _ => A.lipschitz.lipschitzOnWith
+    fun _ => A.lipschitzWith.lipschitzOnWith
   have hinitial : f 0 = g 0 := by
     dsimp only [f, g]
     -- Expose the two local curve definitions at zero before applying their unit laws.

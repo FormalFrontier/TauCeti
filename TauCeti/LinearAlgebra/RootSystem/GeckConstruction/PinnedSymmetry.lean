@@ -51,6 +51,9 @@ the toral carrier.
   equations consumed by the Kostant toral-closure symmetry construction.
 * `TauCeti.DynkinType.geckDiagramModuleEquiv_geckRepresentation_rootGenerator`: the defining
   representation intertwines every numbered root generator with its permuted generator.
+* `TauCeti.DynkinType.geckDiagramIndexEquiv_pow_eq_one` and
+  `TauCeti.DynkinType.geckDiagramFinPerm_pow_eq_one`: the coordinate permutation satisfies every
+  order relation the node permutation satisfies.
 
 ## References
 
@@ -229,6 +232,66 @@ theorem geckWeightFin_geckDiagramFinPerm (hsigma : sigma ∈ t.diagramSymmetry)
     (i : Fin (t.geckDim ht)) (k : Fin t.rank) :
     t.geckWeightFin ht (t.geckDiagramFinPerm ht hsigma i) (sigma k) = t.geckWeightFin ht i k := by
   simp only [geckWeightFin, equivFin_symm_geckDiagramFinPerm, geckWeight_geckDiagramIndexEquiv]
+
+/-! ## The order of the coordinate permutation -/
+
+/-- The coordinate permutation of the pinned Geck module is multiplicative in the node
+permutation. This and the unit law below only build the homomorphism behind the order statements
+that follow, which are what consumers use. -/
+private theorem geckDiagramIndexEquiv_mul {tau : Equiv.Perm (Fin t.rank)}
+    (hsigma : sigma ∈ t.diagramSymmetry) (htau : tau ∈ t.diagramSymmetry) :
+    t.geckDiagramIndexEquiv ht (t.diagramSymmetry.mul_mem hsigma htau) =
+      t.geckDiagramIndexEquiv ht hsigma * t.geckDiagramIndexEquiv ht htau := by
+  ext x
+  cases x with
+  | inl i =>
+      rw [Equiv.Perm.mul_apply, geckDiagramIndexEquiv_apply_inl, geckDiagramIndexEquiv_apply_inl,
+        geckDiagramIndexEquiv_apply_inl, geckDiagramBaseEquiv, geckDiagramBaseEquiv,
+        geckDiagramBaseEquiv]
+      simp [Equiv.Perm.mul_apply]
+  | inr i =>
+      rw [Equiv.Perm.mul_apply, geckDiagramIndexEquiv_apply_inr, geckDiagramIndexEquiv_apply_inr,
+        geckDiagramIndexEquiv_apply_inr, diagramRootPerm_mul, Equiv.Perm.mul_apply]
+
+/-- The identity node permutation induces the identity coordinate permutation. -/
+private theorem geckDiagramIndexEquiv_one :
+    t.geckDiagramIndexEquiv ht t.diagramSymmetry.one_mem = 1 := by
+  ext x
+  cases x with
+  | inl i =>
+      rw [geckDiagramIndexEquiv_apply_inl, geckDiagramBaseEquiv]
+      simp
+  | inr i =>
+      rw [geckDiagramIndexEquiv_apply_inr, diagramRootPerm_one]
+      simp
+
+/-- The coordinate permutations of the pinned Geck module, as a homomorphism out of the symmetry
+group of the Bourbaki-numbered Cartan matrix. This is what converts a relation satisfied by a node
+permutation into the same relation for the coordinate permutation it induces; consumers use the
+order statements below rather than the homomorphism itself. -/
+private def geckDiagramIndexEquivHom : t.diagramSymmetry →* Equiv.Perm (t.GeckIndex ht) where
+  toFun g := t.geckDiagramIndexEquiv ht g.2
+  map_one' := geckDiagramIndexEquiv_one ht
+  map_mul' g₁ g₂ := geckDiagramIndexEquiv_mul ht g₁.2 g₂.2
+
+/-- **A node permutation of finite order induces a coordinate permutation of the pinned Geck
+module satisfying the same relation.** -/
+theorem geckDiagramIndexEquiv_pow_eq_one (hsigma : sigma ∈ t.diagramSymmetry) {m : ℕ}
+    (hm : sigma ^ m = 1) : t.geckDiagramIndexEquiv ht hsigma ^ m = 1 := by
+  have h : (⟨sigma, hsigma⟩ : t.diagramSymmetry) ^ m = 1 := Subtype.ext (by simpa using hm)
+  calc t.geckDiagramIndexEquiv ht hsigma ^ m
+      = geckDiagramIndexEquivHom ht (⟨sigma, hsigma⟩ ^ m) := by rw [map_pow]; rfl
+    _ = 1 := by rw [h, map_one]
+
+/-- **A node permutation of finite order induces a finite-ordinal coordinate permutation
+satisfying the same relation.** This is the source of the order relation for the graph
+automorphism on the algebra-valued points of the pinned Geck carrier. -/
+theorem geckDiagramFinPerm_pow_eq_one (hsigma : sigma ∈ t.diagramSymmetry) {m : ℕ}
+    (hm : sigma ^ m = 1) : t.geckDiagramFinPerm ht hsigma ^ m = 1 := by
+  have hcongr : t.geckDiagramFinPerm ht hsigma =
+      (Fintype.equivFin (t.GeckIndex ht)).permCongrHom (t.geckDiagramIndexEquiv ht hsigma) :=
+    (congrFun (Equiv.permCongrHom_coe (Fintype.equivFin (t.GeckIndex ht))) _).symm
+  rw [hcongr, ← map_pow, geckDiagramIndexEquiv_pow_eq_one ht hsigma hm, map_one]
 
 /-! ## The permutation of the numbered generators -/
 

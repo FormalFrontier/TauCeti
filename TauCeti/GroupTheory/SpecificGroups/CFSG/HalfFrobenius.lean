@@ -168,13 +168,6 @@ theorem halfExponent_eq_zero_iff (e : SuzukiReeIndex) :
 
 /-! ## The Steinberg map on the root datum -/
 
--- The square relation of the selected isogeny, written with the monoid multiplication that the
--- power lemmas of `TauCeti.RootPairingIsogeny` take as their hypothesis.
-private theorem datumSpecialIsogeny_mul_self (e : SuzukiReeIndex) :
-    e.datumSpecialIsogeny * e.datumSpecialIsogeny =
-      RootPairingIsogeny.smulId _ ⟨e.1.characteristic, e.1.characteristic_prime.pos⟩ :=
-  (RootPairingIsogeny.mul_def _ _).trans e.datumSpecialIsogeny_comp_self
-
 /-- **The Steinberg map of a Suzuki--Ree index on its pinned simply connected root datum**: the
 odd power `τ ^ (2 * m + 1)` of the special isogeny selected by the index, written as its
 `fieldExponent`-th power. On the Tits index the exponent is `1` and the map is `τ` itself. -/
@@ -209,12 +202,14 @@ half-Frobenius returns the Frobenius of the field the index names, `2 ^ (2 * m +
 and Ree `F₄` families, `3 ^ (2 * m + 1)` for Ree `G₂`, and `2` for the Tits index. -/
 @[simp] theorem datumSteinberg_mul_self (e : SuzukiReeIndex) :
     e.datumSteinberg * e.datumSteinberg =
-      RootPairingIsogeny.smulId _ ⟨e.1.fieldOrder, e.1.fieldOrder_pos⟩ := by
+      RootPairingIsogeny.smulId _ e.1.1.fieldOrderPNat := by
   rw [datumSteinberg, RootPairingIsogeny.pow_mul_self_eq_smulId _ e.datumSpecialIsogeny_mul_self]
   -- The two scalings differ only in how their common value `p ^ (2 * m + 1)` is written, so all
   -- that is left is the numeric identity between the field order and that power.
   congr 1
-  exact PNat.coe_injective e.1.fieldOrder_eq_characteristic_pow.symm
+  refine PNat.coe_injective ?_
+  rw [LieTypeIndex.coe_fieldOrderPNat]
+  exact e.1.fieldOrder_eq_characteristic_pow.symm
 
 /-! ### The four pieces of data -/
 
