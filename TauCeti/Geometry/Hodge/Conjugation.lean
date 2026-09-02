@@ -27,6 +27,8 @@ complexification models.
 * `TauCeti.Hodge.Conjugation`: a conjugate-linear involution of a complex vector space.
 * `TauCeti.Hodge.Conjugation.tensorProduct`: the tensor product of two conjugations.
 * `TauCeti.Hodge.Conjugation.tensorProduct_toEquiv_tmul`: its action on pure tensors.
+* `TauCeti.Hodge.Conjugation.hom`: the conjugation on a linear-map space induced by two
+  conjugations, with its pointwise description `TauCeti.Hodge.Conjugation.hom_toEquiv_apply`.
 * `TauCeti.Hodge.Conjugation.conjFiltration`: the conjugate of a complex filtration.
 * `TauCeti.Hodge.concreteLatticeConj`: conjugation on the tensor model `ℂ ⊗[ℤ] V`.
 * `TauCeti.Hodge.latticeConj`: conjugation on an abstract complex base-change model.
@@ -129,6 +131,30 @@ theorem tensorProduct_toEquiv_tmul (ω₁ : Conjugation W₁) (ω₂ : Conjugati
 
 end TensorProduct
 
+section Hom
+
+variable {W₁ : Type u} {W₂ : Type v} [AddCommGroup W₁] [Module ℂ W₁]
+  [AddCommGroup W₂] [Module ℂ W₂]
+
+/-- The conjugation on a linear-map space induced by conjugations on its source and target. -/
+def hom (ω₁ : Conjugation W₁) (ω₂ : Conjugation W₂) :
+    Conjugation (W₁ →ₗ[ℂ] W₂) where
+  toEquiv := LinearEquiv.arrowCongr ω₁.toEquiv ω₂.toEquiv
+  involutive := by
+    intro f
+    ext x
+    simp only [LinearEquiv.arrowCongr_apply, Conjugation.toEquiv_symm,
+      Conjugation.apply_apply]
+
+/-- The conjugation on a linear-map space acts pointwise by conjugating source and target. -/
+@[simp]
+theorem hom_toEquiv_apply (ω₁ : Conjugation W₁) (ω₂ : Conjugation W₂)
+    (f : W₁ →ₗ[ℂ] W₂) (x : W₁) :
+    (ω₁.hom ω₂).toEquiv f x = ω₂.toEquiv (f (ω₁.toEquiv x)) := by
+  simp [hom, LinearEquiv.arrowCongr_apply, Conjugation.toEquiv_symm]
+
+end Hom
+
 /-- Mapping a complex subspace twice by a conjugation returns the original subspace. -/
 @[simp]
 theorem map_map_eq_self (ω : Conjugation W) (U : Submodule ℂ W) :
@@ -223,6 +249,15 @@ theorem map_comap_eq_comap_map {W' : Type v} [AddCommGroup W'] [Module ℂ W']
     refine ⟨ω.toEquiv y, ?_, ω.apply_apply y⟩
     rw [he y, ← hzy, ω'.apply_apply]
     exact hz
+
+/-- The inverse of a linear equivalence intertwines the inverse conjugations when the equivalence
+intertwines the conjugations. -/
+theorem symm_intertwines {W' : Type v} [AddCommGroup W'] [Module ℂ W']
+    (ω : Conjugation W) (ω' : Conjugation W') (e : W ≃ₗ[ℂ] W')
+    (he : ∀ x, e (ω.toEquiv x) = ω'.toEquiv (e x)) (y : W') :
+    e.symm (ω'.toEquiv y) = ω.toEquiv (e.symm y) := by
+  apply e.injective
+  rw [e.apply_symm_apply, he, e.apply_symm_apply]
 
 /-- The conjugation induced on a quotient by a stable complex subspace is involutive. -/
 private theorem quotient_involutive (ω : Conjugation W) {U : Submodule ℂ W}
