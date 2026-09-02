@@ -35,7 +35,8 @@ to an equivalence, so carrying a nonzero invariant form and being self-dual are 
 
 * `TauCeti.LieModule.lieModuleHomOfLieInvariant` and
   `TauCeti.LieModule.bilinFormOfLieModuleHom`: the two directions of the correspondence between
-  invariant bilinear forms on `M` and morphisms `M → M*`, each preserving and reflecting vanishing.
+  invariant bilinear forms on `M` and morphisms `M → M*`, mutually inverse and each preserving and
+  reflecting vanishing.
 
 ## Main results
 
@@ -153,6 +154,22 @@ theorem bilinFormOfLieModuleHom_eq_zero_iff {f : M →ₗ⁅R,L⁆ Dual R M} :
   refine ⟨fun h => LieModuleHom.ext fun m => ?_, fun h => LinearMap.ext fun m => ?_⟩
   · simpa using congrArg (fun Φ => Φ m) h
   · simp [h]
+
+/-- The correspondence sends the morphism attached to an invariant form back to that form. -/
+@[simp]
+theorem bilinFormOfLieModuleHom_lieModuleHomOfLieInvariant {Φ : LinearMap.BilinForm R M}
+    (hΦ : Φ.lieInvariant L) :
+    bilinFormOfLieModuleHom (lieModuleHomOfLieInvariant hΦ) = Φ := by
+  ext m
+  simp
+
+/-- The correspondence sends the form attached to a morphism back to that morphism. -/
+@[simp]
+theorem lieModuleHomOfLieInvariant_bilinFormOfLieModuleHom {f : M →ₗ⁅R,L⁆ Dual R M}
+    (hf : (bilinFormOfLieModuleHom f).lieInvariant L) :
+    lieModuleHomOfLieInvariant hf = f := by
+  ext m
+  simp
 
 /-- **A nonzero invariant bilinear form is a nonzero morphism to the dual.** A bilinear form on `M`
 is a linear map `M → M*`, and invariance of the form is exactly equivariance of that map. -/
