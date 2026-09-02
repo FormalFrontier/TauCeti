@@ -64,9 +64,9 @@ filtration, which are all they depend on.
   components vanish is zero.
 * `TauCeti.repartitionDualComponent_eq_zero_iff` and
   `TauCeti.repartitionDualComponent_ne_zero`: **no local component of a nonzero Weil differential
-  vanishes** (Stichtenoth, Proposition 1.7.3), with
-  `TauCeti.bddAbove_setOf_forall_apply_eq_zero` the bound a nonzero linear form on `F` puts on the
-  pole orders it kills.
+  vanishes** (Stichtenoth, Proposition 1.7.3).  The bound this puts on the pole orders that `ω_P`
+  kills is `TauCeti.Place.bddAbove_setOf_forall_valuation_le_apply_eq_zero`, a statement about an
+  arbitrary nonzero linear form on `F` that lives with the order filtration.
 * `TauCeti.eq_of_repartitionDualComponent_eq`: **one local component determines a Weil
   differential**.
 
@@ -245,6 +245,7 @@ component there, so a vanishing `ω_P` would impose no condition at `P`: a divis
 could then be raised by an arbitrary multiple of `P` and would still bound it.  Those divisors
 have arbitrarily large degree, and a divisor of large enough degree bounds no nonzero Weil
 differential. -/
+@[simp]
 theorem repartitionDualComponent_eq_zero_iff (hF : IsFunctionField k F)
     (hex : IsIntegrallyClosedIn k F) {ω : Module.Dual k ↥(repartitionSpace k F)}
     (hω : ω ∈ weilDifferentialSpace k F) (P : Place k F) :
@@ -269,24 +270,6 @@ theorem repartitionDualComponent_ne_zero (hF : IsFunctionField k F)
     (hω : ω ∈ weilDifferentialSpace k F) (hω0 : ω ≠ 0) (P : Place k F) :
     repartitionDualComponent ω P ≠ 0 :=
   fun hP ↦ hω0 ((repartitionDualComponent_eq_zero_iff hF hex hω P).mp hP)
-
-/-- **The pole orders a nonzero linear form on `F` kills are bounded above**: the integers `r`
-such that `f` vanishes on every function whose pole at `P` is bounded by `r` are bounded above, by
-`-ord_P x` for any `x` with `f x ≠ 0`.
-
-At `f = ω_P` — a hypothesis `TauCeti.repartitionDualComponent_ne_zero` supplies at every place of
-a nonzero Weil differential — this is the half of the existence of `v_P (ω)` that bounds it from
-above, and it says nothing about the other places.  The set is empty for many `f`, so the other
-half, that it is nonempty, is not a statement about a general linear form and is left to the
-definition of `v_P (ω)`. -/
-theorem bddAbove_setOf_forall_apply_eq_zero {f : Module.Dual k F} (P : Place k F) (hf : f ≠ 0) :
-    BddAbove {r : ℤ | ∀ x : F, P.valuation x ≤ WithZero.exp r → f x = 0} := by
-  obtain ⟨x, hx⟩ := DFunLike.exists_ne hf
-  rw [LinearMap.zero_apply] at hx
-  have hx0 : x ≠ 0 := fun h ↦ hx (by simp [h])
-  refine ⟨-P.ord x, fun r hr ↦ ?_⟩
-  by_contra hlt
-  exact hx (hr x (by simpa using (P.mem_filtration_iff_le_ord (a := -r) hx0).mpr (by omega)))
 
 /-- **A Weil differential is determined by any one of its local components** (Stichtenoth,
 Proposition 1.7.3): two Weil differentials whose local components agree at a single place are

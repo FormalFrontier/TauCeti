@@ -33,6 +33,10 @@ engine of Stichtenoth's Section I.5: the global half identifies the quotient `A_
 of two members of the divisor filtration of the repartition space with a finite direct sum of
 these local quotients, and so computes `dim_k (A_F(E) / A_F(D)) = deg E - deg D`.
 
+A nonzero `k`-linear form on `F` cannot kill every step of the filtration, and indeed kills only
+the steps `𝔪_P^(-r)` with `r` bounded above
+(`TauCeti.Place.bddAbove_setOf_forall_valuation_le_apply_eq_zero`).
+
 ## Main definitions
 
 * `TauCeti.Place.filtration`: the subspace `𝔪_P^a ⊆ F`.
@@ -51,6 +55,8 @@ these local quotients, and so computes `dim_k (A_F(E) / A_F(D)) = deg E - deg D`
 * `TauCeti.Place.finiteDimensional_quotient_filtration`: those quotients are finite-dimensional
   as soon as the residue field is, which for a function field is
   `TauCeti.Place.finiteDimensional_residueField`.
+* `TauCeti.Place.bddAbove_setOf_forall_valuation_le_apply_eq_zero`: the pole orders at `P` that a
+  nonzero `k`-linear form on `F` kills are bounded above.
 
 ## Implementation notes
 
@@ -146,6 +152,23 @@ theorem mem_filtration_ord (z : F) : z ∈ P.filtration (P.ord z) := by
   rcases eq_or_ne z 0 with rfl | hz
   · simp
   · exact (P.mem_filtration_iff_le_ord hz).mpr le_rfl
+
+/-- **The pole orders a nonzero linear form on `F` kills are bounded above**: the integers `r`
+such that `f` vanishes on `𝔪_P^(-r)`, the functions with a pole of order at most `r` at `P`, are
+bounded above, by `-ord_P x` for any `x` with `f x ≠ 0`.
+
+The set is nonempty exactly when `f` kills some step of the filtration, which many `f` do not, so
+its nonemptiness is not a fact about a general linear form.  It does hold for the local component
+`ω_P` of a Weil differential, and the bound proved here is then the half of the existence of
+`v_P (ω)` that bounds it from above. -/
+theorem bddAbove_setOf_forall_valuation_le_apply_eq_zero {f : Module.Dual k F} (hf : f ≠ 0) :
+    BddAbove {r : ℤ | ∀ x : F, P.valuation x ≤ WithZero.exp r → f x = 0} := by
+  obtain ⟨x, hx⟩ := DFunLike.exists_ne hf
+  rw [LinearMap.zero_apply] at hx
+  have hx0 : x ≠ 0 := fun h ↦ hx (by simp [h])
+  refine ⟨-P.ord x, fun r hr ↦ ?_⟩
+  by_contra hlt
+  exact hx (hr x (by simpa using (P.mem_filtration_iff_le_ord (a := -r) hx0).mpr (by omega)))
 
 /-! ### The successive quotients -/
 
