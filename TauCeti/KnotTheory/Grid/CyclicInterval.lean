@@ -137,6 +137,16 @@ theorem right_notMem_cIoo (a b : Fin n) : b ∉ cIoo a b := by
     | inl hlt => exact hab hlt
     | inr hlt => exact Nat.lt_irrefl b.val hlt
 
+/-- A point in an open cyclic interval differs from its initial endpoint. -/
+theorem ne_left_of_mem_cIoo {a b x : Fin n} (h : x ∈ cIoo a b) : x ≠ a := by
+  rintro rfl
+  exact left_notMem_cIoo _ _ h
+
+/-- A point in an open cyclic interval differs from its terminal endpoint. -/
+theorem ne_right_of_mem_cIoo {a b x : Fin n} (h : x ∈ cIoo a b) : x ≠ b := by
+  rintro rfl
+  exact right_notMem_cIoo _ _ h
+
 /-- The clockwise half-open cyclic interval from `a` to `b` in `Fin n`.
 
 This is the arc that starts at `a` and stops just before `b`, so it is the open arc `cIoo a b`

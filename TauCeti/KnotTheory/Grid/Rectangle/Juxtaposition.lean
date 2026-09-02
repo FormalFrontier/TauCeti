@@ -31,6 +31,8 @@ The following results are in the `TauCeti.GridRectangle` namespace:
 * `coveredSquares_union_eq_of_mem_cIoo`: the first L-shaped repartition identity.
 * `coveredSquares_union_eq_of_mem_cIoo_complementary_col_cut`: the complementary column-cut
   orientation of the same identity.
+* `disjoint_coveredSquares_of_row_cut`, `disjoint_coveredSquares_of_col_cut`: the two rectangles
+  on either side of a row or column cut cover disjoint sets of squares.
 
 ## References
 
@@ -52,6 +54,26 @@ private theorem product_union_eq_union_product {s s' : Finset α} {t t' : Finset
     s ×ˢ t ∪ (s ∪ s') ×ˢ t' = s' ×ˢ t' ∪ s ×ˢ (t ∪ t') := by
   rw [Finset.union_product, Finset.product_union]
   ac_rfl
+
+/-- Rectangles on opposite sides of a row cut cover disjoint sets of squares, independently of
+their column spans. -/
+theorem disjoint_coveredSquares_of_row_cut {a b c d u v w : Fin n}
+    (hrow : v ∈ Grid.cIoo u w) :
+    Disjoint
+      ({ left := a, right := b, bottom := u, top := v } : GridRectangle n).coveredSquares
+      ({ left := c, right := d, bottom := v, top := w } : GridRectangle n).coveredSquares :=
+  (disjoint_coveredSquares_iff _ _).mpr (Or.inr (by
+    simpa only [coveredRows_def] using Grid.disjoint_cIco_cIco_of_mem_cIoo hrow))
+
+/-- Rectangles on opposite sides of a column cut cover disjoint sets of squares, independently
+of their row spans. -/
+theorem disjoint_coveredSquares_of_col_cut {a b c u v w t : Fin n}
+    (hcol : b ∈ Grid.cIoo a c) :
+    Disjoint
+      ({ left := a, right := b, bottom := u, top := v } : GridRectangle n).coveredSquares
+      ({ left := b, right := c, bottom := w, top := t } : GridRectangle n).coveredSquares :=
+  (disjoint_coveredSquares_iff _ _).mpr (Or.inl (by
+    simpa only [coveredColumns_def] using Grid.disjoint_cIco_cIco_of_mem_cIoo hcol))
 
 /-- If `b` and `v` lie between the corresponding outer sides, the two indicated pairs of
 rectangles are the two cuts of the same L-shaped set of squares. -/
