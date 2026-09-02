@@ -50,12 +50,12 @@ the named split torus as maximal requires the reductivity and root-datum structu
 
 * `TauCeti.SlStd.upperTriangularPoints_eq`: the point group is the intersection of the carrier
   points with the upper-triangular matrices.
-* `TauCeti.SlStd.isUpperTriangular_coe_rootSubgroupPoints_inl` and
-  `TauCeti.SlStd.rootSubgroupPoints_inl_mem_upperTriangularPoints`: every positive numbered root
-  subgroup point lies in the intersection.
-* `TauCeti.SlStd.isUpperTriangular_coe_rootSubgroupPoints_inr_iff` and
-  `TauCeti.SlStd.rootSubgroupPoints_inr_mem_upperTriangularPoints_iff`: a negative numbered root
-  subgroup point lies in it only at the identity.
+* `TauCeti.SlStd.isUpperTriangular_coe_rootSubgroupPoints_positive` and
+  `TauCeti.SlStd.rootSubgroupPoints_positive_mem_upperTriangularPoints`: every positive numbered
+  root subgroup point lies in the intersection.
+* `TauCeti.SlStd.isUpperTriangular_coe_rootSubgroupPoints_negative_iff` and
+  `TauCeti.SlStd.rootSubgroupPoints_negative_mem_upperTriangularPoints_iff`: a negative numbered
+  root subgroup point lies in it only at the identity.
 * `TauCeti.SlStd.isUpperTriangular_coe_weightTorusPoints` and
   `TauCeti.SlStd.weightTorusPoints_mem_upperTriangularPoints`: every split weight torus point lies
   in the intersection.
@@ -105,13 +105,6 @@ noncomputable def upperTriangularDefiningIdeal :
     HopfIdeal ℤ (GeneralLinear.coordinateHopfAlgebra ℤ (r + 1)) :=
   definingIdeal r ⊔ GeneralLinear.UpperTriangular.definingHopfIdeal ℤ (r + 1)
 
-/-- The upper-triangular defining ideal is the join of the carrier and upper-triangular defining
-Hopf ideals. -/
-theorem upperTriangularDefiningIdeal_def :
-    upperTriangularDefiningIdeal r =
-      definingIdeal r ⊔ GeneralLinear.UpperTriangular.definingHopfIdeal ℤ (r + 1) :=
-  (rfl)
-
 /-- The carrier defining ideal is contained in the upper-triangular defining ideal. -/
 theorem definingIdeal_le_upperTriangularDefiningIdeal :
     definingIdeal r ≤ upperTriangularDefiningIdeal r := by
@@ -125,16 +118,6 @@ theorem generalLinearUpperTriangularDefiningHopfIdeal_le_upperTriangularDefining
       upperTriangularDefiningIdeal r := by
   rw [upperTriangularDefiningIdeal]
   exact le_sup_right
-
-/-- The underlying ideal of the upper-triangular carrier is the join of the two underlying
-defining ideals. -/
-@[simp]
-theorem upperTriangularDefiningIdeal_toIdeal :
-    (upperTriangularDefiningIdeal r).toIdeal =
-      (definingIdeal r).toIdeal ⊔
-        Ideal.span (GeneralLinear.UpperTriangular.definingRelationSet ℤ (r + 1)) := by
-  rw [upperTriangularDefiningIdeal, HopfIdeal.sup_toIdeal,
-    GeneralLinear.UpperTriangular.definingHopfIdeal_toIdeal]
 
 /-- The upper-triangular closed subgroup scheme of the full-weight type-`A_r` carrier. -/
 noncomputable abbrev upperTriangularGroupScheme : Grp (Over (Spec (CommRingCat.of ℤ))) :=
@@ -234,7 +217,7 @@ private theorem isUpperTriangular_coe_kostantRootSubgroupMatrix_inl
   exact Matrix.blockTriangular_transvection (b := id) (Fin.castSucc_le_succ i) _
 
 /-- A positive numbered root-subgroup matrix is upper triangular. -/
-theorem isUpperTriangular_coe_rootSubgroupPoints_inl
+theorem isUpperTriangular_coe_rootSubgroupPoints_positive
     (A : Type v) [CommRing A] (i : Fin r) (u : Multiplicative A) :
     ((rootSubgroupPoints r (.inl i) A u : Matrix.GeneralLinearGroup (Fin (r + 1)) A) :
       Matrix (Fin (r + 1)) (Fin (r + 1)) A).IsUpperTriangular := by
@@ -243,7 +226,7 @@ theorem isUpperTriangular_coe_rootSubgroupPoints_inl
 
 /-- A negative numbered root-subgroup matrix is upper triangular exactly when its parameter is
 zero: its only nonzero off-diagonal entry sits below the diagonal. -/
-theorem isUpperTriangular_coe_rootSubgroupPoints_inr_iff
+theorem isUpperTriangular_coe_rootSubgroupPoints_negative_iff
     (A : Type v) [CommRing A] (i : Fin r) (u : Multiplicative A) :
     ((rootSubgroupPoints r (.inr i) A u : Matrix.GeneralLinearGroup (Fin (r + 1)) A) :
         Matrix (Fin (r + 1)) (Fin (r + 1)) A).IsUpperTriangular ↔
@@ -266,23 +249,23 @@ theorem isUpperTriangular_coe_weightTorusPoints
 
 /-- Every positive numbered root-subgroup point belongs to the upper-triangular subgroup of the
 type-`A_r` carrier. -/
-theorem rootSubgroupPoints_inl_mem_upperTriangularPoints
+theorem rootSubgroupPoints_positive_mem_upperTriangularPoints
     (A : Type v) [CommRing A] (i : Fin r) (u : Multiplicative A) :
     (rootSubgroupPoints r (.inl i) A u : Matrix.GeneralLinearGroup (Fin (r + 1)) A) ∈
       upperTriangularPoints r A := by
   rw [mem_upperTriangularPoints_iff]
   exact ⟨(rootSubgroupPoints r (.inl i) A u).property,
-    isUpperTriangular_coe_rootSubgroupPoints_inl r A i u⟩
+    isUpperTriangular_coe_rootSubgroupPoints_positive r A i u⟩
 
 /-- A negative numbered root-subgroup point lies in the upper-triangular subgroup exactly when
 its parameter is zero.  In particular, the intersection selects the positive, rather than both,
 halves of the pinning. -/
-theorem rootSubgroupPoints_inr_mem_upperTriangularPoints_iff
+theorem rootSubgroupPoints_negative_mem_upperTriangularPoints_iff
     (A : Type v) [CommRing A] (i : Fin r) (u : Multiplicative A) :
     (rootSubgroupPoints r (.inr i) A u : Matrix.GeneralLinearGroup (Fin (r + 1)) A) ∈
         upperTriangularPoints r A ↔
       Multiplicative.toAdd u = 0 := by
-  rw [mem_upperTriangularPoints_iff, isUpperTriangular_coe_rootSubgroupPoints_inr_iff,
+  rw [mem_upperTriangularPoints_iff, isUpperTriangular_coe_rootSubgroupPoints_negative_iff,
     and_iff_right (rootSubgroupPoints r (.inr i) A u).property]
 
 /-- Every point of the named split weight torus belongs to the upper-triangular subgroup of the
