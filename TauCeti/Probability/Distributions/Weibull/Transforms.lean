@@ -270,8 +270,8 @@ theorem integrable_exp_mul_id_weibullMeasure_one_iff (hlam : 0 < lam) (t : ℝ) 
   rw [weibullMeasure_one_eq_expMeasure hlam]
   exact integrable_exp_mul_expMeasure_iff (inv_pos.mpr hlam)
 
-/-- The exact exponential-integrability domain of a shape-one Weibull law. -/
-@[simp]
+/-- The exact exponential-integrability domain of a shape-one Weibull law. This is the shape-one
+branch of `integrableExpSet_id_weibullMeasure`, which is the `simp` form. -/
 theorem integrableExpSet_id_weibullMeasure_one (hlam : 0 < lam) :
     integrableExpSet id (weibullMeasure 1 lam) = Iio lam⁻¹ := by
   ext t
