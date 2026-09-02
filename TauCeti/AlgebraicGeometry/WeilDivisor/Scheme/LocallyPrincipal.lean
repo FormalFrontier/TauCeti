@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.AlgebraicGeometry.WeilDivisor.Scheme.Principal
+public import TauCeti.AlgebraicGeometry.WeilDivisor.Scheme.Sheaf
 import Mathlib.Tactic.Abel
 
 /-!
@@ -20,7 +21,9 @@ Cartier divisors defined in `TauCeti/AlgebraicGeometry/CartierDivisor/Basic.lean
 
 The predicate and its additive subgroup require only `IsLocallyNoetherian X`. Results involving
 the globally assembled principal Weil divisors and linear equivalence require `IsNoetherian X`,
-which supplies the finite-support condition for `orderAt`.
+which supplies the finite-support condition for `orderAt`. The local triviality of `𝒪_X(D)`
+additionally requires the codimension-one stalks to be discrete valuation rings, which is the
+hypothesis under which that sheaf is built.
 
 ## Main declarations
 
@@ -30,7 +33,12 @@ which supplies the finite-support condition for `orderAt`.
 * `SchemeWeilDivisor.principalSubgroup_le_locallyPrincipalSubgroup` records that principal
   divisors are locally principal;
 * `WeilDivisor.OrderSystem.LinearlyEquivalent.isLocallyPrincipal_iff` shows that local
-  principality depends only on the divisor class.
+  principality depends only on the divisor class;
+* `SchemeWeilDivisor.IsLocallyPrincipal.exists_sections_sub_principalDivisor_eq_sections_zero`
+  and `SchemeWeilDivisor.IsLocallyPrincipal.exists_iso_sheaf_sections_eq_sections_zero` consume
+  the predicate: the sheaf `𝒪_X(D)` of
+  `TauCeti/AlgebraicGeometry/WeilDivisor/Scheme/Sheaf.lean` is isomorphic, near every point, to
+  the sheaf of a divisor whose sections there are those of `𝒪_X(0)`.
 
 This advances `TauCetiRoadmap/JacobianChallenge/README.md`, Layer A, target "Divisors on a curve:
 Weil divisors and Cartier divisors; the dictionaries `Cartier ≃ line bundles` and (smooth curve)
@@ -47,7 +55,7 @@ principal-divisor and linear-equivalence API.
 
 public section
 
-open AlgebraicGeometry TopologicalSpace
+open AlgebraicGeometry CategoryTheory TopologicalSpace
 
 namespace TauCeti
 
@@ -79,9 +87,7 @@ def IsLocallyPrincipal (D : SchemeWeilDivisor X) : Prop :=
 neighbourhood on which the coefficients of `D` are the orders of a single nonzero rational
 function.
 
-This provides both the introduction and the elimination rule for `IsLocallyPrincipal`. The body of
-the definition is not exposed outside this module, so consumers cannot obtain the neighbourhood and
-its local equation by unfolding; they use this lemma instead. -/
+This is the convenient introduction and elimination rule for `IsLocallyPrincipal`. -/
 lemma isLocallyPrincipal_iff {D : SchemeWeilDivisor X} :
     IsLocallyPrincipal D ↔ ∀ x : X, ∃ U : X.Opens, x ∈ U ∧ ∃ g : Additive X.functionFieldˣ,
       ∀ y : CodimensionOnePoint X, (y : X) ∈ U →
@@ -136,6 +142,12 @@ lemma sub (hD : IsLocallyPrincipal D) (hE : IsLocallyPrincipal E) :
 
 end IsLocallyPrincipal
 
+/-- A Weil divisor is locally principal exactly when its negation is. -/
+@[simp]
+lemma isLocallyPrincipal_neg {D : SchemeWeilDivisor X} :
+    IsLocallyPrincipal (-D) ↔ IsLocallyPrincipal D :=
+  ⟨fun hD ↦ by simpa using hD.neg, IsLocallyPrincipal.neg⟩
+
 /-- The additive subgroup of locally principal Weil divisors on `X`. -/
 def locallyPrincipalSubgroup (X : Scheme.{u}) [IsIntegral X] [IsLocallyNoetherian X] :
     AddSubgroup (SchemeWeilDivisor X) where
@@ -189,6 +201,43 @@ lemma IsLocallyPrincipal.of_linearlyEquivalent {D E : SchemeWeilDivisor X}
   exact hD.sub hDiff
 
 end Noetherian
+
+section Sheaf
+
+variable [IsNoetherian X]
+  [∀ y : CodimensionOnePoint X, IsDiscreteValuationRing (X.presheaf.stalk (y : X))]
+  {D : SchemeWeilDivisor X}
+
+/-- **A local equation trivializes the divisor near its point.** If `D` is locally principal then
+every point of `X` has an open neighbourhood `U` and a local equation `g` such that, over every
+open subset of `U`, the sheaf `𝒪_X(D - div g)` has the same sections as `𝒪_X(0)`.
+
+Together with `SchemeWeilDivisor.sheafMulIso g D : 𝒪_X(D) ≅ 𝒪_X(D - div g)` this is the local
+triviality of `𝒪_X(D)`, which is what invertibility of `𝒪_X(D)` needs. -/
+theorem IsLocallyPrincipal.exists_sections_sub_principalDivisor_eq_sections_zero
+    (hD : IsLocallyPrincipal D) (x : X) :
+    ∃ (U : X.Opens) (g : Additive X.functionFieldˣ), x ∈ U ∧ ∀ V ≤ U,
+      sections (D - (WeilDivisor.OrderSystem.ofScheme X).principalDivisor g) V =
+        sections (0 : SchemeWeilDivisor X) V := by
+  obtain ⟨U, hxU, g, hg⟩ := hD x
+  refine ⟨U, g, hxU, fun V hV ↦ ?_⟩
+  ext s
+  simp only [mem_sections]
+  refine forall_congr' fun y ↦ forall_congr' fun hy ↦ ?_
+  rw [WeilDivisor.coeff_sub, WeilDivisor.OrderSystem.coeff_principalDivisor,
+    WeilDivisor.OrderSystem.ofScheme_ord, hg y (hV hy), sub_self, WeilDivisor.coeff_zero]
+
+/-- **The sheaf of a locally principal Weil divisor is locally trivial.** Every point of `X` has
+an open neighbourhood `U` together with a divisor `E` such that `𝒪_X(D) ≅ 𝒪_X(E)` and the sections
+of `𝒪_X(E)` over every open subset of `U` are those of `𝒪_X(0)`. -/
+theorem IsLocallyPrincipal.exists_iso_sheaf_sections_eq_sections_zero
+    (hD : IsLocallyPrincipal D) (x : X) :
+    ∃ (U : X.Opens) (E : SchemeWeilDivisor X), x ∈ U ∧ Nonempty (sheaf D ≅ sheaf E) ∧
+      ∀ V ≤ U, sections E V = sections (0 : SchemeWeilDivisor X) V := by
+  obtain ⟨U, g, hxU, hUV⟩ := hD.exists_sections_sub_principalDivisor_eq_sections_zero x
+  exact ⟨U, _, hxU, ⟨sheafMulIso g D⟩, hUV⟩
+
+end Sheaf
 
 end
 
