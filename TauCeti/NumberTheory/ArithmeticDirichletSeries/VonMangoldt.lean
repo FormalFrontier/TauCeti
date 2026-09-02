@@ -389,12 +389,6 @@ theorem convolution_vonMangoldt_one :
   simpa using (Ideal.sum_divisorsAntidiagonal_fst A
     (vonMangoldt : IdealArithmeticFunction K)).trans (sum_vonMangoldt_divisors A)
 
-/-- Convolving the everywhere-one function on nonzero ideals with `Λ` gives `log N`. -/
-@[simp]
-theorem convolution_one_vonMangoldt :
-    convolution (1 : IdealArithmeticFunction K) vonMangoldt = log := by
-  rw [convolution_comm, convolution_vonMangoldt_one]
-
 end IdealArithmeticFunction
 
 namespace MultiplicativeIdealWeight

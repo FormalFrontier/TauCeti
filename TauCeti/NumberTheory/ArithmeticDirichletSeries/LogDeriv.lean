@@ -88,7 +88,7 @@ theorem normCoeff_log_mul (f : IdealArithmeticFunction K) :
 
 /-! ### Absolute convergence of the twisted series -/
 
-/-- **The ideal logarithm does not move the abscissa.** The ideal-indexed Dirichlet series of
+/-- **The ideal logarithm does not increase the abscissa.** The ideal-indexed Dirichlet series of
 `(log N) f` converges absolutely wherever that of `f` does, because `log t` is dominated by every
 positive power of `t`. This is the ideal-indexed analogue of Mathlib's
 `LSeries.abscissaOfAbsConv_logMul`. -/
