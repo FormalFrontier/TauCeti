@@ -271,68 +271,24 @@ theorem quotient_toEquiv_mk (ω : Conjugation W) {U : Submodule ℂ W}
       Submodule.Quotient.mk (ω.toEquiv x) :=
   (rfl)
 
-/-- The twisted transpose of a conjugation: a functional `φ` is sent to the functional
-conjugating the values of `φ` along `ω`. -/
-private def dualMap (ω : Conjugation W) :
-    Module.Dual ℂ W →ₛₗ[starRingEnd ℂ] Module.Dual ℂ W :=
-  { toFun := fun φ =>
-      { toFun := fun v => star (φ (ω.toEquiv v))
-        map_add' := by
-          intro x y
-          simp [map_add, star_add]
-        map_smul' := by
-          intro c v
-          have h1 : ω.toEquiv (c • v) = (starRingEnd ℂ) c • ω.toEquiv v :=
-            LinearMap.map_smulₛₗ ω.toEquiv.toLinearMap c v
-          have h2 : φ ((starRingEnd ℂ) c • ω.toEquiv v) =
-              (starRingEnd ℂ) c * φ (ω.toEquiv v) := by simp
-          rw [h1, h2]
-          simp [star_mul, mul_comm] }
-    map_add' := by
-      intro φ ψ
-      ext v
-      simp
-    map_smul' := by
-      intro c φ
-      ext v
-      simp }
-
-/-- Pointwise description of the twisted transpose. -/
-private theorem dualMap_apply (ω : Conjugation W) (φ : Module.Dual ℂ W) (v : W) :
-    dualMap ω φ v = star (φ (ω.toEquiv v)) :=
-  (rfl)
-
-/-- The twisted transpose is an involution. -/
-private theorem dualMap_involutive (ω : Conjugation W) :
-    Function.Involutive (dualMap ω) := by
-  intro φ
-  ext v
-  simp [dualMap_apply, ω.apply_apply]
+/-- Complex conjugation, packaged as a conjugate-linear involution. -/
+private def complexConjugation : Conjugation ℂ where
+  toEquiv := starLinearEquiv ℂ
+  involutive := by
+    intro z
+    exact star_star z
 
 /-- The twisted transpose of a conjugation `ω`: a functional `φ` acts by conjugating the values
 of `φ` along `ω`. It is again an involution, so it packages as a conjugation on the dual space;
 see `TauCeti.Hodge.Conjugation.dual_toEquiv_apply` for its pointwise description. -/
-def dual (ω : Conjugation W) : Conjugation (Module.Dual ℂ W) where
-  toEquiv :=
-    { toFun := dualMap ω
-      invFun := dualMap ω
-      left_inv := dualMap_involutive ω
-      right_inv := dualMap_involutive ω
-      map_add' := by
-        intro φ ψ
-        ext v
-        simp [map_add]
-      map_smul' := by
-        intro c φ
-        ext v
-        simp [dualMap_apply] }
-  involutive := dualMap_involutive ω
+def dual (ω : Conjugation W) : Conjugation (Module.Dual ℂ W) :=
+  ω.hom complexConjugation
 
 /-- Pointwise description of the dual conjugation. -/
 @[simp]
 theorem dual_toEquiv_apply (ω : Conjugation W) (φ : Module.Dual ℂ W) (v : W) :
     ω.dual.toEquiv φ v = star (φ (ω.toEquiv v)) :=
-  (rfl)
+  by simp [dual, complexConjugation]
 
 /-- A conjugation carries dual annihilators to dual annihilators of conjugated subspaces. -/
 @[simp]

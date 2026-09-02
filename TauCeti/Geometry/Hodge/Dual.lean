@@ -22,7 +22,7 @@ the table of Hodge numbers.
 
 This is one of the companion constructions of Layer L0 of `TauCetiRoadmap/HodgeStructures/README.md`
 (the `⊗`/`Hom`/dual companions), following Peters–Steenbrink, *Mixed Hodge Structures*, §2; it is
-the base on which the internal hom of Hodge structures is to be built.
+the base of the internal hom in `TauCeti/Geometry/Hodge/Hom.lean`.
 
 ## Main declarations
 
