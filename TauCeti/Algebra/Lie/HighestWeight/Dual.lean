@@ -236,9 +236,10 @@ theorem nonempty_lieModuleEquiv_dual_iff (hv : IsHighestWeightVector b lam v) :
 module with highest weight `lam` carries a nonzero invariant bilinear form exactly when
 `-(w₀ • lam) = lam`.
 
-The roadmap pins the criterion against "a Weyl element carrying the dominant cone to its negative";
-`TauCeti.IsDominantIntegral.neg_longestElement_smul` says that `w₀` is such an element, so the two
-readings agree. -/
+The roadmap pins the criterion against "a Weyl element carrying the dominant cone to its negative".
+`TauCeti.IsDominantIntegral.neg_longestElement_smul` is the pointwise form of that reading for `w₀`:
+whenever `lam` is dominant integral, so is `-(w₀ • lam)`, that is, `w₀ • lam` lands in the negative
+of the dominant integral weights. -/
 theorem exists_ne_zero_lieInvariant_iff_neg_longestElement_smul_eq
     (hv : IsHighestWeightVector b lam v) :
     (∃ Φ : LinearMap.BilinForm K M, Φ ≠ 0 ∧ Φ.lieInvariant L) ↔
