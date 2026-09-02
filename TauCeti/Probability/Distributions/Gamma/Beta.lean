@@ -7,7 +7,6 @@ module
 
 public import TauCeti.Probability.Distributions.Beta.Basic
 public import TauCeti.Probability.Distributions.Gamma.Basic
-public import Mathlib.Probability.HasLaw
 import Mathlib.MeasureTheory.Function.Jacobian
 import TauCeti.Probability.Distributions.PDFInstances
 
@@ -29,9 +28,10 @@ Gamma-distributed, and the two are independent.
   Beta law and a Gamma law.
 * `TauCeti.map_div_add_gammaMeasure` gives the Beta marginal.
 * `TauCeti.indepFun_div_add_gammaMeasure` proves independence under the product Gamma law.
-* `TauCeti.hasLaw_div_add_prod_gammaMeasure_of_indepFun` and
-  `TauCeti.indepFun_div_add_of_hasLaw_gammaMeasure` transfer the conclusions to independent random
-  variables.
+* `TauCeti.hasLaw_div_add_prod_gammaMeasure_of_indepFun`,
+  `TauCeti.hasLaw_div_add_gammaMeasure_of_indepFun`, and
+  `TauCeti.indepFun_div_add_of_hasLaw_gammaMeasure` transfer the conclusions to independent
+  random variables.
 
 ## References
 
@@ -52,35 +52,39 @@ namespace TauCeti
 /-! ### The Gamma--Beta coordinate change -/
 
 /-- The positive quadrant on which the Gamma--Beta coordinate change is bijective. -/
-private def gammaBetaSource : Set (ℝ × ℝ) := Ioi 0 ×ˢ Ioi 0
+def gammaBetaSource : Set (ℝ × ℝ) := Ioi 0 ×ˢ Ioi 0
 
 /-- The product of the open unit interval and the positive half-line. -/
-private def gammaBetaTarget : Set (ℝ × ℝ) := Ioo 0 1 ×ˢ Ioi 0
+def gammaBetaTarget : Set (ℝ × ℝ) := Ioo 0 1 ×ˢ Ioi 0
 
 /-- The ratio-and-sum coordinate map. -/
-private def gammaBetaMap (z : ℝ × ℝ) : ℝ × ℝ :=
+def gammaBetaMap (z : ℝ × ℝ) : ℝ × ℝ :=
   (z.1 / (z.1 + z.2), z.1 + z.2)
 
 /-- The inverse of the ratio-and-sum coordinate map. -/
-private def betaGammaMap (z : ℝ × ℝ) : ℝ × ℝ :=
+def betaGammaMap (z : ℝ × ℝ) : ℝ × ℝ :=
   (z.1 * z.2, (1 - z.1) * z.2)
 
-private theorem measurable_gammaBetaMap : Measurable gammaBetaMap := by
+/-- The ratio-and-sum coordinate map is measurable. -/
+theorem measurable_gammaBetaMap : Measurable gammaBetaMap := by
   unfold gammaBetaMap
   fun_prop
 
-private theorem measurable_betaGammaMap : Measurable betaGammaMap := by
+/-- The inverse Gamma--Beta coordinate map is measurable. -/
+theorem measurable_betaGammaMap : Measurable betaGammaMap := by
   unfold betaGammaMap
   fun_prop
 
-private theorem betaGammaMap_mem_source {z : ℝ × ℝ} (hz : z ∈ gammaBetaTarget) :
+/-- The inverse coordinate map sends the target region into the positive quadrant. -/
+theorem betaGammaMap_mem_source {z : ℝ × ℝ} (hz : z ∈ gammaBetaTarget) :
     betaGammaMap z ∈ gammaBetaSource := by
   rcases z with ⟨u, s⟩
   simp only [gammaBetaTarget, gammaBetaSource, mem_prod, mem_Ioo, mem_Ioi,
     betaGammaMap] at hz ⊢
   exact ⟨mul_pos hz.1.1 hz.2, mul_pos (sub_pos.mpr hz.1.2) hz.2⟩
 
-private theorem gammaBetaMap_mem_target {z : ℝ × ℝ} (hz : z ∈ gammaBetaSource) :
+/-- The ratio-and-sum coordinate map sends the positive quadrant into its target region. -/
+theorem gammaBetaMap_mem_target {z : ℝ × ℝ} (hz : z ∈ gammaBetaSource) :
     gammaBetaMap z ∈ gammaBetaTarget := by
   rcases z with ⟨x, y⟩
   simp only [gammaBetaSource, gammaBetaTarget, mem_prod, mem_Ioi, mem_Ioo,
@@ -88,7 +92,8 @@ private theorem gammaBetaMap_mem_target {z : ℝ × ℝ} (hz : z ∈ gammaBetaSo
   have hsum : 0 < x + y := add_pos hz.1 hz.2
   exact ⟨⟨div_pos hz.1 hsum, (div_lt_one hsum).2 (by linarith)⟩, hsum⟩
 
-private theorem gammaBetaMap_betaGammaMap {z : ℝ × ℝ} (hz : z ∈ gammaBetaTarget) :
+/-- The ratio-and-sum map is a left inverse to the inverse coordinate map on the target region. -/
+theorem gammaBetaMap_betaGammaMap {z : ℝ × ℝ} (hz : z ∈ gammaBetaTarget) :
     gammaBetaMap (betaGammaMap z) = z := by
   rcases z with ⟨u, s⟩
   simp only [gammaBetaTarget, mem_prod, mem_Ioo, mem_Ioi] at hz
@@ -100,7 +105,8 @@ private theorem gammaBetaMap_betaGammaMap {z : ℝ × ℝ} (hz : z ∈ gammaBeta
   · simp only [gammaBetaMap, betaGammaMap]
     ring
 
-private theorem betaGammaMap_gammaBetaMap {z : ℝ × ℝ} (hz : z ∈ gammaBetaSource) :
+/-- The inverse coordinate map is a left inverse to the ratio-and-sum map on the source region. -/
+theorem betaGammaMap_gammaBetaMap {z : ℝ × ℝ} (hz : z ∈ gammaBetaSource) :
     betaGammaMap (gammaBetaMap z) = z := by
   rcases z with ⟨x, y⟩
   simp only [gammaBetaSource, mem_prod, mem_Ioi] at hz
@@ -112,7 +118,8 @@ private theorem betaGammaMap_gammaBetaMap {z : ℝ × ℝ} (hz : z ∈ gammaBeta
     field_simp
     ring
 
-private theorem betaGammaMap_image_target :
+/-- The inverse coordinate map sends the target region onto the positive quadrant. -/
+theorem betaGammaMap_image_target :
     betaGammaMap '' gammaBetaTarget = gammaBetaSource := by
   apply Set.Subset.antisymm
   · rintro _ ⟨z, hz, rfl⟩
@@ -120,16 +127,18 @@ private theorem betaGammaMap_image_target :
   · intro z hz
     exact ⟨gammaBetaMap z, gammaBetaMap_mem_target hz, betaGammaMap_gammaBetaMap hz⟩
 
-private theorem betaGammaMap_injOn : Set.InjOn betaGammaMap gammaBetaTarget := by
+/-- The inverse coordinate map is injective on the target region. -/
+theorem betaGammaMap_injOn : Set.InjOn betaGammaMap gammaBetaTarget := by
   intro z hz w hw hzw
   rw [← gammaBetaMap_betaGammaMap hz, ← gammaBetaMap_betaGammaMap hw, hzw]
 
 /-- The derivative of the inverse Gamma--Beta coordinate map. -/
-private def fderivBetaGammaMap (z : ℝ × ℝ) : (ℝ × ℝ) →L[ℝ] (ℝ × ℝ) :=
+def fderivBetaGammaMap (z : ℝ × ℝ) : (ℝ × ℝ) →L[ℝ] (ℝ × ℝ) :=
   (Matrix.toLin (.finTwoProd ℝ) (.finTwoProd ℝ)
     !![z.2, z.1; -z.2, 1 - z.1]).toContinuousLinearMap
 
-private theorem hasFDerivAt_betaGammaMap (z : ℝ × ℝ) :
+/-- The stated continuous linear map is the derivative of the inverse coordinate map. -/
+theorem hasFDerivAt_betaGammaMap (z : ℝ × ℝ) :
     HasFDerivAt betaGammaMap (fderivBetaGammaMap z) z := by
   have hfst : HasFDerivAt (fun q : ℝ × ℝ ↦ q.1)
       (ContinuousLinearMap.fst ℝ ℝ ℝ) z := hasFDerivAt_fst
@@ -144,7 +153,8 @@ private theorem hasFDerivAt_betaGammaMap (z : ℝ × ℝ) :
   all_goals try simp only [Pi.sub_apply]
   all_goals module
 
-private theorem det_fderivBetaGammaMap (z : ℝ × ℝ) :
+/-- The Jacobian determinant of the inverse Gamma--Beta coordinate map is its second coordinate. -/
+theorem det_fderivBetaGammaMap (z : ℝ × ℝ) :
     (fderivBetaGammaMap z).det = z.2 := by
   unfold fderivBetaGammaMap
   simp only [LinearMap.det_toContinuousLinearMap, LinearMap.det_toLin,
@@ -153,7 +163,7 @@ private theorem det_fderivBetaGammaMap (z : ℝ × ℝ) :
 
 /-- The Jacobian formula for the inverse coordinate change, expressed as an equality of restricted
 Lebesgue measures. -/
-private theorem map_betaGammaMap_withDensity :
+theorem map_betaGammaMap_withDensity :
     Measure.map betaGammaMap
         ((volume.restrict gammaBetaTarget).withDensity fun z ↦ ENNReal.ofReal z.2) =
       volume.restrict gammaBetaSource := by
@@ -167,16 +177,6 @@ private theorem map_betaGammaMap_withDensity :
   exact map_withDensity_abs_det_fderiv_eq_addHaar volume
     (measurableSet_Ioo.prod measurableSet_Ioi).nullMeasurableSet
     (fun z _ ↦ (hasFDerivAt_betaGammaMap z).hasFDerivWithinAt) betaGammaMap_injOn
-
-private theorem lintegral_comp_betaGammaMap (f : ℝ × ℝ → ℝ≥0∞) (hf : Measurable f) :
-    ∫⁻ z in gammaBetaTarget, ENNReal.ofReal z.2 * f (betaGammaMap z) =
-      ∫⁻ z in gammaBetaSource, f z := by
-  have h := congrArg (fun μ : Measure (ℝ × ℝ) ↦ ∫⁻ z, f z ∂μ)
-    map_betaGammaMap_withDensity
-  rw [lintegral_map hf measurable_betaGammaMap] at h
-  have hcomp : Measurable (fun z ↦ f (betaGammaMap z)) := hf.comp measurable_betaGammaMap
-  rw [lintegral_withDensity_eq_lintegral_mul _ (by fun_prop) hcomp] at h
-  simpa only [Pi.mul_apply] using h
 
 private theorem gammaBeta_density_real {a b r u s : ℝ} (ha : 0 < a) (hb : 0 < b)
     (hr : 0 < r) (hu : 0 < u) (hu' : u < 1) (hs : 0 < s) :
@@ -217,10 +217,7 @@ private theorem gammaBeta_density {a b r : ℝ} (ha : 0 < a) (hb : 0 < b) (hr : 
       betaPDF a b z.1 * gammaPDF (a + b) r z.2 := by
   rcases z with ⟨u, s⟩
   simp only [gammaBetaTarget, mem_prod, mem_Ioo, mem_Ioi] at hz
-  change ENNReal.ofReal s *
-      (ENNReal.ofReal (gammaPDFReal a r (u * s)) *
-        ENNReal.ofReal (gammaPDFReal b r ((1 - u) * s))) =
-    ENNReal.ofReal (betaPDFReal a b u) * ENNReal.ofReal (gammaPDFReal (a + b) r s)
+  simp only [gammaPDF, betaPDF, betaGammaMap]
   rw [← ENNReal.ofReal_mul (gammaPDFReal_nonneg ha hr _),
     ← ENNReal.ofReal_mul hz.2.le,
     ← ENNReal.ofReal_mul (betaPDFReal_nonneg ha hb _),
@@ -323,8 +320,13 @@ private theorem map_betaGammaMap_prod_beta_gamma {a b r : ℝ} (ha : 0 < a) (hb 
         exact (gammaBeta_density ha hb hr hz).symm
       · have hzq' : z ∉ betaGammaMap ⁻¹' q := hzq
         rw [indicator_of_notMem hzq', indicator_of_notMem hzq, mul_zero]
-    _ = ∫⁻ z in gammaBetaSource, q.indicator (gammaGammaPDF a b r) z :=
-      lintegral_comp_betaGammaMap _ ((measurable_gammaGammaPDF a b r).indicator hq)
+    _ = ∫⁻ z in gammaBetaSource, q.indicator (gammaGammaPDF a b r) z := by
+      rw [← betaGammaMap_image_target,
+        lintegral_image_eq_lintegral_abs_det_fderiv_mul volume
+          (measurableSet_Ioo.prod measurableSet_Ioi)
+          (fun z _ ↦ (hasFDerivAt_betaGammaMap z).hasFDerivWithinAt) betaGammaMap_injOn]
+      refine setLIntegral_congr_fun (measurableSet_Ioo.prod measurableSet_Ioi) fun z hz ↦ ?_
+      rw [det_fderivBetaGammaMap, abs_of_pos hz.2]
 
 /-! ### Independent Gamma variables -/
 
@@ -338,8 +340,10 @@ theorem map_div_add_prod_gammaMeasure {a b r : ℝ} (ha : 0 < a) (hb : 0 < b) (h
       (betaMeasure a b).prod (gammaMeasure (a + b) r) := by
   let _ := isProbabilityMeasureBeta ha hb
   let _ := isProbabilityMeasure_gammaMeasure (add_pos ha hb) hr
-  change Measure.map gammaBetaMap ((gammaMeasure a r).prod (gammaMeasure b r)) = _
-  rw [← map_betaGammaMap_prod_beta_gamma ha hb hr,
+  have hmap : (fun z : ℝ × ℝ ↦ (z.1 / (z.1 + z.2), z.1 + z.2)) = gammaBetaMap := by
+    funext z
+    simp only [gammaBetaMap]
+  rw [hmap, ← map_betaGammaMap_prod_beta_gamma ha hb hr,
     Measure.map_map measurable_gammaBetaMap measurable_betaGammaMap]
   calc
     Measure.map (gammaBetaMap ∘ betaGammaMap)
@@ -391,6 +395,22 @@ theorem hasLaw_div_add_prod_gammaMeasure_of_indepFun
     ⟨measurable_gammaBetaMap.aemeasurable, map_div_add_prod_gammaMeasure ha hb hr⟩
   simpa only [gammaBetaMap, Function.comp_def] using hmap.fun_comp hpair
 
+/-- The ratio of independent Gamma random variables with a common positive rate has a Beta law. -/
+theorem hasLaw_div_add_gammaMeasure_of_indepFun
+    {Ω : Type*} {mΩ : MeasurableSpace Ω} {P : Measure Ω} {X Y : Ω → ℝ}
+    {a b r : ℝ} (ha : 0 < a) (hb : 0 < b) (hr : 0 < r) (hXY : IndepFun X Y P)
+    (hX : HasLaw X (gammaMeasure a r) P) (hY : HasLaw Y (gammaMeasure b r) P) :
+    HasLaw (fun ω ↦ X ω / (X ω + Y ω)) (betaMeasure a b) P := by
+  let _ := isProbabilityMeasure_gammaMeasure ha hr
+  let _ := isProbabilityMeasure_gammaMeasure hb hr
+  let _ : IsProbabilityMeasure P := hX.isProbabilityMeasure
+  have hpair : HasLaw (fun ω ↦ (X ω, Y ω))
+      ((gammaMeasure a r).prod (gammaMeasure b r)) P := hXY.hasLaw_prod hX hY
+  have hratio : HasLaw (fun z : ℝ × ℝ ↦ z.1 / (z.1 + z.2)) (betaMeasure a b)
+      ((gammaMeasure a r).prod (gammaMeasure b r)) :=
+    ⟨by fun_prop, map_div_add_gammaMeasure ha hb hr⟩
+  exact hratio.fun_comp hpair
+
 /-- The ratio and sum of independent Gamma random variables with a common positive rate are
 independent. -/
 theorem indepFun_div_add_of_hasLaw_gammaMeasure
@@ -404,11 +424,7 @@ theorem indepFun_div_add_of_hasLaw_gammaMeasure
   let _ := isProbabilityMeasure_gammaMeasure (add_pos ha hb) hr
   let _ : IsProbabilityMeasure P := hX.isProbabilityMeasure
   have hjoint := hasLaw_div_add_prod_gammaMeasure_of_indepFun ha hb hr hXY hX hY
-  have hratio : HasLaw (fun ω ↦ X ω / (X ω + Y ω)) (betaMeasure a b) P := by
-    have hfst : HasLaw Prod.fst (betaMeasure a b)
-        ((betaMeasure a b).prod (gammaMeasure (a + b) r)) :=
-      MeasureTheory.measurePreserving_fst.hasLaw
-    simpa only [Function.comp_def] using hfst.fun_comp hjoint
+  have hratio := hasLaw_div_add_gammaMeasure_of_indepFun ha hb hr hXY hX hY
   have hsum : HasLaw (fun ω ↦ X ω + Y ω) (gammaMeasure (a + b) r) P := by
     have hsnd : HasLaw Prod.snd (gammaMeasure (a + b) r)
         ((betaMeasure a b).prod (gammaMeasure (a + b) r)) :=
