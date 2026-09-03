@@ -47,41 +47,123 @@ _META_RE = re.compile(r"<!--tauceti-meta:v1\s+(\{.*\})\s*-->", re.S)
 _INPROGRESS_RE = re.compile(r"<!--tauceti-review-in-progress (.*?)-->", re.S)
 _REPO_ASSOCIATED = ("OWNER", "MEMBER", "COLLABORATOR")
 
-# `gh` exits nonzero on a rate limit without retrying, and every sink in this
-# package shares ONE App installation budget with the review and merge workflows.
-# These substrings identify that case in its stderr so gh_api can wait instead of
-# failing the caller.
-_RATE_LIMITED = ("rate limit", "secondary rate", "API rate limit exceeded",
-                 "was submitted too quickly", "HTTP 429")
-RATE_LIMIT_RETRIES = 4
-RATE_LIMIT_BACKOFF_SECONDS = 15
+# `gh` exits nonzero on a rate limit without retrying. The sinks driven by
+# pr-labels.yml, zulip-pr*.yml and housekeeping.yml read through gh_api against
+# ONE shared App installation budget; stuck-alerts.yml runs on GITHUB_TOKEN and so
+# has its own. Either way a burst of merges can spend the budget out from under
+# whichever read comes next.
+#
+# `gh` writes the API's message followed by "(HTTP <status>)" to stderr, so a rate
+# limit is recognised by STATUS first and wording second. Matching on wording alone
+# would retry a 404 whose body happens to mention a rate limit.
+_HTTP_STATUS = re.compile(r"\(HTTP (\d{3})\)")
+_RATE_LIMIT_WORDING = ("rate limit", "abuse detection", "was submitted too quickly")
+
+# Total calls, not retries. GitHub asks for at least a minute before retrying a
+# secondary limit, so the waits are 60s then 120s -- not the sub-minute schedule a
+# generic exponential back-off would use, which GitHub warns can prolong the limit.
+RATE_LIMIT_ATTEMPTS = 3
+SECONDARY_BACKOFF_SECONDS = 60
+# A PRIMARY limit (quota exhausted) clears only at the hourly reset, which is far
+# too long to sleep inside a workflow step. Past this, give up immediately and say
+# when it clears rather than burning the job's timeout.
+RATE_LIMIT_MAX_WAIT_SECONDS = 180
 
 
 # ----- GitHub truth (via the gh CLI, authenticated by GH_TOKEN) ---------------
 
-def gh_api(path, jq=None, paginate=False, sleep=time.sleep):
-    """One `gh api` read, with a bounded back-off for a rate limit.
+class RateLimited(RuntimeError):
+    """A rate limit we waited out and did not clear. Distinct from a plain failure
+    so a caller looping over many items can tell "GitHub is refusing us" from "this
+    one item is broken"."""
+
+
+# Once a limit is established, every later read is refused until it resets. Without
+# this a caller that catches per-item failures — stuck_alerts runs ten detectors,
+# housekeeping and the Zulip backfill loop per PR — would start the full wait again
+# for each one and blow the job's timeout long before doing any work.
+_BLOCKED_UNTIL = 0.0
+
+
+def _rate_limited(stderr):
+    """Is this stderr a rate limit? Status first, wording second."""
+    found = _HTTP_STATUS.search(stderr)
+    status = int(found.group(1)) if found else None
+    if status == 429:
+        return True
+    if status == 403:
+        return any(word in stderr.lower() for word in _RATE_LIMIT_WORDING)
+    return False
+
+
+def _quota_reset_in(now=None):
+    """Seconds until the core quota resets if it is EXHAUSTED, else None.
+
+    None means the quota still has room, so the refusal was a secondary limit —
+    a burst that eases on its own — rather than the hourly budget running out.
+    `/rate_limit` is documented not to consume quota, so asking is free.
+    """
+    out = subprocess.run(
+        ["gh", "api", "rate_limit", "--jq",
+         r'"\(.resources.core.remaining) \(.resources.core.reset)"'],
+        capture_output=True, text=True)
+    if out.returncode != 0:
+        return None
+    try:
+        remaining, reset = out.stdout.split()
+        if int(remaining) > 0:
+            return None
+        return max(0, int(reset) - int(time.time() if now is None else now))
+    except (TypeError, ValueError):
+        return None
+
+
+def gh_api(path, jq=None, paginate=False, sleep=time.sleep, quota_reset_in=None):
+    """One `gh api` read, waiting out a rate limit within a bounded budget.
 
     `gh` does not retry a 403/429 of its own accord, so a burst of merges spending
-    the shared App budget for a minute failed whichever sink happened to read next
-    -- an hourly sweep losing a run, or a label left wrong until the next event.
-    A rate-limited call now waits and retries a few times; anything else still
-    fails immediately, so a 404 or a permission error stays as loud as before.
+    the budget failed whichever sink read next: an hourly sweep losing a run, or a
+    status label left wrong until some later event fired.
+
+    Only a rate limit is retried, and only on its own terms — at least a minute for
+    a secondary limit, and not at all for an exhausted hourly quota, which cannot
+    clear inside a workflow step. Every other failure raises on the first attempt,
+    so a 404 or a permission error stays as loud, and as fast, as before.
     """
+    global _BLOCKED_UNTIL
+    reset_probe = _quota_reset_in if quota_reset_in is None else quota_reset_in
+    now = time.time()
+    if now < _BLOCKED_UNTIL:
+        raise RateLimited(
+            f"gh api {path} skipped: rate limited for another "
+            f"{int(_BLOCKED_UNTIL - now)}s")
+
     cmd = ["gh", "api", path]
     if paginate:
         cmd.append("--paginate")
     if jq is not None:
         cmd += ["--jq", jq]
-    for attempt in range(RATE_LIMIT_RETRIES):
+    for attempt in range(RATE_LIMIT_ATTEMPTS):
         out = subprocess.run(cmd, capture_output=True, text=True)
         if out.returncode == 0:
             return out.stdout
         stderr = out.stderr.strip()
-        limited = any(marker.lower() in stderr.lower() for marker in _RATE_LIMITED)
-        if not limited or attempt + 1 == RATE_LIMIT_RETRIES:
+        if not _rate_limited(stderr):
             raise RuntimeError(f"gh api {path} failed: {stderr}")
-        delay = RATE_LIMIT_BACKOFF_SECONDS * (2 ** attempt)
+        # An exhausted hourly quota only clears at its reset; a secondary limit
+        # eases on its own. Ask which this is before deciding to wait at all.
+        exhausted_for = reset_probe()
+        if exhausted_for is not None and exhausted_for > RATE_LIMIT_MAX_WAIT_SECONDS:
+            _BLOCKED_UNTIL = time.time() + exhausted_for
+            raise RateLimited(
+                f"gh api {path} failed: hourly quota exhausted, resets in "
+                f"{exhausted_for}s")
+        if attempt + 1 == RATE_LIMIT_ATTEMPTS:
+            _BLOCKED_UNTIL = time.time() + SECONDARY_BACKOFF_SECONDS
+            raise RateLimited(f"gh api {path} failed after "
+                              f"{RATE_LIMIT_ATTEMPTS} attempts: {stderr}")
+        delay = (exhausted_for if exhausted_for is not None
+                 else SECONDARY_BACKOFF_SECONDS * (2 ** attempt))
         print(f"gh api rate-limited; retrying in {delay}s", flush=True)
         sleep(delay)
 
