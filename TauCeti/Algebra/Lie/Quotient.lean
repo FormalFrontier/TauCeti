@@ -51,9 +51,8 @@ variable (I : LieIdeal R L)
 
 /-- The quotient map `L → L ⧸ I` as a homomorphism of Lie algebras.
 
-This is `LieSubmodule.Quotient.mk'` upgraded from a morphism of Lie modules over `L` to a morphism
-of Lie algebras; the bracket on the quotient is by construction the bracket of representatives, so
-there is nothing to check. -/
+Its underlying function is Mathlib's `LieSubmodule.Quotient.mk`, sending each element to its
+quotient class. -/
 def mkQ : L →ₗ⁅R⁆ L ⧸ I where
   toFun := LieSubmodule.Quotient.mk
   map_add' _ _ := rfl

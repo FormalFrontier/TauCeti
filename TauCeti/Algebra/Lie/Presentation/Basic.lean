@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.Lie.Free
-public import TauCeti.Algebra.Lie.Quotient
 
 /-!
 # Presenting a Lie algebra by generators and relations
