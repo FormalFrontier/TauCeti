@@ -8,11 +8,11 @@ module
 public import Mathlib.Algebra.CubicDiscriminant
 import Mathlib.Algebra.MvPolynomial.Basic
 public import Mathlib.Algebra.Order.BigOperators.Group.LocallyFinite
+import Mathlib.Data.Nat.Choose.Vandermonde
 public import Mathlib.FieldTheory.Separable
 public import Mathlib.RingTheory.Discriminant
 public import Mathlib.RingTheory.Localization.FractionRing
 public import Mathlib.RingTheory.Polynomial.Resultant.Basic
-import TauCeti.Data.Nat.Triangle
 import TauCeti.RingTheory.Polynomial.Resultant.Basic
 
 /-!
@@ -37,8 +37,8 @@ separable.
   product `δ = ∏_{i < j} (rᵢ - rⱼ)`. The second is the shape the discriminant test for
   containment in the alternating group is stated with, since a Galois automorphism permutes the
   roots and multiplies `δ` by the sign of that permutation.
-* `Polynomial.Monic.discr_eq_prod_roots_sub_sq`: the same formula for a monic polynomial that
-  splits after base change, written against a numbering of its root multiset.
+* `Polynomial.Monic.discr_eq_prod_roots_sub_sq`: the same formula for a monic polynomial,
+  written against a numbering `r : Fin f.natDegree → L` of its root multiset over an extension.
 * `Polynomial.Monic.prod_roots_eval_derivative`: the product of the derivative over the root
   multiset, which is the discriminant up to the same sign. This is the shape in which the
   discriminant of a minimal polynomial is a norm.
@@ -54,20 +54,20 @@ separable.
   so that `Cubic.discr` and `Polynomial.discr` may be used interchangeably in degree three.
 * `Algebra.discr_powerBasis_eq_minpoly_discr`: the algebra discriminant of a power basis agrees
   with the polynomial discriminant of the minimal polynomial of its generator.
+* `Polynomial.discr_X_pow_three_sub_three_mul_X_sub_one`, `Polynomial.discr_X_pow_three_sub_two`
+  and `Polynomial.not_isSquare_discr_X_pow_three_sub_two`: the two worked cubics, of discriminant
+  `81`, a square, and `-108`, a nonsquare.
 
 ## Implementation notes
 
-The root-product formula is a universal polynomial identity, and it is proved as one. The work
-happens over an integral domain, where `Polynomial.resultant_eq_prod_eval` evaluates the
-resultant of `f` and `f.derivative` as a product over the roots of `f`; the general case is then
-the image of the identity over `MvPolynomial (Fin n) ℤ`, which is a domain, under the ring
-morphism sending the `i`-th variable to `r i`. Base change along that morphism is legitimate
-precisely because `∏ i, (X - C (X i))` is monic.
+The root-product formula is a universal polynomial identity, so it is stated over an arbitrary
+commutative ring and proved by base change from `MvPolynomial (Fin n) ℤ`, which is a domain and
+over which the roots are the variables themselves.
 
 The separability criterion is *not* a universal identity, and the failure is recorded here:
 `Polynomial.not_separable_X_pow_two_sub_one` shows that `X ^ 2 - 1` over `ℤ` has nonzero
-discriminant `4` and is not `Polynomial.Separable`. Over a domain the criterion must therefore
-be read in the fraction field, and that is the form every use over `ℤ` takes.
+discriminant `4` and is not `Polynomial.Separable`. Over a domain the criterion is therefore
+formulated after passage to a fraction field.
 
 The sign bookkeeping — folding the off-diagonal product over ordered pairs into a product over
 unordered pairs, and evaluating `∑ i, #(Ioi i)` as `n * (n - 1) / 2` — follows the corresponding
@@ -93,8 +93,9 @@ variable {R S : Type*} [CommRing R] [CommRing S]
 `f.natDegree` and `f.natDegree - 1` that the Sylvester matrix of the discriminant uses, is the
 discriminant up to the sign `(-1) ^ (n * (n - 1) / 2)`.
 
-This is `Polynomial.resultant_deriv` with the leading coefficient removed, extended to the
-constant polynomial `1`, which that lemma excludes. -/
+This is the monic case of `Polynomial.resultant_deriv`: the leading coefficient of that lemma is
+`1`, and its positive-degree hypothesis is unnecessary, the constant polynomial `1` being
+covered. -/
 theorem _root_.Polynomial.Monic.resultant_deriv {f : R[X]} (hf : f.Monic) :
     f.resultant f.derivative f.natDegree (f.natDegree - 1) =
       (-1) ^ (f.natDegree * (f.natDegree - 1) / 2) * f.discr := by
@@ -251,14 +252,22 @@ theorem _root_.Polynomial.Monic.discr_mul {f g : R[X]} (hf : f.Monic) (hg : g.Mo
   have hcomm : g.resultant f = (-1) ^ (g.natDegree * f.natDegree) * f.resultant g :=
     resultant_comm g f g.natDegree f.natDegree
   -- Step 4: the same reading on the left-hand side produces the sign
-  -- `(-1) ^ ((m + n) * (m + n - 1) / 2)`, which `Nat.triangle_add` splits as the two signs
-  -- collected in Step 3 together with `(-1) ^ (m * n)` from `hcomm`. All of them cancel, being
-  -- units.
+  -- `(-1) ^ ((m + n) * (m + n - 1) / 2)`. The triangular number of a sum splits as the two
+  -- triangular numbers plus the cross term `m * n` — Vandermonde's identity `Nat.add_choose_eq`
+  -- at `k = 2` — so that sign is the two signs collected in Step 3 together with `(-1) ^ (m * n)`
+  -- from `hcomm`. All of them cancel, being units.
+  have htriangle : ∀ m n : ℕ,
+      (m + n) * (m + n - 1) / 2 = m * (m - 1) / 2 + n * (n - 1) / 2 + m * n := by
+    intro m n
+    have h := Nat.add_choose_eq m n 2
+    simp [Finset.Nat.sum_antidiagonal_eq_sum_range_succ_mk, Finset.sum_range_succ,
+      Nat.choose_two_right] at h
+    omega
   have hdisc := (hf.mul hg).resultant_deriv
   rw [hdeg] at hdisc
   dsimp only [d] at hmul
   rw [hmul, hfd, hgd, hcomm,
-    Nat.triangle_add, pow_add, pow_add] at hdisc
+    htriangle, pow_add, pow_add] at hdisc
   ring_nf at hdisc
   have hu : IsUnit (((-1 : R) ^ (f.natDegree * g.natDegree)) *
       (-1) ^ (f.natDegree * (f.natDegree - 1) / 2) *
@@ -353,24 +362,42 @@ theorem _root_.Polynomial.discr_prod_X_sub_C_eq_sq {n : ℕ} (r : Fin n → R) :
   exact Finset.prod_congr rfl fun i _ ↦ Finset.prod_pow _ 2 _
 
 /-- The root-product formula for a monic polynomial that splits after base change, written against
-a numbering `r` of the root multiset over the extension ring. -/
-theorem _root_.Polynomial.Monic.discr_eq_prod_roots_sub_sq {L : Type*} [CommRing L] [IsDomain L]
-    [Algebra R L] {f : R[X]} (hf : f.Monic) (hs : (f.map (algebraMap R L)).Splits) {n : ℕ}
-    {r : Fin n → L} (hr : (f.map (algebraMap R L)).roots = univ.val.map r) :
+a numbering `r : Fin n → L` of the root multiset by an arbitrary index type. The complete
+numbering, by `Fin f.natDegree`, is `Polynomial.Monic.discr_eq_prod_roots_sub_sq`. -/
+private theorem _root_.Polynomial.Monic.discr_eq_prod_roots_sub_sq_of_splits {L : Type*}
+    [CommRing L] [IsDomain L] [Algebra R L] {f : R[X]} (hf : f.Monic)
+    (hs : (f.map (algebraMap R L)).Splits) {n : ℕ} {r : Fin n → L}
+    (hr : (f.map (algebraMap R L)).roots = univ.val.map r) :
     algebraMap R L f.discr = ∏ i, ∏ j ∈ Ioi i, (r i - r j) ^ 2 := by
   have hfeq : f.map (algebraMap R L) = ∏ i, (X - C (r i)) := by
     rw [hs.eq_prod_roots_of_monic (hf.map _), hr, Finset.prod_eq_multiset_prod, Multiset.map_map]
     rfl
   rw [← hf.discr_map, hfeq, Polynomial.discr_prod_X_sub_C]
 
+/-- **The root-product formula for a monic polynomial.** Number the roots of a monic `f` over an
+extension `L`, with multiplicity, as `r : Fin f.natDegree → L`. Then the discriminant of `f` is
+the square of the Vandermonde-like product of the differences of the roots. Numbering the whole
+root multiset by `Fin f.natDegree` already says that `f` splits over `L`, so no splitting
+hypothesis appears. -/
+theorem _root_.Polynomial.Monic.discr_eq_prod_roots_sub_sq {L : Type*} [CommRing L] [IsDomain L]
+    [Algebra R L] {f : R[X]} (hf : f.Monic) {r : Fin f.natDegree → L}
+    (hr : (f.map (algebraMap R L)).roots = univ.val.map r) :
+    algebraMap R L f.discr = ∏ i, ∏ j ∈ Ioi i, (r i - r j) ^ 2 := by
+  have hcard : (f.map (algebraMap R L)).roots.card = (f.map (algebraMap R L)).natDegree := by
+    rw [hr, hf.natDegree_map]
+    simp
+  exact hf.discr_eq_prod_roots_sub_sq_of_splits (splits_iff_card_roots.mpr hcard) hr
+
 /-! ### Separability -/
 
-/-- A monic polynomial is separable exactly when its discriminant is a unit. Both sides read the
-resultant of `f` with `f.derivative`: separability is coprimality of that pair, and
-`Polynomial.isUnit_resultant_iff_isCoprime` turns coprimality into a unit resultant. -/
+/-- A monic polynomial is separable exactly when its discriminant is a unit. This is the
+ring-level form of the criterion; over a field it reads `f.discr ≠ 0`. -/
 @[simp]
 theorem _root_.Polynomial.Monic.isUnit_discr_iff {f : R[X]} (hf : f.Monic) :
     IsUnit f.discr ↔ f.Separable := by
+  -- Separability is coprimality of `f` with `f.derivative`, which
+  -- `Polynomial.isUnit_resultant_iff_isCoprime` reads as a unit resultant; the discriminant
+  -- differs from that resultant by the unit sign.
   rw [separable_def, ← isUnit_resultant_iff_isCoprime hf,
     ← hf.resultant_of_le (natDegree_derivative_le f),
     hf.resultant_deriv,
@@ -387,7 +414,8 @@ theorem _root_.Polynomial.Monic.discr_ne_zero_iff {K : Type*} [Field K] {f : K[X
   rw [← hf.isUnit_discr_iff, isUnit_iff_ne_zero]
 
 /-- Over a domain, the discriminant of a monic polynomial is nonzero exactly when the polynomial
-becomes separable over the fraction field. This is the form every use over `ℤ` takes. -/
+becomes separable over the fraction field: over a domain the separability criterion is the one
+formulated after passage to a fraction field. -/
 @[simp]
 theorem _root_.Polynomial.Monic.discr_ne_zero_iff_separable_map (K : Type*) [Field K]
     [Algebra R K] [IsFractionRing R K] {f : R[X]} (hf : f.Monic) :
@@ -455,7 +483,7 @@ theorem _root_.Algebra.discr_powerBasis_eq_minpoly_discr {K L : Type*} [Field K]
     exact (Multiset.eq_of_le_of_card_le hle (by simp [hcardroots])).symm
   apply (algebraMap K E).injective
   rw [Algebra.discr_powerBasis_eq_prod K E pb e,
-    (minpoly.monic pb.isIntegral_gen).discr_eq_prod_roots_sub_sq hs hr]
+    (minpoly.monic pb.isIntegral_gen).discr_eq_prod_roots_sub_sq_of_splits hs hr]
   apply Finset.prod_congr rfl
   intro i _
   apply Finset.prod_congr rfl
@@ -470,16 +498,36 @@ theorem _root_.Polynomial.discr_X_pow_two_sub_one : (X ^ 2 - 1 : ℤ[X]).discr =
   rw [discr_of_degree_eq_two (by compute_degree!)]
   simp [coeff_one]
 
-/-- `X ^ 2 - 1` is not separable over `ℤ`, although its discriminant `4` is nonzero: a coprimality
-witness for `X ^ 2 - 1` and `2 * X`, evaluated at `1`, would give `2 ∣ 1`. This is why
+/-- `X ^ 2 - 1` is not separable over `ℤ`, although its discriminant `4` is nonzero. This is why
 `Polynomial.Monic.discr_ne_zero_iff` is stated over a field, and why the version over a domain
 passes to the fraction field. -/
 theorem _root_.Polynomial.not_separable_X_pow_two_sub_one : ¬ (X ^ 2 - 1 : ℤ[X]).Separable := by
+  -- A coprimality witness for `X ^ 2 - 1` and `2 * X`, evaluated at `1`, would give `2 ∣ 1`.
   rw [separable_def']
   rintro ⟨a, b, hab⟩
   have := congrArg (eval 1) hab
   simp at this
   omega
+
+/-! ### Worked instances -/
+
+/-- The discriminant of `x³ - 3x - 1` over `ℤ` is `81`, a square. -/
+theorem _root_.Polynomial.discr_X_pow_three_sub_three_mul_X_sub_one :
+    (X ^ 3 - 3 * X - 1 : ℤ[X]).discr = 81 := by
+  rw [discr_of_degree_eq_three (by compute_degree!)]
+  simp [coeff_X, coeff_one]
+
+/-- The discriminant of `x³ - 2` over `ℤ` is `-108`. -/
+theorem _root_.Polynomial.discr_X_pow_three_sub_two : (X ^ 3 - 2 : ℤ[X]).discr = -108 := by
+  rw [discr_of_degree_eq_three (by compute_degree!)]
+  simp
+
+/-- The discriminant of `x³ - 2` over `ℤ` is not a square, being negative. -/
+theorem _root_.Polynomial.not_isSquare_discr_X_pow_three_sub_two :
+    ¬ IsSquare (X ^ 3 - 2 : ℤ[X]).discr := by
+  rw [Polynomial.discr_X_pow_three_sub_two]
+  rintro ⟨r, hr⟩
+  nlinarith [mul_self_nonneg r]
 
 /-! ### Comparison with the discriminant of a cubic -/
 
