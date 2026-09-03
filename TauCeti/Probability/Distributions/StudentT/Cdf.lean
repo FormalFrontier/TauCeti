@@ -288,14 +288,8 @@ theorem cdf_studentTMeasure_eq (hν : 0 < ν) (x : ℝ) :
       (studentTMeasure ν).real (Ioi y) =
         (1 / 2 : ℝ) * (1 - regularizedIncompleteBeta (1 / 2) (ν / 2) (y ^ 2 / (ν + y ^ 2))) := by
     intro y hy
-    have hpdf : studentTPDF ν = fun x => ENNReal.ofReal (studentTPDFReal ν x) := by
-      funext x
-      rw [studentTPDF_of_pos hν x, ← studentTPDFReal_of_pos hν x]
     have hreal : (studentTMeasure ν).real (Ioi y) = ∫ z in Ioi y, studentTPDFReal ν z := by
-      rw [studentTMeasure_def, hpdf]
-      exact measureReal_withDensity_ofReal
-        (ae_of_all _ fun _ => studentTPDFReal_nonneg ν _) measurableSet_Ioi
-        (integrable_studentTPDFReal ν).integrableOn
+      exact measureReal_studentTMeasure hν measurableSet_Ioi
     rw [hreal, integral_Ioi_studentTPDFReal_tail hν hy]
   by_cases hx : 0 ≤ x
   · -- nonnegative branch: `cdf = 1 - tail`, and the reflection formula swaps the beta parameters
@@ -323,8 +317,7 @@ theorem cdf_studentTMeasure_eq (hν : 0 < ν) (x : ℝ) :
       ext w
       simp [le_iff_eq_or_lt]
     have hnull : (studentTMeasure ν) ({-x} : Set ℝ) = 0 := by
-      rw [studentTMeasure_def]
-      exact measure_singleton (-x)
+      exact (studentTMeasure_absolutelyContinuous ν) (measure_singleton (-x))
     have h5 : Ici (-x) = Ioi (-x) ∪ ({-x} : Set ℝ) := by
       ext w
       simp [le_iff_eq_or_lt]

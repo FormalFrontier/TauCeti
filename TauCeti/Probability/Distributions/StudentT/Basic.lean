@@ -186,14 +186,9 @@ theorem measurable_studentTPDF (ν : ℝ) : Measurable (studentTPDF ν) :=
 For `ν ≤ 0` this is the zero measure, not a probability measure; see
 `studentTMeasure_of_nonpos`.
 
-This is presented as Lebesgue measure with density `studentTPDF ν`; use `studentTMeasure_def`
-when a proof needs the `withDensity` representation. -/
+This is presented as Lebesgue measure with density `studentTPDF ν`. -/
 def studentTMeasure (ν : ℝ) : Measure ℝ :=
   volume.withDensity (studentTPDF ν)
-
-/-- The defining `withDensity` presentation of Student's t measure. -/
-theorem studentTMeasure_def (ν : ℝ) : studentTMeasure ν = volume.withDensity (studentTPDF ν) :=
-  (rfl)
 
 /-- Outside the valid parameter range Student's t law is the zero measure. -/
 @[simp]
@@ -202,7 +197,7 @@ theorem studentTMeasure_of_nonpos (hν : ν ≤ 0) : studentTMeasure ν = 0 := b
     funext y
     rw [studentTPDF_of_nonpos hν]
     rfl
-  rw [studentTMeasure_def, h, withDensity_zero]
+  rw [studentTMeasure, h, withDensity_zero]
 
 /-- The Student t density is integrable on the whole line for every parameter. -/
 theorem integrable_studentTPDFReal (ν : ℝ) : Integrable (studentTPDFReal ν) := by
@@ -240,7 +235,7 @@ theorem lintegral_studentTPDF_eq_one (hν : 0 < ν) : ∫⁻ x, studentTPDF ν x
 theorem isProbabilityMeasure_studentTMeasure (hν : 0 < ν) :
     IsProbabilityMeasure (studentTMeasure ν) := by
   constructor
-  rw [studentTMeasure_def, withDensity_apply _ MeasurableSet.univ,
+  rw [studentTMeasure, withDensity_apply _ MeasurableSet.univ,
     Measure.restrict_univ, lintegral_studentTPDF_eq_one hν]
 
 /-! ### Absolute continuity -/
@@ -262,6 +257,37 @@ theorem rnDeriv_studentTMeasure (ν : ℝ) :
     (studentTMeasure ν).rnDeriv volume =ᵐ[volume] studentTPDF ν :=
   Measure.rnDeriv_withDensity volume (measurable_studentTPDF ν)
 
+/-- Student's t measure is absolutely continuous with respect to Lebesgue measure. -/
+theorem studentTMeasure_absolutelyContinuous (ν : ℝ) : studentTMeasure ν ≪ volume := by
+  rw [studentTMeasure]
+  exact withDensity_absolutelyContinuous volume (studentTPDF ν)
+
+/-- A Student t law presented through its real-valued density. -/
+theorem integrable_studentTMeasure_iff {f : ℝ → ℝ} (hν : 0 < ν) :
+    Integrable f (studentTMeasure ν) ↔
+      Integrable (fun x : ℝ => studentTPDFReal ν x * f x) := by
+  have : IsProbabilityMeasure (studentTMeasure ν) := isProbabilityMeasure_studentTMeasure hν
+  rw [← integrable_toReal_rnDeriv_mul_iff (studentTMeasure_absolutelyContinuous ν)]
+  refine integrable_congr ?_
+  filter_upwards [rnDeriv_studentTMeasure ν] with x hx
+  rw [hx]
+  by_cases hρ : 0 ≤ studentTPDFReal ν x
+  · rw [studentTPDF, ENNReal.toReal_ofReal hρ]
+  · have hzero : studentTPDFReal ν x = 0 :=
+      le_antisymm (not_le.mp hρ).le (studentTPDFReal_nonneg ν x)
+    rw [studentTPDF, hzero, ENNReal.ofReal_zero, ENNReal.toReal_zero, zero_mul]
+
+/-- The real mass of a measurable set under a Student t law is the integral of its real-valued
+density. -/
+theorem measureReal_studentTMeasure (hν : 0 < ν) {s : Set ℝ} (hs : MeasurableSet s)
+    : (studentTMeasure ν).real s = ∫ z in s, studentTPDFReal ν z := by
+  have : IsProbabilityMeasure (studentTMeasure ν) := isProbabilityMeasure_studentTMeasure hν
+  rw [← Measure.setIntegral_toReal_rnDeriv' (studentTMeasure_absolutelyContinuous ν) hs]
+  refine setIntegral_congr_ae hs ?_
+  filter_upwards [rnDeriv_studentTMeasure ν] with x hx _
+  rw [hx]
+  exact ENNReal.toReal_ofReal (studentTPDFReal_nonneg ν x)
+
 /-! ### Symmetry -/
 
 /-- Student's t law is invariant under reflection in the origin: its density is even and Lebesgue
@@ -270,7 +296,7 @@ theorem studentTMeasure_map_neg (ν : ℝ) :
     (studentTMeasure ν).map (fun x => -x) = studentTMeasure ν := by
   refine Measure.ext fun t ht => ?_
   have hpre : MeasurableSet ((fun x : ℝ => -x) ⁻¹' t) := ht.preimage measurable_neg
-  rw [Measure.map_apply measurable_neg ht, studentTMeasure_def,
+  rw [Measure.map_apply measurable_neg ht, studentTMeasure,
     withDensity_apply _ hpre, withDensity_apply _ ht]
   have h := (Measure.measurePreserving_neg (volume : Measure ℝ)).setLIntegral_comp_preimage_emb
     (Homeomorph.neg ℝ).measurableEmbedding (studentTPDF ν) t
@@ -316,7 +342,7 @@ private lemma integrable_id_mul_studentTKernel (hν : 1 < ν) :
 private theorem integrable_id_studentTMeasure_of_one_lt (hν : 1 < ν) :
     Integrable id (studentTMeasure ν) := by
   have hνpos : 0 < ν := lt_trans zero_lt_one hν
-  rw [studentTMeasure_def, integrable_withDensity_iff (measurable_studentTPDF ν)
+  rw [studentTMeasure, integrable_withDensity_iff (measurable_studentTPDF ν)
     (ae_of_all _ fun _ => ENNReal.ofReal_lt_top)]
   simp_rw [id_eq, toReal_studentTPDF, studentTPDFReal_of_pos hνpos]
   have h := (integrable_id_mul_studentTKernel hν).const_mul
@@ -395,7 +421,7 @@ private theorem not_integrable_pow_studentTMeasure (hν : 0 < ν) (q : ℕ)
     (hνq : ν ≤ (q : ℝ)) :
     ¬ Integrable (fun x : ℝ => x ^ q) (studentTMeasure ν) := by
   intro hint
-  rw [studentTMeasure_def, integrable_withDensity_iff (measurable_studentTPDF ν)
+  rw [studentTMeasure, integrable_withDensity_iff (measurable_studentTPDF ν)
     (ae_of_all _ fun _ => ENNReal.ofReal_lt_top)] at hint
   simp_rw [toReal_studentTPDF] at hint
   let c : ℝ :=
@@ -437,13 +463,6 @@ theorem integrable_id_studentTMeasure_iff (hν : 0 < ν) :
     apply hnot
     simpa only [pow_one] using hint'
   · exact integrable_id_studentTMeasure_of_one_lt
-
-/-- The identity is not integrable under a Student t law with at most one degree of freedom:
-the mean does not exist. -/
-theorem not_integrable_id_studentTMeasure (hν0 : 0 < ν) (hν1 : ν ≤ 1) :
-    ¬ Integrable id (studentTMeasure ν) := by
-  rw [integrable_id_studentTMeasure_iff hν0]
-  exact not_lt.mpr hν1
 
 /-- The Bochner integral of the identity under a Student t measure is zero for every parameter,
 including by convention when the identity is not integrable. -/
@@ -501,7 +520,7 @@ private lemma integrable_sq_mul_studentTKernel (hν : 2 < ν) :
 private theorem integrable_sq_studentTMeasure_of_two_lt (hν : 2 < ν) :
     Integrable (fun x : ℝ => x ^ 2) (studentTMeasure ν) := by
   have hνpos : 0 < ν := lt_trans zero_lt_two hν
-  rw [studentTMeasure_def, integrable_withDensity_iff (measurable_studentTPDF ν)
+  rw [studentTMeasure, integrable_withDensity_iff (measurable_studentTPDF ν)
     (ae_of_all _ fun _ => ENNReal.ofReal_lt_top)]
   simp_rw [toReal_studentTPDF, studentTPDFReal_of_pos hνpos]
   have h := (integrable_sq_mul_studentTKernel hν).const_mul
@@ -586,7 +605,7 @@ theorem integral_sq_studentTMeasure (hν : 2 < ν) :
   have hthree : (3 : ℝ) / 2 = 1 / 2 + 1 := by ring
   have hgammaSum : (1 : ℝ) / 2 + 1 + (ν - 2) / 2 = (ν + 1) / 2 := by ring
   have hνhalf : ν / 2 = (ν - 2) / 2 + 1 := by ring
-  rw [studentTMeasure_def, integral_withDensity_eq_integral_toReal_smul
+  rw [studentTMeasure, integral_withDensity_eq_integral_toReal_smul
     (measurable_studentTPDF ν) (ae_of_all _ fun _ => ENNReal.ofReal_lt_top)]
   simp_rw [toReal_studentTPDF, smul_eq_mul, studentTPDFReal_of_pos hνpos]
   calc
@@ -658,7 +677,7 @@ theorem studentTPDFReal_one (x : ℝ) : studentTPDFReal 1 x = cauchyPDFReal 0 1 
 
 /-- **Student's t law with one degree of freedom is the standard Cauchy law.** -/
 theorem studentTMeasure_one : studentTMeasure 1 = cauchyMeasure 0 1 := by
-  rw [studentTMeasure_def, cauchyMeasure_of_scale_ne_zero 0 one_ne_zero]
+  rw [studentTMeasure, cauchyMeasure_of_scale_ne_zero 0 one_ne_zero]
   congr 1
   funext x
   rw [studentTPDF, studentTPDFReal_one, cauchyPDF]

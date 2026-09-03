@@ -247,22 +247,6 @@ private theorem integrableOn_pow_mul_studentTPDFReal_Ioi_iff (hν : 0 < ν) (hq 
   simpa [g, IntegrableOn, integrable_const_mul_iff hc] using
     integrableOn_studentTBetaKernel_Ioi_iff hν hq
 
-/-- A Student t law presented as Lebesgue measure with the real-valued density: the
-`withDensity` integrability bridge specialized to `studentTPDFReal`. -/
-private lemma integrable_studentTMeasure_iff {f : ℝ → ℝ} (hν : 0 < ν) :
-    Integrable f (studentTMeasure ν) ↔
-      Integrable (fun x : ℝ => studentTPDFReal ν x * f x) := by
-  have hpdf : studentTPDF ν = fun x => ENNReal.ofReal (studentTPDFReal ν x) := by
-    funext x
-    exact (studentTPDF_of_pos hν x).trans (by rw [studentTPDFReal_of_pos hν x])
-  have hden : studentTMeasure ν =
-      volume.withDensity (fun x : ℝ => ENNReal.ofReal (studentTPDFReal ν x)) := by
-    rw [studentTMeasure_def, hpdf]
-  rw [hden]
-  exact (integrable_withDensity_ofReal_iff (g := f) (μ := volume)
-    (measurable_studentTPDFReal ν).aemeasurable
-    (ae_of_all _ fun _ => studentTPDFReal_nonneg ν _)).trans (by simp [smul_eq_mul])
-
 /-! ### Exponential moments -/
 
 /-- The exponential of a nonzero multiple of the identity is not integrable under a Student t
