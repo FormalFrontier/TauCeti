@@ -49,6 +49,8 @@ schemes in the affine Hopf-algebra dictionary.
   `TauCeti.HopfIdeal.comapOfSurjective_comapOfSurjective`: identity and composition laws.
 * `TauCeti.HopfIdeal.comapOfSurjective_bialgEquiv_symm_apply`: inverse-image cancellation for a
   bialgebra equivalence.
+* `TauCeti.HopfIdeal.comapOrderIso`: inverse image along a bialgebra equivalence as an order
+  isomorphism of Hopf ideals.
 
 ## References
 
@@ -282,6 +284,16 @@ theorem comapOfSurjective_bialgEquiv_symm_apply (I : HopfIdeal R H) (e : H ≃�
   rw [mem_comapOfSurjective, mem_comapOfSurjective]
   simp only [BialgEquiv.toBialgHom_eq_coe, BialgEquiv.coe_toBialgHom,
     e.symm_apply_apply]
+
+/-- Inverse image along a bialgebra equivalence is an order isomorphism of Hopf ideals. -/
+@[expose] noncomputable def comapOrderIso (e : H ≃ₐc[R] K) :
+    HopfIdeal R K ≃o HopfIdeal R H where
+  toFun I := I.comapOfSurjective e.toBialgHom (EquivLike.surjective e)
+  invFun I := I.comapOfSurjective e.symm.toBialgHom (EquivLike.surjective e.symm)
+  left_inv I := comapOfSurjective_bialgEquiv_symm_apply I e.symm
+  right_inv I := comapOfSurjective_bialgEquiv_symm_apply I e
+  map_rel_iff' := comapOfSurjective_le_comapOfSurjective_iff e.toBialgHom
+    (EquivLike.surjective e)
 
 section Field
 

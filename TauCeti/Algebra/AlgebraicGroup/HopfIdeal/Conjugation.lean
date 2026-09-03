@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.Hopf.InnerConjugation
+public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.InnerConjugation
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Points.Basic
 
 /-!
@@ -15,14 +15,13 @@ A Hopf ideal `I` in a commutative Hopf algebra `H` cuts out a closed subgroup of
 group represented by `H`. Pulling `I` back along the coordinate automorphism attached to a
 rational point `g` cuts out the conjugate subgroup `g G_I g⁻¹`.
 
-The characteristic point theorem keeps the contravariance visible: a point `x` belongs to the
-subgroup cut out by `I` exactly when its conjugate by `g` belongs to the subgroup cut out by
-`I.conjugate g`.
+The characteristic point theorem states that a point `x` belongs to the subgroup cut out by `I`
+exactly when its conjugate by `g` belongs to the subgroup cut out by `I.conjugate g`.
 
 ## Main declarations
 
 * `TauCeti.HopfIdeal.conjugate`: the defining Hopf ideal of a conjugate closed subgroup.
-* `TauCeti.HopfIdeal.mem_quotientPointsSubgroup_conjugate_iff`: conjugation identifies the
+* `TauCeti.HopfIdeal.conj_mem_quotientPointsSubgroup_conjugate_iff`: conjugation identifies the
   corresponding algebra-valued point subgroups.
 * `TauCeti.HopfIdeal.conjugateOrderIso`: conjugation as an order automorphism of Hopf ideals.
 
@@ -69,19 +68,28 @@ belongs to the conjugate closed subgroup.
 
 Thus conjugation gives a bijection from the original subgroup's `A`-points to the conjugate
 subgroup's `A`-points, uniformly in the commutative value algebra `A`. -/
-@[simp]
-theorem mem_quotientPointsSubgroup_conjugate_iff (I : HopfIdeal R H)
+theorem conj_mem_quotientPointsSubgroup_conjugate_iff (I : HopfIdeal R H)
     (g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R))
     (A : CommAlgCat.{v} R) (x : HopfAlgebra.points (R := R) (H := H) A) :
-    CommHopfAlgCat.extendPoint H A g * x * (CommHopfAlgCat.extendPoint H A g)⁻¹ ∈
+    HopfAlgebra.extendPoint H A g * x * (HopfAlgebra.extendPoint H A g)⁻¹ ∈
         CommHopfAlgCat.quotientPointsSubgroup H (I.conjugate g) A ↔
       x ∈ CommHopfAlgCat.quotientPointsSubgroup H I A := by
   let f := (CommHopfAlgCat.innerConjugationIso H g).hom.hom
   have hf : Function.Bijective f :=
     ConcreteCategory.bijective_of_isIso (CommHopfAlgCat.innerConjugationIso H g).hom
   rw [← CommHopfAlgCat.mapPointsFunctor_innerConjugationIso_hom_app_apply H g A x]
-  -- The generic transport theorem reconstructs the categorical Hopf algebra from its carrier;
-  -- expose that presentation together with the point-map wrapper before applying it.
+  rw [CommHopfAlgCat.mapPointsFunctor_app_apply]
+  rw [← AlgHom.mapDomain_apply]
+  change AlgHom.mapDomain f x ∈ CommHopfAlgCat.quotientPointsSubgroup H (I.conjugate g) A ↔
+    x ∈ CommHopfAlgCat.quotientPointsSubgroup H I A
+  have he : (BialgEquiv.ofBijective f hf).toBialgHom = f := by
+    ext y
+    exact congrFun (BialgEquiv.coe_ofBijective f hf) y
+  rw [← he]
+  rw [BialgEquiv.toBialgHom_eq_coe]
+  rw [← AlgHom.mapDomainMulEquiv_apply (BialgEquiv.ofBijective f hf)]
+  -- The generic transport theorem reconstructs the categorical object from its carrier; this
+  -- `change` is only the residual `CommHopfAlgCat.of R ↑H` eta identification.
   change AlgHom.mapDomainMulEquiv (A := A) (BialgEquiv.ofBijective f hf) x ∈
       CommHopfAlgCat.quotientPointsSubgroup (_root_.CommHopfAlgCat.of R ↑H)
         (I.comapOfSurjective f hf.2) A ↔
@@ -96,10 +104,10 @@ theorem conjugate_one (I : HopfIdeal R H) :
         (1 : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R)) = I := by
   ext x
   rw [mem_conjugate_iff, CommHopfAlgCat.innerConjugationIso_one]
-  rfl
+  simp
 
-/-- Successive conjugation first by `g` and then by `h` is conjugation by `h * g`. The reversed
-order comes from the contravariance of defining ideals. -/
+/-- Successive conjugation first by `g` and then by `h` is conjugation by `h * g`, in the usual
+order for the action by inner automorphisms. -/
 @[simp]
 theorem conjugate_conjugate (I : HopfIdeal R H)
     (g h : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R)) :
@@ -107,16 +115,16 @@ theorem conjugate_conjugate (I : HopfIdeal R H)
   ext x
   rw [mem_conjugate_iff, mem_conjugate_iff, mem_conjugate_iff,
     CommHopfAlgCat.innerConjugationIso_mul]
-  rfl
+  simp only [Iso.trans_hom, CategoryTheory.ConcreteCategory.comp_apply]
 
 /-- Conjugating by `g⁻¹` undoes conjugation by `g`. -/
-theorem conjugate_inv_conjugate (I : HopfIdeal R H)
+theorem conjugate_conjugate_inv (I : HopfIdeal R H)
     (g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R)) :
     (I.conjugate g).conjugate g⁻¹ = I := by
   rw [conjugate_conjugate, inv_mul_cancel g, conjugate_one]
 
 /-- Conjugating by `g` undoes conjugation by `g⁻¹`. -/
-theorem conjugate_conjugate_inv (I : HopfIdeal R H)
+theorem conjugate_inv_conjugate (I : HopfIdeal R H)
     (g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R)) :
     (I.conjugate g⁻¹).conjugate g = I := by
   rw [conjugate_conjugate, mul_inv_cancel g, conjugate_one]
@@ -124,21 +132,18 @@ theorem conjugate_conjugate_inv (I : HopfIdeal R H)
 /-- Conjugation by a rational point as an order automorphism of defining Hopf ideals. -/
 noncomputable def conjugateOrderIso
     (g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R)) :
-    HopfIdeal R H ≃o HopfIdeal R H where
-  toFun I := I.conjugate g
-  invFun I := I.conjugate g⁻¹
-  left_inv I := conjugate_inv_conjugate I g
-  right_inv I := conjugate_conjugate_inv I g
-  map_rel_iff' := comapOfSurjective_le_comapOfSurjective_iff
+    HopfIdeal R H ≃o HopfIdeal R H :=
+  comapOrderIso (BialgEquiv.ofBijective
     (CommHopfAlgCat.innerConjugationIso H g).hom.hom
-      (ConcreteCategory.bijective_of_isIso
-        (CommHopfAlgCat.innerConjugationIso H g).hom).2
+    (ConcreteCategory.bijective_of_isIso
+      (CommHopfAlgCat.innerConjugationIso H g).hom))
 
 /-- Applying the conjugation order isomorphism conjugates the defining Hopf ideal. -/
 @[simp]
 theorem conjugateOrderIso_apply
     (g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R)) (I : HopfIdeal R H) :
     conjugateOrderIso g I = I.conjugate g := by
+  unfold conjugateOrderIso comapOrderIso conjugate
   rfl
 
 /-- Applying the inverse conjugation order isomorphism conjugates by the inverse point. -/
@@ -146,7 +151,8 @@ theorem conjugateOrderIso_apply
 theorem conjugateOrderIso_symm_apply
     (g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R)) (I : HopfIdeal R H) :
     (conjugateOrderIso g).symm I = I.conjugate g⁻¹ := by
-  rfl
+  apply (conjugateOrderIso g).injective
+  rw [OrderIso.apply_symm_apply, conjugateOrderIso_apply, conjugate_inv_conjugate]
 
 end HopfIdeal
 

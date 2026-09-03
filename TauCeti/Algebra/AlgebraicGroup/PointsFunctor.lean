@@ -24,6 +24,7 @@ functor of points has values `A ↦ (H →ₐ[R] A)` and group law given by conv
 ## Main definitions
 
 * `HopfAlgebra.points`: the bundled group of `A`-points.
+* `HopfAlgebra.extendPoint`: extension of ground-ring-valued points to a value algebra.
 * `HopfAlgebra.mapPoints`: the group homomorphism induced by post-composition in the value
   algebra.
 * `HopfAlgebra.pointsFunctor`: the functor `CommAlgCat R ⥤ GrpCat`.
@@ -46,7 +47,7 @@ namespace TauCeti
 
 namespace HopfAlgebra
 
-universe u v w
+universe u v w x
 
 variable {R : Type u} [CommRing R] {H : Type v} [Semiring H] [_root_.HopfAlgebra R H]
 
@@ -56,6 +57,28 @@ The underlying type is `WithConv (H →ₐ[R] A)`: algebra homomorphisms from `H
 the convolution group structure supplied by the antipode of `H`. -/
 noncomputable abbrev points (A : CommAlgCat.{w} R) : GrpCat.{max v w} :=
   GrpCat.of (WithConv (H →ₐ[R] A))
+
+/-- Extension of ground-ring-valued points to `A`-valued points along the structure map of `A`. -/
+@[expose] noncomputable def extendPoint (H : Type v) [Semiring H] [_root_.HopfAlgebra R H]
+    (A : CommAlgCat.{w} R) :
+    points (H := H) (CommAlgCat.of R R) →* points (H := H) A :=
+  AlgHom.mapValue (Algebra.ofId R A)
+
+/-- Evaluation of an extended point is obtained by applying the value algebra's structure map. -/
+@[simp]
+theorem extendPoint_ofConv (H : Type v) [Semiring H] [_root_.HopfAlgebra R H]
+    (A : CommAlgCat.{w} R) (g : points (H := H) (CommAlgCat.of R R)) (h : H) :
+    (extendPoint H A g).ofConv h = algebraMap R A (g.ofConv h) := by
+  simp only [extendPoint, AlgHom.mapValue_apply, WithConv.ofConv_toConv, AlgHom.comp_apply,
+    Algebra.ofId_apply]
+
+/-- Post-composition of an extended point is extension to the target algebra. -/
+theorem mapValue_extendPoint (H : Type v) [Semiring H] [_root_.HopfAlgebra R H]
+    {A : CommAlgCat.{w} R} {B : CommAlgCat.{x} R} (f : A →ₐ[R] B)
+    (g : points (H := H) (CommAlgCat.of R R)) :
+    AlgHom.mapValue (H := H) f (extendPoint H A g) = extendPoint H B g := by
+  rw [extendPoint, extendPoint, ← MonoidHom.comp_apply, ← AlgHom.mapValue_comp,
+    Algebra.comp_ofId]
 
 /-- The group homomorphism on points induced by a morphism of value algebras.
 
@@ -96,6 +119,14 @@ lemma mapPoints_id (A : CommAlgCat.{w} R) :
 lemma mapPoints_comp {A B C : CommAlgCat.{w} R} (φ : A ⟶ B) (ψ : B ⟶ C) :
     mapPoints (H := H) (φ ≫ ψ) = mapPoints (H := H) φ ≫ mapPoints (H := H) ψ := by
   simp only [mapPoints, CommAlgCat.hom_comp, AlgHom.mapValue_comp, GrpCat.ofHom_comp]
+
+/-- The categorical point map sends an extended point to its extension in the target algebra. -/
+@[simp]
+theorem mapPoints_extendPoint {A B : CommAlgCat.{w} R} (f : A ⟶ B)
+    (g : points (H := H) (CommAlgCat.of R R)) :
+    mapPoints (H := H) f (extendPoint H A g) = extendPoint H B g := by
+  rw [mapPoints_apply]
+  exact mapValue_extendPoint H f.hom g
 
 /-- The functor of points of the affine group object represented by a Hopf algebra.
 
