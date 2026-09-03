@@ -18,13 +18,13 @@ and carries unramifiedness from `q` to `q.comap ψ`.
 
 ## Main results
 
-* `Algebra.isUnramifiedAt_of_eq_comap_algEquiv`: if `B` is unramified at `q` over `R`, then `A` is
+* `AlgEquiv.isUnramifiedAt_of_eq_comap`: if `B` is unramified at `q` over `R`, then `A` is
   unramified at any prime equal to `q.comap ψ`.
 -/
 
 public section
 
-namespace Algebra
+namespace AlgEquiv
 
 variable {R A B : Type*} [CommRing R] [CommRing A] [CommRing B] [Algebra R A] [Algebra R B]
 
@@ -34,9 +34,9 @@ variable {R A B : Type*} [CommRing R] [CommRing A] [CommRing B] [Algebra R A] [A
 The transported prime is a parameter `p` carrying the equation `p = q.comap ψ`, rather than the
 term `q.comap ψ` itself: `IsUnramifiedAt` takes the primality of its ideal as an instance
 argument, so `rw` cannot turn a conclusion about `q.comap ψ` into one about `p`. -/
-theorem isUnramifiedAt_of_eq_comap_algEquiv (ψ : A ≃ₐ[R] B) {q : Ideal B} [q.IsPrime]
-    {p : Ideal A} [p.IsPrime] (hp : p = q.comap ψ) [IsUnramifiedAt R q] :
-    IsUnramifiedAt R p := by
+theorem isUnramifiedAt_of_eq_comap (ψ : A ≃ₐ[R] B) {q : Ideal B} [q.IsPrime]
+    {p : Ideal A} [p.IsPrime] (hp : p = q.comap ψ) [Algebra.IsUnramifiedAt R q] :
+    Algebra.IsUnramifiedAt R p := by
   subst hp
   have H : Submonoid.map (ψ.symm : B ≃ₐ[R] A) q.primeCompl = (q.comap ψ).primeCompl := by
     ext x
@@ -44,7 +44,7 @@ theorem isUnramifiedAt_of_eq_comap_algEquiv (ψ : A ≃ₐ[R] B) {q : Ideal B} [
     · rintro ⟨y, hy, rfl⟩
       exact fun hx ↦ hy (by rwa [SetLike.mem_coe, Ideal.mem_comap, ψ.apply_symm_apply] at hx)
     · exact fun hx ↦ ⟨ψ x, hx, ψ.symm_apply_apply x⟩
-  exact FormallyUnramified.of_equiv (IsLocalization.algEquivOfAlgEquiv
+  exact Algebra.FormallyUnramified.of_equiv (IsLocalization.algEquivOfAlgEquiv
     (Localization.AtPrime q) (Localization.AtPrime (q.comap ψ)) ψ.symm H)
 
-end Algebra
+end AlgEquiv

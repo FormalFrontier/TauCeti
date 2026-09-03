@@ -8,8 +8,6 @@ module
 public import Mathlib.NumberTheory.RamificationInertia.Galois
 public import Mathlib.RingTheory.Frobenius
 public import TauCeti.NumberTheory.NumberField.Frobenius
-public import TauCeti.NumberTheory.NumberField.AutomorphismAction
-public import TauCeti.RingTheory.Unramified.AlgEquiv
 
 /-!
 # The Artin symbol of an unramified prime
@@ -119,57 +117,12 @@ Frobenius condition. The symbol itself is therefore equivariant for the induced 
 
 variable {L L' : Type*} [Field L] [Algebra K L] [Field L'] [Algebra K L']
 
-omit [NumberField K] in
-/-- **Unramifiedness above `𝔭` does not depend on the model of the extension.** -/
-theorem forall_isUnramifiedAt_iff_of_algEquiv (e : L ≃ₐ[K] L') (𝔭 : Ideal (𝓞 K)) :
-    (∀ (Q : Ideal (𝓞 L)) [Q.IsPrime] [Q.LiesOver 𝔭], Algebra.IsUnramifiedAt (𝓞 K) Q) ↔
-      ∀ (Q : Ideal (𝓞 L')) [Q.IsPrime] [Q.LiesOver 𝔭], Algebra.IsUnramifiedAt (𝓞 K) Q := by
-  -- Both directions read `Q` as the transport of the prime under it, whose primality and lying
-  -- over `𝔭` are instances (`Ideal.IsPrime.comap`, `Ideal.comap_liesOver`).
-  constructor
-  · intro h Q _ _
-    have hQ : (Q.comap (RingOfIntegers.mapAlgEquiv e)).comap
-        (RingOfIntegers.mapAlgEquiv e).symm = Q := by
-      ext x
-      simp [Ideal.mem_comap]
-    have _ : Algebra.IsUnramifiedAt (𝓞 K) (Q.comap (RingOfIntegers.mapAlgEquiv e)) := h _
-    exact Algebra.isUnramifiedAt_of_eq_comap_algEquiv (RingOfIntegers.mapAlgEquiv e).symm hQ.symm
-  · intro h Q _ _
-    have hQ : (Q.comap (RingOfIntegers.mapAlgEquiv e).symm).comap
-        (RingOfIntegers.mapAlgEquiv e) = Q := by
-      ext x
-      simp [Ideal.mem_comap]
-    have _ : Algebra.IsUnramifiedAt (𝓞 K) (Q.comap (RingOfIntegers.mapAlgEquiv e).symm) := h _
-    exact Algebra.isUnramifiedAt_of_eq_comap_algEquiv (RingOfIntegers.mapAlgEquiv e) hQ.symm
-
-omit [NumberField K] in
-/-- **A Frobenius travels along an isomorphism of extensions.** If `σ` is an arithmetic Frobenius
-at `Q`, then `AlgEquiv.autCongr e σ` is one at the prime of `𝓞 L'` matching `Q`. -/
-theorem isArithFrobAt_autCongr (e : L ≃ₐ[K] L') {Q : Ideal (𝓞 L)} {σ : L ≃ₐ[K] L}
-    (hσ : IsArithFrobAt (𝓞 K) σ Q) :
-    IsArithFrobAt (𝓞 K) (AlgEquiv.autCongr e σ)
-      (Q.comap (RingOfIntegers.mapAlgEquiv e).symm) := by
-  -- The two primes lie over the same prime of `𝓞 K`, so the Frobenius exponent is unchanged.
-  have hunder : (Q.comap (RingOfIntegers.mapAlgEquiv e).symm).under (𝓞 K) = Q.under (𝓞 K) :=
-    (Ideal.LiesOver.over (p := Q.under (𝓞 K))
-      (P := Q.comap (RingOfIntegers.mapAlgEquiv e).symm)).symm
-  intro x
-  rw [MulSemiringAction.toAlgHom_apply, Ideal.mem_comap, hunder, map_sub, map_pow]
-  -- Conjugating by `e` is what `autCongr e` does, so the induced map on `𝓞` is equivariant.
-  have key : (RingOfIntegers.mapAlgEquiv e).symm (AlgEquiv.autCongr e σ • x) =
-      σ • (RingOfIntegers.mapAlgEquiv e).symm x := by
-    apply RingOfIntegers.ext
-    change e.symm ((AlgEquiv.autCongr e σ • x : 𝓞 L') : L') = σ (e.symm (x : L'))
-    simp
-  rw [key, ← MulSemiringAction.toAlgHom_apply (𝓞 K)]
-  exact hσ _
-
 variable [NumberField L] [IsGalois K L] [NumberField L'] [IsGalois K L']
 
 /-- **The Artin symbol is equivariant under an isomorphism of extensions.** For `e : L ≃ₐ[K] L'`,
 the symbol computed in `L'` is the image of the one computed in `L` under the induced isomorphism
 `AlgEquiv.autCongr e` of Galois groups. -/
-theorem artinSymbol_eq_map_autCongr (e : L ≃ₐ[K] L') (𝔭 : Ideal (𝓞 K)) [𝔭.IsMaximal]
+theorem artinSymbol_eq_map_autCongr (𝔭 : Ideal (𝓞 K)) [𝔭.IsMaximal] (e : L ≃ₐ[K] L')
     (hur : ∀ (Q : Ideal (𝓞 L)) [Q.IsPrime] [Q.LiesOver 𝔭], Algebra.IsUnramifiedAt (𝓞 K) Q)
     (hur' : ∀ (Q : Ideal (𝓞 L')) [Q.IsPrime] [Q.LiesOver 𝔭], Algebra.IsUnramifiedAt (𝓞 K) Q) :
     artinSymbol 𝔭 hur' =
@@ -180,7 +133,7 @@ theorem artinSymbol_eq_map_autCongr (e : L ≃ₐ[K] L') (𝔭 : Ideal (𝓞 K))
     (Ideal.ne_bot_of_liesOver_of_ne_bot (NeZero.ne 𝔭) Q₀)
   rw [artinSymbol_eq_mk_of_isArithFrobAt 𝔭 hur Q₀ σ₀ hσ₀,
     artinSymbol_eq_mk_of_isArithFrobAt 𝔭 hur' (Q₀.comap (RingOfIntegers.mapAlgEquiv e).symm)
-      (AlgEquiv.autCongr e σ₀) (isArithFrobAt_autCongr e hσ₀)]
+      (AlgEquiv.autCongr e σ₀) (e.isArithFrobAt_autCongr hσ₀)]
   rfl
 
 end IsoOfExtensions

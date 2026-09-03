@@ -62,11 +62,6 @@ The last two are what let the density arguments discard a finite exceptional set
 one class at a time: a lower density bound for each class can be squeezed against a partition of
 a cofinite set, which is how the crossing argument produces exact densities.
 
-## References
-
-The definition of `frobeniusPrimeSet` and the statement of `disjoint_frobeniusPrimeSet` are taken
-from `TauCetiRoadmap/Chebotarev/Suggested.lean`, including the dependent membership condition and
-the `HeightOneSpectrum (𝓞 K)` carrier.
 -/
 
 public section
@@ -175,7 +170,7 @@ isomorphism `AlgEquiv.autCongr e` of Galois groups.
 
 So the fibres depend only on the extension `L / K` up to isomorphism, not on the model of `L`
 chosen to compute the Artin symbol. -/
-theorem frobeniusPrimeSet_map_autCongr (e : L ≃ₐ[K] L') (C : ConjClasses (L ≃ₐ[K] L)) :
+theorem frobeniusPrimeSet_map_autCongr (C : ConjClasses (L ≃ₐ[K] L)) (e : L ≃ₐ[K] L') :
     frobeniusPrimeSet K L' (ConjClasses.map (AlgEquiv.autCongr e).toMonoidHom C) =
       frobeniusPrimeSet K L C := by
   -- The two induced maps on conjugacy classes are inverse to one another.
@@ -191,11 +186,11 @@ theorem frobeniusPrimeSet_map_autCongr (e : L ≃ₐ[K] L') (C : ConjClasses (L 
   simp only [mem_frobeniusPrimeSet_iff]
   constructor
   · rintro ⟨hur', hC⟩
-    have hur := (forall_isUnramifiedAt_iff_of_algEquiv e 𝔭.asIdeal).mpr hur'
-    exact ⟨hur, by rw [artinSymbol_eq_map_autCongr e.symm 𝔭.asIdeal hur' hur, hC, hcomp]⟩
+    have hur := (e.forall_isUnramifiedAt_iff 𝔭.asIdeal).mpr hur'
+    exact ⟨hur, by rw [artinSymbol_eq_map_autCongr 𝔭.asIdeal e.symm hur' hur, hC, hcomp]⟩
   · rintro ⟨hur, hC⟩
-    have hur' := (forall_isUnramifiedAt_iff_of_algEquiv e 𝔭.asIdeal).mp hur
-    exact ⟨hur', by rw [artinSymbol_eq_map_autCongr e 𝔭.asIdeal hur hur', hC]⟩
+    have hur' := (e.forall_isUnramifiedAt_iff 𝔭.asIdeal).mp hur
+    exact ⟨hur', by rw [artinSymbol_eq_map_autCongr 𝔭.asIdeal e hur hur', hC]⟩
 
 end IsoOfExtensions
 
