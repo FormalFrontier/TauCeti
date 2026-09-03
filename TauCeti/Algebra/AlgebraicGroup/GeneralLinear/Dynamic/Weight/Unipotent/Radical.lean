@@ -55,7 +55,7 @@ variable {N : ℕ}
 /-- **The unipotent radical of an injective-weight parabolic is its weight-unipotent subgroup.**
 The pullback along the displayed object equality presents the result in the coordinate algebra
 where the canonical weight-unipotent ideal is defined. -/
-theorem unipotentRadicalDefiningIdeal_weightParabolicFiniteTypeCoordinateHopfAlgebra
+@[simp] theorem unipotentRadicalDefiningIdeal_weightParabolicFiniteTypeCoordinateHopfAlgebra
     (k : Type u) [Field k] (w : Fin N → ℤ) (hw : Function.Injective w) :
     (FiniteTypeCommHopfAlgCat.unipotentRadicalDefiningIdeal
         (weightParabolicFiniteTypeCoordinateHopfAlgebra k w)).comapOfSurjective
