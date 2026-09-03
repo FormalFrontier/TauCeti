@@ -236,10 +236,9 @@ theorem mem_closure_image_inter_sphere_inter_setOf_im_pos_and_mem_closure_inter_
 
 /-- **An image side that meets the inside of such a curve lies inside it.** The side is
 preconnected as a continuous image of a preconnected set and disjoint from `K` by
-`TauCeti.disjoint_image_of_subset_closure_image_inter_sphere_union_frontier_image`,
-so `IsPreconnected.subset_filledHull`
-traps it in the bounded component of `Kᶜ` it meets. Instantiate `V` at `U ∩ ball ζ ρ` for the near
-side and at `U \ closedBall ζ ρ` for the far side. -/
+`TauCeti.disjoint_image_of_subset_closure_image_inter_sphere_union_frontier_image`, so
+`IsPreconnected.subset_filledHull` traps it in the bounded component of `Kᶜ` it meets. Instantiate
+`V` at `U ∩ ball ζ ρ` for the near side and at `U \ closedBall ζ ρ` for the far side. -/
 private theorem image_subset_filledHull_of_disjoint_inter_sphere {U V K : Set ℂ} (hUo : IsOpen U)
     (hd : DifferentiableOn ℂ f U) (hinj : InjOn f U) (hVU : V ⊆ U)
     (hV : Disjoint V (U ∩ sphere ζ ρ)) (hVc : IsPreconnected V)

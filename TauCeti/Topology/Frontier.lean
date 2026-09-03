@@ -78,6 +78,9 @@ side of such a crosscut cuts off, whose description as a union of cluster sets i
 statement about a closure. Nothing here is specific to those uses; no lemma mentions a metric, let
 alone a holomorphic map.
 
+`IsPreconnected.inter_frontier_nonempty` extends Mathlib's root-level `IsPreconnected` API, so it
+is declared there and can be invoked directly on a preconnectedness hypothesis.
+
 ## Main results
 
 * `IsPreconnected.inter_frontier_nonempty` — a preconnected set meeting both a set and its
@@ -106,8 +109,7 @@ Nothing is assumed about `V`; the argument is that `(frontier V)ᶜ` is the unio
 open sets `interior V` and `interior Vᶜ`, so a preconnected set missing the frontier is confined to
 one of them and therefore cannot straddle `V`. -/
 theorem _root_.IsPreconnected.inter_frontier_nonempty (hS : IsPreconnected S)
-    (h₁ : (S ∩ V).Nonempty)
-    (h₂ : (S \ V).Nonempty) : (S ∩ frontier V).Nonempty := by
+    (h₁ : (S ∩ V).Nonempty) (h₂ : (S \ V).Nonempty) : (S ∩ frontier V).Nonempty := by
   by_contra hcon
   have hsub : S ⊆ interior V ∪ interior Vᶜ := by
     rw [← compl_frontier_eq_union_interior]
