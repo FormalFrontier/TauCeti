@@ -47,6 +47,10 @@ variable {R S T : Type*} [CommRing R] [CommRing S] [CommRing T] [Algebra R S] [A
 theorem under_mapAlgEquiv (e : S ≃ₐ[R] T) (Q : Ideal S) :
     (Q.map e).under R = Q.under R := by
   rw [under_def, under_def]
+  -- `Ideal.map` is applied via `RingHomClass`, so the `AlgEquiv` and `RingEquiv`
+  -- coercions give syntactically different terms; they coincide definitionally
+  -- (Mathlib proves the underlying `RingHom` equality
+  -- `AlgEquiv.toRingEquiv_toRingHom` itself by `rfl`), hence this `rfl`.
   have hmap : Q.map e = Q.map (e.toRingEquiv : S →+* T) := rfl
   rw [hmap, map_comap_of_equiv]
   ext x
@@ -103,8 +107,11 @@ theorem mapAlgEquiv (e : S ≃ₐ[R] T) (Q : Ideal S) (φ : S →ₐ[R] S)
   simp only [AlgHom.comp_apply]
   have h2 : (e : S →ₐ[R] T) (φ (e.symm x) - (e.symm x) ^ Nat.card (R ⧸ Q.under R))
       ∈ Q.map e := Ideal.mem_map_of_mem e (hφ (e.symm x))
-  rw [map_sub, map_pow, show (e : S →ₐ[R] T) (e.symm x) = x from AlgEquiv.apply_symm_apply e x]
-    at h2
+  -- Push the conjugated map inside with named lemmas only: unfold the
+  -- `(↑e : S →ₐ[R] T)` application via `toAlgHom_apply`, then cancel
+  -- `e (e.symm x)` with `apply_symm_apply` (`simp only` rewrites every occurrence;
+  -- a single `rw` rewrites only the first unified instance).
+  simp only [map_sub, map_pow, AlgEquiv.toAlgHom_apply, AlgEquiv.apply_symm_apply] at h2
   exact h2
 
 /-- **Being an arithmetic Frobenius is invariant under conjugation by an algebra equivalence.** -/
