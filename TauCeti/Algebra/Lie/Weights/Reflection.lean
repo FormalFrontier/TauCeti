@@ -7,8 +7,6 @@ module
 
 public import Mathlib.Algebra.Lie.Weights.RootSystem
 
-public section
-
 /-!
 # Reflections of the root system of a Cartan subalgebra
 
@@ -23,6 +21,8 @@ its reflections back in Lie-theoretic terms: the reflection in a root `α` sends
 * `TauCeti.coe_rootSystem_reflection_apply`: the reflection of the root system in a root, read as a
   function on the Cartan subalgebra.
 -/
+
+public section
 
 namespace TauCeti
 

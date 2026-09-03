@@ -73,13 +73,13 @@ theorem ConditionallyIIDWith.map_values {μ : Measure Ω} {X : ι → Ω → α}
   refine ConditionallyIIDWith.intro (fun i => hf.comp_aemeasurable (h.aemeasurable i))
     (hmapQ.comp h.measurable_directing) fun m k hk => ?_
   set F : (Fin m → α) → Fin m → β := fun x i => f (x i) with hF
-  have hFmeas : Measurable F := measurable_pi_lambda _ fun i => hf.comp (measurable_pi_apply i)
+  have hFmeas : Measurable F := Measurable.of_eval fun i => hf.comp (measurable_pi_apply i)
   have hΦ : Measurable
       (Prod.map (fun Q : ProbabilityMeasure α => Q.map f) F) :=
     hmapQ.prodMap hFmeas
   have hinner : AEMeasurable (fun ω => (ν ω, fun i : Fin m => X (k i) ω)) μ :=
     h.measurable_directing.aemeasurable.prodMk
-      (aemeasurable_pi_lambda _ fun i => h.aemeasurable (k i))
+      (AEMeasurable.of_eval fun i => h.aemeasurable (k i))
   have hK : AEMeasurable (fun ω =>
       (Measure.dirac (ν ω)).prod (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure) μ :=
     (TauCeti.MeasureTheory.measurable_dirac_prod_probabilityMeasure_pi_const_toMeasure ν
@@ -124,12 +124,12 @@ theorem ConditionallyIIDWith.of_pathLaw {μ : Measure Ω} {X : ℕ → Ω → α
     (hX_meas : ∀ n, Measurable (X n)) {ν : (ℕ → α) → ProbabilityMeasure α}
     (hν : ConditionallyIIDWith (pathLaw μ X) (fun n p => p n) ν) :
     ConditionallyIIDWith μ X fun ω => ν fun i => X i ω := by
-  have hφ : Measurable (fun ω => fun i => X i ω : Ω → ℕ → α) := measurable_pi_lambda _ hX_meas
+  have hφ : Measurable (fun ω => fun i => X i ω : Ω → ℕ → α) := Measurable.of_eval hX_meas
   have hνm : Measurable ν := hν.measurable_directing
   refine ConditionallyIIDWith.intro (fun i => (hX_meas i).aemeasurable) (hνm.comp hφ) ?_
   intro m k hk
   have hcoord : Measurable (fun p : ℕ → α => fun i : Fin m => p (k i)) :=
-    measurable_pi_lambda _ fun i => measurable_pi_apply (k i)
+    Measurable.of_eval fun i => measurable_pi_apply (k i)
   have houter : Measurable (fun p : ℕ → α => (ν p, fun i : Fin m => p (k i))) :=
     hνm.prodMk hcoord
   have hker : Measurable (fun p : ℕ → α =>

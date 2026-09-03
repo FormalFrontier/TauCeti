@@ -9,8 +9,6 @@ public import Mathlib.LinearAlgebra.Determinant
 public import Mathlib.LinearAlgebra.BilinearForm.Properties
 import TauCeti.LinearAlgebra.BilinearForm.Multilinear
 
-public section
-
 /-!
 # Determinant transformation laws, and determinants of updated rows
 
@@ -72,6 +70,8 @@ field, for a scalar-valued form, evaluated at a basis, and proves the first by e
 in coordinates; none of that is reproduced here. `TauCeti.Matrix.detRowAlternating_mulVec` predates
 that port and is not from the source.
 -/
+
+public section
 
 open Module
 

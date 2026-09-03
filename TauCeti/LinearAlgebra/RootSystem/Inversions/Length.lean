@@ -7,8 +7,6 @@ module
 
 public import TauCeti.LinearAlgebra.RootSystem.Inversions.StrongExchange
 
-public section
-
 /-!
 # Length equals inversions
 
@@ -72,6 +70,8 @@ nonempty reduced word has a nonempty inversion set". This file therefore precede
 The argument is the one in J. E. Humphreys, *Introduction to Lie Algebras and Representation
 Theory*, GTM 9, Ch. III, §10.3, and in Bourbaki, *Lie Groups and Lie Algebras*, Chapters 4--6.
 -/
+
+public section
 
 namespace TauCeti
 

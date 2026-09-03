@@ -64,7 +64,7 @@ be split into countably many measurable fibres. -/
 theorem measurable_reindexPopulation {ι κ : Type*} [Countable κ] [MeasurableSpace κ]
     [MeasurableSingletonClass κ] :
     Measurable (fun p : (ι → κ) × (κ → α) => fun i : ι => p.2 (p.1 i)) := by
-  refine measurable_pi_lambda _ fun i => ?_
+  refine Measurable.of_eval fun i => ?_
   intro s hs
   have hpreimage : (fun p : (ι → κ) × (κ → α) => p.2 (p.1 i)) ⁻¹' s =
       ⋃ j : κ, {p | p.1 i = j} ∩ {p | p.2 j ∈ s} := by
@@ -173,7 +173,7 @@ theorem ExchangeableAt.sampleWithoutReplacement_eq_prefixLaw
       apply lintegral_congr_ae
       filter_upwards [hae] with k hk
       rw [← Measure.map_apply
-        (measurable_pi_lambda _ fun i : Fin m => measurable_pi_apply (k i)) hA, hmap k hk]
+        (Measurable.of_eval fun i : Fin m => measurable_pi_apply (k i)) hA, hmap k hk]
     _ = prefixLaw μ X m A := by simp
 
 end Probability

@@ -9,8 +9,6 @@ public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.Basic
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.E7.Lattice
 import TauCeti.LinearAlgebra.Matrix.Gram
 
-public section
-
 /-!
 # The simply connected root datum of type `E₇`
 
@@ -49,6 +47,8 @@ This is the `E₇` branch of the target "a named datum per valid type" in Layer 
 `TauCetiRoadmap/RepresentationTheory/RootSystems/README.md`. Its assembly follows the existing
 `E₈` construction in this directory.
 -/
+
+public section
 
 namespace TauCeti
 

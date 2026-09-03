@@ -9,8 +9,6 @@ module
 public import Mathlib.LinearAlgebra.Matrix.Symmetric
 import Mathlib.Tactic.Ring
 
-public section
-
 /-!
 # Gram forms and matrix reflection
 
@@ -24,6 +22,8 @@ and quadratic forms attached to a symmetric matrix.
 * `TauCeti.reflect_vecMul_dotProduct_self`: reflection in a vector of norm two preserves the value
   `(v ᵥ* M) ⬝ᵥ v` of the form at every vector.
 -/
+
+public section
 
 namespace TauCeti
 

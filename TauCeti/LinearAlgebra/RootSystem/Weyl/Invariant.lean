@@ -10,8 +10,6 @@ public import TauCeti.LinearAlgebra.RootSystem.Weyl.Alternating
 -- proofs below, never part of the type of an exported declaration.
 import Mathlib.Algebra.MonoidAlgebra.MapDomain
 
-public section
-
 /-!
 # Weyl-invariant elements of the group algebra of a weight space
 
@@ -67,6 +65,8 @@ root pairing and the Lie-algebra statement is a specialization rather than a reb
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, Ch. VI, §24.2.
 * J.-P. Serre, *Complex Semisimple Lie Algebras*, Ch. VII, §7.
 -/
+
+public section
 
 namespace TauCeti
 

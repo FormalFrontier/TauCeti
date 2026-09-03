@@ -186,7 +186,7 @@ theorem mixedIIDWith_of_conditionallyIIDWith {μ : Measure Ω} {X : ι → Ω �
   calc blockLaw μ X k
       = (μ.map fun ω => (ν ω, fun i : Fin m => X (k i) ω)).snd := by
         rw [blockLaw_def, Measure.snd_map_prodMk₀ h.measurable_directing.aemeasurable
-          (aemeasurable_pi_lambda _ fun i => h.aemeasurable (k i))]
+          (AEMeasurable.of_eval fun i => h.aemeasurable (k i))]
     _ = (μ.bind fun ω => (Measure.dirac (ν ω)).prod
           (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure).snd := by
         rw [h.jointLaw_eq_disintegration k hk]

@@ -250,6 +250,33 @@ variable {R : Type v} [CommRing R] [Algebra ℤ R]
 -- Match tensor products to the module structure carried by the explicit `ℤ`-algebra.
 attribute [local instance high] Algebra.toModule
 
+/-- Outside the truncation the reordered sextuple already has a vanishing factor: if each family
+`D‹·›` vanishes from its own bound `k‹·›` onwards, then past
+`kx + ky + kz + 2 * kw + 3 * kv + 3 * ks` in either of the two weightings the product is zero.
+This is the vanishing half of `sum_smul_mul_sum_smul_of_chainG2Order`'s hypothesis, stated for
+arbitrary families over any `MulZeroClass` so that the type-`G₂` proof only has to supply the six
+bounds. -/
+private theorem mul_eq_zero_of_le_of_chainG2Order {B : Type*} [MulZeroClass B]
+    (Dx Dy Dz Dw Dv Ds : ℕ → B) {kx ky kz kw kv ks : ℕ}
+    (hvx : ∀ n, kx ≤ n → Dx n = 0) (hvy : ∀ n, ky ≤ n → Dy n = 0)
+    (hvz : ∀ n, kz ≤ n → Dz n = 0) (hvw : ∀ n, kw ≤ n → Dw n = 0)
+    (hvv : ∀ n, kv ≤ n → Dv n = 0) (hvs : ∀ n, ks ≤ n → Ds n = 0) (a b c d e q : ℕ)
+    (h : kx + ky + kz + 2 * kw + 3 * kv + 3 * ks ≤ a + b + c + d + 2 * e ∨
+      kx + ky + kz + 2 * kw + 3 * kv + 3 * ks ≤ q + b + 2 * c + 3 * d + 3 * e) :
+    Dy a * Dz b * Dw c * Dv d * Ds e * Dx q = 0 := by
+  by_cases ha : ky ≤ a
+  · simp [hvy a ha]
+  · by_cases hq : kx ≤ q
+    · simp [hvx q hq]
+    · by_cases hb : kz ≤ b
+      · simp [hvz b hb]
+      · by_cases hc : kw ≤ c
+        · simp [hvw c hc]
+        · by_cases hd : kv ≤ d
+          · simp [hvv d hd]
+          · -- Every other index is below its bound, so either weighting forces `ks ≤ e`.
+            simp [hvs e (by omega)]
+
 /-- **The Chevalley commutator relation in type `G₂`.** If
 
 ```text
@@ -315,31 +342,13 @@ theorem baseChangeExp_mul_baseChangeExp_of_commutator_eq_three_nsmul
     simp only [map_mul, map_sum] at h
     exact h
   · -- Outside the truncation the reordered sextuple has a vanishing factor.
-    have hvx := forall_baseChange_integralDividedPower_eq_zero_of_le (R := R) x M hMx hkx
-    have hvy := forall_baseChange_integralDividedPower_eq_zero_of_le (R := R) y M hMy hky
-    have hvz := forall_baseChange_integralDividedPower_eq_zero_of_le (R := R) z M hMz hkz
-    have hvw := forall_baseChange_integralDividedPower_eq_zero_of_le (R := R) w M hMw hkw
-    have hvv := forall_baseChange_integralDividedPower_eq_zero_of_le (R := R) v M hMv hkv
-    have hvs' := forall_baseChange_integralDividedPower_eq_zero_of_le (R := R) s M hMs hks
-    rintro a b c d e q (habc | hqbc)
-    · rcases le_or_gt ky a with ha | ha
-      · simp [hvy a ha]
-      · rcases le_or_gt kz b with hb | hb
-        · simp [hvz b hb]
-        · rcases le_or_gt kw c with hc | hc
-          · simp [hvw c hc]
-          · rcases le_or_gt kv d with hd | hd
-            · simp [hvv d hd]
-            · simp [hvs' e (by omega)]
-    · rcases le_or_gt kx q with hq | hq
-      · simp [hvx q hq]
-      · rcases le_or_gt kz b with hb | hb
-        · simp [hvz b hb]
-        · rcases le_or_gt kw c with hc | hc
-          · simp [hvw c hc]
-          · rcases le_or_gt kv d with hd | hd
-            · simp [hvv d hd]
-            · simp [hvs' e (by omega)]
+    exact mul_eq_zero_of_le_of_chainG2Order _ _ _ _ _ _
+      (forall_baseChange_integralDividedPower_eq_zero_of_le (R := R) x M hMx hkx)
+      (forall_baseChange_integralDividedPower_eq_zero_of_le (R := R) y M hMy hky)
+      (forall_baseChange_integralDividedPower_eq_zero_of_le (R := R) z M hMz hkz)
+      (forall_baseChange_integralDividedPower_eq_zero_of_le (R := R) w M hMw hkw)
+      (forall_baseChange_integralDividedPower_eq_zero_of_le (R := R) v M hMv hkv)
+      (forall_baseChange_integralDividedPower_eq_zero_of_le (R := R) s M hMs hks)
 
 /-- The conjugation form of the Chevalley commutator relation in type `G₂`: conjugating the
 one-parameter subgroup of `y` by that of `x` multiplies it by the one-parameter subgroups of `z`,

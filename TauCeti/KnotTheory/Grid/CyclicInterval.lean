@@ -43,6 +43,11 @@ directions before taking products.
 * `TauCeti.Grid.cIco_union_cIco_eq_cIco_of_mem_cIoo`: an interior point cuts a half-open arc
   into two adjacent half-open arcs.
 * `TauCeti.Grid.disjoint_cIco_cIco_of_mem_cIoo`: the two pieces of such a cut are disjoint.
+* `TauCeti.Grid.cIoo_union_insert_cIoo_eq_cIoo_of_mem_cIoo`: an interior point cuts an open arc
+  into two open arcs and the cutting point itself.
+* `TauCeti.Grid.cIoo_subset_cIoo_right_of_mem_cIoo`,
+  `TauCeti.Grid.cIoo_subset_cIoo_left_of_mem_cIoo`: the two pieces of that cut are contained in
+  the arc they cut.
 * `TauCeti.Grid.Noninterleaving`: two endpoint pairs lie on the same cyclic side of each other.
 * `TauCeti.Grid.noninterleaving_rev`: non-interleaving is preserved by reversing every endpoint
   with `Fin.rev`, exchanging the two endpoints within each pair.
@@ -131,6 +136,16 @@ theorem right_notMem_cIoo (a b : Fin n) : b ∉ cIoo a b := by
     cases hinside with
     | inl hlt => exact hab hlt
     | inr hlt => exact Nat.lt_irrefl b.val hlt
+
+/-- A point in an open cyclic interval differs from its initial endpoint. -/
+theorem ne_left_of_mem_cIoo {a b x : Fin n} (h : x ∈ cIoo a b) : x ≠ a := by
+  rintro rfl
+  exact left_notMem_cIoo _ _ h
+
+/-- A point in an open cyclic interval differs from its terminal endpoint. -/
+theorem ne_right_of_mem_cIoo {a b x : Fin n} (h : x ∈ cIoo a b) : x ≠ b := by
+  rintro rfl
+  exact right_notMem_cIoo _ _ h
 
 /-- The clockwise half-open cyclic interval from `a` to `b` in `Fin n`.
 
@@ -400,6 +415,26 @@ theorem disjoint_cIco_cIco_of_mem_cIoo {a b c : Fin n} (h : b ∈ cIoo a c) :
   rw [mem_cIco] at hxab hxbc
   rw [mem_cIoo] at h
   split_ifs at h hxab hxbc <;> omega
+
+/-- An interior point cuts a clockwise open arc into two open arcs and the cutting point. -/
+theorem cIoo_union_insert_cIoo_eq_cIoo_of_mem_cIoo {a b c : Fin n} (h : b ∈ cIoo a c) :
+    cIoo a b ∪ insert b (cIoo b c) = cIoo a c := by
+  ext x
+  rw [mem_cIoo] at h
+  simp only [Finset.mem_union, Finset.mem_insert, mem_cIoo, ne_eq, Fin.ext_iff]
+  split_ifs at h ⊢ <;> omega
+
+/-- The initial piece of a cut open arc is contained in the whole arc. -/
+theorem cIoo_subset_cIoo_right_of_mem_cIoo {a b c : Fin n} (h : b ∈ cIoo a c) :
+    cIoo a b ⊆ cIoo a c := by
+  rw [← cIoo_union_insert_cIoo_eq_cIoo_of_mem_cIoo h]
+  exact Finset.subset_union_left
+
+/-- The terminal piece of a cut open arc is contained in the whole arc. -/
+theorem cIoo_subset_cIoo_left_of_mem_cIoo {a b c : Fin n} (h : b ∈ cIoo a c) :
+    cIoo b c ⊆ cIoo a c := by
+  rw [← cIoo_union_insert_cIoo_eq_cIoo_of_mem_cIoo h]
+  exact Finset.subset_union_right.trans' (Finset.subset_insert _ _)
 
 /-- A point outside the clockwise interval from `a` to `b` is either an endpoint or lies in
 the opposite clockwise interval. -/

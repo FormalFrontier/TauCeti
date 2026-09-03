@@ -8,8 +8,6 @@ module
 public import Mathlib.Algebra.Lie.Weights.Killing
 public import TauCeti.Algebra.Lie.Sl2.Spectrum
 
-public section
-
 /-!
 # Integrality of the weights of a module over a semisimple Lie algebra
 
@@ -79,6 +77,8 @@ This is the "integrality of weights (the `sl₂` reduction)" item of Layer 2 of
 `TauCeti.genWeightSpaceOf_coroot_eq_bot_of_forall_ne_intCast` extracts an honest eigenvector from a
 nonzero generalized weight space by the argument of Mathlib's `LieModule.Weight.hasEigenvalueAt`.
 -/
+
+public section
 
 namespace TauCeti
 

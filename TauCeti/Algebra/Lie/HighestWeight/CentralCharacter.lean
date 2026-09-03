@@ -10,8 +10,6 @@ public import TauCeti.Algebra.Lie.HighestWeight.Verma
 -- Non-public: the eigenvector criterion appears only inside proofs.
 import TauCeti.Algebra.Lie.Weights.Eigenvector
 
-public section
-
 /-!
 # The central character of a highest weight module
 
@@ -96,6 +94,8 @@ Schur's lemma. That construction is not available here: it assumes `[IsAlgClosed
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §23.2.
 * J. E. Humphreys, *Representations of Semisimple Lie Algebras in the BGG Category `O`*, §1.7.
 -/
+
+public section
 
 namespace TauCeti
 

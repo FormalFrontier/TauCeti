@@ -7,8 +7,6 @@ module
 
 public import TauCeti.LinearAlgebra.RootSystem.Weyl.Alternating
 
-public section
-
 /-!
 # An alternating element below a weight is determined by its dominant integral coefficients
 
@@ -70,6 +68,8 @@ the dot action instead of the linear one.
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §13.2 and
   §24.2.
 -/
+
+public section
 
 namespace TauCeti
 

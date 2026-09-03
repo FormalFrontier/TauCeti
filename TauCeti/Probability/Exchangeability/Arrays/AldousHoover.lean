@@ -308,7 +308,7 @@ theorem separateArray_reindex (f : I × I × I × I → α)
 variable. -/
 theorem measurable_separateArray (f : I × I × I × I → α) (hf : Measurable f) :
     Measurable fun u : NoiseIndex Axis (ℕ × ℕ) → I => fun p => separateArray f p u :=
-  measurable_pi_lambda _ fun p => hf.comp
+  Measurable.of_eval fun p => hf.comp
     ((measurable_pi_apply (NoiseIndex.global : NoiseIndex Axis (ℕ × ℕ))).prodMk
       ((measurable_pi_apply (NoiseIndex.vertex Axis.row p.1)).prodMk
         ((measurable_pi_apply (NoiseIndex.vertex Axis.column p.2)).prodMk
@@ -379,7 +379,7 @@ theorem jointArray_symmetric_of
 /-- A measurable joint Aldous--Hoover coding is measurable as an array-valued random variable. -/
 theorem measurable_jointArray (f : I × I × I × I → α) (hf : Measurable f) :
     Measurable fun u : NoiseIndex Unit (Sym2 ℕ) → I => fun p => jointArray f p u :=
-  measurable_pi_lambda _ fun p => hf.comp
+  Measurable.of_eval fun p => hf.comp
     ((measurable_pi_apply (NoiseIndex.global : NoiseIndex Unit (Sym2 ℕ))).prodMk
       ((measurable_pi_apply (NoiseIndex.vertex () p.1)).prodMk
         ((measurable_pi_apply (NoiseIndex.vertex () p.2)).prodMk
@@ -435,7 +435,7 @@ private theorem measurable_separateBlockNoise (g : I × I × I → α) (hg : Mea
     (e f : ℕ → ℕ) :
     Measurable[blockSigma (fun (q : NoiseIndex Axis (ℕ × ℕ)) u => u q) (separateBlockNoise e f)]
       fun u (p : ℕ × ℕ) => separateArray (fun q => g q.2) (e p.1, f p.2) u := by
-  refine @measurable_pi_lambda (NoiseIndex Axis (ℕ × ℕ) → I) _ _
+  refine @Measurable.of_eval (NoiseIndex Axis (ℕ × ℕ) → I) _ _
     (blockSigma (fun q u => u q) (separateBlockNoise e f)) _ _ fun p => ?_
   have hrow := measurable_blockSigma_of_mem
     (Z := fun (q : NoiseIndex Axis (ℕ × ℕ)) (u : NoiseIndex Axis (ℕ × ℕ) → I) => u q)
@@ -483,7 +483,7 @@ noise coordinates it reads. -/
 private theorem measurable_jointBlockNoise (g : I × I × I → α) (hg : Measurable g) (e : ℕ → ℕ) :
     Measurable[blockSigma (fun (q : NoiseIndex Unit (Sym2 ℕ)) u => u q) (jointBlockNoise e)]
       fun u (p : ℕ × ℕ) => jointArray (fun q => g q.2) (e p.1, e p.2) u := by
-  refine @measurable_pi_lambda (NoiseIndex Unit (Sym2 ℕ) → I) _ _
+  refine @Measurable.of_eval (NoiseIndex Unit (Sym2 ℕ) → I) _ _
     (blockSigma (fun q u => u q) (jointBlockNoise e)) _ _ fun p => ?_
   have hcell : ∀ i ∈ s(e p.1, e p.2), i ∈ Set.range e := by
     intro i hi

@@ -8,8 +8,6 @@ module
 public import Mathlib.RingTheory.Finiteness.Bilinear
 public import TauCeti.Algebra.Lie.HighestWeight.Module
 
-public section
-
 /-!
 # The weight spaces of a highest weight module are finite-dimensional
 
@@ -67,6 +65,8 @@ available before the Poincaré--Birkhoff--Witt basis.
 
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §20.2.
 -/
+
+public section
 
 namespace TauCeti
 

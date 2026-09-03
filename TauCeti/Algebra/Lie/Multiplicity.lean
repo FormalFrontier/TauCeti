@@ -8,8 +8,6 @@ module
 public import TauCeti.Algebra.Lie.Schur
 public import TauCeti.Algebra.Lie.Submodule.DirectSum
 
-public section
-
 /-!
 # The multiplicity of an irreducible Lie module
 
@@ -99,6 +97,8 @@ multiplicities with the minuscule Pieri rule, is untouched here.
 
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §6.
 -/
+
+public section
 
 universe u v w w₁ w₂ w₃
 
