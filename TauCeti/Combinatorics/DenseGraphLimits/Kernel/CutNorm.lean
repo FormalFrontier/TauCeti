@@ -476,13 +476,13 @@ theorem cutNorm_le_cutNormSigned (K : SymmKernel Ω μ) : cutNorm μ K ≤ cutNo
     (measurable_one.indicator hT) (indicator_one_mem_Icc_neg_one_one _)
       (indicator_one_mem_Icc_neg_one_one _)
 
-/-- A `[-1,1]`-valued measurable function, split into measurable `[0,1]`-valued positive and
-negative parts. The factor-four comparison needs exactly this for each of its two test
-functions; bundling it means the construction is written once. -/
+/-- What the factor-four comparison uses of a `[-1,1]`-valued test function: two measurable
+`[0,1]`-valued functions whose difference it is. The fields do not pin the components — any such
+pair will do — and the constructor `signedParts` supplies the canonical one, `u⁺` and `u⁻`. -/
 private structure SignedParts (u : Ω → ℝ) where
-  /-- The positive part. -/
+  /-- The nonnegative component subtracted from. -/
   pos : Ω → ℝ
-  /-- The negative part. -/
+  /-- The nonnegative component subtracted. -/
   neg : Ω → ℝ
   measurable_pos : Measurable pos
   measurable_neg : Measurable neg
@@ -498,17 +498,19 @@ private theorem SignedParts.neg_mem' {u : Ω → ℝ} (P : SignedParts u) (x : �
     P.neg x ∈ Icc (-1 : ℝ) 1 :=
   ⟨by linarith [(P.neg_mem x).1], (P.neg_mem x).2⟩
 
-/-- Every measurable `[-1,1]`-valued function has such a decomposition: `max u 0` and
-`max (-u) 0`. -/
+/-- The canonical decomposition of a measurable `[-1,1]`-valued function into its positive and
+negative parts `u⁺` and `u⁻`. -/
 private def signedParts {u : Ω → ℝ} (hu : Measurable u) (hu1 : ∀ x, u x ∈ Icc (-1 : ℝ) 1) :
     SignedParts u where
-  pos x := max (u x) 0
-  neg x := max (-u x) 0
-  measurable_pos := hu.max measurable_const
-  measurable_neg := hu.neg.max measurable_const
-  pos_mem x := ⟨le_max_right _ _, max_le (hu1 x).2 zero_le_one⟩
-  neg_mem x := ⟨le_max_right _ _, max_le (by linarith [(hu1 x).1]) zero_le_one⟩
-  eq := funext fun x => (max_zero_sub_max_neg_zero_eq_self (u x)).symm
+  pos := u⁺
+  neg := u⁻
+  measurable_pos := by rw [posPart_def]; exact hu.sup measurable_const
+  measurable_neg := by rw [negPart_def]; exact hu.neg.sup measurable_const
+  pos_mem x := ⟨posPart_nonneg u x, by
+    rw [Pi.posPart_apply, posPart_def]; exact sup_le (hu1 x).2 zero_le_one⟩
+  neg_mem x := ⟨negPart_nonneg u x, by
+    rw [Pi.negPart_apply, negPart_def]; exact sup_le (by linarith [(hu1 x).1]) zero_le_one⟩
+  eq := (posPart_sub_negPart u).symm
 
 /-- **Upper side of the factor sandwich.** Relaxing indicators to `[-1,1]`-valued test functions
 increases the cut norm by at most a factor of `4`. -/
