@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Topology.Algebra.ContinuousMonoidHom
 public import TauCeti.GroupTheory.PGroup
 public import TauCeti.Topology.Algebra.Group.Profinite.Basic
 public import TauCeti.Topology.Algebra.Group.Profinite.ProP
@@ -54,9 +53,21 @@ is closed — are found by instance search rather than restated.
   kernel is trivial.
 * `TauCeti.maximalProPQuotient.lift_coe` and `TauCeti.maximalProPQuotient.hom_ext`: the
   universal property of `G(p)`.
+* `TauCeti.maximalProPQuotient.lift_comp_map` and `TauCeti.maximalProPQuotient.comp_lift`: the
+  factorization is natural in the source and in the target.
 * `TauCeti.proPKernel_maximalProPQuotient`: the construction is idempotent.
 
 ## References
+
+This is the Layer 3 milestone "The maximal pro-`p` quotient" of the human-authored roadmap
+`TauCetiRoadmap/ProfiniteProPGroups/README.md`, which supplies the blueprint followed here: it
+freezes the names `proPKernel` and `maximalProPQuotient`, defines the kernel as the intersection
+of the open normal subgroups with `p`-group quotient, asks for it to be closed, normal,
+characteristic for continuous automorphisms and preserved by continuous homomorphisms, prescribes
+the compactness argument carried out in `TauCeti.exists_isPGroup_quotient_le` — that an open
+normal subgroup containing the kernel already contains a member of the defining family — and
+asks for the quotient map, the universal property, the idempotence and the functoriality to be
+stated once, here.
 
 * L. Ribes and P. Zalesskii, *Profinite Groups*, Section 2.2 for pro-`p` groups. The pro-`p`
   kernel and the maximal pro-`p` quotient are the case of finite `p`-groups of the maximal
@@ -83,6 +94,7 @@ def proPKernel (p : ℕ) (G : Type u) [Group G] [TopologicalSpace G] : Subgroup 
 
 /-- Membership in the pro-`p` kernel: `x` lies in it exactly when it lies in every open normal
 subgroup with `p`-group quotient. -/
+@[simp]
 theorem mem_proPKernel {x : G} :
     x ∈ proPKernel p G ↔
       ∀ U : OpenNormalSubgroup G, IsPGroup p (G ⧸ U.toSubgroup) → x ∈ U.toSubgroup := by
@@ -285,6 +297,8 @@ def lift (hP : IsProP p P) (f : G →ₜ* P) : maximalProPQuotient p G →ₜ* P
     rw [(QuotientGroup.isQuotientMap_mk (proPKernel p G)).continuous_iff]
     exact map_continuous f
 
+/-- The lift of `f` through `G(p)` computes on quotient representatives: it agrees with `f` on
+the image of `G`. -/
 @[simp]
 theorem lift_coe (hP : IsProP p P) (f : G →ₜ* P) (g : G) :
     lift hP f (g : maximalProPQuotient p G) = f g := (rfl)
@@ -304,13 +318,40 @@ def map (f : G →ₜ* H) : maximalProPQuotient p G →ₜ* maximalProPQuotient 
 theorem map_coe (f : G →ₜ* H) (g : G) :
     map (p := p) f (g : maximalProPQuotient p G) = (f g : maximalProPQuotient p H) := (rfl)
 
+/-- Functoriality preserves identities: the identity of `G` induces the identity of `G(p)`. -/
 @[simp]
 theorem map_id : map (p := p) (ContinuousMonoidHom.id G) = ContinuousMonoidHom.id _ :=
   hom_ext fun x ↦ by simp
 
+/-- Functoriality preserves composition: a composite of continuous homomorphisms induces the
+composite of the induced maps. -/
+@[simp]
 theorem map_comp {K : Type*} [Group K] [TopologicalSpace K] (f : G →ₜ* H) (g : H →ₜ* K) :
     map (p := p) (g.comp f) = (map g).comp (map f) :=
   hom_ext fun x ↦ by simp
+
+section Naturality
+
+variable {P : Type*} [Group P] [TopologicalSpace P] [IsTopologicalGroup P] [CompactSpace P]
+  [TotallyDisconnectedSpace P]
+variable {Q : Type*} [Group Q] [TopologicalSpace Q] [IsTopologicalGroup Q] [CompactSpace Q]
+  [TotallyDisconnectedSpace Q]
+
+/-- The universal factorization is natural in the source: precomposing the lift of `g : H →ₜ* P`
+with the map induced by `f : G →ₜ* H` is the lift of `g ∘ f`. -/
+@[simp]
+theorem lift_comp_map (hP : IsProP p P) (f : G →ₜ* H) (g : H →ₜ* P) :
+    (lift hP g).comp (map f) = lift hP (g.comp f) :=
+  hom_ext fun x ↦ by simp
+
+/-- The universal factorization is natural in the target: postcomposing the lift of `f : G →ₜ* P`
+with a continuous homomorphism `ψ : P →ₜ* Q` of pro-`p` profinite groups is the lift of
+`ψ ∘ f`. -/
+theorem comp_lift (hP : IsProP p P) (hQ : IsProP p Q) (ψ : P →ₜ* Q) (f : G →ₜ* P) :
+    ψ.comp (lift hP f) = lift hQ (ψ.comp f) :=
+  hom_ext fun x ↦ by simp
+
+end Naturality
 
 end maximalProPQuotient
 
