@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.MeasureTheory.Measure.DiracProba
 public import TauCeti.MeasureTheory.OptimalTransport.Wasserstein.Basic
 
 /-!
@@ -29,6 +30,13 @@ When the ground space is Polish and its distance separates points, both pseudome
 The measurable structures are the subtype structures inherited from `ProbabilityMeasure`; no
 second measurable-space instance is introduced. Identifying these measurable structures with the
 Borel sigma algebras of the Wasserstein metrics is a separate topological result.
+
+Neither carrier exposes its subtype body: elements are built with `TauCeti.WassersteinComponent.mk`
+and `TauCeti.WassersteinSpace.mk`, and taken apart with `toProbabilityMeasure` together with
+`TauCeti.WassersteinComponent.wassersteinEDist_anchor_ne_top` and
+`TauCeti.WassersteinSpace.hasFiniteMoment`. The identification `equivComponent` leaves the
+underlying probability measure unchanged, hence is an isometry for the two Wasserstein
+pseudometrics and is measurable in both directions.
 
 ## Main definitions
 
@@ -58,23 +66,53 @@ variable {X : Type u} {p : ℝ≥0∞}
 
 This is a type synonym for a subtype, so it can carry the Wasserstein topology independently of
 the weak topology already present on `ProbabilityMeasure`. Its measurable structure is still the
-canonical subtype structure. -/
-@[expose]
+canonical subtype structure. The subtype body is not exposed: use
+`TauCeti.WassersteinComponent.mk` and `TauCeti.WassersteinComponent.toProbabilityMeasure`. -/
 def WassersteinComponent [MeasurableSpace X] [PseudoEMetricSpace X]
     (p : ℝ≥0∞) (μ₀ : ProbabilityMeasure X) :=
   {μ : ProbabilityMeasure X //
     wassersteinEDist p (μ₀ : Measure X) (μ : Measure X) ≠ ∞}
 
-/-- Probability measures on `X` with finite `p`-moment. -/
-@[expose]
+/-- Probability measures on `X` with finite `p`-moment.
+
+As for `TauCeti.WassersteinComponent`, the subtype body is not exposed: use
+`TauCeti.WassersteinSpace.mk` and `TauCeti.WassersteinSpace.toProbabilityMeasure`. -/
 def WassersteinSpace (p : ℝ≥0∞) (X : Type u) [MeasurableSpace X] [PseudoEMetricSpace X] :=
   {μ : ProbabilityMeasure X // HasFiniteMoment p (μ : Measure X)}
+
+section Separation
+
+variable [MetricSpace X] [MeasurableSpace X] [BorelSpace X] [SecondCountableTopology X]
+  [CompleteSpace X]
+
+/-- **Separation of probability laws.** On a Polish metric ground space, two probability measures
+at zero `p`-Wasserstein distance are equal, for every nonzero exponent.
+
+This packages `TauCeti.wassersteinEDist_eq_zero_iff` together with its endpoint
+`TauCeti.wassersteinEDist_top_eq_zero_iff`, so that the metric structures below can be obtained
+without repeating the case split on `p = ∞`. -/
+theorem eq_of_wassersteinEDist_eq_zero (hp : p ≠ 0) {μ ν : ProbabilityMeasure X}
+    (h : wassersteinEDist p (μ : Measure X) (ν : Measure X) = 0) : μ = ν := by
+  apply ProbabilityMeasure.toMeasure_injective
+  by_cases hp' : p = ∞
+  · subst hp'
+    exact (wassersteinEDist_top_eq_zero_iff _ _).1 h
+  · exact (wassersteinEDist_eq_zero_iff hp hp' _ _).1 h
+
+end Separation
 
 namespace WassersteinComponent
 
 section Basic
 
 variable [MeasurableSpace X] [PseudoEMetricSpace X] {μ₀ : ProbabilityMeasure X}
+
+/-- The element of the component anchored at `μ₀` given by a probability measure at finite
+`p`-Wasserstein distance from `μ₀`. -/
+def mk (μ : ProbabilityMeasure X)
+    (hμ : wassersteinEDist p (μ₀ : Measure X) (μ : Measure X) ≠ ∞) :
+    WassersteinComponent p μ₀ :=
+  ⟨μ, hμ⟩
 
 /-- The probability measure underlying an element of a Wasserstein component. -/
 @[coe]
@@ -107,13 +145,20 @@ theorem measurable_toProbabilityMeasure :
 
 @[simp]
 theorem coe_mk (μ : ProbabilityMeasure X) (hμ) :
-    toProbabilityMeasure (⟨μ, hμ⟩ : WassersteinComponent p μ₀) = μ :=
+    toProbabilityMeasure (mk (p := p) (μ₀ := μ₀) μ hμ) = μ :=
   (rfl)
 
-/-- Membership in an anchored component is exactly finite Wasserstein distance from its anchor. -/
-theorem mem_component (μ : WassersteinComponent p μ₀) :
+/-- Every element of the component anchored at `μ₀` is at finite Wasserstein distance from `μ₀`;
+together with `TauCeti.WassersteinComponent.mk` this characterises the elements of the
+component. -/
+theorem wassersteinEDist_anchor_ne_top (μ : WassersteinComponent p μ₀) :
     wassersteinEDist p (μ₀ : Measure X) ((μ : ProbabilityMeasure X) : Measure X) ≠ ∞ :=
   μ.2
+
+@[simp]
+theorem mk_coe (μ : WassersteinComponent p μ₀) :
+    mk (μ : ProbabilityMeasure X) (wassersteinEDist_anchor_ne_top μ) = μ :=
+  (rfl)
 
 end Basic
 
@@ -148,6 +193,7 @@ noncomputable instance instPseudoEMetricSpace :
 
 /-- The extended distance on a Wasserstein component is the Wasserstein distance of the
 underlying probability measures. -/
+@[simp]
 theorem edist_def (μ ν : WassersteinComponent p μ₀) :
     edist μ ν = wassersteinEDist p
       ((μ : ProbabilityMeasure X) : Measure X) ((ν : ProbabilityMeasure X) : Measure X) :=
@@ -159,8 +205,9 @@ theorem edist_ne_top (μ ν : WassersteinComponent p μ₀) : edist μ ν ≠ �
   have hμ : wassersteinEDist p
       ((μ : ProbabilityMeasure X) : Measure X) (μ₀ : Measure X) ≠ ∞ := by
     rw [wassersteinEDist_comm measurable_edist]
-    exact μ.2
-  apply ne_top_of_le_ne_top (ENNReal.add_ne_top.mpr ⟨hμ, ν.2⟩)
+    exact wassersteinEDist_anchor_ne_top μ
+  apply ne_top_of_le_ne_top
+    (ENNReal.add_ne_top.mpr ⟨hμ, wassersteinEDist_anchor_ne_top ν⟩)
   exact wassersteinEDist_triangle measurable_edist Fact.out
     ((μ : ProbabilityMeasure X) : Measure X) (μ₀ : Measure X)
     ((ν : ProbabilityMeasure X) : Measure X)
@@ -173,6 +220,7 @@ noncomputable instance instPseudoMetricSpace :
 
 /-- The distance on a Wasserstein component is the real value of the Wasserstein extended
 distance. -/
+@[simp]
 theorem dist_def (μ ν : WassersteinComponent p μ₀) :
     dist μ ν = (wassersteinEDist p
       ((μ : ProbabilityMeasure X) : Measure X) ((ν : ProbabilityMeasure X) : Measure X)).toReal :=
@@ -190,19 +238,11 @@ finite-distance component is a metric space. -/
 noncomputable instance instMetricSpace : MetricSpace (WassersteinComponent p μ₀) where
   toPseudoMetricSpace := inferInstance
   eq_of_dist_eq_zero {μ ν} h := by
+    have hp : (1 : ℝ≥0∞) ≤ p := Fact.out
     apply ext
-    apply ProbabilityMeasure.toMeasure_injective
-    have hw : wassersteinEDist p
-        ((μ : ProbabilityMeasure X) : Measure X) ((ν : ProbabilityMeasure X) : Measure X) = 0 := by
-      rw [← edist_def, edist_dist, h]
-      simp
-    by_cases hp : p = ∞
-    · subst p
-      exact (wassersteinEDist_top_eq_zero_iff
-        ((μ : ProbabilityMeasure X) : Measure X) ((ν : ProbabilityMeasure X) : Measure X)).1 hw
-    · exact (wassersteinEDist_eq_zero_iff
-        (ne_of_gt (zero_lt_one.trans_le Fact.out)) hp
-        ((μ : ProbabilityMeasure X) : Measure X) ((ν : ProbabilityMeasure X) : Measure X)).1 hw
+    refine eq_of_wassersteinEDist_eq_zero (ne_of_gt (zero_lt_one.trans_le hp)) ?_
+    rw [← edist_def, edist_dist, h]
+    simp
 
 end Metric
 
@@ -213,6 +253,11 @@ namespace WassersteinSpace
 section Basic
 
 variable [MeasurableSpace X] [PseudoEMetricSpace X]
+
+/-- The element of `WassersteinSpace p X` given by a probability measure of finite `p`-moment. -/
+def mk (μ : ProbabilityMeasure X) (hμ : HasFiniteMoment p (μ : Measure X)) :
+    WassersteinSpace p X :=
+  ⟨μ, hμ⟩
 
 /-- The probability measure underlying an element of `WassersteinSpace p X`. -/
 @[coe]
@@ -244,13 +289,19 @@ theorem measurable_toProbabilityMeasure :
 
 @[simp]
 theorem coe_mk (μ : ProbabilityMeasure X) (hμ) :
-    toProbabilityMeasure (⟨μ, hμ⟩ : WassersteinSpace p X) = μ :=
+    toProbabilityMeasure (mk (p := p) μ hμ) = μ :=
   (rfl)
 
-/-- A law in `WassersteinSpace p X` has finite `p`-moment. -/
+/-- Every law in `WassersteinSpace p X` has finite `p`-moment; together with
+`TauCeti.WassersteinSpace.mk` this characterises its elements. -/
 theorem hasFiniteMoment (μ : WassersteinSpace p X) :
     HasFiniteMoment p ((μ : ProbabilityMeasure X) : Measure X) :=
   μ.2
+
+@[simp]
+theorem mk_coe (μ : WassersteinSpace p X) :
+    mk (μ : ProbabilityMeasure X) (hasFiniteMoment μ) = μ :=
+  (rfl)
 
 end Basic
 
@@ -279,19 +330,37 @@ theorem hasFiniteMoment_iff_wassersteinEDist_dirac_ne_top (x₀ : X)
 
 /-- Choosing a basepoint identifies the finite-moment Wasserstein space with the finite-distance
 component anchored at its Dirac law. The underlying probability measure is unchanged. -/
-def equivComponent (x₀ : X) :
-    WassersteinSpace p X ≃
-      WassersteinComponent p (⟨Measure.dirac x₀, inferInstance⟩ : ProbabilityMeasure X) where
-  toFun μ := ⟨μ.1, (hasFiniteMoment_iff_wassersteinEDist_dirac_ne_top x₀ μ.1).1 μ.2⟩
-  invFun μ := ⟨μ.1, (hasFiniteMoment_iff_wassersteinEDist_dirac_ne_top x₀ μ.1).2 μ.2⟩
-  left_inv _ := Subtype.ext rfl
-  right_inv _ := Subtype.ext rfl
+def equivComponent (x₀ : X) : WassersteinSpace p X ≃ WassersteinComponent p (diracProba x₀) where
+  toFun μ := WassersteinComponent.mk (μ : ProbabilityMeasure X)
+    ((hasFiniteMoment_iff_wassersteinEDist_dirac_ne_top x₀ _).1 (hasFiniteMoment μ))
+  invFun μ := mk (WassersteinComponent.toProbabilityMeasure μ)
+    ((hasFiniteMoment_iff_wassersteinEDist_dirac_ne_top x₀ _).2
+      (WassersteinComponent.wassersteinEDist_anchor_ne_top μ))
+  left_inv _ := ext (rfl)
+  right_inv _ := WassersteinComponent.ext (rfl)
 
 @[simp]
 theorem coe_equivComponent (x₀ : X) (μ : WassersteinSpace p X) :
     WassersteinComponent.toProbabilityMeasure (equivComponent x₀ μ) =
       (μ : ProbabilityMeasure X) :=
   (rfl)
+
+@[simp]
+theorem coe_equivComponent_symm (x₀ : X) (μ : WassersteinComponent p (diracProba x₀)) :
+    toProbabilityMeasure ((equivComponent x₀).symm μ) =
+      WassersteinComponent.toProbabilityMeasure μ :=
+  (rfl)
+
+/-- The identification with a Dirac-anchored component is measurable: it does not change the
+underlying probability measure, and both sides carry the subtype measurable structure. -/
+theorem measurable_equivComponent (x₀ : X) :
+    Measurable (equivComponent (p := p) x₀) :=
+  measurable_toProbabilityMeasure.subtype_mk
+
+/-- The inverse of the identification with a Dirac-anchored component is measurable. -/
+theorem measurable_equivComponent_symm (x₀ : X) :
+    Measurable (equivComponent (p := p) x₀).symm :=
+  WassersteinComponent.measurable_toProbabilityMeasure.subtype_mk
 
 end MetricGround
 
@@ -345,6 +414,7 @@ noncomputable instance instPseudoEMetricSpace : PseudoEMetricSpace (WassersteinS
   pseudoEMetricSpace measurable_edist Fact.out
 
 /-- The extended distance on finite-moment laws is their Wasserstein distance. -/
+@[simp]
 theorem edist_def (μ ν : WassersteinSpace p X) :
     edist μ ν = wassersteinEDist p
       ((μ : ProbabilityMeasure X) : Measure X) ((ν : ProbabilityMeasure X) : Measure X) :=
@@ -357,12 +427,31 @@ noncomputable instance instPseudoMetricSpace : PseudoMetricSpace (WassersteinSpa
     exact wassersteinEDist_ne_top measurable_edist Fact.out μ ν
 
 /-- The distance on finite-moment laws is the real value of the Wasserstein extended distance. -/
+@[simp]
 theorem dist_def (μ ν : WassersteinSpace p X) :
     dist μ ν = (wassersteinEDist p
       ((μ : ProbabilityMeasure X) : Measure X) ((ν : ProbabilityMeasure X) : Measure X)).toReal :=
   (rfl)
 
 end PseudoMetric
+
+section EquivMetric
+
+variable [MeasurableSpace X] [PseudoMetricSpace X] [StandardBorelSpace X] [BorelSpace X]
+  [SecondCountableTopology X] [Fact (1 ≤ p)]
+
+/-- The identification with a Dirac-anchored component preserves the Wasserstein extended
+distance, since it does not change the underlying probability measure. -/
+theorem edist_equivComponent (x₀ : X) (μ ν : WassersteinSpace p X) :
+    edist (equivComponent x₀ μ) (equivComponent x₀ ν) = edist μ ν := by
+  rw [WassersteinComponent.edist_def, edist_def, coe_equivComponent, coe_equivComponent]
+
+/-- Choosing a basepoint identifies `WassersteinSpace p X` isometrically with the finite-distance
+component anchored at the Dirac law of that basepoint. -/
+theorem isometry_equivComponent (x₀ : X) : Isometry (equivComponent (p := p) x₀) :=
+  edist_equivComponent x₀
+
+end EquivMetric
 
 section Metric
 
@@ -374,19 +463,11 @@ metric. -/
 noncomputable instance instMetricSpace : MetricSpace (WassersteinSpace p X) where
   toPseudoMetricSpace := inferInstance
   eq_of_dist_eq_zero {μ ν} h := by
+    have hp : (1 : ℝ≥0∞) ≤ p := Fact.out
     apply ext
-    apply ProbabilityMeasure.toMeasure_injective
-    have hw : wassersteinEDist p
-        ((μ : ProbabilityMeasure X) : Measure X) ((ν : ProbabilityMeasure X) : Measure X) = 0 := by
-      rw [← edist_def, edist_dist, h]
-      simp
-    by_cases hp : p = ∞
-    · subst p
-      exact (wassersteinEDist_top_eq_zero_iff
-        ((μ : ProbabilityMeasure X) : Measure X) ((ν : ProbabilityMeasure X) : Measure X)).1 hw
-    · exact (wassersteinEDist_eq_zero_iff
-        (ne_of_gt (zero_lt_one.trans_le Fact.out)) hp
-        ((μ : ProbabilityMeasure X) : Measure X) ((ν : ProbabilityMeasure X) : Measure X)).1 hw
+    refine eq_of_wassersteinEDist_eq_zero (ne_of_gt (zero_lt_one.trans_le hp)) ?_
+    rw [← edist_def, edist_dist, h]
+    simp
 
 end Metric
 
