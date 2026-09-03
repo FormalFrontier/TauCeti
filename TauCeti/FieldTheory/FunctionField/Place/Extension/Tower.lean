@@ -27,12 +27,11 @@ and the degree identity is the ordinary finrank tower formula for the residue fi
 * `TauCeti.Place.ramificationIdx_restrict_mul`: ramification indices multiply in a tower.
 * `TauCeti.Place.relativeDegree_restrict_mul`: relative residue degrees multiply in a tower.
 
-## Roadmap
+## Mathematical context
 
-`TauCetiRoadmap/AlgebraicCurves/README.md`, Layer 6, "Setup": multiplicativity in towers for
-extensions of places (Stichtenoth, Proposition 3.1.6). The restriction identity is also the
-functoriality required by `TauCetiRoadmap/EllipticCurves/README.md`, Layer 0, `inducedPlace`,
-and by Layer 1's construction of the dual isogeny.
+Multiplicativity in towers for extensions of places is Stichtenoth, Proposition 3.1.6. The
+restriction identity also supplies the functoriality needed to define induced places and to
+construct dual isogenies.
 
 ## References
 
