@@ -783,9 +783,7 @@ Exposed for the same reason as `quotientOfLeQuadraticRadical`: so that its carri
 
 /-- **The underlying bilinear module of a quadratic orthogonal quotient** is the bilinear
 orthogonal quotient.  Both are the restriction of the form to `H^⊥` divided by the copy of `H`
-inside it, so the two constructions agree on the nose; this lemma is what lets the nondegeneracy
-and order theorems below be read off from
-`TauCeti.LinearAlgebra.FiniteBilinearModule.Orthogonal.Quotient`. -/
+inside it, so the two constructions agree. -/
 @[simp]
 theorem orthogonalQuotient_toFiniteBilinearModule (H : AddSubgroup A) (hH : A.IsIsotropic H) :
     (A.orthogonalQuotient H hH).toFiniteBilinearModule =

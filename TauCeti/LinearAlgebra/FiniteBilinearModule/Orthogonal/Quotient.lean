@@ -40,8 +40,7 @@ The quadratic refinement `TauCeti.FiniteQuadraticModule.orthogonalQuotient` of
 `TauCeti.LinearAlgebra.FiniteBilinearModule.Quadratic` carries a quadratic map on the same
 quotient group, and its underlying bilinear module is definitionally the construction of this
 file; `TauCeti.FiniteQuadraticModule.orthogonalQuotient_toFiniteBilinearModule` records that
-identification, and the quadratic nondegeneracy and order theorems are deduced from the bilinear
-ones through it.
+identification.
 
 ## Main declarations
 
@@ -62,7 +61,6 @@ ones through it.
 * V. V. Nikulin, *Integral symmetric bilinear forms and some of their applications*, §1.4,
   Proposition 1.4.1.
 * W. Ebeling, *Lattices and Codes*, Chapter 1.
-* `TauCetiRoadmap/IntegralLattices/README.md`, Layer 4.
 -/
 
 public section
@@ -85,9 +83,8 @@ is isotropic, so that `H ≤ H⊥`, this is the classical `H⊥ / H`.
 
 Exposed for the same reason as `quotientOfLeRadical`, on which it is built: so that its carrier
 reduces to the `Submodule` quotient and maps out of it are definable with `Submodule.liftQ`,
-`Submodule.mapQ` and `Submodule.Quotient.equiv`.  Exposure is also what identifies this package
-with the quadratic one on the nose, which is how
-`TauCeti.FiniteQuadraticModule.orthogonalQuotient_toFiniteBilinearModule` holds by `rfl`. -/
+`Submodule.mapQ` and `Submodule.Quotient.equiv`, and so that this package is definitionally the
+underlying bilinear module of `TauCeti.FiniteQuadraticModule.orthogonalQuotient`. -/
 @[expose] noncomputable def orthogonalQuotient (H : AddSubgroup A) : FiniteBilinearModule :=
   (A.restrict (A.orthogonalComplement H)).quotientOfLeRadical
     (H.addSubgroupOf (A.orthogonalComplement H))
