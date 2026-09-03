@@ -27,11 +27,10 @@ it is stated as
 
 `∃ hur : (𝔭 is unramified in L), artinSymbol 𝔭.asIdeal hur = C`,
 
-an existential over a proof. Nothing is thereby left ambiguous, because `Algebra.IsUnramifiedAt`
-is a `Prop`: any two unramifiedness proofs are definitionally equal, so the value of
-`artinSymbol 𝔭.asIdeal hur` does not depend on `hur`. That is the content of
-`mem_frobeniusPrimeSet_iff_artinSymbol_eq`, which turns the existential into a plain equation as
-soon as the caller has an unramifiedness proof in hand.
+an existential over a proof. Membership is nonetheless unambiguous: it does not depend on which
+unramifiedness proof witnesses it, and `mem_frobeniusPrimeSet_iff_artinSymbol_eq` turns the
+existential into the plain equation `artinSymbol 𝔭.asIdeal hur = C` for whichever unramifiedness
+proof `hur` the caller has in hand.
 
 The alternative — a total `Gal(L/K)`-valued or `ConjClasses`-valued function taking a junk value
 at the ramified primes — is worse for this set: the junk value carries no arithmetic content, yet
@@ -51,6 +50,9 @@ existential is what keeps the fibres free of them.
 * `NumberField.Chebotarev.mem_frobeniusPrimeSet_mk_iff_exists_isArithFrobAt`: for an unramified
   `𝔭` and an element `σ`, membership in the fibre of `[σ]` says exactly that `σ` is an arithmetic
   Frobenius at *some* prime of `𝓞 L` above `𝔭`.
+* `NumberField.Chebotarev.frobeniusPrimeSet_map_autCongr`: equivariance — an isomorphism
+  `e : L ≃ₐ[K] L'` of extensions of `K` matches the fibre of `C` in `L` with the fibre in `L'` of
+  the image of `C` under the induced isomorphism `AlgEquiv.autCongr e` of Galois groups.
 * `NumberField.Chebotarev.disjoint_frobeniusPrimeSet`: distinct classes have disjoint fibres.
 * `NumberField.Chebotarev.iUnion_frobeniusPrimeSet`: the fibres cover exactly the complement of
   `ramifiedPrimes K L`, so `existsUnique_mem_frobeniusPrimeSet` partitions the unramified primes
@@ -62,11 +64,9 @@ a cofinite set, which is how the crossing argument produces exact densities.
 
 ## References
 
-The definition of `frobeniusPrimeSet` and the statement of `disjoint_frobeniusPrimeSet` follow
-`TauCetiRoadmap/Chebotarev/Suggested.lean`, from which the dependent membership condition and the
-`HeightOneSpectrum (𝓞 K)` carrier are taken verbatim; the prose description of the intended API
-is the section `Frobenius prime sets and finite exceptional sets` of
-`TauCetiRoadmap/Chebotarev/README.md`.
+The definition of `frobeniusPrimeSet` and the statement of `disjoint_frobeniusPrimeSet` are taken
+from `TauCetiRoadmap/Chebotarev/Suggested.lean`, including the dependent membership condition and
+the `HeightOneSpectrum (𝓞 K)` carrier.
 -/
 
 public section
@@ -95,6 +95,7 @@ def frobeniusPrimeSet (C : ConjClasses (L ≃ₐ[K] L)) : Set (HeightOneSpectrum
 
 /-- Membership in `frobeniusPrimeSet`, unfolded. Downstream files should open the definition
 through this lemma rather than through defeq. -/
+@[simp]
 theorem mem_frobeniusPrimeSet_iff {𝔭 : HeightOneSpectrum (𝓞 K)}
     {C : ConjClasses (L ≃ₐ[K] L)} :
     𝔭 ∈ frobeniusPrimeSet K L C ↔
@@ -106,8 +107,8 @@ theorem mem_frobeniusPrimeSet_iff {𝔭 : HeightOneSpectrum (𝓞 K)}
 `frobeniusPrimeSet K L C` is the plain equation `artinSymbol 𝔭.asIdeal hur = C`: the existential
 in the definition may be instantiated at `hur`, whatever proof it was introduced with.
 
-`Algebra.IsUnramifiedAt` is a `Prop`, so the two proofs are definitionally equal and no transport
-along a proof equality is needed. -/
+Membership in `frobeniusPrimeSet K L C` is therefore independent of the unramifiedness proof used
+to test it. -/
 theorem mem_frobeniusPrimeSet_iff_artinSymbol_eq {𝔭 : HeightOneSpectrum (𝓞 K)}
     (hur : ∀ (Q : Ideal (𝓞 L)) [Q.IsPrime] [Q.LiesOver 𝔭.asIdeal],
       Algebra.IsUnramifiedAt (𝓞 K) Q) (C : ConjClasses (L ≃ₐ[K] L)) :
@@ -163,6 +164,40 @@ theorem mem_frobeniusPrimeSet_mk_iff_exists_isArithFrobAt {𝔭 : HeightOneSpect
       ∃ Q : 𝔭.asIdeal.primesOver (𝓞 L), IsArithFrobAt (𝓞 K) σ Q.1 :=
   ⟨exists_isArithFrobAt_of_mem_frobeniusPrimeSet_mk, fun ⟨Q, hσ⟩ ↦
     mem_frobeniusPrimeSet_mk_of_isArithFrobAt hur Q.1 hσ⟩
+
+section IsoOfExtensions
+
+variable {L' : Type*} [Field L'] [NumberField L'] [Algebra K L'] [IsGalois K L']
+
+/-- **Equivariance under an isomorphism of extensions.** An isomorphism `e : L ≃ₐ[K] L'` carries
+the fibre of `C` over `L` onto the fibre over `L'` of the image of `C` under the induced
+isomorphism `AlgEquiv.autCongr e` of Galois groups.
+
+So the fibres depend only on the extension `L / K` up to isomorphism, not on the model of `L`
+chosen to compute the Artin symbol. -/
+theorem frobeniusPrimeSet_map_autCongr (e : L ≃ₐ[K] L') (C : ConjClasses (L ≃ₐ[K] L)) :
+    frobeniusPrimeSet K L' (ConjClasses.map (AlgEquiv.autCongr e).toMonoidHom C) =
+      frobeniusPrimeSet K L C := by
+  -- The two induced maps on conjugacy classes are inverse to one another.
+  have hcomp : ∀ D : ConjClasses (L ≃ₐ[K] L),
+      ConjClasses.map (AlgEquiv.autCongr e.symm).toMonoidHom
+        (ConjClasses.map (AlgEquiv.autCongr e).toMonoidHom D) = D := by
+    intro D
+    obtain ⟨σ, rfl⟩ := ConjClasses.mk_surjective D
+    refine congrArg ConjClasses.mk ?_
+    rw [← AlgEquiv.autCongr_symm]
+    exact (AlgEquiv.autCongr e).symm_apply_apply σ
+  ext 𝔭
+  simp only [mem_frobeniusPrimeSet_iff]
+  constructor
+  · rintro ⟨hur', hC⟩
+    have hur := (forall_isUnramifiedAt_iff_of_algEquiv e 𝔭.asIdeal).mpr hur'
+    exact ⟨hur, by rw [artinSymbol_eq_map_autCongr e.symm 𝔭.asIdeal hur' hur, hC, hcomp]⟩
+  · rintro ⟨hur, hC⟩
+    have hur' := (forall_isUnramifiedAt_iff_of_algEquiv e 𝔭.asIdeal).mp hur
+    exact ⟨hur', by rw [artinSymbol_eq_map_autCongr e 𝔭.asIdeal hur hur', hC]⟩
+
+end IsoOfExtensions
 
 /-- **Distinct classes have disjoint fibres.** A prime unramified in `L` has one Artin class. -/
 theorem disjoint_frobeniusPrimeSet {C D : ConjClasses (L ≃ₐ[K] L)} (h : C ≠ D) :
