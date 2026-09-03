@@ -417,8 +417,9 @@ is the polynomial discriminant of the minimal polynomial of its generator. Separ
 needed: without it both sides vanish, the left because the trace form is identically zero and the
 right because the minimal polynomial is inseparable. -/
 theorem _root_.Algebra.discr_powerBasis_eq_minpoly_discr {K L : Type*} [Field K] [Field L]
-    [Algebra K L] [Module.Finite K L] (pb : PowerBasis K L) :
+    [Algebra K L] (pb : PowerBasis K L) :
     Algebra.discr K pb.basis = (minpoly K pb.gen).discr := by
+  let _ := pb.finite
   classical
   let E := AlgebraicClosure L
   let := fun a b : E ↦ Classical.propDecidable (Eq a b)
