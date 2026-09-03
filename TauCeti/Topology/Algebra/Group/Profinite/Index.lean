@@ -344,15 +344,15 @@ theorem profiniteIndex_map_dvd (H : Subgroup G) {f : G →* G'} (hf : Continuous
 group. -/
 @[simp]
 theorem profiniteIndex_map_continuousMulEquiv (H : Subgroup G) (e : G ≃ₜ* G') :
-    profiniteIndex (H.map e.toMulEquiv.toMonoidHom) = profiniteIndex H := by
-  have hcont : Continuous (e.toMulEquiv.toMonoidHom : G → G') := map_continuous e
-  have hsurj : Function.Surjective (e.toMulEquiv.toMonoidHom : G → G') := EquivLike.surjective e
-  have hcont' : Continuous (e.symm.toMulEquiv.toMonoidHom : G' → G) := map_continuous e.symm
-  have hsurj' : Function.Surjective (e.symm.toMulEquiv.toMonoidHom : G' → G) :=
+    profiniteIndex (H.map ((e : G ≃* G') : G →* G')) = profiniteIndex H := by
+  have hcont : Continuous (((e : G ≃* G') : G →* G') : G → G') := map_continuous e
+  have hsurj : Function.Surjective (((e : G ≃* G') : G →* G') : G → G') := EquivLike.surjective e
+  have hcont' : Continuous (((e.symm : G' ≃* G) : G' →* G) : G' → G) := map_continuous e.symm
+  have hsurj' : Function.Surjective (((e.symm : G' ≃* G) : G' →* G) : G' → G) :=
     EquivLike.surjective e.symm
   refine le_antisymm (Supernatural.dvd_iff_le.mp (profiniteIndex_map_dvd H hcont hsurj)) ?_
-  have hback := profiniteIndex_map_dvd (H.map e.toMulEquiv.toMonoidHom) hcont' hsurj'
-  rw [Subgroup.map_map, show (e.symm.toMulEquiv.toMonoidHom.comp e.toMulEquiv.toMonoidHom)
+  have hback := profiniteIndex_map_dvd (H.map ((e : G ≃* G') : G →* G')) hcont' hsurj'
+  rw [Subgroup.map_map, show (((e.symm : G' ≃* G) : G' →* G).comp ((e : G ≃* G') : G →* G'))
     = MonoidHom.id G from MonoidHom.ext fun x => e.symm_apply_apply x, Subgroup.map_id] at hback
   exact Supernatural.dvd_iff_le.mp hback
 
