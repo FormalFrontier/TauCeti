@@ -20,48 +20,42 @@ hence so is the logarithmic derivative. All three statements are unconditional:
 `fderiv`, `deriv`, and with them `logDeriv` take their junk values at non-differentiable
 points, and the translation identities hold there too.
 
+These extensions of Mathlib's periodicity API live in the root `Function` namespace as
+`Periodic.*`, so that `hf.deriv` and its analogues resolve by receiver notation. They remain
+protected so that opening `Function.Periodic` does not shadow `deriv` and `logDeriv` themselves.
+
 ## Main declarations
 
-* `TauCeti.Function.Periodic.fderiv`: the Fréchet derivative of a periodic function is
+* `Function.Periodic.fderiv`: the Fréchet derivative of a periodic function is
   periodic.
-* `TauCeti.Function.Periodic.deriv`: the derivative of a periodic function is periodic.
-* `TauCeti.Function.Periodic.logDeriv`: the logarithmic derivative of a periodic
+* `Function.Periodic.deriv`: the derivative of a periodic function is periodic.
+* `Function.Periodic.logDeriv`: the logarithmic derivative of a periodic
   function is periodic.
 -/
 
 public section
 
-namespace TauCeti
-
 namespace Function
-
-namespace Periodic
 
 variable {𝕜 : Type*} [NontriviallyNormedField 𝕜]
 
 /-- The Fréchet derivative of a periodic function is periodic. -/
-protected theorem fderiv {E F : Type*} [NormedAddCommGroup E] [NormedSpace 𝕜 E]
+protected theorem Periodic.fderiv {E F : Type*} [NormedAddCommGroup E] [NormedSpace 𝕜 E]
     [NormedAddCommGroup F] [NormedSpace 𝕜 F] {f : E → F} {c : E}
-    (hf : _root_.Function.Periodic f c) :
-    _root_.Function.Periodic (fderiv 𝕜 f) c := fun x ↦ by
+    (hf : Periodic f c) : Periodic (fderiv 𝕜 f) c := fun x ↦ by
   rw [← fderiv_comp_add_right, hf.funext]
 
 /-- The derivative of a periodic function is periodic. -/
-protected theorem deriv {F : Type*} [NormedAddCommGroup F] [NormedSpace 𝕜 F] {f : 𝕜 → F}
-    {c : 𝕜} (hf : _root_.Function.Periodic f c) :
-    _root_.Function.Periodic (_root_.deriv f) c := fun x ↦ by
+protected theorem Periodic.deriv {F : Type*} [NormedAddCommGroup F] [NormedSpace 𝕜 F]
+    {f : 𝕜 → F} {c : 𝕜} (hf : Periodic f c) : Periodic (deriv f) c := fun x ↦ by
   rw [← deriv_comp_add_const, hf.funext]
 
 /-- The logarithmic derivative of a periodic function is periodic. -/
-protected theorem logDeriv {𝕜' : Type*} [NontriviallyNormedField 𝕜'] [NormedAlgebra 𝕜 𝕜']
-    {f : 𝕜 → 𝕜'} {c : 𝕜} (hf : _root_.Function.Periodic f c) :
-    _root_.Function.Periodic (_root_.logDeriv f) c :=
-  (Periodic.deriv hf).div hf
-
-end Periodic
+protected theorem Periodic.logDeriv {𝕜' : Type*} [NontriviallyNormedField 𝕜']
+    [NormedAlgebra 𝕜 𝕜'] {f : 𝕜 → 𝕜'} {c : 𝕜} (hf : Periodic f c) :
+    Periodic (logDeriv f) c :=
+  hf.deriv.div hf
 
 end Function
-
-end TauCeti
 
 end
