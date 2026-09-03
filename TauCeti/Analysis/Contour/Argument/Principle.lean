@@ -85,7 +85,7 @@ private lemma logDeriv_zpow_sub_mul {g : ℂ → ℂ} {c z : ℂ} {n : ℤ} (hz 
   have hld_sub : logDeriv (fun w => w - c) z = (z - c)⁻¹ := by
     have hderiv : deriv (fun w => w - c) z = 1 := by simp
     rw [logDeriv_apply, hderiv, one_div]
-  rw [logDeriv_mul z hzpow hg_ne hdz hg_diff,
+  rw [logDeriv_fun_mul z hzpow hg_ne hdz hg_diff,
     logDeriv_fun_zpow (f := fun w => w - c) (differentiableAt_id.sub_const c) n, hld_sub]
 
 /-- **Simple-pole splitting of the logarithmic derivative.** Near a point `s` where `F` is
@@ -215,7 +215,7 @@ private theorem circleIntegral_logDeriv_sub_principalPart_eq_zero {F : ℂ → �
     circleIntegral (fun z => logDeriv F z - ∑ s ∈ S, (ord s : ℂ) * (z - s)⁻¹) c R = 0 := by
   have hP_mero : MeromorphicOn (fun z => ∑ s ∈ S, (ord s : ℂ) * (z - s)⁻¹)
       (Metric.closedBall c R) := by
-    refine MeromorphicOn.fun_sum fun s z _ => ?_
+    refine MeromorphicOn.fun_sum fun s _ z _ => ?_
     exact (MeromorphicAt.const (ord s : ℂ) z).mul
       (((MeromorphicAt.id z).sub (MeromorphicAt.const s z)).inv)
   refine circleIntegral_eq_zero_of_meromorphicOrderAt_nonneg hR.le (hF_mero.logDeriv.sub hP_mero) ?_

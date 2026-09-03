@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Claude
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -9,6 +9,7 @@ public import Mathlib.Analysis.Analytic.Basic
 public import Mathlib.Analysis.Calculus.Deriv.Basic
 public import Mathlib.Analysis.Complex.Basic
 public import Mathlib.Topology.UnitInterval
+public import TauCeti.Topology.LocallyConstant.Preconnected
 import Mathlib.Analysis.Complex.CauchyIntegral
 import Mathlib.Topology.LocallyConstant.Basic
 
@@ -24,7 +25,9 @@ A continuation is recorded as a family `f : X → ℂ → E` of functions indexe
 subject to the requirement that `f t` be analytic at `γ t` and that the germ of `f u` at `γ u`
 agree with the germ of `f t` at `γ u` for all `u` near `t`. Equivalently — and this is the way to
 read the definition — the assignment `t ↦ (germ of f t at γ t)` is a *continuous lift* of `γ` to
-the étale space of holomorphic germs. The classical "chain of overlapping discs" definition is the
+the étale space of holomorphic germs — literally so, by
+`TauCeti.isAnalyticContinuationAlong_iff_continuousOn_germPoint` of
+`Conformal/Continuation/Etale.lean`. The classical "chain of overlapping discs" definition is the
 same condition written with explicit discs; the germ formulation avoids carrying the discs around.
 
 The parameter space `X` is an arbitrary topological space, and the parameter set `s : Set X` is
@@ -96,8 +99,9 @@ uniqueness of the continuation along a *fixed* path. The monodromy theorem itsel
 continuations along *homotopic* paths, and in the étale-space picture is an instance of Mathlib's
 abstract `IsLocalHomeomorph.monodromy_theorem` (`Mathlib/Topology/Homotopy/Lifting.lean`), whose
 docstring describes exactly this application; the uniqueness proved here is the concrete form of
-the separatedness hypothesis that abstract theorem consumes. Building the étale space of
-holomorphic germs and deducing monodromy from it is left to a follow-up.
+the separatedness hypothesis that abstract theorem consumes. That étale space is built in
+`TauCeti/Analysis/Complex/HolomorphicSheaf.lean`, and `Conformal/Continuation/Etale.lean` supplies
+the continuation/lift correspondence needed to apply the abstract theorem to it.
 
 ## Main definitions and results
 
@@ -172,23 +176,6 @@ theorem eventually_eventuallyEq_iff_of_analyticAt [CompleteSpace E] {F G : ℂ �
   exact ⟨fun h => eventuallyEq_nhds_of_analyticOnNhd_ball hFr hGr hw hz h,
     fun h => eventuallyEq_nhds_of_analyticOnNhd_ball hFr hGr hz hw h⟩
 
-/-- A property that is locally constant along a preconnected set is constant along it.
-
-This is `IsLocallyConstant.apply_eq_of_preconnectedSpace` transported to the subspace `s`; it is
-kept private because the general-topology statement belongs upstream rather than in a
-complex-analysis file. -/
-private theorem eq_of_isPreconnected_of_eventually_iff (hs : IsPreconnected s) {P : X → Prop}
-    (hP : ∀ t ∈ s, ∀ᶠ u in 𝓝[s] t, (P u ↔ P t)) {a b : X} (ha : a ∈ s) (hb : b ∈ s) (hPa : P a) :
-    P b := by
-  have hlc : IsLocallyConstant fun x : s => P x.1 := by
-    rw [IsLocallyConstant.iff_eventually_eq]
-    rintro ⟨t, ht⟩
-    rw [nhds_subtype_eq_comap_nhdsWithin]
-    exact Filter.Eventually.comap ((hP t ht).mono fun _ hu => propext hu) _
-  have : PreconnectedSpace s := isPreconnected_iff_preconnectedSpace.mp hs
-  rw [hlc.apply_eq_of_preconnectedSpace ⟨b, hb⟩ ⟨a, ha⟩]
-  exact hPa
-
 /-! ### Analytic continuation along a path -/
 
 /-- `IsAnalyticContinuationAlong f γ s` says that the family `f` is an **analytic continuation
@@ -198,7 +185,8 @@ sense that `f u` and `f t` have the same germ at `γ u` for every `u ∈ s` clos
 
 Only the germ of `f t` at `γ t` matters; the values of `f t` away from `γ t` are unconstrained.
 Reading the germs as points of the étale space of holomorphic germs over `ℂ`, the condition says
-precisely that `t ↦ (germ of f t at γ t)` is a continuous lift of `γ`. -/
+precisely that `t ↦ (germ of f t at γ t)` is a continuous lift of `γ`; that is
+`TauCeti.isAnalyticContinuationAlong_iff_continuousOn_germPoint`. -/
 structure IsAnalyticContinuationAlong (f : X → ℂ → E) (γ : X → ℂ) (s : Set X) : Prop where
   /-- The path is continuous on the parameter set. -/
   continuousOn : ContinuousOn γ s
@@ -379,9 +367,9 @@ theorem eventuallyEq [CompleteSpace E] (hf : IsAnalyticContinuationAlong f γ s)
     (hg : IsAnalyticContinuationAlong g γ s) (hs : IsPreconnected s) {a b : X} (ha : a ∈ s)
     (hb : b ∈ s) (hab : f a =ᶠ[𝓝 (γ a)] g a) :
     f b =ᶠ[𝓝 (γ b)] g b :=
-  eq_of_isPreconnected_of_eventually_iff hs
-    (P := fun t => f t =ᶠ[𝓝 (γ t)] g t) (fun _ ht => hf.eventually_eventuallyEq_iff hg ht) ha hb
-    hab
+  -- the germ-agreement predicate is locally constant along `s`, hence constant on it
+  (hs.apply_eq_of_eventually_eq (f := fun t => f t =ᶠ[𝓝 (γ t)] g t)
+    (fun _ ht => ((hf.eventually_eventuallyEq_iff hg ht).mono fun _ h => propext h)) ha hb) ▸ hab
 
 /-- Two continuations along the same path that carry the same germ at one parameter time take the
 same value at every parameter time. -/

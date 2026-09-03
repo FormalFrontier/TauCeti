@@ -5,7 +5,7 @@ Authors: Chris Birkbeck
 -/
 module
 
-public import TauCeti.NumberTheory.HeckeRing.GL2.Gamma0.DiagonalCoset
+public import TauCeti.NumberTheory.HeckeRing.GL2.Gamma0.Diagonal.Coset
 public import TauCeti.NumberTheory.HeckeRing.GLn.CosetDecomposition
 
 /-!

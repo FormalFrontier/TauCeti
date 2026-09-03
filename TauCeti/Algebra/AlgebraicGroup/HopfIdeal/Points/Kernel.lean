@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -31,11 +32,11 @@ open CategoryTheory WithConv
 
 namespace TauCeti
 
-universe u w
+universe u v w
 
 namespace CommHopfAlgCat
 
-variable {R : Type u} [CommRing R] {H K : _root_.CommHopfAlgCat.{u} R}
+variable {R : Type u} [CommRing R] {H K : _root_.CommHopfAlgCat.{v} R}
 
 /-- Kernel semantics on functors of points: for every commutative `R`-algebra `A`, an
 `A`-point of the source is sent to the unit point exactly when it lies in the subgroup of

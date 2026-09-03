@@ -1,12 +1,15 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.SchemePoints
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.FunctorOfPoints
+public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Scheme.Basic
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.HopfSpec
+import TauCeti.CategoryTheory.Comma.Over
 
 /-!
 # The general linear group scheme
@@ -35,6 +38,8 @@ lie in the same universe, so this file uses that same-universe setting.
 ## Main declarations
 
 * `TauCeti.GeneralLinear.groupScheme`: the general linear group scheme over `Spec R`.
+* `TauCeti.GeneralLinear.hopfIdealInclusion`: the generic closed immersion into `GL_n`
+  cut out by a Hopf ideal.
 * `TauCeti.GeneralLinear.groupSchemeSpecIso`: its canonical raw-coordinate presentation.
 * `TauCeti.GeneralLinear.groupSchemeMulSourceIso`: the tensor-coordinate presentation of the
   multiplication source.
@@ -97,6 +102,45 @@ lemma groupScheme_def :
   unfold groupScheme
   rfl
 
+/-- The closed subgroup inclusion into `GL_n` cut out by a Hopf ideal of its coordinate
+algebra. -/
+noncomputable def hopfIdealInclusion
+    (I : HopfIdeal R (coordinateHopfAlgebra R n)) :
+    CommHopfAlgCat.quotientSpec (coordinateHopfAlgebra R n) I ⟶ groupScheme R n :=
+  CommHopfAlgCat.quotientSpecι (coordinateHopfAlgebra R n) I ≫
+    (eqToIso (groupScheme_def R n).symm).hom
+
+/-- A Hopf-ideal inclusion is the quotient-spectrum inclusion followed by the named
+identification with `GL_n`. -/
+theorem hopfIdealInclusion_def (I : HopfIdeal R (coordinateHopfAlgebra R n)) :
+    hopfIdealInclusion R n I =
+      CommHopfAlgCat.quotientSpecι (coordinateHopfAlgebra R n) I ≫
+        (eqToIso (groupScheme_def R n).symm).hom := by
+  rw [hopfIdealInclusion]
+
+/-- Every subgroup of `GL_n` cut out by a Hopf ideal is closed. -/
+instance isClosedImmersion_hopfIdealInclusion
+    (I : HopfIdeal R (coordinateHopfAlgebra R n)) :
+    IsClosedImmersion (hopfIdealInclusion R n I).hom.hom.left := by
+  let c := (CommHopfAlgCat.quotientSpecι (coordinateHopfAlgebra R n) I).hom.hom.left
+  let e := ((eqToIso (groupScheme_def R n).symm).hom).hom.hom.left
+  have hc : IsClosedImmersion c := by infer_instance
+  have hce : IsClosedImmersion (c ≫ e) :=
+    (MorphismProperty.cancel_right_of_respectsIso _ c e).2 hc
+  rw [hopfIdealInclusion_def]
+  simpa only [Grp.comp', Mon.comp_hom', Over.comp_left] using hce
+
+/-- A subgroup of `GL_n` cut out by a Hopf ideal is locally of finite type over the base. -/
+instance locallyOfFiniteType_hopfIdealQuotientSpec
+    (I : HopfIdeal R (coordinateHopfAlgebra R n)) :
+    LocallyOfFiniteType
+      (CommHopfAlgCat.quotientSpec (coordinateHopfAlgebra R n) I).X.hom :=
+  FiniteTypeCommHopfAlgCat.locallyOfFiniteType_quotientSpec
+    (⟨coordinateHopfAlgebra R n,
+      inferInstanceAs (Algebra.FiniteType R (coordinateHopfAlgebra R n))⟩ :
+      FiniteTypeCommHopfAlgCat R)
+    I
+
 /-- The scheme underlying the general linear group scheme is the spectrum of its bundled
 coordinate Hopf algebra. -/
 lemma groupScheme_X_left :
@@ -143,6 +187,8 @@ lemma groupScheme_X_hom :
       ext r
       exact (coordinateHopfAlgebraAlgEquiv R n).commutes r |>.symm
 
+/-- The tensor square of the raw coordinate ring is identified with the tensor square of the
+bundled coordinate Hopf algebra. -/
 private noncomputable def coordinateTensorAlgEquiv :
     CoordinateRing R n ⊗[R] CoordinateRing R n ≃ₐ[R]
       coordinateHopfAlgebra R n ⊗[R] coordinateHopfAlgebra R n :=
@@ -365,6 +411,15 @@ lemma schemePointsMulEquiv_apply
           (coordinateRingMap R n (MvPolynomial.X (i, j)))) := by
   rw [schemePointsMulEquiv, MulEquiv.trans_apply, pointsMulEquiv_apply,
     pointToGeneralLinear_apply]
+
+/-- Evaluating the scheme-points equivalence on a point presented by `groupSchemePointMulEquiv`
+recovers the canonical algebra point. -/
+@[simp]
+theorem schemePointsMulEquiv_groupSchemePointMulEquiv
+    (q : WithConv (coordinateHopfAlgebra R n →ₐ[R] A)) :
+    schemePointsMulEquiv n A (groupSchemePointMulEquiv n A q) =
+      pointsMulEquiv (R := R) n q := by
+  simp [schemePointsMulEquiv]
 
 /-- The inverse scheme-points equivalence sends an invertible matrix to the spectrum map induced
 by its canonical coordinate-algebra point. -/

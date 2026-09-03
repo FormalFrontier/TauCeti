@@ -1,12 +1,13 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import Mathlib.MeasureTheory.Function.L1Space.Integrable
 public import Mathlib.MeasureTheory.Measure.Haar.OfBasis
-public import TauCeti.Analysis.PositiveDefinite.Kernel.Basic
+public import Mathlib.LinearAlgebra.Matrix.PosDef
 -- The remaining import is proof-only: the analytic and positive-definiteness facts about the
 -- Gaussian factor.
 import TauCeti.Analysis.Bochner.Gaussian.Basic
@@ -24,12 +25,12 @@ positive-definite function by an integrable one to which Fourier inversion appli
 
 Adapted (Apache 2.0) from the Bochner–Minlos formalization by Michael R. Douglas
 (https://github.com/mrdouglasny/bochner, revision `08eb302`), source file `Bochner/Main.lean`;
-the positive-definiteness hypotheses are restated through `TauCeti.IsPositiveDefiniteKernel`.
+the positive-definiteness hypotheses are restated through `Matrix.PosSemidef`.
 
 ## Main declarations
 
 * `TauCeti.gaussianRegularize`: the Gaussian regularization `φ_ε = φ · exp (-ε‖·‖²)`.
-* `TauCeti.isPositiveDefiniteKernel_gaussianRegularize`: `φ_ε` has a positive-definite
+* `TauCeti.posSemidef_gaussianRegularize`: `φ_ε` has a positive-definite
   subtraction kernel whenever `φ` does.
 * `TauCeti.gaussianRegularize_apply_zero`: regularization preserves the value at the origin.
 * `TauCeti.continuous_gaussianRegularize`, `TauCeti.integrable_gaussianRegularize`,
@@ -45,7 +46,7 @@ the positive-definiteness hypotheses are restated through `TauCeti.IsPositiveDef
 public section
 
 open Filter MeasureTheory
-open scoped Topology
+open scoped ComplexOrder Topology
 
 namespace TauCeti
 
@@ -97,10 +98,10 @@ variable {V : Type*} [NormedAddCommGroup V] [InnerProductSpace ℝ V]
 /-- The Gaussian regularization of a function with positive-definite subtraction kernel again
 has a positive-definite subtraction kernel: it is the Schur product of the original kernel with
 the Gaussian kernel `(a, b) ↦ exp (-ε‖a - b‖²)`. -/
-theorem isPositiveDefiniteKernel_gaussianRegularize {φ : V → ℂ}
-    (hpd : IsPositiveDefiniteKernel fun a b : V => φ (a - b)) {ε : ℝ} (hε : 0 ≤ ε) :
-    IsPositiveDefiniteKernel fun a b : V => gaussianRegularize φ ε (a - b) :=
-  isPositiveDefiniteKernel_mul hpd (isPositiveDefiniteKernel_cexp_neg_mul_sq_norm hε)
+theorem posSemidef_gaussianRegularize {φ : V → ℂ}
+    (hpd : Matrix.PosSemidef fun a b : V => φ (a - b)) {ε : ℝ} (hε : 0 ≤ ε) :
+    Matrix.PosSemidef fun a b : V => gaussianRegularize φ ε (a - b) :=
+  hpd.hadamard (posSemidef_cexp_neg_mul_sq_norm hε)
 
 end PositiveDefinite
 

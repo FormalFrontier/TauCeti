@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -64,6 +65,8 @@ hypothesis always holds.
 
 ## Main results
 
+* `TauCeti.DynkinType.TypeC.span_range_weight_eq_top`: the classical weights span the full
+  character lattice in every rank.
 * `TauCeti.DynkinType.TypeC.signedWeight_signedReflection` and
   `TauCeti.DynkinType.TypeC.signedCoweight_signedReflection`: the reflection acts as the reflection
   formula says it does.
@@ -136,6 +139,55 @@ lemma weight_dotProduct_coweight {a c : ℕ} (ha : a < n) :
   simp only [dotProduct, weight, coweight, sub_mul, Finset.sum_sub_distrib,
     key a, key' a]
   split_ifs <;> omega
+
+/-! ## Generation of the character lattice -/
+
+/-- **The classical type-`Cₙ` weights generate the full character lattice.** Each standard
+coordinate character is the partial sum of the weights through that coordinate. -/
+theorem span_range_weight_eq_top (n : ℕ) :
+    Submodule.span ℤ (Set.range (fun a : Fin n => weight n a)) = ⊤ := by
+  cases n with
+  | zero =>
+      apply top_unique
+      intro x _
+      rw [Subsingleton.elim x 0]
+      exact Submodule.zero_mem _
+  | succ n =>
+      apply top_unique
+      rw [← (Pi.basisFun ℤ (Fin (n + 1))).span_eq]
+      refine Submodule.span_le.2 ?_
+      rintro _ ⟨a, rfl⟩
+      rw [Pi.basisFun_apply]
+      induction a using Fin.induction with
+      | zero =>
+          have h : weight (n + 1) (0 : Fin (n + 1)) ∈
+              Submodule.span ℤ (Set.range (fun a : Fin (n + 1) => weight (n + 1) a)) :=
+            Submodule.subset_span (Set.mem_range_self _)
+          have heq : Pi.single (0 : Fin (n + 1)) 1 = weight (n + 1) (0 : Fin (n + 1)) := by
+            funext i
+            by_cases hi : i = 0
+            · subst i
+              simp only [weight_apply, Pi.single_eq_same, Fin.val_zero, ↓reduceIte, zero_add,
+                Nat.zero_ne_add_one, sub_zero]
+            · have hval : (i : ℕ) ≠ 0 := by
+                intro hval
+                apply hi
+                exact Fin.ext hval
+              have hval' : (0 : ℕ) ≠ (i : ℕ) := Ne.symm hval
+              simp only [weight_apply, Pi.single_eq_of_ne hi, Fin.val_zero, hval', ↓reduceIte,
+                Nat.zero_ne_add_one, sub_self]
+          rw [heq]
+          exact h
+      | succ a ih =>
+          have h : weight (n + 1) a.succ + Pi.single a.castSucc 1 ∈
+              Submodule.span ℤ (Set.range (fun a : Fin (n + 1) => weight (n + 1) a)) :=
+            Submodule.add_mem _ (Submodule.subset_span (Set.mem_range_self a.succ)) ih
+          have heq : Pi.single a.succ 1 = weight (n + 1) a.succ + Pi.single a.castSucc 1 := by
+            funext i
+            simp only [weight_apply, Pi.single_apply, Pi.add_apply, Fin.val_succ]
+            split_ifs <;> simp only [Fin.ext_iff, Fin.val_succ, Fin.val_castSucc] at * <;> omega
+          rw [heq]
+          exact h
 
 /-! ## Signed basis vectors -/
 
@@ -284,6 +336,32 @@ lemma pairRoot_dotProduct_pairCoroot_self {p q : Signed n} (h : q ≠ signedNeg 
       signedWeight_dotProduct_eq_zero hpq (ne_signedNeg_of_ne_signedNeg h),
       signedWeight_dotProduct_eq_zero hpq.symm h]
     ring
+
+/-- Cartan integers between roots in the classical type `C` model have absolute value at most
+two. -/
+lemma abs_pairRoot_dotProduct_pairCoroot_le_two {x y p q : Signed n}
+    (hpq : q ≠ signedNeg p) :
+    |pairRoot x y ⬝ᵥ pairCoroot p q| ≤ 2 := by
+  have atom_le_one (z : Signed n) : |signedWeight z ⬝ᵥ pairCoroot p q| ≤ 1 := by
+    rcases eq_or_ne p q with rfl | hpq_ne
+    · rw [pairCoroot_self, signedWeight_dotProduct_signedCoweight, abs_le]
+      constructor <;> split_ifs <;> omega
+    · rw [pairCoroot_of_ne hpq_ne, dotProduct_add,
+        signedWeight_dotProduct_signedCoweight,
+        signedWeight_dotProduct_signedCoweight, abs_le]
+      have hp_ne_neg_q : p ≠ signedNeg q := ne_signedNeg_of_ne_signedNeg hpq
+      have hnegp_ne_negq : signedNeg p ≠ signedNeg q := by
+        intro h
+        exact hpq_ne (by simpa using congrArg signedNeg h)
+      constructor <;> split_ifs <;> simp_all
+  rw [pairRoot, add_dotProduct]
+  have hx := atom_le_one x
+  have hy := atom_le_one y
+  calc
+    |signedWeight x ⬝ᵥ pairCoroot p q + signedWeight y ⬝ᵥ pairCoroot p q| ≤
+        |signedWeight x ⬝ᵥ pairCoroot p q| + |signedWeight y ⬝ᵥ pairCoroot p q| :=
+      abs_add_le _ _
+    _ ≤ 2 := by omega
 
 /-- A signed basis vector pairs to at least `1` with the coroot of `p + q` exactly when it is `p` or
 `q`. This is the recognition principle behind injectivity of the roots and coroots. -/

@@ -1,10 +1,12 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import Mathlib.RingTheory.MvPolynomial.Symmetric.Defs
+public import TauCeti.Algebra.MvPolynomial.Monomial
 public import TauCeti.RingTheory.MvPolynomial.Symmetric.Schur.Basic
 
 public section
@@ -43,10 +45,9 @@ weakly increasing and that it has the right multiset of letters, determine it
 (`List.Perm.eq_of_pairwise'`), which is how the round trip from a tableau back to itself is
 proved.
 
-Symmetry is a corollary rather than an input:
-`TauCeti.schurPoly_indiscrete_isSymmetric` records the one-row case of the symmetry of the Schur
-polynomials, which is proved here without the Bender--Knuth involution that the general case
-needs.
+Symmetry is a corollary rather than an input: the one-row case falls out of
+`TauCeti.schurPoly_indiscrete` and the symmetry of the complete homogeneous symmetric polynomials,
+without the Bender--Knuth involution that `TauCeti.schurPoly_isSymmetric` needs in general.
 
 ## Main definitions
 
@@ -66,8 +67,6 @@ needs.
 * `TauCeti.diagramSchurPoly_eq_hsymm_of_colLen_le_one`: the Schur polynomial of a one-row shape is
   a complete homogeneous symmetric polynomial.
 * `TauCeti.schurPoly_indiscrete`: `s_{(n)} = h_n`.
-* `TauCeti.schurPoly_indiscrete_isSymmetric`: the Schur polynomial of the partition `(n)` is
-  symmetric.
 
 ## References
 
@@ -82,16 +81,6 @@ needs.
 namespace TauCeti
 
 open Finset MvPolynomial
-
-/-! ### Monomials as products of variables -/
-
-/-- **A monomial is the product of the variables it uses, with multiplicity.**  This is the form
-in which the monomials of `MvPolynomial.hsymm` are written. -/
-private theorem prod_map_X_eq_monomial {σ : Type*} [DecidableEq σ] {R : Type*} [CommSemiring R]
-    (s : Multiset σ) :
-    (s.map (X : σ → MvPolynomial σ R)).prod = monomial s.toFinsupp (1 : R) := by
-  rw [Finset.prod_multiset_map_count, ← prod_X_pow_eq_monomial, Multiset.toFinsupp_support]
-  exact Finset.prod_congr rfl fun a _ => by rw [Multiset.toFinsupp_apply]
 
 namespace BoundedSSYT
 
@@ -354,17 +343,6 @@ theorem schurPoly_indiscrete (n : ℕ) :
   rw [schurPoly_eq_rename,
     diagramSchurPoly_eq_hsymm_of_colLen_le_one (colLen_diagramOf_indiscrete_le_one n),
     card_diagramOf, rename_hsymm]
-
-omit [DecidableEq σ] in
-/-- **The Schur polynomial of the partition `(n)` is symmetric.**  This is the at-most-one-row
-case of the symmetry of the Schur polynomials, which in general needs the Bender--Knuth involution
-and is not proved here; for `(n)` it is the symmetry of the complete homogeneous symmetric
-polynomials. -/
-theorem schurPoly_indiscrete_isSymmetric (n : ℕ) :
-    (schurPoly σ R (Nat.Partition.indiscrete n)).IsSymmetric := by
-  classical
-  rw [schurPoly_indiscrete]
-  exact hsymm_isSymmetric σ R n
 
 end Partition
 

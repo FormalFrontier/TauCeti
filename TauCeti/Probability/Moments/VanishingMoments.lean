@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Claude
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -120,7 +120,7 @@ private theorem integrable_exp_withDensity_ofReal
       (ν.withDensity fun x => ENNReal.ofReal (f x)) := by
   rw [integrable_withDensity_iff_integrable_smul₀' hfm hlt]
   refine hexp.mono ?_ ?_
-  · fun_prop
+  · exact hfm.ennreal_toReal.aestronglyMeasurable.smul (by fun_prop)
   · filter_upwards with x
     have hE : (0 : ℝ) < Real.exp (a * |x|) := Real.exp_pos _
     simp only [smul_eq_mul, ENNReal.toReal_ofReal', Real.norm_eq_abs, abs_mul,

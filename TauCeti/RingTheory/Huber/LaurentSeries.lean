@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -203,7 +204,7 @@ theorem mem_pairOfDefinition_idealImage (n : ℕ) (f : K⸨X⸩) :
   · rintro ⟨y, hy, rfl⟩
     exact (mem_idealOfDefinition_pow_iff n y).mp hy
   · have hle : Valued.v f ≤ 1 :=
-      hf.trans (by simpa using exp_le_exp.mpr (by omega : (-(n : ℤ)) ≤ 0))
+      hf.trans (by simp)
     have hmem : f ∈ powerSeries_as_subring K := by
       rw [← SetLike.mem_coe, coe_powerSeries_as_subring]
       exact hle

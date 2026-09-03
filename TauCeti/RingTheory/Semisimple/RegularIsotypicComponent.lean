@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -108,7 +109,7 @@ detail: build a class with `TauCeti.SimpleSubmoduleClasses.mk`, compare classes 
 `TauCeti.SimpleSubmoduleClasses.lift_mk` and `TauCeti.coe_simpleSubmoduleClassesEquiv_mk` are
 stated as ordinary theorems, so nothing downstream depends on the quotient by definitional
 unfolding. -/
-def SimpleSubmoduleClasses :=
+def SimpleSubmoduleClasses : Type _ :=
   Quot fun N N' : {N : Submodule R M // IsSimpleModule R N} ↦ Nonempty (N.1 ≃ₗ[R] N'.1)
 
 namespace SimpleSubmoduleClasses

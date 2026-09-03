@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Topology.Spectral.ConstructibleTopology
+public import Mathlib.Topology.Spectral.Basic
 
 /-!
 # Pro-constructible subsets of a spectral space
@@ -140,14 +141,14 @@ theorem IsProConstructible.iUnion {ι : Type*} [Finite ι] {f : ι → Set X}
   exact isClosed_iUnion_of_finite hf
 
 /-- A union of pro-constructible subsets over a finite set is pro-constructible. -/
-theorem Set.Finite.isProConstructible_biUnion {ι : Type*} {I : Set ι} {f : ι → Set X}
+theorem _root_.Set.Finite.isProConstructible_biUnion {ι : Type*} {I : Set ι} {f : ι → Set X}
     (hI : I.Finite) (hf : ∀ i ∈ I, IsProConstructible (f i)) :
     IsProConstructible (⋃ i ∈ I, f i) := by
   simp only [IsProConstructible, Set.preimage_iUnion]
   exact hI.isClosed_biUnion hf
 
 /-- A union of pro-constructible subsets over a finset is pro-constructible. -/
-theorem Finset.isProConstructible_biUnion {ι : Type*} (I : Finset ι) {f : ι → Set X}
+theorem _root_.Finset.isProConstructible_biUnion {ι : Type*} (I : Finset ι) {f : ι → Set X}
     (hf : ∀ i ∈ I, IsProConstructible (f i)) : IsProConstructible (⋃ i ∈ I, f i) :=
   Set.Finite.isProConstructible_biUnion I.finite_toSet hf
 
@@ -298,9 +299,7 @@ theorem IsProConstructible.mem_of_isGenericPoint (hs : IsProConstructible s) {η
   have hζη : WithTopology.ofTopology x ∈ closure ({η} : Set X) := by
     rw [hη]; exact subset_closure hζs
   have hζeq : WithTopology.ofTopology x = η :=
-    (inseparable_iff_closure_eq.2 <| subset_antisymm
-      (closure_minimal (by simpa using hζη) isClosed_closure)
-      (closure_minimal (by simpa using hηζ) isClosed_closure)).eq
+    ((specializes_iff_mem_closure.2 hηζ).antisymm (specializes_iff_mem_closure.2 hζη)).eq
   exact hζeq ▸ hζs
 
 /-- The inclusion of a pro-constructible subset of a spectral space is a spectral map: the trace
@@ -327,8 +326,8 @@ theorem IsProConstructible.quasiSeparatedSpace (hs : IsProConstructible s) :
     QuasiSeparatedSpace s := by
   refine QuasiSeparatedSpace.of_isTopologicalBasis
     (b := fun U : {U : Set X // IsOpen U ∧ IsCompact U} ↦ ((↑) : s → X) ⁻¹' U.1) ?_ ?_
-  · have h := (PrespectralSpace.isTopologicalBasis (X := X)).isInducing
-      (f := ((↑) : s → X)) IsEmbedding.subtypeVal.isInducing
+  · have h := Topology.IsInducing.isTopologicalBasis (f := ((↑) : s → X))
+      IsEmbedding.subtypeVal.isInducing (PrespectralSpace.isTopologicalBasis (X := X))
     convert h using 1
     ext V
     simp [Set.range, Subtype.exists, eq_comm]

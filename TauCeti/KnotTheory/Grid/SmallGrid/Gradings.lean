@@ -1,9 +1,11 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.KnotTheory.Grid.Grading.Parity
 public import TauCeti.KnotTheory.Grid.Unknot
 import Mathlib.Tactic.FinCases
 import Mathlib.Tactic.NormNum
@@ -19,7 +21,12 @@ graph and `X` markings on the transposition graph.
 The named states are available from `StateCardinality` and the standard diagram itself from
 `Unknot`, where it is the smallest member of the unknot grid family. Here we combine that
 small-grid API with the integer grading API to compute the two generators' Maslov and Alexander
-gradings in this concrete diagram.
+gradings in this concrete diagram, and package the diagram with its odd-component witness.
+
+## Main definitions
+
+* `TauCeti.OddComponentGridDiagram.twoByTwo`: the standard two-by-two unknot grid packaged with
+  its odd-component witness.
 
 ## Main results
 
@@ -92,26 +99,42 @@ private theorem twoByTwoSwap_pairCard_id : (Finset.univ.filter fun p : Fin 2 × 
   rw [hfilter]
   simp
 
-/-- In a `2 × 2` diagram, the integer `X`-Maslov grading of the `O`-marking state is `2`. -/
-theorem maslovXℤ_O_of_two (G : GridDiagram 2) : G.maslovXℤ G.O = 2 := by
+private theorem twoByTwoId_leCard_swap : (Finset.univ.filter fun p : Fin 2 × Fin 2 =>
+      p.1 ≤ p.2 ∧ GridState.twoByTwoId p.1 ≤ GridState.twoByTwoSwap p.2).card = 2 := by
+  have hfilter : (Finset.univ.filter fun p : Fin 2 × Fin 2 =>
+      p.1 ≤ p.2 ∧ GridState.twoByTwoId p.1 ≤ GridState.twoByTwoSwap p.2) = {(0, 0), (0, 1)} := by
+    decide
+  rw [hfilter]
+  decide
+
+private theorem twoByTwoSwap_leCard_id : (Finset.univ.filter fun p : Fin 2 × Fin 2 =>
+      p.1 ≤ p.2 ∧ GridState.twoByTwoSwap p.1 ≤ GridState.twoByTwoId p.2).card = 2 := by
+  have hfilter : (Finset.univ.filter fun p : Fin 2 × Fin 2 =>
+      p.1 ≤ p.2 ∧ GridState.twoByTwoSwap p.1 ≤ GridState.twoByTwoId p.2) = {(0, 1), (1, 1)} := by
+    decide
+  rw [hfilter]
+  decide
+
+/-- In a `2 × 2` diagram, the integer `X`-Maslov grading of the `O`-marking state vanishes. -/
+theorem maslovXℤ_O_of_two (G : GridDiagram 2) : G.maslovXℤ G.O = 0 := by
   rcases GridState.eq_twoByTwoId_or_eq_twoByTwoSwap G.O with hO | hO
   · rcases GridState.eq_twoByTwoId_or_eq_twoByTwoSwap G.X with hX | hX
     · exfalso
       exact G.disjoint 0 (by simp [hO, hX])
     · rw [maslovXℤ_eq_card, hO, hX]
-      rw [twoByTwoId_pairCard_self, twoByTwoId_pairCard_swap, twoByTwoSwap_pairCard_id,
+      rw [twoByTwoId_pairCard_self, twoByTwoId_leCard_swap, twoByTwoSwap_pairCard_id,
         twoByTwoSwap_pairCard_self]
       norm_num
   · rcases GridState.eq_twoByTwoId_or_eq_twoByTwoSwap G.X with hX | hX
     · rw [maslovXℤ_eq_card, hO, hX]
-      rw [twoByTwoSwap_pairCard_self, twoByTwoSwap_pairCard_id, twoByTwoId_pairCard_swap,
+      rw [twoByTwoSwap_pairCard_self, twoByTwoSwap_leCard_id, twoByTwoId_pairCard_swap,
         twoByTwoId_pairCard_self]
       norm_num
     · exfalso
       exact G.disjoint 0 (by simp [hO, hX])
 
-/-- In a `2 × 2` diagram, the integer `O`-Maslov grading of the `X`-marking state is `2`. -/
-theorem maslovOℤ_X_of_two (G : GridDiagram 2) : G.maslovOℤ G.X = 2 := by
+/-- In a `2 × 2` diagram, the integer `O`-Maslov grading of the `X`-marking state vanishes. -/
+theorem maslovOℤ_X_of_two (G : GridDiagram 2) : G.maslovOℤ G.X = 0 := by
   simpa using maslovXℤ_O_of_two G.swapMarkings
 
 /-- Twice the Alexander grading of the `O`-marking state in a `2 × 2` diagram is `-2`. -/
@@ -137,15 +160,15 @@ theorem alexander_X_of_two (G : GridDiagram 2) : G.alexander G.X = 0 := by
   norm_num
 
 /-- The integer `O`-Maslov grading of the identity generator in the standard two-by-two
-diagram is `1`. -/
+diagram is `-1`. -/
 theorem maslovOℤ_twoByTwo_twoByTwoId :
-    twoByTwo.maslovOℤ GridState.twoByTwoId = 1 := by
+    twoByTwo.maslovOℤ GridState.twoByTwoId = -1 := by
   simpa using maslovOℤ_O twoByTwo
 
 /-- The integer `X`-Maslov grading of the identity generator in the standard two-by-two
-diagram is `2`. -/
+diagram is `0`. -/
 theorem maslovXℤ_twoByTwo_twoByTwoId :
-    twoByTwo.maslovXℤ GridState.twoByTwoId = 2 := by
+    twoByTwo.maslovXℤ GridState.twoByTwoId = 0 := by
   simpa using maslovXℤ_O_of_two twoByTwo
 
 /-- Twice the Alexander grading of the identity generator in the standard two-by-two diagram
@@ -160,16 +183,18 @@ theorem alexander_twoByTwo_twoByTwoId :
   simpa using alexander_O_of_two twoByTwo
 
 /-- The integer `O`-Maslov grading of the transposition generator in the standard two-by-two
-diagram is `2`. -/
+diagram is `0`. -/
 theorem maslovOℤ_twoByTwo_twoByTwoSwap :
-    twoByTwo.maslovOℤ GridState.twoByTwoSwap = 2 := by
+    twoByTwo.maslovOℤ GridState.twoByTwoSwap = 0 := by
   simpa using maslovOℤ_X_of_two twoByTwo
 
 /-- The integer `X`-Maslov grading of the transposition generator in the standard two-by-two
-diagram is `1`. -/
+diagram is `-1`. -/
 theorem maslovXℤ_twoByTwo_twoByTwoSwap :
-    twoByTwo.maslovXℤ GridState.twoByTwoSwap = 1 := by
-  simpa only [twoByTwo_X] using maslovXℤ_X twoByTwo
+    twoByTwo.maslovXℤ GridState.twoByTwoSwap = -1 := by
+  have h := maslovXℤ_X twoByTwo
+  rw [twoByTwo_X] at h
+  simpa using h
 
 /-- Twice the Alexander grading of the transposition generator in the standard two-by-two
 diagram is `0`. -/
@@ -205,5 +230,18 @@ theorem alexander_twoByTwo_eq_neg_one_or_eq_zero (x : GridState 2) :
   alexander_eq_neg_one_or_eq_zero_of_two twoByTwo x
 
 end GridDiagram
+
+namespace OddComponentGridDiagram
+
+/-- The standard `2 × 2` unknot grid diagram, as an odd-component grid diagram: it presents a
+knot, so its component count is one. -/
+abbrev twoByTwo : OddComponentGridDiagram 2 :=
+  ⟨GridDiagram.twoByTwo, by
+    have h : GridDiagram.twoByTwo.componentCount = 1 :=
+      GridDiagram.unknot_zero ▸ (GridDiagram.isKnot_def _).1 (GridDiagram.isKnot_unknot 0)
+    rw [h]
+    exact odd_one⟩
+
+end OddComponentGridDiagram
 
 end TauCeti

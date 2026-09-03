@@ -1,10 +1,11 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.LinearAlgebra.CliffordAlgebra.PinAction
+public import TauCeti.LinearAlgebra.CliffordAlgebra.Pin.Action
 import TauCeti.LinearAlgebra.CliffordAlgebra.Basic
 
 /-!
@@ -17,9 +18,11 @@ remains canonical.
 
 ## Main definitions and results
 
-* `TauCeti.CliffordAlgebra.spinToSpecialOrthogonal` is the Spin action with codomain restricted to
+* `CliffordAlgebra.spinToSpecialOrthogonal` is the Spin action with codomain restricted to
   the special orthogonal group.
-* `TauCeti.CliffordAlgebra.coe_spinToSpecialOrthogonal_apply` identifies its underlying action
+* `CliffordAlgebra.ker_spinToSpecialOrthogonal` identifies its kernel with that of the
+  orthogonal Spin action.
+* `CliffordAlgebra.coe_spinToSpecialOrthogonal_apply` identifies its underlying action
   with the Spin action on the quadratic module.
 
 ## References
@@ -31,9 +34,11 @@ M.-L. Michelsohn, *Spin Geometry* (1989), Chapter I §2.
 
 public section
 
-open CliffordAlgebra QuadraticMap
+open QuadraticMap
 
-namespace TauCeti.CliffordAlgebra
+namespace CliffordAlgebra
+
+open TauCeti
 
 universe u v
 
@@ -72,6 +77,29 @@ private theorem lipschitzDet_unitι [Module.Free R M] [Module.Finite R M]
     exact coe_lipschitzToOrthogonal_apply Q _
   rw [haction, lipschitzVectorAction_unitι]
   exact QuadraticMap.det_reflection Q v
+
+/-- **The parity formula is multiplicative.** If `involute` acts on `x` and on `y` as the scalar
+`lipschitzDet`, it does so on the product. This is the `mul` closure step of
+`involute_eq_det_smul_of_mem_lipschitz`: the two scalars are central, so they collect in front. -/
+private theorem involute_mul_lipschitzDet (Q : QuadraticForm R M) {x y : (CliffordAlgebra Q)ˣ}
+    (hx : x ∈ lipschitzGroup Q) (hy : y ∈ lipschitzGroup Q)
+    (ihx : involute (Q := Q) (x : CliffordAlgebra Q) =
+      algebraMap R (CliffordAlgebra Q) (↑(lipschitzDet Q ⟨x, hx⟩)) * x)
+    (ihy : involute (Q := Q) (y : CliffordAlgebra Q) =
+      algebraMap R (CliffordAlgebra Q) (↑(lipschitzDet Q ⟨y, hy⟩)) * y) :
+    involute (Q := Q) ((x : CliffordAlgebra Q) * y) =
+      algebraMap R (CliffordAlgebra Q)
+        (↑(lipschitzDet Q ((⟨x, hx⟩ : lipschitzGroup Q) * ⟨y, hy⟩))) *
+          ((x : CliffordAlgebra Q) * y) := by
+  rw [map_mul, ihx, ihy, map_mul]
+  simp only [Units.val_mul, map_mul]
+  rw [mul_assoc
+    (algebraMap R (CliffordAlgebra Q) (↑(lipschitzDet Q ⟨x, hx⟩)))
+    (x : CliffordAlgebra Q)]
+  rw [← mul_assoc (x : CliffordAlgebra Q)
+    (algebraMap R (CliffordAlgebra Q) (↑(lipschitzDet Q ⟨y, hy⟩))) y]
+  rw [← Algebra.commutes (↑(lipschitzDet Q ⟨y, hy⟩) : R) (x : CliffordAlgebra Q)]
+  noncomm_ring
 
 private theorem involute_eq_det_smul_of_mem_lipschitz [Module.Free R M] [Module.Finite R M]
     (Q : QuadraticForm R M) {x : (CliffordAlgebra Q)ˣ} (hx : x ∈ lipschitzGroup Q) :
@@ -123,26 +151,8 @@ private theorem involute_eq_det_smul_of_mem_lipschitz [Module.Free R M] [Module.
   | mul x y hx hy ihx ihy =>
       have hx' : x ∈ lipschitzGroup Q := hx
       have hy' : y ∈ lipschitzGroup Q := hy
-      have ihx' : involute (Q := Q) (x : CliffordAlgebra Q) =
-          algebraMap R (CliffordAlgebra Q) (↑(lipschitzDet Q ⟨x, hx'⟩)) * x := by
-        simpa only using ihx
-      have ihy' : involute (Q := Q) (y : CliffordAlgebra Q) =
-          algebraMap R (CliffordAlgebra Q) (↑(lipschitzDet Q ⟨y, hy'⟩)) * y := by
-        simpa only using ihy
-      -- Expose multiplication in the ambient Clifford algebra before combining the hypotheses.
-      change involute (Q := Q) ((x : CliffordAlgebra Q) * y) =
-        algebraMap R (CliffordAlgebra Q)
-          (↑(lipschitzDet Q ((⟨x, hx'⟩ : lipschitzGroup Q) * ⟨y, hy'⟩))) *
-            ((x : CliffordAlgebra Q) * y)
-      rw [map_mul, ihx', ihy', map_mul]
-      simp only [Units.val_mul, map_mul]
-      rw [mul_assoc
-        (algebraMap R (CliffordAlgebra Q) (↑(lipschitzDet Q ⟨x, hx'⟩)))
-        (x : CliffordAlgebra Q)]
-      rw [← mul_assoc (x : CliffordAlgebra Q)
-        (algebraMap R (CliffordAlgebra Q) (↑(lipschitzDet Q ⟨y, hy'⟩))) y]
-      rw [← Algebra.commutes (↑(lipschitzDet Q ⟨y, hy'⟩) : R) (x : CliffordAlgebra Q)]
-      noncomm_ring
+      exact involute_mul_lipschitzDet Q hx' hy' (by simpa only using ihx)
+        (by simpa only using ihy)
 
 private theorem mem_even_of_involute_eq (Q : QuadraticForm R M) {x : CliffordAlgebra Q}
     (hx : involute x = x) : x ∈ even Q := by
@@ -232,6 +242,14 @@ noncomputable def spinToSpecialOrthogonal (Q : QuadraticForm R M) :
       (QuadraticMap.mem_specialOrthogonalGroup_iff).2
         ⟨(spinToOrthogonal Q x).2, det_spinToOrthogonal_eq_one Q x⟩)
 
+/-- Restricting the codomain of the Spin action to the special orthogonal group does not change
+its kernel. -/
+@[simp]
+theorem ker_spinToSpecialOrthogonal (Q : QuadraticForm R M) :
+    MonoidHom.ker (spinToSpecialOrthogonal Q) = MonoidHom.ker (spinToOrthogonal Q) := by
+  rw [spinToSpecialOrthogonal, MonoidHom.ker_codRestrict,
+    MonoidHom.ker_comp_of_injective _ _ (Subgroup.subtype_injective _)]
+
 /-- A Spin element has the same underlying action whether regarded as orthogonal or special
 orthogonal. -/
 @[simp]
@@ -242,4 +260,4 @@ theorem coe_spinToSpecialOrthogonal_apply (Q : QuadraticForm R M) (x : spinGroup
   change (((spinToOrthogonal Q x : QuadraticMap.orthogonalGroup Q) : M ≃ₗ[R] M) m) = _
   rw [coe_spinToOrthogonal_apply]
 
-end TauCeti.CliffordAlgebra
+end CliffordAlgebra

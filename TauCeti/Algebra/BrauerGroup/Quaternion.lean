@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -34,9 +35,10 @@ central division algebra of dimension `4`, so that class is not the identity
 ways `TauCeti/Algebra/BrauerGroup/BaseChange.lean` offers, so the kernel of base change to `ℂ` is
 strictly larger than the trivial subgroup.
 
-What is *not* proved here is that `[ℍ[ℝ]]` **generates** `BrauerGroup ℝ`, that is, that
-`BrauerGroup ℝ ≃ ℤ/2`. That needs the classification of the finite-dimensional real division
-algebras with centre `ℝ` -- only `ℝ` and `ℍ[ℝ]` occur -- which is a separate long-term target.
+That `[ℍ[ℝ]]` **generates** `BrauerGroup ℝ`, that is, that `BrauerGroup ℝ ≃ ℤ/2`, needs the
+classification of the finite-dimensional real division algebras with centre `ℝ` -- only `ℝ` and
+`ℍ[ℝ]` occur -- and is proved in `TauCeti/Algebra/BrauerGroup/Real.lean`
+(`TauCeti.Quaternion.brauerGroupMulEquiv`) on top of the order computation here.
 
 ## Main results
 
@@ -112,11 +114,11 @@ example : BrauerGroup.baseChange ℝ ℂ (BrauerGroup.mk (CSA.of ℝ ℍ[ℝ])) 
   rw [BrauerGroup.baseChange_eq_one_of_isAlgClosed, MonoidHom.one_apply]
 
 /-- The same class, killed through the splitting field rather than through the triviality of
-`BrauerGroup ℂ`: `TauCeti.Algebra.isSplittingField_of_isAlgClosed` says `ℂ` splits every
+`BrauerGroup ℂ`: `TauCeti.Algebra.isSplittingField_of_isSepClosed` says `ℂ` splits every
 finite-dimensional central simple `ℝ`-algebra, and a split algebra lies in the kernel. -/
 example : BrauerGroup.mk (CSA.of ℝ ℍ[ℝ]) ∈ (BrauerGroup.baseChange ℝ ℂ).ker :=
-  BrauerGroup.mk_mem_ker_baseChange_of_isSplittingField ℝ ℂ
-    (Algebra.isSplittingField_of_isAlgClosed ℝ ℍ[ℝ] ℂ)
+  (BrauerGroup.mk_mem_ker_baseChange_iff_isSplittingField ℝ ℂ).2
+    (Algebra.isSplittingField_of_isSepClosed ℝ ℍ[ℝ] ℂ)
 
 /-- `ℝ` does not split `ℍ[ℝ]`: the class of `ℍ[ℝ]` is not the identity, and by
 `TauCeti.BrauerGroup.mk_eq_one_iff_isSplittingField` those two statements are the same one. -/

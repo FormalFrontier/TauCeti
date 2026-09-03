@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -43,6 +44,23 @@ theorem norm_exp_le_exp_norm (h_one : ‖(1 : 𝔸)‖ ≤ 1) (x : 𝔸) :
   | succ m => exact norm_pow_le' x m.succ_pos
 
 variable {X : Type*} [NormedAddCommGroup X] [NormedSpace ℝ X]
+
+/-- The exponential of a real scalar multiple of a bounded operator satisfies
+`‖exp (t A)‖ ≤ exp (‖A‖ |t|)`. -/
+theorem norm_exp_smul_le (A : X →L[ℝ] X) (t : ℝ) :
+    ‖exp (t • A)‖ ≤ Real.exp (‖A‖ * |t|) := by
+  let +nondep : NormedAlgebra ℚ (X →L[ℝ] X) := .restrictScalars ℚ ℝ _
+  calc
+    ‖exp (t • A)‖ ≤ Real.exp ‖t • A‖ :=
+      norm_exp_le_exp_norm ContinuousLinearMap.norm_id_le _
+    _ = Real.exp (‖A‖ * |t|) := by rw [norm_smul, Real.norm_eq_abs, mul_comm]
+
+/-- Exponentials of real scalar multiples of the same bounded operator split over addition. -/
+theorem exp_add_smul [CompleteSpace X] (A : X →L[ℝ] X) (s t : ℝ) :
+    exp ((s + t) • A) = (exp (s • A)).comp (exp (t • A)) := by
+  let +nondep : NormedAlgebra ℚ (X →L[ℝ] X) := .restrictScalars ℚ ℝ _
+  rw [add_smul, exp_add_of_commute (((Commute.refl A).smul_left _).smul_right _),
+    ContinuousLinearMap.mul_def]
 
 namespace ContinuousLinearMap
 

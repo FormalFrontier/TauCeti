@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -137,13 +138,7 @@ theorem eq_of_adjoin_prod_root_eq [NeZero (2 : K)] (hroot : ∀ i, root i ^ 2 = 
   rw [hE, Finset.sdiff_nonempty]
   intro hsub
   apply hne
-  have h3 : S ∪ T = S ∩ T := Finset.Subset.antisymm hsub Finset.inter_subset_union
-  refine Finset.Subset.antisymm ?_ ?_
-  · calc S ⊆ S ∪ T := Finset.subset_union_left
-      _ = S ∩ T := h3
-      _ ⊆ T := Finset.inter_subset_right
-  · calc T ⊆ S ∪ T := Finset.subset_union_right
-      _ = S ∩ T := h3
-      _ ⊆ S := Finset.inter_subset_left
+  rw [← Finset.sup_eq_union, ← Finset.inf_eq_inter] at hsub
+  exact sup_le_inf.mp hsub
 
 end TauCeti.Multiquadratic

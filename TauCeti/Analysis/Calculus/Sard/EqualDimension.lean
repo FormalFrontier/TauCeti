@@ -9,8 +9,8 @@ public import Mathlib.Analysis.Calculus.FDeriv.Defs
 public import Mathlib.LinearAlgebra.FiniteDimensional.Defs
 public import Mathlib.MeasureTheory.Group.Measure
 import Mathlib.MeasureTheory.Function.Jacobian
-import Mathlib.MeasureTheory.Measure.Haar.Unique
 import Mathlib.Analysis.Calculus.FDeriv.Equiv
+import TauCeti.MeasureTheory.Measure.Haar.NormedSpace
 
 /-!
 # Sard's lemma in equal dimensions
@@ -54,14 +54,6 @@ variable {E F : Type*}
   [MeasurableSpace F] [BorelSpace F]
   {s : Set E} {f : E → F} {f' : E → E →L[ℝ] F}
   (ν : Measure F) [IsAddHaarMeasure ν]
-
-omit [FiniteDimensional ℝ E] in
-/-- A continuous linear equivalence is nonsingular for any additive Haar measures on its source
-and target. -/
-private theorem ContinuousLinearEquiv.quasiMeasurePreserving_addHaar
-    (μ : Measure E) (ν : Measure F) [IsAddHaarMeasure μ] [IsAddHaarMeasure ν]
-    (e : E ≃L[ℝ] F) : QuasiMeasurePreserving e μ ν :=
-  ⟨e.continuous.measurable, absolutelyContinuous_isAddHaarMeasure (μ.map e) ν⟩
 
 /-- **Sard's lemma in equal dimensions.** Let `E` and `F` be finite-dimensional real normed
 spaces of equal dimension. If `f` is differentiable along `s` with derivative `f'`, and `f'` is

@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -135,10 +136,7 @@ end Reduced
 roots onto the positive ones. -/
 theorem sum_root_negRootsFinset :
     ∑ i ∈ negRootsFinset P b, P.root i = -twoWeylVector P b := by
-  have hinv : Function.Involutive fun j : ι ↦ P.reflectionPerm j j := by
-    intro j
-    let := P.indexNeg
-    simp only [← RootPairing.indexNeg_neg, neg_neg]
+  have hinv := reflectionPerm_self_involutive P
   rw [twoWeylVector_def, ← Finset.sum_neg_distrib]
   refine Finset.sum_equiv hinv.toPerm (fun j ↦ ?_) fun j _ ↦ ?_
   · rw [mem_negRootsFinset, mem_posRootsFinset, Function.Involutive.coe_toPerm]

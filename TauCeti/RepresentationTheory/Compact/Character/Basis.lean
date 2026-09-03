@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -96,6 +97,26 @@ theorem inner_matrixCoeffLp_map_map (hunitary : IsUnitary π) {f : Lp 𝕜 2 (ha
     _ = ⟪matrixCoeffLp π hπ v w, f⟫_𝕜 :=
       (conjLpₗᵢ (E := 𝕜) (p := 2) (μ := haarProb G) 𝕜 h⁻¹).toLinearIsometry.inner_map_map _ _
 
+omit [FiniteDimensional 𝕜 V] in
+/-- **An endomorphism that represents the pairing against a class function is an intertwiner.**
+If `⟪w, T v⟫ = ⟪(π)_{v,w}, f⟫` for all `v, w` and `f` is a class function, then `T` intertwines `π`
+with itself. -/
+private lemma isIntertwiningMap_of_inner_matrixCoeffLp_eq (hunitary : IsUnitary π)
+    {f : Lp 𝕜 2 (haarProb G)} (hf : f ∈ classFunctionLp 𝕜 𝕜 2 (haarProb G)) (T : V →ₗ[𝕜] V)
+    (hT : ∀ v w : V, ⟪w, T v⟫_𝕜 = ⟪matrixCoeffLp π hπ v w, f⟫_𝕜) :
+    π.toRepresentation.IsIntertwiningMap π.toRepresentation T := by
+  refine ⟨fun g v ↦ ext_inner_left 𝕜 fun u ↦ ?_⟩
+  -- Conjugation invariance of `f` is what moves `g` across the coefficient.
+  have hu : π g (π g⁻¹ u) = u := Representation.self_inv_apply π.toRepresentation g u
+  calc ⟪u, T (π g v)⟫_𝕜
+      = ⟪π g (π g⁻¹ u), T (π g v)⟫_𝕜 := by rw [hu]
+    _ = ⟪matrixCoeffLp π hπ (π g v) (π g (π g⁻¹ u)), f⟫_𝕜 := hT _ _
+    _ = ⟪matrixCoeffLp π hπ v (π g⁻¹ u), f⟫_𝕜 :=
+        inner_matrixCoeffLp_map_map hπ hunitary hf g v (π g⁻¹ u)
+    _ = ⟪π g⁻¹ u, T v⟫_𝕜 := (hT _ _).symm
+    _ = ⟪π g (π g⁻¹ u), π g (T v)⟫_𝕜 := (hunitary.inner_map_map g _ _).symm
+    _ = ⟪u, π g (T v)⟫_𝕜 := by rw [hu]
+
 /-- **Against a class function, the matrix coefficients of an irreducible collapse to one scalar.**
 For `π` irreducible unitary and `f` a class function there is a `c` with
 `⟪(π)_{v,w}, f⟫ = c · ⟪w, v⟫` for all `v, w`.
@@ -127,28 +148,25 @@ theorem exists_forall_inner_matrixCoeffLp_eq [IsAlgClosed 𝕜] (hunitary : IsUn
     simp only [LinearMap.coe_mk, AddHom.coe_mk, inner_sum, inner_smul_right, sum_inner,
       inner_smul_left]
     exact Finset.sum_congr rfl fun a _ ↦ by rw [inner_conj_symm, mul_comm]
-  -- Conjugation invariance of `f` makes `T` an intertwiner.
-  have hcomm : ∀ (g : G) (v : V), T (π g v) = π g (T v) := by
-    intro g v
-    refine ext_inner_left 𝕜 fun u ↦ ?_
-    have hu : π g (π g⁻¹ u) = u := Representation.self_inv_apply π.toRepresentation g u
-    calc ⟪u, T (π g v)⟫_𝕜
-        = ⟪π g (π g⁻¹ u), T (π g v)⟫_𝕜 := by rw [hu]
-      _ = ⟪matrixCoeffLp π hπ (π g v) (π g (π g⁻¹ u)), f⟫_𝕜 := hT _ _
-      _ = ⟪matrixCoeffLp π hπ v (π g⁻¹ u), f⟫_𝕜 :=
-          inner_matrixCoeffLp_map_map hπ hunitary hf g v (π g⁻¹ u)
-      _ = ⟪π g⁻¹ u, T v⟫_𝕜 := (hT _ _).symm
-      _ = ⟪π g (π g⁻¹ u), π g (T v)⟫_𝕜 := (hunitary.inner_map_map g _ _).symm
-      _ = ⟪u, π g (T v)⟫_𝕜 := by rw [hu]
+  have hcomm : ∀ (g : G) (v : V), T (π g v) = π g (T v) :=
+    (isIntertwiningMap_of_inner_matrixCoeffLp_eq hπ hunitary hf T hT).isIntertwining
   -- Schur's lemma turns it into a scalar.
-  obtain ⟨c, hc⟩ := exists_eq_smul_one_of_irreducible π hirr
-    { toContinuousLinearMap := LinearMap.toContinuousLinearMap T
-      isIntertwining' := fun g ↦ by ext v; simpa using hcomm g v }
-  have hc' := congrArg ContIntertwiningMap.toContinuousLinearMap hc
-  simp only [ContIntertwiningMap.toContinuousLinearMap_smul,
-    ContIntertwiningMap.toContinuousLinearMap_one, ContinuousLinearMap.one_def] at hc'
+  let f : Representation.IntertwiningMap π.toRepresentation π.toRepresentation :=
+    T.intertwiningMap_of_isIntertwiningMap π.toRepresentation π.toRepresentation hcomm
+  let f' : ContIntertwiningMap π π :=
+    (_root_.ContRepresentation.intertwiningMapEquiv (π := π) (ρ := π)).symm f
+  obtain ⟨c, hc⟩ := exists_eq_smul_one_of_irreducible π hirr f'
   refine ⟨c, fun v w ↦ ?_⟩
-  have hTv : T v = c • v := by simpa using congrArg (fun F : V →L[𝕜] V ↦ F v) hc'
+  have hTv : T v = c • v := by
+    calc
+      T v = f v :=
+        (LinearMap.toIntertwiningMap π.toRepresentation π.toRepresentation T hcomm v).symm
+      _ = f' v :=
+        (_root_.ContRepresentation.intertwiningMapEquiv_symm_apply_apply f v).symm
+      _ = (c • (1 : ContIntertwiningMap π π)) v :=
+        congrArg (fun g : ContIntertwiningMap π π ↦ g v) hc
+      _ = c • v := by
+        rw [ContIntertwiningMap.smul_apply, ContIntertwiningMap.one_apply]
   rw [← hT v w, hTv, inner_smul_right]
 
 end Scalar
@@ -223,6 +241,7 @@ variable {𝕜 G ι : Type*} [RCLike 𝕜] [Group G] [TopologicalSpace G] [IsTop
   [CompactSpace G] [T2Space G] [MeasurableSpace G] [BorelSpace G]
   {models : ι → IrrepModel 𝕜 G}
 
+omit [T2Space G] in
 /-- **Class-function completeness.**  A class function in `L²(G)` orthogonal to the character of
 every model in a skeleton of the unitary dual is zero.
 
@@ -302,6 +321,7 @@ theorem orthonormal_characterFamily
     (fun i ↦ (models i).isIrreducible) hne
   exact hL2.codRestrict _ fun i ↦ ContRepresentation.characterLp_mem_classFunctionLp _ _
 
+omit [T2Space G] in
 /-- **The characters of a skeleton are complete in the class functions.**  Their span is dense:
 its orthogonal complement inside `classFunctionLp` vanishes, which is
 `TauCeti.eq_zero_of_forall_inner_characterLp_eq_zero`. -/
@@ -328,6 +348,7 @@ noncomputable def characterBasis (h : IsIrrepSkeleton models) :
   HilbertBasis.mkOfOrthogonalEqBot (orthonormal_characterFamily h.pairwise_isEmpty_equiv)
     (orthogonal_span_characterFamily_eq_bot h)
 
+omit [T2Space G] in
 /-- **The class-function basis is the characters.**  As for `TauCeti.coe_peterWeylBasis`, the
 elements are on the nose the characters of the models, not merely some orthonormal basis whose
 existence is asserted. -/
@@ -345,6 +366,7 @@ noncomputable def stdCharacterBasis :
     HilbertBasis (IrrepClass 𝕜 G) 𝕜 (classFunctionLp 𝕜 𝕜 2 (haarProb G)) :=
   characterBasis (isIrrepSkeleton_model 𝕜 G)
 
+omit [T2Space G] in
 /-- The unconditional class-function basis is the characters of the chosen representatives. -/
 @[simp]
 theorem coe_stdCharacterBasis :

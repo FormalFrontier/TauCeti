@@ -136,13 +136,14 @@ image boundary.** For `f` holomorphic and injective on `ball c r` with
 radius `ρ < R` at which the image of `ball c r ∩ sphere ζ ρ` has diameter at most `ε` and the
 closed image crosscut meets `frontier (f '' ball c r)` in two points at distance at most `ε`.
 
-The radius comes from the limiting form `TauCeti.exists_circleImageLength_lt_of_lintegral_ne_top`
-of Wolff's lemma, which makes `TauCeti.circleImageLength f (ball c r) ζ ρ` smaller than
-`ENNReal.ofReal ε` — in particular finite, which is what
+The radius comes from
+`TauCeti.exists_diam_image_ball_inter_sphere_le_and_circleImageLength_ne_top`, the length--area
+selection of `Conformal/ShortCrosscut.lean`: below any prescribed bound it produces a radius at
+which `TauCeti.circleImageLength f (ball c r) ζ ρ` is finite — which is what
 `TauCeti.exists_frontier_inter_closure_image_ball_inter_sphere_eq_pair` needs, so the ends are two
-points; `TauCeti.diam_image_ball_inter_sphere_le` turns the same bound into the diameter bound, and
-`TauCeti.diam_frontier_inter_closure_image_inter_sphere_le` passes it on to the two ends, which lie
-in the boundary piece and so are no further apart than the image crosscut is wide.
+points — and at which the image crosscut is no wider than `ε`. That width is passed on to the two
+ends by `TauCeti.diam_frontier_inter_closure_image_inter_sphere_le`: they lie in the boundary piece
+and so are no further apart than the image crosscut is wide.
 
 Only `0 < r` is asked of the disc, and only `0 < R` of the prescribed bound: the radius is searched
 for below `min R (2 * r)` instead of below `R`, which is what makes `ball c r ∩ sphere ζ ρ` a
@@ -154,21 +155,15 @@ theorem exists_frontier_inter_closure_image_ball_inter_sphere_eq_pair_dist_le
     ∃ ρ ∈ Ioo 0 R, ∃ u v,
       frontier (f '' ball c r) ∩ closure (f '' (ball c r ∩ sphere ζ ρ)) = {u, v} ∧
         dist u v ≤ ε ∧ diam (f '' (ball c r ∩ sphere ζ ρ)) ≤ ε := by
-  obtain ⟨ρ, hρmem, hlen⟩ :=
-    exists_circleImageLength_lt_of_lintegral_ne_top (s := ball c r) f measurableSet_ball ζ hfin
-      (ENNReal.ofReal_pos.mpr hε).ne' (R := min R (2 * r)) (lt_min hR (by linarith))
-  have hfin' : circleImageLength f (ball c r) ζ ρ ≠ ⊤ :=
-    (hlen.trans ENNReal.ofReal_lt_top).ne
-  have hdiam : diam (f '' (ball c r ∩ sphere ζ ρ)) ≤ ε :=
-    diam_image_ball_inter_sphere_le hf hε.le hlen.le
+  obtain ⟨ρ, hρmem, hfin', hdiam, hb⟩ :=
+    exists_diam_image_ball_inter_sphere_le_and_circleImageLength_ne_top (ζ := ζ) hf hfin hε
+      (lt_min hR (by linarith : (0 : ℝ) < 2 * r))
   obtain ⟨u, v, hpair⟩ := exists_frontier_inter_closure_image_ball_inter_sphere_eq_pair hζ hρmem.1
     (hρmem.2.trans_le (min_le_right _ _)) hf hinj hfin'
   have hu : u ∈ frontier (f '' ball c r) ∩ closure (f '' (ball c r ∩ sphere ζ ρ)) := by
     rw [hpair]; exact mem_insert _ _
   have hv : v ∈ frontier (f '' ball c r) ∩ closure (f '' (ball c r ∩ sphere ζ ρ)) := by
     rw [hpair]; exact mem_insert_of_mem _ rfl
-  have hb : IsBounded (f '' (ball c r ∩ sphere ζ ρ)) :=
-    isBounded_image_ball_inter_sphere_of_circleImageLength_ne_top hf hfin'
   exact ⟨ρ, ⟨hρmem.1, hρmem.2.trans_le (min_le_left _ _)⟩, u, v, hpair,
     (dist_le_diam_of_mem (hb.closure.subset inter_subset_right) hu hv).trans
       ((diam_frontier_inter_closure_image_inter_sphere_le hb).trans hdiam), hdiam⟩

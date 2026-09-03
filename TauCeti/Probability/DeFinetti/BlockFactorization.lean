@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -101,7 +102,8 @@ theorem condExp_blockIndicatorProd_ae_eq_prod_of_iCondIndepFun_tailProcess
     (fun i => hX_meas (k i))).1 hCI Finset.univ (sets := C) (fun i _ => hC i)
   -- The intersection over the selection is the block cylinder.
   have hcyl : ⋂ i ∈ (Finset.univ : Finset (Fin m)), X (k i) ⁻¹' C i = blockCylinder X k C := by
-    ext ω; simp [mem_blockCylinder, Set.mem_iInter, Set.mem_preimage]
+    rw [blockCylinder_eq_iInter]
+    simp
   rw [hcyl] at hfac
   -- Goal LHS = `μ⟦blockCylinder X k C | tail⟧`, the block-indicator conditional expectation.
   rw [blockIndicatorProd_eq_indicator]
@@ -172,7 +174,7 @@ theorem mixedIIDWith_of_iCondIndepFun_tailProcess
         (tailProcess X) (tailProcess_le_ambient 0 fun j _ => hX_meas j) (fun i => X (k i)) μ) :
     MixedIIDWith μ X (directingProbabilityMeasure μ X) := by
   have hTail : tailProcess X ≤ mΩ := tailProcess_le_ambient 0 fun j _ => hX_meas j
-  refine mixedIIDWith_of_forall_rectangles
+  refine mixedIIDWith_of_forall_rectangles (fun n => (hX_meas n).aemeasurable)
     (measurable_directingProbabilityMeasure (μ := μ) hTail) ?_
   intro m k hk B hB
   rw [blockLaw_eq_lintegral_prod_directingMeasure_of_iCondIndepFun_tailProcess
@@ -266,7 +268,7 @@ theorem mixedIIDWith_of_contractable
     {X : ℕ → Ω → α} (hX : Contractable μ X) (hX_meas : ∀ n, Measurable (X n)) :
     MixedIIDWith μ X (directingProbabilityMeasure μ X) := by
   have hTail : tailProcess X ≤ mΩ := tailProcess_le_ambient 0 fun j _ => hX_meas j
-  refine mixedIIDWith_of_forall_rectangles
+  refine mixedIIDWith_of_forall_rectangles (fun n => (hX_meas n).aemeasurable)
     (measurable_directingProbabilityMeasure (μ := μ) hTail) ?_
   intro m k hk B hB
   rw [blockLaw_injective_eq_lintegral_prod_directingMeasure hX hX_meas hk hB]

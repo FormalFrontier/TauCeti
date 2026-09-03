@@ -36,7 +36,8 @@ The inverse-free computation rule is `inv_smul_mk`.
 
 * The `MulAction`, `FaithfulSMul`, `ContinuousConstSMul`, and `IsCancelSMul` instances for
   `FundamentalGroup X x₀` acting on `UniversalCover x₀`.
-* `TauCeti.UniversalCover.basepointLift`: the constant-path point over `x₀`.
+* `TauCeti.UniversalCover.basepointLift`: the constant-path point over `x₀`, lying over `x₀`
+  by `TauCeti.UniversalCover.proj_basepointLift`.
 * `TauCeti.UniversalCover.monodromy_basepointLift`: monodromy at that point is the
   fundamental-group action by the inverse loop class.
 * `TauCeti.UniversalCover.proj_eq_iff_mem_orbit`: the fibres of `proj` are precisely the
@@ -167,6 +168,13 @@ def basepointLift (x₀ : X) : (proj : UniversalCover x₀ → X) ⁻¹' {x₀} 
     Set.mem_singleton_iff.mpr (by
       rw [proj_ofBasedPath]
       exact BasedPath.endpoint_ofPath _)⟩
+
+/-- The endpoint projection sends the constant-path point to the basepoint.
+
+This remains an explicit rewrite lemma: `basepointLift_coe` already puts its left-hand side in
+simp-normal form, so the `simpNF` linter rejects a redundant `@[simp]` annotation here. -/
+theorem proj_basepointLift (x₀ : X) : proj (basepointLift x₀ : UniversalCover x₀) = x₀ :=
+  (basepointLift x₀).2
 
 /-- The underlying point of `basepointLift` is represented by the constant path. -/
 @[simp]

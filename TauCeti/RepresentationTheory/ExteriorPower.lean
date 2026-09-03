@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -76,7 +77,7 @@ noncomputable def exteriorPowerZeroEquiv (ρ : Representation R G M) :
     (ρ.exteriorPower 0).Equiv (trivial R G R) :=
   .mk (_root_.exteriorPower.zeroEquiv R M) fun g => by
     rw [exteriorPower_apply, _root_.exteriorPower.zeroEquiv_naturality]
-    simp
+    simp [isTrivial_def]
 
 /-- The underlying linear equivalence is Mathlib's identification of the zeroth exterior power
 with the scalars. -/

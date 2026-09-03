@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -157,7 +158,7 @@ theorem diagramSchurPoly_eq_sum_interlacingShapes (n : ℕ) (μ : _root_.YoungDi
           + Finsupp.mapDomain Fin.castSucc
               (BoundedSSYT.weight (BoundedSSYT.restrict T _ rfl)) :=
       (BoundedSSYT.weight_eq_mapDomain_add_single T rfl).trans (add_comm _ _)
-    rw [rename_monomial, X_pow_eq_monomial, monomial_mul, one_mul, hexp]
+    rw [rename_monomial, X_pow_eq_monomial, monomial_mul_monomial, one_mul, hexp]
     exact congrArg (monomial · (1 : R)) hw
   rw [diagramSchurPoly_eq_sum, Finset.sum_congr rfl fun T _ => key T,
     BoundedSSYT.sum_eq_sum_interlacingShapes n μ fun ν S =>
@@ -219,7 +220,7 @@ theorem aeval_snoc_zero_diagramSchurPoly (n : ℕ) (μ : _root_.YoungDiagram) :
   rcases le_or_gt (μ.colLen 0) n with hμ | hμ
   · have hself : μ ∈ YoungDiagram.interlacingShapes n μ :=
       YoungDiagram.mem_interlacingShapes.mpr
-        ⟨YoungDiagram.interlaces_iff.mpr
+        ⟨YoungDiagram.interlacedBy_iff.mpr
           fun i => ⟨μ.rowLen_anti i (i + 1) (Nat.le_succ i), le_rfl⟩, hμ⟩
     rw [Finset.sum_eq_single_of_mem μ hself hvanish, Nat.sub_self, pow_zero, one_mul,
       aeval_X_left_apply]

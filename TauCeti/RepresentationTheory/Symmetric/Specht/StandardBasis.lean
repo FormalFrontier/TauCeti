@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -210,39 +211,39 @@ private theorem card_filter_le_of_isLowerSet {α : Type*} [LinearOrder α]
 standard tableau the labels of the first rows are the smallest ones of the column, so moving them
 about inside their columns can only push labels down. -/
 theorem tabloidDominates_relabel_of_mem_colSubgroup (T : StandardYoungTableau μ)
-    {q : Equiv.Perm (Fin μ.card)} (hq : q ∈ colSubgroup T.toEquiv) :
-    TabloidDominates T.toEquiv (relabel q T.toEquiv) := by
+    {q : Equiv.Perm (Fin μ.card)} (hq : q ∈ colSubgroup T.toTableau) :
+    TabloidDominates T.toTableau (relabel q T.toTableau) := by
   classical
-  have hcol : ∀ k, colIndex T.toEquiv (q k) = colIndex T.toEquiv k := mem_colSubgroup.mp hq
+  have hcol : ∀ k, colIndex T.toTableau (q k) = colIndex T.toTableau k := mem_colSubgroup.mp hq
   intro m i
   -- index the labels of the relabelled tableau by their preimages
-  have hreindex : rowCount (relabel q T.toEquiv) m i =
+  have hreindex : rowCount (relabel q T.toTableau) m i =
       (Finset.univ.filter fun x : Fin μ.card =>
-        ((q x : Fin μ.card) : ℕ) < m ∧ rowIndex T.toEquiv x ≤ i).card := by
+        ((q x : Fin μ.card) : ℕ) < m ∧ rowIndex T.toTableau x ≤ i).card := by
     refine Finset.card_equiv (q⁻¹ : Equiv.Perm (Fin μ.card)) fun k => ?_
     simp [rowIndex_relabel]
   -- both counts split over the columns of `T`
   have hmemJ : ∀ x : Fin μ.card,
-      colIndex T.toEquiv x ∈ Finset.image (colIndex T.toEquiv) Finset.univ := fun x =>
+      colIndex T.toTableau x ∈ Finset.image (colIndex T.toTableau) Finset.univ := fun x =>
     Finset.mem_image_of_mem _ (Finset.mem_univ x)
   rw [hreindex, rowCount,
-    Finset.card_eq_sum_card_fiberwise (f := colIndex T.toEquiv)
-      (t := Finset.image (colIndex T.toEquiv) Finset.univ) fun x _ => hmemJ x,
-    Finset.card_eq_sum_card_fiberwise (f := colIndex T.toEquiv)
-      (t := Finset.image (colIndex T.toEquiv) Finset.univ) fun x _ => hmemJ x]
+    Finset.card_eq_sum_card_fiberwise (f := colIndex T.toTableau)
+      (t := Finset.image (colIndex T.toTableau) Finset.univ) fun x _ => hmemJ x,
+    Finset.card_eq_sum_card_fiberwise (f := colIndex T.toTableau)
+      (t := Finset.image (colIndex T.toTableau) Finset.univ) fun x _ => hmemJ x]
   refine Finset.sum_le_sum fun j _ => ?_
   -- the labels of column `j` in the first `i + 1` rows, and their images under `q`
   set A : Finset (Fin μ.card) :=
-    Finset.univ.filter fun x => colIndex T.toEquiv x = j ∧ rowIndex T.toEquiv x ≤ i with hA
+    Finset.univ.filter fun x => colIndex T.toTableau x = j ∧ rowIndex T.toTableau x ≤ i with hA
   have hleft : ((Finset.univ.filter fun x : Fin μ.card =>
-        ((q x : Fin μ.card) : ℕ) < m ∧ rowIndex T.toEquiv x ≤ i).filter
-      fun x => colIndex T.toEquiv x = j) =
+        ((q x : Fin μ.card) : ℕ) < m ∧ rowIndex T.toTableau x ≤ i).filter
+      fun x => colIndex T.toTableau x = j) =
       A.filter fun x => ((q x : Fin μ.card) : ℕ) < m := by
     ext x
     simp only [hA, Finset.mem_filter, Finset.mem_univ, true_and]
     tauto
   have hright : ((Finset.univ.filter fun x : Fin μ.card =>
-        (x : ℕ) < m ∧ rowIndex T.toEquiv x ≤ i).filter fun x => colIndex T.toEquiv x = j) =
+        (x : ℕ) < m ∧ rowIndex T.toTableau x ≤ i).filter fun x => colIndex T.toTableau x = j) =
       A.filter fun x : Fin μ.card => (x : ℕ) < m := by
     ext x
     simp only [hA, Finset.mem_filter, Finset.mem_univ, true_and]
@@ -253,7 +254,7 @@ theorem tabloidDominates_relabel_of_mem_colSubgroup (T : StandardYoungTableau μ
       ((A.image q).filter fun y : Fin μ.card => (y : ℕ) < m).card := by
     rw [Finset.filter_image, Finset.card_image_of_injective _ q.injective]
   rw [himage]
-  refine card_filter_le_of_isLowerSet (S := Finset.univ.filter fun x => colIndex T.toEquiv x = j)
+  refine card_filter_le_of_isLowerSet (S := Finset.univ.filter fun x => colIndex T.toTableau x = j)
     (fun y hy => ?_) (le_of_eq (Finset.card_image_of_injective _ q.injective))
     (fun x hx y hy hlt => ?_) fun _ _ hxy hx => (Fin.lt_def.mp hxy).trans hx
   · obtain ⟨x, hx, rfl⟩ := Finset.mem_image.mp hy
@@ -274,34 +275,34 @@ open YoungTableau
 a nonzero coefficient, one of largest weight has a tabloid that no other standard polytabloid of
 the combination reaches, so its coefficient is read off the combination. -/
 theorem linearIndependent_polytabloid (μ : YoungDiagram) :
-    LinearIndependent ℚ fun T : StandardYoungTableau μ => polytabloid T.toEquiv := by
+    LinearIndependent ℚ fun T : StandardYoungTableau μ => polytabloid T.toTableau := by
   classical
   rw [linearIndependent_iff']
   intro s g hsum T₁ hT₁
   by_contra hg
   obtain ⟨T₀, hT₀, hmax⟩ := Finset.exists_max_image (s.filter fun T => g T ≠ 0)
-    (fun T => rowWeight T.toEquiv) ⟨T₁, Finset.mem_filter.mpr ⟨hT₁, hg⟩⟩
+    (fun T => rowWeight T.toTableau) ⟨T₁, Finset.mem_filter.mpr ⟨hT₁, hg⟩⟩
   obtain ⟨hT₀s, hg₀⟩ := Finset.mem_filter.mp hT₀
   -- no other standard polytabloid of the combination reaches the tabloid of `T₀`
   have hzero : ∀ T ∈ s, T ≠ T₀ →
-      (g T • polytabloid T.toEquiv).coeff (tabloid T₀.toEquiv) = 0 := by
+      (g T • polytabloid T.toTableau).coeff (tabloid T₀.toTableau) = 0 := by
     intro T hTs hTne
     rcases eq_or_ne (g T) 0 with h0 | h0
     · simp [h0]
-    have hvanish : (polytabloid T.toEquiv).coeff (tabloid T₀.toEquiv) = 0 := by
+    have hvanish : (polytabloid T.toTableau).coeff (tabloid T₀.toTableau) = 0 := by
       refine polytabloid_coeff_eq_zero_of_forall_ne _ fun q hq hcontra => hTne ?_
-      have hdom : TabloidDominates T.toEquiv (relabel q T.toEquiv) :=
+      have hdom : TabloidDominates T.toTableau (relabel q T.toTableau) :=
         tabloidDominates_relabel_of_mem_colSubgroup T hq
-      have hrow : rowIndex (relabel q T.toEquiv) = rowIndex T₀.toEquiv := by
+      have hrow : rowIndex (relabel q T.toTableau) = rowIndex T₀.toTableau := by
         rw [← tabloid_eq_iff_rowIndex_eq, tabloid_relabel, hcontra]
-      have hw : rowWeight T.toEquiv ≤ rowWeight (relabel q T.toEquiv) := by
+      have hw : rowWeight T.toTableau ≤ rowWeight (relabel q T.toTableau) := by
         rw [rowWeight_congr hrow]
         exact hmax T (Finset.mem_filter.mpr ⟨hTs, h0⟩)
       exact StandardYoungTableau.rowIndex_injective μ
         ((rowIndex_eq_of_tabloidDominates hdom hw).symm.trans hrow)
     simp [hvanish]
   -- so the coefficient of that tabloid in the combination is the coefficient of `T₀`
-  have hcoeff : (∑ T ∈ s, g T • polytabloid T.toEquiv).coeff (tabloid T₀.toEquiv) = 0 := by
+  have hcoeff : (∑ T ∈ s, g T • polytabloid T.toTableau).coeff (tabloid T₀.toTableau) = 0 := by
     rw [hsum]
     simp
   rw [MonoidAlgebra.coeff_sum, Finsupp.finsetSum_apply,
@@ -316,7 +317,7 @@ theorem standardCount_le_finrank_spechtSubrepresentation (μ : YoungDiagram) :
     standardCount μ ≤ Module.finrank ℚ (spechtSubrepresentation μ).toSubmodule := by
   classical
   have hli : LinearIndependent ℚ fun T : StandardYoungTableau μ =>
-      (⟨polytabloid T.toEquiv, polytabloid_mem_spechtSubrepresentation T.toEquiv⟩ :
+      (⟨polytabloid T.toTableau, polytabloid_mem_spechtSubrepresentation T.toTableau⟩ :
         (spechtSubrepresentation μ).toSubmodule) :=
     LinearIndependent.of_comp (spechtSubrepresentation μ).toSubmodule.subtype
       (linearIndependent_polytabloid μ)

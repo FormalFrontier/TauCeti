@@ -1,14 +1,14 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Claude
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import TauCeti.MeasureTheory.Measure.ProductKernel
 import TauCeti.MeasureTheory.Measure.GiryMonad
 import TauCeti.Probability.Moments.CompactDeterminacy
-import TauCeti.MeasureTheory.Measure.ProbabilityMeasureExt
+import TauCeti.MeasureTheory.Measure.ProbabilityMeasure.Ext
 
 /-!
 # The mixing measure is identified by the i.i.d. mixture

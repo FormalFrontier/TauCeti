@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -272,7 +273,7 @@ theorem intervalIntegrable_norm_div_one_sub_norm_sq
     IntervalIntegrable (fun t => ‖γ' t‖ / (1 - ‖γ t‖ ^ 2)) MeasureTheory.volume a b := by
   refine ContinuousOn.intervalIntegrable ?_
   refine hγ'.norm.div (continuousOn_const.sub (hγ.norm.pow 2)) fun t ht => ?_
-  have hpos : (0 : ℝ) < 1 - ‖γ t‖ ^ 2 := by nlinarith [norm_nonneg (γ t), hmem t ht]
+  have hpos : (0 : ℝ) < 1 - ‖γ t‖ ^ 2 := one_sub_sq_norm_pos_of_norm_lt_one (hmem t ht)
   exact hpos.ne'
 
 /-- The same integrability read against `deriv` rather than against the explicit derivative, the

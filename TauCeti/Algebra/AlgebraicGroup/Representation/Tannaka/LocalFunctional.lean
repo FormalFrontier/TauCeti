@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -80,6 +81,18 @@ theorem counitEvaluation_tmul (N : Subcomodule k H H) (a : A) (n : N) :
     counitEvaluation k H A N (a ⊗ₜ[k] n) =
       a * algebraMap k A (Coalgebra.counit (R := k) (A := H) (n : H)) := by
   simp [counitEvaluation]
+
+/-- Counit evaluation is the base change of the counit restricted to the regular
+subcomodule. -/
+theorem counitEvaluation_apply (N : Subcomodule k H H) (z : A ⊗[k] N) :
+    counitEvaluation k H A N z =
+      (TensorProduct.AlgebraTensorModule.rid k A A)
+        (((Coalgebra.counit (R := k) (A := H)).comp
+          (SMulMemClass.subtype N)).baseChange A z) := by
+  simp only [counitEvaluation, TauCeti.Module.Dual.baseChangeEvaluation_one_tmul,
+    Module.Dual.baseChange,
+    LinearMap.compRight_apply, LinearMap.baseChangeHom_apply, LinearMap.coe_comp,
+    Function.comp_apply, LinearEquiv.coe_coe]
 
 end CounitEvaluation
 

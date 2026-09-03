@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -61,7 +62,7 @@ theorem exists_smul_invariant_ae_eq {s : Set X} (hs : MeasurableSet s)
     simp_rw [smul_smul]
     exact (Equiv.mulLeft (g⁻¹ : G)).surjective.iUnion_comp fun h : G => h • s
   · have hae : ∀ g : G, g • s =ᵐ[μ] s := fun g => (hsmul g) ▸ hinv g⁻¹
-    have hunion := Filter.EventuallyEq.countable_iUnion (l := ae μ) hae
+    have hunion := Filter.EventuallyEqSet.countable_iUnion (l := ae μ) hae
     rwa [Set.iUnion_const] at hunion
 
 /-- **Ergodicity of a countable group action can be tested on exactly invariant events.**

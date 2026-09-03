@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -29,10 +30,12 @@ off from residues.
 
 ## Main results
 
-* `TauCeti.NumberField.ncard_primesOver_eq_finrank_iff`: the rational-prime specialization.
-* `TauCeti.NumberField.bijective_algebraMap_quotient_of_ncard_primesOver_eq_finrank`:
+* `NumberField.ncard_primesOver_eq_finrank_iff_of_isGalois`: the relative criterion over an
+  arbitrary Dedekind base.
+* `NumberField.ncard_primesOver_eq_finrank_iff`: the rational-prime specialization.
+* `NumberField.bijective_algebraMap_quotient_of_ncard_primesOver_eq_finrank`:
   complete splitting makes each residue field the prime field.
-* `TauCeti.NumberField.ncard_primesOver_eq_finrank_iff_stabilizer_eq_bot`: the orbit–stabilizer
+* `NumberField.ncard_primesOver_eq_finrank_iff_stabilizer_eq_bot`: the orbit–stabilizer
   form — `p` splits completely iff the decomposition group of a prime above it is trivial.
 
 ## Provenance
@@ -52,12 +55,15 @@ public section
 open NumberField Ideal Module MulAction
 open scoped Pointwise
 
-namespace TauCeti.NumberField
+namespace NumberField
 
 variable (K L : Type*) [Field K] [Field L] [NumberField K] [NumberField L] [Algebra K L]
   [IsGalois K L]
 
-private theorem ncard_primesOver_eq_finrank_iff_of_isGalois {A : Type*} [CommRing A]
+/-- In a Galois extension of number fields, the number of primes over a maximal ideal of a
+Dedekind base equals the relative degree iff the common ramification index and inertia degree
+are both `1`. -/
+theorem ncard_primesOver_eq_finrank_iff_of_isGalois {A : Type*} [CommRing A]
     [IsDedekindDomain A] [Algebra A (𝓞 L)] [Module.Finite A (𝓞 L)]
     [IsTorsionFree A (𝓞 L)] [IsGaloisGroup Gal(L/K) A (𝓞 L)] (P : Ideal A) [P.IsMaximal] :
     (primesOver P (𝓞 L)).ncard = finrank K L ↔
@@ -86,7 +92,7 @@ prime `Q` of `𝓞 L` above the rational prime `p`, the prime `p` splits complet
 `[L : ℚ]` primes above it) iff the decomposition group of `Q` — its stabilizer under `Gal(L/ℚ)` —
 is trivial. -/
 theorem ncard_primesOver_eq_finrank_iff_stabilizer_eq_bot (L : Type*) [Field L]
-    [NumberField L] [IsGalois ℚ L] {p : ℕ} [Fact p.Prime] (Q : Ideal (𝓞 L)) [Q.IsPrime]
+    [NumberField L] [IsGalois ℚ L] {p : ℕ} (Q : Ideal (𝓞 L)) [Q.IsPrime]
     [Q.LiesOver (span {(p : ℤ)})] : (primesOver (span {(p : ℤ)}) (𝓞 L)).ncard = finrank ℚ L ↔
       stabilizer (L ≃ₐ[ℚ] L) Q = ⊥ := by
   -- The orbit of `Q` under `Gal(L/ℚ)` is all of the primes above `p`, so orbit–stabilizer gives
@@ -122,7 +128,7 @@ theorem bijective_algebraMap_quotient_of_ncard_primesOver_eq_finrank {K : Type*}
     Ideal.IsPrime.isMaximal
       ((Ideal.span_singleton_prime hpne).mpr (Nat.prime_iff_prime_int.mp Fact.out))
       (by simpa [Ideal.span_singleton_eq_bot] using hpne)
-  exact RamificationInertia.bijective_algebraMap_quotient_of_ncard_primesOver_eq_finrank
+  exact TauCeti.RamificationInertia.bijective_algebraMap_quotient_of_ncard_primesOver_eq_finrank
     (span {(p : ℤ)}) Q (by rwa [NumberField.RingOfIntegers.rank])
 
-end TauCeti.NumberField
+end NumberField

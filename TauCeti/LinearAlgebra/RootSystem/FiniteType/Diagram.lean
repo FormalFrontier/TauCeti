@@ -1,10 +1,11 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Combinatorics.SimpleGraph.Acyclic
+public import TauCeti.Combinatorics.SimpleGraph.Acyclic
 public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Basic
 
 public section
@@ -34,6 +35,8 @@ the root-system case is irreducibility, which Mathlib packages as
 
 ## Main results
 
+* `TauCeti.diagramGraph_submatrix`: the diagram of a principal submatrix is the pullback of the
+  diagram along the reindexing.
 * `TauCeti.IsFiniteType.isAcyclic_diagramGraph`: **the diagram of a finite-type matrix is a
   forest**. The affine diagrams `Ãₙ` for `n ≥ 2`, the ones whose diagrams are cycles, are excluded
   here in one theorem.
@@ -84,6 +87,15 @@ theorem diagramGraph_adj {i j : B} :
 instance [DecidableEq B] (A : Matrix B B ℤ) : DecidableRel (diagramGraph A).Adj :=
   fun _ _ ↦ decidable_of_iff _ diagramGraph_adj.symm
 
+/-- **The diagram of a principal submatrix is the pullback of the diagram.** Restricting a matrix
+to an injectively indexed family of indices deletes from its diagram exactly the vertices outside
+that family, keeping every edge between two of the remaining ones. -/
+theorem diagramGraph_submatrix {C : Type*} {f : C → B} (hf : Function.Injective f)
+    (A : Matrix B B ℤ) : diagramGraph (A.submatrix f f) = (diagramGraph A).comap f := by
+  ext i j
+  rw [diagramGraph_adj, SimpleGraph.comap_adj, diagramGraph_adj, Matrix.submatrix_apply,
+    Matrix.submatrix_apply, hf.ne_iff]
+
 namespace IsFiniteType
 
 variable [Fintype B]
@@ -115,21 +127,6 @@ theorem isAcyclic_diagramGraph (h : IsFiniteType A) : (diagramGraph A).IsAcyclic
     exact Or.inr rfl
   exact (diagramGraph_adj.mp (f.toHom.map_adj hadj)).2.1 hk
 
-/-- A path in an acyclic graph has no chord: vertices separated by at least one intermediate
-vertex cannot be adjacent. -/
-private theorem not_adj_getVert_of_add_one_lt {V : Type*} {G : SimpleGraph V} {u v : V}
-    (hG : G.IsAcyclic) {p : G.Walk u v} (hp : p.IsPath) {i j : ℕ} (hij : i + 1 < j)
-    (hj : j ≤ p.length) : ¬G.Adj (p.getVert i) (p.getVert j) := by
-  intro hadj
-  have hij' : i ≤ j := by omega
-  have hmem : p.getVert j ∈ (p.drop i).support := by
-    simpa [Nat.add_sub_of_le hij'] using (p.drop i).getVert_mem_support (j - i)
-  have heq := hG.eq_snd_of_adj_start (hp.drop i) hadj hmem
-  have hsnd : (p.drop i).snd = p.getVert (i + 1) := by simp [SimpleGraph.Walk.snd]
-  rw [hsnd] at heq
-  have := hp.getVert_injOn (by omega : i + 1 ≤ p.length) hj heq.symm
-  omega
-
 /-- **A reachable pair in a finite-type diagram is joined by an induced matrix chain.** More
 precisely, there are vertices `w 0, ..., w n` with the prescribed endpoints, no repetitions,
 nonzero entries between consecutive vertices, and zero entries between vertices separated by at
@@ -160,7 +157,7 @@ theorem exists_chain_of_reachable (h : IsFiniteType A) {u v : B}
     have hne' : q.getVert i ≠ q.getVert j := fun heq ↦ by
       have := hq.getVert_injOn (by omega : i ≤ q.length) hj heq
       omega
-    exact not_adj_getVert_of_add_one_lt h.isAcyclic_diagramGraph hq hij hj
+    exact h.isAcyclic_diagramGraph.not_adj_getVert_of_add_one_lt hq hij hj
       (h.diagramGraph_adj_iff.mpr ⟨hne', hne⟩)
 
 /-- **The degree bound in graph form**: no index of a finite-type matrix has four neighbours in the

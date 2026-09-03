@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -200,7 +201,6 @@ theorem measure_eq_zero_or_one_of_ergodicSMul {ρ : Measure (ℕ → α)} [IsPro
           (π := (TimePerm.toPerm g)⁻¹)
           (by simpa only [MulAction.fixedBy_inv ℕ] using TimePerm.finite_compl_fixedBy_toPerm g)
         rw [preimage_timePerm_smul, hfix]
-        exact EventuallyEq.rfl
   rcases eventuallyConst_set'.mp hconst with h | h
   · exact Or.inl (by simpa using measure_congr h)
   · exact Or.inr (by simpa using measure_congr h)

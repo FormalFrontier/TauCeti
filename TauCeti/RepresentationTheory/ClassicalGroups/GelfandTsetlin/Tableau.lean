@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -48,8 +49,8 @@ regime is there a tableau to speak of.
 
 * `TauCeti.GTPattern.tableauEntry` and `TauCeti.GTPattern.toTableau`: the tableau entry `T i c`
   read off a pattern, and the semistandard Young tableau it assembles.
-* `TauCeti.SemistandardYoungTableau.patternEntry` and
-  `TauCeti.SemistandardYoungTableau.toGTPattern`: the pattern read off a tableau.
+* `SemistandardYoungTableau.patternEntry` and
+  `SemistandardYoungTableau.toGTPattern`: the pattern read off a tableau.
 * `TauCeti.gtPatternEquivSSYT`: **the bijection**, between the patterns with `n` rows and top row
   the shape `μ` and the semistandard Young tableaux of shape `μ` with entries below `n`, that is,
   `TauCeti.BoundedSSYT n μ`.
@@ -57,7 +58,7 @@ regime is there a tableau to speak of.
 ## Main results
 
 * `TauCeti.GTPattern.lt_tableauEntry_iff` and
-  `TauCeti.SemistandardYoungTableau.lt_card_filter_rowLen_iff`: the two counting maps are decided
+  `SemistandardYoungTableau.lt_card_filter_rowLen_iff`: the two counting maps are decided
   by the pattern entries, respectively by the tableau entries.  Everything else is read off these
   two comparisons.
 * `TauCeti.card_gtPattern_topRow_eq_card_ssyt`: the patterns with a given top row are as many as
@@ -82,9 +83,9 @@ nonempty the two readings agree, since a nonempty shape forces `n ≠ 0`.
 
 public section
 
-namespace TauCeti
-
 open Finset
+
+namespace TauCeti
 
 variable {n : ℕ} {μ : YoungDiagram}
 
@@ -257,7 +258,11 @@ end GTPattern
 
 /-! ### From a tableau to a pattern -/
 
+end TauCeti
+
 namespace SemistandardYoungTableau
+
+variable {n : ℕ} {μ : YoungDiagram}
 
 /-- The `(i, j)` entry of the pattern attached to a semistandard Young tableau, as a pattern with
 `n` rows: for `j ≤ n` it is the number of cells of row `i` of `μ` whose entry is below `j`, that
@@ -268,7 +273,7 @@ def patternEntry (T : SemistandardYoungTableau μ) (n i j : ℕ) : ℤ :=
 
 /-- The pattern entry of a tableau, unfolded: `0` past the top row, and otherwise the count of the
 cells of row `i` of `μ` carrying an entry below `j`.  The body of
-`TauCeti.SemistandardYoungTableau.patternEntry` is not exposed, so this is how the count is
+`SemistandardYoungTableau.patternEntry` is not exposed, so this is how the count is
 reached. -/
 @[simp]
 theorem patternEntry_def (T : SemistandardYoungTableau μ) (n i j : ℕ) :
@@ -281,14 +286,14 @@ increase weakly, so the condition is downward closed in `c`. -/
 @[simp]
 theorem lt_card_filter_rowLen_iff (T : SemistandardYoungTableau μ) {i j c : ℕ} :
     c < #{c' ∈ range (μ.rowLen i) | T i c' < j} ↔ c < μ.rowLen i ∧ T i c < j :=
-  lt_card_filter_range_iff fun _ _ hxy hx hpx =>
+  TauCeti.lt_card_filter_range_iff fun _ _ hxy hx hpx =>
     (T.row_weak_of_le hxy (YoungDiagram.mem_iff_lt_rowLen.mpr hx)).trans_lt hpx
 
 /-- **The Gelfand-Tsetlin pattern of a semistandard Young tableau**, with `n` rows: row `j` is
 the row-length sequence of the shape filled by the entries `< j`.  No bound on the entries is
 needed to build the pattern; a bound is what makes its top row the whole of `μ`
-(`TauCeti.SemistandardYoungTableau.topRow_toGTPattern`). -/
-def toGTPattern (T : SemistandardYoungTableau μ) (n : ℕ) : GTPattern n where
+(`SemistandardYoungTableau.topRow_toGTPattern`). -/
+def toGTPattern (T : SemistandardYoungTableau μ) (n : ℕ) : TauCeti.GTPattern n where
   entry := patternEntry T n
   zeros' {i j} h := by
     simp only [patternEntry_def]
@@ -336,7 +341,7 @@ theorem topRow_toGTPattern (T : SemistandardYoungTableau μ) (n : ℕ)
   have hfil : {c ∈ range (μ.rowLen (i : ℕ)) | T (i : ℕ) c < n} = range (μ.rowLen (i : ℕ)) :=
     filter_true_of_mem fun c hc =>
       hT _ _ (YoungDiagram.mem_iff_lt_rowLen.mpr (mem_range.mp hc))
-  rw [GTPattern.topRow_apply, toGTPattern_apply]
+  rw [TauCeti.GTPattern.topRow_apply, toGTPattern_apply]
   simp only [patternEntry_def]
   rw [ite_eq_right (lt_irrefl n), hfil, card_range]
 
@@ -353,6 +358,8 @@ theorem toGTPattern_succ_le_iff (T : SemistandardYoungTableau μ) (n : ℕ) {i c
   omega
 
 end SemistandardYoungTableau
+
+namespace TauCeti
 
 /-! ### The bijection -/
 
@@ -433,7 +440,7 @@ theorem gtPatternEquivSSYT_apply_coe (n : ℕ) (μ : YoungDiagram) (hμ : μ.col
   (rfl)
 
 /-- The inverse bijection sends a tableau to the pattern
-`TauCeti.SemistandardYoungTableau.toGTPattern` it names. -/
+`SemistandardYoungTableau.toGTPattern` it names. -/
 @[simp]
 theorem gtPatternEquivSSYT_symm_apply_coe (n : ℕ) (μ : YoungDiagram) (hμ : μ.colLen 0 ≤ n)
     (T : BoundedSSYT n μ) :

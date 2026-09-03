@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -21,6 +22,8 @@ algebras, including nonreduced ones.
 
 ## Main declarations
 
+* `TauCeti.HopfAlgebra.PointRepresentation.map_coact_of_baseChange_comp_endOfPoint_universal`:
+  intertwining at the universal point alone already forces colinearity.
 * `TauCeti.HopfAlgebra.PointRepresentation.map_coact_iff_baseChange_comp_endOfPoint`: the
   fixed-morphism criterion for explicit comodules with carriers in independent universes.
 * `TauCeti.HopfAlgebra.PointRepresentation.map_coact_iff_baseChange_comp_action`: the
@@ -83,6 +86,52 @@ section IndependentCarrierUniverses
 
 variable {W : Type x} [AddCommMonoid W] [Module R W]
 
+/-- **Intertwining at the universal point suffices for colinearity.** A linear map between two
+right comodules is colinear as soon as its scalar extension to `ULift H` intertwines the point
+actions of the universal point; no condition at other value algebras is needed. -/
+theorem map_coact_of_baseChange_comp_endOfPoint_universal
+    (rho : Comodule R H V) (sigma : Comodule R H W) (f : V →ₗ[R] W)
+    (huniv : f.baseChange (CommAlgCat.of R (ULift.{max u v w x} H)) ∘ₗ
+          Comodule.endOfPoint V
+            (toConv ULift.algEquiv.symm.toAlgHom :
+              points (H := H) (CommAlgCat.of R (ULift.{max u v w x} H))).ofConv =
+        Comodule.endOfPoint W
+            (toConv ULift.algEquiv.symm.toAlgHom :
+              points (H := H) (CommAlgCat.of R (ULift.{max u v w x} H))).ofConv ∘ₗ
+          f.baseChange (CommAlgCat.of R (ULift.{max u v w x} H))) :
+    TensorProduct.map f LinearMap.id ∘ₗ rho.coact = sigma.coact ∘ₗ f := by
+  apply LinearMap.ext
+  intro z
+  simp only [LinearMap.comp_apply]
+  rw [coact_apply_eq_universal_endOfPoint W rho z,
+    coact_apply_eq_universal_endOfPoint V sigma (f z)]
+  have huniversal := LinearMap.congr_fun huniv (1 ⊗ₜ[R] z)
+  simp only [LinearMap.comp_apply, LinearMap.baseChange_tmul] at huniversal
+  have hdown := congrArg
+    (TensorProduct.map ULift.algEquiv.toLinearMap
+      (LinearMap.id : W →ₗ[R] W)) huniversal
+  calc
+    TensorProduct.map f LinearMap.id
+        (TensorProduct.comm R H V
+          (TensorProduct.map ULift.algEquiv.toLinearMap LinearMap.id
+            (Comodule.endOfPoint V ULift.algEquiv.symm.toAlgHom (1 ⊗ₜ[R] z)))) =
+      TensorProduct.comm R H W
+        (f.lTensor H
+          (TensorProduct.map ULift.algEquiv.toLinearMap LinearMap.id
+            (Comodule.endOfPoint V ULift.algEquiv.symm.toAlgHom (1 ⊗ₜ[R] z)))) := by
+        exact LinearMap.rTensor_comm f _
+    _ = TensorProduct.comm R H W
+        (TensorProduct.map ULift.algEquiv.toLinearMap LinearMap.id
+          (f.baseChange (ULift.{max u v w x} H)
+            (Comodule.endOfPoint V ULift.algEquiv.symm.toAlgHom (1 ⊗ₜ[R] z)))) := by
+        congr 1
+        simp only [LinearMap.baseChange_eq_ltensor, LinearMap.lTensor_def,
+          TensorProduct.map_map, LinearMap.comp_id, LinearMap.id_comp]
+    _ = TensorProduct.comm R H W
+        (TensorProduct.map ULift.algEquiv.toLinearMap LinearMap.id
+          (Comodule.endOfPoint W ULift.algEquiv.symm.toAlgHom (1 ⊗ₜ[R] f z))) := by
+        rw [hdown]
+
 /-- A linear map between two right comodules is colinear if and only if all its scalar extensions
 intertwine their point actions.
 
@@ -103,39 +152,8 @@ theorem map_coact_iff_baseChange_comp_endOfPoint
     intro A p
     simpa only [fHom] using Comodule.baseChange_comp_endOfPoint fHom p.ofConv
   · intro hintertwines
-    apply LinearMap.ext
-    intro z
-    simp only [LinearMap.comp_apply]
-    rw [coact_apply_eq_universal_endOfPoint W rho z,
-      coact_apply_eq_universal_endOfPoint V sigma (f z)]
-    have huniversal := LinearMap.congr_fun
-      (hintertwines (CommAlgCat.of R (ULift.{max u v w x} H))
-        (toConv ULift.algEquiv.symm.toAlgHom)) (1 ⊗ₜ[R] z)
-    simp only [LinearMap.comp_apply, LinearMap.baseChange_tmul] at huniversal
-    have hdown := congrArg
-      (TensorProduct.map ULift.algEquiv.toLinearMap
-        (LinearMap.id : W →ₗ[R] W)) huniversal
-    calc
-      TensorProduct.map f LinearMap.id
-          (TensorProduct.comm R H V
-            (TensorProduct.map ULift.algEquiv.toLinearMap LinearMap.id
-              (Comodule.endOfPoint V ULift.algEquiv.symm.toAlgHom (1 ⊗ₜ[R] z)))) =
-        TensorProduct.comm R H W
-          (f.lTensor H
-            (TensorProduct.map ULift.algEquiv.toLinearMap LinearMap.id
-              (Comodule.endOfPoint V ULift.algEquiv.symm.toAlgHom (1 ⊗ₜ[R] z)))) := by
-          exact LinearMap.rTensor_comm f _
-      _ = TensorProduct.comm R H W
-          (TensorProduct.map ULift.algEquiv.toLinearMap LinearMap.id
-            (f.baseChange (ULift.{max u v w x} H)
-              (Comodule.endOfPoint V ULift.algEquiv.symm.toAlgHom (1 ⊗ₜ[R] z)))) := by
-          congr 1
-          simp only [LinearMap.baseChange_eq_ltensor, LinearMap.lTensor_def,
-            TensorProduct.map_map, LinearMap.comp_id, LinearMap.id_comp]
-      _ = TensorProduct.comm R H W
-          (TensorProduct.map ULift.algEquiv.toLinearMap LinearMap.id
-            (Comodule.endOfPoint W ULift.algEquiv.symm.toAlgHom (1 ⊗ₜ[R] f z))) := by
-          rw [hdown]
+    exact map_coact_of_baseChange_comp_endOfPoint_universal rho sigma f
+      (hintertwines _ _)
 
 end IndependentCarrierUniverses
 

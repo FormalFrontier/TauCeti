@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -15,17 +16,13 @@ compatibility with the group operations.
 
 ## Main declarations
 
-* `TauCeti.GeneralLinearGroup.prodMap`: the componentwise product of two linear automorphisms.
-* `TauCeti.GeneralLinearGroup.prodMap_apply`: the product automorphism acts componentwise.
+* `LinearMap.GeneralLinearGroup.prodMap`: the componentwise product of two linear automorphisms.
+* `LinearMap.GeneralLinearGroup.prodMap_apply`: the product automorphism acts componentwise.
 -/
 
 public section
 
-namespace TauCeti
-
-open LinearMap
-
-namespace GeneralLinearGroup
+namespace LinearMap.GeneralLinearGroup
 
 universe u v w
 
@@ -67,6 +64,4 @@ theorem prodMap_inv (g : GeneralLinearGroup K V) (h : GeneralLinearGroup K W) :
     prodMap g⁻¹ h⁻¹ = (prodMap g h)⁻¹ := by
   ext x <;> rfl
 
-end GeneralLinearGroup
-
-end TauCeti
+end LinearMap.GeneralLinearGroup

@@ -1,10 +1,11 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Analysis.Semigroups.Generation.Yosida
+public import TauCeti.Analysis.Semigroups.Generation.Yosida.Basic
 import TauCeti.Analysis.Normed.Operator.Exponential
 
 /-!
@@ -22,8 +23,9 @@ resolvent factor in
 
 as a power series gives the uniform estimate `‖exp (t A_lambda)‖ ≤ M` for `t ≥ 0`. Consequently,
 the bounded-generator semigroup associated to every Yosida approximation has growth bound `(0,M)`.
-Unlike the contraction estimate in `TauCeti.Analysis.Semigroups.Generation.Yosida`, this argument
-uses the bounds on *all* resolvent powers; that distinction is exactly why the exponent-zero
+Unlike the contraction estimate in
+`TauCeti.Analysis.Semigroups.Generation.Yosida.Basic`, this argument uses the bounds on *all*
+resolvent powers; that distinction is exactly why the exponent-zero
 Hille--Yosida hypothesis for general `M` is stronger than a bound on the resolvent alone.
 
 For the general Hille--Yosida generation theorem, these estimates must be combined with reduction

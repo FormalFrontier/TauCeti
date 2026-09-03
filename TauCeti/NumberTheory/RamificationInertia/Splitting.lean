@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -81,7 +82,7 @@ theorem bijective_algebraMap_quotient_of_ncard_primesOver_eq_finrank
     Function.Bijective (algebraMap (R ⧸ P) (S ⧸ Q)) := by
   have : Q.IsMaximal := Ideal.IsMaximal.of_liesOver_isMaximal Q P
   have hfQ : finrank (R ⧸ P) (S ⧸ Q) = 1 := by
-    rw [← Ideal.inertiaDeg'_algebraMap (p := P) (P := Q), Ideal.inertiaDeg'_eq_inertiaDeg]
+    rw [← Ideal.inertiaDeg_eq_of_isMaximal P Q]
     exact (ramificationIdx_eq_one_and_inertiaDeg_eq_one_of_ncard_primesOver_eq_finrank P Q
       hsplit).2
   let fld : Field (R ⧸ P) := Ideal.Quotient.field _

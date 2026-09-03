@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -144,7 +145,7 @@ taken within the closed half-line `[0, ∞)`. -/
 lemma IsCompletelyMonotone.neg_iteratedDerivWithin_one_integrableOn (hcm : IsCompletelyMonotone f) :
     IntegrableOn (fun t => -iteratedDerivWithin 1 f (Ici 0) t) (Ioi 0) := by
   obtain ⟨L, hL, -⟩ :=
-    (IsCompletelyMonotoneOnIci.of_isCompletelyMonotone hcm).exists_nonneg_tendsto_atTop
+    (IsContinuousCompletelyMonotoneOnIoi.of_isCompletelyMonotone hcm).exists_nonneg_tendsto_atTop
   have hcont : ContinuousWithinAt f (Ici 0) 0 :=
     hcm.contDiffOn.continuousOn.continuousWithinAt self_mem_Ici
   have hderiv : ∀ t ∈ Ioi 0,

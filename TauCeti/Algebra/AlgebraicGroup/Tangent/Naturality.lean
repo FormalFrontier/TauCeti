@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -27,8 +28,8 @@ Together, these statements make the valuewise representations in
 * `TauCeti.Bialgebra.CounitAlgebra.mapAlgHom`: the coefficient algebra map.
 * `TauCeti.Bialgebra.CounitAlgebra.map`: the same map, linear over the bialgebra
   through the counit actions.
-* `TauCeti.Derivation.mapValue`: postcomposition of counit-valued derivations.
-* `TauCeti.Derivation.mapValue_adDerivation`: the adjoint action commutes with
+* `Derivation.mapValue`: postcomposition of counit-valued derivations.
+* `Derivation.mapValue_adDerivation`: the adjoint action commutes with
   change of coefficient algebra.
 
 The Lie-bracket compatibility, which requires additive inverses, is in
@@ -41,11 +42,9 @@ The Lie-bracket compatibility, which requires additive inverses, is in
 
 public section
 
-namespace TauCeti
-
-open _root_.Coalgebra WithConv
-
 namespace Derivation
+
+open TauCeti _root_.Coalgebra WithConv
 
 variable {R A B C : Type*} [CommSemiring R] [CommSemiring A]
 
@@ -143,5 +142,3 @@ theorem mapValue_adDerivation (phi : B →ₐ[R] C)
 end Adjoint
 
 end Derivation
-
-end TauCeti

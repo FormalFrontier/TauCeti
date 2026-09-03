@@ -1,10 +1,15 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import TauCeti.RepresentationTheory.CharacterTable.ClassFunction
+-- The translation action `g • (x : G ⧸ S)` occurs in the statements about which summands vanish.
+public import Mathlib.GroupTheory.GroupAction.Quotient
+-- Non-public: `TauCeti.smul_quotientGroup_mk_eq_self_iff` is used only inside a proof.
+import TauCeti.GroupTheory.QuotientGroup.Basic
 
 /-!
 # The induced class function
@@ -32,15 +37,24 @@ and to deduce `TauCeti.character_ind` from `TauCeti.indClassFun_eq_natCard_inv_m
   those left coset representatives that conjugate `g` into `S`.  There is no division by `|S|`,
   so it needs no invertibility hypothesis and no more than an additive commutative monoid of
   coefficients.
+* `TauCeti.indClassFunAddHom S`: the same construction packaged as an additive map
+  `(S → k) →+ (G → k)`, which is what lets a property be propagated through the additive
+  generation of an `AddSubgroup` of functions.
 * `TauCeti.ClassFunction.ind S`: the same construction packaged as a `k`-linear map
   `ClassFunction k S →ₗ[k] ClassFunction k G`.
 
 ## Main statements
 
+* `TauCeti.indTerm_eq_zero_of_smul_mk_ne` and
+  `TauCeti.indClassFun_eq_sum_of_smul_eq_self_mem`: only the cosets `g` fixes contribute, so the
+  coset sum may be taken over any finite set of cosets containing the fixed ones.  This is what
+  turns the formula into a finite explicit computation for a concrete group.
 * `TauCeti.indClassFun_mem_classFunction`: the induced function of a class function is a class
   function.
 * `TauCeti.natCard_mul_indClassFun`: the group-sum form, `|S| · (Ind f)(g) = ∑_{x ∈ G} f(x⁻¹gx)`,
   and its averaged corollary `TauCeti.indClassFun_eq_natCard_inv_mul_sum`.
+* `TauCeti.indClassFun_comp_subtype_mul`: the **projection formula**,
+  `Ind_S^G ((Res_S f) · ψ) = f · Ind_S^G ψ` for a class function `f` of `G`.
 
 Frobenius reciprocity for class functions, `⟨Ind f, h⟩_G = ⟨f, Res h⟩_S`, is
 `TauCeti.frobenius_reciprocity_classFunction`; it needs the pairing, so it lives with the other
@@ -94,6 +108,14 @@ theorem indTerm_apply (f : S → k) (g x : G) :
     indTerm f g x = if h : x⁻¹ * g * x ∈ S then f ⟨x⁻¹ * g * x, h⟩ else 0 :=
   (rfl)
 
+/-- **A summand vanishes unless `g` fixes the coset of its representative.**  The conjugate
+`x⁻¹ g x` lies in `S` exactly when `g • xS = xS`, so only the fixed cosets contribute to
+`TauCeti.indClassFun`. -/
+theorem indTerm_eq_zero_of_smul_mk_ne (f : S → k) {g x : G}
+    (h : g • (x : G ⧸ S) ≠ (x : G ⧸ S)) : indTerm f g x = 0 := by
+  classical
+  rw [indTerm, dite_eq_right fun hx => h (smul_quotientGroup_mk_eq_self_iff S g x |>.2 hx)]
+
 /-- Conjugating the argument of the summand translates the representative. -/
 theorem indTerm_conj (f : S → k) (g x c : G) :
     indTerm f (c * g * c⁻¹) x = indTerm f g (c⁻¹ * x) := by
@@ -135,6 +157,18 @@ theorem indClassFun_apply [S.FiniteIndex] (f : S → k) (g : G) :
         else 0 :=
   (rfl)
 
+/-- **The induced class function is a sum over the cosets that `g` fixes.**  The summand attached
+to any other coset vanishes (`TauCeti.indTerm_eq_zero_of_smul_mk_ne`), so summing over a finite
+set `T` of cosets that contains every fixed one already gives the whole sum.  In practice `T` is
+the set of fixed cosets itself, which for a concrete group is a short explicit list. -/
+theorem indClassFun_eq_sum_of_smul_eq_self_mem [S.FiniteIndex] (f : S → k) (g : G)
+    (T : Finset (G ⧸ S)) (hT : ∀ t : G ⧸ S, g • t = t → t ∈ T) :
+    indClassFun S f g = ∑ t ∈ T, indTerm f g (Quotient.out t) := by
+  let := Fintype.ofFinite (G ⧸ S)
+  refine ((Finset.sum_subset (Finset.subset_univ T) fun t _ ht => ?_).trans rfl).symm
+  refine indTerm_eq_zero_of_smul_mk_ne f fun hfix => ht (hT t ?_)
+  rwa [QuotientGroup.out_eq'] at hfix
+
 /-! ### Additivity -/
 
 private theorem indTerm_zero (g x : G) : indTerm (S := S) (0 : S → k) g x = 0 := by
@@ -158,6 +192,25 @@ theorem indClassFun_add [S.FiniteIndex] (f₁ f₂ : S → k) :
     indClassFun S (f₁ + f₂) = indClassFun S f₁ + indClassFun S f₂ := by
   funext g
   simp [indClassFun, indTerm_add, Finset.sum_add_distrib]
+
+/-- **Induction of functions on a finite-index subgroup, as an additive map.**  It is
+`TauCeti.indClassFun` bundled by the two lemmas above, which is what lets a property be propagated
+through the additive generation of an `AddSubgroup` of functions; `TauCeti.ClassFunction.ind` is
+the finer bundling, as a `k`-linear map on class functions. -/
+noncomputable def indClassFunAddHom (S : Subgroup G) [S.FiniteIndex] :
+    (S → k) →+ (G → k) where
+  toFun := indClassFun S
+  map_zero' := indClassFun_zero
+  map_add' := indClassFun_add
+
+private theorem indClassFunAddHom_apply_aux (S : Subgroup G) [S.FiniteIndex] (ψ : S → k) :
+    indClassFunAddHom S ψ = indClassFun S ψ :=
+  rfl
+
+@[simp]
+theorem indClassFunAddHom_apply (S : Subgroup G) [S.FiniteIndex] (ψ : S → k) :
+    indClassFunAddHom S ψ = indClassFun S ψ :=
+  indClassFunAddHom_apply_aux S ψ
 
 end AddCommMonoid
 
@@ -254,6 +307,43 @@ theorem natCard_mul_indClassFun [Fintype G] {f : S → k} (hf : f ∈ ClassFunct
         rw [← e.symm.sum_comp (fun x => indTerm f g x), Fintype.sum_prod_type]
     -- the remaining step only unfolds the summand
     _ = _ := rfl
+
+/-! ### The projection formula -/
+
+section Projection
+
+variable {f : G → k}
+
+/-- **The projection formula, on a single summand.**  The summand only ever evaluates a function on
+`S` at a conjugate of `g`, so multiplying by the restriction of a class function `f` of `G`
+multiplies the summand by the constant `f g`.
+
+It is private: `TauCeti.indClassFun_comp_subtype_mul` is the projection formula every consumer
+uses. -/
+private theorem indTerm_comp_subtype_mul (hf : f ∈ ClassFunction k G) (ψ : S → k) (g x : G) :
+    indTerm ((fun s : S => f s) * ψ) g x = f g * indTerm ψ g x := by
+  classical
+  by_cases h : x⁻¹ * g * x ∈ S
+  · have hconj : f (x⁻¹ * g * x) = f g := by
+      simpa using ClassFunction.mem_iff.mp hf g x⁻¹
+    simp [indTerm, h, hconj]
+  · simp [indTerm, h]
+
+/-- **The projection formula for the induced class function**:
+`Ind_S^G ((Res_S f) · ψ) = f · Ind_S^G ψ` for a class function `f` of `G` and an arbitrary
+function `ψ` on `S`.
+
+This is the class-function shadow of the tensor identity `TauCeti.indProjection`, and it is what
+makes induction a map of modules over the ring of class functions: an induced function may be
+multiplied by `f` either before or after inducing.  Only `f` is required to be a class function;
+the identity is pointwise in `ψ`. -/
+theorem indClassFun_comp_subtype_mul [S.FiniteIndex] (hf : f ∈ ClassFunction k G) (ψ : S → k) :
+    indClassFun S ((fun s : S => f s) * ψ) = f * indClassFun S ψ := by
+  funext g
+  simp only [indClassFun, Pi.mul_apply, Finset.mul_sum]
+  exact Finset.sum_congr rfl fun t _ => indTerm_comp_subtype_mul hf ψ g _
+
+end Projection
 
 /-! ### The induced class function as a linear map -/
 

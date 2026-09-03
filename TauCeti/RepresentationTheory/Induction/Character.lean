@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -17,6 +18,8 @@ subgroup order.
 
 ## Main result
 
+* `TauCeti.character_indFDRep` identifies the character of `TauCeti.indFDRep` with the
+  character of Mathlib's `Representation.ind`, the two differing only by the small carrier model.
 * `TauCeti.character_indFDRep_sum_quotient` expresses an induced character as a sum over left
   cosets.
 * `TauCeti.indClassFun_ofFDRep_character` and `TauCeti.ClassFunction.ind_ofFDRep` identify that
@@ -38,11 +41,11 @@ namespace TauCeti
 
 open CategoryTheory
 
-universe u
+universe u v
 
 namespace Rep
 
-variable {k G : Type u} [Field k] [Group G] {S : Subgroup G}
+variable {k : Type u} {G : Type v} [Field k] [Group G] {S : Subgroup G}
 
 private abbrev RightCosets (S : Subgroup G) := Quotient (QuotientGroup.rightRel S)
 
@@ -141,30 +144,23 @@ private theorem trace_ind_eq_sum_terms [S.FiniteIndex] [Fintype (RightCosets S)]
 
 end Rep
 
-section Forget
-
-variable {k G : Type u} [Field k] [Group G] (A : FDRep k G)
-
-/-- Forgetting finite-dimensionality keeps the same underlying module, so it keeps the
-`FiniteDimensional` instance. -/
-private instance : FiniteDimensional k ((forget₂ (FDRep k G) (Rep k G)).obj A) :=
-  inferInstanceAs (FiniteDimensional k A)
-
-/-- The forgetful functor `FDRep k G ⥤ Rep k G` preserves characters. -/
-private theorem character_forget₂ (g : G) :
-    ((forget₂ (FDRep k G) (Rep k G)).obj A).ρ.character g = A.character g := by
-  rw [FDRep.character, Representation.character, FDRep.forget₂_ρ]
-  -- The remaining `rfl` only identifies the two names of the single underlying module, the same
-  -- definitional identification that lets `FDRep.forget₂_ρ` be stated at all. Keeping it here
-  -- means no other proof in this file needs to unfold `forget₂`.
-  rfl
-
-end Forget
+/-- **The character of `TauCeti.indFDRep` is Mathlib's induced character.** Passing to the
+finite-dimensional model only replaces the carrier of `Representation.ind` by a small one, which
+`TauCeti.indFDRepForgetEquiv` compares with it. -/
+theorem character_indFDRep {k : Type u} {G : Type v} [Field k] [Group G] {S : Subgroup G}
+    [S.FiniteIndex] (A : FDRep k S) (g : G) :
+    (indFDRep (k := k) (G := G) A).character g =
+      (Representation.ind S.subtype A.ρ).character g := by
+  refine Eq.trans ?_ (congrArg
+    (fun τ : Representation k S A => (Representation.ind S.subtype τ).character g)
+    (FDRep.forget₂_ρ A))
+  exact (FDRep.character_forget₂_obj (indFDRep (k := k) (G := G) A) g).symm.trans
+    (congrFun (Representation.char_iso (indFDRepForgetEquiv A)) g)
 
 open scoped Classical in
 /-- The induced character at `g` is the sum of the original character over those left coset
 representatives `t` for which `t⁻¹ g t` belongs to the subgroup. -/
-theorem character_indFDRep_sum_quotient {k G : Type u} [Field k] [Group G]
+theorem character_indFDRep_sum_quotient {k : Type u} {G : Type v} [Field k] [Group G]
     {S : Subgroup G} [S.FiniteIndex] (A : FDRep k S) (g : G) :
     (indFDRep (k := k) (G := G) A).character g =
       letI := Fintype.ofFinite (G ⧸ S)
@@ -173,15 +169,16 @@ theorem character_indFDRep_sum_quotient {k G : Type u} [Field k] [Group G]
           A.character ⟨(Quotient.out t)⁻¹ * g * Quotient.out t, h⟩
         else 0 := by
   have hindCharacter :
-      (indFDRep (k := k) (G := G) A).character g =
+    (indFDRep (k := k) (G := G) A).character g =
         (Rep.ind S.subtype ((forget₂ (FDRep k S) (Rep k S)).obj A)).ρ.character g :=
-    (character_forget₂ (indFDRep (k := k) (G := G) A) g).symm.trans (congrFun
-      (Representation.char_iso (Representation.equivOfIso (indFDRepForgetIso A))) g)
+    (FDRep.character_forget₂_obj (indFDRep (k := k) (G := G) A) g).symm.trans (congrFun
+      (Representation.char_iso (indFDRepForgetEquiv A)) g)
   let := Fintype.ofFinite (G ⧸ S)
   let A' : Rep.{u} k S := (forget₂ (FDRep k S) (Rep k S)).obj A
   let : DecidableRel (QuotientGroup.rightRel S) := Classical.decRel _
   let : Fintype (Rep.RightCosets S) := QuotientGroup.fintypeQuotientRightRel
-  have hforgetCharacter (s : S) : A'.ρ.character s = A.character s := character_forget₂ A s
+  have hforgetCharacter (s : S) : A'.ρ.character s = A.character s :=
+    FDRep.character_forget₂_obj A s
   have hcharacter :
       (indFDRep (k := k) (G := G) A).character g =
         LinearMap.trace k (Rep.ind S.subtype A') ((Rep.ind S.subtype A').ρ g) := by
@@ -211,7 +208,7 @@ theorem character_indFDRep_sum_quotient {k G : Type u} [Field k] [Group G]
 
 section ClassFun
 
-variable {k G : Type u} [Field k] [Group G] {S : Subgroup G}
+variable {k : Type u} {G : Type v} [Field k] [Group G] {S : Subgroup G}
 
 /-- The character of an induced representation is the induced class function of its character. -/
 @[simp]

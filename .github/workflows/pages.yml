@@ -42,6 +42,7 @@ on:
       - 'scripts/loc_roadmap_graph.py'
       - 'scripts/participant_graph.py'
       - 'scripts/pr_stats_graphs.py'
+      - 'scripts/pipeline_health.py'
       - '.github/workflows/pages.yml'
   schedule:
     - cron: "23 */3 * * *"   # Every three hours (UTC): refresh the charts and API docs
@@ -64,6 +65,10 @@ concurrency:
 env:
   # Run JavaScript actions on Node 24 (Node 20 is deprecated on GitHub runners).
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  # Read endpoint for `lake exe cache get`, wired from a repository variable. The cache tool
+  # treats unset and empty alike, so clearing the variable returns reads to the tool's
+  # default endpoints on the next run.
+  MATHLIB_CACHE_GET_URL: ${{ vars.MATHLIB_CACHE_GET_URL }}
 
 jobs:
   # Named `build-site`, not `build`, to keep every job name distinct from the required `build` commit
@@ -85,6 +90,15 @@ jobs:
       # series by walking every commit, so a shallow checkout would truncate the charts.
       - uses: actions/checkout@v4
         with:
+          # Same reasoning as ci.yml's build checkout, and it matters more here: this job
+          # elaborates TauCeti twice (the doc-gen4 build and the examples build), and the token
+          # this workflow grants carries `pages: write` and `id-token: write`, not just
+          # `contents: read`. Left in the workspace .git/config, it would be readable by code
+          # running at elaboration time, which could then publish to the project's Pages site.
+          # Nothing in this job authenticates to GitHub: the only git command is a clone of the
+          # public roadmap repository, the history this checkout fetches is used locally, and the
+          # branch update lives in the separate advance-docgen-ref job with its own GH_TOKEN.
+          persist-credentials: false
           fetch-depth: 0
 
       - name: Clone the roadmap repository (full history, for its chart)
@@ -146,13 +160,41 @@ jobs:
           python3 scripts/pr_stats_graphs.py \
             --repo "${{ github.repository }}" \
             --out-dir web/static_files \
+            --dump-data "$RUNNER_TEMP/pr-snapshot.json" \
           || echo "::warning::PR statistics generation failed; keeping the committed fallback assets"
 
-      - name: Install elan
+      # Pipeline health reuses the snapshot the charts just fetched rather than
+      # walking every PR timeline a second time: that walk is thousands of
+      # requests and the dominant cost of this job. Publishing the result means
+      # anything asking "where is the queue stuck" reads a file instead of
+      # repeating the fetch.
+      - name: Derive pipeline health from the same snapshot
+        working-directory: ${{ github.workspace }}
         run: |
-          curl -sSfL https://elan.lean-lang.org/elan-init.sh -o elan-init.sh
-          chmod +x elan-init.sh
-          ./elan-init.sh -y --default-toolchain none
+          if [ -f "$RUNNER_TEMP/pr-snapshot.json" ]; then
+            python3 scripts/pipeline_health.py \
+              --data "$RUNNER_TEMP/pr-snapshot.json" \
+              --out web/static_files/pipeline-health.json \
+              --json > /dev/null \
+            || echo "::warning::pipeline health generation failed"
+          else
+            echo "::warning::no PR snapshot; skipping pipeline health"
+          fi
+
+      # Pinned leanprover/elan release, verified by SHA-256, rather than whatever the installer
+      # URL serves at the moment of the request; this elan chooses the toolchain that builds the
+      # documentation this job deploys. scripts/test_elan_pin.py keeps the copies of the pin honest.
+      - name: Install elan (pinned + checksum)
+        env:
+          ELAN_SHA256: df0b2b3a439961ffcbb3985214365ffe40f49bc871df04dff268c7d8e21ca8b2
+          ELAN_VER: v4.2.3
+        run: |
+          curl -sSL -H "Accept: application/octet-stream" \
+            "https://github.com/leanprover/elan/releases/download/${ELAN_VER}/elan-x86_64-unknown-linux-gnu.tar.gz" -o elan.tar.gz
+          echo "${ELAN_SHA256}  elan.tar.gz" | sha256sum -c -
+          tar -xzf elan.tar.gz elan-init
+          ./elan-init -y --default-toolchain none
+          rm -f elan.tar.gz elan-init
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
 
       # --- API documentation (doc-gen4), normally built every three hours ----------------
@@ -202,6 +244,41 @@ jobs:
             echo "build=false" >> "$GITHUB_OUTPUT"
           fi
 
+      # The docs build compiles the whole library, which dominates this workflow.
+      # ci.yml publishes the library's oleans, and ci.yml and pr-build.yml already
+      # restore them. Restore into the root project rather than docbuild: a path
+      # dependency builds in its own directory.
+      - name: Configure the Lake artifact cache (no-op unless the public endpoints are set)
+        env:
+          PUBLIC_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT_PUBLIC }}
+          PUBLIC_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT_PUBLIC }}
+        run: |
+          if [ -n "$PUBLIC_ARTIFACT_ENDPOINT" ] && [ -n "$PUBLIC_REVISION_ENDPOINT" ]; then
+            {
+              echo "LAKE_CACHE_DIR=$GITHUB_WORKSPACE/.lake/cache"
+              echo "LAKE_ARTIFACT_CACHE=true"
+              echo "LAKE_RESTORE_ARTIFACTS=true"
+              echo "TAUCETI_CACHE_ENABLED=1"
+            } >> "$GITHUB_ENV"
+            echo "::notice::Lake artifact cache enabled - restoring TauCeti's oleans for the docs build"
+          else
+            echo "::notice::Lake artifact cache not configured - the docs build will compile TauCeti from scratch"
+          fi
+
+      - name: Restore TauCeti's oleans from the public artifact cache
+        if: ${{ steps.docs-plan.outputs.build == 'true' && env.TAUCETI_CACHE_ENABLED == '1' }}
+        # The job's default working directory is web/; this script lives at the root.
+        working-directory: ${{ github.workspace }}
+        # A cache is an optimisation and must not be able to break the deploy. The script
+        # already treats a miss as non-fatal and falls back to compiling from scratch;
+        # this extends that to the script failing outright, which is how a mistake here
+        # cost a whole run.
+        continue-on-error: true
+        env:
+          PUBLIC_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT_PUBLIC }}
+          PUBLIC_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT_PUBLIC }}
+        run: bash scripts/lake-cache-get.sh .
+
       - name: Fetch Mathlib oleans (docs project)
         if: steps.docs-plan.outputs.build == 'true'
         working-directory: docbuild
@@ -233,6 +310,8 @@ jobs:
         env:
           DOCGEN_LOCAL_MODULE_ROOTS: TauCeti
           DOCGEN_DEPS_DOCS_URL: https://leanprover-community.github.io/mathlib4_docs
+          # The restore above placed what this needs, so do not reach for a remote cache.
+          LAKE_NO_CACHE: "true"
         run: |
           rm -rf .lake/build/doc .lake/build/doc-data
           lake build TauCetiDocs:docs
@@ -282,6 +361,10 @@ jobs:
 
       - name: Build examples project (checks the showcased TauCeti theorems)
         working-directory: web/examples
+        env:
+          # GITHUB_ENV carries the cache settings into every later step, and this is a
+          # different project.
+          LAKE_NO_CACHE: "true"
         run: lake build
 
       - name: Build site (extracts the checked snippets, compiles Verso)

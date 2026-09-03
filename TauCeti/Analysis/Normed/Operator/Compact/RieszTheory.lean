@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -261,35 +262,54 @@ theorem isClosed_range_one_sub (hK : IsCompactOperator K) :
   rw [hrange]
   exact hanti.isClosed_range ((1 - K : X →L[𝕜] X).comp M.subtypeL).uniformContinuous
 
+/-- A sequence obeying the recurrence `V (n + 1) = f (V n)` is constant from `p` onwards as soon
+as `V (p + 1) = V p`. -/
+private lemma eq_of_apply_eq_of_succ_eq {S : Type*} {f : S → S} {V : ℕ → S} {p : ℕ}
+    (hmap : ∀ n, V (n + 1) = f (V n)) (hp : V (p + 1) = V p) (n : ℕ) :
+    V (p + n) = V p := by
+  induction n with
+  | zero => simp
+  | succ n ih => rw [← Nat.add_assoc, hmap (p + n), ih, ← hmap p, hp]
+
+omit [CompleteSpace 𝕜] [IsRCLikeNormedField 𝕜] [CompleteSpace X] in
+/-- If the range of `T ^ (n + 1)` is unchanged on squaring, then `ker (T ^ (n + 1))` and `range T`
+span, so `ker (T ^ (n + 1))` surjects onto `X ⧸ range T`. -/
+private lemma mkQ_comp_ker_subtype_surjective {T : X →ₗ[𝕜] X} {n : ℕ}
+    (hn : LinearMap.range (T ^ (n + 1 + (n + 1))) = LinearMap.range (T ^ (n + 1))) :
+    Function.Surjective ((LinearMap.range T).mkQ.comp
+      (LinearMap.ker (T ^ (n + 1))).subtype) := by
+  have hsup : LinearMap.range T ⊔ LinearMap.ker (T ^ (n + 1)) = ⊤ := by
+    rw [eq_top_iff]
+    intro x _
+    obtain ⟨z, hz⟩ : (T ^ (n + 1)) x ∈ LinearMap.range (T ^ (n + 1 + (n + 1))) := by
+      rw [hn]; exact ⟨x, rfl⟩
+    rw [pow_add, Module.End.mul_apply] at hz
+    refine Submodule.mem_sup.mpr ⟨(T ^ (n + 1)) z, ⟨(T ^ n) z, by rw [pow_succ']; rfl⟩,
+      x - (T ^ (n + 1)) z, ?_, by abel⟩
+    rw [LinearMap.mem_ker, map_sub, hz, sub_self]
+  rw [← LinearMap.range_eq_top, LinearMap.range_comp, Submodule.range_subtype,
+    Submodule.map_mkQ_eq_top]
+  exact hsup
+
 /-- The cokernel of a compact perturbation of the identity is finite dimensional. -/
 theorem finiteDimensional_quotient_range_one_sub (hK : IsCompactOperator K) :
     FiniteDimensional 𝕜 (X ⧸ LinearMap.range ((1 - K : X →L[𝕜] X) : X →ₗ[𝕜] X)) := by
   set A : X →L[𝕜] X := 1 - K with hA
-  set V : ℕ → Submodule 𝕜 X :=
-    fun n => LinearMap.range ((A ^ n : X →L[𝕜] X) : X →ₗ[𝕜] X) with hV
-  have hVmem : ∀ (n : ℕ) (x : X), x ∈ V n ↔ ∃ z, (A ^ n) z = x := by
-    intro n x
-    simp only [hV, LinearMap.mem_range, ContinuousLinearMap.coe_coe]
-  have hVsucc : ∀ n, ∀ x ∈ V n, A x ∈ V (n + 1) := by
-    intro n x hx
-    obtain ⟨z, rfl⟩ := (hVmem n x).mp hx
-    exact (hVmem (n + 1) _).mpr ⟨z, by rw [pow_succ']; rfl⟩
-  have hVmono : ∀ n, V (n + 1) ≤ V n := by
-    intro n x hx
-    obtain ⟨z, rfl⟩ := (hVmem _ _).mp hx
-    exact (hVmem n _).mpr ⟨A z, by rw [pow_succ]; rfl⟩
-  have hVmap : ∀ n, V (n + 1) = Submodule.map (A : X →ₗ[𝕜] X) (V n) := by
-    intro n
-    refine le_antisymm (fun x hx => ?_) (fun x hx => ?_)
-    · obtain ⟨z, rfl⟩ := (hVmem _ _).mp hx
-      exact ⟨(A ^ n) z, (hVmem n _).mpr ⟨z, rfl⟩, by rw [pow_succ']; rfl⟩
-    · obtain ⟨w, hw, rfl⟩ := hx
-      exact hVsucc n w hw
+  -- `V` is Mathlib's chain object, so one step of the chain and its antitonicity are library
+  -- facts rather than hand proofs; `hViter` is the bridge to the `range (A ^ n)` form used below.
+  set V : ℕ → Submodule 𝕜 X := fun n => (A : X →ₗ[𝕜] X).iterateRange n with hV
+  have hViter : ∀ n, V n = LinearMap.range ((A ^ n : X →L[𝕜] X) : X →ₗ[𝕜] X) := fun n => by
+    simp only [hV, LinearMap.iterateRange_coe, ContinuousLinearMap.toLinearMap_pow]
+  have hVmap : ∀ n, V (n + 1) = Submodule.map (A : X →ₗ[𝕜] X) (V n) :=
+    fun _ => LinearMap.iterateRange_succ
+  have hVsucc : ∀ n, ∀ x ∈ V n, A x ∈ V (n + 1) := fun n x hx => (hVmap n) ▸ ⟨x, hx, rfl⟩
+  have hVmono : ∀ n, V (n + 1) ≤ V n :=
+    fun n => (A : X →ₗ[𝕜] X).iterateRange.monotone (Nat.le_succ n)
   have hVclosed : ∀ n, IsClosed ((V n : Set X)) := by
     intro n
     have h := isClosed_range_one_sub (isCompactOperator_one_sub_pow hK n)
     rw [sub_sub_cancel, ← hA] at h
-    rw [hV]
+    rw [hViter]
     exact h
   obtain ⟨p, hp⟩ := exists_eq_succ_of_chain hK hVmono hVclosed (by
     intro n x hx
@@ -297,59 +317,19 @@ theorem finiteDimensional_quotient_range_one_sub (hK : IsCompactOperator K) :
     rw [this]
     exact hVsucc n x hx)
   -- The chain of ranges is constant from `p` on.
-  have hstab : ∀ n, p ≤ n → V (n + 1) = V n := by
-    intro n hn
-    induction n with
-    | zero => rw [Nat.le_zero.mp hn] at hp; exact hp
-    | succ n ih =>
-      rcases Nat.lt_or_ge p (n + 1) with h | h
-      · have hih := ih (Nat.lt_succ_iff.mp h)
-        calc V (n + 1 + 1) = Submodule.map (A : X →ₗ[𝕜] X) (V (n + 1)) := hVmap (n + 1)
-          _ = Submodule.map (A : X →ₗ[𝕜] X) (V n) := by rw [hih]
-          _ = V (n + 1) := (hVmap n).symm
-      · rw [Nat.le_antisymm hn h] at hp; exact hp
-  have hconst : ∀ n, V (p + n) = V p := by
-    intro n
-    induction n with
-    | zero => simp
-    | succ n ih => rw [← Nat.add_assoc, hstab (p + n) (Nat.le_add_right p n)]; exact ih
+  have hconst : ∀ n, V (p + n) = V p := eq_of_apply_eq_of_succ_eq hVmap hp
   have hV2 : V (p + 1 + (p + 1)) = V (p + 1) := by
     have h1 : p + 1 + (p + 1) = p + (p + 2) := by omega
     rw [h1, hconst, hp]
   -- The kernel of `A ^ (p + 1)` surjects onto the cokernel of `A`.
   have hkerfin : FiniteDimensional 𝕜
-      (LinearMap.ker ((A ^ (p + 1) : X →L[𝕜] X) : X →ₗ[𝕜] X)) := by
+      (LinearMap.ker (((A : X →ₗ[𝕜] X)) ^ (p + 1))) := by
     have h := finiteDimensional_ker_one_sub (isCompactOperator_one_sub_pow hK (p + 1))
-    rw [sub_sub_cancel, ← hA] at h
+    rw [sub_sub_cancel, ← hA, ContinuousLinearMap.toLinearMap_pow] at h
     exact h
-  refine FiniteDimensional.of_surjective
-    ((LinearMap.range (A : X →ₗ[𝕜] X)).mkQ.comp
-      (LinearMap.ker ((A ^ (p + 1) : X →L[𝕜] X) : X →ₗ[𝕜] X)).subtype) ?_
-  intro ξ
-  obtain ⟨x, rfl⟩ := Submodule.mkQ_surjective _ ξ
-  have hx : (A ^ (p + 1)) x ∈ V (p + 1 + (p + 1)) := by
-    rw [hV2]
-    exact (hVmem _ _).mpr ⟨x, rfl⟩
-  obtain ⟨z, hz⟩ := (hVmem _ _).mp hx
-  have hcomp : ∀ (m n : ℕ) (w : X), (A ^ (m + n)) w = (A ^ m) ((A ^ n) w) := by
-    intro m n w
-    rw [pow_add]
-    rfl
-  have hzz : (A ^ (p + 1)) ((A ^ (p + 1)) z) = (A ^ (p + 1)) x := by
-    rw [← hcomp]
-    exact hz
-  refine ⟨⟨x - (A ^ (p + 1)) z, ?_⟩, ?_⟩
-  · rw [LinearMap.mem_ker]
-    have hzz' :
-        ((A ^ (p + 1) : X →L[𝕜] X) : X →ₗ[𝕜] X) ((A ^ (p + 1)) z) =
-          ((A ^ (p + 1) : X →L[𝕜] X) : X →ₗ[𝕜] X) x := by
-      simpa only [ContinuousLinearMap.coe_coe] using hzz
-    rw [map_sub, hzz', sub_self]
-  · have hmem : (A ^ (p + 1)) z ∈ LinearMap.range (A : X →ₗ[𝕜] X) :=
-      ⟨(A ^ p) z, by rw [pow_succ']; rfl⟩
-    simp only [LinearMap.comp_apply, Submodule.subtype_apply, Submodule.mkQ_apply]
-    rw [Submodule.Quotient.eq]
-    simpa using neg_mem hmem
+  refine FiniteDimensional.of_surjective _
+    (mkQ_comp_ker_subtype_surjective (T := (A : X →ₗ[𝕜] X)) (n := p) ?_)
+  simpa only [← ContinuousLinearMap.toLinearMap_pow, ← hViter] using hV2
 
 end IsCompactOperator
 

@@ -1,11 +1,12 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.Basic
-public import TauCeti.RingTheory.Idempotents.ConnectedSpectrum
+public import TauCeti.RingTheory.Idempotents.Connected.Spectrum
 import Mathlib.RingTheory.Flat.Basic
 
 /-!
@@ -15,6 +16,9 @@ For a commutative Hopf algebra `H` over a field `k`, geometric connectedness mea
 every extension `K / k` of the base field, the base-changed coordinate ring `H ⊗[k] K` has
 connected prime spectrum. This is equivalent to saying that every such base change has no
 idempotents other than zero and one.
+
+The condition is exposed as an `ObjectProperty` on the ambient Hopf-algebra category; consumers
+can impose it without introducing a separate bundled category of connected objects.
 
 ## Main declarations
 

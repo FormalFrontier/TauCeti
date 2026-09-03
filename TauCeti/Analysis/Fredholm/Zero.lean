@@ -1,10 +1,11 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Analysis.Fredholm.Basic
+public import TauCeti.Analysis.Fredholm.Index
 
 /-!
 # The zero Fredholm operator
@@ -88,8 +89,7 @@ dimension of its codomain. -/
 @[simp]
 lemma index_zero :
     index (0 : E →L[𝕜] F) = (finrank 𝕜 E : ℤ) - finrank 𝕜 F := by
-  rw [index_eq_finrank_sub]
-  simpa only [ContinuousLinearMap.toLinearMap_zero, LinearMap.index_eq_finrank_sub] using
+  simpa only [index_def, ContinuousLinearMap.toLinearMap_zero] using
     (LinearMap.index_zero (R := 𝕜) (M := E) (N := F))
 
 end ContinuousLinearMap

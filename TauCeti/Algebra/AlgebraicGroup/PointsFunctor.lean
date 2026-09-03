@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -26,6 +27,8 @@ functor of points has values `A ↦ (H →ₐ[R] A)` and group law given by conv
 * `HopfAlgebra.mapPoints`: the group homomorphism induced by post-composition in the value
   algebra.
 * `HopfAlgebra.pointsFunctor`: the functor `CommAlgCat R ⥤ GrpCat`.
+* `HopfAlgebra.subgroupFunctor`: a functor assembled from point subgroups stable under
+  change of value algebra.
 
 ## References
 
@@ -114,12 +117,66 @@ lemma pointsFunctor_map {A B : CommAlgCat.{w} R} (φ : A ⟶ B) :
     (pointsFunctor (H := H)).map φ = mapPoints (H := H) φ :=
   rfl
 
+/-- The map of `pointsFunctor`, transported along its concrete object presentations, is the
+corresponding map on points. -/
+lemma pointsFunctor_map_eqToHom {A B : CommAlgCat.{w} R} (φ : A ⟶ B) :
+    eqToHom (pointsFunctor_obj (H := H) A).symm ≫
+        (pointsFunctor (H := H)).map φ =
+      mapPoints (H := H) φ ≫ eqToHom (pointsFunctor_obj (H := H) B).symm :=
+  rfl
+
 /-- The pointwise value of the image of an `A`-point under `pointsFunctor.map φ`. -/
 @[simp]
 lemma pointsFunctor_map_apply_apply {A B : CommAlgCat.{w} R} (φ : A ⟶ B)
     (f : WithConv (H →ₐ[R] A)) (h : H) :
     (((pointsFunctor (H := H)).map φ f : WithConv (H →ₐ[R] B)).ofConv) h =
       φ.hom (f.ofConv h) :=
+  rfl
+
+/-- A family of subgroups of the functor of points, equipped with compatible maps between
+value algebras, as a group-valued functor. -/
+@[expose] noncomputable def subgroupFunctor
+    (S : (A : CommAlgCat.{w} R) → Subgroup (points (H := H) A))
+    (map : {A B : CommAlgCat.{w} R} → (A ⟶ B) → S A →* S B)
+    (map_id : ∀ (A : CommAlgCat.{w} R) (g : S A), map (𝟙 A) g = g)
+    (map_comp : ∀ {A B C : CommAlgCat.{w} R} (φ : A ⟶ B) (ψ : B ⟶ C) (g : S A),
+      map (φ ≫ ψ) g = map ψ (map φ g)) :
+    CommAlgCat.{w} R ⥤ GrpCat.{max v w} where
+  obj A := GrpCat.of (S A)
+  map φ := GrpCat.ofHom (map φ)
+  map_id A := by
+    apply GrpCat.hom_ext
+    apply MonoidHom.ext
+    intro g
+    exact map_id A g
+  map_comp φ ψ := by
+    apply GrpCat.hom_ext
+    apply MonoidHom.ext
+    intro g
+    exact map_comp φ ψ g
+
+/-- The object part of a point-subgroup functor is the specified subgroup. -/
+@[simp]
+lemma subgroupFunctor_obj
+    (S : (A : CommAlgCat.{w} R) → Subgroup (points (H := H) A))
+    (map : {A B : CommAlgCat.{w} R} → (A ⟶ B) → S A →* S B)
+    (map_id : ∀ (A : CommAlgCat.{w} R) (g : S A), map (𝟙 A) g = g)
+    (map_comp : ∀ {A B C : CommAlgCat.{w} R} (φ : A ⟶ B) (ψ : B ⟶ C) (g : S A),
+      map (φ ≫ ψ) g = map ψ (map φ g))
+    (A : CommAlgCat.{w} R) :
+    (subgroupFunctor (H := H) S map map_id map_comp).obj A = GrpCat.of (S A) :=
+  rfl
+
+/-- The map part of a point-subgroup functor is the specified restricted point map. -/
+@[simp]
+lemma subgroupFunctor_map
+    (S : (A : CommAlgCat.{w} R) → Subgroup (points (H := H) A))
+    (map : {A B : CommAlgCat.{w} R} → (A ⟶ B) → S A →* S B)
+    (map_id : ∀ (A : CommAlgCat.{w} R) (g : S A), map (𝟙 A) g = g)
+    (map_comp : ∀ {A B C : CommAlgCat.{w} R} (φ : A ⟶ B) (ψ : B ⟶ C) (g : S A),
+      map (φ ≫ ψ) g = map ψ (map φ g))
+    {A B : CommAlgCat.{w} R} (φ : A ⟶ B) :
+    (subgroupFunctor (H := H) S map map_id map_comp).map φ = GrpCat.ofHom (map φ) :=
   rfl
 
 end HopfAlgebra

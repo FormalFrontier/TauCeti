@@ -1,11 +1,13 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.Scheme.Basic
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.ClosedImmersion
+import TauCeti.CategoryTheory.Comma.Over
 
 /-!
 # Closed immersions of diagonalizable group schemes
@@ -42,23 +44,13 @@ theorem isClosedImmersion_groupSchemeMap_of_surjective {G H : FGCommGrpCat.{u}} 
   let e₁ := (eqToHom (groupScheme_def R H)).hom.hom.left
   let e₂ := (eqToHom (groupScheme_def R G).symm).hom.hom.left
   let c := ((hopfSpec (CommRingCat.of R)).map (coordinateMap R φ).hom.op).hom.hom.left
-  have he₁ : IsIso e₁ :=
-    ((Over.forget (Spec (CommRingCat.of R))).mapIso
-      ((Grp.forget (Over (Spec (CommRingCat.of R)))).mapIso
-        (eqToIso (groupScheme_def R H)))).isIso_hom
-  have he₂ : IsIso e₂ :=
-    ((Over.forget (Spec (CommRingCat.of R))).mapIso
-      ((Grp.forget (Over (Spec (CommRingCat.of R)))).mapIso
-        (eqToIso (groupScheme_def R G).symm))).isIso_hom
   have hc : IsClosedImmersion c :=
     (CommHopfAlgCat.isClosedImmersion_hopfSpec_map_iff _).2
       (coordinateMap_surjective_of_surjective R φ hφ)
   have hc₂ : IsClosedImmersion (c ≫ e₂) :=
-    (@MorphismProperty.cancel_right_of_respectsIso
-      Scheme _ @IsClosedImmersion inferInstance _ _ _ c e₂ he₂).2 hc
+    (MorphismProperty.cancel_right_of_respectsIso _ c e₂).2 hc
   have he₁c₂ : IsClosedImmersion (e₁ ≫ (c ≫ e₂)) :=
-    (@MorphismProperty.cancel_left_of_respectsIso
-      Scheme _ @IsClosedImmersion inferInstance _ _ _ e₁ (c ≫ e₂) he₁).2 hc₂
+    (MorphismProperty.cancel_left_of_respectsIso _ e₁ (c ≫ e₂)).2 hc₂
   rw [groupSchemeMap_def]
   simp only [Grp.comp', Mon.comp_hom', Over.comp_left]
   exact he₁c₂

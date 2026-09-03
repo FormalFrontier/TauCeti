@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Claude
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -30,6 +30,13 @@ content behind the weighted-pairing integration-by-parts recursion
 recurrence is the standard form `Hₙ₊₁ = X·Hₙ - n·Hₙ₋₁` that orthogonal-polynomial arguments
 consume. The parity theorem records `Hₙ(-x) = (-1)ⁿ Hₙ(x)` over any commutative ring. They mirror
 Mathlib's existing Hermite file and are stated in the `Polynomial` namespace as upstream candidates.
+
+## References
+
+* [Mathlib PR #42724](https://github.com/leanprover-community/mathlib4/pull/42724)
+  (Kim Morrison) — the draft upstream adaptation of this file and of `GeneratingFunction.lean`;
+  the removal of `@[simp]` from `Polynomial.derivative_hermite_succ` here follows the
+  simp-normal-form analysis made for that PR.
 -/
 
 public section
@@ -40,8 +47,10 @@ open Polynomial
 
 /-- **Lowering (derivative) identity for the Hermite polynomials.** Differentiating the
 `(n + 1)`-st probabilists' Hermite polynomial lowers the index:
-`H'_{n+1} = (n + 1) · Hₙ`. -/
-@[simp]
+`H'_{n+1} = (n + 1) · Hₙ`.
+
+This is not a `simp` lemma because its left-hand side is already reduced by the `n`-indexed
+form `Polynomial.derivative_hermite`. -/
 theorem _root_.Polynomial.derivative_hermite_succ (n : ℕ) :
     derivative (hermite (n + 1)) = (n + 1) • hermite n := by
   induction n with

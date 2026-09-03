@@ -6,6 +6,7 @@ Authors: Chris Birkbeck
 module
 
 public import TauCeti.AlgebraicGeometry.AdicSpace.ValuationSpectrum
+public import TauCeti.Topology.Spectral.ProConstructible
 import TauCeti.Topology.Spectral.PatchCriterion
 
 /-!
@@ -27,6 +28,12 @@ in `SpvOfIdeal/Spectral.lean`, by the same criterion applied to the witness topo
 along `r_I`. Nor is the *basis* property proved here — only quasi-compactness of the individual
 members.
 
+The quasi-compactness of the basic opens also yields, by stability of pro-constructibility
+under intersections, that the sub-unit locus `{v | ∀ a ∈ S, v(a) ≤ 1}` is pro-constructible in
+`Spv A`. Like everything above this is a statement about `Spv A` itself, subject to the same
+non-transfer caveat: the `Spv (A, IA)` analogue that Theorem 7.35 consumes is proved on that
+side (`isProConstructible_val_preimage_setOfPred_forall_vle_one`), not by restriction.
+
 ## Main definitions
 
 * `TauCeti.ValuationSpectrum.toPatch` : The relation table `Spv A → (A × A) → Bool`.
@@ -43,6 +50,11 @@ members.
 * `TauCeti.ValuationSpectrum.isCompact_of_isClosed_patchTopology` : a patch-closed subset is
   quasi-compact, with `TauCeti.ValuationSpectrum.isCompact_basicOpen` and
   `TauCeti.ValuationSpectrum.isCompact_basicOpenFinset` its two instances.
+* `TauCeti.ValuationSpectrum.isProConstructible_setOfPred_forall_vle_one` : the locus
+  `v ≤ 1` on a set of ring elements is pro-constructible **in `Spv A`** — the `Spv A`-level
+  shape of the sub-unit condition of `Spa (A, A⁺)`; the `Spv (A, IA)` statement that Wedhorn's
+  Theorem 7.35 consumes is `isProConstructible_val_preimage_setOfPred_forall_vle_one`
+  (`SpvOfIdeal/Spectral.lean`), proved there since the inclusion is not spectral.
 
 ## Provenance
 
@@ -252,5 +264,23 @@ patch-clopen. -/
 lemma isCompact_basicOpenFinset (T : Finset A) (s : A) : IsCompact (basicOpenFinset T s) :=
   isCompact_of_isClosed_patchTopology
     (@IsClopen.isClosed (Spv A) (patchTopology A) _ (isClopen_patchTopology_basicOpenFinset T s))
+
+/-! ### The sub-unit locus is pro-constructible -/
+
+/-- **The locus `v ≤ 1` on a set of ring elements is pro-constructible in `Spv A`.**
+
+At `S = A⁺` this is the `Spv A`-level shape of the sub-unit condition cutting `Spa (A, A⁺)`
+out of `Cont A` (`spa_def`). Wedhorn's Theorem 7.35 consumes the corresponding statement in
+`Spv (A, IA)`, which does not follow from this one by restriction — the inclusion
+`Spv(A,I) → Spv A` is not spectral — and is instead proved from the rational family as
+`isProConstructible_val_preimage_setOfPred_forall_vle_one` in `SpvOfIdeal/Spectral.lean`. -/
+theorem isProConstructible_setOfPred_forall_vle_one (S : Set A) :
+    IsProConstructible {v : Spv A | ∀ a ∈ S, v.toValuativeRel.vle a 1} := by
+  have h : {v : Spv A | ∀ a ∈ S, v.toValuativeRel.vle a 1} = ⋂ a ∈ S, basicOpen a 1 := by
+    ext v
+    simp
+  rw [h]
+  exact IsProConstructible.biInter fun a _ ↦
+    IsCompact.isProConstructible (isCompact_basicOpen a 1) (isOpen_basicOpen a 1)
 
 end TauCeti.ValuationSpectrum

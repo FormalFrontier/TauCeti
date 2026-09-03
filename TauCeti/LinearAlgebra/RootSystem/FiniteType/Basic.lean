@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -51,6 +52,10 @@ denominators. The symmetrization itself is not redone here: Mathlib packages it 
 * `TauCeti.IsFiniteType.apply_mul_apply_mem_of_ne`: the rank-two bound. For `i ≠ j` the Cartan
   product `A i j * A j i` lies in `{0, 1, 2, 3}`, so every edge of the diagram is single, double or
   triple.
+* `TauCeti.IsFiniteType.isSimplyLaced_iff`: **a finite-type matrix is simply laced exactly when
+  none of its edges is multiple**, that is, when no Cartan product of two distinct indices exceeds
+  `1`. Together with the rank-two bound this is how the classification enters its simply-laced
+  branch, having excluded the Cartan products `2` and `3`.
 * `TauCeti.IsFiniteType.exists_apply_succ_eq_zero`: **a finite-type diagram carries no cycle**. A
   cyclic list of at least three distinct indices has a missing edge. This is the second estimate:
   the test vector is supported on the indices of the putative cycle, its coordinate at each of them
@@ -353,6 +358,87 @@ theorem apply_mul_apply_mem_of_ne (h : IsFiniteType A) {i j : B} (hij : i ≠ j)
   simp only [Set.mem_insert_iff, Set.mem_singleton_iff]
   omega
 
+/-- **A finite-type matrix is simply laced exactly when none of its edges is multiple.** The Cartan
+product `A i j * A j i` is the multiplicity of the edge joining `i` and `j`, so the condition on the
+right says that every edge is single: no double edge, and no triple edge.
+
+Only the off-diagonal entries are constrained, one entry of a transposed pair at a time, and that
+is enough because the entries of such a pair vanish together and a product of two nonpositive
+integers is `1` only when both are `-1`. -/
+theorem isSimplyLaced_iff (h : IsFiniteType A) :
+    A.IsSimplyLaced ↔ ∀ i j, i ≠ j → A i j * A j i ≤ 1 := by
+  constructor
+  · intro hsl i j hij
+    rcases hsl hij with hij' | hij' <;> rcases hsl hij.symm with hji | hji <;> simp [hij', hji]
+  · intro hle i j hij
+    have hbound := hle i j hij
+    have hnonneg : 0 ≤ A i j * A j i :=
+      mul_nonneg_of_nonpos_of_nonpos (h.apply_le_zero_of_ne hij) (h.apply_le_zero_of_ne hij.symm)
+    rcases (by omega : A i j * A j i = 0 ∨ A i j * A j i = 1) with hzero | hone
+    · rcases mul_eq_zero.mp hzero with hij' | hji
+      · exact Or.inl hij'
+      · exact Or.inl (h.apply_eq_zero_symm hji)
+    · rcases Int.eq_one_or_neg_one_of_mul_eq_one' hone with ⟨hij', -⟩ | ⟨hij', -⟩
+      · have := h.apply_le_zero_of_ne hij
+        omega
+      · exact Or.inr hij'
+
+/-- **On a cycle of length at least three an index and its two cyclic neighbours are pairwise
+distinct.** Successor and predecessor are the cyclic ones, taken in the additive group `Fin m`.
+Three is the exact threshold: on `Fin 2` an index has a single neighbour, `i + 1 = i - 1`. -/
+private theorem cyclic_neighbors_pairwise_ne {m : ℕ} [NeZero m] (hm : 3 ≤ m) (i : Fin m) :
+    i + 1 ≠ i ∧ i - 1 ≠ i ∧ i + 1 ≠ i - 1 := by
+  have hval1 : ((1 : Fin m) : ℕ) = 1 := by
+    rw [Fin.val_one', Nat.mod_eq_of_lt (by omega)]
+  have hone : (1 : Fin m) ≠ 0 := fun hc ↦ by
+    have hval := congrArg Fin.val hc
+    rw [hval1, Fin.val_zero] at hval
+    omega
+  have htwo : (1 : Fin m) + 1 ≠ 0 := fun hc ↦ by
+    have hval2 : (((1 : Fin m) + 1 : Fin m) : ℕ) = 2 := by
+      rw [Fin.val_add, hval1, Nat.mod_eq_of_lt (by omega)]
+    have hval := congrArg Fin.val hc
+    rw [hval2, Fin.val_zero] at hval
+    omega
+  have hsucc : i + 1 ≠ i := fun hc ↦ hone (add_left_cancel (hc.trans (add_zero i).symm))
+  refine ⟨hsucc, fun hc ↦ ?_, fun hc ↦ ?_⟩
+  · have h1 : i - 1 + 1 = i + 1 := by rw [hc]
+    rw [sub_add_cancel] at h1
+    exact hsucc h1.symm
+  · refine htwo (add_left_cancel (a := i) ?_)
+    rw [← add_assoc, hc, sub_add_cancel, add_zero]
+
+/-- **A symmetric cycle form with the given diagonal and edge bounds has rows summing to a
+difference of reciprocals.** For `f` symmetric with `f i i = 2 / dᵢ`, nonpositive off the diagonal
+and at most `-1/dᵢ` along each cycle edge, the `i`th row sums to at most `1/dᵢ - 1/dᵢ₋₁`. Summing
+this over the cycle makes the right-hand side telescope to zero. -/
+private theorem sum_le_inv_sub_inv {m : ℕ} [NeZero m] (hm : 3 ≤ m)
+    {d : Fin m → ℚ} {f : Fin m → Fin m → ℚ} (hfsymm : ∀ i j, f i j = f j i)
+    (hdiag : ∀ i, f i i = 2 / d i) (hnonpos : ∀ i j : Fin m, j ≠ i → f i j ≤ 0)
+    (hedge : ∀ i : Fin m, f i (i + 1) ≤ -(d i)⁻¹) (i : Fin m) :
+    ∑ j, f i j ≤ (d i)⁻¹ - (d (i - 1))⁻¹ := by
+  obtain ⟨hsucc, hpred, hsp⟩ := cyclic_neighbors_pairwise_ne hm i
+  rw [← Finset.sum_sdiff (Finset.subset_univ ({i, i + 1, i - 1} : Finset (Fin m)))]
+  have hrest : ∑ j ∈ Finset.univ \ ({i, i + 1, i - 1} : Finset (Fin m)), f i j ≤ 0 := by
+    refine Finset.sum_nonpos fun j hj ↦ hnonpos i j ?_
+    simp only [Finset.mem_sdiff, Finset.mem_insert, Finset.mem_singleton, not_or] at hj
+    tauto
+  have hthree : ∑ j ∈ ({i, i + 1, i - 1} : Finset (Fin m)), f i j
+      = f i i + f i (i + 1) + f i (i - 1) := by
+    rw [Finset.sum_insert (by
+        simp only [Finset.mem_insert, Finset.mem_singleton, not_or]
+        exact ⟨hsucc.symm, hpred.symm⟩),
+      Finset.sum_insert (by simpa using hsp), Finset.sum_singleton, add_assoc]
+  have hlast : f i (i - 1) ≤ -(d (i - 1))⁻¹ := by
+    have hshift := hedge (i - 1)
+    rwa [sub_add_cancel, hfsymm] at hshift
+  have hhalf : (2 : ℚ) / d i = (d i)⁻¹ + (d i)⁻¹ := by
+    rw [div_eq_mul_inv]; ring
+  have hii := hdiag i
+  have hnext := hedge i
+  rw [hthree]
+  linarith
+
 /-- **A cyclic diagram is not of finite type.** On an index type of size at least three, no
 finite-type matrix joins every index to its cyclic successor: some `Tₖ,ₖ₊₁` vanishes.
 
@@ -377,30 +463,6 @@ private theorem exists_apply_succ_eq_zero_fin {m : ℕ} [NeZero m] (hm : 3 ≤ m
   push Not at hcon
   obtain ⟨d, hd, hpd⟩ := h.exists_symmetrizer
   have hsymm := symmetrization_apply_comm hpd
-  -- An index, its successor and its predecessor are pairwise distinct, the cycle being long enough.
-  have hval1 : ((1 : Fin m) : ℕ) = 1 := by
-    rw [Fin.val_one', Nat.mod_eq_of_lt (by omega)]
-  have hone : (1 : Fin m) ≠ 0 := fun hc ↦ by
-    have hval := congrArg Fin.val hc
-    rw [hval1, Fin.val_zero] at hval
-    omega
-  have htwo : (1 : Fin m) + 1 ≠ 0 := fun hc ↦ by
-    have hval2 : (((1 : Fin m) + 1 : Fin m) : ℕ) = 2 := by
-      rw [Fin.val_add, hval1, Nat.mod_eq_of_lt (by omega)]
-    have hval := congrArg Fin.val hc
-    rw [hval2, Fin.val_zero] at hval
-    omega
-  have hsucc : ∀ i : Fin m, i + 1 ≠ i := fun i hc ↦
-    hone (add_left_cancel (hc.trans (add_zero i).symm))
-  have hpred : ∀ i : Fin m, i - 1 ≠ i := by
-    intro i hc
-    have h1 : i - 1 + 1 = i + 1 := by rw [hc]
-    rw [sub_add_cancel] at h1
-    exact hsucc i h1.symm
-  have hsp : ∀ i : Fin m, i + 1 ≠ i - 1 := by
-    intro i hc
-    refine htwo (add_left_cancel (a := i) ?_)
-    rw [← add_assoc, hc, sub_add_cancel, add_zero]
   -- `f i j` is the contribution of the pair `(i, j)` to the form at the test vector; it is
   -- symmetric, and nonpositive off the diagonal.
   obtain ⟨f, hf⟩ : ∃ f : Fin m → Fin m → ℚ, ∀ i j, f i j = (T i j : ℚ) / d j := ⟨_, fun _ _ ↦ rfl⟩
@@ -422,7 +484,7 @@ private theorem exists_apply_succ_eq_zero_fin {m : ℕ} [NeZero m] (hm : 3 ≤ m
     intro i
     have h0 : T (i + 1) i ≠ 0 := fun hc ↦ hcon i (h.apply_eq_zero_symm hc)
     have hle : T (i + 1) i ≤ -1 := by
-      have := h.apply_le_zero_of_ne (hsucc i)
+      have := h.apply_le_zero_of_ne (cyclic_neighbors_pairwise_ne hm i).1
       omega
     have hcast : ((T (i + 1) i : ℤ) : ℚ) ≤ -1 := by exact_mod_cast hle
     calc f i (i + 1) = (T (i + 1) i : ℚ) * (d i)⁻¹ := by rw [hfsymm, hf, div_eq_mul_inv]
@@ -441,28 +503,8 @@ private theorem exists_apply_succ_eq_zero_fin {m : ℕ} [NeZero m] (hm : 3 ≤ m
     rw [hf, inv_mul_cancel_left₀ (hd i).ne', div_eq_mul_inv]
   -- Each index contributes at most `1/dᵢ - 1/dᵢ₋₁`, and those differences telescope around the
   -- cycle to `0`.
-  have hbound : ∀ i : Fin m, ∑ j, f i j ≤ (d i)⁻¹ - (d (i - 1))⁻¹ := by
-    intro i
-    rw [← Finset.sum_sdiff (Finset.subset_univ ({i, i + 1, i - 1} : Finset (Fin m)))]
-    have hrest : ∑ j ∈ Finset.univ \ ({i, i + 1, i - 1} : Finset (Fin m)), f i j ≤ 0 := by
-      refine Finset.sum_nonpos fun j hj ↦ hnonpos i j ?_
-      simp only [Finset.mem_sdiff, Finset.mem_insert, Finset.mem_singleton, not_or] at hj
-      tauto
-    have hthree : ∑ j ∈ ({i, i + 1, i - 1} : Finset (Fin m)), f i j
-        = f i i + f i (i + 1) + f i (i - 1) := by
-      rw [Finset.sum_insert (by
-          simp only [Finset.mem_insert, Finset.mem_singleton, not_or]
-          exact ⟨(hsucc i).symm, (hpred i).symm⟩),
-        Finset.sum_insert (by simpa using hsp i), Finset.sum_singleton, add_assoc]
-    have hlast : f i (i - 1) ≤ -(d (i - 1))⁻¹ := by
-      have hshift := hedge (i - 1)
-      rwa [sub_add_cancel, hfsymm] at hshift
-    have hhalf : (2 : ℚ) / d i = (d i)⁻¹ + (d i)⁻¹ := by
-      rw [div_eq_mul_inv]; ring
-    have hii := hdiag i
-    have hnext := hedge i
-    rw [hthree]
-    linarith
+  have hbound : ∀ i : Fin m, ∑ j, f i j ≤ (d i)⁻¹ - (d (i - 1))⁻¹ :=
+    sum_le_inv_sub_inv hm hfsymm hdiag hnonpos hedge
   have hshift : ∑ i : Fin m, (d (i - 1))⁻¹ = ∑ i : Fin m, (d i)⁻¹ :=
     Fintype.sum_equiv (Equiv.subRight (1 : Fin m)) _ _ fun _ ↦ rfl
   have hle := Finset.sum_le_sum fun i (_ : i ∈ (Finset.univ : Finset (Fin m))) ↦ hbound i

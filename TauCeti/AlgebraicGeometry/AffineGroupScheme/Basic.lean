@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -51,7 +52,8 @@ lemma affineGroupSchemeProperty_iff {S : CommRingCat.{u}} (G : Grp (Over (Spec S
 
 /-- The category of affine group schemes over `Spec S`: the full subcategory of group
 objects in schemes over `Spec S` whose underlying scheme is affine. -/
-abbrev AffineGroupSchemeCat (S : CommRingCat.{u}) := (affineGroupSchemeProperty S).FullSubcategory
+abbrev AffineGroupSchemeCat (S : CommRingCat.{u}) : Type _ :=
+  (affineGroupSchemeProperty S).FullSubcategory
 
 /-- Being an affine group scheme is invariant under isomorphism of group objects: an
 isomorphism induces an isomorphism of underlying schemes, and affineness transfers

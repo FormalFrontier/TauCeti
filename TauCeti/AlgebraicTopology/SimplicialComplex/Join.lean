@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -26,8 +27,8 @@ The construction follows Rourke--Sanderson, *Introduction to Piecewise-Linear To
 
 ## Main definitions
 
-* `TauCeti.PreAbstractSimplicialComplex.join`: the join of two precomplexes.
-* `TauCeti.AbstractSimplicialComplex.join`: the join of two abstract complexes.
+* `PreAbstractSimplicialComplex.join`: the join of two precomplexes.
+* `AbstractSimplicialComplex.join`: the join of two abstract complexes.
 
 ## Main results
 
@@ -37,8 +38,6 @@ The construction follows Rourke--Sanderson, *Introduction to Piecewise-Linear To
 -/
 
 public section
-
-namespace TauCeti
 
 open Finset Function Sum
 
@@ -183,4 +182,3 @@ theorem join_mono (hK : K ≤ K') (hL : L ≤ L') :
 
 end AbstractSimplicialComplex
 
-end TauCeti

@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -80,6 +81,13 @@ def cohomologyZeroEquiv (M : X.Modules) :
     Cohomology M 0 ≃+ Γ(M, ⊤) :=
   CategoryTheory.Sheaf.H.equiv₀
     ((_root_.SheafOfModules.toSheaf X.ringCatSheaf).obj M) isTerminalTop
+
+/-- The degree-zero cohomology equivalence is natural in the coefficient sheaf. -/
+lemma cohomologyZeroEquiv_naturality {M N : X.Modules} (f : M ⟶ N) (x : Cohomology M 0) :
+    cohomologyZeroEquiv N ((cohomologyFunctor X 0).map f x) =
+      f.app ⊤ (cohomologyZeroEquiv M x) :=
+  (CategoryTheory.Sheaf.H.equiv₀_naturality isTerminalTop
+    ((_root_.SheafOfModules.toSheaf X.ringCatSheaf).map f) x).symm
 
 section Opens
 

@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -47,22 +48,6 @@ variable {R : Type u} {A : Type v} {A' : Type w} {B : Type x}
 variable [CommSemiring R] [CommSemiring A] [HopfAlgebra R A]
 variable [CommSemiring A'] [HopfAlgebra R A']
 variable [CommSemiring B] [Algebra R B]
-
-private lemma algEquivSelf_derivationComp_apply (φ : A' →ₐc[R] A)
-    (d : Derivation R A (Bialgebra.CounitAlgebra R A B)) (a : A') :
-    Bialgebra.CounitAlgebra.algEquivSelf R A' B
-        (derivationComp (B := B) φ d a) =
-      Bialgebra.CounitAlgebra.algEquivSelf R A B
-        (d ((φ : A' →ₐ[R] A) a)) := by
-  rw [derivationComp_apply]
-  exact
-    (Bialgebra.CounitAlgebra.algEquivSelf_apply R A' B
-      -- Both counit algebras are definitionally copies of `B`; this `show` transports
-      -- the value to the indexing expected by the `A'`-side equivalence.
-      (show Bialgebra.CounitAlgebra R A' B from
-        d ((φ : A' →ₐ[R] A) a))).trans
-      (Bialgebra.CounitAlgebra.algEquivSelf_apply R A B
-        (d ((φ : A' →ₐ[R] A) a))).symm
 
 private lemma derivationComp_toLinearMap (φ : A' →ₐc[R] A)
     (d : Derivation R A (Bialgebra.CounitAlgebra R A B)) :

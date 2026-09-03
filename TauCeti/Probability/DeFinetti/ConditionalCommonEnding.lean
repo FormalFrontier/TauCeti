@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -11,8 +12,8 @@ public import TauCeti.Probability.Exchangeability.Cylinder
 # The conditional rectangle common ending for de Finetti
 
 This file supplies the joint-law companion of the mixture rectangle common ending.  To prove that
-a measurable random probability measure `ν : Ω → ProbabilityMeasure α` directs a process, it is
-enough to verify the expected disintegration on sets of the form
+a measurable random probability measure `ν : Ω → ProbabilityMeasure α` directs a coordinatewise
+`μ`-a.e. measurable family, it is enough to verify the expected disintegration on sets of the form
 
 ```text
 S ×ˢ Set.univ.pi B
@@ -27,8 +28,8 @@ there extends to the full joint-law identity in `ConditionallyIIDWith`.
 * `conditionallyIID_of_jointRectangles` — the Layer 1 common ending, at a named directing measure;
 * `conditionallyIIDWith_of_measure_inter_blockCylinder_eq_setLIntegral` — a set-integral
   factorization of the mass of a directing-measure event met with a block cylinder, converted here
-  into the joint-rectangle identity above. A reusable seam, consumed by the martingale route and
-  available to any other, assuming no standard-Borel structure on either space;
+  into the joint-rectangle identity above. A reusable seam assuming no standard-Borel structure on
+  either space: all three de Finetti routes consume it;
 * `ConditionallyIIDWith.jointLaw_prod_univ_pi` — the converse rectangle identity;
 * `conditionallyIIDWith_iff_forall_jointRectangles` and
   `conditionallyIID_iff_exists_forall_jointRectangles` — characteristic forms for the named and
@@ -83,13 +84,11 @@ private theorem measure_eq_of_forall_prod_univ_pi
 /-- **Conditional common de Finetti ending.** If the joint law of a measurable random probability
 measure `ν` and every injective finite block agrees with
 `∫ δ_{ν(ω)} ⊗ (ν(ω))^{⊗m} ∂μ(ω)` on all measurable products of a set in the `ν` coordinate and a
-rectangle in the block coordinates, then `ν` directs the process.
-
-No measurability hypothesis on the coordinates of `X` is needed: the rectangle identities are
-already exactly the data used to extend the two finite joint measures. -/
-theorem conditionallyIID_of_jointRectangles {μ : Measure Ω} [IsFiniteMeasure μ]
-    {X : ℕ → Ω → α} {ν : Ω → ProbabilityMeasure α} (hν : Measurable ν)
-    (h_rect : ∀ (m : ℕ) (k : Fin m → ℕ), Function.Injective k →
+rectangle in the block coordinates, then `ν` directs the family. -/
+theorem conditionallyIID_of_jointRectangles {ι : Type*} {μ : Measure Ω} [IsFiniteMeasure μ]
+    {X : ι → Ω → α} {ν : Ω → ProbabilityMeasure α}
+    (hX : ∀ i, AEMeasurable (X i) μ) (hν : Measurable ν)
+    (h_rect : ∀ (m : ℕ) (k : Fin m → ι), Function.Injective k →
       ∀ S : Set (ProbabilityMeasure α), MeasurableSet S →
         ∀ B : Fin m → Set α, (∀ i, MeasurableSet (B i)) →
           (μ.map fun ω => (ν ω, fun i : Fin m => X (k i) ω)) (S ×ˢ Set.univ.pi B) =
@@ -98,7 +97,7 @@ theorem conditionallyIID_of_jointRectangles {μ : Measure Ω} [IsFiniteMeasure �
                 (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure)
               (S ×ˢ Set.univ.pi B)) :
     ConditionallyIIDWith μ X ν := by
-  refine ConditionallyIIDWith.intro hν fun m k hk => ?_
+  refine ConditionallyIIDWith.intro hX hν fun m k hk => ?_
   have : IsFiniteMeasure (μ.map fun ω => (ν ω, fun i : Fin m => X (k i) ω)) :=
     inferInstance
   exact measure_eq_of_forall_prod_univ_pi (h_rect m k hk)
@@ -111,10 +110,16 @@ witness's evaluations, then the witness directs the process.
 the monotone case: the reduction by sorting happens here. That matches what the proof routes
 naturally produce, since a block argument reads disjoint windows in increasing order.
 
+This theorem is, alone among the rectangle endings, stated for a sequence. The obstruction is
+inherited rather than intrinsic: the statement is phrased with `blockCylinder`, which
+`Exchangeability/Cylinder.lean` defines only for `X : ℕ → Ω → α`, and the sorting reduction needs a
+linear order on the index — hence `ℕ`. The others quantify over an arbitrary index type.
+
 This is a reusable seam: nothing here mentions how `ν` was built, so a route supplies only its own
 factorization identity. The martingale route reaches it from tail conditional laws and consumes it
-in `conditionallyIIDWith_of_contractable_pathSpace`; a route conditioning on invariant σ-algebras
-instead could consume the same statement, though none currently does.
+in `conditionallyIIDWith_of_contractable_pathSpace`; the `L²` route reaches it from its own block
+factorization; and the Koopman route conditions on the shift-invariant σ-algebra instead and
+consumes it in `ContractableLaw.conditionallyIIDWith_invariantConditionalProbabilityMeasure`.
 
 In particular there is **no** standard-Borel or non-empty hypothesis on either space: those are
 needed to *construct* a directing measure, not to recognise one. -/
@@ -141,7 +146,7 @@ theorem conditionallyIIDWith_of_measure_inter_blockCylinder_eq_setLIntegral {μ 
     obtain ⟨e, hsm, hcyl, hprod⟩ := exists_perm_strictMono_comp_blockCylinder_eq_and_prod_eq X hk B
     rw [hcyl, hcore r (k ∘ e) hsm S hS (fun i => B (e i)) fun i => hB (e i)]
     exact lintegral_congr fun ω => hprod fun T => (ν ω : Measure α) T
-  refine conditionallyIID_of_jointRectangles hν fun r k hk S hS B hB => ?_
+  refine conditionallyIID_of_jointRectangles hX_meas hν fun r k hk S hS B hB => ?_
   have hjoint : AEMeasurable (fun ω => (ν ω, fun i : Fin r => X (k i) ω)) μ :=
     hν.aemeasurable.prodMk (aemeasurable_pi_lambda _ fun i => hX_meas _)
   have hker : Measurable fun ω =>
@@ -165,9 +170,9 @@ theorem conditionallyIIDWith_of_measure_inter_blockCylinder_eq_setLIntegral {μ 
 /-- A `ConditionallyIIDWith` witness gives the joint disintegration on a product of an arbitrary
 set in the directing-measure coordinate and an arbitrary finite block rectangle. -/
 @[grind =>]
-theorem ConditionallyIIDWith.jointLaw_prod_univ_pi {μ : Measure Ω} {X : ℕ → Ω → α}
+theorem ConditionallyIIDWith.jointLaw_prod_univ_pi {ι : Type*} {μ : Measure Ω} {X : ι → Ω → α}
     {ν : Ω → ProbabilityMeasure α} (h : ConditionallyIIDWith μ X ν)
-    {m : ℕ} (k : Fin m → ℕ) (hk : Function.Injective k)
+    {m : ℕ} (k : Fin m → ι) (hk : Function.Injective k)
     (S : Set (ProbabilityMeasure α)) (B : Fin m → Set α) :
     (μ.map fun ω => (ν ω, fun i : Fin m => X (k i) ω)) (S ×ˢ Set.univ.pi B) =
       (μ.bind fun ω =>
@@ -178,12 +183,12 @@ theorem ConditionallyIIDWith.jointLaw_prod_univ_pi {μ : Measure Ω} {X : ℕ �
 
 /-- Joint-rectangle factorization characterizes `ConditionallyIIDWith` for a finite base
 measure. -/
-theorem conditionallyIIDWith_iff_forall_jointRectangles
-    {μ : Measure Ω} [IsFiniteMeasure μ] {X : ℕ → Ω → α}
+theorem conditionallyIIDWith_iff_forall_jointRectangles {ι : Type*}
+    {μ : Measure Ω} [IsFiniteMeasure μ] {X : ι → Ω → α}
     {ν : Ω → ProbabilityMeasure α} :
     ConditionallyIIDWith μ X ν ↔
-      Measurable ν ∧
-        ∀ (m : ℕ) (k : Fin m → ℕ), Function.Injective k →
+      (∀ i, AEMeasurable (X i) μ) ∧ Measurable ν ∧
+        ∀ (m : ℕ) (k : Fin m → ι), Function.Injective k →
           ∀ S : Set (ProbabilityMeasure α), MeasurableSet S →
             ∀ B : Fin m → Set α, (∀ i, MeasurableSet (B i)) →
               (μ.map fun ω => (ν ω, fun i : Fin m => X (k i) ω))
@@ -194,18 +199,18 @@ theorem conditionallyIIDWith_iff_forall_jointRectangles
                   (S ×ˢ Set.univ.pi B) := by
   constructor
   · intro h
-    exact ⟨h.measurable_directing, fun m k hk S _ B _ =>
+    exact ⟨h.aemeasurable, h.measurable_directing, fun m k hk S _ B _ =>
       h.jointLaw_prod_univ_pi k hk S B⟩
-  · rintro ⟨hν, h_rect⟩
-    exact conditionallyIID_of_jointRectangles hν h_rect
+  · rintro ⟨hX, hν, h_rect⟩
+    exact conditionallyIID_of_jointRectangles hX hν h_rect
 
 /-- Joint-rectangle factorization characterizes the existential predicate `ConditionallyIID` for
 a finite base measure. -/
-theorem conditionallyIID_iff_exists_forall_jointRectangles
-    {μ : Measure Ω} [IsFiniteMeasure μ] {X : ℕ → Ω → α} :
+theorem conditionallyIID_iff_exists_forall_jointRectangles {ι : Type*}
+    {μ : Measure Ω} [IsFiniteMeasure μ] {X : ι → Ω → α} :
     ConditionallyIID μ X ↔
-      ∃ ν : Ω → ProbabilityMeasure α, Measurable ν ∧
-        ∀ (m : ℕ) (k : Fin m → ℕ), Function.Injective k →
+      ∃ ν : Ω → ProbabilityMeasure α, (∀ i, AEMeasurable (X i) μ) ∧ Measurable ν ∧
+        ∀ (m : ℕ) (k : Fin m → ι), Function.Injective k →
           ∀ S : Set (ProbabilityMeasure α), MeasurableSet S →
             ∀ B : Fin m → Set α, (∀ i, MeasurableSet (B i)) →
               (μ.map fun ω => (ν ω, fun i : Fin m => X (k i) ω))

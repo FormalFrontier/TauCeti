@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -53,6 +54,12 @@ lemma le_iff {D E : WeilDivisor X} : D ≤ E ↔ ∀ x, coeff D x ≤ coeff E x 
 /-- The coefficientwise order projects to coefficients: `D ≤ E` gives `coeff D x ≤ coeff E x`. -/
 lemma coeff_le_coeff {D E : WeilDivisor X} (h : D ≤ E) (x : X) : coeff D x ≤ coeff E x :=
   le_iff.mp h x
+
+/-- A negative integer multiple of a point divisor is strictly negative. -/
+lemma zsmul_ofPoint_lt_zero (x : X) {n : ℤ} (hn : n < 0) : n • ofPoint x < 0 := by
+  rw [← single_eq_zsmul_ofPoint]
+  exact lt_of_le_of_ne (Finsupp.single_nonpos.mpr hn.le)
+    (mt Finsupp.single_eq_zero.mp hn.ne)
 
 /-- Effectivity is exactly nonnegativity in the coefficientwise order. -/
 lemma isEffective_iff_zero_le {D : WeilDivisor X} : IsEffective D ↔ 0 ≤ D := by

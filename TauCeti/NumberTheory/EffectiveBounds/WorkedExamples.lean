@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -29,24 +30,24 @@ the repo's own effective-bound machinery rather than citing a closed formula fro
 
 For `ℚ(√-5)` we take `AdjoinRoot (X² + 5)` over `ℚ` (a field because `X² + 5` is irreducible,
 having no rational root), a degree-two number field with a square root of `-5`, and feed it to
-`TauCeti.NumberField.classNumber_le_natAbs_of_sq_intCast`.
+`NumberField.classNumber_le_natAbs_of_sq_intCast`.
 
 For `ℚ(i)` we take the fourth cyclotomic field `CyclotomicField 4 ℚ`, whose primitive fourth
 root of unity `ζ` satisfies `ζ² = -1` and generates `ℚ(i)`. The pair `{1, ζ}` is a `ℤ`-basis
 of the ring of integers (Mathlib's integral power basis of a cyclotomic `𝒪_K`), so the repo's
 equality companion of the discriminant bound
-(`TauCeti.NumberField.discr_eq_of_basis_isIntegral_of_span_eq_top_of_discr_eq_int`) turns the
+(`NumberField.discr_eq_of_basis_isIntegral_of_span_eq_top_of_discr_eq_int`) turns the
 trace-form evaluation `disc ℚ {1, ζ} = 4·(-1) = -4`
 (`TauCeti.Algebra.discr_one_elem_eq_of_sq_algebraMap`) into `d_{ℚ(i)} = -4` exactly, whence
 `|d_{ℚ(i)}| = 4`.
 
 ## Main results
 
-* `TauCeti.NumberField.WorkedExamples.classNumber_adjoinRoot_sqrt_neg_five_le`: `h ≤ 320` for
+* `NumberField.WorkedExamples.classNumber_adjoinRoot_sqrt_neg_five_le`: `h ≤ 320` for
   `ℚ(√-5)`.
-* `TauCeti.NumberField.WorkedExamples.discr_cyclotomicField_four`: `d_{ℚ(i)} = -4`.
-* `TauCeti.NumberField.WorkedExamples.abs_discr_cyclotomicField_four`: `|d_{ℚ(i)}| = 4`.
-* `TauCeti.NumberField.WorkedExamples.natAbs_discr_cyclotomicField_four`: `|d_{ℚ(i)}| = 4`.
+* `NumberField.WorkedExamples.discr_cyclotomicField_four`: `d_{ℚ(i)} = -4`.
+* `NumberField.WorkedExamples.abs_discr_cyclotomicField_four`: `|d_{ℚ(i)}| = 4`.
+* `NumberField.WorkedExamples.natAbs_discr_cyclotomicField_four`: `|d_{ℚ(i)}| = 4`.
 
 ## Provenance
 
@@ -61,7 +62,7 @@ public section
 open Polynomial Module
 open scoped NumberField
 
-namespace TauCeti.NumberField.WorkedExamples
+namespace NumberField.WorkedExamples
 
 /-! ### `ℚ(√-5)`: the class-number bound is non-vacuous -/
 
@@ -181,4 +182,4 @@ theorem natAbs_discr_cyclotomicField_four :
   rw [discr_cyclotomicField_four]
   norm_num
 
-end TauCeti.NumberField.WorkedExamples
+end NumberField.WorkedExamples

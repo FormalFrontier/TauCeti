@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -26,10 +27,10 @@ commutator action of Clifford bivectors, rather than by expanding a matrix commu
 
 ## Main results
 
-* `TauCeti.CliffordAlgebra.bivectorEquivSo`: the standard exterior-bivector Lie equivalence.
-* `TauCeti.CliffordAlgebra.bivectorEquivSo_apply_ιMulti`: its value on a decomposable bivector.
-* `TauCeti.CliffordAlgebra.bivectorEquivSo_symm_repr_apply`: the coefficients of its inverse.
-* `TauCeti.CliffordAlgebra.bivectorEquivSo_apply_ιMulti_mulVec`: its normalized action on a vector.
+* `CliffordAlgebra.bivectorEquivSo`: the standard exterior-bivector Lie equivalence.
+* `CliffordAlgebra.bivectorEquivSo_apply_ιMulti`: its value on a decomposable bivector.
+* `CliffordAlgebra.bivectorEquivSo_symm_repr_apply`: the coefficients of its inverse.
+* `CliffordAlgebra.bivectorEquivSo_apply_ιMulti_mulVec`: its normalized action on a vector.
 
 ## References
 
@@ -42,12 +43,10 @@ public section
 open scoped Matrix
 
 open TauCeti
-open CliffordAlgebra
-
 
 universe u
 
-namespace TauCeti.CliffordAlgebra
+namespace CliffordAlgebra
 
 attribute [local instance 100] LieRing.ofAssociativeRing
 
@@ -166,6 +165,22 @@ private theorem soToExteriorLinear_standardBivectorToSoLinear
     (exteriorBasis n R).equivFun x
   rw [LinearEquiv.apply_symm_apply, soCoordinates_standardBivectorToSoLinear]
 
+/-- Two elements of the orthogonal Lie algebra with equal coordinates agree on every
+strictly-upper-triangular matrix entry. -/
+private theorem matrix_apply_eq_of_soCoordinates_eq_of_lt {A B : LieAlgebra.Orthogonal.so (Fin n) R}
+    (h : soCoordinates n R A = soCoordinates n R B) {a b : Fin n} (hab : a < b) :
+    (A : Matrix (Fin n) (Fin n) R) a b = (B : Matrix (Fin n) (Fin n) R) a b := by
+  let e : Fin 2 ↪o Fin n := OrderEmbedding.ofStrictMono ![a, b] (by
+    apply Fin.strictMono_iff_lt_succ.2
+    intro k
+    fin_cases k
+    simpa using hab)
+  -- the coordinate at `{a, b}` is `⅟2` times the `(a, b)` entry, once the bundled map is unfolded
+  have hs := congr_fun h (Set.powersetCard.ofFinEmbEquiv e)
+  simp only [soCoordinates, LinearMap.coe_mk, AddHom.coe_mk,
+    Equiv.symm_apply_apply] at hs
+  exact (mul_right_inj_of_invertible (⅟ (2 : R))).mp hs
+
 private theorem soCoordinates_injective : Function.Injective (soCoordinates n R) := by
   intro A B h
   apply Subtype.ext
@@ -176,40 +191,14 @@ private theorem soCoordinates_injective : Function.Injective (soCoordinates n R)
     have hC := (LieAlgebra.Orthogonal.mem_so (Fin n) R
       (C : Matrix (Fin n) (Fin n) R)).1 C.property
     exact congr_fun (congr_fun hC a) b
-  have hupper (a b : Fin n) (hab : a < b) :
-      (A : Matrix (Fin n) (Fin n) R) a b =
-        (B : Matrix (Fin n) (Fin n) R) a b := by
-    let e : Fin 2 ↪o Fin n := OrderEmbedding.ofStrictMono ![a, b] (by
-      apply Fin.strictMono_iff_lt_succ.2
-      intro k
-      fin_cases k
-      simpa using hab)
-    have hs := congr_fun h (Set.powersetCard.ofFinEmbEquiv e)
-    -- Expose the upper-triangular coordinate selected by the local order embedding.
-    change (⅟ (2 : R)) *
-        (A : Matrix (Fin n) (Fin n) R)
-          (Set.powersetCard.ofFinEmbEquiv.symm
-            (Set.powersetCard.ofFinEmbEquiv e) 0)
-          (Set.powersetCard.ofFinEmbEquiv.symm
-            (Set.powersetCard.ofFinEmbEquiv e) 1) =
-      (⅟ (2 : R)) *
-        (B : Matrix (Fin n) (Fin n) R)
-          (Set.powersetCard.ofFinEmbEquiv.symm
-            (Set.powersetCard.ofFinEmbEquiv e) 0)
-          (Set.powersetCard.ofFinEmbEquiv.symm
-            (Set.powersetCard.ofFinEmbEquiv e) 1) at hs
-    rw [Equiv.symm_apply_apply] at hs
-    -- Normalize the coordinate equality before cancelling the invertible factor `⅟ 2`.
-    change (⅟ (2 : R)) * (A : Matrix (Fin n) (Fin n) R) a b =
-      (⅟ (2 : R)) * (B : Matrix (Fin n) (Fin n) R) a b at hs
-    exact (mul_right_inj_of_invertible (⅟ (2 : R))).mp hs
   by_cases hij : i < j
-  · exact hupper i j hij
+  · exact matrix_apply_eq_of_soCoordinates_eq_of_lt n R h hij
   by_cases hji : j < i
   · calc
       (A : Matrix (Fin n) (Fin n) R) i j =
           -(A : Matrix (Fin n) (Fin n) R) j i := hskew A j i
-      _ = -(B : Matrix (Fin n) (Fin n) R) j i := congrArg Neg.neg (hupper j i hji)
+      _ = -(B : Matrix (Fin n) (Fin n) R) j i :=
+          congrArg Neg.neg (matrix_apply_eq_of_soCoordinates_eq_of_lt n R h hji)
       _ = (B : Matrix (Fin n) (Fin n) R) i j := (hskew B j i).symm
   · have hij' : i = j := le_antisymm (not_lt.mp hji) (not_lt.mp hij)
     subst j
@@ -488,4 +477,4 @@ theorem bivectorEquivSo_apply_ιMulti_mulVec (u v x : Fin n → R) :
   rw [bivectorEquivSo_apply]
   exact standardBivectorToSoLinear_mulVec n R u v x
 
-end TauCeti.CliffordAlgebra
+end CliffordAlgebra

@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -21,8 +22,11 @@ therefore comes from those two facts and is not reproved here.
 
 * `TauCeti.derivationComp`: precomposition of counit-valued derivations along a
   bialgebra morphism, as an `R`-linear map — the derivation form of the differential.
-* `TauCeti.derivationComp_apply`, `TauCeti.derivationComp_id`,
-  `TauCeti.derivationComp_comp`: it acts by precomposition, functorially.
+* `TauCeti.derivationComp_apply`, `TauCeti.algEquivSelf_derivationComp_apply`,
+  `TauCeti.derivationComp_id`, `TauCeti.derivationComp_comp`: it acts by precomposition,
+  functorially and compatibly with the counit coefficient identifications.
+* `TauCeti.derivationComp_injective_of_surjective`: precomposition along a surjective
+  bialgebra morphism is injective.
 
 The intertwining with the tangent dictionaries is
 `TauCeti.tangentKerMap_derivationMulEquivTangentKer` in
@@ -149,6 +153,42 @@ lemma derivationComp_apply (φ : A' →ₐc[R] A)
   change derivationCompAux (B := B) φ d a = _
   rw [derivationCompAux_apply]
 
+/-- The derivation differential is literal precomposition after identifying the two counit
+coefficient algebras with the original coefficient algebra. -/
+lemma algEquivSelf_derivationComp_apply (φ : A' →ₐc[R] A)
+    (d : Derivation R A (Bialgebra.CounitAlgebra R A B)) (a : A') :
+    Bialgebra.CounitAlgebra.algEquivSelf R A' B
+        (derivationComp (B := B) φ d a) =
+      Bialgebra.CounitAlgebra.algEquivSelf R A B
+        (d ((φ : A' →ₐ[R] A) a)) := by
+  rw [derivationComp_apply]
+  exact
+    (Bialgebra.CounitAlgebra.algEquivSelf_apply R A' B
+      -- Both counit algebras are definitionally copies of `B`; this `show` transports
+      -- the value to the indexing expected by the `A'`-side equivalence.
+      (show Bialgebra.CounitAlgebra R A' B from
+        d ((φ : A' →ₐ[R] A) a))).trans
+      (Bialgebra.CounitAlgebra.algEquivSelf_apply R A B
+        (d ((φ : A' →ₐ[R] A) a))).symm
+
+/-- Precomposition of derivations along a surjective bialgebra morphism is injective. -/
+theorem derivationComp_injective_of_surjective (φ : A' →ₐc[R] A)
+    (hφ : Function.Surjective φ) :
+    Function.Injective (derivationComp (B := B) φ) := by
+  intro d e hde
+  apply Derivation.ext
+  intro a
+  obtain ⟨a', rfl⟩ := hφ a
+  have hvalue := DFunLike.congr_fun hde a'
+  apply (Bialgebra.CounitAlgebra.algEquivSelf R A B).injective
+  calc
+    _ = Bialgebra.CounitAlgebra.algEquivSelf R A' B
+          (derivationComp (B := B) φ d a') :=
+      (algEquivSelf_derivationComp_apply φ d a').symm
+    _ = Bialgebra.CounitAlgebra.algEquivSelf R A' B
+          (derivationComp (B := B) φ e a') := congrArg _ hvalue
+    _ = _ := algEquivSelf_derivationComp_apply φ e a'
+
 /-- Precomposition along the identity is the identity map. -/
 @[simp]
 theorem derivationComp_id :
@@ -166,6 +206,29 @@ theorem derivationComp_comp {A'' : Type*} [CommSemiring A''] [Bialgebra R A'']
   ext d a
   simp
   -- The residual is the definitional identification of the coefficient indexings.
+  rfl
+
+/-- **Precomposition along a section undoes precomposition along its retraction.** If
+`φ.comp χ` is the identity — so `χ` is a section of `φ` — then `derivationComp χ` undoes
+`derivationComp φ`. -/
+theorem derivationComp_derivationComp_eq_self_of_comp_eq_id (φ : A' →ₐc[R] A) (χ : A →ₐc[R] A')
+    (h : φ.comp χ = BialgHom.id R A)
+    (d : Derivation R A (Bialgebra.CounitAlgebra R A B)) :
+    derivationComp (B := B) χ (derivationComp (B := B) φ d) = d := by
+  rw [← LinearMap.comp_apply, ← derivationComp_comp, h, derivationComp_id, LinearMap.id_apply]
+
+/-- **A composite landing in the base kills every derivation.** If `φ ∘ χ` sends each element to
+the scalar multiple of `1` given by its counit, then precomposing along `χ` after `φ` annihilates
+derivations. -/
+theorem derivationComp_derivationComp_eq_zero_of_comp_eq_counit_smul_one {A'' : Type*}
+    [CommSemiring A''] [Bialgebra R A''] (φ : A' →ₐc[R] A) (χ : A'' →ₐc[R] A')
+    (hcomp : ∀ a : A'', (φ : A' →ₐ[R] A) ((χ : A'' →ₐ[R] A') a) = counit (R := R) a • 1)
+    (d : Derivation R A (Bialgebra.CounitAlgebra R A B)) :
+    derivationComp (B := B) χ (derivationComp (B := B) φ d) = 0 := by
+  ext a
+  simp only [derivationComp_apply, hcomp, Derivation.map_smul, Derivation.map_one_eq_zero,
+    smul_zero]
+  -- Both sides are zero in exposed counit-coefficient synonyms.
   rfl
 
 end DerivationMap

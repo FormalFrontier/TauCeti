@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 Tau Ceti. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Claude
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -41,17 +41,20 @@ below uses them.
   irreducible representations are linearly independent**, as class functions and as functions
   on `G`; `TauCeti.ClassFunction.linearIndependent_ofFDRep` and
   `TauCeti.ClassFunction.linearIndependent_character_fdRep` are the `FDRep` mirrors.
-* `TauCeti.Representation.nonempty_equiv_of_character_eq` and
-  `TauCeti.FDRep.nonempty_iso_of_character_eq`: **an irreducible representation is determined by
-  its character**.
+* `Representation.nonempty_equiv_of_character_eq_of_isIrreducible` and
+  `FDRep.nonempty_iso_of_character_eq_of_simple`: **an irreducible representation is
+  determined by its character**.
 * `TauCeti.ClassFunction.card_le_card_conjClasses` and
   `TauCeti.ClassFunction.card_le_card_conjClasses_fdRep`: **there are at most as many pairwise
   inequivalent irreducibles as there are conjugacy classes**.
+* `TauCeti.Representation.nonempty_equiv_iff_eq`: inside a pairwise inequivalent family, two
+  members are equivalent exactly when they are the same member. This one needs neither
+  irreducibility nor any hypothesis on `k` and `G`; it is the form in which the
+  pairwise-inequivalence hypothesis is used downstream.
 
 ## Implementation notes
 
-Nothing here mentions `TauCeti.ClassFunction.characterPairing`, which is defined for a `Fintype`:
-the pairing enters only through the split orthonormality lemmas of
+The pairing enters only through the split orthonormality lemmas of
 `TauCeti/RepresentationTheory/CharacterTable/Pairing.lean`, so these statements ask for
 `Finite G` and produce the `Fintype` inside their proofs.
 
@@ -72,6 +75,8 @@ the pairing enters only through the split orthonormality lemmas of
 -/
 
 public section
+
+open scoped MonoidAlgebra
 
 namespace TauCeti
 
@@ -154,37 +159,63 @@ variable {k : Type u} {G : Type v} [Field k] [Group G] [Finite G] [IsAlgClosed k
 
 /-- **An irreducible representation is determined by its character**: two irreducible
 representations with the same character are equivalent. -/
-theorem nonempty_equiv_of_character_eq (ρ : Representation k G V) (σ : Representation k G W)
+theorem _root_.Representation.nonempty_equiv_of_character_eq_of_isIrreducible
+    (ρ : Representation k G V) (σ : Representation k G W)
     [ρ.IsIrreducible] [σ.IsIrreducible] (h : ρ.character = σ.character) :
     Nonempty (σ.Equiv ρ) := by
   let _ := Fintype.ofFinite G
   rw [← not_isEmpty_iff]
   intro hempty
   have hσρ : ClassFunction.ofCharacter σ = ClassFunction.ofCharacter ρ :=
-    Subtype.ext <| funext fun g => by simp only [ClassFunction.ofCharacter_apply, h]
+    Subtype.ext <| funext fun g ↦ by simp only [ClassFunction.ofCharacter_apply, h]
   have h0 := ClassFunction.characterPairing_ofCharacter_eq_zero ρ σ hempty
   rw [hσρ, ClassFunction.characterPairing_ofCharacter_self ρ] at h0
   exact one_ne_zero h0
 
+/-! ### Members of a pairwise inequivalent family -/
+
+section Pairwise
+
+variable {k : Type u} {G : Type v} [Semiring k] [Monoid G] {ι : Type*} {V : ι → Type w}
+  [∀ i, AddCommMonoid (V i)] [∀ i, Module k (V i)] (ρ : ∀ i, Representation k G (V i))
+  (hind : Pairwise fun i j => IsEmpty ((ρ i).Equiv (ρ j)))
+
+include hind
+
+/-- Inside a family of pairwise inequivalent representations, two members are equivalent exactly
+when they are the same member. -/
+@[simp]
+theorem nonempty_equiv_iff_eq {i j : ι} : Nonempty ((ρ i).Equiv (ρ j)) ↔ i = j := by
+  refine ⟨fun h => ?_, fun h => h ▸ ⟨_root_.Representation.Equiv.refl (ρ i)⟩⟩
+  by_contra hij
+  exact (hind hij).elim' h.some
+
+end Pairwise
+
 end Representation
 
-namespace FDRep
+section FDRep
+
+section Simple
 
 variable {k : Type u} {G : Type v} [Field k] [Group G] [Finite G] [IsAlgClosed k]
   [Invertible (Nat.card G : k)]
 
 /-- **A simple object of `FDRep k G` is determined by its character**: two simple objects with
 the same character are isomorphic. -/
-theorem nonempty_iso_of_character_eq (X Y : FDRep k G) [CategoryTheory.Simple X]
-    [CategoryTheory.Simple Y] (h : X.character = Y.character) : Nonempty (X ≅ Y) := by
+theorem _root_.FDRep.nonempty_iso_of_character_eq_of_simple (X Y : FDRep k G)
+    [CategoryTheory.Simple X] [CategoryTheory.Simple Y]
+    (h : X.character = Y.character) : Nonempty (X ≅ Y) := by
   let _ := Fintype.ofFinite G
   rw [← not_isEmpty_iff]
   intro hempty
   have hXY : ClassFunction.ofFDRep Y = ClassFunction.ofFDRep X :=
-    Subtype.ext <| funext fun g => by simp only [ClassFunction.ofFDRep_apply, h]
+    Subtype.ext <| funext fun g ↦ by simp only [ClassFunction.ofFDRep_apply, h]
   have h0 := ClassFunction.characterPairing_ofFDRep_eq_zero X Y hempty
   rw [hXY, ClassFunction.characterPairing_ofFDRep_self X] at h0
   exact one_ne_zero h0
+
+end Simple
 
 end FDRep
 

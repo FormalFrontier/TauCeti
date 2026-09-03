@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -103,7 +104,7 @@ theorem derivationComp_eq_zero_iff_vanishes_kernelHopfIdeal (f : H ⟶ K)
   constructor
   · intro hcomp x hx
     rw [kernelHopfIdeal_toIdeal, Ideal.map] at hx
-    apply TauCeti.Derivation.apply_eq_zero_of_mem_span d (x := x) (S := f.hom ''
+    apply Derivation.apply_eq_zero_of_mem_span d (x := x) (S := f.hom ''
       ((HopfIdeal.augmentation R H).toIdeal : Set H)) _ _ hx
     · rintro _ ⟨y, hy, rfl⟩
       have hyε : Coalgebra.counit (R := R) y = 0 :=

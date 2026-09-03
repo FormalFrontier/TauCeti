@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -59,6 +60,8 @@ same root system; `Valid` keeps only `B 2` of those two names.
   and nonpositive off-diagonal entries.
 * `TauCeti.DynkinType.cartanMatrix_apply_eq_zero_iff_symm`: their zero pattern is symmetric, so each
   is a generalized Cartan matrix.
+* `TauCeti.DynkinType.cartanMatrix_C_two_apply_eq_cartanMatrix_B_two`: the matrices of `B 2` and
+  `C 2` are exchanged by the swap of the two Bourbaki nodes.
 * `TauCeti.DynkinType.isSimplyLaced_cartanMatrix_iff`: the standard Cartan matrix of a type is
   simply laced exactly when the type is or has rank at most one; rank at most one also holds of
   `A 0`, `A 1`, `D 0` and `D 1`, but the types the second alternative *adds* to the first are
@@ -221,9 +224,9 @@ def cartanMatrix : (t : DynkinType) → Matrix (Fin t.rank) (Fin t.rank) ℤ
   | .B n => CartanMatrix.B n
   | .C n => CartanMatrix.C n
   | .D n => CartanMatrix.D n
-  | .E6 => CartanMatrix.E₆
-  | .E7 => CartanMatrix.E₇
-  | .E8 => CartanMatrix.E₈
+  | .E6 => CartanMatrix.E 6
+  | .E7 => CartanMatrix.E 7
+  | .E8 => CartanMatrix.E 8
   | .F4 => CartanMatrix.F₄
   | .G2 => CartanMatrix.G₂ᵀ
 
@@ -234,11 +237,22 @@ def cartanMatrix : (t : DynkinType) → Matrix (Fin t.rank) (Fin t.rank) ℤ
 @[simp] lemma cartanMatrix_B (n : ℕ) : (B n).cartanMatrix = CartanMatrix.B n := (rfl)
 @[simp] lemma cartanMatrix_C (n : ℕ) : (C n).cartanMatrix = CartanMatrix.C n := (rfl)
 @[simp] lemma cartanMatrix_D (n : ℕ) : (D n).cartanMatrix = CartanMatrix.D n := (rfl)
-@[simp] lemma cartanMatrix_E6 : E6.cartanMatrix = CartanMatrix.E₆ := (rfl)
-@[simp] lemma cartanMatrix_E7 : E7.cartanMatrix = CartanMatrix.E₇ := (rfl)
-@[simp] lemma cartanMatrix_E8 : E8.cartanMatrix = CartanMatrix.E₈ := (rfl)
+@[simp] lemma cartanMatrix_E6 : E6.cartanMatrix = CartanMatrix.E 6 := (rfl)
+@[simp] lemma cartanMatrix_E7 : E7.cartanMatrix = CartanMatrix.E 7 := (rfl)
+@[simp] lemma cartanMatrix_E8 : E8.cartanMatrix = CartanMatrix.E 8 := (rfl)
 @[simp] lemma cartanMatrix_F4 : F4.cartanMatrix = CartanMatrix.F₄ := (rfl)
 @[simp] lemma cartanMatrix_G2 : G2.cartanMatrix = CartanMatrix.G₂ᵀ := (rfl)
+
+/-- **The two rank-two standard Cartan matrices differ only by the node numbering**: exchanging
+Bourbaki nodes `1` and `2` carries the matrix of `B 2` to the matrix of `C 2`. This is the
+low-rank coincidence that `TauCeti.DynkinType.Valid` records by keeping only the name `B 2` of the
+two. From rank three on there is no such relabelling, `Bₙ` and `Cₙ` being different root systems
+whose matrices are transposes; at rank two transposition is itself a relabelling because both
+diagonal entries are `2`. -/
+theorem cartanMatrix_C_two_apply_eq_cartanMatrix_B_two (i j : Fin 2) :
+    (C 2).cartanMatrix i j =
+      (B 2).cartanMatrix (Equiv.swap (0 : Fin 2) 1 i) (Equiv.swap (0 : Fin 2) 1 j) := by
+  fin_cases i <;> fin_cases j <;> decide
 
 /-- Every diagonal entry of a standard Cartan matrix is `2`. -/
 @[simp] lemma cartanMatrix_apply_same (t : DynkinType) (i : Fin t.rank) :
@@ -260,9 +274,9 @@ def cartanMatrix : (t : DynkinType) → Matrix (Fin t.rank) (Fin t.rank) ℤ
   | D n =>
       change Fin n at i
       exact CartanMatrix.D_diag n i
-  | E6 => exact CartanMatrix.E₆_diag i
-  | E7 => exact CartanMatrix.E₇_diag i
-  | E8 => exact CartanMatrix.E₈_diag i
+  | E6 => exact CartanMatrix.E_diag 6 i
+  | E7 => exact CartanMatrix.E_diag 7 i
+  | E8 => exact CartanMatrix.E_diag 8 i
   | F4 => exact CartanMatrix.F₄_diag i
   | G2 => exact CartanMatrix.G₂_diag i  -- `G₂ᵀ i i` is `G₂ i i` definitionally
 
@@ -274,9 +288,9 @@ lemma cartanMatrix_apply_le_zero_of_ne (t : DynkinType) {i j : Fin t.rank} (h : 
   case B n => exact CartanMatrix.B_off_diag_nonpos n i j h
   case C n => exact CartanMatrix.C_off_diag_nonpos n i j h
   case D n => exact CartanMatrix.D_off_diag_nonpos n i j h
-  case E6 => exact CartanMatrix.E₆_off_diag_nonpos i j h
-  case E7 => exact CartanMatrix.E₇_off_diag_nonpos i j h
-  case E8 => exact CartanMatrix.E₈_off_diag_nonpos i j h
+  case E6 => exact CartanMatrix.E_off_diag_nonpos 6 i j h
+  case E7 => exact CartanMatrix.E_off_diag_nonpos 7 i j h
+  case E8 => exact CartanMatrix.E_off_diag_nonpos 8 i j h
   case F4 => exact CartanMatrix.F₄_off_diag_nonpos i j h
   -- `G₂ᵀ i j` is `G₂ j i` definitionally, so the transposed pair of indices is the one to feed in.
   case G2 => exact CartanMatrix.G₂_off_diag_nonpos j i h.symm
@@ -292,9 +306,9 @@ lemma cartanMatrix_apply_eq_zero_iff_symm (t : DynkinType) (i j : Fin t.rank) :
   cases t
   case A n => exact symm_case (CartanMatrix.A_isSymm n) i j
   case D n => exact symm_case (CartanMatrix.D_isSymm n) i j
-  case E6 => exact symm_case CartanMatrix.E₆_isSymm i j
-  case E7 => exact symm_case CartanMatrix.E₇_isSymm i j
-  case E8 => exact symm_case CartanMatrix.E₈_isSymm i j
+  case E6 => exact symm_case (CartanMatrix.E_isSymm 6) i j
+  case E7 => exact symm_case (CartanMatrix.E_isSymm 7) i j
+  case E8 => exact symm_case (CartanMatrix.E_isSymm 8) i j
   case B n =>
     -- Splitting on `t` leaves dependent indices that elaborate as `Fin t.rank`; expose their
     -- definitional reduction to `Fin n` before unfolding the non-symmetric matrix.
@@ -345,9 +359,9 @@ theorem isSimplyLaced_cartanMatrix_iff (t : DynkinType) :
   cases t
   case A n => exact iff_of_true (CartanMatrix.isSimplyLaced_A n) (Or.inl trivial)
   case D n => exact iff_of_true (CartanMatrix.isSimplyLaced_D n) (Or.inl trivial)
-  case E6 => exact iff_of_true CartanMatrix.isSimplyLaced_E₆ (Or.inl trivial)
-  case E7 => exact iff_of_true CartanMatrix.isSimplyLaced_E₇ (Or.inl trivial)
-  case E8 => exact iff_of_true CartanMatrix.isSimplyLaced_E₈ (Or.inl trivial)
+  case E6 => exact iff_of_true (CartanMatrix.isSimplyLaced_E 6) (Or.inl trivial)
+  case E7 => exact iff_of_true (CartanMatrix.isSimplyLaced_E 7) (Or.inl trivial)
+  case E8 => exact iff_of_true (CartanMatrix.isSimplyLaced_E 8) (Or.inl trivial)
   case F4 => exact iff_of_false CartanMatrix.not_isSimplyLaced_F₄ (by simp)
   -- The standard matrix of `G₂` is Bourbaki's, the transpose of Mathlib's `CartanMatrix.G₂`, and
   -- transposition does not change simple-lacedness.

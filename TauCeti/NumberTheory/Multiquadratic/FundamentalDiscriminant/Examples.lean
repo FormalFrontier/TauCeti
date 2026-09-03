@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -16,7 +17,8 @@ discriminant `-84` and genus field `ℚ(√-1, √-3, √-7)`. This file establi
 fundamental-discriminant component of those examples: each discriminant is derived as a product
 of prime discriminants through
 `isFundamentalDiscriminant_mul_prod_oddPrimeDiscriminant_of_isEvenPrimeDiscriminant`, rather than
-by unfolding the definition. The class-group and genus-field claims remain for later work.
+by unfolding the definition. Their class-group and concrete genus-field identifications remain
+future work.
 
 ## Main results
 
@@ -31,8 +33,7 @@ public section
 namespace TauCeti.Multiquadratic
 
 /-- **Worked example.** `-20`, the discriminant of `ℚ(√-5)`, is a fundamental discriminant: it is
-the product of the prime discriminants `-4` and `5`, whose square roots generate the genus field
-`ℚ(√-1, √5)`. -/
+the product of the prime discriminants `-4` and `5`. -/
 theorem isFundamentalDiscriminant_neg_twenty : IsFundamentalDiscriminant (-20) := by
   have h := isFundamentalDiscriminant_mul_prod_oddPrimeDiscriminant_of_isEvenPrimeDiscriminant
     isEvenPrimeDiscriminant_neg_four (s := ({5} : Finset ℕ)) (p := id)
@@ -45,8 +46,7 @@ theorem isFundamentalDiscriminant_neg_twenty : IsFundamentalDiscriminant (-20) :
   rwa [hval] at h
 
 /-- **Worked example.** `-84`, the discriminant of `ℚ(√-21)`, is a fundamental discriminant: it is
-the product of the prime discriminants `-4`, `-3` and `-7`, whose square roots generate the genus
-field `ℚ(√-1, √-3, √-7)`. -/
+the product of the prime discriminants `-4`, `-3` and `-7`. -/
 theorem isFundamentalDiscriminant_neg_eighty_four : IsFundamentalDiscriminant (-84) := by
   have h := isFundamentalDiscriminant_mul_prod_oddPrimeDiscriminant_of_isEvenPrimeDiscriminant
     isEvenPrimeDiscriminant_neg_four (s := ({3, 7} : Finset ℕ)) (p := id)

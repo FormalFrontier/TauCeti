@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -19,8 +20,8 @@ surjection is the image of the principal-class map `mkPrincipal`, which factors 
 
 ## Main results
 
-* `TauCeti.NumberField.NarrowClassGroup.instFinite`: `Cl⁺(K)` is finite.
-* `TauCeti.NumberField.NarrowClassGroup.exists_card_eq_card_classGroup_mul_two_pow`: the narrow
+* `NumberField.NarrowClassGroup.instFinite`: `Cl⁺(K)` is finite.
+* `NumberField.NarrowClassGroup.exists_card_eq_card_classGroup_mul_two_pow`: the narrow
   class number is the ordinary class number times a power of `2`.
 -/
 
@@ -29,7 +30,7 @@ public section
 open NumberField
 open scoped nonZeroDivisors
 
-namespace TauCeti.NumberField.NarrowClassGroup
+namespace NumberField.NarrowClassGroup
 
 variable {K : Type*} [Field K] [NumberField K]
 
@@ -69,4 +70,4 @@ theorem exists_card_eq_card_classGroup_mul_two_pow :
   obtain ⟨k, hk⟩ := IsPGroup.iff_card.1 (isPGroup_two_ker_toClassGroup (K := K))
   exact ⟨k, by rw [card_eq_card_classGroup_mul_card_ker, hk]⟩
 
-end TauCeti.NumberField.NarrowClassGroup
+end NumberField.NarrowClassGroup

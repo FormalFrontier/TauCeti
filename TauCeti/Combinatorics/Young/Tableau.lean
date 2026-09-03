@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -29,7 +30,7 @@ directly.  As a consequence dot notation on a tableau resolves in the `Equiv` na
 declarations below are to be spelled out, as in `YoungTableau.rowIndex t`.
 
 A `μ`-tableau is not required to be row- or column-increasing.  The strictly row- and
-column-increasing ones are `TauCeti.StandardYoungTableau`, whose `toEquiv` field is a `μ`-tableau
+column-increasing ones are `TauCeti.StandardYoungTableau`, whose `toTableau` field is a `μ`-tableau
 in the present sense; Mathlib's `SemistandardYoungTableau` is a different notion again, a filling
 of `μ` by natural numbers that is weakly increasing along each row and strictly increasing down
 each column (represented as a function `ℕ → ℕ → ℕ` vanishing outside `μ`), with no bijectivity
@@ -185,7 +186,7 @@ shape in its first `k` rows. -/
 theorem card_filter_rowIndex_lt (t : YoungTableau μ) (k : ℕ) :
     (Finset.univ.filter fun x => rowIndex t x < k).card = (μ.rowLens.take k).sum := by
   classical
-  rw [TauCeti.YoungDiagram.sum_take_rowLens_eq_card_filter_fst]
+  rw [YoungDiagram.sum_take_rowLens_eq_card_filter_fst]
   refine Finset.card_bij (fun x _ => ((t.symm x : ↥μ.cells) : ℕ × ℕ)) (fun x hx => ?_)
     (fun x _ y _ h => t.symm.injective (Subtype.ext h)) fun c hc => ?_
   · simp only [Finset.mem_filter, Finset.mem_univ, true_and, rowIndex_def] at hx

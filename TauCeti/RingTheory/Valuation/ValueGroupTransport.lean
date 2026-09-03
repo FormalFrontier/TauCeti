@@ -37,7 +37,7 @@ order isomorphisms of those groups with a zero adjoined.
 
 public section
 
-namespace TauCeti.Valuation
+namespace Valuation
 
 open MonoidWithZeroHom
 
@@ -49,14 +49,14 @@ Mathlib's `IsEquiv.orderMonoidIso` is an isomorphism of the value monoids *with 
 `ValueGroup₀ f = WithZero ↥(valueGroup f)`, so this is exactly the inverse of Mathlib's
 `OrderMonoidIso.withZero`, which identifies order isomorphisms of two groups with those of
 the groups with zero adjoined. -/
-noncomputable def _root_.Valuation.IsEquiv.valueGroupOrderIso {v : Valuation A Γ₀}
+noncomputable def IsEquiv.valueGroupOrderIso {v : Valuation A Γ₀}
     {w : Valuation A Γ₀'} (h : v.IsEquiv w) :
     valueGroup (.ofClass v) ≃*o valueGroup (.ofClass w) :=
   OrderMonoidIso.withZero.symm h.orderMonoidIso
 
 /-- The induced value-group isomorphism agrees with `orderMonoidIso` under the coercion. -/
 @[simp]
-theorem _root_.Valuation.IsEquiv.valueGroupOrderIso_coe {v : Valuation A Γ₀}
+theorem IsEquiv.valueGroupOrderIso_coe {v : Valuation A Γ₀}
     {w : Valuation A Γ₀'} (h : v.IsEquiv w) (γ : valueGroup (.ofClass v)) :
     ((h.valueGroupOrderIso γ : valueGroup (.ofClass w)) : ValueGroup₀ (.ofClass w))
       = h.orderMonoidIso (γ : ValueGroup₀ (.ofClass v)) :=
@@ -64,7 +64,7 @@ theorem _root_.Valuation.IsEquiv.valueGroupOrderIso_coe {v : Valuation A Γ₀}
 
 /-- Transport along the inverse equivalence is the inverse transport. Mirrors Mathlib's
 `Valuation.IsEquiv.orderMonoidIso_symm`. -/
-theorem _root_.Valuation.IsEquiv.valueGroupOrderIso_symm {v : Valuation A Γ₀}
+theorem IsEquiv.valueGroupOrderIso_symm {v : Valuation A Γ₀}
     {w : Valuation A Γ₀'} (h : v.IsEquiv w) (h' : w.IsEquiv v) :
     h.valueGroupOrderIso.symm = h'.valueGroupOrderIso :=
   (rfl)
@@ -72,7 +72,7 @@ theorem _root_.Valuation.IsEquiv.valueGroupOrderIso_symm {v : Valuation A Γ₀}
 /-- Transport along a valuation's equivalence with itself is the identity. Mirrors Mathlib's
 `Valuation.IsEquiv.orderMonoidIso_eq_refl`. -/
 @[simp]
-theorem _root_.Valuation.IsEquiv.valueGroupOrderIso_eq_refl {v : Valuation A Γ₀}
+theorem IsEquiv.valueGroupOrderIso_eq_refl {v : Valuation A Γ₀}
     (h : v.IsEquiv v) : h.valueGroupOrderIso = .refl _ := by
   ext γ
   simp [Valuation.IsEquiv.valueGroupOrderIso]
@@ -90,11 +90,11 @@ private theorem withZero_symm_trans {G H K : Type*} [CommGroup G] [PartialOrder 
 /-- Transport along a composite equivalence is the composite transport. Mirrors Mathlib's
 `Valuation.IsEquiv.orderMonoidIso_trans`. -/
 @[simp]
-theorem _root_.Valuation.IsEquiv.valueGroupOrderIso_trans {Γ₀'' : Type*}
+theorem IsEquiv.valueGroupOrderIso_trans {Γ₀'' : Type*}
     [LinearOrderedCommGroupWithZero Γ₀''] {v : Valuation A Γ₀} {w : Valuation A Γ₀'}
     {u : Valuation A Γ₀''} (h : v.IsEquiv w) (h' : w.IsEquiv u) :
     h.valueGroupOrderIso.trans h'.valueGroupOrderIso = (h.trans h').valueGroupOrderIso := by
   simp only [Valuation.IsEquiv.valueGroupOrderIso]
   rw [withZero_symm_trans, Valuation.IsEquiv.orderMonoidIso_trans]
 
-end TauCeti.Valuation
+end Valuation

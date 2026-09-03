@@ -1,10 +1,11 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Topology.Algebra.Nonarchimedean.Basic
+public import TauCeti.Topology.Algebra.Nonarchimedean.OpenAddSubgroupBasis
 
 /-!
 # A first-countable nonarchimedean group has a decreasing basis of open subgroups
@@ -46,17 +47,17 @@ zero.**
 
 Both hypotheses are used, and only where stated: nonarchimedean makes the open subgroups a basis
 of `𝓝 0` at all, and countable generation of `𝓝 0` is what extracts an antitone *sequence* from
-that basis. Global first countability is more than is needed and is not assumed. -/
+that basis.
+
+Countable generation of `𝓝 0` and `FirstCountableTopology G` are in fact equivalent under these
+hypotheses, since `NonarchimedeanAddGroup` extends `IsTopologicalAddGroup`:
+`TauCeti.SeparatelyContinuousAdd.toFirstCountableTopology` gives one direction and
+`FirstCountableTopology.nhds_generated_countable` the other. The `𝓝 0` form is stated because it
+is the one the proof consumes. -/
 theorem exists_antitone_basis_openAddSubgroup [(𝓝 (0 : G)).IsCountablyGenerated]
     [NonarchimedeanAddGroup G] :
     ∃ V : ℕ → OpenAddSubgroup G, (𝓝 (0 : G)).HasAntitoneBasis fun n ↦ (V n : Set G) := by
-  have hb : (𝓝 (0 : G)).HasBasis (fun _ : OpenAddSubgroup G ↦ True) fun V ↦ (V : Set G) := by
-    refine Filter.hasBasis_iff.mpr fun S ↦ ⟨fun hS ↦ ?_, ?_⟩
-    · obtain ⟨V, hV⟩ := NonarchimedeanAddGroup.is_nonarchimedean S hS
-      exact ⟨V, trivial, hV⟩
-    · rintro ⟨V, -, hV⟩
-      exact Filter.mem_of_superset (V.isOpen.mem_nhds V.zero_mem) hV
-  obtain ⟨V, -, hV⟩ := hb.exists_antitone_subbasis
+  obtain ⟨V, -, hV⟩ := (nhds_zero_hasBasis_openAddSubgroup G).exists_antitone_subbasis
   exact ⟨V, hV⟩
 
 end NonarchimedeanAddGroup

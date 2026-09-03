@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -175,7 +176,7 @@ theorem tangentLinearEquiv_symm_apply_T (b : B) :
 @[simp]
 theorem tangent_bracket_eq_zero (d e : Derivation R H C) : ⁅d, e⁆ = 0 := by
   apply derivation_ext
-  rw [TauCeti.Derivation.bracket_apply, LaurentPolynomial.comul_T]
+  rw [Derivation.bracket_apply, LaurentPolynomial.comul_T]
   simp [mul_comm]
 
 end

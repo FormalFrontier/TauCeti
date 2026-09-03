@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -42,6 +43,8 @@ relative degree the genus-field constructions consume.
   exactly when `U` is a line, `dim U = 1`.
 * `TauCeti.Multiquadratic.finrank_top_over_intermediateField_of_finrank_eq_two`: over a quadratic
   subfield, `[M : F] = 2 ^ (n - 1)`.
+* `TauCeti.Multiquadratic.finrank_top_over_adjoin_range_ne`: `M` is quadratic over the compositum
+  of all but one of its roots.
 
 ## Provenance
 
@@ -67,9 +70,7 @@ theorem finiteDimensional_top_over_intermediateField [Finite ι]
     (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i))
     (F : IntermediateField K (adjoin K (Set.range root))) :
     FiniteDimensional F (adjoin K (Set.range root)) :=
-  haveI := isSplittingField hroot
-  haveI : FiniteDimensional K (adjoin K (Set.range root)) :=
-    Polynomial.IsSplittingField.finiteDimensional _ (definingPolynomial d)
+  haveI := finiteDimensional_adjoin_range hroot
   Module.Finite.of_restrictScalars_finite K F (adjoin K (Set.range root))
 
 /-- **The tower identity `[F : K] · [M : F] = 2ⁿ`.** Under square-class independence, an
@@ -95,9 +96,7 @@ theorem finrank_top_over_intermediateField [Finite ι] [NeZero (2 : K)]
     (F : IntermediateField K (adjoin K (Set.range root))) :
     Module.finrank F (adjoin K (Set.range root))
       = 2 ^ Module.finrank (ZMod 2) (intermediateFieldEquivSubmodule hroot hindep F).ofDual := by
-  have := isSplittingField hroot
-  have : FiniteDimensional K (adjoin K (Set.range root)) :=
-    Polynomial.IsSplittingField.finiteDimensional _ (definingPolynomial d)
+  have := finiteDimensional_adjoin_range hroot
   have hpos : 0 < Module.finrank K F := Module.finrank_pos
   refine Nat.eq_of_mul_eq_mul_left hpos ?_
   rw [finrank_intermediateField_mul_finrank_top hroot hindep F,
@@ -136,5 +135,31 @@ theorem finrank_top_over_intermediateField_of_finrank_eq_two [Finite ι] [NeZero
   congr 1
   have := (finrank_intermediateField_eq_two_iff hroot hindep F).mp hF
   omega
+
+/-- **A multiquadratic field is quadratic over the compositum of all but one of its roots.** If the
+square-class independent roots `root i` generate the whole field `L` over `K`, then omitting the
+root indexed by `i` leaves a subfield of index two: the absolute degrees are `2 ^ |ι|` and
+`2 ^ (|ι| - 1)`, so the tower law gives relative degree `2`. This is the transverse degree the
+genus-field constructions read off at the prime belonging to the omitted root. -/
+theorem finrank_top_over_adjoin_range_ne [Finite ι] [NeZero (2 : K)]
+    (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i))
+    (hindep : ∀ S : Finset ι, S.Nonempty → ¬ IsSquare (∏ i ∈ S, d i))
+    (htop : adjoin K (Set.range root) = ⊤) (i : ι) :
+    Module.finrank (adjoin K (Set.range fun j : {j // j ≠ i} => root j.val)) L = 2 := by
+  have : FiniteDimensional K (adjoin K (Set.range root)) :=
+    finiteDimensional_adjoin_range hroot
+  rw [htop] at this
+  have : FiniteDimensional K L :=
+    (IntermediateField.topEquiv (F := K) (E := L)).toLinearEquiv.finiteDimensional
+  have hpos : 0 < Nat.card ι := Nat.card_pos_iff.mpr ⟨⟨i⟩, ‹Finite ι›⟩
+  have htotal : Module.finrank K L = 2 ^ Nat.card ι := by
+    have h := finrank_adjoin_range hroot hindep
+    rwa [htop, IntermediateField.finrank_top'] at h
+  have htower := Module.finrank_mul_finrank K
+    (adjoin K (Set.range fun j : {j // j ≠ i} => root j.val)) L
+  rw [finrank_adjoin_range_ne hroot hindep i, htotal,
+    show (2 : ℕ) ^ Nat.card ι = 2 ^ (Nat.card ι - 1) * 2 by
+      rw [← pow_succ, Nat.sub_add_cancel hpos]] at htower
+  exact Nat.eq_of_mul_eq_mul_left (by positivity) htower
 
 end TauCeti.Multiquadratic

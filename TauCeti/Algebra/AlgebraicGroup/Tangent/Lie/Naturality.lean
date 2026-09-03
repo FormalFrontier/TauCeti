@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -12,23 +13,21 @@ public import TauCeti.Algebra.AlgebraicGroup.Tangent.Naturality
 
 Postcomposition along a homomorphism of coefficient rings preserves the convolution
 commutator bracket on counit-valued derivations. Thus the functorial linear map
-`TauCeti.Derivation.mapValue` upgrades to a Lie algebra homomorphism. This is the
+`Derivation.mapValue` upgrades to a Lie algebra homomorphism. This is the
 Lie-algebra layer of the natural adjoint action constructed in `Tangent.Naturality`.
 
 ## Main declarations
 
-* `TauCeti.Derivation.mapValue_lie`: postcomposition preserves the tangent bracket.
-* `TauCeti.Derivation.lieMapValue`: change of coefficients as a Lie algebra
+* `Derivation.mapValue_lie`: postcomposition preserves the tangent bracket.
+* `Derivation.lieMapValue`: change of coefficients as a Lie algebra
   homomorphism.
 -/
 
 public section
 
-namespace TauCeti
-
 namespace Derivation
 
-open _root_.Coalgebra
+open TauCeti _root_.Coalgebra
 
 variable {R A B C : Type*} [CommRing R] [CommRing A] [Bialgebra R A]
   [CommRing B] [Algebra R B] [CommRing C] [Algebra R C]
@@ -116,5 +115,3 @@ theorem lieMapValue_comp {D : Type*} [CommRing D] [Algebra R D]
     lieMapValue_toLinearMap, mapValue_comp]
 
 end Derivation
-
-end TauCeti

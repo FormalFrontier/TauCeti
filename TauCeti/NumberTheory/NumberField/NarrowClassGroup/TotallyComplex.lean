@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -17,9 +18,9 @@ formula concerns the *real* case, where the two can differ.)
 
 ## Main results
 
-* `TauCeti.NumberField.NarrowClassGroup.toClassGroup_injective`: for a totally complex field the
+* `NumberField.NarrowClassGroup.toClassGroup_injective`: for a totally complex field the
   forgetful map `Cl⁺(K) → Cl(K)` is injective.
-* `TauCeti.NumberField.NarrowClassGroup.toClassGroupEquiv`: the isomorphism `Cl⁺(K) ≃* Cl(K)`.
+* `NumberField.NarrowClassGroup.toClassGroupEquiv`: the isomorphism `Cl⁺(K) ≃* Cl(K)`.
 -/
 
 public section
@@ -27,7 +28,7 @@ public section
 open NumberField
 open scoped nonZeroDivisors
 
-namespace TauCeti.NumberField.NarrowClassGroup
+namespace NumberField.NarrowClassGroup
 
 variable {K : Type*} [Field K] [NumberField K]
 
@@ -52,4 +53,4 @@ noncomputable def toClassGroupEquiv [IsTotallyComplex K] :
   simp only [toClassGroupEquiv]
   exact MulEquiv.ofBijective_apply (toClassGroup (K := K)) _ z
 
-end TauCeti.NumberField.NarrowClassGroup
+end NumberField.NarrowClassGroup

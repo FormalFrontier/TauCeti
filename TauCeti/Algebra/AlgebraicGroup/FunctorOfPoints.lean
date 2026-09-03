@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -42,7 +43,8 @@ as inverse.
   cocommutative.
 * `AlgHom.mapValue`: post-composition with `φ : A →ₐ[R] B` as a monoid homomorphism of
   convolution monoids, with `AlgHom.mapValue_id`, `AlgHom.mapValue_comp` recording its
-  functoriality in the value algebra.
+  functoriality in the value algebra and `AlgHom.mapValue_injective` recording that it loses no
+  information when `φ` does not.
 
 ## References
 
@@ -156,6 +158,15 @@ lemma mapValue_id :
     mapValue (H := H) (AlgHom.id R A) = MonoidHom.id (WithConv (H →ₐ[R] A)) := by
   refine MonoidHom.ext fun f => ?_
   rw [mapValue_apply, AlgHom.id_comp, toConv_ofConv, MonoidHom.id_apply]
+
+/-- An injective homomorphism of value algebras induces an injective map on points: a point is
+determined by its values. -/
+lemma mapValue_injective {φ : A →ₐ[R] B} (hφ : Function.Injective φ) :
+    Function.Injective (mapValue (H := H) φ) := by
+  intro f g hfg
+  rw [mapValue_apply, mapValue_apply] at hfg
+  refine WithConv.ofConv_injective (AlgHom.ext fun h => hφ ?_)
+  exact DFunLike.congr_fun (WithConv.toConv_injective hfg) h
 
 variable {C : Type*} [CommSemiring C] [Algebra R C]
 

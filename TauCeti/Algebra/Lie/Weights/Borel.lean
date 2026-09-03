@@ -1,10 +1,12 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import Mathlib.Algebra.Lie.Weights.RootSystem
+public import TauCeti.Algebra.Lie.Weights.Span
 public import TauCeti.LinearAlgebra.RootSystem.Positive
 
 public section
@@ -29,7 +31,7 @@ function.
 ## Main definitions
 
 * `TauCeti.rootSpaceSpan H S`: the `H`-submodule of `L` spanned by the root spaces indexed by a set
-  `S` of roots.
+  `S` of roots, the instance of `TauCeti.genWeightSpaceSpan` at `M = L`.
 * `TauCeti.IsSpecialClosedRootSet H S`: `S` is stable under those sums of its members that are
   again roots, and contains no root together with its negative.
 * `TauCeti.rootSpaceSubalgebra H S hS`: the span of a special closed set of roots, as a Lie
@@ -40,13 +42,15 @@ function.
 
 ## Main results
 
-* `TauCeti.rootSpaceSpan_le_iff` and `TauCeti.rootSpaceSubalgebra_le_iff` are the universal
-  property of the span: it is contained in a given submodule, resp. Lie subalgebra, exactly when
-  each of the root spaces it is spanned by is. `TauCeti.positiveNilradical_le_iff` and
+* `TauCeti.rootSpaceSpan_le_iff` and `TauCeti.rootSpaceSubalgebra_le_iff` are the universal property
+  of the span: it is contained in a given submodule, resp. Lie subalgebra, exactly when each of the
+  root spaces it is spanned by is. `TauCeti.positiveNilradical_le_iff` and
   `TauCeti.negativeNilradical_le_iff` are its two specialisations to the nilradicals.
 * `TauCeti.mem_positiveNilradical_of_mem_rootSpace` and
   `TauCeti.mem_negativeNilradical_of_mem_rootSpace` say the nilradicals contain the root spaces
   they are built from.
+* `TauCeti.neg_mem_posRoots_of_mem_negRoots` and `TauCeti.neg_mem_negRoots_of_mem_posRoots` say
+  that negation exchanges negative and positive roots.
 * `TauCeti.borelSubalgebra_eq_sup`: the Borel subalgebra is the join `H ⊔ n⁺`.
 * `TauCeti.le_borelSubalgebra` and `TauCeti.positiveNilradical_le_borelSubalgebra` are the two
   inclusions `H ≤ 𝔟` and `n⁺ ≤ 𝔟`.
@@ -54,6 +58,8 @@ function.
   ideal of `𝔟`.
 * `TauCeti.negativeNilradical_sup_borelSubalgebra_eq_top`: the triangular decomposition
   `L = n⁻ + (H + n⁺)`, as an equality of submodules.
+* `TauCeti.exists_mem_negativeNilradical_add_mem_borelSubalgebra`: the corresponding elementwise
+  decomposition.
 
 ## Implementation notes
 
@@ -94,9 +100,10 @@ variable {K : Type u} {L : Type v} [Field K] [CharZero K] [LieRing L] [LieAlgebr
 
 /-! ### Spans of root spaces -/
 
-/-- The `H`-submodule of `L` spanned by the root spaces indexed by a set `S` of roots. -/
+/-- The `H`-submodule of `L` spanned by the root spaces indexed by a set `S` of roots: the weight
+spaces of `L` itself at the weights the members of `S` name. -/
 def rootSpaceSpan (S : Set H.root) : LieSubmodule K H L :=
-  ⨆ α : S, rootSpace H ((α : H.root) : H → K)
+  genWeightSpaceSpan H L ((fun α : H.root => (α : H → K)) '' S)
 
 variable {H}
 
@@ -104,20 +111,30 @@ omit [IsKilling K L] [IsTriangularizable K H L] in
 /-- A root space indexed by a member of `S` lies in the span of `S`. -/
 theorem rootSpace_le_rootSpaceSpan {S : Set H.root} {α : H.root} (hα : α ∈ S) :
     rootSpace H (α : H → K) ≤ rootSpaceSpan H S :=
-  le_iSup (fun β : S => rootSpace H ((β : H.root) : H → K)) ⟨α, hα⟩
+  genWeightSpace_le_genWeightSpaceSpan (Set.mem_image_of_mem _ hα)
+
+omit [IsKilling K L] [IsTriangularizable K H L] in
+/-- The span of the root spaces indexed by `S`, written as the supremum of those root spaces. -/
+theorem rootSpaceSpan_eq_iSup (S : Set H.root) :
+    rootSpaceSpan H S = ⨆ α : S, rootSpace H ((α : H.root) : H → K) := by
+  refine le_antisymm (genWeightSpaceSpan_le_iff.mpr ?_) (iSup_le fun α => ?_)
+  · rintro _ ⟨α, hα, rfl⟩
+    exact le_iSup (fun β : S => rootSpace H ((β : H.root) : H → K)) ⟨α, hα⟩
+  · exact rootSpace_le_rootSpaceSpan α.2
 
 omit [IsKilling K L] [IsTriangularizable K H L] in
 /-- Spans of root spaces are monotone in the indexing set. -/
 theorem rootSpaceSpan_mono {S T : Set H.root} (h : S ⊆ T) :
     rootSpaceSpan H S ≤ rootSpaceSpan H T :=
-  iSup_le fun α => rootSpace_le_rootSpaceSpan (h α.2)
+  genWeightSpaceSpan_mono (Set.image_mono h)
 
 omit [IsKilling K L] [IsTriangularizable K H L] in
 /-- The span of the root spaces indexed by `S` is contained in an `H`-submodule exactly when each
 of the root spaces it is spanned by is. -/
 theorem rootSpaceSpan_le_iff {S : Set H.root} {N : LieSubmodule K H L} :
     rootSpaceSpan H S ≤ N ↔ ∀ α ∈ S, rootSpace H (α : H → K) ≤ N :=
-  ⟨fun h _ hα => (rootSpace_le_rootSpaceSpan hα).trans h, fun h => iSup_le fun α => h α α.2⟩
+  ⟨fun h _ hα => (rootSpace_le_rootSpaceSpan hα).trans h,
+    fun h => genWeightSpaceSpan_le_iff.mpr (by rintro _ ⟨α, hα, rfl⟩; exact h α hα)⟩
 
 omit [IsKilling K L] [IsTriangularizable K H L] in
 /-- The span of the root spaces indexed by `S` is closed under the bracket as soon as the root
@@ -127,6 +144,7 @@ theorem lie_mem_rootSpaceSpan {S : Set H.root}
       rootSpace H ((α : H → K) + (β : H → K)) ≤ rootSpaceSpan H S)
     {x y : L} (hx : x ∈ rootSpaceSpan H S) (hy : y ∈ rootSpaceSpan H S) :
     ⁅x, y⁆ ∈ rootSpaceSpan H S := by
+  rw [rootSpaceSpan_eq_iSup] at hx hy
   refine LieSubmodule.iSup_induction (motive := fun x => ⁅x, y⁆ ∈ rootSpaceSpan H S) _ hx
     (fun α x hx => ?_) (by simp) (fun x z hx hz => by rw [add_lie]; exact add_mem hx hz)
   refine LieSubmodule.iSup_induction (motive := fun y => ⁅x, y⁆ ∈ rootSpaceSpan H S) _ hy
@@ -179,6 +197,22 @@ theorem rootSpace_add_le_rootSpaceSpan {S : Set H.root} (hS : IsSpecialClosedRoo
 
 variable (b : (IsKilling.rootSystem H).Base)
 
+/-- Negating a negative root gives a positive root. -/
+theorem neg_mem_posRoots_of_mem_negRoots {i : H.root}
+    (hi : i ∈ negRoots (IsKilling.rootSystem H) b) :
+    -i ∈ posRoots (IsKilling.rootSystem H) b := by
+  rw [← IsKilling.rootSystem_reflectionPerm_self_eq_neg i]
+  exact (reflectionPerm_self_mem_posRoots_iff_mem_negRoots
+    (IsKilling.rootSystem H) b i).mpr hi
+
+/-- Negating a positive root gives a negative root. -/
+theorem neg_mem_negRoots_of_mem_posRoots {i : H.root}
+    (hi : i ∈ posRoots (IsKilling.rootSystem H) b) :
+    -i ∈ negRoots (IsKilling.rootSystem H) b := by
+  rw [← IsKilling.rootSystem_reflectionPerm_self_eq_neg i]
+  exact (reflectionPerm_self_mem_negRoots_iff_mem_posRoots
+    (IsKilling.rootSystem H) b i).mpr hi
+
 /-- The positive roots are a special closed set of roots: heights add, and a positive root never
 has a positive negative. -/
 theorem isSpecialClosedRootSet_posRoots :
@@ -219,7 +253,7 @@ theorem rootSpaceSubalgebra_le_iff {S : Set H.root} (hS : IsSpecialClosedRootSet
     rootSpaceSubalgebra H S hS ≤ K' ↔ ∀ α ∈ S, ∀ x ∈ rootSpace H (α : H → K), x ∈ K' := by
   refine ⟨fun h α hα _ hx => h (rootSpace_le_rootSpaceSpan hα hx), fun h => ?_⟩
   rw [← LieSubalgebra.toSubmodule_le_toSubmodule, rootSpaceSubalgebra_toSubmodule,
-    rootSpaceSpan, LieSubmodule.iSup_toSubmodule]
+    rootSpaceSpan_eq_iSup, LieSubmodule.iSup_toSubmodule]
   exact iSup_le fun α => h α α.2
 
 /-! ### The nilradicals and the Borel subalgebra -/
@@ -371,5 +405,13 @@ theorem negativeNilradical_sup_borelSubalgebra_eq_top :
       exact (congrArg LieSubmodule.toSubmodule (LieAlgebra.rootSpace_zero_eq K L H)).trans
         H.coe_toLieSubmodule
   simpa using htop
+
+/-- **The triangular decomposition, as a splitting of an element of `L`**: every `x : L` is the sum
+of an element of the negative nilradical and an element of the Borel subalgebra. -/
+theorem exists_mem_negativeNilradical_add_mem_borelSubalgebra (x : L) :
+    ∃ g ∈ negativeNilradical H b, ∃ y ∈ borelSubalgebra H b, g + y = x := by
+  refine Submodule.mem_sup.mp ?_
+  rw [negativeNilradical_sup_borelSubalgebra_eq_top]
+  trivial
 
 end TauCeti

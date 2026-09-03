@@ -1,12 +1,14 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Analysis.PositiveDefinite.Kernel.Basic
+public import TauCeti.LinearAlgebra.Matrix.PosSemidef
 public import Mathlib.Analysis.Complex.Circle
 public import Mathlib.Analysis.InnerProductSpace.Basic
+public import Mathlib.MeasureTheory.Function.L1Space.Integrable
 
 /-!
 # Fourier atoms
@@ -17,9 +19,11 @@ It uses Mathlib's `2π` Fourier convention.
 ## Main declarations
 
 * `TauCeti.fourierAtom`: the spatial atom `v ↦ exp (-2πi⟪v, q⟫)`.
-* `TauCeti.isPositiveDefiniteKernel_fourierAtom`: the subtraction kernel attached to a
+* `TauCeti.posSemidef_fourierAtom`: the subtraction kernel attached to a
   Fourier atom is positive definite.
 * `TauCeti.continuous_fourierAtom`: Fourier atoms are continuous in the spatial variable.
+* `TauCeti.norm_fourierAtom`: Fourier atoms have unit norm.
+* `TauCeti.integrable_fourierAtom`: Fourier atoms are integrable against a finite measure.
 * `TauCeti.fourierAtom_zero_left` and `TauCeti.fourierAtom_zero_right`: a Fourier atom is `1`
   when either argument is `0`.
 -/
@@ -77,11 +81,19 @@ theorem fourierAtom_sub (q v w : V) :
   ring_nf
 
 /-- The spatial subtraction kernel supplied by a Fourier atom is positive definite. -/
-theorem isPositiveDefiniteKernel_fourierAtom (q : V) :
-    IsPositiveDefiniteKernel fun v w : V => fourierAtom q (v - w) := by
+theorem posSemidef_fourierAtom (q : V) :
+    Matrix.PosSemidef fun v w : V => fourierAtom q (v - w) := by
   simp_rw [fourierAtom_sub]
-  exact isPositiveDefiniteKernel_conj_mul
+  simpa only [RCLike.star_def] using posSemidef_rankOne
     (fun v : V => Complex.exp (2 * ((Real.pi : ℝ) : ℂ) * Complex.I * ((inner ℝ v q : ℝ) : ℂ)))
+
+/-- Fourier atoms take values on the unit circle.
+
+Not a `@[simp]` lemma: `simp` rewrites the atom through `fourierAtom_apply` first, and the
+simpNF linter reports the tagged form as unusable for the same reason as
+`fourierAtom_zero_left`. -/
+theorem norm_fourierAtom (q v : V) : ‖fourierAtom q v‖ = 1 := by
+  rw [fourierAtom_eq_fourierChar, Circle.norm_coe]
 
 /-- Fourier atoms are continuous in the spatial variable. -/
 theorem continuous_fourierAtom (q : V) : Continuous (fourierAtom q) := by
@@ -90,5 +102,14 @@ theorem continuous_fourierAtom (q : V) : Continuous (fourierAtom q) := by
       Continuous fun v : V => ((Real.fourierChar (-(inner ℝ v q)) : Circle) : ℂ)) using 1
   ext v
   exact (fourierAtom_eq_fourierChar q v).symm
+
+/-- A Fourier atom, having unit norm and being continuous, is integrable against a finite
+measure. -/
+theorem integrable_fourierAtom [MeasurableSpace V] [OpensMeasurableSpace V]
+    (μ : MeasureTheory.Measure V) [MeasureTheory.IsFiniteMeasure μ] (q : V) :
+    MeasureTheory.Integrable (fourierAtom q) μ :=
+  (MeasureTheory.integrable_const (1 : ℝ)).mono'
+    (continuous_fourierAtom q).aestronglyMeasurable
+    (.of_forall fun v => (norm_fourierAtom q v).le)
 
 end TauCeti

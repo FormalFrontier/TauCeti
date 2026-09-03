@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -33,6 +34,9 @@ derived from `CuspForm.peterssonInnerCosetsCore`; see the note on that definitio
 * `TauCeti.CuspForm.peterssonInnerCosetsₛₗ`: the Petersson pairing as a sesquilinear form.
 
 ## Main results
+
+* `TauCeti.CuspForm.isCompl_peterssonOrthogonal`: a subspace and its Petersson-orthogonal
+  complement are complements of one another, so every cusp form splits uniquely along them.
 
 * `TauCeti.CuspForm.mem_peterssonOrthogonal_iff'`: orthogonality may equivalently be tested in
   the other argument of the pairing, by Hermitian symmetry.
@@ -179,8 +183,6 @@ private theorem peterssonOrthogonal_eq_orthogonal
 theorem peterssonOrthogonal_peterssonOrthogonal
     (V : Submodule ℂ (CuspForm (Γ.map (mapGL ℝ)) k)) :
     peterssonOrthogonal (peterssonOrthogonal V) = V := by
-  let _ : Module.Finite ℂ (CuspForm (Γ.map (mapGL ℝ)) k) :=
-    Module.Finite.of_injective CuspForm.toModularFormₗ CuspForm.toModularFormₗ_injective
   rw [peterssonOrthogonal_eq_orthogonal, peterssonOrthogonal_eq_orthogonal,
     Submodule.orthogonal_orthogonal]
 
@@ -188,12 +190,17 @@ theorem peterssonOrthogonal_peterssonOrthogonal
 theorem sup_peterssonOrthogonal_eq_top
     (V : Submodule ℂ (CuspForm (Γ.map (mapGL ℝ)) k)) :
     V ⊔ peterssonOrthogonal V = ⊤ := by
-  let _ : Module.Finite ℂ (CuspForm (Γ.map (mapGL ℝ)) k) :=
-    Module.Finite.of_injective CuspForm.toModularFormₗ CuspForm.toModularFormₗ_injective
   rw [peterssonOrthogonal_eq_orthogonal]
   exact Submodule.sup_orthogonal_of_hasOrthogonalProjection
 
 end PeterssonInnerProductSpace
+
+/-- **A subspace and its Petersson-orthogonal complement are complements of one another.**
+Disjointness is positive definiteness of the pairing; codisjointness is the orthogonal
+decomposition of the finite-dimensional cusp-form space. -/
+theorem isCompl_peterssonOrthogonal (V : Submodule ℂ (CuspForm (Γ.map (mapGL ℝ)) k)) :
+    IsCompl V (peterssonOrthogonal V) :=
+  ⟨peterssonOrthogonal_disjoint V, codisjoint_iff.mpr (sup_peterssonOrthogonal_eq_top V)⟩
 
 /-- **The complement of a supremum is the infimum of the complements.** Orthogonality to a
 family of subspaces spreads to the subspace they generate, since the pairing is additive in

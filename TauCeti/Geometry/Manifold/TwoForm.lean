@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -34,6 +35,7 @@ manifold-valued pseudoholomorphic curves.
 * `TauCeti.SmoothTwoForm`: a smooth alternating bilinear form on tangent fibers.
 * `TauCeti.SmoothTwoForm.bilinFormAt`: the algebraic alternating bilinear form at a point.
 * `TauCeti.SmoothTwoForm.contMDiff_apply`: smooth evaluation on two smooth vector fields.
+* `TauCeti.SmoothTwoForm.const`: the constant smooth two-form on a model vector space.
 
 The definition follows McDuff--Salamon, *J-holomorphic Curves and Symplectic Topology*,
 Section 2.2.
@@ -139,6 +141,73 @@ lemma contMDiff_apply {n : ℕ∞ω} [ENat.LEInfty n] (form : SmoothTwoForm I M)
 
 end Evaluation
 
+/-- A continuous alternating bilinear form defines a constant smooth two-form on its model vector
+space. -/
+def const {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V]
+    (B : V →L[ℝ] V →L[ℝ] ℝ) (hB : ∀ v, B v v = 0) :
+    SmoothTwoForm (modelWithCornersSelf ℝ V) V where
+  toContMDiffSection :=
+    ⟨fun _ ↦ B, by
+      intro x
+      rw [contMDiffAt_hom_bundle]
+      refine ⟨contMDiffAt_id, ?_⟩
+      -- The base and fiber components of the constant section are the projections of an explicit
+      -- pair, so `dsimp only` reduces the goal to the coordinate expression rewritten below.
+      dsimp only
+      have hcoord : (fun y : V =>
+          ContinuousLinearMap.inCoordinates V (TangentSpace 𝓘(ℝ, V)) (V →L[ℝ] ℝ)
+            (fun b : V => TangentSpace 𝓘(ℝ, V) b →L[ℝ] ℝ) x y x y B) = fun _ => B := by
+        funext y
+        ext v w
+        simp only [ContinuousLinearMap.inCoordinates, TangentBundle.symmL_model_space,
+          ContinuousLinearMap.comp_apply, Trivialization.continuousLinearMapAt_apply]
+        have htan : y ∈ (trivializationAt V (TangentSpace 𝓘(ℝ, V)) x).baseSet := by
+          rw [TangentBundle.trivializationAt_baseSet, chartAt_self_eq]
+          exact Set.mem_univ y
+        have htriv : y ∈ (trivializationAt ℝ (Bundle.Trivial V ℝ) x).baseSet := by
+          simp
+        have hhom : y ∈ (trivializationAt (V →L[ℝ] ℝ)
+            (fun b : V => TangentSpace 𝓘(ℝ, V) b →L[ℝ] ℝ) x).baseSet := by
+          rw [hom_trivializationAt_baseSet]
+          exact ⟨htan, htriv⟩
+        rw [Trivialization.linearMapAt_apply, ite_eq_left hhom, hom_trivializationAt_apply]
+        simp only [ContinuousLinearMap.inCoordinates, Trivial.fiberBundle_trivializationAt',
+          Trivial.continuousLinearMapAt_trivialization, TangentBundle.symmL_model_space,
+          ContinuousLinearMap.id_comp]
+        rfl
+      rw [hcoord]
+      exact contMDiffAt_const⟩
+  isAlt _ v := hB v
+
+/-- The smooth bilinear section of a constant two-form has its defining value in every fiber. -/
+@[simp]
+lemma const_toContMDiffSection_apply {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V]
+    (B : V →L[ℝ] V →L[ℝ] ℝ) (hB : ∀ v, B v v = 0) (x : V) :
+    (const B hB).toContMDiffSection x = B :=
+  (rfl)
+
+/-- The pointwise bilinear form of a constant smooth two-form is its defining bilinear form with
+continuity forgotten. -/
+@[simp]
+lemma const_bilinFormAt {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V]
+    (B : V →L[ℝ] V →L[ℝ] ℝ) (hB : ∀ v, B v v = 0) (x : V) :
+    (const B hB).bilinFormAt x = B.toBilinForm := by
+  ext v w
+  rfl
+
+-- `zero`/`neg`/`smul` below (and the simp lemmas unfolding them) each resolve a doubly-nested
+-- `Hom`-of-tangent-space `VectorBundle` instance -- two-forms are curried bilinear maps
+-- `V →L[ℝ] V →L[ℝ] ℝ`, the standard, natural representation for this kind of object. That search
+-- passes through `ContinuousLinearMap`'s additive structure, which mathlib provides via two
+-- independent instances, `addCommGroup` and `addCommMonoid` (declared separately in
+-- `Mathlib.Topology.Algebra.Module.ContinuousLinearMap.Basic`, for the group and monoid-only
+-- cases respectively). Reconciling the two when both are in play is needless work here: over
+-- `ℝ`, an `AddCommGroup` instance is always available, and `addCommGroup.toAddCommMonoid` is
+-- exactly the `AddCommMonoid` these declarations would use anyway. Each one below removes
+-- `addCommMonoid` from local instance search, forcing resolution through `addCommGroup` alone;
+-- nothing about the resulting terms changes.
+
+attribute [-instance] ContinuousLinearMap.addCommMonoid in
 /-- The zero smooth two-form. -/
 protected def zero : SmoothTwoForm I M where
   toContMDiffSection := 0
@@ -147,6 +216,7 @@ protected def zero : SmoothTwoForm I M where
 instance : Zero (SmoothTwoForm I M) :=
   ⟨SmoothTwoForm.zero⟩
 
+attribute [-instance] ContinuousLinearMap.addCommMonoid in
 @[simp]
 lemma zero_toContMDiffSection :
     (0 : SmoothTwoForm I M).toContMDiffSection = 0 := (rfl)
@@ -171,6 +241,7 @@ lemma add_apply (form form' : SmoothTwoForm I M) (x : M) (v w : TangentSpace I x
     (form + form') x v w = form x v w + form' x v w := by
   rfl
 
+attribute [-instance] ContinuousLinearMap.addCommMonoid in
 /-- The negative of a smooth two-form. -/
 protected def neg (form : SmoothTwoForm I M) : SmoothTwoForm I M where
   toContMDiffSection := -form.toContMDiffSection
@@ -179,6 +250,7 @@ protected def neg (form : SmoothTwoForm I M) : SmoothTwoForm I M where
 instance : Neg (SmoothTwoForm I M) :=
   ⟨SmoothTwoForm.neg⟩
 
+attribute [-instance] ContinuousLinearMap.addCommMonoid in
 @[simp]
 lemma neg_toContMDiffSection (form : SmoothTwoForm I M) :
     (-form).toContMDiffSection = -form.toContMDiffSection := (rfl)
@@ -204,6 +276,7 @@ lemma sub_apply (form form' : SmoothTwoForm I M) (x : M) (v w : TangentSpace I x
     (form - form') x v w = form x v w - form' x v w := by
   rfl
 
+attribute [-instance] ContinuousLinearMap.addCommMonoid in
 /-- The real scalar multiple of a smooth two-form. -/
 protected def smul (c : ℝ) (form : SmoothTwoForm I M) : SmoothTwoForm I M where
   toContMDiffSection := c • form.toContMDiffSection
@@ -212,6 +285,7 @@ protected def smul (c : ℝ) (form : SmoothTwoForm I M) : SmoothTwoForm I M wher
 instance : SMul ℝ (SmoothTwoForm I M) :=
   ⟨SmoothTwoForm.smul⟩
 
+attribute [-instance] ContinuousLinearMap.addCommMonoid in
 @[simp]
 lemma smul_toContMDiffSection (c : ℝ) (form : SmoothTwoForm I M) :
     (c • form).toContMDiffSection = c • form.toContMDiffSection := (rfl)

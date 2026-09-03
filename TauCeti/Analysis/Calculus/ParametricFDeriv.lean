@@ -1,10 +1,12 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import Mathlib.Analysis.Calculus.FDeriv.Symmetric
+public import TauCeti.Analysis.Calculus.SecondDerivative
 
 /-!
 # Mixed derivatives of a parametric map
@@ -135,7 +137,7 @@ private theorem hasDerivAt_spatialFDeriv_apply_mixed {F : 𝕜 × E → F'}
     HasDerivAt (fun s => spatialFDeriv F x s w)
       (fderiv 𝕜 (fderiv 𝕜 F) (t, x) (1, 0) (0, w)) t := by
   have hDF : HasFDerivAt (fderiv 𝕜 F) (fderiv 𝕜 (fderiv 𝕜 F) (t, x)) (t, x) :=
-    ((hF.fderiv_right (m := 1) le_minSmoothness).differentiableAt one_ne_zero).hasFDerivAt
+    TauCeti.ContDiffAt.hasFDerivAt_fderiv hF le_minSmoothness
   have hParam :=
     (hDF.comp_hasDerivAt t (hasFDerivAt_prodMk_left t x).hasDerivAt).clm_apply_const (0, w)
   simpa only [spatialFDeriv_apply, Function.comp_apply, ContinuousLinearMap.inl_apply] using hParam
@@ -145,7 +147,7 @@ private theorem hasFDerivAt_timeFDeriv_mixed {F : 𝕜 × E → F'} {t : 𝕜} {
     HasFDerivAt (timeFDeriv F t)
       ((fderiv 𝕜 (fderiv 𝕜 F) (t, x) ∘L ContinuousLinearMap.inr 𝕜 𝕜 E).flip (1, 0)) x := by
   have hDF : HasFDerivAt (fderiv 𝕜 F) (fderiv 𝕜 (fderiv 𝕜 F) (t, x)) (t, x) :=
-    ((hF.fderiv_right (m := 1) le_minSmoothness).differentiableAt one_ne_zero).hasFDerivAt
+    TauCeti.ContDiffAt.hasFDerivAt_fderiv hF le_minSmoothness
   have hSpatial := (hDF.comp x (hasFDerivAt_prodMk_right t x)).clm_apply_const (1, 0)
   rw [timeFDeriv_eq]
   exact hSpatial
@@ -158,7 +160,7 @@ theorem hasDerivAt_spatialFDeriv {F : 𝕜 × E → F'} {t : 𝕜} {x : E}
   -- derivative of `timeFDeriv F t = fun z ↦ DF (t, z) (1, 0)`. Symmetry of the
   -- second derivative identifies these two mixed partials, pointwise in `w`.
   have hDFdiff : DifferentiableAt 𝕜 (fderiv 𝕜 F) (t, x) :=
-    (hF.fderiv_right (m := 1) le_minSmoothness).differentiableAt one_ne_zero
+    (TauCeti.ContDiffAt.hasFDerivAt_fderiv hF le_minSmoothness).differentiableAt
   have hdiff : DifferentiableAt 𝕜 (spatialFDeriv F x) t := by
     rw [spatialFDeriv_eq]
     fun_prop

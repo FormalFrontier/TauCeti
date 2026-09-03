@@ -1,10 +1,12 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import Mathlib.RingTheory.FiniteStability
+public import Mathlib.RingTheory.HopfAlgebra.TensorProduct
 public import TauCeti.Algebra.AlgebraicGroup.FiniteType.CommHopfAlgCat
 public import TauCeti.Algebra.AlgebraicGroup.Product
 
@@ -67,6 +69,18 @@ noncomputable abbrev includeRight (H K : FiniteTypeCommHopfAlgCat.{u, v} R) :
     K ⟶ tensorProduct H K :=
   letI : Algebra.FiniteType R (H ⊗[R] K) := tensorProduct_finiteType (R := R) H K
   ofHom (Bialgebra.TensorProduct.includeRight (R := R) (H₁ := H) (H₂ := K))
+
+/-- The left coordinate inclusion sends `h` to `h ⊗ 1`. -/
+@[simp]
+theorem includeLeft_apply (H K : FiniteTypeCommHopfAlgCat.{u, v} R) (h : H) :
+    toBialgHom (includeLeft H K) h = h ⊗ₜ[R] (1 : K) :=
+  Bialgebra.TensorProduct.includeLeft_apply h
+
+/-- The right coordinate inclusion sends `k` to `1 ⊗ k`. -/
+@[simp]
+theorem includeRight_apply (H K : FiniteTypeCommHopfAlgCat.{u, v} R) (k : K) :
+    toBialgHom (includeRight H K) k = (1 : H) ⊗ₜ[R] k :=
+  Bialgebra.TensorProduct.includeRight_apply k
 
 variable (A : CommAlgCat.{w} R)
 

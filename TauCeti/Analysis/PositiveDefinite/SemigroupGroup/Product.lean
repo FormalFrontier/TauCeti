@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -24,7 +25,8 @@ This is a small prerequisite for the BCR semigroup--Bochner representation miles
 shape before integration: a time kernel multiplied by a spatial Fourier kernel.
 
 No Mathlib infrastructure is vendored. The proof reuses Tau Ceti's positive-definite
-function/kernel correspondence and the Schur product closure for positive-definite kernels.
+function/kernel correspondence together with Mathlib's `Matrix.PosSemidef.submatrix` and
+`Matrix.PosSemidef.hadamard` operations.
 
 ## Main declarations
 
@@ -55,15 +57,15 @@ variable {V : Type*} [AddCommGroup V]
 factor gives a positive-definite subtraction kernel `(v, w) ↦ g (v - w)`, then their separated
 product is semigroup-group positive definite. -/
 theorem isSemigroupGroupPD_mul_time_spatial_of_kernels {f : ℝ≥0 → ℂ} {g : V → ℂ}
-    (hf : IsPositiveDefiniteKernel fun t u : ℝ≥0 => f (t + u))
-    (hg : IsPositiveDefiniteKernel fun v w : V => g (v - w)) :
+    (hf : Matrix.PosSemidef fun t u : ℝ≥0 => f (t + u))
+    (hg : Matrix.PosSemidef fun v w : V => g (v - w)) :
     IsSemigroupGroupPD fun p : ℝ≥0 × V => f p.1 * g p.2 := by
-  refine IsSemigroupGroupPD.of_isPositiveDefiniteKernel ?_
-  have htime : IsPositiveDefiniteKernel fun p q : ℝ≥0 × V => f (p.1 + q.1) :=
-    isPositiveDefiniteKernel_comp hf Prod.fst
-  have hspace : IsPositiveDefiniteKernel fun p q : ℝ≥0 × V => g (p.2 - q.2) :=
-    isPositiveDefiniteKernel_comp hg Prod.snd
-  simpa using isPositiveDefiniteKernel_mul htime hspace
+  refine IsSemigroupGroupPD.of_posSemidef ?_
+  have htime : Matrix.PosSemidef fun p q : ℝ≥0 × V => f (p.1 + q.1) :=
+    hf.submatrix Prod.fst
+  have hspace : Matrix.PosSemidef fun p q : ℝ≥0 × V => g (p.2 - q.2) :=
+    hg.submatrix Prod.snd
+  exact htime.hadamard hspace
 
 /-- A separated product of a time positive-definite function and a spatial positive-definite
 function is semigroup-group positive definite. The time factor uses Mathlib's trivial involution
@@ -71,8 +73,8 @@ on `ℝ≥0`; the spatial factor uses the supplied negation-involution hypothesi
 theorem isSemigroupGroupPD_mul_time_spatial [StarAddMonoid V] {f : ℝ≥0 → ℂ} {g : V → ℂ}
     (hf : IsPositiveDefinite f) (hg : IsPositiveDefinite g) (hstar : ∀ v : V, star v = -v) :
     IsSemigroupGroupPD fun p : ℝ≥0 × V => f p.1 * g p.2 := by
-  refine isSemigroupGroupPD_mul_time_spatial_of_kernels ?_ (hg.isPositiveDefiniteKernel_sub hstar)
-  have hK := hf.isPositiveDefiniteKernel
+  refine isSemigroupGroupPD_mul_time_spatial_of_kernels ?_ (hg.posSemidef_sub hstar)
+  have hK := hf.posSemidef
   simpa [star_trivial] using hK
 
 section Topology
@@ -96,8 +98,8 @@ theorem isSemigroupGroupPD_mul_time_spatial_and_continuous [StarAddMonoid V]
 
 /-- Kernel-supplied version of the separated-product construction, packaged with continuity. -/
 theorem isSemigroupGroupPD_mul_time_spatial_of_kernels_and_continuous
-    (hf : IsPositiveDefiniteKernel fun t u : ℝ≥0 => f (t + u))
-    (hg : IsPositiveDefiniteKernel fun v w : V => g (v - w))
+    (hf : Matrix.PosSemidef fun t u : ℝ≥0 => f (t + u))
+    (hg : Matrix.PosSemidef fun v w : V => g (v - w))
     (hfcont : Continuous f) (hgcont : Continuous g) :
     IsSemigroupGroupPD (fun p : ℝ≥0 × V => f p.1 * g p.2) ∧
       Continuous (fun p : ℝ≥0 × V => f p.1 * g p.2) :=

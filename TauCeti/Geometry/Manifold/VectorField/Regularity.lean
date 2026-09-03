@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -11,7 +12,7 @@ import Mathlib.Geometry.Manifold.VectorBundle.Tangent
 # Regularity of tangent-bundle-valued maps and directional derivatives
 
 This file records reusable regularity facts for maps into a tangent bundle and for applying the
-manifold differential of a function to a smooth section.
+manifold differential of a function to tangent vectors whose base point varies.
 
 ## Main results
 
@@ -19,8 +20,10 @@ manifold differential of a function to a smooth section.
 * `contMDiff_tangentBundle_mk_constBase`: smoothness of a varying model vector over a fixed point.
 * `mvfderiv_apply_eq_mfderiv_apply`: identifies `mvfderiv` with `mfderiv` when the target is a
   normed vector space.
-* `ContMDiff.contMDiff_mvfderiv_apply`: applying the differential of a `C^n` function to a `C^m`
-  tangent-bundle section is `C^m` when `m + 1 ≤ n`.
+* `ContMDiff.contMDiff_mvfderiv_apply`: applying the differential of a `C^n` function on the
+  tangent bundle is `C^m` when `m + 1 ≤ n`.
+* `ContMDiffOn.contMDiffOn_mvfderiv_apply`: the derivative of a `C^n` function along a `C^m`
+  vector field is `C^m` on an open set, when `m + 1 ≤ n`.
 
 ## References
 
@@ -30,7 +33,7 @@ manifold differential of a function to a smooth section.
 
 public section
 
-open Bundle Manifold
+open Bundle Manifold Set
 open scoped ContDiff Manifold
 
 variable {𝕜 : Type*} [NontriviallyNormedField 𝕜]
@@ -84,20 +87,52 @@ canonical one, so evaluating it agrees with evaluating `mfderiv`. -/
   -- `fromTangentSpace` is Mathlib's explicit interface for this canonical identification.
   rfl
 
-/-- Applying the differential of a `C^n` function to a `C^m` tangent-bundle section is `C^m`
-when `m + 1 ≤ n`. -/
+/-- The map that applies the differential of a `C^n` function to tangent vectors is `C^m` on the
+tangent bundle when `m + 1 ≤ n`. -/
 theorem ContMDiff.contMDiff_mvfderiv_apply {f : M → F}
-    {V : ∀ x : M, TangentSpace I x}
     (hf : ContMDiff I 𝓘(𝕜, F) n f)
-    (hV : ContMDiff I I.tangent m (fun x => (V x : TangentBundle I M)))
     (hmn : m + 1 ≤ n) :
-    ContMDiff I 𝓘(𝕜, F) m (fun x => mvfderiv I f x (V x)) := by
+    ContMDiff I.tangent 𝓘(𝕜, F) m
+      (fun p : TangentBundle I M => mvfderiv I f p.1 p.2) := by
   let df : TangentBundle I M → TangentBundle 𝓘(𝕜, F) F := tangentMap% f
   have hdf : ContMDiff I.tangent 𝓘(𝕜, F).tangent m df :=
     hf.contMDiff_tangentMap hmn
   have hsnd : ContMDiff 𝓘(𝕜, F).tangent 𝓘(𝕜, F) m
       (fun p : TangentBundle 𝓘(𝕜, F) F => p.2) :=
     contMDiff_snd_tangentBundle_modelSpace F 𝓘(𝕜, F)
-  simp only [mvfderiv_apply_eq_mfderiv_apply]
-  have h := hsnd.comp (hdf.comp hV)
-  exact h.congr fun x => rfl
+  have h := hsnd.comp hdf
+  have htangent (p : TangentBundle I M) :
+      NormedSpace.fromTangentSpace (f p.1) ((tangentMap% f p).2) =
+        mvfderiv I f p.1 p.2 := by
+    rw [mvfderiv, ContinuousLinearMap.comp_apply, tangentMap_snd]
+    rfl
+  -- On a model vector space, `NormedSpace.fromTangentSpace` is the identity on the underlying
+  -- type, so the second projection computed by `h` agrees definitionally with `mvfderiv`.
+  exact h.congr fun p => (htangent p).symm
+
+/-- The derivative of a `C^n` function along a `C^m` vector field is `C^m` on an open set, when
+`m + 1 ≤ n`. This is the set-local form of `ContMDiff.contMDiff_mvfderiv_apply`: only the germ of
+`f` on the open set `s` enters, so it applies to functions built from sections that are smooth on
+a chart domain only. -/
+theorem ContMDiffOn.contMDiffOn_mvfderiv_apply {f : M → F} {s : Set M}
+    {A : Π y : M, TangentSpace I y}
+    (hf : ContMDiffOn I 𝓘(𝕜, F) n f s) (hs : IsOpen s)
+    (hA : ContMDiffOn I I.tangent m (fun y ↦ (TotalSpace.mk' E y (A y) : TangentBundle I M)) s)
+    (hmn : m + 1 ≤ n) :
+    ContMDiffOn I 𝓘(𝕜, F) m (fun y ↦ mvfderiv I f y (A y)) s := by
+  have htangent : ContMDiffOn I.tangent 𝓘(𝕜, F).tangent m (tangentMapWithin I 𝓘(𝕜, F) f s)
+      (π E (TangentSpace I) ⁻¹' s) :=
+    hf.contMDiffOn_tangentMapWithin hmn hs.uniqueMDiffOn
+  have hsnd : ContMDiff 𝓘(𝕜, F).tangent 𝓘(𝕜, F) m
+      (fun p : TangentBundle 𝓘(𝕜, F) F ↦ p.2) :=
+    contMDiff_snd_tangentBundle_modelSpace F 𝓘(𝕜, F)
+  have hproj : ContMDiffOn I.tangent 𝓘(𝕜, F) m
+      (fun p : TangentBundle I M ↦ (tangentMapWithin I 𝓘(𝕜, F) f s p).2)
+      (π E (TangentSpace I) ⁻¹' s) := hsnd.comp_contMDiffOn htangent
+  have hcomp := hproj.comp hA (fun y hy ↦ hy)
+  refine hcomp.congr fun y hy ↦ ?_
+  have hval : ((fun p : TangentBundle I M ↦ (tangentMapWithin I 𝓘(𝕜, F) f s p).2) ∘
+      (fun y : M ↦ (TotalSpace.mk' E y (A y) : TangentBundle I M))) y
+      = mfderivWithin I 𝓘(𝕜, F) f s y (A y) := by
+    exact tangentMapWithin_snd
+  rw [hval, mfderivWithin_of_isOpen hs hy, mvfderiv_apply_eq_mfderiv_apply]

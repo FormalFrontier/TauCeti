@@ -1,10 +1,12 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import TauCeti.Geometry.Manifold.VectorField.LieBracket
+public import TauCeti.Geometry.Lie.Interior
 public import TauCeti.Geometry.Lie.Tangent.LeftInvariantDerivation
 
 /-!
@@ -23,6 +25,8 @@ This advances Deliverable A, Layer 1 of
 * `tangentToLeftInvariantDerivation_lie`: the invariant derivation construction preserves brackets.
 * `leftInvariantDerivationLieEquivGroupLieAlgebra`: the canonical derivation–tangent Lie
   equivalence.
+* `leftInvariantDerivationLinearIsometryEquivModelVectorSpace_apply_eq_lieEquiv_apply`: the
+  isometric and Lie equivalences agree after viewing the tangent Lie algebra as the model space.
 
 ## References
 
@@ -87,7 +91,7 @@ theorem tangentToLeftInvariantDerivation_lie [CompleteSpace E]
       (W := mulInvariantVectorField w)
       (x := (1 : G))
       F.contMDiff.contMDiffAt
-      (by simpa using (inferInstance : ENat.LEInfty (2 : ℕ∞ω)).out)
+      (by simp)
       ((contMDiff_mulInvariantVectorField_infty v).mdifferentiable
         (by simp)).mdifferentiableAt
       ((contMDiff_mulInvariantVectorField_infty w).mdifferentiable
@@ -144,6 +148,26 @@ theorem leftInvariantDerivationLieEquivGroupLieAlgebra_symm_apply
     e₀ (tangentToLeftInvariantDerivation v) = e₀ (e₀.symm v) := by
       rw [leftInvariantDerivationEquivGroupLieAlgebra_symm_apply]
     _ = v := e₀.apply_symm_apply v
+
+section CanonicalModelBridges
+
+/-- The canonical isometric and Lie equivalences agree after viewing the tangent Lie algebra as
+the model vector space. -/
+theorem leftInvariantDerivationLinearIsometryEquivModelVectorSpace_apply_eq_lieEquiv_apply
+    [FiniteDimensional ℝ E] (D : LeftInvariantDerivation I G) :
+    let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
+    let _ : BoundarylessManifold I G := ContMDiffMul.boundarylessManifold
+    leftInvariantDerivationLinearIsometryEquivModelVectorSpace (I := I) (G := G) D =
+      (show E from leftInvariantDerivationLieEquivGroupLieAlgebra
+        BoundarylessManifold.isInteriorPoint D) := by
+  let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
+  let _ : BoundarylessManifold I G := ContMDiffMul.boundarylessManifold
+  dsimp only
+  rw [leftInvariantDerivationLinearIsometryEquivModelVectorSpace_apply,
+    leftInvariantDerivationLieEquivGroupLieAlgebra_apply,
+    leftInvariantDerivationEquivGroupLieAlgebra_apply]
+
+end CanonicalModelBridges
 
 /-- Evaluation at the identity preserves the Lie bracket. -/
 @[simp]

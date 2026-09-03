@@ -6,12 +6,15 @@ Authors: Chris Birkbeck
 module
 
 public import Mathlib.NumberTheory.ModularForms.Basic
+public import TauCeti.Analysis.Complex.UpperHalfPlane.MoebiusAction
 
 /-!
 # Modular-forms basics: extensions of Mathlib's API
 
 Small generic lemmas extending `Mathlib/NumberTheory/ModularForms/Basic.lean` and its slash
-actions: the conjugation `σ` is trivial on `SL(2, ℤ)`-matrices, the `CuspForm`
+actions: the conjugation `σ` is trivial on `SL(2, ℤ)`-matrices — a special case of
+`UpperHalfPlane.σ_eq_refl_of_det_pos`, which lives with `σ` itself in
+`TauCeti/Analysis/Complex/UpperHalfPlane/MoebiusAction.lean` — the `CuspForm`
 translation equations Mathlib does not yet provide (`CuspForm.mcast_apply` and the
 `GL(2, ℝ)`-level `CuspForm.coe_translate_gl`), and the weight-`k` slash action of `-I`
 (`ModularForm.slash_neg_one`), the source of every parity constraint on weights and
@@ -45,6 +48,9 @@ AINTLIB `LeanModularForms` project
 * `SlashInvariantForm.slash_action_eqn_of_det_pos`: the transformation law
   `f (γ • τ) = |det γ| ^ (1 - k) * denom γ τ ^ k * f τ` for `γ` of positive determinant,
   generalising Mathlib's `slash_action_eqn''`, which assumes `det γ = 1`.
+* `slash_zpow_eq_self_of_slash_eq`, `slash_zpow_mul_mul_zpow_eq_smul`: slash
+  invariance passes to integer powers, and an eigenvalue law survives multiplication on both
+  sides by powers of an invariance.
 * `Subgroup.IsArithmetic.isCusp_of_isCusp`: any two arithmetic groups have the same cusps.
 * `ModularForm.mem_range_ofLeₗ_iff`, `CuspForm.mem_range_ofLeₗ_iff`: for `Γ' ≤ Γ` with every
   cusp of `Γ` a cusp of `Γ'`, a form for `Γ'` extends to `Γ` exactly when it is `Γ`-slash
@@ -57,12 +63,84 @@ open Matrix Matrix.SpecialLinearGroup UpperHalfPlane
 
 open scoped MatrixGroups ModularForm
 
+/-- **Every element of `𝒮ℒ` has positive determinant**: it is the image of a matrix of
+determinant `1`.
+
+This is the hypothesis the positive-determinant slash lemmas take — `σ_eq_refl_of_det_pos` just
+below, and `orderOfVanishingAt_slash` / `orderOfVanishingAt_smul` in
+`TauCeti.NumberTheory.ModularForms.Order.OfVanishing` — and every modular call site discharges
+it the same way. Keying it on membership in `𝒮ℒ` rather than on
+`Matrix.SpecialLinearGroup.mapGL` covers both shapes the call sites come in: a direct image
+`mapGL ℝ γ` (via `MonoidHom.mem_range.mpr ⟨γ, rfl⟩`) and an element of the image of a subgroup
+`Γ ≤ SL(2, ℤ)` (via `Subgroup.map_le_range`). -/
+theorem det_pos_of_mem_slGL {g : GL (Fin 2) ℝ} (hg : g ∈ 𝒮ℒ) :
+    0 < (g : Matrix (Fin 2) (Fin 2) ℝ).det := by
+  obtain ⟨γ, rfl⟩ := hg
+  rw [← Matrix.GeneralLinearGroup.val_det_apply, Matrix.SpecialLinearGroup.det_mapGL]
+  exact one_pos
+
 /-- The slash-action conjugation `σ` is the identity for matrices coming from
-`SL₂(ℤ)`: their determinant is `1 > 0`, so the `σ` branch picks `ContinuousAlgEquiv.refl ℝ ℂ`. -/
+`SL₂(ℤ)`: their determinant is `1 > 0`, so the `σ` branch picks `ContinuousAlgEquiv.refl ℝ ℂ`.
+
+This keeps `@[simp]` even though `UpperHalfPlane.σ_eq_refl_of_det_pos` is also `@[simp]`: that
+one is conditional, and `simp` cannot discharge `0 < (↑(mapGL ℝ s)).det` on its own — the
+determinant of a mapped `SL(2, ℤ)` matrix reduces through `GeneralLinearGroup.det`, not through
+`Matrix.det` of the entrywise map. So the two do not overlap in practice. -/
 @[simp]
 lemma σ_mapGL_real_eq_refl (s : SL(2, ℤ)) :
-    UpperHalfPlane.σ (mapGL ℝ s) = ContinuousAlgEquiv.refl ℝ ℂ := by
-  simp [UpperHalfPlane.σ, SpecialLinearGroup.mapGL]
+    UpperHalfPlane.σ (mapGL ℝ s) = ContinuousAlgEquiv.refl ℝ ℂ :=
+  σ_eq_refl_of_det_pos (det_pos_of_mem_slGL (MonoidHom.mem_range.mpr ⟨s, rfl⟩))
+
+/-! ### Slash invariance under a fixed matrix
+
+Ported from the AINTLIB `LeanModularForms` project (Chris Birkbeck), Apache-2.0, file
+`LeanModularForms/Eigenforms/ConductorTheorem.lean` at commit
+`2baa76f742bdb4fb8ee323fabba41203bd390e08`
+(<https://github.com/CBirkbeck/AINTLIB>): `slash_T_zpow_eq_self_of_slash_T_eq` (:176) and
+`conductor_slash_T_conj_eq` (:186). The source states both for powers of `ModularGroup.T` in
+`SL(2, ℤ)`; they are recorded here for `GL (Fin 2) ℝ`, which is all their proofs use. -/
+
+/-- The weight-`k` slash action read as a `MulAction` of the opposite group, so that the
+generic fixed-point API applies to it. Slashing is a *right* action — `SlashAction.slash_mul`
+reverses the order — hence the `ᵐᵒᵖ`. The weight is a parameter rather than a constant, so
+this is a `def` introduced by `let` at its one use site rather than an instance. -/
+@[instance_reducible]
+private noncomputable def slashMulAction (k : ℤ) : MulAction (GL (Fin 2) ℝ)ᵐᵒᵖ (ℍ → ℂ) where
+  smul A f := f ∣[k] A.unop
+  one_smul f := SlashAction.slash_one k f
+  mul_smul A B f := SlashAction.slash_mul k B.unop A.unop f
+
+/-- **Slash invariance passes to every integer power.** If `f ∣[k] A = f` then
+`f ∣[k] A ^ j = f` for every `j : ℤ`: `f` is a fixed point of the slash action of `A`, and
+`MulAction.mem_fixedBy_zpow` carries a fixed point along every integer power. -/
+lemma slash_zpow_eq_self_of_slash_eq (k : ℤ) (f : ℍ → ℂ) {A : GL (Fin 2) ℝ}
+    (hf : f ∣[k] A = f) (j : ℤ) : f ∣[k] (A ^ j) = f := by
+  let _inst := slashMulAction k
+  exact MulAction.mem_fixedBy_zpow (g := MulOpposite.op A) hf j
+
+/-- **An eigenvalue law survives multiplication on both sides by powers of an invariance.** If
+`f` is fixed by `δ` and slashing by `γ` multiplies it by `z`, then slashing by
+`δ ^ i * γ * δ ^ j` does too, for independent `i` and `j` — this is a conjugation only in the
+special case `j = -i`.
+
+Nothing is asked of `γ` beyond that law. The determinant hypothesis on `δ` is exactly what
+keeps `σ` out of the conclusion: `σ` is then trivial on every power of `δ`, so the scalar `z`
+passes through the outer slash unconjugated. For `δ` in the image of `SL(2, ℤ)` that
+hypothesis is `det_pos_of_mem_slGL`.
+
+The level-lowering step of the conductor theorem is the case `δ = T`, with `γ` the conjugate
+`conjScale l γ' c` supplied by the `T`-factorisation of `Γ₀(N / l)`. -/
+lemma slash_zpow_mul_mul_zpow_eq_smul (k : ℤ) (f : ℍ → ℂ) {δ γ : GL (Fin 2) ℝ}
+    (hδdet : 0 < (δ : Matrix (Fin 2) (Fin 2) ℝ).det) (hδ : f ∣[k] δ = f) {z : ℂ}
+    (hγ : f ∣[k] γ = z • f) (i j : ℤ) :
+    f ∣[k] (δ ^ i * γ * δ ^ j) = z • f := by
+  have hσ : UpperHalfPlane.σ (δ ^ j) = ContinuousAlgEquiv.refl ℝ ℂ := by
+    refine σ_eq_refl_of_det_pos ?_
+    rw [← Matrix.GeneralLinearGroup.val_det_apply] at hδdet ⊢
+    simpa using zpow_pos hδdet j
+  rw [SlashAction.slash_mul, SlashAction.slash_mul,
+    slash_zpow_eq_self_of_slash_eq k f hδ i, hγ, _root_.ModularForm.smul_slash, hσ,
+    ContinuousAlgEquiv.refl_apply, slash_zpow_eq_self_of_slash_eq k f hδ j]
 
 /-- `CuspForm.mcast` does not change the pointwise values of a cusp form: the `CuspForm`
 analogue of Mathlib's `ModularForm.mcast_apply`, which Mathlib does not yet provide. -/
@@ -91,8 +169,42 @@ theorem _root_.ModularForm.slash_neg_one (k : ℤ) (f : ℍ → ℂ) :
     ext
     simp [Matrix.det_neg]
   funext z
-  rw [ModularForm.slash_apply]
-  simp [UpperHalfPlane.σ, hzpow, hdet, mul_comm]
+  rw [ModularForm.slash_apply, σ_eq_refl_of_det_pos (by simp [Matrix.det_neg])]
+  simp [hzpow, hdet, mul_comm]
+
+/-- **The weight-`k` slash formula at a positive-determinant matrix**, free of the `σ` twist:
+
+`f ∣[k] g = fun τ ↦ f (g • τ) * |det g| ^ (k - 1) * denom g τ ^ (-k)`.
+
+Mathlib's `ModularForm.slash_def` carries `σ g` around the value of `f`, which is complex
+conjugation on the negative-determinant branch. `ModularForm.SL_slash_def` drops it because
+`det = 1`; here positivity alone is what does it. -/
+theorem _root_.ModularForm.slash_def_of_det_pos (k : ℤ) {g : GL (Fin 2) ℝ}
+    (hg : 0 < (g : Matrix (Fin 2) (Fin 2) ℝ).det) (f : ℍ → ℂ) :
+    f ∣[k] g = fun τ ↦ f (g • τ) * |(g.det : ℝ)| ^ (k - 1) * denom g τ ^ (-k) := by
+  rw [ModularForm.slash_def, σ_eq_refl_of_det_pos hg]
+  rfl
+
+/-- The pointwise form of `ModularForm.slash_def_of_det_pos`, matching
+`ModularForm.SL_slash_apply`. -/
+theorem _root_.ModularForm.slash_apply_of_det_pos (k : ℤ) {g : GL (Fin 2) ℝ}
+    (hg : 0 < (g : Matrix (Fin 2) (Fin 2) ℝ).det) (f : ℍ → ℂ) (τ : ℍ) :
+    (f ∣[k] g) τ = f (g • τ) * |(g.det : ℝ)| ^ (k - 1) * denom g τ ^ (-k) :=
+  congrFun (ModularForm.slash_def_of_det_pos k hg f) τ
+
+/-- **Scalars pass through the slash of a positive-determinant matrix.** Mathlib's
+`ModularForm.smul_slash` carries the twist `σ A c`, which is complex conjugation when the
+determinant is negative, so scalars do not commute past a general slash. On the positive branch
+they do.
+
+This is what makes a Hecke operator `ℂ`-linear: it is a sum of slashes by representatives of
+positive determinant. The scalar generality matches `ModularForm.SL_smul_slash`. -/
+@[simp]
+theorem _root_.ModularForm.smul_slash_of_det_pos {α : Type*} [SMul α ℂ] [IsScalarTower α ℂ ℂ]
+    (k : ℤ) {g : GL (Fin 2) ℝ} (hg : 0 < (g : Matrix (Fin 2) (Fin 2) ℝ).det) (f : ℍ → ℂ)
+    (c : α) : (c • f) ∣[k] g = c • f ∣[k] g := by
+  ext τ : 1
+  simp [ModularForm.slash_apply_of_det_pos k hg, smul_mul_assoc]
 
 /-- A form invariant under the image in `GL(2, ℝ)` of a subgroup `Γ ≤ SL(2, ℤ)` is fixed by
 the weight-`k` slash action of every element of `Γ` — the invariance condition read back at
@@ -115,9 +227,7 @@ theorem _root_.SlashInvariantForm.slash_action_eqn_of_det_pos {F : Type*} [FunLi
   have hdet_ne : ((|(γ.det : ℝ)| : ℝ) : ℂ) ≠ 0 := by
     exact_mod_cast (abs_pos.mpr (γ.det : ℝˣ).ne_zero).ne'
   have h := congr_fun (SlashInvariantForm.slash_action_eqn f γ hγ) τ
-  have hdet' : (0 : ℝ) < ↑(Matrix.GeneralLinearGroup.det γ) := by
-    rwa [Matrix.GeneralLinearGroup.val_det_apply]
-  rw [ModularForm.slash_def, σ, ite_eq_left hdet'] at h
+  rw [ModularForm.slash_def, σ_eq_refl_of_det_pos hdet] at h
   simp only [ContinuousAlgEquiv.refl_apply] at h
   -- clear the two inverse factors of the slash action in turn, then read off the exponents
   have hden : denom γ (τ : ℂ) ^ (-k) ≠ 0 := zpow_ne_zero _ (denom_ne_zero γ τ)

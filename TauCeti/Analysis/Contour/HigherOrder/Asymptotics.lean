@@ -311,18 +311,14 @@ theorem antiderivative_diff_at_tangent_target_tendsto_zero
       2 ^ k * (‖γ t - s - (‖γ t - s‖ / ‖T‖ : ℝ) • T‖ / ‖γ t - s‖ ^ k) := by
     filter_upwards [h_ne, h_chord_le_d] with t h_ne hcd
     have hcd' : ‖γ t - (s + (‖γ t - s‖ / ‖T‖ : ℝ) • T)‖ ≤ ‖γ t - s‖ := by
-      rwa [show γ t - (s + (‖γ t - s‖ / ‖T‖ : ℝ) • T) =
-            γ t - s - (‖γ t - s‖ / ‖T‖ : ℝ) • T by ring]
+      rwa [sub_add_eq_sub_sub]
     have h_bound := norm_antiderivative_diff_at_tangent_target_le hk hT h_ne hcd'
-    rw [show ‖γ t - (s + (‖γ t - s‖ / ‖T‖ : ℝ) • T)‖ =
-          ‖γ t - s - (‖γ t - s‖ / ‖T‖ : ℝ) • T‖ by congr 1; ring] at h_bound
+    rw [sub_add_eq_sub_sub] at h_bound
     calc ‖_‖
         ≤ (1 : ℝ) / (‖γ t - s‖ / 2) ^ k *
             ‖γ t - s - (‖γ t - s‖ / ‖T‖ : ℝ) • T‖ := h_bound
-      _ = 2 ^ k / ‖γ t - s‖ ^ k *
-            ‖γ t - s - (‖γ t - s‖ / ‖T‖ : ℝ) • T‖ := by
-          congr 1; rw [div_pow]; field_simp
-      _ = 2 ^ k * (‖γ t - s - (‖γ t - s‖ / ‖T‖ : ℝ) • T‖ / ‖γ t - s‖ ^ k) := by ring
+      _ = 2 ^ k * (‖γ t - s - (‖γ t - s‖ / ‖T‖ : ℝ) • T‖ / ‖γ t - s‖ ^ k) := by
+          rw [div_pow]; field_simp
   exact tendsto_of_tendsto_of_tendsto_of_le_of_le' tendsto_const_nhds h_const_ratio
     (Eventually.of_forall fun _ => norm_nonneg _) h_F_diff_le
 

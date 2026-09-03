@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -67,9 +68,7 @@ noncomputable def intermediateFieldEquivSubmodule [Finite ι] [NeZero (2 : K)]
     (hindep : ∀ S : Finset ι, S.Nonempty → ¬ IsSquare (∏ i ∈ S, d i)) :
     IntermediateField K (adjoin K (Set.range root)) ≃o
       (Submodule (ZMod 2) (ι → ZMod 2))ᵒᵈ :=
-  haveI := isSplittingField hroot
-  haveI : FiniteDimensional K (adjoin K (Set.range root)) :=
-    Polynomial.IsSplittingField.finiteDimensional _ (definingPolynomial d)
+  haveI := finiteDimensional_adjoin_range hroot
   haveI := isGalois hroot
   IsGalois.intermediateFieldEquivSubgroup.trans
     (OrderIso.dual

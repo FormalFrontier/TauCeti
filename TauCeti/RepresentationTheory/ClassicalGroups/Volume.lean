@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 Tau Ceti. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Codex
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -84,7 +84,7 @@ noncomputable def topExtPowerSLEquivTrivial : ((stdSLRep k n).exteriorPower n).E
       (Representation.trivial k (Matrix.SpecialLinearGroup (Fin n) k) k) :=
   .mk (exteriorPower.topEquiv (Pi.basisFun k (Fin n))) fun g ↦ by
     rw [stdSLRep_exteriorPower_self_apply]
-    simp
+    simp [Representation.isTrivial_def]
 
 /-- The underlying linear equivalence of `TauCeti.topExtPowerSLEquivTrivial` is the top-degree
 identification of the exterior power with the scalars. -/

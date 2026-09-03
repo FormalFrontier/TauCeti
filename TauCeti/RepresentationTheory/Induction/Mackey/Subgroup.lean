@@ -1,10 +1,13 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.Algebra.Group.Subgroup.Finite
 public import Mathlib.GroupTheory.Index
+public import Mathlib.GroupTheory.SpecificGroups.Cyclic.Basic
 public import TauCeti.Algebra.Group.Subgroup.Pointwise
 public import TauCeti.GroupTheory.DoubleCoset.Orbits
 public import TauCeti.GroupTheory.QuotientGroup.Basic
@@ -72,6 +75,14 @@ roadmap-specific subgroup the induction and restriction of that layer run along.
 * `TauCeti.relIndex_mackeySubgroup_conj`: that index depends only on the double coset.
 * `TauCeti.card_doubleCoset_mul_card_mackeySubgroup`: the double-coset size formula
   `|KsH| · |K ⊓ sHs⁻¹| = |K| · |H|`.
+* `TauCeti.stabilizer_smul_eq_mackeySubgroup_subgroupOf`: the same stabilizer description for an
+  arbitrary `G`-set, at a translate `s • p`.
+* `TauCeti.mackeySubgroup_eq_bot_or_conj_smul_le_of_prime_card`: for `H` of prime order the Mackey
+  subgroup is `⊥` unless the whole conjugate `sHs⁻¹` lies in `K`.
+* `TauCeti.mackeySubgroup_self_eq_bot_or_conj_smul_eq_self_of_prime_card`: at `K = H` that
+  dichotomy reads: `H` meets each of its conjugates in `⊥` or in itself.
+* `TauCeti.exists_notMem_mackeySubgroup_eq_bot_of_prime_card_of_not_normal`: a non-normal subgroup
+  of prime order therefore has a conjugate meeting it trivially.
 
 ## References
 
@@ -342,6 +353,75 @@ theorem relIndex_mackeySubgroup_conj {s k h : G} {H K : Subgroup G} (hk : k ∈ 
         rw [mackeySubgroup_conj hk hh, Subgroup.conj_smul_eq_self_of_mem hk]
     _ = (mackeySubgroup s H K).relIndex K := Subgroup.relIndex_pointwise_smul _ _ _
 
+section Translate
+
+variable {α : Type*} [MulAction G α]
+
+/-- **The Mackey subgroup is a stabilizer, for an arbitrary action.** For a point `p` of any
+`G`-set and `s : G`, the stabilizer of the translate `s • p` in a subgroup `Γ` is the Mackey
+subgroup of `Γ` and `stabilizer G p` at `s`, read inside `Γ`.
+
+`stabilizer_eq_mackeySubgroup_subgroupOf` above is the same statement for the translation action
+of `Γ` on `G ⧸ H`. Neither implies the other: that one is stated for Mathlib's
+`mulLeftCosetsCompSubtypeVal` action on cosets, this one for the restriction of scalars
+`Subgroup.instMulAction`, and `MulAction ↥Γ (G ⧸ H)` has both. The general form is the one a sum
+over the points of an arbitrary `G`-set needs. -/
+theorem stabilizer_smul_eq_mackeySubgroup_subgroupOf (s : G) (Γ : Subgroup G) (p : α) :
+    stabilizer (↥Γ) (s • p) = (mackeySubgroup s (stabilizer G p) Γ).subgroupOf Γ := by
+  ext g
+  rw [Subgroup.mem_subgroupOf, mem_mackeySubgroup_iff, mem_stabilizer_iff, Subgroup.smul_def,
+    mem_stabilizer_iff, mul_smul, mul_smul]
+  exact ⟨fun hg => ⟨g.2, inv_smul_eq_iff.mpr hg⟩, fun hg => inv_smul_eq_iff.mp hg.2⟩
+
+end Translate
+
 end Orbit
+
+section PrimeCard
+
+/-- Conjugation preserves the number of elements of a subgroup. -/
+private theorem card_conj_smul_eq (s : G) (H : Subgroup G) :
+    Nat.card (MulAut.conj s • H : Subgroup G) = Nat.card H :=
+  Nat.card_congr (Subgroup.equivSMul (MulAut.conj s) H).toEquiv.symm
+
+/-- **A subgroup of prime order either meets `K` trivially after conjugation, or is carried inside
+`K` altogether.** The Mackey subgroup `K ⊓ sHs⁻¹` sits inside the conjugate `sHs⁻¹`, a group of
+prime order `Nat.card H`, so read inside `sHs⁻¹` it is `⊥` or `⊤`. -/
+theorem mackeySubgroup_eq_bot_or_conj_smul_le_of_prime_card (hp : (Nat.card H).Prime) (s : G)
+    (K : Subgroup G) :
+    mackeySubgroup s H K = ⊥ ∨ (MulAut.conj s • H : Subgroup G) ≤ K := by
+  have _ : Fact (Nat.card (MulAut.conj s • H : Subgroup G)).Prime :=
+    ⟨by rw [card_conj_smul_eq]; exact hp⟩
+  rcases Subgroup.eq_bot_or_eq_top_of_prime_card
+      ((mackeySubgroup s H K).subgroupOf (MulAut.conj s • H)) with h | h
+  · exact Or.inl ((Subgroup.subgroupOf_eq_bot.mp h).eq_bot_of_le mackeySubgroup_le_conj)
+  · exact Or.inr ((Subgroup.subgroupOf_eq_top.mp h).trans mackeySubgroup_le_right)
+
+/-- **A subgroup of prime order meets each of its conjugates in `⊥` or in itself.** This is
+`TauCeti.mackeySubgroup_eq_bot_or_conj_smul_le_of_prime_card` at `K = H`: the containment
+`sHs⁻¹ ≤ H` it produces is an equality because conjugate subgroups have the same finite order. -/
+theorem mackeySubgroup_self_eq_bot_or_conj_smul_eq_self_of_prime_card (hp : (Nat.card H).Prime)
+    (s : G) : mackeySubgroup s H H = ⊥ ∨ (MulAut.conj s • H : Subgroup G) = H := by
+  have _ : Finite H := Nat.finite_of_card_ne_zero hp.ne_zero
+  refine (mackeySubgroup_eq_bot_or_conj_smul_le_of_prime_card hp s H).imp id fun hle => ?_
+  exact Subgroup.eq_of_le_of_card_ge hle (card_conj_smul_eq s H).ge
+
+/-- **A non-normal subgroup of prime order has a conjugate meeting it trivially.** If every
+conjugate of `H` were `H` itself, `H` would be normal; so some conjugate is different, and by
+`TauCeti.mackeySubgroup_self_eq_bot_or_conj_smul_eq_self_of_prime_card` it then meets `H`
+trivially. The conjugating element lies outside `H`, since conjugating by an element of `H`
+preserves `H`. -/
+theorem exists_notMem_mackeySubgroup_eq_bot_of_prime_card_of_not_normal
+    (hp : (Nat.card H).Prime) (hH : ¬ H.Normal) : ∃ s ∉ H, mackeySubgroup s H H = ⊥ := by
+  by_contra hcon
+  push Not at hcon
+  refine hH (Subgroup.Normal.of_conjugate_fixed fun g => ?_)
+  by_cases hg : g ∈ H
+  · exact Subgroup.conj_smul_eq_self_of_mem hg
+  · -- At an element outside `H` the Mackey subgroup is not `⊥`, so the conjugate is `H` itself.
+    exact (mackeySubgroup_self_eq_bot_or_conj_smul_eq_self_of_prime_card hp g).resolve_left
+      (hcon g hg)
+
+end PrimeCard
 
 end TauCeti

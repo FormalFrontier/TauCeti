@@ -1,10 +1,13 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.Algebra.Group.Submonoid.Support
 public import Mathlib.LinearAlgebra.RootSystem.Base
+public import TauCeti.LinearAlgebra.RootSystem.Height
 
 public section
 
@@ -27,10 +30,16 @@ positive root is a nonnegative integer combination of the simple coroots.
 * `TauCeti.negRoots` is its complementary set of negative roots.
 * `TauCeti.posRootsFinset` and `TauCeti.negRootsFinset` are the same two sets as finsets, for a
   finite root index type, so that they can be summed over.
+* `TauCeti.posRootCone` is the additive monoid `Q⁺` of nonnegative integer combinations of the
+  simple roots.
 
 ## Main results
 
 * `TauCeti.image_reflectionPerm_self_posRoots` says root negation exchanges the two sets.
+* `TauCeti.ncard_posRoots_eq_natCard_div_two` says that, for a finite root index type, exactly
+  half of the roots are positive, and `TauCeti.posRootsFinset_eq_filter`,
+  `TauCeti.card_posRootsFinset` read `TauCeti.posRootsFinset` as the filter of the positivity
+  predicate and its cardinality as the cardinality of `TauCeti.posRoots`.
 * `TauCeti.add_mem_posRoots` and `TauCeti.add_mem_negRoots` say each of the two sets is closed
   under those sums of its members that are again roots, and
   `TauCeti.reflectionPerm_self_notMem_posRoots`, `TauCeti.reflectionPerm_self_notMem_negRoots` say
@@ -43,7 +52,24 @@ positive root is a nonnegative integer combination of the simple coroots.
   indecomposable positive roots: those that are not the sum of two positive roots.
 * `TauCeti.RootPairing.Base.isPos_flip_iff` says a root is positive for a base exactly when its
   coroot is positive for that base, and `TauCeti.posRoots_flip` restates it for the sets.
-* `TauCeti.sum_root_ne_zero_of_mem_posRoots` says a nonempty sum of positive roots is nonzero.
+* `TauCeti.root_mem_posRootCone_of_mem_posRoots` says the positive roots lie in `Q⁺`,
+  `TauCeti.isPointed_posRootCone` says `Q⁺` is pointed,
+  `TauCeti.eq_zero_of_add_eq_zero_of_mem_posRootCone` is the same fact as a cancellation rule,
+  `TauCeti.root_add_ne_zero_of_mem_posRoots_of_mem_posRootCone` specializes that to a positive root
+  added to a member of `Q⁺`, and `TauCeti.sum_root_ne_zero_of_mem_posRoots` deduces that a nonempty
+  sum of positive roots is nonzero.
+* `TauCeti.eq_of_nsmul_root_sub_root_mem_posRootCone` says that the only positive root lying below
+  a natural multiple of a simple root, in the order defined by `Q⁺`, is that simple root itself.
+* `TauCeti.one_le_height_of_mem_posRoots` says every positive root has height at least one, and
+  `TauCeti.height_neg_of_mem_negRoots` says every negative root has negative height.
+* `TauCeti.heightLinearMap_sum_nsmul_root` computes the height of a nonnegative integer
+  combination of the simple roots, whence
+  `TauCeti.exists_natCast_eq_heightLinearMap_of_mem_posRootCone`, that the height functional takes
+  natural-number values on `Q⁺`, and
+  `TauCeti.eq_zero_of_mem_posRootCone_of_heightLinearMap_eq_zero`, that zero is the only member of
+  `Q⁺` of height zero.
+* `TauCeti.exists_intCast_eq_coroot'_of_mem_posRootCone` says a coroot functional takes integer
+  values on `Q⁺`.
 * `TauCeti.exists_coroot_eq_sum_nat_of_mem_posRoots` says the coroot of a positive root is a
   nonnegative integer combination of the simple coroots.
 
@@ -76,6 +102,12 @@ variable {ι : Type u} {R : Type v} {M : Type w} {N : Type x}
   [CommRing R] [AddCommGroup M] [Module R M] [AddCommGroup N] [Module R N]
   (P : RootPairing ι R M N)
 
+/-- Root negation is an involution of the root index type: it is the `InvolutiveNeg` supplied by
+`RootPairing.indexNeg`, written through the self-reflection permutation. -/
+lemma reflectionPerm_self_involutive : Function.Involutive fun i : ι ↦ P.reflectionPerm i i := by
+  let := P.indexNeg
+  simpa only [← RootPairing.indexNeg_neg] using neg_involutive
+
 /-- The positive roots relative to a base. -/
 def posRoots [CharZero R] (b : P.Base) : Set ι := {i | b.IsPos i}
 
@@ -88,9 +120,18 @@ variable [CharZero R] (b : P.Base)
 @[simp]
 lemma mem_posRoots (i : ι) : i ∈ posRoots P b ↔ b.IsPos i := Iff.rfl
 
+/-- A positive root has height at least one. -/
+theorem one_le_height_of_mem_posRoots {i : ι} (hi : i ∈ posRoots P b) : 1 ≤ b.height i := by
+  rw [mem_posRoots, RootPairing.Base.isPos_iff] at hi
+  omega
+
 /-- Membership in the set of negative roots. -/
 @[simp]
 lemma mem_negRoots (i : ι) : i ∈ negRoots P b ↔ ¬ b.IsPos i := Iff.rfl
+
+/-- A negative root has negative height. -/
+theorem height_neg_of_mem_negRoots {i : ι} (hi : i ∈ negRoots P b) : b.height i < 0 :=
+  lt_of_not_ge fun h => (mem_negRoots P b i).mp hi (b.isPos_iff'.mpr h)
 
 /-- The negative roots are the complement of the positive roots. -/
 lemma compl_posRoots : (posRoots P b)ᶜ = negRoots P b := by
@@ -139,6 +180,17 @@ lemma mem_posRootsFinset [Finite ι] (i : ι) : i ∈ posRootsFinset P b ↔ i �
 @[simp]
 lemma mem_negRootsFinset [Finite ι] (i : ι) : i ∈ negRootsFinset P b ↔ i ∈ negRoots P b :=
   (negRoots_finite P b).mem_toFinset
+
+/-- The finset of positive roots is the filter of the positivity predicate, which is the shape a
+consumer that counts positive roots by `Finset.filter` meets them in. -/
+lemma posRootsFinset_eq_filter [Fintype ι] [DecidablePred b.IsPos] :
+    posRootsFinset P b = Finset.univ.filter fun i ↦ b.IsPos i := by
+  ext i
+  simp
+
+/-- Counting the positive roots as a finset agrees with counting them as a set. -/
+lemma card_posRootsFinset [Finite ι] : (posRootsFinset P b).card = (posRoots P b).ncard :=
+  (Set.ncard_eq_toFinset_card _ (posRoots_finite P b)).symm
 
 /-- Every simple root is positive. -/
 lemma support_subset_posRoots : ↑b.support ⊆ posRoots P b := by
@@ -218,9 +270,114 @@ lemma exists_root_eq_sum_nat_of_mem_posRoots {i : ι} (hi : i ∈ posRoots P b) 
       Finset.sum_nonpos fun j _ ↦ by simp [g]
     exact (not_lt_of_ge hnonpos hi).elim
 
-/-- **A nonempty sum of positive roots is nonzero.** Expanding each summand in the simple roots and
-collecting terms, the total coefficient is the sum of the heights, which is positive; the simple
-roots are linearly independent, so a combination with a nonzero coefficient sum cannot vanish.
+/-! ### The cone of nonnegative combinations of the simple roots -/
+
+omit [CharZero R] in
+/-- The **positive root cone** `Q⁺` of a base: the additive submonoid generated by the simple
+roots, that is the set of nonnegative integer combinations of them. -/
+def posRootCone : AddSubmonoid M := AddSubmonoid.closure (P.root '' b.support)
+
+omit [CharZero R] in
+/-- Membership in the positive root cone, spelled out as a nonnegative integer combination of the
+simple roots. -/
+theorem mem_posRootCone {v : M} :
+    v ∈ posRootCone P b ↔ ∃ f : ι → ℕ, v = ∑ j ∈ b.support, f j • P.root j := by
+  rw [posRootCone, ← Submodule.span_nat_eq_addSubmonoidClosure, Submodule.mem_toAddSubmonoid,
+    Submodule.mem_span_image_finset_iff_exists_fun']
+  exact exists_congr fun _ => eq_comm
+
+/-- Every positive root lies in the positive root cone. -/
+theorem root_mem_posRootCone_of_mem_posRoots {i : ι} (hi : i ∈ posRoots P b) :
+    P.root i ∈ posRootCone P b :=
+  let ⟨f, _, hf⟩ := exists_root_eq_sum_nat_of_mem_posRoots P b hi
+  (mem_posRootCone P b).mpr ⟨f, hf⟩
+
+omit [CharZero R] in
+/-- **The height of a nonnegative integer combination of the simple roots** is the total number of
+simple roots occurring in it, every simple root having height one. -/
+theorem heightLinearMap_sum_nsmul_root [P.IsRootSystem] (f : ι → ℕ) :
+    heightLinearMap P b (∑ j ∈ b.support, f j • P.root j)
+      = ((∑ j ∈ b.support, f j : ℕ) : R) := by
+  rw [map_sum, Nat.cast_sum]
+  exact Finset.sum_congr rfl fun j hj => by
+    rw [map_nsmul, heightLinearMap_simpleRoot P b ⟨j, hj⟩, nsmul_eq_mul, mul_one]
+
+omit [CharZero R] in
+/-- **The height functional takes natural-number values on the positive root cone**: the height of
+a nonnegative integer combination of simple roots is the total number of simple roots in it, every
+simple root having height one. This is what makes the height of a cone member a legitimate
+induction parameter. -/
+theorem exists_natCast_eq_heightLinearMap_of_mem_posRootCone [P.IsRootSystem] {u : M}
+    (hu : u ∈ posRootCone P b) : ∃ n : ℕ, heightLinearMap P b u = (n : R) := by
+  obtain ⟨f, rfl⟩ := (mem_posRootCone P b).mp hu
+  exact ⟨∑ j ∈ b.support, f j, heightLinearMap_sum_nsmul_root P b f⟩
+
+/-- **The only member of the positive root cone of height zero is zero.** The height counts the
+simple roots occurring in a member, so a member of height zero has no summand at all. -/
+theorem eq_zero_of_mem_posRootCone_of_heightLinearMap_eq_zero [P.IsRootSystem] {u : M}
+    (hu : u ∈ posRootCone P b) (hheight : heightLinearMap P b u = 0) : u = 0 := by
+  obtain ⟨f, rfl⟩ := (mem_posRootCone P b).mp hu
+  rw [heightLinearMap_sum_nsmul_root P b f, Nat.cast_eq_zero, Finset.sum_eq_zero_iff] at hheight
+  exact Finset.sum_eq_zero fun j hj => by rw [hheight j hj, zero_smul]
+
+omit [CharZero R] in
+/-- **A coroot functional takes integer values on the positive root cone**: a nonnegative integer
+combination of the simple roots pairs with a coroot to the matching combination of Cartan
+integers. -/
+theorem exists_intCast_eq_coroot'_of_mem_posRootCone [P.IsCrystallographic] {u : M}
+    (hu : u ∈ posRootCone P b) (i : ι) : ∃ m : ℤ, P.coroot' i u = (m : R) := by
+  obtain ⟨f, rfl⟩ := (mem_posRootCone P b).mp hu
+  have hpair : ∀ p q : ι, ((P.pairingIn ℤ p q : ℤ) : R) = P.pairing p q := fun p q => by
+    rw [← P.algebraMap_pairingIn ℤ p q]
+    simp
+  refine ⟨∑ j ∈ b.support, (f j : ℤ) * P.pairingIn ℤ j i, ?_⟩
+  rw [map_sum]
+  push_cast
+  exact Finset.sum_congr rfl fun j _ => by
+    rw [map_nsmul, P.root_coroot'_eq_pairing, nsmul_eq_mul, hpair]
+
+/-- **The positive root cone is pointed**: the only member whose negative is again a member is
+zero. Expanding a member and its negative in the simple roots, the total coefficient vector is
+nonnegative and sums to zero and, the simple roots being linearly independent, must vanish, so each
+coefficient vector does.
+
+This is what makes the cone an order on weights: `μ ≤ λ` defined by `λ - μ ∈ Q⁺` is antisymmetric,
+and a weight cannot be reached from itself through a nonempty chain of positive roots. -/
+theorem isPointed_posRootCone : (posRootCone P b).IsPointed := by
+  classical
+  refine AddSubmonoid.IsPointed.mk fun u hu hu' => ?_
+  obtain ⟨f, rfl⟩ := (mem_posRootCone P b).mp hu
+  obtain ⟨g, hg⟩ := (mem_posRootCone P b).mp hu'
+  have huv : (∑ j ∈ b.support, f j • P.root j) + ∑ j ∈ b.support, g j • P.root j = 0 := by
+    rw [← hg, add_neg_cancel]
+  have hcomb : ∑ j ∈ b.support, ((f j + g j : ℕ) : ℤ) • P.root j = 0 := by
+    rw [← huv, ← Finset.sum_add_distrib]
+    exact Finset.sum_congr rfl fun j _ => by push_cast; rw [add_smul, natCast_zsmul, natCast_zsmul]
+  have hli : LinearIndepOn ℤ P.root (b.support : Set ι) :=
+    b.linearIndepOn_root.restrict_scalars' ℤ
+  have hzero : ∀ j ∈ b.support, ((f j + g j : ℕ) : ℤ) = 0 :=
+    linearIndepOn_iff'.mp hli b.support _ subset_rfl hcomb
+  refine Finset.sum_eq_zero fun j hj => ?_
+  have : f j = 0 := by have := hzero j hj; omega
+  rw [this, zero_smul]
+
+/-- **A member of the positive root cone that is cancelled by another member is zero**: pointedness
+of the cone, in the additive form the weight order uses. -/
+theorem eq_zero_of_add_eq_zero_of_mem_posRootCone {u v : M} (hu : u ∈ posRootCone P b)
+    (hv : v ∈ posRootCone P b) (huv : u + v = 0) : u = 0 :=
+  (isPointed_posRootCone P b).eq_zero_of_mem_of_neg_mem hu
+    (by rwa [neg_eq_of_add_eq_zero_right huv])
+
+/-- **A positive root is never cancelled inside the positive root cone.** A positive root is a
+nonzero member of the cone, so `TauCeti.eq_zero_of_add_eq_zero_of_mem_posRootCone` forbids it. -/
+theorem root_add_ne_zero_of_mem_posRoots_of_mem_posRootCone {i : ι} (hi : i ∈ posRoots P b)
+    {v : M} (hv : v ∈ posRootCone P b) : P.root i + v ≠ 0 := fun hsum =>
+  P.ne_zero i (eq_zero_of_add_eq_zero_of_mem_posRootCone P b
+    (root_mem_posRootCone_of_mem_posRoots P b hi) hv hsum)
+
+/-- **A nonempty sum of positive roots is nonzero.** Splitting off one summand, the rest is a
+nonnegative integer combination of the simple roots, and a positive root is never cancelled inside
+that cone.
 
 This is the integral form of the statement that the positive roots lie in an open half space. It is
 what rules out a cycle of weights each obtained from the previous one by adding a positive root, and
@@ -229,26 +386,65 @@ theorem sum_root_ne_zero_of_mem_posRoots {κ : Type*} {s : Finset κ} (hs : s.No
     (hf : ∀ x ∈ s, f x ∈ posRoots P b) :
     ∑ x ∈ s, P.root (f x) ≠ 0 := by
   classical
-  intro hsum
-  choose g _hsupp _hsign hg using fun x : κ ↦ b.exists_root_eq_sum_int (f x)
-  set c : ι → ℤ := fun j ↦ ∑ x ∈ s, g x j with hc
-  have hcomb : ∑ j ∈ b.support, c j • P.root j = 0 := by
-    rw [← hsum]
-    simp_rw [hg, hc, Finset.sum_smul]
-    exact Finset.sum_comm
-  have hli : LinearIndepOn ℤ P.root (b.support : Set ι) :=
-    b.linearIndepOn_root.restrict_scalars' ℤ
-  have hczero : ∀ j ∈ b.support, c j = 0 :=
-    linearIndepOn_iff'.mp hli b.support c subset_rfl hcomb
-  have hheight : ∑ x ∈ s, b.height (f x) = 0 := by
-    have hswap : ∑ x ∈ s, b.height (f x) = ∑ j ∈ b.support, c j := by
-      simp_rw [b.height_eq_sum (hg _), hc]
-      exact Finset.sum_comm
-    rw [hswap]
-    exact Finset.sum_eq_zero hczero
-  have hpos : 0 < ∑ x ∈ s, b.height (f x) :=
-    Finset.sum_pos (fun x hx ↦ hf x hx) hs
-  exact hpos.ne' hheight
+  obtain ⟨x₀, hx₀⟩ := hs
+  rw [← Finset.add_sum_erase _ _ hx₀]
+  exact root_add_ne_zero_of_mem_posRoots_of_mem_posRootCone P b (hf x₀ hx₀)
+    (AddSubmonoid.sum_mem _ fun x hx =>
+      root_mem_posRootCone_of_mem_posRoots P b (hf x (Finset.mem_of_mem_erase hx)))
+
+/-- **A simple root dominates only itself.** If a natural multiple of a simple root `αᵢ` exceeds a
+positive root `αⱼ` inside the cone `Q⁺`, then `αⱼ` is `αᵢ`.
+
+Expanding both `αⱼ` and the difference in the simple roots and comparing coefficients, which is
+legitimate because the simple roots are linearly independent, leaves `αⱼ` a natural multiple of
+`αᵢ`; the multiple is `1` because a base contains no proper multiple of one of its members
+(`RootPairing.Base.eq_one_or_neg_one_of_mem_support_of_smul_mem`).
+
+This is the combinatorial input to the integrability relation of a highest weight module: it is
+what confines a positive root vector raising the weight `lam - (n + 1) αᵢ` to the single direction
+`αᵢ`. -/
+theorem eq_of_nsmul_root_sub_root_mem_posRootCone [Finite ι] [IsAddTorsionFree M]
+    [IsAddTorsionFree N] {i : ι} (hi : i ∈ b.support) {j : ι} (hj : j ∈ posRoots P b) {n : ℕ}
+    (h : n • P.root i - P.root j ∈ posRootCone P b) : j = i := by
+  classical
+  obtain ⟨c, -, hc⟩ := exists_root_eq_sum_nat_of_mem_posRoots P b hj
+  obtain ⟨d, hd⟩ := (mem_posRootCone P b).mp h
+  set g : ι → R := fun k => (c k : R) + (d k : R) - (if k = i then (n : R) else 0) with hgdef
+  have hsingle : ∑ k ∈ b.support, (if k = i then (n : R) else 0) • P.root k
+      = (n : R) • P.root i := by
+    rw [Finset.sum_eq_single i (fun k _ hk => by simp [hk]) (fun hni => absurd hi hni)]
+    simp
+  have hzero : ∑ k ∈ b.support, g k • P.root k = 0 := by
+    have hsplit : ∑ k ∈ b.support, g k • P.root k
+        = ((∑ k ∈ b.support, c k • P.root k) + ∑ k ∈ b.support, d k • P.root k)
+          - ∑ k ∈ b.support, (if k = i then (n : R) else 0) • P.root k := by
+      rw [← Finset.sum_add_distrib, ← Finset.sum_sub_distrib]
+      exact Finset.sum_congr rfl fun k _ => by
+        simp [hgdef, add_smul, sub_smul, Nat.cast_smul_eq_nsmul]
+    rw [hsplit, hsingle, ← hc, ← hd, Nat.cast_smul_eq_nsmul]
+    abel
+  have hg0 : ∀ k ∈ b.support, g k = 0 :=
+    linearIndepOn_iff'.mp b.linearIndepOn_root b.support g subset_rfl hzero
+  have hc0 : ∀ k ∈ b.support, k ≠ i → c k = 0 := by
+    intro k hk hki
+    have hif : (if k = i then (n : R) else 0) = 0 := by simp [hki]
+    have hgk := hg0 k hk
+    rw [hgdef] at hgk
+    simp only [hif, sub_zero] at hgk
+    have hcast : ((c k + d k : ℕ) : R) = 0 := by push_cast; exact hgk
+    have : c k + d k = 0 := by exact_mod_cast hcast
+    omega
+  have hroot : P.root j = (c i : ℕ) • P.root i := by
+    rw [hc, Finset.sum_eq_single i (fun k hk hki => by rw [hc0 k hk hki, zero_smul])
+      (fun hni => absurd hi hni)]
+  have hmem : (c i : R) • P.root i ∈ Set.range P.root := by
+    rw [Nat.cast_smul_eq_nsmul, ← hroot]
+    exact Set.mem_range_self j
+  rcases b.eq_one_or_neg_one_of_mem_support_of_smul_mem i hi _ hmem with h1 | h1
+  · have hci : c i = 1 := by exact_mod_cast h1
+    exact P.root.injective (by rw [hroot, hci, one_smul])
+  · have hcast : ((c i + 1 : ℕ) : R) = 0 := by push_cast [h1]; ring
+    exact absurd (by exact_mod_cast hcast : c i + 1 = 0) (Nat.succ_ne_zero (c i))
 
 /-- Root negation exchanges positive and negative roots. -/
 theorem image_reflectionPerm_self_posRoots :
@@ -269,10 +465,7 @@ theorem image_reflectionPerm_self_posRoots :
 /-- Root negation exchanges negative and positive roots. -/
 theorem image_reflectionPerm_self_negRoots :
     (fun i ↦ P.reflectionPerm i i) '' negRoots P b = posRoots P b := by
-  let := P.indexNeg
-  have hinv : Function.Involutive (fun i : ι ↦ P.reflectionPerm i i) := by
-    intro i
-    simp only [← RootPairing.indexNeg_neg, neg_neg]
+  have hinv := reflectionPerm_self_involutive P
   calc
     (fun i ↦ P.reflectionPerm i i) '' negRoots P b =
         (fun i ↦ P.reflectionPerm i i) '' (posRoots P b)ᶜ := by rw [negRoots_eq_compl]
@@ -283,6 +476,37 @@ theorem image_reflectionPerm_self_negRoots :
       ext i
       simp only [Set.mem_compl_iff, mem_negRoots, mem_posRoots]
       tauto
+
+/-! ### The number of positive roots -/
+
+/-- A root pairing has equally many positive and negative roots. Root negation gives the bijection
+between the two sets. -/
+@[simp]
+theorem ncard_negRoots_eq_ncard_posRoots :
+    (negRoots P b).ncard = (posRoots P b).ncard := by
+  rw [← image_reflectionPerm_self_posRoots P b]
+  exact Set.ncard_image_of_injective _ (reflectionPerm_self_involutive P).injective
+
+/-- The numbers of positive and negative roots add up to the total number of roots. -/
+theorem ncard_posRoots_add_ncard_negRoots [Finite ι] :
+    (posRoots P b).ncard + (negRoots P b).ncard = Nat.card ι := by
+  rw [negRoots_eq_compl]
+  exact Set.ncard_add_ncard_compl _
+
+/-- Twice the number of positive roots is the total number of roots. -/
+theorem two_mul_ncard_posRoots [Finite ι] :
+    2 * (posRoots P b).ncard = Nat.card ι := by
+  calc
+    2 * (posRoots P b).ncard =
+        (posRoots P b).ncard + (posRoots P b).ncard := two_mul _
+    _ = (posRoots P b).ncard + (negRoots P b).ncard := by
+      rw [ncard_negRoots_eq_ncard_posRoots P b]
+    _ = Nat.card ι := ncard_posRoots_add_ncard_negRoots P b
+
+/-- Exactly half of a finite root index type consists of positive roots. -/
+theorem ncard_posRoots_eq_natCard_div_two [Finite ι] :
+    (posRoots P b).ncard = Nat.card ι / 2 :=
+  Nat.eq_div_of_mul_eq_right (by norm_num) (two_mul_ncard_posRoots P b)
 
 /-- Reflecting a positive root in a simple root never produces that simple root: the only root
 sent to a simple root `αᵢ` by `sᵢ` is `-αᵢ`, which is negative. -/

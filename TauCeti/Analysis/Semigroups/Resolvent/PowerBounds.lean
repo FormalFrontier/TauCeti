@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -28,10 +29,16 @@ For a contraction semigroup, this specializes to
 
 `‖R(lambda)^n‖ ≤ lambda⁻ⁿ`.
 
+Using `generator_resolvent_eq`, the sharp bound is also transported to the generator resolvent,
+
+`‖R(lambda, generator S)^n‖ ≤ M / (lambda - omega)^n`,
+
+with the corresponding contraction-semigroup specialization.
+
 The corresponding pointwise estimates and the bound for the scaled contraction resolvent
 `lambda R(lambda)` are also recorded. This is the necessity half of the Hille--Yosida generation
-theorem: every C₀-semigroup's Laplace-transform resolvent satisfies the power bound that the
-generation theorem assumes for an abstract operator.
+theorem: every C₀-semigroup's Laplace-transform resolvent, and hence its generator resolvent,
+satisfies the sharp power bound used by the generation theorem.
 
 The sharp derivative bound obtained from the power formula is recorded here in both the general
 growth-bound and contraction cases.
@@ -267,6 +274,18 @@ theorem resolvent_pow_norm_le (hb : S.HasGrowthBound omega M) (n : ℕ)
       · intro x
         exact S.norm_resolvent_pow_succ_apply_le hb n hlambda x
 
+/-- **Sharp Hille--Yosida power bound for the generator resolvent.** For a C₀-semigroup with
+growth bound `(omega, M)` and `lambda > omega`,
+`‖R(lambda, generator S) ^ n‖ ≤ M / (lambda - omega) ^ n`.
+
+This is the necessity estimate in exactly the form consumed by the Hille--Yosida generation
+theorem. -/
+theorem norm_generator_resolvent_pow_le (hb : S.HasGrowthBound omega M)
+    {lambda : ℝ} (hlambda : omega < lambda) (n : ℕ) :
+    ‖LinearPMap.resolvent S.generator lambda ^ n‖ ≤ M / (lambda - omega) ^ n := by
+  rw [S.generator_resolvent_eq hb hlambda]
+  exact S.resolvent_pow_norm_le hb n hlambda
+
 /-- The sharp Hille--Yosida derivative bound obtained from the resolvent power formula. -/
 theorem norm_iteratedDeriv_resolventFun_le (hb : S.HasGrowthBound omega M) (n : ℕ)
     {lambda : ℝ} (hlambda : omega < lambda) :
@@ -304,6 +323,16 @@ theorem resolvent_pow_norm_le (S : ContractionSemigroup X) (lambda : ℝ) (hlamb
     ‖S.resolvent lambda hlambda ^ n‖ ≤ (1 / lambda) ^ n := by
   have h := S.toStronglyContinuousSemigroup.resolvent_pow_norm_le S.hasGrowthBound n hlambda
   rw [← S.resolvent_eq_stronglyContinuousSemigroup_resolvent] at h
+  simpa only [sub_zero, one_div_pow] using h
+
+/-- The sharp Hille--Yosida power bound for the generator of a contraction semigroup:
+`‖R(lambda, generator S) ^ n‖ ≤ lambda⁻ⁿ` for `lambda > 0`. -/
+theorem norm_generator_resolvent_pow_le (S : ContractionSemigroup X) {lambda : ℝ}
+    (hlambda : 0 < lambda) (n : ℕ) :
+    ‖LinearPMap.resolvent S.toStronglyContinuousSemigroup.generator lambda ^ n‖
+      ≤ (1 / lambda) ^ n := by
+  have h := S.toStronglyContinuousSemigroup.norm_generator_resolvent_pow_le
+    S.hasGrowthBound hlambda n
   simpa only [sub_zero, one_div_pow] using h
 
 /-- The Hille--Yosida derivative bound in the contraction case. -/

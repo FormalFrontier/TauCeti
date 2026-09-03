@@ -61,6 +61,14 @@ class ReviewState(unittest.TestCase):
 
 
 class ScoreboardMeta(unittest.TestCase):
+    @staticmethod
+    def board(n, updated, association):
+        return {
+            "body": f'<!--tauceti-scoreboard--><!--tauceti-meta:v1 {{"n":{n}}}-->',
+            "updated": updated,
+            "author_association": association,
+        }
+
     def test_parses_meta_with_nested_states(self):
         # Regression: a lazy `\{.*?\}` truncated at the first inner `}` and dropped the whole meta.
         body = ('<!--tauceti-scoreboard-->\n'
@@ -70,13 +78,39 @@ class ScoreboardMeta(unittest.TestCase):
         self.assertEqual(meta.get("states", {}).get("correctness"), "blocking_block")
         self.assertEqual(meta.get("full_rounds"), 2)
 
-    def test_newest_trusted_comment_wins(self):
+    def test_newest_supplied_comment_wins(self):
         old = {"body": '<!--tauceti-scoreboard--><!--tauceti-meta:v1 {"n":1}-->', "updated": "2026-01-01"}
         new = {"body": '<!--tauceti-scoreboard--><!--tauceti-meta:v1 {"n":2}-->', "updated": "2026-02-01"}
         self.assertEqual(core.scoreboard_meta_from([old, new]).get("n"), 2)
 
     def test_no_marker_is_empty(self):
         self.assertEqual(core.scoreboard_meta_from([{"body": "hi", "updated": "x"}]), {})
+
+    def test_status_scoreboard_accepts_newer_contributor_review(self):
+        comments = [
+            self.board(1, "2026-01-01", "MEMBER"),
+            self.board(2, "2026-02-01", "CONTRIBUTOR"),
+        ]
+        with mock.patch.object(core, "issue_comments", return_value=comments):
+            self.assertEqual(core.scoreboard_meta("9").get("n"), 2)
+
+    def test_destructive_selector_keeps_repo_associated_policy(self):
+        comments = [
+            self.board(1, "2026-01-01", "MEMBER"),
+            self.board(2, "2026-02-01", "CONTRIBUTOR"),
+        ]
+        with mock.patch.object(core, "issue_comments", return_value=comments):
+            self.assertEqual(core.repo_associated_scoreboard_meta("9").get("n"), 1)
+
+    def test_issue_comment_fetch_has_no_author_filter(self):
+        raw = json.dumps({
+            "body": "external review",
+            "updated": "2026-02-01",
+            "author_association": "CONTRIBUTOR",
+        })
+        with mock.patch.object(core, "gh_api", return_value=raw) as gh:
+            self.assertEqual(core.issue_comments("9")[0]["author_association"], "CONTRIBUTOR")
+        self.assertNotIn("select(.author_association", gh.call_args.kwargs["jq"])
 
 
 class RoadmapLabels(unittest.TestCase):
@@ -118,9 +152,6 @@ class RoadmapLabels(unittest.TestCase):
                     "title": "Title",
                     "author": "alice",
                     "roadmaps": ["roadmap/PDE"],
-                    # The event payload carries no trustworthy mergeability, so the
-                    # fast path reports "not known" and conflicting() resolves it.
-                    "mergeable": None,
                 },
             )
 
@@ -153,128 +184,11 @@ class InProgress(unittest.TestCase):
         self.assertFalse(core.inprogress_from([{"body": "just a comment"}], self.HEAD, self.NOW))
 
 
-class Conflicting(unittest.TestCase):
-    """core.conflicting maps GitHub's tri-state `mergeable` onto True/False/None."""
-
-    def setUp(self):
-        self._saved = core.gh_api
-        self.calls = []
-
-    def tearDown(self):
-        core.gh_api = self._saved
-
-    def answer(self, *values):
-        replies = list(values)
-        def fake(path, jq=None, paginate=False):
-            self.calls.append(path)
-            return replies.pop(0)
-        core.gh_api = fake
-
-    def test_prefetched_state_costs_no_request(self):
-        core.gh_api = lambda *a, **k: self.fail("must not fetch")
-        self.assertIs(core.conflicting("1", {"mergeable": False}), True)
-        self.assertIs(core.conflicting("1", {"mergeable": True}), False)
-
-    def test_reads_when_the_state_has_no_answer(self):
-        self.answer("false\n")
-        self.assertIs(core.conflicting("1", {"mergeable": None}), True)
-        self.assertEqual(len(self.calls), 1)
-
-    def test_polls_through_a_not_yet_computed_answer(self):
-        self.answer("null\n", "true\n")
-        self.assertIs(core.conflicting("1", None, sleep=lambda s: None), False)
-        self.assertEqual(len(self.calls), 2)
-
-    def test_gives_up_as_unknown_never_as_mergeable(self):
-        self.answer(*(["null\n"] * core.MERGEABLE_POLLS))
-        self.assertIsNone(core.conflicting("1", None, sleep=lambda s: None))
-        self.assertEqual(len(self.calls), core.MERGEABLE_POLLS)
-
-
-class RateLimitBackoff(unittest.TestCase):
-    """gh does not retry a rate limit; every sink here shares one App budget."""
-
-    def run_with(self, *results):
-        replies = list(results)
-        class Result:
-            def __init__(self, rc, err): self.returncode, self.stderr, self.stdout = rc, err, "ok"
-        with mock.patch.object(core.subprocess, "run",
-                               side_effect=[Result(*r) for r in replies]) as run:
-            return core.gh_api("/x", sleep=lambda s: None), run.call_count
-
-    def test_retries_through_a_rate_limit(self):
-        out, calls = self.run_with((1, "API rate limit exceeded"), (0, ""))
-        self.assertEqual((out, calls), ("ok", 2))
-
-    def test_a_normal_failure_is_not_retried(self):
-        with mock.patch.object(core.subprocess, "run") as run:
-            run.return_value = mock.Mock(returncode=1, stderr="404 Not Found", stdout="")
-            with self.assertRaises(RuntimeError):
-                core.gh_api("/x", sleep=lambda s: None)
-            self.assertEqual(run.call_count, 1)
-
-    def test_a_persistent_rate_limit_eventually_raises(self):
-        with mock.patch.object(core.subprocess, "run") as run:
-            run.return_value = mock.Mock(returncode=1, stderr="secondary rate limit", stdout="")
-            with self.assertRaises(RuntimeError):
-                core.gh_api("/x", sleep=lambda s: None)
-            self.assertEqual(run.call_count, core.RATE_LIMIT_RETRIES)
-
-    def test_a_write_goes_through_the_same_back_off(self):
-        # conflicts.py posts its notice through gh_api, so the sweep's writes share
-        # the budget protection its reads have. Retrying is safe: a rate-limited call
-        # was refused, so it cannot double-post the comment it was carrying.
-        results = [mock.Mock(returncode=1, stderr="API rate limit exceeded", stdout=""),
-                   mock.Mock(returncode=0, stderr="", stdout="ok")]
-        with mock.patch.object(core.subprocess, "run", side_effect=results) as run:
-            core.gh_api("/x", method="POST", fields={"body": "b"}, sleep=lambda s: None)
-        self.assertEqual(run.call_count, 2)
-        self.assertEqual(run.call_args.args[0],
-                         ["gh", "api", "/x", "--method", "POST", "-f", "body=b"])
-
-    def test_retry_transient_is_opt_in(self):
-        # The bulk chart reads ride out a 502; a status sink must not, or a sweep
-        # papers over a read it should have failed and left for the next run.
-        for retry_transient, expected in ((False, 1), (True, core.RATE_LIMIT_RETRIES)):
-            with mock.patch.object(core.subprocess, "run") as run:
-                run.return_value = mock.Mock(returncode=1, stderr="HTTP 502", stdout="")
-                with self.assertRaises(RuntimeError):
-                    core.run_gh(["api", "/x"], "gh api /x", sleep=lambda s: None,
-                                retry_transient=retry_transient)
-                self.assertEqual(run.call_count, expected, retry_transient)
-
-
 class DerivedLabel(unittest.TestCase):
-    def label(self, lifecycle="open", ci=None, review="none", inprogress=False,
-              conflicting=False):
+    def label(self, lifecycle="open", ci=None, review="none", inprogress=False):
         return labels.derived_label(
-            {"lifecycle": lifecycle, "ci": ci, "review": review, "conflicting": conflicting,
+            {"lifecycle": lifecycle, "ci": ci, "review": review,
              "review_inprogress": inprogress, "head": "h", "title": "t"})
-
-    def test_conflict_outranks_every_open_state(self):
-        for ci in (None, "running", "success", "failure"):
-            for review in ("none", "running", "changes", "approved"):
-                self.assertEqual(
-                    self.label(ci=ci, review=review, conflicting=True), "merge-conflict",
-                    f"ci={ci} review={review}")
-
-    def test_conflict_never_survives_a_terminal_pr(self):
-        self.assertIsNone(self.label(lifecycle="merged", conflicting=True))
-        self.assertIsNone(self.label(lifecycle="closed", conflicting=True))
-
-    def test_unknown_mergeability_does_not_paint_a_conflict(self):
-        # None means "GitHub has not computed it", not "no conflict"; a state we
-        # have not established must never displace the one we can see.
-        self.assertEqual(self.label(ci="success", review="approved", conflicting=None),
-                         "ready-to-merge")
-        self.assertEqual(self.label(ci="running", conflicting=None), "awaiting-CI")
-
-    def test_absent_conflict_key_is_tolerated(self):
-        # A caller with an older status dict must still get a label, not a KeyError.
-        self.assertEqual(
-            labels.derived_label({"lifecycle": "open", "ci": "success", "review": "approved",
-                                  "review_inprogress": False, "head": "h", "title": "t"}),
-            "ready-to-merge")
 
     def test_merged_and_closed_have_no_label(self):
         self.assertIsNone(self.label(lifecycle="merged"))
@@ -317,25 +231,35 @@ class DerivedLabel(unittest.TestCase):
 
 
 class Derive(unittest.TestCase):
-    """core.derive glues pr_state/ci_status/trusted_comments together; stub them."""
+    """core.derive glues pr_state/ci_status/issue_comments together; stub them."""
 
     def setUp(self):
-        self._saved = (core.pr_state, core.ci_status, core.trusted_comments, core.conflicting)
+        self._saved = (core.pr_state, core.ci_status, core.issue_comments)
 
     def tearDown(self):
-        (core.pr_state, core.ci_status, core.trusted_comments,
-         core.conflicting) = self._saved
+        core.pr_state, core.ci_status, core.issue_comments = self._saved
 
-    def stub(self, state="open", merged=False, ci="success", comments=None, conflict=False):
-        core.pr_state = lambda pr: {"state": state, "merged": merged, "head": "H", "title": "T",
-                                    "mergeable": None}
+    def stub(self, state="open", merged=False, ci="success", comments=None):
+        core.pr_state = lambda pr: {"state": state, "merged": merged, "head": "H", "title": "T"}
         core.ci_status = lambda head: ci
-        core.trusted_comments = lambda pr: (comments or [])
-        core.conflicting = lambda pr, st=None: conflict
+        core.issue_comments = lambda pr: (comments or [])
 
-    def test_open_plumbs_inprogress(self):
+    def test_contributor_scoreboard_drives_review_state(self):
+        self.stub(comments=[{
+            "body": ('<!--tauceti-scoreboard-->'
+                     '<!--tauceti-meta:v1 {"head_sha":"H",'
+                     '"states":{"correctness":"blocking_request"}}-->'),
+            "updated": "2026-02-01",
+            "author_association": "CONTRIBUTOR",
+        }])
+        self.assertEqual(core.derive("1")["review"], "changes")
+
+    def test_contributor_inprogress_marker_drives_status(self):
         self.stub(ci="success",
-                  comments=[{"body": '<!--tauceti-review-in-progress {"head": "H", "expires_at": 9999999999}-->'}])
+                  comments=[{
+                      "body": '<!--tauceti-review-in-progress {"head": "H", "expires_at": 9999999999}-->',
+                      "author_association": "CONTRIBUTOR",
+                  }])
         d = core.derive("1", now=1_700_000_000)
         self.assertEqual(d["lifecycle"], "open")
         self.assertTrue(d["review_inprogress"])
@@ -347,7 +271,6 @@ class Derive(unittest.TestCase):
         self.assertEqual(d["lifecycle"], "merged")
         self.assertIsNone(d["ci"])
         self.assertIsNone(d["review"])
-        self.assertIsNone(d["conflicting"])
         self.assertFalse(d["review_inprogress"])
 
     def test_state_param_avoids_refetch(self):
@@ -359,27 +282,14 @@ class Derive(unittest.TestCase):
 
         core.pr_state = boom
         core.ci_status = lambda head: "running"
-        core.trusted_comments = lambda pr: []
-        core.conflicting = lambda pr, st=None: False
-        d = core.derive("1", state={"state": "open", "merged": False, "head": "H", "title": "T",
-                                    "mergeable": True})
+        core.issue_comments = lambda pr: []
+        d = core.derive("1", state={"state": "open", "merged": False, "head": "H", "title": "T"})
         self.assertEqual(d["ci"], "running")
         self.assertEqual(called["n"], 0)
 
     def test_ci_override_none_maps_to_none(self):
         self.stub(ci="success")
         self.assertIsNone(core.derive("1", ci_override="none")["ci"])
-
-    def test_conflict_override_replaces_the_read(self):
-        # The sweep already knows every PR's mergeability, so passing it must skip
-        # the per-PR read entirely rather than merely agreeing with it.
-        self.stub()
-        core.conflicting = lambda pr, st=None: self.fail("must not re-read mergeability")
-        self.assertIs(core.derive("1", conflict_override=True)["conflicting"], True)
-
-    def test_conflict_is_read_when_not_overridden(self):
-        self.stub(conflict=True)
-        self.assertIs(core.derive("1")["conflicting"], True)
 
 
 class Reconcile(unittest.TestCase):
@@ -401,82 +311,35 @@ class Reconcile(unittest.TestCase):
         labels.remove_label = self._r
 
     def run_with(self, status, present):
-        self.overrides = []
-
-        def derive(pr, ci=None, conflict_override=None, **kwargs):
-            self.overrides.append(conflict_override)
-            return status
-
-        labels.core.derive = derive
+        labels.core.derive = lambda pr, ci=None: status
         labels.current_status_labels = lambda pr: present
 
-    def status(self, **kwargs):
-        base = {"lifecycle": "open", "ci": "success", "review": "approved",
-                "conflicting": False, "review_inprogress": False, "head": "h", "title": "t"}
-        base.update(kwargs)
-        return base
-
     def test_switches_to_the_single_desired_label(self):
-        self.run_with(self.status(), present=["awaiting-review"])
+        self.run_with(
+            {"lifecycle": "open", "ci": "success", "review": "approved", "review_inprogress": False,
+             "head": "h", "title": "t"},
+            present=["awaiting-review"])
         labels.reconcile("1")
         self.assertEqual(self.added, ["ready-to-merge"])
         self.assertEqual(self.removed, ["awaiting-review"])
 
     def test_idempotent_when_already_correct(self):
-        self.run_with(self.status(ci=None, review="none"), present=["awaiting-CI"])
+        self.run_with(
+            {"lifecycle": "open", "ci": None, "review": "none", "review_inprogress": False,
+             "head": "h", "title": "t"},
+            present=["awaiting-CI"])
         labels.reconcile("1")
         self.assertEqual(self.added, [])
         self.assertEqual(self.removed, [])
 
     def test_terminal_strips_all(self):
-        self.run_with(self.status(lifecycle="merged", ci=None, review=None),
-                      present=["ready-to-merge", "review-in-progress"])
+        self.run_with(
+            {"lifecycle": "merged", "ci": None, "review": None, "review_inprogress": False,
+             "head": "h", "title": "t"},
+            present=["ready-to-merge", "review-in-progress"])
         labels.reconcile("1")
         self.assertEqual(self.added, [])
         self.assertEqual(sorted(self.removed), ["ready-to-merge", "review-in-progress"])
-
-    def test_conflict_replaces_whatever_label_was_there(self):
-        self.run_with(self.status(conflicting=True), present=["ready-to-merge"])
-        labels.reconcile("1")
-        self.assertEqual(self.added, ["merge-conflict"])
-        self.assertEqual(self.removed, ["ready-to-merge"])
-
-    def test_resolved_conflict_gives_the_label_back(self):
-        self.run_with(self.status(), present=["merge-conflict"])
-        labels.reconcile("1")
-        self.assertEqual(self.added, ["ready-to-merge"])
-        self.assertEqual(self.removed, ["merge-conflict"])
-
-    def test_uncomputed_mergeability_keeps_an_established_conflict(self):
-        # GitHub answers null for a while after every push, which is exactly when a
-        # PR event fires this. Deriving from None would strip the label off a
-        # still-conflicting PR until the hourly sweep put it back.
-        self.run_with(self.status(conflicting=None), present=["merge-conflict"])
-        labels.reconcile("1")
-        self.assertEqual((self.added, self.removed), ([], []))
-
-    def test_uncomputed_mergeability_does_not_invent_a_conflict(self):
-        self.run_with(self.status(conflicting=None), present=["awaiting-review"])
-        labels.reconcile("1")
-        self.assertEqual(self.added, ["ready-to-merge"])
-        self.assertEqual(self.removed, ["awaiting-review"])
-
-    def test_only_a_positive_answer_clears_the_conflict_label(self):
-        self.run_with(self.status(conflicting=False), present=["merge-conflict"])
-        labels.reconcile("1")
-        self.assertEqual(self.added, ["ready-to-merge"])
-        self.assertEqual(self.removed, ["merge-conflict"])
-
-    def test_a_terminal_pr_still_strips_a_kept_conflict_label(self):
-        self.run_with(self.status(lifecycle="merged", ci=None, review=None, conflicting=None),
-                      present=["merge-conflict"])
-        labels.reconcile("1")
-        self.assertEqual((self.added, self.removed), ([], ["merge-conflict"]))
-
-    def test_conflict_override_is_plumbed_through(self):
-        self.run_with(self.status(conflicting=True), present=[])
-        labels.reconcile("1", conflict_override=True)
-        self.assertEqual(self.overrides, [True])
 
 
 class EnsureLabel(unittest.TestCase):

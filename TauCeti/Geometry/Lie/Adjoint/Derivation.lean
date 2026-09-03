@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -95,18 +96,22 @@ theorem leftInvariantDerivationLieEquivGroupLieAlgebra_Ad
 tangent adjoint actions. -/
 @[simp high]
 theorem leftInvariantDerivationLinearIsometryEquivModelVectorSpace_Ad
-    [T2Space G] [BoundarylessManifold I G]
     (g : G) (D : LeftInvariantDerivation I G) :
+    let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
+    let _ : BoundarylessManifold I G := ContMDiffMul.boundarylessManifold
     leftInvariantDerivationLinearIsometryEquivModelVectorSpace (I := I) (G := G) (Ad g D) =
       tangentAd (I := I) g
         (leftInvariantDerivationLinearIsometryEquivModelVectorSpace (I := I) (G := G) D) := by
+  let _ : T2Space G := t2Space_of_lieGroup (I := I) (n := ∞)
+  let _ : BoundarylessManifold I G := ContMDiffMul.boundarylessManifold
+  dsimp only
   have h := leftInvariantDerivationLieEquivGroupLieAlgebra_Ad (I := I) g D
   -- `GroupLieAlgebra I G` is definitionally the model space `E`; expose it to compare the
   -- Lie-equivalence identity with the isometric model-space identification.
   have hE := congrArg (fun X : GroupLieAlgebra I G ↦ show E from X) h
-  simpa only [leftInvariantDerivationLieEquivGroupLieAlgebra_apply,
-    leftInvariantDerivationLinearIsometryEquivModelVectorSpace_apply,
-    leftInvariantDerivationEquivGroupLieAlgebra_apply] using hE
+  rw [leftInvariantDerivationLinearIsometryEquivModelVectorSpace_apply_eq_lieEquiv_apply,
+    leftInvariantDerivationLinearIsometryEquivModelVectorSpace_apply_eq_lieEquiv_apply]
+  exact hE
 
 /-- The identity element acts trivially on left-invariant derivations. -/
 @[simp]

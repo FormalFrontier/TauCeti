@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -8,7 +9,7 @@ public import Mathlib.RingTheory.Ideal.Maximal
 public import Mathlib.RingTheory.Jacobson.Radical
 public import Mathlib.RingTheory.Nilpotent.Basic
 public import TauCeti.RepresentationTheory.Quiver.Acyclic.FinitePaths
-public import TauCeti.RepresentationTheory.Quiver.PathAlgebra
+public import TauCeti.RepresentationTheory.Quiver.PathAlgebra.Basic
 
 /-!
 # The arrow ideal of a path algebra, and its radical
@@ -191,19 +192,15 @@ theorem mul_mem_pathSpan {m n : ℕ} {f g : pathAlgebra k Q} (hf : f ∈ pathSpa
     | smul c a _ ha => rw [mul_smul_comm]; exact Submodule.smul_mem _ _ ha
     | mem w hw =>
       obtain ⟨y, hy, rfl⟩ := hw
-      obtain ⟨a₁, b₁, p⟩ := x
-      obtain ⟨a₂, b₂, q⟩ := y
-      simp only [coe_pathAlgebraBasis]
-      by_cases hcomp : b₂ = a₁
-      · subst hcomp
-        rw [ofPath_mul_ofPath_of_comp]
+      have hx' : m ≤ x.2.2.length := hx
+      have hy' : n ≤ y.2.2.length := hy
+      simp only [coe_pathAlgebraBasis, ofPath_mul_ofPath]
+      cases hxy : x.mul? y with
+      | none => exact Submodule.zero_mem _
+      | some z =>
         refine ofPath_mem_pathSpan ?_
-        have hp : m ≤ p.length := hx
-        have hq : n ≤ q.length := hy
-        simp only [Quiver.Path.length_comp]
+        rw [Quiver.TotalPath.length_eq_add_of_mul?_eq_some hxy]
         omega
-      · rw [ofPath_mul_ofPath_of_not_composable (x := ⟨a₁, b₁, p⟩) (y := ⟨a₂, b₂, q⟩) hcomp]
-        exact Submodule.zero_mem _
 
 /-- Powers of an element of the first step of the length filtration climb the filtration. -/
 theorem pow_mem_pathSpan {f : pathAlgebra k Q} (hf : f ∈ pathSpan k Q 1) (n : ℕ) :

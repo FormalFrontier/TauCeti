@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -254,7 +255,6 @@ private theorem map_prod_tail_eq_pathLaw_map {μ : Measure Ω} [IsFiniteMeasure 
     {h : ℕ} (hh : h < g 0) :
     μ.map (fun ω => (X h ω, fun n => X (g n) ω))
       = (pathLaw μ X).map (fun f : ℕ → α => (f 0, fun n => f (n + 1))) := by
-  classical
   let headTail : (ℕ → α) → α × (ℕ → α) := fun f => (f 0, fun n => f (n + 1))
   have hheadTail_meas : Measurable headTail :=
     (measurable_pi_apply 0).prodMk (measurable_pi_lambda _ fun n => measurable_pi_apply (n + 1))

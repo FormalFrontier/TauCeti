@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -26,17 +27,15 @@ homotopy groups of a torus.
 
 ## Main declarations
 
-* `TauCeti.HomotopyGroup.prodEquiv`: the homotopy group of a binary product is the product
+* `HomotopyGroup.prodEquiv`: the homotopy group of a binary product is the product
   of the homotopy groups.
-* `TauCeti.HomotopyGroup.piEquiv`: the homotopy group of an indexed product is the indexed
+* `HomotopyGroup.piEquiv`: the homotopy group of an indexed product is the indexed
   product of the homotopy groups.
-* `TauCeti.HomotopyGroup.prodMulEquiv`, `TauCeti.HomotopyGroup.piMulEquiv`: the
+* `HomotopyGroup.prodMulEquiv`, `HomotopyGroup.piMulEquiv`: the
   positive-dimensional multiplicative forms.
 -/
 
 public section
-
-namespace TauCeti
 
 open scoped unitInterval Topology Topology.Homotopy
 open Topology.Homotopy
@@ -319,5 +318,3 @@ theorem pi_mul [DecidableEq N] [Nonempty N] (a b : ∀ i, HomotopyGroup N (Z i) 
     (piMulEquiv (N := N) z).symm.map_mul a b
 
 end HomotopyGroup
-
-end TauCeti

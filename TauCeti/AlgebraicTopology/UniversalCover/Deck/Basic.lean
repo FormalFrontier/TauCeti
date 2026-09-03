@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -19,6 +20,9 @@ The action of `Deck p` on the total space is inherited, by subgroup transfer, fr
 tautological action of the ambient homeomorphism group `E ≃ₜ E` on `E`
 (`TauCeti.Homeomorph.applyMulAction`). Each deck transformation preserves `p`, hence
 preserves every fibre of `p`.
+
+The deck group only sees `p` through the equalities `p (φ e) = p e`, so postcomposition by an
+injective map leaves it unchanged (`TauCeti.deck_comp_of_injective`).
 
 ## References
 
@@ -106,5 +110,17 @@ lemma inv_smul_eq_symm_apply (φ : Deck p) (e : E) : (φ⁻¹ : Deck p) • e = 
 -- subgroup instances in `TauCeti.Topology.Algebra.Homeomorph.Action`; `Deck p` is a `Subgroup`.
 
 end Deck
+
+section Injective
+
+variable {E B B' : Type*} [TopologicalSpace E]
+
+/-- Postcomposing a map with an injection does not change its deck group. -/
+theorem deck_comp_of_injective {f : B → B'} (hf : Function.Injective f) (p : E → B) :
+    Deck (f ∘ p) = Deck p := by
+  ext φ
+  simp only [Deck.mem_iff, Function.comp_apply, hf.eq_iff]
+
+end Injective
 
 end TauCeti

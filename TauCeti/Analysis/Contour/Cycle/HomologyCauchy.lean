@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -122,26 +123,13 @@ private theorem cycleDixonH1_eq_cycleDixonH2_sub {f : ℂ → ℂ} {C : Cycle} {
         (TauCeti.Contour.dixonH2 f γ γ.a γ.b w - 2 * (Real.pi : ℂ) * Complex.I *
           TauCeti.Contour.windingNumber γ γ.a γ.b w * f w) :=
       Finset.sum_congr rfl fun γ hγ ↦ by rw [hterm γ hγ]
-    _ = ∑ γ ∈ FreeAbelianGroup.support C,
-        ((FreeAbelianGroup.coeff γ C : ℂ) * TauCeti.Contour.dixonH2 f γ γ.a γ.b w -
-          (FreeAbelianGroup.coeff γ C : ℂ) * (2 * (Real.pi : ℂ) * Complex.I *
-            TauCeti.Contour.windingNumber γ γ.a γ.b w * f w)) :=
-      Finset.sum_congr rfl fun _ _ ↦ by ring
-    _ = (∑ γ ∈ FreeAbelianGroup.support C,
-          (FreeAbelianGroup.coeff γ C : ℂ) * TauCeti.Contour.dixonH2 f γ γ.a γ.b w) -
-        ∑ γ ∈ FreeAbelianGroup.support C, (FreeAbelianGroup.coeff γ C : ℂ) *
-          (2 * (Real.pi : ℂ) * Complex.I *
-            TauCeti.Contour.windingNumber γ γ.a γ.b w * f w) :=
-      by rw [Finset.sum_sub_distrib]
     _ = (∑ γ ∈ FreeAbelianGroup.support C,
           (FreeAbelianGroup.coeff γ C : ℂ) * TauCeti.Contour.dixonH2 f γ γ.a γ.b w) -
         2 * (Real.pi : ℂ) * Complex.I *
           (∑ γ ∈ FreeAbelianGroup.support C, (FreeAbelianGroup.coeff γ C : ℂ) *
             TauCeti.Contour.windingNumber γ γ.a γ.b w) * f w := by
-      congr 1
-      rw [Finset.mul_sum, Finset.sum_mul]
-      refine Finset.sum_congr rfl fun _ _ ↦ ?_
-      ring
+      simp only [Finset.mul_sum, Finset.sum_mul, ← Finset.sum_sub_distrib]
+      exact Finset.sum_congr rfl fun _ _ ↦ by ring
 
 /-- The cycle Dixon function agrees with `h₂` at an off-trace point where the cycle winding
 number vanishes. -/

@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -33,6 +34,13 @@ the arrows of `Reflect V i`, by `TauCeti.Quiver.hom_reflectAt_eq_hom_reflect` �
   quiver structure, with `TauCeti.Quiver.hom_reflectList_of_forall_mem` the same statement on
   arrow types.
 
+## Implementation notes
+
+Both definitions are `@[expose]`d. A module that iterates the reflection of *representations*
+needs the reductions `reflectList q (i :: l) = reflectList (reflectAt q i) l` and
+`(a ⟶ b) = TauCeti.Quiver.reflectHom i a b` in `reflectAt q i` to hold definitionally, so that a
+recursive construction typechecks against the quiver structure its predecessor produced.
+
 ## References
 
 The lists along which this iteration is sink-admissible are studied in
@@ -62,7 +70,7 @@ namespace Quiver
 vertex type: `reflectAt q i` has the arrows of `q` with every arrow incident to `i` reversed.
 Unlike the type synonym `TauCeti.Quiver.Reflect`, this form iterates, which is what a sequence of
 reflections needs. -/
-@[instance_reducible]
+@[expose, instance_reducible]
 noncomputable def reflectAt (q : _root_.Quiver.{v} V) (i : V) : _root_.Quiver.{v} V :=
   ⟨@reflectHom V q i⟩
 
@@ -89,7 +97,7 @@ theorem reflectAt_reflectAt (q : _root_.Quiver.{v} V) (i : V) :
 /-! ### Reflecting along a list of vertices -/
 
 /-- Reflection at each vertex of a list in turn, starting from the head. -/
-@[instance_reducible]
+@[expose, instance_reducible]
 noncomputable def reflectList (q : _root_.Quiver.{v} V) (l : List V) : _root_.Quiver.{v} V :=
   l.foldl reflectAt q
 

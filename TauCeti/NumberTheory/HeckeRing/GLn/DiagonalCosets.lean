@@ -9,7 +9,7 @@ public import TauCeti.NumberTheory.HeckeRing.GLn.Basic
 public import TauCeti.NumberTheory.HeckeRing.One
 
 import TauCeti.LinearAlgebra.Matrix.SmithNormalForm
-import TauCeti.RepresentationTheory.ClassicalGroups.Diagonal
+import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Diagonal.Basic
 
 /-!
 # Diagonal coset representatives for the `GL_n` Hecke ring
@@ -77,6 +77,18 @@ noncomputable def natDiagGL (a : Fin n → ℕ) : GL (Fin n) ℚ :=
   rw [natDiagGL, dite_eq_left ha, TauCeti.diagGL_coe]
   simp
 
+/-- **The integral witness of `natDiagGL`.** `natDiagGL n a` is the entrywise cast of the
+integral diagonal matrix with entries `a`.
+
+`natDiagGL_coe` gives the same matrix as a `ℚ`-valued diagonal; this states it in the form the
+integral-witness API asks for, so that `mapGL_mul_coe_eq_intMatrix` and its relatives can be
+applied to a product with `natDiagGL` in the middle without re-deriving the cast each time. -/
+lemma natDiagGL_coe_eq_map_intCast (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) :
+    (↑(natDiagGL n a) : Matrix (Fin n) (Fin n) ℚ) =
+      (Matrix.diagonal (fun i ↦ (a i : ℤ))).map (Int.cast : ℤ → ℚ) := by
+  rw [natDiagGL_coe n a ha, Matrix.diagonal_map (by simp)]
+  norm_num
+
 lemma hasIntEntries_natDiagGL (a : Fin n → ℕ) : HasIntEntries n (natDiagGL n a) := by
   rw [natDiagGL]
   split_ifs with h
@@ -120,6 +132,17 @@ lemma natDiagGL_det (a : Fin n → ℕ) (ha : ∀ i, 0 < a i) :
 @[simp] lemma natDiagGL_of_not_pos {a : Fin n → ℕ} (ha : ¬ ∀ i, 0 < a i) :
     natDiagGL n a = 1 :=
   dite_eq_right ha
+
+/-- **Natural diagonal matrices commute**, with no positivity hypothesis: on the positive branch
+this is `natDiagGL_mul` and `mul_comm` of the entry tuples, and when either tuple fails positivity
+that factor is the junk value `1`, which commutes with everything. -/
+lemma natDiagGL_comm (a b : Fin n → ℕ) :
+    natDiagGL n a * natDiagGL n b = natDiagGL n b * natDiagGL n a := by
+  by_cases ha : ∀ i, 0 < a i
+  · by_cases hb : ∀ i, 0 < b i
+    · rw [natDiagGL_mul n a b ha hb, natDiagGL_mul n b a hb ha, mul_comm a b]
+    · rw [natDiagGL_of_not_pos n hb, one_mul, mul_one]
+  · rw [natDiagGL_of_not_pos n ha, one_mul, mul_one]
 
 private lemma natDiagGL_const_eq_scalar {c : ℕ} (hc : 0 < c) :
     natDiagGL n (fun _ ↦ c) =

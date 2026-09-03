@@ -1,12 +1,14 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import Mathlib.NumberTheory.NumberField.Basic
 public import Mathlib.RingTheory.Discriminant
 public import Mathlib.RingTheory.Trace.Basic
+import TauCeti.FieldTheory.Minpoly
 
 /-!
 # Trace lemmas for field extensions
@@ -15,7 +17,7 @@ This file collects reusable trace facts for finite field extensions.
 
 ## Main results
 
-* `TauCeti.NumberField.trace_eq_zero_of_sq_ratCast`: the number-field
+* `NumberField.trace_eq_zero_of_sq_ratCast`: the number-field
   specialization saying that `x² ∈ ℚ`, `x ∉ ℚ` implies `Tr x = 0`.
 * `TauCeti.Algebra.trace_eq_zero_of_sq_algebraMap_of_not_mem_range`: the corresponding
   trace-vanishing statement for any finite field extension.
@@ -45,7 +47,6 @@ theorem trace_eq_zero_of_sq_algebraMap_of_not_mem_range {F L : Type*} [Field F] 
     [Algebra F L] [FiniteDimensional F L] {x : L} {r : F}
     (hx2 : x ^ 2 = algebraMap F L r) (hx : x ∉ (algebraMap F L).range) :
     Algebra.trace F L x = 0 := by
-  have hmonic : (X ^ 2 - C r).Monic := Polynomial.monic_X_pow_sub_C r (by norm_num)
   have haeval : aeval x (X ^ 2 - C r : F[X]) = 0 := by simp [hx2]
   have hdvd : minpoly F x ∣ (X ^ 2 - C r) := minpoly.dvd F x haeval
   have hint : IsIntegral F x := Algebra.IsIntegral.isIntegral x
@@ -62,8 +63,7 @@ theorem trace_eq_zero_of_sq_algebraMap_of_not_mem_range {F L : Type*} [Field F] 
       · exact hx (minpoly.natDegree_eq_one_iff.mp hh)
     omega
   have heq : minpoly F x = X ^ 2 - C r :=
-    (Polynomial.eq_of_monic_of_dvd_of_natDegree_le (minpoly.monic hint) hmonic hdvd
-      (by rw [hdeg2, Polynomial.natDegree_X_pow_sub_C])).symm
+    minpoly_eq_X_sq_sub_C_of_sq_eq_of_natDegree_eq_two hx2 hdeg2
   rw [trace_eq_finrank_mul_minpoly_nextCoeff, heq]
   have hnc : (X ^ 2 - C r : F[X]).nextCoeff = 0 := by
     rw [Polynomial.nextCoeff_of_natDegree_pos
@@ -107,6 +107,8 @@ theorem discr_one_elem_eq_of_sq_algebraMap {x : L} {a : F} (hfin : finrank F L =
 
 end Algebra
 
+end TauCeti
+
 namespace NumberField
 
 /-- In a number field, an irrational element whose square is rational has trace zero. -/
@@ -115,8 +117,4 @@ theorem trace_eq_zero_of_sq_ratCast {K : Type*} [Field K] [NumberField K]
     Algebra.trace ℚ K x = 0 :=
   TauCeti.Algebra.trace_eq_zero_of_sq_algebraMap_of_not_mem_range hx2 hx
 
-/-- Deprecated compatibility alias for the old NumberField helper name. -/
-@[deprecated TauCeti.NumberField.trace_eq_zero_of_sq_ratCast (since := "2026-06-20")]
-alias trace_eq_zero_of_sq_ratCast_of_not_mem_range := trace_eq_zero_of_sq_ratCast
-
-end TauCeti.NumberField
+end NumberField

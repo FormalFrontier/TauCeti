@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -49,7 +50,6 @@ theorem exists_strictMono_nat_extending_fin_eventually_add {m : ℕ} {k : Fin m 
     (hk : StrictMono k) :
     ∃ (φ : ℕ → ℕ) (C : ℕ), StrictMono φ ∧ (∀ i : Fin m, φ i.val = k i) ∧
       ∀ n, m ≤ n → φ n = n + C := by
-  classical
   let C := Finset.univ.sup k + 1
   let φ : ℕ → ℕ := fun n => if h : n < m then k ⟨n, h⟩ else n + C
   refine ⟨φ, C, ?_, ?_, ?_⟩

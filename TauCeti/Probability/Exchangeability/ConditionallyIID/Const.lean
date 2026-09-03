@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -49,16 +50,11 @@ theorem conditionallyIIDWith_const_of_mixedIIDWith {μ : Measure Ω}
     ConditionallyIIDWith μ X fun _ => p := by
   by_cases hμ : μ = 0
   · subst μ
-    refine ConditionallyIIDWith.intro measurable_const fun m k hk => ?_
+    refine ConditionallyIIDWith.intro h.aemeasurable measurable_const fun m k hk => ?_
     simp
-  refine ConditionallyIIDWith.intro measurable_const fun m k hk => ?_
-  have hblock_ne : blockLaw μ X k ≠ 0 := by
-    rw [h.blockLaw_eq_mixture k hk, Measure.bind_const]
-    intro hzero
-    have huniv := congrArg (fun q : Measure (Fin m → α) => q Set.univ) hzero
-    exact hμ (Measure.measure_univ_eq_zero.mp (by simpa using huniv))
+  refine ConditionallyIIDWith.intro h.aemeasurable measurable_const fun m k hk => ?_
   have hblock : AEMeasurable (fun ω (i : Fin m) => X (k i) ω) μ :=
-    AEMeasurable.of_map_ne_zero (by simpa only [blockLaw_def] using hblock_ne)
+    aemeasurable_pi_lambda _ fun i => h.aemeasurable (k i)
   calc μ.map (fun ω => (p, fun i : Fin m => X (k i) ω))
       = (μ.map fun ω (i : Fin m) => X (k i) ω).map (Prod.mk p) := by
         rw [measurable_prodMk_left.aemeasurable.map_map_of_aemeasurable hblock]
@@ -68,7 +64,8 @@ theorem conditionallyIIDWith_const_of_mixedIIDWith {μ : Measure Ω}
         rw [← blockLaw_def, h.blockLaw_eq_mixture k hk]
     _ = μ.bind fun _ : Ω =>
           (Measure.dirac p).prod (ProbabilityMeasure.pi fun _ : Fin m => p).toMeasure := by
-        rw [Measure.bind_const, Measure.bind_const, Measure.map_smul, Measure.dirac_prod]
+        rw [Measure.bind_const, Measure.bind_const,
+          Measure.map_smul _ measurable_prodMk_left.aemeasurable, Measure.dirac_prod]
 
 /-- **The two de Finetti predicates agree at a constant witness.** In general only
 `mixedIIDWith_of_conditionallyIIDWith` is available and the two need not agree; at a constant `ν`
@@ -79,10 +76,12 @@ theorem conditionallyIIDWith_const_iff_mixedIIDWith {μ : Measure Ω}
   ⟨mixedIIDWith_of_conditionallyIIDWith, conditionallyIIDWith_const_of_mixedIIDWith⟩
 
 /-- **A constant directing measure means plain i.i.d.**: `fun _ => p` witnesses
-`ConditionallyIIDWith` exactly when the coordinates are independent and each has law `p`. -/
+`ConditionallyIIDWith` exactly when the coordinates are a.e. measurable and independent and
+each has law `p`. -/
 theorem conditionallyIIDWith_const_iff_iIndepFun_and_map_eq {μ : Measure Ω}
     [IsProbabilityMeasure μ] {X : ι → Ω → α} {p : ProbabilityMeasure α} :
-    (ConditionallyIIDWith μ X fun _ => p) ↔ iIndepFun X μ ∧ ∀ i, μ.map (X i) = (p : Measure α) :=
+    (ConditionallyIIDWith μ X fun _ => p) ↔
+      (∀ i, AEMeasurable (X i) μ) ∧ iIndepFun X μ ∧ ∀ i, μ.map (X i) = (p : Measure α) :=
   conditionallyIIDWith_const_iff_mixedIIDWith.trans mixedIIDWith_const_iff_iIndepFun_and_map_eq
 
 /-- **Independent, identically distributed coordinates are conditionally i.i.d.**, at an arbitrary
@@ -92,7 +91,7 @@ theorem ConditionallyIIDWith.of_iIndepFun_identDistrib_at {μ : Measure Ω} {X :
     (i₀ : ι) (hindep : iIndepFun X μ) (hident : ∀ i, IdentDistrib (X i) (X i₀) μ μ) :
     haveI := hindep.isProbabilityMeasure
     ConditionallyIIDWith μ X
-      (fun _ => ⟨μ.map (X i₀), Measure.isProbabilityMeasure_map (hident i₀).aemeasurable_fst⟩) := by
+      (fun _ => ⟨μ.map (X i₀), inferInstance⟩) := by
   have := hindep.isProbabilityMeasure
   exact conditionallyIIDWith_const_of_mixedIIDWith
     (MixedIIDWith.of_iIndepFun_identDistrib_at i₀ hindep hident)
@@ -103,7 +102,7 @@ theorem ConditionallyIIDWith.of_iIndepFun_identDistrib {μ : Measure Ω} {X : �
     (hindep : iIndepFun X μ) (hident : ∀ i, IdentDistrib (X i) (X 0) μ μ) :
     haveI := hindep.isProbabilityMeasure
     ConditionallyIIDWith μ X
-      (fun _ => ⟨μ.map (X 0), Measure.isProbabilityMeasure_map (hident 0).aemeasurable_fst⟩) :=
+      (fun _ => ⟨μ.map (X 0), inferInstance⟩) :=
   ConditionallyIIDWith.of_iIndepFun_identDistrib_at 0 hindep hident
 
 /-- **An i.i.d. family is conditionally i.i.d.** (existential directing-measure form), at an

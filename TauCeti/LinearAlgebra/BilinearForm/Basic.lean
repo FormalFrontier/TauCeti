@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -22,6 +23,9 @@ field, or over any domain, `IsRegular.of_ne_zero` supplies the hypothesis from `
 
 * `TauCeti.BilinForm.eq_zero_of_isSymm_of_isAlt`: a symmetric alternating form over a ring in which
   `2` is regular is zero.
+* `TauCeti.BilinForm.nondegenerate_smul_iff`: scalar multiplication by a regular element
+  preserves nondegeneracy.
+* `TauCeti.BilinForm.nondegenerate_neg_iff`: negating a bilinear form preserves nondegeneracy.
 -/
 
 public section
@@ -42,6 +46,36 @@ theorem eq_zero_of_isSymm_of_isAlt {R M : Type*} [CommRing R] [AddCommGroup M]
     rw [mul_zero]
     linear_combination hsymm.eq x y - halt.neg_eq x y
   simpa using h2 hzero
+
+/-- A scalar multiple of a bilinear form by a regular element is nondegenerate if and only if
+the original form is nondegenerate. -/
+@[simp]
+theorem nondegenerate_smul_iff {R M : Type*} [CommSemiring R] [AddCommMonoid M]
+    [Module R M] {B : BilinForm R M} {c : R} (hc : IsRegular c) :
+    (c • B).Nondegenerate ↔ B.Nondegenerate := by
+  constructor
+  · rintro ⟨hl, hr⟩
+    refine ⟨fun x hx ↦ hl x fun y ↦ ?_, fun y hy ↦ hr y fun x ↦ ?_⟩
+    · specialize hx y
+      simp only [LinearMap.smul_apply, smul_eq_mul, hx, mul_zero]
+    · specialize hy x
+      simp only [LinearMap.smul_apply, smul_eq_mul, hy, mul_zero]
+  · rintro ⟨hl, hr⟩
+    refine ⟨fun x hx ↦ hl x fun y ↦ ?_, fun y hy ↦ hr y fun x ↦ ?_⟩
+    · specialize hx y
+      simp only [LinearMap.smul_apply, smul_eq_mul, hc.left.mul_left_eq_zero_iff] at hx
+      exact hx
+    · specialize hy x
+      simp only [LinearMap.smul_apply, smul_eq_mul, hc.left.mul_left_eq_zero_iff] at hy
+      exact hy
+
+/-- Negating a bilinear form preserves nondegeneracy. -/
+@[simp]
+theorem nondegenerate_neg_iff {R M : Type*} [CommRing R] [AddCommGroup M]
+    [Module R M] {B : BilinForm R M} :
+    (-B).Nondegenerate ↔ B.Nondegenerate := by
+  rw [← neg_one_smul R B]
+  exact nondegenerate_smul_iff (isUnit_neg_one : IsUnit (-1 : R)).isRegular
 
 end BilinForm
 

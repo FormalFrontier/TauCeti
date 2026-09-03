@@ -1,19 +1,21 @@
 /-
 Copyright (c) 2026 Tau Ceti. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Codex
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import Mathlib.Data.FunLike.Fintype
-public import TauCeti.Combinatorics.Young.Diagram
+public import TauCeti.Combinatorics.Young.Tableau
 
 /-!
 # Standard Young tableaux
 
 A standard Young tableau of shape `μ` is a bijective labeling of the cells of `μ` by
 `Fin μ.card` that increases strictly from left to right and from top to bottom. This file
-defines standard Young tableaux, their finite cardinality `standardCount`, and transposition.
+defines standard Young tableaux, their finite cardinality `standardCount`, and transposition. Its
+underlying labeling is the existing `YoungTableau μ` type, so the general tableau API applies
+without converting between parallel representations.
 
 The labels start at zero, following the `Fin μ.card` convention in the Schur--Weyl roadmap.
 
@@ -33,20 +35,20 @@ namespace TauCeti
 /-- A standard Young tableau of shape `μ` is a bijective labeling of its cells by
 `Fin μ.card`, strictly increasing along rows and columns. -/
 structure StandardYoungTableau (μ : YoungDiagram) where
-  /-- The bijection from cells of the diagram to their labels. -/
-  toEquiv : ↥μ.cells ≃ Fin μ.card
+  /-- The underlying Young tableau. -/
+  toTableau : YoungTableau μ
   /-- Labels increase strictly from left to right. -/
   row_strict' : ∀ {i j₁ j₂ : ℕ} (h : j₁ < j₂) (hcell : (i, j₂) ∈ μ),
-    toEquiv ⟨(i, j₁), μ.up_left_mem (by rfl) h.le hcell⟩ < toEquiv ⟨(i, j₂), hcell⟩
+    toTableau ⟨(i, j₁), μ.up_left_mem (by rfl) h.le hcell⟩ < toTableau ⟨(i, j₂), hcell⟩
   /-- Labels increase strictly from top to bottom. -/
   col_strict' : ∀ {i₁ i₂ j : ℕ} (h : i₁ < i₂) (hcell : (i₂, j) ∈ μ),
-    toEquiv ⟨(i₁, j), μ.up_left_mem h.le (by rfl) hcell⟩ < toEquiv ⟨(i₂, j), hcell⟩
+    toTableau ⟨(i₁, j), μ.up_left_mem h.le (by rfl) hcell⟩ < toTableau ⟨(i₂, j), hcell⟩
 
 namespace StandardYoungTableau
 
 instance instFunLike {μ : YoungDiagram} :
     FunLike (StandardYoungTableau μ) ↥μ.cells (Fin μ.card) where
-  coe T := T.toEquiv
+  coe T := T.toTableau
   coe_injective T U h := by
     cases T with
     | mk e _ _ =>
@@ -55,16 +57,16 @@ instance instFunLike {μ : YoungDiagram} :
         congr
         exact Equiv.ext fun c => congrFun h c
 
-/-- The underlying function of a standard Young tableau is its labeling equivalence. -/
+/-- The underlying function of a standard Young tableau is its underlying tableau. -/
 @[simp]
-theorem coe_toEquiv {μ : YoungDiagram} (T : StandardYoungTableau μ) :
-    ⇑T.toEquiv = T :=
+theorem coe_toTableau {μ : YoungDiagram} (T : StandardYoungTableau μ) :
+    ⇑T.toTableau = T :=
   rfl
 
-/-- Evaluating the labeling equivalence agrees with evaluating the tableau. -/
+/-- Evaluating the underlying tableau agrees with evaluating the standard tableau. -/
 @[simp]
-theorem toEquiv_apply {μ : YoungDiagram} (T : StandardYoungTableau μ) (c : ↥μ.cells) :
-    T.toEquiv c = T c :=
+theorem toTableau_apply {μ : YoungDiagram} (T : StandardYoungTableau μ) (c : ↥μ.cells) :
+    T.toTableau c = T c :=
   rfl
 
 /-- Two standard Young tableaux are equal when all of their entries agree. -/
@@ -75,17 +77,17 @@ theorem ext {μ : YoungDiagram} {T U : StandardYoungTableau μ} (h : ∀ c, T c 
 /-- The entries of a standard Young tableau form a bijection. -/
 theorem bijective {μ : YoungDiagram} (T : StandardYoungTableau μ) :
     Function.Bijective T :=
-  T.toEquiv.bijective
+  T.toTableau.bijective
 
 /-- The entries of a standard Young tableau are injective. -/
 theorem injective {μ : YoungDiagram} (T : StandardYoungTableau μ) :
     Function.Injective T :=
-  T.toEquiv.injective
+  T.toTableau.injective
 
 /-- Every label occurs in a standard Young tableau. -/
 theorem surjective {μ : YoungDiagram} (T : StandardYoungTableau μ) :
     Function.Surjective T :=
-  T.toEquiv.surjective
+  T.toTableau.surjective
 
 /-- Entries of a standard Young tableau increase strictly from left to right. -/
 theorem row_strict {μ : YoungDiagram} (T : StandardYoungTableau μ)
@@ -123,16 +125,16 @@ private theorem transposeCellEquiv_symm_apply (μ : YoungDiagram) (c : ↥μ.cel
 labels. -/
 def transpose {μ : YoungDiagram} (T : StandardYoungTableau μ) :
     StandardYoungTableau μ.transpose where
-  toEquiv :=
+  toTableau :=
     (transposeCellEquiv μ).trans
-      (T.toEquiv.trans (finCongr (YoungDiagram.card_transpose μ).symm))
+      (T.toTableau.trans (finCongr (YoungDiagram.card_transpose μ).symm))
   row_strict' h hcell := by
     simpa only [Equiv.trans_apply, transposeCellEquiv_apply, Prod.swap, finCongr,
-      Equiv.coe_fn_mk, Fin.cast_lt_cast, toEquiv_apply] using
+      Equiv.coe_fn_mk, Fin.cast_lt_cast, toTableau_apply] using
       T.col_strict h (YoungDiagram.mem_transpose.mp hcell)
   col_strict' h hcell := by
     simpa only [Equiv.trans_apply, transposeCellEquiv_apply, Prod.swap, finCongr,
-      Equiv.coe_fn_mk, Fin.cast_lt_cast, toEquiv_apply] using
+      Equiv.coe_fn_mk, Fin.cast_lt_cast, toTableau_apply] using
       T.row_strict h (YoungDiagram.mem_transpose.mp hcell)
 
 /-- Transposition preserves the numeric label of each cell. -/
@@ -141,35 +143,35 @@ theorem transpose_apply_val {μ : YoungDiagram} (T : StandardYoungTableau μ)
     (c : ↥μ.transpose.cells) : (T.transpose c).val =
       (T ⟨c.1.swap, YoungDiagram.mem_transpose.mp c.2⟩).val :=
   calc
-    (T.transpose c).val = (T.transpose.toEquiv c).val :=
-      congrArg Fin.val (toEquiv_apply T.transpose c).symm
+    (T.transpose c).val = (T.transpose.toTableau c).val :=
+      congrArg Fin.val (toTableau_apply T.transpose c).symm
     _ = (T ⟨c.1.swap, YoungDiagram.mem_transpose.mp c.2⟩).val := by
       simp only [transpose, Equiv.trans_apply, transposeCellEquiv_apply,
-        finCongr, Equiv.coe_fn_mk, Fin.val_cast, toEquiv_apply]
+        finCongr, Equiv.coe_fn_mk, Fin.val_cast, toTableau_apply]
 
 private def untranspose {μ : YoungDiagram} (T : StandardYoungTableau μ.transpose) :
     StandardYoungTableau μ where
-  toEquiv :=
+  toTableau :=
     (transposeCellEquiv μ).symm.trans
-      (T.toEquiv.trans (finCongr (YoungDiagram.card_transpose μ)))
+      (T.toTableau.trans (finCongr (YoungDiagram.card_transpose μ)))
   row_strict' h hcell := by
     simpa only [Equiv.trans_apply, transposeCellEquiv_symm_apply, Prod.swap, finCongr,
-      Equiv.coe_fn_mk, Fin.cast_lt_cast, toEquiv_apply] using
+      Equiv.coe_fn_mk, Fin.cast_lt_cast, toTableau_apply] using
       T.col_strict h (YoungDiagram.mem_transpose.mpr hcell)
   col_strict' h hcell := by
     simpa only [Equiv.trans_apply, transposeCellEquiv_symm_apply, Prod.swap, finCongr,
-      Equiv.coe_fn_mk, Fin.cast_lt_cast, toEquiv_apply] using
+      Equiv.coe_fn_mk, Fin.cast_lt_cast, toTableau_apply] using
       T.row_strict h (YoungDiagram.mem_transpose.mpr hcell)
 
 private theorem untranspose_apply_val {μ : YoungDiagram}
     (T : StandardYoungTableau μ.transpose) (c : ↥μ.cells) : (untranspose T c).val =
       (T ⟨c.1.swap, YoungDiagram.mem_transpose.mpr c.2⟩).val :=
   calc
-    (untranspose T c).val = ((untranspose T).toEquiv c).val :=
-      congrArg Fin.val (toEquiv_apply (untranspose T) c).symm
+    (untranspose T c).val = ((untranspose T).toTableau c).val :=
+      congrArg Fin.val (toTableau_apply (untranspose T) c).symm
     _ = (T ⟨c.1.swap, YoungDiagram.mem_transpose.mpr c.2⟩).val := by
       simp only [untranspose, Equiv.trans_apply, transposeCellEquiv_symm_apply,
-        finCongr, Equiv.coe_fn_mk, Fin.val_cast, toEquiv_apply]
+        finCongr, Equiv.coe_fn_mk, Fin.val_cast, toTableau_apply]
 
 /-- Transposition is an equivalence between standard Young tableaux of conjugate shapes. -/
 def transposeEquiv (μ : YoungDiagram) :

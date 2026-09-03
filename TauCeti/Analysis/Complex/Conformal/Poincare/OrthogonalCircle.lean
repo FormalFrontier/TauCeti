@@ -234,7 +234,7 @@ traces a genuine circle rather than a point or the empty set
 lemma orthogonalCircleRadius_pos {u a : ℂ} (ha : ‖a‖ < 1) (hA : (conj u * a).im ≠ 0) :
     0 < orthogonalCircleRadius u a := by
   rw [orthogonalCircleRadius_def]
-  have hnum : 0 < 1 - ‖a‖ ^ 2 := by nlinarith [norm_nonneg a]
+  have hnum : 0 < 1 - ‖a‖ ^ 2 := one_sub_sq_norm_pos_of_norm_lt_one ha
   have hden : 0 < |(conj u * a).im| := abs_pos.mpr hA
   exact div_pos hnum (by linarith)
 

@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -41,7 +42,7 @@ An algebra homomorphism between coefficient algebras transports these synonyms v
 `Bialgebra.CounitAlgebra.mapAlgHom`; `Bialgebra.CounitAlgebra.map` records that this
 transport is linear for the actions induced by the counit.
 
-The general generator criterion `TauCeti.Derivation.apply_eq_zero_of_mem_span` says that a
+The general generator criterion `Derivation.apply_eq_zero_of_mem_span` says that a
 counit-valued derivation vanishing on counit-zero generators vanishes on their ideal span.
 
 ## The exterior convolution product
@@ -62,9 +63,9 @@ consequence of these three identities.
 
 public section
 
-namespace TauCeti
-
 open TauCeti.Bialgebra _root_.Bialgebra _root_.Coalgebra WithConv
+
+namespace TauCeti
 
 section BialgebraPoint
 
@@ -239,12 +240,16 @@ lemma algEquivSelf_derivation_smul_apply
 
 end DerivationCoefficients
 
+end TauCeti
+
 section DerivationSpan
 
 variable {R H B : Type*} [CommSemiring R] [CommSemiring H] [Bialgebra R H]
   [CommSemiring B] [Algebra R B]
 
 namespace Derivation
+
+open TauCeti
 
 /-- The ideal on which both the counit and a counit-valued derivation vanish. -/
 private def vanishingIdeal
@@ -279,6 +284,8 @@ theorem apply_eq_zero_of_mem_span
 end Derivation
 
 end DerivationSpan
+
+namespace TauCeti
 
 section CounitAlgebraMap
 
@@ -722,6 +729,8 @@ lemma tangentKer_smul_apply_snd
 
 end Hopf
 
+end TauCeti
+
 section DerivationLeibniz
 
 open WithConv TensorProduct
@@ -734,7 +743,7 @@ variable {R A B : Type*} [CommSemiring R] [CommSemiring A] [Bialgebra R A]
 
 namespace Derivation
 
-open TauCeti.LinearMap
+open TauCeti TauCeti.LinearMap
 
 /-- The Leibniz rule in convolution form: composing a counit-valued derivation with
 the multiplication of `A` is the exterior product against the convolution unit, on
@@ -757,5 +766,3 @@ lemma toConv_coe_comp_mul'
 end Derivation
 
 end DerivationLeibniz
-
-end TauCeti

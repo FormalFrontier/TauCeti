@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Claude
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -34,12 +34,12 @@ variable {α β E : Type*} {mα : MeasurableSpace α} {mβ : MeasurableSpace β}
   [NormedAddCommGroup E] [NormedSpace ℝ E]
 
 /-- An a.e. statement on the first factor transfers to the product measure. -/
-theorem ae_of_ae_fst {p : α → Prop} (hp : ∀ᵐ x ∂μ, p x) :
+theorem ae_of_ae_fst [SFinite ν] {p : α → Prop} (hp : ∀ᵐ x ∂μ, p x) :
     ∀ᵐ q : α × β ∂(μ.prod ν), p q.1 :=
   Measure.quasiMeasurePreserving_fst.tendsto_ae.eventually hp
 
 /-- An a.e. statement on the second factor transfers to the product measure. -/
-theorem ae_of_ae_snd {p : β → Prop} (hp : ∀ᵐ y ∂ν, p y) :
+theorem ae_of_ae_snd [SFinite ν] {p : β → Prop} (hp : ∀ᵐ y ∂ν, p y) :
     ∀ᵐ q : α × β ∂(μ.prod ν), p q.2 :=
   Measure.quasiMeasurePreserving_snd.tendsto_ae.eventually hp
 

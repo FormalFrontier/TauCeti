@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -27,9 +28,9 @@ finite module (ReductiveGroups roadmap, Layer 2).
 * `TauCeti.Bialgebra.CotangentSpace`: the augmentation ideal modulo its square.
 * `TauCeti.Bialgebra.cotangentMap`: the universal first-order displacement from
   the identity.
-* `TauCeti.Derivation.cotangentLinearEquiv`: the duality between the cotangent
+* `Derivation.cotangentLinearEquiv`: the duality between the cotangent
   space and counit-valued derivations.
-* `TauCeti.Derivation.tangentScalarExtensionEquiv`: scalar extension of the
+* `Derivation.tangentScalarExtensionEquiv`: scalar extension of the
   cotangent dual when the cotangent space is finite projective.
 
 ## References
@@ -49,12 +50,13 @@ variable (R A : Type*) [CommRing R] [CommRing A] [Bialgebra R A]
 
 /-- The augmentation ideal of a commutative bialgebra, the kernel of its counit. -/
 abbrev AugmentationIdeal :=
-  RingHom.ker (_root_.Bialgebra.counitAlgHom R A).toRingHom
+  RingHom.ker (_root_.Bialgebra.counitAlgHom R A : A →+* R)
 
 /-- The cotangent space at the identity of the affine monoid represented by `A`:
 the augmentation ideal `ker ε` modulo its square. -/
 abbrev CotangentSpace := (AugmentationIdeal R A).Cotangent
 
+/-- The linear displacement of an element from the scalar selected by the counit. -/
 private noncomputable def counitDisplacement : A →ₗ[R] A where
   toFun a := a - algebraMap R A (counit (R := R) a)
   map_add' a b := by
@@ -64,6 +66,7 @@ private noncomputable def counitDisplacement : A →ₗ[R] A where
     simp [Algebra.smul_def]
     ring
 
+/-- The counit displacement regarded as an element of the augmentation ideal. -/
 private noncomputable def augmentationProjection : A →ₗ[R] AugmentationIdeal R A where
   toFun a := ⟨counitDisplacement R A a, by
     simp [AugmentationIdeal, counitDisplacement]⟩
@@ -95,7 +98,7 @@ lemma cotangentMap_augmentation (x : AugmentationIdeal R A) :
     cotangentMap R A (x : A) = (AugmentationIdeal R A).toCotangent x := by
   rw [cotangentMap_apply]
   have hx : counit (R := R) (x : A) = 0 := by
-    simpa [AugmentationIdeal] using x.prop
+    exact x.prop
   apply (AugmentationIdeal R A).toCotangent.congr_arg
   ext
   simp [hx]
@@ -126,7 +129,11 @@ lemma cotangentMap_mul (a b : A) :
 
 end Bialgebra
 
+end TauCeti
+
 namespace Derivation
+
+open TauCeti _root_.Coalgebra TensorProduct
 
 variable {R A B : Type*} [CommRing R] [CommRing A] [Bialgebra R A]
   [CommRing B] [Algebra R B]
@@ -143,6 +150,7 @@ private lemma algEquivSelf_smul (a : A)
     (R := R) (A := A) (B := B)
     (algebraMap R B (counit a) : Bialgebra.CounitAlgebra R A B)
 
+/-- Construct a counit-valued derivation from a linear map out of the cotangent space. -/
 private noncomputable def ofCotangentLinearMap
     (f : Bialgebra.CotangentSpace R A →ₗ[R] B) :
     Derivation R A (Bialgebra.CounitAlgebra R A B) :=
@@ -151,7 +159,7 @@ private noncomputable def ofCotangentLinearMap
       (f.comp (Bialgebra.cotangentMap R A)))
     fun a b => by
       simp only [LinearMap.comp_apply]
-      rw [Bialgebra.cotangentMap_mul, map_add, map_smul, map_smul]
+      rw [Bialgebra.cotangentMap_mul, map_add, _root_.map_smul, _root_.map_smul]
       apply (Bialgebra.CounitAlgebra.algEquivSelf R A B).injective
       simp only [AlgEquiv.toLinearMap_apply]
       rw [AlgEquiv.apply_symm_apply, map_add, algEquivSelf_smul,
@@ -165,6 +173,7 @@ private lemma algEquivSelf_ofCotangentLinearMap_apply
   simp only [ofCotangentLinearMap, Derivation.coe_mk', LinearMap.comp_apply,
     AlgEquiv.toLinearMap_apply, AlgEquiv.apply_symm_apply]
 
+/-- Factor a counit-valued derivation through the cotangent space. -/
 private noncomputable def toCotangentLinearMap
     (d : Derivation R A (Bialgebra.CounitAlgebra R A B)) :
     Bialgebra.CotangentSpace R A →ₗ[R] B :=
@@ -175,9 +184,9 @@ private noncomputable def toCotangentLinearMap
     fun x y => by
       simp only [LinearMap.comp_apply]
       have hx : counit (R := R) (x : A) = 0 := by
-        simpa [Bialgebra.AugmentationIdeal] using x.prop
+        exact x.prop
       have hy : counit (R := R) (y : A) = 0 := by
-        simpa [Bialgebra.AugmentationIdeal] using y.prop
+        exact y.prop
       have hxy : d ((x : A) * (y : A)) = 0 := by
         rw [Derivation.leibniz]
         simp only [Bialgebra.CounitAlgebra.algebraMap_apply, hx, hy, map_zero,
@@ -203,6 +212,7 @@ private lemma toCotangentLinearMap_toCotangent
   -- After the named coercion reductions, both sides are the same application of `d`.
   rfl
 
+/-- The linear equivalence between cotangent-space functionals and counit-valued derivations. -/
 private noncomputable def cotangentLinearEquivBase :
     (Bialgebra.CotangentSpace R A →ₗ[R] B) ≃ₗ[R]
       Derivation R A (Bialgebra.CounitAlgebra R A B) where
@@ -230,7 +240,7 @@ private noncomputable def cotangentLinearEquivBase :
     ext a
     apply (Bialgebra.CounitAlgebra.algEquivSelf R A B).injective
     simp only [algEquivSelf_ofCotangentLinearMap_apply, LinearMap.smul_apply,
-      RingHom.id_apply, Derivation.smul_apply, map_smul]
+      RingHom.id_apply, Derivation.smul_apply, _root_.map_smul]
 
 private lemma cotangentLinearEquivBase_apply
     (f : Bialgebra.CotangentSpace R A →ₗ[R] B) :
@@ -388,5 +398,3 @@ lemma tangentScalarExtensionEquiv_tmul_apply
     tangentScalarExtensionEquivBase_tmul_apply]
 
 end Derivation
-
-end TauCeti

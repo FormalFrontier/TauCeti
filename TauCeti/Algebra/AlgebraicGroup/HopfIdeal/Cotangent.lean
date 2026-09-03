@@ -1,13 +1,16 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import Mathlib.LinearAlgebra.Dual.Lemmas
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Tangent
 public import TauCeti.Algebra.AlgebraicGroup.Tangent.Cotangent
+public import TauCeti.Algebra.HopfAlgebra.Kernel
 import TauCeti.Algebra.AlgebraicGroup.Tangent.Dimension
+import TauCeti.Algebra.HopfAlgebra.HopfIdeal.Augmentation
 
 /-!
 # The conormal sequence of a closed affine subgroup
@@ -35,7 +38,16 @@ needed in Layer 2 of the ReductiveGroups roadmap.
   gives the differential of the closed-subgroup inclusion.
 * `TauCeti.HopfIdeal.quotientCotangentMap_surjective`: right exactness of the conormal sequence.
 * `TauCeti.HopfIdeal.ker_quotientCotangentMap`: its kernel is the conormal subspace.
+* `TauCeti.HopfIdeal.quotientLieHom_surjective_iff_conormalSubspace_eq_bot`: the
+  closed-subgroup differential is onto exactly when its conormal space vanishes.
+* `TauCeti.HopfIdeal.conormalSubspace_eq_bot_iff_toIdeal_le_sq_augmentationIdeal`: conormal
+  vanishing means that the defining ideal has no linear term at the identity.
 * `TauCeti.HopfIdeal.finrank_quotientLie_add_finrank_conormal`: the resulting dimension formula.
+* `TauCeti.HopfIdeal.finrank_quotientLie_le`: the resulting closed-subgroup dimension bound.
+* `TauCeti.HopfIdeal.exists_maximal_finrank_quotientLie`: every nonempty family of closed
+  subgroups contains one of maximal Lie dimension.
+* `TauCeti.HopfIdeal.finrank_quotientLie_antitone`: inclusion of closed subgroups cannot increase
+  Lie dimension.
 
 ## References
 
@@ -61,9 +73,9 @@ variable [CommRing k] [CommRing H] [HopfAlgebra k H]
 /-- A Hopf ideal is contained in the augmentation ideal. -/
 private theorem toIdeal_le_augmentationIdeal (I : HopfIdeal k H) :
     I.toIdeal ≤ Bialgebra.AugmentationIdeal k H := by
-  intro x hx
-  rw [Bialgebra.AugmentationIdeal, RingHom.mem_ker]
-  exact I.counit_eq_zero (mem_toIdeal.mp hx)
+  have hI := toIdeal_le_toIdeal.mpr I.le_augmentation
+  rw [augmentation_toIdeal] at hI
+  exact hI
 
 /-- The image of a closed subgroup's defining Hopf ideal in the ambient augmentation cotangent
 space. This is the conormal space at the identity, equivalently
@@ -86,6 +98,14 @@ theorem mem_conormalSubspace_iff (I : HopfIdeal k H)
   · rintro ⟨y, hy, rfl⟩
     exact ⟨y, hy, rfl⟩
 
+/-- Enlarging the defining Hopf ideal enlarges the conormal space of the corresponding closed
+subgroup at the identity. -/
+theorem conormalSubspace_mono {I J : HopfIdeal k H} (hIJ : I ≤ J) :
+    conormalSubspace I ≤ conormalSubspace J := by
+  rw [conormalSubspace, conormalSubspace]
+  exact Submodule.map_mono (Submodule.restrictScalars_mono k
+    (HopfIdeal.toIdeal_le_toIdeal.mpr hIJ))
+
 /-- The quotient map carries the augmentation ideal of `H` into the augmentation ideal of
 `H/I`. -/
 private theorem augmentationIdeal_le_comap_quotient (I : HopfIdeal k H) :
@@ -104,7 +124,10 @@ noncomputable def quotientCotangentMap (I : HopfIdeal k H) :
       (Bialgebra.AugmentationIdeal k H)
       (Bialgebra.AugmentationIdeal k (H ⧸ I.toIdeal))
       (Algebra.ofId H (H ⧸ I.toIdeal))
-      (augmentationIdeal_le_comap_quotient I)).restrictScalars k
+      (by
+        intro x hx
+        rw [Ideal.mem_comap, Algebra.ofId_apply]
+        exact augmentationIdeal_le_comap_quotient I hx)).restrictScalars k
 
 /-- The quotient cotangent map sends the class of an augmentation-ideal element to the class of
 its image in the quotient. -/
@@ -115,13 +138,16 @@ theorem quotientCotangentMap_toCotangent (I : HopfIdeal k H)
         ((Bialgebra.AugmentationIdeal k H).toCotangent x) =
       (Bialgebra.AugmentationIdeal k (H ⧸ I.toIdeal)).toCotangent
         ⟨algebraMap H (H ⧸ I.toIdeal) x, by
-          simpa [Bialgebra.AugmentationIdeal, RingHom.mem_ker] using x.property⟩ := by
-  rw [quotientCotangentMap]
-  exact Ideal.mapCotangent_toCotangent
-    (Bialgebra.AugmentationIdeal k H)
-    (Bialgebra.AugmentationIdeal k (H ⧸ I.toIdeal))
-    (Algebra.ofId H (H ⧸ I.toIdeal))
-    (augmentationIdeal_le_comap_quotient I) x
+          have hx : Coalgebra.counit (R := k) (x : H) = 0 := x.property
+          rw [Bialgebra.AugmentationIdeal, RingHom.mem_ker]
+          simpa only [AlgHom.toRingHom_eq_coe, RingHom.coe_coe,
+            Ideal.Quotient.algebraMap_eq, Bialgebra.counitAlgHom_apply,
+            Bialgebra.Quotient.counit_mk] using hx⟩ := by
+  rw [quotientCotangentMap, LinearMap.restrictScalars_apply,
+    Ideal.mapCotangent_toCotangent]
+  apply (Bialgebra.AugmentationIdeal k (H ⧸ I.toIdeal)).toCotangent.congr_arg
+  ext
+  exact Algebra.ofId_apply (H ⧸ I.toIdeal) (x : H)
 
 /-- The quotient cotangent map sends the first-order displacement of `x` to the first-order
 displacement of its quotient class. -/
@@ -208,11 +234,116 @@ theorem ker_quotientCotangentMap (I : HopfIdeal k H) :
     · exact (Bialgebra.cotangentMap_augmentation
         (R := k) (A := H) ⟨x, toIdeal_le_augmentationIdeal I hx'⟩).symm
 
+/-- A closed subgroup has zero conormal space at the identity exactly when every element of its
+defining ideal vanishes to second order there. -/
+@[simp]
+theorem conormalSubspace_eq_bot_iff_toIdeal_le_sq_augmentationIdeal
+    (I : HopfIdeal k H) :
+    conormalSubspace I = ⊥ ↔
+      I.toIdeal ≤ Bialgebra.AugmentationIdeal k H ^ 2 := by
+  constructor
+  · intro hconormal x hx
+    have hxconormal : Bialgebra.cotangentMap k H x ∈ conormalSubspace I :=
+      (mem_conormalSubspace_iff I _).2 ⟨x, hx, rfl⟩
+    rw [hconormal, Submodule.mem_bot] at hxconormal
+    let x' : Bialgebra.AugmentationIdeal k H :=
+      ⟨x, toIdeal_le_augmentationIdeal I hx⟩
+    rw [Bialgebra.cotangentMap_augmentation (x := x')] at hxconormal
+    exact
+      ((Bialgebra.AugmentationIdeal k H).toCotangent_eq_zero x').1 hxconormal
+  · intro hsquare
+    apply le_bot_iff.1
+    intro y hy
+    obtain ⟨x, hx, rfl⟩ := (mem_conormalSubspace_iff I y).1 hy
+    let x' : Bialgebra.AugmentationIdeal k H :=
+      ⟨x, toIdeal_le_augmentationIdeal I hx⟩
+    rw [Bialgebra.cotangentMap_augmentation (x := x'), Submodule.mem_bot,
+      Ideal.toCotangent_eq_zero]
+    exact hsquare hx
+
 end Ring
 
 section Field
 
 variable [Field k] [CommRing H] [HopfAlgebra k H]
+
+/-- The differential of a closed-subgroup inclusion is surjective exactly when the subgroup has
+zero conormal space at the identity. Equivalently, the inclusion is an infinitesimal equality at
+the identity. -/
+theorem quotientLieHom_surjective_iff_conormalSubspace_eq_bot
+    (I : HopfIdeal k H) :
+    Function.Surjective (quotientLieHom (B := k) I) ↔
+      conormalSubspace I = ⊥ := by
+  constructor
+  · intro hsurjective
+    rw [← ker_quotientCotangentMap, LinearMap.ker_eq_bot,
+      ← LinearMap.dualMap_surjective_iff]
+    intro f
+    obtain ⟨d, hd⟩ := hsurjective
+      (Derivation.cotangentLinearEquiv (R := k) (A := H) (B := k) f)
+    refine ⟨(Derivation.cotangentLinearEquiv
+      (R := k) (A := H ⧸ I.toIdeal) (B := k)).symm d, ?_⟩
+    apply (Derivation.cotangentLinearEquiv (R := k) (A := H) (B := k)).injective
+    rw [LinearMap.dualMap_apply',
+      ← cotangentLinearEquiv_comp_quotientCotangentMap,
+      (Derivation.cotangentLinearEquiv
+        (R := k) (A := H ⧸ I.toIdeal) (B := k)).apply_symm_apply]
+    exact hd
+  · intro hconormal
+    have hinjective : Function.Injective (quotientCotangentMap I) := by
+      rw [← LinearMap.ker_eq_bot, ker_quotientCotangentMap]
+      exact hconormal
+    have hdual : Function.Surjective (quotientCotangentMap I).dualMap :=
+      LinearMap.dualMap_surjective_of_injective hinjective
+    intro d
+    obtain ⟨f, hf⟩ := hdual
+      ((Derivation.cotangentLinearEquiv (R := k) (A := H) (B := k)).symm d)
+    refine ⟨Derivation.cotangentLinearEquiv
+      (R := k) (A := H ⧸ I.toIdeal) (B := k) f, ?_⟩
+    rw [cotangentLinearEquiv_comp_quotientCotangentMap,
+      ← LinearMap.dualMap_apply', hf,
+      (Derivation.cotangentLinearEquiv (R := k) (A := H) (B := k)).apply_symm_apply]
+
+/-- The kernel of a surjective Hopf-algebra morphism has zero conormal space when the
+differential of the morphism is surjective. -/
+theorem conormalSubspace_ker_eq_bot_of_surjective_of_derivationCompLieHom_surjective
+    {K : Type w} [CommRing K] [HopfAlgebra k K] (f : H →ₐc[k] K)
+    (hf : Function.Surjective f)
+    (hdf : Function.Surjective (derivationCompLieHom (B := k) f)) :
+    conormalSubspace (ker f) = ⊥ := by
+  have hkerOf : conormalSubspace (kerOfSurjective f hf) = ⊥ := by
+    apply
+      (quotientLieHom_surjective_iff_conormalSubspace_eq_bot
+        (kerOfSurjective f hf)).1
+    intro d
+    obtain ⟨e, he⟩ := hdf d
+    refine ⟨derivationCompLieHom (B := k) (kerLiftBialgHom f hf) e, ?_⟩
+    -- `quotientLieHom` is not exposed, so rewrite it through its public application lemma.
+    have hquotient :
+        quotientLieHom (B := k) (kerOfSurjective f hf) =
+          derivationCompLieHom (B := k)
+            (Bialgebra.Quotient.mkBialgHom (kerOfSurjective f hf).toIdeal) := by
+      ext d x
+      rw [quotientLieHom_apply_apply, derivationCompLieHom_apply, derivationComp_apply]
+      exact Bialgebra.CounitAlgebra.algEquivSelf_apply
+        k (H ⧸ (kerOfSurjective f hf).toIdeal) k
+        (d (Ideal.Quotient.mkₐ k (kerOfSurjective f hf).toIdeal x))
+    rw [hquotient]
+    calc
+      derivationCompLieHom (B := k)
+          (Bialgebra.Quotient.mkBialgHom (kerOfSurjective f hf).toIdeal)
+          (derivationCompLieHom (B := k) (kerLiftBialgHom f hf) e) =
+        ((derivationCompLieHom (B := k)
+            (Bialgebra.Quotient.mkBialgHom (kerOfSurjective f hf).toIdeal)).comp
+          (derivationCompLieHom (B := k) (kerLiftBialgHom f hf))) e := rfl
+      _ = derivationCompLieHom (B := k)
+          ((kerLiftBialgHom f hf).comp
+            (Bialgebra.Quotient.mkBialgHom (kerOfSurjective f hf).toIdeal)) e := by
+        rw [derivationCompLieHom_comp]
+      _ = derivationCompLieHom (B := k) f e := by
+        rw [kerLiftBialgHom_comp_mkBialgHom]
+      _ = d := he
+  simpa only [kerOfSurjective_eq_ker] using hkerOf
 
 /-- In finite dimension, the dimension of the closed subgroup's cotangent space plus its
 conormal dimension is the dimension of the ambient cotangent space. -/
@@ -250,6 +381,73 @@ theorem finrank_quotientLie_add_finrank_conormal (I : HopfIdeal k H)
     Derivation.finrank_eq_finrank_cotangentSpace (k := k) (H := H)
   rw [hquotient, hambient]
   exact finrank_quotientCotangent_add_finrank_conormal I
+
+/-- The Lie dimension of a closed subgroup is at most the Lie dimension of the ambient affine
+group when the ambient cotangent space is finite-dimensional. -/
+theorem finrank_quotientLie_le (I : HopfIdeal k H)
+    [FiniteDimensional k (Bialgebra.CotangentSpace k H)] :
+    Module.finrank k
+        (Derivation k (H ⧸ I.toIdeal)
+          (Bialgebra.CounitAlgebra k (H ⧸ I.toIdeal) k)) ≤
+      Module.finrank k
+        (Derivation k H (Bialgebra.CounitAlgebra k H k)) := by
+  have h := finrank_quotientLie_add_finrank_conormal I
+  omega
+
+/-- Every nonempty family of closed affine subgroups contains one of maximal Lie dimension.
+
+The family is specified by a predicate on its defining Hopf ideals. Its attained dimensions lie
+in the finite interval from zero to the Lie dimension of the ambient group, so a maximum exists
+without any finiteness assumption on the family itself. -/
+theorem exists_maximal_finrank_quotientLie
+    [FiniteDimensional k (Bialgebra.CotangentSpace k H)]
+    (P : HopfIdeal k H → Prop) (hP : ∃ I, P I) :
+    ∃ I : HopfIdeal k H, P I ∧
+      ∀ J : HopfIdeal k H, P J →
+        Module.finrank k
+            (Derivation k (H ⧸ J.toIdeal)
+              (Bialgebra.CounitAlgebra k (H ⧸ J.toIdeal) k)) ≤
+          Module.finrank k
+            (Derivation k (H ⧸ I.toIdeal)
+              (Bialgebra.CounitAlgebra k (H ⧸ I.toIdeal) k)) := by
+  let dimensions : Set ℕ := {n | ∃ I : HopfIdeal k H, P I ∧
+    Module.finrank k
+      (Derivation k (H ⧸ I.toIdeal)
+        (Bialgebra.CounitAlgebra k (H ⧸ I.toIdeal) k)) = n}
+  have hdimensions_finite : dimensions.Finite := by
+    apply (Set.finite_Iic
+      (Module.finrank k (Derivation k H (Bialgebra.CounitAlgebra k H k)))).subset
+    rintro n ⟨I, _, rfl⟩
+    exact finrank_quotientLie_le I
+  have hdimensions_nonempty : dimensions.Nonempty := by
+    obtain ⟨I, hI⟩ := hP
+    exact ⟨_, I, hI, rfl⟩
+  obtain ⟨n, hn, hnmax⟩ :=
+    Set.exists_max_image dimensions id hdimensions_finite hdimensions_nonempty
+  obtain ⟨I, hI, hIn⟩ := hn
+  refine ⟨I, hI, fun J hJ ↦ ?_⟩
+  have hJmem : Module.finrank k
+      (Derivation k (H ⧸ J.toIdeal)
+        (Bialgebra.CounitAlgebra k (H ⧸ J.toIdeal) k)) ∈ dimensions :=
+    ⟨J, hJ, rfl⟩
+  simpa only [id_eq, hIn] using hnmax _ hJmem
+
+/-- Lie dimension is antitone in the defining Hopf ideal: if `I ≤ J`, then the closed subgroup
+cut out by `J` is contained in the one cut out by `I`, so its Lie dimension is no larger. -/
+theorem finrank_quotientLie_antitone
+    [FiniteDimensional k (Bialgebra.CotangentSpace k H)] :
+    Antitone fun I : HopfIdeal k H ↦
+      Module.finrank k
+        (Derivation k (H ⧸ I.toIdeal)
+          (Bialgebra.CounitAlgebra k (H ⧸ I.toIdeal) k)) := by
+  intro I J hIJ
+  dsimp only
+  have hI := finrank_quotientLie_add_finrank_conormal I
+  have hJ := finrank_quotientLie_add_finrank_conormal J
+  have hconormal : Module.finrank k (conormalSubspace I) ≤
+      Module.finrank k (conormalSubspace J) :=
+    Submodule.finrank_mono (conormalSubspace_mono hIJ)
+  omega
 
 end Field
 

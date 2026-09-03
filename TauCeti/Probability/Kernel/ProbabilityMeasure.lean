@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -24,6 +25,7 @@ lemma here, since the type already carries it.
 * `Kernel.probabilityMeasure_toMeasure` — its underlying measure is the kernel's fibre, and the
   abstraction boundary for importing modules;
 * `Kernel.measurable_probabilityMeasure` — measurability into `ProbabilityMeasure Ω`.
+* `samplingKernel` — the tautological Markov kernel from a probability measure to itself.
 
 Stated for an arbitrary Markov kernel rather than for any particular construction. The regular
 conditional distribution `ProbabilityTheory.condDistrib` is one instance; conditioning on a
@@ -65,6 +67,21 @@ theorem Kernel.measurable_probabilityMeasure (κ : Kernel β Ω) [IsMarkovKernel
     Measurable (Kernel.probabilityMeasure κ) := by
   refine Measurable.subtype_mk ?_
   exact Measure.measurable_of_measurable_coe _ fun s hs => Kernel.measurable_coe _ hs
+
+variable {α : Type*} [MeasurableSpace α]
+
+/-- **The tautological Markov kernel.** It sends each bundled probability measure to its
+underlying measure on `α`, so the fibre at `P` is `P` itself. -/
+def samplingKernel (α : Type*) [MeasurableSpace α] : Kernel (ProbabilityMeasure α) α :=
+  ⟨fun P => (P : Measure α), measurable_subtype_coe⟩
+
+@[simp]
+theorem samplingKernel_apply (P : ProbabilityMeasure α) :
+    samplingKernel α P = (P : Measure α) :=
+  (rfl)
+
+instance : IsMarkovKernel (samplingKernel α) :=
+  ⟨fun P => P.2⟩
 
 end Probability
 

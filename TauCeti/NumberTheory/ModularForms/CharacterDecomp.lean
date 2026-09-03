@@ -8,7 +8,7 @@ module
 public import Mathlib.Algebra.DirectSum.Module
 import Mathlib.Analysis.Complex.Polynomial.Basic
 import Mathlib.RingTheory.RootsOfUnity.AlgebraicallyClosed
-public import TauCeti.LinearAlgebra.Eigenspace.JointEigenvector
+public import TauCeti.LinearAlgebra.Eigenspace.JointEigenvector.Basic
 public import TauCeti.NumberTheory.ModularForms.DiamondOperators
 
 /-!
@@ -23,7 +23,7 @@ diamond-eigenspaces. This file proves the internal direct sum decomposition
 
 together with its cusp-form analogues and the refinement to diamond-invariant
 submodules, by simultaneous diagonalization of the commuting finite-order diamond
-operators (`TauCeti/LinearAlgebra/Eigenspace/JointEigenvector.lean`).
+operators (`TauCeti/LinearAlgebra/Eigenspace/JointEigenvector/Basic.lean`).
 
 Beyond the standing `N ≠ 0` hypothesis (`[NeZero N]`, a section variable that most
 declarations here need, the independence statements being the exception), the statements are

@@ -1,6 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
@@ -44,7 +45,7 @@ universe u
 noncomputable section
 
 /-- The full category of finitely presented sheaves of modules on a scheme. -/
-abbrev FinitelyPresentedSheaf (X : Scheme.{u}) :=
+abbrev FinitelyPresentedSheaf (X : Scheme.{u}) : Type _ :=
   ObjectProperty.FullSubcategory
     (_root_.SheafOfModules.isFinitePresentation X.ringCatSheaf)
 

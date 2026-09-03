@@ -1,12 +1,14 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import Mathlib.NumberTheory.LegendreSymbol.Basic
 public import TauCeti.NumberTheory.Multiquadratic.Galois.Basic
 public import TauCeti.NumberTheory.NumberField.SplitsCompletely
+import TauCeti.NumberTheory.NumberField.AutomorphismAction
 import TauCeti.RingTheory.Ideal.LiesOver
 import TauCeti.NumberTheory.NumberField.IntegralSqrt
 
@@ -20,7 +22,7 @@ This is the general (compositum) case; the base case `n = 1` is `ncard_primesOve
 
 ## Main results
 
-* `TauCeti.NumberField.ncard_primesOver_multiquadratic_iff`: the multiquadratic prime-splitting
+* `NumberField.ncard_primesOver_multiquadratic_iff`: the multiquadratic prime-splitting
   law — `p` splits completely in `K = ℚ(√d₁, …, √dₙ)` iff every `dᵢ` is a quadratic residue
   mod `p`.
 -/
@@ -28,7 +30,7 @@ This is the general (compositum) case; the base case `n = 1` is `ncard_primesOve
 open Polynomial NumberField Ideal Module MulAction
 open scoped Pointwise
 
-namespace TauCeti.NumberField
+namespace NumberField
 
 public section
 
@@ -45,7 +47,7 @@ private theorem legendreSym_eq_one_of_ncard_primesOver_eq_finrank {ι : Type*} (
   -- Lift the residue of `R` to an integer `a`, so `R ≡ a (mod Q)`.
   let R : 𝓞 K := integralSqrt (hr i)
   have hbij :=
-    TauCeti.NumberField.bijective_algebraMap_quotient_of_ncard_primesOver_eq_finrank Q hsplit
+    NumberField.bijective_algebraMap_quotient_of_ncard_primesOver_eq_finrank Q hsplit
   obtain ⟨c, hc⟩ := hbij.surjective (Ideal.Quotient.mk Q R)
   obtain ⟨a, rfl⟩ := Ideal.Quotient.mk_surjective c
   -- The algebra map `ℤ ⧸ (p) → 𝓞 K ⧸ Q` is `Ideal.quotientMap`, which sends `mk a` to
@@ -56,7 +58,7 @@ private theorem legendreSym_eq_one_of_ncard_primesOver_eq_finrank {ι : Type*} (
   have hdiff : algebraMap ℤ (𝓞 K) a - R ∈ Q := Ideal.Quotient.eq.mp hc
   -- `(algebraMap a - R)(algebraMap a + R) = algebraMap (a² - d i) ∈ Q`, so `p ∣ a² - d i`.
   have hpd : (p : ℤ) ∣ a ^ 2 - d i := by
-    rw [← algebraMap_int_mem_iff_dvd_of_liesOver Q]
+    rw [← TauCeti.algebraMap_int_mem_iff_dvd_of_liesOver Q]
     have hfac : algebraMap ℤ (𝓞 K) (a ^ 2 - d i) =
         (algebraMap ℤ (𝓞 K) a - R) * (algebraMap ℤ (𝓞 K) a + R) := by
       rw [map_sub, map_pow, ← integralSqrt_sq (hr i)]; ring
@@ -122,19 +124,15 @@ private theorem map_ne_neg_of_legendreSym_eq_one (d : ℤ) (r : K) (hr : r ^ 2 =
     have h1 : (R - A) * (R + A) = R ^ 2 - A ^ 2 := by ring
     rw [h1, integralSqrt_sq hr, hAsq, ← map_sub]
   have hfacQ : (R - A) * (R + A) ∈ Q := by
-    rw [heq]; exact (algebraMap_int_mem_iff_dvd_of_liesOver Q _).mpr (dvd_sub_comm.mp hpa)
-  -- `algebraMap` intertwines the Galois action on `𝓞 K` with the one on `K`.
-  have hbridge (x : 𝓞 K) : algebraMap (𝓞 K) K (σ • x) = σ (algebraMap (𝓞 K) K x) := by
-    have hcoe : algebraMap (𝓞 K) K (σ • x) = σ • algebraMap (𝓞 K) K x :=
-      integralClosure.coe_smul σ x
-    rw [hcoe, AlgEquiv.smul_def]
+    rw [heq]
+    exact (TauCeti.algebraMap_int_mem_iff_dvd_of_liesOver Q _).mpr (dvd_sub_comm.mp hpa)
   -- `σ` sends `R ↦ -R` and fixes the integer `A`.
   have hsR : σ • R = - R := by
     apply FaithfulSMul.algebraMap_injective (𝓞 K) K
-    rw [hbridge R, map_neg, algebraMap_integralSqrt, hflip]
+    rw [algebraMap_smul_eq_apply σ R, map_neg, algebraMap_integralSqrt, hflip]
   have hsA : σ • A = A := by
     apply FaithfulSMul.algebraMap_injective (𝓞 K) K
-    rw [hbridge A, hAdef, ← IsScalarTower.algebraMap_apply ℤ (𝓞 K) K,
+    rw [algebraMap_smul_eq_apply σ A, hAdef, ← IsScalarTower.algebraMap_apply ℤ (𝓞 K) K,
       IsScalarTower.algebraMap_apply ℤ ℚ K, AlgEquiv.commutes]
   -- Applying `σ` to whichever factor lies in `Q` and adding the two gives `2 A ∈ Q`.
   have hmapQ : ∀ x ∈ Q, σ • x ∈ Q := fun x hx => by
@@ -147,7 +145,8 @@ private theorem map_ne_neg_of_legendreSym_eq_one (d : ℤ) (r : K) (hr : r ^ 2 =
     rw [map_mul, halg_two, ← hAdef]
     exact h2A
   have hpint : Prime (p : ℤ) := Nat.prime_iff_prime_int.mp Fact.out
-  rcases hpint.dvd_mul.mp ((algebraMap_int_mem_iff_dvd_of_liesOver Q _).mp h2a) with h2 | ha
+  rcases hpint.dvd_mul.mp
+      ((TauCeti.algebraMap_int_mem_iff_dvd_of_liesOver Q _).mp h2a) with h2 | ha
   · exact hodd ((Nat.prime_dvd_prime_iff_eq Fact.out Nat.prime_two).mp (by exact_mod_cast h2))
   · exact hpa' ha
 
@@ -223,4 +222,4 @@ theorem ncard_primesOver_multiquadratic_iff {ι : Type*} [Finite ι] (d : ι →
 
 end
 
-end TauCeti.NumberField
+end NumberField

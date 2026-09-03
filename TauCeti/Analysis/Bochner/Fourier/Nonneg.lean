@@ -1,12 +1,13 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import Mathlib.Analysis.Fourier.FourierTransform
 public import Mathlib.MeasureTheory.Measure.Haar.OfBasis
-public import TauCeti.Analysis.PositiveDefinite.Kernel.Basic
+public import TauCeti.LinearAlgebra.Matrix.PosSemidef
 -- The remaining imports are proof-only: the Fejér averaging argument uses dominated convergence,
 -- Fubini, simple-function approximation, the Haar ball formulas and negation invariance, the
 -- Fourier atom kernel with its Fourier-transform bridge, the continuity of `𝓕`/`𝓕⁻`, and the
@@ -48,22 +49,22 @@ against a shrinking family of Gaussians and using the Parseval/Fubini identity b
 Adapted (Apache 2.0) from the Bochner–Minlos formalization by Michael R. Douglas
 (https://github.com/mrdouglasny/bochner, revision `08eb302`), source files `Bochner/FejerPD.lean`
 and `Bochner/Main.lean`; the arguments are ported with the positive-definiteness hypotheses
-restated through `IsPositiveDefiniteKernel`.
+restated through `Matrix.PosSemidef`.
 
 ## Main declarations
 
-* `TauCeti.fourier_re_nonneg_of_isPositiveDefiniteKernel`: the Fourier transform of a
+* `TauCeti.fourier_re_nonneg_of_posSemidef`: the Fourier transform of a
   continuous integrable positive-definite function has nonnegative real part.
 * `TauCeti.fourier_im_eq_zero_of_map_neg_eq_conj` and
   `TauCeti.fourier_eq_re_of_map_neg_eq_conj`: for an integrable *conjugate-symmetric* `F`
   (continuity is not needed), the imaginary part of `𝓕 F` vanishes and `𝓕 F` equals its own real
-  part; `TauCeti.fourier_im_eq_zero_of_isPositiveDefiniteKernel` and
-  `TauCeti.fourier_eq_re_of_isPositiveDefiniteKernel` are the positive-definite specializations.
-* `TauCeti.integrable_fourier_of_isPositiveDefiniteKernel`: the Fourier transform of a
+  part; `TauCeti.fourier_im_eq_zero_of_posSemidef` and
+  `TauCeti.fourier_eq_re_of_posSemidef` are the positive-definite specializations.
+* `TauCeti.integrable_fourier_of_posSemidef`: the Fourier transform of a
   continuous integrable positive-definite function is integrable.
-* `TauCeti.fourierInv_re_nonneg_of_isPositiveDefiniteKernel`,
-  `TauCeti.fourierInv_eq_re_of_isPositiveDefiniteKernel`,
-  `TauCeti.integrable_fourierInv_of_isPositiveDefiniteKernel` and
+* `TauCeti.fourierInv_re_nonneg_of_posSemidef`,
+  `TauCeti.fourierInv_eq_re_of_posSemidef`,
+  `TauCeti.integrable_fourierInv_of_posSemidef` and
   `TauCeti.measurable_ofReal_re_fourierInv`: the same facts for the inverse transform `𝓕⁻ F`,
   which is the density of the representing measure of Bochner's theorem.
 
@@ -171,11 +172,12 @@ omit [InnerProductSpace ℝ V] [FiniteDimensional ℝ V] [MeasurableSpace V] [Bo
 /-- The positive-definite double sum attached to a subtraction kernel has nonnegative real
 part. -/
 private theorem re_sum_nonneg_of_kernel
-    (hpd : IsPositiveDefiniteKernel fun a b : V => ψ (a - b)) {ι : Type*} [Fintype ι]
+    (hpd : Matrix.PosSemidef fun a b : V => ψ (a - b)) {ι : Type*} [Fintype ι]
     (x : ι → V) (c : ι → ℂ) :
     0 ≤ (∑ i, ∑ j, conj (c i) * c j * ψ (x i - x j)).re := by
-  have h := (isPositiveDefiniteKernel_iff.mp hpd).2 x c
-  exact (Complex.nonneg_iff.mp h).1
+  have h := (posSemidef_iff_finite_sum.mp hpd).2 x c
+  simpa only [RCLike.star_def, mul_comm, mul_left_comm, mul_assoc] using
+    (Complex.nonneg_iff.mp h).1
 
 end KernelConsequences
 
@@ -187,7 +189,7 @@ integrals along `StronglyMeasurable.approx id` converge to `∬ ψ (x - y)`.
 Dominated convergence twice, with the uniform bound `‖ψ z‖ ≤ (ψ 0).re` supplied by positive
 definiteness. -/
 private theorem exists_simpleFunc_tendsto_double_integral (ψ : V → ℂ)
-    (hpd : IsPositiveDefiniteKernel fun a b : V => ψ (a - b)) (hcont : Continuous ψ)
+    (hpd : Matrix.PosSemidef fun a b : V => ψ (a - b)) (hcont : Continuous ψ)
     (μ : Measure V) [IsFiniteMeasure μ] :
     ∃ s : ℕ → SimpleFunc V V,
       Tendsto (fun n => ∫ x, ∫ y, ψ (s n x - s n y) ∂μ ∂μ) atTop
@@ -196,7 +198,7 @@ private theorem exists_simpleFunc_tendsto_double_integral (ψ : V → ℂ)
   refine ⟨hid.approx, ?_⟩
   have h_ptwise : ∀ x, Tendsto (fun n => hid.approx n x) atTop (nhds x) :=
     fun x => by simpa using hid.tendsto_approx x
-  have hbound : ∀ z, ‖ψ z‖ ≤ (ψ 0).re := norm_apply_le_map_zero_re_of_isPositiveDefiniteKernel hpd
+  have hbound : ∀ z, ‖ψ z‖ ≤ (ψ 0).re := norm_apply_le_map_zero_re_of_posSemidef hpd
   -- The inner integral converges for each `x` by dominated convergence.
   have h_inner_conv : ∀ x, Tendsto
       (fun n => ∫ y, ψ (hid.approx n x - hid.approx n y) ∂μ)
@@ -222,17 +224,8 @@ private theorem exists_simpleFunc_tendsto_double_integral (ψ : V → ℂ)
       (fun u => ∫ y, ψ (u - hid.approx n y) ∂μ) μ
   have hbd2 : ∀ n, ∀ᵐ x ∂μ,
       ‖∫ y, ψ (hid.approx n x - hid.approx n y) ∂μ‖ ≤
-        (ψ 0).re * (μ Set.univ).toReal := by
-    intro n
-    refine ae_of_all _ (fun x => ?_)
-    calc ‖∫ y, ψ (hid.approx n x - hid.approx n y) ∂μ‖
-        ≤ ∫ y, ‖ψ (hid.approx n x - hid.approx n y)‖ ∂μ :=
-          norm_integral_le_integral_norm _
-      _ ≤ ∫ _, (ψ 0).re ∂μ :=
-          integral_mono_of_nonneg (ae_of_all _ (fun _ => norm_nonneg _))
-            (integrable_const _) (ae_of_all _ (fun _ => hbound _))
-      _ = (ψ 0).re * (μ Set.univ).toReal := by
-          rw [integral_const, smul_eq_mul, mul_comm, measureReal_def]
+        (ψ 0).re * (μ Set.univ).toReal := fun n =>
+    ae_of_all _ fun _ => norm_integral_le_of_norm_le_const (ae_of_all _ fun _ => hbound _)
   exact tendsto_integral_of_dominated_convergence
     (fun _ => (ψ 0).re * (μ Set.univ).toReal)
     hmeas2 (integrable_const _) hbd2 (ae_of_all _ h_inner_conv)
@@ -242,7 +235,7 @@ omit [InnerProductSpace ℝ V] [FiniteDimensional ℝ V] [BorelSpace V] in
 real part.** For a positive-definite `fun a b => ψ (a - b)`, a finite measure `μ` and a simple
 function `sn`, the real part of `∬ ψ (sn x - sn y)` is nonnegative. -/
 private theorem re_double_integral_simpleFunc_nonneg (ψ : V → ℂ)
-    (hpd : IsPositiveDefiniteKernel fun a b : V => ψ (a - b))
+    (hpd : Matrix.PosSemidef fun a b : V => ψ (a - b))
     (μ : Measure V) [IsFiniteMeasure μ] (sn : SimpleFunc V V) :
     0 ≤ (∫ x, ∫ y, ψ (sn x - sn y) ∂μ ∂μ).re := by
   classical
@@ -267,7 +260,7 @@ double sum with real coefficients, so has nonnegative real part
 (`exists_simpleFunc_tendsto_double_integral`), so nonnegativity passes to the limit.
 See Rudin, *Fourier Analysis on Groups*, proof of Theorem 1.4.3, step 1. -/
 private theorem pd_double_integral_re_nonneg (ψ : V → ℂ)
-    (hpd : IsPositiveDefiniteKernel fun a b : V => ψ (a - b))
+    (hpd : Matrix.PosSemidef fun a b : V => ψ (a - b))
     (hcont : Continuous ψ) (S : Set V) (hSbdd : Bornology.IsBounded S) :
     0 ≤ (∫ x in S, ∫ y in S, ψ (x - y)).re := by
   let μ := (volume : Measure V).restrict S
@@ -327,15 +320,53 @@ private theorem closedBall_sub_norm_subset (v : V) (R : ℝ) :
   ⟨Metric.closedBall_subset_closedBall (by linarith [norm_nonneg v]) hx,
     Metric.closedBall_subset_closedBall' (by simp [dist_zero_left]) hx⟩
 
-/-- The overlap ratio tends to one along integer radii, for a fixed translation.
+/-- The overlap ratio at radius `R` is at least `((R - ‖v‖) / R) ^ Module.finrank ℝ V`, for any
+translation no longer than the radius. -/
+private theorem sub_norm_div_pow_le_overlapRatio (v : V) {R : ℝ} (hR : ‖v‖ ≤ R) :
+    ((R - ‖v‖) / R) ^ Module.finrank ℝ V ≤ overlapRatio R v := by
+  have hR_nn : (0 : ℝ) ≤ R := (norm_nonneg v).trans hR
+  have hsub_nn : (0 : ℝ) ≤ R - ‖v‖ := sub_nonneg.mpr hR
+  have hball_pos : 0 < (volume (Metric.ball (0 : V) 1)).toReal :=
+    ENNReal.toReal_pos (ne_of_gt (Metric.measure_ball_pos volume 0 one_pos))
+      (ne_of_lt measure_ball_lt_top)
+  have hvol : ∀ r : ℝ, 0 ≤ r → (volume (Metric.closedBall (0 : V) r)).toReal =
+      r ^ Module.finrank ℝ V * (volume (Metric.ball (0 : V) 1)).toReal := fun r hr => by
+    simpa only [measureReal_def] using Measure.addHaar_real_closedBall volume (0 : V) hr
+  unfold overlapRatio
+  split_ifs with h
+  · -- A vanishing denominator forces `R = 0` with positive rank, so the left side vanishes too.
+    have hRd : R ^ Module.finrank ℝ V = 0 :=
+      (mul_eq_zero.mp ((hvol R hR_nn).symm.trans h)).resolve_right (ne_of_gt hball_pos)
+    have hR0 : R = 0 := by by_contra hne; exact pow_ne_zero _ hne hRd
+    rw [hR0] at hRd
+    rw [hR0, div_zero]
+    exact hRd.le
+  · have hden_pos : 0 < (volume (Metric.closedBall (0 : V) R)).toReal :=
+      lt_of_le_of_ne ENNReal.toReal_nonneg (Ne.symm h)
+    -- The ratio of the two Haar volumes is the claimed power, and the smaller ball sits inside
+    -- the overlap.
+    calc ((R - ‖v‖) / R) ^ Module.finrank ℝ V
+        = (R - ‖v‖) ^ Module.finrank ℝ V / R ^ Module.finrank ℝ V := by rw [div_pow]
+      _ = ((R - ‖v‖) ^ Module.finrank ℝ V * (volume (Metric.ball (0 : V) 1)).toReal) /
+          (R ^ Module.finrank ℝ V * (volume (Metric.ball (0 : V) 1)).toReal) := by
+          rw [mul_div_mul_right _ _ (ne_of_gt hball_pos)]
+      _ = (volume (Metric.closedBall (0 : V) (R - ‖v‖))).toReal /
+          (volume (Metric.closedBall (0 : V) R)).toReal := by
+          rw [hvol _ hsub_nn, hvol R hR_nn]
+      _ ≤ (volume (Metric.closedBall (0 : V) R ∩ Metric.closedBall v R)).toReal /
+          (volume (Metric.closedBall (0 : V) R)).toReal :=
+          div_le_div_of_nonneg_right
+            (ENNReal.toReal_mono
+              (ne_of_lt (lt_of_le_of_lt (measure_mono Set.inter_subset_left)
+                measure_closedBall_lt_top))
+              (measure_mono (closedBall_sub_norm_subset v R)))
+            hden_pos.le
 
-Since `closedBall 0 (R - ‖v‖) ⊆ closedBall 0 R ∩ closedBall v R`, the ratio is at least
-`((R - ‖v‖) / R) ^ d → 1` by the Haar ball formula, and it is at most `1`; squeeze. -/
+/-- The overlap ratio tends to one along integer radii, for a fixed translation. -/
 private theorem overlapRatio_tendsto_one (v : V) :
     Tendsto (fun n : ℕ => overlapRatio (n : ℝ) v) atTop (nhds 1) := by
-  set d := Module.finrank ℝ V
   -- Lower bound: `((n - ‖v‖) / n) ^ d → 1`.
-  have hlower : Tendsto (fun n : ℕ => ((↑n - ‖v‖) / ↑n) ^ d) atTop (nhds 1) := by
+  have hlower : Tendsto (fun n : ℕ => ((↑n - ‖v‖) / ↑n) ^ Module.finrank ℝ V) atTop (nhds 1) := by
     have h : Tendsto (fun n : ℕ => (↑n - ‖v‖) / (↑n : ℝ)) atTop (nhds 1) := by
       have h1 : ∀ᶠ n : ℕ in atTop, (↑n - ‖v‖) / (↑n : ℝ) = 1 - ‖v‖ / ↑n := by
         filter_upwards [Filter.eventually_gt_atTop 0] with n hn
@@ -344,48 +375,13 @@ private theorem overlapRatio_tendsto_one (v : V) :
         tendsto_const_nhds.div_atTop tendsto_natCast_atTop_atTop
       exact Tendsto.congr' (EventuallyEq.symm h1)
         (by simpa using Tendsto.sub tendsto_const_nhds hc)
-    simpa using h.pow (n := d)
-  -- The ratio dominates the lower bound once `n > ‖v‖`, by the Haar ball formula.
-  have hdom : ∀ᶠ n : ℕ in atTop, ((↑n - ‖v‖) / ↑n) ^ d ≤ overlapRatio (n : ℝ) v := by
+    simpa using h.pow (n := Module.finrank ℝ V)
+  -- The ratio dominates that bound once the radius exceeds `‖v‖`.
+  have hdom : ∀ᶠ n : ℕ in atTop,
+      ((↑n - ‖v‖) / ↑n) ^ Module.finrank ℝ V ≤ overlapRatio (n : ℝ) v := by
     filter_upwards [Filter.eventually_gt_atTop (⌈‖v‖⌉₊)] with n hn
-    have hn_gt : ‖v‖ < (n : ℝ) :=
-      lt_of_le_of_lt (Nat.le_ceil _) (Nat.cast_lt.mpr hn)
-    have hn_pos : (0 : ℝ) < n := by linarith [norm_nonneg v]
-    have hsub_nn : (0 : ℝ) ≤ ↑n - ‖v‖ := by linarith
-    have hvol_pos := Metric.measure_closedBall_pos (volume : Measure V) 0 hn_pos
-    have hvol_ne_top : volume (Metric.closedBall (0 : V) (↑n)) ≠ ⊤ :=
-      ne_of_lt measure_closedBall_lt_top
-    have hvol_toReal_pos : 0 < (volume (Metric.closedBall (0 : V) (↑n))).toReal :=
-      ENNReal.toReal_pos (ne_of_gt hvol_pos) hvol_ne_top
-    unfold overlapRatio
-    rw [ite_eq_right (ne_of_gt hvol_toReal_pos)]
-    have hball_pos : 0 < (volume (Metric.ball (0 : V) 1)).toReal :=
-      ENNReal.toReal_pos (ne_of_gt (Metric.measure_ball_pos volume 0 one_pos))
-        (ne_of_lt measure_ball_lt_top)
-    have hvol_sub : (volume (Metric.closedBall (0 : V) (↑n - ‖v‖))).toReal =
-        (↑n - ‖v‖) ^ d * (volume (Metric.ball (0 : V) 1)).toReal := by
-      rw [Measure.addHaar_closedBall volume (0 : V) hsub_nn, ENNReal.toReal_mul,
-          ENNReal.toReal_ofReal (by positivity)]
-    have hvol_n : (volume (Metric.closedBall (0 : V) (↑n))).toReal =
-        (↑n) ^ d * (volume (Metric.ball (0 : V) 1)).toReal := by
-      rw [Measure.addHaar_closedBall volume (0 : V) hn_pos.le, ENNReal.toReal_mul,
-          ENNReal.toReal_ofReal (by positivity)]
-    calc ((↑n - ‖v‖) / ↑n) ^ d
-        = (↑n - ‖v‖) ^ d / (↑n) ^ d := by rw [div_pow]
-      _ = ((↑n - ‖v‖) ^ d * (volume (Metric.ball (0 : V) 1)).toReal) /
-          ((↑n) ^ d * (volume (Metric.ball (0 : V) 1)).toReal) := by
-          rw [mul_div_mul_right _ _ (ne_of_gt hball_pos)]
-      _ = (volume (Metric.closedBall (0 : V) (↑n - ‖v‖))).toReal /
-          (volume (Metric.closedBall (0 : V) (↑n))).toReal := by
-          rw [hvol_sub, hvol_n]
-      _ ≤ (volume (Metric.closedBall (0 : V) (↑n) ∩ Metric.closedBall v (↑n))).toReal /
-          (volume (Metric.closedBall (0 : V) (↑n))).toReal :=
-          div_le_div_of_nonneg_right
-            (ENNReal.toReal_mono
-              (ne_of_lt (lt_of_le_of_lt (measure_mono Set.inter_subset_left)
-                measure_closedBall_lt_top))
-              (measure_mono (closedBall_sub_norm_subset v ↑n)))
-            hvol_toReal_pos.le
+    exact sub_norm_div_pow_le_overlapRatio v
+      (lt_of_le_of_lt (Nat.le_ceil _) (Nat.cast_lt.mpr hn)).le
   -- Squeeze between that lower bound and the constant `1`.
   exact Filter.Tendsto.squeeze' hlower tendsto_const_nhds hdom
     (Filter.Eventually.of_forall fun n => overlapRatio_le_one (n : ℝ) v)
@@ -545,7 +541,7 @@ private theorem tendsto_integral_overlapRatio_mul (ψ : V → ℂ) (hint : Integ
 nonnegative real part: the Fejér-averaged double integral `J_R` converges to `∫ ψ` and has
 nonnegative real part for each radius `R`. -/
 private theorem pd_integral_re_nonneg (ψ : V → ℂ)
-    (hpd : IsPositiveDefiniteKernel fun a b : V => ψ (a - b))
+    (hpd : Matrix.PosSemidef fun a b : V => ψ (a - b))
     (hint : Integrable ψ) (hcont : Continuous ψ) :
     0 ≤ (∫ x, ψ x).re := by
   -- Define `J n = vol(B_n)⁻¹ • ∬_{B_n × B_n} ψ (x - y)`.
@@ -559,7 +555,7 @@ private theorem pd_integral_re_nonneg (ψ : V → ℂ)
     intro n
     simp only [J]
     split_ifs with h
-    · exact map_zero_re_nonneg_of_isPositiveDefiniteKernel hpd
+    · exact map_zero_re_nonneg_of_posSemidef hpd
     · rw [Complex.smul_re]
       apply mul_nonneg (inv_nonneg.mpr ENNReal.toReal_nonneg)
       exact pd_double_integral_re_nonneg ψ hpd hcont _ Metric.isBounded_closedBall
@@ -582,16 +578,16 @@ finite-dimensional real inner-product space has nonnegative real part.
 
 Rudin, *Fourier Analysis on Groups*, Theorem 1.4.3; Folland, *A Course in Abstract Harmonic
 Analysis*, §4.2, Lemma 4.8. -/
-theorem fourier_re_nonneg_of_isPositiveDefiniteKernel (F : V → ℂ)
-    (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b))
+theorem fourier_re_nonneg_of_posSemidef (F : V → ℂ)
+    (hpd : Matrix.PosSemidef fun a b : V => F (a - b))
     (hint : Integrable F) (hcont : Continuous F) (ξ : V) :
     0 ≤ (𝓕 F ξ).re := by
   -- Step 1: `𝓕 F ξ = ∫ v, fourierAtom ξ v * F v`.
   rw [fourier_eq_integral_fourierAtom_mul F ξ]
   -- Step 2: the twisted function is positive definite (Schur product with the Fourier atom).
-  have hψ_pd : IsPositiveDefiniteKernel
+  have hψ_pd : Matrix.PosSemidef
       fun a b : V => (fun v => fourierAtom ξ v * F v) (a - b) :=
-    isPositiveDefiniteKernel_mul (isPositiveDefiniteKernel_fourierAtom ξ) hpd
+    (posSemidef_fourierAtom ξ).hadamard hpd
   -- Step 3: the twisted function is continuous and integrable.
   have hψ_cont : Continuous fun v => fourierAtom ξ v * F v :=
     (continuous_fourierAtom ξ).mul hcont
@@ -649,16 +645,16 @@ theorem fourier_eq_re_of_map_neg_eq_conj (F : V → ℂ)
 
 /-- The positive-definite specialization of `fourier_im_eq_zero_of_map_neg_eq_conj`: a function
 with positive-definite subtraction kernel is conjugate-symmetric. -/
-theorem fourier_im_eq_zero_of_isPositiveDefiniteKernel (F : V → ℂ)
-    (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b)) (hint : Integrable F) (ξ : V) :
+theorem fourier_im_eq_zero_of_posSemidef (F : V → ℂ)
+    (hpd : Matrix.PosSemidef fun a b : V => F (a - b)) (hint : Integrable F) (ξ : V) :
     (𝓕 F ξ).im = 0 :=
-  fourier_im_eq_zero_of_map_neg_eq_conj F (map_neg_eq_conj_of_isPositiveDefiniteKernel hpd) hint ξ
+  fourier_im_eq_zero_of_map_neg_eq_conj F (map_neg_eq_conj_of_posSemidef hpd) hint ξ
 
 /-- The positive-definite specialization of `fourier_eq_re_of_map_neg_eq_conj`. -/
-theorem fourier_eq_re_of_isPositiveDefiniteKernel (F : V → ℂ)
-    (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b)) (hint : Integrable F) (ξ : V) :
+theorem fourier_eq_re_of_posSemidef (F : V → ℂ)
+    (hpd : Matrix.PosSemidef fun a b : V => F (a - b)) (hint : Integrable F) (ξ : V) :
     𝓕 F ξ = ((𝓕 F ξ).re : ℂ) :=
-  fourier_eq_re_of_map_neg_eq_conj F (map_neg_eq_conj_of_isPositiveDefiniteKernel hpd) hint ξ
+  fourier_eq_re_of_map_neg_eq_conj F (map_neg_eq_conj_of_posSemidef hpd) hint ξ
 
 /-! ### Integrability of the Fourier transform of a positive-definite function -/
 
@@ -698,9 +694,9 @@ private theorem integral_fourierIntegral_gaussian_eq_one {t : ℝ} (ht : 0 < t) 
 nonnegative because the Gaussian has a positive-definite subtraction kernel. -/
 private theorem integral_norm_fourierIntegral_gaussian_eq_one {t : ℝ} (ht : 0 < t) :
     ∫ ξ : V, ‖𝓕 (fun x : V => Complex.exp (-(t * ‖x‖ ^ 2 : ℝ))) ξ‖ = 1 := by
-  have hg_pd : IsPositiveDefiniteKernel
+  have hg_pd : Matrix.PosSemidef
       fun a b : V => Complex.exp (-(t * ‖a - b‖ ^ 2 : ℝ)) :=
-    isPositiveDefiniteKernel_cexp_neg_mul_sq_norm ht.le
+    posSemidef_cexp_neg_mul_sq_norm ht.le
   have hg_int : Integrable fun x : V => Complex.exp (-(t * ‖x‖ ^ 2 : ℝ)) :=
     integrable_cexp_neg_mul_sq_norm ht
   have hg_cont : Continuous fun x : V => Complex.exp (-(t * ‖x‖ ^ 2 : ℝ)) :=
@@ -709,8 +705,8 @@ private theorem integral_norm_fourierIntegral_gaussian_eq_one {t : ℝ} (ht : 0 
   have hnorm : ∀ ξ : V, ‖𝓕 (fun x : V => Complex.exp (-(t * ‖x‖ ^ 2 : ℝ))) ξ‖ =
       (𝓕 (fun x : V => Complex.exp (-(t * ‖x‖ ^ 2 : ℝ))) ξ).re := by
     intro ξ
-    have hre := fourier_re_nonneg_of_isPositiveDefiniteKernel _ hg_pd hg_int hg_cont ξ
-    rw [fourier_eq_re_of_isPositiveDefiniteKernel _ hg_pd hg_int ξ, Complex.norm_real,
+    have hre := fourier_re_nonneg_of_posSemidef _ hg_pd hg_int hg_cont ξ
+    rw [fourier_eq_re_of_posSemidef _ hg_pd hg_int ξ, Complex.norm_real,
       Complex.ofReal_re, Real.norm_of_nonneg hre]
   calc ∫ ξ : V, ‖𝓕 (fun x : V => Complex.exp (-(t * ‖x‖ ^ 2 : ℝ))) ξ‖
       = ∫ ξ : V, (𝓕 (fun x : V => Complex.exp (-(t * ‖x‖ ^ 2 : ℝ))) ξ).re :=
@@ -723,13 +719,13 @@ private theorem integral_norm_fourierIntegral_gaussian_eq_one {t : ℝ} (ht : 0 
 of `𝓕 F` is at most `(F 0).re`, by the Parseval/Fubini identity and the `L¹` bound on the
 Fourier transform of the Gaussian. -/
 private theorem re_integral_fourierIntegral_mul_gaussian_le (F : V → ℂ)
-    (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b))
+    (hpd : Matrix.PosSemidef fun a b : V => F (a - b))
     (hint : Integrable F) (hcont : Continuous F) {t : ℝ} (ht : 0 < t) :
     (∫ ξ, 𝓕 F ξ * Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ))).re ≤ (F 0).re := by
   have hgt_int : Integrable fun ξ : V => Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ)) :=
     integrable_cexp_neg_mul_sq_norm ht
   have hft_gt_int := integrable_fourierIntegral_gaussian (V := V) ht
-  have hFbound : ∀ x, ‖F x‖ ≤ (F 0).re := norm_apply_le_map_zero_re_of_isPositiveDefiniteKernel hpd
+  have hFbound : ∀ x, ‖F x‖ ≤ (F 0).re := norm_apply_le_map_zero_re_of_posSemidef hpd
   have hprod_int : Integrable fun x : V =>
       F x * 𝓕 (fun ξ : V => Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ))) x :=
     hft_gt_int.bdd_mul hcont.aestronglyMeasurable (ae_of_all _ hFbound)
@@ -764,7 +760,7 @@ private theorem re_integral_fourierIntegral_mul_gaussian_le (F : V → ℂ)
 damping parameter: the damped transform is real and nonnegative, so its `L¹` norm equals the
 Gaussian-tested integral bounded by `re_integral_fourierIntegral_mul_gaussian_le`. -/
 private theorem lintegral_enorm_fourierIntegral_mul_gaussian_le (F : V → ℂ)
-    (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b))
+    (hpd : Matrix.PosSemidef fun a b : V => F (a - b))
     (hint : Integrable F) (hcont : Continuous F) {t : ℝ} (ht : 0 < t) :
     ∫⁻ ξ, ‖𝓕 F ξ * Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ))‖ₑ ≤ ENNReal.ofReal (F 0).re := by
   have hbound : ∀ ξ : V, ‖𝓕 F ξ‖ ≤ ∫ x, ‖F x‖ := fun ξ =>
@@ -778,10 +774,10 @@ private theorem lintegral_enorm_fourierIntegral_mul_gaussian_le (F : V → ℂ)
   have hnorm_eq : ∀ ξ : V, ‖𝓕 F ξ * Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ))‖ =
       (𝓕 F ξ * Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ))).re := by
     intro ξ
-    rw [fourier_eq_re_of_isPositiveDefiniteKernel F hpd hint ξ, ← Complex.ofReal_neg,
+    rw [fourier_eq_re_of_posSemidef F hpd hint ξ, ← Complex.ofReal_neg,
       ← Complex.ofReal_exp, ← Complex.ofReal_mul, Complex.norm_real, Complex.ofReal_re,
       Real.norm_of_nonneg (mul_nonneg
-        (fourier_re_nonneg_of_isPositiveDefiniteKernel F hpd hint hcont ξ)
+        (fourier_re_nonneg_of_posSemidef F hpd hint hcont ξ)
         (Real.exp_nonneg _))]
   calc ∫ ξ, ‖𝓕 F ξ * Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ))‖
       = ∫ ξ, (𝓕 F ξ * Complex.exp (-(t * ‖ξ‖ ^ 2 : ℝ))).re :=
@@ -795,8 +791,8 @@ private theorem lintegral_enorm_fourierIntegral_mul_gaussian_le (F : V → ℂ)
 Testing `𝓕 F` against the Gaussians `exp (-‖·‖²/(n+1))` gives integrals uniformly bounded by
 `(F 0).re`, and Fatou's lemma passes the bound to `∫⁻ ‖𝓕 F‖ₑ`. Folland, *A Course in Abstract
 Harmonic Analysis*, §4.2. -/
-theorem integrable_fourier_of_isPositiveDefiniteKernel (F : V → ℂ)
-    (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b))
+theorem integrable_fourier_of_posSemidef (F : V → ℂ)
+    (hpd : Matrix.PosSemidef fun a b : V => F (a - b))
     (hint : Integrable F) (hcont : Continuous F) :
     Integrable (𝓕 F) := by
   have hft_cont : Continuous (𝓕 F) := continuous_fourier_of_integrable hint
@@ -838,12 +834,12 @@ Bochner's theorem, so nonnegativity, realness and integrability are recorded for
 
 /-- The inverse Fourier transform of a continuous integrable positive-definite function has
 nonnegative real part. -/
-theorem fourierInv_re_nonneg_of_isPositiveDefiniteKernel (F : V → ℂ)
-    (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b))
+theorem fourierInv_re_nonneg_of_posSemidef (F : V → ℂ)
+    (hpd : Matrix.PosSemidef fun a b : V => F (a - b))
     (hint : Integrable F) (hcont : Continuous F) (ξ : V) :
     0 ≤ (𝓕⁻ F ξ).re := by
   rw [Real.fourierInv_eq_fourier_neg]
-  exact fourier_re_nonneg_of_isPositiveDefiniteKernel F hpd hint hcont (-ξ)
+  exact fourier_re_nonneg_of_posSemidef F hpd hint hcont (-ξ)
 
 /-- The inverse Fourier transform of an integrable conjugate-symmetric function is real: it
 equals the coercion of its own real part. As in `fourier_im_eq_zero_of_map_neg_eq_conj`, `hint`
@@ -856,19 +852,19 @@ theorem fourierInv_eq_re_of_map_neg_eq_conj (F : V → ℂ)
   exact fourier_eq_re_of_map_neg_eq_conj F hsymm hint (-ξ)
 
 /-- The positive-definite specialization of `fourierInv_eq_re_of_map_neg_eq_conj`. -/
-theorem fourierInv_eq_re_of_isPositiveDefiniteKernel (F : V → ℂ)
-    (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b)) (hint : Integrable F) (ξ : V) :
+theorem fourierInv_eq_re_of_posSemidef (F : V → ℂ)
+    (hpd : Matrix.PosSemidef fun a b : V => F (a - b)) (hint : Integrable F) (ξ : V) :
     𝓕⁻ F ξ = ((𝓕⁻ F ξ).re : ℂ) :=
-  fourierInv_eq_re_of_map_neg_eq_conj F (map_neg_eq_conj_of_isPositiveDefiniteKernel hpd) hint ξ
+  fourierInv_eq_re_of_map_neg_eq_conj F (map_neg_eq_conj_of_posSemidef hpd) hint ξ
 
 /-- The inverse Fourier transform of a continuous integrable positive-definite function is
 integrable. -/
-theorem integrable_fourierInv_of_isPositiveDefiniteKernel (F : V → ℂ)
-    (hpd : IsPositiveDefiniteKernel fun a b : V => F (a - b))
+theorem integrable_fourierInv_of_posSemidef (F : V → ℂ)
+    (hpd : Matrix.PosSemidef fun a b : V => F (a - b))
     (hint : Integrable F) (hcont : Continuous F) :
     Integrable (𝓕⁻ F) := by
   rw [funext fun ξ => Real.fourierInv_eq_fourier_neg F ξ]
-  exact (integrable_fourier_of_isPositiveDefiniteKernel F hpd hint hcont).comp_neg
+  exact (integrable_fourier_of_posSemidef F hpd hint hcont).comp_neg
 
 /-- The `ℝ≥0∞`-valued density `(𝓕⁻ F).re` of the Bochner representing measure is measurable
 whenever `F` is integrable. -/

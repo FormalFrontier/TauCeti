@@ -27,9 +27,11 @@ preconnected and not the whole circle, and pick `z ∉ T`. Cutting the circle at
 reading it as `Circle.exp` on the period `[t, t + 2π]` for `Circle.exp t = z` — turns `T` into
 `K = Circle.exp ⁻¹' T ∩ Icc t (t + 2 * π)`, a compact subset of `ℝ` avoiding *both* endpoints of
 that period, so `K ⊆ Ioo t (t + 2 * π)` and `Circle.exp` is injective on `K`. A continuous injection
-of a compact space into a Hausdorff one is a closed map, so
-`IsPreconnected.preimage_of_isClosedMap` carries preconnectedness of `T = Circle.exp '' K` back to
-`K`, and a compact connected subset of `ℝ` is a closed interval (`eq_Icc_of_connected_compact`).
+of a compact space into a Hausdorff one is a closed embedding (`Continuous.isClosedEmbedding`),
+hence inducing, and an inducing map reflects preconnectedness
+(`Topology.IsInducing.isPreconnected_image`), which carries preconnectedness of
+`T = Circle.exp '' K` back to `K`; a compact connected subset of `ℝ` is then a closed interval
+(`eq_Icc_of_connected_compact`).
 Hence `T = Circle.exp '' Icc a b` with `b - a < 2 * π`, the degenerate case `a = b` being a point.
 
 The complement is read off the same period, moved to `Ioc b (b + 2 * π)` so that the closed arc
@@ -58,6 +60,22 @@ private lemma circleExp_image_Icc_add_period (a b : ℝ) :
     Circle.exp '' Icc (a + 2 * π) (b + 2 * π) = Circle.exp '' Icc a b := by
   rw [← image_add_const_Icc, ← image_comp]
   exact image_congr fun x _ => Circle.exp_add_two_pi x
+
+/-- **Preconnectedness pulls back along a continuous injection on a compact set.** If `f` is
+continuous and injective on a compact `K` and its image in a Hausdorff space is preconnected, then
+`K` itself is preconnected. -/
+private lemma isPreconnected_of_injOn {X Y : Type*} [TopologicalSpace X] [TopologicalSpace Y]
+    [T2Space Y] {f : X → Y} {K : Set X} (hK : IsCompact K) (hf : ContinuousOn f K)
+    (hinj : InjOn f K) (hpre : IsPreconnected (f '' K)) : IsPreconnected K := by
+  -- On the subtype the restriction is a closed embedding, so it reflects preconnectedness.
+  have : CompactSpace K := isCompact_iff_compactSpace.mp hK
+  have hginj : Function.Injective fun x : K => f (x : X) :=
+    fun x y hxy => Subtype.ext (hinj x.2 y.2 hxy)
+  have hgc : Continuous fun x : K => f (x : X) := continuousOn_iff_continuous_domRestrict.mp hf
+  have hrange : range (fun x : K => f (x : X)) = f '' K := (image_eq_range f K).symm
+  rw [isPreconnected_iff_preconnectedSpace, preconnectedSpace_iff_univ,
+    ← (hgc.isClosedEmbedding hginj).isInducing.isPreconnected_image, image_univ, hrange]
+  exact hpre
 
 /-- **A nonempty closed preconnected proper subset of the circle is a closed arc.** The two angles
 are less than a full turn apart, so `Circle.exp` is injective on the interval carrying them, and the
@@ -89,19 +107,8 @@ theorem exists_eq_circleExp_image_Icc {T : Set Circle} (hT : IsClosed T) (hpre :
   have hKne : K.Nonempty := by
     rw [← image_nonempty (f := Circle.exp), himg]
     exact hne
-  have hKpre : IsPreconnected K := by
-    have : CompactSpace K := isCompact_iff_compactSpace.mp hKcompact
-    have hginj : Function.Injective fun x : K => Circle.exp (x : ℝ) :=
-      fun x y hxy => Subtype.ext (hinj x.2 y.2 hxy)
-    have hgc : Continuous fun x : K => Circle.exp (x : ℝ) :=
-      Circle.exp.continuous.comp continuous_subtype_val
-    have hrange : range (fun x : K => Circle.exp (x : ℝ)) = T :=
-      (image_eq_range Circle.exp K).symm.trans himg
-    have hpre' := hpre.preimage_of_isClosedMap hginj hgc.isClosedMap hrange.ge
-    have hpreimage : (fun x : K => Circle.exp (x : ℝ)) ⁻¹' T = univ :=
-      eq_univ_of_forall fun x => x.2.1
-    rw [hpreimage] at hpre'
-    exact isPreconnected_iff_preconnectedSpace.mpr ⟨hpre'⟩
+  have hKpre : IsPreconnected K :=
+    isPreconnected_of_injOn hKcompact Circle.exp.continuous.continuousOn hinj (himg ▸ hpre)
   have hKeq : K = Icc (sInf K) (sSup K) := eq_Icc_of_connected_compact ⟨hKne, hKpre⟩ hKcompact
   have hIsub : Icc (sInf K) (sSup K) ⊆ Ioo t (t + 2 * π) := hKeq ▸ hKsub
   have hle : sInf K ≤ sSup K := by

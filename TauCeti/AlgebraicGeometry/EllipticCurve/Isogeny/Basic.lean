@@ -1,10 +1,11 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.AlgebraicGeometry.EllipticCurve.Affine.Point
+public import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.Eval
 
 /-!
 # Isogenies of Weierstrass curves
@@ -26,6 +27,17 @@ a typeclass diamond.
 * `TauCeti.Isogeny`: a coordinate pullback satisfying `MapsInfinity`.
 * `TauCeti.Isogeny.id`: the identity isogeny.
 
+## Main results
+
+* `WeierstrassCurve.Affine.CoordinateRing.algHom_ext`: two pullbacks agreeing on the two
+  coordinates are equal.
+
+The coordinate-ring universal property used to build and move pullbacks is stated at its natural
+generality in `Affine/Eval.lean`. `Isogeny/MulByInt/Basic.lean` makes `[n]` from the
+division-polynomial point, and `Isogeny/BaseChange.lean` carries a pullback along a change of base
+field by carrying its point. The identity and Frobenius pullbacks instead come directly from their
+underlying ring maps.
+
 This is the opening milestone of Layer 1 of the elliptic-curves roadmap. The definition is the
 coordinate-ring form of D. Angdinata's function-field definition of an isogeny. The geometric
 interpretation follows Silverman, *The Arithmetic of Elliptic Curves*, II.2.4. No ellipticity or
@@ -34,14 +46,18 @@ normality assumption is needed to state the data.
 
 public section
 
+open Polynomial
+
+open scoped Polynomial.Bivariate
+
 namespace TauCeti
 
-open WeierstrassCurve.Affine
+open _root_.WeierstrassCurve.Affine
 
 variable {F : Type*} [Field F]
 
 /-- A contravariant pullback from the target coordinate ring to the source function field. -/
-abbrev CoordinatePullback (W₁ W₂ : WeierstrassCurve.Affine F) :=
+abbrev CoordinatePullback (W₁ W₂ : WeierstrassCurve.Affine F) : Type _ :=
   W₂.CoordinateRing →ₐ[F] W₁.FunctionField
 
 namespace CoordinatePullback
@@ -66,6 +82,22 @@ theorem mapsInfinity_iff {W₁ W₂ : WeierstrassCurve.Affine F}
       @IsIntegral W₂.CoordinateRing W₁.FunctionField _ _ pullback.toRingHom.toAlgebra
         (algebraMap W₁.CoordinateRing W₁.FunctionField x) :=
   Iff.rfl
+
+/-- A coordinate pullback maps infinity to infinity if a fixed positive power of every source
+coordinate function is pulled back from the target. -/
+theorem mapsInfinity_of_pow {W₁ W₂ : WeierstrassCurve.Affine F}
+    (pullback : CoordinatePullback W₁ W₂) {n : ℕ} (hn : 0 < n)
+    (h : ∀ z : W₁.CoordinateRing, ∃ w : W₂.CoordinateRing,
+      pullback w = algebraMap W₁.CoordinateRing W₁.FunctionField z ^ n) :
+    pullback.MapsInfinity := by
+  rw [mapsInfinity_iff]
+  let _ := pullback.toRingHom.toAlgebra
+  intro z
+  obtain ⟨w, hw⟩ := h z
+  refine IsIntegral.of_pow hn ?_
+  rw [← hw]
+  rw [← AlgHom.coe_toRingHom, ← RingHom.algebraMap_toAlgebra pullback.toRingHom]
+  exact isIntegral_algebraMap
 
 /-- The identity coordinate pullback, embedding a coordinate ring into its fraction field. -/
 noncomputable def id (W : WeierstrassCurve.Affine F) : CoordinatePullback W W :=

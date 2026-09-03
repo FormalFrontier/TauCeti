@@ -1,12 +1,15 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
 -/
 module
 
 public import Mathlib.Combinatorics.Quiver.Basic
 public import Mathlib.Algebra.BigOperators.Ring.Finset
 public import Mathlib.LinearAlgebra.QuadraticForm.Basic
+public import TauCeti.LinearAlgebra.QuadraticForm.PosDef
+public import TauCeti.RepresentationTheory.Quiver.FirstArrow
 public import TauCeti.RepresentationTheory.Quiver.LastArrow
 import Mathlib.Tactic.Ring
 
@@ -18,7 +21,9 @@ the Tits form, is the numerical form used by reflection functors and Gabriel's t
 
 `TauCeti.eulerForm_card_path_left` evaluates the Euler form against the vector counting the paths
 out of a vertex `i`: it is evaluation at `i`, the last-arrow recursion for path counts cancelling
-the arrow sum.
+the arrow sum. `TauCeti.eulerForm_card_path_right` is the mirror statement on the right-hand
+argument, for the vector counting the paths *into* a vertex, and rests on the first-arrow recursion
+instead.
 
 The last section evaluates both forms on the simple dimension vectors `αᵢ = Pi.single i 1`;
 in particular `TauCeti.titsPolarForm_single_single` computes the Gram matrix of the polarized
@@ -88,6 +93,11 @@ public def titsForm : QuadraticMap ℤ (Q → ℤ) ℤ :=
 public theorem titsForm_def (d : Q → ℤ) : titsForm Q d = eulerForm Q d d :=
   LinearMap.BilinMap.toQuadraticMap_apply _ _
 
+/-- Only finitely many nonnegative integer vectors are roots of a positive definite Tits form. -/
+public theorem finite_setOf_nonneg_titsForm_eq_one (hpd : (titsForm Q).PosDef) :
+    {d : Q → ℤ | 0 ≤ d ∧ titsForm Q d = 1}.Finite :=
+  (QuadraticMap.PosDef.finite_setOf_apply_eq hpd 1).subset fun _ hd ↦ hd.2
+
 /-- The symmetric bilinear form obtained by polarizing the Tits form. -/
 public def titsPolarForm : LinearMap.BilinForm ℤ (Q → ℤ) :=
   (titsForm Q).polarBilin
@@ -132,7 +142,7 @@ public theorem eulerForm_card_path_left (i : Q) [∀ a : Q, Finite (Quiver.Path 
           - ∑ a : Q, (Fintype.card (a ⟶ b) : ℤ) * (Nat.card (Quiver.Path i a) : ℤ)
         = if i = b then 1 else 0 := by
     intro b
-    have h := congrArg (fun n : ℕ ↦ (n : ℤ)) (card_path_eq_ite_add_sum (V := Q) i b)
+    have h := congrArg (fun n : ℕ ↦ (n : ℤ)) (card_path_eq_ite_add_sum_lastArrow (V := Q) i b)
     push_cast [Nat.card_eq_fintype_card] at h
     rw [h, Finset.sum_congr rfl fun a _ ↦
       mul_comm ((Fintype.card (a ⟶ b) : ℤ)) ((Nat.card (Quiver.Path i a) : ℤ))]
@@ -147,6 +157,35 @@ public theorem eulerForm_card_path_left (i : Q) [∀ a : Q, Finite (Quiver.Path 
     exact Finset.sum_congr rfl fun a _ ↦ by ring
   rw [eulerForm_eq_sum_card, hswap, ← Finset.sum_sub_distrib,
     Finset.sum_congr rfl fun b _ ↦ by rw [← sub_mul, key b]]
+  simp
+
+/-- **The Euler form against a path-count vector on the right is evaluation.** Pairing any
+`d : Q → ℤ` against the vector counting the paths into `i` returns `dᵢ`: at each vertex `a` the path
+count `#(a → i)` cancels the arrow-weighted sum `∑_b #(a ⟶ b) · #(b → i)` up to the trivial path, by
+the first-arrow recursion `TauCeti.card_path_eq_ite_add_sum_firstArrow`. This is the mirror image of
+`TauCeti.eulerForm_card_path_left`, and the Euler form is not symmetric, so neither statement
+follows from the other. -/
+public theorem eulerForm_card_path_right (d : Q → ℤ) (i : Q)
+    [∀ a : Q, Finite (Quiver.Path a i)] :
+    eulerForm Q d (fun v ↦ (Nat.card (Quiver.Path v i) : ℤ)) = d i := by
+  classical
+  have key : ∀ a : Q,
+      (Nat.card (Quiver.Path a i) : ℤ)
+          - ∑ b : Q, (Fintype.card (a ⟶ b) : ℤ) * (Nat.card (Quiver.Path b i) : ℤ)
+        = if a = i then 1 else 0 := by
+    intro a
+    have h := congrArg (fun n : ℕ ↦ (n : ℤ)) (card_path_eq_ite_add_sum_firstArrow (V := Q) a i)
+    push_cast [Nat.card_eq_fintype_card] at h
+    rw [h]
+    ring
+  have hgroup : ∀ a : Q,
+      (∑ b : Q, (Fintype.card (a ⟶ b) : ℤ) * (d a * (Nat.card (Quiver.Path b i) : ℤ)))
+        = d a * ∑ b : Q, (Fintype.card (a ⟶ b) : ℤ) * (Nat.card (Quiver.Path b i) : ℤ) := by
+    intro a
+    rw [Finset.mul_sum]
+    exact Finset.sum_congr rfl fun b _ ↦ by ring
+  rw [eulerForm_eq_sum_card, Finset.sum_congr rfl fun a _ ↦ hgroup a, ← Finset.sum_sub_distrib,
+    Finset.sum_congr rfl fun a _ ↦ by rw [← mul_sub, key a]]
   simp
 
 /-! ### The Euler and Tits forms in the simple dimension vectors -/
@@ -197,6 +236,18 @@ public theorem titsForm_single (i : Q) :
     titsForm Q (Pi.single i 1) = 1 - (Fintype.card (i ⟶ i) : ℤ) := by
   rw [titsForm_def, eulerForm_single_single]
   simp
+
+omit [DecidableEq Q] in
+/-- **A positive definite Tits form has no loops.** The simple dimension vector `αᵢ` has
+`q(αᵢ) = 1 - #(i ⟶ i)`, which a loop at `i` makes non-positive. -/
+public theorem isEmpty_hom_self_of_titsForm_posDef (hpd : (titsForm Q).PosDef) (i : Q) :
+    IsEmpty (i ⟶ i) := by
+  classical
+  have hne : (Pi.single i 1 : Q → ℤ) ≠ 0 := fun h ↦ by simpa using congrFun h i
+  have hpos := hpd _ hne
+  rw [titsForm_single] at hpos
+  rw [← Fintype.card_eq_zero_iff]
+  omega
 
 /-- A loopless vertex has a simple dimension vector of Tits norm one, that is, `αᵢ` is a root. -/
 public theorem titsForm_single_of_isEmpty {i : Q} (h : IsEmpty (i ⟶ i)) :

@@ -63,6 +63,9 @@ needed for the estimates themselves, whose statements cover every centre and rad
   Wolff's lemma: a holomorphic map of a disc with finite Dirichlet integral has, at every centre
   `ζ` and below every positive radius, a radius `ρ` at which `f '' (ball c r ∩ sphere ζ ρ)` has
   diameter at most `ε`.
+* `TauCeti.exists_diam_image_ball_inter_sphere_le_and_circleImageLength_ne_top` — the same
+  selection returning also the finite circle-image length and the boundedness that follows from
+  it, which is the form the crosscut theorems downstream consume.
 * `TauCeti.exists_diam_image_ball_inter_sphere_le` — its corollary for an injective map with
   bounded image, the case a Riemann map falls under.
 
@@ -182,6 +185,30 @@ theorem isBounded_image_ball_inter_sphere_of_circleImageLength_ne_top
 /-! ## Circle intersections with a short image -/
 
 /-- **A holomorphic map of finite Dirichlet integral has short images of small circle
+intersections, together with the length witness that produced the bound.** For `f` holomorphic on
+`ball c r` with finite Dirichlet integral and an arbitrary `ζ`, every tolerance `ε > 0` and every
+bound `R > 0` admit a radius `ρ < R` at which `circleImageLength f (ball c r) ζ ρ` is finite, the
+image of `ball c r ∩ sphere ζ ρ` has diameter at most `ε`, and that image is bounded.
+
+`TauCeti.exists_diam_image_ball_inter_sphere_le_of_lintegral_ne_top` is the diameter conjunct
+alone. Callers that go on to talk about the crosscut itself need the finite length as well --
+the endpoint-limit and Jordan-closing theorems both take it -- and boundedness follows from it,
+so all three are returned here rather than reconstructed at each call site. A caller wanting a
+genuine circular crosscut applies this at `dist ζ c = r` with `R := min R (2 * r)`. -/
+theorem exists_diam_image_ball_inter_sphere_le_and_circleImageLength_ne_top
+    (hf : DifferentiableOn ℂ f (ball c r))
+    (hfin : ∫⁻ z in ball c r, ‖deriv f z‖ₑ ^ 2 ≠ ⊤) {ε : ℝ} (hε : 0 < ε) {R : ℝ} (hR : 0 < R) :
+    ∃ ρ ∈ Ioo 0 R, circleImageLength f (ball c r) ζ ρ ≠ ⊤ ∧
+      diam (f '' (ball c r ∩ sphere ζ ρ)) ≤ ε ∧
+      IsBounded (f '' (ball c r ∩ sphere ζ ρ)) := by
+  obtain ⟨ρ, hρmem, hlen⟩ :=
+    exists_circleImageLength_lt_of_lintegral_ne_top (s := ball c r) f measurableSet_ball ζ hfin
+      (ENNReal.ofReal_pos.mpr hε).ne' hR
+  have hfin' : circleImageLength f (ball c r) ζ ρ ≠ ⊤ := (hlen.trans ENNReal.ofReal_lt_top).ne
+  exact ⟨ρ, hρmem, hfin', diam_image_ball_inter_sphere_le hf hε.le hlen.le,
+    isBounded_image_ball_inter_sphere_of_circleImageLength_ne_top hf hfin'⟩
+
+/-- **A holomorphic map of finite Dirichlet integral has short images of small circle
 intersections.** For `f` holomorphic on `ball c r` with `∫⁻ z in ball c r, ‖deriv f z‖ₑ ^ 2 ≠ ⊤`
 and an arbitrary `ζ`, every tolerance `ε > 0` and every bound `R > 0` admit a radius `ρ < R` at
 which the image of `ball c r ∩ sphere ζ ρ` has diameter at most `ε`. The case the Carathéodory
@@ -209,10 +236,9 @@ theorem exists_diam_image_ball_inter_sphere_le_of_lintegral_ne_top
     (hf : DifferentiableOn ℂ f (ball c r))
     (hfin : ∫⁻ z in ball c r, ‖deriv f z‖ₑ ^ 2 ≠ ⊤) {ε : ℝ} (hε : 0 < ε) {R : ℝ} (hR : 0 < R) :
     ∃ ρ ∈ Ioo 0 R, diam (f '' (ball c r ∩ sphere ζ ρ)) ≤ ε := by
-  obtain ⟨ρ, hρmem, hlen⟩ :=
-    exists_circleImageLength_lt_of_lintegral_ne_top (s := ball c r) f measurableSet_ball ζ hfin
-      (ENNReal.ofReal_pos.mpr hε).ne' hR
-  exact ⟨ρ, hρmem, diam_image_ball_inter_sphere_le hf hε.le hlen.le⟩
+  obtain ⟨ρ, hρmem, -, hdiam, -⟩ :=
+    exists_diam_image_ball_inter_sphere_le_and_circleImageLength_ne_top (ζ := ζ) hf hfin hε hR
+  exact ⟨ρ, hρmem, hdiam⟩
 
 /-- **A conformal map of a disc has arbitrarily small images of the circle intersections
 `ball c r ∩ sphere ζ ρ` at every centre `ζ`.** This is the case of

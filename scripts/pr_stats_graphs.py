@@ -42,12 +42,24 @@ from pathlib import Path
 from typing import Iterable
 
 from chart_style import BAR_BG, MUTED, PALETTE, base_css, card_rect, css_px
-# The repository's one GraphQL client, shared with the PR status sinks that already
-# import it: same query/variable/error handling, plus the rate-limit back-off this
-# job wants as much as they do (it and they spend one App budget). The call sites
-# below pass `retry_transient=True` to keep this script's own policy of riding out
-# a transient failure, which a run of thousands of timeline queries depends on.
-from pr_status.core import graphql
+# The lifecycle rules live in one module because two readers of the same label
+# timelines have to agree about what they mean, and once did not.
+from pr_lifecycle import (  # noqa: F401  (re-exported for existing callers)
+    LIFECYCLE_EPOCH,
+    LIFECYCLE_LABELS,
+    STAGE_ORDER,
+    STATE_AUTHOR,
+    STATE_AUTHOR_ACTION,
+    STATE_LABELS,
+    STATE_REVIEW,
+    author_episode_start,
+    current_stage,
+    episodes,
+    iso_z,
+    latest_lifecycle_label,
+    parse_dt,
+    review_cycle_starts,
+)
 
 SCOREBOARD_MARKER = "<!--tauceti-scoreboard-->"
 # A canonical scoreboard is the review engine's own comment: besides the public marker it
@@ -56,19 +68,6 @@ SCOREBOARD_MARKER = "<!--tauceti-scoreboard-->"
 # marker or paste another PR's scoreboard.  scripts/pr_status/core.py parses the same block
 # when it derives a single PR's review state.
 SCOREBOARD_META_KIND = "scoreboard"
-STATE_REVIEW = {"awaiting-review", "review-in-progress"}
-# The two states that put the ball in the author's court. They are separate labels because the
-# author reads a build log for one and the review threads for the other, but every measurement
-# here treats them as one state: the PR is waiting on a human either way.
-STATE_AUTHOR_ACTION = {"awaiting-author", "ci-failed"}
-STATE_LABELS = {*STATE_AUTHOR_ACTION, *STATE_REVIEW}
-# States in which the PR has left the review queue: the author owns it, or CI is judging a
-# new commit before review resumes.
-STATE_AUTHOR = {*STATE_AUTHOR_ACTION, "awaiting-CI"}
-LIFECYCLE_LABELS = {*STATE_REVIEW, *STATE_AUTHOR, "ready-to-merge"}
-# The lifecycle-label workflow first landed on 2026-07-22. A PR closed before
-# that UTC day cannot contain one of its label events and needs no timeline query.
-LIFECYCLE_EPOCH = datetime(2026, 7, 22, tzinfo=timezone.utc)
 ASSET_NAMES = [
     "pr-queue-age.svg",
     "review-cycles-reached.svg",
@@ -82,14 +81,6 @@ HOUR_LABELS = [
     "<1h", "1–2h", "2–4h", "4–8h", "8–12h", "12–24h",
     "1–2d", "2–3d", "3–5d", "5d+",
 ]
-
-
-def parse_dt(value: str | None) -> datetime | None:
-    return datetime.fromisoformat(value.replace("Z", "+00:00")) if value else None
-
-
-def iso_z(value: datetime) -> str:
-    return value.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
 def atomic_write(path: Path, content: str) -> None:
@@ -164,6 +155,19 @@ query($owner:String!, $name:String!, $number:Int!, $cursor:String) {
 """
 
 
+def graphql(query: str, **variables) -> dict:
+    args = ["api", "graphql", "-f", f"query={query}"]
+    for key, value in variables.items():
+        if value is None:
+            continue
+        flag = "-F" if isinstance(value, int) else "-f"
+        args.extend([flag, f"{key}={value}"])
+    payload = json.loads(run_gh(args))
+    if payload.get("errors"):
+        raise RuntimeError(f"GitHub GraphQL errors: {payload['errors']}")
+    return payload["data"]
+
+
 def normalized_events(events: list[dict]) -> list[dict]:
     return sorted((
         {"created_at": event["createdAt"], "label": event["label"]["name"]}
@@ -177,7 +181,7 @@ def fetch_timeline(owner: str, name: str, number: int) -> dict:
     events = []
     while True:
         pull = graphql(
-            TIMELINE_PAGE_QUERY, retry_transient=True, owner=owner, name=name,
+            TIMELINE_PAGE_QUERY, owner=owner, name=name,
             number=number, cursor=cursor,
         )["repository"]["pullRequest"]
         if pull is None:
@@ -212,8 +216,7 @@ def fetch_prs(repo: str) -> list[dict]:
     cursor = None
     prs = []
     while True:
-        data = graphql(PR_PAGE_QUERY, retry_transient=True,
-                       owner=owner, name=name, cursor=cursor)
+        data = graphql(PR_PAGE_QUERY, owner=owner, name=name, cursor=cursor)
         connection = data["repository"]["pullRequests"]
         for raw in connection["nodes"]:
             labels = [item["name"] for item in raw["labels"]["nodes"]]
@@ -352,58 +355,6 @@ def fetch_snapshot(repo: str) -> dict:
         "scoreboards": scoreboards,
         "rejected_scoreboard_comments": dict(sorted(rejected.items())),
     }
-
-
-def latest_lifecycle_label(pr: dict) -> str | None:
-    events = [
-        event for event in pr.get("labeled_events") or []
-        if event["label"] in LIFECYCLE_LABELS
-    ]
-    return events[-1]["label"] if events else None
-
-
-def author_episode_start(pr: dict) -> datetime | None:
-    """When the PR's current spell of waiting on its author began, or None if it is not in one.
-
-    ``ci-failed`` and ``awaiting-author`` are separate labels because the author has to do
-    different things about them, but for the queue-age clock they are one state: the PR is out of
-    the pipeline's hands either way.  So the clock runs from where the PR *entered* that state, and
-    swapping one of the two for the other inside it -- a red build arriving on a PR that already
-    had changes requested, or the migration that first split the labels -- continues the spell
-    rather than starting a new one.  Any other lifecycle label ends it: a push that sends the PR
-    back to ``awaiting-CI`` is a genuinely fresh wait, even if it fails again straight afterwards.
-    """
-    start = None
-    for event in sorted(pr.get("labeled_events") or [], key=lambda item: item["created_at"]):
-        if event["label"] in STATE_AUTHOR_ACTION:
-            if start is None:
-                start = parse_dt(event["created_at"])
-        elif event["label"] in LIFECYCLE_LABELS:
-            start = None
-    return start
-
-
-def review_cycle_starts(pr: dict) -> list[datetime]:
-    """When each of the PR's review cycles began, from its label timeline.
-
-    The pipeline swaps ``awaiting-review`` for ``review-in-progress`` while a round is being
-    judged and reconciliation can restore ``awaiting-review`` afterwards, so counting label
-    applications splits one cycle into several.  A cycle instead begins where the PR *enters*
-    the review states from an author or CI state (or from no state at all) and lasts until it
-    leaves for one; consecutive review labels stay inside the same cycle.  Labeled events
-    alone are enough: the pipeline replaces one state label with another, and a bare removal,
-    as on merge, never opens a cycle.
-    """
-    starts = []
-    in_review = False
-    for event in sorted(pr.get("labeled_events") or [], key=lambda item: item["created_at"]):
-        if event["label"] in STATE_REVIEW:
-            if not in_review:
-                starts.append(parse_dt(event["created_at"]))
-            in_review = True
-        elif event["label"] in STATE_AUTHOR:
-            in_review = False
-    return starts
 
 
 def queue_age_metrics(prs: list[dict], snapshot: datetime) -> dict:
