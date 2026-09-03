@@ -35,8 +35,11 @@ coefficient ring by dual numbers on singleton components restores the missing vo
 
 ## References
 
-See Huerfano--Khovanov, *A category for the adjoint representation*, Section 3, and
-Ehrig--Tubbenhauer, *Algebraic properties of zigzag algebras*, Section 2.
+This is the dimension clause of Layer 2 of `TauCetiRoadmap/ZigzagPreprojective/README.md`, whose
+target signature `finrank_zigzagAlgebra` appears in
+`TauCetiRoadmap/ZigzagPreprojective/Suggested.lean`.  See Huerfano--Khovanov, *A category for the
+adjoint representation*, Section 3, and Ehrig--Tubbenhauer, *Algebraic properties of zigzag
+algebras*, Section 2.
 -/
 
 public section
@@ -47,16 +50,17 @@ open SimpleGraph
 
 universe u w
 
-variable (k : Type w) [Field k] {V : Type u} (G : SimpleGraph V)
+variable (k : Type w) {V : Type u} (G : SimpleGraph V)
 
 section Component
 
-variable [Finite V]
+variable [CommRing k] [Nontrivial k] [Finite V]
 
 /-- The component factor of a zigzag algebra has dimension twice its number of vertices plus its
 number of darts, equivalently twice its number of edges.  On a nontrivial component this is the
 vertex--arrow--volume basis count; on a singleton component it is the two-dimensional dual-number
 factor. -/
+@[simp]
 theorem finrank_zigzagComponentAlgebra (C : G.ConnectedComponent) :
     Module.finrank k (zigzagComponentAlgebra k G C) =
       2 * Nat.card C + Nat.card C.toSimpleGraph.Dart := by
@@ -77,25 +81,20 @@ theorem finrank_zigzagComponentAlgebra (C : G.ConnectedComponent) :
     let _ : Unique C := Unique.mk' C
     let _ : IsEmpty C.toSimpleGraph.Dart :=
       ⟨fun d => d.fst_ne_snd (Subsingleton.elim d.fst d.snd)⟩
-    let e : DualNumber k ≃ₗ[k] k × k :=
-      { toFun := id
-        invFun := id
-        left_inv := fun _ => rfl
-        right_inv := fun _ => rfl
-        map_add' := fun _ _ => rfl
-        map_smul' := fun _ _ => rfl }
-    rw [e.finrank_eq]
+    change Module.finrank k (k × k) = _
+    rw [Module.finrank_prod]
     simp
 
 end Component
 
 section FiniteGraph
 
-variable [Fintype V] [DecidableRel G.Adj]
+variable [Field k] [Fintype V] [DecidableRel G.Adj]
 
 /-- **Dimension of the public zigzag algebra.**  For every finite simple graph, including graphs
 with isolated vertices, `dim Z(G) = 2|V| + 2|E|`.  Every vertex contributes an idempotent and a
 volume class, while every undirected edge contributes its two orientations. -/
+@[simp]
 theorem finrank_zigzagAlgebra :
     Module.finrank k (zigzagAlgebra k G) =
       2 * Fintype.card V + 2 * G.edgeFinset.card := by
@@ -131,8 +130,8 @@ theorem finrank_zigzagAlgebra :
       rw [finrank_zigzagComponentAlgebra k G]
       have hc : 0 < Nat.card C := Nat.card_pos
       omega
-  -- `zigzagAlgebra` bundles this dependent product in `AlgCat`; expose its carrier for the
-  -- standard finite-product dimension theorem.
+  -- `zigzagAlgebra` is opaque across the public import, so use its public projections and
+  -- reconstruction map to expose the dependent product to the standard finrank theorem.
   change Module.finrank k (zigzagAlgebra k G).carrier = _
   let e : (zigzagAlgebra k G).carrier ≃ₗ[k]
       (∀ C : G.ConnectedComponent, zigzagComponentAlgebra k G C) :=
