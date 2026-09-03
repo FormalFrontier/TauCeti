@@ -68,6 +68,8 @@ the finite-type coordinate-Hopf-algebra category.
   ambient automorphism imply invariance of a Hopf ideal.
 * `TauCeti.FiniteTypeCommHopfAlgCat.quotientIsoOfIso`: an ambient isomorphism induces an
   isomorphism between the corresponding finite-type Hopf-ideal quotients.
+* `TauCeti.FiniteTypeCommHopfAlgCat.minimal_quotientProperty_comapOfIso`: a minimal
+  isomorphism-invariant quotient property is preserved by an ambient isomorphism.
 * `TauCeti.FiniteTypeCommHopfAlgCat.quotientBotIso`: quotienting by the zero Hopf ideal does
   not change a finite-type commutative Hopf algebra.
 
@@ -647,6 +649,38 @@ noncomputable def quotientIsoOfIso (e : H ≅ K) (I : HopfIdeal R K) :
     CommHopfAlgCat.quotientIsoOfIso
       ((forget₂ (FiniteTypeCommHopfAlgCat.{u, v} R)
         (_root_.CommHopfAlgCat.{v} R)).mapIso e) I
+
+/-- A minimal isomorphism-invariant property of finite-type Hopf-algebra quotients is preserved
+when the ambient Hopf algebra is replaced by an isomorphic one. -/
+theorem minimal_quotientProperty_comapOfIso
+    (P : ObjectProperty (FiniteTypeCommHopfAlgCat.{u, v} R)) [P.IsClosedUnderIsomorphisms]
+    (I : HopfIdeal R K)
+    (hI : Minimal (fun J : HopfIdeal R K ↦ P (quotient K J)) I) (e : H ≅ K) :
+    Minimal (fun J : HopfIdeal R H ↦ P (quotient H J))
+      (I.comapOfSurjective (toBialgHom e.hom)
+        (ConcreteCategory.bijective_of_isIso e.hom).2) := by
+  let f := toBialgHom e.hom
+  let hf := (ConcreteCategory.bijective_of_isIso e.hom).2
+  let g := toBialgHom e.inv
+  let hg := (ConcreteCategory.bijective_of_isIso e.inv).2
+  refine ⟨P.prop_of_iso (quotientIsoOfIso e I).symm hI.prop, ?_⟩
+  intro J hJ hJpulled
+  let J' := J.comapOfSurjective g hg
+  have hJ' : P (quotient K J') :=
+    P.prop_of_iso (quotientIsoOfIso e.symm J).symm hJ
+  have hJ'comap : J'.comapOfSurjective f hf = J :=
+    HopfIdeal.comapOfSurjective_bialgEquiv_symm_apply J
+      (_root_.CommHopfAlgCat.ofIso <|
+        (forget₂ (FiniteTypeCommHopfAlgCat.{u, v} R)
+          (_root_.CommHopfAlgCat.{v} R)).mapIso e)
+  have hJ'I : J' ≤ I := by
+    rw [← HopfIdeal.comapOfSurjective_le_comapOfSurjective_iff f hf, hJ'comap]
+    exact hJpulled
+  have hIJ' : I ≤ J' := hI.le_of_le hJ' hJ'I
+  calc
+    I.comapOfSurjective f hf ≤ J'.comapOfSurjective f hf :=
+      HopfIdeal.comapOfSurjective_mono f hf hIJ'
+    _ = J := hJ'comap
 
 /-- Transporting a finite-type quotient object along an equality of Hopf ideals transports its
 quotient morphism. -/
