@@ -157,24 +157,8 @@ private theorem hasSum_negativeBinomialWeightReal_mul_pow (hr : 0 < r) (hp : 0 <
     {t : ℝ} (ht : |(1 - p) * t| < 1) :
     HasSum (fun k => negativeBinomialWeightReal r p k * t ^ k)
       (Real.rpow (p / (1 - (1 - p) * t)) r) := by
-  have hseries := Real.one_div_one_sub_rpow_hasFPowerSeriesOnBall_zero r
-  have hmem : ‖((1 - p) * t : ℝ)‖ₑ < (1 : ℝ≥0∞) := by
-    rw [enorm_eq_nnnorm]
-    -- `Metric.mem_eball` uses the extended norm, so first state the NNReal version.
-    exact_mod_cast (show ‖((1 - p) * t : ℝ)‖₊ < (1 : ℝ≥0) by
-      have ht' : ‖((1 - p) * t : ℝ)‖ < 1 := by
-        simpa [Real.norm_eq_abs] using ht
-      exact_mod_cast ht')
-  have hsum := hseries.hasSum_sub (y := (1 - p) * t)
-    (by simpa [Metric.mem_eball] using hmem)
-  simp only [FormalMultilinearSeries.ofScalars_apply_eq, sub_zero, smul_eq_mul] at hsum
-  have hchoose (n : ℕ) :
-      Ring.choose (r + (n : ℝ) - 1) n = Ring.multichoose r n := by
-    rw [Ring.multichoose_eq]
-  have hsum' : HasSum (fun k => (Ring.multichoose r k : ℝ) * ((1 - p) * t) ^ k)
-      (1 / (1 - (1 - p) * t) ^ r) := by
-    simpa only [hchoose] using hsum
-  have hsum'' := hsum'.mul_right (Real.rpow p r)
+  have hsum := hasSum_multichoose_mul_geometric_of_abs_lt_one (r := r) ht
+  have hsum' := hsum.mul_right (Real.rpow p r)
   have hweight (k : ℕ) :
       negativeBinomialWeightReal r p k * t ^ k =
         (Ring.multichoose r k : ℝ) * ((1 - p) * t) ^ k * Real.rpow p r := by
@@ -185,7 +169,7 @@ private theorem hasSum_negativeBinomialWeightReal_mul_pow (hr : 0 < r) (hp : 0 <
   -- Normalize the real-power notation inherited from the analytic-series theorem.
   have hden_rpow : (1 - (1 - p) * t) ^ r =
       Real.rpow (1 - (1 - p) * t) r := rfl
-  rw [hden_rpow] at hsum''
+  rw [hden_rpow] at hsum'
   have hvalue : 1 / Real.rpow (1 - (1 - p) * t) r * Real.rpow p r =
       Real.rpow (p / (1 - (1 - p) * t)) r := by
     calc
@@ -194,8 +178,8 @@ private theorem hasSum_negativeBinomialWeightReal_mul_pow (hr : 0 < r) (hp : 0 <
             rw [one_div, div_eq_mul_inv, mul_comm]
       _ = Real.rpow (p / (1 - (1 - p) * t)) r :=
         (Real.div_rpow hp.le hden r).symm
-  rw [hvalue] at hsum''
-  exact HasSum.congr_fun hsum'' hweight
+  rw [hvalue] at hsum'
+  exact HasSum.congr_fun hsum' hweight
 
 private theorem hasSum_negativeBinomialWeightReal (hr : 0 < r) (hp : 0 < p) (hp1 : p ≤ 1) :
     HasSum (fun k => negativeBinomialWeightReal r p k) 1 := by
@@ -273,6 +257,7 @@ theorem pgf_negativeBinomialMeasure {r p : ℝ} (hr : 0 < r) (hp : 0 < p) (hp1 :
 
 /-- At shape zero, the negative-binomial law is concentrated at zero, so its
 probability-generating function is identically one. -/
+@[simp]
 theorem pgf_negativeBinomialMeasure_zero {p : ℝ} (hp : 0 < p) (hp1 : p ≤ 1) (t : ℝ) :
     pgf id (negativeBinomialMeasure 0 p) t = 1 := by
   rw [negativeBinomialMeasure_zero hp hp1, pgf_def]

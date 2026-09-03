@@ -18,6 +18,8 @@ series; divergence on its boundary follows from Mathlib's Abel limit theorem.
 
 ## Main declarations
 
+* `TauCeti.hasSum_multichoose_mul_geometric_of_abs_lt_one` — the multichoose binomial
+  series on the open unit interval.
 * `TauCeti.summable_multichoose_mul_geometric_iff_norm_lt_one` — exact summability of
   `∑ n, multichoose r n * q ^ n` for `0 < r`.
 -/
@@ -28,6 +30,19 @@ open Filter Set
 open scoped ENNReal
 
 namespace TauCeti
+
+/-- The generalized multichoose power series sums to `(1 - x)⁻ʳ` when `|x| < 1`. -/
+theorem hasSum_multichoose_mul_geometric_of_abs_lt_one {r x : ℝ} (hx : |x| < 1) :
+    HasSum (fun n : ℕ => Ring.multichoose r n * x ^ n) (1 / (1 - x) ^ r) := by
+  have hmem : x ∈ Metric.eball (0 : ℝ) (1 : ℝ≥0∞) := by
+    rw [Metric.mem_eball]
+    simpa [edist_dist, Real.dist_0_eq_abs, enorm_eq_nnnorm] using hx
+  have hsum := (Real.one_div_one_sub_rpow_hasFPowerSeriesOnBall_zero r).hasSum_sub hmem
+  simp only [FormalMultilinearSeries.ofScalars_apply_eq, sub_zero, smul_eq_mul] at hsum
+  have hchoose (n : ℕ) :
+      Ring.choose (r + (n : ℝ) - 1) n = Ring.multichoose r n := by
+    rw [Ring.multichoose_eq]
+  simpa only [hchoose] using hsum
 
 /-- For positive real `r`, the generalized multichoose power series is unconditionally summable
 at a real or complex argument `q` exactly when `q` lies in the open unit ball. -/
@@ -40,17 +55,6 @@ theorem summable_multichoose_mul_geometric_iff_norm_lt_one
     rw [nsmul_eq_mul, Polynomial.ascPochhammer_smeval_eq_eval] at h
     apply pos_of_mul_pos_right (by rw [h]; exact ascPochhammer_pos n r hr)
     positivity
-  have hseries {x : ℝ} (hx : |x| < 1) :
-      HasSum (fun n : ℕ => Ring.multichoose r n * x ^ n) (1 / (1 - x) ^ r) := by
-    have hmem : x ∈ Metric.eball (0 : ℝ) (1 : ℝ≥0∞) := by
-      rw [Metric.mem_eball]
-      simpa [edist_dist, Real.dist_0_eq_abs, enorm_eq_nnnorm] using hx
-    have hsum := (Real.one_div_one_sub_rpow_hasFPowerSeriesOnBall_zero r).hasSum_sub hmem
-    simp only [FormalMultilinearSeries.ofScalars_apply_eq, sub_zero, smul_eq_mul] at hsum
-    have hchoose (n : ℕ) :
-        Ring.choose (r + (n : ℝ) - 1) n = Ring.multichoose r n := by
-      rw [Ring.multichoose_eq]
-    simpa only [hchoose] using hsum
   have hnot : ¬ Summable (fun n : ℕ => Ring.multichoose r n) := by
     intro hs
     have habel := Real.tendsto_tsum_powerSeries_nhdsWithin_lt hs.hasSum.tendsto_sum_nat
@@ -74,7 +78,8 @@ theorem summable_multichoose_mul_geometric_iff_norm_lt_one
     have heq : ∀ᶠ x : ℝ in nhdsWithin 1 (Iio 1),
         (∑' n : ℕ, Ring.multichoose r n * x ^ n) = 1 / (1 - x) ^ r := by
       filter_upwards [Ioo_mem_nhdsLT (by norm_num : (-1 : ℝ) < 1)] with x hx
-      exact (hseries (by simpa [abs_lt] using hx)).tsum_eq
+      exact (hasSum_multichoose_mul_geometric_of_abs_lt_one
+        (r := r) (by simpa [abs_lt] using hx)).tsum_eq
     have heq' : Filter.EventuallyEq (nhdsWithin 1 (Iio 1))
         (fun x : ℝ => 1 / (1 - x) ^ r)
         (fun x => ∑' n : ℕ, Ring.multichoose r n * x ^ n) := by
@@ -91,7 +96,8 @@ theorem summable_multichoose_mul_geometric_iff_norm_lt_one
       simpa only [mul_one] using mul_le_mul_of_nonneg_left
         (one_le_pow₀ (le_of_not_gt hq)) (hcoeff_pos n).le
   · intro hq
-    exact (hseries (by simpa only [abs_norm] using hq)).summable
+    exact (hasSum_multichoose_mul_geometric_of_abs_lt_one
+      (r := r) (by simpa only [abs_norm] using hq)).summable
 
 end TauCeti
 
