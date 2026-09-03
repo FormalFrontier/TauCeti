@@ -186,9 +186,12 @@ Two ordering decisions carry the weight:
   `stuck_alerts.py`'s `diverged-head` detector exists to catch — so one such PR
   could stop every other conflict being labelled.
 
-A PR carrying a hold label (`keep`/`hold`/`wip`/`human`/`do-not-close`/`blocked`)
-is still labelled, because the queue view should be honest, but is not commented
-on: the comment is a call to action and nobody asked for action on a parked PR.
+A PR carrying a hold label (`keep`/`hold`/`wip`/`human`/`do-not-close`/`blocked`,
+matching `stuck_alerts.py`) is left entirely alone rather than labelled-but-silent:
+the label means "the author has been told", so labelling without commenting would
+leave the conflict silent for good once the hold came off. Only open PRs are read,
+so a PR closed while labelled keeps the label — accurate, but it means that
+episode has no closing event in the timeline.
 
 Note that labelling and commenting both bump the PR's `updatedAt`, which
 `housekeeping.py` treats as freshness — so a conflict episode resets that PR's

@@ -70,9 +70,17 @@ class Reconcile(unittest.TestCase):
         self.assertEqual(conflicts.reconcile(pr(8, None, [conflicts.LABEL])), "skipped")
         self.assertEqual(self.calls, [])
 
-    def test_a_parked_pr_is_labelled_but_not_commented(self):
-        self.assertEqual(conflicts.reconcile(pr(7, True, ["keep"])), "labelled")
-        self.assertEqual(self.kinds(), ["label"])
+    def test_a_parked_pr_is_left_entirely_alone(self):
+        # Not labelled-but-silent: the label means "we told the author", so
+        # labelling without commenting would leave the conflict permanently silent
+        # once the hold came off, the label having already claimed it was handled.
+        self.assertEqual(conflicts.reconcile(pr(7, True, ["keep"])), "parked")
+        self.assertEqual(self.calls, [])
+
+    def test_unparking_a_conflicting_pr_then_announces_it(self):
+        self.assertEqual(conflicts.reconcile(pr(7, True, ["hold"])), "parked")
+        self.assertEqual(conflicts.reconcile(pr(7, True)), "labelled")
+        self.assertEqual(self.kinds(), ["comment", "label"])
 
     def test_dry_run_decides_but_writes_nothing(self):
         self.assertEqual(conflicts.reconcile(pr(7, True), dry_run=True), "labelled")
@@ -98,9 +106,58 @@ class Unknowns(unittest.TestCase):
         conflicts.resolve_unknowns(rows, sleep=lambda s: None)
         self.assertIsNone(rows[0]["conflicting"])
 
+    def test_a_failed_re_read_keeps_what_is_already_known(self):
+        def boom():
+            raise RuntimeError("GitHub is down")
+        rows = [pr(1, None), pr(2, True)]
+        conflicts.open_prs = boom
+        conflicts.resolve_unknowns(rows, sleep=lambda s: None)
+        self.assertEqual([r["conflicting"] for r in rows], [None, True])
+
+    def test_a_resolved_row_is_replaced_wholesale(self):
+        # Pairing fresh mergeability with stale labels is how a PR gets commented
+        # on twice.
+        rows = [pr(1, None, labels=[])]
+        conflicts.open_prs = lambda: [pr(1, True, labels=[conflicts.LABEL])]
+        conflicts.resolve_unknowns(rows, sleep=lambda s: None)
+        self.assertEqual(rows[0]["labels"], [conflicts.LABEL])
+
     def test_no_unknowns_costs_no_extra_query(self):
         conflicts.open_prs = lambda: self.fail("must not re-read when nothing is unknown")
         conflicts.resolve_unknowns([pr(1, False)], sleep=lambda s: None)
+
+
+class EnsureLabel(unittest.TestCase):
+    """The label is the episode state, so a missing one must stop the sweep."""
+
+    def setUp(self):
+        self._run = conflicts.subprocess.run
+        self.addCleanup(setattr, conflicts.subprocess, "run", self._run)
+
+    def results(self, *pairs):
+        seq = [type("R", (), {"returncode": c, "stderr": e, "stdout": ""})()
+               for c, e in pairs]
+        conflicts.subprocess.run = lambda *a, **k: seq.pop(0)
+
+    def test_an_existing_label_needs_no_create(self):
+        self.results((0, ""))
+        conflicts.ensure_label()
+
+    def test_a_missing_label_is_created(self):
+        self.results((1, "gh: Not Found (HTTP 404)"), (0, ""))
+        conflicts.ensure_label()
+
+    def test_a_concurrent_create_is_fine(self):
+        self.results((1, "404"), (1, "already_exists"))
+        conflicts.ensure_label()
+
+    def test_an_unconfirmable_label_raises_rather_than_proceeding(self):
+        # The finding: silently returning here let the sweep comment on every
+        # conflicting PR while every label write failed, so the next run commented
+        # on them all again.
+        self.results((1, "gh: Bad gateway (HTTP 502)"), (1, "gh: Bad gateway (HTTP 502)"))
+        with self.assertRaises(RuntimeError):
+            conflicts.ensure_label()
 
 
 class Sweep(unittest.TestCase):

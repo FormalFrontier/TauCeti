@@ -37,9 +37,11 @@ name: Merge conflicts
 
 on:
   schedule:
-    # Every 15 minutes, offset from housekeeping (:20), merge-sweep (:40) and
-    # stuck-alerts (:50).
-    - cron: "3,18,33,48 * * * *"
+    # Every 15 minutes, on the quarter -- the offsets furthest from pr-labels
+    # (:05), housekeeping (:20), merge-sweep (:40) and stuck-alerts (:50). The gap
+    # to housekeeping matters: labelling bumps updatedAt, which its stale timer
+    # reads as freshness, so the two overlapping is a race worth not inviting.
+    - cron: "0,15,30,45 * * * *"
   workflow_dispatch:
     inputs:
       dry-run:
@@ -74,8 +76,12 @@ jobs:
           permission-issues: write        # the label and the one-off comment
           permission-pull-requests: read  # open PRs and their mergeability
       # The trusted base checkout: never PR head code, like every other sink here.
+      # `ref` is explicit because workflow_dispatch otherwise checks out the ref it
+      # was dispatched from -- which would run a branch's copy of this script with
+      # the App token minted above.
       - uses: actions/checkout@v4
         with:
+          ref: main
           sparse-checkout: scripts/pr_status
           persist-credentials: false
       - name: Label conflicting PRs

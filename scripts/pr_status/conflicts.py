@@ -42,9 +42,14 @@ Two ordering decisions carry the weight, and both are deliberate:
     `stuck_alerts.py`'s `diverged-head` detector is for), and one such PR must not
     be able to stop the others being labelled.
 
-A PR carrying a hold label is still labelled -- the queue view should be honest --
-but is not commented on: the comment is a call to action and nobody asked for
-action on a parked PR.
+A PR carrying a hold label is left entirely alone, not labelled-but-silent. The
+label means "the author has been told", and labelling without commenting would
+break that: once the hold came off, the label would already claim the conflict was
+handled and it would stay silent for good.
+
+Only OPEN PRs are read, so a PR closed while labelled keeps the label. That is
+accurate -- it was conflicting when it closed -- but it means a timeline has no
+closing event for that episode, which anyone measuring should allow for.
 
 Usage:
     conflicts.py sweep [--dry-run]
@@ -140,6 +145,12 @@ def open_prs():
                 "base": node.get("baseRefName") or "the base branch",
                 "labels": [l["name"] for l in (node.get("labels") or {}).get("nodes", [])],
             })
+            # The nested connection is not paginated. 100 is far past anything this
+            # repo uses, but a PR that hit the cap could hide our own label from us
+            # and be commented on twice, so say so rather than fail silently.
+            if len(rows[-1]["labels"]) >= 100:
+                log(f"PR #{rows[-1]['number']} reports 100 labels; the list may be "
+                    f"truncated and its {LABEL} state unreliable")
         if not block["pageInfo"]["hasNextPage"]:
             return rows
         cursor = block["pageInfo"]["endCursor"]
@@ -158,37 +169,59 @@ def resolve_unknowns(prs, sleep=time.sleep):
             return
         log(f"{len(pending)} PR(s) with mergeability not yet computed; re-reading")
         sleep(UNKNOWN_WAIT_SECONDS)
-        fresh = {pr["number"]: pr["conflicting"] for pr in open_prs()}
-        for pr in prs:
-            if pr["conflicting"] is None and fresh.get(pr["number"]) is not None:
-                pr["conflicting"] = fresh[pr["number"]]
+        try:
+            fresh = {row["number"]: row for row in open_prs()}
+        except Exception as exc:
+            # Giving up here would abandon every PR we DO know about, which is the
+            # same run-wide failure this module exists to avoid.
+            log(f"re-read failed ({exc}); continuing with what is already known")
+            return
+        for index, pr in enumerate(prs):
+            row = fresh.get(pr["number"])
+            # Replace the whole row: the PR may have gained a label or changed base
+            # while we waited, and pairing fresh mergeability with stale labels is
+            # how a PR gets commented on twice.
+            if pr["conflicting"] is None and row and row["conflicting"] is not None:
+                prs[index] = row
     still = sorted(pr["number"] for pr in prs if pr["conflicting"] is None)
     if still:
         log(f"mergeability still unknown for {still}; leaving them exactly as they are")
 
 
 def ensure_label():
-    """Create the label if it does not exist. Same self-provisioning as labels.py,
-    so this needs no manual setup step to be forgotten."""
+    """Make sure the label exists, or RAISE. Self-provisioning like labels.py.
+
+    Raising matters more than it looks. The label is the episode state, so if it
+    is missing every comment still goes out and every label write then fails,
+    leaving no state behind -- and the next run comments the same PRs again. On a
+    queue with sixteen conflicts that is sixteen duplicate comments per run. So an
+    ambiguous probe is never read as "it is there": we try to create it anyway
+    (creation is idempotent) and give up loudly if we still cannot confirm it,
+    which stops the sweep before it comments on anything.
+    """
     probe = subprocess.run(["gh", "api", f"/repos/{REPO}/labels/{LABEL}"],
                            capture_output=True, text=True)
     if probe.returncode == 0:
         return
-    if "404" not in probe.stderr:
-        return          # not a clear absence; the add below will report the truth
     create = subprocess.run(
         ["gh", "api", "--method", "POST", f"/repos/{REPO}/labels",
          "-f", f"name={LABEL}", "-f", f"color={LABEL_COLOR}",
          "-f", f"description={LABEL_DESCRIPTION}"], capture_output=True, text=True)
-    if create.returncode != 0 and "already_exists" not in create.stderr:
-        raise RuntimeError(f"could not create the {LABEL} label: {create.stderr.strip()}")
-    log(f"created the {LABEL} label")
+    if create.returncode == 0:
+        log(f"created the {LABEL} label")
+        return
+    if "already_exists" in create.stderr:
+        return
+    raise RuntimeError(
+        f"cannot confirm the {LABEL} label exists, so not commenting on anything: "
+        f"probe said {probe.stderr.strip()!r}; create said {create.stderr.strip()!r}")
 
 
 def reconcile(pr, dry_run=False):
     """Bring one PR's label into line with its mergeability.
 
-    Returns "labelled", "cleared", "unchanged", or "skipped" (mergeability unknown).
+    Returns "labelled", "cleared", "unchanged", "parked", or "skipped"
+    (mergeability unknown).
     """
     number, labelled = pr["number"], LABEL in pr["labels"]
     if pr["conflicting"] is None:
@@ -202,15 +235,19 @@ def reconcile(pr, dry_run=False):
                  f"/repos/{REPO}/issues/{number}/labels/{LABEL}"])
         return "cleared"
 
-    parked = bool(HOLD_LABELS.intersection(name.lower() for name in pr["labels"]))
-    log(f"PR #{number}: conflicts with {pr['base']}"
-        + ("; parked, so labelling without a comment" if parked else ""))
+    if HOLD_LABELS.intersection(name.lower() for name in pr["labels"]):
+        # Left entirely alone, not labelled-but-silent. The label means "we have
+        # told the author"; labelling without commenting would break that, and the
+        # conflict would then stay silent forever once the hold came off, because
+        # the label already says it was handled.
+        log(f"PR #{number}: conflicts with {pr['base']}, but is parked; leaving it")
+        return "parked"
+    log(f"PR #{number}: conflicts with {pr['base']}")
     if not dry_run:
         # Comment BEFORE labelling: the label is what suppresses a repeat, so a
         # comment that fails after it would never be retried. See the module docs.
-        if not parked:
-            _gh(["api", "--method", "POST", f"/repos/{REPO}/issues/{number}/comments",
-                 "-f", f"body={COMMENT.format(base=pr['base'])}"])
+        _gh(["api", "--method", "POST", f"/repos/{REPO}/issues/{number}/comments",
+             "-f", f"body={COMMENT.format(base=pr['base'])}"])
         _gh(["api", "--method", "POST", f"/repos/{REPO}/issues/{number}/labels",
              "-f", f"labels[]={LABEL}"])
     return "labelled"
