@@ -143,28 +143,27 @@ The scalar in the averaged sums is real, not `𝕜`: the Bochner integral being 
 
 ## References
 
-This is the measure-identification and character-count part of the worked example "finite groups
-recover the character theory" of the
-[compact-groups roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CompactGroups/README.md):
-`haarProb G` is the normalized counting measure `|G|⁻¹ • count`, and the counting identity
+The compact-group theory specialized here is the one developed in the
+[compact-groups roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CompactGroups/README.md),
+and each statement below is the finite case of the compact one named beside it. `haarProb G` is the
+normalized counting measure `|G|⁻¹ • count`, and the counting identity
 `dim V^G = |G|⁻¹ ∑ g, χ_π g` is the finite shadow of
 `ContRepresentation.integral_character_eq_finrank_invariants`, matching Mathlib's
-`FDRep.average_char_eq_finrank_invariants` for the purely algebraic theory. It is also the `L²`,
-Schur and character-orthonormality part of that item: `L²(G)` is `G → 𝕜` by
+`FDRep.average_char_eq_finrank_invariants` for the purely algebraic theory. `L²(G)` is `G → 𝕜` by
 `TauCeti.lpHaarProbEquivFun` and `⟪·, ·⟫_{L²(G)}` becomes the finite Hermitian pairing on it,
 `schur_orthogonality_self`, `schur_orthogonality_distinct` and
 `schur_orthogonality` become the classical orthogonality relations for matrix coefficients, and
 `character_orthonormal_self` and `character_orthonormal_distinct` become the two branches of
-Mathlib's `Representation.char_orthonormal`, exhibited by two anonymous `example`s. It is finally
-the Maschke part of that item: `exists_orthogonal_irreducible_decomposition` specializes, through
-the finite unitarian trick, to
+Mathlib's `Representation.char_orthonormal`, exhibited by two anonymous `example`s. Finally
+`exists_orthogonal_irreducible_decomposition` specializes, through the finite unitarian trick, to
 `ContRepresentation.exists_orthogonal_irreducible_decomposition_of_finite`, whose blocks are
 subrepresentations of the given representation, carried back along the unitarizing equivalence
-`ContRepresentation.congrEquiv`. What that specialization adds to Mathlib's Maschke — which is
-already an instance, for every field in which `|G|` is invertible, and hence is not restated
-here — is the orthogonality of the summands, which needs the inner product Mathlib's complements
-do not see. The one specialization the roadmap item asks for that is still missing is Peter-Weyl
-(that `peterWeylBasis` is the matrix-coefficient basis of `k[G]`); it is not proved here.
+`ContRepresentation.congrEquiv`. What that specialization adds to Mathlib's Maschke is the
+orthogonality of the summands, which needs the inner product Mathlib's complements do not see; the
+purely algebraic conclusion, that `π.toRepresentation.asModule` is a semisimple
+`MonoidAlgebra 𝕜 G`-module whenever `|G|` is invertible in `𝕜`, is Mathlib's own instance and is
+neither restated nor reproved here. Peter-Weyl for a finite group, that `peterWeylBasis` is the
+matrix-coefficient basis of `k[G]`, is not proved here either.
 -/
 
 public section
@@ -676,8 +675,7 @@ is discharged by the vanishing half of Schur's lemma,
 `TauCeti.ContRepresentation.eq_zero_of_isEmpty_equiv`, exactly as `orthonormal_characterLp`
 discharges it in the compact theory. So the substantive vanishing statement is reached, not
 assumed: `character_orthonormal_distinct_sum` keeps the hypothesis of the compact theorem
-`character_orthonormal_distinct` it specializes, as the roadmap's "without new hypotheses"
-criterion asks, and irreducibility enters here.
+`character_orthonormal_distinct` it specializes, and irreducibility enters here.
 
 No name is claimed, for the same reason as above and in the two counting identities: with both
 representations irreducible and inequivalent this is Mathlib's `Representation.char_orthonormal`

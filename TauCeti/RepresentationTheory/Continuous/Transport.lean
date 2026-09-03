@@ -182,20 +182,25 @@ This is the bundled form of that observation, and it is what carries a statement
 transport back to `π`: an `Equiv` is an isomorphism in the category of continuous representations,
 so `π` and `congr e π` have the same subrepresentation lattice, the same irreducible constituents
 and the same character. It lives in the root `ContRepresentation` namespace, rather than beside
-`congr` in `TauCeti.ContRepresentation`, so that dot notation on Mathlib's `ContRepresentation`
-elaborates. -/
-noncomputable def congrEquiv (e : V ≃L[𝕜] W) (π : ContRepresentation 𝕜 G V) :
+`congr` in `TauCeti.ContRepresentation`, so that the dot notation `π.congrEquiv e` elaborates;
+`congrEquiv_apply` and `congrEquiv_symm_apply` evaluate it and its inverse as `e` and `e.symm`. -/
+noncomputable def congrEquiv (π : ContRepresentation 𝕜 G V) (e : V ≃L[𝕜] W) :
     π.Equiv (TauCeti.ContRepresentation.congr e π) :=
   .mk e fun g ↦ ContinuousLinearMap.ext fun v ↦ by simp
 
 @[simp]
-theorem congrEquiv_toContinuousLinearEquiv (e : V ≃L[𝕜] W) (π : ContRepresentation 𝕜 G V) :
-    (congrEquiv e π).toContinuousLinearEquiv = e :=
+theorem congrEquiv_toContinuousLinearEquiv (π : ContRepresentation 𝕜 G V) (e : V ≃L[𝕜] W) :
+    (π.congrEquiv e).toContinuousLinearEquiv = e :=
   (rfl)
 
 @[simp]
-theorem congrEquiv_apply (e : V ≃L[𝕜] W) (π : ContRepresentation 𝕜 G V) (v : V) :
-    congrEquiv e π v = e v :=
+theorem congrEquiv_apply (π : ContRepresentation 𝕜 G V) (e : V ≃L[𝕜] W) (v : V) :
+    π.congrEquiv e v = e v :=
+  (rfl)
+
+@[simp]
+theorem congrEquiv_symm_apply (π : ContRepresentation 𝕜 G V) (e : V ≃L[𝕜] W) (w : W) :
+    (π.congrEquiv e).symm w = e.symm w :=
   (rfl)
 
 end ContRepresentation

@@ -256,7 +256,7 @@ theorem exists_orthogonal_irreducible_decomposition_of_congr {e : V ≃L[𝕜] W
       (e : V ≃ₗ[𝕜] W) ((π.toRepresentation : Representation 𝕜 G V) g v) =
         ((ContRepresentation.congr e π).toRepresentation : Representation 𝕜 G W) g
           ((e : V ≃ₗ[𝕜] W) v) := fun g v ↦ by
-    have h := (_root_.ContRepresentation.congrEquiv e π).toContIntertwiningMap.isIntertwining g v
+    have h := (_root_.ContRepresentation.congrEquiv π e).toContIntertwiningMap.isIntertwining g v
     simp only [_root_.ContRepresentation.Equiv.coe_toContIntertwiningMap,
       _root_.ContRepresentation.congrEquiv_apply] at h
     exact h
