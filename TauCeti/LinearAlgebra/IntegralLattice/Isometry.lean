@@ -28,6 +28,8 @@ composition) follows Mathlib's `LinearMap.BilinForm.IsometryEquiv` API in
 
 * `TauCeti.IntegralLattice.Isometry`: a form-preserving rational linear equivalence mapping one
   integral carrier onto another.
+* `TauCeti.IntegralLattice.Isometry.ambientEquiv`: the ambient equivalence of an isometry, read
+  over `ℤ`.
 * `TauCeti.IntegralLattice.Isometry.carrierEquiv`: restriction of an isometry to the carriers.
 * `TauCeti.IntegralLattice.Isometry.carrierBasisEquiv`: transport of carrier bases along an
   isometry.
@@ -108,15 +110,27 @@ theorem coe_toIsometryEquiv (e : Isometry L M) : ⇑e.toIsometryEquiv = ⇑e := 
 theorem map_app (e : Isometry L M) (x y : V) : M.form (e x) (e y) = L.form x y :=
   e.toIsometryEquiv.map_app y x
 
+/-- The ambient rational equivalence of an integral-lattice isometry, read as an equivalence of
+the underlying `ℤ`-modules. Carriers, dual carriers, and every submodule between them are
+transported along this equivalence. -/
+def ambientEquiv (e : Isometry L M) : V ≃ₗ[ℤ] W :=
+  (e : V ≃ₗ[ℚ] W).restrictScalars ℤ
+
+@[simp]
+theorem ambientEquiv_apply (e : Isometry L M) (x : V) : e.ambientEquiv x = e x := (rfl)
+
 /-- An ambient vector's image belongs to the target carrier if and only if the vector belongs
 to the source carrier. -/
 @[simp]
 theorem apply_mem_carrier_iff (e : Isometry L M) (x : V) :
     e x ∈ M.carrier ↔ x ∈ L.carrier := by
+  -- `map_carrier` is stated using the restricted ambient linear equivalence, while this goal is
+  -- displayed through the `Isometry` coercion. Expose that equivalence definitionally so the
+  -- standard membership theorem for mapped submodules can rewrite the goal.
+  change e.ambientEquiv x ∈ M.carrier ↔ x ∈ L.carrier
   rw [← e.map_carrier, Submodule.mem_map_equiv]
-  have hsymm := ((e : V ≃ₗ[ℚ] W).restrictScalars ℤ).symm_apply_apply x
-  simp only [LinearEquiv.restrictScalars_apply, coe_toLinearEquiv] at hsymm
-  rw [hsymm]
+  change e.ambientEquiv.symm (e.ambientEquiv x) ∈ L.carrier ↔ x ∈ L.carrier
+  rw [LinearEquiv.symm_apply_apply]
 
 /-- Two lattice isometries agreeing on the ambient space are equal. -/
 @[ext]
@@ -208,9 +222,31 @@ theorem coe_symm (e : Isometry L M) : ⇑e.symm = ⇑(e : V ≃ₗ[ℚ] W).symm 
   simp only [symm]
   rfl
 
+@[simp]
+theorem ambientEquiv_symm_apply (e : Isometry L M) (y : W) : e.ambientEquiv.symm y = e.symm y := by
+  rw [coe_symm]
+  rfl
+
+@[simp]
+theorem ambientEquiv_refl (L : IntegralLattice V) :
+    (refl L).ambientEquiv = LinearEquiv.refl ℤ V := by
+  ext x
+  rfl
+
+@[simp]
+theorem ambientEquiv_symm (e : Isometry L M) : e.symm.ambientEquiv = e.ambientEquiv.symm := by
+  ext y
+  rw [ambientEquiv_apply, ambientEquiv_symm_apply]
+
+@[simp]
+theorem ambientEquiv_trans (e : Isometry L M) (f : Isometry M N) :
+    (e.trans f).ambientEquiv = e.ambientEquiv.trans f.ambientEquiv := by
+  ext x
+  rfl
+
 /-- Restrict an integral-lattice isometry to an integral linear equivalence of its carriers. -/
 def carrierEquiv (e : Isometry L M) : L ≃ₗ[ℤ] M :=
-  ((e : V ≃ₗ[ℚ] W).restrictScalars ℤ).ofSubmodules L.carrier M.carrier e.map_carrier
+  e.ambientEquiv.ofSubmodules L.carrier M.carrier e.map_carrier
 
 @[simp]
 theorem coe_carrierEquiv_apply (e : Isometry L M) (x : L) :

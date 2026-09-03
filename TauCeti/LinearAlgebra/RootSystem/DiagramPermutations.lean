@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.LinearAlgebra.Matrix.Submatrix
 public import TauCeti.LinearAlgebra.RootSystem.RootLength
 public import Mathlib.GroupTheory.OrderOfElement
 
@@ -31,6 +32,8 @@ the `CFSGStatement` roadmap's conventions for Steinberg endomorphisms.
 * `TauCeti.trialityPermD4`: the order-three triality symmetry of `D₄`.
 * `TauCeti.lengthPermRankTwo`: the length-exchanging permutation for `B₂` and `G₂`.
 * `TauCeti.lengthPermF4`: the length-exchanging permutation for `F₄`.
+* `TauCeti.DynkinType.diagramSymmetry`: the group of node permutations preserving the Cartan matrix
+  of a Dynkin type, of which the graph permutations above are members.
 
 ## Main results
 
@@ -46,7 +49,8 @@ the `CFSGStatement` roadmap's conventions for Steinberg endomorphisms.
   two counterparts record that this is a different matrix, so a length permutation is not a
   diagram symmetry.
 * `TauCeti.lengthPermRankTwo_lengthPermRankTwo` and `TauCeti.lengthPermF4_lengthPermF4`: the length
-  permutations are involutions.
+  permutations are involutions, and `TauCeti.lengthPermRankTwo_apply`,
+  `TauCeti.graphPermA_apply` and `TauCeti.lengthPermF4_apply` evaluate them as reversals.
 -/
 
 public section
@@ -151,6 +155,9 @@ theorem graphPermD_ne_one (n : ℕ) (hn : 2 ≤ n) : graphPermD n hn ≠ 1 := by
 /-- Applying the `E₆` graph permutation twice is the identity. -/
 @[simp] theorem graphPermE6_sq : graphPermE6 ^ 2 = 1 := by decide
 
+/-- The `E₆` graph permutation is its own inverse. -/
+@[simp] lemma graphPermE6_symm : graphPermE6.symm = graphPermE6 := by decide
+
 /-- The `E₆` graph permutation has order exactly two. -/
 @[simp] theorem orderOf_graphPermE6 : orderOf graphPermE6 = 2 :=
   orderOf_eq_prime graphPermE6_sq (by decide)
@@ -187,9 +194,21 @@ theorem graphPermD_ne_one (n : ℕ) (hn : 2 ≤ n) : graphPermD n hn ≠ 1 := by
 /-- The two rank-two nodes are distinct, so exchanging them is not the identity. -/
 theorem lengthPermRankTwo_ne_one : lengthPermRankTwo ≠ 1 := by decide
 
+/-- On two nodes, exchanging them is reversal. -/
+theorem lengthPermRankTwo_apply (i : Fin 2) : lengthPermRankTwo i = i.rev := by
+  fin_cases i <;> decide
+
 /-- Exchanging the two rank-two nodes has order exactly two. -/
 @[simp] theorem orderOf_lengthPermRankTwo : orderOf lengthPermRankTwo = 2 :=
   orderOf_eq_prime lengthPermRankTwo_sq lengthPermRankTwo_ne_one
+
+/-- Reversal of a chain sends a node to its reverse. -/
+theorem graphPermA_apply (n : ℕ) (i : Fin n) : graphPermA n i = i.rev := by
+  simp only [graphPermA, Fin.revPerm_apply]
+
+/-- Reversal of the `F₄` diagram sends node `i` to the node at the mirrored index. -/
+lemma lengthPermF4_apply (i : Fin 4) : lengthPermF4 i = i.rev :=
+  graphPermA_apply 4 i
 
 /-- Reversal of a chain is an involution. -/
 @[simp] theorem graphPermA_graphPermA (n : ℕ) (i : Fin n) : graphPermA n (graphPermA n i) = i := by
@@ -331,5 +350,31 @@ theorem cartanMatrix_F4_submatrix_lengthPermF4_ne :
   have := congrFun (congrFun h 1) 2
   simp [Matrix.submatrix_apply, DynkinType.cartanMatrix_F4, CartanMatrix.F₄, lengthPermF4,
     graphPermA] at this
+
+/-! ## Symmetries of the Bourbaki-numbered Cartan matrix -/
+
+namespace DynkinType
+
+/-- **The symmetry group of a Bourbaki-numbered Dynkin diagram**: the permutations of the nodes
+which preserve the Cartan matrix. This is `TauCeti.matrixSymmetryGroup` at that matrix. -/
+def diagramSymmetry (t : DynkinType) : Subgroup (Equiv.Perm (Fin t.rank)) :=
+  matrixSymmetryGroup t.cartanMatrix
+
+variable {t : DynkinType} {σ : Equiv.Perm (Fin t.rank)}
+
+/-- The matrix form of membership in `TauCeti.DynkinType.diagramSymmetry`. This is the shape in
+which `TauCeti.serreDiagramAut` takes a Cartan-matrix symmetry. -/
+theorem mem_diagramSymmetry_iff_submatrix :
+    σ ∈ t.diagramSymmetry ↔ t.cartanMatrix.submatrix σ σ = t.cartanMatrix :=
+  mem_matrixSymmetryGroup_iff
+
+/-- The entrywise form of membership in `TauCeti.DynkinType.diagramSymmetry`. This is the shape in
+which the graph permutations above are shown to be diagram symmetries. -/
+theorem mem_diagramSymmetry_iff :
+    σ ∈ t.diagramSymmetry ↔ ∀ i j, t.cartanMatrix (σ i) (σ j) = t.cartanMatrix i j :=
+  mem_diagramSymmetry_iff_submatrix.trans
+    ⟨fun h i j => congrFun₂ h i j, fun h => by ext i j; exact h i j⟩
+
+end DynkinType
 
 end TauCeti

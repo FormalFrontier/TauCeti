@@ -6,9 +6,13 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.Squarefree.Basic
+public import Mathlib.Data.Nat.Prime.Basic
+import Mathlib.Algebra.EuclideanDomain.Int
 import Mathlib.Algebra.Ring.Associated
+import Mathlib.Data.Nat.Factors
 import Mathlib.Data.Nat.Squarefree
 import Mathlib.Data.Rat.Lemmas
+import Mathlib.RingTheory.PrincipalIdealDomain
 import Mathlib.Tactic.FieldSimp
 import Mathlib.Tactic.LinearCombination
 
@@ -28,8 +32,14 @@ that Mathlib does not provide directly, used across the multiquadratic developme
   not change squareness — the statement that squareness depends only on the square class.
 * `Int.exists_squarefree_mul_sq` and `Rat.exists_squarefree_int_mul_sq`: the **squarefree part**.
   Every nonzero integer, and every nonzero rational, is a squarefree *integer* times a nonzero
-  square. Mathlib has this for the natural numbers only (`Nat.sq_mul_squarefree`); these are the
-  integer and rational forms, which is what a square-class argument over `ℚ` needs.
+  square. Mathlib's `exists_sq_mul_squarefree` proves the underlying factorization in a unique
+  factorization monoid; the integer statement here records a nonzero square factor and puts the
+  factors in the orientation used by the rational square-class argument.
+* `Nat.four_dvd_or_exists_odd_prime_and_dvd_of_squarefree`: squarefreeness of *every* prime
+  divisor of an `n > 2`, read in a commutative ring, yields the single branch that Mathlib's
+  `Nat.four_dvd_or_exists_odd_prime_and_dvd_of_two_lt` splits into. This is the bridge from a
+  uniform hypothesis, which a caller can usually establish without knowing `n`, to the sharp
+  branch-dependent one that a proof consumes.
 -/
 
 public section
@@ -62,22 +72,19 @@ theorem isSquare_mul_sq_iff {G₀ : Type*} [CommGroupWithZero G₀] {x y : G₀}
   rwa [mul_assoc, ← mul_pow, mul_inv_cancel₀ hy, one_pow, mul_one] at h'
 
 /-- **The squarefree part of an integer.** Every nonzero integer is a squarefree integer times the
-square of a nonzero integer. This is the integer form of Mathlib's `Nat.sq_mul_squarefree`; the
-sign is carried by the squarefree factor. -/
+square of a nonzero integer. This specializes Mathlib's unique-factorization-monoid theorem
+`exists_sq_mul_squarefree` to `ℤ`, makes the square factor's nonzeroness explicit, and reverses
+the factor order to the form used below. -/
 theorem Int.exists_squarefree_mul_sq {n : ℤ} (hn : n ≠ 0) :
     ∃ a b : ℤ, Squarefree a ∧ b ≠ 0 ∧ n = a * b ^ 2 := by
-  obtain ⟨a, b, hab, ha⟩ := Nat.sq_mul_squarefree n.natAbs
-  have habZ : (n.natAbs : ℤ) = (a : ℤ) * (b : ℤ) ^ 2 := by
-    rw [← hab]; push_cast; ring
-  have hb : (b : ℤ) ≠ 0 := by
-    rintro hb0
-    refine hn (Int.natAbs_eq_zero.mp ?_)
-    have h0 : (n.natAbs : ℤ) = 0 := by rw [habZ, hb0]; ring
-    exact_mod_cast h0
-  have haZ : Squarefree (a : ℤ) := Int.squarefree_natCast.mpr ha
-  rcases Int.natAbs_eq n with h | h
-  · exact ⟨(a : ℤ), (b : ℤ), haZ, hb, by rw [h, habZ]⟩
-  · exact ⟨-(a : ℤ), (b : ℤ), haZ.neg, hb, by rw [h, habZ]; ring⟩
+  obtain ⟨b, a, hab, ha⟩ := exists_sq_mul_squarefree n
+  refine ⟨a, b, ha, ?_, ?_⟩
+  · intro hb
+    apply hn
+    simpa [hb] using hab.symm
+  · calc
+      n = b ^ 2 * a := hab.symm
+      _ = a * b ^ 2 := mul_comm _ _
 
 /-- **The squarefree part of a rational number.** Every nonzero rational is a squarefree *integer*
 times the square of a nonzero rational: its square class is represented by a squarefree integer.
@@ -94,3 +101,26 @@ theorem Rat.exists_squarefree_int_mul_sq {q : ℚ} (hq : q ≠ 0) :
   rw [hnum] at habQ
   field_simp
   linear_combination habQ
+
+namespace Nat
+
+/-- **From uniform squarefreeness to the sharp branch.** If every prime dividing `n > 2` is
+squarefree in `R`, then either `4 ∣ n` and `2` is squarefree there, or some *odd* prime divides
+`n` and is squarefree there.
+
+Mathlib's `Nat.four_dvd_or_exists_odd_prime_and_dvd_of_two_lt` supplies the dichotomy on `n`; what
+this adds is carrying the squarefreeness through it. The point of stating it is that the two
+hypotheses differ in usability: the uniform one can be established with no knowledge of `n` — over
+`ℤ` it is free, since every rational prime is squarefree — while the branch-dependent one is what a
+proof consumes. Anything proved from the sharp form is therefore available from the uniform form
+through this lemma. -/
+theorem four_dvd_or_exists_odd_prime_and_dvd_of_squarefree {R : Type*} [CommRing R] {n : ℕ}
+    (hn : 2 < n) (hsf : ∀ p : ℕ, p.Prime → p ∣ n → Squarefree ((p : ℤ) : R)) :
+    (4 ∣ n ∧ Squarefree (2 : R)) ∨
+      ∃ p : ℕ, p.Prime ∧ p ≠ 2 ∧ p ∣ n ∧ Squarefree ((p : ℤ) : R) := by
+  rcases Nat.four_dvd_or_exists_odd_prime_and_dvd_of_two_lt hn with h4 | ⟨p, hp, hpn, hodd⟩
+  · exact Or.inl ⟨h4, by simpa using hsf 2 Nat.prime_two (dvd_trans ⟨2, rfl⟩ h4)⟩
+  · have hp_ne_two : p ≠ 2 := by rintro rfl; rw [Nat.odd_iff] at hodd; omega
+    exact Or.inr ⟨p, hp, hp_ne_two, hpn, hsf p hp hpn⟩
+
+end Nat

@@ -26,7 +26,8 @@ action laws, and identifies its action on the prime spectrum.
 
 * `TauCeti.HopfAlgebra.rightTranslationAlgHom`: pullback by right translation by a point.
 * `TauCeti.HopfAlgebra.rightTranslationAlgEquiv`: right translation as an algebra automorphism.
-* `TauCeti.HopfAlgebra.rightTranslationAlgEquiv_mul`: right translation respects the convolution
+* `TauCeti.HopfAlgebra.rightTranslationAlgEquiv_mul` and
+  `TauCeti.HopfAlgebra.rightTranslationAlgHom_mul`: right translation respects the convolution
   product of points.
 * `TauCeti.HopfAlgebra.comap_rightTranslationAlgEquiv_augmentationPoint`: the translated counit
   point is the given point.
@@ -71,6 +72,27 @@ theorem rightTranslationAlgHom_apply (g : WithConv (H →ₐ[k] k)) (x : H) :
   | zero => simp
   | add z w hz hw => simp [hz, hw]
   | tmul z w => simp [Algebra.smul_def, mul_comm]
+
+/-- Composing a point with right translation is convolution by the translating point. -/
+@[simp]
+theorem toConv_comp_rightTranslationAlgHom (f g : WithConv (H →ₐ[k] k)) :
+    WithConv.toConv (f.ofConv.comp (rightTranslationAlgHom g)) = f * g := by
+  apply WithConv.ofConv_injective
+  ext x
+  -- Composition must be exposed at application level before the translation formula rewrites.
+  change f.ofConv (rightTranslationAlgHom g x) = (f * g).ofConv x
+  rw [rightTranslationAlgHom_apply, AlgHom.convMul_apply]
+  induction Coalgebra.comul (R := k) x using TensorProduct.induction_on with
+  | zero => simp
+  | add y z hy hz => simp [hy, hz]
+  | tmul y z => simp [Algebra.smul_def, mul_comm]
+
+/-- Applying a point to a right-translated function is convolution by the translating point. -/
+@[simp]
+theorem ofConv_rightTranslationAlgHom (f g : WithConv (H →ₐ[k] k)) (x : H) :
+    f.ofConv (rightTranslationAlgHom g x) = (f * g).ofConv x := by
+  exact DFunLike.congr_fun
+    (congrArg WithConv.ofConv (toConv_comp_rightTranslationAlgHom f g)) x
 
 /-- The linear equivalence underlying right translation. -/
 private noncomputable def rightTranslationLinearEquiv (g : WithConv (H →ₐ[k] k)) :
@@ -173,6 +195,31 @@ theorem rightTranslationAlgEquiv_mul (g h : WithConv (H →ₐ[k] k)) :
         (rightTranslationAlgEquiv h x)).symm
     _ = (rightTranslationAlgEquiv g * rightTranslationAlgEquiv h) x :=
       (AlgEquiv.mul_apply _ _ x).symm
+
+/-- Translation by the identity point is the identity algebra endomorphism. -/
+@[simp]
+theorem rightTranslationAlgHom_one :
+    rightTranslationAlgHom (1 : WithConv (H →ₐ[k] k)) = AlgHom.id k H := by
+  rw [← rightTranslationAlgEquiv_toAlgHom, rightTranslationAlgEquiv_one]
+  rfl
+
+/-- Translation by a convolution product is the composite of the two translation algebra
+endomorphisms. -/
+@[simp]
+theorem rightTranslationAlgHom_mul (g h : WithConv (H →ₐ[k] k)) :
+    rightTranslationAlgHom (g * h) =
+      (rightTranslationAlgHom g).comp (rightTranslationAlgHom h) := by
+  ext x
+  calc
+    rightTranslationAlgHom (g * h) x = rightTranslationAlgEquiv (g * h) x :=
+      (DFunLike.congr_fun (rightTranslationAlgEquiv_toAlgHom (g * h)) x).symm
+    _ = rightTranslationAlgEquiv g (rightTranslationAlgEquiv h x) :=
+      DFunLike.congr_fun (rightTranslationAlgEquiv_mul g h) x
+    _ = rightTranslationAlgHom g (rightTranslationAlgEquiv h x) :=
+      DFunLike.congr_fun (rightTranslationAlgEquiv_toAlgHom g) _
+    _ = rightTranslationAlgHom g (rightTranslationAlgHom h x) :=
+      congrArg (rightTranslationAlgHom g)
+        (DFunLike.congr_fun (rightTranslationAlgEquiv_toAlgHom h) x)
 
 /-- Translation by an inverse point is the inverse algebra automorphism. -/
 @[simp]

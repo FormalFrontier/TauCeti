@@ -1,43 +1,49 @@
 #!/usr/bin/env bash
 # lake-cache-get.sh — restore TauCeti's OWN root-package oleans from the public Lake
 # artifact cache, factored out of .github/workflows/pr-build.yml so ci.yml can use the
-# same logic. Both callers want identical semantics: a clean whole cache, or none at all.
+# same logic. Both callers want identical final semantics: a clean whole cache, or none at all.
 #
 # Usage: bash scripts/lake-cache-get.sh <project-dir>
 #
 # Reads PUBLIC_ARTIFACT_ENDPOINT / PUBLIC_REVISION_ENDPOINT from the environment (the
-# LAKE_CACHE_*_PUBLIC repo variables). Expects LAKE_CACHE_DIR to be <project-dir>/.lake/cache.
+# LAKE_CACHE_*_PUBLIC repo variables), defaulting to the public cache both this project's CI and
+# its contributors read. The defaults exist so a contributor can run this from a checkout with no
+# setup: the endpoints are public, anonymous and not secret. CI still passes them explicitly, and
+# reaches this script only when those repo variables are set, so the defaults never decide what CI
+# does. Expects LAKE_CACHE_DIR to be <project-dir>/.lake/cache.
 # On an unclean outcome it discards the cache and appends the LAKE_* disable lines to
 # $GITHUB_ENV, so the caller's build proceeds exactly as if the cache were switched off.
 #
 # Anonymous GETs from the PUBLIC read host (a different host than the S3 API endpoint the
 # trusted upload uses). Looks up the root-package oleans for the checkout's revision --
-# backtracking up to --max-revs ancestors, and unpacks them into $LAKE_CACHE_DIR. This is
-# trusted, publisher-built data: no token is in reach and no PR code runs (lakefile.toml is
-# declarative and base-trusted). Mathlib's oleans are NOT here; they come from
-# `lake exe cache get`.
+# backtracking up to LAKE_CACHE_MAX_REVS revisions from HEAD (default 100; 0 means the complete
+# available history), and unpacks them into $LAKE_CACHE_DIR. This is trusted, publisher-built
+# data: no token is in reach and no PR code runs (the caller attests the declarative lakefile
+# first). Mathlib's oleans are NOT here; they come from `lake exe cache get`.
+#
+# Callers choose the limit, because only they know whether a walk can pay. The search stops as
+# soon as a lookup succeeds, so where a hit is likely it reads only the few revisions between
+# HEAD and a published one. Size it generously otherwise: overrunning the limit is reported as
+# a total miss, and a total miss costs a full recompile, far dearer than the extra requests a
+# longer walk would have made. `1` asks about HEAD alone and never walks.
 #
 # A TOTAL miss is non-fatal: the build just recompiles from scratch, as when the cache is off.
-# A PARTIAL fetch is a different matter. `lake cache get` continues past a failed download and
-# exits nonzero (see `lake cache help get`), leaving input-to-output mappings whose artifacts
-# never arrived. pr-build's sandboxed build is offline with no cache service configured, so it
-# cannot fetch them: Lake logs a warning per affected module and correctly rebuilds it from
-# source, but `lake build --iofail` is `--fail-level=info`, so those warnings fail a build in
-# which every module compiled. Partial fetches are routine: they cost about a third of
-# merge-group builds their cache. Fixed by https://github.com/leanprover/lean4/pull/14651,
-# landing in v4.34.0-rc1; see https://github.com/TauCetiProject/TauCeti/issues/2062.
-#
-# Hence: retry from an EMPTY cache each time, then fall back to no cache at all. Retrying over
-# the dirty cache a failed attempt left behind does not work: Lake skips any artifact already
-# on disk, so the retry re-fetches only what is still MISSING and never revisits what the failed
-# attempt got wrong. It then reports clean and the corruption survives into the build.
-# Discarding between attempts is what makes a clean verdict mean the cache is whole; it is
-# affordable because a failing attempt aborts in seconds and a full refetch is ~30s.
+# A PARTIAL fetch is non-fatal too, but must not reach the offline build. Since v4.34.0-rc1,
+# Lake downloads to temporary files, verifies their hashes, atomically installs only valid
+# artifacts, and returns failure when any transfer fails. A retry over the same cache therefore
+# preserves verified artifacts and fetches only those still missing. If every attempt fails, we
+# discard the partial cache before the build so its final behavior remains exactly the same as
+# when the cache is switched off. See https://github.com/leanprover/lean4/pull/14651 and
+# https://github.com/TauCetiProject/TauCeti/issues/2062.
 set -euo pipefail
 
 PROJECT_DIR="${1:?usage: lake-cache-get.sh <project-dir>}"
-: "${PUBLIC_ARTIFACT_ENDPOINT:?PUBLIC_ARTIFACT_ENDPOINT is required}"
-: "${PUBLIC_REVISION_ENDPOINT:?PUBLIC_REVISION_ENDPOINT is required}"
+PUBLIC_ARTIFACT_ENDPOINT="${PUBLIC_ARTIFACT_ENDPOINT:-https://cache.taucetiproject.org/artifacts}"
+PUBLIC_REVISION_ENDPOINT="${PUBLIC_REVISION_ENDPOINT:-https://cache.taucetiproject.org/revisions}"
+LAKE_CACHE_MAX_REVS="${LAKE_CACHE_MAX_REVS:-100}"
+case "$LAKE_CACHE_MAX_REVS" in
+  ''|*[!0-9]*) echo "::error::LAKE_CACHE_MAX_REVS must be a natural number"; exit 1 ;;
+esac
 
 # Define the public read service in a Lake system config and select it with `--service`
 # (the env-var form of endpoint config is deprecated). Anonymous GETs, so no key here.
@@ -68,59 +74,31 @@ discard_cache() {
   return 0
 }
 
-# `lake cache get` cannot be judged by exit status alone. Lake accumulates transfer failures
-# into a local `didError` but then tests the stale `s.didError` (Lake/Config/Cache.lean,
-# `if s.didError then failure`), so it can log "failed to download some artifacts" and still
-# exit 0. An attempt therefore counts as clean only if it exits 0 AND logs no failure
-# diagnostic.
-# SIMPLIFY ON THE BUMP TO v4.34.0: that stale read is fixed by
-# https://github.com/leanprover/lean4/pull/14651 ("fix: lake: gracefully handle curl and IO
-# errors during transfer"), which missed v4.33.0-rc2 by hours and was not backported. From
-# v4.34.0-rc1 on, drop FAIL_RE and trust `rc` alone. The purge below outlives that bump: it is
-# for https://github.com/leanprover/lean4/issues/14670, still open.
-#
-# `downloaded artifact hash mismatch` must be here. Lake handles a mismatch by deleting the
-# artifact and setting `didError`, but the stale `didError` read means the process can still
-# exit 0, and the deletion leaves an input-to-output mapping whose artifact is gone. An offline
-# build cannot refetch it, so that entry becomes a build failure rather than a rebuild. Treat it
-# as unclean so the cache is refetched or dropped.
-FAIL_RE='failed to download|output lookup failed|curl exited with code|downloaded artifact hash mismatch'
+# Lake v4.34.0-rc1 and later correctly return failure when any transfer, lookup, or hash check
+# fails. Successful artifacts have already been verified and atomically installed, so they are
+# safe to retain for the next attempt.
 # A revision with no cached build at all is deterministic: retrying cannot change it, and there
 # is nothing partial to discard.
 MISS_RE='no outputs found'
-# Six attempts, not three. Losing every attempt discards the whole cache and forces a ~22 minute
-# full rebuild, which was happening on 4 of 18 sampled builds (the other 14 took 2-3 minutes).
-# The cause is lean4#14698: one unreadable artifact throws out of `computeFileHash`, which has
-# no try/catch, so a single ENOENT aborts the entire fetch and discards every artifact already
-# downloaded. Which artifact trips it varies between attempts, so re-fetching genuinely tends to
-# succeed; at the observed per-attempt failure rate six attempts take whole-cache loss from
-# roughly 22% to roughly 5%. Reduce this again once the fix (lean4#14651) reaches a released
-# toolchain: it is on master only, and v4.33.0-rc2 was branched before it landed.
-ATTEMPTS=6
+# Three attempts are enough now that each retry fetches only artifacts still missing rather than
+# throwing away and redownloading the whole cache.
+ATTEMPTS=3
 clean=0
 for attempt in $(seq 1 $ATTEMPTS); do
   LOG="${RUNNER_TEMP:-/tmp}/cache-get-$attempt.log"
   rc=0
   ( cd "$PROJECT_DIR" && LAKE_CONFIG="$CFG" lake cache get --service tauceti-public \
-      --repo TauCetiProject/TauCeti ) > "$LOG" 2>&1 || rc=$?
+      --repo TauCetiProject/TauCeti --max-revs="$LAKE_CACHE_MAX_REVS" ) > "$LOG" 2>&1 || rc=$?
   cat "$LOG"
-  if [ "$rc" = 0 ] && ! grep -qE "$FAIL_RE" "$LOG"; then clean=1; break; fi
+  if [ "$rc" = 0 ]; then clean=1; break; fi
   if grep -qE "$MISS_RE" "$LOG"; then break; fi
   # `[ ... ] && sleep` would abort the script under `bash -e` on the last attempt, when the
   # test is false and the whole list returns nonzero. Use a plain `if`.
   if [ "$attempt" != "$ATTEMPTS" ]; then
-    echo "::notice::lake cache get attempt $attempt of $ATTEMPTS did not complete cleanly; discarding the partial cache and retrying"
-    # Sleep BEFORE discarding. A failed `lake cache get` returns as soon as one transfer errors,
-    # while its sibling curl/leantar processes are still writing into the cache dir; discarding
-    # at that instant races them. This is not a throttling backoff: the read endpoint serves
-    # these artifacts byte-identically under 48-way concurrency, so the failures are the Lake bug
-    # above rather than rate limiting, and a short fixed pause is enough to let the stragglers
-    # finish.
-    sleep 10
-    # Must precede the retry: see the header. Without this, attempt N+1 skips every artifact this
-    # attempt already wrote, including the broken ones, and a clean exit from it says nothing
-    # about the entries that made this attempt fail.
-    discard_cache
+    echo "::notice::lake cache get attempt $attempt of $ATTEMPTS did not complete cleanly; retaining verified artifacts and retrying missing ones"
+    # Give a transient connection failure a brief backoff. Lake has waited for curl to exit and
+    # has removed or left uninstalled any invalid temporary artifacts before returning.
+    sleep 2
   fi
 done
 

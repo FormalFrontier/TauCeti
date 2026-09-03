@@ -28,13 +28,20 @@ boundary, which is what Hirsch's bump-function argument does and what this file 
 * `TauCeti.EuclideanHalfSpace.normalRay`: the inward normal ray `[0, ∞) → EuclideanHalfSpace 1`,
   the parametrization by which the one-dimensional half-space model is a half-line.
 * `TauCeti.EuclideanHalfSpace.normalIio`: the initial segment `[0, ε)` of the one-dimensional
-  half-space model, cut out by the normal coordinate.
+  half-space model, cut out by the normal coordinate, and
+  `TauCeti.EuclideanHalfSpace.normalIioOpens`: the same segment as an open subspace.
 * `TauCeti.IsProductCollarChart`: a collar chart whose target is a product box `V × [0, ε)`, is
   `C^k` in both directions, and cuts out the boundary as the zero slice of its normal coordinate.
 * `TauCeti.EuclideanHalfSpace.homeomorphNormalIio`: that segment, read by its normal coordinate
   as the real interval `[0, ε)`.
 * `TauCeti.IsProductCollarChart.homeomorphProd`: the local collar itself, a homeomorphism of the
   source of a product collar chart onto (its part of) the boundary times `[0, ε)`.
+* `TauCeti.IsProductCollarChart.sourceOpens` and
+  `TauCeti.IsProductCollarChart.sourceBoundaryOpens`: the source of a product collar chart and its
+  boundary part, as open subspaces of the ambient manifold and of the canonical boundary manifold.
+* `TauCeti.IsProductCollarChart.homeomorphProdOpens`: the local collar with all three of those
+  factors read as open subspaces. This is the packaging the smooth local collar of
+  `Boundary.Collar.Diffeomorph` is built on.
 
 ## Main results
 
@@ -60,7 +67,10 @@ heights anyway.
 target `(U ∩ ∂M) × [0, ε)` is a product of a piece of the boundary manifold of
 `Boundary.Charts` with an interval, and identifying that manifold structure with the one the
 chart transports is a separate step. What is smooth here is the chart itself, through
-`IsProductCollarChart.contMDiffOn` and `IsProductCollarChart.contMDiffOn_symm`.
+`IsProductCollarChart.contMDiffOn` and `IsProductCollarChart.contMDiffOn_symm`. That
+identification is carried out downstream in `Boundary.Collar.Diffeomorph`, where
+`TauCeti.IsProductCollarChart.diffeomorphProd` upgrades `homeomorphProdOpens` to a `C^k`
+diffeomorphism.
 
 ## References
 
@@ -137,6 +147,16 @@ theorem mem_normalIio {ε : ℝ} {t : EuclideanHalfSpace 1} : t ∈ normalIio ε
 theorem isOpen_normalIio (ε : ℝ) : IsOpen (normalIio ε) := by
   have : Continuous fun t : EuclideanHalfSpace 1 ↦ t.1 0 := by fun_prop
   exact isOpen_Iio.preimage this
+
+/-- The initial segment `[0, ε)` of the one-dimensional half-space model as an open subspace. It
+is empty for `ε ≤ 0`. -/
+def normalIioOpens (ε : ℝ) : TopologicalSpace.Opens (EuclideanHalfSpace 1) :=
+  ⟨normalIio ε, isOpen_normalIio ε⟩
+
+/-- Membership in the open initial segment is one inequality on the normal coordinate. -/
+@[simp]
+theorem mem_normalIioOpens {ε : ℝ} {t : EuclideanHalfSpace 1} :
+    t ∈ normalIioOpens ε ↔ t.1 0 < ε := mem_normalIio
 
 /-- An initial segment of positive height contains the origin.
 
@@ -220,6 +240,49 @@ namespace IsProductCollarChart
 variable {φ : OpenPartialHomeomorph M (EuclideanSpace ℝ (Fin n) × EuclideanHalfSpace 1)}
   {V : Set (EuclideanSpace ℝ (Fin n))} {ε : ℝ}
 
+/-- The source of a product collar chart, regarded as an open submanifold of the ambient
+manifold. -/
+def sourceOpens (_h : IsProductCollarChart k φ V ε) : TopologicalSpace.Opens M :=
+  ⟨φ.source, φ.open_source⟩
+
+/-- Membership in the open source of a product collar chart is membership in the chart source. -/
+@[simp]
+theorem mem_sourceOpens (h : IsProductCollarChart k φ V ε) {x : M} :
+    x ∈ h.sourceOpens ↔ x ∈ φ.source := (Iff.rfl)
+
+/-- The part of the boundary in the source of a product collar chart, regarded as an open
+submanifold of the canonical boundary manifold. -/
+def sourceBoundaryOpens (h : IsProductCollarChart k φ V ε) :
+    TopologicalSpace.Opens ↥((𝓡∂ (n + 1)).boundary M) :=
+  TopologicalSpace.Opens.comap ⟨Subtype.val, continuous_subtype_val⟩ h.sourceOpens
+
+/-- A boundary point belongs to the boundary part of the chart source exactly when its ambient
+point belongs to the chart source. -/
+@[simp]
+theorem mem_sourceBoundaryOpens (h : IsProductCollarChart k φ V ε)
+    {x : ↥((𝓡∂ (n + 1)).boundary M)} :
+    x ∈ h.sourceBoundaryOpens ↔ (x : M) ∈ φ.source := (Iff.rfl)
+
+/-- The tangential coordinate of a point in the source of a product collar chart lies in its
+base. -/
+theorem fst_mem_base (h : IsProductCollarChart k φ V ε) {y : M} (hy : y ∈ φ.source) :
+    (φ y).1 ∈ V :=
+  (h.target_eq ▸ φ.map_source hy).1
+
+/-- Replacing the normal coordinate of a point in a product collar chart by another coordinate
+in its normal interval stays in the chart target. -/
+theorem mk_mem_target (h : IsProductCollarChart k φ V ε) {y : M} (hy : y ∈ φ.source)
+    {t : EuclideanHalfSpace 1} (ht : t ∈ EuclideanHalfSpace.normalIio ε) :
+    ((φ y).1, t) ∈ φ.target := by
+  rw [h.target_eq]
+  exact ⟨h.fst_mem_base hy, ht⟩
+
+/-- Setting the normal coordinate of a point in a product collar chart to zero stays in the chart
+target. -/
+theorem fst_zero_mem_target (h : IsProductCollarChart k φ V ε) {y : M} (hy : y ∈ φ.source) :
+    ((φ y).1, (0 : EuclideanHalfSpace 1)) ∈ φ.target :=
+  h.mk_mem_target hy (EuclideanHalfSpace.zero_mem_normalIio h.height_pos)
+
 /-- The base of a product collar chart is open: it is a factor of the open target. -/
 theorem isOpen_base (h : IsProductCollarChart k φ V ε) : IsOpen V := by
   have hopen : IsOpen (V ×ˢ EuclideanHalfSpace.normalIio ε) := h.target_eq ▸ φ.open_target
@@ -274,6 +337,38 @@ def homeomorphProd (h : IsProductCollarChart k φ V ε) :
       (Homeomorph.Set.prod V (EuclideanHalfSpace.normalIio ε))).trans
     (h.homeomorphBase.symm.prodCongr (Homeomorph.refl _))
 
+private def sourceInterHomeomorphSourceBoundaryOpens (h : IsProductCollarChart k φ V ε) :
+    ↥(φ.source ∩ (𝓡∂ (n + 1)).boundary M) ≃ₜ h.sourceBoundaryOpens where
+  toFun x := ⟨⟨x, x.2.2⟩, h.mem_sourceBoundaryOpens.2 x.2.1⟩
+  invFun x := ⟨x.1.1, h.mem_sourceBoundaryOpens.1 x.2, x.1.2⟩
+  left_inv x := Subtype.ext (rfl)
+  right_inv x := Subtype.ext (Subtype.ext (rfl))
+  continuous_toFun := by fun_prop
+  continuous_invFun := by fun_prop
+
+/-- The local collar with its source, boundary part, and normal interval packaged as open
+subspaces. Its underlying map is `homeomorphProd`; only the subtype packaging changes. -/
+def homeomorphProdOpens (h : IsProductCollarChart k φ V ε) :
+    h.sourceOpens ≃ₜ h.sourceBoundaryOpens × EuclideanHalfSpace.normalIioOpens ε :=
+  h.homeomorphProd.trans <|
+    h.sourceInterHomeomorphSourceBoundaryOpens.prodCongr (Homeomorph.refl _)
+
+/-- The boundary component of the open-subspace local collar agrees with that of
+`homeomorphProd`. -/
+theorem coe_homeomorphProdOpens_fst_eq_homeomorphProd_fst (h : IsProductCollarChart k φ V ε)
+    (y : h.sourceOpens) :
+    (((h.homeomorphProdOpens y).1 : ↥((𝓡∂ (n + 1)).boundary M)) : M) =
+      ((h.homeomorphProd ⟨y, h.mem_sourceOpens.1 y.2⟩).1 : M) :=
+  (rfl)
+
+/-- The normal component of the open-subspace local collar agrees with that of
+`homeomorphProd`. -/
+theorem coe_homeomorphProdOpens_snd_eq_homeomorphProd_snd (h : IsProductCollarChart k φ V ε)
+    (y : h.sourceOpens) :
+    ((h.homeomorphProdOpens y).2 : EuclideanHalfSpace 1) =
+      ((h.homeomorphProd ⟨y, h.mem_sourceOpens.1 y.2⟩).2 : EuclideanHalfSpace 1) :=
+  (rfl)
+
 /-- The second component of the local collar is the normal coordinate.
 
 Proved by `rfl` for the same reason as `coe_homeomorphBase`: `Homeomorph.Set.prod_apply` does
@@ -288,10 +383,23 @@ homeomorphism down: it is the chart, read in the box. -/
 @[simp]
 theorem map_homeomorphProd_fst (h : IsProductCollarChart k φ V ε) (y : ↥φ.source) :
     φ ((h.homeomorphProd y).1 : M) = ((φ y).1, 0) := by
-  have hmem : ((φ y).1, (0 : EuclideanHalfSpace 1)) ∈ φ.target := by
-    rw [h.target_eq]
-    exact ⟨(h.target_eq ▸ φ.map_source y.2).1, EuclideanHalfSpace.zero_mem_normalIio h.height_pos⟩
-  exact φ.right_inv hmem
+  exact φ.right_inv (h.fst_zero_mem_target y.2)
+
+/-- The second component of the open-subspace local collar is the normal coordinate. -/
+@[simp]
+theorem coe_homeomorphProdOpens_snd (h : IsProductCollarChart k φ V ε)
+    (y : h.sourceOpens) :
+    ((h.homeomorphProdOpens y).2 : EuclideanHalfSpace 1) = (φ y).2 := by
+  rw [coe_homeomorphProdOpens_snd_eq_homeomorphProd_snd, h.coe_homeomorphProd_snd]
+
+/-- The first component of the open-subspace local collar is the boundary retraction in collar
+coordinates. -/
+@[simp]
+theorem map_homeomorphProdOpens_fst (h : IsProductCollarChart k φ V ε)
+    (y : h.sourceOpens) :
+    φ (((h.homeomorphProdOpens y).1 : ↥((𝓡∂ (n + 1)).boundary M)) : M) =
+      ((φ y).1, 0) := by
+  rw [coe_homeomorphProdOpens_fst_eq_homeomorphProd_fst, h.map_homeomorphProd_fst]
 
 end IsProductCollarChart
 

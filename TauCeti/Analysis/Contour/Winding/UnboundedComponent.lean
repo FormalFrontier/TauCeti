@@ -79,4 +79,43 @@ theorem IsPiecewiseC1On.windingNumber_eq_zero_of_unbounded_component {γ : ℝ �
   exact TauCeti.Contour.windingNumber_eq_zero_of_unbounded_component hclosed hP
     hγ.continuousOn hγ_diff hγ.intervalIntegrable_deriv hcomp
 
+/-- **The winding number vanishes at a point joined to infinity by a ray off the curve.** If the
+ray `c ↦ w + c · v` (`0 ≤ c`, `v ≠ 0`) misses the closed curve, then `w` lies in an unbounded
+component of the complement and the winding number about `w` is zero.
+
+This is the form callers can actually discharge: exhibiting one escape ray is elementary, whereas
+`IsPiecewiseC1On.windingNumber_eq_zero_of_unbounded_component` asks for the component itself. Any
+point outside a bounded region the curve encloses -- outside a disc containing the curve, or on the
+far side of a line the curve does not cross -- has such a ray. -/
+theorem IsPiecewiseC1On.windingNumber_eq_zero_of_ray {γ : ℝ → ℂ} {a b : ℝ}
+    (hγ : IsPiecewiseC1On γ a b) (hclosed : γ a = γ b) {w v : ℂ} (hv : v ≠ 0)
+    (hray : ∀ c : ℝ, 0 ≤ c → w + (c : ℂ) * v ∉ γ '' uIcc a b) :
+    windingNumber γ a b w = 0 := by
+  have hAconn : IsPreconnected ((fun c : ℝ => w + (c : ℂ) * v) '' Ici 0) :=
+    isPreconnected_Ici.image (fun c : ℝ => w + (c : ℂ) * v)
+      (Continuous.continuousOn (by fun_prop))
+  have hzero : (0 : ℝ) ∈ Ici (0 : ℝ) := Set.mem_Ici.mpr le_rfl
+  have hAmem : w ∈ (fun c : ℝ => w + (c : ℂ) * v) '' Ici 0 := ⟨0, hzero, by simp⟩
+  have hAsub : (fun c : ℝ => w + (c : ℂ) * v) '' Ici 0 ⊆ (γ '' uIcc a b)ᶜ := by
+    rintro _ ⟨c, hc, rfl⟩
+    exact hray c hc
+  refine hγ.windingNumber_eq_zero_of_unbounded_component hclosed fun hbdd => ?_
+  have hsub := hAconn.subset_connectedComponentIn hAmem hAsub
+  obtain ⟨r, hr⟩ := (hbdd.subset hsub).subset_closedBall 0
+  have hwr : ‖w‖ ≤ r := by simpa using Metric.mem_closedBall.mp (hr ⟨0, hzero, by simp⟩)
+  have hrnn : (0 : ℝ) ≤ r := le_trans (norm_nonneg w) hwr
+  have hvpos : 0 < ‖v‖ := norm_pos_iff.mpr hv
+  -- Far enough along the ray the norm exceeds `r`, so the ray escapes the ball.
+  set c : ℝ := (r + ‖w‖ + 1) / ‖v‖ with hc_def
+  have hcnn : 0 ≤ c := by positivity
+  have hnorm : ‖(c : ℂ) * v‖ = r + ‖w‖ + 1 := by
+    rw [norm_mul, Complex.norm_real, Real.norm_eq_abs, abs_of_nonneg hcnn, hc_def,
+      div_mul_cancel₀ _ hvpos.ne']
+  have hle : ‖w + (c : ℂ) * v‖ ≤ r := by
+    simpa using Metric.mem_closedBall.mp (hr ⟨c, hcnn, rfl⟩)
+  have hge : ‖(c : ℂ) * v‖ ≤ ‖w + (c : ℂ) * v‖ + ‖w‖ := by
+    simpa using norm_sub_le (w + (c : ℂ) * v) w
+  rw [hnorm] at hge
+  linarith
+
 end TauCeti.Contour

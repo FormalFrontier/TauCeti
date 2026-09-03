@@ -6,9 +6,15 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.MeasureTheory.Integral.Pi
+public import Mathlib.MeasureTheory.Integral.Prod
+public import TauCeti.MeasureTheory.Constructions.Pi
 
 /-!
-# Lower integrals of coordinatewise products over a finite product measure
+# Integrals over finite product measures
+
+This file collects integration results for finite product measures. In addition to the lower
+integral product formula, it gives a Fubini identity obtained by refreshing two coordinates with
+independent samples.
 
 The `ℝ≥0∞`-valued companion of Mathlib's `MeasureTheory.integral_fintype_prod_eq_prod`: over
 `MeasureTheory.Measure.pi`, the lower integral of a product `∏ i, f i (x i)` of functions each
@@ -26,15 +32,47 @@ Mathlib's: reduce a `Fin (n + 1)`-indexed product to a binary product measure al
 
 * `TauCeti.lintegral_fintype_prod_eq_prod`: the product formula, for measurable factors.
 * `TauCeti.lintegral_fintype_prod_eq_prod₀`: the same for almost everywhere measurable factors.
+* `TauCeti.integral_pi_eq_integral_integral_update`: the two-coordinate Fubini
+  identity.
 -/
 
 public section
 
-open MeasureTheory MeasureTheory.Measure
+open Function MeasureTheory MeasureTheory.Measure
 
 open scoped ENNReal
 
 namespace TauCeti
+
+variable {ι : Type*} [Fintype ι] [DecidableEq ι] {α : ι → Type*}
+  [∀ i, MeasurableSpace (α i)]
+
+/-- **Fubini after a two-coordinate refresh.** An integral against a finite product of sigma-finite
+measures is an outer integral over the assignment and an inner integral over a fresh independent
+pair placed at the two distinct probability coordinates `a` and `b`. -/
+theorem integral_pi_eq_integral_integral_update {E : Type*} [NormedAddCommGroup E]
+    [NormedSpace ℝ E] (μ : ∀ i, Measure (α i)) [∀ i, SigmaFinite (μ i)] {a b : ι}
+    [IsProbabilityMeasure (μ a)] [IsProbabilityMeasure (μ b)] (hab : a ≠ b)
+    {f : (∀ i, α i) → E} (hf : Integrable f (Measure.pi μ)) :
+    ∫ x, f x ∂(Measure.pi μ) =
+      ∫ z, (∫ p : α a × α b, f (update (update z a p.1) b p.2) ∂(μ a).prod (μ b))
+        ∂(Measure.pi μ) := by
+  set g : ((∀ i, α i) × α a × α b) → (∀ i, α i) :=
+    fun w => update (update w.1 a w.2.1) b w.2.2 with hg
+  have hmp := measurePreserving_update_update μ hab
+  have hcomp : Integrable (fun w => f (g w)) ((Measure.pi μ).prod ((μ a).prod (μ b))) :=
+    hmp.integrable_comp_of_integrable hf
+  have hae : AEStronglyMeasurable f
+      (Measure.map g ((Measure.pi μ).prod ((μ a).prod (μ b)))) := by
+    rw [hmp.map_eq]
+    exact hf.aestronglyMeasurable
+  calc ∫ x, f x ∂(Measure.pi μ)
+      = ∫ x, f x ∂(Measure.map g ((Measure.pi μ).prod ((μ a).prod (μ b)))) := by
+        rw [hmp.map_eq]
+    _ = ∫ w, f (g w) ∂((Measure.pi μ).prod ((μ a).prod (μ b))) :=
+        integral_map hmp.measurable.aemeasurable hae
+    _ = ∫ z, (∫ p : α a × α b, f (update (update z a p.1) b p.2) ∂(μ a).prod (μ b))
+          ∂(Measure.pi μ) := integral_prod _ hcomp
 
 /-- The product formula for a `Fin n`-indexed product measure, by induction on `n`. -/
 private theorem lintegral_fin_nat_prod_eq_prod {n : ℕ} {α : Fin n → Type*}

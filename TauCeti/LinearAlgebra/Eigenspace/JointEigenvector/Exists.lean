@@ -40,7 +40,11 @@ induction in the Lie--Kolchin theorem.
 ## References
 
 * J. C. Jantzen, *Representations of Algebraic Groups*, I.2.
-* T. A. Springer, *Linear Algebraic Groups*, Section 2.4.
+* T. A. Springer, *Linear Algebraic Groups*, Lemma 2.4.2(i): over an algebraically closed field,
+  a set of pairwise commuting matrices is simultaneously conjugate into the upper-triangular
+  matrices, by the induction on an eigenspace of a non-scalar member that is used here.  The
+  results below take triangularizability as a hypothesis instead, so that they also apply over a
+  field that is not algebraically closed.
 -/
 
 public section

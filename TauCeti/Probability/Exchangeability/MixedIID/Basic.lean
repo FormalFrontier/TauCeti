@@ -13,8 +13,9 @@ public import TauCeti.MeasureTheory.Measure.ProductKernel
 
 A family is *mixed i.i.d.* when there is a measurable random probability measure
 `ν : Ω → ProbabilityMeasure α` such that every finite block of **distinct** coordinates has, as
-its law, the `ν`-mixture of the corresponding product measure. `MixedIIDWith μ X ν` names the
-witness `ν`; `MixedIID` is the existential wrapper.
+its law, the `ν`-mixture of the corresponding product measure, and every coordinate is
+`μ`-a.e. measurable. `MixedIIDWith μ X ν` names the witness `ν`; `MixedIID` is the existential
+wrapper.
 
 ⚠ This is a property of the **unconditional** finite-dimensional laws: the mixture identity
 constrains each finite block's marginal law, never the joint law of `(ν, X)`. It is therefore
@@ -89,31 +90,36 @@ private theorem measure_eq_of_forall_univ_pi {ι : Type*} [Finite ι] {α : ι �
   · rintro _ ⟨B, hB, rfl⟩
     exact h B fun i => hB i (mem_univ i)
 
-/-- Mixed i.i.d.-ness with a specified mixing representative `ν`: the random
-measure `ν` is measurable, and along every finite selection `k` of **distinct** coordinates
-the block law is the `ν`-mixture of the product measure
+/-- Mixed i.i.d.-ness with a specified mixing representative `ν`: the coordinates are a.e.
+measurable, the random measure `ν` is measurable, and along every finite selection `k` of
+**distinct** coordinates the block law is the `ν`-mixture of the product measure
 `ProbabilityMeasure.pi (fun _ => ν ω)`. Distinctness (`Function.Injective k`) is what product
-laws need, in contrast with the order condition `StrictMono` of `Contractable`. -/
+laws need, in contrast with the order condition `StrictMono` of `Contractable`.
+
+Coordinatewise a.e. measurability is part of the definition because `Measure.map` sends a
+function that is not a.e. measurable to a junk Dirac mass, so the mixture identity alone
+cannot see measurability; compare `ProbabilityTheory.HasLaw` in Mathlib. -/
+@[grind unfold]
 def MixedIIDWith (μ : Measure Ω) (X : ι → Ω → α) (ν : Ω → ProbabilityMeasure α) :
     Prop :=
-  Measurable ν ∧
+  (∀ i, AEMeasurable (X i) μ) ∧ Measurable ν ∧
     ∀ (m : ℕ) (k : Fin m → ι), Function.Injective k →
       blockLaw μ X k = μ.bind fun ω => (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure
 
-/-- Constructor: a measurable mixing representative together with the finite-block mixture
-identity. -/
+/-- Constructor: a.e. measurable coordinates and a measurable mixing representative together
+with the finite-block mixture identity. -/
 theorem MixedIIDWith.intro {μ : Measure Ω} {X : ι → Ω → α} {ν : Ω → ProbabilityMeasure α}
-    (hν : Measurable ν)
+    (hX : ∀ i, AEMeasurable (X i) μ) (hν : Measurable ν)
     (h : ∀ (m : ℕ) (k : Fin m → ι), Function.Injective k →
       blockLaw μ X k = μ.bind fun ω => (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure) :
     MixedIIDWith μ X ν :=
-  ⟨hν, h⟩
+  ⟨hX, hν, h⟩
 
 /-- Simp normal form for `MixedIIDWith`. -/
 @[simp]
 theorem mixedIIDWith_iff {μ : Measure Ω} {X : ι → Ω → α} {ν : Ω → ProbabilityMeasure α} :
     MixedIIDWith μ X ν ↔
-      Measurable ν ∧
+      (∀ i, AEMeasurable (X i) μ) ∧ Measurable ν ∧
         ∀ (m : ℕ) (k : Fin m → ι), Function.Injective k →
           blockLaw μ X k = μ.bind fun ω => (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure :=
   Iff.rfl
@@ -134,20 +140,32 @@ theorem mixedIID_iff {μ : Measure Ω} {X : ι → Ω → α} :
   Iff.rfl
 
 /-- The mixing representative of a `MixedIIDWith` witness is measurable. -/
-@[grind →]
 theorem MixedIIDWith.measurable_mixingRepresentative {μ : Measure Ω} {X : ι → Ω → α}
     {ν : Ω → ProbabilityMeasure α} (h : MixedIIDWith μ X ν) : Measurable ν :=
-  h.1
+  h.2.1
 
 /-- The defining finite-block mixture identity of a `MixedIIDWith` witness: along an injective
 selection the block law is the `ν`-mixture of the product measure. The prefix specialization is
 `MixedIIDWith.prefixLaw_eq_mixture`. -/
-@[grind =>]
 theorem MixedIIDWith.blockLaw_eq_mixture {μ : Measure Ω} {X : ι → Ω → α}
     {ν : Ω → ProbabilityMeasure α} (h : MixedIIDWith μ X ν)
     {m : ℕ} (k : Fin m → ι) (hk : Function.Injective k) :
     blockLaw μ X k = μ.bind fun ω => (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure :=
-  h.2 m k hk
+  h.2.2 m k hk
+
+/-- The coordinates of a `MixedIIDWith` family are a.e. measurable. -/
+theorem MixedIIDWith.aemeasurable {μ : Measure Ω} {X : ι → Ω → α}
+    {ν : Ω → ProbabilityMeasure α} (h : MixedIIDWith μ X ν) (i : ι) :
+    AEMeasurable (X i) μ :=
+  h.1 i
+
+/-- **Coordinatewise a.e. measurability from mixed i.i.d.-ness**, without naming a representative.
+The conclusion does not mention the mixing representative, so this is the natural level; the
+witness-level `MixedIIDWith.aemeasurable` is its specialization. -/
+theorem MixedIID.aemeasurable {μ : Measure Ω} {X : ι → Ω → α} (h : MixedIID μ X) (i : ι) :
+    AEMeasurable (X i) μ := by
+  obtain ⟨ν, hν⟩ := h
+  exact hν.aemeasurable i
 
 /-- A `MixedIID` family has a mixing representative. -/
 theorem MixedIID.exists_mixingRepresentative {μ : Measure Ω} {X : ι → Ω → α}
@@ -155,16 +173,18 @@ theorem MixedIID.exists_mixingRepresentative {μ : Measure Ω} {X : ι → Ω �
     ∃ ν : Ω → ProbabilityMeasure α, MixedIIDWith μ X ν :=
   h
 
-/-- A family is `MixedIIDWith μ X ν` once every injective finite block has the same
-rectangle values as the corresponding random product-measure mixture. -/
+/-- A family with a.e. measurable coordinates is `MixedIIDWith μ X ν` once every injective
+finite block has the same rectangle values as the corresponding random product-measure
+mixture. -/
 theorem mixedIIDWith_of_forall_rectangles {μ : Measure Ω} [IsFiniteMeasure μ]
-    {X : ι → Ω → α} {ν : Ω → ProbabilityMeasure α} (hν : Measurable ν)
+    {X : ι → Ω → α} {ν : Ω → ProbabilityMeasure α}
+    (hX : ∀ i, AEMeasurable (X i) μ) (hν : Measurable ν)
     (h_rect : ∀ (m : ℕ) (k : Fin m → ι), Function.Injective k →
       ∀ B : Fin m → Set α, (∀ i, MeasurableSet (B i)) →
         blockLaw μ X k (Set.univ.pi B) =
           ∫⁻ ω, ∏ i : Fin m, (ν ω : Measure α) (B i) ∂μ) :
     MixedIIDWith μ X ν := by
-  refine MixedIIDWith.intro hν ?_
+  refine MixedIIDWith.intro hX hν ?_
   intro m k hk
   have : IsFiniteMeasure (blockLaw μ X k) := by
     rw [blockLaw_def]
@@ -187,26 +207,28 @@ theorem MixedIIDWith.blockLaw_univ_pi {μ : Measure Ω} {X : ι → Ω → α}
   have hν_ae : AEMeasurable ν μ := h.measurable_mixingRepresentative.aemeasurable
   rw [TauCeti.MeasureTheory.bind_probabilityMeasure_pi_const_pi ν hν_ae B hB]
 
-/-- Rectangle factorization is equivalent to the named `MixedIIDWith` relation. -/
+/-- Rectangle factorization is equivalent to the named `MixedIIDWith` relation, for a family
+with a.e. measurable coordinates. -/
 theorem mixedIIDWith_iff_forall_rectangles {μ : Measure Ω} [IsFiniteMeasure μ]
     {X : ι → Ω → α} {ν : Ω → ProbabilityMeasure α} :
     MixedIIDWith μ X ν ↔
-      Measurable ν ∧
+      (∀ i, AEMeasurable (X i) μ) ∧ Measurable ν ∧
         ∀ (m : ℕ) (k : Fin m → ι), Function.Injective k →
           ∀ B : Fin m → Set α, (∀ i, MeasurableSet (B i)) →
             blockLaw μ X k (Set.univ.pi B) =
               ∫⁻ ω, ∏ i : Fin m, (ν ω : Measure α) (B i) ∂μ := by
   constructor
   · intro h
-    exact ⟨h.measurable_mixingRepresentative, fun m k hk B hB => h.blockLaw_univ_pi k hk B hB⟩
-  · rintro ⟨hν, h_rect⟩
-    exact mixedIIDWith_of_forall_rectangles hν h_rect
+    exact ⟨h.aemeasurable, h.measurable_mixingRepresentative,
+      fun m k hk B hB => h.blockLaw_univ_pi k hk B hB⟩
+  · rintro ⟨hX, hν, h_rect⟩
+    exact mixedIIDWith_of_forall_rectangles hX hν h_rect
 
 /-- Rectangle factorization is equivalent to the existential `MixedIID` relation. -/
 theorem mixedIID_iff_exists_forall_rectangles {μ : Measure Ω} [IsFiniteMeasure μ]
     {X : ι → Ω → α} :
     MixedIID μ X ↔
-      ∃ ν : Ω → ProbabilityMeasure α, Measurable ν ∧
+      ∃ ν : Ω → ProbabilityMeasure α, (∀ i, AEMeasurable (X i) μ) ∧ Measurable ν ∧
         ∀ (m : ℕ) (k : Fin m → ι), Function.Injective k →
           ∀ B : Fin m → Set α, (∀ i, MeasurableSet (B i)) →
             blockLaw μ X k (Set.univ.pi B) =
@@ -219,7 +241,8 @@ inherited with the same witness. -/
 theorem MixedIIDWith.comp_injective {μ : Measure Ω} {X : ι → Ω → α}
     {ν : Ω → ProbabilityMeasure α} (h : MixedIIDWith μ X ν) {f : κ → ι}
     (hf : Function.Injective f) : MixedIIDWith μ (fun j => X (f j)) ν := by
-  refine MixedIIDWith.intro h.measurable_mixingRepresentative fun m k hk => ?_
+  refine MixedIIDWith.intro (fun j => h.aemeasurable (f j))
+    h.measurable_mixingRepresentative fun m k hk => ?_
   simpa only [blockLaw_def, Function.comp_apply] using
     h.blockLaw_eq_mixture (f ∘ k) (hf.comp hk)
 

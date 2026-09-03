@@ -47,6 +47,8 @@ energy method, as in Evans, *Partial Differential Equations*, Chapter 6.
   diagonal estimate from the mass-floor lower bound.
 * `TauCeti.PDE.min_lam_mass_mul_norm_sq_le_energyIntegrand_zero_drift_self`: explicit
   zero-drift diagonal lower bound from a principal quadratic lower bound and nonnegative mass.
+* `TauCeti.PDE.mul_norm_snd_sq_le_energyIntegrand_zero_drift_self`: the zero-drift energy
+  dominates the squared gradient component.
 -/
 
 public section
@@ -136,6 +138,16 @@ lemma min_lam_mass_mul_norm_sq_le_energyIntegrand_zero_drift_self {A : Matrix n 
   simp only [inner_zero_left, zero_mul, add_zero]
   rw [Real.norm_eq_abs, sq_abs] at hprod
   exact hprod.trans (add_le_add hA' le_rfl)
+
+/-- A zero-drift energy density dominates the squared gradient component when the principal
+quadratic form has lower bound `λ` and the mass coefficient is nonnegative. -/
+lemma mul_norm_snd_sq_le_energyIntegrand_zero_drift_self {A : Matrix n n ℝ} {c₀ : ℝ}
+    (hA : ∀ ξ : EuclideanSpace ℝ n, lam * ‖ξ‖ ^ 2 ≤ A.toQuadraticForm' ξ)
+    (hc : 0 ≤ c₀) (U : ℝ × EuclideanSpace ℝ n) :
+    lam * ‖U.2‖ ^ 2 ≤ energyIntegrand A 0 c₀ U U := by
+  rw [energyIntegrand_self]
+  simp only [inner_zero_left, zero_mul, add_zero]
+  exact (hA U.2).trans (le_add_of_nonneg_right (mul_nonneg hc (sq_nonneg _)))
 
 /-- Explicit diagonal lower bound for the shifted Laplacian jet form with nonnegative mass. -/
 lemma min_one_mass_mul_norm_sq_le_energyIntegrand_one_zero_mass_self {c : ℝ} (hc : 0 ≤ c)

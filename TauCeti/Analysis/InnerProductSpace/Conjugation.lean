@@ -26,6 +26,10 @@ conjugating the matrix of `A` entrywise.
 
 * `TauCeti.conjugation_conjugation` and `TauCeti.inner_conjugation_conjugation`: conjugation is an
   involution, and reverses the inner product.
+* `TauCeti.conjugation_basis`: the basis it is attached to is fixed vector by vector, which is what
+  makes it *the* conjugation of that basis.
+* `TauCeti.inner_conjugation_left_basis`: pairing a conjugate against a basis vector swaps the two
+  arguments of the inner product.
 * `TauCeti.conjCLM_one`, `TauCeti.conjCLM_mul` and `TauCeti.conjCLM_conjCLM`: conjugation of
   operators is a multiplicative involution fixing the identity.
 * `TauCeti.conjCLM_add` and `TauCeti.conjCLM_smul`: it is additive and conjugate-linear, so with
@@ -108,6 +112,18 @@ theorem conjugation_conjugation (x : V) : conjugation e (conjugation e x) = x :=
   simp only [h]
   exact e.sum_repr' x
 
+/-- **Conjugation fixes the basis it is attached to.** Coordinatewise conjugation is the identity
+on the vectors whose coordinates are `0` and `1`. -/
+@[simp]
+theorem conjugation_basis (j : ι) : conjugation e (e j) = e j := by
+  classical
+  have h : ∀ i, (starRingEnd 𝕜) ⟪e i, e j⟫_𝕜 = ⟪e i, e j⟫_𝕜 := fun i ↦ by
+    rw [orthonormal_iff_ite.mp e.orthonormal]
+    split <;> simp
+  rw [conjugation_apply]
+  simp only [h]
+  exact e.sum_repr' (e j)
+
 /-- Conjugation reverses the inner product: it is conjugate-linear and isometric. -/
 @[simp]
 theorem inner_conjugation_conjugation (x y : V) :
@@ -120,6 +136,15 @@ theorem inner_conjugation_conjugation (x y : V) :
   refine Finset.sum_congr rfl fun i _ ↦ ?_
   rw [inner_smul_left, inner_conjugation]
   simp [mul_comm]
+
+/-- **Pairing a conjugate against a basis vector swaps the arguments.** Conjugation fixes `e j`, so
+the reversal of the inner product turns `⟪J x, e j⟫` into `⟪e j, x⟫`. This is the form in which the
+conjugation is contracted against a coordinate. -/
+@[simp]
+theorem inner_conjugation_left_basis (x : V) (j : ι) :
+    ⟪conjugation e x, e j⟫_𝕜 = ⟪e j, x⟫_𝕜 := by
+  conv_lhs => rw [← conjugation_basis e j]
+  rw [inner_conjugation_conjugation, inner_conj_symm]
 
 /-- Conjugation is isometric, as the reversal of the inner product shows on the diagonal. -/
 @[simp]

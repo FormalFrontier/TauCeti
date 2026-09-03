@@ -8,6 +8,8 @@ module
 public import TauCeti.Probability.Exchangeability.MixedIID.Basic
 -- Non-public: `map_bind` is used only inside the proof below.
 import TauCeti.MeasureTheory.Measure.GiryMonad
+-- Non-public: the Giry-measurability of a pushforward is used only inside the proof below.
+import TauCeti.MeasureTheory.Measure.Measurability
 
 /-!
 # Coordinatewise maps of mixed i.i.d. families
@@ -53,15 +55,14 @@ measurable map of the value space: if `X` is mixed i.i.d. with mixing representa
 pushforward `fun ω => (ν ω).map f`. -/
 theorem MixedIIDWith.map_values {μ : Measure Ω} {X : ι → Ω → α}
     {ν : Ω → ProbabilityMeasure α} (h : MixedIIDWith μ X ν)
-    {f : α → β} (hf : Measurable f) (hX : ∀ i, AEMeasurable (X i) μ) :
-    MixedIIDWith μ (fun i ω => f (X i ω)) fun ω => (ν ω).map hf.aemeasurable := by
-  refine MixedIIDWith.intro ?_ ?_
+    {f : α → β} (hf : Measurable f) :
+    MixedIIDWith μ (fun i ω => f (X i ω)) fun ω => (ν ω).map f := by
+  refine MixedIIDWith.intro (fun i => hf.comp_aemeasurable (h.aemeasurable i)) ?_ ?_
   · -- The pushforward mixing representative is measurable in the Giry structure.
-    have hν : Measurable fun ω => (ν ω : Measure α) :=
-      measurable_subtype_coe.comp h.measurable_mixingRepresentative
-    exact ((Measure.measurable_map f hf).comp hν).subtype_mk
+    exact (TauCeti.MeasureTheory.measurable_probabilityMeasure_map hf).comp
+      h.measurable_mixingRepresentative
   · intro m k hk
-    have hXk : ∀ i : Fin m, AEMeasurable (X (k i)) μ := fun i => hX (k i)
+    have hXk : ∀ i : Fin m, AEMeasurable (X (k i)) μ := fun i => h.aemeasurable (k i)
     have hFmeas : Measurable fun x : Fin m → α => fun i => f (x i) :=
       measurable_pi_lambda _ fun i => hf.comp (measurable_pi_apply i)
     have hg : AEMeasurable
@@ -78,19 +79,18 @@ theorem MixedIIDWith.map_values {μ : Measure Ω} {X : ι → Ω → α}
             ((ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure).map
               fun x : Fin m → α => fun i => f (x i) := TauCeti.MeasureTheory.map_bind hg hFmeas
       _ = μ.bind fun ω =>
-            (ProbabilityMeasure.pi fun _ : Fin m => (ν ω).map hf.aemeasurable).toMeasure := by
+            (ProbabilityMeasure.pi fun _ : Fin m => (ν ω).map f).toMeasure := by
             refine congrArg (μ.bind ·) (funext fun ω => ?_)
-            have : IsProbabilityMeasure ((ν ω : Measure α).map f) :=
-              (ν ω : Measure α).isProbabilityMeasure_map hf.aemeasurable
+            have : IsProbabilityMeasure ((ν ω : Measure α).map f) := inferInstance
             simp only [ProbabilityMeasure.toMeasure_pi, ProbabilityMeasure.toMeasure_map]
             exact Measure.pi_map_pi fun _ : Fin m => hf.aemeasurable
 
 /-- Mixed i.i.d.-ness is preserved by a coordinatewise measurable map of the value space. -/
 theorem MixedIID.map_values {μ : Measure Ω} {X : ι → Ω → α}
-    (h : MixedIID μ X) {f : α → β} (hf : Measurable f) (hX : ∀ i, AEMeasurable (X i) μ) :
+    (h : MixedIID μ X) {f : α → β} (hf : Measurable f) :
     MixedIID μ (fun i ω => f (X i ω)) := by
   obtain ⟨ν, hν⟩ := h.exists_mixingRepresentative
-  exact MixedIID.of_mixingRepresentative (hν.map_values hf hX)
+  exact MixedIID.of_mixingRepresentative (hν.map_values hf)
 
 /-- **Transfer of mixed i.i.d.-ness along the path law.** If the coordinate process on path
 space is mixed i.i.d. under `pathLaw μ X`, then `X` is mixed i.i.d. under `μ`. -/
@@ -101,7 +101,8 @@ theorem mixedIID_of_mixedIID_pathLaw {μ : Measure Ω} {X : ℕ → Ω → α}
   obtain ⟨ν, hν⟩ := h.exists_mixingRepresentative
   have hφ : Measurable (fun ω => fun i => X i ω : Ω → ℕ → α) := measurable_pi_lambda _ hX_meas
   refine MixedIID.of_mixingRepresentative
-    (MixedIIDWith.intro (hν.measurable_mixingRepresentative.comp hφ) ?_)
+    (MixedIIDWith.intro (fun i => (hX_meas i).aemeasurable)
+      (hν.measurable_mixingRepresentative.comp hφ) ?_)
   intro m k hk
   have hcoord : Measurable (fun p : ℕ → α => fun i : Fin m => p (k i)) :=
     measurable_pi_lambda _ fun i => measurable_pi_apply (k i)

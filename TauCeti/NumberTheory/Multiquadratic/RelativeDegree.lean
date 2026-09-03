@@ -70,9 +70,7 @@ theorem finiteDimensional_top_over_intermediateField [Finite ι]
     (hroot : ∀ i, root i ^ 2 = algebraMap K L (d i))
     (F : IntermediateField K (adjoin K (Set.range root))) :
     FiniteDimensional F (adjoin K (Set.range root)) :=
-  haveI := isSplittingField hroot
-  haveI : FiniteDimensional K (adjoin K (Set.range root)) :=
-    Polynomial.IsSplittingField.finiteDimensional _ (definingPolynomial d)
+  haveI := finiteDimensional_adjoin_range hroot
   Module.Finite.of_restrictScalars_finite K F (adjoin K (Set.range root))
 
 /-- **The tower identity `[F : K] · [M : F] = 2ⁿ`.** Under square-class independence, an
@@ -98,9 +96,7 @@ theorem finrank_top_over_intermediateField [Finite ι] [NeZero (2 : K)]
     (F : IntermediateField K (adjoin K (Set.range root))) :
     Module.finrank F (adjoin K (Set.range root))
       = 2 ^ Module.finrank (ZMod 2) (intermediateFieldEquivSubmodule hroot hindep F).ofDual := by
-  have := isSplittingField hroot
-  have : FiniteDimensional K (adjoin K (Set.range root)) :=
-    Polynomial.IsSplittingField.finiteDimensional _ (definingPolynomial d)
+  have := finiteDimensional_adjoin_range hroot
   have hpos : 0 < Module.finrank K F := Module.finrank_pos
   refine Nat.eq_of_mul_eq_mul_left hpos ?_
   rw [finrank_intermediateField_mul_finrank_top hroot hindep F,
@@ -150,9 +146,8 @@ theorem finrank_top_over_adjoin_range_ne [Finite ι] [NeZero (2 : K)]
     (hindep : ∀ S : Finset ι, S.Nonempty → ¬ IsSquare (∏ i ∈ S, d i))
     (htop : adjoin K (Set.range root) = ⊤) (i : ι) :
     Module.finrank (adjoin K (Set.range fun j : {j // j ≠ i} => root j.val)) L = 2 := by
-  have := isSplittingField hroot
   have : FiniteDimensional K (adjoin K (Set.range root)) :=
-    Polynomial.IsSplittingField.finiteDimensional _ (definingPolynomial d)
+    finiteDimensional_adjoin_range hroot
   rw [htop] at this
   have : FiniteDimensional K L :=
     (IntermediateField.topEquiv (F := K) (E := L)).toLinearEquiv.finiteDimensional

@@ -9,9 +9,7 @@ public import TauCeti.Analysis.Complex.UpperHalfPlane.PSLAction
 public import TauCeti.GroupTheory.GroupAction.Stabilizer
 public import TauCeti.NumberTheory.Modular.Orbits
 
--- these two serve only the private centre computation, so they stay off the public surface
-import Mathlib.LinearAlgebra.SpecialLinearGroup
-import Mathlib.RingTheory.RootsOfUnity.PrimitiveRoots
+public import TauCeti.LinearAlgebra.Matrix.SpecialLinearGroup.Basic
 
 /-!
 # Orders of the point stabilisers of the modular group
@@ -167,21 +165,11 @@ theorem card_stabilizer_eq_two_of_orbit_ne_I_of_orbit_ne_ρ (z : ℍ)
 
 /-! ### The projective orders `e_P` -/
 
--- the centre of `SL(2, ℤ)` has order two. Built on Mathlib rather than on an explicit `{±1}`
--- computation: the matrix and module special linear groups agree (`toLin'_equiv`), the module
--- one has centre the roots of unity (`centerEquivRootsOfUnity`), and `-1` is a primitive second
--- root over `ℤ`.
-private theorem card_center : Nat.card (Subgroup.center SL(2, ℤ)) = 2 := by
-  have hroot : IsPrimitiveRoot (-1 : ℤ) 2 := IsPrimitiveRoot.neg_one 0 (by norm_num)
-  have hrank : max (Module.finrank ℤ (Fin 2 → ℤ)) 1 = 2 := by simp
-  rw [Nat.card_congr (Subgroup.centerCongr Matrix.SpecialLinearGroup.toLin'_equiv).toEquiv,
-    Nat.card_congr (SpecialLinearGroup.centerEquivRootsOfUnity (R := ℤ) (V := Fin 2 → ℤ)).toEquiv,
-    hrank, hroot.card_rootsOfUnity]
-
 /-- **The stabiliser order in `Γ` splits off the part of the centre that `Γ` contains.** For any
 `Γ ≤ SL(2, ℤ)`, the order of the stabiliser of `z` in `Γ` is the order of `Γ ⊓ ±1` times the
 order of the stabiliser in the image of `Γ` in `PSL(2, ℤ)` — the projective, elliptic order. The
-factor is `2` when `-I ∈ Γ` and `1` otherwise.
+factor is `2` when `-I ∈ Γ` and `1` otherwise, by
+`Matrix.SpecialLinearGroup.card_center_subgroupOf_eq_two_iff`.
 
 This is the general-level form of the halving below, and it is exactly one application of
 `TauCeti.card_stabilizer_eq_card_subgroupOf_mul_card_stabilizer_map`: no quotient action of `Γ`
@@ -200,8 +188,13 @@ the centre `±1`, which acts trivially on `ℍ`, so every projective stabiliser 
 halved — the passage from the counts `4`, `6`, `2` to the elliptic orders `e_P`. -/
 theorem card_stabilizer_eq_two_mul_card_stabilizer_psl (z : ℍ) :
     Nat.card (stabilizer SL(2, ℤ) z) = 2 * Nat.card (stabilizer PSL(2, ℤ) z) := by
+  -- `-I ≠ I` over `ℤ`, read off the `(0,0)` entry, is what turns the general bound into the value
+  have hne : (-1 : SL(2, ℤ)) ≠ 1 := fun h ↦ by
+    have h00 := congrArg (fun g : SL(2, ℤ) ↦ (g : Matrix (Fin 2) (Fin 2) ℤ) 0 0) h
+    norm_num at h00
   rw [TauCeti.card_stabilizer_eq_card_subgroup_mul_card_stabilizer_quotient _ z
-    fun g ↦ UpperHalfPlane.pslMk_smul g z, card_center]
+    fun g ↦ UpperHalfPlane.pslMk_smul g z,
+    Matrix.SpecialLinearGroup.card_center_eq_two hne]
 
 -- Neither elliptic order below is `@[simp]`, tested: `MulAction.mem_stabilizer_iff` rewrites
 -- `Nat.card (stabilizer G z)` into a `Nat.card` of a subtype underneath, so the left-hand side is

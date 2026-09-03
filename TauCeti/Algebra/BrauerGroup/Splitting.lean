@@ -70,13 +70,13 @@ instead, which keeps the argument inside `Module.finrank` and avoids having to p
 isomorphism `D ≃+* K` that `TauCeti.wedderburn_data_unique` also supplies to an isomorphism of
 `K`-algebras.
 
-The two `IsBrauerTrivial` equivalences are the `simp` normal form of `TauCeti.IsBrauerTrivial`, the
-division-algebra one at default priority and the general one at `low`, because a division algebra is
-simple and so matches both left-hand sides; the sharper `Module.finrank` criterion is the one that
-should win there. The two `TauCeti.BrauerGroup.mk` forms are deliberately *not* `simp` lemmas:
-`TauCeti.BrauerGroup.mk_eq_one_iff` is one already, so `simp` normalizes `mk (CSA.of K A) = 1`
-through it and reaches the same right-hand sides; tagging them as well makes the `simpNF` linter
-report them as provable by the rules already in the set.
+The general `IsBrauerTrivial` equivalence is the `simp` normal form of `TauCeti.IsBrauerTrivial`.
+The division-algebra equivalence is deliberately not a `simp` lemma: after importing
+`TauCeti.Algebra.BrauerGroup.Division`, simplification instead passes through
+`TauCeti.BrauerGroup.isBrauerEquivalent_iff_nonempty_algEquiv` and Mathlib's
+`Module.nonempty_algEquiv_iff_finrank_eq_one`. The two `TauCeti.BrauerGroup.mk` forms are likewise
+not `simp` lemmas because `TauCeti.BrauerGroup.mk_eq_one_iff` already normalizes their left-hand
+sides.
 
 As in `TauCeti/Algebra/BrauerGroup/Trivial.lean`, the statements mentioning `TauCeti.CSA.base K`
 are for a `CSA.{u, u} K`, an algebra in the universe of its own base field, because Mathlib's
@@ -173,8 +173,11 @@ variable (K : Type u) [Field K] (D : Type u) [DivisionRing D] [Algebra K D]
 
 This is the base case of the statement that every Brauer class has a unique division-algebra
 representative, and it is what makes a Brauer group nontrivial in practice: exhibiting a central
-division algebra of dimension greater than one exhibits a nonidentity class. -/
-@[simp]
+division algebra of dimension greater than one exhibits a nonidentity class.
+
+Not a `simp` lemma: `TauCeti.BrauerGroup.isBrauerEquivalent_iff_nonempty_algEquiv` already rewrites
+the left-hand side, and `Module.nonempty_algEquiv_iff_finrank_eq_one` is the dimension criterion for
+what it leaves. -/
 theorem isBrauerTrivial_iff_finrank_eq_one :
     IsBrauerTrivial (CSA.of K D) ↔ Module.finrank K D = 1 := by
   constructor

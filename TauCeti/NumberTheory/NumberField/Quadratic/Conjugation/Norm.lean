@@ -20,7 +20,9 @@ consumed by `NumberField.mulEquiv_ringOfIntegersQuadraticConj_apply_eq_inv`.
 
 Along the way it records the elementwise norm identities
 `algebraMap_norm_eq_mul_quadraticConj` (`N(y) = y · σy` for `y : K`) and
-`algebraMap_norm_eq_mul_ringOfIntegersQuadraticConj` (its form for `y : 𝓞 K`).
+`algebraMap_norm_eq_mul_ringOfIntegersQuadraticConj` (its form for `y : 𝓞 K`), and their
+consequence `mul_ringOfIntegersQuadraticConj_unit_eq_one_or_neg_one` for a unit of `𝓞 K`, whose
+norm is a unit of `ℤ`.
 
 The proof runs through the relative ideal norm: `I · σI` has the same relative norm as
 `(Ideal.relNorm ℤ I).map (algebraMap ℤ (𝓞 K))` and contains it, hence equals it, and that
@@ -70,6 +72,20 @@ private theorem algebraMap_intNorm_eq (hmin : minpoly ℤ θ = X ^ 2 - C d)
   congr 1
   rw [Algebra.intNorm_eq_norm, algebraMap_int_eq, eq_intCast]
   exact Algebra.coe_norm_int x
+
+/-- **The conjugation norm of a unit is `±1`.** For a unit `u` of `𝓞 K` in a quadratic number
+field, `u σu` is the extension of the integral norm of `u`, which is a unit of `ℤ`. Which of the
+two signs occurs is a genuine invariant of `K`: `-1` is attained in `ℚ(√2)` and in no imaginary
+quadratic field. -/
+theorem mul_ringOfIntegersQuadraticConj_unit_eq_one_or_neg_one
+    (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤) (u : (𝓞 K)ˣ) :
+    (u : 𝓞 K) * ringOfIntegersQuadraticConj hmin hgen (u : 𝓞 K) = 1 ∨
+      (u : 𝓞 K) * ringOfIntegersQuadraticConj hmin hgen (u : 𝓞 K) = -1 := by
+  have hunit : IsUnit (Algebra.intNorm ℤ (𝓞 K) (u : 𝓞 K)) :=
+    u.isUnit.map (Algebra.intNorm ℤ (𝓞 K))
+  rcases Int.isUnit_iff.mp hunit with h | h
+  · exact Or.inl (by rw [← algebraMap_intNorm_eq hmin hgen, h, map_one])
+  · exact Or.inr (by rw [← algebraMap_intNorm_eq hmin hgen, h, map_neg, map_one])
 
 /-- The degree of `𝓞 K` over `ℤ` is `2`, matching `finrank ℚ K`. -/
 private theorem finrank_int_eq_two (hmin : minpoly ℤ θ = X ^ 2 - C d)

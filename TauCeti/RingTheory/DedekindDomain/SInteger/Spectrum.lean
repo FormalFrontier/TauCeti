@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.NumberTheory.RamificationInertia.Valuation
+public import Mathlib.RingTheory.DedekindDomain.SelmerGroup
 public import TauCeti.RingTheory.DedekindDomain.SInteger.Basic
 
 /-!
@@ -144,14 +145,12 @@ lemma integer_map_le_map_pow_iff {v : HeightOneSpectrum R} (hv : v ∉ S) (J : I
 
 /-- The prime of `R` below a prime `P` of `𝒪_S`: its contraction. -/
 noncomputable def integerPrimeUnder (P : HeightOneSpectrum (S.integer K)) :
-    HeightOneSpectrum R where
-  asIdeal := P.asIdeal.comap (algebraMap R (S.integer K))
-  isPrime := P.isPrime.comap _
-  ne_bot := integer_comap_ne_bot K S P.ne_bot
+    HeightOneSpectrum R :=
+  HeightOneSpectrum.comapOfNeBot (algebraMap R (S.integer K)) P (integer_comap_ne_bot K S P.ne_bot)
 
 @[simp] lemma integerPrimeUnder_asIdeal (P : HeightOneSpectrum (S.integer K)) :
-    (integerPrimeUnder K S P).asIdeal = P.asIdeal.comap (algebraMap R (S.integer K)) := by
-  simp only [integerPrimeUnder]
+    (integerPrimeUnder K S P).asIdeal = P.asIdeal.comap (algebraMap R (S.integer K)) :=
+  HeightOneSpectrum.comapOfNeBot_asIdeal _ _ _
 
 /-- A prime under a prime of `𝒪_S` never lies in `S`. -/
 lemma integerPrimeUnder_notMem (P : HeightOneSpectrum (S.integer K)) :
@@ -166,13 +165,16 @@ lemma integerPrimeUnder_notMem (P : HeightOneSpectrum (S.integer K)) :
 @[simp] lemma integerPrimeUnder_integerPrimeOverOfNotMem {v : HeightOneSpectrum R} (hv : v ∉ S) :
     integerPrimeUnder K S (integerPrimeOverOfNotMem K S hv) = v :=
   have := v.isMaximal
-  HeightOneSpectrum.ext <|
-    Ideal.comap_map_eq_self_of_isMaximal _ (integer_map_asIdeal_ne_top K S hv)
+  HeightOneSpectrum.ext <| by
+    rw [integerPrimeUnder_asIdeal, integerPrimeOverOfNotMem_asIdeal]
+    exact Ideal.comap_map_eq_self_of_isMaximal _ (integer_map_asIdeal_ne_top K S hv)
 
 /-- Contracting a prime of `𝒪_S` and extending back returns it. -/
 @[simp] lemma integerPrimeOverOfNotMem_integerPrimeUnder (P : HeightOneSpectrum (S.integer K)) :
     integerPrimeOverOfNotMem K S (integerPrimeUnder_notMem K S P) = P :=
-  HeightOneSpectrum.ext <| integer_map_comap_eq K S P.asIdeal
+  HeightOneSpectrum.ext <| by
+    rw [integerPrimeOverOfNotMem_asIdeal, integerPrimeUnder_asIdeal]
+    exact integer_map_comap_eq K S P.asIdeal
 
 /-- **The height-one primes of `𝒪_S` are exactly the height-one primes of `R` not in `S`.** -/
 noncomputable def integerHeightOneSpectrumEquiv :
@@ -223,6 +225,25 @@ lemma valuation_integerHeightOneSpectrumEquiv (v : {v : HeightOneSpectrum R // v
     (integerHeightOneSpectrumEquiv K S v).valuation K x
       = (v : HeightOneSpectrum R).valuation K x := by
   rw [integerHeightOneSpectrumEquiv_apply, valuation_integerPrimeOverOfNotMem]
+
+/-- **The correspondence preserves the integer-valued valuation**: the `Multiplicative ℤ`-valued
+valuation of the `S`-integers at the prime above `v` is the one of `R` at `v`. This is the `Kˣ`
+companion of `valuation_integerPrimeOverOfNotMem`. -/
+@[simp]
+lemma valuationOfNeZero_integerPrimeOverOfNotMem {v : HeightOneSpectrum R} (hv : v ∉ S) (u : Kˣ) :
+    (integerPrimeOverOfNotMem K S hv).valuationOfNeZero u = v.valuationOfNeZero u := by
+  rw [← WithZero.coe_inj, HeightOneSpectrum.valuationOfNeZero_eq,
+    HeightOneSpectrum.valuationOfNeZero_eq,
+    valuation_integerPrimeOverOfNotMem K S hv (u : K)]
+
+/-- Transport of the integer-valued valuation, phrased through the equivalence. Not a `simp`
+lemma: `integerHeightOneSpectrumEquiv_apply` rewrites the left-hand side to
+`integerPrimeOverOfNotMem` first, so this form is never in normal form — the `simp` lemma is
+`valuationOfNeZero_integerPrimeOverOfNotMem` above. -/
+lemma valuationOfNeZero_integerHeightOneSpectrumEquiv (v : {v : HeightOneSpectrum R // v ∉ S})
+    (u : Kˣ) : (integerHeightOneSpectrumEquiv K S v).valuationOfNeZero u
+      = (v : HeightOneSpectrum R).valuationOfNeZero u := by
+  rw [integerHeightOneSpectrumEquiv_apply, valuationOfNeZero_integerPrimeOverOfNotMem]
 
 /-- **The correspondence preserves valuations, read downwards**: the valuation of `𝒪_S` at an
 arbitrary prime `P` is the valuation of `R` at the prime under `P`. This is the form a consumer

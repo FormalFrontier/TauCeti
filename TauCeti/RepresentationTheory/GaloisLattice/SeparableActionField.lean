@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.FieldTheory.PurelyInseparable.Basic
+public import TauCeti.FieldTheory.Galois.AbsoluteGaloisGroup
 public import TauCeti.RepresentationTheory.GaloisLattice.ActionField
 
 /-!
@@ -77,48 +77,12 @@ noncomputable def actionFieldGalToSeparableActionField (M : GaloisLatticeCat k) 
     Gal(actionField M/k) →* Gal(separableActionField M/k) :=
   AlgEquiv.restrictNormalHom (separableActionField M)
 
-/-- Every automorphism of the separable action field extends to the original normal action
-field. -/
-theorem actionFieldGalToSeparableActionField_surjective (M : GaloisLatticeCat k) :
-    Function.Surjective (actionFieldGalToSeparableActionField M) := by
-  unfold actionFieldGalToSeparableActionField
-  exact AlgEquiv.restrictNormalHom_surjective (actionField M)
-
-/-- Restriction to the separable action field is injective. The remaining extension is purely
-inseparable, so an automorphism fixing the separable action field is the identity. -/
-theorem actionFieldGalToSeparableActionField_injective (M : GaloisLatticeCat k) :
-    Function.Injective (actionFieldGalToSeparableActionField M) := by
-  rw [← MonoidHom.ker_eq_bot_iff]
-  apply le_antisymm
-  · intro sigma hsigma
-    rw [MonoidHom.mem_ker] at hsigma
-    let _ : IsPurelyInseparable (separableActionField M) (actionField M) := by
-      unfold separableActionField
-      infer_instance
-    let sigma' : actionField M →ₐ[separableActionField M] actionField M :=
-      { sigma.toAlgHom with
-        commutes' := fun x ↦ by
-          have hx := congrArg Subtype.val (DFunLike.congr_fun hsigma x)
-          simp only [actionFieldGalToSeparableActionField,
-            AlgEquiv.restrictNormalHom_apply, AlgEquiv.one_apply] at hx
-          -- Cross the bundled homomorphism and intermediate-field coercions in the structure field.
-          change sigma (x : actionField M) = (x : actionField M)
-          exact hx }
-    have hsigma' : sigma' = AlgHom.id (separableActionField M) (actionField M) :=
-      Subsingleton.elim _ _
-    rw [Subgroup.mem_bot]
-    apply AlgEquiv.ext
-    intro x
-    exact DFunLike.congr_fun hsigma' x
-  · exact bot_le
-
 /-- Restriction identifies the automorphism group of the finite normal action field with that of
-its finite Galois separable subextension. -/
+its finite Galois separable subextension. This is `separableClosureRestrictEquiv` for the normal
+extension `actionField M / k`, forgetting its continuity. -/
 noncomputable def actionFieldGalEquivSeparableActionField (M : GaloisLatticeCat k) :
     Gal(actionField M/k) ≃* Gal(separableActionField M/k) :=
-  MulEquiv.ofBijective (actionFieldGalToSeparableActionField M)
-    ⟨actionFieldGalToSeparableActionField_injective M,
-      actionFieldGalToSeparableActionField_surjective M⟩
+  (separableClosureRestrictEquiv k (actionField M)).toMulEquiv
 
 /-- The isomorphism of automorphism groups is restriction to the separable action field. -/
 @[simp]
@@ -126,9 +90,7 @@ theorem actionFieldGalEquivSeparableActionField_apply (M : GaloisLatticeCat k)
     (sigma : Gal(actionField M/k)) :
     actionFieldGalEquivSeparableActionField M sigma =
       actionFieldGalToSeparableActionField M sigma :=
-  by
-    rw [actionFieldGalEquivSeparableActionField]
-    rfl
+  separableClosureRestrictEquiv_apply sigma
 
 /-- The automorphism group of the separable action field maps onto the faithful finite quotient
 acting on the lattice. -/

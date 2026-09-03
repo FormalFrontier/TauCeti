@@ -8,6 +8,7 @@ module
 public import Mathlib.Algebra.Polynomial.Basic
 public import Mathlib.LinearAlgebra.Finsupp.LSum
 public import TauCeti.LowDimTopology.Plumbing.Cube.Face.Exponent
+public import TauCeti.LowDimTopology.Plumbing.Cube.Generator
 import Mathlib.Algebra.CharP.Two
 
 /-!
@@ -37,6 +38,13 @@ oriented cubical differential.
 ## Main results
 
 * `TauCeti.PlumbingGraph.latticeDifferential_single`: the differential on a basis cube.
+* `TauCeti.PlumbingGraph.latticeDifferential_single_mk_singleton`: the differential on a
+  one-dimensional basis cube.
+* `TauCeti.PlumbingGraph.latticeDifferential_eq_zero_of_forall_directions_eq_empty`: a chain
+  supported on lattice points is a cycle.
+* `TauCeti.PlumbingGraph.single_add_sub_smul_single_mem_range` and
+  `TauCeti.PlumbingGraph.single_sub_smul_single_add_mem_range`: the boundary relations between
+  adjacent lattice points.
 * `TauCeti.PlumbingGraph.latticeDifferential_comp_self`: the lattice differential squares to
   zero.
 * `TauCeti.PlumbingGraph.latticeDifferential_eq_zero_of_isEmpty`: the zero-vertex
@@ -117,6 +125,88 @@ theorem latticeDifferential_apply
       c.sum fun C a => a • @latticeDifferentialOnGenerator V decV finV P k C := by
   rw [latticeDifferential, Finsupp.lsum_apply]
   simp [Finsupp.sum, LinearMap.smulRight_apply]
+
+/-- A zero-dimensional cube has no directions to differentiate along, so it is a cycle. -/
+@[simp]
+theorem latticeDifferentialOnGenerator_eq_zero_of_directions_eq_empty (P : PlumbingGraph V)
+    (k : P.characteristicVectors) {C : PlumbingCube V} (hC : C.directions = ∅) :
+    P.latticeDifferentialOnGenerator k C = 0 := by
+  rw [latticeDifferentialOnGenerator_def]
+  refine Finset.sum_eq_zero fun v _ => ?_
+  have : (v : V) ∈ (∅ : Finset V) := by rw [← hC]; exact v.property
+  exact absurd this (Finset.notMem_empty _)
+
+/-- A chain supported in cubical degree zero is a cycle: a lattice point has no faces. -/
+theorem latticeDifferential_eq_zero_of_forall_directions_eq_empty (P : PlumbingGraph V)
+    (k : P.characteristicVectors) {c : PlumbingChain V}
+    (hc : ∀ C ∈ c.support, C.directions = ∅) : P.latticeDifferential k c = 0 := by
+  rw [latticeDifferential_apply, Finsupp.sum]
+  refine Finset.sum_eq_zero fun C hC => ?_
+  rw [P.latticeDifferentialOnGenerator_eq_zero_of_directions_eq_empty k (hc C hC), smul_zero]
+
+/-! ### One-dimensional cubes and adjacent lattice points -/
+
+namespace PlumbingChain
+
+omit decV finV in
+/-- Subtraction of plumbing chains is addition, the coefficients having characteristic two. -/
+private theorem sub_eq_add (c d : PlumbingChain V) : c - d = c + d := by
+  rw [sub_eq_add_neg, ← neg_one_smul PlumbingCoefficient d, CharTwo.neg_eq, one_smul]
+
+end PlumbingChain
+
+/-- The lattice differential of a one-dimensional cube generator: each endpoint appears,
+weighted by the drop from the cube weight to that endpoint's weight. -/
+theorem latticeDifferential_single_mk_singleton (P : PlumbingGraph V)
+    (k : P.characteristicVectors) (x : V → ℤ) (v : V) :
+    P.latticeDifferential k (Finsupp.single ⟨x, {v}⟩ 1) =
+      Finsupp.single (⟨x, ∅⟩ : PlumbingCube V)
+          (Polynomial.X ^
+            (max (P.characteristicWeight k x) (P.characteristicWeight k (x + Pi.single v 1)) -
+              P.characteristicWeight k x).toNat) +
+        Finsupp.single (⟨x + Pi.single v 1, ∅⟩ : PlumbingCube V)
+          (Polynomial.X ^
+            (max (P.characteristicWeight k x) (P.characteristicWeight k (x + Pi.single v 1)) -
+              P.characteristicWeight k (x + Pi.single v 1)).toNat) := by
+  classical
+  rw [latticeDifferential_single, one_smul, latticeDifferentialOnGenerator_def,
+    Finset.sum_eq_single_of_mem (⟨v, Finset.mem_singleton_self v⟩ :
+      {w // w ∈ ({v} : Finset V)}) (Finset.mem_attach _ _)
+      (fun w _ hw => absurd (Subtype.ext (Finset.mem_singleton.mp w.property)) hw)]
+  rw [PlumbingCube.lowerFace_mk, PlumbingCube.upperFace_mk, Finset.erase_singleton,
+    PlumbingCube.characteristicLowerFaceExponent_mk,
+    PlumbingCube.characteristicUpperFaceExponent_mk,
+    PlumbingCube.characteristicLowerFaceExponent_mk_singleton,
+    PlumbingCube.characteristicUpperFaceExponent_mk_singleton]
+
+/-- Crossing a one-dimensional cube towards a lattice point of no smaller weight: the far
+endpoint is, modulo boundaries, `U ^ d` times the near one. -/
+theorem single_add_sub_smul_single_mem_range (P : PlumbingGraph V)
+    (k : P.characteristicVectors) (x : V → ℤ) (v : V)
+    (h : P.characteristicWeight k x ≤ P.characteristicWeight k (x + Pi.single v 1)) :
+    Finsupp.single (⟨x + Pi.single v 1, ∅⟩ : PlumbingCube V) 1 -
+        (Polynomial.X : PlumbingCoefficient) ^ (P.characteristicWeight k (x + Pi.single v 1) -
+            P.characteristicWeight k x).toNat •
+          Finsupp.single (⟨x, ∅⟩ : PlumbingCube V) 1 ∈
+      LinearMap.range (P.latticeDifferential k) := by
+  refine ⟨Finsupp.single ⟨x, {v}⟩ 1, ?_⟩
+  rw [latticeDifferential_single_mk_singleton, max_eq_right h, sub_self, Int.toNat_zero,
+    pow_zero, PlumbingChain.sub_eq_add, Finsupp.smul_single, smul_eq_mul, mul_one]
+  exact add_comm _ _
+
+/-- Crossing a one-dimensional cube away from a lattice point of no larger weight: the near
+endpoint is, modulo boundaries, `U ^ d` times the far one. -/
+theorem single_sub_smul_single_add_mem_range (P : PlumbingGraph V)
+    (k : P.characteristicVectors) (x : V → ℤ) (v : V)
+    (h : P.characteristicWeight k (x + Pi.single v 1) ≤ P.characteristicWeight k x) :
+    Finsupp.single (⟨x, ∅⟩ : PlumbingCube V) 1 -
+        (Polynomial.X : PlumbingCoefficient) ^ (P.characteristicWeight k x -
+            P.characteristicWeight k (x + Pi.single v 1)).toNat •
+          Finsupp.single (⟨x + Pi.single v 1, ∅⟩ : PlumbingCube V) 1 ∈
+      LinearMap.range (P.latticeDifferential k) := by
+  refine ⟨Finsupp.single ⟨x, {v}⟩ 1, ?_⟩
+  rw [latticeDifferential_single_mk_singleton, max_eq_left h, sub_self, Int.toNat_zero,
+    pow_zero, PlumbingChain.sub_eq_add, Finsupp.smul_single, smul_eq_mul, mul_one]
 
 /-! ### Cancellation around codimension-two faces -/
 

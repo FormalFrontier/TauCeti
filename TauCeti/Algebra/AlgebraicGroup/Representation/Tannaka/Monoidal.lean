@@ -457,7 +457,10 @@ theorem isMonoidal_of_linear_components
     rw [hunit]
     simp
   · intro M N
-    have htensor' :
+    -- The ascribed categorical type is load-bearing: `congrArg` on its own yields the
+    -- definitionally equal `LinearMap.comp`/`TensorProduct.map` spelling, which `erw` matches
+    -- syntactically and so would not find.
+    have htensor_cat :
         SemimoduleCat.ofHom
               (TensorProduct.AlgebraTensorModule.distribBaseChange R A M N).symm.toLinearMap ≫
             SemimoduleCat.ofHom
@@ -468,18 +471,8 @@ theorem isMonoidal_of_linear_components
               SemimoduleCat.ofHom
                 (F N : Module.End A (A ⊗[R] N))) ≫
             SemimoduleCat.ofHom
-              (TensorProduct.AlgebraTensorModule.distribBaseChange R A M N).symm.toLinearMap := by
-      apply SemimoduleCat.hom_ext
-      -- `hom_ext` leaves categorical composition and tensoring wrapped by `ofHom`; rewriting
-      -- cannot reach their linear maps, so reduce those wrappers to `comp` and `TensorProduct.map`.
-      change
-        (F (M ⊗ N : FGComoduleCat R H) :
-          Module.End A (A ⊗[R] ((M ⊗ N : FGComoduleCat R H) : Type u))).comp
-            (TensorProduct.AlgebraTensorModule.distribBaseChange R A M N).symm.toLinearMap =
-          (TensorProduct.AlgebraTensorModule.distribBaseChange R A M N).symm.toLinearMap.comp
-            (TensorProduct.map (F M : Module.End A (A ⊗[R] M))
-              (F N : Module.End A (A ⊗[R] N)))
-      exact (htensor M N).symm
+              (TensorProduct.AlgebraTensorModule.distribBaseChange R A M N).symm.toLinearMap :=
+      congrArg SemimoduleCat.ofHom (htensor M N).symm
     erw [FGComoduleCat.scalarExtensionFunctor_μ,
       happ, happ, happ]
     rw [← MonoidalCategory.tensorHom_comp_tensorHom,
@@ -489,7 +482,7 @@ theorem isMonoidal_of_linear_components
     erw [Category.assoc, eqToHom_trans_assoc]
     simp only [MonoidalCategory.tensorHom_comp_tensorHom_assoc, eqToHom_trans,
       eqToHom_refl, Category.id_comp, Category.comp_id, LinearEquiv.toModuleIsoₛ_hom]
-    erw [← Category.assoc, htensor', Category.assoc]
+    erw [← Category.assoc, htensor_cat, Category.assoc]
 
 /-- A family of `A`-linear automorphisms of the scalar extensions of the finite comodules that is
 natural in the comodule, preserves the tensor unit, and is compatible with the tensor comparison,

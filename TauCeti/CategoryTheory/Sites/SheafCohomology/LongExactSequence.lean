@@ -30,7 +30,10 @@ each of the three consecutive pairs.
 * `TauCeti.CategoryTheory.Sheaf.H.map_injective`, the injectivity of `H⁰(F₁) →+ H⁰(F₂)`, which
   is where the sequence starts;
 * `TauCeti.CategoryTheory.Sheaf.H.map_g_surjective`, `H.subsingleton_X₂`, `H.subsingleton_X₃`
-  and `H.subsingleton_X₁`, the vanishing consequences that the sequence is normally used for.
+  and `H.subsingleton_X₁`, the vanishing consequences that the sequence is normally used for;
+* `TauCeti.CategoryTheory.Sheaf.H.δ_naturality`, the naturality of the connecting map in the
+  short exact sequence, which is what makes the sequence one of modules over a ring acting on
+  all three terms rather than merely one of abelian groups.
 
 The six-term form of the sequence as a `ComposableArrows` is already available: it is Mathlib's
 `CategoryTheory.Abelian.Ext.covariantSequence` for the constant sheaf `ℤ`, whose arrows are
@@ -40,7 +43,8 @@ Sheaf cohomology on the small Zariski site of a scheme is the cohomology of a sh
 so this is Layer B infrastructure for `TauCetiRoadmap/JacobianChallenge/README.md`; see
 `TauCeti/AlgebraicGeometry/Cohomology/LongExactSequence.lean`. No formalization is vendored: the
 underlying long exact sequence is Mathlib's `CategoryTheory.Abelian.Ext.covariant_sequence_exact₁'`,
-`covariant_sequence_exact₂'` and `covariant_sequence_exact₃'`.
+`covariant_sequence_exact₂'` and `covariant_sequence_exact₃'`, and the naturality of the
+extension class is Mathlib's `CategoryTheory.ShortComplex.ShortExact.extClass_naturality`.
 -/
 
 public section
@@ -133,6 +137,27 @@ theorem subsingleton_X₁ (n₀ n₁ : ℕ) (h : n₀ + 1 = n₁)
   obtain ⟨x₃, hx₃⟩ := (exact_δ_map hS n₀ n₁ h x).1 (Subsingleton.elim _ _)
   obtain ⟨y₃, hy₃⟩ := (exact_δ_map hS n₀ n₁ h y).1 (Subsingleton.elim _ _)
   rw [← hx₃, ← hy₃, Subsingleton.elim x₃ y₃]
+
+omit hS in
+/-- The connecting map is postcomposition with the extension class of the short exact
+sequence. -/
+private lemma δ_apply {T : ShortComplex (Sheaf J AddCommGrpCat.{v})} (hT : T.ShortExact)
+    (n₀ n₁ : ℕ) (h : n₀ + 1 = n₁) (x : _root_.CategoryTheory.Sheaf.H T.X₃ n₀) :
+    δ hT n₀ n₁ h x = x.comp hT.extClass h :=
+  (rfl)
+
+omit hS in
+/-- The connecting map of the long exact cohomology sequence is natural in the short exact
+sequence: a morphism `φ : T₁ ⟶ T₂` of short exact sequences of abelian sheaves makes the square
+formed by the two connecting maps and the maps induced by `φ.τ₃` and `φ.τ₁` commute. -/
+theorem δ_naturality {T₁ T₂ : ShortComplex (Sheaf J AddCommGrpCat.{v})}
+    (h₁ : T₁.ShortExact) (h₂ : T₂.ShortExact) (φ : T₁ ⟶ T₂)
+    (n₀ n₁ : ℕ) (h : n₀ + 1 = n₁) (x : _root_.CategoryTheory.Sheaf.H T₁.X₃ n₀) :
+    _root_.CategoryTheory.Sheaf.H.map φ.τ₁ n₁ (δ h₁ n₀ n₁ h x) =
+      δ h₂ n₀ n₁ h (_root_.CategoryTheory.Sheaf.H.map φ.τ₃ n₀ x) := by
+  rw [_root_.CategoryTheory.Sheaf.H.map_apply, _root_.CategoryTheory.Sheaf.H.map_apply,
+    δ_apply, δ_apply, Ext.comp_assoc_of_third_deg_zero, Ext.comp_assoc_of_second_deg_zero,
+    ShortComplex.ShortExact.extClass_naturality h₁ h₂ φ]
 
 end H
 

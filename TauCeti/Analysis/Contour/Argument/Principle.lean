@@ -215,7 +215,7 @@ private theorem circleIntegral_logDeriv_sub_principalPart_eq_zero {F : ℂ → �
     circleIntegral (fun z => logDeriv F z - ∑ s ∈ S, (ord s : ℂ) * (z - s)⁻¹) c R = 0 := by
   have hP_mero : MeromorphicOn (fun z => ∑ s ∈ S, (ord s : ℂ) * (z - s)⁻¹)
       (Metric.closedBall c R) := by
-    refine MeromorphicOn.fun_sum fun s z _ => ?_
+    refine MeromorphicOn.fun_sum fun s _ z _ => ?_
     exact (MeromorphicAt.const (ord s : ℂ) z).mul
       (((MeromorphicAt.id z).sub (MeromorphicAt.const s z)).inv)
   refine circleIntegral_eq_zero_of_meromorphicOrderAt_nonneg hR.le (hF_mero.logDeriv.sub hP_mero) ?_

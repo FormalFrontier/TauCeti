@@ -219,13 +219,13 @@ end Opposite
 
 /-- **The Brauer group of an algebraically closed field is trivial.** Every finite-dimensional
 central simple algebra over an algebraically closed field is a matrix algebra over it
-(`TauCeti.Algebra.isSplittingField_of_isAlgClosed`, with the extension taken to be the base field
+(`TauCeti.Algebra.isSplittingField_of_isSepClosed`, with the extension taken to be the base field
 itself), so there is only one Brauer class. -/
 theorem subsingleton_brauerGroup_of_isAlgClosed [IsAlgClosed K] :
     Subsingleton (BrauerGroup.{u, v} K) :=
   ⟨fun x y ↦ Quotient.inductionOn₂ x y fun A B ↦ Quotient.sound <|
-    isBrauerEquivalent_of_isSplittingField K (Algebra.isSplittingField_of_isAlgClosed K A K)
-      (Algebra.isSplittingField_of_isAlgClosed K B K)⟩
+    isBrauerEquivalent_of_isSplittingField K (Algebra.isSplittingField_of_isSepClosed K A K)
+      (Algebra.isSplittingField_of_isSepClosed K B K)⟩
 
 /-- **The Brauer group of a finite field is trivial.** A finite division ring is a field (little
 Wedderburn), so the Wedderburn presentation of a central simple algebra over a finite field is

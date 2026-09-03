@@ -59,6 +59,48 @@ theorem windingNumber_eq_sum_support (C : Cycle) (z : ℂ) :
   conv_lhs => rw [FreeAbelianGroup.eq_sum_support_coeff_smul_of C]
   simp only [map_sum, map_zsmul, windingNumber_of, ← Int.cast_smul_eq_zsmul ℂ, smul_eq_mul]
 
+/-- **A per-generator splitting resums to the cycle-level one.** Summing, over the generators of a
+cycle and weighted by their coefficients, an integral of `g` plus `c` times a `w`-weighted sum of
+that generator's winding numbers gives the cycle integral of `g` plus `c` times the `w`-weighted
+sum of the *cycle's* winding numbers.
+
+The scalar `c`, the integrand `g` and the weight `w` are all arbitrary; residue applications take
+`c = 2πi`. At `S = ∅` both sides collapse to `integral g C`, and at `c = 0` to the same. -/
+theorem sum_support_smul_eq_integral_add_windingNumber_sum
+    {E : Type*} [NormedAddCommGroup E] [NormedSpace ℂ E]
+    (c : ℂ) (g w : ℂ → E) (S : Finset ℂ) (C : Cycle) :
+    ∑ γ ∈ FreeAbelianGroup.support C, FreeAbelianGroup.coeff γ C •
+        ((∫ t in γ.a..γ.b, deriv (⇑γ) t • g (γ t))
+          + c • ∑ s ∈ S, TauCeti.Contour.windingNumber (⇑γ) γ.a γ.b s • w s)
+      = integral g C
+        + c • ∑ s ∈ S, windingNumber s C • w s := by
+  have hswap : ∀ γ : PiecewiseC1ClosedCurve,
+      (FreeAbelianGroup.coeff γ C : ℂ) •
+          (c • ∑ s ∈ S, TauCeti.Contour.windingNumber (⇑γ) γ.a γ.b s • w s)
+        = ∑ s ∈ S, c • ((FreeAbelianGroup.coeff γ C : ℂ) •
+            (TauCeti.Contour.windingNumber (⇑γ) γ.a γ.b s • w s)) := fun γ ↦ by
+    rw [Finset.smul_sum, Finset.smul_sum]
+    exact Finset.sum_congr rfl fun s _ ↦ smul_comm _ _ _
+  calc
+    ∑ γ ∈ FreeAbelianGroup.support C, FreeAbelianGroup.coeff γ C •
+          ((∫ t in γ.a..γ.b, deriv (⇑γ) t • g (γ t))
+            + c • ∑ s ∈ S, TauCeti.Contour.windingNumber (⇑γ) γ.a γ.b s • w s)
+        = (∑ γ ∈ FreeAbelianGroup.support C, FreeAbelianGroup.coeff γ C •
+              (∫ t in γ.a..γ.b, deriv (⇑γ) t • g (γ t)))
+            + ∑ γ ∈ FreeAbelianGroup.support C, FreeAbelianGroup.coeff γ C •
+                (c • ∑ s ∈ S, TauCeti.Contour.windingNumber (⇑γ) γ.a γ.b s • w s) := by
+          simp only [smul_add]
+          exact Finset.sum_add_distrib
+    _ = integral g C
+          + c • ∑ s ∈ S, windingNumber s C • w s := by
+          rw [← integral_eq_sum_support]
+          refine congrArg _ ?_
+          simp only [← Int.cast_smul_eq_zsmul ℂ]
+          rw [Finset.sum_congr rfl fun γ _ ↦ hswap γ, Finset.sum_comm, Finset.smul_sum]
+          refine Finset.sum_congr rfl fun s _ ↦ ?_
+          rw [windingNumber_eq_sum_support, Finset.sum_smul, Finset.smul_sum]
+          exact Finset.sum_congr rfl fun x _ ↦ by rw [mul_smul]
+
 /-- **Ordinary-integral formula off the trace.** At a point `z` outside a contour cycle's trace,
 the generalized winding number is the normalized ordinary cycle integral of the Cauchy kernel
 `w ↦ (w - z)⁻¹`. No principal value remains: every generator in the canonical support avoids

@@ -28,6 +28,8 @@ satisfies this criterion automatically.
 
 ## Main results
 
+* `TauCeti.Multiquadratic.squarefree_prod_primeDiscriminantRadicands_of_pairwise_isCoprime`: a
+  subset product of pairwise coprime prime-discriminant radicands is squarefree.
 * `TauCeti.Multiquadratic.isCoprime_primeDiscriminantRadicand`: the radicands of two distinct
   prime discriminants are coprime except for the pair `8`, `-8`.
 * `TauCeti.Multiquadratic.not_isSquare_prod_primeDiscriminantRadicands`: for an injective family
@@ -66,16 +68,17 @@ private theorem prod_primeDiscriminantRadicands_ne_neg_one {ι : Type*} {D : ι 
   · rw [Finset.not_nonempty_iff_eq_empty.mp hS] at hprod
     norm_num at hprod
 
-/-- Products over prime-discriminant radicands are squarefree when the selected radicands are
-pairwise coprime. -/
-private theorem squarefree_prod_primeDiscriminantRadicands_of_pairwise_isCoprime {ι : Type*}
-    {D : ι → ℤ} (hD : ∀ i, IsPrimeDiscriminant (D i)) {S : Finset ι}
+/-- **Squarefreeness of a subset product of prime-discriminant radicands.** A product over `S` of
+prime-discriminant radicands is squarefree as soon as the selected radicands are pairwise coprime.
+Only the discriminants indexed by `S` are constrained. -/
+theorem squarefree_prod_primeDiscriminantRadicands_of_pairwise_isCoprime {ι : Type*}
+    {D : ι → ℤ} {S : Finset ι} (hD : ∀ i ∈ S, IsPrimeDiscriminant (D i))
     (hcop : ∀ i ∈ S, ∀ j ∈ S, i ≠ j →
       IsCoprime (primeDiscriminantRadicand (D i)) (primeDiscriminantRadicand (D j))) :
     Squarefree (∏ i ∈ S, primeDiscriminantRadicand (D i)) :=
   Finset.squarefree_prod_of_pairwise_isCoprime
     (fun i hi j hj hij => (hcop i hi j hj hij).isRelPrime)
-    (fun i _ => squarefree_primeDiscriminantRadicand (hD i))
+    (fun i hi => squarefree_primeDiscriminantRadicand (hD i hi))
 
 /-- Products over pairwise coprime prime-discriminant radicands are not rational squares, provided
 the selected product is not the empty product in disguise. -/
@@ -87,7 +90,8 @@ private theorem not_isSquare_prod_primeDiscriminantRadicands_of_pairwise_isCopri
     ¬ IsSquare (∏ i ∈ S, ((primeDiscriminantRadicand (D i) : ℤ) : ℚ)) := by
   rw [← Int.cast_prod]
   exact not_isSquare_intCast_of_squarefree_of_ne_one
-    (squarefree_prod_primeDiscriminantRadicands_of_pairwise_isCoprime hD hcop) hne_one
+    (squarefree_prod_primeDiscriminantRadicands_of_pairwise_isCoprime (fun i _ => hD i) hcop)
+    hne_one
 
 /-- A product of prime-discriminant radicands is not `1` as soon as the discriminant family is
 injective and the selected set is nonempty. -/
@@ -111,8 +115,8 @@ private theorem prod_primeDiscriminantRadicands_ne_one_of_nonempty {ι : Type*} 
   exact absurd hP (by decide)
 
 /-!
-The first block of private helpers above is intentionally local to this file; the public API starts
-with the coprimality theorem below.
+Apart from the squarefreeness theorem, the block of helpers above is intentionally local to this
+file; the public API continues with the coprimality theorem below.
 -/
 
 /-- **Coprimality of distinct prime-discriminant radicands.** The radicands of two distinct prime
@@ -180,7 +184,8 @@ private theorem not_isSquare_prod_primeDiscriminantRadicands_of_mem_eight_neg_ei
       (fun i hi => hno4S i (Finset.mem_of_mem_erase (Finset.mem_of_mem_erase hi))) hP
   have hnot_negP : ¬ IsSquare (((-P : ℤ) : ℚ)) :=
     not_isSquare_intCast_of_squarefree_of_ne_one
-      (squarefree_prod_primeDiscriminantRadicands_of_pairwise_isCoprime hD hcopT).neg hne_negP
+      (squarefree_prod_primeDiscriminantRadicands_of_pairwise_isCoprime
+        (fun i _ => hD i) hcopT).neg hne_negP
   intro hsquare
   have hfour : IsSquare (4 * ((-P : ℤ) : ℚ)) := by
     convert hsquare using 1

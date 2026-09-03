@@ -27,8 +27,8 @@ Each proof is the same two steps: unfold `polyEval` into a `map` followed by `ev
   `.evalEval_φ`, `.evalEval_ω`, `.evalEval_ψc`: the polynomials `ψ₂`, `Ψ₃`, `ψₙ`, `φₙ`, `ωₙ` and
   the complement `ψc n` of `W` at `(x, y)`, together with the auxiliary `preΨ₄`, are the
   universal ones evaluated through `Universal.polyEval`.
-* `WeierstrassCurve.Universal.isEllipticSequence_polyToField_ψ`: the universal `ψ` family, taken
-  into `Universal.Field`, is an elliptic sequence.
+* `WeierstrassCurve.Universal.isEllipticNet_polyToField_ψ`: the universal `ψ` family, taken
+  into `Universal.Field`, is an elliptic net.
 * `WeierstrassCurve.Universal.polyEval_cusp_ψ`, `.polyEval_cusp_φ`, `.polyEval_cusp_ψc`,
   `.polyEval_cusp_ω`: specialised to the cusp curve at `(1, 1)`, `ψₙ` evaluates to `n` itself,
   the numerator `φₙ` to `1`, the complement `ψc n` to `2`, and `ωₙ` to `1`.
@@ -75,7 +75,9 @@ at `dev/modular-curves @ 9fec8eba7652` — the revision `TauCetiRoadmap/Elliptic
 pins for the NagellLutz project. Declarations `Universal.evalEval_ψ₂`, `evalEval_Ψ₃`,
 `evalEval_preΨ₄`, `evalEval_ψ`, `evalEval_φ` and (added with the `ω` port, read at
 `main @ 1c1c74664e40071c2c2165bc55ca2616a67ccd6b`) `evalEval_ψc` and `evalEval_ω`.
-`isEllipticSequence_polyToField_ψ` adapts that same file's `isEllSequence_ψᵤ`.
+`isEllipticNet_polyToField_ψ` adapts that same file's `net_ψᵤ` (`:140`); the source's neighbouring
+`isEllSequence_ψᵤ` (`:139`) is the `s = 0` shift of it and is not separately ported, since
+`IsEllipticNet.isEllipticSequence` recovers it.
 That file's header reads `Authors: David Kurniadi Angdinata, Junyan Xu`; following this
 repository's convention for adapted material the upstream authorship is credited here rather than
 in the copyright header.
@@ -95,7 +97,7 @@ their siblings — qualified names, ring-hom-named `map_*` rewrites in place of 
 The `evalEval_*` statements are the source's unchanged. Docstrings are added here, and the
 source's shared `variable {m n : ℤ}` is narrowed to `n`: of the seven transports only
 `evalEval_ψ`, `evalEval_φ`, `evalEval_ω` and `evalEval_ψc` carry an index, and all four use `n`
-alone. `isEllSequence_ψᵤ` is stated upstream through
+alone. `net_ψᵤ` is stated upstream through
 an `abbrev ψᵤ` and its own `ψᵤ_eq_normEDS`; here the abbreviation is dropped, the identification
 of `ψ` with `normEDS` is the named `ψ_eq_normEDS` (`DivisionPolynomial/NormEDS.lean`), and a
 `have` transports it through `polyToField`, so the statement is spelled on
@@ -106,11 +108,11 @@ The nonvanishing block adapts, at the same `main` revision, `ψᵤ_ne_zero` (`:1
 source name kept) and `polyToField_ψ₂Sq` (`:154`, here `polyToField_Ψ₂Sq`: the constant in its
 conclusion is `Ψ₂Sq`, capitalised). The first two port essentially unchanged, both retracting to
 the cusp curve at `(1, 1)` through `ringEval`, where `ψₙ` reads off as `n` and `φₙ` as `1`. One
-departure beyond the `ψᵤ` respelling, and it is confined to `polyToField_Ψ₂Sq`: the source clears
-the Weierstrass polynomial by rewriting with its own `polyToField_polynomial`, which has no
-counterpart here, so the proof instead pushes the coordinate-ring identity
-`Affine.CoordinateRing.mk_ψ₂_sq` into the field of fractions, where that vanishing is already
-absorbed by the quotient.
+departure beyond the `ψᵤ` respelling, and it is confined to `polyToField_Ψ₂Sq`: the source expands
+`ψ₂_sq` and clears the Weierstrass polynomial term by hand with `polyToField_polynomial`. That
+lemma exists here too (`EllipticCurve/Universal.lean`), but this proof does not need it — Mathlib
+packages the same cancellation as the coordinate-ring identity `Affine.CoordinateRing.mk_ψ₂_sq`,
+which is what the proof pushes into the field of fractions.
 -/
 
 public section
@@ -147,21 +149,23 @@ lemma evalEval_ψ : (W.ψ n).evalEval x y = polyEval W x y (curve.ψ n) := by
 lemma evalEval_φ : (W.φ n).evalEval x y = polyEval W x y (curve.φ n) := by
   simp_rw [polyEval_apply, ← map_φ, map_specialize]
 
-/-- **The universal `ψ` family is an elliptic sequence.** Pushing `ψₙ` of the universal curve into
-`Universal.Field` gives a normalised EDS, hence an elliptic sequence — over the universal field,
-with no hypothesis on any coefficient.
+/-- **The universal `ψ` family is an elliptic net.** Pushing `ψₙ` of the universal curve into
+`Universal.Field` gives a normalised EDS, hence an elliptic net — over the universal field, with
+no hypothesis on any coefficient.
 
 The proof recognises the family as a `normEDS` outright, which is what puts the whole `normEDS` API
 — including `NormEDS.lean`'s `universalNormEDS_ne_zero` — within reach of the universal division
-polynomials. -/
-lemma isEllipticSequence_polyToField_ψ :
-    IsEllipticSequence fun n : ℤ ↦ polyToField (curve.ψ n) := by
+polynomials. The elliptic-*sequence* consequence is the shift `s = 0`, which
+`IsEllipticNet.isEllipticSequence` reads off; consumers that need a nonzero shift, as the
+addition formula for `n • (X, Y)` does, need the net. -/
+lemma isEllipticNet_polyToField_ψ :
+    IsEllipticNet fun n : ℤ ↦ polyToField (curve.ψ n) := by
   have h : (fun n : ℤ ↦ polyToField (curve.ψ n))
       = normEDS (polyToField curve.ψ₂) (polyToField (Polynomial.C curve.Ψ₃))
           (polyToField (Polynomial.C curve.preΨ₄)) := by
     funext n; rw [ψ_eq_normEDS, _root_.map_normEDS]
   rw [h]
-  exact isEllipticSequence_normEDS _ _ _
+  exact isEllipticNet_normEDS _ _ _
 
 /-- **On the cusp curve at `(1, 1)`, the `n`-division polynomial evaluates to `n`.** -/
 lemma polyEval_cusp_ψ : polyEval (cusp ℤ) 1 1 (curve.ψ n) = n := by
@@ -175,7 +179,7 @@ lemma polyEval_cusp_φ : polyEval (cusp ℤ) 1 1 (curve.φ n) = 1 := by
   rw [WeierstrassCurve.φ, map_sub (polyEval (cusp ℤ) 1 1), map_mul (polyEval (cusp ℤ) 1 1),
     map_mul (polyEval (cusp ℤ) 1 1), map_pow (polyEval (cusp ℤ) 1 1), polyEval_cusp_ψ,
     polyEval_cusp_ψ, polyEval_cusp_ψ]
-  simp [polyEval_apply, evalEval]
+  simp [evalEval]
   ring
 
 /-- The `ω`-division polynomial of `W` at `(x, y)` is the universal one under `polyEval`. -/
@@ -197,8 +201,8 @@ lemma polyEval_cusp_ω : polyEval (cusp ℤ) 1 1 (curve.ω n) = 1 := by
   -- Evaluate `two_mul_ω` at the cusp: `ψc` gives `2`, `φ` gives `1`, the cusp's `a₁` and `a₃`
   -- vanish, so `h` collapses to `2 * (the goal's left side) = 2` and the `2` cancels.
   have h := congr(polyEval (cusp ℤ) 1 1 $(two_mul_ω curve n))
-  simp only [map_mul (polyEval (cusp ℤ) 1 1), map_sub (polyEval (cusp ℤ) 1 1),
-    map_pow (polyEval (cusp ℤ) 1 1), polyEval_cusp_ψc, polyEval_cusp_ψ, polyEval_cusp_φ] at h
+  simp only [map_mul (polyEval (cusp ℤ) 1 1), map_sub (polyEval (cusp ℤ) 1 1), polyEval_cusp_ψc,
+    polyEval_cusp_φ] at h
   -- The residual `a₁`/`a₃` terms sit under `CC`, whose body is unexposed and has no cusp value
   -- lemma, so no named rewrite can kill them; evaluating the wrappers is the one route left.
   simpa [polyEval_apply, evalEval] using h

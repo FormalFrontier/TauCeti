@@ -23,9 +23,8 @@ coordinate lattice, so both resulting root-subgroup morphisms are closed immersi
   vector to the other and annihilates the remaining vector.
 * `TauCeti.Sl2Std.kostantRootSubgroupPoints_apply_baseChange_basis_one`: the resulting class-two
   root-subgroup action on the base-changed coordinate basis.
-* `TauCeti.Sl2Std.nilpotencyClass_repEnveloping_root` and
-  `TauCeti.Sl2Std.isNilpotent_repEnveloping_root`: both root operators are nilpotent, of class
-  exactly two.
+* `TauCeti.Sl2Std.nilpotencyClass_repEnveloping_root`: both root operators are nilpotent of
+  class exactly two.
 * `TauCeti.Sl2Std.exists_unit_rootStep_repEnveloping_one`: both root operators have a unit root
   step on the two-dimensional integral lattice.
 * `TauCeti.Sl2Std.isClosedImmersion_kostantRootSubgroup_one`: both associated root subgroups are
@@ -106,11 +105,6 @@ theorem nilpotencyClass_repEnveloping_root (i : Fin 2) :
       coe_integralLatticeAddSubgroupBasis_apply] at hz
     exact (basis ℚ 1).ne_zero i hz
 
-/-- Both root operators in the standard two-dimensional `sl₂` representation are nilpotent. -/
-theorem isNilpotent_repEnveloping_root (i : Fin 2) :
-    IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))) :=
-  ⟨2, (nilpotencyClass_eq_succ_iff.mp (nilpotencyClass_repEnveloping_root i)).1⟩
-
 private theorem integralDividedPower_one_apply_basis (i s : Fin 2) :
     integralDividedPower (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i)))
         (integralLattice 1).toAddSubgroup 1
@@ -127,7 +121,7 @@ class-two formula `v_s ↦ v_s + t v_i` when `s = i.rev`, and fixes `v_s` otherw
 theorem kostantRootSubgroupPoints_apply_baseChange_basis_one {A : Type*} [CommRing A]
     (i s : Fin 2) (f : WithConv (SymmetricAlgebra ℤ ℤ →ₐ[ℤ] A)) :
     (kostantRootSubgroupPoints e h ρ (integralLattice 1).toAddSubgroup
-        (kostantForm_apply_mem_integralLattice 1) i (isNilpotent_repEnveloping_root i) f).val
+        (kostantForm_apply_mem_integralLattice 1) i (isNilpotent_repEnveloping_root ℚ 1 i) f).val
         ((b).baseChange A s) =
       (b).baseChange A s + if s = i.rev then
         Multiplicative.toAdd (AdditiveGroup.gaPointsMulEquiv f) • (b).baseChange A i else 0 := by
@@ -157,10 +151,10 @@ theorem isClosedImmersion_kostantRootSubgroup_one (i : Fin 2) :
     IsClosedImmersion
       (kostantRootSubgroup e h ρ (integralLattice 1).toAddSubgroup
         (kostantForm_apply_mem_integralLattice 1) i
-        (isNilpotent_repEnveloping_root i) b).hom.hom.left := by
+        (isNilpotent_repEnveloping_root ℚ 1 i) b).hom.hom.left := by
   obtain ⟨r, s, c, hc, hstep, hsq⟩ := exists_unit_rootStep_repEnveloping_one i
   exact isClosedImmersion_kostantRootSubgroup e h ρ (integralLattice 1).toAddSubgroup
-    (kostantForm_apply_mem_integralLattice 1) i (isNilpotent_repEnveloping_root i) b
+    (kostantForm_apply_mem_integralLattice 1) i (isNilpotent_repEnveloping_root ℚ 1 i) b
     hc hstep hsq
 
 end TauCeti.Sl2Std

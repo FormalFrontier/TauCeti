@@ -281,29 +281,7 @@ level of the representations. -/
 theorem MixedIIDWith.mixedMarkovChainWith [Countable α] [MeasurableSingletonClass α]
     {μ : Measure Ω} {X : ℕ → Ω → α} {ν : Ω → ProbabilityMeasure α}
     (h : MixedIIDWith μ X ν) : MixedMarkovChainWith μ X ν fun ω _ => ν ω := by
-  -- The mixture identity already forces coordinatewise a.e. measurability, by the argument of
-  -- `MixedIIDWith.aemeasurable_of_const`: a one-coordinate block law is a mixture of probability
-  -- measures, hence carries the total mass of `μ`, whereas `Measure.map` along a
-  -- non-a.e.-measurable function is `0`.
-  have hX : ∀ i, AEMeasurable (X i) μ := by
-    rcases eq_or_ne μ 0 with rfl | hμ
-    · exact fun _ => aemeasurable_zero_measure
-    intro i
-    have hblock := h.blockLaw_eq_mixture (fun _ : Fin 1 => i) fun a b _ => Subsingleton.elim a b
-    rw [blockLaw_def] at hblock
-    have hmass : (μ.bind fun ω => (ProbabilityMeasure.pi fun _ : Fin 1 => ν ω).toMeasure)
-        Set.univ = μ Set.univ := by
-      rw [Measure.bind_apply MeasurableSet.univ
-        (TauCeti.MeasureTheory.aemeasurable_probabilityMeasure_pi_const_toMeasure ν
-          h.measurable_mixingRepresentative.aemeasurable)]
-      simp
-    have hne : (μ.map fun ω (_ : Fin 1) => X i ω) ≠ 0 := by
-      rw [hblock]
-      intro hzero
-      rw [hzero] at hmass
-      exact Measure.measure_univ_ne_zero.2 hμ hmass.symm
-    exact (measurable_pi_apply 0).comp_aemeasurable (AEMeasurable.of_map_ne_zero hne)
-  refine MixedMarkovChainWith.intro hX h.measurable_mixingRepresentative
+  refine MixedMarkovChainWith.intro h.aemeasurable h.measurable_mixingRepresentative
     (fun _ => h.measurable_mixingRepresentative) fun n w => ?_
   rw [prefixLaw_def, ← Set.univ_pi_singleton w,
     h.blockLaw_univ_pi (fun i : Fin (n + 1) => i.val) Fin.val_injective (fun i => {w i})

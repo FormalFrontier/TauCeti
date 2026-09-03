@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.NumberTheory.EllipticDivisibilitySequence
+import Mathlib.Tactic.LinearCombination
 
 /-!
 # The doubling relations of an elliptic sequence

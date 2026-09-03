@@ -7,6 +7,7 @@ module
 
 public import TauCeti.NumberTheory.EllipticDivisibilitySequence.Invariant.Basic
 public import TauCeti.NumberTheory.EllipticDivisibilitySequence.NormEDS
+import Mathlib.Tactic.LinearCombination
 
 /-!
 # The invariant of a normalised EDS

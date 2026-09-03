@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Quotient.Basic
+public import TauCeti.Algebra.HopfAlgebra.HopfIdeal.Augmentation
 
 /-!
 # Points of Hopf-ideal quotients
@@ -29,9 +30,11 @@ the point factors uniquely through the quotient algebra.
 * `CommHopfAlgCat.mem_range_quotientPointsHom_iff`: quotient points are exactly ambient
   points killing `I`.
 * `CommHopfAlgCat.quotientPointsSubgroup`: the subgroup of ambient points cut out by `I`.
+* `CommHopfAlgCat.eq_one_of_mem_quotientPointsSubgroup_augmentation`: the subgroup cut out by
+  the augmentation ideal consists only of the identity point.
 * `CommHopfAlgCat.instIsMulCommutativeQuotientPointsSubgroup`: when the quotient Hopf algebra is
   cocommutative, the cut-out point subgroup is commutative.
-* `CommHopfAlgCat.mapDomainMulEquiv_mem_quotientPointsSubgroup_comap_iff`: transport of
+* `CommHopfAlgCat.mapDomainMulEquiv_mem_quotientPointsSubgroup_comapOfSurjective_iff`: transport of
   quotient-subgroup membership along a bialgebra equivalence.
 
 ## References
@@ -164,23 +167,49 @@ lemma mem_quotientPointsSubgroup_iff (H : _root_.CommHopfAlgCat.{v} R)
     g ∈ quotientPointsSubgroup H I A ↔ ∀ h : H, h ∈ I → g.ofConv h = 0 :=
   mem_range_quotientPointsHom_iff H I A g
 
+/-- A point killing the augmentation ideal is the identity point: the trivial subgroup has only
+the identity over every value algebra. -/
+theorem eq_one_of_mem_quotientPointsSubgroup_augmentation (H : _root_.CommHopfAlgCat.{v} R)
+    (A : CommAlgCat.{w} R) {g : HopfAlgebra.points (R := R) (H := H) A}
+    (hg : g ∈ quotientPointsSubgroup H (HopfIdeal.augmentation R ↥H) A) : g = 1 := by
+  refine WithConv.ofConv_injective (AlgHom.ext fun x ↦ ?_)
+  have hx : x - algebraMap R ↥H (Coalgebra.counit (R := R) x) ∈
+      HopfIdeal.augmentation R ↥H := by
+    rw [HopfIdeal.mem_augmentation]
+    simp
+  have hzero := (mem_quotientPointsSubgroup_iff H _ A g).mp hg _ hx
+  rw [map_sub, sub_eq_zero] at hzero
+  rw [hzero, AlgHom.commutes]
+  exact (AlgHom.convOne_apply x).symm
+
+/-- The subgroup of points cut out by the augmentation ideal consists exactly of the identity
+point. -/
+@[simp]
+theorem mem_quotientPointsSubgroup_augmentation_iff (H : _root_.CommHopfAlgCat.{v} R)
+    (A : CommAlgCat.{w} R) (g : HopfAlgebra.points (R := R) (H := H) A) :
+    g ∈ quotientPointsSubgroup H (HopfIdeal.augmentation R H) A ↔ g = 1 := by
+  constructor
+  · exact eq_one_of_mem_quotientPointsSubgroup_augmentation H A
+  · rintro rfl
+    exact Subgroup.one_mem _
+
 /-- Precomposition by a bijective bialgebra morphism identifies the points cut out by a Hopf
 ideal with the points cut out by its pullback. -/
-theorem mapDomainMulEquiv_mem_quotientPointsSubgroup_comap_iff
+theorem mapDomainMulEquiv_mem_quotientPointsSubgroup_comapOfSurjective_iff
     {H K : Type v} [CommRing H] [CommRing K] [HopfAlgebra R H] [HopfAlgebra R K]
     (f : H →ₐc[R] K) (hinj : Function.Injective f) (hsurj : Function.Surjective f)
     (I : HopfIdeal R K) (A : CommAlgCat.{w} R)
     (g : HopfAlgebra.points (R := R) (H := K) A) :
     AlgHom.mapDomainMulEquiv (A := A) (BialgEquiv.ofBijective f ⟨hinj, hsurj⟩) g ∈
-        quotientPointsSubgroup (_root_.CommHopfAlgCat.of R H) (I.comap f hsurj) A ↔
+        quotientPointsSubgroup (_root_.CommHopfAlgCat.of R H) (I.comapOfSurjective f hsurj) A ↔
       g ∈ quotientPointsSubgroup (_root_.CommHopfAlgCat.of R K) I A := by
   rw [mem_quotientPointsSubgroup_iff, mem_quotientPointsSubgroup_iff]
   constructor
   · intro hg y hy
     obtain ⟨x, rfl⟩ := hsurj y
-    exact hg x (HopfIdeal.mem_comap.mpr hy)
+    exact hg x (HopfIdeal.mem_comapOfSurjective.mpr hy)
   · intro hg x hx
-    exact hg (f x) (HopfIdeal.mem_comap.mp hx)
+    exact hg (f x) (HopfIdeal.mem_comapOfSurjective.mp hx)
 
 /-- The included quotient point belongs to the subgroup cut out by the Hopf ideal. -/
 lemma quotientPointsHom_mem_quotientPointsSubgroup (H : _root_.CommHopfAlgCat.{v} R)

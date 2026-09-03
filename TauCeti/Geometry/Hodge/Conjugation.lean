@@ -7,6 +7,8 @@ module
 
 public import Mathlib.Algebra.Module.Submodule.Map
 public import Mathlib.Data.Complex.Basic
+public import Mathlib.LinearAlgebra.Dual.Lemmas
+public import Mathlib.LinearAlgebra.Quotient.Basic
 public import Mathlib.LinearAlgebra.TensorProduct.Map
 public import Mathlib.RingTheory.IsTensorProduct
 
@@ -23,10 +25,23 @@ complexification models.
 ## Main declarations
 
 * `TauCeti.Hodge.Conjugation`: a conjugate-linear involution of a complex vector space.
+* `TauCeti.Hodge.Conjugation.tensorProduct`: the tensor product of two conjugations.
+* `TauCeti.Hodge.Conjugation.tensorProduct_toEquiv_tmul`: its action on pure tensors.
+* `TauCeti.Hodge.Conjugation.conjFiltration`: the conjugate of a complex filtration.
 * `TauCeti.Hodge.concreteLatticeConj`: conjugation on the tensor model `ℂ ⊗[ℤ] V`.
 * `TauCeti.Hodge.latticeConj`: conjugation on an abstract complex base-change model.
 * `TauCeti.Hodge.latticeConj_unique`: uniqueness among conjugate-linear maps fixing the integral
   module.
+* `TauCeti.Hodge.Conjugation.restrict`: the conjugation induced on a stable complex subspace.
+* `TauCeti.Hodge.Conjugation.quotient`: the conjugation induced on the quotient by a stable
+  complex subspace.
+* `TauCeti.Hodge.Conjugation.map_comap_eq_comap_map`: an equivalence intertwining two conjugations
+  exchanges conjugation with taking preimages of subspaces.
+* `TauCeti.Hodge.Conjugation.dual`: the twisted transpose of a conjugation, again a conjugation,
+  on the complex dual space, with its pointwise description
+  `TauCeti.Hodge.Conjugation.dual_toEquiv_apply`.
+* `TauCeti.Hodge.Conjugation.map_dualAnnihilator`: a conjugation carries dual annihilators to
+  dual annihilators of conjugated subspaces.
 * `TauCeti.Hodge.latticeConjugation`: the abstract map bundled as a `Conjugation`.
 * `TauCeti.Hodge.integralMapToComplex`: complexification of an integral linear map between abstract
   complexification models.
@@ -69,6 +84,51 @@ theorem toEquiv_symm (ω : Conjugation W) : ω.toEquiv.symm = ω.toEquiv := by
 theorem apply_apply (ω : Conjugation W) (x : W) : ω.toEquiv (ω.toEquiv x) = x :=
   ω.involutive x
 
+section TensorProduct
+
+variable {W₁ : Type u} {W₂ : Type v} [AddCommGroup W₁] [Module ℂ W₁]
+  [AddCommGroup W₂] [Module ℂ W₂]
+
+private def tensorMap (ω₁ : Conjugation W₁) (ω₂ : Conjugation W₂) :
+    W₁ ⊗[ℂ] W₂ →ₛₗ[starRingEnd ℂ] W₁ ⊗[ℂ] W₂ :=
+  TensorProduct.map ω₁.toEquiv ω₂.toEquiv
+
+private theorem tensorMap_involutive (ω₁ : Conjugation W₁) (ω₂ : Conjugation W₂) :
+    Function.Involutive (tensorMap ω₁ ω₂) := by
+  intro x
+  simp only [tensorMap, TensorProduct.map_map]
+  rw [show ω₁.toEquiv.toLinearMap ∘ₛₗ ω₁.toEquiv.toLinearMap = LinearMap.id by
+    ext y
+    simp [Conjugation.apply_apply]]
+  rw [show ω₂.toEquiv.toLinearMap ∘ₛₗ ω₂.toEquiv.toLinearMap = LinearMap.id by
+    ext y
+    simp [Conjugation.apply_apply], TensorProduct.map_id]
+  rfl
+
+/-- The tensor product of two conjugate-linear involutions. -/
+def tensorProduct (ω₁ : Conjugation W₁) (ω₂ : Conjugation W₂) :
+    Conjugation (W₁ ⊗[ℂ] W₂) where
+  toEquiv :=
+    { toFun := tensorMap ω₁ ω₂
+      invFun := tensorMap ω₁ ω₂
+      left_inv := tensorMap_involutive ω₁ ω₂
+      right_inv := tensorMap_involutive ω₁ ω₂
+      map_add' := by simp [tensorMap]
+      map_smul' := by simp [tensorMap] }
+  involutive := tensorMap_involutive ω₁ ω₂
+
+/-- Tensor-product conjugation acts componentwise on pure tensors. -/
+@[simp]
+theorem tensorProduct_toEquiv_tmul (ω₁ : Conjugation W₁) (ω₂ : Conjugation W₂)
+    (x : W₁) (y : W₂) :
+    (ω₁.tensorProduct ω₂).toEquiv (x ⊗ₜ[ℂ] y) = ω₁.toEquiv x ⊗ₜ[ℂ] ω₂.toEquiv y :=
+  by
+    -- Expose the private map so Mathlib's pure-tensor computation lemma can fire.
+    change tensorMap ω₁ ω₂ (x ⊗ₜ[ℂ] y) = _
+    simp [tensorMap]
+
+end TensorProduct
+
 /-- Mapping a complex subspace twice by a conjugation returns the original subspace. -/
 @[simp]
 theorem map_map_eq_self (ω : Conjugation W) (U : Submodule ℂ W) :
@@ -76,6 +136,203 @@ theorem map_map_eq_self (ω : Conjugation W) (U : Submodule ℂ W) :
   have h : (U.map ω.toEquiv.toLinearMap).map ω.toEquiv.symm.toLinearMap = U :=
     (Submodule.map_symm_eq_iff ω.toEquiv).2 rfl
   simpa only [ω.toEquiv_symm] using h
+
+/-- The conjugate filtration obtained by mapping each step through a conjugation. -/
+noncomputable def conjFiltration (ω : Conjugation W) (F : ℤ → Submodule ℂ W) (p : ℤ) :
+    Submodule ℂ W :=
+  (F p).map ω.toEquiv.toLinearMap
+
+/-- A conjugate filtration step is the image of the original step under conjugation. -/
+theorem conjFiltration_def (ω : Conjugation W) (F : ℤ → Submodule ℂ W) (p : ℤ) :
+    ω.conjFiltration F p = (F p).map ω.toEquiv.toLinearMap :=
+  (rfl)
+
+/-- Conjugating an antitone filtration produces an antitone filtration. -/
+theorem conjFiltration_antitone (ω : Conjugation W) {F : ℤ → Submodule ℂ W}
+    (hF : Antitone F) : Antitone (ω.conjFiltration F) :=
+  fun _ _ hpq ↦ Submodule.map_mono (hF hpq)
+
+/-- Membership in a conjugate filtration step is detected by applying the conjugation. -/
+@[simp]
+theorem mem_conjFiltration_iff (ω : Conjugation W) (F : ℤ → Submodule ℂ W) (p : ℤ) (x : W) :
+    x ∈ ω.conjFiltration F p ↔ ω.toEquiv x ∈ F p := by
+  simp [conjFiltration, ω.toEquiv_symm]
+
+/-- Applying conjugation to a conjugate filtration step recovers the original step. -/
+@[simp]
+theorem conjFiltration_conjFiltration (ω : Conjugation W) (F : ℤ → Submodule ℂ W) (p : ℤ) :
+    (ω.conjFiltration F p).map ω.toEquiv.toLinearMap = F p :=
+  ω.map_map_eq_self (F p)
+
+variable {W' : Type v} [AddCommGroup W'] [Module ℂ W']
+
+/-- A linear map commuting with two conjugations carries the conjugate of a preserved filtration
+step into the corresponding conjugate filtration step. -/
+theorem map_conjFiltration_le (ω : Conjugation W) (ω' : Conjugation W')
+    (F : ℤ → Submodule ℂ W) (F' : ℤ → Submodule ℂ W') (f : W →ₗ[ℂ] W')
+    (hcomm : ∀ x, f (ω.toEquiv x) = ω'.toEquiv (f x)) {p : ℤ}
+    (hF : (F p).map f ≤ F' p) :
+    (ω.conjFiltration F p).map f ≤ ω'.conjFiltration F' p := by
+  rintro _ ⟨_, ⟨x, hx, rfl⟩, rfl⟩
+  exact ⟨f x, hF ⟨x, hx, rfl⟩, (hcomm x).symm⟩
+
+/-- A conjugation restricted to a stable complex subspace is involutive. -/
+private theorem restrict_involutive (ω : Conjugation W) {U : Submodule ℂ W}
+    (hU : ∀ x ∈ U, ω.toEquiv x ∈ U) :
+    Function.Involutive (ω.toEquiv.toLinearMap.restrict hU) := fun x ↦ by
+  ext
+  simp
+
+/-- The conjugation induced on a complex subspace stable under a given conjugation. -/
+noncomputable def restrict (ω : Conjugation W) {U : Submodule ℂ W}
+    (hU : ∀ x ∈ U, ω.toEquiv x ∈ U) : Conjugation U where
+  toEquiv := LinearEquiv.ofInvolutive _ (ω.restrict_involutive hU)
+  involutive := ω.restrict_involutive hU
+
+/-- A restricted conjugation acts as the ambient one. -/
+@[simp]
+theorem restrict_toEquiv_apply (ω : Conjugation W) {U : Submodule ℂ W}
+    (hU : ∀ x ∈ U, ω.toEquiv x ∈ U) (x : U) :
+    ((ω.restrict hU).toEquiv x : W) = ω.toEquiv x :=
+  (rfl)
+
+/-- Conjugating inside a stable subspace is conjugating in the ambient space: the image of an
+intersection with the subspace under the restricted conjugation is the intersection with the
+conjugate subspace. -/
+@[simp]
+theorem map_restrict_comap_subtype (ω : Conjugation W) {U : Submodule ℂ W}
+    (hU : ∀ x ∈ U, ω.toEquiv x ∈ U) (A : Submodule ℂ W) :
+    (A.comap U.subtype).map (ω.restrict hU).toEquiv.toLinearMap =
+      (A.map ω.toEquiv.toLinearMap).comap U.subtype := by
+  ext x
+  simp
+
+/-- A linear equivalence intertwining two conjugations exchanges conjugating a preimage with
+taking the preimage of the conjugate. -/
+theorem map_comap_eq_comap_map {W' : Type v} [AddCommGroup W'] [Module ℂ W']
+    (ω : Conjugation W) (ω' : Conjugation W') (e : W ≃ₗ[ℂ] W')
+    (he : ∀ x, e (ω.toEquiv x) = ω'.toEquiv (e x)) (A : Submodule ℂ W') :
+    (A.comap e.toLinearMap).map ω.toEquiv.toLinearMap =
+      (A.map ω'.toEquiv.toLinearMap).comap e.toLinearMap := by
+  ext y
+  simp only [Submodule.mem_map, Submodule.mem_comap, LinearEquiv.coe_coe]
+  constructor
+  · rintro ⟨x, hx, rfl⟩
+    exact ⟨e x, hx, (he x).symm⟩
+  · rintro ⟨z, hz, hzy⟩
+    refine ⟨ω.toEquiv y, ?_, ω.apply_apply y⟩
+    rw [he y, ← hzy, ω'.apply_apply]
+    exact hz
+
+/-- The conjugation induced on a quotient by a stable complex subspace is involutive. -/
+private theorem quotient_involutive (ω : Conjugation W) {U : Submodule ℂ W}
+    (hU : ∀ x ∈ U, ω.toEquiv x ∈ U) :
+    Function.Involutive (U.mapQ U ω.toEquiv.toLinearMap fun x hx ↦ hU x hx) := fun x ↦
+  Submodule.Quotient.induction_on _ x fun y ↦
+    congrArg Submodule.Quotient.mk (ω.apply_apply y)
+
+/-- The conjugation induced on the quotient of a complex vector space by a stable subspace. -/
+noncomputable def quotient (ω : Conjugation W) {U : Submodule ℂ W}
+    (hU : ∀ x ∈ U, ω.toEquiv x ∈ U) : Conjugation (W ⧸ U) where
+  toEquiv := LinearEquiv.ofInvolutive _ (ω.quotient_involutive hU)
+  involutive := ω.quotient_involutive hU
+
+/-- The induced conjugation on a quotient acts on classes through the ambient conjugation. -/
+@[simp]
+theorem quotient_toEquiv_mk (ω : Conjugation W) {U : Submodule ℂ W}
+    (hU : ∀ x ∈ U, ω.toEquiv x ∈ U) (x : W) :
+    (ω.quotient hU).toEquiv (Submodule.Quotient.mk x) =
+      Submodule.Quotient.mk (ω.toEquiv x) :=
+  (rfl)
+
+/-- The twisted transpose of a conjugation: a functional `φ` is sent to the functional
+conjugating the values of `φ` along `ω`. -/
+private def dualMap (ω : Conjugation W) :
+    Module.Dual ℂ W →ₛₗ[starRingEnd ℂ] Module.Dual ℂ W :=
+  { toFun := fun φ =>
+      { toFun := fun v => star (φ (ω.toEquiv v))
+        map_add' := by
+          intro x y
+          simp [map_add, star_add]
+        map_smul' := by
+          intro c v
+          have h1 : ω.toEquiv (c • v) = (starRingEnd ℂ) c • ω.toEquiv v :=
+            LinearMap.map_smulₛₗ ω.toEquiv.toLinearMap c v
+          have h2 : φ ((starRingEnd ℂ) c • ω.toEquiv v) =
+              (starRingEnd ℂ) c * φ (ω.toEquiv v) := by simp
+          rw [h1, h2]
+          simp [star_mul, mul_comm] }
+    map_add' := by
+      intro φ ψ
+      ext v
+      simp
+    map_smul' := by
+      intro c φ
+      ext v
+      simp }
+
+/-- Pointwise description of the twisted transpose. -/
+private theorem dualMap_apply (ω : Conjugation W) (φ : Module.Dual ℂ W) (v : W) :
+    dualMap ω φ v = star (φ (ω.toEquiv v)) :=
+  (rfl)
+
+/-- The twisted transpose is an involution. -/
+private theorem dualMap_involutive (ω : Conjugation W) :
+    Function.Involutive (dualMap ω) := by
+  intro φ
+  ext v
+  simp [dualMap_apply, ω.apply_apply]
+
+/-- The twisted transpose of a conjugation `ω`: a functional `φ` acts by conjugating the values
+of `φ` along `ω`. It is again an involution, so it packages as a conjugation on the dual space;
+see `TauCeti.Hodge.Conjugation.dual_toEquiv_apply` for its pointwise description. -/
+def dual (ω : Conjugation W) : Conjugation (Module.Dual ℂ W) where
+  toEquiv :=
+    { toFun := dualMap ω
+      invFun := dualMap ω
+      left_inv := dualMap_involutive ω
+      right_inv := dualMap_involutive ω
+      map_add' := by
+        intro φ ψ
+        ext v
+        simp [map_add]
+      map_smul' := by
+        intro c φ
+        ext v
+        simp [dualMap_apply] }
+  involutive := dualMap_involutive ω
+
+/-- Pointwise description of the dual conjugation. -/
+@[simp]
+theorem dual_toEquiv_apply (ω : Conjugation W) (φ : Module.Dual ℂ W) (v : W) :
+    ω.dual.toEquiv φ v = star (φ (ω.toEquiv v)) :=
+  (rfl)
+
+/-- A conjugation carries dual annihilators to dual annihilators of conjugated subspaces. -/
+@[simp]
+theorem map_dualAnnihilator (ω : Conjugation W) (U : Submodule ℂ W) :
+    U.dualAnnihilator.map ω.dual.toEquiv.toLinearMap =
+      (U.map ω.toEquiv.toLinearMap).dualAnnihilator := by
+  ext φ
+  rw [Submodule.mem_dualAnnihilator, Submodule.mem_map]
+  constructor
+  · rintro ⟨ψ, hψ, rfl⟩ u hu
+    obtain ⟨v, hv, rfl⟩ := Submodule.mem_map.1 hu
+    have hψ' : ∀ w ∈ U, ψ w = 0 := (Submodule.mem_dualAnnihilator ψ).mp hψ
+    -- `LinearEquiv.coe_toLinearMap` exposes the underlying functions (one rewrite per
+    -- occurrence), so that the pointwise description `dual_toEquiv_apply` applies to the goal.
+    rw [LinearEquiv.coe_toLinearMap, LinearEquiv.coe_toLinearMap, dual_toEquiv_apply,
+      ω.apply_apply, hψ' v hv]
+    exact star_zero _
+  · intro h
+    refine ⟨ω.dual.toEquiv φ,
+      (Submodule.mem_dualAnnihilator (ω.dual.toEquiv φ)).mpr fun u hu => ?_, ?_⟩
+    · have h0 : φ (ω.toEquiv u) = 0 :=
+        h (ω.toEquiv u) (Submodule.mem_map.2 ⟨u, hu, rfl⟩)
+      rw [dual_toEquiv_apply, h0]
+      exact star_zero _
+    · ext v
+      exact congrArg (fun f => f v) (ω.dual.apply_apply φ)
 
 end Conjugation
 
@@ -228,6 +485,14 @@ theorem latticeConjugation_toEquiv_apply (hℂ : IsBaseChange ℂ ιℂ) (x : V�
     (latticeConjugation hℂ).toEquiv x = latticeConj hℂ x :=
   by simp [latticeConjugation]
 
+/-- The linear map underlying bundled lattice conjugation is `latticeConj`, bridging the bundled
+spelling used by `HodgeStructureOn` and the bare spelling used by the base-change API. This is not
+a `simp` lemma: rewriting with it discards the equivalence, and with it `simp`'s ability to see
+that conjugating a subspace preserves `⊤`. -/
+theorem latticeConjugation_toLinearMap (hℂ : IsBaseChange ℂ ιℂ) :
+    (latticeConjugation hℂ).toEquiv.toLinearMap = latticeConj hℂ :=
+  (rfl)
+
 /-- Bundled lattice conjugation fixes the image of the integral module. -/
 theorem latticeConjugation_toEquiv_ι (hℂ : IsBaseChange ℂ ιℂ) (v : V) :
     (latticeConjugation hℂ).toEquiv (ιℂ v) = ιℂ v := by
@@ -259,6 +524,19 @@ theorem integralMapToComplex_apply_ι (h₁ : IsBaseChange ℂ ι₁) (ι₂ : V
     integralMapToComplex h₁ ι₂ f (ι₁ x) = ι₂ (f x) :=
   h₁.lift_eq (ι₂ ∘ₗ f) x
 
+/-- The additive homomorphism `(V₁ →ₗ[ℤ] V₂) →+ (W₁ →ₗ[ℂ] W₂)` sending an integral linear map to
+its complexification. -/
+private noncomputable def integralMapToComplexAddMonoidHom (h₁ : IsBaseChange ℂ ι₁)
+    (ι₂ : V₂ →ₗ[ℤ] W₂) : (V₁ →ₗ[ℤ] V₂) →+ (W₁ →ₗ[ℂ] W₂) :=
+  AddMonoidHom.mk' (integralMapToComplex h₁ ι₂) fun _ _ ↦ h₁.algHom_ext _ _ fun x ↦ by simp
+
+/-- The bundled complexification homomorphism acts as `integralMapToComplex`. -/
+@[simp]
+private theorem coe_integralMapToComplexAddMonoidHom (h₁ : IsBaseChange ℂ ι₁)
+    (ι₂ : V₂ →ₗ[ℤ] W₂) :
+    ⇑(integralMapToComplexAddMonoidHom h₁ ι₂) = integralMapToComplex h₁ ι₂ :=
+  rfl
+
 /-- Complexification sends the identity integral map to the identity complex map. -/
 @[simp]
 theorem integralMapToComplex_id (h₁ : IsBaseChange ℂ ι₁) :
@@ -268,45 +546,45 @@ theorem integralMapToComplex_id (h₁ : IsBaseChange ℂ ι₁) :
 /-- Complexification sends the zero integral map to the zero complex map. -/
 @[simp]
 theorem integralMapToComplex_zero (h₁ : IsBaseChange ℂ ι₁) (ι₂ : V₂ →ₗ[ℤ] W₂) :
-    integralMapToComplex h₁ ι₂ (0 : V₁ →ₗ[ℤ] V₂) = 0 :=
-  h₁.algHom_ext _ _ fun x ↦ by simp
+    integralMapToComplex h₁ ι₂ (0 : V₁ →ₗ[ℤ] V₂) = 0 := by
+  simpa using map_zero (integralMapToComplexAddMonoidHom h₁ ι₂)
 
 /-- Complexification preserves addition of integral linear maps. -/
 @[simp]
 theorem integralMapToComplex_add (h₁ : IsBaseChange ℂ ι₁) (ι₂ : V₂ →ₗ[ℤ] W₂)
     (f g : V₁ →ₗ[ℤ] V₂) :
     integralMapToComplex h₁ ι₂ (f + g) =
-      integralMapToComplex h₁ ι₂ f + integralMapToComplex h₁ ι₂ g :=
-  h₁.algHom_ext _ _ fun x ↦ by simp
+      integralMapToComplex h₁ ι₂ f + integralMapToComplex h₁ ι₂ g := by
+  simpa using map_add (integralMapToComplexAddMonoidHom h₁ ι₂) f g
 
 /-- Complexification preserves negation of integral linear maps. -/
 @[simp]
 theorem integralMapToComplex_neg (h₁ : IsBaseChange ℂ ι₁) (ι₂ : V₂ →ₗ[ℤ] W₂)
     (f : V₁ →ₗ[ℤ] V₂) :
-    integralMapToComplex h₁ ι₂ (-f) = -integralMapToComplex h₁ ι₂ f :=
-  h₁.algHom_ext _ _ fun x ↦ by simp
+    integralMapToComplex h₁ ι₂ (-f) = -integralMapToComplex h₁ ι₂ f := by
+  simpa using map_neg (integralMapToComplexAddMonoidHom h₁ ι₂) f
 
 /-- Complexification preserves subtraction of integral linear maps. -/
 @[simp]
 theorem integralMapToComplex_sub (h₁ : IsBaseChange ℂ ι₁) (ι₂ : V₂ →ₗ[ℤ] W₂)
     (f g : V₁ →ₗ[ℤ] V₂) :
     integralMapToComplex h₁ ι₂ (f - g) =
-      integralMapToComplex h₁ ι₂ f - integralMapToComplex h₁ ι₂ g :=
-  h₁.algHom_ext _ _ fun x ↦ by simp
+      integralMapToComplex h₁ ι₂ f - integralMapToComplex h₁ ι₂ g := by
+  simpa using map_sub (integralMapToComplexAddMonoidHom h₁ ι₂) f g
 
 /-- Complexification preserves natural-number multiples of integral linear maps. -/
 @[simp]
 theorem integralMapToComplex_nsmul (h₁ : IsBaseChange ℂ ι₁) (ι₂ : V₂ →ₗ[ℤ] W₂) (k : ℕ)
     (f : V₁ →ₗ[ℤ] V₂) :
-    integralMapToComplex h₁ ι₂ (k • f) = k • integralMapToComplex h₁ ι₂ f :=
-  h₁.algHom_ext _ _ fun x ↦ by simp
+    integralMapToComplex h₁ ι₂ (k • f) = k • integralMapToComplex h₁ ι₂ f := by
+  simpa using map_nsmul (integralMapToComplexAddMonoidHom h₁ ι₂) k f
 
 /-- Complexification preserves integer multiples of integral linear maps. -/
 @[simp]
 theorem integralMapToComplex_zsmul (h₁ : IsBaseChange ℂ ι₁) (ι₂ : V₂ →ₗ[ℤ] W₂) (k : ℤ)
     (f : V₁ →ₗ[ℤ] V₂) :
-    integralMapToComplex h₁ ι₂ (k • f) = k • integralMapToComplex h₁ ι₂ f :=
-  h₁.algHom_ext _ _ fun x ↦ by simp
+    integralMapToComplex h₁ ι₂ (k • f) = k • integralMapToComplex h₁ ι₂ f := by
+  simpa using map_zsmul (integralMapToComplexAddMonoidHom h₁ ι₂) k f
 
 /-- Complexification preserves composition of integral linear maps. -/
 theorem integralMapToComplex_comp (h₁ : IsBaseChange ℂ ι₁) (h₂ : IsBaseChange ℂ ι₂)

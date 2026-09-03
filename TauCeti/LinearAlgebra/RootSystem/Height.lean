@@ -15,7 +15,14 @@ public section
 The height of a root relative to a base of a root pairing is the sum of the coefficients of its
 expansion in the simple roots. This file records that height respects every integral relation
 among the roots: a vanishing integral combination of roots has a vanishing combination of heights,
-so two integral combinations with the same value have the same combination of heights.
+so two integral combinations with the same value have the same combination of heights. When the
+roots span the weight space, it also extends height to the linear functional which sums the
+coordinates in the simple-root basis.
+
+## Main definitions
+
+* `TauCeti.heightLinearMap` is the linear extension of root height to the weight
+  space of a root system.
 
 ## Main results
 
@@ -37,7 +44,45 @@ universe u v w x
 
 variable {ι : Type u} {R : Type v} {M : Type w} {N : Type x}
   [CommRing R] [AddCommGroup M] [Module R M] [AddCommGroup N] [Module R N]
-  (P : RootPairing ι R M N) [CharZero R]
+  (P : RootPairing ι R M N)
+
+section HeightLinearMap
+
+variable [P.IsRootSystem]
+
+/-- **The height functional on the weight space of a root system.** A base of a root system is a
+basis of its weight space; summing the coordinates in that basis extends the integer-valued height
+of roots to an `R`-linear map on the whole weight space. -/
+noncomputable def heightLinearMap (b : P.Base) : M →ₗ[R] R :=
+  b.toWeightBasis.sumCoords
+
+/-- The height functional is the coordinate sum in the simple-root basis. -/
+theorem heightLinearMap_apply (b : P.Base) (m : M) :
+    heightLinearMap P b m = (b.toWeightBasis.repr m).sum fun _ ↦ id := by
+  rw [heightLinearMap, Module.Basis.coe_sumCoords]
+
+/-- The height functional sends every simple root to one. -/
+@[simp]
+theorem heightLinearMap_simpleRoot (b : P.Base) (i : b.support) :
+    heightLinearMap P b (P.root i) = 1 := by
+  simpa only [heightLinearMap, b.toWeightBasis_apply] using
+    b.toWeightBasis.sumCoords_self_apply i
+
+/-- On a root, the height functional agrees with the integer-valued height of the root. -/
+@[simp]
+theorem heightLinearMap_root [CharZero R] (b : P.Base) (i : ι) :
+    heightLinearMap P b (P.root i) = (b.height i : R) := by
+  classical
+  obtain ⟨f, -, -, hf⟩ := b.exists_root_eq_sum_int i
+  rw [hf, map_sum, b.height_eq_sum hf, Int.cast_sum]
+  apply Finset.sum_congr rfl
+  intro j hj
+  rw [map_zsmul, heightLinearMap_simpleRoot P b ⟨j, hj⟩]
+  simp only [zsmul_one]
+
+end HeightLinearMap
+
+variable [CharZero R]
 
 /-- If an integral combination of roots vanishes, the same combination of their heights
 vanishes. -/

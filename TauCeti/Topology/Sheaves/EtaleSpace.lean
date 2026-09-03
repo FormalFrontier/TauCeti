@@ -44,7 +44,14 @@ noncomputable def germSection (F : X.Presheaf C) (U : Opens X)
     U → F.EtaleSpace :=
   fun x ↦ ⟨x, F.germ U x x.2 s⟩
 
+/-- The germ section written out: over `x`, it is the pair of `x` and the germ of `s` at `x`.
+This is the characteristic property of `TauCeti.TopCat.Presheaf.EtaleSpace.germSection`, and the
+form in which a concrete germ map is identified with it. -/
 @[simp]
+theorem germSection_apply (U : Opens X) (s : ToType (F.obj (Opposite.op U))) (x : U) :
+    germSection F U s x = ⟨x, F.germ U x x.2 s⟩ :=
+  (rfl)
+
 theorem base_germSection (U : Opens X) (s : ToType (F.obj (Opposite.op U))) (x : U) :
     (germSection F U s x).base = x :=
   (rfl)

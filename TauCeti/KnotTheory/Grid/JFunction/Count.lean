@@ -18,7 +18,7 @@ The ordered southwest count `GridPoint.I s t` and the symmetrized `J`-function a
 `JFunction.lean` as cardinalities of a filtered product of point sets. This file records their
 fiberwise reading: `I s t` is the sum over the left points of the number of right points strictly
 northeast of them, and dually over the right points. Specializing the left (or right) argument to
-a singleton turns each `J`-pairing against a single grid square into a plain count of the strictly
+a singleton turns each `J`-pairing against a single grid point into a plain count of the strictly
 comparable points of the other set.
 
 The fiberwise statements are proved first for the relation-parametric `GridPoint.ICount`, so the
@@ -30,16 +30,18 @@ the same counting API. That companion module records the resulting `JCenter` sin
 * `TauCeti.GridPoint.ICount_eq_sum_card_filter`,
   `TauCeti.GridPoint.ICount_eq_sum_card_filter_right`: an arbitrary ordered relation count as a
   sum of fiber counts.
+* `TauCeti.GridPoint.JNumMixed_eq_sum_singleton_left`: an arbitrary mixed numerator as a sum of
+  its singleton-left contributions.
 * `TauCeti.GridPoint.I_eq_sum_card_filter`, `TauCeti.GridPoint.I_eq_sum_card_filter_right`: the
   ordered southwest count as a sum of fiber counts over the left (resp. right) point set.
 * `TauCeti.GridPoint.I_singleton_left`, `TauCeti.GridPoint.I_singleton_right`: the ordered
-  southwest count against a single grid square, as the number of strictly northeast (resp.
+  southwest count against a single grid point, as the number of strictly northeast (resp.
   southwest) points of the other set.
 * `TauCeti.GridPoint.JNum_singleton_left`,
   `TauCeti.GridPoint.JNum_singleton_left_eq_card`: the symmetrized numerator against a single
-  square, as the two directed counts and as the single count of strictly comparable points.
+  point, as the two directed counts and as the single count of strictly comparable points.
 * `TauCeti.GridPoint.J_singleton_left`, `TauCeti.GridPoint.two_mul_J_singleton_left`: the
-  `J`-pairing against a single square is half the number of strictly comparable points, so twice
+  `J`-pairing against a single point is half the number of strictly comparable points, so twice
   it is that integer count.
 
 ## References
@@ -102,27 +104,38 @@ theorem I_eq_sum_card_filter_right (s t : Finset (Fin n × Fin n)) :
     I s t = ∑ q ∈ t, (s.filter fun p => IsSouthWest p q).card :=
   ICount_eq_sum_card_filter_right _ s t
 
-/-- The ordered southwest count of a single grid square against a point set `t` is the number of
+/-- The ordered southwest count of a single grid point against a point set `t` is the number of
 points of `t` strictly northeast of it. -/
 theorem I_singleton_left (p : Fin n × Fin n) (t : Finset (Fin n × Fin n)) :
     I {p} t = (t.filter fun q => IsSouthWest p q).card :=
   ICount_singleton_left _ p t
 
-/-- The ordered southwest count of a point set `s` against a single grid square is the number of
+/-- The ordered southwest count of a point set `s` against a single grid point is the number of
 points of `s` strictly southwest of it. -/
 theorem I_singleton_right (s : Finset (Fin n × Fin n)) (p : Fin n × Fin n) :
     I s {p} = (s.filter fun q => IsSouthWest q p).card :=
   ICount_singleton_right _ s p
 
-/-- The symmetrized numerator of the `J`-function against a single grid square splits into the two
-directed counts: the points of `t` strictly northeast of the square and the points strictly
+/-- A mixed numerator is the sum, over the left point set, of its singleton-left
+contributions. -/
+theorem JNumMixed_eq_sum_singleton_left
+    (r : (Fin n × Fin n) → (Fin n × Fin n) → Prop) [DecidableRel r]
+    (s t : Finset (Fin n × Fin n)) :
+    JNumMixed r s t = ∑ p ∈ s, JNumMixed r {p} t := by
+  rw [JNumMixed_def, ICount_eq_sum_card_filter, I_eq_sum_card_filter_right,
+    ← Finset.sum_add_distrib]
+  exact Finset.sum_congr rfl fun p _ => by
+    rw [JNumMixed_def, ICount_singleton_left, I_singleton_right]
+
+/-- The symmetrized numerator of the `J`-function against a single grid point splits into the two
+directed counts: the points of `t` strictly northeast of the point and the points strictly
 southwest of it. -/
 theorem JNum_singleton_left (p : Fin n × Fin n) (t : Finset (Fin n × Fin n)) :
     JNum {p} t =
       (t.filter fun q => IsSouthWest p q).card + (t.filter fun q => IsSouthWest q p).card := by
   rw [JNum_def, I_singleton_left, I_singleton_right]
 
-/-- No point of a set is both strictly northeast and strictly southwest of a fixed grid square, so
+/-- No point of a set is both strictly northeast and strictly southwest of a fixed grid point, so
 the two directed neighbor sets are disjoint. -/
 private theorem disjoint_filter_isSouthWest (p : Fin n × Fin n) (t : Finset (Fin n × Fin n)) :
     Disjoint (t.filter fun q => IsSouthWest p q) (t.filter fun q => IsSouthWest q p) := by
@@ -131,7 +144,7 @@ private theorem disjoint_filter_isSouthWest (p : Fin n × Fin n) (t : Finset (Fi
   simp only [Finset.mem_filter] at hq hq'
   exact not_isSouthWest_swap hq.2 hq'.2
 
-/-- The symmetrized numerator of the `J`-function against a single grid square is the number of
+/-- The symmetrized numerator of the `J`-function against a single grid point is the number of
 points of `t` strictly comparable to it: those either strictly northeast or strictly southwest. The
 two directions never overlap, so the two counts combine into a single filter cardinality. -/
 theorem JNum_singleton_left_eq_card (p : Fin n × Fin n) (t : Finset (Fin n × Fin n)) :
@@ -139,14 +152,14 @@ theorem JNum_singleton_left_eq_card (p : Fin n × Fin n) (t : Finset (Fin n × F
   rw [JNum_singleton_left, ← Finset.card_union_of_disjoint (disjoint_filter_isSouthWest p t),
     ← Finset.filter_or]
 
-/-- The `J`-pairing of a single grid square against a point set `t` is half the number of points of
+/-- The `J`-pairing of a single grid point against a point set `t` is half the number of points of
 `t` strictly comparable to it. -/
 theorem J_singleton_left (p : Fin n × Fin n) (t : Finset (Fin n × Fin n)) :
     GridPoint.J {p} t =
       (((t.filter fun q => IsSouthWest p q ∨ IsSouthWest q p).card : ℕ) : ℚ) / 2 := by
   rw [J_def, JNum_singleton_left_eq_card]
 
-/-- Twice the `J`-pairing of a single grid square against a point set `t` is the number of points
+/-- Twice the `J`-pairing of a single grid point against a point set `t` is the number of points
 of `t` strictly comparable to it: in particular this pairing is a half-integer whose double is a
 natural number. -/
 theorem two_mul_J_singleton_left (p : Fin n × Fin n) (t : Finset (Fin n × Fin n)) :

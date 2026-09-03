@@ -7,14 +7,15 @@ module
 
 public import Mathlib.MeasureTheory.Measure.Prokhorov
 public import Mathlib.MeasureTheory.Integral.BoundedContinuousFunction
+import Mathlib.Topology.MetricSpace.Polish
 
 /-!
-# Weak cluster limits of tight finite measures
+# Prokhorov compactness lemmas for sequences of measures
 
-This file contains a generic finite-measure extraction lemma based on Mathlib's Prokhorov
-compactness theorem for finite measures. It has no real-line support condition and no
-normalization step: tightness and a uniform mass bound place the sequence in a compact set of
-`FiniteMeasure`s, and compactness gives a weak cluster limit.
+This file contains generic consequences of Mathlib's Prokhorov compactness theorem. For finite
+measures, tightness and a uniform mass bound give a weak cluster limit without a real-line support
+condition or normalization step. For probability measures on a Polish space, a weakly convergent
+sequence is tight.
 
 ## Main declarations
 
@@ -22,10 +23,13 @@ normalization step: tightness and a uniform mass bound place the sequence in a c
   weak cluster limit along an ultrafilter below `atTop`.
 * `TauCeti.finite_measure_subseq_limit`: the corresponding subsequence form when the weak topology
   on `FiniteMeasure α` is first-countable.
+* `TauCeti.isTightMeasureSet_range_of_tendsto`: a weakly convergent sequence of probability
+  measures on a Polish space is tight.
 
 ## References
 
 * Roadmap: `TauCetiRoadmap/OneParameterSemigroups/README.md`, Part B (Bernstein theorem milestone).
+* Roadmap: `TauCetiRoadmap/OptimalTransport/README.md`, Layer 1, item 6 (stability).
 -/
 
 public section
@@ -146,5 +150,24 @@ lemma finite_measure_subseq_limit [FirstCountableTopology (FiniteMeasure α)]
   -- the plain Bochner integral against the underlying measures, which is the statement wanted.
   change Tendsto (fun k => ∫ x, g x ∂σ (φ k)) atTop (𝓝 (∫ x, g x ∂μ₀)) at hweak
   exact hweak
+
+section ProbabilityMeasure
+
+variable [PolishSpace α] {μs : ℕ → ProbabilityMeasure α} {μ : ProbabilityMeasure α}
+
+omit [T2Space α] in
+/-- **A weakly convergent sequence of probability measures on a Polish space is tight.** -/
+theorem isTightMeasureSet_range_of_tendsto (hμ : Tendsto μs atTop (𝓝 μ)) :
+    IsTightMeasureSet (Set.range fun n ↦ (μs n).toMeasure) := by
+  -- Prokhorov's converse asks for a complete metric; a Polish topology supplies one.
+  let : MetricSpace α := TopologicalSpace.completelyMetrizableMetric α
+  have : CompleteSpace α := TopologicalSpace.complete_completelyMetrizableMetric α
+  have hcompact : IsCompact (insert μ (Set.range μs)) := hμ.isCompact_insert_range
+  refine (MeasureTheory.isTightMeasureSet_of_isCompact_closure
+    (S := insert μ (Set.range μs)) (by rwa [hcompact.isClosed.closure_eq])).subset ?_
+  rintro - ⟨n, rfl⟩
+  exact ⟨μs n, mem_insert_of_mem _ (mem_range_self n), rfl⟩
+
+end ProbabilityMeasure
 
 end TauCeti

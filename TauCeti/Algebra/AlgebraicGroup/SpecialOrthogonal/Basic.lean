@@ -8,6 +8,7 @@ module
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Points.Order
 public import TauCeti.Algebra.AlgebraicGroup.Orthogonal.Basic
 public import TauCeti.Algebra.AlgebraicGroup.SpecialLinear.Basic
+import TauCeti.CategoryTheory.Comma.Over
 
 /-!
 # The special orthogonal subgroup scheme of `GLₙ`
@@ -87,7 +88,7 @@ theorem definingHopfIdeal_toIdeal :
         Ideal.span
           {(GeneralLinear.determinantGroupLike R n :
               GeneralLinear.coordinateHopfAlgebra R n) - 1} := by
-  rw [definingHopfIdeal, HopfIdeal.sup_toIdeal, Orthogonal.definingHopfIdeal_toIdeal,
+  rw [definingHopfIdeal, HopfIdeal.sup_toIdeal, ConstantForm.definingHopfIdeal_toIdeal,
     SpecialLinear.definingHopfIdeal_toIdeal]
 
 /-- The coordinate Hopf algebra of the special orthogonal subgroup scheme of `GL n`. -/
@@ -119,7 +120,7 @@ theorem coordinateMap_relationMatrix (i j : Fin n) :
   exact Ideal.Quotient.eq_zero_iff_mem.mpr
     (definingHopfIdeal_toIdeal R n ▸
       Ideal.mem_sup_left
-        (Ideal.subset_span (Orthogonal.relationMatrix_mem_relationSet R n i j)))
+        (Ideal.subset_span (ConstantForm.relationMatrix_mem_relationSet R n 1 i j)))
 
 /-- The generic determinant maps to one in the special orthogonal coordinate Hopf algebra. -/
 @[simp↓]
@@ -162,15 +163,10 @@ instance isClosedImmersion_inclusion :
   let c := (CommHopfAlgCat.quotientSpecι
     (GeneralLinear.coordinateHopfAlgebra R n) (definingHopfIdeal R n)).hom.hom.left
   let e₂ := ((eqToIso (GeneralLinear.groupScheme_def R n).symm).hom).hom.hom.left
-  have he₂ : IsIso e₂ :=
-    ((Over.forget (AlgebraicGeometry.Spec (CommRingCat.of R))).mapIso
-      ((Grp.forget (Over (AlgebraicGeometry.Spec (CommRingCat.of R)))).mapIso
-        (eqToIso (GeneralLinear.groupScheme_def R n).symm))).isIso_hom
   have hc : AlgebraicGeometry.IsClosedImmersion c := by
     infer_instance
   have hc₂ : AlgebraicGeometry.IsClosedImmersion (c ≫ e₂) :=
-    (@MorphismProperty.cancel_right_of_respectsIso
-      _ _ @AlgebraicGeometry.IsClosedImmersion inferInstance _ _ _ c e₂ he₂).2 hc
+    (MorphismProperty.cancel_right_of_respectsIso _ c e₂).2 hc
   rw [inclusion_hom_left]
   exact hc₂
 

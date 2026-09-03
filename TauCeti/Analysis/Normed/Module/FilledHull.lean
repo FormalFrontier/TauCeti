@@ -7,6 +7,7 @@ module
 
 public import Mathlib.Analysis.Normed.Module.Convex
 public import TauCeti.Topology.FilledHull
+public import TauCeti.Analysis.Normed.Module.Ball.Exterior
 import Mathlib.Analysis.LocallyConvex.Separation
 -- `NormedSpace.toLocallyConvexSpace`, needed to apply `geometric_hahn_banach_point_closed`.
 import Mathlib.Analysis.LocallyConvex.WithSeminorms
@@ -41,14 +42,13 @@ off from infinity is itself small*, with no regularity asked of `K`.
 
 ## Roadmap role
 
-The filled hull is the vocabulary in which the open frontier item of layer **L5** of
-`TauCetiRoadmap/ConformalMapping/README.md` is stated; see the roadmap section of
-`TauCeti/Topology/FilledHull.lean`. The step waiting on that item is the one bounding the piece a
-crosscut cuts off from a Jordan domain: the file
-`TauCeti/Analysis/Complex/Conformal/Crosscut/SmallJordanCurve.lean` encloses a short image crosscut
-in an arbitrarily small Jordan curve `J`, and the cut-off piece is a connected set disjoint from
-`J`; once separation says it is the inside of `J` that the piece falls on,
-`TauCeti.IsPreconnected.diam_le_diam_of_disjoint` makes it no wider than `J`.
+The filled hull is the vocabulary in which the enclosure step of layer **L5** of
+`TauCetiRoadmap/ConformalMapping/README.md` is stated. That step is now unconditional: the
+preconnectedness/winding-number route in `TauCeti/Analysis/Complex/Conformal/Crosscut/Inside.lean`
+places one image piece of a crosscut in the filled hull without plane separation. In the diameter
+bound that follows, `TauCeti/Analysis/Complex/Conformal/Crosscut/SmallJordanCurve.lean` encloses a
+short image crosscut in an arbitrarily small Jordan curve `J`, and
+`TauCeti.IsPreconnected.diam_le_diam_of_disjoint` makes the cut-off piece no wider than `J`.
 
 This is a different route to a diameter bound from `TauCeti.diam_le_diam_of_frontier_subset` of
 `TauCeti/Analysis/Normed/Module/DiamFrontier.lean`, which bounds a set by *any* bounded set
@@ -74,6 +74,10 @@ used, and the separation argument is the general Hahn–Banach one.
   functional is unbounded, and `TauCeti.isBounded_closedConvexHull`,
   `TauCeti.diam_closedConvexHull` — the closed forms of the two convex-hull facts the width
   argument runs on.
+* `TauCeti.connectedComponentIn_compl_eq_of_unbounded_component` — the unbounded connected
+  component of the complement of a bounded set is unique (dimension at least two).
+* `TauCeti.mem_filledHull_or_mem_filledHull_of_notMem_connectedComponentIn` — of two points in
+  different components, at least one lies in the filled hull (dimension at least two).
 -/
 
 public section
@@ -205,5 +209,40 @@ preconnected, disjoint from `K`, and meets the filled hull of `K`, then it lies 
 theorem IsPreconnected.diam_le_diam_of_disjoint (hS : IsPreconnected S) (hSK : Disjoint S K)
     (hne : (S ∩ filledHull K).Nonempty) (hK : IsBounded K) : diam S ≤ diam K :=
   diam_le_diam_of_subset_filledHull hK (IsPreconnected.subset_filledHull hS hSK hne)
+
+variable {x y : E}
+
+/-- **The unbounded component of the complement of a bounded set is unique** in a real normed space
+of dimension at least two. -/
+theorem connectedComponentIn_compl_eq_of_unbounded_component (h : 1 < Module.rank ℝ E)
+    (hK : IsBounded K) (hx : ¬ IsBounded (connectedComponentIn Kᶜ x))
+    (hy : ¬ IsBounded (connectedComponentIn Kᶜ y)) :
+    connectedComponentIn Kᶜ x = connectedComponentIn Kᶜ y := by
+  obtain ⟨R, hR⟩ := hK.subset_closedBall (0 : E)
+  have hext : (closedBall (0 : E) R)ᶜ ⊆ Kᶜ := compl_subset_compl.mpr hR
+  have hesc : ∀ z : E, ¬ IsBounded (connectedComponentIn Kᶜ z) →
+      ∃ z' ∈ connectedComponentIn Kᶜ z, z' ∈ (closedBall (0 : E) R)ᶜ := fun z hz => by
+    by_contra hcon
+    push Not at hcon
+    exact hz ((isBounded_closedBall (x := (0 : E)) (r := R)).subset fun w hw =>
+      notMem_compl_iff.mp (hcon w hw))
+  obtain ⟨x', hx'c, hx'R⟩ := hesc x hx
+  obtain ⟨y', hy'c, hy'R⟩ := hesc y hy
+  have h1 : y' ∈ connectedComponentIn Kᶜ x' :=
+    (isPreconnected_compl_closedBall h 0 R).subset_connectedComponentIn hx'R hext hy'R
+  rw [connectedComponentIn_eq hx'c, connectedComponentIn_eq h1, ← connectedComponentIn_eq hy'c]
+
+/-- **Two points in different components of the complement of a bounded set cannot both lie outside
+the filled hull** in a real normed space of dimension at least two. -/
+theorem mem_filledHull_or_mem_filledHull_of_notMem_connectedComponentIn (h : 1 < Module.rank ℝ E)
+    (hK : IsBounded K) (hxy : y ∉ connectedComponentIn Kᶜ x) :
+    x ∈ filledHull K ∨ y ∈ filledHull K := by
+  by_cases hy : y ∈ K
+  · exact Or.inr (subset_filledHull hy)
+  · by_contra hcon
+    push Not at hcon
+    simp only [mem_filledHull_iff] at hcon
+    exact hxy ((connectedComponentIn_compl_eq_of_unbounded_component h hK hcon.1 hcon.2).symm ▸
+      mem_connectedComponentIn (mem_compl hy))
 
 end TauCeti

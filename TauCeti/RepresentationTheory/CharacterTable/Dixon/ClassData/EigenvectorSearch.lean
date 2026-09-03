@@ -41,6 +41,7 @@ count is `TauCeti.ClassData.card_centralCharacterSearch`; its good-prime special
 
 * `TauCeti.ClassData.modularClassMatrix_eq_submatrix`: the numbered modular matrices are a
   renumbering of the class-indexed ones, so their theory transports.
+* `TauCeti.ClassData.IsModularEigenrow.map`: ring homomorphisms preserve modular eigenrows.
 * `TauCeti.ClassData.modularClassMatrix_index_one`: the identity-class matrix is the identity.
 * `TauCeti.ClassData.vecMul_modularClassMatrix_apply_index_one`: the identity coordinate of
   `v ᵥ* Mᵢ` is `v i`.
@@ -130,6 +131,20 @@ theorem isModularEigenrow_iff (v : Fin d.numClasses → F) :
     funext j
     rw [Matrix.vecMul_apply_eq_sum]
     simpa only [modularClassMatrix_apply, Pi.smul_apply, smul_eq_mul, mul_comm] using h i j
+
+/-- A common eigenrow remains a common eigenrow after applying a ring homomorphism entrywise. -/
+theorem IsModularEigenrow.map {d : ClassData G} {S : Type*} [CommRing S]
+    {v : Fin d.numClasses → F}
+    (h : d.IsModularEigenrow v) (f : F →+* S) :
+    d.IsModularEigenrow (fun j => f (v j)) := by
+  rw [d.isModularEigenrow_iff] at h ⊢
+  intro i j
+  calc
+    ∑ k, (d.structureConstant i j k : S) * f (v k) =
+        ∑ k, f ((d.structureConstant i j k : F) * v k) := by simp
+    _ = f (∑ k, (d.structureConstant i j k : F) * v k) := by rw [map_sum]
+    _ = f (v i * v j) := by rw [h i j]
+    _ = f (v i) * f (v j) := by rw [map_mul]
 
 /-- Renumbering identifies the executable numbered eigenrow condition with the class-indexed
 `TauCeti.IsClassEigenrow` predicate used by the class-algebra API. -/

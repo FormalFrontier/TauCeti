@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.Adjoint
+public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.Adjoint.Basic
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.Weight.Basis
 public import TauCeti.Algebra.Module.Submodule.Finite
 

@@ -25,6 +25,11 @@ this identity into within-row exchangeability requires the later endpoint and re
 that step is not proved here. The measurable encoding proved here is what will transfer a future
 representation of the joint law of `(x 0, successorArray x)` back to the law of the path.
 
+## Main definitions
+
+* `TauCeti.Probability.successorProcess`: the successor array of a process, as an array indexed by
+  state and visit number.
+
 ## Main results
 
 * `TauCeti.Probability.transitionCount_prefixProj`: the transition counts of a prefix are the
@@ -201,6 +206,32 @@ theorem measurable_successorArray :
     Measurable fun x : ℕ → α => successorArray x :=
   measurable_pi_lambda _ fun a =>
     measurable_pi_lambda _ fun k => measurable_successorArray_apply a k (measurableSet_singleton a)
+
+section SuccessorProcess
+
+variable {Ω : Type*} [MeasurableSpace Ω]
+
+/-- The successor array of a process, as an array indexed by state and visit number: the
+`(a, k)`-entry is the value the process takes right after its `k`-th visit to `a`. -/
+def successorProcess (X : ℕ → Ω → α) : α × ℕ → Ω → α :=
+  fun p ω => successorArray (fun n => X n ω) p.1 p.2
+
+-- The parentheses in `(rfl)` opt out of the exported-theorem exposure check, so that this, the
+-- complete computational API of `successorProcess`, can be stated without exposing its body.
+omit [MeasurableSpace Ω] [MeasurableSpace α] in
+@[simp]
+theorem successorProcess_apply (X : ℕ → Ω → α) (p : α × ℕ) (ω : Ω) :
+    successorProcess X p ω = successorArray (fun n => X n ω) p.1 p.2 :=
+  (rfl)
+
+/-- Every entry of the successor array of an almost everywhere measurable process is almost
+everywhere measurable. -/
+theorem aemeasurable_successorProcess {μ : Measure Ω} {X : ℕ → Ω → α}
+    (hX : ∀ i, AEMeasurable (X i) μ) (p : α × ℕ) : AEMeasurable (successorProcess X p) μ :=
+  (measurable_successorArray_apply p.1 p.2 (measurableSet_singleton p.1)).comp_aemeasurable
+    (aemeasurable_pi_lambda _ hX)
+
+end SuccessorProcess
 
 /-- The map pairing a path's initial state with its successor array is measurable. -/
 theorem measurable_apply_zero_prodMk_successorArray :

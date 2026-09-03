@@ -43,13 +43,10 @@ is a convenient sufficient bound rather than the sharp one. Morse--Sard holds al
 maps with `k ≥ max 1 (finrank ℝ E - finrank ℝ F + 1)`; recovering that sharp exponent needs a
 more careful induction than the one run here, and smooth maps satisfy every bound in sight.
 
-What is still missing for the general Morse--Sard theorem is the outermost stratum, the set of
-critical points at which the derivative is nonzero but not surjective; Milnor handles it by a
-Fubini argument on a local fibration of the source. Combined with
-`TauCeti.Differentiable.addHaar_image_criticalPoints_eq_zero` (equal dimensions) and
-`TauCeti.Differentiable.addHaar_image_not_surjective_fderiv_eq_zero_of_finrank_lt_finrank`
-(smaller source), Morse--Sard is now available whenever `finrank ℝ E ≤ finrank ℝ F`, and, in any
-source dimension, whenever `finrank ℝ F = 1`.
+The remaining stratum of the general Morse--Sard theorem, the set of critical points at which the
+derivative is nonzero but not surjective, is handled by a Fubini argument on a local fibration of
+the source in `TauCeti.Analysis.Calculus.Sard.OutermostStratum`, where the theorem itself is
+assembled; the results here are what that argument runs its induction against.
 
 This is Lane F0 of the analytic Heegaard Floer roadmap, where finite-dimensional Sard is the
 prerequisite for Sard--Smale and hence for every transversality argument downstream.
@@ -59,10 +56,8 @@ prerequisite for Sard--Smale and hence for every transversality argument downstr
 * `TauCeti.addHaar_image_eq_zero_of_fderiv_eq_zero`: the image of a set of points at which the
   derivative vanishes is null, for a map that is `C^k` at those points with `k` large enough.
 * `TauCeti.ContDiff.addHaar_image_vanishingFDeriv_eq_zero`: its global form for a smooth map.
-* `TauCeti.ContDiff.addHaar_image_criticalPoints_eq_zero_of_finrank_eq_one`: **Morse--Sard for a
-  one-dimensional target**, with
-  `TauCeti.ContDiff.dense_compl_image_criticalPoints_of_finrank_eq_one` the density of the regular
-  values.
+* `TauCeti.setOf_not_surjective_fderiv_eq_setOf_fderiv_eq_zero_of_finrank_eq_one`: for a
+  one-dimensional target, the critical locus is exactly the vanishing-derivative locus.
 
 ## References
 
@@ -246,27 +241,6 @@ critical points of a map into such a space are the points where its derivative v
     have h1 : iteratedFDeriv ℝ 1 f x = 0 := by
       rw [← norm_eq_zero, norm_iteratedFDeriv_one, h, norm_zero]
     exact not_surjective_fderiv_of_iteratedFDeriv_one_eq_zero h1 hsurj
-
-omit [Nontrivial F] in
-/-- **Morse--Sard for a one-dimensional target.** The critical values of a sufficiently smooth map
-from a finite-dimensional real normed space to a one-dimensional one, that is the values it takes
-at the points where its derivative is not surjective, form a set of additive Haar measure zero. -/
-theorem ContDiff.addHaar_image_criticalPoints_eq_zero_of_finrank_eq_one {n : ℕ∞ω}
-    (hf : ContDiff ℝ n f) (hk : ((finrank ℝ E * finrank ℝ E + 1 : ℕ) : ℕ∞ω) ≤ n) :
-    ν (f '' {x | ¬ Surjective (fderiv ℝ f x)}) = 0 := by
-  let _ : Nontrivial F := Module.nontrivial_of_finrank_eq_succ hF
-  rw [setOf_not_surjective_fderiv_eq_setOf_fderiv_eq_zero_of_finrank_eq_one hF]
-  exact ContDiff.addHaar_image_vanishingFDeriv_eq_zero ν hf hk
-
-omit [Nontrivial F] in
-/-- The regular values of a sufficiently smooth map from a finite-dimensional real normed space to
-a one-dimensional one are dense. -/
-theorem ContDiff.dense_compl_image_criticalPoints_of_finrank_eq_one {n : ℕ∞ω}
-    (hf : ContDiff ℝ n f) (hk : ((finrank ℝ E * finrank ℝ E + 1 : ℕ) : ℕ∞ω) ≤ n) :
-    Dense (f '' {x | ¬ Surjective (fderiv ℝ f x)})ᶜ := by
-  let _ : Nontrivial F := Module.nontrivial_of_finrank_eq_succ hF
-  rw [setOf_not_surjective_fderiv_eq_setOf_fderiv_eq_zero_of_finrank_eq_one hF]
-  exact ContDiff.dense_compl_image_vanishingFDeriv hf hk
 
 end OneDimensional
 

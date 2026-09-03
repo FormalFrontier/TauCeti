@@ -5,8 +5,10 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.RepresentationTheory.Subrepresentation
+public import Mathlib.LinearAlgebra.PID
 public import TauCeti.Algebra.MonoidAlgebra.Basis
+public import TauCeti.RepresentationTheory.FDRep
+public import TauCeti.RepresentationTheory.Subrepresentation
 
 /-!
 # The augmentation subrepresentation of a permutation representation
@@ -42,6 +44,8 @@ the symmetric group in `TauCeti.RepresentationTheory.Symmetric.Standard` is the 
   or `X` is empty, the two subrepresentations are complementary.
 * `TauCeti.finrank_augmentationSubrepresentation`: the augmentation subrepresentation has
   dimension `|X| - 1`.
+* `TauCeti.character_augmentationSubrepresentation`: for a nonempty `X`, its character is the
+  character of `k[X]` less `1`, the trivial quotient contributing that `1`.
 
 ## Implementation notes
 
@@ -63,6 +67,9 @@ splitting needs, and for a nonempty `X` over a nontrivial `k` it is the sharp hy
 so the invariant line meets it and the two are not complementary.  For an empty `X`, or a trivial
 `k`, every module in sight is zero and the two are complementary whatever `|X|` is in `k`; the
 empty case is the first disjunct of `TauCeti.isCompl_invariantLine_augmentationSubrepresentation`.
+The character identity `TauCeti.character_augmentationSubrepresentation` needs no such hypothesis:
+the `1` it subtracts is the trace of a rank-one projection onto a line transverse to the
+augmentation subrepresentation, and such a line exists whether or not the *invariant* line is one.
 
 ## References
 
@@ -338,6 +345,63 @@ theorem finrank_augmentationSubrepresentation :
   rw [hrange, hcard] at hsum
   rw [toSubmodule_augmentationSubrepresentation]
   omega
+
+/-! ### The character of the augmentation subrepresentation -/
+
+omit [Fintype X] in
+/-- **The character of the augmentation subrepresentation** is the character of `k[X]` less `1`.
+The subtracted `1` is the trivial quotient `k[X] / ker(augmentation) ≃ k`, so nothing about `|X|`
+in `k` is needed: the identity holds in every characteristic, including the one dividing `|X|`,
+where the invariant line is *not* a complement.
+
+For a permutation representation the subtracted `1` is the trivial constituent: the character of
+`k[X]` counts fixed points, so the character here is the number of fixed points less one. -/
+@[simp]
+theorem character_augmentationSubrepresentation [Finite X] [Nonempty X] (g : G) :
+    (augmentationSubrepresentation k G X).toRepresentation.character g
+      = (Representation.ofMulAction k G X).character g - 1 := by
+  classical
+  -- Take the rank-one map `σ : v ↦ (augmentation v) • single x₀ 1`, a projection onto a line
+  -- transverse to the augmentation subrepresentation.  The augmentation is invariant, so `ρ g - σ`
+  -- lands in the augmentation subrepresentation, where it restricts to the action of `g`; its
+  -- trace is therefore the character on the left, and it is `trace (ρ g) - trace σ`.
+  have hfin : Module.Finite k (MonoidAlgebra k X) :=
+    Module.Finite.of_basis (MonoidAlgebra.basis X k)
+  set e₀ : MonoidAlgebra k X := MonoidAlgebra.single (Classical.arbitrary X) 1 with he₀
+  set σ : MonoidAlgebra k X →ₗ[k] MonoidAlgebra k X :=
+    (MonoidAlgebra.basis X k).sumCoords.smulRight e₀ with hσ
+  have hσ_apply : ∀ v, σ v = (MonoidAlgebra.basis X k).sumCoords v • e₀ := by
+    intro v; rw [hσ]; simp
+  have he₀_sum : (MonoidAlgebra.basis X k).sumCoords e₀ = 1 := by
+    rw [he₀]; simp
+  have htraceσ : LinearMap.trace k _ σ = 1 := by
+    rw [hσ, LinearMap.trace_smulRight, he₀_sum]
+  -- `σ` leaves the augmentation unchanged, because it rescales the augmentation-`1` vector `e₀`
+  have hσ_sum : ∀ v, (MonoidAlgebra.basis X k).sumCoords (σ v)
+      = (MonoidAlgebra.basis X k).sumCoords v := by
+    intro v
+    rw [hσ_apply, map_smul, he₀_sum, smul_eq_mul, mul_one]
+  -- `ρ g - σ` lands in the augmentation subrepresentation, and restricts there to `ρ g`
+  have hmem : ∀ v, (Representation.ofMulAction k G X g - σ) v ∈
+      (augmentationSubrepresentation k G X).toSubmodule := fun v => by
+    simp only [toSubmodule_augmentationSubrepresentation, LinearMap.mem_ker, LinearMap.sub_apply,
+      map_sub, hσ_sum, sumCoords_basis_ofMulAction, sub_self]
+  have hrestrict : (Representation.ofMulAction k G X g - σ).restrict (fun v _ => hmem v)
+      = (augmentationSubrepresentation k G X).toRepresentation g := by
+    refine LinearMap.ext fun v => Subtype.ext ?_
+    have hv : σ (v : MonoidAlgebra k X) = 0 := by
+      rw [hσ_apply, mem_augmentationSubrepresentation_iff.mp v.2, zero_smul]
+    simp [Subrepresentation.toRepresentation_apply, hv]
+  have key : LinearMap.trace k _ ((Representation.ofMulAction k G X g - σ).restrict
+      (fun v _ => hmem v))
+      = LinearMap.trace k _ (Representation.ofMulAction k G X g - σ) :=
+    LinearMap.trace_restrict_eq_of_forall_mem _ _ hmem
+  -- the two characters are the traces, by definition
+  have hL : (augmentationSubrepresentation k G X).toRepresentation.character g
+      = LinearMap.trace k _ ((augmentationSubrepresentation k G X).toRepresentation g) := rfl
+  have hR : (Representation.ofMulAction k G X).character g
+      = LinearMap.trace k _ (Representation.ofMulAction k G X g) := rfl
+  rw [hL, hR, ← hrestrict, key, map_sub, htraceσ]
 
 end Field
 

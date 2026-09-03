@@ -12,6 +12,7 @@ import Mathlib.Data.Finsupp.Encodable
 import TauCeti.Topology.LiftTendstoCofinite
 import TauCeti.Order.Filter.ZeroAndBoundedAtFilter
 import TauCeti.RingTheory.Huber.Bounded
+import TauCeti.Topology.Algebra.Module.Submodule
 
 /-!
 # Restricted Power Series
@@ -45,6 +46,14 @@ where the convergent/restricted power series ring is (5.6.1) in §5.6.
   out of a module with a countable neighbourhood basis at `0` — the lifted coefficients can then
   be chosen to still tend to `0`, which lifting them one at a time does not give. This is what
   lets Wedhorn's Remark 8.29 descend from a presentation.
+* `restrictedMvPowerSeriesSubmoduleMap_eq_zero_iff` and
+  `restrictedMvPowerSeriesSubmoduleMap_injective`: the kernel of the induced map is detected
+  coefficientwise, so the functor preserves injectivity. Together with
+  `restrictedMvPowerSeriesSubmoduleMap_surjective` these are the exactness inputs Remark 8.29
+  needs at the two ends.
+* `restrictedMvPowerSeriesSubmoduleMap_range_eq_ker`: and the input it needs **in the middle** —
+  for `range u = ker p` with `u` open onto its image, the induced row is exact at `N⟨T₁, …, Tₖ⟩`.
+  With the two above, Remark 8.29's row is exact everywhere.
 * `restrictedMvPowerSeriesSubmodule_ext`: coefficientwise agreement is equality in `M⟨T₁, …, Tₖ⟩`
   — the elimination rule `MvPowerSeries.ext` cannot supply at module coefficients.
 * `coeff_coe_smul_restrictedMvPowerSeriesSubring`: the scalar action on `A⟨T₁, …, Tₖ⟩` is
@@ -77,8 +86,10 @@ coefficient binders — `[Zero]` and a topology, where the original asked for a 
 `IsRestricted.smul`, `restrictedMvPowerSeriesSubmodule`, `mem_restrictedMvPowerSeriesSubmodule`,
 `isRestricted_pi_iff`, `restrictedMvPowerSeriesSubmodulePiEquiv` and
 `restrictedMvPowerSeriesSubringLinearEquiv`, each with its computation lemmas, together with
-`IsRestricted.map`, `restrictedMvPowerSeriesSubmoduleMap` with its laws and
-`restrictedMvPowerSeriesSubmoduleMap_surjective`, and
+`IsRestricted.map`, `restrictedMvPowerSeriesSubmoduleMap` with its laws,
+`restrictedMvPowerSeriesSubmoduleMap_surjective`,
+`restrictedMvPowerSeriesSubmoduleMap_eq_zero_iff` and
+`restrictedMvPowerSeriesSubmoduleMap_injective`, and
 `coeff_coe_smul_restrictedMvPowerSeriesSubring`.
 
 **None of those has an AINTLIB counterpart**, for three different reasons.
@@ -88,6 +99,9 @@ induced-map material: AINTLIB states restricted series over a coefficient *ring*
 induced map at module coefficients and a fortiori no surjectivity statement about one. Wedhorn
 Remark 8.29 is credited for the mathematics; the lifting construction it delegates to
 (`TauCeti.exists_lift_tendsto_cofinite_nhds`) is original here too.
+`restrictedMvPowerSeriesSubmoduleMap_eq_zero_iff` and
+`restrictedMvPowerSeriesSubmoduleMap_injective` are the same statement at the other end of the
+exactness, and have no counterpart there for the same reason.
 
 The two product statements — `isRestricted_pi_iff` and `restrictedMvPowerSeriesSubmodulePiEquiv` —
 have none because the source states restrictedness only for a single coefficient module and never
@@ -104,6 +118,19 @@ to be functorial in, so no map to credit. The general filter content of `IsRestr
 submodule at all, so the subring is the only object it has to identify. The same holds of
 `coeff_coe_smul_restrictedMvPowerSeriesSubring`, which computes an action the source never
 states.
+
+**AINTLIB's mathematics, generalised in statement and rebuilt on this file's API.**
+`restrictedMvPowerSeriesSubmoduleMap_range_eq_ker` is AINTLIB's `muMap_middle_exact`
+(`Adic spaces/TateAlgebra.lean:1855`), Wedhorn's own middle-exactness step, and the argument is
+that one: corestrict `u` to its image, lift the coefficients of a series killed by `p` along the
+corestriction, compose back. Three things differ. The source fixes the row to `Aⁿ → Aᵐ → M` and
+carries Wedhorn's bundle — `[CompleteSpace A] [IsTateRing A] [IsNoetherianRing A]` — so as to
+*derive* strictness of `u` from its own `wedhorn_6_18_open_onto_image`; the row here is between
+arbitrary topological modules with strictness hypothesised, so none of that bundle appears. The
+source works at ring coefficients through its own `restrictedModule` and lifts with
+`restrictedModule_map_surjective`; both come from this file's module-coefficient functor here.
+And the continuity of the action on `↥(range u)`, which the source establishes inline, is
+`Submodule.continuousConstSMul`.
 
 The name `isRestricted_iff` needs care: the port introduced it for the `coeff`-form unfolding
 lemma, which is now `isRestricted_iff_coeff`. The statement the name carries here — unfolding
@@ -162,9 +189,10 @@ arbitrary finite sums of elements in an open additive subgroup remain in the sub
 
 ## References
 
-* [Wedhorn, *Adic Spaces*][wedhorn_adic], (5.6.1) in §5.6.
+* [Wedhorn, *Adic Spaces*][wedhorn_adic], (5.6.1) in §5.6, and Remark 8.29.
 * [AINTLIB](https://github.com/CBirkbeck/AINTLIB), branch `dev/adic-spaces`,
-  `projects/AdicSpaces/Adic spaces/RestrictedPowerSeries.lean`.
+  `projects/AdicSpaces/Adic spaces/RestrictedPowerSeries.lean` and, at commit `37bbdaeb9`,
+  `projects/AdicSpaces/Adic spaces/TateAlgebra.lean`.
 -/
 
 public section
@@ -618,6 +646,99 @@ theorem restrictedMvPowerSeriesSubmoduleMap_surjective {k : ℕ} {A M N : Type*}
     restrictedMvPowerSeriesSubmodule_ext fun s ↦ ?_⟩
   rw [coeff_restrictedMvPowerSeriesSubmoduleMap]
   exact hfg s
+
+/-- **The kernel is coefficientwise**: a restricted series is killed by `φ` exactly when every
+one of its coefficients is.
+
+Stated as `… = 0` rather than as membership in `LinearMap.ker`, because `LinearMap.mem_ker` is
+itself a `simp` lemma: it rewrites the membership away first, so a `mem_ker` phrasing could not
+be `@[simp]` — the two chain together, and `f ∈ ker …` still reduces coefficientwise. -/
+@[simp]
+theorem restrictedMvPowerSeriesSubmoduleMap_eq_zero_iff {k : ℕ} {A M N : Type*} [Semiring A]
+    [AddCommMonoid M] [TopologicalSpace M] [Module A M] [ContinuousAdd M]
+    [ContinuousConstSMul A M] [AddCommMonoid N] [TopologicalSpace N] [Module A N]
+    [ContinuousAdd N] [ContinuousConstSMul A N] (φ : M →ₗ[A] N) (hφ : ContinuousAt φ 0)
+    {f : restrictedMvPowerSeriesSubmodule k A M} :
+    restrictedMvPowerSeriesSubmoduleMap (k := k) φ hφ f = 0 ↔
+      ∀ s, φ (((f : MvPowerSeries (Fin k) M) : (Fin k →₀ ℕ) → M) s) = 0 := by
+  constructor
+  · intro h s
+    rw [← coeff_restrictedMvPowerSeriesSubmoduleMap φ hφ f s, h]
+    rfl
+  · intro h
+    ext s
+    rw [coeff_restrictedMvPowerSeriesSubmoduleMap]
+    exact h s
+
+/-- **`M ↦ M⟨T₁, …, Tₖ⟩` preserves injectivity.** -/
+theorem restrictedMvPowerSeriesSubmoduleMap_injective {k : ℕ} {A M N : Type*} [Semiring A]
+    [AddCommMonoid M] [TopologicalSpace M] [Module A M] [ContinuousAdd M]
+    [ContinuousConstSMul A M] [AddCommMonoid N] [TopologicalSpace N] [Module A N]
+    [ContinuousAdd N] [ContinuousConstSMul A N] (φ : M →ₗ[A] N) (hφ : ContinuousAt φ 0)
+    (hinj : Function.Injective φ) :
+    Function.Injective (restrictedMvPowerSeriesSubmoduleMap (k := k) φ hφ) := fun f g h ↦
+  restrictedMvPowerSeriesSubmodule_ext fun s ↦ hinj <| by
+    rw [← coeff_restrictedMvPowerSeriesSubmoduleMap φ hφ f s,
+      ← coeff_restrictedMvPowerSeriesSubmoduleMap φ hφ g s, h]
+
+/-- **`M ↦ M⟨T₁, …, Tₖ⟩` is exact in the middle.** For `A`-linear maps `u : M →ₗ[A] N` and
+`p : N →ₗ[A] P`, each continuous at `0`, with `range u = ker p`, the induced row
+`M⟨T₁, …, Tₖ⟩ → N⟨T₁, …, Tₖ⟩ → P⟨T₁, …, Tₖ⟩` is exact at the middle — provided `u` is **strict**,
+carrying the neighbourhoods of `0` onto neighbourhoods of `0` in its image, and `M` has a
+countable neighbourhood basis at `0`.
+
+This is the middle-exactness step of Wedhorn's Remark 8.29: applied to a presentation
+`Aⁿ →u Aᵐ →p M → 0` it makes the restricted-series row exact at `Aᵐ⟨T₁, …, Tₖ⟩`, which is the
+input the injective half of that remark runs a diagram chase against.
+`restrictedMvPowerSeriesSubmoduleMap_injective` and
+`restrictedMvPowerSeriesSubmoduleMap_surjective` are the same statement at the two ends.
+
+Strictness does not follow from continuity and is not derived here. It is Wedhorn's
+Proposition 6.18(2) that supplies it in the setting Remark 8.29 is stated in — over a complete
+noetherian Tate ring a linear map of finitely generated modules is open onto its image — and that
+derivation needs hypotheses this file does not carry. So strictness is taken as a hypothesis, in
+the filter-inequality form `restrictedMvPowerSeriesSubmoduleMap_surjective` also takes it: a
+caller holding `h : IsOpenMap u.rangeRestrict` passes `map_zero _ ▸ h.nhds_le 0`.
+
+Only `u` need be strict. Nothing is asked of `p` beyond continuity at `0`, and nothing at all of
+`N` or `P` beyond what `N⟨T₁, …, Tₖ⟩` and `P⟨T₁, …, Tₖ⟩` need to exist: exactness at the middle
+lifts the coefficients of a series killed by `p` along `u`, and the countable basis that lifting
+consumes is a property of the source.
+
+Stated as the equality of submodules rather than through Mathlib's `Function.Exact`, whose file
+this one does not import; `LinearMap.exact_iff` converts in either direction where it is wanted. -/
+theorem restrictedMvPowerSeriesSubmoduleMap_range_eq_ker {k : ℕ} {A M N P : Type*} [Semiring A]
+    [AddCommMonoid M] [TopologicalSpace M] [Module A M] [ContinuousAdd M] [ContinuousConstSMul A M]
+    [(nhds (0 : M)).IsCountablyGenerated] [AddCommMonoid N] [TopologicalSpace N] [Module A N]
+    [ContinuousAdd N] [ContinuousConstSMul A N] [AddCommMonoid P] [TopologicalSpace P] [Module A P]
+    [ContinuousAdd P] [ContinuousConstSMul A P] (u : M →ₗ[A] N) (hu : ContinuousAt u 0)
+    (p : N →ₗ[A] P) (hp : ContinuousAt p 0) (hexact : LinearMap.range u = LinearMap.ker p)
+    (hstrict : nhds (0 : LinearMap.range u) ≤ Filter.map u.rangeRestrict (nhds 0)) :
+    LinearMap.range (restrictedMvPowerSeriesSubmoduleMap (k := k) u hu) =
+      LinearMap.ker (restrictedMvPowerSeriesSubmoduleMap (k := k) p hp) := by
+  refine le_antisymm ?_ fun c hc ↦ ?_
+  · rintro _ ⟨b, rfl⟩
+    rw [LinearMap.mem_ker, restrictedMvPowerSeriesSubmoduleMap_eq_zero_iff]
+    intro s
+    rw [coeff_restrictedMvPowerSeriesSubmoduleMap]
+    exact LinearMap.mem_ker.mp (hexact ▸ LinearMap.mem_range_self u _)
+  · rw [LinearMap.mem_ker, restrictedMvPowerSeriesSubmoduleMap_eq_zero_iff] at hc
+    have hcoef : ∀ s, ((c : MvPowerSeries (Fin k) N) : (Fin k →₀ ℕ) → N) s ∈ LinearMap.range u :=
+      fun s ↦ hexact ▸ LinearMap.mem_ker.mpr (hc s)
+    -- The coefficients of `c` lie in `range u`, so `c` is a restricted series over `↥(range u)`
+    -- — restrictedness transfers because the subspace topology is induced. Lift that series
+    -- along the corestriction of `u`, surjective by construction and strict by hypothesis.
+    obtain ⟨b, hb⟩ := restrictedMvPowerSeriesSubmoduleMap_surjective (k := k) u.rangeRestrict
+      (Topology.IsInducing.subtypeVal.continuousAt_iff.mpr hu)
+      (LinearMap.surjective_rangeRestrict u) hstrict
+      ⟨show MvPowerSeries (Fin k) ↥(LinearMap.range u) from fun s ↦ ⟨_, hcoef s⟩,
+        mem_restrictedMvPowerSeriesSubmodule.mpr (isRestricted_iff.mpr
+          (tendsto_subtype_rng.mpr (isRestricted_iff.mp c.2)))⟩
+    -- `u = (range u).subtype ∘ u.rangeRestrict`, so reading `hb` coefficientwise and forgetting
+    -- the membership proof is already the required equality.
+    refine ⟨b, restrictedMvPowerSeriesSubmodule_ext fun s ↦ ?_⟩
+    rw [coeff_restrictedMvPowerSeriesSubmoduleMap]
+    exact congrArg Subtype.val (congrFun (congrArg Subtype.val hb) s)
 
 /-- **`A⟨T₁, …, Tₖ⟩` as a submodule over itself**: at `M = A` the subring and the submodule cut
 out the same series, so they are `A`-linearly isomorphic.

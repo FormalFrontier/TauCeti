@@ -75,7 +75,7 @@ over a subsingleton every polynomial is monic. -/
 theorem monic_Φ_sub_C_mul_ΨSq (n : ℤ) (c : R) : (W.Φ n - C c * W.ΨSq n).Monic := by
   nontriviality R
   rcases eq_or_ne n 0 with rfl | hn0
-  · simp [_root_.WeierstrassCurve.ΨSq_zero, _root_.WeierstrassCurve.Φ_zero]
+  · simp [_root_.WeierstrassCurve.Φ_zero]
   · refine Polynomial.Monic.sub_of_left (W.leadingCoeff_Φ n) (degree_lt_degree ?_)
     calc (C c * W.ΨSq n).natDegree
       _ ≤ (W.ΨSq n).natDegree := natDegree_C_mul_le _ _

@@ -102,42 +102,13 @@ theorem hasCauchyPV_analyticRemainder_add_residue_sum (decomp : PolarPartDecompo
       γ.source_eq_target (hbase γ hγ)
       (fun t ht ↦ isIn_iff.mp hCU (mem_trace_iff.mpr ⟨γ, hγ, t, ht, rfl⟩)) hmero (hA γ hγ)
       (hB γ hγ)
-  -- Regroup the double sum over generators and poles, pole index outermost.
-  have hswap : ∀ γ : PiecewiseC1ClosedCurve,
-      (FreeAbelianGroup.coeff γ C : ℂ) *
-          (2 * (Real.pi : ℂ) * Complex.I *
-            ∑ s ∈ S, TauCeti.Contour.windingNumber (⇑γ) γ.a γ.b s * residue f s)
-        = ∑ s ∈ S, 2 * (Real.pi : ℂ) * Complex.I *
-            ((FreeAbelianGroup.coeff γ C : ℂ) *
-              TauCeti.Contour.windingNumber (⇑γ) γ.a γ.b s * residue f s) := fun γ ↦ by
-    rw [Finset.mul_sum, Finset.mul_sum]
-    exact Finset.sum_congr rfl fun s _ ↦ by ring
   have hval : (∑ γ ∈ FreeAbelianGroup.support C, FreeAbelianGroup.coeff γ C •
         ((∫ t in γ.a..γ.b, deriv (⇑γ) t • decomp.analyticRemainder (γ t))
           + 2 * (Real.pi : ℂ) * Complex.I *
               ∑ s ∈ S, TauCeti.Contour.windingNumber (⇑γ) γ.a γ.b s * residue f s))
       = integral decomp.analyticRemainder C
         + 2 * (Real.pi : ℂ) * Complex.I * ∑ s ∈ S, windingNumber s C * residue f s :=
-    calc
-      ∑ γ ∈ FreeAbelianGroup.support C, FreeAbelianGroup.coeff γ C •
-            ((∫ t in γ.a..γ.b, deriv (⇑γ) t • decomp.analyticRemainder (γ t))
-              + 2 * (Real.pi : ℂ) * Complex.I *
-                  ∑ s ∈ S, TauCeti.Contour.windingNumber (⇑γ) γ.a γ.b s * residue f s)
-          = (∑ γ ∈ FreeAbelianGroup.support C, FreeAbelianGroup.coeff γ C •
-                (∫ t in γ.a..γ.b, deriv (⇑γ) t • decomp.analyticRemainder (γ t)))
-              + ∑ γ ∈ FreeAbelianGroup.support C, FreeAbelianGroup.coeff γ C •
-                  (2 * (Real.pi : ℂ) * Complex.I *
-                    ∑ s ∈ S, TauCeti.Contour.windingNumber (⇑γ) γ.a γ.b s * residue f s) := by
-            simp only [smul_add]
-            exact Finset.sum_add_distrib
-      _ = integral decomp.analyticRemainder C
-            + 2 * (Real.pi : ℂ) * Complex.I * ∑ s ∈ S, windingNumber s C * residue f s := by
-            rw [← integral_eq_sum_support]
-            refine congrArg _ ?_
-            simp only [← Int.cast_smul_eq_zsmul ℂ, smul_eq_mul]
-            rw [Finset.sum_congr rfl fun γ _ ↦ hswap γ, Finset.sum_comm, Finset.mul_sum]
-            refine Finset.sum_congr rfl fun s _ ↦ ?_
-            rw [windingNumber_eq_sum_support, Finset.sum_mul, Finset.mul_sum]
+    sum_support_smul_eq_integral_add_windingNumber_sum _ _ _ _ _
   rw [← hval]
   exact HasCauchyPV.of_generators hgen
 

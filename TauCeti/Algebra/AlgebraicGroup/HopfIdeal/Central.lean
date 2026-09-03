@@ -42,8 +42,8 @@ producing a Hopf ideal from the cocommutativity defect of `H`.
 
 * `TauCeti.CommHopfAlgCat.isCentral_iff_forall_isCentralPoint`: **a Hopf ideal is central exactly
   when the points it cuts out are central points over every value algebra.**
-* `TauCeti.HopfIdeal.IsCentral.comap_of_bijective`: centrality is preserved by pullback along a
-  bijective bialgebra morphism.
+* `TauCeti.HopfIdeal.IsCentral.comapOfSurjective_of_bijective`: centrality is preserved by
+  pullback along a bijective bialgebra morphism.
 * `TauCeti.HopfIdeal.IsCentral.isNormal`: a central Hopf ideal is normal.
 * `TauCeti.HopfIdeal.IsCentral.isCocomm_quotient`: the coordinate Hopf algebra of a central
   closed subgroup is cocommutative.
@@ -69,7 +69,7 @@ open TensorProduct WithConv
 
 namespace TauCeti
 
-universe u v
+universe u v w
 
 namespace HopfIdeal
 
@@ -142,7 +142,7 @@ variable {R : Type u} [CommRing R]
 /-- Every point cut out by a central Hopf ideal is a central point of the ambient group, over
 every value algebra. -/
 theorem isCentralPoint_of_mem_quotientPointsSubgroup (H : _root_.CommHopfAlgCat.{v} R)
-    (I : HopfIdeal R H) (hI : I.IsCentral) (A : CommAlgCat.{v} R)
+    (I : HopfIdeal R H) (hI : I.IsCentral) (A : CommAlgCat.{w} R)
     {g : HopfAlgebra.points (R := R) (H := H) A} (hg : g ∈ quotientPointsSubgroup H I A) :
     HopfAlgebra.IsCentralPoint g := by
   rw [HopfAlgebra.isCentralPoint_def]
@@ -236,21 +236,6 @@ theorem quotientPointsSubgroup_le_center (H : _root_.CommHopfAlgCat.{v} R)
   fun _ hg ↦ HopfAlgebra.mem_center.mpr
     (isCentralPoint_of_mem_quotientPointsSubgroup H I hI A hg)
 
-/-- A point killing the augmentation ideal is the identity point: the trivial subgroup has only
-the identity over every value algebra. -/
-theorem eq_one_of_mem_quotientPointsSubgroup_augmentation (H : _root_.CommHopfAlgCat.{v} R)
-    (A : CommAlgCat.{v} R) {g : HopfAlgebra.points (R := R) (H := H) A}
-    (hg : g ∈ quotientPointsSubgroup H (HopfIdeal.augmentation R ↥H) A) : g = 1 := by
-  refine WithConv.ofConv_injective (AlgHom.ext fun x ↦ ?_)
-  have hx : x - algebraMap R ↥H (Coalgebra.counit (R := R) x) ∈
-      HopfIdeal.augmentation R ↥H := by
-    rw [HopfIdeal.mem_augmentation]
-    simp
-  have hzero := (mem_quotientPointsSubgroup_iff H _ A g).mp hg _ hx
-  rw [map_sub, sub_eq_zero] at hzero
-  rw [hzero, AlgHom.commutes]
-  exact (AlgHom.convOne_apply x).symm
-
 /-- **The trivial subgroup is central.** -/
 theorem isCentral_augmentation (H : _root_.CommHopfAlgCat.{v} R) :
     (HopfIdeal.augmentation R ↥H).IsCentral := by
@@ -268,16 +253,16 @@ variable {R : Type u} [CommRing R]
 /-- Pulling a central Hopf ideal back along a bijective bialgebra morphism preserves centrality.
 Contravariantly, an isomorphism of affine group schemes carries central closed subgroup schemes
 to central closed subgroup schemes. -/
-theorem IsCentral.comap_of_bijective {H K : Type v} [CommRing H] [CommRing K]
+theorem IsCentral.comapOfSurjective_of_bijective {H K : Type v} [CommRing H] [CommRing K]
     [HopfAlgebra R H] [HopfAlgebra R K] {I : HopfIdeal R K} (hI : I.IsCentral)
     (f : H →ₐc[R] K) (hinj : Function.Injective f) (hsurj : Function.Surjective f) :
-    (I.comap f hsurj).IsCentral := by
+    (I.comapOfSurjective f hsurj).IsCentral := by
   apply (CommHopfAlgCat.isCentral_iff_forall_isCentralPoint
-    (_root_.CommHopfAlgCat.of R H) (I.comap f hsurj)).mpr
+    (_root_.CommHopfAlgCat.of R H) (I.comapOfSurjective f hsurj)).mpr
   intro A g hg
   let e := BialgEquiv.ofBijective f ⟨hinj, hsurj⟩
   let E := AlgHom.mapDomainMulEquiv (A := A) e
-  have hmem := CommHopfAlgCat.mapDomainMulEquiv_mem_quotientPointsSubgroup_comap_iff
+  have hmem := CommHopfAlgCat.mapDomainMulEquiv_mem_quotientPointsSubgroup_comapOfSurjective_iff
     f hinj hsurj I A
   have hg' : E.symm g ∈ CommHopfAlgCat.quotientPointsSubgroup
       (_root_.CommHopfAlgCat.of R K) I A := by

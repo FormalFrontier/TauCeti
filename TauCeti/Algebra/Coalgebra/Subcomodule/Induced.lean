@@ -24,6 +24,8 @@ subcomodules to be usable as comodules in their own right.
 
 * `TauCeti.Subcomodule.inducedCoact`: the coaction on the subtype of a subcomodule.
 * `TauCeti.Subcomodule.instComodule`: the induced right-comodule structure.
+* `TauCeti.Subcomodule.coact_coe_eq_tmul_one`: a fixed vector of a subcomodule is fixed in the
+  ambient comodule.
 * `TauCeti.Subcomodule.subtype`: the inclusion as a comodule morphism.
 * `TauCeti.Comodule.Hom.codRestrict`: a comodule morphism corestricted to a
   subcomodule containing its image.
@@ -215,6 +217,14 @@ theorem subtype_rTensor_coact (n : N) :
     (SMulMemClass.subtype N).rTensor C (Comodule.coact (R := R) (C := C) (M := N) n) =
       Comodule.coact (R := R) (C := C) (M := M) n :=
   subtype_rTensor_inducedCoact N n
+
+/-- A vector of a subcomodule whose inherited coaction is `v ↦ v ⊗ 1` is fixed by the ambient
+coaction too. -/
+theorem coact_coe_eq_tmul_one [One C] {n : N}
+    (hn : Comodule.coact (R := R) (C := C) (M := N) n = n ⊗ₜ[R] (1 : C)) :
+    Comodule.coact (R := R) (C := C) (M := M) (n : M) = (n : M) ⊗ₜ[R] (1 : C) := by
+  have h := congrArg ((SMulMemClass.subtype N).rTensor C) hn
+  rwa [subtype_rTensor_coact, LinearMap.rTensor_tmul, SMulMemClass.subtype_apply] at h
 
 /-- The subtype map of a subcomodule as a morphism of right comodules. -/
 noncomputable def subtype : Comodule.Hom R C N M where

@@ -66,7 +66,7 @@ private theorem dvd_of_isIntegral_of_natCast_mul_eq {k : Type*} [Field k] [CharZ
     rw [map_div₀, map_natCast, map_natCast, eq_comm, eq_div_iff hnk, mul_comm]
     exact h
   have hq : IsIntegral ℤ ((m : ℚ) / (n : ℚ)) :=
-    (isIntegral_algebraMap_iff (algebraMap ℚ k).injective).mp (hz' ▸ hz)
+    isIntegral_algebraMap_iff.mp (hz' ▸ hz)
   obtain ⟨y, hy⟩ := IsIntegrallyClosed.algebraMap_eq_of_integral hq
   have hyq : (y : ℚ) * (n : ℚ) = (m : ℚ) := by
     rw [← eq_intCast (algebraMap ℤ ℚ) y, hy, div_mul_cancel₀]
@@ -139,8 +139,7 @@ theorem finrank_dvd_card : finrank k V ∣ Nat.card G := by
   let _ : Fintype G := Fintype.ofFinite G
   have hcard : (Nat.card G : k) ≠ 0 := Nat.cast_ne_zero.mpr Nat.card_pos.ne'
   have : Invertible (Nat.card G : k) := invertibleOfNonzero hcard
-  have : Nontrivial ρ.asModule := IsSimpleModule.nontrivial k[G] ρ.asModule
-  have : Nontrivial V := ρ.asModuleEquiv.symm.toEquiv.nontrivial
+  have : Nontrivial V := IsIrreducible.nontrivial ‹ρ.IsIrreducible›
   refine dvd_of_isIntegral_of_natCast_mul_eq (k := k) ?_
     (finrank_mul_sum_centralCharacter_eq_card ρ) Module.finrank_pos.ne'
   refine IsIntegral.sum _ fun C _ => IsIntegral.mul

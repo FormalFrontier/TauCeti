@@ -13,7 +13,7 @@ public import Mathlib.GroupTheory.Torsion
 
 This file packages the canonical decomposition of a finite abelian group as the product of its
 prime-primary components. The equivalence sends a tuple of primary elements to their sum in the
-ambient group.
+ambient group. It also defines the part of an additive subgroup lying in one primary component.
 
 The proof follows the cardinality argument used by Mathlib's `Sylow.directProductOfNormal`:
 primary components for distinct primes have coprime cardinalities, and the product of those
@@ -23,6 +23,7 @@ and uses Mathlib's canonical `AddCommGroup.primaryComponent` subgroups.
 
 ## Main results
 
+* `AddSubgroup.primaryPart`: the part of a subgroup in one primary component.
 * `TauCeti.AddCommGroup.primaryDecomposition`: a finite abelian group is additively equivalent to
   the product of its prime-primary components.
 * `TauCeti.AddCommGroup.primaryDecomposition_apply`: the equivalence is the sum of the component
@@ -37,6 +38,23 @@ This is the group-theoretic input to the primary-decomposition part of Layer 3 o
 -/
 
 public section
+
+namespace AddSubgroup
+
+variable {G : Type*} [AddCommGroup G]
+
+/-- The `p`-primary part of `H`, regarded as a subgroup of the ambient `p`-primary component. -/
+def primaryPart (H : AddSubgroup G) (p : ℕ) :
+    AddSubgroup (AddCommGroup.primaryComponent G p) :=
+  H.comap (AddCommGroup.primaryComponent G p).subtype
+
+@[simp]
+theorem mem_primaryPart_iff (H : AddSubgroup G) (p : ℕ)
+    (x : AddCommGroup.primaryComponent G p) :
+    x ∈ primaryPart H p ↔ (x : G) ∈ H :=
+  Iff.rfl
+
+end AddSubgroup
 
 namespace TauCeti
 

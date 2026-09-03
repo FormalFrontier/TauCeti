@@ -7,6 +7,7 @@ module
 
 public import TauCeti.NumberTheory.HeckeRing.GL2.MultiplicationTable
 
+import TauCeti.Algebra.LinearRecurrence.OrderTwo
 import Mathlib.Tactic.LinearCombination
 import Mathlib.Tactic.Module
 
@@ -183,179 +184,50 @@ theorem heckeT_prime_pow_recurrence : ∀ k : ℕ, 0 < k →
 
 section Centrality
 
-/-! ## Centrality of the scalar operator
+/-! ## The product formula
 
-The scalar operator commutes with every summed operator, hence so do its powers. -/
-
-include hp in
-/-- Powers of the scalar operator commute with `T(pᵏ)`.
-
-The scalar operator is central by `mul_comm_of_antiInvolution`; that a commuting element's
-powers still commute is `Commute.pow_left`, so there is nothing to induct on here. -/
-private lemma commute_heckeTScalar_pow_heckeT_prime_pow (i k : ℕ) :
-    Commute (heckeTScalar p ^ i) (heckeT ⟨p ^ k, pow_pos hp.pos k⟩) :=
-  Commute.pow_left (HeckeCosetModule.mul_comm_of_antiInvolution ℤ (transposeAntiInvolution 2)
-    (transposeAntiInvolution_onHeckeCoset_eq_self 2) (heckeTScalar p)
-      (heckeT ⟨p ^ k, pow_pos hp.pos k⟩)) i
+`r ↦ T(pʳ)` is a second-order linear recurrence: `heckeT_prime_pow_recurrence` says it obeys
+`d (r + 2) = D * d (r + 1) - S * d r` with `D = T(p)` and `S = p • T(p,p)`. The product formula
+is therefore an instance of `TauCeti.linearRec₂_mul_eq_sum_pow_mul`, which holds for any such
+sequence over any ring in which `D` and `S` commute — and here they do, the scalar operator
+being central. -/
 
 include hp in
-/-- `T(p)` passes through a scalar power in front of any `T(pᵏ)`. -/
-private lemma heckeT_prime_mul_scalar_pow_mul (i k : ℕ) :
-    heckeT ⟨p, hp.pos⟩ * (heckeTScalar p ^ i * heckeT ⟨p ^ k, pow_pos hp.pos k⟩) =
-      heckeTScalar p ^ i * (heckeT ⟨p, hp.pos⟩ * heckeT ⟨p ^ k, pow_pos hp.pos k⟩) := by
-  rw [← mul_assoc, ← heckeT_prime_pow_one p hp,
-    (commute_heckeTScalar_pow_heckeT_prime_pow p hp i 1).symm.eq, mul_assoc]
+/-- `T(p)` commutes with the scalar operator `p • T(p,p)`.
 
-include hp in
-/-- Each summand of `T(p) · S` splits in two through the recurrence. -/
-private lemma heckeT_prime_pow_mul_summand_split (r s i : ℕ) (hi : i ≤ r) (hrs : r ≤ s) :
-    (p : ℤ) ^ i • (heckeTScalar p ^ i *
-        (heckeT ⟨p, hp.pos⟩ *
-          heckeT ⟨p ^ (r + 1 + s - 2 * i), pow_pos hp.pos (r + 1 + s - 2 * i)⟩)) =
-      (p : ℤ) ^ i • (heckeTScalar p ^ i *
-          heckeT ⟨p ^ (r + 2 + s - 2 * i), pow_pos hp.pos (r + 2 + s - 2 * i)⟩) +
-        (p : ℤ) ^ (i + 1) • (heckeTScalar p ^ (i + 1) *
-          heckeT ⟨p ^ (r + s - 2 * i), pow_pos hp.pos (r + s - 2 * i)⟩) := by
-  have h_rec := heckeT_prime_pow_recurrence p hp (r + 1 + s - 2 * i) (by omega)
-  rw [show r + 1 + s - 2 * i + 1 = r + 2 + s - 2 * i by omega,
-    show r + 1 + s - 2 * i - 1 = r + s - 2 * i by omega] at h_rec
-  have h_eq : heckeT ⟨p, hp.pos⟩ *
-      heckeT ⟨p ^ (r + 1 + s - 2 * i), pow_pos hp.pos (r + 1 + s - 2 * i)⟩ =
-      heckeT ⟨p ^ (r + 2 + s - 2 * i), pow_pos hp.pos (r + 2 + s - 2 * i)⟩ +
-        (p : ℤ) • (heckeTScalar p *
-          heckeT ⟨p ^ (r + s - 2 * i), pow_pos hp.pos (r + s - 2 * i)⟩) := by
-    rw [eq_sub_iff_add_eq] at h_rec
-    exact h_rec.symm
-  rw [h_eq, mul_add, smul_add]
-  congr 1
-  rw [mul_smul_comm, smul_smul, show (p : ℤ) ^ i * (p : ℤ) = (p : ℤ) ^ (i + 1) by ring]
-  congr 1
-  rw [← mul_assoc, ← pow_succ]
-
-include hp in
-/-- Distribute `T(p)` into each summand of a product-formula sum. -/
-private lemma heckeT_prime_mul_sum_distrib (r s : ℕ) :
-    heckeT ⟨p, hp.pos⟩ *
-      (∑ i ∈ Finset.range (r + 1 + 1), (p : ℤ) ^ i • (heckeTScalar p ^ i *
-        heckeT ⟨p ^ (r + 1 + s - 2 * i), pow_pos hp.pos (r + 1 + s - 2 * i)⟩)) =
-      ∑ i ∈ Finset.range (r + 1 + 1), (p : ℤ) ^ i • (heckeTScalar p ^ i *
-        (heckeT ⟨p, hp.pos⟩ *
-          heckeT ⟨p ^ (r + 1 + s - 2 * i), pow_pos hp.pos (r + 1 + s - 2 * i)⟩)) := by
-  rw [Finset.mul_sum]
-  refine Finset.sum_congr rfl fun i _ ↦ ?_
-  rw [mul_smul_comm, heckeT_prime_mul_scalar_pow_mul p hp i _, ← mul_assoc]
-
-include hp in
-/-- Distribute `p · T(p,p)` into a product-formula sum, shifting the index. -/
-private lemma heckeT_scalar_mul_sum_shift (r s : ℕ) :
-    (p : ℤ) • (heckeTScalar p *
-      ∑ i ∈ Finset.range (r + 1), (p : ℤ) ^ i • (heckeTScalar p ^ i *
-        heckeT ⟨p ^ (r + s - 2 * i), pow_pos hp.pos (r + s - 2 * i)⟩)) =
-      ∑ i ∈ Finset.range (r + 1), (p : ℤ) ^ (i + 1) • (heckeTScalar p ^ (i + 1) *
-        heckeT ⟨p ^ (r + s - 2 * i), pow_pos hp.pos (r + s - 2 * i)⟩) := by
-  rw [Finset.mul_sum, Finset.smul_sum]
-  refine Finset.sum_congr rfl fun i _ ↦ ?_
-  rw [mul_smul_comm, smul_smul, mul_comm ((p : ℤ)) ((p : ℤ) ^ i), ← pow_succ]
-  congr 1
-  rw [← mul_assoc, ← pow_succ']
-
-include hp in
-/-- The top-index summand expands through the recurrence at `p^(s−r−1)`. -/
-private lemma heckeT_prime_pow_mul_summand_split_succ (r s : ℕ) (hrs : r + 2 ≤ s) :
-    (p : ℤ) ^ (r + 1) • (heckeTScalar p ^ (r + 1) *
-        (heckeT ⟨p, hp.pos⟩ *
-          heckeT ⟨p ^ (r + 1 + s - 2 * (r + 1)),
-            pow_pos hp.pos (r + 1 + s - 2 * (r + 1))⟩)) =
-      (p : ℤ) ^ (r + 1) • (heckeTScalar p ^ (r + 1) *
-          heckeT ⟨p ^ (r + 2 + s - 2 * (r + 1)),
-            pow_pos hp.pos (r + 2 + s - 2 * (r + 1))⟩) +
-        (p : ℤ) ^ (r + 2) • (heckeTScalar p ^ (r + 2) *
-          heckeT ⟨p ^ (r + 2 + s - 2 * (r + 2)),
-            pow_pos hp.pos (r + 2 + s - 2 * (r + 2))⟩) := by
-  have hexp : r + 1 + s - 2 * (r + 1) = s - r - 1 := by omega
-  have h_rec := heckeT_prime_pow_recurrence p hp (s - r - 1) (by omega)
-  rw [show s - r - 1 + 1 = s - r by omega, show s - r - 1 - 1 = s - r - 2 by omega] at h_rec
-  have h_expand : heckeT ⟨p, hp.pos⟩ * heckeT ⟨p ^ (s - r - 1), pow_pos hp.pos (s - r - 1)⟩ =
-      heckeT ⟨p ^ (s - r), pow_pos hp.pos (s - r)⟩ +
-        (p : ℤ) • (heckeTScalar p * heckeT ⟨p ^ (s - r - 2), pow_pos hp.pos (s - r - 2)⟩) := by
-    rw [eq_sub_iff_add_eq] at h_rec
-    exact h_rec.symm
-  rw [hexp, h_expand, mul_add, smul_add, mul_smul_comm, smul_smul,
-    show (p : ℤ) ^ (r + 1) * (p : ℤ) = (p : ℤ) ^ (r + 2) by ring, ← mul_assoc,
-    show heckeTScalar p ^ (r + 1) * heckeTScalar p = heckeTScalar p ^ (r + 2) from
-      (pow_succ (heckeTScalar p) (r + 1)).symm]
-  rw [show s - r - 2 = r + 2 + s - 2 * (r + 2) by omega,
-    show s - r = r + 2 + s - 2 * (r + 1) by omega]
-
-include hp in
-/-- The inductive step of the product formula: from the formula at `r` and `r + 1` against
-`s`, it follows at `r + 2`. -/
-private lemma heckeT_prime_pow_mul_step (r s : ℕ) (hrs : r + 2 ≤ s)
-    (ih1 : heckeT ⟨p ^ (r + 1), pow_pos hp.pos (r + 1)⟩ * heckeT ⟨p ^ s, pow_pos hp.pos s⟩ =
-      ∑ i ∈ Finset.range (r + 1 + 1), (p : ℤ) ^ i • (heckeTScalar p ^ i *
-        heckeT ⟨p ^ (r + 1 + s - 2 * i), pow_pos hp.pos (r + 1 + s - 2 * i)⟩))
-    (ih0 : heckeT ⟨p ^ r, pow_pos hp.pos r⟩ * heckeT ⟨p ^ s, pow_pos hp.pos s⟩ =
-      ∑ i ∈ Finset.range (r + 1), (p : ℤ) ^ i • (heckeTScalar p ^ i *
-        heckeT ⟨p ^ (r + s - 2 * i), pow_pos hp.pos (r + s - 2 * i)⟩)) :
-    heckeT ⟨p ^ (r + 2), pow_pos hp.pos (r + 2)⟩ * heckeT ⟨p ^ s, pow_pos hp.pos s⟩ =
-      ∑ i ∈ Finset.range (r + 2 + 1), (p : ℤ) ^ i • (heckeTScalar p ^ i *
-        heckeT ⟨p ^ (r + 2 + s - 2 * i), pow_pos hp.pos (r + 2 + s - 2 * i)⟩) := by
-  have h_rec := heckeT_prime_pow_recurrence p hp (r + 1) (by omega)
-  simp only [show r + 1 - 1 = r by omega] at h_rec
-  rw [show r + 1 + 1 = r + 2 by omega] at h_rec
-  rw [h_rec, sub_mul, mul_assoc, ih1, smul_mul_assoc, mul_assoc (heckeTScalar p), ih0]
-  set Tp := heckeT ⟨p, hp.pos⟩
-  set Tpp := heckeTScalar p
-  have h_lhs1 := heckeT_prime_mul_sum_distrib p hp r s
-  have h_lhs2 := heckeT_scalar_mul_sum_shift p hp r s
-  have h_sum_split : ∑ i ∈ Finset.range (r + 1), (p : ℤ) ^ i • (Tpp ^ i *
-        (Tp * heckeT ⟨p ^ (r + 1 + s - 2 * i), pow_pos hp.pos (r + 1 + s - 2 * i)⟩)) =
-      (∑ i ∈ Finset.range (r + 1), (p : ℤ) ^ i • (Tpp ^ i *
-          heckeT ⟨p ^ (r + 2 + s - 2 * i), pow_pos hp.pos (r + 2 + s - 2 * i)⟩)) +
-        (∑ i ∈ Finset.range (r + 1), (p : ℤ) ^ (i + 1) • (Tpp ^ (i + 1) *
-          heckeT ⟨p ^ (r + s - 2 * i), pow_pos hp.pos (r + s - 2 * i)⟩)) := by
-    rw [← Finset.sum_add_distrib]
-    refine Finset.sum_congr rfl fun i hi ↦ ?_
-    rw [Finset.mem_range] at hi
-    exact heckeT_prime_pow_mul_summand_split p hp r s i (by omega) (by omega)
-  rw [h_lhs1, Finset.sum_range_succ, h_sum_split, h_lhs2]
-  set A := ∑ i ∈ Finset.range (r + 1), (p : ℤ) ^ i • (Tpp ^ i *
-    heckeT ⟨p ^ (r + 2 + s - 2 * i), pow_pos hp.pos (r + 2 + s - 2 * i)⟩)
-  set B := ∑ i ∈ Finset.range (r + 1), (p : ℤ) ^ (i + 1) • (Tpp ^ (i + 1) *
-    heckeT ⟨p ^ (r + s - 2 * i), pow_pos hp.pos (r + s - 2 * i)⟩)
-  set C := (p : ℤ) ^ (r + 1) • (Tpp ^ (r + 1) *
-    (Tp * heckeT ⟨p ^ (r + 1 + s - 2 * (r + 1)), pow_pos hp.pos (r + 1 + s - 2 * (r + 1))⟩))
-  -- `A`, `B`, `C` are `set` abbreviations, so the goal is already this sum up to defeq;
-  -- no rewrite witnesses that regrouping, hence `change` rather than `rw`
-  change A + B + C - B = _
-  rw [add_assoc, add_comm B C, ← add_assoc, add_sub_cancel_right,
-    show r + 2 + 1 = r + 1 + 1 + 1 by omega,
-    Finset.sum_range_succ, Finset.sum_range_succ, add_assoc]
-  congr 1
-  exact heckeT_prime_pow_mul_summand_split_succ p hp r s hrs
+The scalar operator is central by `mul_comm_of_antiInvolution`, and an integer multiple of a
+commuting element still commutes. -/
+private lemma commute_heckeT_prime_smul_heckeTScalar :
+    Commute (heckeT ⟨p, hp.pos⟩) ((p : ℤ) • heckeTScalar p) := by
+  refine Commute.smul_right ?_ _
+  rw [heckeT_prime p hp]
+  exact HeckeCosetModule.mul_comm_of_antiInvolution ℤ (transposeAntiInvolution 2)
+    (transposeAntiInvolution_onHeckeCoset_eq_self 2) (heckeTDiag 1 p) (heckeTScalar p)
 
 include hp in
 /-- **Shimura, Theorem 3.24(4)** — the prime-power product formula:
-`T(pʳ) · T(pˢ) = ∑_{i ≤ r} pⁱ · T(p,p)ⁱ · T(p^(r+s−2i))` for `r ≤ s`. -/
+`T(pʳ) · T(pˢ) = ∑_{i ≤ r} pⁱ · T(p,p)ⁱ · T(p^(r+s−2i))` for `r ≤ s`.
+
+This is `TauCeti.linearRec₂_mul_eq_sum_pow_mul` at `d = fun r ↦ T(pʳ)`, `D = T(p)` and
+`S = p • T(p,p)`; all that is left is to match the summand, since the general statement writes
+`S ^ i * _` where this one writes `pⁱ • (T(p,p)ⁱ * _)`. -/
 theorem heckeT_prime_pow_mul : ∀ r s : ℕ, r ≤ s →
     heckeT ⟨p ^ r, pow_pos hp.pos r⟩ * heckeT ⟨p ^ s, pow_pos hp.pos s⟩ =
       ∑ i ∈ Finset.range (r + 1), (p : ℤ) ^ i • (heckeTScalar p ^ i *
         heckeT ⟨p ^ (r + s - 2 * i), pow_pos hp.pos (r + s - 2 * i)⟩) := by
-  intro r
-  induction r using Nat.strongRecOn with
-  | _ r ih =>
-  intro s hrs
-  rcases r with _ | _ | r
-  · rw [Finset.sum_range_one, heckeT_prime_pow_zero p hp]
-    simp
-  · rw [Finset.sum_range_succ, Finset.sum_range_one]
-    simp only [pow_zero, one_smul, one_mul, pow_one]
-    conv_rhs => rw [show 0 + 1 + s - 2 * 0 = s + 1 by omega,
-      show 0 + 1 + s - 2 * 1 = s - 1 by omega]
-    rw [heckeT_prime_pow_one p hp]
-    exact (eq_sub_iff_add_eq.mp (heckeT_prime_pow_recurrence p hp s (by omega))).symm
-  · exact heckeT_prime_pow_mul_step p hp r s (by omega) (ih (r + 1) (by omega) s (by omega))
-      (ih r (by omega) s (by omega))
+  intro r s hrs
+  have hrec : ∀ n : ℕ, heckeT ⟨p ^ (n + 2), pow_pos hp.pos (n + 2)⟩ =
+      heckeT ⟨p, hp.pos⟩ * heckeT ⟨p ^ (n + 1), pow_pos hp.pos (n + 1)⟩ -
+        ((p : ℤ) • heckeTScalar p) * heckeT ⟨p ^ n, pow_pos hp.pos n⟩ := by
+    intro n
+    have h := heckeT_prime_pow_recurrence p hp (n + 1) (by omega)
+    rw [show n + 1 + 1 = n + 2 by omega, show n + 1 - 1 = n by omega] at h
+    rw [h, smul_mul_assoc]
+  rw [TauCeti.linearRec₂_mul_eq_sum_pow_mul (d := fun n ↦ heckeT ⟨p ^ n, pow_pos hp.pos n⟩)
+    (heckeT_prime_pow_zero p hp) (heckeT_prime_pow_one p hp)
+    (commute_heckeT_prime_smul_heckeTScalar p hp) hrec hrs]
+  exact Finset.sum_congr rfl fun i _ ↦ by rw [smul_pow, smul_mul_assoc]
+
 
 end Centrality
 

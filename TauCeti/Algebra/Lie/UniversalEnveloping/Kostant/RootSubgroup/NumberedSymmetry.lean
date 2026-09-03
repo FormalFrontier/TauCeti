@@ -5,7 +5,7 @@ Authors: Claude
 -/
 module
 
-public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Elementary
+public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Elementary.Basic
 public import TauCeti.RingTheory.Nilpotent.Conjugation
 
 /-!
@@ -14,7 +14,7 @@ public import TauCeti.RingTheory.Nilpotent.Conjugation
 Let `U_ℤ = kostantForm e h` act on a rational representation `V` preserving an additive subgroup
 `M ≤ V`, so that the divided-power exponentials of the distinguished root vectors `eᵢ` generate the
 elementary group `E(A) ≤ Aut_A(A ⊗[ℤ] M)` of
-`TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Elementary`.
+`TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Elementary.Basic`.
 
 A *symmetry of the numbered data* is a surjective self-map `σ` of the index set together with a
 `ℚ`-linear automorphism `θ` of `V` that preserves `M` and carries the action of `eᵢ` to the action

@@ -10,29 +10,35 @@ public import Mathlib.LinearAlgebra.Matrix.BilinearForm
 public import Mathlib.RingTheory.TensorProduct.Free
 import Mathlib.Algebra.Algebra.Rat
 import Mathlib.RingTheory.Localization.BaseChange
-public import TauCeti.Geometry.Hodge.Conjugation
+public import TauCeti.Geometry.Hodge.BaseChange
 
 /-!
-# Complexification of an integral bilinear form
+# Scalar extension of an integral bilinear form
 
-An integral bilinear form on a lattice extends uniquely to a complex bilinear form on any
-abstract complexification of that lattice. This file constructs that extension,
-`TauCeti.Hodge.integralFormToComplex`, from Mathlib's base change of a bilinear form along the
-canonical tensor model, and characterizes it by its values on integral vectors.
+An integral bilinear form on a lattice extends uniquely to a bilinear form on any abstract base
+change of that lattice. This file constructs that extension,
+`TauCeti.Hodge.integralFormBaseChange`, from Mathlib's base change of a bilinear form along the
+canonical tensor model, and characterizes it by its values on integral vectors. The rational and
+the complex extension are the two cases the Hodge theory uses, and they agree on the purely
+rational vectors of the complexification.
 
-Two properties make the extension usable in Hodge theory. It is *real*: conjugating both arguments
-conjugates the value, because lattice-induced conjugation fixes the integral vectors. And it is
-nondegenerate as soon as the integral form is: nondegeneracy is preserved first by localization from
-`ℤ` to `ℚ` and then by scalar extension from `ℚ` to `ℂ`.
+Two properties make the complex extension usable in Hodge theory. It is *real*: conjugating both
+arguments conjugates the value, because lattice-induced conjugation fixes the integral vectors. And
+it is nondegenerate as soon as the integral form is: nondegeneracy is preserved first by
+localization from `ℤ` to `ℚ` and then by scalar extension from `ℚ` to `ℂ`.
 
 ## Main declarations
 
-* `TauCeti.Hodge.integralFormToComplex`: the complex bilinear form extending an integral one.
-* `TauCeti.Hodge.integralFormToComplex_ι`: its values on integral vectors.
-* `TauCeti.Hodge.integralFormToComplex_unique`: it is the only such extension.
-* `TauCeti.Hodge.integralFormToComplex_conj`: it commutes with lattice-induced conjugation.
-* `TauCeti.Hodge.integralFormToComplex_nondegenerate`: it inherits nondegeneracy from the integral
-  form.
+* `TauCeti.Hodge.integralFormBaseChange`: the bilinear form extending an integral one along an
+  abstract base change of its lattice.
+* `TauCeti.Hodge.integralFormBaseChange_ι`: its values on integral vectors.
+* `TauCeti.Hodge.integralFormBaseChange_unique`: it is the only such extension.
+* `TauCeti.Hodge.integralFormBaseChange_conj`: the complex extension commutes with lattice-induced
+  conjugation.
+* `TauCeti.Hodge.integralFormBaseChange_nondegenerate`: the complex extension inherits
+  nondegeneracy from the integral form.
+* `TauCeti.Hodge.integralFormBaseChange_rationalToComplexLinearEquiv_one_tmul`: the complexified
+  form computes the rationalified one on purely rational vectors.
 -/
 
 public section
@@ -47,44 +53,51 @@ variable {V : Type u} {Vℂ : Type v}
 variable [AddCommGroup V] [AddCommGroup Vℂ] [Module ℂ Vℂ]
 variable {ιℂ : V →ₗ[ℤ] Vℂ}
 
-/-- The complexification of an integral bilinear form, transported from Mathlib's base change
-along the canonical tensor model to an abstract complexification. -/
-noncomputable def integralFormToComplex (hℂ : IsBaseChange ℂ ιℂ)
-    (Q : LinearMap.BilinForm ℤ V) : LinearMap.BilinForm ℂ Vℂ :=
-  (Q.baseChange ℂ).compl₁₂ hℂ.equiv.symm.toLinearMap hℂ.equiv.symm.toLinearMap
+section BaseChange
 
-/-- On integral vectors the complexified form is the integral form. -/
+variable {A : Type*} {V_A : Type*} [CommRing A] [AddCommGroup V_A] [Module A V_A]
+variable {ι : V →ₗ[ℤ] V_A}
+
+/-- The scalar extension of an integral bilinear form along an abstract base change of its
+lattice, transported from Mathlib's base change along the canonical tensor model. -/
+noncomputable def integralFormBaseChange (h : IsBaseChange A ι)
+    (Q : LinearMap.BilinForm ℤ V) : LinearMap.BilinForm A V_A :=
+  (Q.baseChange A).compl₁₂ h.equiv.symm.toLinearMap h.equiv.symm.toLinearMap
+
+/-- On integral vectors the extended form is the integral form. -/
 @[simp]
-theorem integralFormToComplex_ι (hℂ : IsBaseChange ℂ ιℂ) (Q : LinearMap.BilinForm ℤ V)
-    (x y : V) : integralFormToComplex hℂ Q (ιℂ x) (ιℂ y) = (Q x y : ℂ) := by
-  simp [integralFormToComplex, hℂ.equiv_symm_apply]
+theorem integralFormBaseChange_ι (h : IsBaseChange A ι) (Q : LinearMap.BilinForm ℤ V)
+    (x y : V) : integralFormBaseChange h Q (ι x) (ι y) = (Q x y : A) := by
+  simp [integralFormBaseChange, h.equiv_symm_apply]
 
-/-- The complexified form is the unique complex bilinear form restricting to the integral one. -/
-theorem integralFormToComplex_unique (hℂ : IsBaseChange ℂ ιℂ) (Q : LinearMap.BilinForm ℤ V)
-    (B : LinearMap.BilinForm ℂ Vℂ) (hB : ∀ x y : V, B (ιℂ x) (ιℂ y) = (Q x y : ℂ)) :
-    B = integralFormToComplex hℂ Q := by
-  refine hℂ.algHom_ext _ _ fun x ↦ hℂ.algHom_ext _ _ fun y ↦ ?_
+/-- The extended form is the unique bilinear form restricting to the integral one. -/
+theorem integralFormBaseChange_unique (h : IsBaseChange A ι) (Q : LinearMap.BilinForm ℤ V)
+    (B : LinearMap.BilinForm A V_A) (hB : ∀ x y : V, B (ι x) (ι y) = (Q x y : A)) :
+    B = integralFormBaseChange h Q := by
+  refine h.algHom_ext _ _ fun x ↦ h.algHom_ext _ _ fun y ↦ ?_
   simp [hB x y]
 
-/-- Complexification turns the flip of an integral form into the flip of the complexified form. -/
+/-- Scalar extension turns the flip of an integral form into the flip of the extended form. -/
 @[simp]
-theorem integralFormToComplex_flip (hℂ : IsBaseChange ℂ ιℂ) (Q : LinearMap.BilinForm ℤ V) :
-    (integralFormToComplex hℂ Q).flip = integralFormToComplex hℂ Q.flip :=
-  integralFormToComplex_unique hℂ _ _ fun x y ↦ by simp
+theorem integralFormBaseChange_flip (h : IsBaseChange A ι) (Q : LinearMap.BilinForm ℤ V) :
+    (integralFormBaseChange h Q).flip = integralFormBaseChange h Q.flip :=
+  integralFormBaseChange_unique h _ _ fun x y ↦ by simp
 
-/-- Complexification commutes with integer multiples of an integral form. -/
+/-- Scalar extension commutes with integer multiples of an integral form. -/
 @[simp]
-theorem integralFormToComplex_zsmul (hℂ : IsBaseChange ℂ ιℂ) (k : ℤ)
+theorem integralFormBaseChange_zsmul (h : IsBaseChange A ι) (k : ℤ)
     (Q : LinearMap.BilinForm ℤ V) :
-    integralFormToComplex hℂ (k • Q) = k • integralFormToComplex hℂ Q :=
-  (integralFormToComplex_unique hℂ _ _ fun x y ↦ by simp).symm
+    integralFormBaseChange h (k • Q) = k • integralFormBaseChange h Q :=
+  (integralFormBaseChange_unique h _ _ fun x y ↦ by simp).symm
+
+end BaseChange
 
 /-- Conjugating the second argument of a complexified integral form against an integral first
 argument conjugates its value. -/
-theorem integralFormToComplex_conj_right (hℂ : IsBaseChange ℂ ιℂ) (Q : LinearMap.BilinForm ℤ V)
+theorem integralFormBaseChange_conj_right (hℂ : IsBaseChange ℂ ιℂ) (Q : LinearMap.BilinForm ℤ V)
     (x : V) (y : Vℂ) :
-    integralFormToComplex hℂ Q (ιℂ x) (latticeConj hℂ y) =
-      starRingEnd ℂ (integralFormToComplex hℂ Q (ιℂ x) y) := by
+    integralFormBaseChange hℂ Q (ιℂ x) (latticeConj hℂ y) =
+      starRingEnd ℂ (integralFormBaseChange hℂ Q (ιℂ x) y) := by
   induction y using hℂ.inductionOn with
   | zero => simp
   | tmul w => simp
@@ -94,13 +107,13 @@ theorem integralFormToComplex_conj_right (hℂ : IsBaseChange ℂ ιℂ) (Q : Li
 /-- Conjugating both arguments of a complexified integral form conjugates its value: the form
 takes real values on the lattice. -/
 @[simp]
-theorem integralFormToComplex_conj (hℂ : IsBaseChange ℂ ιℂ) (Q : LinearMap.BilinForm ℤ V)
+theorem integralFormBaseChange_conj (hℂ : IsBaseChange ℂ ιℂ) (Q : LinearMap.BilinForm ℤ V)
     (x y : Vℂ) :
-    integralFormToComplex hℂ Q (latticeConj hℂ x) (latticeConj hℂ y) =
-      starRingEnd ℂ (integralFormToComplex hℂ Q x y) := by
+    integralFormBaseChange hℂ Q (latticeConj hℂ x) (latticeConj hℂ y) =
+      starRingEnd ℂ (integralFormBaseChange hℂ Q x y) := by
   induction x using hℂ.inductionOn generalizing y with
   | zero => simp
-  | tmul v => simpa using integralFormToComplex_conj_right hℂ Q v y
+  | tmul v => simpa using integralFormBaseChange_conj_right hℂ Q v y
   | smul z x hx => simp [hx]
   | add x₁ x₂ hx₁ hx₂ => simp [hx₁, hx₂]
 
@@ -196,16 +209,53 @@ private theorem integralFormToCanonicalComplex_nondegenerate {Q : LinearMap.Bili
   exact LinearMap.BilinForm.Nondegenerate.congr e hn
 
 /-- Complexification preserves nondegeneracy of an integral bilinear form. -/
-theorem integralFormToComplex_nondegenerate (hℂ : IsBaseChange ℂ ιℂ)
+theorem integralFormBaseChange_nondegenerate (hℂ : IsBaseChange ℂ ιℂ)
     {Q : LinearMap.BilinForm ℤ V} (hQ : Q.Nondegenerate) :
-    (integralFormToComplex hℂ Q).Nondegenerate := by
-  have hform : integralFormToComplex hℂ Q =
+    (integralFormBaseChange hℂ Q).Nondegenerate := by
+  have hform : integralFormBaseChange hℂ Q =
       LinearMap.BilinForm.congr hℂ.equiv (Q.baseChange ℂ) := by
     ext x y
-    simp only [integralFormToComplex, LinearMap.compl₁₂_apply,
+    simp only [integralFormBaseChange, LinearMap.compl₁₂_apply,
       LinearMap.BilinForm.congr_apply, LinearEquiv.coe_coe]
   rw [hform]
   exact LinearMap.BilinForm.Nondegenerate.congr hℂ.equiv
     (integralFormToCanonicalComplex_nondegenerate hQ)
+
+/-! ### Comparing the rational and the complex extension -/
+
+section Rational
+
+variable {Vℚ : Type*} [AddCommGroup Vℚ] [Module ℚ Vℚ] {ιℚ : V →ₗ[ℤ] Vℚ}
+
+/-- On an integral vector and a purely rational vector the complexified form takes the value of
+the rationalified form. -/
+private theorem integralFormBaseChange_rationalToComplexLinearEquiv_ι (hℚ : IsBaseChange ℚ ιℚ)
+    (hℂ : IsBaseChange ℂ ιℂ) (Q : LinearMap.BilinForm ℤ V) (v : V) (y : Vℚ) :
+    integralFormBaseChange hℂ Q (ιℂ v) (rationalToComplexLinearEquiv hℚ hℂ (1 ⊗ₜ[ℚ] y)) =
+      ((integralFormBaseChange hℚ Q (ιℚ v) y : ℚ) : ℂ) := by
+  induction y using hℚ.inductionOn with
+  | zero => simp
+  | tmul w => simp
+  | smul q y hy =>
+      simp [TensorProduct.tmul_smul, ← algebraMap_smul ℂ q, map_smul, hy]
+  | add y₁ y₂ h₁ h₂ =>
+      simp [TensorProduct.tmul_add, h₁, h₂]
+
+/-- The two scalar extensions of an integral form agree: on purely rational vectors of the
+complexification, the complexified form takes the values of the rationalified form. -/
+theorem integralFormBaseChange_rationalToComplexLinearEquiv_one_tmul (hℚ : IsBaseChange ℚ ιℚ)
+    (hℂ : IsBaseChange ℂ ιℂ) (Q : LinearMap.BilinForm ℤ V) (x y : Vℚ) :
+    integralFormBaseChange hℂ Q (rationalToComplexLinearEquiv hℚ hℂ (1 ⊗ₜ[ℚ] x))
+        (rationalToComplexLinearEquiv hℚ hℂ (1 ⊗ₜ[ℚ] y)) =
+      ((integralFormBaseChange hℚ Q x y : ℚ) : ℂ) := by
+  induction x using hℚ.inductionOn generalizing y with
+  | zero => simp
+  | tmul v => simpa using integralFormBaseChange_rationalToComplexLinearEquiv_ι hℚ hℂ Q v y
+  | smul q x hx =>
+      simp [TensorProduct.tmul_smul, ← algebraMap_smul ℂ q, map_smul, hx]
+  | add x₁ x₂ h₁ h₂ =>
+      simp [TensorProduct.tmul_add, h₁, h₂]
+
+end Rational
 
 end TauCeti.Hodge

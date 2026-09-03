@@ -9,6 +9,7 @@ public import Mathlib.RepresentationTheory.Invariants
 public import Mathlib.RepresentationTheory.Irreducible
 public import TauCeti.LinearAlgebra.BilinearForm.Basic
 public import TauCeti.LinearAlgebra.BilinearForm.Isometry.Basic
+public import TauCeti.RepresentationTheory.Irreducible
 
 /-!
 # Invariant bilinear forms on a representation
@@ -72,6 +73,9 @@ representation, is what makes `G` a group.
   flip of such a form is the form itself or its negative.
 * `TauCeti.Representation.IsInvariantForm.isSymm_or_isAlt`: away from characteristic two -- the
   hypothesis `(2 : k) ≠ 0` -- such a form is symmetric or alternating.
+* `TauCeti.Representation.exists_isSymm_or_exists_isAlt_or_invariantForms_eq_bot`: the case split
+  that dichotomy gives, that an irreducible representation carries a nonzero invariant symmetric
+  form, or a nonzero invariant alternating one, or no nonzero invariant form at all.
 
 ## Implementation notes
 
@@ -374,9 +378,7 @@ other is Mathlib's `LinearMap.BilinForm.Nondegenerate.ne_zero`, once the space a
 representation acts on is known to be nonzero. -/
 theorem IsInvariantForm.nondegenerate_iff_ne_zero [ρ.IsIrreducible] (hB : IsInvariantForm ρ B) :
     B.Nondegenerate ↔ B ≠ 0 := by
-  -- Irreducibility makes `ρ.asModule` a simple, hence nonzero, module over the group algebra.
-  have : Nontrivial ρ.asModule := IsSimpleModule.nontrivial (MonoidAlgebra k G) _
-  have : Nontrivial V := ρ.asModuleEquiv.symm.toEquiv.nontrivial
+  have : Nontrivial V := IsIrreducible.nontrivial ‹ρ.IsIrreducible›
   exact ⟨fun h => h.ne_zero, hB.nondegenerate⟩
 
 variable [FiniteDimensional k V] [IsAlgClosed k] [ρ.IsIrreducible]
@@ -451,6 +453,24 @@ theorem IsInvariantForm.isSymm_or_isAlt (h2 : (2 : k) ≠ 0) (hB : IsInvariantFo
       simpa using this
     have : (2 : k) * B x x = 0 := by linear_combination hx
     exact (mul_eq_zero.mp this).resolve_left h2
+
+variable (ρ) in
+/-- **An irreducible representation carries a symmetric, an alternating, or no invariant form.**
+Away from characteristic two, over an algebraically closed field it carries a nonzero invariant
+symmetric form, or a nonzero invariant alternating form, or no nonzero invariant form at all.  This
+is the case split the three values of the Frobenius-Schur indicator are read off from, for a finite
+group in `TauCeti/RepresentationTheory/CharacterTable/FrobeniusSchur/Trichotomy.lean` and for a
+compact group in `TauCeti/RepresentationTheory/Compact/FrobeniusSchur/InvariantForm.lean`. -/
+theorem exists_isSymm_or_exists_isAlt_or_invariantForms_eq_bot (h2 : (2 : k) ≠ 0) :
+    (∃ B : BilinForm k V, IsInvariantForm ρ B ∧ B ≠ 0 ∧ B.IsSymm) ∨
+      (∃ B : BilinForm k V, IsInvariantForm ρ B ∧ B ≠ 0 ∧ B.IsAlt) ∨ invariantForms ρ = ⊥ := by
+  by_cases hbot : invariantForms ρ = ⊥
+  · exact Or.inr (Or.inr hbot)
+  · obtain ⟨C, hCmem, hC0⟩ := (Submodule.ne_bot_iff _).mp hbot
+    have hC : IsInvariantForm ρ C := mem_invariantForms.mp hCmem
+    rcases hC.isSymm_or_isAlt h2 hC0 with hsymm | halt
+    · exact Or.inl ⟨C, hC, hC0, hsymm⟩
+    · exact Or.inr (Or.inl ⟨C, hC, hC0, halt⟩)
 
 end Irreducible
 

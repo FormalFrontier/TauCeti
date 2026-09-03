@@ -216,10 +216,9 @@ theorem hasCauchyPVAt_inv_sub_twoRayCorner {z₀ u v : ℂ} (huv : ‖u‖ = ‖
         refine MeasureTheory.AEStronglyMeasurable.congr
           (f := fun t : ℝ => if ‖twoRayCorner z₀ u v t - z₀‖ > ε then
             (twoRayCorner z₀ u v t - z₀)⁻¹ * (if t < 0 then -u else v) else 0) ?_ ?_
-        · refine (Measurable.ite ?_ ?_ measurable_const).aestronglyMeasurable
-          · exact measurableSet_lt measurable_const
-              (((measurable_twoRayCorner z₀ u v).sub measurable_const).norm)
-          · exact (((measurable_twoRayCorner z₀ u v).sub measurable_const).inv).mul hstep
+        · exact aestronglyMeasurable_truncated (measurable_twoRayCorner z₀ u v).aemeasurable
+            ((((measurable_twoRayCorner z₀ u v).sub measurable_const).inv).mul
+              hstep).aestronglyMeasurable
         · filter_upwards [deriv_twoRayCorner_ae z₀ u v R] with s hs
           rw [hs]
       · intro s hs

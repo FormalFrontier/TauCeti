@@ -11,22 +11,25 @@ public import TauCeti.Algebra.Coalgebra.Subcomodule.Quotient
 public import TauCeti.LinearAlgebra.Matrix.Triangular
 
 /-!
-# Flags of upper-unitriangular comodules
+# Flags of upper-triangular comodules
 
 Let `M` be a finite free comodule with basis `b₀, ..., bₙ₋₁`. Its coefficient matrix is upper
-unitriangular exactly when, for every `i`, the coaction of `bᵢ` is congruent to `bᵢ ⊗ 1` modulo
-the span of the preceding basis vectors. Thus the standard basis flag is comodule-stable and its
-successive one-dimensional factors are trivial.
+triangular with diagonal `c` exactly when, for every `i`, the coaction of `bᵢ` is congruent to
+`bᵢ ⊗ cᵢ` modulo the span of the preceding basis vectors. Thus the standard basis flag is
+comodule-stable and its successive one-dimensional factors have weights `cᵢ`. The unitriangular
+case `c = 1` says those factors are trivial.
 
-This is the flag interface needed for the Kolchin induction in Layer 5, "Unipotent groups", of
-the ReductiveGroups roadmap. Once that induction supplies successive fixed vectors, the criterion
-here produces the upper-unitriangular coefficient matrix used to embed a faithful representation
-into `Uₙ`.
+This is the flag interface needed for the Kolchin inductions in Layer 5, "Unipotent groups", of
+the ReductiveGroups roadmap. Once such an induction supplies successive fixed vectors, the
+criterion here produces the upper-unitriangular coefficient matrix used to embed a faithful
+representation into `Uₙ`.
 
 ## Main declarations
 
-* `TauCeti.Comodule.coefficientMatrix_isUpperUnitriangular_iff`: the quotient-by-preceding-span
-  criterion for an upper-unitriangular coefficient matrix.
+* `TauCeti.Comodule.coefficientMatrix_isUpperTriangular_and_diag_iff`: the
+  quotient-by-preceding-span criterion for an upper-triangular coefficient matrix with prescribed
+  diagonal.
+* `TauCeti.Comodule.coefficientMatrix_isUpperUnitriangular_iff`: its unitriangular special case.
 * `TauCeti.Comodule.flagSubcomodule`: the standard flag of an upper-triangular comodule, bundled as
   subcomodules.
 * `TauCeti.Comodule.quotient_mk_basis_ne_zero`: each successive basis class is nonzero in the
@@ -56,20 +59,21 @@ variable {k : Type u} {H : Type v} {M : Type w} {n : ℕ}
 variable [CommRing k] [AddCommMonoid H] [Module k H] [Coalgebra k H]
 variable [AddCommGroup M] [Module k M] [Comodule k H M]
 
-/-- A coefficient matrix is upper unitriangular exactly when each basis vector is fixed by the
-coaction modulo the span of the preceding basis vectors. -/
-theorem coefficientMatrix_isUpperUnitriangular_iff [One H] (b : Basis (Fin n) k M) :
-    (coefficientMatrix (C := H) b).IsUpperUnitriangular ↔
+/-- A coefficient matrix is upper triangular with prescribed diagonal exactly when each basis
+vector has the prescribed coaction modulo the span of the preceding basis vectors. -/
+theorem coefficientMatrix_isUpperTriangular_and_diag_iff (b : Basis (Fin n) k M) (c : Fin n → H) :
+    ((coefficientMatrix (C := H) b).IsUpperTriangular ∧
+        ∀ i : Fin n, coefficientMatrix (C := H) b i i = c i) ↔
       ∀ i : Fin n,
         TensorProduct.map (b.flag i.castSucc).mkQ (LinearMap.id : H →ₗ[k] H)
             (coact (C := H) (b i)) =
-          Submodule.Quotient.mk (b i) ⊗ₜ[k] (1 : H) := by
+          Submodule.Quotient.mk (b i) ⊗ₜ[k] c i := by
   constructor
-  · intro h i
+  · rintro ⟨htri, hdiag⟩ i
     rw [coact_basis_eq_sum_coefficientMatrix, map_sum]
     classical
     rw [Finset.sum_eq_single i]
-    · simp [h.apply_diag i]
+    · simp [hdiag i]
     · intro j _ hji
       rcases lt_trichotomy j i with hji' | hji' | hij
       · rw [TensorProduct.map_tmul, LinearMap.id_apply]
@@ -77,11 +81,11 @@ theorem coefficientMatrix_isUpperUnitriangular_iff [One H] (b : Basis (Fin n) k 
           b.self_mem_flag (Fin.castSucc_lt_castSucc_iff.mpr hji')
         simp [(Submodule.Quotient.mk_eq_zero _).mpr hjflag]
       · exact (hji hji').elim
-      · simp [h.isUpperTriangular hij]
+      · simp [htri hij]
     · simp
   · intro h
     have hcoeff (i j : Fin n) (hji : j ≤ i) :
-        coefficientMatrix (C := H) b i j = if i = j then 1 else 0 := by
+        coefficientMatrix (C := H) b i j = if i = j then c i else 0 := by
       let q := (b.flag j.castSucc).mkQ
       let phi : (M ⧸ b.flag j.castSucc) →ₗ[k] k :=
         (b.flag j.castSucc).liftQ (b.coord i)
@@ -99,14 +103,21 @@ theorem coefficientMatrix_isUpperUnitriangular_iff [One H] (b : Basis (Fin n) k 
       · subst i
         simpa [phi, q, Submodule.liftQ_apply, Basis.coord_apply] using heq
       · simpa [phi, q, Submodule.liftQ_apply, Basis.coord_apply, hij] using heq
-    rw [Matrix.isUpperUnitriangular_def]
-    refine ⟨?_, ?_⟩
-    · intro i j hji
-      have hji' : j < i := by simpa only [id_eq] using hji
+    refine ⟨fun i j hji ↦ ?_, fun i ↦ ?_⟩
+    · have hji' : j < i := by simpa only [id_eq] using hji
       simpa [hji'.ne'] using hcoeff i j hji'.le
-    · intro i
-      rw [hcoeff i i le_rfl]
-      simp
+    · simpa using hcoeff i i le_rfl
+
+/-- A coefficient matrix is upper unitriangular exactly when each basis vector is fixed by the
+coaction modulo the span of the preceding basis vectors. -/
+theorem coefficientMatrix_isUpperUnitriangular_iff [One H] (b : Basis (Fin n) k M) :
+    (coefficientMatrix (C := H) b).IsUpperUnitriangular ↔
+      ∀ i : Fin n,
+        TensorProduct.map (b.flag i.castSucc).mkQ (LinearMap.id : H →ₗ[k] H)
+            (coact (C := H) (b i)) =
+          Submodule.Quotient.mk (b i) ⊗ₜ[k] (1 : H) := by
+  rw [Matrix.isUpperUnitriangular_def]
+  exact coefficientMatrix_isUpperTriangular_and_diag_iff b fun _ ↦ 1
 
 /-- The coaction of a basis vector in a stable initial segment belongs to the tensor product of
 that initial segment with the coalgebra. -/

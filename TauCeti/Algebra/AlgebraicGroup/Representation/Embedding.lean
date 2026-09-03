@@ -10,6 +10,7 @@ public import TauCeti.Algebra.Coalgebra.Comodule.MatrixCoefficient.FiniteType
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Scheme
 public import TauCeti.AlgebraicGeometry.AffineGroupScheme.ClosedImmersion
 import TauCeti.AlgebraicGeometry.AffineGroupScheme.Equivalence
+import TauCeti.CategoryTheory.Comma.Over
 
 /-!
 # Embedding a finite-type affine group in a general linear group
@@ -236,9 +237,6 @@ theorem exists_isClosedImmersion_generalLinear
   obtain ⟨M, n, b, hb⟩ :=
     Comodule.exists_isClosedImmersion_coordinateGroupSchemeHom (k := k) (H := A)
   refine ⟨n, e.hom ≫ Comodule.coordinateGroupSchemeHom (H := A) b, ?_⟩
-  let _ : IsIso e.hom.hom.hom.left :=
-    ((Over.forget (Spec (CommRingCat.of k))).mapIso
-      ((Grp.forget (Over (Spec (CommRingCat.of k)))).mapIso e)).isIso_hom
   simp only [Grp.comp', Mon.comp_hom', Over.comp_left]
   rw [MorphismProperty.cancel_left_of_respectsIso (P := @IsClosedImmersion)]
   exact hb

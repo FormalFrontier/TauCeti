@@ -23,6 +23,8 @@ reconstruction should be built on this full subcategory rather than on all comod
 ## Main definitions
 
 * `TauCeti.ComoduleCat.isFG`: the finite-generation object property on `ComoduleCat`.
+* `TauCeti.ComoduleCat.isFG_isClosedUnderIsomorphisms`: finite generation is invariant under
+  comodule isomorphisms.
 * `TauCeti.FGComoduleCat`: finitely generated right comodules as a full subcategory.
 * `TauCeti.FGComoduleCat.incl`: the inclusion into all comodules.
 * `forget₂ (FGComoduleCat R C) (ComoduleCat R C)`: the forgetful functor to all comodules.
@@ -67,6 +69,15 @@ module. -/
 theorem isFG_iff (M : ComoduleCat.{u, v, w} R C) :
     isFG (R := R) (C := C) M ↔ Module.Finite R M :=
   Iff.rfl
+
+/-- Finite generation of a comodule is preserved by comodule isomorphisms. -/
+noncomputable instance isFG_isClosedUnderIsomorphisms :
+    (isFG (R := R) (C := C) :
+      ObjectProperty (ComoduleCat.{u, v, w} R C)).IsClosedUnderIsomorphisms where
+  of_iso {M N} e h := by
+    rw [isFG_iff] at h ⊢
+    let _ : Module.Finite R M := h
+    exact Module.Finite.equiv (isoToLinearEquiv (R := R) (C := C) e)
 
 /-- The zero comodule is finitely generated. -/
 theorem finite_zero : Module.Finite R (zero R C : ComoduleCat.{u, v, w} R C) := by

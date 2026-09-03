@@ -126,8 +126,7 @@ inequality. -/
 theorem pseudoHyperbolicExpr_le_add_div_one_add_mul_of_norm_lt_one {z w : ℂ}
     (hz : ‖z‖ < 1) (hw : ‖w‖ < 1) :
     pseudoHyperbolicExpr z w ≤ (‖z‖ + ‖w‖) / (1 + ‖z‖ * ‖w‖) := by
-  have hDpos : 0 < ‖1 - (starRingEnd ℂ) w * z‖ :=
-    norm_pos_iff.mpr (one_sub_conj_mul_ne_zero_of_norm_lt_one hz hw)
+  have hDpos : 0 < ‖1 - (starRingEnd ℂ) w * z‖ := norm_one_sub_conj_mul_pos_of_norm_lt_one hz hw
   have hABpos : (0 : ℝ) < 1 + ‖z‖ * ‖w‖ := by positivity
   have hdiff := sq_sub_sq_triangle z w
   have htabs : |(z * (starRingEnd ℂ) w).re| ≤ ‖z‖ * ‖w‖ := by
@@ -186,14 +185,11 @@ theorem pseudoHyperbolicExpr_eq_add_div_one_add_mul_iff_of_norm_lt_one {z w : �
     (hz : ‖z‖ < 1) (hw : ‖w‖ < 1) :
     pseudoHyperbolicExpr z w = (‖z‖ + ‖w‖) / (1 + ‖z‖ * ‖w‖) ↔
       (z * (starRingEnd ℂ) w).re = -(‖z‖ * ‖w‖) := by
-  have hDpos : 0 < ‖1 - (starRingEnd ℂ) w * z‖ :=
-    norm_pos_iff.mpr (one_sub_conj_mul_ne_zero_of_norm_lt_one hz hw)
+  have hDpos : 0 < ‖1 - (starRingEnd ℂ) w * z‖ := norm_one_sub_conj_mul_pos_of_norm_lt_one hz hw
   have hABpos : (0 : ℝ) < 1 + ‖z‖ * ‖w‖ := by positivity
   have hdiff := sq_sub_sq_triangle z w
-  have hposfac : 0 < (1 - ‖z‖ ^ 2) * (1 - ‖w‖ ^ 2) := by
-    have h₁ : 0 < 1 - ‖z‖ ^ 2 := by nlinarith [norm_nonneg z]
-    have h₂ : 0 < 1 - ‖w‖ ^ 2 := by nlinarith [norm_nonneg w]
-    exact mul_pos h₁ h₂
+  have hposfac : 0 < (1 - ‖z‖ ^ 2) * (1 - ‖w‖ ^ 2) :=
+    mul_pos (one_sub_sq_norm_pos_of_norm_lt_one hz) (one_sub_sq_norm_pos_of_norm_lt_one hw)
   rw [pseudoHyperbolicExpr_def, norm_div, div_eq_div_iff hDpos.ne' hABpos.ne']
   constructor
   · intro h
@@ -221,8 +217,7 @@ of the one behind `pseudoHyperbolicExpr_le_add_div_one_add_mul_of_norm_lt_one`. 
 theorem abs_sub_div_one_sub_mul_le_pseudoHyperbolicExpr_of_norm_lt_one {z w : ℂ}
     (hz : ‖z‖ < 1) (hw : ‖w‖ < 1) :
     |‖z‖ - ‖w‖| / (1 - ‖z‖ * ‖w‖) ≤ pseudoHyperbolicExpr z w := by
-  have hDpos : 0 < ‖1 - (starRingEnd ℂ) w * z‖ :=
-    norm_pos_iff.mpr (one_sub_conj_mul_ne_zero_of_norm_lt_one hz hw)
+  have hDpos : 0 < ‖1 - (starRingEnd ℂ) w * z‖ := norm_one_sub_conj_mul_pos_of_norm_lt_one hz hw
   have hABpos : (0 : ℝ) < 1 - ‖z‖ * ‖w‖ := by
     nlinarith [norm_nonneg z, norm_nonneg w]
   have hsq := sq_sub_sq_reverse_triangle z w
@@ -258,15 +253,12 @@ theorem pseudoHyperbolicExpr_eq_abs_sub_div_one_sub_mul_iff_of_norm_lt_one {z w 
     (hz : ‖z‖ < 1) (hw : ‖w‖ < 1) :
     pseudoHyperbolicExpr z w = |‖z‖ - ‖w‖| / (1 - ‖z‖ * ‖w‖) ↔
       (z * (starRingEnd ℂ) w).re = ‖z‖ * ‖w‖ := by
-  have hDpos : 0 < ‖1 - (starRingEnd ℂ) w * z‖ :=
-    norm_pos_iff.mpr (one_sub_conj_mul_ne_zero_of_norm_lt_one hz hw)
+  have hDpos : 0 < ‖1 - (starRingEnd ℂ) w * z‖ := norm_one_sub_conj_mul_pos_of_norm_lt_one hz hw
   have hABpos : (0 : ℝ) < 1 - ‖z‖ * ‖w‖ := by
     nlinarith [norm_nonneg z, norm_nonneg w]
   have hsq := sq_sub_sq_reverse_triangle z w
-  have hposfac : 0 < (1 - ‖z‖ ^ 2) * (1 - ‖w‖ ^ 2) := by
-    have h₁ : 0 < 1 - ‖z‖ ^ 2 := by nlinarith [norm_nonneg z]
-    have h₂ : 0 < 1 - ‖w‖ ^ 2 := by nlinarith [norm_nonneg w]
-    exact mul_pos h₁ h₂
+  have hposfac : 0 < (1 - ‖z‖ ^ 2) * (1 - ‖w‖ ^ 2) :=
+    mul_pos (one_sub_sq_norm_pos_of_norm_lt_one hz) (one_sub_sq_norm_pos_of_norm_lt_one hw)
   rw [pseudoHyperbolicExpr_def, norm_div, div_eq_div_iff hDpos.ne' hABpos.ne']
   constructor
   · intro h

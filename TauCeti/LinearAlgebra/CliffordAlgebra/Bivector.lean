@@ -7,6 +7,7 @@ module
 
 import Mathlib.Tactic.NoncommRing
 import Mathlib.Data.Fin.Tuple.Reflection
+import TauCeti.LinearAlgebra.CliffordAlgebra.VolumeElement
 public import Mathlib.LinearAlgebra.ExteriorPower.Basic
 public import TauCeti.LinearAlgebra.CliffordAlgebra.Filtration
 
@@ -38,6 +39,11 @@ Layer 9 CAR worked instance.
 
 * `CliffordAlgebra.bivector_lie_ι`: its commutator action on a generator is the
   infinitesimal rotation determined by `QuadraticMap.polar`.
+* `CliffordAlgebra.ι_mul_ι_eq_bivector_add`: the product of two generators is
+  its Clifford bivector plus its scalar symmetric part.
+* `CliffordAlgebra.bivector_eq_ι_mul_ι_of_isOrtho` and
+  `CliffordAlgebra.bivector_mul_self_of_isOrtho`: for orthogonal generators the
+  bivector is their plain product, and its square is the scalar `-(Q a * Q b)`.
 * `CliffordAlgebra.bivectorExterior_apply_ιMulti`: the exterior-square map on a
   decomposable bivector.
 * `CliffordAlgebra.equivExterior_bivector`,
@@ -78,6 +84,36 @@ noncomputable def bivector (a b : M) : CliffordAlgebra Q :=
 theorem bivector_def (a b : M) :
     bivector Q a b = (⅟ (2 : R)) • (ι Q a * ι Q b - ι Q b * ι Q a) := by
   rw [bivector]
+
+/-- The product of two Clifford generators is its bivector plus its scalar symmetric part. -/
+theorem ι_mul_ι_eq_bivector_add (a b : M) :
+    ι Q a * ι Q b =
+      bivector Q a b +
+        (⅟ (2 : R)) • algebraMap R (CliffordAlgebra Q) (QuadraticMap.polar Q a b) := by
+  have hcar := ι_mul_ι_add_swap (Q := Q) a b
+  symm
+  rw [bivector_def, ← smul_add, ← hcar]
+  match_scalars
+  · simpa only [one_add_one_eq_two] using invOf_mul_self (2 : R)
+  · ring
+
+/-- **For orthogonal generators the bivector is the plain product.** The scalar symmetric part of
+`ι a * ι b` is `⅟2` times the polar form of the two vectors, so it disappears exactly when they
+are orthogonal. -/
+theorem bivector_eq_ι_mul_ι_of_isOrtho {a b : M} (h : Q.IsOrtho a b) :
+    bivector Q a b = ι Q a * ι Q b := by
+  rw [ι_mul_ι_eq_bivector_add, h.polar_eq_zero, map_zero, smul_zero, add_zero]
+
+/-- **The square of the bivector of two orthogonal generators is a scalar**, namely
+`-(Q a * Q b)`. In particular it vanishes as soon as one of the two vectors is isotropic, which is
+what makes a root vector of a hyperbolic pair act by a square-zero operator on a Clifford
+module.
+
+This is `CliffordAlgebra.ι_mul_ι_mul_self_of_isOrtho`, the bivector being the plain product. -/
+theorem bivector_mul_self_of_isOrtho {a b : M} (h : Q.IsOrtho a b) :
+    bivector Q a b * bivector Q a b = -algebraMap R (CliffordAlgebra Q) (Q a * Q b) := by
+  rw [bivector_eq_ι_mul_ι_of_isOrtho Q h]
+  exact ι_mul_ι_mul_self_of_isOrtho h
 
 /-- The alternating map whose value on two vectors is their half-normalized Clifford bivector. -/
 noncomputable def bivectorAlternating : M [⋀^Fin 2]→ₗ[R] CliffordAlgebra Q :=

@@ -84,13 +84,11 @@ theorem commute_rootSubgroupPoints (hij : i ≠ j) (hkl : k ≠ l)
     (f g : WithConv (AdditiveGroup.coordinateHopfAlgebra R →ₐ[R] A)) :
     Commute (rootSubgroupPoints (R := R) (A := A) hij f)
       (rootSubgroupPoints (R := R) (A := A) hkl g) := by
-  rw [commute_iff_eq]
-  apply (pointsMulEquiv (R := R) (A := A) N).injective
-  rw [map_mul, map_mul, pointsMulEquiv_rootSubgroupPoints hij f,
-    pointsMulEquiv_rootSubgroupPoints hkl g]
-  exact (_root_.Matrix.SpecialLinearGroup.commute_transvection hij hkl hjk hli
+  refine Commute.of_map (pointsMulEquiv (R := R) (A := A) N).injective ?_
+  rw [pointsMulEquiv_rootSubgroupPoints hij f, pointsMulEquiv_rootSubgroupPoints hkl g]
+  exact _root_.Matrix.SpecialLinearGroup.commute_transvection hij hkl hjk hli
     (Multiplicative.toAdd (AdditiveGroup.gaPointsMulEquiv f))
-    (Multiplicative.toAdd (AdditiveGroup.gaPointsMulEquiv g))).eq
+    (Multiplicative.toAdd (AdditiveGroup.gaPointsMulEquiv g))
 
 /-- **The type-A Chevalley commutator relation on algebra-valued points of `SLₙ`.** For three
 distinct indices,

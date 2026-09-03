@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.Group.Prod
+public import Mathlib.Analysis.Normed.Module.Ball.Homeomorph
 public import Mathlib.Geometry.Manifold.ChartedSpace
 public import Mathlib.Topology.LocallyClosed
 
@@ -58,6 +59,8 @@ discs (topological sliceness) and for stating the annulus conjecture.
 
 * `TauCeti.isSliceChart_iff`: a chart is a slice chart iff, on its source, membership in the set is
   read off as membership of the coordinates in the slice.
+* `TauCeti.IsSliceChart.exists_target_eq`: a slice chart can be shrunk to have any prescribed open
+  subset of its target as its target.
 * `TauCeti.isLocallyFlat_iff_isSliceEmbedding`, `TauCeti.isLocallyFlat_iff` and
   `TauCeti.IsLocallyFlat.exists_isSliceChart`: the defining flattening charts, as the slice
   embedding for the standard slice, in pointwise form, and as an eliminator.
@@ -77,7 +80,10 @@ discs (topological sliceness) and for stating the annulus conjecture.
 * `TauCeti.isLocallyFlat_iff_isOpenEmbedding`: in codimension zero, locally flat means open.
 * `TauCeti.IsLocallyFlat.isLocallyClosed_range`: a locally flat image is locally closed, as soon as
   the origin of the complementary model is closed.
-* `TauCeti.isLocallyFlat_prodMkLeft`: the standard model `x ↦ (x, 0)` is locally flat.
+* `TauCeti.isLocallyFlat_prodMkLeft`: over a domain charted on `F`, the standard model
+  `x ↦ (x, 0)` is locally flat.
+* `TauCeti.IsLocallyFlat.exists_isOpenEmbedding_prod`: a locally flat embedding with normed
+  complementary model has local product neighbourhoods.
 
 ## Implementation notes
 
@@ -141,7 +147,7 @@ public section
 
 namespace TauCeti
 
-open Set Topology
+open Metric Set Topology
 
 variable {M N N' P F F' : Type*} [TopologicalSpace M] [TopologicalSpace N] [TopologicalSpace N']
   [TopologicalSpace P] [TopologicalSpace F] [TopologicalSpace F']
@@ -187,6 +193,26 @@ theorem mem_iff (h : IsSliceChart φ S A) {y : M} (hy : y ∈ φ.source) : y ∈
 /-- On the source of a slice chart, the flattened set is cut out by the slice. -/
 theorem source_inter_eq (h : IsSliceChart φ S A) : φ.source ∩ A = φ.source ∩ φ ⁻¹' S :=
   Set.ext fun _ => and_congr_right fun hy => h.mem_iff hy
+
+/-- A slice chart can be shrunk so that its target becomes a prescribed open subset of the old
+target, without changing the map. -/
+theorem exists_target_eq (h : IsSliceChart φ S A) {T : Set F} (hT : IsOpen T)
+    (hTφ : T ⊆ φ.target) :
+    ∃ ψ : OpenPartialHomeomorph M F, ⇑ψ = ⇑φ ∧ ψ.source = φ.source ∩ φ ⁻¹' T ∧ ψ.target = T ∧
+      IsSliceChart ψ S A := by
+  refine ⟨φ.restrOpen (φ.source ∩ φ ⁻¹' T) (φ.isOpen_inter_preimage hT), rfl, ?_, ?_, ?_⟩
+  · rw [OpenPartialHomeomorph.restrOpen_source, inter_eq_right.2 inter_subset_left]
+  · ext z
+    simp only [OpenPartialHomeomorph.restrOpen_toPartialEquiv, PartialEquiv.restr_target,
+      mem_inter_iff, mem_preimage, OpenPartialHomeomorph.coe_toPartialEquiv_symm]
+    refine ⟨fun hz => ?_, fun hz => ⟨hTφ hz, φ.map_target (hTφ hz), ?_⟩⟩
+    · have := hz.2.2
+      rwa [φ.right_inv hz.1] at this
+    · rw [φ.right_inv (hTφ hz)]
+      exact hz
+  · refine isSliceChart_iff.2 fun y hy => ?_
+    rw [OpenPartialHomeomorph.restrOpen_source] at hy
+    exact h.mem_iff hy.1
 
 /-- Restricting a slice chart to an open set restricts the flattened set to the same open set. -/
 theorem restrOpen (h : IsSliceChart φ S A) {V : Set M} (hV : IsOpen V) :
@@ -634,17 +660,134 @@ theorem isLocallyFlat_iff_isOpenEmbedding [Subsingleton F'] [ChartedSpace (F × 
   rw [IsLocallyFlat, h0]
   exact isSliceEmbedding_univ_iff
 
-/-- The standard local model: the inclusion of `F` as the slice `F × {0}` of `F × F'` is locally
-flat. With `F = ℝⁿ` and `F' = ℝᵏ` this is the coordinate slice `ℝⁿ × {0} ⊆ ℝⁿ⁺ᵏ` that local
+/-- The standard local model: over a space `N` charted on `F`, the inclusion of `N` as the slice
+`N × {0}` of `N × F'` is locally flat, its flattening charts being the charts of `N` times the
+identity. With `N = F = ℝⁿ` and `F' = ℝᵏ` this is the coordinate slice `ℝⁿ × {0} ⊆ ℝⁿ⁺ᵏ` that local
 flatness is modelled on. -/
-theorem isLocallyFlat_prodMkLeft : IsLocallyFlat F F' (fun x : F => (x, (0 : F'))) := by
-  have hrange : (range fun x : F => (x, (0 : F'))) = (univ : Set F) ×ˢ ({0} : Set F') := by
-    ext p
-    simp [Prod.ext_iff, eq_comm]
-  refine ⟨isEmbedding_prodMkLeft 0, fun x => ⟨OpenPartialHomeomorph.refl (F × F'), mem_univ _, ?_⟩⟩
-  rw [hrange]
-  exact isSliceChart_iff.2 fun y _ => Iff.rfl
+theorem isLocallyFlat_prodMkLeft [ChartedSpace F N] :
+    IsLocallyFlat F F' (fun x : N => (x, (0 : F'))) := by
+  refine ⟨isEmbedding_prodMkLeft 0, fun x => ⟨(chartAt F x).prod (OpenPartialHomeomorph.refl F'),
+    ⟨mem_chart_source F x, mem_univ _⟩, isSliceChart_iff.2 fun p _ => ?_⟩⟩
+  simp [Prod.ext_iff, eq_comm]
 
 end StandardSlice
+
+/-!
+### Local product neighbourhoods
+
+A flattening chart is already a local trivialisation once its target has been shrunk to a box, so
+a locally flat embedding has local product neighbourhoods in any codimension.
+-/
+
+section ProductNeighborhood
+
+/-- An open partial homeomorphism turns an open embedding into its target into an open embedding
+into its source. This is the transport step of the constructions below. -/
+private theorem isOpenEmbedding_symm_comp {X : Type*} [TopologicalSpace X]
+    (ψ : OpenPartialHomeomorph M F) {g : X → F} (hg : IsOpenEmbedding g)
+    (hgr : range g ⊆ ψ.target) : IsOpenEmbedding (ψ.symm ∘ g) :=
+  .of_continuous_injective_isOpenMap
+    (ψ.continuousOn_symm.comp_continuous hg.continuous fun q => hgr (mem_range_self q))
+    (fun q q' hqq' => hg.injective (ψ.symm.injOn
+      (ψ.symm_source ▸ hgr (mem_range_self q)) (ψ.symm_source ▸ hgr (mem_range_self q')) hqq'))
+    fun O hO => by
+      rw [image_comp]
+      exact ψ.isOpen_image_symm_of_subset_target (hg.isOpenMap O hO)
+        ((image_subset_range g O).trans hgr)
+
+variable {G : Type*} [NormedAddCommGroup G] [NormedSpace ℝ G]
+
+/-- A slice chart whose target is a box `u ×ˢ ball 0 r` exhibits its source as a product of the
+part of the domain lying under it with the complementary model, the map being the zero slice.
+This is the geometric content of the local product statement; the general case reduces to it by
+shrinking the chart. -/
+private theorem exists_isOpenEmbedding_prod_of_target_eq_prod {ψ : OpenPartialHomeomorph M (F × G)}
+    {u : Set F} {r : ℝ} (hu : IsOpen u) (hr : 0 < r) (hψt : ψ.target = u ×ˢ ball (0 : G) r)
+    (hψ : IsSliceChart ψ ((univ : Set F) ×ˢ ({0} : Set G)) (range f)) (hf : IsEmbedding f) :
+    ∃ b : (f ⁻¹' ψ.source) × G → M,
+      IsOpenEmbedding b ∧ ∀ y : (f ⁻¹' ψ.source), b (y, 0) = f y := by
+  -- Read the normal factor of the box as the whole complementary model.
+  set ρ := OpenPartialHomeomorph.univBall (0 : G) r with hρ
+  have hρs : ρ.source = univ := OpenPartialHomeomorph.univBall_source _ _
+  have hρr : range ρ = ball (0 : G) r := by
+    rw [← image_univ, ← hρs, OpenPartialHomeomorph.image_source_eq_target, hρ,
+      OpenPartialHomeomorph.univBall_target _ hr]
+  have hρ0 : ρ 0 = 0 := OpenPartialHomeomorph.univBall_apply_zero ..
+  -- `σ` presents the source of the chart as a product.
+  set j : u × G → F × G := Prod.map ((↑) : u → F) ρ with hj
+  have hje : IsOpenEmbedding j :=
+    hu.isOpenEmbedding_subtypeVal.prodMap (ρ.isOpenEmbedding hρs)
+  have hjr : range j = ψ.target := by
+    rw [hj, range_prodMap, Subtype.range_coe, hρr, hψt]
+  set σ : u × G → M := ψ.symm ∘ j with hσ
+  have hσe : IsOpenEmbedding σ := isOpenEmbedding_symm_comp ψ hje hjr.subset
+  -- The zero slice of `σ` and the restriction of `f` are two embeddings with the same image.
+  set e₁ : (f ⁻¹' ψ.source) → M := f ∘ ((↑) : (f ⁻¹' ψ.source) → N) with he₁
+  set e₂ : u → M := fun v => σ (v, 0) with he₂
+  have he₂' : ∀ v : u, e₂ v = ψ.symm ((v : F), (0 : G)) := fun v => by
+    simp [he₂, hσ, hj, hρ0]
+  have hr₁ : range e₁ = ψ.source ∩ range f := by
+    rw [he₁, range_comp, Subtype.range_coe, image_preimage_eq_inter_range]
+  have hr₂ : range e₂ = ψ.source ∩ range f := by
+    ext m
+    constructor
+    · rintro ⟨v, rfl⟩
+      have hmem : ((v : F), (0 : G)) ∈ ψ.target := by
+        rw [hψt]; exact ⟨v.2, mem_ball_self hr⟩
+      have hs : ψ.symm ((v : F), (0 : G)) ∈ ψ.source := ψ.map_target hmem
+      rw [he₂' v]
+      exact ⟨hs, (hψ.mem_iff hs).2 (by rw [ψ.right_inv hmem]; exact ⟨mem_univ _, rfl⟩)⟩
+    · rintro ⟨hms, hmr⟩
+      have h2 : (ψ m).2 = 0 := ((hψ.mem_iff hms).1 hmr).2
+      have h1 : (ψ m).1 ∈ u := by
+        have hmt := ψ.map_source hms
+        rw [hψt] at hmt
+        exact hmt.1
+      refine ⟨⟨(ψ m).1, h1⟩, ?_⟩
+      have hpair : (((ψ m).1 : F), (0 : G)) = ψ m := by rw [← h2]
+      rw [he₂' ⟨(ψ m).1, h1⟩, hpair]
+      exact ψ.left_inv hms
+  -- Two embeddings with the same image have homeomorphic domains, over the ambient space.
+  have hb₁ : IsEmbedding e₁ := hf.comp IsEmbedding.subtypeVal
+  have hb₂ : IsEmbedding e₂ := hσe.isEmbedding.comp (isEmbedding_prodMkLeft 0)
+  have hkey : ∀ z : range e₂, e₂ (hb₂.toHomeomorph.symm z) = (z : M) := fun z => by
+    rw [← Topology.IsEmbedding.toHomeomorph_apply_coe hb₂]
+    exact congrArg Subtype.val (hb₂.toHomeomorph.apply_symm_apply z)
+  set η : (f ⁻¹' ψ.source) ≃ₜ u :=
+    hb₁.toHomeomorph.trans ((Homeomorph.setCongr (hr₁.trans hr₂.symm)).trans hb₂.toHomeomorph.symm)
+    with hη
+  refine ⟨σ ∘ Prod.map η id, hσe.comp (η.isOpenEmbedding.prodMap IsOpenEmbedding.id), fun y => ?_⟩
+  have hy : e₂ (η y) = e₁ y := by
+    rw [hη, Homeomorph.trans_apply, Homeomorph.trans_apply, hkey]
+    exact Topology.IsEmbedding.toHomeomorph_apply_coe hb₁ y
+  simpa [he₁, he₂] using hy
+
+/-- A locally flat embedding has **local product neighbourhoods**: every point of the domain has
+an open neighbourhood `U` such that an open subset of the ambient space is a product `U × G`, in
+which the map is the zero slice.
+
+The complementary model is only asked to be a real normed space, so this covers every
+codimension. What is codimension-sensitive is patching these local products into a global one,
+which is not proved here. -/
+theorem IsLocallyFlat.exists_isOpenEmbedding_prod (h : IsLocallyFlat F G f) (x : N) :
+    ∃ U : Set N, IsOpen U ∧ x ∈ U ∧ ∃ b : U × G → M,
+      IsOpenEmbedding b ∧ ∀ y : U, b (y, 0) = f y := by
+  obtain ⟨φ, hφx, hφ⟩ := h.exists_isSliceChart x
+  -- The chart reads `f x` on the zero slice.
+  have hfx : φ (f x) = ((φ (f x)).1, (0 : G)) :=
+    Prod.ext rfl ((hφ.mem_iff hφx).1 ⟨x, rfl⟩).2
+  -- Shrink the chart until its target is a box.
+  obtain ⟨u, w, hu, hw, hxu, h0w, huw⟩ :=
+    isOpen_prod_iff.1 φ.open_target _ _ (hfx ▸ φ.map_source hφx)
+  obtain ⟨r, hr, hrw⟩ := Metric.isOpen_iff.1 hw 0 h0w
+  obtain ⟨ψ, -, hψs, hψt, hψ⟩ :=
+    hφ.exists_target_eq (hu.prod isOpen_ball) fun z hz => huw ⟨hz.1, hrw hz.2⟩
+  have hψx : f x ∈ ψ.source := by
+    rw [hψs]
+    exact ⟨hφx, by rw [mem_preimage, hfx]; exact ⟨hxu, mem_ball_self hr⟩⟩
+  exact ⟨f ⁻¹' ψ.source, ψ.open_source.preimage h.continuous, hψx,
+    exists_isOpenEmbedding_prod_of_target_eq_prod hu hr hψt hψ h.isEmbedding⟩
+
+end ProductNeighborhood
 
 end TauCeti

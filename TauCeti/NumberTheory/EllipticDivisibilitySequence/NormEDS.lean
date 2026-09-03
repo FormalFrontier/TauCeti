@@ -7,6 +7,7 @@ module
 
 public import TauCeti.NumberTheory.EllipticDivisibilitySequence.Descent
 public import TauCeti.NumberTheory.EllipticDivisibilitySequence.Universal
+import Mathlib.Tactic.LinearCombination
 import TauCeti.NumberTheory.EllipticDivisibilitySequence.Ext
 
 /-!

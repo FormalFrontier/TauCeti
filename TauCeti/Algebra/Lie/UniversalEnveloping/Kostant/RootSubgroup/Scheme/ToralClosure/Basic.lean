@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.WeightTorus
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Weight.Torus
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.Generated.Basic
 public import TauCeti.AlgebraicGeometry.GroupScheme.ClosedSubgroup
 
@@ -115,6 +115,36 @@ theorem le_kostantToralDefiningIdeal_iff
     · exact hroot i
     · exact htorus
 
+/-- **A surjective endomorphism of the ambient coordinate Hopf algebra which reindexes the
+root-subgroup coordinate maps and carries the weight-torus coordinate map to itself up to an
+injective postcomposition pulls the toral defining ideal into itself.**
+
+The conclusion is one containment, not invariance: an automorphism fixing the ideal needs this
+lemma once for itself and once for its inverse. -/
+theorem kostantToralDefiningIdeal_comapOfSurjective_le_of_comp_eq
+    (φ : GeneralLinear.coordinateHopfAlgebra ℤ n ⟶ GeneralLinear.coordinateHopfAlgebra ℤ n)
+    (hφ : Function.Surjective φ.hom) (s : I → I)
+    (t : (DiagonalizableGroup.coordinateRing ℤ (SplitTorus.characterGroup κ)).obj ⟶
+      (DiagonalizableGroup.coordinateRing ℤ (SplitTorus.characterGroup κ)).obj)
+    (ht : Function.Injective t.hom)
+    (hroot : ∀ i, φ ≫ kostantRootSubgroupCoordinateMap e h ρ M hM (s i) (hnil (s i)) b =
+      kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b)
+    (htorus : φ ≫ GeneralLinear.weightTorusCoordinateMap wt =
+      GeneralLinear.weightTorusCoordinateMap wt ≫ t) :
+    (kostantToralDefiningIdeal e h ρ M hM hnil b wt).comapOfSurjective φ.hom hφ ≤
+      kostantToralDefiningIdeal e h ρ M hM hnil b wt := by
+  refine CommHopfAlgCat.comapOfSurjective_commonKernelHopfIdeal_le_of_comp_eq_comp
+    (kostantToralGeneratorMap e h ρ M hM hnil b wt) φ hφ
+    (fun j => match j with | .inl i => .inl (s i) | .inr _ => .inr ())
+    (fun j => match j with | .inl _ => 𝟙 _ | .inr _ => t) ?_ ?_
+  · rintro (i | u)
+    · exact fun _ _ hxy => hxy
+    · exact ht
+  · rintro (i | u)
+    · simpa only [kostantToralGeneratorMap, kostantToralGeneratorCodomain, Category.comp_id]
+        using hroot i
+    · simpa only [kostantToralGeneratorMap, kostantToralGeneratorCodomain] using htorus
+
 /-- Every represented root-subgroup coordinate map kills the toral defining ideal. -/
 theorem kostantToralDefiningIdeal_toIdeal_le_root_ker (i : I) :
     (kostantToralDefiningIdeal e h ρ M hM hnil b wt).toIdeal ≤
@@ -193,6 +223,16 @@ theorem mkQuotient_comp_kostantRootSubgroupToralCoordinateMap (i : I) :
   CommHopfAlgCat.mkQuotient_comp_commonKernelLift
     (kostantToralGeneratorMap e h ρ M hM hnil b wt) (.inl i)
 
+/-- A surjective root-subgroup coordinate map remains surjective after factoring through the
+toral closure. -/
+theorem kostantRootSubgroupToralCoordinateMap_surjective_of_surjective (i : I)
+    (hi : Function.Surjective
+      (kostantRootSubgroupCoordinateMap e h ρ M hM i (hnil i) b).hom) :
+    Function.Surjective
+      (kostantRootSubgroupToralCoordinateMap e h ρ M hM hnil b wt i).hom :=
+  CommHopfAlgCat.commonKernelLift_surjective_of_surjective
+    (kostantToralGeneratorMap e h ρ M hM hnil b wt) (.inl i) hi
+
 /-- The coordinate map through which the represented weight torus factors into the toral
 closure. -/
 noncomputable def kostantWeightTorusToralCoordinateMap :
@@ -228,6 +268,17 @@ theorem kostantRootSubgroupToToral_def (i : I) :
         (AlgebraicGeometry.hopfSpec (CommRingCat.of ℤ)).map
           (kostantRootSubgroupToralCoordinateMap e h ρ M hM hnil b wt i).op :=
   by rw [kostantRootSubgroupToToral]
+
+/-- A root-subgroup morphism into the toral closure is a closed immersion whenever its factored
+coordinate map is surjective. -/
+theorem isClosedImmersion_kostantRootSubgroupToToral_of_surjective (i : I)
+    (hi : Function.Surjective
+      (kostantRootSubgroupToralCoordinateMap e h ρ M hM hnil b wt i).hom) :
+    IsClosedImmersion (kostantRootSubgroupToToral e h ρ M hM hnil b wt i).hom.hom.left := by
+  rw [kostantRootSubgroupToToral_def]
+  exact (CommHopfAlgCat.isClosedImmersion_eqToHom_comp_hopfSpec_map_iff
+    (AdditiveGroup.groupScheme_def ℤ)
+    (kostantRootSubgroupToralCoordinateMap e h ρ M hM hnil b wt i)).2 hi
 
 /-- Factoring a root subgroup through the toral closure and then including into `GLₙ` recovers
 the original represented root-subgroup morphism. -/

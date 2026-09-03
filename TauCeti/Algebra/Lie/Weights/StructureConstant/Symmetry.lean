@@ -38,6 +38,8 @@ here.
 
 ## Main results
 
+* `TauCeti.IsSl2System.mul_structureConstant_eq_of_map_eq_smul_neg`: the general scalar relation
+  induced by a Lie endomorphism carrying three root vectors to their opposites.
 * `TauCeti.IsSl2System.structureConstant_neg_neg_of_hom`: compatibility with a Lie endomorphism
   exchanging root vectors with the negatives of their opposites.
 * `TauCeti.IsSl2System.structureConstant_mul_killingForm_eq`: the cyclic Killing-form symmetry.
@@ -68,6 +70,35 @@ variable {x : Weight K H L → L} (hx : IsSl2System x)
 
 include hx
 
+/-- **The scalars are multiplicative along a root sum, up to the structure constants.** Applying a
+Lie endomorphism to `⁅x α, x β⁆ = N(α, β) • x γ` turns it into the bracket at the opposite
+roots. -/
+theorem mul_structureConstant_eq_of_map_eq_smul_neg (e : L →ₗ⁅K⁆ L) {a b c : K}
+    (heα : e (x α) = a • x (-α)) (heβ : e (x β) = b • x (-β))
+    (heγ : e (x γ) = c • x (-γ)) :
+    c * hx.structureConstant α β γ hγ hαβ = a * b *
+      hx.structureConstant (-α) (-β) (-γ) hγ.neg (by
+        rw [Weight.coe_neg, Weight.coe_neg, Weight.coe_neg, hαβ]
+        abel) := by
+  have hneg : ((-γ : Weight K H L) : H → K) =
+      ((-α : Weight K H L) : H → K) + ((-β : Weight K H L) : H → K) := by
+    rw [Weight.coe_neg, Weight.coe_neg, Weight.coe_neg, hαβ]
+    abel
+  refine smul_left_injective K (hx.ne_zero (-γ) hγ.neg) ?_
+  calc (c * hx.structureConstant α β γ hγ hαβ) • x (-γ)
+      = hx.structureConstant α β γ hγ hαβ • (c • x (-γ)) := by
+        rw [smul_smul, mul_comm]
+    _ = hx.structureConstant α β γ hγ hαβ • e (x γ) := by rw [heγ]
+    _ = e (hx.structureConstant α β γ hγ hαβ • x γ) := (map_smul _ _ _).symm
+    _ = e ⁅x α, x β⁆ := by rw [← hx.lie_eq_structureConstant_smul α β γ hγ hαβ]
+    _ = ⁅e (x α), e (x β)⁆ := e.map_lie (x α) (x β)
+    _ = ⁅a • x (-α), b • x (-β)⁆ := by rw [heα, heβ]
+    _ = (a * b) • ⁅x (-α), x (-β)⁆ := by rw [smul_lie, lie_smul, smul_smul]
+    _ = (a * b) • (hx.structureConstant (-α) (-β) (-γ) hγ.neg hneg • x (-γ)) := by
+        rw [hx.lie_eq_structureConstant_smul (-α) (-β) (-γ) hγ.neg]
+    _ = (a * b * hx.structureConstant (-α) (-β) (-γ) hγ.neg hneg) • x (-γ) := by
+        rw [smul_smul]
+
 /-- If a Lie endomorphism sends the root vectors at `α`, `β`, and `γ = α + β` to the negatives of
 their opposite root vectors, then it sends the corresponding structure constant to the negative
 of the structure constant at `-α`, `-β`, and `-γ`.
@@ -81,18 +112,9 @@ theorem structureConstant_neg_neg_of_hom (e : L →ₗ⁅K⁆ L)
         rw [Weight.coe_neg, Weight.coe_neg, Weight.coe_neg, hαβ]
         abel) =
       -hx.structureConstant α β γ hγ hαβ := by
-  symm
-  rw [hx.eq_structureConstant_iff (-α) (-β) (-γ) hγ.neg]
-  calc
-    ⁅x (-α), x (-β)⁆ = ⁅-x (-α), -x (-β)⁆ := by simp
-    _ = ⁅e (x α), e (x β)⁆ := by rw [heα, heβ]
-    _ = e ⁅x α, x β⁆ := (e.map_lie (x α) (x β)).symm
-    _ = e (hx.structureConstant α β γ hγ hαβ • x γ) := by
-      rw [hx.lie_eq_structureConstant_smul α β γ hγ hαβ]
-    _ = hx.structureConstant α β γ hγ hαβ • e (x γ) := e.map_smul _ _
-    _ = hx.structureConstant α β γ hγ hαβ • -x (-γ) := by rw [heγ]
-    _ = -hx.structureConstant α β γ hγ hαβ • x (-γ) := by
-      rw [smul_neg, neg_smul]
+  have h := hx.mul_structureConstant_eq_of_map_eq_smul_neg α β γ hγ hαβ e
+    (a := -1) (b := -1) (c := -1) (by simpa using heα) (by simpa using heβ) (by simpa using heγ)
+  linear_combination -h
 
 /-- **Cyclic symmetry of normalized structure constants.** If `γ = α + β`, invariance of the
 Killing form relates the constants of `(α, β, γ)` and `(β, -γ, -α)` after weighting by the

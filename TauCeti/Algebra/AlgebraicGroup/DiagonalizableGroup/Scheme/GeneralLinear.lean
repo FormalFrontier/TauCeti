@@ -10,6 +10,7 @@ public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.Scheme.Basic
 public import TauCeti.Algebra.AlgebraicGroup.Representation.Embedding
 public import TauCeti.Algebra.Coalgebra.Comodule.GroupLike
 public import Mathlib.RingTheory.HopfAlgebra.MonoidAlgebra
+import TauCeti.CategoryTheory.Comma.Over
 
 /-!
 # Diagonal representations of a diagonalizable group
@@ -235,15 +236,10 @@ theorem isClosedImmersion_diagonalGroupSchemeHom (b : Module.Basis (Fin n) R M)
       (Comodule.coordinateGroupSchemeHom (H := MonoidAlgebra R G) b).hom.hom.left :=
     (Comodule.isClosedImmersion_coordinateGroupSchemeHom_iff b).2
       (surjective_diagonalCoordinateMap b wt hwt)
-  have he : IsIso (eqToHom (groupScheme_def R G)).hom.hom.left :=
-    ((Over.forget (Spec (CommRingCat.of R))).mapIso
-      ((Grp.forget (Over (Spec (CommRingCat.of R)))).mapIso
-        (eqToIso (groupScheme_def R G)))).isIso_hom
   have hcomp : IsClosedImmersion
       ((eqToHom (groupScheme_def R G)).hom.hom.left ≫
         (Comodule.coordinateGroupSchemeHom (H := MonoidAlgebra R G) b).hom.hom.left) :=
-    (@MorphismProperty.cancel_left_of_respectsIso
-      Scheme _ @IsClosedImmersion inferInstance _ _ _ _ _ he).2 hc
+    (MorphismProperty.cancel_left_of_respectsIso _ _ _).2 hc
   rw [diagonalGroupSchemeHom]
   simpa only [Grp.comp', Mon.comp_hom', Over.comp_left] using hcomp
 

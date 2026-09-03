@@ -20,7 +20,7 @@ polarize a structure without being carried twice; bundling the form with a proof
 `TauCeti.Hodge.IsPolarizable`.
 
 The complex form is derived rather than postulated: it is the complexification
-`TauCeti.Hodge.integralFormToComplex` of the integral form, so the integral-to-complex link is a
+`TauCeti.Hodge.integralFormBaseChange` of the integral form, so the integral-to-complex link is a
 computation rather than an axiom.
 
 ## Conventions
@@ -75,10 +75,10 @@ structure IsPolarization (hℂ : IsBaseChange ℂ ιℂ) {n : ℤ} (hs : HodgeSt
   nondegenerate : Q.Nondegenerate
   /-- The first Hodge–Riemann relation: `F p` and `F (n + 1 - p)` are orthogonal. -/
   orthogonal : ∀ p, ∀ x ∈ hs.F p, ∀ y ∈ hs.F (n + 1 - p),
-    integralFormToComplex hℂ Q x y = 0
+    integralFormBaseChange hℂ Q x y = 0
   /-- The second Hodge–Riemann relation: `i^(p-q) Q x (conj x)` is positive on `H^{p,q}`. -/
   positive : ∀ p, ∀ x ∈ hs.piece p, x ≠ 0 →
-    0 < Complex.I ^ (2 * p - n) * integralFormToComplex hℂ Q x (latticeConj hℂ x)
+    0 < Complex.I ^ (2 * p - n) * integralFormBaseChange hℂ Q x (latticeConj hℂ x)
 
 namespace IsPolarization
 
@@ -100,35 +100,35 @@ theorem flip_eq (h : IsPolarization hℂ hs Q) : Q.flip = (n.negOnePow : ℤ) �
 
 /-- The complexification of a polarizing form obeys the same weight symmetry. -/
 theorem complex_symm_weight (h : IsPolarization hℂ hs Q) (x y : Vℂ) :
-    integralFormToComplex hℂ Q y x = (n.negOnePow : ℤ) * integralFormToComplex hℂ Q x y := by
-  have hforms : (integralFormToComplex hℂ Q).flip =
-      (n.negOnePow : ℤ) • integralFormToComplex hℂ Q := by
-    rw [integralFormToComplex_flip, h.flip_eq, integralFormToComplex_zsmul]
+    integralFormBaseChange hℂ Q y x = (n.negOnePow : ℤ) * integralFormBaseChange hℂ Q x y := by
+  have hforms : (integralFormBaseChange hℂ Q).flip =
+      (n.negOnePow : ℤ) • integralFormBaseChange hℂ Q := by
+    rw [integralFormBaseChange_flip, h.flip_eq, integralFormBaseChange_zsmul]
   have hxy := DFunLike.congr_fun (DFunLike.congr_fun hforms x) y
   simpa only [LinearMap.BilinForm.flip_apply, LinearMap.smul_apply, zsmul_eq_mul] using hxy
 
 /-- The complexification of a polarizing form is nondegenerate. -/
 theorem complex_nondegenerate (h : IsPolarization hℂ hs Q) :
-    LinearMap.BilinForm.Nondegenerate (integralFormToComplex hℂ Q) :=
-  integralFormToComplex_nondegenerate hℂ h.nondegenerate
+    LinearMap.BilinForm.Nondegenerate (integralFormBaseChange hℂ Q) :=
+  integralFormBaseChange_nondegenerate hℂ h.nondegenerate
 
 /-- The first Hodge–Riemann relation transported to the conjugate filtration. -/
 theorem orthogonal_conjF (h : IsPolarization hℂ hs Q) (p : ℤ) {x y : Vℂ}
     (hx : x ∈ hs.conjF p) (hy : y ∈ hs.conjF (n + 1 - p)) :
-    integralFormToComplex hℂ Q x y = 0 := by
+    integralFormBaseChange hℂ Q x y = 0 := by
   have hx' : latticeConj hℂ x ∈ hs.F p := by
     simpa using (hs.mem_conjF_iff p x).mp hx
   have hy' : latticeConj hℂ y ∈ hs.F (n + 1 - p) := by
     simpa using (hs.mem_conjF_iff (n + 1 - p) y).mp hy
   have hzero := h.orthogonal p _ hx' _ hy'
-  rw [integralFormToComplex_conj] at hzero
+  rw [integralFormBaseChange_conj] at hzero
   simpa using congrArg (starRingEnd ℂ) hzero
 
 /-- **Orthogonality of the Hodge components.** Two Hodge components pair to zero under a
 polarization unless their degrees add up to the weight. -/
 theorem orthogonal_piece (h : IsPolarization hℂ hs Q) {p p' : ℤ} (hpp : p + p' ≠ n)
     {x y : Vℂ} (hx : x ∈ hs.piece p) (hy : y ∈ hs.piece p') :
-    integralFormToComplex hℂ Q x y = 0 := by
+    integralFormBaseChange hℂ Q x y = 0 := by
   rcases lt_or_gt_of_ne hpp with hlt | hgt
   · -- Below the weight: conjugate both arguments into complementary filtration steps.
     refine h.orthogonal_conjF (n - p) (hs.piece_le_conjF p hx) ?_
@@ -141,7 +141,7 @@ theorem orthogonal_piece (h : IsPolarization hℂ hs Q) {p p' : ℤ} (hpp : p + 
 conjugate is nonzero. -/
 theorem pairing_conj_ne_zero (h : IsPolarization hℂ hs Q) {p : ℤ} {x : Vℂ}
     (hx : x ∈ hs.piece p) (hx0 : x ≠ 0) :
-    integralFormToComplex hℂ Q x (latticeConj hℂ x) ≠ 0 := by
+    integralFormBaseChange hℂ Q x (latticeConj hℂ x) ≠ 0 := by
   intro hzero
   have hpos := h.positive p x hx hx0
   rw [hzero, mul_zero] at hpos
@@ -151,7 +151,7 @@ theorem pairing_conj_ne_zero (h : IsPolarization hℂ hs Q) {p : ℤ} {x : Vℂ}
 vector of `H^{p,q}` pairs nontrivially with a vector of `H^{q,p}`, namely with its conjugate. -/
 theorem exists_pairing_ne_zero (h : IsPolarization hℂ hs Q) {p : ℤ} {x : Vℂ}
     (hx : x ∈ hs.piece p) (hx0 : x ≠ 0) :
-    ∃ y ∈ hs.piece (n - p), integralFormToComplex hℂ Q x y ≠ 0 :=
+    ∃ y ∈ hs.piece (n - p), integralFormBaseChange hℂ Q x y ≠ 0 :=
   ⟨latticeConj hℂ x, by simpa using hs.conj_mem_piece hx, h.pairing_conj_ne_zero hx hx0⟩
 
 end IsPolarization
@@ -170,7 +170,7 @@ variable {hℂ : IsBaseChange ℂ ιℂ} {n : ℤ} {hs : HodgeStructure hℂ n}
 
 /-- The complex bilinear form of a polarization, derived by complexifying the integral form. -/
 noncomputable def Q (P : Polarization hℂ hs) : LinearMap.BilinForm ℂ Vℂ :=
-  integralFormToComplex hℂ P.Qint
+  integralFormBaseChange hℂ P.Qint
 
 /-- The complex form of a polarization obeys the weight symmetry. -/
 theorem Q_symm_weight (P : Polarization hℂ hs) (x y : Vℂ) :
@@ -196,17 +196,17 @@ theorem Q_positive (P : Polarization hℂ hs) (p : ℤ) {x : Vℂ} (hx : x ∈ h
 /-- The complex form of a polarization restricts to the integral form on integral vectors. -/
 @[simp]
 theorem Q_ι (P : Polarization hℂ hs) (x y : V) : P.Q (ιℂ x) (ιℂ y) = (P.Qint x y : ℂ) :=
-  integralFormToComplex_ι hℂ P.Qint x y
+  integralFormBaseChange_ι hℂ P.Qint x y
 
 /-- The complex bilinear form is the complexification of the integral form. -/
-theorem Q_def (P : Polarization hℂ hs) : P.Q = integralFormToComplex hℂ P.Qint :=
-  integralFormToComplex_unique hℂ P.Qint P.Q P.Q_ι
+theorem Q_def (P : Polarization hℂ hs) : P.Q = integralFormBaseChange hℂ P.Qint :=
+  integralFormBaseChange_unique hℂ P.Qint P.Q P.Q_ι
 
 /-- The complex form of a polarization takes conjugate values on conjugate arguments. -/
 @[simp]
 theorem Q_conj (P : Polarization hℂ hs) (x y : Vℂ) :
     P.Q (latticeConj hℂ x) (latticeConj hℂ y) = starRingEnd ℂ (P.Q x y) :=
-  integralFormToComplex_conj hℂ P.Qint x y
+  integralFormBaseChange_conj hℂ P.Qint x y
 
 /-- Two polarizations of the same Hodge structure agree as soon as their integral forms do. -/
 @[ext]

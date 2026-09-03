@@ -74,7 +74,6 @@ that composes to zero is already zero.
   forced to be two in a torsion-free module.
 * `IsSl2Triple.rescale`: rescaling the raising element by a unit and the lowering element by its
   inverse preserves an `sl₂` triple.
-
 ## Implementation notes
 
 The special linear results are stated over an arbitrary commutative ring `R`; nontriviality of `R`

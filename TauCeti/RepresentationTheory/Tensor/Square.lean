@@ -6,11 +6,14 @@ Authors: The Tau Ceti contributors
 module
 
 import Mathlib.LinearAlgebra.PiTensorProduct.Basis
+import TauCeti.Data.Fin.Basic
+
 public import TauCeti.LinearAlgebra.TensorSquare
 public import TauCeti.LinearAlgebra.ExteriorPower
 public import TauCeti.RepresentationTheory.ExteriorPower
 public import TauCeti.RepresentationTheory.SymmetricPower
 public import TauCeti.LinearAlgebra.Trace.Prod
+public import TauCeti.LinearAlgebra.Trace.Square
 public import TauCeti.RepresentationTheory.Tensor.Power
 
 /-!
@@ -110,6 +113,7 @@ private theorem mk_comp_toTensorPower {R : Type} {M : Type*}
     toTensorPower_ιMulti_two, map_sub, hswap, sub_self]
   simp
 
+/-- The symmetric-square map to the quotient of the tensor square by alternating tensors. -/
 private noncomputable def symToAlternatingQuotient {R : Type} {M : Type*}
     [Field R] [AddCommGroup M] [Module R M] :
     Sym[R]^2 M →ₗ[R]
@@ -273,7 +277,8 @@ private theorem mk_comp_swap {R : Type} {M : Type*}
 
 /-- The trace of `f ⊗ f` composed with the swap of the two tensor factors is the trace of `f²`.
 On a basis the diagonal entry at `eᵢ ⊗ eⱼ` is `aᵢⱼ aⱼᵢ`, and summing those is the trace of the
-square of the matrix of `f`. -/
+square of the matrix of `f`: that last step is
+`TauCeti.trace_eq_trace_comp_self_of_toMatrix_diag`, shared with the binary tensor square. -/
 private theorem trace_map_comp_swap {R : Type} {M : Type*}
     [Field R] [AddCommGroup M] [Module R M] [FiniteDimensional R M] (f : M →ₗ[R] M) :
     LinearMap.trace R (⨂[R]^2 M)
@@ -283,23 +288,11 @@ private theorem trace_map_comp_swap {R : Type} {M : Type*}
   set b := Module.finBasis R M
   -- The tensor square inherits the monomial basis, indexed by pairs of basis indices.
   set B := Basis.piTensorProduct fun _ : Fin 2 ↦ b with hB
-  have hdiag : ∀ p : Fin 2 → Fin (Module.finrank R M),
-      LinearMap.toMatrix B B
-          ((PiTensorProduct.map fun _ : Fin 2 ↦ f).comp
-            (tensorSwap R M).toLinearMap) p p
-        = LinearMap.toMatrix b b f (p 0) (p 1) * LinearMap.toMatrix b b f (p 1) (p 0) := by
-    intro p
-    rw [LinearMap.toMatrix_apply, hB, Basis.piTensorProduct_apply, LinearMap.comp_apply,
-      LinearEquiv.coe_coe, tensorSwap_tprod, PiTensorProduct.map_tprod,
-      Basis.piTensorProduct_repr_tprod_apply, Fin.prod_univ_two]
-    simp [LinearMap.toMatrix_apply]
-  rw [LinearMap.trace_eq_matrix_trace R B, LinearMap.trace_eq_matrix_trace R b,
-    LinearMap.toMatrix_comp b b b f f, Matrix.trace, Matrix.trace]
-  simp only [Matrix.diag_apply, hdiag, Matrix.mul_apply]
-  refine Eq.trans (Fintype.sum_equiv (finTwoArrowEquiv _) _
-    (fun q ↦ LinearMap.toMatrix b b f q.1 q.2 * LinearMap.toMatrix b b f q.2 q.1)
-    fun p ↦ rfl) ?_
-  exact Fintype.sum_prod_type _
+  refine trace_eq_trace_comp_self_of_toMatrix_diag b B (finTwoArrowEquiv _) f _ fun p ↦ ?_
+  rw [LinearMap.toMatrix_apply, hB, Basis.piTensorProduct_apply, LinearMap.comp_apply,
+    LinearEquiv.coe_coe, tensorSwap_tprod, PiTensorProduct.map_tprod,
+    Basis.piTensorProduct_repr_tprod_apply, Fin.prod_univ_two]
+  simp [LinearMap.toMatrix_apply]
 
 /-- **The trace form of the two square characters.** Over any field, the traces of an
 endomorphism on the symmetric and exterior squares differ by the trace of its own square. -/

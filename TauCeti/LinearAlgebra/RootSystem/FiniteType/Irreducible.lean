@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.Combinatorics.SimpleGraph.Connected
 public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Diagram
 public import Mathlib.LinearAlgebra.RootSystem.Irreducible
 public import TauCeti.LinearAlgebra.RootSystem.InvariantSubmodule
@@ -43,22 +44,6 @@ open Module.End (invtSubmodule)
 namespace TauCeti
 
 namespace SimpleGraph
-
-/-- A graph on `Fin n` is preconnected if every nonzero vertex has an adjacent predecessor. -/
-private theorem preconnected_fin_of_exists_adj_lt {n : ℕ} {G : SimpleGraph (Fin n)}
-    (hn : 0 < n)
-    (h : ∀ i : Fin n, (i : ℕ) ≠ 0 → ∃ j : Fin n, (j : ℕ) < i ∧ G.Adj j i) :
-    G.Preconnected := by
-  let z : Fin n := ⟨0, hn⟩
-  have hreach (i : Fin n) : G.Reachable z i := by
-    induction hi : (i : ℕ) using Nat.strong_induction_on generalizing i with
-    | h k ih =>
-        rcases eq_or_ne k 0 with rfl | hk
-        · have hiz : i = z := Fin.ext (by simpa [z] using hi)
-          rw [hiz]
-        · obtain ⟨j, hji, hadj⟩ := h i (hi ▸ hk)
-          exact (ih (j : ℕ) (hi ▸ hji) j rfl).trans hadj.reachable
-  exact fun i j ↦ (hreach i).symm.trans (hreach j)
 
 /-- A graph containing every successor edge contains the path graph. -/
 private theorem pathGraph_le_of_adj_succ {n : ℕ} {G : SimpleGraph (Fin n)}
@@ -140,9 +125,8 @@ theorem connected_diagramGraph_cartanMatrix {t : DynkinType} (ht : t.Valid) :
       simpa only [rank_C, cartanMatrix_C] using hconn
   | D n =>
       have hn := valid_D.mp ht
-      let _ : Nonempty (Fin n) := Fin.pos_iff_nonempty.mp (by omega)
       have hconn : (diagramGraph (CartanMatrix.D n)).Connected := by
-        refine ⟨SimpleGraph.preconnected_fin_of_exists_adj_lt (by omega) fun i hi ↦ ?_⟩
+        refine SimpleGraph.connected_fin_of_exists_adj_lt (by omega) fun i hi ↦ ?_
         by_cases hlast : (i : ℕ) = n - 1
         · let j : Fin n := ⟨n - 3, by omega⟩
           have hji : j = ⟨n - 3, by omega⟩ := rfl

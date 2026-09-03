@@ -47,6 +47,8 @@ the same symmetry lemmas.
   drift defect.
 * `TauCeti.PDE.UniformlyEllipticOn.min_lam_mass_mul_norm_sq_le_energyIntegrand_zero_drift_self`:
   the zero-drift diagonal estimate from uniform ellipticity and nonnegative mass.
+* `TauCeti.PDE.UniformlyEllipticOn.mul_norm_snd_sq_le_energyIntegrand_zero_drift_self`:
+  the zero-drift lower bound for the squared gradient component.
 -/
 
 public section
@@ -144,6 +146,17 @@ lemma min_lam_mass_mul_norm_sq_le_energyIntegrand_zero_drift_self
     (h.lower_bound hx) hc U
 
 grind_pattern min_lam_mass_mul_norm_sq_le_energyIntegrand_zero_drift_self =>
+  UniformlyEllipticOn Ω a lam Lam, x ∈ Ω, 0 ≤ c₀, energyIntegrand (a x) 0 c₀ U U
+
+/-- A zero-drift energy density for a uniformly elliptic principal coefficient dominates the
+squared gradient component when the mass coefficient is nonnegative. -/
+lemma mul_norm_snd_sq_le_energyIntegrand_zero_drift_self
+    (h : UniformlyEllipticOn Ω a lam Lam) {x : X} (hx : x ∈ Ω) {c₀ : ℝ} (hc : 0 ≤ c₀)
+    (U : ℝ × EuclideanSpace ℝ n) :
+    lam * ‖U.2‖ ^ 2 ≤ energyIntegrand (a x) 0 c₀ U U :=
+  PDE.mul_norm_snd_sq_le_energyIntegrand_zero_drift_self (h.lower_bound hx) hc U
+
+grind_pattern mul_norm_snd_sq_le_energyIntegrand_zero_drift_self =>
   UniformlyEllipticOn Ω a lam Lam, x ∈ Ω, 0 ≤ c₀, energyIntegrand (a x) 0 c₀ U U
 
 end UniformlyEllipticOn

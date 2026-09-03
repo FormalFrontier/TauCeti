@@ -49,6 +49,14 @@ lattice-homology differential can use directly.
 * `TauCeti.PlumbingCube.characteristicLowerFaceExponent` and
   `TauCeti.PlumbingCube.characteristicUpperFaceExponent`: the bundled face exponents.
 
+## Main results
+
+* `TauCeti.PlumbingCube.characteristicWeight_mk_singleton`: the weight of a
+  one-dimensional cube is the larger of its endpoint weights.
+* `TauCeti.PlumbingCube.characteristicLowerFaceExponent_mk_singleton` and
+  `TauCeti.PlumbingCube.characteristicUpperFaceExponent_mk_singleton`: the two face exponents of
+  a one-dimensional cube.
+
 ## References
 
 This supplies a prerequisite for `TauCetiRoadmap/CombinatorialHeegaardFloer/README.md`, Lane L
@@ -292,6 +300,54 @@ theorem characteristicUpperFaceExponent_natCast [Fintype V] (P : PlumbingGraph V
   by
     simp [characteristicUpperFaceExponent_def, characteristicWeight_def, upperFace_base,
       upperFace_directions]
+
+/-! ### One-dimensional cubes -/
+
+section Singleton
+
+variable [Fintype V]
+
+/-- The characteristic cube weight of a one-dimensional cube is the larger of its two endpoint
+weights. -/
+theorem characteristicWeight_mk_singleton (P : PlumbingGraph V)
+    (k : P.characteristicVectors) (x : V → ℤ) (v : V) :
+    characteristicWeight P k ⟨x, {v}⟩ =
+      max (P.characteristicWeight k x) (P.characteristicWeight k (x + Pi.single v 1)) := by
+  rw [characteristicWeight_mk,
+    P.characteristicCubeWeight_eq_max_erase k x (Finset.mem_singleton_self v),
+    Finset.erase_singleton, PlumbingGraph.characteristicCubeWeight_empty,
+    PlumbingGraph.characteristicCubeWeight_empty]
+
+/-- The lower-face exponent of a one-dimensional cube is the drop from its weight to the weight
+of its base point. -/
+@[simp]
+theorem characteristicLowerFaceExponent_mk_singleton (P : PlumbingGraph V)
+    (k : P.characteristicVectors) (x : V → ℤ) (v : V) :
+    P.characteristicLowerFaceExponent k x {v} v =
+      (max (P.characteristicWeight k x) (P.characteristicWeight k (x + Pi.single v 1)) -
+        P.characteristicWeight k x).toNat := by
+  have h := characteristicLowerFaceExponent_natCast P k ⟨x, {v}⟩ v
+  rw [characteristicWeight_mk_singleton] at h
+  simp only [characteristicLowerFaceExponent_mk, eraseDirection_mk, Finset.erase_singleton,
+    characteristicWeight_mk, PlumbingGraph.characteristicCubeWeight_empty] at h
+  omega
+
+/-- The upper-face exponent of a one-dimensional cube is the drop from its weight to the weight
+of its far endpoint. -/
+@[simp]
+theorem characteristicUpperFaceExponent_mk_singleton (P : PlumbingGraph V)
+    (k : P.characteristicVectors) (x : V → ℤ) (v : V) :
+    P.characteristicUpperFaceExponent k x {v} (Finset.mem_singleton_self v) =
+      (max (P.characteristicWeight k x) (P.characteristicWeight k (x + Pi.single v 1)) -
+        P.characteristicWeight k (x + Pi.single v 1)).toNat := by
+  have h := characteristicUpperFaceExponent_natCast P k
+    (⟨x, {v}⟩ : PlumbingCube V) (Finset.mem_singleton_self v)
+  rw [characteristicWeight_mk_singleton] at h
+  simp only [characteristicUpperFaceExponent_mk, upperFace_mk, Finset.erase_singleton,
+    characteristicWeight_mk, PlumbingGraph.characteristicCubeWeight_empty] at h
+  omega
+
+end Singleton
 
 /-- The lower exponent is zero exactly when erasing the direction leaves the bundled weight
 unchanged. -/

@@ -7,10 +7,11 @@ module
 
 public import Mathlib.LinearAlgebra.Basis.VectorSpace
 public import Mathlib.LinearAlgebra.TensorProduct.RightExactness
-public import Mathlib.RingTheory.Flat.Basic
+public import Mathlib.RingTheory.Flat.Equalizer
 public import TauCeti.Algebra.Bialgebra.Quotient
 public import TauCeti.Algebra.HopfAlgebra.Basic
 public import TauCeti.Algebra.HopfAlgebra.HopfIdeal.Basic
+import TauCeti.Algebra.TensorProduct.Injective
 
 /-!
 # Kernels of Hopf algebra morphisms
@@ -30,6 +31,7 @@ dictionary.
 * `TauCeti.HopfIdeal.kerOfSurjective`: the Hopf ideal given by the kernel of a surjective bialgebra
   morphism.
 * `TauCeti.HopfIdeal.ker`: the kernel Hopf ideal of an arbitrary bialgebra morphism over a field.
+* `TauCeti.HopfIdeal.ker_le_ker_comp`: a Hopf kernel grows under postcomposition.
 * `TauCeti.HopfIdeal.kerOfSurjective_eq_ker`: comparison of the two constructions over a field.
 * `TauCeti.HopfIdeal.kerOfSurjective_toIdeal` and
   `TauCeti.HopfIdeal.mem_kerOfSurjective`: its characteristic API.
@@ -39,11 +41,13 @@ dictionary.
   by the kernel to the codomain.
 * `TauCeti.HopfIdeal.kerOfSurjective_mkBialgHom`: the kernel of the quotient morphism by `I`
   is `I`.
+* `TauCeti.HopfIdeal.ker_lTensor_eq_rightTensorIdeal`: tensoring on the left by a flat algebra
+  carries the kernel of an algebra map to the corresponding right tensor ideal.
 
 ## References
 
-The construction is the standard kernel Hopf ideal. The tensor-kernel exactness step uses
-Mathlib's `Algebra.TensorProduct.map_ker`.
+The construction is the standard kernel Hopf ideal. The tensor-kernel exactness steps use
+Mathlib's `Algebra.TensorProduct.map_ker` and `Module.Flat.ker_lTensor_eq`.
 -/
 
 public section
@@ -52,7 +56,7 @@ open scoped TensorProduct
 
 namespace TauCeti
 
-universe u v w
+universe u v w x
 
 namespace HopfIdeal
 
@@ -73,6 +77,43 @@ private theorem tensor_map_ker_eq_left_sup_right [Algebra R H] {A : Type*} [Ring
   -- and `rightTensorIdeal_def` use their `toRingHom`; after the named coercion rewrite
   -- these are the same ideal maps definitionally.
   apply congr_arg₂ (· ⊔ ·) <;> rfl
+
+/-- Tensoring on the left by a flat algebra carries the kernel of an algebra map to the
+corresponding right tensor ideal. -/
+theorem ker_lTensor_eq_rightTensorIdeal {A B : Type*} [CommRing A] [CommRing B]
+    [Algebra R A] [Algebra R B] [Module.Flat R A] (f : A →ₐ[R] B) :
+    RingHom.ker (Algebra.TensorProduct.map (AlgHom.id R A) f) =
+      rightTensorIdeal (R := R) (H := A) (RingHom.ker f) := by
+  rw [← Submodule.restrictScalars_inj R]
+  have hmap :
+      (RingHom.ker (Algebra.TensorProduct.map (AlgHom.id R A) f)).restrictScalars R =
+        LinearMap.ker (TensorProduct.AlgebraTensorModule.lTensor R A f.toLinearMap) := by
+    have hlinear :
+        (Algebra.TensorProduct.map (AlgHom.id R A) f).toLinearMap =
+          TensorProduct.AlgebraTensorModule.lTensor R A f.toLinearMap := by
+      apply TensorProduct.AlgebraTensorModule.ext
+      intro x y
+      simp only [Algebra.TensorProduct.toLinearMap_map, AlgHom.toLinearMap_id,
+        TensorProduct.AlgebraTensorModule.map_tmul,
+        TensorProduct.AlgebraTensorModule.lTensor_tmul, LinearMap.id_apply]
+    ext x
+    simp only [Submodule.restrictScalars_mem, RingHom.mem_ker, LinearMap.mem_ker]
+    rw [← LinearMap.congr_fun hlinear x]
+    simp only [AlgHom.toLinearMap_apply]
+  rw [hmap]
+  rw [Module.Flat.ker_lTensor_eq]
+  have hker : f.toLinearMap.ker = (RingHom.ker f).restrictScalars R := by
+    ext x
+    simp only [LinearMap.mem_ker, Submodule.restrictScalars_mem, RingHom.mem_ker,
+      AlgHom.toLinearMap_apply]
+  rw [hker]
+  have hsubtype : ((RingHom.ker f).restrictScalars R).subtype =
+      (RingHom.ker f).subtype.restrictScalars R := by
+    ext x
+    exact (LinearMap.restrictScalars_apply R (RingHom.ker f).subtype x).symm
+  rw [hsubtype, rightTensorIdeal_def]
+  exact TensorProduct.AlgebraTensorModule.range_lTensor_idealMap
+    (R := R) A R (RingHom.ker f)
 
 variable [HopfAlgebra R H] [HopfAlgebra R K]
 
@@ -183,10 +224,7 @@ private theorem tensor_kerLiftAlg_injective (f : H →ₐ[k] K) :
       (Algebra.TensorProduct.map (Ideal.kerLiftAlg f) (Ideal.kerLiftAlg f)) := by
   let f' : (H ⧸ RingHom.ker f) →ₐ[k] K := Ideal.kerLiftAlg f
   have hf' : Function.Injective f' := Ideal.kerLiftAlg_injective f
-  -- Expose the underlying linear map so the named tensor-product map lemmas can rewrite it.
-  change Function.Injective (Algebra.TensorProduct.map f' f').toLinearMap
-  rw [Algebra.TensorProduct.toLinearMap_map, TensorProduct.AlgebraTensorModule.map_eq]
-  exact TensorProduct.map_injective_of_flat_flat f'.toLinearMap f'.toLinearMap hf' hf'
+  exact Algebra.TensorProduct.map_injective_of_injective f' f' hf' hf'
 
 /-- The comultiplication of an element in the ordinary kernel of a Hopf-algebra morphism over a
 field belongs to `ker f ⊗ H + H ⊗ ker f`. -/
@@ -247,6 +285,13 @@ theorem ker_toIdeal (f : H →ₐc[k] K) :
 @[simp]
 theorem mem_ker (f : H →ₐc[k] K) {x : H} : x ∈ ker f ↔ f x = 0 :=
   mem_ofKerComul f _
+
+/-- The kernel Hopf ideal of a morphism is contained in the kernel after postcomposition. -/
+theorem ker_le_ker_comp {L : Type x} [Ring L] [HopfAlgebra k L]
+    (f : H →ₐc[k] K) (g : K →ₐc[k] L) : ker f ≤ ker (g.comp f) := by
+  intro h hh
+  rw [mem_ker] at hh ⊢
+  rw [BialgHom.comp_apply, hh, map_zero]
 
 /-- Over a field, the kernel constructed for a surjective morphism agrees with the canonical
 kernel, which does not require the surjectivity hypothesis. -/

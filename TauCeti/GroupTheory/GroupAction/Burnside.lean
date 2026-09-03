@@ -26,6 +26,9 @@ This is the shape in which Burnside's lemma computes the pairing of two permutat
 * `TauCeti.card_fixedBy_prod`: the corresponding count.
 * `TauCeti.sum_card_fixedBy_mul_card_fixedBy_eq_card_orbits_mul_card_group`: Burnside's lemma
   on `X × Y`.
+* `TauCeti.isPretransitive_prod_left`: a product with a one-point `G`-set stays pretransitive,
+  and `TauCeti.card_orbitQuotient_eq_one` then counts its orbits, which is the value Burnside's
+  lemma takes on such a product.
 
 ## Implementation notes
 
@@ -76,5 +79,23 @@ theorem sum_card_fixedBy_mul_card_fixedBy_eq_card_orbits_mul_card_group
   have hburnside := sum_card_fixedBy_eq_card_orbits_mul_card_group G (X × Y)
   simp only [← Nat.card_eq_fintype_card] at hburnside
   simpa only [card_fixedBy_prod] using hburnside
+
+/-- **A pretransitive action on a nonempty type has one orbit.** This is Mathlib's
+`MulAction.pretransitive_iff_unique_quotient_of_nonempty` in the counting form in which the orbit
+side of Burnside's lemma is read. -/
+@[simp]
+theorem card_orbitQuotient_eq_one [Nonempty X] [IsPretransitive G X] :
+    Nat.card (orbitRel.Quotient G X) = 1 :=
+  let _ := ((MulAction.pretransitive_iff_unique_quotient_of_nonempty G X).mp ‹_›).some
+  Nat.card_unique
+
+/-- **Pairing a pretransitive action with a one-point one leaves it pretransitive**, so that
+`TauCeti.card_orbitQuotient_eq_one` applies to the product `G`-set on which Burnside's lemma
+above is evaluated. -/
+theorem isPretransitive_prod_left [IsPretransitive G X] [Subsingleton Y] :
+    IsPretransitive G (X × Y) :=
+  ⟨fun p q => by
+    obtain ⟨g, hg⟩ := MulAction.exists_smul_eq G p.1 q.1
+    exact ⟨g, Prod.ext hg (Subsingleton.elim _ _)⟩⟩
 
 end TauCeti

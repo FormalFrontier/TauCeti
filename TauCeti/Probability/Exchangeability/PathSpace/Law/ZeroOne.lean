@@ -80,8 +80,6 @@ theorem infinitePi_of_exchangeableSigma_trivial [StandardBorelSpace α]
     have htail : MeasurableSet[tailProcess fun n (x : ℕ → α) => x n] (ν ⁻¹' A) :=
       measurable_tailProcess_directingProbabilityMeasure hA
     exact pathTail_le_exchangeableSigma _ (by rwa [pathTail_eq_tailProcess])
-  have hprob : IsProbabilityMeasure (ρ.map ν) :=
-    Measure.isProbabilityMeasure_map hν_meas.aemeasurable
   have hzo : IsZeroOneMeasure (ρ.map ν) :=
     ⟨fun A hA => by rw [Measure.map_apply hν_meas hA]; exact htriv _ (hpre hA)⟩
   obtain ⟨P, hP⟩ :=
@@ -89,7 +87,7 @@ theorem infinitePi_of_exchangeableSigma_trivial [StandardBorelSpace α]
   refine ⟨P, ?_⟩
   calc ρ = pathLaw ρ (fun n (x : ℕ → α) => x n) := hpath.symm
     _ = (ρ.map ν).bind fun Q => Measure.infinitePi fun _ : ℕ => (Q : Measure α) :=
-        pathLaw_eq_bind_infinitePi_of_mixedIIDWith (fun n => (hcoord n).aemeasurable) hmix
+        pathLaw_eq_bind_infinitePi_of_mixedIIDWith hmix
     _ = Measure.infinitePi fun _ : ℕ => (P : Measure α) := by
         rw [hP, Measure.dirac_bind TauCeti.MeasureTheory.measurable_infinitePi_const]
 

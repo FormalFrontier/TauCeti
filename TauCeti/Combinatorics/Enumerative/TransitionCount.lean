@@ -7,6 +7,7 @@ module
 
 public import Mathlib.Algebra.BigOperators.Fin
 public import Mathlib.Data.Fintype.EquivFin
+public import Mathlib.Data.List.GetD
 public import Mathlib.SetTheory.Cardinal.Finite
 public import Mathlib.Logic.Equiv.Basic
 
@@ -45,6 +46,12 @@ transition counts of a path are the sufficient statistic: see
   force equal occurrence counts.
 * `TauCeti.exists_perm_comp_of_transitionCount_eq`: two such words are rearrangements of each
   other.
+* `TauCeti.consecutivePairs_append_cons`: splitting a word at a letter splits its consecutive
+  pairs.
+* `TauCeti.transitionCount_getD`: the transition counts of a list, read as a `Fin`-indexed word,
+  count its consecutive pairs.
+* `TauCeti.prod_consecutivePairs_getD`: a product of transition weights along a list, read as a
+  `Fin`-indexed word, is the product over its consecutive pairs.
 * `TauCeti.prod_transitionCount`: a product of transition weights along a word depends on the word
   only through its transition counts.
 * `TauCeti.prod_eq_of_transitionCount_eq`: the resulting comparison of two words with equal
@@ -90,6 +97,39 @@ theorem occCount_eq_sum [DecidableEq α] {N : ℕ} (w : Fin N → α) (a : α) :
     occCount w a = ∑ i : Fin N, if w i = a then 1 else 0 := by
   rw [occCount_eq_card_filter, card_filter]
 
+/-- **Occurrence counts grow along a letter-preserving embedding of positions.** If `e` embeds the
+positions of `u` into those of `v` in a way that carries each letter of `u` to the same letter of
+`v`, then `v` uses each letter at least as often as `u`. -/
+theorem occCount_le_occCount_of_comp_eq {M N : ℕ} {u : Fin M → α} {v : Fin N → α}
+    (e : Fin M ↪ Fin N) (he : ∀ i, v (e i) = u i) (a : α) : occCount u a ≤ occCount v a := by
+  classical
+  rw [occCount_eq_card_filter, occCount_eq_card_filter]
+  refine card_le_card_of_injOn e (fun i hi => ?_) e.injective.injOn
+  rw [mem_coe, mem_filter] at hi ⊢
+  exact ⟨mem_univ _, (he i).trans hi.2⟩
+
+/-- **A letter-preserving embedding that misses an occurrence loses it.** If in addition to the
+hypotheses of `TauCeti.occCount_le_occCount_of_comp_eq` some position `j` of `v` carrying `a` is
+outside the range of `e`, then `v` uses `a` strictly more often than `u`. -/
+theorem occCount_lt_occCount_of_comp_eq {M N : ℕ} {u : Fin M → α} {v : Fin N → α} {a : α}
+    {j : Fin N} (e : Fin M ↪ Fin N) (he : ∀ i, v (e i) = u i) (hj : v j = a)
+    (hmiss : ∀ i, e i ≠ j) : occCount u a < occCount v a := by
+  classical
+  have hsubset : (filter (fun i => u i = a) univ).image e ⊆ filter (fun i => v i = a) univ := by
+    intro l hl
+    obtain ⟨i, hi, rfl⟩ := mem_image.1 hl
+    rw [mem_filter] at hi ⊢
+    exact ⟨mem_univ _, (he i).trans hi.2⟩
+  have hnot : j ∉ (filter (fun i => u i = a) univ).image e := fun hmem => by
+    obtain ⟨i, _, hi⟩ := mem_image.1 hmem
+    exact hmiss i hi
+  have hlt : (filter (fun i => u i = a) univ).card < (filter (fun i => v i = a) univ).card := by
+    rw [← card_image_of_injective (filter (fun i => u i = a) univ) e.injective]
+    exact card_lt_card ((ssubset_iff_of_subset hsubset).2
+      ⟨j, mem_filter.2 ⟨mem_univ _, hj⟩, hnot⟩)
+  rw [occCount_eq_card_filter, occCount_eq_card_filter]
+  exact hlt
+
 /-- Splitting off the last position: the occurrences of `a` in a word are those in its initial
 segment together with a possible occurrence at the last position. -/
 theorem occCount_comp_castSucc_add_last [DecidableEq α] {n : ℕ} (w : Fin (n + 1) → α) (a : α) :
@@ -114,6 +154,98 @@ theorem occCount_comp_succ_add_zero [DecidableEq α] {n : ℕ} (w : Fin (n + 1) 
     occCount (w ∘ Fin.succ) a + (if w 0 = a then 1 else 0) = occCount w a := by
   rw [occCount_eq_sum, occCount_eq_sum, Fin.sum_univ_succ, Nat.add_comm]
   rfl
+
+/-- Splitting off the first transition: the transitions in a word are those in its final segment
+together with a possible transition at the first position. -/
+theorem transitionCount_comp_succ_add_zero [DecidableEq α] {n : ℕ}
+    (w : Fin (n + 2) → α) (a b : α) :
+    transitionCount (w ∘ Fin.succ) a b + (if w 0 = a ∧ w 1 = b then 1 else 0) =
+      transitionCount w a b := by
+  rw [transitionCount_eq_card_filter, transitionCount_eq_card_filter, Finset.card_filter,
+    Finset.card_filter, Fin.sum_univ_succ, Nat.add_comm]
+  rfl
+
+/-! ## Words presented as lists
+
+A word can equally be presented as a list, read through `List.getD`; its transitions are then the
+occurrences among the list `List.consecutivePairs` of consecutive pairs supplied by Mathlib.
+-/
+
+theorem consecutivePairs_cons_cons (a b : α) (l : List α) :
+    (a :: b :: l).consecutivePairs = (a, b) :: (b :: l).consecutivePairs :=
+  rfl
+
+/-- Splitting a word at a letter `y` splits its consecutive pairs: those of the part up to and
+including `y`, followed by those of the part from `y` on. -/
+theorem consecutivePairs_append_cons (l : List α) (y : α) (m : List α) :
+    (l ++ y :: m).consecutivePairs = (l ++ [y]).consecutivePairs ++ (y :: m).consecutivePairs := by
+  induction l with
+  | nil => simp
+  | cons x l ih =>
+    cases l with
+    | nil => rfl
+    | cons z l =>
+      have key : ((z :: l) ++ y :: m).consecutivePairs =
+          ((z :: l) ++ [y]).consecutivePairs ++ (y :: m).consecutivePairs := ih
+      simp only [List.cons_append, consecutivePairs_cons_cons] at key ⊢
+      rw [key]
+
+/-- **Transition counts count consecutive pairs.** Reading a list of length `n + 1` as a word
+indexed by `Fin (n + 1)`, its transition count from `a` to `b` is the number of occurrences of
+`(a, b)` among its consecutive pairs. -/
+theorem transitionCount_getD [DecidableEq α] (d a b : α) :
+    ∀ (n : ℕ) (l : List α), l.length = n + 1 →
+      transitionCount (fun i : Fin (n + 1) => l.getD i.val d) a b =
+        l.consecutivePairs.count (a, b)
+  | _, [], hl => by simp at hl
+  | n, [x], hl => by
+    obtain rfl : n = 0 := by simp only [List.length_cons, List.length_nil] at hl; omega
+    rw [transitionCount_eq_card_filter]
+    simp [List.consecutivePairs]
+  | n, x :: y :: t, hl => by
+    obtain rfl : n = t.length + 1 := by simp only [List.length_cons] at hl; omega
+    have hstep := transitionCount_comp_succ_add_zero
+      (w := fun i : Fin (t.length + 2) => (x :: y :: t).getD i.val d) a b
+    have htail : ((fun i : Fin (t.length + 2) => (x :: y :: t).getD i.val d) ∘ Fin.succ) =
+        fun i : Fin (t.length + 1) => (y :: t).getD i.val d := by
+      funext i
+      simp only [Function.comp_apply, Fin.val_succ, List.getD_cons_succ]
+    rw [htail] at hstep
+    rw [← hstep, transitionCount_getD d a b t.length (y :: t) rfl,
+      consecutivePairs_cons_cons, List.count_cons]
+    simp only [Fin.val_zero, Fin.val_one, List.getD_cons_zero, List.getD_cons_succ, beq_iff_eq,
+      Prod.mk.injEq]
+
+/-- **A product of transition weights along a word is a product over its consecutive pairs.**
+Reading a list of length `n + 1` as a word indexed by `Fin (n + 1)`, the product of a weight over
+the `n` transitions of the word is the product of that weight over the list of its consecutive
+pairs. This is the multiplicative counterpart of `transitionCount_getD`. -/
+theorem prod_consecutivePairs_getD {M : Type*} [CommMonoid M] (p : α → α → M) (d : α) :
+    ∀ (n : ℕ) (l : List α), l.length = n + 1 →
+      ∏ i : Fin n, p (l.getD i.val d) (l.getD (i.val + 1) d) =
+        (l.consecutivePairs.map fun q => p q.1 q.2).prod
+  | _, [], hl => by simp at hl
+  | n, [x], hl => by
+    obtain rfl : n = 0 := by simp only [List.length_cons, List.length_nil] at hl; omega
+    simp [List.consecutivePairs]
+  | n, x :: y :: t, hl => by
+    obtain rfl : n = t.length + 1 := by simp only [List.length_cons] at hl; omega
+    rw [Fin.prod_univ_succ, consecutivePairs_cons_cons]
+    have htail : ∀ i : Fin t.length,
+        p ((x :: y :: t).getD i.succ.val d) ((x :: y :: t).getD (i.succ.val + 1) d) =
+          p ((y :: t).getD i.val d) ((y :: t).getD (i.val + 1) d) := fun i => by simp
+    rw [Finset.prod_congr rfl fun i _ => htail i,
+      prod_consecutivePairs_getD p d t.length (y :: t) rfl]
+    simp
+
+/-- **The occurrence counts of a word sum to its length.** The index set `S` only has to contain
+the letters the word uses. -/
+theorem sum_occCount_eq_card {N : ℕ} (w : Fin N → α) {S : Finset α} (hS : ∀ i, w i ∈ S) :
+    ∑ a ∈ S, occCount w a = N := by
+  classical
+  have h := card_eq_sum_card_fiberwise (s := (univ : Finset (Fin N))) (f := w) (t := S)
+    fun i _ => hS i
+  simpa only [card_univ, Fintype.card_fin, occCount_eq_card_filter] using h.symm
 
 /-- Summing the transitions out of `a` counts the positions carrying `a` other than the last one.
 The index set `S` only has to contain the successors of transitions in `w`. -/

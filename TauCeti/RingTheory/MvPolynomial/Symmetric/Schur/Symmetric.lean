@@ -51,6 +51,10 @@ polynomials they generalize already live.
 
 ## References
 
+* R. P. Stanley, *Enumerative Combinatorics*, Volume 2, §7.10, Theorem 7.10.2: the skew Schur
+  function is symmetric, proved by the same reduction to interchanging `xᵢ` and `x_{i+1}`. The
+  involution is that of E. A. Bender and D. E. Knuth, *Enumeration of plane partitions*,
+  J. Combinatorial Theory **13** (1972), 40--54.
 * [W. Fulton, *Young Tableaux*][fulton1997], Section 2.2.
 * [Schur--Weyl roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/SchurWeyl/README.md),
   Layer 7.

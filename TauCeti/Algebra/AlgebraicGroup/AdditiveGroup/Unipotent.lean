@@ -47,6 +47,8 @@ some `d`, the `(d + 1)`-st power of the difference vanishes.
   the binomial rule `Nᵢ ∘ Nⱼ = (i + j choose i) Nᵢ₊ⱼ`.
 * `TauCeti.AdditiveGroup.exists_coactFiltration_eq_top`: the filtration of a finitely generated
   comodule is exhausted at a finite stage.
+* `TauCeti.AdditiveGroup.exists_ne_zero_coact_eq_tmul_one`: **Kolchin's theorem for `𝔾ₐ`**, every
+  nonzero comodule over `R[x]` contains a nonzero fixed vector.
 * `TauCeti.AdditiveGroup.isNilpotent_endOfPoint_sub_one` and
   `TauCeti.AdditiveGroup.isUnipotentPoint`: **every point of `𝔾ₐ` is unipotent.**
 * `TauCeti.AdditiveGroup.smoothUnipotentCommHopfAlgProperty_coordinateHopfAlgebra`: **`𝔾ₐ` over a
@@ -310,6 +312,61 @@ theorem exists_coactFiltration_eq_top [Module.Finite R V] :
     (coactDecomposition R V v).support.sup id) hv) hi)
 
 end Filtration
+
+section FixedVector
+
+variable (R : Type u) [CommSemiring R] (V : Type v) [AddCommMonoid V] [Module R V]
+variable [Comodule R (SymmetricAlgebra R R) V]
+
+variable {V}
+
+/-- The zeroth step of the divided-power filtration is the set of fixed vectors: a vector has
+coaction `v ↦ v ⊗ 1` exactly when all its positive divided-power components vanish. -/
+theorem mem_coactFiltration_zero_iff {v : V} :
+    v ∈ coactFiltration R V 0 ↔
+      Comodule.coact (R := R) (C := SymmetricAlgebra R R) v =
+        v ⊗ₜ[R] (1 : SymmetricAlgebra R R) := by
+  rw [mem_coactFiltration]
+  refine ⟨fun hv => ?_, fun hv i hi => ?_⟩
+  · rw [coact_eq_sum, Finsupp.sum_eq_single (g := fun i w =>
+        w ⊗ₜ[R] ((ι R R 1 : SymmetricAlgebra R R) ^ i)) 0 (fun i hmem hi => absurd
+      ((coactDecomposition_apply R V v i).trans (hv i (Nat.pos_of_ne_zero hi))) hmem)
+      fun _ => TensorProduct.zero_tmul _ _]
+    rw [coactDecomposition_apply, coactComponent_zero, LinearMap.id_apply, pow_zero]
+  · rw [coactComponent_apply, hv, Comodule.tensorComponent_tmul,
+      ← pow_zero (ι R R 1 : SymmetricAlgebra R R), coeff_pow, ite_eq_right (by omega),
+      zero_smul]
+
+/-- **Kolchin's theorem for `𝔾ₐ`**: every nonzero vector of a comodule over the coordinate
+algebra of the additive group produces a nonzero fixed vector, over an arbitrary base and with no
+finiteness hypothesis. The witness is the top nonvanishing divided-power component `Nᵢ v`: by the
+binomial composition rule each further component of it is a component of `v` of strictly larger
+index, which vanishes by maximality. -/
+theorem exists_ne_zero_coact_eq_tmul_one {v : V} (hv : v ≠ 0) :
+    ∃ w : V, w ≠ 0 ∧ Comodule.coact (R := R) (C := SymmetricAlgebra R R) w =
+      w ⊗ₜ[R] (1 : SymmetricAlgebra R R) := by
+  have hzero : (0 : ℕ) ∈ (coactDecomposition R V v).support := by
+    rw [Finsupp.mem_support_iff, coactDecomposition_apply, coactComponent_zero,
+      LinearMap.id_apply]
+    exact hv
+  set i := (coactDecomposition R V v).support.max' ⟨0, hzero⟩ with hi
+  have hiv : coactComponent R V i v ≠ 0 := by
+    have hmem := (coactDecomposition R V v).support.max'_mem ⟨0, hzero⟩
+    rwa [← hi, Finsupp.mem_support_iff, coactDecomposition_apply] at hmem
+  refine ⟨coactComponent R V i v, hiv, (mem_coactFiltration_zero_iff R).1 ?_⟩
+  rw [mem_coactFiltration]
+  intro j hj
+  rw [coactComponent_coactComponent]
+  have hvanish : coactComponent R V (j + i) v = 0 := by
+    by_contra hne
+    have hmem : j + i ∈ (coactDecomposition R V v).support := by
+      rw [Finsupp.mem_support_iff, coactDecomposition_apply]
+      exact hne
+    have hle := (coactDecomposition R V v).support.le_max' _ hmem
+    omega
+  rw [hvanish, smul_zero]
+
+end FixedVector
 
 section ActionExpansion
 

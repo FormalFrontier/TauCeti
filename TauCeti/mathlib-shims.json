@@ -1,0 +1,200 @@
+[
+  {
+    "note": "Exact Riemann-mapping existence input from mathlib4#33505 (urkud), https://github.com/leanprover-community/mathlib4/pull/33505; migrate the Tau Ceti existence theorem and preserve its stronger inverse API",
+    "sources": [
+      "TauCeti/Analysis/Complex/Conformal/RiemannMapping/Existence.lean"
+    ],
+    "declarations": [
+      "Complex.exists_bijOn_unitBall_map_eq_zero"
+    ]
+  },
+  {
+    "note": "Coordinated with mathlib4#33505 (urkud), https://github.com/leanprover-community/mathlib4/pull/33505; its private prerequisites may not replace every tracked declaration",
+    "landing_sentinel": true,
+    "sources": [
+      "TauCeti/Analysis/Complex/BranchLogRoot.lean",
+      "TauCeti/Analysis/Complex/Conformal/ArgumentPrinciple.lean",
+      "TauCeti/Analysis/Complex/Conformal/Biholomorph.lean",
+      "TauCeti/Analysis/Complex/Conformal/DiscInjection.lean",
+      "TauCeti/Analysis/Complex/Conformal/ExtremalFamily.lean",
+      "TauCeti/Analysis/Complex/Conformal/Hyperbolic/ClosedForm.lean",
+      "TauCeti/Analysis/Complex/Conformal/Hyperbolic/Density.lean",
+      "TauCeti/Analysis/Complex/Conformal/Hyperbolic/Distance.lean",
+      "TauCeti/Analysis/Complex/Conformal/Hyperbolic/Length.lean",
+      "TauCeti/Analysis/Complex/Conformal/Hyperbolic/Triangle.lean",
+      "TauCeti/Analysis/Complex/Conformal/Hurwitz.lean",
+      "TauCeti/Analysis/Complex/Conformal/ImageSimplyConnected.lean",
+      "TauCeti/Analysis/Complex/Conformal/Koebe.lean",
+      "TauCeti/Analysis/Complex/Conformal/LocalDegree.lean",
+      "TauCeti/Analysis/Complex/Conformal/Montel/Basic.lean",
+      "TauCeti/Analysis/Complex/Conformal/Montel/Precompact.lean",
+      "TauCeti/Analysis/Complex/Conformal/Morera.lean",
+      "TauCeti/Analysis/Complex/Conformal/NormalFamilies.lean",
+      "TauCeti/Analysis/Complex/Conformal/Poincare/Betweenness.lean",
+      "TauCeti/Analysis/Complex/Conformal/Poincare/Geodesic.lean",
+      "TauCeti/Analysis/Complex/Conformal/Poincare/Isometry/Equiv.lean",
+      "TauCeti/Analysis/Complex/Conformal/Poincare/MetricSpace.lean",
+      "TauCeti/Analysis/Complex/Conformal/Poincare/OrthogonalCircle.lean",
+      "TauCeti/Analysis/Complex/Conformal/Poincare/Topology.lean",
+      "TauCeti/Analysis/Complex/Conformal/PseudoHyperbolic.lean",
+      "TauCeti/Analysis/Complex/Conformal/Reflection/Principle.lean",
+      "TauCeti/Analysis/Complex/Conformal/Removability/Basic.lean",
+      "TauCeti/Analysis/Complex/Conformal/RiemannMapping/Conformal.lean",
+      "TauCeti/Analysis/Complex/Conformal/RiemannMapping/Equivalence.lean",
+      "TauCeti/Analysis/Complex/Conformal/RiemannMapping/Normalization.lean",
+      "TauCeti/Analysis/Complex/Conformal/Rouche.lean",
+      "TauCeti/Analysis/Complex/Conformal/Schwarz.lean",
+      "TauCeti/Analysis/Complex/Conformal/SchwarzPick/AutomorphismIsometry.lean",
+      "TauCeti/Analysis/Complex/Conformal/SchwarzPick/Basic.lean",
+      "TauCeti/Analysis/Complex/Conformal/SchwarzPick/Derivative.lean",
+      "TauCeti/Analysis/Complex/Conformal/SchwarzPick/FixedPoint.lean",
+      "TauCeti/Analysis/Complex/Conformal/SchwarzPick/Isometry.lean",
+      "TauCeti/Analysis/Complex/Conformal/SchwarzPick/Rigidity.lean",
+      "TauCeti/Analysis/Complex/Conformal/UnitDisc/Automorphism/Rotation.lean",
+      "TauCeti/Analysis/Complex/Conformal/Vitali.lean"
+    ],
+    "declarations": [
+      "Complex.exists_bijOn_unitBall_map_eq_zero"
+    ]
+  },
+  {
+    "note": "Disc-automorphism work coordinated with mathlib4#33505 (urkud), https://github.com/leanprover-community/mathlib4/pull/33505; a replacement target is not named yet",
+    "speculative": true,
+    "landing_sentinel": true,
+    "sources": [
+      "TauCeti/Analysis/Complex/Conformal/UnitDisc/Automorphism/Group.lean",
+      "TauCeti/Analysis/Complex/Conformal/UnitDisc/Automorphism/Parametrization.lean"
+    ],
+    "declarations": [
+      "Complex.unitDiscAut",
+      "Complex.unitDiscAutEquivProd"
+    ],
+    "modules": [
+      "Mathlib.Analysis.Complex.UnitDisc.Automorphism"
+    ]
+  },
+  {
+    "note": "Exact Set.unit_fg replacement from mathlib4#40791 (vvvv-ops), https://github.com/leanprover-community/mathlib4/pull/40791, with the argument adapted from EllipticCurves/Mathlib/SelmerGroup.lean (Michael Stoll), https://github.com/MichaelStollBayreuth/EllipticCurves; its blocking migration must preserve or re-home mem_unit_iff, unit_mono, unit_fg_of_units, and algebraMap_unitEmptyEquivUnits_apply",
+    "sources": [
+      "TauCeti/RingTheory/DedekindDomain/SInteger/Unit.lean"
+    ],
+    "declarations": [
+      "Set.unit_fg"
+    ]
+  },
+  {
+    "note": "Vendored from mathlib4#41253 (Chris Birkbeck), https://github.com/leanprover-community/mathlib4/pull/41253",
+    "sources": [
+      "TauCeti/GroupTheory/DoubleCoset/Basic.lean"
+    ],
+    "declarations": [
+      "DoubleCoset.doubleCoset_eq_iUnion_leftCosets"
+    ]
+  },
+  {
+    "note": "Coset vocabulary partially vendored from mathlib4#41253 (Chris Birkbeck), https://github.com/leanprover-community/mathlib4/pull/41253; degree section ported from AINTLIB LeanModularForms/HeckeRIngs/AbstractHeckeRing/Degree.lean (Chris Birkbeck), https://github.com/CBirkbeck/AINTLIB/tree/main/projects/LeanModularForms",
+    "speculative": true,
+    "landing_sentinel": true,
+    "sources": [
+      "TauCeti/NumberTheory/HeckeRing/Basic.lean"
+    ],
+    "modules": [
+      "Mathlib.NumberTheory.HeckeRing.Basic"
+    ]
+  },
+  {
+    "note": "Vendored from mathlib4#41254 (Chris Birkbeck), https://github.com/leanprover-community/mathlib4/pull/41254; the future module path is speculative",
+    "speculative": true,
+    "landing_sentinel": true,
+    "sources": [
+      "TauCeti/NumberTheory/HeckeRing/Multiplicity/Basic.lean"
+    ],
+    "modules": [
+      "Mathlib.NumberTheory.HeckeRing.Multiplicity"
+    ]
+  },
+  {
+    "note": "Vendored from mathlib4#41255 (Chris Birkbeck), https://github.com/leanprover-community/mathlib4/pull/41255; the future module path is speculative",
+    "speculative": true,
+    "landing_sentinel": true,
+    "sources": [
+      "TauCeti/NumberTheory/HeckeRing/Multiplicity/Unit.lean"
+    ],
+    "modules": [
+      "Mathlib.NumberTheory.HeckeRing.MultiplicityUnit"
+    ]
+  },
+  {
+    "note": "Vendored from mathlib4#41256 (Chris Birkbeck), https://github.com/leanprover-community/mathlib4/pull/41256; the future module path is speculative",
+    "speculative": true,
+    "landing_sentinel": true,
+    "sources": [
+      "TauCeti/NumberTheory/HeckeRing/Multiplicity/Support.lean"
+    ],
+    "modules": [
+      "Mathlib.NumberTheory.HeckeRing.MultiplicitySupport"
+    ]
+  },
+  {
+    "note": "Vendored from mathlib4#41277 (Chris Birkbeck), https://github.com/leanprover-community/mathlib4/pull/41277; the future module path is speculative",
+    "speculative": true,
+    "landing_sentinel": true,
+    "sources": [
+      "TauCeti/NumberTheory/HeckeRing/Multiplication.lean"
+    ],
+    "modules": [
+      "Mathlib.NumberTheory.HeckeRing.Multiplication"
+    ]
+  },
+  {
+    "note": "Vendored from mathlib4#41279 (Chris Birkbeck), https://github.com/leanprover-community/mathlib4/pull/41279; the future module path is speculative",
+    "speculative": true,
+    "landing_sentinel": true,
+    "sources": [
+      "TauCeti/NumberTheory/HeckeRing/One.lean"
+    ],
+    "modules": [
+      "Mathlib.NumberTheory.HeckeRing.One"
+    ]
+  },
+  {
+    "note": "Vendored from mathlib4#41328 (Chris Birkbeck), https://github.com/leanprover-community/mathlib4/pull/41328; the future module path is speculative",
+    "speculative": true,
+    "landing_sentinel": true,
+    "sources": [
+      "TauCeti/NumberTheory/HeckeRing/Associativity.lean"
+    ],
+    "modules": [
+      "Mathlib.NumberTheory.HeckeRing.Associativity"
+    ]
+  },
+  {
+    "note": "Ported from mathlib4#38009 (Chris Birkbeck), https://github.com/leanprover-community/mathlib4/pull/38009",
+    "sources": [
+      "TauCeti/AlgebraicGeometry/AdicSpace/ValuationSpectrum.lean"
+    ],
+    "modules": [
+      "Mathlib.RingTheory.Valuation.ValuationSpectrum"
+    ]
+  },
+  {
+    "note": "Exact theorem from mathlib4#38009 (Chris Birkbeck), https://github.com/leanprover-community/mathlib4/pull/38009",
+    "sources": [
+      "TauCeti/RingTheory/Valuation/ValuativeRel/Basic.lean"
+    ],
+    "declarations": [
+      "ValuativeRel.not_vle_zero_of_isUnit"
+    ]
+  },
+  {
+    "note": "Exact comap API from mathlib4#38009 (Chris Birkbeck), https://github.com/leanprover-community/mathlib4/pull/38009",
+    "sources": [
+      "TauCeti/RingTheory/Valuation/ValuativeRel/Comap.lean"
+    ],
+    "declarations": [
+      "ValuativeRel.comap"
+    ],
+    "modules": [
+      "Mathlib.RingTheory.Valuation.ValuativeRel.Comap"
+    ]
+  }]

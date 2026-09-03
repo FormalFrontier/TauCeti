@@ -107,6 +107,55 @@ theorem integralDividedPower_mul_integralDividedPower_of_commutator_eq_three_nsm
 
 /-! ## The generating-function form of the straightening rule -/
 
+/-- Summing over the truncated region
+`{(m, n, b, c, d, e) | m, n < N, (b, c, d, e) ∈ chainG2Index m n}` is the same as summing over the
+slice `{(a, b, c, d, e, q) | a + b + c + d + 2e < N, q + b + 2c + 3d + 3e < N}` of the hypercube,
+the summand transported along
+`(m, n, b, c, d, e) ↦ (n - b - c - d - 2e, b, c, d, e, m - b - 2c - 3d - 3e)`. For `N = 0` both
+sides are empty sums.
+
+This is the six-variable analogue of `sum_chainLeTwoIndex_diag_flip` in
+`TauCeti.RingTheory.Nilpotent.RootString.Basic`, whose name it follows: the inner index set is
+`Associative.chainG2Index m n` rather than `Associative.chainLeTwoIndex m n`. -/
+private theorem sum_chainG2Index_diag_flip {B : Type*} [AddCommMonoid B]
+    (F : ℕ × ℕ × ℕ × ℕ × ℕ × ℕ → B) (N : ℕ) :
+    ∑ w ∈ (range N ×ˢ range N).sigma (fun mn => Associative.chainG2Index mn.1 mn.2),
+        F (w.1.2 - w.2.1 - w.2.2.1 - w.2.2.2.1 - 2 * w.2.2.2.2, w.2.1, w.2.2.1, w.2.2.2.1,
+          w.2.2.2.2, w.1.1 - w.2.1 - 2 * w.2.2.1 - 3 * w.2.2.2.1 - 3 * w.2.2.2.2) =
+      ∑ w ∈ range N ×ˢ range N ×ˢ range N ×ˢ range N ×ˢ range N ×ˢ range N with
+        w.1 + w.2.1 + w.2.2.1 + w.2.2.2.1 + 2 * w.2.2.2.2.1 < N ∧
+          w.2.2.2.2.2 + w.2.1 + 2 * w.2.2.1 + 3 * w.2.2.2.1 + 3 * w.2.2.2.2.1 < N, F w := by
+  refine Finset.sum_nbij'
+    (fun w => (w.1.2 - w.2.1 - w.2.2.1 - w.2.2.2.1 - 2 * w.2.2.2.2, w.2.1, w.2.2.1, w.2.2.2.1,
+      w.2.2.2.2, w.1.1 - w.2.1 - 2 * w.2.2.1 - 3 * w.2.2.2.1 - 3 * w.2.2.2.2))
+    (fun w => ⟨(w.2.2.2.2.2 + w.2.1 + 2 * w.2.2.1 + 3 * w.2.2.2.1 + 3 * w.2.2.2.2.1,
+      w.1 + w.2.1 + w.2.2.1 + w.2.2.2.1 + 2 * w.2.2.2.2.1),
+      (w.2.1, w.2.2.1, w.2.2.2.1, w.2.2.2.2.1)⟩) ?_ ?_ ?_ ?_ ?_
+  · rintro ⟨⟨m, n⟩, b, c, d, e⟩ hw
+    simp only [Finset.mem_sigma, Finset.mem_product, Finset.mem_range,
+      Associative.mem_chainG2Index] at hw
+    simp only [Finset.mem_filter, Finset.mem_product, Finset.mem_range]
+    omega
+  · rintro ⟨a, b, c, d, e, q⟩ hw
+    simp only [Finset.mem_filter, Finset.mem_product, Finset.mem_range] at hw
+    simp only [Finset.mem_sigma, Finset.mem_product, Finset.mem_range,
+      Associative.mem_chainG2Index]
+    omega
+  · rintro ⟨⟨m, n⟩, b, c, d, e⟩ hw
+    obtain ⟨h1, h2⟩ := Associative.mem_chainG2Index.mp (Finset.mem_sigma.mp hw).2
+    -- Restate the two bounds with the pair projections reduced, so that `omega` can use them.
+    have hbn : b + c + d + 2 * e ≤ n := h1
+    have hbm : b + 2 * c + 3 * d + 3 * e ≤ m := h2
+    have e1 : m - b - 2 * c - 3 * d - 3 * e + b + 2 * c + 3 * d + 3 * e = m := by omega
+    have e2 : n - b - c - d - 2 * e + b + c + d + 2 * e = n := by omega
+    simp [e1, e2]
+  · rintro ⟨a, b, c, d, e, q⟩ _
+    have e1 : a + b + c + d + 2 * e - b - c - d - 2 * e = a := by omega
+    have e2 : q + b + 2 * c + 3 * d + 3 * e - b - 2 * c - 3 * d - 3 * e = q := by omega
+    simp [e1, e2]
+  · rintro ⟨⟨m, n⟩, b, c, d, e⟩ _
+    rfl
+
 -- The combinatorial core: a truncated left factor times a truncated right factor is the reordered
 -- sextuple product, once the truncation is wide enough that the reindexed hypercube contains no
 -- extra nonzero terms. The reindexing is
@@ -162,45 +211,23 @@ private theorem sum_smul_mul_sum_smul_of_chainG2Order {R : Type*} [CommRing R]
       ∑ w ∈ range N ×ˢ range N ×ˢ range N ×ˢ range N ×ˢ range N ×ˢ range N with
         w.1 + w.2.1 + w.2.2.1 + w.2.2.2.1 + 2 * w.2.2.2.2.1 < N ∧
           w.2.2.2.2.2 + w.2.1 + 2 * w.2.2.1 + 3 * w.2.2.2.1 + 3 * w.2.2.2.2.1 < N, G w := by
-    refine Finset.sum_nbij'
-      (fun w => (w.1.2 - w.2.1 - w.2.2.1 - w.2.2.2.1 - 2 * w.2.2.2.2, w.2.1, w.2.2.1, w.2.2.2.1,
-        w.2.2.2.2, w.1.1 - w.2.1 - 2 * w.2.2.1 - 3 * w.2.2.2.1 - 3 * w.2.2.2.2))
-      (fun w => ⟨(w.2.2.2.2.2 + w.2.1 + 2 * w.2.2.1 + 3 * w.2.2.2.1 + 3 * w.2.2.2.2.1,
-        w.1 + w.2.1 + w.2.2.1 + w.2.2.2.1 + 2 * w.2.2.2.2.1),
-        (w.2.1, w.2.2.1, w.2.2.2.1, w.2.2.2.2.1)⟩) ?_ ?_ ?_ ?_ ?_
-    · rintro ⟨⟨m, n⟩, b, c, d, e⟩ hw
-      simp only [Finset.mem_sigma, Finset.mem_product, Finset.mem_range,
-        Associative.mem_chainG2Index] at hw
-      simp only [Finset.mem_filter, Finset.mem_product, Finset.mem_range]
-      omega
-    · rintro ⟨a, b, c, d, e, q⟩ hw
-      simp only [Finset.mem_filter, Finset.mem_product, Finset.mem_range] at hw
-      simp only [Finset.mem_sigma, Finset.mem_product, Finset.mem_range,
-        Associative.mem_chainG2Index]
-      omega
-    · rintro ⟨⟨m, n⟩, b, c, d, e⟩ hw
-      obtain ⟨h1, h2⟩ := Associative.mem_chainG2Index.mp (Finset.mem_sigma.mp hw).2
-      have hbn : b + c + d + 2 * e ≤ n := h1
-      have hbm : b + 2 * c + 3 * d + 3 * e ≤ m := h2
-      have e1 : m - b - 2 * c - 3 * d - 3 * e + b + 2 * c + 3 * d + 3 * e = m := by omega
-      have e2 : n - b - c - d - 2 * e + b + c + d + 2 * e = n := by omega
-      simp [e1, e2]
-    · rintro ⟨a, b, c, d, e, q⟩ _
-      have e1 : a + b + c + d + 2 * e - b - c - d - 2 * e = a := by omega
-      have e2 : q + b + 2 * c + 3 * d + 3 * e - b - 2 * c - 3 * d - 3 * e = q := by omega
-      simp [e1, e2]
-    · rintro ⟨⟨m, n⟩, b, c, d, e⟩ hw
-      simp only [Finset.mem_sigma, Finset.mem_product, Finset.mem_range,
-        Associative.mem_chainG2Index] at hw
-      obtain ⟨a, rfl⟩ : ∃ a, n = a + (b + c + d + 2 * e) := ⟨n - b - c - d - 2 * e, by omega⟩
-      obtain ⟨q, rfl⟩ : ∃ q, m = q + (b + 2 * c + 3 * d + 3 * e) :=
-        ⟨m - b - 2 * c - 3 * d - 3 * e, by omega⟩
-      have h1 : a + (b + c + d + 2 * e) - b - c - d - 2 * e = a := by omega
-      have h2 : q + (b + 2 * c + 3 * d + 3 * e) - b - 2 * c - 3 * d - 3 * e = q := by omega
-      simp only [hG, h1, h2]
-      congr 1
-      simp only [mul_pow, pow_add, pow_mul]
-      ring
+    rw [← sum_chainG2Index_diag_flip G N]
+    refine Finset.sum_congr rfl ?_
+    -- On the region `m = q + (b + 2c + 3d + 3e)`, `n = a + (b + c + d + 2e)`, so the scalar
+    -- `t ^ m * u ^ n` is `G`'s `u ^ a * (t * u) ^ b * (t ^ 2 * u) ^ c * (t ^ 3 * u) ^ d *
+    -- (t ^ 3 * u ^ 2) ^ e * t ^ q`.
+    rintro ⟨⟨m, n⟩, b, c, d, e⟩ hw
+    simp only [Finset.mem_sigma, Finset.mem_product, Finset.mem_range,
+      Associative.mem_chainG2Index] at hw
+    obtain ⟨a, rfl⟩ : ∃ a, n = a + (b + c + d + 2 * e) := ⟨n - b - c - d - 2 * e, by omega⟩
+    obtain ⟨q, rfl⟩ : ∃ q, m = q + (b + 2 * c + 3 * d + 3 * e) :=
+      ⟨m - b - 2 * c - 3 * d - 3 * e, by omega⟩
+    have h1 : a + (b + c + d + 2 * e) - b - c - d - 2 * e = a := by omega
+    have h2 : q + (b + 2 * c + 3 * d + 3 * e) - b - 2 * c - 3 * d - 3 * e = q := by omega
+    simp only [hG, h1, h2]
+    congr 1
+    simp only [mul_pow, pow_add, pow_mul]
+    ring
   -- Step 4: the terms of the hypercube outside that part vanish.
   have hsub : ∑ w ∈ range N ×ˢ range N ×ˢ range N ×ˢ range N ×ˢ range N ×ˢ range N with
         w.1 + w.2.1 + w.2.2.1 + w.2.2.2.1 + 2 * w.2.2.2.2.1 < N ∧
@@ -222,6 +249,33 @@ variable {R : Type v} [CommRing R] [Algebra ℤ R]
 
 -- Match tensor products to the module structure carried by the explicit `ℤ`-algebra.
 attribute [local instance high] Algebra.toModule
+
+/-- Outside the truncation the reordered sextuple already has a vanishing factor: if each family
+`D‹·›` vanishes from its own bound `k‹·›` onwards, then past
+`kx + ky + kz + 2 * kw + 3 * kv + 3 * ks` in either of the two weightings the product is zero.
+This is the vanishing half of `sum_smul_mul_sum_smul_of_chainG2Order`'s hypothesis, stated for
+arbitrary families over any `MulZeroClass` so that the type-`G₂` proof only has to supply the six
+bounds. -/
+private theorem mul_eq_zero_of_le_of_chainG2Order {B : Type*} [MulZeroClass B]
+    (Dx Dy Dz Dw Dv Ds : ℕ → B) {kx ky kz kw kv ks : ℕ}
+    (hvx : ∀ n, kx ≤ n → Dx n = 0) (hvy : ∀ n, ky ≤ n → Dy n = 0)
+    (hvz : ∀ n, kz ≤ n → Dz n = 0) (hvw : ∀ n, kw ≤ n → Dw n = 0)
+    (hvv : ∀ n, kv ≤ n → Dv n = 0) (hvs : ∀ n, ks ≤ n → Ds n = 0) (a b c d e q : ℕ)
+    (h : kx + ky + kz + 2 * kw + 3 * kv + 3 * ks ≤ a + b + c + d + 2 * e ∨
+      kx + ky + kz + 2 * kw + 3 * kv + 3 * ks ≤ q + b + 2 * c + 3 * d + 3 * e) :
+    Dy a * Dz b * Dw c * Dv d * Ds e * Dx q = 0 := by
+  by_cases ha : ky ≤ a
+  · simp [hvy a ha]
+  · by_cases hq : kx ≤ q
+    · simp [hvx q hq]
+    · by_cases hb : kz ≤ b
+      · simp [hvz b hb]
+      · by_cases hc : kw ≤ c
+        · simp [hvw c hc]
+        · by_cases hd : kv ≤ d
+          · simp [hvv d hd]
+          · -- Every other index is below its bound, so either weighting forces `ks ≤ e`.
+            simp [hvs e (by omega)]
 
 /-- **The Chevalley commutator relation in type `G₂`.** If
 
@@ -288,37 +342,13 @@ theorem baseChangeExp_mul_baseChangeExp_of_commutator_eq_three_nsmul
     simp only [map_mul, map_sum] at h
     exact h
   · -- Outside the truncation the reordered sextuple has a vanishing factor.
-    have hvx : ∀ q, kx ≤ q → (integralDividedPower x M q (hMx q)).baseChange R = 0 :=
-      fun q hq => baseChange_integralDividedPower_eq_zero_of_le x M (hMx q) hkx hq
-    have hvy : ∀ a, ky ≤ a → (integralDividedPower y M a (hMy a)).baseChange R = 0 :=
-      fun a ha => baseChange_integralDividedPower_eq_zero_of_le y M (hMy a) hky ha
-    have hvz : ∀ b, kz ≤ b → (integralDividedPower z M b (hMz b)).baseChange R = 0 :=
-      fun b hb => baseChange_integralDividedPower_eq_zero_of_le z M (hMz b) hkz hb
-    have hvw : ∀ c, kw ≤ c → (integralDividedPower w M c (hMw c)).baseChange R = 0 :=
-      fun c hc => baseChange_integralDividedPower_eq_zero_of_le w M (hMw c) hkw hc
-    have hvv : ∀ d, kv ≤ d → (integralDividedPower v M d (hMv d)).baseChange R = 0 :=
-      fun d hd => baseChange_integralDividedPower_eq_zero_of_le v M (hMv d) hkv hd
-    have hvs' : ∀ e, ks ≤ e → (integralDividedPower s M e (hMs e)).baseChange R = 0 :=
-      fun e he => baseChange_integralDividedPower_eq_zero_of_le s M (hMs e) hks he
-    rintro a b c d e q (habc | hqbc)
-    · rcases le_or_gt ky a with ha | ha
-      · simp [hvy a ha]
-      · rcases le_or_gt kz b with hb | hb
-        · simp [hvz b hb]
-        · rcases le_or_gt kw c with hc | hc
-          · simp [hvw c hc]
-          · rcases le_or_gt kv d with hd | hd
-            · simp [hvv d hd]
-            · simp [hvs' e (by omega)]
-    · rcases le_or_gt kx q with hq | hq
-      · simp [hvx q hq]
-      · rcases le_or_gt kz b with hb | hb
-        · simp [hvz b hb]
-        · rcases le_or_gt kw c with hc | hc
-          · simp [hvw c hc]
-          · rcases le_or_gt kv d with hd | hd
-            · simp [hvv d hd]
-            · simp [hvs' e (by omega)]
+    exact mul_eq_zero_of_le_of_chainG2Order _ _ _ _ _ _
+      (forall_baseChange_integralDividedPower_eq_zero_of_le (R := R) x M hMx hkx)
+      (forall_baseChange_integralDividedPower_eq_zero_of_le (R := R) y M hMy hky)
+      (forall_baseChange_integralDividedPower_eq_zero_of_le (R := R) z M hMz hkz)
+      (forall_baseChange_integralDividedPower_eq_zero_of_le (R := R) w M hMw hkw)
+      (forall_baseChange_integralDividedPower_eq_zero_of_le (R := R) v M hMv hkv)
+      (forall_baseChange_integralDividedPower_eq_zero_of_le (R := R) s M hMs hks)
 
 /-- The conjugation form of the Chevalley commutator relation in type `G₂`: conjugating the
 one-parameter subgroup of `y` by that of `x` multiplies it by the one-parameter subgroups of `z`,

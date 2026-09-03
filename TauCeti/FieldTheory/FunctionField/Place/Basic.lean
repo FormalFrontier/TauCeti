@@ -6,6 +6,8 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.FieldTheory.AlgebraicClosure
+public import Mathlib.RingTheory.DiscreteValuationRing.TFAE
+public import Mathlib.RingTheory.Valuation.Integral
 public import Mathlib.RingTheory.Valuation.IsTrivialOn
 public import TauCeti.RingTheory.Valuation.Discrete.Order
 
@@ -44,11 +46,17 @@ equivalence is needed and equality of places *is* equality of valuations
   `algebraicClosure k F` is contained in `𝒪_P`
   (`TauCeti.Place.mem_integers_of_mem_algebraicClosure`).
 * `TauCeti.Place.integers_injective`: a place is determined by its valuation ring
-  (Stichtenoth, Theorem 1.1.13).
+  (Stichtenoth, Theorem 1.1.13), and `TauCeti.Place.eq_of_integers_le`: the valuation ring of a
+  place is a maximal proper subring of `F`, so a place whose valuation ring contains that of
+  another place is that place (Stichtenoth, Theorem 1.1.13(d)).
+* `TauCeti.Place.mem_integers_of_isIntegral`: the valuation ring of a place is integrally closed
+  in `F`.
 * `TauCeti.Place.degree_eq_one_iff_algebraMap_surjective` and
   `TauCeti.Place.degree_eq_one_iff_forall_exists_valuation_sub_lt_one`: the rational places are
   those whose residue field is exhausted by the constants, equivalently those at which every
-  integral function agrees with a constant to first order.
+  integral function agrees with a constant to first order;
+  `TauCeti.Place.residueFieldEquivOfDegreeEqOne` identifies the residue field of such a place
+  with `k`.
 
 ## Implementation notes
 
@@ -142,6 +150,10 @@ theorem ord_one : P.ord 1 = 0 := Valuation.ord_one P.valuation
 theorem ord_mul {f g : F} (hf : f ≠ 0) (hg : g ≠ 0) : P.ord (f * g) = P.ord f + P.ord g :=
   Valuation.ord_mul P.valuation hf hg
 
+theorem ord_prod {ι : Type*} (s : Finset ι) {f : ι → F} (hf : ∀ i ∈ s, f i ≠ 0) :
+    P.ord (∏ i ∈ s, f i) = ∑ i ∈ s, P.ord (f i) :=
+  Valuation.ord_prod P.valuation s hf
+
 @[simp]
 theorem ord_inv (f : F) : P.ord f⁻¹ = -P.ord f := Valuation.ord_inv P.valuation f
 
@@ -167,6 +179,15 @@ theorem ord_div_zpow {f t : F} (hf : f ≠ 0) (ht : t ≠ 0) (n : ℤ) :
 theorem ord_surjective : Function.Surjective P.ord :=
   Valuation.ord_surjective P.valuation P.valuation_surjective
 
+/-- Every integer is the order of a *nonzero* function: the sharpening of
+`TauCeti.Place.ord_surjective` that the junk value `ord_P 0 = 0` makes necessary, since the
+element `ord_surjective` produces at `0` may itself be `0`. -/
+theorem exists_ne_zero_ord_eq (n : ℤ) : ∃ t : F, t ≠ 0 ∧ P.ord t = n := by
+  obtain ⟨t, ht⟩ := P.ord_surjective n
+  rcases eq_or_ne t 0 with rfl | ht0
+  · exact ⟨1, one_ne_zero, by rw [P.ord_one, ← ht, P.ord_zero]⟩
+  · exact ⟨t, ht0, ht⟩
+
 theorem mem_integers_iff_ord_nonneg {f : F} : f ∈ P.integers ↔ 0 ≤ P.ord f :=
   Valuation.mem_valuationSubring_iff_ord_nonneg P.valuation
 
@@ -181,6 +202,34 @@ have distinct orders, the order of their sum is the smaller of the two. -/
 theorem ord_add_eq_min_of_ord_ne {f g : F} (hf : f ≠ 0) (hg : g ≠ 0)
     (h : P.ord f ≠ P.ord g) : P.ord (f + g) = min (P.ord f) (P.ord g) :=
   Valuation.ord_add_eq_min_of_ord_ne P.valuation hf hg h
+
+/-- A finite sum one of whose summands has strictly least order at `P` does not vanish. -/
+theorem sum_ne_zero_of_forall_ord_lt {ι : Type*} {s : Finset ι} {f : ι → F} {j : ι} (hj : j ∈ s)
+    (hfj : f j ≠ 0) (hlt : ∀ i ∈ s, i ≠ j → P.ord (f j) < P.ord (f i)) :
+    ∑ i ∈ s, f i ≠ 0 :=
+  Valuation.sum_ne_zero_of_forall_ord_lt P.valuation hj hfj hlt
+
+/-- The **strict triangle inequality for a finite sum**: a summand of strictly least order at `P`
+dictates the order of the sum. -/
+theorem ord_sum_eq_of_forall_lt {ι : Type*} {s : Finset ι} {f : ι → F} {j : ι} (hj : j ∈ s)
+    (hfj : f j ≠ 0) (hlt : ∀ i ∈ s, i ≠ j → P.ord (f j) < P.ord (f i)) :
+    P.ord (∑ i ∈ s, f i) = P.ord (f j) :=
+  Valuation.ord_sum_eq_of_forall_lt P.valuation hj hfj hlt
+
+/-- **Normalizing a family of coefficients.** A finite family in `F` that does not vanish
+identically has a nonzero member by which the whole family can be divided without leaving `𝒪_P`;
+a member of least order at `P` is one. This is what turns a relation with coefficients in `F`
+into a relation with coefficients in `𝒪_P`, one of which is a unit. -/
+theorem exists_ne_zero_forall_div_mem_integers {ι : Type*} [Finite ι] (c : ι → F) {i₁ : ι}
+    (hi₁ : c i₁ ≠ 0) : ∃ i₀, c i₀ ≠ 0 ∧ ∀ i, c i / c i₀ ∈ P.integers := by
+  obtain ⟨i₀, hi₀, hmin⟩ :=
+    Set.exists_min_image {i | c i ≠ 0} (fun i ↦ P.ord (c i)) (Set.toFinite _) ⟨i₁, hi₁⟩
+  refine ⟨i₀, hi₀, fun i ↦ ?_⟩
+  rcases eq_or_ne (c i) 0 with h | h
+  · simp [h]
+  · rw [P.mem_integers_iff_ord_nonneg, P.ord_div h hi₀]
+    have := hmin i h
+    omega
 
 section Constants
 
@@ -274,6 +323,13 @@ theorem mem_maximalIdeal_iff_valuation_lt_one {f : P.integers} :
     f ∈ IsLocalRing.maximalIdeal P.integers ↔ P.valuation (f : F) < 1 :=
   Valuation.mem_maximalIdeal_iff (v := P.valuation)
 
+/-- The elements of positive order are exactly those of valuation less than one: the maximal
+ideal of `𝒪_P`, read at the level of `F`. -/
+theorem valuation_lt_one_iff_ord_pos {f : F} (hf : f ≠ 0) :
+    P.valuation f < 1 ↔ 0 < P.ord f := by
+  rw [P.valuation_eq_exp_neg_ord hf, ← WithZero.exp_zero, WithZero.exp_lt_exp]
+  omega
+
 theorem mem_maximalIdeal_iff_ord_pos {f : P.integers} (hf : (f : F) ≠ 0) :
     f ∈ IsLocalRing.maximalIdeal P.integers ↔ 0 < P.ord (f : F) :=
   Valuation.mem_maximalIdeal_iff_ord_pos P.valuation hf
@@ -290,9 +346,38 @@ theorem eq_of_isEquiv {P Q : Place k F} (h : P.valuation.IsEquiv Q.valuation) : 
   ext (Valuation.eq_of_isEquiv_of_surjective
     P.valuation_surjective Q.valuation_surjective h)
 
+@[simp]
+theorem valuation_isEquiv_iff {P Q : Place k F} : P.valuation.IsEquiv Q.valuation ↔ P = Q := by
+  refine ⟨eq_of_isEquiv, ?_⟩
+  rintro rfl
+  exact Valuation.IsEquiv.refl
+
 /-- A place is determined by its valuation ring (Stichtenoth, Theorem 1.1.13). -/
 theorem integers_injective : Function.Injective (integers : Place k F → ValuationSubring F) :=
   fun _ _ h => eq_of_isEquiv ((Valuation.isEquiv_iff_valuationSubring _ _).mpr h)
+
+/-- **The valuation ring of a place is a maximal proper subring of `F`** (Stichtenoth,
+Theorem 1.1.13(d)), in the form used to recognize a place from a containment of valuation
+rings: a place whose valuation ring contains the valuation ring of another place is that
+place.
+
+This is Mathlib's `ValuationSubring.eq_of_le_of_ne_top` for `𝒪_P`, which applies because a
+discrete valuation ring has Krull dimension at most one; properness of `𝒪_Q` is what rules out
+the other case. -/
+theorem eq_of_integers_le {P Q : Place k F} (h : P.integers ≤ Q.integers) : P = Q :=
+  integers_injective (P.integers.eq_of_le_of_ne_top h Q.integers_ne_top)
+
+/-- The valuation ring of a place is integrally closed in `F`: an element of `F` integral over a
+`k`-algebra whose image lies in `𝒪_P` lies in `𝒪_P`. -/
+theorem mem_integers_of_isIntegral {R : Type*} [CommRing R] [Algebra R F]
+    (hR : ∀ r : R, algebraMap R F r ∈ P.integers) {y : F} (hy : IsIntegral R y) :
+    y ∈ P.integers := by
+  have hR' : ∀ r : R, algebraMap R F r ∈ P.valuation.valuationSubring :=
+    fun r ↦ P.mem_integers_iff.mp (hR r)
+  let : Algebra R P.valuation.valuationSubring := ((algebraMap R F).codRestrict _ hR').toAlgebra
+  have : IsScalarTower R P.valuation.valuationSubring F := .of_algebraMap_eq fun _ ↦ rfl
+  exact P.mem_integers_iff.mpr
+    ((Valuation.valuationSubring.integers P.valuation).isIntegral_iff_v_le_one.mp hy.tower_top)
 
 end IntegersOrder
 
@@ -304,6 +389,14 @@ noncomputable instance : Algebra k P.integers :=
 
 instance : IsScalarTower k P.integers F :=
   .of_algebraMap_eq fun _ => rfl
+
+/-- A constant, viewed in `𝒪_P` and then back in `F`, is that constant.  The name says
+`constants` rather than `integers` because `TauCeti.Place.coe_algebraMap_integers` is the
+corresponding statement for the algebra map between the valuation rings of two places. -/
+@[simp, norm_cast]
+theorem coe_algebraMap_constants (c : k) :
+    ((algebraMap k P.integers c : P.integers) : F) = algebraMap k F c := by
+  rw [IsScalarTower.algebraMap_apply k P.integers F, ValuationSubring.algebraMap_apply]
 
 /-- The residue field `F_P = 𝒪_P / 𝔪_P` of a place (Stichtenoth, Definition 1.1.14). The
 evaluation map `f ↦ f(P)` is `IsLocalRing.residue P.integers`. -/
@@ -368,6 +461,18 @@ theorem degree_eq_one_iff_forall_exists_valuation_sub_lt_one :
     obtain ⟨a, rfl⟩ := IsLocalRing.residue_surjective y
     obtain ⟨c, hc⟩ := h (a : F) a.2
     exact ⟨c, ((key a c).mp hc).symm⟩
+
+/-- **A rational place has residue field `k`**: at a place of degree one the constants map
+isomorphically onto the residue field, so `f(P)` really is an element of `k`. -/
+noncomputable def residueFieldEquivOfDegreeEqOne (h : P.degree = 1) : k ≃ₐ[k] P.ResidueField :=
+  AlgEquiv.ofBijective (Algebra.ofId k P.ResidueField)
+    ⟨(algebraMap k P.ResidueField).injective,
+      (degree_eq_one_iff_algebraMap_surjective P).mp h⟩
+
+@[simp]
+theorem residueFieldEquivOfDegreeEqOne_apply (h : P.degree = 1) (c : k) :
+    residueFieldEquivOfDegreeEqOne P h c = algebraMap k P.ResidueField c :=
+  AlgEquiv.ofBijective_apply _ _ _
 
 /-- If the residue field of a place is algebraic over an algebraically closed field of constants,
 then the place is rational (Stichtenoth, Remark 1.1.17). -/

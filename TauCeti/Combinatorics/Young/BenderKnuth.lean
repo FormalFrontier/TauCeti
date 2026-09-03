@@ -53,6 +53,8 @@ endpoints depend only on `a` and `b`, which a recut does not move.
 
 ## References
 
+* E. A. Bender and D. E. Knuth, *Enumeration of plane partitions*, J. Combinatorial Theory **13**
+  (1972), 40--54, where the involution originates.
 * [W. Fulton, *Young Tableaux*][fulton1997], Section 2.2.
 * [Schur--Weyl roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/SchurWeyl/README.md),
   Layer 7.

@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.RepresentationTheory.Spin.Polarization.Basic
-public import Mathlib.FieldTheory.IsSepClosed
+public import TauCeti.LinearAlgebra.QuadraticForm.SepClosed
 import Mathlib.LinearAlgebra.QuadraticForm.Dual
 public import Mathlib.LinearAlgebra.QuadraticForm.Radical
 import Mathlib.RingTheory.Finiteness.Prod
@@ -27,9 +27,7 @@ quadratic spaces over separably closed fields of characteristic different from t
 
 * [Tau Ceti Roadmap](https://github.com/TauCetiProject/TauCetiRoadmap), Representation Theory /
   Spin Representations, Layer 4, "The spin module".
-* Mathlib's `QuadraticForm.isometryEquivSumSquaresUnits` and
-  `QuadraticForm.equivalent_weightedSumSquares_of_isAlgClosed` supply the normalization argument
-  adapted below from algebraically closed to separably closed fields.
+* `QuadraticForm.equivalent_weightedSumSquares_of_isSepClosed` supplies the normalization argument.
 -/
 
 public section
@@ -405,27 +403,6 @@ private noncomputable def pullback {V V' : Type*} [AddCommGroup V] [Module K V]
     rw [hpolar]
     exact P.line_orthogonal_W' (eLine z) (eW' y)
 
-private def isometryEquivSumSquaresUnits {F : Type*} [Field F] [NeZero (2 : F)]
-    [IsSepClosed F]
-    {I : Type*} [Fintype I] (w : I → Fˣ) :
-    (QuadraticMap.weightedSumSquares F fun i ↦ (w i : F)).IsometryEquiv
-      (QuadraticMap.weightedSumSquares F (1 : I → F)) := by
-  classical
-  refine QuadraticForm.isometryEquivWeightedSumSquaresWeightedSumSquares
-    (fun i ↦ Units.mk0 (IsSepClosed.exists_eq_mul_self (w i : F)).choose ?_) ?_
-  · rw [← mul_self_eq_zero.ne, ← (IsSepClosed.exists_eq_mul_self (w i : F)).choose_spec]
-    exact (w i).ne_zero
-  · intro i
-    simp [pow_two, ← (IsSepClosed.exists_eq_mul_self (w i : F)).choose_spec]
-
-private theorem equivalent_weightedSumSquares {F X : Type*} [Field F] [Invertible (2 : F)]
-    [IsSepClosed F] [AddCommGroup X] [Module F X] [FiniteDimensional F X]
-    (Q : QuadraticForm F X) (hQ : (QuadraticMap.associated Q).SeparatingLeft) :
-    Q.Equivalent (QuadraticMap.weightedSumSquares F (1 : Fin (Module.finrank F X) → F)) := by
-  classical
-  let ⟨w, ⟨e⟩⟩ := Q.equivalent_weightedSumSquares_units_of_nondegenerate' hQ
-  exact ⟨e.trans (isometryEquivSumSquaresUnits w)⟩
-
 private theorem finrank_splitModel {R : Type*} [CommRing R] [Nontrivial R] (n : ℕ) :
     Module.finrank R (SplitModel R n) = n := by
   let _ : Module.Free R (SplitHalf R n) := Module.Free.pi R _
@@ -440,13 +417,12 @@ private noncomputable def isometryEquivSplitModel {F X : Type*} [Field F]
     [Invertible (2 : F)] [IsSepClosed F] [AddCommGroup X] [Module F X]
     [FiniteDimensional F X] (Q : QuadraticForm F X) (hQ : Q.Nondegenerate) :
     Q.IsometryEquiv (splitModelForm F (Module.finrank F X)) := by
-  have hQ' := equivalent_weightedSumSquares Q
+  have hQ' := Q.equivalent_weightedSumSquares_of_isSepClosed
     ((QuadraticMap.nondegenerate_associated_iff (Q := Q)).2 hQ).1
   have hModel' :
       (splitModelForm F (Module.finrank F X)).Equivalent
         (QuadraticMap.weightedSumSquares F (1 : Fin (Module.finrank F X) → F)) := by
-    have h := equivalent_weightedSumSquares
-      (splitModelForm F (Module.finrank F X))
+    have h := (splitModelForm F (Module.finrank F X)).equivalent_weightedSumSquares_of_isSepClosed
       (associated_splitModelForm_separatingLeft (R := F) (Module.finrank F X))
     rw [finrank_splitModel] at h
     exact h

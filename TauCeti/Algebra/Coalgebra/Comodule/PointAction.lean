@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.FieldTheory.IsAlgClosed.Basic
-public import TauCeti.Algebra.AlgebraicGroup.Representation.PointsAction
+public import TauCeti.Algebra.Coalgebra.Comodule.PointsAction
 import TauCeti.Algebra.Coalgebra.Comodule.Evaluation
 import TauCeti.RingTheory.FiniteType.PointSeparation
 
@@ -23,17 +23,15 @@ coefficient of `m` to its trivial-comodule value. Reduced finite-type point sepa
 identifies those coefficients in `H`. A finite-dimensional subspace containing the single tensor
 `coact m - m ⊗ 1` has enough coordinate functionals to show that this tensor vanishes.
 
-For a Hopf algebra this is restated using the group action of its convolution group of points.
-This is the bridge in the Kolchin induction for Layer 5 of the ReductiveGroups roadmap: a common
-fixed vector obtained from the geometric point representation is thereby promoted to a fixed
-vector of the comodule itself.
+The representation-level restatements live in
+`TauCeti.Algebra.AlgebraicGroup.Representation.PointsAction`. This criterion is the bridge in the
+Kolchin induction for Layer 5 of the ReductiveGroups roadmap: a common fixed vector obtained from
+the geometric point representation is thereby promoted to a fixed vector of the comodule itself.
 
 ## Main declarations
 
 * `TauCeti.Comodule.coact_eq_tmul_one_iff_forall_endOfPoint_tmul_eq`: geometric-point detection of
   a fixed vector for a bialgebra comodule.
-* `TauCeti.Comodule.coact_eq_tmul_one_iff_forall_pointsAction_tmul_eq`: the same criterion for the
-  convolution-group action of a Hopf algebra.
 
 ## References
 
@@ -96,31 +94,6 @@ theorem coact_eq_tmul_one_iff_forall_endOfPoint_tmul_eq (m : M) :
     rw [← hz', hz'zero, map_zero]
 
 end Bialgebra
-
-section HopfAlgebra
-
-variable {k : Type u} {H : Type v} {M : Type w} {K : Type x}
-variable [Field k] [CommRing H] [HopfAlgebra k H] [Algebra.FiniteType k H] [IsReduced H]
-variable [AddCommGroup M] [Module k M] [Comodule k H M]
-variable [Field K] [Algebra k K] [IsAlgClosed K]
-
-/-- For a Hopf-algebra comodule, a vector is fixed by the coaction exactly when every point in the
-convolution group fixes its scalar extension. -/
-theorem coact_eq_tmul_one_iff_forall_pointsAction_tmul_eq (m : M) :
-    coact (R := k) (C := H) m = m ⊗ₜ[k] (1 : H) ↔
-      ∀ g : WithConv (H →ₐ[k] K),
-        pointsAction M g ((1 : K) ⊗ₜ[k] m) = (1 : K) ⊗ₜ[k] m := by
-  rw [coact_eq_tmul_one_iff_forall_endOfPoint_tmul_eq (K := K)]
-  constructor
-  · intro h g
-    rw [← LinearEquiv.coe_toLinearMap, pointsAction_toLinearMap]
-    exact h g.ofConv
-  · intro h g
-    have hg := h (toConv g)
-    rw [← LinearEquiv.coe_toLinearMap, pointsAction_toLinearMap] at hg
-    simpa only [ofConv_toConv] using hg
-
-end HopfAlgebra
 
 end
 

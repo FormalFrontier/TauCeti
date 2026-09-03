@@ -28,6 +28,11 @@ functions to constants.
 * `TauCeti.IsJHolomorphicOn` and `TauCeti.IsJHolomorphic`: setwise and global predicates.
 * `TauCeti.IsJHolomorphicAt.comp`: composition of J-holomorphic maps.
 
+The within-set predicate carries the same two structural lemmas as the constant-structure one:
+`IsJHolomorphicWithinAt.mono` shrinks the set and `isJHolomorphicWithinAt_univ` identifies the
+`Set.univ` case with `IsJHolomorphicAt`. `IsJHolomorphicOn.mono` and `isJHolomorphicOn_univ`
+follow from them pointwise.
+
 The convention follows McDuff--Salamon, *J-holomorphic Curves and Symplectic Topology*,
 Section 2.1.
 -/
@@ -203,6 +208,22 @@ lemma IsJHolomorphicWithinAt.isJHolomorphicAt_of_mem_nhds {J : U → AlmostCompl
     IsJHolomorphicAt J J' f x :=
   IsConstStructureJHolomorphicWithinAt.isConstStructureJHolomorphicAt_of_mem_nhds hf hs
 
+/-- Restrict the domain set of a within-set J-holomorphic map. -/
+lemma IsJHolomorphicWithinAt.mono {J : U → AlmostComplexStructure U}
+    {J' : V → AlmostComplexStructure V} {f : U → V} {s t : Set U} {x : U}
+    (hf : IsJHolomorphicWithinAt J J' f t x) (hst : s ⊆ t) :
+    IsJHolomorphicWithinAt J J' f s x := by
+  simpa only [IsJHolomorphicWithinAt] using
+    IsConstStructureJHolomorphicWithinAt.mono hf hst
+
+/-- Within the whole space, J-holomorphicity is the same as pointwise J-holomorphicity. -/
+@[simp]
+lemma isJHolomorphicWithinAt_univ (J : U → AlmostComplexStructure U)
+    (J' : V → AlmostComplexStructure V) (f : U → V) (x : U) :
+    IsJHolomorphicWithinAt J J' f Set.univ x ↔ IsJHolomorphicAt J J' f x := by
+  simpa only [IsJHolomorphicWithinAt, IsJHolomorphicAt] using
+    isConstStructureJHolomorphicWithinAt_univ (J x) (J' (f x)) f x
+
 /-- A setwise J-holomorphic map is J-holomorphic within the set at each member. -/
 lemma IsJHolomorphicOn.isJHolomorphicWithinAt {J : U → AlmostComplexStructure U}
     {J' : V → AlmostComplexStructure V} {f : U → V} {s : Set U}
@@ -214,10 +235,7 @@ lemma IsJHolomorphicOn.isJHolomorphicWithinAt {J : U → AlmostComplexStructure 
 lemma IsJHolomorphicOn.mono {J : U → AlmostComplexStructure U} {J' : V → AlmostComplexStructure V}
     {f : U → V} {s t : Set U} (hf : IsJHolomorphicOn J J' f t) (hst : s ⊆ t) :
     IsJHolomorphicOn J J' f s :=
-  fun x hx ↦
-    let hfx := hf x (hst hx)
-    isConstStructureJHolomorphicWithinAt_of_hasFDerivWithinAt
-      (hfx.hasFDerivWithinAt.mono hst) hfx.derivative_isComplexLinear
+  fun x hx ↦ (hf x (hst hx)).mono hst
 
 /-- A setwise J-holomorphic map is differentiable on its domain. -/
 lemma IsJHolomorphicOn.differentiableOn {J : U → AlmostComplexStructure U}
@@ -253,11 +271,7 @@ lemma IsJHolomorphic.continuous {J : U → AlmostComplexStructure U}
 lemma isJHolomorphicOn_univ (J : U → AlmostComplexStructure U)
     (J' : V → AlmostComplexStructure V) (f : U → V) :
     IsJHolomorphicOn J J' f Set.univ ↔ IsJHolomorphic J J' f := by
-  constructor
-  · intro hf x
-    exact (hf x (Set.mem_univ x)).isJHolomorphicAt_of_mem_nhds (by simp)
-  · intro hf x _
-    exact (hf x).isJHolomorphicWithinAt
+  simp [IsJHolomorphicOn, IsJHolomorphic]
 
 /-- For constant structure functions, varying-structure pointwise J-holomorphicity is exactly
 the existing constant-structure predicate. -/
@@ -346,17 +360,15 @@ lemma isJHolomorphicOn_const (J : U → AlmostComplexStructure U)
 /-- The identity map is J-holomorphic for every varying almost complex structure. -/
 @[simp]
 lemma isJHolomorphic_id (J : U → AlmostComplexStructure U) :
-    IsJHolomorphic J J id := by
-  intro x
-  exact isConstStructureJHolomorphicAt_id (J x) x
+    IsJHolomorphic J J id :=
+  fun x ↦ isJHolomorphicAt_id J x
 
 /-- A constant map is J-holomorphic for arbitrary source and target structures. -/
 @[simp]
 lemma isJHolomorphic_const (J : U → AlmostComplexStructure U)
     (J' : V → AlmostComplexStructure V) (c : V) :
-    IsJHolomorphic J J' (fun _ ↦ c) := by
-  intro x
-  exact isConstStructureJHolomorphicAt_const (J x) (J' c) c x
+    IsJHolomorphic J J' (fun _ ↦ c) :=
+  fun x ↦ isJHolomorphicAt_const J J' c x
 
 /-- The composition of two J-holomorphic maps is J-holomorphic at a point. -/
 lemma IsJHolomorphicAt.comp {J : U → AlmostComplexStructure U}

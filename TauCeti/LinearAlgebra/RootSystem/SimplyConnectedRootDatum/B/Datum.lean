@@ -192,9 +192,12 @@ private lemma corootIdx_injective : Injective (corootIdx : Fin (2 * n) × Fin n 
 
 /-! ## The enumeration of the roots -/
 
+/-- There is room for the first `n` indices in the type `Bₙ` enumeration of `2 * n ^ 2` roots. -/
+private lemma typeB_le_two_mul_sq (n : ℕ) : n ≤ 2 * n ^ 2 :=
+  le_trans (Nat.le_self_pow (by norm_num) n) (Nat.le_mul_of_pos_left (n ^ 2) (by norm_num))
+
 private lemma typeB_lt_two_mul_sq {i : ℕ} (hi : i < n) : i < 2 * n ^ 2 :=
-  lt_of_lt_of_le hi (le_trans (Nat.le_self_pow (by norm_num) n)
-    (Nat.le_mul_of_pos_left (n ^ 2) (by norm_num)))
+  lt_of_lt_of_le hi (typeB_le_two_mul_sq n)
 
 /-- The rotation of the signed basis vectors by `n - 1` steps. Composed with the reversal of the
 offsets it moves the long simple roots to the front of the enumeration. -/
@@ -251,12 +254,13 @@ private def typeBSimplePair (i : Fin n) : Fin (2 * n) × Fin n :=
 
 /-- The `i`-th simple root of type `Bₙ` sits at root index `i`, the Bourbaki node `i + 1`. -/
 def typeBSimpleIndex (n : ℕ) (i : Fin n) : Fin (2 * n ^ 2) :=
-  ⟨i, typeB_lt_two_mul_sq i.isLt⟩
+  Fin.castLE (typeB_le_two_mul_sq n) i
 
-@[simp] lemma typeBSimpleIndex_val (i : Fin n) : (typeBSimpleIndex n i : ℕ) = i := (rfl)
+@[simp] lemma typeBSimpleIndex_val (i : Fin n) : (typeBSimpleIndex n i : ℕ) = i := by
+  simp [typeBSimpleIndex]
 
-lemma typeBSimpleIndex_injective : Injective (typeBSimpleIndex n) := fun i j h =>
-  Fin.ext (by simpa using congrArg Fin.val h)
+lemma typeBSimpleIndex_injective : Injective (typeBSimpleIndex n) :=
+  Fin.castLE_injective (typeB_le_two_mul_sq n)
 
 private lemma typeBEnum_typeBSimplePair (i : Fin n) :
     typeBEnum n (typeBSimplePair i) = typeBSimpleIndex n i := by
@@ -295,14 +299,6 @@ private lemma typeBEnum_symm_typeBSimpleIndex (i : Fin n) :
   rw [← typeBEnum_typeBSimplePair i, Equiv.symm_apply_apply]
 
 /-! ## The root datum -/
-
-/-- The standard dot-product pairing on the character and cocharacter coordinate lattices is
-perfect; this local instance supplies the perfect pairing required to construct the root datum. -/
-private instance : (dotProductBilin ℤ ℤ :
-    (Fin n → ℤ) →ₗ[ℤ] (Fin n → ℤ) →ₗ[ℤ] ℤ).IsPerfPair := by
-  -- `dotProductEquiv` has `dotProductBilin` as its underlying linear map by definition.
-  change (dotProductEquiv ℤ (Fin n)).toLinearMap.IsPerfPair
-  infer_instance
 
 /-- The reflection in the root at index `k`, transported to the enumerated index type. -/
 private def typeBReflPerm (n : ℕ) (k : Fin (2 * n ^ 2)) : Equiv.Perm (Fin (2 * n ^ 2)) :=
@@ -513,15 +509,11 @@ private lemma typeBSimpleRoot_dotProduct_typeBDualVec (i j : Fin n) :
     split_ifs <;> omega
 
 private lemma linearIndependent_typeBSimpleRoot (n : ℕ) :
-    LinearIndependent ℤ fun i : Fin n => weight n (i : ℕ) - weight n ((i : ℕ) + 1) := by
-  rw [Fintype.linearIndependent_iff]
-  intro g hg j
-  have h := congrArg (· ⬝ᵥ typeBDualVec n (j : ℕ)) hg
-  simp only [sum_dotProduct, smul_dotProduct, smul_eq_mul, zero_dotProduct,
-    typeBSimpleRoot_dotProduct_typeBDualVec, mul_ite, mul_zero] at h
-  rw [Finset.sum_ite_eq' Finset.univ j fun i => g i * 2] at h
-  simp only [Finset.mem_univ, ite_true] at h
-  omega
+    LinearIndependent ℤ fun i : Fin n => weight n (i : ℕ) - weight n ((i : ℕ) + 1) :=
+  linearIndependent_of_dotProduct_diagonal (c := fun _ => 2)
+    (w := fun j : Fin n => typeBDualVec n (j : ℕ)) (fun _ => by norm_num)
+    (fun i => by rw [typeBSimpleRoot_dotProduct_typeBDualVec]; simp)
+    (fun i j hij => by rw [typeBSimpleRoot_dotProduct_typeBDualVec]; simp [hij])
 
 /-- The support of the pinned base of type `Bₙ`: the first `n` root indices. -/
 private abbrev typeBSimpleSupport (n : ℕ) : Finset (Fin (2 * n ^ 2)) :=
@@ -624,6 +616,87 @@ private lemma typeB_corootOfPair_nonpos_of_sgn_eq_one_of_sgn_eq_neg_one_of_axis_
   · rw [corootOfPair_apply_of_ne hj, hsu, hsv]
     split_ifs <;> omega
 
+/-- Every root of the pinned type `Bₙ` datum is, up to sign, an `ℕ`-combination of the simple
+roots. -/
+private lemma typeB_root_mem_or_neg_mem (k : Fin (2 * n ^ 2)) :
+    (typeBSimplyConnectedRootDatum n).root k ∈
+        AddSubmonoid.closure ((typeBSimplyConnectedRootDatum n).root ''
+          (typeBSimpleSupport n : Set (Fin (2 * n ^ 2)))) ∨
+      -(typeBSimplyConnectedRootDatum n).root k ∈
+        AddSubmonoid.closure ((typeBSimplyConnectedRootDatum n).root ''
+          (typeBSimpleSupport n : Set (Fin (2 * n ^ 2)))) := by
+  rw [image_root_typeBSimpleSupport]
+  obtain ⟨u, v, hroot⟩ : ∃ u v : Fin (2 * n),
+      (typeBSimplyConnectedRootDatum n).root k = rootOfPair u v :=
+    ⟨_, _, by rw [root_typeBSimplyConnectedRootDatum, rootIdx_def]⟩
+  rcases eq_or_ne u v with heq | hne
+  · rw [hroot, ← heq, rootOfPair_self]
+    rcases sgn_eq_one_or_neg_one u with hs | hs
+    · refine Or.inl ?_
+      rw [signedWeight_def, hs, one_smul]
+      exact typeB_weight_mem_closure (le_of_lt (axis_lt u))
+    · refine Or.inr ?_
+      rw [signedWeight_def, hs, neg_one_smul, neg_neg]
+      exact typeB_weight_mem_closure (le_of_lt (axis_lt u))
+  · rw [hroot, rootOfPair_of_ne hne]
+    rcases sgn_eq_one_or_neg_one u with hsu | hsu <;>
+      rcases sgn_eq_one_or_neg_one v with hsv | hsv
+    · exact Or.inl (typeB_signedWeight_add_signedWeight_mem_closure u v hsu hsv)
+    · rcases le_total (axis u) (axis v) with hle | hle
+      · exact Or.inl (typeB_signedWeight_sub_signedWeight_mem_closure u v hsu hsv hle)
+      · refine Or.inr ?_
+        rw [neg_add, ← signedWeight_opp, ← signedWeight_opp, add_comm]
+        exact typeB_signedWeight_sub_signedWeight_mem_closure (opp v) (opp u)
+          (by simp [sgn_opp, hsv])
+          (by simp [sgn_opp, hsu]) (by rwa [axis_opp, axis_opp])
+    · rcases le_total (axis v) (axis u) with hle | hle
+      · rw [add_comm]
+        exact Or.inl (typeB_signedWeight_sub_signedWeight_mem_closure v u hsv hsu hle)
+      · refine Or.inr ?_
+        rw [neg_add, ← signedWeight_opp, ← signedWeight_opp]
+        exact typeB_signedWeight_sub_signedWeight_mem_closure (opp u) (opp v)
+          (by simp [sgn_opp, hsu])
+          (by simp [sgn_opp, hsv]) (by rwa [axis_opp, axis_opp])
+    · refine Or.inr ?_
+      rw [neg_add, ← signedWeight_opp, ← signedWeight_opp]
+      exact typeB_signedWeight_add_signedWeight_mem_closure (opp u) (opp v)
+        (by simp [sgn_opp, hsu])
+        (by simp [sgn_opp, hsv])
+
+/-- Every coroot of the pinned type `Bₙ` datum is, up to sign, an `ℕ`-combination of the simple
+coroots. -/
+private lemma typeB_coroot_mem_or_neg_mem (k : Fin (2 * n ^ 2)) :
+    (typeBSimplyConnectedRootDatum n).coroot k ∈
+        AddSubmonoid.closure ((typeBSimplyConnectedRootDatum n).coroot ''
+          (typeBSimpleSupport n : Set (Fin (2 * n ^ 2)))) ∨
+      -(typeBSimplyConnectedRootDatum n).coroot k ∈
+        AddSubmonoid.closure ((typeBSimplyConnectedRootDatum n).coroot ''
+          (typeBSimpleSupport n : Set (Fin (2 * n ^ 2)))) := by
+  rw [image_coroot_typeBSimpleSupport]
+  obtain ⟨u, v, hcor⟩ : ∃ u v : Fin (2 * n),
+      (typeBSimplyConnectedRootDatum n).coroot k = corootOfPair u v :=
+    ⟨_, _, by rw [coroot_typeBSimplyConnectedRootDatum, corootIdx_def]⟩
+  rw [hcor]
+  rcases sgn_eq_one_or_neg_one u with hsu | hsu <;>
+    rcases sgn_eq_one_or_neg_one v with hsv | hsv
+  · exact Or.inl
+      (typeB_mem_closure_single (typeB_corootOfPair_nonneg_of_sgn_eq_one hsu hsv))
+  · rcases le_total (axis u) (axis v) with hle | hle
+    · exact Or.inl (typeB_mem_closure_single
+        (typeB_corootOfPair_nonneg_of_sgn_eq_one_of_sgn_eq_neg_one_of_axis_le hsu hsv hle))
+    · exact Or.inr (typeB_mem_closure_single fun j =>
+        neg_nonneg.mpr
+          (typeB_corootOfPair_nonpos_of_sgn_eq_one_of_sgn_eq_neg_one_of_axis_le hsu hsv hle j))
+  · rw [corootOfPair_comm]
+    rcases le_total (axis v) (axis u) with hle | hle
+    · exact Or.inl (typeB_mem_closure_single
+        (typeB_corootOfPair_nonneg_of_sgn_eq_one_of_sgn_eq_neg_one_of_axis_le hsv hsu hle))
+    · exact Or.inr (typeB_mem_closure_single fun j =>
+        neg_nonneg.mpr
+          (typeB_corootOfPair_nonpos_of_sgn_eq_one_of_sgn_eq_neg_one_of_axis_le hsv hsu hle j))
+  · exact Or.inr (typeB_mem_closure_single fun j =>
+      neg_nonneg.mpr (typeB_corootOfPair_nonpos_of_sgn_eq_neg_one hsu hsv j))
+
 /-- The Bourbaki-numbered base of the pinned simply connected root datum of type `Bₙ`. Its support
 is the set of the first `n` root indices, carrying the simple roots in Bourbaki order. -/
 def typeBSimplyConnectedBase (n : ℕ) : (typeBSimplyConnectedRootDatum n).Base where
@@ -641,69 +714,8 @@ def typeBSimplyConnectedBase (n : ℕ) : (typeBSimplyConnectedRootDatum n).Base 
         simp
       rw [hcomp]
       exact (Pi.basisFun ℤ (Fin n)).linearIndependent
-  root_mem_or_neg_mem k := by
-    rw [image_root_typeBSimpleSupport]
-    obtain ⟨u, v, hroot⟩ : ∃ u v : Fin (2 * n),
-        (typeBSimplyConnectedRootDatum n).root k = rootOfPair u v :=
-      ⟨_, _, by rw [root_typeBSimplyConnectedRootDatum, rootIdx_def]⟩
-    rcases eq_or_ne u v with heq | hne
-    · rw [hroot, ← heq, rootOfPair_self]
-      rcases sgn_eq_one_or_neg_one u with hs | hs
-      · refine Or.inl ?_
-        rw [signedWeight_def, hs, one_smul]
-        exact typeB_weight_mem_closure (le_of_lt (axis_lt u))
-      · refine Or.inr ?_
-        rw [signedWeight_def, hs, neg_one_smul, neg_neg]
-        exact typeB_weight_mem_closure (le_of_lt (axis_lt u))
-    · rw [hroot, rootOfPair_of_ne hne]
-      rcases sgn_eq_one_or_neg_one u with hsu | hsu <;>
-        rcases sgn_eq_one_or_neg_one v with hsv | hsv
-      · exact Or.inl (typeB_signedWeight_add_signedWeight_mem_closure u v hsu hsv)
-      · rcases le_total (axis u) (axis v) with hle | hle
-        · exact Or.inl (typeB_signedWeight_sub_signedWeight_mem_closure u v hsu hsv hle)
-        · refine Or.inr ?_
-          rw [neg_add, ← signedWeight_opp, ← signedWeight_opp, add_comm]
-          exact typeB_signedWeight_sub_signedWeight_mem_closure (opp v) (opp u)
-            (by simp [sgn_opp, hsv])
-            (by simp [sgn_opp, hsu]) (by rwa [axis_opp, axis_opp])
-      · rcases le_total (axis v) (axis u) with hle | hle
-        · rw [add_comm]
-          exact Or.inl (typeB_signedWeight_sub_signedWeight_mem_closure v u hsv hsu hle)
-        · refine Or.inr ?_
-          rw [neg_add, ← signedWeight_opp, ← signedWeight_opp]
-          exact typeB_signedWeight_sub_signedWeight_mem_closure (opp u) (opp v)
-            (by simp [sgn_opp, hsu])
-            (by simp [sgn_opp, hsv]) (by rwa [axis_opp, axis_opp])
-      · refine Or.inr ?_
-        rw [neg_add, ← signedWeight_opp, ← signedWeight_opp]
-        exact typeB_signedWeight_add_signedWeight_mem_closure (opp u) (opp v)
-          (by simp [sgn_opp, hsu])
-          (by simp [sgn_opp, hsv])
-  coroot_mem_or_neg_mem k := by
-    rw [image_coroot_typeBSimpleSupport]
-    obtain ⟨u, v, hcor⟩ : ∃ u v : Fin (2 * n),
-        (typeBSimplyConnectedRootDatum n).coroot k = corootOfPair u v :=
-      ⟨_, _, by rw [coroot_typeBSimplyConnectedRootDatum, corootIdx_def]⟩
-    rw [hcor]
-    rcases sgn_eq_one_or_neg_one u with hsu | hsu <;>
-      rcases sgn_eq_one_or_neg_one v with hsv | hsv
-    · exact Or.inl
-        (typeB_mem_closure_single (typeB_corootOfPair_nonneg_of_sgn_eq_one hsu hsv))
-    · rcases le_total (axis u) (axis v) with hle | hle
-      · exact Or.inl (typeB_mem_closure_single
-          (typeB_corootOfPair_nonneg_of_sgn_eq_one_of_sgn_eq_neg_one_of_axis_le hsu hsv hle))
-      · exact Or.inr (typeB_mem_closure_single fun j =>
-          neg_nonneg.mpr
-            (typeB_corootOfPair_nonpos_of_sgn_eq_one_of_sgn_eq_neg_one_of_axis_le hsu hsv hle j))
-    · rw [corootOfPair_comm]
-      rcases le_total (axis v) (axis u) with hle | hle
-      · exact Or.inl (typeB_mem_closure_single
-          (typeB_corootOfPair_nonneg_of_sgn_eq_one_of_sgn_eq_neg_one_of_axis_le hsv hsu hle))
-      · exact Or.inr (typeB_mem_closure_single fun j =>
-          neg_nonneg.mpr
-            (typeB_corootOfPair_nonpos_of_sgn_eq_one_of_sgn_eq_neg_one_of_axis_le hsv hsu hle j))
-    · exact Or.inr (typeB_mem_closure_single fun j =>
-        neg_nonneg.mpr (typeB_corootOfPair_nonpos_of_sgn_eq_neg_one hsu hsv j))
+  root_mem_or_neg_mem := typeB_root_mem_or_neg_mem
+  coroot_mem_or_neg_mem := typeB_coroot_mem_or_neg_mem
 
 /-- Membership in the pinned base support is exactly membership among the first `n` root
 indices. -/

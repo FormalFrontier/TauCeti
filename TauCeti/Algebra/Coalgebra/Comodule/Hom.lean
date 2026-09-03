@@ -127,38 +127,28 @@ instance instModule : Module R (Hom R C M N) :=
     ext m
     exact LinearMap.congr_fun h m) fun _ _ => smul_toLinearMap _ _
 
-/-- Natural-number scalar multiplication of comodule morphisms is pointwise. -/
-@[simp]
-theorem nsmul_apply (n : ℕ) (f : Hom R C M N) (m : M) : (n • f) m = n • f m := by
-  induction n with
-  | zero =>
-      rw [zero_nsmul, zero_nsmul]
-      rfl
-  | succ n ih =>
-      rw [succ_nsmul, add_apply, ih, succ_nsmul]
-
 /-- Natural-number scalar multiplication of comodule morphisms is natural-number scalar
 multiplication of the underlying linear maps. -/
 @[simp]
-theorem nsmul_toLinearMap (n : ℕ) (f : Hom R C M N) : (n • f).toLinearMap = n • f.toLinearMap := by
-  ext m
-  simp
+theorem nsmul_toLinearMap (n : ℕ) (f : Hom R C M N) : (n • f).toLinearMap = n • f.toLinearMap :=
+  map_nsmul toLinearMapAddMonoidHom n f
 
-/-- Finite sums of comodule morphisms are evaluated pointwise. -/
+/-- Natural-number scalar multiplication of comodule morphisms is pointwise. -/
 @[simp]
-theorem sum_apply {ι : Type*} (s : Finset ι) (f : ι → Hom R C M N) (m : M) :
-    (∑ i ∈ s, f i) m = ∑ i ∈ s, f i m := by
-  classical
-  induction s using Finset.induction_on with
-  | empty => simp
-  | insert i s hi ih => simp [hi, ih]
+theorem nsmul_apply (n : ℕ) (f : Hom R C M N) (m : M) : (n • f) m = n • f m :=
+  (LinearMap.congr_fun (nsmul_toLinearMap n f) m).trans (LinearMap.smul_apply _ _ _)
 
 /-- Finite sums of comodule morphisms are finite sums of the underlying linear maps. -/
 @[simp]
 theorem sum_toLinearMap {ι : Type*} (s : Finset ι) (f : ι → Hom R C M N) :
-    (∑ i ∈ s, f i).toLinearMap = ∑ i ∈ s, (f i).toLinearMap := by
-  ext m
-  simp
+    (∑ i ∈ s, f i).toLinearMap = ∑ i ∈ s, (f i).toLinearMap :=
+  map_sum toLinearMapAddMonoidHom f s
+
+/-- Finite sums of comodule morphisms are evaluated pointwise. -/
+@[simp]
+theorem sum_apply {ι : Type*} (s : Finset ι) (f : ι → Hom R C M N) (m : M) :
+    (∑ i ∈ s, f i) m = ∑ i ∈ s, f i m :=
+  (LinearMap.congr_fun (sum_toLinearMap s f) m).trans (LinearMap.sum_apply _ _ _)
 
 section Comp
 

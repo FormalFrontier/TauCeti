@@ -20,9 +20,9 @@ construction works on any real normed domain with measurable opens and a measure
 sets. Its intrinsic weak-derivative characterization additionally needs local finiteness, while
 finite dimensionality is needed only for extensionality via uniqueness of weak derivatives.
 
-The construction is independent of the order of differentiation. It is instantiated by `W2p`
-with the weak gradient and by `W3p` with the weak Hessian, whose projections, constructor,
-norm bounds and completeness are specializations of the ones proved here.
+The construction is independent of the order of differentiation. It is iterated by `Wkp`,
+which starts from the weak gradient and adjoins one weak derivative per order; the projections,
+constructors, norm bounds, and completeness there specialize the results proved here.
 
 The graph carries the Euclidean (`WithLp 2`) product norm
 
@@ -322,7 +322,7 @@ theorem norm_weakFDeriv_le (base : X →L[ℝ] Lp F p (mu.restrict Omega))
 theorem norm_sq_eq_norm_prev_sq_add_norm_weakFDeriv_sq
     (base : X →L[ℝ] Lp F p (mu.restrict Omega)) (u : WeakDerivStep mu Omega p base) :
     ‖u‖ ^ 2 = ‖prev base u‖ ^ 2 + ‖weakFDeriv base u‖ ^ 2 := by
-  rw [Submodule.coe_norm, prev_coe, weakFDeriv_coe]
+  rw [← Submodule.norm_coe, prev_coe, weakFDeriv_coe]
   exact WithLp.prod_norm_sq_eq_of_L2 u.1
 
 /-- A weak-derivative graph step over a complete preceding space is complete because it is a

@@ -20,13 +20,15 @@ proof is an explicit Bézout certificate in the `b`-invariants. Its two divisibi
 course assumptions; what it needs *beyond* them is nothing — no point of a curve, no ellipticity,
 no domain or factorisation hypothesis on the ring.
 
-When the Nagell–Lutz route later needs the on-curve form — with `κ = ψ₂(x, y) = 2y + a₁x + a₃`
-Mathlib's `2`-division polynomial at a point, take `d = κ²`, which on the curve *is* `Ψ₂Sq(x)` by
-`evalEval_ψ₂_sq` — that is a one-line specialisation. It is deliberately **not** stated here: its
-hypothesis `κ² ∣ 4·Ψ₃(x)` is supplied by point-level `[n]`-multiplication material that is not yet
-in this repository, and a theorem whose premise nothing can yet discharge is not API this file
-should export. For a short model (`a₁ = a₃ = 0`, so `κ = 2y`) that future conclusion reads
-`(2y)² ∣ 4Δ`.
+The Nagell–Lutz route needs the on-curve form — with `κ = ψ₂(x, y) = 2y + a₁x + a₃` Mathlib's
+`2`-division polynomial at a point, take `d = κ²`, which on the curve *is* `Ψ₂Sq(x)` by
+`evalEval_ψ₂_sq`. That specialisation is still deliberately **not** stated here, but the reason has
+changed. It used to be that nothing could discharge its hypothesis `κ² ∣ 4·Ψ₃(x)`; the point-level
+`[n]`-multiplication material has since landed, and `Torsion/Discriminant.lean` supplies exactly
+that premise from a torsion point and concludes `κ² ∣ 4Δ`. Having the specialisation here as well
+would name twice what that file already does with the point in hand, so this module keeps to the
+polynomial statement and lets its consumer instantiate it. For a short model (`a₁ = a₃ = 0`, so
+`κ = 2y`) the consumer's conclusion reads `(2y)² ∣ 4Δ`.
 
 ## Main results
 
@@ -36,10 +38,10 @@ should export. For a short model (`a₁ = a₃ = 0`, so `κ = 2y`) that future c
 
 Stated over an arbitrary commutative ring: no domain, integrality or ellipticity hypothesis.
 
-⚠ **No torsion hypothesis appears here, and no part of `lutz_nagell` is proved.** Nothing in this
-file takes a premise that awaits absent material: the headline is a statement about polynomials,
-usable by any caller with a common divisor in hand, and `evalEval_ψ₂_sq` is an unconditional
-on-curve evaluation.
+⚠ **No torsion hypothesis appears here, and no part of `lutz_nagell` is proved.** The headline is a
+statement about polynomials, usable by any caller with a common divisor in hand, and
+`evalEval_ψ₂_sq` is an unconditional on-curve evaluation. The torsion input that turns them into
+the Nagell–Lutz disjunct lives in `Torsion/Discriminant.lean`.
 
 This is an ingredient for the Nagell–Lutz milestone of `TauCetiRoadmap/EllipticCurves/README.md`,
 Layer 6, item "The torsion subgroup and Nagell–Lutz", whose short-model target `lutz_nagell` asks

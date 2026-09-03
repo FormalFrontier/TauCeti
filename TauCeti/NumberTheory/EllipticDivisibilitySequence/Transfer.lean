@@ -45,11 +45,11 @@ terminate.
 
 ## Implementation notes
 
-Parity is spelled as Mathlib spells it for this API — the unbundled conjunction
+Parity is spelled as the unbundled conjunction
 `d % 2 = a % 2 ∧ d % 2 = b % 2 ∧ d % 2 = c % 2`, relative to the last index, as
-`IsEllipticNet.atomRel_eq` and `atomRel_avg_sub` take it — rather than as the source's bundled
-predicate over `Int.negOnePow`. Matching the upstream shape means those two lemmas apply with no
-conversion at the use sites, and avoids standing a second parity predicate next to Mathlib's.
+`IsEllipticNet.atomRel_eq` takes it, rather than as the source's bundled predicate over
+`Int.negOnePow`. Mathlib's `atomRel_avg_sub` instead takes a `List.Pairwise` condition; the descent
+converts the conjunction locally with `pairwise_emod_two` at its one use site.
 
 The ordering half reuses Mathlib's tuple API: it is `StrictAnti ![a, b, c, d]`, not a hand-rolled
 chain of three inequalities. `Mathlib/Order/Fin/Tuple.lean` states that API through `vecCons` —

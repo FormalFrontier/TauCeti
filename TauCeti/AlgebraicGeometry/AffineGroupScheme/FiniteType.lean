@@ -40,6 +40,8 @@ reductive-groups roadmap, while the dictionary records that the two predicates c
   anti-equivalence.
 * `TauCeti.finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat.functorCompιIso`:
   after both inclusions, the forward functor is Mathlib's `AlgebraicGeometry.hopfSpec`.
+* `TauCeti.finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat.functorObjIso`:
+  the corresponding object-level isomorphism with the bundled Hopf spectrum.
 * `TauCeti.finiteType_objectProperty_iff_coordinate`: transport of an isomorphism-invariant
   object property through the finite-type anti-equivalence.
 
@@ -196,6 +198,23 @@ noncomputable def
       (commHopfAlgCatOpEquivAffineGroupSchemeCat.functorCompιIso
         (CommRingCat.of R))
 
+/-- The object produced by the finite-type Hopf/group-scheme anti-equivalence is the bundled
+finite-type Hopf spectrum. -/
+noncomputable def
+    finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat.functorObjIso
+    (R : Type u) [CommRing R] (H : (FiniteTypeCommHopfAlgCat.{u, u} R)ᵒᵖ) :
+    (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat R).functor.obj H ≅
+      ⟨⟨(hopfSpec (CommRingCat.of R)).obj (op H.unop.obj), by
+          rw [affineGroupSchemeProperty_iff, hopfSpec_obj_X_left]
+          infer_instance⟩,
+        by
+          rw [finiteTypeAffineGroupSchemeProperty_iff]
+          exact (algebraFiniteType_iff_locallyOfFiniteType_hopfSpec R H.unop.obj).mp
+            H.unop.property⟩ :=
+  (finiteTypeAffineGroupSchemeProperty (CommRingCat.of R)).ι.preimageIso
+    ((affineGroupSchemeProperty (CommRingCat.of R)).ι.preimageIso
+      ((finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat.functorCompιIso R).app H))
+
 /-- An isomorphism-invariant property of affine group schemes can be tested on the coordinate
 Hopf algebra of a finite-type affine group scheme whenever the unrestricted anti-equivalence
 identifies it with a coordinate-side property. -/
@@ -218,11 +237,9 @@ theorem finiteType_objectProperty_iff_coordinate
       (finiteTypeAffineGroupSchemeProperty (CommRingCat.of R)).ι.obj (E.functor.obj H) ≅
         (commHopfAlgCatOpEquivAffineGroupSchemeCat
           (CommRingCat.of R)).functor.obj H₀ :=
-    (affineGroupSchemeProperty (CommRingCat.of R)).ι.preimageIso
-      ((finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat.functorCompιIso R).app
-          H ≪≫
-        ((commHopfAlgCatOpEquivAffineGroupSchemeCat.functorCompιIso
-          (CommRingCat.of R)).app H₀).symm)
+    (finiteTypeAffineGroupSchemeProperty (CommRingCat.of R)).ι.mapIso
+        (finiteTypeCommHopfAlgCatOpEquivFiniteTypeAffineGroupSchemeCat.functorObjIso R H) ≪≫
+      (commHopfAlgCatOpEquivAffineGroupSchemeCat.functorObjIso R H₀).symm
   let eG :
       (finiteTypeAffineGroupSchemeProperty (CommRingCat.of R)).ι.obj (E.functor.obj H) ≅
         G.obj :=

@@ -82,7 +82,7 @@ theorem deFinetti_tendsto_empiricalMeasure_apply [StandardBorelSpace α] [Nonemp
         (fun n : ℕ => ((empiricalMeasure (fun i => X i ω) n : Measure α) B).toReal) atTop
         (𝓝 (((ν ω : Measure α) B).toReal)) := by
   obtain ⟨ν, hν⟩ := (conditionallyIID_of_exchangeable hX hX_meas).exists_directing
-  exact ⟨ν, hν, fun B hB => hν.tendsto_empiricalMeasure_apply_ae hX_meas hB⟩
+  exact ⟨ν, hν, fun B hB => hν.tendsto_empiricalMeasure_apply_ae hB⟩
 
 /-- **De Finetti's theorem in empirical-measure form.** An exchangeable process valued in a
 nonempty Polish space, with its Borel σ-algebra, has a directing measure that is almost surely the
@@ -99,7 +99,7 @@ theorem deFinetti_empiricalMeasure [TopologicalSpace α] [PolishSpace α] [Borel
     ∃ ν : Ω → ProbabilityMeasure α, ConditionallyIIDWith μ X ν ∧
       ∀ᵐ ω ∂μ, Tendsto (fun n : ℕ => empiricalMeasure (fun i => X i ω) n) atTop (𝓝 (ν ω)) := by
   obtain ⟨ν, hν⟩ := (conditionallyIID_of_exchangeable hX hX_meas).exists_directing
-  exact ⟨ν, hν, hν.tendsto_empiricalMeasure_ae hX_meas⟩
+  exact ⟨ν, hν, hν.tendsto_empiricalMeasure_ae⟩
 
 end Probability
 

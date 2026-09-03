@@ -52,6 +52,12 @@ set.
 
 It also records the immediate differentiability and continuity consequences of these predicates.
 
+Following the `HasFDerivWithinAt` API it is built on, the within-set predicate shrinks with the
+set (`IsConstStructureJHolomorphicWithinAt.mono`) and agrees with the pointwise one on
+`Set.univ` (`isConstStructureJHolomorphicWithinAt_univ`); the setwise
+`IsConstStructureJHolomorphicOn.mono` and `isConstStructureJHolomorphicOn_univ` are read off
+from those two pointwise facts.
+
 The Cauchy--Riemann equation `df ∘ J = J' ∘ df` is real-linear in `df`, so a continuous
 real-linear map is holomorphic in this sense exactly when it is complex-linear, and such maps are
 closed under pointwise sums, differences, and real scalar multiples:
@@ -192,14 +198,23 @@ lemma isConstStructureJHolomorphic_of_forall {J : AlmostComplexStructure V}
   (isConstStructureJHolomorphic_iff J J' f).mpr fun x =>
     (isConstStructureJHolomorphicAt_iff J J' f x).mp (hf x)
 
+/-- Within the whole space, constant-structure `J`-holomorphicity is the same as pointwise
+constant-structure `J`-holomorphicity. -/
+@[simp]
+lemma isConstStructureJHolomorphicWithinAt_univ (J : AlmostComplexStructure V)
+    (J' : AlmostComplexStructure W) (f : V → W) (x : V) :
+    IsConstStructureJHolomorphicWithinAt J J' f Set.univ x ↔
+      IsConstStructureJHolomorphicAt J J' f x := by
+  simp [IsConstStructureJHolomorphicWithinAt, IsConstStructureJHolomorphicAt,
+    hasFDerivWithinAt_univ]
+
 /-- On the whole space, setwise constant-structure `J`-holomorphicity is the same as global
 constant-structure `J`-holomorphicity. -/
 @[simp]
 lemma isConstStructureJHolomorphicOn_univ (J : AlmostComplexStructure V)
     (J' : AlmostComplexStructure W) (f : V → W) :
     IsConstStructureJHolomorphicOn J J' f Set.univ ↔ IsConstStructureJHolomorphic J J' f := by
-  simp [IsConstStructureJHolomorphicOn, IsConstStructureJHolomorphicWithinAt,
-    IsConstStructureJHolomorphic, IsConstStructureJHolomorphicAt, hasFDerivWithinAt_univ]
+  simp [IsConstStructureJHolomorphicOn, IsConstStructureJHolomorphic]
 
 /-- The continuous-linear derivative witnessing constant-structure `J`-holomorphicity at a point. -/
 lemma IsConstStructureJHolomorphicAt.hasFDerivAt {J : AlmostComplexStructure V}
@@ -280,6 +295,13 @@ lemma IsConstStructureJHolomorphicWithinAt.derivative_isComplexLinear {J : Almos
       (Classical.choose
         ((isConstStructureJHolomorphicWithinAt_iff J J' f s x).mp hf)).toLinearMap :=
   (Classical.choose_spec ((isConstStructureJHolomorphicWithinAt_iff J J' f s x).mp hf)).2
+
+/-- Restrict the domain set of a within-set constant-structure `J`-holomorphic map. -/
+lemma IsConstStructureJHolomorphicWithinAt.mono {J : AlmostComplexStructure V}
+    {J' : AlmostComplexStructure W} {f : V → W} {s t : Set V} {x : V}
+    (hf : IsConstStructureJHolomorphicWithinAt J J' f t x) (hst : s ⊆ t) :
+    IsConstStructureJHolomorphicWithinAt J J' f s x :=
+  ⟨_, hf.hasFDerivWithinAt.mono hst, hf.derivative_isComplexLinear⟩
 
 /-- A map that is constant-structure `J`-holomorphic within a set is differentiable within
 that set. -/
@@ -440,9 +462,7 @@ lemma IsConstStructureJHolomorphicOn.mono
     {J : AlmostComplexStructure V} {J' : AlmostComplexStructure W}
     {f : V → W} {s t : Set V} (hf : IsConstStructureJHolomorphicOn J J' f t) (hst : s ⊆ t) :
     IsConstStructureJHolomorphicOn J J' f s :=
-  fun x hx =>
-    let hfx := hf x (hst hx)
-    ⟨_, hfx.hasFDerivWithinAt.mono hst, hfx.derivative_isComplexLinear⟩
+  fun x hx => (hf x (hst hx)).mono hst
 
 /-- A map that is constant-structure `J`-holomorphic on a set is differentiable on that set. -/
 lemma IsConstStructureJHolomorphicOn.differentiableOn {J : AlmostComplexStructure V}

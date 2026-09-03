@@ -458,8 +458,7 @@ theorem isOpen_setOf_isTopologicallyNilpotent :
       obtain ⟨P, hmem, hI⟩ := isTopologicallyNilpotent_iff_exists_mem_idealOfDefinition.mp hx
       exact ⟨P, (P.mem_idealImage 1).mpr ⟨⟨x, hmem⟩, by simpa using hI, rfl⟩⟩
     · rintro ⟨P, hP⟩
-      obtain ⟨y, hy, rfl⟩ := (P.mem_idealImage 1).mp hP
-      exact P.isTopologicallyNilpotent_of_mem_idealOfDefinition (by simpa using hy)
+      exact P.isTopologicallyNilpotent_of_mem_idealImage one_ne_zero hP
   rw [hunion]
   exact isOpen_iUnion fun P ↦ P.isOpen_idealImage 1
 

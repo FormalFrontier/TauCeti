@@ -39,6 +39,7 @@ subspace under a suitable geometric hypothesis but not on all of `W^{1,p}(Ω)`.
   `C_c^∞(Ω) → W^{1,p}(Ω)`, and its injectivity.
 * `TauCeti.w1p0Submodule` and `TauCeti.W1p0`: the space `W^{1,p}_0(Ω)`, complete for the graph
   norm.
+* `TauCeti.W1p0.valueL`: the canonical continuous value map into `Lᵖ(Ω)`.
 * `TauCeti.w1p0Submodule_subset_of_isClosed`: a closed set containing every test-function jet
   contains `W^{1,p}_0(Ω)`, which is how a property is extended from test functions to the whole
   space.
@@ -104,23 +105,8 @@ copy of `C_c^∞(Ω)`, not just a quotient of it. -/
 theorem W1p.ofTestFunctionₗ_injective :
     Function.Injective (W1p.ofTestFunctionₗ mu Omega p) := by
   intro phi psi h
-  have hLp : testFunctionLp (mu := mu) p phi = testFunctionLp (mu := mu) p psi := by
-    simpa using congrArg W1p.value h
-  have hae : (phi : E → ℝ) =ᵐ[mu.restrict Omega] (psi : E → ℝ) := by
-    filter_upwards [testFunctionLp_apply_ae (mu := mu) p phi,
-      testFunctionLp_apply_ae (mu := mu) p psi] with x hx hy
-    rw [← hx, ← hy, hLp]
-  have hsubset : {x | (phi : E → ℝ) x ≠ psi x} ⊆ (Omega : Set E) := by
-    intro x hx
-    by_contra hxO
-    exact hx (by rw [image_eq_zero_of_notMem_tsupport fun hc => hxO (phi.tsupport_subset hc),
-      image_eq_zero_of_notMem_tsupport fun hc => hxO (psi.tsupport_subset hc)])
-  have hzero : mu {x | (phi : E → ℝ) x ≠ psi x} = 0 := by
-    have := ae_iff.1 hae
-    rwa [Measure.restrict_apply' Omega.isOpen.measurableSet,
-      Set.inter_eq_self_of_subset_left hsubset] at this
-  have hempty := (isOpen_ne_fun phi.continuous psi.continuous).measure_eq_zero_iff mu |>.1 hzero
-  exact TestFunction.ext fun x => not_not.1 fun hx => Set.eq_empty_iff_forall_notMem.1 hempty x hx
+  apply testFunctionLp_injective (nu := mu) (U := Omega) p
+  simpa using congrArg W1p.value h
 
 /-! ### The space `W^{1,p}_0(Ω)` -/
 
@@ -153,6 +139,25 @@ theorem w1p0Submodule_subset_of_isClosed {s : Set (W1p mu Omega p)} (hs : IsClos
 /-- **The Sobolev space `W^{1,p}_0(Ω)`**, the closure of `C_c^∞(Ω)` in `W^{1,p}(Ω)`. -/
 abbrev W1p0 (mu : Measure E) [mu.IsAddHaarMeasure] (Omega : Opens E) (p : ENNReal)
     [Fact (1 ≤ p)] := (w1p0Submodule mu Omega p).toSubmodule
+
+/-- Shortcut instance for the norm `W^{1,p}_0(Ω)` inherits through the two nested Sobolev
+subspaces; instance search does not find it on its own. -/
+noncomputable instance instSeminormedAddCommGroupW1p0 :
+    SeminormedAddCommGroup (W1p0 mu Omega p) := inferInstance
+
+/-- Shortcut instance for the scalar action `W^{1,p}_0(Ω)` inherits through the two nested
+Sobolev subspaces. -/
+noncomputable instance instNormedSpaceW1p0 : NormedSpace ℝ (W1p0 mu Omega p) := inferInstance
+
+/-- **The canonical value map of `W^{1,p}_0(Ω)`**, the value component of the Sobolev jet read
+off a zero-boundary function, as a continuous linear map into `Lᵖ(Ω)`. -/
+def W1p0.valueL : W1p0 mu Omega p →L[ℝ] Lp ℝ p (mu.restrict Omega) :=
+  W1p.valueL.comp (w1p0Submodule mu Omega p).toSubmodule.subtypeL
+
+@[simp]
+theorem W1p0.valueL_apply (u : W1p0 mu Omega p) :
+    W1p0.valueL u = W1p.value (u : W1p mu Omega p) :=
+  by simp [W1p0.valueL]
 
 /-- `W^{1,p}_0(Ω)` is complete: it is a closed subspace of the complete space `W^{1,p}(Ω)`. -/
 instance : CompleteSpace (W1p0 mu Omega p) :=

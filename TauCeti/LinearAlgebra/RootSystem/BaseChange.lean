@@ -7,6 +7,7 @@ module
 
 public import Mathlib.LinearAlgebra.LinearIndependent.BaseChange
 public import Mathlib.LinearAlgebra.RootSystem.CartanMatrix
+public import Mathlib.LinearAlgebra.RootSystem.Chain
 public import Mathlib.LinearAlgebra.RootSystem.Reduced
 public import TauCeti.LinearAlgebra.Matrix.Dual
 
@@ -298,5 +299,110 @@ def supportEquivRootPairingBaseChangeBase :
   pairingIn_rootPairingBaseChange S P hP i j
 
 end Base
+
+/-! ## Root strings -/
+
+section Chain
+
+variable {ι κ R : Type*} (S : Type*) [Fintype κ] [CommRing R] [CommRing S]
+  [Algebra R S] (P : RootPairing ι R (κ → R) (κ → R))
+  (hP : ∀ x y, P.toLinearMap x y = x ⬝ᵥ y)
+  [FaithfulSMul R S]
+
+private theorem root_add_nsmul_mem_range_baseChange_iff (i j : ι) (n : ℕ) :
+    (rootPairingBaseChange S P hP).root j + n • (rootPairingBaseChange S P hP).root i ∈
+        range (rootPairingBaseChange S P hP).root ↔
+      P.root j + n • P.root i ∈ range P.root := by
+  constructor
+  · rintro ⟨k, hk⟩
+    refine ⟨k, funext fun x ↦ FaithfulSMul.algebraMap_injective R S ?_⟩
+    simpa [piAlgebraMap_apply] using congrFun hk x
+  · rintro ⟨k, hk⟩
+    refine ⟨k, ?_⟩
+    simpa only [root_rootPairingBaseChange, map_add, map_nsmul] using
+      congrArg (Pi.algebraMap κ R S) hk
+
+private theorem root_sub_nsmul_mem_range_baseChange_iff (i j : ι) (n : ℕ) :
+    (rootPairingBaseChange S P hP).root j - n • (rootPairingBaseChange S P hP).root i ∈
+        range (rootPairingBaseChange S P hP).root ↔
+      P.root j - n • P.root i ∈ range P.root := by
+  constructor
+  · rintro ⟨k, hk⟩
+    refine ⟨k, funext fun x ↦ FaithfulSMul.algebraMap_injective R S ?_⟩
+    simpa [piAlgebraMap_apply] using congrFun hk x
+  · rintro ⟨k, hk⟩
+    refine ⟨k, ?_⟩
+    simpa only [root_rootPairingBaseChange, map_sub, map_nsmul] using
+      congrArg (Pi.algebraMap κ R S) hk
+
+variable [Finite ι] [IsDomain S] [CharZero R] [P.IsCrystallographic]
+
+private theorem chainTopCoeff_rootPairingBaseChange_aux [IsDomain R] [hS : CharZero S] (i j : ι) :
+    (rootPairingBaseChange S P hP).chainTopCoeff i j = P.chainTopCoeff i j := by
+  let P' := rootPairingBaseChange S P hP
+  have hv : (fun k ↦ algebraMap R S ∘ ![P.root i, P.root j] k) =
+      ![P'.root i, P'.root j] := by
+    funext k
+    fin_cases k <;> rfl
+  by_cases h : LinearIndependent R ![P.root i, P.root j]
+  · have h' : LinearIndependent S ![P'.root i, P'.root j] := by
+      rw [← hv, linearIndependent_algebraMap_comp_iff]
+      exact h
+    apply le_antisymm
+    · rw [← P.root_add_nsmul_mem_range_iff_le_chainTopCoeff h,
+        ← root_add_nsmul_mem_range_baseChange_iff S P hP,
+        P'.root_add_nsmul_mem_range_iff_le_chainTopCoeff h']
+    · rw [← P'.root_add_nsmul_mem_range_iff_le_chainTopCoeff h',
+        root_add_nsmul_mem_range_baseChange_iff S P hP,
+        P.root_add_nsmul_mem_range_iff_le_chainTopCoeff h]
+  · have h' : ¬LinearIndependent S ![P'.root i, P'.root j] := by
+      rwa [← hv, linearIndependent_algebraMap_comp_iff]
+    rw [P.chainTopCoeff_of_not_linearIndependent h,
+      P'.chainTopCoeff_of_not_linearIndependent h']
+
+/-- Extending scalars along an injective map preserves the upper root-string coefficient. -/
+@[simp]
+theorem chainTopCoeff_rootPairingBaseChange (i j : ι) :
+    let _ : IsDomain R := IsDomain.of_faithfulSMul R S
+    letI : CharZero S := Algebra.charZero_of_charZero R S
+    (rootPairingBaseChange S P hP).chainTopCoeff i j = P.chainTopCoeff i j := by
+  let _ : IsDomain R := IsDomain.of_faithfulSMul R S
+  exact chainTopCoeff_rootPairingBaseChange_aux S P hP
+    (hS := Algebra.charZero_of_charZero R S) i j
+
+private theorem chainBotCoeff_rootPairingBaseChange_aux [IsDomain R] [hS : CharZero S] (i j : ι) :
+    (rootPairingBaseChange S P hP).chainBotCoeff i j = P.chainBotCoeff i j := by
+  let P' := rootPairingBaseChange S P hP
+  have hv : (fun k ↦ algebraMap R S ∘ ![P.root i, P.root j] k) =
+      ![P'.root i, P'.root j] := by
+    funext k
+    fin_cases k <;> rfl
+  by_cases h : LinearIndependent R ![P.root i, P.root j]
+  · have h' : LinearIndependent S ![P'.root i, P'.root j] := by
+      rw [← hv, linearIndependent_algebraMap_comp_iff]
+      exact h
+    apply le_antisymm
+    · rw [← P.root_sub_nsmul_mem_range_iff_le_chainBotCoeff h,
+        ← root_sub_nsmul_mem_range_baseChange_iff S P hP,
+        P'.root_sub_nsmul_mem_range_iff_le_chainBotCoeff h']
+    · rw [← P'.root_sub_nsmul_mem_range_iff_le_chainBotCoeff h',
+        root_sub_nsmul_mem_range_baseChange_iff S P hP,
+        P.root_sub_nsmul_mem_range_iff_le_chainBotCoeff h]
+  · have h' : ¬LinearIndependent S ![P'.root i, P'.root j] := by
+      rwa [← hv, linearIndependent_algebraMap_comp_iff]
+    rw [P.chainBotCoeff_of_not_linearIndependent h,
+      P'.chainBotCoeff_of_not_linearIndependent h']
+
+/-- Extending scalars along an injective map preserves the lower root-string coefficient. -/
+@[simp]
+theorem chainBotCoeff_rootPairingBaseChange (i j : ι) :
+    let _ : IsDomain R := IsDomain.of_faithfulSMul R S
+    letI : CharZero S := Algebra.charZero_of_charZero R S
+    (rootPairingBaseChange S P hP).chainBotCoeff i j = P.chainBotCoeff i j := by
+  let _ : IsDomain R := IsDomain.of_faithfulSMul R S
+  exact chainBotCoeff_rootPairingBaseChange_aux S P hP
+    (hS := Algebra.charZero_of_charZero R S) i j
+
+end Chain
 
 end TauCeti
