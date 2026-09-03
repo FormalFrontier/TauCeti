@@ -55,6 +55,11 @@ private lemma integral_poissonMass_gammaMeasure {r p : ℝ} (hr : 0 < r) (hp : 0
     ring
   -- Collect the Poisson mass with the Gamma density on its positive support.
   rw [TauCeti.integral_gammaMeasure_eq hr hrate]
+  -- In this real-valued specialization, scalar multiplication is ordinary multiplication.
+  change (∫ x in Ioi 0,
+    ((p / (1 - p)) ^ r / Real.Gamma r * x ^ (r - 1) *
+      Real.exp (-(p / (1 - p) * x))) *
+        (Real.exp (-x) * x ^ k / k.factorial)) = _
   have hcongr : ∀ x ∈ Ioi (0 : ℝ),
       (p / (1 - p)) ^ r / Real.Gamma r * x ^ (r - 1) *
           Real.exp (-(p / (1 - p) * x)) * (Real.exp (-x) * x ^ k / k.factorial) =
@@ -104,6 +109,7 @@ private lemma integral_poissonMass_gammaMeasure {r p : ℝ} (hr : 0 < r) (hp : 0
 If the Poisson rate is mixed according to the Gamma law of shape `r` and rate
 `p / (1 - p)`, the resulting count law is negative-binomial with shape `r` and success
 probability `p`. -/
+@[simp]
 theorem bind_gammaMeasure_poissonMeasure {r p : ℝ} (hr : 0 < r) (hp : 0 < p) (hp1 : p < 1) :
     (gammaMeasure r (p / (1 - p))).bind
         (fun lam => poissonMeasure (Real.toNNReal lam)) =
