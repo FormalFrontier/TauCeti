@@ -6,9 +6,9 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Symplectic.Levi
-public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Symplectic.Pivot
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Symplectic.RootGeneration
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Symplectic.UnipotentGeneration
+public import TauCeti.LinearAlgebra.Matrix.Pivot
 
 /-!
 # Gaussian generation of the symplectic group
@@ -32,7 +32,7 @@ the middle general-linear Levi factor using difference roots and diagonal Levi e
 * `TauCeti.GLSymplecticFin.eq_top_of_root_subgroups_of_diagonal` proves that all standard root
   subgroups together with the diagonal Levi subgroup generate the whole symplectic group.
 * `TauCeti.GLSymplecticFin.eq_top_of_adjacent_of_long_of_diagonal` reduces the root hypotheses to
-  the positive and negative simple roots of type `C`.
+  both orientations of the adjacent difference roots and one positive and negative long root.
 
 ## References
 
@@ -50,77 +50,36 @@ universe u
 
 variable {K : Type u} [Field K] {m : ℕ}
 
-/-- Every general-linear Levi element belongs to a subgroup containing all difference-root
-elements and every diagonal Levi element. -/
-theorem leviHom_mem_of_difference_of_diagonal
-    (H : Subgroup (GLSymplecticFin m K))
-    (hdifference : ∀ {i j : Fin m} (hij : i ≠ j) (c : K),
-      differenceShortRootUnit hij c ∈ H)
-    (hdiagonal : ∀ s : Fin m → Kˣ, leviHom (diagGL s) ∈ H)
-    (A : GL (Fin m) K) : leviHom A ∈ H := by
-  cases isEmpty_or_nonempty (Fin m) with
-  | inl hempty =>
-      let _ := hempty
-      rw [Subsingleton.elim A 1, map_one]
-      exact H.one_mem
-  | inr hnonempty =>
-      let _ := hnonempty
-      let i₀ : Fin m := Classical.choice inferInstance
-      let d : Fin m → Kˣ := Function.update 1 i₀ (Matrix.GeneralLinearGroup.det A)
-      let D : GL (Fin m) K := diagGL d
-      have hprod : ∏ i, d i = Matrix.GeneralLinearGroup.det A := by
-        dsimp only [d]
-        rw [Finset.prod_update_of_mem (Finset.mem_univ i₀)]
-        simp
-      have hdetD : Matrix.GeneralLinearGroup.det D = Matrix.GeneralLinearGroup.det A := by
-        simpa [D, det_diagGL] using hprod
-      let Q : GL (Fin m) K := A * D⁻¹
-      have hdetQ : ((Q : Matrix (Fin m) (Fin m) K).det) = 1 := by
-        rw [← Matrix.GeneralLinearGroup.val_det_apply]
-        simp [Q, hdetD]
-      let Q₁ : Matrix.SpecialLinearGroup (Fin m) K := ⟨(Q : Matrix (Fin m) (Fin m) K), hdetQ⟩
-      have hQ : leviHom Q ∈ H := by
-        have := leviHom_toGL_mem_of_difference H hdifference Q₁
-        convert this using 1
-        apply congrArg leviHom
-        apply Matrix.GeneralLinearGroup.ext
-        intro i j
-        rfl
-      have hD : leviHom D ∈ H := hdiagonal d
-      have hAD : A = Q * D := by
-        simp [Q]
-      rw [hAD, map_mul]
-      exact H.mul_mem hQ hD
-
 /-- A symplectic matrix whose upper-left block is invertible belongs to every subgroup containing
 all upper and lower symmetric unipotents and the general-linear Levi subgroup. -/
 theorem mem_of_isUnit_toBlocks₁₁
-    (H : Subgroup (GLSymplecticFin m K))
-    (hupper : ∀ (B : Matrix (Fin m) (Fin m) K) (hB : B.IsSymm), upperUnipotent B hB ∈ H)
-    (hlower : ∀ (C : Matrix (Fin m) (Fin m) K) (hC : C.IsSymm), lowerUnipotent C hC ∈ H)
-    (hlevi : ∀ A : GL (Fin m) K, leviHom A ∈ H)
-    (g : GLSymplecticFin m K)
-    (hunit : IsUnit (((mulEquivGLSymplectic m K g : GLSymplectic (Fin m) K) :
-      GL (Fin m ⊕ Fin m) K) : Matrix (Fin m ⊕ Fin m) (Fin m ⊕ Fin m) K).toBlocks₁₁) :
+    {R : Type u} [CommRing R]
+    (H : Subgroup (GLSymplecticFin m R))
+    (hupper : ∀ (B : Matrix (Fin m) (Fin m) R) (hB : B.IsSymm), upperUnipotent B hB ∈ H)
+    (hlower : ∀ (C : Matrix (Fin m) (Fin m) R) (hC : C.IsSymm), lowerUnipotent C hC ∈ H)
+    (hlevi : ∀ A : GL (Fin m) R, leviHom A ∈ H)
+    (g : GLSymplecticFin m R)
+    (hunit : IsUnit (((mulEquivGLSymplectic m R g : GLSymplectic (Fin m) R) :
+      GL (Fin m ⊕ Fin m) R) : Matrix (Fin m ⊕ Fin m) (Fin m ⊕ Fin m) R).toBlocks₁₁) :
     g ∈ H := by
-  let M : Matrix (Fin m ⊕ Fin m) (Fin m ⊕ Fin m) K :=
-    ((mulEquivGLSymplectic m K g : GLSymplectic (Fin m) K) : GL (Fin m ⊕ Fin m) K)
+  let M : Matrix (Fin m ⊕ Fin m) (Fin m ⊕ Fin m) R :=
+    ((mulEquivGLSymplectic m R g : GLSymplectic (Fin m) R) : GL (Fin m ⊕ Fin m) R)
   let A := M.toBlocks₁₁
   let B := M.toBlocks₁₂
   let C := M.toBlocks₂₁
   let D := M.toBlocks₂₂
-  have hM : M ∈ Matrix.symplecticGroup (Fin m) K := by
+  have hM : M ∈ Matrix.symplecticGroup (Fin m) R := by
     simpa only [M] using GLSymplectic.mem_iff_mem_symplecticGroup.mp
-      (mulEquivGLSymplectic m K g).property
+      (mulEquivGLSymplectic m R g).property
   have hMblocks : Matrix.fromBlocks A B C D = M := by
     simpa only [A, B, C, D] using M.fromBlocks_toBlocks
   have hblocks : Aᵀ * C = Cᵀ * A ∧ Bᵀ * D = Dᵀ * B ∧ Aᵀ * D - Cᵀ * B = 1 := by
     exact (SymplecticGroup.fromBlocks_mem_iff).mp (hMblocks ▸ hM)
-  let P : GL (Fin m) K := Matrix.GeneralLinearGroup.mk'' A
+  let P : GL (Fin m) R := Matrix.GeneralLinearGroup.mk'' A
     ((Matrix.isUnit_iff_isUnit_det A).mp hunit)
-  set Ainv : Matrix (Fin m) (Fin m) K :=
-    ((P⁻¹ : GL (Fin m) K) : Matrix (Fin m) (Fin m) K) with Ainv_def
-  have hP : (P : Matrix (Fin m) (Fin m) K) = A := by simp [P]
+  set Ainv : Matrix (Fin m) (Fin m) R :=
+    ((P⁻¹ : GL (Fin m) R) : Matrix (Fin m) (Fin m) R) with Ainv_def
+  have hP : (P : Matrix (Fin m) (Fin m) R) = A := by simp [P]
   have hleft : Ainv * A = 1 := by
     rw [← hP, Ainv_def, ← Matrix.GeneralLinearGroup.coe_mul]
     simp
@@ -140,7 +99,7 @@ theorem mem_of_isUnit_toBlocks₁₁
       _ = C * Ainv := by rw [← Matrix.transpose_mul, hright, Matrix.transpose_one, one_mul]
   have hdual : A * Bᵀ = B * Aᵀ := by
     have hMt : Matrix.fromBlocks Aᵀ Cᵀ Bᵀ Dᵀ ∈
-        Matrix.symplecticGroup (Fin m) K := by
+        Matrix.symplecticGroup (Fin m) R := by
       rw [← Matrix.fromBlocks_transpose, hMblocks]
       exact SymplecticGroup.transpose_mem hM
     simpa only [Matrix.transpose_transpose] using
@@ -176,22 +135,16 @@ theorem mem_of_isUnit_toBlocks₁₁
   have hSA : S * A = C := by
     rw [S_def, mul_assoc, hleft, mul_one]
   have hfactor : g = lowerUnipotent S hS * leviHom P * upperUnipotent T hT := by
-    -- Compare the transported matrices blockwise; the coercion-heavy `change`
-    -- merely exposes the three underlying matrices of the subgroup elements.
-    apply (mulEquivGLSymplectic m K).injective
-    apply Subtype.ext
-    apply Units.ext
+    apply (mulEquivGLSymplectic m R).injective
     rw [map_mul, map_mul, mulEquivGLSymplectic_leviHom]
-    change M =
-      (((((mulEquivGLSymplectic m K) (lowerUnipotent S hS) :
-          GLSymplectic (Fin m) K) : GL (Fin m ⊕ Fin m) K) :
-            Matrix (Fin m ⊕ Fin m) (Fin m ⊕ Fin m) K) *
-        (((GLSymplectic.leviHom P : GLSymplectic (Fin m) K) :
-          GL (Fin m ⊕ Fin m) K) : Matrix (Fin m ⊕ Fin m) (Fin m ⊕ Fin m) K)) *
-      ((((mulEquivGLSymplectic m K) (upperUnipotent T hT) :
-        GLSymplectic (Fin m) K) : GL (Fin m ⊕ Fin m) K) :
-          Matrix (Fin m ⊕ Fin m) (Fin m ⊕ Fin m) K)
-    simp only [coe_mulEquivGLSymplectic, coe_mulEquivGLSymplectic_lowerUnipotent,
+    apply Subtype.ext
+    simp only [Subgroup.coe_mul]
+    apply Units.ext
+    rw [show ((((mulEquivGLSymplectic m R) g : GLSymplectic (Fin m) R) :
+        GL (Fin m ⊕ Fin m) R) : Matrix (Fin m ⊕ Fin m) (Fin m ⊕ Fin m) R) = M by
+      rfl]
+    simp only [Matrix.GeneralLinearGroup.coe_mul, coe_mulEquivGLSymplectic,
+      coe_mulEquivGLSymplectic_lowerUnipotent,
       coe_mulEquivGLSymplectic_upperUnipotent, GLSymplectic.coe_ofSymplecticGroup,
       GLSymplectic.coe_leviHom]
     rw [Matrix.fromBlocks_multiply, Matrix.fromBlocks_multiply]
@@ -222,12 +175,12 @@ theorem eq_top_of_root_subgroups_of_diagonal
     intro B hB
     exact upperUnipotent_mem_of_root_subgroups H.toSubmonoid
       (fun i c ↦ by
-        change positiveLongRootTransvectionUnit i c ∈ H
+        rw [Subgroup.mem_toSubmonoid]
         simpa only [RootSubgroupIndex.hom_positiveLong,
           positiveLongRootTransvectionHom_apply, toAdd_ofAdd] using
             hroot (.positiveLong i) (Multiplicative.ofAdd c))
       (fun hij c ↦ by
-        change positiveSumShortRootUnit hij.ne c ∈ H
+        rw [Subgroup.mem_toSubmonoid]
         simpa only [RootSubgroupIndex.hom_positiveSum, positiveSumShortRootHom_apply,
           toAdd_ofAdd] using
           hroot (.positiveSum _ _ hij) (Multiplicative.ofAdd c)) B hB
@@ -236,12 +189,12 @@ theorem eq_top_of_root_subgroups_of_diagonal
     intro C hC
     exact lowerUnipotent_mem_of_root_subgroups H.toSubmonoid
       (fun i c ↦ by
-        change negativeLongRootTransvectionUnit i c ∈ H
+        rw [Subgroup.mem_toSubmonoid]
         simpa only [RootSubgroupIndex.hom_negativeLong,
           negativeLongRootTransvectionHom_apply, toAdd_ofAdd] using
             hroot (.negativeLong i) (Multiplicative.ofAdd c))
       (fun hij c ↦ by
-        change negativeSumShortRootUnit hij.ne c ∈ H
+        rw [Subgroup.mem_toSubmonoid]
         simpa only [RootSubgroupIndex.hom_negativeSum, negativeSumShortRootHom_apply,
           toAdd_ofAdd] using
           hroot (.negativeSum _ _ hij) (Multiplicative.ofAdd c)) C hC
@@ -255,11 +208,13 @@ theorem eq_top_of_root_subgroups_of_diagonal
     simpa only [M] using GLSymplectic.mem_iff_mem_symplecticGroup.mp
       (mulEquivGLSymplectic m K g).property
   have hker (x : Fin m → K) (hAx : A • x = 0) (hCx : C • x = 0) : x = 0 := by
-    change M.toBlocks₁₁ *ᵥ x = 0 at hAx
-    change M.toBlocks₂₁ *ᵥ x = 0 at hCx
+    have hAx' : M.toBlocks₁₁ *ᵥ x = 0 := by
+      simpa only [Matrix.smul_eq_mulVec, A] using hAx
+    have hCx' : M.toBlocks₂₁ *ᵥ x = 0 := by
+      simpa only [Matrix.smul_eq_mulVec, C] using hCx
     have hv : M *ᵥ Sum.elim x 0 = M *ᵥ Sum.elim 0 0 := by
       rw [← M.fromBlocks_toBlocks]
-      simp [Matrix.fromBlocks_mulVec, hAx, hCx]
+      simp [Matrix.fromBlocks_mulVec, hAx', hCx']
     exact (Sum.elim_eq_iff.mp
       (Matrix.mulVec_injective_iff_isUnit.mpr
         (((mulEquivGLSymplectic m K g : GLSymplectic (Fin m) K) :
@@ -274,15 +229,23 @@ theorem eq_top_of_root_subgroups_of_diagonal
   have hu : upperUnipotent X hX ∈ H := hupper X hX
   have hprod : upperUnipotent X hX * g ∈ H := by
     apply mem_of_isUnit_toBlocks₁₁ H hupper hlower hlevi
+    have hcoeProduct :
+        ((((mulEquivGLSymplectic m K) (upperUnipotent X hX * g) :
+          GLSymplectic (Fin m) K) : GL (Fin m ⊕ Fin m) K) :
+            Matrix (Fin m ⊕ Fin m) (Fin m ⊕ Fin m) K) =
+          ((((mulEquivGLSymplectic m K) (upperUnipotent X hX) :
+            GLSymplectic (Fin m) K) : GL (Fin m ⊕ Fin m) K) :
+              Matrix (Fin m ⊕ Fin m) (Fin m ⊕ Fin m) K) * M := by
+      have h := congrArg
+        (fun q : GLSymplectic (Fin m) K ↦
+          (((q : GL (Fin m ⊕ Fin m) K) : Matrix (Fin m ⊕ Fin m) (Fin m ⊕ Fin m) K)))
+        ((mulEquivGLSymplectic m K).map_mul (upperUnipotent X hX) g)
+      simpa only [Subgroup.coe_mul, Matrix.GeneralLinearGroup.coe_mul, M] using h
     have htop :
         (((mulEquivGLSymplectic m K (upperUnipotent X hX * g) :
           GLSymplectic (Fin m) K) : GL (Fin m ⊕ Fin m) K) :
             Matrix (Fin m ⊕ Fin m) (Fin m ⊕ Fin m) K).toBlocks₁₁ = A + X * C := by
-      rw [map_mul]
-      change
-        (((((mulEquivGLSymplectic m K) (upperUnipotent X hX) :
-          GLSymplectic (Fin m) K) : GL (Fin m ⊕ Fin m) K) :
-            Matrix (Fin m ⊕ Fin m) (Fin m ⊕ Fin m) K) * M).toBlocks₁₁ = A + X * C
+      rw [hcoeProduct]
       simp only [coe_mulEquivGLSymplectic, coe_mulEquivGLSymplectic_upperUnipotent,
         GLSymplectic.coe_ofSymplecticGroup]
       rw [← M.fromBlocks_toBlocks, Matrix.fromBlocks_multiply]
@@ -293,8 +256,9 @@ theorem eq_top_of_root_subgroups_of_diagonal
   have := H.mul_mem (H.inv_mem hu) hprod
   simpa only [inv_mul_cancel_left] using this
 
-/-- The positive and negative simple roots of type `C`, together with the diagonal Levi subgroup,
-generate the full symplectic group over a field. -/
+/-- Both orientations of the adjacent difference roots, one positive and negative long root,
+and the diagonal Levi subgroup generate the full symplectic group over a field. Choosing the
+terminal long-root index gives the standard simple-root family of type `C`. -/
 theorem eq_top_of_adjacent_of_long_of_diagonal
     (H : Subgroup (GLSymplecticFin m K)) (r : Fin m)
     (hadjacent : ∀ {i j : Fin m} (hij : i ≠ j) (c : K),

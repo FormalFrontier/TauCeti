@@ -5,10 +5,12 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Symplectic.Basic
+public import Mathlib.LinearAlgebra.Matrix.Action
+public import Mathlib.LinearAlgebra.Matrix.Rank
+public import Mathlib.LinearAlgebra.Matrix.SchurComplement
 
 /-!
-# A symmetric pivot for symplectic Gaussian elimination
+# A symmetric matrix pivot for Gaussian elimination
 
 Let `A` and `C` be two square matrices over a field. If their kernels meet trivially and
 `Aᵀ C = Cᵀ A`, then some symmetric matrix `X` makes `A + X C` invertible. Applied to the
@@ -109,6 +111,8 @@ theorem exists_isUnit_add_mul_of_ker_inter_eq_bot_of_transpose_mul_comm
         ← mul_assoc, ← inv_submatrix_equiv, add_mul, mul_assoc _ (U.submatrix _ _),
         mul_inv_of_invertible]
       simp [X_def]
+      -- The remaining equality is definitional: `f` is the local abbreviation for
+      -- submatrix reindexing, so both sides now apply the same reindexed matrices.
       rfl
     rw [← hf, heq', IsUnit.mul_iff, IsUnit.mul_iff]
     refine ⟨⟨isUnit_of_invertible _, ?_⟩, ?_⟩
