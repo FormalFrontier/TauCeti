@@ -102,11 +102,8 @@ private theorem mapPoints_conjugate_extendPoint {A B : CommAlgCat.{v} R} (f : A 
         (extendPoint H A g * x * (extendPoint H A g)⁻¹) =
       extendPoint H B g * HopfAlgebra.mapPoints (H := H) f x * (extendPoint H B g)⁻¹ := by
   rw [HopfAlgebra.mapPoints_mul, HopfAlgebra.mapPoints_mul, HopfAlgebra.mapPoints_inv]
-  have hext := mapPoints_extendPoint H f.hom g
-  change AlgHom.mapValue (H := H) f.hom (extendPoint H A g) *
-      HopfAlgebra.mapPoints (H := H) f x *
-        (AlgHom.mapValue (H := H) f.hom (extendPoint H A g))⁻¹ = _
-  rw [hext]
+  rw [show HopfAlgebra.mapPoints (H := H) f (extendPoint H A g) = extendPoint H B g from
+    mapPoints_extendPoint H f.hom g]
 
 /-- Conjugation by the extension of a rational point, as an automorphism of `A`-valued points. -/
 noncomputable def innerConjugationPointIso
