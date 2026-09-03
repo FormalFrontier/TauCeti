@@ -5,7 +5,6 @@ Authors: Codex
 -/
 module
 
-public import Mathlib.AlgebraicGeometry.AlgClosed.Basic
 public import TauCeti.Algebra.AlgebraicGroup.Smooth.GeometricallyReduced
 
 /-!
@@ -27,8 +26,9 @@ persists after every field extension.
 
 ## Main declarations
 
-* `TauCeti.smooth_of_grpObj_of_isAlgClosed_of_isReduced`: the scheme-theoretic criterion.
-* `TauCeti.smoothCommHopfAlgProperty_of_isReduced_of_isAlgClosed`: a reduced finite-type
+* `TauCeti.AlgebraicGeometry.smooth_of_grpObj_of_isAlgClosed_of_isReduced`: the
+  scheme-theoretic criterion.
+* `TauCeti.smoothCommHopfAlgProperty_of_isAlgClosed_of_isReduced`: a reduced finite-type
   commutative Hopf algebra over an algebraically closed field is smooth.
 * `TauCeti.smoothCommHopfAlgProperty_iff_isReduced_of_isAlgClosed`: the coordinate smoothness
   criterion.
@@ -42,10 +42,6 @@ persists after every field extension.
 
 The group-scheme argument is adapted from the private algebraically-closed-field lemma underlying
 `AlgebraicGeometry.smooth_of_grpObj` in Mathlib.
-
-This supplies the smoothness input for the reduced-center step in Layer 6, "Reductive and
-semisimple groups", of the ReductiveGroups roadmap. Once the nilradical of the center is packaged
-as a Hopf ideal, this criterion makes the resulting reduced central subgroup smooth.
 -/
 
 public section
@@ -60,12 +56,9 @@ universe u
 
 noncomputable section
 
-/-- A reduced group scheme locally of finite type over an algebraically closed field is smooth.
+namespace AlgebraicGeometry
 
-Smoothness holds on a dense open subset because the field is perfect. If the nonsmooth locus
-contained a point, its Jacobson property would provide a closed point there. Translation by
-closed rational points carries that point to a closed point in the smooth locus, contradicting
-invariance of the smooth locus under isomorphisms over the base. -/
+/-- A reduced group scheme locally of finite type over an algebraically closed field is smooth. -/
 theorem smooth_of_grpObj_of_isAlgClosed_of_isReduced
     {K : Type u} [Field K] [IsAlgClosed K] {G : Scheme.{u}}
     (f : G ⟶ Spec (.of K)) [LocallyOfFiniteType f] [GrpObj (Over.mk f)] [IsReduced G] :
@@ -90,20 +83,32 @@ theorem smooth_of_grpObj_of_isAlgClosed_of_isReduced
     dsimp only [Iso.trans_hom, Iso.symm_hom, e]
     rw [← Category.assoc, ← Iso.eq_comp_inv]
     simp [comp_lift_assoc]
+  have hx' : x'.left = pointOfClosedPoint f x hxc := by
+    simp only [x', Over.homMk_left, pointEquivClosedPoint_symm_apply_coe]
+  have hy' : y'.left = pointOfClosedPoint f y hyc := by
+    simp only [y', Over.homMk_left, pointEquivClosedPoint_symm_apply_coe]
+  have eLeft_hom : eLeft.hom = e.hom.left := by
+    simp only [eLeft, Functor.mapIso_hom, Over.forget_map]
   have heLeft : pointOfClosedPoint f x hxc ≫ eLeft.hom =
       pointOfClosedPoint f y hyc := by
-    simpa [x', y', eLeft, pointEquivClosedPoint] using congrArg Over.Hom.left he
+    rw [eLeft_hom, ← hx', ← hy']
+    simpa only [Over.comp_left] using congrArg Over.Hom.left he
   have he' : eLeft.hom x = y := by
     rw [← pointOfClosedPoint_apply f x hxc (IsLocalRing.closedPoint K),
       ← pointOfClosedPoint_apply f y hyc (IsLocalRing.closedPoint K)]
     exact congr(($heLeft) (IsLocalRing.closedPoint K))
+  have eLeft_hom_comp : eLeft.hom ≫ f = f := by
+    rw [eLeft_hom]
+    exact e.hom.w
   rw! [← he', ← eLeft.hom.mem_preimage, Scheme.Hom.preimage_smoothLocus_eq,
-    show eLeft.hom ≫ f = f from e.hom.w] at hy
+    eLeft_hom_comp] at hy
   exact hx hy
+
+end AlgebraicGeometry
 
 /-- **A reduced finite-type commutative Hopf algebra over an algebraically closed field is
 smooth.** -/
-theorem smoothCommHopfAlgProperty_of_isReduced_of_isAlgClosed
+theorem smoothCommHopfAlgProperty_of_isAlgClosed_of_isReduced
     (k : Type u) [Field k] [IsAlgClosed k] (H : CommHopfAlgCat.{u} k)
     [Algebra.FiniteType k H] [IsReduced H] :
     smoothCommHopfAlgProperty k H := by
@@ -112,7 +117,7 @@ theorem smoothCommHopfAlgProperty_of_isReduced_of_isAlgClosed
     (algebraFiniteType_iff_locallyOfFiniteType_hopfSpec k H).mp inferInstance
   let _ : IsReduced ((hopfSpec (CommRingCat.of k)).obj (Opposite.op H)).X.left :=
     by
-      change IsReduced (Spec (CommRingCat.of H))
+      rw [hopfSpec_obj_X_left]
       rw [affine_isReduced_iff]
       infer_instance
   let _ : GrpObj
@@ -120,7 +125,7 @@ theorem smoothCommHopfAlgProperty_of_isReduced_of_isAlgClosed
     inferInstanceAs (GrpObj ((hopfSpec (CommRingCat.of k)).obj (Opposite.op H)).X)
   apply (algebraSmooth_iff_smooth_hopfSpec k H).mpr
   rw [smoothAffineGroupSchemeProperty_iff]
-  exact smooth_of_grpObj_of_isAlgClosed_of_isReduced _
+  exact AlgebraicGeometry.smooth_of_grpObj_of_isAlgClosed_of_isReduced _
 
 /-- For a finite-type commutative Hopf algebra over an algebraically closed field, smoothness is
 equivalent to reducedness of its coordinate ring. -/
@@ -134,7 +139,7 @@ theorem smoothCommHopfAlgProperty_iff_isReduced_of_isAlgClosed
     exact isReduced_of_smooth_of_field k H
   · intro hH
     let _ : IsReduced H := hH
-    exact smoothCommHopfAlgProperty_of_isReduced_of_isAlgClosed k H
+    exact smoothCommHopfAlgProperty_of_isAlgClosed_of_isReduced k H
 
 /-- Over an algebraically closed field, a finite-type commutative Hopf algebra is geometrically
 reduced exactly when its coordinate ring is reduced. -/
