@@ -18,11 +18,23 @@ only obstruction to recovering `H` from its orthogonal complement:
 H⊥⊥ = H + rad(A).
 ```
 
-The proof first quotients the pairing by its radical.  The induced finite bilinear module is
-nondegenerate, so restriction of characters shows that `|H| |H⊥| = |A|`.  Applying this
-identity in the radical quotient gives the general double-complement formula.  In particular,
-for a nondegenerate module, double orthogonal complementation is the identity and a Lagrangian
-subgroup has order whose square is the order of the ambient group.
+For a nondegenerate `A` the file also has the cardinality identity `|H| |H⊥| = |A|`, which is
+unavailable without nondegeneracy, together with its two consequences: double orthogonal
+complementation is the identity, and a Lagrangian subgroup has order whose square is the order of
+the ambient group.
+
+The file closes with the degeneracy of a restricted pairing.  Restricting the pairing to a
+subgroup `S` makes exactly the vectors of `S ∩ S⊥` degenerate:
+
+```text
+rad(A|_S) = S⊥ ∩ S.
+```
+
+Read at `S = H⊥` and combined with the double-complement formula, this says that the pairing
+restricted to `H⊥` has radical `(H + rad(A)) ∩ H⊥`, so in particular it kills the copy of `H`
+sitting inside `H⊥` when `H` is isotropic.  In general it kills `H ∩ H⊥`, which makes the
+orthogonal quotient `H⊥ / (H ∩ H⊥)` of
+`TauCeti.LinearAlgebra.FiniteBilinearModule.Orthogonal.Quotient` well defined.
 
 ## Main declarations
 
@@ -30,7 +42,10 @@ subgroup has order whose square is the order of the ambient group.
   `H⊥⊥ = H ⊔ rad(A)`.
 * `TauCeti.FiniteBilinearModule.IsNondegenerate.card_mul_card_orthogonalComplement`: the
   cardinality identity `|H| |H⊥| = |A|` for a nondegenerate module.
-* `TauCeti.FiniteBilinearModule.IsLagrangian.card_sq`: a Lagrangian has squared order `|A|`.
+* `TauCeti.FiniteBilinearModule.IsLagrangian.card_sq`: a Lagrangian subgroup of a nondegenerate
+  module has squared order `|A|`.
+* `TauCeti.FiniteBilinearModule.addSubgroupOf_orthogonalComplement_le_radical_restrict`: the
+  part of `H` lying in `H⊥` is degenerate for the restricted pairing.
 
 ## References
 
@@ -176,5 +191,25 @@ theorem IsLagrangian.card_sq (hH : A.IsLagrangian H) (hA : A.IsNondegenerate) :
     Nat.card H ^ 2 = Nat.card H * Nat.card H := pow_two _
     _ = Nat.card H * Nat.card (A.orthogonalComplement H) := congrArg _ hcard
     _ = Nat.card A := IsNondegenerate.card_mul_card_orthogonalComplement A hA H
+
+/-! ## The radical of a pairing restricted to an orthogonal complement -/
+
+/-- The radical of the pairing restricted to `H⊥` is the part of `H + rad(A)` lying in `H⊥`.
+
+It identifies the residual degeneracy that is removed when forming the orthogonal quotient. -/
+theorem radical_restrict_orthogonalComplement (H : AddSubgroup A) :
+    (A.restrict (A.orthogonalComplement H)).radical =
+      (H ⊔ A.radical).addSubgroupOf (A.orthogonalComplement H) := by
+  rw [A.radical_restrict, A.orthogonalComplement_orthogonalComplement]
+
+/-- The part of `H` lying in `H⊥` is degenerate for the pairing restricted to `H⊥`.
+
+This is the inclusion which lets the restricted pairing descend to `H⊥ / (H ∩ H⊥)`. -/
+theorem addSubgroupOf_orthogonalComplement_le_radical_restrict (H : AddSubgroup A) :
+    H.addSubgroupOf (A.orthogonalComplement H) ≤
+      (A.restrict (A.orthogonalComplement H)).radical := by
+  intro x hx
+  rw [A.radical_restrict, AddSubgroup.mem_addSubgroupOf]
+  exact A.le_orthogonalComplement_orthogonalComplement H (AddSubgroup.mem_addSubgroupOf.mp hx)
 
 end TauCeti.FiniteBilinearModule

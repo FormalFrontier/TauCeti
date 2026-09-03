@@ -35,9 +35,7 @@ factorial of the polynomial degree.
 
 The proofs reuse Mathlib's `Polynomial.card_rootSet_eq_natDegree`,
 `Polynomial.Gal.galActionHom_injective`, `MonoidHom.ofInjective`, and Lagrange's theorem. This is
-the "Degree bookkeeping" milestone of Layer 0 in
-`TauCetiRoadmap/PolynomialGaloisGroups/README.md`; its root numbering is consumed by the
-orbit-to-factor dictionary and the later low-degree label predicates.
+the degree bookkeeping used by the orbit-to-factor dictionary and by low-degree label predicates.
 -/
 
 public section

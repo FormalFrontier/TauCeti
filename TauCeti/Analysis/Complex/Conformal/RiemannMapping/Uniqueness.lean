@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Analysis.Complex.Conformal.UnitDisc.Automorphism.Classification
-import TauCeti.Analysis.Complex.Conformal.InverseFunction
+import TauCeti.Analysis.Complex.Conformal.Inverse.Function
 
 /-!
 # Uniqueness in the Riemann mapping theorem

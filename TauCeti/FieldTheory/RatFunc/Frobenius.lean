@@ -24,28 +24,19 @@ subfield `K(X^q)`, and `K(X)` has degree exactly `q` over it.
 
 Both are `@[simp]`.
 
-## Roadmap
+## Application to Frobenius isogenies
 
-`TauCetiRoadmap/EllipticCurves/README.md`, **Layer 1**, the Frobenius isogeny — "the key input to
-Layer 3". The layer seeds
-
-```lean
-noncomputable def Isogeny.degree (φ : Isogeny W₁ W₂) : ℕ :=
-  Module.finrank φ.fieldPullback.fieldRange W₁.FunctionField
-theorem degree_frobeniusIsogeny [Finite F] (W : WeierstrassCurve.Affine F) :
-    (frobeniusIsogeny W).degree = Nat.card F
-```
-
-so the target is `Module.finrank` of `K(W)` over the field range of the `q`-power map. This file
-proves that statement for the rational function field. It is what the seeded degree is computed
-from: `K(x^q)` sits below both `K(x)` and `K(W)^q` inside `K(W)`, the two intermediate degrees
+Computing the degree of a Frobenius isogeny requires the `Module.finrank` of `K(W)` over the field
+range of the `q`-power map. This file proves the corresponding statement for the rational function
+field. It supplies the inner degree in the comparison: `K(x^q)` sits below both `K(x)` and
+`K(W)^q` inside `K(W)`, the two intermediate degrees
 `[K(W) : K(x)]` and `[K(W)^q : K(x^q)]` are both `2`, and the tower law along the two routes reads
 `[K(W) : K(W)^q] · 2 = 2 · [K(x) : K(x^q)]`. The right-hand factor is the `q` proved here.
 
 ## Provenance
 
-Ported from the AINTLIB `HasseWeil` project (`github.com/CBirkbeck/AINTLIB`, Apache-2.0, pinned by
-that roadmap at `dev/hasse-weil @ 513e83879e2f`), `HasseWeil/FrobeniusIsogeny.lean`, declarations
+Ported from the AINTLIB `HasseWeil` project (`github.com/CBirkbeck/AINTLIB`, Apache-2.0,
+`dev/hasse-weil @ 513e83879e2f`), `HasseWeil/FrobeniusIsogeny.lean`, declarations
 `frobenius_fieldRange_ratFunc` and `finrank_ratFunc_frobenius`.
 
 Changes from the source. Both are `private` there, inside the file that builds the Frobenius

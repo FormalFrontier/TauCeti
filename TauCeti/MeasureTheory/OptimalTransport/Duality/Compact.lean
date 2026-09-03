@@ -11,6 +11,7 @@ public import TauCeti.MeasureTheory.MeasurableSpace.Metric
 public import TauCeti.MeasureTheory.OptimalTransport.CTransform.Basic
 public import TauCeti.MeasureTheory.OptimalTransport.Cost.Compact
 public import TauCeti.MeasureTheory.OptimalTransport.Finite.Duality
+import TauCeti.MeasureTheory.Integral.Prod
 
 /-!
 # Strong Kantorovich duality for continuous costs on compact spaces
@@ -282,26 +283,13 @@ private theorem transportCost_le_ofReal_cost {n m : ℕ} {qX : X → Fin n} {qY 
     intro i j
     rcases eq_or_ne (T i j) 0 with h | h
     · simp [h]
-    · have := ProbabilityTheory.cond_isProbabilityMeasure (row_fiber_ne_zero hpμ T h)
-      have := ProbabilityTheory.cond_isProbabilityMeasure (col_fiber_ne_zero hpν T h)
-      refine mul_le_mul_of_nonneg_left ?_ (by positivity)
-      have hfib1 : ∀ᵐ z ∂((μ[|qX ⁻¹' {i}]).prod (ν[|qY ⁻¹' {j}])), qX z.1 = i := by
-        refine (Measure.ae_prod_iff_ae_ae ?_).2 ?_
-        · exact (hqX.comp measurable_fst) (MeasurableSet.singleton i)
-        · filter_upwards [ProbabilityTheory.ae_cond_mem (μ := μ)
-            (hqX (MeasurableSet.singleton i))] with x hx
-          exact ae_of_all _ fun _ ↦ hx
-      have hfib2 : ∀ᵐ z ∂((μ[|qX ⁻¹' {i}]).prod (ν[|qY ⁻¹' {j}])), qY z.2 = j := by
-        refine (Measure.ae_prod_iff_ae_ae ?_).2 ?_
-        · exact (hqY.comp measurable_snd) (MeasurableSet.singleton j)
-        · exact ae_of_all _ fun _ ↦ ProbabilityTheory.ae_cond_mem (μ := ν)
-            (hqY (MeasurableSet.singleton j))
-      refine le_trans (lintegral_mono_ae ?_) (by rw [lintegral_const, measure_univ, mul_one])
-      filter_upwards [hfib1, hfib2] with z h1 h2
-      refine ENNReal.ofReal_le_ofReal ?_
-      have hz := hC z.1 z.2
-      rw [h1, h2] at hz
-      simpa using hz
+    · refine mul_le_mul_of_nonneg_left (lintegral_cond_prod_le
+        (hqX (MeasurableSet.singleton i)) (hqY (MeasurableSet.singleton j))
+        (row_fiber_ne_zero hpμ T h) (measure_ne_top μ _)
+        (col_fiber_ne_zero hpν T h) (measure_ne_top ν _) fun x hx y hy ↦ ?_) (by positivity)
+      have hxi : qX x = i := by simpa only [Set.mem_preimage, Set.mem_singleton_iff] using hx
+      have hyj : qY y = j := by simpa only [Set.mem_preimage, Set.mem_singleton_iff] using hy
+      exact ENNReal.ofReal_le_ofReal ((hC x y).trans_eq (by rw [hxi, hyj]))
   have hentry : ∀ i j, T i j * ENNReal.ofReal (C (i, j))
       = ENNReal.ofReal (C (i, j) * T.toRealFun (i, j)) := by
     intro i j

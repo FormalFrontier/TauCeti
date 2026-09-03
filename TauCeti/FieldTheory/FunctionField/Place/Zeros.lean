@@ -67,12 +67,11 @@ proved nonzero.
 
 ## Provenance
 
-The mathematics is Stichtenoth's and the Lean development is independent. The roadmap's
-coordination section records that `vaca22/riemann-roch-function-fields` (Guanghao Li,
-Apache-2.0) carries a complete function-field Riemann–Roch by the same Stichtenoth route, and
-that this roadmap specifies the mathematics rather than that code; no code is copied or adapted
-from it here, and the normalized-`ℤᵐ⁰`-valuation `TauCeti.Place` API this file is written
-against is the deliberate API divergence recorded there.
+The mathematics is Stichtenoth's and the Lean development is independent. The separate
+`vaca22/riemann-roch-function-fields` project (Guanghao Li, Apache-2.0) carries a complete
+function-field Riemann–Roch development by the same Stichtenoth route; no code is copied or
+adapted from it here. In particular, this file uses Tau Ceti's normalized-`ℤᵐ⁰`-valuation
+`TauCeti.Place` API.
 
 ## References
 

@@ -5,66 +5,42 @@ Authors: Claude, Codex
 -/
 module
 
-import TauCeti.Analysis.SpecialFunctions.Beta
-public import TauCeti.Probability.Density
-public import Mathlib.Analysis.SpecialFunctions.Gamma.Basic
-public import Mathlib.Probability.Distributions.Cauchy
+public import TauCeti.Probability.Distributions.StudentT.Basic
+public import Mathlib.Probability.Moments.IntegrableExpMul
 public import Mathlib.Probability.Moments.Variance
-import TauCeti.Analysis.SpecialFunctions.Gamma
+import TauCeti.Analysis.Calculus.RealCharts
+import TauCeti.Probability.Distributions.StudentT.WeightedIntegral
+import TauCeti.Analysis.SpecialFunctions.Beta
 import Mathlib.Analysis.SpecialFunctions.NonIntegrable
-import Mathlib.MeasureTheory.Measure.Haar.NormedSpace
+import Mathlib.MeasureTheory.Function.L1Space.Integrable
+import Mathlib.MeasureTheory.Measure.Lebesgue.Integral
 
 /-!
-# Student's t distribution
+# Moments of Student's t law
 
-Student's t law with `ν` degrees of freedom is the symmetric law on the line with density
-proportional to `(1 + x ^ 2 / ν) ^ (-(ν + 1) / 2)`. This file defines it, proves that it is a
-probability measure for `0 < ν`, identifies it as a `MeasureTheory.HasPDF` law with that density,
-records its reflection symmetry, establishes the sharp first- and second-moment thresholds and
-formulas, and identifies the one degree of freedom member of the family with the standard Cauchy
-law.
-
-**Boundary.** The number of degrees of freedom must be positive for the density to normalize, so
-both `studentTPDFReal` and `studentTMeasure` are *defined* to vanish for `ν ≤ 0`
-(`studentTMeasure_of_nonpos`); every formula describing the probability law carries `0 < ν` as a
-hypothesis.
-
-## Main definitions
-
-* `TauCeti.Probability.studentTPDFReal` — the real-valued density;
-* `TauCeti.Probability.studentTPDF` — its `ℝ≥0∞`-valued companion;
-* `TauCeti.Probability.studentTMeasure` — the law, as `volume.withDensity studentTPDF`.
+This file proves the mean, variance, polynomial moment thresholds and exponential moment domain of
+the Student t distribution defined in `TauCeti/Probability/Distributions/StudentT/Basic.lean`. The
+cumulative distribution function is computed in
+`TauCeti/Probability/Distributions/StudentT/Cdf.lean`. The density is even, and on the positive
+half-line the substitution `w = x ^ 2 / ν` turns every weighted integral into Euler's second beta
+integral
+`∫ w ^ (a - 1) * (1 + w) ^ (-(a + b)) = Β(a, b)`, so the weighted density is integrable there
+exactly for `-1 < q < ν`; the exponential-moment statements read off that sharp threshold.
 
 ## Main results
 
-* `isProbabilityMeasure_studentTMeasure` — it is a probability measure when `0 < ν`;
-* `hasPDF_of_hasLaw_studentTMeasure`, `pdf_eq_studentTPDF_of_hasLaw_studentTMeasure` and
-  `rnDeriv_studentTMeasure` — the `HasPDF` bridge, the density, and the Radon–Nikodym derivative;
-* `studentTMeasure_map_neg` — the law is invariant under reflection in the origin;
 * `integrable_id_studentTMeasure_iff` and `integral_id_studentTMeasure` — within the nondegenerate
   family the mean exists exactly when `1 < ν`, while its Bochner integral is zero for every
   parameter;
 * `integrable_sq_studentTMeasure_iff`, `integral_sq_studentTMeasure` and
   `variance_id_studentTMeasure` — the second moment exists exactly when `2 < ν`, and then both it
   and the variance equal `ν / (ν - 2)`;
-* `studentTMeasure_one` — one degree of freedom gives the standard Cauchy law
-  `ProbabilityTheory.cauchyMeasure 0 1`;
-* `measurable_studentTMeasure` — the family is measurable in its parameter, so it can be used as a
-  kernel.
-
-## Implementation
-
-The whole analytic content is the normalization. Scaling by `√ν` with
-`MeasureTheory.integral_comp_mul_left` reduces the total mass of `(1 + x ^ 2 / ν) ^ (-(ν + 1) / 2)`
-to that of the Cauchy-type kernel `(1 + x ^ 2) ^ (-(ν + 1) / 2)`, which is
-`TauCeti.integral_one_add_sq_rpow`: the value `Β(1 / 2, ν / 2)` of Euler's second beta integral.
-Writing that value as a quotient of Gamma values cancels the normalizing constant exactly. The
-positive moment results reduce to the same beta integral, while the sharp failures use a positive
-multiple of `x⁻¹` as a lower bound on the corresponding weighted density in the right tail.
+* `integrable_exp_mul_id_studentTMeasure_iff` — `exp (t · x)` is integrable exactly at `t = 0`;
+* `integrableExpSet_id_studentTMeasure` — the exponential-moment domain is the singleton `{0}`,
+  together with the matching non-integrability statement for every nonzero rate.
 
 ## References
 
-* Roadmap: `TauCetiRoadmap/StandardDistributions/README.md`, Layer 3, the **Student's t** target.
 * N. L. Johnson, S. Kotz, N. Balakrishnan, *Continuous Univariate Distributions*, vol. 2, 2nd ed.,
   Wiley (1995), ch. 28.
 -/
@@ -81,195 +57,9 @@ namespace TauCeti
 
 namespace Probability
 
-variable {ν x : ℝ}
+variable {ν q x t : ℝ}
 
-/-! ### The density -/
-
-/-- The density of Student's t law with `ν` degrees of freedom, as a real-valued function.
-
-For `ν ≤ 0` there is no such law and the density is `0`. -/
-def studentTPDFReal (ν x : ℝ) : ℝ :=
-  if 0 < ν then
-    Real.Gamma ((ν + 1) / 2) / (√(ν * π) * Real.Gamma (ν / 2)) *
-      (1 + x ^ 2 / ν) ^ (-((ν + 1) / 2))
-  else 0
-
-/-- The density of Student's t law, as a function valued in `ℝ≥0∞`. -/
-def studentTPDF (ν x : ℝ) : ℝ≥0∞ :=
-  ENNReal.ofReal (studentTPDFReal ν x)
-
-/-- Outside the valid parameter range the density vanishes. -/
-@[simp]
-theorem studentTPDFReal_of_nonpos (hν : ν ≤ 0) (x : ℝ) : studentTPDFReal ν x = 0 := by
-  rw [studentTPDFReal, ite_eq_right (not_lt.mpr hν)]
-
-/-- For a positive number of degrees of freedom the density is the Student t formula. -/
-@[simp]
-theorem studentTPDFReal_of_pos (hν : 0 < ν) (x : ℝ) :
-    studentTPDFReal ν x =
-      Real.Gamma ((ν + 1) / 2) / (√(ν * π) * Real.Gamma (ν / 2)) *
-        (1 + x ^ 2 / ν) ^ (-((ν + 1) / 2)) := by
-  rw [studentTPDFReal, ite_eq_left hν]
-
-/-- For a positive number of degrees of freedom the `ℝ≥0∞`-valued density is the Student t
-formula. -/
-@[simp]
-theorem studentTPDF_of_pos (hν : 0 < ν) (x : ℝ) :
-    studentTPDF ν x = ENNReal.ofReal
-      (Real.Gamma ((ν + 1) / 2) / (√(ν * π) * Real.Gamma (ν / 2)) *
-        (1 + x ^ 2 / ν) ^ (-((ν + 1) / 2))) := by
-  rw [studentTPDF, studentTPDFReal_of_pos hν]
-
-/-- Outside the valid parameter range the `ℝ≥0∞`-valued density vanishes. -/
-@[simp]
-theorem studentTPDF_of_nonpos (hν : ν ≤ 0) (x : ℝ) : studentTPDF ν x = 0 := by
-  rw [studentTPDF, studentTPDFReal_of_nonpos hν, ENNReal.ofReal_zero]
-
-/-- The normalizing constant of Student's t law is positive. -/
-theorem studentT_const_pos (hν : 0 < ν) :
-    0 < Real.Gamma ((ν + 1) / 2) / (√(ν * π) * Real.Gamma (ν / 2)) :=
-  div_pos (Real.Gamma_pos_of_pos (by linarith))
-    (mul_pos (Real.sqrt_pos.mpr (by positivity)) (Real.Gamma_pos_of_pos (by linarith)))
-
-/-- For a positive number of degrees of freedom the density is strictly positive everywhere: the
-Student t law has no vanishing tail. -/
-theorem studentTPDFReal_pos (hν : 0 < ν) (x : ℝ) : 0 < studentTPDFReal ν x := by
-  rw [studentTPDFReal_of_pos hν]
-  exact mul_pos (studentT_const_pos hν) (Real.rpow_pos_of_pos (by positivity) _)
-
-/-- The Student t density is nonnegative at every parameter, valid or not. -/
-theorem studentTPDFReal_nonneg (ν x : ℝ) : 0 ≤ studentTPDFReal ν x := by
-  rcases lt_or_ge 0 ν with hν | hν
-  · exact (studentTPDFReal_pos hν x).le
-  · rw [studentTPDFReal_of_nonpos hν]
-
-/-- The two Student t densities agree under `ENNReal.toReal`; the density is never infinite. -/
-@[simp]
-theorem toReal_studentTPDF (ν x : ℝ) : (studentTPDF ν x).toReal = studentTPDFReal ν x :=
-  ENNReal.toReal_ofReal (studentTPDFReal_nonneg ν x)
-
-/-- The Student t density is even in the sample point. -/
-@[simp]
-theorem studentTPDFReal_neg (ν x : ℝ) : studentTPDFReal ν (-x) = studentTPDFReal ν x := by
-  rw [studentTPDFReal, studentTPDFReal, neg_sq]
-
-/-- The `ℝ≥0∞`-valued Student t density is even in the sample point. -/
-@[simp]
-theorem studentTPDF_neg (ν x : ℝ) : studentTPDF ν (-x) = studentTPDF ν x := by
-  rw [studentTPDF, studentTPDF, studentTPDFReal_neg]
-
-/-- The real-valued Student t density is measurable. -/
-@[fun_prop]
-theorem measurable_studentTPDFReal (ν : ℝ) : Measurable (studentTPDFReal ν) := by
-  by_cases hν : 0 < ν
-  · have h : studentTPDFReal ν = fun y =>
-        Real.Gamma ((ν + 1) / 2) / (√(ν * π) * Real.Gamma (ν / 2)) *
-          Real.exp (Real.log (1 + y ^ 2 / ν) * (-((ν + 1) / 2))) := by
-      funext y
-      rw [studentTPDFReal_of_pos hν, Real.rpow_def_of_pos (by positivity)]
-    rw [h]
-    fun_prop
-  · have h : studentTPDFReal ν = fun _ => (0 : ℝ) :=
-      funext fun y => studentTPDFReal_of_nonpos (not_lt.mp hν) y
-    rw [h]
-    exact measurable_const
-
-/-- The `ℝ≥0∞`-valued Student t density is measurable. -/
-@[fun_prop]
-theorem measurable_studentTPDF (ν : ℝ) : Measurable (studentTPDF ν) :=
-  (measurable_studentTPDFReal ν).ennreal_ofReal
-
-/-! ### The measure and its total mass -/
-
-/-- Student's t probability measure with `ν` degrees of freedom.
-
-For `ν ≤ 0` this is the zero measure, not a probability measure; see
-`studentTMeasure_of_nonpos`. -/
-def studentTMeasure (ν : ℝ) : Measure ℝ :=
-  volume.withDensity (studentTPDF ν)
-
-/-- Outside the valid parameter range Student's t law is the zero measure. -/
-@[simp]
-theorem studentTMeasure_of_nonpos (hν : ν ≤ 0) : studentTMeasure ν = 0 := by
-  have h : studentTPDF ν = 0 := by
-    funext y
-    rw [studentTPDF_of_nonpos hν]
-    rfl
-  rw [studentTMeasure, h, withDensity_zero]
-
-/-- The Student t density is integrable on the whole line for every parameter. -/
-theorem integrable_studentTPDFReal (ν : ℝ) : Integrable (studentTPDFReal ν) := by
-  by_cases hν : 0 < ν
-  · have hs : (1 : ℝ) / 2 < (ν + 1) / 2 := by linarith
-    have h := (integrable_one_add_sq_div_rpow hν hs).const_mul
-      (Real.Gamma ((ν + 1) / 2) / (√(ν * π) * Real.Gamma (ν / 2)))
-    exact (integrable_congr (ae_of_all _ fun y => studentTPDFReal_of_pos hν y)).mpr h
-  · have h : studentTPDFReal ν = fun _ => (0 : ℝ) :=
-      funext fun y => studentTPDFReal_of_nonpos (not_lt.mp hν) y
-    rw [h]
-    exact integrable_zero ℝ ℝ volume
-
-/-- The Student t density integrates to `1`. -/
-theorem integral_studentTPDFReal (hν : 0 < ν) : ∫ x, studentTPDFReal ν x = 1 := by
-  have hs : (1 : ℝ) / 2 < (ν + 1) / 2 := by linarith
-  have hG1 : Real.Gamma ((ν + 1) / 2) ≠ 0 := (Real.Gamma_pos_of_pos (by linarith)).ne'
-  have hG2 : Real.Gamma (ν / 2) ≠ 0 := (Real.Gamma_pos_of_pos (by linarith)).ne'
-  have hsq : √(ν * π) ≠ 0 := (Real.sqrt_pos.mpr (by positivity)).ne'
-  have hsub : (ν + 1) / 2 - 1 / 2 = ν / 2 := by ring
-  have hsum : (1 : ℝ) / 2 + ν / 2 = (ν + 1) / 2 := by ring
-  simp_rw [studentTPDFReal_of_pos hν]
-  rw [integral_const_mul, integral_one_add_sq_div_rpow hν hs, hsub, ProbabilityTheory.beta,
-    Real.Gamma_one_half_eq, hsum, Real.sqrt_mul hν.le]
-  field_simp
-
-/-- The `ℝ≥0∞`-valued Student t density has total mass `1`. -/
-theorem lintegral_studentTPDF_eq_one (hν : 0 < ν) : ∫⁻ x, studentTPDF ν x = 1 := by
-  simp_rw [studentTPDF]
-  rw [← ofReal_integral_eq_lintegral_ofReal (integrable_studentTPDFReal ν)
-      (ae_of_all _ fun y => studentTPDFReal_nonneg ν y),
-    integral_studentTPDFReal hν, ENNReal.ofReal_one]
-
-/-- **For a positive number of degrees of freedom Student's t law is a probability measure.** -/
-theorem isProbabilityMeasure_studentTMeasure (hν : 0 < ν) :
-    IsProbabilityMeasure (studentTMeasure ν) := by
-  constructor
-  rw [studentTMeasure, withDensity_apply _ MeasurableSet.univ,
-    Measure.restrict_univ, lintegral_studentTPDF_eq_one hν]
-
-/-! ### Absolute continuity -/
-
-variable {Ω : Type*} [MeasurableSpace Ω] {P : Measure Ω} {X : Ω → ℝ}
-
-/-- A random variable with a Student t law has a density. -/
-theorem hasPDF_of_hasLaw_studentTMeasure (hX : HasLaw X (studentTMeasure ν) P) :
-    HasPDF X P volume :=
-  hasPDF_of_hasLaw_withDensity (measurable_studentTPDF ν).aemeasurable hX
-
-/-- The density of a Student t law is `studentTPDF`. -/
-theorem pdf_eq_studentTPDF_of_hasLaw_studentTMeasure (hX : HasLaw X (studentTMeasure ν) P) :
-    pdf X P volume =ᵐ[volume] studentTPDF ν :=
-  pdf_eq_of_hasLaw_withDensity (measurable_studentTPDF ν).aemeasurable hX
-
-/-- The Radon–Nikodym derivative of a Student t law against Lebesgue measure is `studentTPDF`. -/
-theorem rnDeriv_studentTMeasure (ν : ℝ) :
-    (studentTMeasure ν).rnDeriv volume =ᵐ[volume] studentTPDF ν :=
-  Measure.rnDeriv_withDensity volume (measurable_studentTPDF ν)
-
-/-! ### Symmetry -/
-
-/-- Student's t law is invariant under reflection in the origin: its density is even and Lebesgue
-measure is reflection invariant. -/
-theorem studentTMeasure_map_neg (ν : ℝ) :
-    (studentTMeasure ν).map (fun x => -x) = studentTMeasure ν := by
-  refine Measure.ext fun t ht => ?_
-  have hpre : MeasurableSet ((fun x : ℝ => -x) ⁻¹' t) := ht.preimage measurable_neg
-  rw [Measure.map_apply measurable_neg ht, studentTMeasure,
-    withDensity_apply _ hpre, withDensity_apply _ ht]
-  have h := (Measure.measurePreserving_neg (volume : Measure ℝ)).setLIntegral_comp_preimage_emb
-    (Homeomorph.neg ℝ).measurableEmbedding (studentTPDF ν) t
-  simpa only [studentTPDF_neg] using h
-
-/-! ### Moments -/
+/-! ### Polynomial moments -/
 
 private lemma studentTKernel_id_factor (hν : 0 < ν) (x : ℝ) :
     (x / √(1 + x ^ 2 / ν)) * (1 + x ^ 2 / ν) ^ (-(ν / 2)) =
@@ -309,8 +99,8 @@ private lemma integrable_id_mul_studentTKernel (hν : 1 < ν) :
 private theorem integrable_id_studentTMeasure_of_one_lt (hν : 1 < ν) :
     Integrable id (studentTMeasure ν) := by
   have hνpos : 0 < ν := lt_trans zero_lt_one hν
-  rw [studentTMeasure, integrable_withDensity_iff (measurable_studentTPDF ν)
-    (ae_of_all _ fun _ => ENNReal.ofReal_lt_top)]
+  rw [studentTMeasure_def, integrable_withDensity_iff (measurable_studentTPDF ν)
+    (ae_of_all _ fun x => studentTPDF_lt_top ν x)]
   simp_rw [id_eq, toReal_studentTPDF, studentTPDFReal_of_pos hνpos]
   have h := (integrable_id_mul_studentTKernel hν).const_mul
     (Real.Gamma ((ν + 1) / 2) / (√(ν * π) * Real.Gamma (ν / 2)))
@@ -388,8 +178,8 @@ private theorem not_integrable_pow_studentTMeasure (hν : 0 < ν) (q : ℕ)
     (hνq : ν ≤ (q : ℝ)) :
     ¬ Integrable (fun x : ℝ => x ^ q) (studentTMeasure ν) := by
   intro hint
-  rw [studentTMeasure, integrable_withDensity_iff (measurable_studentTPDF ν)
-    (ae_of_all _ fun _ => ENNReal.ofReal_lt_top)] at hint
+  rw [studentTMeasure_def, integrable_withDensity_iff (measurable_studentTPDF ν)
+    (ae_of_all _ fun x => studentTPDF_lt_top ν x)] at hint
   simp_rw [toReal_studentTPDF] at hint
   let c : ℝ :=
     (Real.Gamma ((ν + 1) / 2) / (√(ν * π) * Real.Gamma (ν / 2))) *
@@ -487,8 +277,8 @@ private lemma integrable_sq_mul_studentTKernel (hν : 2 < ν) :
 private theorem integrable_sq_studentTMeasure_of_two_lt (hν : 2 < ν) :
     Integrable (fun x : ℝ => x ^ 2) (studentTMeasure ν) := by
   have hνpos : 0 < ν := lt_trans zero_lt_two hν
-  rw [studentTMeasure, integrable_withDensity_iff (measurable_studentTPDF ν)
-    (ae_of_all _ fun _ => ENNReal.ofReal_lt_top)]
+  rw [studentTMeasure_def, integrable_withDensity_iff (measurable_studentTPDF ν)
+    (ae_of_all _ fun x => studentTPDF_lt_top ν x)]
   simp_rw [toReal_studentTPDF, studentTPDFReal_of_pos hνpos]
   have h := (integrable_sq_mul_studentTKernel hν).const_mul
     (Real.Gamma ((ν + 1) / 2) / (√(ν * π) * Real.Gamma (ν / 2)))
@@ -572,8 +362,8 @@ theorem integral_sq_studentTMeasure (hν : 2 < ν) :
   have hthree : (3 : ℝ) / 2 = 1 / 2 + 1 := by ring
   have hgammaSum : (1 : ℝ) / 2 + 1 + (ν - 2) / 2 = (ν + 1) / 2 := by ring
   have hνhalf : ν / 2 = (ν - 2) / 2 + 1 := by ring
-  rw [studentTMeasure, integral_withDensity_eq_integral_toReal_smul
-    (measurable_studentTPDF ν) (ae_of_all _ fun _ => ENNReal.ofReal_lt_top)]
+  rw [studentTMeasure_def, integral_withDensity_eq_integral_toReal_smul
+    (measurable_studentTPDF ν) (ae_of_all _ fun x => studentTPDF_lt_top ν x)]
   simp_rw [toReal_studentTPDF, smul_eq_mul, studentTPDFReal_of_pos hνpos]
   calc
     ∫ x : ℝ, (Real.Gamma ((ν + 1) / 2) /
@@ -630,55 +420,260 @@ theorem variance_id_studentTMeasure (hν : 2 < ν) :
   rw [integral_sq_studentTMeasure hν, integral_id_studentTMeasure]
   ring
 
-/-! ### One degree of freedom -/
+/-- On the right tail the Student-t beta kernel dominates a constant multiple of the
+corresponding pure power. This is the comparison that carries the non-integrability at infinity. -/
+private lemma eventually_const_mul_rpow_le_studentTBetaKernel (hν : 0 < ν) {q : ℝ} :
+    ∀ᶠ w in atTop,
+      (2 : ℝ) ^ (-((ν + 1) / 2)) * w ^ ((q - ν - 2) / 2) ≤ studentTBetaKernel ν q w := by
+  set s := (ν + 1) / 2
+  set e := (q - ν - 2) / 2 with he
+  filter_upwards [eventually_ge_atTop (1 : ℝ)] with w hw
+  -- For large `w`, compare `(1 + w) ^ (-s)` with `(2w) ^ (-s)`.
+  have hw0 : 0 < w := by linarith
+  have hle : 1 + w ≤ 2 * w := by
+    have h : 1 ≤ w := hw
+    linarith
+  have hpos1 : 0 < 1 + w := by linarith
+  have hpos2 : 0 < 2 * w := by linarith
+  have hs_pos : 0 < s := by
+    dsimp only [s]
+    linarith [hν]
+  have hp : (1 + w) ^ s ≤ (2 * w) ^ s :=
+    Real.rpow_le_rpow hpos1.le hle hs_pos.le
+  have hneg1 : (1 + w) ^ (-s) = ((1 + w) ^ s)⁻¹ :=
+    Real.rpow_neg hpos1.le s
+  have hneg2 : (2 * w) ^ (-s) = ((2 * w) ^ s)⁻¹ :=
+    Real.rpow_neg hpos2.le s
+  have h : (2 * w) ^ (-s) ≤ (1 + w) ^ (-s) := by
+    rw [hneg2, hneg1]
+    have hpos : 0 < (1 + w) ^ s := Real.rpow_pos_of_pos hpos1 s
+    have h9 : 1 / (2 * w) ^ s ≤ 1 / (1 + w) ^ s :=
+      one_div_le_one_div_of_le hpos hp
+    simpa [div_eq_mul_inv] using h9
+  have h9' : (2 * w) ^ (-s) = (2 : ℝ) ^ (-s) * w ^ (-s) := by
+    rw [Real.mul_rpow (by positivity) hw0.le]
+  have h12 : w ^ e = w ^ ((q - 1) / 2) * w ^ (-s) := by
+    have heq' : (q - 1) / 2 + (-s) = e := by
+      dsimp only [e, s]; ring_nf
+    have h12' : w ^ ((q - 1) / 2) * w ^ (-s) = w ^ e := by
+      rw [← Real.rpow_add hw0 ((q - 1) / 2) (-s), heq']
+    exact h12'.symm
+  have hgoal :
+      (2 : ℝ) ^ (-s) * w ^ e ≤ w ^ ((q - 1) / 2) * (1 + w) ^ (-s) := by
+    calc
+      (2 : ℝ) ^ (-s) * w ^ e
+        = (2 : ℝ) ^ (-s) * (w ^ ((q - 1) / 2) * w ^ (-s)) := by rw [h12]
+      _ = w ^ ((q - 1) / 2) * ((2 : ℝ) ^ (-s) * w ^ (-s)) := by ring
+      _ = w ^ ((q - 1) / 2) * (2 * w) ^ (-s) := by rw [h9']
+      _ ≤ w ^ ((q - 1) / 2) * (1 + w) ^ (-s) :=
+        mul_le_mul_of_nonneg_left h (Real.rpow_nonneg hw0.le _)
+  simpa [studentTBetaKernel, s, e] using hgoal
 
-/-- With one degree of freedom the Student t density is the standard Cauchy density. -/
-theorem studentTPDFReal_one (x : ℝ) : studentTPDFReal 1 x = cauchyPDFReal 0 1 x := by
-  have h1 : ((1 : ℝ) + 1) / 2 = 1 := by norm_num
-  rw [studentTPDFReal_of_pos one_pos, cauchyPDFReal, h1, Real.Gamma_one,
-    Real.sqrt_mul zero_le_one, Real.sqrt_one, one_mul, Real.Gamma_one_half_eq,
-    Real.rpow_neg_one, Real.mul_self_sqrt Real.pi_pos.le]
-  push_cast
-  rw [div_one, sub_zero, one_pow, add_comm (x ^ 2) 1]
-  ring
+/-- If the tail exponent is at least `-1`, the beta-kernel tail comparison forces divergence. -/
+private lemma not_integrableOn_studentTBetaKernel_Ioi_of_le (hν : 0 < ν)
+    (hνq : ν ≤ q) : ¬ IntegrableOn (studentTBetaKernel ν q) (Ioi (0 : ℝ)) := by
+  intro h
+  set s := (ν + 1) / 2
+  set e := (q - ν - 2) / 2 with he
+  -- The tail comparison transfers integrability to a nonintegrable pure power.
+  have he1 : -1 ≤ e := by linarith
+  have hbound := eventually_const_mul_rpow_le_studentTBetaKernel (q := q) hν
+  have hIoi1 : IntegrableOn (studentTBetaKernel ν q) (Ioi (1 : ℝ)) :=
+    h.mono_set fun x hx => mem_Ioi.mpr (by linarith [mem_Ioi.mp hx])
+  obtain ⟨a0, ha0⟩ := eventually_atTop.mp hbound
+  set a := max a0 1 with ha_def
+  have ha : ∀ w : ℝ, a ≤ w → (2 : ℝ) ^ (-s) * w ^ e ≤ studentTBetaKernel ν q w := by
+    intro w hw
+    exact ha0 w (le_trans (le_max_left a0 1) hw)
+  let f : ℝ → ℝ := fun w => (2 : ℝ) ^ (-s) * w ^ e
+  have hf_contOn : ContinuousOn f (Icc (1 : ℝ) a) := by
+    apply ContinuousOn.mul
+    · exact continuous_const.continuousOn
+    · intro x hx
+      have hx1 : x ≠ 0 := by
+        have h2 : 1 ≤ x := hx.1
+        linarith
+      exact Real.continuousAt_rpow_const x e (Or.inl hx1) |>.continuousWithinAt
+  have hbounded : IntegrableOn f (Icc (1 : ℝ) a) :=
+    hf_contOn.integrableOn_Icc
+  have hbounded' : IntegrableOn f (Ioc (1 : ℝ) a) :=
+    hbounded.mono_set Ioc_subset_Icc_self
+  have hae : ∀ᵐ w ∂volume.restrict (Ioi a), |f w| ≤ studentTBetaKernel ν q w := by
+    filter_upwards [ae_restrict_mem measurableSet_Ioi] with w hw
+    have hwa : a ≤ w := le_of_lt hw
+    have hwpos : 0 < w := by
+      have h1 : 1 ≤ a := by simp [ha_def]
+      linarith
+    have hnonneg : 0 ≤ f w := by
+      dsimp only [f]
+      exact mul_nonneg (Real.rpow_nonneg (by positivity) _) (Real.rpow_nonneg hwpos.le _)
+    have habs : |f w| = f w := abs_of_nonneg hnonneg
+    rw [habs]
+    exact ha w hwa
+  have ha1 : 1 ≤ a := by
+    simp [ha_def]
+  have hIoi_a : IntegrableOn (studentTBetaKernel ν q) (Ioi a) :=
+    hIoi1.mono_set fun x hx => by
+      have hxa : a < x := hx
+      have h : 1 < x := by linarith [ha1, hxa]
+      exact h
+  have htail : IntegrableOn f (Ioi a) :=
+    hIoi_a.mono' (by fun_prop) hae
+  have hconst : IntegrableOn f (Ioi (1 : ℝ)) := by
+    have hdisj : Disjoint (Ioc (1 : ℝ) a) (Ioi a) := by
+      simp [Set.disjoint_left]
+    have hunion : Ioc (1 : ℝ) a ∪ Ioi a = Ioi (1 : ℝ) := by
+      ext x; simp [ha_def]
+    have : IntegrableOn f (Ioc (1 : ℝ) a ∪ Ioi a) :=
+      hbounded'.union htail
+    rwa [hunion] at this
+  have hc : IsUnit ((2 : ℝ) ^ (-s)) :=
+    isUnit_iff_ne_zero.mpr (Real.rpow_pos_of_pos (by positivity) _).ne'
+  have hpow : IntegrableOn (fun w : ℝ => w ^ e) (Ioi (1 : ℝ)) := by
+    have h : IntegrableOn (fun w : ℝ => (2 : ℝ) ^ (-s) * w ^ e) (Ioi (1 : ℝ)) := hconst
+    have h' : IntegrableOn (fun w : ℝ => w ^ e) (Ioi (1 : ℝ)) := by
+      simpa [IntegrableOn, integrable_const_mul_iff hc] using h
+    exact h'
+  rw [integrableOn_Ioi_rpow_iff one_pos] at hpow
+  linarith
 
-/-- **Student's t law with one degree of freedom is the standard Cauchy law.** -/
-theorem studentTMeasure_one : studentTMeasure 1 = cauchyMeasure 0 1 := by
-  rw [studentTMeasure, cauchyMeasure_of_scale_ne_zero 0 one_ne_zero]
-  congr 1
-  funext x
-  rw [studentTPDF, studentTPDFReal_one, cauchyPDF]
+/-- The beta kernel is integrable on the positive half-line precisely for `-1 < q < ν`: the
+exponent at `0` is `(q - 1) / 2` and the tail exponent is `(q - ν - 2) / 2`. -/
+private lemma integrableOn_studentTBetaKernel_Ioi_iff (hν : 0 < ν) (hq : -1 < q) :
+    IntegrableOn (studentTBetaKernel ν q) (Ioi (0 : ℝ)) ↔ q < ν := by
+  set s := (ν + 1) / 2
+  constructor
+  · intro h
+    by_contra hqν
+    exact not_integrableOn_studentTBetaKernel_Ioi_of_le hν (not_lt.mp hqν) h
+  · intro hqν
+    set ha := (q + 1) / 2
+    set hb := (ν - q) / 2 with hb_def
+    have ha_pos : 0 < ha := by
+      dsimp only [ha]; linarith
+    have hb_pos : 0 < hb := by
+      dsimp only [hb]; linarith
+    have hsum : ha + hb = s := by
+      dsimp only [ha, hb, s]; ring
+    have h := integrableOn_rpow_mul_one_add_rpow ha_pos hb_pos
+    have hkernel : ∀ w : ℝ, studentTBetaKernel ν q w =
+        w ^ (ha - 1) * (1 + w) ^ (-(ha + hb)) := by
+      intro w
+      dsimp only [studentTBetaKernel]
+      have h1 : (q - 1) / 2 = ha - 1 := by
+        dsimp only [ha]; ring
+      have h2 : -((ν + 1) / 2) = -(ha + hb) := by
+        dsimp only [ha, hb]; ring
+      rw [h1, h2]
+    have h3 : IntegrableOn (studentTBetaKernel ν q) (Ioi (0 : ℝ)) := by
+      have h4 : EqOn (fun w : ℝ => w ^ (ha - 1) * (1 + w) ^ (-(ha + hb)))
+          (studentTBetaKernel ν q) (Ioi (0 : ℝ)) := by
+        intro w hw
+        exact (hkernel w).symm
+      exact h.congr_fun h4 measurableSet_Ioi
+    exact h3
 
-/-! ### Parameter measurability -/
+/-- The weighted Student t density `studentTPDFReal ν x * x ^ q` is integrable on the positive
+half-line exactly for `-1 < q < ν`. -/
+private theorem integrableOn_pow_mul_studentTPDFReal_Ioi_iff (hν : 0 < ν) (hq : -1 < q) :
+    IntegrableOn (fun x : ℝ => studentTPDFReal ν x * x ^ q) (Ioi (0 : ℝ)) ↔ q < ν := by
+  set C := Real.Gamma ((ν + 1) / 2) / (Real.sqrt (ν * Real.pi) * Real.Gamma (ν / 2))
+  let g : ℝ → ℝ := fun w => C * ν ^ ((q + 1) / 2) / 2 * studentTBetaKernel ν q w
+  have hderiv : ∀ z ∈ Ioi (0 : ℝ),
+      HasDerivWithinAt (fun z : ℝ => z ^ 2 / ν) (2 * z / ν) (Ioi (0 : ℝ)) z :=
+    fun z _ => (hasDerivAt_sq_div_const ν z).hasDerivWithinAt
+  have hiff : IntegrableOn g (Ioi (0 : ℝ)) ↔
+      IntegrableOn (fun x : ℝ => studentTPDFReal ν x * x ^ q) (Ioi (0 : ℝ)) := by
+    have himg0 : (fun z : ℝ => z ^ 2 / ν) '' Ioi (0 : ℝ) = Ioi (0 ^ 2 / ν) :=
+      image_sq_div_const_Ioi hν (y := 0) le_rfl
+    have himg : (fun z : ℝ => z ^ 2 / ν) '' Ioi (0 : ℝ) = Ioi (0 : ℝ) := by
+      rw [himg0]
+      simp
+    have h_g_eq : ∀ z : ℝ, 0 < z → |2 * z / ν| • g (z ^ 2 / ν) =
+        studentTPDFReal ν z * z ^ q := by
+      intro z hz
+      simpa [g] using abs_deriv_smul_studentTPDFReal hν q hz
+    have h_g_eq' : EqOn (fun z : ℝ => |2 * z / ν| • g (z ^ 2 / ν))
+        (fun x : ℝ => studentTPDFReal ν x * x ^ q) (Ioi (0 : ℝ)) := by
+      intro z hz
+      exact h_g_eq z hz
+    have himg1 : IntegrableOn (fun z : ℝ => |2 * z / ν| • g (z ^ 2 / ν)) (Ioi (0 : ℝ)) ↔
+        IntegrableOn (fun x : ℝ => studentTPDFReal ν x * x ^ q) (Ioi (0 : ℝ)) := by
+      refine ⟨fun h => h.congr_fun h_g_eq' measurableSet_Ioi,
+        fun h => h.congr_fun (fun z hz => (h_g_eq' hz).symm) measurableSet_Ioi⟩
+    have hpre : IntegrableOn g ((fun z : ℝ => z ^ 2 / ν) '' Ioi (0 : ℝ)) ↔
+        IntegrableOn (fun z : ℝ => |2 * z / ν| • g (z ^ 2 / ν)) (Ioi (0 : ℝ)) :=
+      integrableOn_image_iff_integrableOn_abs_deriv_smul measurableSet_Ioi hderiv
+        (injOn_sq_div_const_Ioi hν.ne') g
+    rw [himg] at hpre
+    exact hpre.trans himg1
+  have hC_ne : C ≠ 0 := (studentT_const_pos hν).ne'
+  have hc : IsUnit (C * ν ^ ((q + 1) / 2) / 2) := isUnit_iff_ne_zero.mpr <|
+    div_ne_zero (mul_ne_zero hC_ne (Real.rpow_pos_of_pos hν _).ne') (by norm_num)
+  rw [← hiff]
+  simpa [g, IntegrableOn, integrable_const_mul_iff hc] using
+    integrableOn_studentTBetaKernel_Ioi_iff hν hq
 
-/-- The Student t density is jointly measurable in the degrees of freedom and the sample point. -/
-@[fun_prop]
-theorem measurable_uncurry_studentTPDF :
-    Measurable fun q : ℝ × ℝ => studentTPDF q.1 q.2 := by
-  have heq : (fun q : ℝ × ℝ => studentTPDF q.1 q.2) = fun q =>
-      ENNReal.ofReal (if 0 < q.1 then
-        Real.Gamma ((q.1 + 1) / 2) / (√(q.1 * π) * Real.Gamma (q.1 / 2)) *
-          Real.exp (Real.log (1 + q.2 ^ 2 / q.1) * (-((q.1 + 1) / 2))) else 0) := by
-    funext q
-    rw [studentTPDF, studentTPDFReal]
-    split_ifs with h
-    · rw [Real.rpow_def_of_pos (by positivity)]
-    · rfl
-  rw [heq]
-  refine (Measurable.ite ?_ ?_ measurable_const).ennreal_ofReal
-  · exact measurableSet_lt (measurable_const : Measurable fun _ : ℝ × ℝ => (0 : ℝ)) measurable_fst
-  · have hG1 : Measurable fun q : ℝ × ℝ => Real.Gamma ((q.1 + 1) / 2) :=
-      Real.measurable_Gamma.comp (by fun_prop)
-    have hG2 : Measurable fun q : ℝ × ℝ => Real.Gamma (q.1 / 2) :=
-      Real.measurable_Gamma.comp (by fun_prop)
-    have hsqrt : Measurable fun q : ℝ × ℝ => √(q.1 * π) :=
-      Real.continuous_sqrt.measurable.comp (by fun_prop)
-    exact (hG1.div (hsqrt.mul hG2)).mul (by fun_prop)
+/-! ### Exponential moments -/
 
-/-- The Student t family is measurable in its degrees of freedom. -/
-@[fun_prop]
-theorem measurable_studentTMeasure : Measurable fun ν : ℝ => studentTMeasure ν :=
-  measurable_withDensity (μ := volume) measurable_uncurry_studentTPDF
+/-- The exponential of a nonzero multiple of the identity is not integrable under a Student t
+law: if `exp (t * x)` and `exp (-t * x)` were both integrable, then every moment would be
+finite, contradicting the sharp moment threshold `q < ν`. -/
+theorem not_integrable_exp_mul_id_studentTMeasure (hν : 0 < ν) {t : ℝ} (ht : t ≠ 0) :
+    ¬ Integrable (fun x : ℝ => Real.exp (t * x)) (studentTMeasure ν) := by
+  intro hint
+  -- reflection in the origin turns the rate `t` into `-t`
+  have hmap : (studentTMeasure ν).map (fun x : ℝ => -x) = studentTMeasure ν :=
+    studentTMeasure_map_neg ν
+  have hkey : Integrable (fun y : ℝ => Real.exp (t * y))
+      ((studentTMeasure ν).map (fun x : ℝ => -x)) := by
+    rw [hmap]
+    exact hint
+  have hcomp : Integrable (fun x : ℝ => Real.exp (t * (-x))) (studentTMeasure ν) :=
+    (integrable_map_measure hkey.aestronglyMeasurable measurable_neg.aemeasurable).mp hkey
+  have hneg : Integrable (fun x : ℝ => Real.exp (-t * x)) (studentTMeasure ν) := by
+    simpa [mul_neg] using hcomp
+  -- both one-sided exponential moments would force every polynomial moment to be finite
+  have hmom : Integrable (fun x : ℝ => |x| ^ ν) (studentTMeasure ν) :=
+    integrable_rpow_abs_of_integrable_exp_mul ht hint hneg hν.le
+  have hden : Integrable (fun x : ℝ => studentTPDFReal ν x * |x| ^ ν) :=
+    (integrable_studentTMeasure_iff (ν := ν) (f := fun x : ℝ => |x| ^ ν)).mp hmom
+  have hIoi : IntegrableOn (fun x : ℝ => studentTPDFReal ν x * x ^ ν) (Ioi (0 : ℝ)) := by
+    have h1 : IntegrableOn (fun x : ℝ => studentTPDFReal ν x * |x| ^ ν) (Ioi (0 : ℝ)) :=
+      hden.integrableOn
+    have h2 : ∀ x ∈ Ioi (0 : ℝ), studentTPDFReal ν x * |x| ^ ν = studentTPDFReal ν x * x ^ ν := by
+      intro x hx
+      have hx0 : 0 < x := hx
+      have habs : |x| = x := abs_of_pos hx0
+      rw [habs]
+    exact h1.congr_fun h2 measurableSet_Ioi
+  have hq : -1 < ν := by linarith
+  have : ν < ν := (integrableOn_pow_mul_studentTPDFReal_Ioi_iff hν hq).mp hIoi
+  linarith
+
+/-- The exponential integrand of a Student t law is integrable exactly at rate zero. -/
+@[simp]
+theorem integrable_exp_mul_id_studentTMeasure_iff (hν : 0 < ν) (t : ℝ) :
+    Integrable (fun x : ℝ => Real.exp (t * x)) (studentTMeasure ν) ↔ t = 0 := by
+  have : IsProbabilityMeasure (studentTMeasure ν) :=
+    isProbabilityMeasure_studentTMeasure hν
+  refine ⟨fun h => not_ne_iff.mp fun ht => not_integrable_exp_mul_id_studentTMeasure hν ht h,
+    fun ht => ?_⟩
+  subst t
+  have h : (fun x : ℝ => Real.exp (0 * x)) = fun _ : ℝ => (1 : ℝ) := by
+    funext x
+    simp
+  rw [h]
+  exact integrable_const (1 : ℝ)
+
+/-- The exponential-integrability domain of the identity under a Student t law is the singleton
+`{0}`: every nonzero exponential moment diverges in the polynomial tails. -/
+@[simp]
+theorem integrableExpSet_id_studentTMeasure (hν : 0 < ν) :
+    integrableExpSet id (studentTMeasure ν) = {0} := by
+  ext t
+  simpa [integrableExpSet, id_eq] using integrable_exp_mul_id_studentTMeasure_iff hν t
+
 
 end Probability
 

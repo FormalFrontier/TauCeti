@@ -83,30 +83,8 @@ theorem comapOfIso (hI : IsMaximalTorus k K.obj I) (e : H ≅ K) :
     IsMaximalTorus k H.obj
       (I.comapOfSurjective (FiniteTypeCommHopfAlgCat.toBialgHom e.hom)
         (ConcreteCategory.bijective_of_isIso e.hom).2) := by
-  let f := FiniteTypeCommHopfAlgCat.toBialgHom e.hom
-  let hf := (ConcreteCategory.bijective_of_isIso e.hom).2
-  let g := FiniteTypeCommHopfAlgCat.toBialgHom e.inv
-  let hg := (ConcreteCategory.bijective_of_isIso e.inv).2
-  refine ⟨(torusCommHopfAlgProperty k).prop_of_iso
-    (FiniteTypeCommHopfAlgCat.quotientIsoOfIso e I).symm hI.prop, ?_⟩
-  intro J hJ hJpulled
-  let J' := J.comapOfSurjective g hg
-  have hJ' : torusCommHopfAlgProperty k (FiniteTypeCommHopfAlgCat.quotient K J') :=
-    (torusCommHopfAlgProperty k).prop_of_iso
-      (FiniteTypeCommHopfAlgCat.quotientIsoOfIso e.symm J).symm hJ
-  have hJ'comap : J'.comapOfSurjective f hf = J := by
-    exact HopfIdeal.comapOfSurjective_bialgEquiv_symm_apply J
-      (_root_.CommHopfAlgCat.ofIso <| (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} k)
-        (_root_.CommHopfAlgCat.{u} k)).mapIso e)
-  have hJ'I : J' ≤ I := by
-    rw [← HopfIdeal.comapOfSurjective_le_comapOfSurjective_iff f hf]
-    rw [hJ'comap]
-    exact hJpulled
-  have hIJ' : I ≤ J' := hI.le_of_le hJ' hJ'I
-  calc
-    I.comapOfSurjective f hf ≤ J'.comapOfSurjective f hf :=
-      HopfIdeal.comapOfSurjective_mono f hf hIJ'
-    _ = J := hJ'comap
+  exact FiniteTypeCommHopfAlgCat.minimal_quotientProperty_comapOfIso
+    (torusCommHopfAlgProperty k) I hI e
 
 /-- Maximal-torus status is invariant under pulling the defining ideal back across an ambient
 Hopf-algebra isomorphism. -/

@@ -14,13 +14,16 @@ public import Mathlib.RingTheory.Finiteness.ModuleFinitePresentation
 public import TauCeti.Algebra.Coalgebra.Convolution
 
 /-!
-# Projections of Hopf spectra
+# Infrastructure for Hopf spectra
 
 This file computes the underlying scheme maps of Mathlib's `AlgebraicGeometry.hopfSpec` on an
 arbitrary same-universe commutative Hopf algebra.  It identifies the underlying scheme with the
 ordinary spectrum, the structural morphism with the algebra structure map, the multiplication
 source with the standard affine fibre product, and the group operations with the counit,
 comultiplication, and antipode.
+
+It also records coordinate equality and extensionality lemmas obtained from the full faithfulness
+of `hopfSpec`.
 
 These lemmas provide the common projection boundary used by concrete affine group schemes.  The
 same-universe restriction is inherited from Mathlib's current `hopfSpec` construction.
@@ -35,6 +38,9 @@ same-universe restriction is inherited from Mathlib's current `hopfSpec` constru
 * `TauCeti.algSpec_map_left_ofAlgHom`: the underlying spectrum map of an algebra morphism.
 * `TauCeti.hopfSpec_obj_one_left`, `TauCeti.hopfSpec_obj_mul_left`, and
   `TauCeti.hopfSpec_obj_inv_left`: its three group operations.
+* `CommHopfAlgCat.preimage_unop_comp_eq_of_hopfSpec_map_comp_eq` and
+  `CommHopfAlgCat.hom_ext_of_preimage_unop_eq`: coordinate equalities and
+  extensionality transported through the full faithfulness of `hopfSpec`.
 * `TauCeti.isCocomm_iff_isCommMonObj_hopfSpec`: cocommutativity corresponds to a commutative
   group object.
 * `TauCeti.instIsCommMonObjHopfSpec`: a cocommutative Hopf algebra has a commutative Hopf
@@ -56,13 +62,51 @@ public section
 open CategoryTheory Opposite WithConv
 open scoped CategoryTheory.MonObj
 
-namespace TauCeti
-
 open AlgebraicGeometry MonObj MonoidalCategory
 
 universe u
 
 variable (R : Type u) [CommRing R]
+
+namespace CommHopfAlgCat
+
+variable {R : Type u} [CommRing R] {K Y : _root_.CommHopfAlgCat.{u} R}
+
+/-- **Coordinate equalities transport through `hopfSpec`, one map at a time.** If two
+homomorphisms of affine group schemes out of `Spec Q` agree after composing with the homomorphism
+represented by a coordinate morphism `c : Q ⟶ K`, then their coordinate preimages agree after
+composing with `c`. -/
+theorem preimage_unop_comp_eq_of_hopfSpec_map_comp_eq {Q : _root_.CommHopfAlgCat.{u} R}
+    (c : Q ⟶ K)
+    (φ ψ : (hopfSpec (CommRingCat.of R)).obj (Opposite.op Q) ⟶
+      (hopfSpec (CommRingCat.of R)).obj (Opposite.op Y))
+    (hc : (hopfSpec (CommRingCat.of R)).map c.op ≫ φ =
+      (hopfSpec (CommRingCat.of R)).map c.op ≫ ψ) :
+    ((hopfSpec.fullyFaithful (R := CommRingCat.of R)).preimage φ).unop ≫ c =
+      ((hopfSpec.fullyFaithful (R := CommRingCat.of R)).preimage ψ).unop ≫ c := by
+  refine Quiver.Hom.op_inj
+    ((hopfSpec.fullyFaithful (R := CommRingCat.of R)).map_injective ?_)
+  rw [op_comp, op_comp, Functor.map_comp, Functor.map_comp, Quiver.Hom.op_unop,
+    Quiver.Hom.op_unop, (hopfSpec.fullyFaithful (R := CommRingCat.of R)).map_preimage,
+    (hopfSpec.fullyFaithful (R := CommRingCat.of R)).map_preimage]
+  exact hc
+
+/-- **Coordinate extensionality transports through `hopfSpec`.** Two homomorphisms of affine
+group schemes between Hopf spectra are equal as soon as their coordinate preimages are. -/
+theorem hom_ext_of_preimage_unop_eq {Q : _root_.CommHopfAlgCat.{u} R}
+    (φ ψ : (hopfSpec (CommRingCat.of R)).obj (Opposite.op Q) ⟶
+      (hopfSpec (CommRingCat.of R)).obj (Opposite.op Y))
+    (h : ((hopfSpec.fullyFaithful (R := CommRingCat.of R)).preimage φ).unop =
+      ((hopfSpec.fullyFaithful (R := CommRingCat.of R)).preimage ψ).unop) :
+    φ = ψ := by
+  have hop : (hopfSpec.fullyFaithful (R := CommRingCat.of R)).preimage φ =
+      (hopfSpec.fullyFaithful (R := CommRingCat.of R)).preimage ψ := Quiver.Hom.unop_inj h
+  rw [← (hopfSpec.fullyFaithful (R := CommRingCat.of R)).map_preimage φ,
+    ← (hopfSpec.fullyFaithful (R := CommRingCat.of R)).map_preimage ψ, hop]
+
+end CommHopfAlgCat
+
+namespace TauCeti
 
 /-- Finite morphisms of schemes respect isomorphisms. -/
 instance isFinite_respectsIso :

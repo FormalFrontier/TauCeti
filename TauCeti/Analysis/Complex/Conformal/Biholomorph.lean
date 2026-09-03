@@ -8,7 +8,7 @@ module
 public import Mathlib.Analysis.Complex.Conformal
 public import Mathlib.Topology.OpenPartialHomeomorph.Basic
 import TauCeti.Analysis.Complex.Conformal.ImageSimplyConnected
-import TauCeti.Analysis.Complex.Conformal.InverseFunction
+import TauCeti.Analysis.Complex.Conformal.Inverse.Function
 
 /-!
 # Injective holomorphic maps as partial homeomorphisms
