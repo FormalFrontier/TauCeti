@@ -141,8 +141,12 @@ noncomputable def teichmuller : (ResidueField R)ˣ →* Rˣ where
     · rw [Units.val_mul, map_mul, (teichmullerFun_spec R x).2, (teichmullerFun_spec R y).2]
       simp
 
-/-- The Teichmüller lift takes its values in the `q - 1`-st roots of unity. -/
-@[simp] theorem teichmuller_pow_card_sub_one (x : (ResidueField R)ˣ) :
+/-- The Teichmüller lift takes its values in the `q - 1`-st roots of unity.
+
+This is deliberately not a `simp` lemma: `Nat.card_eq_fintype_card` rewrites the exponent of the
+left-hand side whenever a `Fintype` instance is around, so the statement is not in `simp`-normal
+form. -/
+theorem teichmuller_pow_card_sub_one (x : (ResidueField R)ˣ) :
     teichmuller R x ^ (Nat.card (ResidueField R) - 1) = 1 := (teichmullerFun_spec R x).1
 
 /-- The Teichmüller lift is a section of reduction. -/
