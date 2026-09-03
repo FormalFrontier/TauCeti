@@ -30,8 +30,7 @@ public import TauCeti.Probability.Distributions.Beta.Cdf
 This file begins the elementary API for Fisher's F law.  For positive degrees of freedom `m` and
 `n`, it realizes the law as the image of `betaMeasure (m / 2) (n / 2)` under
 `u ↦ (n / m) * u / (1 - u)`.  This gives a probability measure and its cumulative distribution
-function without introducing a second probability-law abstraction.  The density and the
-moment and transform formulas are subsequent parts of the roadmap development.
+function without introducing a second probability-law abstraction.
 
 The change of variables is useful in its own right: the inverse map on the positive half-line is
 `x ↦ m * x / (n + m * x)`.  The cdf theorem below records this inverse explicitly, in the same
@@ -39,7 +38,6 @@ regularized-incomplete-beta convention used by the beta API.
 
 ## References
 
-* Roadmap: `TauCetiRoadmap/StandardDistributions/README.md`, Layer 3, the **Fisher's F** target.
 * N. L. Johnson, S. Kotz, and N. Balakrishnan, *Continuous Univariate Distributions*, vol. 2,
   2nd ed., Wiley (1995), chapter 27.
 -/
