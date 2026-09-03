@@ -316,7 +316,7 @@ private theorem sum_compProj (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
 
 /-- A linear map lies in the degree-`p` internal-Hom piece if and only if it sends each
 source component of degree `a` into the target component of degree `a + p`. -/
-@[simp] theorem mem_hom_piece_iff (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
+theorem mem_hom_piece_iff (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
     (hs₂ : HodgeStructureOn W₂ ω₂ n₂) {p : ℤ} {f : W₁ →ₗ[ℂ] W₂} :
     f ∈ (hs₁.hom hs₂).piece p ↔
       ∀ (a : ℤ) (x : W₁), x ∈ hs₁.piece a → f x ∈ hs₂.piece (a + p) := by
