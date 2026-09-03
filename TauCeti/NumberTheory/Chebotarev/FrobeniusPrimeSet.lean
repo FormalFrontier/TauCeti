@@ -104,7 +104,6 @@ in the definition may be instantiated at `hur`, whatever proof it was introduced
 
 Membership in `frobeniusPrimeSet K L C` is therefore independent of the unramifiedness proof used
 to test it. -/
-@[simp]
 theorem mem_frobeniusPrimeSet_iff_artinSymbol_eq {𝔭 : HeightOneSpectrum (𝓞 K)}
     (hur : ∀ (Q : Ideal (𝓞 L)) [Q.IsPrime] [Q.LiesOver 𝔭.asIdeal],
       Algebra.IsUnramifiedAt (𝓞 K) Q) (C : ConjClasses (L ≃ₐ[K] L)) :
