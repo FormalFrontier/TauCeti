@@ -40,7 +40,7 @@ for the naturality statement.
 * `TauCeti.Diffeomorph.diffCongr e`: the group isomorphism `Diff I M n ≃* Diff J N n` conjugating by
   a diffeomorphism `e : M ≃ₘ^n⟮I, J⟯ N`.
 
-The analogous self-homeomorphism-group isomorphism `TauCeti.Homeomorph.homeoCongr`, the target of
+The analogous self-homeomorphism-group isomorphism `Homeomorph.homeoCongr`, the target of
 the forgetful naturality below, lives in `TauCeti.Topology.Algebra.Homeomorph.Congr`.
 
 ## Main results

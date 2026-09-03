@@ -119,8 +119,8 @@ private theorem conjugationHomeomorph_image_identityComponent (g : WithConv (H â
       connectedComponent (Bialgebra.augmentationPoint k H) := by
   let z : Spec (CommRingCat.of H) := Bialgebra.augmentationPoint k H
   have himage : conjugationHomeomorph g '' connectedComponent z =
-      connectedComponent (conjugationHomeomorph g z) := by
-    exact TauCeti.Homeomorph.image_connectedComponent (conjugationHomeomorph g) z
+      connectedComponent (conjugationHomeomorph g z) :=
+    (conjugationHomeomorph g).image_connectedComponent z
   have hfix : conjugationHomeomorph g z = z := by
     dsimp only [z]
     rw [conjugationHomeomorph_kernelPoint]

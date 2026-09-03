@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Topology.Homeomorph.Lemmas
-public import TauCeti.Topology.Algebra.Homeomorph.Action
+public import TauCeti.Topology.Algebra.ConstMulAction
 
 /-!
 # Deck transformations of a map
@@ -18,7 +18,7 @@ subgroup `Deck p` will be the deck transformation group.
 
 The action of `Deck p` on the total space is inherited, by subgroup transfer, from the
 tautological action of the ambient homeomorphism group `E ≃ₜ E` on `E`
-(`TauCeti.Homeomorph.applyMulAction`). Each deck transformation preserves `p`, hence
+(`Homeomorph.applyMulAction`). Each deck transformation preserves `p`, hence
 preserves every fibre of `p`.
 
 The deck group only sees `p` through the equalities `p (φ e) = p e`, so postcomposition by an
@@ -106,8 +106,8 @@ lemma smul_eq_apply (φ : Deck p) (e : E) : φ • e = φ.1 e :=
 lemma inv_smul_eq_symm_apply (φ : Deck p) (e : E) : (φ⁻¹ : Deck p) • e = φ.1.symm e :=
   rfl
 
--- `FaithfulSMul (Deck p) E` and `ContinuousConstSMul (Deck p) E` are inherited from the generic
--- subgroup instances in `TauCeti.Topology.Algebra.Homeomorph.Action`; `Deck p` is a `Subgroup`.
+-- `FaithfulSMul (Deck p) E` and `ContinuousConstSMul (Deck p) E` are inherited from Mathlib's
+-- generic subgroup action and `TauCeti.Subgroup.continuousConstSMul`; `Deck p` is a `Subgroup`.
 
 end Deck
 

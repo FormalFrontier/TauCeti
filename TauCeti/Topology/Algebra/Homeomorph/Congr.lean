@@ -23,23 +23,24 @@ conjugation isomorphism of permutation groups, and is the target of the forgetfu
 diffeomorphism-level `TauCeti.Diffeomorph.diffCongr` in
 `TauCeti.Geometry.Diffeomorphism.Congr`.
 
+These extensions of Mathlib's `Homeomorph` API live in the root `Homeomorph` namespace, so their
+placement is canonical and receiver notation is available where the arguments permit it.
+
 ## Main definitions
 
-* `TauCeti.Homeomorph.homeoCongr e`: the group isomorphism `(M ≃ₜ M) ≃* (N ≃ₜ N)` conjugating
+* `Homeomorph.homeoCongr e`: the group isomorphism `(M ≃ₜ M) ≃* (N ≃ₜ N)` conjugating
   self-homeomorphisms by a homeomorphism `e : M ≃ₜ N`.
 
 ## Main results
 
-* `TauCeti.Homeomorph.homeoCongr_apply_apply`: the pointwise action
+* `Homeomorph.homeoCongr_apply_apply`: the pointwise action
   `homeoCongr e φ x = e (φ (e.symm x))`.
-* `TauCeti.Homeomorph.homeoCongr_refl`, `TauCeti.Homeomorph.homeoCongr_trans`, and
-  `TauCeti.Homeomorph.homeoCongr_symm`: the functoriality of `homeoCongr` on the groupoid of
+* `Homeomorph.homeoCongr_refl`, `Homeomorph.homeoCongr_trans`, and
+  `Homeomorph.homeoCongr_symm`: the functoriality of `homeoCongr` on the groupoid of
   homeomorphisms.
 -/
 
 public section
-
-namespace TauCeti
 
 variable {M : Type*} [TopologicalSpace M]
   {N : Type*} [TopologicalSpace N]
@@ -69,7 +70,7 @@ theorem homeoCongr_inv (e : M ≃ₜ N) (φ : M ≃ₜ M) :
 
 /-- Conjugating by the identity homeomorphism is the identity isomorphism. -/
 @[simp]
-theorem homeoCongr_refl : homeoCongr (_root_.Homeomorph.refl M) = MulEquiv.refl (M ≃ₜ M) := by
+theorem homeoCongr_refl : homeoCongr (Homeomorph.refl M) = MulEquiv.refl (M ≃ₜ M) := by
   ext φ x
   simp
 
@@ -88,5 +89,3 @@ theorem homeoCongr_symm (e : M ≃ₜ N) : (homeoCongr e).symm = homeoCongr e.sy
   rfl
 
 end Homeomorph
-
-end TauCeti
