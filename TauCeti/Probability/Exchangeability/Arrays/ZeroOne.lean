@@ -99,7 +99,7 @@ theorem JointlyDissociated.indep_arrayTailFamily_arrayTail [IsZeroOrProbabilityM
         ((Set.Iic_disjoint_Ici).2 (Nat.not_succ_le_self (n + k))))
   have hsup := indep_iSup_of_monotone hindep hle
     (arrayTail_le_ambient n hX) hmono
-  exact indep_of_indep_of_le_left hsup (arrayTailFamily_le_iSup_Icc X n)
+  exact indep_of_indep_of_le_left hsup (arrayTailFamily_eq_iSup_Icc X n).le
 
 /-- **The tail σ-algebra of a jointly dissociated array is independent of itself**, the special
 case of `JointlyDissociated.indep_arrayTailFamily_arrayTail` in which the left σ-algebra is cut

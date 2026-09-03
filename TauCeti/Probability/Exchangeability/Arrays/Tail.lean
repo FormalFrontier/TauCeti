@@ -19,9 +19,9 @@ dissociated array in `Arrays.ZeroOne` is stated for. Cutting both axes is what d
 for: two square blocks are independent only when their index sets are disjoint, so a one-axis cut
 would not do.
 
-The corner tail is not the tail of the diagonal process `arrayDiag X`; it contains it
-(`tailProcess_arrayDiag_le_arrayTail`) and is in general strictly larger, since it also reads the
-off-diagonal entries above the cutoff.
+The corner tail need not be the tail of the diagonal process `arrayDiag X`; it contains it
+(`tailProcess_arrayDiag_le_arrayTail`) and may additionally read off-diagonal entries above the
+cutoff.
 
 These definitions support the exchangeable-arrays milestone of
 `TauCetiRoadmap/Exchangeability/README.md`, Layer 8.
@@ -37,7 +37,7 @@ These definitions support the exchangeable-arrays milestone of
 * `TauCeti.Probability.arrayTailFamily_le_iff` and `TauCeti.Probability.le_arrayTail_iff` — the
   universal properties of the two σ-algebras;
 * `TauCeti.Probability.arrayTailFamily_antitone` — the tail family decreases;
-* `TauCeti.Probability.arrayTailFamily_le_iSup_Icc` — finite corners exhaust a member of the tail
+* `TauCeti.Probability.arrayTailFamily_eq_iSup_Icc` — finite corners exhaust a member of the tail
   family;
 * `TauCeti.Probability.arrayTail_le_ambient` — the array tail is a sub-σ-algebra of the ambient one
   as soon as the entries beyond some cutoff are measurable;
@@ -114,17 +114,22 @@ theorem arrayTailFamily_antitone (X : ℕ × ℕ → Ω → α) : Antitone (arra
 
 omit [MeasurableSpace Ω] in
 /-- The finite corners above `n` exhaust the array tail family at `n`. -/
-theorem arrayTailFamily_le_iSup_Icc (X : ℕ × ℕ → Ω → α) (n : ℕ) :
-    arrayTailFamily X n ≤
+theorem arrayTailFamily_eq_iSup_Icc (X : ℕ × ℕ → Ω → α) (n : ℕ) :
+    arrayTailFamily X n =
       ⨆ k, blockSigma X (Set.Icc n (n + k) ×ˢ Set.Icc n (n + k)) := by
-  rw [arrayTailFamily_le_iff]
-  intro i j hi hj
-  exact (measurable_blockSigma_of_mem (Z := X)
-    (S := Set.Icc n (n + max i j) ×ˢ Set.Icc n (n + max i j))
-    ⟨⟨hi, (le_max_left i j).trans (Nat.le_add_left _ _)⟩,
-      ⟨hj, (le_max_right i j).trans (Nat.le_add_left _ _)⟩⟩).mono
-    (le_iSup (fun k : ℕ =>
-      blockSigma X (Set.Icc n (n + k) ×ˢ Set.Icc n (n + k))) (max i j)) le_rfl
+  apply le_antisymm
+  · rw [arrayTailFamily_le_iff]
+    intro i j hi hj
+    exact (measurable_blockSigma_of_mem (Z := X)
+      (S := Set.Icc n (n + max i j) ×ˢ Set.Icc n (n + max i j))
+      ⟨⟨hi, (le_max_left i j).trans (Nat.le_add_left _ _)⟩,
+        ⟨hj, (le_max_right i j).trans (Nat.le_add_left _ _)⟩⟩).mono
+      (le_iSup (fun k : ℕ =>
+        blockSigma X (Set.Icc n (n + k) ×ˢ Set.Icc n (n + k))) (max i j)) le_rfl
+  · refine iSup_le fun k => ?_
+    rw [arrayTailFamily_eq_blockSigma]
+    exact blockSigma_mono
+      (Set.prod_mono Set.Icc_subset_Ici_self Set.Icc_subset_Ici_self)
 
 omit [MeasurableSpace Ω] in
 /-- The tail σ-algebra of an array sits inside every member of its tail family. -/
@@ -173,8 +178,8 @@ theorem blockSigma_arrayDiag_le_blockSigma_prod_self (X : ℕ × ℕ → Ω → 
 omit [MeasurableSpace Ω] in
 /-- **The tail of the diagonal is an array tail event.** The diagonal entries from time `n` on have
 both indices at least `n`, so they generate a sub-σ-algebra of the tail family at `n`. The
-inclusion is not an equality: the array tail also reads the off-diagonal entries above the
-cutoff. -/
+inclusion need not be an equality: the array tail may additionally read off-diagonal entries above
+the cutoff. -/
 theorem tailProcess_arrayDiag_le_arrayTail (X : ℕ × ℕ → Ω → α) :
     tailProcess (arrayDiag X) ≤ arrayTail X := by
   rw [le_arrayTail_iff]
