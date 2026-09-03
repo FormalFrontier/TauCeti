@@ -216,8 +216,8 @@ private theorem compDecomp_apply_eq_zero_of_mem_of_ne (hs₁ : HodgeStructureOn 
       ← DirectSum.apply_eq_component]
   exact Submodule.coe_eq_zero.mp (hcoe.trans hproj0)
 
-/-- A linear map lies in the degree-`p` internal-Hom piece if and only if it sends each
-source component of degree `a` into the target component of degree `a + p`. -/
+/-- A Hodge-coordinate functional on the degree-`a` source component lies in the degree-`-a`
+dual piece. -/
 private theorem projCoord_mem_dual_piece (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
     (a : ℤ) (k : Fin (Module.finrank ℂ ↥(hs₁.piece a))) :
     ((Module.finBasis ℂ ↥(hs₁.piece a)).dualBasis k).comp
@@ -316,7 +316,7 @@ private theorem sum_compProj (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
 
 /-- A linear map lies in the degree-`p` internal-Hom piece if and only if it sends each
 source component of degree `a` into the target component of degree `a + p`. -/
-theorem mem_hom_piece_iff (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
+@[simp] theorem mem_hom_piece_iff (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
     (hs₂ : HodgeStructureOn W₂ ω₂ n₂) {p : ℤ} {f : W₁ →ₗ[ℂ] W₂} :
     f ∈ (hs₁.hom hs₂).piece p ↔
       ∀ (a : ℤ) (x : W₁), x ∈ hs₁.piece a → f x ∈ hs₂.piece (a + p) := by
