@@ -80,6 +80,27 @@ Lake service names: `tauceti-public` for reads, `tauceti-r2` for uploads. Object
 `artifacts/TauCetiProject/TauCeti/<hash>.art`, so the endpoint variables hold only the prefix and
 Lake appends the scope.
 
+## Contributors
+
+The read endpoints above are anonymous and are not secrets, so `scripts/lake-cache-get.sh` defaults
+to them and a contributor needs no configuration:
+
+```bash
+bash scripts/lake-cache-get.sh .
+```
+
+This is the second half of a working local build and the README documents it as such. Skipping it
+does not fail anything; it compiles the whole library from source instead, which is why its absence
+went unnoticed for as long as it did. CI keeps passing the endpoints explicitly from the
+`LAKE_CACHE_*_PUBLIC` repo variables and reaches the script only when those are set, so the defaults
+never decide what CI does.
+
+Anything else reading this cache, including the worker exemplar in
+[`kim-em/TauCetiWorker`](https://github.com/kim-em/TauCetiWorker), must use the custom domain rather
+than the bucket's `pub-<id>.r2.dev` development URL. Public access on that development URL is off and
+it answers 401 for every path, which a caller whose cache miss is non-fatal cannot tell from a cold
+revision.
+
 ## Why the upload is its own job
 
 `ci.yml` publishes in two jobs. `build` compiles main and *stages* the artifacts; the separate

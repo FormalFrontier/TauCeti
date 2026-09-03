@@ -10,8 +10,6 @@ import TauCeti.Algebra.Lie.Submodule.Atom
 import TauCeti.Algebra.Lie.Weights.FormalCharacter
 import TauCeti.LinearAlgebra.RootSystem.DominantCone
 
-public section
-
 /-!
 # The weight support of a highest weight module
 
@@ -74,6 +72,8 @@ the dominant-conjugate step that Layer 7's "Freudenthal's multiplicity formula" 
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §21.2, and
   §13.2 for the dominant conjugate.
 -/
+
+public section
 
 namespace TauCeti
 

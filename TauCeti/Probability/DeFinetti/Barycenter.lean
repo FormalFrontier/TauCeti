@@ -161,7 +161,7 @@ theorem map_pi_deFinettiBarycenter {β : Type*} [MeasurableSpace β]
   have hmap : Measurable fun P : ProbabilityMeasure α => P.map f :=
     TauCeti.MeasureTheory.measurable_probabilityMeasure_map hf
   have hpi : Measurable fun x : ℕ → α => fun i => f (x i) :=
-    measurable_pi_lambda _ fun i => hf.comp (measurable_pi_apply i)
+    Measurable.of_eval fun i => hf.comp (measurable_pi_apply i)
   calc (deFinettiBarycenter π).map (fun x i => f (x i))
       = π.bind fun P => (Measure.infinitePi fun _ : ℕ => (P : Measure α)).map
           fun x i => f (x i) :=

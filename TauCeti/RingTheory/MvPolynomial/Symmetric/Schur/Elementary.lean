@@ -8,8 +8,6 @@ module
 public import Mathlib.RingTheory.MvPolynomial.Symmetric.Defs
 public import TauCeti.RingTheory.MvPolynomial.Symmetric.Schur.Basic
 
-public section
-
 /-!
 # The Schur polynomial of a one-column shape
 
@@ -64,6 +62,8 @@ Bender--Knuth involution that `TauCeti.schurPoly_isSymmetric` needs in general.
 * [Schur--Weyl roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/SchurWeyl/README.md),
   Layer 7.
 -/
+
+public section
 
 namespace TauCeti
 

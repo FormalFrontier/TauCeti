@@ -144,6 +144,9 @@ SCHEDULERS = {
     "housekeeping.yml":      ("queue housekeeping",        7),
     "zulip-healthcheck.yml": ("zulip healthcheck",        15),
     "merge-sweep.yml":       ("merge sweep",               4),
+    # Every 15 minutes; the threshold is deliberately loose because GitHub
+    # routinely delays a scheduled run well past its cadence.
+    "merge-conflicts.yml":   ("merge-conflict labels",     2),
 }
 # A PR carrying any of these labels is intentionally parked; never "stranded".
 HOLD_LABELS = {"keep", "hold", "wip", "human", "do-not-close", "blocked"}
@@ -588,6 +591,15 @@ def _check_scheduler(wf, name, max_hours):
         f"/repos/{REPO}/actions/workflows/{wf}/runs?event=schedule&per_page=1",
         jq='.workflow_runs[0].created_at // ""')
     if not last:
+        # A workflow only just added has no scheduled run yet and is not broken.
+        # Alerting on that turns every new cron into a false emergency for its
+        # first cadence, in the one topic that must not cry wolf.
+        created = gh_scalar(f"/repos/{REPO}/actions/workflows/{wf}",
+                            jq='.created_at // ""')
+        if created and hours_since(created) < max_hours:
+            zp.log(f"{wf} has no scheduled run yet but was added "
+                   f"{hours_since(created):.1f}h ago; not alerting")
+            return []
         return [_sched_alert(wf, name, f"`{wf}` has no scheduled run on record.",
                              "Confirm the cron is configured and firing.")]
     if hours_since(last) >= max_hours:

@@ -113,8 +113,7 @@ theorem tailFamily_eq_comap_shift (X : (k : ℕ) → Ω → β k) (r : ℕ) :
     exact (measurable_pi_apply d).comp hshift
   · have hmeas : Measurable[tailFamily X r] (fun ω n => X (r + n) ω) := by
       let : MeasurableSpace Ω := tailFamily X r
-      exact measurable_pi_lambda (fun ω n => X (r + n) ω)
-        fun n => measurable_tailFamily_of_le (Nat.le_add_right r n)
+      exact Measurable.of_eval fun n => measurable_tailFamily_of_le (Nat.le_add_right r n)
     exact hmeas.comap_le
 
 variable [MeasurableSpace Ω]
@@ -217,7 +216,7 @@ theorem processCons_processTail (t : Ω → ℕ → α) :
 @[fun_prop]
 theorem measurable_processCons {x : Ω → α} {t : Ω → ℕ → α} (hx : Measurable x)
     (ht : ∀ n, Measurable fun ω => t ω n) : Measurable (processCons x t) := by
-  refine measurable_pi_lambda _ fun n => ?_
+  refine Measurable.of_eval fun n => ?_
   cases n with
   | zero => simpa only [processCons_zero] using hx
   | succ n => simpa only [processCons_succ] using ht n
@@ -226,7 +225,7 @@ theorem measurable_processCons {x : Ω → α} {t : Ω → ℕ → α} (hx : Mea
 @[fun_prop]
 theorem measurable_processTail {t : Ω → ℕ → α} (ht : ∀ n, Measurable fun ω => t ω (n + 1)) :
     Measurable (processTail t) := by
-  refine measurable_pi_lambda _ fun n => ?_
+  refine Measurable.of_eval fun n => ?_
   simpa only [processTail_apply] using ht n
 
 omit [MeasurableSpace Ω] in

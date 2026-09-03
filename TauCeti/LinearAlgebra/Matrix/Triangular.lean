@@ -45,6 +45,8 @@ which have no business importing Lie-algebra theory use it.
 * `Matrix.IsUpperUnitriangular.det_eq_one` — an upper-unitriangular matrix has determinant one.
 * `Matrix.isNilpotent_of_isUpperTriangular_of_diag_eq_zero` — strict upper triangularity implies
   nilpotence.
+* `TauCeti.isUpperTriangular_transvection_iff` — a transvection with its off-diagonal entry
+  strictly below the diagonal is upper triangular exactly when its parameter vanishes.
 * `TauCeti.vecMul_injective_of_submatrix_isUpperTriangular` — a rectangular matrix has injective
   row multiplication when a square column selection is upper triangular with nonzero diagonal.
 -/
@@ -270,6 +272,21 @@ end Matrix
 open scoped Matrix
 
 namespace TauCeti
+
+/-- A transvection whose off-diagonal entry lies strictly *below* the diagonal is upper
+triangular exactly when its parameter vanishes. The complementary case, an entry on or above the
+diagonal, is Mathlib's `Matrix.blockTriangular_transvection`. -/
+@[simp]
+theorem isUpperTriangular_transvection_iff {n : Type*} [DecidableEq n] [Preorder n]
+    {A : Type*} [CommRing A] {i j : n} (hij : j < i) (c : A) :
+    (Matrix.transvection i j c).IsUpperTriangular ↔ c = 0 := by
+  refine ⟨fun h => ?_, fun hc => ?_⟩
+  · have hentry := h hij
+    simp only [Matrix.transvection, Matrix.add_apply, Matrix.one_apply_ne hij.ne',
+      Matrix.single_apply_same, zero_add] at hentry
+    exact hentry
+  · rw [hc, Matrix.transvection_zero]
+    exact Matrix.blockTriangular_one
 
 /-- **A triangular selection of coordinates makes the rows independent.** If some choice `e` of a
 coordinate for each row makes the matrix upper triangular - `M i (e j) = 0` for `j < i` - with a

@@ -11,8 +11,6 @@ public import TauCeti.Algebra.Lie.Weights.Central
 import Mathlib.Algebra.Lie.Normalizer
 import Mathlib.LinearAlgebra.BilinearForm.Orthogonal
 
-public section
-
 /-!
 # Reductive Lie algebras: the centre and the derived ideal span
 
@@ -96,6 +94,8 @@ reductive Lie algebra determines an irreducible restricted module and a central 
 * N. Bourbaki, *Lie Groups and Lie Algebras*, Chapter I, §6.4.
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §5 and §6.
 -/
+
+public section
 
 namespace TauCeti
 

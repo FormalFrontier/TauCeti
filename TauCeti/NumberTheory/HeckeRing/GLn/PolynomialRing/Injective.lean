@@ -7,8 +7,6 @@ module
 
 public import TauCeti.NumberTheory.HeckeRing.GLn.PolynomialRing.Basic
 
-public section
-
 /-!
 # `pLocalSubring` is a polynomial ring for `n = 1, 2`
 
@@ -42,6 +40,8 @@ Chris Birkbeck), the `Inj` section.
 * [G. Shimura, *Introduction to the arithmetic theory of automorphic functions*][shimura1971],
   §3.2, Theorem 3.20.
 -/
+
+public section
 
 open Matrix Subgroup.Commensurable Pointwise HeckeRing DoubleCoset Matrix.SpecialLinearGroup
 
@@ -123,7 +123,7 @@ theorem evalHom_one_injective (p : ℕ) (hp : 1 < p) : Function.Injective (evalH
   set D := diagCoset (n := 1) (fun _ ↦ p ^ (s 0))
   have h0 : evalHom 1 p R D = 0 := by rw [hR]; rfl
   apply hcoeff
-  suffices h : evalHom 1 p R D = MvPolynomial.coeff s R from h ▸ h0
+  suffices h : evalHom 1 p R D = R.coeff s from h ▸ h0
   rw [evalHom_apply]
   classical
   -- each monomial `X^k` evaluates to the basis element at `T(p^k)`, so its contribution at

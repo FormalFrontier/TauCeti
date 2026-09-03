@@ -9,8 +9,6 @@ import TauCeti.LinearAlgebra.RootSystem.FiniteType.Bounded
 public import TauCeti.LinearAlgebra.RootSystem.Positive
 import TauCeti.LinearAlgebra.RootSystem.Weyl.Group
 
-public section
-
 /-!
 # The weight cone below a weight is finite once it is stable under the simple reflections
 
@@ -79,6 +77,8 @@ classification of finite-dimensional irreducibles", of
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §13.2 and
   §21.2.
 -/
+
+public section
 
 namespace TauCeti
 

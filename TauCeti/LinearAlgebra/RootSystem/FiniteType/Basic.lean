@@ -8,8 +8,6 @@ module
 public import TauCeti.LinearAlgebra.Matrix.PosDef
 public import TauCeti.LinearAlgebra.RootSystem.DynkinType
 
-public section
-
 /-!
 # Cartan matrices of finite type
 
@@ -101,6 +99,8 @@ Dimensional Lie Algebras*, 3rd ed., Chapter 4, for the finite/affine/indefinite 
 generalized Cartan matrices, and Humphreys, *Introduction to Lie Algebras and Representation
 Theory*, Chapter 11, for the classification of the finite-type case.
 -/
+
+public section
 
 open scoped Matrix
 

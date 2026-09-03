@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Data.Real.Basic
+public import Mathlib.Basic.Real.Basic
 public import Mathlib.Algebra.Module.Equiv.Basic
 public import Mathlib.LinearAlgebra.Span.Defs
 import Mathlib.Tactic.Module

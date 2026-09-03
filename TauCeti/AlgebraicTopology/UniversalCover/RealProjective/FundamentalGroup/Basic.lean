@@ -40,7 +40,7 @@ group, is not simply connected, not contractible, and not homeomorphic to `ℝ`.
   iff monodromy fixes lift.
 * `TauCeti.RealProjectiveSpace.fundamentalGroupMulEquivAt`: basepoint-unconscious version
   for any `x`.
-* `TauCeti.RealProjectiveSpace.card_fundamentalGroup`:
+* `TauCeti.RealProjectiveSpace.card_fundamentalGroup_of_two_le`:
   `Nat.card (FundamentalGroup (RealProjectiveSpace n) x) = 2`.
 * `TauCeti.RealProjectiveSpace.nontrivial_fundamentalGroup`: the fundamental group is nontrivial.
 * `TauCeti.RealProjectiveSpace.not_simplyConnectedSpace`: `RPⁿ` is not simply connected.
@@ -139,7 +139,7 @@ def fundamentalGroupMulEquivAt (hn : 2 ≤ n)
 
 /-- For `2 ≤ n`, the fundamental group of `RPⁿ` has
 exactly two elements. -/
-theorem card_fundamentalGroup (hn : 2 ≤ n)
+theorem card_fundamentalGroup_of_two_le (hn : 2 ≤ n)
     (x : RealProjectiveSpace n) :
     Nat.card (FundamentalGroup (RealProjectiveSpace n) x) = 2 := by
   rw [Nat.card_congr (fundamentalGroupMulEquivAt n hn x).toEquiv, Nat.card_eq_fintype_card,

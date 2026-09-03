@@ -9,8 +9,6 @@ public import TauCeti.LinearAlgebra.RootSystem.DynkinType
 public import TauCeti.LinearAlgebra.RootSystem.Positive
 public import Mathlib.LinearAlgebra.RootSystem.Reduced
 
-public section
-
 /-!
 # The simply connected root datum of type G2
 
@@ -64,6 +62,8 @@ Plate IX. This is the `G2` branch of Layer 6 in
 corresponding clause of the `G₂` worked example in the "Worked examples (acceptance criteria)"
 section of that README; it agrees with the count in Bourbaki, Plate IX.
 -/
+
+public section
 
 namespace TauCeti
 

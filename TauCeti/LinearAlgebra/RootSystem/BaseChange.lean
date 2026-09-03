@@ -11,8 +11,6 @@ public import Mathlib.LinearAlgebra.RootSystem.Chain
 public import Mathlib.LinearAlgebra.RootSystem.Reduced
 public import TauCeti.LinearAlgebra.Matrix.Dual
 
-public section
-
 /-!
 # Base change of a root pairing carried by the standard lattices
 
@@ -58,6 +56,8 @@ that it determines; see N. Bourbaki, *Lie Groups and Lie Algebras, Chapters 4--6
 supplies the root-system input of the Chevalley basis in Layer 9,
 "pinned Chevalley--Demazure group schemes over `ℤ`", of `TauCetiRoadmap/ReductiveGroups/README.md`.
 -/
+
+public section
 
 namespace TauCeti
 

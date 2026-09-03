@@ -8,8 +8,6 @@ module
 public import TauCeti.Algebra.Lie.HighestWeight.Casimir
 public import TauCeti.Algebra.Lie.Weights.WeylInvariance
 
-public section
-
 /-!
 # Freudenthal's multiplicity recursion
 
@@ -87,6 +85,8 @@ positive-root sum machinery is in place"; that machinery is in place, so the sum
   Indag. Math. **16** (1954), 369--376.
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §22.3.
 -/
+
+public section
 
 namespace TauCeti
 
