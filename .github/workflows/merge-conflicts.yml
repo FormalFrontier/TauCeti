@@ -1,0 +1,83 @@
+name: Merge conflicts
+
+# Label a PR that has stopped merging into main, and tell its author once.
+#
+# This is the one PR transition nothing else here can see. Every other trigger in
+# this repository is scoped to the PR — pull_request_target, a pr-build / Review
+# workflow_run, an issue_comment — but a PR conflicts because *main moved*, which
+# fires none of them. Until this existed a PR could pick up a conflict and nothing
+# anywhere said so: no label, no comment, no alert. stuck-alerts deliberately skips
+# a conflicting PR (it is not being wrongly withheld by the merge path) and
+# housekeeping only retires PRs that are blocking under review, so a
+# conflicted-but-approved PR was reaped by nothing either. It rotted silently.
+#
+# The `merge-conflict` label is deliberately NOT part of the mutually-exclusive set
+# that pr-labels.yml maintains. It is orthogonal to where a PR sits in the pipeline:
+# a PR can be awaiting review AND conflicting, and saying both is more useful than
+# having one hide the other. Nothing else reads or writes it.
+#
+# The label is also the state. Whether an episode is open is "is the label on the
+# PR", so there is no marker to parse and no way for the bot to fail to recognise
+# its own bookkeeping; a wrong label self-heals on the next run. It makes the
+# problem measurable too, because GitHub timestamps label changes in the PR
+# timeline — `labeled merge-conflict` → `unlabeled merge-conflict` is the episode,
+# recorded by GitHub rather than self-reported:
+#
+#   gh api "/repos/$REPO/issues/N/timeline" \
+#     --jq '.[] | select(.label.name == "merge-conflict") | "\(.event) \(.created_at)"'
+#
+# Same approach as mathlib4's merge_conflicts.yml, and the same pinned action.
+
+on:
+  schedule:
+    # Every 15 minutes, offset from housekeeping (:20), conflict-free of
+    # merge-sweep (:40) and stuck-alerts (:50).
+    - cron: "3,18,33,48 * * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: merge-conflicts
+  cancel-in-progress: false
+
+jobs:
+  label:
+    if: github.repository == 'TauCetiProject/TauCeti'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: TauCetiProject
+          repositories: TauCeti
+          permission-issues: write        # the label and the one-off comment
+          permission-pull-requests: read  # open PRs and their mergeability
+
+      # Pinned to the commit v3.1.0 points at, not a floating tag: this step is
+      # handed an App token that can label and comment on any PR.
+      - uses: eps1lon/actions-label-merge-conflict@0273be72a0bbd58fcd71d0d6c02c209b50d1e5e1 # v3.1.0
+        with:
+          repoToken: ${{ steps.app-token.outputs.token }}
+          dirtyLabel: merge-conflict
+          # GitHub computes mergeability lazily, so the first read after main moves
+          # answers UNKNOWN and only schedules the merge. Retry rather than treat
+          # "not computed" as either answer.
+          retryAfter: 30
+          retryMax: 5
+          commentOnDirty: >
+            This PR no longer merges into `main`. Rebase it onto current `main`
+            (or merge `main` into it) and push; nothing downstream can make
+            progress until then, since a green build and an approving review on
+            this head still cannot merge.
+
+
+            Check what the conflict actually is before resolving it mechanically.
+            If `main` has since landed its own version of something this PR adds,
+            part of it may be superseded, and the right answer is to drop that
+            part — or close the PR — rather than to reconcile the text. That is an
+            authoring decision.

@@ -6,10 +6,9 @@ We keep exactly one bot-owned message per PR in a dedicated channel/topic
 groups of emoji reactions on it from the PR's status (see core.derive):
 
   CI (build) group        review / lifecycle group
-    running   -> yellow      conflicts with main     -> warning
-    passed    -> green_circle review has begun        -> eyes
-    failed    -> red_circle  review is pending        -> (none)
-                             changes_requested/block  -> writing
+    running   -> yellow      review has begun        -> eyes
+    passed    -> green_circle review is pending       -> (none)
+    failed    -> red_circle  changes_requested/block -> writing
                              all review done, green   -> check
                              merged                   -> merge      (realm emoji)
                              closed, not merged       -> closed-pr  (realm emoji)
@@ -115,7 +114,6 @@ EMOJI = {
     "green_circle":     ("unicode_emoji", None),
     "red_circle":       ("unicode_emoji", None),
     # review / lifecycle group
-    "warning":          ("unicode_emoji", None),
     "eyes":             ("unicode_emoji", None),
     # Legacy state, retained in the group so reconcile removes old ▶️ reactions.
     "play":             ("unicode_emoji", None),
@@ -125,7 +123,7 @@ EMOJI = {
     "closed-pr":        ("realm_emoji", "61293"),
 }
 CI_GROUP = ["yellow", "green_circle", "red_circle"]
-REVIEW_GROUP = ["warning", "eyes", "play", "writing", "check", "merge", "closed-pr"]
+REVIEW_GROUP = ["eyes", "play", "writing", "check", "merge", "closed-pr"]
 
 # core.derive's CI states -> this sink's emoji. An unreported build is the
 # `awaiting-CI` state, so it is yellow too; terminal PRs clear the group.
@@ -394,27 +392,13 @@ def set_group(z, message, bot_id, group, desired, dry_run=False):
     return changes
 
 
-def _has_warning(message, bot_id):
-    """Does the bot already own a ⚠️ on this message? Only the bot's own reactions
-    count, exactly as set_group judges presence."""
-    return any(r["emoji_name"] == "warning" and r.get("user_id") == bot_id
-               for r in (message or {}).get("reactions", []))
-
-
 def review_emoji(status):
     """Review reaction derived from the same truth as the automatic labels.
 
-    A PR that no longer merges into main shows ⚠️ and outranks every review state,
-    mirroring `merge-conflict`'s label precedence: until the author rebases, no
-    verdict on the current head can lead anywhere. Only a *known* conflict paints
-    it -- `conflicting is None` means GitHub has not computed mergeability yet.
-
-    Otherwise the live review marker that produces `review-in-progress` produces
-    👀 here. A completed blocking review produces ✍️, and an all-green review
-    produces ✔️. Merely waiting for review has no review reaction.
+    In particular, the live review marker that produces `review-in-progress`
+    produces 👀 here. A completed blocking review produces ✍️, and an all-green
+    review produces ✔️. Merely waiting for review has no review reaction.
     """
-    if status.get("conflicting") is True:
-        return "warning"
     if status["review"] == "approved":
         return "check"
     if status["review"] == "changes":
@@ -426,7 +410,7 @@ def review_emoji(status):
 
 def reconcile(
         z, pr, create, ci_override, bot_id=None, state=None, dry_run=False,
-        message=_MESSAGE_NOT_GIVEN, create_if_open=False, conflict_override=None):
+        message=_MESSAGE_NOT_GIVEN, create_if_open=False):
     bot_id = z.my_user_id() if bot_id is None else bot_id
     # Read only the PR's own metadata first and find-or-create the durable message from its title,
     # BEFORE the fallible CI/scoreboard reads. Otherwise a transient GitHub hiccup during those reads
@@ -461,22 +445,17 @@ def reconcile(
     else:
         changes = 0
 
-    status = core.derive(pr, ci_override, state=st, conflict_override=conflict_override)
+    status = core.derive(pr, ci_override, state=st)
     rev = {"merged": "merge", "closed": "closed-pr"}.get(status["lifecycle"])
     if rev is None:  # open PR: render the review state
         rev = review_emoji(status)
-        # An UNCOMPUTED mergeability must not clear an ESTABLISHED conflict, for the
-        # same reason as the label: GitHub answers null for a while after every push,
-        # and removing ⚠️ then would say "this merges again" when we do not know that.
-        if status.get("conflicting") is None and _has_warning(message, bot_id):
-            rev = "warning"
     changes += set_group(z, message, bot_id, REVIEW_GROUP, rev, dry_run)
 
     # CI status is only meaningful while the PR is open; core.derive already
     # clears it (ci=None) on a terminal PR, so this maps straight through.
     ci_emoji = None if status["lifecycle"] != "open" else CI_EMOJI[status["ci"]]
     changes += set_group(z, message, bot_id, CI_GROUP, ci_emoji, dry_run)
-    log(f"PR #{pr}: review={rev} ci={ci_emoji} conflicting={status['conflicting']}")
+    log(f"PR #{pr}: review={rev} ci={ci_emoji}")
     return changes
 
 

@@ -14,42 +14,15 @@ import zulip  # noqa: E402
 
 
 class ReviewEmoji(unittest.TestCase):
-    def emoji(self, review="none", inprogress=False, conflicting=False):
+    def emoji(self, review="none", inprogress=False):
         return zulip.review_emoji({
             "lifecycle": "open",
             "ci": "success",
             "review": review,
-            "conflicting": conflicting,
             "review_inprogress": inprogress,
             "head": "h",
             "title": "t",
         })
-
-    def test_conflict_outranks_every_review_state(self):
-        for review in ("none", "running", "changes", "approved"):
-            for inprogress in (False, True):
-                with self.subTest(review=review, inprogress=inprogress):
-                    self.assertEqual(
-                        self.emoji(review=review, inprogress=inprogress, conflicting=True),
-                        "warning")
-
-    def test_unknown_mergeability_shows_the_review_state(self):
-        self.assertEqual(self.emoji(review="approved", conflicting=None), "check")
-        self.assertIsNone(self.emoji(review="none", conflicting=None))
-
-    def test_uncomputed_mergeability_keeps_a_warning_the_bot_already_owns(self):
-        message = {"id": 7, "reactions": [{"emoji_name": "warning", "user_id": 42}]}
-        self.assertTrue(zulip._has_warning(message, 42))
-        # A human's ⚠️ is not ours to read as state, exactly as set_group judges it.
-        other = {"id": 7, "reactions": [{"emoji_name": "warning", "user_id": 99}]}
-        self.assertFalse(zulip._has_warning(other, 42))
-        self.assertFalse(zulip._has_warning({"id": 7, "reactions": []}, 42))
-        self.assertFalse(zulip._has_warning(None, 42))
-
-    def test_the_conflict_emoji_is_in_the_review_group(self):
-        # Otherwise reconcile could never REMOVE it once the conflict clears.
-        self.assertIn("warning", zulip.REVIEW_GROUP)
-        self.assertIn("warning", zulip.EMOJI)
 
     def test_waiting_for_review_has_no_reaction(self):
         self.assertIsNone(self.emoji())
@@ -81,7 +54,6 @@ class ReviewEmoji(unittest.TestCase):
                 "lifecycle": "open",
                 "ci": "success",
                 "review": review,
-                "conflicting": False,
                 "review_inprogress": inprogress,
                 "head": "h",
                 "title": "t",
@@ -203,7 +175,6 @@ class Reconcile(unittest.TestCase):
         "title": "Old PR",
         "author": "alice",
         "roadmaps": ["roadmap/PDE"],
-        "mergeable": None,
     }
 
     def test_legacy_post_is_rewritten_in_place(self):
@@ -241,7 +212,6 @@ class Reconcile(unittest.TestCase):
             "lifecycle": "open",
             "ci": None,
             "review": "none",
-            "conflicting": False,
             "review_inprogress": False,
             "head": "h",
             "title": "Old PR",
@@ -259,7 +229,6 @@ class Reconcile(unittest.TestCase):
             "lifecycle": "open",
             "ci": None,
             "review": "none",
-            "conflicting": False,
             "review_inprogress": False,
             "head": "h",
             "title": "Old PR",

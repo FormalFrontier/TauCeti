@@ -144,7 +144,9 @@ SCHEDULERS = {
     "housekeeping.yml":      ("queue housekeeping",        7),
     "zulip-healthcheck.yml": ("zulip healthcheck",        15),
     "merge-sweep.yml":       ("merge sweep",               4),
-    "conflict-sweep.yml":    ("conflict sweep",            4),
+    # Every 15 minutes; the threshold is deliberately loose because GitHub
+    # routinely delays a scheduled run well past its cadence.
+    "merge-conflicts.yml":   ("merge-conflict labels",     2),
 }
 # A PR carrying any of these labels is intentionally parked; never "stranded".
 HOLD_LABELS = {"keep", "hold", "wip", "human", "do-not-close", "blocked"}
