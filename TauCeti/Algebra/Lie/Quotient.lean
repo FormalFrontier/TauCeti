@@ -37,7 +37,7 @@ receiver notation on the ideal.
 ## Implementation notes
 
 Neither `LieIdeal.mkQ` nor `LieIdeal.liftQ` is exposed: `LieIdeal.mkQ_apply` and
-`LieIdeal.liftQ_apply_mk` characterize them on representatives, and `LieIdeal.ker_mkQ`,
+`LieIdeal.liftQ_apply` characterize them on representatives, and `LieIdeal.ker_mkQ`,
 `LieIdeal.mkQ_surjective`, `LieIdeal.liftQ_mkQ` and `LieIdeal.eq_liftQ` give its elimination and
 factorization properties, so nothing downstream has to unfold the quotient.
 -/
@@ -83,7 +83,7 @@ def liftQ (f : L →ₗ⁅R⁆ L') (h : I ≤ f.ker) : L ⧸ I →ₗ⁅R⁆ L' 
 
 /-- The induced homomorphism on the quotient sends the class of `x` to `f x`. -/
 @[simp]
-theorem liftQ_apply_mk (f : L →ₗ⁅R⁆ L') (h : I ≤ f.ker) (x : L) :
+theorem liftQ_apply (f : L →ₗ⁅R⁆ L') (h : I ≤ f.ker) (x : L) :
     I.liftQ f h (LieSubmodule.Quotient.mk x) = f x := (rfl)
 
 /-- The induced homomorphism on the quotient composed with the quotient map is the original
