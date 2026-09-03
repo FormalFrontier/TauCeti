@@ -68,8 +68,10 @@ rate of the Gamma law.  It is the zero measure if either parameter is nonpositiv
 def inverseGammaMeasure (a r : ℝ) : Measure ℝ :=
   if 0 < a ∧ 0 < r then (gammaMeasure a r).map Inv.inv else 0
 
-/-- At positive parameters the inverse-gamma law is the inversion pushforward of the Gamma law. -/
-@[simp]
+/-- At positive parameters the inverse-gamma law is the inversion pushforward of the Gamma law.
+
+This is not a `simp` lemma: `inverseGammaMeasure a r` is the simp-normal form, and unfolding it
+would shadow every `simp` lemma stated about the law at positive parameters. -/
 theorem inverseGammaMeasure_of_pos (ha : 0 < a) (hr : 0 < r) :
     inverseGammaMeasure a r = (gammaMeasure a r).map Inv.inv := by
   rw [inverseGammaMeasure, ite_eq_left ⟨ha, hr⟩]
@@ -85,7 +87,7 @@ theorem isProbabilityMeasure_inverseGammaMeasure (ha : 0 < a) (hr : 0 < r) :
     IsProbabilityMeasure (inverseGammaMeasure a r) := by
   rw [inverseGammaMeasure_of_pos ha hr]
   let _ := isProbabilityMeasure_gammaMeasure ha hr
-  exact Measure.isProbabilityMeasure_map measurable_inv.aemeasurable
+  infer_instance
 
 /-- The inverse-gamma law assigns no mass to the nonpositive half-line. -/
 @[simp]
