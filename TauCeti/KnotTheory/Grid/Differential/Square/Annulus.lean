@@ -26,9 +26,10 @@ differential therefore has no two-step return, and the diagonal entries of the m
 `∂⁻ ∘ ∂⁻` are zero.
 
 The argument never inspects the `O`-markings, so it is insensitive to the weights `V^{O(r)}` and
-runs over an arbitrary commutative coefficient ring, characteristic two included. The disjoint
-case is settled in `Differential/Square/DoubleTransposition.lean`; only the overlapping case, where
-two rectangles share exactly one side column, remains.
+runs over an arbitrary commutative coefficient ring, characteristic two included. The three cases
+of the juxtaposition analysis are told apart by how many side columns the two rectangles have in
+common: both for the annular case treated here, none for the disjoint case of
+`Differential/Square/DoubleTransposition.lean`, and exactly one for the overlapping case.
 On a grid of size at most two the annular case already suffices, because there is no room for the
 other two: that consequence is
 `GridDiagram.unblockedDifferential_comp_self_eq_zero_of_le_two` in `SmallGrid/Differential.lean`.

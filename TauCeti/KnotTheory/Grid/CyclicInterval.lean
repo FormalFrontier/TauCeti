@@ -38,6 +38,8 @@ directions before taking products.
   the opposite arc.
 * `TauCeti.Grid.mem_cIoo_of_mem_cIoo_of_mem_cIoo_swap`: if `a` and `b` lie on opposite arcs from
   `c` to `d`, then `d` lies on the clockwise arc from `a` to `b`.
+* `TauCeti.Grid.mem_cIoo_and_mem_cIoo_swap_of_notMem`: cyclic separation is symmetric, so `c` and
+  `d` then lie on the two opposite arcs between `a` and `b`.
 * `TauCeti.Grid.card_cIoo_add_card_cIoo_swap`: the two arc lengths add to `n - 2`.
 * `TauCeti.Grid.cIoo_image_rev`: reversing a clockwise open arc by `Fin.rev` gives the clockwise
   open arc with reversed, exchanged endpoints.
@@ -475,6 +477,15 @@ theorem mem_cIoo_of_mem_cIoo_of_mem_cIoo_swap {a b c d : Fin n} (ha : a ∈ cIoo
     (hb : b ∈ cIoo d c) : d ∈ cIoo a b := by
   simp only [cIoo, Set.Finite.mem_toFinset, Set.mem_cIoo] at ha hb ⊢
   exact sbtw_cyclic_left (sbtw_trans_left (sbtw_cyclic_left hb) ha)
+
+/-- Cyclic separation is symmetric: if `a` lies on the clockwise arc from `c` to `d` while `b`,
+distinct from both endpoints, lies off it, then `c` and `d` lie on the two opposite arcs between
+`a` and `b`. -/
+theorem mem_cIoo_and_mem_cIoo_swap_of_notMem {a b c d : Fin n} (hcd : c ≠ d)
+    (hbc : b ≠ c) (hbd : b ≠ d) (hbout : b ∉ cIoo c d) (ha : a ∈ cIoo c d) :
+    d ∈ cIoo a b ∧ c ∈ cIoo b a :=
+  have hb := mem_cIoo_swap_of_notMem hcd hbc hbd hbout
+  ⟨mem_cIoo_of_mem_cIoo_of_mem_cIoo_swap ha hb, mem_cIoo_of_mem_cIoo_of_mem_cIoo_swap hb ha⟩
 
 /-- The two opposite cyclic intervals cover exactly the complement of their endpoints. -/
 @[simp]

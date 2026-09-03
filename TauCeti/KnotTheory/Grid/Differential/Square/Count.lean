@@ -29,10 +29,8 @@ counting form used by the disjoint and one-common-side cases.
 *Which region carries a marking.* Every fully blocked statement below is relative to the ambient
 `GridDiagram.fullyBlockedRectangles`, and none of them unfolds the marking condition: they relate
 two objects assembled from that one finite set. The marking region is fixed upstream by
-`GridRectangle.AvoidsMarkings`, which still tests the open grid-line interior rather than the
-square-centred domain used by the Lane G.2 gradings; aligning it with the square-centred
-convention is a separate correction to that predicate, after which the identities here read off
-the corrected rectangle sets unchanged.
+`GridRectangle.AvoidsMarkings`, which asks that no square a rectangle covers carry an `O` or an
+`X` marking.
 
 ## Main definitions
 

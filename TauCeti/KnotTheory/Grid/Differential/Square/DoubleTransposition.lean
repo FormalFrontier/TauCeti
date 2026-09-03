@@ -14,11 +14,11 @@ public import TauCeti.KnotTheory.Grid.Differential.Square.SideOverlap
 # Disjoint double-transposition terms vanish
 
 The square of a grid differential is a sum over pairs of composable rectangles, and the
-juxtaposition argument for `∂ ∘ ∂ = 0` splits those pairs according to how the two rectangles
-meet. `Annulus.lean` closed the annular case, where the second rectangle returns to the source of
-the first. This file closes the opposite extreme for both the fully blocked and unblocked
-differentials: the target state is obtained from the source by two *disjoint* column
-transpositions.
+juxtaposition argument for `∂ ∘ ∂ = 0` splits those pairs according to how many side columns the
+two rectangles have in common. Both columns in common is the annular case of `Annulus.lean`, where
+the second rectangle returns to the source of the first. This file treats the opposite extreme,
+for the fully blocked and the unblocked differential alike: the target state is obtained from the
+source by two *disjoint* column transpositions.
 
 That configuration is exactly the disjoint-side case of the case split in `SideOverlap.lean`. Two
 disjoint column transpositions move four columns, whereas two transpositions sharing a column move
@@ -27,14 +27,14 @@ Reordering the two rectangle moves, `GridRectangleDecomposition.commute`, is the
 the decompositions the unblocked differential counts. Exchanging the two toroidal domains
 preserves `X`-avoidance and the weight `V^{O(r)}`. Emptiness is transferred separately by
 `isEmpty_commute_first` and `isEmpty_commute_second`, using the cyclic-separation lemma
-`Grid.mem_cIoo_of_mem_cIoo_of_mem_cIoo_swap`. Reordering also changes the intermediate state, so
+`Grid.mem_cIoo_and_mem_cIoo_swap_of_notMem`. Reordering also changes the intermediate state, so
 it has no fixed point. In characteristic two the paired terms cancel.
 
 The shared bookkeeping in `Count.lean` first reindexes the two-step terms as a single sum
 over the finite set of decompositions both of whose rectangles the unblocked differential counts.
-That reindexing holds for every pair of grid states and coefficient ring, and is also the entry
-point for the remaining case: two rectangles sharing exactly one side column,
-`GridRectangleDecomposition.HasOneCommonSide`.
+That reindexing holds for every pair of grid states and coefficient ring, so it serves the
+intermediate case of two rectangles sharing exactly one side column,
+`GridRectangleDecomposition.HasOneCommonSide`, just as well.
 
 ## Main results
 
@@ -55,10 +55,7 @@ The following results are in the `TauCeti.GridDiagram` namespace.
 
 ## References
 
-This supplies the disjoint-side case for
-`TauCetiRoadmap/CombinatorialHeegaardFloer/README.md`, Lane G.3, "The complexes and `∂² = 0`",
-specifically the "disjoint" clause of its juxtaposition case analysis. The argument follows
-Ozsváth--Stipsicz--Szabó, *Grid Homology for Knots and Links*, Chapter 4.6.
+The argument follows Ozsváth--Stipsicz--Szabó, *Grid Homology for Knots and Links*, Chapter 4.6.
 -/
 
 public section
@@ -198,8 +195,8 @@ theorem
 /-- In characteristic two, the square of the unblocked grid differential has zero matrix entry
 between a grid state and the state obtained from it by two disjoint column transpositions.
 
-Together with the vanishing of the diagonal entries in `Annulus.lean`, this leaves only the case
-of two rectangles sharing exactly one side column. -/
+Together with the vanishing of the diagonal entries in `Annulus.lean`, this covers every pair of
+grid states except those joined by two column transpositions with a column in common. -/
 theorem unblockedDifferential_sq_single_apply_swapColumns_swapColumns_eq_zero_of_disjoint
     (x : GridState n) {a b c d : Fin n} (hab : a ≠ b) (hcd : c ≠ d)
     (hdisjoint : Disjoint ({a, b} : Finset (Fin n)) {c, d}) :
