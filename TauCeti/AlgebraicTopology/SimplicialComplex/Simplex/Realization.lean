@@ -25,9 +25,9 @@ roadmap asks that the realization of the boundary of the standard `n`-simplex be
 The interval identification also supplies the standard topological model for the simplicial
 interval used in the later product-and-collapse formulation of Zeeman's conjecture.
 
-The barycentric simplex uses Mathlib's `stdSimplex`, and its homeomorphism with the unit interval
-is Mathlib's `stdSimplexHomeomorphUnitInterval`. The zero-sphere identification is the elementary
-equivalence between its two points and `Fin 2`.
+The barycentric simplex uses Mathlib's `Convexity.StdSimplex`, and its homeomorphism with the
+unit interval is Mathlib's `Convexity.StdSimplex.homeomorphI`. The zero-sphere identification is
+the elementary equivalence between its two points and `Fin 2`.
 
 ## Main results
 
@@ -57,34 +57,23 @@ private def topFace : Face (⊤ : AbstractSimplicialComplex ι) :=
 /-- The realization of the full abstract complex on a finite vertex type is homeomorphic to
 Mathlib's standard simplex of nonnegative coordinate functions summing to one. -/
 noncomputable def realizationTopHomeomorphStdSimplex :
-    Realization (⊤ : AbstractSimplicialComplex ι) ≃ₜ stdSimplex ℝ ι where
-  toFun x := ⟨fun i => x.1 i, by
-    let y : StandardSimplex (carrier (⊤ : AbstractSimplicialComplex ι) x).1 :=
-      ⟨x.1, mem_convexHull_carrier _ x⟩
-    refine ⟨StandardSimplex.nonneg y, ?_⟩
-    rw [← Finsupp.sum_fintype x.1 (fun _ r => r) (fun _ => rfl)]
-    exact StandardSimplex.sum_eq_one y⟩
+    Realization (⊤ : AbstractSimplicialComplex ι) ≃ₜ Convexity.StdSimplex ℝ ι where
+  toFun x := by
+    refine ⟨x.1, fun i => ?_, ?_⟩ <;>
+      let y : StandardSimplex (carrier (⊤ : AbstractSimplicialComplex ι) x).1 :=
+        ⟨x.1, mem_convexHull_carrier _ x⟩
+    · exact StandardSimplex.nonneg y i
+    · exact StandardSimplex.sum_eq_one y
   invFun x :=
     faceInclusion (⊤ : AbstractSimplicialComplex ι)
       (topFace (ι := ι))
-      ⟨Finsupp.equivFunOnFinite.symm x.1, by
+      ⟨x.weights, by
         rw [Finset.coe_image, mem_standardSimplex_iff]
-        refine ⟨x.2.1, ?_, Finset.subset_univ _⟩
-        rw [Finsupp.sum_fintype]
-        · exact x.2.2
-        · exact fun _ => rfl⟩
-  left_inv x := by
-    apply Subtype.ext
-    rw [faceInclusion_val]
-    exact Finsupp.equivFunOnFinite.symm_apply_apply x.1
-  right_inv x := by
-    apply Subtype.ext
-    funext i
-    dsimp only
-    rw [faceInclusion_val]
-    exact Finsupp.equivFunOnFinite_symm_apply_apply x.1 i
+        exact ⟨x.weights_nonneg, x.total, Finset.subset_univ _⟩⟩
+  left_inv x := Subtype.ext (faceInclusion_val _ _ _)
+  right_inv x := Convexity.StdSimplex.ext (faceInclusion_val _ _ _)
   continuous_toFun := by
-    apply Continuous.subtype_mk
+    rw [(Convexity.StdSimplex.isEmbedding_toFun_comp_weights ℝ ι).continuous_iff]
     apply continuous_pi
     intro i
     apply continuous_iff_faceInclusion.2
@@ -97,43 +86,44 @@ noncomputable def realizationTopHomeomorphStdSimplex :
     apply (continuous_faceInclusion (⊤ : AbstractSimplicialComplex ι)
       (topFace (ι := ι))).comp
     apply continuous_induced_rng.mpr
-    exact (continuous_subtype_val :
-      Continuous fun x : stdSimplex ℝ ι => (x : ι → ℝ)).congr fun x => by
-        funext i
-        exact (Finsupp.equivFunOnFinite_symm_apply_apply x.1 i).symm
+    exact continuous_pi fun i => Convexity.StdSimplex.continuous_weights_apply ℝ i
 
 /-- The full-complex realization homeomorphism reads the same barycentric coordinates. -/
 @[simp]
 theorem realizationTopHomeomorphStdSimplex_apply (x : Realization
     (⊤ : AbstractSimplicialComplex ι)) (i : ι) :
-    realizationTopHomeomorphStdSimplex x i = x.1 i :=
-  (rfl)
+    (realizationTopHomeomorphStdSimplex x).weights i = x.1 i := by
+  rfl
 
 /-- The inverse full-complex realization homeomorphism has the prescribed barycentric
 coordinates. -/
 @[simp]
-theorem realizationTopHomeomorphStdSimplex_symm_apply_val (x : stdSimplex ℝ ι) (i : ι) :
-    (realizationTopHomeomorphStdSimplex.symm x : ι →₀ ℝ) i = x i :=
-  by
-    rw [realizationTopHomeomorphStdSimplex]
-    exact congrArg (fun z : ι →₀ ℝ => z i)
-      (faceInclusion_val (⊤ : AbstractSimplicialComplex ι)
-        (topFace (ι := ι)) _)
+theorem realizationTopHomeomorphStdSimplex_symm_apply_val (x : Convexity.StdSimplex ℝ ι) (i : ι) :
+    (realizationTopHomeomorphStdSimplex.symm x : ι →₀ ℝ) i = x.weights i := by
+  rw [realizationTopHomeomorphStdSimplex]
+  exact congrArg (fun z : ι →₀ ℝ => z i)
+    (faceInclusion_val (⊤ : AbstractSimplicialComplex ι)
+      (topFace (ι := ι)) _)
 
 /-- The realization of the standard one-simplex is homeomorphic to the unit interval. The zeroth
 vertex maps to `0` and the first vertex maps to `1`; see the two endpoint lemmas below. -/
 noncomputable def realizationOneSimplexHomeomorphUnitInterval :
     Realization (⊤ : AbstractSimplicialComplex (Fin 2)) ≃ₜ unitInterval :=
-  (realizationTopHomeomorphStdSimplex (ι := Fin 2)).trans stdSimplexHomeomorphUnitInterval
+  (realizationTopHomeomorphStdSimplex (ι := Fin 2)).trans Convexity.StdSimplex.homeomorphI
 
-private theorem stdSimplexHomeomorphUnitInterval_apply (x : stdSimplex ℝ (Fin 2)) :
-    (stdSimplexHomeomorphUnitInterval x : ℝ) = x 1 :=
-  rfl
-
-private theorem stdSimplexHomeomorphUnitInterval_symm_apply (x : unitInterval) :
-    (stdSimplexHomeomorphUnitInterval.symm x : Fin 2 → ℝ) =
-      ![1 - (x : ℝ), (x : ℝ)] :=
-  stdSimplexEquivIcc_symm_apply_coe ℝ x
+private theorem homeomorphI_symm_apply_coe (x : unitInterval) :
+    ((Convexity.StdSimplex.homeomorphI.symm x).weights : Fin 2 → ℝ) =
+      ![1 - (x : ℝ), (x : ℝ)] := by
+  have h : Convexity.StdSimplex.homeomorphI.symm x =
+      Convexity.StdSimplex.duple (s := 1 - (x : ℝ)) (t := (x : ℝ)) 0 1
+        (sub_nonneg.mpr x.2.2) x.2.1 (by ring) := by
+    rw [Homeomorph.symm_apply_eq]
+    exact Subtype.ext (by
+      simp [Convexity.StdSimplex.homeomorphI_apply_coe,
+        Convexity.StdSimplex.weights_duple])
+  rw [h, Convexity.StdSimplex.weights_duple]
+  funext i
+  fin_cases i <;> simp
 
 /-- The one-simplex homeomorphism is its second barycentric coordinate. -/
 @[simp]
@@ -141,7 +131,7 @@ theorem realizationOneSimplexHomeomorphUnitInterval_coe (x : Realization
     (⊤ : AbstractSimplicialComplex (Fin 2))) :
     (realizationOneSimplexHomeomorphUnitInterval x : ℝ) = x.1 1 := by
   rw [realizationOneSimplexHomeomorphUnitInterval, Homeomorph.trans_apply,
-    stdSimplexHomeomorphUnitInterval_apply, realizationTopHomeomorphStdSimplex_apply]
+    Convexity.StdSimplex.homeomorphI_apply_coe, realizationTopHomeomorphStdSimplex_apply]
 
 /-- The zeroth barycentric coordinate of the interval inverse is one minus the interval
 coordinate. -/
@@ -151,7 +141,7 @@ theorem realizationOneSimplexHomeomorphUnitInterval_symm_apply_val_zero (x : uni
       1 - (x : ℝ) := by
   rw [realizationOneSimplexHomeomorphUnitInterval, Homeomorph.symm_trans_apply,
     realizationTopHomeomorphStdSimplex_symm_apply_val,
-    stdSimplexHomeomorphUnitInterval_symm_apply]
+    homeomorphI_symm_apply_coe]
   rfl
 
 /-- The first barycentric coordinate of the interval inverse is the interval coordinate. -/
@@ -160,7 +150,7 @@ theorem realizationOneSimplexHomeomorphUnitInterval_symm_apply_val_one (x : unit
     (realizationOneSimplexHomeomorphUnitInterval.symm x : Fin 2 →₀ ℝ) 1 = (x : ℝ) := by
   rw [realizationOneSimplexHomeomorphUnitInterval, Homeomorph.symm_trans_apply,
     realizationTopHomeomorphStdSimplex_symm_apply_val,
-    stdSimplexHomeomorphUnitInterval_symm_apply]
+    homeomorphI_symm_apply_coe]
   rfl
 
 /-- The zeroth vertex of the realized one-simplex is the left endpoint of the interval. -/

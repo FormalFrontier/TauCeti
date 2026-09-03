@@ -7,6 +7,7 @@ module
 
 public import TauCeti.GroupTheory.Index
 public import TauCeti.LinearAlgebra.Matrix.SpecialLinearGroup.Basic
+public import TauCeti.NumberTheory.Modular
 
 /-!
 # Adjoining the centre to a subgroup of `SL(2, ℤ)`
@@ -21,6 +22,10 @@ This is the form every `SL(2, ℤ)` consumer wants, and it depends on nothing be
 `withCenter` API and the description of the centre of `SpecialLinearGroup`, so it sits here rather
 than inside any one consumer.
 
+The last section records the geometric counterpart: because `Γ·{±I}` contains both `1` and `-1`,
+the translates of the open fundamental domain `𝒟ᵒ` indexed by the cosets of `Γ·{±I}` are pairwise
+disjoint. This needs no more about `Γ` than the membership description above, so it sits here too.
+
 ## Main results
 
 * `Subgroup.mem_withCenter_iff_exists_eq_or_eq_neg`: membership in `Γ·{±I}` is being `±` an
@@ -28,6 +33,8 @@ than inside any one consumer.
 * `TauCeti.ModularForm.index_eq_two_mul_index_withCenter_of_neg_one_notMem` and
   `TauCeti.ModularForm.relIndex_withCenter_eq_two_of_neg_one_notMem`: when `-I ∉ Γ`,
   `[SL₂(ℤ) : Γ] = 2 · [SL₂(ℤ) : ±Γ]`.
+* `ModularGroup.pairwise_disjoint_smul_fdo_out_withCenter`: the translates of `𝒟ᵒ` indexed by
+  the cosets of `Γ·{±I}` are pairwise disjoint.
 -/
 
 public section
@@ -79,5 +86,31 @@ theorem relIndex_withCenter_eq_two_of_neg_one_notMem (h : (-1 : SL(2, ℤ)) ∉ 
     fun _ hc ↦ Matrix.SpecialLinearGroup.mem_center_iff_eq_one_or_eq_neg_one.mp hc
 
 end TauCeti.ModularForm
+
+namespace ModularGroup
+
+open scoped MatrixGroups Pointwise
+
+/-- **The translates of `𝒟ᵒ` indexed by the cosets of `Γ·{±I}` are pairwise disjoint.** By
+`ModularGroup.disjoint_smul_fdo` it suffices that the chosen representatives of two distinct
+cosets differ neither by `1` nor by `−1`; and both `1` and `−1` lie in `Γ·{±I}`, so either
+coincidence would identify the two cosets. -/
+theorem pairwise_disjoint_smul_fdo_out_withCenter (Γ : Subgroup SL(2, ℤ)) :
+    Pairwise (Function.onFun Disjoint
+      fun q : SL(2, ℤ) ⧸ Γ.withCenter ↦ ((q.out)⁻¹ • fdo)) := by
+  intro q₁ q₂ hq
+  refine disjoint_smul_fdo ?_ ?_ <;> rw [inv_inv] <;> intro h <;> apply hq
+  · rw [← Quotient.out_eq q₁, ← Quotient.out_eq q₂, mul_inv_eq_one.mp h]
+  · have hneg : q₁.out = -q₂.out := by
+      rw [mul_inv_eq_iff_eq_mul] at h
+      simpa using h
+    rw [← Quotient.out_eq q₁, ← Quotient.out_eq q₂, hneg]
+    refine QuotientGroup.eq.mpr ?_
+    have hcalc : (-q₂.out)⁻¹ * q₂.out = -1 := by rw [← neg_inv, neg_mul, inv_mul_cancel]
+    rw [hcalc]
+    exact Γ.center_le_withCenter
+      (Matrix.SpecialLinearGroup.mem_center_iff_eq_one_or_eq_neg_one.mpr (Or.inr rfl))
+
+end ModularGroup
 
 end

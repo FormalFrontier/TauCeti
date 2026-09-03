@@ -10,8 +10,6 @@ import Mathlib.Algebra.Lie.Basis.Base
 import TauCeti.Algebra.Lie.HighestWeight.Integrability
 import TauCeti.Algebra.Lie.Submodule.Atom
 
-public section
-
 /-!
 # Highest weight zero and the trivial module
 
@@ -42,6 +40,8 @@ This is the zero-weight separation step in Layer 5, "Weyl's complete reducibilit
 Algebras and Representation Theory*, §6 supplies the model for the subsequent Casimir-splitting
 argument; the rank-one zero-highest-weight argument used here is from §§7.2 and 21.1.
 -/
+
+public section
 
 namespace TauCeti
 

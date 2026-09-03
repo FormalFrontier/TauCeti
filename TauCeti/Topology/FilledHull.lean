@@ -43,17 +43,14 @@ needed downstream, and the first two of which fail without hypotheses on `K`.
 
 ## Roadmap role
 
-Plane separation for Jordan curves is the open frontier item of layer **L5** of
-`TauCetiRoadmap/ConformalMapping/README.md`, the Carathéodory boundary correspondence:
-`ConformalMapping/STATUS.md` records that nothing in the repository establishes that a Jordan curve
-separates the plane, and asks that how much of it the boundary work needs be settled first. What
-that work needs is the single statement that every point of a Jordan curve is a limit of points
-inside it,
-
-> `J ⊆ closure (filledHull J \ J)`,
-
-which is written in the vocabulary defined here — the inside of `J` is `filledHull J \ J`. So this
-file supplies what the missing stage is stated with rather than presuming it: nothing here assumes
+Plane separation for Jordan curves was the open frontier item of layer **L5** of
+`TauCetiRoadmap/ConformalMapping/README.md`, the Carathéodory boundary correspondence. The
+enclosure step now runs through `IsPreconnected (K \ {f z₀})` and the winding-number two-sidedness
+theorem
+(`TauCeti.image_inter_ball_subset_filledHull_of_diam_lt_of_isPreconnected_sdiff_singleton`),
+which `IsJordanCurve.isPathConnected_sdiff_singleton` discharges; `Caratheodory.lean` is
+unconditional.
+The inside of `J` is `filledHull J \ J` in the vocabulary defined here. Nothing here assumes
 separation, or any other regularity of `K`.
 
 ## Main results

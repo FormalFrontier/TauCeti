@@ -7,8 +7,6 @@ module
 
 public import Mathlib.LinearAlgebra.Eigenspace.Semisimple
 
-public section
-
 /-!
 # Diagonalizable endomorphisms are semisimple
 
@@ -24,6 +22,8 @@ by a scalar, so each is annihilated by the squarefree polynomial `X - C μ` and 
 * `TauCeti.isSemisimple_of_iSup_eigenspace_eq_top`: an endomorphism whose eigenspaces span the
   space is semisimple.
 -/
+
+public section
 
 namespace TauCeti
 

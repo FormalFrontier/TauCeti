@@ -101,13 +101,13 @@ theorem Contractable.coordinate_pathLaw {μ : Measure Ω} {X : ℕ → Ω → α
     (hX : Contractable μ X) (hX_meas : ∀ i, AEMeasurable (X i) μ) :
     Contractable (pathLaw μ X) fun j (p : ℕ → α) => p j := by
   have hφ : AEMeasurable (fun ω => fun i => X i ω : Ω → ℕ → α) μ :=
-    aemeasurable_pi_lambda _ hX_meas
+    AEMeasurable.of_eval hX_meas
   have key : ∀ {n : ℕ} (sel : Fin n → ℕ),
       blockLaw (pathLaw μ X) (fun j (p : ℕ → α) => p j) sel = blockLaw μ X sel := by
     intro n sel
     simp only [blockLaw_def, pathLaw_def]
     rw [AEMeasurable.map_map_of_aemeasurable
-      (measurable_pi_lambda _ fun i => measurable_pi_apply (sel i)).aemeasurable hφ]
+      (Measurable.of_eval fun i => measurable_pi_apply (sel i)).aemeasurable hφ]
     rfl
   intro m k hk
   rw [key k, prefixLaw_def, key fun i : Fin m => i.val, ← prefixLaw_def]

@@ -83,7 +83,7 @@ sample each row from it. -/
 theorem measurable_arrayRowCoding :
     Measurable fun q : ProbabilityMeasure (ℕ → α) × (ℕ → unitInterval) =>
       (q.1, fun p : ℕ × ℕ => unitIntervalCoding (ℕ → α) q.1 (q.2 p.1) p.2) :=
-  measurable_fst.prodMk (measurable_pi_lambda _ fun p => measurable_unitIntervalCoding_entry p)
+  measurable_fst.prodMk (Measurable.of_eval fun p => measurable_unitIntervalCoding_entry p)
 
 /-- The canonical coupled law of a random path measure and the array obtained by independently
 sampling its rows. -/
@@ -189,7 +189,7 @@ theorem SeparatelyExchangeable.map_pairReindex_arrayRowCodingLaw_eq
       (measurable_reindex τ)).comp measurable_fst).prodMk
         ((measurable_pairReindex σ τ).comp measurable_snd) |>.aemeasurable
   · exact hν.measurable_directing.aemeasurable.prodMk
-      (aemeasurable_pi_lambda _ hX)
+      (AEMeasurable.of_eval hX)
 
 /-- The canonical coupled law is equivariant for an invariant mixing law.  The row permutation
 reindexes the independently sampled row paths, while the column permutation pushes the retained
@@ -216,7 +216,7 @@ theorem map_pairReindex_arrayRowCodingLaw_eq_of_col_invariant
     exact ((Measure.measurable_map _ (measurable_reindex τ)).comp
       measurable_subtype_coe).subtype_mk
   have hg : Measurable g := by
-    exact measurable_pi_lambda _ fun i =>
+    exact Measurable.of_eval fun i =>
       (measurable_reindex τ).comp (measurable_pi_apply (σ i))
   have hJ : Measurable J := hf.prodMap hg
   have hC : Measurable C := measurable_id.prodMap measurable_uncurry
@@ -260,8 +260,8 @@ theorem map_pairReindex_arrayRowCodingLaw_eq_of_col_invariant
     let r : (ℕ → (ℕ → α)) → (ℕ → (ℕ → α)) := fun x i => x (σ i)
     let c : (ℕ → (ℕ → α)) → (ℕ → (ℕ → α)) := fun x i => permReindex τ (x i)
     let z : (ℕ → (ℕ → α)) → (ℕ → (ℕ → α)) := fun x i => permReindex τ (x (σ i))
-    have hr : Measurable r := measurable_pi_lambda _ fun i => measurable_pi_apply (σ i)
-    have hc : Measurable c := measurable_pi_lambda _ fun i =>
+    have hr : Measurable r := Measurable.of_eval fun i => measurable_pi_apply (σ i)
+    have hc : Measurable c := Measurable.of_eval fun i =>
       (measurable_reindex τ).comp (measurable_pi_apply i)
     have hz : z = c ∘ r := by
       funext x i

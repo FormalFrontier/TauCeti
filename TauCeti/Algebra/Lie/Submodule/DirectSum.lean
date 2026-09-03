@@ -8,8 +8,6 @@ module
 public import Mathlib.LinearAlgebra.Dimension.Constructions
 public import TauCeti.Algebra.Lie.DirectSum
 
-public section
-
 /-!
 # An internal direct sum of Lie submodules is an external one
 
@@ -58,6 +56,8 @@ decompositions it counts are produced by `TauCeti.exists_isInternal_isIrreducibl
 `TauCeti/Algebra/Lie/Submodule/Decomposition.lean`, in exactly the `DirectSum.IsInternal` form
 consumed here.
 -/
+
+public section
 
 open scoped DirectSum
 

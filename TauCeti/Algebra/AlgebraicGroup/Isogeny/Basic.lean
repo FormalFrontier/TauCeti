@@ -32,6 +32,8 @@ surjectivity by a weaker statement about points over the base field.
   bridge for central isogenies.
 * `TauCeti.CommHopfAlgCat.IsIsogeny.mapPointsFunctor_app_surjective`: an isogeny is
   surjective on points over algebraically closed fields.
+* `TauCeti.CommHopfAlgCat.IsIsogeny.isIso_iff_surjective`: an isogeny is an isomorphism
+  exactly when its coordinate map is surjective.
 * `TauCeti.CommHopfAlgCat.isCentralIsogeny_of_isIso`: every isomorphism is a central
   isogeny.
 
@@ -143,6 +145,24 @@ theorem faithfullyFlat (hf : IsIsogeny f) :
 /-- The coordinate map of an isogeny is injective. -/
 theorem injective (hf : IsIsogeny f) : Function.Injective f.hom :=
   hf.faithfullyFlat.injective
+
+/-- An isogeny is an isomorphism exactly when its coordinate map is surjective. -/
+theorem isIso_iff_surjective (hf : IsIsogeny f) :
+    IsIso f ↔ Function.Surjective f.hom := by
+  constructor
+  · intro
+    exact (ConcreteCategory.bijective_of_isIso f).2
+  · intro hsurjective
+    let hbijective : Function.Bijective f.hom := ⟨hf.injective, hsurjective⟩
+    let e := BialgEquiv.ofBijective f.hom hbijective
+    have he : (CommHopfAlgCat.isoMk e).hom = f := by
+      rw [CommHopfAlgCat.isoMk_hom]
+      apply CommHopfAlgCat.hom_ext
+      apply BialgHom.ext
+      intro x
+      exact congrFun (BialgEquiv.coe_ofBijective f.hom hbijective) x
+    rw [← he]
+    infer_instance
 
 /-- A finite coordinate morphism is in particular of finite type. -/
 theorem finiteType (hf : IsIsogeny f) : f.hom.toAlgHom.FiniteType :=

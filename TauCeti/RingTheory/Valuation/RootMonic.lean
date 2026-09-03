@@ -14,6 +14,7 @@ import Mathlib.Algebra.Polynomial.Eval.Coeff
 import Mathlib.Algebra.Polynomial.Monic
 import Mathlib.RingTheory.Polynomial.Subring
 import Mathlib.RingTheory.Valuation.Integral
+import Mathlib.Tactic.ComputeDegree
 
 /-!
 # Valuations of roots of monic polynomials
@@ -32,6 +33,8 @@ integral closedness of the valuation ring; the equality is what is added here, a
   `ν`-integral coefficients and `1 < ν t`.
 * `Valuation.le_one_of_root_monic`: a root of a monic polynomial with `ν`-integral coefficients
   is `ν`-integral, from `Valuation.Integers.isIntegral_iff_v_le_one`.
+* `Valuation.map_cubic_eq_of_one_lt` and `Valuation.le_one_of_root_cubic`: the two statements above
+  for the monic cubic `t³ + at² + bt + c`, which is the shape a Weierstrass equation takes.
 
 ## Roadmap
 
@@ -46,7 +49,8 @@ companion estimate, for a polynomial *expression* in an element that is already 
 Adapted, with the author's proofs, from Michael Stoll's `EllipticCurves` project
 (`github.com/MichaelStollBayreuth/EllipticCurves`, Apache-2.0, pinned by
 `TauCetiRoadmap/EllipticCurves/README.md` at `66889eada51a`),
-`EllipticCurves/Mathlib/Basic.lean`, section `Valuation`. The source is written against Lean
+`EllipticCurves/Mathlib/Basic.lean`, section `Valuation`, together with the cubic specializations
+from `EllipticCurves/WeakMordellWeil.lean`, section `Cubic`. The source is written against Lean
 `v4.32.0`; this is a forward port.
 -/
 
@@ -106,6 +110,49 @@ lemma le_one_of_root_monic {p : L[X]} (hp : p.Monic)
   refine (Valuation.integer.integers ν).mem_of_integral
     ⟨p.toSubring _ hsub, (Polynomial.monic_toSubring _ _ _).mpr hp, ?_⟩
   rw [Polynomial.eval₂_eq_eval_map, hmap, heq]
+
+section Cubic
+
+variable {c : L}
+
+-- `compute_degree!` and `monicity!` need `Nontrivial L` below, to know that the leading
+-- coefficient `1` is nonzero and hence that the cubic really has degree `3`. Pulling `Nontrivial`
+-- back along `ν` keeps it out of the signatures, which hold over any `L`: `(0 : L) = 1` would
+-- force `(0 : Γ) = 1`, which a `LinearOrderedCommGroupWithZero` forbids.
+
+/-- The non-leading coefficients of `X³ + aX² + bX + c` are `a`, `b`, `c` (and zeros), so they
+are integral as soon as `a`, `b`, `c` are. This is the coefficient hypothesis that the general
+lemmas above take. -/
+private lemma cubic_coeff_le_one (ha : ν a ≤ 1) (hb : ν b ≤ 1) (hc : ν c ≤ 1) :
+    ∀ i < (X ^ 3 + C a * X ^ 2 + C b * X + C c).natDegree,
+      ν ((X ^ 3 + C a * X ^ 2 + C b * X + C c).coeff i) ≤ 1 := by
+  have := domain_nontrivial ν ν.map_zero ν.map_one
+  have hdeg : (X ^ 3 + C a * X ^ 2 + C b * X + C c).natDegree = 3 := by compute_degree!
+  intro i hi
+  rw [hdeg] at hi
+  interval_cases i <;> simp [ha, hb, hc]
+
+/-- A monic cubic with integral coefficients, evaluated at an element of value `> 1`, is
+dominated by its leading term. -/
+lemma map_cubic_eq_of_one_lt (ha : ν a ≤ 1) (hb : ν b ≤ 1) (hc : ν c ≤ 1) (ht : 1 < ν t) :
+    ν (t ^ 3 + a * t ^ 2 + b * t + c) = ν t ^ 3 := by
+  have := domain_nontrivial ν ν.map_zero ν.map_one
+  have hp : (X ^ 3 + C a * X ^ 2 + C b * X + C c).Monic := by monicity!
+  have hdeg : (X ^ 3 + C a * X ^ 2 + C b * X + C c).natDegree = 3 := by compute_degree!
+  have h := ν.map_eval_eq_of_one_lt hp (cubic_coeff_le_one ν ha hb hc) ht
+  rw [hdeg] at h
+  simpa using h
+
+/-- A root of a monic cubic with integral coefficients is integral. -/
+lemma le_one_of_root_cubic (ha : ν a ≤ 1) (hb : ν b ≤ 1) (hc : ν c ≤ 1)
+    (heq : t ^ 3 + a * t ^ 2 + b * t + c = 0) :
+    ν t ≤ 1 := by
+  have := domain_nontrivial ν ν.map_zero ν.map_one
+  have hp : (X ^ 3 + C a * X ^ 2 + C b * X + C c).Monic := by monicity!
+  refine ν.le_one_of_root_monic hp (cubic_coeff_le_one ν ha hb hc) ?_
+  simpa using heq
+
+end Cubic
 
 end Valuation
 

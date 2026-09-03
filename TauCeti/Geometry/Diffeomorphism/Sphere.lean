@@ -34,40 +34,39 @@ inclusion `O(4) → Diff(S³)` is stateable" is `TauCeti.orthogonalToDiffSphere 
 
 ## Main definitions
 
-* `TauCeti.LinearIsometryEquiv.unitSphereEquiv`: the self-equivalence of the unit sphere
+* `LinearIsometryEquiv.unitSphereEquiv`: the self-equivalence of the unit sphere
   obtained by restricting a linear isometry equivalence.
-* `TauCeti.LinearIsometryEquiv.unitSphereDiffeomorph`: that restriction as a `C^m`
+* `LinearIsometryEquiv.unitSphereDiffeomorph`: that restriction as a `C^m`
   diffeomorphism of the unit sphere, viewed as a manifold modelled on `𝓡 n`.
-* `TauCeti.LinearIsometryEquiv.unitSphereDiffHom`: the group homomorphism
+* `LinearIsometryEquiv.unitSphereDiffHom`: the group homomorphism
   `(E ≃ₗᵢ[ℝ] E) →* Diff (𝓡 n) (sphere (0 : E) 1) m`.
 * `TauCeti.orthogonalToDiffSphere`: the reference inclusion `O(n + 1) → Diff(Sⁿ)`, the case
   `E = EuclideanSpace ℝ (Fin (n + 1))` of `unitSphereDiffHom`.
 
 ## Main results
 
-* `TauCeti.LinearIsometryEquiv.contMDiff_unitSphereEquiv`: the restriction to the unit sphere is
+* `LinearIsometryEquiv.contMDiff_unitSphereEquiv`: the restriction to the unit sphere is
   `C^m` for every smoothness exponent.
-* `TauCeti.LinearIsometryEquiv.isometry_unitSphereEquiv`: it is an isometry for the distance the
+* `LinearIsometryEquiv.isometry_unitSphereEquiv`: it is an isometry for the distance the
   sphere inherits from `E`, so the action is by isometries of the round sphere.
-* `TauCeti.LinearIsometryEquiv.unitSphereDiffeomorph_neg_apply`: the diffeomorphism induced by
+* `LinearIsometryEquiv.unitSphereDiffeomorph_neg_apply`: the diffeomorphism induced by
   `-1 ∈ O(n + 1)` is the antipodal map.
 * `TauCeti.LinearMap.eq_of_eqOn_unitSphere`: a linear map is
   determined by its values on the unit sphere, whence
-  `TauCeti.LinearIsometryEquiv.unitSphereDiffHom_injective` and
+  `LinearIsometryEquiv.unitSphereDiffHom_injective` and
   `TauCeti.orthogonalToDiffSphere_injective`: the inclusion is injective, so `O(n + 1)` is
   realised as a subgroup of `Diff(Sⁿ)`.
 
 ## Implementation notes
 
-The declarations below and the generic unit-sphere API in
-`TauCeti.Geometry.Sphere.LinearIsometry` live in `TauCeti.LinearIsometryEquiv`, mirroring the
-Mathlib namespace of the objects they are about, so they are applied in prefix form
-(`unitSphereEquiv e`) rather than by dot notation.
+The declarations extending `LinearIsometryEquiv` here and in
+`TauCeti.Geometry.Sphere.LinearIsometry` live in the root-level `LinearIsometryEquiv` namespace,
+allowing receiver notation. The reference inclusion remains project-owned top-level API in
+`TauCeti`; the auxiliary linear-map lemma remains in `TauCeti.LinearMap` as explained in the
+generic file.
 -/
 
 public section
-
-namespace TauCeti
 
 open Metric Module
 open scoped Manifold ContDiff
@@ -129,7 +128,8 @@ theorem unitSphereDiffeomorph_neg_apply (x : sphere (0 : E) 1) :
 /-- The inclusion of the linear isometry group of `E` into the group of self-diffeomorphisms of
 its unit sphere. For `E = EuclideanSpace ℝ (Fin (n + 1))` this is the reference inclusion
 `O(n + 1) → Diff(Sⁿ)`; see `TauCeti.orthogonalToDiffSphere`. -/
-def unitSphereDiffHom (m : ℕ∞ω) : (E ≃ₗᵢ[ℝ] E) →* Diff (𝓡 n) (sphere (0 : E) 1) m where
+def unitSphereDiffHom (m : ℕ∞ω) :
+    (E ≃ₗᵢ[ℝ] E) →* TauCeti.Diff (𝓡 n) (sphere (0 : E) 1) m where
   toFun e := unitSphereDiffeomorph e m
   map_one' := _root_.Diffeomorph.ext fun x => by
     apply Subtype.ext
@@ -151,12 +151,14 @@ theorem unitSphereDiffHom_injective :
   rw [unitSphereDiffHom_apply, unitSphereDiffHom_apply] at h
   apply _root_.LinearIsometryEquiv.toLinearEquiv_injective
   apply LinearEquiv.toLinearMap_injective
-  refine LinearMap.eq_of_eqOn_unitSphere fun x hx => ?_
+  refine TauCeti.LinearMap.eq_of_eqOn_unitSphere fun x hx => ?_
   simpa using congrArg Subtype.val (DFunLike.congr_fun h ⟨x, hx⟩)
 
 end InnerProduct
 
 end LinearIsometryEquiv
+
+namespace TauCeti
 
 open scoped EuclideanSpace
 

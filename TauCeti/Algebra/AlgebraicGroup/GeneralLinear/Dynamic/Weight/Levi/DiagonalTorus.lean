@@ -179,14 +179,10 @@ noncomputable def weightLeviDiagonalCoordinateIso
       CommHopfAlgCat.of R
         (MonoidAlgebra R (Multiplicative (ULift.{u} (Fin N) →₀ ℤ))) := by
   let f := weightLeviDiagonalCoordinateMap R w
-  let _ : IsIso ((CommHopfAlgCat.pointsFunctor.{u, u, u} (R := R)).map f.op) := by
-    rw [CommHopfAlgCat.pointsFunctor_map, Quiver.Hom.unop_op]
+  let _ : IsIso (CommHopfAlgCat.mapPointsFunctor.{u, u, u} f) := by
     dsimp only [f]
     exact isIso_mapPointsFunctor_weightLeviDiagonalCoordinateMap R w hw
-  let _ : IsIso f.op :=
-    (Functor.FullyFaithful.ofFullyFaithful
-      (CommHopfAlgCat.pointsFunctor.{u, u, u} (R := R))).isIso_of_isIso_map f.op
-  let _ : IsIso f := isIso_of_op f
+  let _ : IsIso f := CommHopfAlgCat.isIso_of_isIso_mapPointsFunctor f
   exact asIso f
 
 /-- The injective-weight Levi coordinate isomorphism restricts the ambient general-linear

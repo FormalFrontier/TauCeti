@@ -6,8 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Lie.HighestWeight.Module
-
-public section
+import TauCeti.Algebra.Lie.Submodule.Atom
 
 /-!
 # The maximal submodule of a highest weight module, and its irreducible quotient
@@ -59,6 +58,9 @@ goes through.
   submodule of a highest weight module is its greatest proper submodule**, so by
   `TauCeti.eq_top_of_maximalSubmodule_lt_of_isHighestWeightVector_of_lieSpan_eq_top` anything
   strictly above it is everything.
+* `TauCeti.isCoatom_maximalSubmodule_of_isHighestWeightVector_of_lieSpan_eq_top`: **it is a coatom**
+  of the lattice of Lie submodules, so by `TauCeti.isIrreducible_quotient_iff_isCoatom` the quotient
+  by it is irreducible.
 * `TauCeti.isIrreducible_quotient_maximalSubmodule_of_isHighestWeightVector_of_lieSpan_eq_top`:
   **the quotient by it is irreducible**, and
   `TauCeti.isHighestWeightVector_mk_of_isHighestWeightVector_of_lieSpan_eq_top` together with
@@ -89,6 +91,8 @@ are proved for an arbitrary highest weight module, which is how `L(λ)` will con
 
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §20.3.
 -/
+
+public section
 
 namespace TauCeti
 
@@ -436,39 +440,24 @@ theorem isHighestWeightVector_mk_of_isHighestWeightVector_of_lieSpan_eq_top
   · rw [← LieModuleHom.map_lie, hv.lie_eq_smul x, map_smul]
   · rw [← LieModuleHom.map_lie, hv.lie_eq_zero_of_mem_positiveNilradical hx, map_zero]
 
-/-- **The quotient of a highest weight module by its maximal submodule is irreducible.** A Lie
-submodule of the quotient pulls back to one containing the maximal submodule, which is therefore
-either the maximal submodule itself or everything. -/
+/-- **The maximal submodule of a highest weight module is a coatom** of its lattice of Lie
+submodules: it is proper because it misses the generator, and anything strictly above it is
+everything. -/
+theorem isCoatom_maximalSubmodule_of_isHighestWeightVector_of_lieSpan_eq_top
+    (hv : IsHighestWeightVector b lam v) (hgen : LieSubmodule.lieSpan K L {v} = ⊤) :
+    IsCoatom (maximalSubmodule H M lam) :=
+  ⟨fun htop => notMem_maximalSubmodule_of_isHighestWeightVector_of_lieSpan_eq_top hv hgen
+      (htop ▸ LieSubmodule.mem_top v),
+    fun _ hN =>
+      eq_top_of_maximalSubmodule_lt_of_isHighestWeightVector_of_lieSpan_eq_top hv hgen hN⟩
+
+/-- **The quotient of a highest weight module by its maximal submodule is irreducible**, the
+maximal submodule being a coatom. -/
 theorem isIrreducible_quotient_maximalSubmodule_of_isHighestWeightVector_of_lieSpan_eq_top
     (hv : IsHighestWeightVector b lam v) (hgen : LieSubmodule.lieSpan K L {v} = ⊤) :
-    LieModule.IsIrreducible K L (M ⧸ maximalSubmodule H M lam) := by
-  have hvnot := notMem_maximalSubmodule_of_isHighestWeightVector_of_lieSpan_eq_top hv hgen
-  have : Nontrivial (M ⧸ maximalSubmodule H M lam) :=
-    ⟨LieSubmodule.Quotient.mk' _ v, 0, by rwa [Ne, LieSubmodule.Quotient.mk_eq_zero]⟩
-  refine LieModule.IsIrreducible.mk fun P hP => ?_
-  -- the preimage of a nonzero submodule strictly contains the maximal submodule
-  set Q := P.comap (LieSubmodule.Quotient.mk' (maximalSubmodule H M lam)) with hQ
-  have hle : maximalSubmodule H M lam ≤ Q := by
-    intro m hm
-    have hzero : LieSubmodule.Quotient.mk' (maximalSubmodule H M lam) m = 0 :=
-      (LieSubmodule.Quotient.mk_eq_zero _).mpr hm
-    simp [hQ, hzero, P.zero_mem]
-  have hlt : maximalSubmodule H M lam < Q := by
-    refine lt_of_le_of_ne hle fun hcontra => hP ?_
-    refine eq_bot_iff.mpr fun q hq => ?_
-    obtain ⟨m, rfl⟩ := LieSubmodule.Quotient.surjective_mk' _ q
-    have hmQ : m ∈ Q := by
-      rw [hQ]
-      exact LieSubmodule.mem_comap.mpr hq
-    rw [← hcontra] at hmQ
-    simp [(LieSubmodule.Quotient.mk_eq_zero _).mpr hmQ]
-  have hQtop : Q = ⊤ :=
-    eq_top_of_maximalSubmodule_lt_of_isHighestWeightVector_of_lieSpan_eq_top hv hgen hlt
-  refine eq_top_iff.mpr fun q _ => ?_
-  obtain ⟨m, rfl⟩ := LieSubmodule.Quotient.surjective_mk' _ q
-  have hmQ : m ∈ Q := hQtop ▸ (trivial : m ∈ (⊤ : LieSubmodule K L M))
-  rw [hQ] at hmQ
-  exact LieSubmodule.mem_comap.mp hmQ
+    LieModule.IsIrreducible K L (M ⧸ maximalSubmodule H M lam) :=
+  isIrreducible_quotient_iff_isCoatom.mpr
+    (isCoatom_maximalSubmodule_of_isHighestWeightVector_of_lieSpan_eq_top hv hgen)
 
 variable {Q : Type x} [AddCommGroup Q] [Module K Q] [LieRingModule L Q] [LieModule K L Q]
 
