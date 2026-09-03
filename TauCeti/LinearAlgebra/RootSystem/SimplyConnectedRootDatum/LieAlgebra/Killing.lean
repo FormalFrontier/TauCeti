@@ -5,8 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Algebra.Lie.CartanCriterion
-public import Mathlib.LinearAlgebra.RootSystem.GeckConstruction.Semisimple
+import Mathlib.Algebra.Lie.CartanCriterion
+import Mathlib.LinearAlgebra.RootSystem.GeckConstruction.Semisimple
 public import TauCeti.Algebra.Lie.Killing.BaseChange
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.LieAlgebra.BaseChange
 
@@ -64,8 +64,8 @@ instance instIsKillingLieAlgebra : IsKilling ℚ (t.lieAlgebra ht) := by
   have hradical : HasTrivialRadical K (t.lieAlgebraBaseChange ht K) := by
     rw [lieAlgebraBaseChange_def]
     infer_instance
-  have hbase : IsKilling K (t.lieAlgebraBaseChange ht K) :=
-    (hasTrivialRadical_iff_isKilling K (t.lieAlgebraBaseChange ht K)).1 hradical
+  let _ : HasTrivialRadical K (t.lieAlgebraBaseChange ht K) := hradical
+  have hbase : IsKilling K (t.lieAlgebraBaseChange ht K) := inferInstance
   let _ : IsKilling K (t.lieAlgebraBaseChange ht K) := hbase
   have hscalar : IsKilling K (K ⊗[ℚ] t.lieAlgebra ht) := e.symm.isKilling
   let _ : IsKilling K (K ⊗[ℚ] t.lieAlgebra ht) := hscalar
