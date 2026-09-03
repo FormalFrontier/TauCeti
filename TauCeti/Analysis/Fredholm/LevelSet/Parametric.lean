@@ -90,6 +90,7 @@ noncomputable def levelSetParameterMap
     ↥{z | f z = c}) : E × Λ).2
 
 /-- The local parameter map reads the parameter component of the inverse level-set chart. -/
+@[simp]
 theorem levelSetParameterMap_apply
     (hf : HasStrictFDerivAt f (D₁.coprod D₂) (x, l))
     (hD : Surjective (D₁.coprod D₂))
@@ -102,7 +103,6 @@ theorem levelSetParameterMap_apply
   rfl
 
 /-- At the chart origin, the local parameter map returns the base parameter. -/
-@[simp]
 theorem levelSetParameterMap_zero
     (hf : HasStrictFDerivAt f (D₁.coprod D₂) (x, l))
     (hD : Surjective (D₁.coprod D₂))
