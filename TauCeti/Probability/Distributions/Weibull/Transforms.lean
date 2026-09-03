@@ -44,7 +44,6 @@ Weibull law with an exponential law also gives the mgf `(1 - lam * t)⁻¹` and 
 
 ## References
 
-* Roadmap: `TauCetiRoadmap/StandardDistributions/README.md`, Layer 3, **Weibull**.
 * N. L. Johnson, S. Kotz, N. Balakrishnan, *Continuous Univariate Distributions*, vol. 1,
   2nd ed., Wiley (1994), chapter on Weibull distributions.
 -/
