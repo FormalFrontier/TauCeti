@@ -35,7 +35,6 @@ Gamma-distributed, and the two are independent.
 
 ## References
 
-* Tau Ceti roadmap, `StandardDistributions`, Layer 4, item 3, "Independent gamma variables".
 * N. L. Johnson, S. Kotz, N. Balakrishnan, *Continuous Univariate Distributions*, vol. 2,
   2nd ed., Wiley, 1995.
 -/
@@ -249,24 +248,6 @@ private theorem prod_beta_gammaMeasure_eq_withDensity (a b r : ℝ) :
     prod_withDensity (Probability.measurable_betaPDF a b)
       (Probability.measurable_gammaPDF (a + b) r), ← Measure.volume_eq_prod]
   rfl
-
-private theorem ae_pos_gammaMeasure (a r : ℝ) :
-    ∀ᵐ x ∂gammaMeasure a r, 0 < x := by
-  rw [gammaMeasure, ae_withDensity_iff (Probability.measurable_gammaPDF a r)]
-  filter_upwards [(volume : Measure ℝ).ae_ne 0] with x hx hpdf
-  by_contra hxpos
-  exact hpdf (gammaPDF_of_neg (lt_of_le_of_ne (le_of_not_gt hxpos) hx))
-
-private theorem ae_mem_Ioo_betaMeasure (a b : ℝ) :
-    ∀ᵐ x ∂betaMeasure a b, x ∈ Ioo (0 : ℝ) 1 := by
-  rw [betaMeasure, ae_withDensity_iff (Probability.measurable_betaPDF a b)]
-  filter_upwards [(volume : Measure ℝ).ae_ne 0, (volume : Measure ℝ).ae_ne 1]
-    with x hx0 hx1 hpdf
-  constructor
-  · by_contra hx
-    exact hpdf (betaPDF_eq_zero_of_nonpos (le_of_not_gt hx))
-  · by_contra hx
-    exact hpdf (betaPDF_eq_zero_of_one_le (le_of_not_gt hx))
 
 private theorem ae_mem_gammaBetaSource {a b r : ℝ} (ha : 0 < a) (hb : 0 < b)
     (hr : 0 < r) :
