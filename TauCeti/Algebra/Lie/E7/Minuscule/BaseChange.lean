@@ -14,13 +14,13 @@ public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Schem
 `TauCeti.E7Minuscule.groupScheme` is the explicit integral affine group scheme obtained by
 closing the fourteen numbered type-`E₇` root subgroups and the minuscule weight torus inside
 `GL₅₆`. This file specializes the base-change construction for a general Kostant toral closure
-to that pinned carrier.
+to that toral-closure carrier.
 
 For every commutative ring `A`, `TauCeti.E7Minuscule.baseChangeDefiningIdeal` is an ideal in
 `O(GL₅₆/A)` whose quotient is canonically the scalar extension of the integral coordinate Hopf
 algebra. The transported numbered root-subgroup maps and weight-torus map factor through that
-quotient. Thus the integral carrier and its pinned generators base-change together; none of the
-data is chosen anew over `A`.
+quotient. Thus the integral carrier and its numbered root-subgroup and weight-torus maps base-change
+together; none of the data is chosen anew over `A`.
 
 The defining ideal transported from `ℤ` is contained in the common kernel of the transported
 generators. Equality is not asserted over an arbitrary, possibly non-flat, base: additional
@@ -43,11 +43,11 @@ reductive, that its torus is maximal, or that its root datum has been identified
 * `TauCeti.E7Minuscule.mkQuotient_comp_baseChangeCoordinateIso_hom`: the coordinate
   isomorphism is compatible with the quotient presentations.
 * `TauCeti.E7Minuscule.baseChangeCoordinateIso_hom_comp_rootSubgroupBaseChangeMap` and
-  `TauCeti.E7Minuscule.baseChangeCoordinateIso_hom_comp_weightTorusBaseChangeMap`: the pinned
-  generators are the scalar extensions of their integral coordinate maps.
+  `TauCeti.E7Minuscule.baseChangeCoordinateIso_hom_comp_weightTorusBaseChangeMap`: the numbered
+  root-subgroup and weight-torus maps are the scalar extensions of their integral coordinate maps.
 * `TauCeti.E7Minuscule.hopfSpec_map_rootSubgroupIntegralCoordinateMap_op` and
   `TauCeti.E7Minuscule.hopfSpec_map_weightTorusIntegralCoordinateMap_op`: the integral
-  coordinate maps represent the existing pinned morphisms.
+  coordinate maps represent the existing numbered root-subgroup and weight-torus morphisms.
 * `TauCeti.E7Minuscule.baseChangeDefiningIdeal_le_commonKernel`: the transported carrier
   contains the subgroup generated after base change by the transported maps.
 
