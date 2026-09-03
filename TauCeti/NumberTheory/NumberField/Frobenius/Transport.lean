@@ -14,26 +14,23 @@ public import TauCeti.NumberTheory.NumberField.RingOfIntegers.Equiv
 
 An algebra isomorphism between two finite extensions of the same number field restricts to an
 isomorphism between their rings of integers (`NumberField.RingOfIntegers.mapAlgEquiv`).  This
-file records the two local facts needed when a construction indexed by relative Frobenius classes
-is transported along that isomorphism:
+file records the local fact needed when a construction indexed by relative Frobenius classes
+is transported along that isomorphism: an arithmetic Frobenius is carried to its conjugate.
 
-* relative unramifiedness is preserved by the induced map on prime ideals; and
-* an arithmetic Frobenius is carried to its conjugate.
-
-Both are specializations, along `RingOfIntegers.mapAlgEquiv`, of the generic algebra-equivalence
+It is a specialization, along `RingOfIntegers.mapAlgEquiv`, of the generic algebra-equivalence
 transport proved in `TauCeti/RingTheory/Frobenius/Transport.lean`; the compatibility lemma
 `NumberField.toAlgHom_autCongr` mediates between the Galois-action formulation used here and the
-algebra-homomorphism formulation used there.
+algebra-homomorphism formulation used there.  Unramifiedness needs no specialization: call sites
+use `Algebra.IsUnramifiedAt.mapAlgEquiv` and `Algebra.IsUnramifiedAt.mapAlgEquiv_iff` directly
+with `RingOfIntegers.mapAlgEquiv e`.
 
 The prime-ideal map is used rather than a second prime carrier.  In particular, the statements
 remain conditional at a prime and do not assign a Frobenius to a ramified prime.
 
 ## Main results
 
-* `NumberField.isUnramifiedAt_map_ringOfIntegersAlgEquiv` and its `iff` form: unramifiedness
-  transport.
-* `NumberField.isArithFrobAt_map_ringOfIntegersAlgEquiv` and its `iff` form: arithmetic Frobenius
-  transport.
+* `NumberField.isArithFrobAt_autCongr_map_ringOfIntegersAlgEquiv` and its `iff` form:
+  arithmetic Frobenius transport.
 * `NumberField.toAlgHom_autCongr`: conjugation of automorphisms restricts to conjugation of their
   actions on the ring of integers.
 
@@ -64,17 +61,10 @@ theorem toAlgHom_autCongr (e : L ≃ₐ[K] L') (τ : L ≃ₐ[K] L) :
   simp [MulSemiringAction.toAlgHom_apply, algebraMap_smul_eq_apply, AlgEquiv.trans_apply,
     RingOfIntegers.mapAlgEquiv_apply]
 
-/-- Unramifiedness at a prime is preserved by the induced map on rings of integers. -/
-theorem isUnramifiedAt_map_ringOfIntegersAlgEquiv (e : L ≃ₐ[K] L')
-    (Q : Ideal (𝓞 L)) [Q.IsPrime]
-    (hQ : Algebra.IsUnramifiedAt (𝓞 K) Q) :
-    Algebra.IsUnramifiedAt (𝓞 K) (Q.map (RingOfIntegers.mapAlgEquiv e)) :=
-  Algebra.IsUnramifiedAt.mapAlgEquiv (RingOfIntegers.mapAlgEquiv e) Q hQ
-
 /-- An arithmetic Frobenius is transported to the conjugate automorphism at the transported
 prime.  The exponent is unchanged because the two primes have the same contraction to `𝓞 K`
 (`Ideal.under_mapAlgEquiv`). -/
-theorem isArithFrobAt_map_ringOfIntegersAlgEquiv (e : L ≃ₐ[K] L')
+theorem isArithFrobAt_autCongr_map_ringOfIntegersAlgEquiv (e : L ≃ₐ[K] L')
     (Q : Ideal (𝓞 L))
     (τ : L ≃ₐ[K] L)
     (hτ : IsArithFrobAt (𝓞 K) τ Q) :
@@ -89,7 +79,7 @@ theorem isArithFrobAt_map_ringOfIntegersAlgEquiv (e : L ≃ₐ[K] L')
 /-- The Frobenius transport theorem is an equivalence when the transported prime is written as the
 map of the original one. -/
 @[simp]
-theorem isArithFrobAt_map_ringOfIntegersAlgEquiv_iff
+theorem isArithFrobAt_autCongr_map_ringOfIntegersAlgEquiv_iff
     (e : L ≃ₐ[K] L')
     (Q : Ideal (𝓞 L))
     (τ : L ≃ₐ[K] L) :
@@ -99,14 +89,5 @@ theorem isArithFrobAt_map_ringOfIntegersAlgEquiv_iff
   simp only [IsArithFrobAt]
   rw [toAlgHom_autCongr]
   exact AlgHom.IsArithFrobAt.mapAlgEquiv_iff (RingOfIntegers.mapAlgEquiv e) Q _
-
-/-- Unramifiedness is likewise invariant in both directions under the induced prime bijection.
-Not `@[simp]`: the generic `Algebra.IsUnramifiedAt.mapAlgEquiv_iff` already covers this
-specialization as a simp lemma. -/
-theorem isUnramifiedAt_map_ringOfIntegersAlgEquiv_iff (e : L ≃ₐ[K] L')
-    (Q : Ideal (𝓞 L)) [Q.IsPrime] :
-    Algebra.IsUnramifiedAt (𝓞 K) (Q.map (RingOfIntegers.mapAlgEquiv e)) ↔
-      Algebra.IsUnramifiedAt (𝓞 K) Q :=
-  Algebra.IsUnramifiedAt.mapAlgEquiv_iff (RingOfIntegers.mapAlgEquiv e) Q
 
 end NumberField
