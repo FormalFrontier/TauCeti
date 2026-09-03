@@ -37,10 +37,7 @@ receiver notation on the ideal.
 Neither `LieIdeal.mkQ` nor `LieIdeal.liftQ` is exposed: `LieIdeal.mkQ_apply` and
 `LieIdeal.liftQ_apply_mkQ` characterize them on elements, and `LieIdeal.ker_mkQ`,
 `LieIdeal.liftQ_mkQ` and `LieIdeal.eq_liftQ` say all a consumer needs about their kernel and their
-factorization, so nothing downstream has to unfold the quotient. `LieIdeal.mkQ_apply`,
-`LieIdeal.liftQ_apply_mk` and `LieIdeal.liftQ_apply_mkQ` are proved by the parenthesized `(rfl)`,
-which elaborates against the definitions themselves; a bare `rfl` in an exported theorem would
-demand that they be `@[expose]`d.
+factorization, so nothing downstream has to unfold the quotient.
 
 `LieIdeal.liftQ_apply_mkQ` is the composite of `LieIdeal.mkQ_apply` and
 `LieIdeal.liftQ_apply_mk`, but only inside this file: unexposed bodies mean that in another module
