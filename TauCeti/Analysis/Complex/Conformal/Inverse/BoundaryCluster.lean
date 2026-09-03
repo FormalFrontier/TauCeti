@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Analysis.Complex.Conformal.MonotoneExtension
 public import TauCeti.Analysis.Complex.Conformal.Biholomorph
+public import TauCeti.Topology.ClusterSet
 import TauCeti.Analysis.Complex.Conformal.ImageSimplyConnected
 
 /-!

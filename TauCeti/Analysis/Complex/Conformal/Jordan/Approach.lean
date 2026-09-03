@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Analysis.Complex.Conformal.Inverse.BoundaryCluster
 public import TauCeti.Analysis.Complex.Conformal.Jordan.Domain
+public import TauCeti.Topology.ClusterSet
 public import TauCeti.Analysis.Complex.Conformal.Caratheodory
 public import TauCeti.Analysis.Complex.PlaneSeparation.Basic
 public import TauCeti.Topology.JordanCurve.SmallArc
@@ -16,8 +17,7 @@ public import TauCeti.Topology.JordanCurve.SmallArc
 
 A Jordan domain has preconnected approach regions at every boundary point.
 The proof uses Janiszewski's theorem (`TauCeti.janiszewski`) and one arc
-lemma; it avoids the Jordan curve theorem and Schoenflies by using
-Janiszewski.
+lemma, avoiding the Jordan curve theorem and Schoenflies.
 
 Given `a ∈ frontier U` with `U` a Jordan domain, take an open arc
 `W ⊆ frontier U ∩ ball a r` through `a` whose complement `frontier U \ W`
