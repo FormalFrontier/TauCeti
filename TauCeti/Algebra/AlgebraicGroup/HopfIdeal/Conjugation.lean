@@ -30,9 +30,6 @@ subgroup cut out by `I` exactly when its conjugate by `g` belongs to the subgrou
 
 * J. S. Milne, *Algebraic Groups* (2017), §§3.5 and 10.20.
 * A. Borel, *Linear Algebraic Groups*, 2nd ed. (1991), §8.
-
-This supplies the closed-subgroup conjugation operation required before the Layer 7 conjugacy
-theorems for maximal tori and Borel subgroups in the ReductiveGroups roadmap.
 -/
 
 public section
@@ -147,8 +144,6 @@ noncomputable def conjugateOrderIso
 theorem conjugateOrderIso_apply
     (g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R)) (I : HopfIdeal R H) :
     conjugateOrderIso g I = I.conjugate g := by
-  rw [conjugateOrderIso]
-  change I.conjugate g = I.conjugate g
   rfl
 
 /-- Applying the inverse conjugation order isomorphism conjugates by the inverse point. -/
@@ -156,8 +151,6 @@ theorem conjugateOrderIso_apply
 theorem conjugateOrderIso_symm_apply
     (g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R)) (I : HopfIdeal R H) :
     (conjugateOrderIso g).symm I = I.conjugate g⁻¹ := by
-  rw [conjugateOrderIso]
-  change I.conjugate g⁻¹ = I.conjugate g⁻¹
   rfl
 
 end HopfIdeal

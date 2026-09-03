@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.Yoneda
-public import TauCeti.Algebra.AlgebraicGroup.Hopf.Conjugation
 
 /-!
 # Inner conjugation in Hopf coordinates
@@ -35,9 +34,6 @@ H --conj#--> H ⊗ H --(g ⊗ id)--> H.
 
 * J. S. Milne, *Algebraic Groups* (2017), §§3.5 and 10.20.
 * A. Borel, *Linear Algebraic Groups*, 2nd ed. (1991), §8.
-
-This is the conjugation operation needed by Layer 7, "Borel subgroups, maximal tori, and their
-conjugacy", of the ReductiveGroups roadmap.
 -/
 
 public section

@@ -23,10 +23,6 @@ closed subgroup is represented contravariantly by its defining Hopf ideal.
 
 * J. S. Milne, *Algebraic Groups* (2017), §17.
 * A. Borel, *Linear Algebraic Groups*, 2nd ed. (1991), §8.
-
-This is the conjugation-stability prerequisite for Layer 7, "Borel subgroups, maximal tori, and
-their conjugacy", of the ReductiveGroups roadmap. The existence theorem and the assertion that
-any two maximal tori are conjugate remain separate.
 -/
 
 public section
