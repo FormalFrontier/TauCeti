@@ -146,9 +146,11 @@ lemma condExp_ae_eq_of_forall_condExp_ae_eq_of_tendsto_eLpNorm
 /-- Conditioning on a `μ`-trivial σ-algebra is integrating: if every `m'`-measurable set has
 measure `0` or `1`, then `μ[f | m']` is a.e. the constant `∫ f ∂μ`. -/
 theorem condExp_ae_eq_integral_of_forall_zero_or_one {Ω : Type*} {m0 : MeasurableSpace Ω}
-    {μ : Measure Ω} [IsProbabilityMeasure μ] {m' : MeasurableSpace Ω} (hm' : m' ≤ m0)
+    {μ : Measure Ω} [IsZeroOrProbabilityMeasure μ] {m' : MeasurableSpace Ω} (hm' : m' ≤ m0)
     (htriv : ∀ s, MeasurableSet[m'] s → μ s = 0 ∨ μ s = 1) {f : Ω → ℝ} (hf : Integrable f μ) :
     μ[f | m'] =ᵐ[μ] fun _ => ∫ x, f x ∂μ := by
+  rcases eq_zero_or_isProbabilityMeasure μ with rfl | _
+  · simp [Filter.EventuallyEq, ae_zero]
   refine (ae_eq_condExp_of_forall_setIntegral_eq hm' hf
     (fun s _ _ => integrableOn_const) ?_
     stronglyMeasurable_const.aestronglyMeasurable).symm

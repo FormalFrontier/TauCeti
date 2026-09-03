@@ -12,6 +12,7 @@ public import TauCeti.Probability.Exchangeability.Arrays.Tail
 import Mathlib.Probability.Independence.ZeroOne
 import TauCeti.MeasureTheory.Function.ConditionalExpectation
 import TauCeti.Probability.Martingale.Convergence
+import TauCeti.Probability.Exchangeability.PermutationExtension
 
 /-!
 # Joint dissociation and the corner tail of an array
@@ -47,10 +48,8 @@ and along the corner tail filtration Lévy's downward theorem drives the conditi
 the first cylinder's indicator to its tail conditional expectation, which triviality makes the
 constant `μ A`, so in the limit the joint mass factorizes.
 
-These results advance the exchangeable-arrays milestone of
-`TauCetiRoadmap/Exchangeability/README.md`, Layer 8: the ergodic form of the Aldous--Hoover
-representation is the dissociated one, and this is the zero-one law separating it from the general
-form, together with its converse.
+The ergodic form of the Aldous--Hoover representation is the dissociated one, and this is the
+zero-one law separating it from the general form, together with its converse.
 
 ## Main results
 
@@ -67,10 +66,7 @@ form, together with its converse.
   converse**: a jointly exchangeable array with trivial corner tail is jointly dissociated;
 * `TauCeti.Probability.jointlyDissociated_iff_forall_arrayTail_measure_eq_zero_or_one` — the two
   together, **joint dissociation ↔ corner-tail triviality** for a coordinatewise measurable jointly
-  exchangeable array under a probability measure.
-
-The Lévy factorization step along a decreasing filtration with trivial intersection is private
-here; it becomes general API only if a second consumer appears.
+  exchangeable array under a zero-or-probability measure.
 
 ## References
 
@@ -251,35 +247,6 @@ private theorem measure_inter_eq_mul_of_forall_zero_or_one_iInf [IsProbabilityMe
   have := abs_eq_zero.mp habs0
   linarith
 
-/-- A permutation of `ℕ` that fixes a finite set `I` pointwise and carries a finite set `J`,
-disjoint from `I`, past `n`. -/
-private theorem exists_perm_fixOn_le_apply (I J : Finset ℕ) (hIJ : Disjoint I J) (n : ℕ) :
-    ∃ ρ : Equiv.Perm ℕ, (∀ i ∈ I, ρ i = i) ∧ ∀ j ∈ J, n ≤ ρ j := by
-  classical
-  -- shift `J` by `N`, large enough to clear both `n` and everything in `I`
-  set N : ℕ := n + (I ∪ J).sup id + 1 with hN
-  let g : ↥(I ∪ J) → ℕ := fun x => if (x : ℕ) ∈ I then x else x + N
-  -- every element of `J` is sent past `N`, hence past everything in `I ∪ J`
-  have hbig : ∀ x : ↥(I ∪ J), (x : ℕ) < N := fun x => by
-    have := Finset.le_sup (f := id) x.property
-    simp only [id] at this; omega
-  have hg : Function.Injective g := by
-    intro x y hxy
-    simp only [g] at hxy
-    apply Subtype.ext
-    have hx := hbig x
-    have hy := hbig y
-    split_ifs at hxy <;> omega
-  obtain ⟨ρ, hρ⟩ := Equiv.Perm.exists_extending_pair (fun x : ↥(I ∪ J) => (x : ℕ)) g
-    Subtype.val_injective hg
-  refine ⟨ρ, fun i hi => ?_, fun j hj => ?_⟩
-  · have := hρ ⟨i, Finset.mem_union_left _ hi⟩
-    simpa [g, hi] using this
-  · have hjI : j ∉ I := Finset.disjoint_right.mp hIJ hj
-    have := hρ ⟨j, Finset.mem_union_right _ hj⟩
-    simp only [g, hjI, ite_false] at this
-    rw [this]; omega
-
 /-- **The core factorization.** For a cylinder `A` of the block over `S = range e × range e` and a
 cylinder `B` of the block over `T = range e' × range e'`, with `e`, `e'` of disjoint range,
 `μ (A ∩ B) = μ A * μ B`: fix the finitely many `S`-indices of `A`, push the finitely many
@@ -308,17 +275,15 @@ private theorem measure_inter_eq_mul_of_cylinders [IsProbabilityMeasure μ]
   choose! CA hCA hCAeq using hfA'
   choose! CB hCB hCBeq using hfB'
   -- the cylinders on array space, and the two events as preimages of them
-  let cyl : Finset (ℕ × ℕ) → (ℕ × ℕ → Set α) → Set (ℕ × ℕ → α) := fun t C =>
-    ⋂ p ∈ t, (fun x : ℕ × ℕ → α => x p) ⁻¹' C p
   have hcyl_meas : ∀ (t : Finset (ℕ × ℕ)) (C : ℕ × ℕ → Set α), (∀ p ∈ t, MeasurableSet (C p)) →
-      MeasurableSet (cyl t C) := fun t C hC =>
-    Finset.measurableSet_biInter _ fun p hp => measurable_pi_apply p (hC p hp)
+      MeasurableSet (Set.pi (↑t) C) := fun t C hC =>
+    MeasurableSet.pi t.countable_toSet fun p hp => hC p (Finset.mem_coe.1 hp)
   have hpre : ∀ (ρ : Equiv.Perm ℕ) (t : Finset (ℕ × ℕ)) (C : ℕ × ℕ → Set α),
-      (fun ω p => X (ρ p.1, ρ p.2) ω) ⁻¹' cyl t C = ⋂ p ∈ t, X (ρ p.1, ρ p.2) ⁻¹' C p := by
-    intro ρ t C; ext ω; simp [cyl]
+      (fun ω p => X (ρ p.1, ρ p.2) ω) ⁻¹' Set.pi (↑t) C = ⋂ p ∈ t, X (ρ p.1, ρ p.2) ⁻¹' C p := by
+    intro ρ t C; ext ω; simp [Set.mem_pi]
   have hpre1 : ∀ (t : Finset (ℕ × ℕ)) (C : ℕ × ℕ → Set α),
-      (fun ω p => X p ω) ⁻¹' cyl t C = ⋂ p ∈ t, X p ⁻¹' C p := by
-    intro t C; ext ω; simp [cyl]
+      (fun ω p => X p ω) ⁻¹' Set.pi (↑t) C = ⋂ p ∈ t, X p ⁻¹' C p := by
+    intro t C; ext ω; simp [Set.mem_pi]
   -- the index sets touched by the two cylinders are finite and disjoint
   set I : Finset ℕ := tA.image Prod.fst ∪ tA.image Prod.snd with hI
   set J : Finset ℕ := tB.image Prod.fst ∪ tB.image Prod.snd with hJ
@@ -354,14 +319,14 @@ private theorem measure_inter_eq_mul_of_cylinders [IsProbabilityMeasure μ]
     have h2 : n ≤ ρ n p.2 := hρJ n _ (Finset.mem_union_right _ (Finset.mem_image_of_mem _ hp))
     exact (measurable_arrayTailFamily_of_le (X := X) h1 h2) (hCB p hp)
   -- the events as preimages of array-space cylinders
-  have hAeq : (⋂ p ∈ tA, fA p) = (fun ω p => X p ω) ⁻¹' cyl tA CA := by
+  have hAeq : (⋂ p ∈ tA, fA p) = (fun ω p => X p ω) ⁻¹' Set.pi (↑tA) CA := by
     rw [hpre1]; exact Set.iInter₂_congr fun p hp => (hCAeq p hp).symm
-  have hBeq : (⋂ p ∈ tB, fB p) = (fun ω p => X p ω) ⁻¹' cyl tB CB := by
+  have hBeq : (⋂ p ∈ tB, fB p) = (fun ω p => X p ω) ⁻¹' Set.pi (↑tB) CB := by
     rw [hpre1]; exact Set.iInter₂_congr fun p hp => (hCBeq p hp).symm
-  have hAeq' : ∀ n, (⋂ p ∈ tA, fA p) = (fun ω p => X (ρ n p.1, ρ n p.2) ω) ⁻¹' cyl tA CA := by
+  have hAeq' : ∀ n, (⋂ p ∈ tA, fA p) = (fun ω p => X (ρ n p.1, ρ n p.2) ω) ⁻¹' Set.pi (↑tA) CA := by
     intro n; rw [hpre]
     exact Set.iInter₂_congr fun p hp => by rw [hρ_fixA n p hp, hCAeq p hp]
-  have hB'eq : ∀ n, B' n = (fun ω p => X (ρ n p.1, ρ n p.2) ω) ⁻¹' cyl tB CB := fun n =>
+  have hB'eq : ∀ n, B' n = (fun ω p => X (ρ n p.1, ρ n p.2) ω) ⁻¹' Set.pi (↑tB) CB := fun n =>
     (hpre _ _ _).symm
   have hcylA := hcyl_meas tA CA hCA
   have hcylB := hcyl_meas tB CB hCB
@@ -374,26 +339,31 @@ private theorem measure_inter_eq_mul_of_cylinders [IsProbabilityMeasure μ]
   · intro n
     rw [hB'eq, hBeq, ← Measure.map_apply (Measurable.of_eval fun p => hX _) hcylB,
       ← Measure.map_apply (Measurable.of_eval fun p => hX _) hcylB]
-    exact congrArg (fun m : Measure (ℕ × ℕ → α) => m (cyl tB CB))
+    exact congrArg (fun m : Measure (ℕ × ℕ → α) => m (Set.pi (↑tB) CB))
       (hexch.map_comp (fun p => (hX p).aemeasurable) (ρ n) measurable_id)
   · intro n
     have hL : (⋂ p ∈ tA, fA p) ∩ B' n
-        = (fun ω p => X (ρ n p.1, ρ n p.2) ω) ⁻¹' (cyl tA CA ∩ cyl tB CB) := by
+        = (fun ω p => X (ρ n p.1, ρ n p.2) ω) ⁻¹' (Set.pi (↑tA) CA ∩ Set.pi (↑tB) CB) := by
       rw [hAeq' n, hB'eq, Set.preimage_inter]
     have hR : (⋂ p ∈ tA, fA p) ∩ (⋂ p ∈ tB, fB p)
-        = (fun ω p => X p ω) ⁻¹' (cyl tA CA ∩ cyl tB CB) := by
+        = (fun ω p => X p ω) ⁻¹' (Set.pi (↑tA) CA ∩ Set.pi (↑tB) CB) := by
       rw [hAeq, hBeq, Set.preimage_inter]
     rw [hL, hR]
     rw [← Measure.map_apply (Measurable.of_eval fun p => hX _) (hcylA.inter hcylB),
       ← Measure.map_apply (Measurable.of_eval fun p => hX _) (hcylA.inter hcylB)]
-    exact congrArg (fun m : Measure (ℕ × ℕ → α) => m (cyl tA CA ∩ cyl tB CB))
+    exact congrArg (fun m : Measure (ℕ × ℕ → α) => m (Set.pi (↑tA) CA ∩ Set.pi (↑tB) CB))
       (hexch.map_comp (fun p => (hX p).aemeasurable) (ρ n) measurable_id)
 
+/-- **Corner-tail triviality implies joint dissociation.** A coordinatewise measurable, jointly
+exchangeable array whose corner tail is `μ`-trivial is jointly dissociated. -/
 theorem jointlyDissociated_of_forall_arrayTail_measure_eq_zero_or_one {X : ℕ × ℕ → Ω → α}
-    [IsProbabilityMeasure μ]
+    [IsZeroOrProbabilityMeasure μ]
     (hX : ∀ p, Measurable (X p)) (hexch : JointlyExchangeable μ X)
     (htriv : ∀ s, MeasurableSet[arrayTail X] s → μ s = 0 ∨ μ s = 1) :
     JointlyDissociated μ X := by
+  rcases eq_zero_or_isProbabilityMeasure μ with rfl | _
+  · exact jointlyDissociated_iff.mpr fun e e' _ => by
+      rw [indepFun_iff_measure_inter_preimage_eq_mul]; simp
   refine jointlyDissociated_iff.mpr fun e e' hd => ?_
   -- independence of the two block σ-algebras, from factorization on their generating π-systems
   have hindep : Indep (blockSigma X (Set.range e ×ˢ Set.range e))
@@ -422,9 +392,9 @@ theorem jointlyDissociated_of_forall_arrayTail_measure_eq_zero_or_one {X : ℕ �
   exact indep_of_indep_of_le_left (indep_of_indep_of_le_right hindep hV.comap_le) hU.comap_le
 
 /-- **Joint dissociation ↔ array-tail triviality** for a coordinatewise measurable jointly
-exchangeable array under a probability measure. -/
+exchangeable array under a zero-or-probability measure. -/
 theorem jointlyDissociated_iff_forall_arrayTail_measure_eq_zero_or_one {X : ℕ × ℕ → Ω → α}
-    [IsProbabilityMeasure μ]
+    [IsZeroOrProbabilityMeasure μ]
     (hX : ∀ p, Measurable (X p)) (hexch : JointlyExchangeable μ X) :
     JointlyDissociated μ X ↔ ∀ s, MeasurableSet[arrayTail X] s → μ s = 0 ∨ μ s = 1 :=
   ⟨fun h _ hs => h.measure_eq_zero_or_one_of_arrayTail 0 (fun p _ _ => hX p) hs,
