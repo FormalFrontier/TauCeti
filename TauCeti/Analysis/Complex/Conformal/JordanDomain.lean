@@ -173,7 +173,7 @@ theorem IsJordanDomain.locallyConnectedSpace_frontier (h : IsJordanDomain U) :
 joined by connected subsets of the boundary that are small at a rate independent of where they sit.
 
 This is `TauCeti.IsJordanDomain.locallyConnectedSpace_frontier` upgraded by
-`TauCeti.IsCompact.isUniformlyLocallyConnected`, the upgrade costing nothing because the boundary
+`IsCompact.isUniformlyLocallyConnected`, the upgrade costing nothing because the boundary
 of a bounded set is compact. The uniform form is what the hard direction of the L5 milestone
 consumes: Carathéodory's continuity theorem controls the image of a crosscut by joining its two
 boundary endpoints inside a small connected piece of `frontier U`, and the estimate has to be

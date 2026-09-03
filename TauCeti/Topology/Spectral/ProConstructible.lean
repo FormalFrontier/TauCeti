@@ -45,7 +45,7 @@ Recall that Mathlib orders topologies by *reverse* inclusion of their open sets,
 
 * `TauCeti.IsOpen.isOpen_constructibleTopology` — on a prespectral space the constructible
   topology refines the given one; hence `TauCeti.IsClosed.isProConstructible`.
-* `TauCeti.IsCompact.isProConstructible` — a quasi-compact open subset is pro-constructible. It is
+* `IsCompact.isProConstructible` — a quasi-compact open subset is pro-constructible. It is
   in fact clopen for the constructible topology, which is what makes the two previous families
   interact.
 * `TauCeti.IsProConstructible.inter`, `.iInter`, `.sInter`, `.union`, `.iUnion` — the calculus of
@@ -168,7 +168,8 @@ theorem IsProConstructible.sInter {S : Set (Set X)} (hS : ∀ s ∈ S, IsProCons
 
 /-- A quasi-compact open subset is pro-constructible: it is even clopen for the constructible
 topology, since it and its complement both belong to the defining subbasis. -/
-theorem IsCompact.isProConstructible {s : Set X} (hcomp : IsCompact s) (hopen : IsOpen s) :
+theorem _root_.IsCompact.isProConstructible {s : Set X} (hcomp : IsCompact s)
+    (hopen : IsOpen s) :
     IsProConstructible s :=
   isProConstructible_iff_isClosed.2 <|
     (@isOpen_compl_iff X s (constructibleTopology X)).1 <|
