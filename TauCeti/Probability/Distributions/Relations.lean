@@ -90,19 +90,23 @@ private theorem measurable_min {f : ι → Ω → ℝ} (hf : ∀ i, Measurable (
 measurable. -/
 private theorem aemeasurable_max (hX : ∀ i, AEMeasurable (X i) P) :
     AEMeasurable (fun ω => Finset.univ.sup' Finset.univ_nonempty fun i => X i ω) P := by
-  refine ⟨fun ω => Finset.univ.sup' Finset.univ_nonempty fun i => (hX i).mk (X i) ω,
-    measurable_max fun i => (hX i).measurable_mk, ?_⟩
-  filter_upwards [(ae_all_iff.2 fun i => (hX i).ae_eq_mk : ∀ᵐ ω ∂P, ∀ i, X i ω = _)] with ω hω
-  exact Finset.sup'_congr _ rfl fun i _ => hω i
+  have heq : (fun ω => Finset.univ.sup' Finset.univ_nonempty fun i => X i ω)
+      = Finset.univ.sup' (Finset.univ_nonempty (α := ι)) X :=
+    funext fun ω => (Finset.sup'_apply _ X ω).symm
+  rw [heq]
+  exact Finset.sup'_induction (p := fun g : Ω → ℝ => AEMeasurable g P) _ X
+    (fun _ h₁ _ h₂ => h₁.sup h₂) fun i _ => hX i
 
 /-- The minimum of an almost-everywhere measurable finite family is almost everywhere
 measurable. -/
-private theorem aemeasurable_min (hX : ∀ i, AEMeasurable (X i) P) :
+theorem aemeasurable_min (hX : ∀ i, AEMeasurable (X i) P) :
     AEMeasurable (fun ω => Finset.univ.inf' Finset.univ_nonempty fun i => X i ω) P := by
-  refine ⟨fun ω => Finset.univ.inf' Finset.univ_nonempty fun i => (hX i).mk (X i) ω,
-    measurable_min fun i => (hX i).measurable_mk, ?_⟩
-  filter_upwards [(ae_all_iff.2 fun i => (hX i).ae_eq_mk : ∀ᵐ ω ∂P, ∀ i, X i ω = _)] with ω hω
-  exact Finset.inf'_congr _ rfl fun i _ => hω i
+  have heq : (fun ω => Finset.univ.inf' Finset.univ_nonempty fun i => X i ω)
+      = Finset.univ.inf' (Finset.univ_nonempty (α := ι)) X :=
+    funext fun ω => (Finset.inf'_apply _ X ω).symm
+  rw [heq]
+  exact Finset.inf'_induction (p := fun g : Ω → ℝ => AEMeasurable g P) _ X
+    (fun _ h₁ _ h₂ => h₁.inf h₂) fun i _ => hX i
 
 /-- The maximum of a finite family is at most `x` exactly when every member is. -/
 private theorem setOf_max_le (X : ι → Ω → ℝ) (x : ℝ) :
