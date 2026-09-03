@@ -162,7 +162,7 @@ theorem rowExchangeable_iff_forall_prodCongrRight_mem_finitary [IsFiniteMeasure 
       intro ρ
       have hρ : Measurable (fun y : ι × ℕ → α =>
           fun p : ι × ℕ => y (p.1, ρ p.1 p.2)) :=
-        measurable_pi_lambda _ fun p => measurable_pi_apply (p.1, ρ p.1 p.2)
+        Measurable.of_eval fun p => measurable_pi_apply (p.1, ρ p.1 p.2)
       exact hρ.comp_aemeasurable hY
     rw [ProbabilityTheory.map_eq_iff_forall_finset_map_restrict_eq (hshift π) hY]
     intro F
