@@ -168,6 +168,8 @@ theorem baseChangeHopfIdeal_comapOfIso (J : HopfIdeal k L) (e : H ≅ L) :
           qIsoK.hom =
         baseChangeMap (K := K) e.hom ≫
           baseChangeMap (K := K) (mkQuotient L J) := by
+    -- `baseChangeMap` is the map field of the `baseChangeFunctor` abbreviation. Unfolding
+    -- that wrapper here exposes both composites in the form required by `Functor.map_comp`.
     change (baseChangeFunctor (K := K)).map (mkQuotient H
           (J.comapOfSurjective e.hom.hom (ConcreteCategory.bijective_of_isIso e.hom).2)) ≫
         (baseChangeFunctor (K := K)).map qIso.hom =
@@ -483,32 +485,6 @@ theorem mem_quotientPointsSubgroup_baseChangeHopfIdeal_iff (J : HopfIdeal k H)
     exact RingHom.mem_ker.mp (hle ((HopfIdeal.mem_toIdeal (I := baseChangeHopfIdeal J)).mpr hy))
 
 end TauCeti.CommHopfAlgCat
-
-namespace TauCeti.FiniteTypeCommHopfAlgCat
-
-universe u v w
-
-variable {k : Type u} {K : Type w} [CommRing k] [CommRing K] [Algebra k K]
-variable {H L : FiniteTypeCommHopfAlgCat.{u, v} k}
-
-/-- Base change commutes with pulling a Hopf ideal back along an ambient finite-type
-Hopf-algebra isomorphism. -/
-@[simp]
-theorem baseChangeHopfIdeal_comapOfIso (J : HopfIdeal k L.obj) (e : H ≅ L) :
-    CommHopfAlgCat.baseChangeHopfIdeal (K := K)
-        (J.comapOfSurjective (toBialgHom e.hom)
-          (ConcreteCategory.bijective_of_isIso e.hom).2) =
-      (CommHopfAlgCat.baseChangeHopfIdeal (K := K) J).comapOfSurjective
-        (toBialgHom ((_root_.TauCeti.FiniteTypeCommHopfAlgCat.baseChangeFunctor
-          (K := K)).mapIso e).hom)
-        (ConcreteCategory.bijective_of_isIso
-          ((_root_.TauCeti.FiniteTypeCommHopfAlgCat.baseChangeFunctor
-            (K := K)).mapIso e).hom).2 := by
-  exact CommHopfAlgCat.baseChangeHopfIdeal_comapOfIso (K := K) J
-    ((forget₂ (FiniteTypeCommHopfAlgCat.{u, v} k)
-      (_root_.CommHopfAlgCat.{v} k)).mapIso e)
-
-end TauCeti.FiniteTypeCommHopfAlgCat
 
 namespace TauCeti.CommHopfAlgCat
 

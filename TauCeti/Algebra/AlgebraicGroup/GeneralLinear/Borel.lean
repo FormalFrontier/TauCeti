@@ -299,20 +299,6 @@ private theorem isBorelOverField_iff (F : Type u) [Field F]
     exact ⟨⟨hsmooth, hconnected, hsolvable⟩,
       fun J hJ hJI ↦ hmax J hJ.1 hJ.2.1 hJ.2.2 hJI⟩
 
-private theorem isBorelOverField_comapOfIso
-    {F : Type u} [Field F]
-    {H L : FiniteTypeCommHopfAlgCat.{u, u} F} {I : HopfIdeal F L.obj}
-    (hI : isBorelOverField F L I) (e : H ≅ L) :
-    isBorelOverField F H
-      (I.comapOfSurjective (FiniteTypeCommHopfAlgCat.toBialgHom e.hom)
-        (ConcreteCategory.bijective_of_isIso e.hom).2) := by
-  exact FiniteTypeCommHopfAlgCat.minimal_quotientProperty_comapOfIso
-    ((smoothCommHopfAlgProperty F ⊓
-      (geometricallyConnectedCommHopfAlgProperty F ⊓
-        geometricallySolvablePointsCommHopfAlgProperty F)).inverseImage
-      (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} F)
-        (_root_.CommHopfAlgCat.{u} F))) I hI e
-
 /-- Over a field, the upper-triangular subgroup of `GL₂` is maximal among smooth geometrically
 connected solvable closed subgroups. -/
 private theorem isBorelOverField_definingHopfIdeal :
@@ -330,6 +316,8 @@ private theorem isBorelOverField_definingHopfIdeal :
   let K := AlgebraicClosure k
   let P := GeneralLinear.hopfIdealPointsSubgroup 2 I K
   have hBP : GL2Borel K ≤ P := by
+    -- `GL2Borel` abbreviates this upper-triangular subgroup; no propositional equality lemma is
+    -- retained solely to restate that definitional equality.
     change upperTriangularGroup (Fin 2) K ≤ P
     rw [← UpperTriangular.hopfIdealPointsSubgroup_eq k 2]
     exact GeneralLinear.hopfIdealPointsSubgroup_le_of_le 2 hIB K
@@ -376,7 +364,17 @@ theorem isBorel_definingHopfIdeal :
   rw [← isBorelOverField_iff K H' I']
   have htarget : isBorelOverField K L (definingHopfIdeal K) := by
     simpa only [L] using (isBorelOverField_definingHopfIdeal (k := K))
-  have hpull := isBorelOverField_comapOfIso htarget e
+  have hpull : isBorelOverField K H'
+      ((definingHopfIdeal K).comapOfSurjective
+        (FiniteTypeCommHopfAlgCat.toBialgHom e.hom)
+        (ConcreteCategory.bijective_of_isIso e.hom).2) :=
+    FiniteTypeCommHopfAlgCat.minimal_quotientProperty_comapOfIso
+      (H := H') (K := L)
+      ((smoothCommHopfAlgProperty K ⊓
+        (geometricallyConnectedCommHopfAlgProperty K ⊓
+          geometricallySolvablePointsCommHopfAlgProperty K)).inverseImage
+        (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} K)
+          (_root_.CommHopfAlgCat.{u} K))) (definingHopfIdeal K) htarget e
   let f := FiniteTypeCommHopfAlgCat.toBialgHom e.hom
   have hf : Function.Bijective f := ConcreteCategory.bijective_of_isIso e.hom
   have hmap : I'.map f = definingHopfIdeal K := by

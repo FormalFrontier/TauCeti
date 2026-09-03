@@ -123,20 +123,6 @@ theorem isBorel_iff (k : Type u) [Field k] (H : _root_.CommHopfAlgCat.{v} k)
     exact ⟨⟨hsmooth, hconnected, hsolvable⟩,
       fun J hJ hJI ↦ hmax J hJ.1 hJ.2.1 hJ.2.2 hJI⟩
 
-/-- The defining minimal-quotient-property form of `IsBorel`, used internally for transport
-across ambient isomorphisms. -/
-private theorem isBorel_iff_minimal_quotientProperty
-    (k : Type u) [Field k] (H : _root_.CommHopfAlgCat.{v} k)
-    [Algebra.FiniteType k H] (I : HopfIdeal k H) :
-    let K := AlgebraicClosure k
-    let H' := FiniteTypeCommHopfAlgCat.baseChange (K := K)
-      ⟨H, (finiteTypeCommHopfAlgProperty_iff H).2 inferInstance⟩
-    let I' := CommHopfAlgCat.baseChangeHopfIdeal (K := K) I
-    IsBorel k H I ↔
-      Minimal (fun J : HopfIdeal K H'.obj ↦
-        borelQuotientProperty K (FiniteTypeCommHopfAlgCat.quotient H' J)) I' :=
-  Iff.rfl
-
 private theorem minimal_borelQuotientProperty_comapOfIso
     {k : Type u} [Field k]
     {H L : FiniteTypeCommHopfAlgCat.{u, v} k} {I : HopfIdeal k L.obj}
@@ -164,8 +150,17 @@ private theorem minimal_borelQuotientProperty_comapOfIso
     (K := FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) L)
     (borelQuotientProperty (AlgebraicClosure k))
     (CommHopfAlgCat.baseChangeHopfIdeal (K := AlgebraicClosure k) I) hI eK
-  rw [← FiniteTypeCommHopfAlgCat.baseChangeHopfIdeal_comapOfIso
-    (K := AlgebraicClosure k) I e] at htransport
+  have hbaseChange :
+      CommHopfAlgCat.baseChangeHopfIdeal (K := AlgebraicClosure k)
+          (I.comapOfSurjective (FiniteTypeCommHopfAlgCat.toBialgHom e.hom)
+            (ConcreteCategory.bijective_of_isIso e.hom).2) =
+        (CommHopfAlgCat.baseChangeHopfIdeal (K := AlgebraicClosure k) I).comapOfSurjective
+          (FiniteTypeCommHopfAlgCat.toBialgHom eK.hom)
+          (ConcreteCategory.bijective_of_isIso eK.hom).2 :=
+    CommHopfAlgCat.baseChangeHopfIdeal_comapOfIso (K := AlgebraicClosure k) I
+      ((forget₂ (FiniteTypeCommHopfAlgCat.{u, v} k)
+        (_root_.CommHopfAlgCat.{v} k)).mapIso e)
+  rw [hbaseChange]
   exact htransport
 
 namespace IsBorel
@@ -179,9 +174,18 @@ theorem comapOfIso (hI : IsBorel k L.obj I) (e : H ≅ L) :
     IsBorel k H.obj
       (I.comapOfSurjective (FiniteTypeCommHopfAlgCat.toBialgHom e.hom)
         (ConcreteCategory.bijective_of_isIso e.hom).2) := by
-  apply (isBorel_iff_minimal_quotientProperty k H.obj _).mpr
-  exact minimal_borelQuotientProperty_comapOfIso
-    ((isBorel_iff_minimal_quotientProperty k L.obj I).mp hI) e
+  -- `IsBorel` is definitionally this minimal quotient property; no private `Iff.rfl`
+  -- wrapper is retained solely to unfold and refold it for transport.
+  change Minimal
+    (fun J : HopfIdeal (AlgebraicClosure k)
+        (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H).obj ↦
+      borelQuotientProperty (AlgebraicClosure k)
+        (FiniteTypeCommHopfAlgCat.quotient
+          (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H) J))
+    (CommHopfAlgCat.baseChangeHopfIdeal (K := AlgebraicClosure k)
+      (I.comapOfSurjective (FiniteTypeCommHopfAlgCat.toBialgHom e.hom)
+        (ConcreteCategory.bijective_of_isIso e.hom).2))
+  exact minimal_borelQuotientProperty_comapOfIso hI e
 
 /-- Borel status is invariant under pulling the defining ideal back across an ambient
 Hopf-algebra isomorphism. -/
