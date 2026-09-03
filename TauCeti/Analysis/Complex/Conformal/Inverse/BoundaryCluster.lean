@@ -12,9 +12,8 @@ import TauCeti.Analysis.Complex.Conformal.ImageSimplyConnected
 /-!
 # Boundary injectivity via inverse cluster sets
 
-The predicate `IsPreconnectedApproachAt U a` asks that every neighbourhood of
-`a` contains a smaller neighbourhood whose trace on `U` is preconnected.
-If the condition holds at every boundary point of a conformal image, the
+If `IsPreconnectedApproachAt` (from `TauCeti/Topology/ClusterSet.lean`) holds at
+every boundary point of a conformal image, the
 cluster-set continuum theorem makes each boundary fibre of the extension
 preconnected, and `injOn_closedBall_of_isPreconnected_boundary_fiber`
 gives injectivity on the closed disc.
@@ -25,7 +24,6 @@ Adapted from D. Cureton, `sphere-six-complex`,
 
 ## Main results
 
-* `TauCeti.IsPreconnectedApproachAt` — the local connectivity predicate.
 * `TauCeti.clusterSetOn_invFunOn_eq_boundary_fiber` — boundary fibre =
   cluster set of the inverse.
 * `TauCeti.isPreconnected_boundary_fiber_of_isPreconnected_image_approach`
@@ -48,45 +46,6 @@ public section
 open Set Metric Topology Function Filter
 
 namespace TauCeti
-
-variable {X : Type*} [TopologicalSpace X]
-
-/-- A set has **preconnected approach regions at `a`** if every
-neighbourhood of `a` contains a smaller neighbourhood whose trace on
-the set is preconnected.  This is the exact local input in the
-cluster-set continuum theorem. -/
-def IsPreconnectedApproachAt (U : Set X) (a : X) : Prop :=
-  ∀ s ∈ nhds a, ∃ t ∈ nhds a, t ⊆ s ∧ IsPreconnected (U ∩ t)
-
-theorem isPreconnectedApproachAt_def {U : Set X} {a : X} :
-    IsPreconnectedApproachAt U a ↔
-      ∀ s ∈ 𝓝 a, ∃ t ∈ 𝓝 a, t ⊆ s ∧ IsPreconnected (U ∩ t) :=
-  Iff.rfl
-
-/-- **Local connectedness gives preconnected approach regions.**  If for every
-`ε > 0` some preconnected `C ⊆ U ∩ ball a ε` contains `U ∩ ball a δ` for a
-`δ > 0`, then `U` has preconnected approach regions at `a`.  The witness
-neighbourhood is `ball a δ ∪ C`, whose trace on `U` is `C`. -/
-theorem isPreconnectedApproachAt_of_forall_exists_isPreconnected_superset
-    {Y : Type*} [PseudoMetricSpace Y] {U : Set Y} {a : Y}
-    (h : ∀ ε > 0, ∃ δ > 0, ∃ C ⊆ U ∩ ball a ε,
-      IsPreconnected C ∧ U ∩ ball a δ ⊆ C) :
-    IsPreconnectedApproachAt U a := by
-  intro s hs
-  obtain ⟨ε, hε, hεs⟩ := Metric.mem_nhds_iff.mp hs
-  obtain ⟨δ, hδ, C, hCU, hCpre, hsub⟩ := h ε hε
-  refine ⟨ball a (min δ ε) ∪ C,
-    mem_of_superset (ball_mem_nhds a (lt_min hδ hε)) subset_union_left, ?_, ?_⟩
-  · exact union_subset ((ball_subset_ball (min_le_right δ ε)).trans hεs)
-      ((hCU.trans inter_subset_right).trans hεs)
-  · have heq : U ∩ (ball a (min δ ε) ∪ C) = C := by
-      apply subset_antisymm
-      · rintro z ⟨hzU, hz | hz⟩
-        · exact hsub ⟨hzU, ball_subset_ball (min_le_left δ ε) hz⟩
-        · exact hz
-      · exact fun z hz => ⟨(hCU hz).1, Or.inr hz⟩
-    rw [heq]
-    exact hCpre
 
 /-! ### Cluster-set identification and fibre theorems -/
 
@@ -216,7 +175,7 @@ theorem
         (clusterSetOn g (f '' U) a) :=
     isPreconnected_clusterSetOn
       hUb.isCompact_closure
-      (fun z hz ↦ subset_closure (hgU hz)) hgc hloc
+      (fun z hz ↦ subset_closure (hgU hz)) hgc (isPreconnectedApproachAt_def.mp hloc)
   rw [← IsInducing.subtypeVal.isPreconnected_image]
   have himage :
       Subtype.val '' {z : frontier U | F z = a} =

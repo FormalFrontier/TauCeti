@@ -50,9 +50,8 @@ cluster-set property that produces the continuous extension in the first place â
 boundary-injectivity claim is discharged by this file; what it adds is the analytic
 non-degeneracy input that the missing step will consume.
 
-The L5 milestone is now complete via `Conformal/Jordan/Approach.lean`, which takes the
-Janiszewski route (preconnected approach regions) rather than the classical two-arc argument,
-so this file's analytic input is consumed through a different path than described above.
+`Conformal/Jordan/Approach.lean` proves boundary injectivity by a different route (Janiszewski
+and preconnected approach regions) and does not consume this file.
 
 ## Main results
 

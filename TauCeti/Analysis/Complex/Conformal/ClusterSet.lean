@@ -98,9 +98,8 @@ boundary point, and what is asked of it is *relative nowhere density* — each o
 one for every `w ∈ frontier U`, is to be nowhere dense in the curve. What the criterion does is
 trade the analytic content of the milestone for that purely topological condition on where the
 cluster sets sit; what it does not do is *verify* the condition for a Riemann map, which the
-crosscut and length–area files are aimed at. The L5 milestone is now complete via
-`Conformal/Jordan/Approach.lean`, which takes the Janiszewski route (preconnected approach
-regions) rather than verifying the nowhere-density condition directly.
+crosscut and length–area files are aimed at. For Jordan domains, that verification is
+`IsJordanDomain.isPreconnectedApproachAt` in `Conformal/Jordan/Approach.lean`.
 
 In accordance with the generality bar of `ConformalMapping/README.md`, which fixes scalar `ℂ` for
 every theorem added in layers L0–L6, the results below are stated for maps of `ℂ`, as in

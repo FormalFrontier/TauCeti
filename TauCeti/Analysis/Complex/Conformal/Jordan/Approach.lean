@@ -10,7 +10,6 @@ public import TauCeti.Analysis.Complex.Conformal.Jordan.Domain
 public import TauCeti.Analysis.Complex.Conformal.Caratheodory
 public import TauCeti.Analysis.Complex.PlaneSeparation.Basic
 public import TauCeti.Topology.JordanCurve.SmallArc
-public import TauCeti.Topology.JordanCurve.Subcontinuum
 
 /-!
 # Preconnected approach regions for Jordan domains
@@ -52,10 +51,8 @@ for the Riemann map of a Jordan domain, and with `closureHomeomorph` from
 
 * C. Carathéodory, *Über die gegenseitige Beziehung der Ränder bei der konformen Abbildung*,
   Math. Ann. **73** (1913).
-* Layer L5 is absent from
-  [mathlib4#33505](https://github.com/leanprover-community/mathlib4/pull/33505), the in-progress
-  human-curated Riemann-mapping-theorem effort, and Mathlib has no boundary correspondence for
-  conformal maps, so this is new Lean formalization.
+* [mathlib4#33505](https://github.com/leanprover-community/mathlib4/pull/33505) — the human-curated
+  Riemann-mapping-theorem effort in Mathlib; layer L5 (boundary correspondence) is absent there.
 -/
 
 public section
