@@ -62,14 +62,6 @@ existential is what keeps the fibres free of them.
 The last two are what let the density arguments discard a finite exceptional set and then work
 one class at a time: a lower density bound for each class can be squeezed against a partition of
 a cofinite set, which is how the crossing argument produces exact densities.
-
-## References
-
-The definition of `frobeniusPrimeSet` and the statement of `disjoint_frobeniusPrimeSet` follow
-`TauCetiRoadmap/Chebotarev/Suggested.lean`, lines 64–76, from which the dependent membership
-condition and the `HeightOneSpectrum (𝓞 K)` carrier are taken verbatim; the prose description of
-the intended API is the section `Frobenius prime sets and finite exceptional sets` of
-`TauCetiRoadmap/Chebotarev/README.md`.
 -/
 
 public section
@@ -91,7 +83,11 @@ and its Artin class is `C`.
 
 The unramifiedness proof is packaged existentially rather than assumed, because `artinSymbol`
 takes it as an argument and no value is assigned at a ramified prime. See
-`mem_frobeniusPrimeSet_iff_artinSymbol_eq` for the form used once such a proof is available. -/
+`mem_frobeniusPrimeSet_iff_artinSymbol_eq` for the form used once such a proof is available.
+
+The carrier and this membership condition are taken from
+`TauCetiRoadmap/Chebotarev/Suggested.lean`, lines 64–76, described in the section
+`Frobenius prime sets and finite exceptional sets` of `TauCetiRoadmap/Chebotarev/README.md`. -/
 def frobeniusPrimeSet (C : ConjClasses (L ≃ₐ[K] L)) : Set (HeightOneSpectrum (𝓞 K)) :=
   {𝔭 | ∃ hur : ∀ (Q : Ideal (𝓞 L)) [Q.IsPrime] [Q.LiesOver 𝔭.asIdeal],
     Algebra.IsUnramifiedAt (𝓞 K) Q, artinSymbol 𝔭.asIdeal hur = C}
