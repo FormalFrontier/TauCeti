@@ -75,6 +75,10 @@ rest of the layer this file opens.
   commute.**
 * `TauCeti.SpinPolarizationData.spinAction_diagonalBivector_basis`: **the diagonal bivectors act
   diagonally on the exterior basis**, by `⅟2` or `-⅟2`.
+* `TauCeti.SpinPolarizationData.spinAction_two_smul_diagonalBivector_basis` and
+  `TauCeti.SpinPolarizationData.spinAction_diagonalBivector_sub_diagonalBivector_basis`: twice a
+  diagonal bivector acts by `±1`, and a difference of two of them by a difference of two weights.
+  These are the two combinations that a coroot of an orthogonal Lie algebra realizes.
 * `TauCeti.spinWeightSpace_spinWeight`: **each weight space is the line spanned by its exterior
   basis vector.**
 * `TauCeti.spinWeightSpace_eq_bot_of_notMem_range` and `TauCeti.spinWeightSpace_ne_bot_iff`: no
@@ -297,6 +301,25 @@ theorem spinAction_diagonalBivector_basis (i : ι) (s : Finset ι) :
     simp [h]
   · rw [spinWeight_of_notMem h]
     simp [h]
+
+/-- **Twice a diagonal bivector acts on the exterior basis by `±1`**, according to whether its
+coordinate is occupied: the spin weights are half-integral, so their doubles are units. This is
+the combination realized by the short coroot of an odd orthogonal Lie algebra. -/
+theorem spinAction_two_smul_diagonalBivector_basis (i : ι) (s : Finset ι) :
+    spinAction Q P ((2 : K) • P.diagonalBivector b i) (b.ExteriorAlgebra s) =
+      (if i ∈ s then (1 : K) else -1) • b.ExteriorAlgebra s := by
+  rw [map_smul, LinearMap.smul_apply, P.spinAction_diagonalBivector_basis b i s, smul_smul]
+  by_cases hi : i ∈ s <;> simp [hi, spinWeight_of_mem, spinWeight_of_notMem]
+
+/-- **A difference of two diagonal bivectors acts on the exterior basis by the difference of the
+two spin weights**, which is `0` or `±1`. This is the combination realized by the long coroot of
+an orthogonal Lie algebra. -/
+theorem spinAction_diagonalBivector_sub_diagonalBivector_basis (i j : ι) (s : Finset ι) :
+    spinAction Q P (P.diagonalBivector b i - P.diagonalBivector b j) (b.ExteriorAlgebra s) =
+      (spinWeight K s i - spinWeight K s j) • b.ExteriorAlgebra s := by
+  rw [map_sub, LinearMap.sub_apply, P.spinAction_diagonalBivector_basis b i s,
+    P.spinAction_diagonalBivector_basis b j s]
+  simp [sub_smul]
 
 end SpinPolarizationData
 

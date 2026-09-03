@@ -7,8 +7,6 @@ module
 
 public import TauCeti.LinearAlgebra.RootSystem.Chamber
 
-public section
-
 /-!
 # The Weyl vector of a base
 
@@ -66,6 +64,8 @@ specialization rather than a rebuild.
 The argument is the one in J. E. Humphreys, *Introduction to Lie Algebras and Representation
 Theory*, GTM 9, Ch. III, §10.2 and §13.3.
 -/
+
+public section
 
 namespace TauCeti
 

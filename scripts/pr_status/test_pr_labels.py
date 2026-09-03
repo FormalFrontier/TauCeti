@@ -17,6 +17,137 @@ import core  # noqa: E402
 import labels  # noqa: E402
 
 
+# Real `gh api` stderr: the API message, then the status gh appends.
+SECONDARY_403 = ("gh: You have exceeded a secondary rate limit and have been "
+                 "temporarily blocked from content creation. (HTTP 403)")
+ABUSE_403 = ("gh: You have triggered an abuse detection mechanism. "
+             "Please wait a few minutes before you try again. (HTTP 403)")
+PRIMARY_403 = "gh: API rate limit exceeded for installation. (HTTP 403)"
+TOO_MANY_429 = "gh: Too Many Requests (HTTP 429)"
+NOT_FOUND_404 = "gh: Not Found (HTTP 404)"
+# The finding this pins: wording alone must not trigger a retry.
+NOT_FOUND_MENTIONING_RATE = ("gh: No workflow named 'rate limit dashboard' "
+                             "was found. (HTTP 404)")
+
+
+class RateLimitClassification(unittest.TestCase):
+    """Status first, wording second: `gh` reports rate limits as 403 or 429."""
+
+    def test_recognises_the_real_limit_responses(self):
+        for stderr in (SECONDARY_403, ABUSE_403, PRIMARY_403, TOO_MANY_429):
+            with self.subTest(stderr=stderr[:40]):
+                self.assertTrue(core._rate_limited(stderr))
+
+    def test_a_404_is_never_a_rate_limit_however_it_is_worded(self):
+        self.assertFalse(core._rate_limited(NOT_FOUND_404))
+        self.assertFalse(core._rate_limited(NOT_FOUND_MENTIONING_RATE))
+
+    def test_a_403_that_is_merely_forbidden_is_not_retried(self):
+        self.assertFalse(core._rate_limited("gh: Resource not accessible by "
+                                            "integration (HTTP 403)"))
+
+    def test_stderr_with_no_status_is_not_retried(self):
+        self.assertFalse(core._rate_limited("gh: connection reset"))
+
+
+class RateLimitBackoff(unittest.TestCase):
+    """`gh` does not retry a rate limit, and a burst can spend the budget."""
+
+    def setUp(self):
+        core._BLOCKED_UNTIL = 0.0
+        self.addCleanup(setattr, core, "_BLOCKED_UNTIL", 0.0)
+
+    def result(self, code, err):
+        return mock.Mock(returncode=code, stderr=err, stdout="ok")
+
+    def call(self, results, quota=None, waits=None):
+        """Run gh_api over canned subprocess results. `quota` is what the quota
+        probe reports: None = secondary limit, an int = seconds to reset."""
+        record = waits.append if waits is not None else (lambda s: None)
+        state = ((core.QUOTA_EXHAUSTED, quota) if isinstance(quota, int)
+                 else (quota or core.QUOTA_OK, None))
+        with (mock.patch.object(core.subprocess, "run") as run,
+              mock.patch.object(core.time, "sleep", record),
+              mock.patch.object(core, "_quota_state", lambda: state)):
+            run.side_effect = results
+            return core.gh_api("/x"), run
+
+    def test_retries_through_a_secondary_limit(self):
+        out, run = self.call([self.result(1, SECONDARY_403), self.result(0, "")])
+        self.assertEqual((out, run.call_count), ("ok", 2))
+
+    def test_a_normal_failure_is_not_retried(self):
+        with self.assertRaises(RuntimeError) as caught:
+            self.call([self.result(1, NOT_FOUND_404)])
+        self.assertNotIsInstance(caught.exception, core.RateLimited)
+
+    def test_waits_at_least_a_minute_before_retrying(self):
+        # GitHub asks for 60s minimum on a secondary limit; a faster schedule can
+        # prolong the block.
+        waits = []
+        self.call([self.result(1, SECONDARY_403), self.result(1, ABUSE_403),
+                   self.result(0, "")], waits=waits)
+        self.assertEqual(waits, [core.SECONDARY_BACKOFF_SECONDS,
+                                 core.SECONDARY_BACKOFF_SECONDS * 2])
+
+    def test_an_exhausted_quota_fails_fast_rather_than_sleeping_it_out(self):
+        # The hourly quota clears only at its reset, which no workflow step can
+        # wait for.
+        waits = []
+        with self.assertRaises(core.RateLimited) as caught:
+            self.call([self.result(1, PRIMARY_403)], quota=1800, waits=waits)
+        self.assertEqual(waits, [])
+        self.assertIn("1800s", str(caught.exception))
+
+    def test_a_bare_429_with_no_message_is_still_a_rate_limit(self):
+        # `gh` renders a response with no JSON message as "gh: HTTP 429".
+        self.assertTrue(core._rate_limited("gh: HTTP 429"))
+
+    def test_a_failed_quota_probe_is_not_read_as_room_to_spare(self):
+        # /rate_limit does not cost primary quota but can cost secondary, so the
+        # probe can itself be refused; reading that as "budget is fine" would keep
+        # us issuing requests while limited.
+        waits = []
+        self.call([self.result(1, SECONDARY_403), self.result(0, "")],
+                  quota=core.QUOTA_UNKNOWN, waits=waits)
+        self.assertEqual(waits, [core.SECONDARY_BACKOFF_SECONDS])
+
+    def test_the_breaker_holds_for_the_next_interval_not_the_first(self):
+        # Releasing after 60s would let a looping caller restart the whole
+        # schedule, which is what the breaker exists to prevent.
+        before = core.time.time()
+        with self.assertRaises(core.RateLimited):
+            self.call([self.result(1, SECONDARY_403)] * core.RATE_LIMIT_ATTEMPTS)
+        held = core._BLOCKED_UNTIL - before
+        self.assertGreaterEqual(
+            held, core.SECONDARY_BACKOFF_SECONDS * 2 ** (core.RATE_LIMIT_ATTEMPTS - 1))
+
+    def test_a_short_block_never_shortens_a_long_one(self):
+        core._BLOCKED_UNTIL = core.time.time() + 3600
+        core._block_for(1)
+        self.assertGreater(core._BLOCKED_UNTIL - core.time.time(), 3000)
+
+    def test_a_quota_resetting_soon_is_waited_for(self):
+        waits = []
+        out, _ = self.call([self.result(1, PRIMARY_403), self.result(0, "")],
+                           quota=20, waits=waits)
+        self.assertEqual((out, waits), ("ok", [20]))
+
+    def test_exhausting_the_attempts_raises_rate_limited(self):
+        with self.assertRaises(core.RateLimited):
+            self.call([self.result(1, SECONDARY_403)] * core.RATE_LIMIT_ATTEMPTS)
+
+    def test_a_later_read_fails_fast_instead_of_waiting_again(self):
+        # stuck_alerts runs ten detectors catching failures individually; without
+        # this each would start the whole wait over and blow the job timeout.
+        with self.assertRaises(core.RateLimited):
+            self.call([self.result(1, SECONDARY_403)] * core.RATE_LIMIT_ATTEMPTS)
+        with mock.patch.object(core.subprocess, "run") as run:
+            with self.assertRaises(core.RateLimited):
+                core.gh_api("/y")
+            run.assert_not_called()
+
+
 class ReviewState(unittest.TestCase):
     HEAD = "abc123"
 
@@ -61,6 +192,14 @@ class ReviewState(unittest.TestCase):
 
 
 class ScoreboardMeta(unittest.TestCase):
+    @staticmethod
+    def board(n, updated, association):
+        return {
+            "body": f'<!--tauceti-scoreboard--><!--tauceti-meta:v1 {{"n":{n}}}-->',
+            "updated": updated,
+            "author_association": association,
+        }
+
     def test_parses_meta_with_nested_states(self):
         # Regression: a lazy `\{.*?\}` truncated at the first inner `}` and dropped the whole meta.
         body = ('<!--tauceti-scoreboard-->\n'
@@ -70,13 +209,39 @@ class ScoreboardMeta(unittest.TestCase):
         self.assertEqual(meta.get("states", {}).get("correctness"), "blocking_block")
         self.assertEqual(meta.get("full_rounds"), 2)
 
-    def test_newest_trusted_comment_wins(self):
+    def test_newest_supplied_comment_wins(self):
         old = {"body": '<!--tauceti-scoreboard--><!--tauceti-meta:v1 {"n":1}-->', "updated": "2026-01-01"}
         new = {"body": '<!--tauceti-scoreboard--><!--tauceti-meta:v1 {"n":2}-->', "updated": "2026-02-01"}
         self.assertEqual(core.scoreboard_meta_from([old, new]).get("n"), 2)
 
     def test_no_marker_is_empty(self):
         self.assertEqual(core.scoreboard_meta_from([{"body": "hi", "updated": "x"}]), {})
+
+    def test_status_scoreboard_accepts_newer_contributor_review(self):
+        comments = [
+            self.board(1, "2026-01-01", "MEMBER"),
+            self.board(2, "2026-02-01", "CONTRIBUTOR"),
+        ]
+        with mock.patch.object(core, "issue_comments", return_value=comments):
+            self.assertEqual(core.scoreboard_meta("9").get("n"), 2)
+
+    def test_destructive_selector_keeps_repo_associated_policy(self):
+        comments = [
+            self.board(1, "2026-01-01", "MEMBER"),
+            self.board(2, "2026-02-01", "CONTRIBUTOR"),
+        ]
+        with mock.patch.object(core, "issue_comments", return_value=comments):
+            self.assertEqual(core.repo_associated_scoreboard_meta("9").get("n"), 1)
+
+    def test_issue_comment_fetch_has_no_author_filter(self):
+        raw = json.dumps({
+            "body": "external review",
+            "updated": "2026-02-01",
+            "author_association": "CONTRIBUTOR",
+        })
+        with mock.patch.object(core, "gh_api", return_value=raw) as gh:
+            self.assertEqual(core.issue_comments("9")[0]["author_association"], "CONTRIBUTOR")
+        self.assertNotIn("select(.author_association", gh.call_args.kwargs["jq"])
 
 
 class RoadmapLabels(unittest.TestCase):
@@ -197,22 +362,35 @@ class DerivedLabel(unittest.TestCase):
 
 
 class Derive(unittest.TestCase):
-    """core.derive glues pr_state/ci_status/trusted_comments together; stub them."""
+    """core.derive glues pr_state/ci_status/issue_comments together; stub them."""
 
     def setUp(self):
-        self._saved = (core.pr_state, core.ci_status, core.trusted_comments)
+        self._saved = (core.pr_state, core.ci_status, core.issue_comments)
 
     def tearDown(self):
-        core.pr_state, core.ci_status, core.trusted_comments = self._saved
+        core.pr_state, core.ci_status, core.issue_comments = self._saved
 
     def stub(self, state="open", merged=False, ci="success", comments=None):
         core.pr_state = lambda pr: {"state": state, "merged": merged, "head": "H", "title": "T"}
         core.ci_status = lambda head: ci
-        core.trusted_comments = lambda pr: (comments or [])
+        core.issue_comments = lambda pr: (comments or [])
 
-    def test_open_plumbs_inprogress(self):
+    def test_contributor_scoreboard_drives_review_state(self):
+        self.stub(comments=[{
+            "body": ('<!--tauceti-scoreboard-->'
+                     '<!--tauceti-meta:v1 {"head_sha":"H",'
+                     '"states":{"correctness":"blocking_request"}}-->'),
+            "updated": "2026-02-01",
+            "author_association": "CONTRIBUTOR",
+        }])
+        self.assertEqual(core.derive("1")["review"], "changes")
+
+    def test_contributor_inprogress_marker_drives_status(self):
         self.stub(ci="success",
-                  comments=[{"body": '<!--tauceti-review-in-progress {"head": "H", "expires_at": 9999999999}-->'}])
+                  comments=[{
+                      "body": '<!--tauceti-review-in-progress {"head": "H", "expires_at": 9999999999}-->',
+                      "author_association": "CONTRIBUTOR",
+                  }])
         d = core.derive("1", now=1_700_000_000)
         self.assertEqual(d["lifecycle"], "open")
         self.assertTrue(d["review_inprogress"])
@@ -235,7 +413,7 @@ class Derive(unittest.TestCase):
 
         core.pr_state = boom
         core.ci_status = lambda head: "running"
-        core.trusted_comments = lambda pr: []
+        core.issue_comments = lambda pr: []
         d = core.derive("1", state={"state": "open", "merged": False, "head": "H", "title": "T"})
         self.assertEqual(d["ci"], "running")
         self.assertEqual(called["n"], 0)

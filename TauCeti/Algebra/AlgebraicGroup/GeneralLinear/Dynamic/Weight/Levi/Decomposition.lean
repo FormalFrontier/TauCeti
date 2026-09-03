@@ -189,9 +189,7 @@ theorem mapPointsFunctor_weightLeviToParabolicCoordinateMap_comp_weightParabolic
 `O(L(w)) → O(P(w))`, opposite to the group-scheme morphism. -/
 noncomputable def weightParabolicLimitCoordinateMap (w : Fin N → ℤ) :
     weightLeviCoordinateHopfAlgebra R w ⟶ weightParabolicCoordinateHopfAlgebra R w :=
-  ((CommHopfAlgCat.pointsFunctor.{u, u, u} (R := R) :
-      (_root_.CommHopfAlgCat.{u} R)ᵒᵖ ⥤ CommAlgCat.{u} R ⥤ GrpCat.{u}).preimage
-    (weightParabolicLimitPointsMap R w)).unop
+  CommHopfAlgCat.homOfPointsMap (weightParabolicLimitPointsMap R w)
 
 /-- Precomposition by the limit coordinate morphism is the natural dynamic limit map on
 represented points. -/
@@ -201,12 +199,8 @@ private theorem mapPointsFunctor_weightParabolicLimitCoordinateMap_sameUniverse
       (weightParabolicLimitCoordinateMap R w) :
       HopfAlgebra.pointsFunctor (R := R) (H := weightParabolicCoordinateHopfAlgebra R w) ⟶
         HopfAlgebra.pointsFunctor (R := R) (H := weightLeviCoordinateHopfAlgebra R w)) =
-      weightParabolicLimitPointsMap R w := by
-  unfold weightParabolicLimitCoordinateMap
-  rw [← CommHopfAlgCat.pointsFunctor_map]
-  exact Functor.map_preimage
-    (CommHopfAlgCat.pointsFunctor.{u, u, u} (R := R) :
-      (_root_.CommHopfAlgCat.{u} R)ᵒᵖ ⥤ CommAlgCat.{u} R ⥤ GrpCat.{u}) _
+      weightParabolicLimitPointsMap R w :=
+  CommHopfAlgCat.mapPointsFunctor_homOfPointsMap _
 
 -- A point `g : K → A` is obtained from the generic point `id_K : K → K` by changing its value
 -- algebra along `g`. This formulation crosses universe levels, unlike functoriality inside one

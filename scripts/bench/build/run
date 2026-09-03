@@ -3,7 +3,10 @@ set -euxo pipefail
 
 BENCH="scripts/bench"
 
-# Prepare build
+# Prepare build. A caller opts out of the default read endpoint below by defining
+# MATHLIB_CACHE_GET_URL first. A defined-but-empty value also counts as a choice:
+# the cache tool treats it as unset and uses its default endpoints.
+export MATHLIB_CACHE_GET_URL="${MATHLIB_CACHE_GET_URL-https://cache.mathlib.org/mathlib4}"
 lake exe cache get
 
 # Run build

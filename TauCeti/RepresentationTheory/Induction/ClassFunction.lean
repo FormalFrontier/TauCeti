@@ -6,6 +6,10 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.RepresentationTheory.CharacterTable.ClassFunction
+-- The translation action `g • (x : G ⧸ S)` occurs in the statements about which summands vanish.
+public import Mathlib.GroupTheory.GroupAction.Quotient
+-- Non-public: `TauCeti.smul_quotientGroup_mk_eq_self_iff` is used only inside a proof.
+import TauCeti.GroupTheory.QuotientGroup.Basic
 
 /-!
 # The induced class function
@@ -41,6 +45,10 @@ and to deduce `TauCeti.character_ind` from `TauCeti.indClassFun_eq_natCard_inv_m
 
 ## Main statements
 
+* `TauCeti.indTerm_eq_zero_of_smul_mk_ne` and
+  `TauCeti.indClassFun_eq_sum_of_smul_eq_self_mem`: only the cosets `g` fixes contribute, so the
+  coset sum may be taken over any finite set of cosets containing the fixed ones.  This is what
+  turns the formula into a finite explicit computation for a concrete group.
 * `TauCeti.indClassFun_mem_classFunction`: the induced function of a class function is a class
   function.
 * `TauCeti.natCard_mul_indClassFun`: the group-sum form, `|S| · (Ind f)(g) = ∑_{x ∈ G} f(x⁻¹gx)`,
@@ -100,6 +108,14 @@ theorem indTerm_apply (f : S → k) (g x : G) :
     indTerm f g x = if h : x⁻¹ * g * x ∈ S then f ⟨x⁻¹ * g * x, h⟩ else 0 :=
   (rfl)
 
+/-- **A summand vanishes unless `g` fixes the coset of its representative.**  The conjugate
+`x⁻¹ g x` lies in `S` exactly when `g • xS = xS`, so only the fixed cosets contribute to
+`TauCeti.indClassFun`. -/
+theorem indTerm_eq_zero_of_smul_mk_ne (f : S → k) {g x : G}
+    (h : g • (x : G ⧸ S) ≠ (x : G ⧸ S)) : indTerm f g x = 0 := by
+  classical
+  rw [indTerm, dite_eq_right fun hx => h (smul_quotientGroup_mk_eq_self_iff S g x |>.2 hx)]
+
 /-- Conjugating the argument of the summand translates the representative. -/
 theorem indTerm_conj (f : S → k) (g x c : G) :
     indTerm f (c * g * c⁻¹) x = indTerm f g (c⁻¹ * x) := by
@@ -140,6 +156,18 @@ theorem indClassFun_apply [S.FiniteIndex] (f : S → k) (g : G) :
           f ⟨(Quotient.out t)⁻¹ * g * Quotient.out t, h⟩
         else 0 :=
   (rfl)
+
+/-- **The induced class function is a sum over the cosets that `g` fixes.**  The summand attached
+to any other coset vanishes (`TauCeti.indTerm_eq_zero_of_smul_mk_ne`), so summing over a finite
+set `T` of cosets that contains every fixed one already gives the whole sum.  In practice `T` is
+the set of fixed cosets itself, which for a concrete group is a short explicit list. -/
+theorem indClassFun_eq_sum_of_smul_eq_self_mem [S.FiniteIndex] (f : S → k) (g : G)
+    (T : Finset (G ⧸ S)) (hT : ∀ t : G ⧸ S, g • t = t → t ∈ T) :
+    indClassFun S f g = ∑ t ∈ T, indTerm f g (Quotient.out t) := by
+  let := Fintype.ofFinite (G ⧸ S)
+  refine ((Finset.sum_subset (Finset.subset_univ T) fun t _ ht => ?_).trans rfl).symm
+  refine indTerm_eq_zero_of_smul_mk_ne f fun hfix => ht (hT t ?_)
+  rwa [QuotientGroup.out_eq'] at hfix
 
 /-! ### Additivity -/
 

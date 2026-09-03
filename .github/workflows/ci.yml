@@ -20,6 +20,12 @@ concurrency:
   group: main-ci-cache-publisher
   cancel-in-progress: false
 
+env:
+  # Read endpoint for `lake exe cache get`, wired from a repository variable. The cache tool
+  # treats unset and empty alike, so clearing the variable returns reads to the tool's
+  # default endpoints on the next run.
+  MATHLIB_CACHE_GET_URL: ${{ vars.MATHLIB_CACHE_GET_URL }}
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -57,6 +63,7 @@ jobs:
           python3 scripts/test_roadmap_label.py
           python3 scripts/pr_status/test_pr_labels.py
           python3 scripts/pr_status/test_zulip.py
+          python3 scripts/pr_status/test_conflicts.py
           python3 scripts/test_structure_nudge.py
           python3 scripts/test_workflow_pins.py
           python3 scripts/test_landrun_pin.py
@@ -64,6 +71,7 @@ jobs:
           python3 scripts/test_attest_pr_config.py
           python3 scripts/test_profile_workflow.py
           python3 scripts/test_lake_cache_probe.py
+          python3 scripts/test_lake_cache_get.py
           PYTHONPATH=. python3 scripts/perf/test_perf.py
           PYTHONPATH=scripts python3 scripts/test_claims_access.py
           python3 scripts/test_lint_dot_notation.py

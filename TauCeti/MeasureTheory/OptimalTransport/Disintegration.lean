@@ -127,7 +127,7 @@ theorem compProd_condDistrib (hπ : IsCoupling π μ ν) :
   have heta : (fun z : X × Y ↦ (z.1, z.2)) = id := funext Prod.eta
   simpa only [Measure.fst, heta, Measure.map_id] using
     (ProbabilityTheory.compProd_map_condDistrib (μ := π) (X := Prod.fst) (Y := Prod.snd)
-      measurable_snd.aemeasurable)
+      measurable_fst.aemeasurable measurable_snd.aemeasurable)
 
 /-- The conditional distribution of the second coordinate given the first averages against the
 source marginal to the target marginal. -/

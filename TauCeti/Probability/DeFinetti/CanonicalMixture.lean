@@ -19,7 +19,7 @@ import TauCeti.Probability.Exchangeability.PathSpace.Law.Bridge
 
 The development names the mixing law of an exchangeable process three times:
 
-* `deFinettiMeasure μ X hTail`, the law of the canonical tail directing measure
+* `deFinettiMeasure μ X`, the law of the canonical tail directing measure
   (`DeFinetti/Mixture.lean`);
 * the unique witness `π` produced by `deFinetti_mixture` (`DeFinetti/Representation.lean`);
 * `deFinettiEquiv.symm ρ`, the mixing law read off an exchangeable path law
@@ -53,12 +53,10 @@ exhibits a point of `α`: it is not only a hypothesis. `deFinettiMeasure` is bui
 `condDistrib`, so the instance is needed to *elaborate the statements themselves*, not just to
 prove them.
 
-The coordinates must be exactly measurable for two concrete reasons, neither of which is about
-`deFinettiMeasure` itself — that elaborates for an arbitrary `X`, taking only a tail-measurability
-bound. First, `Contractable.conditionallyIIDWith_directingProbabilityMeasure`, which supplies the
-witness, asks for `∀ n, Measurable (X n)`. Second, the bound handed to `deFinettiMeasure` is built
-here as `tailProcess_le_ambient 0 fun j _ => hX_meas j`, which needs measurable coordinates to
-produce it.
+The coordinates must be exactly measurable for a concrete reason that is not about
+`deFinettiMeasure` itself — that elaborates for an arbitrary `X`:
+`Contractable.conditionallyIIDWith_directingProbabilityMeasure`, which supplies the witness,
+asks for `∀ n, Measurable (X n)`.
 
 ## Why the `L²` route supplies the witness
 
@@ -100,10 +98,9 @@ theorem pathLaw_eq_bind_infinitePi_deFinettiMeasure_of_contractable {μ : Measur
     [IsProbabilityMeasure μ] {X : ℕ → Ω → α} (hX : Contractable μ X)
     (hX_meas : ∀ n, Measurable (X n)) :
     pathLaw μ X
-      = (deFinettiMeasure μ X (tailProcess_le_ambient 0 fun j _ => hX_meas j) :
-          Measure (ProbabilityMeasure α)).bind
+      = (deFinettiMeasure μ X : Measure (ProbabilityMeasure α)).bind
           fun P => Measure.infinitePi fun _ : ℕ => (P : Measure α) :=
-  pathLaw_eq_bind_infinitePi_deFinettiMeasure_of_mixedIIDWith hX_meas
+  pathLaw_eq_bind_infinitePi_deFinettiMeasure_of_mixedIIDWith
     (mixedIIDWith_of_conditionallyIIDWith
       (hX.conditionallyIIDWith_directingProbabilityMeasure hX_meas))
 
@@ -114,8 +111,7 @@ theorem pathLaw_eq_bind_infinitePi_deFinettiMeasure_of_exchangeable {μ : Measur
     [IsProbabilityMeasure μ] {X : ℕ → Ω → α} (hX : Exchangeable μ X)
     (hX_meas : ∀ n, Measurable (X n)) :
     pathLaw μ X
-      = (deFinettiMeasure μ X (tailProcess_le_ambient 0 fun j _ => hX_meas j) :
-          Measure (ProbabilityMeasure α)).bind
+      = (deFinettiMeasure μ X : Measure (ProbabilityMeasure α)).bind
           fun P => Measure.infinitePi fun _ : ℕ => (P : Measure α) :=
   pathLaw_eq_bind_infinitePi_deFinettiMeasure_of_contractable
     (hX.contractable fun n => (hX_meas n).aemeasurable) hX_meas
@@ -134,7 +130,7 @@ theorem eq_deFinettiMeasure_of_pathLaw_eq_bind_infinitePi {μ : Measure Ω} [IsP
     {π : ProbabilityMeasure (ProbabilityMeasure α)}
     (hπ : pathLaw μ X = (π : Measure (ProbabilityMeasure α)).bind
       fun P => Measure.infinitePi fun _ : ℕ => (P : Measure α)) :
-    π = deFinettiMeasure μ X (tailProcess_le_ambient 0 fun j _ => hX_meas j) := by
+    π = deFinettiMeasure μ X := by
   have hlaw : ExchangeableLaw (pathLaw μ X) := by
     rw [hπ, ← deFinettiBarycenter_def]
     exact exchangeableLaw_deFinettiBarycenter
@@ -155,8 +151,7 @@ theorem deFinettiEquiv_symm_eq_deFinettiMeasure {μ : Measure Ω} [IsProbability
     {X : ℕ → Ω → α} (hX_meas : ∀ n, Measurable (X n))
     {ρ : {ρ : ProbabilityMeasure (ℕ → α) // ExchangeableLaw (ρ : Measure (ℕ → α))}}
     (hρ : ((ρ : ProbabilityMeasure (ℕ → α)) : Measure (ℕ → α)) = pathLaw μ X) :
-    deFinettiEquiv.symm ρ
-      = deFinettiMeasure μ X (tailProcess_le_ambient 0 fun j _ => hX_meas j) := by
+    deFinettiEquiv.symm ρ = deFinettiMeasure μ X := by
   have hX : Exchangeable μ X :=
     (exchangeable_iff_exchangeableLaw_pathLaw fun n => (hX_meas n).aemeasurable).2 (hρ ▸ ρ.2)
   exact deFinettiEquiv_symm_eq

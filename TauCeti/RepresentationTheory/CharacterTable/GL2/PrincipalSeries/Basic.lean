@@ -5,9 +5,9 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Data.Complex.Basic
-public import Mathlib.RepresentationTheory.Character
+public import Mathlib.Basic.Complex.Basic
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Borel
+public import TauCeti.RepresentationTheory.LinearCharacter
 public import TauCeti.RepresentationTheory.Induction.FiniteDimensional
 
 /-!
@@ -47,6 +47,8 @@ representation is not proved here.
   `α`; this is the boundary case whose principal series is reducible.
 * `TauCeti.GL2Borel.character_linearRep`: the character of a one-dimensional representation is the
   scalar it acts by.
+* `TauCeti.GL2Borel.linearRep_def`: the representation is the generic one-dimensional
+  representation associated to `TauCeti.GL2Borel.linearChar`.
 * `TauCeti.GL2BorelRep_def`: the bundled Borel representation is `TauCeti.GL2Borel.linearRep`, the
   form to reason from when the action itself, and not only its character, is needed.
 * `TauCeti.finrank_GL2PrincipalSeries` and `TauCeti.character_one_GL2PrincipalSeries`: the
@@ -150,20 +152,19 @@ variable {R : Type*} [CommRing R] {k : Type*} [CommSemiring k]
 /-- **The one-dimensional representation of the Borel subgroup** on which `b` acts by the scalar
 `TauCeti.GL2Borel.linearChar α β b`. This is the representation `α ⊗ β` that parabolic induction
 consumes. -/
-def linearRep (α β : Rˣ →* kˣ) : Representation k (GL2Borel R) k where
-  toFun g := LinearMap.lsmul k k (linearChar α β g : k)
-  map_one' := by
-    refine LinearMap.ext fun x => ?_
-    simp
-  map_mul' g h := by
-    refine LinearMap.ext fun x => ?_
-    simp only [map_mul, Units.val_mul, LinearMap.lsmul_apply, smul_eq_mul, Module.End.mul_apply]
-    ring
+def linearRep (α β : Rˣ →* kˣ) : Representation k (GL2Borel R) k :=
+  Representation.ofLinearCharacter (linearChar α β)
+
+/-- **The Borel representation is the one-dimensional representation associated to
+`TauCeti.GL2Borel.linearChar`.** -/
+theorem linearRep_def (α β : Rˣ →* kˣ) :
+    linearRep α β = Representation.ofLinearCharacter (linearChar α β) :=
+  (rfl)
 
 @[simp]
 theorem linearRep_apply (α β : Rˣ →* kˣ) (g : GL2Borel R) (x : k) :
     linearRep α β g x = (linearChar α β g : k) * x :=
-  (rfl)
+  Representation.ofLinearCharacter_apply (linearChar α β) g x
 
 end CommSemiring
 
@@ -176,12 +177,7 @@ multiplication by `c` on the line `k` is `c`. -/
 @[simp]
 theorem character_linearRep (α β : Rˣ →* kˣ) (g : GL2Borel R) :
     (linearRep (R := R) α β).character g = (linearChar α β g : k) := by
-  rw [Representation.character]
-  have h : (linearRep (R := R) (k := k) α β) g =
-      LinearMap.id.smulRight (linearChar α β g : k) := by
-    refine LinearMap.ext fun x => ?_
-    simp [mul_comm]
-  rw [h, LinearMap.trace_smulRight, LinearMap.id_apply]
+  exact Representation.char_ofLinearCharacter (linearChar α β) g
 
 end Field
 

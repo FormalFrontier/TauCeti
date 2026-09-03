@@ -46,6 +46,10 @@ Its graded-algebra packaging adapts the pattern in Mathlib's
   `gradedGMonoid`, `gradedGRing`, `gradedGSemiring` and
   `gradedGAlgebra`, culminating in
   `TauCeti.Algebra.wordFiltration.associatedGradedRing`, the ring structure on the direct sum.
+* `TauCeti.Algebra.wordFiltration.gradedPiece_mk_prod_map_eq_zero_of_length_lt`: a word of length
+  strictly below `k` has zero class in degree `k`.
+* `TauCeti.Algebra.wordFiltration.gradedPiece_induction_on`: the classes of words of length
+  exactly `k` span the degree-`k` graded piece.
 
 ## Roadmap
 
@@ -547,5 +551,92 @@ homogeneous product. -/
     (DirectSum.of (GradedPiece f) i x * DirectSum.of (GradedPiece f) j y : AssociatedGraded f) =
       DirectSum.of (GradedPiece f) (i + j) (gradedMul f i j x y) := by
   rw [DirectSum.of_mul_of, gradedGMul_mul]
+
+/-- A word of length strictly below `k` has zero class in the degree-`k` graded piece. -/
+@[simp]
+theorem gradedPiece_mk_prod_map_eq_zero_of_length_lt (f : M →ₗ[R] A) {k : ℕ} {l : List M}
+    (hl : l.length < k) :
+    (Submodule.Quotient.mk
+        (⟨(l.map f).prod, prod_map_mem_wordFiltration f hl.le⟩ : wordFiltration f k) :
+      GradedPiece f k) = 0 := by
+  rw [Submodule.Quotient.mk_eq_zero, mem_previousRestricted_iff]
+  cases k with
+  | zero => omega
+  | succ k =>
+      rw [wordFiltrationPrevious_succ]
+      exact prod_map_mem_wordFiltration f (Nat.lt_succ_iff.mp hl)
+
+/-- **Words in a spanning family span the graded pieces.** To prove a statement about every
+element of the degree-`k` graded piece of a word filtration it suffices to treat the classes of
+length-`k` words in a spanning family, and to check that the statement is closed under zero,
+addition and scalar multiplication. Shorter words are covered by the zero case, since their
+classes vanish in degree `k`. -/
+@[elab_as_elim]
+theorem gradedPiece_induction_on_of_span (f : M →ₗ[R] A) {ι : Type*} (e : ι → M)
+    (he : Submodule.span R (Set.range e) = ⊤) {k : ℕ}
+    {motive : GradedPiece f k → Prop} (x : GradedPiece f k)
+    (word : ∀ (l : List ι) (hl : l.length = k),
+      motive (Submodule.Quotient.mk
+        (⟨(l.map fun i ↦ f (e i)).prod, by
+          simpa only [List.map_map, Function.comp_def] using
+            prod_map_mem_wordFiltration f (l := l.map e) (by simpa using hl.le)⟩ :
+          wordFiltration f k)))
+    (zero : motive 0) (add : ∀ x y, motive x → motive y → motive (x + y))
+    (smul : ∀ (r : R) x, motive x → motive (r • x)) : motive x := by
+  induction x using Submodule.Quotient.induction_on with
+  | _ x =>
+      let s : Submodule R A :=
+        Submodule.span R {a | ∃ l : List ι, l.length ≤ k ∧
+          (l.map fun i ↦ f (e i)).prod = a}
+      have hs : s = wordFiltration f k := by
+        exact span_prod_map_eq_wordFiltration f e he k
+      -- The word span and the filtration step agree, so it is enough to induct on the span.
+      have key : ∀ (a : A) (ha : a ∈ s),
+          motive (Submodule.Quotient.mk (⟨a, hs ▸ ha⟩ : wordFiltration f k)) := by
+        intro a ha
+        refine Submodule.span_induction (p := fun a ha =>
+          motive (Submodule.Quotient.mk (⟨a, hs ▸ ha⟩ : wordFiltration f k))) ?_ ?_ ?_ ?_ ha
+        · rintro a ⟨l, hl, rfl⟩
+          rcases hl.eq_or_lt with hlen | hlen
+          · exact word l hlen
+          · have hzero := gradedPiece_mk_prod_map_eq_zero_of_length_lt f
+              (l := l.map e) (by simpa using hlen)
+            -- State the equality with the span-induced membership proof, so the rewrite replaces
+            -- the quotient class as a whole instead of rewriting its dependent representative.
+            have hzero' :
+                (Submodule.Quotient.mk
+                    (⟨(l.map fun i ↦ f (e i)).prod,
+                      hs ▸ Submodule.subset_span ⟨l, hl, rfl⟩⟩ : wordFiltration f k) :
+                  GradedPiece f k) = 0 := by
+              simpa only [List.map_map, Function.comp_def] using hzero
+            rw [hzero']
+            exact zero
+        -- Quotient constructors preserve zero, addition, and scalar multiplication definitionally
+        -- (`Submodule.Quotient.mk_zero`, `mk_add`, and `mk_smul` are all proved by `rfl`).
+        · exact zero
+        · exact fun a b _ _ ha hb => add _ _ ha hb
+        · exact fun r a _ ha => smul r _ ha
+      have hx : (x : A) ∈ s := by
+        rw [hs]
+        exact x.property
+      have hmotive := key (x : A) hx
+      -- The reassembled representative is the original one, by eta for the filtration subtype.
+      rwa [Subtype.coe_eta] at hmotive
+
+/-- To prove a statement about every element of a graded piece, it suffices to treat all words of
+the exact degree and check closure under the module operations. -/
+@[elab_as_elim]
+theorem gradedPiece_induction_on (f : M →ₗ[R] A) {k : ℕ}
+    {motive : GradedPiece f k → Prop} (x : GradedPiece f k)
+    (word : ∀ (l : List M) (hl : l.length = k),
+      motive (Submodule.Quotient.mk
+        (⟨(l.map f).prod, prod_map_mem_wordFiltration f hl.le⟩ : wordFiltration f k)))
+    (zero : motive 0) (add : ∀ x y, motive x → motive y → motive (x + y))
+    (smul : ∀ (r : R) x, motive x → motive (r • x)) : motive x := by
+  have hid : Submodule.span R (Set.range (id : M → M)) = ⊤ := by
+    rw [Set.range_id, Submodule.span_univ]
+  refine gradedPiece_induction_on_of_span f id hid x ?_ zero add smul
+  intro l hl
+  simpa only [id_eq] using word l hl
 
 end TauCeti.Algebra.wordFiltration

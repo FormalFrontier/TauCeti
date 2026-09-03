@@ -37,8 +37,10 @@ it only after restricting to a finite-dimensional invariant subspace.
 ## Implementation notes
 
 Right translation on `Lp` is definitionally Mathlib's `DomMulAct` action of `Gᵐᵒᵖ`, that is,
-`DomMulAct.mk (MulOpposite.op g) • f`, so the monoid-homomorphism laws of `rightRegularLp` are
-`one_smul` and `mul_smul` for that action, and its strong continuity is Mathlib's
+`DomMulAct.mk (MulOpposite.op g) • f`, so `rightRegularLp`'s identity law is `one_smul` for that
+action; its multiplicativity law is proved instead via Mathlib's `compMeasurePreserving_comp_apply`
+and right-multiplication associativity, since the two composed `Lp.compMeasurePreservingₗᵢ` do not
+unify with the `DomMulAct` action definitionally. Its strong continuity is Mathlib's
 `Continuous.compMeasurePreservingLp`.
 -/
 
@@ -66,10 +68,14 @@ noncomputable def rightRegularLp : ContRepresentation 𝕜 G (Lp 𝕜 2 (haarPro
     { toFun g := (Lp.compMeasurePreservingₗᵢ 𝕜 (· * g)
         (measurePreserving_mul_right (haarProb G) g)).toContinuousLinearMap
       -- Right translation on `Lp` *is* the `DomMulAct` action `DomMulAct.mk (op g) • ·` of `Gᵐᵒᵖ`,
-      -- definitionally, so the two monoid laws are the `MulAction` laws of that action.
+      -- definitionally, so the identity law is the `MulAction` law of that action.
       map_one' := ContinuousLinearMap.ext fun x => one_smul (MulOpposite G)ᵈᵐᵃ x
-      map_mul' g h := ContinuousLinearMap.ext fun x =>
-        mul_smul (DomMulAct.mk (MulOpposite.op g)) (DomMulAct.mk (MulOpposite.op h)) x }
+      map_mul' g h := ContinuousLinearMap.ext fun x => by
+        have hfun : (fun y : G => y * (g * h)) = (fun y : G => y * h) ∘ (fun y : G => y * g) :=
+          funext fun y => (mul_assoc y g h).symm
+        simp only [mul_apply_eq_comp, hfun]
+        exact Lp.compMeasurePreserving_comp_apply x (measurePreserving_mul_right (haarProb G) h)
+          (measurePreserving_mul_right (haarProb G) g) }
 
 /-- **Right translation on `L²(G)`, unfolded to the underlying `Lp.compMeasurePreserving`.** The
 body of `rightRegularLp` is not exposed, so this is the lemma that lets a downstream file transfer

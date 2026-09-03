@@ -7,6 +7,8 @@ module
 
 public import Mathlib.RingTheory.Finiteness.Basic
 public import Mathlib.RingTheory.MvPolynomial.Basic
+public import Mathlib.RingTheory.TensorProduct.MvPolynomial
+public import TauCeti.LinearAlgebra.Dimension.BaseChange
 
 /-!
 # Finiteness of `MvPolynomial.map`
@@ -37,40 +39,25 @@ public section
 
 namespace TauCeti
 
+-- `MvPolynomial.algebraMvPolynomial` is deliberately not a global instance: it diamonds for
+-- `Algebra (MvPolynomial σ R) (MvPolynomial σ (MvPolynomial σ S))`. Mathlib installs it locally
+-- wherever the `MvPolynomial σ R`-algebra structure on `MvPolynomial σ S` is wanted, and the
+-- pushout and scalar-tower instances used below are stated under it.
+attribute [local instance] MvPolynomial.algebraMvPolynomial
+
 /-- Polynomial rings preserve module-finiteness of the coefficient map: `MvPolynomial.map f` is
 a finite ring map whenever `f` is. -/
 theorem MvPolynomial.finite_map {σ R S : Type*} [CommRing R] [CommRing S] {f : R →+* S}
     (hf : f.Finite) : (MvPolynomial.map (σ := σ) f).Finite := by
-  classical
   let _ : Algebra R S := f.toAlgebra
-  obtain ⟨t, htfin, ht⟩ := Submodule.fg_def.mp (Module.finite_def.mp hf)
-  let _ : Algebra (MvPolynomial σ R) (MvPolynomial σ S) := (MvPolynomial.map (σ := σ) f).toAlgebra
-  refine Module.finite_def.mpr (Submodule.fg_def.mpr
-    ⟨MvPolynomial.C '' t, htfin.image _, eq_top_iff.mpr fun p _ ↦ ?_⟩)
-  refine MvPolynomial.induction_on' p (fun α c ↦ ?_) (fun p q hp hq ↦ Submodule.add_mem _ hp hq)
-  refine Submodule.span_induction
-    (p := fun c _ ↦ MvPolynomial.monomial α c ∈
-      Submodule.span (MvPolynomial σ R) (MvPolynomial.C '' t))
-    ?_ ?_ ?_ ?_ (ht ▸ Submodule.mem_top : c ∈ Submodule.span R t)
-  · -- a generator `x ∈ t`, as the constant `C x`, scaled by the monomial `X ^ α`
-    intro x hx
-    have hx' : MvPolynomial.monomial α x
-        = (MvPolynomial.monomial α (1 : R)) • (MvPolynomial.C x : MvPolynomial σ S) := by
-      rw [Algebra.smul_def, RingHom.algebraMap_toAlgebra]
-      rw [MvPolynomial.map_monomial, map_one, mul_comm, MvPolynomial.C_mul_monomial, mul_one]
-    rw [hx']
-    exact Submodule.smul_mem _ _ (Submodule.subset_span ⟨x, hx, rfl⟩)
-  · simp
-  · intro x y _ _ hx hy
-    rw [map_add]
-    exact Submodule.add_mem _ hx hy
-  · -- an `R`-scalar becomes the constant `C r` acting through `MvPolynomial.map f`
-    intro r x _ hx
-    have hr : MvPolynomial.monomial α (r • x)
-        = (MvPolynomial.C r : MvPolynomial σ R) • MvPolynomial.monomial α x := by
-      rw [Algebra.smul_def, RingHom.algebraMap_toAlgebra, Algebra.smul_def,
-        RingHom.algebraMap_toAlgebra, MvPolynomial.map_C, MvPolynomial.C_mul_monomial]
-    rw [hr]
-    exact Submodule.smul_mem _ _ hx
+  have _ : Module.Finite R S := hf
+  -- `MvPolynomial σ S` is the base change of `S` along `R → MvPolynomial σ R`. Stating that as a
+  -- `have` is load-bearing: unifying `finite_of_isBaseChange` against the goal directly forces the
+  -- `MvPolynomial σ R`-algebra structure to be `(MvPolynomial.map f).toAlgebra`, for which the
+  -- scalar tower is not an instance, whereas Mathlib's pushout is stated for `algebraMvPolynomial`.
+  have h : Module.Finite (MvPolynomial σ R) (MvPolynomial σ S) :=
+    TauCeti.finite_of_isBaseChange
+      (Algebra.IsPushout.out (R := R) (S := MvPolynomial σ R) (R' := S) (S' := MvPolynomial σ S))
+  exact h
 
 end TauCeti

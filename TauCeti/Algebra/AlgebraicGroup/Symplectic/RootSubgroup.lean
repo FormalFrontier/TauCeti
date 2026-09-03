@@ -275,9 +275,7 @@ section Scheme
 /-- The coordinate Hopf-algebra morphism selected by a symplectic root index. -/
 noncomputable def rootSubgroupCoordinateMap (root : GLSymplecticFin.RootSubgroupIndex m) :
     coordinateHopfAlgebra R m ⟶ AdditiveGroup.coordinateHopfAlgebra R :=
-  ((CommHopfAlgCat.pointsFunctor.{u, u, u} (R := R) :
-      (_root_.CommHopfAlgCat.{u} R)ᵒᵖ ⥤ CommAlgCat.{u} R ⥤ GrpCat.{u}).preimage
-    (rootSubgroupPointsMap.{u, u} (R := R) root)).unop
+  CommHopfAlgCat.homOfPointsMap (rootSubgroupPointsMap.{u, u} (R := R) root)
 
 /-- The coordinate morphism of the positive long-root subgroup, recovered from its natural
 action on points. -/
@@ -303,12 +301,8 @@ theorem mapPointsFunctor_rootSubgroupCoordinateMap
       (rootSubgroupCoordinateMap (R := R) root) :
       HopfAlgebra.pointsFunctor (R := R) (H := AdditiveGroup.coordinateHopfAlgebra R) ⟶
         HopfAlgebra.pointsFunctor (R := R) (H := coordinateHopfAlgebra R m)) =
-      rootSubgroupPointsMap.{u, u} root := by
-  unfold rootSubgroupCoordinateMap
-  rw [← CommHopfAlgCat.pointsFunctor_map]
-  exact Functor.map_preimage
-    (CommHopfAlgCat.pointsFunctor.{u, u, u} (R := R) :
-      (_root_.CommHopfAlgCat.{u} R)ᵒᵖ ⥤ CommAlgCat.{u} R ⥤ GrpCat.{u}) _
+      rootSubgroupPointsMap.{u, u} root :=
+  CommHopfAlgCat.mapPointsFunctor_homOfPointsMap _
 
 /-- Precomposition by the positive long-root coordinate morphism gives its natural point map. -/
 theorem mapPointsFunctor_positiveLongRootSubgroupCoordinateMap (i : Fin m) :

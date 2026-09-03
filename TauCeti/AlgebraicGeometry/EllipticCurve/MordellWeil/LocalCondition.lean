@@ -7,6 +7,7 @@ module
 
 public import TauCeti.AlgebraicGeometry.EllipticCurve.MordellWeil.XSubT
 public import TauCeti.AlgebraicGeometry.EllipticCurve.NormalForms
+public import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.BaseChange
 
 /-!
 # Base change of the étale algebra, and the local condition of `2`-descent
@@ -248,8 +249,6 @@ lemma pointMap_some {x y : K} (h : W.Nonsingular x y) : W.pointMap L (Point.some
 end PointMap
 
 variable [W.IsElliptic] [W.IsCharNeTwoNF]
-
-instance : (W⁄L).IsElliptic := inferInstanceAs (W.map (algebraMap K L)).IsElliptic
 
 open scoped Classical in
 /-- The local `2`-descent condition at the extension field `L` of `K` (in the applications,

@@ -9,8 +9,6 @@ public import Mathlib.Algebra.DirectSum.LinearMap
 public import TauCeti.Algebra.Lie.Weights.Diagonalizable
 public import TauCeti.Algebra.Lie.Weights.Killing
 
-public section
-
 /-!
 # The projections attached to the weight-space decomposition
 
@@ -36,7 +34,8 @@ space, which for a root is `1`.
 
 * `TauCeti.sum_genWeightSpaceProjection_apply`: the projections sum to the identity.
 * `TauCeti.killingForm_genWeightSpaceProjection`: `κ (π_χ x) y = κ x (π_{-χ} y)`, so `π_χ` and
-  `π_{-χ}` are Killing-adjoint.
+  `π_{-χ}` are Killing-adjoint; `TauCeti.isAdjointPair_genWeightSpaceProjection` says the same in
+  the `LinearMap.IsAdjointPair` form.
 * `TauCeti.trace_genWeightSpaceProjection`: the trace of a projection is the dimension of the
   weight space it projects onto.
 
@@ -60,6 +59,8 @@ the trace are what the Casimir eigenvalue computation of Layer 5 consumes.
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §8.1 (the
   root-space decomposition) and §8.2 (the Killing form pairs `Lα` with `L_{-α}` alone).
 -/
+
+public section
 
 namespace TauCeti
 
@@ -219,6 +220,14 @@ theorem killingForm_genWeightSpaceProjection (χ : Weight K H L) (x y : L) :
   exact killingForm_apply_eq_zero_of_mem_rootSpace_of_add_ne_zero K L H
     (genWeightSpaceProjection_apply_mem ψ x) (genWeightSpaceProjection_apply_mem (-χ) y)
     (weight_add_ne_zero H fun hc ↦ h (by rwa [neg_neg] at hc))
+
+/-- **Opposite root-space projections are a Killing-adjoint pair.** This is the
+`LinearMap.IsAdjointPair` form of `TauCeti.killingForm_genWeightSpaceProjection`, which is what
+the Killing-dual-basis lemmas consume. -/
+theorem isAdjointPair_genWeightSpaceProjection (χ : Weight K H L) :
+    LinearMap.IsAdjointPair (killingForm K L) (killingForm K L)
+      (genWeightSpaceProjection K H L (-χ)) (genWeightSpaceProjection K H L χ) := fun x y ↦ by
+  rw [killingForm_genWeightSpaceProjection H (-χ) x y, neg_neg]
 
 /-- **A root-space projection has trace one.** The root spaces at nonzero weights are lines
 (`LieAlgebra.IsKilling.finrank_rootSpace_eq_one`). -/

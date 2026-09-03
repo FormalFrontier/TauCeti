@@ -17,12 +17,20 @@ one even value is a fundamental discriminant. This file supplies the **analysis*
 converse existence statement: every fundamental discriminant `D` is a product of a finite set of
 prime discriminants, at most one of which is even.
 
+The factorization is unique once its factors are required to be distinct. Its proof first matches
+the odd factors through the unique rational prime below each prime discriminant. After cancelling
+their common product, the remaining factors belong to the three-element set `{-4, 8, -8}`; its
+eight subsets have pairwise distinct products, so the even factors match as well.
+
+This is the classical prime-discriminant factorization; see D. A. Cox, *Primes of the Form
+x² + ny²*, §3.B and §6.A, and F. Lemmermeyer, *Reciprocity Laws: From Euler to Eisenstein*, §2.2.
+
 This is a prerequisite for the genus-field layer, which attaches a *family* of prime discriminants
 to a quadratic field `ℚ(√d)`: the square-class independence and degree theorems of
 `Multiquadratic/Prime/Discriminant/Independence.lean` apply to such a family, giving a
-degree-`2ᵗ` multiquadratic compositum. Turning that compositum into the genus field — defining the
-genus field and identifying it with this compositum — is later work; this file only supplies the
-factorization the family comes from.
+degree-`2ᵗ` multiquadratic compositum. For negative radicands,
+`isGenusField_candidateGenusField` identifies that compositum with the genus field; the real case
+remains future work. This file only supplies the factorization the family comes from.
 
 The engine is `prod_oddPrimeDiscriminant_primeFactors_eq`: for an odd squarefree `x ≡ 1 (mod 4)`,
 the product of the odd prime discriminants `p*` over the prime factors `p` of `x` is `x` itself.
@@ -36,6 +44,10 @@ discriminant — odd, `4 ·` odd, `8 ·` odd — then differ only in the single 
 * `TauCeti.Multiquadratic.IsFundamentalDiscriminant.exists_finset_primeDiscriminant`: every
   fundamental discriminant is a product of a finite set of prime discriminants with at most one
   even value — the converse of `isFundamentalDiscriminant_prod`.
+* `TauCeti.Multiquadratic.finset_primeDiscriminant_eq_of_prod_eq`: two finite sets of prime
+  discriminants with the same product have the same factors.
+* `TauCeti.Multiquadratic.IsFundamentalDiscriminant.existsUnique_finset_primeDiscriminant`: every
+  fundamental discriminant has a unique factorization into a finite set of prime discriminants.
 -/
 
 public section
@@ -159,5 +171,95 @@ theorem IsFundamentalDiscriminant.exists_finset_primeDiscriminant {D : ℤ}
       exact absurd hPe (himg P hP).2
     · rw [hprodimg]
       exact prod_oddPrimeDiscriminant_primeFactors_eq hsf hodd h1
+
+/-- An odd prime-discriminant factor of one product occurs in any equal prime-discriminant
+product.  The rational prime below an odd prime discriminant determines it uniquely. -/
+private theorem mem_of_not_isEvenPrimeDiscriminant_of_prod_eq {s t : Finset ℤ}
+    (hs : ∀ P ∈ s, IsPrimeDiscriminant P) (ht : ∀ P ∈ t, IsPrimeDiscriminant P)
+    (hprod : ∏ P ∈ s, P = ∏ P ∈ t, P) {P : ℤ} (hPs : P ∈ s)
+    (hPodd : ¬ IsEvenPrimeDiscriminant P) : P ∈ t := by
+  let p := primeDiscriminantPrime P
+  have hp : p.Prime := prime_primeDiscriminantPrime (hs P hPs)
+  have hp_prod : (p : ℤ) ∣ ∏ Q ∈ t, Q := by
+    rw [← hprod]
+    exact (primeDiscriminantPrime_dvd (hs P hPs)).trans (Finset.dvd_prod_of_mem id hPs)
+  obtain ⟨Q, hQt, hpQ⟩ : ∃ Q ∈ t, (p : ℤ) ∣ Q :=
+    ((Nat.prime_iff_prime_int.mp hp).dvd_finsetProd_iff id).mp hp_prod
+  have hp_eq : primeDiscriminantPrime P = primeDiscriminantPrime Q :=
+    (natCast_dvd_primeDiscriminant_iff (ht Q hQt) hp).mp hpQ
+  have hPQ : P = Q := eq_of_primeDiscriminantPrime_eq (hs P hPs) (ht Q hQt)
+    (fun hPeven _ => absurd hPeven hPodd) hp_eq
+  rwa [hPQ]
+
+open Classical in
+/-- A finset of even prime discriminants is determined by its product. -/
+private theorem finset_isEvenPrimeDiscriminant_eq_of_prod_eq {s t : Finset ℤ}
+    (hs : ∀ P ∈ s, IsEvenPrimeDiscriminant P)
+    (ht : ∀ P ∈ t, IsEvenPrimeDiscriminant P)
+    (hprod : ∏ P ∈ s, P = ∏ P ∈ t, P) : s = t := by
+  classical
+  have hs_mem : s ∈ ({-4, 8, -8} : Finset ℤ).powerset := by
+    rw [Finset.mem_powerset]
+    intro P hP
+    simpa only [Finset.mem_insert, Finset.mem_singleton, IsEvenPrimeDiscriminant] using hs P hP
+  have ht_mem : t ∈ ({-4, 8, -8} : Finset ℤ).powerset := by
+    rw [Finset.mem_powerset]
+    intro P hP
+    simpa only [Finset.mem_insert, Finset.mem_singleton, IsEvenPrimeDiscriminant] using ht P hP
+  fin_cases hs_mem <;> fin_cases ht_mem
+  all_goals norm_num at hprod
+  all_goals rfl
+
+/-- **Uniqueness of a prime-discriminant factorization.** Two finite sets of prime discriminants
+are equal when their products are equal.
+
+Odd factors are determined by their unique underlying rational prime. Once those common factors
+are cancelled from the product equality, each remaining factor belongs to `{-4, 8, -8}`; the
+products of the eight possible subsets are distinct, so the even factors match too. -/
+theorem finset_primeDiscriminant_eq_of_prod_eq {s t : Finset ℤ}
+    (hs : ∀ P ∈ s, IsPrimeDiscriminant P)
+    (ht : ∀ P ∈ t, IsPrimeDiscriminant P)
+    (hprod : ∏ P ∈ s, P = ∏ P ∈ t, P) : s = t := by
+  classical
+  have hodd : s.filter (fun P => ¬ IsEvenPrimeDiscriminant P) =
+      t.filter (fun P => ¬ IsEvenPrimeDiscriminant P) := by
+    ext P
+    simp only [Finset.mem_filter]
+    constructor
+    · rintro ⟨hPs, hPodd⟩
+      exact ⟨mem_of_not_isEvenPrimeDiscriminant_of_prod_eq hs ht hprod hPs hPodd, hPodd⟩
+    · rintro ⟨hPt, hPodd⟩
+      exact ⟨mem_of_not_isEvenPrimeDiscriminant_of_prod_eq ht hs hprod.symm hPt hPodd, hPodd⟩
+  have hodd_ne : (∏ P ∈ s with ¬ IsEvenPrimeDiscriminant P, P) ≠ 0 := by
+    rw [Finset.prod_ne_zero_iff]
+    intro P hP
+    rcases isPrimeDiscriminant_iff.mp (hs P (Finset.mem_filter.mp hP).1) with
+      hPeven | ⟨p, hp, hPodd, rfl⟩
+    · exact absurd hPeven (Finset.mem_filter.mp hP).2
+    · exact oddPrimeDiscriminant_ne_zero.mpr hp.ne_zero
+  have heven_prod : (∏ P ∈ s with IsEvenPrimeDiscriminant P, P) =
+      ∏ P ∈ t with IsEvenPrimeDiscriminant P, P := by
+    apply mul_right_cancel₀ hodd_ne
+    rw [Finset.prod_filter_mul_prod_filter_not, hodd,
+      Finset.prod_filter_mul_prod_filter_not, hprod]
+  have heven : s.filter IsEvenPrimeDiscriminant = t.filter IsEvenPrimeDiscriminant :=
+    finset_isEvenPrimeDiscriminant_eq_of_prod_eq
+      (fun P hP => (Finset.mem_filter.mp hP).2)
+      (fun P hP => (Finset.mem_filter.mp hP).2) heven_prod
+  ext P
+  by_cases hPeven : IsEvenPrimeDiscriminant P
+  · simpa only [Finset.ext_iff, Finset.mem_filter, hPeven, and_true] using
+      Finset.ext_iff.mp heven P
+  · simpa only [Finset.ext_iff, Finset.mem_filter, hPeven, not_false_eq_true, and_true] using
+      Finset.ext_iff.mp hodd P
+
+/-- **Unique prime-discriminant factorization of a fundamental discriminant.** Every fundamental
+discriminant is the product of a unique finite set of prime discriminants. -/
+theorem IsFundamentalDiscriminant.existsUnique_finset_primeDiscriminant {D : ℤ}
+    (hD : IsFundamentalDiscriminant D) :
+    ∃! s : Finset ℤ, (∀ P ∈ s, IsPrimeDiscriminant P) ∧ ∏ P ∈ s, P = D := by
+  obtain ⟨s, hs, _, hprod⟩ := hD.exists_finset_primeDiscriminant
+  refine ⟨s, ⟨hs, hprod⟩, fun t ht => ?_⟩
+  exact finset_primeDiscriminant_eq_of_prod_eq ht.1 hs (ht.2.trans hprod.symm)
 
 end TauCeti.Multiquadratic

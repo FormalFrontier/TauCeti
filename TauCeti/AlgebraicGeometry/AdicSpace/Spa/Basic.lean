@@ -54,8 +54,10 @@ it; the subspace form here needs no such comparison.)
 * `TauCeti.ValuationSpectrum.spa_eq_empty_of_one_mem_closure_zero` : if `1 ∈ closure {0}` in a
   commutative ring `A` with separately continuous addition, then `Spa(A, A⁺) = ∅` for any plus
   ring `A⁺` (the `1 ∈ closure {0} → Spa(A, A⁺) = ∅` half of Wedhorn Proposition 7.49(1)).
-* `TauCeti.ValuationSpectrum.trivialSection_mem_spa` : the trivial valuation of an open prime is
-  a point of the adic spectrum, for any plus ring.
+* `TauCeti.ValuationSpectrum.trivialSection_mem_spa_iff` : the trivial valuation of a prime is a
+  point of the adic spectrum exactly when the prime is open, for any plus ring.
+* `TauCeti.ValuationSpectrum.eq_top_of_spa_eq_empty` : an empty adic spectrum forces every open
+  ideal to be the unit ideal.
 * `TauCeti.ValuationSpectrum.one_mem_closure_zero_of_spa_eq_empty` : the converse half of
   Wedhorn Proposition 7.49(1) — over a topological ring in which `closure {0}` is open, an empty
   adic spectrum forces `1 ∈ closure {0}`.
@@ -65,9 +67,21 @@ The openness of `closure {0}` is Wedhorn 7.49(2) and is taken as a hypothesis he
 Wedhorn's proof of 7.49(1) takes it; proving it needs the microbiality substrate and is not done
 in this file.
 
+## Provenance
+
+`trivialSection_mem_spa_iff` is the trivial-valuation witness of AINTLIB
+(`github.com/CBirkbeck/AINTLIB`, Apache-2.0), branch `dev/adic-spaces` at commit
+`37bbdaeb9ad9e3bc9f0d660feadc2779e455a91c`, project `projects/AdicSpaces/`, file
+`Adic spaces/AdicSpectrum.lean`, section `Prop752`, with the valuation-spectrum vocabulary adapted
+to this repository's `Spv`/`ValuativeRel` interface and the introduction direction strengthened to
+an equivalence. It reached this file by being factored out of
+`TauCeti/AlgebraicGeometry/AdicSpace/Spa/Points.lean`, which had used it inline.
+
 ## References
 
 * T. Wedhorn, *Adic Spaces*, arXiv:1910.05934v1, Definition 7.23 and Proposition 7.49.
+* [C. Birkbeck, *AINTLIB*](https://github.com/CBirkbeck/AINTLIB), branch `dev/adic-spaces`,
+  commit `37bbdaeb`, `projects/AdicSpaces/Adic spaces/AdicSpectrum.lean`.
 -/
 
 public section
@@ -126,6 +140,17 @@ theorem spa_integralClosure (R : Subring A) :
     rw [Valuation.mem_integer_iff, ← map_one v.valuation, valuation_le_iff] at hxint
     exact hxint
 
+/-- The trivial valuation of a prime `p` is a point of the adic spectrum exactly when `p` is open,
+for any plus ring `A⁺`: the sub-unit condition holds at every element of `A`, since a trivial
+valuation takes only the values `0` and `1` and `1` lies outside a prime. -/
+theorem trivialSection_mem_spa_iff (Aplus : Subring A) (p : PrimeSpectrum A) :
+    trivialSection p ∈ spa Aplus ↔ IsOpen (p.asIdeal : Set A) := by
+  rw [mem_spa_iff]
+  refine ⟨fun h ↦ (isContinuous_trivialSection_iff p).mp h.1,
+    fun hp ↦ ⟨(isContinuous_trivialSection_iff p).mpr hp, fun a _ ↦ ?_⟩⟩
+  exact (trivialSection_vle_iff p a 1).mpr
+    (Or.inr ((Ideal.ne_top_iff_one _).mp p.isPrime.ne_top))
+
 section SeparatelyContinuousAdd
 
 variable [SeparatelyContinuousAdd A]
@@ -137,42 +162,39 @@ theorem spa_eq_empty_of_one_mem_closure_zero (Aplus : Subring A)
     (h : (1 : A) ∈ closure ({0} : Set A)) : spa Aplus = ∅ := by
   rw [spa_def, cont_eq_empty_of_one_mem_closure_zero h, Set.empty_inter]
 
-omit [SeparatelyContinuousAdd A] in
-/-- The trivial valuation of an open prime is a point of the adic spectrum, for any plus ring:
-`A⁺` is unconstrained because a trivial valuation is sub-unit on all of `A`. -/
-theorem trivialSection_mem_spa (Aplus : Subring A) {p : PrimeSpectrum A}
-    (hp : IsOpen (p.asIdeal : Set A)) : trivialSection p ∈ spa Aplus := by
-  rw [mem_spa_iff]
-  refine ⟨(isContinuous_trivialSection_iff p).mpr hp, fun a _ ↦ ?_⟩
-  exact (trivialSection_vle_iff p a 1).mpr
-    (Or.inr ((Ideal.ne_top_iff_one _).mp p.isPrime.ne_top))
+/-- **An empty adic spectrum forces every open ideal to be the unit ideal.** A proper open ideal
+would lie in a maximal ideal, which is then open too, and the trivial valuation there would be a
+point of `Spa (A, A⁺)`.
 
-omit [SeparatelyContinuousAdd A] in
+This is the content of the converse half of Wedhorn Proposition 7.49(1); nothing about
+`closure {0}` is used, only that the ideal is open. -/
+theorem eq_top_of_spa_eq_empty (Aplus : Subring A) {I : Ideal A}
+    (hI : IsOpen (I : Set A)) (h : spa Aplus = ∅) : I = ⊤ := by
+  by_contra hne
+  obtain ⟨m, hm, hle⟩ := Ideal.exists_le_maximal I hne
+  have hopen : IsOpen ((m : Set A)) :=
+    AddSubgroup.isOpen_mono (H₁ := I.toAddSubgroup) (H₂ := m.toAddSubgroup) hle hI
+  have hmem : trivialSection ⟨m, hm.isPrime⟩ ∈ spa Aplus :=
+    (trivialSection_mem_spa_iff Aplus _).mpr hopen
+  rw [h] at hmem
+  exact Set.notMem_empty _ hmem
+
 /-- **The `Spa (A, A⁺) = ∅ → 1 ∈ closure {0}` half of Wedhorn Proposition 7.49(1)**, the converse
 of `spa_eq_empty_of_one_mem_closure_zero`, under the hypothesis that `closure {0}` is open.
 
-The openness hypothesis is Wedhorn 7.49(2) and is *not* proved here: it needs the microbiality
-substrate, and is taken as given exactly as Wedhorn's proof takes it. -/
+That openness is not proved here. It is what Wedhorn's proof of 7.49(1) extracts from 7.49(2) once
+the adic spectrum is empty, via the separated-quotient item 7.49(2)(iii); discharging it needs the
+Huber hypotheses 7.49(2) carries, which this statement does not assume. -/
 theorem one_mem_closure_zero_of_spa_eq_empty [IsTopologicalRing A] (Aplus : Subring A)
     (hopen : IsOpen (closure ({0} : Set A))) (h : spa Aplus = ∅) :
     (1 : A) ∈ closure ({0} : Set A) := by
-  by_contra h1
-  -- `closure {0}` is an ideal, and by hypothesis a proper one
   have hcoe : ((Ideal.closure (⊥ : Ideal A) : Ideal A) : Set A) = closure ({0} : Set A) := by
-    simp [Ideal.closure]
-  have hne : Ideal.closure (⊥ : Ideal A) ≠ ⊤ := by
-    rw [Ne, Ideal.eq_top_iff_one]
-    rw [← SetLike.mem_coe, hcoe]
-    exact h1
-  obtain ⟨m, hm, hle⟩ := Ideal.exists_le_maximal _ hne
-  -- a prime above an open ideal is open, so its trivial valuation is a point of `Spa`
-  have hopen' : IsOpen ((m : Set A)) :=
-    Submodule.isOpen_mono hle (by rw [← hcoe] at hopen; exact hopen)
-  have hmem : trivialSection ⟨m, hm.isPrime⟩ ∈ spa Aplus := trivialSection_mem_spa Aplus hopen'
-  rw [h] at hmem
-  exact hmem
+    rw [Ideal.coe_closure, Submodule.bot_coe]
+  have htop : Ideal.closure (⊥ : Ideal A) = ⊤ :=
+    eq_top_of_spa_eq_empty Aplus (by rw [hcoe]; exact hopen) h
+  rw [← hcoe, htop]
+  exact Submodule.mem_top
 
-omit [SeparatelyContinuousAdd A] in
 /-- **Wedhorn Proposition 7.49(1)**, both directions, once `closure {0}` is open: the adic
 spectrum is empty exactly when `1` lies in the closure of zero. -/
 theorem spa_eq_empty_iff_one_mem_closure_zero [IsTopologicalRing A] (Aplus : Subring A)

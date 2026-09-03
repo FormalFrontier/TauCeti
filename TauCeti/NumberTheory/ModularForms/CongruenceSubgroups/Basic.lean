@@ -66,6 +66,13 @@ infrastructure independent of the diamond operators.
   lower-right entry of a matrix in `Γ₀(N)` (via strong approximation for `SL₂`).
 * `CongruenceSubgroup.gamma0Twist`: an explicit `Γ₀(N)` element whose lower-right entry is any
   natural number coprime to `N`.
+* `CongruenceSubgroup.gamma0TwistOfUnit` and
+  `CongruenceSubgroup.Gamma0Map_toHomUnits_gamma0TwistOfUnit`: the Bézout twist taken at a
+  representative of a unit `u` is a `Γ₀(N)` element whose nebentypus label is exactly `u` — the
+  constructive counterpart of `Gamma0Map_toHomUnits_surjective`, which gives no control over the
+  entries. Its bottom row is `(N, (u : ZMod N).val)`, by
+  `CongruenceSubgroup.gamma0TwistOfUnit_apply_one_zero` and
+  `CongruenceSubgroup.gamma0TwistOfUnit_apply_one_one`.
 * `CongruenceSubgroup.neg_one_mem_Gamma0` and
   `CongruenceSubgroup.Gamma0Map_toHomUnits_negOne`: `-I ∈ Γ₀(N)`, with lower-right entry the
   unit `-1`; `CongruenceSubgroup.neg_one_mem_Gamma1_iff`: `-I ∈ Γ₁(N) ↔ N ∣ 2`.
@@ -239,6 +246,14 @@ private def diagUnit (u : (ZMod N)ˣ) : SpecialLinearGroup (Fin 2) (ZMod N) :=
 private lemma coe_diagUnit (u : (ZMod N)ˣ) :
     (diagUnit u : Matrix (Fin 2) (Fin 2) (ZMod N)) = !![(↑u⁻¹ : ZMod N), 0; 0, ↑u] := rfl
 
+/-- **The value of Mathlib's `Gamma0Map`**: the lower-right entry of the matrix, reduced mod `N`.
+
+`Gamma0Map` is a bare `MonoidHom.mk`, so this holds definitionally; naming it keeps that one
+definitional step out of the `simp` sets that consume it, and gives downstream files a lemma to
+rewrite with instead of unfolding the definition. -/
+theorem Gamma0Map_apply (g : ↥(Gamma0 N)) :
+    Gamma0Map N g = (((g : Matrix (Fin 2) (Fin 2) ℤ) 1 1 : ℤ) : ZMod N) := (rfl)
+
 /-- `(Gamma0Map N).toHomUnits` is surjective: every unit `u ∈ (ZMod N)ˣ` is realized as the
 lower-right entry of some `g ∈ Gamma0 N`, by strong approximation for `SL₂`. -/
 theorem Gamma0Map_toHomUnits_surjective :
@@ -280,7 +295,40 @@ lemma gamma0Twist_mem_Gamma0 {p : ℕ} (h : Nat.Coprime p N) : gamma0Twist N p h
 lemma Gamma0Map_toHomUnits_gamma0Twist {p : ℕ} (h : Nat.Coprime p N) :
     (Gamma0Map N).toHomUnits ⟨gamma0Twist N p h, gamma0Twist_mem_Gamma0 h⟩ =
       ZMod.unitOfCoprime p h :=
-  Units.ext (by simp [Gamma0Map, gamma0Twist_apply_one_one h])
+  Units.ext (by simp [Gamma0Map_apply, gamma0Twist_apply_one_one h])
+
+/-- The Bézout twist at a representative of a unit: `gamma0Twist` at `p = (u : ZMod N).val`.
+Its bottom row is `(N, (u : ZMod N).val)`, which is what `gamma0TwistOfUnit_apply_one_zero` and
+`gamma0TwistOfUnit_apply_one_one` record. -/
+noncomputable def gamma0TwistOfUnit (u : (ZMod N)ˣ) : SL(2, ℤ) :=
+  gamma0Twist N (u : ZMod N).val (ZMod.val_coe_unit_coprime u)
+
+/-- The lower-left entry of the Bézout twist at a unit is `N`. -/
+@[simp] lemma gamma0TwistOfUnit_apply_one_zero (u : (ZMod N)ˣ) :
+    gamma0TwistOfUnit u 1 0 = (N : ℤ) := by
+  rw [gamma0TwistOfUnit, gamma0Twist_apply_one_zero]
+
+/-- The lower-right entry of the Bézout twist at a unit is the chosen representative of `u`. -/
+@[simp] lemma gamma0TwistOfUnit_apply_one_one (u : (ZMod N)ˣ) :
+    gamma0TwistOfUnit u 1 1 = ((u : ZMod N).val : ℤ) := by
+  rw [gamma0TwistOfUnit, gamma0Twist_apply_one_one]
+
+/-- The Bézout twist at a unit lies in `Γ₀(N)`. -/
+lemma gamma0TwistOfUnit_mem_Gamma0 (u : (ZMod N)ˣ) : gamma0TwistOfUnit u ∈ Gamma0 N := by
+  rw [Gamma0_mem, gamma0TwistOfUnit_apply_one_zero]
+  simp
+
+/-- **The Bézout twist at a representative of `u` lifts `u`.** The nebentypus reads the
+lower-right entry, and there that entry is `(u : ZMod N).val`.
+
+This is the constructive form of `Gamma0Map_toHomUnits_surjective`: that lemma produces *some*
+preimage of `u`, whereas this one names an explicit matrix whose bottom row is `(N, u.val)`, which
+is what an argument comparing the entries of two lifts needs. -/
+@[simp] lemma Gamma0Map_toHomUnits_gamma0TwistOfUnit [NeZero N] (u : (ZMod N)ˣ) :
+    (Gamma0Map N).toHomUnits ⟨gamma0TwistOfUnit u, gamma0TwistOfUnit_mem_Gamma0 u⟩ = u :=
+  Units.ext <| by
+    rw [MonoidHom.coe_toHomUnits, Gamma0Map_apply, gamma0TwistOfUnit_apply_one_one,
+      Int.cast_natCast, ZMod.natCast_val, ZMod.cast_id]
 
 /-- `-I` lies in `Γ₀(N)`: its lower-left entry is `0`. -/
 theorem neg_one_mem_Gamma0 : (-1 : SL(2, ℤ)) ∈ Gamma0 N := by
@@ -296,7 +344,7 @@ lemma Gamma0.coe_negOne (N : ℕ) : (Gamma0.negOne N : SL(2, ℤ)) = -1 := (rfl)
 /-- The lower-right entry of `-I ∈ Γ₀(N)` is `-1`. -/
 @[simp]
 theorem Gamma0Map_negOne : Gamma0Map N (Gamma0.negOne N) = -1 := by
-  simp [Gamma0Map, Gamma0.coe_negOne]
+  simp [Gamma0Map_apply, Gamma0.coe_negOne]
 
 /-- The unit-valued lower-right entry of `-I ∈ Γ₀(N)` is the unit `-1`. -/
 @[simp]

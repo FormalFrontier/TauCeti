@@ -383,7 +383,6 @@ theorem totallyBounded_of_comp_add_sub_of_isBounded_of_ae_eq_zero_compl (hp' : p
     TotallyBounded S := by
   obtain ⟨R, hR⟩ := hs.subset_closedBall 0
   refine totallyBounded_of_comp_add_sub_of_unifTight hp' hM hbdd htrans ?_
-  rw [unifTight_iff_ennreal]
   intro ε _
   refine ⟨closedBall (0 : E) R, measure_closedBall_lt_top.ne, fun f => ?_⟩
   have h0 : (closedBall (0 : E) R)ᶜ.indicator ⇑(f : Lp F p mu) =ᵐ[mu] 0 := by

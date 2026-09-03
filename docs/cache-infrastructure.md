@@ -35,6 +35,14 @@ incompatible, bump `mathlib-ltar-v1` once in
 `gh cache delete <key> --repo TauCetiProject/TauCeti`. A failed fetch also retries once with
 `lake exe cache get!`, which forces every linked file to be downloaded and unpacked again.
 
+Which endpoint serves those downloads is a repository variable. Every workflow that runs
+`lake exe cache get` (`ci.yml`, `pr-build.yml`, `pr-profile.yml`, `nightly-verify.yml`,
+`pages.yml`) exports `MATHLIB_CACHE_GET_URL` from `vars.MATHLIB_CACHE_GET_URL`. The cache
+tool treats an empty value as unset, so clearing the variable returns reads to the tool's
+default endpoints on the next run, with no code change. For local and radar runs,
+`scripts/bench/build/run` sets a default for the same variable; a value defined beforehand
+(even an empty one) wins over the default.
+
 ## Cloudflare account
 
 This table records the required destination. During the 2026 account migration,
@@ -71,6 +79,27 @@ to sign them, so the read host must be public; only uploads use a key.
 Lake service names: `tauceti-public` for reads, `tauceti-r2` for uploads. Object keys are
 `artifacts/TauCetiProject/TauCeti/<hash>.art`, so the endpoint variables hold only the prefix and
 Lake appends the scope.
+
+## Contributors
+
+The read endpoints above are anonymous and are not secrets, so `scripts/lake-cache-get.sh` defaults
+to them and a contributor needs no configuration:
+
+```bash
+bash scripts/lake-cache-get.sh .
+```
+
+This is the second half of a working local build and the README documents it as such. Skipping it
+does not fail anything; it compiles the whole library from source instead, which is why its absence
+went unnoticed for as long as it did. CI keeps passing the endpoints explicitly from the
+`LAKE_CACHE_*_PUBLIC` repo variables and reaches the script only when those are set, so the defaults
+never decide what CI does.
+
+Anything else reading this cache, including the worker exemplar in
+[`kim-em/TauCetiWorker`](https://github.com/kim-em/TauCetiWorker), must use the custom domain rather
+than the bucket's `pub-<id>.r2.dev` development URL. Public access on that development URL is off and
+it answers 401 for every path, which a caller whose cache miss is non-fatal cannot tell from a cold
+revision.
 
 ## Why the upload is its own job
 

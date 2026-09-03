@@ -179,7 +179,7 @@ theorem ConditionallyIIDWith.tendsto_average_ae [IsFiniteMeasure μ]
     mem_ae_iff.mpr (by rwa [jointPathLaw_def] at hnull)
   have hmap : AEMeasurable
       (fun ω => (ν ω, fun i => X i ω) : Ω → ProbabilityMeasure α × (ℕ → α)) μ :=
-    h.measurable_directing.aemeasurable.prodMk (aemeasurable_pi_lambda _ h.aemeasurable)
+    h.measurable_directing.aemeasurable.prodMk (AEMeasurable.of_eval h.aemeasurable)
   filter_upwards [(ae_map_iff hmap
     (p := fun z : ProbabilityMeasure α × (ℕ → α) => z ∈ G) hGmeas).mp hjointae] with ω hω
   simpa only [hG, Set.mem_ofPred_eq] using hω

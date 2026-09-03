@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.Algebra.Algebra.Subalgebra.Basic
 public import Mathlib.LinearAlgebra.Basis.VectorSpace
 public import Mathlib.RingTheory.SimpleModule.Basic
 public import Mathlib.RingTheory.SimpleRing.Basic
@@ -24,6 +25,16 @@ two-sided ideal not containing `1`. So over a simple ring every simple module fi
 gives `R ≃+* Module.End D M`, which is the Wedderburn presentation of a simple ring in
 module-internal form -- no ambient base field is involved, only finiteness over `D`.
 
+The last section restates the theorem in the form a representation uses: for a subalgebra `A` of
+`Module.End K N` over which `N` is semisimple, the double centralizer of `A` *inside*
+`Module.End K N` is `A` itself. Here faithfulness is automatic, `A` being a set of endomorphisms,
+so only Mathlib's surjectivity is needed; the centralizer `A'` is the ring of `A`-linear
+endomorphisms of `N`, and an element of `A''` is exactly an `A'`-linear endomorphism. This is a
+different theorem from `TauCeti.centralizer_centralizer` of
+`TauCeti/Algebra/CentralSimple/Centralizer.lean`, which computes the double centralizer of a
+*central simple* subalgebra of a central simple algebra by a dimension count; neither hypothesis
+implies the other.
+
 ## Main results
 
 * `TauCeti.faithfulSMul_of_isSimpleRing`: a nontrivial module over a simple ring is faithful.
@@ -40,6 +51,12 @@ module-internal form -- no ambient base field is involved, only finiteness over 
   finiteness hypothesis density needs.
 * `TauCeti.algEquivEndEndOfIsSimpleRing`: the finite-dimensional-algebra form, where the finiteness
   hypothesis is supplied by finiteness over a commutative base ring acting compatibly.
+* `TauCeti.centralizer_centralizer_of_isSemisimpleModule`: the **subalgebra form**. A subalgebra
+  `A` of `Module.End K N` over which `N` is semisimple, `N` finite over `Module.End A N`, is its
+  own double centralizer inside `Module.End K N`.
+* `TauCeti.centralizer_centralizer_range`: the same statement for the image of a semisimple
+  algebra, the form a representation supplies. The image, not the algebra itself, is what the
+  double centralizer returns, since the representation need not be faithful.
 
 ## Implementation notes
 
@@ -61,8 +78,11 @@ roadmap calls the same statement `toModuleEnd_bijective`.
 
 This implements the Layer 3 target `toModuleEnd_bijective` of the
 [semisimple algebras roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/SemisimpleAlgebras/README.md),
-together with its Jacobson-Chevalley corollary. See T. Y. Lam, *A First Course in Noncommutative
-Rings*, GTM 131, Chapter 4, and N. Jacobson, *Basic Algebra II*, Chapter 4.
+together with its Jacobson-Chevalley corollary. The subalgebra form is what Layer 8 of the
+[Schur--Weyl roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/SchurWeyl/README.md)
+calls "a case of the double-centralizer theorem for the semisimple algebra `ℂ[Sₙ]`". See T. Y. Lam,
+*A First Course in Noncommutative Rings*, GTM 131, Chapter 4, and N. Jacobson, *Basic Algebra II*,
+Chapter 4.
 -/
 
 public section
@@ -231,5 +251,79 @@ theorem algEquivEndEndOfIsSimpleRing_symm_smul (K : Type*) [CommSemiring K] [Alg
     (algEquivEndEndOfIsSimpleRing R M K).symm f • m = f m := by
   rw [← algEquivEndEndOfIsSimpleRing_apply K ((algEquivEndEndOfIsSimpleRing R M K).symm f) m,
     AlgEquiv.apply_symm_apply]
+
+/-! ### The double centralizer of a subalgebra of an endomorphism algebra -/
+
+section EndSubalgebra
+
+variable {K : Type*} [CommRing K] {N : Type*} [AddCommGroup N] [Module K N]
+  (A : Subalgebra K (Module.End K N))
+
+/-- An `A`-linear endomorphism of `N`, for `A` a `K`-subalgebra of `Module.End K N`, commutes with
+every element of `A`, so its restriction of scalars lies in the centralizer of `A`. -/
+private theorem restrictScalars_mem_centralizer (g : Module.End A N) :
+    g.restrictScalars K ∈ Subalgebra.centralizer K (A : Set (Module.End K N)) := by
+  refine (Subalgebra.mem_centralizer_iff K).2 fun a ha => ?_
+  ext m
+  exact (g.map_smul ⟨a, ha⟩ m).symm
+
+/-- **The double centralizer theorem inside an endomorphism algebra.** Let `A` be a `K`-subalgebra
+of `Module.End K N`, and suppose `N` is semisimple as an `A`-module and finite over
+`Module.End A N`. Then `A` is its own double centralizer: an endomorphism commuting with everything
+that commutes with `A` already lies in `A`.
+
+The inclusion `A ≤ A''` is formal (`Subalgebra.le_centralizer_centralizer`); the content is the
+reverse one, which is Jacobson density. The centralizer `A'` is the ring of `A`-linear
+endomorphisms of `N`, so an element of `A''` is an `A'`-linear endomorphism, and density writes
+every such endomorphism as the action of an element of `A`.
+
+Finiteness is over `Module.End A N`, the hypothesis density actually needs; a caller with a finite
+`K`-module `N` gets it from `TauCeti.finite_end_of_smulCommClass`. -/
+theorem centralizer_centralizer_of_isSemisimpleModule [Module.Finite (Module.End A N) N]
+    [IsSemisimpleModule A N] :
+    Subalgebra.centralizer K
+        (Subalgebra.centralizer K (A : Set (Module.End K N)) : Set (Module.End K N)) = A := by
+  refine le_antisymm (fun x hx => ?_) (Subalgebra.le_centralizer_centralizer K)
+  rw [Subalgebra.mem_centralizer_iff] at hx
+  -- `x` commutes with every `A`-linear endomorphism, so it is `A'`-linear.
+  let f : Module.End (Module.End A N) N :=
+    { toFun := x
+      map_add' := x.map_add
+      map_smul' := fun g m => by
+        -- Evaluating the commutation of `x` with `g.restrictScalars K` at `m` gives
+        -- `x (g m) = g (x m)`, which is the required `A'`-linearity once the scalar action of
+        -- `Module.End ↥A N` on `N` is `Module.End.smul_def` and the restriction of scalars is
+        -- `LinearMap.coe_restrictScalars`.
+        have h := congrArg (fun t : Module.End K N => t m)
+          (hx _ (restrictScalars_mem_centralizer A g))
+        simpa only [Module.End.smul_def, RingHom.id_apply, Module.End.mul_apply,
+          LinearMap.coe_restrictScalars] using h.symm }
+  obtain ⟨a, ha⟩ := Module.Finite.toModuleEnd_moduleEnd_surjective (R := A) (M := N) f
+  have hx' : x = (a : Module.End K N) := by
+    ext m
+    exact (congrArg (fun t : Module.End (Module.End A N) N => t m) ha).symm
+  exact hx' ▸ a.2
+
+/-- **The double centralizer theorem for the image of a semisimple algebra.** The image of a
+semisimple `K`-algebra `S` in `Module.End K N`, for a finite `K`-module `N`, is its own double
+centralizer.
+
+The image is a quotient of `S`, hence semisimple, so `N` is a semisimple module over it and
+`TauCeti.centralizer_centralizer_of_isSemisimpleModule` applies, its finiteness hypothesis coming
+from `TauCeti.finite_end_of_smulCommClass`. It is the image and not `S` that is recovered: the
+representation `S → Module.End K N` need not be injective. -/
+theorem centralizer_centralizer_range [Module.Finite K N] {S : Type*} [Ring S] [Algebra K S]
+    [IsSemisimpleRing S] (ρ : S →ₐ[K] Module.End K N) :
+    Subalgebra.centralizer K
+        (Subalgebra.centralizer K (ρ.range : Set (Module.End K N)) : Set (Module.End K N)) =
+      ρ.range := by
+  have : IsSemisimpleRing ρ.range :=
+    RingHom.isSemisimpleRing_of_surjective ρ.rangeRestrict.toRingHom
+      (AlgHom.rangeRestrict_surjective _)
+  have : IsSemisimpleModule ρ.range N := IsSemisimpleRing.isSemisimpleModule
+  have : Module.Finite (Module.End ρ.range N) N := finite_end_of_smulCommClass (R := ρ.range) K
+  exact centralizer_centralizer_of_isSemisimpleModule _
+
+end EndSubalgebra
 
 end TauCeti

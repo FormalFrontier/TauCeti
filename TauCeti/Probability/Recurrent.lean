@@ -161,7 +161,7 @@ theorem recurrent_of_measurePreserving_shift [Countable α] [MeasurableSingleton
     (h : MeasurePreserving (shift α) (pathLaw μ X) (pathLaw μ X)) :
     Recurrent μ X := by
   have hfin : IsFiniteMeasure (pathLaw μ X) := by rw [pathLaw_def]; infer_instance
-  have hmap : AEMeasurable (fun ω i => X i ω) μ := aemeasurable_pi_lambda _ hX
+  have hmap : AEMeasurable (fun ω i => X i ω) μ := AEMeasurable.of_eval hX
   have hpath := ae_forall_frequently_apply_eq_of_measurePreserving_shift h
   rw [pathLaw_def] at hpath
   exact ae_of_ae_map hmap hpath
@@ -189,7 +189,7 @@ theorem measurableSet_setOf_forall_frequently_apply_eq [MeasurableEq α] :
 theorem recurrent_pathLaw_iff [MeasurableEq α] {μ : Measure Ω}
     {X : ℕ → Ω → α} (hX : ∀ i, AEMeasurable (X i) μ) :
     Recurrent (pathLaw μ X) (fun n (x : ℕ → α) => x n) ↔ Recurrent μ X := by
-  have hmap : AEMeasurable (fun ω i => X i ω) μ := aemeasurable_pi_lambda _ hX
+  have hmap : AEMeasurable (fun ω i => X i ω) μ := AEMeasurable.of_eval hX
   rw [recurrent_def, recurrent_def, pathLaw_def,
     ae_map_iff hmap measurableSet_setOf_forall_frequently_apply_eq]
 

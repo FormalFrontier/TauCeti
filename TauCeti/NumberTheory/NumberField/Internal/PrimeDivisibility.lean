@@ -7,7 +7,7 @@ module
 
 public import Mathlib.Data.Int.Basic
 public import Mathlib.Data.Nat.Prime.Basic
-public import Mathlib.Logic.Basic
+public import Mathlib.Basic.Logic.Basic
 
 /-!
 # Prime divisibility helpers

@@ -3,8 +3,8 @@
 
 This is the single place that reads what a PR's status *is* -- its lifecycle
 (open / merged / closed), its `build` CI state, and its review state (from the
-newest repo-associated `<!--tauceti-scoreboard-->` comment's meta JSON), plus whether a review
-is in flight right now (from the engine's `<!--tauceti-review-in-progress-->`
+newest `<!--tauceti-scoreboard-->` comment's meta JSON), plus whether a review is
+in flight right now (from the engine's `<!--tauceti-review-in-progress-->`
 marker). Every status *sink* imports it and renders that one truth its own way:
 
   * zulip.py   -> two independent groups of emoji reactions on the PR's message
@@ -13,11 +13,16 @@ marker). Every status *sink* imports it and renders that one truth its own way:
 Keeping the derivation here means the two sinks can never disagree about what a
 PR's state is: they read the same `derive()` and only differ in how they show it.
 
-Everything here reads only trusted GitHub data. The two review signals -- the scoreboard meta and
-the in-progress marker -- are taken only from comments by a repo-associated author
-(OWNER/MEMBER/COLLABORATOR), so a fork PR author cannot forge status labels or housekeeping state.
-This status-sink policy is deliberately narrower than auto-merge's newest-scoreboard policy. Both
-signals are extracted from ONE comment fetch.
+The status sinks deliberately use the same no-author-bar policy as the worker and auto-merge: the
+newest marked scoreboard counts regardless of the comment author's repository association. A review
+posted by a contributor is therefore reflected in labels and Zulip instead of remaining visibly
+`awaiting-review` after the worker has recorded the head as reviewed. The status labels are not a
+security boundary; the build, scope, axiom and bump guards remain trusted commit statuses.
+
+Destructive housekeeping is intentionally stricter. It calls
+`repo_associated_scoreboard_meta`, which accepts only comments by OWNER/MEMBER/COLLABORATOR accounts,
+so an arbitrary commenter cannot make housekeeping close somebody else's PR. Both status review
+signals are extracted from one all-comments fetch.
 
 The module is a pure library -- importing it has no side effects, writes nothing,
 and needs only python3's standard library plus an authenticated `gh` CLI (via
@@ -40,21 +45,159 @@ _META_RE = re.compile(r"<!--tauceti-meta:v1\s+(\{.*\})\s*-->", re.S)
 # `expires_at` (epoch seconds) so a crashed reviewer self-clears. The format is owned by the review
 # engine; we parse only those two fields (mirrors the worker's de-contention read).
 _INPROGRESS_RE = re.compile(r"<!--tauceti-review-in-progress (.*?)-->", re.S)
-_TRUSTED_ASSOC = ("OWNER", "MEMBER", "COLLABORATOR")
+_REPO_ASSOCIATED = ("OWNER", "MEMBER", "COLLABORATOR")
+
+# `gh` exits nonzero on a rate limit without retrying. The sinks driven by
+# pr-labels.yml, zulip-pr*.yml and housekeeping.yml read through gh_api against
+# ONE shared App installation budget; stuck-alerts.yml runs on GITHUB_TOKEN and so
+# has its own. Either way a burst of merges can spend the budget out from under
+# whichever read comes next.
+#
+# `gh` writes the API's message followed by "(HTTP <status>)" to stderr, so a rate
+# limit is recognised by STATUS first and wording second. Matching on wording alone
+# would retry a 404 whose body happens to mention a rate limit.
+# `gh` usually renders "<message> (HTTP <status>)", but a response with no JSON
+# message is rendered bare as "gh: HTTP 429". Accept both spellings.
+_HTTP_STATUS = re.compile(r"\(HTTP (\d{3})\)|\bHTTP (\d{3})\b")
+_RATE_LIMIT_WORDING = ("rate limit", "abuse detection", "was submitted too quickly")
+
+# Total calls, not retries. GitHub asks for at least a minute before retrying a
+# secondary limit, so the waits are 60s then 120s -- not the sub-minute schedule a
+# generic exponential back-off would use, which GitHub warns can prolong the limit.
+RATE_LIMIT_ATTEMPTS = 3
+SECONDARY_BACKOFF_SECONDS = 60
+# A PRIMARY limit (quota exhausted) clears only at the hourly reset, which is far
+# too long to sleep inside a workflow step. Past this, give up immediately and say
+# when it clears rather than burning the job's timeout.
+RATE_LIMIT_MAX_WAIT_SECONDS = 180
 
 
 # ----- GitHub truth (via the gh CLI, authenticated by GH_TOKEN) ---------------
 
+class RateLimited(RuntimeError):
+    """A rate limit this read gave up on -- whether the retries were spent, the
+    quota's reset was too far off to wait for, or an earlier call already
+    established the limit. Distinct from a plain failure so a caller looping over
+    many items can tell "GitHub is refusing us" from "this one item is broken"."""
+
+
+# Once a limit is established, every later read is refused until it resets. Without
+# this a caller that catches per-item failures — stuck_alerts runs ten detectors,
+# housekeeping and the Zulip backfill loop per PR — would start the full wait again
+# for each one and blow the job's timeout long before doing any work.
+_BLOCKED_UNTIL = 0.0
+
+
+def _rate_limited(stderr):
+    """Is this stderr a rate limit? Status first, wording second."""
+    found = _HTTP_STATUS.search(stderr)
+    status = int(found.group(1) or found.group(2)) if found else None
+    if status == 429:
+        return True
+    if status == 403:
+        return any(word in stderr.lower() for word in _RATE_LIMIT_WORDING)
+    return False
+
+
+QUOTA_EXHAUSTED = "exhausted"   # the hourly budget is spent; seconds says until when
+QUOTA_OK = "ok"                 # budget has room, so the refusal was a secondary limit
+QUOTA_UNKNOWN = "unknown"       # the probe itself failed; assume nothing
+
+
+def _quota_state():
+    """(state, seconds-until-reset) for the core REST quota.
+
+    QUOTA_UNKNOWN is deliberately distinct from QUOTA_OK. `/rate_limit` does not
+    count against the PRIMARY quota, but GitHub says it can count against a
+    SECONDARY one -- so the probe can itself be refused, and reading that failure
+    as "the budget has room" would have us keep issuing requests while limited,
+    which is what prolongs a block.
+    """
+    out = subprocess.run(
+        ["gh", "api", "rate_limit", "--jq",
+         r'"\(.resources.core.remaining) \(.resources.core.reset)"'],
+        capture_output=True, text=True)
+    if out.returncode != 0:
+        return QUOTA_UNKNOWN, None
+    try:
+        remaining, reset = out.stdout.split()
+        if int(remaining) > 0:
+            return QUOTA_OK, None
+        return QUOTA_EXHAUSTED, max(0, int(reset) - int(time.time()))
+    except (TypeError, ValueError):
+        return QUOTA_UNKNOWN, None
+
+
+def _block_for(seconds):
+    """Refuse reads for `seconds`, never shortening a block already in force: a
+    short secondary hold must not overwrite a long primary one."""
+    global _BLOCKED_UNTIL
+    _BLOCKED_UNTIL = max(_BLOCKED_UNTIL, time.time() + seconds)
+
+
 def gh_api(path, jq=None, paginate=False):
+    """One `gh api` read, waiting out a rate limit within a bounded budget.
+
+    `gh` does not retry a 403/429 of its own accord, so a burst of merges spending
+    the budget failed whichever sink read next: an hourly sweep losing a run, or a
+    status label left wrong until some later event fired.
+
+    Only a rate limit is retried, and only on its own terms: at least a minute for
+    a secondary limit, and for an exhausted hourly quota only when its reset is
+    within RATE_LIMIT_MAX_WAIT_SECONDS -- a reset further off than that cannot be
+    waited for inside a workflow step, so it raises RateLimited immediately and
+    blocks later reads until it passes. Every other failure raises on the first
+    attempt, so a 404 or a permission error stays as loud, and as fast, as before.
+
+    KNOWN LIMIT: `gh api` prints the response body, not its headers, so a
+    `Retry-After` GitHub sent cannot be honoured. Capturing it would mean
+    `--include` and stripping a header block from every page of a paginated read,
+    for a value that is usually within the minimum we already wait. The waits here
+    are GitHub's documented floor, not its per-response instruction.
+
+    The bound is on the SLEEP SCHEDULE, not on wall clock: the subprocesses
+    themselves are unbounded, so a hung `gh` is not covered. Single-threaded, and
+    the breaker is per process -- separate workflow jobs sharing an installation
+    budget do not coordinate.
+    """
+    now = time.time()
+    if now < _BLOCKED_UNTIL:
+        raise RateLimited(
+            f"gh api {path} skipped: rate limited for another "
+            f"{int(_BLOCKED_UNTIL - now)}s")
+
     cmd = ["gh", "api", path]
     if paginate:
         cmd.append("--paginate")
     if jq is not None:
         cmd += ["--jq", jq]
-    out = subprocess.run(cmd, capture_output=True, text=True)
-    if out.returncode != 0:
-        raise RuntimeError(f"gh api {path} failed: {out.stderr.strip()}")
-    return out.stdout
+    for attempt in range(RATE_LIMIT_ATTEMPTS):
+        out = subprocess.run(cmd, capture_output=True, text=True)
+        if out.returncode == 0:
+            return out.stdout
+        stderr = out.stderr.strip()
+        if not _rate_limited(stderr):
+            raise RuntimeError(f"gh api {path} failed: {stderr}")
+        # An exhausted hourly quota clears only at its reset; a secondary limit
+        # eases on its own. Probe once, and only while the answer is still useful:
+        # after the last attempt there is nothing left to decide.
+        state, reset_in = (_quota_state() if attempt + 1 < RATE_LIMIT_ATTEMPTS
+                           else (QUOTA_UNKNOWN, None))
+        if state is QUOTA_EXHAUSTED and reset_in > RATE_LIMIT_MAX_WAIT_SECONDS:
+            _block_for(reset_in)
+            raise RateLimited(f"gh api {path} failed: hourly quota exhausted, "
+                              f"resets in {reset_in}s")
+        backoff = SECONDARY_BACKOFF_SECONDS * (2 ** attempt)
+        if attempt + 1 == RATE_LIMIT_ATTEMPTS:
+            # Hold off for what the NEXT wait would have been, not the first one:
+            # releasing after 60s would let a looping caller start the whole
+            # 60/120 schedule again, which is what the breaker exists to stop.
+            _block_for(backoff)
+            raise RateLimited(f"gh api {path} failed after "
+                              f"{RATE_LIMIT_ATTEMPTS} attempts: {stderr}")
+        delay = reset_in if state is QUOTA_EXHAUSTED else backoff
+        print(f"gh api rate-limited; retrying in {delay}s", flush=True)
+        time.sleep(delay)
 
 
 def _roadmap_labels(labels):
@@ -103,15 +246,17 @@ def pr_state(pr):
     }
 
 
-def trusted_comments(pr):
-    """Issue comments authored by a repo-associated account (OWNER/MEMBER/COLLABORATOR), as
-    `[{'body','updated'}]`. One paginated fetch, reused for both review signals below, so an
-    untrusted fork-PR comment can never forge review state. The jq emits one compact object per
-    line (valid JSONL across any number of pages)."""
+def issue_comments(pr):
+    """All issue comments as `[{'body','updated','author_association'}]`.
+
+    One paginated fetch is reused for both status review signals below. The jq emits one compact
+    object per line (valid JSONL across any number of pages). Keeping the association in the neutral
+    row lets destructive callers apply the stricter repository-associated policy without duplicating
+    the fetch or the scoreboard parser.
+    """
     out = gh_api(
         f"/repos/{REPO}/issues/{pr}/comments?per_page=100",
-        jq='.[] | select(.author_association|IN("OWNER","MEMBER","COLLABORATOR"))'
-           ' | {body: .body, updated: .updated_at}',
+        jq='.[] | {body: .body, updated: .updated_at, author_association: .author_association}',
         paginate=True,
     )
     rows = []
@@ -126,8 +271,13 @@ def trusted_comments(pr):
     return rows
 
 
+def repo_associated_comments(pr):
+    """Only comments by OWNER/MEMBER/COLLABORATOR accounts, for destructive consumers."""
+    return [c for c in issue_comments(pr) if c.get("author_association") in _REPO_ASSOCIATED]
+
+
 def scoreboard_meta_from(comments):
-    """The newest scoreboard comment's meta JSON ({} if none), from a trusted-comment list."""
+    """The newest scoreboard comment's meta JSON ({} if none) from the supplied comment policy."""
     best = None
     for c in comments:
         if SCOREBOARD_MARKER in (c.get("body") or ""):
@@ -145,12 +295,17 @@ def scoreboard_meta_from(comments):
 
 
 def scoreboard_meta(pr):
-    """Convenience: the scoreboard meta for a PR (fetches trusted comments itself)."""
-    return scoreboard_meta_from(trusted_comments(pr))
+    """Newest marked scoreboard from any author, matching the worker and auto-merge policy."""
+    return scoreboard_meta_from(issue_comments(pr))
+
+
+def repo_associated_scoreboard_meta(pr):
+    """Newest marked scoreboard from a repo-associated author, for destructive consumers."""
+    return scoreboard_meta_from(repo_associated_comments(pr))
 
 
 def inprogress_from(comments, head, now):
-    """True iff some trusted comment carries an UNEXPIRED in-progress marker for exactly `head`.
+    """True iff some supplied comment carries an UNEXPIRED in-progress marker for exactly `head`.
 
     Head-exact (a new push is a new review unit, not covered by an old marker) and TTL-bounded
     (a crashed reviewer's marker self-clears once `expires_at` passes), mirroring the engine's own
@@ -271,7 +426,7 @@ def derive(pr, ci_override=None, state=None, now=None):
             ci = None if ci_override == "none" else ci_override
         else:
             ci = ci_status(st["head"])
-        comments = trusted_comments(pr)
+        comments = issue_comments(pr)
         review = review_state(scoreboard_meta_from(comments), st["head"])
         inprogress = inprogress_from(comments, st["head"], int(time.time()) if now is None else now)
 

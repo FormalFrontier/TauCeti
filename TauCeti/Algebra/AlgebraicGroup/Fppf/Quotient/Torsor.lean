@@ -177,7 +177,7 @@ private noncomputable def quotientSubgroupPointsPresheafGrpInclusion
     (H : _root_.CommHopfAlgCat.{u} R) (I : HopfIdeal R H) :
     pointsPresheafGrp (quotient H I) ⟶ pointsPresheafGrp H :=
   groupFunctorGrpMap <| Functor.whiskerRight
-    (Functor.whiskerLeft (opOpEquivalence (CommAlgCat.{u} R)).functor
+    (Functor.whiskerLeft (unopUnop (CommAlgCat.{u} R))
       (mapPointsFunctor (mkQuotient H I)))
     GrpCat.uliftFunctor.{u + 1, u}
 

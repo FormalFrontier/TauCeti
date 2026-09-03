@@ -290,7 +290,8 @@ older entries.
 If a tag does not match the rule, the tool reports it and changes nothing.
 """ % EARLIEST_RELEASE
 
-STATUSES = ("tagged", "ready", "pending", "blocked", "unreachable", "out-of-scope")
+STATUSES = ("tagged", "ready", "pending", "ahead", "blocked", "unreachable",
+            "out-of-scope")
 
 
 def audit(ref=None):
@@ -303,6 +304,7 @@ def audit(ref=None):
     if not by_release:
         raise RuntimeError("main has never run on a Lean release toolchain")
     oldest = min(by_release, key=release_key)
+    newest_era = max(by_release, key=release_key)   # the toolchain main is on now
     rows = []
 
     for release in sorted(set(mathlib_releases()) | set(by_release), key=release_key):
@@ -310,7 +312,7 @@ def audit(ref=None):
             continue          # predates this repository entirely; not our business
         era = by_release.get(release)
         if era is None:
-            rows.append(_unreachable_row(release, tags))
+            rows.append(_unreachable_row(release, tags, newest_era))
             continue
         sha = era["commit"]
         row = dict(era, status=None, reason=None, mathlib_rev=mathlib_pin(sha),
@@ -353,7 +355,7 @@ def audit(ref=None):
     return rows
 
 
-def _unreachable_row(release, tags):
+def _unreachable_row(release, tags, newest_era=None):
     """A release main never ran on. There is no commit to tag and nothing will construct
     one, so the only useful thing the report can do is say so and why."""
     row = {"release": release, "toolchain": toolchain_for(release), "commit": None,
@@ -384,6 +386,16 @@ def _unreachable_row(release, tags):
     if release_key(release) < release_key(EARLIEST_RELEASE):
         row["status"] = "out-of-scope"
         row["reason"] = f"predates {EARLIEST_RELEASE}, before the Lake cache existed"
+        return row
+    if newest_era and release_key(release) > release_key(newest_era):
+        # Ahead of main, not stepped over. `unreachable` reads as permanent and the report
+        # files it under "no tag is possible", which is the opposite of the truth: the bump
+        # has not arrived yet, and this will be tagged like any other release when it does.
+        # Mathlib tags a release as soon as Lean cuts it, so this is the normal state for
+        # days or weeks rather than an exception.
+        row["status"] = "ahead"
+        row["reason"] = (f"mathlib has tagged it, but main is still on {newest_era}; "
+                         "nothing to do until the bump gets there")
     return row
 
 
@@ -397,10 +409,12 @@ def state_digest(rows):
     Over (release, status) only, so rewording a reason or the policy text does not read as
     a change. `pending` releases are left out entirely: a release whose CI has not finished
     is not news, and including it would post a message on every bump saying "wait", then
-    another when the waiting ended. `out-of-scope` is left out because it never changes."""
+    another when the waiting ended. `ahead` likewise: mathlib tags a release the moment Lean
+    cuts one and main reaches it days or weeks later, so posting then would announce
+    something nobody here can act on. `out-of-scope` is left out because it never changes."""
     interesting = sorted((r["release"], r["status"], r.get("commit"), r.get("ci"))
                          for r in rows
-                         if r["status"] not in ("pending", "out-of-scope"))
+                         if r["status"] not in ("pending", "ahead", "out-of-scope"))
     return hashlib.sha256(repr(interesting).encode()).hexdigest()[:16]
 
 
@@ -438,6 +452,10 @@ def render(rows, include_policy=True, collapse_old=False):
     if blocked:
         lines += ["", "Needing a human:", ""]
         lines += [f"    {r['release']}: {r['reason']}" for r in blocked]
+    ahead = [r for r in rows if r["status"] == "ahead"]
+    if ahead:
+        lines += ["", "Ahead of main, and will be tagged when the bump arrives:", ""]
+        lines += [f"    {r['release']}: {r['reason']}" for r in ahead]
     unreachable = [r for r in rows if r["status"] == "unreachable"]
     if unreachable:
         lines += ["", "No tag is possible for these, and none will be constructed:", ""]

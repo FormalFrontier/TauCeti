@@ -10,8 +10,6 @@ public import TauCeti.Algebra.Lie.Weights.Borel
 import TauCeti.Algebra.Lie.Weights.Eigenvector
 public import TauCeti.Algebra.Lie.Weights.Integrality
 
-public section
-
 /-!
 # Highest weight vectors and dominant integral weights
 
@@ -49,12 +47,18 @@ combination of the simple coroots.
 
 ## Main results
 
+* `TauCeti.rootSystem_coroot'_apply`: the coroot functional of the abstract root-pairing API is
+  evaluation at the coroot, the dictionary through which the general root-system results apply to
+  dominance and integrality here.
+
 * `TauCeti.isHighestWeightVector_iff_forall_rootSpace`: it is enough to check that each *positive
   root space* annihilates `v`, the positive nilradical being spanned by them.
 * `TauCeti.IsHighestWeightVector.unique`: a vector is a highest weight vector for at most one
   weight.
 * `TauCeti.IsHighestWeightVector.map` and `TauCeti.IsHighestWeightVector.congr`: morphisms with
   nonzero image, and in particular equivalences, preserve highest weight vectors and their weights.
+* `TauCeti.isHighestWeightVector_coe_iff`: a vector of a Lie submodule is a highest weight vector
+  there exactly when it is one in the ambient module.
 * `TauCeti.IsHighestWeightVector.mem_genWeightSpace` and
   `TauCeti.IsHighestWeightVector.weight`: a highest weight vector really does exhibit `lam` as a
   weight of `M`, so the vocabulary is not vacuous.
@@ -91,6 +95,8 @@ definition of Layer 4 of
 
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §20.2.
 -/
+
+public section
 
 namespace TauCeti
 
@@ -176,6 +182,22 @@ theorem unique (hv : IsHighestWeightVector b lam v) (hw : IsHighestWeightVector 
 
 end IsHighestWeightVector
 
+/-! ### Highest weight vectors of a Lie submodule -/
+
+/-- A vector of a Lie submodule is a highest weight vector of that submodule exactly when it is one
+of the ambient module: both defining conditions are read off the ambient bracket. -/
+@[simp]
+theorem isHighestWeightVector_coe_iff {lam : Dual K H} {P : LieSubmodule K L M} {w : P} :
+    IsHighestWeightVector b lam (w : M) ↔ IsHighestWeightVector b lam w := by
+  constructor
+  · intro h
+    refine isHighestWeightVector_iff.mpr ⟨fun h0 => h.ne_zero (by simp [h0]), fun x => ?_,
+      fun x hx => ?_⟩
+    · exact Subtype.ext (by simpa using h.lie_eq_smul x)
+    · exact Subtype.ext (by simpa using h.lie_eq_zero_of_mem_positiveNilradical hx)
+  · intro h
+    exact h.map P.incl (by simpa using h.ne_zero)
+
 /-! ### Recognising a highest weight vector on the root spaces -/
 
 /-- **Positive root spaces suffice.** A nonzero `H`-eigenvector annihilated by the root space of
@@ -243,6 +265,17 @@ theorem coe_weight (hv : IsHighestWeightVector b lam v) : (hv.weight : H → K) 
 end IsHighestWeightVector
 
 /-! ### Dominant integral weights -/
+
+/-- **The two coroot interfaces agree.** The root system of a splitting Cartan subalgebra pairs a
+weight with a coroot by evaluation, so the coroot functional `RootPairing.coroot' i` of the
+abstract root-pairing API is evaluation at the coroot of `i`.
+
+This is the dictionary between the root-pairing formulation of dominance and integrality, in which
+the general root-system results are stated, and the Lie-theoretic one used below. -/
+@[simp]
+theorem rootSystem_coroot'_apply (i : H.root) (chi : Dual K H) :
+    (IsKilling.rootSystem H).coroot' i chi = chi ((IsKilling.rootSystem H).coroot i) := by
+  rw [LinearMap.flip_apply, IsKilling.rootSystem_toLinearMap_apply]
 
 variable (b)
 

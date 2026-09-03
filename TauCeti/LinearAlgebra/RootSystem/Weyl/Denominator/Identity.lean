@@ -1,0 +1,164 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
+-/
+module
+
+public import TauCeti.LinearAlgebra.RootSystem.Weyl.Alternating
+-- Non-public: the positive-cone argument is used only inside a private proof.
+import TauCeti.LinearAlgebra.RootSystem.DominantCone
+
+/-!
+# The Weyl denominator identity
+
+The **Weyl denominator identity** is the equality
+
+`∏_{α > 0} (1 - e^{-α}) = ∑_{w ∈ W} sgn(w) e^{w ⬝ 0}`
+
+in the integral group algebra `ℤ[M]` of the weight space of a root system: the Weyl denominator
+`TauCeti.weylDenominator` is the Weyl numerator `TauCeti.weylNumerator` of the weight `0`. Written
+without the dot action `w ⬝ 0 = w(ρ) - ρ` it is the familiar
+`∏_{α>0}(1 - e^{-α}) = ∑_w sgn(w) e^{w(ρ) - ρ}`, or, after multiplying by `e^{ρ}`, the symmetric
+form `∏_{α>0}(e^{α/2} - e^{-α/2}) = ∑_w sgn(w) e^{w(ρ)}`.
+
+It is the case `λ = 0` of the Weyl character formula, which identifies the product of a formal
+character with the denominator with the numerator of a dominant weight. Thus the identity is proved
+first and on its own, with no representation theory involved.
+
+## The argument
+
+`Δ` is alternating for the dot action (`TauCeti.isDotAlternating_weylDenominator`), so
+`TauCeti.IsDotAlternating.eq_weylNumerator` reduces the identity to two coefficient computations on
+the open chamber of the dot action: the constant term of `Δ` is `1`
+(`TauCeti.coeff_weylDenominator_zero`, an elementary expansion proved with the denominator itself),
+and `0` is the only weight of that chamber where `Δ` does not vanish.
+
+The second computation is the geometric heart of the identity, and is the only step specific to the
+denominator. An exponent of `Δ` is `-ν` for a sum `ν` of positive roots; lying in the open dot
+chamber makes `ρ - ν` strictly dominant, which bounds every `⟨ν, αᵢ^∨⟩` above by `1`; these
+pairings are integers, hence nonpositive; and the only antidominant member of the positive root
+cone is `0` (`TauCeti.eq_zero_of_mem_posRootCone_of_forall_coroot'_nonpos`).
+
+## The coefficient ring
+
+Everything below is stated over a linearly ordered coefficient ring, which is where the chamber
+geometry the proof runs through lives: `TauCeti.openDotDominantChamber` is defined through
+`TauCeti.openDominantChamber`, whose *definition* already asks for `[LinearOrder R]`, and
+`TauCeti.IsDotAlternating.eq_weylNumerator` is stated over an ordered ring. The identity therefore
+specializes directly to an ordered root pairing — a rational or a real one — but not, without a
+base change, to one over an unordered field such as `ℂ`. Carrying it there is a scalar-restriction
+question about `RootPairing.restrictScalars'`, which produces a pairing on the span of the roots
+rather than on the ambient weight module, and is not attempted here.
+
+## Main results
+
+* `TauCeti.weylDenominator_eq_weylNumerator_zero`: **the Weyl denominator identity**, `Δ = N(0)`.
+* `TauCeti.support_coeff_weylDenominator` and `TauCeti.card_support_coeff_weylDenominator`:
+  consequently `Δ` is supported on the dot orbit of `0` and has exactly `|W|` terms.
+
+## References
+
+This is the "Weyl denominator identity, proved combinatorially" step of Layer 6 ("the Weyl
+character, dimension, and Kostant formulas") of
+`TauCetiRoadmap/RepresentationTheory/LieHighestWeight/README.md`.
+
+* J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, Ch. VI, §24.3.
+* J.-P. Serre, *Complex Semisimple Lie Algebras*, Ch. VII, §7.
+-/
+
+public section
+
+namespace TauCeti
+
+universe u v w x
+
+variable {ι : Type u} {R : Type v} {M : Type w} {N : Type x}
+  [CommRing R] [AddCommGroup M] [Module R M] [AddCommGroup N] [Module R N]
+  (P : _root_.RootPairing ι R M N) [Finite ι] [CharZero R] (b : P.Base)
+
+section Reduced
+
+variable [LinearOrder R] [IsStrictOrderedRing R] [P.IsReduced]
+
+/-- A reduced root pairing has reduced coroots: both the weight and the coweight module are
+reflexive, being perfectly paired with each other, hence torsion free, which is what
+`RootPairing.instFlipIsReduced` needs. So `P.flip.IsReduced` need not be assumed separately. -/
+private theorem flip_isReduced : P.flip.IsReduced :=
+  have : Module.IsReflexive R M := .of_isPerfPair P.toLinearMap
+  have : Module.IsReflexive R N := .of_isPerfPair P.flip.toLinearMap
+  inferInstance
+
+end Reduced
+
+section Cone
+
+variable [LinearOrder R] [IsStrictOrderedRing R] [Invertible (2 : R)] [P.IsCrystallographic]
+  [P.IsReduced] [P.IsRootSystem]
+
+/-- The Weyl denominator vanishes at a weight of the open chamber of the dot action, unless that
+weight is `0`.
+
+An exponent of `Δ` is minus a sum `ν` of positive roots, so strict dominance of `ρ - ν` bounds
+every `⟨ν, αᵢ^∨⟩` above by `1`; these pairings are integers, hence nonpositive, and the only
+antidominant member of the positive root cone is `0`. -/
+private theorem eq_zero_of_coeff_weylDenominator_ne_zero {y : M}
+    (hy : (weylDenominator P b).coeff y ≠ 0)
+    (hdom : y ∈ openDotDominantChamber P b) : y = 0 := by
+  have hcone := neg_mem_posRootCone_of_coeff_weylDenominator_ne_zero P b hy
+  have hzero : -y = 0 := by
+    refine eq_zero_of_mem_posRootCone_of_forall_coroot'_nonpos b hcone fun i hi => ?_
+    obtain ⟨m, hm⟩ := exists_intCast_eq_coroot'_of_mem_posRootCone P b hcone i
+    have hlt : P.coroot' i (-y) < 1 := by
+      have h0 := (mem_openDotDominantChamber_iff_neg_one_lt_coroot' P b y).mp hdom i hi
+      rw [map_neg]
+      linarith
+    rw [hm] at hlt ⊢
+    have hm1 : m < 1 := by exact_mod_cast hlt
+    exact_mod_cast (by omega : m ≤ 0)
+  exact neg_eq_zero.mp hzero
+
+end Cone
+
+section Identity
+
+variable [LinearOrder R] [IsStrictOrderedRing R] [Invertible (2 : R)] [P.IsCrystallographic]
+  [P.IsReduced] [P.IsRootSystem] [Fintype P.weylGroup]
+
+/-- **The Weyl denominator identity**: the Weyl denominator is the Weyl numerator of the weight
+`0`,
+
+`∏_{α > 0} (1 - e^{-α}) = ∑_{w ∈ W} sgn(w) e^{w ⬝ 0}`,
+
+an identity in the integral group algebra of the weight space. Written without the dot action, the
+right-hand side is `∑_{w ∈ W} sgn(w) e^{w(ρ) - ρ}`.
+
+This is the case `λ = 0` of the Weyl character formula, in which the character of the trivial
+module is `1`. -/
+theorem weylDenominator_eq_weylNumerator_zero :
+    weylDenominator P b = weylNumerator P b 0 := by
+  have := flip_isReduced P
+  exact (isDotAlternating_weylDenominator P b).eq_weylNumerator
+    (zero_mem_openDotDominantChamber P b) (coeff_weylDenominator_zero P b)
+    fun _ hx hne => eq_zero_of_coeff_weylDenominator_ne_zero P b hne hx
+
+/-- **The Weyl denominator is supported exactly on the dot orbit of `0`**, one term for each
+element of the Weyl group. -/
+theorem support_coeff_weylDenominator [DecidableEq M] :
+    (weylDenominator P b).coeff.support
+      = Finset.univ.image fun w : P.weylGroup => dotAction P b w 0 := by
+  have := flip_isReduced P
+  rw [weylDenominator_eq_weylNumerator_zero]
+  exact support_coeff_weylNumerator P b (zero_mem_dominantChamber P b)
+
+/-- **The Weyl denominator has exactly `|W|` terms.** Expanding the product over the positive roots
+gives `2^{|Φ⁺|}` terms, which collapse to one for each element of the Weyl group. -/
+theorem card_support_coeff_weylDenominator :
+    (weylDenominator P b).coeff.support.card = Fintype.card P.weylGroup := by
+  have := flip_isReduced P
+  rw [weylDenominator_eq_weylNumerator_zero]
+  exact card_support_coeff_weylNumerator P b (zero_mem_dominantChamber P b)
+
+end Identity
+
+end TauCeti

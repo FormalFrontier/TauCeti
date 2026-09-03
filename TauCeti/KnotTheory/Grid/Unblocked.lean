@@ -65,6 +65,8 @@ assignment, a later stage of the roadmap.
   `O`-markings among the covered squares.
 * `TauCeti.GridDiagram.totalDegree_OMonomial`: the weight of a rectangle is a squarefree monomial
   whose degree is the number of `O`-markings the rectangle covers.
+* `TauCeti.GridDiagram.OMonomial_eq_prod_coveredSquares`: the weight of a rectangle as a product
+  over the squares it covers.
 * `TauCeti.GridDiagram.unblockedDifferentialOnGenerator_support_subset`: the differential of a
   generator is supported on the column transpositions of that generator.
 * `TauCeti.GridDiagram.maslovO_sub_two_mul_card_OColumns_eq_maslovO_sub_one`,
@@ -169,6 +171,20 @@ theorem OMonomial_eq_monomial (r : GridRectangle n) :
 theorem OMonomial_ne_zero [Nontrivial R] (r : GridRectangle n) : G.OMonomial R r ≠ 0 := by
   rw [OMonomial_eq_monomial]
   simp
+
+/-- The weight of a rectangle is the product, over the squares it covers, of the variable of the
+square's column at the `O`-marked squares and of `1` elsewhere.
+
+Written this way the weight is a multiplicative function of the covered-square domain alone, so
+any repartition of a union of covered squares into rectangles preserves the product of the
+weights. That is what the recutting arguments for `∂⁻ ∘ ∂⁻ = 0` need. -/
+theorem OMonomial_eq_prod_coveredSquares (r : GridRectangle n) :
+    G.OMonomial R r =
+      ∏ p ∈ r.coveredSquares,
+        if p ∈ G.OSet then MvPolynomial.X p.1 else (1 : MvPolynomial (Fin n) R) := by
+  classical
+  rw [OMonomial, Finset.prod_ite_mem, Finset.inter_comm, G.OSet_inter_coveredSquares r,
+    Finset.prod_image fun _ _ _ _ hab => congrArg Prod.fst hab]
 
 /-- The weight of a rectangle has total degree the number of `O`-markings the rectangle covers.
 

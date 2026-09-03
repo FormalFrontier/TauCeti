@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.LinearAlgebra.RootSystem.Isogeny.Basic
+public import TauCeti.LinearAlgebra.RootSystem.Isogeny.Power
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.B.SpecialMap
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.F4.SpecialMap
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.G2.SpecialMap
@@ -44,7 +44,7 @@ with `σ` the pinned `TauCeti.lengthPermRankTwo` for `B₂` and `G₂` and `TauC
 `F₄`. On the simple roots this reads `A (α (σ i)) = ℓ (σ i) • α i`, which is the defining relation
 `f (b α) = q α · α` of a special isogeny of root data, with the isogeny exponent `q` at a simple
 root the *other* length; squaring it gives `A ^ 2 = p`, since `ℓ` takes the two values `1` and `p`
-and `σ` exchanges them. `TauCeti.DynkinType.b2SpecialIsogeny_comp_self` and its `G₂` and `F₄`
+and `σ` exchanges them. `TauCeti.DynkinType.b2SpecialIsogeny_mul_self` and its `G₂` and `F₄`
 counterparts are that square relation, in the form `τ ∘ τ = Frob_p` on root data.
 
 The index tables extend `σ` from the simple roots to all eight, twelve, respectively forty-eight,
@@ -74,10 +74,14 @@ in each case, and the relations that are statements about it.
 
 ## Main results
 
-* `TauCeti.DynkinType.b2SpecialIsogeny_comp_self`,
-  `TauCeti.DynkinType.g2SpecialIsogeny_comp_self` and
-  `TauCeti.DynkinType.f4SpecialIsogeny_comp_self`: composing the special isogeny with itself gives
+* `TauCeti.DynkinType.b2SpecialIsogeny_mul_self`,
+  `TauCeti.DynkinType.g2SpecialIsogeny_mul_self` and
+  `TauCeti.DynkinType.f4SpecialIsogeny_mul_self`: composing the special isogeny with itself gives
   scaling by the characteristic, which is the root-datum form of `τ ^ 2 = Frob_p`.
+* `TauCeti.DynkinType.b2SpecialIsogeny_pow_mul_self`,
+  `TauCeti.DynkinType.g2SpecialIsogeny_pow_mul_self` and
+  `TauCeti.DynkinType.f4SpecialIsogeny_pow_mul_self`: the same relation at every power, which at an
+  odd exponent is the square relation the Suzuki and Ree groups are cut out by.
 * `TauCeti.DynkinType.b2SpecialIsogeny_weightMap_root_typeBSimpleIndex`,
   `TauCeti.DynkinType.g2SpecialIsogeny_weightMap_root_castLE` and
   `TauCeti.DynkinType.f4SpecialIsogeny_weightMap_root_castAdd`: the defining relation on the simple
@@ -153,9 +157,10 @@ noncomputable def b2SpecialIsogeny :
 the relation `τ ^ 2 = Frob_p` that identifies the exceptional isogeny in characteristic `p`; the
 square relation is the root-datum input for constructing the exceptional Steinberg endomorphisms
 used to define the Suzuki groups. -/
-theorem b2SpecialIsogeny_comp_self :
-    b2SpecialIsogeny.comp b2SpecialIsogeny =
+@[simp] theorem b2SpecialIsogeny_mul_self :
+    b2SpecialIsogeny * b2SpecialIsogeny =
       RootPairingIsogeny.smulId (typeBSimplyConnectedRootDatum 2) 2 := by
+  rw [RootPairingIsogeny.mul_def]
   refine RootPairingIsogeny.ext ?_ ?_ ?_ ?_
   · simpa using b2SpecialIsogenyMatrix_mulVecLin_comp_self
   · simpa using b2SpecialIsogenyMatrix_transpose_mulVecLin_comp_self
@@ -169,6 +174,14 @@ theorem b2SpecialIsogeny_comp_self :
     rw [htwo]
     simpa only [b2SpecialIsogeny_exponent, b2SpecialIsogeny_indexEquiv_apply] using
       b2SpecialIsogenyExponent_mul_exponent i
+
+/-- **The powers of the special isogeny of `B₂` square to the powers of two.** At `n = 2 * m + 1`
+this is the root-datum form of the square relation satisfied by the Steinberg endomorphism whose
+fixed points are the Suzuki group `²B₂(2 ^ (2 * m + 1))`. -/
+theorem b2SpecialIsogeny_pow_mul_self (n : ℕ) :
+    b2SpecialIsogeny ^ n * b2SpecialIsogeny ^ n =
+      RootPairingIsogeny.smulId (typeBSimplyConnectedRootDatum 2) (2 ^ n) :=
+  RootPairingIsogeny.pow_mul_self_eq_smulId _ b2SpecialIsogeny_mul_self n
 
 /-- **The defining relation of the special isogeny of `B₂` on the simple roots.** The character
 map carries the simple root at the length-exchanged node to the simple root at `i`, rescaled by
@@ -260,9 +273,10 @@ def g2SpecialIsogeny :
 
 /-- **The square of the special isogeny of `G₂` is scaling by three.** This is the root-datum form
 of the relation `τ ^ 2 = Frob_p` that identifies the exceptional isogeny in characteristic `p`. -/
-theorem g2SpecialIsogeny_comp_self :
-    g2SpecialIsogeny.comp g2SpecialIsogeny =
+@[simp] theorem g2SpecialIsogeny_mul_self :
+    g2SpecialIsogeny * g2SpecialIsogeny =
       RootPairingIsogeny.smulId g2SimplyConnectedRootDatum 3 := by
+  rw [RootPairingIsogeny.mul_def]
   refine RootPairingIsogeny.ext ?_ ?_ ?_ ?_
   · simpa using g2SpecialIsogenyMatrix_mulVecLin_comp_self
   · simpa using g2SpecialIsogenyMatrix_transpose_mulVecLin_comp_self
@@ -276,6 +290,14 @@ theorem g2SpecialIsogeny_comp_self :
     rw [hthree]
     simpa only [g2SpecialIsogeny_exponent, g2SpecialIsogeny_indexEquiv_apply] using
       g2Length_mul_g2Length_g2SpecialIsogenyIndex i
+
+/-- **The powers of the special isogeny of `G₂` square to the powers of three.** At `n = 2 * m + 1`
+this is the root-datum form of the square relation satisfied by the Steinberg endomorphism whose
+fixed points are the Ree group `²G₂(3 ^ (2 * m + 1))`. -/
+theorem g2SpecialIsogeny_pow_mul_self (n : ℕ) :
+    g2SpecialIsogeny ^ n * g2SpecialIsogeny ^ n =
+      RootPairingIsogeny.smulId g2SimplyConnectedRootDatum (3 ^ n) :=
+  RootPairingIsogeny.pow_mul_self_eq_smulId _ g2SpecialIsogeny_mul_self n
 
 /-- **The defining relation of the special isogeny of `G₂` on the simple roots.** The character
 map carries the simple root at the length-exchanged node to the simple root at `i`, rescaled by
@@ -337,9 +359,10 @@ noncomputable def f4SpecialIsogeny :
 
 /-- **The square of the special isogeny of `F₄` is scaling by two.** This is the root-datum form of
 the relation `τ ^ 2 = Frob_p` that identifies the exceptional isogeny in characteristic `p`. -/
-theorem f4SpecialIsogeny_comp_self :
-    f4SpecialIsogeny.comp f4SpecialIsogeny =
+@[simp] theorem f4SpecialIsogeny_mul_self :
+    f4SpecialIsogeny * f4SpecialIsogeny =
       RootPairingIsogeny.smulId f4SimplyConnectedRootDatum 2 := by
+  rw [RootPairingIsogeny.mul_def]
   refine RootPairingIsogeny.ext ?_ ?_ ?_ ?_
   · simpa using f4SpecialIsogenyMatrix_mulVecLin_comp_self
   · simpa using f4SpecialIsogenyMatrix_transpose_mulVecLin_comp_self
@@ -353,6 +376,15 @@ theorem f4SpecialIsogeny_comp_self :
     rw [htwo]
     simpa only [f4SpecialIsogeny_exponent, f4SpecialIsogeny_indexEquiv_apply] using
       f4Length_mul_f4Length_specialIsogenyIndex i
+
+/-- **The powers of the special isogeny of `F₄` square to the powers of two.** At `n = 2 * m + 1`
+this is the root-datum form of the square relation satisfied by the Steinberg endomorphism whose
+fixed points are the Ree group `²F₄(2 ^ (2 * m + 1))`; at `n = 1` it underlies `²F₄(2)`, whose
+derived subgroup is the Tits group. -/
+theorem f4SpecialIsogeny_pow_mul_self (n : ℕ) :
+    f4SpecialIsogeny ^ n * f4SpecialIsogeny ^ n =
+      RootPairingIsogeny.smulId f4SimplyConnectedRootDatum (2 ^ n) :=
+  RootPairingIsogeny.pow_mul_self_eq_smulId _ f4SpecialIsogeny_mul_self n
 
 /-- **The defining relation of the special isogeny of `F₄` on the simple roots.** The character
 map carries the simple root at the length-exchanged node to the simple root at `i`, rescaled by
