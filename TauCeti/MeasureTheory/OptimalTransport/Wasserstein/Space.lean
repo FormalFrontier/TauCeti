@@ -47,6 +47,9 @@ pseudometrics and is measurable in both directions.
 ## References
 
 * C. Villani, *Optimal Transport: Old and New*, Grundlehren 338, Springer 2009, Chapter 6.
+* The Tau Ceti optimal-transport roadmap, Layer 3 ("Wasserstein distances and topology"), item 2,
+  which specifies the anchored component, the finite-moment space `P_p (X)` and their
+  identification at a Dirac law.
 -/
 
 public section
@@ -79,27 +82,6 @@ As for `TauCeti.WassersteinComponent`, the subtype body is not exposed: use
 `TauCeti.WassersteinSpace.mk` and `TauCeti.WassersteinSpace.toProbabilityMeasure`. -/
 def WassersteinSpace (p : ℝ≥0∞) (X : Type u) [MeasurableSpace X] [PseudoEMetricSpace X] :=
   {μ : ProbabilityMeasure X // HasFiniteMoment p (μ : Measure X)}
-
-section Separation
-
-variable [MetricSpace X] [MeasurableSpace X] [BorelSpace X] [SecondCountableTopology X]
-  [CompleteSpace X]
-
-/-- **Separation of probability laws.** On a Polish metric ground space, two probability measures
-at zero `p`-Wasserstein distance are equal, for every nonzero exponent.
-
-This packages `TauCeti.wassersteinEDist_eq_zero_iff` together with its endpoint
-`TauCeti.wassersteinEDist_top_eq_zero_iff`, so that the metric structures below can be obtained
-without repeating the case split on `p = ∞`. -/
-theorem eq_of_wassersteinEDist_eq_zero (hp : p ≠ 0) {μ ν : ProbabilityMeasure X}
-    (h : wassersteinEDist p (μ : Measure X) (ν : Measure X) = 0) : μ = ν := by
-  apply ProbabilityMeasure.toMeasure_injective
-  by_cases hp' : p = ∞
-  · subst hp'
-    exact (wassersteinEDist_top_eq_zero_iff _ _).1 h
-  · exact (wassersteinEDist_eq_zero_iff hp hp' _ _).1 h
-
-end Separation
 
 namespace WassersteinComponent
 
@@ -240,7 +222,8 @@ noncomputable instance instMetricSpace : MetricSpace (WassersteinComponent p μ�
   eq_of_dist_eq_zero {μ ν} h := by
     have hp : (1 : ℝ≥0∞) ≤ p := Fact.out
     apply ext
-    refine eq_of_wassersteinEDist_eq_zero (ne_of_gt (zero_lt_one.trans_le hp)) ?_
+    apply ProbabilityMeasure.toMeasure_injective
+    refine eq_of_wassersteinEDist_eq_zero (ne_of_gt (zero_lt_one.trans_le hp)) _ _ ?_
     rw [← edist_def, edist_dist, h]
     simp
 
@@ -307,34 +290,16 @@ end Basic
 
 section MetricGround
 
-variable [MeasurableSpace X] [PseudoMetricSpace X] [BorelSpace X]
-
-/-- On an ordinary pseudometric space, finite moment can be checked at any prescribed basepoint. -/
-theorem hasFiniteMoment_iff_memLp_edist (x₀ : X) (μ : ProbabilityMeasure X) :
-    HasFiniteMoment p (μ : Measure X) ↔ MemLp (fun x ↦ edist x₀ x) p (μ : Measure X) := by
-  constructor
-  · intro h
-    exact h.memLp measurable_edist_right.aestronglyMeasurable
-  · exact fun h ↦ hasFiniteMoment_def.2 ⟨x₀, h⟩
-
-variable [SecondCountableTopology X]
-
-/-- On an ordinary pseudometric space, finite moment is equivalent to finite Wasserstein distance
-from the Dirac law at any prescribed basepoint. -/
-theorem hasFiniteMoment_iff_wassersteinEDist_dirac_ne_top (x₀ : X)
-    (μ : ProbabilityMeasure X) :
-    HasFiniteMoment p (μ : Measure X) ↔
-      wassersteinEDist p (Measure.dirac x₀) (μ : Measure X) ≠ ∞ := by
-  rw [hasFiniteMoment_iff_memLp_edist x₀]
-  exact memLp_edist_iff_wassersteinEDist_dirac_ne_top measurable_edist x₀ μ
+variable [MeasurableSpace X] [PseudoMetricSpace X] [BorelSpace X] [SecondCountableTopology X]
 
 /-- Choosing a basepoint identifies the finite-moment Wasserstein space with the finite-distance
 component anchored at its Dirac law. The underlying probability measure is unchanged. -/
 def equivComponent (x₀ : X) : WassersteinSpace p X ≃ WassersteinComponent p (diracProba x₀) where
   toFun μ := WassersteinComponent.mk (μ : ProbabilityMeasure X)
-    ((hasFiniteMoment_iff_wassersteinEDist_dirac_ne_top x₀ _).1 (hasFiniteMoment μ))
+    ((hasFiniteMoment_iff_wassersteinEDist_dirac_ne_top measurable_edist x₀ _).1
+      (hasFiniteMoment μ))
   invFun μ := mk (WassersteinComponent.toProbabilityMeasure μ)
-    ((hasFiniteMoment_iff_wassersteinEDist_dirac_ne_top x₀ _).2
+    ((hasFiniteMoment_iff_wassersteinEDist_dirac_ne_top measurable_edist x₀ _).2
       (WassersteinComponent.wassersteinEDist_anchor_ne_top μ))
   left_inv _ := ext (rfl)
   right_inv _ := WassersteinComponent.ext (rfl)
@@ -465,7 +430,8 @@ noncomputable instance instMetricSpace : MetricSpace (WassersteinSpace p X) wher
   eq_of_dist_eq_zero {μ ν} h := by
     have hp : (1 : ℝ≥0∞) ≤ p := Fact.out
     apply ext
-    refine eq_of_wassersteinEDist_eq_zero (ne_of_gt (zero_lt_one.trans_le hp)) ?_
+    apply ProbabilityMeasure.toMeasure_injective
+    refine eq_of_wassersteinEDist_eq_zero (ne_of_gt (zero_lt_one.trans_le hp)) _ _ ?_
     rw [← edist_def, edist_dist, h]
     simp
 
