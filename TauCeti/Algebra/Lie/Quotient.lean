@@ -26,6 +26,8 @@ receiver notation on the ideal.
 
 ## Main results
 
+* `LieIdeal.mkQ_surjective`: every quotient class has a representative in the original Lie
+  algebra.
 * `LieIdeal.liftQ_mkQ`: the lifted homomorphism restricts to the original one along the quotient
   map.
 * `LieIdeal.lieHom_qext`: two homomorphisms from the quotient are equal when they agree after the
@@ -36,11 +38,8 @@ receiver notation on the ideal.
 
 Neither `LieIdeal.mkQ` nor `LieIdeal.liftQ` is exposed: `LieIdeal.mkQ_apply` and
 `LieIdeal.liftQ_apply_mk` characterize them on representatives, and `LieIdeal.ker_mkQ`,
-`LieIdeal.liftQ_mkQ` and `LieIdeal.eq_liftQ` say all a consumer needs about their kernel and their
-factorization, so nothing downstream has to unfold the quotient.
-
-Surjectivity of `LieIdeal.mkQ` is not restated: it is Mathlib's
-`LieSubmodule.Quotient.surjective_mk'` transported along `LieIdeal.mkQ_apply`.
+`LieIdeal.mkQ_surjective`, `LieIdeal.liftQ_mkQ` and `LieIdeal.eq_liftQ` give its elimination and
+factorization properties, so nothing downstream has to unfold the quotient.
 -/
 
 public section
@@ -64,6 +63,11 @@ def mkQ : L →ₗ⁅R⁆ L ⧸ I where
 /-- The quotient homomorphism sends an element to its class. -/
 @[simp]
 theorem mkQ_apply (x : L) : I.mkQ x = LieSubmodule.Quotient.mk x := (rfl)
+
+/-- Every element of the quotient has a representative in the original Lie algebra. -/
+theorem mkQ_surjective : Function.Surjective I.mkQ := fun y => by
+  obtain ⟨x, hx⟩ := LieSubmodule.Quotient.surjective_mk' I y
+  exact ⟨x, (I.mkQ_apply x).trans hx⟩
 
 /-- The kernel of the quotient homomorphism is the ideal quotiented by. -/
 @[simp]
