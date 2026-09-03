@@ -6,10 +6,11 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Topology.Clopen
+public import Mathlib.Topology.Connected.Clopen
 public import Mathlib.Topology.Covering.Basic
 
 /-!
-# Covering maps onto a clopen subspace
+# Covering maps and clopen sets
 
 A covering map `p : E → ↥s` onto a subspace of `X` is also a covering map `E → X` as soon as `s`
 is clopen: over a point of `s` an evenly covered neighbourhood in `↥s` is one in `X` because `s`
@@ -22,10 +23,18 @@ neighbourhood meeting `s`, so no neighbourhood of it is evenly covered by a surj
 Mathlib's `IsCoveringMap` allows empty fibres, which is exactly what makes the clopen statement
 work without assuming `p` surjective or `s = X`.
 
+Empty fibres are also what makes the *range* of a covering map clopen. It is open because a
+covering map is a local homeomorphism, and closed because a point outside the range has an evenly
+covered neighbourhood whose fibre is empty, so that whole neighbourhood misses the range. Over a
+preconnected base a covering map with nonempty total space is therefore surjective.
+
 ## Main declarations
 
 * `IsCoveringMap.subtypeVal_comp`: the composite of a covering map onto a clopen
   subspace with the subspace inclusion is a covering map.
+* `IsCoveringMap.isClopen_range`: the range of a covering map is clopen.
+* `IsCoveringMap.surjective`: a covering map onto a preconnected base with nonempty total space
+  is surjective.
 -/
 
 public section
@@ -45,5 +54,26 @@ theorem _root_.IsCoveringMap.subtypeVal_comp {p : E → s} (hp : IsCoveringMap p
   · refine IsEvenlyCovered.to_isEvenlyCovered_preimage
       (IsEvenlyCovered.of_preimage_eq_empty Empty (hs.isClosed.isOpen_compl.mem_nhds hx) ?_)
     exact Set.eq_empty_of_forall_notMem fun e he => he (p e).2
+
+/-- **The range of a covering map is clopen.** It is open because a covering map is a local
+homeomorphism, and closed because an evenly covered neighbourhood of a point outside the range
+has empty preimage. -/
+theorem _root_.IsCoveringMap.isClopen_range {p : E → X} (hp : IsCoveringMap p) :
+    IsClopen (Set.range p) := by
+  refine ⟨?_, hp.isLocalHomeomorph.isOpenMap.isOpen_range⟩
+  rw [← isOpen_compl_iff]
+  refine isOpen_iff_forall_mem_open.mpr fun x hx => ?_
+  obtain ⟨-, U, hxU, hU, -, H, -⟩ := hp x
+  have : IsEmpty (p ⁻¹' {x} : Set E) := ⟨fun e => hx ⟨e, e.2⟩⟩
+  have hpU : p ⁻¹' U = ∅ := Set.isEmpty_coe_sort.mp (Function.isEmpty ⇑H)
+  refine ⟨U, fun y hy => ?_, hU, hxU⟩
+  rintro ⟨e, rfl⟩
+  exact Set.eq_empty_iff_forall_notMem.mp hpU e hy
+
+/-- **A covering map onto a preconnected base is surjective** as soon as its total space is
+nonempty: its range is a nonempty clopen subset. -/
+theorem _root_.IsCoveringMap.surjective [PreconnectedSpace X] [Nonempty E] {p : E → X}
+    (hp : IsCoveringMap p) : Function.Surjective p :=
+  Set.range_eq_univ.mp (hp.isClopen_range.eq_univ (Set.range_nonempty p))
 
 end TauCeti
