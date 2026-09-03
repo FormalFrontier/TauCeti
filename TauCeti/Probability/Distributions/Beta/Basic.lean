@@ -77,8 +77,9 @@ theorem ae_mem_Icc_betaMeasure (α β : ℝ) :
 /-- The beta distribution is carried by the open unit interval. -/
 theorem ae_mem_Ioo_betaMeasure (α β : ℝ) :
     ∀ᵐ x ∂betaMeasure α β, x ∈ Set.Ioo (0 : ℝ) 1 := by
-  let _ : NullSingletonClass (betaMeasure α β) := by
-    change NullSingletonClass (volume.withDensity (betaPDF α β))
+  have hβ : betaMeasure α β = volume.withDensity (betaPDF α β) := rfl
+  have : NullSingletonClass (betaMeasure α β) := by
+    rw [hβ]
     infer_instance
   filter_upwards [ae_mem_Icc_betaMeasure α β,
     Ioo_ae_eq_Icc (μ := betaMeasure α β)] with x hxIcc hxEq
