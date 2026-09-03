@@ -7,7 +7,7 @@ module
 
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.Rigidity
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Basic
-import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Scheme.Equalizer
+import TauCeti.AlgebraicGeometry.AffineGroupScheme.HopfSpec
 
 /-!
 # Rigidity of the toral Kostant carrier

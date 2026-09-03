@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Basic
-import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Equalizer
+import TauCeti.AlgebraicGeometry.AffineGroupScheme.HopfSpec
 import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Scheme.Equalizer
 import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Internal
 
