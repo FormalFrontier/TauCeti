@@ -198,8 +198,9 @@ theorem
 /-- In characteristic two, the square of the unblocked grid differential has zero matrix entry
 between a grid state and the state obtained from it by two disjoint column transpositions.
 
-Together with the vanishing of the diagonal entries in `Annulus.lean`, this covers every pair of
-grid states except those joined by two column transpositions with a column in common. -/
+Among the targets obtained from a grid state by two column transpositions, this leaves only the
+case of two transpositions sharing exactly one column: two transpositions on the same pair of
+columns return to the source, whose entry vanishes by the diagonal case in `Annulus.lean`. -/
 theorem unblockedDifferential_sq_single_apply_swapColumns_swapColumns_eq_zero_of_disjoint
     (x : GridState n) {a b c d : Fin n} (hab : a ≠ b) (hcd : c ≠ d)
     (hdisjoint : Disjoint ({a, b} : Finset (Fin n)) {c, d}) :
