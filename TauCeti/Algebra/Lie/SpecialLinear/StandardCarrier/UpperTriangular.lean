@@ -89,11 +89,6 @@ the named split torus as maximal requires the reductivity and root-datum structu
   root-subgroup scheme API of
   `TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme`; the scheme-level
   factorizations below follow the same `CommHopfAlgCat.liftQuotient` pattern used there.
-
-This advances the "Pinnings" target of Layer 9 of
-`TauCetiRoadmap/ReductiveGroups/README.md`: it constructs the closed positive subgroup containing
-the torus and positive simple-root subgroups for the explicit type-`A` carrier.  Milestone L0 of
-`TauCetiRoadmap/CFSGStatement/README.md` consumes that pinned carrier.
 -/
 
 public section
