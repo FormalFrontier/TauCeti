@@ -20,9 +20,9 @@ of the dual pairs nontrivially only against the component of index `-p`, and, wh
 finite-dimensional, has the same dimension as the `(-p)`-th component, so dualizing reflects
 the table of Hodge numbers.
 
-This is one of the companion constructions of Layer L0 of `TauCetiRoadmap/HodgeStructures/README.md`
-(the `⊗`/`Hom`/dual companions), following Peters–Steenbrink, *Mixed Hodge Structures*, §2; it is
-the base of the internal hom in `TauCeti/Geometry/Hodge/Hom.lean`.
+It follows Peters–Steenbrink, *Mixed Hodge Structures*, §2. The dual supplies the
+contravariant factor of the internal hom in `TauCeti/Geometry/Hodge/Hom.lean`, where the
+dual–tensor product is transported to the space of linear maps.
 
 ## Main declarations
 

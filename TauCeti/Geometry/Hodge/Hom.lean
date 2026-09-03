@@ -198,6 +198,24 @@ theorem smulRight_mem_hom (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
   rw [← h, LinearEquiv.coe_coe, LinearEquiv.symm_apply_apply]
   exact hs₁.dual.tmul_mem_tensorProduct hs₂ hφ hy
 
+omit [FiniteDimensional ℂ W₁] in
+/-- The Hodge-coordinate projection vanishes on every Hodge component of a different degree.
+
+The composite of the Hodge decomposition with the `a`-th coordinate projection agrees, after
+coercion, with the `a`-th Hodge projection `hs₁.proj a` (see `HodgeStructureOn.proj_apply` and
+`DirectSum.apply_eq_component`), which annihilates all other components. -/
+private theorem compDecomp_apply_eq_zero_of_mem_of_ne (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
+    {a q : ℤ} {y : W₁} (hy : y ∈ hs₁.piece q) (hqa : q ≠ a) :
+    (DirectSum.component ℂ ℤ (fun q => ↥(hs₁.piece q)) a ∘ₗ
+      hs₁.decomposition.toLinearMap) y = 0 := by
+  have hproj0 := hs₁.proj_apply_eq_zero_of_mem_of_ne (p := a) (q := q) hy hqa
+  have hcoe : ((((DirectSum.component ℂ ℤ (fun q => ↥(hs₁.piece q)) a ∘ₗ
+      hs₁.decomposition.toLinearMap) y : ↥(hs₁.piece a))) : W₁) =
+      hs₁.proj a y := by
+    rw [hs₁.proj_apply, LinearMap.comp_apply, LinearEquiv.coe_toLinearMap,
+      ← DirectSum.apply_eq_component]
+  exact Submodule.coe_eq_zero.mp (hcoe.trans hproj0)
+
 /-- A linear map lies in the degree-`p` internal-Hom piece if and only if it sends each
 source component of degree `a` into the target component of degree `a + p`. -/
 private theorem projCoord_mem_dual_piece (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
@@ -214,18 +232,8 @@ private theorem projCoord_mem_dual_piece (hs₁ : HodgeStructureOn W₁ ω₁ n�
     rw [hs₁.F_eq_iSup_piece]
     refine iSup_le fun q => iSup_le fun hq => ?_
     intro y hy
-    rw [LinearMap.mem_ker]
-    have hqa : q ≠ a := by omega
-    have hproj0 := hs₁.proj_apply_eq_zero_of_mem_of_ne (p := a) (q := q) hy hqa
-    have hcoe : ((((DirectSum.component ℂ ℤ (fun q => ↥(hs₁.piece q)) a ∘ₗ
-        hs₁.decomposition.toLinearMap) y : ↥(hs₁.piece a))) : W₁) =
-        hs₁.proj a y := by
-      rw [hs₁.proj_apply]
-      rfl
-    have h0 : (DirectSum.component ℂ ℤ (fun q => ↥(hs₁.piece q)) a ∘ₗ
-        hs₁.decomposition.toLinearMap) y = 0 :=
-      Submodule.coe_eq_zero.mp (hcoe.trans hproj0)
-    simp [LinearMap.comp_apply, h0]
+    rw [LinearMap.mem_ker, LinearMap.comp_apply,
+      hs₁.compDecomp_apply_eq_zero_of_mem_of_ne hy (by omega), map_zero]
   have hCker : hs₁.conjF (n₁ + 1 + -a) ≤ LinearMap.ker
       (((Module.finBasis ℂ ↥(hs₁.piece a)).dualBasis k).comp
         (DirectSum.component ℂ ℤ (fun q => ↥(hs₁.piece q)) a ∘ₗ
@@ -233,18 +241,8 @@ private theorem projCoord_mem_dual_piece (hs₁ : HodgeStructureOn W₁ ω₁ n�
     rw [hs₁.conjF_eq_iSup_piece]
     refine iSup_le fun q => iSup_le fun hq => ?_
     intro y hy
-    rw [LinearMap.mem_ker]
-    have hqa : q ≠ a := by omega
-    have hproj0 := hs₁.proj_apply_eq_zero_of_mem_of_ne (p := a) (q := q) hy hqa
-    have hcoe : ((((DirectSum.component ℂ ℤ (fun q => ↥(hs₁.piece q)) a ∘ₗ
-        hs₁.decomposition.toLinearMap) y : ↥(hs₁.piece a))) : W₁) =
-        hs₁.proj a y := by
-      rw [hs₁.proj_apply]
-      rfl
-    have h0 : (DirectSum.component ℂ ℤ (fun q => ↥(hs₁.piece q)) a ∘ₗ
-        hs₁.decomposition.toLinearMap) y = 0 :=
-      Submodule.coe_eq_zero.mp (hcoe.trans hproj0)
-    simp [LinearMap.comp_apply, h0]
+    rw [LinearMap.mem_ker, LinearMap.comp_apply,
+      hs₁.compDecomp_apply_eq_zero_of_mem_of_ne hy (by omega), map_zero]
   have hle : hs₁.F (1 - -a) ⊔ hs₁.conjF (n₁ + 1 + -a) ≤ LinearMap.ker
       (((Module.finBasis ℂ ↥(hs₁.piece a)).dualBasis k).comp
         (DirectSum.component ℂ ℤ (fun q => ↥(hs₁.piece q)) a ∘ₗ
@@ -269,7 +267,9 @@ private theorem compProj_expand (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
   ext x
   simp only [LinearMap.comp_apply, LinearMap.sum_apply, LinearMap.smulRight_apply]
   have hlink : (DirectSum.component ℂ ℤ (fun q => ↥(hs₁.piece q)) a ∘ₗ
-      hs₁.decomposition.toLinearMap) x = hs₁.decomposition x a := rfl
+      hs₁.decomposition.toLinearMap) x = hs₁.decomposition x a := by
+    rw [LinearMap.comp_apply, LinearEquiv.coe_toLinearMap,
+      ← DirectSum.apply_eq_component]
   have hsr := (Module.finBasis ℂ ↥(hs₁.piece a)).sum_repr
       ((DirectSum.component ℂ ℤ (fun q => ↥(hs₁.piece q)) a ∘ₗ
         hs₁.decomposition.toLinearMap) x)
@@ -316,7 +316,7 @@ private theorem sum_compProj (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
 
 /-- A linear map lies in the degree-`p` internal-Hom piece if and only if it sends each
 source component of degree `a` into the target component of degree `a + p`. -/
-theorem mem_hom_piece_iff (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
+@[simp] theorem mem_hom_piece_iff (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
     (hs₂ : HodgeStructureOn W₂ ω₂ n₂) {p : ℤ} {f : W₁ →ₗ[ℂ] W₂} :
     f ∈ (hs₁.hom hs₂).piece p ↔
       ∀ (a : ℤ) (x : W₁), x ∈ hs₁.piece a → f x ∈ hs₂.piece (a + p) := by
