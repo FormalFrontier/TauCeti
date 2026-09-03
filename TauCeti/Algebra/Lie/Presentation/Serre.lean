@@ -401,25 +401,26 @@ private theorem toIdeal_le_ker_lift (h : IsSerreSystem R CM H E F) :
 property of the presentation. -/
 noncomputable def serreLift (h : IsSerreSystem R CM H E F) :
     Matrix.ToLieAlgebra R CM →ₗ⁅R⁆ L :=
-  LieIdeal.liftQ (FreeLieAlgebra.lift R (serreGeneratorMap H E F)) (toIdeal_le_ker_lift h)
+  (Relations.toIdeal R CM).liftQ (FreeLieAlgebra.lift R (serreGeneratorMap H E F))
+    (toIdeal_le_ker_lift h)
 
 /-- The homomorphism determined by a Serre system sends `Hᵢ` to `H i`. -/
 @[simp]
 theorem serreLift_serreH (h : IsSerreSystem R CM H E F) (i : B) :
     serreLift h (serreH R CM i) = H i :=
-  (LieIdeal.liftQ_apply_mkQ _ _ _).trans (FreeLieAlgebra.lift_of_apply _ _)
+  ((Relations.toIdeal R CM).liftQ_apply_mkQ _ _ _).trans (FreeLieAlgebra.lift_of_apply _ _)
 
 /-- The homomorphism determined by a Serre system sends `Eᵢ` to `E i`. -/
 @[simp]
 theorem serreLift_serreE (h : IsSerreSystem R CM H E F) (i : B) :
     serreLift h (serreE R CM i) = E i :=
-  (LieIdeal.liftQ_apply_mkQ _ _ _).trans (FreeLieAlgebra.lift_of_apply _ _)
+  ((Relations.toIdeal R CM).liftQ_apply_mkQ _ _ _).trans (FreeLieAlgebra.lift_of_apply _ _)
 
 /-- The homomorphism determined by a Serre system sends `Fᵢ` to `F i`. -/
 @[simp]
 theorem serreLift_serreF (h : IsSerreSystem R CM H E F) (i : B) :
     serreLift h (serreF R CM i) = F i :=
-  (LieIdeal.liftQ_apply_mkQ _ _ _).trans (FreeLieAlgebra.lift_of_apply _ _)
+  ((Relations.toIdeal R CM).liftQ_apply_mkQ _ _ _).trans (FreeLieAlgebra.lift_of_apply _ _)
 
 /-- A nonzero Cartan element in a Serre system has a nonzero preimage among the presented Cartan
 generators. -/
@@ -460,7 +461,7 @@ theorem serre_hom_ext {g₁ g₂ : Matrix.ToLieAlgebra R CM →ₗ⁅R⁆ L}
     | H i => exact hH i
     | E i => exact hE i
     | F i => exact hF i
-  refine LieIdeal.lieHom_qext fun x => ?_
+  refine (Relations.toIdeal R CM).lieHom_qext fun x => ?_
   exact congrArg (fun ψ : FreeLieAlgebra R (Generators B) →ₗ⁅R⁆ L => ψ x) hcomp
 
 /-- Two equivalences out of `Matrix.ToLieAlgebra R CM` agreeing on the generators are equal. -/
