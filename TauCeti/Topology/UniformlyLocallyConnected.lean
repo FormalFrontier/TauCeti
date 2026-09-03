@@ -57,8 +57,8 @@ it, and no Lebesgue-number consequence of this shape.
 
 ## Main results
 
-* `IsCompact.isUniformlyLocallyConnected` — a compact locally connected set is uniformly
-  locally connected.
+* `IsCompact.isUniformlyLocallyConnected` — a compact locally connected set is uniformly locally
+  connected.
 * `TauCeti.IsUniformlyLocallyConnected.locallyConnectedSpace` — a uniformly locally connected set
   is locally connected; no compactness is used.
 * `TauCeti.IsUniformlyLocallyConnected.exists_isConnected_superset` — a small enough subset is
@@ -283,7 +283,7 @@ implication is `TauCeti.IsUniformlyLocallyConnected.locallyConnectedSpace`, whic
 compactness; the backward one is `IsCompact.isUniformlyLocallyConnected`, which does. -/
 protected theorem _root_.IsCompact.isUniformlyLocallyConnected_iff (hs : IsCompact s) :
     IsUniformlyLocallyConnected s ↔ LocallyConnectedSpace s :=
-  ⟨fun h => h.locallyConnectedSpace, fun h => haveI := h; IsCompact.isUniformlyLocallyConnected hs⟩
+  ⟨fun h => h.locallyConnectedSpace, fun h => haveI := h; hs.isUniformlyLocallyConnected⟩
 
 /-! ## Continuous images -/
 
@@ -294,6 +294,6 @@ theorem isUniformlyLocallyConnected_image_of_isCompact {Z : Type*} [TopologicalS
     {t : Set Z} {g : Z → X} [LocallyConnectedSpace t] (ht : IsCompact t) (hg : ContinuousOn g t) :
     IsUniformlyLocallyConnected (g '' t) :=
   haveI := locallyConnectedSpace_image_of_isCompact ht hg
-  IsCompact.isUniformlyLocallyConnected (ht.image_of_continuousOn hg)
+  (ht.image_of_continuousOn hg).isUniformlyLocallyConnected
 
 end TauCeti

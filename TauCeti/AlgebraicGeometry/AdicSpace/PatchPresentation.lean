@@ -281,6 +281,6 @@ theorem isProConstructible_setOfPred_forall_vle_one (S : Set A) :
     simp
   rw [h]
   exact IsProConstructible.biInter fun a _ ↦
-    IsCompact.isProConstructible (isCompact_basicOpen a 1) (isOpen_basicOpen a 1)
+    (isCompact_basicOpen a 1).isProConstructible (isOpen_basicOpen a 1)
 
 end TauCeti.ValuationSpectrum
