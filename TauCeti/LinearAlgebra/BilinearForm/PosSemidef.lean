@@ -11,7 +11,8 @@ public import Mathlib.LinearAlgebra.BilinearForm.Properties
 # Positive-semidefinite bilinear forms
 
 This file records a pointwise characterization of positive semidefiniteness for symmetric
-bilinear forms.
+bilinear forms. It converts `IsPosSemidef` into diagonal nonnegativity, the form consumed by
+quadratic-form signature criteria and other pointwise positivity arguments.
 
 ## Main results
 
