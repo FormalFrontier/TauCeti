@@ -137,7 +137,8 @@ wrongly withheld by the merge path) and `housekeeping.py` only retires PRs that
 are blocking under review, so a conflicted-but-approved PR was reaped by nothing
 either. It rotted silently.
 
-[`conflicts.py`](conflicts.py) runs every fifteen minutes: one GraphQL query reads
+[`conflicts.py`](conflicts.py) runs on every push to `main` and every fifteen
+minutes: one GraphQL query reads
 the whole open queue, `merge-conflict` goes on a PR that has stopped merging and
 comes off when it merges again, and the author is told once per episode. The label
 is provisioned on first use, like the status labels.
@@ -185,6 +186,14 @@ Two ordering decisions carry the weight:
   branch tip sits at `mergeable: null` indefinitely — precisely what
   `stuck_alerts.py`'s `diverged-head` detector exists to catch — so one such PR
   could stop every other conflict being labelled.
+
+Both triggers are needed and neither suffices. A push to `main` is what creates a
+conflict, so reacting to it is prompt — but it is also the worst moment to *read*
+mergeability, since GitHub has just invalidated it for every open PR and most come
+back UNKNOWN and are skipped. The cron then reads a settled queue. It is also the
+only cover for the scheduler itself: GitHub has been observed dropping this
+repository's scheduled dispatches for hours at a time, which is why the sweep does
+not depend on them alone.
 
 A PR carrying a hold label (`keep`/`hold`/`wip`/`human`/`do-not-close`/`blocked`,
 matching `stuck_alerts.py`) is left entirely alone rather than labelled-but-silent:
