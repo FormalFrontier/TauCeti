@@ -52,7 +52,8 @@ in its square are exactly the irreducible ones
 (`TauCeti.isIrreducibleMorphism_iff_mem_jacobsonRadical_and_notMem_jacobsonRadicalSq`), which is
 the sense in which the quotient `rad(X, Y) / rad²(X, Y)` is the space of irreducible morphisms an
 arrow of the Auslander-Reiten quiver is a basis vector of; this file supplies the two subgroups,
-their ideal properties and, over a linear category, their submodule views, not that quotient.
+their ideal properties and, over a linear category, their submodule views, and
+`TauCeti.CategoryTheory.Preadditive.Radical.Quotient` forms that quotient on top of them.
 
 The engine of the whole development is **Jacobson's lemma** in its categorical form
 (`TauCeti.isIso_id_sub_comp_comm`): for `a : X ⟶ Y` and `b : Y ⟶ X`, the endomorphism
