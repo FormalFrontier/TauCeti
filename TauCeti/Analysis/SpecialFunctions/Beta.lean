@@ -48,6 +48,8 @@ and `TauCeti/Probability/Distributions/StudentT/Basic.lean` normalizes its densi
   `TauCeti.abs_deriv_smul_one_add_rpow` — the chart `u ↦ u / (1 - u)` carrying `(u₀, 1)` onto
   `(u₀ / (1 - u₀), ∞)`, with its injectivity, image, derivative, and the change-of-variables
   identity between the two beta integrands;
+* `TauCeti.image_sq_div_const_Ioi`, `TauCeti.sq_div_const_injOn_Ioi`, and
+  `TauCeti.hasDerivAt_sq_div_const` — the square chart `x ↦ x ^ 2 / ν` on the positive half-line;
 * `TauCeti.integrable_one_add_sq_rpow`, `TauCeti.integral_one_add_sq_rpow`,
   `TauCeti.integrable_one_add_sq_div_rpow`, and `TauCeti.integral_one_add_sq_div_rpow` — the
   Cauchy-type kernel `(1 + x ^ 2 / ν) ^ (-s)` is integrable on the line for `0 < ν` and
@@ -265,6 +267,50 @@ lemma abs_deriv_smul_one_add_rpow (a b : ℝ) {u : ℝ} (hu : u ∈ Ioo (0 : ℝ
       = u ^ (a - 1) *
         ((1 - u) ^ (-2 : ℝ) * (((1 - u) ^ (a - 1))⁻¹ * (1 - u) ^ (a + b))) := by ring
     _ = u ^ (a - 1) * (1 - u) ^ (b - 1) := by rw [e3]
+
+/-! ### The square chart on the positive half-line -/
+
+/-- The square chart `z ↦ z ^ 2 / ν` carries `(y, ∞)` onto `(y ^ 2 / ν, ∞)` for
+`0 ≤ y` and `0 < ν`. -/
+lemma image_sq_div_const_Ioi (hν : 0 < ν) {y : ℝ} (hy : 0 ≤ y) :
+    (fun z : ℝ => z ^ 2 / ν) '' Ioi y = Ioi (y ^ 2 / ν) := by
+  ext w
+  simp only [mem_image, mem_Ioi]
+  constructor
+  · rintro ⟨z, hz, rfl⟩
+    have hz0 : 0 < z := hy.trans_lt hz
+    have hsq : y ^ 2 < z ^ 2 := by gcongr
+    exact div_lt_div_of_pos_right hsq hν
+  · intro hw
+    have h0 : 0 ≤ y ^ 2 / ν := by positivity
+    have hw0 : 0 < w := h0.trans_lt hw
+    have hνw : 0 < ν * w := mul_pos hν hw0
+    have hsqrt_y : y < Real.sqrt (ν * w) := by
+      have h : y ^ 2 < ν * w := by
+        have h' : y ^ 2 / ν < w := hw
+        calc y ^ 2 = ν * (y ^ 2 / ν) := by field_simp [hν.ne']
+             _ < ν * w := mul_lt_mul_of_pos_left h' hν
+      have h2 : y ^ 2 < (Real.sqrt (ν * w)) ^ 2 := by
+        rw [Real.sq_sqrt (by linarith)]; exact h
+      nlinarith [Real.sqrt_nonneg (ν * w)]
+    refine ⟨Real.sqrt (ν * w), hsqrt_y, ?_⟩
+    rw [Real.sq_sqrt (by linarith)]; field_simp [hν.ne']
+
+/-- The chart `z ↦ z ^ 2 / ν` is injective on the positive half-line for nonzero `ν`. -/
+lemma sq_div_const_injOn_Ioi (hν : ν ≠ 0) :
+    InjOn (fun z : ℝ => z ^ 2 / ν) (Ioi (0 : ℝ)) := by
+  intro z hz w hw h
+  have hz0 : 0 < z := hz
+  have hw0 : 0 < w := hw
+  have : z ^ 2 = w ^ 2 := by
+    field_simp [hν] at h
+    linarith
+  nlinarith
+
+/-- The derivative of the chart `z ↦ z ^ 2 / ν`. -/
+lemma hasDerivAt_sq_div_const (ν z : ℝ) :
+    HasDerivAt (fun x : ℝ => x ^ 2 / ν) (2 * z / ν) z := by
+  simpa using ((hasDerivAt_id z).pow 2).div_const ν
 
 /-- The integrand of Euler's second beta integral is integrable on the positive half-line
 whenever both parameters are positive. -/

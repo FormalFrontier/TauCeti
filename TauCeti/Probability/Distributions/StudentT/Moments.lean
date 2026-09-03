@@ -5,9 +5,10 @@ Authors: Codex
 -/
 module
 
-public import TauCeti.Probability.Distributions.StudentT.WeightedIntegral
+public import TauCeti.Probability.Distributions.StudentT.Basic
 public import Mathlib.Probability.Moments.IntegrableExpMul
 public import Mathlib.Probability.Moments.Variance
+import TauCeti.Probability.Distributions.StudentT.WeightedIntegral
 import TauCeti.Analysis.SpecialFunctions.Beta
 import Mathlib.Analysis.SpecialFunctions.NonIntegrable
 import Mathlib.MeasureTheory.Function.JacobianOneDim
@@ -421,8 +422,7 @@ theorem variance_id_studentTMeasure (hν : 2 < ν) :
 
 /-- On the right tail the Student-t beta kernel dominates a constant multiple of the
 corresponding pure power. This is the comparison that carries the non-integrability at infinity. -/
-private lemma eventually_const_mul_rpow_le_studentTBetaKernel (hν : 0 < ν) {q : ℝ}
-    (_hνq : ν ≤ q) :
+private lemma eventually_const_mul_rpow_le_studentTBetaKernel (hν : 0 < ν) {q : ℝ} :
     ∀ᶠ w in atTop,
       (2 : ℝ) ^ (-((ν + 1) / 2)) * w ^ ((q - ν - 2) / 2) ≤ studentTBetaKernel ν q w := by
   set s := (ν + 1) / 2
@@ -470,14 +470,14 @@ private lemma eventually_const_mul_rpow_le_studentTBetaKernel (hν : 0 < ν) {q 
   simpa [studentTBetaKernel, s, e] using hgoal
 
 /-- If the tail exponent is at least `-1`, the beta-kernel tail comparison forces divergence. -/
-private lemma not_integrableOn_studentTBetaKernel_Ioi_of_le (hν : 0 < ν) (_hq : -1 < q)
+private lemma not_integrableOn_studentTBetaKernel_Ioi_of_le (hν : 0 < ν)
     (hνq : ν ≤ q) : ¬ IntegrableOn (studentTBetaKernel ν q) (Ioi (0 : ℝ)) := by
   intro h
   set s := (ν + 1) / 2
   set e := (q - ν - 2) / 2 with he
   -- The tail comparison transfers integrability to a nonintegrable pure power.
   have he1 : -1 ≤ e := by linarith
-  have hbound := eventually_const_mul_rpow_le_studentTBetaKernel hν hνq
+  have hbound := eventually_const_mul_rpow_le_studentTBetaKernel (q := q) hν
   have hIoi1 : IntegrableOn (studentTBetaKernel ν q) (Ioi (1 : ℝ)) :=
     h.mono_set fun x hx => mem_Ioi.mpr (by linarith [mem_Ioi.mp hx])
   obtain ⟨a0, ha0⟩ := eventually_atTop.mp hbound
@@ -545,7 +545,7 @@ private lemma integrableOn_studentTBetaKernel_Ioi_iff (hν : 0 < ν) (hq : -1 < 
   constructor
   · intro h
     by_contra hqν
-    exact not_integrableOn_studentTBetaKernel_Ioi_of_le hν hq (not_lt.mp hqν) h
+    exact not_integrableOn_studentTBetaKernel_Ioi_of_le hν (not_lt.mp hqν) h
   · intro hqν
     set ha := (q + 1) / 2
     set hb := (ν - q) / 2 with hb_def

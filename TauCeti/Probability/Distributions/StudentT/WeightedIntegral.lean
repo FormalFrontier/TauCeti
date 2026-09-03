@@ -6,15 +6,15 @@ Authors: Codex
 module
 
 public import TauCeti.Probability.Distributions.StudentT.Basic
+import TauCeti.Analysis.SpecialFunctions.Beta
 
 /-!
 # The square-root chart for weighted half-line integrals of Student's t law
 
 The substitution `w = z ^ 2 / ν` reduces weighted integrals of the even Student t density over the
-positive half-line to Euler integrals on `(0, ∞)`. This file collects the chart, its
-injectivity and derivative, the beta-kernel normal form of the transformed density, and the kernel
-itself; the polynomial moment evaluations live in `Basic.lean`, the exponential-moment results in
-`Moments.lean`, and the tail/cdf evaluation in `Cdf.lean`.
+positive half-line to Euler integrals on `(0, ∞)`. This file collects the Student-t beta-kernel
+normal form of the transformed density and the kernel itself; the general square-chart facts live
+with the beta-integral change-of-variables infrastructure.
 -/
 
 public section
@@ -38,47 +38,6 @@ variable {ν q x t : ℝ}
 `w ^ ((q - 1) / 2) * (1 + w) ^ (-((ν + 1) / 2))`. -/
 abbrev studentTBetaKernel (ν q w : ℝ) : ℝ :=
   w ^ ((q - 1) / 2) * (1 + w) ^ (-((ν + 1) / 2))
-
-/-- The square-root chart `z ↦ z ^ 2 / ν` carries `(y, ∞)` onto `(y ^ 2 / ν, ∞)` for `0 ≤ y`. -/
-lemma image_sq_div_const_Ioi (hν : 0 < ν) {y : ℝ} (hy : 0 ≤ y) :
-    (fun z : ℝ => z ^ 2 / ν) '' Ioi y = Ioi (y ^ 2 / ν) := by
-  ext w
-  simp only [mem_image, mem_Ioi]
-  constructor
-  · rintro ⟨z, hz, rfl⟩
-    have hz0 : 0 < z := hy.trans_lt hz
-    have hsq : y ^ 2 < z ^ 2 := by gcongr
-    exact div_lt_div_of_pos_right hsq hν
-  · intro hw
-    have h0 : 0 ≤ y ^ 2 / ν := by positivity
-    have hw0 : 0 < w := h0.trans_lt hw
-    have hνw : 0 < ν * w := mul_pos hν hw0
-    have hsqrt_y : y < Real.sqrt (ν * w) := by
-      have h : y ^ 2 < ν * w := by
-        have h' : y ^ 2 / ν < w := hw
-        calc y ^ 2 = ν * (y ^ 2 / ν) := by field_simp [hν.ne']
-             _ < ν * w := mul_lt_mul_of_pos_left h' hν
-      have h2 : y ^ 2 < (Real.sqrt (ν * w)) ^ 2 := by
-        rw [Real.sq_sqrt (by linarith)]; exact h
-      nlinarith [Real.sqrt_nonneg (ν * w)]
-    refine ⟨Real.sqrt (ν * w), hsqrt_y, ?_⟩
-    rw [Real.sq_sqrt (by linarith)]; field_simp [hν.ne']
-
-/-- The chart `z ↦ z ^ 2 / ν` is injective on the positive half-line for nonzero `ν`. -/
-lemma sq_div_const_injOn_Ioi (hν : ν ≠ 0) :
-    InjOn (fun z : ℝ => z ^ 2 / ν) (Ioi (0 : ℝ)) := by
-  intro z hz w hw h
-  have hz0 : 0 < z := hz
-  have hw0 : 0 < w := hw
-  have : z ^ 2 = w ^ 2 := by
-    field_simp [hν] at h
-    linarith
-  nlinarith
-
-/-- The derivative of the chart `z ↦ z ^ 2 / ν`. -/
-lemma hasDerivAt_sq_div_const (ν z : ℝ) :
-    HasDerivAt (fun x : ℝ => x ^ 2 / ν) (2 * z / ν) z := by
-  simpa using ((hasDerivAt_id z).pow 2).div_const ν
 
 /-- The square chart rewrites the beta-kernel power as the sample power times the compensating
 degree-of-freedom power. -/

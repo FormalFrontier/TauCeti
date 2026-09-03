@@ -6,8 +6,9 @@ Authors: Codex
 module
 
 public import TauCeti.Analysis.SpecialFunctions.IncompleteBeta
-public import TauCeti.Probability.Distributions.StudentT.WeightedIntegral
+public import TauCeti.Probability.Distributions.StudentT.Basic
 public import Mathlib.Probability.CDF
+import TauCeti.Probability.Distributions.StudentT.WeightedIntegral
 import Mathlib.MeasureTheory.Function.JacobianOneDim
 import Mathlib.MeasureTheory.Measure.Lebesgue.Integral
 
