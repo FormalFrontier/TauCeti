@@ -432,8 +432,7 @@ private theorem kostantTorusSubsystemRelativeDefiningIdeal_eq_commonKernel
       CommHopfAlgCat.kerOfSurjective_quotientMapOfLe A hI
   rw [hrelative]
   simpa only [Iₛ, q₀, f, kostantTorusSubsystemDefiningIdeal] using
-    (CommHopfAlgCat.commonKernelHopfIdeal_eq_map_mkQuotient_of_comp
-      f I₀ p (by simpa only [Iₛ, f, kostantTorusSubsystemDefiningIdeal] using hI) hp).symm
+    (CommHopfAlgCat.commonKernelHopfIdeal_eq_map_mkQuotient_of_comp f I₀ p hp).symm
 
 private theorem kostantTorusSubsystemClosedSubgroup_eq_quotientClosedSubgroup
     (hnil : ∀ i, IsNilpotent (ρ (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i))))

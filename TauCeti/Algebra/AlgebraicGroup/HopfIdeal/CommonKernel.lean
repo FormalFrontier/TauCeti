@@ -157,9 +157,12 @@ This identifies the defining Hopf ideal of the same generated closed subgroup wh
 affine group scheme is replaced by a quotient containing it. -/
 theorem commonKernelHopfIdeal_eq_map_mkQuotient_of_comp (f : ∀ i, H ⟶ K i)
     (I : HopfIdeal R H) (c : ∀ i, quotient H I ⟶ K i)
-    (hI : I ≤ commonKernelHopfIdeal f) (hc : ∀ i, mkQuotient H I ≫ c i = f i) :
+    (hc : ∀ i, mkQuotient H I ≫ c i = f i) :
     commonKernelHopfIdeal c =
       (commonKernelHopfIdeal f).map (mkQuotient H I).hom := by
+  have hI : I ≤ commonKernelHopfIdeal f :=
+    (le_commonKernelHopfIdeal_iff f I).mpr fun i =>
+      toIdeal_le_ker_of_mkQuotient_comp (hc i)
   let q := mkQuotient H I
   have hq : Function.Surjective q.hom := mkQuotient_surjective H I
   rw [← HopfIdeal.comapOfSurjective_eq_comapOfSurjective_iff q.hom hq]
