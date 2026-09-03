@@ -42,9 +42,6 @@ What is not here is surjectivity, which is Hilbert 90 for `Kˢ/K` and needs the 
 `H¹` as a colimit over the finite quotients of `G_K`. Surjectivity is the only missing input for
 the Kummer isomorphism `Kˣ ⧸ (Kˣ)ⁿ ≅ H¹(G_K, μₙ)`.
 
-This implements targets 4 and 5 and the multiplicativity and kernel parts of target 6 in Layer 9
-of the human-authored `TauCetiRoadmap/ProfiniteCohomology/README.md` and `Suggested.lean`.
-
 ## Main definitions
 
 * `TauCeti.kummerCocycle`: the cocycle `g ↦ g α / α` attached to a choice of `n`th root, and
@@ -186,7 +183,7 @@ private theorem kummerMapAdd_apply (hn : IsUnit (n : K)) (c : Additive Kˣ) :
   (rfl)
 
 /-- **The Kummer map** `Kˣ →* Multiplicative (H¹(G_K, μₙ))`: the degree-zero connecting
-homomorphism of the Kummer sequence, written in the multiplicative API specified by the roadmap. -/
+homomorphism of the Kummer sequence, written multiplicatively on the units of `K`. -/
 def kummerMap (hn : IsUnit (n : K)) :
     Kˣ →* Multiplicative (H1 (AbsoluteGaloisGroup K) (KummerCoeff K n)) :=
   (kummerMapAdd K n hn).toMultiplicativeRight
