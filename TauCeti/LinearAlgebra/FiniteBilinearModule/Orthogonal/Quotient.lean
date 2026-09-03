@@ -248,11 +248,6 @@ theorem card_orthogonalQuotient_eq_one_iff_isLagrangian {H : AddSubgroup A}
   exact ⟨fun h ↦ le_antisymm ((A.isIsotropic_iff_le_orthogonalComplement H).mp hH) h,
     fun h ↦ h ▸ le_rfl⟩
 
-/-- The orthogonal quotient of a Lagrangian subgroup is trivial. -/
-theorem IsLagrangian.card_orthogonalQuotient_eq_one {H : AddSubgroup A}
-    (hH : A.IsLagrangian H) : Nat.card (A.orthogonalQuotient H) = 1 :=
-  (A.card_orthogonalQuotient_eq_one_iff_isLagrangian hH.isIsotropic).mpr hH
-
 /-! ## Transport along isometries -/
 
 namespace Isometry
@@ -303,7 +298,17 @@ private theorem orthogonalQuotientAddEquiv_orthogonalQuotientMk (f : Isometry A 
     f.orthogonalQuotientAddEquiv H (A.orthogonalQuotientMk H x) =
       B.orthogonalQuotientMk (H.map f.toAddEquiv)
         (Isometry.orthogonalComplementEquiv A f H x) := by
-  unfold orthogonalQuotientAddEquiv orthogonalQuotientMk quotientOfLeRadicalMk
+  have hx : A.orthogonalQuotientMk H x =
+      (Submodule.Quotient.mk x : A.orthogonalQuotient H) := by
+    unfold orthogonalQuotientMk
+    exact quotientOfLeRadicalMk_apply _ _ _ _
+  have hfx : B.orthogonalQuotientMk (H.map f.toAddEquiv)
+      (Isometry.orthogonalComplementEquiv A f H x) =
+      (Submodule.Quotient.mk (Isometry.orthogonalComplementEquiv A f H x) :
+        B.orthogonalQuotient (H.map f.toAddEquiv)) := by
+    unfold orthogonalQuotientMk
+    exact quotientOfLeRadicalMk_apply _ _ _ _
+  rw [hx, hfx]
   change (Submodule.Quotient.equiv _ _
       (Isometry.orthogonalComplementEquiv A f H).toIntLinearEquiv
       (map_toIntSubmodule_addSubgroupOf_orthogonalComplement f H))

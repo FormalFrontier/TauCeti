@@ -114,9 +114,14 @@ The package is exposed so that its carrier projection reduces to the `Submodule`
     exact A.pairing_comm x y
 
 /-- The quotient map onto the quotient by a subgroup of the radical. -/
-@[expose] noncomputable def quotientOfLeRadicalMk (K : AddSubgroup A) (hK : K ≤ A.radical) :
+noncomputable def quotientOfLeRadicalMk (K : AddSubgroup A) (hK : K ≤ A.radical) :
     A →+ A.quotientOfLeRadical K hK :=
   K.toIntSubmodule.mkQ.toAddMonoidHom
+
+/-- The quotient map sends an element to its quotient class. -/
+theorem quotientOfLeRadicalMk_apply (K : AddSubgroup A) (hK : K ≤ A.radical) (x : A) :
+    A.quotientOfLeRadicalMk K hK x = Submodule.Quotient.mk x :=
+  Submodule.mkQ_apply K.toIntSubmodule x
 
 /-- The quotient pairing is represented by the original pairing on representatives. -/
 @[simp]
