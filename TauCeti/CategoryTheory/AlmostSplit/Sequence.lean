@@ -49,9 +49,6 @@ almost-split sequence is an epimorphism onto a nonzero object and so is never ze
 * `CategoryTheory.ShortComplex.IsAlmostSplit.not_projective_X₃` and `.not_injective_X₁`: **its
   right-hand end is not projective and its left-hand end is not injective.**  A projective
   right-hand end would section the sequence, an injective left-hand end would retract it.
-* `CategoryTheory.ShortComplex.IsAlmostSplit.not_mono_g` and `.not_epi_f`: in a balanced category
-  the second map is an epimorphism that is not a monomorphism, and the first map a monomorphism
-  that is not an epimorphism.
 * `CategoryTheory.ShortComplex.isAlmostSplit_op_iff`: **being almost split is self-dual**, the two
   lifting conditions being exchanged by passage to the opposite category, so every statement about
   the left-hand end dualizes to one about the right-hand end.
@@ -143,18 +140,6 @@ namespace IsAlmostSplit
 
 /-! ### The maps of an almost-split sequence -/
 
-/-- The second map of an almost-split sequence is not a split monomorphism: short exactness makes
-it an epimorphism, so a splitting on that side would make it an isomorphism. -/
-theorem not_isSplitMono_g (hS : IsAlmostSplit S) : ¬ IsSplitMono S.g := by
-  have := hS.shortExact.epi_g
-  exact hS.isRightAlmostSplit_g.not_isSplitMono
-
-/-- The first map of an almost-split sequence is not a split epimorphism, dually to
-`CategoryTheory.ShortComplex.IsAlmostSplit.not_isSplitMono_g`. -/
-theorem not_isSplitEpi_f (hS : IsAlmostSplit S) : ¬ IsSplitEpi S.f := by
-  have := hS.shortExact.mono_f
-  exact hS.isLeftAlmostSplit_f.not_isSplitEpi
-
 /-- **The first map of an almost-split sequence is nonzero**: short exactness makes it a
 monomorphism, and a zero monomorphism has a zero source, whose identity would split it. -/
 theorem ne_zero_f (hS : IsAlmostSplit S) : S.f ≠ 0 := by
@@ -201,24 +186,6 @@ theorem not_injective_X₁ (hS : IsAlmostSplit S) : ¬ Injective S.X₁ := by
   have := hS.shortExact.mono_f
   exact hS.isLeftAlmostSplit_f.not_injective
 
-section Balanced
-
-variable [Balanced C]
-
-/-- In a balanced category the second map of an almost-split sequence is an epimorphism that is not
-a monomorphism: it would otherwise be an isomorphism. -/
-theorem not_mono_g (hS : IsAlmostSplit S) : ¬ Mono S.g := by
-  have := hS.shortExact.epi_g
-  exact hS.isRightAlmostSplit_g.not_mono
-
-/-- In a balanced category the first map of an almost-split sequence is a monomorphism that is not
-an epimorphism, dually to `CategoryTheory.ShortComplex.IsAlmostSplit.not_mono_g`. -/
-theorem not_epi_f (hS : IsAlmostSplit S) : ¬ Epi S.f := by
-  have := hS.shortExact.mono_f
-  exact hS.isLeftAlmostSplit_f.not_epi
-
-end Balanced
-
 /-! ### Duality -/
 
 /-- **The opposite of an almost-split sequence is almost split**: the two lifting clauses are
@@ -252,7 +219,7 @@ theorem isAlmostSplit_unop_iff {S : ShortComplex Cᵒᵖ} : IsAlmostSplit S.unop
 
 /-- **Being almost split is invariant under an isomorphism of short complexes**, so it descends to
 isomorphism classes of sequences. -/
-theorem IsAlmostSplit.of_iso (e : S₁ ≅ S₂) (hS : IsAlmostSplit S₁) : IsAlmostSplit S₂ where
+theorem isAlmostSplit_of_iso (e : S₁ ≅ S₂) (hS : IsAlmostSplit S₁) : IsAlmostSplit S₂ where
   shortExact := ShortComplex.shortExact_of_iso e hS.shortExact
   isLeftAlmostSplit_f := by
     have key : (asIso e.hom.τ₁).symm.hom ≫ S₁.f ≫ (asIso e.hom.τ₂).hom = S₂.f := by
@@ -265,6 +232,6 @@ theorem IsAlmostSplit.of_iso (e : S₁ ≅ S₂) (hS : IsAlmostSplit S₁) : IsA
 
 /-- Being almost split is invariant under an isomorphism of short complexes. -/
 theorem isAlmostSplit_iff_of_iso (e : S₁ ≅ S₂) : IsAlmostSplit S₁ ↔ IsAlmostSplit S₂ :=
-  ⟨IsAlmostSplit.of_iso e, IsAlmostSplit.of_iso e.symm⟩
+  ⟨isAlmostSplit_of_iso e, isAlmostSplit_of_iso e.symm⟩
 
 end CategoryTheory.ShortComplex

@@ -97,11 +97,6 @@ structure maps then compose to `0`, collapsing the other summand), so both facto
 
 ## References
 
-This builds the right and left almost split conditions named in Layer 6 (Auslander-Reiten theory)
-of `TauCetiRoadmap/RepresentationTheory/QuiverRepresentations/README.md` as the two lifting
-clauses of an almost-split sequence, together with the indecomposability of its ends, which that
-layer lists as a separate requirement on the sequence.
-
 * M. Auslander, I. Reiten, S. Smalø, *Representation Theory of Artin Algebras*, CUP (1995), V.1.
 * I. Assem, D. Simson, A. Skowroński, *Elements of the Representation Theory of Associative
   Algebras, Vol. 1*, LMS Student Texts 65, CUP (2006), IV.1.
