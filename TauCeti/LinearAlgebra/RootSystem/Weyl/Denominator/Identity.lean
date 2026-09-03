@@ -5,8 +5,9 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.LinearAlgebra.RootSystem.DominantCone
 public import TauCeti.LinearAlgebra.RootSystem.Weyl.Alternating
+-- Non-public: the positive-cone argument is used only inside a private proof.
+import TauCeti.LinearAlgebra.RootSystem.DominantCone
 
 public section
 
@@ -23,17 +24,17 @@ without the dot action `w ⬝ 0 = w(ρ) - ρ` it is the familiar
 `∏_{α>0}(1 - e^{-α}) = ∑_w sgn(w) e^{w(ρ) - ρ}`, or, after multiplying by `e^{ρ}`, the symmetric
 form `∏_{α>0}(e^{α/2} - e^{-α/2}) = ∑_w sgn(w) e^{w(ρ)}`.
 
-It is the case `λ = 0` of the Weyl character formula, whose right-hand side is the numerator of a
-dominant weight; the formula divides by this identity, so the identity is proved first and on its
-own, with no representation theory involved.
+It is the case `λ = 0` of the Weyl character formula, which identifies the product of a formal
+character with the denominator with the numerator of a dominant weight. Thus the identity is proved
+first and on its own, with no representation theory involved.
 
 ## The argument
 
 `Δ` is alternating for the dot action (`TauCeti.isDotAlternating_weylDenominator`), so
 `TauCeti.IsDotAlternating.eq_weylNumerator` reduces the identity to two coefficient computations on
 the open chamber of the dot action: the constant term of `Δ` is `1`
-(`TauCeti.coeff_weylDenominator_zero`, since the empty set is the only set of positive roots
-summing to `0`), and `0` is the only weight of that chamber where `Δ` does not vanish.
+(`TauCeti.coeff_weylDenominator_zero`, an elementary expansion proved with the denominator itself),
+and `0` is the only weight of that chamber where `Δ` does not vanish.
 
 The second computation is the geometric heart of the identity, and is the only step specific to the
 denominator. An exponent of `Δ` is `-ν` for a sum `ν` of positive roots; lying in the open dot
@@ -41,9 +42,19 @@ chamber makes `ρ - ν` strictly dominant, which bounds every `⟨ν, αᵢ^∨�
 pairings are integers, hence nonpositive; and the only antidominant member of the positive root
 cone is `0` (`TauCeti.eq_zero_of_mem_posRootCone_of_forall_coroot'_nonpos`).
 
+## The coefficient ring
+
+Everything below is stated over a linearly ordered coefficient ring, which is where the chamber
+geometry the proof runs through lives: `TauCeti.openDotDominantChamber` is defined through
+`TauCeti.openDominantChamber`, whose *definition* already asks for `[LinearOrder R]`, and
+`TauCeti.IsDotAlternating.eq_weylNumerator` is stated over an ordered ring. The identity therefore
+specializes directly to an ordered root pairing — a rational or a real one — but not, without a
+base change, to one over an unordered field such as `ℂ`. Carrying it there is a scalar-restriction
+question about `RootPairing.restrictScalars'`, which produces a pairing on the span of the roots
+rather than on the ambient weight module, and is not attempted here.
+
 ## Main results
 
-* `TauCeti.coeff_weylDenominator_zero`: the constant term of `Δ` is `1`.
 * `TauCeti.weylDenominator_eq_weylNumerator_zero`: **the Weyl denominator identity**, `Δ = N(0)`.
 * `TauCeti.support_coeff_weylDenominator` and `TauCeti.card_support_coeff_weylDenominator`:
   consequently `Δ` is supported on the dot orbit of `0` and has exactly `|W|` terms.
@@ -66,20 +77,19 @@ variable {ι : Type u} {R : Type v} {M : Type w} {N : Type x}
   [CommRing R] [AddCommGroup M] [Module R M] [AddCommGroup N] [Module R N]
   (P : _root_.RootPairing ι R M N) [Finite ι] [CharZero R] (b : P.Base)
 
-/-- **The constant term of the Weyl denominator is `1`.** Expanding `∏_{α>0}(1 - e^{-α})` indexes
-the terms by the sets of positive roots, and the empty set is the only one whose sum vanishes. -/
-@[simp]
-theorem coeff_weylDenominator_zero : (weylDenominator P b).coeff 0 = 1 := by
-  classical
-  simp only [weylDenominator_eq_sum_powerset, AddMonoidAlgebra.coeff_sum, Finsupp.finsetSum_apply,
-    AddMonoidAlgebra.coeff_single]
-  refine (Finset.sum_eq_single_of_mem (∅ : Finset ι) (Finset.empty_mem_powerset _) ?_).trans ?_
-  · intro T hT hTne
-    have hsum : ∑ i ∈ T, P.root i ≠ 0 :=
-      sum_root_ne_zero_of_mem_posRoots P b (Finset.nonempty_iff_ne_empty.mpr hTne)
-        fun i hi => (mem_posRootsFinset P b i).mp (Finset.mem_powerset.mp hT hi)
-    exact Finsupp.single_eq_of_ne (Ne.symm (neg_ne_zero.mpr hsum))
-  · simp
+section Reduced
+
+variable [LinearOrder R] [IsStrictOrderedRing R] [P.IsReduced]
+
+/-- A reduced root pairing has reduced coroots: both the weight and the coweight module are
+reflexive, being perfectly paired with each other, hence torsion free, which is what
+`RootPairing.instFlipIsReduced` needs. So `P.flip.IsReduced` need not be assumed separately. -/
+private theorem flip_isReduced : P.flip.IsReduced :=
+  have : Module.IsReflexive R M := .of_isPerfPair P.toLinearMap
+  have : Module.IsReflexive R N := .of_isPerfPair P.flip.toLinearMap
+  inferInstance
+
+end Reduced
 
 section Cone
 
@@ -95,31 +105,25 @@ antidominant member of the positive root cone is `0`. -/
 private theorem eq_zero_of_coeff_weylDenominator_ne_zero {y : M}
     (hy : (weylDenominator P b).coeff y ≠ 0)
     (hdom : y ∈ openDotDominantChamber P b) : y = 0 := by
-  obtain ⟨T, hT, hyT⟩ : ∃ T ⊆ posRootsFinset P b, y = -∑ i ∈ T, P.root i := by
-    by_contra hcon
-    push Not at hcon
-    exact hy (coeff_weylDenominator_eq_zero P b hcon)
-  have hcone : (∑ i ∈ T, P.root i) ∈ posRootCone P b :=
-    AddSubmonoid.sum_mem _ fun i hi =>
-      root_mem_posRootCone_of_mem_posRoots P b ((mem_posRootsFinset P b i).mp (hT hi))
-  have hzero : ∑ i ∈ T, P.root i = 0 := by
+  have hcone := neg_mem_posRootCone_of_coeff_weylDenominator_ne_zero P b hy
+  have hzero : -y = 0 := by
     refine eq_zero_of_mem_posRootCone_of_forall_coroot'_nonpos b hcone fun i hi => ?_
     obtain ⟨m, hm⟩ := exists_intCast_eq_coroot'_of_mem_posRootCone P b hcone i
-    have hlt : P.coroot' i (∑ j ∈ T, P.root j) < 1 := by
+    have hlt : P.coroot' i (-y) < 1 := by
       have h0 := (mem_openDotDominantChamber_iff_neg_one_lt_coroot' P b y).mp hdom i hi
-      rw [hyT, map_neg] at h0
+      rw [map_neg]
       linarith
     rw [hm] at hlt ⊢
     have hm1 : m < 1 := by exact_mod_cast hlt
     exact_mod_cast (by omega : m ≤ 0)
-  rw [hyT, hzero, neg_zero]
+  exact neg_eq_zero.mp hzero
 
 end Cone
 
 section Identity
 
 variable [LinearOrder R] [IsStrictOrderedRing R] [Invertible (2 : R)] [P.IsCrystallographic]
-  [P.IsReduced] [P.flip.IsReduced] [P.IsRootSystem] [Fintype P.weylGroup]
+  [P.IsReduced] [P.IsRootSystem] [Fintype P.weylGroup]
 
 /-- **The Weyl denominator identity**: the Weyl denominator is the Weyl numerator of the weight
 `0`,
@@ -132,9 +136,10 @@ right-hand side is `∑_{w ∈ W} sgn(w) e^{w(ρ) - ρ}`.
 This is the case `λ = 0` of the Weyl character formula, in which the character of the trivial
 module is `1`. -/
 theorem weylDenominator_eq_weylNumerator_zero :
-    weylDenominator P b = weylNumerator P b 0 :=
-  (isDotAlternating_weylDenominator P b).eq_weylNumerator (zero_mem_openDotDominantChamber P b)
-    (coeff_weylDenominator_zero P b)
+    weylDenominator P b = weylNumerator P b 0 := by
+  have := flip_isReduced P
+  exact (isDotAlternating_weylDenominator P b).eq_weylNumerator
+    (zero_mem_openDotDominantChamber P b) (coeff_weylDenominator_zero P b)
     fun _ hx hne => eq_zero_of_coeff_weylDenominator_ne_zero P b hne hx
 
 /-- **The Weyl denominator is supported exactly on the dot orbit of `0`**, one term for each
@@ -142,6 +147,7 @@ element of the Weyl group. -/
 theorem support_coeff_weylDenominator [DecidableEq M] :
     (weylDenominator P b).coeff.support
       = Finset.univ.image fun w : P.weylGroup => dotAction P b w 0 := by
+  have := flip_isReduced P
   rw [weylDenominator_eq_weylNumerator_zero]
   exact support_coeff_weylNumerator P b (zero_mem_dominantChamber P b)
 
@@ -149,6 +155,7 @@ theorem support_coeff_weylDenominator [DecidableEq M] :
 gives `2^{|Φ⁺|}` terms, which collapse to one for each element of the Weyl group. -/
 theorem card_support_coeff_weylDenominator :
     (weylDenominator P b).coeff.support.card = Fintype.card P.weylGroup := by
+  have := flip_isReduced P
   rw [weylDenominator_eq_weylNumerator_zero]
   exact card_support_coeff_weylNumerator P b (zero_mem_dominantChamber P b)
 

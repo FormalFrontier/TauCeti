@@ -128,7 +128,8 @@ theorem frobeniusSchurIndicator_trivial [Invertible (Nat.card G : k)] :
   have hchar : ∀ g : G, (Representation.trivial k G V).character (g ^ 2) = (finrank k V : k) := by
     intro g
     have h1 : (Representation.trivial k G V) (g ^ 2) = LinearMap.id (R := k) (M := V) := by
-      ext v; simp
+      ext v
+      simp [_root_.Representation.isTrivial_def]
     rw [Representation.character, h1, LinearMap.trace_id]
   simp only [frobeniusSchurIndicator, hchar, Finset.sum_const, Finset.card_univ,
     Fintype.card_eq_nat_card, nsmul_eq_mul]

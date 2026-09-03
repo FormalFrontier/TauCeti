@@ -18,6 +18,8 @@ This file supplies general constructions for Lie modules that are missing from M
 ## Main definitions
 
 * `TauCeti.LieModuleEquiv.ofBijective`: a bijective morphism of Lie modules is an equivalence.
+* `TauCeti.LieModuleEquiv.restrictLie`: an equivalence of Lie modules over a Lie algebra, read as
+  one over a Lie subalgebra.
 * `TauCeti.LieModuleEquiv.congrRight` and `TauCeti.LieModuleEquiv.congrLeft`: postcomposition and
   precomposition with an equivalence of Lie modules, as linear equivalences of morphism spaces.
 * `TauCeti.lieAnnihilator`: the Lie subalgebra of elements annihilating a vector in a Lie
@@ -59,6 +61,21 @@ theorem ofBijective_apply (f : M →ₗ⁅R,L⁆ N) (hf : Function.Bijective f) 
   -- representation boundary before applying the corresponding linear-equivalence interface lemma.
   change (LinearEquiv.ofBijective (f : M →ₗ[R] N) hf) m = f m
   exact LinearEquiv.ofBijective_apply _ _
+
+/-- **An equivalence of `L`-modules is an equivalence of `L'`-modules** for a Lie subalgebra
+`L' ≤ L`, with the same underlying map. This is Mathlib's `LieModuleHom.restrictLie` for
+equivalences. -/
+noncomputable def restrictLie [LieAlgebra R L] (e : M ≃ₗ⁅R,L⁆ N) (L' : LieSubalgebra R L) :
+    M ≃ₗ⁅R,L'⁆ N :=
+  ofBijective ((e : M →ₗ⁅R,L⁆ N).restrictLie L') ⟨e.injective, e.surjective⟩
+
+@[simp]
+theorem coe_restrictLie [LieAlgebra R L] (e : M ≃ₗ⁅R,L⁆ N) (L' : LieSubalgebra R L) :
+    ⇑(restrictLie e L') = e := by
+  funext m
+  refine (ofBijective_apply ((e : M →ₗ⁅R,L⁆ N).restrictLie L') _ m).trans ?_
+  rw [LieModuleHom.coe_restrictLie]
+  rfl
 
 section CongrRight
 
