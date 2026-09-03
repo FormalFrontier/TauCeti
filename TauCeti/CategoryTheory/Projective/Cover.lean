@@ -30,7 +30,7 @@ and it is the epimorphism condition, not the subobject one, that the results bel
 Mathlib has projective objects (`CategoryTheory.Projective`) and projective *presentations*
 (`CategoryTheory.ProjectivePresentation`, an epimorphism from a projective with no minimality
 demanded), but neither essential epimorphisms nor projective covers. The module-level notion is
-`TauCeti.IsProjectiveCover` in `TauCeti.Algebra.Module.ProjectiveCover`, phrased through the
+`TauCeti.IsProjectiveCover` in `TauCeti.Algebra.Module.ProjectiveCover.Basic`, phrased through the
 superfluousness of the kernel; `TauCeti.isProjectiveCover_iff_forall_surjective` shows that over an
 additive group it is exactly the condition used here, so this file is the categorical reading of
 the same notion, available in categories with no ambient kernel or subobject theory.
