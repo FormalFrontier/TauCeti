@@ -54,9 +54,7 @@ variable (I : LieIdeal R L)
 Its underlying function is Mathlib's `LieSubmodule.Quotient.mk`, sending each element to its
 quotient class. -/
 def mkQ : L →ₗ⁅R⁆ L ⧸ I where
-  toFun := LieSubmodule.Quotient.mk
-  map_add' _ _ := rfl
-  map_smul' _ _ := rfl
+  __ := I.toSubmodule.mkQ
   map_lie' := rfl
 
 /-- The quotient homomorphism sends an element to its class. -/
