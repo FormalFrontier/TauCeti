@@ -15,8 +15,8 @@ An algebra equivalence `e : S ≃ₐ[R] T` of commutative `R`-algebras moves ide
 of `T` and conjugates endomorphisms of `S` into endomorphisms of `T`.  The local data attached to
 a prime is invariant under this transport:
 
-* the contraction to `R` of a prime is unchanged by mapping it along `e`
-  (`Ideal.under_mapAlgEquiv`), and mapping along `e` and back along `e.symm` recovers the prime
+* the contraction to `R` of an ideal is unchanged by mapping it along `e`
+  (`Ideal.under_mapAlgEquiv`), and mapping along `e` and back along `e.symm` recovers the ideal
   (`Ideal.map_of_equiv`);
 * unramifiedness at a prime is preserved, and is an equivalence
   (`Algebra.IsUnramifiedAt.mapAlgEquiv`, `Algebra.IsUnramifiedAt.mapAlgEquiv_iff`);
@@ -36,8 +36,8 @@ namespace Ideal
 
 variable {R S T : Type*} [CommRing R] [CommRing S] [CommRing T] [Algebra R S] [Algebra R T]
 
-/-- **Mapping a prime along an algebra equivalence preserves its contraction.**  For an
-`R`-algebra equivalence `e : S ≃ₐ[R] T`, the prime `Q.map e` of `T` has the same contraction to
+/-- **Mapping an ideal along an algebra equivalence preserves its contraction.**  For an
+`R`-algebra equivalence `e : S ≃ₐ[R] T`, the ideal `Q.map e` of `T` has the same contraction to
 `R` as `Q`. -/
 @[simp]
 theorem under_mapAlgEquiv (e : S ≃ₐ[R] T) (Q : Ideal S) :
