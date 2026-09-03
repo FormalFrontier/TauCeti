@@ -10,7 +10,6 @@ public import TauCeti.Probability.Density
 public import Mathlib.Analysis.SpecialFunctions.Gamma.Basic
 public import Mathlib.Probability.Distributions.Cauchy
 import TauCeti.Analysis.SpecialFunctions.Gamma
-import Mathlib.Analysis.SpecialFunctions.NonIntegrable
 import Mathlib.MeasureTheory.Measure.Haar.NormedSpace
 
 /-!
@@ -57,7 +56,6 @@ moment modules reuse the same normalization and symmetry facts.
 
 ## References
 
-* Roadmap: `TauCetiRoadmap/StandardDistributions/README.md`, Layer 3, the **Student's t** target.
 * N. L. Johnson, S. Kotz, N. Balakrishnan, *Continuous Univariate Distributions*, vol. 2, 2nd ed.,
   Wiley (1995), ch. 28.
 -/
