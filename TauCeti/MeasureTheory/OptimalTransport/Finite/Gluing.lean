@@ -73,7 +73,7 @@ private theorem middleMass_eq_zero_iff (π : PMF (α × β)) (b : β) [Finite α
     π.map Prod.snd b = 0 ↔ ∀ a, π (a, b) = 0 := by
   classical
   let _ := Fintype.ofFinite α
-  rw [TauCeti.PMF.map_snd_apply]
+  rw [π.map_snd_apply_fintype]
   simp
 
 omit instFintypeα instFintypeβ instFintypeγ in
@@ -81,7 +81,7 @@ private theorem map_fst_eq_zero_iff (σ : PMF (β × γ)) (b : β) [Finite γ] :
     σ.map Prod.fst b = 0 ↔ ∀ c, σ (b, c) = 0 := by
   classical
   let _ := Fintype.ofFinite γ
-  rw [TauCeti.PMF.map_fst_apply]
+  rw [σ.map_fst_apply_fintype]
   simp
 
 private theorem finiteGluingWeight_sum (π : PMF (α × β)) (σ : PMF (β × γ))
@@ -109,9 +109,9 @@ private theorem finiteGluingWeight_sum (π : PMF (α × β)) (σ : PMF (β × γ
                   simp only [div_eq_mul_inv, Finset.sum_mul]
         _ = π.map Prod.snd b := by
           have hσ : ∑ c, σ (b, c) = π.map Prod.snd b := by
-            rw [← TauCeti.PMF.map_fst_apply σ b, ← hmid b]
+            rw [← σ.map_fst_apply_fintype b, ← hmid b]
           rw [hσ]
-          rw [← TauCeti.PMF.map_snd_apply π b]
+          rw [← π.map_snd_apply_fintype b]
           apply ENNReal.mul_div_cancel_right hb
           exact (π.map Prod.snd).apply_ne_top b
   calc
@@ -225,7 +225,7 @@ theorem map_prodMap_id_fst_finiteGluing (h : π.map Prod.snd = σ.map Prod.fst) 
                 π.map Prod.snd p.2 := by
                   simp only [div_eq_mul_inv, Finset.sum_mul, Finset.mul_sum]
           _ = π p := by
-            rw [← TauCeti.PMF.map_fst_apply σ p.2, ← hmid]
+            rw [← σ.map_fst_apply_fintype p.2, ← hmid]
             apply ENNReal.mul_div_cancel_right hb
             exact (π.map Prod.snd).apply_ne_top p.2
 
@@ -268,7 +268,7 @@ theorem map_snd_finiteGluing (h : π.map Prod.snd = σ.map Prod.fst) :
                 π.map Prod.snd p.1 := by
                   simp only [div_eq_mul_inv, Finset.sum_mul]
           _ = σ p := by
-            rw [← TauCeti.PMF.map_snd_apply π p.1, mul_comm]
+            rw [← π.map_snd_apply_fintype p.1, mul_comm]
             apply ENNReal.mul_div_cancel_right hb
             exact (π.map Prod.snd).apply_ne_top p.1
 
