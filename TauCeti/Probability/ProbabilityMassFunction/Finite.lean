@@ -8,18 +8,20 @@ module
 public import Mathlib.Probability.ProbabilityMassFunction.Constructions
 
 /-!
-# Finite sums for probability mass functions
+# Marginals and finite sums for probability mass functions
 
-This file records elementary finite-sum identities for probability mass functions, including the
-row- and column-sum formulas for the marginals of a product PMF on finite types.
+This file records elementary summation identities for probability mass functions. The marginals
+of a PMF on an arbitrary product are its infinite row and column sums; for finite factors these
+specialize to ordinary finite sums.
 
 ## Main results
 
 * `PMF.sum_toReal_eq_one`: the real values of a PMF on a finite type sum to one.
-* `PMF.map_fst_apply_fintype`, `PMF.map_snd_apply_fintype`: the two marginals of a finite
-  product PMF are its row and column sums.
-* `PMF.map_fst_eq_iff_fintype`, `PMF.map_snd_eq_iff_fintype`: characterizations of prescribed
-  marginals by those sums.
+* `PMF.map_fst_apply`, `PMF.map_snd_apply`: the two marginals of a product PMF are its infinite row
+  and column sums, with `PMF.map_fst_apply_fintype` and `PMF.map_snd_apply_fintype` as their finite
+  specializations.
+* `PMF.map_fst_eq_iff`, `PMF.map_snd_eq_iff`: characterizations of prescribed marginals by those
+  sums, again with finite specializations.
 -/
 
 public section
@@ -42,11 +44,11 @@ theorem sum_toReal_eq_one [Fintype ι] (μ : PMF ι) : ∑ i, (μ i).toReal = 1 
 
 section Fst
 
-variable [Fintype κ] (π : PMF (ι × κ))
+variable (π : PMF (ι × κ))
 
-/-- The first marginal of a finite product PMF is obtained by summing each row of its matrix of
-point masses. -/
-theorem map_fst_apply_fintype (i : ι) : π.map Prod.fst i = ∑ j, π (i, j) := by
+/-- The first marginal of a product PMF is obtained by summing each row of its matrix of point
+masses. -/
+theorem map_fst_apply (i : ι) : π.map Prod.fst i = ∑' j, π (i, j) := by
   classical
   rw [PMF.map_apply, ENNReal.tsum_prod']
   rw [tsum_eq_single i]
@@ -54,30 +56,52 @@ theorem map_fst_apply_fintype (i : ι) : π.map Prod.fst i = ∑ j, π (i, j) :=
   · intro i' hi
     simp [hi.symm]
 
-/-- A finite product PMF has first marginal `μ` exactly when its row sums are `μ`. -/
-theorem map_fst_eq_iff_fintype (μ : PMF ι) :
-    π.map Prod.fst = μ ↔ ∀ i, ∑ j, π (i, j) = μ i := by
+/-- A product PMF has first marginal `μ` exactly when its infinite row sums are `μ`. -/
+theorem map_fst_eq_iff (μ : PMF ι) :
+    π.map Prod.fst = μ ↔ ∀ i, ∑' j, π (i, j) = μ i := by
   rw [PMF.ext_iff]
-  simp only [map_fst_apply_fintype]
+  simp only [map_fst_apply]
+
+/-- The first marginal of a finite product PMF is obtained by summing each row of its matrix of
+point masses. -/
+theorem map_fst_apply_fintype [Fintype κ] (i : ι) : π.map Prod.fst i = ∑ j, π (i, j) := by
+  rw [map_fst_apply, tsum_fintype]
+
+/-- A finite product PMF has first marginal `μ` exactly when its row sums are `μ`. -/
+theorem map_fst_eq_iff_fintype [Fintype κ] (μ : PMF ι) :
+    π.map Prod.fst = μ ↔ ∀ i, ∑ j, π (i, j) = μ i := by
+  rw [map_fst_eq_iff]
+  simp only [tsum_fintype]
 
 end Fst
 
 section Snd
 
-variable [Fintype ι] (π : PMF (ι × κ))
+variable (π : PMF (ι × κ))
 
-/-- The second marginal of a finite product PMF is obtained by summing each column of its matrix
-of point masses. -/
-theorem map_snd_apply_fintype (j : κ) : π.map Prod.snd j = ∑ i, π (i, j) := by
+/-- The second marginal of a product PMF is obtained by summing each column of its matrix of point
+masses. -/
+theorem map_snd_apply (j : κ) : π.map Prod.snd j = ∑' i, π (i, j) := by
   classical
   rw [PMF.map_apply, ENNReal.tsum_prod']
   simp
 
-/-- A finite product PMF has second marginal `ν` exactly when its column sums are `ν`. -/
-theorem map_snd_eq_iff_fintype (ν : PMF κ) :
-    π.map Prod.snd = ν ↔ ∀ j, ∑ i, π (i, j) = ν j := by
+/-- A product PMF has second marginal `ν` exactly when its infinite column sums are `ν`. -/
+theorem map_snd_eq_iff (ν : PMF κ) :
+    π.map Prod.snd = ν ↔ ∀ j, ∑' i, π (i, j) = ν j := by
   rw [PMF.ext_iff]
-  simp only [map_snd_apply_fintype]
+  simp only [map_snd_apply]
+
+/-- The second marginal of a finite product PMF is obtained by summing each column of its matrix
+of point masses. -/
+theorem map_snd_apply_fintype [Fintype ι] (j : κ) : π.map Prod.snd j = ∑ i, π (i, j) := by
+  rw [map_snd_apply, tsum_fintype]
+
+/-- A finite product PMF has second marginal `ν` exactly when its column sums are `ν`. -/
+theorem map_snd_eq_iff_fintype [Fintype ι] (ν : PMF κ) :
+    π.map Prod.snd = ν ↔ ∀ j, ∑ i, π (i, j) = ν j := by
+  rw [map_snd_eq_iff]
+  simp only [tsum_fintype]
 
 end Snd
 
