@@ -1,7 +1,7 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Codex
+Authors: Claude, Codex
 -/
 module
 
@@ -42,7 +42,6 @@ exactly for `-1 < q < ν`; the exponential-moment statements read off that sharp
 
 ## References
 
-* TauCetiRoadmap/StandardDistributions/README.md.
 * N. L. Johnson, S. Kotz, N. Balakrishnan, *Continuous Univariate Distributions*, vol. 2, 2nd ed.,
   Wiley (1995), ch. 28.
 -/
@@ -606,7 +605,7 @@ private theorem integrableOn_pow_mul_studentTPDFReal_Ioi_iff (hν : 0 < ν) (hq 
     have hpre : IntegrableOn g ((fun z : ℝ => z ^ 2 / ν) '' Ioi (0 : ℝ)) ↔
         IntegrableOn (fun z : ℝ => |2 * z / ν| • g (z ^ 2 / ν)) (Ioi (0 : ℝ)) :=
       integrableOn_image_iff_integrableOn_abs_deriv_smul measurableSet_Ioi hderiv
-        (sq_div_const_injOn_Ioi hν.ne') g
+        (injOn_sq_div_const_Ioi hν.ne') g
     rw [himg] at hpre
     exact hpre.trans himg1
   have hC_ne : C ≠ 0 := (studentT_const_pos hν).ne'

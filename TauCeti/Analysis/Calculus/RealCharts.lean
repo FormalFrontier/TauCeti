@@ -17,10 +17,10 @@ special-function computations.
 
 ## Main results
 
-* `TauCeti.div_one_sub_strictMonoOn`, `TauCeti.div_one_sub_injOn_Ioo`,
+* `TauCeti.div_one_sub_strictMonoOn`, `TauCeti.injOn_div_one_sub_Ioo`,
   `TauCeti.image_div_one_sub_Ioo`, and `TauCeti.hasDerivAt_div_one_sub` describe the chart
   `u ↦ u / (1 - u)` on intervals below `1`;
-* `TauCeti.image_sq_div_const_Ioi`, `TauCeti.sq_div_const_injOn_Ioi`, and
+* `TauCeti.image_sq_div_const_Ioi`, `TauCeti.injOn_sq_div_const_Ioi`, and
   `TauCeti.hasDerivAt_sq_div_const` describe the square chart `z ↦ z ^ 2 / ν` on positive
   half-lines.
 -/
@@ -51,7 +51,7 @@ lemma div_one_sub_strictMonoOn : StrictMonoOn (fun u : ℝ => u / (1 - u)) (Set.
     _ = v / (1 - v) := by field_simp [h1.ne', h2.ne']
 
 /-- The chart `u ↦ u / (1 - u)` is injective on `(u₀, 1)`. -/
-lemma div_one_sub_injOn_Ioo {u0 : ℝ} :
+lemma injOn_div_one_sub_Ioo {u0 : ℝ} :
     InjOn (fun u : ℝ => u / (1 - u)) (Ioo u0 1) :=
   div_one_sub_strictMonoOn.injOn.mono fun _ hx => (Set.mem_Ioo.mp hx).2
 
@@ -123,7 +123,7 @@ lemma image_sq_div_const_Ioi (hν : 0 < ν) {y : ℝ} (hy : 0 ≤ y) :
     rw [Real.sq_sqrt (by linarith)]; field_simp [hν.ne']
 
 /-- The chart `z ↦ z ^ 2 / ν` is injective on the positive half-line for nonzero `ν`. -/
-lemma sq_div_const_injOn_Ioi (hν : ν ≠ 0) :
+lemma injOn_sq_div_const_Ioi (hν : ν ≠ 0) :
     InjOn (fun z : ℝ => z ^ 2 / ν) (Ioi (0 : ℝ)) := by
   intro z hz w hw h
   have hz0 : 0 < z := hz

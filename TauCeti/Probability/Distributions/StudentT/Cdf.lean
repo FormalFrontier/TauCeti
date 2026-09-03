@@ -28,7 +28,6 @@ This file computes the cumulative distribution function of the Student t distrib
 
 ## References
 
-* TauCetiRoadmap/StandardDistributions/README.md.
 * N. L. Johnson, S. Kotz, N. Balakrishnan, *Continuous Univariate Distributions*, vol. 2, 2nd ed.,
   Wiley (1995), ch. 28.
 -/
@@ -62,7 +61,7 @@ private lemma integral_Ioi_studentTPDFReal_eq_betaKernel_tail (hν : 0 < ν) {y 
       (w ^ (-(1 / 2 : ℝ)) * (1 + w) ^ (-s))
   -- First change variables from the Student-t tail to the beta half-line kernel.
   have hinj : InjOn (fun z : ℝ => z ^ 2 / ν) (Ioi y) :=
-    (sq_div_const_injOn_Ioi hν.ne').mono fun z hz => hy.trans_lt hz
+    (injOn_sq_div_const_Ioi hν.ne').mono fun z hz => hy.trans_lt hz
   have hderiv1 : ∀ z ∈ Ioi y,
       HasDerivWithinAt (fun z : ℝ => z ^ 2 / ν) (2 * z / ν) (Ioi y) z :=
     fun z _ => (hasDerivAt_sq_div_const ν z).hasDerivWithinAt
@@ -117,117 +116,6 @@ private lemma integral_Ioi_studentTPDFReal_eq_betaKernel_tail (hν : 0 < ν) {y 
   rw [h1]
   rw [hg1]
 
-/-- The half-line tail of Euler's second beta integral, written through the chart
-`u ↦ u / (1 - u)`. -/
-private lemma integral_Ioi_betaKernel_tail_eq_interval_tail {u0 : ℝ}
-    (hu00 : 0 ≤ u0) (hu01 : u0 < 1) :
-    ∫ w in Ioi (u0 / (1 - u0)), w ^ (-(1 / 2 : ℝ)) * (1 + w) ^ (-((ν + 1) / 2)) =
-      ∫ u in Ioo u0 1, u ^ (-(1 / 2 : ℝ)) * (1 - u) ^ (ν / 2 - 1) := by
-  set s := (ν + 1) / 2 with hs
-  have hderiv2 : ∀ u ∈ Ioo u0 1,
-      HasDerivWithinAt (fun u : ℝ => u / (1 - u)) ((1 - u) ^ 2)⁻¹ (Ioo u0 1) u :=
-    fun u hu => (hasDerivAt_div_one_sub (ne_of_lt hu.2)).hasDerivWithinAt
-  let k0 : ℝ → ℝ := fun w => w ^ (-(1 / 2 : ℝ)) * (1 + w) ^ (-s)
-  let k : ℝ → ℝ := fun u => u ^ (-(1 / 2 : ℝ)) * (1 - u) ^ (ν / 2 - 1)
-  -- The chart `u ↦ u / (1 - u)` turns the half-line beta tail into an interval tail.
-  have hsub : Ioo u0 1 ⊆ Ioo (0 : ℝ) 1 := fun u hu =>
-    ⟨by linarith [hu.1, hu00], hu.2⟩
-  have hcov : ∀ u ∈ Ioo u0 1, |((1 - u) ^ 2)⁻¹| • k0 (u / (1 - u)) = k u := by
-    intro u hu
-    have hk0 : k0 (u / (1 - u)) =
-        (u / (1 - u)) ^ (-(1 / 2 : ℝ)) * (1 + u / (1 - u)) ^ (-s) := by
-      simp [k0]
-    rw [hk0]
-    have hs' : s = (1 / 2 : ℝ) + ν / 2 := by dsimp only [s]; ring
-    have ha : (1 / 2 : ℝ) - 1 = -(1 / 2 : ℝ) := by ring
-    have hb : -((1 / 2 : ℝ) + ν / 2) = -s := by rw [← hs']
-    have hkey := abs_deriv_smul_one_add_rpow (1 / 2 : ℝ) (ν / 2) (hsub hu)
-    rw [ha, hb] at hkey
-    exact hkey
-  have himg :
-      (fun u : ℝ => u / (1 - u)) '' Ioo u0 1 = Ioi (u0 / (1 - u0)) := by
-    rw [image_div_one_sub_Ioo hu01]
-  have h21 : ∫ u in Ioo u0 1, |((1 - u) ^ 2)⁻¹| • k0 (u / (1 - u)) =
-      ∫ w in Ioi (u0 / (1 - u0)), k0 w := by
-    rw [← integral_image_eq_integral_abs_deriv_smul measurableSet_Ioo hderiv2
-        (div_one_sub_injOn_Ioo (u0 := u0)) k0, himg]
-  have h2 : ∫ w in Ioi (u0 / (1 - u0)), k0 w = ∫ u in Ioo u0 1, k u := by
-    rw [← h21, setIntegral_congr_fun measurableSet_Ioo hcov]
-  simpa [k0, k, s] using h2
-
-/-- The interval tail in the incomplete-beta chart is the total beta mass minus the normalized
-lower incomplete beta mass. -/
-private lemma integral_Ioo_rpow_one_sub_rpow_tail_eq (hν : 0 < ν) {u0 : ℝ} (hu00 : 0 ≤ u0)
-    (hu01 : u0 < 1) :
-    ∫ u in Ioo u0 1, u ^ (-(1 / 2 : ℝ)) * (1 - u) ^ (ν / 2 - 1) =
-      beta (1 / 2) (ν / 2) *
-        (1 - regularizedIncompleteBeta (1 / 2) (ν / 2) u0) := by
-  let k : ℝ → ℝ := fun u => u ^ (-(1 / 2 : ℝ)) * (1 - u) ^ (ν / 2 - 1)
-  let kb : ℝ → ℝ := fun t => t ^ ((1 / 2 : ℝ) - 1) * (1 - t) ^ (ν / 2 - 1)
-  have hkeq : kb = k := by
-    funext t
-    have h : (1 / 2 : ℝ) - 1 = -(1 / 2 : ℝ) := by ring
-    simp only [kb, k, h]
-  have hb_pos : 0 < ν / 2 := by linarith
-  have hmem01 : (0 : ℝ) ∈ Icc (0 : ℝ) 1 := ⟨le_rfl, zero_le_one⟩
-  have hmem11 : (1 : ℝ) ∈ Icc (0 : ℝ) 1 := ⟨zero_le_one, le_rfl⟩
-  have hmemu0 : u0 ∈ Icc (0 : ℝ) 1 := ⟨hu00, by linarith⟩
-  have hII : IntervalIntegrable kb volume 0 1 :=
-    intervalIntegrable_rpow_mul_one_sub_rpow one_half_pos hb_pos hmem01 hmem11
-  have hIIu : IntervalIntegrable kb volume 0 u0 :=
-    intervalIntegrable_rpow_mul_one_sub_rpow one_half_pos hb_pos hmem01 hmemu0
-  have hmemu0' : u0 ∈ Set.uIcc (0 : ℝ) 1 := by
-    rw [Set.uIcc_of_le (zero_le_one : (0 : ℝ) ≤ 1)]
-    exact hmemu0
-  have hmem11' : (1 : ℝ) ∈ Set.uIcc (0 : ℝ) 1 := by
-    rw [Set.uIcc_of_le (zero_le_one : (0 : ℝ) ≤ 1)]
-    exact hmem11
-  have hII1 : IntervalIntegrable kb volume u0 1 :=
-    hII.mono_set (Set.uIcc_subset_uIcc hmemu0' hmem11')
-  have h41 : Ioo u0 1 =ᵐ[volume] Ioc u0 1 :=
-    Ioo_ae_eq_Ioc' Real.volume_singleton
-  have h4 : ∫ u in Ioo u0 1, k u = ∫ u in u0..(1 : ℝ), kb u := by
-    rw [setIntegral_congr_set h41, ← hkeq,
-      intervalIntegral.integral_of_le (by linarith : u0 ≤ 1)]
-  have h5 := intervalIntegral.integral_add_adjacent_intervals hIIu hII1
-  have h6 : ∫ t in (0 : ℝ)..(1 : ℝ), kb t = beta (1 / 2) (ν / 2) :=
-    integral_rpow_mul_one_sub_rpow one_half_pos hb_pos
-  -- Convert the interval tail into total beta mass minus the incomplete beta mass.
-  have h3 : ∫ u in Ioo u0 1, k u = beta (1 / 2) (ν / 2) - ∫ u in (0 : ℝ)..u0, kb u := by
-    rw [h4]
-    linarith [h5, h6]
-  have h71 : regularizedIncompleteBeta (1 / 2) (ν / 2) u0 =
-      (∫ t in (0 : ℝ)..u0, kb t) / beta (1 / 2) (ν / 2) :=
-    regularizedIncompleteBeta_def_of_mem_Icc one_half_pos hb_pos hmemu0
-  have hbetane : beta (1 / 2) (ν / 2) ≠ 0 := (beta_pos one_half_pos hb_pos).ne'
-  have h7 : ∫ t in (0 : ℝ)..u0, kb t =
-      beta (1 / 2) (ν / 2) * regularizedIncompleteBeta (1 / 2) (ν / 2) u0 := by
-    have : regularizedIncompleteBeta (1 / 2) (ν / 2) u0 =
-        (∫ t in (0 : ℝ)..u0, kb t) / beta (1 / 2) (ν / 2) := h71
-    have hgoal : (∫ t in (0 : ℝ)..u0, kb t) =
-        beta (1 / 2) (ν / 2) * regularizedIncompleteBeta (1 / 2) (ν / 2) u0 := by
-      rw [this]
-      field_simp [hbetane]
-    exact hgoal
-  have htailval : beta (1 / 2) (ν / 2) -
-      beta (1 / 2) (ν / 2) * regularizedIncompleteBeta (1 / 2) (ν / 2) u0 =
-      beta (1 / 2) (ν / 2) *
-        (1 - regularizedIncompleteBeta (1 / 2) (ν / 2) u0) := by ring
-  have hgoal : ∫ u in Ioo u0 1, k u =
-      beta (1 / 2) (ν / 2) * (1 - regularizedIncompleteBeta (1 / 2) (ν / 2) u0) := by
-    rw [h3, h7, htailval]
-  simpa [k] using hgoal
-
-/-- The half-line tail of Euler's second beta integral, written through the chart
-`u ↦ u / (1 - u)`. -/
-private lemma integral_Ioi_betaKernel_tail_eq (hν : 0 < ν) {u0 : ℝ} (hu00 : 0 ≤ u0)
-    (hu01 : u0 < 1) :
-    ∫ w in Ioi (u0 / (1 - u0)), w ^ (-(1 / 2 : ℝ)) * (1 + w) ^ (-((ν + 1) / 2)) =
-      beta (1 / 2) (ν / 2) *
-        (1 - regularizedIncompleteBeta (1 / 2) (ν / 2) u0) := by
-  rw [integral_Ioi_betaKernel_tail_eq_interval_tail (ν := ν) hu00 hu01,
-    integral_Ioo_rpow_one_sub_rpow_tail_eq hν hu00 hu01]
-
 /-- The Student t normalizing constant times the beta-tail normalizer is `1 / 2`. -/
 private lemma studentT_tail_normalizing_const (hν : 0 < ν) :
     Real.Gamma ((ν + 1) / 2) / (Real.sqrt (ν * Real.pi) * Real.Gamma (ν / 2)) *
@@ -270,8 +158,20 @@ private lemma integral_Ioi_studentTPDFReal_tail (hν : 0 < ν) {y : ℝ} (hy : 0
     simp only [u0]
     have h : y ^ 2 < ν + y ^ 2 := by linarith
     exact (div_lt_one (by positivity)).mpr h
+  have hbeta_tail :
+      ∫ w in Ioi (u0 / (1 - u0)), w ^ (-(1 / 2 : ℝ)) *
+          (1 + w) ^ (-((ν + 1) / 2)) =
+        beta (1 / 2) (ν / 2) *
+          (1 - regularizedIncompleteBeta (1 / 2) (ν / 2) u0) := by
+    have hb_pos : 0 < ν / 2 := by linarith
+    have h := integral_Ioi_rpow_one_add_rpow_tail_eq (a := 1 / 2) (b := ν / 2)
+      one_half_pos hb_pos hu00 hu01
+    convert h using 1
+    apply setIntegral_congr_fun measurableSet_Ioi
+    intro w _
+    ring_nf
   rw [integral_Ioi_studentTPDFReal_eq_betaKernel_tail hν hy, ← hy0_eq,
-    integral_Ioi_betaKernel_tail_eq hν hu00 hu01]
+    hbeta_tail]
   rw [← mul_assoc, studentT_tail_normalizing_const hν]
 
 /-- **The cumulative distribution function of a Student t law.** Writing
