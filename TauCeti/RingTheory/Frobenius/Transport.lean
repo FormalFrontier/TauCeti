@@ -28,10 +28,6 @@ These are the generic commutative-algebra forms of the number-field transport fa
 `TauCeti/NumberTheory/NumberField/Frobenius/Transport.lean`, which specialize them along the
 ring-of-integers equivalence `NumberField.RingOfIntegers.mapAlgEquiv`.
 
-## References
-
-* [Chebotarev roadmap, Layer 2](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/Chebotarev/README.md)
-  consumes the number-field specialization of this transport.
 -/
 
 public section

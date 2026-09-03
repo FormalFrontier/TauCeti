@@ -34,10 +34,6 @@ remain conditional at a prime and do not assign a Frobenius to a ramified prime.
 * `NumberField.toAlgHom_autCongr`: conjugation of automorphisms restricts to conjugation of their
   actions on the ring of integers.
 
-## References
-
-* [Chebotarev roadmap, Layer 2](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/Chebotarev/README.md)
-  specifies the extension-isomorphism equivariance supplied here.
 -/
 
 public section

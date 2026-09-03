@@ -22,6 +22,10 @@ its inverse.
   the ambient inverse after coercion to the field.
 * `NumberField.RingOfIntegers.mapAlgEquiv_symm`: the induced equivalence of an inverse is the
   inverse induced equivalence.
+* `NumberField.RingOfIntegers.mapAlgEquiv_refl`: the induced equivalence of the identity is the
+  identity equivalence.
+* `NumberField.RingOfIntegers.mapAlgEquiv_trans`: the induced equivalence of a composite is the
+  composite of the induced equivalences.
 -/
 
 public section
@@ -48,6 +52,26 @@ theorem mapAlgEquiv_symm_apply (e : L ≃ₐ[K] L') (x : 𝓞 L') :
 @[simp]
 theorem mapAlgEquiv_symm (e : L ≃ₐ[K] L') :
     (mapAlgEquiv e).symm = mapAlgEquiv e.symm := by
+  apply AlgEquiv.ext
+  intro x
+  apply RingOfIntegers.ext
+  rfl
+
+/-- The induced ring-of-integers equivalence of the identity is the identity equivalence. -/
+@[simp]
+theorem mapAlgEquiv_refl :
+    mapAlgEquiv (AlgEquiv.refl : L ≃ₐ[K] L) = AlgEquiv.refl := by
+  apply AlgEquiv.ext
+  intro x
+  apply RingOfIntegers.ext
+  rfl
+
+/-- The induced ring-of-integers equivalence of a composite is the composite of the induced
+equivalences. -/
+@[simp]
+theorem mapAlgEquiv_trans {L'' : Type*} [Field L''] [Algebra K L'']
+    (e : L ≃ₐ[K] L') (f : L' ≃ₐ[K] L'') :
+    mapAlgEquiv (e.trans f) = (mapAlgEquiv e).trans (mapAlgEquiv f) := by
   apply AlgEquiv.ext
   intro x
   apply RingOfIntegers.ext
