@@ -255,13 +255,20 @@ theorem pgf_negativeBinomialMeasure {r p : ℝ} (hr : 0 < r) (hp : 0 < p) (hp1 :
   congr with k
   rw [negativeBinomialWeight_toReal hr.le hp.le hp1]
 
-/-- At shape zero, the negative-binomial law is concentrated at zero, so its
-probability-generating function is identically one. -/
+/-- At shape zero, the negative-binomial PGF is one in the valid probability range and zero
+outside it, in accordance with the totalization of `negativeBinomialMeasure`. -/
 @[simp]
-theorem pgf_negativeBinomialMeasure_zero {p : ℝ} (hp : 0 < p) (hp1 : p ≤ 1) (t : ℝ) :
-    pgf id (negativeBinomialMeasure 0 p) t = 1 := by
-  rw [negativeBinomialMeasure_zero hp hp1, pgf_def]
-  simp
+theorem pgf_negativeBinomialMeasure_zero (p t : ℝ) :
+    pgf id (negativeBinomialMeasure 0 p) t = if 0 < p ∧ p ≤ 1 then 1 else 0 := by
+  by_cases h : 0 < p ∧ p ≤ 1
+  · rw [ite_eq_left h, negativeBinomialMeasure_zero h.1 h.2, pgf_def]
+    simp
+  · rw [ite_eq_right h]
+    have hz : negativeBinomialMeasure 0 p = 0 := by
+      apply negativeBinomialMeasure_eq_zero_of_invalid
+      simpa using h
+    rw [hz, pgf_def]
+    simp
 
 end Probability
 
