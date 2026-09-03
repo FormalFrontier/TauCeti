@@ -36,10 +36,6 @@ maximality only among subgroups defined over the ground field is not the Borel c
 
 * J. S. Milne, *Algebraic Groups* (2017), Section 17.a.
 * T. A. Springer, *Linear Algebraic Groups*, Sections 6.2--6.3.
-
-This supplies the Borel-subgroup predicate required by Layer 7, "Borel subgroups, maximal tori,
-and their conjugacy", of the ReductiveGroups roadmap. Existence and conjugacy for general
-reductive groups remain downstream.
 -/
 
 public section

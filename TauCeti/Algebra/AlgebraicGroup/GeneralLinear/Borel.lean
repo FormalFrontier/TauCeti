@@ -9,7 +9,6 @@ public import TauCeti.Algebra.AlgebraicGroup.Borel.Basic
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.UpperTriangular.Basic
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.UpperTriangular.SmoothConnected
 public import TauCeti.Algebra.AlgebraicGroup.Solvable.UpperTriangular
-import Mathlib.GroupTheory.IsPerfect
 import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Coordinate.BaseChange
 import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Points.Separation
 import TauCeti.Algebra.AlgebraicGroup.Smooth.GeometricallyReduced
@@ -199,70 +198,6 @@ section Field
 
 variable {k : Type u} [Field k]
 
-private theorem not_isSolvable_generalLinear_two
-    (F : Type u) [Field F] [Infinite F] :
-    ¬ Group.IsSolvable (GL (Fin 2) F) := by
-  let S : Set F := {0} ∪ {1} ∪ {-1}
-  let U := {x : F // x ∈ Sᶜ}
-  let _ : Infinite U := (Set.toFinite S).infinite_compl.to_subtype
-  obtain ⟨a, _, _⟩ := exists_pair_ne U
-  have ha0 : (a : F) ≠ 0 := by
-    intro h
-    apply a.property
-    simp [S, h]
-  have ha1 : (a : F) ^ 2 ≠ 1 := by
-    rw [sq_ne_one_iff]
-    constructor
-    · intro h
-      apply a.property
-      simp [S, h]
-    · intro h
-      apply a.property
-      simp [S, h]
-  let _ : Group.IsPerfect (Matrix.SpecialLinearGroup (Fin 2) F) :=
-    ⟨Matrix.SL2.commutator_eq_top ha0 ha1⟩
-  have h01 : (0 : Fin 2) ≠ 1 := by decide
-  let t : Matrix.SpecialLinearGroup (Fin 2) F :=
-    Matrix.SpecialLinearGroup.transvection h01 1
-  have ht : t ≠ 1 := by
-    intro ht
-    have hentry := congrArg
-      (fun s : Matrix.SpecialLinearGroup (Fin 2) F ↦ (s : Matrix (Fin 2) (Fin 2) F) 0 1) ht
-    simp [t, Matrix.SpecialLinearGroup.transvection_coe, Matrix.single] at hentry
-  let _ : Nontrivial (Matrix.SpecialLinearGroup (Fin 2) F) := ⟨t, 1, ht⟩
-  intro hGL
-  let _ : Group.IsSolvable (GL (Fin 2) F) := hGL
-  exact Group.IsPerfect.not_isSolvable (Matrix.SpecialLinearGroup (Fin 2) F) <|
-    Group.isSolvable_of_isSolvable_injective
-      (f := Matrix.SpecialLinearGroup.toGL) Matrix.SpecialLinearGroup.toGL_injective
-
-private theorem le_gl2Borel_of_isSolvable
-    {F : Type u} [Field F] [Infinite F]
-    (P : Subgroup (GL (Fin 2) F)) [Group.IsSolvable P]
-    (hBP : GL2Borel F ≤ P) : P ≤ GL2Borel F := by
-  by_contra hPB
-  obtain ⟨g, hgP, hgB⟩ := SetLike.not_le_iff_exists.mp hPB
-  obtain ⟨x, hx, y, hy, hxy⟩ :=
-    DoubleCoset.mem_doubleCoset.mp (GL2Borel.mem_doubleCoset_weyl_of_notMem hgB)
-  have hwP : GL2WeylElement F ∈ P := by
-    have hxP := hBP hx
-    have hyP := hBP hy
-    have hprod : x⁻¹ * g * y⁻¹ ∈ P := mul_mem (mul_mem (inv_mem hxP) hgP) (inv_mem hyP)
-    convert hprod using 1
-    rw [hxy]
-    group
-  have hclosure :
-      Subgroup.closure (insert (GL2WeylElement F) (GL2Borel F : Set (GL (Fin 2) F))) ≤ P :=
-    (Subgroup.closure_le P).mpr (Set.insert_subset_iff.mpr ⟨hwP, hBP⟩)
-  rw [GL2Borel.closure_insert_gl2WeylElement_eq_top] at hclosure
-  have hPtop : P = ⊤ := top_unique hclosure
-  apply not_isSolvable_generalLinear_two F
-  apply Group.isSolvable_of_surjective (f := P.subtype)
-  intro g
-  refine ⟨⟨g, ?_⟩, rfl⟩
-  rw [hPtop]
-  exact Subgroup.mem_top g
-
 /-- The smooth, geometrically connected, geometrically solvable maximality condition over one
 field. This local predicate is used to transport the geometric Borel condition across the
 canonical base-change isomorphism for `GL₂`. -/
@@ -328,7 +263,7 @@ private theorem isBorelOverField_definingHopfIdeal :
         (CommAlgCat.of k K)) := hIsolvable
   let _ : Group.IsSolvable P :=
     Group.isSolvable_of_isSolvable_injective (f := e.symm.toMonoidHom) e.symm.injective
-  have hPB : P ≤ GL2Borel K := le_gl2Borel_of_isSolvable P hBP
+  have hPB : P ≤ GL2Borel K := GL2Borel.le_of_isSolvable P hBP
   let _ : IsReduced (CommHopfAlgCat.quotient H I) :=
     ((smoothCommHopfAlgProperty_iff_geometricallyReduced k
       (CommHopfAlgCat.quotient H I)).mp hIsmooth).isReduced
