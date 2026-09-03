@@ -257,7 +257,7 @@ theorem mk_surjective : Function.Surjective (mk p G) :=
   QuotientGroup.mk'_surjective _
 
 @[simp]
-theorem ker_mk : (mk p G).toMonoidHom.ker = proPKernel p G :=
+theorem ker_mk : MonoidHom.ker (mk p G : G →* maximalProPQuotient p G) = proPKernel p G :=
   QuotientGroup.ker_mk' _
 
 /-- Two continuous homomorphisms out of the maximal pro-`p` quotient that agree on the image of
@@ -334,7 +334,7 @@ namespace maximalProPQuotient
 /-- On a pro-`p` profinite group the projection onto the maximal pro-`p` quotient is
 bijective. -/
 theorem mk_bijective_of_isProP (hG : IsProP p G) : Function.Bijective (mk p G) := by
-  refine ⟨(MonoidHom.ker_eq_bot_iff _).mp ?_, mk_surjective⟩
+  refine ⟨(MonoidHom.ker_eq_bot_iff (mk p G : G →* maximalProPQuotient p G)).mp ?_, mk_surjective⟩
   rw [ker_mk]
   exact proPKernel_eq_bot_iff.mpr hG
 
