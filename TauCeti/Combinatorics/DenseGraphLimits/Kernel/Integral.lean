@@ -7,7 +7,6 @@ module
 
 public import TauCeti.Combinatorics.DenseGraphLimits.Kernel.Basic
 public import Mathlib.MeasureTheory.Integral.Bochner.Set
-import TauCeti.Algebra.Order.Ring.Abs
 import Mathlib.MeasureTheory.Integral.Prod
 
 /-!
@@ -171,6 +170,13 @@ noncomputable def testIntegral (K : SymmKernel Ω μ) (u v : Ω → ℝ) : ℝ :
 theorem testIntegral_def (K : SymmKernel Ω μ) (u v : Ω → ℝ) :
     K.testIntegral μ u v = ∫ p, u p.1 * v p.2 * K p.1 p.2 ∂(μ.prod μ) := (rfl)
 
+/-- The test integrand is dominated by the kernel: `[-1,1]`-valued test values only shrink `|c|`. -/
+private theorem abs_testIntegrand_le {a b : ℝ} (ha : a ∈ Icc (-1 : ℝ) 1) (hb : b ∈ Icc (-1 : ℝ) 1)
+    (c : ℝ) : |a * b * c| ≤ |c| := by
+  rw [abs_mul, abs_mul, mul_assoc]
+  exact (mul_le_of_le_one_left (mul_nonneg (abs_nonneg _) (abs_nonneg _)) (abs_le.2 ha)).trans
+    (mul_le_of_le_one_left (abs_nonneg _) (abs_le.2 hb))
+
 /-- The integrand of a test integral is integrable when the test functions are measurable and
 `[-1,1]`-valued: it is then dominated pointwise by `|K|`, which is integrable. -/
 theorem integrable_testIntegrand [IsFiniteMeasure μ] (K : SymmKernel Ω μ) {u v : Ω → ℝ}
@@ -181,8 +187,7 @@ theorem integrable_testIntegrand [IsFiniteMeasure μ] (K : SymmKernel Ω μ) {u 
     (((hu.comp measurable_fst).mul (hv.comp measurable_snd)).mul
       K.measurable).aestronglyMeasurable (ae_of_all _ fun p => ?_)
   rw [Real.norm_eq_abs]
-  exact TauCeti.abs_mul_mul_le_abs_of_abs_le_one_of_abs_le_one (abs_le.2 (hu1 p.1))
-    (abs_le.2 (hv1 p.2)) _
+  exact abs_testIntegrand_le (hu1 p.1) (hv1 p.2) _
 
 /-- Every `[-1,1]`-test integral is bounded by the `L¹` norm of the kernel.  This is the bound that
 makes the signed cut norm's supremum a supremum of a bounded set. -/
@@ -194,8 +199,7 @@ theorem abs_testIntegral_le_integral_abs [IsFiniteMeasure μ] (K : SymmKernel Ω
   refine abs_integral_le_integral_abs.trans ?_
   refine integral_mono (K.integrable_testIntegrand μ hu hv hu1 hv1).abs
     K.integrable_uncurry.abs fun p =>
-      TauCeti.abs_mul_mul_le_abs_of_abs_le_one_of_abs_le_one (abs_le.2 (hu1 p.1))
-        (abs_le.2 (hv1 p.2)) _
+      abs_testIntegrand_le (hu1 p.1) (hv1 p.2) _
 
 /-- Testing against two indicator functions recovers the rectangle integral.  This is what makes
 the set form of the cut norm a special case of the signed form. -/
