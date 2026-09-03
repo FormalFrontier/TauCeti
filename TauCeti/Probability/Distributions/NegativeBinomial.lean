@@ -93,6 +93,13 @@ theorem negativeBinomialMeasure_zero {p : ℝ} (hp : 0 < p) (hp1 : p ≤ 1) :
     negativeBinomialMeasure 0 p = Measure.dirac 0 := by
   simp [negativeBinomialMeasure, hp, hp1]
 
+/-- At nonzero shape, the real negative-binomial weight has its defining Gamma-quotient form. -/
+@[simp]
+theorem negativeBinomialWeightReal_eq_gamma (hr : r ≠ 0) (k : ℕ) :
+    negativeBinomialWeightReal r p k =
+      Real.Gamma (k + r) / (k.factorial * Real.Gamma r) * Real.rpow p r * (1 - p) ^ k := by
+  rw [negativeBinomialWeightReal, ite_eq_right hr]
+
 private theorem gamma_ratio_eq_multichoose (hr : 0 < r) (k : ℕ) :
     Real.Gamma (k + r) / (k.factorial * Real.Gamma r) = Ring.multichoose r k := by
   have hpoch : ∀ n : ℕ,
@@ -128,7 +135,7 @@ private theorem gamma_ratio_eq_multichoose (hr : 0 < r) (k : ℕ) :
 theorem negativeBinomialWeightReal_eq_coeff (hr : 0 < r) (k : ℕ) :
     negativeBinomialWeightReal r p k =
       (Ring.multichoose r k : ℝ) * Real.rpow p r * (1 - p) ^ k := by
-  rw [negativeBinomialWeightReal, ite_eq_right hr.ne', gamma_ratio_eq_multichoose hr k]
+  rw [negativeBinomialWeightReal_eq_gamma hr.ne' k, gamma_ratio_eq_multichoose hr k]
 
 private theorem negativeBinomialWeightReal_nonneg (hr : 0 ≤ r) (hp : 0 ≤ p) (hp1 : p ≤ 1)
     (k : ℕ) : 0 ≤ negativeBinomialWeightReal r p k := by

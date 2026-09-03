@@ -87,7 +87,7 @@ private lemma gammaPDFReal_of_pos {x : ℝ} (hx : 0 < x) :
 
 /-- An integral against the gamma law is the set integral of the weighted integrand over
 `(0, ∞)`. -/
-private lemma integral_gammaMeasure_eq (ha : 0 < a) (hr : 0 < r) (f : ℝ → ℝ) :
+theorem integral_gammaMeasure_eq (ha : 0 < a) (hr : 0 < r) (f : ℝ → ℝ) :
     ∫ x, f x ∂gammaMeasure a r =
       ∫ x in Ioi 0, r ^ a / Real.Gamma a * x ^ (a - 1) * exp (-(r * x)) * f x := by
   have hcompl : ∀ x ∉ Ici (0 : ℝ), gammaPDFReal a r x * f x = 0 := by
