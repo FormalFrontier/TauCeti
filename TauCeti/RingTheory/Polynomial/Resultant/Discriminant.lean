@@ -12,6 +12,8 @@ public import Mathlib.FieldTheory.Separable
 public import Mathlib.RingTheory.Discriminant
 public import Mathlib.RingTheory.Localization.FractionRing
 public import Mathlib.RingTheory.Polynomial.Resultant.Basic
+import TauCeti.Data.Nat.Triangle
+import TauCeti.RingTheory.Polynomial.Resultant.Basic
 
 /-!
 # The discriminant of a polynomial as a product over pairs of roots
@@ -103,15 +105,6 @@ theorem _root_.Polynomial.Monic.resultant_deriv {f : R[X]} (hf : f.Monic) :
   · rw [_root_.Polynomial.resultant_deriv (natDegree_pos_iff_degree_pos.mp h), hf.leadingCoeff,
       mul_one]
 
-/-- For monic `f`, `f.resultant g` does not depend on which valid upper bound is supplied for the
-degree of `g`. -/
-private theorem _root_.Polynomial.Monic.resultant_of_le {f g : R[X]} (hf : f.Monic) {n : ℕ}
-    (hn : g.natDegree ≤ n) : f.resultant g f.natDegree n = f.resultant g := by
-  have hn' : n = g.natDegree + (n - g.natDegree) :=
-    (Nat.add_sub_cancel' hn).symm
-  conv_lhs => rw [hn']
-  rw [resultant_add_right_deg _ _ _ _ _ le_rfl, coeff_natDegree, hf.leadingCoeff, one_pow, one_mul]
-
 private noncomputable def Polynomial.sylvesterDerivIndexEquiv {f : R[X]} (φ : R →+* S)
     (hdeg : (f.map φ).natDegree = f.natDegree) :
     Fin ((f.map φ).natDegree - 1 + (f.map φ).natDegree) ≃
@@ -191,15 +184,6 @@ theorem _root_.Polynomial.Monic.discr_map {f : R[X]} (hf : f.Monic) (φ : R →+
   nontriviality S
   exact Polynomial.discr_map_of_natDegree_eq φ (hf.natDegree_map φ)
 
-private theorem triangle_add (m n : ℕ) :
-    (m + n) * (m + n - 1) / 2 =
-      m * (m - 1) / 2 + n * (n - 1) / 2 + m * n := by
-  induction n with
-  | zero => simp
-  | succ n ih =>
-      rw [Nat.add_succ, Nat.triangle_succ, Nat.triangle_succ, ih]
-      simp [Nat.mul_succ, Nat.add_assoc, Nat.add_left_comm, Nat.add_comm]
-
 /-- The discriminant of a product of monic polynomials is the product of their discriminants and
 the square of their resultant. -/
 theorem _root_.Polynomial.Monic.discr_mul {f g : R[X]} (hf : f.Monic) (hg : g.Monic) :
@@ -267,13 +251,14 @@ theorem _root_.Polynomial.Monic.discr_mul {f g : R[X]} (hf : f.Monic) (hg : g.Mo
   have hcomm : g.resultant f = (-1) ^ (g.natDegree * f.natDegree) * f.resultant g :=
     resultant_comm g f g.natDegree f.natDegree
   -- Step 4: the same reading on the left-hand side produces the sign
-  -- `(-1) ^ ((m + n) * (m + n - 1) / 2)`, which `triangle_add` splits as the two signs collected
-  -- in Step 3 together with `(-1) ^ (m * n)` from `hcomm`. All of them cancel, being units.
+  -- `(-1) ^ ((m + n) * (m + n - 1) / 2)`, which `Nat.triangle_add` splits as the two signs
+  -- collected in Step 3 together with `(-1) ^ (m * n)` from `hcomm`. All of them cancel, being
+  -- units.
   have hdisc := (hf.mul hg).resultant_deriv
   rw [hdeg] at hdisc
   dsimp only [d] at hmul
   rw [hmul, hfd, hgd, hcomm,
-    triangle_add, pow_add, pow_add] at hdisc
+    Nat.triangle_add, pow_add, pow_add] at hdisc
   ring_nf at hdisc
   have hu : IsUnit (((-1 : R) ^ (f.natDegree * g.natDegree)) *
       (-1) ^ (f.natDegree * (f.natDegree - 1) / 2) *
