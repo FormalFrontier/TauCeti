@@ -14,10 +14,15 @@ The unblocked grid complex `GC⁻` has one polynomial variable `V_c` for each `O
 the `O`-marking in a chosen column `i` means setting `V_i = 0`.  The resulting simply blocked
 theory keeps the variables indexed by the other columns and counts exactly the empty rectangles
 which cover neither an `X`-marking nor the blocked `O`-marking.  This specialization is defined
-for every grid diagram; for a knot grid it is the differential underlying the future simply
-blocked chain complex `GĈ`.  Its square-zero theorem, chain-complex packaging, and homology `GĤ`
-are supplied later.  For a multi-component link, the corresponding theory instead requires
-blocking one `O`-marking on each component; that construction is not supplied here.
+for every grid diagram and every commutative coefficient semiring; for a knot grid over a
+coefficient semiring of characteristic two it is the differential underlying the future simply
+blocked chain complex `GĈ`.  Over a general coefficient semiring it is only the unsigned
+candidate linear map: exactly as for the unblocked differential it specializes, the unsigned
+rectangle count squares to zero only in characteristic two, a general coefficient semiring
+needing the sign assignment supplied at a later stage of the roadmap.  The square-zero theorem,
+chain-complex packaging, and homology `GĤ` are supplied later.  For a multi-component link, the
+corresponding theory instead requires blocking one `O`-marking on each component; that
+construction is not supplied here.
 
 This file constructs the coefficient specialization and its linear map before the square-zero
 theorem.  The coefficient ring is `R[V_c | c ≠ i]`, not a polynomial ring with a redundant
@@ -229,10 +234,12 @@ theorem simplyBlockedSpecialization_unblockedDifferentialOnGenerator (i : Fin n)
     G.unblockedDifferentialOnGenerator_apply R x y]
   rw [simplyBlockedCoefficient]
 
-/-- The linear map obtained from the `GC⁻` differential by setting `V_i = 0`.  For a knot grid it
-is the differential underlying the future simply blocked chain complex `GĈ`; square-zero,
-chain-complex packaging, and its homology `GĤ` are supplied later.  A link with multiple
-components requires one blocked marking on each component instead. -/
+/-- The linear map obtained from the `GC⁻` differential by setting `V_i = 0`.  For a knot grid
+over a coefficient semiring of characteristic two it is the differential underlying the future
+simply blocked chain complex `GĈ`; over a general coefficient semiring it is only the unsigned
+candidate map, the sign assignment correcting the rectangle counts being a later stage of the
+roadmap.  Square-zero, chain-complex packaging, and its homology `GĤ` are supplied later.  A link
+with multiple components requires one blocked marking on each component instead. -/
 noncomputable def simplyBlockedDifferential (i : Fin n) :
     SimplyBlockedGridChain R n i →ₗ[MvPolynomial (SimplyBlockedVariable i) R]
       SimplyBlockedGridChain R n i :=
@@ -281,13 +288,19 @@ theorem simplyBlockedSpecialization_unblockedDifferential (i : Fin n)
         (simplyBlockedSpecialization R i).map_add,
         (G.simplyBlockedDifferential R i).map_add, ih]
       congr 1
-      apply Finsupp.ext
-      intro y
-      rw [simplyBlockedSpecialization_apply, G.unblockedDifferential_apply_apply,
-        G.simplyBlockedDifferential_apply_apply, simplyBlockedSpecialization,
-        Finsupp.mapRange.linearMap_apply, Finsupp.mapRange_single]
-      simp only [Finsupp.sum_single_index, zero_mul, map_mul, simplyBlockedCoefficient]
-      rfl
+      have hone : simplyBlockedSpecialization R i
+          (Finsupp.single x (1 : MvPolynomial (Fin n) R)) =
+            Finsupp.single x (1 : MvPolynomial (SimplyBlockedVariable i) R) := by
+        apply Finsupp.ext
+        intro y
+        rw [simplyBlockedSpecialization_apply, Finsupp.single_apply, Finsupp.single_apply]
+        split
+        · exact map_one _
+        · exact map_zero _
+      rw [← Finsupp.smul_single_one x a, map_smul, map_smulₛₗ,
+        G.unblockedDifferential_single R x,
+        G.simplyBlockedSpecialization_unblockedDifferentialOnGenerator R i x, map_smulₛₗ, hone,
+        map_smul, G.simplyBlockedDifferential_single R i x]
 
 end GridDiagram
 
