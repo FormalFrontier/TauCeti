@@ -5,7 +5,6 @@ Authors: Codex
 -/
 module
 
-import Mathlib.Probability.Independence.CharacteristicFunction
 public import TauCeti.Probability.Distributions.ChiSquared
 public import TauCeti.Probability.Distributions.Gaussian.Cdf
 
@@ -18,12 +17,9 @@ the sum of the squares of a finite independent standard Gaussian family has the 
 whose degrees of freedom are the cardinality of the family. The empty family is included: both
 the empty sum and `chiSquaredMeasure 0` are the point mass at zero.
 
-The one-variable result is proved by comparing cumulative distribution functions. For `x ≥ 0`,
-the preimage of `(-∞, x]` under squaring is `[-√x, √x]`; symmetry of the standard Gaussian
-cdf reduces its mass to `Real.erf (√x / √2)`, which is
-`regularizedGamma (1 / 2) (x / 2)`. The finite-family result uses the product formula for the
-characteristic function of an independent sum and the existing characteristic function of the
-chi-squared law.
+These laws identify Gaussian quadratic statistics with chi-squared distributions. In particular,
+they provide the scalar foundation for distributional results about Gaussian norms and Gaussian
+Gram matrices.
 
 ## Main results
 
@@ -34,8 +30,6 @@ chi-squared law.
 
 ## References
 
-* Roadmap: `TauCetiRoadmap/StandardDistributions/README.md`, Layer 4, item 1,
-  **Squares of Gaussian variables**.
 * N. L. Johnson, S. Kotz, N. Balakrishnan, *Continuous Univariate Distributions*, vol. 1,
   2nd ed., Wiley (1994), ch. 18.
 -/
@@ -118,27 +112,7 @@ theorem iIndepFun.hasLaw_sum_sq_gaussian (hindep : iIndepFun X P)
   have hindepSq : iIndepFun (fun i omega ↦ X i omega ^ 2) P := by
     simpa [Function.comp_def] using
       hindep.comp (fun (_ : iota) (x : ℝ) ↦ x ^ 2) (fun _ ↦ by fun_prop)
-  let _ : IsProbabilityMeasure P := hindep.isProbabilityMeasure
-  let _ : IsProbabilityMeasure (chiSquaredMeasure (Fintype.card iota)) :=
-    isProbabilityMeasure_chiSquaredMeasure (by positivity)
-  refine ⟨Finset.aemeasurable_fun_sum Finset.univ fun i _ ↦ (hlawSq i).aemeasurable, ?_⟩
-  apply Measure.ext_of_charFun
-  funext t
-  rw [hindepSq.charFun_map_fun_sum_eq_prod fun i ↦ (hlawSq i).aemeasurable,
-    Finset.prod_apply]
-  rw [Finset.prod_congr rfl fun i _ ↦ by
-      rw [(hlawSq i).map_eq, charFun_chiSquaredMeasure zero_le_one],
-    Finset.prod_const, Finset.card_univ,
-    charFun_chiSquaredMeasure (by positivity : (0 : ℝ) ≤ Fintype.card iota)]
-  calc
-    ((1 - 2 * Complex.I * t) ^ (-(1 : ℂ) / 2)) ^ Fintype.card iota =
-        (1 - 2 * Complex.I * t) ^
-          ((Fintype.card iota : ℂ) * (-(1 : ℂ) / 2)) :=
-      (Complex.cpow_nat_mul (1 - 2 * Complex.I * t) (Fintype.card iota)
-        (-(1 : ℂ) / 2)).symm
-    _ = (1 - 2 * Complex.I * t) ^ (-(Fintype.card iota : ℂ) / 2) := by
-      congr 1
-      ring
+  simpa using iIndepFun.hasLaw_sum_chiSquared hindepSq (fun _ ↦ zero_le_one) hlawSq
 
 end Probability
 
