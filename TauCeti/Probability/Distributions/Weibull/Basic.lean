@@ -461,22 +461,30 @@ private lemma cdf_weibullMeasure_one_eq_cdf_expMeasure_of_pos (hlam : 0 < lam) (
     congr 3
     field_simp
 
+/-- The exponential measure is Lebesgue measure weighted by its exponential density. This names
+the definitional bridge through the shape-one Gamma law so the proof below does not depend on
+silent unfolding between the two density presentations. -/
+private lemma expMeasure_eq_withDensity_exponentialPDF (r : ℝ) :
+    expMeasure r = volume.withDensity (exponentialPDF r) := by
+  rw [expMeasure, gammaMeasure]
+  congr 1
+
 /-- **A shape-one Weibull law is exponential.** Its scale `lam` is the reciprocal of the
 exponential rate. No positivity is needed: at a nonpositive scale both sides are the zero
 measure, since the exponential density too is built from `ENNReal.ofReal` of a nonpositive
 quantity. -/
+@[simp]
 theorem weibullMeasure_one_eq_expMeasure (lam : ℝ) :
     weibullMeasure 1 lam = expMeasure lam⁻¹ := by
   rcases le_or_gt lam 0 with hlam | hlam
-  · have hpdf : gammaPDF 1 lam⁻¹ = 0 := by
+  · have hpdf : exponentialPDF lam⁻¹ = 0 := by
       funext y
-      have hy : gammaPDF 1 lam⁻¹ y = exponentialPDF lam⁻¹ y := rfl
-      rw [hy, exponentialPDF_eq, Pi.zero_apply, ENNReal.ofReal_eq_zero]
+      rw [exponentialPDF_eq, Pi.zero_apply, ENNReal.ofReal_eq_zero]
       split_ifs
       · exact mul_nonpos_of_nonpos_of_nonneg (inv_nonpos.mpr hlam) (Real.exp_pos _).le
       · exact le_rfl
     have hexp : expMeasure lam⁻¹ = 0 := by
-      simp only [expMeasure, gammaMeasure]
+      rw [expMeasure_eq_withDensity_exponentialPDF]
       rw [hpdf, withDensity_zero]
     rw [weibullMeasure_of_not_pos fun h ↦ absurd h.2 (not_lt.mpr hlam), hexp]
   · let _ : IsProbabilityMeasure (weibullMeasure 1 lam) :=
