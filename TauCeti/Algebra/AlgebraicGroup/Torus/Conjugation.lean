@@ -43,13 +43,18 @@ theorem conjugate (hI : IsMaximalTorus k H.obj I)
     IsMaximalTorus k H.obj (I.conjugate g) := by
   let e := ObjectProperty.isoMk (finiteTypeCommHopfAlgProperty k)
     (CommHopfAlgCat.innerConjugationIso H.obj g)
+  have e_hom : e.hom.hom = (CommHopfAlgCat.innerConjugationIso H.obj g).hom := by
+    simp only [e, ObjectProperty.isoMk_hom, ObjectProperty.homMk_hom]
+  have e_bialgHom : FiniteTypeCommHopfAlgCat.toBialgHom e.hom =
+      (CommHopfAlgCat.innerConjugationIso H.obj g).hom.hom := by
+    exact congrArg (fun f ↦ f.hom) e_hom
   have heq : I.conjugate g =
       I.comapOfSurjective (FiniteTypeCommHopfAlgCat.toBialgHom e.hom)
         (ConcreteCategory.bijective_of_isIso e.hom).2 := by
     apply HopfIdeal.ext
     intro x
     rw [HopfIdeal.mem_conjugate_iff, HopfIdeal.mem_comapOfSurjective]
-    rfl
+    rw [e_bialgHom]
   rw [heq]
   exact hI.comapOfIso e
 

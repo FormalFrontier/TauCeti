@@ -69,6 +69,7 @@ belongs to the conjugate closed subgroup.
 
 Thus conjugation gives a bijection from the original subgroup's `A`-points to the conjugate
 subgroup's `A`-points, uniformly in the commutative value algebra `A`. -/
+@[simp]
 theorem mem_quotientPointsSubgroup_conjugate_iff (I : HopfIdeal R H)
     (g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R))
     (A : CommAlgCat.{v} R) (x : HopfAlgebra.points (R := R) (H := H) A) :

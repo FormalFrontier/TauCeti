@@ -95,25 +95,12 @@ theorem mapValue_extendPoint {A : CommAlgCat.{v} R} {B : CommAlgCat.{w} R}
 
 /-- The categorical point map sends an extended rational point to its extension in the target
 value algebra. -/
+@[simp]
 theorem mapPoints_extendPoint {A B : CommAlgCat.{v} R} (f : A ⟶ B)
     (g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R)) :
     HopfAlgebra.mapPoints (H := H) f (extendPoint H A g) = extendPoint H B g := by
   rw [HopfAlgebra.mapPoints_apply]
-  apply WithConv.ofConv_injective
-  ext x
-  simp only [extendPoint, AlgHom.mapValue_apply, WithConv.ofConv_toConv, AlgHom.comp_apply]
-  exact f.hom.commutes (g.ofConv x)
-
-/-- Mapping a conjugate by an extended rational point commutes with extension to the target value
-algebra. This isolates the group-homomorphism normalization used in the naturality proof below. -/
-private theorem mapPoints_conjugate_extendPoint {A B : CommAlgCat.{v} R} (f : A ⟶ B)
-    (g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R))
-    (x : HopfAlgebra.points (R := R) (H := H) A) :
-    HopfAlgebra.mapPoints (H := H) f
-        (extendPoint H A g * x * (extendPoint H A g)⁻¹) =
-      extendPoint H B g * HopfAlgebra.mapPoints (H := H) f x * (extendPoint H B g)⁻¹ := by
-  rw [HopfAlgebra.mapPoints_mul, HopfAlgebra.mapPoints_mul, HopfAlgebra.mapPoints_inv]
-  rw [mapPoints_extendPoint]
+  exact mapValue_extendPoint H f.hom g
 
 /-- Conjugation by the extension of a rational point, as an automorphism of `A`-valued points. -/
 noncomputable def innerConjugationPointIso
@@ -156,7 +143,8 @@ noncomputable def innerConjugationPointsIso
     change (innerConjugationPointIso H g B).hom (HopfAlgebra.mapPoints (H := H) f x') =
       HopfAlgebra.mapPoints (H := H) f ((innerConjugationPointIso H g A).hom x')
     rw [innerConjugationPointIso_hom_apply, innerConjugationPointIso_hom_apply]
-    exact (mapPoints_conjugate_extendPoint H f g x').symm
+    rw [HopfAlgebra.mapPoints_mul, HopfAlgebra.mapPoints_mul, HopfAlgebra.mapPoints_inv,
+      mapPoints_extendPoint]
 
 /-- The hom component of natural inner conjugation acts by conjugation by the extended point. -/
 @[simp]
