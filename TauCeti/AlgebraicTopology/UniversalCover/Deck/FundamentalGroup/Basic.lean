@@ -129,7 +129,7 @@ lemma IsRegular.fundamentalGroupEquiv_eq_one_iff [SimplyConnectedSpace E]
 **commutative**, the fundamental group of the base is the deck group itself: the opposite in
 `IsRegular.fundamentalGroupEquiv` disappears because multiplication in the deck group
 commutes. This is the form in which the comparison computes fundamental groups from deck
-groups, e.g. `π₁(S¹) ≅ ℤ` (`TauCeti.AddCircle.fundamentalGroupMulEquiv`) and
+groups, e.g. `π₁(S¹) ≅ ℤ` (`AddCircle.fundamentalGroupMulEquiv`) and
 `π₁(RPⁿ) ≅ ℤˣ` (`TauCeti.RealProjectiveSpace.fundamentalGroupMulEquiv`). -/
 noncomputable def IsRegular.fundamentalGroupDeckEquiv [SimplyConnectedSpace E]
     (hreg : IsRegular p) (hp : IsCoveringMap p) (e : p ⁻¹' {x})
