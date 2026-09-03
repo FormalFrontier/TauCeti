@@ -362,7 +362,7 @@ theorem _root_.Polynomial.discr_prod_X_sub_C_eq_sq {n : ℕ} (r : Fin n → R) :
   exact Finset.prod_congr rfl fun i _ ↦ Finset.prod_pow _ 2 _
 
 /-- The root-product formula for a monic polynomial that splits after base change, written against
-a numbering `r : Fin n → L` of the root multiset by an arbitrary index type. The complete
+a numbering `r : Fin n → L` of the root multiset with arbitrary cardinality `n`. The complete
 numbering, by `Fin f.natDegree`, is `Polynomial.Monic.discr_eq_prod_roots_sub_sq`. -/
 private theorem _root_.Polynomial.Monic.discr_eq_prod_roots_sub_sq_of_splits {L : Type*}
     [CommRing L] [IsDomain L] [Algebra R L] {f : R[X]} (hf : f.Monic)
