@@ -134,6 +134,15 @@ theorem radical_orthogonalQuotient (H : AddSubgroup A) :
   unfold orthogonalQuotient orthogonalQuotientMk
   rw [radical_quotientOfLeRadical, A.radical_restrict_orthogonalComplement]
 
+/-- **The kernel of the quotient map** onto the orthogonal quotient is the part of `H` that lies
+in `H⊥`. -/
+@[simp]
+theorem orthogonalQuotientMk_ker (H : AddSubgroup A) :
+    (A.orthogonalQuotientMk H).ker = H.addSubgroupOf (A.orthogonalComplement H) :=
+  quotientOfLeRadicalMk_ker (A.restrict (A.orthogonalComplement H))
+    (H.addSubgroupOf (A.orthogonalComplement H))
+    (A.addSubgroupOf_orthogonalComplement_le_radical_restrict H)
+
 /-- An element of `H⊥` has zero class in the orthogonal quotient exactly when it lies in `H`. -/
 @[simp]
 theorem orthogonalQuotientMk_eq_zero_iff (H : AddSubgroup A) (x : A.orthogonalComplement H) :
