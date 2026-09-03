@@ -5,8 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-import Mathlib.Algebra.Lie.CartanCriterion
-import Mathlib.LinearAlgebra.RootSystem.GeckConstruction.Semisimple
 public import TauCeti.Algebra.Lie.Killing.BaseChange
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.LieAlgebra.BaseChange
 
