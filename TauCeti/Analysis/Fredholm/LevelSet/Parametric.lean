@@ -240,7 +240,10 @@ from a sufficiently small neighbourhood of the chart origin form a closed nowher
 
 The neighbourhood is contained in the target of the level-set chart, on which the local parameter
 map really is the parameter projection of the universal level set rather than the irrelevant total
-extension of `TauCeti.levelSetParameterMap`.
+extension of `TauCeti.levelSetParameterMap`. It can also be confined to any prescribed
+neighbourhood `U` of the chart origin, as
+`TauCeti.exists_mem_nhds_isClosed_isNowhereDense_image_criticalPoints` allows; take `U = univ` for
+the plain statement.
 
 Here criticality is defined intrinsically for the local parameter map. Its equivalence with
 failure of surjectivity of the fixed-parameter linearization has only been established at the
@@ -251,15 +254,16 @@ The differentiability threshold is the one currently supplied by
 `TauCeti.exists_mem_nhds_isClosed_isNowhereDense_image_criticalPoints`, rewritten using the fact
 that the kernel of `parameterProj D₁ D₂` has the same dimension as `ker D₁`. -/
 theorem exists_mem_nhds_isClosed_isNowhereDense_image_criticalPoints_levelSetParameterMap
-    {n : ℕ∞ω}
+    {n : ℕ∞ω} {U : Set (D₁.coprod D₂).ker}
     (hf : HasStrictFDerivAt f (D₁.coprod D₂) (x, l))
     (hcont : ContDiffAt ℝ n f (x, l))
     (hD₁ : ContinuousLinearMap.IsFredholm D₁)
     (hD : Surjective (D₁.coprod D₂))
     (hxl : f (x, l) = c)
-    (hn : ((finrank ℝ D₁.ker * finrank ℝ D₁.ker + 1 : ℕ) : ℕ∞ω) ≤ n) :
+    (hn : ((finrank ℝ D₁.ker * finrank ℝ D₁.ker + 1 : ℕ) : ℕ∞ω) ≤ n)
+    (hU : U ∈ 𝓝 (0 : (D₁.coprod D₂).ker)) :
     ∃ N ∈ 𝓝 (0 : (D₁.coprod D₂).ker),
-      N ⊆ (levelSetChart hf (LinearMap.range_eq_top.mpr hD)
+      N ⊆ U ∩ (levelSetChart hf (LinearMap.range_eq_top.mpr hD)
         (hD₁.closedComplemented_ker_coprod hD) hxl).target ∧
       IsClosed (levelSetParameterMap hf hD (hD₁.closedComplemented_ker_coprod hD) hxl ''
         (N ∩ {k | ¬ Surjective (fderiv ℝ
@@ -285,7 +289,8 @@ theorem exists_mem_nhds_isClosed_isNowhereDense_image_criticalPoints_levelSetPar
     (hD₁.closedComplemented_ker_coprod hD) hxl).open_target.mem_nhds
       (mem_levelSetChart_target hf (LinearMap.range_eq_top.mpr hD)
         (hD₁.closedComplemented_ker_coprod hD) hxl)
-  exact exists_mem_nhds_isClosed_isNowhereDense_image_criticalPoints hg hFred hn'' htarget
+  exact exists_mem_nhds_isClosed_isNowhereDense_image_criticalPoints hg hFred hn''
+    (Filter.inter_mem hU htarget)
 
 end Real
 
