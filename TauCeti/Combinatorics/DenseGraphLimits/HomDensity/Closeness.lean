@@ -9,13 +9,12 @@ public import TauCeti.Combinatorics.DenseGraphLimits.HomDensity.Finite
 import Mathlib.Data.Fintype.CardEmbedding
 import Mathlib.Data.Nat.Choose.Basic
 import Mathlib.Data.Nat.Factorial.BigOperators
-import Mathlib.SetTheory.Cardinal.Finite
 import Mathlib.Tactic.Linarith
 
 /-!
 # Closeness of the two finite homomorphism densities
 
-For a pattern graph `F` on `k` vertices and a host graph `G` on `n > 0` vertices, the
+For a pattern graph `F` on `k` vertices and a host graph `G` on `n` vertices, the
 all-homomorphism density `t(F, G)` and the injective density `t₀(F, G)` satisfy
 
 `|homDensityFin F G - injHomDensity F G| ≤ (k.choose 2 : ℝ) / n`.
@@ -31,12 +30,14 @@ homomorphism density under random sampling.
 
 ## Main results
 
-* `homDensityFin_sub_injHomDensity_le` — the closeness bound above, for an arbitrary finite
-  host graph (the roadmap states it for a `Fin m` host; the proof never uses the shape of the
-  host, only its cardinality).
+* `abs_homDensityFin_sub_injHomDensity_le` — the closeness bound above, for an arbitrary
+  finite host graph; the bound depends only on the cardinality of the host.
 
 ## References
 
+* Roadmap: `TauCetiRoadmap/DenseGraphLimits/Suggested.lean`, Layer 9a — the finite
+  hom-versus-injective closeness bound. The statement here is adapted from that declaration,
+  generalized from a `SimpleGraph (Fin m)` host to an arbitrary finite host.
 * L. Lovász, *Large Networks and Graph Limits*, §5.2.
 -/
 
@@ -50,34 +51,27 @@ variable {V W : Type*} [Fintype V] [Fintype W]
 
 /-! ### The falling-factorial shortfall -/
 
-/-- The falling product never exceeds the power: each factor is at most `n`. -/
+/-- The falling product never exceeds the power: this is `Nat.descFactorial_le_pow` cast to
+`ℝ`. -/
 private theorem falling_prod_le_pow (n k : ℕ) :
     ∏ i ∈ Finset.range k, ((n : ℝ) - (i : ℝ)) ≤ (n : ℝ) ^ k := by
-  induction k with
-  | zero => simp
-  | succ k ih =>
-    by_cases hk : k < n
-    · rw [Finset.prod_range_succ]
-      have hkn : (k : ℝ) ≤ (n : ℝ) := by exact_mod_cast le_of_lt hk
-      calc (∏ i ∈ Finset.range k, ((n : ℝ) - (i : ℝ))) * ((n : ℝ) - (k : ℝ))
-          ≤ (n : ℝ) ^ k * ((n : ℝ) - (k : ℝ)) :=
-            mul_le_mul_of_nonneg_right ih (by linarith)
-        _ ≤ (n : ℝ) ^ k * (n : ℝ) :=
-            mul_le_mul_of_nonneg_left (by linarith) (pow_nonneg (Nat.cast_nonneg _) k)
-        _ = (n : ℝ) ^ (k + 1) := by rw [pow_succ]
-    · push Not at hk
-      have hmem : n ∈ Finset.range (k + 1) :=
-        Finset.mem_range.mpr (lt_of_le_of_lt hk (Nat.lt_succ_self k))
-      have hzero : ∏ i ∈ Finset.range (k + 1), ((n : ℝ) - (i : ℝ)) = 0 :=
-        Finset.prod_eq_zero hmem (sub_self _)
-      rw [hzero]
-      positivity
-
-/-- The two-term recurrence for `choose`: `C(k+1,2) = C(k,2) + k`. -/
-private theorem choose_succ_two_eq (k : ℕ) : (k + 1).choose 2 = k.choose 2 + k := by
-  have h := Nat.choose_succ_succ' k 1
-  rw [Nat.choose_one_right] at h
-  exact h.trans (add_comm _ _)
+  by_cases hk : k ≤ n
+  · have hprod : (n.descFactorial k : ℝ)
+        = ∏ i ∈ Finset.range k, ((n : ℝ) - (i : ℝ)) := by
+      rw [Nat.descFactorial_eq_prod_range, Nat.cast_prod]
+      apply Finset.prod_congr rfl
+      intro i hi
+      have hin : i ≤ n :=
+        le_trans (le_of_lt (Finset.mem_range.mp hi)) hk
+      exact Nat.cast_sub hin
+    rw [← hprod]
+    exact_mod_cast Nat.descFactorial_le_pow n k
+  · push Not at hk
+    have hmem : n ∈ Finset.range k := Finset.mem_range.mpr hk
+    have hzero : ∏ i ∈ Finset.range k, ((n : ℝ) - (i : ℝ)) = 0 :=
+      Finset.prod_eq_zero hmem (sub_self _)
+    rw [hzero]
+    positivity
 
 /-- The shortfall of the falling product against the power is at most `C(k,2) * n ^ (k-1)`:
 peeling off the last factor contributes `k * P_k`, and the induction hypothesis handles the
@@ -93,7 +87,10 @@ private theorem pow_sub_falling_prod_le (n k : ℕ) :
     have hP := falling_prod_le_pow n k
     have hchooseR : (((k + 1).choose 2 : ℕ) : ℝ)
         = ((k.choose 2 : ℕ) : ℝ) + (k : ℝ) := by
-      rw [choose_succ_two_eq]
+      have h := Nat.choose_succ_succ' k 1
+      rw [Nat.choose_one_right] at h
+      have h2 : (k + 1).choose 2 = k.choose 2 + k := h.trans (add_comm _ _)
+      rw [h2]
       push_cast
       ring
     rw [Finset.prod_range_succ]
@@ -273,84 +270,129 @@ private theorem abs_div_sub_div_le (a b N M : ℝ) (hN : 0 < N)
 /-- The homomorphism density and the injective homomorphism density differ by at most
 `C(k,2) / n`, where `k` is the number of vertices of the pattern and `n` the number of
 vertices of the host. -/
-theorem homDensityFin_sub_injHomDensity_le (F : SimpleGraph V) (G : SimpleGraph W)
-    (hn : 0 < Fintype.card W) :
+theorem abs_homDensityFin_sub_injHomDensity_le (F : SimpleGraph V) (G : SimpleGraph W) :
     |homDensityFin F G - injHomDensity F G|
       ≤ ((Fintype.card V).choose 2 : ℝ) / (Fintype.card W : ℝ) := by
   classical
-  rw [homDensityFin_def, injHomDensity_def]
-  set k := Fintype.card V with hk
-  set n := Fintype.card W with hn'
-  have hnR : (0 : ℝ) < (n : ℝ) := by exact_mod_cast hn
-  have hN : (0 : ℝ) < (n : ℝ) ^ k := pow_pos hnR k
-  have hmaps : Nat.card (V → W) = n ^ k := by
-    rw [Nat.card_fun, Nat.card_eq_fintype_card, Nat.card_eq_fintype_card]
-  have hemb : Nat.card (V ↪ W) = n.descFactorial k := by
-    rw [Nat.card_eq_fintype_card, Fintype.card_embedding_eq]
-  have haN : (Nat.card (F →g G) : ℝ) ≤ (n : ℝ) ^ k := by
-    have h : Nat.card (F →g G) ≤ Nat.card (V → W) :=
-      Nat.card_le_card_of_injective (fun φ : F →g G => (φ : V → W))
-        (fun a b h => by ext x; exact congrFun h x)
-    rw [hmaps] at h
-    exact_mod_cast h
-  have hbM : (Nat.card {φ : F →g G // Function.Injective ⇑φ} : ℝ)
-      ≤ ((n.descFactorial k : ℕ) : ℝ) := by
-    have h : Nat.card {φ : F →g G // Function.Injective ⇑φ} ≤ Nat.card (V ↪ W) :=
-      Nat.card_le_card_of_injective
-        (fun φ : {φ : F →g G // Function.Injective ⇑φ} =>
-          (⟨(φ.1 : V → W), φ.2⟩ : V ↪ W))
-        (fun a b h => by
-          ext x
-          exact congrFun (congrArg (fun e : V ↪ W => (e : V → W)) h) x)
-    rw [hemb] at h
-    exact_mod_cast h
-  have hba_nat : Nat.card {φ : F →g G // Function.Injective ⇑φ}
-      ≤ Nat.card (F →g G) :=
-    Nat.card_le_card_of_injective _ Subtype.val_injective
-  have hMNnat : n.descFactorial k ≤ n ^ k := by
-    rw [← hemb, ← hmaps]
-    exact Nat.card_le_card_of_injective _
-      (fun a b h => by ext x; exact congrFun h x)
-  have hba : (Nat.card {φ : F →g G // Function.Injective ⇑φ} : ℝ)
-      ≤ (Nat.card (F →g G) : ℝ) := by
-    exact_mod_cast hba_nat
-  have hMN : ((n.descFactorial k : ℕ) : ℝ) ≤ (n : ℝ) ^ k := by
-    exact_mod_cast hMNnat
-  have hab : (Nat.card (F →g G) : ℝ) - (Nat.card {φ : F →g G // Function.Injective ⇑φ} : ℝ)
-      ≤ (n : ℝ) ^ k - ((n.descFactorial k : ℕ) : ℝ) := by
-    have h := card_hom_sub_card_inj_le F G
-    have hR : ((Nat.card (F →g G) - Nat.card {φ : F →g G // Function.Injective ⇑φ} : ℕ) : ℝ)
-        ≤ ((Fintype.card W ^ Fintype.card V
-          - (Fintype.card W).descFactorial (Fintype.card V) : ℕ) : ℝ) := by
+  by_cases hW0 : Fintype.card W = 0
+  · -- Empty host: both densities coincide, so the left side vanishes.
+    have hRHS : (0 : ℝ)
+        ≤ ((Fintype.card V).choose 2 : ℝ) / (Fintype.card W : ℝ) :=
+      div_nonneg (Nat.cast_nonneg _) (Nat.cast_nonneg _)
+    suffices heq : homDensityFin F G = injHomDensity F G by
+      rw [heq, sub_self, abs_zero]
+      exact hRHS
+    rw [homDensityFin_def, injHomDensity_def]
+    by_cases hk0 : Fintype.card V = 0
+    · -- Empty pattern: every homomorphism is vacuously injective.
+      have hV : IsEmpty V := Fintype.card_eq_zero_iff.mp hk0
+      have hsub : ∀ φ : F →g G, Function.Injective (⇑φ : V → W) := by
+        intro φ a b _
+        exact False.elim (hV.false a)
+      have e : (F →g G) ≃ {φ : F →g G // Function.Injective ⇑φ} :=
+        { toFun := fun φ => ⟨φ, hsub φ⟩
+          invFun := Subtype.val
+          left_inv := fun _ => rfl
+          right_inv := fun ⟨_, _⟩ => rfl }
+      have hcards : Nat.card (F →g G)
+          = Nat.card {φ : F →g G // Function.Injective ⇑φ} :=
+        Nat.card_congr e
+      rw [hcards, hk0, pow_zero, Nat.descFactorial_zero, Nat.cast_one]
+    · -- Nonempty pattern over an empty host: there are no maps at all.
+      have hmaps0 : Nat.card (V → W) = 0 := by
+        rw [Nat.card_fun, Nat.card_eq_fintype_card, Nat.card_eq_fintype_card, hW0]
+        exact zero_pow hk0
+      have hhom0 : Nat.card (F →g G) = 0 := by
+        apply Nat.eq_zero_of_le_zero
+        calc Nat.card (F →g G) ≤ Nat.card (V → W) :=
+              Nat.card_le_card_of_injective (fun φ : F →g G => (φ : V → W))
+                (fun a b h => by ext x; exact congrFun h x)
+          _ = 0 := hmaps0
+      have hemb0 : Nat.card (V ↪ W) = 0 := by
+        rw [Nat.card_eq_fintype_card, Fintype.card_embedding_eq, hW0]
+        exact Nat.descFactorial_eq_zero_iff_lt.mpr (by omega)
+      have hinj0 : Nat.card {φ : F →g G // Function.Injective ⇑φ} = 0 := by
+        apply Nat.eq_zero_of_le_zero
+        calc Nat.card {φ : F →g G // Function.Injective ⇑φ} ≤ Nat.card (V ↪ W) :=
+              Nat.card_le_card_of_injective
+                (fun φ : {φ : F →g G // Function.Injective ⇑φ} =>
+                  (⟨(φ.1 : V → W), φ.2⟩ : V ↪ W))
+                (fun a b h => by
+                  ext x
+                  exact congrFun (congrArg (fun e : V ↪ W => (e : V → W)) h) x)
+          _ = 0 := hemb0
+      rw [hhom0, hinj0, Nat.cast_zero, zero_div, zero_div]
+  · have hn : 0 < Fintype.card W := Nat.pos_of_ne_zero hW0
+    rw [homDensityFin_def, injHomDensity_def]
+    set k := Fintype.card V with hk
+    set n := Fintype.card W with hn'
+    have hnR : (0 : ℝ) < (n : ℝ) := by exact_mod_cast hn
+    have hN : (0 : ℝ) < (n : ℝ) ^ k := pow_pos hnR k
+    have hmaps : Nat.card (V → W) = n ^ k := by
+      rw [Nat.card_fun, Nat.card_eq_fintype_card, Nat.card_eq_fintype_card]
+    have hemb : Nat.card (V ↪ W) = n.descFactorial k := by
+      rw [Nat.card_eq_fintype_card, Fintype.card_embedding_eq]
+    have haN : (Nat.card (F →g G) : ℝ) ≤ (n : ℝ) ^ k := by
+      have h : Nat.card (F →g G) ≤ Nat.card (V → W) :=
+        Nat.card_le_card_of_injective (fun φ : F →g G => (φ : V → W))
+          (fun a b h => by ext x; exact congrFun h x)
+      rw [hmaps] at h
       exact_mod_cast h
-    rw [Nat.cast_sub hba_nat, Nat.cast_sub hMNnat] at hR
-    push_cast at hR
-    exact hR
-  have hstep := abs_div_sub_div_le _ _ _ _ hN (Nat.cast_nonneg _) haN (Nat.cast_nonneg _)
-    hbM (Nat.cast_nonneg _) hMN hba hab
-  have hC := pow_sub_descFactorial_le n k
-  have hdiv1 : ((n : ℝ) ^ k - ((n.descFactorial k : ℕ) : ℝ)) / (n : ℝ) ^ k
-      ≤ (((k.choose 2 : ℕ) : ℝ) * (n : ℝ) ^ (k - 1)) / (n : ℝ) ^ k :=
-    div_le_div_of_nonneg_right hC (le_of_lt hN)
-  have hdiv2 : ((((k.choose 2 : ℕ) : ℝ) * (n : ℝ) ^ (k - 1))) / (n : ℝ) ^ k
-      ≤ ((k.choose 2 : ℕ) : ℝ) / (n : ℝ) := by
-    by_cases hk0 : k = 0
-    · have hc0 : Nat.choose 0 2 = 0 := by decide
-      simp only [hk0, hc0, Nat.cast_zero, zero_mul, zero_div, le_refl]
-    · have hk1 : 1 ≤ k := by omega
-      have hpow : (n : ℝ) ^ (k - 1) * (n : ℝ) = (n : ℝ) ^ k := by
-        have hps := pow_succ (n : ℝ) (k - 1)
-        rw [Nat.sub_add_cancel hk1] at hps
-        exact hps.symm
-      have hn0 : (n : ℝ) ≠ 0 := ne_of_gt hnR
-      have hP : (n : ℝ) ^ (k - 1) ≠ 0 := pow_ne_zero _ hn0
-      have key : (((k.choose 2 : ℕ) : ℝ) * (n : ℝ) ^ (k - 1))
-            / ((n : ℝ) ^ (k - 1) * (n : ℝ))
-          = ((k.choose 2 : ℕ) : ℝ) / (n : ℝ) := by
-        rw [div_eq_div_iff (mul_ne_zero hP hn0) hn0]
-        ring
-      rw [← hpow, key]
-  exact le_trans hstep (le_trans hdiv1 hdiv2)
+    have hbM : (Nat.card {φ : F →g G // Function.Injective ⇑φ} : ℝ)
+        ≤ ((n.descFactorial k : ℕ) : ℝ) := by
+      have h : Nat.card {φ : F →g G // Function.Injective ⇑φ} ≤ Nat.card (V ↪ W) :=
+        Nat.card_le_card_of_injective
+          (fun φ : {φ : F →g G // Function.Injective ⇑φ} =>
+            (⟨(φ.1 : V → W), φ.2⟩ : V ↪ W))
+          (fun a b h => by
+            ext x
+            exact congrFun (congrArg (fun e : V ↪ W => (e : V → W)) h) x)
+      rw [hemb] at h
+      exact_mod_cast h
+    have hba_nat : Nat.card {φ : F →g G // Function.Injective ⇑φ}
+        ≤ Nat.card (F →g G) :=
+      Nat.card_le_card_of_injective _ Subtype.val_injective
+    have hMNnat : n.descFactorial k ≤ n ^ k := Nat.descFactorial_le_pow n k
+    have hba : (Nat.card {φ : F →g G // Function.Injective ⇑φ} : ℝ)
+        ≤ (Nat.card (F →g G) : ℝ) := by
+      exact_mod_cast hba_nat
+    have hMN : ((n.descFactorial k : ℕ) : ℝ) ≤ (n : ℝ) ^ k := by
+      exact_mod_cast hMNnat
+    have hab : (Nat.card (F →g G) : ℝ) - (Nat.card {φ : F →g G // Function.Injective ⇑φ} : ℝ)
+        ≤ (n : ℝ) ^ k - ((n.descFactorial k : ℕ) : ℝ) := by
+      have h := card_hom_sub_card_inj_le F G
+      have hR : ((Nat.card (F →g G) - Nat.card {φ : F →g G // Function.Injective ⇑φ} : ℕ) : ℝ)
+          ≤ ((Fintype.card W ^ Fintype.card V
+            - (Fintype.card W).descFactorial (Fintype.card V) : ℕ) : ℝ) := by
+        exact_mod_cast h
+      rw [Nat.cast_sub hba_nat, Nat.cast_sub hMNnat] at hR
+      push_cast at hR
+      exact hR
+    have hstep := abs_div_sub_div_le _ _ _ _ hN (Nat.cast_nonneg _) haN (Nat.cast_nonneg _)
+      hbM (Nat.cast_nonneg _) hMN hba hab
+    have hC := pow_sub_descFactorial_le n k
+    have hdiv1 : ((n : ℝ) ^ k - ((n.descFactorial k : ℕ) : ℝ)) / (n : ℝ) ^ k
+        ≤ (((k.choose 2 : ℕ) : ℝ) * (n : ℝ) ^ (k - 1)) / (n : ℝ) ^ k :=
+      div_le_div_of_nonneg_right hC (le_of_lt hN)
+    have hdiv2 : ((((k.choose 2 : ℕ) : ℝ) * (n : ℝ) ^ (k - 1))) / (n : ℝ) ^ k
+        ≤ ((k.choose 2 : ℕ) : ℝ) / (n : ℝ) := by
+      by_cases hk0 : k = 0
+      · have hc0 : Nat.choose 0 2 = 0 := by decide
+        simp only [hk0, hc0, Nat.cast_zero, zero_mul, zero_div, le_refl]
+      · have hk1 : 1 ≤ k := by omega
+        have hpow : (n : ℝ) ^ (k - 1) * (n : ℝ) = (n : ℝ) ^ k := by
+          have hps := pow_succ (n : ℝ) (k - 1)
+          rw [Nat.sub_add_cancel hk1] at hps
+          exact hps.symm
+        have hn0 : (n : ℝ) ≠ 0 := ne_of_gt hnR
+        have hP : (n : ℝ) ^ (k - 1) ≠ 0 := pow_ne_zero _ hn0
+        have key : (((k.choose 2 : ℕ) : ℝ) * (n : ℝ) ^ (k - 1))
+              / ((n : ℝ) ^ (k - 1) * (n : ℝ))
+            = ((k.choose 2 : ℕ) : ℝ) / (n : ℝ) := by
+          rw [div_eq_div_iff (mul_ne_zero hP hn0) hn0]
+          ring
+        rw [← hpow, key]
+    exact le_trans hstep (le_trans hdiv1 hdiv2)
 
 end DenseGraphLimits
 
