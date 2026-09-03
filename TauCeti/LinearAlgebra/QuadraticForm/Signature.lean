@@ -5,10 +5,10 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.LinearAlgebra.BilinearForm.Properties
 public import Mathlib.LinearAlgebra.Matrix.BilinearForm
 import Mathlib.LinearAlgebra.Projection
 public import Mathlib.LinearAlgebra.QuadraticForm.Signature
+public import TauCeti.LinearAlgebra.BilinearForm.PosSemidef
 public import TauCeti.LinearAlgebra.QuadraticForm.Radical
 public import TauCeti.LinearAlgebra.Submodule.Prod
 
@@ -381,20 +381,6 @@ end QuadraticForm
 namespace LinearMap.BilinForm
 
 open _root_.QuadraticForm
-
-section Semiring
-
-variable {R M : Type*} [CommSemiring R] [AddCommMonoid M] [Module R M] [LE R]
-
-/-- A symmetric bilinear form is positive-semidefinite if and only if its values on all vectors
-are nonnegative. -/
-@[grind =]
-theorem isPosSemidef_iff_forall_nonneg (B : LinearMap.BilinForm R M) (hB : B.IsSymm) :
-    B.IsPosSemidef ↔ ∀ x, 0 ≤ B x x := by
-  rw [LinearMap.BilinForm.isPosSemidef_def, LinearMap.BilinForm.isNonneg_def]
-  simp only [hB, true_and]
-
-end Semiring
 
 variable {K M : Type*} [Field K] [LinearOrder K] [IsStrictOrderedRing K]
   [AddCommGroup M] [Module K M] [FiniteDimensional K M]
