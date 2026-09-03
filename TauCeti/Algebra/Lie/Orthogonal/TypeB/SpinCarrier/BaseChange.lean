@@ -77,6 +77,17 @@ noncomputable def baseChangeDefiningIdeal :
     (rep_kostantForm_mem_lattice n) (isNilpotent_rep_rootGenerator n)
     (latticeBasis n) (basisWeight n) A
 
+/-- The transported defining ideal is the one supplied by the generic Kostant toral-closure base
+change. -/
+theorem baseChangeDefiningIdeal_def :
+    baseChangeDefiningIdeal n A =
+      kostantToralBaseChangePresentationIdeal
+        (TauCeti.typeBSimpleRootGeneratorFamily (K := ℚ))
+        (TauCeti.typeBSimpleCorootGenerator (K := ℚ)) (rep n) (lattice n).toAddSubgroup
+        (rep_kostantForm_mem_lattice n) (isNilpotent_rep_rootGenerator n)
+        (latticeBasis n) (basisWeight n) A := by
+  rw [baseChangeDefiningIdeal]
+
 /-- Membership in the transported defining ideal is membership of the corresponding element in
 the base change of the named integral defining ideal. -/
 @[simp]
@@ -85,7 +96,7 @@ theorem mem_baseChangeDefiningIdeal_iff
     x ∈ baseChangeDefiningIdeal n A ↔
       (GeneralLinear.coordinateHopfAlgebraBaseChangeIso ℤ A (dimension n)).inv.hom x ∈
         CommHopfAlgCat.baseChangeHopfIdeal (K := A) (definingIdeal n) := by
-  rw [baseChangeDefiningIdeal, mem_kostantToralBaseChangePresentationIdeal_iff,
+  rw [baseChangeDefiningIdeal_def, mem_kostantToralBaseChangePresentationIdeal_iff,
     kostantToralBaseChangeIdeal_def, ← definingIdeal_def]
 
 /-- Transporting a pure tensor of a scalar and an integral defining equation produces an equation
@@ -94,7 +105,7 @@ theorem map_tmul_mem_baseChangeDefiningIdeal_of_mem (s : A)
     {y : GeneralLinear.coordinateHopfAlgebra ℤ (dimension n)} (hy : y ∈ definingIdeal n) :
     (GeneralLinear.coordinateHopfAlgebraBaseChangeIso ℤ A (dimension n)).hom.hom
         (s ⊗ₜ[ℤ] y) ∈ baseChangeDefiningIdeal n A := by
-  rw [baseChangeDefiningIdeal]
+  rw [baseChangeDefiningIdeal_def]
   exact map_tmul_mem_kostantToralBaseChangePresentationIdeal_of_mem
     (TauCeti.typeBSimpleRootGeneratorFamily (K := ℚ))
     (TauCeti.typeBSimpleCorootGenerator (K := ℚ)) (rep n) (lattice n).toAddSubgroup
