@@ -196,7 +196,7 @@ theorem IsLagrangian.card_sq (hH : A.IsLagrangian H) (hA : A.IsNondegenerate) :
 
 /-- The radical of the pairing restricted to `H⊥` is the part of `H + rad(A)` lying in `H⊥`.
 
-This is `radical_restrict` at `S = H⊥`, simplified by the double-complement formula. -/
+It identifies the residual degeneracy that is removed when forming the orthogonal quotient. -/
 theorem radical_restrict_orthogonalComplement (H : AddSubgroup A) :
     (A.restrict (A.orthogonalComplement H)).radical =
       (H ⊔ A.radical).addSubgroupOf (A.orthogonalComplement H) := by
