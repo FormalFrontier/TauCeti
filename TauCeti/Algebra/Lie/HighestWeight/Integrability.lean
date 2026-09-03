@@ -9,8 +9,6 @@ public import TauCeti.Algebra.Lie.HighestWeight.Maximal
 import TauCeti.Algebra.Lie.Submodule.Atom
 import TauCeti.Algebra.Lie.Weights.Eigenvector
 
-public section
-
 /-!
 # The integrability relation of a highest weight module
 
@@ -71,6 +69,8 @@ finite-dimensional irreducibles", of
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §21.2 and
   §21.4.
 -/
+
+public section
 
 namespace TauCeti
 

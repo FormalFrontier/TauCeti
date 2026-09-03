@@ -8,8 +8,6 @@ module
 public import TauCeti.Algebra.Lie.GeneralLinear.Radical
 public import TauCeti.Algebra.Lie.Reductive
 
-public section
-
 /-!
 # The `sl n` ↔ `gl n` dictionary for irreducible modules
 
@@ -44,6 +42,8 @@ This is the "`sl ↔ gl` transfer, pinned" bullet of Layer 9 of
 irreducible `gl n K`-module rather than for the not-yet-constructed named carrier
 `glIrreducible n μ`, which it will specialize to.
 -/
+
+public section
 
 namespace TauCeti
 

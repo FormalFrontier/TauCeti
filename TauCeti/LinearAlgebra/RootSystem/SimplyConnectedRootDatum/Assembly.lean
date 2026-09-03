@@ -16,8 +16,6 @@ public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.E8.Datum
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.F4.Basic
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.G2.Basic
 
-public section
-
 /-!
 # The pinned simply connected root datum of a Dynkin type
 
@@ -62,6 +60,8 @@ Chapter 11. This assembles the target "a named datum per valid type" in Layer 6 
 `TauCetiRoadmap/RepresentationTheory/RootSystems/README.md` for its consumer,
 `CFSGStatement` milestone L0.
 -/
+
+public section
 
 namespace TauCeti.DynkinType
 

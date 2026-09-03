@@ -11,10 +11,6 @@ public import Mathlib.LinearAlgebra.RootSystem.CartanMatrix
 public import TauCeti.LinearAlgebra.RootSystem.RankTwo
 public import TauCeti.LinearAlgebra.RootSystem.SimpleReflections
 
-public section
-
-open scoped Matrix
-
 /-!
 # The Coxeter matrix of a base
 
@@ -73,6 +69,10 @@ This file implements “The Coxeter matrix of a base” in Layer 2 of
 crystallographic configurations behind it is Bourbaki, *Lie Groups and Lie Algebras*, Chapters
 4--6, Ch. VI, §1.3.
 -/
+
+public section
+
+open scoped Matrix
 
 namespace TauCeti
 

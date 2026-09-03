@@ -123,7 +123,7 @@ theorem map_volume_unitIntervalCoding (P : ProbabilityMeasure α) :
 /-- The coordinatewise coding of an `ι`-indexed uniform family is measurable. -/
 theorem measurable_pi_unitIntervalCoding {ι : Type*} (P : ProbabilityMeasure α) :
     Measurable fun u : ι → I => fun i => unitIntervalCoding α P (u i) :=
-  measurable_pi_lambda _ fun i =>
+  Measurable.of_eval fun i =>
     (measurable_unitIntervalCoding P).comp (measurable_pi_apply i)
 
 /-- **Coding a product law by i.i.d. uniform noise.** Applying the coding map coordinatewise to an

@@ -50,7 +50,7 @@ theorem MixedIIDWith.map_eq_of_const {μ : Measure Ω} [IsProbabilityMeasure μ]
     {p : ProbabilityMeasure α} (h : MixedIIDWith μ X fun _ => p) (i : ι) :
     μ.map (X i) = (p : Measure α) := by
   have hone : AEMeasurable (fun ω (_ : Fin 1) => X i ω) μ :=
-    aemeasurable_pi_lambda _ fun _ => h.aemeasurable i
+    AEMeasurable.of_eval fun _ => h.aemeasurable i
   have hblock :=
     h.blockLaw_eq_pi_of_const (fun _ : Fin 1 => i) fun a b _ => Subsingleton.elim a b
   calc μ.map (X i)
@@ -84,11 +84,11 @@ theorem MixedIIDWith.iIndepFun_of_const {μ : Measure Ω} [IsProbabilityMeasure 
     funext ω j
     simp [e.apply_symm_apply j]
   have hae : AEMeasurable (fun ω (i : Fin s.card) => X ((e i : s) : ι) ω) μ :=
-    aemeasurable_pi_lambda _ fun i => hX _
+    AEMeasurable.of_eval fun i => hX _
   calc μ.map (fun ω (j : s) => X (j : ι) ω)
       = (μ.map fun ω (i : Fin s.card) => X ((e i : s) : ι) ω).map
           (fun g (j : s) => g (e.symm j)) := by
-        rw [(measurable_pi_lambda _ fun j => measurable_pi_apply
+        rw [(Measurable.of_eval fun j => measurable_pi_apply
           (e.symm j)).aemeasurable.map_map_of_aemeasurable hae, hcomp]
     _ = (Measure.pi fun _ : Fin s.card => (p : Measure α)).map fun g (j : s) => g (e.symm j) := by
         rw [← blockLaw_def, hblock]

@@ -118,17 +118,17 @@ private theorem arrayCol_eq_entries (X : ℕ × ℕ → Ω → α) :
 /-- Currying an array-shaped path into its rows. -/
 private theorem measurable_rowsOf :
     Measurable fun x : ℕ × ℕ → α => fun i j => x (i, j) :=
-  measurable_pi_lambda _ fun i => measurable_pi_lambda _ fun j => measurable_pi_apply (i, j)
+  Measurable.of_eval fun i => Measurable.of_eval fun j => measurable_pi_apply (i, j)
 
 /-- Currying an array-shaped path into its columns. -/
 private theorem measurable_colsOf :
     Measurable fun x : ℕ × ℕ → α => fun j i => x (i, j) :=
-  measurable_pi_lambda _ fun j => measurable_pi_lambda _ fun i => measurable_pi_apply (i, j)
+  Measurable.of_eval fun j => Measurable.of_eval fun i => measurable_pi_apply (i, j)
 
 /-- Reassembling an array from its columns. -/
 private theorem measurable_uncurrySwap :
     Measurable fun x : ℕ → ℕ → α => fun p : ℕ × ℕ => x p.2 p.1 :=
-  measurable_pi_lambda _ fun p => (measurable_pi_apply p.1).comp (measurable_pi_apply p.2)
+  Measurable.of_eval fun p => (measurable_pi_apply p.1).comp (measurable_pi_apply p.2)
 
 omit [MeasurableSpace Ω] in
 /-- Pushing a probability measure on path space forward by the identity permutation of time does
@@ -145,7 +145,7 @@ theorem map_uncurry_jointPathLaw_arrayRow (hX : ∀ p, AEMeasurable (X p) μ)
       = μ.map fun ω => (ν ω, fun p : ℕ × ℕ => X p ω) := by
   rw [jointPathLaw_def, AEMeasurable.map_map_of_aemeasurable
     (measurable_id.prodMap measurable_uncurry).aemeasurable
-    (hν.aemeasurable.prodMk (aemeasurable_pi_lambda _ (aemeasurable_arrayRow hX)))]
+    (hν.aemeasurable.prodMk (AEMeasurable.of_eval (aemeasurable_arrayRow hX)))]
   refine congrArg (Measure.map · _) (funext fun ω => Prod.ext rfl (funext fun p => ?_))
   simp [Function.uncurry]
 
@@ -158,7 +158,7 @@ theorem map_uncurrySwap_jointPathLaw_arrayCol (hX : ∀ p, AEMeasurable (X p) μ
       = μ.map fun ω => (ν ω, fun p : ℕ × ℕ => X p ω) := by
   rw [jointPathLaw_def, AEMeasurable.map_map_of_aemeasurable
     (measurable_id.prodMap measurable_uncurrySwap).aemeasurable
-    (hν.aemeasurable.prodMk (aemeasurable_pi_lambda _ (aemeasurable_arrayCol hX)))]
+    (hν.aemeasurable.prodMk (AEMeasurable.of_eval (aemeasurable_arrayCol hX)))]
   refine congrArg (Measure.map · _) (funext fun ω => Prod.ext rfl (funext fun p => ?_))
   simp
 

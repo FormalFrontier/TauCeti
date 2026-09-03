@@ -8,8 +8,6 @@ module
 public import TauCeti.LinearAlgebra.RootSystem.DynkinType
 public import TauCeti.LinearAlgebra.RootSystem.Flip
 
-public section
-
 /-!
 # Duality of Dynkin types
 
@@ -62,6 +60,8 @@ two types are "identified only after `flip` (duality)", and Layer 6 asks for the
 to be `RootPairing.flip` of the dual type's datum. See Bourbaki, *Lie Groups and Lie Algebras,
 Chapters 4-6*, plates I-IX, for the standard Cartan matrices and their duals.
 -/
+
+public section
 
 namespace TauCeti
 

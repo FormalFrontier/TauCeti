@@ -9,8 +9,6 @@ public import Mathlib.Algebra.DirectSum.LinearMap
 public import TauCeti.Algebra.Lie.Weights.Diagonalizable
 public import TauCeti.Algebra.Lie.Weights.Killing
 
-public section
-
 /-!
 # The projections attached to the weight-space decomposition
 
@@ -61,6 +59,8 @@ the trace are what the Casimir eigenvalue computation of Layer 5 consumes.
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §8.1 (the
   root-space decomposition) and §8.2 (the Killing form pairs `Lα` with `L_{-α}` alone).
 -/
+
+public section
 
 namespace TauCeti
 

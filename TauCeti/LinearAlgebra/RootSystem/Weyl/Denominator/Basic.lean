@@ -9,8 +9,6 @@ public import Mathlib.Algebra.BigOperators.Ring.Finset
 public import Mathlib.Algebra.MonoidAlgebra.Defs
 public import TauCeti.LinearAlgebra.RootSystem.Positive
 
-public section
-
 /-!
 # The Weyl denominator
 
@@ -54,6 +52,8 @@ of an abstract root pairing, so the Lie-algebra target is a specialization rathe
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, Ch. VI, §24.
 * J.-P. Serre, *Complex Semisimple Lie Algebras*, Ch. VII.
 -/
+
+public section
 
 namespace TauCeti
 

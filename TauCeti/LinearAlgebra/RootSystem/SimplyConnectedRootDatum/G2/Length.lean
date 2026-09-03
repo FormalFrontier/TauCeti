@@ -8,8 +8,6 @@ module
 public import TauCeti.LinearAlgebra.RootSystem.RootLength
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.G2.Basic
 
-public section
-
 /-!
 # Squared lengths of the pinned `G₂` roots
 
@@ -57,6 +55,9 @@ characteristics two and three" bullet of Layer 9 of `TauCetiRoadmap/ReductiveGro
 matching the rank-two type `B` tables of
 `TauCeti/LinearAlgebra/RootSystem/SimplyConnectedRootDatum/B/RankTwo.lean`.
 -/
+
+public section
+
 namespace TauCeti.DynkinType
 
 open Function

@@ -113,8 +113,8 @@ theorem finrank_candidateGenusFieldBase {d : ℤ} (hd : Squarefree d)
     have hsq := candidateGenusFieldBaseRoot_sq hd
     rw [← hq, ← map_pow] at hsq
     simpa only [pow_two] using hsq.symm
-  have h := TauCeti.IntermediateField.finrank_sup_adjoin_simple_eq_mul_two
-    (⊥ : IntermediateField ℚ (candidateGenusField hd)) hx2 hxnot
+  have h := (⊥ : IntermediateField ℚ (candidateGenusField hd)).finrank_sup_adjoin_simple_eq_mul_two
+    hx2 hxnot
   rwa [bot_sup_eq, IntermediateField.finrank_bot, one_mul] at h
 
 /-- **Relative degree of the candidate genus field over `ℚ(√d)`.** If the squarefree integer

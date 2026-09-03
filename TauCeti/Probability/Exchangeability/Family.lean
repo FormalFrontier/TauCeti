@@ -142,15 +142,15 @@ theorem ExchangeableFamily.map_eq_of_injective {μ : Measure Ω} [IsFiniteMeasur
             fun y (i : I) => y (I.equivFin i) := by
     intro d I
     have hg : Measurable fun (y : Fin I.card → α) (i : I) => y (I.equivFin i) :=
-      measurable_pi_lambda _ fun _ => measurable_pi_apply _
+      Measurable.of_eval fun _ => measurable_pi_apply _
     have hd : AEMeasurable (fun ω (j : Fin I.card) => X (d (I.equivFin.symm j)) ω) μ :=
-      aemeasurable_pi_lambda _ fun _ => hX _
+      AEMeasurable.of_eval fun _ => hX _
     rw [blockLaw_def, AEMeasurable.map_map_of_aemeasurable hg.aemeasurable hd]
     exact congrArg μ.map (funext fun ω => funext fun i => by
       simp [Finset.restrict, Function.comp_apply])
   refine (ProbabilityTheory.map_eq_iff_forall_finset_map_restrict_eq
-    (aemeasurable_pi_lambda _ fun i => hX (e i))
-    (aemeasurable_pi_lambda _ fun i => hX (f i))).2 fun I => ?_
+    (AEMeasurable.of_eval fun i => hX (e i))
+    (AEMeasurable.of_eval fun i => hX (f i))).2 fun I => ?_
   rw [key e I, key f I]
   have hI : Function.Injective fun j : Fin I.card => (I.equivFin.symm j : κ) :=
     Subtype.val_injective.comp I.equivFin.symm.injective

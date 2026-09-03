@@ -8,8 +8,6 @@ module
 public import TauCeti.LinearAlgebra.RootSystem.LongestElement
 public import TauCeti.LinearAlgebra.RootSystem.Weyl.Orbit
 
-public section
-
 /-!
 # The sign character of a Weyl group
 
@@ -78,6 +76,8 @@ as its purpose; this file is that prerequisite, built where the inversion combin
 The convention follows Bourbaki, *Lie Groups and Lie Algebras*, Chapters 4--6, Ch. VI §1, and
 J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, Ch. III §10.3.
 -/
+
+public section
 
 namespace TauCeti
 

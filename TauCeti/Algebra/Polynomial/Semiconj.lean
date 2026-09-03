@@ -28,8 +28,8 @@ it to an additive shift and then to `Ring.choose`.
 ## Main results
 
 * `SemiconjBy.smeval_right`: simultaneous polynomial evaluation preserves semiconjugacy.
-* `TauCeti.Polynomial.smeval_mul_pow_eq_pow_mul_smeval` and
-  `TauCeti.Polynomial.pow_mul_smeval_eq_smeval_mul_pow`: the corresponding polynomial
+* `Polynomial.smeval_mul_pow_eq_pow_mul_smeval` and
+  `Polynomial.pow_mul_smeval_eq_smeval_mul_pow`: the corresponding polynomial
   reordering identities.
 * `TauCeti.ringChoose_mul_pow` and `TauCeti.pow_mul_ringChoose`: their two
   binomial-coefficient forms.
@@ -94,11 +94,10 @@ private theorem mul_pow_eq_pow_mul_add_nsmul {a x c : A} (h : a * x = x * (a + c
           add_mul_eq_mul_add_add h (hc.smul_left n)
       rw [hshift, ← mul_assoc, ← pow_succ]
 
-namespace Polynomial
-
 /-- A polynomial in `a` can be moved to the right across `x ^ n` by shifting its argument by
 `n • c`. -/
-theorem smeval_mul_pow_eq_pow_mul_smeval {R : Type v} [Semiring R] [Module R A]
+theorem _root_.Polynomial.smeval_mul_pow_eq_pow_mul_smeval
+    {R : Type v} [Semiring R] [Module R A]
     [IsScalarTower R A A]
     [SMulCommClass R A A] (p : _root_.Polynomial R) {a x c : A}
     (h : a * x = x * (a + c)) (hc : Commute c x) (n : ℕ) :
@@ -107,8 +106,6 @@ theorem smeval_mul_pow_eq_pow_mul_smeval {R : Type v} [Semiring R] [Module R A]
   have hs : SemiconjBy (x ^ n) (a + n • c) a :=
     (mul_pow_eq_pow_mul_add_nsmul h hc n).symm
   exact (hs.smeval_right p).eq.symm
-
-end Polynomial
 
 end Semiring
 
@@ -122,20 +119,17 @@ private theorem sub_nsmul_mul_eq_mul_add {a x c : A} (h : a * x = x * (a + c))
   simpa only [sub_eq_add_neg] using
     add_mul_eq_mul_add_add h (hc.smul_left n).neg_left
 
-namespace Polynomial
-
 /-- A polynomial in `a` can be moved to the left across `x ^ n` by shifting its argument by
 `-n • c`. -/
-theorem pow_mul_smeval_eq_smeval_mul_pow {R : Type v} [Semiring R] [Module R A]
+theorem _root_.Polynomial.pow_mul_smeval_eq_smeval_mul_pow
+    {R : Type v} [Semiring R] [Module R A]
     [IsScalarTower R A A]
     [SMulCommClass R A A] (p : _root_.Polynomial R) {a x c : A}
     (h : a * x = x * (a + c)) (hc : Commute c x) (n : ℕ) :
     x ^ n * _root_.Polynomial.smeval p a =
       _root_.Polynomial.smeval p (a - n • c) * x ^ n := by
   simpa only [sub_add_cancel] using
-    (smeval_mul_pow_eq_pow_mul_smeval p (sub_nsmul_mul_eq_mul_add h hc n) hc n).symm
-
-end Polynomial
+    (Polynomial.smeval_mul_pow_eq_pow_mul_smeval p (sub_nsmul_mul_eq_mul_add h hc n) hc n).symm
 
 attribute [local instance] BinomialRing.toIsAddTorsionFree
 

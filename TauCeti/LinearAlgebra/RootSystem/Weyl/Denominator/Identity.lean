@@ -9,8 +9,6 @@ public import TauCeti.LinearAlgebra.RootSystem.Weyl.Alternating
 -- Non-public: the positive-cone argument is used only inside a private proof.
 import TauCeti.LinearAlgebra.RootSystem.DominantCone
 
-public section
-
 /-!
 # The Weyl denominator identity
 
@@ -68,6 +66,8 @@ character, dimension, and Kostant formulas") of
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, Ch. VI, §24.3.
 * J.-P. Serre, *Complex Semisimple Lie Algebras*, Ch. VII, §7.
 -/
+
+public section
 
 namespace TauCeti
 

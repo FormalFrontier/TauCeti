@@ -8,8 +8,6 @@ module
 public import TauCeti.Algebra.Lie.HighestWeight.Module
 import TauCeti.Algebra.Lie.Submodule.Atom
 
-public section
-
 /-!
 # The maximal submodule of a highest weight module, and its irreducible quotient
 
@@ -93,6 +91,8 @@ are proved for an arbitrary highest weight module, which is how `L(λ)` will con
 
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §20.3.
 -/
+
+public section
 
 namespace TauCeti
 

@@ -35,6 +35,12 @@ in the seminorm form `eLpNorm (f i - g) 1 μ → 0` (for instance by
 
 The conversion is `MeasureTheory.ofReal_integral_norm_eq_lintegral_enorm`, whose home is
 `Mathlib.MeasureTheory.Integral.Bochner.Basic`, plus continuity of `ENNReal.ofReal` at `0`.
+
+## Kernel averages on the real line
+
+* `integral_kernel_mem_Icc_of_antitoneOn` squeezes the average of a function against a probability
+  density supported in `[-ε, 0]` between the function's values at `t + ε` and `t`, given only
+  antitonicity on the sampled interval `[t, t + ε]`.
 -/
 
 public section
@@ -108,6 +114,43 @@ theorem tendsto_eLpNorm_one_of_tendsto_integral_norm_sub {Ω E ι : Type*} [Meas
     simp [Pi.sub_apply]
   simp_rw [heq]
   simpa [Function.comp_def] using (ENNReal.continuous_ofReal.tendsto 0).comp h
+
+/-- **Averaging against a kernel supported in `[-ε, 0]` samples only `[t, t + ε]`.** If `ψ` is a
+nonnegative probability density with respect to `μ` vanishing outside `[-ε, 0]`, and `F` is antitone
+on `[t, t + ε]`, then the average `∫ s, ψ s * F (t - s) ∂μ` lies between `F (t + ε)` and `F t`.
+
+Use this to bound a mollification of a monotone function by two of its values; no regularity of
+`F` beyond antitonicity on the sampled interval is needed. -/
+theorem integral_kernel_mem_Icc_of_antitoneOn {μ : Measure ℝ} {ψ F : ℝ → ℝ} {ε t : ℝ}
+    (hε : 0 ≤ ε) (hFanti : AntitoneOn F (Set.Icc t (t + ε))) (hψ0 : ∀ s, 0 ≤ ψ s)
+    (hψint : ∫ s, ψ s ∂μ = 1) (hψi : Integrable ψ μ)
+    (hintF : Integrable (fun s => ψ s * F (t - s)) μ)
+    (hsupp : ∀ s : ℝ, ψ s ≠ 0 → s ∈ Set.Icc (-ε) 0) :
+    (∫ s, ψ s * F (t - s) ∂μ) ∈ Set.Icc (F (t + ε)) (F t) := by
+  have hmass : ∀ c : ℝ, ∫ s, ψ s * c ∂μ = c := by
+    intro c
+    rw [integral_mul_const, hψint, one_mul]
+  have hsample : ∀ s : ℝ, -ε ≤ s → s ≤ 0 → t - s ∈ Set.Icc t (t + ε) := fun s h1 h2 =>
+    ⟨by linarith, by linarith⟩
+  have hlo : t ∈ Set.Icc t (t + ε) := ⟨le_rfl, by linarith⟩
+  have hhi : t + ε ∈ Set.Icc t (t + ε) := ⟨by linarith, le_rfl⟩
+  refine Set.mem_Icc.mpr ⟨?_, ?_⟩
+  · have hle : ∀ s : ℝ, ψ s * F (t + ε) ≤ ψ s * F (t - s) := by
+      intro s
+      rcases eq_or_ne (ψ s) 0 with h0 | h0
+      · simp [h0]
+      · obtain ⟨hs1, hs2⟩ := hsupp s h0
+        exact mul_le_mul_of_nonneg_left (hFanti (hsample s hs1 hs2) hhi (by linarith)) (hψ0 s)
+    calc F (t + ε) = ∫ s, ψ s * F (t + ε) ∂μ := (hmass _).symm
+      _ ≤ ∫ s, ψ s * F (t - s) ∂μ := integral_mono (hψi.mul_const _) hintF hle
+  · have hle : ∀ s : ℝ, ψ s * F (t - s) ≤ ψ s * F t := by
+      intro s
+      rcases eq_or_ne (ψ s) 0 with h0 | h0
+      · simp [h0]
+      · obtain ⟨hs1, hs2⟩ := hsupp s h0
+        exact mul_le_mul_of_nonneg_left (hFanti hlo (hsample s hs1 hs2) (by linarith)) (hψ0 s)
+    calc ∫ s, ψ s * F (t - s) ∂μ ≤ ∫ s, ψ s * F t ∂μ := integral_mono hintF (hψi.mul_const _) hle
+      _ = F t := hmass _
 
 end MeasureTheory
 
