@@ -1,11 +1,11 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: The Tau Ceti contributors
+Authors: Codex
 -/
 module
 
-public import TauCeti.Probability.Exchangeability.Arrays.AldousHoover
+public import TauCeti.Probability.Exchangeability.Arrays.AldousHoover.Basic
 public import TauCeti.Probability.Exchangeability.Arrays.Dissociated
 
 /-!
@@ -19,10 +19,6 @@ easy direction of the ergodic form of the theorem.  The shared global coordinate
 disjoint-noise proof, and a nontrivial array built from global noise alone is not dissociated, by
 `JointlyDissociated.measure_preimage_eq_zero_or_one_of_const`.
 
-This is the only file in the Aldous--Hoover development that reaches the dissociation and
-disjoint-block machinery; the coding construction itself, in `Arrays.AldousHoover`, depends only on
-the array symmetries.
-
 ## Main results
 
 * `TauCeti.Probability.AldousHoover.separatelyDissociated_separateArray_of_snd`;
@@ -33,7 +29,6 @@ the array symmetries.
 * D. Aldous, ["Representations for partially exchangeable arrays of random variables"]
   (https://doi.org/10.1016/0047-259X(81)90099-3), *Journal of Multivariate Analysis* 11
   (1981), 581--598.
-* Roadmap: `TauCetiRoadmap/Exchangeability/README.md`, Layer 8, exchangeable arrays.
 
 No material is adapted from `cameronfreer/exchangeability`, which treats sequences rather than
 exchangeable arrays.
