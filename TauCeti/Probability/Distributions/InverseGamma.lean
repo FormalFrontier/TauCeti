@@ -42,6 +42,7 @@ composing a power with inversion.
 
 ## References
 
+* Roadmap: `TauCetiRoadmap/StandardDistributions/README.md`, Layer 3, "Inverse-gamma".
 * N. L. Johnson, S. Kotz, N. Balakrishnan, *Continuous Univariate Distributions*, vol. 1,
   2nd ed., Wiley (1994), chapter on inverse-gamma distributions.
 -/
@@ -403,8 +404,8 @@ theorem variance_id_inverseGammaMeasure (hr : 0 < r) (ha : 2 < a) :
 @[simp]
 theorem integrable_id_inverseGammaMeasure_iff (ha : 0 < a) (hr : 0 < r) :
     Integrable id (inverseGammaMeasure a r) ↔ 1 < a := by
-  rw [show (id : ℝ → ℝ) = fun x ↦ x ^ 1 from funext fun x ↦ (pow_one x).symm]
-  simpa only [Nat.cast_one] using integrable_pow_inverseGammaMeasure_iff ha hr 1
+  simpa only [Function.id_def, pow_one, Nat.cast_one] using
+    integrable_pow_inverseGammaMeasure_iff ha hr 1
 
 /-- At and below shape one, the identity is not integrable under a valid inverse-gamma law. -/
 theorem not_integrable_id_inverseGammaMeasure (ha : 0 < a) (hr : 0 < r) (h : a ≤ 1) :
