@@ -10,8 +10,6 @@ public import Mathlib.Algebra.Module.TransferInstance
 public import Mathlib.LinearAlgebra.ExteriorPower.Basis
 import Mathlib.Algebra.Lie.Classical
 
-public section
-
 /-!
 # The trace twist of a `gl n`-module, and every dominant weight as a highest weight
 
@@ -102,6 +100,8 @@ done here.
 * W. Fulton, J. Harris, *Representation Theory: A First Course*, Springer GTM 129 (1991), §15.5,
   where the rational representations of `GL n` are the determinant twists of the polynomial ones.
 -/
+
+public section
 
 namespace TauCeti
 

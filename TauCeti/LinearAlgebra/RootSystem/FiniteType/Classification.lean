@@ -14,8 +14,6 @@ public import TauCeti.LinearAlgebra.RootSystem.FiniteType.TripleEdge
 -- private.
 import TauCeti.LinearAlgebra.RootSystem.Isomorphism
 
-public section
-
 /-!
 # The Cartan-Killing classification of finite-type Cartan matrices
 
@@ -68,6 +66,8 @@ crystallographic finite root systems and valid Dynkin types.
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, Ch. III, §11.
 * `TauCetiRoadmap/RepresentationTheory/RootSystems/README.md`, Layer 5.
 -/
+
+public section
 
 namespace TauCeti
 

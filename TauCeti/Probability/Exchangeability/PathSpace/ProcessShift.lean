@@ -54,7 +54,7 @@ theorem processShift_apply (X : ℕ → Ω → α) (m n : ℕ) (ω : Ω) :
 @[fun_prop]
 theorem measurable_processShift {X : ℕ → Ω → α} {m : ℕ} (hX : ∀ n, Measurable (X (m + n))) :
     Measurable (processShift X m) := by
-  refine measurable_pi_lambda _ fun n => ?_
+  refine Measurable.of_eval fun n => ?_
   simpa only [processShift_apply] using hX n
 
 omit [MeasurableSpace Ω] [MeasurableSpace α] in
@@ -70,7 +70,7 @@ theorem map_processShift (μ : Measure Ω) {X : ℕ → Ω → α} (hX : ∀ i, 
     μ.map (processShift X m) = (pathLaw μ X).map ((shift α)^[m]) := by
   rw [processShift_eq_shift_iterate, pathLaw_def,
     AEMeasurable.map_map_of_aemeasurable (measurable_shift_iterate m).aemeasurable
-      (aemeasurable_pi_lambda _ hX)]
+      (AEMeasurable.of_eval hX)]
 
 end Probability
 

@@ -207,9 +207,8 @@ theorem card_stabilizer_coset_eq_card_stabilizer_inv_smul (H : Subgroup G) (p : 
     fun h => ⟨⟨g * (h : G) * g⁻¹, ?_⟩, ?_⟩, fun x => ?_, fun h => ?_⟩
   · -- the stabiliser of a coset is the conjugate subgroup, by `stabilizer_quotientGroup_mk`
     have hx := x.2
-    rw [mem_stabilizer_iff, compHom_smul_def (Subgroup.subtype (stabilizer G p)),
-      Subgroup.coe_subtype, ← mem_stabilizer_iff, stabilizer_quotientGroup_mk,
-      mem_conj_smul] at hx
+    rw [mem_stabilizer_iff, Subgroup.smul_def, ← mem_stabilizer_iff,
+      stabilizer_quotientGroup_mk, mem_conj_smul] at hx
     exact hx
   · -- `g⁻¹ * x * g` sends `g⁻¹ • p` to `g⁻¹ • (x • p)`, and `x` fixes `p`
     have hp := (x : ↥(stabilizer G p)).2
@@ -221,8 +220,8 @@ theorem card_stabilizer_coset_eq_card_stabilizer_inv_smul (H : Subgroup G) (p : 
     rw [mem_stabilizer_iff, Subgroup.smul_def] at hh
     rw [mem_stabilizer_iff, mul_smul, mul_smul, hh, smul_inv_smul]
   · -- same route back: membership in the conjugate subgroup is `h ∈ H` after cancellation
-    rw [mem_stabilizer_iff, compHom_smul_def (Subgroup.subtype (stabilizer G p)),
-      Subgroup.coe_subtype, ← mem_stabilizer_iff, stabilizer_quotientGroup_mk, mem_conj_smul]
+    rw [mem_stabilizer_iff, Subgroup.smul_def, ← mem_stabilizer_iff,
+      stabilizer_quotientGroup_mk, mem_conj_smul]
     simp [mul_assoc]
   · exact Subtype.ext (Subtype.ext (by simp [mul_assoc]))
   · exact Subtype.ext (Subtype.ext (by simp [mul_assoc]))

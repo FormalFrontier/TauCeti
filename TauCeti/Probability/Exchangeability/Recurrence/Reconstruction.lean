@@ -67,7 +67,7 @@ sequence depends on finitely many excursions, and over a countable discrete stat
 words form a countable discrete space, on which every map is measurable. -/
 theorem measurable_pathOfExcursions [Countable α] [MeasurableSingletonClass α] (a₀ : α) :
     Measurable (pathOfExcursions a₀ : (ℕ → List α) → ℕ → α) := by
-  refine measurable_pi_lambda _ fun i => ?_
+  refine Measurable.of_eval fun i => ?_
   have hfac : (fun b : ℕ → List α => pathOfExcursions a₀ b i) =
       (fun v : Fin (i + 1) → List α => loopPathAt a₀ (List.ofFn v) i) ∘
         fun (b : ℕ → List α) (j : Fin (i + 1)) => b j.val := by
@@ -85,7 +85,7 @@ theorem measurable_pathOfExcursions [Countable α] [MeasurableSingletonClass α]
   -- finite product of such spaces inherits both.
   have : MeasurableSingletonClass (List α) := inferInstance
   have : DiscreteMeasurableSpace (Fin (i + 1) → List α) := inferInstance
-  exact Measurable.of_discrete.comp (measurable_pi_lambda _ fun j => measurable_pi_apply _)
+  exact Measurable.of_discrete.comp (Measurable.of_eval fun j => measurable_pi_apply _)
 
 /-! ## The path law of a recurrent process -/
 
@@ -99,7 +99,7 @@ theorem pathLaw_eq_map_pathOfExcursions [Countable α] [MeasurableSingletonClass
     (h0 : ∀ᵐ ω ∂μ, X 0 ω = a₀) :
     pathLaw μ X = (pathLaw μ (excursionProcess X a₀)).map (pathOfExcursions a₀) := by
   have hΦ : AEMeasurable (fun ω k => excursionProcess X a₀ k ω) μ :=
-    aemeasurable_pi_lambda _ fun k => aemeasurable_excursionProcess hX a₀ k
+    AEMeasurable.of_eval fun k => aemeasurable_excursionProcess hX a₀ k
   have hae : (pathOfExcursions a₀ ∘ fun ω k => excursionProcess X a₀ k ω) =ᵐ[μ]
       fun ω i => X i ω := by
     filter_upwards [h0, hreturns] with ω hω0 hωinf

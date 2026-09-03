@@ -7,8 +7,6 @@ module
 
 public import Mathlib.LinearAlgebra.RootSystem.CartanMatrix
 
-public section
-
 /-!
 # Flipping a root pairing transposes its Cartan matrix
 
@@ -38,6 +36,8 @@ This file supplies the root-pairing half of the duality item of Layer 5 of
 two types are "identified only after `flip` (duality)"; the classification side of that item is
 `TauCeti.LinearAlgebra.RootSystem.Duality`.
 -/
+
+public section
 
 namespace TauCeti
 

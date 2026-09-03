@@ -57,7 +57,7 @@ protected theorem project {κ : Type w} (hπ : IsMultiCoupling π μ) (e : κ �
     (π.map fun x k ↦ x (e k)).map (Function.eval j) =
         π.map (Function.eval j ∘ fun x k ↦ x (e k)) :=
       Measure.map_map (measurable_pi_apply j)
-        (measurable_pi_lambda _ fun k ↦ measurable_pi_apply (e k))
+        (Measurable.of_eval fun k ↦ measurable_pi_apply (e k))
     _ = π.map (Function.eval (e j)) := by congr 2
     _ = μ (e j) := hπ.marginal_eq (e j)
 
@@ -74,7 +74,7 @@ protected theorem map {Y : ι → Type w} [∀ i, MeasurableSpace (Y i)]
     (π.map fun x j ↦ f j (x j)).map (Function.eval i) =
         π.map (Function.eval i ∘ fun x j ↦ f j (x j)) :=
       Measure.map_map (measurable_pi_apply i)
-        (measurable_pi_lambda _ fun j ↦ (hf j).comp (measurable_pi_apply j))
+        (Measurable.of_eval fun j ↦ (hf j).comp (measurable_pi_apply j))
     _ = π.map (f i ∘ Function.eval i) := by congr 2
     _ = (π.map (Function.eval i)).map (f i) :=
       (Measure.map_map (hf i) (measurable_pi_apply i)).symm
@@ -188,8 +188,8 @@ theorem project_comp {κ : Type w} {τ : Type*} (π : MultiCoupling μ) (e : κ 
   apply ext
   simp only [project, ProbabilityMeasure.toMeasure_map]
   rw [Measure.map_map
-    (measurable_pi_lambda _ fun k ↦ measurable_pi_apply (d k))
-    (measurable_pi_lambda _ fun j ↦ measurable_pi_apply (e j))]
+    (Measurable.of_eval fun k ↦ measurable_pi_apply (d k))
+    (Measurable.of_eval fun j ↦ measurable_pi_apply (e j))]
   rfl
 
 /-- Reindex a multi-marginal coupling along an equivalence of index types. -/

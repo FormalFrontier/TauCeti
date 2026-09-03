@@ -28,7 +28,7 @@ the prime-power factorization `Ideal.exists_eq_prod_pow` of an arbitrary nonzero
 with the uniqueness statement `Ideal.eq_and_eq_of_pow_mul_eq_pow_mul` and the relative primality
 `Ideal.IsPrimeTo.isRelPrime` of ideals supported on complementary sets, these are what turn a
 finite set of primes into a finite Euler product in
-`TauCeti/NumberTheory/ArithmeticDirichletSeries/EulerProduct.lean`.
+`TauCeti/NumberTheory/ArithmeticDirichletSeries/EulerProduct/Basic.lean`.
 
 It also collects how an isomorphism `e : R ≃+* R'` moves ideals: `Ideal.map e` preserves
 divisibility (`Ideal.map_dvd_map_iff_of_ringEquiv`, `Ideal.map_pow_dvd_map_iff_of_ringEquiv`,

@@ -8,8 +8,6 @@ module
 public import TauCeti.Combinatorics.SimpleGraph.BranchComponents
 public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Star.UniqueBranch
 
-public section
-
 /-!
 # The three arms of a simply-laced finite-type diagram
 
@@ -35,6 +33,8 @@ This is the simply-laced extraction step in Layer 5 of the root-systems roadmap.
 Humphreys, *Introduction to Lie Algebras and Representation Theory*, Section 11.4, and Bourbaki,
 *Lie Groups and Lie Algebras, Chapters 4--6*, Chapter VI, Section 4.
 -/
+
+public section
 
 namespace TauCeti
 

@@ -9,8 +9,6 @@ public import Mathlib.Algebra.Lie.Abelian
 public import Mathlib.LinearAlgebra.SymmetricAlgebra.Basis
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Basic
 
-public section
-
 /-!
 # The enveloping algebra of an abelian Lie algebra is its symmetric algebra
 
@@ -81,6 +79,8 @@ about a non-abelian `L`.
   (the Poincaré--Birkhoff--Witt theorem; §17.2 is the abelian case).
 * N. Bourbaki, *Lie Groups and Lie Algebras*, Chapter I, §2.7.
 -/
+
+public section
 
 universe u v w
 

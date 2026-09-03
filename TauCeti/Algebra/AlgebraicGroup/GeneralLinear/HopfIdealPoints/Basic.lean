@@ -23,6 +23,8 @@ vanishing on the Hopf ideal and is functorial in the value algebra.
   vanishing on the Hopf ideal.
 * `TauCeti.GeneralLinear.hopfIdealPointsSubgroup_le_of_le`: larger Hopf ideals cut out smaller
   point subgroups.
+* `TauCeti.GeneralLinear.hopfIdealPointsSubgroup_sup`: a join of Hopf ideals cuts out the
+  intersection of the point subgroups.
 * `TauCeti.GeneralLinear.mapHopfIdealPointsSubgroup`: functoriality of that subgroup in the
   value algebra.
 * `TauCeti.GeneralLinear.mapHopfIdealPointsSubgroup_injective`: an injective homomorphism of
@@ -186,6 +188,17 @@ theorem hopfIdealPointsSubgroup_le_of_le
     hopfIdealPointsSubgroup n J A ≤ hopfIdealPointsSubgroup n I A :=
   Subgroup.map_mono (CommHopfAlgCat.quotientPointsSubgroup_le_of_le
     (coordinateHopfAlgebra R n) hIJ (CommAlgCat.of R A))
+
+/-- **A join of Hopf ideals cuts out the intersection of the point subgroups.** Scheme-theoretic
+intersection of two closed subgroup schemes of `GLₙ` is intersection of their matrix points. -/
+theorem hopfIdealPointsSubgroup_sup
+    (I J : HopfIdeal R (coordinateHopfAlgebra R n))
+    (A : Type w) [CommRing A] [Algebra R A] :
+    hopfIdealPointsSubgroup n (I ⊔ J) A =
+      hopfIdealPointsSubgroup n I A ⊓ hopfIdealPointsSubgroup n J A := by
+  unfold hopfIdealPointsSubgroup
+  rw [CommHopfAlgCat.quotientPointsSubgroup_sup]
+  exact Subgroup.map_inf _ _ _ (pointsMulEquiv n).injective
 
 end HopfIdealPoints
 

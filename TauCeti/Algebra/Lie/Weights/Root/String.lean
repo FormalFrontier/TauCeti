@@ -9,8 +9,6 @@ public import TauCeti.Algebra.Lie.Weights.InvariantForm
 public import TauCeti.Algebra.Lie.Weights.Sl2System
 public import TauCeti.LinearAlgebra.RootSystem.InvariantForm.RootString
 
-public section
-
 /-!
 # Structure constants along a root string
 
@@ -75,6 +73,8 @@ integral normalization `N = ±(p + 1)`.
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §25.1--25.2.
 * R. W. Carter, *Simple Groups of Lie Type*, §4.1.
 -/
+
+public section
 
 namespace TauCeti
 
