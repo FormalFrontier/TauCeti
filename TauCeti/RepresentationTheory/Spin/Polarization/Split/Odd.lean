@@ -36,10 +36,9 @@ polarization can be used directly by the type-`B` spin representation.
 
 * C. Chevalley, *The Algebraic Theory of Spinors*, Chapter II.
 * N. Bourbaki, *Groupes et algèbres de Lie*, Chapters 4--6, Plate II.
-
-The definitions and proofs in this module follow the formal template of
-`TauCeti.RepresentationTheory.Spin.Polarization.SplitEven`; the additional scalar coordinate
-and norm-one remainder are specific to the odd-dimensional construction.
+* `TauCeti.RepresentationTheory.Spin.Polarization.Split.Even`, for the corresponding
+  even-dimensional polarization. The odd-dimensional construction adds the scalar coordinate
+  and its norm-one remainder.
 -/
 
 public section
@@ -257,6 +256,13 @@ noncomputable def splitOddPolarization (K : Type u) [CommRing K] (n : ℕ) :
 theorem splitOddPolarization_W (K : Type u) [CommRing K] (n : ℕ) :
     (splitOddPolarization K n).W =
       ((⊥ : Submodule K (Module.Dual K (Fin n → K))).prod ⊤).prod ⊥ := by
+  rw [splitOddPolarization]
+
+/-- The second isotropic summand of the split odd polarization is the dual-coordinate axis. -/
+@[simp]
+theorem splitOddPolarization_W' (K : Type u) [CommRing K] (n : ℕ) :
+    (splitOddPolarization K n).W' =
+      ((⊤ : Submodule K (Module.Dual K (Fin n → K))).prod ⊥).prod ⊥ := by
   rw [splitOddPolarization]
 
 /-- The orthogonal remainder of the split odd polarization is the final scalar axis. -/
