@@ -10,33 +10,21 @@ import TauCeti.Probability.DeFinetti
 /-!
 # Worked examples: the de Finetti public API
 
-This file imports **only** `TauCeti.Probability.DeFinetti`, and that is its whole content: each
-example is a bare reference to a name Layer 7 advertises, so the file elaborates exactly when the
-curated facade exports everything it promises. Nothing is proved and nothing is declared; the
-import is not public, so this adds no second route to the API.
+This file demonstrates the public de Finetti API available from the single facade import
+`TauCeti.Probability.DeFinetti`. The initial bare references give a compact index of the principal
+process predicates, implications, representation theorems, uniqueness results, and empirical
+convergence statements.
 
-A failure here means an export went missing, not that a proof broke: a summit can be proved, and
-its module built, while the facade never re-exports it, leaving the name unreachable for a caller
-who imports only the facade.
+The worked examples then use two complementary descriptions of an exchangeable law. The canonical
+mixing-law example shows that an i.i.d. path law has a Dirac de Finetti measure. The affine example
+shows that a convex combination of two Dirac mixing laws corresponds exactly to the same convex
+combination of the associated i.i.d. path laws, in both directions. Together they illustrate how
+the representation theorem and its affine equivalence are used in concrete calculations.
 
-## One advertised name does not exist
-
-Layer 7 spells one endpoint `exchangeable_of_mixedIID`; the repository proves it canonically as
-`MixedIID.exchangeable`, which is checked below under that name. No alias is introduced.
-
-Every other advertised name is checked below.
-
-## The mathematical worked examples live elsewhere
-
-The roadmap's worked-example list is discharged with the objects each concerns, not here: the
-conditionally i.i.d. coin-flip construction in `Exchangeability/ConditionallyIID/CoinFlips.lean`,
-the constant-witness characterisation of i.i.d. in `ConditionallyIID/Const.lean`, and the
-stationary but non-exchangeable 3-cycle in `Exchangeability/ThreeCycle.lean`.
-
-## References
-
-* Roadmap: `TauCetiRoadmap/Exchangeability/README.md`, **Layer 7** (public API and examples), whose
-  suggested home for this file is `TauCeti/Examples/Probability/DeFinetti.lean`.
+Because the file imports only the facade, these examples also ensure that the public entry point
+exposes every declaration needed for ordinary use without introducing another exported module
+path. The mixed-i.i.d. implication appears under its canonical receiver-style name
+`MixedIID.exchangeable`.
 -/
 
 open MeasureTheory
