@@ -13,10 +13,10 @@ import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
 # Densities from laws presented as `withDensity`
 
 Two bridges from a law given as `μ.withDensity f` to Mathlib's `MeasureTheory.HasPDF` and `pdf`,
-together with two bridges for a law presented as Lebesgue measure with a real-valued density:
+together with two bridges for a law presented by a nonnegative real-valued density:
 `integrable_withDensity_ofReal_iff` reduces integrability under such a law to integrability of the
-density-weighted function against Lebesgue measure, and `measureReal_withDensity_ofReal` computes
-the real mass of a measurable set as the integral of the density over it.
+density-weighted function against the reference measure, and `measureReal_withDensity_ofReal`
+computes the real mass of a measurable set as the integral of the density over it.
 
 Several of Mathlib's continuous scalar families can be *presented* as `withDensity` measures — some
 by definition, others only away from a degenerate parameter — and so can laws Tau Ceti builds on top
@@ -31,8 +31,8 @@ family can import it without acquiring the others.
 
 * `hasPDF_of_hasLaw_withDensity` — a law presented as `μ.withDensity f` gives `HasPDF`;
 * `pdf_eq_of_hasLaw_withDensity` — and its density is `f`;
-* `integrable_withDensity_ofReal_iff` — under a law `volume.withDensity (ENNReal.ofReal ∘ f)`, a
-  function is integrable iff `f`-weighted against Lebesgue measure it is;
+* `integrable_withDensity_ofReal_iff` — under a law `μ.withDensity (ENNReal.ofReal ∘ f)`, a
+  function is integrable iff `f`-weighted against the reference measure it is;
 * `measureReal_withDensity_ofReal` — the real mass of a set on which the nonnegative density `f` is
   integrable is its integral over the set.
 
@@ -72,31 +72,32 @@ theorem pdf_eq_of_hasLaw_withDensity [SigmaFinite μ] (hf : AEMeasurable f μ)
 
 section RealDensity
 
-variable {g ρ : ℝ → ℝ} {s : Set ℝ}
+variable {α F : Type*} [MeasurableSpace α] [NormedAddCommGroup F] [NormedSpace ℝ F]
+  {μ : Measure α} {g : α → F} {ρ : α → ℝ} {s : Set α}
 
-/-- Under a law presented as Lebesgue measure with the real-valued density `ρ`, a function is
-integrable iff its product with `ρ` is Lebesgue integrable. The density need only be nonnegative
+/-- Under a law presented by a real-valued density `ρ`, a function is integrable iff its scalar
+product with `ρ` is integrable against the reference measure. The density need only be nonnegative
 a.e.; the `ℝ≥0∞`-valued density used in the presentation is its `ENNReal.ofReal` lift. -/
-theorem integrable_withDensity_ofReal_iff (hρ : Measurable ρ) (hnn : 0 ≤ᵐ[volume] ρ) :
-    Integrable g (volume.withDensity (fun x => ENNReal.ofReal (ρ x))) ↔
-      Integrable (fun x => ρ x * g x) := by
-  have hlt : ∀ᵐ x : ℝ ∂volume, ENNReal.ofReal (ρ x) < ⊤ :=
+theorem integrable_withDensity_ofReal_iff (hρ : AEMeasurable ρ μ) (hnn : 0 ≤ᵐ[μ] ρ) :
+    Integrable g (μ.withDensity (fun x => ENNReal.ofReal (ρ x))) ↔
+      Integrable (fun x => ρ x • g x) μ := by
+  have hlt : ∀ᵐ x ∂μ, ENNReal.ofReal (ρ x) < ⊤ :=
     ae_of_all _ fun _ => ENNReal.ofReal_lt_top
-  rw [integrable_withDensity_iff_integrable_smul' hρ.ennreal_ofReal hlt]
+  rw [integrable_withDensity_iff_integrable_smul₀' hρ.ennreal_ofReal hlt]
   refine integrable_congr ?_
   filter_upwards [hnn] with x hx
-  rw [ENNReal.toReal_ofReal hx, smul_eq_mul, mul_comm]
+  rw [ENNReal.toReal_ofReal hx]
 
 /-- Integrating a nonnegative density that is integrable on `s` computes the real mass of `s`
-under the law presented as Lebesgue measure with that density. -/
-theorem measureReal_withDensity_ofReal (hnn : 0 ≤ᵐ[volume] ρ)
-    (hs : MeasurableSet s) (hint : IntegrableOn ρ s) :
-    (volume.withDensity (fun x => ENNReal.ofReal (ρ x))).real s = ∫ x in s, ρ x := by
-  have hnn' : 0 ≤ᵐ[volume.restrict s] ρ :=
+under the law presented by that density. -/
+theorem measureReal_withDensity_ofReal (hnn : 0 ≤ᵐ[μ] ρ)
+    (hs : MeasurableSet s) (hint : IntegrableOn ρ s μ) :
+    (μ.withDensity (fun x => ENNReal.ofReal (ρ x))).real s = ∫ x in s, ρ x ∂μ := by
+  have hnn' : 0 ≤ᵐ[μ.restrict s] ρ :=
     (ae_restrict_iff' hs).mpr (hnn.mono fun _ hx _ => hx)
   rw [measureReal_def, withDensity_apply _ hs,
     ← ofReal_integral_eq_lintegral_ofReal hint hnn']
-  exact ENNReal.toReal_ofReal (setIntegral_nonneg_of_ae hnn)
+  exact ENNReal.toReal_ofReal (setIntegral_nonneg_of_ae (μ := μ) hnn)
 
 end RealDensity
 

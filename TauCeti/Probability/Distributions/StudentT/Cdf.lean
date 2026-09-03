@@ -49,27 +49,19 @@ variable {ν q x t : ℝ}
 
 /-! ### The cumulative distribution function -/
 
-/-- The upper-tail integral of a valid Student t density: for `0 ≤ y`,
-`P(y < T) = (1 - I_{y²/(ν+y²)}(1/2, ν/2)) / 2`. -/
-private lemma integral_Ioi_studentTPDFReal_tail (hν : 0 < ν) {y : ℝ} (hy : 0 ≤ y) :
+private lemma integral_Ioi_studentTPDFReal_eq_betaKernel_tail (hν : 0 < ν) {y : ℝ}
+    (hy : 0 ≤ y) :
     ∫ z in Ioi y, studentTPDFReal ν z =
-      (1 / 2 : ℝ) * (1 - regularizedIncompleteBeta (1 / 2) (ν / 2) (y ^ 2 / (ν + y ^ 2))) := by
+      (Real.Gamma ((ν + 1) / 2) / (Real.sqrt (ν * Real.pi) * Real.Gamma (ν / 2)) *
+          Real.rpow ν (1 / 2 : ℝ) / 2) *
+        ∫ w in Ioi (y ^ 2 / ν), w ^ (-(1 / 2 : ℝ)) * (1 + w) ^ (-((ν + 1) / 2)) := by
   set s := (ν + 1) / 2 with hs
   set C := Real.Gamma s / (Real.sqrt (ν * Real.pi) * Real.Gamma (ν / 2)) with hC
   set y0 := y ^ 2 / ν
-  set u0 := y ^ 2 / (ν + y ^ 2)
-  have hy0_eq : u0 / (1 - u0) = y0 := by
-    simp only [u0, y0]
-    field_simp [hν.ne']; ring
-  have hu00 : 0 ≤ u0 := by positivity
-  have hu01 : u0 < 1 := by
-    simp only [u0]
-    have h : y ^ 2 < ν + y ^ 2 := by linarith
-    exact (div_lt_one (by positivity)).mpr h
   let g1 : ℝ → ℝ := fun w => C * ν ^ (1 / 2 : ℝ) / 2 *
       (w ^ (-(1 / 2 : ℝ)) * (1 + w) ^ (-s))
   have hinj : InjOn (fun z : ℝ => z ^ 2 / ν) (Ioi y) :=
-    (injOn_sq_div_const_Ioi hν).mono fun z hz => hy.trans_lt hz
+    (sq_div_const_injOn_Ioi hν).mono fun z hz => hy.trans_lt hz
   have hderiv1 : ∀ z ∈ Ioi y,
       HasDerivWithinAt (fun z : ℝ => z ^ 2 / ν) (2 * z / ν) (Ioi y) z :=
     fun z _ => (hasDerivAt_sq_div_const ν z).hasDerivWithinAt
@@ -113,7 +105,25 @@ private lemma integral_Ioi_studentTPDFReal_tail (hν : 0 < ν) {y : ℝ} (hy : 0
     exact h'
   have h1 : ∫ z in Ioi y, studentTPDFReal ν z = ∫ w in Ioi y0, g1 w := by
     rw [← h12, ← h11]
+  set K := C * Real.rpow ν (1 / 2 : ℝ) / 2 with hK
+  have hg1 : ∫ w in Ioi y0, g1 w =
+      K * ∫ w in Ioi y0, w ^ (-(1 / 2 : ℝ)) * (1 + w) ^ (-s) := by
+    have : g1 = fun w => K * (w ^ (-(1 / 2 : ℝ)) * (1 + w) ^ (-s)) := by
+      funext w
+      simp only [g1, hK]
+      rfl
+    rw [this, integral_const_mul]
   rw [h1]
+  rw [hg1]
+
+/-- The half-line tail of Euler's second beta integral, written through the chart
+`u ↦ u / (1 - u)`. -/
+private lemma integral_Ioi_betaKernel_tail_eq (hν : 0 < ν) {u0 : ℝ} (hu00 : 0 ≤ u0)
+    (hu01 : u0 < 1) :
+    ∫ w in Ioi (u0 / (1 - u0)), w ^ (-(1 / 2 : ℝ)) * (1 + w) ^ (-((ν + 1) / 2)) =
+      beta (1 / 2) (ν / 2) *
+        (1 - regularizedIncompleteBeta (1 / 2) (ν / 2) u0) := by
+  set s := (ν + 1) / 2 with hs
   have hderiv2 : ∀ u ∈ Ioo u0 1,
       HasDerivWithinAt (fun u : ℝ => u / (1 - u)) ((1 - u) ^ 2)⁻¹ (Ioo u0 1) u :=
     fun u hu => (hasDerivAt_div_one_sub (ne_of_lt hu.2)).hasDerivWithinAt
@@ -153,12 +163,13 @@ private lemma integral_Ioi_studentTPDFReal_tail (hν : 0 < ν) {y : ℝ} (hy : 0
       rw [hstep]
       exact hcov u hu
     exact hgoal
-  have himg : (fun u : ℝ => u / (1 - u)) '' Ioo u0 1 = Ioi y0 := by
-    rw [image_div_one_sub_Ioi hu00 hu01, hy0_eq]
+  have himg :
+      (fun u : ℝ => u / (1 - u)) '' Ioo u0 1 = Ioi (u0 / (1 - u0)) := by
+    rw [image_div_one_sub_Ioo hu01]
   have h21 : ∫ u in Ioo u0 1, |((1 - u) ^ 2)⁻¹| • k0 (u / (1 - u)) =
-      ∫ w in Ioi y0, k0 w := by
+      ∫ w in Ioi (u0 / (1 - u0)), k0 w := by
     rw [← integral_image_eq_integral_abs_deriv_smul measurableSet_Ioo hderiv2
-        (injOn_div_one_sub_Ioi hu01) k0, himg]
+        (div_one_sub_injOn_Ioo (u0 := u0)) k0, himg]
   have h22eq : EqOn (fun u : ℝ => |((1 - u) ^ 2)⁻¹| • k0 (u / (1 - u)))
       (fun u : ℝ => ((1 - u) ^ 2)⁻¹ • k0 (u / (1 - u))) (Ioo u0 1) := by
     intro u hu
@@ -166,7 +177,7 @@ private lemma integral_Ioi_studentTPDFReal_tail (hν : 0 < ν) {y : ℝ} (hy : 0
   have h22 : ∫ u in Ioo u0 1, |((1 - u) ^ 2)⁻¹| • k0 (u / (1 - u)) =
       ∫ u in Ioo u0 1, ((1 - u) ^ 2)⁻¹ • k0 (u / (1 - u)) := by
     rw [setIntegral_congr_fun measurableSet_Ioo h22eq]
-  have h2 : ∫ w in Ioi y0, k0 w = ∫ u in Ioo u0 1, k u := by
+  have h2 : ∫ w in Ioi (u0 / (1 - u0)), k0 w = ∫ u in Ioo u0 1, k u := by
     rw [← h21, h22, setIntegral_congr_fun measurableSet_Ioo hcov']
   have hmem01 : (0 : ℝ) ∈ Icc (0 : ℝ) 1 := ⟨le_rfl, zero_le_one⟩
   have hmem11 : (1 : ℝ) ∈ Icc (0 : ℝ) 1 := ⟨zero_le_one, le_rfl⟩
@@ -207,6 +218,20 @@ private lemma integral_Ioi_studentTPDFReal_tail (hν : 0 < ν) {y : ℝ} (hy : 0
       rw [this]
       field_simp [hbetane]
     exact hgoal
+  have htailval : beta (1 / 2) (ν / 2) -
+      beta (1 / 2) (ν / 2) * regularizedIncompleteBeta (1 / 2) (ν / 2) u0 =
+      beta (1 / 2) (ν / 2) *
+        (1 - regularizedIncompleteBeta (1 / 2) (ν / 2) u0) := by ring
+  change ∫ w in Ioi (u0 / (1 - u0)), k0 w =
+    beta (1 / 2) (ν / 2) * (1 - regularizedIncompleteBeta (1 / 2) (ν / 2) u0)
+  rw [h2, h3, h7, htailval]
+
+/-- The Student t normalizing constant times the beta-tail normalizer is `1 / 2`. -/
+private lemma studentT_tail_normalizing_const (hν : 0 < ν) :
+    Real.Gamma ((ν + 1) / 2) / (Real.sqrt (ν * Real.pi) * Real.Gamma (ν / 2)) *
+        Real.rpow ν (1 / 2 : ℝ) / 2 * beta (1 / 2) (ν / 2) = 1 / 2 := by
+  set s := (ν + 1) / 2 with hs
+  set C := Real.Gamma s / (Real.sqrt (ν * Real.pi) * Real.Gamma (ν / 2)) with hC
   have hsqrt : Real.sqrt (ν * Real.pi) = Real.sqrt ν * Real.sqrt Real.pi := by
     rw [Real.sqrt_mul hν.le]
   have hrpow : Real.rpow ν (1 / 2 : ℝ) = Real.sqrt ν :=
@@ -215,46 +240,42 @@ private lemma integral_Ioi_studentTPDFReal_tail (hν : 0 < ν) {y : ℝ} (hy : 0
   have hspos : 0 < s := by dsimp only [s]; linarith
   have hGnuv2 : Real.Gamma (ν / 2) ≠ 0 :=
     Real.Gamma_ne_zero fun m => by linarith
-  have hconst : C * Real.rpow ν (1 / 2 : ℝ) / 2 * beta (1 / 2) (ν / 2) = 1 / 2 := by
-    have hbeta : beta (1 / 2) (ν / 2) =
-        Real.Gamma (1 / 2) * Real.Gamma (ν / 2) / Real.Gamma s := by
-      rw [ProbabilityTheory.beta, hs']
-    calc
-      C * Real.rpow ν (1 / 2 : ℝ) / 2 * beta (1 / 2) (ν / 2)
-        = C * Real.rpow ν (1 / 2 : ℝ) / 2 *
-            (Real.Gamma (1 / 2) * Real.Gamma (ν / 2) / Real.Gamma s) := by rw [hbeta]
-      _ = 1 / 2 := by
-        rw [hC, hrpow, hsqrt, Real.Gamma_one_half_eq]
-        field_simp [hGnuv2, (Real.Gamma_pos_of_pos hspos).ne',
-          Real.sqrt_ne_zero'.mpr hν, Real.sqrt_ne_zero'.mpr Real.pi_pos]
-  have htailval : beta (1 / 2) (ν / 2) -
-      beta (1 / 2) (ν / 2) * regularizedIncompleteBeta (1 / 2) (ν / 2) u0 =
-      beta (1 / 2) (ν / 2) *
-        (1 - regularizedIncompleteBeta (1 / 2) (ν / 2) u0) := by ring
-  set K := C * Real.rpow ν (1 / 2 : ℝ) / 2 with hK
-  have hfinal : K * (∫ w in Ioi y0, k0 w) =
-      (1 / 2 : ℝ) * (1 - regularizedIncompleteBeta (1 / 2) (ν / 2) u0) := by
-    have h9 : K * (∫ w in Ioi y0, k0 w) =
-        K * (beta (1 / 2) (ν / 2) *
-          (1 - regularizedIncompleteBeta (1 / 2) (ν / 2) u0)) := by
-      rw [h2, h3, h7, htailval]
-    rw [h9]
-    have h10 : K * (beta (1 / 2) (ν / 2) *
-        (1 - regularizedIncompleteBeta (1 / 2) (ν / 2) u0)) =
-        (K * beta (1 / 2) (ν / 2)) *
-          (1 - regularizedIncompleteBeta (1 / 2) (ν / 2) u0) := by ring
-    rw [h10, hconst]
-  have hg1 : ∫ w in Ioi y0, g1 w = K * ∫ w in Ioi y0, k0 w := by
-    have : g1 = fun w => K * k0 w := by
-      funext w
-      simp only [g1, hK, k0]; rfl
-    rw [this, integral_const_mul]
-  rw [hg1]
-  exact hfinal
+  have hbeta : beta (1 / 2) (ν / 2) =
+      Real.Gamma (1 / 2) * Real.Gamma (ν / 2) / Real.Gamma s := by
+    rw [ProbabilityTheory.beta, hs']
+  calc
+    Real.Gamma ((ν + 1) / 2) / (Real.sqrt (ν * Real.pi) * Real.Gamma (ν / 2)) *
+        Real.rpow ν (1 / 2 : ℝ) / 2 * beta (1 / 2) (ν / 2) =
+      C * Real.rpow ν (1 / 2 : ℝ) / 2 *
+        (Real.Gamma (1 / 2) * Real.Gamma (ν / 2) / Real.Gamma s) := by
+          rw [hbeta, hC, hs]
+    _ = 1 / 2 := by
+      rw [hC, hrpow, hsqrt, Real.Gamma_one_half_eq]
+      field_simp [hGnuv2, (Real.Gamma_pos_of_pos hspos).ne',
+        Real.sqrt_ne_zero'.mpr hν, Real.sqrt_ne_zero'.mpr Real.pi_pos]
+
+/-- The upper-tail integral of a valid Student t density: for `0 ≤ y`,
+`P(y < T) = (1 - I_{y²/(ν+y²)}(1/2, ν/2)) / 2`. -/
+private lemma integral_Ioi_studentTPDFReal_tail (hν : 0 < ν) {y : ℝ} (hy : 0 ≤ y) :
+    ∫ z in Ioi y, studentTPDFReal ν z =
+      (1 / 2 : ℝ) * (1 - regularizedIncompleteBeta (1 / 2) (ν / 2) (y ^ 2 / (ν + y ^ 2))) := by
+  set u0 := y ^ 2 / (ν + y ^ 2)
+  have hy0_eq : u0 / (1 - u0) = y ^ 2 / ν := by
+    simp only [u0]
+    field_simp [hν.ne']; ring
+  have hu00 : 0 ≤ u0 := by positivity
+  have hu01 : u0 < 1 := by
+    simp only [u0]
+    have h : y ^ 2 < ν + y ^ 2 := by linarith
+    exact (div_lt_one (by positivity)).mpr h
+  rw [integral_Ioi_studentTPDFReal_eq_betaKernel_tail hν hy, ← hy0_eq,
+    integral_Ioi_betaKernel_tail_eq hν hu00 hu01]
+  rw [← mul_assoc, studentT_tail_normalizing_const hν]
 
 /-- **The cumulative distribution function of a Student t law.** Writing
 `z = ν / (ν + x ^ 2)`, it is `regularizedIncompleteBeta (ν / 2) (1 / 2) z / 2` for `x < 0` and
 `1 - regularizedIncompleteBeta (ν / 2) (1 / 2) z / 2` for `0 ≤ x`. -/
+@[simp]
 theorem cdf_studentTMeasure_eq (hν : 0 < ν) (x : ℝ) :
     cdf (studentTMeasure ν) x =
       if x < 0 then regularizedIncompleteBeta (ν / 2) (1 / 2) (ν / (ν + x ^ 2)) / 2
@@ -271,7 +292,7 @@ theorem cdf_studentTMeasure_eq (hν : 0 < ν) (x : ℝ) :
       funext x
       rw [studentTPDF_of_pos hν x, ← studentTPDFReal_of_pos hν x]
     have hreal : (studentTMeasure ν).real (Ioi y) = ∫ z in Ioi y, studentTPDFReal ν z := by
-      rw [studentTMeasure, hpdf]
+      rw [studentTMeasure_def, hpdf]
       exact measureReal_withDensity_ofReal
         (ae_of_all _ fun _ => studentTPDFReal_nonneg ν _) measurableSet_Ioi
         (integrable_studentTPDFReal ν).integrableOn
@@ -301,7 +322,9 @@ theorem cdf_studentTMeasure_eq (hν : 0 < ν) (x : ℝ) :
     have hpre : (fun w : ℝ => -w) ⁻¹' (Iic x) = Ici (-x) := by
       ext w
       simp [le_iff_eq_or_lt]
-    have hnull : (studentTMeasure ν) ({-x} : Set ℝ) = 0 := measure_singleton (-x)
+    have hnull : (studentTMeasure ν) ({-x} : Set ℝ) = 0 := by
+      rw [studentTMeasure_def]
+      exact measure_singleton (-x)
     have h5 : Ici (-x) = Ioi (-x) ∪ ({-x} : Set ℝ) := by
       ext w
       simp [le_iff_eq_or_lt]
