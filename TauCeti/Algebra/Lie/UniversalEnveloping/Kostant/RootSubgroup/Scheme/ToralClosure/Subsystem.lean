@@ -54,11 +54,6 @@ generator family, defining ideal and factorization pattern for the full toral cl
 specializes to a selected set of root indices, and it is the scheme-level counterpart of the
 pointwise subsystem subgroups in
 `TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Borel`.
-
-This advances the pinning and explicit Chevalley--Demazure construction targets in Layer 9 of
-`TauCetiRoadmap/ReductiveGroups/README.md`. A positive-root specialization supplies a candidate
-carrier for the Borel required by the pinning consumed in milestone L0 of the CFSGStatement
-roadmap; its Borel and pinning-compatibility properties remain to be proved.
 -/
 
 public section
@@ -109,39 +104,9 @@ theorem kostantTorusSubsystemDefiningIdeal_def (S : Set I)
             | .inl _ => AdditiveGroup.coordinateHopfAlgebra ℤ
             | .inr _ =>
                 (DiagonalizableGroup.coordinateRing ℤ (SplitTorus.characterGroup κ)).obj) := by
-  let p := ((fun j : Sum S Unit =>
-    match j with
-    | .inl i => kostantRootSubgroupCoordinateMap e h ρ M hM i.1 (hnilS i) b
-    | .inr _ => GeneralLinear.weightTorusCoordinateMap (R := ℤ) wt) :
-    (j : Sum S Unit) → GeneralLinear.coordinateHopfAlgebra ℤ n ⟶
-      match j with
-      | .inl _ => AdditiveGroup.coordinateHopfAlgebra ℤ
-      | .inr _ =>
-          (DiagonalizableGroup.coordinateRing ℤ (SplitTorus.characterGroup κ)).obj)
-  change kostantTorusSubsystemDefiningIdeal e h ρ M hM b wt S hnilS =
-    CommHopfAlgCat.commonKernelHopfIdeal p
-  apply le_antisymm
-  · rw [CommHopfAlgCat.le_commonKernelHopfIdeal_iff]
-    rintro (i | u)
-    · simpa only [p, kostantTorusSubsystemDefiningIdeal,
-        ToralClosure.Internal.kostantToralGeneratorMap_inl] using
-        CommHopfAlgCat.commonKernelHopfIdeal_toIdeal_le_ker
-          (ToralClosure.Internal.kostantToralGeneratorMap
-            e h ρ M hM b wt Subtype.val hnilS) (.inl i)
-    · rcases u with ⟨⟩
-      simpa only [p, kostantTorusSubsystemDefiningIdeal,
-        ToralClosure.Internal.kostantToralGeneratorMap_inr] using
-        CommHopfAlgCat.commonKernelHopfIdeal_toIdeal_le_ker
-          (ToralClosure.Internal.kostantToralGeneratorMap
-            e h ρ M hM b wt Subtype.val hnilS) (.inr ())
-  · rw [kostantTorusSubsystemDefiningIdeal,
-      CommHopfAlgCat.le_commonKernelHopfIdeal_iff]
-    rintro (i | u)
-    · simpa only [p, ToralClosure.Internal.kostantToralGeneratorMap_inl] using
-        CommHopfAlgCat.commonKernelHopfIdeal_toIdeal_le_ker p (Sum.inl (β := Unit) i)
-    · rcases u with ⟨⟩
-      simpa only [p, ToralClosure.Internal.kostantToralGeneratorMap_inr] using
-        CommHopfAlgCat.commonKernelHopfIdeal_toIdeal_le_ker p (Sum.inr (α := S) ())
+  unfold kostantTorusSubsystemDefiningIdeal
+  exact ToralClosure.Internal.commonKernelHopfIdeal_kostantToralGeneratorMap_subtype
+    e h ρ M hM b wt S hnilS
 
 /-- A Hopf ideal lies in the subsystem defining ideal exactly when the selected root-subgroup
 maps and the weight-torus map kill it. This is the coordinate universal property of the closed

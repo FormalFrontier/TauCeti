@@ -75,4 +75,31 @@ theorem kostantToralGeneratorMap_inr (r : J → I)
       GeneralLinear.weightTorusCoordinateMap wt := by
   rfl
 
+/-- The common kernel of a subtype-indexed generator family can be written using its root and
+torus branches without exposing the implementation of the family itself. -/
+theorem commonKernelHopfIdeal_kostantToralGeneratorMap_subtype (S : Set I)
+    (hnilS : ∀ i : S, IsNilpotent
+      (rho (_root_.UniversalEnvelopingAlgebra.ι ℚ (e i.1)))) :
+    CommHopfAlgCat.commonKernelHopfIdeal
+        (kostantToralGeneratorMap e h rho M hM b wt Subtype.val hnilS) =
+      CommHopfAlgCat.commonKernelHopfIdeal
+        ((fun j : Sum S Unit =>
+          match j with
+          | .inl i => kostantRootSubgroupCoordinateMap e h rho M hM i.1 (hnilS i) b
+          | .inr _ => GeneralLinear.weightTorusCoordinateMap (R := ℤ) wt) :
+          (j : Sum S Unit) → GeneralLinear.coordinateHopfAlgebra ℤ n ⟶
+            match j with
+            | .inl _ => AdditiveGroup.coordinateHopfAlgebra ℤ
+            | .inr _ =>
+                (DiagonalizableGroup.coordinateRing ℤ
+                  (SplitTorus.characterGroup kappa)).obj) := by
+  unfold kostantToralGeneratorMap kostantToralGeneratorCodomain
+  congr 1
+  · funext j
+    rcases j with i | ⟨⟩ <;> rfl
+  · apply Function.hfunext rfl
+    intro j j' hj
+    cases hj
+    rcases j with i | ⟨⟩ <;> rfl
+
 end TauCeti.UniversalEnvelopingAlgebra.ToralClosure.Internal
