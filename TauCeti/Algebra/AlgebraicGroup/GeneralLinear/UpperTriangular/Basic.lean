@@ -74,6 +74,13 @@ theorem weights_apply (i : Fin n) : weights n i = (n : ℤ) - 1 - (i : ℤ) :=
 theorem weights_lt_weights_iff (i j : Fin n) : weights n i < weights n j ↔ j < i := by
   simp [weights]
 
+/-- The standard upper-triangular weights are pairwise distinct. -/
+theorem weights_injective : Function.Injective (weights n) := by
+  intro i j hij
+  apply Fin.ext
+  rw [weights_apply, weights_apply] at hij
+  omega
+
 /-- The matrix coordinates strictly below the diagonal. -/
 def definingRelationSet : Set (GeneralLinear.coordinateHopfAlgebra R n) :=
   {x | ∃ i j, j < i ∧

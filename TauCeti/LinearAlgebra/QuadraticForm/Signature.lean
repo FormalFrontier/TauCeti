@@ -5,10 +5,10 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.LinearAlgebra.BilinearForm.Properties
 public import Mathlib.LinearAlgebra.Matrix.BilinearForm
 import Mathlib.LinearAlgebra.Projection
 public import Mathlib.LinearAlgebra.QuadraticForm.Signature
+public import TauCeti.LinearAlgebra.BilinearForm.PosSemidef
 public import TauCeti.LinearAlgebra.QuadraticForm.Radical
 public import TauCeti.LinearAlgebra.Submodule.Prod
 
@@ -27,25 +27,25 @@ Finally, both indices are additive under orthogonal products.
 
 ## Main results
 
-* `TauCeti.QuadraticForm.forall_nonneg_iff_sigNeg_eq_zero`: nonnegativity is characterized by
+* `QuadraticForm.forall_nonneg_iff_sigNeg_eq_zero`: nonnegativity is characterized by
   vanishing negative index of inertia.
-* `TauCeti.QuadraticForm.forall_nonpos_iff_sigPos_eq_zero`: nonpositivity is characterized by
+* `QuadraticForm.forall_nonpos_iff_sigPos_eq_zero`: nonpositivity is characterized by
   vanishing positive index of inertia.
-* `TauCeti.QuadraticForm.sigPos_restrict_le`: restriction to a subspace cannot increase the
+* `QuadraticForm.sigPos_restrict_le`: restriction to a subspace cannot increase the
   positive index of inertia.
-* `TauCeti.QuadraticForm.sigNeg_restrict_le`: restriction to a subspace cannot increase the
+* `QuadraticForm.sigNeg_restrict_le`: restriction to a subspace cannot increase the
   negative index of inertia.
-* `TauCeti.QuadraticForm.sigPos_smul_of_pos` and
-  `TauCeti.QuadraticForm.sigNeg_smul_of_pos`: positive scaling preserves both indices.
-* `TauCeti.QuadraticForm.sigPos_smul_of_neg` and
-  `TauCeti.QuadraticForm.sigNeg_smul_of_neg`: negative scaling exchanges the two indices.
-* `TauCeti.QuadraticForm.sigPos_lift_radical`: quotienting by the radical preserves the positive
+* `QuadraticForm.sigPos_smul_of_pos` and `QuadraticForm.sigNeg_smul_of_pos`: positive scaling
+  preserves both indices.
+* `QuadraticForm.sigPos_smul_of_neg` and `QuadraticForm.sigNeg_smul_of_neg`: negative scaling
+  exchanges the two indices.
+* `QuadraticForm.sigPos_lift_radical`: quotienting by the radical preserves the positive
   index of inertia.
-* `TauCeti.QuadraticForm.sigNeg_lift_radical`: quotienting by the radical preserves the negative
+* `QuadraticForm.sigNeg_lift_radical`: quotienting by the radical preserves the negative
   index of inertia.
-* `TauCeti.QuadraticForm.sigPos_prod` and `TauCeti.QuadraticForm.sigNeg_prod`: the indices of
+* `QuadraticForm.sigPos_prod` and `QuadraticForm.sigNeg_prod`: the indices of
   inertia are additive under orthogonal products.
-* `TauCeti.QuadraticForm.posDef_iff_sigNeg_eq_zero_and_radical_eq_bot`: positive-definiteness
+* `QuadraticForm.posDef_iff_sigNeg_eq_zero_and_radical_eq_bot`: positive-definiteness
   is characterized by vanishing negative index and trivial radical.
 
 ## References
@@ -57,11 +57,7 @@ public section
 
 open Finset QuadraticMap
 
-namespace TauCeti
-
 namespace QuadraticForm
-
-open _root_.QuadraticForm
 
 variable {K M : Type*} [Field K] [LinearOrder K] [IsStrictOrderedRing K]
   [AddCommGroup M] [Module K M] [FiniteDimensional K M]
@@ -256,8 +252,6 @@ end QuadraticForm
 
 namespace QuadraticForm
 
-open _root_.QuadraticForm
-
 variable {K M : Type*} [Field K] [AddCommGroup M] [Module K M]
 
 /-- An arbitrarily chosen complement to the radical, used only to compare inertia indices. -/
@@ -388,20 +382,6 @@ namespace LinearMap.BilinForm
 
 open _root_.QuadraticForm
 
-section Semiring
-
-variable {R M : Type*} [CommSemiring R] [AddCommMonoid M] [Module R M] [LE R]
-
-/-- A symmetric bilinear form is positive-semidefinite if and only if its values on all vectors
-are nonnegative. -/
-@[grind =]
-theorem isPosSemidef_iff_forall_nonneg (B : LinearMap.BilinForm R M) (hB : B.IsSymm) :
-    B.IsPosSemidef ↔ ∀ x, 0 ≤ B x x := by
-  rw [LinearMap.BilinForm.isPosSemidef_def, LinearMap.BilinForm.isNonneg_def]
-  simp only [hB, true_and]
-
-end Semiring
-
 variable {K M : Type*} [Field K] [LinearOrder K] [IsStrictOrderedRing K]
   [AddCommGroup M] [Module K M] [FiniteDimensional K M]
 
@@ -438,5 +418,3 @@ theorem posDef_toQuadraticMap_iff_finrank_ker_eq_zero_and_sigNeg_eq_zero
     Submodule.finrank_eq_zero, and_comm]
 
 end LinearMap.BilinForm
-
-end TauCeti

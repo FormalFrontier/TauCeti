@@ -72,6 +72,14 @@ variable {a r : ℝ}
 
 /-! ### Reduction to the positive half-line -/
 
+/-- A gamma measure is almost everywhere strictly positive, for all parameter values. -/
+theorem ae_pos_gammaMeasure (a r : ℝ) :
+    ∀ᵐ x ∂gammaMeasure a r, 0 < x := by
+  rw [gammaMeasure, ae_withDensity_iff (Probability.measurable_gammaPDF a r)]
+  filter_upwards [(volume : Measure ℝ).ae_ne 0] with x hx hpdf
+  by_contra hxpos
+  exact hpdf (gammaPDF_of_neg (lt_of_le_of_ne (le_of_not_gt hxpos) hx))
+
 /-- On the positive half-line the gamma density is given by its closed formula. -/
 private lemma gammaPDFReal_of_pos {x : ℝ} (hx : 0 < x) :
     gammaPDFReal a r x = r ^ a / Real.Gamma a * x ^ (a - 1) * exp (-(r * x)) := by
