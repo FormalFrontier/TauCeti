@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.FieldTheory.FunctionField.Differential.Weil
+import TauCeti.FieldTheory.FunctionField.Differential.Dimension
 
 /-!
 # Local components of a Weil differential
@@ -27,11 +28,16 @@ being a linear form on `A_F / (A_F(D) + F)` — gives `∑_P ω_P (x) = 0`, the 
 theorem**: it is Stichtenoth's `(1.45)` for `x = 1`, and it holds over an arbitrary constant field,
 with no analysis and before any residue map has been constructed.
 
+Once the constant field is exact, no local component of a nonzero Weil differential vanishes, so a
+single local component already determines `ω`.  Both statements are proved here without the
+divisor `(ω)`: a vanishing `ω_P` would let a divisor bounding `ω` be raised by an arbitrary
+multiple of `P` and still bound it, while a divisor of large enough degree bounds no nonzero Weil
+differential at all.
+
 This is Stichtenoth, *Algebraic Function Fields and Codes*, 2nd ed., Definitions 1.7.1,
-Proposition 1.7.2 and the divisor-free half of Proposition 1.7.3(a).  The remaining statements of
-Section I.7 — that no local component of a nonzero Weil differential vanishes, that `v_P (ω)` is
-the largest bound its local component respects, and the explicit generator of `Ω_{k(x)}` — need
-the divisor of a Weil differential, and are not proved here.
+Proposition 1.7.2 and the divisor-free parts of Proposition 1.7.3.  The remaining statements of
+Section I.7 — that `v_P (ω)` is the largest bound its local component respects, and the explicit
+generator of `Ω_{k(x)}` — need the divisor of a Weil differential, and are not proved here.
 
 The repartitions `ι_P x` themselves are built in
 `TauCeti.FieldTheory.FunctionField.Repartition.Basic`, next to the repartition space and its
@@ -56,6 +62,13 @@ filtration, which are all they depend on.
   `∑_P ω_P (x) = 0` for every function `x` (Stichtenoth, (1.45)).
 * `TauCeti.eq_zero_iff_repartitionDualComponent_eq_zero`: a Weil differential all of whose local
   components vanish is zero.
+* `TauCeti.repartitionDualComponent_eq_zero_iff` and
+  `TauCeti.repartitionDualComponent_ne_zero`: **no local component of a nonzero Weil differential
+  vanishes** (Stichtenoth, Proposition 1.7.3).  The bound this puts on the pole orders that `ω_P`
+  kills is `TauCeti.Place.bddAbove_setOf_forall_valuation_le_apply_eq_zero`, a statement about an
+  arbitrary nonzero linear form on `F` that lives with the order filtration.
+* `TauCeti.eq_of_repartitionDualComponent_eq`: **one local component determines a Weil
+  differential**.
 
 ## References
 
@@ -221,5 +234,53 @@ theorem eq_zero_iff_repartitionDualComponent_eq_zero
   refine ⟨fun h P ↦ by subst h; ext x; simp, fun h ↦ LinearMap.ext fun a ↦ ?_⟩
   rw [LinearMap.zero_apply, apply_eq_finsum_repartitionDualComponent hω a]
   simp only [h, LinearMap.zero_apply, finsum_zero]
+
+/-! ### Nonvanishing of a single local component -/
+
+/-- **A single local component already detects a nonzero Weil differential** (Stichtenoth,
+Proposition 1.7.3): the local component of `ω ∈ Ω_F` at a place `P` vanishes exactly when `ω` does.
+
+Membership in `Ω_F(D)` is a conjunction over the places of a condition on the single local
+component there, so a vanishing `ω_P` would impose no condition at `P`: a divisor bounding `ω`
+could then be raised by an arbitrary multiple of `P` and would still bound it.  Those divisors
+have arbitrarily large degree, and a divisor of large enough degree bounds no nonzero Weil
+differential. -/
+@[simp]
+theorem repartitionDualComponent_eq_zero_iff (hF : IsFunctionField k F)
+    (hex : IsIntegrallyClosedIn k F) {ω : Module.Dual k ↥(repartitionSpace k F)}
+    (hω : ω ∈ weilDifferentialSpace k F) (P : Place k F) :
+    repartitionDualComponent ω P = 0 ↔ ω = 0 := by
+  refine ⟨fun hP ↦ ?_, fun h ↦ by ext x; simp [h]⟩
+  obtain ⟨D, hD⟩ := mem_weilDifferentialSpace_iff.mp hω
+  obtain ⟨c, hc⟩ := exists_forall_indexOfSpecialty_eq_zero hF hex
+  obtain ⟨n, hn⟩ := Divisor.exists_le_degree_add_nsmul_ofPoint hF D P c
+  have hmem : ω ∈ weilDifferentialFiltration (D + n • WeilDivisor.ofPoint P) := by
+    rw [mem_weilDifferentialFiltration_iff_repartitionDualComponent_eq_zero hω]
+    intro Q x hx
+    rcases eq_or_ne Q P with rfl | hQ
+    · simp [hP]
+    · exact repartitionDualComponent_apply_eq_zero_of_le hD Q (by simpa [hQ] using hx)
+  simpa [(weilDifferentialFiltration_eq_bot_iff_indexOfSpecialty_eq_zero hF hex _).mpr
+    (hc _ hn)] using hmem
+
+/-- **No local component of a nonzero Weil differential vanishes** (Stichtenoth,
+Proposition 1.7.3): if `ω ∈ Ω_F` is nonzero then `ω_P ≠ 0` at every place `P`. -/
+theorem repartitionDualComponent_ne_zero (hF : IsFunctionField k F)
+    (hex : IsIntegrallyClosedIn k F) {ω : Module.Dual k ↥(repartitionSpace k F)}
+    (hω : ω ∈ weilDifferentialSpace k F) (hω0 : ω ≠ 0) (P : Place k F) :
+    repartitionDualComponent ω P ≠ 0 :=
+  fun hP ↦ hω0 ((repartitionDualComponent_eq_zero_iff hF hex hω P).mp hP)
+
+/-- **A Weil differential is determined by any one of its local components** (Stichtenoth,
+Proposition 1.7.3): two Weil differentials whose local components agree at a single place are
+equal. -/
+theorem eq_of_repartitionDualComponent_eq (hF : IsFunctionField k F)
+    (hex : IsIntegrallyClosedIn k F) {ω ω' : Module.Dual k ↥(repartitionSpace k F)}
+    (hω : ω ∈ weilDifferentialSpace k F) (hω' : ω' ∈ weilDifferentialSpace k F) {P : Place k F}
+    (h : repartitionDualComponent ω P = repartitionDualComponent ω' P) : ω = ω' := by
+  rw [← sub_eq_zero]
+  refine (repartitionDualComponent_eq_zero_iff hF hex (Submodule.sub_mem _ hω hω') P).mp ?_
+  ext x
+  simpa using sub_eq_zero.mpr (DFunLike.congr_fun h x)
 
 end TauCeti
