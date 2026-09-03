@@ -57,6 +57,9 @@ almost-split sequence is an epimorphism onto a nonzero object and so is never ze
   the left-hand end dualizes to one about the right-hand end.
 * `CategoryTheory.ShortComplex.isAlmostSplit_iff_of_iso`: the notion is invariant under an
   isomorphism of short complexes, so it descends to isomorphism classes of sequences.
+* `TauCeti.isEmpty_splitting_of_isRightAlmostSplit` and
+  `TauCeti.isEmpty_splitting_of_isLeftAlmostSplit`: **a short complex one of whose maps is almost
+  split on the corresponding side has no splitting**, so an almost-split sequence does not split.
 
 ## Implementation notes
 
@@ -68,9 +71,16 @@ recorded.  Nothing in this file constrains `C` beyond what each statement needs,
 at the finite-dimensional subcategory of representations of a finite-dimensional algebra recovers
 the intended notion.
 
-The declarations sit in the `CategoryTheory.ShortComplex` namespace, so that `hS.op` and
-`S.IsAlmostSplit` read as dot notation on Mathlib's `CategoryTheory.ShortComplex`; the two
-morphism-level lifting conditions they are assembled from stay in `TauCeti`.
+The declarations about an almost-split sequence sit in the `CategoryTheory.ShortComplex` namespace,
+so that `hS.op` and `S.IsAlmostSplit` read as dot notation on Mathlib's
+`CategoryTheory.ShortComplex`; the two morphism-level lifting conditions they are assembled from
+stay in `TauCeti`, and so do the two non-splitting results, which are statements about a short
+complex carrying one almost split map rather than about an almost-split sequence.
+
+Those two results sit in their own preadditive section rather than in the ambient
+`CategoryTheory.Limits.HasZeroMorphisms` one: `CategoryTheory.ShortComplex.Splitting` is stated for
+the zero morphisms coming from the additive structure, which is not syntactically the ambient
+instance, so sharing one variable block would leave the two `ShortComplex C`s unequal.
 
 ## References
 
@@ -84,6 +94,28 @@ public section
 open CategoryTheory CategoryTheory.Limits TauCeti
 
 universe v u
+
+namespace TauCeti
+
+section Splitting
+
+variable {C : Type u} [Category.{v} C] [Preadditive C] {S : ShortComplex C}
+
+/-- **A short complex whose second map is right almost split does not split.** The `not_split`
+clause in the definition of an almost-split sequence is therefore redundant: it is implied by the
+right almost split clause alone. -/
+theorem isEmpty_splitting_of_isRightAlmostSplit (hg : IsRightAlmostSplit S.g) :
+    IsEmpty S.Splitting :=
+  ⟨fun s => hg.not_isSplitEpi s.isSplitEpi_g⟩
+
+/-- **A short complex whose first map is left almost split does not split.** -/
+theorem isEmpty_splitting_of_isLeftAlmostSplit (hf : IsLeftAlmostSplit S.f) :
+    IsEmpty S.Splitting :=
+  ⟨fun s => hf.not_isSplitMono s.isSplitMono_f⟩
+
+end Splitting
+
+end TauCeti
 
 namespace CategoryTheory.ShortComplex
 
@@ -109,44 +141,31 @@ structure IsAlmostSplit (S : ShortComplex C) : Prop where
 
 namespace IsAlmostSplit
 
-/-! ### The exactness data -/
-
-/-- The first map of an almost-split sequence is a monomorphism. -/
-theorem mono_f (hS : IsAlmostSplit S) : Mono S.f := hS.shortExact.mono_f
-
-/-- The second map of an almost-split sequence is an epimorphism. -/
-theorem epi_g (hS : IsAlmostSplit S) : Epi S.g := hS.shortExact.epi_g
-
-/-- An almost-split sequence is exact at its middle term. -/
-theorem exact (hS : IsAlmostSplit S) : S.Exact := hS.shortExact.exact
-
 /-! ### The maps of an almost-split sequence -/
 
-/-- The second map of an almost-split sequence is not a split monomorphism: it is an epimorphism,
-so a splitting on that side would make it an isomorphism. -/
-theorem not_isSplitMono_g (hS : IsAlmostSplit S) : ¬ IsSplitMono S.g := fun _ => by
-  have := hS.epi_g
-  exact hS.isRightAlmostSplit_g.not_isIso (isIso_of_epi_of_isSplitMono S.g)
+/-- The second map of an almost-split sequence is not a split monomorphism: short exactness makes
+it an epimorphism, so a splitting on that side would make it an isomorphism. -/
+theorem not_isSplitMono_g (hS : IsAlmostSplit S) : ¬ IsSplitMono S.g := by
+  have := hS.shortExact.epi_g
+  exact hS.isRightAlmostSplit_g.not_isSplitMono
 
 /-- The first map of an almost-split sequence is not a split epimorphism, dually to
 `CategoryTheory.ShortComplex.IsAlmostSplit.not_isSplitMono_g`. -/
-theorem not_isSplitEpi_f (hS : IsAlmostSplit S) : ¬ IsSplitEpi S.f := fun _ => by
-  have := hS.mono_f
-  exact hS.isLeftAlmostSplit_f.not_isIso (isIso_of_mono_of_isSplitEpi S.f)
+theorem not_isSplitEpi_f (hS : IsAlmostSplit S) : ¬ IsSplitEpi S.f := by
+  have := hS.shortExact.mono_f
+  exact hS.isLeftAlmostSplit_f.not_isSplitEpi
 
-/-- **The first map of an almost-split sequence is nonzero.**  A zero monomorphism forces its
-source to be a zero object, and the zero morphism out of a zero object is a split monomorphism. -/
-theorem ne_zero_f (hS : IsAlmostSplit S) : S.f ≠ 0 := fun h => by
-  have := hS.mono_f
-  have hid : 𝟙 S.X₁ = 0 := (cancel_mono S.f).mp (by simp [h])
-  exact hS.isLeftAlmostSplit_f.not_isSplitMono (IsSplitMono.mk' ⟨0, by simp [hid]⟩)
+/-- **The first map of an almost-split sequence is nonzero**: short exactness makes it a
+monomorphism, and a zero monomorphism has a zero source, whose identity would split it. -/
+theorem ne_zero_f (hS : IsAlmostSplit S) : S.f ≠ 0 := by
+  have := hS.shortExact.mono_f
+  exact hS.isLeftAlmostSplit_f.ne_zero
 
 /-- **The second map of an almost-split sequence is nonzero**, dually to
 `CategoryTheory.ShortComplex.IsAlmostSplit.ne_zero_f`. -/
-theorem ne_zero_g (hS : IsAlmostSplit S) : S.g ≠ 0 := fun h => by
-  have := hS.epi_g
-  have hid : 𝟙 S.X₃ = 0 := (cancel_epi S.g).mp (by simp [h])
-  exact hS.isRightAlmostSplit_g.not_isSplitEpi (IsSplitEpi.mk' ⟨0, by simp [hid]⟩)
+theorem ne_zero_g (hS : IsAlmostSplit S) : S.g ≠ 0 := by
+  have := hS.shortExact.epi_g
+  exact hS.isRightAlmostSplit_g.ne_zero
 
 /-! ### The objects of an almost-split sequence -/
 
@@ -172,14 +191,14 @@ enters: it supplies the epimorphism `S.g` that
 `TauCeti.IsRightAlmostSplit.not_projective` asks for, and a projective right-hand end would then
 section the sequence. -/
 theorem not_projective_X₃ (hS : IsAlmostSplit S) : ¬ Projective S.X₃ := by
-  have := hS.epi_g
+  have := hS.shortExact.epi_g
   exact hS.isRightAlmostSplit_g.not_projective
 
 /-- **The left-hand end of an almost-split sequence is not injective**, dually to
 `CategoryTheory.ShortComplex.IsAlmostSplit.not_projective_X₃`: exactness supplies the monomorphism
 `S.f`, and an injective left-hand end would retract the sequence. -/
 theorem not_injective_X₁ (hS : IsAlmostSplit S) : ¬ Injective S.X₁ := by
-  have := hS.mono_f
+  have := hS.shortExact.mono_f
   exact hS.isLeftAlmostSplit_f.not_injective
 
 section Balanced
@@ -188,15 +207,15 @@ variable [Balanced C]
 
 /-- In a balanced category the second map of an almost-split sequence is an epimorphism that is not
 a monomorphism: it would otherwise be an isomorphism. -/
-theorem not_mono_g (hS : IsAlmostSplit S) : ¬ Mono S.g := fun _ => by
-  have := hS.epi_g
-  exact hS.isRightAlmostSplit_g.not_isIso (isIso_of_mono_of_epi S.g)
+theorem not_mono_g (hS : IsAlmostSplit S) : ¬ Mono S.g := by
+  have := hS.shortExact.epi_g
+  exact hS.isRightAlmostSplit_g.not_mono
 
 /-- In a balanced category the first map of an almost-split sequence is a monomorphism that is not
 an epimorphism, dually to `CategoryTheory.ShortComplex.IsAlmostSplit.not_mono_g`. -/
-theorem not_epi_f (hS : IsAlmostSplit S) : ¬ Epi S.f := fun _ => by
-  have := hS.mono_f
-  exact hS.isLeftAlmostSplit_f.not_isIso (isIso_of_mono_of_epi S.f)
+theorem not_epi_f (hS : IsAlmostSplit S) : ¬ Epi S.f := by
+  have := hS.shortExact.mono_f
+  exact hS.isLeftAlmostSplit_f.not_epi
 
 end Balanced
 
