@@ -27,8 +27,6 @@ This file computes the cumulative distribution function of the Student t distrib
 
 ## References
 
-* Roadmap: `TauCetiRoadmap/StandardDistributions/README.md`, Layer 3, the **Student's t** target.
-* Formal declaration scaffold: `TauCetiRoadmap/StandardDistributions/Suggested.lean`, Layer 3.
 * N. L. Johnson, S. Kotz, N. Balakrishnan, *Continuous Univariate Distributions*, vol. 2, 2nd ed.,
   Wiley (1995), ch. 28.
 -/
@@ -62,7 +60,7 @@ private lemma integral_Ioi_studentTPDFReal_eq_betaKernel_tail (hν : 0 < ν) {y 
       (w ^ (-(1 / 2 : ℝ)) * (1 + w) ^ (-s))
   -- First change variables from the Student-t tail to the beta half-line kernel.
   have hinj : InjOn (fun z : ℝ => z ^ 2 / ν) (Ioi y) :=
-    (sq_div_const_injOn_Ioi hν).mono fun z hz => hy.trans_lt hz
+    (sq_div_const_injOn_Ioi hν.ne').mono fun z hz => hy.trans_lt hz
   have hderiv1 : ∀ z ∈ Ioi y,
       HasDerivWithinAt (fun z : ℝ => z ^ 2 / ν) (2 * z / ν) (Ioi y) z :=
     fun z _ => (hasDerivAt_sq_div_const ν z).hasDerivWithinAt
@@ -119,24 +117,17 @@ private lemma integral_Ioi_studentTPDFReal_eq_betaKernel_tail (hν : 0 < ν) {y 
 
 /-- The half-line tail of Euler's second beta integral, written through the chart
 `u ↦ u / (1 - u)`. -/
-private lemma integral_Ioi_betaKernel_tail_eq (hν : 0 < ν) {u0 : ℝ} (hu00 : 0 ≤ u0)
-    (hu01 : u0 < 1) :
+private lemma integral_Ioi_betaKernel_tail_eq_interval_tail {u0 : ℝ}
+    (hu00 : 0 ≤ u0) (hu01 : u0 < 1) :
     ∫ w in Ioi (u0 / (1 - u0)), w ^ (-(1 / 2 : ℝ)) * (1 + w) ^ (-((ν + 1) / 2)) =
-      beta (1 / 2) (ν / 2) *
-        (1 - regularizedIncompleteBeta (1 / 2) (ν / 2) u0) := by
+      ∫ u in Ioo u0 1, u ^ (-(1 / 2 : ℝ)) * (1 - u) ^ (ν / 2 - 1) := by
   set s := (ν + 1) / 2 with hs
   have hderiv2 : ∀ u ∈ Ioo u0 1,
       HasDerivWithinAt (fun u : ℝ => u / (1 - u)) ((1 - u) ^ 2)⁻¹ (Ioo u0 1) u :=
     fun u hu => (hasDerivAt_div_one_sub (ne_of_lt hu.2)).hasDerivWithinAt
   let k0 : ℝ → ℝ := fun w => w ^ (-(1 / 2 : ℝ)) * (1 + w) ^ (-s)
   let k : ℝ → ℝ := fun u => u ^ (-(1 / 2 : ℝ)) * (1 - u) ^ (ν / 2 - 1)
-  let kb : ℝ → ℝ := fun t => t ^ ((1 / 2 : ℝ) - 1) * (1 - t) ^ (ν / 2 - 1)
   -- The chart `u ↦ u / (1 - u)` turns the half-line beta tail into an interval tail.
-  have hkeq : kb = k := by
-    funext t
-    have h : (1 / 2 : ℝ) - 1 = -(1 / 2 : ℝ) := by ring
-    simp only [kb, k, h]
-  have hb_pos : 0 < ν / 2 := by linarith
   have hsub : Ioo u0 1 ⊆ Ioo (0 : ℝ) 1 := fun u hu =>
     ⟨by linarith [hu.1, hu00], hu.2⟩
   have hhabs : ∀ u ∈ Ioo u0 1, |((1 - u) ^ 2)⁻¹| = ((1 - u) ^ 2)⁻¹ := by
@@ -181,6 +172,22 @@ private lemma integral_Ioi_betaKernel_tail_eq (hν : 0 < ν) {u0 : ℝ} (hu00 : 
     rw [setIntegral_congr_fun measurableSet_Ioo h22eq]
   have h2 : ∫ w in Ioi (u0 / (1 - u0)), k0 w = ∫ u in Ioo u0 1, k u := by
     rw [← h21, h22, setIntegral_congr_fun measurableSet_Ioo hcov']
+  simpa [k0, k, s] using h2
+
+/-- The interval tail in the incomplete-beta chart is the total beta mass minus the normalized
+lower incomplete beta mass. -/
+private lemma integral_Ioo_rpow_one_sub_rpow_tail_eq (hν : 0 < ν) {u0 : ℝ} (hu00 : 0 ≤ u0)
+    (hu01 : u0 < 1) :
+    ∫ u in Ioo u0 1, u ^ (-(1 / 2 : ℝ)) * (1 - u) ^ (ν / 2 - 1) =
+      beta (1 / 2) (ν / 2) *
+        (1 - regularizedIncompleteBeta (1 / 2) (ν / 2) u0) := by
+  let k : ℝ → ℝ := fun u => u ^ (-(1 / 2 : ℝ)) * (1 - u) ^ (ν / 2 - 1)
+  let kb : ℝ → ℝ := fun t => t ^ ((1 / 2 : ℝ) - 1) * (1 - t) ^ (ν / 2 - 1)
+  have hkeq : kb = k := by
+    funext t
+    have h : (1 / 2 : ℝ) - 1 = -(1 / 2 : ℝ) := by ring
+    simp only [kb, k, h]
+  have hb_pos : 0 < ν / 2 := by linarith
   have hmem01 : (0 : ℝ) ∈ Icc (0 : ℝ) 1 := ⟨le_rfl, zero_le_one⟩
   have hmem11 : (1 : ℝ) ∈ Icc (0 : ℝ) 1 := ⟨zero_le_one, le_rfl⟩
   have hmemu0 : u0 ∈ Icc (0 : ℝ) 1 := ⟨hu00, by linarith⟩
@@ -225,10 +232,20 @@ private lemma integral_Ioi_betaKernel_tail_eq (hν : 0 < ν) {u0 : ℝ} (hu00 : 
       beta (1 / 2) (ν / 2) * regularizedIncompleteBeta (1 / 2) (ν / 2) u0 =
       beta (1 / 2) (ν / 2) *
         (1 - regularizedIncompleteBeta (1 / 2) (ν / 2) u0) := by ring
-  have hgoal : ∫ w in Ioi (u0 / (1 - u0)), k0 w =
+  have hgoal : ∫ u in Ioo u0 1, k u =
       beta (1 / 2) (ν / 2) * (1 - regularizedIncompleteBeta (1 / 2) (ν / 2) u0) := by
-    rw [h2, h3, h7, htailval]
-  simpa [k0, s] using hgoal
+    rw [h3, h7, htailval]
+  simpa [k] using hgoal
+
+/-- The half-line tail of Euler's second beta integral, written through the chart
+`u ↦ u / (1 - u)`. -/
+private lemma integral_Ioi_betaKernel_tail_eq (hν : 0 < ν) {u0 : ℝ} (hu00 : 0 ≤ u0)
+    (hu01 : u0 < 1) :
+    ∫ w in Ioi (u0 / (1 - u0)), w ^ (-(1 / 2 : ℝ)) * (1 + w) ^ (-((ν + 1) / 2)) =
+      beta (1 / 2) (ν / 2) *
+        (1 - regularizedIncompleteBeta (1 / 2) (ν / 2) u0) := by
+  rw [integral_Ioi_betaKernel_tail_eq_interval_tail (ν := ν) hu00 hu01,
+    integral_Ioo_rpow_one_sub_rpow_tail_eq hν hu00 hu01]
 
 /-- The Student t normalizing constant times the beta-tail normalizer is `1 / 2`. -/
 private lemma studentT_tail_normalizing_const (hν : 0 < ν) :

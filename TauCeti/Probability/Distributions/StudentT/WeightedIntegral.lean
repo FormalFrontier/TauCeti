@@ -64,14 +64,14 @@ lemma image_sq_div_const_Ioi (hν : 0 < ν) {y : ℝ} (hy : 0 ≤ y) :
     refine ⟨Real.sqrt (ν * w), hsqrt_y, ?_⟩
     rw [Real.sq_sqrt (by linarith)]; field_simp [hν.ne']
 
-/-- The chart `z ↦ z ^ 2 / ν` is injective on the positive half-line. -/
-lemma sq_div_const_injOn_Ioi (hν : 0 < ν) :
+/-- The chart `z ↦ z ^ 2 / ν` is injective on the positive half-line for nonzero `ν`. -/
+lemma sq_div_const_injOn_Ioi (hν : ν ≠ 0) :
     InjOn (fun z : ℝ => z ^ 2 / ν) (Ioi (0 : ℝ)) := by
   intro z hz w hw h
   have hz0 : 0 < z := hz
   have hw0 : 0 < w := hw
   have : z ^ 2 = w ^ 2 := by
-    field_simp [hν.ne'] at h
+    field_simp [hν] at h
     linarith
   nlinarith
 
