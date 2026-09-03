@@ -320,13 +320,17 @@ private theorem map_betaGammaMap_prod_beta_gamma {a b r : ℝ} (ha : 0 < a) (hb 
         exact (gammaBeta_density ha hb hr hz).symm
       · have hzq' : z ∉ betaGammaMap ⁻¹' q := hzq
         rw [indicator_of_notMem hzq', indicator_of_notMem hzq, mul_zero]
+    _ = ∫⁻ z, q.indicator (gammaGammaPDF a b r) z ∂Measure.map betaGammaMap
+          ((volume.restrict gammaBetaTarget).withDensity fun z ↦ ENNReal.ofReal z.2) := by
+      have hf := (measurable_gammaGammaPDF a b r).indicator hq
+      have hcomp : Measurable (fun z ↦
+          q.indicator (gammaGammaPDF a b r) (betaGammaMap z)) :=
+        hf.comp measurable_betaGammaMap
+      rw [lintegral_map hf measurable_betaGammaMap,
+        lintegral_withDensity_eq_lintegral_mul _ (by fun_prop) hcomp]
+      rfl
     _ = ∫⁻ z in gammaBetaSource, q.indicator (gammaGammaPDF a b r) z := by
-      rw [← betaGammaMap_image_target,
-        lintegral_image_eq_lintegral_abs_det_fderiv_mul volume
-          (measurableSet_Ioo.prod measurableSet_Ioi)
-          (fun z _ ↦ (hasFDerivAt_betaGammaMap z).hasFDerivWithinAt) betaGammaMap_injOn]
-      refine setLIntegral_congr_fun (measurableSet_Ioo.prod measurableSet_Ioi) fun z hz ↦ ?_
-      rw [det_fderivBetaGammaMap, abs_of_pos hz.2]
+      rw [map_betaGammaMap_withDensity]
 
 /-! ### Independent Gamma variables -/
 
