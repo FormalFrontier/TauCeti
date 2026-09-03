@@ -6,6 +6,8 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.Homology.ShortComplex.Exact
+public import Mathlib.CategoryTheory.Preadditive.Injective.Basic
+public import Mathlib.CategoryTheory.Preadditive.Projective.Basic
 public import TauCeti.CategoryTheory.IrreducibleMorphism
 
 /-!
@@ -21,14 +23,14 @@ absorbs all the inessential maps out of `X`.
 These are the two lifting properties an **almost-split (Auslander-Reiten) sequence**
 `0 → τM → E → M → 0` carries: `E ⟶ M` is right almost split and `τM ⟶ E` is left almost split.
 This file builds them as conditions on a single morphism of an arbitrary category, so that the
-sequence-level notion can be assembled from them — it is, as `TauCeti.IsAlmostSplit` in
-`TauCeti/CategoryTheory/AlmostSplit/Sequence.lean` — and proves the two facts that make the
-indecomposability clauses in the definition of an almost-split sequence redundant: **the target of
-a right almost split morphism is indecomposable**, and dually **the source of a left almost split
-morphism is indecomposable**. Neither end of an almost-split sequence has to be *assumed*
-indecomposable — the lifting properties already force it — and a short complex whose `g` is right
-almost split admits no splitting, so non-splitness is likewise a consequence rather than a
-hypothesis.
+sequence-level notion can be assembled from them — it is, as
+`CategoryTheory.ShortComplex.IsAlmostSplit` in `TauCeti/CategoryTheory/AlmostSplit/Sequence.lean` —
+and proves the two facts that make the indecomposability clauses in the definition of an
+almost-split sequence redundant: **the target of a right almost split morphism is indecomposable**,
+and dually **the source of a left almost split morphism is indecomposable**. Neither end of an
+almost-split sequence has to be *assumed* indecomposable — the lifting properties already force
+it — and a short complex whose `g` is right almost split admits no splitting, so non-splitness is
+likewise a consequence rather than a hypothesis.
 
 The connection to `TauCeti.IsIrreducibleMorphism` is the sharpened factorization
 `TauCeti.IsRightAlmostSplit.exists_isSplitMono_of_isIrreducibleMorphism`: an irreducible morphism
@@ -56,6 +58,9 @@ what ties the sequence to the arrows of the Auslander-Reiten quiver.
   morphism factors through an almost split morphism by a split mono, resp. a split epi.**
 * `TauCeti.IsRightAlmostSplit.epi_of_epi` and `TauCeti.IsLeftAlmostSplit.mono_of_mono`: a right
   almost split morphism is an epimorphism as soon as *some* non-split-epi into its target is one.
+* `TauCeti.IsRightAlmostSplit.not_projective` and `TauCeti.IsLeftAlmostSplit.not_injective`: **the
+  target of an epimorphic right almost split morphism is not projective**, and dually the source of
+  a monomorphic left almost split morphism is not injective.
 * Invariance under isomorphisms of the source and the target,
   `TauCeti.isRightAlmostSplit_comp_iso_iff`, `TauCeti.isRightAlmostSplit_iso_comp_iff` and their
   left-hand analogues, so the notions descend to a skeleton.
@@ -335,6 +340,22 @@ theorem IsLeftAlmostSplit.exists_isSplitEpi_of_isIrreducibleMorphism (hf : IsLef
     ∃ h : Y ⟶ Z, IsSplitEpi h ∧ f ≫ h = g := by
   obtain ⟨h, hh⟩ := hf.factors Z g hg.not_isSplitMono
   exact ⟨h, hg.isSplitEpi_of_not_isSplitMono hh hf.not_isSplitMono, hh⟩
+
+/-! ### Projectivity and injectivity of the almost split end -/
+
+/-- **The target of an epimorphic right almost split morphism is not projective.** Were it
+projective, its identity would factor through the epimorphism `f`, which is exactly a section of
+`f`, and `f` is not a split epimorphism. -/
+theorem IsRightAlmostSplit.not_projective (hf : IsRightAlmostSplit f) [Epi f] : ¬ Projective Y :=
+  fun _ => hf.not_isSplitEpi
+    (IsSplitEpi.mk' ⟨Projective.factorThru (𝟙 Y) f, Projective.factorThru_comp _ _⟩)
+
+/-- **The source of a monomorphic left almost split morphism is not injective**, dually to
+`TauCeti.IsRightAlmostSplit.not_projective`: its identity would factor through the monomorphism
+`f`, retracting it. -/
+theorem IsLeftAlmostSplit.not_injective (hf : IsLeftAlmostSplit f) [Mono f] : ¬ Injective X :=
+  fun _ => hf.not_isSplitMono
+    (IsSplitMono.mk' ⟨Injective.factorThru (𝟙 X) f, Injective.comp_factorThru _ _⟩)
 
 /-! ### Indecomposability of the almost split end -/
 
