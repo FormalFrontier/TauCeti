@@ -8,8 +8,9 @@ module
 public import Mathlib.NumberTheory.LSeries.Convergence
 public import Mathlib.NumberTheory.LSeries.SumCoeff
 public import Mathlib.NumberTheory.NumberField.Ideal.Asymptotics
-public import TauCeti.NumberTheory.ArithmeticDirichletSeries.Regroup
 public import TauCeti.NumberTheory.ArithmeticDirichletSeries.Trivial
+-- Regroup supplies proofs only, so it is not part of this module's interface.
+import TauCeti.NumberTheory.ArithmeticDirichletSeries.Regroup
 
 /-!
 # Linear ideal counts and the exact abscissa of the trivial ideal weight

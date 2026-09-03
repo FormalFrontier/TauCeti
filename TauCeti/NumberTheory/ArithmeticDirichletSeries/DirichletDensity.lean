@@ -6,8 +6,9 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.NumberTheory.NumberField.DirichletDensity
-public import TauCeti.NumberTheory.ArithmeticDirichletSeries.Estimates
-public import TauCeti.NumberTheory.NumberField.PrimeIdeal
+-- Both of these supply proofs only, so neither belongs in this module's interface.
+import TauCeti.NumberTheory.ArithmeticDirichletSeries.Estimates
+import TauCeti.NumberTheory.NumberField.PrimeIdeal
 -- See the implementation notes: this second, private import is what lets
 -- `NumberField.Set.hasDirichletDensity_iff_tendsto` be stated at all.
 import all Mathlib.NumberTheory.NumberField.DirichletDensity
