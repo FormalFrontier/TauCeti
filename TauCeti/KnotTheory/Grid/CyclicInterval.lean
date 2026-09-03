@@ -481,10 +481,10 @@ theorem mem_cIoo_of_mem_cIoo_of_mem_cIoo_swap {a b c d : Fin n} (ha : a ∈ cIoo
 /-- Cyclic separation is symmetric: if `a` lies on the clockwise arc from `c` to `d` while `b`,
 distinct from both endpoints, lies off it, then `c` and `d` lie on the two opposite arcs between
 `a` and `b`. -/
-theorem mem_cIoo_and_mem_cIoo_swap_of_notMem {a b c d : Fin n} (hcd : c ≠ d)
-    (hbc : b ≠ c) (hbd : b ≠ d) (hbout : b ∉ cIoo c d) (ha : a ∈ cIoo c d) :
+theorem mem_cIoo_and_mem_cIoo_swap_of_notMem {a b c d : Fin n} (hbc : b ≠ c) (hbd : b ≠ d)
+    (hbout : b ∉ cIoo c d) (ha : a ∈ cIoo c d) :
     d ∈ cIoo a b ∧ c ∈ cIoo b a :=
-  have hb := mem_cIoo_swap_of_notMem hcd hbc hbd hbout
+  have hb := mem_cIoo_swap_of_notMem ((mem_cIoo c d a).mp ha).1 hbc hbd hbout
   ⟨mem_cIoo_of_mem_cIoo_of_mem_cIoo_swap ha hb, mem_cIoo_of_mem_cIoo_of_mem_cIoo_swap hb ha⟩
 
 /-- The two opposite cyclic intervals cover exactly the complement of their endpoints. -/
