@@ -63,13 +63,6 @@ private theorem mem_cIoo_cyclic_right {a b c : Fin n} (h : b ∈ Grid.cIoo a c) 
     a ∈ Grid.cIoo c b := by
   exact mem_cIoo_cyclic_left (mem_cIoo_cyclic_left h)
 
-private theorem mem_cIoo_swap_of_not_mem {a b c : Fin n} (hab : a ≠ b)
-    (hca : c ≠ a) (hcb : c ≠ b) (h : c ∉ Grid.cIoo a b) : c ∈ Grid.cIoo b a := by
-  rcases (Grid.not_mem_cIoo_iff hab).mp h with hca' | hcb' | hswap
-  · exact (hca hca').elim
-  · exact (hcb hcb').elim
-  · exact hswap
-
 /-- Suppose the two empty rectangles in a decomposition share their initial side column and no
 other side. Then their two terminal sides occur in one of the two possible cyclic orders around
 the common side, while the row of the common corner lies strictly between the other two corner
@@ -117,7 +110,7 @@ theorem cyclicOrder_of_isEmpty_of_left_eq_left (D : GridRectangleDecomposition x
           · simpa only [GridRectangle.mem_rowInterior,
               GridRectangleBetween.toGridRectangle_bottom,
               GridRectangleBetween.toGridRectangle_top, hbottom] using hrow)
-    have hrow := mem_cIoo_swap_of_not_mem D.second.bottom_ne_top
+    have hrow := Grid.mem_cIoo_swap_of_notMem D.second.bottom_ne_top
       (by simpa only [hbottom] using D.first.bottom_ne_top)
       (by simpa only [hbottom] using htop_ne_firstBottom.symm) (by simpa only [hbottom] using hnot)
     exact ⟨Or.inl hfirstRight, by
@@ -137,7 +130,7 @@ theorem cyclicOrder_of_isEmpty_of_left_eq_left (D : GridRectangleDecomposition x
           · simpa only [GridRectangle.mem_rowInterior,
               GridRectangleBetween.toGridRectangle_bottom,
               GridRectangleBetween.toGridRectangle_top] using hrow)
-    have hrow := mem_cIoo_swap_of_not_mem D.first.bottom_ne_top
+    have hrow := Grid.mem_cIoo_swap_of_notMem D.first.bottom_ne_top
       htop_ne_firstBottom htop_ne_firstTop hnot
     exact ⟨Or.inr hsecondRight, mem_cIoo_cyclic_right hrow⟩
 

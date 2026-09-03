@@ -280,12 +280,6 @@ theorem commute_middle_mem_twoStepColumnSwapIntermediates
 
 /-! ### Reordering preserves emptiness -/
 
-/-- A point off both endpoints and outside one cyclic arc lies on the opposite arc. -/
-private theorem mem_cIoo_swap_of_notMem {a b u : Fin n} (hab : a ≠ b)
-    (hua : u ≠ a) (hub : u ≠ b) (hout : u ∉ Grid.cIoo a b) : u ∈ Grid.cIoo b a :=
-  ((Grid.mem_cIoo_or_mem_cIoo_swap_iff hab).mpr ⟨hua, hub⟩).resolve_left
-    hout
-
 /-- Cyclic separation in two coordinates puts both latter endpoints on the corresponding arcs
 between the former pair. -/
 private theorem endpoints_mem_cIoo_of_separation {a b c d a' b' c' d' : Fin n}
@@ -295,8 +289,8 @@ private theorem endpoints_mem_cIoo_of_separation {a b c d a' b' c' d' : Fin n}
     (ha : a ∈ Grid.cIoo c d) (ha' : a' ∈ Grid.cIoo c' d') :
     d ∈ Grid.cIoo a b ∧ c ∈ Grid.cIoo b a ∧
       d' ∈ Grid.cIoo a' b' ∧ c' ∈ Grid.cIoo b' a' := by
-  have hb := mem_cIoo_swap_of_notMem hcd hbc hbd hbout
-  have hb' := mem_cIoo_swap_of_notMem hc'd' hb'c' hb'd' hb'out
+  have hb := Grid.mem_cIoo_swap_of_notMem hcd hbc hbd hbout
+  have hb' := Grid.mem_cIoo_swap_of_notMem hc'd' hb'c' hb'd' hb'out
   exact ⟨Grid.mem_cIoo_of_mem_cIoo_of_mem_cIoo_swap ha hb,
     Grid.mem_cIoo_of_mem_cIoo_of_mem_cIoo_swap hb ha,
     Grid.mem_cIoo_of_mem_cIoo_of_mem_cIoo_swap ha' hb',
@@ -310,10 +304,8 @@ private theorem mem_interior_second_iff (D : GridRectangleDecomposition x z)
     p ∈ D.second.toGridRectangle.interior ↔
       p.1 ∈ Grid.cIoo D.second.left D.second.right ∧
         p.2 ∈ Grid.cIoo (x D.second.left) (x D.second.right) := by
-  obtain ⟨hll, hlr, hrl, hrr⟩ := D.hasDisjointSides_iff.mp h
-  rw [D.second.mem_toGridRectangle_interior,
-    D.first.map_of_ne D.second.left hll.symm hrl.symm,
-    D.first.map_of_ne D.second.right hlr.symm hrr.symm]
+  rw [← D.commute_first_toGridRectangle h, (D.commute h).first.mem_toGridRectangle_interior,
+    D.commute_first_left h, D.commute_first_right h]
 
 /-- To transfer emptiness between states that differ only in two columns, it suffices to rule out
 the source-state points on those columns; every other point transfers directly. -/

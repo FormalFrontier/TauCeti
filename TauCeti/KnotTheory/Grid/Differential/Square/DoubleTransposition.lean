@@ -44,8 +44,9 @@ The following results are in the `TauCeti.GridDiagram` namespace.
   fully blocked differential-square entry for two disjoint column transpositions vanishes.
 * `unblockedDecompositionWeight_commute`: commuting a disjoint-side
   decomposition preserves its unblocked weight.
-* `commute_mem_unblockedDecompositions_iff`: commuting preserves whether the
-  unblocked differential counts a decomposition.
+* `commute_mem_unblockedDecompositions_iff` and `commute_mem_fullyBlockedDecompositions_iff`:
+  commuting preserves whether the unblocked, respectively fully blocked, differential counts a
+  decomposition.
 * `sum_unblockedCoefficient_mul_unblockedCoefficient_swapColumns_swapColumns_eq_zero_of_disjoint`:
   the weighted sum for two disjoint column transpositions vanishes in characteristic two.
 * `unblockedDifferential_sq_single_apply_swapColumns_swapColumns_eq_zero_of_disjoint`: in
@@ -111,6 +112,40 @@ theorem commute_mem_unblockedDecompositions_iff {x z : GridState n}
       hforward (D.commute h) (D.hasDisjointSides_commute h) hD
   · exact hforward D h
 
+/-- Reordering a two-step decomposition with disjoint side columns preserves whether the fully
+blocked differential counts it: both rectangles stay empty and the two domains, hence the covered
+squares, are merely exchanged.
+
+This is not a `simp` lemma: `mem_fullyBlockedDecompositions`, `mem_fullyBlockedRectangles` and
+`commute_first_toGridRectangle`/`commute_second_toGridRectangle` are all `@[simp]`, so the
+left-hand side is never in simp-normal form. -/
+theorem commute_mem_fullyBlockedDecompositions_iff {x z : GridState n}
+    (D : GridRectangleDecomposition x z) (h : D.HasDisjointSides) :
+    D.commute h ∈ G.fullyBlockedDecompositions x z ↔
+      D ∈ G.fullyBlockedDecompositions x z := by
+  have hforward : ∀ (E : GridRectangleDecomposition x z) (hE : E.HasDisjointSides),
+      E ∈ G.fullyBlockedDecompositions x z → E.commute hE ∈ G.fullyBlockedDecompositions x z := by
+    intro E hE hmem
+    rw [G.mem_fullyBlockedDecompositions] at hmem ⊢
+    refine ⟨?_, ?_⟩
+    · rw [G.mem_fullyBlockedRectangles]
+      exact ⟨E.isEmpty_commute_first hE
+          (G.isEmpty_of_mem_fullyBlockedRectangles x E.middle hmem.1)
+          (G.isEmpty_of_mem_fullyBlockedRectangles E.middle z hmem.2),
+        (E.avoidsMarkings_commute_first_iff hE G).mpr
+          (G.avoidsMarkings_of_mem_fullyBlockedRectangles E.middle z hmem.2)⟩
+    · rw [G.mem_fullyBlockedRectangles]
+      exact ⟨E.isEmpty_commute_second hE
+          (G.isEmpty_of_mem_fullyBlockedRectangles x E.middle hmem.1)
+          (G.isEmpty_of_mem_fullyBlockedRectangles E.middle z hmem.2),
+        (E.avoidsMarkings_commute_second_iff hE G).mpr
+          (G.avoidsMarkings_of_mem_fullyBlockedRectangles x E.middle hmem.1)⟩
+  constructor
+  · intro hD
+    simpa only [D.commute_commute h] using
+      hforward (D.commute h) (D.hasDisjointSides_commute h) hD
+  · exact hforward D h
+
 /-- The square of the fully blocked grid differential has zero matrix entry between a grid state
 and the state obtained from it by two disjoint column transpositions.
 
@@ -131,21 +166,8 @@ theorem fullyBlockedDifferential_sq_single_apply_swapColumns_swapColumns_eq_zero
     refine Finset.sum_involution
       (fun D _ => D.commute (GridRectangleDecomposition.hasDisjointSides_of_disjoint x hab hcd
         hdisjoint D)) (fun _ _ => CharTwo.add_self_eq_zero 1) (fun D _ _ => D.commute_ne _)
-      (fun D hD => ?_) (fun D _ => D.commute_commute _)
-    rw [G.mem_fullyBlockedDecompositions] at hD ⊢
-    refine ⟨?_, ?_⟩
-    · rw [G.mem_fullyBlockedRectangles]
-      exact ⟨D.isEmpty_commute_first _
-        (G.isEmpty_of_mem_fullyBlockedRectangles x D.middle hD.1)
-        (G.isEmpty_of_mem_fullyBlockedRectangles D.middle _ hD.2),
-        (D.avoidsMarkings_commute_first_iff _ G).mpr
-          (G.avoidsMarkings_of_mem_fullyBlockedRectangles D.middle _ hD.2)⟩
-    · rw [G.mem_fullyBlockedRectangles]
-      exact ⟨D.isEmpty_commute_second _
-        (G.isEmpty_of_mem_fullyBlockedRectangles x D.middle hD.1)
-        (G.isEmpty_of_mem_fullyBlockedRectangles D.middle _ hD.2),
-        (D.avoidsMarkings_commute_second_iff _ G).mpr
-          (G.avoidsMarkings_of_mem_fullyBlockedRectangles x D.middle hD.1)⟩
+      (fun D hD => (G.commute_mem_fullyBlockedDecompositions_iff D _).mpr hD)
+      (fun D _ => D.commute_commute _)
   simpa using hsum
 
 variable [CharP R 2]
