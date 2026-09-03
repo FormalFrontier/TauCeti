@@ -27,8 +27,6 @@ invertible away from zero, and the Levy condition `mu {0} = 0` recovers `mu`.
 
 * `TauCeti.eq_of_eqOn_bernsteinLevyKhintchineExponent`: two Levy--Khintchine triplets defining
   the same function on `(0, infinity)` are equal.
-* `TauCeti.bernsteinLevyKhintchineExponent_eqOn_iff`: two admissible Levy--Khintchine exponents
-  agree on `[0, infinity)` exactly when their three parameters agree.
 * `TauCeti.IsBernsteinFunction.existsUnique_eqOn_bernsteinLevyKhintchineExponent`: every
   Bernstein function has a unique Levy--Khintchine triplet.
 
@@ -36,8 +34,6 @@ invertible away from zero, and the Levy condition `mu {0} = 0` recovers `mu`.
 
 * R. Schilling, R. Song, Z. Vondracek, *Bernstein Functions: Theory and Applications*
   (de Gruyter, 2nd ed. 2012), Theorem 3.2.
-* Roadmap: `TauCetiRoadmap/OneParameterSemigroups/README.md`, Part B (Levy--Khintchine
-  representation of Bernstein functions).
 -/
 
 public section
@@ -132,21 +128,6 @@ theorem eq_of_eqOn_bernsteinLevyKhintchineExponent
           (fun x => (x : ℝ≥0∞)⁻¹) := by rw [hweighted]
       _ = ν := withDensity_inv_bernsteinLevyDerivativeMeasure hν.measure_singleton_zero
   exact ⟨ha, hb_eq, hmeasure⟩
-
-/-- Two admissible Levy--Khintchine exponents agree on the nonnegative half-line exactly when
-their killing coefficients, drift coefficients, and Levy measures agree. -/
-theorem bernsteinLevyKhintchineExponent_eqOn_iff
-    {a b a' b' : ℝ} {μ ν : Measure ℝ≥0}
-    (hμ : IsBernsteinLevyMeasure μ) (hν : IsBernsteinLevyMeasure ν)
-    (hb : 0 ≤ b) (hb' : 0 ≤ b') :
-    EqOn (bernsteinLevyKhintchineExponent a b μ)
-        (bernsteinLevyKhintchineExponent a' b' ν) (Ici 0) ↔
-      a = a' ∧ b = b' ∧ μ = ν := by
-  constructor
-  · exact fun heq => eq_of_eqOn_bernsteinLevyKhintchineExponent hμ hν hb hb'
-      (heq.mono Ioi_subset_Ici_self)
-  · rintro ⟨rfl, rfl, rfl⟩
-    exact fun _ _ => rfl
 
 /-- **Every Bernstein function has a unique Levy--Khintchine triplet.** The components of the
 triple are respectively the killing coefficient, drift coefficient, and Levy measure. -/
