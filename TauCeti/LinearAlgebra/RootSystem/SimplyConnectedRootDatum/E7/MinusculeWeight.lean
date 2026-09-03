@@ -247,41 +247,6 @@ private theorem e7MinusculeWeight_succ_eq_reflection_parent (a : Fin 55) :
   rw [e7SimplyConnectedRootDatum_reflection_e7MinusculeWeight]
   fin_cases a <;> decide
 
-private theorem e7MinusculeWeight_mem_orbit (a : Fin 56) :
-    e7MinusculeWeight a ∈
-      MulAction.orbit e7SimplyConnectedRootDatum.weylGroup
-        (Pi.single 6 1 : Fin 7 → ℤ) := by
-  have aux : ∀ n, ∀ hn : n < 56, e7MinusculeWeight ⟨n, hn⟩ ∈
-      MulAction.orbit e7SimplyConnectedRootDatum.weylGroup
-        (Pi.single 6 1 : Fin 7 → ℤ) := by
-    intro n hn
-    induction n using Nat.strong_induction_on with
-    | h n ih =>
-        by_cases hzero : n = 0
-        · subst n
-          -- Expose the zero index so the public highest-weight lemma applies.
-          change e7MinusculeWeight 0 ∈
-            MulAction.orbit e7SimplyConnectedRootDatum.weylGroup
-              (Pi.single 6 1 : Fin 7 → ℤ)
-          rw [e7MinusculeWeight_zero]
-          exact MulAction.mem_orbit_self _
-        · let a : Fin 55 := ⟨n - 1, by omega⟩
-          have hasucc : a.succ = (⟨n, hn⟩ : Fin 56) := by
-            apply Fin.ext
-            simp [a]
-            omega
-          have hparent : (e7MinusculeParent a : ℕ) < n := by
-            have h := e7MinusculeParent_lt_succ a
-            -- The equality of `Fin` values exposes the natural-number endpoint in `h`.
-            rw [show (a.succ : ℕ) = n from congrArg Fin.val hasucc] at h
-            exact h
-          rw [← hasucc, e7MinusculeWeight_succ_eq_reflection_parent]
-          exact MulAction.mem_orbit_of_mem_orbit
-            (RootPairing.weylGroup.ofIdx e7SimplyConnectedRootDatum
-              (e7SimpleIndex (e7MinusculeParentNode a)))
-            (ih (e7MinusculeParent a) hparent (e7MinusculeParent a).isLt)
-  exact aux a a.isLt
-
 /-- Every index in the minuscule weight table is reached from the highest-weight index by a
 finite sequence of simple reflections. -/
 theorem exists_e7MinusculeReflection_foldl_eq (a : Fin 56) :
@@ -313,6 +278,24 @@ theorem exists_e7MinusculeReflection_foldl_eq (a : Fin 56) :
           rw [← hsucc, e7MinusculeWeight_succ_eq_reflection_parent,
             e7SimplyConnectedRootDatum_reflection_e7MinusculeWeight]
   exact aux a a.isLt
+
+private theorem e7MinusculeWeight_mem_orbit (a : Fin 56) :
+    e7MinusculeWeight a ∈
+      MulAction.orbit e7SimplyConnectedRootDatum.weylGroup
+        (Pi.single 6 1 : Fin 7 → ℤ) := by
+  obtain ⟨l, hl⟩ := exists_e7MinusculeReflection_foldl_eq a
+  rw [← hl]
+  clear a hl
+  induction l using List.reverseRecOn with
+  | nil =>
+      rw [List.foldl_nil, e7MinusculeWeight_zero]
+      exact MulAction.mem_orbit_self _
+  | append_singleton l i ih =>
+      rw [List.foldl_append]
+      simp only [List.foldl_cons, List.foldl_nil]
+      rw [← e7SimplyConnectedRootDatum_reflection_e7MinusculeWeight]
+      exact MulAction.mem_orbit_of_mem_orbit
+        (RootPairing.weylGroup.ofIdx e7SimplyConnectedRootDatum (e7SimpleIndex i)) ih
 
 /-- **The explicit table is exactly the Weyl orbit of the seventh fundamental weight `ϖ₇`.** -/
 theorem range_e7MinusculeWeight :

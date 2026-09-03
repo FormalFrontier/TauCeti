@@ -39,7 +39,8 @@ simple-root elements then move a coordinate vector across the connected minuscul
 * N. Bourbaki, *Lie Groups and Lie Algebras, Chapters 4--6*, Plate VI.
 
 The corestriction and point-action interface follows
-`TauCeti.Algebra.AlgebraicGroup.GeneralLinear.StandardComodule`; the specialized point
+`TauCeti.Algebra.AlgebraicGroup.GeneralLinear.StandardComodule` and is adapted from
+`TauCeti.Algebra.AlgebraicGroup.SpecialLinear.StandardComodule`; the specialized point
 identification uses `TauCeti.Algebra.AlgebraicGroup.GeneralLinear.HopfIdealPoints.BaseChange`.
 -/
 
@@ -139,18 +140,6 @@ theorem piScalarRight_comp_endOfPoint
 
 end PointAction
 
-private theorem piScalarRight_comm_eq_rid
-    (t : (Fin 56 → R) ⊗[R] R) :
-    TensorProduct.piScalarRightHom R R R (Fin 56)
-        (TensorProduct.comm R (Fin 56 → R) R t) =
-      TensorProduct.rid R (Fin 56 → R) t := by
-  induction t using TensorProduct.induction_on with
-  | zero => simp
-  | tmul v r =>
-      ext i
-      simp [TensorProduct.piScalarRightHom_tmul, mul_comm]
-  | add x y hx hy => simpa only [map_add] using congrArg₂ (fun a b ↦ a + b) hx hy
-
 /-- **A subcomodule of the standard carrier comodule is stable under every carrier-valued
 point.** -/
 theorem mulVec_mem
@@ -160,29 +149,17 @@ theorem mulVec_mem
         (CommHopfAlgCat.quotientPointsHom
           (GeneralLinear.coordinateHopfAlgebra R 56) (baseChangeDefiningIdeal R)
           (CommAlgCat.of R R) g) : Matrix (Fin 56) (Fin 56) R) *ᵥ w ∈ N := by
-  have h := N.rid_lTensor_coact_mem g.ofConv.toLinearMap hw
-  rw [standardComodule_coact_eq_corestrictCoact R,
-    standardComodule_coact R, LinearMap.comp_apply] at h
-  have hcoordinate :
-      (Bialgebra.Quotient.mkBialgHom
-          (R := R) (baseChangeDefiningIdeal R).toIdeal).toCoalgHom.toLinearMap =
-        (Bialgebra.Quotient.mkBialgHom
-          (R := R) (baseChangeDefiningIdeal R).toIdeal).toAlgHom.toLinearMap :=
-    (_root_.BialgHom.toAlgHom_toLinearMap
-      (Bialgebra.Quotient.mkBialgHom
-        (R := R) (baseChangeDefiningIdeal R).toIdeal)).symm
-  rw [hcoordinate] at h
-  have h' :
-      TensorProduct.piScalarRight R R R (Fin 56)
-          (Comodule.endOfPoint (Fin 56 → R) g.ofConv (1 ⊗ₜ[R] w)) ∈ N := by
-    simpa [Comodule.endOfPoint_tmul, TensorProduct.piScalarRight_apply,
-      piScalarRight_comm_eq_rid, LinearMap.lTensor_def, TensorProduct.map_map] using h
-  have haction := DFunLike.congr_fun (piScalarRight_comp_endOfPoint R g) (1 ⊗ₜ[R] w)
-  simp only [LinearMap.comp_apply, LinearEquiv.coe_coe, Matrix.GeneralLinearGroup.toLin_apply,
-    Matrix.mulVecLin_apply] at haction
-  rw [haction] at h'
-  simpa only [TensorProduct.piScalarRight_apply, TensorProduct.piScalarRightHom_tmul,
-    smul_eq_mul, mul_one] using h'
+  have h := Comodule.basePointsRepresentation_mem N g hw
+  rw [Comodule.basePointsRepresentation_corestrict (coordinateMap R).hom g,
+    GeneralLinear.basePointsRepresentation_eq_mulVec] at h
+  have hpoint :
+      AlgHom.mapDomain (coordinateMap R).hom g =
+        CommHopfAlgCat.quotientPointsHom
+          (GeneralLinear.coordinateHopfAlgebra R 56) (baseChangeDefiningIdeal R)
+          (CommAlgCat.of R R) g := by
+    rw [AlgHom.mapDomain_apply, CommHopfAlgCat.quotientPointsHom_apply]
+  rw [hpoint] at h
+  exact h
 
 /-! ## Root matrices -/
 
@@ -265,6 +242,8 @@ section Simple
 
 variable (k : Type u) [Field k]
 
+/-- Base-valued points of the specialized coordinate algebra, identified with points of the
+integral minuscule carrier after base change. -/
 private noncomputable def specializedPointsMulEquiv :
     HopfAlgebra.points (R := k) (H := coordinateHopfAlgebra k) (CommAlgCat.of k k) ≃*
       points k :=
@@ -306,6 +285,7 @@ private theorem rootSubgroupPoints_mulVec_mem
     MulEquiv.apply_symm_apply] at h
   exact h
 
+/-- The character of the weight torus corresponding to a minuscule-basis index. -/
 private noncomputable abbrev minusculeCharacter (a : Fin 56) :
     Multiplicative (Fin 7 →₀ ℤ) :=
   Multiplicative.ofAdd (Finsupp.equivFunOnFinite.symm (DynkinType.e7MinusculeWeight a))
