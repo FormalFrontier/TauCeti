@@ -7,10 +7,10 @@ module
 
 public import TauCeti.Analysis.Complex.Conformal.Inverse.BoundaryCluster
 public import TauCeti.Analysis.Complex.Conformal.Jordan.Domain
-public import TauCeti.Topology.ClusterSet
-public import TauCeti.Analysis.Complex.Conformal.Caratheodory
-public import TauCeti.Analysis.Complex.PlaneSeparation.Basic
-public import TauCeti.Topology.JordanCurve.SmallArc
+public import Mathlib.AlgebraicTopology.FundamentalGroupoid.SimplyConnected
+import TauCeti.Analysis.Complex.Conformal.Caratheodory
+import TauCeti.Analysis.Complex.PlaneSeparation.Basic
+import TauCeti.Topology.JordanCurve.SmallArc
 
 /-!
 # Preconnected approach regions for Jordan domains

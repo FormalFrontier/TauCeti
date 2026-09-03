@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Topology.Circle.Arc
+import TauCeti.Topology.Circle.Arc
 public import TauCeti.Topology.Circle.Metric
 public import TauCeti.Topology.JordanCurve.Separation
 import Mathlib.Topology.UniformSpace.HeineCantor

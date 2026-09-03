@@ -14,10 +14,13 @@ import TauCeti.Analysis.Complex.Conformal.ImageSimplyConnected
 # Boundary injectivity via inverse cluster sets
 
 If `IsPreconnectedApproachAt` (from `TauCeti/Topology/ClusterSet.lean`) holds at
-every boundary point of a conformal image, the
-cluster-set continuum theorem makes each boundary fibre of the extension
-preconnected, and `injOn_closedBall_of_isPreconnected_boundary_fiber`
-gives injectivity on the closed disc.
+every boundary point of an open image, the cluster-set continuum theorem makes
+each boundary fibre of the extension preconnected. The topological core
+(`clusterSetOn_invFunOn_eq_boundary_fiber`,
+`isPreconnected_boundary_fiber_of_isPreconnected_image_approach`) assumes only
+`IsOpen (f '' U)` and continuity of the inverse; the conformal specialization
+(`injOn_closedBall_of_isPreconnected_image_approach`) derives these from
+injective differentiability.
 
 Adapted from D. Cureton, `sphere-six-complex`,
 `SphereSixComplex/Periods/Uniformization/InverseBoundaryCluster.lean` at `895c0a0`
@@ -52,11 +55,10 @@ namespace TauCeti
 
 variable {U : Set ℂ} {f F : ℂ → ℂ} {a : ℂ}
 
-/-- The fibre of a continuous conformal extension over an
-image-boundary point is the cluster set of the inverse conformal
-map at that point. -/
+/-- The fibre of a continuous extension over an image-boundary point
+is the cluster set of the inverse map at that point. -/
 theorem clusterSetOn_invFunOn_eq_boundary_fiber
-    (hUo : IsOpen U) (hfd : DifferentiableOn ℂ f U)
+    (hUo : IsOpen U) (hfo : IsOpen (f '' U))
     (hfi : InjOn f U)
     (hFc : ContinuousOn F (closure U))
     (hFf : EqOn F f U)
@@ -113,8 +115,7 @@ theorem clusterSetOn_invFunOn_eq_boundary_fiber
       intro hzU
       have ha_image : a ∈ f '' U :=
         ⟨z, hzU, by rw [← hFa, hFf hzU]⟩
-      exact ((isOpen_image_of_differentiableOn_of_injOn
-        hUo hfd hfi).frontier_eq.subset ha).2 ha_image
+      exact (hfo.frontier_eq.subset ha).2 ha_image
     refine ⟨?_, hFa⟩
     rw [hUo.frontier_eq]
     exact ⟨hzcl, hzU⟩
@@ -149,28 +150,22 @@ theorem clusterSetOn_invFunOn_eq_boundary_fiber
       (MapClusterPt.of_comp hftend hzcomp)
 
 /-- If the image domain is locally preconnected from within at a
-boundary point, the fibre of a continuous conformal extension over
-that point is preconnected. -/
+boundary point, the fibre of a continuous extension over that point
+is preconnected. -/
 theorem
     isPreconnected_boundary_fiber_of_isPreconnected_image_approach
     (hUo : IsOpen U) (hUb : Bornology.IsBounded U)
-    (hfd : DifferentiableOn ℂ f U)
+    (hfo : IsOpen (f '' U))
     (hfi : InjOn f U)
     (hFc : ContinuousOn F (closure U))
     (hFf : EqOn F f U)
+    (hgc : ContinuousOn (invFunOn f U) (f '' U))
     (ha : a ∈ frontier (f '' U))
     (hloc : IsPreconnectedApproachAt (f '' U) a) :
     IsPreconnected {z : frontier U | F z = a} := by
   let g : ℂ → ℂ := invFunOn f U
-  let e :=
-    DifferentiableOn.toOpenPartialHomeomorph hfd hUo hfi
   have hgU : MapsTo g (f '' U) U :=
     hfi.bijOn_image.surjOn.mapsTo_invFunOn
-  have hgc : ContinuousOn g (f '' U) := by
-    simpa only [g, e,
-      DifferentiableOn.toOpenPartialHomeomorph_target,
-      DifferentiableOn.toOpenPartialHomeomorph_coe_symm]
-      using e.continuousOn_symm
   have hcluster :
       IsPreconnected
         (clusterSetOn g (f '' U) a) :=
@@ -185,16 +180,18 @@ theorem
     simp [and_comm]
   rw [himage,
     ← clusterSetOn_invFunOn_eq_boundary_fiber
-      hUo hfd hfi hFc hFf ha]
+      hUo hfo hfi hFc hFf ha]
   exact hcluster
 
 /-- A local connected-approach basis at every image-boundary point
 makes every fibre of the boundary restriction preconnected. -/
 theorem isPreconnected_frontier_fiber_of_image_approach
     (hUo : IsOpen U) (hUb : Bornology.IsBounded U)
-    (hfd : DifferentiableOn ℂ f U) (hfi : InjOn f U)
+    (hfo : IsOpen (f '' U)) (hfi : InjOn f U)
     (hFc : ContinuousOn F (closure U))
     (hFf : EqOn F f U)
+    (hgc : ContinuousOn (invFunOn f U) (f '' U))
+    (hboundary : F '' frontier U ⊆ frontier (f '' U))
     (hloc : ∀ a ∈ frontier (f '' U),
       IsPreconnectedApproachAt (f '' U) a) :
     ∀ a, IsPreconnected {z : frontier U | F z = a} := by
@@ -202,12 +199,8 @@ theorem isPreconnected_frontier_fiber_of_image_approach
   by_cases ha : a ∈ frontier (f '' U)
   · exact
       isPreconnected_boundary_fiber_of_isPreconnected_image_approach
-        hUo hUb hfd hfi hFc hFf ha (hloc a ha)
-  · have hboundary :
-        F '' frontier U ⊆ frontier (f '' U) :=
-      image_frontier_subset_frontier_image
-        hUo hfd hfi hFc hFf
-    have hempty :
+        hUo hUb hfo hfi hFc hFf hgc ha (hloc a ha)
+  · have hempty :
         {z : frontier U | F z = a} = ∅ := by
       ext z
       simp only [Set.mem_ofPred_eq,
@@ -232,14 +225,24 @@ theorem injOn_closedBall_of_isPreconnected_image_approach
     InjOn F (closedBall c r) := by
   have hcl : closure (ball c r) = closedBall c r :=
     closure_ball c hr.ne'
+  have hfo : IsOpen (f '' ball c r) :=
+    isOpen_image_of_differentiableOn_of_injOn isOpen_ball hfd hfi
+  let e := DifferentiableOn.toOpenPartialHomeomorph hfd isOpen_ball hfi
+  have hgc : ContinuousOn (invFunOn f (ball c r)) (f '' ball c r) := by
+    simpa only [e,
+      DifferentiableOn.toOpenPartialHomeomorph_target,
+      DifferentiableOn.toOpenPartialHomeomorph_coe_symm]
+      using e.continuousOn_symm
   have hpre :
       ∀ a,
         IsPreconnected {z : sphere c r | F z = a} := by
     intro a
+    have hboundary : F '' frontier (ball c r) ⊆ frontier (f '' ball c r) :=
+      image_frontier_subset_frontier_image isOpen_ball hfd hfi (hcl.symm ▸ hFc) hFf
     have h :=
       isPreconnected_frontier_fiber_of_image_approach
-        isOpen_ball isBounded_ball hfd hfi
-        (hcl.symm ▸ hFc) hFf hloc a
+        isOpen_ball isBounded_ball hfo hfi
+        (hcl.symm ▸ hFc) hFf hgc hboundary hloc a
     rw [frontier_ball c hr.ne'] at h
     exact h
   have hfdF : DifferentiableOn ℂ F (ball c r) :=

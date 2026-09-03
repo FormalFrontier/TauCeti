@@ -98,8 +98,10 @@ boundary point, and what is asked of it is *relative nowhere density* — each o
 one for every `w ∈ frontier U`, is to be nowhere dense in the curve. What the criterion does is
 trade the analytic content of the milestone for that purely topological condition on where the
 cluster sets sit; what it does not do is *verify* the condition for a Riemann map, which the
-crosscut and length–area files are aimed at. For Jordan domains, that verification is
-`IsJordanDomain.isPreconnectedApproachAt` in `Conformal/Jordan/Approach.lean`.
+crosscut and length–area files are aimed at. For Jordan domains,
+`Conformal/Jordan/Approach.lean` reaches boundary injectivity by a different route, through
+preconnected approach regions (`IsJordanDomain.isPreconnectedApproachAt`) and the inverse
+cluster set, without verifying this condition.
 
 In accordance with the generality bar of `ConformalMapping/README.md`, which fixes scalar `ℂ` for
 every theorem added in layers L0–L6, the results below are stated for maps of `ℂ`, as in
