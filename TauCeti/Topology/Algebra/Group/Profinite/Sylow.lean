@@ -76,7 +76,7 @@ private theorem isPGroup_quotient_subgroupOf_iff (H U : Subgroup G) [U.Normal] :
 
 /-- The image of a pro-`p` subgroup in a finite quotient of the ambient group is a
 `p`-group. -/
-theorem IsProP.isPGroup_map_mk' [IsTopologicalGroup G] {H : Subgroup G} (hH : IsProP p H)
+theorem IsProP.isPGroup_map_mk' {H : Subgroup G} (hH : IsProP p H)
     (U : OpenNormalSubgroup G) :
     IsPGroup p (H.map (QuotientGroup.mk' U.toSubgroup)) := by
   refine (isPGroup_quotient_subgroupOf_iff H U.toSubgroup).mp ?_
