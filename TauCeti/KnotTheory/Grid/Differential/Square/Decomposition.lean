@@ -35,8 +35,6 @@ between two given states is determined by its side columns.
 
 ## References
 
-This supplies the shared two-step bookkeeping for
-`TauCetiRoadmap/CombinatorialHeegaardFloer/README.md`, Lane G.3, "The complexes and `∂² = 0`".
 The decomposition pairing follows Ozsváth--Stipsicz--Szabó, *Grid Homology for Knots and Links*,
 Chapter 4.6.
 -/
@@ -99,85 +97,105 @@ theorem transpose_middle (D : GridRectangleDecomposition x z) :
     D.transpose.middle = D.middle.transpose := by
   rw [transpose]
 
+/-- The intermediate state and first rectangle of a transposed decomposition are the transposes
+of the original intermediate state and first rectangle. They are paired because the rectangle's
+target is indexed by the intermediate state. -/
+@[simp]
+theorem transpose_first (D : GridRectangleDecomposition x z) :
+    (⟨D.transpose.middle, D.transpose.first⟩ :
+      Σ middle, GridRectangleBetween x.transpose middle) =
+      ⟨D.middle.transpose, D.first.transpose⟩ := by
+  rw [transpose]
+
+/-- The intermediate state and second rectangle of a transposed decomposition are the transposes
+of the original intermediate state and second rectangle. They are paired because the rectangle's
+source is indexed by the intermediate state. -/
+@[simp]
+theorem transpose_second (D : GridRectangleDecomposition x z) :
+    (⟨D.transpose.middle, D.transpose.second⟩ :
+      Σ middle, GridRectangleBetween middle z.transpose) =
+      ⟨D.middle.transpose, D.second.transpose⟩ := by
+  rw [transpose]
+
 /-- The first rectangle of a transposed decomposition has the original initial corner row as its
 initial side column. -/
 @[simp]
 theorem transpose_first_left (D : GridRectangleDecomposition x z) :
     D.transpose.first.left = D.first.bottom := by
-  rw [transpose]
-  exact D.first.transpose_left
+  simpa only [GridRectangleBetween.transpose_left] using
+    congrArg (fun p => p.2.left) D.transpose_first
 
 /-- The first rectangle of a transposed decomposition has the original terminal corner row as its
 terminal side column. -/
 @[simp]
 theorem transpose_first_right (D : GridRectangleDecomposition x z) :
     D.transpose.first.right = D.first.top := by
-  rw [transpose]
-  exact D.first.transpose_right
+  simpa only [GridRectangleBetween.transpose_right] using
+    congrArg (fun p => p.2.right) D.transpose_first
 
 /-- The first rectangle of a transposed decomposition has the original initial side column as its
 initial corner row. -/
 @[simp]
 theorem transpose_first_bottom (D : GridRectangleDecomposition x z) :
     D.transpose.first.bottom = D.first.left := by
-  rw [transpose]
-  exact D.first.transpose_bottom
+  simpa only [GridRectangleBetween.transpose_bottom] using
+    congrArg (fun p => p.2.bottom) D.transpose_first
 
 /-- The first rectangle of a transposed decomposition has the original terminal side column as its
 terminal corner row. -/
 @[simp]
 theorem transpose_first_top (D : GridRectangleDecomposition x z) :
     D.transpose.first.top = D.first.right := by
-  rw [transpose]
-  exact D.first.transpose_top
+  simpa only [GridRectangleBetween.transpose_top] using
+    congrArg (fun p => p.2.top) D.transpose_first
 
 /-- The second rectangle of a transposed decomposition has the original initial corner row as its
 initial side column. -/
 @[simp]
 theorem transpose_second_left (D : GridRectangleDecomposition x z) :
     D.transpose.second.left = D.second.bottom := by
-  rw [transpose]
-  exact D.second.transpose_left
+  simpa only [GridRectangleBetween.transpose_left] using
+    congrArg (fun p => p.2.left) D.transpose_second
 
 /-- The second rectangle of a transposed decomposition has the original terminal corner row as its
 terminal side column. -/
 @[simp]
 theorem transpose_second_right (D : GridRectangleDecomposition x z) :
     D.transpose.second.right = D.second.top := by
-  rw [transpose]
-  exact D.second.transpose_right
+  simpa only [GridRectangleBetween.transpose_right] using
+    congrArg (fun p => p.2.right) D.transpose_second
 
 /-- The second rectangle of a transposed decomposition has the original initial side column as its
 initial corner row. -/
 @[simp]
 theorem transpose_second_bottom (D : GridRectangleDecomposition x z) :
     D.transpose.second.bottom = D.second.left := by
-  rw [transpose]
-  exact D.second.transpose_bottom
+  simpa only [GridRectangleBetween.transpose_bottom] using
+    congrArg (fun p => p.2.bottom) D.transpose_second
 
 /-- The second rectangle of a transposed decomposition has the original terminal side column as
 its terminal corner row. -/
 @[simp]
 theorem transpose_second_top (D : GridRectangleDecomposition x z) :
     D.transpose.second.top = D.second.right := by
-  rw [transpose]
-  exact D.second.transpose_top
+  simpa only [GridRectangleBetween.transpose_top] using
+    congrArg (fun p => p.2.top) D.transpose_second
 
 /-- The first rectangle of a transposed decomposition is empty exactly when the original first
 rectangle is. -/
 @[simp]
 theorem isEmpty_transpose_first (D : GridRectangleDecomposition x z) :
     D.transpose.first.IsEmpty ↔ D.first.IsEmpty := by
-  rw [transpose]
-  exact D.first.isEmpty_transpose
+  exact (congrArg (fun p => p.2.IsEmpty) D.transpose_first).to_iff.trans
+    D.first.isEmpty_transpose
 
 /-- The second rectangle of a transposed decomposition is empty exactly when the original second
 rectangle is. -/
 @[simp]
 theorem isEmpty_transpose_second (D : GridRectangleDecomposition x z) :
     D.transpose.second.IsEmpty ↔ D.second.IsEmpty := by
-  rw [transpose]
-  exact D.second.isEmpty_transpose
+  exact (congrArg (fun p => p.2.IsEmpty) D.transpose_second).to_iff.trans
+    D.second.isEmpty_transpose
 
 /-- Reflecting a two-step rectangle decomposition twice recovers the original decomposition. -/
 @[simp]

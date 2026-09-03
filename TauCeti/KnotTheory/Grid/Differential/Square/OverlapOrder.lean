@@ -43,9 +43,8 @@ order.
 
 ## References
 
-This advances `TauCetiRoadmap/CombinatorialHeegaardFloer/README.md`, Lane G.3, "The complexes and
-`∂² = 0`", specifically the overlapping case in the juxtaposition proof. The cyclic-order
-argument follows Ozsváth--Stipsicz--Szabó, *Grid Homology for Knots and Links*, Chapter 4.6.
+The cyclic-order argument follows Ozsváth--Stipsicz--Szabó, *Grid Homology for Knots and Links*,
+Chapter 4.6.
 -/
 
 public section
