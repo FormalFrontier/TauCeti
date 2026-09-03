@@ -56,16 +56,6 @@ reductive, that its torus is maximal, or that its root datum has been identified
 * R. W. Carter, *Simple Groups of Lie Type*, §4.4.
 * J. E. Humphreys, *Linear Algebraic Groups*, §§26--27.
 * B. Conrad, *Reductive Group Schemes*, §1.
-
-This advances the base-change target in Layer 9 of `TauCetiRoadmap/ReductiveGroups/README.md`.
-The resulting specialized pinned carrier is an input to milestone L0, “pinned ambient groups”,
-of `TauCetiRoadmap/CFSGStatement/README.md`.
-
-The declaration structure follows the type-`E₆` specialization in
-`TauCeti.Algebra.Lie.E6.Minuscule.BaseChange`. Every construction below uses the generic Kostant
-base-change API from
-`Kostant/RootSubgroup/Scheme/ToralClosure/GeneralLinearBaseChange.lean`; in particular, none of
-the coordinate-ring calculation is repeated here.
 -/
 
 public section
