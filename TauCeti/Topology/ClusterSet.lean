@@ -527,9 +527,7 @@ cluster-set continuum theorem (`TauCeti.isPreconnected_clusterSetOn`). -/
 def IsPreconnectedApproachAt (U : Set X) (a : X) : Prop :=
   ∀ s ∈ nhds a, ∃ t ∈ nhds a, t ⊆ s ∧ IsPreconnected (U ∩ t)
 
-/-- Unfold `IsPreconnectedApproachAt` into its neighbourhood-basis
-characterization.  Needed by downstream modules that import the
-predicate without seeing through its definition body. -/
+/-- The neighbourhood-basis characterization of `IsPreconnectedApproachAt`. -/
 theorem isPreconnectedApproachAt_def {U : Set X} {a : X} :
     IsPreconnectedApproachAt U a ↔
       ∀ s ∈ 𝓝 a, ∃ t ∈ 𝓝 a, t ⊆ s ∧ IsPreconnected (U ∩ t) :=
@@ -537,8 +535,7 @@ theorem isPreconnectedApproachAt_def {U : Set X} {a : X} :
 
 /-- **Local connectedness gives preconnected approach regions.**  If for every
 `ε > 0` some preconnected `C ⊆ U ∩ ball a ε` contains `U ∩ ball a δ` for a
-`δ > 0`, then `U` has preconnected approach regions at `a`.  The witness
-neighbourhood is `ball a δ ∪ C`, whose trace on `U` is `C`. -/
+`δ > 0`, then `U` has preconnected approach regions at `a`. -/
 theorem isPreconnectedApproachAt_of_forall_exists_isPreconnected_superset
     {Y : Type*} [PseudoMetricSpace Y] {U : Set Y} {a : Y}
     (h : ∀ ε > 0, ∃ δ > 0, ∃ C ⊆ U ∩ ball a ε,

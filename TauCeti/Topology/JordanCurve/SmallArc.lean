@@ -441,15 +441,7 @@ theorem IsJordanCurve.exists_pos_forall_exists_path_injective_diam_le (h : IsJor
     exact hη _ hdiam
 
 /-- **A Jordan curve has, near any of its points, a compact preconnected arc
-missing that point whose complement lies in a given ball around it.**  The
-compact arc `S` is the image of a closed circle arc under the Jordan
-parametrization, chosen small enough that its complement `C \ S` — the open
-window through `a` — stays inside `ball a r`.
-
-`S` is built directly: parametrize `C` by `jordanParam e`, pick an angle
-`θ₀` over `a`, and let `S` be the image of the closed arc of angles
-`Icc (θ₀ + η) (θ₀ - η + 2π)`, compact and preconnected as a continuous image
-of an interval; continuity at `θ₀` keeps its complement inside `ball a r`. -/
+missing that point whose complement lies in a given ball around it.** -/
 theorem IsJordanCurve.exists_isCompact_isPreconnected_notMem_sdiff_subset_ball
     (hJ : IsJordanCurve C) {a : X} (ha : a ∈ C) {r : ℝ} (hr : 0 < r) :
     ∃ S ⊆ C, IsCompact S ∧ IsPreconnected S ∧ a ∉ S ∧ C \ S ⊆ ball a r := by

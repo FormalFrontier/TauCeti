@@ -51,8 +51,6 @@ for the Riemann map of a Jordan domain, and with `closureHomeomorph` from
 
 * C. Carathéodory, *Über die gegenseitige Beziehung der Ränder bei der konformen Abbildung*,
   Math. Ann. **73** (1913).
-* [mathlib4#33505](https://github.com/leanprover-community/mathlib4/pull/33505) — the human-curated
-  Riemann-mapping-theorem effort in Mathlib; layer L5 (boundary correspondence) is absent there.
 -/
 
 public section
@@ -67,12 +65,7 @@ variable {U : Set ℂ} {a : ℂ}
 
 /-- **Janiszewski step.**  Given an open arc `W` of the boundary through `a`,
 inside `ball a r`, with closed preconnected complement, the trace `U ∩ ball a δ`
-lies in one preconnected subset of `U ∩ ball a r` for some `δ > 0`.
-
-`S := frontier U` and `T := sphere a r ∪ (frontier U \ W)` are closed and
-bounded with `S ∩ T = frontier U \ W`; neither separates two points of
-`U ∩ ball a δ`, so by `TauCeti.janiszewski` both lie in one component of
-`(S ∪ T)ᶜ`, which sits inside `U ∩ ball a r`. -/
+lies in one preconnected subset of `U ∩ ball a r` for some `δ > 0`. -/
 private theorem IsJordanDomain.exists_isPreconnected_inter_ball_subset_of_arc
     (hU : IsJordanDomain U) {r : ℝ} (hr : 0 < r) {W : Set ℂ}
     (hWJ : W ⊆ frontier U ∩ ball a r) (haW : a ∈ W)
