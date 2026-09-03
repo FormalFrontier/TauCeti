@@ -47,8 +47,10 @@ on:
         type: boolean
         default: false
 
-# The default GITHUB_TOKEN is unused; every write goes through the App token below.
-permissions: {}
+# The default GITHUB_TOKEN is used only to check out the trusted base script; every
+# write goes through the scoped App token below.
+permissions:
+  contents: read
 
 concurrency:
   group: merge-conflicts
