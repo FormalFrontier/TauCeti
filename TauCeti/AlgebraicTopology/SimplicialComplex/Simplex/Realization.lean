@@ -111,10 +111,6 @@ noncomputable def realizationOneSimplexHomeomorphUnitInterval :
     Realization (⊤ : AbstractSimplicialComplex (Fin 2)) ≃ₜ unitInterval :=
   (realizationTopHomeomorphStdSimplex (ι := Fin 2)).trans Convexity.StdSimplex.homeomorphI
 
-private theorem homeomorphI_apply_coe (x : Convexity.StdSimplex ℝ (Fin 2)) :
-    (Convexity.StdSimplex.homeomorphI x : ℝ) = x.weights 1 :=
-  Convexity.StdSimplex.homeomorphI_apply_coe x
-
 private theorem homeomorphI_symm_apply_coe (x : unitInterval) :
     ((Convexity.StdSimplex.homeomorphI.symm x).weights : Fin 2 → ℝ) =
       ![1 - (x : ℝ), (x : ℝ)] := by
@@ -135,7 +131,7 @@ theorem realizationOneSimplexHomeomorphUnitInterval_coe (x : Realization
     (⊤ : AbstractSimplicialComplex (Fin 2))) :
     (realizationOneSimplexHomeomorphUnitInterval x : ℝ) = x.1 1 := by
   rw [realizationOneSimplexHomeomorphUnitInterval, Homeomorph.trans_apply,
-    homeomorphI_apply_coe, realizationTopHomeomorphStdSimplex_apply]
+    Convexity.StdSimplex.homeomorphI_apply_coe, realizationTopHomeomorphStdSimplex_apply]
 
 /-- The zeroth barycentric coordinate of the interval inverse is one minus the interval
 coordinate. -/
