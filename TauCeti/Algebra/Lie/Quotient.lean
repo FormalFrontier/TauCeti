@@ -35,14 +35,9 @@ receiver notation on the ideal.
 ## Implementation notes
 
 Neither `LieIdeal.mkQ` nor `LieIdeal.liftQ` is exposed: `LieIdeal.mkQ_apply` and
-`LieIdeal.liftQ_apply_mkQ` characterize them on elements, and `LieIdeal.ker_mkQ`,
+`LieIdeal.liftQ_apply_mk` characterize them on representatives, and `LieIdeal.ker_mkQ`,
 `LieIdeal.liftQ_mkQ` and `LieIdeal.eq_liftQ` say all a consumer needs about their kernel and their
 factorization, so nothing downstream has to unfold the quotient.
-
-`LieIdeal.liftQ_apply_mkQ` is the composite of `LieIdeal.mkQ_apply` and
-`LieIdeal.liftQ_apply_mk`, but only inside this file: unexposed bodies mean that in another module
-`I.mkQ x` is not definitionally equal to `LieSubmodule.Quotient.mk x`, so a consumer whose goal is
-stated in terms of its own definitions cannot chain the two lemmas there.
 
 Surjectivity of `LieIdeal.mkQ` is not restated: it is Mathlib's
 `LieSubmodule.Quotient.surjective_mk'` transported along `LieIdeal.mkQ_apply`.
@@ -90,15 +85,6 @@ def liftQ (f : L →ₗ⁅R⁆ L') (h : I ≤ f.ker) : L ⧸ I →ₗ⁅R⁆ L' 
 theorem liftQ_apply_mk (f : L →ₗ⁅R⁆ L') (h : I ≤ f.ker) (x : L) :
     I.liftQ f h (LieSubmodule.Quotient.mk x) = f x := (rfl)
 
-/-- The induced homomorphism on the quotient agrees with `f` on the image of the quotient map.
-
-Not a `simp` lemma: `LieIdeal.mkQ_apply` and `LieIdeal.liftQ_apply_mk` already rewrite the left-hand
-side here, and `simp` rejects a lemma its own set can prove. It is still needed as a lemma, because
-those two only chain where the body of `LieIdeal.mkQ` is visible: in another module `I.mkQ x` is not
-reducible to `LieSubmodule.Quotient.mk x`. -/
-theorem liftQ_apply_mkQ (f : L →ₗ⁅R⁆ L') (h : I ≤ f.ker) (x : L) :
-    I.liftQ f h (I.mkQ x) = f x := (rfl)
-
 /-- The induced homomorphism on the quotient composed with the quotient map is the original
 homomorphism. -/
 @[simp]
@@ -108,6 +94,7 @@ theorem liftQ_mkQ (f : L →ₗ⁅R⁆ L') (h : I ≤ f.ker) : (I.liftQ f h).com
 
 /-- Two homomorphisms out of `L ⧸ I` that agree after composition with the quotient map are
 equal. -/
+@[ext high]
 theorem lieHom_qext {g₁ g₂ : L ⧸ I →ₗ⁅R⁆ L'} (h : ∀ x : L, g₁ (I.mkQ x) = g₂ (I.mkQ x)) :
     g₁ = g₂ := by
   ext x
