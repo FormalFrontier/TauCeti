@@ -73,9 +73,10 @@ RATE_LIMIT_MAX_WAIT_SECONDS = 180
 # ----- GitHub truth (via the gh CLI, authenticated by GH_TOKEN) ---------------
 
 class RateLimited(RuntimeError):
-    """A rate limit we waited out and did not clear. Distinct from a plain failure
-    so a caller looping over many items can tell "GitHub is refusing us" from "this
-    one item is broken"."""
+    """A rate limit this read gave up on -- whether the retries were spent, the
+    quota's reset was too far off to wait for, or an earlier call already
+    established the limit. Distinct from a plain failure so a caller looping over
+    many items can tell "GitHub is refusing us" from "this one item is broken"."""
 
 
 # Once a limit is established, every later read is refused until it resets. Without
@@ -96,7 +97,7 @@ def _rate_limited(stderr):
     return False
 
 
-def _quota_reset_in(now=None):
+def _quota_reset_in():
     """Seconds until the core quota resets if it is EXHAUSTED, else None.
 
     None means the quota still has room, so the refusal was a secondary limit —
@@ -113,25 +114,26 @@ def _quota_reset_in(now=None):
         remaining, reset = out.stdout.split()
         if int(remaining) > 0:
             return None
-        return max(0, int(reset) - int(time.time() if now is None else now))
+        return max(0, int(reset) - int(time.time()))
     except (TypeError, ValueError):
         return None
 
 
-def gh_api(path, jq=None, paginate=False, sleep=time.sleep, quota_reset_in=None):
+def gh_api(path, jq=None, paginate=False):
     """One `gh api` read, waiting out a rate limit within a bounded budget.
 
     `gh` does not retry a 403/429 of its own accord, so a burst of merges spending
     the budget failed whichever sink read next: an hourly sweep losing a run, or a
     status label left wrong until some later event fired.
 
-    Only a rate limit is retried, and only on its own terms — at least a minute for
-    a secondary limit, and not at all for an exhausted hourly quota, which cannot
-    clear inside a workflow step. Every other failure raises on the first attempt,
-    so a 404 or a permission error stays as loud, and as fast, as before.
+    Only a rate limit is retried, and only on its own terms: at least a minute for
+    a secondary limit, and for an exhausted hourly quota only when its reset is
+    within RATE_LIMIT_MAX_WAIT_SECONDS -- a reset further off than that cannot be
+    waited for inside a workflow step, so it raises RateLimited immediately and
+    blocks later reads until it passes. Every other failure raises on the first
+    attempt, so a 404 or a permission error stays as loud, and as fast, as before.
     """
     global _BLOCKED_UNTIL
-    reset_probe = _quota_reset_in if quota_reset_in is None else quota_reset_in
     now = time.time()
     if now < _BLOCKED_UNTIL:
         raise RateLimited(
@@ -152,7 +154,7 @@ def gh_api(path, jq=None, paginate=False, sleep=time.sleep, quota_reset_in=None)
             raise RuntimeError(f"gh api {path} failed: {stderr}")
         # An exhausted hourly quota only clears at its reset; a secondary limit
         # eases on its own. Ask which this is before deciding to wait at all.
-        exhausted_for = reset_probe()
+        exhausted_for = _quota_reset_in()
         if exhausted_for is not None and exhausted_for > RATE_LIMIT_MAX_WAIT_SECONDS:
             _BLOCKED_UNTIL = time.time() + exhausted_for
             raise RateLimited(
@@ -165,7 +167,7 @@ def gh_api(path, jq=None, paginate=False, sleep=time.sleep, quota_reset_in=None)
         delay = (exhausted_for if exhausted_for is not None
                  else SECONDARY_BACKOFF_SECONDS * (2 ** attempt))
         print(f"gh api rate-limited; retrying in {delay}s", flush=True)
-        sleep(delay)
+        time.sleep(delay)
 
 
 def _roadmap_labels(labels):

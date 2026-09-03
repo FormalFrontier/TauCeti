@@ -63,11 +63,12 @@ class RateLimitBackoff(unittest.TestCase):
     def call(self, results, quota=None, waits=None):
         """Run gh_api over canned subprocess results. `quota` is what the quota
         probe reports: None = secondary limit, an int = seconds to reset."""
-        with mock.patch.object(core.subprocess, "run") as run:
+        record = waits.append if waits is not None else (lambda s: None)
+        with (mock.patch.object(core.subprocess, "run") as run,
+              mock.patch.object(core.time, "sleep", record),
+              mock.patch.object(core, "_quota_reset_in", lambda: quota)):
             run.side_effect = results
-            return core.gh_api("/x", sleep=(waits.append if waits is not None
-                                            else (lambda s: None)),
-                               quota_reset_in=lambda: quota), run
+            return core.gh_api("/x"), run
 
     def test_retries_through_a_secondary_limit(self):
         out, run = self.call([self.result(1, SECONDARY_403), self.result(0, "")])
@@ -113,7 +114,7 @@ class RateLimitBackoff(unittest.TestCase):
             self.call([self.result(1, SECONDARY_403)] * core.RATE_LIMIT_ATTEMPTS)
         with mock.patch.object(core.subprocess, "run") as run:
             with self.assertRaises(core.RateLimited):
-                core.gh_api("/y", sleep=lambda s: None)
+                core.gh_api("/y")
             run.assert_not_called()
 
 
