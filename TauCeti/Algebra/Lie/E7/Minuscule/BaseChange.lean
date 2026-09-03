@@ -56,6 +56,7 @@ reductive, that its torus is maximal, or that its root datum has been identified
 * R. W. Carter, *Simple Groups of Lie Type*, §4.4.
 * J. E. Humphreys, *Linear Algebraic Groups*, §§26--27.
 * B. Conrad, *Reductive Group Schemes*, §1.
+* This formalization is adapted from `TauCeti.Algebra.Lie.E6.Minuscule.BaseChange`.
 -/
 
 public section
