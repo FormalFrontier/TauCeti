@@ -8,6 +8,7 @@ module
 public import TauCeti.Geometry.Manifold.Riemannian.Geodesic.Basic
 public import TauCeti.Geometry.Manifold.VectorBundle.CurveInTotalSpace
 public import Mathlib.Geometry.Manifold.IntegralCurve.Basic
+import TauCeti.Geometry.Manifold.VectorBundle.CovariantDerivative.CoordinateChange
 
 /-!
 # The geodesic spray
@@ -28,8 +29,11 @@ which `v` is its own coordinate.  So the displayed formula *is* the definition o
 `TauCeti.Manifold.geodesicSpray`, with `Γ` the model-space Christoffel map
 `TauCeti.Manifold.christoffelMap` of the Levi-Civita connection in the trivialization at the base
 point of the argument — the same moving-chart convention as
-`CovariantDerivative.alongCurveWithin` and `TauCeti.Manifold.IsGeodesicCurveOn`.  What has to be
-proved is that this formula solves the intended problem, and that is the content of
+`CovariantDerivative.alongCurveWithin` and `TauCeti.Manifold.IsGeodesicCurveOn`.  Its compatibility
+on overlapping tangent-bundle charts is `TauCeti.Manifold.tangentCoordChange_geodesicSpray`; the
+derivative term in the tangent lift cancels the inhomogeneous term in
+`TauCeti.Manifold.christoffelMap_coordChange`.  That this formula solves the intended problem is
+the content of
 `TauCeti.Manifold.isMIntegralCurveOn_curveVelocityLiftWithin_iff` and
 `TauCeti.Manifold.eq_curveVelocityLiftWithin_of_isMIntegralCurveOn`: on a parameter set with
 unique derivatives, the integral curves of `S` are exactly the velocity lifts
@@ -49,8 +53,9 @@ The unpacking of a curve into `TM` into its base curve and its fibre coordinate 
 
 * `TauCeti.Manifold.geodesicSpray`: **the geodesic spray** of the ambient Riemannian bundle
   instance, a vector field on the tangent bundle, with `TauCeti.Manifold.geodesicSpray_apply` its
-  chart formula and `TauCeti.Manifold.isMIntegralCurveOn_curveVelocityLiftWithin_const` the
-  constant-curve check.
+  preferred-chart formula, `TauCeti.Manifold.tangentCoordChange_geodesicSpray` its formula in every
+  overlapping tangent-bundle chart, and
+  `TauCeti.Manifold.isMIntegralCurveOn_curveVelocityLiftWithin_const` the constant-curve check.
 * `TauCeti.Manifold.curveVelocityLiftWithin` and `TauCeti.Manifold.curveVelocityLift`: the
   velocity lift of a curve to the tangent bundle, within a parameter set and unrestricted.
 * `TauCeti.Manifold.hasMFDerivWithinAt_curveVelocityLiftWithin_iff`: at one parameter, the
@@ -148,6 +153,205 @@ theorem geodesicSpray_apply (z : TangentBundle I M) :
         ((leviCivita I M).isCovariantDerivativeOn
           (s := (trivializationAt E (TangentSpace I) z.proj).baseSet)) z.proj z.2 z.2) :=
   (rfl)
+
+/- **Chart independence of the spray formula.**  On the overlap of the preferred charts at `x`
+and `x₀`, the tangent lift of the coordinate change sends the second-order vector
+`(u, -Γˣ(u, u))` to `(A u, -Γˣ⁰(A u, A u))`.  Its vertical component is the derivative of
+`y ↦ A_y u` in the base direction `u`, plus `A` applied to the old vertical component. -/
+private theorem geodesicSpray_coordChange {x x₀ : M}
+    (hx₀ : x ∈ (extChartAt I x₀).source) (u : TangentSpace I x) :
+    let A := tangentCoordChange I x x₀ x
+    let Γ := christoffelMap (finBasis ℝ E)
+      ((leviCivita I M).isCovariantDerivativeOn
+        (s := (trivializationAt E (TangentSpace I) x).baseSet)) x
+    let Γ₀ := christoffelMap (finBasis ℝ E)
+      ((leviCivita I M).isCovariantDerivativeOn
+        (s := (trivializationAt E (TangentSpace I) x₀).baseSet)) x
+    (A u, mvfderiv I (fun y ↦ tangentCoordChange I x x₀ y u) x u - A (Γ u u)) =
+      (A u, -Γ₀ (A u) (A u)) := by
+  dsimp only
+  have h := christoffelMap_coordChange (finBasis ℝ E) hx₀ u u
+    ((leviCivita I M).isCovariantDerivativeOn
+      (s := (trivializationAt E (TangentSpace I) x₀).baseSet))
+    ((leviCivita I M).isCovariantDerivativeOn
+      (s := (trivializationAt E (TangentSpace I) x).baseSet))
+  rw [h]
+  simp only [neg_sub]
+
+omit [FiniteDimensional ℝ E] [RiemannianBundle (fun x : M ↦ TangentSpace I x)]
+    [IsContMDiffRiemannianBundle I 1 E (fun x : M ↦ TangentSpace I x)] in
+set_option backward.isDefEq.respectTransparency false in
+private theorem tangentCoordChange_tangent_apply {x x₀ : M}
+    (hx₀ : x ∈ (extChartAt I x₀).source) (u w : TangentSpace I x) :
+    tangentCoordChange I.tangent
+        (TotalSpace.mk' E x u) (TotalSpace.mk' E x₀ 0) (TotalSpace.mk' E x u) (u, w) =
+      (tangentCoordChange I x x₀ x u,
+        mvfderiv I (fun y ↦ tangentCoordChange I x x₀ y u) x u +
+          tangentCoordChange I x x₀ x w) := by
+  change E at u w
+  let z : TangentBundle I M := TotalSpace.mk' E x u
+  let q : TangentBundle I M := TotalSpace.mk' E x₀ 0
+  let p := extChartAt I.tangent z z
+  let G := (extChartAt I.tangent q : TangentBundle I M → E × E) ∘
+    (extChartAt I.tangent z).symm
+  let T : E × E → E × E := fun a ↦
+    let y := (extChartAt I x).symm a.1
+    (extChartAt I x₀ y, tangentCoordChange I x x₀ y a.2)
+  have hz : z ∈ (chartAt (ModelProd H E) z).source := mem_chart_source _ _
+  have hzq : z ∈ (chartAt (ModelProd H E) q).source := by
+    rw [TangentBundle.mem_chart_source_iff (I := I) (M := M)]
+    rw [← extChartAt_source I x₀]
+    exact hx₀
+  have hN := (I.tangent.extendCoordChange_source_mem_nhdsWithin'
+    (e := chartAt (ModelProd H E) z) (e' := chartAt (ModelProd H E) q) hz hzq)
+  have hGT : G =ᶠ[𝓝[range I.tangent] p] T := by
+    filter_upwards [hN] with a ha
+    change a ∈ ((extChartAt I.tangent z).symm ≫ extChartAt I.tangent q).source at ha
+    let b := (extChartAt I.tangent z).symm a
+    have ha_target : a ∈ (extChartAt I.tangent z).target := ha.1
+    have hbzT : b ∈ (extChartAt I.tangent z).source :=
+      (extChartAt I.tangent z).map_target ha_target
+    have hbqT : b ∈ (extChartAt I.tangent q).source := ha.2
+    have hbz : b.proj ∈ (extChartAt I x).source := by
+      rw [extChartAt_source] at hbzT ⊢
+      exact (TangentBundle.mem_chart_source_iff b z).1 hbzT
+    have hbq : b.proj ∈ (extChartAt I x₀).source := by
+      rw [extChartAt_source] at hbqT ⊢
+      exact (TangentBundle.mem_chart_source_iff b q).1 hbqT
+    have hright : extChartAt I.tangent z b = a :=
+      (extChartAt I.tangent z).right_inv ha_target
+    have hbase : extChartAt I x b.proj = a.1 := by
+      have h := congrArg Prod.fst hright
+      change extChartAt I x b.proj = a.1 at h
+      exact h
+    have hfiber : tangentCoordChange I b.proj x b.proj b.2 = a.2 := by
+      have h := congrArg Prod.snd hright
+      change tangentCoordChange I b.proj x b.proj b.2 = a.2 at h
+      exact h
+    have hy : (extChartAt I x).symm a.1 = b.proj := by
+      rw [← hbase]
+      exact (extChartAt I x).left_inv hbz
+    have hsecond : (extChartAt I.tangent q b).2 =
+        tangentCoordChange I x x₀ b.proj a.2 := by
+      rw [← hfiber]
+      have hcomp := tangentCoordChange_comp (I := I) (w := b.proj) (x := x)
+        (y := x₀) (z := b.proj) (v := b.2)
+        ⟨⟨mem_extChartAt_source b.proj, hbz⟩, hbq⟩
+      change tangentCoordChange I b.proj x₀ b.proj b.2 = _
+      exact hcomp.symm
+    change extChartAt I.tangent q b = T a
+    apply Prod.ext
+    · change extChartAt I x₀ b.proj = extChartAt I x₀ ((extChartAt I x).symm a.1)
+      rw [hy]
+    · change (extChartAt I.tangent q b).2 =
+        tangentCoordChange I x x₀ ((extChartAt I x).symm a.1) a.2
+      simpa only [hy] using hsecond
+  rw [tangentCoordChange_def]
+  change fderivWithin ℝ G (range I.tangent) p (u, w) = _
+  have hp_mem : p ∈ range I.tangent :=
+    (extChartAt_target_subset_range z) ((extChartAt I.tangent z).map_source
+      (mem_extChartAt_source z))
+  have hp_eq : G p = T p := hGT.self_of_nhdsWithin hp_mem
+  rw [hGT.fderivWithin_eq hp_eq]
+  have hpcoord : p = (extChartAt I x x, u) := by
+    apply Prod.ext
+    · change extChartAt I x x = (extChartAt I x x, u).1
+      rfl
+    · change tangentCoordChange I x x x u = u
+      exact tangentCoordChange_self (mem_extChartAt_source x)
+  rw [hpcoord, ModelWithCorners.range_prod]
+  rw [ModelWithCorners.range_eq_univ 𝓘(ℝ, E)]
+  let a₀ := extChartAt I x x
+  let F : E → E := fun a ↦ extChartAt I x₀ ((extChartAt I x).symm a)
+  let C : E → E →L[ℝ] E := fun a ↦ tangentCoordChange I x x₀ ((extChartAt I x).symm a)
+  have ha₀ : a₀ ∈ ((extChartAt I x).symm ≫ extChartAt I x₀).source := by
+    rw [PartialEquiv.trans_source]
+    exact ⟨(extChartAt I x).map_source (mem_extChartAt_source x), by
+      change (extChartAt I x).symm a₀ ∈ (extChartAt I x₀).source
+      simpa only [a₀, extChartAt_to_inv] using hx₀⟩
+  have hF : DifferentiableWithinAt ℝ F (range I) a₀ :=
+    (contDiffWithinAt_ext_coord_change x₀ x ha₀).differentiableWithinAt
+      (by norm_num : (2 : WithTop ℕ∞) ≠ 0)
+  have hI₂ : IsManifold I (1 + 1) M := inferInstanceAs (IsManifold I 2 M)
+  have hCMD : MDifferentiableAt I 𝓘(ℝ, E →L[ℝ] E)
+      (tangentCoordChange I x x₀) x :=
+    (contMDiffAt_tangentCoordChange (n := 1) hx₀).mdifferentiableAt one_ne_zero
+  have hC : DifferentiableWithinAt ℝ C (range I) a₀ := by
+    have h := (mdifferentiableAt_iff (tangentCoordChange I x x₀) x).1 hCMD |>.2
+    simp only [writtenInExtChartAt, extChartAt_model_space_eq_id,
+      PartialEquiv.refl_coe] at h
+    change DifferentiableWithinAt ℝ C (range I) a₀ at h
+    exact h
+  have hmaps : MapsTo (Prod.fst : E × E → E) (range I ×ˢ univ) (range I) :=
+    fun _ h ↦ h.1
+  have huniqBase : UniqueDiffWithinAt ℝ (range I) a₀ := I.uniqueDiffWithinAt_image
+  have huniq : UniqueDiffWithinAt ℝ (range I ×ˢ univ) (a₀, u) :=
+    huniqBase.prod uniqueDiffWithinAt_univ
+  have hFp : DifferentiableWithinAt ℝ (fun a : E × E ↦ F a.1)
+      (range I ×ˢ univ) (a₀, u) := by
+    change DifferentiableWithinAt ℝ (F ∘ Prod.fst) (range I ×ˢ univ) (a₀, u)
+    exact hF.comp (a₀, u) differentiableWithinAt_fst hmaps
+  have hCp : DifferentiableWithinAt ℝ (fun a : E × E ↦ C a.1)
+      (range I ×ˢ univ) (a₀, u) := by
+    change DifferentiableWithinAt ℝ (C ∘ Prod.fst) (range I ×ˢ univ) (a₀, u)
+    exact hC.comp (a₀, u) differentiableWithinAt_fst hmaps
+  have hAp : DifferentiableWithinAt ℝ (fun a : E × E ↦ C a.1 a.2)
+      (range I ×ˢ univ) (a₀, u) :=
+    hCp.clm_apply differentiableWithinAt_snd
+  change (fderivWithin ℝ (fun a : E × E ↦ (F a.1, C a.1 a.2))
+    (range I ×ˢ univ) (a₀, u)) (u, w) = _
+  have hFp_eq := fderivWithin_comp (a₀, u) hF differentiableWithinAt_fst hmaps huniq
+  change fderivWithin ℝ (fun a : E × E ↦ F a.1) (range I ×ˢ univ) (a₀, u) = _ at hFp_eq
+  have hCp_eq := fderivWithin_comp (a₀, u) hC differentiableWithinAt_fst hmaps huniq
+  change fderivWithin ℝ (fun a : E × E ↦ C a.1) (range I ×ˢ univ) (a₀, u) = _ at hCp_eq
+  have hAp_eq := fderivWithin_clm_apply huniq hCp differentiableWithinAt_snd
+  change fderivWithin ℝ (fun a : E × E ↦ C a.1 a.2) (range I ×ˢ univ) (a₀, u) = _ at hAp_eq
+  have hfst_app : (fderivWithin ℝ (Prod.fst : E × E → E) (range I ×ˢ univ) (a₀, u))
+      (u, w) = u := by
+    rw [fderivWithin_fst huniq]
+    rfl
+  have hsnd_app : (fderivWithin ℝ (Prod.snd : E × E → E) (range I ×ˢ univ) (a₀, u))
+      (u, w) = w := by
+    rw [fderivWithin_snd huniq]
+    rfl
+  rw [hFp.fderivWithin_prodMk hAp huniq, ContinuousLinearMap.prod_apply, hFp_eq,
+    hAp_eq, hCp_eq]
+  simp only [ContinuousLinearMap.comp_apply, add_apply,
+    ContinuousLinearMap.flip_apply, C, F, a₀, extChartAt_to_inv]
+  rw [hfst_app, hsnd_app, add_comm]
+  have hFderiv : fderivWithin ℝ F (range I) a₀ = tangentCoordChange I x x₀ x := by
+    rw [tangentCoordChange_def]
+    rfl
+  rw [hFderiv]
+  have hMDu : MDifferentiableAt I 𝓘(ℝ, E)
+      (fun y ↦ tangentCoordChange I x x₀ y u) x :=
+    hCMD.clm_apply mdifferentiableAt_const
+  have hCuDeriv := fderivWithin_clm_apply huniqBase hC
+    (differentiableWithinAt_const (c := u))
+  have hCuDerivApp := congrArg (fun L : E →L[ℝ] E ↦ L u) hCuDeriv
+  have hMv : mvfderiv I (fun y ↦ tangentCoordChange I x x₀ y u) x u =
+      fderivWithin ℝ C (range I) a₀ u u := by
+    rw [mvfderiv, ContinuousLinearMap.comp_apply, mfderiv, ite_eq_left hMDu]
+    change fderivWithin ℝ (fun a ↦ C a u) (range I) a₀ u = _
+    simpa [fderivWithin_const_apply] using hCuDerivApp
+  rw [hMv]
+
+set_option backward.isDefEq.respectTransparency false in
+/-- **The geodesic spray has the same formula in every overlapping tangent-bundle chart.**
+Transporting the value defined in the preferred chart at `(x, u)` to the chart based at `x₀`
+sends `(v, -Γ(v, v))` to `(v₀, -Γ₀(v₀, v₀))`, where `v₀` is the fibre coordinate in the latter
+chart. -/
+theorem tangentCoordChange_geodesicSpray {x x₀ : M}
+    (hx₀ : x ∈ (extChartAt I x₀).source) (u : TangentSpace I x) :
+    tangentCoordChange I.tangent (TotalSpace.mk' E x u) (TotalSpace.mk' E x₀ 0)
+        (TotalSpace.mk' E x u) (geodesicSpray I M (TotalSpace.mk' E x u)) =
+      let v := tangentCoordChange I x x₀ x u
+      (v, -christoffelMap (finBasis ℝ E)
+        ((leviCivita I M).isCovariantDerivativeOn
+          (s := (trivializationAt E (TangentSpace I) x₀).baseSet)) x v v) := by
+  rw [geodesicSpray_apply, tangentCoordChange_tangent_apply hx₀]
+  have hchange := geodesicSpray_coordChange (I := I) (M := M) hx₀ u
+  simpa only [map_neg, ← sub_eq_add_neg] using hchange
 
 /-- **The geodesic equation as an integral-curve equation.**  The velocity lift of a `C²` curve
 solves the equation of the geodesic spray at a parameter of its set exactly when the derivative of
