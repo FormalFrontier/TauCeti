@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.Lie.Free
-public import Mathlib.Algebra.Lie.Quotient
+public import TauCeti.Algebra.Lie.Quotient
 
 /-!
 # Presenting a Lie algebra by generators and relations
@@ -16,59 +16,27 @@ A Lie algebra presented by generators `X` and relations `S ⊆ FreeLieAlgebra R 
 construction — the free Lie algebra with its universal property, and the `LieRing`/`LieAlgebra`
 structure on a quotient by a Lie ideal — but not the bridge between them, which is what a
 presentation is used for: a homomorphism out of the presented algebra is the same thing as a family
-of images satisfying the relations. This file supplies the three facts that bridge is made of.
+of images satisfying the relations. The quotient universal property is provided by
+`TauCeti/Algebra/Lie/Quotient.lean`; this file supplies two further facts needed to apply it.
 
-The first is the universal property of the quotient. `LieSubmodule.Quotient.mk'` presents the
-quotient map only as a morphism of Lie *modules*, so `LieIdeal.mkQ` records it as a morphism of Lie
-*algebras*, `LieIdeal.liftQ` factors a homomorphism killing the ideal through it, and
-`LieIdeal.lieHom_qext` says the factorisation is unique. These mirror `Submodule.mkQ`,
-`Submodule.liftQ` and `Submodule.linearMap_qext`, to which the proofs reduce once the bracket is
-checked on representatives, where it is the bracket of representatives by construction.
-
-The second is that a homomorphism transports an iterated adjoint action,
+First, a homomorphism transports an iterated adjoint action,
 `TauCeti.LieHom.map_ad_pow`. Relations of a presentation are frequently written as the vanishing of
 `(ad x) ^ n y` — Serre's relations for a Cartan matrix are the standard example — and such a
 relation says nothing about the presented algebra until it is known to be carried along by the map
 that checks it. The companion `TauCeti.ad_neg_pow_apply_eq_zero` transports such a vanishing result
 from `x` to `-x`.
 
-The third is that a free Lie algebra is generated, as a Lie subalgebra, by its generators:
+Second, a free Lie algebra is generated, as a Lie subalgebra, by its generators:
 `TauCeti.FreeLieAlgebra.lieSpan_range_of_eq_top`. This is what makes the images of the generators
 generate the presented algebra, rather than merely determine maps out of it.
 
-## Main definitions
-
-* `LieIdeal.mkQ`: the quotient map `L →ₗ⁅R⁆ L ⧸ I`.
-* `LieIdeal.liftQ`: the homomorphism `L ⧸ I →ₗ⁅R⁆ L'` induced by a homomorphism
-  `L →ₗ⁅R⁆ L'` whose kernel contains `I`.
-
 ## Main results
 
-* `LieIdeal.liftQ_comp_mkQ` and `LieIdeal.lieHom_qext`: the lifted homomorphism restricts to the
-  original one along the quotient map, and is the only homomorphism that does.
 * `TauCeti.LieHom.map_ad_pow`: a homomorphism carries `(ad x) ^ n y` to `(ad (f x)) ^ n (f y)`.
 * `TauCeti.ad_neg_pow_apply_eq_zero`: negating the element acting by `ad` preserves the vanishing of
   an iterated adjoint action.
 * `TauCeti.FreeLieAlgebra.lieSpan_range_of_eq_top`: the generators of a free Lie algebra generate it
   as a Lie subalgebra.
-
-## Implementation notes
-
-Neither `LieIdeal.mkQ` nor `LieIdeal.liftQ` is exposed: `LieIdeal.mkQ_apply` and
-`LieIdeal.liftQ_apply_mkQ` characterise them on elements, and `LieIdeal.ker_mkQ`,
-`LieIdeal.liftQ_comp_mkQ` and `LieIdeal.eq_liftQ` say all a consumer needs about their kernel and
-their factorisation, so nothing downstream has to unfold the quotient. `LieIdeal.mkQ_apply`,
-`LieIdeal.liftQ_apply_mk` and `LieIdeal.liftQ_apply_mkQ` are proved by the parenthesised `(rfl)`,
-which elaborates against the definitions themselves; a bare `rfl` in an exported theorem would
-demand that they be `@[expose]`d.
-
-`LieIdeal.liftQ_apply_mkQ` is the composite of `LieIdeal.mkQ_apply` and
-`LieIdeal.liftQ_apply_mk`, but only inside this file: unexposed bodies mean that in another module
-`I.mkQ x` is not defeq to `LieSubmodule.Quotient.mk x`, so a consumer whose goal is stated in terms
-of its own definitions cannot chain the two lemmas there.
-
-Surjectivity of `LieIdeal.mkQ` is not restated: it is Mathlib's
-`LieSubmodule.Quotient.surjective_mk'` transported along `LieIdeal.mkQ_apply`.
 
 ## Roadmap
 
@@ -79,78 +47,6 @@ of Layer 9 of `TauCetiRoadmap/ReductiveGroups/README.md`.
 -/
 
 public section
-
-namespace LieIdeal
-
-variable {R L L' : Type*} [CommRing R] [LieRing L] [LieAlgebra R L] [LieRing L'] [LieAlgebra R L']
-variable (I : LieIdeal R L)
-
-/-- The quotient map `L → L ⧸ I` as a homomorphism of Lie algebras.
-
-This is `LieSubmodule.Quotient.mk'` upgraded from a morphism of Lie modules over `L` to a morphism
-of Lie algebras; the bracket on the quotient is by construction the bracket of representatives, so
-there is nothing to check. -/
-def mkQ : L →ₗ⁅R⁆ L ⧸ I where
-  toFun := LieSubmodule.Quotient.mk
-  map_add' _ _ := rfl
-  map_smul' _ _ := rfl
-  map_lie' := rfl
-
-/-- The quotient homomorphism sends an element to its class. -/
-@[simp]
-theorem mkQ_apply (x : L) : I.mkQ x = LieSubmodule.Quotient.mk x := (rfl)
-
-/-- The kernel of the quotient homomorphism is the ideal quotiented by. -/
-@[simp]
-theorem ker_mkQ : I.mkQ.ker = I := by
-  ext x
-  simp [LieHom.mem_ker]
-
-/-- The homomorphism `L ⧸ I →ₗ⁅R⁆ L'` induced by a homomorphism `f : L →ₗ⁅R⁆ L'` whose kernel
-contains the ideal `I`. -/
-def liftQ (f : L →ₗ⁅R⁆ L') (h : I ≤ f.ker) : L ⧸ I →ₗ⁅R⁆ L' where
-  __ := LieSubmodule.toSubmodule I |>.liftQ (f : L →ₗ[R] L') h
-  map_lie' {x y} := by
-    induction x using Quotient.inductionOn' with | _ x
-    induction y using Quotient.inductionOn' with | _ y
-    exact f.map_lie x y
-
-/-- The induced homomorphism on the quotient sends the class of `x` to `f x`. -/
-@[simp]
-theorem liftQ_apply_mk (f : L →ₗ⁅R⁆ L') (h : I ≤ f.ker) (x : L) :
-    I.liftQ f h (LieSubmodule.Quotient.mk x) = f x := (rfl)
-
-/-- The induced homomorphism on the quotient agrees with `f` on the image of the quotient map.
-
-Not a `simp` lemma: `LieIdeal.mkQ_apply` and `LieIdeal.liftQ_apply_mk` already
-rewrite the left-hand side here, and `simp` rejects a lemma its own set can prove. It is still
-needed as a lemma, because those two only chain where the body of `LieIdeal.mkQ` is
-visible: in another module `I.mkQ x` is not reducible to `LieSubmodule.Quotient.mk x`. -/
-theorem liftQ_apply_mkQ (f : L →ₗ⁅R⁆ L') (h : I ≤ f.ker) (x : L) :
-    I.liftQ f h (I.mkQ x) = f x := (rfl)
-
-/-- The induced homomorphism on the quotient composed with the quotient map is the original
-homomorphism. -/
-@[simp]
-theorem liftQ_comp_mkQ (f : L →ₗ⁅R⁆ L') (h : I ≤ f.ker) : (I.liftQ f h).comp I.mkQ = f := by
-  ext x
-  simp
-
-/-- Two homomorphisms out of `L ⧸ I` that agree after composition with the quotient map are
-equal. -/
-theorem lieHom_qext {g₁ g₂ : L ⧸ I →ₗ⁅R⁆ L'} (h : ∀ x : L, g₁ (I.mkQ x) = g₂ (I.mkQ x)) :
-    g₁ = g₂ := by
-  ext x
-  induction x using Quotient.inductionOn' with | _ x
-  exact h x
-
-/-- The factorisation of `LieIdeal.liftQ` is the only one: a homomorphism out of `L ⧸ I`
-restricting to `f` along the quotient map is `I.liftQ f h`. -/
-theorem eq_liftQ {f : L →ₗ⁅R⁆ L'} {h : I ≤ f.ker} {g : L ⧸ I →ₗ⁅R⁆ L'}
-    (hg : ∀ x : L, g (I.mkQ x) = f x) : g = I.liftQ f h :=
-  I.lieHom_qext fun x => by rw [hg]; simp
-
-end LieIdeal
 
 namespace TauCeti
 
