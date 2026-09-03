@@ -7,7 +7,7 @@ module
 
 public import Mathlib.Combinatorics.SimpleGraph.Copy
 public import Mathlib.SetTheory.Cardinal.Finite
-public import Mathlib.Data.Real.Basic
+public import Mathlib.Basic.Real.Basic
 import Mathlib.Data.Fintype.CardEmbedding
 
 /-!

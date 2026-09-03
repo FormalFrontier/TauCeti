@@ -95,46 +95,28 @@ theorem isUnit_det_cartanMatrix_iff (t : DynkinType) (ht : t.Valid) :
     have hn : 1 ≤ n := valid_A.mp ht
     have hdet : (A n).cartanMatrix.det = (n : ℤ) + 1 := by
       rw [cartanMatrix_A]; exact CartanMatrix.A_det n
-    refine ⟨fun h => absurd h ?_, fun h => ?_⟩
-    · rw [hdet, Int.isUnit_iff]
-      omega
-    · rcases h with h | h | h <;> simp at h
+    exact iff_of_false (by rw [hdet, Int.isUnit_iff]; omega) (by simp)
   | B n =>
     have hn : 2 ≤ n := valid_B.mp ht
     have hdet : (B n).cartanMatrix.det = 2 := by
       rw [cartanMatrix_B]; exact CartanMatrix.B_det (by omega)
-    refine ⟨fun h => absurd h ?_, fun h => ?_⟩
-    · rw [hdet, Int.isUnit_iff]
-      decide
-    · rcases h with h | h | h <;> simp at h
+    exact iff_of_false (by rw [hdet, Int.isUnit_iff]; decide) (by simp)
   | C n =>
     have hn : 3 ≤ n := valid_C.mp ht
     have hdet : (C n).cartanMatrix.det = 2 := by
       rw [cartanMatrix_C]; exact CartanMatrix.C_det (by omega)
-    refine ⟨fun h => absurd h ?_, fun h => ?_⟩
-    · rw [hdet, Int.isUnit_iff]
-      decide
-    · rcases h with h | h | h <;> simp at h
+    exact iff_of_false (by rw [hdet, Int.isUnit_iff]; decide) (by simp)
   | D n =>
     have hn : 4 ≤ n := valid_D.mp ht
     have hdet : (D n).cartanMatrix.det = 4 := by
       rw [cartanMatrix_D]; exact CartanMatrix.D_det (by omega)
-    refine ⟨fun h => absurd h ?_, fun h => ?_⟩
-    · rw [hdet, Int.isUnit_iff]
-      decide
-    · rcases h with h | h | h <;> simp at h
+    exact iff_of_false (by rw [hdet, Int.isUnit_iff]; decide) (by simp)
   | E6 =>
     have hdet : E6.cartanMatrix.det = 3 := by rw [cartanMatrix_E6]; exact CartanMatrix.E₆_det
-    refine ⟨fun h => absurd h ?_, fun h => ?_⟩
-    · rw [hdet, Int.isUnit_iff]
-      decide
-    · rcases h with h | h | h <;> simp at h
+    exact iff_of_false (by rw [hdet, Int.isUnit_iff]; decide) (by simp)
   | E7 =>
     have hdet : E7.cartanMatrix.det = 2 := by rw [cartanMatrix_E7]; exact CartanMatrix.E₇_det
-    refine ⟨fun h => absurd h ?_, fun h => ?_⟩
-    · rw [hdet, Int.isUnit_iff]
-      decide
-    · rcases h with h | h | h <;> simp at h
+    exact iff_of_false (by rw [hdet, Int.isUnit_iff]; decide) (by simp)
   | E8 =>
     have hdet : E8.cartanMatrix.det = 1 := by rw [cartanMatrix_E8]; exact CartanMatrix.E₈_det
     rw [hdet]

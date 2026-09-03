@@ -7,8 +7,6 @@ module
 
 public import TauCeti.Algebra.Lie.Weights.Projection
 
-public section
-
 /-!
 # Exact sequences and generalized weight spaces
 
@@ -43,6 +41,8 @@ characters", of `TauCetiRoadmap/RepresentationTheory/LieHighestWeight/README.md`
 
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §22.5.
 -/
+
+public section
 
 namespace TauCeti
 

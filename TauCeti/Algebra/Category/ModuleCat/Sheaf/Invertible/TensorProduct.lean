@@ -7,7 +7,7 @@ module
 
 public import TauCeti.Algebra.Category.ModuleCat.Sheaf.Invertible.Basic
 public import TauCeti.Algebra.Category.ModuleCat.Sheaf.Free
-public import TauCeti.Algebra.Category.ModuleCat.Sheaf.TensorProduct
+public import TauCeti.Algebra.Category.ModuleCat.Sheaf.TensorProduct.Basic
 
 /-!
 # Tensor products with trivial invertible sheaves
@@ -30,8 +30,9 @@ These are the local computations needed to prove that arbitrary invertible sheav
 under tensor product: after refining two trivializing covers to a common cover, both factors are
 the standard free rank-one sheaf there. This advances
 `TauCetiRoadmap/JacobianChallenge/README.md`, Layer A, item "Invertible sheaves on a scheme; the
-Picard group `Pic X` under `⊗`". The common-refinement and restriction compatibility needed for
-the full closure theorem remain subsequent work.
+Picard group `Pic X` under `⊗`". Restriction compatibility is provided by
+`TauCeti.Algebra.Category.ModuleCat.Sheaf.TensorProduct.Restriction`; the common-refinement step
+needed for the full closure theorem remains subsequent work.
 
 No formalization is vendored. The construction reuses Tau Ceti's generic free-rank-one/unit
 comparison and sheafified tensor-unit isomorphisms.

@@ -9,8 +9,6 @@ public import Mathlib.Algebra.Lie.Weights.Killing
 public import TauCeti.Algebra.Lie.InnerAutomorphism
 public import TauCeti.RingTheory.Nilpotent.Exp
 
-public section
-
 /-!
 # The Weyl automorphism of an `sl₂` triple
 
@@ -87,6 +85,8 @@ statement above then reads as a relation in the group of units rather than in th
   and 25.2.
 * [R. W. Carter, *Simple Groups of Lie Type*][carter1972], §4.1.
 -/
+
+public section
 
 namespace TauCeti
 

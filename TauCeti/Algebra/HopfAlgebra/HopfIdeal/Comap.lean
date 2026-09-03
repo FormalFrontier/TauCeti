@@ -47,6 +47,8 @@ schemes in the affine Hopf-algebra dictionary.
   suprema.
 * `TauCeti.HopfIdeal.comapOfSurjective_id` and
   `TauCeti.HopfIdeal.comapOfSurjective_comapOfSurjective`: identity and composition laws.
+* `TauCeti.HopfIdeal.comapOfSurjective_bialgEquiv_symm_apply`: inverse-image cancellation for a
+  bialgebra equivalence.
 
 ## References
 
@@ -265,6 +267,21 @@ theorem comapOfSurjective_comapOfSurjective (I : HopfIdeal R L) (g : K →ₐc[R
   ext h
   rw [mem_comapOfSurjective, mem_comapOfSurjective, mem_comapOfSurjective, BialgHom.coe_comp]
   rfl
+
+/-- Pulling a Hopf ideal back along a bialgebra equivalence and then along its inverse recovers the
+original ideal. -/
+theorem comapOfSurjective_bialgEquiv_symm_apply (I : HopfIdeal R H) (e : H ≃ₐc[R] K) :
+    comapOfSurjective
+        (I.comapOfSurjective e.symm.toBialgHom
+          (by simpa only [BialgEquiv.toBialgHom_eq_coe, BialgEquiv.coe_toBialgHom] using
+            EquivLike.surjective e.symm))
+        e.toBialgHom
+          (by simpa only [BialgEquiv.toBialgHom_eq_coe, BialgEquiv.coe_toBialgHom] using
+            EquivLike.surjective e) = I := by
+  ext h
+  rw [mem_comapOfSurjective, mem_comapOfSurjective]
+  simp only [BialgEquiv.toBialgHom_eq_coe, BialgEquiv.coe_toBialgHom,
+    e.symm_apply_apply]
 
 section Field
 

@@ -9,8 +9,6 @@ public import Mathlib.RingTheory.MvPolynomial.Symmetric.Defs
 public import TauCeti.Algebra.MvPolynomial.Monomial
 public import TauCeti.RingTheory.MvPolynomial.Symmetric.Schur.Basic
 
-public section
-
 /-!
 # The Schur polynomial of a one-row shape
 
@@ -77,6 +75,8 @@ without the Bender--Knuth involution that `TauCeti.schurPoly_isSymmetric` needs 
 * [Schur--Weyl roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/SchurWeyl/README.md),
   Layer 7.
 -/
+
+public section
 
 namespace TauCeti
 

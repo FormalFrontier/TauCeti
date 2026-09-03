@@ -192,7 +192,14 @@ theorem geckTwistedFrobenius_geckRootSubgroupMatrix (i : Fin t.rank ⊕ Fin t.ra
           ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm
             (Multiplicative.ofAdd (Multiplicative.toAdd u ^ p ^ k))),
         t.geckRootSubgroupMatrix_mem_geckPoints ht A _ _⟩ := by
-  rw [geckTwistedFrobenius_apply, geckFrobenius_geckRootSubgroupMatrix,
+  have hroot (j : Fin t.rank ⊕ Fin t.rank) (v : Multiplicative A) :
+      (⟨t.geckRootSubgroupMatrix ht j
+          ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm v),
+        t.geckRootSubgroupMatrix_mem_geckPoints ht A j _⟩ : t.geckPoints ht A) =
+        t.geckRootSubgroupPoints ht j A v := by
+    apply Subtype.ext
+    exact (t.coe_geckRootSubgroupPoints ht j A v).symm
+  rw [geckTwistedFrobenius_apply, hroot, geckFrobenius_geckRootSubgroupPoints, ← hroot,
     geckGraphAutPoints_geckRootSubgroupMatrix]
 
 /-- **The twisted Frobenius raises a point of the pinned Geck weight torus to its `p ^ k`-th power
@@ -205,7 +212,13 @@ theorem geckTwistedFrobenius_geckTorusMatrix (s : Fin t.rank → Aˣ) :
             t.geckTorusMatrix_mem_geckPoints ht A s⟩ =
       ⟨t.geckTorusMatrix ht fun j => (s (sigma⁻¹ j)) ^ p ^ k,
         t.geckTorusMatrix_mem_geckPoints ht A _⟩ := by
-  rw [geckTwistedFrobenius_apply, geckFrobenius_geckTorusMatrix, geckPoints_mk_geckTorusMatrix,
+  have htorus (r : Fin t.rank → Aˣ) :
+      (⟨t.geckTorusMatrix ht r, t.geckTorusMatrix_mem_geckPoints ht A r⟩ :
+          t.geckPoints ht A) = t.geckWeightTorusPoints ht A r := by
+    apply Subtype.ext
+    exact (t.coe_geckWeightTorusPoints ht A r).symm
+  rw [geckTwistedFrobenius_apply, ← geckPoints_mk_geckTorusMatrix]
+  rw [htorus, geckFrobenius_geckWeightTorusPoints, ← htorus, geckPoints_mk_geckTorusMatrix,
     geckGraphAutPoints_geckTorusMatrix]
   exact Subtype.ext (congrArg (t.geckTorusMatrix ht) (funext fun j => Pi.pow_apply s (p ^ k) _))
 

@@ -98,10 +98,8 @@ theorem mixingLaw_map_permReindex_arrayRow_eq_of_col_invariant
     {ν : Ω → ProbabilityMeasure (ℕ → α)} (hν : MixedIIDWith μ (arrayRow X) ν) :
     μ.map (fun ω ↦ (ν ω).map (fun x : ℕ → α => fun k => x (τ k))) = μ.map ν := by
   -- the witness gives row measurability; the entries are its coordinates
-  have hX : ∀ p : ℕ × ℕ, AEMeasurable (X p) μ := fun p => by
-    have h1 : AEMeasurable (fun ω => arrayRow X p.1 ω p.2) μ :=
-      (measurable_pi_apply p.2).comp_aemeasurable (hν.aemeasurable p.1)
-    simpa [arrayRow_apply] using h1
+  have hX : ∀ p : ℕ × ℕ, AEMeasurable (X p) μ :=
+    aemeasurable_entry_of_aemeasurable_arrayRow hν.aemeasurable
   apply mixingLaw_map_eq_of_blockLaw_map_eq hν (measurable_reindex τ)
   intro m k _
   rw [blockLaw_def, blockLaw_def]
@@ -117,7 +115,7 @@ theorem mixingLaw_map_permReindex_arrayRow_eq_of_col_invariant
     rw [arrayRow_apply]
   rw [hleft, hright]
   let F : (ℕ × ℕ → α) → (Fin m → ℕ → α) := fun x i j ↦ x (k i, j)
-  have hF : Measurable F := measurable_pi_lambda _ fun i ↦ measurable_pi_lambda _ fun j ↦
+  have hF : Measurable F := Measurable.of_eval fun i ↦ Measurable.of_eval fun j ↦
     measurable_pi_apply (k i, j)
   rw [← map_map_array (X := fun p ↦ X (p.1, τ p.2)) (fun p ↦ hX _) hF,
     ← map_map_array hX hF, hcol]
@@ -140,10 +138,8 @@ theorem mixingLaw_map_permReindex_arrayCol_eq_of_row_invariant
     {ν : Ω → ProbabilityMeasure (ℕ → α)} (hν : MixedIIDWith μ (arrayCol X) ν) :
     μ.map (fun ω ↦ (ν ω).map (fun x : ℕ → α => fun k => x (σ k))) = μ.map ν := by
   -- the witness gives column measurability; the entries are its coordinates
-  have hX : ∀ p : ℕ × ℕ, AEMeasurable (X p) μ := fun p => by
-    have h1 : AEMeasurable (fun ω => arrayCol X p.2 ω p.1) μ :=
-      (measurable_pi_apply p.1).comp_aemeasurable (hν.aemeasurable p.2)
-    simpa [arrayCol_apply] using h1
+  have hX : ∀ p : ℕ × ℕ, AEMeasurable (X p) μ :=
+    aemeasurable_entry_of_aemeasurable_arrayCol hν.aemeasurable
   apply mixingLaw_map_eq_of_blockLaw_map_eq hν (measurable_reindex σ)
   intro m k _
   rw [blockLaw_def, blockLaw_def]
@@ -159,7 +155,7 @@ theorem mixingLaw_map_permReindex_arrayCol_eq_of_row_invariant
     rw [arrayCol_apply]
   rw [hleft, hright]
   let F : (ℕ × ℕ → α) → (Fin m → ℕ → α) := fun x j i ↦ x (i, k j)
-  have hF : Measurable F := measurable_pi_lambda _ fun j ↦ measurable_pi_lambda _ fun i ↦
+  have hF : Measurable F := Measurable.of_eval fun j ↦ Measurable.of_eval fun i ↦
     measurable_pi_apply (i, k j)
   rw [← map_map_array (X := fun p ↦ X (σ p.1, p.2)) (fun p ↦ hX _) hF,
     ← map_map_array hX hF, hrow]

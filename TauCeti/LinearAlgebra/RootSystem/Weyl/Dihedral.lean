@@ -8,8 +8,6 @@ module
 public import TauCeti.GroupTheory.SpecificGroups.Dihedral
 public import TauCeti.LinearAlgebra.RootSystem.BraidRelation
 
-public section
-
 /-!
 # The Weyl group of a rank-two root system is dihedral
 
@@ -44,6 +42,8 @@ of order 12, `P.weylGroup ≃* DihedralGroup 6`"), together with the two other r
 computation is the one in N. Bourbaki, *Lie Groups and Lie Algebras, Chapters 4--6*, Ch. VI §1.3,
 and J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §9.
 -/
+
+public section
 
 namespace TauCeti
 

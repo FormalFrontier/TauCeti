@@ -213,6 +213,16 @@ protected theorem map (hπ : IsCoupling π μ ν) {f : X → X'} {g : Y → Y'} 
     simp only [Measure.snd, Measure.map_map measurable_snd (hf.prodMap hg),
       Measure.map_map hg measurable_snd, Prod.map_snd']
 
+/-- Scaling a coupling scales both of its marginals by the same factor. -/
+protected theorem smul (hπ : IsCoupling π μ ν) (c : ENNReal) :
+    IsCoupling (c • π) (c • μ) (c • ν) where
+  fst_eq := by
+    simpa only [Measure.fst, Measure.map_smul c measurable_fst.aemeasurable] using
+      congrArg (c • ·) hπ.fst_eq
+  snd_eq := by
+    simpa only [Measure.snd, Measure.map_smul c measurable_snd.aemeasurable] using
+      congrArg (c • ·) hπ.snd_eq
+
 /-- Pushing a coupling forward along a measurable map of the source alone. -/
 protected theorem map_left (hπ : IsCoupling π μ ν) {f : X → X'} (hf : Measurable f) :
     IsCoupling (π.map (Prod.map f id)) (μ.map f) ν := by

@@ -13,26 +13,26 @@ import TauCeti.NumberTheory.NumberField.AutomorphismAction
 import Mathlib.Algebra.CharP.Basic
 
 /-!
-# Frobenius elements of a Galois number field and their action on square roots
+# Frobenius elements of Galois number fields and their action on square roots
 
-At the absolute level, for a Galois number field `K/ℚ` and a prime `Q` of `𝓞 K` over the rational
-prime `p`, an arithmetic Frobenius at `Q` is a `σ ∈ Gal(K/ℚ)` with
-`σ x ≡ x ^ #(ℤ ⧸ Q ∩ ℤ) (mod Q)` for all `x : 𝓞 K` — the exponent is the cardinality of the
-*base* residue ring `ℤ ⧸ Q ∩ ℤ`, which is `p` for `Q` over `(p)`, distinguishing the arithmetic
-Frobenius from the absolute one (whose exponent would be the residue-field norm `p^f`). The file
-also treats finite Galois extensions `L/K`, where the base ring is `𝓞 K` and the Galois group is
-`L ≃ₐ[K] L`. It provides the three number-field services on top of Mathlib's
-`RingTheory/Frobenius.lean`:
+For a finite Galois extension `L/K` of number fields and a nonzero prime `Q` of `𝓞 L`, an
+arithmetic Frobenius at `Q` is a `σ ∈ Gal(L/K)` with
+`σ x ≡ x ^ #(𝓞 K ⧸ Q ∩ 𝓞 K) (mod Q)` for all `x : 𝓞 L`. The exponent is the cardinality of the
+*base* residue ring, not the absolute norm of `Q`. This file provides the following number-field
+services on top of Mathlib's `RingTheory/Frobenius.lean`:
 
-* **existence** — in the absolute case, a Frobenius exists at every nonzero prime of `𝓞 K`,
-  and the same construction gives the relative `L/K` result
+* **relative existence** — a Frobenius exists at every nonzero prime of `𝓞 L`
   (`IsArithFrobAt.exists_of_isInvariant` with the number-field instances discharged: the
-  residue field of a nonzero prime is finite, and the Galois action on the ring of integers has
-  the required invariants); and
+  residue field of a nonzero prime is finite, and the Galois action on `𝓞 L` has invariants
+  `𝓞 K`);
+* **rational-prime existence** — for a Galois number field `K/ℚ`, a Frobenius relative to the
+  base ring `ℤ` exists at every prime over `(p)`, with exponent `p`. This is distinct from the
+  relative theorem at `K = ℚ`, whose base-ring carrier is `𝓞 ℚ`, not `ℤ`;
 * **uniqueness** — for a finite Galois extension `L/K` of number fields, two Frobenius elements
   of `Gal(L/K)` at an unramified prime `Q` of `𝓞 L` are equal, by combining Mathlib's
   integral-ring uniqueness theorem with the faithfulness of the Galois action; and
-* **the square-root action** — for `p` odd and `x ∈ K` with `x² = d ∈ ℤ`, `p ∤ d`, a
+* **the square-root action** — for a number field `K`, `p` odd, and `x ∈ K` with
+  `x² = d ∈ ℤ`, `p ∤ d`, a
   Frobenius at any ideal `Q` over `p` satisfies `σ x = legendreSym p d • x`, transporting the
   `𝓞 K`-level computation `TauCeti.AlgHom.IsArithFrobAt.apply_sqrt` along the Galois action
   on the ring of integers (via `NumberField.algebraMap_smul_eq_apply`), with the `σ x = x`
@@ -44,10 +44,10 @@ multiquadratic roadmap).
 
 ## Main results
 
-* `NumberField.exists_isArithFrobAt`: a Frobenius exists at every nonzero prime of
-  `𝓞 K`.
-* `NumberField.exists_isArithFrobAt_of_isGalois`: a relative Frobenius exists at every nonzero
-  prime of `𝓞 L` in a finite Galois extension `L/K`.
+* `NumberField.exists_isArithFrobAt`: a relative Frobenius exists at every nonzero prime of
+  `𝓞 L` in a finite Galois extension `L/K` of number fields.
+* `NumberField.exists_isArithFrobAt_int_of_liesOver`: a `ℤ`-carrier Frobenius exists at every
+  prime over a rational prime.
 * `NumberField.isArithFrobAt_eq_of_isUnramifiedAt`: for a finite Galois extension `L/K` of
   number fields, two Frobenius elements of `Gal(L/K)` at an unramified prime `Q` of `𝓞 L` are
   equal.
@@ -69,34 +69,32 @@ namespace NumberField
 
 variable {K : Type*} [Field K] [NumberField K] {p : ℕ} [Fact p.Prime]
 
-/-- **Frobenius elements exist.** For a Galois number field `K/ℚ` and a *nonzero* prime `Q` of
-`𝓞 K`, some `σ ∈ Gal(K/ℚ)` is an arithmetic Frobenius at `Q`. This is Mathlib's
-`IsArithFrobAt.exists_of_isInvariant` with the number-field side conditions discharged (a
-nonzero prime of `𝓞 K` is maximal, with finite residue field). -/
-theorem exists_isArithFrobAt [IsGalois ℚ K] (Q : Ideal (𝓞 K)) [Q.IsPrime] (hQ : Q ≠ ⊥) :
-    ∃ σ : K ≃ₐ[ℚ] K, IsArithFrobAt ℤ σ Q := by
-  have : Q.IsMaximal := Ring.DimensionLEOne.maximalOfPrime hQ ‹Q.IsPrime›
-  exact IsArithFrobAt.exists_of_isInvariant ℤ (K ≃ₐ[ℚ] K) Q
+private theorem exists_isArithFrobAt_aux {L : Type*} [Field L] [NumberField L]
+    (R : Type*) [CommRing R] [Algebra R (𝓞 L)] (G : Type*) [Group G] [Finite G]
+    [MulSemiringAction G (𝓞 L)] [SMulCommClass G R (𝓞 L)]
+    [Algebra.IsInvariant R (𝓞 L) G] (Q : Ideal (𝓞 L)) [Q.IsPrime] (hQ : Q ≠ ⊥) :
+    ∃ σ : G, IsArithFrobAt R σ Q := by
+  let _ : Finite (𝓞 L ⧸ Q) := Ring.HasFiniteQuotients.finiteQuotient hQ
+  exact IsArithFrobAt.exists_of_isInvariant R G Q
 
+variable (K) in
 /-- **Relative Frobenius elements exist.** For a finite Galois extension `L/K` of number fields
-and a *nonzero* prime `Q` of `𝓞 L`, some `σ ∈ Gal(L/K)` is an arithmetic Frobenius at `Q`.
-This is Mathlib's `IsArithFrobAt.exists_of_isInvariant` with the relative number-field
-side conditions discharged. -/
-theorem exists_isArithFrobAt_of_isGalois {K L : Type*} [Field K] [Field L]
-    [NumberField K] [NumberField L] [Algebra K L] [IsGalois K L]
+and a nonzero prime `Q` of `𝓞 L`, some `σ ∈ Gal(L/K)` is an arithmetic Frobenius at `Q`. -/
+theorem exists_isArithFrobAt {L : Type*} [Field L] [NumberField L] [Algebra K L] [IsGalois K L]
     (Q : Ideal (𝓞 L)) [Q.IsPrime] (hQ : Q ≠ ⊥) :
-    ∃ σ : L ≃ₐ[K] L, IsArithFrobAt (𝓞 K) σ Q := by
-  have : Q.IsMaximal := Ring.DimensionLEOne.maximalOfPrime hQ ‹Q.IsPrime›
-  exact IsArithFrobAt.exists_of_isInvariant (𝓞 K) (L ≃ₐ[K] L) Q
+    ∃ σ : L ≃ₐ[K] L, IsArithFrobAt (𝓞 K) σ Q :=
+  exists_isArithFrobAt_aux (𝓞 K) (L ≃ₐ[K] L) Q hQ
 
-/-- A Frobenius exists at every prime of `𝓞 K` lying over a rational prime — the form used when
-`Q` is presented by a `LiesOver` instance rather than a nonvanishing hypothesis. -/
-theorem exists_isArithFrobAt_of_liesOver [IsGalois ℚ K] {p : ℕ} [Fact p.Prime]
+/-- A Frobenius relative to the base ring `ℤ` exists at every prime of `𝓞 K` lying over the
+rational prime `(p)`; its exponent is therefore `p`. This is distinct from
+`exists_isArithFrobAt ℚ`, whose base-ring carrier is `𝓞 ℚ` rather than `ℤ`. -/
+theorem exists_isArithFrobAt_int_of_liesOver [IsGalois ℚ K] {p : ℕ} [Fact p.Prime]
     (Q : Ideal (𝓞 K)) [Q.IsPrime] [Q.LiesOver (span {(p : ℤ)})] :
     ∃ σ : K ≃ₐ[ℚ] K, IsArithFrobAt ℤ σ Q := by
   have hp : (span {(p : ℤ)} : Ideal ℤ) ≠ ⊥ := by
     rw [Ne, Ideal.span_singleton_eq_bot]; exact_mod_cast (Fact.out : p.Prime).ne_zero
-  exact exists_isArithFrobAt Q (Ideal.ne_bot_of_liesOver_of_ne_bot hp Q)
+  exact exists_isArithFrobAt_aux ℤ (K ≃ₐ[ℚ] K) Q
+    (Ideal.ne_bot_of_liesOver_of_ne_bot hp Q)
 
 /-! ### Uniqueness at unramified primes
 

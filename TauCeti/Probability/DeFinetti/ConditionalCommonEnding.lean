@@ -148,7 +148,7 @@ theorem conditionallyIIDWith_of_measure_inter_blockCylinder_eq_setLIntegral {μ 
     exact lintegral_congr fun ω => hprod fun T => (ν ω : Measure α) T
   refine conditionallyIID_of_jointRectangles hX_meas hν fun r k hk S hS B hB => ?_
   have hjoint : AEMeasurable (fun ω => (ν ω, fun i : Fin r => X (k i) ω)) μ :=
-    hν.aemeasurable.prodMk (aemeasurable_pi_lambda _ fun i => hX_meas _)
+    hν.aemeasurable.prodMk (AEMeasurable.of_eval fun i => hX_meas _)
   have hker : Measurable fun ω =>
       (Measure.dirac (ν ω)).prod (ProbabilityMeasure.pi fun _ : Fin r => ν ω).toMeasure :=
     TauCeti.MeasureTheory.measurable_dirac_prod_probabilityMeasure_pi_const_toMeasure _ hν

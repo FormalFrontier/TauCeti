@@ -33,11 +33,9 @@ inseparable extensions.
 
 ## Provenance
 
-Roadmap: EllipticCurves, the Layers 0-1 target *Function-field foundations and isogenies*
-(`TauCetiRoadmap/EllipticCurves/README.md:1096`), through the support module
-`RingTheory/IntegralClosure/NormalizationFinite`. The mathematics is the field-theoretic half of
-the "some details omitted" sentence of Stacks 10.161.13 (tag 032O): there is a finite purely
-inseparable `L' / K` and `q = p ^ e` with `L ⊂ L'(x^{1/q})`.
+The mathematics is the field-theoretic half of the "some details omitted" sentence of Stacks
+10.161.13 (tag 032O): there is a finite purely inseparable `L' / K` and `q = p ^ e` with
+`L ⊂ L'(x^{1/q})`.
 -/
 
 public section

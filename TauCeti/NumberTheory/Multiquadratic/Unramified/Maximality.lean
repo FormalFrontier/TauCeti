@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.FieldTheory.AlgHom
 public import TauCeti.NumberTheory.Multiquadratic.CandidateGenusField.Relative.Ramification
 public import TauCeti.NumberTheory.Multiquadratic.Unramified.Basic
 public import TauCeti.NumberTheory.Multiquadratic.Unramified.Subfields
@@ -103,8 +104,8 @@ private theorem finrank_adjoin_sq_eq_intCast {d : ℤ}
     refine ⟨r, ?_⟩
     apply (algebraMap ℚ M).injective
     simpa only [map_mul, hr, pow_two] using hyQ.symm
-  have hdeg := TauCeti.IntermediateField.finrank_sup_adjoin_simple_eq_mul_two
-    (⊥ : IntermediateField ℚ M) hy_sq_mem hy_not_mem
+  have hdeg := (⊥ : IntermediateField ℚ M).finrank_sup_adjoin_simple_eq_mul_two
+    hy_sq_mem hy_not_mem
   rw [bot_sup_eq] at hdeg
   simpa using hdeg
 
@@ -240,13 +241,9 @@ theorem nonempty_algEquiv_candidateGenusField {d : ℤ} (hd : Squarefree d)
     (hfr : Module.finrank ℚ M = 2 ^ (genusPrimeDiscriminants hd).card) :
     Nonempty (M ≃ₐ[ℚ] candidateGenusField hd) := by
   obtain ⟨φ⟩ := nonempty_algHom_candidateGenusField hd hnsqd hy hunr
-  have hinj : Function.Injective φ := fun _ _ h => φ.toRingHom.injective h
   have hrank : Module.finrank ℚ M = Module.finrank ℚ (candidateGenusField hd) := by
     rw [hfr, finrank_candidateGenusField hd]
-  have hsurj : Function.Surjective φ :=
-    (LinearMap.injective_iff_surjective_of_finrank_eq_finrank hrank
-      (f := φ.toLinearMap)).mp hinj
-  exact ⟨AlgEquiv.ofBijective φ ⟨hinj, hsurj⟩⟩
+  exact ⟨TauCeti.algEquivOfFinrankEq φ hrank⟩
 
 end IsAbelianGalois
 

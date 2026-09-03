@@ -380,6 +380,39 @@ theorem chiSquaredMeasure_conv_chiSquaredMeasure (hk : 0 ≤ k) (hl : 0 ≤ l) :
     gammaMeasure_conv_gammaMeasure (by positivity) (by positivity) one_half_pos]
   ring_nf
 
+/-- A finite sum of independent chi-squared variables has the chi-squared law whose degrees of
+freedom are the sum of the individual degrees of freedom. -/
+theorem iIndepFun.hasLaw_sum_chiSquared {ι : Type*} [Fintype ι]
+    {Y : ι → Ω → ℝ} {k : ι → ℝ} (hindep : iIndepFun Y P) (hk : ∀ i, 0 ≤ k i)
+    (hlaw : ∀ i, HasLaw (Y i) (chiSquaredMeasure (k i)) P) :
+    HasLaw (fun ω ↦ ∑ i, Y i ω) (chiSquaredMeasure (∑ i, k i)) P := by
+  classical
+  let _ : IsProbabilityMeasure P := hindep.isProbabilityMeasure
+  have hsum (s : Finset ι) :
+      HasLaw (∑ i ∈ s, Y i) (chiSquaredMeasure (∑ i ∈ s, k i)) P := by
+    induction s using Finset.induction_on with
+    | empty =>
+        simp only [Finset.sum_empty]
+        rw [chiSquaredMeasure_zero]
+        exact hasLaw_dirac_of_ae_eq (Filter.Eventually.of_forall fun _ ↦ rfl)
+    | @insert i s hi ih =>
+        let _ : IsProbabilityMeasure (chiSquaredMeasure (k i)) :=
+          isProbabilityMeasure_chiSquaredMeasure (hk i)
+        let _ : IsProbabilityMeasure (chiSquaredMeasure (∑ j ∈ s, k j)) :=
+          isProbabilityMeasure_chiSquaredMeasure (Finset.sum_nonneg fun j _ ↦ hk j)
+        have hadd :=
+          (hindep.indepFun_finsetSum_of_notMem₀
+            (fun j ↦ (hlaw j).aemeasurable) hi).symm.hasLaw_add
+            (hlaw i) ih
+        rw [chiSquaredMeasure_conv_chiSquaredMeasure (hk i)
+          (Finset.sum_nonneg fun j _ ↦ hk j)] at hadd
+        simpa only [Finset.sum_insert hi] using hadd
+  have hY : (fun ω ↦ ∑ i, Y i ω) = ∑ i, Y i := by
+    funext ω
+    exact (Fintype.sum_apply ω Y).symm
+  rw [hY]
+  exact hsum Finset.univ
+
 /-- Two degrees of freedom give the exponential law of rate `1 / 2`. -/
 theorem chiSquaredMeasure_two : chiSquaredMeasure 2 = expMeasure (1 / 2) := by
   rw [chiSquaredMeasure_eq_gammaMeasure two_pos, expMeasure]

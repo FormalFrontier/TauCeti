@@ -35,6 +35,8 @@ This advances the **Pinnings** and **Chevalley--Demazure construction** targets 
 * `TauCeti.typeBShortCorootGenerator`: its diagonal coroot.
 * `TauCeti.typeBShortRootDividedSquare`: the integral divided square `eᵢ² / 2`.
 * `TauCeti.typeBSimpleRootGenerator`: the Bourbaki-indexed simple-root vectors of `Bₙ₊₁`.
+* `TauCeti.typeBSimpleRootGeneratorFamily`: those vectors and their opposites as one family
+  indexed by `Fin (n + 1) ⊕ Fin (n + 1)`.
 
 ## References
 
@@ -587,6 +589,23 @@ theorem coe_typeBSimpleCorootGenerator (i : Fin (n + 1)) :
       typeBSimpleCorootMatrix i := by
   refine Fin.lastCases ?_ (fun j => ?_) i <;>
     simp [typeBSimpleCorootGenerator, typeBSimpleCorootMatrix]
+
+/-- The positive and negative Bourbaki-numbered simple-root vectors of `Bₙ₊₁`, combined into the
+single family indexed by `Fin (n + 1) ⊕ Fin (n + 1)` that the Chevalley constructions consume. -/
+def typeBSimpleRootGeneratorFamily (k : Fin (n + 1) ⊕ Fin (n + 1)) :
+    LieAlgebra.Orthogonal.typeB (Fin (n + 1)) K :=
+  Sum.elim (typeBSimpleRootGenerator (K := K))
+    (typeBSimpleNegativeRootGenerator (K := K)) k
+
+@[simp]
+theorem typeBSimpleRootGeneratorFamily_inl (i : Fin (n + 1)) :
+    typeBSimpleRootGeneratorFamily (K := K) (.inl i) = typeBSimpleRootGenerator i :=
+  (rfl)
+
+@[simp]
+theorem typeBSimpleRootGeneratorFamily_inr (i : Fin (n + 1)) :
+    typeBSimpleRootGeneratorFamily (K := K) (.inr i) = typeBSimpleNegativeRootGenerator i :=
+  (rfl)
 
 /-- Each positive and negative Bourbaki simple-root pair brackets to its simple coroot. -/
 @[simp]

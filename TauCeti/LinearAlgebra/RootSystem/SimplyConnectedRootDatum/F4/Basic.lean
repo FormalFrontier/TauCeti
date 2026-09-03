@@ -7,8 +7,6 @@ module
 
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.Basic
 
-public section
-
 /-!
 # The simply connected root datum of type F4
 
@@ -46,6 +44,8 @@ they are written in the fundamental-weight basis for the roots and the simple-co
 coroots. This is the `F4` branch of Layer 6 in
 `TauCetiRoadmap/RepresentationTheory/RootSystems/README.md`.
 -/
+
+public section
 
 namespace TauCeti
 

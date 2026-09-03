@@ -8,8 +8,6 @@ module
 public import TauCeti.LinearAlgebra.RootSystem.Inversions.DominantChamber
 public import TauCeti.LinearAlgebra.RootSystem.Weyl.Vector
 
-public section
-
 /-!
 # The dot action of the Weyl group on weights
 
@@ -86,6 +84,8 @@ chamber is what the roadmap's `centralCharacter_injOn_isDominantIntegral` consum
 The argument is the one in J. E. Humphreys, *Introduction to Lie Algebras and Representation
 Theory*, GTM 9, Ch. III, §13.2 and Ch. VI, §23.3.
 -/
+
+public section
 
 namespace TauCeti
 

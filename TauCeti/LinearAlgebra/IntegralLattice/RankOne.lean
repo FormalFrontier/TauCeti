@@ -10,8 +10,6 @@ public import TauCeti.LinearAlgebra.IntegralLattice.Discriminant.Cardinality
 public import TauCeti.LinearAlgebra.IntegralLattice.Discriminant.Quadratic
 public import TauCeti.LinearAlgebra.IntegralLattice.Examples
 
-public section
-
 /-!
 # The rank-one lattice `⟨2m⟩` and its discriminant form
 
@@ -80,6 +78,8 @@ the discriminant group needs in order to be finite — is available to instance 
 * V. V. Nikulin, *Integral symmetric bilinear forms and some of their applications*, §1.
 * `TauCetiRoadmap/IntegralLattices/README.md`, Layer 5, the rank-one acceptance test.
 -/
+
+public section
 
 namespace TauCeti
 

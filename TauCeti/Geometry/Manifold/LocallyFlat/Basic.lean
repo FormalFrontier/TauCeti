@@ -429,8 +429,9 @@ this way. -/
 theorem isLocallyClosed_range (h : IsSliceEmbedding S f) (hS : IsLocallyClosed S) :
     IsLocallyClosed (range f) := by
   obtain ⟨U, Z, hU, hZ, rfl⟩ := hS
-  refine ((isLocallyClosed_tfae (range f)).out 3 1).1 ?_
+  refine ((isLocallyClosed_tfae (range f)).out 2 1).1 ?_
   rintro _ ⟨x, rfl⟩
+  refine ((isLocallyClosedAt_tfae (range f) (f x)).out 2 1).1 ?_
   obtain ⟨φ, hφx, hφ⟩ := h.exists_isSliceChart x
   -- Shrink the chart to the part of its source where the open half of the slice already holds;
   -- there the image is cut out by the closed half alone.
