@@ -46,7 +46,7 @@ namespace TauCeti.RingTheory.Gorenstein
 
 public section
 
-universe u
+universe u v
 
 variable (R : Type u) [Ring R]
 
@@ -56,7 +56,7 @@ variable (R : Type u) [Ring R]
 needed), and `Hom(-,Q)` leaves it exact for every projective `Q`. -/
 structure StronglyCompleteProjectiveResolution (R : Type u) [Ring R] where
   /-- The underlying projective module `P` in `⋯ → P → P → ⋯`. -/
-  P : Type u
+  P : Type v
   /-- `P` is an additive group. -/
   [addGroup : AddCommGroup P]
   /-- `P` is an `R`-module. -/
@@ -67,11 +67,11 @@ structure StronglyCompleteProjectiveResolution (R : Type u) [Ring R] where
   f : P →ₗ[R] P
   /-- The complex `⋯ → P -f→ P -f→ P → ⋯` is exact at `P` (`ker f = range f`;
   this also gives `f.comp f = 0`, via `Function.Exact.linearMap_comp_eq_zero`). -/
-  hExact : Function.Exact f f
+  exact : Function.Exact f f
   /-- Completeness: `Hom(-,Q)` leaves `⋯ → P -f→ P -f→ P → ⋯` exact, for every
   projective `Q` — precomposing `Q`-valued homs by `f` is itself an exact pair.
   Without this the resolution is merely exact, not *complete*. -/
-  homExact : ∀ (Q : Type u) [AddCommGroup Q] [Module R Q] [Module.Projective R Q],
+  homExact : ∀ (Q : Type v) [AddCommGroup Q] [Module R Q] [Module.Projective R Q],
     Function.Exact (fun g : P →ₗ[R] Q => g.comp f) (fun g : P →ₗ[R] Q => g.comp f)
 
 /-- Def. 1.1(2) (dual): a strongly complete injective resolution
@@ -79,7 +79,7 @@ structure StronglyCompleteProjectiveResolution (R : Type u) [Ring R] where
 `Hom(E,-)` leaves it exact for every injective `E`. -/
 structure StronglyCompleteInjectiveResolution (R : Type u) [Ring R] where
   /-- The underlying injective module `I` in `⋯ → I → I → ⋯`. -/
-  I : Type u
+  I : Type v
   /-- `I` is an additive group. -/
   [addGroup : AddCommGroup I]
   /-- `I` is an `R`-module. -/
@@ -90,11 +90,11 @@ structure StronglyCompleteInjectiveResolution (R : Type u) [Ring R] where
   f : I →ₗ[R] I
   /-- The complex `⋯ → I -f→ I -f→ I → ⋯` is exact at `I` (`ker f = range f`;
   this also gives `f.comp f = 0`, via `Function.Exact.linearMap_comp_eq_zero`). -/
-  hExact : Function.Exact f f
+  exact : Function.Exact f f
   /-- Completeness: `Hom(E,-)` leaves `⋯ → I -f→ I -f→ I → ⋯` exact, for every
   injective `E` — postcomposing `E`-sourced homs by `f` is itself an exact
   pair. Without this the resolution is merely exact, not *complete*. -/
-  homExact : ∀ (E : Type u) [AddCommGroup E] [Module R E] [Module.Injective R E],
+  homExact : ∀ (E : Type v) [AddCommGroup E] [Module R E] [Module.Injective R E],
     Function.Exact (fun g : E →ₗ[R] I => f.comp g) (fun g : E →ₗ[R] I => f.comp g)
 
 /-- Def. 1.1(3) (dual): a strongly complete flat resolution
@@ -104,7 +104,7 @@ over a `CommSemiring`, so this structure (unlike the projective and injective
 cases) needs `CommRing R`. -/
 structure StronglyCompleteFlatResolution (R : Type u) [CommRing R] where
   /-- The underlying flat module `F` in `⋯ → F → F → ⋯`. -/
-  F : Type u
+  F : Type v
   /-- `F` is an additive group. -/
   [addGroup : AddCommGroup F]
   /-- `F` is an `R`-module. -/
@@ -115,35 +115,59 @@ structure StronglyCompleteFlatResolution (R : Type u) [CommRing R] where
   f : F →ₗ[R] F
   /-- The complex `⋯ → F -f→ F -f→ F → ⋯` is exact at `F` (`ker f = range f`;
   this also gives `f.comp f = 0`, via `Function.Exact.linearMap_comp_eq_zero`). -/
-  hExact : Function.Exact f f
+  exact : Function.Exact f f
   /-- Completeness: `I ⊗ -` leaves `⋯ → F -f→ F -f→ F → ⋯` exact, for every
   injective `I` — `id ⊗ f` on `I ⊗[R] F` is itself an exact pair. Without this
   the resolution is merely exact, not *complete*. -/
-  homExact : ∀ (I : Type u) [AddCommGroup I] [Module R I] [Module.Injective R I],
+  tensorExact : ∀ (I : Type v) [AddCommGroup I] [Module R I] [Module.Injective R I],
     Function.Exact (TensorProduct.map (LinearMap.id (R := R) (M := I)) f)
       (TensorProduct.map (LinearMap.id (R := R) (M := I)) f)
 
 /-- Def. 1.1(1): `M` is strongly Gorenstein projective if it is (isomorphic
 to) the image of the differential of a strongly complete projective
 resolution. -/
-def IsStronglyGorensteinProjective (M : Type u) [AddCommGroup M] [Module R M] : Prop :=
-  ∃ S : StronglyCompleteProjectiveResolution R,
+def IsStronglyGorensteinProjective (M : Type v) [AddCommGroup M] [Module R M] : Prop :=
+  ∃ S : StronglyCompleteProjectiveResolution.{u, v} R,
     letI := S.addGroup; letI := S.moduleInst
     Nonempty (LinearMap.range S.f ≃ₗ[R] M)
 
 /-- Def. 1.1(2): `M` is strongly Gorenstein injective, dually. -/
-def IsStronglyGorensteinInjective (M : Type u) [AddCommGroup M] [Module R M] : Prop :=
-  ∃ S : StronglyCompleteInjectiveResolution R,
+def IsStronglyGorensteinInjective (M : Type v) [AddCommGroup M] [Module R M] : Prop :=
+  ∃ S : StronglyCompleteInjectiveResolution.{u, v} R,
     letI := S.addGroup; letI := S.moduleInst
     Nonempty (LinearMap.range S.f ≃ₗ[R] M)
 
 /-- Def. 1.1(3): `M` is strongly Gorenstein flat, dually. Needs `CommRing R`
 for the same reason `StronglyCompleteFlatResolution` does. -/
-def IsStronglyGorensteinFlat (R : Type u) [CommRing R] (M : Type u)
+def IsStronglyGorensteinFlat (R : Type u) [CommRing R] (M : Type v)
     [AddCommGroup M] [Module R M] : Prop :=
-  ∃ S : StronglyCompleteFlatResolution R,
+  ∃ S : StronglyCompleteFlatResolution.{u, v} R,
     letI := S.addGroup; letI := S.moduleInst
     Nonempty (LinearMap.range S.f ≃ₗ[R] M)
+
+/-- Introduction rule for `IsStronglyGorensteinProjective`: a resolution together
+with an isomorphism from its image. Consumers should build the predicate through
+this rather than through the anonymous constructor, so the `∃`/`Nonempty` encoding
+stays an implementation detail. -/
+theorem IsStronglyGorensteinProjective.of_rangeEquiv (M : Type v) [AddCommGroup M] [Module R M]
+    (S : StronglyCompleteProjectiveResolution.{u, v} R)
+    (e : letI := S.addGroup; letI := S.moduleInst; LinearMap.range S.f ≃ₗ[R] M) :
+    IsStronglyGorensteinProjective R M :=
+  ⟨S, ⟨e⟩⟩
+
+/-- Introduction rule for `IsStronglyGorensteinInjective`. -/
+theorem IsStronglyGorensteinInjective.of_rangeEquiv (M : Type v) [AddCommGroup M] [Module R M]
+    (S : StronglyCompleteInjectiveResolution.{u, v} R)
+    (e : letI := S.addGroup; letI := S.moduleInst; LinearMap.range S.f ≃ₗ[R] M) :
+    IsStronglyGorensteinInjective R M :=
+  ⟨S, ⟨e⟩⟩
+
+/-- Introduction rule for `IsStronglyGorensteinFlat`. -/
+theorem IsStronglyGorensteinFlat.of_rangeEquiv (R : Type u) [CommRing R] (M : Type v)
+    [AddCommGroup M] [Module R M] (S : StronglyCompleteFlatResolution.{u, v} R)
+    (e : letI := S.addGroup; letI := S.moduleInst; LinearMap.range S.f ≃ₗ[R] M) :
+    IsStronglyGorensteinFlat R M :=
+  ⟨S, ⟨e⟩⟩
 
 /-! ## Contractible periodic complexes
 
@@ -169,22 +193,26 @@ theorem exact_of_homotopy {N : Type*} [AddCommGroup N] {F S : N → N}
   · rintro ⟨x, rfl⟩
     exact hFF x
 
-variable (M : Type u) [AddCommGroup M] [Module R M]
+variable (M : Type v) [AddCommGroup M] [Module R M]
 
 /-- The differential `(x, y) ↦ (y, 0)` of the contractible periodic complex on
 `M × M`. Its image is the first summand, a copy of `M`. -/
-@[expose] def prodShift : M × M →ₗ[R] M × M :=
+def prodShift : M × M →ₗ[R] M × M :=
   (LinearMap.inl R M M).comp (LinearMap.snd R M M)
 
 /-- The contraction `(x, y) ↦ (0, x)` of `prodShift`. -/
-@[expose] def prodContraction : M × M →ₗ[R] M × M :=
+def prodContraction : M × M →ₗ[R] M × M :=
   (LinearMap.inr R M M).comp (LinearMap.fst R M M)
 
-@[simp] theorem prodShift_apply (p : M × M) : prodShift R M p = (p.2, 0) := rfl
+/-- `prodShift` unfolded, so that its body need not be exposed. -/
+theorem prodShift_eq_comp :
+    prodShift R M = (LinearMap.inl R M M).comp (LinearMap.snd R M M) := (rfl)
 
-@[simp] theorem prodContraction_apply (p : M × M) : prodContraction R M p = (0, p.1) := rfl
+@[simp] theorem prodShift_apply (p : M × M) : prodShift R M p = (p.2, 0) := (rfl)
 
-theorem prodShift_prodShift (p : M × M) : prodShift R M (prodShift R M p) = 0 := rfl
+@[simp] theorem prodContraction_apply (p : M × M) : prodContraction R M p = (0, p.1) := (rfl)
+
+theorem prodShift_prodShift (p : M × M) : prodShift R M (prodShift R M p) = 0 := (rfl)
 
 theorem prodShift_prodContraction_add (p : M × M) :
     prodShift R M (prodContraction R M p) + prodContraction R M (prodShift R M p) = p := by
@@ -198,7 +226,7 @@ theorem prodContraction_prodShift_add (p : M × M) :
 
 theorem range_prodShift :
     LinearMap.range (prodShift R M) = LinearMap.range (LinearMap.inl R M M) := by
-  unfold prodShift
+  rw [prodShift_eq_comp]
   exact LinearMap.range_comp_of_range_eq_top _
     (LinearMap.range_eq_top_of_surjective _ Prod.snd_surjective)
 
@@ -214,8 +242,9 @@ holds for every `Q`, projective or not, because a contraction survives any
 additive functor. -/
 theorem isStronglyGorensteinProjective_of_projective [Module.Projective R M] :
     IsStronglyGorensteinProjective R M := by
-  refine ⟨{ P := M × M, f := prodShift R M, hExact := ?_, homExact := ?_ },
-    ⟨rangeProdShiftEquiv R M⟩⟩
+  refine IsStronglyGorensteinProjective.of_rangeEquiv R M
+    { P := M × M, f := prodShift R M, exact := ?_, homExact := ?_ }
+    (rangeProdShiftEquiv R M)
   · exact exact_of_homotopy (S := prodContraction R M) (prodShift_prodShift R M)
       (map_zero _) (prodShift_prodContraction_add R M)
   · intro Q _ _ _
@@ -234,7 +263,7 @@ restrictive: over `ℤ`, where projective modules are torsion free, `ZMod 2`
 admits no such embedding. -/
 theorem IsStronglyGorensteinProjective.exists_injective
     (h : IsStronglyGorensteinProjective R M) :
-    ∃ S : StronglyCompleteProjectiveResolution R,
+    ∃ S : StronglyCompleteProjectiveResolution.{u, v} R,
       letI := S.addGroup; letI := S.moduleInst
       ∃ i : M →ₗ[R] S.P, Function.Injective i := by
   obtain ⟨S, ⟨e⟩⟩ := h
@@ -248,7 +277,7 @@ Dually to the projective case this is restrictive: over `ℤ` a quotient of an
 injective module is divisible, and `ZMod 2` is not. -/
 theorem IsStronglyGorensteinInjective.exists_surjective
     (h : IsStronglyGorensteinInjective R M) :
-    ∃ S : StronglyCompleteInjectiveResolution R,
+    ∃ S : StronglyCompleteInjectiveResolution.{u, v} R,
       letI := S.addGroup; letI := S.moduleInst
       ∃ p : S.I →ₗ[R] M, Function.Surjective p := by
   obtain ⟨S, ⟨e⟩⟩ := h
@@ -259,9 +288,9 @@ theorem IsStronglyGorensteinInjective.exists_surjective
 
 /-- A strongly Gorenstein flat module embeds in a flat module. Over `ℤ`, where
 flat means torsion free, this again fails for `ZMod 2`. -/
-theorem IsStronglyGorensteinFlat.exists_injective (R : Type u) [CommRing R] (M : Type u)
+theorem IsStronglyGorensteinFlat.exists_injective (R : Type u) [CommRing R] (M : Type v)
     [AddCommGroup M] [Module R M] (h : IsStronglyGorensteinFlat R M) :
-    ∃ S : StronglyCompleteFlatResolution R,
+    ∃ S : StronglyCompleteFlatResolution.{u, v} R,
       letI := S.addGroup; letI := S.moduleInst
       ∃ i : M →ₗ[R] S.F, Function.Injective i := by
   obtain ⟨S, ⟨e⟩⟩ := h
