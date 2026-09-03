@@ -116,7 +116,11 @@ def log(message):
 def _gh(args):
     result = subprocess.run(["gh", *args], capture_output=True, text=True)
     if result.returncode != 0:
-        raise RuntimeError(f"gh {' '.join(args)} failed: {result.stderr.strip()}")
+        # Summarise the command rather than echoing it: a failing comment would
+        # otherwise reprint the whole comment body into the log, once per PR.
+        shown = " ".join(a.split("=", 1)[0] if a.startswith("-f") or "=" in a else a
+                         for a in args)
+        raise RuntimeError(f"gh {shown} failed: {result.stderr.strip()}")
     return result.stdout
 
 

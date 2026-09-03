@@ -40,6 +40,8 @@ restriction to a subgroup can be degenerate.
 
 ## Main results
 
+* `TauCeti.FiniteBilinearModule.radical_restrict`: the radical of a restricted pairing is
+  the part of the orthogonal complement lying in the subgroup.
 * `TauCeti.FiniteBilinearModule.Isometry.map_orthogonalComplement`: an isometry carries
   orthogonal complements to orthogonal complements.
 * `TauCeti.FiniteBilinearModule.Isometry.orthogonalComplementEquiv`: the induced equivalence
@@ -676,6 +678,16 @@ theorem mem_orthogonalComplement_iff (H : AddSubgroup A) (x : A) :
   rw [orthogonalComplement, Submodule.mem_toAddSubgroup, Submodule.mem_orthogonalBilin]
   simp_rw [toBilin_apply, A.pairing_comm]
   exact ⟨fun h y hy ↦ h y hy, fun h y hy ↦ h y hy⟩
+
+/-- **The radical of a restricted pairing.** Restricting the pairing of `A` to a subgroup `S`
+makes degenerate exactly the vectors of `S` which are orthogonal to all of `S`. -/
+@[simp]
+theorem radical_restrict (S : AddSubgroup A) :
+    (A.restrict S).radical = (A.orthogonalComplement S).addSubgroupOf S := by
+  ext x
+  rw [mem_radical_iff, AddSubgroup.mem_addSubgroupOf, A.mem_orthogonalComplement_iff]
+  exact ⟨fun hx y hy ↦ by simpa only [A.restrict_pairing S] using hx ⟨y, hy⟩,
+    fun hx y ↦ by simpa only [A.restrict_pairing S] using hx y.1 y.2⟩
 
 /-- Orthogonal complements reverse inclusions. -/
 theorem orthogonalComplement_anti {H K : AddSubgroup A} (h : H ≤ K) :

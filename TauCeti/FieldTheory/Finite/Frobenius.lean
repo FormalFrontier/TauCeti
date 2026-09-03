@@ -20,13 +20,12 @@ of the `q`-power endomorphism of `L` is a subfield over which `L` is purely inse
 * `TauCeti.FiniteField.isPurelyInseparable_fieldRange_frobeniusAlgHom`: `L` is purely
   inseparable over the field range of `FiniteField.frobeniusAlgHom K L`.
 
-## Roadmap
+## Mathematical context
 
-This is the field-theoretic input to the Frobenius isogeny in Layer 1 of
-`TauCetiRoadmap/EllipticCurves/README.md`, which requires `π_q` to be purely inseparable of degree
-`q`. Stating it before specializing to a curve keeps the argument independent of the particular
-function field, just as the degree computation first identifies the field range of the same
-`q`-power map.
+This is the field-theoretic input to proving that the Frobenius isogeny `π_q` is purely inseparable
+of degree `q`. Stating it before specializing to a curve keeps the argument independent of the
+particular function field, just as the degree computation first identifies the field range of the
+same `q`-power map.
 
 ## References
 

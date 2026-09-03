@@ -31,7 +31,6 @@ faithfulness of `hopfSpec` together with uniqueness of that factorization.
   `TauCeti.CommHopfAlgCat.liftEqualizerSpec_comp_equalizerSpecι` and
   `TauCeti.CommHopfAlgCat.liftEqualizerSpec_unique`: the universal property of that cone among
   affine group schemes.
-
 ## References
 
 The equalizer of two homomorphisms of group schemes is a closed subgroup scheme; see

@@ -8,6 +8,7 @@ module
 public import Mathlib.Analysis.InnerProductSpace.Projection.FiniteDimensional
 public import TauCeti.LinearAlgebra.Dimension.DirectSum
 public import TauCeti.RepresentationTheory.Continuous.InvariantComplement
+public import TauCeti.RepresentationTheory.Continuous.Transport
 public import TauCeti.RepresentationTheory.Irreducible
 
 /-!
@@ -30,12 +31,19 @@ remainder is a strictly smaller subrepresentation and the descent recurses on it
 No measure, no compactness, and no continuity of the representation are used: the argument runs on
 a `ContRepresentation` only because that is where `TauCeti.ContRepresentation.IsUnitary` lives, and
 the acting group may be arbitrary. For a compact group the unitarity hypothesis is what Weyl's
-unitarian trick in `TauCeti.RepresentationTheory.Compact.Unitarizable` is there to supply.
+unitarian trick in `TauCeti.RepresentationTheory.Compact.Unitarizable` is there to supply. That
+trick does not make `π` itself unitary — it conjugates it into a unitary representation — so the
+decomposition is also recorded in the form that consumes such a conjugation, with the blocks
+carried back to `π` along it.
 
 ## Main results
 
 * `TauCeti.ContRepresentation.IsUnitary.exists_orthogonal_irreducible_decomposition`: complete
   reducibility in orthogonal internal form, with the dimension count that goes with it.
+* `TauCeti.ContRepresentation.IsUnitary.exists_orthogonal_irreducible_decomposition_of_congr`: the
+  same decomposition for a representation that is merely *conjugate* to a unitary one, its blocks
+  carried back along the conjugating equivalence and orthogonal for the inner product that
+  equivalence pulls back.
 
 ## Implementation notes
 
@@ -74,6 +82,8 @@ private theorem iSup_fin_succ {α : Type*} [CompleteLattice α] {n : ℕ} (f : F
 namespace ContRepresentation
 
 namespace IsUnitary
+
+section Unitary
 
 variable {𝕜 G V : Type*} [RCLike 𝕜] [Group G] [NormedAddCommGroup V] [InnerProductSpace 𝕜 V]
   {π : ContRepresentation 𝕜 G V}
@@ -203,6 +213,89 @@ theorem exists_orthogonal_irreducible_decomposition (hπ : IsUnitary π) :
   exact finrank_eq_sum_finrank_of_isInternal hinternal
 
 end FiniteDimensional
+
+end Unitary
+
+section Congr
+
+variable {𝕜 G V W : Type*} [RCLike 𝕜] [Group G]
+  [NormedAddCommGroup V] [NormedSpace 𝕜 V] [FiniteDimensional 𝕜 V]
+  [NormedAddCommGroup W] [InnerProductSpace 𝕜 W] {π : ContRepresentation 𝕜 G V}
+
+/-- **Complete reducibility for a unitarizable representation, orthogonal internal form.** If a
+continuous linear equivalence `e : V ≃L[𝕜] W` conjugates `π` into a *unitary* representation
+`congr e π`, then `π` itself — not merely its unitary model — is an internal direct sum of finitely
+many irreducible subrepresentations, of dimensions adding up to `dim V`, whose images under `e` are
+pairwise orthogonal.
+
+This is `TauCeti.ContRepresentation.IsUnitary.exists_orthogonal_irreducible_decomposition` carried
+back along the equivalence of continuous representations
+`ContRepresentation.congrEquiv : π.Equiv (congr e π)`: each block `U i` of the unitary model pulls
+back to `(U i).toSubmodule.map e.symm`, which is `π`-invariant because `e` intertwines `π` with
+`congr e π`, and irreducibility, internality and the dimension count travel along the linear
+equivalence `e.symm` restricted to it.
+
+Orthogonality is not stated inside `V`, which carries no inner product here: `e` is there
+precisely because `π` need not preserve one, and the form the blocks are orthogonal for is the
+invariant `⟪e ·, e ·⟫` pulled back from `W`. Only the unitary model needs an inner product, so
+`V` is asked for no more than a finite-dimensional normed space, as
+`TauCeti.ContRepresentation.congr` itself is. Nothing here uses finiteness or compactness of the
+acting group; a construction of an `e` is what such a hypothesis is for, Weyl's unitarian trick
+`TauCeti.ContRepresentation.exists_isUnitary_congr` being one. -/
+theorem exists_orthogonal_irreducible_decomposition_of_congr {e : V ≃L[𝕜] W}
+    (he : IsUnitary (ContRepresentation.congr e π)) :
+    ∃ (n : ℕ) (U : Fin n → Subrepresentation π.toRepresentation),
+      (∀ i, (U i).toRepresentation.IsIrreducible) ∧
+      (Pairwise fun i j ↦ ∀ v ∈ (U i).toSubmodule, ∀ w ∈ (U j).toSubmodule, ⟪e v, e w⟫_𝕜 = 0) ∧
+      DirectSum.IsInternal (fun i ↦ (U i).toSubmodule) ∧
+      Module.finrank 𝕜 V = ∑ i, Module.finrank 𝕜 (U i).toSubmodule := by
+  have _ : FiniteDimensional 𝕜 W := (e : V ≃ₗ[𝕜] W).finiteDimensional
+  obtain ⟨n, U, hirr, horth, hinternal, hdim⟩ := he.exists_orthogonal_irreducible_decomposition
+  -- `e` intertwines `π` with `congr e π`: that is the equivalence `ContRepresentation.congrEquiv`.
+  have hint : ∀ (g : G) (v : V),
+      (e : V ≃ₗ[𝕜] W) ((π.toRepresentation : Representation 𝕜 G V) g v) =
+        ((ContRepresentation.congr e π).toRepresentation : Representation 𝕜 G W) g
+          ((e : V ≃ₗ[𝕜] W) v) := fun g v ↦ by
+    have h := (_root_.ContRepresentation.congrEquiv π e).toContIntertwiningMap.isIntertwining g v
+    simp only [_root_.ContRepresentation.Equiv.coe_toContIntertwiningMap,
+      _root_.ContRepresentation.congrEquiv_apply] at h
+    exact h
+  have hsymm : ∀ (g : G) (w : W),
+      (e : V ≃ₗ[𝕜] W).symm
+          (((ContRepresentation.congr e π).toRepresentation : Representation 𝕜 G W) g w) =
+        (π.toRepresentation : Representation 𝕜 G V) g ((e : V ≃ₗ[𝕜] W).symm w) := by
+    intro g w
+    have h := hint g ((e : V ≃ₗ[𝕜] W).symm w)
+    rw [LinearEquiv.apply_symm_apply] at h
+    rw [← h, LinearEquiv.symm_apply_apply]
+  have hmem : ∀ (i : Fin n) (v : V),
+      v ∈ (U i).toSubmodule.map ((e : V ≃ₗ[𝕜] W).symm : W →ₗ[𝕜] V) ↔
+        (e : V ≃ₗ[𝕜] W) v ∈ (U i).toSubmodule := fun i v ↦ Submodule.mem_map_equiv _
+  have hinv : ∀ (i : Fin n) (g : G) ⦃v : V⦄,
+      v ∈ (U i).toSubmodule.map ((e : V ≃ₗ[𝕜] W).symm : W →ₗ[𝕜] V) →
+        (π.toRepresentation : Representation 𝕜 G V) g v ∈
+          (U i).toSubmodule.map ((e : V ≃ₗ[𝕜] W).symm : W →ₗ[𝕜] V) := by
+    intro i g v hv
+    refine (hmem i _).mpr ?_
+    rw [hint g v]
+    exact (U i).apply_mem_toSubmodule g ((hmem i v).mp hv)
+  refine ⟨n, fun i ↦ ⟨(U i).toSubmodule.map ((e : V ≃ₗ[𝕜] W).symm : W →ₗ[𝕜] V), hinv i⟩,
+    fun i ↦ ?_, fun i j hij v hv w hw ↦ ?_, ?_, ?_⟩
+  · refine Representation.isIrreducible_of_linearEquiv
+      ((e : V ≃ₗ[𝕜] W).symm.submoduleMap (U i).toSubmodule) (fun g x ↦ Subtype.ext ?_) (hirr i)
+    simp only [LinearEquiv.submoduleMap_apply, Subrepresentation.toRepresentation_apply]
+    exact hsymm g x
+  · exact horth hij ⟨_, (hmem i v).mp hv⟩ ⟨_, (hmem j w).mp hw⟩
+  · obtain ⟨hindep, htop⟩ :=
+      (DirectSum.isInternal_submodule_iff_iSupIndep_and_iSup_eq_top _).mp hinternal
+    refine (DirectSum.isInternal_submodule_iff_iSupIndep_and_iSup_eq_top _).mpr
+      ⟨hindep.map_orderIso (Submodule.orderIsoMapComap (e : V ≃ₗ[𝕜] W).symm), ?_⟩
+    rw [← Submodule.map_iSup, htop, Submodule.map_top, LinearEquiv.range]
+  · rw [(e : V ≃ₗ[𝕜] W).finrank_eq, hdim]
+    exact Finset.sum_congr rfl fun i _ ↦
+      ((e : V ≃ₗ[𝕜] W).symm.submoduleMap (U i).toSubmodule).finrank_eq
+
+end Congr
 
 end IsUnitary
 

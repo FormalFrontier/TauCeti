@@ -40,11 +40,10 @@ extension of the prime field.
 ## References
 
 This is the field-theoretic half of "the fixed points of the `q`-power Frobenius are the
-`𝔽_q`-points", the ring-theoretic half being `TauCeti.frobeniusFixedSubring` itself. It is a
-prerequisite of the "points over an algebraically closed field, functorially in the field" target
-of Layer 9 of `TauCetiRoadmap/ReductiveGroups/README.md`, and of milestone L1 of
-`TauCetiRoadmap/CFSGStatement/README.md`, whose ordinary and graph-twisted Steinberg maps start
-from the `q`-power Frobenius of an algebraic closure of `ZMod p`.
+`𝔽_q`-points", the ring-theoretic half being `TauCeti.frobeniusFixedSubring` itself. It supplies
+the finite-field input for studying points over an algebraically closed field and for ordinary and
+graph-twisted Steinberg maps, which start from the `q`-power Frobenius of an algebraic closure of
+`ZMod p`.
 
 * S. Lang, *Algebra*, 3rd ed., V.5.
 * R. Lidl and H. Niederreiter, *Finite Fields*, §2.1.
