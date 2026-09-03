@@ -27,8 +27,8 @@ the middle general-linear Levi factor using difference roots and diagonal Levi e
 
 ## Main results
 
-* `TauCeti.GLSymplecticFin.mem_of_isUnit_toBlocks₁₁` is the block Gaussian decomposition on
-  the open cell where the upper-left block is invertible.
+* `TauCeti.GLSymplecticFin.exists_gaussian_decomposition_of_isUnit_toBlocks₁₁` is the block
+  Gaussian decomposition on the open cell where the upper-left block is invertible.
 * `TauCeti.GLSymplecticFin.eq_top_of_root_subgroups_of_diagonal` proves that all standard root
   subgroups together with the diagonal Levi subgroup generate the whole symplectic group.
 * `TauCeti.GLSymplecticFin.eq_top_of_adjacent_of_long_of_diagonal` reduces the root hypotheses to
@@ -50,18 +50,16 @@ universe u
 
 variable {K : Type u} [Field K] {m : ℕ}
 
-/-- A symplectic matrix whose upper-left block is invertible belongs to every subgroup containing
-all upper and lower symmetric unipotents and the general-linear Levi subgroup. -/
-theorem mem_of_isUnit_toBlocks₁₁
+/-- A symplectic matrix whose upper-left block is invertible factors as a lower symmetric
+unipotent, a general-linear Levi element, and an upper symmetric unipotent. -/
+theorem exists_gaussian_decomposition_of_isUnit_toBlocks₁₁
     {R : Type u} [CommRing R]
-    (H : Subgroup (GLSymplecticFin m R))
-    (hupper : ∀ (B : Matrix (Fin m) (Fin m) R) (hB : B.IsSymm), upperUnipotent B hB ∈ H)
-    (hlower : ∀ (C : Matrix (Fin m) (Fin m) R) (hC : C.IsSymm), lowerUnipotent C hC ∈ H)
-    (hlevi : ∀ A : GL (Fin m) R, leviHom A ∈ H)
     (g : GLSymplecticFin m R)
     (hunit : IsUnit (((mulEquivGLSymplectic m R g : GLSymplectic (Fin m) R) :
       GL (Fin m ⊕ Fin m) R) : Matrix (Fin m ⊕ Fin m) (Fin m ⊕ Fin m) R).toBlocks₁₁) :
-    g ∈ H := by
+    ∃ (S T : Matrix (Fin m) (Fin m) R) (P : GL (Fin m) R)
+      (hS : S.IsSymm) (hT : T.IsSymm),
+        g = lowerUnipotent S hS * leviHom P * upperUnipotent T hT := by
   let M : Matrix (Fin m ⊕ Fin m) (Fin m ⊕ Fin m) R :=
     ((mulEquivGLSymplectic m R g : GLSymplectic (Fin m) R) : GL (Fin m ⊕ Fin m) R)
   let A := M.toBlocks₁₁
@@ -140,9 +138,9 @@ theorem mem_of_isUnit_toBlocks₁₁
     apply Subtype.ext
     simp only [Subgroup.coe_mul]
     apply Units.ext
-    rw [show ((((mulEquivGLSymplectic m R) g : GLSymplectic (Fin m) R) :
-        GL (Fin m ⊕ Fin m) R) : Matrix (Fin m ⊕ Fin m) (Fin m ⊕ Fin m) R) = M by
-      rfl]
+    -- Here `M` is the local abbreviation for exactly the coerced matrix on the left; this
+    -- change only exposes that abbreviation and does not unfold a group or matrix wrapper.
+    change M = _
     simp only [Matrix.GeneralLinearGroup.coe_mul, coe_mulEquivGLSymplectic,
       coe_mulEquivGLSymplectic_lowerUnipotent,
       coe_mulEquivGLSymplectic_upperUnipotent, GLSymplectic.coe_ofSymplecticGroup,
@@ -153,6 +151,22 @@ theorem mem_of_isUnit_toBlocks₁₁
     rw [← hMblocks]
     ext i j
     cases i <;> cases j <;> simp [hAT, hSA, hD, Ainv_def]
+  exact ⟨S, T, P, hS, hT, hfactor⟩
+
+/-- A symplectic matrix whose upper-left block is invertible belongs to every subgroup containing
+all upper and lower symmetric unipotents and the general-linear Levi subgroup. -/
+theorem mem_of_isUnit_toBlocks₁₁
+    {R : Type u} [CommRing R]
+    (H : Subgroup (GLSymplecticFin m R))
+    (hupper : ∀ (B : Matrix (Fin m) (Fin m) R) (hB : B.IsSymm), upperUnipotent B hB ∈ H)
+    (hlower : ∀ (C : Matrix (Fin m) (Fin m) R) (hC : C.IsSymm), lowerUnipotent C hC ∈ H)
+    (hlevi : ∀ A : GL (Fin m) R, leviHom A ∈ H)
+    (g : GLSymplecticFin m R)
+    (hunit : IsUnit (((mulEquivGLSymplectic m R g : GLSymplectic (Fin m) R) :
+      GL (Fin m ⊕ Fin m) R) : Matrix (Fin m ⊕ Fin m) (Fin m ⊕ Fin m) R).toBlocks₁₁) :
+    g ∈ H := by
+  obtain ⟨S, T, P, hS, hT, hfactor⟩ :=
+    exists_gaussian_decomposition_of_isUnit_toBlocks₁₁ g hunit
   rw [hfactor]
   exact H.mul_mem (H.mul_mem (hlower S hS) (hlevi P)) (hupper T hT)
 
