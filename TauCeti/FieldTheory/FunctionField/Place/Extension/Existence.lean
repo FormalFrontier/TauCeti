@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.FieldTheory.FunctionField.Basic
+public import TauCeti.FieldTheory.FunctionField.ConstantField
 public import TauCeti.FieldTheory.FunctionField.Place.Extension.Basic
 
 import Mathlib.RingTheory.Valuation.LocalSubring
@@ -16,7 +16,9 @@ import TauCeti.FieldTheory.FunctionField.Place.OfValuationSubring
 
 Every place of an algebraic function field extends across an integral field extension. More
 generally, the field of constants may also grow by an integral extension: a valuation trivial on
-the smaller constant field is automatically trivial on the larger one.
+the smaller constant field is automatically trivial on the larger one. For an extension of
+algebraic function fields with `F' / F` finite, both integrality hypotheses are automatic, the
+one on the constant fields because the extension of constant fields is then finite.
 
 The proof dominates the local valuation ring of the original place by a valuation subring of the
 larger function field. Locality ensures that the resulting valuation subring is proper. Since
@@ -27,6 +29,9 @@ place whose restriction is the original place.
 
 * `TauCeti.Place.restrict_surjective`: every place downstairs is the restriction of a place
   upstairs (Stichtenoth, Proposition 3.1.7).
+* `TauCeti.Place.restrict_surjective_of_finiteDimensional`: the same statement for an extension
+  of algebraic function fields, where both integrality hypotheses are theorems rather than
+  hypotheses.
 
 ## References
 
@@ -46,6 +51,8 @@ variable {k : Type u} {k' : Type u'} {F : Type v} {F' : Type v'}
 variable [Field k] [Field k'] [Field F] [Field F']
 variable [Algebra k k'] [Algebra k F] [Algebra k' F'] [Algebra F F'] [Algebra k F']
 variable [IsScalarTower k k' F'] [IsScalarTower k F F']
+section Integral
+
 variable [Algebra.IsIntegral k k'] [Algebra.IsIntegral F F']
 
 /-- **Existence of extensions of places** (Stichtenoth, Proposition 3.1.7): if both the field
@@ -95,6 +102,23 @@ theorem restrict_surjective (hF' : IsFunctionField k' F') :
   have hAx := hA ⟨x, hx⟩
   simpa only [f, RingHom.coe_comp, Function.comp_apply, ValuationSubring.coe_subtype,
     ValuationSubring.mem_toSubring] using hAx
+
+end Integral
+
+/-- **Existence of extensions of places for an extension of function fields** (Stichtenoth,
+Proposition 3.1.7): every place of `F / k` is the restriction of a place of `F' / k'`.
+
+Unlike `TauCeti.Place.restrict_surjective`, this asks nothing of the extension of constants:
+`k' / k` is finite by `TauCeti.IsFunctionField.finiteDimensional_constantExtension`.  Neither
+statement subsumes the other, since `TauCeti.Place.restrict_surjective` allows an infinite
+algebraic extension `F' / F`. -/
+theorem restrict_surjective_of_finiteDimensional [FiniteDimensional F F']
+    (hF : IsFunctionField k F) (hF' : IsFunctionField k' F') :
+    Function.Surjective (fun P' : Place k' F' ↦ restrict k F P') :=
+  have := hF.finiteDimensional_constantExtension hF'
+  have := Algebra.IsIntegral.of_finite k k'
+  have := Algebra.IsIntegral.of_finite F F'
+  restrict_surjective hF'
 
 end Place
 
