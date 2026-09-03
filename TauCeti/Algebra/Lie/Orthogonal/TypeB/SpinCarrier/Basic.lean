@@ -189,6 +189,17 @@ noncomputable def definingIdeal :
     (rep_kostantForm_mem_lattice n) (isNilpotent_rep_rootGenerator n)
     (latticeBasis n) (basisWeight n)
 
+/-- The type-`Bₙ₊₁` carrier ideal is the generic Kostant toral-closure ideal specialized to
+the spin representation and its exterior coordinate lattice. -/
+theorem definingIdeal_def :
+    definingIdeal n =
+      kostantToralDefiningIdeal
+        (TauCeti.typeBSimpleRootGeneratorFamily (K := ℚ))
+        (TauCeti.typeBSimpleCorootGenerator (K := ℚ)) (rep n) (lattice n).toAddSubgroup
+        (rep_kostantForm_mem_lattice n) (isNilpotent_rep_rootGenerator n)
+        (latticeBasis n) (basisWeight n) := by
+  rw [definingIdeal]
+
 /-- The full-weight type-`Bₙ₊₁` spin carrier over `ℤ`. -/
 noncomputable def groupScheme : Grp (Over (Spec (CommRingCat.of ℤ))) :=
   kostantToralGroupScheme
@@ -203,18 +214,35 @@ theorem groupScheme_def :
       (TauCeti.GeneralLinear.coordinateHopfAlgebra ℤ (dimension n)) (definingIdeal n) := by
   rw [groupScheme, definingIdeal]
 
-/-- The canonical inclusion of the type-`Bₙ₊₁` spin carrier into its general-linear carrier. -/
+/-- The type-`Bₙ₊₁` carrier is the generic Kostant toral closure for its spin
+representation. -/
+theorem groupScheme_eq_kostantToralGroupScheme :
+    groupScheme n = kostantToralGroupScheme
+      (TauCeti.typeBSimpleRootGeneratorFamily (K := ℚ))
+      (TauCeti.typeBSimpleCorootGenerator (K := ℚ)) (rep n) (lattice n).toAddSubgroup
+      (rep_kostantForm_mem_lattice n) (isNilpotent_rep_rootGenerator n)
+      (latticeBasis n) (basisWeight n) := by
+  rw [groupScheme]
+
+/-- The canonical inclusion of the type-`Bₙ₊₁` spin carrier into its general-linear
+carrier. -/
 noncomputable def carrierι :
     groupScheme n ⟶ TauCeti.GeneralLinear.groupScheme ℤ (dimension n) :=
-  kostantToralGroupSchemeι
-    (TauCeti.typeBSimpleRootGeneratorFamily (K := ℚ))
-    (TauCeti.typeBSimpleCorootGenerator (K := ℚ)) (rep n) (lattice n).toAddSubgroup
-    (rep_kostantForm_mem_lattice n) (isNilpotent_rep_rootGenerator n)
-    (latticeBasis n) (basisWeight n)
+  eqToHom (by rfl : groupScheme n = kostantToralGroupScheme
+      (TauCeti.typeBSimpleRootGeneratorFamily (K := ℚ))
+      (TauCeti.typeBSimpleCorootGenerator (K := ℚ)) (rep n) (lattice n).toAddSubgroup
+      (rep_kostantForm_mem_lattice n) (isNilpotent_rep_rootGenerator n)
+      (latticeBasis n) (basisWeight n)) ≫
+    kostantToralGroupSchemeι
+      (TauCeti.typeBSimpleRootGeneratorFamily (K := ℚ))
+      (TauCeti.typeBSimpleCorootGenerator (K := ℚ)) (rep n) (lattice n).toAddSubgroup
+      (rep_kostantForm_mem_lattice n) (isNilpotent_rep_rootGenerator n)
+      (latticeBasis n) (basisWeight n)
 
 /-- The spin carrier is a closed subgroup scheme of its ambient general linear group. -/
-instance isClosedImmersion_carrierι : IsClosedImmersion (carrierι n).hom.hom.left :=
-  isClosedImmersion_kostantToralGroupSchemeι _ _ _ _ _ _ _ _
+instance isClosedImmersion_carrierι : IsClosedImmersion (carrierι n).hom.hom.left := by
+  rw [carrierι]
+  exact isClosedImmersion_kostantToralGroupSchemeι _ _ _ _ _ _ _ _
 
 /-- A positive or negative numbered simple-root subgroup of the spin carrier. -/
 noncomputable def rootSubgroup (k : Fin (n + 1) ⊕ Fin (n + 1)) :
@@ -225,25 +253,21 @@ noncomputable def rootSubgroup (k : Fin (n + 1) ⊕ Fin (n + 1)) :
     (rep_kostantForm_mem_lattice n) (isNilpotent_rep_rootGenerator n)
     (latticeBasis n) (basisWeight n) k ≫
   eqToHom (by rfl : kostantToralGroupScheme
-    (TauCeti.typeBSimpleRootGeneratorFamily (K := ℚ))
-    (TauCeti.typeBSimpleCorootGenerator (K := ℚ)) (rep n) (lattice n).toAddSubgroup
-    (rep_kostantForm_mem_lattice n) (isNilpotent_rep_rootGenerator n)
-    (latticeBasis n) (basisWeight n) = groupScheme n)
+      (TauCeti.typeBSimpleRootGeneratorFamily (K := ℚ))
+      (TauCeti.typeBSimpleCorootGenerator (K := ℚ)) (rep n) (lattice n).toAddSubgroup
+      (rep_kostantForm_mem_lattice n) (isNilpotent_rep_rootGenerator n)
+      (latticeBasis n) (basisWeight n) = groupScheme n)
 
-/-- The numbered root subgroup is the generic Kostant root subgroup factored through the toral
-closure at the type-`Bₙ₊₁` spin data. -/
+/-- The root subgroup is the generic Kostant root subgroup transported to the type-`Bₙ₊₁`
+carrier. -/
 theorem rootSubgroup_def (k : Fin (n + 1) ⊕ Fin (n + 1)) :
     rootSubgroup n k =
       kostantRootSubgroupToToral
-        (TauCeti.typeBSimpleRootGeneratorFamily (K := ℚ))
-        (TauCeti.typeBSimpleCorootGenerator (K := ℚ)) (rep n) (lattice n).toAddSubgroup
-        (rep_kostantForm_mem_lattice n) (isNilpotent_rep_rootGenerator n)
-        (latticeBasis n) (basisWeight n) k ≫
-      eqToHom (by rfl : kostantToralGroupScheme
-        (TauCeti.typeBSimpleRootGeneratorFamily (K := ℚ))
-        (TauCeti.typeBSimpleCorootGenerator (K := ℚ)) (rep n) (lattice n).toAddSubgroup
-        (rep_kostantForm_mem_lattice n) (isNilpotent_rep_rootGenerator n)
-        (latticeBasis n) (basisWeight n) = groupScheme n) := by
+          (TauCeti.typeBSimpleRootGeneratorFamily (K := ℚ))
+          (TauCeti.typeBSimpleCorootGenerator (K := ℚ)) (rep n) (lattice n).toAddSubgroup
+          (rep_kostantForm_mem_lattice n) (isNilpotent_rep_rootGenerator n)
+          (latticeBasis n) (basisWeight n) k ≫
+        eqToHom (groupScheme_eq_kostantToralGroupScheme n).symm := by
   rw [rootSubgroup]
 
 /-- Including a root subgroup into the ambient general linear group gives its exponential. -/
@@ -254,8 +278,9 @@ theorem rootSubgroup_comp_carrierι (k : Fin (n + 1) ⊕ Fin (n + 1)) :
         (TauCeti.typeBSimpleRootGeneratorFamily (K := ℚ))
         (TauCeti.typeBSimpleCorootGenerator (K := ℚ)) (rep n) (lattice n).toAddSubgroup
         (rep_kostantForm_mem_lattice n) k (isNilpotent_rep_rootGenerator n k)
-        (latticeBasis n) :=
-  kostantRootSubgroupToToral_comp_ι _ _ _ _ _ _ _ _ k
+        (latticeBasis n) := by
+  rw [rootSubgroup, carrierι]
+  exact kostantRootSubgroupToToral_comp_ι _ _ _ _ _ _ _ _ k
 
 /-- The represented split weight torus in the type-`Bₙ₊₁` spin carrier. -/
 noncomputable def weightTorus :
@@ -264,14 +289,36 @@ noncomputable def weightTorus :
     (TauCeti.typeBSimpleRootGeneratorFamily (K := ℚ))
     (TauCeti.typeBSimpleCorootGenerator (K := ℚ)) (rep n) (lattice n).toAddSubgroup
     (rep_kostantForm_mem_lattice n) (isNilpotent_rep_rootGenerator n)
-    (latticeBasis n) (basisWeight n)
+    (latticeBasis n) (basisWeight n) ≫
+  eqToHom (by rfl : kostantToralGroupScheme
+      (TauCeti.typeBSimpleRootGeneratorFamily (K := ℚ))
+      (TauCeti.typeBSimpleCorootGenerator (K := ℚ)) (rep n) (lattice n).toAddSubgroup
+      (rep_kostantForm_mem_lattice n) (isNilpotent_rep_rootGenerator n)
+      (latticeBasis n) (basisWeight n) = groupScheme n)
+
+/-- The weight torus is the generic factored Kostant torus transported to the type-`Bₙ₊₁`
+carrier. -/
+theorem weightTorus_def :
+    weightTorus n =
+      kostantWeightTorusToToral
+          (TauCeti.typeBSimpleRootGeneratorFamily (K := ℚ))
+          (TauCeti.typeBSimpleCorootGenerator (K := ℚ)) (rep n) (lattice n).toAddSubgroup
+          (rep_kostantForm_mem_lattice n) (isNilpotent_rep_rootGenerator n)
+          (latticeBasis n) (basisWeight n) ≫
+        eqToHom (by rfl : kostantToralGroupScheme
+          (TauCeti.typeBSimpleRootGeneratorFamily (K := ℚ))
+          (TauCeti.typeBSimpleCorootGenerator (K := ℚ)) (rep n) (lattice n).toAddSubgroup
+          (rep_kostantForm_mem_lattice n) (isNilpotent_rep_rootGenerator n)
+          (latticeBasis n) (basisWeight n) = groupScheme n) := by
+  rw [weightTorus]
 
 /-- Including the weight torus recovers the diagonal torus of spin weights. -/
 @[simp]
 theorem weightTorus_comp_carrierι :
     weightTorus n ≫ carrierι n =
-      TauCeti.GeneralLinear.weightTorus (R := ℤ) (basisWeight n) :=
-  kostantWeightTorusToToral_comp_ι _ _ _ _ _ _ _ _
+      TauCeti.GeneralLinear.weightTorus (R := ℤ) (basisWeight n) := by
+  rw [weightTorus, carrierι]
+  exact kostantWeightTorusToToral_comp_ι _ _ _ _ _ _ _ _
 
 /-- The full spin weights make the represented torus a closed subgroup scheme. -/
 instance isClosedImmersion_weightTorus :
