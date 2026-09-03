@@ -67,14 +67,6 @@ one, which is not proved here (see the Roadmap section below).
 * `TauCeti.serreLift_eq_id`: lifting the generators along their own Serre system is the identity.
 * `TauCeti.lieSpan_serreGenerators_eq_top`: the generators generate the presented algebra.
 
-## Implementation notes
-
-None of the definitions is exposed: `TauCeti.serreMk_of_H` and its companions, the individual
-relations, and `TauCeti.serreLift_serreH` and its companions together with `TauCeti.eq_serreLift`
-characterise them, so nothing downstream has to unfold the quotient. This follows the API design
-of `TauCeti/Algebra/Lie/Quotient.lean`: downstream proofs use the characterisation lemmas rather
-than unfolded definitions.
-
 ## Roadmap
 
 This is a prerequisite for the Chevalley--Demazure construction, Layer 9 of

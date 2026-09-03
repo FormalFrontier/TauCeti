@@ -33,13 +33,6 @@ receiver notation on the ideal.
 * `LieIdeal.lieHom_qext`: two homomorphisms from the quotient are equal when they agree after the
   quotient map.
 * `LieIdeal.eq_liftQ`: the lifted homomorphism is the unique such factorization.
-
-## Implementation notes
-
-Neither `LieIdeal.mkQ` nor `LieIdeal.liftQ` is exposed: `LieIdeal.mkQ_apply` and
-`LieIdeal.liftQ_apply` characterize them on representatives, and `LieIdeal.ker_mkQ`,
-`LieIdeal.mkQ_surjective`, `LieIdeal.liftQ_mkQ` and `LieIdeal.eq_liftQ` give its elimination and
-factorization properties, so nothing downstream has to unfold the quotient.
 -/
 
 public section
@@ -98,9 +91,9 @@ equal. -/
 @[ext high]
 theorem lieHom_qext {g₁ g₂ : L ⧸ I →ₗ⁅R⁆ L'} (h : ∀ x : L, g₁ (I.mkQ x) = g₂ (I.mkQ x)) :
     g₁ = g₂ := by
-  ext x
-  induction x using Quotient.inductionOn' with | _ x
-  exact h x
+  apply LieHom.ext
+  exact LinearMap.congr_fun <|
+    Submodule.quot_hom_ext I.toSubmodule g₁.toLinearMap g₂.toLinearMap fun x => h x
 
 /-- The factorization of `LieIdeal.liftQ` is the only one: a homomorphism out of `L ⧸ I`
 restricting to `f` along the quotient map is `I.liftQ f h`. -/
