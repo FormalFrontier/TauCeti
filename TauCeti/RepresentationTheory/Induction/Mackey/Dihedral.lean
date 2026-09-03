@@ -7,7 +7,7 @@ module
 
 public import Mathlib.Analysis.Complex.Polynomial.Basic
 public import Mathlib.RingTheory.RootsOfUnity.Complex
-public import TauCeti.GroupTheory.SpecificGroups.Dihedral
+public import TauCeti.GroupTheory.SpecificGroups.Dihedral.Character
 public import TauCeti.RepresentationTheory.Induction.LinearCharacter
 public import TauCeti.RepresentationTheory.Induction.Mackey.LinearCharacter
 
@@ -24,12 +24,12 @@ inverse.
 The criterion is the Mackey irreducibility criterion for a linear character of a normal subgroup
 (`TauCeti.simple_indFDRep_ofLinearCharacter_iff`), which asks that no element `s` outside the
 subgroup stabilize `ψ`. For the dihedral group the conjugation is completely explicit: by
-`TauCeti.map_conjNormal_eq_inv_of_notMem_dihedralRotations` an element outside the rotation
-subgroup inverts every rotation, so `{}^s ψ = ψ⁻¹` for *every* such `s`, and the criterion
-collapses to the single condition `ψ ≠ ψ⁻¹`, that some value of `ψ` is not a square root of `1`.
-That condition is not only sufficient but necessary, so the result is an `iff`.
+`TauCeti.conjNormal_eq_inv_of_notMem_dihedralRotations` an element outside the rotation subgroup
+inverts every rotation, so `{}^s ψ = ψ⁻¹` for *every* such `s`, and the criterion collapses to the
+single condition `ψ ≠ ψ⁻¹`, that some value of `ψ` is not a square root of `1`. That condition is
+not only sufficient but necessary, so the result is an `iff`.
 
-The concrete instance the roadmap asks for is `n = 4`: the character sending the rotation `r 1` of
+The concrete instance carried out below is `n = 4`: the character sending the rotation `r 1` of
 `D₄` to `i` has `ψ(r 1)² = -1 ≠ 1`, so it induces a two-dimensional irreducible representation
 of `D₄` over `ℂ`.
 
@@ -50,15 +50,14 @@ of `D₄` over `ℂ`.
   of `D₄` over `ℂ` induced from that faithful linear character is irreducible**, the Mackey
   criterion certifying it.
 * `TauCeti.finrank_indFDRep_ofLinearCharacter_dihedralGroupFourRotationChar`: it is
-  two-dimensional; with the previous statement this is the roadmap's two-dimensional irreducible
-  of `D₄`.
+  two-dimensional; with the previous statement this is the two-dimensional irreducible of `D₄`.
 
 ## Implementation notes
 
 `TauCeti.dihedralRotationChar`, the character of the rotation subgroup attached to an `n`-th root
 of unity, is pure group theory and lives with the rotation subgroup in
-`TauCeti.GroupTheory.SpecificGroups.Dihedral`; only its consequences for induced representations
-are here.
+`TauCeti.GroupTheory.SpecificGroups.Dihedral.Character`; only its consequences for induced
+representations are here.
 
 The irreducibility criterion is stated over an algebraically closed field of characteristic zero,
 which is what `TauCeti.simple_indFDRep_ofLinearCharacter_iff` asks for, and its coefficient field
@@ -68,11 +67,8 @@ neither: it holds over any field, in any universe.
 
 ## References
 
-This is the "`D₄` dihedral induction" worked example of
-[the induction and restriction roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/InductionRestriction/README.md):
-"`Ind` from the cyclic subgroup `⟨r⟩` of order `4` in `D₄ = DihedralGroup 4`, applied to a faithful
-linear character of `⟨r⟩` (one sending `r` to a primitive fourth root of unity), produces the
-`2`-dimensional irreducible of `D₄`; the Mackey criterion certifies its irreducibility."
+The "`D₄` dihedral induction" worked example of
+[the induction and restriction roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/InductionRestriction/README.md).
 
 * J.-P. Serre, *Linear Representations of Finite Groups*, Chapter 5.3 and Chapter 7.4.
 -/
@@ -114,7 +110,7 @@ theorem simple_indFDRep_ofLinearCharacter_dihedralRotations_iff (ψ : dihedralRo
   have key : ∀ {s : DihedralGroup n}, s ∉ dihedralRotations n →
       ∀ x : dihedralRotations n, (ψ (MulAut.conjNormal s x) ≠ ψ x ↔ ψ x ^ 2 ≠ 1) := by
     intro s hs x
-    rw [map_conjNormal_eq_inv_of_notMem_dihedralRotations ψ hs x, ne_eq, ne_eq,
+    rw [conjNormal_eq_inv_of_notMem_dihedralRotations hs, map_inv, ne_eq, ne_eq,
       inv_eq_iff_mul_eq_one, ← sq]
   refine ⟨fun h => ?_, fun ⟨x, hx⟩ s hs => ⟨x, (key hs x).mpr hx⟩⟩
   obtain ⟨x, hx⟩ := h (DihedralGroup.sr 0) (sr_notMem_dihedralRotations 0)
