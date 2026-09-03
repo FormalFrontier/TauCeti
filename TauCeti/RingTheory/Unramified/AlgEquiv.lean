@@ -29,14 +29,14 @@ namespace AlgEquiv
 variable {R A B : Type*} [CommRing R] [CommRing A] [CommRing B] [Algebra R A] [Algebra R B]
 
 /-- **Unramifiedness transports along an isomorphism of `R`-algebras.** If `B` is unramified over
-`R` at a prime `q`, then `A` is unramified over `R` at the corresponding prime `q.comap ψ`.
-
-The transported prime is a parameter `p` carrying the equation `p = q.comap ψ`, rather than the
-term `q.comap ψ` itself: `IsUnramifiedAt` takes the primality of its ideal as an instance
-argument, so `rw` cannot turn a conclusion about `q.comap ψ` into one about `p`. -/
+`R` at a prime `q`, then `A` is unramified over `R` at the corresponding prime `q.comap ψ`, stated
+for any prime `p` of `A` equal to it. -/
 theorem isUnramifiedAt_of_eq_comap (ψ : A ≃ₐ[R] B) {q : Ideal B} [q.IsPrime]
     {p : Ideal A} [p.IsPrime] (hp : p = q.comap ψ) [Algebra.IsUnramifiedAt R q] :
     Algebra.IsUnramifiedAt R p := by
+  -- The transported prime is the parameter `p` with the equation `hp`, not the term `q.comap ψ`
+  -- itself: `Algebra.IsUnramifiedAt` takes the primality of its ideal as an instance argument, so
+  -- `rw` cannot turn a conclusion about `q.comap ψ` into one about `p`, while `subst` can.
   subst hp
   exact Algebra.FormallyUnramified.of_equiv (IsLocalization.algEquivOfAlgEquiv
     (Localization.AtPrime (q.comap ψ)) (Localization.AtPrime q) ψ
