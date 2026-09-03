@@ -25,8 +25,7 @@ equivalence,
 and `smulRight_mem_hom` records that a rank-one map built from homogeneous factors is homogeneous
 of the summed degree.
 
-This is the `Hom` companion in Layer L0 of `TauCetiRoadmap/HodgeStructures/README.md`.  Only the
-source `W₁` must be finite-dimensional (as required by the tensor--Hom equivalence); no
+Only the source `W₁` must be finite-dimensional (as required by the tensor--Hom equivalence); no
 lattice or further finiteness is imposed, and the target `W₂` is arbitrary.
 
 ## Main declarations
@@ -200,10 +199,124 @@ theorem smulRight_mem_hom (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
   exact hs₁.dual.tmul_mem_tensorProduct hs₂ hφ hy
 
 /-- A linear map lies in the degree-`p` internal-Hom piece if and only if it sends each
-source component of degree `a` into the target component of degree `a + p`. The forward
-direction is `hom_piece_apply_mem`; the converse expands the map along a Hodge-adapted basis,
-whose dual basis vectors lie in the complementary dual pieces. -/
-theorem mem_hom_piece_iff (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
+source component of degree `a` into the target component of degree `a + p`. -/
+private theorem projCoord_mem_dual_piece (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
+    (a : ℤ) (k : Fin (Module.finrank ℂ ↥(hs₁.piece a))) :
+    ((Module.finBasis ℂ ↥(hs₁.piece a)).dualBasis k).comp
+      (DirectSum.component ℂ ℤ (fun q => ↥(hs₁.piece q)) a ∘ₗ
+        hs₁.decomposition.toLinearMap) ∈ (hs₁.dual).piece (-a) := by
+  rw [hs₁.dual_piece, Submodule.mem_dualAnnihilator]
+  intro x hx
+  have hFker : hs₁.F (1 - -a) ≤ LinearMap.ker
+      (((Module.finBasis ℂ ↥(hs₁.piece a)).dualBasis k).comp
+        (DirectSum.component ℂ ℤ (fun q => ↥(hs₁.piece q)) a ∘ₗ
+          hs₁.decomposition.toLinearMap)) := by
+    rw [hs₁.F_eq_iSup_piece]
+    refine iSup_le fun q => iSup_le fun hq => ?_
+    intro y hy
+    rw [LinearMap.mem_ker]
+    have hqa : q ≠ a := by omega
+    have hproj0 := hs₁.proj_apply_eq_zero_of_mem_of_ne (p := a) (q := q) hy hqa
+    have hcoe : ((((DirectSum.component ℂ ℤ (fun q => ↥(hs₁.piece q)) a ∘ₗ
+        hs₁.decomposition.toLinearMap) y : ↥(hs₁.piece a))) : W₁) =
+        hs₁.proj a y := by
+      rw [hs₁.proj_apply]
+      rfl
+    have h0 : (DirectSum.component ℂ ℤ (fun q => ↥(hs₁.piece q)) a ∘ₗ
+        hs₁.decomposition.toLinearMap) y = 0 :=
+      Submodule.coe_eq_zero.mp (hcoe.trans hproj0)
+    simp [LinearMap.comp_apply, h0]
+  have hCker : hs₁.conjF (n₁ + 1 + -a) ≤ LinearMap.ker
+      (((Module.finBasis ℂ ↥(hs₁.piece a)).dualBasis k).comp
+        (DirectSum.component ℂ ℤ (fun q => ↥(hs₁.piece q)) a ∘ₗ
+          hs₁.decomposition.toLinearMap)) := by
+    rw [hs₁.conjF_eq_iSup_piece]
+    refine iSup_le fun q => iSup_le fun hq => ?_
+    intro y hy
+    rw [LinearMap.mem_ker]
+    have hqa : q ≠ a := by omega
+    have hproj0 := hs₁.proj_apply_eq_zero_of_mem_of_ne (p := a) (q := q) hy hqa
+    have hcoe : ((((DirectSum.component ℂ ℤ (fun q => ↥(hs₁.piece q)) a ∘ₗ
+        hs₁.decomposition.toLinearMap) y : ↥(hs₁.piece a))) : W₁) =
+        hs₁.proj a y := by
+      rw [hs₁.proj_apply]
+      rfl
+    have h0 : (DirectSum.component ℂ ℤ (fun q => ↥(hs₁.piece q)) a ∘ₗ
+        hs₁.decomposition.toLinearMap) y = 0 :=
+      Submodule.coe_eq_zero.mp (hcoe.trans hproj0)
+    simp [LinearMap.comp_apply, h0]
+  have hle : hs₁.F (1 - -a) ⊔ hs₁.conjF (n₁ + 1 + -a) ≤ LinearMap.ker
+      (((Module.finBasis ℂ ↥(hs₁.piece a)).dualBasis k).comp
+        (DirectSum.component ℂ ℤ (fun q => ↥(hs₁.piece q)) a ∘ₗ
+          hs₁.decomposition.toLinearMap)) :=
+    sup_le hFker hCker
+  have hxker : x ∈ LinearMap.ker
+      (((Module.finBasis ℂ ↥(hs₁.piece a)).dualBasis k).comp
+        (DirectSum.component ℂ ℤ (fun q => ↥(hs₁.piece q)) a ∘ₗ
+          hs₁.decomposition.toLinearMap)) := hle hx
+  rwa [LinearMap.mem_ker] at hxker
+
+/-- A projected map expands along the Hodge-adapted basis of the source component as a sum of
+rank-one maps built from the coordinate functionals. -/
+private theorem compProj_expand (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
+    (f : W₁ →ₗ[ℂ] W₂) (a : ℤ) :
+    f ∘ₗ hs₁.proj a =
+      ∑ k, (((Module.finBasis ℂ ↥(hs₁.piece a)).dualBasis k).comp
+        (DirectSum.component ℂ ℤ (fun q => ↥(hs₁.piece q)) a ∘ₗ
+          hs₁.decomposition.toLinearMap)).smulRight
+        (f ((((Module.finBasis ℂ ↥(hs₁.piece a)) k : ↥(hs₁.piece a))) : W₁)) := by
+  classical
+  ext x
+  simp only [LinearMap.comp_apply, LinearMap.sum_apply, LinearMap.smulRight_apply]
+  have hlink : (DirectSum.component ℂ ℤ (fun q => ↥(hs₁.piece q)) a ∘ₗ
+      hs₁.decomposition.toLinearMap) x = hs₁.decomposition x a := rfl
+  have hsr := (Module.finBasis ℂ ↥(hs₁.piece a)).sum_repr
+      ((DirectSum.component ℂ ℤ (fun q => ↥(hs₁.piece q)) a ∘ₗ
+        hs₁.decomposition.toLinearMap) x)
+  have hsum : (DirectSum.component ℂ ℤ (fun q => ↥(hs₁.piece q)) a ∘ₗ
+      hs₁.decomposition.toLinearMap) x = ∑ k,
+        (((Module.finBasis ℂ ↥(hs₁.piece a)).dualBasis k)
+          ((DirectSum.component ℂ ℤ (fun q => ↥(hs₁.piece q)) a ∘ₗ
+            hs₁.decomposition.toLinearMap) x)) •
+        (Module.finBasis ℂ ↥(hs₁.piece a)) k := by
+    conv_lhs => rw [← hsr]
+    refine Finset.sum_congr rfl fun k _ => ?_
+    rw [Module.Basis.dualBasis_apply]
+  rw [hs₁.proj_apply, ← hlink, hsum, Submodule.coe_sum, map_sum]
+  refine Finset.sum_congr rfl fun k _ => ?_
+  rw [LinearMap.comp_apply, Submodule.coe_smul, map_smul]
+
+omit [FiniteDimensional ℂ W₁] in
+/-- A linear map is the finite sum of its compositions with the source Hodge projections. -/
+private theorem sum_compProj (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
+    (f : W₁ →ₗ[ℂ] W₂) :
+    f = ∑ a ∈ hs₁.finite_setOf_piece_ne_bot.toFinset, f ∘ₗ hs₁.proj a := by
+  classical
+  ext x
+  simp only [LinearMap.sum_apply, LinearMap.comp_apply]
+  have hbase : x = ∑ j ∈ (hs₁.decomposition x).support, hs₁.proj j x := by
+    conv_lhs => rw [← hs₁.decomposition.symm_apply_apply x,
+      hs₁.decomposition_symm_apply, DirectSum.coeLinearMap_eq_dfinsuppSum,
+      DFinsupp.sum]
+    simp only [hs₁.proj_apply]
+  have hsupp : (hs₁.decomposition x).support ⊆ hs₁.finite_setOf_piece_ne_bot.toFinset := by
+    intro j hj
+    rw [Set.Finite.mem_toFinset, Set.mem_ofPred_eq]
+    intro hbot
+    let : Subsingleton ↥(hs₁.piece j) := by rw [hbot]; infer_instance
+    have hj0 : hs₁.decomposition x j = 0 := Subsingleton.elim _ _
+    exact (DFinsupp.mem_support_iff.mp hj) hj0
+  have hx : x = ∑ a ∈ hs₁.finite_setOf_piece_ne_bot.toFinset, hs₁.proj a x := by
+    conv_lhs => rw [hbase]
+    refine Finset.sum_subset hsupp ?_
+    intro j _ hnj
+    have hj0 : hs₁.decomposition x j = 0 := DFinsupp.notMem_support_iff.mp hnj
+    simp [hs₁.proj_apply, hj0]
+  conv_lhs => rw [hx, map_sum]
+
+/-- A linear map lies in the degree-`p` internal-Hom piece if and only if it sends each
+source component of degree `a` into the target component of degree `a + p`. -/
+@[simp] theorem mem_hom_piece_iff (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
     (hs₂ : HodgeStructureOn W₂ ω₂ n₂) {p : ℤ} {f : W₁ →ₗ[ℂ] W₂} :
     f ∈ (hs₁.hom hs₂).piece p ↔
       ∀ (a : ℤ) (x : W₁), x ∈ hs₁.piece a → f x ∈ hs₂.piece (a + p) := by
@@ -212,117 +325,16 @@ theorem mem_hom_piece_iff (hs₁ : HodgeStructureOn W₁ ω₁ n₁)
     exact hs₁.hom_piece_apply_mem hs₂ hf hx
   · intro h
     classical
-    have hLa : ∀ (a q : ℤ) (y : W₁), y ∈ hs₁.piece q → q ≠ a →
-        ((DirectSum.component ℂ ℤ (fun q => ↥(hs₁.piece q)) a ∘ₗ
-          hs₁.decomposition.toLinearMap) y = 0) := by
-      intro a q y hy hne
-      have hLaeq : (DirectSum.component ℂ ℤ (fun q => ↥(hs₁.piece q)) a ∘ₗ
-          hs₁.decomposition.toLinearMap) y = hs₁.decomposition y a := rfl
-      have h0 : ((hs₁.decomposition y a : ↥(hs₁.piece a)) : W₁) = 0 := by
-        have hh := hs₁.proj_apply_eq_zero_of_mem_of_ne (p := a) (q := q) hy hne
-        rwa [hs₁.proj_apply] at hh
-      rw [hLaeq]
-      exact Submodule.coe_eq_zero.mp h0
-    have hphi : ∀ (a : ℤ) (k : Fin (Module.finrank ℂ ↥(hs₁.piece a))),
-        ((Module.finBasis ℂ ↥(hs₁.piece a)).dualBasis k).comp
-          (DirectSum.component ℂ ℤ (fun q => ↥(hs₁.piece q)) a ∘ₗ
-            hs₁.decomposition.toLinearMap) ∈ (hs₁.dual).piece (-a) := by
-      intro a k
-      rw [hs₁.dual_piece, Submodule.mem_dualAnnihilator]
-      intro x hx
-      have hFker : hs₁.F (1 - -a) ≤ LinearMap.ker
-          (((Module.finBasis ℂ ↥(hs₁.piece a)).dualBasis k).comp
-            (DirectSum.component ℂ ℤ (fun q => ↥(hs₁.piece q)) a ∘ₗ
-              hs₁.decomposition.toLinearMap)) := by
-        rw [hs₁.F_eq_iSup_piece]
-        refine iSup_le fun q => iSup_le fun hq => ?_
-        intro y hy
-        rw [LinearMap.mem_ker]
-        have hqa : q ≠ a := by omega
-        have h0 := hLa a q y hy hqa
-        simp [LinearMap.comp_apply, h0]
-      have hCker : hs₁.conjF (n₁ + 1 + -a) ≤ LinearMap.ker
-          (((Module.finBasis ℂ ↥(hs₁.piece a)).dualBasis k).comp
-            (DirectSum.component ℂ ℤ (fun q => ↥(hs₁.piece q)) a ∘ₗ
-              hs₁.decomposition.toLinearMap)) := by
-        rw [hs₁.conjF_eq_iSup_piece]
-        refine iSup_le fun q => iSup_le fun hq => ?_
-        intro y hy
-        rw [LinearMap.mem_ker]
-        have hqa : q ≠ a := by omega
-        have h0 := hLa a q y hy hqa
-        simp [LinearMap.comp_apply, h0]
-      have hle : hs₁.F (1 - -a) ⊔ hs₁.conjF (n₁ + 1 + -a) ≤ LinearMap.ker
-          (((Module.finBasis ℂ ↥(hs₁.piece a)).dualBasis k).comp
-            (DirectSum.component ℂ ℤ (fun q => ↥(hs₁.piece q)) a ∘ₗ
-              hs₁.decomposition.toLinearMap)) :=
-        sup_le hFker hCker
-      have hxker : x ∈ LinearMap.ker
-          (((Module.finBasis ℂ ↥(hs₁.piece a)).dualBasis k).comp
-            (DirectSum.component ℂ ℤ (fun q => ↥(hs₁.piece q)) a ∘ₗ
-              hs₁.decomposition.toLinearMap)) := hle hx
-      rwa [LinearMap.mem_ker] at hxker
-    have hproj_eq : ∀ (a : ℤ) (x : W₁), hs₁.proj a x =
-        ((((DirectSum.component ℂ ℤ (fun q => ↥(hs₁.piece q)) a ∘ₗ
-          hs₁.decomposition.toLinearMap) x : ↥(hs₁.piece a))) : W₁) := by
-      intro a x
-      rw [hs₁.proj_apply]
-      rfl
-    have hexpand : ∀ (a : ℤ), f ∘ₗ hs₁.proj a =
-        ∑ k, (((Module.finBasis ℂ ↥(hs₁.piece a)).dualBasis k).comp
-          (DirectSum.component ℂ ℤ (fun q => ↥(hs₁.piece q)) a ∘ₗ
-            hs₁.decomposition.toLinearMap)).smulRight
-          (f ((((Module.finBasis ℂ ↥(hs₁.piece a)) k : ↥(hs₁.piece a))) : W₁)) := by
-      intro a
-      ext x
-      simp only [LinearMap.comp_apply, LinearMap.sum_apply, LinearMap.smulRight_apply]
-      have hsr := (Module.finBasis ℂ ↥(hs₁.piece a)).sum_repr
-          ((DirectSum.component ℂ ℤ (fun q => ↥(hs₁.piece q)) a ∘ₗ
-            hs₁.decomposition.toLinearMap) x)
-      have hsum : (DirectSum.component ℂ ℤ (fun q => ↥(hs₁.piece q)) a ∘ₗ
-            hs₁.decomposition.toLinearMap) x = ∑ k,
-            (((Module.finBasis ℂ ↥(hs₁.piece a)).dualBasis k)
-              ((DirectSum.component ℂ ℤ (fun q => ↥(hs₁.piece q)) a ∘ₗ
-                hs₁.decomposition.toLinearMap) x)) •
-            (Module.finBasis ℂ ↥(hs₁.piece a)) k := by
-        conv_lhs => rw [← hsr]
-        refine Finset.sum_congr rfl fun k _ => ?_
-        rw [Module.Basis.dualBasis_apply]
-      rw [hproj_eq a x, hsum, Submodule.coe_sum, map_sum]
-      refine Finset.sum_congr rfl fun k _ => ?_
-      rw [LinearMap.comp_apply, Submodule.coe_smul, map_smul]
     have hmem_each : ∀ a ∈ hs₁.finite_setOf_piece_ne_bot.toFinset,
         f ∘ₗ hs₁.proj a ∈ (hs₁.hom hs₂).piece p := by
       intro a _
-      rw [hexpand a]
+      rw [hs₁.compProj_expand f a]
       refine Submodule.sum_mem _ fun k _ => ?_
       have hdeg : -a + (a + p) = p := by ring
       rw [← hdeg]
-      refine hs₁.smulRight_mem_hom hs₂ (hphi a k) ?_
+      refine hs₁.smulRight_mem_hom hs₂ (hs₁.projCoord_mem_dual_piece a k) ?_
       exact h a _ ((Module.finBasis ℂ ↥(hs₁.piece a)) k).2
-    have hfsum : f = ∑ a ∈ hs₁.finite_setOf_piece_ne_bot.toFinset, f ∘ₗ hs₁.proj a := by
-      ext x
-      simp only [LinearMap.sum_apply, LinearMap.comp_apply]
-      have hbase : x = ∑ j ∈ (hs₁.decomposition x).support, hs₁.proj j x := by
-        conv_lhs => rw [← hs₁.decomposition.symm_apply_apply x,
-          hs₁.decomposition_symm_apply, DirectSum.coeLinearMap_eq_dfinsuppSum,
-          DFinsupp.sum]
-        simp only [hs₁.proj_apply]
-      have hsupp : (hs₁.decomposition x).support ⊆ hs₁.finite_setOf_piece_ne_bot.toFinset := by
-        intro j hj
-        rw [Set.Finite.mem_toFinset, Set.mem_ofPred_eq]
-        intro hbot
-        let : Subsingleton ↥(hs₁.piece j) := by rw [hbot]; infer_instance
-        have hj0 : hs₁.decomposition x j = 0 := Subsingleton.elim _ _
-        exact (DFinsupp.mem_support_iff.mp hj) hj0
-      have hx : x = ∑ a ∈ hs₁.finite_setOf_piece_ne_bot.toFinset, hs₁.proj a x := by
-        conv_lhs => rw [hbase]
-        refine Finset.sum_subset hsupp ?_
-        intro j _ hnj
-        have hj0 : hs₁.decomposition x j = 0 := DFinsupp.notMem_support_iff.mp hnj
-        simp [hs₁.proj_apply, hj0]
-      conv_lhs => rw [hx, map_sum]
-    rw [hfsum]
+    rw [hs₁.sum_compProj f]
     exact Submodule.sum_mem _ fun a ha => hmem_each a ha
 
 end Finite

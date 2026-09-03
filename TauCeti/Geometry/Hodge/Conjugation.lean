@@ -272,11 +272,17 @@ theorem quotient_toEquiv_mk (ω : Conjugation W) {U : Submodule ℂ W}
   (rfl)
 
 /-- Complex conjugation, packaged as a conjugate-linear involution. -/
-private def complexConjugation : Conjugation ℂ where
+def complexConjugation : Conjugation ℂ where
   toEquiv := starLinearEquiv ℂ
   involutive := by
     intro z
     exact star_star z
+
+/-- Applying complex conjugation is the `star` operation. -/
+@[simp]
+theorem complexConjugation_toEquiv_apply (z : ℂ) :
+    complexConjugation.toEquiv z = star z := by
+  simp [complexConjugation]
 
 /-- The twisted transpose of a conjugation `ω`: a functional `φ` acts by conjugating the values
 of `φ` along `ω`. It is again an involution, so it packages as a conjugation on the dual space;
