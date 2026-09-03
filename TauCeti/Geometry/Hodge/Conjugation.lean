@@ -293,8 +293,8 @@ def dual (ω : Conjugation W) : Conjugation (Module.Dual ℂ W) :=
 /-- Pointwise description of the dual conjugation. -/
 @[simp]
 theorem dual_toEquiv_apply (ω : Conjugation W) (φ : Module.Dual ℂ W) (v : W) :
-    ω.dual.toEquiv φ v = star (φ (ω.toEquiv v)) :=
-  by simp [dual, complexConjugation]
+    ω.dual.toEquiv φ v = star (φ (ω.toEquiv v)) := by
+  simp only [dual, hom_toEquiv_apply, complexConjugation_toEquiv_apply]
 
 /-- A conjugation carries dual annihilators to dual annihilators of conjugated subspaces. -/
 @[simp]
