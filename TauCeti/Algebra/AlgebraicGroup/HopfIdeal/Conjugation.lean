@@ -78,21 +78,15 @@ theorem mem_quotientPointsSubgroup_conjugate_iff (I : HopfIdeal R H)
   let f := (CommHopfAlgCat.innerConjugationIso H g).hom.hom
   have hf : Function.Bijective f :=
     ConcreteCategory.bijective_of_isIso (CommHopfAlgCat.innerConjugationIso H g).hom
-  rw [CommHopfAlgCat.mem_quotientPointsSubgroup_iff,
-    CommHopfAlgCat.mem_quotientPointsSubgroup_iff]
-  constructor
-  · intro hx y hy
-    obtain ⟨z, rfl⟩ := hf.2 y
-    have hz : z ∈ I.conjugate g := (mem_conjugate_iff I g z).2 hy
-    have haction := congrArg (fun p : HopfAlgebra.points (R := R) (H := H) A ↦ p.ofConv z)
-      (CommHopfAlgCat.mapPointsFunctor_innerConjugationIso_hom_app_apply H g A x)
-    rw [CommHopfAlgCat.mapPointsFunctor_app_apply_apply] at haction
-    exact haction.trans (hx z hz)
-  · intro hx y hy
-    have haction := congrArg (fun p : HopfAlgebra.points (R := R) (H := H) A ↦ p.ofConv y)
-      (CommHopfAlgCat.mapPointsFunctor_innerConjugationIso_hom_app_apply H g A x)
-    rw [CommHopfAlgCat.mapPointsFunctor_app_apply_apply] at haction
-    exact haction.symm.trans (hx (f y) ((mem_conjugate_iff I g y).1 hy))
+  rw [← CommHopfAlgCat.mapPointsFunctor_innerConjugationIso_hom_app_apply H g A x]
+  -- The generic transport theorem reconstructs the categorical Hopf algebra from its carrier;
+  -- expose that presentation together with the point-map wrapper before applying it.
+  change AlgHom.mapDomainMulEquiv (A := A) (BialgEquiv.ofBijective f hf) x ∈
+      CommHopfAlgCat.quotientPointsSubgroup (_root_.CommHopfAlgCat.of R ↑H)
+        (I.comapOfSurjective f hf.2) A ↔
+    x ∈ CommHopfAlgCat.quotientPointsSubgroup (_root_.CommHopfAlgCat.of R ↑H) I A
+  exact CommHopfAlgCat.mapDomainMulEquiv_mem_quotientPointsSubgroup_comapOfSurjective_iff
+    f hf.1 hf.2 I A x
 
 /-- Conjugating a closed subgroup by the identity point does not change it. -/
 @[simp]
