@@ -270,16 +270,14 @@ theorem integrableExpSet_id_weibullMeasure_of_lt_one (hk : 0 < k) (hk' : k < 1)
 @[simp]
 theorem integrable_exp_mul_id_weibullMeasure_one_iff (hlam : 0 < lam) (t : ℝ) :
     Integrable (fun x : ℝ => Real.exp (t * x)) (weibullMeasure 1 lam) ↔ t < lam⁻¹ := by
-  rw [weibullMeasure_one_eq_expMeasure hlam]
+  rw [weibullMeasure_one_eq_expMeasure]
   exact integrable_exp_mul_expMeasure_iff (inv_pos.mpr hlam)
 
 /-- The exact exponential-integrability domain of a shape-one Weibull law. This is the shape-one
 branch of `integrableExpSet_id_weibullMeasure`, which is the `simp` form. -/
 theorem integrableExpSet_id_weibullMeasure_one (hlam : 0 < lam) :
     integrableExpSet id (weibullMeasure 1 lam) = Iio lam⁻¹ := by
-  ext t
-  simpa [integrableExpSet, id_eq] using
-    integrable_exp_mul_id_weibullMeasure_one_iff hlam t
+  rw [weibullMeasure_one_eq_expMeasure, integrableExpSet_id_expMeasure (inv_pos.mpr hlam)]
 
 /-- **The exponential-integrability trichotomy for a valid Weibull law.** The domain is all of
 `ℝ` above shape one, is open with endpoint `lam⁻¹` at shape one, and is `(-∞, 0]` below shape
@@ -300,7 +298,7 @@ theorem integrableExpSet_id_weibullMeasure (hk : 0 < k) (hlam : 0 < lam) :
 @[simp]
 theorem mgf_id_weibullMeasure_one (hlam : 0 < lam) (ht : t < lam⁻¹) :
     mgf id (weibullMeasure 1 lam) t = (1 - lam * t)⁻¹ := by
-  rw [weibullMeasure_one_eq_expMeasure hlam, mgf_id_expMeasure (inv_pos.mpr hlam) ht]
+  rw [weibullMeasure_one_eq_expMeasure, mgf_id_expMeasure (inv_pos.mpr hlam) ht]
   have hlam0 : lam ≠ 0 := hlam.ne'
   field_simp
 

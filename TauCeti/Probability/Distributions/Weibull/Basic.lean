@@ -447,8 +447,10 @@ theorem cdf_weibullMeasure_eq (hk : 0 < k) (hlam : 0 < lam) (x : ℝ) :
       measureReal_Ioi_weibullMeasure hk hlam (not_le.mp hx)]
     simp
 
-/-- At shape one, the Weibull cdf is the cdf of the exponential law of rate `lam⁻¹`. -/
-theorem cdf_weibullMeasure_one_eq_cdf_expMeasure (hlam : 0 < lam) (x : ℝ) :
+/-- At shape one and positive scale, the Weibull cdf is the cdf of the exponential law of rate
+`lam⁻¹`. Kept private: `weibullMeasure_one_eq_expMeasure` upgrades it to an identity of measures
+that needs no positivity, and `cdf_weibullMeasure_one_eq_cdf_expMeasure` is its cdf form. -/
+private lemma cdf_weibullMeasure_one_eq_cdf_expMeasure_of_pos (hlam : 0 < lam) (x : ℝ) :
     cdf (weibullMeasure 1 lam) x = cdf (expMeasure lam⁻¹) x := by
   rw [cdf_weibullMeasure_eq one_pos hlam, cdf_expMeasure_eq (inv_pos.mpr hlam)]
   by_cases hx : x ≤ 0
@@ -461,16 +463,35 @@ theorem cdf_weibullMeasure_one_eq_cdf_expMeasure (hlam : 0 < lam) (x : ℝ) :
     field_simp
 
 /-- **A shape-one Weibull law is exponential.** Its scale `lam` is the reciprocal of the
-exponential rate. -/
-theorem weibullMeasure_one_eq_expMeasure (hlam : 0 < lam) :
+exponential rate. No positivity is needed: at a nonpositive scale both sides are the zero
+measure, since the exponential density too is built from `ENNReal.ofReal` of a nonpositive
+quantity. -/
+theorem weibullMeasure_one_eq_expMeasure (lam : ℝ) :
     weibullMeasure 1 lam = expMeasure lam⁻¹ := by
-  let _ : IsProbabilityMeasure (weibullMeasure 1 lam) :=
-    isProbabilityMeasure_weibullMeasure one_pos hlam
-  let _ : IsProbabilityMeasure (expMeasure lam⁻¹) :=
-    isProbabilityMeasure_expMeasure (inv_pos.mpr hlam)
-  apply Measure.eq_of_cdf
-  ext x
-  exact cdf_weibullMeasure_one_eq_cdf_expMeasure hlam x
+  rcases le_or_gt lam 0 with hlam | hlam
+  · have hpdf : gammaPDF 1 lam⁻¹ = 0 := by
+      funext y
+      have hy : gammaPDF 1 lam⁻¹ y = exponentialPDF lam⁻¹ y := rfl
+      rw [hy, exponentialPDF_eq, Pi.zero_apply, ENNReal.ofReal_eq_zero]
+      split_ifs
+      · exact mul_nonpos_of_nonpos_of_nonneg (inv_nonpos.mpr hlam) (Real.exp_pos _).le
+      · exact le_rfl
+    have hexp : expMeasure lam⁻¹ = 0 := by
+      simp only [expMeasure, gammaMeasure]
+      rw [hpdf, withDensity_zero]
+    rw [weibullMeasure_of_not_pos fun h ↦ absurd h.2 (not_lt.mpr hlam), hexp]
+  · let _ : IsProbabilityMeasure (weibullMeasure 1 lam) :=
+      isProbabilityMeasure_weibullMeasure one_pos hlam
+    let _ : IsProbabilityMeasure (expMeasure lam⁻¹) :=
+      isProbabilityMeasure_expMeasure (inv_pos.mpr hlam)
+    apply Measure.eq_of_cdf
+    ext x
+    exact cdf_weibullMeasure_one_eq_cdf_expMeasure_of_pos hlam x
+
+/-- At shape one, the Weibull cdf is the cdf of the exponential law of rate `lam⁻¹`. -/
+theorem cdf_weibullMeasure_one_eq_cdf_expMeasure (lam x : ℝ) :
+    cdf (weibullMeasure 1 lam) x = cdf (expMeasure lam⁻¹) x := by
+  rw [weibullMeasure_one_eq_expMeasure]
 
 /-! ### Natural moments, mean, and variance -/
 
