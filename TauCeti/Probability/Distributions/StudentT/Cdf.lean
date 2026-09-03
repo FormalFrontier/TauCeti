@@ -289,7 +289,7 @@ theorem cdf_studentTMeasure_eq (hν : 0 < ν) (x : ℝ) :
         (1 / 2 : ℝ) * (1 - regularizedIncompleteBeta (1 / 2) (ν / 2) (y ^ 2 / (ν + y ^ 2))) := by
     intro y hy
     have hreal : (studentTMeasure ν).real (Ioi y) = ∫ z in Ioi y, studentTPDFReal ν z := by
-      exact measureReal_studentTMeasure hν measurableSet_Ioi
+      exact measureReal_studentTMeasure measurableSet_Ioi
     rw [hreal, integral_Ioi_studentTPDFReal_tail hν hy]
   by_cases hx : 0 ≤ x
   · -- nonnegative branch: `cdf = 1 - tail`, and the reflection formula swaps the beta parameters

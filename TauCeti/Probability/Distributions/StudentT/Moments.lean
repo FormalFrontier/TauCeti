@@ -270,7 +270,7 @@ theorem not_integrable_exp_mul_id_studentTMeasure (hν : 0 < ν) {t : ℝ} (ht :
   have hmom : Integrable (fun x : ℝ => |x| ^ ν) (studentTMeasure ν) :=
     integrable_rpow_abs_of_integrable_exp_mul ht hint hneg hν.le
   have hden : Integrable (fun x : ℝ => studentTPDFReal ν x * |x| ^ ν) :=
-    (integrable_studentTMeasure_iff hν (f := fun x : ℝ => |x| ^ ν)).mp hmom
+    (integrable_studentTMeasure_iff (ν := ν) (f := fun x : ℝ => |x| ^ ν)).mp hmom
   have hIoi : IntegrableOn (fun x : ℝ => studentTPDFReal ν x * x ^ ν) (Ioi (0 : ℝ)) := by
     have h1 : IntegrableOn (fun x : ℝ => studentTPDFReal ν x * |x| ^ ν) (Ioi (0 : ℝ)) :=
       hden.integrableOn

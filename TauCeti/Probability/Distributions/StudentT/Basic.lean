@@ -263,30 +263,25 @@ theorem studentTMeasure_absolutelyContinuous (ν : ℝ) : studentTMeasure ν ≪
   exact withDensity_absolutelyContinuous volume (studentTPDF ν)
 
 /-- A Student t law presented through its real-valued density. -/
-theorem integrable_studentTMeasure_iff {f : ℝ → ℝ} (hν : 0 < ν) :
+theorem integrable_studentTMeasure_iff {f : ℝ → ℝ} :
     Integrable f (studentTMeasure ν) ↔
       Integrable (fun x : ℝ => studentTPDFReal ν x * f x) := by
-  have : IsProbabilityMeasure (studentTMeasure ν) := isProbabilityMeasure_studentTMeasure hν
-  rw [← integrable_toReal_rnDeriv_mul_iff (studentTMeasure_absolutelyContinuous ν)]
-  refine integrable_congr ?_
-  filter_upwards [rnDeriv_studentTMeasure ν] with x hx
-  rw [hx]
-  by_cases hρ : 0 ≤ studentTPDFReal ν x
-  · rw [studentTPDF, ENNReal.toReal_ofReal hρ]
-  · have hzero : studentTPDFReal ν x = 0 :=
-      le_antisymm (not_le.mp hρ).le (studentTPDFReal_nonneg ν x)
-    rw [studentTPDF, hzero, ENNReal.ofReal_zero, ENNReal.toReal_zero, zero_mul]
+  change Integrable f (volume.withDensity fun x => ENNReal.ofReal (studentTPDFReal ν x)) ↔
+    Integrable (fun x : ℝ => studentTPDFReal ν x * f x)
+  simpa [smul_eq_mul] using
+    (integrable_withDensity_ofReal_iff (μ := volume) (g := f) (ρ := studentTPDFReal ν)
+      (measurable_studentTPDFReal ν).aemeasurable
+      (ae_of_all _ fun x => studentTPDFReal_nonneg ν x))
 
 /-- The real mass of a measurable set under a Student t law is the integral of its real-valued
 density. -/
-theorem measureReal_studentTMeasure (hν : 0 < ν) {s : Set ℝ} (hs : MeasurableSet s)
+theorem measureReal_studentTMeasure {s : Set ℝ} (hs : MeasurableSet s)
     : (studentTMeasure ν).real s = ∫ z in s, studentTPDFReal ν z := by
-  have : IsProbabilityMeasure (studentTMeasure ν) := isProbabilityMeasure_studentTMeasure hν
-  rw [← Measure.setIntegral_toReal_rnDeriv' (studentTMeasure_absolutelyContinuous ν) hs]
-  refine setIntegral_congr_ae hs ?_
-  filter_upwards [rnDeriv_studentTMeasure ν] with x hx _
-  rw [hx]
-  exact ENNReal.toReal_ofReal (studentTPDFReal_nonneg ν x)
+  change (volume.withDensity (fun x => ENNReal.ofReal (studentTPDFReal ν x))).real s =
+    ∫ z in s, studentTPDFReal ν z
+  exact measureReal_withDensity_ofReal
+    (ae_of_all _ fun x => studentTPDFReal_nonneg ν x) hs
+    (integrable_studentTPDFReal ν).integrableOn
 
 /-! ### Symmetry -/
 
