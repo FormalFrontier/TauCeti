@@ -84,7 +84,7 @@ of the middle piece with a union of cluster sets, not with a connected subset of
 running between them.
 
 That nonemptiness is what the enclosure theorem consumes. If `frontier Ω` is uniformly locally
-connected — exactly local connectedness by `IsCompact.isUniformlyLocallyConnected`, since
+connected — exactly local connectedness by `IsCompact.isUniformlyLocallyConnected_iff`, since
 `frontier Ω` is compact — then for every `ε > 0` there is a single `δ > 0`,
 independent of the centre `ζ` and the radius `ρ` of the cutting circle, such that a `γ` of diameter
 less than `δ` has its whole middle piece enclosed in a *connected* subset of `frontier Ω`
