@@ -9,6 +9,7 @@ public import Mathlib.NumberTheory.RamificationInertia.Galois
 public import Mathlib.RingTheory.Frobenius
 public import TauCeti.NumberTheory.NumberField.Frobenius.Restriction
 public import TauCeti.NumberTheory.NumberField.AutomorphismAction
+public import TauCeti.NumberTheory.NumberField.UnramifiedTower
 
 /-!
 # The Artin symbol of an unramified prime
@@ -93,24 +94,6 @@ theorem artinSymbol_eq_mk_of_isArithFrobAt {L : Type*} [Field L] [NumberField L]
       NumberField.algebraMap_smul_eq_apply, NumberField.algebraMap_smul_eq_apply] at hQ''
     simpa [galRestrict_apply, algebraMap_galRestrict_apply] using hQ''
   simpa [hQeq] using hconj
-
-/-- **Unramifiedness descends to an intermediate extension.** If every prime of `L` over `𝔭` is
-unramified over `K`, then every prime of an intermediate field `M` over `𝔭` is unramified over
-`K` as well. -/
-theorem isUnramifiedAt_of_intermediateExtension {M L : Type*} [Field M] [NumberField M]
-    [Field L] [NumberField L] [Algebra K M] [Algebra M L] [Algebra K L]
-    [IsScalarTower K M L] (𝔭 : Ideal (𝓞 K))
-    (hur : ∀ (Q : Ideal (𝓞 L)) [Q.IsPrime] [Q.LiesOver 𝔭],
-      Algebra.IsUnramifiedAt (𝓞 K) Q) :
-    ∀ (P : Ideal (𝓞 M)) [P.IsPrime] [P.LiesOver 𝔭],
-      Algebra.IsUnramifiedAt (𝓞 K) P := by
-  intro P _ _
-  let Q : P.primesOver (𝓞 L) := Classical.choice inferInstance
-  let _ : Q.1.IsPrime := Q.2.1
-  let _ : Q.1.LiesOver P := Q.2.2
-  let _ : Q.1.LiesOver 𝔭 := Ideal.LiesOver.trans Q.1 P 𝔭
-  let _ : Algebra.IsUnramifiedAt (𝓞 K) Q.1 := hur Q.1
-  exact Algebra.IsUnramifiedAt.of_liesOver (𝓞 K) P Q.1
 
 /-- **The Artin symbol is functorial under restriction to a normal subextension.** For a normal
 tower `L/M/K`, applying restriction to the conjugacy class `artinSymbol 𝔭` for `L/K` gives the

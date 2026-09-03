@@ -9,7 +9,7 @@ public import Mathlib.NumberTheory.NumberField.Ideal.Basic
 public import TauCeti.RingTheory.Frobenius
 public import TauCeti.NumberTheory.LegendreSymbol.Frobenius
 public import TauCeti.NumberTheory.NumberField.IntegralSqrt
-public import TauCeti.NumberTheory.NumberField.AutomorphismAction
+import TauCeti.NumberTheory.NumberField.AutomorphismAction
 import Mathlib.Algebra.CharP.Basic
 
 /-!
