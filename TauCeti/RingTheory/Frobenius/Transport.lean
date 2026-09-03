@@ -56,6 +56,7 @@ theorem under_mapAlgEquiv (e : S ≃ₐ[R] T) (Q : Ideal S) :
 
 /-- Mapping an ideal along an algebra equivalence and back along the inverse recovers the
 original ideal.  Algebra-equivalence variant of `Ideal.map_of_equiv`. -/
+@[simp]
 theorem map_of_algEquiv (e : S ≃ₐ[R] T) (Q : Ideal S) : (Q.map e).map e.symm = Q :=
   map_of_equiv e.toRingEquiv
 
@@ -77,6 +78,7 @@ theorem mapAlgEquiv (e : S ≃ₐ[R] T) (Q : Ideal S) [Q.IsPrime]
   exact Algebra.FormallyUnramified.of_equiv eLocal
 
 /-- **Unramifiedness is invariant under an algebra equivalence.** -/
+@[simp]
 theorem mapAlgEquiv_iff (e : S ≃ₐ[R] T) (Q : Ideal S) [Q.IsPrime] :
     IsUnramifiedAt R (Q.map e) ↔ IsUnramifiedAt R Q := by
   constructor
@@ -111,6 +113,7 @@ theorem mapAlgEquiv (e : S ≃ₐ[R] T) (Q : Ideal S) (φ : S →ₐ[R] S)
   exact h2
 
 /-- **Being an arithmetic Frobenius is invariant under conjugation by an algebra equivalence.** -/
+@[simp]
 theorem mapAlgEquiv_iff (e : S ≃ₐ[R] T) (Q : Ideal S) (φ : S →ₐ[R] S) :
     ((e : S →ₐ[R] T).comp (φ.comp e.symm.toAlgHom)).IsArithFrobAt (Q.map e) ↔
       φ.IsArithFrobAt Q := by

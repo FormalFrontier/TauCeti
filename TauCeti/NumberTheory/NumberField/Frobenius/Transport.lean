@@ -100,8 +100,9 @@ theorem isArithFrobAt_map_ringOfIntegersAlgEquiv_iff
   rw [toAlgHom_autCongr]
   exact AlgHom.IsArithFrobAt.mapAlgEquiv_iff (RingOfIntegers.mapAlgEquiv e) Q _
 
-/-- Unramifiedness is likewise invariant in both directions under the induced prime bijection. -/
-@[simp]
+/-- Unramifiedness is likewise invariant in both directions under the induced prime bijection.
+Not `@[simp]`: the generic `Algebra.IsUnramifiedAt.mapAlgEquiv_iff` already covers this
+specialization as a simp lemma. -/
 theorem isUnramifiedAt_map_ringOfIntegersAlgEquiv_iff (e : L ≃ₐ[K] L')
     (Q : Ideal (𝓞 L)) [Q.IsPrime] :
     Algebra.IsUnramifiedAt (𝓞 K) (Q.map (RingOfIntegers.mapAlgEquiv e)) ↔
