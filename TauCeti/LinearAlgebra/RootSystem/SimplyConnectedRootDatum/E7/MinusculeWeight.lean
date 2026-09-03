@@ -33,6 +33,8 @@ roadmap, consumed by the explicit pinned-carrier milestone of the CFSG statement
 * `TauCeti.DynkinType.e7MinusculeWeight`: the fifty-six weights in fundamental coordinates.
 * `TauCeti.DynkinType.e7MinusculeReflection`: the permutation induced by a simple reflection.
 * `TauCeti.DynkinType.e7MinusculeWeight_reflection`: the simple-reflection equation.
+* `TauCeti.DynkinType.exists_e7MinusculeReflection_foldl_eq`: every table index is reached from
+  the highest weight by simple reflections.
 * `TauCeti.DynkinType.range_e7MinusculeWeight`: the table is exactly the Weyl orbit of `ϖ₇`.
 * `TauCeti.DynkinType.span_range_e7MinusculeWeight_eq_top`: the weights span the character
   lattice.
@@ -278,6 +280,38 @@ private theorem e7MinusculeWeight_mem_orbit (a : Fin 56) :
             (RootPairing.weylGroup.ofIdx e7SimplyConnectedRootDatum
               (e7SimpleIndex (e7MinusculeParentNode a)))
             (ih (e7MinusculeParent a) hparent (e7MinusculeParent a).isLt)
+  exact aux a a.isLt
+
+/-- Every index in the minuscule weight table is reached from the highest-weight index by a
+finite sequence of simple reflections. -/
+theorem exists_e7MinusculeReflection_foldl_eq (a : Fin 56) :
+    ∃ l : List (Fin 7), l.foldl (fun b i ↦ e7MinusculeReflection i b) 0 = a := by
+  have aux : ∀ n, ∀ hn : n < 56,
+      ∃ l : List (Fin 7), l.foldl (fun b i ↦ e7MinusculeReflection i b) 0 =
+        (⟨n, hn⟩ : Fin 56) := by
+    intro n hn
+    induction n using Nat.strong_induction_on with
+    | h n ih =>
+        by_cases hzero : n = 0
+        · subst n
+          exact ⟨[], rfl⟩
+        · let c : Fin 55 := ⟨n - 1, by omega⟩
+          have hsucc : c.succ = (⟨n, hn⟩ : Fin 56) := by
+            apply Fin.ext
+            simp [c]
+            omega
+          obtain ⟨l, hl⟩ := ih (e7MinusculeParent c)
+            (by
+              have hlt := e7MinusculeParent_lt_succ c
+              rw [show (c.succ : ℕ) = n from congrArg Fin.val hsucc] at hlt
+              exact hlt)
+            (e7MinusculeParent c).isLt
+          refine ⟨l ++ [e7MinusculeParentNode c], ?_⟩
+          rw [List.foldl_append, hl]
+          simp only [List.foldl_cons, List.foldl_nil]
+          apply e7MinusculeWeight_injective
+          rw [← hsucc, e7MinusculeWeight_succ_eq_reflection_parent,
+            e7SimplyConnectedRootDatum_reflection_e7MinusculeWeight]
   exact aux a a.isLt
 
 /-- **The explicit table is exactly the Weyl orbit of the seventh fundamental weight `ϖ₇`.** -/
