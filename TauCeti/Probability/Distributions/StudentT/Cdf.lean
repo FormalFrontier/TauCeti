@@ -60,6 +60,7 @@ private lemma integral_Ioi_studentTPDFReal_eq_betaKernel_tail (hν : 0 < ν) {y 
   set y0 := y ^ 2 / ν
   let g1 : ℝ → ℝ := fun w => C * ν ^ (1 / 2 : ℝ) / 2 *
       (w ^ (-(1 / 2 : ℝ)) * (1 + w) ^ (-s))
+  -- First change variables from the Student-t tail to the beta half-line kernel.
   have hinj : InjOn (fun z : ℝ => z ^ 2 / ν) (Ioi y) :=
     (sq_div_const_injOn_Ioi hν).mono fun z hz => hy.trans_lt hz
   have hderiv1 : ∀ z ∈ Ioi y,
@@ -130,6 +131,7 @@ private lemma integral_Ioi_betaKernel_tail_eq (hν : 0 < ν) {u0 : ℝ} (hu00 : 
   let k0 : ℝ → ℝ := fun w => w ^ (-(1 / 2 : ℝ)) * (1 + w) ^ (-s)
   let k : ℝ → ℝ := fun u => u ^ (-(1 / 2 : ℝ)) * (1 - u) ^ (ν / 2 - 1)
   let kb : ℝ → ℝ := fun t => t ^ ((1 / 2 : ℝ) - 1) * (1 - t) ^ (ν / 2 - 1)
+  -- The chart `u ↦ u / (1 - u)` turns the half-line beta tail into an interval tail.
   have hkeq : kb = k := by
     funext t
     have h : (1 / 2 : ℝ) - 1 = -(1 / 2 : ℝ) := by ring
@@ -202,6 +204,7 @@ private lemma integral_Ioi_betaKernel_tail_eq (hν : 0 < ν) {u0 : ℝ} (hu00 : 
   have h5 := intervalIntegral.integral_add_adjacent_intervals hIIu hII1
   have h6 : ∫ t in (0 : ℝ)..(1 : ℝ), kb t = beta (1 / 2) (ν / 2) :=
     integral_rpow_mul_one_sub_rpow one_half_pos hb_pos
+  -- Convert the interval tail into total beta mass minus the incomplete beta mass.
   have h3 : ∫ u in Ioo u0 1, k u = beta (1 / 2) (ν / 2) - ∫ u in (0 : ℝ)..u0, kb u := by
     rw [h4]
     linarith [h5, h6]
@@ -222,9 +225,10 @@ private lemma integral_Ioi_betaKernel_tail_eq (hν : 0 < ν) {u0 : ℝ} (hu00 : 
       beta (1 / 2) (ν / 2) * regularizedIncompleteBeta (1 / 2) (ν / 2) u0 =
       beta (1 / 2) (ν / 2) *
         (1 - regularizedIncompleteBeta (1 / 2) (ν / 2) u0) := by ring
-  change ∫ w in Ioi (u0 / (1 - u0)), k0 w =
-    beta (1 / 2) (ν / 2) * (1 - regularizedIncompleteBeta (1 / 2) (ν / 2) u0)
-  rw [h2, h3, h7, htailval]
+  have hgoal : ∫ w in Ioi (u0 / (1 - u0)), k0 w =
+      beta (1 / 2) (ν / 2) * (1 - regularizedIncompleteBeta (1 / 2) (ν / 2) u0) := by
+    rw [h2, h3, h7, htailval]
+  simpa [k0, s] using hgoal
 
 /-- The Student t normalizing constant times the beta-tail normalizer is `1 / 2`. -/
 private lemma studentT_tail_normalizing_const (hν : 0 < ν) :

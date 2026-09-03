@@ -61,6 +61,7 @@ private lemma eventually_const_mul_rpow_le_studentTBetaKernel (hν : 0 < ν) {q 
   set s := (ν + 1) / 2
   set e := (q - ν - 2) / 2 with he
   filter_upwards [eventually_ge_atTop (1 : ℝ)] with w hw
+  -- For large `w`, compare `(1 + w) ^ (-s)` with `(2w) ^ (-s)`.
   have hw0 : 0 < w := by linarith
   have hle : 1 + w ≤ 2 * w := by
     have h : 1 ≤ w := hw
@@ -84,24 +85,22 @@ private lemma eventually_const_mul_rpow_le_studentTBetaKernel (hν : 0 < ν) {q 
     simpa [div_eq_mul_inv] using h9
   have h9' : (2 * w) ^ (-s) = (2 : ℝ) ^ (-s) * w ^ (-s) := by
     rw [Real.mul_rpow (by positivity) hw0.le]
-  have h10 : studentTBetaKernel ν q w =
-      w ^ ((q - 1) / 2) * (1 + w) ^ (-s) := by
-    rfl
-  rw [h10]
   have h12 : w ^ e = w ^ ((q - 1) / 2) * w ^ (-s) := by
     have heq' : (q - 1) / 2 + (-s) = e := by
       dsimp only [e, s]; ring_nf
     have h12' : w ^ ((q - 1) / 2) * w ^ (-s) = w ^ e := by
       rw [← Real.rpow_add hw0 ((q - 1) / 2) (-s), heq']
     exact h12'.symm
-  change (2 : ℝ) ^ (-s) * w ^ e ≤ w ^ ((q - 1) / 2) * (1 + w) ^ (-s)
-  calc
-    (2 : ℝ) ^ (-s) * w ^ e
-      = (2 : ℝ) ^ (-s) * (w ^ ((q - 1) / 2) * w ^ (-s)) := by rw [h12]
-    _ = w ^ ((q - 1) / 2) * ((2 : ℝ) ^ (-s) * w ^ (-s)) := by ring
-    _ = w ^ ((q - 1) / 2) * (2 * w) ^ (-s) := by rw [h9']
-    _ ≤ w ^ ((q - 1) / 2) * (1 + w) ^ (-s) :=
-      mul_le_mul_of_nonneg_left h (Real.rpow_nonneg hw0.le _)
+  have hgoal :
+      (2 : ℝ) ^ (-s) * w ^ e ≤ w ^ ((q - 1) / 2) * (1 + w) ^ (-s) := by
+    calc
+      (2 : ℝ) ^ (-s) * w ^ e
+        = (2 : ℝ) ^ (-s) * (w ^ ((q - 1) / 2) * w ^ (-s)) := by rw [h12]
+      _ = w ^ ((q - 1) / 2) * ((2 : ℝ) ^ (-s) * w ^ (-s)) := by ring
+      _ = w ^ ((q - 1) / 2) * (2 * w) ^ (-s) := by rw [h9']
+      _ ≤ w ^ ((q - 1) / 2) * (1 + w) ^ (-s) :=
+        mul_le_mul_of_nonneg_left h (Real.rpow_nonneg hw0.le _)
+  simpa [studentTBetaKernel, s, e] using hgoal
 
 /-- If the tail exponent is at least `-1`, the beta-kernel tail comparison forces divergence. -/
 private lemma not_integrableOn_studentTBetaKernel_Ioi_of_le (hν : 0 < ν) (_hq : -1 < q)
@@ -109,6 +108,7 @@ private lemma not_integrableOn_studentTBetaKernel_Ioi_of_le (hν : 0 < ν) (_hq 
   intro h
   set s := (ν + 1) / 2
   set e := (q - ν - 2) / 2 with he
+  -- The tail comparison transfers integrability to a nonintegrable pure power.
   have he1 : -1 ≤ e := by linarith
   have hbound := eventually_const_mul_rpow_le_studentTBetaKernel hν hνq
   have hIoi1 : IntegrableOn (studentTBetaKernel ν q) (Ioi (1 : ℝ)) :=
