@@ -1,10 +1,10 @@
 name: Merge conflicts
 
-# Label a PR that has stopped merging into main, and tell its author once.
+# Label a PR that has stopped merging into its base branch, and tell its author once.
 #
 # This is the one PR transition nothing else here can see. Every other trigger in
 # this repository is scoped to the PR — pull_request_target, a pr-build / Review
-# workflow_run, an issue_comment — but a PR conflicts because *main moved*, which
+# workflow_run, an issue_comment — but a PR conflicts because *its base moved*, which
 # fires none of them. Until this existed a PR could pick up a conflict and nothing
 # anywhere said so: no label, no comment, no alert. stuck-alerts deliberately skips
 # a conflicting PR (it is not being wrongly withheld by the merge path) and
@@ -26,17 +26,29 @@ name: Merge conflicts
 #   gh api "/repos/$REPO/issues/N/timeline" \
 #     --jq '.[] | select(.label.name == "merge-conflict") | "\(.event) \(.created_at)"'
 #
-# Same approach as mathlib4's merge_conflicts.yml, and the same pinned action.
+# mathlib4's merge_conflicts.yml runs eps1lon/actions-label-merge-conflict for
+# this. We do not, for one reason found while reviewing it: on an UNKNOWN
+# mergeability that action returns from the middle of its loop and, once its
+# retries are spent, returns an empty result — abandoning that page of PRs and
+# every later one. A PR whose head has diverged from its branch tip sits at
+# `mergeable: null` indefinitely, which is exactly what stuck-alerts' diverged-head
+# detector exists to catch, so one such PR could stop every other conflict being
+# labelled. scripts/pr_status/conflicts.py skips an unknown PR and keeps going.
 
 on:
   schedule:
-    # Every 15 minutes, offset from housekeeping (:20), conflict-free of
-    # merge-sweep (:40) and stuck-alerts (:50).
+    # Every 15 minutes, offset from housekeeping (:20), merge-sweep (:40) and
+    # stuck-alerts (:50).
     - cron: "3,18,33,48 * * * *"
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: "Report what would change without labelling or commenting"
+        type: boolean
+        default: false
 
-permissions:
-  contents: read
+# The default GITHUB_TOKEN is unused; every write goes through the App token below.
+permissions: {}
 
 concurrency:
   group: merge-conflicts
@@ -48,7 +60,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/create-github-app-token@v1
+      # Pinned to a full SHA, not a floating major tag: this step receives the App
+      # private key, so it is the most sensitive one here.
+      - uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         id: app-token
         with:
           app-id: ${{ secrets.APP_ID }}
@@ -57,27 +71,14 @@ jobs:
           repositories: TauCeti
           permission-issues: write        # the label and the one-off comment
           permission-pull-requests: read  # open PRs and their mergeability
-
-      # Pinned to the commit v3.1.0 points at, not a floating tag: this step is
-      # handed an App token that can label and comment on any PR.
-      - uses: eps1lon/actions-label-merge-conflict@0273be72a0bbd58fcd71d0d6c02c209b50d1e5e1 # v3.1.0
+      # The trusted base checkout: never PR head code, like every other sink here.
+      - uses: actions/checkout@v4
         with:
-          repoToken: ${{ steps.app-token.outputs.token }}
-          dirtyLabel: merge-conflict
-          # GitHub computes mergeability lazily, so the first read after main moves
-          # answers UNKNOWN and only schedules the merge. Retry rather than treat
-          # "not computed" as either answer.
-          retryAfter: 30
-          retryMax: 5
-          commentOnDirty: >
-            This PR no longer merges into `main`. Rebase it onto current `main`
-            (or merge `main` into it) and push; nothing downstream can make
-            progress until then, since a green build and an approving review on
-            this head still cannot merge.
-
-
-            Check what the conflict actually is before resolving it mechanically.
-            If `main` has since landed its own version of something this PR adds,
-            part of it may be superseded, and the right answer is to drop that
-            part — or close the PR — rather than to reconcile the text. That is an
-            authoring decision.
+          sparse-checkout: scripts/pr_status
+          persist-credentials: false
+      - name: Label conflicting PRs
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_REPO: ${{ github.repository }}
+          DRY_RUN: ${{ inputs.dry-run && '--dry-run' || '' }}
+        run: python3 scripts/pr_status/conflicts.py sweep $DRY_RUN

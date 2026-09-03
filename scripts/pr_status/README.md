@@ -126,54 +126,74 @@ Three event-driven workflows drive it:
 
 ## Merge conflicts
 
-A PR becomes conflicted because **main moved**, not because its author did
+A PR becomes conflicted because **its base moved**, not because its author did
 anything, which makes it the one transition nothing else here can see. Every other
 trigger is scoped to the PR (`pull_request_target`, a `pr-build` / `Review`
-`workflow_run`, an `issue_comment`), and main moving fires none of them. Before
-[`merge-conflicts.yml`](../../.github/workflows/merge-conflicts.yml) a PR could
-pick up a conflict and *nothing anywhere said so* — no label, no comment, no
+`workflow_run`, an `issue_comment`), and the base moving fires none of them.
+Before [`merge-conflicts.yml`](../../.github/workflows/merge-conflicts.yml) a PR
+could pick up a conflict and *nothing anywhere said so* — no label, no comment, no
 alert. `stuck_alerts.py` deliberately skips a conflicting PR (it is not being
 wrongly withheld by the merge path) and `housekeeping.py` only retires PRs that
 are blocking under review, so a conflicted-but-approved PR was reaped by nothing
 either. It rotted silently.
 
-The workflow runs [`eps1lon/actions-label-merge-conflict`](https://github.com/eps1lon/actions-label-merge-conflict)
-every fifteen minutes, pinned to the commit `v3.1.0` points at because the step is
-handed an App token that can label and comment on any PR. It adds
-`merge-conflict` when a PR stops merging, removes it when the PR merges cleanly
-again, and comments once per episode. This is the same approach, and the same
-pinned action, as mathlib4's `merge_conflicts.yml`.
+[`conflicts.py`](conflicts.py) runs every fifteen minutes: one GraphQL query reads
+the whole open queue, `merge-conflict` goes on a PR that has stopped merging and
+comes off when it merges again, and the author is told once per episode. The label
+is provisioned on first use, like the status labels.
 
-Two properties are worth stating, because they are why this is thirty lines rather
-than several hundred.
+Two properties are why this is a couple of hundred lines rather than a package.
 
 **The label is orthogonal to the status labels.** It is deliberately *not* part of
-the mutually-exclusive set [`labels.py`](labels.py) maintains, and nothing in this
-package reads or writes it. A PR can be awaiting review *and* conflicting, and
-saying both is more useful than having one hide the other; keeping them separate
-also means conflict state never has to enter `core.derive`, never has to win or
-lose a precedence argument, and cannot interfere with what a review harness reads.
+the mutually-exclusive set [`labels.py`](labels.py) maintains, and nothing else
+reads or writes it. A PR can be awaiting review *and* conflicting, and saying both
+is more useful than having one hide the other; keeping them separate also means
+conflict state never enters `core.derive`, never has to win a precedence argument
+against CI or review state, and cannot interfere with what a review harness reads.
 
 **The label is also the state.** Whether an episode is open is just "is the label
-on the PR", so there is no marker to parse and no way for the bot to fail to
-recognise its own bookkeeping — a wrong label self-heals on the next run, at worst
-costing one duplicate comment. It makes the problem measurable for free, too:
-GitHub timestamps label changes in the PR timeline, so an episode is
-`labeled merge-conflict` → `unlabeled merge-conflict`, recorded by GitHub rather
-than self-reported.
+on the PR", so there is no marker to parse and no way to fail to recognise our own
+bookkeeping — a wrong label self-heals on the next run. It also makes the problem
+measurable without writing anything extra, since GitHub timestamps label changes:
 
 ```bash
-gh api "/repos/TauCetiProject/TauCeti/issues/2033/timeline" \
-  --jq '.[] | select(.label.name == "merge-conflict") | "\(.event) \(.created_at)"'
+gh api --paginate "/repos/TauCetiProject/TauCeti/issues/N/timeline?per_page=100" \
+  --jq '.[] | select(.label.name == "merge-conflict") | "\(.event) \(.created_at) \(.actor.login)"'
 ```
 
-GitHub computes `mergeable` lazily, so the first read after main moves answers
-UNKNOWN and only schedules the merge; `retryAfter`/`retryMax` re-read rather than
-treating "not computed" as either answer.
+Read those as **observed label intervals**, not exact conflict durations: the
+boundaries are quantised by the fifteen-minute poll and by GitHub's scheduling, a
+conflict that arises and clears between two runs is never seen at all, and a PR
+closed while labelled has no closing event. The actor distinguishes the bot's own
+transitions from a human's.
 
-For the history from before the label existed, the timeline has nothing to read,
-so it has to be reconstructed from git and the `pr-build` run history; that is a
-separate tool and a separate PR.
+Two ordering decisions carry the weight:
+
+- **The comment is posted before the label.** The label is what suppresses a
+  repeat, so writing it first would mean a comment that then failed was never
+  retried — the notice lost silently, which is the one failure this must not have.
+  This way the risk is a duplicate comment instead, which is merely annoying.
+- **UNKNOWN is skipped per PR, never per run.** GitHub computes `mergeable`
+  lazily, so a read just after the base moved answers UNKNOWN and only schedules
+  the merge. Those are re-read a few times; whatever stays unknown is left exactly
+  as it is, neither labelled nor cleared, while every PR whose state we do know is
+  still processed. This is why we do not use
+  [`eps1lon/actions-label-merge-conflict`](https://github.com/eps1lon/actions-label-merge-conflict),
+  which mathlib4 uses for the same job: on UNKNOWN it returns from the middle of
+  its loop, and once its retries are spent returns an empty result, abandoning
+  that page of PRs and every later one. A PR whose head has diverged from its
+  branch tip sits at `mergeable: null` indefinitely — precisely what
+  `stuck_alerts.py`'s `diverged-head` detector exists to catch — so one such PR
+  could stop every other conflict being labelled.
+
+A PR carrying a hold label (`keep`/`hold`/`wip`/`human`/`do-not-close`/`blocked`)
+is still labelled, because the queue view should be honest, but is not commented
+on: the comment is a call to action and nobody asked for action on a parked PR.
+
+Note that labelling and commenting both bump the PR's `updatedAt`, which
+`housekeeping.py` treats as freshness — so a conflict episode resets that PR's
+seven-day stale-close clock. That is the intended trade: a PR that just learned it
+conflicts should get its week to act on it.
 
 ## Stuck-automation alerts (Tau Ceti > "Stuck PRs")
 
