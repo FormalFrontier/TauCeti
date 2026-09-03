@@ -399,17 +399,17 @@ theorem variance_id_inverseGammaMeasure (hr : 0 < r) (ha : 2 < a) :
   field_simp [ha1, ha2]
   ring
 
+/-- The identity is integrable under a valid inverse-gamma law exactly above shape one. -/
+@[simp]
+theorem integrable_id_inverseGammaMeasure_iff (ha : 0 < a) (hr : 0 < r) :
+    Integrable id (inverseGammaMeasure a r) ↔ 1 < a := by
+  rw [show (id : ℝ → ℝ) = fun x ↦ x ^ 1 from funext fun x ↦ (pow_one x).symm]
+  simpa only [Nat.cast_one] using integrable_pow_inverseGammaMeasure_iff ha hr 1
+
 /-- At and below shape one, the identity is not integrable under a valid inverse-gamma law. -/
 theorem not_integrable_id_inverseGammaMeasure (ha : 0 < a) (hr : 0 < r) (h : a ≤ 1) :
-    ¬ Integrable id (inverseGammaMeasure a r) := by
-  intro hint
-  have hid : (id : ℝ → ℝ) = fun x ↦ x := rfl
-  rw [hid] at hint
-  have hint' : Integrable (fun x : ℝ ↦ x ^ 1) (inverseGammaMeasure a r) := by
-    simpa only [pow_one] using hint
-  have hlt := (integrable_pow_inverseGammaMeasure_iff ha hr 1).1 hint'
-  norm_num at hlt
-  exact (not_lt_of_ge h) hlt
+    ¬ Integrable id (inverseGammaMeasure a r) :=
+  (integrable_id_inverseGammaMeasure_iff ha hr).not.mpr (not_lt.mpr h)
 
 /-- At and below shape two, the square is not integrable under a valid inverse-gamma law. -/
 theorem not_integrable_sq_inverseGammaMeasure (ha : 0 < a) (hr : 0 < r) (h : a ≤ 2) :
@@ -488,8 +488,8 @@ theorem cdf_inverseGammaMeasure_eq (ha : 0 < a) (hr : 0 < r) (x : ℝ) :
       (Ioi_ae_eq_Ici' (μ := gammaMeasure a r) (by
         rw [gammaMeasure]
         exact measure_singleton _)).symm
-    rw [measure_congr hsets, ← measureReal_def, measureReal_Ioi_gammaMeasure ha hr x⁻¹]
-    congr 2
+    rw [measure_congr hsets, ← measureReal_def, measureReal_Ioi_gammaMeasure ha hr x⁻¹,
+      div_eq_mul_inv]
 
 /-! ### Parameter measurability -/
 
