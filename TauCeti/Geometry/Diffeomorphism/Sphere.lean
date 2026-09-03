@@ -60,9 +60,10 @@ inclusion `O(4) → Diff(S³)` is stateable" is `TauCeti.orthogonalToDiffSphere 
 ## Implementation notes
 
 The declarations extending `LinearIsometryEquiv` here and in
-`TauCeti.Geometry.Sphere.LinearIsometry` live in Mathlib's root namespace, allowing receiver
-notation. The reference inclusion remains project-owned top-level API in `TauCeti`; the auxiliary
-linear-map lemma remains in `TauCeti.LinearMap` as explained in the generic file.
+`TauCeti.Geometry.Sphere.LinearIsometry` live in the root-level `LinearIsometryEquiv` namespace,
+allowing receiver notation. The reference inclusion remains project-owned top-level API in
+`TauCeti`; the auxiliary linear-map lemma remains in `TauCeti.LinearMap` as explained in the
+generic file.
 -/
 
 public section

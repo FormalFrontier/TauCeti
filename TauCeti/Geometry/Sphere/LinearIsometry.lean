@@ -30,9 +30,9 @@ This file develops that restriction independently of the manifold structure on s
 
 ## Implementation notes
 
-The declarations extending `LinearIsometryEquiv` live in Mathlib's root namespace so receiver
-notation elaborates. The separate linear-map lemma remains in `TauCeti.LinearMap`: it is not part
-of this namespace migration and has no explicit `LinearMap` receiver for dot notation.
+The declarations extending `LinearIsometryEquiv` live in the root-level `LinearIsometryEquiv`
+namespace, so receiver notation elaborates. The separate linear-map lemma remains in
+`TauCeti.LinearMap`; it has no explicit `LinearMap` receiver for dot notation.
 -/
 
 public section
