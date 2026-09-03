@@ -9,7 +9,7 @@ public import TauCeti.Probability.Distributions.StudentT.Basic
 import TauCeti.Analysis.Calculus.RealCharts
 
 /-!
-# The square-root chart for weighted half-line integrals of Student's t law
+# The square chart for weighted half-line integrals of Student's t law
 
 The substitution `w = z ^ 2 / ν` reduces weighted integrals of the even Student t density over the
 positive half-line to Euler integrals on `(0, ∞)`. This file collects the Student-t beta-kernel
