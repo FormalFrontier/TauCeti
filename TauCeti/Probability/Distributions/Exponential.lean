@@ -398,8 +398,15 @@ theorem hasLaw_min_iid_expMeasure {Ω ι : Type*} {mΩ : MeasurableSpace Ω} [Fi
   have _ : IsProbabilityMeasure (expMeasure r) := isProbabilityMeasure_expMeasure hr
   have _ : IsProbabilityMeasure (expMeasure ((Fintype.card ι : ℝ) * r)) :=
     isProbabilityMeasure_expMeasure (mul_pos hd hr)
-  have hmin : AEMeasurable (fun ω => Finset.univ.inf' Finset.univ_nonempty fun i => X i ω) P :=
-    aemeasurable_min fun i => (hlaw i).aemeasurable
+  have hmin : AEMeasurable (fun ω => Finset.univ.inf' Finset.univ_nonempty fun i => X i ω) P := by
+    -- `Finset.inf'_apply` moves the coordinatewise spelling to the lattice one, where the
+    -- minimum is a finite infimum of a.e.-measurable functions.
+    have heq : (fun ω => Finset.univ.inf' Finset.univ_nonempty fun i => X i ω)
+        = Finset.univ.inf' (Finset.univ_nonempty (α := ι)) X :=
+      funext fun ω => (Finset.inf'_apply _ X ω).symm
+    rw [heq]
+    exact Finset.inf'_induction (p := fun g : Ω → ℝ => AEMeasurable g P) _ X
+      (fun _ h₁ _ h₂ => h₁.inf h₂) fun i _ => (hlaw i).aemeasurable
   have _ : IsProbabilityMeasure P := (hlaw (Classical.arbitrary ι)).isProbabilityMeasure
   refine ⟨hmin, ?_⟩
   refine Measure.eq_of_cdf _ _ ?_

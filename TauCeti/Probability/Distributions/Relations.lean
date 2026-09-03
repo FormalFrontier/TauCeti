@@ -41,9 +41,7 @@ specialisation — the minimum of `d` i.i.d. exponentials of rate `r` is exponen
   `TauCeti.Probability.measureReal_setOf_min_le_iid` — the minimum exceeds `x` with probability
   `(1 - cdf μ x) ^ d`, hence is at most `x` with probability `1 - (1 - cdf μ x) ^ d`;
 * `TauCeti.Probability.cdf_max_iid`, `TauCeti.Probability.cdf_min_iid` — the same two formulas for
-  the laws of the two extremes;
-* `TauCeti.Probability.aemeasurable_min` — the minimum of an a.e.-measurable finite family is
-  a.e. measurable, the one measurability fact a family specialisation needs.
+  the laws of the two extremes.
 
 A general theory of order statistics is outside the scope of the roadmap target below.
 
@@ -98,9 +96,8 @@ private theorem aemeasurable_max (hX : ∀ i, AEMeasurable (X i) P) :
   exact Finset.sup'_congr _ rfl fun i _ => hω i
 
 /-- The minimum of an almost-everywhere measurable finite family is almost everywhere
-measurable. Public: a specialisation to a particular family needs this to state `HasLaw` of the
-minimum, and Mathlib has `Finset.measurable_sup'` but no `inf'` counterpart. -/
-theorem aemeasurable_min (hX : ∀ i, AEMeasurable (X i) P) :
+measurable. -/
+private theorem aemeasurable_min (hX : ∀ i, AEMeasurable (X i) P) :
     AEMeasurable (fun ω => Finset.univ.inf' Finset.univ_nonempty fun i => X i ω) P := by
   refine ⟨fun ω => Finset.univ.inf' Finset.univ_nonempty fun i => (hX i).mk (X i) ω,
     measurable_min fun i => (hX i).measurable_mk, ?_⟩
