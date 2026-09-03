@@ -285,6 +285,17 @@ theorem points_def (A : Type v) [CommRing A] :
   rw [points, definingIdeal]
   exact kostantToralPointsSubgroup_def _ _ _ _ _ _ _ _ A
 
+/-- A matrix is a carrier point exactly when its associated convolution point kills the
+defining Hopf ideal. -/
+@[simp]
+theorem mem_points_iff (A : Type v) [CommRing A]
+    (g : _root_.Matrix.GeneralLinearGroup (Fin (dimension n)) A) :
+    g ∈ points n A ↔
+      ∀ x ∈ definingIdeal n,
+        ((TauCeti.GeneralLinear.pointsMulEquiv (R := ℤ) (dimension n)).symm g).ofConv x = 0 := by
+  rw [points, definingIdeal]
+  exact mem_kostantToralPointsSubgroup_iff _ _ _ _ _ _ _ _ A g
+
 /-- A numbered root-subgroup homomorphism on matrix-valued points. -/
 noncomputable def rootSubgroupPoints (k : Fin (n + 1) ⊕ Fin (n + 1))
     (A : Type v) [CommRing A] : Multiplicative A →* points n A :=
@@ -294,6 +305,20 @@ noncomputable def rootSubgroupPoints (k : Fin (n + 1) ⊕ Fin (n + 1))
     (rep_kostantForm_mem_lattice n) (isNilpotent_rep_rootGenerator n)
     (latticeBasis n) (basisWeight n) k A
 
+/-- A numbered root-subgroup point is its represented divided-power exponential matrix. -/
+@[simp]
+theorem coe_rootSubgroupPoints (k : Fin (n + 1) ⊕ Fin (n + 1))
+    (A : Type v) [CommRing A] (u : Multiplicative A) :
+    (rootSubgroupPoints n k A u :
+        _root_.Matrix.GeneralLinearGroup (Fin (dimension n)) A) =
+      kostantRootSubgroupMatrix
+        (TauCeti.typeBSimpleRootGeneratorFamily (K := ℚ))
+        (TauCeti.typeBSimpleCorootGenerator (K := ℚ)) (rep n) (lattice n).toAddSubgroup
+        (rep_kostantForm_mem_lattice n) k (isNilpotent_rep_rootGenerator n k)
+        (latticeBasis n)
+        ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm u) := by
+  exact coe_kostantToralRootSubgroupPoints _ _ _ _ _ _ _ _ k A u
+
 /-- The split spin weight torus on matrix-valued carrier points. -/
 noncomputable def weightTorusPoints (A : Type v) [CommRing A] :
     (Fin (n + 1) → Aˣ) →* points n A :=
@@ -302,6 +327,14 @@ noncomputable def weightTorusPoints (A : Type v) [CommRing A] :
     (TauCeti.typeBSimpleCorootGenerator (K := ℚ)) (rep n) (lattice n).toAddSubgroup
     (rep_kostantForm_mem_lattice n) (isNilpotent_rep_rootGenerator n)
     (latticeBasis n) (basisWeight n) A
+
+/-- A weight-torus point is the diagonal matrix obtained by evaluating each spin weight. -/
+@[simp]
+theorem coe_weightTorusPoints (A : Type v) [CommRing A] (s : Fin (n + 1) → Aˣ) :
+    (weightTorusPoints n A s :
+        _root_.Matrix.GeneralLinearGroup (Fin (dimension n)) A) =
+      kostantTorusMatrix (lattice n).toAddSubgroup (latticeBasis n) (basisWeight n) s := by
+  exact coe_kostantToralWeightTorusPoints _ _ _ _ _ _ _ _ A s
 
 /-! ## The Cartan action and pinning equation -/
 
