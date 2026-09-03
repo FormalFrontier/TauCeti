@@ -37,9 +37,9 @@ for the cohomology of a scheme, which is Layer B infrastructure for
 Mathlib's `CategoryTheory.Limits.IsTerminal.isTerminalObj`, `FreeAbelianGroup.uniqueEquiv`,
 `CategoryTheory.Functor.constComp` and `CategoryTheory.Abelian.extFunctor`.
 
-The object-level comparison extends Mathlib's root-level `CategoryTheory.Sheaf` API; the
-functor-level construction remains in `TauCeti.CategoryTheory.Sheaf` because it is not attached to
-a particular sheaf.
+The object-level comparison extends Mathlib's root-level `CategoryTheory.Sheaf` API. The
+functor-level construction remains in `TauCeti.CategoryTheory.Sheaf`: it takes no explicit sheaf
+argument, so moving it would not enable dot notation.
 -/
 
 public section
@@ -109,11 +109,9 @@ def cohomologyPresheafEvaluationIsoFunctorH (n : ℕ) {T : C} (hT : IsTerminal T
       (freeYonedaSheafIsoConstantSheaf hT).symm.op ≪≫
     functorHIso n
 
-variable (n : ℕ) {T : C} (hT : IsTerminal T)
-
 /-- At a terminal object, the cohomology of the object is the cohomology of the site. -/
 noncomputable abbrev _root_.CategoryTheory.Sheaf.cohomologyPresheafObjIsoH
-    (F : Sheaf J AddCommGrpCat.{v}) :
+    (F : Sheaf J AddCommGrpCat.{v}) (n : ℕ) {T : C} (hT : IsTerminal T) :
     _root_.CategoryTheory.Sheaf.H' F n T ≅
       AddCommGrpCat.of (_root_.CategoryTheory.Sheaf.H F n) :=
   (cohomologyPresheafEvaluationIsoFunctorH J n hT).app F
