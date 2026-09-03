@@ -63,6 +63,13 @@ The last two are what let the density arguments discard a finite exceptional set
 one class at a time: a lower density bound for each class can be squeezed against a partition of
 a cofinite set, which is how the crossing argument produces exact densities.
 
+## References
+
+The definition of `frobeniusPrimeSet` and the statement of `disjoint_frobeniusPrimeSet` follow
+`TauCetiRoadmap/Chebotarev/Suggested.lean`, lines 64–76, from which the dependent membership
+condition and the `HeightOneSpectrum (𝓞 K)` carrier are taken verbatim; the prose description of
+the intended API is the section `Frobenius prime sets and finite exceptional sets` of
+`TauCetiRoadmap/Chebotarev/README.md`.
 -/
 
 public section
@@ -91,6 +98,7 @@ def frobeniusPrimeSet (C : ConjClasses (L ≃ₐ[K] L)) : Set (HeightOneSpectrum
 
 /-- Membership in `frobeniusPrimeSet`, unfolded. Downstream files should open the definition
 through this lemma rather than through defeq. -/
+@[simp]
 theorem mem_frobeniusPrimeSet_iff {𝔭 : HeightOneSpectrum (𝓞 K)}
     {C : ConjClasses (L ≃ₐ[K] L)} :
     𝔭 ∈ frobeniusPrimeSet K L C ↔

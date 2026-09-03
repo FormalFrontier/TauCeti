@@ -116,7 +116,7 @@ theorem isArithFrobAt_autCongr (e : L ≃ₐ[K] L') {Q : Ideal (𝓞 L)} {σ : L
       (P := Q.comap (NumberField.RingOfIntegers.mapAlgEquiv e).symm)).symm
   intro x
   rw [MulSemiringAction.toAlgHom_apply, Ideal.mem_comap, hunder, map_sub, map_pow,
-    e.mapRingOfIntegers_symm_autCongr_smul, ← MulSemiringAction.toAlgHom_apply (𝓞 K)]
+    e.mapAlgEquiv_symm_autCongr_smul, ← MulSemiringAction.toAlgHom_apply (𝓞 K)]
   exact hσ _
 
 end AlgEquiv
