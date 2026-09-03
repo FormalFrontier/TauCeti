@@ -17,11 +17,15 @@ the form `u x * v y * K x y` with `[-1,1]`-valued test functions `u` and `v`.
 
 public section
 
+namespace TauCeti
+
 variable {α : Type*} [Ring α] [LinearOrder α] [IsOrderedRing α] {a b : α}
 
 /-- `|a * b * c| ≤ |c|` whenever `|a| ≤ 1` and `|b| ≤ 1`. -/
-theorem abs_mul_mul_le_abs_of_abs_le_one (ha : |a| ≤ 1) (hb : |b| ≤ 1) (c : α) :
+theorem abs_mul_mul_le_abs_of_abs_le_one_of_abs_le_one (ha : |a| ≤ 1) (hb : |b| ≤ 1) (c : α) :
     |a * b * c| ≤ |c| := by
   rw [abs_mul, abs_mul]
   exact (mul_le_of_le_one_left (abs_nonneg c)
     (mul_le_of_le_one_left (abs_nonneg b) ha |>.trans hb))
+
+end TauCeti
