@@ -7,7 +7,7 @@ module
 
 public import TauCeti.AlgebraicTopology.FundamentalGroup.Homeomorph
 public import TauCeti.AlgebraicTopology.NotSimplyConnected
-public import TauCeti.AlgebraicTopology.UniversalCover.ComplexCircleFundamentalGroup
+public import TauCeti.AlgebraicTopology.UniversalCover.Circle.FundamentalGroup
 public import TauCeti.AlgebraicTopology.UniversalCover.RealProjective.Circle
 
 /-!

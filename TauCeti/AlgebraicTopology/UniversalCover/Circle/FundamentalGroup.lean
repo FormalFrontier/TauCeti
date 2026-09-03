@@ -7,13 +7,15 @@ module
 
 public import Mathlib.Topology.Covering.AddCircle
 public import Mathlib.Topology.Instances.AddCircle.Real
+public import Mathlib.Analysis.SpecialFunctions.Complex.Circle
 public import Mathlib.Analysis.Convex.Contractible
 public import Mathlib.AlgebraicTopology.FundamentalGroupoid.SimplyConnected
+public import TauCeti.AlgebraicTopology.FundamentalGroup.Homeomorph
 public import TauCeti.AlgebraicTopology.UniversalCover.AddCircle
 public import TauCeti.AlgebraicTopology.UniversalCover.Deck.FundamentalGroup.Basic
 
 /-!
-# The fundamental group of the circle is `ℤ`
+# Fundamental groups of additive and complex circles
 
 The covering `(↑) : ℝ → AddCircle p` is the universal cover of the circle: its total space
 `ℝ` is contractible, hence simply connected, and the cover is regular with deck group
@@ -27,6 +29,10 @@ commutative), giving
 
 for any nonzero real period `p`. Specialising to the unit circle `UnitAddCircle = ℝ ⧸ ℤ`
 yields the classical `π₁(S¹) ≅ ℤ`.
+
+For a nonzero real period `T`, `AddCircle.homeomorphCircle` identifies `AddCircle T` with
+Mathlib's complex unit circle `Circle`. Transporting the additive-circle computation across this
+homeomorphism gives `FundamentalGroup Circle x ≃* Multiplicative ℤ` at every basepoint.
 
 The regularity input is elementary and holds for an arbitrary topological additive group:
 two points of `𝕜` with the same image under `(↑) : 𝕜 → AddCircle p` differ by an element of
@@ -45,6 +51,9 @@ transformation, so `Deck ((↑) : 𝕜 → AddCircle p)` acts transitively on ev
 * `AddCircle.fundamentalGroupMulEquivZero`: the basepoint-`0` specialisation, using the lift
   `0 : ℝ`.
 * `UnitAddCircle.fundamentalGroupMulEquiv`: `π₁(S¹) ≅ ℤ` for the unit circle.
+* `AddCircle.homeomorphCircle_symm_one`: the inverse circle homeomorphism sends `1` to `0` for
+  every nonzero real period.
+* `Circle.fundamentalGroupMulEquiv`: `π₁(Circle, x) ≃* Multiplicative ℤ`.
 
 ## References
 
@@ -268,3 +277,43 @@ lemma fundamentalGroupMulEquiv_eq_one_iff (γ : FundamentalGroup UnitAddCircle 0
     AddCircle.fundamentalGroupMulEquivZero_eq_one_iff 1 one_ne_zero γ
 
 end UnitAddCircle
+
+noncomputable section
+
+namespace AddCircle
+
+/-- The inverse homeomorphism `AddCircle.homeomorphCircle.symm` carries `1 : Circle` to `0`. -/
+@[simp]
+theorem homeomorphCircle_symm_one {T : ℝ} (hT : T ≠ 0) :
+    (AddCircle.homeomorphCircle hT).symm 1 = 0 := by
+  rw [Homeomorph.symm_apply_eq, AddCircle.homeomorphCircle_apply, AddCircle.toCircle_zero]
+
+end AddCircle
+
+namespace Circle
+
+/-- The fundamental group of the complex unit circle `Circle = {z : ℂ | ‖z‖ = 1}`, based at
+`x`, is `Multiplicative ℤ`: `π₁(S¹, x) ≅ ℤ`. It is obtained by changing the basepoint to
+`1 : Circle`, then transporting the additive-circle computation at `0` across
+`AddCircle.homeomorphCircle : AddCircle (2 * π) ≃ₜ Circle`. -/
+def fundamentalGroupMulEquiv (x : Circle) : FundamentalGroup Circle x ≃* Multiplicative ℤ :=
+  (FundamentalGroup.fundamentalGroupMulEquivOfPathConnected x 1).trans
+    ((TauCeti.FundamentalGroup.homeomorphMulEquivOfEq
+          (AddCircle.homeomorphCircle (T := 2 * Real.pi) Real.two_pi_pos.ne').symm
+          (AddCircle.homeomorphCircle_symm_one Real.two_pi_pos.ne')).trans
+      (AddCircle.fundamentalGroupMulEquivZero (2 * Real.pi) Real.two_pi_pos.ne'))
+
+/-- `fundamentalGroupMulEquiv` factors through Mathlib's basepoint-change isomorphism, followed
+by the canonical-basepoint circle computation transported from `AddCircle`. -/
+theorem fundamentalGroupMulEquiv_def (x : Circle) :
+    fundamentalGroupMulEquiv x =
+      (FundamentalGroup.fundamentalGroupMulEquivOfPathConnected x 1).trans
+        ((TauCeti.FundamentalGroup.homeomorphMulEquivOfEq
+          (AddCircle.homeomorphCircle (T := 2 * Real.pi) Real.two_pi_pos.ne').symm
+            (AddCircle.homeomorphCircle_symm_one Real.two_pi_pos.ne')).trans
+          (AddCircle.fundamentalGroupMulEquivZero (2 * Real.pi) Real.two_pi_pos.ne')) := by
+  rfl
+
+end Circle
+
+end
