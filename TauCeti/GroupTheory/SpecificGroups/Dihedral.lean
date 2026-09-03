@@ -328,7 +328,7 @@ theorem dihedralReflectionParity_surjective (n : ℕ) :
 
 /-- The **rotation subgroup** of `DihedralGroup n`, the kernel of the reflection parity. It is
 normal of index `2`, and `TauCeti.dihedralRotationsMulEquiv` identifies it with
-`Multiplicative (ZMod n)`, so it is cyclic (`TauCeti.dihedralRotations_isCyclic`) and in particular
+`Multiplicative (ZMod n)`, so it is cyclic (`TauCeti.isCyclic_dihedralRotations`) and in particular
 commutative. -/
 def dihedralRotations (n : ℕ) : Subgroup (DihedralGroup n) :=
   (dihedralReflectionParity n).ker
@@ -365,7 +365,7 @@ theorem index_dihedralRotations (n : ℕ) : (dihedralRotations n).index = 2 := b
 
 /-- The rotation subgroup has finite index, for every `n` -- including `n = 0`, where
 `DihedralGroup n` is infinite. -/
-instance dihedralRotations_finiteIndex (n : ℕ) : (dihedralRotations n).FiniteIndex :=
+instance finiteIndex_dihedralRotations (n : ℕ) : (dihedralRotations n).FiniteIndex :=
   ⟨by simp⟩
 
 /-- **Conjugation by a reflection inverts every rotation.** This is the defining dihedral relation
@@ -439,7 +439,7 @@ theorem coe_dihedralRotationsMulEquiv_symm (i : Multiplicative (ZMod n)) :
 
 /-- The rotation subgroup is cyclic, `Multiplicative (ZMod n)` being so; in particular it is
 commutative. -/
-instance dihedralRotations_isCyclic (n : ℕ) : IsCyclic (dihedralRotations n) :=
+instance isCyclic_dihedralRotations (n : ℕ) : IsCyclic (dihedralRotations n) :=
   isCyclic_of_surjective _ (dihedralRotationsMulEquiv n).symm.surjective
 
 section Character
