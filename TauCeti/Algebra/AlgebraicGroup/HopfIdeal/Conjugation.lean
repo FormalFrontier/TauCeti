@@ -41,7 +41,7 @@ open CategoryTheory WithConv
 
 namespace TauCeti
 
-universe u
+universe u v
 
 namespace HopfIdeal
 
@@ -53,7 +53,7 @@ variable {H : _root_.CommHopfAlgCat.{u} R}
 The inverse image is taken along the coordinate pullback for `x ↦ g x g⁻¹`. Since coordinate
 rings are contravariant, this ideal cuts out the direct image of the subgroup under that
 automorphism. -/
-@[expose] noncomputable def conjugate (I : HopfIdeal R H)
+noncomputable def conjugate (I : HopfIdeal R H)
     (g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R)) : HopfIdeal R H :=
   I.comapOfSurjective (CommHopfAlgCat.innerConjugationIso H g).hom.hom
     (ConcreteCategory.bijective_of_isIso
@@ -67,17 +67,6 @@ theorem mem_conjugate_iff (I : HopfIdeal R H)
     x ∈ I.conjugate g ↔ (CommHopfAlgCat.innerConjugationIso H g).hom.hom x ∈ I := by
   rw [conjugate, mem_comapOfSurjective]
 
-private theorem mapDomainMulEquiv_innerConjugation_apply
-    (g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R))
-    (hf : Function.Bijective (CommHopfAlgCat.innerConjugationIso H g).hom.hom)
-    (A : CommAlgCat.{u} R) (x : HopfAlgebra.points (R := R) (H := H) A) :
-    AlgHom.mapDomainMulEquiv (A := A)
-        (BialgEquiv.ofBijective (CommHopfAlgCat.innerConjugationIso H g).hom.hom hf) x =
-      CommHopfAlgCat.extendPoint H A g * x * (CommHopfAlgCat.extendPoint H A g)⁻¹ := by
-  have h := CommHopfAlgCat.mapPointsFunctor_innerConjugationIso_hom_app_apply H g A x
-  apply WithConv.ofConv_injective
-  exact congrArg WithConv.ofConv h
-
 /-- A point belongs to the closed subgroup cut out by `I` exactly when its conjugate by `g`
 belongs to the conjugate closed subgroup.
 
@@ -85,28 +74,28 @@ Thus conjugation gives a bijection from the original subgroup's `A`-points to th
 subgroup's `A`-points, uniformly in the commutative value algebra `A`. -/
 theorem mem_quotientPointsSubgroup_conjugate_iff (I : HopfIdeal R H)
     (g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R))
-    (A : CommAlgCat.{u} R) (x : HopfAlgebra.points (R := R) (H := H) A) :
+    (A : CommAlgCat.{v} R) (x : HopfAlgebra.points (R := R) (H := H) A) :
     CommHopfAlgCat.extendPoint H A g * x * (CommHopfAlgCat.extendPoint H A g)⁻¹ ∈
         CommHopfAlgCat.quotientPointsSubgroup H (I.conjugate g) A ↔
       x ∈ CommHopfAlgCat.quotientPointsSubgroup H I A := by
   let f := (CommHopfAlgCat.innerConjugationIso H g).hom.hom
-  let hf : Function.Bijective f :=
+  have hf : Function.Bijective f :=
     ConcreteCategory.bijective_of_isIso (CommHopfAlgCat.innerConjugationIso H g).hom
-  have h := CommHopfAlgCat.mapDomainMulEquiv_mem_quotientPointsSubgroup_comapOfSurjective_iff
-    f hf.1 hf.2 I A x
-  rw [mapDomainMulEquiv_innerConjugation_apply g hf] at h
-  -- The transport theorem reconstructs the bundled coordinate object from its carrier, whereas
-  -- `conjugate` retains the original bundle. Expose their definitionally equal subgroup statement.
-  change _ ∈ CommHopfAlgCat.quotientPointsSubgroup H (I.conjugate g) A ↔ _ at h
-  exact h
-
-/-- Conjugation preserves containment of closed subgroups, expressed in the reversed order on
-their defining Hopf ideals. -/
-theorem conjugate_mono
-    (g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R)) :
-    Monotone (fun I : HopfIdeal R H ↦ I.conjugate g) := by
-  intro I J hIJ
-  exact comapOfSurjective_mono _ _ hIJ
+  rw [CommHopfAlgCat.mem_quotientPointsSubgroup_iff,
+    CommHopfAlgCat.mem_quotientPointsSubgroup_iff]
+  constructor
+  · intro hx y hy
+    obtain ⟨z, rfl⟩ := hf.2 y
+    have hz : z ∈ I.conjugate g := (mem_conjugate_iff I g z).2 hy
+    have haction := congrArg (fun p : HopfAlgebra.points (R := R) (H := H) A ↦ p.ofConv z)
+      (CommHopfAlgCat.mapPointsFunctor_innerConjugationIso_hom_app_apply H g A x)
+    rw [CommHopfAlgCat.mapPointsFunctor_app_apply_apply] at haction
+    exact haction.trans (hx z hz)
+  · intro hx y hy
+    have haction := congrArg (fun p : HopfAlgebra.points (R := R) (H := H) A ↦ p.ofConv y)
+      (CommHopfAlgCat.mapPointsFunctor_innerConjugationIso_hom_app_apply H g A x)
+    rw [CommHopfAlgCat.mapPointsFunctor_app_apply_apply] at haction
+    exact haction.symm.trans (hx (f y) ((mem_conjugate_iff I g y).1 hy))
 
 /-- Conjugating a closed subgroup by the identity point does not change it. -/
 @[simp]
@@ -148,21 +137,28 @@ noncomputable def conjugateOrderIso
   invFun I := I.conjugate g⁻¹
   left_inv I := conjugate_inv_conjugate I g
   right_inv I := conjugate_conjugate_inv I g
-  map_rel_iff' := by
-    intro I J
-    -- `OrderIso` stores this field through `toFun`; expose the displayed conjugation operation
-    -- before applying monotonicity and inverse cancellation.
-    change I.conjugate g ≤ J.conjugate g ↔ I ≤ J
-    constructor
-    · intro h
-      have h' := conjugate_mono g⁻¹ h
-      -- The inferred function arguments of `conjugate_mono` remain hidden in `h'`; expose the
-      -- iterated conjugations so their cancellation lemmas rewrite directly.
-      change (I.conjugate g).conjugate g⁻¹ ≤ (J.conjugate g).conjugate g⁻¹ at h'
-      rw [conjugate_inv_conjugate, conjugate_inv_conjugate] at h'
-      exact h'
-    · intro h
-      exact conjugate_mono g h
+  map_rel_iff' := comapOfSurjective_le_comapOfSurjective_iff
+    (CommHopfAlgCat.innerConjugationIso H g).hom.hom
+      (ConcreteCategory.bijective_of_isIso
+        (CommHopfAlgCat.innerConjugationIso H g).hom).2
+
+/-- Applying the conjugation order isomorphism conjugates the defining Hopf ideal. -/
+@[simp]
+theorem conjugateOrderIso_apply
+    (g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R)) (I : HopfIdeal R H) :
+    conjugateOrderIso g I = I.conjugate g := by
+  rw [conjugateOrderIso]
+  change I.conjugate g = I.conjugate g
+  rfl
+
+/-- Applying the inverse conjugation order isomorphism conjugates by the inverse point. -/
+@[simp]
+theorem conjugateOrderIso_symm_apply
+    (g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R)) (I : HopfIdeal R H) :
+    (conjugateOrderIso g).symm I = I.conjugate g⁻¹ := by
+  rw [conjugateOrderIso]
+  change I.conjugate g⁻¹ = I.conjugate g⁻¹
+  rfl
 
 end HopfIdeal
 

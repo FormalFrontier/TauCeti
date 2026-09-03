@@ -46,13 +46,13 @@ open CategoryTheory WithConv
 
 namespace TauCeti.CommHopfAlgCat
 
-universe u
+universe u v w
 
 variable {R : Type u} [CommRing R]
 variable (H : _root_.CommHopfAlgCat.{u} R)
 
 /-- Extension of an `R`-valued point to an `A`-valued point along the structure map of `A`. -/
-noncomputable def extendPoint (A : CommAlgCat.{u} R)
+noncomputable def extendPoint (A : CommAlgCat.{v} R)
     (g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R)) :
     HopfAlgebra.points (R := R) (H := H) A :=
   AlgHom.mapValue (Algebra.ofId R A) g
@@ -68,49 +68,54 @@ theorem extendPoint_self
 
 /-- The identity rational point extends to the identity point. -/
 @[simp]
-theorem extendPoint_one (A : CommAlgCat.{u} R) :
+theorem extendPoint_one (A : CommAlgCat.{v} R) :
     extendPoint H A (1 : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R)) = 1 := by
   exact (AlgHom.mapValue (H := H) (Algebra.ofId R A)).map_one
 
 /-- Extension of rational points preserves multiplication. -/
 @[simp]
-theorem extendPoint_mul (A : CommAlgCat.{u} R)
+theorem extendPoint_mul (A : CommAlgCat.{v} R)
     (g h : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R)) :
     extendPoint H A (g * h) = extendPoint H A g * extendPoint H A h := by
   exact (AlgHom.mapValue (H := H) (Algebra.ofId R A)).map_mul g h
 
 /-- Extension of rational points preserves inverses. -/
 @[simp]
-theorem extendPoint_inv (A : CommAlgCat.{u} R)
+theorem extendPoint_inv (A : CommAlgCat.{v} R)
     (g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R)) :
     extendPoint H A g⁻¹ = (extendPoint H A g)⁻¹ := by
   exact (AlgHom.mapValue (H := H) (Algebra.ofId R A)).map_inv g
 
 /-- Extension of a ground-ring-valued point is natural in the value algebra. -/
-theorem mapPoints_extendPoint {A B : CommAlgCat.{u} R} (f : A ⟶ B)
+theorem mapPoints_extendPoint {A : CommAlgCat.{v} R} {B : CommAlgCat.{w} R}
+    (f : A →ₐ[R] B)
     (g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R)) :
-    HopfAlgebra.mapPoints (H := H) f (extendPoint H A g) = extendPoint H B g := by
+    AlgHom.mapValue (H := H) f (extendPoint H A g) = extendPoint H B g := by
   apply WithConv.ofConv_injective
   ext x
   simp only [extendPoint, AlgHom.mapValue_apply,
     WithConv.ofConv_toConv, AlgHom.comp_apply]
-  exact f.hom.commutes (g.ofConv x)
+  exact f.commutes (g.ofConv x)
 
 /-- Mapping a conjugate by an extended rational point commutes with extension to the target value
 algebra. This isolates the group-homomorphism normalization used in the naturality proof below. -/
-private theorem mapPoints_conjugate_extendPoint {A B : CommAlgCat.{u} R} (f : A ⟶ B)
+private theorem mapPoints_conjugate_extendPoint {A B : CommAlgCat.{v} R} (f : A ⟶ B)
     (g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R))
     (x : HopfAlgebra.points (R := R) (H := H) A) :
     HopfAlgebra.mapPoints (H := H) f
         (extendPoint H A g * x * (extendPoint H A g)⁻¹) =
       extendPoint H B g * HopfAlgebra.mapPoints (H := H) f x * (extendPoint H B g)⁻¹ := by
-  rw [HopfAlgebra.mapPoints_mul, HopfAlgebra.mapPoints_mul, HopfAlgebra.mapPoints_inv,
-    mapPoints_extendPoint]
+  rw [HopfAlgebra.mapPoints_mul, HopfAlgebra.mapPoints_mul, HopfAlgebra.mapPoints_inv]
+  have hext := mapPoints_extendPoint H f.hom g
+  change AlgHom.mapValue (H := H) f.hom (extendPoint H A g) *
+      HopfAlgebra.mapPoints (H := H) f x *
+        (AlgHom.mapValue (H := H) f.hom (extendPoint H A g))⁻¹ = _
+  rw [hext]
 
 /-- Conjugation by the extension of a rational point, as an automorphism of `A`-valued points. -/
 noncomputable def innerConjugationPointIso
     (g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R))
-    (A : CommAlgCat.{u} R) :
+    (A : CommAlgCat.{v} R) :
     (HopfAlgebra.pointsFunctor (R := R) (H := H)).obj A ≅
       (HopfAlgebra.pointsFunctor (R := R) (H := H)).obj A :=
   MulEquiv.toGrpIso (MulAut.conj (extendPoint H A g))
@@ -119,7 +124,7 @@ noncomputable def innerConjugationPointIso
 @[simp]
 theorem innerConjugationPointIso_hom_apply
     (g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R))
-    (A : CommAlgCat.{u} R) (x : HopfAlgebra.points (R := R) (H := H) A) :
+    (A : CommAlgCat.{v} R) (x : HopfAlgebra.points (R := R) (H := H) A) :
     (innerConjugationPointIso H g A).hom x =
       extendPoint H A g * x * (extendPoint H A g)⁻¹ := by
   rfl
@@ -128,7 +133,7 @@ theorem innerConjugationPointIso_hom_apply
 @[simp]
 theorem innerConjugationPointIso_inv_apply
     (g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R))
-    (A : CommAlgCat.{u} R) (x : HopfAlgebra.points (R := R) (H := H) A) :
+    (A : CommAlgCat.{v} R) (x : HopfAlgebra.points (R := R) (H := H) A) :
     (innerConjugationPointIso H g A).inv x =
       extendPoint H A g⁻¹ * x * extendPoint H A g := by
   rfl
@@ -136,8 +141,8 @@ theorem innerConjugationPointIso_inv_apply
 /-- Conjugation by a rational point, naturally on the full functor of points. -/
 noncomputable def innerConjugationPointsIso
     (g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R)) :
-    HopfAlgebra.pointsFunctor (R := R) (H := H) ≅
-      HopfAlgebra.pointsFunctor (R := R) (H := H) :=
+    HopfAlgebra.pointsFunctor.{u, u, v} (R := R) (H := H) ≅
+      HopfAlgebra.pointsFunctor.{u, u, v} (R := R) (H := H) :=
   NatIso.ofComponents (innerConjugationPointIso H g) fun {A B} f ↦ by
     apply GrpCat.hom_ext
     apply MonoidHom.ext
@@ -273,21 +278,11 @@ theorem innerConjugationIso_inv
 @[simp]
 theorem mapPointsFunctor_innerConjugationIso_hom
     (g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R)) :
-    mapPointsFunctor (innerConjugationIso H g).hom =
-      (innerConjugationPointsIso H g).hom := by
+    (mapPointsFunctor (innerConjugationIso H g).hom :
+      HopfAlgebra.pointsFunctor.{u, u, u} (R := R) (H := H) ⟶
+        HopfAlgebra.pointsFunctor.{u, u, u} (R := R) (H := H)) =
+      (innerConjugationPointsIso.{u, u} H g).hom := by
   exact mapPointsFunctor_homOfPointsMap _
-
-/-- On points, the coordinate inner automorphism acts by conjugation by the extended rational
-point. -/
--- Not `@[simp]`: `mapPointsFunctor_innerConjugationIso_hom` already rewrites the left-hand
--- side before this applied form can fire.
-theorem mapPointsFunctor_innerConjugationIso_hom_app_apply
-    (g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R))
-    (A : CommAlgCat.{u} R) (x : HopfAlgebra.points (R := R) (H := H) A) :
-    (mapPointsFunctor (innerConjugationIso H g).hom).app A x =
-      extendPoint H A g * x * (extendPoint H A g)⁻¹ := by
-  rw [mapPointsFunctor_innerConjugationIso_hom]
-  exact innerConjugationPointIso_hom_apply H g A x
 
 /-- The coordinate algebra map of inner conjugation is obtained from the universal conjugation
 map by evaluating its conjugating variable at the given rational point. -/
@@ -299,8 +294,13 @@ theorem innerConjugationIso_hom_toAlgHom
           (HopfAlgebra.conjugationAlgHom (R := R) (H := H)) := by
   apply AlgHom.ext
   intro x
-  have hpoint := mapPointsFunctor_innerConjugationIso_hom_app_apply H g
-    (CommAlgCat.of R H) (toConv (AlgHom.id R H))
+  have hpoint :
+      (mapPointsFunctor (innerConjugationIso H g).hom).app (CommAlgCat.of R H)
+          (toConv (AlgHom.id R H)) =
+        extendPoint H (CommAlgCat.of R H) g * toConv (AlgHom.id R H) *
+          (extendPoint H (CommAlgCat.of R H) g)⁻¹ := by
+    rw [mapPointsFunctor_innerConjugationIso_hom]
+    exact innerConjugationPointIso_hom_apply H g _ _
   have hx := congrArg (fun p : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R H) ↦
     p.ofConv x) hpoint
   rw [mapPointsFunctor_app_apply] at hx
@@ -316,5 +316,31 @@ theorem innerConjugationIso_hom_toAlgHom
         DFunLike.congr_fun
           (HopfAlgebra.productMap_comp_conjugationAlgHom (R := R) (H := H)
             (toConv ((Algebra.ofId R H).comp g.ofConv)) (toConv (AlgHom.id R H))).symm x
+
+/-- On points over any commutative value algebra, the coordinate inner automorphism acts by
+conjugation by the extended rational point. -/
+-- Not `@[simp]`: `mapPointsFunctor_innerConjugationIso_hom` is the preferred same-universe rule.
+theorem mapPointsFunctor_innerConjugationIso_hom_app_apply
+    (g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R))
+    (A : CommAlgCat.{v} R) (x : HopfAlgebra.points (R := R) (H := H) A) :
+    (mapPointsFunctor (innerConjugationIso H g).hom).app A x =
+      extendPoint H A g * x * (extendPoint H A g)⁻¹ := by
+  apply WithConv.ofConv_injective
+  rw [mapPointsFunctor_app_apply]
+  rw [innerConjugationIso_hom_toAlgHom]
+  rw [← AlgHom.comp_assoc]
+  have hprod :
+      x.ofConv.comp (Algebra.TensorProduct.productMap
+          ((Algebra.ofId R H).comp g.ofConv) (AlgHom.id R H)) =
+        Algebra.TensorProduct.productMap (extendPoint H A g).ofConv x.ofConv := by
+    apply Algebra.TensorProduct.ext'
+    intro a b
+    simp only [Algebra.TensorProduct.productMap_apply_tmul, AlgHom.comp_apply,
+      AlgHom.id_apply, extendPoint, AlgHom.mapValue_apply, WithConv.ofConv_toConv,
+      Algebra.ofId_apply, map_mul]
+    exact congrArg (fun c : A ↦ c * x.ofConv b) (x.ofConv.commutes (g.ofConv a))
+  rw [hprod]
+  exact (HopfAlgebra.productMap_comp_conjugationAlgHom (R := R) (H := H)
+    (extendPoint H A g) x)
 
 end TauCeti.CommHopfAlgCat
