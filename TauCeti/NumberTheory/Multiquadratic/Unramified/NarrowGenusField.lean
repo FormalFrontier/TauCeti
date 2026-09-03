@@ -8,6 +8,7 @@ module
 public import TauCeti.NumberTheory.Multiquadratic.CandidateGenusField.GaloisGroup
 public import TauCeti.NumberTheory.Multiquadratic.CandidateGenusField.Relative.Degree
 public import TauCeti.NumberTheory.Multiquadratic.Unramified.Basic
+import TauCeti.FieldTheory.Minpoly
 import TauCeti.NumberTheory.Multiquadratic.Unramified.Maximality
 
 /-!
@@ -89,22 +90,6 @@ variable {d : ℤ}
 variable {L M : Type u} [Field L] [NumberField L] [Field M] [NumberField M]
 variable {y : L} {z : M}
 
-private theorem minpoly_eq_X_sq_sub_C (hL : IsNarrowGenusField d L y) :
-    minpoly ℚ y = Polynomial.X ^ 2 - Polynomial.C ((d : ℤ) : ℚ) := by
-  have hy : IsIntegral ℚ y := Algebra.IsIntegral.isIntegral y
-  have haeval :
-      Polynomial.aeval y (Polynomial.X ^ 2 - Polynomial.C ((d : ℤ) : ℚ)) = 0 := by
-    rw [map_sub, map_pow, Polynomial.aeval_X, Polynomial.aeval_C, hL.root_sq,
-      IsScalarTower.algebraMap_apply ℤ ℚ L]
-    norm_num
-  have hdeg : (minpoly ℚ y).natDegree = 2 := by
-    rw [← IntermediateField.adjoin.finrank hy]
-    exact hL.finrank_adjoin
-  symm
-  exact Polynomial.eq_of_monic_of_dvd_of_natDegree_le (minpoly.monic hy)
-    (Polynomial.monic_X_pow_sub_C _ (by norm_num)) (minpoly.dvd ℚ y haeval) (by
-      rw [Polynomial.natDegree_X_pow_sub_C, hdeg])
-
 /-- Any two narrow genus fields for the same radicand are isomorphic as `ℚ`-algebras by an
 equivalence carrying the chosen square root in the first field to the chosen square root in the
 second.
@@ -123,12 +108,17 @@ theorem exists_algEquiv_apply_eq (hL : IsNarrowGenusField d L y)
   have hML : Module.finrank ℚ M ≤ Module.finrank ℚ L :=
     LinearMap.finrank_le_finrank_of_injective (f := ψ.toLinearMap) ψ.injective
   have hrank : Module.finrank ℚ L = Module.finrank ℚ M := le_antisymm hLM hML
-  have hsurj : Function.Surjective φ :=
-    (LinearMap.injective_iff_surjective_of_finrank_eq_finrank hrank
-      (f := φ.toLinearMap)).mp φ.injective
-  let e : L ≃ₐ[ℚ] M := AlgEquiv.ofBijective φ ⟨φ.injective, hsurj⟩
+  let e : L ≃ₐ[ℚ] M := TauCeti.algEquivOfFinrankEq φ hrank
+  have hminpoly {N : Type u} [Field N] [NumberField N] {w : N}
+      (hN : IsNarrowGenusField d N w) :
+      minpoly ℚ w = Polynomial.X ^ 2 - Polynomial.C ((d : ℤ) : ℚ) := by
+    apply TauCeti.Algebra.minpoly_eq_X_sq_sub_C_of_sq_eq_of_natDegree_eq_two
+    · rw [hN.root_sq, IsScalarTower.algebraMap_apply ℤ ℚ N]
+      norm_num
+    · rw [← IntermediateField.adjoin.finrank (Algebra.IsIntegral.isIntegral w)]
+      exact hN.finrank_adjoin
   have hmin : minpoly ℚ (e y) = minpoly ℚ z := by
-    rw [minpoly.algEquiv_eq e y, minpoly_eq_X_sq_sub_C hL, minpoly_eq_X_sq_sub_C hM]
+    rw [minpoly.algEquiv_eq e y, hminpoly hL, hminpoly hM]
   have heval : Polynomial.aeval (e y) (minpoly ℚ z) = 0 := by
     rw [← hmin]
     exact minpoly.aeval ℚ (e y)

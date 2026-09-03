@@ -3,15 +3,7 @@ set -euxo pipefail
 
 BENCH="scripts/bench"
 
-# Prepare build. A caller opts out of the default read endpoint below by defining
-# MATHLIB_CACHE_GET_URL first. A defined-but-empty value also counts as a choice:
-# the cache tool treats it as unset and uses its default endpoints.
-#
-# The container is `mathlib4-master`, where master CI writes. The bare `mathlib4` container is the
-# legacy store: CI does not upload there, and it holds only artifacts mirrored from before the write
-# cutover. Since MATHLIB_CACHE_GET_URL names one endpoint and bypasses the container lookup chain,
-# naming the legacy container would miss every artifact built since.
-export MATHLIB_CACHE_GET_URL="${MATHLIB_CACHE_GET_URL-https://cache.mathlib.org/mathlib4-master}"
+# Prepare build
 lake exe cache get
 
 # Run build

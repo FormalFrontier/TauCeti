@@ -11,8 +11,6 @@ module
 -- It re-exports `Mathlib.LinearAlgebra.RootSystem.CartanMatrix`, hence that theorem.
 public import TauCeti.LinearAlgebra.RootSystem.DynkinType
 
-public section
-
 /-!
 # Root systems of the same Dynkin type are isomorphic
 
@@ -45,6 +43,8 @@ This file proves `nonempty_equiv_of_hasCartanType`, the final isomorphism step o
 Algebras, Chapters 4-6*, chapter VI, §4, and Humphreys, *Introduction to Lie Algebras and
 Representation Theory*, §11.1, for the isomorphism theorem in the classical language.
 -/
+
+public section
 
 namespace TauCeti
 

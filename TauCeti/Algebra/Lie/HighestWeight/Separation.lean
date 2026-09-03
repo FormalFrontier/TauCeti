@@ -10,8 +10,6 @@ public import TauCeti.Algebra.Lie.Weights.Positivity
 import TauCeti.Algebra.Lie.HighestWeight.Module
 import TauCeti.Algebra.Lie.HighestWeight.WeightSupport
 
-public section
-
 /-!
 # Separation by the Casimir scalar
 
@@ -98,6 +96,8 @@ This is the "the eigenvalue separates the trivial module from nontrivial irreduc
 Layer 5 of `TauCetiRoadmap/RepresentationTheory/LieHighestWeight/README.md`, together with the
 nonvanishing that Layer 7's "Freudenthal's multiplicity formula" needs to be read as a recursion.
 -/
+
+public section
 
 namespace TauCeti
 

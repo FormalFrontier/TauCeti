@@ -319,7 +319,7 @@ theorem iSup_bigradedChainMinusPiece_eq_top (R : Type*) [CommSemiring R] :
   | single_add x p c _ _ ih =>
     refine Submodule.add_mem _ ?_ ih
     have hp : (Finsupp.single x p : GridChainMinus R n) =
-        ∑ e ∈ p.support, Finsupp.single x (monomial e (coeff e p)) := by
+        ∑ e ∈ p.support, Finsupp.single x (monomial e (p.coeff e)) := by
       conv_lhs => rw [MvPolynomial.as_sum p]
       exact map_sum (Finsupp.singleAddHom x) _ _
     rw [hp]

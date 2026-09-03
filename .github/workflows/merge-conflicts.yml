@@ -1,0 +1,92 @@
+name: Merge conflicts
+
+# Label a PR that has stopped merging into its base branch, and tell its author once.
+#
+# This is the one PR transition nothing else here can see. Every other trigger in
+# this repository is scoped to the PR — pull_request_target, a pr-build / Review
+# workflow_run, an issue_comment — but a PR conflicts because *its base moved*, which
+# fires none of them. Until this existed a PR could pick up a conflict and nothing
+# anywhere said so: no label, no comment, no alert. stuck-alerts deliberately skips
+# a conflicting PR (it is not being wrongly withheld by the merge path) and
+# housekeeping only retires PRs that are blocking under review, so a
+# conflicted-but-approved PR was reaped by nothing either. It rotted silently.
+#
+# The `merge-conflict` label is deliberately NOT part of the mutually-exclusive set
+# that pr-labels.yml maintains. It is orthogonal to where a PR sits in the pipeline:
+# a PR can be awaiting review AND conflicting, and saying both is more useful than
+# having one hide the other. Nothing else reads or writes it.
+#
+# The label is also the state. Whether an episode is open is "is the label on the
+# PR", so there is no marker to parse and no way for the bot to fail to recognise
+# its own bookkeeping; a wrong label self-heals on the next run. It makes the
+# problem measurable too, because GitHub timestamps label changes in the PR
+# timeline — `labeled merge-conflict` → `unlabeled merge-conflict` is the episode,
+# recorded by GitHub rather than self-reported:
+#
+#   gh api "/repos/$REPO/issues/N/timeline" \
+#     --jq '.[] | select(.label.name == "merge-conflict") | "\(.event) \(.created_at)"'
+#
+# mathlib4's merge_conflicts.yml runs eps1lon/actions-label-merge-conflict for
+# this. We do not, for one reason found while reviewing it: on an UNKNOWN
+# mergeability that action returns from the middle of its loop and, once its
+# retries are spent, returns an empty result — abandoning that page of PRs and
+# every later one. A PR whose head has diverged from its branch tip sits at
+# `mergeable: null` indefinitely, which is exactly what stuck-alerts' diverged-head
+# detector exists to catch, so one such PR could stop every other conflict being
+# labelled. scripts/pr_status/conflicts.py skips an unknown PR and keeps going.
+
+on:
+  schedule:
+    # Every 15 minutes, on the quarter -- the offsets furthest from pr-labels
+    # (:05), housekeeping (:20), merge-sweep (:40) and stuck-alerts (:50). The gap
+    # to housekeeping matters: labelling bumps updatedAt, which its stale timer
+    # reads as freshness, so the two overlapping is a race worth not inviting.
+    - cron: "0,15,30,45 * * * *"
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: "Report what would change without labelling or commenting"
+        type: boolean
+        default: false
+
+# The default GITHUB_TOKEN is used only to check out the trusted base script; every
+# write goes through the scoped App token below.
+permissions:
+  contents: read
+
+concurrency:
+  group: merge-conflicts
+  cancel-in-progress: false
+
+jobs:
+  label:
+    if: github.repository == 'TauCetiProject/TauCeti'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      # Pinned to a full SHA, not a floating major tag: this step receives the App
+      # private key, so it is the most sensitive one here.
+      - uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        id: app-token
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          owner: TauCetiProject
+          repositories: TauCeti
+          permission-issues: write        # the label and the one-off comment
+          permission-pull-requests: read  # open PRs and their mergeability
+      # The trusted base checkout: never PR head code, like every other sink here.
+      # `ref` is explicit because workflow_dispatch otherwise checks out the ref it
+      # was dispatched from -- which would run a branch's copy of this script with
+      # the App token minted above.
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          sparse-checkout: scripts/pr_status
+          persist-credentials: false
+      - name: Label conflicting PRs
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          GH_REPO: ${{ github.repository }}
+          DRY_RUN: ${{ inputs.dry-run && '--dry-run' || '' }}
+        run: python3 scripts/pr_status/conflicts.py sweep $DRY_RUN

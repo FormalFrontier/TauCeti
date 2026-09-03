@@ -269,7 +269,7 @@ private lemma sum_multiplicity_eq_card [IsHeckeTriple Δ H₁ H₂] [IsHeckeTrip
   rw [step]
   refine Finset.sum_congr rfl fun i _ ↦ ?_
   rw [multiplicity_eq_card_filter (Γ₁ := H₂) (g₂ : G) (g₃ : G) (((i.out : G) * g₁)⁻¹ * d)]
-  exact Nat.card_congr (Equiv.Set.congr (by
+  exact Nat.card_congr (Set.equivOfEq (by
     ext j
     simp only [Set.mem_ofPred_eq, mul_inv_rev, mul_assoc]))
 

@@ -8,6 +8,7 @@ module
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.FunctionField.Finrank
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.FunctionField.InfinityPlace.Unique
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Isogeny.FunctionField
+import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.FunctionField.GenericPoint
 import TauCeti.FieldTheory.FunctionField.Place.OfValuationSubring
 import TauCeti.RingTheory.Valuation.IntegralOfValuationLeOne
 import TauCeti.RingTheory.Valuation.Polynomial
@@ -72,24 +73,13 @@ public section
 
 namespace TauCeti
 
-open _root_.Polynomial WeierstrassCurve.Affine
+open _root_.Polynomial _root_.WeierstrassCurve.Affine
 
 open scoped Polynomial.Bivariate
 
 namespace Isogeny
 
 variable {F : Type*} [Field F] {W₁ W₂ : WeierstrassCurve.Affine F} (φ : Isogeny W₁ W₂)
-
-/-- A polynomial in the function field is the evaluation of that polynomial at the coordinate
-function `x`: the structure map `F[X] → F(W)` is `aeval x`, both being `F`-algebra maps sending
-`X` to `x`. -/
-private theorem algebraMap_eq_aeval {W : WeierstrassCurve.Affine F} (q : F[X]) :
-    algebraMap F[X] W.FunctionField q
-      = Polynomial.aeval (algebraMap F[X] W.FunctionField Polynomial.X) q := by
-  have h : Polynomial.aeval (R := F) (algebraMap F[X] W.FunctionField Polynomial.X)
-      = IsScalarTower.toAlgHom F F[X] W.FunctionField :=
-    Polynomial.algHom_ext (by simp)
-  rw [h, IsScalarTower.toAlgHom_apply]
 
 /-- The restriction of the place at infinity along an isogeny is trivial on the base field, the
 pullback being an `F`-algebra map. -/
@@ -121,8 +111,9 @@ theorem one_lt_infinityPlace_pullback_X :
   rw [not_lt] at hle
   -- With `x₂` in the valuation ring, so is every polynomial in it.
   have hpoly : ∀ q : F[X], u (algebraMap F[X] W₂.FunctionField q) ≤ 1 := fun q ↦ by
-    rw [algebraMap_eq_aeval]
-    exact u.aeval_le_one (Valuation.IsTrivialOn.valuation_algebraMap_le_one u) hle q
+    rw [WeierstrassCurve.Affine.algebraMap_eq_aeval_genericX]
+    have hle' : u W₂.genericX ≤ 1 := by rwa [genericX_eq_algebraMap]
+    exact u.aeval_le_one (Valuation.IsTrivialOn.valuation_algebraMap_le_one u) hle' q
   -- And so is `y₂`: a pole of `y₂` would make the left-hand side of the Weierstrass equation of
   -- `W₂` — the product of two factors, each of value `v y₂` — dominate its right-hand side, which
   -- is a polynomial in `x₂` and so has value at most `1`.

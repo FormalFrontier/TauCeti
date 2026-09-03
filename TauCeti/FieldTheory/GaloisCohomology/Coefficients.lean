@@ -217,6 +217,13 @@ theorem kummerShortExact_proj (hn : IsUnit (n : K)) :
 
 variable {K}
 
+/-- A unit of the base field is fixed by the absolute Galois group after mapping into the
+separable closure. -/
+theorem smul_units_map_algebraMap (g : AbsoluteGaloisGroup K) (a : Kˣ) :
+    g • Units.map (algebraMap K (SeparableClosure K)).toMonoidHom a =
+      Units.map (algebraMap K (SeparableClosure K)).toMonoidHom a :=
+  Units.ext (AlgEquiv.commutes g (a : K))
+
 /-- **A unit of `Kˢ` fixed by the whole Galois group comes from `Kˣ`.** This is the fixed-field
 theorem for the separable closure read on units: `InfiniteGalois.mem_range_algebraMap_iff_fixed`
 supplies base-field preimages of the unit and of its inverse, and those preimages are inverse to
@@ -249,7 +256,7 @@ theorem mem_H0_unitsCoeff_iff {u : UnitsCoeff K} :
   · rintro ⟨a, ha⟩ σ
     refine Additive.toMul.injective ?_
     rw [Additive.toMul_smul, ← ha]
-    exact Units.ext (AlgEquiv.commutes σ (a : K))
+    exact smul_units_map_algebraMap σ a
 
 variable (K)
 

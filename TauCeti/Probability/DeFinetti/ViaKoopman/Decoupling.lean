@@ -203,7 +203,7 @@ private theorem setIntegral_weight_mul_prefix_mul_indicator_displaced_eq
     g (fun j : Fin r => y j.castSucc) * B.indicator (fun _ => (1 : ℝ)) (y (Fin.last r)) with hG
   have hG_meas : Measurable G := by
     refine Measurable.mul ?_ ?_
-    · exact hg.comp (measurable_pi_lambda _ fun j => measurable_pi_apply j.castSucc)
+    · exact hg.comp (Measurable.of_eval fun j => measurable_pi_apply j.castSucc)
     · exact (measurable_const.indicator hB).comp (measurable_pi_apply (Fin.last r))
   -- Reading the combined observable along the displaced selection is the integrand.
   have hcomp : ∀ (d : ℕ) (x : ℕ → α),

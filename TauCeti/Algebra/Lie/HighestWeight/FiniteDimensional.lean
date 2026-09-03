@@ -13,8 +13,6 @@ import TauCeti.Algebra.Lie.HighestWeight.Existence
 import TauCeti.Algebra.Lie.HighestWeight.Irreducible
 import TauCeti.Algebra.Lie.Submodule.Atom
 
-public section
-
 /-!
 # Finite-dimensionality of dominant irreducible highest weight modules
 
@@ -62,6 +60,8 @@ dominant integral `lam`.
 
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §21.2.
 -/
+
+public section
 
 namespace TauCeti
 

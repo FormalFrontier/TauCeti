@@ -7,8 +7,6 @@ module
 
 public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Basic
 
-public section
-
 /-!
 # A finite-type Cartan inequality has finitely many natural solutions
 
@@ -59,6 +57,8 @@ classification of finite-dimensional irreducibles", of
 
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §13.2, Lemma B.
 -/
+
+public section
 
 open scoped Matrix
 

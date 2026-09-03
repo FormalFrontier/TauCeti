@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.IsPrimePow
+public import Mathlib.Algebra.CharZero.Infinite
 public import Mathlib.Analysis.SpecialFunctions.Log.Basic
 public import Mathlib.NumberTheory.NumberField.Completion.FinitePlace
 public import Mathlib.RingTheory.Ideal.Quotient.HasFiniteQuotients.Basic
@@ -86,13 +87,16 @@ open IsDedekindDomain
 
 /-! ### Ideals and height-one primes of bounded absolute norm -/
 
-/-- The absolute norm on nonzero ideals of a Dedekind domain finite and free over `ℤ` is Northcott,
-by `Ideal.finite_setOfPred_absNorm_le₀`. Mathlib already supplies the corresponding instance on
-height-one primes. -/
+/-- The absolute norm on nonzero ideals of an infinite Dedekind domain with finite quotients is
+Northcott, by `Ring.HasFiniteQuotients.finite_absNorm_le`. Mathlib already supplies the
+corresponding instance on height-one primes. -/
 instance instNorthcottAbsNormNonZeroDivisors {R : Type*} [CommRing R] [IsDedekindDomain R]
-    [Module.Free ℤ R] [Module.Finite ℤ R] :
-    Northcott (fun I : (Ideal R)⁰ ↦ Ideal.absNorm (I : Ideal R)) :=
-  ⟨fun B ↦ Ideal.finite_setOfPred_absNorm_le₀ B⟩
+    [Infinite R] [Ring.HasFiniteQuotients R] :
+    Northcott (fun I : (Ideal R)⁰ ↦ Ideal.absNorm (I : Ideal R)) := by
+  constructor
+  intro B
+  exact (Ring.HasFiniteQuotients.finite_absNorm_le (S := R) B).preimage
+    Subtype.val_injective.injOn
 
 variable (K : Type*) [Field K] [NumberField K]
 

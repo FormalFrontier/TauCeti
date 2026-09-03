@@ -6,6 +6,8 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.DirectSum.Decomposition
+public import Mathlib.RingTheory.Finiteness.Basic
+import TauCeti.Order.CompactlyGenerated
 
 /-!
 # Internal direct sums from explicit equivalences
@@ -14,7 +16,9 @@ This file provides reusable infrastructure for direct sums of submodules.  The g
 `DirectSum.piInclusion`, `DirectSum.piSubmodule`, and `DirectSum.piSubmoduleEquiv` declarations
 describe their componentwise inclusion and range, while `DirectSum.isInternal_of_lof` gives a
 criterion for proving that a family of submodules is an internal direct sum by identifying its
-summands with the components of a linear equivalence.
+summands with the components of a linear equivalence.  The file also specializes the compactness
+bound `TauCeti.finite_ne_bot_of_iSupIndep_of_isCompactElement` to submodules,
+`TauCeti.Submodule.finite_ne_bot_of_iSupIndep_of_fg`.
 -/
 
 public section
@@ -156,5 +160,25 @@ theorem DirectSum.isInternal_of_lof {R ι M : Type*} [Semiring R] [DecidableEq �
     exact (hF i x).symm
   rw [DirectSum.isInternal_iff_bijective_coeLinearMap, hcoe]
   exact F.bijective
+
+-- The decomposition is spelled as `iSupIndep A` together with a finiteness hypothesis on
+-- `⨆ i, A i` rather than as `DirectSum.IsInternal`, which carries a `DecidableEq` hypothesis on
+-- the index type that the proof does not need.  Over a semiring an internal decomposition supplies
+-- the two hypotheses through `DirectSum.IsInternal.submodule_iSupIndep` and
+-- `DirectSum.IsInternal.submodule_iSup_eq_top`; the converse implication, and with it
+-- `DirectSum.isInternal_submodule_iff_iSupIndep_and_iSup_eq_top`, needs `[Ring R]` and
+-- `[AddCommGroup M]`.
+private theorem Submodule.finite_ne_bot_of_iSupIndep_of_fg_aux
+    {R ι M : Type*} [Semiring R] [AddCommMonoid M]
+    [Module R M] {A : ι → Submodule R M} (hAi : iSupIndep A) (hAf : (⨆ i, A i).FG) :
+    {i | A i ≠ ⊥}.Finite :=
+  finite_ne_bot_of_iSupIndep_of_isCompactElement hAi ((Submodule.fg_iff_compact _).mp hAf)
+
+/-- An independent family of submodules spanning a finitely generated submodule has only finitely
+many nonzero members. -/
+theorem Submodule.finite_ne_bot_of_iSupIndep_of_fg {R ι M : Type*} [Semiring R] [AddCommMonoid M]
+    [Module R M] {A : ι → Submodule R M} (hAi : iSupIndep A) (hAf : (⨆ i, A i).FG) :
+    {i | A i ≠ ⊥}.Finite :=
+  Submodule.finite_ne_bot_of_iSupIndep_of_fg_aux hAi hAf
 
 end TauCeti

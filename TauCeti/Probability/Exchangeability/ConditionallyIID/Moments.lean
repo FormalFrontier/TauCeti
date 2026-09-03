@@ -102,7 +102,7 @@ theorem ConditionallyIIDWith.lintegral_mul_indicator_iInter
   have hF : Measurable F :=
     (hg.comp measurable_fst).mul ((measurable_one.indicator hR).comp measurable_snd)
   have hΦ : AEMeasurable (fun ω => (ν ω, fun i : Fin m => X (k i) ω)) μ :=
-    hν.aemeasurable.prodMk (aemeasurable_pi_lambda _ fun i => h.aemeasurable (k i))
+    hν.aemeasurable.prodMk (AEMeasurable.of_eval fun i => h.aemeasurable (k i))
   have hκ : AEMeasurable (fun ω =>
       (Measure.dirac (ν ω)).prod (ProbabilityMeasure.pi fun _ : Fin m => ν ω).toMeasure) μ :=
     (TauCeti.MeasureTheory.measurable_dirac_prod_probabilityMeasure_pi_const_toMeasure ν

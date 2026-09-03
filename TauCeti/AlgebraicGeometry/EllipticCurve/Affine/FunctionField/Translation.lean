@@ -160,12 +160,12 @@ private noncomputable def translationAlgHom (P : (W⁄F).toAffine.Point) :
 private theorem translationAlgHom_mk_C_X (P : (W⁄F).toAffine.Point) :
     translationAlgHom W P (CoordinateRing.mk W (C X)) =
       Point.xCoord (translatedGenericPoint W P) :=
-  CoordinateRing.evalAlgHom_mk_C_X _
+  CoordinateRing.evalAlgHom_of_X _
 
 private theorem translationAlgHom_mk_Y (P : (W⁄F).toAffine.Point) :
     translationAlgHom W P (CoordinateRing.mk W Y) =
       Point.yCoord (translatedGenericPoint W P) :=
-  CoordinateRing.evalAlgHom_mk_Y _
+  CoordinateRing.evalAlgHom_root _
 
 private theorem translationAlgHom_injective (P : (W⁄F).toAffine.Point) :
     Function.Injective (translationAlgHom W P) :=
@@ -220,9 +220,11 @@ private theorem map_translatedGenericPointAux (P Q : (W⁄F).toAffine.Point) :
 private theorem comp_translationAlgHom (P Q : (W⁄F).toAffine.Point) :
     (translationAux W Q).comp (translationAlgHom W P) = translationAlgHom W (P + Q) := by
   refine CoordinateRing.algHom_ext ?_ ?_
-  · rw [AlgHom.comp_apply, translationAlgHom_mk_C_X, translationAlgHom_mk_C_X,
+  · rw [← AdjoinRoot.mk_C, AlgHom.comp_apply, translationAlgHom_mk_C_X,
+      translationAlgHom_mk_C_X,
       ← Point.xCoord_map (W := W) (translationAux W Q), map_translatedGenericPointAux]
-  · rw [AlgHom.comp_apply, translationAlgHom_mk_Y, translationAlgHom_mk_Y,
+  · rw [← AdjoinRoot.mk_X, AlgHom.comp_apply, translationAlgHom_mk_Y,
+      translationAlgHom_mk_Y,
       ← Point.yCoord_map (W := W) (translationAux W Q), map_translatedGenericPointAux]
 
 /-- **Composition of translation pullbacks**, on the function field. -/
@@ -247,10 +249,10 @@ private theorem comp_translationAux (P Q : (W⁄F).toAffine.Point) :
 private theorem translationAlgHom_zero :
     translationAlgHom W 0 = IsScalarTower.toAlgHom F W.CoordinateRing W.FunctionField := by
   refine CoordinateRing.algHom_ext ?_ ?_
-  · rw [translationAlgHom_mk_C_X, translatedGenericPoint_zero, xCoord_genericPoint,
-      IsScalarTower.toAlgHom_apply, genericX_def]
-  · rw [translationAlgHom_mk_Y, translatedGenericPoint_zero, yCoord_genericPoint,
-      IsScalarTower.toAlgHom_apply, genericY_def]
+  · rw [← AdjoinRoot.mk_C, translationAlgHom_mk_C_X, translatedGenericPoint_zero,
+      xCoord_genericPoint, IsScalarTower.toAlgHom_apply, genericX_def]
+  · rw [← AdjoinRoot.mk_X, translationAlgHom_mk_Y, translatedGenericPoint_zero,
+      yCoord_genericPoint, IsScalarTower.toAlgHom_apply, genericY_def]
 
 private theorem translationAux_zero : translationAux W 0 = AlgHom.id F W.FunctionField := by
   apply IsLocalization.algHom_ext (nonZeroDivisors W.CoordinateRing)

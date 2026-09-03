@@ -9,8 +9,6 @@ public import Mathlib.Algebra.Lie.Semisimple.Basic
 public import Mathlib.LinearAlgebra.Dual.Defs
 public import Mathlib.LinearAlgebra.Eigenspace.Triangularizable
 
-public section
-
 /-!
 # The central weight of an irreducible Lie module
 
@@ -86,6 +84,8 @@ centre with **no integrality constraint**"*, the target named there
 `exists_centralWeight_of_isIrreducible`, together with the API that makes the functional a named
 object rather than an existential.
 -/
+
+public section
 
 namespace TauCeti
 

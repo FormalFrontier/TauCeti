@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.NumberTheory.Multiquadratic.Quadratic.GenusCharacter.Basic
+public import Mathlib.Algebra.CharZero.Infinite
 public import Mathlib.RingTheory.Ideal.Norm.AbsNorm
 
 /-!

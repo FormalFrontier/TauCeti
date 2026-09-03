@@ -25,7 +25,7 @@ and establishes its basic measure-theoretic API.  The central results relate it 
 moment-generating function and show that it turns sums of independent random variables into
 products.  The file then identifies the generating function of a finite measure on `ℕ` with the
 sum of the power series carrying its singleton masses, so that the generating function is analytic
-on the open unit interval and its Taylor coefficients at the origin recover those masses;
+on `(-1, 1)` and its Taylor coefficients at the origin recover those masses;
 consequently a law on `ℕ` is determined by its generating function near `0`.  Finally it computes
 the generating functions of the standard discrete families: Bernoulli, binomial, Poisson, and
 geometric, the last one on its exact integrability domain.
@@ -43,12 +43,16 @@ corresponding measure-integral formulas directly.
 
 * `TauCeti.Probability.pgf` — the probability-generating function.
 * `TauCeti.Probability.pgf_exp` — evaluation at `exp t` is a moment-generating function.
-* `TauCeti.Probability.integrable_pow_of_abs_le_one` — on the closed unit interval the integrand is
+* `TauCeti.Probability.integrable_pow_of_abs_le_one` — on `[-1, 1]` the integrand is
   integrable under a finite measure.
 * `TauCeti.Probability.IndepFun.pgf_add` and `TauCeti.Probability.iIndepFun.pgf_sum` —
-  multiplicativity over binary and finite sums of independent random variables.
+  multiplicativity over binary and finite sums of independent random variables when the factor
+  integrands are integrable.
+* `TauCeti.Probability.IndepFun.pgf_add_of_abs_le_one` and
+  `TauCeti.Probability.iIndepFun.pgf_sum_of_abs_le_one` — the corresponding formulas on the
+  interval `[-1, 1]`, where integrability is automatic.
 * `TauCeti.Probability.hasSum_pgf` and `TauCeti.Probability.pgf_eq_tsum` — the power-series
-  expansion in the singleton masses, valid on the closed unit interval.
+  expansion in the singleton masses, valid on `[-1, 1]`.
 * `TauCeti.Probability.hasFPowerSeriesOnBall_pgf` and `TauCeti.Probability.analyticOnNhd_pgf` —
   analyticity on the open unit ball.
 * `TauCeti.Probability.iteratedDeriv_pgf_zero` — the Taylor coefficients at the origin are the
@@ -129,8 +133,8 @@ theorem pgf_exp (X : Ω → ℕ) (μ : Measure Ω) (t : ℝ) :
   funext ω
   rw [Nat.cast_comm, mul_comm]
 
-/-- For a finite measure, the integrand of a probability-generating function is integrable on the
-closed unit interval. -/
+/-- For a finite measure, the integrand of a probability-generating function is integrable on
+`[-1, 1]`. -/
 theorem integrable_pow_of_abs_le_one [IsFiniteMeasure μ] {X : Ω → ℕ} (hX : AEMeasurable X μ)
     {t : ℝ} (ht : |t| ≤ 1) : Integrable (fun ω => t ^ X ω) μ := by
   refine (integrable_const (1 : ℝ)).mono' (hX.const_pow t).aestronglyMeasurable ?_
@@ -138,29 +142,67 @@ theorem integrable_pow_of_abs_le_one [IsFiniteMeasure μ] {X : Ω → ℕ} (hX :
   simpa only [Real.norm_eq_abs, abs_pow, norm_one] using pow_le_one₀ (abs_nonneg t) ht
 
 /-- The probability-generating function of a sum of two independent natural-number-valued random
-variables is the product of their generating functions. -/
-theorem IndepFun.pgf_add {X Y : Ω → ℕ} (hXY : IndepFun X Y μ) (hX : AEMeasurable X μ)
-    (hY : AEMeasurable Y μ) (t : ℝ) :
+variables is the product of their generating functions whenever both factor integrands are
+integrable.
+
+The integrability hypotheses deliberately restrict the public statement so that it expresses a
+product of genuine expectations.  Mathlib's totalized integral gives the same equality without
+these hypotheses, but in the non-integrable cases it is merely an artifact of totalization. -/
+theorem IndepFun.pgf_add {X Y : Ω → ℕ} (hXY : IndepFun X Y μ) (t : ℝ)
+    (hXt : Integrable (fun ω => t ^ X ω) μ) (hYt : Integrable (fun ω => t ^ Y ω) μ) :
     pgf (X + Y) μ t = pgf X μ t * pgf Y μ t := by
   have hindep : IndepFun (fun ω => t ^ X ω) (fun ω => t ^ Y ω) μ :=
     hXY.comp (measurable_id.const_pow t) (measurable_id.const_pow t)
   simp_rw [pgf_def, Pi.add_apply, pow_add]
-  exact hindep.integral_mul_eq_mul_integral (hX.const_pow t).aestronglyMeasurable
-    (hY.const_pow t).aestronglyMeasurable
+  exact hindep.integral_mul_eq_mul_integral hXt.aestronglyMeasurable
+    hYt.aestronglyMeasurable
+
+/-- Under a finite measure, on `[-1, 1]` the probability-generating function of a
+sum of two independent natural-number-valued random variables is the product of their generating
+functions. -/
+theorem IndepFun.pgf_add_of_abs_le_one [IsFiniteMeasure μ] {X Y : Ω → ℕ}
+    (hXY : IndepFun X Y μ) (hX : AEMeasurable X μ) (hY : AEMeasurable Y μ) {t : ℝ}
+    (ht : |t| ≤ 1) : pgf (X + Y) μ t = pgf X μ t * pgf Y μ t :=
+  IndepFun.pgf_add hXY t (integrable_pow_of_abs_le_one hX ht)
+    (integrable_pow_of_abs_le_one hY ht)
 
 /-- A probability-generating function turns a finite sum of independent random variables into the
-product of their generating functions. -/
+product of their generating functions whenever every factor integrand is integrable. -/
 theorem iIndepFun.pgf_sum {ι : Type*} {X : ι → Ω → ℕ} (h_indep : iIndepFun X μ)
-    (h_meas : ∀ i, AEMeasurable (X i) μ) (s : Finset ι) (t : ℝ) :
+    (s : Finset ι) (t : ℝ)
+    (h_int : ∀ i ∈ s, Integrable (fun ω => t ^ X i ω) μ) :
     pgf (∑ i ∈ s, X i) μ t = ∏ i ∈ s, pgf (X i) μ t := by
-  have : IsProbabilityMeasure μ := h_indep.isProbabilityMeasure
   classical
-  induction s using Finset.induction_on with
-  | empty => simp [pgf_def]
-  | insert i s hi hrec =>
-      rw [Finset.sum_insert hi, Finset.prod_insert hi,
-        IndepFun.pgf_add (h_indep.indepFun_finsetSum_of_notMem₀ h_meas hi).symm (h_meas i)
-          (Finset.aemeasurable_sum s fun j _ => h_meas j) t, hrec]
+  let Y : s → Ω → ℝ := fun i ω => t ^ X i ω
+  have hY_indep : iIndepFun Y μ := by
+    have hXs : iIndepFun (fun i : s => X i) μ :=
+      iIndepFun.precomp Subtype.val_injective h_indep
+    simpa only [Y, Function.comp_def] using
+      hXs.comp (fun (_ : s) (n : ℕ) => t ^ n) fun _ => measurable_id.const_pow t
+  have hY_meas : ∀ i, AEStronglyMeasurable (Y i) μ :=
+    fun i => (h_int i i.property).aestronglyMeasurable
+  calc
+    pgf (∑ i ∈ s, X i) μ t = ∫ ω, ∏ i : s, Y i ω ∂μ := by
+      rw [pgf_def]
+      apply integral_congr_ae
+      filter_upwards with ω
+      simp only [Y, Finset.prod_pow_eq_pow_sum, Finset.sum_apply]
+      exact congrArg (fun n : ℕ => t ^ n)
+        (Finset.sum_coe_sort s fun i => X i ω).symm
+    _ = ∏ i : s, ∫ ω, Y i ω ∂μ := hY_indep.integral_fun_prod_eq_prod_integral hY_meas
+    _ = ∏ i ∈ s, pgf (X i) μ t := by
+      simpa only [Y, pgf_def] using
+        (Finset.prod_coe_sort s fun i => pgf (X i) μ t)
+
+/-- On `[-1, 1]`, a probability-generating function turns a finite sum of
+independent random variables into the product of their generating functions. -/
+theorem iIndepFun.pgf_sum_of_abs_le_one {ι : Type*} {X : ι → Ω → ℕ}
+    (h_indep : iIndepFun X μ) (s : Finset ι)
+    (h_meas : ∀ i ∈ s, AEMeasurable (X i) μ) {t : ℝ}
+    (ht : |t| ≤ 1) : pgf (∑ i ∈ s, X i) μ t = ∏ i ∈ s, pgf (X i) μ t := by
+  have := h_indep.isProbabilityMeasure
+  exact iIndepFun.pgf_sum h_indep s t fun i hi =>
+    integrable_pow_of_abs_le_one (h_meas i hi) ht
 
 /-! ### Coefficient recovery and uniqueness
 
@@ -176,7 +218,7 @@ section Coefficients
 open FormalMultilinearSeries
 
 /-- Under a finite measure on `ℕ`, the probability-generating function is the sum of the power
-series whose coefficients are the singleton masses, on the closed unit interval. -/
+series whose coefficients are the singleton masses, on `[-1, 1]`. -/
 theorem hasSum_pgf (ν : Measure ℕ) [IsFiniteMeasure ν] {t : ℝ} (ht : |t| ≤ 1) :
     HasSum (fun n => ν.real {n} * t ^ n) (pgf id ν t) := by
   have hbound : ∀ n : ℕ, ‖ν.real {n} * t ^ n‖ ≤ ν.real {n} := by
@@ -198,7 +240,7 @@ theorem hasSum_pgf (ν : Measure ℕ) [IsFiniteMeasure ν] {t : ℝ} (ht : |t| �
   exact hsum.hasSum
 
 /-- The power-series expansion of the probability-generating function of a finite measure on `ℕ`
-on the closed unit interval. -/
+on `[-1, 1]`. -/
 theorem pgf_eq_tsum (ν : Measure ℕ) [IsFiniteMeasure ν] {t : ℝ} (ht : |t| ≤ 1) :
     pgf id ν t = ∑' n : ℕ, ν.real {n} * t ^ n :=
   (hasSum_pgf ν ht).tsum_eq.symm
@@ -224,8 +266,7 @@ theorem hasFPowerSeriesOnBall_pgf (ν : Measure ℕ) [IsFiniteMeasure ν] :
     simpa only [ofScalars_apply_eq, smul_eq_mul, zero_add] using
       hasSum_pgf ν hy'.le
 
-/-- The probability-generating function of a finite measure on `ℕ` is analytic on the open unit
-interval. -/
+/-- The probability-generating function of a finite measure on `ℕ` is analytic on `(-1, 1)`. -/
 theorem analyticOnNhd_pgf (ν : Measure ℕ) [IsFiniteMeasure ν] :
     AnalyticOnNhd ℝ (pgf id ν) (Set.Ioo (-1) 1) :=
   (hasFPowerSeriesOnBall_pgf ν).analyticOnNhd.mono fun x hx => by
@@ -271,7 +312,7 @@ theorem measure_eq_of_pgf_eventuallyEq {ν ν' : Measure ℕ} [IsFiniteMeasure �
   exact mul_left_cancel₀ (Nat.cast_ne_zero.mpr n.factorial_ne_zero) hderiv
 
 /-- A finite measure on `ℕ`, in particular a probability measure, is determined by its
-probability-generating function on the open unit interval. -/
+probability-generating function on `(-1, 1)`. -/
 theorem measure_eq_of_pgf_eqOn {ν ν' : Measure ℕ} [IsFiniteMeasure ν] [IsFiniteMeasure ν']
     (h : Set.EqOn (pgf id ν) (pgf id ν') (Set.Ioo (-1) 1)) : ν = ν' :=
   measure_eq_of_pgf_eventuallyEq
@@ -290,8 +331,8 @@ theorem identDistrib_of_pgf_eventuallyEq {Ω' : Type*} [MeasurableSpace Ω'] {P 
   rw [pgf_map hX, pgf_map hY]
   exact ht
 
-/-- Two natural-number-valued random variables whose probability-generating functions agree on the
-open unit interval are identically distributed. -/
+/-- Two natural-number-valued random variables whose probability-generating functions agree on
+`(-1, 1)` are identically distributed. -/
 theorem identDistrib_of_pgf_eqOn {Ω' : Type*} [MeasurableSpace Ω'] {P : Measure Ω} {Q : Measure Ω'}
     [IsFiniteMeasure P] [IsFiniteMeasure Q] {X : Ω → ℕ} {Y : Ω' → ℕ}
     (hX : AEMeasurable X P) (hY : AEMeasurable Y Q)
