@@ -33,6 +33,8 @@ For `2 ≤ n`, the fundamental group computation is developed in the sibling mod
   any basepoint.
 * `TauCeti.RealProjectiveSpace.Line.nontrivial_fundamentalGroup`: `π₁(RP¹, x)` is nontrivial.
 * `TauCeti.RealProjectiveSpace.Line.infinite_fundamentalGroup`: `π₁(RP¹, x)` is infinite.
+* `TauCeti.RealProjectiveSpace.Line.card_fundamentalGroup`: `Nat.card (π₁(RP¹, x)) = 0`,
+  expressing infinitude under the `Nat.card` convention.
 * `TauCeti.RealProjectiveSpace.Line.not_simplyConnectedSpace`: `RP¹` is not simply connected.
 * `TauCeti.RealProjectiveSpace.Line.not_contractibleSpace`: `RP¹` is not contractible.
 
@@ -78,6 +80,13 @@ theorem nontrivial_fundamentalGroup (x : RealProjectiveSpace 1) :
 theorem infinite_fundamentalGroup (x : RealProjectiveSpace 1) :
     Infinite (FundamentalGroup (RealProjectiveSpace 1) x) :=
   Infinite.of_injective _ (fundamentalGroupMulEquiv x).symm.injective
+
+/-- The fundamental group of `RP¹` has `Nat.card` zero because it is infinite. -/
+@[simp]
+theorem card_fundamentalGroup (x : RealProjectiveSpace 1) :
+    Nat.card (FundamentalGroup (RealProjectiveSpace 1) x) = 0 := by
+  let := infinite_fundamentalGroup x
+  exact Nat.card_eq_zero_of_infinite
 
 /-- The real projective line is not simply connected. -/
 theorem not_simplyConnectedSpace : ¬ SimplyConnectedSpace (RealProjectiveSpace 1) :=

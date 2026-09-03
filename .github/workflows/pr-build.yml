@@ -227,6 +227,7 @@ jobs:
             pins_known=1
           fi
           pins_changed=0
+          toolchain_changed=0
           # Whole tree entries, not just blob IDs. Git keeps the mode beside the object, and a
           # symlink is a blob holding its target path — so `lean-toolchain` can be re-pointed at
           # mode 120000 while REUSING the existing blob. Its ID would be unchanged, this would
@@ -251,12 +252,25 @@ jobs:
                  echo "::error::$f is not an ordinary file at the head ($head_entry)"
                  continue ;;
             esac
-            if [ "$mb_entry" != "$head_entry" ]; then pins_changed=1; fi
+            if [ "$mb_entry" != "$head_entry" ]; then
+              pins_changed=1
+              # Which pin moved matters to the cache step below, not just whether one did. The
+              # Lake cache keys each revision map by toolchain, so when lean-toolchain moves no
+              # ancestor can hold a map under the new one and the lookup is known-futile before
+              # it starts. A manifest-only bump keeps the toolchain and still hits.
+              if [ "$f" = "lean-toolchain" ]; then toolchain_changed=1; fi
+            fi
           done
           if [ "$pins_known" = "1" ]; then echo "PINS_KNOWN=1" >> "$GITHUB_ENV"; fi
           if [ "$pins_changed" = "1" ]; then
             echo "BUMP=1" >> "$GITHUB_ENV"
             echo "::notice::PR changes Lake pins — validating as a forward bump before building"
+          fi
+          # Set only when both tree entries were read and differ, so an unresolved merge base
+          # leaves it unset and the lookup runs as before: unknown means look, never means skip.
+          if [ "$toolchain_changed" = "1" ]; then
+            echo "TOOLCHAIN_CHANGED=1" >> "$GITHUB_ENV"
+            echo "::notice::PR moves lean-toolchain — the Lake cache lookup will ask about this revision only, since the maps are keyed by toolchain and every ancestor was published under the old one"
           fi
 
           # The report step runs under `if: always()`. Mark successful completion explicitly so an
@@ -618,16 +632,24 @@ jobs:
           # environment variables; the script hands it the endpoints through a `--service` config.
           PUBLIC_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT_PUBLIC }}
           PUBLIC_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT_PUBLIC }}
-          # This limit stops the search after 100 ancestors. The search otherwise stops only when
-          # a lookup succeeds. On a hit the first ancestor that main published succeeds. The
-          # search then reads only the few ancestors between this head and main.
+          # How far back it is worth asking, which depends on whether an ancestor could hold
+          # a usable map at all. The maps are keyed by toolchain, so once lean-toolchain moves
+          # every ancestor was published under the old one and walking them cannot hit: ask
+          # about HEAD alone and stop. HEAD itself is still worth one request, because a
+          # merge-group re-run of a bump that already built once finds its own published
+          # outputs there — the case an outright skip would recompile from scratch.
           #
-          # The cache keys each revision map by toolchain. A lookup therefore succeeds only when
-          # a published ancestor uses the same toolchain as this head. A pull request that bumps
-          # lean-toolchain has no such ancestor, because main published all of its ancestors
-          # under the old toolchain. Without this limit, the search reads the full history and
-          # finds nothing.
-          LAKE_CACHE_MAX_REVS: "100"
+          # Otherwise a walk can pay, so bound it only as a backstop against something we have
+          # not characterised. Overrunning the bound is indistinguishable from a genuine miss,
+          # and a miss costs a full recompile (~2h) against the ~4 minutes a 1000-revision walk
+          # costs at the rate observed in the run that motivated #5396 — so it is sized to be
+          # reached only by the genuinely unexpected. At main's current rate 1000 is about three
+          # weeks of history, against roughly 39 hours for the 100 it replaces.
+          #
+          # The scope guard above answers the toolchain question from the immutable tree entries
+          # at the merge base and the head, and leaves it unset whenever it could not read them,
+          # so unknown falls through to the walk rather than to the single lookup.
+          LAKE_CACHE_MAX_REVS: ${{ env.TOOLCHAIN_CHANGED == '1' && '1' || '1000' }}
         run: bash gate/scripts/lake-cache-get.sh pr
 
       - name: Prepare trusted read-only Lean watchdog toolchain

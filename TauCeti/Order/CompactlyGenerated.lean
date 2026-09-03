@@ -8,13 +8,19 @@ module
 public import Mathlib.Order.CompactlyGenerated.Basic
 
 /-!
-# Independent families in compactly generated modular lattices
+# Independent families and compactness
 
-This file records lattice consequences of independence that use compact generation to pass from
-finite joins to arbitrary suprema.
+This file records lattice consequences of independence that involve compact elements and compact
+generation.
 
 ## Main declarations
 
+* `TauCeti.finite_ne_bot_of_iSupIndep_of_isCompactElement`: an independent family whose supremum
+  is a compact element has only finitely many nonzero members. Compactness confines the whole
+  family to a finite subfamily, and independence then forces every index outside it to be `⊥`.
+  This is the compactness variant of Mathlib's
+  `WellFoundedGT.finite_ne_bot_of_iSupIndep`, which instead assumes the ascending
+  chain condition.
 * `TauCeti.iSupIndep.iSup₂_inf_iSup_eq_iSup₂`: a partial supremum of an independent family
   meets the total supremum of a pointwise dominated family in its corresponding partial supremum.
 -/
@@ -22,6 +28,17 @@ finite joins to arbitrary suprema.
 public section
 
 namespace TauCeti
+
+/-- An independent family whose supremum is a compact element has only finitely many nonzero
+members. -/
+theorem finite_ne_bot_of_iSupIndep_of_isCompactElement {α ι : Type*} [CompleteLattice α]
+    {a : ι → α} (ha : iSupIndep a)
+    (hc : IsCompactElement (⨆ i, a i)) : {i | a i ≠ ⊥}.Finite := by
+  obtain ⟨s, hs⟩ := CompleteLattice.IsCompactElement.exists_finset_of_le_iSup α hc a le_rfl
+  refine s.finite_toSet.subset fun i hi ↦ ?_
+  by_contra his
+  refine hi ((ha i).eq_bot_of_le ((le_iSup a i).trans (hs.trans (iSup₂_le fun j hj ↦ ?_))))
+  exact le_iSup₂_of_le j (fun hji ↦ his (Finset.mem_coe.mpr (hji ▸ hj))) le_rfl
 
 /-- **A subfamily of an independent family truncates a dominated supremum.** If `B i ≤ A i` for
 every `i` and the `A i` are independent, then the total supremum of the `B` meets the partial

@@ -85,7 +85,7 @@ noncomputable def topExtPowerSLEquivTrivial : ((stdSLRep k n).exteriorPower n).E
   .mk (exteriorPower.topEquiv (Pi.basisFun k (Fin n))) fun g ↦ by
     rw [stdSLRep_exteriorPower_self_apply]
     ext x
-    simp
+    simp [Representation.isTrivial_def]
 
 /-- The underlying linear equivalence of `TauCeti.topExtPowerSLEquivTrivial` is the top-degree
 identification of the exterior power with the scalars. -/

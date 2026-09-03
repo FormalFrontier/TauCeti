@@ -47,8 +47,11 @@ the lower level. The `q`-expansion results go up only.
 * `TauCeti.ModularForm.levelRaise_apply`: `(V_d f) τ = f (d τ)`, the defining formula from which
   the algebraic properties (`levelRaise_one_apply`, `ModularForm.levelRaise_one`,
   `levelRaise_levelRaise`, `levelRaise_injective`) all follow by `ext`.
-* `TauCeti.slash_mapGL_eq_self_of_mem_Gamma1_div`: a function whose level-raise carries a
-  nebentypus that factors through `N / l` is invariant under all of `Γ₁(N / l)`.
+* `TauCeti.slash_mapGL_eq_smul_of_unitsMap_eq`: a function whose level-raise carries a nebentypus
+  trivial on the kernel of `(ZMod N)ˣ → (ZMod (N/l))ˣ` transforms under each `γ' ∈ Γ₀(N / l)` by
+  the character value at any unit lying over the label of `γ'`.
+* `TauCeti.slash_mapGL_eq_self_of_mem_Gamma1_div`: the trivial-label case of the previous result —
+  such a function is invariant under all of `Γ₁(N / l)`.
 * `TauCeti.Gamma1_map_le_conjAct_scaleGL`, `TauCeti.Gamma0_map_le_conjAct_scaleGL`: the level
   transport, `Γ₁(dM) ≤ diag(d,1)⁻¹ Γ₁(M) diag(d,1)` and likewise for `Γ₀`, which is what makes
   `V_d` a map `M_k(Γ₁(M)) → M_k(Γ₁(dM))`.
@@ -773,6 +776,67 @@ theorem CuspForm.levelRaise_mem_cuspFormCharSpace (M d : ℕ) [NeZero d]
       cuspFormCharSpace k (χ.comp (ZMod.unitsMap (Dvd.intro_left d rfl : M ∣ d * M))) :=
   levelRaise_mem_cuspFormCharSpace_of_dvd dvd_rfl χ hf
 
+/-- **The `T`-factorisation lift carries the label of the element it lifts.** Reduced to a level
+`M ∣ N`, the nebentypus label of a `Γ₀(N)` element `γ` whose lower-right entry differs from that
+of `γ' ∈ Γ₀(M)` by a multiple of `γ' 1 0` — the output shape of
+`exists_eq_T_zpow_mul_conjScale_mul_T_zpow` — is the label of `γ'`. The lower-left entry of a
+`Γ₀(M)` element vanishes there, so the recorded shift `γ' 1 0 * j` drops out. Nothing here
+concerns the cofactor, so the statement is at a general divisor. -/
+private theorem unitsMap_Gamma0Map_toHomUnits_eq_of_diag {M N : ℕ} (hMN : M ∣ N) {γ : SL(2, ℤ)}
+    (hγ : γ ∈ Gamma0 N) (γ' : ↥(Gamma0 M)) {j : ℤ}
+    (hdiag : γ 1 1 = (γ' : SL(2, ℤ)) 1 1 - (γ' : SL(2, ℤ)) 1 0 * j) :
+    ZMod.unitsMap hMN ((Gamma0Map N).toHomUnits ⟨γ, hγ⟩) = (Gamma0Map M).toHomUnits γ' := by
+  have hγ' : γ ∈ Gamma0 M := Gamma0_le_Gamma0_of_dvd hMN hγ
+  rw [← Gamma0Map_toHomUnits_of_dvd hMN ⟨γ, hγ⟩ hγ']
+  refine Units.ext ?_
+  have h10 : (((γ' : SL(2, ℤ)) 1 0 : ℤ) : ZMod M) = 0 := Gamma0_mem.mp γ'.property
+  rw [MonoidHom.coe_toHomUnits, MonoidHom.coe_toHomUnits, Gamma0Map_apply, Gamma0Map_apply,
+    hdiag]
+  push_cast
+  rw [h10]
+  ring
+
+/-- **The Γ₀(N/l)-transformation law of a function whose level-raise carries a nebentypus.**
+
+If the level-raise `f ∣[k] V_l` is an eigenvector of every `γ ∈ Γ₀(N)` with eigenvalue the value
+`χ` reads off `γ`, if `f` is `T`-periodic, and if `χ` is trivial on the kernel of the reduction
+`(ZMod N)ˣ → (ZMod (N/l))ˣ`, then `f` itself transforms under each `γ' ∈ Γ₀(N / l)` by `χ u`, for
+*any* unit `u` of level `N` lying over the nebentypus label of `γ'`.
+
+The value does not depend on which `u` is chosen: two such units differ by an element of the
+kernel of the reduction, on which `χ` is trivial by `hχ` — which is exactly what that hypothesis
+is for. `TauCeti.slash_mapGL_eq_self_of_mem_Gamma1_div` is the case of trivial label, and
+`TauCeti.cuspFormOfSmulSlashScaleGL_mem_cuspFormCharSpace` is the case of a character that
+factors, so both the descent and the nebentypus of the descended form are instances of this one
+law rather than separate arguments. -/
+theorem slash_mapGL_eq_smul_of_unitsMap_eq (l N : ℕ) [NeZero l] (hlN : l ∣ N)
+    (k : ℤ) (χ : (ZMod N)ˣ →* ℂˣ)
+    (hχ : ∀ u : (ZMod N)ˣ, ZMod.unitsMap (Nat.div_dvd_of_dvd hlN) u = 1 → χ u = 1) (f : ℍ → ℂ)
+    (hnb : ∀ (γ : SL(2, ℤ)) (hγ : γ ∈ Gamma0 N),
+      (f ∣[k] scaleGL l) ∣[k] mapGL ℝ γ =
+        (χ ((Gamma0Map N).toHomUnits ⟨γ, hγ⟩) : ℂ) • (f ∣[k] scaleGL l))
+    (hT : f ∣[k] (mapGL ℝ ModularGroup.T : GL (Fin 2) ℝ) = f)
+    (γ' : ↥(Gamma0 (N / l))) (u : (ZMod N)ˣ)
+    (hu : ZMod.unitsMap (Nat.div_dvd_of_dvd hlN) u = (Gamma0Map (N / l)).toHomUnits γ') :
+    f ∣[k] (mapGL ℝ (γ' : SL(2, ℤ)) : GL (Fin 2) ℝ) = (χ u : ℂ) • f := by
+  obtain ⟨i, j, c, γ, hc, hγ, hfactor, hdiag⟩ :=
+    exists_eq_T_zpow_mul_conjScale_mul_T_zpow l N hlN (γ' : SL(2, ℤ)) γ'.property
+  have hdet := det_pos_of_mem_slGL (MonoidHom.mem_range.mpr ⟨ModularGroup.T, rfl⟩)
+  have hconj := slash_conjScale_eq_smul_of_slash_scaleGL (k := k) f γ hc (hnb γ hγ)
+  -- the lift and `u` have the same label after reduction, so they differ by a kernel element
+  have hchar : (χ ((Gamma0Map N).toHomUnits ⟨γ, hγ⟩) : ℂ) = (χ u : ℂ) := by
+    have hlab : ZMod.unitsMap (Nat.div_dvd_of_dvd hlN) ((Gamma0Map N).toHomUnits ⟨γ, hγ⟩) =
+        ZMod.unitsMap (Nat.div_dvd_of_dvd hlN) u := by
+      rw [unitsMap_Gamma0Map_toHomUnits_eq_of_diag (Nat.div_dvd_of_dvd hlN) hγ γ' hdiag, hu]
+    have hker : χ ((Gamma0Map N).toHomUnits ⟨γ, hγ⟩ * u⁻¹) = 1 := by
+      refine hχ _ ?_
+      rw [map_mul, map_inv, hlab]
+      simp
+    rw [map_mul, map_inv, mul_inv_eq_one] at hker
+    exact congrArg Units.val hker
+  rw [hfactor, map_mul, map_mul, map_zpow, map_zpow,
+    slash_zpow_mul_mul_zpow_eq_smul k f hdet hT hconj i j, hchar]
+
 /-- **Γ₁(N/l)-invariance from a nebentypus of level `N` that factors through `N / l`.**
 
 If the level-raise `f ∣[k] V_l` is an eigenvector of every `γ ∈ Γ₀(N)` with eigenvalue the
@@ -801,29 +865,14 @@ theorem slash_mapGL_eq_self_of_mem_Gamma1_div (l N : ℕ) [NeZero l] (hlN : l �
     (hT : f ∣[k] (mapGL ℝ ModularGroup.T : GL (Fin 2) ℝ) = f)
     (δ : SL(2, ℤ)) (hδ : δ ∈ Gamma1 (N / l)) :
     f ∣[k] (mapGL ℝ δ : GL (Fin 2) ℝ) = f := by
-  obtain ⟨i, j, c, γ, hc, hγ, hfactor, hdiag⟩ :=
-    exists_eq_T_zpow_mul_conjScale_mul_T_zpow l N hlN δ (Gamma1_in_Gamma0 _ hδ)
-  have hdet := det_pos_of_mem_slGL (MonoidHom.mem_range.mpr ⟨ModularGroup.T, rfl⟩)
-  have hconj := slash_conjScale_eq_smul_of_slash_scaleGL (k := k) f γ hc (hnb γ hγ)
-  -- the character value is `1`: `γ 1 1` is congruent to `δ 1 1 ≡ 1` modulo `N / l`
-  have hchar : (χ ((Gamma0Map N).toHomUnits ⟨γ, hγ⟩) : ℂ) = 1 := by
-    obtain ⟨-, hd, hcz⟩ := (Gamma1_mem _ _).mp hδ
-    have hγ' : γ ∈ Gamma0 (N / l) := Gamma0_le_Gamma0_of_dvd (Nat.div_dvd_of_dvd hlN) hγ
-    -- `Gamma0Map_apply` reads the label as the lower-right entry. Instantiating it here, with the
-    -- entry spelled as `hdiag` spells it, keeps the subtype coercion in one named step instead of
-    -- leaving it for `rw` to discharge silently.
-    have hentry : Gamma0Map (N / l) ⟨γ, hγ'⟩ = ((γ 1 1 : ℤ) : ZMod (N / l)) := Gamma0Map_apply _
-    have hlabel : Gamma0Map (N / l) ⟨γ, hγ'⟩ = 1 := by
-      rw [hentry, hdiag]
-      push_cast
-      rw [hd, hcz, zero_mul, sub_zero]
-    have hred : ZMod.unitsMap (Nat.div_dvd_of_dvd hlN)
-        ((Gamma0Map N).toHomUnits ⟨γ, hγ⟩) = 1 := by
-      rw [← Gamma0Map_toHomUnits_of_dvd (Nat.div_dvd_of_dvd hlN) ⟨γ, hγ⟩ hγ']
-      exact Units.ext hlabel
-    rw [hχ _ hred, Units.val_one]
-  rw [hfactor, map_mul, map_mul, map_zpow, map_zpow,
-    slash_zpow_mul_mul_zpow_eq_smul k f hdet hT hconj i j, hchar, one_smul]
+  have hδ0 : δ ∈ Gamma0 (N / l) := Gamma1_in_Gamma0 _ hδ
+  -- a `Γ₁(N / l)` element has trivial label, so this is the `u = 1` case of the general law
+  have hlabel : (Gamma0Map (N / l)).toHomUnits ⟨δ, hδ0⟩ = 1 :=
+    Units.ext <| by
+      rw [MonoidHom.coe_toHomUnits, Gamma0Map_apply]
+      exact ((Gamma1_mem _ _).mp hδ).2.1
+  simpa using
+    slash_mapGL_eq_smul_of_unitsMap_eq l N hlN k χ hχ f hnb hT ⟨δ, hδ0⟩ 1 (by rw [map_one, hlabel])
 
 end Nebentypus
 

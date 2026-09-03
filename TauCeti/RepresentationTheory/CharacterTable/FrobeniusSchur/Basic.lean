@@ -127,7 +127,7 @@ theorem frobeniusSchurIndicator_trivial [Invertible (Nat.card G : k)] :
     frobeniusSchurIndicator (Representation.trivial k G V) = (finrank k V : k) := by
   have hchar : ∀ g : G, (Representation.trivial k G V).character (g ^ 2) = (finrank k V : k) := by
     intro g
-    have h1 : (Representation.trivial k G V) (g ^ 2) = LinearMap.id := by
+    have h1 : (Representation.trivial k G V) (g ^ 2) = LinearMap.id (R := k) (M := V) := by
       ext v; rw [Representation.trivial_apply, LinearMap.id_apply]
     rw [Representation.character, h1, LinearMap.trace_id]
   simp only [frobeniusSchurIndicator, hchar, Finset.sum_const, Finset.card_univ,

@@ -7,9 +7,10 @@ module
 
 public import Mathlib.Data.Nat.Choose.Vandermonde
 public import Mathlib.MeasureTheory.Integral.Bochner.SumMeasure
+public import Mathlib.MeasureTheory.Measure.CharacteristicFunction.Basic
 public import Mathlib.Probability.Moments.Basic
 public import Mathlib.Probability.Moments.IntegrableExpMul
-public import Mathlib.MeasureTheory.Measure.CharacteristicFunction.Basic
+public import Mathlib.Probability.Moments.Variance
 
 /-!
 # The hypergeometric distribution
@@ -23,9 +24,9 @@ without replacement from a population of size `N` containing `K` marked objects.
 ```
 
 This file defines the law as a finite weighted sum of Dirac measures, proves its normalization
-from Vandermonde's identity, and provides its mass, support, cumulative-mass, finite-integral, and
-transform APIs. Outside the classical parameter range the measure is zero, as required by the
-standard-distributions roadmap.
+from Vandermonde's identity, and provides its mass, support, cumulative-mass, finite-integral,
+mean, variance, and transform APIs. Outside the classical parameter range the measure is zero,
+as required by the standard-distributions roadmap.
 
 ## Main definitions and results
 
@@ -36,8 +37,11 @@ standard-distributions roadmap.
   parameter range.
 * `TauCeti.Probability.hypergeometricMeasure_singleton`: the exact singleton mass.
 * `TauCeti.Probability.hypergeometricWeight_ne_zero_iff`: the exact support.
-* `TauCeti.Probability.integral_hypergeometricMeasure`: integration as a finite weighted sum.
 * `TauCeti.Probability.hypergeometricMeasure_real_Iic`: the native cumulative mass.
+* `TauCeti.Probability.integral_hypergeometricMeasure`: integration as a finite weighted sum.
+* `TauCeti.Probability.integral_id_map_cast_hypergeometricMeasure`: the mean of the real cast law.
+* `TauCeti.Probability.variance_id_map_cast_hypergeometricMeasure`: its variance when `1 < N`,
+  with separate zero-variance results for populations of size zero and one.
 * `TauCeti.Probability.mgf_id_map_cast_hypergeometricMeasure` and
   `TauCeti.Probability.charFun_map_cast_hypergeometricMeasure`: the finite transform formulas for
   the real-valued cast law.
@@ -254,6 +258,353 @@ theorem hypergeometricMeasure_real_Iic_eq_sum (hK : K ≤ N) (hn : n ≤ N) (k :
         else 0 := by
   rw [hypergeometricMeasure_real_Iic]
   exact Finset.sum_congr rfl fun j _ ↦ hypergeometricMeasure_real_singleton hK hn j
+
+/-! ## Moments of the real-valued cast law -/
+
+private theorem sum_fst_mul_choose_mul_choose (A B r : ℕ) (hr : 0 < r) :
+    ∑ ij ∈ Finset.HasAntidiagonal.antidiagonal r,
+        ij.1 * A.choose ij.1 * B.choose ij.2 =
+      A * (A + B - 1).choose (r - 1) := by
+  obtain ⟨s, rfl⟩ := Nat.exists_eq_succ_of_ne_zero hr.ne'
+  cases A with
+  | zero =>
+      simp only [Nat.zero_add, Nat.zero_mul]
+      apply Finset.sum_eq_zero
+      intro p hp
+      by_cases h : p.1 = 0
+      · simp [h]
+      · simp [Nat.choose_eq_zero_of_lt (Nat.pos_of_ne_zero h)]
+  | succ a =>
+      rw [Finset.Nat.sum_antidiagonal_succ]
+      simp only [Nat.zero_mul, zero_add]
+      calc
+        (∑ p ∈ Finset.HasAntidiagonal.antidiagonal s,
+            (p.1 + 1) * (a + 1).choose (p.1 + 1) * B.choose p.2) =
+            (a + 1) * ∑ p ∈ Finset.HasAntidiagonal.antidiagonal s,
+              a.choose p.1 * B.choose p.2 := by
+          rw [Finset.mul_sum]
+          apply Finset.sum_congr rfl
+          intro p hp
+          have hchoose : (p.1 + 1) * (a + 1).choose (p.1 + 1) =
+              (a + 1) * a.choose p.1 := by
+            simpa [Nat.mul_comm] using (Nat.add_one_mul_choose_eq a p.1).symm
+          rw [hchoose]
+          ring
+        _ = (a + 1) * (a + B).choose s := by
+          rw [← Nat.add_choose_eq]
+        _ = (a + 1) * (a + 1 + B - 1).choose (s + 1 - 1) := by
+          simp
+
+private theorem sum_fst_mul_pred_mul_choose_mul_choose_add_two (a B s : ℕ) :
+    ∑ ij ∈ Finset.HasAntidiagonal.antidiagonal (2 + s),
+        ij.1 * (ij.1 - 1) * (a + 2).choose ij.1 * B.choose ij.2 =
+      (a + 2) * (a + 2 - 1) * (a + 2 + B - 2).choose (2 + s - 2) := by
+  -- Extract one factor `a + 2` with the choose recurrence, reducing the remaining sum to
+  -- the first falling-factorial Vandermonde identity.
+  have hr : 2 + s = (s + 1) + 1 := by omega
+  rw [hr, Finset.Nat.sum_antidiagonal_succ]
+  simp only [Nat.zero_mul, zero_add, Nat.add_sub_cancel]
+  calc
+    (∑ p ∈ Finset.HasAntidiagonal.antidiagonal (s + 1),
+        (p.1 + 1) * p.1 * (a + 2).choose (p.1 + 1) * B.choose p.2) =
+        (a + 2) * ∑ p ∈ Finset.HasAntidiagonal.antidiagonal (s + 1),
+          p.1 * (a + 1).choose p.1 * B.choose p.2 := by
+      rw [Finset.mul_sum]
+      apply Finset.sum_congr rfl
+      intro p hp
+      have hchoose : (p.1 + 1) * (a + 2).choose (p.1 + 1) =
+          (a + 2) * (a + 1).choose p.1 := by
+        calc
+          _ = (a + 2).choose (p.1 + 1) * (p.1 + 1) := Nat.mul_comm _ _
+          _ = _ := by simpa only [Nat.add_assoc] using
+            (Nat.add_one_mul_choose_eq (a + 1) p.1).symm
+      calc
+        _ = p.1 * ((p.1 + 1) * (a + 2).choose (p.1 + 1)) * B.choose p.2 := by
+          ring
+        _ = p.1 * ((a + 2) * (a + 1).choose p.1) * B.choose p.2 := by rw [hchoose]
+        _ = _ := by ring
+    _ = (a + 2) * ((a + 1) * (a + 1 + B - 1).choose (s + 1 - 1)) := by
+      rw [sum_fst_mul_choose_mul_choose (a + 1) B (s + 1) (by omega)]
+    _ = (a + 2) * (a + 2 - 1) *
+        (a + 2 + B - 2).choose (s + 1 + 1 - 2) := by
+      have haPred : a + 2 - 1 = a + 1 := by omega
+      have haBPred : a + 2 + B - 2 = a + B := by omega
+      have hsPred : s + 1 + 1 - 2 = s := by omega
+      have haBPred' : a + 1 + B - 1 = a + B := by omega
+      have hsPred' : s + 1 - 1 = s := by omega
+      rw [haPred, haBPred, hsPred, haBPred', hsPred']
+      ring
+
+private theorem sum_fst_mul_pred_mul_choose_mul_choose (A B r : ℕ) (hr : 2 ≤ r) :
+    ∑ ij ∈ Finset.HasAntidiagonal.antidiagonal r,
+        ij.1 * (ij.1 - 1) * A.choose ij.1 * B.choose ij.2 =
+      A * (A - 1) * (A + B - 2).choose (r - 2) := by
+  obtain ⟨s, rfl⟩ := Nat.exists_eq_add_of_le hr
+  -- For `A = 0` or `A = 1`, every summand vanishes: either the binomial coefficient or
+  -- the falling-factorial multiplier `ij.1 * (ij.1 - 1)` is zero.
+  cases A with
+  | zero =>
+      simp only [Nat.zero_add, Nat.zero_mul]
+      apply Finset.sum_eq_zero
+      intro p hp
+      by_cases h : p.1 = 0
+      · simp [h]
+      · simp [Nat.choose_eq_zero_of_lt (Nat.pos_of_ne_zero h)]
+  | succ a =>
+      cases a with
+      | zero =>
+          simp only [Nat.add_sub_cancel_left, Nat.sub_self, Nat.mul_zero]
+          rw [Nat.zero_mul]
+          apply Finset.sum_eq_zero
+          intro p hp
+          rcases lt_trichotomy p.1 1 with h | h | h
+          · have hp0 : p.1 = 0 := by omega
+            simp [hp0]
+          · simp [h]
+          · simp [Nat.choose_eq_zero_of_lt h]
+      | succ a =>
+          exact sum_fst_mul_pred_mul_choose_mul_choose_add_two a B s
+
+private theorem sum_range_mul_choose_mul_choose {N K n : ℕ} (hK : K ≤ N) (hn : 0 < n) :
+    ∑ k ∈ Finset.range (n + 1), k * K.choose k * (N - K).choose (n - k) =
+      K * (N - 1).choose (n - 1) := by
+  calc
+    _ = ∑ ij ∈ Finset.HasAntidiagonal.antidiagonal n,
+        ij.1 * K.choose ij.1 * (N - K).choose ij.2 := by
+      symm
+      simpa using Finset.Nat.sum_antidiagonal_eq_sum_range_succ_mk
+        (fun ij : ℕ × ℕ ↦ ij.1 * K.choose ij.1 * (N - K).choose ij.2) n
+    _ = K * (K + (N - K) - 1).choose (n - 1) := sum_fst_mul_choose_mul_choose K (N - K) n hn
+    _ = _ := by rw [Nat.add_sub_of_le hK]
+
+private theorem sum_range_mul_pred_mul_choose_mul_choose {N K n : ℕ} (hK : K ≤ N) (hn : 2 ≤ n) :
+    ∑ k ∈ Finset.range (n + 1),
+        k * (k - 1) * K.choose k * (N - K).choose (n - k) =
+      K * (K - 1) * (N - 2).choose (n - 2) := by
+  calc
+    _ = ∑ ij ∈ Finset.HasAntidiagonal.antidiagonal n,
+        ij.1 * (ij.1 - 1) * K.choose ij.1 * (N - K).choose ij.2 := by
+      symm
+      simpa using Finset.Nat.sum_antidiagonal_eq_sum_range_succ_mk
+        (fun ij : ℕ × ℕ ↦
+          ij.1 * (ij.1 - 1) * K.choose ij.1 * (N - K).choose ij.2) n
+    _ = K * (K - 1) * (K + (N - K) - 2).choose (n - 2) :=
+      sum_fst_mul_pred_mul_choose_mul_choose K (N - K) n hn
+    _ = _ := by rw [Nat.add_sub_of_le hK]
+
+private theorem sum_hypergeometricWeight_toReal_mul {N K n : ℕ} (hK : K ≤ N) (hn : n ≤ N)
+    (hN : 0 < N) :
+    ∑ k ∈ Finset.range (n + 1),
+        (hypergeometricWeight N K n k).toReal * (k : ℝ) =
+      (n : ℝ) * (K : ℝ) / (N : ℝ) := by
+  by_cases hn0 : n = 0
+  · subst n
+    simp
+  have hnpos : 0 < n := Nat.pos_of_ne_zero hn0
+  have hchooseN : (N.choose n : ℝ) ≠ 0 := by
+    exact_mod_cast Nat.choose_ne_zero hn
+  calc
+    _ = ∑ k ∈ Finset.range (n + 1),
+        ((K.choose k : ℝ) * ((N - K).choose (n - k) : ℝ) /
+          (N.choose n : ℝ)) * (k : ℝ) := by
+      apply Finset.sum_congr rfl
+      intro k hk
+      rw [hypergeometricWeight_of_le (Nat.lt_succ_iff.mp (Finset.mem_range.mp hk)),
+        ENNReal.toReal_div, ENNReal.toReal_mul]
+      norm_cast
+    _ = ((∑ k ∈ Finset.range (n + 1),
+        k * K.choose k * (N - K).choose (n - k) : ℕ) : ℝ) / (N.choose n : ℝ) := by
+      push_cast
+      rw [Finset.sum_div]
+      apply Finset.sum_congr rfl
+      intro k hk
+      ring
+    _ = ((K * (N - 1).choose (n - 1) : ℕ) : ℝ) / (N.choose n : ℝ) := by
+      rw [sum_range_mul_choose_mul_choose hK hnpos]
+    _ = (n : ℝ) * (K : ℝ) / (N : ℝ) := by
+      have hchoose : N * (N - 1).choose (n - 1) = N.choose n * n := by
+        obtain ⟨M, rfl⟩ := Nat.exists_eq_succ_of_ne_zero hN.ne'
+        obtain ⟨m, rfl⟩ := Nat.exists_eq_succ_of_ne_zero hnpos.ne'
+        exact Nat.add_one_mul_choose_eq M m
+      have hchooseR : (N : ℝ) * ((N - 1).choose (n - 1) : ℝ) =
+          (N.choose n : ℝ) * (n : ℝ) := by
+        exact_mod_cast hchoose
+      push_cast
+      field_simp
+      linear_combination (K : ℝ) * hchooseR
+
+private theorem cast_mul_pred_mul_choose_pred_pred {N n : ℕ} (hn2 : 2 ≤ n) (hn : n ≤ N) :
+    (N : ℝ) * ((N : ℝ) - 1) * ((N - 2).choose (n - 2) : ℝ) =
+      (N.choose n : ℝ) * (n : ℝ) * ((n : ℝ) - 1) := by
+  have hNtwo : 2 ≤ N := hn2.trans hn
+  have hNpos : 0 < N := by omega
+  have hnpos : 0 < n := by omega
+  have hchoose₁ : N * (N - 1).choose (n - 1) = N.choose n * n := by
+    obtain ⟨M, rfl⟩ := Nat.exists_eq_succ_of_ne_zero hNpos.ne'
+    obtain ⟨m, rfl⟩ := Nat.exists_eq_succ_of_ne_zero hnpos.ne'
+    exact Nat.add_one_mul_choose_eq M m
+  have hchoose₂ : (N - 1) * (N - 2).choose (n - 2) =
+      (N - 1).choose (n - 1) * (n - 1) := by
+    obtain ⟨M, hM⟩ := Nat.exists_eq_add_of_le hNtwo
+    obtain ⟨m, hm⟩ := Nat.exists_eq_add_of_le hn2
+    subst N
+    subst n
+    simpa [Nat.add_comm, Nat.add_left_comm, Nat.add_assoc] using
+      Nat.add_one_mul_choose_eq M m
+  have h₁ : (N : ℝ) * ((N - 1).choose (n - 1) : ℝ) =
+      (N.choose n : ℝ) * (n : ℝ) := by exact_mod_cast hchoose₁
+  have h₂ : ((N : ℝ) - 1) * ((N - 2).choose (n - 2) : ℝ) =
+      ((N - 1).choose (n - 1) : ℝ) * ((n : ℝ) - 1) := by
+    have h₂' : ((N - 1 : ℕ) : ℝ) * ((N - 2).choose (n - 2) : ℝ) =
+        ((N - 1).choose (n - 1) : ℝ) * ((n - 1 : ℕ) : ℝ) := by
+      exact_mod_cast hchoose₂
+    simpa [Nat.cast_sub (by omega : 1 ≤ N), Nat.cast_sub (by omega : 1 ≤ n)] using h₂'
+  calc
+    _ = (N : ℝ) * (((N : ℝ) - 1) * ((N - 2).choose (n - 2) : ℝ)) := by ring
+    _ = (N : ℝ) * (((N - 1).choose (n - 1) : ℝ) * ((n : ℝ) - 1)) := by rw [h₂]
+    _ = ((N : ℝ) * ((N - 1).choose (n - 1) : ℝ)) * ((n : ℝ) - 1) := by ring
+    _ = ((N.choose n : ℝ) * (n : ℝ)) * ((n : ℝ) - 1) := by rw [h₁]
+    _ = _ := by ring
+
+private theorem sum_hypergeometricWeight_toReal_mul_pred {N K n : ℕ} (hK : K ≤ N) (hn : n ≤ N)
+    (hN : 1 < N) :
+    ∑ k ∈ Finset.range (n + 1),
+        (hypergeometricWeight N K n k).toReal * (k : ℝ) * ((k : ℝ) - 1) =
+      (n : ℝ) * ((n : ℝ) - 1) * (K : ℝ) * ((K : ℝ) - 1) /
+        ((N : ℝ) * ((N : ℝ) - 1)) := by
+  by_cases hn2 : 2 ≤ n
+  · -- Normalize the weights by `N.choose n`, apply the second-factorial-moment
+    -- Vandermonde identity, and cancel the denominator using two choose recurrences.
+    have hchooseN : (N.choose n : ℝ) ≠ 0 := by
+      exact_mod_cast Nat.choose_ne_zero hn
+    calc
+      _ = ∑ k ∈ Finset.range (n + 1),
+          ((K.choose k : ℝ) * ((N - K).choose (n - k) : ℝ) /
+            (N.choose n : ℝ)) * (k : ℝ) * ((k : ℝ) - 1) := by
+        apply Finset.sum_congr rfl
+        intro k hk
+        rw [hypergeometricWeight_of_le (Nat.lt_succ_iff.mp (Finset.mem_range.mp hk)),
+          ENNReal.toReal_div, ENNReal.toReal_mul]
+        norm_cast
+      _ = ((∑ k ∈ Finset.range (n + 1),
+          k * (k - 1) * K.choose k * (N - K).choose (n - k) : ℕ) : ℝ) /
+            (N.choose n : ℝ) := by
+        push_cast
+        rw [Finset.sum_div]
+        apply Finset.sum_congr rfl
+        intro k hk
+        cases k with
+        | zero => simp
+        | succ k =>
+            simp only [Nat.cast_succ, Nat.succ_sub_one]
+            ring
+      _ = ((K * (K - 1) * (N - 2).choose (n - 2) : ℕ) : ℝ) /
+            (N.choose n : ℝ) := by
+        rw [sum_range_mul_pred_mul_choose_mul_choose hK hn2]
+      _ = (n : ℝ) * ((n : ℝ) - 1) * (K : ℝ) * ((K : ℝ) - 1) /
+          ((N : ℝ) * ((N : ℝ) - 1)) := by
+        have hKpred : (K : ℝ) * ((K - 1 : ℕ) : ℝ) =
+            (K : ℝ) * ((K : ℝ) - 1) := by
+          cases K <;> norm_num [Nat.cast_sub]
+        have hNreal : (1 : ℝ) < (N : ℝ) := by exact_mod_cast hN
+        have hNm1 : (N : ℝ) - 1 ≠ 0 := by linarith
+        push_cast
+        rw [hKpred]
+        field_simp [hNm1]
+        linear_combination (K : ℝ) * ((K : ℝ) - 1) *
+          cast_mul_pred_mul_choose_pred_pred hn2 hn
+  · -- When `n` is zero or one, the falling factorial `k * (k - 1)` vanishes on the support.
+    have hnle : n ≤ 1 := by omega
+    interval_cases n <;> norm_num [Finset.sum_range_succ, hypergeometricWeight]
+
+/-- The mean of the real cast of a valid hypergeometric law is `nK / N` when the population
+is nonempty. The only valid empty-population parameters are handled separately below. -/
+@[simp]
+theorem integral_id_map_cast_hypergeometricMeasure {N K n : ℕ}
+    (hK : K ≤ N) (hn : n ≤ N) (hN : 0 < N) :
+    ∫ x, x ∂((hypergeometricMeasure N K n).map (Nat.cast : ℕ → ℝ)) =
+      (n : ℝ) * (K : ℝ) / (N : ℝ) := by
+  rw [integral_map (by fun_prop) (by fun_prop),
+    integral_hypergeometricMeasure (fun k ↦ (k : ℝ)) hK hn]
+  simpa only [smul_eq_mul] using sum_hypergeometricWeight_toReal_mul hK hn hN
+
+private theorem integral_sq_id_map_cast_hypergeometricMeasure {N K n : ℕ}
+    (hK : K ≤ N) (hn : n ≤ N) (hN : 1 < N) :
+    ∫ x, x ^ 2 ∂((hypergeometricMeasure N K n).map (Nat.cast : ℕ → ℝ)) =
+      (n : ℝ) * ((n : ℝ) - 1) * (K : ℝ) * ((K : ℝ) - 1) /
+          ((N : ℝ) * ((N : ℝ) - 1)) +
+        (n : ℝ) * (K : ℝ) / (N : ℝ) := by
+  rw [integral_map (by fun_prop) (by fun_prop),
+    integral_hypergeometricMeasure (fun k ↦ (k : ℝ) ^ 2) hK hn]
+  simp only [smul_eq_mul]
+  calc
+    _ = ∑ k ∈ Finset.range (n + 1),
+          ((hypergeometricWeight N K n k).toReal * (k : ℝ) * ((k : ℝ) - 1) +
+            (hypergeometricWeight N K n k).toReal * (k : ℝ)) := by
+      apply Finset.sum_congr rfl
+      intro k hk
+      ring
+    _ = (∑ k ∈ Finset.range (n + 1),
+          (hypergeometricWeight N K n k).toReal * (k : ℝ) * ((k : ℝ) - 1)) +
+        ∑ k ∈ Finset.range (n + 1),
+          (hypergeometricWeight N K n k).toReal * (k : ℝ) := by
+      rw [Finset.sum_add_distrib]
+    _ = _ := by
+      rw [sum_hypergeometricWeight_toReal_mul_pred hK hn hN,
+        sum_hypergeometricWeight_toReal_mul hK hn (by omega)]
+
+private theorem integrable_sq_id_map_cast_hypergeometricMeasure (N K n : ℕ) :
+    Integrable (fun x : ℝ ↦ x ^ 2)
+      ((hypergeometricMeasure N K n).map (Nat.cast : ℕ → ℝ)) := by
+  rw [(MeasurableEmbedding.natCast (α := ℝ)).integrable_map_iff]
+  convert integrable_hypergeometricMeasure (fun k : ℕ ↦ ((k : ℝ) ^ 2)) N K n using 1
+  funext k
+  rfl
+
+/-- The variance of the real cast of a valid hypergeometric law for a population with at least
+two elements. The finite-population correction is `(N - n) / (N - 1)`; populations of size zero
+and one are handled separately below. -/
+@[simp]
+theorem variance_id_map_cast_hypergeometricMeasure {N K n : ℕ}
+    (hK : K ≤ N) (hn : n ≤ N) (hN : 1 < N) :
+    variance id ((hypergeometricMeasure N K n).map (Nat.cast : ℕ → ℝ)) =
+      (n : ℝ) * ((K : ℝ) / (N : ℝ)) * (1 - (K : ℝ) / (N : ℝ)) *
+        (((N : ℝ) - (n : ℝ)) / ((N : ℝ) - 1)) := by
+  let _ : IsProbabilityMeasure (hypergeometricMeasure N K n) :=
+    isProbabilityMeasure_hypergeometricMeasure hK hn
+  have hmem : MemLp id 2
+      ((hypergeometricMeasure N K n).map (Nat.cast : ℕ → ℝ)) :=
+    (memLp_two_iff_integrable_sq aestronglyMeasurable_id).2
+      (integrable_sq_id_map_cast_hypergeometricMeasure N K n)
+  rw [variance_eq_sub hmem]
+  simp only [Pi.pow_apply, id_eq]
+  rw [integral_sq_id_map_cast_hypergeometricMeasure hK hn hN,
+    integral_id_map_cast_hypergeometricMeasure hK hn (by omega)]
+  have hNreal : (1 : ℝ) < (N : ℝ) := by exact_mod_cast hN
+  have hNm1 : (N : ℝ) - 1 ≠ 0 := by linarith
+  field_simp [hNm1]
+  ring
+
+/-- The real cast of the unique valid empty-population hypergeometric law has mean zero. -/
+@[simp]
+theorem integral_id_map_cast_hypergeometricMeasure_zero :
+    ∫ x, x ∂((hypergeometricMeasure 0 0 0).map (Nat.cast : ℕ → ℝ)) = 0 := by
+  norm_num [hypergeometricMeasure, hypergeometricWeight]
+
+/-- The real cast of the unique valid empty-population hypergeometric law has variance zero. -/
+@[simp]
+theorem variance_id_map_cast_hypergeometricMeasure_zero :
+    variance id ((hypergeometricMeasure 0 0 0).map (Nat.cast : ℕ → ℝ)) = 0 := by
+  norm_num [hypergeometricMeasure, hypergeometricWeight]
+
+/-- Every valid hypergeometric law on a population of size one has variance zero. This is stated
+separately because the usual formula contains the totalized quotient by `N - 1`. -/
+@[simp]
+theorem variance_id_map_cast_hypergeometricMeasure_of_population_one {K n : ℕ}
+    (hK : K ≤ 1) (hn : n ≤ 1) :
+    variance id ((hypergeometricMeasure 1 K n).map (Nat.cast : ℕ → ℝ)) = 0 := by
+  interval_cases K <;> interval_cases n <;>
+    simp [hypergeometricMeasure, hypergeometricWeight, Finset.sum_range_succ]
 
 /-! ## Transforms of the real-valued cast law -/
 
