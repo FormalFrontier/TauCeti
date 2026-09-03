@@ -17,6 +17,44 @@ import core  # noqa: E402
 import labels  # noqa: E402
 
 
+class RateLimitBackoff(unittest.TestCase):
+    """`gh` does not retry a rate limit, and every sink here shares one App budget."""
+
+    def result(self, code, err):
+        return mock.Mock(returncode=code, stderr=err, stdout="ok")
+
+    def test_retries_through_a_rate_limit(self):
+        with mock.patch.object(core.subprocess, "run") as run:
+            run.side_effect = [self.result(1, "API rate limit exceeded"),
+                               self.result(0, "")]
+            self.assertEqual(core.gh_api("/x", sleep=lambda s: None), "ok")
+            self.assertEqual(run.call_count, 2)
+
+    def test_a_normal_failure_is_not_retried(self):
+        # A 404 or a permission error must stay as loud, and as fast, as before.
+        with mock.patch.object(core.subprocess, "run") as run:
+            run.return_value = self.result(1, "404 Not Found")
+            with self.assertRaises(RuntimeError):
+                core.gh_api("/x", sleep=lambda s: None)
+            self.assertEqual(run.call_count, 1)
+
+    def test_a_persistent_rate_limit_eventually_raises(self):
+        with mock.patch.object(core.subprocess, "run") as run:
+            run.return_value = self.result(1, "secondary rate limit")
+            with self.assertRaises(RuntimeError):
+                core.gh_api("/x", sleep=lambda s: None)
+            self.assertEqual(run.call_count, core.RATE_LIMIT_RETRIES)
+
+    def test_the_backoff_grows(self):
+        waits = []
+        with mock.patch.object(core.subprocess, "run") as run:
+            run.side_effect = [self.result(1, "rate limit"), self.result(1, "rate limit"),
+                               self.result(0, "")]
+            core.gh_api("/x", sleep=waits.append)
+        self.assertEqual(waits, [core.RATE_LIMIT_BACKOFF_SECONDS,
+                                 core.RATE_LIMIT_BACKOFF_SECONDS * 2])
+
+
 class ReviewState(unittest.TestCase):
     HEAD = "abc123"
 

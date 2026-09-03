@@ -47,19 +47,43 @@ _META_RE = re.compile(r"<!--tauceti-meta:v1\s+(\{.*\})\s*-->", re.S)
 _INPROGRESS_RE = re.compile(r"<!--tauceti-review-in-progress (.*?)-->", re.S)
 _REPO_ASSOCIATED = ("OWNER", "MEMBER", "COLLABORATOR")
 
+# `gh` exits nonzero on a rate limit without retrying, and every sink in this
+# package shares ONE App installation budget with the review and merge workflows.
+# These substrings identify that case in its stderr so gh_api can wait instead of
+# failing the caller.
+_RATE_LIMITED = ("rate limit", "secondary rate", "API rate limit exceeded",
+                 "was submitted too quickly", "HTTP 429")
+RATE_LIMIT_RETRIES = 4
+RATE_LIMIT_BACKOFF_SECONDS = 15
+
 
 # ----- GitHub truth (via the gh CLI, authenticated by GH_TOKEN) ---------------
 
-def gh_api(path, jq=None, paginate=False):
+def gh_api(path, jq=None, paginate=False, sleep=time.sleep):
+    """One `gh api` read, with a bounded back-off for a rate limit.
+
+    `gh` does not retry a 403/429 of its own accord, so a burst of merges spending
+    the shared App budget for a minute failed whichever sink happened to read next
+    -- an hourly sweep losing a run, or a label left wrong until the next event.
+    A rate-limited call now waits and retries a few times; anything else still
+    fails immediately, so a 404 or a permission error stays as loud as before.
+    """
     cmd = ["gh", "api", path]
     if paginate:
         cmd.append("--paginate")
     if jq is not None:
         cmd += ["--jq", jq]
-    out = subprocess.run(cmd, capture_output=True, text=True)
-    if out.returncode != 0:
-        raise RuntimeError(f"gh api {path} failed: {out.stderr.strip()}")
-    return out.stdout
+    for attempt in range(RATE_LIMIT_RETRIES):
+        out = subprocess.run(cmd, capture_output=True, text=True)
+        if out.returncode == 0:
+            return out.stdout
+        stderr = out.stderr.strip()
+        limited = any(marker.lower() in stderr.lower() for marker in _RATE_LIMITED)
+        if not limited or attempt + 1 == RATE_LIMIT_RETRIES:
+            raise RuntimeError(f"gh api {path} failed: {stderr}")
+        delay = RATE_LIMIT_BACKOFF_SECONDS * (2 ** attempt)
+        print(f"gh api rate-limited; retrying in {delay}s", flush=True)
+        sleep(delay)
 
 
 def _roadmap_labels(labels):
