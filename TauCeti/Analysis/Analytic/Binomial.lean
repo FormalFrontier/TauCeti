@@ -13,8 +13,8 @@ import Mathlib.Analysis.Complex.AbelLimit
 
 This file determines the exact unconditional summability domain of the power series with
 generalized multichoose coefficients and positive real parameter.  The result applies to both real
-and complex arguments.  Convergence on the open unit ball comes from Mathlib's real binomial power
-series; divergence on its boundary follows from Mathlib's Abel limit theorem.
+and complex arguments.  These results supply the analytic criterion used to determine the exact
+integrability domain of the negative-binomial probability-generating function.
 
 ## Main declarations
 
