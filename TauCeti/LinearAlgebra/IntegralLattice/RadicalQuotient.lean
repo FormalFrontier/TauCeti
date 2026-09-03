@@ -225,7 +225,7 @@ theorem sigPos_radicalQuotient : L.radicalQuotient.sigPos = L.sigPos := by
   dsimp only [sigPos]
   rw [radicalQuotient_form, radicalQuotientForm,
     QuadraticMap.toQuadraticMap_associated ℚ]
-  exact TauCeti.QuadraticForm.sigPos_lift_of_eq_radical L.form.toQuadraticMap L.radical
+  exact QuadraticForm.sigPos_lift_of_eq_radical L.form.toQuadraticMap L.radical
     L.radical_toQuadraticMap.symm
 
 /-- The negative index is unchanged after quotienting by the radical. -/
@@ -235,7 +235,7 @@ theorem sigNeg_radicalQuotient : L.radicalQuotient.sigNeg = L.sigNeg := by
   dsimp only [sigNeg]
   rw [radicalQuotient_form, radicalQuotientForm,
     QuadraticMap.toQuadraticMap_associated ℚ]
-  exact TauCeti.QuadraticForm.sigNeg_lift_of_eq_radical L.form.toQuadraticMap L.radical
+  exact QuadraticForm.sigNeg_lift_of_eq_radical L.form.toQuadraticMap L.radical
     L.radical_toQuadraticMap.symm
 
 /-- The radical quotient has the same positive and negative indices as the original lattice and

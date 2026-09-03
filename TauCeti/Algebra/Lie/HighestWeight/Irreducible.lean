@@ -9,8 +9,6 @@ public import TauCeti.Algebra.Lie.Basic
 public import TauCeti.Algebra.Lie.HighestWeight.Module
 public import TauCeti.Algebra.Lie.Prod
 
-public section
-
 /-!
 # Irreducible highest weight modules are classified by their weight
 
@@ -74,6 +72,8 @@ two Verma modules.
 
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §20.3.
 -/
+
+public section
 
 namespace TauCeti
 

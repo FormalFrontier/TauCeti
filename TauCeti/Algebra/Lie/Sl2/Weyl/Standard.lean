@@ -8,8 +8,6 @@ module
 public import TauCeti.Algebra.Lie.Sl2.IntegralLattice
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Weyl.Basic
 
-public section
-
 /-!
 # The Weyl element of a standard `sl₂`-module
 
@@ -78,6 +76,8 @@ coordinate lattice; its scalar extension is the existing `kostantWeylPoints`.
 * R. Steinberg, *Lectures on Chevalley Groups*, §3.
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, §26.
 -/
+
+public section
 
 open Finset
 open TensorProduct

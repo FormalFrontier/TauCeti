@@ -46,6 +46,9 @@ the finite-type coordinate-Hopf-algebra category.
   `I ≤ J`.
 * `TauCeti.CommHopfAlgCat.quotientMapOfLe_surjective`: quotient-to-quotient coordinate maps are
   surjective.
+* `TauCeti.CommHopfAlgCat.quotientMapOfLe_comp_liftQuotient_eq`: a quotient-to-quotient
+  coordinate map followed by a lift through the larger ideal is identified by its
+  precomposition with the quotient morphism.
 * `TauCeti.FiniteTypeCommHopfAlgCat.quotientMapOfLe_surjective`: the finite-type form of
   quotient-to-quotient surjectivity.
 * `TauCeti.HopfIdeal.comapOfSurjective_map_mkQuotient`: pulling the image of `J` back from
@@ -540,6 +543,17 @@ lemma mkQuotient_comp_quotientMapOfLe (H : _root_.CommHopfAlgCat.{v} R)
     mkQuotient H I ≫ quotientMapOfLe H hIJ = mkQuotient H J :=
   mkQuotient_comp_liftQuotient I (mkQuotient H J)
     (toIdeal_le_ker_mkQuotient_of_le H hIJ)
+
+/-- **A lift through the larger of two Hopf ideals is recognized by its precomposition with the
+quotient morphism.** Composing `H ⧸ I ⟶ H ⧸ J` with the lift of `f : H ⟶ K` through `H ⧸ J` gives
+the unique morphism `g : H ⧸ I ⟶ K` with `mkQuotient H I ≫ g = f`. -/
+lemma quotientMapOfLe_comp_liftQuotient_eq (H : _root_.CommHopfAlgCat.{v} R)
+    {K : _root_.CommHopfAlgCat.{v} R} {I J : HopfIdeal R H} (hIJ : I ≤ J) (f : H ⟶ K)
+    (hf : J.toIdeal ≤ RingHom.ker f.hom.toAlgHom.toRingHom) (g : quotient H I ⟶ K)
+    (hg : mkQuotient H I ≫ g = f) :
+    quotientMapOfLe H hIJ ≫ liftQuotient J f hf = g := by
+  apply mkQuotient_hom_ext
+  rw [← Category.assoc, mkQuotient_comp_quotientMapOfLe, mkQuotient_comp_liftQuotient, hg]
 
 /-- The quotient-to-quotient morphism for `I ≤ I` is the identity morphism. -/
 @[simp]

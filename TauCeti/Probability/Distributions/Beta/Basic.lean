@@ -61,29 +61,25 @@ private lemma toReal_betaPDF {α β : ℝ} (hα : 0 < α) (hβ : 0 < β) (x : �
     (ENNReal.ofReal (betaPDFReal α β x)).toReal = betaPDFReal α β x :=
   ENNReal.toReal_ofReal (betaPDFReal_nonneg hα hβ x)
 
-/-- The beta distribution is carried by the closed unit interval. -/
-theorem ae_mem_Icc_betaMeasure (α β : ℝ) :
-    ∀ᵐ x ∂betaMeasure α β, x ∈ Set.Icc (0 : ℝ) 1 := by
+/-- A beta measure lies almost everywhere in the open unit interval, for all parameter values. -/
+theorem ae_mem_Ioo_betaMeasure (α β : ℝ) :
+    ∀ᵐ x ∂betaMeasure α β, x ∈ Set.Ioo (0 : ℝ) 1 := by
   have hpdf : betaPDF α β = ENNReal.ofReal ∘ betaPDFReal α β := rfl
   rw [betaMeasure, hpdf, ae_withDensity_iff
     (ENNReal.measurable_ofReal.comp (measurable_betaPDFReal α β))]
-  refine ae_of_all _ fun x hx ↦ ?_
+  filter_upwards [(volume : Measure ℝ).ae_ne 0, (volume : Measure ℝ).ae_ne 1]
+    with x hx0 hx1 hpdf
   constructor
-  · by_contra h
-    exact hx (betaPDF_eq_zero_of_nonpos (le_of_not_ge h))
-  · by_contra h
-    exact hx (betaPDF_eq_zero_of_one_le (le_of_not_ge h))
+  · by_contra hx
+    exact hpdf (betaPDF_eq_zero_of_nonpos (le_of_not_gt hx))
+  · by_contra hx
+    exact hpdf (betaPDF_eq_zero_of_one_le (le_of_not_gt hx))
 
-/-- The beta distribution is carried by the open unit interval. -/
-theorem ae_mem_Ioo_betaMeasure (α β : ℝ) :
-    ∀ᵐ x ∂betaMeasure α β, x ∈ Set.Ioo (0 : ℝ) 1 := by
-  have hβ : betaMeasure α β = volume.withDensity (betaPDF α β) := rfl
-  have : NullSingletonClass (betaMeasure α β) := by
-    rw [hβ]
-    infer_instance
-  filter_upwards [ae_mem_Icc_betaMeasure α β,
-    Ioo_ae_eq_Icc (μ := betaMeasure α β)] with x hxIcc hxEq
-  exact hxEq.mpr hxIcc
+/-- The beta distribution is carried by the unit interval. -/
+theorem ae_mem_Icc_betaMeasure (α β : ℝ) :
+    ∀ᵐ x ∂betaMeasure α β, x ∈ Set.Icc (0 : ℝ) 1 := by
+  filter_upwards [ae_mem_Ioo_betaMeasure α β] with x hx
+  exact ⟨hx.1.le, hx.2.le⟩
 
 /-- The `n`th raw moment of a beta distribution with positive shape parameters. -/
 @[simp]

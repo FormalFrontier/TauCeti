@@ -11,8 +11,6 @@ public import TauCeti.Algebra.Lie.Weights.Reflection
 import TauCeti.Algebra.Lie.Submodule.Atom
 import TauCeti.LinearAlgebra.RootSystem.SimpleReflections
 
-public section
-
 /-!
 # The weights of an irreducible highest weight module are stable under the Weyl group
 
@@ -53,6 +51,8 @@ classification of finite-dimensional irreducibles", of
 
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §21.2.
 -/
+
+public section
 
 namespace TauCeti
 

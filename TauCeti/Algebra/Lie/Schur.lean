@@ -8,8 +8,6 @@ module
 public import TauCeti.Algebra.Lie.Basic
 public import TauCeti.Algebra.Lie.Weights.Central
 
-public section
-
 /-!
 # The space of morphisms between irreducible Lie modules
 
@@ -79,6 +77,8 @@ quotient `L(λ)`.
   `CategoryTheory.finrank_hom_simple_simple` of `Mathlib/CategoryTheory/Preadditive/Schur.lean`,
   which is unavailable here: Mathlib has no category of Lie modules over a fixed Lie algebra.
 -/
+
+public section
 
 namespace TauCeti.LieModule
 

@@ -11,8 +11,6 @@ public import Mathlib.LinearAlgebra.RootSystem.Irreducible
 public import TauCeti.LinearAlgebra.RootSystem.InvariantSubmodule
 import Mathlib.Combinatorics.SimpleGraph.Hasse
 
-public section
-
 /-!
 # Irreducibility from a connected Dynkin diagram
 
@@ -37,6 +35,8 @@ every edge of the Dynkin diagram, so the simple roots span the whole space insid
   connected.
 * `TauCeti.HasCartanType.isIrreducible`: a root system of valid Cartan type is irreducible.
 -/
+
+public section
 
 open Function Set
 open Module.End (invtSubmodule)

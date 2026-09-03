@@ -6,8 +6,11 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Lie.GeneralLinear.Borel
+public import Mathlib.Algebra.Lie.Semisimple.Defs
 public import Mathlib.Algebra.Ring.CharZero
 public import Mathlib.Data.Rat.Cast.Defs
+import TauCeti.Algebra.Lie.GeneralLinear.Basic
+import TauCeti.Algebra.Lie.Weights.Central
 
 /-!
 # Dominant weights and highest weight vectors for `gl n`
@@ -64,6 +67,12 @@ and the whole of `𝔫⁺` annihilates (`TauCeti.isGlHighestWeightVector_iff_for
   weight vector, so the elementwise definition loses nothing.
 * `TauCeti.IsGlHighestWeightVector.weight_eq`: a vector is a highest weight vector for at most one
   weight.
+* `TauCeti.IsGlHighestWeightVector.map` and `TauCeti.IsGlHighestWeightVector.congr`: highest weight
+  vectors transport along module morphisms that preserve nonzeroness, in particular equivalences.
+* `TauCeti.isGlHighestWeightVector_coe_iff`: a vector of a Lie submodule is a highest weight vector
+  of that submodule exactly when it is one of the ambient module.
+* `TauCeti.forall_one_lie_eq_sum_smul_of_isGlHighestWeightVector`: on an irreducible module carrying
+  a highest weight vector, the identity matrix acts by the sum of the entries of that weight.
 * `TauCeti.isGlHighestWeightVector_single_bot_top`: the highest root vector `E_{⊥⊤}` is a highest
   weight vector of the adjoint module, of weight `ε_⊥ - ε_⊤`, so the predicate is not vacuous.
 
@@ -343,20 +352,26 @@ theorem lie_single_eq_zero (hv : IsGlHighestWeightVector mu v) {i j : n} (hij : 
 
 end IsGlHighestWeightVector
 
-/-- **Transport along an injective map of `gl n R`-modules.** Injectivity is only used to keep the
-image nonzero; the two weight conditions transport along any map. An equivalence `e` is the case
-`hv.map (e : M →ₗ⁅R,Matrix n n R⁆ M') e.injective`. -/
+/-- **Transport along a map of `gl n R`-modules.** The two weight conditions transport along any
+map; all that is asked of `f` is that it keep the vector nonzero, which for an injective `f` — an
+equivalence `e`, say — is automatic. -/
 theorem IsGlHighestWeightVector.map {M' : Type*} [AddCommGroup M'] [Module R M']
     [LieRingModule (Matrix n n R) M']
-    (f : M →ₗ⁅R,Matrix n n R⁆ M') (hf : Function.Injective f)
+    (f : M →ₗ⁅R,Matrix n n R⁆ M') (hf : f v ≠ 0)
     (hv : IsGlHighestWeightVector mu v) :
     IsGlHighestWeightVector mu (f v) := by
   have hmap : ∀ (x : Matrix n n R) (m : M), f ⁅x, m⁆ = ⁅x, f m⁆ := fun x m =>
     LieModuleHom.map_lie f x m
-  refine isGlHighestWeightVector_iff.mpr
-    ⟨fun h => hv.ne_zero (hf (by rw [h, map_zero])), fun i => ?_, fun i j hij => ?_⟩
+  refine isGlHighestWeightVector_iff.mpr ⟨hf, fun i => ?_, fun i j hij => ?_⟩
   · rw [← hmap, hv.lie_single_self_eq_smul, map_smul]
   · rw [← hmap, hv.lie_single_eq_zero hij, map_zero]
+
+/-- **Transport along an equivalence of `gl n R`-modules.** -/
+theorem IsGlHighestWeightVector.congr {M' : Type*} [AddCommGroup M'] [Module R M']
+    [LieRingModule (Matrix n n R) M'] (hv : IsGlHighestWeightVector mu v)
+    (e : M ≃ₗ⁅R,Matrix n n R⁆ M') : IsGlHighestWeightVector mu (e v) :=
+  hv.map (e : M →ₗ⁅R,Matrix n n R⁆ M') fun h =>
+    hv.ne_zero (e.injective (h.trans (map_zero e).symm))
 
 /-- **A vector is a highest weight vector for at most one weight.** The diagonal matrix units read
 the weight off the vector, so two weights of the same nonzero vector agree entry by entry. -/
@@ -421,6 +436,18 @@ theorem isGlHighestWeightVector_iff_forall_mem :
     simp [single_apply, Finset.sum_ite_eq]
   rwa [glWeightEquiv_apply, hsum] at h
 
+omit [LieModule R (Matrix n n R) M] in
+/-- **A vector of a Lie submodule is a highest weight vector of that submodule exactly when it is
+one of the ambient module**: both defining conditions are read off the ambient bracket. -/
+@[simp]
+theorem isGlHighestWeightVector_coe_iff {P : LieSubmodule R (Matrix n n R) M} {w : P} :
+    IsGlHighestWeightVector mu (w : M) ↔ IsGlHighestWeightVector mu w := by
+  refine ⟨fun h => isGlHighestWeightVector_iff.mpr
+    ⟨fun h0 => h.ne_zero (by simp [h0]), fun i => ?_, fun i j hij => ?_⟩,
+    fun h => h.map P.incl (by simpa using h.ne_zero)⟩
+  · exact Subtype.ext (by simpa using h.lie_single_self_eq_smul i)
+  · exact Subtype.ext (by simpa using h.lie_single_eq_zero hij)
+
 section TorsionFree
 
 variable [IsCancelMulZero R] [Module.IsTorsionFree R M]
@@ -435,6 +462,19 @@ theorem IsGlHighestWeightVector.smul (hv : IsGlHighestWeightVector mu v) {c : R}
   · rw [lie_smul, hv.lie_single_eq_zero hij, smul_zero]
 
 end TorsionFree
+
+/-- **The identity matrix acts by the sum of the highest weight entries** on any irreducible module
+carrying a highest weight vector. The scalar is read off the highest weight vector rather than
+produced by Schur's lemma, so a commutative ring of scalars is all this needs. -/
+theorem forall_one_lie_eq_sum_smul_of_isGlHighestWeightVector
+    [LieModule.IsIrreducible R (Matrix n n R) M]
+    (hv : IsGlHighestWeightVector mu v) (m : M) :
+    ⁅(1 : Matrix n n R), m⁆ = (∑ i, mu i) • m := by
+  have hone : (1 : Matrix n n R) ∈ diagonalCartan R n :=
+    mem_diagonalCartan_iff.mpr fun i j hij => Matrix.one_apply_ne hij
+  exact forall_lie_eq_smul_of_lie_eq_smul R (Matrix n n R) M
+    ⟨1, one_mem_center_matrix R n⟩
+    hv.ne_zero (by simpa using hv.lie_eq_smul_of_mem_diagonalCartan hone) m
 
 end HighestWeight
 

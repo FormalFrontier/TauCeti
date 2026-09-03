@@ -9,8 +9,6 @@ public import TauCeti.LinearAlgebra.Determinant
 public import TauCeti.RepresentationTheory.ClassicalGroups.ExteriorPower
 public import TauCeti.RepresentationTheory.ClassicalGroups.Restriction
 
-public section
-
 /-!
 # The determinant form preserved by the special linear group
 
@@ -40,6 +38,8 @@ volume element is the multivector dual to it.)
 * [Classical groups roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/ClassicalGroups/README.md),
   Layer 0, “The subgroups and the extra invariants”.
 -/
+
+public section
 
 namespace TauCeti
 
@@ -84,7 +84,8 @@ noncomputable def topExtPowerSLEquivTrivial : ((stdSLRep k n).exteriorPower n).E
       (Representation.trivial k (Matrix.SpecialLinearGroup (Fin n) k) k) :=
   .mk (exteriorPower.topEquiv (Pi.basisFun k (Fin n))) fun g ↦ by
     rw [stdSLRep_exteriorPower_self_apply]
-    simp
+    ext x
+    simp [Representation.isTrivial_def]
 
 /-- The underlying linear equivalence of `TauCeti.topExtPowerSLEquivTrivial` is the top-degree
 identification of the exterior power with the scalars. -/

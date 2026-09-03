@@ -236,7 +236,7 @@ variable (R : Type*) [CommSemiring R]
 not that of its partition. -/
 @[simp]
 theorem coeff_msymm_eq_zero_of_degree_ne (ν : n.Partition) {d : σ →₀ ℕ} (h : d.degree ≠ n) :
-    coeff d (msymm σ R ν) = 0 := by
+    (msymm σ R ν).coeff d = 0 := by
   rw [msymm, coeff_sum]
   refine Finset.sum_eq_zero fun s _ => ?_
   rw [prod_map_X_eq_monomial, coeff_monomial, ite_eq_right]
@@ -248,7 +248,7 @@ the monomials of total degree `n` whose nonzero exponents are the parts of `ν`,
 once. -/
 @[simp]
 theorem coeff_msymm (ν : n.Partition) {d : σ →₀ ℕ} (h : d.degree = n) :
-    coeff d (msymm σ R ν) = if weightPartition d h = ν then 1 else 0 := by
+    (msymm σ R ν).coeff d = if weightPartition d h = ν then 1 else 0 := by
   have hinj : ∀ s : Sym σ n, Multiset.toFinsupp (s : Multiset σ) = d ↔ s = weightSym d h :=
     fun s => by rw [Multiset.toFinsupp_eq_iff, ← Sym.coe_inj, coe_weightSym]
   rw [msymm, coeff_sum]
@@ -324,7 +324,7 @@ partition.  This is the statement that the monomial symmetric polynomials are du
 monomials, and the reason they are linearly independent. -/
 @[simp]
 theorem coeff_msymm_partWeight (ν ξ : n.Partition) (hξ : ξ.parts.card ≤ Fintype.card σ) :
-    coeff (partWeight σ ξ) (msymm σ R ν) = if ξ = ν then 1 else 0 := by
+    (msymm σ R ν).coeff (partWeight σ ξ) = if ξ = ν then 1 else 0 := by
   rw [coeff_msymm R ν (degree_partWeight ξ hξ), weightPartition_partWeight ξ hξ]
 
 /-! ### The monomial expansion -/
@@ -337,9 +337,9 @@ sorted, since sorting them is a permutation of the alphabet, which a symmetric p
 see. -/
 @[simp]
 theorem coeff_schurPoly_eq_kostkaNumber {d : σ →₀ ℕ} (h : d.degree = n) :
-    coeff d (schurPoly σ R μ) = (kostkaNumber μ (weightPartition d h) : R) := by
+    (schurPoly σ R μ).coeff d = (kostkaNumber μ (weightPartition d h) : R) := by
   obtain ⟨e, he⟩ := exists_perm_mapDomain_eq_partWeight d h
-  have hsymm : coeff (Finsupp.mapDomain e d) (schurPoly σ R μ) = coeff d (schurPoly σ R μ) := by
+  have hsymm : (schurPoly σ R μ).coeff (Finsupp.mapDomain e d) = (schurPoly σ R μ).coeff d := by
     conv_lhs => rw [← schurPoly_isSymmetric (R := R) μ e]
     exact coeff_rename_mapDomain _ e.injective _ _
   rw [← hsymm, he, coeff_schurPoly_partWeight μ _

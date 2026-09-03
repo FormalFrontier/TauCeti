@@ -9,8 +9,6 @@ import TauCeti.LinearAlgebra.RootSystem.ClassicalTypeD
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.E8.Basic
 import TauCeti.LinearAlgebra.RootSystem.E8Coordinates
 
-public section
-
 /-!
 # The listed `E₈` coroots are all the norm-two vectors
 
@@ -59,6 +57,8 @@ The Euclidean model of the `E₈` lattice and its two hundred and forty minimal 
 Lattices and Groups*, chapter 4, section 8. This supports the target "a named datum per valid type"
 in Layer 6 of `TauCetiRoadmap/RepresentationTheory/RootSystems/README.md`.
 -/
+
+public section
 
 namespace TauCeti
 

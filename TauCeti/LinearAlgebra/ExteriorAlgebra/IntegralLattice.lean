@@ -65,6 +65,15 @@ variable {ι : Type*} [LinearOrder ι] (b : Module.Basis ι ℚ M)
 def integralLattice : Submodule ℤ (_root_.ExteriorAlgebra ℚ M) :=
   Submodule.span ℤ (Set.range b.ExteriorAlgebra)
 
+/-- The coordinate integral lattice is the `ℤ`-span of the exterior basis, which is the form in
+which the generic span lemmas about integral spans apply to it. The body of `integralLattice` is
+not `@[expose]`d, so downstream modules cannot reach that span by `rw [integralLattice]`; this is
+the accessor they use instead. -/
+theorem integralLattice_eq_span :
+    integralLattice b = Submodule.span ℤ (Set.range b.ExteriorAlgebra) :=
+  -- `(rfl)`, not `rfl`: the body of `integralLattice` is not `@[expose]`d.
+  (rfl)
+
 /-- **A linear map preserves the coordinate integral lattice as soon as it does so on the exterior
 basis**, since that basis spans the lattice. This is the shared induction behind every
 lattice-preservation statement below. -/

@@ -320,6 +320,14 @@ theorem preprojectiveAlgebraEquivGaugedOne_preprojectiveMk
   rw [preprojectiveAlgebraEquivGaugedOne, preprojectiveMk_apply,
     gaugedPreprojectiveMk_apply, Ideal.quotientEquivAlgOfEq_mk]
 
+/-- The inverse constant-gauge identification preserves the quotient generators. -/
+@[simp]
+theorem preprojectiveAlgebraEquivGaugedOne_symm_gaugedPreprojectiveMk
+    (x : pathAlgebra k (Symmetrify Q)) :
+    (preprojectiveAlgebraEquivGaugedOne (Q := Q) k).symm
+        (gaugedPreprojectiveMk k (fun _ _ _ => 1) x) = preprojectiveMk k Q x := by
+  rw [AlgEquiv.symm_apply_eq, preprojectiveAlgebraEquivGaugedOne_preprojectiveMk]
+
 /-- **Every unit-valued gauge presents the preprojective algebra.** In particular a labelling of
 the arrows of `Q` by signs presents `Π_k(Q)` for every choice of signs. -/
 noncomputable def preprojectiveAlgebraEquivGauged (ε : ∀ ⦃i j : Q⦄, (i ⟶ j) → k)

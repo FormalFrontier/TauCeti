@@ -143,7 +143,7 @@ theorem map_project_replaceMarginal_of_forall_ne {κ : Type w}
       π.toMeasure.map (fun x k ↦ x (e k)) := by
   classical
   apply map_replaceMarginal_eq_of_update_eq π i σ (fun x k ↦ x (e k))
-    (measurable_pi_lambda _ fun k ↦ measurable_pi_apply (e k))
+    (Measurable.of_eval fun k ↦ measurable_pi_apply (e k))
   intro x y
   funext k
   simp [he k]

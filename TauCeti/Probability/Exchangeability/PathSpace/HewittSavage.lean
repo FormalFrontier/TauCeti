@@ -154,7 +154,7 @@ private theorem preimage_permReindex_cylinder (π : Equiv.Perm ℕ) (F : Finset 
 
 private theorem measurable_pullMoved [MeasurableSpace α] (π : Equiv.Perm ℕ) (F : Finset ℕ) :
     Measurable (pullMoved π F α) :=
-  measurable_pi_lambda _ fun _ => measurable_pi_apply _
+  Measurable.of_eval fun _ => measurable_pi_apply _
 
 /-- Every measurable path-space event is approximated, in measure, by a measurable cylinder over a
 finite index set. -/
@@ -191,7 +191,7 @@ private theorem measure_pathLaw_inter_cylinder_of_disjoint {μ : Measure Ω}
     pathLaw μ X (cylinder F S ∩ cylinder G T)
       = pathLaw μ X (cylinder F S) * pathLaw μ X (cylinder G T) := by
   let := h_indep.isProbabilityMeasure
-  have hΦ : AEMeasurable (fun ω => (fun n => X n ω : ℕ → α)) μ := aemeasurable_pi_lambda _ hX
+  have hΦ : AEMeasurable (fun ω => (fun n => X n ω : ℕ → α)) μ := AEMeasurable.of_eval hX
   have hSmeas : MeasurableSet (cylinder F S) :=
     MeasurableSet.cylinder (α := fun _ : ℕ => α) F hS
   have hTmeas : MeasurableSet (cylinder G T) :=

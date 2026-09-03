@@ -151,7 +151,7 @@ theorem sampleWithReplacement_eq_map_prod (ρ : Measure (κ → α)) [SFinite ρ
   rw [← Measure.map_apply
       (μ := uniformOn (Set.univ : Set (ι → κ)))
       (f := fun k i => x (k i))
-      (measurable_pi_lambda _ fun i =>
+      (Measurable.of_eval fun i =>
         (measurable_of_countable x).comp (measurable_pi_apply i)) hA,
     ← pi_empiricalMeasureOfFintype_eq_map_uniformOn]
 

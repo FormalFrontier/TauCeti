@@ -240,11 +240,12 @@ theorem finrank_quotient_eq_one_iff {I : Ideal W.CoordinateRing} :
     let x₀ := ρ (CoordinateRing.mk W (C X))
     let y₀ := ρ (CoordinateRing.mk W Y)
     have hcomp : ∀ p : F[X][Y], ρ (CoordinateRing.mk W p) = p.evalEval x₀ y₀ := fun p ↦ by
-      simpa only [x₀, y₀, Algebra.algebraMap_self, mapRingHom_id, Polynomial.map_id] using
+      simpa only [x₀, y₀, AdjoinRoot.mk_C, AdjoinRoot.mk_X, Algebra.algebraMap_self,
+        mapRingHom_id, Polynomial.map_id] using
         _root_.WeierstrassCurve.Affine.CoordinateRing.algHom_mk_eq_evalEval ρ p
     have heq : W.Equation x₀ y₀ := by
-      simpa only [x₀, y₀, Algebra.algebraMap_self, _root_.WeierstrassCurve.baseChange,
-        _root_.WeierstrassCurve.map_id] using
+      simpa only [x₀, y₀, AdjoinRoot.mk_C, AdjoinRoot.mk_X, Algebra.algebraMap_self,
+        _root_.WeierstrassCurve.baseChange, _root_.WeierstrassCurve.map_id] using
         _root_.WeierstrassCurve.Affine.CoordinateRing.equation_of_algHom ρ
     refine ⟨x₀, y₀, heq, ((XYIdeal_isMaximal_of_equation heq).eq_of_le hI ?_).symm⟩
     rw [CoordinateRing.XYIdeal, Ideal.span_le, Set.pair_subset_iff]
