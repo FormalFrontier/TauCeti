@@ -51,17 +51,6 @@ namespace TauCeti
 
 namespace Probability
 
-private theorem measureReal_Ioc_standardGaussian {a b : ℝ} (hab : a ≤ b) :
-    (gaussianReal 0 1).real (Ioc a b) =
-      cdf (gaussianReal 0 1) b - cdf (gaussianReal 0 1) a := by
-  have hunion :
-      (gaussianReal 0 1).real (Iic a) + (gaussianReal 0 1).real (Ioc a b) =
-        (gaussianReal 0 1).real (Iic b) := by
-    rw [← measureReal_union (Iic_disjoint_Ioc le_rfl) measurableSet_Ioc,
-      Iic_union_Ioc_eq_Iic hab]
-  rw [← cdf_eq_real, ← cdf_eq_real] at hunion
-  linarith
-
 /-- The image of the standard Gaussian law under squaring is the chi-squared law with one degree
 of freedom. -/
 @[simp]
@@ -92,9 +81,18 @@ theorem gaussianReal_map_sq :
     rw [hpreimage]
     let _ : NullSingletonClass (gaussianReal 0 1) :=
       nullSingletonClass_gaussianReal one_ne_zero
+    have hIoc :
+        (gaussianReal 0 1).real (Ioc (-√x) √x) =
+          cdf (gaussianReal 0 1) √x - cdf (gaussianReal 0 1) (-√x) := by
+      calc
+        (gaussianReal 0 1).real (Ioc (-√x) √x) =
+            (cdf (gaussianReal 0 1)).measure.real (Ioc (-√x) √x) := by
+          rw [measure_cdf]
+        _ = cdf (gaussianReal 0 1) √x - cdf (gaussianReal 0 1) (-√x) := by
+          rw [Measure.real, StieltjesFunction.measure_Ioc, ENNReal.toReal_ofReal]
+          exact sub_nonneg.mpr ((cdf (gaussianReal 0 1)).mono (by linarith [Real.sqrt_nonneg x]))
     rw [← measureReal_congr (Ioc_ae_eq_Icc (a := -√x) (b := √x)),
-      measureReal_Ioc_standardGaussian (by linarith [Real.sqrt_nonneg x]),
-      cdf_gaussianReal_zero_one, cdf_gaussianReal_zero_one]
+      hIoc, cdf_gaussianReal_zero_one, cdf_gaussianReal_zero_one]
     have hneg : -√x / √2 = -(√x / √2) := by ring
     rw [hneg, Real.erf_neg]
     have herf : 0 ≤ √x / √2 := by positivity
