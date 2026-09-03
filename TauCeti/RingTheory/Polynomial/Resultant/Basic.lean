@@ -15,6 +15,10 @@ Mathlib evaluates the resultant against the linear polynomial `X - C x` on eithe
 companion for the *reversed* polynomial `C x - X`, which is the shape that arises as `x - θ` in
 `AdjoinRoot f`: the answer is `f.eval x`, with **no sign**.
 
+The file also normalizes bounded resultants with a monic left argument. This makes the resultant
+independent of the chosen valid right degree bound, as needed when comparing resultant-based
+discriminant formulas that use different bounds.
+
 That absence is the point. `C x - X` is `C (-1) * (X - C x)`, which contributes `(-1) ^ m`, and
 `resultant_X_sub_C_right` contributes another `(-1) ^ m`, so the two cancel.
 

@@ -50,7 +50,7 @@ separable.
   `Polynomial.Monic.discr_ne_zero_iff_separable_map`: a monic polynomial is separable exactly
   when its discriminant is a unit; over a field that reads `discr f ≠ 0`, and over a domain the
   correct statement passes to the fraction field.
-* `Cubic.discr_toPoly`: the two discriminants of a cubic with nonzero leading coefficient agree,
+* `Cubic.toPoly_discr`: the two discriminants of a cubic with nonzero leading coefficient agree,
   so that `Cubic.discr` and `Polynomial.discr` may be used interchangeably in degree three.
 * `Algebra.discr_powerBasis_eq_minpoly_discr`: the algebra discriminant of a power basis agrees
   with the polynomial discriminant of the minimal polynomial of its generator.
@@ -535,7 +535,7 @@ theorem _root_.Polynomial.not_isSquare_discr_X_pow_three_sub_two :
 is the discriminant of the associated degree-three polynomial. The two conventions agree on the
 nose, with no normalization to monic and no sign. -/
 @[simp]
-theorem _root_.Cubic.discr_toPoly {P : Cubic R} (ha : P.a ≠ 0) : P.toPoly.discr = P.discr := by
+theorem _root_.Cubic.toPoly_discr {P : Cubic R} (ha : P.a ≠ 0) : P.toPoly.discr = P.discr := by
   rw [discr_of_degree_eq_three (P.degree_of_a_ne_zero ha), P.coeff_eq_a, P.coeff_eq_b,
     P.coeff_eq_c, P.coeff_eq_d, Cubic.discr]
 
