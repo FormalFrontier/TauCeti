@@ -246,7 +246,7 @@ theorem not_integrable_exp_mul_id_weibullMeasure_of_lt_one (hk : 0 < k) (hk' : k
           ((k / lam) * (x / lam) ^ (k - 1) * Real.exp (-(x / lam) ^ k)) :=
             (exp_mul_mul_exp_neg ((k / lam) * (x / lam) ^ (k - 1)) t x
               ((x / lam) ^ k)).symm
-  exact MeasureTheory.not_integrable_of_eventually_one_le_atTop hev
+  exact MeasureTheory.not_integrable_of_eventually_le_atTop one_pos hev
     (hint.congr (ae_of_all _ fun x => by simp only [smul_eq_mul, mul_comm]))
 
 /-- For a sublinear Weibull law, exponential integrability is equivalent to a nonpositive rate. -/

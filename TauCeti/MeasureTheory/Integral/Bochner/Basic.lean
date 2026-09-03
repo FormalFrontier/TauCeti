@@ -42,9 +42,8 @@ The conversion is `MeasureTheory.ofReal_integral_norm_eq_lintegral_enorm`, whose
 A function on the real line whose norm stays above a positive constant on a set of infinite
 measure cannot be integrable there.
 
-* `not_integrableOn_Ioi_of_eventually_one_le_norm` is the half-line form, and
-  `not_integrable_of_eventually_one_le_norm_atTop` and `not_integrable_of_eventually_one_le_atTop`
-  are its Lebesgue-integrability consequences.
+* `not_integrableOn_Ioi_of_eventually_le_norm` is the half-line form, and
+  `not_integrable_of_eventually_le_atTop` is its real-valued Lebesgue-integrability consequence.
 
 ## Kernel averages on the real line
 
@@ -65,31 +64,29 @@ namespace TauCeti
 
 namespace MeasureTheory
 
-/-- A function whose norm is eventually at least one at `atTop` is not integrable on any right
-half-line: it is bounded below in norm on a set of infinite measure. -/
-theorem not_integrableOn_Ioi_of_eventually_one_le_norm {E : Type*} [NormedAddCommGroup E]
-    {f : ℝ → E} (c : ℝ) (hf : ∀ᶠ x in atTop, 1 ≤ ‖f x‖) : ¬ IntegrableOn f (Set.Ioi c) := by
+/-- A function whose norm is eventually at least a positive constant at `atTop` is not integrable
+on any right half-line: it is bounded below in norm on a set of infinite measure. -/
+theorem not_integrableOn_Ioi_of_eventually_le_norm {E : Type*} [NormedAddCommGroup E]
+    {f : ℝ → E} {ε : ℝ} (hε : 0 < ε) (c : ℝ) (hf : ∀ᶠ x in atTop, ε ≤ ‖f x‖) :
+    ¬ IntegrableOn f (Set.Ioi c) := by
   intro hint
   obtain ⟨a, ha⟩ := eventually_atTop.mp hf
   have htail : IntegrableOn f (Set.Ioi (max a c)) :=
     hint.mono_set (Set.Ioi_subset_Ioi (le_max_right a c))
-  have hone : IntegrableOn (fun _ : ℝ => (1 : ℝ)) (Set.Ioi (max a c)) volume := by
+  have hconst : IntegrableOn (fun _ : ℝ => ε) (Set.Ioi (max a c)) volume := by
     refine Integrable.mono' htail.norm (by fun_prop) ?_
     filter_upwards [ae_restrict_mem measurableSet_Ioi] with x hx
-    simpa only [norm_one] using ha x ((le_max_left a c).trans hx.le)
-  rw [integrableOn_const_iff] at hone
-  simp [Real.volume_Ioi] at hone
+    simpa only [Real.norm_eq_abs, abs_of_pos hε] using ha x ((le_max_left a c).trans hx.le)
+  rw [integrableOn_const_iff] at hconst
+  simp [Real.volume_Ioi, hε.ne'] at hconst
 
-/-- A function whose norm is eventually at least one at `atTop` is not Lebesgue integrable. -/
-theorem not_integrable_of_eventually_one_le_norm_atTop {E : Type*} [NormedAddCommGroup E]
-    {f : ℝ → E} (hf : ∀ᶠ x in atTop, 1 ≤ ‖f x‖) : ¬ Integrable f volume := fun hint =>
-  not_integrableOn_Ioi_of_eventually_one_le_norm 0 hf hint.integrableOn
-
-/-- A real function that is eventually at least one at `atTop` is not Lebesgue integrable. -/
-theorem not_integrable_of_eventually_one_le_atTop {f : ℝ → ℝ}
-    (hf : ∀ᶠ x in atTop, 1 ≤ f x) : ¬ Integrable f volume :=
-  not_integrable_of_eventually_one_le_norm_atTop
+/-- A real function that is eventually at least a positive constant at `atTop` is not Lebesgue
+integrable. -/
+theorem not_integrable_of_eventually_le_atTop {f : ℝ → ℝ} {ε : ℝ} (hε : 0 < ε)
+    (hf : ∀ᶠ x in atTop, ε ≤ f x) : ¬ Integrable f volume := fun hint =>
+  not_integrableOn_Ioi_of_eventually_le_norm hε 0
     (hf.mono fun x hx => by rw [Real.norm_eq_abs]; exact hx.trans (le_abs_self _))
+    hint.integrableOn
 
 /-- Cauchy--Schwarz for a real-valued set integral over a set of finite measure, in squared form. -/
 theorem sq_setIntegral_le_measureReal_mul_setIntegral_sq {Ω : Type*} [MeasurableSpace Ω]

@@ -42,8 +42,7 @@ Natural moments reduce to Euler's Gamma integral.
 * `cdf_weibullMeasure_eq` gives the closed cdf;
 * `integral_pow_weibullMeasure` gives every natural moment;
 * `integral_id_weibullMeasure` and `variance_id_weibullMeasure` give the mean and variance;
-* `cdf_weibullMeasure_one_eq_cdf_expMeasure` and `weibullMeasure_one_eq_expMeasure` identify
-  shape-one Weibull laws with exponential laws;
+* `weibullMeasure_one_eq_expMeasure` identifies shape-one Weibull laws with exponential laws;
 * `measurable_weibullMeasure` makes the family available for kernel constructions.
 
 ## References
@@ -449,7 +448,7 @@ theorem cdf_weibullMeasure_eq (hk : 0 < k) (hlam : 0 < lam) (x : ℝ) :
 
 /-- At shape one and positive scale, the Weibull cdf is the cdf of the exponential law of rate
 `lam⁻¹`. Kept private: `weibullMeasure_one_eq_expMeasure` upgrades it to an identity of measures
-that needs no positivity, and `cdf_weibullMeasure_one_eq_cdf_expMeasure` is its cdf form. -/
+that needs no positivity and rewrites every cdf occurrence directly. -/
 private lemma cdf_weibullMeasure_one_eq_cdf_expMeasure_of_pos (hlam : 0 < lam) (x : ℝ) :
     cdf (weibullMeasure 1 lam) x = cdf (expMeasure lam⁻¹) x := by
   rw [cdf_weibullMeasure_eq one_pos hlam, cdf_expMeasure_eq (inv_pos.mpr hlam)]
@@ -487,11 +486,6 @@ theorem weibullMeasure_one_eq_expMeasure (lam : ℝ) :
     apply Measure.eq_of_cdf
     ext x
     exact cdf_weibullMeasure_one_eq_cdf_expMeasure_of_pos hlam x
-
-/-- At shape one, the Weibull cdf is the cdf of the exponential law of rate `lam⁻¹`. -/
-theorem cdf_weibullMeasure_one_eq_cdf_expMeasure (lam x : ℝ) :
-    cdf (weibullMeasure 1 lam) x = cdf (expMeasure lam⁻¹) x := by
-  rw [weibullMeasure_one_eq_expMeasure]
 
 /-! ### Natural moments, mean, and variance -/
 

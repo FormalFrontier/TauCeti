@@ -408,7 +408,7 @@ theorem not_integrable_exp_mul_logNormalMeasure (m : ℝ) (hv : v ≠ 0) (ht : 0
           mul_le_mul_of_nonneg_left key (by positivity)
       _ = Real.exp (t * Real.exp x)
             * ((√(2 * π * (v : ℝ)))⁻¹ * Real.exp (-(x - m) ^ 2 / (2 * (v : ℝ)))) := by ring
-  exact MeasureTheory.not_integrable_of_eventually_one_le_atTop hev
+  exact MeasureTheory.not_integrable_of_eventually_le_atTop one_pos hev
 
 /-- **The exponential-integrability domain of a log-normal law with nonzero log-variance is the
 nonpositive half-line.** -/
