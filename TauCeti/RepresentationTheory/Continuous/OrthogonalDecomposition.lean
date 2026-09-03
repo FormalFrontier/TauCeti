@@ -83,6 +83,8 @@ namespace ContRepresentation
 
 namespace IsUnitary
 
+section Unitary
+
 variable {𝕜 G V : Type*} [RCLike 𝕜] [Group G] [NormedAddCommGroup V] [InnerProductSpace 𝕜 V]
   {π : ContRepresentation 𝕜 G V}
 
@@ -210,9 +212,15 @@ theorem exists_orthogonal_irreducible_decomposition (hπ : IsUnitary π) :
     hfamily, hinternal, ?_⟩
   exact finrank_eq_sum_finrank_of_isInternal hinternal
 
+end FiniteDimensional
+
+end Unitary
+
 section Congr
 
-variable {W : Type*} [NormedAddCommGroup W] [InnerProductSpace 𝕜 W]
+variable {𝕜 G V W : Type*} [RCLike 𝕜] [Group G]
+  [NormedAddCommGroup V] [NormedSpace 𝕜 V] [FiniteDimensional 𝕜 V]
+  [NormedAddCommGroup W] [InnerProductSpace 𝕜 W] {π : ContRepresentation 𝕜 G V}
 
 /-- **Complete reducibility for a unitarizable representation, orthogonal internal form.** If a
 continuous linear equivalence `e : V ≃L[𝕜] W` conjugates `π` into a *unitary* representation
@@ -227,10 +235,12 @@ back to `(U i).toSubmodule.map e.symm`, which is `π`-invariant because `e` inte
 `congr e π`, and irreducibility, internality and the dimension count travel along the linear
 equivalence `e.symm` restricted to it.
 
-Orthogonality cannot be stated for the inner product of `V`: `e` is there precisely because `π`
-need not preserve that one, and the form the blocks are orthogonal for is the invariant
-`⟪e ·, e ·⟫` pulled back from `W`. Nothing here uses finiteness or compactness of the acting group;
-a construction of an `e` is what such a hypothesis is for, Weyl's unitarian trick
+Orthogonality is not stated inside `V`, which carries no inner product here: `e` is there
+precisely because `π` need not preserve one, and the form the blocks are orthogonal for is the
+invariant `⟪e ·, e ·⟫` pulled back from `W`. Only the unitary model needs an inner product, so
+`V` is asked for no more than a finite-dimensional normed space, as
+`TauCeti.ContRepresentation.congr` itself is. Nothing here uses finiteness or compactness of the
+acting group; a construction of an `e` is what such a hypothesis is for, Weyl's unitarian trick
 `TauCeti.ContRepresentation.exists_isUnitary_congr` being one. -/
 theorem exists_orthogonal_irreducible_decomposition_of_congr {e : V ≃L[𝕜] W}
     (he : IsUnitary (ContRepresentation.congr e π)) :
@@ -286,8 +296,6 @@ theorem exists_orthogonal_irreducible_decomposition_of_congr {e : V ≃L[𝕜] W
       ((e : V ≃ₗ[𝕜] W).symm.submoduleMap (U i).toSubmodule).finrank_eq
 
 end Congr
-
-end FiniteDimensional
 
 end IsUnitary
 
