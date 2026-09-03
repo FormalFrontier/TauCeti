@@ -24,7 +24,7 @@ in terms of `Sheaf.H'`, so the comparison is what lets a covering of the whole s
 
 ## Main declarations
 
-* `TauCeti.CategoryTheory.Sheaf.cohomologyPresheafObjIsoH`: the comparison
+* `CategoryTheory.Sheaf.cohomologyPresheafObjIsoH`: the comparison
   `Hⁿ(T, F) ≅ Hⁿ(F)` at a terminal object `T`, as an isomorphism of abelian groups;
 * `TauCeti.CategoryTheory.Sheaf.cohomologyPresheafEvaluationIsoFunctorH`: the same comparison as a
   natural isomorphism in the coefficient sheaf.
@@ -36,6 +36,10 @@ for the cohomology of a scheme, which is Layer B infrastructure for
 `TauCetiRoadmap/JacobianChallenge/README.md`. No formalization is vendored: the ingredients are
 Mathlib's `CategoryTheory.Limits.IsTerminal.isTerminalObj`, `FreeAbelianGroup.uniqueEquiv`,
 `CategoryTheory.Functor.constComp` and `CategoryTheory.Abelian.extFunctor`.
+
+The object-level comparison extends Mathlib's root-level `CategoryTheory.Sheaf` API; the
+functor-level construction remains in `TauCeti.CategoryTheory.Sheaf` because it is not attached to
+a particular sheaf.
 -/
 
 public section
@@ -108,7 +112,8 @@ def cohomologyPresheafEvaluationIsoFunctorH (n : ℕ) {T : C} (hT : IsTerminal T
 variable (n : ℕ) {T : C} (hT : IsTerminal T)
 
 /-- At a terminal object, the cohomology of the object is the cohomology of the site. -/
-noncomputable abbrev cohomologyPresheafObjIsoH (F : Sheaf J AddCommGrpCat.{v}) :
+noncomputable abbrev _root_.CategoryTheory.Sheaf.cohomologyPresheafObjIsoH
+    (F : Sheaf J AddCommGrpCat.{v}) :
     _root_.CategoryTheory.Sheaf.H' F n T ≅
       AddCommGrpCat.of (_root_.CategoryTheory.Sheaf.H F n) :=
   (cohomologyPresheafEvaluationIsoFunctorH J n hT).app F

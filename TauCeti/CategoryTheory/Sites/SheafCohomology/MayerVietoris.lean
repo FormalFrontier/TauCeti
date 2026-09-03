@@ -13,6 +13,9 @@ public import Mathlib.CategoryTheory.Sites.SheafCohomology.MayerVietoris
 This file records general consequences of Mathlib's Mayer-Vietoris sequence for sheaf
 cohomology. They are used for the scheme-cohomology vanishing results required by
 `TauCetiRoadmap/JacobianChallenge/README.md`, Layer B.
+
+The results extend Mathlib's root-level `CategoryTheory.GrothendieckTopology.MayerVietorisSquare`
+API, so they are declared there and can be invoked directly on a Mayer-Vietoris square.
 -/
 
 public section
@@ -33,7 +36,8 @@ variable (S : J.MayerVietorisSquare) (F : Sheaf J AddCommGrpCat.{v})
 
 /-- If the cohomology of the two side objects vanishes in degree `n₁`, then the connecting map
 from degree `n₀` to degree `n₁` is an epimorphism. -/
-theorem epi_δ (n₀ n₁ : ℕ) (h : n₀ + 1 = n₁)
+theorem _root_.CategoryTheory.GrothendieckTopology.MayerVietorisSquare.epi_δ
+    (n₀ n₁ : ℕ) (h : n₀ + 1 = n₁)
     (h₂ : Subsingleton (F.H' n₁ S.X₂)) (h₃ : Subsingleton (F.H' n₁ S.X₃)) :
     Epi (S.δ F n₀ n₁ h) := by
   have hg : S.toBiprod F n₁ = 0 :=
@@ -45,12 +49,13 @@ theorem epi_δ (n₀ n₁ : ℕ) (h : n₀ + 1 = n₁)
 
 /-- If the lower-left and the two side cohomology groups in consecutive degrees vanish, then the
 upper-right cohomology group vanishes. -/
-theorem subsingleton_H'_X₄ (n₀ n₁ : ℕ) (h : n₀ + 1 = n₁)
+theorem _root_.CategoryTheory.GrothendieckTopology.MayerVietorisSquare.subsingleton_H'_X₄
+    (n₀ n₁ : ℕ) (h : n₀ + 1 = n₁)
     (h₁ : Subsingleton (F.H' n₀ S.X₁))
     (h₂ : Subsingleton (F.H' n₁ S.X₂)) (h₃ : Subsingleton (F.H' n₁ S.X₃)) :
     Subsingleton (F.H' n₁ S.X₄) := by
   have hsurj : Function.Surjective (S.δ F n₀ n₁ h) :=
-    (AddCommGrpCat.epi_iff_surjective _).mp (epi_δ S F n₀ n₁ h h₂ h₃)
+    (AddCommGrpCat.epi_iff_surjective _).mp (S.epi_δ F n₀ n₁ h h₂ h₃)
   exact hsurj.subsingleton
 
 end CategoryTheory.GrothendieckTopology.MayerVietorisSquare

@@ -123,7 +123,7 @@ lemma cohomologyOnRes_comp (n : ℕ) {U V W : Opens X} (hUV : U ≤ V) (hVW : V 
 /-- The cohomology of the whole space is the cohomology of the scheme. -/
 noncomputable abbrev cohomologyOnTopIso (n : ℕ) :
     cohomologyOn M n ⊤ ≅ AddCommGrpCat.of (Cohomology M n) :=
-  TauCeti.CategoryTheory.Sheaf.cohomologyPresheafObjIsoH n isTerminalTop _
+  CategoryTheory.Sheaf.cohomologyPresheafObjIsoH n isTerminalTop _
 
 end Opens
 
