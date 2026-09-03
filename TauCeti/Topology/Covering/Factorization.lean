@@ -6,39 +6,36 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Topology.Connected.LocallyConnected
-public import TauCeti.Topology.Covering.Clopen
+public import Mathlib.Topology.Covering.Basic
 
 /-!
-# A map between covering spaces of a locally connected base is a covering map
+# A map of covering spaces with locally connected target is a covering map
 
 Let `p : E → X` and `q : F → X` be covering maps and let `g : E → F` be a continuous map over
-`X`, that is, `q ∘ g = p`. This file proves that `g` is itself a covering map as soon as `X` is
+`X`, that is, `q ∘ g = p`. This file proves that `g` is itself a covering map as soon as `F` is
 locally connected.
 
 The proof is the standard sheet comparison. Around a point `f₀` of `F`, choose a connected open
-set `V` inside the intersection of an evenly covered neighbourhood for `p` with one for `q`, and
-trivialize both projections over it. A sheet of `p` over `V` is the image of `V` under
+neighbourhood in `F` whose image `V` lies inside the intersection of evenly covered
+neighbourhoods for `p` and `q`, and trivialize both projections over `V`. A sheet of `p` over `V`
+is the image of `V` under
 `v ↦ tp.symm (v, i)`, so it is connected, and the sheet index of its image under `g` is a
 continuous map from `V` to a discrete space, hence constant. So `g` carries each sheet of `p`
 over `V` onto a single sheet of `q`, and injectively, because `p = q ∘ g` is injective on it.
 The sheet `W` of `q` through `f₀` is therefore evenly covered by `g`, with fibre the set of
 sheets of `p` that land in `W`.
 
-Local connectedness of `X` is what produces the connected `V`. It is used exactly once, to make
-the sheet index locally constant, and that is the step which fails over a base with no small
-connected neighbourhoods.
+Local connectedness of `F` produces the connected neighbourhood whose open, connected image is
+`V`. It is used exactly once, to make the sheet index locally constant.
 
 Neither total space is assumed connected and `g` is not assumed surjective. That is consistent
 because `IsCoveringMap` allows empty fibres: over a sheet of `q` missed by `g` the fibre of `g`
-is empty. Surjectivity is a separate statement, recorded here for a preconnected target: it
-follows from the clopenness of the range of a covering map.
+is empty.
 
 ## Main declarations
 
-* `IsCoveringMap.of_comp_eq`: **a continuous map between covering spaces of a locally connected
-  base, commuting with the projections, is a covering map.**
-* `IsCoveringMap.surjective_of_comp_eq`: it is surjective as soon as the target cover is
-  preconnected and the source cover is nonempty.
+* `IsCoveringMap.of_comp_eq`: **a continuous map between covering spaces, with locally connected
+  target and commuting with the projections, is a covering map.**
 -/
 
 public section
@@ -156,13 +153,13 @@ private theorem isEvenlyCovered_of_trivialization (hq : Continuous q) (hg : Cont
         · exact tp.mem_target.mpr (hVsub wi.1.2.1).1 },
     fun _ => rfl⟩
 
-/-- **A map of covering spaces over a locally connected base is a covering map.** If `p : E → X`
+/-- **A map of covering spaces with locally connected target is a covering map.** If `p : E → X`
 and `q : F → X` are covering maps and `g : E → F` is continuous with `q ∘ g = p`, then `g` is a
-covering map.
+covering map provided `F` is locally connected.
 
 Neither total space needs to be connected and `g` need not be surjective; the fibre of `g` over
 a point outside its range is empty, which `IsCoveringMap` permits. -/
-theorem _root_.IsCoveringMap.of_comp_eq [LocallyConnectedSpace X] (hp : IsCoveringMap p)
+theorem _root_.IsCoveringMap.of_comp_eq [LocallyConnectedSpace F] (hp : IsCoveringMap p)
     (hq : IsCoveringMap q) (hg : Continuous g) (hgp : q ∘ g = p) : IsCoveringMap g := by
   have hqg : ∀ e, q (g e) = p e := congrFun hgp
   intro f₀
@@ -183,20 +180,16 @@ theorem _root_.IsCoveringMap.of_comp_eq [LocallyConnectedSpace X] (hp : IsCoveri
   · have : Nonempty (q ⁻¹' {q f₀} : Set F) := ⟨⟨f₀, rfl⟩⟩
     have := (hp (q f₀)).discreteTopology_fiber
     have := (hq (q f₀)).discreteTopology_fiber
-    -- `V` is the connected component of `q f₀` in the intersection of the two base sets.
     set tp := (hp (q f₀)).toTrivialization
     set tq := (hq (q f₀)).toTrivialization
+    obtain ⟨W, hWsub, hWopen, hf₀W, hWconn⟩ :=
+      locallyConnectedSpace_iff_subsets_isOpen_isConnected.mp ‹LocallyConnectedSpace F› f₀
+        (q ⁻¹' (tp.baseSet ∩ tq.baseSet))
+        ((tp.open_baseSet.inter tq.open_baseSet).preimage hq.continuous |>.mem_nhds
+          ⟨(hp (q f₀)).mem_toTrivialization_baseSet,
+            (hq (q f₀)).mem_toTrivialization_baseSet⟩)
     exact isEvenlyCovered_of_trivialization hq.continuous hg hqg tp tq f₀
-      (tp.open_baseSet.inter tq.open_baseSet).connectedComponentIn
-      isPreconnected_connectedComponentIn (connectedComponentIn_subset _ _)
-      (mem_connectedComponentIn
-        ⟨(hp (q f₀)).mem_toTrivialization_baseSet, (hq (q f₀)).mem_toTrivialization_baseSet⟩)
-
-/-- A map of covering spaces over a locally connected base is surjective as soon as the target
-cover is preconnected and the source cover is nonempty. -/
-theorem _root_.IsCoveringMap.surjective_of_comp_eq [LocallyConnectedSpace X] [PreconnectedSpace F]
-    [Nonempty E] (hp : IsCoveringMap p) (hq : IsCoveringMap q) (hg : Continuous g)
-    (hgp : q ∘ g = p) : Function.Surjective g :=
-  (hp.of_comp_eq hq hg hgp).surjective
+      (hq.isOpenMap W hWopen) (hWconn.isPreconnected.image q hq.continuous.continuousOn)
+      (fun x ⟨f, hf, hfx⟩ => hfx ▸ hWsub hf) ⟨f₀, hf₀W, rfl⟩
 
 end TauCeti

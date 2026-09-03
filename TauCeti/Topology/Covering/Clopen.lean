@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Topology.Clopen
 public import Mathlib.Topology.Connected.Clopen
 public import Mathlib.Topology.Covering.Basic
 

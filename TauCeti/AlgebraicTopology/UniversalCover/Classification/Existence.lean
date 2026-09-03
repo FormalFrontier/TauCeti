@@ -9,6 +9,7 @@ public import TauCeti.AlgebraicTopology.UniversalCover.Classification.SubgroupQu
 public import TauCeti.Topology.Covering.Category
 public import TauCeti.Topology.Covering.Quotient
 import TauCeti.Topology.Homotopy.Monodromy.Functoriality
+import TauCeti.Topology.IsLocalHomeomorph
 
 /-!
 # The covering associated to a subgroup
@@ -65,6 +66,13 @@ theorem isCoveringMap_subgroupQuotientProj [LocallyPathConnectedSpace X]
   IsQuotientCoveringMap.isCoveringMap_of_comp (isQuotientCoveringMap (x₀ := x₀))
     (isQuotientCoveringMap_subgroupQuotientMap x₀ H)
     (subgroupQuotientProj_comp_subgroupQuotientMap x₀ H)
+
+/-- The quotient of the universal cover by a subgroup is locally path-connected, being the total
+space of a covering space of the locally path-connected base `X`. -/
+theorem locallyPathConnectedSpace_subgroupQuotient [LocallyPathConnectedSpace X]
+    [PathConnectedSpace X] [SemilocallySimplyConnectedSpace X] (x₀ : X)
+    (H : Subgroup (FundamentalGroup X x₀)) : LocallyPathConnectedSpace (SubgroupQuotient x₀ H) :=
+  (isCoveringMap_subgroupQuotientProj x₀ H).isLocalHomeomorph.locallyPathConnectedSpace
 
 /-- The connected covering space associated to a subgroup `H ≤ π₁(X, x₀)`, obtained by
 quotienting the universal cover by `H`. -/
