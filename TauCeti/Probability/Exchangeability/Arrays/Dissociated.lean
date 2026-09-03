@@ -54,7 +54,7 @@ the global noise coordinate entirely.
 
 These results advance the exchangeable-arrays milestone of
 `TauCetiRoadmap/Exchangeability/README.md`, Layer 8. The dissociated codings themselves are in
-`Arrays/AldousHoover.lean`.
+`Arrays/AldousHoover/Dissociated.lean`.
 
 ## Main definitions
 

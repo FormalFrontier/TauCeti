@@ -282,6 +282,42 @@ private theorem lineHomotopy_sub (γ₀ γ₁ : ℝ → ℂ) (s s' t : ℝ) :
   simp only [lineHomotopy_apply]
   module
 
+/-- Chaining the leash lemma along a uniform subdivision. If every step of the straight-line
+homotopy moves each point by less than the clearance `m` between the whole homotopy and `w`, then
+every stage `k / N` has the same winding number about `w` as the initial curve. -/
+private theorem windingNumber_lineHomotopy_div_eq_of_norm_div_lt (h₀ : IsPiecewiseC1On γ₀ a b)
+    (h₁ : IsPiecewiseC1On γ₁ a b) (h₀closed : γ₀ a = γ₀ b) (h₁closed : γ₁ a = γ₁ b)
+    {m : ℝ} {N : ℕ} (hNpos : (0 : ℝ) < N)
+    (hlt : ∀ t ∈ uIcc a b, ‖γ₁ t - γ₀ t‖ / N < m)
+    (hmle : ∀ s ∈ Icc (0 : ℝ) 1, ∀ t ∈ uIcc a b, m ≤ ‖lineHomotopy γ₀ γ₁ s t - w‖) :
+    ∀ k : ℕ, k ≤ N → windingNumber (lineHomotopy γ₀ γ₁ (k / N)) a b w =
+      windingNumber (lineHomotopy γ₀ γ₁ 0) a b w := by
+  have hHpw : ∀ s : ℝ, IsPiecewiseC1On (lineHomotopy γ₀ γ₁ s) a b := fun s =>
+    (h₀.const_smul (1 - s)).add (h₁.const_smul s)
+  have hHclosed : ∀ s : ℝ, lineHomotopy γ₀ γ₁ s a = lineHomotopy γ₀ γ₁ s b := fun s => by
+    rw [lineHomotopy_apply, lineHomotopy_apply, h₀closed, h₁closed]
+  intro k
+  induction k with
+  | zero => intro _; norm_num
+  | succ k ih =>
+    intro hk
+    have hkN : k ≤ N := Nat.le_of_succ_le hk
+    rw [← ih hkN]
+    refine IsPiecewiseC1On.windingNumber_eq_of_dist_lt_dist (hHpw _) (hHpw _)
+      (hHclosed _) (hHclosed _) fun t ht => ?_
+    have hmem : (k : ℝ) / N ∈ Icc (0 : ℝ) 1 := by
+      refine ⟨by positivity, ?_⟩
+      rw [div_le_one hNpos]
+      exact_mod_cast hkN
+    -- one stage of the subdivision advances the parameter by exactly `1 / N`
+    have hgap : ((k + 1 : ℕ) : ℝ) / N - (k : ℝ) / N = 1 / N := by push_cast; ring
+    have hdisp : ‖lineHomotopy γ₀ γ₁ ((k + 1 : ℕ) / N) t
+        - lineHomotopy γ₀ γ₁ ((k : ℝ) / N) t‖ = ‖γ₁ t - γ₀ t‖ / N := by
+      rw [lineHomotopy_sub, norm_smul, Real.norm_eq_abs, hgap, abs_of_pos (by positivity)]
+      ring
+    rw [dist_eq_norm, dist_eq_norm, hdisp]
+    exact lt_of_lt_of_le (hlt t ht) (hmle _ hmem t ht)
+
 /-- **Invariance of the winding number along a straight-line homotopy.** If for every parameter `t`
 the segment from `γ₀ t` to `γ₁ t` misses `w`, then the two closed piecewise-`C¹` curves have the
 same winding number about `w`.
@@ -299,10 +335,6 @@ theorem IsPiecewiseC1On.windingNumber_eq_of_notMem_segment (h₀ : IsPiecewiseC1
     intro s hs t ht
     refine sub_ne_zero.mpr fun heq => hseg t ht ?_
     exact heq ▸ ⟨1 - s, s, by linarith [hs.2], hs.1, by ring, rfl⟩
-  have hHpw : ∀ s : ℝ, IsPiecewiseC1On (lineHomotopy γ₀ γ₁ s) a b := fun s =>
-    (h₀.const_smul (1 - s)).add (h₁.const_smul s)
-  have hHclosed : ∀ s : ℝ, lineHomotopy γ₀ γ₁ s a = lineHomotopy γ₀ γ₁ s b := fun s => by
-    rw [lineHomotopy_apply, lineHomotopy_apply, h₀closed, h₁closed]
   -- A positive lower bound for the distance from the homotopy to `w`, by compactness.
   have hKcompact : IsCompact (Icc (0 : ℝ) 1 ×ˢ uIcc a b) := isCompact_Icc.prod isCompact_uIcc
   have hKne : (Icc (0 : ℝ) 1 ×ˢ uIcc a b).Nonempty := ⟨(0, a), ⟨by norm_num, left_mem_uIcc⟩⟩
@@ -331,31 +363,8 @@ theorem IsPiecewiseC1On.windingNumber_eq_of_notMem_segment (h₀ : IsPiecewiseC1
     rw [div_lt_iff₀ hNpos, mul_comm]
     exact (div_lt_iff₀ hm).mp hN
   -- Chain the stages `k / N` together with the leash lemma.
-  have key : ∀ k : ℕ, k ≤ N → windingNumber (lineHomotopy γ₀ γ₁ (k / N)) a b w =
-      windingNumber (lineHomotopy γ₀ γ₁ 0) a b w := by
-    intro k
-    induction k with
-    | zero => intro _; norm_num
-    | succ k ih =>
-      intro hk
-      have hkN : k ≤ N := Nat.le_of_succ_le hk
-      rw [← ih hkN]
-      refine IsPiecewiseC1On.windingNumber_eq_of_dist_lt_dist (hHpw _) (hHpw _)
-        (hHclosed _) (hHclosed _) fun t ht => ?_
-      have hmem : (k : ℝ) / N ∈ Icc (0 : ℝ) 1 := by
-        refine ⟨by positivity, ?_⟩
-        rw [div_le_one hNpos]
-        exact_mod_cast hkN
-      have hdisp : ‖lineHomotopy γ₀ γ₁ ((k + 1 : ℕ) / N) t
-          - lineHomotopy γ₀ γ₁ ((k : ℝ) / N) t‖ = ‖γ₁ t - γ₀ t‖ / N := by
-        rw [lineHomotopy_sub, norm_smul, Real.norm_eq_abs,
-          show ((k + 1 : ℕ) : ℝ) / N - (k : ℝ) / N = 1 / N by push_cast; ring,
-          abs_of_pos (by positivity)]
-        ring
-      rw [dist_eq_norm, dist_eq_norm, hdisp]
-      calc ‖γ₁ t - γ₀ t‖ / N ≤ M / N := by gcongr; exact hM t ht
-        _ < ‖lineHomotopy γ₀ γ₁ q.1 q.2 - w‖ := hstep
-        _ ≤ ‖lineHomotopy γ₀ γ₁ ((k : ℝ) / N) t - w‖ := hmle _ hmem t ht
+  have key := windingNumber_lineHomotopy_div_eq_of_norm_div_lt h₀ h₁ h₀closed h₁closed hNpos
+    (fun t ht => lt_of_le_of_lt (by gcongr; exact hM t ht) hstep) hmle
   have hfinal := key N le_rfl
   rw [div_self (ne_of_gt hNpos)] at hfinal
   have hH0 : lineHomotopy γ₀ γ₁ 0 = γ₀ := by

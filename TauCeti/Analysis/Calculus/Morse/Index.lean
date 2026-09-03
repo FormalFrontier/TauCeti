@@ -23,7 +23,7 @@ The Hessian quadratic form used here is
 
 Some statements of the Morse lemma put a factor `2⁻¹` in front of this form.  That positive factor
 does not change its negative index, by
-`TauCeti.QuadraticForm.sigNeg_smul_of_pos`.  In particular the convention agrees with the normal
+`QuadraticForm.sigNeg_smul_of_pos`.  In particular the convention agrees with the normal
 form in `TauCeti.Analysis.Calculus.Morse.NormalForm`.
 
 The definition is made at every point, not only at a critical point, since the index of the
@@ -167,7 +167,7 @@ index is zero. -/
 theorem IsNondegenerateCriticalPoint.hessianQuadraticForm_posDef_iff_morseIndex_eq_zero
     [FiniteDimensional ℝ E] (h : IsNondegenerateCriticalPoint f x) :
     (hessianQuadraticForm f x).PosDef ↔ morseIndex f x = 0 := by
-  rw [TauCeti.QuadraticForm.posDef_iff_sigNeg_eq_zero_and_radical_eq_bot,
+  rw [QuadraticForm.posDef_iff_sigNeg_eq_zero_and_radical_eq_bot,
     h.hessianQuadraticForm_nondegenerate.radical_eq_bot, morseIndex_def]
   simp only [eq_self, and_true]
 
@@ -176,7 +176,7 @@ index is the dimension of the ambient space. -/
 theorem IsNondegenerateCriticalPoint.neg_hessianQuadraticForm_posDef_iff_morseIndex_eq_finrank
     [FiniteDimensional ℝ E] (h : IsNondegenerateCriticalPoint f x) :
     (-hessianQuadraticForm f x).PosDef ↔ morseIndex f x = Module.finrank ℝ E := by
-  rw [TauCeti.QuadraticForm.posDef_iff_sigNeg_eq_zero_and_radical_eq_bot,
+  rw [QuadraticForm.posDef_iff_sigNeg_eq_zero_and_radical_eq_bot,
     QuadraticMap.radical_neg, h.hessianQuadraticForm_nondegenerate.radical_eq_bot, sigNeg_neg]
   simp only [eq_self, and_true]
   have hsum := h.sigPos_hessianQuadraticForm_add_morseIndex_eq_finrank

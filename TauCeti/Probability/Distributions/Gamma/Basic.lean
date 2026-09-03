@@ -77,6 +77,14 @@ variable {a r : ℝ}
 
 /-! ### Reduction to the positive half-line -/
 
+/-- A gamma measure is almost everywhere strictly positive, for all parameter values. -/
+theorem ae_pos_gammaMeasure (a r : ℝ) :
+    ∀ᵐ x ∂gammaMeasure a r, 0 < x := by
+  rw [gammaMeasure, ae_withDensity_iff (Probability.measurable_gammaPDF a r)]
+  filter_upwards [(volume : Measure ℝ).ae_ne 0] with x hx hpdf
+  by_contra hxpos
+  exact hpdf (gammaPDF_of_neg (lt_of_le_of_ne (le_of_not_gt hxpos) hx))
+
 /-- On the positive half-line the gamma density is given by its closed formula. -/
 private lemma gammaPDFReal_of_pos {x : ℝ} (hx : 0 < x) :
     gammaPDFReal a r x = r ^ a / Real.Gamma a * x ^ (a - 1) * exp (-(r * x)) := by
@@ -84,15 +92,16 @@ private lemma gammaPDFReal_of_pos {x : ℝ} (hx : 0 < x) :
 
 /-- An integral against the gamma law is the set integral of the weighted integrand over
 `(0, ∞)`. -/
-private lemma integral_gammaMeasure_eq (ha : 0 < a) (hr : 0 < r) (f : ℝ → ℝ) :
+theorem integral_gammaMeasure_eq {E : Type*} [NormedAddCommGroup E] [NormedSpace ℝ E]
+    (ha : 0 < a) (hr : 0 < r) (f : ℝ → E) :
     ∫ x, f x ∂gammaMeasure a r =
-      ∫ x in Ioi 0, r ^ a / Real.Gamma a * x ^ (a - 1) * exp (-(r * x)) * f x := by
-  have hcompl : ∀ x ∉ Ici (0 : ℝ), gammaPDFReal a r x * f x = 0 := by
+      ∫ x in Ioi 0, (r ^ a / Real.Gamma a * x ^ (a - 1) * exp (-(r * x))) • f x := by
+  have hcompl : ∀ x ∉ Ici (0 : ℝ), gammaPDFReal a r x • f x = 0 := by
     intro x hx
-    rw [gammaPDFReal, ite_eq_right (by simpa using hx), zero_mul]
+    rw [gammaPDFReal, ite_eq_right (by simpa using hx), zero_smul]
   rw [gammaMeasure, integral_withDensity_eq_integral_toReal_smul
     (Probability.measurable_gammaPDF a r) (ae_of_all _ fun _ ↦ ENNReal.ofReal_lt_top) f]
-  simp_rw [gammaPDF, ENNReal.toReal_ofReal (gammaPDFReal_nonneg ha hr _), smul_eq_mul]
+  simp_rw [gammaPDF, ENNReal.toReal_ofReal (gammaPDFReal_nonneg ha hr _)]
   rw [← setIntegral_eq_integral_of_forall_compl_eq_zero hcompl, integral_Ici_eq_integral_Ioi]
   exact setIntegral_congr_fun measurableSet_Ioi fun x hx ↦ by rw [gammaPDFReal_of_pos hx]
 
@@ -117,8 +126,7 @@ private lemma integrable_gammaMeasure_iff (ha : 0 < a) (hr : 0 < r) (f : ℝ →
     fun h ↦ ⟨hneg, h.congr_fun (fun x hx ↦ (hpos x hx).symm) measurableSet_Ioi⟩⟩
 
 /-- A constant multiple of Euler's Gamma integral, in quotient form. -/
-private lemma integral_const_mul_rpow_mul_exp_neg_mul_Ioi
-    (C s b : ℝ) (hs : 0 < s) (hb : 0 < b) :
+private lemma integral_const_mul_gammaKernel (C s b : ℝ) (hs : 0 < s) (hb : 0 < b) :
     ∫ x in Ioi 0, C * (x ^ (s - 1) * exp (-(b * x))) = C * Real.Gamma s / b ^ s := by
   rw [integral_const_mul, Real.integral_rpow_mul_exp_neg_mul_Ioi hs hb, one_div,
     Real.inv_rpow hb.le, div_eq_mul_inv]
@@ -146,9 +154,12 @@ theorem integral_pow_gammaMeasure (ha : 0 < a) (hr : 0 < r) (n : ℕ) :
   have hGa := (Real.Gamma_pos_of_pos ha).ne'
   have hra := (Real.rpow_pos_of_pos hr a).ne'
   have hrn := (pow_pos hr n).ne'
-  rw [integral_gammaMeasure_eq ha hr, setIntegral_congr_fun measurableSet_Ioi hcongr,
-    integral_const_mul_rpow_mul_exp_neg_mul_Ioi _ _ _ han hr, Real.rpow_add hr,
-    Real.rpow_natCast]
+  rw [integral_gammaMeasure_eq ha hr]
+  -- In this real-valued specialization, scalar multiplication is ordinary multiplication.
+  change (∫ x in Ioi 0,
+    (r ^ a / Real.Gamma a * x ^ (a - 1) * exp (-(r * x))) * x ^ n) = _
+  rw [setIntegral_congr_fun measurableSet_Ioi hcongr,
+    integral_const_mul_gammaKernel _ _ _ han hr, Real.rpow_add hr, Real.rpow_natCast]
   field_simp
 
 /-- Multiplying a Gamma density by the `n`th power of inversion lowers its shape by `n`. -/
@@ -232,10 +243,13 @@ theorem integral_inv_pow_gammaMeasure (hr : 0 < r) (n : ℕ)
     (hn : (n : ℝ) < a) :
     ∫ x, (x ^ n)⁻¹ ∂gammaMeasure a r = r ^ n * Real.Gamma (a - n) / Real.Gamma a := by
   have ha : 0 < a := lt_of_le_of_lt (Nat.cast_nonneg n) hn
-  rw [integral_gammaMeasure_eq ha hr,
-    setIntegral_congr_fun measurableSet_Ioi (fun x hx ↦ gammaWeight_mul_inv_pow n hx)]
+  rw [integral_gammaMeasure_eq ha hr]
+  -- In this real-valued specialization, scalar multiplication is ordinary multiplication.
+  change (∫ x in Ioi 0,
+    (r ^ a / Real.Gamma a * x ^ (a - 1) * exp (-(r * x))) * (x ^ n)⁻¹) = _
+  rw [setIntegral_congr_fun measurableSet_Ioi (fun x hx ↦ gammaWeight_mul_inv_pow n hx)]
   have han : 0 < a - (n : ℝ) := sub_pos.mpr hn
-  rw [integral_const_mul_rpow_mul_exp_neg_mul_Ioi _ _ _ han hr]
+  rw [integral_const_mul_gammaKernel _ _ _ han hr]
   have hGa : Real.Gamma a ≠ 0 := (Real.Gamma_pos_of_pos ha).ne'
   rw [Real.rpow_sub hr, Real.rpow_natCast]
   field_simp
@@ -349,9 +363,12 @@ theorem mgf_id_gammaMeasure (ha : 0 < a) (hr : 0 < r) {t : ℝ} (ht : t < r) :
   have hone_sub : (1 : ℝ) - t / r = (r - t) / r := by field_simp
   rw [mgf]
   simp only [id_eq]
-  rw [integral_gammaMeasure_eq ha hr,
-    setIntegral_congr_fun measurableSet_Ioi (fun x _ ↦ gammaWeight_mul_exp a r t x),
-    integral_const_mul_rpow_mul_exp_neg_mul_Ioi _ _ _ ha hrt, hone_sub,
+  rw [integral_gammaMeasure_eq ha hr]
+  -- In this real-valued specialization, scalar multiplication is ordinary multiplication.
+  change (∫ x in Ioi 0,
+    (r ^ a / Real.Gamma a * x ^ (a - 1) * exp (-(r * x))) * exp (t * x)) = _
+  rw [setIntegral_congr_fun measurableSet_Ioi (fun x _ ↦ gammaWeight_mul_exp a r t x),
+    integral_const_mul_gammaKernel _ _ _ ha hrt, hone_sub,
     Real.rpow_neg (by positivity), Real.div_rpow hrt.le hr.le]
   field_simp
 

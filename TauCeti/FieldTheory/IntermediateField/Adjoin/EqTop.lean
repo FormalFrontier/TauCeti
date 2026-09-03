@@ -16,7 +16,7 @@ whole-field counterpart of Mathlib's `IntermediateField.algHom_ext_of_eq_adjoin`
 compares homomorphisms out of the *subfield* `adjoin F s`), obtained from it by transporting
 along `adjoin F s ≃ₐ[F] E` rather than repeating the adjoin induction.
 
-It is the extensionality step shared by the multiquadratic Layer 1 arguments: the splitting
+It is the extensionality step shared by the multiquadratic arguments: the splitting
 law shows a decomposition-group element fixes every generator `√dᵢ` and concludes it is
 trivial, and the Frobenius computation concludes the same when every Legendre symbol is `1`.
 

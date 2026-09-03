@@ -73,8 +73,11 @@ jobs:
           private-key: ${{ secrets.APP_PRIVATE_KEY }}
           owner: TauCetiProject
           repositories: TauCeti
-          permission-issues: write        # the label and the one-off comment
-          permission-pull-requests: read  # open PRs and their mergeability
+          permission-issues: write         # the label, and creating it on first use
+          # WRITE, not read: commenting on a pull request is governed by the pull
+          # requests permission, not issues, even though the endpoint is
+          # /issues/N/comments. With read this failed 403 on every comment.
+          permission-pull-requests: write
       # The trusted base checkout: never PR head code, like every other sink here.
       # `ref` is explicit because workflow_dispatch otherwise checks out the ref it
       # was dispatched from -- which would run a branch's copy of this script with

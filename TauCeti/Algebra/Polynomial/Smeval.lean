@@ -23,25 +23,24 @@ enveloping algebra applied to a generalized binomial coefficient is such a situa
 
 ## Main results
 
-* `TauCeti.Polynomial.unop_smeval`: `MulOpposite.unop` commutes with `Polynomial.smeval`.
+* `Polynomial.unop_smeval`: `MulOpposite.unop` commutes with `Polynomial.smeval`.
 -/
 
 public section
 
-namespace TauCeti.Polynomial
+namespace Polynomial
 
 /-- Evaluating a polynomial at an element of an opposite monoid and then taking
 `MulOpposite.unop` is the same as evaluating at the `MulOpposite.unop` of that element. -/
 @[simp]
 theorem unop_smeval {R A : Type*} [Semiring R] [Monoid A] [AddCommMonoid A] [Module R A]
-    (p : _root_.Polynomial R) (a : Aᵐᵒᵖ) :
+    (p : Polynomial R) (a : Aᵐᵒᵖ) :
     (p.smeval a).unop = p.smeval a.unop := by
-  induction p using _root_.Polynomial.induction_on' with
+  induction p using Polynomial.induction_on' with
   | add p q hp hq =>
-    rw [_root_.Polynomial.smeval_add, MulOpposite.unop_add, hp, hq,
-      _root_.Polynomial.smeval_add]
+    rw [Polynomial.smeval_add, MulOpposite.unop_add, hp, hq, Polynomial.smeval_add]
   | monomial n c =>
-    rw [_root_.Polynomial.smeval_monomial, MulOpposite.unop_smul, MulOpposite.unop_pow,
-      _root_.Polynomial.smeval_monomial]
+    rw [Polynomial.smeval_monomial, MulOpposite.unop_smul, MulOpposite.unop_pow,
+      Polynomial.smeval_monomial]
 
-end TauCeti.Polynomial
+end Polynomial
