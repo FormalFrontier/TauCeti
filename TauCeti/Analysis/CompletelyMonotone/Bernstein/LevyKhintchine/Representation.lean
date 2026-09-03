@@ -16,7 +16,7 @@ import Mathlib.MeasureTheory.Integral.IntervalIntegral.FundThmCalculus
 
 This file proves the existence part of the converse Levy--Khintchine representation: every
 Bernstein function is the sum of a nonnegative killing term, a nonnegative linear drift, and the
-jump exponent of a Bernstein Levy measure. The three parameters are proved unique in
+jump exponent of a Bernstein Levy measure. Uniqueness of the three parameters is proved in
 `TauCeti.Analysis.CompletelyMonotone.Bernstein.LevyKhintchine.Uniqueness`.
 
 The proof represents the completely monotone derivative by a measure `sigma`. The atom of

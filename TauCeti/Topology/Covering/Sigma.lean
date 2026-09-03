@@ -66,7 +66,7 @@ theorem isCoveringMap_sigmaMap (hf : ∀ i, IsCoveringMap (f i)) :
     refine funext fun p ↦ Subtype.ext ?_
     obtain ⟨⟨j, e⟩, hje⟩ := p
     obtain rfl : j = i := by simpa [Sigma.map, eq_comm] using hje
-    simp [Set.restrictPreimage, Sigma.map, hE, hX, Homeomorph.setCongr, Equiv.setCongr,
+    simp [Set.restrictPreimage, Sigma.map, hE, hX, Homeomorph.setCongr, Set.equivOfEq,
       Equiv.subtypeEquivProp]
   rw [heq]
   exact ((hf i).comp_homeomorph hE).homeomorph_comp hX
@@ -75,7 +75,7 @@ theorem isCoveringMap_sigmaMap (hf : ∀ i, IsCoveringMap (f i)) :
 `x`**, through the inclusion of the `i`-th summand. -/
 noncomputable def sigmaMapFiberEquiv (i : ι) (x : X i) :
     (f i ⁻¹' {x} : Set (E i)) ≃ (Sigma.map id f ⁻¹' {(⟨i, x⟩ : Σ i, X i)} : Set (Σ i, E i)) :=
-  (Equiv.Set.image _ _ sigma_mk_injective).trans <| Equiv.setCongr <| by
+  (Equiv.Set.image _ _ sigma_mk_injective).trans <| Set.equivOfEq <| by
     simpa using Set.image_sigmaMk_preimage_sigmaMap Function.injective_id f i {x}
 
 omit [(i : ι) → TopologicalSpace (E i)] [(i : ι) → TopologicalSpace (X i)] in

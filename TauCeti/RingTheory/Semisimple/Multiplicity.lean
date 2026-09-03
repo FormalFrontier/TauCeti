@@ -8,6 +8,7 @@ module
 public import Mathlib.LinearAlgebra.Matrix.FiniteDimensional
 public import Mathlib.RingTheory.SimpleModule.Isotypic
 public import TauCeti.RingTheory.Semisimple.Schur
+public import TauCeti.RingTheory.Semisimple.RegularIsotypicComponent
 
 /-!
 # The multiplicity of a simple module, as the dimension of a hom space
@@ -30,10 +31,11 @@ Schur's lemma, `TauCeti.finrank_linearMap_eq_one_of_nonempty_linearEquiv` and
 `TauCeti/RingTheory/Semisimple/Schur.lean` alongside the transport of a hom space along an
 isomorphism of its target, `TauCeti.homCongrRight`.
 
-Everything is stated for a `k`-algebra `A` and `A`-modules that are `k`-modules compatibly, which
-is the generality the group-representation application needs: for `A = k[G]` the hom space is the
-space of intertwiners and the theorem is the classical "multiplicity equals the dimension of the
-space of intertwiners".
+The multiplicity results are stated for a `k`-algebra `A` and `A`-modules that are `k`-modules
+compatibly, which is the generality the group-representation application needs: for `A = k[G]`
+the hom space is the space of intertwiners. The reconstruction result from simple-module classes
+needs only a semisimple ring, while reconstruction from hom-space dimensions returns to the
+finite-dimensional `k`-algebra setting.
 
 ## Main results
 
@@ -43,6 +45,12 @@ space of intertwiners".
 * `TauCeti.natCard_eq_natCard_of_linearEquiv_pi`: consequently equivalent finite products of
   simple modules have the same number of factors isomorphic to `S`; applied to two decompositions
   of one module, this says that the multiplicity is well defined.
+* `TauCeti.nonempty_linearEquiv_pi_of_natCard_eq`: conversely, two finite products of simple
+  modules are linearly equivalent when their numbers of factors in every simple-module class
+  agree.
+* `TauCeti.nonempty_linearEquiv_of_finrank_linearMap_eq`: finite modules over a finite-dimensional
+  semisimple algebra are linearly equivalent when every simple left ideal has the same hom-space
+  dimension into them.
 * `TauCeti.finrank_linearMap_pos_iff_exists_nonempty_linearEquiv`: the multiplicity is positive
   exactly when `S` occurs among the factors, so the hom space detects the constituents.
 * `TauCeti.finrank_linearMap_eq_natCard_of_linearEquiv_pi_const`: the isotypic case, where `M` is
@@ -70,6 +78,10 @@ decomposition-free description of the component that a multiplicity computation 
 The index set of a decomposition is counted with `Nat.card` of a subtype rather than with a
 `Finset.filter`, so that no `DecidablePred` instance enters the statements; the proofs introduce
 classical decidability and a `Fintype` structure locally.
+
+The ring-general reconstruction theorem counts factors by `simpleModuleClass`; the hom-space
+reconstruction theorem converts those class fibres to the `Nonempty (S ≃ₗ[A] N i)` convention of
+the multiplicity theorem using `simpleModuleClass_eq_mk_iff`.
 
 Simplicity of `S` and finite dimensionality of `S` over `k` are standing hypotheses, but nothing
 is assumed about `M`: the multiplicity theorem takes the decomposition of `M` as data, and the
@@ -174,6 +186,89 @@ theorem natCard_eq_natCard_of_linearEquiv_pi {κ : Type*} [Finite κ] {P : κ �
     finrank_linearMap_eq_natCard_of_linearEquiv_pi (k := k) (S := S) e]
 
 end Multiplicity
+
+/-! ### Reconstructing a finite sum from its multiplicities -/
+
+section Reconstruction
+
+variable {R : Type*} [Ring R] [IsSemisimpleRing R]
+variable {ι κ : Type*} [Finite ι] [Finite κ]
+variable {N : ι → Type*} [∀ i, AddCommGroup (N i)] [∀ i, Module R (N i)]
+  [∀ i, IsSimpleModule R (N i)]
+variable {P : κ → Type*} [∀ j, AddCommGroup (P j)] [∀ j, Module R (P j)]
+  [∀ j, IsSimpleModule R (P j)]
+
+/-- **Finite sums of simple modules are determined by their multiplicities.** If two finite
+families contain equally many modules in every simple-module isomorphism class, their products are
+linearly equivalent. -/
+theorem nonempty_linearEquiv_pi_of_natCard_eq
+    (h : ∀ c : SimpleSubmoduleClasses R R,
+      Nat.card {i // simpleModuleClass R (N i) = c} =
+        Nat.card {j // simpleModuleClass R (P j) = c}) :
+    Nonempty ((∀ i, N i) ≃ₗ[R] ∀ j, P j) := by
+  have efiber : ∀ c, {i // simpleModuleClass R (N i) = c} ≃
+      {j // simpleModuleClass R (P j) = c} := fun c ↦ (Finite.card_eq.mp (h c)).some
+  let σ : ι ≃ κ := Equiv.ofFiberEquiv efiber
+  have hclass (i : ι) : simpleModuleClass R (N i) = simpleModuleClass R (P (σ i)) :=
+    (Equiv.ofFiberEquiv_map efiber i).symm
+  have hiso (i : ι) : Nonempty (N i ≃ₗ[R] P (σ i)) :=
+    simpleModuleClass_eq_iff.mp (hclass i)
+  exact ⟨(LinearEquiv.piCongrRight fun i ↦ (hiso i).some).trans
+    (LinearEquiv.piCongrLeft R P σ)⟩
+
+end Reconstruction
+
+/-! ### Reconstructing finite modules from hom-space dimensions -/
+
+section ReconstructionFromHom
+
+variable {k A M P : Type*} [Field k] [IsAlgClosed k] [Ring A] [Algebra k A]
+  [FiniteDimensional k A] [IsSemisimpleRing A]
+variable [AddCommGroup M] [Module k M] [Module A M] [IsScalarTower k A M] [Module.Finite A M]
+variable [AddCommGroup P] [Module k P] [Module A P] [IsScalarTower k A P] [Module.Finite A P]
+
+/-- **Finite modules over a semisimple algebra are determined by their simple multiplicities.**
+If every simple left ideal has hom spaces of the same dimension into `M` and `P`, then `M` and
+`P` are linearly equivalent. -/
+theorem nonempty_linearEquiv_of_finrank_linearMap_eq
+    (h : ∀ (S : Submodule A A) [IsSimpleModule A S],
+      Module.finrank k (S →ₗ[A] M) = Module.finrank k (S →ₗ[A] P)) :
+    Nonempty (M ≃ₗ[A] P) := by
+  obtain ⟨n, SM, eM, hSM⟩ := IsSemisimpleModule.exists_linearEquiv_fin_dfinsupp A M
+  obtain ⟨m, SP, eP, hSP⟩ := IsSemisimpleModule.exists_linearEquiv_fin_dfinsupp A P
+  let _ (i : Fin n) : IsSimpleModule A (SM i) := hSM i
+  let _ (i : Fin m) : IsSimpleModule A (SP i) := hSP i
+  let epM : M ≃ₗ[A] ∀ i, SM i := eM.trans DFinsupp.linearEquivFunOnFintype
+  let epP : P ≃ₗ[A] ∀ i, SP i := eP.trans DFinsupp.linearEquivFunOnFintype
+  have hfiber : ∀ c,
+      Nat.card {i // simpleModuleClass A (SM i) = c} =
+        Nat.card {j // simpleModuleClass A (SP j) = c} := by
+    intro c
+    induction c using SimpleSubmoduleClasses.ind with
+    | mk S hS =>
+      let _ : IsSimpleModule A S := hS
+      let _ : Module.Finite k S :=
+        Module.Finite.of_injective (S.subtype.restrictScalars k) Subtype.val_injective
+      have hpredM (i : Fin n) : simpleModuleClass A (SM i) =
+          SimpleSubmoduleClasses.mk S ↔ Nonempty (S ≃ₗ[A] SM i) := by
+        rw [simpleModuleClass_eq_mk_iff]
+        exact ⟨fun ⟨e⟩ ↦ ⟨e.symm⟩, fun ⟨e⟩ ↦ ⟨e.symm⟩⟩
+      have hpredP (i : Fin m) : simpleModuleClass A (SP i) =
+          SimpleSubmoduleClasses.mk S ↔ Nonempty (S ≃ₗ[A] SP i) := by
+        rw [simpleModuleClass_eq_mk_iff]
+        exact ⟨fun ⟨e⟩ ↦ ⟨e.symm⟩, fun ⟨e⟩ ↦ ⟨e.symm⟩⟩
+      calc
+        Nat.card {i // simpleModuleClass A (SM i) = SimpleSubmoduleClasses.mk S} =
+            Nat.card {i // Nonempty (S ≃ₗ[A] SM i)} :=
+          Nat.card_congr (Equiv.subtypeEquivRight hpredM)
+        _ = Nat.card {i // Nonempty (S ≃ₗ[A] SP i)} := by
+          rw [← finrank_linearMap_eq_natCard_of_linearEquiv_pi (k := k) (S := S) epM,
+            h S, finrank_linearMap_eq_natCard_of_linearEquiv_pi (k := k) (S := S) epP]
+        _ = Nat.card {i // simpleModuleClass A (SP i) = SimpleSubmoduleClasses.mk S} :=
+          Nat.card_congr (Equiv.subtypeEquivRight hpredP).symm
+  exact ⟨epM |>.trans (nonempty_linearEquiv_pi_of_natCard_eq hfiber).some |>.trans epP.symm⟩
+
+end ReconstructionFromHom
 
 /-! ### The isotypic case -/
 
@@ -299,4 +394,3 @@ theorem finrank_linearMap_pos_of_ne_bot {S : Submodule A M} (hS : S ≠ ⊥) :
 end Positivity
 
 end TauCeti
-

@@ -195,6 +195,19 @@ lemma const_bilinFormAt {V : Type*} [NormedAddCommGroup V] [NormedSpace ℝ V]
   ext v w
   rfl
 
+-- `zero`/`neg`/`smul` below (and the simp lemmas unfolding them) each resolve a doubly-nested
+-- `Hom`-of-tangent-space `VectorBundle` instance -- two-forms are curried bilinear maps
+-- `V →L[ℝ] V →L[ℝ] ℝ`, the standard, natural representation for this kind of object. That search
+-- passes through `ContinuousLinearMap`'s additive structure, which mathlib provides via two
+-- independent instances, `addCommGroup` and `addCommMonoid` (declared separately in
+-- `Mathlib.Topology.Algebra.Module.ContinuousLinearMap.Basic`, for the group and monoid-only
+-- cases respectively). Reconciling the two when both are in play is needless work here: over
+-- `ℝ`, an `AddCommGroup` instance is always available, and `addCommGroup.toAddCommMonoid` is
+-- exactly the `AddCommMonoid` these declarations would use anyway. Each one below removes
+-- `addCommMonoid` from local instance search, forcing resolution through `addCommGroup` alone;
+-- nothing about the resulting terms changes.
+
+attribute [-instance] ContinuousLinearMap.addCommMonoid in
 /-- The zero smooth two-form. -/
 protected def zero : SmoothTwoForm I M where
   toContMDiffSection := 0
@@ -203,6 +216,7 @@ protected def zero : SmoothTwoForm I M where
 instance : Zero (SmoothTwoForm I M) :=
   ⟨SmoothTwoForm.zero⟩
 
+attribute [-instance] ContinuousLinearMap.addCommMonoid in
 @[simp]
 lemma zero_toContMDiffSection :
     (0 : SmoothTwoForm I M).toContMDiffSection = 0 := (rfl)
@@ -227,6 +241,7 @@ lemma add_apply (form form' : SmoothTwoForm I M) (x : M) (v w : TangentSpace I x
     (form + form') x v w = form x v w + form' x v w := by
   rfl
 
+attribute [-instance] ContinuousLinearMap.addCommMonoid in
 /-- The negative of a smooth two-form. -/
 protected def neg (form : SmoothTwoForm I M) : SmoothTwoForm I M where
   toContMDiffSection := -form.toContMDiffSection
@@ -235,6 +250,7 @@ protected def neg (form : SmoothTwoForm I M) : SmoothTwoForm I M where
 instance : Neg (SmoothTwoForm I M) :=
   ⟨SmoothTwoForm.neg⟩
 
+attribute [-instance] ContinuousLinearMap.addCommMonoid in
 @[simp]
 lemma neg_toContMDiffSection (form : SmoothTwoForm I M) :
     (-form).toContMDiffSection = -form.toContMDiffSection := (rfl)
@@ -260,6 +276,7 @@ lemma sub_apply (form form' : SmoothTwoForm I M) (x : M) (v w : TangentSpace I x
     (form - form') x v w = form x v w - form' x v w := by
   rfl
 
+attribute [-instance] ContinuousLinearMap.addCommMonoid in
 /-- The real scalar multiple of a smooth two-form. -/
 protected def smul (c : ℝ) (form : SmoothTwoForm I M) : SmoothTwoForm I M where
   toContMDiffSection := c • form.toContMDiffSection
@@ -268,6 +285,7 @@ protected def smul (c : ℝ) (form : SmoothTwoForm I M) : SmoothTwoForm I M wher
 instance : SMul ℝ (SmoothTwoForm I M) :=
   ⟨SmoothTwoForm.smul⟩
 
+attribute [-instance] ContinuousLinearMap.addCommMonoid in
 @[simp]
 lemma smul_toContMDiffSection (c : ℝ) (form : SmoothTwoForm I M) :
     (c • form).toContMDiffSection = c • form.toContMDiffSection := (rfl)

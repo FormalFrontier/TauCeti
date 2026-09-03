@@ -27,6 +27,7 @@ structure, and it computes the concrete pieces.
 
 * `TauCeti.zigzagGrade`: the induced degree-`n` piece on the relation quotient, the descent of
   `TauCeti.PathAlgebra.grade` along the quotient map.
+* `TauCeti.zigzagIntegerGrade`: the same grading extended by zero to integer degrees.
 * `TauCeti.zigzagGradedAlgebra`: **the zigzag relation quotient is a graded algebra** for the
   induced path-length grading.
 
@@ -241,5 +242,42 @@ theorem zigzagGrade_eq_bot_of_three_le {n : ℕ} (hn : 3 ≤ n) : zigzagGrade k 
   refine TauCeti.GradedAlgebra.gradeQuot_eq_bot_of_le (grade k (DoubledQuiver G))
     (zigzagIdeal k G).asIdeal fun y hy => ?_
   exact hle hy
+
+/-! ### Integer-indexed grading -/
+
+/-- The path-length grading of the zigzag relation quotient, extended by zero from `ℕ` to `ℤ`.
+This signed indexing is needed to state every internal grading shift. -/
+noncomputable def zigzagIntegerGrade (d : ℤ) :
+    Submodule k (nonisolatedZigzagQuotient k G) :=
+  if 0 ≤ d then zigzagGrade k G d.toNat else ⊥
+
+@[simp]
+theorem zigzagIntegerGrade_ofNat (d : ℕ) :
+    zigzagIntegerGrade k G d = zigzagGrade k G d := by
+  simp [zigzagIntegerGrade]
+
+/-- The integer extension of the path-length grading vanishes in negative degrees. -/
+theorem zigzagIntegerGrade_eq_bot_of_neg {d : ℤ} (hd : d < 0) :
+    zigzagIntegerGrade k G d = ⊥ := by
+  simp [zigzagIntegerGrade, (not_le_of_gt hd)]
+
+/-- Multiplication adds signed degrees in the integer extension of the path-length grading. -/
+theorem mul_mem_zigzagIntegerGrade {m n : ℤ}
+    {x y : nonisolatedZigzagQuotient k G} (hx : x ∈ zigzagIntegerGrade k G m)
+    (hy : y ∈ zigzagIntegerGrade k G n) : x * y ∈ zigzagIntegerGrade k G (m + n) := by
+  by_cases hm : 0 ≤ m
+  · by_cases hn : 0 ≤ n
+    · simp only [zigzagIntegerGrade, hm, ↓reduceIte] at hx
+      simp only [zigzagIntegerGrade, hn, ↓reduceIte] at hy
+      simp only [zigzagIntegerGrade, add_nonneg hm hn, ↓reduceIte]
+      simpa [Int.toNat_add hm hn] using mul_mem_zigzagGrade k G hx hy
+    · simp only [zigzagIntegerGrade, hn, ↓reduceIte] at hy
+      rw [Submodule.mem_bot] at hy
+      subst y
+      simp
+  · simp only [zigzagIntegerGrade, hm, ↓reduceIte] at hx
+    rw [Submodule.mem_bot] at hx
+    subst x
+    simp
 
 end TauCeti

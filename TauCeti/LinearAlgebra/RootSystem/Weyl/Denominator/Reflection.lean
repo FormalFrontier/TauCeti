@@ -9,8 +9,6 @@ public import TauCeti.LinearAlgebra.RootSystem.Weyl.Denominator.Basic
 public import TauCeti.LinearAlgebra.RootSystem.Weyl.DotAction
 public import TauCeti.LinearAlgebra.RootSystem.Weyl.Sign
 
-public section
-
 /-!
 # Reflections of the Weyl denominator
 
@@ -25,8 +23,12 @@ Consequently its linear action on the integral group algebra sends
 `Δ` to `-e^{αᵢ} Δ`.
 
 The dot action includes the compensating translation by `-αᵢ`, so the coefficients of `Δ` at
-`x` and `sᵢ ⬝ x` are negatives of one another. In particular a coefficient on a dot-action wall
-vanishes.
+`x` and `sᵢ ⬝ x` are negatives of one another.
+
+The consequences of that transformation law — in particular the vanishing of a coefficient at a
+weight fixed by an odd Weyl-group element, so on a dot-action wall — are proved once for every
+alternating element in `TauCeti/LinearAlgebra/RootSystem/Weyl/Alternating.lean`, and reach `Δ`
+through `TauCeti.isDotAlternating_weylDenominator`.
 
 ## Main results
 
@@ -34,8 +36,6 @@ vanishes.
   `-e^{αᵢ} Δ`.
 * `TauCeti.coeff_weylDenominator_dotAction`: the coefficient function of `Δ` transforms by the
   sign character under the dot action of the whole Weyl group.
-* `TauCeti.coeff_weylDenominator_eq_zero_of_coroot'_eq_neg_one`: a coefficient on the dot-action
-  wall `⟨x, αᵢ^∨⟩ = -1` vanishes.
 
 ## References
 
@@ -46,6 +46,8 @@ character formula").
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, Ch. VI, §24.
 * J.-P. Serre, *Complex Semisimple Lie Algebras*, Ch. VII.
 -/
+
+public section
 
 namespace TauCeti
 
@@ -173,22 +175,5 @@ theorem coeff_weylDenominator_dotAction (w : P.weylGroup) (x : M) :
         coeff_weylDenominator_dotAction_ofIdx P b i.2, ih, map_mul,
         weylSign_ofIdx P b]
       norm_num
-
-/-- A coefficient fixed by an odd Weyl-group element for the dot action vanishes. -/
-theorem coeff_weylDenominator_eq_zero_of_dotAction_eq_self {w : P.weylGroup} {x : M}
-    (hw : weylSign P b w = -1) (hx : dotAction P b w x = x) :
-    (weylDenominator P b).coeff x = 0 := by
-  have h := coeff_weylDenominator_dotAction P b w x
-  rw [hx, hw] at h
-  norm_num at h
-  omega
-
-/-- **A coefficient of the Weyl denominator on a dot-action wall vanishes.** The wall of the
-simple reflection `sᵢ` is the affine hyperplane `⟨x, αᵢ^∨⟩ = -1`. -/
-theorem coeff_weylDenominator_eq_zero_of_coroot'_eq_neg_one {i : ι}
-    (hi : i ∈ b.support) {x : M} (hx : P.coroot' i x = -1) :
-    (weylDenominator P b).coeff x = 0 :=
-  coeff_weylDenominator_eq_zero_of_dotAction_eq_self P b (weylSign_ofIdx P b i)
-    ((dotAction_ofIdx_eq_self_iff P b hi x).mpr hx)
 
 end TauCeti

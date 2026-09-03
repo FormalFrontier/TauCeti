@@ -33,8 +33,9 @@ coset vocabulary vendored from the in-review mathlib4 PR
 * `LeftCosetModule.instIsScalarTowerMulOpposite`,
   `LeftCosetModule.instSMulCommClassMulOpposite`: the scalar operations are homogeneous in,
   and commute with, the coefficients.
-* `LeftCosetModule.card_filter_orbit_eq_multiplicity` (private): Shimura's pair count, the
-  combinatorial core of the compatibility law.
+* `HeckeCoset.card_filter_smulOrbit_eq_multiplicity`: Shimura's pair count, the
+  combinatorial core of the compatibility law and the public bridge from iterated coset orbits
+  to the Hecke ring's structure constants.
 
 ## References
 
@@ -205,70 +206,53 @@ private lemma sum_ite_orbit_eq (t : 𝕋 Δ H R) (β : Δ) (c : R) {x : HeckeCos
     have h := eq_of_mem_smulOrbit hmem hx
     rwa [HeckeCoset.mk_rep, HeckeCoset.mk_rep] at h)
 
-open Classical in
-/-- Membership in the orbit through the canonical representative: `x` lies in the orbit of
-`g` on `w` iff `w⁻¹ · x.rep` lies in the double coset `HgH`. -/
-private lemma mem_smulOrbit_iff_rep {g w : Δ} {x : HeckeCoset Δ ⊥ H} :
-    x ∈ smulOrbit H g w ↔
-      ((w : G))⁻¹ * ((x.rep : Δ) : G) ∈ doubleCoset (g : G) (H : Set G) H := by
-  constructor
-  · intro hx
-    obtain ⟨i, hi⟩ := mem_smulOrbit.mp hx
-    have hrep := mk_bot_eq_mk_bot.mp ((HeckeCoset.mk_rep x).trans hi.symm)
-    -- hrep : x.rep⁻¹ · (w·σᵢ·g) ∈ H, so w⁻¹·x.rep = σᵢ·g·(w·σᵢ·g)⁻¹·x.rep with σᵢ ∈ H
-    refine mem_doubleCoset.mpr ⟨(i.out : G), i.out.2,
-      (((x.rep : Δ) : G)⁻¹ * ((w : G) * (i.out : G) * (g : G)))⁻¹, H.inv_mem hrep, by group⟩
-  · intro hmem
-    obtain ⟨h₁, hh₁, h₂, hh₂, heq⟩ := mem_doubleCoset.mp hmem
-    set i : DecompQuotient H H (g : G) := QuotientGroup.mk ⟨h₁, hh₁⟩ with hi
-    obtain ⟨n, hn⟩ := QuotientGroup.mk_out_eq_mul
-      ((ConjAct.toConjAct (g : G) • H).subgroupOf H) (⟨h₁, hh₁⟩ : H)
-    have hout : ((i.out : H) : G) = h₁ * n := by
-      rw [hi]
-      simpa [Subgroup.coe_mul] using congrArg (Subtype.val : H → G) hn
-    refine mem_smulOrbit.mpr ⟨i, ?_⟩
-    rw [← HeckeCoset.mk_rep x]
-    refine mk_bot_eq_mk_bot.mpr ?_
-    -- as in `smulOrbit_subset`, the setoid membership is stated through the coercions
-    change ((w : G) * ((i.out : H) : G) * (g : G))⁻¹ * ((x.rep : Δ) : G) ∈ H
-    have key : ((w : G) * ((i.out : H) : G) * (g : G))⁻¹ * ((x.rep : Δ) : G) =
-        ((g : G)⁻¹ * (n : G)⁻¹ * g) * h₂ := by
-      have hx : ((x.rep : Δ) : G) = (w : G) * (h₁ * (g : G) * h₂) := by
-        rw [← heq]; group
-      rw [hout, hx]
-      group
-    rw [key]
-    exact H.mul_mem
-      (by simpa [mul_assoc] using H.inv_mem (DoubleCoset.conj_mem_of_stabilizer (g : G) n)) hh₂
+end LeftCosetModule
+
+namespace HeckeCoset
+
+open scoped Pointwise
+
+variable [IsHeckeTriple Δ H H]
 
 open Classical in
-/-- **Shimura's pair count** (the heart of Proposition 3.4): for a left coset in the orbit
-of `D₀`, the number of intermediate cosets of the `D₁`-orbit whose `D₂`-orbit contains it
-is the multiplicity of `D₀` in the product `D₁ * D₂`. -/
-private lemma card_filter_orbit_eq_multiplicity {D₁ D₂ D₀ : HeckeCoset Δ H H} {β : Δ}
-    {x : HeckeCoset Δ ⊥ H} (hx : x ∈ smulOrbit H D₀.rep β) :
-    ((smulOrbit H D₁.rep β).filter fun i ↦ x ∈ smulOrbit H D₂.rep i.rep).card =
-      multiplicity H H H (D₁.rep : G) (D₂.rep : G) (D₀.rep : G) := by
-  classical
-  rw [← multiplicity_doubleCoset_congr (D₁.rep : G) (D₂.rep : G)
-      (mem_smulOrbit_iff_rep.mp hx),
-    multiplicity_eq_card_filter, Nat.card_eq_fintype_card, Fintype.card_subtype,
-    smulOrbit_eq_image, Finset.filter_image,
-    Finset.card_image_of_injective _ (smulOrbit_map_injective D₁.rep β)]
+/-- The orbit elements counted by the filtered pair count correspond bijectively to the
+decomposition classes in the one-sided formula for `DoubleCoset.multiplicity`. -/
+private theorem card_filter_smulOrbit_eq_card_decomp (g₁ g₂ β ξ : Δ) :
+    ((smulOrbit H g₁ β).filter fun i ↦ mk ⊥ H ξ ∈ smulOrbit H g₂ i.rep).card =
+      Nat.card {i : DecompQuotient H H (g₁ : G) |
+        ((i.out : G) * (g₁ : G))⁻¹ * ((β : G)⁻¹ * (ξ : G)) ∈
+          doubleCoset (g₂ : G) (H : Set G) H} := by
+  rw [Nat.card_eq_fintype_card, Fintype.card_subtype, smulOrbit_eq_image,
+    Finset.filter_image, Finset.card_image_of_injective _ (smulOrbit_map_injective g₁ β)]
   refine congrArg Finset.card (Finset.filter_congr fun i _ ↦ ?_)
-  -- normalize the basepoint: peel `β` off the product so both sides quotient at `i·g₁`
-  have hbase : ((β : G) * (i.out : G) * ((D₁.rep : Δ) : G))⁻¹ * ((x.rep : Δ) : G) =
-      ((i.out : G) * ((D₁.rep : Δ) : G))⁻¹ * ((β : G)⁻¹ * ((x.rep : Δ) : G)) := by group
-  rw [smulOrbit_congr D₂.rep (HeckeCoset.mk_rep _), mem_smulOrbit_iff_rep, hbase]
+  have hbase : ((β : G) * (i.out : G) * (g₁ : G))⁻¹ * (ξ : G) =
+      ((i.out : G) * (g₁ : G))⁻¹ * ((β : G)⁻¹ * (ξ : G)) := by group
+  rw [smulOrbit_congr g₂ (mk_rep _), mk_bot_mem_smulOrbit_iff, hbase]
   exact Iff.rfl
+
+open Classical in
+/-- **Shimura's pair count** (the heart of Proposition 3.4): the number of cosets in the
+orbit of `g₁` on `βH` whose `g₂`-orbit contains the coset `ξH` is the multiplicity of the
+double coset of `β⁻¹ * ξ` in the product `Hg₁H * Hg₂H`.
+
+This is the pointwise bridge between the iterated orbit enumeration `smulOrbit` — the left
+cosets `βσᵢg₁H` through which the Hecke ring acts — and the pair count defining
+`DoubleCoset.multiplicity`. In particular, it is the count needed to regroup a composite of
+two orbit sums by its output coset. -/
+theorem card_filter_smulOrbit_eq_multiplicity (g₁ g₂ β ξ : Δ) :
+    ((smulOrbit H g₁ β).filter fun i ↦ mk ⊥ H ξ ∈ smulOrbit H g₂ i.rep).card =
+      multiplicity H H H (g₁ : G) (g₂ : G) ((β : G)⁻¹ * (ξ : G)) := by
+  rw [card_filter_smulOrbit_eq_card_decomp, multiplicity_eq_card_filter]
 
 /-- Iterated orbit membership factors through a single orbit at the original base: the
 witnessing double coset is that of `β⁻¹ · x.rep`. -/
 private lemma exists_orbit_of_mem_orbit_orbit {g₁ g₂ β : Δ} {x i : HeckeCoset Δ ⊥ H}
     (hi : i ∈ smulOrbit H g₁ β) (hx : x ∈ smulOrbit H g₂ i.rep) :
     ∃ D₀ : HeckeCoset Δ H H, x ∈ smulOrbit H D₀.rep β := by
-  have hβη := mem_smulOrbit_iff_rep.mp hi
-  have hηξ := mem_smulOrbit_iff_rep.mp hx
+  have hβη : (β : G)⁻¹ * ((i.rep : Δ) : G) ∈ doubleCoset (g₁ : G) (H : Set G) H :=
+    mk_bot_mem_smulOrbit_iff.mp (by rwa [mk_rep])
+  have hηξ : ((i.rep : Δ) : G)⁻¹ * ((x.rep : Δ) : G) ∈ doubleCoset (g₂ : G) (H : Set G) H :=
+    mk_bot_mem_smulOrbit_iff.mp (by rwa [mk_rep])
   -- each leg lies in `Δ` because a double coset of a `Δ`-element is absorbed by `Δ`, and
   -- the two legs compose at `i.rep`
   have hΔ : (β : G)⁻¹ * ((x.rep : Δ) : G) ∈ Δ := by
@@ -276,14 +260,17 @@ private lemma exists_orbit_of_mem_orbit_orbit {g₁ g₂ β : Δ} {x i : HeckeCo
         ((β : G)⁻¹ * ((i.rep : Δ) : G)) * (((i.rep : Δ) : G)⁻¹ * ((x.rep : Δ) : G)) by group]
     exact Δ.mul_mem (IsHeckeTriple.mem_of_mem_doubleCoset g₁.2 hβη)
       (IsHeckeTriple.mem_of_mem_doubleCoset g₂.2 hηξ)
-  refine ⟨HeckeCoset.mk H H ⟨(β : G)⁻¹ * ((x.rep : Δ) : G), hΔ⟩, ?_⟩
-  rw [mem_smulOrbit_iff_rep]
-  have hrep := HeckeCoset.rep_mem (HeckeCoset.mk H H ⟨(β : G)⁻¹ * ((x.rep : Δ) : G), hΔ⟩)
-  rw [HeckeCoset.toSet_mk] at hrep
-  exact doubleCoset_eq_of_mem hrep ▸
-    mem_doubleCoset_self H H ((β : G)⁻¹ * ((x.rep : Δ) : G))
+  refine ⟨mk H H ⟨(β : G)⁻¹ * ((x.rep : Δ) : G), hΔ⟩, ?_⟩
+  have hmem : mk ⊥ H x.rep ∈
+      smulOrbit H (mk H H ⟨(β : G)⁻¹ * ((x.rep : Δ) : G), hΔ⟩).rep β := by
+    rw [mk_bot_mem_smulOrbit_iff]
+    have hrep := rep_mem (mk H H ⟨(β : G)⁻¹ * ((x.rep : Δ) : G), hΔ⟩)
+    rw [toSet_mk] at hrep
+    exact doubleCoset_eq_of_mem hrep ▸
+      mem_doubleCoset_self H H ((β : G)⁻¹ * ((x.rep : Δ) : G))
+  rwa [mk_rep] at hmem
 
-end LeftCosetModule
+end HeckeCoset
 
 namespace LeftCosetModule
 
@@ -310,7 +297,13 @@ private lemma single_mul_smul_single (D₁ D₂ : HeckeCoset Δ H H) (q : HeckeC
   rw [sum_smulOrbit_single_apply, sum_sum_single_apply]
   by_cases h : ∃ D₀ : HeckeCoset Δ H H, x ∈ smulOrbit H D₀.rep q.rep
   · obtain ⟨D₀, hD₀⟩ := h
-    rw [sum_ite_orbit_eq _ _ _ hD₀, card_filter_orbit_eq_multiplicity hD₀,
+    have hcount := card_filter_smulOrbit_eq_multiplicity (H := H) D₁.rep D₂.rep q.rep x.rep
+    rw [HeckeCoset.mk_rep] at hcount
+    have hmem : ((q.rep : Δ) : G)⁻¹ * ((x.rep : Δ) : G) ∈
+        doubleCoset ((D₀.rep : Δ) : G) (H : Set G) H :=
+      mk_bot_mem_smulOrbit_iff.mp (by rwa [HeckeCoset.mk_rep])
+    rw [sum_ite_orbit_eq _ _ _ hD₀, hcount,
+      multiplicity_doubleCoset_congr (D₁.rep : G) (D₂.rep : G) hmem,
       HeckeCosetModule.structureConstants_apply]
     simp only [nsmul_eq_mul]
     -- the multiplicity enters as a natural-number cast, which is central

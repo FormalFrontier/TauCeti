@@ -8,6 +8,7 @@ module
 public import Mathlib.Analysis.Calculus.BumpFunction.FiniteDimension
 public import Mathlib.Analysis.Calculus.BumpFunction.Normed
 public import TauCeti.Analysis.CompletelyMonotone.FiniteDifference.Basic
+import TauCeti.MeasureTheory.Integral.Bochner.Basic
 
 /-!
 # Smoothing a finite-difference completely monotone function
@@ -23,7 +24,8 @@ only ever evaluates `f` on `[t, t + ε]`, so on `[0, ∞)` it never leaves the h
 hypothesis lives. The average is `C^∞` because it is a convolution with a smooth compactly
 supported kernel, and every mixed forward difference of `g` is the same average of the
 corresponding difference of `f`, so the sign condition passes to `g` verbatim. Since `f` is
-nonincreasing, `g` is squeezed between `f (· + ε)` and `f`.
+nonincreasing, `g` is squeezed between `f (· + ε)` and `f`, by the general kernel-average bound
+`TauCeti.MeasureTheory.integral_kernel_mem_Icc_of_antitoneOn`.
 
 The outcome,
 `TauCeti.IsDifferenceCompletelyMonotone.exists_isCompletelyMonotone_between_shift`, is a completely
@@ -155,30 +157,8 @@ theorem IsDifferenceCompletelyMonotone.exists_isCompletelyMonotone_between_shift
   · -- The two-sided bound, from monotonicity of `F` and the normalization of `ψ`.
     have hintF : Integrable (fun s => ψ s * F (t - s)) volume :=
       hψc.convolutionExists_left (ContinuousLinearMap.mul ℝ ℝ) hψcont hFloc t
-    have hmass : ∀ c : ℝ, ∫ s, ψ s * c = c := by
-      intro c
-      rw [integral_mul_const, hψint, one_mul]
-    constructor
-    · have hle : ∀ s : ℝ, ψ s * F (t + ε) ≤ ψ s * F (t - s) := by
-        intro s
-        rcases eq_or_ne (ψ s) 0 with h0 | h0
-        · simp [h0]
-        · obtain ⟨hs1, hs2⟩ := hsupp s h0
-          exact mul_le_mul_of_nonneg_left
-            (hFcm.antitoneOn (mem_Ici.mpr (by linarith)) (mem_Ici.mpr (by linarith))
-              (by linarith)) (hψ0 s)
-      calc f (t + ε) = ∫ s, ψ s * F (t + ε) := by
-              rw [hmass, hFeq _ (by linarith)]
-        _ ≤ ∫ s, ψ s * F (t - s) := integral_mono (hψi.mul_const _) hintF hle
-    · have hle : ∀ s : ℝ, ψ s * F (t - s) ≤ ψ s * F t := by
-        intro s
-        rcases eq_or_ne (ψ s) 0 with h0 | h0
-        · simp [h0]
-        · obtain ⟨hs1, hs2⟩ := hsupp s h0
-          exact mul_le_mul_of_nonneg_left
-            (hFcm.antitoneOn (mem_Ici.mpr ht) (mem_Ici.mpr (by linarith)) (by linarith))
-            (hψ0 s)
-      calc ∫ s, ψ s * F (t - s) ≤ ∫ s, ψ s * F t := integral_mono hintF (hψi.mul_const _) hle
-        _ = f t := by rw [hmass, hFeq t ht]
+    rw [← hFeq _ (by linarith : (0 : ℝ) ≤ t + ε), ← hFeq t ht]
+    exact mem_Icc.mp (MeasureTheory.integral_kernel_mem_Icc_of_antitoneOn hε.le
+      (hFanti.antitoneOn _) hψ0 hψint hψi hintF fun s hs => ⟨(hsupp s hs).1.le, (hsupp s hs).2.le⟩)
 
 end TauCeti

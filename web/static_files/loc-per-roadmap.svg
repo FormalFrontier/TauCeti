@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1140 520" role="img"
      aria-label="Tau Ceti — lines of Lean per roadmap: 238,733 net lines across 16 roadmaps as of 2026-08-05">
   <style>
-    text{font-family:ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;fill:#eef2fb}.title{font-size:22.1px;font-weight:600}.subtitle{font-size:15.1px;fill:#9aa6c9}.tick{font-size:14.0px;fill:#9aa6c9}.grid{stroke:rgba(255,255,255,0.08);stroke-width:1.2}.axis{stroke:rgba(255,255,255,0.18);stroke-width:1.2}
+    text{font-family:'Helvetica Neue',Helvetica,Arial,'Liberation Sans',sans-serif;fill:#eef2fb}.title{font-size:22.1px;font-weight:600}.subtitle{font-size:15.1px;fill:#9aa6c9}.tick{font-size:14.0px;fill:#9aa6c9}.grid{stroke:rgba(255,255,255,0.08);stroke-width:1.2}.axis{stroke:rgba(255,255,255,0.18);stroke-width:1.2}
     .ytick{text-anchor:end}
     .xtick{text-anchor:middle}
     .legendhead{fill:#9aa6c9;font-size:14.0px;font-weight:600}

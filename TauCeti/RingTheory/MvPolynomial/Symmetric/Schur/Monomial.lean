@@ -55,11 +55,16 @@ exactly as the Schur polynomial itself vanishes for such a shape
   `n` is a Kostka number**, that of `μ` and the partition of the monomial's exponents.
 * `TauCeti.schurPoly_eq_sum_kostkaNumber_smul_msymm`: **the monomial expansion**
   `s_μ = ∑_ν K_{μν} m_ν`, writing a Schur polynomial as the combination of the monomial symmetric
-  polynomials whose coefficients are the Kostka numbers.  This is the expansion only: that the two
-  families are bases of the symmetric polynomials — which would make the Kostka numbers a genuine
-  change-of-basis matrix, as the roadmap target below phrases it — is not proved here, and indeed
-  neither family is linearly independent as indexed here, both containing zero terms whenever the
-  partition has more parts than the alphabet has letters.
+  polynomials whose coefficients are the Kostka numbers.  This is the expansion only: neither family
+  is linearly independent as indexed here, both containing zero terms whenever the partition has
+  more parts than the alphabet has letters.  Restricted to the partitions the alphabet does record
+  they *are* bases, and the Kostka numbers a genuine change-of-basis matrix, which is
+  `TauCeti/RingTheory/MvPolynomial/Symmetric/Schur/Basis.lean`.
+* `TauCeti.degree_partWeight`, `TauCeti.weightPartition_partWeight` and
+  `TauCeti.coeff_msymm_partWeight`: the sorted monomial of a partition the alphabet records has
+  degree `n` and shape that partition, so `m_ν` is the indicator of its own sorted monomial.  This
+  is what makes the monomial symmetric polynomials independent.
+* `TauCeti.isHomogeneous_msymm`: a monomial symmetric polynomial is homogeneous.
 
 ## Implementation notes
 
@@ -231,7 +236,7 @@ variable (R : Type*) [CommSemiring R]
 not that of its partition. -/
 @[simp]
 theorem coeff_msymm_eq_zero_of_degree_ne (ν : n.Partition) {d : σ →₀ ℕ} (h : d.degree ≠ n) :
-    coeff d (msymm σ R ν) = 0 := by
+    (msymm σ R ν).coeff d = 0 := by
   rw [msymm, coeff_sum]
   refine Finset.sum_eq_zero fun s _ => ?_
   rw [prod_map_X_eq_monomial, coeff_monomial, ite_eq_right]
@@ -243,7 +248,7 @@ the monomials of total degree `n` whose nonzero exponents are the parts of `ν`,
 once. -/
 @[simp]
 theorem coeff_msymm (ν : n.Partition) {d : σ →₀ ℕ} (h : d.degree = n) :
-    coeff d (msymm σ R ν) = if weightPartition d h = ν then 1 else 0 := by
+    (msymm σ R ν).coeff d = if weightPartition d h = ν then 1 else 0 := by
   have hinj : ∀ s : Sym σ n, Multiset.toFinsupp (s : Multiset σ) = d ↔ s = weightSym d h :=
     fun s => by rw [Multiset.toFinsupp_eq_iff, ← Sym.coe_inj, coe_weightSym]
   rw [msymm, coeff_sum]
@@ -272,6 +277,56 @@ theorem msymm_eq_zero_of_card_lt (ν : n.Partition) (h : Fintype.card σ < ν.pa
   obtain ⟨t, rfl⟩ := s
   exact le_of_eq_of_le (Multiset.card_map _ _) (Finset.card_le_univ (t : Multiset σ).toFinset)
 
+/-- **A monomial symmetric polynomial is homogeneous** of degree the natural number its partition
+partitions: every monomial occurring in it has the parts of the partition as its exponents. -/
+theorem isHomogeneous_msymm (ν : n.Partition) : (msymm σ R ν).IsHomogeneous n := by
+  intro d hd
+  rw [Pi.one_def, ← Finsupp.degree_eq_weight_one]
+  by_contra hne
+  exact hd (coeff_msymm_eq_zero_of_degree_ne R ν hne)
+
+/-! ### The sorted monomial of a partition -/
+
+omit [DecidableEq σ] in
+/-- **The sorted monomial of a partition of `n` has total degree `n`**, its exponents being the
+parts of the partition padded with zeros.  The hypothesis is what keeps every part inside the
+alphabet: a longer partition would be truncated. -/
+theorem degree_partWeight (ν : n.Partition) (hν : ν.parts.card ≤ Fintype.card σ) :
+    (partWeight σ ν).degree = n := by
+  rw [Finsupp.degree_eq_sum, Finset.sum_eq_multiset_sum, map_univ_val_partWeight ν hν,
+    Multiset.sum_add, Multiset.sum_replicate, smul_zero, add_zero]
+  exact ν.parts_sum
+
+/-- **Sorting the exponents of an already sorted monomial changes nothing**: the partition of the
+exponents of `TauCeti.partWeight σ ν` is `ν` itself.  Together with `TauCeti.coeff_msymm` this
+says that the monomial symmetric polynomials take the value `1` at their own sorted monomial and
+`0` at every other one. -/
+theorem weightPartition_partWeight (ν : n.Partition) (hν : ν.parts.card ≤ Fintype.card σ)
+    (h : (partWeight σ ν).degree = n) : weightPartition (partWeight σ ν) h = ν := by
+  refine Nat.Partition.ext ?_
+  rw [weightPartition_parts]
+  have hkey := (map_univ_val (partWeight σ ν)).symm.trans (map_univ_val_partWeight ν hν)
+  have hpos : ∀ a ∈ Multiset.map (partWeight σ ν) (partWeight σ ν).support.val, 0 < a := by
+    rintro a ha
+    obtain ⟨x, hx, rfl⟩ := Multiset.mem_map.mp ha
+    exact Nat.pos_of_ne_zero (Finsupp.mem_support_iff.mp hx)
+  have hzero : ∀ k : ℕ, Multiset.filter (0 < ·) (Multiset.replicate k 0) = 0 :=
+    fun k => Multiset.filter_eq_nil.mpr fun a ha => by
+      rw [Multiset.eq_of_mem_replicate ha]; exact lt_irrefl 0
+  have := congrArg (Multiset.filter (0 < ·)) hkey
+  rwa [Multiset.filter_add, Multiset.filter_add, hzero, hzero, add_zero, add_zero,
+    Multiset.filter_eq_self.mpr hpos,
+    Multiset.filter_eq_self.mpr fun a ha => ν.parts_pos ha] at this
+
+/-- **A monomial symmetric polynomial is the indicator of its own sorted monomial**: `m_ν` has
+coefficient `1` at the sorted monomial of `ν` and `0` at the sorted monomial of any other
+partition.  This is the statement that the monomial symmetric polynomials are dual to the sorted
+monomials, and the reason they are linearly independent. -/
+@[simp]
+theorem coeff_msymm_partWeight (ν ξ : n.Partition) (hξ : ξ.parts.card ≤ Fintype.card σ) :
+    (msymm σ R ν).coeff (partWeight σ ξ) = if ξ = ν then 1 else 0 := by
+  rw [coeff_msymm R ν (degree_partWeight ξ hξ), weightPartition_partWeight ξ hξ]
+
 /-! ### The monomial expansion -/
 
 variable (μ : n.Partition)
@@ -282,9 +337,9 @@ sorted, since sorting them is a permutation of the alphabet, which a symmetric p
 see. -/
 @[simp]
 theorem coeff_schurPoly_eq_kostkaNumber {d : σ →₀ ℕ} (h : d.degree = n) :
-    coeff d (schurPoly σ R μ) = (kostkaNumber μ (weightPartition d h) : R) := by
+    (schurPoly σ R μ).coeff d = (kostkaNumber μ (weightPartition d h) : R) := by
   obtain ⟨e, he⟩ := exists_perm_mapDomain_eq_partWeight d h
-  have hsymm : coeff (Finsupp.mapDomain e d) (schurPoly σ R μ) = coeff d (schurPoly σ R μ) := by
+  have hsymm : (schurPoly σ R μ).coeff (Finsupp.mapDomain e d) = (schurPoly σ R μ).coeff d := by
     conv_lhs => rw [← schurPoly_isSymmetric (R := R) μ e]
     exact coeff_rename_mapDomain _ e.injective _ _
   rw [← hsymm, he, coeff_schurPoly_partWeight μ _

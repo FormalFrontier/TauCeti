@@ -32,9 +32,15 @@ not to this identity.
 
 All three of the weight map, the coweight map and the index bijection are monoid homomorphisms out
 of this monoid, the coweight map into the opposite endomorphism monoid because `comp` reverses on
-that component. This is the same shape as `RootPairing.Hom.weightHom`,
+that component. These declarations adapt the Mathlib API `RootPairing.Hom.weightHom`,
 `RootPairing.Hom.coweightHom` and `RootPairing.Hom.indexHom` for the endomorphism monoid of a root
 pairing, and the powers of all three components are `map_pow`.
+
+Two further maps into the monoid are recorded because the Steinberg endomorphisms of the twisted
+families are built from them: the automorphisms of the root pairing land in it multiplicatively,
+`TauCeti.RootPairingIsogeny.ofEquivHom`, and the scalings are central in it,
+`TauCeti.RootPairingIsogeny.commute_smulId`. Together they let a power of an automorphism times a
+scaling be separated into a power of each.
 
 The same hypothesis also splits the powers themselves: an even power is a scaling, and an odd power
 is a scaling times `f`, so an odd power permutes the roots exactly as `f` does while multiplying
@@ -51,14 +57,21 @@ come from.
   `TauCeti.RootPairingIsogeny.indexHom`: the weight map, the coweight map and the index bijection
   as monoid homomorphisms, the coweight map into the opposite endomorphism monoid.
 * `TauCeti.RootPairingIsogeny.smulIdHom`: the scalings, as a monoid homomorphism out of `ℕ+`.
+* `TauCeti.RootPairingIsogeny.ofEquivHom`: the automorphisms of the root pairing, as a monoid
+  homomorphism into the isogeny monoid.
 
 ## Main results
 
+* `TauCeti.RootPairingIsogeny.ofEquiv_pow`: an automorphism and the isogeny it becomes have the
+  same powers.
+* `TauCeti.RootPairingIsogeny.commute_smulId`: a scaling commutes with every endo-isogeny.
 * `TauCeti.RootPairingIsogeny.pow_mul_self_eq_smulId`: a power of an isogeny whose square is a
   scaling squares to the corresponding power of that scaling.
 * `TauCeti.RootPairingIsogeny.pow_two_mul_eq_smulId` and
   `TauCeti.RootPairingIsogeny.pow_two_mul_add_one_eq_smulId_mul`: such an isogeny has scalings for
   its even powers, and a scaling times itself for its odd ones.
+* `TauCeti.RootPairingIsogeny.exponent_pow`: the exponent of an iterate is the product along the
+  corresponding orbit of indices.
 * `TauCeti.RootPairingIsogeny.indexEquiv_pow_two_mul_add_one`,
   `TauCeti.RootPairingIsogeny.exponent_pow_two_mul_add_one`,
   `TauCeti.RootPairingIsogeny.weightMap_pow_two_mul_add_one` and
@@ -67,6 +80,8 @@ come from.
 
 ## References
 
+* Scott Carnahan, `Mathlib/LinearAlgebra/RootSystem/Hom.lean`, for the `RootPairing.Hom`
+  endomorphism monoid API adapted here.
 * Schémas en groupes (SGA 3), Exposé XXI, 6.8.
 * R. Steinberg, *Endomorphisms of linear algebraic groups*, Memoirs AMS 80 (1968), §11.
 
@@ -126,6 +141,22 @@ theorem one_def : (1 : RootPairingIsogeny P P) = id P := (rfl)
 @[simp] theorem exponent_one (i : ι) : (1 : RootPairingIsogeny P P).exponent i = 1 :=
   id_exponent P i
 
+/-- **The automorphisms of a root pairing sit inside its monoid of endo-isogenies**, as a monoid
+homomorphism: an automorphism is an isogeny with every exponent `1`, and composition agrees on the
+two sides. -/
+def ofEquivHom (P : RootPairing ι R M N) : RootPairing.Aut P →* RootPairingIsogeny P P where
+  toFun := ofEquiv
+  map_one' := by rw [one_def]; exact ofEquiv_one
+  map_mul' _ _ := by ext <;> simp
+
+@[simp] theorem ofEquivHom_apply (f : RootPairing.Aut P) : ofEquivHom P f = ofEquiv f := (rfl)
+
+/-- **An automorphism and the isogeny it becomes have the same powers**, since
+`TauCeti.RootPairingIsogeny.ofEquiv` is multiplicative. -/
+@[simp] theorem ofEquiv_pow (f : RootPairing.Aut P) (n : ℕ) :
+    ofEquiv (f ^ n) = ofEquiv f ^ n :=
+  map_pow (ofEquivHom P) f n
+
 /-! ## The multiplicative components -/
 
 /-- **The weight map of an isogeny, as a monoid homomorphism** into the endomorphism monoid of the
@@ -184,6 +215,16 @@ theorem exponent_pow_succ (f : RootPairingIsogeny P P) (n : ℕ) (i : ι) :
     (f ^ (n + 1)).exponent i = f.exponent i * (f ^ n).exponent (f.indexEquiv i) := by
   rw [pow_succ, exponent_mul]
 
+/-- **The exponent of an iterate accumulates along the forward orbit of the index bijection.**
+Unlike the other three fields the exponent is not multiplicative: the exponent of a composite at
+an index is the product of the exponents met at the successive images of that index. -/
+@[simp] theorem exponent_pow (f : RootPairingIsogeny P P) (k : ℕ) (i : ι) :
+    (f ^ k).exponent i = ∏ j ∈ Finset.range k, f.exponent ((f.indexEquiv ^ j) i) := by
+  induction k with
+  | zero => simp
+  | succ k ih =>
+    rw [pow_succ', exponent_mul, ih, indexEquiv_pow, Finset.prod_range_succ]
+
 /-! ## The scalings -/
 
 section Scaling
@@ -209,6 +250,13 @@ def smulIdHom : ℕ+ →* RootPairingIsogeny P P where
 /-- A power of a scaling is the scaling by the corresponding power. -/
 @[simp] theorem smulId_pow (c : ℕ+) (n : ℕ) : smulId P c ^ n = smulId P (c ^ n) :=
   (map_pow (smulIdHom P) c n).symm
+
+/-- **A scaling is central in the monoid of endo-isogenies**, the monoid form of
+`TauCeti.RootPairingIsogeny.comp_smulId`. Since a scaling at a prime power `q` is the root-datum
+shadow of the `q`-power Frobenius, this is the root-datum form of the fact that a Frobenius
+commutes with every endomorphism of the datum. -/
+theorem commute_smulId (f : RootPairingIsogeny P P) (c : ℕ+) : Commute (smulId P c) f :=
+  (commute_iff_eq _ _).2 <| by rw [mul_def, mul_def, comp_smulId]
 
 variable {f : RootPairingIsogeny P P} {c : ℕ+}
 

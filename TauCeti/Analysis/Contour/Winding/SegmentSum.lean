@@ -8,7 +8,7 @@ module
 public import Mathlib.Analysis.Calculus.Deriv.Basic
 public import Mathlib.Analysis.SpecialFunctions.Complex.Log
 public import Mathlib.MeasureTheory.Integral.IntervalIntegral.Basic
-import Mathlib.Data.Complex.BigOperators
+import Mathlib.Basic.Complex.BigOperators
 import TauCeti.Analysis.Contour.Argument.Lift
 import TauCeti.Analysis.Contour.LogDerivFTC
 

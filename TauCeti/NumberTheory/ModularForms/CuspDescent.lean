@@ -9,14 +9,16 @@ public import TauCeti.NumberTheory.ModularForms.Cusps.Rat.Basic
 public import TauCeti.NumberTheory.ModularForms.Degeneracy
 
 /-!
-# Vanishing at the cusps descends through the level-raising operator
+# Cusp forms descend through the level-raising operator
 
 `Degeneracy.lean` has a `Descent` section, which answers the question the conductor theorem asks:
 given only that the *level-raise* `V_d f` is a form, what can be said about `f` itself? Two of the
 three conditions a form must satisfy are answered there — the transformation law by
 `slash_conjScale_eq_smul_of_slash_scaleGL`, and holomorphy by
 `mdifferentiable_of_comp_scaleGL_smul`. The third, vanishing at the cusps, is not: the whole file
-mentions `IsCusp` once. This file is that missing third member.
+mentions `IsCusp` once. This file supplies that missing third member, and then closes the loop:
+with all three conditions in hand, `f` itself bundles into a `CuspForm` of the lowered level
+`Γ₁(N / l)`.
 
 ## The one geometric input
 
@@ -36,15 +38,20 @@ is to name `diag(d, 1)` over `ℚ` and record that it pushes forward to `scaleGL
 * `TauCeti.isZeroAt_of_smul_slash_scaleGL_eq`: **vanishing at the cusps descends** — if the
   level-raise of `f` is a cusp form for any arithmetic subgroup, then `f` vanishes at every cusp of
   any arithmetic subgroup.
+* `TauCeti.nebentypus_slash_scaleGL_of_mem_cuspFormCharSpace`: the nebentypus relation of the
+  level-raise, read off `f ∣[k] diag(l, 1)` with the normalizing scalar cancelled.
+* `TauCeti.cuspFormOfSmulSlashScaleGL`, `TauCeti.coe_cuspFormOfSmulSlashScaleGL`: **the descent
+  bundle** — `f` as a cusp form of level `Γ₁(N / l)`, and its underlying function.
 
 ## Provenance
 
 Adapted from the AINTLIB `LeanModularForms` project
 (`LeanModularForms/Eigenforms/ConductorTheorem.lean`, Chris Birkbeck, Apache-2.0,
 <https://github.com/CBirkbeck/AINTLIB> @ `2baa76f742bdb4fb8ee323fabba41203bd390e08`), lines
-354–486, whose `zero_at_cusps_of_levelRaiseFun_eq` (:471) is the final theorem here.
+354–486 and 500–541, whose `zero_at_cusps_of_levelRaiseFun_eq` (:471) and
+`conductorTheoremCaseA_cuspForm` (:511) are the two theorems this file is built around.
 
-Statements only, and four of the source's nine declarations are not reproduced at all:
+Statements only, and four of the first window's nine declarations are not reproduced at all:
 
 * `cuspWitnessLevelRaiseInv` (:354), its private helper `cuspWitnessLevelRaiseInv_first_col`
   (:360) and `gcd_levelRaise_first_col_ne_zero` build an explicit `SL(2, ℤ)` witness by
@@ -57,10 +64,22 @@ Statements only, and four of the source's nine declarations are not reproduced a
 * `isZeroAtImInfty_slash_iff_levelRaiseFun_eq` (:425) is one rewrite of what this repository
   already has as `slash_scaleGL_slash_mapGL`, so it is inlined rather than named.
 
+Of the second window's three declarations, one is likewise not reproduced:
+
+* `cuspFormToModularForm_mem_modFormCharSpace_iff_mem_cuspFormCharSpace` (:500) moves the
+  character-space hypothesis from the cusp form to its underlying modular form, because the
+  source's transformation law is stated for a `ModularForm`. This repository's
+  `slash_mapGL_eq_self_of_mem_Gamma1_div` asks instead for the nebentypus relation of the bare
+  function, so the bridge is not a coercion but a scalar cancellation, and it is
+  `nebentypus_slash_scaleGL_of_mem_cuspFormCharSpace` below.
+
 The source is phrased over its own `levelRaiseFun` and `levelRaiseMatrix`, neither of which exists
 here; the statements below use `scaleGL` and the hypothesis shape
 `⇑g = d ^ (1 - k) • (f ∣[k] scaleGL d)` that `smul_slash_scaleGL_eq` was written to be rewritten
-with.
+with. The source also carries its character as a `DirichletCharacter ℂ N` and phrases Case A over
+`χ.FactorsThrough (N / l)`; here the character is the units homomorphism `(ZMod N)ˣ →* ℂˣ` that
+`cuspFormCharSpace` is indexed by, and the descent hypothesis is triviality on the kernel of
+`ZMod.unitsMap`, which is the form `slash_mapGL_eq_self_of_mem_Gamma1_div` already takes.
 
 ## References
 
@@ -156,6 +175,65 @@ theorem isZeroAt_of_smul_slash_scaleGL_eq {Γ' : Subgroup (GL (Fin 2) ℝ)} [Γ'
       σ_mapGL_real_eq_refl, ContinuousAlgEquiv.refl_apply]
   have := (isZeroAtImInfty_slash_inv_scaleGL_mul_mapGL d g A).smul ((d : ℂ) ^ (1 - k))⁻¹
   rwa [hkey, smul_smul, inv_mul_cancel₀ hd, one_smul] at this
+
+/-! ### The descent bundle -/
+
+/-- **The nebentypus relation descends to the level-raised function.** If a cusp form `g` of level
+`N` lies in the `χ`-eigenspace and is the level-raise of `f`, then `f ∣[k] diag(l, 1)` satisfies
+the classical nebentypus relation for `χ` on the nose.
+
+This is the hypothesis `slash_mapGL_eq_self_of_mem_Gamma1_div` asks for. -/
+lemma nebentypus_slash_scaleGL_of_mem_cuspFormCharSpace {l N : ℕ} [NeZero l] {k : ℤ}
+    {χ : (ZMod N)ˣ →* ℂˣ} {f : ℍ → ℂ} {g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k}
+    (hgχ : g ∈ cuspFormCharSpace k χ) (hg : ⇑g = (l : ℂ) ^ (1 - k) • (f ∣[k] scaleGL l))
+    (γ : SL(2, ℤ)) (hγ : γ ∈ Gamma0 N) : (f ∣[k] scaleGL l) ∣[k] mapGL ℝ γ =
+      (χ ((Gamma0Map N).toHomUnits ⟨γ, hγ⟩) : ℂ) • (f ∣[k] scaleGL l) := by
+  have h := (mem_cuspFormCharSpace_iff_nebentypus k χ g).mp hgχ ⟨γ, hγ⟩
+  -- the normalizing scalar `l ^ (1 - k)` relating `g` to `f ∣[k] diag(l, 1)` passes through
+  -- the slash — `mapGL ℝ γ` has positive determinant — and then cancels, so the relation is
+  -- inherited unchanged: `smul_slash` moves the scalar out, `σ_mapGL_real_eq_refl` kills the
+  -- twist it leaves behind, and `smul_comm` lines the two scalars up for `smul_right_injective`
+  rw [hg, _root_.ModularForm.smul_slash, σ_mapGL_real_eq_refl,
+    ContinuousAlgEquiv.refl_apply, smul_comm] at h
+  exact smul_right_injective _ (zpow_ne_zero _ (Nat.cast_ne_zero.mpr (NeZero.ne l))) h
+
+/-- **The conductor descent, bundled.** If the level-raise of `f` is a cusp form `g` of level `N`
+whose nebentypus `χ` is trivial on the kernel of `(ZMod N)ˣ → (ZMod (N / l))ˣ`, and if `f` is
+`T`-periodic, then `f` is itself a cusp form of the *lowered* level `Γ₁(N / l)`. -/
+noncomputable def cuspFormOfSmulSlashScaleGL (l N : ℕ) [NeZero l] [NeZero N] (hlN : l ∣ N) (k : ℤ)
+    (χ : (ZMod N)ˣ →* ℂˣ)
+    (hχ : ∀ u : (ZMod N)ˣ, ZMod.unitsMap (Nat.div_dvd_of_dvd hlN) u = 1 → χ u = 1) (f : ℍ → ℂ)
+    (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) (hgχ : g ∈ cuspFormCharSpace k χ)
+    (hg : ⇑g = (l : ℂ) ^ (1 - k) • (f ∣[k] scaleGL l))
+    (hT : f ∣[k] (mapGL ℝ ModularGroup.T : GL (Fin 2) ℝ) = f) :
+    CuspForm ((Gamma1 (N / l)).map (mapGL ℝ)) k where
+  -- this is what the `Descent` section of `Degeneracy.lean` and the cusp result above were
+  -- built for: the three cusp-form fields are exactly the three descent statements
+  toFun := f
+  slash_action_eq' _ hγ := by
+    obtain ⟨δ, hδ, rfl⟩ := Subgroup.mem_map.mp hγ
+    exact slash_mapGL_eq_self_of_mem_Gamma1_div l N hlN k χ hχ f
+      (nebentypus_slash_scaleGL_of_mem_cuspFormCharSpace hgχ hg) hT δ hδ
+  holo' := mdifferentiable_of_comp_scaleGL_smul (d := l) (f := f) <| by
+    rw [← smul_slash_scaleGL_eq k f, ← hg]
+    exact CuspFormClass.holo g
+  zero_at_cusps' hc := by
+    have : NeZero (N / l) := ⟨(Nat.div_pos (Nat.le_of_dvd (NeZero.pos N) hlN) (NeZero.pos l)).ne'⟩
+    exact isZeroAt_of_smul_slash_scaleGL_eq l f g hg _ hc
+
+/-- The bundled `cuspFormOfSmulSlashScaleGL` has underlying function `f`. -/
+@[simp]
+lemma coe_cuspFormOfSmulSlashScaleGL (l N : ℕ) [NeZero l] [NeZero N] (hlN : l ∣ N) (k : ℤ)
+    (χ : (ZMod N)ˣ →* ℂˣ)
+    (hχ : ∀ u : (ZMod N)ˣ, ZMod.unitsMap (Nat.div_dvd_of_dvd hlN) u = 1 → χ u = 1) (f : ℍ → ℂ)
+    (g : CuspForm ((Gamma1 N).map (mapGL ℝ)) k) (hgχ : g ∈ cuspFormCharSpace k χ)
+    (hg : ⇑g = (l : ℂ) ^ (1 - k) • (f ∣[k] scaleGL l))
+    (hT : f ∣[k] (mapGL ℝ ModularGroup.T : GL (Fin 2) ℝ) = f) :
+    ⇑(cuspFormOfSmulSlashScaleGL l N hlN k χ hχ f g hgχ hg hT) = f :=
+  -- deliberately `(rfl)` rather than `rfl`: `cuspFormOfSmulSlashScaleGL` is not `@[expose]`, so
+  -- the parentheses opt out of exporting the definitional equality, which this lemma itself
+  -- replaces downstream. Same convention as `ModularForm.coe_ofLe` in `Basic.lean`.
+  (rfl)
 
 end TauCeti
 

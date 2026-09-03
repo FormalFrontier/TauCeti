@@ -143,7 +143,10 @@ private def toralGraphAut (hsigma : sigma ∈ t.diagramSymmetry) :
     (geckDiagramModuleEquiv_ι_geckRepresentation_rootGenerator ht hsigma)
     (diagramRootGeneratorPerm sigma).surjective
     (t.geckDiagramFinPerm ht hsigma)
-    (t.geckDiagramModuleEquiv_geckCoordinateBasisFin ht hsigma)
+    (fun _ => 1)
+    (fun i => by
+      simpa only [one_smul] using
+        t.geckDiagramModuleEquiv_geckCoordinateBasisFin ht hsigma i)
     sigma (t.geckWeightFin_geckDiagramFinPerm ht hsigma)
 
 /-- **The graph automorphism of the pinned Geck carrier** attached to a symmetry of its
@@ -218,7 +221,7 @@ theorem geckGraphAut_pow_eq_one (hsigma : sigma ∈ t.diagramSymmetry) {m : ℕ}
   have hgen : diagramRootGeneratorPerm sigma ^ m = 1 := diagramRootGeneratorPerm_pow_eq_one hm
   have htoral : toralGraphAut ht hsigma ^ m = 1 :=
     TauCeti.UniversalEnvelopingAlgebra.kostantToralNumberedSymmetryIso_pow_eq_one _ _ _ _ _ _ _ _
-      _ _ _ _ _ _ _ _ _ m (by rw [← Equiv.Perm.coe_pow, hgen]; rfl) hm
+      _ _ _ _ _ _ _ _ _ _ m (by rw [← Equiv.Perm.coe_pow, hgen]; rfl) hm
   rw [geckGraphAut, ← map_pow, htoral, map_one]
 
 /-- The identity symmetry of the diagram gives the identity automorphism of the Geck carrier. -/
@@ -246,9 +249,15 @@ finite-ordinal coordinate permutation. -/
 theorem coe_geckGraphAutMatrix (hsigma : sigma ∈ t.diagramSymmetry) (A : Type v) [CommRing A] :
     (t.geckGraphAutMatrix ht hsigma A :
         Matrix (Fin (t.geckDim ht)) (Fin (t.geckDim ht)) A) =
-      (t.geckDiagramFinPerm ht hsigma)⁻¹.permMatrix A :=
-  TauCeti.UniversalEnvelopingAlgebra.coe_kostantNumberedSymmetryMatrix_of_perm _ _ _ _
-    (t.geckDiagramFinPerm ht hsigma) (t.geckDiagramModuleEquiv_geckCoordinateBasisFin ht hsigma) A
+      (t.geckDiagramFinPerm ht hsigma)⁻¹.permMatrix A := by
+  ext i j
+  rw [geckGraphAutMatrix]
+  rw [UniversalEnvelopingAlgebra.coe_kostantNumberedSymmetryMatrix_apply_of_monomial _ _ _ _
+      (t.geckDiagramFinPerm ht hsigma) (fun _ => 1)
+      (fun k => by
+        simpa only [one_smul] using
+          t.geckDiagramModuleEquiv_geckCoordinateBasisFin ht hsigma k) A i j]
+  simp [Equiv.Perm.permMatrix, PEquiv.toMatrix_apply, Equiv.eq_symm_apply, eq_comm]
 
 /-- The matrix of the pinned Geck coordinate permutation commutes with extension of the value
 ring. -/
@@ -303,7 +312,10 @@ theorem map_geckPoints_conj_geckGraphAutMatrix (hsigma : sigma ∈ t.diagramSymm
     (geckDiagramModuleEquiv_ι_geckRepresentation_rootGenerator ht hsigma)
     (diagramRootGeneratorPerm sigma).surjective
     (t.geckDiagramFinPerm ht hsigma)
-    (t.geckDiagramModuleEquiv_geckCoordinateBasisFin ht hsigma)
+    (fun _ => 1)
+    (fun i => by
+      simpa only [one_smul] using
+        t.geckDiagramModuleEquiv_geckCoordinateBasisFin ht hsigma i)
     sigma (t.geckWeightFin_geckDiagramFinPerm ht hsigma) A
 
 /-- The matrix of the pinned coordinate permutation, as an element of the normalizer of the points
@@ -380,7 +392,10 @@ theorem schemePointsMulEquiv_geckGraphAut_comp_geckGroupSchemeι
       (geckDiagramModuleEquiv_ι_geckRepresentation_rootGenerator ht hsigma)
       (diagramRootGeneratorPerm sigma).surjective
       (t.geckDiagramFinPerm ht hsigma)
-      (t.geckDiagramModuleEquiv_geckCoordinateBasisFin ht hsigma)
+      (fun _ => 1)
+      (fun i => by
+        simpa only [one_smul] using
+          t.geckDiagramModuleEquiv_geckCoordinateBasisFin ht hsigma i)
       sigma (t.geckWeightFin_geckDiagramFinPerm ht hsigma) A
       (p ≫ (eqToHom (t.geckGroupScheme_def ht)).hom.hom)
 
@@ -439,7 +454,10 @@ theorem geckGraphAutPoints_geckTorusMatrix (hsigma : sigma ∈ t.diagramSymmetry
     (t.geckDiagramModuleEquiv ht hsigma)
     (t.geckDiagramModuleEquiv_mem_geckCoordinateLattice_iff ht hsigma)
     (t.geckDiagramFinPerm ht hsigma)
-    (t.geckDiagramModuleEquiv_geckCoordinateBasisFin ht hsigma) A
+    (fun _ => 1)
+    (fun i => by
+      simpa only [one_smul] using
+        t.geckDiagramModuleEquiv_geckCoordinateBasisFin ht hsigma i) A
     (fun i => torusCharacter s (t.geckWeightFin ht i))
   refine Subtype.ext ?_
   rw [coe_geckGraphAutPoints]

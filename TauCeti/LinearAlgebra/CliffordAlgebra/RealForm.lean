@@ -707,10 +707,6 @@ theorem realCliffordZeroTwoEquivQuaternion_ι (v : Fin (0 + 2) → ℝ) :
     CliffordAlgebra.map_apply_ι]
   simp only [IsometryEquiv.toIsometry_apply, CliffordAlgebraQuaternion.equiv_apply,
     CliffordAlgebraQuaternion.toQuaternion_ι, realCliffordZeroTwoIsometry_apply]
-  -- Both sides are now the same quadruple; they differ only in the instance path of the two zero
-  -- components, `CliffordAlgebraQuaternion.toQuaternion` producing them in `ℍ[ℝ,-1,-1]` and the
-  -- statement reading them in `ℍ[ℝ]`, so the components match on the nose.
-  ext <;> rfl
 
 /-! ### `Cliff(1,1) ≅ M₂(ℝ)` -/
 

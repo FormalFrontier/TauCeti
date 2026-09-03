@@ -78,10 +78,10 @@ private theorem mixingLaw_map_eq_of_blockLaw_map_eq
     {f : (ℕ → α) → (ℕ → α)} (hf : Measurable f)
     (hblock : ∀ (m : ℕ) (k : Fin m → ℕ), Function.Injective k →
       blockLaw μ (fun i ω ↦ f (Y i ω)) k = blockLaw μ Y k) :
-    μ.map (fun ω ↦ (ν ω).map hf.aemeasurable) = μ.map ν := by
+    μ.map (fun ω ↦ (ν ω).map f) = μ.map ν := by
   have hmap := hν.map_values hf
-  have hmap' : MixedIIDWith μ Y (fun ω ↦ (ν ω).map hf.aemeasurable) :=
-    MixedIIDWith.intro hmap.measurable_mixingRepresentative fun m k hk ↦ by
+  have hmap' : MixedIIDWith μ Y (fun ω ↦ (ν ω).map f) :=
+    MixedIIDWith.intro hν.aemeasurable hmap.measurable_mixingRepresentative fun m k hk ↦ by
       rw [← hblock m k hk]
       exact hmap.blockLaw_eq_mixture k hk
   exact mixedIID_mixingLaw_unique hmap' hν
@@ -96,12 +96,10 @@ theorem mixingLaw_map_permReindex_arrayRow_eq_of_col_invariant
     {μ : Measure Ω} [IsFiniteMeasure μ] {X : ℕ × ℕ → Ω → α} {τ : Equiv.Perm ℕ}
     (hcol : (μ.map fun ω p ↦ X (p.1, τ p.2) ω) = μ.map fun ω p ↦ X p ω)
     {ν : Ω → ProbabilityMeasure (ℕ → α)} (hν : MixedIIDWith μ (arrayRow X) ν) :
-    μ.map (fun ω ↦ (ν ω).map (measurable_reindex τ).aemeasurable) = μ.map ν := by
+    μ.map (fun ω ↦ (ν ω).map (fun x : ℕ → α => fun k => x (τ k))) = μ.map ν := by
   -- the witness gives row measurability; the entries are its coordinates
-  have hX : ∀ p : ℕ × ℕ, AEMeasurable (X p) μ := fun p => by
-    have h1 : AEMeasurable (fun ω => arrayRow X p.1 ω p.2) μ :=
-      (measurable_pi_apply p.2).comp_aemeasurable (hν.aemeasurable p.1)
-    simpa [arrayRow_apply] using h1
+  have hX : ∀ p : ℕ × ℕ, AEMeasurable (X p) μ :=
+    aemeasurable_entry_of_aemeasurable_arrayRow hν.aemeasurable
   apply mixingLaw_map_eq_of_blockLaw_map_eq hν (measurable_reindex τ)
   intro m k _
   rw [blockLaw_def, blockLaw_def]
@@ -117,7 +115,7 @@ theorem mixingLaw_map_permReindex_arrayRow_eq_of_col_invariant
     rw [arrayRow_apply]
   rw [hleft, hright]
   let F : (ℕ × ℕ → α) → (Fin m → ℕ → α) := fun x i j ↦ x (k i, j)
-  have hF : Measurable F := measurable_pi_lambda _ fun i ↦ measurable_pi_lambda _ fun j ↦
+  have hF : Measurable F := Measurable.of_eval fun i ↦ Measurable.of_eval fun j ↦
     measurable_pi_apply (k i, j)
   rw [← map_map_array (X := fun p ↦ X (p.1, τ p.2)) (fun p ↦ hX _) hF,
     ← map_map_array hX hF, hcol]
@@ -128,7 +126,7 @@ theorem SeparatelyExchangeable.mixingLaw_map_permReindex_arrayRow_eq
     (h : SeparatelyExchangeable μ X)
     {ν : Ω → ProbabilityMeasure (ℕ → α)} (hν : MixedIIDWith μ (arrayRow X) ν)
     (τ : Equiv.Perm ℕ) :
-    μ.map (fun ω ↦ (ν ω).map (measurable_reindex τ).aemeasurable) = μ.map ν :=
+    μ.map (fun ω ↦ (ν ω).map (fun x : ℕ → α => fun k => x (τ k))) = μ.map ν :=
   mixingLaw_map_permReindex_arrayRow_eq_of_col_invariant
     (separatelyExchangeable_iff.mp h 1 τ) hν
 
@@ -138,12 +136,10 @@ theorem mixingLaw_map_permReindex_arrayCol_eq_of_row_invariant
     {μ : Measure Ω} [IsFiniteMeasure μ] {X : ℕ × ℕ → Ω → α} {σ : Equiv.Perm ℕ}
     (hrow : (μ.map fun ω p ↦ X (σ p.1, p.2) ω) = μ.map fun ω p ↦ X p ω)
     {ν : Ω → ProbabilityMeasure (ℕ → α)} (hν : MixedIIDWith μ (arrayCol X) ν) :
-    μ.map (fun ω ↦ (ν ω).map (measurable_reindex σ).aemeasurable) = μ.map ν := by
+    μ.map (fun ω ↦ (ν ω).map (fun x : ℕ → α => fun k => x (σ k))) = μ.map ν := by
   -- the witness gives column measurability; the entries are its coordinates
-  have hX : ∀ p : ℕ × ℕ, AEMeasurable (X p) μ := fun p => by
-    have h1 : AEMeasurable (fun ω => arrayCol X p.2 ω p.1) μ :=
-      (measurable_pi_apply p.1).comp_aemeasurable (hν.aemeasurable p.2)
-    simpa [arrayCol_apply] using h1
+  have hX : ∀ p : ℕ × ℕ, AEMeasurable (X p) μ :=
+    aemeasurable_entry_of_aemeasurable_arrayCol hν.aemeasurable
   apply mixingLaw_map_eq_of_blockLaw_map_eq hν (measurable_reindex σ)
   intro m k _
   rw [blockLaw_def, blockLaw_def]
@@ -159,7 +155,7 @@ theorem mixingLaw_map_permReindex_arrayCol_eq_of_row_invariant
     rw [arrayCol_apply]
   rw [hleft, hright]
   let F : (ℕ × ℕ → α) → (Fin m → ℕ → α) := fun x j i ↦ x (i, k j)
-  have hF : Measurable F := measurable_pi_lambda _ fun j ↦ measurable_pi_lambda _ fun i ↦
+  have hF : Measurable F := Measurable.of_eval fun j ↦ Measurable.of_eval fun i ↦
     measurable_pi_apply (i, k j)
   rw [← map_map_array (X := fun p ↦ X (σ p.1, p.2)) (fun p ↦ hX _) hF,
     ← map_map_array hX hF, hrow]
@@ -170,7 +166,7 @@ theorem SeparatelyExchangeable.mixingLaw_map_permReindex_arrayCol_eq
     (h : SeparatelyExchangeable μ X)
     {ν : Ω → ProbabilityMeasure (ℕ → α)} (hν : MixedIIDWith μ (arrayCol X) ν)
     (σ : Equiv.Perm ℕ) :
-    μ.map (fun ω ↦ (ν ω).map (measurable_reindex σ).aemeasurable) = μ.map ν :=
+    μ.map (fun ω ↦ (ν ω).map (fun x : ℕ → α => fun k => x (σ k))) = μ.map ν :=
   mixingLaw_map_permReindex_arrayCol_eq_of_row_invariant
     (separatelyExchangeable_iff.mp h σ 1) hν
 

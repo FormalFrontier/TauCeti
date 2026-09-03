@@ -57,10 +57,52 @@ transcription, not Lean theorems: this file asserts no order, finiteness, simpli
 identification result. The roadmap's further cross-check against the `FiniteSimpleGroups`
 permutation development is unavailable for `J₃`, which that development does not cover.
 
-## Main definition
+## Independent source-to-Lean read-through
+
+An independent read-through used the bytes of the ATLAS Magma source `J3G1-P1.M` whose SHA-256
+digest is `db34e17432d777cb96784c78883ff956352f822ae1f9472f60fdff96a26f5082`. Its constructor
+`G<x,y>` and later assignments `a := x; b := y` fix the generator order used by the Lean row.
+
+The source constructor lists, in order,
+
+```text
+x², y³, [x,y]⁹, (xy)¹⁹, ((xy)⁶(xy⁻¹)⁵)²,
+((xyxyxy⁻¹)² xy xy⁻¹ xy⁻¹ xy xy⁻¹)²,
+xyxy (xyxy⁻¹)³ xyxy (xyxy⁻¹)⁴ xy⁻¹ (xyxy⁻¹)³,
+((xy)³(xyxy⁻¹)²)⁴.
+```
+
+These are exactly the eight entries of `j3Presentation_transcribed` after substituting
+`s₁ = ab` and `s₋₁ = ab⁻¹` and expanding the source commutator as `x⁻¹y⁻¹xy`. In particular, the
+Lean row follows the Magma order in placing `[x,y]⁹` before `(xy)¹⁹`; the rendered ATLAS page has
+the same words with those two positions swapped. No constructor entry is commented out or marked
+redundant. This checks every source relator, inverse, exponent, and source-order position
+independently of the original transcription and closes this row's S1 source-to-Lean read-through.
+
+The row is a sealed definition, so it publishes an equation for each of its fields: the transcribed
+relator expressions with their generator indices written out, and the provenance a manifest row
+exists to record. Together with `TauCeti.GroupPresentation.relators_def` and
+`TauCeti.GroupPresentation.mem_relatorSet_iff` the first of those determines the compiled words and
+the relations defining the presented group, so a consumer reasons about the row without unfolding
+it.
+
+Three decidable checks accompany those equations. The relator lengths and their total record the
+compiled data one word at a time and in aggregate, and cyclic reducedness is what makes such a
+letter count comparable with a published presentation length, since both are measured after free
+and cyclic reduction of each relator. This row records no published length, so the total here
+states the transcription for a reviewer to compare with the source, rather than checking it against
+a recorded number.
+
+## Main definitions and results
 
 * `TauCeti.Sporadic.j3Presentation`: the ATLAS finite presentation of `J₃`, for which the ATLAS
   records no individual contributor.
+* `TauCeti.Sporadic.j3Presentation_transcribed` and the equations for the remaining fields: the
+  characterization of the sealed row.
+* `TauCeti.Sporadic.j3Presentation_map_length_relators`,
+  `TauCeti.Sporadic.j3Presentation_totalLength` and
+  `TauCeti.Sporadic.j3Presentation_relatorsCyclicallyReduced`: the three checks on the compiled
+  words.
 
 ## References
 
@@ -138,7 +180,144 @@ def j3Presentation : GroupPresentation where
       seventhWord,
       .pow (.pow ab1 3 ⬝ .pow (ab1 ⬝ abNeg1) 2) 4 ]
 
+/-- The generator names recorded for `J₃`. The row's body is sealed, so this is what lets a
+consumer see that it is a two-generator presentation. -/
+@[simp]
+theorem j3Presentation_generatorNames : j3Presentation.generatorNames = ["a", "b"] := by
+  simp [j3Presentation]
+
+/-- The source recorded for `J₃`. The row's body is sealed, so this equation is what publishes the
+citation itself, rather than only the row's name, to a downstream audit. -/
+@[simp]
+theorem j3Presentation_source :
+    j3Presentation.source = "R. A. Wilson, R. A. Parker, J. N. Bray et al., ATLAS of Finite Group \
+      Representations, version 3; individual presentation contributor not recorded" := by
+  simp [j3Presentation]
+
+/-- The locator recorded for `J₃`, pointing at the presentation inside its source. -/
+@[simp]
+theorem j3Presentation_sourceLocator :
+    j3Presentation.sourceLocator = "J3G1-P1, \
+      https://brauer.maths.qmul.ac.uk/Atlas/v3/pres/J3G1-P1, with the relator list and the \
+      demonstration of correctness in the Magma source file \
+      https://brauer.maths.qmul.ac.uk/Atlas/spor/J3/mag/J3G1-P1.M" := by
+  simp [j3Presentation]
+
+/-- The generator convention recorded for `J₃`, fixing which generator each relator index names and
+which commutator convention the source uses. -/
+@[simp]
+theorem j3Presentation_generatorConvention :
+    j3Presentation.generatorConvention = "The ATLAS standard generators a and b of J3, that is, a \
+      in class 2A and b in class 3A with ab of order 19, in that order, so index 0 is a and index \
+      1 is b. Products are read left to right, negative exponents denote inverses, and [r,s] \
+      denotes r^-1 s^-1 r s." := by
+  simp [j3Presentation]
+
+/-- The transcription notes recorded for `J₃`. -/
+@[simp]
+theorem j3Presentation_transcriptionNotes :
+    j3Presentation.transcriptionNotes = "The eight words of the source's relator list are stored \
+      as eight relators equal to the identity, in the order of the Magma file; the ATLAS page \
+      records no individual contributor for this presentation. The presentation page displays the \
+      same eight words with (x,y)^9 and (x*y)^19 interchanged. No word is marked redundant in \
+      either rendering. The source demonstrates correctness by the coset enumeration \
+      19*Index(G,K1) over the cyclic subgroup K1 = <a*b> of order 19, returning the order \
+      50232960 of J3. GAP 4.15.1 reproduces that enumeration from the eight compiled words, \
+      obtaining the index 2643840, and checks that the same eight words vanish on the ATLAS \
+      6156-point standard generators of J3, which have a an involution with centralizer of order \
+      1920, b of order 3 with centralizer of order 1080, ab of order 19, and which generate a \
+      simple group of order 50232960." := by
+  simp [j3Presentation]
+
+/-- The generator count `J₃`'s source states. With
+`TauCeti.Sporadic.j3Presentation_generatorNames` this is what makes
+`TauCeti.Sporadic.j3Presentation_matchesMetadata` an equation between two visible numbers. -/
+@[simp]
+theorem j3Presentation_expectedGeneratorCount : j3Presentation.expectedGeneratorCount = 2 := by
+  simp [j3Presentation]
+
+/-- The relator count `J₃`'s source states; see
+`TauCeti.Sporadic.j3Presentation_expectedGeneratorCount`. -/
+@[simp]
+theorem j3Presentation_expectedRelatorCount : j3Presentation.expectedRelatorCount = 8 := by
+  simp [j3Presentation]
+
+/-- The relator expressions transcribed for `J₃`, with their generator indices written out and the
+private abbreviations of this file expanded.
+
+The row's body is sealed, so this is the equation that characterizes it: with
+`TauCeti.GroupPresentation.relators_def` it determines the compiled words, and with
+`TauCeti.GroupPresentation.mem_relatorSet_iff` it determines the relations defining
+`TauCeti.GroupPresentation.Group`, so a consumer never has to unfold the row. Index `0` is the
+generator `a` and index `1` is `b`, and the bounds come from
+`TauCeti.Sporadic.j3Presentation_generatorNames`. Every occurrence of a syllable `ab` or `ab⁻¹` is
+bracketed, since the stored expression is a tree and not a flat word. -/
+@[simp]
+theorem j3Presentation_transcribed :
+    j3Presentation.transcribed =
+      [ -- a²
+        .pow (.gen ⟨0, by simp⟩) 2,
+        -- b³
+        .pow (.gen ⟨1, by simp⟩) 3,
+        -- [a,b]⁹, in the source's commutator convention
+        .pow (.comm (.inv (.gen ⟨0, by simp⟩)) (.inv (.gen ⟨1, by simp⟩))) 9,
+        -- (ab)¹⁹
+        .pow (.gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩) 19,
+        -- ((ab)⁶(ab⁻¹)⁵)²
+        .pow (.pow (.gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩) 6 ⬝
+          .pow (.gen ⟨0, by simp⟩ ⬝ .inv (.gen ⟨1, by simp⟩)) 5) 2,
+        -- ((abab ab⁻¹)² ab ab⁻¹ ab⁻¹ ab ab⁻¹)²
+        .pow (.pow ((.gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩) ⬝
+              (.gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩) ⬝
+              (.gen ⟨0, by simp⟩ ⬝ .inv (.gen ⟨1, by simp⟩))) 2 ⬝
+            (.gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩) ⬝
+            (.gen ⟨0, by simp⟩ ⬝ .inv (.gen ⟨1, by simp⟩)) ⬝
+            (.gen ⟨0, by simp⟩ ⬝ .inv (.gen ⟨1, by simp⟩)) ⬝
+            (.gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩) ⬝
+            (.gen ⟨0, by simp⟩ ⬝ .inv (.gen ⟨1, by simp⟩))) 2,
+        -- abab (abab⁻¹)³ abab (abab⁻¹)⁴ ab⁻¹ (abab⁻¹)³
+        (.gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩) ⬝ (.gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩) ⬝
+          .pow ((.gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩) ⬝
+            (.gen ⟨0, by simp⟩ ⬝ .inv (.gen ⟨1, by simp⟩))) 3 ⬝
+          (.gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩) ⬝ (.gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩) ⬝
+          .pow ((.gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩) ⬝
+            (.gen ⟨0, by simp⟩ ⬝ .inv (.gen ⟨1, by simp⟩))) 4 ⬝
+          (.gen ⟨0, by simp⟩ ⬝ .inv (.gen ⟨1, by simp⟩)) ⬝
+          .pow ((.gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩) ⬝
+            (.gen ⟨0, by simp⟩ ⬝ .inv (.gen ⟨1, by simp⟩))) 3,
+        -- ((ab)³(abab⁻¹)²)⁴
+        .pow (.pow (.gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩) 3 ⬝
+          .pow ((.gen ⟨0, by simp⟩ ⬝ .gen ⟨1, by simp⟩) ⬝
+            (.gen ⟨0, by simp⟩ ⬝ .inv (.gen ⟨1, by simp⟩))) 2) 4 ] := by
+  simp [j3Presentation]
+
 /-- The generator and relator counts recorded for `J₃` agree with the transcribed data. -/
 theorem j3Presentation_matchesMetadata : j3Presentation.matchesMetadata := by decide
+
+/-- The lengths of the eight compiled relator words for `J₃`, in the order of the Magma source
+file.
+
+Reading the counts off one relator at a time is what lets a reviewer locate a discrepancy, rather
+than only observe one in the total of `TauCeti.Sporadic.j3Presentation_totalLength`. -/
+theorem j3Presentation_map_length_relators :
+    j3Presentation.relators.map List.length = [2, 3, 36, 38, 44, 44, 50, 56] := by
+  simp [GroupPresentation.relators_def, j3Presentation]
+
+/-- The compiled relator words for `J₃` have `273` letters in total. The row records no published
+length, so this figure states the transcribed data for a reviewer to compare with the source,
+rather than checking it against a recorded number. -/
+theorem j3Presentation_totalLength : j3Presentation.totalLength = 273 := by
+  rw [GroupPresentation.totalLength_def, j3Presentation_map_length_relators]
+  decide
+
+/-- Every compiled relator word for `J₃` is cyclically reduced. This is what makes the letter count
+of `TauCeti.Sporadic.j3Presentation_totalLength` comparable with a published presentation length,
+which is measured after free and cyclic reduction of each relator. -/
+theorem j3Presentation_relatorsCyclicallyReduced :
+    j3Presentation.relatorsCyclicallyReduced := by
+  simp only [GroupPresentation.relatorsCyclicallyReduced_iff, GroupPresentation.relators_def,
+    j3Presentation, List.map_cons, List.map_nil, Relator.toWord_mul, Relator.toWord_pow,
+    Relator.toWord_inv, Relator.toWord_comm, Relator.toWord_gen]
+  decide
 
 end TauCeti.Sporadic

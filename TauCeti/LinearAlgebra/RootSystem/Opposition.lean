@@ -7,8 +7,6 @@ module
 
 public import TauCeti.LinearAlgebra.RootSystem.LongestElement
 
-public section
-
 /-!
 # The opposition involution of a base
 
@@ -73,6 +71,8 @@ rest of that target rests. The argument is the one in J. E. Humphreys, *Introduc
 Algebras and Representation Theory*, GTM 9, Ch. III, §10.3 and §13.1, and in N. Bourbaki, *Groupes
 et algèbres de Lie*, Ch. VI, §1.6.
 -/
+
+public section
 
 namespace TauCeti
 

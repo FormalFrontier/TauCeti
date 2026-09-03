@@ -27,13 +27,12 @@ together with the specialization of the mixture representation to it.
 ## Hypotheses
 
 The generic representation `pathLaw_eq_bind_infinitePi_of_mixedIIDWith` needs only
-`[IsFiniteMeasure μ]`, a.e.-measurable coordinates, and a witness. The definition here needs more,
-because the canonical directing measure is built from a conditional distribution: a probability base
-law `[IsProbabilityMeasure μ]`, a standard-Borel nonempty **state** space
-`[StandardBorelSpace α] [Nonempty α]`, and enough measurability to place the directing map in the
-ambient σ-algebra — which is exactly `tailProcess X ≤ ‹MeasurableSpace Ω›`, taken as an argument
-rather than the stronger pointwise measurability of the coordinates. The specialization derives that
-bound from measurable coordinates via `tailProcess_le_ambient`.
+`[IsFiniteMeasure μ]`, a.e.-measurable coordinates, and a witness. Defining
+`deFinettiMeasure μ X` additionally needs a probability base law `[IsProbabilityMeasure μ]` and a
+standard-Borel nonempty state space `[StandardBorelSpace α] [Nonempty α]`, because the canonical
+directing measure is built from a conditional distribution. It takes no measurability or tail-space
+hypothesis: `ProbabilityMeasure.map` is defined for every function. The later identification uses a
+`MixedIIDWith` witness, whose definition includes coordinatewise a.e. measurability.
 
 No theorem here assumes `[StandardBorelSpace Ω]`, and the specialization below takes the witness as
 an explicit hypothesis rather than deriving it. That is an import boundary, not a mathematical
@@ -77,29 +76,24 @@ pushforward and need not represent the path law at all.
 
 Bundling records at the type level that the mixing law is a probability measure, and supports the
 downstream weak-topology and convergence APIs, which are stated for `ProbabilityMeasure`; it coerces
-back to `Measure` for the `bind` representation. Bundling is also why measurability is required at
-construction time, as the argument `hTail`: `Measure.map` of a non-measurable function is `0`, which
-is not a probability measure, so the pushforward is not known to be one without it. The bound
-`tailProcess X ≤ ‹MeasurableSpace Ω›` is all that is needed — the directing map is tail-measurable
-by construction — so this is weaker than assuming the coordinates measurable. -/
-def deFinettiMeasure (μ : Measure Ω) [IsProbabilityMeasure μ] (X : ℕ → Ω → α)
-    (hTail : tailProcess X ≤ (inferInstance : MeasurableSpace Ω)) :
+back to `Measure` for the `bind` representation. No measurability is required at construction
+time: `Measure.map` of a non-measurable function is a Dirac mass, so the pushforward of a
+probability measure is always a probability measure. The identification of this measure with the
+mixing law instead uses a `MixedIIDWith` witness, which includes coordinatewise a.e.
+measurability. -/
+def deFinettiMeasure (μ : Measure Ω) [IsProbabilityMeasure μ] (X : ℕ → Ω → α) :
     ProbabilityMeasure (ProbabilityMeasure α) :=
   ProbabilityMeasure.map (⟨μ, inferInstance⟩ : ProbabilityMeasure Ω)
-    (f := directingProbabilityMeasure μ X)
-    (measurable_directingProbabilityMeasure (μ := μ) hTail).aemeasurable
+    (directingProbabilityMeasure μ X)
 
 /-- The underlying measure of the de Finetti measure is the pushforward of the directing measure. -/
 @[simp]
-theorem deFinettiMeasure_toMeasure {μ : Measure Ω} [IsProbabilityMeasure μ] {X : ℕ → Ω → α}
-    (hTail : tailProcess X ≤ (inferInstance : MeasurableSpace Ω)) :
-    (deFinettiMeasure μ X hTail : Measure (ProbabilityMeasure α))
+theorem deFinettiMeasure_toMeasure {μ : Measure Ω} [IsProbabilityMeasure μ] {X : ℕ → Ω → α} :
+    (deFinettiMeasure μ X : Measure (ProbabilityMeasure α))
       = μ.map (directingProbabilityMeasure μ X) := by
-  unfold deFinettiMeasure
-  -- `ProbabilityMeasure.map` is `Measure.map` on the underlying measures by construction; the
-  -- pre-bump `simp only [ProbabilityMeasure.toMeasure_map, ProbabilityMeasure.coe_mk]` no
-  -- longer rewrites through the bundled subtype, so strip it definitionally.
-  rfl
+  simpa only [deFinettiMeasure, ProbabilityMeasure.coe_mk] using
+    ProbabilityMeasure.toMeasure_map
+      (⟨μ, inferInstance⟩ : ProbabilityMeasure Ω)
 
 /-- **The mixture representation against the de Finetti measure.** When the canonical directing
 measure is a mixing representative for `X`, the path law of `X` is the `deFinettiMeasure`-mixture of
@@ -109,11 +103,10 @@ The witness hypothesis is taken rather than derived, to keep this file free of a
 route. `pathLaw_eq_bind_infinitePi_deFinettiMeasure_of_contractable`, in
 `TauCeti.Probability.DeFinetti.CanonicalMixture`, discharges it from contractability alone. -/
 theorem pathLaw_eq_bind_infinitePi_deFinettiMeasure_of_mixedIIDWith {μ : Measure Ω}
-    [IsProbabilityMeasure μ] {X : ℕ → Ω → α} (hX : ∀ n, Measurable (X n))
+    [IsProbabilityMeasure μ] {X : ℕ → Ω → α}
     (h : MixedIIDWith μ X (directingProbabilityMeasure μ X)) :
     pathLaw μ X
-      = (deFinettiMeasure μ X (tailProcess_le_ambient 0 fun j _ => hX j) :
-          Measure (ProbabilityMeasure α)).bind
+      = (deFinettiMeasure μ X : Measure (ProbabilityMeasure α)).bind
           fun P => Measure.infinitePi fun _ : ℕ => (P : Measure α) := by
   rw [deFinettiMeasure_toMeasure]
   exact pathLaw_eq_bind_infinitePi_of_mixedIIDWith h

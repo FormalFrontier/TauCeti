@@ -5,7 +5,7 @@ Authors: Codex
 -/
 module
 
-public import TauCeti.Combinatorics.DenseGraphLimits.Kernel.CutNorm
+public import TauCeti.Combinatorics.DenseGraphLimits.Kernel.Integral
 public import TauCeti.Combinatorics.DenseGraphLimits.StepGraphon.Basic
 public import Mathlib.MeasureTheory.Integral.Average
 

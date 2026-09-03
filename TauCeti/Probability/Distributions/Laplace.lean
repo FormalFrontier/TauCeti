@@ -14,7 +14,6 @@ public import Mathlib.Probability.Moments.Variance
 import TauCeti.Analysis.Fourier.ExpNegAbs
 import Mathlib.Analysis.SpecialFunctions.Gaussian.GaussianIntegral
 import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
-import Mathlib.MeasureTheory.Integral.Gamma
 import Mathlib.MeasureTheory.Function.JacobianOneDim
 import Mathlib.MeasureTheory.Measure.Lebesgue.Integral
 
@@ -67,10 +66,11 @@ mass `1` is the sum of the two halves at `x = μ`.
 
 The moments take a different route. Translating by the location with
 `MeasureTheory.integral_sub_right_eq_self` makes the integrand a function of `|x|`, and Mathlib's
-`integral_comp_abs` folds that onto the positive half-line, where the moment is Euler's integral
-`MeasureTheory.integral_rpow_mul_exp_neg_mul_rpow`. The mean is *not* computed from a first
-moment: the translated integrand is odd, so the whole integral vanishes by the reflection
-invariance of Lebesgue measure, and the variance is the second absolute central moment.
+`integral_comp_abs` folds that onto the positive half-line, where the moment is the polynomially
+weighted exponential integral `TauCeti.integral_pow_mul_exp_neg_mul_Ioi`. The mean is *not*
+computed from a first moment: the translated integrand is odd, so the whole integral vanishes by
+the reflection invariance of Lebesgue measure, and the variance is the second absolute central
+moment.
 
 ## References
 
@@ -344,26 +344,6 @@ theorem cdf_laplaceMeasure_eq (hb : 0 < b) (μ x : ℝ) :
 
 /-! ### Moments -/
 
-/-- Euler's integral in the form used below: the `n`-th moment of a decaying exponential on the
-positive half-line. -/
-private lemma integral_pow_mul_exp_neg_inv_mul_Ioi (hb : 0 < b) (n : ℕ) :
-    ∫ y in Ioi (0 : ℝ), y ^ n * Real.exp (-b⁻¹ * y) = n ! * b ^ (n + 1) := by
-  have hb' : (0 : ℝ) < b⁻¹ := inv_pos.mpr hb
-  have hq : (-1 : ℝ) < (n : ℝ) := lt_of_lt_of_le (by norm_num) (Nat.cast_nonneg n)
-  have h := integral_rpow_mul_exp_neg_mul_rpow (p := 1) (q := (n : ℝ)) (b := b⁻¹) one_pos hq hb'
-  simp only [Real.rpow_one, Real.rpow_natCast, div_one, mul_one] at h
-  rw [h, Real.Gamma_nat_eq_factorial, Real.rpow_neg hb'.le, Real.inv_rpow hb.le, inv_inv,
-    ← Nat.cast_one, ← Nat.cast_add, Real.rpow_natCast]
-  ring
-
-/-- The integrand of `integral_pow_mul_exp_neg_inv_mul_Ioi` is integrable. -/
-private lemma integrableOn_pow_mul_exp_neg_inv_mul_Ioi (hb : 0 < b) (n : ℕ) :
-    IntegrableOn (fun y : ℝ => y ^ n * Real.exp (-b⁻¹ * y)) (Ioi 0) := by
-  have hb' : (0 : ℝ) < b⁻¹ := inv_pos.mpr hb
-  have hq : (-1 : ℝ) < (n : ℝ) := lt_of_lt_of_le (by norm_num) (Nat.cast_nonneg n)
-  have h := integrableOn_rpow_mul_exp_neg_mul_rpow (p := 1) (s := (n : ℝ)) (b := b⁻¹) hq one_pos hb'
-  simpa only [Real.rpow_one, Real.rpow_natCast] using h
-
 /-- An even function integrable on the positive half-line is integrable on the whole line. -/
 private lemma integrable_comp_abs {f : ℝ → ℝ} (hf : IntegrableOn f (Ioi 0)) :
     Integrable fun y : ℝ => f |y| := by
@@ -406,9 +386,14 @@ theorem integral_pow_abs_sub_laplaceMeasure (hb : 0 < b) (μ : ℝ) (n : ℕ) :
     _ = 2 * ((2 * b)⁻¹ * ∫ t in Ioi (0 : ℝ), t ^ n * Real.exp (-b⁻¹ * t)) := by
         rw [integral_const_mul]
     _ = n ! * b ^ n := by
-        rw [integral_pow_mul_exp_neg_inv_mul_Ioi hb n]
+        have hrate : (fun t : ℝ => t ^ n * Real.exp (-b⁻¹ * t))
+            = fun t : ℝ => t ^ n * Real.exp (-(b⁻¹ * t)) := by
+          funext t
+          rw [neg_mul]
+        rw [hrate, TauCeti.integral_pow_mul_exp_neg_mul_Ioi n (inv_pos.mpr hb)]
         field_simp
-        ring
+        rw [one_div, inv_pow, pow_succ]
+        field_simp
 
 /-- The absolute central moments of a Laplace law are finite for every scale. -/
 theorem integrable_pow_abs_sub_laplaceMeasure (μ : ℝ) (n : ℕ) :
@@ -421,7 +406,8 @@ theorem integrable_pow_abs_sub_laplaceMeasure (μ : ℝ) (n : ℕ) :
     have hIoi : IntegrableOn
         (fun t : ℝ => (2 * b)⁻¹ * Real.exp (-t / b) * t ^ n) (Ioi 0) := by
       refine IntegrableOn.congr_fun
-        ((integrableOn_pow_mul_exp_neg_inv_mul_Ioi hb n).const_mul ((2 * b)⁻¹))
+        (((TauCeti.integrableOn_pow_mul_exp_neg_mul_Ioi n (inv_pos.mpr hb)).congr_fun
+          (fun t _ => by rw [← neg_mul]) measurableSet_Ioi).const_mul ((2 * b)⁻¹))
         (fun t _ => ?_) measurableSet_Ioi
       rw [neg_div_eq_neg_inv_mul]
       ring
@@ -449,38 +435,46 @@ theorem integrable_id_laplaceMeasure (μ : ℝ) : Integrable id (laplaceMeasure 
     simp
   · simp [laplaceMeasure_of_nonpos (not_lt.mp hb)]
 
+/-- **The mean deviation of a Laplace law from its location vanishes.**
+
+This is the vanishing first central moment, and it is what turns the location parameter into the
+mean: `integral_id_laplaceMeasure` is this result together with the total mass of the law. Reach for
+it directly when centring an integrand on `μ`; for the absolute central moments of every order, see
+`integral_pow_abs_sub_laplaceMeasure`.
+
+This needs no positivity hypothesis, unlike the moment formulas around it: for `b ≤ 0` the law
+degenerates to the zero measure (`laplaceMeasure_of_nonpos`), whose integral is `0` as well. -/
+theorem integral_sub_const_laplaceMeasure (μ : ℝ) :
+    ∫ y, (y - μ) ∂laplaceMeasure μ b = 0 := by
+  rcases le_or_gt b 0 with hb | hb
+  · simp [laplaceMeasure_of_nonpos hb]
+  rw [laplaceMeasure_eq_withDensity, integral_withDensity_eq_integral_toReal_smul
+    (measurable_laplacePDF μ b) (ae_of_all _ fun y => ENNReal.ofReal_lt_top)]
+  simp_rw [toReal_laplacePDF, smul_eq_mul]
+  have hshift : ∫ y, laplacePDFReal μ b y * (y - μ)
+      = ∫ y, (2 * b)⁻¹ * Real.exp (-|y| / b) * y :=
+    calc ∫ y, laplacePDFReal μ b y * (y - μ)
+        = ∫ y, (2 * b)⁻¹ * Real.exp (-|y - μ| / b) * (y - μ) := by
+          refine integral_congr_ae (ae_of_all _ fun y => ?_)
+          simp only [laplacePDFReal_of_pos hb]
+      _ = ∫ y, (2 * b)⁻¹ * Real.exp (-|y| / b) * y :=
+          integral_sub_right_eq_self
+            (fun u : ℝ => (2 * b)⁻¹ * Real.exp (-|u| / b) * u) μ
+  rw [hshift]
+  have hrefl := integral_neg_eq_self (fun u : ℝ => (2 * b)⁻¹ * Real.exp (-|u| / b) * u) volume
+  simp only [abs_neg, mul_neg] at hrefl
+  rw [integral_neg] at hrefl
+  linarith
+
 /-- **The mean of a Laplace law is its location.** -/
 theorem integral_id_laplaceMeasure (hb : 0 < b) (μ : ℝ) :
     ∫ y, y ∂laplaceMeasure μ b = μ := by
-  -- After translating by `μ`, the integrand is odd, so reflection invariance makes its integral
-  -- zero.
   have hp : IsProbabilityMeasure (laplaceMeasure μ b) := isProbabilityMeasure_laplaceMeasure hb μ
   have hsub : Integrable (fun y : ℝ => y - μ) (laplaceMeasure μ b) :=
     integrable_sub_const_laplaceMeasure (b := b) μ
-  have hodd : ∫ y, (y - μ) ∂laplaceMeasure μ b = 0 := by
-    rw [laplaceMeasure_eq_withDensity, integral_withDensity_eq_integral_toReal_smul
-      (measurable_laplacePDF μ b) (ae_of_all _ fun y => ENNReal.ofReal_lt_top)]
-    simp_rw [toReal_laplacePDF, smul_eq_mul]
-    have hshift : ∫ y, laplacePDFReal μ b y * (y - μ)
-        = ∫ y, (2 * b)⁻¹ * Real.exp (-|y| / b) * y :=
-      calc ∫ y, laplacePDFReal μ b y * (y - μ)
-          = ∫ y, (2 * b)⁻¹ * Real.exp (-|y - μ| / b) * (y - μ) := by
-            refine integral_congr_ae (ae_of_all _ fun y => ?_)
-            simp only [laplacePDFReal_of_pos hb]
-        _ = ∫ y, (2 * b)⁻¹ * Real.exp (-|y| / b) * y :=
-            integral_sub_right_eq_self
-              (fun u : ℝ => (2 * b)⁻¹ * Real.exp (-|u| / b) * u) μ
-    rw [hshift]
-    have hrefl : ∫ y : ℝ, (2 * b)⁻¹ * Real.exp (-|(-y)| / b) * (-y)
-        = ∫ y : ℝ, (2 * b)⁻¹ * Real.exp (-|y| / b) * y :=
-      (Measure.measurePreserving_neg (volume : Measure ℝ)).integral_comp
-        (Homeomorph.neg ℝ).measurableEmbedding
-        (fun u : ℝ => (2 * b)⁻¹ * Real.exp (-|u| / b) * u)
-    simp only [abs_neg, mul_neg] at hrefl
-    rw [integral_neg] at hrefl
-    linarith
   have : ∫ y, y ∂laplaceMeasure μ b = ∫ y, ((y - μ) + μ) ∂laplaceMeasure μ b := by simp
-  rw [this, integral_add hsub (integrable_const μ), hodd, integral_const]
+  rw [this, integral_add hsub (integrable_const μ), integral_sub_const_laplaceMeasure μ,
+    integral_const]
   simp
 
 /-- **The variance of a Laplace law with scale `b` is `2 * b ^ 2`.** -/

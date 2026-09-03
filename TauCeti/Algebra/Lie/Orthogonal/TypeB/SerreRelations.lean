@@ -135,26 +135,27 @@ private theorem lie_typeBSimpleRootMatrix_castSucc_of_nonadjacent
     simp only [Fin.val_succ, Fin.val_castSucc] at hval
     exact hji hval.symm
 
+private theorem lie_typeBSimpleRootMatrix_castSucc_of_adjacent
+    (i j : Fin n) (hij : i.val + 1 = j.val) (hout : i.castSucc ≠ j.succ) :
+    ⁅typeBSimpleRootMatrix (K := K) i.castSucc,
+      typeBSimpleRootMatrix (K := K) j.castSucc⁆ =
+        typeBLongRootMatrix i.castSucc j.succ hout := by
+  simp only [typeBSimpleRootMatrix_castSucc]
+  exact typeBLongRootMatrix_lie_longRootMatrix_chain (K := K)
+    i.castSucc i.succ j.castSucc j.succ (ne_of_lt i.castSucc_lt_succ)
+    (ne_of_lt j.castSucc_lt_succ) (Fin.ext hij) hout
+
 private theorem lie_lie_typeBSimpleRootMatrix_castSucc (i j : Fin n) :
     ⁅typeBSimpleRootMatrix (K := K) i.castSucc,
       ⁅typeBSimpleRootMatrix (K := K) i.castSucc,
         typeBSimpleRootMatrix (K := K) j.castSucc⁆⁆ = 0 := by
   by_cases hij : i.val + 1 = j.val
-  · have hmid : i.succ = j.castSucc := Fin.ext hij
-    have hout : i.castSucc ≠ j.succ := by
+  · have hout : i.castSucc ≠ j.succ := by
       intro h
       have hval := congrArg Fin.val h
       simp only [Fin.val_castSucc, Fin.val_succ] at hval
       omega
-    have hinner :
-        ⁅typeBSimpleRootMatrix (K := K) i.castSucc,
-          typeBSimpleRootMatrix (K := K) j.castSucc⁆ =
-            typeBLongRootMatrix i.castSucc j.succ hout := by
-      simp only [typeBSimpleRootMatrix_castSucc]
-      exact typeBLongRootMatrix_lie_longRootMatrix_chain (K := K)
-        i.castSucc i.succ j.castSucc j.succ (ne_of_lt i.castSucc_lt_succ)
-        (ne_of_lt j.castSucc_lt_succ) hmid hout
-    rw [hinner]
+    rw [lie_typeBSimpleRootMatrix_castSucc_of_adjacent (K := K) i j hij hout]
     simp only [typeBSimpleRootMatrix_castSucc]
     apply typeBLongRootMatrix_lie_longRootMatrix_of_ne
     · intro h
@@ -163,30 +164,17 @@ private theorem lie_lie_typeBSimpleRootMatrix_castSucc (i j : Fin n) :
       omega
     · exact hout
   · by_cases hji : j.val + 1 = i.val
-    · have hmid : j.succ = i.castSucc := Fin.ext hji
-      have hout : j.castSucc ≠ i.succ := by
+    · have hout : j.castSucc ≠ i.succ := by
         intro h
         have hval := congrArg Fin.val h
         simp only [Fin.val_castSucc, Fin.val_succ] at hval
         omega
-      have hreverse :
-          ⁅typeBSimpleRootMatrix (K := K) j.castSucc,
-            typeBSimpleRootMatrix (K := K) i.castSucc⁆ =
-              typeBLongRootMatrix j.castSucc i.succ hout := by
-        simp only [typeBSimpleRootMatrix_castSucc]
-        exact typeBLongRootMatrix_lie_longRootMatrix_chain (K := K)
-          j.castSucc j.succ i.castSucc i.succ (ne_of_lt j.castSucc_lt_succ)
-          (ne_of_lt i.castSucc_lt_succ) hmid hout
       have hinner :
           ⁅typeBSimpleRootMatrix (K := K) i.castSucc,
             typeBSimpleRootMatrix (K := K) j.castSucc⁆ =
               -typeBLongRootMatrix j.castSucc i.succ hout := by
-        calc
-          ⁅typeBSimpleRootMatrix (K := K) i.castSucc,
-              typeBSimpleRootMatrix (K := K) j.castSucc⁆ =
-              -⁅typeBSimpleRootMatrix (K := K) j.castSucc,
-                typeBSimpleRootMatrix (K := K) i.castSucc⁆ := (lie_skew _ _).symm
-          _ = -typeBLongRootMatrix j.castSucc i.succ hout := by rw [hreverse]
+        rw [← lie_typeBSimpleRootMatrix_castSucc_of_adjacent (K := K) j i hji hout]
+        exact (lie_skew _ _).symm
       rw [hinner, lie_neg]
       simp only [typeBSimpleRootMatrix_castSucc, neg_eq_zero]
       apply typeBLongRootMatrix_lie_longRootMatrix_of_ne

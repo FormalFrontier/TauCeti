@@ -10,8 +10,6 @@ public import TauCeti.LinearAlgebra.RootSystem.FiniteType.DoubleEdge.Basic
 import TauCeti.LinearAlgebra.RootSystem.FiniteType.DoubleEdge.Reindex
 import TauCeti.LinearAlgebra.RootSystem.FiniteType.TwoDoubleEdges
 
-public section
-
 /-!
 # The branchless double-edge case of the finite-type classification
 
@@ -43,6 +41,8 @@ multiple edges is the affine-diagram argument in N. Bourbaki, *Lie Groups and Li
 Chapters 4--6*, Chapter VI, section 4, and J. E. Humphreys, *Introduction to Lie Algebras and
 Representation Theory*, section 11.4.
 -/
+
+public section
 
 namespace TauCeti
 

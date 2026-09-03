@@ -45,12 +45,29 @@ Sobolev function need not be weakly differentiable across `∂Ω`. A local form 
 survives on compactly contained subsets for translations smaller than their distance to the
 boundary.
 
+## Translation after extension by zero
+
+For an arbitrary open domain `Ω`, the translation estimate is applied after extending by zero to
+the whole space. `TauCeti.W1p0.eLpNorm_value_extendByZeroL_comp_add_sub_le_mul_enorm_gradient`
+records the result directly in terms of the original gradient:
+
+`‖\tilde{u}(· + h) - \tilde{u}‖_p ≤ ‖h‖ ‖∇u‖_p`,
+
+where `\tilde{u}` is the zero extension of `u`. The zero extension vanishes almost everywhere
+off `Ω`, as recorded by `TauCeti.W1p0.value_extendByZeroL_ae_eq_zero_compl`, so its support is
+contained in `Ω` up to a null set. When `Ω` is bounded, this containment and the translation
+estimate give the fixed-bounded-support and translation inputs for Fréchet--Kolmogorov.
+
 ## Main declarations
 
 * `TauCeti.W1p.eLpNorm_value_comp_add_sub_value_le_mul_enorm_gradient`: the translation estimate
   on `W^{1,p}_0(ℝⁿ)`.
-* `TauCeti.W1p0.eLpNorm_value_extendByZeroL_comp_add_sub_le_mul_enorm_gradient`: the same estimate
-  for an arbitrary open `Ω`, stated for the extension by zero.
+* `TauCeti.W1p0.eLpNorm_value_extendByZeroL_comp_add_sub_le_mul_enorm_gradient`: the translation
+  estimate for the zero extension of a function in `W^{1,p}_0(Ω)`.
+* `TauCeti.W1p0.exists_pos_forall_eLpNorm_value_extendByZeroL_comp_add_sub_le_of_gradient_le`:
+  zero extensions of a gradient-bounded family have uniformly small translation increments.
+* `TauCeti.W1p0.exists_pos_forall_eLpNorm_value_extendByZeroL_comp_add_sub_le_of_norm_le`:
+  zero extensions of a norm-bounded family have uniformly small translation increments.
 
 ## References
 
@@ -164,6 +181,8 @@ theorem W1p.eLpNorm_value_comp_add_sub_value_le_mul_enorm_gradient (hp : p ≠ �
   simpa only [Set.mem_ofPred_eq, W1p.value_ofTestFunctionₗ, W1p.gradient_ofTestFunctionₗ] using
     eLpNorm_testFunctionLp_comp_add_sub_testFunctionLp_le hp h phi
 
+/-! ### Translation after extension by zero -/
+
 /-- **The translation estimate on `W^{1,p}_0(Ω)` for an arbitrary open `Ω`**: for `1 ≤ p < ∞`,
 the extension by zero of `u ∈ W^{1,p}_0(Ω)` satisfies
 
@@ -186,6 +205,60 @@ theorem W1p0.eLpNorm_value_extendByZeroL_comp_add_sub_le_mul_enorm_gradient {Ome
   rw [W1p0.gradient_extendByZeroL]
   exact enorm_eq_iff_norm_eq.2 ((extendByZeroLpₗᵢ ℝ mu Omega.isOpen.measurableSet
     (SetLike.coe_subset_coe.mpr (le_top : Omega ≤ ⊤))).norm_map _)
+
+/-- **Uniform smallness of translation increments for a gradient-bounded Sobolev family.** If
+every `u ∈ S ⊆ W^{1,p}_0(Ω)` has gradient norm at most `C`, then for every `ε > 0` there is a
+common `δ > 0` such that every zero extension `\tilde{u}` satisfies
+
+`‖\tilde{u}(· + h) - \tilde{u}‖_p ≤ ε` whenever `‖h‖ < δ`.
+
+When `Ω` is bounded, `TauCeti.W1p0.value_extendByZeroL_ae_eq_zero_compl` also supplies fixed
+bounded support for the family. -/
+theorem W1p0.exists_pos_forall_eLpNorm_value_extendByZeroL_comp_add_sub_le_of_gradient_le
+    {Omega : Opens E} (hp : p ≠ ∞) {S : Set (W1p0 mu Omega p)} {C : ℝ}
+    (hS : ∀ u ∈ S, ‖W1p.gradient (u : W1p mu Omega p)‖ ≤ C)
+    {epsilon : ℝ≥0∞} (hepsilon : 0 < epsilon) :
+    ∃ delta > 0, ∀ u ∈ S, ∀ h : E, ‖h‖ < delta →
+      eLpNorm (fun x =>
+        W1p.value (W1p0.extendByZeroL le_top u : W1p mu ⊤ p) (x + h) -
+          W1p.value (W1p0.extendByZeroL le_top u : W1p mu ⊤ p) x) p mu
+        ≤ epsilon := by
+  rcases S.eq_empty_or_nonempty with rfl | ⟨u, hu⟩
+  · exact ⟨1, zero_lt_one, by simp⟩
+  have hC : 0 ≤ C := (norm_nonneg _).trans (hS u hu)
+  rcases eq_or_ne epsilon ∞ with rfl | hepsilon_top
+  · exact ⟨1, zero_lt_one, fun _ _ _ _ => le_top⟩
+  let delta := epsilon.toReal / (C + 1)
+  have hdelta : 0 < delta := div_pos (ENNReal.toReal_pos hepsilon.ne' hepsilon_top) (by linarith)
+  refine ⟨delta, hdelta, fun u hu h hh =>
+    (W1p0.eLpNorm_value_extendByZeroL_comp_add_sub_le_mul_enorm_gradient hp h u).trans ?_⟩
+  have hu_enorm : ‖W1p.gradient (u : W1p mu Omega p)‖ₑ ≤ ENNReal.ofReal C := by
+    rw [← ofReal_norm]
+    exact ENNReal.ofReal_mono (hS u hu)
+  refine (mul_le_mul_right hu_enorm ‖h‖ₑ).trans ?_
+  rw [← ofReal_norm, ← ENNReal.ofReal_mul (norm_nonneg h),
+    ← ENNReal.ofReal_toReal hepsilon_top]
+  apply ENNReal.ofReal_mono
+  calc
+    ‖h‖ * C ≤ delta * C := mul_le_mul_of_nonneg_right hh.le hC
+    _ ≤ delta * (C + 1) := mul_le_mul_of_nonneg_left (by linarith) hdelta.le
+    _ = epsilon.toReal := div_mul_cancel₀ _ (by linarith)
+
+/-- **Uniform smallness of translation increments for a norm-bounded Sobolev family.** This is
+the graph-norm-bounded corollary of
+`TauCeti.W1p0.exists_pos_forall_eLpNorm_value_extendByZeroL_comp_add_sub_le_of_gradient_le`. -/
+theorem W1p0.exists_pos_forall_eLpNorm_value_extendByZeroL_comp_add_sub_le_of_norm_le
+    {Omega : Opens E} (hp : p ≠ ∞) {S : Set (W1p0 mu Omega p)} {C : ℝ}
+    (hS : ∀ u ∈ S, ‖u‖ ≤ C) {epsilon : ℝ≥0∞} (hepsilon : 0 < epsilon) :
+    ∃ delta > 0, ∀ u ∈ S, ∀ h : E, ‖h‖ < delta →
+      eLpNorm (fun x =>
+        W1p.value (W1p0.extendByZeroL le_top u : W1p mu ⊤ p) (x + h) -
+          W1p.value (W1p0.extendByZeroL le_top u : W1p mu ⊤ p) x) p mu
+        ≤ epsilon := by
+  refine W1p0.exists_pos_forall_eLpNorm_value_extendByZeroL_comp_add_sub_le_of_gradient_le hp
+    (C := C) (epsilon := epsilon) ?_ hepsilon
+  intro u hu
+  exact (W1p.norm_gradient_le (u : W1p mu Omega p)).trans (hS u hu)
 
 end Sobolev
 

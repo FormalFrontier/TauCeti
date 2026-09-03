@@ -8,8 +8,6 @@ module
 public import TauCeti.Algebra.Lie.HighestWeight.Maximal
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Module
 
-public section
-
 /-!
 # Verma modules
 
@@ -107,6 +105,8 @@ The construction therefore is not the zero quotient, and `L(0)` exists outright.
   `TauCeti.isHighestWeightVector_irreducibleQuotientGenerator`: **`L(lam)` is irreducible and its
   canonical generator is a highest weight vector of weight `lam`**, once the Verma module is known
   to be nonzero.
+* `TauCeti.subsingleton_irreducibleQuotient_iff`: in the remaining case `L(lam)` is the zero
+  module, so it is **either irreducible or zero, never anything else**.
 
 ## Roadmap
 
@@ -127,6 +127,8 @@ without it.
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §20.3.
 * J. E. Humphreys, *Representations of Semisimple Lie Algebras in the BGG Category `O`*, §1.3.
 -/
+
+public section
 
 open UniversalEnvelopingAlgebra
 
@@ -483,5 +485,21 @@ theorem isHighestWeightVector_irreducibleQuotientGenerator (h : vermaGenerator b
   isHighestWeightVector_mk_of_isHighestWeightVector_of_lieSpan_eq_top
     ((isHighestWeightVector_vermaGenerator_iff b lam).mpr h)
     (lieSpan_vermaGenerator_eq_top b lam)
+
+/-- **`L(lam)` is the zero module exactly when `M(lam)` is.** It is a quotient of `M(lam)`, and
+conversely it is irreducible, hence nonzero, as soon as `M(lam)` is nonzero. Together with
+`TauCeti.isIrreducible_irreducibleQuotient` this settles the named carrier in both cases: `L(lam)`
+is irreducible when `M(lam) ≠ 0` and zero otherwise, so a statement about it never has to leave
+the missing Poincaré--Birkhoff--Witt input undischarged. -/
+theorem subsingleton_irreducibleQuotient_iff :
+    Subsingleton (irreducibleQuotient b lam) ↔ vermaGenerator b lam = 0 := by
+  refine ⟨fun h ↦ ?_, fun h ↦ ?_⟩
+  · by_contra h0
+    have _ := isIrreducible_irreducibleQuotient b lam h0
+    have _ : Nontrivial (irreducibleQuotient b lam) :=
+      LieModule.nontrivial_of_isIrreducible (R := K) (L := L) (M := irreducibleQuotient b lam)
+    exact not_subsingleton _ h
+  · have _ : Subsingleton (VermaModule b lam) := (subsingleton_vermaModule_iff b lam).mpr h
+    exact (irreducibleQuotientMk_surjective b lam).subsingleton
 
 end TauCeti
