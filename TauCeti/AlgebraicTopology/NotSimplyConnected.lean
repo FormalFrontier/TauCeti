@@ -16,12 +16,12 @@ non-simply-connected space inherits the standard topological obstructions: it is
 contractible, and it is not homeomorphic to any simply connected space — in particular not to
 any real topological vector space nor to `ℝ`.
 
-These facts use the space only through the (non-)triviality of its fundamental group, so they
-are stated once here for an arbitrary space and then specialised to concrete circles (`AddCircle.*`,
-`UnitAddCircle.*`, `TauCeti.Circle.*`). Non-simple-connectivity
-follows because a simply connected space has a subsingleton fundamental group; the
-homeomorphism statements consume Mathlib's transfer of `SimplyConnectedSpace` along a homotopy
-equivalence (`ContinuousMap.HomotopyEquiv.simplyConnectedSpace`, via
+These facts use the space only through the (non-)triviality of its fundamental group, so they are
+stated once here for an arbitrary space and then specialised to concrete circles (`AddCircle.*`,
+`UnitAddCircle.*`, `Circle.*`). Non-simple-connectivity follows because a simply connected space
+has a subsingleton fundamental group; the homeomorphism statements consume Mathlib's transfer of
+`SimplyConnectedSpace` along a homotopy equivalence
+(`ContinuousMap.HomotopyEquiv.simplyConnectedSpace`, via
 `Homeomorph.toHomotopyEquiv`) and the contractibility of a real topological vector space
 (`RealTopologicalVectorSpace.contractibleSpace`). No Mathlib code is vendored.
 

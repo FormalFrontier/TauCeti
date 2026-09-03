@@ -37,28 +37,29 @@ application). The qualitative corollaries — the fundamental group is nontrivia
 so `Circle` is neither simply connected nor contractible, and in particular is not
 homeomorphic to the real line — follow exactly as for `AddCircle`. No Mathlib code is vendored.
 
+The extensions below live in Mathlib's root `AddCircle` and `Circle` namespaces, enabling
+receiver notation where the arguments permit it.
+
 ## Main declarations
 
-* `TauCeti.Circle.homeomorphCircle_symm_one`: `AddCircle.homeomorphCircle.symm 1 = 0`.
-* `TauCeti.Circle.fundamentalGroupMulEquiv`: `π₁(Circle, x) ≃* Multiplicative ℤ`.
-* `TauCeti.Circle.fundamentalGroupMulEquiv_def`: factorization through basepoint change and the
+* `AddCircle.homeomorphCircle_symm_one`: `AddCircle.homeomorphCircle.symm 1 = 0`.
+* `Circle.fundamentalGroupMulEquiv`: `π₁(Circle, x) ≃* Multiplicative ℤ`.
+* `Circle.fundamentalGroupMulEquiv_def`: factorization through basepoint change and the
   canonical-basepoint circle computation.
-* `TauCeti.Circle.nontrivial_fundamentalGroup`, `TauCeti.Circle.infinite_fundamentalGroup`:
+* `Circle.nontrivial_fundamentalGroup`, `Circle.infinite_fundamentalGroup`:
   the fundamental group of `Circle`, based at `x`, is nontrivial and infinite.
-* `TauCeti.Circle.not_simplyConnectedSpace`, `TauCeti.Circle.not_contractibleSpace`:
+* `Circle.not_simplyConnectedSpace`, `Circle.not_contractibleSpace`:
   `Circle` is not simply connected and not contractible.
-* `TauCeti.Circle.isEmpty_homeomorph_real`: `Circle` is not homeomorphic to `ℝ`.
+* `Circle.isEmpty_homeomorph_real`: `Circle` is not homeomorphic to `ℝ`.
 -/
 
 public section
 
-namespace TauCeti
-
-namespace Circle
-
 open scoped Real
 
 noncomputable section
+
+namespace AddCircle
 
 /-- The inverse homeomorphism `AddCircle.homeomorphCircle.symm` carries `1 : Circle` to `0`. -/
 @[simp]
@@ -66,15 +67,19 @@ theorem homeomorphCircle_symm_one :
     (AddCircle.homeomorphCircle (T := 2 * Real.pi) Real.two_pi_pos.ne').symm 1 = 0 := by
   rw [Homeomorph.symm_apply_eq, AddCircle.homeomorphCircle_apply, AddCircle.toCircle_zero]
 
+end AddCircle
+
+namespace Circle
+
 /-- The fundamental group of the complex unit circle `Circle = {z : ℂ | ‖z‖ = 1}`, based at
 `x`, is `Multiplicative ℤ`: `π₁(S¹, x) ≅ ℤ`. It is obtained by changing the basepoint to
 `1 : Circle`, then transporting the additive-circle computation at `0` across
 `AddCircle.homeomorphCircle : AddCircle (2 * π) ≃ₜ Circle`. -/
 def fundamentalGroupMulEquiv (x : Circle) : FundamentalGroup Circle x ≃* Multiplicative ℤ :=
   (FundamentalGroup.fundamentalGroupMulEquivOfPathConnected x 1).trans
-    ((FundamentalGroup.homeomorphMulEquivOfEq
+    ((TauCeti.FundamentalGroup.homeomorphMulEquivOfEq
           (AddCircle.homeomorphCircle (T := 2 * Real.pi) Real.two_pi_pos.ne').symm
-          homeomorphCircle_symm_one).trans
+          AddCircle.homeomorphCircle_symm_one).trans
       (AddCircle.fundamentalGroupMulEquivZero (2 * Real.pi) Real.two_pi_pos.ne'))
 
 /-- `fundamentalGroupMulEquiv` factors through Mathlib's basepoint-change isomorphism, followed
@@ -82,9 +87,9 @@ by the canonical-basepoint circle computation transported from `AddCircle`. -/
 theorem fundamentalGroupMulEquiv_def (x : Circle) :
     fundamentalGroupMulEquiv x =
       (FundamentalGroup.fundamentalGroupMulEquivOfPathConnected x 1).trans
-        ((FundamentalGroup.homeomorphMulEquivOfEq
+        ((TauCeti.FundamentalGroup.homeomorphMulEquivOfEq
           (AddCircle.homeomorphCircle (T := 2 * Real.pi) Real.two_pi_pos.ne').symm
-            homeomorphCircle_symm_one).trans
+            AddCircle.homeomorphCircle_symm_one).trans
           (AddCircle.fundamentalGroupMulEquivZero (2 * Real.pi) Real.two_pi_pos.ne')) :=
   by
     unfold fundamentalGroupMulEquiv
@@ -104,35 +109,33 @@ theorem infinite_fundamentalGroup (x : Circle) : Infinite (FundamentalGroup Circ
 nontrivial, whereas a simply connected space has a subsingleton fundamental group. -/
 theorem not_simplyConnectedSpace : ¬ SimplyConnectedSpace Circle :=
   haveI := nontrivial_fundamentalGroup 1
-  not_simplyConnectedSpace_of_nontrivial_fundamentalGroup (1 : Circle)
+  TauCeti.not_simplyConnectedSpace_of_nontrivial_fundamentalGroup (1 : Circle)
 
 /-- The complex unit circle `Circle` is **not contractible**: a contractible space is simply
 connected, and the circle is not. -/
 theorem not_contractibleSpace : ¬ ContractibleSpace Circle :=
-  not_contractibleSpace_of_not_simplyConnectedSpace not_simplyConnectedSpace
+  TauCeti.not_contractibleSpace_of_not_simplyConnectedSpace not_simplyConnectedSpace
 
 /-- The complex unit circle `Circle` is not homeomorphic to any simply connected space: a
 homeomorphism is a homotopy equivalence, and simple connectivity transfers along homotopy
 equivalences, which the circle does not enjoy. -/
 theorem isEmpty_homeomorph_of_simplyConnectedSpace (Y : Type*) [TopologicalSpace Y]
     [SimplyConnectedSpace Y] : IsEmpty (Circle ≃ₜ Y) :=
-  isEmpty_homeomorph_of_not_simplyConnectedSpace not_simplyConnectedSpace Y
+  TauCeti.isEmpty_homeomorph_of_not_simplyConnectedSpace not_simplyConnectedSpace Y
 
 /-- The complex unit circle `Circle` is not homeomorphic to any real topological vector space
 (in particular, to any real normed space), since such a space is contractible, hence simply
 connected. -/
 theorem isEmpty_homeomorph_realTopologicalVectorSpace (E : Type*) [AddCommGroup E] [Module ℝ E]
     [TopologicalSpace E] [ContinuousAdd E] [ContinuousSMul ℝ E] : IsEmpty (Circle ≃ₜ E) :=
-  isEmpty_homeomorph_realTopologicalVectorSpace_of_not_simplyConnectedSpace
+  TauCeti.isEmpty_homeomorph_realTopologicalVectorSpace_of_not_simplyConnectedSpace
     not_simplyConnectedSpace E
 
 /-- The complex unit circle `Circle` is not homeomorphic to the real line: the circle is not
 simply connected but `ℝ` is contractible. -/
 theorem isEmpty_homeomorph_real : IsEmpty (Circle ≃ₜ ℝ) :=
-  isEmpty_homeomorph_real_of_not_simplyConnectedSpace not_simplyConnectedSpace
-
-end
+  TauCeti.isEmpty_homeomorph_real_of_not_simplyConnectedSpace not_simplyConnectedSpace
 
 end Circle
 
-end TauCeti
+end
