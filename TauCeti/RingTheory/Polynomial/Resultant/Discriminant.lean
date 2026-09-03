@@ -93,14 +93,15 @@ discriminant up to the sign `(-1) ^ (n * (n - 1) / 2)`.
 
 This is `Polynomial.resultant_deriv` with the leading coefficient removed, extended to the
 constant polynomial `1`, which that lemma excludes. -/
-theorem _root_.Polynomial.Monic.resultant_derivative {f : R[X]} (hf : f.Monic) :
+theorem _root_.Polynomial.Monic.resultant_deriv {f : R[X]} (hf : f.Monic) :
     f.resultant f.derivative f.natDegree (f.natDegree - 1) =
       (-1) ^ (f.natDegree * (f.natDegree - 1) / 2) * f.discr := by
   rcases Nat.eq_zero_or_pos f.natDegree with h | h
   · obtain rfl := eq_one_of_monic_natDegree_zero hf h
     have h1 : (1 : R[X]).discr = 1 := by simpa using discr_C (R := R) 1
     simp [h1]
-  · rw [resultant_deriv (natDegree_pos_iff_degree_pos.mp h), hf.leadingCoeff, mul_one]
+  · rw [_root_.Polynomial.resultant_deriv (natDegree_pos_iff_degree_pos.mp h), hf.leadingCoeff,
+      mul_one]
 
 /-- For monic `f`, `f.resultant g` does not depend on which valid upper bound is supplied for the
 degree of `g`. -/
@@ -203,6 +204,8 @@ private theorem triangle_add (m n : ℕ) :
 the square of their resultant. -/
 theorem _root_.Polynomial.Monic.discr_mul {f g : R[X]} (hf : f.Monic) (hg : g.Monic) :
     (f * g).discr = f.discr * g.discr * (f.resultant g) ^ 2 := by
+  -- A monic factor of degree zero is `1`, and both sides are then the discriminant of the other
+  -- factor; the argument below needs both degrees positive.
   by_cases hf0 : f.natDegree = 0
   · obtain rfl := eq_one_of_monic_natDegree_zero hf hf0
     have h1 : (1 : R[X]).discr = 1 := by simpa using discr_C (R := R) 1
@@ -211,6 +214,9 @@ theorem _root_.Polynomial.Monic.discr_mul {f g : R[X]} (hf : f.Monic) (hg : g.Mo
   · obtain rfl := eq_one_of_monic_natDegree_zero hg hg0
     have h1 : (1 : R[X]).discr = 1 := by simpa using discr_C (R := R) 1
     simp [h1]
+  -- All resultants against `(f * g).derivative` are taken at the single degree bound `d`, which
+  -- is the degree bound `Polynomial.discr` uses for `f * g`; the next block records that every
+  -- polynomial the argument feeds to a resultant stays inside that bound.
   let d := f.natDegree + g.natDegree - 1
   have hdeg : (f * g).natDegree = f.natDegree + g.natDegree := hf.natDegree_mul hg
   have hderiv : (f * g).derivative.natDegree ≤ d := by
@@ -228,6 +234,9 @@ theorem _root_.Polynomial.Monic.discr_mul {f g : R[X]} (hf : f.Monic) (hg : g.Mo
   have hpf' : f.natDegree + g.derivative.natDegree ≤ d := by omega
   have hmul_f : (f.derivative * g).natDegree ≤ d := natDegree_mul_le.trans hpg
   have hmul_g : (f * g.derivative).natDegree ≤ d := natDegree_mul_le.trans hpf'
+  -- Step 1: expand `(f * g)' = f' * g + f * g'`. Against `f` the second summand is a multiple of
+  -- `f`, so it drops out of the resultant, leaving `res(f, f') * res(f, g)`; against `g` the
+  -- first summand drops out symmetrically.
   have hresf : f.resultant (f * g).derivative f.natDegree d =
       f.resultant f.derivative * f.resultant g := by
     rw [derivative_mul, resultant_add_mul_right _ _ _ _ _ hpf le_rfl,
@@ -241,19 +250,26 @@ theorem _root_.Polynomial.Monic.discr_mul {f g : R[X]} (hf : f.Monic) (hg : g.Mo
       hg.resultant_of_le hmul_g,
       ← hg.resultant_of_le natDegree_mul_le,
       resultant_mul_right _ _ _ _ le_rfl]
+  -- Step 2: multiplicativity of the resultant in its left argument turns
+  -- `res(f * g, (f * g)')` into the product of the two resultants just computed.
   have hmul := resultant_mul_left f g (f * g).derivative d hderiv
   rw [hresf, hresg] at hmul
+  -- Step 3: read each resultant of a polynomial against its own derivative as a discriminant,
+  -- and swap the arguments of the crossed resultant `res(g, f)`.
   have hfd : f.resultant f.derivative =
       (-1) ^ (f.natDegree * (f.natDegree - 1) / 2) * f.discr := by
     rw [← hf.resultant_of_le (natDegree_derivative_le f),
-      hf.resultant_derivative]
+      hf.resultant_deriv]
   have hgd : g.resultant g.derivative =
       (-1) ^ (g.natDegree * (g.natDegree - 1) / 2) * g.discr := by
     rw [← hg.resultant_of_le (natDegree_derivative_le g),
-      hg.resultant_derivative]
+      hg.resultant_deriv]
   have hcomm : g.resultant f = (-1) ^ (g.natDegree * f.natDegree) * f.resultant g :=
     resultant_comm g f g.natDegree f.natDegree
-  have hdisc := (hf.mul hg).resultant_derivative
+  -- Step 4: the same reading on the left-hand side produces the sign
+  -- `(-1) ^ ((m + n) * (m + n - 1) / 2)`, which `triangle_add` splits as the two signs collected
+  -- in Step 3 together with `(-1) ^ (m * n)` from `hcomm`. All of them cancel, being units.
+  have hdisc := (hf.mul hg).resultant_deriv
   rw [hdeg] at hdisc
   dsimp only [d] at hmul
   rw [hmul, hfd, hgd, hcomm,
@@ -279,7 +295,7 @@ theorem _root_.Polynomial.Monic.prod_roots_eval_derivative [IsDomain R] {f : R[X
       (-1) ^ (f.natDegree * (f.natDegree - 1) / 2) * f.discr := by
   have key := resultant_eq_prod_eval f f.derivative (f.natDegree - 1)
     (natDegree_derivative_le f) hs
-  rwa [hf.resultant_derivative, hf.leadingCoeff, one_pow, one_mul, eq_comm] at key
+  rwa [hf.resultant_deriv, hf.leadingCoeff, one_pow, one_mul, eq_comm] at key
 
 /-- The root-product formula over an integral domain, where the resultant of `f` and its
 derivative may be evaluated over the roots of `f`. -/
@@ -290,20 +306,26 @@ private theorem discr_prod_X_sub_C_of_isDomain [IsDomain R] {n : ℕ} (r : Fin n
   have hmon : f.Monic := monic_prod_X_sub_C r univ
   have hdeg : f.natDegree = n := by simp [hfdef]
   have hsplits : f.Splits := Splits.prod fun i _ ↦ Splits.X_sub_C (r i)
+  -- Rewrite `f` as a product over the multiset of roots, the shape Mathlib's root lemmas take.
+  have hfms : f = (Multiset.map (fun a ↦ X - C a) (univ.val.map r)).prod := by
+    rw [hfdef, Finset.prod_eq_multiset_prod, Multiset.map_map]
+    rfl
   have hroots : f.roots = univ.val.map r := by
-    -- Expose the composition needed by `Multiset.map_map`.
-    have hcomp : (fun i ↦ (X - C (r i) : R[X])) = (fun a ↦ X - C a) ∘ r := rfl
-    rw [hfdef, Finset.prod_eq_multiset_prod,
-      hcomp, ← Multiset.map_map, roots_multiset_prod_X_sub_C]
-  -- The derivative of `f` at the root `r i` is the product of the other root differences.
+    rw [hfms, roots_multiset_prod_X_sub_C]
+  -- The derivative of `f` at the root `r i` is the product of the other root differences; this
+  -- is `Polynomial.eval_multiset_prod_X_sub_C_derivative`, after erasing the index `i` rather
+  -- than one occurrence of the value `r i`.
   have hderiv : ∀ i, eval (r i) f.derivative = ∏ j ∈ univ.erase i, (r i - r j) := by
     intro i
-    rw [hfdef, derivative_prod_finset, eval_finsetSum, Finset.sum_eq_single i]
-    · simp [eval_prod]
-    · intro k _ hk
-      rw [eval_mul, eval_prod, Finset.prod_eq_zero (Finset.mem_erase.mpr ⟨hk.symm, mem_univ i⟩)
-        (by simp), zero_mul]
-    · simp
+    have hmem : r i ∈ univ.val.map r :=
+      Multiset.mem_map_of_mem r (Finset.mem_val.mpr (mem_univ i))
+    have herase : (univ.val.map r).erase (r i) = (univ.erase i).val.map r := by
+      rw [Finset.erase_val]
+      conv_lhs => rw [← Multiset.cons_erase (Finset.mem_val.mpr (mem_univ i))]
+      rw [Multiset.map_cons, Multiset.erase_cons_head]
+    rw [hfms, eval_multiset_prod_X_sub_C_derivative hmem, herase, Finset.prod_eq_multiset_prod,
+      Multiset.map_map]
+    rfl
   -- Evaluate the derivative of `f` over the roots of `f`.
   have key := hmon.prod_roots_eval_derivative hsplits
   rw [hroots, Multiset.map_map, ← Finset.prod_eq_multiset_prod, eq_comm] at key
@@ -356,20 +378,75 @@ theorem _root_.Polynomial.Monic.discr_eq_prod_roots_sub_sq {L : Type*} [CommRing
     rfl
   rw [← hf.discr_map, hfeq, Polynomial.discr_prod_X_sub_C]
 
-/-- For a separable field extension with a power basis, the algebra discriminant of the power
-basis is the polynomial discriminant of the minimal polynomial of its generator. -/
+/-! ### Separability -/
+
+/-- A monic polynomial is separable exactly when its discriminant is a unit. Both sides read the
+resultant of `f` with `f.derivative`: separability is coprimality of that pair, and
+`Polynomial.isUnit_resultant_iff_isCoprime` turns coprimality into a unit resultant. -/
+@[simp]
+theorem _root_.Polynomial.Monic.isUnit_discr_iff {f : R[X]} (hf : f.Monic) :
+    IsUnit f.discr ↔ f.Separable := by
+  rw [separable_def, ← isUnit_resultant_iff_isCoprime hf,
+    ← hf.resultant_of_le (natDegree_derivative_le f),
+    hf.resultant_deriv,
+    IsUnit.mul_iff]
+  simp [isUnit_one.neg.pow]
+
+/-- Over a field, a monic polynomial is separable exactly when its discriminant is nonzero.
+
+⚠ The field hypothesis is not decoration: `Polynomial.not_separable_X_pow_two_sub_one` records a
+monic polynomial over `ℤ` with nonzero discriminant that is not separable. -/
+@[simp]
+theorem _root_.Polynomial.Monic.discr_ne_zero_iff {K : Type*} [Field K] {f : K[X]}
+    (hf : f.Monic) : f.discr ≠ 0 ↔ f.Separable := by
+  rw [← hf.isUnit_discr_iff, isUnit_iff_ne_zero]
+
+/-- Over a domain, the discriminant of a monic polynomial is nonzero exactly when the polynomial
+becomes separable over the fraction field. This is the form every use over `ℤ` takes. -/
+@[simp]
+theorem _root_.Polynomial.Monic.discr_ne_zero_iff_separable_map (K : Type*) [Field K]
+    [Algebra R K] [IsFractionRing R K] {f : R[X]} (hf : f.Monic) :
+    f.discr ≠ 0 ↔ (f.map (algebraMap R K)).Separable := by
+  rw [← (hf.map (algebraMap R K)).discr_ne_zero_iff, hf.discr_map,
+    map_ne_zero_iff _ (FaithfulSMul.algebraMap_injective R K)]
+
+/-! ### The discriminant of a power basis -/
+
+/-- For a finite field extension with a power basis, the algebra discriminant of the power basis
+is the polynomial discriminant of the minimal polynomial of its generator. Separability is not
+needed: without it both sides vanish, the left because the trace form is identically zero and the
+right because the minimal polynomial is inseparable. -/
 theorem _root_.Algebra.discr_powerBasis_eq_minpoly_discr {K L : Type*} [Field K] [Field L]
-    [Algebra K L] [Module.Finite K L] (pb : PowerBasis K L) [Algebra.IsSeparable K L] :
+    [Algebra K L] [Module.Finite K L] (pb : PowerBasis K L) :
     Algebra.discr K pb.basis = (minpoly K pb.gen).discr := by
   classical
   let E := AlgebraicClosure L
   let := fun a b : E ↦ Classical.propDecidable (Eq a b)
+  have hs : ((minpoly K pb.gen).map (algebraMap K E)).Splits := IsAlgClosed.splits _
+  -- A power basis is separable over `K` exactly when the whole extension is, since the number of
+  -- embeddings of `L` into an algebraic closure is then the degree of the minimal polynomial.
+  have hsep_of : IsSeparable K pb.gen → Algebra.IsSeparable K L := fun h ↦ by
+    rw [← Field.finSepDegree_eq_finrank_iff,
+      Field.finSepDegree_eq_of_isAlgClosed (F := K) (E := L) (K := E),
+      AlgHom.natCard_of_powerBasis pb h hs, PowerBasis.finrank pb]
+  by_cases hsepL : Algebra.IsSeparable K L
+  case neg =>
+    -- The inseparable case: the trace form vanishes identically, and so does the discriminant of
+    -- the minimal polynomial, which is monic and not separable.
+    have hzero : Algebra.traceMatrix K pb.basis = 0 := by
+      ext i j
+      simp [Algebra.traceMatrix_apply, Algebra.traceForm_apply,
+        Algebra.trace_eq_zero_of_not_isSeparable hsepL]
+    have hminpoly : ¬ (minpoly K pb.gen).Separable := fun h ↦ hsepL (hsep_of h)
+    have : Nonempty (Fin pb.dim) := ⟨⟨0, pb.dim_pos⟩⟩
+    rw [Algebra.discr_def, hzero, Matrix.det_zero,
+      eq_comm, ← not_ne_iff, (minpoly.monic pb.isIntegral_gen).discr_ne_zero_iff]
+    exact hminpoly
   have e : Fin pb.dim ≃ (L →ₐ[K] E) := by
     refine Fintype.equivOfCardEq ?_
     rw [Fintype.card_fin, AlgHom.card]
     exact (PowerBasis.finrank pb).symm
   let r : Fin pb.dim → E := fun i ↦ e i pb.gen
-  have hs : ((minpoly K pb.gen).map (algebraMap K E)).Splits := IsAlgClosed.splits _
   have hrmem : ∀ i, r i ∈ (minpoly K pb.gen).aroots E := by
     intro i
     rw [mem_roots, IsRoot.def, eval_map_algebraMap, aeval_algHom_apply]
@@ -399,38 +476,6 @@ theorem _root_.Algebra.discr_powerBasis_eq_minpoly_discr {K L : Type*} [Field K]
   intro j _
   dsimp only [r]
   ring
-
-/-! ### Separability -/
-
-/-- A monic polynomial is separable exactly when its discriminant is a unit. Both sides read the
-resultant of `f` with `f.derivative`: separability is coprimality of that pair, and
-`Polynomial.isUnit_resultant_iff_isCoprime` turns coprimality into a unit resultant. -/
-@[simp]
-theorem _root_.Polynomial.Monic.isUnit_discr_iff {f : R[X]} (hf : f.Monic) :
-    IsUnit f.discr ↔ f.Separable := by
-  rw [separable_def, ← isUnit_resultant_iff_isCoprime hf,
-    ← hf.resultant_of_le (natDegree_derivative_le f),
-    hf.resultant_derivative,
-    IsUnit.mul_iff]
-  simp [isUnit_one.neg.pow]
-
-/-- Over a field, a monic polynomial is separable exactly when its discriminant is nonzero.
-
-⚠ The field hypothesis is not decoration: `Polynomial.not_separable_X_pow_two_sub_one` records a
-monic polynomial over `ℤ` with nonzero discriminant that is not separable. -/
-@[simp]
-theorem _root_.Polynomial.Monic.discr_ne_zero_iff {K : Type*} [Field K] {f : K[X]}
-    (hf : f.Monic) : f.discr ≠ 0 ↔ f.Separable := by
-  rw [← hf.isUnit_discr_iff, isUnit_iff_ne_zero]
-
-/-- Over a domain, the discriminant of a monic polynomial is nonzero exactly when the polynomial
-becomes separable over the fraction field. This is the form every use over `ℤ` takes. -/
-@[simp]
-theorem _root_.Polynomial.Monic.discr_ne_zero_iff_separable_map (K : Type*) [Field K]
-    [Algebra R K] [IsFractionRing R K] {f : R[X]} (hf : f.Monic) :
-    f.discr ≠ 0 ↔ (f.map (algebraMap R K)).Separable := by
-  rw [← (hf.map (algebraMap R K)).discr_ne_zero_iff, hf.discr_map,
-    map_ne_zero_iff _ (FaithfulSMul.algebraMap_injective R K)]
 
 /-! ### The failure of the separability criterion over a ring -/
 
