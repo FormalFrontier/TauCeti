@@ -99,7 +99,7 @@ unramified over `K`, then every prime of an intermediate field `M` over `𝔭` i
 `K` as well. -/
 theorem isUnramifiedAt_of_intermediateExtension {M L : Type*} [Field M] [NumberField M]
     [Field L] [NumberField L] [Algebra K M] [Algebra M L] [Algebra K L]
-    [IsScalarTower K M L] (𝔭 : Ideal (𝓞 K)) [𝔭.IsMaximal]
+    [IsScalarTower K M L] (𝔭 : Ideal (𝓞 K))
     (hur : ∀ (Q : Ideal (𝓞 L)) [Q.IsPrime] [Q.LiesOver 𝔭],
       Algebra.IsUnramifiedAt (𝓞 K) Q) :
     ∀ (P : Ideal (𝓞 M)) [P.IsPrime] [P.LiesOver 𝔭],
