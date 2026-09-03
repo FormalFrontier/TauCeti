@@ -251,8 +251,6 @@ private theorem measure_inter_eq_mul_of_forall_zero_or_one_iInf [IsProbabilityMe
   have := abs_eq_zero.mp habs0
   linarith
 
-
-
 /-- A permutation of `ℕ` that fixes a finite set `I` pointwise and carries a finite set `J`,
 disjoint from `I`, past `n`. -/
 private theorem exists_perm_fixOn_le_apply (I J : Finset ℕ) (hIJ : Disjoint I J) (n : ℕ) :
@@ -281,15 +279,6 @@ private theorem exists_perm_fixOn_le_apply (I J : Finset ℕ) (hIJ : Disjoint I 
     have := hρ ⟨j, Finset.mem_union_right _ hj⟩
     simp only [g, hjI, ite_false] at this
     rw [this]; omega
-
-/-- Reindexing the array along `ρ` on both coordinates: the joint law is invariant, so the mass
-of any measurable set of array values is unchanged. -/
-private theorem measure_preimage_pairReindex_eq {μ : Measure Ω} {X : ℕ × ℕ → Ω → α}
-    (hX : ∀ p, Measurable (X p)) (hexch : JointlyExchangeable μ X) (ρ : Equiv.Perm ℕ)
-    {C : Set (ℕ × ℕ → α)} (hC : MeasurableSet C) :
-    μ ((fun ω p => X (ρ p.1, ρ p.2) ω) ⁻¹' C) = μ ((fun ω p => X p ω) ⁻¹' C) := by
-  rw [← Measure.map_apply (Measurable.of_eval fun p => hX _) hC,
-    ← Measure.map_apply (Measurable.of_eval fun p => hX _) hC, jointlyExchangeable_iff.mp hexch ρ]
 
 /-- **The core factorization.** For a cylinder `A` of the block over `S = range e × range e` and a
 cylinder `B` of the block over `T = range e' × range e'`, with `e`, `e'` of disjoint range,
@@ -383,8 +372,10 @@ private theorem measure_inter_eq_mul_of_cylinders [IsProbabilityMeasure μ]
     (Finset.measurableSet_biInter _ fun p hp => by rw [← hCAeq p hp]; exact hX p (hCA p hp))
     hB'_meas ?_ ?_
   · intro n
-    rw [hB'eq, hBeq]
-    exact measure_preimage_pairReindex_eq hX hexch (ρ n) hcylB
+    rw [hB'eq, hBeq, ← Measure.map_apply (Measurable.of_eval fun p => hX _) hcylB,
+      ← Measure.map_apply (Measurable.of_eval fun p => hX _) hcylB]
+    exact congrArg (fun m : Measure (ℕ × ℕ → α) => m (cyl tB CB))
+      (hexch.map_comp (fun p => (hX p).aemeasurable) (ρ n) measurable_id)
   · intro n
     have hL : (⋂ p ∈ tA, fA p) ∩ B' n
         = (fun ω p => X (ρ n p.1, ρ n p.2) ω) ⁻¹' (cyl tA CA ∩ cyl tB CB) := by
@@ -393,7 +384,10 @@ private theorem measure_inter_eq_mul_of_cylinders [IsProbabilityMeasure μ]
         = (fun ω p => X p ω) ⁻¹' (cyl tA CA ∩ cyl tB CB) := by
       rw [hAeq, hBeq, Set.preimage_inter]
     rw [hL, hR]
-    exact measure_preimage_pairReindex_eq hX hexch (ρ n) (hcylA.inter hcylB)
+    rw [← Measure.map_apply (Measurable.of_eval fun p => hX _) (hcylA.inter hcylB),
+      ← Measure.map_apply (Measurable.of_eval fun p => hX _) (hcylA.inter hcylB)]
+    exact congrArg (fun m : Measure (ℕ × ℕ → α) => m (cyl tA CA ∩ cyl tB CB))
+      (hexch.map_comp (fun p => (hX p).aemeasurable) (ρ n) measurable_id)
 
 theorem jointlyDissociated_of_forall_arrayTail_measure_eq_zero_or_one {X : ℕ × ℕ → Ω → α}
     [IsProbabilityMeasure μ]
@@ -413,7 +407,6 @@ theorem jointlyDissociated_of_forall_arrayTail_measure_eq_zero_or_one {X : ℕ �
       (by rw [blockSigma_def]; exact (generateFrom_piiUnionInter_measurableSet _ _).symm)
       ((IndepSets_iff _ _ _).2 fun A B hA hB =>
         measure_inter_eq_mul_of_cylinders hX hexch htriv hd hA hB)
-  -- the two sub-array maps are measurable for their block σ-algebras
   -- each sub-array map is measurable for the σ-algebra of its own block
   have hU : Measurable[blockSigma X (Set.range e ×ˢ Set.range e)]
       fun ω (p : ℕ × ℕ) => X (e p.1, e p.2) ω := by
