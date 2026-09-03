@@ -38,8 +38,8 @@ same-universe restriction is inherited from Mathlib's current `hopfSpec` constru
 * `TauCeti.algSpec_map_left_ofAlgHom`: the underlying spectrum map of an algebra morphism.
 * `TauCeti.hopfSpec_obj_one_left`, `TauCeti.hopfSpec_obj_mul_left`, and
   `TauCeti.hopfSpec_obj_inv_left`: its three group operations.
-* `TauCeti.CommHopfAlgCat.preimage_unop_comp_eq_of_hopfSpec_map_comp_eq` and
-  `TauCeti.CommHopfAlgCat.hom_ext_of_preimage_unop_eq`: coordinate equalities and
+* `CommHopfAlgCat.preimage_unop_comp_eq_of_hopfSpec_map_comp_eq` and
+  `CommHopfAlgCat.hom_ext_of_preimage_unop_eq`: coordinate equalities and
   extensionality transported through the full faithfulness of `hopfSpec`.
 * `TauCeti.isCocomm_iff_isCommMonObj_hopfSpec`: cocommutativity corresponds to a commutative
   group object.
@@ -61,8 +61,6 @@ public section
 
 open CategoryTheory Opposite WithConv
 open scoped CategoryTheory.MonObj
-
-namespace TauCeti
 
 open AlgebraicGeometry MonObj MonoidalCategory
 
@@ -107,6 +105,8 @@ theorem hom_ext_of_preimage_unop_eq {Q : _root_.CommHopfAlgCat.{u} R}
     ← (hopfSpec.fullyFaithful (R := CommRingCat.of R)).map_preimage ψ, hop]
 
 end CommHopfAlgCat
+
+namespace TauCeti
 
 /-- Finite morphisms of schemes respect isomorphisms. -/
 instance isFinite_respectsIso :
