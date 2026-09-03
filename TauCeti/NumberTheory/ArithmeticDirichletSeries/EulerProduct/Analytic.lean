@@ -94,7 +94,6 @@ theorem coe_primeIdealPow (P : HeightOneSpectrum (𝓞 K)) (e : ℕ) :
   (rfl)
 
 /-- The absolute norm is multiplicative on prime powers. -/
-@[simp]
 theorem absNorm_primeIdealPow (P : HeightOneSpectrum (𝓞 K)) (e : ℕ) :
     Ideal.absNorm (primeIdealPow P e : Ideal (𝓞 K)) = Ideal.absNorm P.asIdeal ^ e := by
   rw [coe_primeIdealPow, map_pow]
