@@ -66,12 +66,11 @@ Nothing here proves or assumes it; every statement below is conditional on a cov
 
 ## References
 
-This implements the projective-cover half of the "projective covers and injective envelopes"
-bullet of Layer 3 of `TauCetiRoadmap/RepresentationTheory/QuiverRepresentations/README.md`
-("`projectiveCover M`: a projective `P` with an essential epimorphism `P ↠ M` (superfluous
-kernel), unique up to isomorphism"). Existence is
-`TauCeti/Algebra/Module/ProjectiveCover/Existence.lean`, and the dual injective envelope is the
-remaining half.
+Uniqueness, proved here, is what makes "the" projective cover of a module a well-defined object;
+that a cover exists at all is a condition on the ring, established for a semiprimary ring — a
+finite-dimensional algebra among them — in
+`TauCeti/Algebra/Module/ProjectiveCover/Existence.lean`. The dual notion, an injective envelope,
+is an essential monomorphism into an injective module; nothing here is used for it.
 
 See I. Assem, D. Simson, A. Skowroński, *Elements of the Representation Theory of Associative
 Algebras, Vol. 1*, Section I.5.
