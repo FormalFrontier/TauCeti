@@ -43,7 +43,7 @@ smooth compatibility and a countable cover, and is not asserted here.
   linear parameter projection.
 * `TauCeti.levelSetParameterMap_levelSetChart`: on the chart source, the local parameter map is
   the parameter projection of the universal level set.
-* `TauCeti.exists_apply_eq_of_levelSetParameterMap`: every value of the local parameter map is a
+* `TauCeti.exists_apply_levelSetParameterMap_eq`: every value of the local parameter map is a
   parameter at which the equation has a solution.
 * `TauCeti.surjective_fderiv_levelSetParameterMap_iff`: the chart origin is a regular point of the
   local parameter map exactly when the fixed-parameter linearization is surjective.
@@ -128,7 +128,7 @@ theorem levelSetParameterMap_levelSetChart
 /-- Every value of the local parameter map is a parameter for which the equation has a solution:
 the chart parametrizes the universal level set, so the point it produces solves the equation at
 the parameter that the map returns. -/
-theorem exists_apply_eq_of_levelSetParameterMap
+theorem exists_apply_levelSetParameterMap_eq
     (hf : HasStrictFDerivAt f (D₁.coprod D₂) (x, l))
     (hD : Surjective (D₁.coprod D₂))
     (hker : (D₁.coprod D₂).ker.ClosedComplemented)
