@@ -87,7 +87,7 @@ theorem ext {D E : GridRectangleDecomposition x z}
 /-- The diagonal reflection of a two-step rectangle decomposition. It reflects both constituent
 rectangles and the intermediate state, and hence gives a decomposition between the transposed
 endpoint states. -/
-@[expose] def transpose (D : GridRectangleDecomposition x z) :
+def transpose (D : GridRectangleDecomposition x z) :
     GridRectangleDecomposition x.transpose z.transpose where
   middle := D.middle.transpose
   first := D.first.transpose
@@ -96,20 +96,88 @@ endpoint states. -/
 /-- The intermediate state of a transposed decomposition is the transposed intermediate state. -/
 @[simp]
 theorem transpose_middle (D : GridRectangleDecomposition x z) :
-    D.transpose.middle = D.middle.transpose :=
-  rfl
+    D.transpose.middle = D.middle.transpose := by
+  rw [transpose]
 
-/-- The first rectangle of a transposed decomposition is the transposed first rectangle. -/
+/-- The first rectangle of a transposed decomposition has the original initial corner row as its
+initial side column. -/
 @[simp]
-theorem transpose_first (D : GridRectangleDecomposition x z) :
-    D.transpose.first = D.first.transpose :=
-  rfl
+theorem transpose_first_left (D : GridRectangleDecomposition x z) :
+    D.transpose.first.left = D.first.bottom := by
+  rw [transpose]
+  exact D.first.transpose_left
 
-/-- The second rectangle of a transposed decomposition is the transposed second rectangle. -/
+/-- The first rectangle of a transposed decomposition has the original terminal corner row as its
+terminal side column. -/
 @[simp]
-theorem transpose_second (D : GridRectangleDecomposition x z) :
-    D.transpose.second = D.second.transpose :=
-  rfl
+theorem transpose_first_right (D : GridRectangleDecomposition x z) :
+    D.transpose.first.right = D.first.top := by
+  rw [transpose]
+  exact D.first.transpose_right
+
+/-- The first rectangle of a transposed decomposition has the original initial side column as its
+initial corner row. -/
+@[simp]
+theorem transpose_first_bottom (D : GridRectangleDecomposition x z) :
+    D.transpose.first.bottom = D.first.left := by
+  rw [transpose]
+  exact D.first.transpose_bottom
+
+/-- The first rectangle of a transposed decomposition has the original terminal side column as its
+terminal corner row. -/
+@[simp]
+theorem transpose_first_top (D : GridRectangleDecomposition x z) :
+    D.transpose.first.top = D.first.right := by
+  rw [transpose]
+  exact D.first.transpose_top
+
+/-- The second rectangle of a transposed decomposition has the original initial corner row as its
+initial side column. -/
+@[simp]
+theorem transpose_second_left (D : GridRectangleDecomposition x z) :
+    D.transpose.second.left = D.second.bottom := by
+  rw [transpose]
+  exact D.second.transpose_left
+
+/-- The second rectangle of a transposed decomposition has the original terminal corner row as its
+terminal side column. -/
+@[simp]
+theorem transpose_second_right (D : GridRectangleDecomposition x z) :
+    D.transpose.second.right = D.second.top := by
+  rw [transpose]
+  exact D.second.transpose_right
+
+/-- The second rectangle of a transposed decomposition has the original initial side column as its
+initial corner row. -/
+@[simp]
+theorem transpose_second_bottom (D : GridRectangleDecomposition x z) :
+    D.transpose.second.bottom = D.second.left := by
+  rw [transpose]
+  exact D.second.transpose_bottom
+
+/-- The second rectangle of a transposed decomposition has the original terminal side column as
+its terminal corner row. -/
+@[simp]
+theorem transpose_second_top (D : GridRectangleDecomposition x z) :
+    D.transpose.second.top = D.second.right := by
+  rw [transpose]
+  exact D.second.transpose_top
+
+/-- The first rectangle of a transposed decomposition is empty exactly when the original first
+rectangle is. -/
+@[simp]
+theorem isEmpty_transpose_first (D : GridRectangleDecomposition x z) :
+    D.transpose.first.IsEmpty ↔ D.first.IsEmpty := by
+  rw [transpose]
+  exact D.first.isEmpty_transpose
+
+/-- The second rectangle of a transposed decomposition is empty exactly when the original second
+rectangle is. -/
+@[simp]
+theorem isEmpty_transpose_second (D : GridRectangleDecomposition x z) :
+    D.transpose.second.IsEmpty ↔ D.second.IsEmpty := by
+  rw [transpose]
+  exact D.second.isEmpty_transpose
 
 /-- Reflecting a two-step rectangle decomposition twice recovers the original decomposition. -/
 @[simp]
