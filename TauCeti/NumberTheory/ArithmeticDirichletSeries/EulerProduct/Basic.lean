@@ -86,6 +86,58 @@ namespace TauCeti
 open scoped nonZeroDivisors NumberField
 open IsDedekindDomain (HeightOneSpectrum)
 
+namespace HeightOneSpectrum
+
+variable {K : Type*} [Field K]
+
+/-- The `e`-th power of a height-one prime of `𝓞 K`, as a nonzero integral ideal. -/
+def primeIdealPow (P : HeightOneSpectrum (𝓞 K)) (e : ℕ) : (Ideal (𝓞 K))⁰ :=
+  ⟨P.asIdeal ^ e, mem_nonZeroDivisors_of_ne_zero (pow_ne_zero e P.ne_bot)⟩
+
+/-- A prime power, as a nonzero integral ideal, has the expected underlying ideal. -/
+@[simp]
+theorem coe_primeIdealPow (P : HeightOneSpectrum (𝓞 K)) (e : ℕ) :
+    (primeIdealPow P e : Ideal (𝓞 K)) = P.asIdeal ^ e :=
+  (rfl)
+
+variable [NumberField K]
+
+/-- The absolute norm is multiplicative on prime powers. -/
+@[simp]
+theorem absNorm_primeIdealPow (P : HeightOneSpectrum (𝓞 K)) (e : ℕ) :
+    Ideal.absNorm (primeIdealPow P e : Ideal (𝓞 K)) = Ideal.absNorm P.asIdeal ^ e := by
+  rw [coe_primeIdealPow, map_pow]
+
+/-- Distinct exponents give distinct prime powers. -/
+theorem primeIdealPow_injective (P : HeightOneSpectrum (𝓞 K)) :
+    Function.Injective (primeIdealPow P) := fun m n h ↦
+  Nat.pow_right_injective (NumberField.HeightOneSpectrum.one_lt_absNorm P)
+    (by simpa only [absNorm_primeIdealPow] using
+      congrArg (fun I : (Ideal (𝓞 K))⁰ ↦ Ideal.absNorm (I : Ideal (𝓞 K))) h)
+
+end HeightOneSpectrum
+
+/-- **Every nonzero ideal is eventually supported.** A finite set of height-one primes that
+contains all primes of norm at most `Ideal.absNorm A` already contains every prime divisor of `A`,
+and those bounded-norm sets are cofinal by the Northcott property of the absolute norm. -/
+theorem eventually_isPrimeTo_compl {K : Type*} [Field K] [NumberField K]
+    (A : (Ideal (𝓞 K))⁰) :
+    ∀ᶠ S : Finset (HeightOneSpectrum (𝓞 K)) in Filter.atTop,
+      Ideal.IsPrimeTo (A : Ideal (𝓞 K)) (S : Set (HeightOneSpectrum (𝓞 K)))ᶜ := by
+  classical
+  let T : Finset (HeightOneSpectrum (𝓞 K)) :=
+    (Northcott.finite_le (h := fun P : HeightOneSpectrum (𝓞 K) ↦ Ideal.absNorm P.asIdeal)
+      (Ideal.absNorm (A : Ideal (𝓞 K)))).toFinset
+  filter_upwards [Filter.eventually_ge_atTop T] with S hTS
+  rw [Ideal.isPrimeTo_iff]
+  refine ⟨nonZeroDivisors.coe_ne_zero A, fun P hP hPdvd ↦ hP ?_⟩
+  have hnormP : Ideal.absNorm P.asIdeal ≤ Ideal.absNorm (A : Ideal (𝓞 K)) :=
+    Nat.le_of_dvd (Ideal.absNorm_pos_of_nonZeroDivisors A)
+      (Ideal.absNorm_dvd_absNorm_of_le (Ideal.dvd_iff_le.mp hPdvd))
+  exact hTS ((Northcott.finite_le
+    (h := fun P : HeightOneSpectrum (𝓞 K) ↦ Ideal.absNorm P.asIdeal)
+    (Ideal.absNorm (A : Ideal (𝓞 K)))).mem_toFinset.mpr hnormP)
+
 namespace IdealArithmeticFunction
 
 variable {K : Type*} [Field K]
@@ -105,8 +157,9 @@ omit [NumberField K] in
 theorem coeff_localPowerSeries (f : IdealArithmeticFunction K)
     (P : HeightOneSpectrum (𝓞 K)) (n : ℕ) :
     PowerSeries.coeff n (localPowerSeries f P) =
-      f ⟨P.asIdeal ^ n, mem_nonZeroDivisors_of_ne_zero (pow_ne_zero n P.ne_bot)⟩ := by
-  simp [localPowerSeries]
+      f (HeightOneSpectrum.primeIdealPow P n) := by
+  simp only [localPowerSeries, PowerSeries.coeff_mk]
+  exact congrArg f (Subtype.ext (HeightOneSpectrum.coe_primeIdealPow P n).symm)
 
 omit [NumberField K] in
 /-- The constant coefficient of the canonical local power series is `f 1`. -/
@@ -137,7 +190,7 @@ theorem localArithmeticFactor_def (f : IdealArithmeticFunction K)
 theorem localArithmeticFactor_apply_pow (f : IdealArithmeticFunction K)
     (P : HeightOneSpectrum (𝓞 K)) (n : ℕ) :
     localArithmeticFactor f P (Ideal.absNorm P.asIdeal ^ n) =
-      f ⟨P.asIdeal ^ n, mem_nonZeroDivisors_of_ne_zero (pow_ne_zero n P.ne_bot)⟩ := by
+      f (HeightOneSpectrum.primeIdealPow P n) := by
   rw [localArithmeticFactor, ArithmeticFunction.ofPowerSeries_apply_pow
     (NumberField.HeightOneSpectrum.one_lt_absNorm P)]
   exact coeff_localPowerSeries f P n
@@ -411,26 +464,6 @@ theorem normCoeff_supportedPart (hf : f.IsMultiplicative)
   | insert P S hPS ih =>
       rw [Finset.coe_insert, supportedPart_insert hf (by simpa using hPS), normCoeff_convolution,
         ih, normCoeff_supportedPart_singleton, Finset.prod_insert hPS, mul_comm]
-
-/-- **Every nonzero ideal is eventually supported.** A finite set of height-one primes that
-contains all primes of norm at most `Ideal.absNorm A` already contains every prime divisor of `A`,
-and those bounded-norm sets are cofinal by the Northcott property of the absolute norm. -/
-theorem eventually_isPrimeTo_compl (A : (Ideal (𝓞 K))⁰) :
-    ∀ᶠ S : Finset (HeightOneSpectrum (𝓞 K)) in Filter.atTop,
-      Ideal.IsPrimeTo (A : Ideal (𝓞 K)) (S : Set (HeightOneSpectrum (𝓞 K)))ᶜ := by
-  classical
-  let T : Finset (HeightOneSpectrum (𝓞 K)) :=
-    (Northcott.finite_le (h := fun P : HeightOneSpectrum (𝓞 K) ↦ Ideal.absNorm P.asIdeal)
-      (Ideal.absNorm (A : Ideal (𝓞 K)))).toFinset
-  filter_upwards [Filter.eventually_ge_atTop T] with S hTS
-  rw [Ideal.isPrimeTo_iff]
-  refine ⟨nonZeroDivisors.coe_ne_zero A, fun P hP hPdvd ↦ hP ?_⟩
-  have hnormP : Ideal.absNorm P.asIdeal ≤ Ideal.absNorm (A : Ideal (𝓞 K)) :=
-    Nat.le_of_dvd (Ideal.absNorm_pos_of_nonZeroDivisors A)
-      (Ideal.absNorm_dvd_absNorm_of_le (Ideal.dvd_iff_le.mp hPdvd))
-  exact hTS ((Northcott.finite_le
-    (h := fun P : HeightOneSpectrum (𝓞 K) ↦ Ideal.absNorm P.asIdeal)
-    (Ideal.absNorm (A : Ideal (𝓞 K)))).mem_toFinset.mpr hnormP)
 
 /-- At a fixed coefficient, restricting to a sufficiently large finite set of prime ideals does
 not change the norm coefficient: the norm fibre is finite, and each of its members is eventually
