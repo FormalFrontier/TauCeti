@@ -8,6 +8,7 @@ module
 public import Mathlib.RingTheory.Flat.FaithfullyFlat.Algebra
 public import TauCeti.Algebra.AlgebraicGroup.BaseChange.CentralPoint
 public import TauCeti.Algebra.AlgebraicGroup.CommHopfAlgCat.BaseChange
+public import TauCeti.Algebra.AlgebraicGroup.FiniteType.BaseChange
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.CommonKernel
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Central
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Points.Basic
@@ -46,6 +47,8 @@ along `h ↦ 1 ⊗ h`.
   change reflects containment of Hopf ideals.
 * `TauCeti.CommHopfAlgCat.baseChangeHopfIdeal_injective`: faithfully flat base change reflects
   equality of Hopf ideals.
+* `TauCeti.CommHopfAlgCat.baseChangeHopfIdeal_comapOfIso`: base change commutes with pulling a
+  Hopf ideal back along an ambient isomorphism.
 * `TauCeti.CommHopfAlgCat.baseChangeHopfIdeal_commonKernelHopfIdeal_le`: the subgroup generated
   by a base-changed family sits inside the base change of the subgroup it generates.
 * `TauCeti.CommHopfAlgCat.quotientBaseChangeIso`: the identification
@@ -146,6 +149,51 @@ theorem baseChangeHopfIdeal_mono {J J' : HopfIdeal k H} (hJ : J ≤ J') :
     baseChangeHopfIdeal (K := K) J ≤ baseChangeHopfIdeal (K := K) J' := by
   rw [← HopfIdeal.toIdeal_le_toIdeal, baseChangeHopfIdeal_toIdeal, baseChangeHopfIdeal_toIdeal]
   exact Ideal.map_mono (HopfIdeal.toIdeal_le_toIdeal.mpr hJ)
+
+/-- Base change commutes with pulling a Hopf ideal back along an ambient Hopf-algebra
+isomorphism. -/
+@[simp]
+theorem baseChangeHopfIdeal_comapOfIso (J : HopfIdeal k L) (e : H ≅ L) :
+    baseChangeHopfIdeal (K := K)
+        (J.comapOfSurjective e.hom.hom (ConcreteCategory.bijective_of_isIso e.hom).2) =
+      (baseChangeHopfIdeal (K := K) J).comapOfSurjective
+        (baseChangeMap (K := K) e.hom).hom
+        (ConcreteCategory.bijective_of_isIso
+          ((baseChangeFunctor (K := K)).mapIso e).hom).2 := by
+  let qIso := quotientIsoOfIso e J
+  let qIsoK := (baseChangeFunctor (K := K)).mapIso qIso
+  have hcomm :
+      baseChangeMap (K := K) (mkQuotient H
+          (J.comapOfSurjective e.hom.hom (ConcreteCategory.bijective_of_isIso e.hom).2)) ≫
+          qIsoK.hom =
+        baseChangeMap (K := K) e.hom ≫
+          baseChangeMap (K := K) (mkQuotient L J) := by
+    change (baseChangeFunctor (K := K)).map (mkQuotient H
+          (J.comapOfSurjective e.hom.hom (ConcreteCategory.bijective_of_isIso e.hom).2)) ≫
+        (baseChangeFunctor (K := K)).map qIso.hom =
+      (baseChangeFunctor (K := K)).map e.hom ≫
+        (baseChangeFunctor (K := K)).map (mkQuotient L J)
+    rw [← Functor.map_comp, ← Functor.map_comp]
+    exact congrArg (fun f ↦ (baseChangeFunctor (K := K)).map f)
+      (mkQuotient_comp_quotientIsoOfIso_hom e J)
+  ext x
+  rw [mem_baseChangeHopfIdeal_iff, HopfIdeal.mem_comapOfSurjective,
+    mem_baseChangeHopfIdeal_iff]
+  have hpoint : qIsoK.hom.hom
+        ((baseChangeMap (K := K) (mkQuotient H
+          (J.comapOfSurjective e.hom.hom
+            (ConcreteCategory.bijective_of_isIso e.hom).2))).hom x) =
+      (baseChangeMap (K := K) (mkQuotient L J)).hom
+        ((baseChangeMap (K := K) e.hom).hom x) :=
+    congrArg
+      (fun f : baseChange (K := K) H ⟶ baseChange (K := K) (quotient L J) ↦ f.hom x) hcomm
+  constructor
+  · intro hx
+    rw [hx, map_zero] at hpoint
+    exact hpoint.symm
+  · intro hx
+    apply (ConcreteCategory.bijective_of_isIso qIsoK.hom).1
+    rw [map_zero, hpoint, hx]
 
 /-- Along an injective scalar map, base change reflects containment of Hopf ideals when the
 quotient by the larger ideal is flat over the base. In particular, this applies to every field
@@ -435,6 +483,32 @@ theorem mem_quotientPointsSubgroup_baseChangeHopfIdeal_iff (J : HopfIdeal k H)
     exact RingHom.mem_ker.mp (hle ((HopfIdeal.mem_toIdeal (I := baseChangeHopfIdeal J)).mpr hy))
 
 end TauCeti.CommHopfAlgCat
+
+namespace TauCeti.FiniteTypeCommHopfAlgCat
+
+universe u v w
+
+variable {k : Type u} {K : Type w} [CommRing k] [CommRing K] [Algebra k K]
+variable {H L : FiniteTypeCommHopfAlgCat.{u, v} k}
+
+/-- Base change commutes with pulling a Hopf ideal back along an ambient finite-type
+Hopf-algebra isomorphism. -/
+@[simp]
+theorem baseChangeHopfIdeal_comapOfIso (J : HopfIdeal k L.obj) (e : H ≅ L) :
+    CommHopfAlgCat.baseChangeHopfIdeal (K := K)
+        (J.comapOfSurjective (toBialgHom e.hom)
+          (ConcreteCategory.bijective_of_isIso e.hom).2) =
+      (CommHopfAlgCat.baseChangeHopfIdeal (K := K) J).comapOfSurjective
+        (toBialgHom ((_root_.TauCeti.FiniteTypeCommHopfAlgCat.baseChangeFunctor
+          (K := K)).mapIso e).hom)
+        (ConcreteCategory.bijective_of_isIso
+          ((_root_.TauCeti.FiniteTypeCommHopfAlgCat.baseChangeFunctor
+            (K := K)).mapIso e).hom).2 := by
+  exact CommHopfAlgCat.baseChangeHopfIdeal_comapOfIso (K := K) J
+    ((forget₂ (FiniteTypeCommHopfAlgCat.{u, v} k)
+      (_root_.CommHopfAlgCat.{v} k)).mapIso e)
+
+end TauCeti.FiniteTypeCommHopfAlgCat
 
 namespace TauCeti.CommHopfAlgCat
 
