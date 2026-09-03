@@ -71,9 +71,9 @@ one, which is not proved here (see the Roadmap section below).
 None of the definitions is exposed: `TauCeti.serreMk_of_H` and its companions, the individual
 relations, and `TauCeti.serreLift_serreH` and its companions together with `TauCeti.eq_serreLift`
 characterise them, so nothing downstream has to unfold the quotient. As in
-`TauCeti/Algebra/Lie/Presentation/Basic.lean`, the equations that hold by definition are proved by
-the parenthesised `(rfl)`, which elaborates against the definitions rather than demanding that they
-be `@[expose]`d.
+`TauCeti/Algebra/Lie/Quotient.lean`, the equations that hold by definition are proved by the
+parenthesised `(rfl)`, which elaborates against the definitions rather than demanding that they be
+`@[expose]`d.
 
 ## Roadmap
 
