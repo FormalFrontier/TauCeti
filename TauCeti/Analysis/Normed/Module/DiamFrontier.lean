@@ -21,7 +21,7 @@ The mechanism is that a ray leaving a bounded set has to cross the frontier, and
 *later* than it passes through a given point of the set. Precisely
 (`TauCeti.exists_mem_frontier_dist_le`), for `x ∈ V` and any base point `y ≠ x` the ray
 `t ↦ y + t • (x - y)`, followed from `t = 1` outwards, eventually leaves the bounded set `V`, and
-the segment it traces is connected, so `TauCeti.IsPreconnected.inter_frontier_nonempty` produces a
+the segment it traces is connected, so `IsPreconnected.inter_frontier_nonempty` produces a
 frontier point `p = y + t • (x - y)` with `t ≥ 1`, whence `dist y p = t * dist y x ≥ dist y x`.
 
 Applying this twice turns a pair of points of `V` into a pair of frontier points at least as far
@@ -62,7 +62,7 @@ through a given point of the set.** For `x` in a bounded set `V` and any base po
 ray from `y` through `x` meets `frontier V` at a point `p` with `dist y x ≤ dist y p`.
 
 The ray is followed from `x` outwards. It leaves `V` because `V` is bounded, the segment traced is
-connected, and `TauCeti.IsPreconnected.inter_frontier_nonempty` therefore hands back a frontier
+connected, and `IsPreconnected.inter_frontier_nonempty` therefore hands back a frontier
 point on it; being beyond `x` on the ray, that point is at least as far from `y` as `x` is. -/
 theorem exists_mem_frontier_dist_le (hV : IsBounded V) (hx : x ∈ V) (hne : y ≠ x) :
     ∃ p ∈ frontier V, dist y x ≤ dist y p := by
@@ -90,7 +90,7 @@ theorem exists_mem_frontier_dist_le (hV : IsBounded V) (hx : x ∈ V) (hne : y �
   have hcont : Continuous γ := by fun_prop
   have hSconn : IsPreconnected (γ '' Icc 1 T) :=
     isPreconnected_Icc.image γ hcont.continuousOn
-  obtain ⟨p, hpS, hpf⟩ := IsPreconnected.inter_frontier_nonempty hSconn
+  obtain ⟨p, hpS, hpf⟩ := hSconn.inter_frontier_nonempty
     ⟨x, ⟨1, ⟨le_rfl, hT1⟩, hγ1⟩, hx⟩ ⟨γ T, ⟨T, ⟨hT1, le_rfl⟩, rfl⟩, hTV⟩
   obtain ⟨t, ht, rfl⟩ := hpS
   refine ⟨γ t, hpf, ?_⟩
