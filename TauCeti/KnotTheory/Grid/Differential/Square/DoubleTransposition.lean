@@ -146,15 +146,16 @@ theorem commute_mem_fullyBlockedDecompositions_iff {x z : GridState n}
 /-- The square of the fully blocked grid differential has zero matrix entry between a grid state
 and the state obtained from it by two disjoint column transpositions.
 
-Every fully blocked decomposition of such a target has disjoint side columns. Commuting its two
-rectangles preserves emptiness and marking avoidance and has no fixed point, so the decomposition
-set has even cardinality. -/
+This is the disjoint clause of the juxtaposition case analysis for the fully blocked complex. -/
 theorem fullyBlockedDifferential_sq_single_apply_swapColumns_swapColumns_eq_zero_of_disjoint
     (x : GridState n) {a b c d : Fin n} (hab : a ≠ b) (hcd : c ≠ d)
     (hdisjoint : Disjoint ({a, b} : Finset (Fin n)) {c, d}) :
     G.fullyBlockedDifferential
         (G.fullyBlockedDifferential (Finsupp.single x (1 : ZMod 2)))
       ((x.swapColumns a b).swapColumns c d) = 0 := by
+  -- Every fully blocked decomposition of such a target has disjoint side columns, and commuting
+  -- its two rectangles preserves emptiness and marking avoidance without a fixed point, so the
+  -- decomposition set has even cardinality.
   rw [G.fullyBlockedDifferential_sq_single_apply_eq_decompositionCount,
     G.fullyBlockedDecompositionCount_def]
   have hsum :
@@ -173,15 +174,17 @@ variable [CharP R 2]
 between a grid state and the state obtained from it by two disjoint column transpositions
 vanishes.
 
-Every two-step decomposition of such a target has disjoint pairs of side columns, so reordering
-the two rectangle moves is a weight-preserving involution on the counted decompositions with no
-fixed point. -/
+This is the sum-level form of the disjoint case, and the form the remaining one-common-side case
+will consume. -/
 theorem
     sum_unblockedCoefficient_mul_unblockedCoefficient_swapColumns_swapColumns_eq_zero_of_disjoint
     (x : GridState n) {a b c d : Fin n} (hab : a ≠ b) (hcd : c ≠ d)
     (hdisjoint : Disjoint ({a, b} : Finset (Fin n)) {c, d}) :
     ∑ y : GridState n, G.unblockedCoefficient R x y *
         G.unblockedCoefficient R y ((x.swapColumns a b).swapColumns c d) = 0 := by
+  -- Every two-step decomposition of such a target has disjoint pairs of side columns, so
+  -- reordering the two rectangle moves is a weight-preserving involution on the counted
+  -- decompositions with no fixed point.
   rw [G.sum_unblockedCoefficient_mul_unblockedCoefficient R]
   refine Finset.sum_involution
     (fun D _ => D.commute (GridRectangleDecomposition.hasDisjointSides_of_disjoint x hab hcd

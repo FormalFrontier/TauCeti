@@ -195,12 +195,15 @@ theorem hasDisjointSides_or_hasOneCommonSide_or_eq
 /-- Two disjoint column transpositions move four columns, so no two-step rectangle decomposition
 of the resulting state can share a side column.
 
-The two rectangles of a decomposition fix every column outside their four side columns. Sharing a
-side column would leave only three such columns, and sharing both would return to the source. -/
+This is the entry point that puts a two-step term over such a target in the disjoint-side case of
+`hasDisjointSides_or_hasOneCommonSide_or_eq`. -/
 theorem hasDisjointSides_of_disjoint (x : GridState n) {a b c d : Fin n} (hab : a ≠ b)
     (hcd : c ≠ d) (hdisjoint : Disjoint ({a, b} : Finset (Fin n)) {c, d})
     (D : GridRectangleDecomposition x ((x.swapColumns a b).swapColumns c d)) :
     D.HasDisjointSides := by
+  -- The two rectangles of a decomposition fix every column outside their four side columns.
+  -- Sharing a side column would leave only three such columns, and sharing both would return to
+  -- the source.
   obtain ⟨hac, had⟩ : a ≠ c ∧ a ≠ d := by
     simpa only [Finset.mem_insert, Finset.mem_singleton, not_or] using
       Finset.disjoint_left.mp hdisjoint (by simp : a ∈ ({a, b} : Finset (Fin n)))

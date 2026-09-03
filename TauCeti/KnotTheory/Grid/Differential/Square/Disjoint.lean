@@ -294,12 +294,14 @@ private theorem mem_interior_second_iff (D : GridRectangleDecomposition x z)
 /-- Reordering two empty rectangles with disjoint side columns leaves the new first rectangle
 empty.
 
-Its domain is the old second domain, which is empty for the intermediate state. The two states
-differ only in the first pair of side columns, and if either of those two source points fell
-inside the domain, then the cyclic separation forced on the four columns and on the four rows
-would put a source point inside the first domain instead. -/
+With `isEmpty_commute_second`, this makes reordering an operation on decompositions into *empty*
+rectangles, which is the form the rectangle juxtaposition argument consumes. -/
 theorem isEmpty_commute_first (D : GridRectangleDecomposition x z) (h : D.HasDisjointSides)
     (h₁ : D.first.IsEmpty) (h₂ : D.second.IsEmpty) : (D.commute h).first.IsEmpty := by
+  -- The new first domain is the old second domain, which is empty for the intermediate state.
+  -- The two states differ only in the first pair of side columns, and if either of those two
+  -- source points fell inside the domain, then the cyclic separation forced on the four columns
+  -- and on the four rows would put a source point inside the first domain instead.
   obtain ⟨hll, hlr, hrl, hrr⟩ := D.hasDisjointSides_iff.mp h
   -- the two intermediate-state points off the second pair of side columns
   have hmid₁ := D.mem_interior_second_iff h (D.first.left, x D.first.right)
@@ -342,12 +344,15 @@ theorem isEmpty_commute_first (D : GridRectangleDecomposition x z) (h : D.HasDis
 /-- Reordering two empty rectangles with disjoint side columns leaves the new second rectangle
 empty.
 
-Its domain is the old first domain, which is empty for the source state. The new source state
-differs from the source only in the second pair of side columns, and if either of those two points
-fell inside the domain, then the cyclic separation forced on the four columns and on the four rows
-would put an intermediate-state point inside the second domain instead. -/
+This is the companion of `isEmpty_commute_first` for the other rectangle of the reordered
+decomposition. -/
 theorem isEmpty_commute_second (D : GridRectangleDecomposition x z) (h : D.HasDisjointSides)
     (h₁ : D.first.IsEmpty) (h₂ : D.second.IsEmpty) : (D.commute h).second.IsEmpty := by
+  -- The new second domain is the old first domain, which is empty for the source state. The new
+  -- source state differs from the source only in the second pair of side columns, and if either
+  -- of those two points fell inside the domain, then the cyclic separation forced on the four
+  -- columns and on the four rows would put an intermediate-state point inside the second domain
+  -- instead.
   obtain ⟨hll, hlr, hrl, hrr⟩ := D.hasDisjointSides_iff.mp h
   -- the two source points on the second pair of side columns
   have hout₁ : ¬((D.second.left ∈ Grid.cIoo D.first.left D.first.right) ∧
