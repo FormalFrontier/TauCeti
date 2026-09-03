@@ -94,15 +94,6 @@ theorem standardComodule_coact :
   rw [Comodule.corestrictCoact_apply, LinearMap.comp_apply,
     GeneralLinear.standardComodule_coact]
 
-/-- The coaction bundled by `standardComodule` is its defining corestriction. -/
-@[simp]
-theorem standardComodule_coact_eq_corestrictCoact :
-    (standardComodule R).coact =
-      Comodule.corestrictCoact
-        (Bialgebra.Quotient.mkBialgHom
-          (R := R) (baseChangeDefiningIdeal R).toIdeal).toCoalgHom :=
-  rfl
-
 /-- **The standard comodule of the specialized type-`E₇` minuscule carrier is faithful.** -/
 theorem isFaithful_standardComodule :
     Comodule.IsFaithful (k := R) (H := coordinateHopfAlgebra R) (V := Fin 56 → R) := by
@@ -303,10 +294,10 @@ private theorem torusCorestrict_eq_ofWeights :
   intro a
   rw [Comodule.ofWeights_coact_basis]
   rw [Pi.basisFun_apply]
-  change Comodule.corestrictCoact
-      (weightTorusToBaseChangeCoordinateMap k).hom.toCoalgHom (Pi.single a 1) = _
-  rw [Comodule.corestrictCoact_apply, standardComodule_coact_eq_corestrictCoact,
-    standardComodule_coact, LinearMap.comp_apply,
+  rw [Comodule.corestrict_coact_apply
+    (weightTorusToBaseChangeCoordinateMap k).hom.toCoalgHom]
+  rw [Comodule.corestrict_coact_apply (coordinateMap k).hom.toCoalgHom]
+  rw [GeneralLinear.standardComodule_coact,
     GeneralLinear.standardCoact_apply_basisFun, map_sum]
   simp only [TensorProduct.map_tmul, LinearMap.id_coe, id_eq]
   have hX (i : Fin 56) :
@@ -315,9 +306,7 @@ private theorem torusCorestrict_eq_ofWeights :
             (GeneralLinear.coordinateHopfAlgebraAlgEquiv k 56
               (GeneralLinear.coordinateRingMap k 56 (MvPolynomial.X (i, a))))) =
         if i = a then MonoidAlgebra.single (minusculeCharacter a) (1 : k) else 0 := by
-    change ((coordinateMap k ≫ weightTorusToBaseChangeCoordinateMap k).hom)
-        (GeneralLinear.coordinateHopfAlgebraAlgEquiv k 56
-          (GeneralLinear.coordinateRingMap k 56 (MvPolynomial.X (i, a)))) = _
+    rw [← _root_.BialgHom.comp_apply, ← _root_.CommHopfAlgCat.hom_comp]
     rw [mkQuotient_comp_weightTorusToBaseChangeCoordinateMap]
     rw [GeneralLinear.hom_weightTorusBaseChangeCoordinateMap,
       GeneralLinear.weightTorusCoordinateBialgHom_X]
@@ -331,13 +320,10 @@ private theorem torusCorestrict_eq_ofWeights :
     (_root_.BialgHom.toAlgHom_toLinearMap
       (weightTorusToBaseChangeCoordinateMap k).hom).symm
   have hcoordinateLinear :
-      (Bialgebra.Quotient.mkBialgHom
-          (R := k) (baseChangeDefiningIdeal k).toIdeal).toCoalgHom.toLinearMap =
-        (Bialgebra.Quotient.mkBialgHom
-          (R := k) (baseChangeDefiningIdeal k).toIdeal).toAlgHom.toLinearMap :=
+      (coordinateMap k).hom.toCoalgHom.toLinearMap =
+        (coordinateMap k).hom.toAlgHom.toLinearMap :=
     (_root_.BialgHom.toAlgHom_toLinearMap
-      (Bialgebra.Quotient.mkBialgHom
-        (R := k) (baseChangeDefiningIdeal k).toIdeal)).symm
+      (coordinateMap k).hom).symm
   rw [hweightLinear, hcoordinateLinear]
   simp only [map_sum, TensorProduct.map_tmul, LinearMap.id_coe, id_eq,
     AlgHom.toLinearMap_apply]
@@ -501,11 +487,11 @@ private theorem single_one_mem_of_ne_bot
         simp [hb0]
       · simp [hcb]
     rwa [heq] at hscaled
-  obtain ⟨l, hl⟩ := DynkinType.exists_e7MinusculeReflection_foldl_eq b
+  obtain ⟨l, hl⟩ := DynkinType.exists_foldl_e7MinusculeReflection_eq b
   have hzero : Pi.single (0 : Fin 56) 1 ∈ N := by
     apply single_mem_of_foldl_mem k N l 0
     rwa [hl]
-  obtain ⟨m, hm⟩ := DynkinType.exists_e7MinusculeReflection_foldl_eq a
+  obtain ⟨m, hm⟩ := DynkinType.exists_foldl_e7MinusculeReflection_eq a
   have := single_foldl_mem k N m 0 hzero
   rwa [hm] at this
 
