@@ -7,6 +7,7 @@ module
 
 public import TauCeti.NumberTheory.Chebotarev.RamifiedPrimes
 public import TauCeti.NumberTheory.NumberField.ArtinSymbol
+import TauCeti.NumberTheory.NumberField.AlgEquiv
 
 /-!
 # The unramified primes carrying a prescribed Artin class
@@ -90,7 +91,6 @@ def frobeniusPrimeSet (C : ConjClasses (L ≃ₐ[K] L)) : Set (HeightOneSpectrum
 
 /-- Membership in `frobeniusPrimeSet`, unfolded. Downstream files should open the definition
 through this lemma rather than through defeq. -/
-@[simp]
 theorem mem_frobeniusPrimeSet_iff {𝔭 : HeightOneSpectrum (𝓞 K)}
     {C : ConjClasses (L ≃ₐ[K] L)} :
     𝔭 ∈ frobeniusPrimeSet K L C ↔
@@ -104,6 +104,7 @@ in the definition may be instantiated at `hur`, whatever proof it was introduced
 
 Membership in `frobeniusPrimeSet K L C` is therefore independent of the unramifiedness proof used
 to test it. -/
+@[simp]
 theorem mem_frobeniusPrimeSet_iff_artinSymbol_eq {𝔭 : HeightOneSpectrum (𝓞 K)}
     (hur : ∀ (Q : Ideal (𝓞 L)) [Q.IsPrime] [Q.LiesOver 𝔭.asIdeal],
       Algebra.IsUnramifiedAt (𝓞 K) Q) (C : ConjClasses (L ≃ₐ[K] L)) :

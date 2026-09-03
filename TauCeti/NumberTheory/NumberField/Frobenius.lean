@@ -8,7 +8,6 @@ module
 public import Mathlib.NumberTheory.NumberField.Ideal.Basic
 public import TauCeti.RingTheory.Frobenius
 public import TauCeti.NumberTheory.LegendreSymbol.Frobenius
-public import TauCeti.NumberTheory.NumberField.AlgEquiv
 public import TauCeti.NumberTheory.NumberField.AutomorphismAction
 public import TauCeti.NumberTheory.NumberField.IntegralSqrt
 import Mathlib.Algebra.CharP.Basic

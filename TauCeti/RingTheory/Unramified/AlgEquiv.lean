@@ -38,13 +38,8 @@ theorem isUnramifiedAt_of_eq_comap (ψ : A ≃ₐ[R] B) {q : Ideal B} [q.IsPrime
     {p : Ideal A} [p.IsPrime] (hp : p = q.comap ψ) [Algebra.IsUnramifiedAt R q] :
     Algebra.IsUnramifiedAt R p := by
   subst hp
-  have H : Submonoid.map (ψ.symm : B ≃ₐ[R] A) q.primeCompl = (q.comap ψ).primeCompl := by
-    ext x
-    constructor
-    · rintro ⟨y, hy, rfl⟩
-      exact fun hx ↦ hy (by rwa [SetLike.mem_coe, Ideal.mem_comap, ψ.apply_symm_apply] at hx)
-    · exact fun hx ↦ ⟨ψ x, hx, ψ.symm_apply_apply x⟩
   exact Algebra.FormallyUnramified.of_equiv (IsLocalization.algEquivOfAlgEquiv
-    (Localization.AtPrime q) (Localization.AtPrime (q.comap ψ)) ψ.symm H)
+    (Localization.AtPrime (q.comap ψ)) (Localization.AtPrime q) ψ
+      (Ideal.map_primeCompl_comap_of_surjective ψ ψ.surjective q)).symm
 
 end AlgEquiv

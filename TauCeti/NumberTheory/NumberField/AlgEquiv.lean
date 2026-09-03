@@ -35,17 +35,15 @@ theorem forall_isUnramifiedAt_iff (e : L ≃ₐ[K] L') (𝔭 : Ideal (𝓞 K)) :
   constructor
   · intro h Q _ _
     have hQ : (Q.comap (NumberField.RingOfIntegers.mapAlgEquiv e)).comap
-        (NumberField.RingOfIntegers.mapAlgEquiv e).symm = Q := by
-      ext x
-      simp [Ideal.mem_comap]
+        (NumberField.RingOfIntegers.mapAlgEquiv e).symm = Q :=
+      Ideal.comap_of_equiv (NumberField.RingOfIntegers.mapAlgEquiv e).symm.toRingEquiv
     have _ : Algebra.IsUnramifiedAt (𝓞 K)
         (Q.comap (NumberField.RingOfIntegers.mapAlgEquiv e)) := h _
     exact (NumberField.RingOfIntegers.mapAlgEquiv e).symm.isUnramifiedAt_of_eq_comap hQ.symm
   · intro h Q _ _
     have hQ : (Q.comap (NumberField.RingOfIntegers.mapAlgEquiv e).symm).comap
-        (NumberField.RingOfIntegers.mapAlgEquiv e) = Q := by
-      ext x
-      simp [Ideal.mem_comap]
+        (NumberField.RingOfIntegers.mapAlgEquiv e) = Q :=
+      Ideal.comap_of_equiv (NumberField.RingOfIntegers.mapAlgEquiv e).toRingEquiv
     have _ : Algebra.IsUnramifiedAt (𝓞 K)
         (Q.comap (NumberField.RingOfIntegers.mapAlgEquiv e).symm) := h _
     exact (NumberField.RingOfIntegers.mapAlgEquiv e).isUnramifiedAt_of_eq_comap hQ.symm
