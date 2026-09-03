@@ -42,7 +42,6 @@ composing a power with inversion.
 
 ## References
 
-* Roadmap: `TauCetiRoadmap/StandardDistributions/README.md`, Layer 3, **Inverse-gamma**.
 * N. L. Johnson, S. Kotz, N. Balakrishnan, *Continuous Univariate Distributions*, vol. 1,
   2nd ed., Wiley (1994), chapter on inverse-gamma distributions.
 -/
@@ -70,6 +69,7 @@ def inverseGammaMeasure (a r : ℝ) : Measure ℝ :=
   if 0 < a ∧ 0 < r then (gammaMeasure a r).map Inv.inv else 0
 
 /-- At positive parameters the inverse-gamma law is the inversion pushforward of the Gamma law. -/
+@[simp]
 theorem inverseGammaMeasure_of_pos (ha : 0 < a) (hr : 0 < r) :
     inverseGammaMeasure a r = (gammaMeasure a r).map Inv.inv := by
   rw [inverseGammaMeasure, ite_eq_left ⟨ha, hr⟩]
@@ -122,6 +122,11 @@ def inverseGammaPDFReal (a r x : ℝ) : ℝ :=
 /-- The inverse-gamma density, valued in `ℝ≥0∞`. -/
 def inverseGammaPDF (a r x : ℝ) : ℝ≥0∞ :=
   ENNReal.ofReal (inverseGammaPDFReal a r x)
+
+/-- The `ℝ≥0∞`-valued inverse-gamma density is the coercion of the real-valued one. -/
+theorem inverseGammaPDF_eq_ofReal (a r x : ℝ) :
+    inverseGammaPDF a r x = ENNReal.ofReal (inverseGammaPDFReal a r x) := by
+  rw [inverseGammaPDF]
 
 /-- The real density has its usual formula at valid parameters and a positive point. -/
 @[simp]
