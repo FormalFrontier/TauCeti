@@ -54,7 +54,7 @@ instance applyMulAction : MulAction (M ≃ₘ^n⟮I, I⟯ M) M where
 
 /-- The tautological action of `M ≃ₘ^n⟮I, I⟯ M` on `M` is given by evaluation. -/
 @[simp]
-theorem smul_eq_apply (f : M ≃ₘ^n⟮I, I⟯ M) (x : M) : f • x = f x := rfl
+theorem smul_def (f : M ≃ₘ^n⟮I, I⟯ M) (x : M) : f • x = f x := rfl
 
 /-- The action homomorphism of the tautological diffeomorphism action is the forgetful homomorphism
 to permutations. -/
