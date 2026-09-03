@@ -16,17 +16,17 @@ subobject is unique because its representing arrow is a monomorphism.
 
 ## Main declarations
 
-* `TauCeti.Subobject.factors_eqToHom_comp_iff`: precomposition by an equality-induced
+* `CategoryTheory.Subobject.factors_eqToHom_comp_iff`: precomposition by an equality-induced
   isomorphism does not change whether a morphism factors through a subobject.
-* `TauCeti.Subobject.factors_iff_existsUnique`: factoring through a subobject is equivalent to
-  the existence of a unique lift.
+* `CategoryTheory.Subobject.factors_iff_existsUnique`: factoring through a subobject is equivalent
+  to the existence of a unique lift.
 -/
 
 public section
 
 open CategoryTheory
 
-namespace TauCeti.Subobject
+namespace TauCeti
 
 universe v u
 
@@ -34,19 +34,19 @@ variable {C : Type u} [Category.{v} C] {X Y Z : C}
 
 /-- Factoring through a subobject is unchanged after precomposing with the isomorphism induced by
 an equality of source objects. -/
-theorem factors_eqToHom_comp_iff (P : CategoryTheory.Subobject Z) (hXY : X = Y) (f : Y ⟶ Z) :
-    P.Factors (eqToHom hXY ≫ f) ↔ P.Factors f := by
+theorem _root_.CategoryTheory.Subobject.factors_eqToHom_comp_iff (P : Subobject Z) (hXY : X = Y)
+    (f : Y ⟶ Z) : P.Factors (eqToHom hXY ≫ f) ↔ P.Factors f := by
   constructor
-  · rw [CategoryTheory.Subobject.factors_iff, CategoryTheory.Subobject.factors_iff]
+  · rw [Subobject.factors_iff, Subobject.factors_iff]
     rintro ⟨g, hg⟩
     refine ⟨eqToHom hXY.symm ≫ g, ?_⟩
     rw [Category.assoc, hg, ← Category.assoc]
     simp
-  · exact CategoryTheory.Subobject.factors_of_factors_right _
+  · exact Subobject.factors_of_factors_right _
 
 /-- A morphism factors through a subobject exactly when it has a unique lift through the
 subobject's representing arrow. -/
-theorem factors_iff_existsUnique (P : CategoryTheory.Subobject Y) (f : X ⟶ Y) :
+theorem _root_.CategoryTheory.Subobject.factors_iff_existsUnique (P : Subobject Y) (f : X ⟶ Y) :
     P.Factors f ↔ ∃! g : X ⟶ (P : C), g ≫ P.arrow = f := by
   constructor
   · intro hf
@@ -56,6 +56,6 @@ theorem factors_iff_existsUnique (P : CategoryTheory.Subobject Y) (f : X ⟶ Y) 
     rw [hg', P.factorThru_arrow]
   · rintro ⟨g, hg, -⟩
     rw [← hg]
-    exact CategoryTheory.Subobject.factors_comp_arrow g
+    exact Subobject.factors_comp_arrow g
 
-end TauCeti.Subobject
+end TauCeti

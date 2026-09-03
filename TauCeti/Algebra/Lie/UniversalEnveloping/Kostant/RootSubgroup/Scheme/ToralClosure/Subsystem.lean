@@ -774,21 +774,21 @@ theorem kostantTorusSubsystemClosedSubgroup_le_iff
     have hP := hminimal.mp hle
     constructor
     · intro i hi
-      apply (TauCeti.Subobject.factors_iff_existsUnique P.1 _).mp
-      rw [kostantRootSubgroupToToral_def, TauCeti.Subobject.factors_eqToHom_comp_iff]
+      apply (CategoryTheory.Subobject.factors_iff_existsUnique P.1 _).mp
+      rw [kostantRootSubgroupToToral_def, CategoryTheory.Subobject.factors_eqToHom_comp_iff]
       exact hP (.inl ⟨i, hi⟩)
-    · apply (TauCeti.Subobject.factors_iff_existsUnique P.1 _).mp
-      rw [kostantWeightTorusToToral_def, TauCeti.Subobject.factors_eqToHom_comp_iff]
+    · apply (CategoryTheory.Subobject.factors_iff_existsUnique P.1 _).mp
+      rw [kostantWeightTorusToToral_def, CategoryTheory.Subobject.factors_eqToHom_comp_iff]
       exact hP (.inr ())
   · rintro ⟨hroot, htorus⟩
     apply hminimal.mpr
     rintro (i | u)
-    · have hi := (TauCeti.Subobject.factors_iff_existsUnique P.1 _).mpr (hroot i.1 i.2)
-      rw [kostantRootSubgroupToToral_def, TauCeti.Subobject.factors_eqToHom_comp_iff] at hi
+    · have hi := (CategoryTheory.Subobject.factors_iff_existsUnique P.1 _).mpr (hroot i.1 i.2)
+      rw [kostantRootSubgroupToToral_def, CategoryTheory.Subobject.factors_eqToHom_comp_iff] at hi
       exact hi
     · rcases u with ⟨⟩
-      have ht := (TauCeti.Subobject.factors_iff_existsUnique P.1 _).mpr htorus
-      rw [kostantWeightTorusToToral_def, TauCeti.Subobject.factors_eqToHom_comp_iff] at ht
+      have ht := (CategoryTheory.Subobject.factors_iff_existsUnique P.1 _).mpr htorus
+      rw [kostantWeightTorusToToral_def, CategoryTheory.Subobject.factors_eqToHom_comp_iff] at ht
       exact ht
 
 /-- **Rigidity of a torus-subsystem group scheme.** Two homomorphisms out of the subsystem
