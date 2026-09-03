@@ -31,10 +31,13 @@ an existential over a proof. Nothing is thereby left ambiguous, because `Algebra
 is a `Prop`: any two unramifiedness proofs are definitionally equal, so the value of
 `artinSymbol 𝔭.asIdeal hur` does not depend on `hur`. That is the content of
 `mem_frobeniusPrimeSet_iff_artinSymbol_eq`, which turns the existential into a plain equation as
-soon as the caller has an unramifiedness proof in hand, and it is the form later layers use.
+soon as the caller has an unramifiedness proof in hand.
 
-The alternative — a total `Gal(L/K)`-valued or `ConjClasses`-valued function with junk at the
-ramified primes — is rejected by the roadmap, and the existential is what avoids it.
+The alternative — a total `Gal(L/K)`-valued or `ConjClasses`-valued function taking a junk value
+at the ramified primes — is worse for this set: the junk value carries no arithmetic content, yet
+the ramified primes would sit inside the fibre of whichever class it names, so the fibres would
+neither cover the unramified primes exactly nor be pinned down by a Frobenius element there. The
+existential is what keeps the fibres free of them.
 
 ## Main definitions
 
@@ -56,6 +59,14 @@ ramified primes — is rejected by the roadmap, and the existential is what avoi
 The last two are what let the density arguments discard a finite exceptional set and then work
 one class at a time: a lower density bound for each class can be squeezed against a partition of
 a cofinite set, which is how the crossing argument produces exact densities.
+
+## References
+
+The definition of `frobeniusPrimeSet` and the statement of `disjoint_frobeniusPrimeSet` follow
+`TauCetiRoadmap/Chebotarev/Suggested.lean`, from which the dependent membership condition and the
+`HeightOneSpectrum (𝓞 K)` carrier are taken verbatim; the prose description of the intended API
+is the section `Frobenius prime sets and finite exceptional sets` of
+`TauCetiRoadmap/Chebotarev/README.md`.
 -/
 
 public section
@@ -173,6 +184,7 @@ classes of `Gal(L/K)` is exactly the complement of the finite set `ramifiedPrime
 
 Together with `disjoint_frobeniusPrimeSet` this is the partition that the density arguments run
 on: everything outside a finite exceptional set is accounted for exactly once. -/
+@[simp]
 theorem iUnion_frobeniusPrimeSet :
     ⋃ C : ConjClasses (L ≃ₐ[K] L), frobeniusPrimeSet K L C = (↑(ramifiedPrimes K L))ᶜ := by
   refine Set.Subset.antisymm (Set.iUnion_subset frobeniusPrimeSet_subset_compl_ramifiedPrimes)
