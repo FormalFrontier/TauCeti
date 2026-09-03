@@ -67,9 +67,6 @@ neither: it holds over any field, in any universe.
 
 ## References
 
-The "`D₄` dihedral induction" worked example of
-[the induction and restriction roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/InductionRestriction/README.md).
-
 * J.-P. Serre, *Linear Representations of Finite Groups*, Chapter 5.3 and Chapter 7.4.
 -/
 
