@@ -8,6 +8,7 @@ module
 public import Mathlib.Probability.CDF
 public import Mathlib.Probability.HasLaw
 public import Mathlib.Probability.Independence.Basic
+import TauCeti.MeasureTheory.Order.Lattice
 
 /-!
 # The extremes of an independent identically distributed family
@@ -28,10 +29,8 @@ formula acquires the default value that an empty family would force on a `Finset
 equal factors, which is where the two powers come from. The minimum is then read off its
 complementary event, which is why its formula is the one with the two subtractions.
 
-This file is generic in the common law `μ` and imports no particular family. The exponential
-specialisation — the minimum of `d` i.i.d. exponentials of rate `r` is exponential of rate
-`d * r` — lives with the exponential family, in `Distributions.Exponential`, as
-`hasLaw_min_iid_expMeasure`.
+`cdf_min_iid` specialises to the exponential family as `hasLaw_min_iid_expMeasure`: the minimum
+of `d` i.i.d. exponentials of rate `r` is exponential of rate `d * r`.
 
 ## Main results
 
@@ -65,48 +64,29 @@ namespace Probability
 variable {Ω ι : Type*} {mΩ : MeasurableSpace Ω} [Fintype ι] [Nonempty ι] {P : Measure Ω}
   {μ : Measure ℝ} {X : ι → Ω → ℝ} {r : ℝ}
 
-/-- The maximum of a measurable finite family is measurable. Mathlib's `Finset.measurable_sup'`
-states this in the pointwise lattice on `Ω → ℝ`; `Finset.sup'_apply` moves it to the
-coordinatewise spelling used here. -/
-private theorem measurable_max {f : ι → Ω → ℝ} (hf : ∀ i, Measurable (f i)) :
-    Measurable fun ω => Finset.univ.sup' Finset.univ_nonempty fun i => f i ω := by
-  have heq : (fun ω => Finset.univ.sup' Finset.univ_nonempty fun i => f i ω)
-      = Finset.univ.sup' (Finset.univ_nonempty (α := ι)) f :=
-    funext fun ω => (Finset.sup'_apply _ f ω).symm
-  rw [heq]
-  exact Finset.measurable_sup' _ fun i _ => hf i
+/-- The coordinatewise spelling of the maximum of the family is its lattice supremum. -/
+private theorem sup'_coord_eq (X : ι → Ω → ℝ) :
+    (fun ω => Finset.univ.sup' Finset.univ_nonempty fun i => X i ω)
+      = Finset.univ.sup' (Finset.univ_nonempty (α := ι)) X :=
+  funext fun ω => (Finset.sup'_apply _ X ω).symm
 
-/-- The minimum of a measurable finite family is measurable. -/
-private theorem measurable_min {f : ι → Ω → ℝ} (hf : ∀ i, Measurable (f i)) :
-    Measurable fun ω => Finset.univ.inf' Finset.univ_nonempty fun i => f i ω := by
-  have heq : (fun ω => Finset.univ.inf' Finset.univ_nonempty fun i => f i ω)
-      = Finset.univ.inf' (Finset.univ_nonempty (α := ι)) f :=
-    funext fun ω => (Finset.inf'_apply _ f ω).symm
-  rw [heq]
-  exact Finset.inf'_induction (p := fun g : Ω → ℝ => Measurable g) _ f
-    (fun _ h₁ _ h₂ => h₁.inf h₂) fun i _ => hf i
+/-- The coordinatewise spelling of the minimum of the family is its lattice infimum. -/
+private theorem inf'_coord_eq (X : ι → Ω → ℝ) :
+    (fun ω => Finset.univ.inf' Finset.univ_nonempty fun i => X i ω)
+      = Finset.univ.inf' (Finset.univ_nonempty (α := ι)) X :=
+  funext fun ω => (Finset.inf'_apply _ X ω).symm
 
 /-- The maximum of an almost-everywhere measurable finite family is almost everywhere
-measurable. -/
+measurable: `TauCeti.Finset.aemeasurable_sup'` in the coordinatewise spelling. -/
 private theorem aemeasurable_max (hX : ∀ i, AEMeasurable (X i) P) :
     AEMeasurable (fun ω => Finset.univ.sup' Finset.univ_nonempty fun i => X i ω) P := by
-  have heq : (fun ω => Finset.univ.sup' Finset.univ_nonempty fun i => X i ω)
-      = Finset.univ.sup' (Finset.univ_nonempty (α := ι)) X :=
-    funext fun ω => (Finset.sup'_apply _ X ω).symm
-  rw [heq]
-  exact Finset.sup'_induction (p := fun g : Ω → ℝ => AEMeasurable g P) _ X
-    (fun _ h₁ _ h₂ => h₁.sup h₂) fun i _ => hX i
+  rw [sup'_coord_eq]; exact TauCeti.Finset.aemeasurable_sup' _ fun i _ => hX i
 
 /-- The minimum of an almost-everywhere measurable finite family is almost everywhere
-measurable. -/
-theorem aemeasurable_min (hX : ∀ i, AEMeasurable (X i) P) :
+measurable: `TauCeti.Finset.aemeasurable_inf'` in the coordinatewise spelling. -/
+private theorem aemeasurable_min (hX : ∀ i, AEMeasurable (X i) P) :
     AEMeasurable (fun ω => Finset.univ.inf' Finset.univ_nonempty fun i => X i ω) P := by
-  have heq : (fun ω => Finset.univ.inf' Finset.univ_nonempty fun i => X i ω)
-      = Finset.univ.inf' (Finset.univ_nonempty (α := ι)) X :=
-    funext fun ω => (Finset.inf'_apply _ X ω).symm
-  rw [heq]
-  exact Finset.inf'_induction (p := fun g : Ω → ℝ => AEMeasurable g P) _ X
-    (fun _ h₁ _ h₂ => h₁.inf h₂) fun i _ => hX i
+  rw [inf'_coord_eq]; exact TauCeti.Finset.aemeasurable_inf' _ fun i _ => hX i
 
 /-- The maximum of a finite family is at most `x` exactly when every member is. -/
 private theorem setOf_max_le (X : ι → Ω → ℝ) (x : ℝ) :
