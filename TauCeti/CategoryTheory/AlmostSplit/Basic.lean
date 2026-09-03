@@ -21,7 +21,8 @@ absorbs all the inessential maps out of `X`.
 These are the two lifting properties an **almost-split (Auslander-Reiten) sequence**
 `0 → τM → E → M → 0` carries: `E ⟶ M` is right almost split and `τM ⟶ E` is left almost split.
 This file builds them as conditions on a single morphism of an arbitrary category, so that the
-sequence-level notion can be assembled from them, and proves the two facts that make the
+sequence-level notion can be assembled from them — it is, as `TauCeti.IsAlmostSplit` in
+`TauCeti/CategoryTheory/AlmostSplit/Sequence.lean` — and proves the two facts that make the
 indecomposability clauses in the definition of an almost-split sequence redundant: **the target of
 a right almost split morphism is indecomposable**, and dually **the source of a left almost split
 morphism is indecomposable**. Neither end of an almost-split sequence has to be *assumed*
