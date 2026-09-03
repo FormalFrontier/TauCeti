@@ -15,13 +15,20 @@ This file bundles the algebraic input for an Euler product over the height-one p
 of integers of a number field. An `EulerProductData K` consists of an ideal arithmetic function
 that is multiplicative on relatively prime nonzero ideals. The prime-power series and local
 arithmetic factors are canonically derived from the function as defined in
-`EulerProduct/Basic.lean`. A finite bad-prime set is deliberately not stored here until a concrete
-good-prime property relates such a set to the local factors.
+`EulerProduct/Basic.lean`, so nothing about the local behaviour is stored: the bundle carries
+exactly the one algebraic hypothesis that an Euler product consumes.
 
 The formal Euler-product identity follows from
 `IdealArithmeticFunction.normCoeff_eq_eulerProduct`: coprime multiplicativity and unique
 factorization prove that `normCoeff` is Mathlib's `ArithmeticFunction.eulerProduct` of the
-canonical local factors. Analytic convergence of the evaluated factors belongs to Layer 3.3.
+canonical local factors.
+
+Two hypotheses of the classical theory are deliberately absent, because the identity proved here
+does not need either. There is no distinguished finite set of exceptional primes: multiplicativity
+is required on every coprime pair of nonzero ideals, and the local factor at a prime is read off
+from the coefficients at its powers, good or bad. There is also no analytic input: the identity is
+an equality of arithmetic functions, and the convergence of the evaluated factors to an infinite
+product is a separate question.
 
 ## Main definitions
 
@@ -30,15 +37,6 @@ canonical local factors. Analytic convergence of the evaluated factors belongs t
   Euler-product data.
 * Pointwise multiplication, complex conjugation, and restriction away from sets of primes
   preserve the bundle.
-
-## Roadmap role
-
-This supplies the algebraic coefficient-system part of Layer **3.1** ("Local data") of
-`TauCetiRoadmap/ArithmeticDirichletSeries/README.md`. It consumes the canonical local factors and
-finite Euler product of Layer 3.2 already proved in `EulerProduct/Basic.lean`. A later Layer 3.1
-prerequisite must formulate the concrete good-prime property before adding finite bad support.
-Layer 3.3 then evaluates these formal local factors and passes to the analytic infinite product
-under absolute convergence.
 
 ## References
 

@@ -63,21 +63,20 @@ finite Euler product needs support on a *finite* set of primes, so all but finit
 bad; such a function is never a `MultiplicativeIdealWeight`, whose zero support is finite by
 definition. Hence `supportedPart` is a plain ideal arithmetic function.
 
-## Roadmap role
-
-This is the canonical-local-factor foundation for Layer **3.1** and the whole of Layer **3.2**
-("Finite products first") of `TauCetiRoadmap/ArithmeticDirichletSeries/README.md`; the local series
-is derived here rather than stored. `EulerProduct/Data.lean` bundles this canonical information
-as a multiplicative coefficient system; finite bad-prime data remains deferred. Layer 3.3 then
-evaluates the formal factors as analytic functions and passes to their infinite product under
-absolute convergence.
+Finiteness is what carries the finite products to the full Euler product. A nonzero ideal has
+only finitely many prime divisors, and only finitely many primes have norm at most a given `n`, so
+at a fixed norm coefficient the restriction `supportedPart f S` already agrees with `f` as soon as
+`S` contains those primes. Each finite product is therefore eventually the exact norm coefficient,
+and Mathlib's `ArithmeticFunction.eulerProduct`, being the limit of those finite products, computes
+the norm coefficients of `f` itself. The local factors are derived from `f` rather than stored, so
+this identity holds for any multiplicative `f` with no further data.
 
 ## References
 
 * J. Neukirch, *Algebraic Number Theory*, Chapter VII.
 * Mathlib's `ArithmeticFunction.ofPowerSeries` and `ArithmeticFunction.eulerProduct` APIs.
-* `TauCetiRoadmap/ArithmeticDirichletSeries/Suggested.lean`, whose Layer 3 local-factor target
-  signatures and naming are adapted here; the full data package is deferred as described above.
+* `TauCetiRoadmap/ArithmeticDirichletSeries/Suggested.lean`, whose local-factor target signatures
+  and naming are adapted here.
 -/
 
 public section
@@ -441,7 +440,7 @@ theorem eventually_normCoeff_supportedPart_eq (f : IdealArithmeticFunction K) (n
 /-- **The formal Euler product of norm coefficients.** The norm coefficients of a multiplicative
 ideal arithmetic function are Mathlib's `ArithmeticFunction.eulerProduct` of the canonical local
 arithmetic factors. This is an equality of arithmetic functions; the analytic infinite product
-obtained after evaluating their `LSeries` is the separate absolute-convergence step of Layer 3.3. -/
+obtained after evaluating their `LSeries` is a separate absolute-convergence question. -/
 theorem normCoeff_eq_eulerProduct (hf : f.IsMultiplicative) :
     normCoeff K f = ArithmeticFunction.eulerProduct f.localArithmeticFactor := by
   ext n
