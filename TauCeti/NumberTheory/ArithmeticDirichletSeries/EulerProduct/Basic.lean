@@ -413,33 +413,30 @@ theorem normCoeff_supportedPart (hf : f.IsMultiplicative)
       rw [Finset.coe_insert, supportedPart_insert hf (by simpa using hPS), normCoeff_convolution,
         ih, normCoeff_supportedPart_singleton, Finset.prod_insert hPS, mul_comm]
 
-/-- For a fixed nonzero ideal, restriction to a growing finite set of height-one primes eventually
-does nothing. -/
-theorem eventually_supportedPart_apply_eq (f : IdealArithmeticFunction K)
-    (A : (Ideal (𝓞 K))⁰) :
-    ∀ᶠ S : Finset (HeightOneSpectrum (𝓞 K)) in Filter.atTop,
-      supportedPart f (S : Set (HeightOneSpectrum (𝓞 K))) A = f A := by
-  obtain ⟨T, e, hA⟩ := Ideal.exists_eq_prod_pow (nonZeroDivisors.coe_ne_zero A)
-  filter_upwards [Filter.eventually_ge_atTop T] with S hTS
-  apply supportedPart_apply_of_isPrimeTo_compl
-  rw [hA, Ideal.isPrimeTo_prod_iff]
-  intro P hPT
-  exact (Ideal.isPrimeTo_asIdeal_iff.mpr (Set.notMem_compl_iff.mpr (hTS hPT))).pow (e P)
-
 /-- At a fixed coefficient, restricting to a sufficiently large finite set of prime ideals does
-not change the norm coefficient. -/
+not change the norm coefficient. One may take all prime ideals of norm at most `n`: every prime
+divisor of an ideal of norm `n` belongs to that finite set. -/
 theorem eventually_normCoeff_supportedPart_eq (f : IdealArithmeticFunction K) (n : ℕ) :
     ∀ᶠ S : Finset (HeightOneSpectrum (𝓞 K)) in Filter.atTop,
       normCoeff K (supportedPart f (S : Set (HeightOneSpectrum (𝓞 K)))) n =
         normCoeff K f n := by
-  have h : ∀ᶠ S : Finset (HeightOneSpectrum (𝓞 K)) in Filter.atTop,
-      ∀ A ∈ normFiber K n,
-        supportedPart f (S : Set (HeightOneSpectrum (𝓞 K))) A = f A := by
-    rw [Finset.eventually_all (normFiber K n)]
-    exact fun A _ ↦ eventually_supportedPart_apply_eq f A
-  filter_upwards [h] with S hS
+  classical
+  let T : Finset (HeightOneSpectrum (𝓞 K)) :=
+    (Northcott.finite_le
+      (h := fun P : HeightOneSpectrum (𝓞 K) ↦ Ideal.absNorm P.asIdeal) n).toFinset
+  filter_upwards [Filter.eventually_ge_atTop T] with S hTS
   rw [normCoeff_eq_sum_normFiber, normCoeff_eq_sum_normFiber]
-  exact Finset.sum_congr rfl hS
+  refine Finset.sum_congr rfl fun A hA ↦ supportedPart_apply_of_isPrimeTo_compl ?_
+  rw [Ideal.isPrimeTo_iff]
+  refine ⟨nonZeroDivisors.coe_ne_zero A, fun P hP hPdvd ↦ hP ?_⟩
+  have hnormP : Ideal.absNorm P.asIdeal ≤ n := by
+    have hnormdvd : Ideal.absNorm P.asIdeal ∣ Ideal.absNorm (A : Ideal (𝓞 K)) :=
+      Ideal.absNorm_dvd_absNorm_of_le (Ideal.dvd_iff_le.mp hPdvd)
+    have hnormA : Ideal.absNorm (A : Ideal (𝓞 K)) = n := (mem_normFiber K).mp hA
+    rw [hnormA] at hnormdvd
+    exact Nat.le_of_dvd (hnormA ▸ Ideal.absNorm_pos_of_nonZeroDivisors A) hnormdvd
+  exact hTS ((Northcott.finite_le
+    (h := fun P : HeightOneSpectrum (𝓞 K) ↦ Ideal.absNorm P.asIdeal) n).mem_toFinset.mpr hnormP)
 
 /-- **The formal Euler product of norm coefficients.** The norm coefficients of a multiplicative
 ideal arithmetic function are Mathlib's `ArithmeticFunction.eulerProduct` of the canonical local
