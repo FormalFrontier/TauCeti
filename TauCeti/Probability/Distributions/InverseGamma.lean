@@ -345,19 +345,15 @@ theorem integral_pow_inverseGammaMeasure (hr : 0 < r) (n : ℕ)
     integral_map measurable_inv.aemeasurable (by fun_prop)]
   simpa only [inv_pow] using TauCeti.integral_inv_pow_gammaMeasure hr n hn
 
-/-- Mathlib's Gamma recurrence `Real.Gamma_add_one`, shifted to the form `Γ b = (b - 1) * Γ (b - 1)`
-in which the inverse-gamma moment formulas need to normalize `Real.Gamma`. -/
-private lemma Gamma_eq_sub_one_mul_Gamma_sub_one {b : ℝ} (hb : b - 1 ≠ 0) :
-    Real.Gamma b = (b - 1) * Real.Gamma (b - 1) := by
-  simpa using Real.Gamma_add_one hb
-
 /-- The mean of an inverse-gamma law is `r / (a - 1)` when `1 < a`. -/
 @[simp]
 theorem integral_id_inverseGammaMeasure (hr : 0 < r) (ha : 1 < a) :
     ∫ x, x ∂inverseGammaMeasure a r = r / (a - 1) := by
   have h := integral_pow_inverseGammaMeasure hr 1 (by simpa using ha)
+  have hgamma : Real.Gamma a = (a - 1) * Real.Gamma (a - 1) := by
+    simpa using Real.Gamma_add_one (by linarith : a - 1 ≠ 0)
   simp only [pow_one, Nat.cast_one] at h
-  rw [h, Gamma_eq_sub_one_mul_Gamma_sub_one (by linarith : a - 1 ≠ 0)]
+  rw [h, hgamma]
   field_simp [(Real.Gamma_pos_of_pos (by linarith : 0 < a - 1)).ne']
 
 /-- The second raw moment of an inverse-gamma law is
@@ -366,10 +362,13 @@ theorem integral_id_inverseGammaMeasure (hr : 0 < r) (ha : 1 < a) :
 theorem integral_sq_inverseGammaMeasure (hr : 0 < r) (ha : 2 < a) :
     ∫ x, x ^ 2 ∂inverseGammaMeasure a r = r ^ 2 / ((a - 1) * (a - 2)) := by
   have h := integral_pow_inverseGammaMeasure hr 2 (by simpa using ha)
-  have hsub : a - 1 - 1 = a - 2 := by ring
+  have hgamma : Real.Gamma a = (a - 1) * Real.Gamma (a - 1) := by
+    simpa using Real.Gamma_add_one (by linarith : a - 1 ≠ 0)
+  have hshift : a - 2 + 1 = a - 1 := by ring
+  have hgamma' : Real.Gamma (a - 1) = (a - 2) * Real.Gamma (a - 2) := by
+    simpa [hshift] using Real.Gamma_add_one (by linarith : a - 2 ≠ 0)
   norm_num only [Nat.cast_ofNat] at h
-  rw [h, Gamma_eq_sub_one_mul_Gamma_sub_one (by linarith : a - 1 ≠ 0),
-    Gamma_eq_sub_one_mul_Gamma_sub_one (by linarith : a - 1 - 1 ≠ 0), hsub]
+  rw [h, hgamma, hgamma']
   field_simp [(Real.Gamma_pos_of_pos (by linarith : 0 < a - 2)).ne']
 
 /-- The variance of an inverse-gamma law is
