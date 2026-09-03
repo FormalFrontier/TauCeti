@@ -31,9 +31,6 @@ the unipotent radical of the upper-triangular affine group.
 
 * J. S. Milne, *Algebraic Groups* (2017), Chapters 13 and 17.
 * T. A. Springer, *Linear Algebraic Groups*, Sections 6.2--6.3.
-
-This supplies the concrete unipotent radical of the standard Borel candidate required by Layers
-5 and 7 of the ReductiveGroups roadmap. Maximal solvability of that candidate remains downstream.
 -/
 
 public section
@@ -48,9 +45,17 @@ noncomputable section
 
 /-- The Hopf ideal in the upper-triangular coordinate algebra cutting out the
 upper-unitriangular subgroup. -/
-noncomputable abbrev upperUnitriangularHopfIdeal
+noncomputable def upperUnitriangularHopfIdeal
     (R : Type u) [CommRing R] (n : ℕ) : HopfIdeal R (coordinateHopfAlgebra R n) :=
   GeneralLinear.Dynamic.weightUnipotentInParabolicHopfIdeal R (weights n)
+
+/-- The upper-unitriangular Hopf ideal is the relative weight-unipotent ideal for the standard
+decreasing weights. -/
+theorem upperUnitriangularHopfIdeal_def
+    (R : Type u) [CommRing R] (n : ℕ) :
+    upperUnitriangularHopfIdeal R n =
+      GeneralLinear.Dynamic.weightUnipotentInParabolicHopfIdeal R (weights n) := by
+  rw [upperUnitriangularHopfIdeal]
 
 /-- The relative weight-unipotent ideal cuts out exactly the existing upper-unitriangular
 matrix group, compatibly with the upper-triangular inclusion into `GL_n`. -/
@@ -63,7 +68,7 @@ theorem mem_upperUnitriangularPointsSubgroup_iff
         (upperUnitriangularHopfIdeal R n) (CommAlgCat.of R A) ↔
       (pointsMulEquiv (R := R) (n := n) (A := A) f : GL (Fin n) A) ∈
         upperUnitriangularGroup (Fin n) A := by
-  rw [upperUnitriangularHopfIdeal,
+  rw [upperUnitriangularHopfIdeal_def,
     GeneralLinear.Dynamic.mem_weightUnipotentInParabolicPointsSubgroup_iff,
     GeneralLinear.mem_weightUnipotentDefiningPointsSubgroup_iff,
     UpperUnitriangularGroup.mem_iff, Matrix.isUpperUnitriangular_def,
@@ -99,6 +104,7 @@ theorem unipotentRadicalDefiningIdeal_finiteTypeCoordinateHopfAlgebra
       (ConcreteCategory.bijective_of_isIso
         (eqToHom (finiteTypeCoordinateHopfAlgebra_obj k n).symm)).2 =
       upperUnitriangularHopfIdeal k n := by
+  rw [upperUnitriangularHopfIdeal_def]
   let e : finiteTypeCoordinateHopfAlgebra k n ≅
       GeneralLinear.weightParabolicFiniteTypeCoordinateHopfAlgebra k (weights n) :=
     ObjectProperty.isoMk _ <| eqToIso <|

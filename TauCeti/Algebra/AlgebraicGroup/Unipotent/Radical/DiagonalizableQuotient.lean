@@ -32,9 +32,6 @@ hence trivial. This forces the radical to lie in the kernel.
 
 * J. S. Milne, *Algebraic Groups* (2017), Proposition 12.40 and §§6.45--6.46.
 * A. Borel, *Linear Algebraic Groups*, §11.21.
-
-This is the quotient criterion used to identify concrete unipotent radicals in Layer 5 of the
-ReductiveGroups roadmap.
 -/
 
 public section

@@ -35,9 +35,6 @@ claimed equality of Hopf ideals.
 
 * J. S. Milne, *Algebraic Groups* (2017), Chapters 13 and 17.
 * T. A. Springer, *Linear Algebraic Groups*, Sections 6.2--6.3.
-
-This completes the unipotent-radical calculation for injective-weight parabolics in Layers 5 and
-7 of the ReductiveGroups roadmap.
 -/
 
 public section
