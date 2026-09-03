@@ -9,8 +9,6 @@ public import Mathlib.NumberTheory.ADEInequality
 public import TauCeti.LinearAlgebra.RootSystem.Chain
 public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Basic
 
-public section
-
 /-!
 # The fork bound for finite-type Cartan matrices
 
@@ -84,6 +82,8 @@ J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, §11.
 the inequality `1/p + 1/q + 1/r > 1` is obtained from the same linear weighting of the arms, and
 Bourbaki, *Lie Groups and Lie Algebras, Chapters 4-6*, Ch. VI §4.
 -/
+
+public section
 
 open scoped Matrix
 

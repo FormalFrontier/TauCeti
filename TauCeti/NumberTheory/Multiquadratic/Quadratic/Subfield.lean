@@ -38,10 +38,12 @@ the same simple extension only when their radicands lie in the same square class
 
 ## Provenance
 
-The one-step quadratic normal form this rests on (`mem_sup_adjoin_sq`,
-`finrank_sup_adjoin_simple_eq_mul_two`) is migrated, with the rest of the multiquadratic Layer 0,
-from [kim-em/erdos-unit-distance](https://github.com/kim-em/erdos-unit-distance), the formalization
-of L. Alpöge's disproof of the uniform-constant Erdős unit-distance conjecture. The subset-product
+The one-step quadratic normal form this rests on
+(`TauCeti.IntermediateField.mem_sup_adjoin_sq`,
+`IntermediateField.finrank_sup_adjoin_simple_eq_mul_two`) is migrated, with the rest of the
+multiquadratic Layer 0, from
+[kim-em/erdos-unit-distance](https://github.com/kim-em/erdos-unit-distance), the formalization of
+L. Alpöge's disproof of the uniform-constant Erdős unit-distance conjecture. The subset-product
 description of the quadratic subfields is assembled here from that normal form.
 -/
 
@@ -88,7 +90,7 @@ theorem finrank_adjoin_prod_root [NeZero (2 : K)] (hroot : ∀ i, root i ^ 2 = a
   have hx2 : (∏ i ∈ S, root i) ^ 2 ∈ (⊥ : IntermediateField K L) := by
     rw [prod_root_sq hroot]; exact IntermediateField.algebraMap_mem _ _
   have hxb := prod_root_notMem_bot hroot hSsq
-  have h := finrank_sup_adjoin_simple_eq_mul_two (⊥ : IntermediateField K L) hx2 hxb
+  have h := (⊥ : IntermediateField K L).finrank_sup_adjoin_simple_eq_mul_two hx2 hxb
   rwa [bot_sup_eq, IntermediateField.finrank_bot, one_mul] at h
 
 /-- **A subset-product subfield sits inside the multiquadratic field.** For any subset `S`, the

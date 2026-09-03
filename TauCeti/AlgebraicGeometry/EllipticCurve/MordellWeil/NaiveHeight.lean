@@ -7,8 +7,8 @@ module
 
 public import Mathlib.NumberTheory.Height.EllipticCurve
 public import Mathlib.NumberTheory.Height.Northcott
+public import Mathlib.AlgebraicGeometry.EllipticCurve.Affine.Point
 public import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.AddSubMap
-public import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.Point.XRep
 
 /-!
 # The naïve height on an elliptic curve, and the approximate parallelogram law
@@ -31,11 +31,10 @@ homogeneous polynomial map is controlled by the height of its argument. The comm
 holds only up to a nonzero scalar, which is harmless because `logHeight` is scale-invariant.
 
 Everything this runs on mentions no height and lives under `Affine/`: the commuting square in
-`TauCeti.AlgebraicGeometry.EllipticCurve.Affine.AddSubMap`; the duplication formulae, the
-`x`-coordinate addition formulae and their transport to `Point.xRep` in
-`TauCeti.AlgebraicGeometry.EllipticCurve.Affine.Point.Duplication`; and finiteness of the fibres
-of `xRep`, which the Northcott instance consumes, in
-`TauCeti.AlgebraicGeometry.EllipticCurve.Affine.Point.XRep`.
+`TauCeti.AlgebraicGeometry.EllipticCurve.Affine.AddSubMap`; the duplication formulae and the
+`x`-coordinate addition formulae in `Mathlib.AlgebraicGeometry.EllipticCurve.Affine.Formula`; and
+their transport to `Point.xRep` and finiteness of the fibres of `xRep`, which the Northcott
+instance consumes, in `Mathlib.AlgebraicGeometry.EllipticCurve.Affine.Point`.
 
 ## Main results
 
@@ -54,10 +53,10 @@ That last lemma lives in `Mathlib/NumberTheory/Height/EllipticCurve.lean`, a fil
 author as this development's source, whose module docstring is titled "The naïve height and the
 approximate parallelogram law" and whose `TODO` list names three items: define the naïve height,
 add the further ingredients for the approximate parallelogram law, and add the law itself. The
-source also brackets the duplication block with a reference to Mathlib PR `#40303`. So the
-material here is work the upstream author has slotted but not landed: at the Mathlib version this
-repository pins, all of these declarations are absent, which is why they are stated here rather
-than imported.
+`xRep` half of that programme has landed (Mathlib PR `#40303`, the duplication formulae and the
+fibre finiteness now consumed from Mathlib above); the height half has not. So the declarations
+here are work the upstream author has slotted but not landed: at the Mathlib version this
+repository pins, they are absent, which is why they are stated here rather than imported.
 
 This is a deliberate, temporary duplication with a defined end. If a later pin bump lands that
 upstream work, the superseded declarations here must be deleted and their uses repointed at

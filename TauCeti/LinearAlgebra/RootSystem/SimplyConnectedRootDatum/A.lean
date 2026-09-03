@@ -10,8 +10,6 @@ public import TauCeti.LinearAlgebra.RootSystem.Positive
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.Basic
 import TauCeti.LinearAlgebra.RootSystem.Swap
 
-public section
-
 /-!
 # The simply connected root datum of type `Aₙ`
 
@@ -121,6 +119,8 @@ Steinberg map of milestone L1 of `TauCetiRoadmap/CFSGStatement/README.md`. The d
 type-`A` diagram automorphism as `X ↦ -J Xᵀ J` on `sl_{n+1}`, of which the map below is the
 root-datum shadow, is in R. W. Carter, *Simple Groups of Lie Type*, §12.2.
 -/
+
+public section
 
 namespace TauCeti
 

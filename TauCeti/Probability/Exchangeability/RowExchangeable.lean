@@ -138,7 +138,7 @@ theorem rowExchangeable_def :
 /-- Every column of an array with a.e. measurable entries is a.e. measurable. -/
 theorem aemeasurable_arrayColumn (hY : ∀ p, AEMeasurable (Y p) μ) (k : ℕ) :
     AEMeasurable (arrayColumn Y k) μ :=
-  aemeasurable_pi_lambda _ fun a => hY (a, k)
+  AEMeasurable.of_eval fun a => hY (a, k)
 
 /-- **Each row of a row exchangeable array is fully exchangeable.** -/
 theorem RowExchangeable.fullyExchangeable_row (h : RowExchangeable μ Y)
@@ -148,13 +148,13 @@ theorem RowExchangeable.fullyExchangeable_row (h : RowExchangeable μ Y)
   intro σ
   set π : ι → Equiv.Perm ℕ := fun b => if b = a then σ else 1 with hπ
   have hrow : Measurable fun y : ι × ℕ → α => fun k => y (a, k) :=
-    measurable_pi_lambda _ fun k => measurable_pi_apply (a, k)
+    Measurable.of_eval fun k => measurable_pi_apply (a, k)
   have hmap := congrArg (fun ρ : Measure (ι × ℕ → α) => ρ.map fun y => fun k => y (a, k))
     (rowExchangeable_def.mp h π)
   rw [AEMeasurable.map_map_of_aemeasurable hrow.aemeasurable
-      (aemeasurable_pi_lambda _ fun p => hY (p.1, π p.1 p.2)),
+      (AEMeasurable.of_eval fun p => hY (p.1, π p.1 p.2)),
     AEMeasurable.map_map_of_aemeasurable hrow.aemeasurable
-      (aemeasurable_pi_lambda _ fun p => hY p)] at hmap
+      (AEMeasurable.of_eval fun p => hY p)] at hmap
   have hπa : π a = σ := by simp [hπ]
   simpa [Function.comp_def, pathLaw, hπa] using hmap
 
@@ -165,15 +165,15 @@ theorem RowExchangeable.fullyExchangeable_arrayColumn (h : RowExchangeable μ Y)
     FullyExchangeable μ (arrayColumn Y) := by
   intro σ
   have hcol : Measurable fun y : ι × ℕ → α => fun (k : ℕ) (a : ι) => y (a, k) :=
-    measurable_pi_lambda _ fun k => measurable_pi_lambda _ fun a => measurable_pi_apply (a, k)
+    Measurable.of_eval fun k => Measurable.of_eval fun a => measurable_pi_apply (a, k)
   have hmap := congrArg
     (fun ρ : Measure (ι × ℕ → α) =>
       ρ.map fun y => fun (k : ℕ) (a : ι) => y (a, k))
     (rowExchangeable_def.mp h fun _ => σ)
   rw [AEMeasurable.map_map_of_aemeasurable hcol.aemeasurable
-      (aemeasurable_pi_lambda _ fun p => hY (p.1, σ p.2)),
+      (AEMeasurable.of_eval fun p => hY (p.1, σ p.2)),
     AEMeasurable.map_map_of_aemeasurable hcol.aemeasurable
-      (aemeasurable_pi_lambda _ fun p => hY p)] at hmap
+      (AEMeasurable.of_eval fun p => hY p)] at hmap
   have hleft : (fun ω (i : ℕ) => arrayColumn Y (σ i) ω) =
       fun (x : Ω) (k : ℕ) (a : ι) => Y (a, σ k) x := by
     funext ω k a
@@ -193,13 +193,13 @@ theorem RowExchangeable.map_values {β : Type*} [MeasurableSpace β] (h : RowExc
   rw [rowExchangeable_def] at h ⊢
   intro π
   have hpush : Measurable fun y : ι × ℕ → α => fun p : ι × ℕ => f p.1 (y p) :=
-    measurable_pi_lambda _ fun p => (hf p.1).comp (measurable_pi_apply p)
+    Measurable.of_eval fun p => (hf p.1).comp (measurable_pi_apply p)
   have hmap := congrArg
     (fun ρ : Measure (ι × ℕ → α) => ρ.map fun y => fun p : ι × ℕ => f p.1 (y p)) (h π)
   rw [AEMeasurable.map_map_of_aemeasurable hpush.aemeasurable
-      (aemeasurable_pi_lambda _ fun p => hY (p.1, π p.1 p.2)),
+      (AEMeasurable.of_eval fun p => hY (p.1, π p.1 p.2)),
     AEMeasurable.map_map_of_aemeasurable hpush.aemeasurable
-      (aemeasurable_pi_lambda _ fun p => hY p)] at hmap
+      (AEMeasurable.of_eval fun p => hY p)] at hmap
   simpa [Function.comp_def] using hmap
 
 /-- **The exchangeability of the columns.** -/
@@ -257,7 +257,7 @@ theorem RowExchangeable.measure_setOf_forall_pair_eq (h : RowExchangeable μ Y)
   have hLHS : (μ.map fun ω (p : ι × ℕ) => Y (p.1, π p.1 p.2) ω) A =
       μ {ω | ∀ a ∈ F, Y (a, c a) ω ∈ B₀ a ∧ Y (a, d a) ω ∈ B₁ a} := by
     rw [Measure.map_apply_of_aemeasurable
-      (aemeasurable_pi_lambda _ fun p => hY (p.1, π p.1 p.2)) hAmeas]
+      (AEMeasurable.of_eval fun p => hY (p.1, π p.1 p.2)) hAmeas]
     congr 1
     ext ω
     simp only [hA, Set.mem_preimage, Set.mem_ofPred_eq]
@@ -265,7 +265,7 @@ theorem RowExchangeable.measure_setOf_forall_pair_eq (h : RowExchangeable μ Y)
     rw [(hπ a ha).1, (hπ a ha).2]
   have hRHS : (μ.map fun ω (p : ι × ℕ) => Y p ω) A =
       μ {ω | ∀ a ∈ F, Y (a, 0) ω ∈ B₀ a ∧ Y (a, 1) ω ∈ B₁ a} := by
-    rw [Measure.map_apply_of_aemeasurable (aemeasurable_pi_lambda _ fun p => hY p) hAmeas]
+    rw [Measure.map_apply_of_aemeasurable (AEMeasurable.of_eval fun p => hY p) hAmeas]
     rfl
   rw [← hLHS, ← hRHS, rowExchangeable_def.mp h π]
 

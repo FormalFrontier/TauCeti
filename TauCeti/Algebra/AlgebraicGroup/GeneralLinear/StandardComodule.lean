@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.FunctorOfPoints
-public import TauCeti.Algebra.AlgebraicGroup.Representation.Faithful
+public import TauCeti.Algebra.AlgebraicGroup.Representation.Faithful.Basic
 import Mathlib.LinearAlgebra.FiniteDimensional.Basic
 
 /-!

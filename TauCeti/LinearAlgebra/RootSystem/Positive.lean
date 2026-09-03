@@ -9,8 +9,6 @@ public import Mathlib.Algebra.Group.Submonoid.Support
 public import Mathlib.LinearAlgebra.RootSystem.Base
 public import TauCeti.LinearAlgebra.RootSystem.Height
 
-public section
-
 /-!
 # Positive and negative roots
 
@@ -91,6 +89,8 @@ GTM 9, Ch. III, §10. The decomposition half of `TauCeti.mem_support_iff_isPos_a
 the step that Mathlib currently performs only inside the proof of
 `RootPairing.Base.IsPos.induction_on_add`, isolated here as a statement of its own.
 -/
+
+public section
 
 namespace TauCeti
 

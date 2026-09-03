@@ -9,8 +9,6 @@ public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Basic
 import TauCeti.LinearAlgebra.RootSystem.E8Coordinates
 import Mathlib.Data.Rat.Star
 
-public section
-
 /-!
 # Exceptional Cartan matrices are of finite type
 
@@ -54,6 +52,8 @@ roots of Bourbaki, *Lie Groups and Lie Algebras, Chapters 4--6*, plate VII; the 
 models are the coroots dual to the simple roots of plates VIII and IX.  See also Humphreys,
 *Introduction to Lie Algebras and Representation Theory*, Chapter 11.
 -/
+
+public section
 
 open scoped Matrix
 

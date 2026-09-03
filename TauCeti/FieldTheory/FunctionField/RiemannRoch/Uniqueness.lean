@@ -61,11 +61,10 @@ consequences to that witness recovers `g(k(x)) = 0`, `ℓ(-2 · P_∞) = 0` and
 
 ## Provenance
 
-The mathematics is Stichtenoth's and the Lean development is independent.  The roadmap's
-coordination section records that `vaca22/riemann-roch-function-fields` (Guanghao Li,
-Apache-2.0) carries a complete function-field Riemann–Roch by the same Stichtenoth route, and
-that this roadmap specifies the mathematics rather than that code; no code is copied or adapted
-from it here.
+The mathematics is Stichtenoth's and the Lean development is independent. The separate
+`vaca22/riemann-roch-function-fields` project (Guanghao Li, Apache-2.0) carries a complete
+function-field Riemann–Roch development by the same Stichtenoth route; no code is copied or
+adapted from it here.
 
 ## References
 

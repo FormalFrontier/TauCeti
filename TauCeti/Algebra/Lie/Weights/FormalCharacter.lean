@@ -17,8 +17,6 @@ public import TauCeti.LinearAlgebra.TensorProduct.Decomposition
 -- a statement.
 import TauCeti.Algebra.Lie.Submodule.DirectSum
 
-public section
-
 /-!
 # The formal character of a finite-dimensional Lie module
 
@@ -99,6 +97,8 @@ Layer 2 Weyl invariance proved directly from `sl₂`; both are consumed here.
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §22.5.
 * N. Bourbaki, *Groupes et algèbres de Lie*, Chapitre VIII, §7.
 -/
+
+public section
 
 namespace TauCeti
 
