@@ -12,8 +12,6 @@ public import TauCeti.LinearAlgebra.RootSystem.Weyl.Invariant
 -- `Invertible (2 : K)`, which the alternating-element API asks of the coefficient ring.
 public import Mathlib.Algebra.CharP.Invertible
 
-public section
-
 /-!
 # The formal character of a highest weight module against the Weyl denominator
 
@@ -79,6 +77,8 @@ combinatorially, and concluding by Weyl alternation".
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, Ch. VI, §24.
 * J.-P. Serre, *Complex Semisimple Lie Algebras*, Ch. VII, §7.
 -/
+
+public section
 
 namespace TauCeti
 

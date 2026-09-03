@@ -9,8 +9,6 @@ public import Mathlib.LinearAlgebra.Basis.Basic
 public import TauCeti.LinearAlgebra.RootSystem.Weyl.Denominator.Reflection
 public import TauCeti.LinearAlgebra.RootSystem.Weyl.Numerator
 
-public section
-
 /-!
 # Alternating elements of the group algebra of a weight space
 
@@ -80,6 +78,8 @@ root pairing and the Lie-algebra statement is a specialization rather than a reb
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, Ch. VI, §24.2.
 * J.-P. Serre, *Complex Semisimple Lie Algebras*, Ch. VII, §7.
 -/
+
+public section
 
 namespace TauCeti
 

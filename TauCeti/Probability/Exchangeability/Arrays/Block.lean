@@ -121,12 +121,12 @@ theorem aemeasurable_arrayBlockPair (hX : ∀ p, AEMeasurable (X p) μ) (p : ℕ
 /-- Reading a block off an array's sample path is measurable. -/
 theorem measurable_blockReadOff (e f : ℕ → ℕ) :
     Measurable fun x : ℕ × ℕ → α => fun p : ℕ × ℕ => x (e p.1, f p.2) :=
-  measurable_pi_lambda _ fun _ => measurable_pi_apply _
+  Measurable.of_eval fun _ => measurable_pi_apply _
 
 /-- Reading a block together with its transpose off an array's sample path is measurable. -/
 theorem measurable_blockPairReadOff (e f : ℕ → ℕ) :
     Measurable fun x : ℕ × ℕ → α => fun p : ℕ × ℕ => (x (e p.1, f p.2), x (f p.2, e p.1)) :=
-  measurable_pi_lambda _ fun _ => (measurable_pi_apply _).prodMk (measurable_pi_apply _)
+  Measurable.of_eval fun _ => (measurable_pi_apply _).prodMk (measurable_pi_apply _)
 
 /-! ## Blocks inherit the symmetry of the array -/
 
@@ -270,7 +270,7 @@ private theorem map_blockReadOff_eq {β : Type*} [MeasurableSpace β] [IsFiniteM
     (hd' : Disjoint (Set.range e') (Set.range f')) :
     (μ.map fun ω => B e f fun q => X q ω) = μ.map fun ω => B e' f' fun q => X q ω := by
   have hmeas : ∀ u v : ℕ → ℕ, AEMeasurable (fun ω => B u v fun q => X q ω) μ :=
-    fun u v => (hBmeas u v).comp_aemeasurable (aemeasurable_pi_lambda _ hX)
+    fun u v => (hBmeas u v).comp_aemeasurable (AEMeasurable.of_eval hX)
   refine (ProbabilityTheory.map_eq_iff_forall_finset_map_restrict_eq
     (hmeas e f) (hmeas e' f')).mpr fun I => ?_
   -- Every index occurring in `I` is below `n`, so a permutation matching the two pairs of index

@@ -8,8 +8,6 @@ module
 public import TauCeti.LinearAlgebra.RootSystem.Inversions.Exchange
 public import TauCeti.LinearAlgebra.RootSystem.SimpleReflections
 
-public section
-
 /-!
 # The strong exchange condition and the identity criterion for inversion sets
 
@@ -56,6 +54,8 @@ This file supplies the root-level exchange condition of Layer 1 in
 presentation of Layer 2 proves that the braid relations are complete. The argument is the one in
 J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, Ch. III, §10.3.
 -/
+
+public section
 
 namespace TauCeti
 

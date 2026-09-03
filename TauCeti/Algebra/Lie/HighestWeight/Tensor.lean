@@ -7,8 +7,6 @@ module
 
 public import TauCeti.Algebra.Lie.HighestWeight.Decomposition
 
-public section
-
 /-!
 # Tensor multiplicities of irreducible modules
 
@@ -85,6 +83,8 @@ formula.
 
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, Ch. VI, §24.
 -/
+
+public section
 
 open scoped TensorProduct
 

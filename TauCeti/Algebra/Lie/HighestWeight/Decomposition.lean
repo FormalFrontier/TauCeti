@@ -13,8 +13,6 @@ import TauCeti.Algebra.Lie.HighestWeight.CompleteReducibility
 import TauCeti.Algebra.Lie.HighestWeight.Irreducible
 import TauCeti.Algebra.Lie.Submodule.Decomposition
 
-public section
-
 /-!
 # The packaged isotypic decomposition `M ≅ ⨁ L(λ)^{m λ}`
 
@@ -122,6 +120,8 @@ through the enveloping-algebra dictionary" in the Layer 6 decomposition toolkit 
   reducibility) and §§20.3, 21.2 (the classification of the finite-dimensional irreducible
   modules).
 -/
+
+public section
 
 namespace TauCeti
 

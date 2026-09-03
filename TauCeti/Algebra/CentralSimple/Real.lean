@@ -20,8 +20,6 @@ import TauCeti.Algebra.CentralSimple.MaximalSubfield
 import Mathlib.Algebra.QuaternionBasis
 import Mathlib.Analysis.Complex.Polynomial.Basic
 
-public section
-
 /-!
 # Frobenius' theorem: the real central division algebras are `ℝ` and `ℍ[ℝ]`
 
@@ -85,6 +83,8 @@ listed as a prerequisite of the real base field target in Layer 6 of the
 See R. S. Pierce, *Associative Algebras*, GTM 88, Chapter 13, and P. Gille, T. Szamuely, *Central
 Simple Algebras and Galois Cohomology*, CUP (2006), §1.1.
 -/
+
+public section
 
 namespace TauCeti
 

@@ -27,8 +27,11 @@ the uniqueness theorem for minimal presentations then gives
 `IsMinimalProjectivePresentation.nonempty_linearEquiv_auslanderReitenTranspose`.
 
 This supplies the transpose construction in sublayer 6C of the quiver-representations roadmap.
-The remaining part of 6C develops its stable equivalence; sublayer 6D then applies finite-field
-duality `D = Hom_k(-, k)` to construct the Auslander--Reiten translate `τ = D Tr`.
+The remaining part of 6C develops its stable equivalence; sublayer 6D applies the duality
+`D = Hom_k(-, k)` to construct the Auslander--Reiten translate `τ = D Tr`, in
+`TauCeti/Algebra/Module/AuslanderReiten/Translate.lean`.  The scalar structure that duality
+dualizes over — a base ring `k` of `A` acting on the transpose through `Aᵐᵒᵖ` — is supplied here,
+next to the other module structures on the transpose.
 
 ## Main definitions
 
@@ -79,6 +82,30 @@ instance : AddCommGroup (AuslanderReitenTranspose p₁) :=
 
 instance : Module Aᵐᵒᵖ (AuslanderReitenTranspose p₁) :=
   inferInstanceAs (Module Aᵐᵒᵖ (Module.Dual A P₁ ⧸ LinearMap.range (p₁.lcomp Aᵐᵒᵖ A)))
+
+section Scalars
+
+variable (k : Type*) [CommSemiring k] [Algebra k A]
+
+/-- A base ring `k` of `A` acts on the transpose, through the algebra map into `Aᵐᵒᵖ`.  This is the
+scalar structure the Auslander--Reiten translate dualizes over. -/
+instance : Module k (AuslanderReitenTranspose p₁) :=
+  inferInstanceAs (Module k (Module.Dual A P₁ ⧸ LinearMap.range (p₁.lcomp Aᵐᵒᵖ A)))
+
+instance : IsScalarTower k Aᵐᵒᵖ (AuslanderReitenTranspose p₁) :=
+  inferInstanceAs (IsScalarTower k Aᵐᵒᵖ (Module.Dual A P₁ ⧸ LinearMap.range (p₁.lcomp Aᵐᵒᵖ A)))
+
+instance : SMulCommClass Aᵐᵒᵖ k (AuslanderReitenTranspose p₁) :=
+  inferInstanceAs (SMulCommClass Aᵐᵒᵖ k (Module.Dual A P₁ ⧸ LinearMap.range (p₁.lcomp Aᵐᵒᵖ A)))
+
+/-- A scalar of `k`, viewed in `Aᵐᵒᵖ` through the algebra map, acts on the transpose as it does
+through the `k`-action itself. -/
+@[simp]
+theorem op_algebraMap_smul (c : k) (x : AuslanderReitenTranspose p₁) :
+    MulOpposite.op (algebraMap k A c) • x = c • x := by
+  rw [← MulOpposite.algebraMap_apply, algebraMap_smul]
+
+end Scalars
 
 /-- The quotient map from the dual of the first projective onto its Auslander--Reiten transpose. -/
 def mk : Module.Dual A P₁ →ₗ[Aᵐᵒᵖ] AuslanderReitenTranspose p₁ :=

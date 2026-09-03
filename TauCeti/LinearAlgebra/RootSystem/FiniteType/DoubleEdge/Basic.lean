@@ -8,8 +8,6 @@ module
 public import TauCeti.LinearAlgebra.RootSystem.Chain
 public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Classical
 
-public section
-
 /-!
 # The double-edge bound for finite-type Cartan matrices
 
@@ -84,6 +82,8 @@ Lie Algebras and Representation Theory*, §11.4, step (6), where the same linear
 chains gives `(p - 1) (q - 1) < 2`, and Bourbaki, *Lie Groups and Lie Algebras, Chapters 4-6*,
 Ch. VI §4.
 -/
+
+public section
 
 open scoped Matrix
 

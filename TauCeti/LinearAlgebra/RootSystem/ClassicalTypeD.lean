@@ -9,8 +9,6 @@ public import TauCeti.LinearAlgebra.RootSystem.DynkinType
 import Mathlib.LinearAlgebra.Matrix.Dual
 import TauCeti.LinearAlgebra.Matrix.Gram
 
-public section
-
 /-!
 # The classical integral roots of type `Dₙ`
 
@@ -53,6 +51,8 @@ Plate IV, and Humphreys, *Introduction to Lie Algebras and Representation Theory
 This supplies the classical-root prerequisite for the `Dₙ` branch of “a named datum per valid
 type” in Layer 6 of `TauCetiRoadmap/RepresentationTheory/RootSystems/README.md`.
 -/
+
+public section
 
 namespace TauCeti
 

@@ -148,7 +148,7 @@ theorem conditionallyIIDWith_iidMixtureLaw (hP : Measurable P) :
       (fun Q : ProbabilityMeasure α => Q) measurable_id
   have hsel : Measurable fun ω : T × (ℕ → α) => (P ω.1, fun i : Fin m => ω.2 (k i)) :=
     (hP.comp measurable_fst).prodMk
-      (measurable_pi_lambda _ fun i => (measurable_pi_apply (k i)).comp measurable_snd)
+      (Measurable.of_eval fun i => (measurable_pi_apply (k i)).comp measurable_snd)
   -- Each fibre of the mixture selects its block out of a countable power: `Measure.dirac_prod`
   -- turns the fibre into a pushforward of `(P t)^{⊗ℕ}`, on which the block-selection lemma applies.
   have hfib : ∀ t : T,

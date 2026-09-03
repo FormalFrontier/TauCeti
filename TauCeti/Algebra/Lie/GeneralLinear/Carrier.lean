@@ -10,8 +10,6 @@ public import TauCeti.Algebra.Lie.GeneralLinear.Twist
 public import TauCeti.Algebra.Lie.GeneralLinear.Uniqueness
 public import TauCeti.Algebra.Lie.Submodule.Atom
 
-public section
-
 /-!
 # The named irreducible `gl N`-module of a dominant weight
 
@@ -87,6 +85,8 @@ This is the named carrier `glIrreducible` of Layer 9 of
 
 * R. Goodman, N. R. Wallach, *Symmetry, Representations, and Invariants*, GTM 255, §5.5.
 -/
+
+public section
 
 namespace TauCeti
 

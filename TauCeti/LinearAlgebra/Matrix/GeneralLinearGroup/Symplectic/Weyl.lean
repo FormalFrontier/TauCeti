@@ -32,6 +32,8 @@ subgroups. This advances the explicit full-weight type-`C` carrier in Layer 9 of
 
 * `TauCeti.GLSymplecticFin.differenceShortRootWeylElement`: the standard representative of the
   reflection in `e_i-e_j`.
+* `differenceShortRootWeylElement_mem`: a subgroup containing the two difference-root elements
+  forming a Weyl word contains the corresponding Weyl representative.
 * `coe_differenceShortRootWeylElement`: in sum coordinates it is a product of two type-`A` Weyl
   representatives.
 * `differenceShortRootWeylElement_inv`: the representative for the opposite root is its inverse.
@@ -63,6 +65,15 @@ variable {R : Type u} [CommRing R] {m : ℕ} {i j : Fin m}
 def differenceShortRootWeylElement (hij : i ≠ j) : GLSymplecticFin m R :=
   differenceShortRootUnit hij 1 * differenceShortRootUnit hij.symm (-1) *
     differenceShortRootUnit hij 1
+
+/-- A subgroup containing the two difference-root elements forming a Weyl word contains the
+corresponding Weyl reflection representative. -/
+theorem differenceShortRootWeylElement_mem (H : Subgroup (GLSymplecticFin m R))
+    (hij : i ≠ j) (hforward : differenceShortRootUnit hij 1 ∈ H)
+    (hbackward : differenceShortRootUnit hij.symm (-1) ∈ H) :
+    differenceShortRootWeylElement hij ∈ H := by
+  rw [differenceShortRootWeylElement]
+  exact H.mul_mem (H.mul_mem hforward hbackward) hforward
 
 /-- In sum coordinates the short-root Weyl representative is the product of the type-`A` Weyl
 representative on the first block and the inverse of the one on the second block. -/

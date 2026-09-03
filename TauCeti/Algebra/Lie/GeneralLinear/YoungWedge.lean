@@ -8,8 +8,6 @@ module
 public import TauCeti.Algebra.Lie.GeneralLinear.BlockDiagonal
 public import TauCeti.Combinatorics.Young.Cells
 
-public section
-
 /-!
 # Highest weight vectors of `gl ι` from Young diagrams
 
@@ -82,6 +80,8 @@ picks the lexicographic order, supplied as a local instance.
   where the modules of the classical groups are realized inside exterior powers of `Kⁿ ⊗ Kᵐ`.
 * W. Fulton, J. Harris, *Representation Theory: A First Course*, GTM 129, §15.5.
 -/
+
+public section
 
 namespace TauCeti
 

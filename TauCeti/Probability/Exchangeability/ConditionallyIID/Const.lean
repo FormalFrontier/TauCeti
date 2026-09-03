@@ -54,7 +54,7 @@ theorem conditionallyIIDWith_const_of_mixedIIDWith {μ : Measure Ω}
     simp
   refine ConditionallyIIDWith.intro h.aemeasurable measurable_const fun m k hk => ?_
   have hblock : AEMeasurable (fun ω (i : Fin m) => X (k i) ω) μ :=
-    aemeasurable_pi_lambda _ fun i => h.aemeasurable (k i)
+    AEMeasurable.of_eval fun i => h.aemeasurable (k i)
   calc μ.map (fun ω => (p, fun i : Fin m => X (k i) ω))
       = (μ.map fun ω (i : Fin m) => X (k i) ω).map (Prod.mk p) := by
         rw [measurable_prodMk_left.aemeasurable.map_map_of_aemeasurable hblock]

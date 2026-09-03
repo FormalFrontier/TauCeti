@@ -7,8 +7,6 @@ module
 
 public import TauCeti.LinearAlgebra.RootSystem.DynkinType
 
-public section
-
 /-!
 # Numbers of roots of Dynkin types
 
@@ -38,6 +36,8 @@ This is the `DynkinType.numRoots` target of Layer 6 of
 *Lie Groups and Lie Algebras, Chapters 4--6*, plates I--IX, and J. E. Humphreys,
 *Introduction to Lie Algebras and Representation Theory*, Chapter 11.
 -/
+
+public section
 
 namespace TauCeti.DynkinType
 

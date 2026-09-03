@@ -7,8 +7,6 @@ module
 
 public import Mathlib.Algebra.Polynomial.Smeval
 
-public section
-
 /-!
 # Scalar-multiple polynomial evaluation in an opposite monoid
 
@@ -27,6 +25,8 @@ enveloping algebra applied to a generalized binomial coefficient is such a situa
 
 * `TauCeti.Polynomial.unop_smeval`: `MulOpposite.unop` commutes with `Polynomial.smeval`.
 -/
+
+public section
 
 namespace TauCeti.Polynomial
 

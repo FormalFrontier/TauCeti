@@ -20,7 +20,7 @@ public import TauCeti.Algebra.Central.Quaternion
 -- the statements below typecheck: the public imports above reach `Mathlib.Algebra.Quaternion`,
 -- which supplies `ℍ[·]` over an arbitrary base but not `ℝ` itself, so without this import `ℝ` is
 -- not even in scope as a name.
-public import Mathlib.Data.Real.Basic
+public import Mathlib.Basic.Real.Basic
 
 /-!
 # The tensor square of the real quaternions is `M₄(ℝ)`
