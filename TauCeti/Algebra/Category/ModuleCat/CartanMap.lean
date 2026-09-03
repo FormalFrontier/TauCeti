@@ -8,6 +8,7 @@ module
 public import Mathlib.Algebra.Category.FGModuleCat.EssentiallySmall
 public import Mathlib.Algebra.Category.ModuleCat.Projective
 public import Mathlib.Algebra.Homology.ShortComplex.ModuleCat
+public import Mathlib.RingTheory.SimpleModule.InjectiveProjective
 public import TauCeti.CategoryTheory.GrothendieckGroup.ProjectiveResolution
 
 /-!
@@ -37,12 +38,12 @@ The main theorem is the module form of the resolution theorem: if every finitely
 isomorphism, with inverse the alternating class of any such resolution. This is deduced from the
 categorical resolution theorem `TauCeti.ExactStructure.resolutionEquiv` by factoring the Cartan
 map through the modules admitting finite resolutions by finitely generated projectives. Over a
-division ring the hypothesis holds for the trivial reason that every module is projective, which is
-recorded as
-`TauCeti.cartanEquivOfDivisionRing`.
+semisimple ring the hypothesis holds for the trivial reason that every module is projective, which
+is recorded as
+`TauCeti.cartanEquivOfIsSemisimpleRing`.
 
 Nothing here computes a Cartan matrix: that needs bases of the two groups, hence the
-Krull--Schmidt hypotheses of a finite-dimensional algebra, and is left to the sequel.
+Krull--Schmidt hypotheses of a finite-dimensional algebra.
 
 ## Main definitions
 
@@ -77,7 +78,8 @@ Krull--Schmidt hypotheses of a finite-dimensional algebra, and is left to the se
 * `TauCeti.moduleEulerClassOf_eq`: every finite projective resolution computes the module Euler
   class.
 * `TauCeti.cartanMap_bijective`: the module form of the resolution theorem, and
-  `TauCeti.cartanMap_bijective_of_divisionRing` for the division-ring instance of its hypothesis.
+  `TauCeti.cartanMap_bijective_of_isSemisimpleRing` for the semisimple-ring instance of its
+  hypothesis.
 
 ## References
 
@@ -86,9 +88,7 @@ Krull--Schmidt hypotheses of a finite-dimensional algebra, and is left to the se
 * Ibrahim Assem, Daniel Simson, and Andrzej Skowroński, *Elements of the Representation Theory of
   Associative Algebras I*, Chapter III, Section 3, for the Cartan map of a finite-dimensional
   algebra.
-* [The Tau Ceti Grothendieck groups, Cartan maps, and Euler forms roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/GrothendieckEulerForms/README.md),
-  Layer 4, whose "two groups", "Cartan map and matrix" and "finite projective resolutions"
-  bullets this file begins.
+* [The Tau Ceti Grothendieck groups, Cartan maps, and Euler forms roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/GrothendieckEulerForms/README.md).
 -/
 
 public section
@@ -140,13 +140,9 @@ instance : (finiteProjectiveModules R).ContainsZero where
 
 /-! ### Essential smallness -/
 
-instance : ObjectProperty.EssentiallySmall.{u} (ModuleCat.isFG.{u} R) := by
-  refine ⟨ObjectProperty.ofObj (fun p : Σ n : ℕ, Submodule R (Fin n → R) =>
-    ModuleCat.of R ((Fin p.1 → R) ⧸ p.2)), inferInstance, fun M hM => ?_⟩
-  obtain ⟨n, S, ⟨e⟩⟩ := @Module.Finite.exists_fin_quot_equiv R (M : Type u)
-    _ _ _ ((ModuleCat.isFG_iff M).mp hM)
-  exact ⟨ModuleCat.of R ((Fin n → R) ⧸ S),
-    (ObjectProperty.ofObj_iff _ _).2 ⟨⟨n, S⟩, rfl⟩, ⟨e.symm.toModuleIso⟩⟩
+instance : ObjectProperty.EssentiallySmall.{u} (ModuleCat.isFG.{u} R) :=
+  (ObjectProperty.exists_equivalence_iff _).1
+    ⟨_, _, ⟨equivSmallModel.{u} (FGModuleCat.{u} R)⟩⟩
 
 instance : ObjectProperty.EssentiallySmall.{u} (finiteProjectiveModules R) :=
   ObjectProperty.EssentiallySmall.of_le (finiteProjectiveModules_le_finiteModules R)
@@ -261,8 +257,7 @@ theorem admitsFiniteResolution_le_finiteModules :
     (fun {K Q X} hQ {i p zero} hconf _ => ?_) hM
   rw [ExactStructure.abelian_conflation] at hconf
   have : Module.Finite R Q := (finiteProjectiveModules_iff.mp hQ).1
-  change Module.Finite R X
-  exact Module.Finite.of_surjective p.hom hconf.moduleCat_surjective_g
+  exact (ModuleCat.isFG_iff X).mpr (Module.Finite.of_surjective p.hom hconf.moduleCat_surjective_g)
 
 instance : ObjectProperty.EssentiallySmall.{u}
     ((ExactStructure.abelian (ModuleCat.{u} R)).admitsFiniteResolution
@@ -470,55 +465,53 @@ theorem cartanMap_bijective : Function.Bijective (cartanMap R) :=
 
 end Inverse
 
-/-! ### The division-ring case -/
+/-! ### The semisimple case -/
 
-section DivisionRing
+section IsSemisimpleRing
 
-variable (K : Type u) [DivisionRing K]
+variable [IsSemisimpleRing R]
 
-/-- Over a division ring every module is projective, so the finitely generated projective modules
-are exactly the finitely generated ones. -/
+/-- Over a semisimple ring every module is projective, so the finitely generated projective
+modules are exactly the finitely generated ones. -/
 theorem finiteModules_le_finiteProjectiveModules :
-    ModuleCat.isFG K ≤ finiteProjectiveModules K := by
-  intro M hM
-  have : Module.Free K (M : Type u) := Module.Free.of_divisionRing K M
-  exact finiteProjectiveModules_iff.mpr
-    ⟨(ModuleCat.isFG_iff M).mp hM, Module.Projective.of_free⟩
+    ModuleCat.isFG R ≤ finiteProjectiveModules R := fun M hM =>
+  finiteProjectiveModules_iff.mpr
+    ⟨(ModuleCat.isFG_iff M).mp hM, Module.projective_of_isSemisimpleRing R M⟩
 
-/-- Over a division ring every finitely generated module is its own finite projective resolution,
-so the hypothesis of the resolution theorem holds. -/
+/-- Over a semisimple ring every finitely generated module is its own finite projective
+resolution, so the hypothesis of the resolution theorem holds. -/
 theorem finiteModules_le_admitsFiniteResolution :
-    ModuleCat.isFG K ≤ (ExactStructure.abelian (ModuleCat.{u} K)).admitsFiniteResolution
-      (finiteProjectiveModules K) :=
-  (finiteModules_le_finiteProjectiveModules K).trans
+    ModuleCat.isFG R ≤ (ExactStructure.abelian (ModuleCat.{u} R)).admitsFiniteResolution
+      (finiteProjectiveModules R) :=
+  (finiteModules_le_finiteProjectiveModules R).trans
     (ExactStructure.le_admitsFiniteResolution _ _)
 
-/-- **The Cartan map of a division ring is an isomorphism**, because every finitely generated
+/-- **The Cartan map of a semisimple ring is an isomorphism**, because every finitely generated
 module is already projective. -/
-noncomputable def cartanEquivOfDivisionRing :
-    ExactK0.{u} (finiteProjectiveModulesExactStructure K) ≃+
-      ExactK0.{u} (finiteModulesExactStructure K) :=
-  cartanEquiv K (finiteModules_le_admitsFiniteResolution K)
+noncomputable def cartanEquivOfIsSemisimpleRing :
+    ExactK0.{u} (finiteProjectiveModulesExactStructure R) ≃+
+      ExactK0.{u} (finiteModulesExactStructure R) :=
+  cartanEquiv R (finiteModules_le_admitsFiniteResolution R)
 
-@[simp] theorem cartanEquivOfDivisionRing_apply
-    (x : ExactK0.{u} (finiteProjectiveModulesExactStructure K)) :
-    cartanEquivOfDivisionRing K x = cartanMap K x := by
-  simp only [cartanEquivOfDivisionRing]
-  exact cartanEquiv_apply K (finiteModules_le_admitsFiniteResolution K) x
+@[simp] theorem cartanEquivOfIsSemisimpleRing_apply
+    (x : ExactK0.{u} (finiteProjectiveModulesExactStructure R)) :
+    cartanEquivOfIsSemisimpleRing R x = cartanMap R x := by
+  simp only [cartanEquivOfIsSemisimpleRing]
+  exact cartanEquiv_apply R (finiteModules_le_admitsFiniteResolution R) x
 
-/-- The inverse of the division-ring Cartan equivalence is the alternating-resolution map. -/
-@[simp] theorem cartanEquivOfDivisionRing_symm_apply
-    (x : ExactK0.{u} (finiteModulesExactStructure K)) :
-    (cartanEquivOfDivisionRing K).symm x =
-      cartanInverse K (finiteModules_le_admitsFiniteResolution K) x := by
-  simp only [cartanEquivOfDivisionRing]
-  exact cartanEquiv_symm_apply K (finiteModules_le_admitsFiniteResolution K) x
+/-- The inverse of the semisimple Cartan equivalence is the alternating-resolution map. -/
+@[simp] theorem cartanEquivOfIsSemisimpleRing_symm_apply
+    (x : ExactK0.{u} (finiteModulesExactStructure R)) :
+    (cartanEquivOfIsSemisimpleRing R).symm x =
+      cartanInverse R (finiteModules_le_admitsFiniteResolution R) x := by
+  simp only [cartanEquivOfIsSemisimpleRing]
+  exact cartanEquiv_symm_apply R (finiteModules_le_admitsFiniteResolution R) x
 
-/-- **The Cartan map of a division ring is bijective**, with no hypothesis: over a division ring
-every finitely generated module is projective, hence its own finite projective resolution. -/
-theorem cartanMap_bijective_of_divisionRing : Function.Bijective (cartanMap K) :=
-  cartanMap_bijective K (finiteModules_le_admitsFiniteResolution K)
+/-- **The Cartan map of a semisimple ring is bijective**, with no hypothesis: over a semisimple
+ring every finitely generated module is projective, hence its own finite projective resolution. -/
+theorem cartanMap_bijective_of_isSemisimpleRing : Function.Bijective (cartanMap R) :=
+  cartanMap_bijective R (finiteModules_le_admitsFiniteResolution R)
 
-end DivisionRing
+end IsSemisimpleRing
 
 end TauCeti
