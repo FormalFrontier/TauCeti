@@ -180,16 +180,18 @@ private theorem geodesicSpray_coordChange {x x₀ : M}
 
 omit [FiniteDimensional ℝ E] [RiemannianBundle (fun x : M ↦ TangentSpace I x)]
     [IsContMDiffRiemannianBundle I 1 E (fun x : M ↦ TangentSpace I x)] in
-set_option backward.isDefEq.respectTransparency false in
 private theorem tangentCoordChange_tangent_apply {x x₀ : M}
-    (hx₀ : x ∈ (extChartAt I x₀).source) (u w : TangentSpace I x) :
+    (hx₀ : x ∈ (extChartAt I x₀).source) (u w : E) :
     tangentCoordChange I.tangent
-        (TotalSpace.mk' E x u) (TotalSpace.mk' E x₀ 0) (TotalSpace.mk' E x u) (u, w) =
+        (TotalSpace.mk' E x ((tangentSpaceCastModel I x).symm u))
+        (TotalSpace.mk' E x₀ 0)
+        (TotalSpace.mk' E x ((tangentSpaceCastModel I x).symm u)) (u, w) =
       (tangentCoordChange I x x₀ x u,
-        mvfderiv I (fun y ↦ tangentCoordChange I x x₀ y u) x u +
+        mvfderiv I (fun y ↦ tangentCoordChange I x x₀ y u) x
+            ((tangentSpaceCastModel I x).symm u) +
           tangentCoordChange I x x₀ x w) := by
-  change E at u w
-  let z : TangentBundle I M := TotalSpace.mk' E x u
+  let z : TangentBundle I M :=
+    TotalSpace.mk' E x ((tangentSpaceCastModel I x).symm u)
   let q : TangentBundle I M := TotalSpace.mk' E x₀ 0
   let p := extChartAt I.tangent z z
   let G := (extChartAt I.tangent q : TangentBundle I M → E × E) ∘
@@ -329,14 +331,14 @@ private theorem tangentCoordChange_tangent_apply {x x₀ : M}
   have hCuDeriv := fderivWithin_clm_apply huniqBase hC
     (differentiableWithinAt_const (c := u))
   have hCuDerivApp := congrArg (fun L : E →L[ℝ] E ↦ L u) hCuDeriv
-  have hMv : mvfderiv I (fun y ↦ tangentCoordChange I x x₀ y u) x u =
+  have hMv : mvfderiv I (fun y ↦ tangentCoordChange I x x₀ y u) x
+      ((tangentSpaceCastModel I x).symm u) =
       fderivWithin ℝ C (range I) a₀ u u := by
-    rw [mvfderiv, ContinuousLinearMap.comp_apply, mfderiv, ite_eq_left hMDu]
+    rw [hMDu.mvfderiv]
     change fderivWithin ℝ (fun a ↦ C a u) (range I) a₀ u = _
     simpa [fderivWithin_const_apply] using hCuDerivApp
   rw [hMv]
 
-set_option backward.isDefEq.respectTransparency false in
 /-- **The geodesic spray has the same formula in every overlapping tangent-bundle chart.**
 Transporting the value defined in the preferred chart at `(x, u)` to the chart based at `x₀`
 sends `(v, -Γ(v, v))` to `(v₀, -Γ₀(v₀, v₀))`, where `v₀` is the fibre coordinate in the latter
@@ -349,8 +351,19 @@ theorem tangentCoordChange_geodesicSpray {x x₀ : M}
       (v, -christoffelMap (finBasis ℝ E)
         ((leviCivita I M).isCovariantDerivativeOn
           (s := (trivializationAt E (TangentSpace I) x₀).baseSet)) x v v) := by
-  rw [geodesicSpray_apply, tangentCoordChange_tangent_apply hx₀]
-  have hchange := geodesicSpray_coordChange (I := I) (M := M) hx₀ u
+  change E at u
+  change tangentCoordChange I.tangent
+      (TotalSpace.mk' E x ((tangentSpaceCastModel I x).symm u))
+      (TotalSpace.mk' E x₀ 0)
+      (TotalSpace.mk' E x ((tangentSpaceCastModel I x).symm u))
+        (u, -christoffelMap (finBasis ℝ E)
+          ((leviCivita I M).isCovariantDerivativeOn
+            (s := (trivializationAt E (TangentSpace I) x).baseSet)) x u u) = _
+  rw [tangentCoordChange_tangent_apply hx₀]
+  have hchange := geodesicSpray_coordChange (I := I) (M := M) hx₀
+    ((tangentSpaceCastModel I x).symm u)
+  have hu : (tangentSpaceCastModel I x).symm u = (show TangentSpace I x from u) := rfl
+  rw [hu] at hchange ⊢
   simpa only [map_neg, ← sub_eq_add_neg] using hchange
 
 /-- **The geodesic equation as an integral-curve equation.**  The velocity lift of a `C²` curve
