@@ -24,7 +24,8 @@ criterion, while `(φ x)² = x²` forces `φ x = ± x` on the nose; the two sign
 modulo `Q` because `2x ∈ Q` would force `p ∣ 4d`. This is the local input for the Frobenius
 form of the multiquadratic splitting law (Layer 1 of the multiquadratic roadmap): the Frobenius
 of `ℚ(√d₁, …, √dₙ)` at `p` acts on each generator by the sign `(dᵢ/p)`.
-`TauCeti.NumberTheory.NumberField.Frobenius` transports this computation to the Galois group of
+`TauCeti.NumberTheory.NumberField.Frobenius.Basic` transports this computation to the Galois
+group of
 a number field, and `TauCeti.NumberTheory.Multiquadratic.Frobenius` applies it to the
 multiquadratic generators.
 
