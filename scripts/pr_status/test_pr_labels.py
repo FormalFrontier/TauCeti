@@ -64,9 +64,11 @@ class RateLimitBackoff(unittest.TestCase):
         """Run gh_api over canned subprocess results. `quota` is what the quota
         probe reports: None = secondary limit, an int = seconds to reset."""
         record = waits.append if waits is not None else (lambda s: None)
+        state = ((core.QUOTA_EXHAUSTED, quota) if isinstance(quota, int)
+                 else (quota or core.QUOTA_OK, None))
         with (mock.patch.object(core.subprocess, "run") as run,
               mock.patch.object(core.time, "sleep", record),
-              mock.patch.object(core, "_quota_reset_in", lambda: quota)):
+              mock.patch.object(core, "_quota_state", lambda: state)):
             run.side_effect = results
             return core.gh_api("/x"), run
 
@@ -96,6 +98,34 @@ class RateLimitBackoff(unittest.TestCase):
             self.call([self.result(1, PRIMARY_403)], quota=1800, waits=waits)
         self.assertEqual(waits, [])
         self.assertIn("1800s", str(caught.exception))
+
+    def test_a_bare_429_with_no_message_is_still_a_rate_limit(self):
+        # `gh` renders a response with no JSON message as "gh: HTTP 429".
+        self.assertTrue(core._rate_limited("gh: HTTP 429"))
+
+    def test_a_failed_quota_probe_is_not_read_as_room_to_spare(self):
+        # /rate_limit does not cost primary quota but can cost secondary, so the
+        # probe can itself be refused; reading that as "budget is fine" would keep
+        # us issuing requests while limited.
+        waits = []
+        self.call([self.result(1, SECONDARY_403), self.result(0, "")],
+                  quota=core.QUOTA_UNKNOWN, waits=waits)
+        self.assertEqual(waits, [core.SECONDARY_BACKOFF_SECONDS])
+
+    def test_the_breaker_holds_for_the_next_interval_not_the_first(self):
+        # Releasing after 60s would let a looping caller restart the whole
+        # schedule, which is what the breaker exists to prevent.
+        before = core.time.time()
+        with self.assertRaises(core.RateLimited):
+            self.call([self.result(1, SECONDARY_403)] * core.RATE_LIMIT_ATTEMPTS)
+        held = core._BLOCKED_UNTIL - before
+        self.assertGreaterEqual(
+            held, core.SECONDARY_BACKOFF_SECONDS * 2 ** (core.RATE_LIMIT_ATTEMPTS - 1))
+
+    def test_a_short_block_never_shortens_a_long_one(self):
+        core._BLOCKED_UNTIL = core.time.time() + 3600
+        core._block_for(1)
+        self.assertGreater(core._BLOCKED_UNTIL - core.time.time(), 3000)
 
     def test_a_quota_resetting_soon_is_waited_for(self):
         waits = []
