@@ -27,17 +27,15 @@ that future topological group to the underlying space.
 
 ## Main definitions
 
-* `TauCeti.Diffeomorph.applyMulAction`: the `MulAction (M ≃ₘ^n⟮I, I⟯ M) M` with
+* `Diffeomorph.applyMulAction`: the `MulAction (M ≃ₘ^n⟮I, I⟯ M) M` with
   `φ • x = φ x`.
-* `TauCeti.Diffeomorph.applyFaithfulSMul`: the action is faithful.
-* `TauCeti.Diffeomorph.applyContinuousConstSMul`: each diffeomorphism acts continuously.
-* `TauCeti.Diffeomorph.applySubgroupContinuousConstSMul`: subgroups inherit continuity in the
+* `Diffeomorph.applyFaithfulSMul`: the action is faithful.
+* `Diffeomorph.applyContinuousConstSMul`: each diffeomorphism acts continuously.
+* `Diffeomorph.applySubgroupContinuousConstSMul`: subgroups inherit continuity in the
   point.
 -/
 
 public section
-
-namespace TauCeti
 
 open scoped Manifold ContDiff
 
@@ -56,7 +54,7 @@ instance applyMulAction : MulAction (M ≃ₘ^n⟮I, I⟯ M) M where
 
 /-- The tautological action of `M ≃ₘ^n⟮I, I⟯ M` on `M` is given by evaluation. -/
 @[simp]
-theorem smul_def (f : M ≃ₘ^n⟮I, I⟯ M) (x : M) : f • x = f x := rfl
+theorem smul_eq_apply (f : M ≃ₘ^n⟮I, I⟯ M) (x : M) : f • x = f x := rfl
 
 /-- The action homomorphism of the tautological diffeomorphism action is the forgetful homomorphism
 to permutations. -/
@@ -68,7 +66,7 @@ theorem toPermHom_eq_toPerm :
 
 /-- The tautological action of `M ≃ₘ^n⟮I, I⟯ M` on `M` is faithful. -/
 instance applyFaithfulSMul : FaithfulSMul (M ≃ₘ^n⟮I, I⟯ M) M :=
-  ⟨fun h => _root_.Diffeomorph.ext h⟩
+  ⟨fun h => Diffeomorph.ext h⟩
 
 /-- The action of each self-diffeomorphism on `M` is continuous. -/
 instance applyContinuousConstSMul : ContinuousConstSMul (M ≃ₘ^n⟮I, I⟯ M) M :=
@@ -81,5 +79,3 @@ abbrev applySubgroupContinuousConstSMul (G : Subgroup (M ≃ₘ^n⟮I, I⟯ M)) 
   inferInstance
 
 end Diffeomorph
-
-end TauCeti

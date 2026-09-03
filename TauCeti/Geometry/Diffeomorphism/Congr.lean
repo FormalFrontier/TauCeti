@@ -37,7 +37,7 @@ for the naturality statement.
 
 ## Main definitions
 
-* `TauCeti.Diffeomorph.diffCongr e`: the group isomorphism `Diff I M n ≃* Diff J N n` conjugating by
+* `Diffeomorph.diffCongr e`: the group isomorphism `Diff I M n ≃* Diff J N n` conjugating by
   a diffeomorphism `e : M ≃ₘ^n⟮I, J⟯ N`.
 
 The analogous self-homeomorphism-group isomorphism `TauCeti.Homeomorph.homeoCongr`, the target of
@@ -45,23 +45,22 @@ the forgetful naturality below, lives in `TauCeti.Topology.Algebra.Homeomorph.Co
 
 ## Main results
 
-* `TauCeti.Diffeomorph.diffCongr_apply_apply`: the pointwise action
+* `Diffeomorph.diffCongr_apply_apply`: the pointwise action
   `diffCongr e φ x = e (φ (e.symm x))`.
-* `TauCeti.Diffeomorph.diffCongr_refl`: conjugating by the identity is the identity isomorphism.
-* `TauCeti.Diffeomorph.diffCongr_trans`: `diffCongr` turns `Diffeomorph.trans` into
+* `Diffeomorph.diffCongr_refl`: conjugating by the identity is the identity isomorphism.
+* `Diffeomorph.diffCongr_trans`: `diffCongr` turns `Diffeomorph.trans` into
   `MulEquiv.trans`, so it is functorial on the groupoid of diffeomorphisms.
-* `TauCeti.Diffeomorph.diffCongr_symm`: the inverse isomorphism conjugates by `e.symm`.
-* `TauCeti.Diffeomorph.toHomeomorphHom_comp_diffCongr` and
-  `TauCeti.Diffeomorph.toPerm_comp_diffCongr`: naturality of `diffCongr` against the forgetful
+* `Diffeomorph.diffCongr_symm`: the inverse isomorphism conjugates by `e.symm`.
+* `Diffeomorph.toHomeomorphHom_comp_diffCongr` and
+  `Diffeomorph.toPerm_comp_diffCongr`: naturality of `diffCongr` against the forgetful
   homomorphisms `toHomeomorphHom` and `toPerm`, as commutative squares of group homomorphisms
-  intertwining `diffCongr` with `Homeomorph.homeoCongr` and `Equiv.permCongrHom` respectively.
-* `TauCeti.Diffeomorph.toHomeomorph_diffCongr` and `TauCeti.Diffeomorph.toPerm_diffCongr`: the
+  intertwining `diffCongr` with `TauCeti.Homeomorph.homeoCongr` and `Equiv.permCongrHom`
+  respectively.
+* `Diffeomorph.toHomeomorph_diffCongr` and `Diffeomorph.toPerm_diffCongr`: the
   elementwise shadows of those squares.
 -/
 
 public section
-
-namespace TauCeti
 
 open scoped Manifold ContDiff
 
@@ -88,13 +87,13 @@ groups. -/
   invFun ψ := (e.trans ψ).trans e.symm
   left_inv φ := by
     ext x
-    simp [_root_.Diffeomorph.coe_trans]
+    simp [Diffeomorph.coe_trans]
   right_inv ψ := by
     ext x
-    simp [_root_.Diffeomorph.coe_trans]
+    simp [Diffeomorph.coe_trans]
   map_mul' φ ψ := by
     ext x
-    simp [mul_def, _root_.Diffeomorph.coe_trans]
+    simp [mul_def, Diffeomorph.coe_trans]
 
 /-- The conjugating isomorphism acts pointwise by `diffCongr e φ x = e (φ (e.symm x))`. -/
 @[simp, grind =]
@@ -112,7 +111,7 @@ theorem diffCongr_inv (e : M ≃ₘ^n⟮I, J⟯ N) (φ : M ≃ₘ^n⟮I, I⟯ M)
 /-- Conjugating by the identity diffeomorphism is the identity isomorphism. -/
 @[simp]
 theorem diffCongr_refl :
-    diffCongr (_root_.Diffeomorph.refl I M n) = MulEquiv.refl (M ≃ₘ^n⟮I, I⟯ M) := by
+    diffCongr (Diffeomorph.refl I M n) = MulEquiv.refl (M ≃ₘ^n⟮I, I⟯ M) := by
   ext φ x
   simp
 
@@ -122,7 +121,7 @@ conjugating isomorphisms. -/
 theorem diffCongr_trans (e : M ≃ₘ^n⟮I, J⟯ N) (e' : N ≃ₘ^n⟮J, K⟯ P) :
     diffCongr (e.trans e') = (diffCongr e).trans (diffCongr e') := by
   ext φ x
-  simp [_root_.Diffeomorph.coe_trans, _root_.Diffeomorph.symm_trans']
+  simp [Diffeomorph.coe_trans, Diffeomorph.symm_trans']
 
 /-- The isomorphism conjugating by `e.symm` is the inverse of the one conjugating by `e`. -/
 @[simp, grind =]
@@ -133,11 +132,11 @@ theorem diffCongr_symm (e : M ≃ₘ^n⟮I, J⟯ N) : (diffCongr e).symm = diffC
 /-- Naturality of `diffCongr` against the forgetful homomorphism to self-homeomorphisms, as a
 commutative square of group homomorphisms: conjugating diffeomorphisms by `e` and then forgetting
 smoothness equals forgetting smoothness and then conjugating homeomorphisms by `e` through
-`Homeomorph.homeoCongr`. This is the naturality of `diffCongr` against the stronger forgetful
-homomorphism `Diffeomorph.toHomeomorphHom`, refining `toPerm_comp_diffCongr`. -/
+`TauCeti.Homeomorph.homeoCongr`. This is the naturality of `diffCongr` against the stronger
+forgetful homomorphism `Diffeomorph.toHomeomorphHom`, refining `toPerm_comp_diffCongr`. -/
 theorem toHomeomorphHom_comp_diffCongr (e : M ≃ₘ^n⟮I, J⟯ N) :
     toHomeomorphHom.comp (diffCongr e).toMonoidHom =
-      (Homeomorph.homeoCongr e.toHomeomorph).toMonoidHom.comp toHomeomorphHom := by
+      (TauCeti.Homeomorph.homeoCongr e.toHomeomorph).toMonoidHom.comp toHomeomorphHom := by
   ext φ x
   simp [toHomeomorphHom_apply]
 
@@ -166,5 +165,3 @@ theorem toPerm_diffCongr (e : M ≃ₘ^n⟮I, J⟯ N) (φ : M ≃ₘ^n⟮I, I⟯
   simpa using h
 
 end Diffeomorph
-
-end TauCeti
