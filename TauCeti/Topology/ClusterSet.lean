@@ -527,7 +527,9 @@ cluster-set continuum theorem (`TauCeti.isPreconnected_clusterSetOn`). -/
 def IsPreconnectedApproachAt (U : Set X) (a : X) : Prop :=
   ∀ s ∈ nhds a, ∃ t ∈ nhds a, t ⊆ s ∧ IsPreconnected (U ∩ t)
 
-/-- The neighbourhood-basis characterization of `IsPreconnectedApproachAt`. -/
+/-- `TauCeti.IsPreconnectedApproachAt` restated as an `Iff`, so that it can be established and
+consumed in its neighbourhood-basis form without unfolding the definition — which downstream
+modules cannot do, the definition being public but not exposed. -/
 theorem isPreconnectedApproachAt_def {U : Set X} {a : X} :
     IsPreconnectedApproachAt U a ↔
       ∀ s ∈ 𝓝 a, ∃ t ∈ 𝓝 a, t ⊆ s ∧ IsPreconnected (U ∩ t) :=
