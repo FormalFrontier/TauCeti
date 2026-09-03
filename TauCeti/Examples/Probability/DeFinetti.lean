@@ -16,15 +16,22 @@ process predicates, implications, representation theorems, uniqueness results, a
 convergence statements.
 
 The worked examples then use two complementary descriptions of an exchangeable law. The canonical
-mixing-law example shows that an i.i.d. path law has a Dirac de Finetti measure. The affine example
-shows that a convex combination of two Dirac mixing laws corresponds exactly to the same convex
-combination of the associated i.i.d. path laws, in both directions. Together they illustrate how
-the representation theorem and its affine equivalence are used in concrete calculations.
+mixing-law example shows that an i.i.d. path law has a Dirac de Finetti measure. The two affine
+examples show that a convex combination of two Dirac mixing laws corresponds exactly to the same
+convex combination of the associated i.i.d. path laws, in both directions. Together they
+illustrate how the representation theorem and its affine equivalence are used in concrete
+calculations.
 
-Because the file imports only the facade, these examples also ensure that the public entry point
-exposes every declaration needed for ordinary use without introducing another exported module
-path. The mixed-i.i.d. implication appears under its canonical receiver-style name
-`MixedIID.exchangeable`.
+Further worked examples live with the objects they concern: the conditionally i.i.d. coin-flip
+construction in `Exchangeability/ConditionallyIID/CoinFlips.lean`, the constant-witness
+characterisation of i.i.d. in `ConditionallyIID/Const.lean`, and the stationary but
+non-exchangeable 3-cycle in `Exchangeability/ThreeCycle.lean`.
+
+Because the file imports only the facade, the bare-reference index checks that its principal
+declarations remain available from the public entry point. A failure in that index means an export
+went missing, not that a proof broke. The import is not public, so this file adds no second route to
+the API. The mixed-i.i.d. implication is stated only in receiver style as
+`MixedIID.exchangeable`; no `exchangeable_of_mixedIID` alias is introduced.
 -/
 
 open MeasureTheory
