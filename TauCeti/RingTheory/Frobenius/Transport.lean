@@ -17,7 +17,7 @@ a prime is invariant under this transport:
 
 * the contraction to `R` of a prime is unchanged by mapping it along `e`
   (`Ideal.under_mapAlgEquiv`), and mapping along `e` and back along `e.symm` recovers the prime
-  (`Ideal.map_of_algEquiv`);
+  (`Ideal.map_of_equiv`);
 * unramifiedness at a prime is preserved, and is an equivalence
   (`Algebra.IsUnramifiedAt.mapAlgEquiv`, `Algebra.IsUnramifiedAt.mapAlgEquiv_iff`);
 * an arithmetic Frobenius `φ : S →ₐ[R] S` conjugates to an arithmetic Frobenius at the mapped
@@ -54,12 +54,6 @@ theorem under_mapAlgEquiv (e : S ≃ₐ[R] T) (Q : Ideal S) :
   rw [← e.commutes]
   simp
 
-/-- Mapping an ideal along an algebra equivalence and back along the inverse recovers the
-original ideal.  Algebra-equivalence variant of `Ideal.map_of_equiv`. -/
-@[simp]
-theorem map_of_algEquiv (e : S ≃ₐ[R] T) (Q : Ideal S) : (Q.map e).map e.symm = Q :=
-  map_of_equiv e.toRingEquiv
-
 end Ideal
 
 namespace Algebra.IsUnramifiedAt
@@ -85,7 +79,8 @@ theorem mapAlgEquiv_iff (e : S ≃ₐ[R] T) (Q : Ideal S) [Q.IsPrime] :
   · intro h
     have _hp : ((Q.map e : Ideal T)).IsPrime := Ideal.map_isPrime_of_equiv e
     have hQ := mapAlgEquiv e.symm (Q.map e) h
-    simp only [Ideal.map_of_algEquiv] at hQ
+    have hmap : (Q.map e).map e.symm = Q := Ideal.map_of_equiv e.toRingEquiv
+    simp only [hmap] at hQ
     exact hQ
   · exact mapAlgEquiv e Q
 
@@ -120,7 +115,8 @@ theorem mapAlgEquiv_iff (e : S ≃ₐ[R] T) (Q : Ideal S) (φ : S →ₐ[R] S) :
   constructor
   · intro h
     have h' := mapAlgEquiv e.symm (Q.map e) _ h
-    rw [Ideal.map_of_algEquiv] at h'
+    have hmap : (Q.map e).map e.symm = Q := Ideal.map_of_equiv e.toRingEquiv
+    simp only [hmap] at h'
     have hcomp : e.symm.toAlgHom.comp
         (((e : S →ₐ[R] T).comp (φ.comp e.symm.toAlgHom)).comp e.symm.symm.toAlgHom) = φ := by
       ext y
