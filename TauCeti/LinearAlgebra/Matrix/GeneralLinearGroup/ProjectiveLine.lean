@@ -91,7 +91,7 @@ public section
 
 namespace TauCeti
 
-open Matrix OnePoint
+open _root_.Matrix OnePoint
 open scoped Pointwise
 
 universe u
