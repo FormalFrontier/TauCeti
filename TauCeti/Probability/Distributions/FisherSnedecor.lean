@@ -154,6 +154,7 @@ theorem fisherSnedecorMap_strictMonoOn (hm : 0 < m) (hn : 0 < n) :
 
 /-- If `m ≠ 0`, `n ≠ 0`, and `u ≠ 1`, the inverse transformation after the
 beta-to-F map is the identity. -/
+@[simp]
 theorem fisherSnedecorMapInv_map (hm : m ≠ 0) (hn : n ≠ 0) {u : ℝ}
     (hu : u ≠ 1) :
     fisherSnedecorMapInv m n (fisherSnedecorMap m n u) = u := by
@@ -163,6 +164,7 @@ theorem fisherSnedecorMapInv_map (hm : m ≠ 0) (hn : n ≠ 0) {u : ℝ}
 
 /-- If `m ≠ 0`, `n ≠ 0`, and `n + m * x ≠ 0`, the beta-to-F map after the
 inverse transformation is the identity. -/
+@[simp]
 theorem fisherSnedecorMap_mapInv (hm : m ≠ 0) (hn : n ≠ 0) {x : ℝ}
     (hden : n + m * x ≠ 0) :
     fisherSnedecorMap m n (fisherSnedecorMapInv m n x) = x := by
