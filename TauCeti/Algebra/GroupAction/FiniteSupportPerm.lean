@@ -187,6 +187,7 @@ points.
 
 This is deliberately not a `simp` lemma: `mem_finitary` is already `simp`, so the left-hand side
 is not in simp-normal form and the `simpNF` linter rejects the attribute. -/
+@[grind =]
 theorem mem_finitary_prodCongrRight_iff {ι β : Type*} {τ : ι → Equiv.Perm β} :
     Equiv.prodCongrRight τ ∈ finitary (ι × β) ↔
       {a | τ a ≠ 1}.Finite ∧ ∀ a, τ a ∈ finitary β := by
