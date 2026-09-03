@@ -8,8 +8,8 @@ module
 public import TauCeti.Analysis.SpecialFunctions.IncompleteBeta
 public import TauCeti.Probability.Distributions.StudentT.Basic
 public import Mathlib.Probability.CDF
+import TauCeti.Analysis.Calculus.RealCharts
 import TauCeti.Probability.Distributions.StudentT.WeightedIntegral
-import Mathlib.MeasureTheory.Function.JacobianOneDim
 import Mathlib.MeasureTheory.Measure.Lebesgue.Integral
 
 /-!
@@ -28,6 +28,7 @@ This file computes the cumulative distribution function of the Student t distrib
 
 ## References
 
+* TauCetiRoadmap/StandardDistributions/README.md.
 * N. L. Johnson, S. Kotz, N. Balakrishnan, *Continuous Univariate Distributions*, vol. 2, 2nd ed.,
   Wiley (1995), ch. 28.
 -/
@@ -131,10 +132,6 @@ private lemma integral_Ioi_betaKernel_tail_eq_interval_tail {u0 : ℝ}
   -- The chart `u ↦ u / (1 - u)` turns the half-line beta tail into an interval tail.
   have hsub : Ioo u0 1 ⊆ Ioo (0 : ℝ) 1 := fun u hu =>
     ⟨by linarith [hu.1, hu00], hu.2⟩
-  have hhabs : ∀ u ∈ Ioo u0 1, |((1 - u) ^ 2)⁻¹| = ((1 - u) ^ 2)⁻¹ := by
-    intro u _
-    have hnonneg : 0 ≤ ((1 - u) ^ 2)⁻¹ := by positivity
-    exact abs_of_nonneg hnonneg
   have hcov : ∀ u ∈ Ioo u0 1, |((1 - u) ^ 2)⁻¹| • k0 (u / (1 - u)) = k u := by
     intro u hu
     have hk0 : k0 (u / (1 - u)) =
@@ -147,16 +144,6 @@ private lemma integral_Ioi_betaKernel_tail_eq_interval_tail {u0 : ℝ}
     have hkey := abs_deriv_smul_one_add_rpow (1 / 2 : ℝ) (ν / 2) (hsub hu)
     rw [ha, hb] at hkey
     exact hkey
-  have hcov' : EqOn (fun u : ℝ => ((1 - u) ^ 2)⁻¹ • k0 (u / (1 - u))) k (Ioo u0 1) := by
-    intro u hu
-    have hc : ((1 - u) ^ 2)⁻¹ = |((1 - u) ^ 2)⁻¹| := (hhabs u hu).symm
-    have hgoal : ((1 - u) ^ 2)⁻¹ • k0 (u / (1 - u)) = k u := by
-      have hstep : ((1 - u) ^ 2)⁻¹ • k0 (u / (1 - u)) =
-          |((1 - u) ^ 2)⁻¹| • k0 (u / (1 - u)) := by
-        exact congr_arg (fun c : ℝ => c • k0 (u / (1 - u))) hc
-      rw [hstep]
-      exact hcov u hu
-    exact hgoal
   have himg :
       (fun u : ℝ => u / (1 - u)) '' Ioo u0 1 = Ioi (u0 / (1 - u0)) := by
     rw [image_div_one_sub_Ioo hu01]
@@ -164,15 +151,8 @@ private lemma integral_Ioi_betaKernel_tail_eq_interval_tail {u0 : ℝ}
       ∫ w in Ioi (u0 / (1 - u0)), k0 w := by
     rw [← integral_image_eq_integral_abs_deriv_smul measurableSet_Ioo hderiv2
         (div_one_sub_injOn_Ioo (u0 := u0)) k0, himg]
-  have h22eq : EqOn (fun u : ℝ => |((1 - u) ^ 2)⁻¹| • k0 (u / (1 - u)))
-      (fun u : ℝ => ((1 - u) ^ 2)⁻¹ • k0 (u / (1 - u))) (Ioo u0 1) := by
-    intro u hu
-    exact congr_arg (fun c : ℝ => c • k0 (u / (1 - u))) (hhabs u hu)
-  have h22 : ∫ u in Ioo u0 1, |((1 - u) ^ 2)⁻¹| • k0 (u / (1 - u)) =
-      ∫ u in Ioo u0 1, ((1 - u) ^ 2)⁻¹ • k0 (u / (1 - u)) := by
-    rw [setIntegral_congr_fun measurableSet_Ioo h22eq]
   have h2 : ∫ w in Ioi (u0 / (1 - u0)), k0 w = ∫ u in Ioo u0 1, k u := by
-    rw [← h21, h22, setIntegral_congr_fun measurableSet_Ioo hcov']
+    rw [← h21, setIntegral_congr_fun measurableSet_Ioo hcov]
   simpa [k0, k, s] using h2
 
 /-- The interval tail in the incomplete-beta chart is the total beta mass minus the normalized

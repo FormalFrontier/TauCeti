@@ -7,7 +7,6 @@ module
 
 public import Mathlib.Probability.Density
 public import Mathlib.Probability.HasLaw
-import Mathlib.MeasureTheory.Measure.Lebesgue.Basic
 
 /-!
 # Densities from laws presented as `withDensity`

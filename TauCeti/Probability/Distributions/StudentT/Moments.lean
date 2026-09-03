@@ -8,6 +8,7 @@ module
 public import TauCeti.Probability.Distributions.StudentT.Basic
 public import Mathlib.Probability.Moments.IntegrableExpMul
 public import Mathlib.Probability.Moments.Variance
+import TauCeti.Analysis.Calculus.RealCharts
 import TauCeti.Probability.Distributions.StudentT.WeightedIntegral
 import TauCeti.Analysis.SpecialFunctions.Beta
 import Mathlib.Analysis.SpecialFunctions.NonIntegrable
@@ -41,6 +42,7 @@ exactly for `-1 < q < ν`; the exponential-moment statements read off that sharp
 
 ## References
 
+* TauCetiRoadmap/StandardDistributions/README.md.
 * N. L. Johnson, S. Kotz, N. Balakrishnan, *Continuous Univariate Distributions*, vol. 2, 2nd ed.,
   Wiley (1995), ch. 28.
 -/
