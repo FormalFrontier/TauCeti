@@ -36,6 +36,10 @@ polarization can be used directly by the type-`B` spin representation.
 
 * C. Chevalley, *The Algebraic Theory of Spinors*, Chapter II.
 * N. Bourbaki, *Groupes et algèbres de Lie*, Chapters 4--6, Plate II.
+
+The definitions and proofs in this module follow the formal template of
+`TauCeti.RepresentationTheory.Spin.Polarization.SplitEven`; the additional scalar coordinate
+and norm-one remainder are specific to the odd-dimensional construction.
 -/
 
 public section

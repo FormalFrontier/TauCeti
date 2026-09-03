@@ -47,6 +47,10 @@ subgroups is separate from this carrier construction.
 * C. Chevalley, *The Algebraic Theory of Spinors*, Chapter II.
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, §§25--27.
 * N. Bourbaki, *Groupes et algèbres de Lie*, Chapters 4--6, Plate II.
+
+The organization and carrier API of this module follow the formal template of
+`TauCeti.Algebra.Lie.Orthogonal.TypeD.SpinCarrier.Basic`; the split odd representation,
+type-`B` lattice, and root data are specific to this construction.
 -/
 
 public section
