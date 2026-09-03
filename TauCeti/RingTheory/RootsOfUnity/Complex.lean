@@ -23,21 +23,27 @@ sum of `d` complex numbers of modulus one; therefore `‖α‖ ≤ 1` at *every*
 inclusion we started with. A nonzero algebraic integer with that property is a root of unity
 (`NumberField.Embeddings.pow_eq_one_of_norm_le_one`), so `‖α‖ = 1`.
 
-The hypothesis on the average is what makes the statement bite: with no condition on it, a sum of
-`d` roots of unity can have any absolute value in `[0, d]`.
+The hypothesis on the average is what makes the statement bite: without it the bound `‖x‖ ≤ d` is
+all there is, and intermediate absolute values really do occur, `1 + i` being a sum of two fourth
+roots of unity of absolute value `√2`.
 
 ## Main statements
 
 * `TauCeti.sum_eq_zero_or_norm_sum_eq_card_of_isIntegral`: a multiset of `n`-th roots of unity
   whose average is integral over `ℤ` has sum `0`, or a sum whose absolute value is its
   cardinality.
+* `TauCeti.mem_adjoin_of_pow_eq_one`: an `n`-th root of unity lies in the field generated over `ℚ`
+  by a primitive `n`-th root of unity.
+* `TauCeti.norm_map_multiset_sum_le_card`: the image in `ℂ` of a sum of `n`-th roots of unity has
+  absolute value at most the number of summands, under any ring homomorphism.
 
 ## References
 
 * Kronecker's theorem on algebraic integers in the closed unit disc, in Mathlib as
   `NumberField.Embeddings.pow_eq_one_of_norm_le_one`.
 * I. M. Isaacs, *Character Theory of Finite Groups* (1976), Theorem 3.8, where this is the
-  arithmetic half of Burnside's vanishing theorem for character values.
+  Kronecker half of Burnside's vanishing theorem for character values, applied to the average once
+  the arithmetic half has shown that average to be an algebraic integer.
 -/
 
 public section
@@ -46,14 +52,14 @@ namespace TauCeti
 
 /-- Every `n`-th root of unity of `ℂ` lies in the subfield of `ℂ` generated over `ℚ` by a
 primitive `n`-th root of unity, being one of its powers. -/
-private theorem mem_adjoin_of_pow_eq_one {n : ℕ} [NeZero n] {ζ : ℂ} (hζ : IsPrimitiveRoot ζ n)
+theorem mem_adjoin_of_pow_eq_one {n : ℕ} [NeZero n] {ζ : ℂ} (hζ : IsPrimitiveRoot ζ n)
     {μ : ℂ} (hμ : μ ^ n = 1) : μ ∈ IntermediateField.adjoin ℚ ({ζ} : Set ℂ) := by
   obtain ⟨i, -, rfl⟩ := hζ.eq_pow_of_pow_eq_one hμ
   exact pow_mem (IntermediateField.subset_adjoin ℚ _ (Set.mem_singleton ζ)) i
 
 /-- A ring homomorphism into `ℂ` sends a multiset of `n`-th roots of unity to complex numbers of
 modulus one, so it sends their sum to a complex number of modulus at most the cardinality. -/
-private theorem norm_map_multiset_sum_le {K : Type*} [Semiring K] {n : ℕ} (hn : n ≠ 0)
+theorem norm_map_multiset_sum_le_card {K : Type*} [Semiring K] {n : ℕ} (hn : n ≠ 0)
     {t : Multiset K} (ht : ∀ ν ∈ t, ν ^ n = 1) (φ : K →+* ℂ) :
     ‖φ t.sum‖ ≤ Multiset.card t := by
   have hmap : (t.map φ).map (‖·‖) = t.map fun _ => (1 : ℝ) := by
@@ -109,7 +115,7 @@ theorem sum_eq_zero_or_norm_sum_eq_card_of_isIntegral {n : ℕ} (hn : n ≠ 0) {
     intro φ
     rw [hαdef, map_div₀, map_natCast, norm_div, Complex.norm_natCast,
       div_le_one (by positivity)]
-    exact hcardt ▸ norm_map_multiset_sum_le hn hroot φ
+    exact hcardt ▸ norm_map_multiset_sum_le_card hn hroot φ
   rcases eq_or_ne α 0 with hα0 | hα0
   · refine Or.inl ?_
     rw [hα0, map_zero, eq_comm, div_eq_zero_iff] at hαcoe

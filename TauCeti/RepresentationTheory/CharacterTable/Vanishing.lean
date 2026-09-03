@@ -26,12 +26,12 @@ The proof has two halves.
 with `ωᵪ` the central character and `K_C` the class sum. Both `ωᵪ(K_C)` and `χ(g)` are algebraic
 integers (`TauCeti.Representation.isIntegral_centralCharacter_classSumCenter` and
 `TauCeti.Representation.isIntegral_char`), so the average `χ(g) / χ(1)` is one too. That is
-`TauCeti.Representation.isIntegral_character_div_finrank`, proved over any algebraically closed
-field of characteristic zero.
+`TauCeti.Representation.isIntegral_char_div_finrank`, proved over any algebraically closed field of
+characteristic zero. This first half is where the coprimality is spent.
 
-*Kronecker's theorem.* Over `ℂ` the value `χ(g)` is a sum of `χ(1)` roots of unity, so an
-algebraic-integer average forces the dichotomy: this is
-`TauCeti.sum_eq_zero_or_norm_sum_eq_card_of_isIntegral`, and it is where the coprimality is spent.
+*Kronecker's theorem.* Over `ℂ` the value `χ(g)` is a sum of `χ(1)` roots of unity, so once the
+average is known to be an algebraic integer the dichotomy follows, with no arithmetic hypothesis of
+its own: this is `TauCeti.sum_eq_zero_or_norm_sum_eq_card_of_isIntegral`.
 
 The classical use of the dichotomy is Burnside's `pᵃqᵇ` theorem, which applies it to an element
 whose class has prime-power size. Turning the second alternative `‖χ(g)‖ = χ(1)` into the
@@ -40,17 +40,15 @@ of unity — is a separate step and is not proved here.
 
 ## Main statements
 
-* `Representation.isIntegral_character_div_finrank`: when the class size and the degree are
-  coprime, the average `χ(g) / χ(1)` is an algebraic integer.
-* `Representation.character_eq_zero_or_norm_character_eq_finrank` and its bundled form
-  `FDRep.character_eq_zero_or_norm_character_eq_finrank`: **Burnside's vanishing theorem**, the
-  dichotomy `χ(g) = 0 ∨ ‖χ(g)‖ = χ(1)`.
+* `Representation.isIntegral_char_div_finrank`: when the class size and the degree are coprime, the
+  average `χ(g) / χ(1)` is an algebraic integer.
+* `Representation.char_eq_zero_or_norm_char_eq_finrank` and its bundled form
+  `FDRep.char_eq_zero_or_norm_char_eq_finrank`: **Burnside's vanishing theorem**, the dichotomy
+  `χ(g) = 0 ∨ ‖χ(g)‖ = χ(1)`.
 
 ## References
 
-This proves the vanishing lemma of the Burnside application in Layer 4 of the
-[character theory roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CharacterTheory/README.md).
-See I. M. Isaacs, *Character Theory of Finite Groups* (1976), Theorem 3.8.
+* I. M. Isaacs, *Character Theory of Finite Groups* (1976), Theorem 3.8.
 -/
 
 public section
@@ -69,7 +67,7 @@ the size of the conjugacy class of `g` is coprime to the degree.
 
 Bézout splits `χ(g) / χ(1)` as an integer combination of the central-character value
 `ωᵪ(K_C) = |C| χ(g) / χ(1)` and of `χ(g)`, both of which are algebraic integers. -/
-theorem _root_.Representation.isIntegral_character_div_finrank (ρ : Representation k G V)
+theorem _root_.Representation.isIntegral_char_div_finrank (ρ : Representation k G V)
     [ρ.IsIrreducible] {g : G}
     (h : (Nat.card (ConjClasses.mk g).carrier).Coprime (finrank k V)) :
     IsIntegral ℤ (ρ.character g / (finrank k V : k)) := by
@@ -121,10 +119,10 @@ variable {G V : Type*} [Group G] [Finite G] [AddCommGroup V] [Module ℂ V] [Fin
 of an irreducible complex representation `ρ`, then its character either vanishes at `g` or attains
 there the maximum absolute value `χ(1)` that any character value can have.
 
-The average `χ(g) / χ(1)` is an algebraic integer
-(`Representation.isIntegral_character_div_finrank`) and `χ(g)` is a sum of `χ(1)` roots of unity,
-so Kronecker's theorem leaves no other possibility. -/
-theorem _root_.Representation.character_eq_zero_or_norm_character_eq_finrank
+The average `χ(g) / χ(1)` is an algebraic integer (`Representation.isIntegral_char_div_finrank`)
+and `χ(g)` is a sum of `χ(1)` roots of unity, so Kronecker's theorem leaves no other
+possibility. -/
+theorem _root_.Representation.char_eq_zero_or_norm_char_eq_finrank
     (ρ : Representation ℂ G V) [ρ.IsIrreducible] {g : G}
     (h : (Nat.card (ConjClasses.mk g).carrier).Coprime (finrank ℂ V)) :
     ρ.character g = 0 ∨ ‖ρ.character g‖ = finrank ℂ V := by
@@ -132,7 +130,7 @@ theorem _root_.Representation.character_eq_zero_or_norm_character_eq_finrank
     Representation.exists_multiset_rootsOfUnity_char_eq_sum ρ (pow_orderOf_eq_one g)
   have hint : IsIntegral ℤ (s.sum / (Multiset.card s : ℂ)) := by
     rw [← hsum, hcard]
-    exact Representation.isIntegral_character_div_finrank ρ h
+    exact Representation.isIntegral_char_div_finrank ρ h
   rcases sum_eq_zero_or_norm_sum_eq_card_of_isIntegral
     (isOfFinOrder_of_finite g).orderOf_pos.ne' hroot hint with h0 | h1
   · exact Or.inl (hsum.trans h0)
@@ -145,11 +143,11 @@ section Bundled
 variable {G : Type*} [Group G] [Finite G]
 
 /-- **Burnside's vanishing theorem**, for a bundled finite-dimensional complex representation. -/
-theorem _root_.FDRep.character_eq_zero_or_norm_character_eq_finrank (X : FDRep ℂ G)
+theorem _root_.FDRep.char_eq_zero_or_norm_char_eq_finrank (X : FDRep ℂ G)
     [_root_.Representation.IsIrreducible X.ρ] {g : G}
     (h : (Nat.card (ConjClasses.mk g).carrier).Coprime (finrank ℂ X)) :
     X.character g = 0 ∨ ‖X.character g‖ = finrank ℂ X :=
-  Representation.character_eq_zero_or_norm_character_eq_finrank X.ρ h
+  Representation.char_eq_zero_or_norm_char_eq_finrank X.ρ h
 
 end Bundled
 
