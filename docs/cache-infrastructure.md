@@ -35,6 +35,20 @@ incompatible, bump `mathlib-ltar-v1` once in
 `gh cache delete <key> --repo TauCetiProject/TauCeti`. A failed fetch also retries once with
 `lake exe cache get!`, which forces every linked file to be downloaded and unpacked again.
 
+Downloads go to the cache tool's default read endpoint. The escape hatch is a repository
+variable. Every workflow that runs `lake exe cache get` (`ci.yml`, `pr-build.yml`,
+`pr-profile.yml`, `nightly-verify.yml`, `pages.yml`) exports
+`MATHLIB_CACHE_DEBUG_USE_LEGACY` from `vars.MATHLIB_CACHE_DEBUG_USE_LEGACY`. An operator
+sets the variable to `1` to send reads back to the legacy storage endpoint, and clears it
+to return to the default endpoint. Both changes apply on the next run, with no code
+change: the tool treats unset, empty, `0`, and `false` alike as off. Local and radar runs
+need no wiring; the cache tool reads the variable from the caller's environment.
+
+The flag is temporary. It exists only for an easy rollback during the transition to the
+default endpoint that leanprover-community/mathlib4@03616a12 introduced, and upstream
+plans to retire it together with direct reads from the storage account. Remove this
+wiring when the pinned cache tool drops the flag.
+
 ## Cloudflare account
 
 This table records the required destination. During the 2026 account migration,
@@ -71,6 +85,27 @@ to sign them, so the read host must be public; only uploads use a key.
 Lake service names: `tauceti-public` for reads, `tauceti-r2` for uploads. Object keys are
 `artifacts/TauCetiProject/TauCeti/<hash>.art`, so the endpoint variables hold only the prefix and
 Lake appends the scope.
+
+## Contributors
+
+The read endpoints above are anonymous and are not secrets, so `scripts/lake-cache-get.sh` defaults
+to them and a contributor needs no configuration:
+
+```bash
+bash scripts/lake-cache-get.sh .
+```
+
+This is the second half of a working local build and the README documents it as such. Skipping it
+does not fail anything; it compiles the whole library from source instead, which is why its absence
+went unnoticed for as long as it did. CI keeps passing the endpoints explicitly from the
+`LAKE_CACHE_*_PUBLIC` repo variables and reaches the script only when those are set, so the defaults
+never decide what CI does.
+
+Anything else reading this cache, including the worker exemplar in
+[`kim-em/TauCetiWorker`](https://github.com/kim-em/TauCetiWorker), must use the custom domain rather
+than the bucket's `pub-<id>.r2.dev` development URL. Public access on that development URL is off and
+it answers 401 for every path, which a caller whose cache miss is non-fatal cannot tell from a cold
+revision.
 
 ## Why the upload is its own job
 

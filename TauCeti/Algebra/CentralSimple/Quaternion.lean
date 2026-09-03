@@ -20,7 +20,7 @@ public import TauCeti.Algebra.Central.Quaternion
 -- the statements below typecheck: the public imports above reach `Mathlib.Algebra.Quaternion`,
 -- which supplies `ℍ[·]` over an arbitrary base but not `ℝ` itself, so without this import `ℝ` is
 -- not even in scope as a name.
-public import Mathlib.Data.Real.Basic
+public import Mathlib.Basic.Real.Basic
 
 /-!
 # The tensor square of the real quaternions is `M₄(ℝ)`
@@ -40,8 +40,9 @@ Nothing below is a statement about `BrauerGroup ℝ`: the two main results are i
 statement. Informally, the isomorphisms exhibit the Brauer class of `ℍ[ℝ]` as **self-inverse**; that
 the class is moreover not the identity, so that its order is exactly `2`, is
 `TauCeti.Quaternion.orderOf_mk_eq_two` in `TauCeti/Algebra/BrauerGroup/Quaternion.lean`. Saying that
-`BrauerGroup ℝ ≃ ℤ/2` is a further and independent matter: it needs the classification of real
-division algebras, to know the class generates, and remains a long-term target.
+`BrauerGroup ℝ ≃ ℤ/2` is a further and independent matter, needing the classification of real
+division algebras to know the class generates; that is
+`TauCeti.Quaternion.brauerGroupMulEquiv` in `TauCeti/Algebra/BrauerGroup/Real.lean`.
 
 The matrix size is `4` and not `2`: it is the **dimension** `Module.finrank ℝ ℍ[ℝ] = 4` of the
 algebra, not its degree `TauCeti.Algebra.deg ℝ ℍ[ℝ] = 2`. Squaring the degree is exactly what taking

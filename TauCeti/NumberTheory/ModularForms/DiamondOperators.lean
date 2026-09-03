@@ -7,7 +7,7 @@ module
 
 public import Mathlib.LinearAlgebra.Eigenspace.Basic
 public import TauCeti.NumberTheory.ModularForms.Basic
-public import TauCeti.NumberTheory.ModularForms.CongruenceSubgroups
+public import TauCeti.NumberTheory.ModularForms.CongruenceSubgroups.Basic
 public import TauCeti.NumberTheory.ModularForms.SlashActionRat
 
 /-!

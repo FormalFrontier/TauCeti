@@ -44,6 +44,10 @@ search returns.
   prime.
 * `TauCeti.ClassData.centralCharacterSearch_nonempty`: the trivial central character ensures that
   the search is nonempty over any coefficient field, without a splitting hypothesis.
+* `TauCeti.ClassData.centralCharacterSearch_eq_rowsOfMap`: a complete set of candidate
+  normalized eigenrows exhausts the search, and
+  `TauCeti.ClassData.centralCharacterSearch_eq_rowsOfMap_of_isGoodDixonPrime` reads that
+  off a good Dixon prime.
 
 ## Implementation notes
 
@@ -123,6 +127,37 @@ theorem card_centralCharacterSearch_of_isGoodDixonPrime {p : ℕ} [Fact p.Prime]
     (hp : IsGoodDixonPrime G p) :
     (d.centralCharacterSearch (F := ZMod p)).card = d.numClasses :=
   d.card_centralCharacterSearch hp.nonempty_center_algEquiv_conjClasses
+
+/-! ### Identifying a complete set of candidate rows -/
+
+/-- **Displayed normalized eigenrows exhaust the central-character search** over a coefficient
+field splitting the centre of `F[G]`, when the displayed set has the required number of rows. -/
+theorem centralCharacterSearch_eq_rowsOfMap {R : Type*}
+    (h : Nonempty (Subalgebra.center F (MonoidAlgebra F G) ≃ₐ[F] (ConjClasses G → F)))
+    (f : R → F) (M : Matrix (Fin d.numClasses) (Fin d.numClasses) R)
+    (hone : ∀ i, f (M i (d.index 1)) = 1)
+    (heig : ∀ i, d.IsModularEigenrow (fun j => f (M i j)))
+    (hcard : (d.rowsOfMap f M).card = d.numClasses) :
+    d.centralCharacterSearch (F := F) = d.rowsOfMap f M := by
+  symm
+  apply Finset.eq_of_subset_of_card_le
+  · rw [rowsOfMap, Finset.image_subset_iff]
+    intro i _
+    rw [d.mem_centralCharacterSearch]
+    exact ⟨hone i, heig i⟩
+  · rw [d.card_centralCharacterSearch h, hcard]
+
+/-- **Displayed normalized eigenrows exhaust the modular central-character search at a good Dixon
+prime** when the displayed set has the required number of rows. -/
+theorem centralCharacterSearch_eq_rowsOfMap_of_isGoodDixonPrime
+    {R : Type*} {p : ℕ} [Fact p.Prime] (hp : IsGoodDixonPrime G p)
+    (f : R → ZMod p) (M : Matrix (Fin d.numClasses) (Fin d.numClasses) R)
+    (hone : ∀ i, f (M i (d.index 1)) = 1)
+    (heig : ∀ i, d.IsModularEigenrow (fun j => f (M i j)))
+    (hcard : (d.rowsOfMap f M).card = d.numClasses) :
+    d.centralCharacterSearch (F := ZMod p) = d.rowsOfMap f M :=
+  d.centralCharacterSearch_eq_rowsOfMap hp.nonempty_center_algEquiv_conjClasses f M
+    hone heig hcard
 
 end ClassData
 

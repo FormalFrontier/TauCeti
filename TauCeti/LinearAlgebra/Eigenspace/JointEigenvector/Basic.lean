@@ -5,10 +5,10 @@ Authors: Chris Birkbeck
 -/
 module
 
-import Mathlib.NumberTheory.MulChar.Duality
 public import Mathlib.RingTheory.RootsOfUnity.EnoughRootsOfUnity
 public import Mathlib.LinearAlgebra.Eigenspace.Pi
 public import Mathlib.LinearAlgebra.Eigenspace.Semisimple
+import TauCeti.GroupTheory.FiniteAbelian.CharacterOrthogonality
 
 /-!
 # Joint eigenvectors of commuting semisimple families
@@ -46,6 +46,9 @@ components of `M_k(Γ₁(N))`.
   independent (with no further hypotheses), exhaust the space when semisimple, and
   decompose every invariant submodule — with the character-indexed forms (`…_unitHom…`)
   for group representations.
+* `finite_nonzeroJointWeights`, `natCard_nonzeroJointWeights_le_finrank`: a finite-dimensional
+  representation has finitely many nonzero joint weights, with their number bounded by its
+  dimension.
 * `iSup_iInf_eigenspace_unitHom_eq_top_of_commGroup`,
   `iSup_inf_iInf_eigenspace_unitHom_of_invariant_of_commGroup`: for a finite commutative `G`
   with `[HasEnoughRootsOfUnity K (Monoid.exponent G)]` and `IsUnit (Nat.card G : K)`, the
@@ -245,6 +248,26 @@ lemma iSupIndep_iInf_eigenspace_unitHom :
   (iSupIndep_iInf_eigenspace (fun g ↦ ρ g)).comp
     fun _ _ h ↦ MonoidHom.ext fun g ↦ Units.ext (congr_fun h g)
 
+/-- A finite-dimensional representation has only finitely many characters with nonzero joint
+weight space. Distinct character-indexed joint eigenspaces are independent, so a
+finite-dimensional space can contain only finitely many nonzero ones. -/
+noncomputable instance finite_nonzeroJointWeights [FiniteDimensional K V]
+    (ρ : G →* Module.End K V) :
+    Finite {χ : G →* Kˣ // (⨅ g : G, (ρ g).eigenspace (χ g)) ≠ ⊥} := by
+  exact @Finite.of_fintype _
+    iSupIndep_iInf_eigenspace_unitHom.fintypeNeBotOfFiniteDimensional
+
+/-- The number of characters with nonzero joint weight space in a finite-dimensional
+representation is bounded by the dimension of the representation. -/
+theorem natCard_nonzeroJointWeights_le_finrank [FiniteDimensional K V]
+    (ρ : G →* Module.End K V) :
+    Nat.card {χ : G →* Kˣ // (⨅ g : G, (ρ g).eigenspace (χ g)) ≠ ⊥} ≤
+      Module.finrank K V := by
+  let _ : Fintype {χ : G →* Kˣ // (⨅ g : G, (ρ g).eigenspace (χ g)) ≠ ⊥} :=
+    iSupIndep_iInf_eigenspace_unitHom.fintypeNeBotOfFiniteDimensional
+  rw [Nat.card_eq_fintype_card]
+  exact iSupIndep_iInf_eigenspace_unitHom.subtype_ne_bot_le_finrank
+
 /-- **Character-indexed decomposition of a finite-dimensional invariant submodule**,
 assuming only that the restricted representation is semisimple. -/
 lemma iSup_inf_iInf_eigenspace_unitHom_of_invariant [IsAlgClosed K]
@@ -291,9 +314,6 @@ variable [CommGroup G] [Finite G]
 private noncomputable instance : Fintype G :=
   Fintype.ofFinite _
 
-private noncomputable instance : Fintype (G →* Kˣ) :=
-  Fintype.ofFinite _
-
 open Finset
 
 variable {ρ : G →* Module.End K V}
@@ -326,41 +346,6 @@ private lemma fourierComponent_mem (χ₀ : G →* Kˣ) (v : V) (g : G) :
 
 variable [HasEnoughRootsOfUnity K (Monoid.exponent G)]
 
-private instance : HasEnoughRootsOfUnity K (Monoid.exponent Gˣ) :=
-  Monoid.exponent_eq_of_mulEquiv (toUnits (G := G)).symm ▸ inferInstance
-
--- the character group of a finite commutative group over a commutative domain with enough
--- roots of unity has the size of the group, by Mathlib's character duality
-omit [IsDomain K] in
-private lemma card_unitHom : Nat.card (G →* Kˣ) = Nat.card G := by
-  rw [Nat.card_congr (MulChar.equivToUnitHom.trans
-      (toUnits (G := G)).monoidHomCongrLeftEquiv.symm).symm,
-    MulChar.card_eq_card_units_of_hasEnoughRootsOfUnity G K,
-    Nat.card_congr (toUnits (G := G)).toEquiv.symm]
-
-/-- Evaluation at `d`, as a multiplicative character of the finite character group `G →* Kˣ`. -/
-private noncomputable def evalCharHom (d : G) : MulChar (G →* Kˣ) K :=
-  MulChar.ofUnitHom ((MonoidHom.eval d).comp (Units.coeHom (G →* Kˣ)))
-
-omit [Finite G] [HasEnoughRootsOfUnity K (Monoid.exponent G)] in
-omit [IsDomain K] in
-private lemma evalCharHom_apply (d : G) (χ : G →* Kˣ) :
-    evalCharHom (K := K) d χ = ((χ d : Kˣ) : K) := by
-  simpa [evalCharHom] using
-    MulChar.ofUnitHom_coe ((MonoidHom.eval d).comp (Units.coeHom (G →* Kˣ))) (toUnits χ)
-
--- second orthogonality, from Mathlib's character-sum vanishing applied to `evalCharHom d`
-private lemma sum_unitHom_apply_eq_zero
-    {d : G} (hd : d ≠ 1) :
-    ∑ χ : G →* Kˣ, ((χ d : Kˣ) : K) = 0 := by
-  obtain ⟨ψ, hψ⟩ := CommGroup.exists_apply_ne_one_of_hasEnoughRootsOfUnity G K hd
-  have hne : evalCharHom (K := K) d ≠ 1 := fun h ↦ hψ <| by
-    have hval := congrArg (fun χ : MulChar (G →* Kˣ) K ↦ χ ψ) h
-    rw [evalCharHom_apply, MulChar.one_apply (Group.isUnit ψ)] at hval
-    exact Units.val_eq_one.mp hval
-  simpa [evalCharHom_apply] using MulChar.sum_eq_zero_of_ne_one hne
-
-
 -- every vector is the sum of its projections, by second orthogonality
 private lemma sum_fourierComponent (hunit : IsUnit (Nat.card G : K)) (v : V) :
     ∑ χ₀ : G →* Kˣ, fourierComponent (ρ := ρ) χ₀ v = v := by
@@ -374,13 +359,13 @@ private lemma sum_fourierComponent (hunit : IsUnit (Nat.card G : K)) (v : V) :
   rw [Finset.sum_congr rfl fun d _ ↦ hcol d]
   have hsplit : ∀ d : G, d ≠ 1 → (∑ χ₀ : G →* Kˣ, ((χ₀ d⁻¹ : Kˣ) : K)) • ρ d v = 0 := by
     intro d hd
-    rw [sum_unitHom_apply_eq_zero (by simpa using hd), zero_smul]
+    rw [CommGroup.sum_monoidHom_apply_eq_zero_of_ne_one (M := K) (by simpa using hd), zero_smul]
   rw [Finset.sum_eq_single 1 (fun d _ hd ↦ hsplit d hd) (by simp)]
   have hone : ∀ χ₀ : G →* Kˣ, ((χ₀ (1 : G)⁻¹ : Kˣ) : K) = 1 := by simp
   rw [Finset.sum_congr rfl fun χ₀ _ ↦ hone χ₀]
   have hcard : (∑ _χ₀ : G →* Kˣ, (1 : K)) = (Nat.card G : K) := by
     rw [Finset.sum_const, card_univ, nsmul_eq_mul, mul_one, ← Nat.card_eq_fintype_card,
-      card_unitHom]
+      CommGroup.card_monoidHom_of_hasEnoughRootsOfUnity G K]
   rw [hcard, map_one, Module.End.one_apply, smul_smul,
     Ring.inverse_mul_cancel _ hunit, one_smul]
 

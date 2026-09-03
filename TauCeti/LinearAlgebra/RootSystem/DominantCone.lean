@@ -9,8 +9,6 @@ import TauCeti.LinearAlgebra.RootSystem.FiniteType.Bounded
 public import TauCeti.LinearAlgebra.RootSystem.Positive
 import TauCeti.LinearAlgebra.RootSystem.Weyl.Group
 
-public section
-
 /-!
 # The weight cone below a weight is finite once it is stable under the simple reflections
 
@@ -36,12 +34,24 @@ values on the simple coroots and are stable under the simple reflections, none o
 that the module is finite-dimensional; the theorem below turns those three facts into finiteness of
 the weight support.
 
+The raising step is itself worth naming, because a Weyl translate carries more information than a
+cardinality: under the same three hypotheses every member has a Weyl-group element taking it to a
+dominant member of the set
+(`TauCeti.exists_weylGroup_smul_dominant_of_forall_reflection_mem_of_sub_mem_posRootCone`).
+Finiteness is the corollary obtained by forgetting which translate was used.
+
 ## Main results
 
 * `TauCeti.finite_setOf_dominant_sub_mem_posRootCone`: **only finitely many dominant weights lie
   below a given weight.**
+* `TauCeti.exists_weylGroup_smul_dominant_of_forall_reflection_mem_of_sub_mem_posRootCone`: **a
+  member of a set of weights below `lam`, integral on the simple coroots and stable under the
+  simple reflections, has a dominant Weyl translate in the set.**
 * `TauCeti.finite_of_forall_reflection_mem_of_sub_mem_posRootCone`: **a set of weights below `lam`,
   integral on the simple coroots and stable under the simple reflections, is finite.**
+* `TauCeti.eq_zero_of_mem_posRootCone_of_forall_coroot'_nonpos`: **the only antidominant member of
+  the positive root cone is zero**, the case `lam = 0` of the first statement applied to all the
+  natural multiples of a member at once.
 
 ## The argument
 
@@ -51,11 +61,12 @@ vector `c` solves the Cartan inequality of the transposed Cartan matrix, whose s
 finite; the right-hand side of the inequality is manufactured from one member of the set, which is
 why the argument begins by disposing of the empty case.
 
-For the second statement, if `mu` is a member on which `αᵢ^∨` takes a negative value, then
+For the other two, if `mu` is a member on which `αᵢ^∨` takes a negative value, then
 `sᵢ mu = mu - ⟨mu, αᵢ^∨⟩ αᵢ` is again a member and `lam - sᵢ mu` has strictly smaller height: the
 simple roots are linearly independent, so the coefficient vectors of the two differences agree
 except at `i`, where the coefficient drops by `-⟨mu, αᵢ^∨⟩ ≥ 1`. Induction on that height therefore
-writes every member as a Weyl translate of a dominant member.
+writes every member as a Weyl translate of a dominant member, which is the second statement;
+finiteness follows because both the dominant members and the Weyl group are finite.
 
 ## References
 
@@ -66,6 +77,8 @@ classification of finite-dimensional irreducibles", of
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §13.2 and
   §21.2.
 -/
+
+public section
 
 namespace TauCeti
 
@@ -153,15 +166,122 @@ theorem finite_setOf_dominant_sub_mem_posRootCone (lam : M) :
     rw [← hf]
     abel
 
+omit [Finite ι] [IsDomain R] [P.IsRootSystem] [P.IsCrystallographic] in
+/-- **A reflection-stable set containing the dominant members contains everything below `lam`.**
+The induction is on the height `∑ j, f j` of `lam - mu`: a member on which some simple coroot is
+negative is moved by that reflection strictly closer to `lam`. -/
+private theorem mem_of_sub_eq_sum_nsmul_root_of_reflection_stable {lam : M} {S T : Set M}
+    (hcone : ∀ mu ∈ S, lam - mu ∈ posRootCone P b)
+    (hint : ∀ mu ∈ S, ∀ i ∈ b.support, ∃ z : ℤ, P.coroot' i mu = (z : R))
+    (hrefl : ∀ mu ∈ S, ∀ i ∈ b.support, P.reflection i mu ∈ S)
+    (hTrefl : ∀ (i : ι) (x : M), x ∈ T → P.reflection i x ∈ T)
+    (hdomMem : ∀ mu ∈ S, (∀ i ∈ b.support, ∃ n : ℕ, P.coroot' i mu = (n : R)) → mu ∈ T) :
+    ∀ k : ℕ, ∀ mu ∈ S, ∀ f : ι → ℕ,
+      lam - mu = ∑ j ∈ b.support, f j • P.root j → ∑ j ∈ b.support, f j = k → mu ∈ T := by
+  classical
+  -- The simple roots are linearly independent, so the coefficients of a member are determined.
+  have hli : LinearIndepOn ℤ P.root (b.support : Set ι) :=
+    b.linearIndepOn_root.restrict_scalars' ℤ
+  intro k
+  induction k using Nat.strong_induction_on with
+  | _ k ih =>
+    intro mu hmu f hf hsum
+    by_cases hdom : ∀ i ∈ b.support, ∃ n : ℕ, P.coroot' i mu = (n : R)
+    · exact hdomMem mu hmu hdom
+    push Not at hdom
+    obtain ⟨i, hi, hnotnat⟩ := hdom
+    obtain ⟨z, hz⟩ := hint mu hmu i hi
+    have hzneg : z < 0 := by
+      by_contra hc
+      push Not at hc
+      refine hnotnat z.toNat ?_
+      rw [hz, ← Int.cast_natCast (R := R) z.toNat, Int.toNat_of_nonneg hc]
+    -- Reflecting in `αᵢ` raises `mu`, so it lowers the height of `lam - mu`.
+    have hnu : P.reflection i mu ∈ S := hrefl mu hmu i hi
+    obtain ⟨g, hg⟩ := (mem_posRootCone P b).mp (hcone _ hnu)
+    have hrel : ∑ j ∈ b.support, (g j : ℤ) • P.root j
+        = ∑ j ∈ b.support, (f j : ℤ) • P.root j + z • P.root i := by
+      have h₁ : lam - P.reflection i mu = (lam - mu) + z • P.root i := by
+        rw [P.reflection_apply, hz, Int.cast_smul_eq_zsmul]
+        abel
+      simp only [natCast_zsmul]
+      rw [← hg, h₁, hf]
+    have hcoeff : ∀ j ∈ b.support,
+        ((g j : ℤ) - (f j : ℤ) - (if j = i then z else 0)) = 0 := by
+      refine linearIndepOn_iff'.mp hli b.support _ subset_rfl ?_
+      have hsingle : ∑ j ∈ b.support, (if j = i then z else 0) • P.root j = z • P.root i := by
+        rw [Finset.sum_eq_single i (fun j _ hj ↦ by simp [hj]) fun hni ↦ absurd hi hni]
+        simp
+      simp only [sub_smul]
+      rw [Finset.sum_sub_distrib, Finset.sum_sub_distrib, hsingle, hrel]
+      abel
+    have hgsum : ((∑ j ∈ b.support, g j : ℕ) : ℤ) = ((∑ j ∈ b.support, f j : ℕ) : ℤ) + z := by
+      have hsplit : ∀ j ∈ b.support, (g j : ℤ) = (f j : ℤ) + (if j = i then z else 0) := by
+        intro j hj
+        have := hcoeff j hj
+        omega
+      push_cast
+      rw [Finset.sum_congr rfl hsplit, Finset.sum_add_distrib]
+      congr 1
+      rw [Finset.sum_eq_single i (fun j _ hj ↦ by simp [hj]) fun hni ↦ absurd hi hni]
+      simp
+    have hlt : ∑ j ∈ b.support, g j < k := by omega
+    have hmem := ih _ hlt _ hnu g hg rfl
+    have hback : P.reflection i (P.reflection i mu) = mu := P.reflection_same i mu
+    exact hback ▸ hTrefl i _ hmem
+
+omit [Finite ι] [IsDomain R] [P.IsRootSystem] [P.IsCrystallographic] in
+/-- **A member of a reflection-stable set of weights below a weight has a dominant Weyl
+translate in the set.** Let `S` be a set of weights with `lam - mu` in the positive root cone for
+every `mu ∈ S`, on which every simple coroot takes integer values, and which every simple
+reflection carries into itself. Then every `mu ∈ S` has a Weyl-group element `w` for which `w • mu`
+again lies in `S` and every simple coroot takes a natural value on it.
+
+A member on which some simple coroot is negative is moved by the corresponding reflection strictly
+closer to `lam`, so the induction on the height of `lam - mu` stops exactly at a dominant member;
+the set of weights admitting such a `w` is reflection stable, which is what lets the induction run
+inside it.
+
+`TauCeti.exists_mem_dominantChamber` is the same statement for an arbitrary weight, with dominance
+read as `0 ≤ ⟨mu, αᵢ^∨⟩` and no reference to `lam`; it needs a `[LinearOrder R]` on the coefficient
+ring, which is exactly what the weight space of a Lie algebra over an algebraically closed field
+does not carry. Here dominance is instead the order-free condition that each `⟨mu, αᵢ^∨⟩` is a
+natural number, which the hypotheses on `S` make available, and the cone below `lam` replaces the
+maximization argument. -/
+theorem exists_weylGroup_smul_dominant_of_forall_reflection_mem_of_sub_mem_posRootCone
+    {lam : M} {S : Set M}
+    (hcone : ∀ mu ∈ S, lam - mu ∈ posRootCone P b)
+    (hint : ∀ mu ∈ S, ∀ i ∈ b.support, ∃ z : ℤ, P.coroot' i mu = (z : R))
+    (hrefl : ∀ mu ∈ S, ∀ i ∈ b.support, P.reflection i mu ∈ S)
+    {mu : M} (hmu : mu ∈ S) :
+    ∃ w : P.weylGroup, w • mu ∈ S ∧
+      ∀ i ∈ b.support, ∃ n : ℕ, P.coroot' i (w • mu) = (n : R) := by
+  classical
+  -- Undoing a reflection by appending it to the Weyl-group element on the right.
+  have hsmul : ∀ (i : ι) (x : M) (w : P.weylGroup),
+      (w * RootPairing.weylGroup.ofIdx P i) • P.reflection i x = w • x := fun i x w ↦ by
+    rw [mul_smul, RootPairing.weylGroup.ofIdx_smul, RootPairing.Equiv.reflection_smul,
+      P.reflection_same]
+  -- the weights admitting such a translate, a reflection-stable set containing the dominant ones
+  set T : Set M := {y : M | ∃ w : P.weylGroup, w • y ∈ S ∧
+    ∀ j ∈ b.support, ∃ n : ℕ, P.coroot' j (w • y) = (n : R)}
+  have hTrefl : ∀ (i : ι) (x : M), x ∈ T → P.reflection i x ∈ T := by
+    rintro i x ⟨w, hw, hdom⟩
+    exact ⟨w * RootPairing.weylGroup.ofIdx P i, by rwa [hsmul], by rw [hsmul]; exact hdom⟩
+  obtain ⟨f, hf⟩ := (mem_posRootCone P b).mp (hcone mu hmu)
+  exact mem_of_sub_eq_sum_nsmul_root_of_reflection_stable b hcone hint hrefl hTrefl
+    (fun nu hnu hdom ↦ ⟨1, by rwa [one_smul], by simpa only [one_smul] using hdom⟩)
+    _ mu hmu f hf rfl
+
 /-- **A reflection-stable set of weights below a weight is finite.** Let `S` be a set of weights
 with `lam - mu` in the positive root cone for every `mu ∈ S`, on which every simple coroot takes
 integer values, and which every simple reflection carries into itself. Then `S` is finite.
 
 Stability is what replaces dominance in
-`TauCeti.finite_setOf_dominant_sub_mem_posRootCone`: a member on which some simple coroot is
-negative is moved by the corresponding reflection to a member strictly closer to `lam`, so
-induction on the height of `lam - mu` exhibits every member as a Weyl translate of a dominant
-member, and both the dominant members and the Weyl group are finite. -/
+`TauCeti.finite_setOf_dominant_sub_mem_posRootCone`: every member is a Weyl translate of a
+dominant member by
+`TauCeti.exists_weylGroup_smul_dominant_of_forall_reflection_mem_of_sub_mem_posRootCone`, and both
+the dominant members and the Weyl group are finite. -/
 theorem finite_of_forall_reflection_mem_of_sub_mem_posRootCone {lam : M} {S : Set M}
     (hcone : ∀ mu ∈ S, lam - mu ∈ posRootCone P b)
     (hint : ∀ mu ∈ S, ∀ i ∈ b.support, ∃ z : ℤ, P.coroot' i mu = (z : R))
@@ -169,73 +289,63 @@ theorem finite_of_forall_reflection_mem_of_sub_mem_posRootCone {lam : M} {S : Se
     S.Finite := by
   classical
   have : Finite P.weylGroup := RootPairing.finite_weylGroup P
-  set D : Set M := {mu : M | lam - mu ∈ posRootCone P b ∧
-    ∀ i ∈ b.support, ∃ n : ℕ, P.coroot' i mu = (n : R)}
-  set T : Set M := ⋃ w : P.weylGroup, (fun x ↦ w • x) '' D with hTdef
-  have hT : T.Finite :=
-    Set.finite_iUnion fun w ↦ (finite_setOf_dominant_sub_mem_posRootCone b lam).image _
-  -- The union of the Weyl translates of the dominant members is reflection stable.
-  have hTrefl : ∀ (i : ι) (x : M), x ∈ T → P.reflection i x ∈ T := by
-    intro i x hx
-    simp only [hTdef, Set.mem_iUnion, Set.mem_image] at hx ⊢
-    obtain ⟨w, v, hv, rfl⟩ := hx
-    refine ⟨RootPairing.weylGroup.ofIdx P i * w, v, hv, ?_⟩
-    rw [mul_smul]
-    simp
-  -- The simple roots are linearly independent, so the coefficients of a member are determined.
-  have hli : LinearIndepOn ℤ P.root (b.support : Set ι) :=
-    b.linearIndepOn_root.restrict_scalars' ℤ
-  have main : ∀ k : ℕ, ∀ mu ∈ S, ∀ f : ι → ℕ,
-      lam - mu = ∑ j ∈ b.support, f j • P.root j → ∑ j ∈ b.support, f j = k → mu ∈ T := by
-    intro k
-    induction k using Nat.strong_induction_on with
-    | _ k ih =>
-      intro mu hmu f hf hsum
-      by_cases hdom : ∀ i ∈ b.support, ∃ n : ℕ, P.coroot' i mu = (n : R)
-      · exact Set.mem_iUnion.mpr ⟨1, mu, ⟨hcone mu hmu, hdom⟩, one_smul _ _⟩
-      push Not at hdom
-      obtain ⟨i, hi, hnotnat⟩ := hdom
-      obtain ⟨z, hz⟩ := hint mu hmu i hi
-      have hzneg : z < 0 := by
-        by_contra hc
-        push Not at hc
-        refine hnotnat z.toNat ?_
-        rw [hz, ← Int.cast_natCast (R := R) z.toNat, Int.toNat_of_nonneg hc]
-      -- Reflecting in `αᵢ` raises `mu`, so it lowers the height of `lam - mu`.
-      have hnu : P.reflection i mu ∈ S := hrefl mu hmu i hi
-      obtain ⟨g, hg⟩ := (mem_posRootCone P b).mp (hcone _ hnu)
-      have hrel : ∑ j ∈ b.support, (g j : ℤ) • P.root j
-          = ∑ j ∈ b.support, (f j : ℤ) • P.root j + z • P.root i := by
-        have h₁ : lam - P.reflection i mu = (lam - mu) + z • P.root i := by
-          rw [P.reflection_apply, hz, Int.cast_smul_eq_zsmul]
-          abel
-        simp only [natCast_zsmul]
-        rw [← hg, h₁, hf]
-      have hcoeff : ∀ j ∈ b.support,
-          ((g j : ℤ) - (f j : ℤ) - (if j = i then z else 0)) = 0 := by
-        refine linearIndepOn_iff'.mp hli b.support _ subset_rfl ?_
-        have hsingle : ∑ j ∈ b.support, (if j = i then z else 0) • P.root j = z • P.root i := by
-          rw [Finset.sum_eq_single i (fun j _ hj ↦ by simp [hj]) fun hni ↦ absurd hi hni]
-          simp
-        simp only [sub_smul]
-        rw [Finset.sum_sub_distrib, Finset.sum_sub_distrib, hsingle, hrel]
-        abel
-      have hgsum : ((∑ j ∈ b.support, g j : ℕ) : ℤ) = ((∑ j ∈ b.support, f j : ℕ) : ℤ) + z := by
-        have hsplit : ∀ j ∈ b.support, (g j : ℤ) = (f j : ℤ) + (if j = i then z else 0) := by
-          intro j hj
-          have := hcoeff j hj
-          omega
-        push_cast
-        rw [Finset.sum_congr rfl hsplit, Finset.sum_add_distrib]
-        congr 1
-        rw [Finset.sum_eq_single i (fun j _ hj ↦ by simp [hj]) fun hni ↦ absurd hi hni]
-        simp
-      have hlt : ∑ j ∈ b.support, g j < k := by omega
-      have hmem := ih _ hlt _ hnu g hg rfl
-      have hback : P.reflection i (P.reflection i mu) = mu := P.reflection_same i mu
-      exact hback ▸ hTrefl i _ hmem
-  refine hT.subset fun mu hmu ↦ ?_
-  obtain ⟨f, hf⟩ := (mem_posRootCone P b).mp (hcone mu hmu)
-  exact main _ mu hmu f hf rfl
+  refine Set.Finite.subset (Set.finite_iUnion fun w : P.weylGroup ↦
+    (finite_setOf_dominant_sub_mem_posRootCone b lam).image fun x ↦ w⁻¹ • x)
+    fun mu hmu ↦ Set.mem_iUnion.mpr ?_
+  obtain ⟨w, hwS, hwdom⟩ :=
+    exists_weylGroup_smul_dominant_of_forall_reflection_mem_of_sub_mem_posRootCone b hcone hint
+      hrefl hmu
+  exact ⟨w, w • mu, ⟨hcone _ hwS, hwdom⟩, inv_smul_smul w mu⟩
+
+omit [IsDomain R] in
+/-- **The only antidominant member of the positive root cone is zero.** A nonnegative integer
+combination `nu` of the simple roots on which every simple coroot takes a nonpositive value is
+zero.
+
+The pairings of a member of `Q⁺` with the simple coroots are Cartan integers
+(`TauCeti.exists_intCast_eq_coroot'_of_mem_posRootCone`), so nonpositivity makes every natural
+multiple of `-nu` a dominant weight below `0`. There are only finitely many of those by
+`TauCeti.finite_setOf_dominant_sub_mem_posRootCone`, while the multiples of a nonzero member of
+`Q⁺` are pairwise distinct because their heights are.
+
+This is the statement that separates the dot orbit of `0` from the rest of the negative cone: it
+is what forces the Weyl denominator to be supported on that orbit alone. -/
+theorem eq_zero_of_mem_posRootCone_of_forall_coroot'_nonpos [LinearOrder R]
+    [IsStrictOrderedRing R] {nu : M} (hnu : nu ∈ posRootCone P b)
+    (h : ∀ i ∈ b.support, P.coroot' i nu ≤ 0) : nu = 0 := by
+  by_contra hne
+  -- Nonpositive Cartan integers: every simple coroot takes the value `-n` on `nu` for some `n : ℕ`.
+  have hnat : ∀ i ∈ b.support, ∃ n : ℕ, P.coroot' i nu = -(n : R) := by
+    intro i hi
+    obtain ⟨m, hm⟩ := exists_intCast_eq_coroot'_of_mem_posRootCone P b hnu i
+    have hm0 : m ≤ 0 := by
+      have hle := h i hi
+      rw [hm] at hle
+      exact_mod_cast hle
+    refine ⟨(-m).toNat, ?_⟩
+    rw [hm, ← Int.cast_natCast (R := R) (-m).toNat, Int.toNat_of_nonneg (by omega)]
+    push_cast
+    ring
+  -- The height of `nu` is a positive natural number.
+  obtain ⟨k, hk⟩ := exists_natCast_eq_heightLinearMap_of_mem_posRootCone P b hnu
+  have hk0 : k ≠ 0 := fun hzero =>
+    hne (eq_zero_of_mem_posRootCone_of_heightLinearMap_eq_zero P b hnu (by rw [hk, hzero]; simp))
+  -- All natural multiples of `-nu` are dominant weights below `0`, and they are pairwise distinct.
+  have hmem : ∀ j : ℕ, -(j • nu) ∈ {mu : M | (0 : M) - mu ∈ posRootCone P b ∧
+      ∀ i ∈ b.support, ∃ n : ℕ, P.coroot' i mu = (n : R)} := by
+    intro j
+    refine ⟨by simpa using AddSubmonoid.nsmul_mem _ hnu j, fun i hi => ?_⟩
+    obtain ⟨n, hn⟩ := hnat i hi
+    refine ⟨j * n, ?_⟩
+    rw [map_neg, map_nsmul, hn]
+    push_cast
+    ring
+  have hinj : Function.Injective fun j : ℕ => -(j • nu) := by
+    intro p q hpq
+    have hh := congrArg (heightLinearMap P b) hpq
+    simp only [map_neg, map_nsmul, hk, nsmul_eq_mul, neg_inj] at hh
+    exact_mod_cast mul_right_cancel₀ (Nat.cast_ne_zero.mpr hk0) hh
+  exact Set.infinite_of_injective_forall_mem hinj hmem
+    (finite_setOf_dominant_sub_mem_posRootCone b 0)
 
 end TauCeti

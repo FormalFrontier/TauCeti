@@ -8,7 +8,7 @@ module
 public import Mathlib.Analysis.Convex.StdSimplex
 public import Mathlib.Probability.ProbabilityMassFunction.Integrals
 public import Mathlib.Topology.Sion
-public import TauCeti.MeasureTheory.OptimalTransport.CTransform
+public import TauCeti.MeasureTheory.OptimalTransport.CTransform.Basic
 public import TauCeti.MeasureTheory.OptimalTransport.Duality.Basic
 public import TauCeti.MeasureTheory.OptimalTransport.Finite.TransportMatrix
 
@@ -62,6 +62,8 @@ codomain: the inner supremum is `⊤` at a plan whose marginals are wrong.
   lives on the contact set of the pair, and
   `TauCeti.TransportMatrix.forall_cost_le_and_forall_finiteDualValue_le_iff_mem_contactSet` —
   the same certificate read through `TauCeti.contactSet`;
+* `TauCeti.TransportMatrix.forall_cost_le_iff_exists_forall_add_le_and_support_subset_contactSet`
+  — existential complementary slackness, with finite dual attainment supplying the potentials;
 * `TauCeti.finiteDualValue_eq_kantorovichDualValue`,
   `TauCeti.TransportMatrix.cost_eq_integral` and
   `TauCeti.TransportMatrix.isCoupling_toPMF_toMeasure` — the bridges to the measure-level dual
@@ -136,6 +138,10 @@ theorem finiteDualValue_mono {φ φ' : ι → ℝ} {ψ ψ' : κ → ℝ} (hφ : 
 
 Convexity and compactness arguments are run on real-valued plans, which form a closed subset of
 the standard simplex on the product. -/
+
+/-- The standard simplex on `ι × κ`: functions with non-negative values summing to 1. -/
+private def stdSimplexSet : Set (ι × κ → ℝ) :=
+  {f | (∀ q, 0 ≤ f q) ∧ ∑ q, f q = 1}
 
 /-- The real transport plans: nonnegative functions on the product with the prescribed row and
 column sums. This is the standard-simplex picture of `TauCeti.TransportMatrix`. -/
@@ -254,12 +260,28 @@ private theorem continuous_costFun (c : ι × κ → ℝ) : Continuous (costFun 
   refine continuous_finsetSum _ fun q _ ↦ ?_
   exact continuous_const.mul (continuous_apply q)
 
-private theorem realPlans_subset_stdSimplex : RealPlans μ ν ⊆ stdSimplex ℝ (ι × κ) := by
+private theorem realPlans_subset_stdSimplex : RealPlans μ ν ⊆ stdSimplexSet := by
   intro f hf
   refine ⟨hf.1, ?_⟩
   rw [Fintype.sum_prod_type]
   simp only [hf.2.1]
   exact PMF.sum_toReal_eq_one μ
+
+private theorem convex_stdSimplexSet : Convex ℝ (stdSimplexSet (ι := ι) (κ := κ)) := by
+  intro f hf g hg a b ha hb hab
+  refine ⟨fun q ↦ add_nonneg (smul_nonneg ha (hf.1 q)) (smul_nonneg hb (hg.1 q)), ?_⟩
+  simp only [Pi.add_apply, Pi.smul_apply, smul_eq_mul, Finset.sum_add_distrib, ← Finset.mul_sum,
+    hf.2, hg.2, mul_one, hab]
+
+private theorem isCompact_stdSimplexSet : IsCompact (stdSimplexSet (ι := ι) (κ := κ)) := by
+  have h : stdSimplexSet (ι := ι) (κ := κ) =
+      Set.range fun t : Convexity.StdSimplex ℝ (ι × κ) ↦ ⇑t.weights := by
+    rw [Convexity.StdSimplex.range_toFun_comp_weights]
+    ext f
+    simp [stdSimplexSet]
+  rw [h]
+  exact isCompact_range
+    (continuous_pi fun q ↦ Convexity.StdSimplex.continuous_weights_apply ℝ q)
 
 private theorem isClosed_realPlans : IsClosed (RealPlans μ ν) := by
   have h1 : IsClosed {f : ι × κ → ℝ | ∀ q, 0 ≤ f q} := by
@@ -274,7 +296,7 @@ private theorem isClosed_realPlans : IsClosed (RealPlans μ ν) := by
   exact h1.inter (h2.inter h3)
 
 private theorem isCompact_realPlans : IsCompact (RealPlans μ ν) :=
-  (isCompact_stdSimplex ℝ (ι × κ)).of_isClosed_subset isClosed_realPlans
+  IsCompact.of_isClosed_subset isCompact_stdSimplexSet isClosed_realPlans
     realPlans_subset_stdSimplex
 
 private theorem realPlans_nonempty (μ : PMF ι) (ν : PMF κ) : (RealPlans μ ν).Nonempty :=
@@ -551,7 +573,7 @@ private theorem iSup_lagrangian_of_mem (c : ι × κ → ℝ) (hf : f ∈ RealPl
   simp only [hconst]
   exact iSup_const
 
-private theorem iSup_lagrangian_of_notMem (c : ι × κ → ℝ) (hf : f ∈ stdSimplex ℝ (ι × κ))
+private theorem iSup_lagrangian_of_notMem (c : ι × κ → ℝ) (hf : f ∈ stdSimplexSet)
     (hnot : f ∉ RealPlans μ ν) :
     ⨆ p : (ι → ℝ) × (κ → ℝ), ((lagrangian c μ ν f p : ℝ) : EReal) = ⊤ := by
   classical
@@ -588,11 +610,11 @@ private theorem iSup_lagrangian_of_notMem (c : ι × κ → ℝ) (hf : f ∈ std
 private theorem iInf_lagrangian (c : ι × κ → ℝ) (μ : PMF ι) (ν : PMF κ)
     (p : (ι → ℝ) × (κ → ℝ)) (q₀ : ι × κ)
     (hq₀ : ∀ q, c q₀ - p.1 q₀.1 - p.2 q₀.2 ≤ c q - p.1 q.1 - p.2 q.2) :
-    ⨅ f ∈ stdSimplex ℝ (ι × κ), ((lagrangian c μ ν f p : ℝ) : EReal)
+    ⨅ f ∈ stdSimplexSet, ((lagrangian c μ ν f p : ℝ) : EReal)
       = ((finiteDualValue μ ν p.1 p.2 + (c q₀ - p.1 q₀.1 - p.2 q₀.2) : ℝ) : EReal) := by
   classical
   refine le_antisymm ?_ (le_iInf₂ fun f hf ↦ ?_)
-  · have hmem : (fun q ↦ if q = q₀ then (1 : ℝ) else 0) ∈ stdSimplex ℝ (ι × κ) := by
+  · have hmem : (fun q ↦ if q = q₀ then (1 : ℝ) else 0) ∈ stdSimplexSet := by
       refine ⟨fun q ↦ by positivity, ?_⟩
       simp
     refine (biInf_le _ hmem).trans (le_of_eq ?_)
@@ -619,25 +641,25 @@ theorem exists_cost_eq_finiteDualValue (c : ι × κ → ℝ) (μ : PMF ι) (ν 
   obtain ⟨A, hA⟩ := TransportMatrix.exists_forall_cost_le c μ ν
   obtain ⟨φ, ψ, hfeas, hmax⟩ := exists_forall_finiteDualValue_le c μ ν
   refine ⟨A, φ, ψ, hA, hfeas, le_antisymm ?_ (A.finiteDualValue_le_cost hfeas)⟩
-  have key : (⨅ f ∈ stdSimplex ℝ (ι × κ), ⨆ p ∈ (Set.univ : Set ((ι → ℝ) × (κ → ℝ))),
+  have key : (⨅ f ∈ stdSimplexSet, ⨆ p ∈ (Set.univ : Set ((ι → ℝ) × (κ → ℝ))),
         ((lagrangian c μ ν f p : ℝ) : EReal))
-      = ⨆ p ∈ (Set.univ : Set ((ι → ℝ) × (κ → ℝ))), ⨅ f ∈ stdSimplex ℝ (ι × κ),
+      = ⨆ p ∈ (Set.univ : Set ((ι → ℝ) × (κ → ℝ))), ⨅ f ∈ stdSimplexSet,
         ((lagrangian c μ ν f p : ℝ) : EReal) := by
     refine Sion.minimax'
       (ne_X := (realPlans_nonempty μ ν).mono realPlans_subset_stdSimplex)
-      (cX := convex_stdSimplex ℝ (ι × κ)) (kX := isCompact_stdSimplex ℝ (ι × κ))
+      (cX := convex_stdSimplexSet) (kX := isCompact_stdSimplexSet)
       (cY := convex_univ) (hfy := fun p _ ↦ ?_) (hfy' := fun p _ ↦ ?_)
       (hfx := fun f _ ↦ ?_) (hfx' := fun f _ ↦ ?_)
     · exact (continuous_coe_real_ereal.comp
         (continuous_lagrangian_left c μ ν p)).lowerSemicontinuous.lowerSemicontinuousOn _
-    · exact quasiconvexOn_coe (affine_convexOn_concaveOn (convex_stdSimplex ℝ (ι × κ))
+    · exact quasiconvexOn_coe (affine_convexOn_concaveOn convex_stdSimplexSet
         (fun x y a b hab ↦ lagrangian_affine_left c μ ν x y p a b hab)).1
     · exact (continuous_coe_real_ereal.comp
         (continuous_lagrangian_right c μ ν f)).upperSemicontinuous.upperSemicontinuousOn _
     · exact quasiconcaveOn_coe (affine_convexOn_concaveOn convex_univ
         (fun x y a b hab ↦ lagrangian_affine_right c μ ν f x y a b hab)).2
   simp only [iSup_univ] at key
-  have h1 : ((A.cost c : ℝ) : EReal) ≤ ⨅ f ∈ stdSimplex ℝ (ι × κ),
+  have h1 : ((A.cost c : ℝ) : EReal) ≤ ⨅ f ∈ stdSimplexSet,
       ⨆ p : (ι → ℝ) × (κ → ℝ), ((lagrangian c μ ν f p : ℝ) : EReal) := by
     refine le_iInf₂ fun f hf ↦ ?_
     by_cases hmem : f ∈ RealPlans μ ν
@@ -646,7 +668,7 @@ theorem exists_cost_eq_finiteDualValue (c : ι × κ → ℝ) (μ : PMF ι) (ν 
       exact hA _
     · rw [iSup_lagrangian_of_notMem c hf hmem]
       exact le_top
-  have h2 : (⨆ p : (ι → ℝ) × (κ → ℝ), ⨅ f ∈ stdSimplex ℝ (ι × κ),
+  have h2 : (⨆ p : (ι → ℝ) × (κ → ℝ), ⨅ f ∈ stdSimplexSet,
       ((lagrangian c μ ν f p : ℝ) : EReal)) ≤ ((finiteDualValue μ ν φ ψ : ℝ) : EReal) := by
     refine iSup_le fun p ↦ ?_
     obtain ⟨q₀, hq₀⟩ := Finite.exists_min fun q ↦ c q - p.1 q.1 - p.2 q.2
@@ -709,7 +731,43 @@ theorem TransportMatrix.forall_cost_le_and_forall_finiteDualValue_le_iff_mem_con
           (i, j) ∈ contactSet c (fun i ↦ (φ i : EReal)) (fun j ↦ (ψ j : EReal)) := by
   rw [A.forall_cost_le_and_forall_finiteDualValue_le_iff hfeas]
   refine forall_congr' fun i ↦ forall_congr' fun j ↦ imp_congr_right fun _ ↦ ?_
-  rw [mk_mem_contactSet_iff, ← EReal.coe_add, EReal.coe_eq_coe_iff]
+  rw [mk_mem_contactSet_coe_iff]
+
+/-- Containment of the support of a transportation matrix in the contact set of real-valued
+potentials is the pointwise complementary-slackness condition on every nonzero entry. -/
+theorem TransportMatrix.toPMF_support_subset_contactSet_coe_iff (A : TransportMatrix μ ν)
+    (c : ι × κ → ℝ) (φ : ι → ℝ) (ψ : κ → ℝ) :
+    A.toPMF.support ⊆ contactSet c (fun i ↦ (φ i : EReal)) (fun j ↦ (ψ j : EReal)) ↔
+      ∀ i j, A i j ≠ 0 → φ i + ψ j = c (i, j) := by
+  constructor
+  · intro hsupp i j hij
+    rw [← mk_mem_contactSet_coe_iff c φ ψ i j]
+    apply hsupp
+    simpa only [PMF.mem_support_iff, A.toPMF_apply]
+  · intro hcontact q hq
+    rw [mk_mem_contactSet_coe_iff]
+    apply hcontact q.1 q.2
+    simpa only [PMF.mem_support_iff, A.toPMF_apply] using hq
+
+/-- **Existential complementary slackness for a finite transport plan.** A transportation
+matrix minimizes a real cost exactly when there is a dual-feasible pair of potentials whose
+contact set contains the support of the matrix. Finite Kantorovich duality supplies the
+potentials, so they need not be selected in advance. -/
+theorem TransportMatrix.forall_cost_le_iff_exists_forall_add_le_and_support_subset_contactSet
+    (A : TransportMatrix μ ν) (c : ι × κ → ℝ) :
+    (∀ B : TransportMatrix μ ν, A.cost c ≤ B.cost c) ↔
+      ∃ φ : ι → ℝ, ∃ ψ : κ → ℝ, (∀ i j, φ i + ψ j ≤ c (i, j)) ∧
+        A.toPMF.support ⊆
+          contactSet c (fun i ↦ (φ i : EReal)) (fun j ↦ (ψ j : EReal)) := by
+  constructor
+  · intro hA
+    obtain ⟨φ, ψ, hfeas, hmax⟩ := exists_forall_finiteDualValue_le c μ ν
+    refine ⟨φ, ψ, hfeas,
+      (A.toPMF_support_subset_contactSet_coe_iff c φ ψ).2 ?_⟩
+    exact (A.forall_cost_le_and_forall_finiteDualValue_le_iff hfeas).1 ⟨hA, hmax⟩
+  · rintro ⟨φ, ψ, hfeas, hsupp⟩
+    exact ((A.forall_cost_le_and_forall_finiteDualValue_le_iff hfeas).2
+      ((A.toPMF_support_subset_contactSet_coe_iff c φ ψ).1 hsupp)).1
 
 /-! ### The measure-level reading
 

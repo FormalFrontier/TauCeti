@@ -181,10 +181,7 @@ private theorem truncatedExtEuler_shortExact_correction₁ {S : ShortComplex C} 
     have h := Ext.contravariant_sequence_exact₁' hS Y n (n + 1) (Nat.one_add n)
     rw [ShortComplex.ab_exact_iff_function_exact] at h
     exact h
-  · intro n
-    have h := Ext.contravariant_sequence_exact₃' hS Y n (n + 1) (Nat.one_add n)
-    rw [ShortComplex.ab_exact_iff_function_exact] at h
-    exact h
+  · exact fun n ↦ exact_precompOfLinear₃ k hS Y n (n + 1) (Nat.one_add n)
 
 /-! ### Additivity on short exact sequences -/
 
@@ -243,15 +240,19 @@ variable {P Q : ObjectProperty C} [LocallySmall.{w} C]
   [P.ContainsZero] [P.IsClosedUnderBinaryProducts]
   [Q.ContainsZero] [Q.IsClosedUnderBinaryProducts]
 
-private noncomputable def extEulerRightInvariant
+private noncomputable def extEulerRightAdditiveInvariant
     (hQ : (ExactStructure.abelian C).IsExtensionClosed Q)
-    (h : IsEulerAdmissibleOn.{w} k P Q) (X : P.FullSubcategory) :
-    ExactK0.AdditiveInvariant ((ExactStructure.abelian C).fullSubcategory Q hQ) ℤ where
-  obj Y := extEuler.{w} k (h.isEulerAdmissible X.property Y.property)
-  map_iso {Y Y'} e :=
+    (h : IsEulerAdmissibleOn.{w} k P Q) :
+    ExactK0.RightAdditiveInvariant P.FullSubcategory
+      ((ExactStructure.abelian C).fullSubcategory Q hQ) ℤ where
+  obj X Y := extEuler.{w} k (h.isEulerAdmissible X.property Y.property)
+  map_iso₁ {X X'} e Y :=
+    extEuler_of_iso (h.isEulerAdmissible X.property Y.property)
+      (h.isEulerAdmissible X'.property Y.property) (P.ι.mapIso e) (Iso.refl Y.obj)
+  map_iso₂ X {Y Y'} e :=
     extEuler_of_iso (h.isEulerAdmissible X.property Y.property)
       (h.isEulerAdmissible X.property Y'.property) (Iso.refl X.obj) (Q.ι.mapIso e)
-  map_conflation {S} hS := by
+  map_conflation₂ X {S} hS := by
     have hc : (ExactStructure.abelian C).Conflation (S.map Q.ι) :=
       (ExactStructure.fullSubcategory_conflation_iff hQ S).mp hS
     have hS' : (S.map Q.ι).ShortExact := (ExactStructure.abelian_conflation _).mp hc
@@ -266,7 +267,7 @@ noncomputable def extEulerRight
     (hQ : (ExactStructure.abelian C).IsExtensionClosed Q)
     (h : IsEulerAdmissibleOn.{w} k P Q) (X : P.FullSubcategory) :
     ExactK0 ((ExactStructure.abelian C).fullSubcategory Q hQ) →+ ℤ :=
-  ExactK0.lift (extEulerRightInvariant hQ h X)
+  (extEulerRightAdditiveInvariant hQ h).rightLift X
 
 omit [ObjectProperty.EssentiallySmall.{w} P] [P.ContainsZero]
   [P.IsClosedUnderBinaryProducts] in
@@ -277,46 +278,23 @@ theorem extEulerRight_of
     (Y : Q.FullSubcategory) :
     extEulerRight hQ h X (ExactK0.of Y) =
       extEuler.{w} k (h.isEulerAdmissible X.property Y.property) :=
-  ExactK0.lift_of _ Y
+  ExactK0.RightAdditiveInvariant.rightLift_of _ X Y
 
-omit [ObjectProperty.EssentiallySmall.{w} P] [P.ContainsZero]
-  [P.IsClosedUnderBinaryProducts] in
-private theorem extEulerRight_congr
-    (hQ : (ExactStructure.abelian C).IsExtensionClosed Q)
-    (h : IsEulerAdmissibleOn.{w} k P Q) {X X' : P.FullSubcategory} (e : X ≅ X') :
-    extEulerRight hQ h X = extEulerRight hQ h X' := by
-  refine ExactK0.hom_ext fun Y ↦ ?_
-  rw [extEulerRight_of, extEulerRight_of]
-  exact extEuler_of_iso (h.isEulerAdmissible X.property Y.property)
-    (h.isEulerAdmissible X'.property Y.property) (P.ι.mapIso e) (Iso.refl Y.obj)
-
-omit [ObjectProperty.EssentiallySmall.{w} P] in
-private theorem extEulerRight_conflation
-    (hP : (ExactStructure.abelian C).IsExtensionClosed P)
-    (hQ : (ExactStructure.abelian C).IsExtensionClosed Q)
-    (h : IsEulerAdmissibleOn.{w} k P Q) {S : ShortComplex P.FullSubcategory}
-    (hS : ((ExactStructure.abelian C).fullSubcategory P hP).Conflation S) :
-    extEulerRight hQ h S.X₂ = extEulerRight hQ h S.X₁ + extEulerRight hQ h S.X₃ := by
-  refine ExactK0.hom_ext fun Y ↦ ?_
-  simp only [extEulerRight_of, AddMonoidHom.add_apply]
-  have hc : (ExactStructure.abelian C).Conflation (S.map P.ι) :=
-    (ExactStructure.fullSubcategory_conflation_iff hP S).mp hS
-  have hS' : (S.map P.ι).ShortExact := (ExactStructure.abelian_conflation _).mp hc
-  exact extEuler_shortExact₁ hS' Y.obj
-    (h.isEulerAdmissible S.X₁.property Y.property)
-    (h.isEulerAdmissible S.X₂.property Y.property)
-    (h.isEulerAdmissible S.X₃.property Y.property)
-
-private noncomputable def extEulerLeftInvariant
+private noncomputable def extEulerBiadditiveInvariant
     (hP : (ExactStructure.abelian C).IsExtensionClosed P)
     (hQ : (ExactStructure.abelian C).IsExtensionClosed Q)
     (h : IsEulerAdmissibleOn.{w} k P Q) :
-    ExactK0.AdditiveInvariant ((ExactStructure.abelian C).fullSubcategory P hP)
-  (ExactK0 ((ExactStructure.abelian C).fullSubcategory Q hQ) →+ ℤ) where
-  obj := extEulerRight hQ h
-  map_iso := fun {_ _} e ↦ extEulerRight_congr (P := P) (Q := Q) hQ h e
-  map_conflation := fun {_} hS ↦
-    extEulerRight_conflation (P := P) (Q := Q) hP hQ h hS
+    ExactK0.BiadditiveInvariant ((ExactStructure.abelian C).fullSubcategory P hP)
+      ((ExactStructure.abelian C).fullSubcategory Q hQ) ℤ where
+  toRightAdditiveInvariant := extEulerRightAdditiveInvariant hQ h
+  map_conflation₁ {S} hS Y := by
+    have hc : (ExactStructure.abelian C).Conflation (S.map P.ι) :=
+      (ExactStructure.fullSubcategory_conflation_iff hP S).mp hS
+    have hS' : (S.map P.ι).ShortExact := (ExactStructure.abelian_conflation _).mp hc
+    exact extEuler_shortExact₁ hS' Y.obj
+      (h.isEulerAdmissible S.X₁.property Y.property)
+      (h.isEulerAdmissible S.X₂.property Y.property)
+      (h.isEulerAdmissible S.X₃.property Y.property)
 
 /-- **The Ext-Euler pairing on Grothendieck groups.** If `P` and `Q` are extension-closed
 additive object properties and every pair in `P × Q` is Euler-admissible, the object-level
@@ -328,7 +306,7 @@ noncomputable def extEulerPairing
     (h : IsEulerAdmissibleOn.{w} k P Q) :
     ExactK0 ((ExactStructure.abelian C).fullSubcategory P hP) →+
       ExactK0 ((ExactStructure.abelian C).fullSubcategory Q hQ) →+ ℤ :=
-  ExactK0.lift (extEulerLeftInvariant hP hQ h)
+  (extEulerBiadditiveInvariant hP hQ h).bilift
 
 /-- The descended pairing evaluates on object classes as the original Ext-Euler
 characteristic. -/
@@ -340,7 +318,7 @@ theorem extEulerPairing_of_of
     (Y : Q.FullSubcategory) :
     extEulerPairing hP hQ h (ExactK0.of X) (ExactK0.of Y) =
       extEuler.{w} k (h.isEulerAdmissible X.property Y.property) := by
-  rw [extEulerPairing, ExactK0.lift_of, extEulerLeftInvariant, extEulerRight_of]
+  exact ExactK0.BiadditiveInvariant.bilift_of_of _ X Y
 
 /-- The Ext-Euler pairing is the unique biadditive map with the prescribed values on pairs of
 object classes. -/
@@ -354,7 +332,6 @@ theorem extEulerPairing_unique
       b (ExactK0.of X) (ExactK0.of Y) =
         extEuler.{w} k (h.isEulerAdmissible X.property Y.property)) :
     b = extEulerPairing hP hQ h := by
-  refine ExactK0.hom_ext fun X ↦ ExactK0.hom_ext fun Y ↦ ?_
-  rw [hb, extEulerPairing_of_of]
+  exact ExactK0.BiadditiveInvariant.bilift_unique _ b hb
 
 end TauCeti

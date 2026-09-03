@@ -4,20 +4,12 @@
 from __future__ import annotations
 
 import contextlib
-import importlib.util
 import io
 import pathlib
-import sys
 import tempfile
 import unittest
 
-
-SCRIPT = pathlib.Path(__file__).with_name("lint-dot-notation.py")
-SPEC = importlib.util.spec_from_file_location("lint_dot_notation", SCRIPT)
-assert SPEC is not None and SPEC.loader is not None
-lint = importlib.util.module_from_spec(SPEC)
-sys.modules[SPEC.name] = lint
-SPEC.loader.exec_module(lint)
+import lean_source as lint
 
 
 def findings(source: str, namespaces: set[str] | None = None):

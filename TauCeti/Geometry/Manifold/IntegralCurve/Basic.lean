@@ -74,8 +74,12 @@ theorem map_of_mfderiv_eq {f : M → M'} {V : (x : M) → TangentSpace I x}
 curve outside its parameter set are junk, so a curve agreeing with an integral curve on the set is
 again an integral curve there. -/
 theorem congr {V : (x : M) → TangentSpace I x} {γ γ' : ℝ → M} {s : Set ℝ}
-    (hγ : IsMIntegralCurveOn γ V s) (h : Set.EqOn γ' γ s) : IsMIntegralCurveOn γ' V s := fun t ht ↦
-  ((hγ t ht).congr_mono h (h ht) Set.Subset.rfl).congr_mfderiv (by rw [h ht])
+    (hγ : IsMIntegralCurveOn γ V s) (h : Set.EqOn γ' γ s) : IsMIntegralCurveOn γ' V s := by
+  intro t ht
+  apply ((hγ t ht).congr_mono h (h ht) Set.Subset.rfl).congr_mfderiv
+  -- Normalize the common base point so the dependent tangent spaces and their cast coincide.
+  rw [h ht]
+  rfl
 
 end IsMIntegralCurveOn
 

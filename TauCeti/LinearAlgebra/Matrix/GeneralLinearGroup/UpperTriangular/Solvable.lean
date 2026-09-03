@@ -20,9 +20,8 @@ nilpotent upper-unitriangular group. Hence every upper-triangular general linear
 commutative ring is solvable.
 
 This advances the "Lie--Kolchin; solvable groups" milestone in Layer 5 of the ReductiveGroups
-roadmap. Its `Fin 2` case supplies the solvability input for the `GL₂` Borel scheme in
-`TauCeti.Algebra.AlgebraicGroup.Solvable.Borel`; the general-rank case will supply the same input
-once the corresponding Borel subgroup scheme has been constructed.
+roadmap. It supplies the abstract solvability input for the upper-triangular subgroup scheme in
+`TauCeti.Algebra.AlgebraicGroup.Solvable.UpperTriangular`.
 
 ## Main declaration
 

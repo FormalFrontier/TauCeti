@@ -6,9 +6,8 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.RingTheory.MvPolynomial.Symmetric.Defs
+public import TauCeti.Algebra.MvPolynomial.Monomial
 public import TauCeti.RingTheory.MvPolynomial.Symmetric.Schur.Basic
-
-public section
 
 /-!
 # The Schur polynomial of a one-row shape
@@ -77,19 +76,11 @@ without the Bender--Knuth involution that `TauCeti.schurPoly_isSymmetric` needs 
   Layer 7.
 -/
 
+public section
+
 namespace TauCeti
 
 open Finset MvPolynomial
-
-/-! ### Monomials as products of variables -/
-
-/-- **A monomial is the product of the variables it uses, with multiplicity.**  This is the form
-in which the monomials of `MvPolynomial.hsymm` are written. -/
-private theorem prod_map_X_eq_monomial {σ : Type*} [DecidableEq σ] {R : Type*} [CommSemiring R]
-    (s : Multiset σ) :
-    (s.map (X : σ → MvPolynomial σ R)).prod = monomial s.toFinsupp (1 : R) := by
-  rw [Finset.prod_multiset_map_count, ← prod_X_pow_eq_monomial, Multiset.toFinsupp_support]
-  exact Finset.prod_congr rfl fun a _ => by rw [Multiset.toFinsupp_apply]
 
 namespace BoundedSSYT
 

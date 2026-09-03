@@ -51,9 +51,9 @@ sends `N ∩ f ⁻¹' L` into a compact box; being anti-Lipschitz, it reflects t
 
 Lane F0 of the analytic Heegaard Floer roadmap asks for the package "a moduli space is the zero
 set of a Fredholm section, and at a regular point a manifold of dimension the index", of which
-`TauCeti.Analysis.Fredholm.LevelSet` supplies the charts; local properness is the complementary
-topological half, and it is what will make the critical values of a Fredholm map locally closed
-in the Sard--Smale argument.
+`TauCeti.Analysis.Fredholm.LevelSet.Basic` supplies the charts. Local properness is the
+complementary topological half, and it is what will make the critical values of a Fredholm map
+locally closed in the Sard--Smale argument.
 -/
 
 public section
@@ -137,7 +137,7 @@ private theorem exists_isCompact_forall_mem_of_norm_le {V : Submodule 𝕜 E}
     (isCompact_closedBall _ _).image V.subtypeL.continuous,
     fun x hx => ⟨⟨P x, hPV x⟩, ?_, V.subtypeL_apply _⟩⟩
   simp only [Metric.mem_closedBall, dist_zero_right]
-  calc ‖(⟨P x, hPV x⟩ : V)‖ = ‖P x‖ := Submodule.coe_norm _
+  calc ‖(⟨P x, hPV x⟩ : V)‖ = ‖P x‖ := (Submodule.norm_coe _).symm
     _ ≤ ‖P‖ * ‖x‖ := P.le_opNorm x
     _ ≤ ‖P‖ * r := by gcongr
 
@@ -199,7 +199,7 @@ theorem _root_.HasStrictFDerivAt.exists_mem_nhds_forall_isCompact_inter_preimage
     antilipschitzWith_prodMk hC.le key
   have hΘlip : LipschitzWith (‖f'‖₊ + ε + ‖P‖₊) Θ := by
     have h1 : LipschitzWith (‖f'‖₊ + ε) fun x : N => f (x : E) := happN.lipschitz
-    have h2 : LipschitzWith ‖P‖₊ fun x : N => P (x : E) := P.lipschitz.restrict N
+    have h2 : LipschitzWith ‖P‖₊ fun x : N => P (x : E) := P.lipschitzWith.restrict N
     exact (h1.prodMk h2).weaken (by simp)
   have hind : IsUniformInducing Θ := hanti.isUniformInducing hΘlip.uniformContinuous
   -- total boundedness, then compactness

@@ -67,12 +67,11 @@ proved nonzero.
 
 ## Provenance
 
-The mathematics is Stichtenoth's and the Lean development is independent. The roadmap's
-coordination section records that `vaca22/riemann-roch-function-fields` (Guanghao Li,
-Apache-2.0) carries a complete function-field Riemann–Roch by the same Stichtenoth route, and
-that this roadmap specifies the mathematics rather than that code; no code is copied or adapted
-from it here, and the normalized-`ℤᵐ⁰`-valuation `TauCeti.Place` API this file is written
-against is the deliberate API divergence recorded there.
+The mathematics is Stichtenoth's and the Lean development is independent. The separate
+`vaca22/riemann-roch-function-fields` project (Guanghao Li, Apache-2.0) carries a complete
+function-field Riemann–Roch development by the same Stichtenoth route; no code is copied or
+adapted from it here. In particular, this file uses Tau Ceti's normalized-`ℤᵐ⁰`-valuation
+`TauCeti.Place` API.
 
 ## References
 
@@ -226,15 +225,137 @@ private theorem valuation_sum_eq_exp_neg {x t : F} (hx : 0 < P.ord x) (ht : P.or
 
 /-! ### Proposition 1.3.3 -/
 
+/-- **The products `u P j * t P ^ a` are linearly independent over `k⟮x⟯`.** Given
+uniformizers `t P` at each place of `S` that are units at the other places of `S`, and lifts
+`u P j` of a `k`-basis of each residue field that are as small as `x` at the other places, the
+products `u P j * t P ^ a` for `a < ord_P x` form a `k⟮x⟯`-linearly independent family. This is
+the content of Stichtenoth, Proposition 1.3.3; counting the family is all that remains. -/
+private theorem linearIndependent_mul_pow_of_linearIndependent_residue {x : F}
+    {S : Finset (Place k F)} (hS : ∀ P ∈ S, 0 < P.ord x)
+    {t : {P : Place k F // P ∈ S} → F}
+    (ht1 : ∀ P : {P : Place k F // P ∈ S}, (P : Place k F).ord (t P) = 1)
+    (ht0 : ∀ (P : {P : Place k F // P ∈ S}) (Q : Place k F), Q ∈ S → Q ≠ (P : Place k F) →
+      Q.ord (t P) = 0)
+    {u : ∀ P : {P : Place k F // P ∈ S},
+      Fin (Module.finrank k (P : Place k F).ResidueField) → F}
+    (humem : ∀ (P : {P : Place k F // P ∈ S}) j, u P j ∈ (P : Place k F).integers)
+    (huord : ∀ (P : {P : Place k F // P ∈ S}) j (Q : Place k F), Q ∈ S → Q ≠ (P : Place k F) →
+      Q.ord (u P j) = Q.ord x)
+    (hlib : ∀ P : {P : Place k F // P ∈ S}, LinearIndependent k
+      fun j ↦ IsLocalRing.residue (P : Place k F).integers ⟨u P j, humem P j⟩) :
+    LinearIndependent k⟮x⟯
+      (fun i : Σ P : {P : Place k F // P ∈ S}, Fin ((P : Place k F).ord x).toNat ×
+          Fin (Module.finrank k (P : Place k F).ResidueField) ↦
+        u i.1 i.2.2 * t i.1 ^ (i.2.1 : ℕ)) := by
+  classical
+  -- Clear a common power of `x` from the coefficients, then localise at the place `P₀` carrying
+  -- the surviving lowest-degree coefficient: there the valuation of its own block is `exp (-A)`
+  -- exactly, while every other block is at most `exp (-ord_{P₀} x)`, and `A < ord_{P₀} x` makes
+  -- that a contradiction.
+  rcases S.eq_empty_or_nonempty with rfl | ⟨P₁, hP₁⟩
+  · have : IsEmpty (Σ P : {P : Place k F // P ∈ (∅ : Finset (Place k F))},
+        Fin ((P : Place k F).ord x).toNat ×
+          Fin (Module.finrank k (P : Place k F).ResidueField)) :=
+      ⟨fun i ↦ Finset.notMem_empty _ i.1.2⟩
+    exact linearIndependent_empty_type
+  have hx0 : x ≠ 0 := by rintro rfl; simpa using hS P₁ hP₁
+  -- Linear independence of the residue vectors already forces each lift to be nonzero.
+  have hune : ∀ (P : {P : Place k F // P ∈ S}) j, u P j ≠ 0 := by
+    intro P j h
+    have hu0 : (⟨u P j, humem P j⟩ : (P : Place k F).integers) = 0 := Subtype.ext h
+    exact (hlib P).ne_zero j (by rw [hu0, map_zero])
+  rw [← LinearIndependent.iff_fractionRing (Algebra.adjoin k {x}) k⟮x⟯,
+    Fintype.linearIndependent_iff]
+  intro g hsum i₁
+  by_contra hg0
+  -- Write the coefficients as polynomials in `x` and clear the common power of `x`.
+  have hrange : ∀ y : F, y ∈ Algebra.adjoin k ({x} : Set F) → ∃ p : k[X], aeval x p = y := by
+    intro y hy
+    rwa [Algebra.adjoin_singleton_eq_range_aeval, AlgHom.mem_range] at hy
+  choose p hp using fun i ↦ hrange ((g i : Algebra.adjoin k ({x} : Set F)) : F) (g i).2
+  have hpne : p i₁ ≠ 0 := by
+    intro h
+    exact hg0 (Subtype.ext (by simpa [h] using (hp i₁).symm))
+  obtain ⟨m, q, hfactor, i₂, -, hq₂⟩ :=
+    TauCeti.Polynomial.exists_common_X_pow_factor Finset.univ p ⟨i₁, Finset.mem_univ _, hpne⟩
+  have hsumF : ∑ i, aeval x (q i) * (u i.1 i.2.2 * t i.1 ^ (i.2.1 : ℕ)) = 0 := by
+    refine mul_left_cancel₀ (pow_ne_zero m hx0) ?_
+    rw [Finset.mul_sum, mul_zero, ← hsum]
+    refine Finset.sum_congr rfl fun i _ ↦ ?_
+    rw [Algebra.smul_def, Subalgebra.algebraMap_apply, ← hp i,
+      hfactor i (Finset.mem_univ i), map_mul, map_pow, aeval_X]
+    ring
+  rw [← Finset.univ_sigma_univ, Finset.sum_sigma] at hsumF
+  simp only [Fintype.sum_prod_type] at hsumF
+  -- Split the relation into the block at `P₀ := i₂.1` and the remaining blocks.
+  set P₀ := i₂.1
+  have hmem₂ : i₂.2.1 ∈ Finset.univ.filter
+      (fun a : Fin ((P₀ : Place k F).ord x).toNat ↦ ∃ j, (q ⟨P₀, a, j⟩).coeff 0 ≠ 0) := by
+    simp only [Finset.mem_filter, Finset.mem_univ, true_and]
+    exact ⟨i₂.2.2, hq₂⟩
+  set A := (Finset.univ.filter
+    (fun a : Fin ((P₀ : Place k F).ord x).toNat ↦ ∃ j, (q ⟨P₀, a, j⟩).coeff 0 ≠ 0)).min'
+      ⟨i₂.2.1, hmem₂⟩ with hAdef
+  have hAex : ∃ j, (q ⟨P₀, A, j⟩).coeff 0 ≠ 0 := by
+    have := Finset.min'_mem _ (⟨i₂.2.1, hmem₂⟩ :
+      (Finset.univ.filter (fun a : Fin ((P₀ : Place k F).ord x).toNat ↦
+        ∃ j, (q ⟨P₀, a, j⟩).coeff 0 ≠ 0)).Nonempty)
+    simpa [← hAdef] using this
+  have hAmin : ∀ a : Fin ((P₀ : Place k F).ord x).toNat, (a : ℕ) < (A : ℕ) →
+      ∀ j, (q ⟨P₀, a, j⟩).coeff 0 = 0 := by
+    intro a ha j
+    by_contra h
+    have hle : A ≤ a := Finset.min'_le _ a (by
+      simp only [Finset.mem_filter, Finset.mem_univ, true_and]
+      exact ⟨j, h⟩)
+    exact absurd (Fin.le_def.mp hle) (by omega)
+  have hAlt : ((A : ℕ) : ℤ) < (P₀ : Place k F).ord x := by
+    have h1 := A.isLt
+    have h2 := hS (P₀ : Place k F) P₀.2
+    omega
+  have hkey : (P₀ : Place k F).valuation
+      (∑ a : Fin ((P₀ : Place k F).ord x).toNat,
+        ∑ j : Fin (Module.finrank k (P₀ : Place k F).ResidueField),
+          aeval x (q ⟨P₀, a, j⟩) * (u P₀ j * t P₀ ^ (a : ℕ)))
+      = WithZero.exp (-((A : ℕ) : ℤ)) :=
+    valuation_sum_eq_exp_neg (hS (P₀ : Place k F) P₀.2) (ht1 P₀) (humem P₀) (hlib P₀) _
+      hAex hAmin hAlt
+  have hother : ∀ P : {P : Place k F // P ∈ S}, P ≠ P₀ →
+      (P₀ : Place k F).valuation
+        (∑ a : Fin ((P : Place k F).ord x).toNat,
+          ∑ j : Fin (Module.finrank k (P : Place k F).ResidueField),
+            aeval x (q ⟨P, a, j⟩) * (u P j * t P ^ (a : ℕ)))
+        ≤ WithZero.exp (-(P₀ : Place k F).ord x) := by
+    intro P hP
+    have hne : (P₀ : Place k F) ≠ (P : Place k F) := fun h ↦ hP (Subtype.ext h.symm)
+    refine valuation_sum_le ?_ ?_ ?_ _
+    · exact (P₀ : Place k F).mem_integers_iff_ord_nonneg.mpr (hS _ P₀.2).le
+    · exact (P₀ : Place k F).mem_integers_iff.mp
+        ((P₀ : Place k F).mem_integers_iff_ord_nonneg.mpr
+          (by rw [ht0 P (P₀ : Place k F) P₀.2 hne]))
+    · intro j
+      rw [(P₀ : Place k F).valuation_eq_exp_neg_ord (hune P j),
+        huord P j (P₀ : Place k F) P₀.2 hne]
+  have hsplit : (∑ a : Fin ((P₀ : Place k F).ord x).toNat,
+      ∑ j : Fin (Module.finrank k (P₀ : Place k F).ResidueField),
+        aeval x (q ⟨P₀, a, j⟩) * (u P₀ j * t P₀ ^ (a : ℕ)))
+      = -∑ P ∈ Finset.univ.erase P₀, ∑ a : Fin ((P : Place k F).ord x).toNat,
+          ∑ j : Fin (Module.finrank k (P : Place k F).ResidueField),
+            aeval x (q ⟨P, a, j⟩) * (u P j * t P ^ (a : ℕ)) := by
+    rw [eq_neg_iff_add_eq_zero, add_comm, Finset.sum_erase_add _ _ (Finset.mem_univ P₀)]
+    exact hsumF
+  rw [hsplit, Valuation.map_neg] at hkey
+  have hle : WithZero.exp (-((A : ℕ) : ℤ)) ≤ WithZero.exp (-(P₀ : Place k F).ord x) := by
+    rw [← hkey]
+    exact Valuation.map_sum_le _ fun P hP ↦ hother P (Finset.ne_of_mem_erase hP)
+  have := WithZero.exp_le_exp.mp hle
+  omega
+
 /-- The natural-number form of Stichtenoth, Proposition 1.3.3, which is what the linear
 independence of Stichtenoth's family says on the nose. -/
 private theorem sum_toNat_mul_finrank_le {x : F} [FiniteDimensional k⟮x⟯ F]
     {S : Finset (Place k F)} (hS : ∀ P ∈ S, 0 < P.ord x) :
     ∑ P ∈ S, (P.ord x).toNat * Module.finrank k P.ResidueField ≤ Module.finrank k⟮x⟯ F := by
-  classical
-  rcases S.eq_empty_or_nonempty with rfl | ⟨P₁, hP₁⟩
-  · simp
-  have hx0 : x ≠ 0 := by rintro rfl; simpa using hS P₁ hP₁
   -- A `k`-basis of each residue field, which is finite over `k` because `x` is a parameter.
   obtain ⟨b⟩ : Nonempty (∀ P : {P : Place k F // P ∈ S},
       Module.Basis (Fin (Module.finrank k (P : Place k F).ResidueField)) k
@@ -250,106 +371,11 @@ private theorem sum_toNat_mul_finrank_le {x : F} [FiniteDimensional k⟮x⟯ F]
   choose u humem hures huord using fun (P : {P : Place k F // P ∈ S})
       (j : Fin (Module.finrank k (P : Place k F).ResidueField)) ↦
     (P : Place k F).exists_residue_eq_and_forall_mem_ord_eq S (b P j) (fun Q ↦ Q.ord x)
-  have hune : ∀ (P : {P : Place k F // P ∈ S}) j, u P j ≠ 0 := by
-    intro P j h
-    refine (b P).ne_zero j ?_
-    have hu_zero : (⟨u P j, humem P j⟩ : (P : Place k F).integers) = 0 := Subtype.ext h
-    rw [← hures P j, hu_zero]
-    exact map_zero _
   have hlib : ∀ P : {P : Place k F // P ∈ S}, LinearIndependent k
       fun j ↦ IsLocalRing.residue (P : Place k F).integers ⟨u P j, humem P j⟩ := fun P ↦ by
     simpa only [hures P] using (b P).linearIndependent
   -- Stichtenoth's family, indexed by a place of `S`, an exponent and a basis vector.
-  have key : LinearIndependent k⟮x⟯
-      (fun i : Σ P : {P : Place k F // P ∈ S}, Fin ((P : Place k F).ord x).toNat ×
-          Fin (Module.finrank k (P : Place k F).ResidueField) ↦
-        u i.1 i.2.2 * t i.1 ^ (i.2.1 : ℕ)) := by
-    rw [← LinearIndependent.iff_fractionRing (Algebra.adjoin k {x}) k⟮x⟯,
-      Fintype.linearIndependent_iff]
-    intro g hsum i₁
-    by_contra hg0
-    -- Write the coefficients as polynomials in `x` and clear the common power of `x`.
-    have hrange : ∀ y : F, y ∈ Algebra.adjoin k ({x} : Set F) → ∃ p : k[X], aeval x p = y := by
-      intro y hy
-      rwa [Algebra.adjoin_singleton_eq_range_aeval, AlgHom.mem_range] at hy
-    choose p hp using fun i ↦ hrange ((g i : Algebra.adjoin k ({x} : Set F)) : F) (g i).2
-    have hpne : p i₁ ≠ 0 := by
-      intro h
-      exact hg0 (Subtype.ext (by simpa [h] using (hp i₁).symm))
-    obtain ⟨m, q, hfactor, i₂, -, hq₂⟩ :=
-      TauCeti.Polynomial.exists_common_X_pow_factor Finset.univ p ⟨i₁, Finset.mem_univ _, hpne⟩
-    have hsumF : ∑ i, aeval x (q i) * (u i.1 i.2.2 * t i.1 ^ (i.2.1 : ℕ)) = 0 := by
-      refine mul_left_cancel₀ (pow_ne_zero m hx0) ?_
-      rw [Finset.mul_sum, mul_zero, ← hsum]
-      refine Finset.sum_congr rfl fun i _ ↦ ?_
-      rw [Algebra.smul_def, Subalgebra.algebraMap_apply, ← hp i,
-        hfactor i (Finset.mem_univ i), map_mul, map_pow, aeval_X]
-      ring
-    rw [← Finset.univ_sigma_univ, Finset.sum_sigma] at hsumF
-    simp only [Fintype.sum_prod_type] at hsumF
-    -- Split the relation into the block at `P₀ := i₂.1` and the remaining blocks.
-    set P₀ := i₂.1
-    have hmem₂ : i₂.2.1 ∈ Finset.univ.filter
-        (fun a : Fin ((P₀ : Place k F).ord x).toNat ↦ ∃ j, (q ⟨P₀, a, j⟩).coeff 0 ≠ 0) := by
-      simp only [Finset.mem_filter, Finset.mem_univ, true_and]
-      exact ⟨i₂.2.2, hq₂⟩
-    set A := (Finset.univ.filter
-      (fun a : Fin ((P₀ : Place k F).ord x).toNat ↦ ∃ j, (q ⟨P₀, a, j⟩).coeff 0 ≠ 0)).min'
-        ⟨i₂.2.1, hmem₂⟩ with hAdef
-    have hAex : ∃ j, (q ⟨P₀, A, j⟩).coeff 0 ≠ 0 := by
-      have := Finset.min'_mem _ (⟨i₂.2.1, hmem₂⟩ :
-        (Finset.univ.filter (fun a : Fin ((P₀ : Place k F).ord x).toNat ↦
-          ∃ j, (q ⟨P₀, a, j⟩).coeff 0 ≠ 0)).Nonempty)
-      simpa [← hAdef] using this
-    have hAmin : ∀ a : Fin ((P₀ : Place k F).ord x).toNat, (a : ℕ) < (A : ℕ) →
-        ∀ j, (q ⟨P₀, a, j⟩).coeff 0 = 0 := by
-      intro a ha j
-      by_contra h
-      have hle : A ≤ a := Finset.min'_le _ a (by
-        simp only [Finset.mem_filter, Finset.mem_univ, true_and]
-        exact ⟨j, h⟩)
-      exact absurd (Fin.le_def.mp hle) (by omega)
-    have hAlt : ((A : ℕ) : ℤ) < (P₀ : Place k F).ord x := by
-      have h1 := A.isLt
-      have h2 := hS (P₀ : Place k F) P₀.2
-      omega
-    have hkey : (P₀ : Place k F).valuation
-        (∑ a : Fin ((P₀ : Place k F).ord x).toNat,
-          ∑ j : Fin (Module.finrank k (P₀ : Place k F).ResidueField),
-            aeval x (q ⟨P₀, a, j⟩) * (u P₀ j * t P₀ ^ (a : ℕ)))
-        = WithZero.exp (-((A : ℕ) : ℤ)) :=
-      valuation_sum_eq_exp_neg (hS (P₀ : Place k F) P₀.2) (ht1 P₀) (humem P₀) (hlib P₀) _
-        hAex hAmin hAlt
-    have hother : ∀ P : {P : Place k F // P ∈ S}, P ≠ P₀ →
-        (P₀ : Place k F).valuation
-          (∑ a : Fin ((P : Place k F).ord x).toNat,
-            ∑ j : Fin (Module.finrank k (P : Place k F).ResidueField),
-              aeval x (q ⟨P, a, j⟩) * (u P j * t P ^ (a : ℕ)))
-          ≤ WithZero.exp (-(P₀ : Place k F).ord x) := by
-      intro P hP
-      have hne : (P₀ : Place k F) ≠ (P : Place k F) := fun h ↦ hP (Subtype.ext h.symm)
-      refine valuation_sum_le ?_ ?_ ?_ _
-      · exact (P₀ : Place k F).mem_integers_iff_ord_nonneg.mpr (hS _ P₀.2).le
-      · exact (P₀ : Place k F).mem_integers_iff.mp
-          ((P₀ : Place k F).mem_integers_iff_ord_nonneg.mpr
-            (by rw [ht0 P (P₀ : Place k F) P₀.2 hne]))
-      · intro j
-        rw [(P₀ : Place k F).valuation_eq_exp_neg_ord (hune P j),
-          huord P j (P₀ : Place k F) P₀.2 hne]
-    have hsplit : (∑ a : Fin ((P₀ : Place k F).ord x).toNat,
-        ∑ j : Fin (Module.finrank k (P₀ : Place k F).ResidueField),
-          aeval x (q ⟨P₀, a, j⟩) * (u P₀ j * t P₀ ^ (a : ℕ)))
-        = -∑ P ∈ Finset.univ.erase P₀, ∑ a : Fin ((P : Place k F).ord x).toNat,
-            ∑ j : Fin (Module.finrank k (P : Place k F).ResidueField),
-              aeval x (q ⟨P, a, j⟩) * (u P j * t P ^ (a : ℕ)) := by
-      rw [eq_neg_iff_add_eq_zero, add_comm, Finset.sum_erase_add _ _ (Finset.mem_univ P₀)]
-      exact hsumF
-    rw [hsplit, Valuation.map_neg] at hkey
-    have hle : WithZero.exp (-((A : ℕ) : ℤ)) ≤ WithZero.exp (-(P₀ : Place k F).ord x) := by
-      rw [← hkey]
-      exact Valuation.map_sum_le _ fun P hP ↦ hother P (Finset.ne_of_mem_erase hP)
-    have := WithZero.exp_le_exp.mp hle
-    omega
+  have key := linearIndependent_mul_pow_of_linearIndependent_residue hS ht1 ht0 humem huord hlib
   have hcard := key.fintype_card_le_finrank
   rw [Fintype.card_sigma] at hcard
   simp only [Fintype.card_prod, Fintype.card_fin] at hcard

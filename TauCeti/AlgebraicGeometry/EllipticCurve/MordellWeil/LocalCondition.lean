@@ -7,6 +7,7 @@ module
 
 public import TauCeti.AlgebraicGeometry.EllipticCurve.MordellWeil.XSubT
 public import TauCeti.AlgebraicGeometry.EllipticCurve.NormalForms
+public import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.BaseChange
 
 /-!
 # Base change of the étale algebra, and the local condition of `2`-descent
@@ -43,6 +44,13 @@ of square classes whose image in `(W⁄L).M` lies in the image of the local desc
   satisfies the local condition at every extension field. This is what makes `localCondition` a
   *condition*: it is a constraint the classes coming from `W(K)` are known to satisfy, so the
   intersection of the local conditions bounds `W(K)/2W(K)` from above.
+* `WeierstrassCurve.Affine.card_range_μ_of_surjective_algebraMap`: base change along an
+  *isomorphism* preserves the size of the descent image, via
+  `WeierstrassCurve.Affine.range_μ_of_surjective_algebraMap`, which identifies the two images.
+  This is the transport step: a count of `#(im μ)` established over a concrete field carries to
+  any field isomorphic to it. Its inputs are
+  `WeierstrassCurve.Affine.bijective_mapA_of_surjective_algebraMap` and
+  `WeierstrassCurve.Affine.localRes_injective_of_surjective_algebraMap`.
 
 ## Implementation notes
 
@@ -61,8 +69,16 @@ Mathlib's `AddEquiv.cast` transports along.
 Adapted, with the author's proofs, from Michael Stoll's `EllipticCurves` project
 (`github.com/MichaelStollBayreuth/EllipticCurves`, Apache-2.0, pinned by
 `TauCetiRoadmap/EllipticCurves/README.md` at `66889eada51a`),
-`EllipticCurves/SelmerGroup.lean` lines 85-295, which are that file's `BaseChange` section up to
-the local condition and its compatibility with `μ`.
+`EllipticCurves/SelmerGroup.lean` lines 85-323 — that file's `BaseChange` section: lines 85-295
+give the base change up to the local condition and its compatibility with `μ`, and lines 296-323
+give the isomorphism-invariance block — `range_μ_of_bijective_algebraMap` and
+`card_range_μ_of_bijective_algebraMap` upstream, renamed here for the weaker hypothesis — plus the
+étale-algebra bijectivity at line 168.
+
+One declaration is **not** adapted from the source: `localRes_injective_of_surjective_algebraMap`
+is re-derived here. The source obtains it from its local `Units.modPow.bijective_map`, which is in
+the square-class spelling this repository does not carry, and Mathlib has no `QuotientGroup.map`
+injectivity helper to appeal to instead.
 
 This advances `TauCetiRoadmap/EllipticCurves/README.md`, Layer 6 (README:813-820), whose
 "Explicit `2`-descent (core, this layer)" bullet names "the local conditions" as the first item
@@ -168,6 +184,31 @@ lemma localRes_unit {a : W.A} (ha : IsUnit a) :
   rw [localRes_mk]
   exact congrArg _ (Units.ext rfl)
 
+/-- Base change of the étale algebra along a surjective algebra map of fields is an isomorphism:
+`mapA` is `AdjoinRoot.map`, which `AdjoinRoot.mapRingEquiv` upgrades.
+
+Surjectivity is the whole hypothesis: a ring homomorphism out of a field is automatically
+injective, so `algebraMap K L` is bijective as soon as it is onto. -/
+lemma bijective_mapA_of_surjective_algebraMap (h : Function.Surjective (algebraMap K L)) :
+    Function.Bijective (W.mapA L) :=
+  (AdjoinRoot.mapRingEquiv
+    (RingEquiv.ofBijective (algebraMap K L) ⟨(algebraMap K L).injective, h⟩)
+    W.f (W⁄L).toAffine.f (by rw [W.baseChange_f]; exact Associated.refl _)).bijective
+
+/-- Along an isomorphism, the base-change map on square classes is injective: a square root of
+`mapA a` pulls back along the isomorphism to a square root of `a`. -/
+lemma localRes_injective_of_surjective_algebraMap (h : Function.Surjective (algebraMap K L)) :
+    Function.Injective (W.localRes L) := by
+  have hb := W.bijective_mapA_of_surjective_algebraMap L h
+  rw [injective_iff_map_eq_one]
+  intro m hm
+  obtain ⟨u, rfl⟩ := QuotientGroup.mk_surjective m
+  rw [localRes_mk, QuotientGroup.eq_one_iff] at hm
+  obtain ⟨w, hw⟩ := hm
+  obtain ⟨w', rfl⟩ := (Units.map_bijective hb).2 w
+  exact (QuotientGroup.eq_one_iff _).mpr ⟨w', (Units.map_bijective hb).1
+    (by simpa only [powMonoidHom_apply, map_pow] using hw)⟩
+
 section PointMap
 
 open scoped Classical in
@@ -208,8 +249,6 @@ lemma pointMap_some {x y : K} (h : W.Nonsingular x y) : W.pointMap L (Point.some
 end PointMap
 
 variable [W.IsElliptic] [W.IsCharNeTwoNF]
-
-instance : (W⁄L).IsElliptic := inferInstanceAs (W.map (algebraMap K L)).IsElliptic
 
 open scoped Classical in
 /-- The local `2`-descent condition at the extension field `L` of `K` (in the applications,
@@ -271,6 +310,42 @@ theorem range_μ_le_localCondition : (μ (W := W)).range ≤ W.localCondition L 
   rw [localCondition, ← Subgroup.map_le_iff_le_comap, MonoidHom.map_range, localRes_comp_μ]
   rintro _ ⟨P, rfl⟩
   exact ⟨_, rfl⟩
+
+/-!
+### Base change along an isomorphism
+
+If `L/K` is an isomorphism rather than a proper extension, nothing is lost: the étale algebras
+are isomorphic, so the descent map has the same image over `L` as over `K`. This is what lets a
+count established over a concrete field — `ℝ`, say — be transported to a completion that is
+merely isomorphic to it.
+-/
+
+open scoped Classical in
+/-- Along an isomorphism, the descent image over `L` is the image of the descent image over `K`
+under the local restriction of square classes. Formal from the naturality `localRes_comp_μ`,
+once base change of points is seen to be surjective. -/
+lemma range_μ_of_surjective_algebraMap (h : Function.Surjective (algebraMap K L)) :
+    (μ (W := (W⁄L).toAffine)).range = Subgroup.map (W.localRes L) (μ (W := W)).range := by
+  have hpm : Function.Surjective (W.pointMap L) := by
+    rintro (_ | ⟨x, y, hP⟩)
+    · exact ⟨0, map_zero (W.pointMap L)⟩
+    · obtain ⟨x', rfl⟩ := h x
+      obtain ⟨y', rfl⟩ := h y
+      exact ⟨Point.some x' y'
+        ((W.map_nonsingular (algebraMap K L).injective _ _).mp hP), W.pointMap_some L _⟩
+  have hsurj : Function.Surjective (AddMonoidHom.toMultiplicative (W.pointMap L)) :=
+    fun P ↦ (hpm P.toAdd).imp fun _ hQ ↦ congrArg Multiplicative.ofAdd hQ
+  rw [MonoidHom.map_range, localRes_comp_μ, ← MonoidHom.map_range,
+    MonoidHom.range_eq_top.mpr hsurj, ← MonoidHom.range_eq_map]
+
+open scoped Classical in
+/-- **Base change along an isomorphism preserves the size of the descent image.** This is the
+transport step: a count of `#(im μ)` established over one field carries to any field isomorphic
+to it. -/
+theorem card_range_μ_of_surjective_algebraMap (h : Function.Surjective (algebraMap K L)) :
+    Nat.card (μ (W := (W⁄L).toAffine)).range = Nat.card (μ (W := W)).range := by
+  rw [W.range_μ_of_surjective_algebraMap L h]
+  exact Subgroup.card_map_of_injective (W.localRes_injective_of_surjective_algebraMap L h)
 
 end BaseChange
 

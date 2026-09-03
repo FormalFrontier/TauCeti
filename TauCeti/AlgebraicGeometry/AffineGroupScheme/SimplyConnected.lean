@@ -5,7 +5,8 @@ Authors: Codex
 -/
 module
 
-public import TauCeti.AlgebraicGeometry.AffineGroupScheme.Semisimple
+public import TauCeti.Algebra.AlgebraicGroup.SimplyConnected.Basic
+public import TauCeti.AlgebraicGeometry.AffineGroupScheme.Semisimple.Reductive
 public import TauCeti.AlgebraicGeometry.GroupScheme.CentralIsogeny.Isomorphism
 
 /-!
@@ -35,6 +36,10 @@ monomorphism of schemes is an isomorphism. This gives the kernel-free characteri
 * `TauCeti.simplyConnectedSemisimpleAffineGroupSchemeProperty_iff_forall_mono`: a semisimple
   affine group scheme is simply connected exactly when every central isogeny onto it has monic
   underlying scheme morphism.
+* `TauCeti.simplyConnectedSemisimpleAffineGroupSchemeProperty_inverseImage`: pulling the scheme
+  property back along `Spec` recovers the coordinate-Hopf property.
+* The restricted anti-equivalence between the coordinate and scheme models is
+  `simplyConnectedSemisimpleCommHopfAlgCatOpEquivSimplyConnectedSemisimpleAffineGroupSchemeCat`.
 
 ## References
 
@@ -50,7 +55,7 @@ public section
 
 namespace TauCeti
 
-open CategoryTheory AlgebraicGeometry
+open CategoryTheory AlgebraicGeometry Opposite
 
 universe u
 
@@ -59,7 +64,8 @@ variable {k : Type u} [Field k]
 /-- The forgetful functor from semisimple affine group schemes to group schemes. -/
 noncomputable abbrev semisimpleAffineGroupSchemeForget (k : Type u) [Field k] :
     SemisimpleAffineGroupSchemeCat k ⥤ Grp (Over (Spec (CommRingCat.of k))) :=
-  (semisimpleAffineGroupSchemeProperty k).ι ⋙
+  semisimpleToReductiveAffineGroupSchemeFunctor k ⋙
+    (reductiveAffineGroupSchemeProperty k).ι ⋙
     (finiteTypeAffineGroupSchemeProperty (CommRingCat.of k)).ι ⋙
       (affineGroupSchemeProperty (CommRingCat.of k)).ι
 
@@ -141,5 +147,104 @@ theorem simplyConnectedSemisimpleAffineGroupSchemeProperty_iff_forall_mono
     let _ : Mono ((semisimpleAffineGroupSchemeForget k).map f).hom.hom.left := hG H f hf
     let _ : IsIso ((semisimpleAffineGroupSchemeForget k).map f) := hf.isIsogeny.isIso_of_mono
     exact isIso_of_reflects_iso f (semisimpleAffineGroupSchemeForget k)
+
+/-- Under the semisimple Hopf/group-scheme anti-equivalence, a morphism is a coordinate central
+isogeny exactly when its image is a group-scheme central isogeny. -/
+theorem
+    semisimpleCommHopfAlgCatOpEquivSemisimpleAffineGroupSchemeCat.isCentralIsogeny_map_iff
+    {H K : (SemisimpleCommHopfAlgCat.{u} k)ᵒᵖ} (f : H ⟶ K) :
+    GroupScheme.IsCentralIsogeny
+        ((semisimpleAffineGroupSchemeForget k).map
+          ((semisimpleCommHopfAlgCatOpEquivSemisimpleAffineGroupSchemeCat k).functor.map f)) ↔
+      CommHopfAlgCat.IsCentralIsogeny f.unop.hom.hom := by
+  rw [CommHopfAlgCat.isCentralIsogeny_iff_isCentralIsogeny_hopfSpec_map]
+  let α :=
+    semisimpleCommHopfAlgCatOpEquivSemisimpleAffineGroupSchemeCat.functorCompιIso k
+  exact (GroupScheme.centralIsogenies k).arrow_mk_iso_iff
+    (Arrow.isoMk (α.app H) (α.app K) (α.hom.naturality f).symm)
+
+/-- Pulling simple connectivity on semisimple affine group schemes back along `Spec` recovers
+simple connectivity of semisimple commutative Hopf algebras. -/
+theorem simplyConnectedSemisimpleAffineGroupSchemeProperty_inverseImage
+    (k : Type u) [Field k] :
+    (simplyConnectedSemisimpleAffineGroupSchemeProperty k).inverseImage
+        (semisimpleCommHopfAlgCatOpEquivSemisimpleAffineGroupSchemeCat k).functor =
+      (simplyConnectedSemisimpleCommHopfAlgProperty k).op := by
+  ext H
+  rw [ObjectProperty.prop_inverseImage_iff, ObjectProperty.op_iff]
+  let E := semisimpleCommHopfAlgCatOpEquivSemisimpleAffineGroupSchemeCat k
+  constructor
+  · intro hG
+    apply simplyConnectedSemisimpleCommHopfAlgProperty.mk
+    intro K f hf
+    let g : op K ⟶ H := f.op
+    have hg : GroupScheme.IsCentralIsogeny
+        ((semisimpleAffineGroupSchemeForget k).map (E.functor.map g)) :=
+      (semisimpleCommHopfAlgCatOpEquivSemisimpleAffineGroupSchemeCat.isCentralIsogeny_map_iff
+        g).2 hf
+    let _ : IsIso (E.functor.map g) := hG (E.functor.obj (op K)) (E.functor.map g) hg
+    let _ : IsIso g := isIso_of_reflects_iso g E.functor
+    exact (isIso_op_iff f).1 (inferInstance : IsIso f.op)
+  · intro hH
+    apply simplyConnectedSemisimpleAffineGroupSchemeProperty.mk
+    intro G f hf
+    let e := E.counitIso.app G
+    let g : E.functor.obj (E.inverse.obj G) ⟶ E.functor.obj H := e.hom ≫ f
+    let g' : E.inverse.obj G ⟶ H := E.functor.preimage g
+    have hmap : E.functor.map g' = g := by
+      simp only [g', Functor.map_preimage]
+    have hg : GroupScheme.IsCentralIsogeny
+        ((semisimpleAffineGroupSchemeForget k).map g) := by
+      rw [Functor.map_comp]
+      exact ((GroupScheme.centralIsogenies k).cancel_left_of_respectsIso _ _).2 hf
+    have hg' : CommHopfAlgCat.IsCentralIsogeny g'.unop.hom.hom := by
+      apply
+        (semisimpleCommHopfAlgCatOpEquivSemisimpleAffineGroupSchemeCat.isCentralIsogeny_map_iff
+          g').1
+      rw [hmap]
+      exact hg
+    let _ : IsIso g'.unop := hH.isIso g'.unop hg'
+    let _ : IsIso g' := (isIso_unop_iff g').1 (inferInstance : IsIso g'.unop)
+    let _ : IsIso g := hmap ▸ (inferInstance : IsIso (E.functor.map g'))
+    exact IsIso.of_isIso_comp_left e.hom f
+
+/-- `Spec` restricts to an anti-equivalence from simply connected semisimple finite-type
+commutative Hopf algebras to simply connected semisimple affine group schemes. -/
+noncomputable def
+    simplyConnectedSemisimpleCommHopfAlgCatOpEquivSimplyConnectedSemisimpleAffineGroupSchemeCat
+    (k : Type u) [Field k] :
+    (SimplyConnectedSemisimpleCommHopfAlgCat.{u} k)ᵒᵖ ≌
+      SimplyConnectedSemisimpleAffineGroupSchemeCat k :=
+  (ObjectProperty.opEquivalence (simplyConnectedSemisimpleCommHopfAlgProperty k)).symm.trans <|
+    (semisimpleCommHopfAlgCatOpEquivSemisimpleAffineGroupSchemeCat k).congrFullSubcategory
+      (simplyConnectedSemisimpleAffineGroupSchemeProperty_inverseImage k)
+
+namespace
+  simplyConnectedSemisimpleCommHopfAlgCatOpEquivSimplyConnectedSemisimpleAffineGroupSchemeCat
+
+/-- After forgetting simple connectivity, the restricted anti-equivalence is the existing
+semisimple Hopf/group-scheme anti-equivalence. -/
+noncomputable def functorCompιIso
+    (k : Type u) [Field k] :
+    (simplyConnectedSemisimpleCommHopfAlgCatOpEquivSimplyConnectedSemisimpleAffineGroupSchemeCat
+          k).functor ⋙
+        (simplyConnectedSemisimpleAffineGroupSchemeProperty k).ι ≅
+      (forget₂ (SimplyConnectedSemisimpleCommHopfAlgCat.{u} k)
+          (SemisimpleCommHopfAlgCat.{u} k)).op ⋙
+        (semisimpleCommHopfAlgCatOpEquivSemisimpleAffineGroupSchemeCat k).functor := by
+  let P := simplyConnectedSemisimpleCommHopfAlgProperty k
+  let Q := simplyConnectedSemisimpleAffineGroupSchemeProperty k
+  let e := semisimpleCommHopfAlgCatOpEquivSemisimpleAffineGroupSchemeCat k
+  let h := simplyConnectedSemisimpleAffineGroupSchemeProperty_inverseImage k
+  exact
+    Functor.associator _ _ _ ≪≫
+      Functor.isoWhiskerLeft (ObjectProperty.opEquivalence P).symm.functor
+        (Q.liftCompιIso (P.op.ι ⋙ e.functor) (fun X ↦
+          (congrFun h X.obj).symm.mp X.property)) ≪≫
+      (Functor.associator _ _ _).symm ≪≫
+      Functor.isoWhiskerRight
+        (P.op.liftCompιIso P.ι.op (fun X ↦ X.unop.property)) e.functor
+
+end simplyConnectedSemisimpleCommHopfAlgCatOpEquivSimplyConnectedSemisimpleAffineGroupSchemeCat
 
 end TauCeti

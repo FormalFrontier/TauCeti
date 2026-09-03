@@ -8,8 +8,6 @@ module
 public import TauCeti.Algebra.Lie.HighestWeight.Maximal
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Module
 
-public section
-
 /-!
 # Verma modules
 
@@ -76,6 +74,12 @@ The construction therefore is not the zero quotient, and `L(0)` exists outright.
   `L`-module structures.
 * `TauCeti.vermaMk b lam`: the canonical projection `U(L) → M(lam)`, as a `U(L)`-linear map.
 * `TauCeti.vermaGenerator b lam`: the canonical generator `v_lam`, the class of `1`.
+* `TauCeti.irreducibleQuotient b lam`: the irreducible quotient `L(lam)`, the quotient of `M(lam)`
+  by its maximal submodule, with its `K`-module and `L`-module structures.
+* `TauCeti.irreducibleQuotientMk b lam`: the canonical projection `M(lam) → L(lam)`, as a Lie
+  module homomorphism.
+* `TauCeti.irreducibleQuotientGenerator b lam`: the canonical generator of `L(lam)`, the class of
+  the canonical generator of `M(lam)`.
 
 ## Main results
 
@@ -94,8 +98,15 @@ The construction therefore is not the zero quotient, and `L(0)` exists outright.
   `TauCeti.vermaGenerator_ne_zero_of_isHighestWeightVector`,
   `TauCeti.vermaGenerator_eq_zero_iff` and `TauCeti.subsingleton_vermaModule_iff`: the isolation of
   the one missing input described above, as the properness of `TauCeti.vermaIdeal`.
-* `TauCeti.isIrreducible_quotient_maximalSubmodule_vermaModule`: **the irreducible quotient
-  `L(lam)`**, once the Verma module is known to be nonzero.
+* `TauCeti.irreducibleQuotientMk_surjective` and
+  `TauCeti.lieSpan_irreducibleQuotientGenerator_eq_top`: every vector of `L(lam)` is the class of
+  one of `M(lam)`, and the canonical generator generates `L(lam)`.
+* `TauCeti.isIrreducible_irreducibleQuotient` and
+  `TauCeti.isHighestWeightVector_irreducibleQuotientGenerator`: **`L(lam)` is irreducible and its
+  canonical generator is a highest weight vector of weight `lam`**, once the Verma module is known
+  to be nonzero.
+* `TauCeti.subsingleton_irreducibleQuotient_iff`: in the remaining case `L(lam)` is the zero
+  module, so it is **either irreducible or zero, never anything else**.
 
 ## Roadmap
 
@@ -105,13 +116,19 @@ This is the "Verma modules" item of Layer 3 of
 `Suggested.lean`. The carrier is named `TauCeti.VermaModule` rather than `vermaModule` because it
 is a type, and the canonical vector `TauCeti.vermaGenerator` rather than
 `vermaHighestWeightVector` because it is only a highest weight vector once it is known to be
-nonzero.
+nonzero. `TauCeti.irreducibleQuotient` is the carrier of the same layer's "irreducible quotient
+`L(λ)`" item; the two properties `Suggested.lean` pins of it, irreducibility and the existence of a
+highest weight vector of weight `lam`, are proved here under the hypothesis
+`vermaGenerator b lam ≠ 0`, which is the missing PBW input described above and cannot be dropped
+without it.
 
 ## References
 
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §20.3.
 * J. E. Humphreys, *Representations of Semisimple Lie Algebras in the BGG Category `O`*, §1.3.
 -/
+
+public section
 
 open UniversalEnvelopingAlgebra
 
@@ -386,16 +403,103 @@ theorem subsingleton_vermaModule_iff :
   change Subsingleton (U ⧸ vermaIdeal b lam) ↔ vermaGenerator b lam = 0
   rw [Submodule.Quotient.subsingleton_iff, ← vermaGenerator_eq_zero_iff]
 
-/-- **The irreducible quotient `L(lam)`.** As soon as the Verma module is nonzero, it is a highest
-weight module of weight `lam`, so its quotient by the maximal submodule of
-`TauCeti/Algebra/Lie/HighestWeight/Maximal.lean` is irreducible. That quotient is `L(lam)`, and by
-`TauCeti.quotientMaximalSubmoduleEquivOfSurjectiveOfIsIrreducible` it is the only irreducible
+/-- **The irreducible quotient `L(lam)`**: the quotient of the Verma module by the maximal
+submodule of `TauCeti/Algebra/Lie/HighestWeight/Maximal.lean`. As with
+`TauCeti.VermaModule`, the carrier is a definition with its module structures declared
+one by one, so that statements about `L(lam)` are made against this name rather than against the
+quotient it is built from.
+
+Nothing about it is irreducible by fiat: irreducibility is
+`TauCeti.isIrreducible_irreducibleQuotient`, which needs `M(lam) ≠ 0`. Naming the carrier is what
+lets a statement about `L(lam)` be phrased at one fixed module instead of at an arbitrary
+irreducible module carrying a highest weight vector of weight `lam`. -/
+def irreducibleQuotient : Type max u v :=
+  VermaModule b lam ⧸ maximalSubmodule H (VermaModule b lam) lam
+
+noncomputable instance : AddCommGroup (irreducibleQuotient b lam) :=
+  inferInstanceAs
+    (AddCommGroup (VermaModule b lam ⧸ maximalSubmodule H (VermaModule b lam) lam))
+
+noncomputable instance : Module K (irreducibleQuotient b lam) :=
+  inferInstanceAs
+    (Module K (VermaModule b lam ⧸ maximalSubmodule H (VermaModule b lam) lam))
+
+noncomputable instance : LieRingModule L (irreducibleQuotient b lam) :=
+  inferInstanceAs
+    (LieRingModule L (VermaModule b lam ⧸ maximalSubmodule H (VermaModule b lam) lam))
+
+noncomputable instance : LieModule K L (irreducibleQuotient b lam) :=
+  inferInstanceAs
+    (LieModule K L (VermaModule b lam ⧸ maximalSubmodule H (VermaModule b lam) lam))
+
+/-- **The canonical projection** `M(lam) → L(lam)`, bundled as a Lie module homomorphism, so that
+its algebraic behaviour — `map_zero`, `map_add`, `map_smul`, `map_lie` — is available from the
+`LieModuleHom` API without unfolding the quotient. It is the analogue for `L(lam)` of
+`TauCeti.vermaMk`, and together with `TauCeti.irreducibleQuotientMk_surjective` it is how every
+vector of `L(lam)` is reached. -/
+noncomputable def irreducibleQuotientMk : VermaModule b lam →ₗ⁅K,L⁆ irreducibleQuotient b lam :=
+  LieSubmodule.Quotient.mk' (maximalSubmodule H (VermaModule b lam) lam)
+
+/-- **The canonical projection onto `L(lam)` is surjective**: every vector of `L(lam)` is the
+class of one of `M(lam)`. This is the elimination rule matching
+`TauCeti.irreducibleQuotientMk`, and it is what lets a statement about `L(lam)` be checked on
+representatives without unfolding the quotient. -/
+theorem irreducibleQuotientMk_surjective : Function.Surjective (irreducibleQuotientMk b lam) :=
+  fun q => LieSubmodule.Quotient.surjective_mk' _ q
+
+/-- **The canonical generator of `L(lam)`**, the class of the canonical generator of `M(lam)`.
+It is a highest weight vector of weight `lam` as soon as `M(lam)` is nonzero
+(`TauCeti.isHighestWeightVector_irreducibleQuotientGenerator`), and it is the introduction rule
+through which `L(lam)` is populated without unfolding the quotient. The body is not exposed: the
+public equation is `TauCeti.irreducibleQuotientMk_vermaGenerator`. -/
+noncomputable def irreducibleQuotientGenerator : irreducibleQuotient b lam :=
+  irreducibleQuotientMk b lam (vermaGenerator b lam)
+
+@[simp]
+theorem irreducibleQuotientMk_vermaGenerator :
+    irreducibleQuotientMk b lam (vermaGenerator b lam) = irreducibleQuotientGenerator b lam :=
+  (rfl)
+
+/-- **The canonical generator generates `L(lam)`**, the canonical generator of `M(lam)` generating
+`M(lam)` and the projection being surjective. So `L(lam)` is a highest weight module of weight
+`lam` as soon as `M(lam)` is nonzero. -/
+theorem lieSpan_irreducibleQuotientGenerator_eq_top :
+    LieSubmodule.lieSpan K L {irreducibleQuotientGenerator b lam} = ⊤ :=
+  lieSpan_mk_eq_top_of_lieSpan_eq_top (lieSpan_vermaGenerator_eq_top b lam) _
+
+/-- **`L(lam)` is irreducible.** As soon as the Verma module is nonzero, it is a highest weight
+module of weight `lam`, so its quotient by the maximal submodule is irreducible. By
+`TauCeti.quotientMaximalSubmoduleEquivOfSurjectiveOfIsIrreducible` it is then the only irreducible
 highest weight module of weight `lam`, up to isomorphism. -/
-theorem isIrreducible_quotient_maximalSubmodule_vermaModule (h : vermaGenerator b lam ≠ 0) :
-    LieModule.IsIrreducible K L
-      (VermaModule b lam ⧸ maximalSubmodule H (VermaModule b lam) lam) :=
+theorem isIrreducible_irreducibleQuotient (h : vermaGenerator b lam ≠ 0) :
+    LieModule.IsIrreducible K L (irreducibleQuotient b lam) :=
   isIrreducible_quotient_maximalSubmodule_of_isHighestWeightVector_of_lieSpan_eq_top
     ((isHighestWeightVector_vermaGenerator_iff b lam).mpr h)
     (lieSpan_vermaGenerator_eq_top b lam)
+
+/-- **`L(lam)` carries a highest weight vector of weight `lam`**, its canonical generator; the
+anti-vacuity companion of `TauCeti.isIrreducible_irreducibleQuotient`, without which any family of
+pairwise non-isomorphic irreducibles would do. -/
+theorem isHighestWeightVector_irreducibleQuotientGenerator (h : vermaGenerator b lam ≠ 0) :
+    IsHighestWeightVector b lam (irreducibleQuotientGenerator b lam) :=
+  isHighestWeightVector_mk_of_isHighestWeightVector_of_lieSpan_eq_top
+    ((isHighestWeightVector_vermaGenerator_iff b lam).mpr h)
+    (lieSpan_vermaGenerator_eq_top b lam)
+
+/-- **`L(lam)` is the zero module exactly when `M(lam)` is.** It is a quotient of `M(lam)`, and
+conversely it is irreducible, hence nonzero, as soon as `M(lam)` is nonzero. Together with
+`TauCeti.isIrreducible_irreducibleQuotient` this settles the named carrier in both cases: `L(lam)`
+is irreducible when `M(lam) ≠ 0` and zero otherwise, so a statement about it never has to leave
+the missing Poincaré--Birkhoff--Witt input undischarged. -/
+theorem subsingleton_irreducibleQuotient_iff :
+    Subsingleton (irreducibleQuotient b lam) ↔ vermaGenerator b lam = 0 := by
+  refine ⟨fun h ↦ ?_, fun h ↦ ?_⟩
+  · by_contra h0
+    have _ := isIrreducible_irreducibleQuotient b lam h0
+    have _ : Nontrivial (irreducibleQuotient b lam) :=
+      LieModule.nontrivial_of_isIrreducible (R := K) (L := L) (M := irreducibleQuotient b lam)
+    exact not_subsingleton _ h
+  · have _ : Subsingleton (VermaModule b lam) := (subsingleton_vermaModule_iff b lam).mpr h
+    exact (irreducibleQuotientMk_surjective b lam).subsingleton
 
 end TauCeti

@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.Algebra.Pi
+public import Mathlib.LinearAlgebra.Finsupp.Pi
 public import TauCeti.FieldTheory.FunctionField.Divisor.Principal
 public import TauCeti.FieldTheory.FunctionField.RiemannRoch.Basic
 
@@ -27,7 +28,8 @@ and proves the basic calculus of the filtration: it is monotone and directed, it
 `A_F`, and it cuts the diagonal copy of `F` in exactly the Riemann–Roch space `L(D)`.
 
 It is Stichtenoth, *Algebraic Function Fields and Codes*, 2nd ed., Definitions 1.5.2 and 1.5.3,
-together with the elementary lemmas that Section I.5 uses without numbering them.  The
+together with the elementary lemmas that Section I.5 uses without numbering them, and the
+repartitions `ι_P x` supported at a single place from his Definition 1.7.1.  The
 quotients `A_F(E)/A_F(D)` and `A_F ⧸ (A_F(D) + F)`, the index of specialty, and Weil
 differentials are the work that consumes this file.
 
@@ -38,6 +40,12 @@ differentials are the work that consumes this file.
 * `TauCeti.adeleFiltration`: the subspace `A_F(D)` attached to a divisor (Definition 1.5.3).
 * `TauCeti.diagonalRepartitions`: the diagonal copy of `F` inside `Place k F → F`, the image of
   `Pi.constAlgHom`.
+* `TauCeti.submoduleOfAdeleFiltrationSupDiagonalRepartitions`: the subspace `(A_F(D) + F) ∩ A_F`
+  of `A_F`, whose cokernel computes the index of specialty.
+* `TauCeti.repartitionMul`: multiplication of a repartition by a function, as a `k`-algebra map
+  to the `k`-linear endomorphisms of `A_F`.
+* `TauCeti.singleRepartition`: the repartition `ι_P x` carrying the entry `x` at a single place
+  `P`, as a `k`-linear map `F →ₗ[k] A_F`.
 
 ## Main results
 
@@ -51,10 +59,16 @@ differentials are the work that consumes this file.
 * `TauCeti.diagonalRepartitions_le_repartitionSpace`: the diagonal `F ↪ A_F`, which is where
   the finiteness of the zeros and poles of a function enters.
 * `TauCeti.diagonalRepartitions_inf_adeleFiltration`: `F ∩ A_F(D) = L(D)`, the lemma that ties
-  the filtration to the Riemann–Roch spaces.
+  the filtration to the Riemann–Roch spaces, and its relative form
+  `TauCeti.adeleFiltration_inf_sup_diagonalRepartitions`:
+  `A_F(E) ∩ (A_F(D) + F) = A_F(D) + L(E)` for `D ≤ E`.
 * `TauCeti.smul_mem_adeleFiltration_iff` and
   `TauCeti.smul_mem_adeleFiltration_sub_principal`: multiplying by a function `z` translates the
   filtration by `div z`, exactly as it does for Riemann–Roch spaces.
+* `TauCeti.smul_mem_repartitionSpace` and `TauCeti.smul_mem_diagonalRepartitions`: both `A_F`
+  and the diagonal are stable under multiplication by a function.
+* `TauCeti.singleRepartition_mem_adeleFiltration_iff`: the bound defining `A_F(D)` is a condition
+  at the single place `P` on the repartitions supported there.
 
 ## Implementation notes
 
@@ -72,10 +86,16 @@ form on it.  Its multiplicative structure is not lost: `TauCeti.one_mem_repartit
 `TauCeti.smul_mem_repartitionSpace` records the `F`-scalar multiplication that the `F`-vector
 space structure on the Weil differentials is built from.
 
+`ι_P x` is built from `Finsupp.lsingle P`, not from `Pi.single` or `LinearMap.single`: the latter
+two carry a `DecidableEq` argument, and no instance supplies a decidable equality of places, while
+`Finsupp.single` needs none.  `TauCeti.singleRepartition_self` and
+`TauCeti.singleRepartition_of_ne` determine `ι_P x` entrywise, so nothing downstream has to
+mention `Finsupp`.
+
 ## References
 
 * H. Stichtenoth, *Algebraic Function Fields and Codes*, 2nd ed., GTM 254, Springer, 2009,
-  Section I.5.
+  Section I.5 and Definition 1.7.1.
 -/
 
 public section
@@ -311,6 +331,30 @@ theorem diagonalRepartitions_inf_adeleFiltration (D : Divisor k F) :
   · rintro ⟨f, hf, rfl⟩
     exact ⟨const_mem_diagonalRepartitions f, const_mem_adeleFiltration_iff.mpr hf⟩
 
+/-- **The relative form of `F ∩ A_F(D) = L(D)`** (Stichtenoth, in the proof of Theorem 1.5.4):
+for `D ≤ E`, a repartition bounded by `E` that differs from a constant by a repartition bounded
+by `D` differs from a constant of `L(E)`, so that
+
+`A_F(E) ∩ (A_F(D) + F) = A_F(D) + L(E)`.
+
+Given `A_F(D) ≤ A_F(E)` this is the modular law for the lattice of subspaces followed by
+`TauCeti.diagonalRepartitions_inf_adeleFiltration`. -/
+theorem adeleFiltration_inf_sup_diagonalRepartitions {D E : Divisor k F} (h : D ≤ E) :
+    adeleFiltration E ⊓ (adeleFiltration D ⊔ diagonalRepartitions k F) =
+      adeleFiltration D ⊔
+        (riemannRochSpace E).map (Pi.constAlgHom k (Place k F) F).toLinearMap := by
+  rw [inf_comm, sup_inf_assoc_of_le _ (adeleFiltration_mono h),
+    diagonalRepartitions_inf_adeleFiltration]
+
+/-- The constant repartition of a function of `L(E)` is bounded by `E`, and is a constant, so it
+lies in `A_F(E) ∩ (A_F(D) + F)`. -/
+theorem const_mem_adeleFiltration_inf_sup_diagonalRepartitions (D : Divisor k F)
+    {E : Divisor k F} {f : F} (hf : f ∈ riemannRochSpace E) :
+    Function.const (Place k F) f ∈
+      adeleFiltration E ⊓ (adeleFiltration D ⊔ diagonalRepartitions k F) :=
+  ⟨const_mem_adeleFiltration_iff.mpr hf,
+    Submodule.mem_sup_right (const_mem_diagonalRepartitions f)⟩
+
 /-- Membership in `A_F(D) + F`, the subspace whose cokernel in `A_F` computes the index of
 specialty: a repartition lies in it exactly when subtracting a single constant brings it into
 `A_F(D)`. -/
@@ -339,6 +383,34 @@ theorem adeleFiltration_sup_diagonalRepartitions_le (hF : IsFunctionField k F)
     (D : Divisor k F) :
     adeleFiltration D ⊔ diagonalRepartitions k F ≤ repartitionSpace k F :=
   sup_le (adeleFiltration_le_repartitionSpace D) (diagonalRepartitions_le_repartitionSpace hF)
+
+/-- The subspace `(A_F(D) + F) ∩ A_F` of the repartition space: the repartitions that differ
+from a constant by one whose poles are bounded by `D`.  Its cokernel in `A_F` is the index of
+specialty of `D`, and a Weil differential bounded by `D` is a `k`-linear form killing it. -/
+noncomputable def submoduleOfAdeleFiltrationSupDiagonalRepartitions (D : Divisor k F) :
+    Submodule k ↥(repartitionSpace k F) :=
+  (adeleFiltration D ⊔ diagonalRepartitions k F).submoduleOf (repartitionSpace k F)
+
+/-- `(A_F(D) + F) ∩ A_F` is `A_F(D) + F` cut down to `A_F` in the sense of
+`Submodule.submoduleOf`, so that combinator's API applies to it. -/
+theorem submoduleOfAdeleFiltrationSupDiagonalRepartitions_eq_submoduleOf (D : Divisor k F) :
+    submoduleOfAdeleFiltrationSupDiagonalRepartitions D =
+      (adeleFiltration D ⊔ diagonalRepartitions k F).submoduleOf (repartitionSpace k F) := by
+  rfl
+
+/-- Membership in `(A_F(D) + F) ∩ A_F` is membership in `A_F(D) + F` of the underlying family. -/
+@[simp]
+theorem mem_submoduleOfAdeleFiltrationSupDiagonalRepartitions_iff {D : Divisor k F}
+    {a : ↥(repartitionSpace k F)} :
+    a ∈ submoduleOfAdeleFiltrationSupDiagonalRepartitions D ↔
+      (a : Place k F → F) ∈ adeleFiltration D ⊔ diagonalRepartitions k F :=
+  (Iff.rfl)
+
+/-- Enlarging the divisor enlarges `(A_F(D) + F) ∩ A_F`. -/
+theorem submoduleOfAdeleFiltrationSupDiagonalRepartitions_mono {D E : Divisor k F} (h : D ≤ E) :
+    submoduleOfAdeleFiltrationSupDiagonalRepartitions D ≤
+      submoduleOfAdeleFiltrationSupDiagonalRepartitions E :=
+  Submodule.comap_mono (sup_le_sup_right (adeleFiltration_mono h) _)
 
 /-! ### Translating the filtration by a principal divisor -/
 
@@ -374,5 +446,86 @@ theorem smul_mem_repartitionSpace (hF : IsFunctionField k F) (f : F) {a : Place 
     simp [smul_eq_mul]
   rw [h]
   exact mul_mem_repartitionSpace (const_mem_repartitionSpace hF f) ha
+
+/-- The diagonal copy of `F` is stable under multiplication by a function: a constant times a
+constant is a constant. -/
+theorem smul_mem_diagonalRepartitions (f : F) {a : Place k F → F}
+    (ha : a ∈ diagonalRepartitions k F) : f • a ∈ diagonalRepartitions k F := by
+  obtain ⟨g, rfl⟩ := mem_diagonalRepartitions_iff.mp ha
+  refine mem_diagonalRepartitions_iff.mpr ⟨f * g, ?_⟩
+  funext P
+  simp [smul_eq_mul]
+
+/-- Multiplication of repartitions by a function, as a `k`-algebra map to the `k`-linear
+endomorphisms of the repartition space.  It lands in the repartition space because a function of
+an algebraic function field has only finitely many poles. -/
+noncomputable def repartitionMul (hF : IsFunctionField k F) :
+    F →ₐ[k] Module.End k ↥(repartitionSpace k F) where
+  toFun f :=
+    { toFun a := ⟨f • (a : Place k F → F), smul_mem_repartitionSpace hF f a.2⟩
+      map_add' a b := Subtype.ext (by simp [smul_add])
+      map_smul' c a := Subtype.ext (by simp [smul_comm f c]) }
+  map_one' := LinearMap.ext fun a ↦ Subtype.ext (by simp)
+  map_mul' f g := LinearMap.ext fun a ↦ Subtype.ext (by simp [mul_smul])
+  map_zero' := LinearMap.ext fun a ↦ Subtype.ext (by simp)
+  map_add' f g := LinearMap.ext fun a ↦ Subtype.ext (by simp [add_smul])
+  commutes' c := LinearMap.ext fun a ↦ Subtype.ext (by simp [algebraMap_smul])
+
+/-- Multiplying a repartition by `f` multiplies each of its entries by `f`. -/
+@[simp]
+theorem coe_repartitionMul_apply (hF : IsFunctionField k F) (f : F)
+    (a : ↥(repartitionSpace k F)) :
+    ((repartitionMul hF f a : ↥(repartitionSpace k F)) : Place k F → F) =
+      f • (a : Place k F → F) :=
+  (rfl)
+
+/-! ### Repartitions supported at a single place -/
+
+/-- The repartition `ι_P x` with the entry `x` at the place `P` and `0` at every other place
+(Stichtenoth, Definition 1.7.1), as a `k`-linear map `F →ₗ[k] A_F`.
+
+It is `Finsupp.single P x`, read as a family indexed by all the places; a finitely supported
+family is integral outside its support, hence a repartition. -/
+noncomputable def singleRepartition (P : Place k F) : F →ₗ[k] ↥(repartitionSpace k F) :=
+  LinearMap.codRestrict _ (Finsupp.lcoeFun ∘ₗ Finsupp.lsingle P) fun x ↦
+    mem_repartitionSpace_iff_finite.mpr <|
+      (Finsupp.single P x).support.finite_toSet.subset fun Q hQ ↦ by
+        by_contra hne
+        exact hQ (by simp [Finsupp.notMem_support_iff.mp hne])
+
+/-- The entry of `ι_P x` at `P` is `x`. -/
+@[simp]
+theorem singleRepartition_self (P : Place k F) (x : F) :
+    ((singleRepartition P x : ↥(repartitionSpace k F)) : Place k F → F) P = x :=
+  Finsupp.single_eq_same
+
+/-- The entries of `ι_P x` away from `P` vanish. -/
+@[simp]
+theorem singleRepartition_of_ne {P Q : Place k F} (h : Q ≠ P) (x : F) :
+    ((singleRepartition P x : ↥(repartitionSpace k F)) : Place k F → F) Q = 0 :=
+  Finsupp.single_eq_of_ne h
+
+/-- `ι_P x` is bounded by `D` exactly when the pole of `x` at `P` is: at every other place its
+entry is `0`, which every divisor bounds.
+
+This is not `@[simp]`: `TauCeti.mem_adeleFiltration_iff` is, and it rewrites this left-hand side
+first, so tagging this one is a simp-normal-form violation that `scripts/lint-env.sh` rejects. -/
+theorem singleRepartition_mem_adeleFiltration_iff {D : Divisor k F} {P : Place k F} {x : F} :
+    ((singleRepartition P x : ↥(repartitionSpace k F)) : Place k F → F) ∈ adeleFiltration D ↔
+      P.valuation x ≤ WithZero.exp (D.coeff P) := by
+  rw [mem_adeleFiltration_iff]
+  refine ⟨fun h ↦ by simpa using h P, fun h Q ↦ ?_⟩
+  rcases eq_or_ne Q P with rfl | hQ
+  · simpa using h
+  · simp [singleRepartition_of_ne hQ]
+
+/-- Multiplying `ι_P x` by a function multiplies its entry: `f · ι_P x = ι_P (f x)`. -/
+@[simp]
+theorem repartitionMul_singleRepartition (hF : IsFunctionField k F) (f : F) (P : Place k F)
+    (x : F) : repartitionMul hF f (singleRepartition P x) = singleRepartition P (f * x) :=
+  Subtype.ext <| funext fun Q ↦ by
+    rcases eq_or_ne Q P with rfl | hQ
+    · simp [coe_repartitionMul_apply]
+    · simp [coe_repartitionMul_apply, singleRepartition_of_ne hQ]
 
 end TauCeti

@@ -6,17 +6,26 @@
 # Usage: bash scripts/lake-cache-get.sh <project-dir>
 #
 # Reads PUBLIC_ARTIFACT_ENDPOINT / PUBLIC_REVISION_ENDPOINT from the environment (the
-# LAKE_CACHE_*_PUBLIC repo variables). Expects LAKE_CACHE_DIR to be <project-dir>/.lake/cache.
+# LAKE_CACHE_*_PUBLIC repo variables), defaulting to the public cache both this project's CI and
+# its contributors read. The defaults exist so a contributor can run this from a checkout with no
+# setup: the endpoints are public, anonymous and not secret. CI still passes them explicitly, and
+# reaches this script only when those repo variables are set, so the defaults never decide what CI
+# does. Expects LAKE_CACHE_DIR to be <project-dir>/.lake/cache.
 # On an unclean outcome it discards the cache and appends the LAKE_* disable lines to
 # $GITHUB_ENV, so the caller's build proceeds exactly as if the cache were switched off.
 #
 # Anonymous GETs from the PUBLIC read host (a different host than the S3 API endpoint the
 # trusted upload uses). Looks up the root-package oleans for the checkout's revision --
-# backtracking up to LAKE_CACHE_MAX_REVS ancestors (default 100; 0 means the complete available
-# history), and unpacks them into $LAKE_CACHE_DIR. This is trusted, publisher-built data: no token
-# is in reach and no PR code runs (the caller attests the declarative lakefile first). Mathlib's
-# oleans are NOT here; they come from
-# `lake exe cache get`.
+# backtracking up to LAKE_CACHE_MAX_REVS revisions from HEAD (default 100; 0 means the complete
+# available history), and unpacks them into $LAKE_CACHE_DIR. This is trusted, publisher-built
+# data: no token is in reach and no PR code runs (the caller attests the declarative lakefile
+# first). Mathlib's oleans are NOT here; they come from `lake exe cache get`.
+#
+# Callers choose the limit, because only they know whether a walk can pay. The search stops as
+# soon as a lookup succeeds, so where a hit is likely it reads only the few revisions between
+# HEAD and a published one. Size it generously otherwise: overrunning the limit is reported as
+# a total miss, and a total miss costs a full recompile, far dearer than the extra requests a
+# longer walk would have made. `1` asks about HEAD alone and never walks.
 #
 # A TOTAL miss is non-fatal: the build just recompiles from scratch, as when the cache is off.
 # A PARTIAL fetch is non-fatal too, but must not reach the offline build. Since v4.34.0-rc1,
@@ -29,8 +38,8 @@
 set -euo pipefail
 
 PROJECT_DIR="${1:?usage: lake-cache-get.sh <project-dir>}"
-: "${PUBLIC_ARTIFACT_ENDPOINT:?PUBLIC_ARTIFACT_ENDPOINT is required}"
-: "${PUBLIC_REVISION_ENDPOINT:?PUBLIC_REVISION_ENDPOINT is required}"
+PUBLIC_ARTIFACT_ENDPOINT="${PUBLIC_ARTIFACT_ENDPOINT:-https://cache.taucetiproject.org/artifacts}"
+PUBLIC_REVISION_ENDPOINT="${PUBLIC_REVISION_ENDPOINT:-https://cache.taucetiproject.org/revisions}"
 LAKE_CACHE_MAX_REVS="${LAKE_CACHE_MAX_REVS:-100}"
 case "$LAKE_CACHE_MAX_REVS" in
   ''|*[!0-9]*) echo "::error::LAKE_CACHE_MAX_REVS must be a natural number"; exit 1 ;;

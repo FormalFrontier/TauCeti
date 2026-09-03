@@ -5,12 +5,14 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.DiagonalTorus.Basic
-public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Weight.Parabolic
-public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Points.Naturality
-public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Scheme.Basic
-public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Borel
-import TauCeti.CategoryTheory.Comma.Over
+public import TauCeti.Algebra.AlgebraicGroup.Borel.Basic
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.UpperTriangular.Basic
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.UpperTriangular.SmoothConnected
+public import TauCeti.Algebra.AlgebraicGroup.Solvable.UpperTriangular
+import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Coordinate.BaseChange
+import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Points.Separation
+import TauCeti.Algebra.AlgebraicGroup.Smooth.GeometricallyReduced
+import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Bruhat
 
 /-!
 # The upper-triangular Borel subgroup scheme of `GL₂`
@@ -20,10 +22,9 @@ For a commutative ring `R`, the lower-left coordinate `X₁₀` in the coordinat
 upper-triangular matrices. On every commutative `R`-algebra `A`, its points are naturally the
 existing group `TauCeti.GL2Borel A`.
 
-This is the Borel component of the standard pinning of `GL₂`. It is a worked example for the
-pinning interface required by Layer 9 of the ReductiveGroups roadmap: the diagonal split torus
-can be placed in this closed subgroup scheme, and the positive simple-root subgroup is proved to
-land in it below.
+This is the rank-two specialization of the standard upper-triangular subgroup. The general-rank
+`UpperTriangular` API places both the diagonal split torus and every positive root subgroup in
+this closed subgroup scheme.
 
 The construction uses the equation
 
@@ -41,36 +42,25 @@ arbitrary commutative base ring.
 * `TauCeti.GeneralLinear.Borel.coordinateHopfAlgebra`: the quotient coordinate Hopf algebra.
 * `TauCeti.GeneralLinear.Borel.groupScheme`: the resulting closed subgroup scheme of `GL₂`.
 * `TauCeti.GeneralLinear.Borel.inclusion`: its closed immersion into the named `GL₂` group scheme.
-* `TauCeti.GeneralLinear.Borel.diagonalTorus`: the diagonal split torus as a morphism into the
-  Borel subgroup scheme.
-* `TauCeti.GeneralLinear.Borel.diagonalTorus_comp_inclusion`: composing the Borel diagonal torus
-  with the inclusion is the ambient diagonal torus of `GL₂`.
-* `TauCeti.GeneralLinear.Borel.rootSubgroup`: the positive root subgroup morphism `x₀₁ : 𝔾ₐ → B`.
-* `TauCeti.GeneralLinear.Borel.rootSubgroup_comp_inclusion`: composing the Borel root subgroup with
-  the inclusion is the ambient `GL₂` root subgroup `x₀₁`.
-* `TauCeti.GeneralLinear.Borel.pointsMulEquiv`: its algebra-valued points are upper-triangular
-  invertible matrices.
-* `TauCeti.GeneralLinear.Borel.mapBorel`: entrywise application of a ring homomorphism to
-  `GL2Borel`.
-* `TauCeti.GeneralLinear.Borel.borelFunctor`: the group-valued functor of upper-triangular matrices.
-* `TauCeti.GeneralLinear.Borel.pointsNatIso`: the natural isomorphism between the functor of points
-  of the Borel coordinate Hopf algebra and `borelFunctor`.
+* `TauCeti.GeneralLinear.Borel.isBorel_definingHopfIdeal`: the upper-triangular subgroup is a
+  Borel subgroup over every field.
 
 ## References
 
 * J. S. Milne, *Algebraic Groups* (2017), §§12 and 21.
 * R. W. Carter, *Simple Groups of Lie Type* (1972), §8.2.
-* The quotient coordinate Hopf algebra, closed subgroup scheme packaging, and algebra-valued
-  points construction adapt `TauCeti.Algebra.AlgebraicGroup.SpecialLinear.Basic`.
+* The quotient coordinate Hopf algebra, closed subgroup scheme packaging, algebra-valued points,
+  and functoriality are the rank-two specialization of
+  `TauCeti.Algebra.AlgebraicGroup.GeneralLinear.UpperTriangular.Basic`.
 -/
 
 public section
 
-open CategoryTheory WithConv
+open CategoryTheory
 
 namespace TauCeti.GeneralLinear.Borel
 
-universe u w
+universe u
 
 variable (R : Type u) [CommRing R]
 
@@ -90,18 +80,8 @@ theorem lowerLeftCoordinate_def :
     rfl
 
 /-- The weights `(1, 0)` whose weight parabolic is the standard upper-triangular Borel. -/
-def weights : Fin 2 → ℤ :=
-  fun i ↦ if i = 0 then 1 else 0
-
-/-- The first standard Borel weight is one. -/
-@[simp]
-theorem weights_zero : weights 0 = 1 := by
-  simp [weights]
-
-/-- The second standard Borel weight is zero. -/
-@[simp]
-theorem weights_one : weights 1 = 0 := by
-  simp [weights]
+abbrev weights : Fin 2 → ℤ :=
+  UpperTriangular.weights 2
 
 /-- For the weights `(1, 0)`, the weight-parabolic relation set is the singleton containing the
 lower-left coordinate. -/
@@ -197,525 +177,149 @@ theorem finiteTypeCoordinateHopfAlgebra_obj :
 instance locallyOfFiniteType_groupScheme :
     AlgebraicGeometry.LocallyOfFiniteType (groupScheme R).X.hom := by infer_instance
 
-/-! ### Algebra-valued points -/
+/-- The general-linear base-change isomorphism carries the scalar extension of the
+upper-triangular defining ideal to the upper-triangular defining ideal over the new field. -/
+private theorem map_baseChangeHopfIdeal_definingHopfIdeal
+    (k K : Type u) [Field k] [Field K] [Algebra k K] :
+    (CommHopfAlgCat.baseChangeHopfIdeal (K := K) (definingHopfIdeal k)).map
+        (GeneralLinear.coordinateHopfAlgebraBaseChangeIso k K 2).hom.hom =
+      definingHopfIdeal K := by
+  refine CommHopfAlgCat.map_baseChangeHopfIdeal_of_toIdeal_eq_span
+    (definingHopfIdeal k) (definingHopfIdeal K)
+    (GeneralLinear.coordinateHopfAlgebraBaseChangeIso k K 2)
+    (definingHopfIdeal_toIdeal k) (definingHopfIdeal_toIdeal K) ?_
+  simp only [Set.image_singleton]
+  congr 1
+  rw [lowerLeftCoordinate_def, lowerLeftCoordinate_def]
+  simpa using GeneralLinear.coordinateHopfAlgebraBaseChangeIso_hom_apply.{u, u}
+    k K 2 1 (MvPolynomial.X ((1 : Fin 2), (0 : Fin 2)))
 
-section Points
+section Field
 
-variable {A : Type w} [CommRing A] [Algebra R A]
+variable {k : Type u} [Field k]
 
-/-- An ambient `GL₂`-point belongs to the subgroup cut out by `(X₁₀)` exactly when its
-corresponding matrix is upper triangular. -/
-private theorem mem_definingPointsSubgroup_iff
-    (g : HopfAlgebra.points (R := R)
-      (H := GeneralLinear.coordinateHopfAlgebra R 2) (CommAlgCat.of R A)) :
-    g ∈ CommHopfAlgCat.quotientPointsSubgroup
-        (GeneralLinear.coordinateHopfAlgebra R 2) (definingHopfIdeal R)
-        (CommAlgCat.of R A) ↔
-      GeneralLinear.pointsMulEquiv 2 g ∈ GL2Borel A := by
-  rw [definingHopfIdeal,
-    GeneralLinear.mem_weightParabolicDefiningPointsSubgroup_iff_blockTriangular,
-    GL2Borel.mem_iff]
-  simp only [Matrix.BlockTriangular, Function.comp_apply, OrderDual.toDual_lt_toDual]
+/-- The smooth, geometrically connected, geometrically solvable maximality condition over one
+field. This local predicate is used to transport the geometric Borel condition across the
+canonical base-change isomorphism for `GL₂`. -/
+private def isBorelOverField (F : Type u) [Field F]
+    (H : FiniteTypeCommHopfAlgCat.{u, u} F) (I : HopfIdeal F H.obj) : Prop :=
+  Minimal (fun J : HopfIdeal F H.obj ↦
+    smoothCommHopfAlgProperty F (FiniteTypeCommHopfAlgCat.quotient H J).obj ∧
+      geometricallyConnectedCommHopfAlgProperty F
+        (FiniteTypeCommHopfAlgCat.quotient H J).obj ∧
+      geometricallySolvablePointsCommHopfAlgProperty F
+        (FiniteTypeCommHopfAlgCat.quotient H J).obj) I
+
+private theorem isBorelOverField_iff (F : Type u) [Field F]
+    (H : FiniteTypeCommHopfAlgCat.{u, u} F) (I : HopfIdeal F H.obj) :
+    isBorelOverField F H I ↔
+      smoothCommHopfAlgProperty F (FiniteTypeCommHopfAlgCat.quotient H I).obj ∧
+        geometricallyConnectedCommHopfAlgProperty F
+          (FiniteTypeCommHopfAlgCat.quotient H I).obj ∧
+        geometricallySolvablePointsCommHopfAlgProperty F
+          (FiniteTypeCommHopfAlgCat.quotient H I).obj ∧
+        ∀ J : HopfIdeal F H.obj,
+          smoothCommHopfAlgProperty F (FiniteTypeCommHopfAlgCat.quotient H J).obj →
+            geometricallyConnectedCommHopfAlgProperty F
+              (FiniteTypeCommHopfAlgCat.quotient H J).obj →
+            geometricallySolvablePointsCommHopfAlgProperty F
+              (FiniteTypeCommHopfAlgCat.quotient H J).obj →
+            J ≤ I → I ≤ J := by
   constructor
-  · intro h
-    exact h (i := 1) (j := 0) (by simp [weights])
-  · intro h i j hij
-    fin_cases i <;> fin_cases j
-    · simp [weights] at hij
-    · simp [weights] at hij
-    · simpa only [GeneralLinear.pointsMulEquiv_apply,
-        GeneralLinear.pointToGeneralLinear_apply, Fin.zero_eta, Fin.mk_one] using h
-    · simp [weights] at hij
+  · rintro ⟨⟨hsmooth, hconnected, hsolvable⟩, hmax⟩
+    exact ⟨hsmooth, hconnected, hsolvable,
+      fun J hJsmooth hJconnected hJsolvable hJI ↦
+        hmax ⟨hJsmooth, hJconnected, hJsolvable⟩ hJI⟩
+  · rintro ⟨hsmooth, hconnected, hsolvable, hmax⟩
+    exact ⟨⟨hsmooth, hconnected, hsolvable⟩,
+      fun J hJ hJI ↦ hmax J hJ.1 hJ.2.1 hJ.2.2 hJI⟩
 
-/-- Read a cut-out ambient point as an upper-triangular invertible matrix. -/
-private noncomputable def pointsSubgroupToBorel
-    (g : CommHopfAlgCat.quotientPointsSubgroup
-      (GeneralLinear.coordinateHopfAlgebra R 2) (definingHopfIdeal R)
-      (CommAlgCat.of R A)) : GL2Borel A :=
-  ⟨GeneralLinear.pointsMulEquiv 2 g.1,
-    (mem_definingPointsSubgroup_iff R g.1).mp g.2⟩
+/-- Over a field, the upper-triangular subgroup of `GL₂` is maximal among smooth geometrically
+connected solvable closed subgroups. -/
+private theorem isBorelOverField_definingHopfIdeal :
+    isBorelOverField k
+      ⟨GeneralLinear.coordinateHopfAlgebra k 2,
+        (finiteTypeCommHopfAlgProperty_iff _).2 inferInstance⟩
+      (definingHopfIdeal k) := by
+  rw [isBorelOverField_iff]
+  refine ⟨UpperTriangular.smoothCommHopfAlgProperty_coordinateHopfAlgebra 2 k,
+    UpperTriangular.geometricallyConnectedCommHopfAlgProperty_coordinateHopfAlgebra 2 k,
+    UpperTriangular.geometricallySolvablePointsCommHopfAlgProperty_coordinateHopfAlgebra k 2,
+    ?_⟩
+  intro I hIsmooth _ hIsolvable hIB
+  let H := GeneralLinear.coordinateHopfAlgebra k 2
+  let K := AlgebraicClosure k
+  let P := GeneralLinear.hopfIdealPointsSubgroup 2 I K
+  have hBP : GL2Borel K ≤ P := by
+    -- `GL2Borel` abbreviates this upper-triangular subgroup; no propositional equality lemma is
+    -- retained solely to restate that definitional equality.
+    change upperTriangularGroup (Fin 2) K ≤ P
+    rw [← UpperTriangular.hopfIdealPointsSubgroup_eq k 2]
+    exact GeneralLinear.hopfIdealPointsSubgroup_le_of_le 2 hIB K
+  let e := GeneralLinear.hopfIdealPointsSubgroupMulEquiv 2 I (CommAlgCat.of k K)
+  rw [geometricallySolvablePointsCommHopfAlgProperty_iff] at hIsolvable
+  let _ : Group.IsSolvable
+      (HopfAlgebra.points (R := k) (H := CommHopfAlgCat.quotient H I)
+        (CommAlgCat.of k K)) := hIsolvable
+  let _ : Group.IsSolvable P :=
+    Group.isSolvable_of_isSolvable_injective (f := e.symm.toMonoidHom) e.symm.injective
+  have hPB : P ≤ GL2Borel K := GL2Borel.le_of_isSolvable K P hBP
+  let _ : IsReduced (CommHopfAlgCat.quotient H I) :=
+    ((smoothCommHopfAlgProperty_iff_geometricallyReduced k
+      (CommHopfAlgCat.quotient H I)).mp hIsmooth).isReduced
+  apply HopfIdeal.le_of_quotientPointsSubgroup_le (K := K)
+  intro q hq
+  have hqP : GeneralLinear.pointsMulEquiv 2 q ∈ P :=
+    GeneralLinear.pointsMulEquiv_mem_hopfIdealPointsSubgroup 2 I K q hq
+  have hqB : GeneralLinear.pointsMulEquiv 2 q ∈
+      GeneralLinear.hopfIdealPointsSubgroup 2 (definingHopfIdeal k) K := by
+    rw [UpperTriangular.hopfIdealPointsSubgroup_eq k 2]
+    exact hPB hqP
+  rw [GeneralLinear.mem_hopfIdealPointsSubgroup_iff] at hqB
+  rw [CommHopfAlgCat.mem_quotientPointsSubgroup_iff]
+  simpa only [MulEquiv.symm_apply_apply] using hqB
 
-/-- Regard an upper-triangular invertible matrix as a point in the cut-out ambient subgroup. -/
-private noncomputable def borelToPointsSubgroup (g : GL2Borel A) :
-    CommHopfAlgCat.quotientPointsSubgroup
-      (GeneralLinear.coordinateHopfAlgebra R 2) (definingHopfIdeal R)
-      (CommAlgCat.of R A) :=
-  ⟨(GeneralLinear.pointsMulEquiv (R := R) (A := A) 2).symm g.1,
-    (mem_definingPointsSubgroup_iff R _).mpr (by
-      rw [MulEquiv.apply_symm_apply]
-      exact g.2)⟩
+/-- **The upper-triangular subgroup scheme of `GL₂` is a Borel subgroup over every field.**
+Its base change to an algebraic closure is smooth, connected, solvable, and maximal among closed
+subgroups with those properties. -/
+theorem isBorel_definingHopfIdeal :
+    HopfIdeal.IsBorel k (GeneralLinear.coordinateHopfAlgebra k 2) (definingHopfIdeal k) := by
+  simp only [HopfIdeal.isBorel_iff]
+  let K := AlgebraicClosure k
+  let H : FiniteTypeCommHopfAlgCat.{u, u} k :=
+    ⟨GeneralLinear.coordinateHopfAlgebra k 2,
+      (finiteTypeCommHopfAlgProperty_iff _).2 inferInstance⟩
+  let H' := FiniteTypeCommHopfAlgCat.baseChange (K := K) H
+  let L : FiniteTypeCommHopfAlgCat.{u, u} K :=
+    ⟨GeneralLinear.coordinateHopfAlgebra K 2,
+      (finiteTypeCommHopfAlgProperty_iff _).2 inferInstance⟩
+  let e : H' ≅ L := ObjectProperty.isoMk _
+    (GeneralLinear.coordinateHopfAlgebraBaseChangeIso k K 2)
+  let I' := CommHopfAlgCat.baseChangeHopfIdeal (K := K) (definingHopfIdeal k)
+  rw [← isBorelOverField_iff K H' I']
+  have htarget : isBorelOverField K L (definingHopfIdeal K) := by
+    simpa only [L] using (isBorelOverField_definingHopfIdeal (k := K))
+  have hpull : isBorelOverField K H'
+      ((definingHopfIdeal K).comapOfSurjective
+        (FiniteTypeCommHopfAlgCat.toBialgHom e.hom)
+        (ConcreteCategory.bijective_of_isIso e.hom).2) :=
+    FiniteTypeCommHopfAlgCat.minimal_quotientProperty_comapOfIso
+      (H := H') (K := L)
+      ((smoothCommHopfAlgProperty K ⊓
+        (geometricallyConnectedCommHopfAlgProperty K ⊓
+          geometricallySolvablePointsCommHopfAlgProperty K)).inverseImage
+        (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} K)
+          (_root_.CommHopfAlgCat.{u} K))) (definingHopfIdeal K) htarget e
+  let f := FiniteTypeCommHopfAlgCat.toBialgHom e.hom
+  have hf : Function.Bijective f := ConcreteCategory.bijective_of_isIso e.hom
+  have hmap : I'.map f = definingHopfIdeal K := by
+    exact map_baseChangeHopfIdeal_definingHopfIdeal k K
+  have hcomap :
+      (definingHopfIdeal K).comapOfSurjective f hf.2 = I' := by
+    rw [← hmap]
+    exact HopfIdeal.comapOfSurjective_map_of_bijective I' f hf
+  rwa [hcomap] at hpull
 
-/-- The subgroup of `GL₂(A)` cut out by the Borel Hopf ideal is `GL2Borel A`. -/
-private noncomputable def definingPointsSubgroupMulEquiv :
-    CommHopfAlgCat.quotientPointsSubgroup
-        (GeneralLinear.coordinateHopfAlgebra R 2) (definingHopfIdeal R)
-        (CommAlgCat.of R A) ≃*
-      GL2Borel A where
-  toFun := pointsSubgroupToBorel R
-  invFun := borelToPointsSubgroup R
-  left_inv g := by
-    apply Subtype.ext
-    exact (GeneralLinear.pointsMulEquiv (R := R) (A := A) 2).symm_apply_apply g.1
-  right_inv g := by
-    apply Subtype.ext
-    exact (GeneralLinear.pointsMulEquiv (R := R) (A := A) 2).apply_symm_apply g.1
-  map_mul' g h := by
-    apply Subtype.ext
-    exact map_mul (GeneralLinear.pointsMulEquiv (R := R) (A := A) 2) g.1 h.1
-
-/-- The group of algebra-valued points of the Borel coordinate Hopf algebra is the group of
-invertible upper-triangular `2 × 2` matrices. -/
-noncomputable def pointsMulEquiv :
-    HopfAlgebra.points (R := R) (H := coordinateHopfAlgebra R) (CommAlgCat.of R A) ≃*
-      GL2Borel A :=
-  ((CommHopfAlgCat.quotientPointsSubgroupNatIso
-      (GeneralLinear.coordinateHopfAlgebra R 2) (definingHopfIdeal R)).app
-      (CommAlgCat.of R A)).groupIsoToMulEquiv.trans
-    (definingPointsSubgroupMulEquiv R)
-
-/-- Internally, the Borel point equivalence first forms the cut-out ambient subgroup point and
-then reads it as an upper-triangular matrix. -/
-private theorem pointsMulEquiv_apply_eq
-    (f : HopfAlgebra.points (R := R) (H := coordinateHopfAlgebra R) (CommAlgCat.of R A)) :
-    pointsMulEquiv (R := R) (A := A) f =
-      pointsSubgroupToBorel R
-        (((CommHopfAlgCat.quotientPointsSubgroupNatIso
-          (GeneralLinear.coordinateHopfAlgebra R 2) (definingHopfIdeal R)).app
-          (CommAlgCat.of R A)).hom f) :=
-  rfl
-
-/-- Under the Borel and general-linear point equivalences, the quotient-point inclusion is the
-ordinary inclusion of upper-triangular matrices into `GL₂`. -/
-theorem pointsMulEquiv_coe
-    (f : HopfAlgebra.points (R := R) (H := coordinateHopfAlgebra R) (CommAlgCat.of R A)) :
-    GeneralLinear.pointsMulEquiv 2
-        (CommHopfAlgCat.quotientPointsHom
-          (GeneralLinear.coordinateHopfAlgebra R 2) (definingHopfIdeal R)
-          (CommAlgCat.of R A) f) =
-      (pointsMulEquiv (R := R) (A := A) f : GL (Fin 2) A) := by
-  have hcomponent := CommHopfAlgCat.quotientPointsSubgroupNatIso_hom_app_apply
-    (GeneralLinear.coordinateHopfAlgebra R 2) (definingHopfIdeal R)
-    (CommAlgCat.of R A) f
-  rw [pointsMulEquiv_apply_eq]
-  exact congrArg
-    (fun g => (pointsSubgroupToBorel R g : GL2Borel A).1) hcomponent.symm
-
-/-- The ambient point attached to an upper-triangular matrix is the general-linear point
-attached to its ordinary inclusion. -/
-@[simp]
-theorem quotientPointsHom_pointsMulEquiv_symm (g : GL2Borel A) :
-    CommHopfAlgCat.quotientPointsHom
-        (GeneralLinear.coordinateHopfAlgebra R 2) (definingHopfIdeal R)
-        (CommAlgCat.of R A) ((pointsMulEquiv (R := R) (A := A)).symm g) =
-      (GeneralLinear.pointsMulEquiv (R := R) (A := A) 2).symm g.1 := by
-  apply (GeneralLinear.pointsMulEquiv (R := R) (A := A) 2).injective
-  rw [pointsMulEquiv_coe, MulEquiv.apply_symm_apply, MulEquiv.apply_symm_apply]
-
-variable {B : Type w} [CommRing B] [Algebra R B]
-
-/-- Apply a ring homomorphism entrywise to an invertible upper-triangular matrix. -/
-def mapBorel (phi : A →+* B) : GL2Borel A →* GL2Borel B where
-  toFun g := ⟨Matrix.GeneralLinearGroup.map phi g.1, by
-    rw [GL2Borel.mem_iff, Matrix.GeneralLinearGroup.map_apply, GL2Borel.apply_one_zero, map_zero]⟩
-  map_one' := Subtype.ext (map_one _)
-  map_mul' x y := Subtype.ext (map_mul _ x.1 y.1)
-
-@[simp]
-theorem coe_mapBorel (phi : A →+* B) (g : GL2Borel A) :
-    ((mapBorel phi g : GL2Borel B) : GL (Fin 2) B) =
-      Matrix.GeneralLinearGroup.map phi (g : GL (Fin 2) A) := by
-  unfold mapBorel
-  rfl
-
-/-- The Borel point equivalence is natural in the value algebra: postcomposition of Hopf points
-agrees with entrywise mapping of upper-triangular matrices. -/
-theorem pointsMulEquiv_mapValue (phi : A →ₐ[R] B)
-    (f : HopfAlgebra.points (R := R) (H := coordinateHopfAlgebra R)
-      (CommAlgCat.of R A)) :
-    pointsMulEquiv (R := R) (A := B)
-        (HopfAlgebra.mapPoints (H := coordinateHopfAlgebra R)
-          (CommAlgCat.ofHom phi) f) =
-      mapBorel phi.toRingHom (pointsMulEquiv (R := R) (A := A) f) := by
-  apply Subtype.ext
-  have hcoe_lhs := pointsMulEquiv_coe (R := R) (A := B)
-    (HopfAlgebra.mapPoints (H := coordinateHopfAlgebra R) (CommAlgCat.ofHom phi) f)
-  have hcoe_rhs := pointsMulEquiv_coe (R := R) (A := A) f
-  rw [← hcoe_lhs, ← CommHopfAlgCat.mapPoints_quotientPointsHom,
-    HopfAlgebra.mapPoints_apply, CommAlgCat.hom_ofHom, ← AlgHom.mapValue_apply,
-    GeneralLinear.pointsMulEquiv_mapValue, hcoe_rhs, coe_mapBorel]
-
-/-- The positive simple-root subgroup `x₀₁` of `GL₂` lands in the Borel subgroup on every
-algebra-valued point. -/
-theorem rootSubgroupPoints_mem
-    (f : WithConv (AdditiveGroup.coordinateHopfAlgebra R →ₐ[R] A)) :
-    GeneralLinear.rootSubgroupPoints (R := R) (N := 2) (by decide : (0 : Fin 2) ≠ 1) f ∈
-      CommHopfAlgCat.quotientPointsSubgroup
-        (GeneralLinear.coordinateHopfAlgebra R 2) (definingHopfIdeal R)
-        (CommAlgCat.of R A) := by
-  apply (mem_definingPointsSubgroup_iff R _).mpr
-  rw [GeneralLinear.pointsMulEquiv_rootSubgroupPoints]
-  exact GL2Borel.mem_iff.mpr (by simp [Matrix.transvection])
-
-/-- The diagonal torus of `GL₂` lands in the Borel subgroup on every algebra-valued point. -/
-theorem diagonalTorusPoints_mem
-    (f : WithConv
-      (MonoidAlgebra R (Multiplicative (ULift.{u} (Fin 2) →₀ ℤ)) →ₐ[R] A)) :
-    GeneralLinear.diagonalTorusPoints (R := R) (N := 2) f ∈
-      CommHopfAlgCat.quotientPointsSubgroup
-        (GeneralLinear.coordinateHopfAlgebra R 2) (definingHopfIdeal R)
-        (CommAlgCat.of R A) := by
-  apply (mem_definingPointsSubgroup_iff R _).mpr
-  rw [GeneralLinear.pointsMulEquiv_diagonalTorusPoints]
-  exact GL2Borel.mem_iff.mpr (by simp [diagGL_apply])
-
-end Points
-
-section Functor
-
-/-- The group-valued functor sending a commutative `R`-algebra to its upper-triangular Borel group,
-before the universe lift used by `borelFunctor`. -/
-private noncomputable abbrev borelFunctorUnlifted :
-    CommAlgCat.{w} R ⥤ GrpCat.{w} where
-  obj A := GrpCat.of (GL2Borel (A : Type w))
-  map phi := GrpCat.ofHom (mapBorel phi.hom.toRingHom)
-  map_id _ := by
-    ext g i j
-    rfl
-  map_comp _ _ := by
-    ext g i j
-    rfl
-
-/-- The group-valued functor sending a commutative `R`-algebra to its upper-triangular Borel group
-and a value-algebra morphism to entrywise application. Its values are universe-lifted so that its
-codomain agrees with the generic Hopf-algebra points functor. -/
-noncomputable def borelFunctor :
-    CommAlgCat.{w} R ⥤ GrpCat.{max u w} :=
-  borelFunctorUnlifted (R := R) ⋙ GrpCat.uliftFunctor.{u, w}
-
-/-- The object part of `borelFunctor` is the universe lift of the upper-triangular Borel group. -/
-theorem borelFunctor_obj (A : CommAlgCat.{w} R) :
-    (borelFunctor (R := R)).obj A =
-      GrpCat.of (ULift.{u, w} (GL2Borel A)) := by
-  unfold borelFunctor borelFunctorUnlifted
-  rfl
-
-/-- The morphism part of `borelFunctor` applies the value-algebra morphism entrywise. -/
-theorem borelFunctor_map {A B : CommAlgCat.{w} R} (phi : A ⟶ B) :
-    (borelFunctor (R := R)).map phi =
-      eqToHom (borelFunctor_obj (R := R) A) ≫
-        GrpCat.ofHom
-          (MulEquiv.ulift.symm.toMonoidHom.comp
-            ((mapBorel phi.hom.toRingHom).comp
-              MulEquiv.ulift.toMonoidHom)) ≫
-        eqToHom (borelFunctor_obj (R := R) B).symm := by
-  unfold borelFunctor borelFunctorUnlifted
-  rfl
-
-/-- Entrywise computation of the value-algebra map on the Borel functor. -/
-@[simp]
-theorem borelFunctor_map_apply_apply {A B : CommAlgCat.{w} R} (phi : A ⟶ B)
-    (g : ULift.{u, w} (GL2Borel A)) (i j : Fin 2) :
-    (((eqToHom (borelFunctor_obj (R := R) B)
-      ((borelFunctor (R := R)).map phi
-        (eqToHom (borelFunctor_obj (R := R) A).symm g))).down : GL2Borel B) :
-          GL (Fin 2) B) i j =
-      phi.hom (((g.down : GL2Borel A) : GL (Fin 2) A) i j) := by
-  unfold borelFunctor borelFunctorUnlifted mapBorel
-  rfl
-
-/-- The functor of points of the Borel coordinate Hopf algebra is naturally isomorphic
-to the upper-triangular Borel group functor. -/
-noncomputable def pointsNatIso :
-    HopfAlgebra.pointsFunctor (R := R) (H := coordinateHopfAlgebra R) ≅
-      borelFunctor (R := R) :=
-  NatIso.ofComponents
-    (fun A ↦ ((pointsMulEquiv (R := R) (A := A)).trans
-      MulEquiv.ulift.symm).toGrpIso)
-    (by
-      intro A B phi
-      ext f
-      apply ULift.ext
-      exact pointsMulEquiv_mapValue (R := R) (A := A) (B := B) phi.hom f)
-
-/-- After transport along `borelFunctor_obj`, the forward component of `pointsNatIso` is
-the pointwise Borel equivalence. -/
-@[simp]
-theorem pointsNatIso_hom_app_apply (A : CommAlgCat.{w} R)
-    (f : HopfAlgebra.points (R := R) (H := coordinateHopfAlgebra R) A) :
-    (eqToHom (borelFunctor_obj (R := R) A)
-      ((pointsNatIso (R := R)).hom.app A f)).down =
-      pointsMulEquiv (R := R) (A := A) f := by
-  unfold pointsNatIso
-  rfl
-
-/-- After transport back along `borelFunctor_obj`, the inverse component of `pointsNatIso`
-is the inverse pointwise Borel equivalence. -/
-@[simp]
-theorem pointsNatIso_inv_app_apply (A : CommAlgCat.{w} R)
-    (g : ULift.{u, w} (GL2Borel A)) :
-    (pointsNatIso (R := R)).inv.app A
-        (eqToHom (borelFunctor_obj (R := R) A).symm g) =
-      (pointsMulEquiv (R := R) (A := A)).symm g.down := by
-  unfold pointsNatIso
-  rfl
-
-end Functor
-
-section DiagonalTorus
-
-/-- The coordinate morphism of the diagonal torus into the Borel coordinate Hopf algebra. -/
-noncomputable def diagonalTorusCoordinateMap :
-    coordinateHopfAlgebra R ⟶
-      _root_.CommHopfAlgCat.of R
-        (MonoidAlgebra R (Multiplicative (ULift.{u} (Fin 2) →₀ ℤ))) :=
-  CommHopfAlgCat.liftQuotient (definingHopfIdeal R)
-    (GeneralLinear.diagonalTorusCoordinateMap (R := R) (N := 2))
-    (by
-      rw [definingHopfIdeal_toIdeal, Ideal.span_le, Set.singleton_subset_iff,
-        SetLike.mem_coe, RingHom.mem_ker]
-      let id_pt : WithConv
-          (MonoidAlgebra R (Multiplicative (ULift.{u} (Fin 2) →₀ ℤ)) →ₐ[R]
-            MonoidAlgebra R (Multiplicative (ULift.{u} (Fin 2) →₀ ℤ))) :=
-        WithConv.toConv (AlgHom.id R _)
-      have hmem := diagonalTorusPoints_mem (R := R) id_pt
-      rw [CommHopfAlgCat.mem_quotientPointsSubgroup_iff] at hmem
-      have hzero := hmem (lowerLeftCoordinate R)
-        (HopfIdeal.mem_toIdeal.mp
-          (definingHopfIdeal_toIdeal R ▸ Ideal.mem_span_singleton_self _))
-      have heq :
-          GeneralLinear.diagonalTorusPoints (R := R) (N := 2) id_pt =
-            (CommHopfAlgCat.mapPointsFunctor
-              (GeneralLinear.diagonalTorusCoordinateMap (R := R) (N := 2))).app
-              (CommAlgCat.of R
-                (MonoidAlgebra R (Multiplicative (ULift.{u} (Fin 2) →₀ ℤ)))) id_pt := by
-        rw [GeneralLinear.mapPointsFunctor_diagonalTorusCoordinateMap_app]
-      rw [heq, CommHopfAlgCat.mapPointsFunctor_app_apply] at hzero
-      exact hzero)
-
-/-- Precomposing the Borel diagonal-torus coordinate morphism with the quotient coordinate map
-yields the ambient general-linear diagonal-torus coordinate morphism. -/
-@[simp]
-theorem coordinateMap_comp_diagonalTorusCoordinateMap :
-    coordinateMap R ≫ diagonalTorusCoordinateMap R =
-      GeneralLinear.diagonalTorusCoordinateMap (R := R) (N := 2) := by
-  rw [coordinateMap_def]
-  exact CommHopfAlgCat.mkQuotient_comp_liftQuotient _ _ _
-
-/-- **The diagonal split torus of `GL₂` inside its Borel subgroup scheme**. -/
-noncomputable def diagonalTorus :
-    SplitTorus.groupScheme R (ULift.{u} (Fin 2)) ⟶ groupScheme R :=
-  eqToHom
-      (DiagonalizableGroup.groupScheme_def R
-        (SplitTorus.characterGroup (ULift.{u} (Fin 2)))) ≫
-    (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
-      (diagonalTorusCoordinateMap R).op ≫
-    eqToHom (groupScheme_def R).symm
-
-/-- The diagonal torus into the Borel subgroup scheme is relative spectrum applied
-contravariantly to its coordinate morphism, transported across the named presentations. -/
-theorem diagonalTorus_def :
-    diagonalTorus R =
-      eqToHom
-          (DiagonalizableGroup.groupScheme_def R
-            (SplitTorus.characterGroup (ULift.{u} (Fin 2)))) ≫
-        (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
-          (diagonalTorusCoordinateMap R).op ≫
-        eqToHom (groupScheme_def R).symm := by
-  unfold diagonalTorus
-  rfl
-
-/-- Composing the diagonal torus inside the Borel subgroup scheme with the Borel inclusion into
-`GL₂` gives the standard diagonal torus of `GL₂`. -/
-@[simp]
-theorem diagonalTorus_comp_inclusion :
-    diagonalTorus R ≫ inclusion R =
-      GeneralLinear.diagonalTorus (R := R) (N := 2) := by
-  rw [diagonalTorus_def, inclusion, GeneralLinear.diagonalTorus_def]
-  rw [GeneralLinear.weightParabolicInclusion_def]
-  simp only [Category.assoc, eqToHom_refl, Category.id_comp]
-  rw [CommHopfAlgCat.quotientSpecι_def]
-  have hmap :
-      (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
-          (diagonalTorusCoordinateMap R).op ≫
-        (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
-          (CommHopfAlgCat.mkQuotient (GeneralLinear.coordinateHopfAlgebra R 2)
-            (definingHopfIdeal R)).op =
-      (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
-        (GeneralLinear.diagonalTorusCoordinateMap (R := R) (N := 2)).op := by
-    rw [← Functor.map_comp, ← op_comp, ← coordinateMap_def R,
-      coordinateMap_comp_diagonalTorusCoordinateMap]
-  congr 1
-  rw [← Category.assoc, hmap]
-  rfl
-
-variable (A : Type u) [CommRing A] [Algebra R A]
-
-/-- Under the Borel and general-linear point equivalences, the factored diagonal-torus
-coordinate morphism gives the same diagonal matrix as the ambient diagonal-torus morphism. -/
-theorem pointsMulEquiv_diagonalTorusCoordinateMap
-    (f : WithConv
-      (MonoidAlgebra R (Multiplicative (ULift.{u} (Fin 2) →₀ ℤ)) →ₐ[R] A)) :
-    ((pointsMulEquiv (R := R) (A := A)
-        (WithConv.toConv (f.ofConv.comp (diagonalTorusCoordinateMap R).hom)) : GL2Borel A) :
-      GL (Fin 2) A) =
-      GeneralLinear.pointsMulEquiv 2
-        (GeneralLinear.diagonalTorusPoints (R := R) (N := 2) f) := by
-  have hcoe := pointsMulEquiv_coe (R := R) (A := A)
-    (WithConv.toConv (f.ofConv.comp (diagonalTorusCoordinateMap R).hom))
-  rw [← hcoe]
-  congr 1
-  rw [CommHopfAlgCat.quotientPointsHom_apply]
-  have hcomp :
-      (coordinateMap R ≫ diagonalTorusCoordinateMap R).hom.toAlgHom =
-        (diagonalTorusCoordinateMap R).hom.toAlgHom.comp
-          (coordinateMap R).hom.toAlgHom := rfl
-  rw [WithConv.ofConv_toConv, AlgHom.comp_assoc, ← coordinateMap_def R, ← hcomp,
-    coordinateMap_comp_diagonalTorusCoordinateMap]
-  have hmap := GeneralLinear.mapPointsFunctor_diagonalTorusCoordinateMap_app
-    (R := R) (N := 2) (CommAlgCat.of R A) f
-  rw [CommHopfAlgCat.mapPointsFunctor_app_apply] at hmap
-  exact hmap
-
-end DiagonalTorus
-
-section RootSubgroup
-
-/-- The coordinate morphism of the positive root subgroup into the Borel coordinate Hopf algebra. -/
-noncomputable def rootSubgroupCoordinateMap :
-    coordinateHopfAlgebra R ⟶ AdditiveGroup.coordinateHopfAlgebra R :=
-  CommHopfAlgCat.liftQuotient (definingHopfIdeal R)
-    (GeneralLinear.rootSubgroupCoordinateMap (by decide : (0 : Fin 2) ≠ 1))
-    (by
-      rw [definingHopfIdeal_toIdeal, Ideal.span_le, Set.singleton_subset_iff,
-        SetLike.mem_coe, RingHom.mem_ker]
-      have hmem := rootSubgroupPoints_mem (R := R)
-        (A := AdditiveGroup.coordinateHopfAlgebra R)
-        (WithConv.toConv (AlgHom.id R (AdditiveGroup.coordinateHopfAlgebra R)))
-      rw [CommHopfAlgCat.mem_quotientPointsSubgroup_iff] at hmem
-      have h0 := hmem (lowerLeftCoordinate R)
-        (HopfIdeal.mem_toIdeal.mp
-          (definingHopfIdeal_toIdeal R ▸ Ideal.mem_span_singleton_self _))
-      have heq :
-          GeneralLinear.rootSubgroupPoints (by decide : (0 : Fin 2) ≠ 1)
-              (WithConv.toConv (AlgHom.id R (AdditiveGroup.coordinateHopfAlgebra R))) =
-            (CommHopfAlgCat.mapPointsFunctor
-              (GeneralLinear.rootSubgroupCoordinateMap
-                (by decide : (0 : Fin 2) ≠ 1))).app
-              (CommAlgCat.of R (AdditiveGroup.coordinateHopfAlgebra R))
-              (WithConv.toConv (AlgHom.id R (AdditiveGroup.coordinateHopfAlgebra R))) := by
-        rw [GeneralLinear.mapPointsFunctor_rootSubgroupCoordinateMap_app]
-      rw [heq, CommHopfAlgCat.mapPointsFunctor_app_apply] at h0
-      exact h0)
-
-/-- Precomposing the Borel root-subgroup coordinate morphism with the quotient coordinate map
-yields the ambient general-linear root-subgroup coordinate morphism. -/
-@[simp]
-theorem coordinateMap_comp_rootSubgroupCoordinateMap :
-    coordinateMap R ≫ rootSubgroupCoordinateMap R =
-      GeneralLinear.rootSubgroupCoordinateMap (by decide : (0 : Fin 2) ≠ 1) := by
-  rw [coordinateMap_def]
-  exact CommHopfAlgCat.mkQuotient_comp_liftQuotient _ _ _
-
-/-- **The positive simple-root subgroup of `GL₂` inside the Borel subgroup scheme**: the affine
-group-scheme morphism `x₀₁ : 𝔾ₐ → B` whose value on points is `c ↦ x₀₁(c)`. -/
-noncomputable def rootSubgroup :
-    AdditiveGroup.groupScheme R ⟶ groupScheme R :=
-  eqToHom (AdditiveGroup.groupScheme_def R) ≫
-    (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
-      (rootSubgroupCoordinateMap R).op ≫
-    eqToHom (groupScheme_def R).symm
-
-/-- The root subgroup into the Borel subgroup scheme is relative spectrum applied contravariantly
-to its coordinate morphism, transported across the named presentations of `𝔾ₐ` and `B`. -/
-theorem rootSubgroup_def :
-    rootSubgroup R =
-      eqToHom (AdditiveGroup.groupScheme_def R) ≫
-        (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
-          (rootSubgroupCoordinateMap R).op ≫
-        eqToHom (groupScheme_def R).symm := by
-  unfold rootSubgroup
-  rfl
-
-/-- Composing the Borel root-subgroup morphism with the Borel inclusion into `GL₂` gives the
-standard general-linear root subgroup `x₀₁`. -/
-@[simp]
-theorem rootSubgroup_comp_inclusion :
-    rootSubgroup R ≫ inclusion R =
-      GeneralLinear.rootSubgroup (by decide : (0 : Fin 2) ≠ 1) := by
-  rw [rootSubgroup_def, inclusion, GeneralLinear.rootSubgroup_def]
-  rw [GeneralLinear.weightParabolicInclusion_def]
-  simp only [Category.assoc, eqToHom_refl, Category.id_comp]
-  rw [CommHopfAlgCat.quotientSpecι_def]
-  have hmap :
-      (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map (rootSubgroupCoordinateMap R).op ≫
-        (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
-          (CommHopfAlgCat.mkQuotient (GeneralLinear.coordinateHopfAlgebra R 2)
-            (definingHopfIdeal R)).op =
-      (AlgebraicGeometry.hopfSpec (CommRingCat.of R)).map
-        (GeneralLinear.rootSubgroupCoordinateMap (by decide : (0 : Fin 2) ≠ 1)).op := by
-    rw [← Functor.map_comp, ← op_comp, ← coordinateMap_def R,
-      coordinateMap_comp_rootSubgroupCoordinateMap]
-  congr 1
-  rw [← Category.assoc, hmap]
-  rfl
-
-variable (A : Type w) [CommRing A] [Algebra R A]
-
-/-- The positive root subgroup morphism lands in the expected upper-triangular matrix on
-algebra-valued points. -/
-theorem pointsMulEquiv_rootSubgroupCoordinateMap
-    (f : WithConv (AdditiveGroup.coordinateHopfAlgebra R →ₐ[R] A)) :
-    ((pointsMulEquiv (R := R) (A := A)
-        (toConv (f.ofConv.comp (rootSubgroupCoordinateMap R).hom)) : GL2Borel A) : GL (Fin 2) A) =
-      GeneralLinear.pointsMulEquiv 2
-        (GeneralLinear.rootSubgroupPoints (by decide : (0 : Fin 2) ≠ 1) f) := by
-  have hcoe := pointsMulEquiv_coe (R := R) (A := A)
-    (toConv (f.ofConv.comp (rootSubgroupCoordinateMap R).hom))
-  rw [← hcoe]
-  congr 1
-  rw [CommHopfAlgCat.quotientPointsHom_apply]
-  have hcomp :
-      (coordinateMap R ≫ rootSubgroupCoordinateMap R).hom.toAlgHom =
-      (rootSubgroupCoordinateMap R).hom.toAlgHom.comp (coordinateMap R).hom.toAlgHom := rfl
-  rw [ofConv_toConv, AlgHom.comp_assoc, ← coordinateMap_def R, ← hcomp,
-    coordinateMap_comp_rootSubgroupCoordinateMap]
-  let id_pt :
-      WithConv
-        (AdditiveGroup.coordinateHopfAlgebra R →ₐ[R] AdditiveGroup.coordinateHopfAlgebra R) :=
-    toConv (AlgHom.id R (AdditiveGroup.coordinateHopfAlgebra R))
-  have hcomp_alg :
-      (GeneralLinear.rootSubgroupCoordinateMap (by decide : (0 : Fin 2) ≠ 1)).hom.toAlgHom =
-        (GeneralLinear.rootSubgroupPoints (by decide : (0 : Fin 2) ≠ 1) id_pt).ofConv := by
-    have hmap := GeneralLinear.mapPointsFunctor_rootSubgroupCoordinateMap_app (R := R)
-      (by decide : (0 : Fin 2) ≠ 1) (CommAlgCat.of R (AdditiveGroup.coordinateHopfAlgebra R)) id_pt
-    rw [CommHopfAlgCat.mapPointsFunctor_app_apply] at hmap
-    exact congrArg WithConv.ofConv hmap
-  rw [hcomp_alg]
-  have hmap_gl :
-      GeneralLinear.pointsMulEquiv 2
-          (toConv (f.ofConv.comp
-            (GeneralLinear.rootSubgroupPoints (by decide : (0 : Fin 2) ≠ 1) id_pt).ofConv)) =
-        Matrix.GeneralLinearGroup.map f.ofConv.toRingHom
-          (GeneralLinear.pointsMulEquiv 2
-            (GeneralLinear.rootSubgroupPoints (by decide : (0 : Fin 2) ≠ 1) id_pt)) := by
-    apply Matrix.GeneralLinearGroup.ext
-    intro i j
-    rw [GeneralLinear.pointsMulEquiv_apply, GeneralLinear.pointToGeneralLinear_apply,
-      Matrix.GeneralLinearGroup.map_apply, GeneralLinear.pointsMulEquiv_apply,
-      GeneralLinear.pointToGeneralLinear_apply]
-    rfl
-  have hid_pt : AlgHom.mapValue f.ofConv id_pt = f := by
-    apply WithConv.ext
-    exact AlgHom.comp_id f.ofConv
-  have hcoe_ring (x : AdditiveGroup.coordinateHopfAlgebra R) :
-      f.ofConv.toRingHom x = f.ofConv x := rfl
-  apply (GeneralLinear.pointsMulEquiv (R := R) (A := A) 2).injective
-  rw [hmap_gl, GeneralLinear.pointsMulEquiv_rootSubgroupPoints,
-    map_transvectionUnit, hcoe_ring,
-    ← AdditiveGroup.toAdd_gaPointsMulEquiv_mapValue f.ofConv id_pt,
-    hid_pt,
-    GeneralLinear.pointsMulEquiv_rootSubgroupPoints]
-
-end RootSubgroup
+end Field
 
 end TauCeti.GeneralLinear.Borel

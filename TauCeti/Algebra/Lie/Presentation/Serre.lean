@@ -7,6 +7,7 @@ module
 
 public import Mathlib.Algebra.Lie.SerreConstruction
 public import TauCeti.Algebra.Lie.Presentation.Basic
+public import TauCeti.Algebra.Lie.Quotient
 
 /-!
 # The Serre presentation: generators, relations, and the universal property
@@ -60,21 +61,11 @@ one, which is not proved here (see the Roadmap section below).
   `TauCeti.serre_hom_ext`: `TauCeti.serreLift` sends the generators to the given Serre system, and
   is the unique homomorphism doing so; `TauCeti.serre_equiv_ext` is the same extensionality
   principle for equivalences out of the presented algebra.
-* `TauCeti.IsSerreSystem.submatrix`, `TauCeti.IsSerreSystem.perm` and
-  `TauCeti.IsSerreSystem.neg_swap`: a Serre system stays one after reindexing along an injective
-  map of index sets (a permutation preserving the matrix, in the second) or after the signed
-  exchange of the raising and lowering families.
+* `TauCeti.IsSerreSystem.map`, `TauCeti.IsSerreSystem.submatrix`, `TauCeti.IsSerreSystem.perm` and
+  `TauCeti.IsSerreSystem.neg_swap`: Serre systems are preserved by Lie homomorphisms, reindexing,
+  and the signed exchange of the raising and lowering families.
 * `TauCeti.serreLift_eq_id`: lifting the generators along their own Serre system is the identity.
 * `TauCeti.lieSpan_serreGenerators_eq_top`: the generators generate the presented algebra.
-
-## Implementation notes
-
-None of the definitions is exposed: `TauCeti.serreMk_of_H` and its companions, the individual
-relations, and `TauCeti.serreLift_serreH` and its companions together with `TauCeti.eq_serreLift`
-characterise them, so nothing downstream has to unfold the quotient. As in
-`TauCeti/Algebra/Lie/Presentation/Basic.lean`, the equations that hold by definition are proved by
-the parenthesised `(rfl)`, which elaborates against the definitions rather than demanding that they
-be `@[expose]`d.
 
 ## Roadmap
 
@@ -116,9 +107,8 @@ noncomputable def serreMk :
 theorem ker_serreMk : (serreMk R CM).ker = Relations.toIdeal R CM := LieIdeal.ker_mkQ _
 
 /-- Every element of the presented algebra is the class of an element of the free Lie algebra. -/
-theorem serreMk_surjective : Function.Surjective (serreMk R CM) := fun y => by
-  obtain ⟨x, hx⟩ := LieSubmodule.Quotient.surjective_mk' (Relations.toIdeal R CM) y
-  exact ⟨x, (LieIdeal.mkQ_apply _ x).trans hx⟩
+theorem serreMk_surjective : Function.Surjective (serreMk R CM) :=
+  (Relations.toIdeal R CM).mkQ_surjective
 
 /-- A relator of Serre's presentation becomes zero in the presented algebra. -/
 theorem serreMk_eq_zero_of_mem_toSet {x : FreeLieAlgebra R (Generators B)}
@@ -290,11 +280,26 @@ section Stability
 variable {R CM} {H E F : B → L} {σ : Equiv.Perm B}
 
 omit [DecidableEq B] in
-/-- If the `n`-fold adjoint action of `x` annihilates `y`, then so does that of `-x`. -/
-private theorem ad_neg_pow_apply_eq_zero {x y : L} {n : ℕ} (h : (ad R L x ^ n) y = 0) :
-    (ad R L (-x) ^ n) y = 0 := by
-  have hneg : ad R L (-x) = (-1 : R) • ad R L x := by rw [map_neg, neg_smul, one_smul]
-  rw [hneg, smul_pow, LinearMap.smul_apply, h, smul_zero]
+/-- The image of a Serre system under a Lie algebra homomorphism is a Serre system. -/
+theorem IsSerreSystem.map {L' : Type*} [LieRing L'] [LieAlgebra R L']
+    (h : IsSerreSystem R CM H E F) (f : L →ₗ⁅R⁆ L') :
+    IsSerreSystem R CM (f ∘ H) (f ∘ E) (f ∘ F) where
+  lie_H_H i j := by
+    simp only [Function.comp_apply, ← f.map_lie, h.lie_H_H i j, map_zero]
+  lie_E_F_self i := by
+    simp only [Function.comp_apply, ← f.map_lie, h.lie_E_F_self i]
+  lie_E_F_of_ne i j hij := by
+    simp only [Function.comp_apply, ← f.map_lie, h.lie_E_F_of_ne i j hij, map_zero]
+  lie_H_E i j := by
+    simp only [Function.comp_apply, ← f.map_lie, h.lie_H_E i j, map_zsmul]
+  lie_H_F i j := by
+    simp only [Function.comp_apply, ← f.map_lie, h.lie_H_F i j, map_neg, map_zsmul]
+  ad_pow_lie_E_E i j := by
+    simp only [Function.comp_apply, ← f.map_lie, ← LieHom.map_ad_pow,
+      h.ad_pow_lie_E_E i j, map_zero]
+  ad_pow_lie_F_F i j := by
+    simp only [Function.comp_apply, ← f.map_lie, ← LieHom.map_ad_pow,
+      h.ad_pow_lie_F_F i j, map_zero]
 
 omit [DecidableEq B] in
 /-- Reindexing a Serre system along an injective map of index sets gives a Serre system for the
@@ -387,25 +392,36 @@ private theorem toIdeal_le_ker_lift (h : IsSerreSystem R CM H E F) :
 property of the presentation. -/
 noncomputable def serreLift (h : IsSerreSystem R CM H E F) :
     Matrix.ToLieAlgebra R CM →ₗ⁅R⁆ L :=
-  LieIdeal.liftQ (FreeLieAlgebra.lift R (serreGeneratorMap H E F)) (toIdeal_le_ker_lift h)
+  (Relations.toIdeal R CM).liftQ (FreeLieAlgebra.lift R (serreGeneratorMap H E F))
+    (toIdeal_le_ker_lift h)
+
+private theorem serreLift_comp_serreMk (h : IsSerreSystem R CM H E F) :
+    (serreLift h).comp (serreMk R CM) = FreeLieAlgebra.lift R (serreGeneratorMap H E F) :=
+  (Relations.toIdeal R CM).liftQ_mkQ _ _
 
 /-- The homomorphism determined by a Serre system sends `Hᵢ` to `H i`. -/
 @[simp]
 theorem serreLift_serreH (h : IsSerreSystem R CM H E F) (i : B) :
-    serreLift h (serreH R CM i) = H i :=
-  (LieIdeal.liftQ_apply_mkQ _ _ _).trans (FreeLieAlgebra.lift_of_apply _ _)
+    serreLift h (serreH R CM i) = H i := by
+  rw [← serreMk_of_H R CM i]
+  exact (DFunLike.congr_fun (serreLift_comp_serreMk h) _).trans
+    (FreeLieAlgebra.lift_of_apply _ _)
 
 /-- The homomorphism determined by a Serre system sends `Eᵢ` to `E i`. -/
 @[simp]
 theorem serreLift_serreE (h : IsSerreSystem R CM H E F) (i : B) :
-    serreLift h (serreE R CM i) = E i :=
-  (LieIdeal.liftQ_apply_mkQ _ _ _).trans (FreeLieAlgebra.lift_of_apply _ _)
+    serreLift h (serreE R CM i) = E i := by
+  rw [← serreMk_of_E R CM i]
+  exact (DFunLike.congr_fun (serreLift_comp_serreMk h) _).trans
+    (FreeLieAlgebra.lift_of_apply _ _)
 
 /-- The homomorphism determined by a Serre system sends `Fᵢ` to `F i`. -/
 @[simp]
 theorem serreLift_serreF (h : IsSerreSystem R CM H E F) (i : B) :
-    serreLift h (serreF R CM i) = F i :=
-  (LieIdeal.liftQ_apply_mkQ _ _ _).trans (FreeLieAlgebra.lift_of_apply _ _)
+    serreLift h (serreF R CM i) = F i := by
+  rw [← serreMk_of_F R CM i]
+  exact (DFunLike.congr_fun (serreLift_comp_serreMk h) _).trans
+    (FreeLieAlgebra.lift_of_apply _ _)
 
 /-- A nonzero Cartan element in a Serre system has a nonzero preimage among the presented Cartan
 generators. -/
@@ -446,7 +462,7 @@ theorem serre_hom_ext {g₁ g₂ : Matrix.ToLieAlgebra R CM →ₗ⁅R⁆ L}
     | H i => exact hH i
     | E i => exact hE i
     | F i => exact hF i
-  refine LieIdeal.lieHom_qext fun x => ?_
+  refine (Relations.toIdeal R CM).lieHom_qext fun x => ?_
   exact congrArg (fun ψ : FreeLieAlgebra R (Generators B) →ₗ⁅R⁆ L => ψ x) hcomp
 
 /-- Two equivalences out of `Matrix.ToLieAlgebra R CM` agreeing on the generators are equal. -/

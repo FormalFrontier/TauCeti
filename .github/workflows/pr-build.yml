@@ -42,6 +42,14 @@ concurrency:
   group: pr-build-${{ github.event.pull_request.number || inputs.pr || github.event.merge_group.head_sha }}
   cancel-in-progress: true
 
+env:
+  # Temporary escape hatch for `lake exe cache get`, kept only for an easy rollback
+  # during the transition to the cache tool's new default read endpoint. Set the
+  # variable to `1` to send cache reads back to the legacy storage endpoint. Clear it to
+  # return reads to the default endpoint on the next run: the cache tool treats unset,
+  # empty, `0`, and `false` alike as off.
+  MATHLIB_CACHE_DEBUG_USE_LEGACY: ${{ vars.MATHLIB_CACHE_DEBUG_USE_LEGACY }}
+
 jobs:
   # Name kept distinct from `build` on purpose — see the header note. The required merge check is the
   # `build` commit STATUS posted in the final step, not this job's auto-created check-run.
@@ -174,6 +182,13 @@ jobs:
           # runs the workflow-pinned scripts/check-bump.sh and routes to a human if it is
           # anything other than a forward move (mathlib forward on its nominated branch,
           # transitive pins derived from mathlib, toolchain monotonic).
+          # docbuild/docs/references.bib is permitted too. It is the bibliography doc-gen4
+          # resolves docstring citations against, so a docstring that cites a work no one has
+          # entered renders as a bare bracketed key. Filling that in is the same kind of work as
+          # writing the docstring, and holding it for a human merge stalled exactly that. It is
+          # BibTeX consumed only by the pages build, never by Lake or the harness, so nothing
+          # here executes it. The rest of docbuild/ stays human-owned: lakefile.toml, the pin,
+          # and the two generator scripts all feed the docs build itself.
           # Two independent questions: does this reach outside TauCeti/, and does it change the
           # Lake pins. They used to share an `elif`, so a PR doing both was only ever answered as
           # out-of-scope: BUMP stayed unset, check-bump.sh never ran, and the report step could
@@ -183,7 +198,7 @@ jobs:
           if [ -z "$files" ]; then
             echo "INFRA=1" >> "$GITHUB_ENV"; echo "::warning::no files / unable to list — cannot determine scope, routing to human"
           else
-            if echo "$files" | grep -vqE '^TauCeti/|^TauCeti\.lean$|^lake-manifest\.json$|^lean-toolchain$'; then
+            if echo "$files" | grep -vqE '^TauCeti/|^TauCeti\.lean$|^lake-manifest\.json$|^lean-toolchain$|^docbuild/docs/references\.bib$'; then
               if echo "$files" | grep -qE '^lakefile\.(toml|lean)$'; then
                 echo "HUMAN_LAKEFILE=1" >> "$GITHUB_ENV"
               fi
@@ -214,6 +229,7 @@ jobs:
             pins_known=1
           fi
           pins_changed=0
+          toolchain_changed=0
           # Whole tree entries, not just blob IDs. Git keeps the mode beside the object, and a
           # symlink is a blob holding its target path — so `lean-toolchain` can be re-pointed at
           # mode 120000 while REUSING the existing blob. Its ID would be unchanged, this would
@@ -238,12 +254,25 @@ jobs:
                  echo "::error::$f is not an ordinary file at the head ($head_entry)"
                  continue ;;
             esac
-            if [ "$mb_entry" != "$head_entry" ]; then pins_changed=1; fi
+            if [ "$mb_entry" != "$head_entry" ]; then
+              pins_changed=1
+              # Which pin moved matters to the cache step below, not just whether one did. The
+              # Lake cache keys each revision map by toolchain, so when lean-toolchain moves no
+              # ancestor can hold a map under the new one and the lookup is known-futile before
+              # it starts. A manifest-only bump keeps the toolchain and still hits.
+              if [ "$f" = "lean-toolchain" ]; then toolchain_changed=1; fi
+            fi
           done
           if [ "$pins_known" = "1" ]; then echo "PINS_KNOWN=1" >> "$GITHUB_ENV"; fi
           if [ "$pins_changed" = "1" ]; then
             echo "BUMP=1" >> "$GITHUB_ENV"
             echo "::notice::PR changes Lake pins — validating as a forward bump before building"
+          fi
+          # Set only when both tree entries were read and differ, so an unresolved merge base
+          # leaves it unset and the lookup runs as before: unknown means look, never means skip.
+          if [ "$toolchain_changed" = "1" ]; then
+            echo "TOOLCHAIN_CHANGED=1" >> "$GITHUB_ENV"
+            echo "::notice::PR moves lean-toolchain — the Lake cache lookup will ask about this revision only, since the maps are keyed by toolchain and every ancestor was published under the old one"
           fi
 
           # The report step runs under `if: always()`. Mark successful completion explicitly so an
@@ -326,10 +355,11 @@ jobs:
           persist-credentials: false
           fetch-depth: 1
 
-      # Full history is intentional. lake cache get --max-revs=0 walks all available ancestors
-      # until it reaches a published main commit, then Lake's input hashes invalidate only changed
-      # modules and their downstream dependents. The checkout is the immutable event head itself:
-      # no refs/pull/N/merge, no local merge, and no source/config overlay.
+      # Full history is intentional. lake cache get walks ancestors until it reaches a published
+      # main commit, then Lake's input hashes invalidate only changed modules and their downstream
+      # dependents. The cache step below limits how many ancestors it reads. The checkout is the
+      # immutable event head itself: no refs/pull/N/merge, no local merge, and no source/config
+      # overlay.
       - name: Checkout the exact candidate head (untrusted contents, no credentials)
         if: ${{ env.INFRA != '1' }}
         uses: actions/checkout@v4
@@ -382,6 +412,29 @@ jobs:
           fi
           test -f pr/TauCeti.lean && test ! -L pr/TauCeti.lean
 
+      - name: Prepare inherited Mathlib shim obligations
+        if: ${{ env.INFRA != '1' }}
+        run: |
+          # Compare with the inherited registry (not today's base tip), so unrelated source
+          # PRs from inheriting registry edits that landed after they branched.
+          base_shims="$RUNNER_TEMP/base-mathlib-shims.json"
+          if [ -f mergebase/TauCeti/mathlib-shims.json ]; then
+            cp mergebase/TauCeti/mathlib-shims.json "$base_shims"
+            echo "BASE_SHIM_REGISTRY=$base_shims" >> "$GITHUB_ENV"
+            echo "BASE_SHIM_ROOT=$(realpath mergebase)" >> "$GITHUB_ENV"
+            echo "SHIM_CHECK=1" >> "$GITHUB_ENV"
+          elif [ -f pr/TauCeti/mathlib-shims.json ]; then
+            # A PR that introduces the registry has no inherited obligations, but its entries are
+            # all new and must still be checked. An older PR containing neither copy predates the
+            # mechanism and is left alone until it rebases onto a registry-bearing main.
+            printf '[]\n' > "$base_shims"
+            echo "BASE_SHIM_REGISTRY=$base_shims" >> "$GITHUB_ENV"
+            echo "BASE_SHIM_ROOT=$(realpath mergebase)" >> "$GITHUB_ENV"
+            echo "SHIM_CHECK=1" >> "$GITHUB_ENV"
+          else
+            echo "SHIM_CHECK=0" >> "$GITHUB_ENV"
+          fi
+
       - name: Import-boundary guard (TauCeti/ and TauCeti.lean ⊬ roadmap/review)
         if: ${{ env.INFRA != '1' }}
         run: |
@@ -397,6 +450,25 @@ jobs:
             echo "::error::TauCeti/ may not use set_option (it can weaken maxHeartbeats, linters, maxRecDepth, ...); remove it"
             exit 1
           fi
+
+      # The trusted checker requires each source-only PR that declares a new temporary Mathlib shim
+      # to record a concrete expiry target in TauCeti's AI-owned registry. Keeping the registry under
+      # TauCeti/ lets a worker add or remove entries in the same autonomous source PR as the shim.
+      - name: Temporary Mathlib shims have machine-checkable expiry targets
+        id: shim_coverage
+        if: ${{ env.INFRA != '1' && env.OUT_OF_SCOPE != '1' && env.SHIM_CHECK == '1' }}
+        continue-on-error: true
+        run: |
+          set +e
+          args=(--coverage-only)
+          [ -z "${BASE_SHIM_REGISTRY:-}" ] || args+=(
+            --base-manifest "$BASE_SHIM_REGISTRY" --base-root "$BASE_SHIM_ROOT"
+          )
+          python3 gate/scripts/check-expired-mathlib-shims.py \
+            --repo-root pr --manifest pr/TauCeti/mathlib-shims.json "${args[@]}"
+          rc=$?
+          echo "SHIM_COVERAGE_RC=$rc" >> "$GITHUB_ENV"
+          exit "$rc"
 
       # Take elan from a pinned leanprover/elan release verified by SHA-256, not from whatever
       # the installer URL serves at the moment of the request. This elan chooses the `lake` the
@@ -562,7 +634,24 @@ jobs:
           # environment variables; the script hands it the endpoints through a `--service` config.
           PUBLIC_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT_PUBLIC }}
           PUBLIC_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT_PUBLIC }}
-          LAKE_CACHE_MAX_REVS: "0"
+          # How far back it is worth asking, which depends on whether an ancestor could hold
+          # a usable map at all. The maps are keyed by toolchain, so once lean-toolchain moves
+          # every ancestor was published under the old one and walking them cannot hit: ask
+          # about HEAD alone and stop. HEAD itself is still worth one request, because a
+          # merge-group re-run of a bump that already built once finds its own published
+          # outputs there — the case an outright skip would recompile from scratch.
+          #
+          # Otherwise a walk can pay, so bound it only as a backstop against something we have
+          # not characterised. Overrunning the bound is indistinguishable from a genuine miss,
+          # and a miss costs a full recompile (~2h) against the ~4 minutes a 1000-revision walk
+          # costs at the rate observed in the run that motivated #5396 — so it is sized to be
+          # reached only by the genuinely unexpected. At main's current rate 1000 is about three
+          # weeks of history, against roughly 39 hours for the 100 it replaces.
+          #
+          # The scope guard above answers the toolchain question from the immutable tree entries
+          # at the merge base and the head, and leaves it unset whenever it could not read them,
+          # so unknown falls through to the walk rather than to the single lookup.
+          LAKE_CACHE_MAX_REVS: ${{ env.TOOLCHAIN_CHANGED == '1' && '1' || '1000' }}
         run: bash gate/scripts/lake-cache-get.sh pr
 
       - name: Prepare trusted read-only Lean watchdog toolchain
@@ -626,6 +715,28 @@ jobs:
           if-no-files-found: error
           retention-days: 1
           compression-level: 0
+
+      # A replacement normally becomes newly actionable when the pinned Mathlib moves; that bump PR
+      # is picked up by Tau Ceti's bump worker. Running the same trusted probe on source PRs also
+      # prevents a newly-added shim from targeting API that already exists at the current pin. The
+      # probe follows the build so a partial Mathlib download can be recovered by the normal build
+      # path first. Only concrete replacements block; broader sentinels remain audit warnings.
+      - name: Migrate shims whose exact replacements exist in pinned Mathlib
+        id: shim_expiry
+        if: ${{ always() && env.INFRA != '1' && env.OUT_OF_SCOPE != '1' && env.SHIM_CHECK == '1' }}
+        continue-on-error: true
+        run: |
+          set +e
+          args=(--fail-on-available)
+          if [ -n "${BASE_SHIM_REGISTRY:-}" ]; then
+            args+=(--base-manifest "$BASE_SHIM_REGISTRY" --base-root "$BASE_SHIM_ROOT")
+            [ "${BUMP:-0}" = "1" ] || args+=(--only-new)
+          fi
+          python3 gate/scripts/check-expired-mathlib-shims.py \
+            --repo-root pr --manifest pr/TauCeti/mathlib-shims.json "${args[@]}"
+          rc=$?
+          echo "SHIM_EXPIRY_RC=$rc" >> "$GITHUB_ENV"
+          exit "$rc"
 
       - name: Report build and bump-guard statuses to the PR head commit
         id: report
@@ -707,10 +818,12 @@ jobs:
           fi
           post_status bump-guard "$bg_state" "$bg_desc"
 
-          # build: the exact immutable candidate result, independent of merge-policy scope. An
-          # out-of-scope scripts/.github change still receives a useful build because all harness
-          # code is workflow-pinned. A lakefile edit or invalid pin is never executed and therefore
-          # reports a required failure rather than pretending that a different configuration built.
+          # build: the actionable exact-candidate verdict consumed by the autonomous bump/fix-ci
+          # workers. It includes the sandboxed build plus shim metadata and exact-expiry failures,
+          # but never a merge-policy verdict. An out-of-scope scripts/.github change still receives
+          # a useful build because all harness code is workflow-pinned. A lakefile edit or invalid
+          # pin is never executed and therefore reports a required failure rather than pretending
+          # that a different configuration built.
           if [ "$head_moved" = 1 ]; then
             state=failure; desc="the pull request changed during this build — the run for its current state statuses it"
           elif [ "${{ env.CONFIG_BAD }}" = "1" ]; then
@@ -718,6 +831,18 @@ jobs:
           elif [ "${{ env.BUMP_BAD }}" = "1" ] || [ "${{ env.INFRA }}" = "1" ] \
              || [ "${{ env.TOO_LARGE }}" = "1" ] || [ "${{ env.DIFF_UNKNOWN }}" = "1" ]; then
             state=failure; desc="build not run — see the scope check"
+          elif [ "${{ steps.build.outcome }}" = "failure" ]; then
+            state=failure; desc="sandboxed build, audit, or simp-NF lint failed"
+          elif { [ -n "${{ env.SHIM_COVERAGE_RC }}" ] \
+                 && [ "${{ env.SHIM_COVERAGE_RC }}" != "0" ]; } \
+               || [ "${{ steps.shim_coverage.outcome }}" = "failure" ]; then
+            state=failure; desc="shim expiry metadata invalid — see failed checker step"
+          elif [ "${{ env.SHIM_EXPIRY_RC }}" = "3" ]; then
+            state=failure; desc="Mathlib replacements landed — autonomous shim migration required"
+          elif { [ -n "${{ env.SHIM_EXPIRY_RC }}" ] \
+                 && [ "${{ env.SHIM_EXPIRY_RC }}" != "0" ]; } \
+               || [ "${{ steps.shim_expiry.outcome }}" = "failure" ]; then
+            state=failure; desc="shim expiry probe failed — see failed checker step"
           elif [ "${{ steps.build.outcome }}" = "success" ]; then
             state=success; desc="exact-head sandboxed build and workflow-pinned audits passed"
           else
@@ -759,7 +884,7 @@ jobs:
           elif [ "${{ env.NEWFILE_TOO_LONG }}" = "1" ]; then
             sc_state=failure; sc_desc="a newly added .lean file exceeds 1000 lines — split it (existing files may grow to 1500)"
           else
-            sc_state=success; sc_desc="changes are in scope (TauCeti/ and the allowed root files only)"
+            sc_state=success; sc_desc="changes are in scope (TauCeti/, the allowed root files, and the bibliography only)"
           fi
           post_status scope "$sc_state" "$sc_desc"
 

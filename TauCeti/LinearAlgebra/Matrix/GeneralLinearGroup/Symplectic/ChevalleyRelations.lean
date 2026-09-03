@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Symplectic.Basic
+import TauCeti.GroupTheory.Commutator
 
 /-!
 # Chevalley commutator relations in the symplectic group
@@ -50,10 +51,17 @@ The complementary long-root strings, starting from the sum roots, are
 Thus every interaction between a long root and a nonopposite short root in the rank-two
 subsystem is available without changing coordinates.
 
+The type-`A` subsystem of difference roots also satisfies the structure-constant-one relation
+
+```text
+⁅x_{eᵢ-eⱼ}(a), x_{eⱼ-eₖ}(b)⁆ = x_{eᵢ-eₖ}(ab).
+```
+
 ## References
 
 * R. W. Carter, *Simple Groups of Lie Type* (1972), §5.2 and §11.3.
 * J. E. Humphreys, *Linear Algebraic Groups* (1975), §26.3.
+* R. Steinberg, *Lectures on Chevalley Groups* (1968), §§3--4.
 -/
 
 public section
@@ -66,6 +74,67 @@ namespace TauCeti.GLSymplecticFin
 universe u
 
 variable {R : Type u} [CommRing R] {m : ℕ} {i j : Fin m}
+
+/-- **The structure-constant-one Chevalley relation in the difference-root subsystem.** For
+pairwise distinct indices, the commutator of `x_{eᵢ-eⱼ}(a)` and `x_{eⱼ-eₖ}(b)` is
+`x_{eᵢ-eₖ}(ab)`. -/
+theorem commutatorElement_differenceShortRootUnit_differenceShortRootUnit
+    {k : Fin m} (hij : i ≠ j) (hjk : j ≠ k) (hik : i ≠ k) (a b : R) :
+    ⁅differenceShortRootUnit hij a, differenceShortRootUnit hjk b⁆ =
+      differenceShortRootUnit hik (a * b) := by
+  apply (GLSymplecticFin m R).subtype_injective
+  rw [map_commutatorElement]
+  -- Expose the ambient general-linear equality so that the explicit matrix formulas apply.
+  change
+    ⁅((differenceShortRootUnit hij a : GLSymplecticFin m R) : GL (Fin (m + m)) R),
+        ((differenceShortRootUnit hjk b : GLSymplecticFin m R) : GL (Fin (m + m)) R)⁆ =
+      ((differenceShortRootUnit hik (a * b) : GLSymplecticFin m R) :
+        GL (Fin (m + m)) R)
+  rw [coe_differenceShortRootUnit, coe_differenceShortRootUnit,
+    coe_differenceShortRootUnit]
+  let I := (finSumFinEquiv : Fin m ⊕ Fin m ≃ Fin (m + m)) (Sum.inl i)
+  let J := (finSumFinEquiv : Fin m ⊕ Fin m ≃ Fin (m + m)) (Sum.inl j)
+  let K := (finSumFinEquiv : Fin m ⊕ Fin m ≃ Fin (m + m)) (Sum.inl k)
+  let I' := (finSumFinEquiv : Fin m ⊕ Fin m ≃ Fin (m + m)) (Sum.inr i)
+  let J' := (finSumFinEquiv : Fin m ⊕ Fin m ≃ Fin (m + m)) (Sum.inr j)
+  let K' := (finSumFinEquiv : Fin m ⊕ Fin m ≃ Fin (m + m)) (Sum.inr k)
+  have hIJ : I ≠ J := differenceShortRoot_first_indices_ne hij
+  have hJK : J ≠ K := differenceShortRoot_first_indices_ne hjk
+  have hIK : I ≠ K := differenceShortRoot_first_indices_ne hik
+  have hJ'I' : J' ≠ I' := differenceShortRoot_second_indices_ne hij
+  have hK'J' : K' ≠ J' := differenceShortRoot_second_indices_ne hjk
+  have hK'I' : K' ≠ I' := differenceShortRoot_second_indices_ne hik
+  -- The upper and lower blocks each satisfy the type-A transvection relation.
+  have hAC :
+      ⁅transvectionUnit hIJ a, transvectionUnit hJK b⁆ =
+        transvectionUnit hIK (a * b) :=
+    commutatorElement_transvectionUnit hIJ hJK hIK a b
+  have hBD :
+      ⁅transvectionUnit hJ'I' (-a), transvectionUnit hK'J' (-b)⁆ =
+        transvectionUnit hK'I' (-(a * b)) := by
+    rw [commutatorElement_transvectionUnit_reverse hJ'I' hK'J' hK'I']
+    congr 1
+    ring
+  -- All cross-block terms commute, including the two factors in the resulting root element.
+  have hBC : Commute (transvectionUnit hJ'I' (-a)) (transvectionUnit hJK b) :=
+    commute_transvectionUnit hJ'I' hJK
+      (finSumFinEquiv_inr_ne_inl i j) (finSumFinEquiv_inl_ne_inr k j) _ _
+  have hAD : Commute (transvectionUnit hIJ a) (transvectionUnit hK'J' (-b)) :=
+    commute_transvectionUnit hIJ hK'J'
+      (finSumFinEquiv_inl_ne_inr j k) (finSumFinEquiv_inr_ne_inl j i) _ _
+  have hCQ : Commute (transvectionUnit hJK b) (transvectionUnit hK'I' (-(a * b))) :=
+    commute_transvectionUnit hJK hK'I'
+      (finSumFinEquiv_inl_ne_inr k k) (finSumFinEquiv_inr_ne_inl i j) _ _
+  have hAQ : Commute (transvectionUnit hIJ a) (transvectionUnit hK'I' (-(a * b))) :=
+    commute_transvectionUnit hIJ hK'I'
+      (finSumFinEquiv_inl_ne_inr j k) (finSumFinEquiv_inr_ne_inl i i) _ _
+  have hPQ : Commute (transvectionUnit hIK (a * b))
+      (transvectionUnit hK'I' (-(a * b))) :=
+    commute_transvectionUnit hIK hK'I'
+      (finSumFinEquiv_inl_ne_inr k k) (finSumFinEquiv_inr_ne_inl i i) _ _
+  rw [TauCeti.commutatorElement_mul_mul_eq_mul_of_commute hBC hAD
+    (by simpa only [hBD] using hCQ) (by simpa only [hBD] using hAQ)
+    (by simpa only [hAC, hBD] using hPQ), hAC, hBD]
 
 /-- **The multiply-laced Chevalley relation in the standard symplectic group.** The commutator
 of `x_{eᵢ-eⱼ}(a)` and `x_{2eⱼ}(b)` is the product of the two remaining root subgroups in

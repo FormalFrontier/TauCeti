@@ -6,6 +6,7 @@ Authors: Claude
 module
 
 public import Mathlib.MeasureTheory.Measure.GiryMonad
+public import Mathlib.MeasureTheory.Measure.ProbabilityMeasure
 
 /-!
 # Measurability of measure-valued maps
@@ -17,6 +18,8 @@ of measures.
 
 * `TauCeti.MeasureTheory.measurable_sum_smul_dirac` — a countable mixture of Dirac measures at
   fixed atoms is measurable when each weight is measurable.
+* `TauCeti.MeasureTheory.measurable_probabilityMeasure_map` — pushing forward along a fixed
+  measurable map is measurable on `ProbabilityMeasure`.
 -/
 
 public section
@@ -43,6 +46,13 @@ theorem measurable_sum_smul_dirac {β ι α : Type*} [MeasurableSpace β] [Measu
   refine Measure.measurable_measure.2 fun s hs => ?_
   simp only [Measure.sum_apply _ hs, Measure.smul_apply, smul_eq_mul, Measure.dirac_apply' _ hs]
   exact Measurable.tsum fun i => (hf i).mul_const _
+
+/-- Pushing a probability measure forward along a fixed measurable map is measurable for the Giry
+structure that `ProbabilityMeasure` inherits as a subtype of `Measure`. -/
+theorem measurable_probabilityMeasure_map {α β : Type*} [MeasurableSpace α] [MeasurableSpace β]
+    {f : α → β} (hf : Measurable f) :
+    Measurable fun P : ProbabilityMeasure α => P.map f :=
+  ((Measure.measurable_map f hf).comp measurable_subtype_coe).subtype_mk
 
 end MeasureTheory
 

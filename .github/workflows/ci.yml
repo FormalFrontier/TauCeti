@@ -20,6 +20,14 @@ concurrency:
   group: main-ci-cache-publisher
   cancel-in-progress: false
 
+env:
+  # Temporary escape hatch for `lake exe cache get`, kept only for an easy rollback
+  # during the transition to the cache tool's new default read endpoint. Set the
+  # variable to `1` to send cache reads back to the legacy storage endpoint. Clear it to
+  # return reads to the default endpoint on the next run: the cache tool treats unset,
+  # empty, `0`, and `false` alike as off.
+  MATHLIB_CACHE_DEBUG_USE_LEGACY: ${{ vars.MATHLIB_CACHE_DEBUG_USE_LEGACY }}
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -57,6 +65,7 @@ jobs:
           python3 scripts/test_roadmap_label.py
           python3 scripts/pr_status/test_pr_labels.py
           python3 scripts/pr_status/test_zulip.py
+          python3 scripts/pr_status/test_conflicts.py
           python3 scripts/test_structure_nudge.py
           python3 scripts/test_workflow_pins.py
           python3 scripts/test_landrun_pin.py
@@ -64,9 +73,11 @@ jobs:
           python3 scripts/test_attest_pr_config.py
           python3 scripts/test_profile_workflow.py
           python3 scripts/test_lake_cache_probe.py
+          python3 scripts/test_lake_cache_get.py
           PYTHONPATH=. python3 scripts/perf/test_perf.py
           PYTHONPATH=scripts python3 scripts/test_claims_access.py
           python3 scripts/test_lint_dot_notation.py
+          python3 scripts/test_check_expired_mathlib_shims.py
           python3 scripts/test_toolchain_tags.py
 
       # The two-library split is build convenience, not a trust boundary.

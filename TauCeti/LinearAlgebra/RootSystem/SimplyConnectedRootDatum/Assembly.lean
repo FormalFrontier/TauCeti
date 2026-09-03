@@ -16,8 +16,6 @@ public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.E8.Datum
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.F4.Basic
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.G2.Basic
 
-public section
-
 /-!
 # The pinned simply connected root datum of a Dynkin type
 
@@ -50,6 +48,9 @@ make this explicit data available without requiring downstream users to unfold t
 * `TauCeti.DynkinType.card_support_simplyConnectedBase`: the pinned base has `t.rank` elements.
 * `TauCeti.DynkinType.toLinearMap_simplyConnectedRootDatum`: the pinned pairing is the dot
   product, uniformly in the type.
+* `TauCeti.DynkinType.simpleIndex_B`, `simpleIndex_F4` and `simpleIndex_G2`: the simple-root
+  index of the dispatcher is the family module's own simple-root index, for the three families
+  carrying a special isogeny.
 
 ## References
 
@@ -59,6 +60,8 @@ Chapter 11. This assembles the target "a named datum per valid type" in Layer 6 
 `TauCetiRoadmap/RepresentationTheory/RootSystems/README.md` for its consumer,
 `CFSGStatement` milestone L0.
 -/
+
+public section
 
 namespace TauCeti.DynkinType
 
@@ -204,13 +207,19 @@ def simpleIndex (t : DynkinType) (ht : t.Valid) (i : Fin t.rank) : Fin t.numRoot
 @[simp] theorem simpleIndex_val (t : DynkinType) (ht : t.Valid) (i : Fin t.rank) :
     (t.simpleIndex ht i : ℕ) = i := (rfl)
 
+/-! Each family module enumerates its own roots and names its own simple-root index. The
+equations below identify the dispatcher with those names, so a statement proved for one family
+about its own index transfers to the uniform one. They are stated by `Fin.ext` against
+`simpleIndex_val` rather than by unfolding either side. -/
+
 private theorem simpleIndex_A (n : ℕ) (ht : (A n).Valid) (i : Fin n) :
     (A n).simpleIndex ht i = typeASimpleIndex n i := by
   apply Fin.ext
   rw [typeASimpleIndex_val]
   exact simpleIndex_val (A n) ht i
 
-private theorem simpleIndex_B (n : ℕ) (ht : (B n).Valid) (i : Fin n) :
+/-- The simple-root index of the dispatcher at type `B n` is type `B`'s own simple-root index. -/
+@[simp] theorem simpleIndex_B (n : ℕ) (ht : (B n).Valid) (i : Fin n) :
     (B n).simpleIndex ht i = typeBSimpleIndex n i := by
   apply Fin.ext
   rw [typeBSimpleIndex_val]
@@ -246,10 +255,12 @@ private theorem simpleIndex_E8 (ht : E8.Valid) (i : Fin 8) :
   rw [e8SimpleIndex_val]
   exact simpleIndex_val E8 ht i
 
-private theorem simpleIndex_F4 (ht : F4.Valid) (i : Fin 4) :
+/-- The simple-root index of the dispatcher at type `F₄` is type `F₄`'s own simple-root index. -/
+@[simp] theorem simpleIndex_F4 (ht : F4.Valid) (i : Fin 4) :
     F4.simpleIndex ht i = Fin.castAdd 44 i := Fin.ext rfl
 
-private theorem simpleIndex_G2 (ht : G2.Valid) (i : Fin 2) :
+/-- The simple-root index of the dispatcher at type `G₂` is type `G₂`'s own simple-root index. -/
+@[simp] theorem simpleIndex_G2 (ht : G2.Valid) (i : Fin 2) :
     G2.simpleIndex ht i = Fin.castAdd 10 i := Fin.ext rfl
 
 /-- The simple coroots of the pinned datum are the standard basis of the cocharacter lattice. -/

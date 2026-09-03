@@ -9,8 +9,6 @@ public import Mathlib.Algebra.BigOperators.Ring.Finset
 public import Mathlib.Algebra.MonoidAlgebra.Defs
 public import TauCeti.LinearAlgebra.RootSystem.Positive
 
-public section
-
 /-!
 # The Weyl denominator
 
@@ -37,7 +35,11 @@ whose Weyl-group combinatorics is a much later dependency.
 * `TauCeti.weylDenominator_eq_sum_powerset`: expanding the product, `Δ` is the signed sum
   `∑_{T ⊆ Φ⁺} (-1)^{|T|} e^{-∑_{α ∈ T} α}` over the subsets of the positive roots; hence
 * `TauCeti.coeff_weylDenominator_eq_zero`: `Δ` is supported on the negatives of the sums of sets of
-  positive roots, which is the statement that it lives in the negative cone.
+  positive roots, which is the statement that it lives in the negative cone, and
+  `TauCeti.neg_mem_posRootCone_of_coeff_weylDenominator_ne_zero`, that statement read against
+  `TauCeti.posRootCone`; and
+* `TauCeti.coeff_weylDenominator_zero`: the constant term of `Δ` is `1`, the empty set being the
+  only set of positive roots summing to `0`.
 
 ## References
 
@@ -50,6 +52,8 @@ of an abstract root pairing, so the Lie-algebra target is a specialization rathe
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, Ch. VI, §24.
 * J.-P. Serre, *Complex Semisimple Lie Algebras*, Ch. VII.
 -/
+
+public section
 
 namespace TauCeti
 
@@ -100,5 +104,32 @@ theorem coeff_weylDenominator_eq_zero {x : M}
     AddMonoidAlgebra.coeff_single]
   exact Finset.sum_eq_zero fun T hT ↦ Finsupp.single_apply_eq_zero.mpr fun h ↦
     absurd h (hx T (Finset.mem_powerset.mp hT))
+
+/-- **The constant term of the Weyl denominator is `1`.** Expanding `∏_{α>0}(1 - e^{-α})` indexes
+the terms by the sets of positive roots, and the empty set is the only one whose sum vanishes. -/
+@[simp]
+theorem coeff_weylDenominator_zero : (weylDenominator P b).coeff 0 = 1 := by
+  classical
+  simp only [weylDenominator_eq_sum_powerset, AddMonoidAlgebra.coeff_sum, Finsupp.finsetSum_apply,
+    AddMonoidAlgebra.coeff_single]
+  refine (Finset.sum_eq_single_of_mem (∅ : Finset ι) (Finset.empty_mem_powerset _) ?_).trans ?_
+  · intro T hT hTne
+    have hsum : ∑ i ∈ T, P.root i ≠ 0 :=
+      sum_root_ne_zero_of_mem_posRoots P b (Finset.nonempty_iff_ne_empty.mpr hTne)
+        fun i hi => (mem_posRootsFinset P b i).mp (Finset.mem_powerset.mp hT hi)
+    exact Finsupp.single_eq_of_ne (Ne.symm (neg_ne_zero.mpr hsum))
+  · simp
+
+/-- **The Weyl denominator is supported on the negative of the positive root cone**: a weight
+carrying a nonzero coefficient of `Δ` is minus a nonnegative integer combination of the simple
+roots. This is `TauCeti.coeff_weylDenominator_eq_zero` read against `TauCeti.posRootCone`, in the
+form the weight-cone arguments of the highest weight theory consume. -/
+theorem neg_mem_posRootCone_of_coeff_weylDenominator_ne_zero {x : M}
+    (hx : (weylDenominator P b).coeff x ≠ 0) : -x ∈ posRootCone P b := by
+  by_contra hcone
+  refine hx (coeff_weylDenominator_eq_zero P b fun T hT hxT ↦ hcone ?_)
+  rw [hxT, neg_neg]
+  exact sum_mem fun i hi ↦
+    root_mem_posRootCone_of_mem_posRoots P b ((mem_posRootsFinset P b i).mp (hT hi))
 
 end TauCeti

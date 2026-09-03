@@ -28,6 +28,8 @@ packages its functoriality in the covering map.
   between their monodromy functors.
 * `TauCeti.IsCoveringMap.monodromyNatIso`: an isomorphism of covers induces a natural
   isomorphism between their monodromy functors.
+* `IsCoveringMap.monodromyHomeomorphCompNatIso`: changing the base by a homeomorphism
+  transports the monodromy functor by the inverse homeomorphism.
 
 ## References
 
@@ -191,6 +193,92 @@ theorem monodromyNatIso_inv (hp : _root_.IsCoveringMap p)
       monodromyNatTrans hq hp (h.symm : C(F, E))
         ((Equiv.comp_symm_eq h.toEquiv q p).2 hh.symm) :=
   (rfl)
+
+section BaseHomeomorph
+
+variable {Y : Type v} [TopologicalSpace Y]
+
+omit [TopologicalSpace E] in
+/-- The fibre of a covering map after composing its projection with a base homeomorphism is the
+original fibre over the inverse image of the basepoint. -/
+def homeomorphCompFiberEquiv (h : X ≃ₜ Y) (y : Y) :
+    (h ∘ p) ⁻¹' {y} ≃ p ⁻¹' {h.symm y} :=
+  Set.equivOfEq <| Set.ext fun _ ↦ by
+    simp only [Set.mem_preimage, Set.mem_singleton_iff, Function.comp_apply]
+    exact h.eq_symm_apply.symm
+
+omit [TopologicalSpace E] in
+/-- On underlying points, the fibre equivalence for a homeomorphism of bases is the identity. -/
+@[simp]
+theorem homeomorphCompFiberEquiv_apply_coe (h : X ≃ₜ Y) (y : Y)
+    (e : (h ∘ p) ⁻¹' {y}) :
+    (homeomorphCompFiberEquiv (p := p) h y e : E) = e :=
+  (rfl)
+
+omit [TopologicalSpace E] in
+/-- On underlying points, the inverse fibre equivalence for a homeomorphism of bases is the
+identity. -/
+@[simp]
+theorem homeomorphCompFiberEquiv_symm_apply_coe (h : X ≃ₜ Y) (y : Y)
+    (e : p ⁻¹' {h.symm y}) :
+    ((homeomorphCompFiberEquiv (p := p) h y).symm e : E) = e :=
+  (rfl)
+
+/-- Fibre transport after changing the base by a homeomorphism agrees with transport along the
+inverse image of the path. -/
+@[simp]
+theorem _root_.IsCoveringMap.homeomorphCompFiberEquiv_monodromy
+    (hp : _root_.IsCoveringMap p)
+    (h : X ≃ₜ Y) {x y : Y} (a : Path.Homotopic.Quotient x y)
+    (e : (h ∘ p) ⁻¹' {x}) :
+    homeomorphCompFiberEquiv (p := p) h y ((hp.homeomorph_comp h).monodromy a e) =
+      hp.monodromy (a.map (h.symm : C(Y, X)))
+        (homeomorphCompFiberEquiv (p := p) h x e) := by
+  obtain ⟨γ⟩ := a
+  apply Subtype.ext
+  let ex := homeomorphCompFiberEquiv (p := p) h x e
+  let Γ : C(I, E) := hp.liftPath (γ.map h.symm.continuous) e (by
+    have hex : (ex : E) = e := homeomorphCompFiberEquiv_apply_coe h x e
+    rw [← hex]
+    simpa using ex.2.symm)
+  have hΓ : Γ = (hp.homeomorph_comp h).liftPath γ e (by
+      simpa using e.2.symm) := by
+    refine ((hp.homeomorph_comp h).eq_liftPath_iff' (γ_0 := by
+      simpa using e.2.symm)).2 ⟨?_, ?_⟩
+    · funext t
+      -- Expose the composite projection so the lift equation for `Γ` can be applied pointwise.
+      change h (p (Γ t)) = γ t
+      have hΓt : p (Γ t) = h.symm (γ t) :=
+        congrFun (hp.liftPath_lifts (γ.map h.symm.continuous) e _) t
+      rw [hΓt, h.apply_symm_apply]
+    · exact hp.liftPath_zero (γ.map h.symm.continuous) e _
+  exact congrArg (fun q : C(I, E) ↦ q 1) hΓ.symm
+
+/-- **Changing the base of a covering map by a homeomorphism transports monodromy along the
+inverse homeomorphism.** -/
+noncomputable def _root_.IsCoveringMap.monodromyHomeomorphCompNatIso
+    (hp : _root_.IsCoveringMap p)
+    (h : X ≃ₜ Y) :
+    (hp.homeomorph_comp h).monodromyFunctor ≅
+      FundamentalGroupoid.map (h.symm : C(Y, X)) ⋙ hp.monodromyFunctor :=
+  NatIso.ofComponents
+    (fun y ↦ (homeomorphCompFiberEquiv (p := p) h y.as).toIso)
+    (by
+      intro x y a
+      ext e
+      exact hp.homeomorphCompFiberEquiv_monodromy h a e)
+
+/-- The forward component of the monodromy isomorphism for a homeomorphic base is the canonical
+equivalence of fibres. -/
+@[simp]
+theorem _root_.IsCoveringMap.monodromyHomeomorphCompNatIso_hom_app
+    (hp : _root_.IsCoveringMap p)
+    (h : X ≃ₜ Y) (y : Y) :
+    (hp.monodromyHomeomorphCompNatIso h).hom.app (FundamentalGroupoid.mk y) =
+      (homeomorphCompFiberEquiv (p := p) h y).toIso.hom :=
+  (rfl)
+
+end BaseHomeomorph
 
 end IsCoveringMap
 

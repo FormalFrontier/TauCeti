@@ -7,6 +7,8 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.MultiplicativeType.Basic
 public import TauCeti.Algebra.AlgebraicGroup.SplitTorus.Basic
+import TauCeti.Algebra.Coalgebra.BaseChange
+import TauCeti.Algebra.Coalgebra.Cocommutative
 
 /-!
 # Tori over a field
@@ -37,6 +39,8 @@ distinguishes tori from general groups of multiplicative type.
   finite-rank split torus over `AlgebraicClosure k`.
 * `TauCeti.splitTorusCommHopfAlgProperty.torus`: every split torus is a torus.
 * `TauCeti.torusCommHopfAlgProperty.multiplicativeType`: every torus is of multiplicative type.
+* `TauCeti.torusCommHopfAlgProperty.isCocomm`: the coordinate Hopf algebra of a torus is
+  cocommutative.
 * `TauCeti.SplitTorus.splitTorus_coordinateRing`: the standard finite-rank split tori satisfy the
   split predicate.
 
@@ -119,6 +123,25 @@ instance (k : Type u) [Field k] :
     (torusCommHopfAlgProperty k).IsClosedUnderIsomorphisms := by
   unfold torusCommHopfAlgProperty
   infer_instance
+
+/-- The coordinate Hopf algebra of a torus is cocommutative. -/
+@[grind →]
+theorem torusCommHopfAlgProperty.isCocomm
+    (k : Type u) [Field k] (H : FiniteTypeCommHopfAlgCat.{u, u} k)
+    (hH : torusCommHopfAlgProperty k H) :
+    _root_.Coalgebra.IsCocomm k H.obj := by
+  rw [torusCommHopfAlgProperty_iff] at hH
+  obtain ⟨n, ⟨i⟩⟩ := hH
+  let hsplit : _root_.Coalgebra.IsCocomm (AlgebraicClosure k)
+      (DiagonalizableGroup.coordinateRing (AlgebraicClosure k)
+        (SplitTorus.characterGroup (ULift.{u} (Fin n)))).obj := inferInstance
+  let hbase : _root_.Coalgebra.IsCocomm (AlgebraicClosure k)
+      (FiniteTypeCommHopfAlgCat.baseChange (K := AlgebraicClosure k) H).obj :=
+    Coalgebra.IsCocomm.of_bialgEquiv
+      (_root_.CommHopfAlgCat.ofIso <|
+        (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} (AlgebraicClosure k))
+          (_root_.CommHopfAlgCat.{u} (AlgebraicClosure k))).mapIso i) (hA := hsplit)
+  exact Coalgebra.IsCocomm.of_baseChange (h := hbase)
 
 /-- The category of finite-type torus coordinate Hopf algebras over a field.
 

@@ -103,7 +103,7 @@ ring. -/
 lemma isBoundedAtImInfty_galoisProd {R : Type*} [SeminormedCommRing R] {N : ℕ} {f : ℍ → R}
     (hf_bdd : IsBoundedAtImInfty f) :
     IsBoundedAtImInfty (galoisProd N f) := by
-  unfold galoisProd IsBoundedAtImInfty Filter.BoundedAtFilter
+  unfold galoisProd
   rw [← Finset.prod_fn]
   refine Filter.BoundedAtFilter.prod _ fun j _ ↦ hf_bdd.comp_tendsto ?_
   simp only [atImInfty, Filter.tendsto_comap_iff, Function.comp_def]

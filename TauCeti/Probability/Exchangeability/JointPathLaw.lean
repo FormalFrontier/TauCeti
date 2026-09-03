@@ -58,17 +58,17 @@ theorem jointPathLaw_def (μ : Measure Ω) (X : ℕ → Ω → α) (ν : Ω → 
 -- simp rewrites this left-hand side away before the lemma could fire and `simpNF` rejects the
 -- annotation; `grind` is not subject to that normalisation.
 @[grind =>]
-theorem map_fst_jointPathLaw (hX : ∀ i, AEMeasurable (X i) μ) :
+theorem map_fst_jointPathLaw (hν : AEMeasurable ν μ) (hX : ∀ i, AEMeasurable (X i) μ) :
     (jointPathLaw μ X ν).map Prod.fst = μ.map ν := by
   rw [jointPathLaw_def]
-  exact Measure.fst_map_prodMk₀ (aemeasurable_pi_lambda _ hX)
+  exact Measure.fst_map_prodMk₀ hν (AEMeasurable.of_eval hX)
 
 /-- The second marginal of the joint path law is the law of the path. -/
 @[grind =>]
-theorem map_snd_jointPathLaw (hν : AEMeasurable ν μ) :
+theorem map_snd_jointPathLaw (hν : AEMeasurable ν μ) (hX : ∀ i, AEMeasurable (X i) μ) :
     (jointPathLaw μ X ν).map Prod.snd = pathLaw μ X := by
   rw [jointPathLaw_def, pathLaw_def]
-  exact Measure.snd_map_prodMk₀ hν
+  exact Measure.snd_map_prodMk₀ hν (AEMeasurable.of_eval hX)
 
 /-- The prefix pushforward of the joint path law is the joint block law of the first `n`
 coordinates. -/
@@ -78,7 +78,7 @@ theorem map_prefixProjPair_jointPathLaw (hX : ∀ i, AEMeasurable (X i) μ) (hν
       = μ.map fun ω => (ν ω, fun i : Fin n => X i ω) := by
   have hpath : AEMeasurable (fun ω => (ν ω, fun i => X i ω) :
       Ω → ProbabilityMeasure α × (ℕ → α)) μ :=
-    hν.prodMk (aemeasurable_pi_lambda _ hX)
+    hν.prodMk (AEMeasurable.of_eval hX)
   rw [jointPathLaw_def,
     AEMeasurable.map_map_of_aemeasurable
       (measurable_prefixProjPair (ProbabilityMeasure α) α n).aemeasurable hpath]

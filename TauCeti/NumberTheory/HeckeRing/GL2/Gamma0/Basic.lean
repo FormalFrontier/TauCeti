@@ -9,7 +9,7 @@ public import TauCeti.NumberTheory.HeckeRing.GL2.Delta0
 public import Mathlib.NumberTheory.ModularForms.CongruenceSubgroups
 
 -- only the Γ₀ unit-entry lemma is needed, and only inside a proof
-import TauCeti.NumberTheory.ModularForms.CongruenceSubgroups
+import TauCeti.NumberTheory.ModularForms.CongruenceSubgroups.Basic
 
 /-!
 # The Hecke triple of `Γ₀(N)`

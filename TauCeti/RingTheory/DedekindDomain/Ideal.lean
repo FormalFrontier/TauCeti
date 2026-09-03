@@ -5,7 +5,9 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.RingTheory.Valuation.Discrete.IsDiscreteValuationRing
 public import Mathlib.RingTheory.DedekindDomain.Ideal.Lemmas
+import Mathlib.RingTheory.DedekindDomain.Factorization
 
 /-!
 # Complements on ideals of a Dedekind domain
@@ -15,6 +17,18 @@ complementing `Mathlib/RingTheory/DedekindDomain/Ideal/Lemmas.lean`. In particul
 the predicate `Ideal.IsPrimeTo I S`, saying that `I` is nonzero and divisible by no prime in `S`,
 together with its induction principle `Ideal.IsPrimeTo.induction_on` and its transport
 `Ideal.isPrimeTo_comap_iff` along a ring isomorphism.
+
+The predicate is closed under products (`Ideal.isPrimeTo_mul_iff`, its finite form
+`Ideal.isPrimeTo_prod_iff`) and powers (`Ideal.isPrimeTo_pow_iff`). Complementing a set of primes
+turns it into a *support* condition: `IsPrimeTo I Sᶜ` says that every prime factor of `I` lies in
+`S`. The two extreme cases are `Ideal.isPrimeTo_univ_iff` (no prime factor at all, so `I = ⊤`) and
+`Ideal.isPrimeTo_compl_singleton_iff` (a single allowed prime, so `I` is a prime power), and
+`Ideal.IsPrimeTo.exists_eq_pow_mul` splits off one allowed prime at a time. The file also records
+the prime-power factorization `Ideal.exists_eq_prod_pow` of an arbitrary nonzero ideal. Together
+with the uniqueness statement `Ideal.eq_and_eq_of_pow_mul_eq_pow_mul` and the relative primality
+`Ideal.IsPrimeTo.isRelPrime` of ideals supported on complementary sets, these are what turn a
+finite set of primes into a finite Euler product in
+`TauCeti/NumberTheory/ArithmeticDirichletSeries/EulerProduct/Basic.lean`.
 
 It also collects how an isomorphism `e : R ≃+* R'` moves ideals: `Ideal.map e` preserves
 divisibility (`Ideal.map_dvd_map_iff_of_ringEquiv`, `Ideal.map_pow_dvd_map_iff_of_ringEquiv`,
@@ -34,12 +48,33 @@ of an ideal weight on a number field; the design of the predicate — nonzerones
 `⊥` is prime to no set at all — is taken from there, while nothing in it is specific to a number
 field.
 
+The file also identifies any height-one prime of a discrete valuation ring with its maximal ideal
+(`IsDedekindDomain.HeightOneSpectrum.eq_maximalIdeal`), which is what lets a condition stated at
+the height-one primes of such a ring be read as a condition on its valuation. It was split out of
+material adapted from Michael Stoll's elliptic-curves formalisation
+(`EllipticCurves/Mathlib/AdicCompletionExtension.lean` at the roadmap's pin `66889eada51a`,
+Apache 2.0, by Michael Stoll), where it is the step behind `valuation_adicCompletion_algebraMap`.
+
 The theorem `IsDedekindDomain.HeightOneSpectrum.exists_mem_notMem` was split out of material
 adapted from Michael Stoll's elliptic-curves formalisation
 (`github.com/MichaelStollBayreuth/EllipticCurves`, `EllipticCurves/Mathlib/SIntegers.lean` at the
 roadmap's pin `66889eada51a`, Apache 2.0, by Michael Stoll); following this repository's
 convention for adapted material, the upstream authorship is credited here rather than in the
 copyright header.
+
+`IsDedekindDomain.HeightOneSpectrum.comapOfNeBot` and its projection are likewise adapted from that
+formalisation (`github.com/MichaelStollBayreuth/EllipticCurves`, `EllipticCurves/Mathlib/Basic.lean`
+line 539, at the roadmap's pin `66889eada51a74c2f5dfb7fb5909b0b5a0a2d96e`, Apache 2.0, by Michael
+Stoll). The construction is the source's; what changed is the hypothesis — the source and this
+version take the nonvanishing of the contraction as a hypothesis, where Mathlib's
+`HeightOneSpectrum.comap` instead derives it from surjectivity of the map.
+
+`Ideal.ne_bot_of_comap_ne_bot` plays the role of the source's
+`comap_ne_bot_of_comap_comap_ne_bot` (`EllipticCurves/Mathlib/Basic.lean` line 270): it is what
+discharges that nonvanishing hypothesis when a prime is contracted through an intermediate ring.
+It is stated here in the general form — an arbitrary ideal and an injective ring homomorphism,
+with the map producing the ideal dropped, since it plays no role — and proved from Mathlib's
+`Ideal.comap_bot_of_injective`.
 -/
 
 public section
@@ -106,9 +141,62 @@ theorem count_factors_map_of_ringEquiv (e : R ≃+* R') {p I : Ideal R} (hp : Pr
 
 end RingEquivDedekind
 
+section Injective
+
+/-- If the contraction of `J` along an injective ring homomorphism is nonzero, so is `J` itself.
+
+This is the eliminator that discharges the nonvanishing hypothesis of
+`IsDedekindDomain.HeightOneSpectrum.comapOfNeBot` when a prime is contracted through an
+intermediate ring: contract all the way down to a base where nonvanishing is already known, and
+read the intermediate step off from that. Only injectivity of the *lower* map is needed; the map
+producing `J` plays no role, so it does not appear. -/
+theorem ne_bot_of_comap_ne_bot {R S F : Type*} [Semiring R] [Semiring S] [FunLike F R S]
+    [RingHomClass F R S] (f : F) (hf : Function.Injective f) {J : Ideal S}
+    (h : J.comap f ≠ ⊥) : J ≠ ⊥ :=
+  fun h0 ↦ h (h0 ▸ comap_bot_of_injective f hf)
+
+end Injective
+
 end Ideal
 
 namespace IsDedekindDomain.HeightOneSpectrum
+
+section Comap
+
+variable {B C : Type*} [CommRing B] [IsDedekindDomain B] [CommRing C] [IsDedekindDomain C]
+
+/-- The height-one prime of `B` obtained by contracting a height-one prime of `C` along a ring
+homomorphism `ψ : B →+* C`, given that the contraction is nonzero.
+
+Mathlib's `IsDedekindDomain.HeightOneSpectrum.comap` is the same construction, but it asks for `ψ`
+to be **surjective** and derives the `ne_bot` field from that. `comapOfNeBot` **generalises** it:
+the surjective case is recovered by supplying `(Ideal.eq_bot_of_comap_eq_bot' hf).mt w.ne_bot`, and
+only the converse fails.
+
+The generality is needed because the maps contracted along here are embeddings into completions —
+`R → v.adicCompletionIntegers K` — which are neither surjective, so Mathlib's `comap` does not
+apply, nor integral `Algebra` maps, so `HeightOneSpectrum.under` does not either. (`ℤ → ℤ_p` is
+flat, not integral.) The `ne_bot` hypothesis has to be supplied by hand.
+
+Adapted from Michael Stoll's `EllipticCurves` (`EllipticCurves/Mathlib/Basic.lean` line 539, Apache
+2.0, at the roadmap's pin `66889eada51a74c2f5dfb7fb5909b0b5a0a2d96e`); the `ne_bot`-as-hypothesis
+formulation is the source's. -/
+def comapOfNeBot (ψ : B →+* C) (w : HeightOneSpectrum C) (hne : w.asIdeal.comap ψ ≠ ⊥) :
+    HeightOneSpectrum B where
+  asIdeal := w.asIdeal.comap ψ
+  isPrime := w.isPrime.comap ψ
+  ne_bot := hne
+
+omit [IsDedekindDomain B] [IsDedekindDomain C] in
+-- `(rfl)` elaborates here, where the definition is visible.
+/-- The underlying ideal of `comapOfNeBot` is the contracted ideal. -/
+@[simp]
+lemma comapOfNeBot_asIdeal (ψ : B →+* C) (w : HeightOneSpectrum C)
+    (hne : w.asIdeal.comap ψ ≠ ⊥) :
+    (comapOfNeBot ψ w hne).asIdeal = w.asIdeal.comap ψ :=
+  (rfl)
+
+end Comap
 
 section RingEquivTransport
 
@@ -144,7 +232,10 @@ end IsDedekindDomain.HeightOneSpectrum
 
 namespace Ideal
 
-open IsDedekindDomain
+-- `_root_` disambiguates: inside `namespace Ideal`, a bare `open IsDedekindDomain` would resolve
+-- to the `Ideal.IsDedekindDomain` namespace of Mathlib's ramification indices, which the
+-- `Factorization` import above makes visible here.
+open _root_.IsDedekindDomain
 
 variable {R : Type*} [CommRing R] [IsDedekindDomain R]
 
@@ -255,6 +346,130 @@ theorem IsPrimeTo.induction_on {motive : Ideal R → Prop} (h : IsPrimeTo I S)
         fun h ↦ hprime.2 _ h (dvd_mul_right p J)
       exact mul_prime (HeightOneSpectrum.ofPrime hp) J hbad hJ (ih hJ)
 
+/-- Powers of an ideal prime to `S` are again prime to `S`. -/
+theorem IsPrimeTo.pow (h : IsPrimeTo I S) (n : ℕ) : IsPrimeTo (I ^ n) S := by
+  induction n with
+  | zero => simp
+  | succ n ih => rw [pow_succ]; exact isPrimeTo_mul_iff.mpr ⟨ih, h⟩
+
+/-- A nonzero power of an ideal is prime to `S` exactly when the ideal is. -/
+@[simp]
+theorem isPrimeTo_pow_iff {n : ℕ} (hn : n ≠ 0) : IsPrimeTo (I ^ n) S ↔ IsPrimeTo I S := by
+  refine ⟨fun h ↦ ?_, fun h ↦ h.pow n⟩
+  obtain ⟨m, rfl⟩ := Nat.exists_eq_succ_of_ne_zero hn
+  rw [pow_succ] at h
+  exact (isPrimeTo_mul_iff.mp h).2
+
+/-- **Being prime to `S` passes to finite products.** A finite product of ideals is prime to `S`
+exactly when every factor is; the empty product is `⊤`, which is prime to everything. -/
+@[simp]
+theorem isPrimeTo_prod_iff {ι : Type*} {t : Finset ι} {I : ι → Ideal R} :
+    IsPrimeTo (∏ i ∈ t, I i) S ↔ ∀ i ∈ t, IsPrimeTo (I i) S := by
+  classical
+  induction t using Finset.induction_on with
+  | empty => simp
+  | insert i t hi ih =>
+      rw [Finset.prod_insert hi, isPrimeTo_mul_iff, ih, Finset.forall_mem_insert]
+
+/-- An ideal divisible by no height-one prime at all is the unit ideal. -/
+@[simp]
+theorem isPrimeTo_univ_iff : IsPrimeTo I Set.univ ↔ I = ⊤ := by
+  refine ⟨fun h ↦ h.induction_on rfl fun 𝔭 _ h𝔭 _ _ ↦ absurd (Set.mem_univ 𝔭) h𝔭, ?_⟩
+  rintro rfl
+  exact isPrimeTo_top
+
+/-- An ideal divisible by no height-one prime other than `𝔭` is a power of `𝔭`. -/
+theorem isPrimeTo_compl_singleton_iff {𝔭 : HeightOneSpectrum R} :
+    IsPrimeTo I {𝔭}ᶜ ↔ ∃ n : ℕ, I = 𝔭.asIdeal ^ n := by
+  constructor
+  · intro h
+    refine h.induction_on ⟨0, by simp⟩ ?_
+    rintro 𝔮 J h𝔮 - ⟨n, rfl⟩
+    rw [Set.notMem_compl_iff, Set.mem_singleton_iff] at h𝔮
+    exact ⟨n + 1, by rw [h𝔮, pow_succ']⟩
+  · rintro ⟨n, rfl⟩
+    exact (isPrimeTo_asIdeal_iff.mpr (by simp)).pow n
+
+/-- **Ideals supported on complementary sets of primes are relatively prime.** -/
+theorem IsPrimeTo.isRelPrime (hI : IsPrimeTo I S) (hJ : IsPrimeTo J Sᶜ) : IsRelPrime I J := by
+  refine (UniqueFactorizationMonoid.isRelPrime_iff_no_prime_factors
+    (by simpa using hI.ne_bot)).mpr fun d hdI hdJ hd ↦ ?_
+  have h𝔭 : HeightOneSpectrum.ofPrime hd ∉ Sᶜ := fun h ↦ hJ.not_dvd h hdJ
+  exact hI.not_dvd (Set.notMem_compl_iff.mp h𝔭) hdI
+
+/-- **Every nonzero ideal is a finite product of prime powers.** This produces the prime-power
+factorizations consumed by multiplicativity statements such as
+`TauCeti.IdealArithmeticFunction.IsMultiplicative.map_prod_pow`. -/
+theorem exists_eq_prod_pow (hI : I ≠ ⊥) :
+    ∃ (S : Finset (HeightOneSpectrum R)) (e : HeightOneSpectrum R → ℕ),
+      I = ∏ 𝔭 ∈ S, 𝔭.asIdeal ^ e 𝔭 := by
+  classical
+  -- Mathlib's `finprod_heightOneSpectrum_factorization` is the same product over *all* height-one
+  -- primes; its multiplicative support is finite, and restricting to it gives a `Finset` product.
+  have hI0 : I ≠ 0 := by simpa using hI
+  have hfin : (Function.mulSupport fun 𝔭 : HeightOneSpectrum R ↦
+      𝔭.asIdeal ^ (Associates.mk 𝔭.asIdeal).count (Associates.mk I).factors).Finite :=
+    Ideal.hasFiniteMulSupport hI0
+  have hprod := finprod_eq_finsetProd_of_mulSupport_subset
+    (fun 𝔭 : HeightOneSpectrum R ↦
+      𝔭.asIdeal ^ (Associates.mk 𝔭.asIdeal).count (Associates.mk I).factors)
+    (s := hfin.toFinset) (by simp)
+  exact ⟨hfin.toFinset, fun 𝔭 ↦ (Associates.mk 𝔭.asIdeal).count (Associates.mk I).factors,
+    by rw [← hprod]; exact (Ideal.finprod_heightOneSpectrum_factorization hI0).symm⟩
+
+/-- **Splitting off one allowed prime.** An ideal all of whose prime factors lie in `insert 𝔭 S`
+is a power of `𝔭` times an ideal all of whose prime factors lie in `S`. -/
+theorem IsPrimeTo.exists_eq_pow_mul {𝔭 : HeightOneSpectrum R} (h : IsPrimeTo I (insert 𝔭 S)ᶜ) :
+    ∃ (n : ℕ) (J : Ideal R), IsPrimeTo J Sᶜ ∧ I = 𝔭.asIdeal ^ n * J := by
+  have hmax := 𝔭.isMaximal
+  obtain ⟨Q, hQsup, heq⟩ := Ideal.eq_prime_pow_mul_coprime h.ne_bot 𝔭.asIdeal
+  refine ⟨_, Q, ⟨fun hQ ↦ h.ne_bot (by rw [heq, hQ, Ideal.mul_bot]), fun 𝔮 h𝔮 hdvd ↦ ?_⟩, heq⟩
+  -- A prime dividing the cofactor divides the whole ideal, so it is excluded unless it is `𝔭`;
+  -- and `𝔭` cannot divide the cofactor, which Mathlib returns coprime to `𝔭`.
+  refine h.not_dvd ?_ (by rw [heq]; exact hdvd.mul_left _)
+  rw [Set.mem_compl_iff, Set.mem_insert_iff]
+  rintro (rfl | h𝔮')
+  · exact hmax.ne_top (by rwa [sup_eq_left.mpr (Ideal.le_of_dvd hdvd)] at hQsup)
+  · exact h𝔮 h𝔮'
+
+private theorem multiplicity_pow_mul {p J : Ideal R} (hp : p ≠ ⊥) (hJ : ¬ p ∣ J) (n : ℕ) :
+    multiplicity p (p ^ n * J) = n := by
+  refine multiplicity_eq_of_dvd_of_not_dvd (Dvd.intro _ rfl) fun hdvd ↦ hJ ?_
+  rw [pow_succ] at hdvd
+  exact (mul_dvd_mul_iff_left (pow_ne_zero n (by simpa using hp))).mp hdvd
+
+/-- **Uniqueness of the splitting.** The exponent and the prime-to-`p` cofactor of a nonzero
+ideal are determined by it. Only nonzeroness of `p` is used, not primality. -/
+theorem eq_and_eq_of_pow_mul_eq_pow_mul {p : Ideal R} (hp : p ≠ ⊥) {m n : ℕ} {I J : Ideal R}
+    (hI : ¬ p ∣ I) (hJ : ¬ p ∣ J) (h : p ^ m * I = p ^ n * J) : m = n ∧ I = J := by
+  have hmn : m = n := by
+    have hm := multiplicity_pow_mul hp hI m
+    rw [h, multiplicity_pow_mul hp hJ n] at hm
+    exact hm.symm
+  refine ⟨hmn, ?_⟩
+  subst hmn
+  exact mul_left_cancel₀ (pow_ne_zero _ (by simpa using hp)) h
+
 end Ideal
+
+section DiscreteValuationRing
+
+namespace IsDedekindDomain.HeightOneSpectrum
+
+/-- The maximal ideal is the only height-one prime of a discrete valuation ring.
+
+Mathlib has `IsDiscreteValuationRing.maximalIdeal` as a `HeightOneSpectrum` and
+`IsLocalRing.eq_maximalIdeal` for ideals, but not that the two agree at the level of
+`HeightOneSpectrum`. That identification is what lets a statement about the height-one primes of a
+discrete valuation ring be read as a statement about its valuation. -/
+-- Not `@[simp]`: the left-hand side is the bare variable `P`, so its head symbol is a variable and
+-- the compiler rejects the annotation outright ("the theorem will be tried on every simp step").
+lemma eq_maximalIdeal {A : Type*} [CommRing A] [IsDomain A] [IsDiscreteValuationRing A]
+    (P : HeightOneSpectrum A) : P = IsDiscreteValuationRing.maximalIdeal A :=
+  HeightOneSpectrum.ext (IsLocalRing.eq_maximalIdeal P.isMaximal)
+
+end IsDedekindDomain.HeightOneSpectrum
+
+end DiscreteValuationRing
 
 end

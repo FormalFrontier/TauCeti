@@ -336,6 +336,17 @@ theorem one_le_restrictToConvex (v : Valuation R Γ₀) (H : ConvexSubgroup Γ�
   have := (restrictToConvex_le_iff_of_mem v H hH hone hc hmone (hH c hc h1)).mpr (by simpa using h1)
   simpa using this
 
+/-- **A valuation bounded by `1` satisfies the absorption hypothesis vacuously.** If `v r ≤ 1`
+for every `r`, then an attained value that is also `≥ 1` equals `1`, so its unit is `1` and lies
+in *every* convex subgroup. This is what lets `restrictToConvex` be applied to a valuation of a
+ring of definition without first choosing `H`. -/
+theorem mk0_mem_of_forall_le_one (v : Valuation R Γ₀) (h : ∀ r, v r ≤ 1)
+    (H : ConvexSubgroup Γ₀ˣ) (a : R) (ha : v a ≠ 0) (h1 : 1 ≤ v a) :
+    Units.mk0 (v a) ha ∈ H := by
+  have heq : Units.mk0 (v a) ha = 1 := Units.ext (le_antisymm (h a) h1)
+  rw [heq]
+  exact one_mem H
+
 /-- `H` keeps every value sandwiched between an attained value `≥ 1` and its inverse. Since
 `H` absorbs the attained values `≥ 1`, and is convex, it absorbs everything they bracket —
 which is exactly the characteristic values of `v`. -/

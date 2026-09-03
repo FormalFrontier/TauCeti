@@ -59,13 +59,13 @@ variable {R : Type u} [CommRing R]
 noncomputable abbrev pointwiseQuotientPresheaf (H : _root_.CommHopfAlgCat.{u} R)
     (I : HopfIdeal R H) (hI : I.IsNormal) :
     ((CommAlgCat.{u} R)ᵒᵖ)ᵒᵖ ⥤ GrpCat.{u} :=
-  (opOpEquivalence (CommAlgCat.{u} R)).functor ⋙ pointwiseQuotientFunctor H I hI
+  unopUnop (CommAlgCat.{u} R) ⋙ pointwiseQuotientFunctor H I hI
 
 /-- The quotient projection, presented as a morphism of presheaves on the affine fppf site. -/
 noncomputable abbrev pointwiseQuotientPresheafProjection
     (H : _root_.CommHopfAlgCat.{u} R) (I : HopfIdeal R H) (hI : I.IsNormal) :
     HopfAlgebra.pointsGroupPresheaf H ⟶ pointwiseQuotientPresheaf H I hI :=
-  Functor.whiskerLeft (opOpEquivalence (CommAlgCat.{u} R)).functor
+  Functor.whiskerLeft (unopUnop (CommAlgCat.{u} R))
     (pointwiseQuotientProjection H I hI)
 
 /-- The pointwise quotient presheaf as a group object in type-valued presheaves. Values are

@@ -35,9 +35,10 @@ central division algebra of dimension `4`, so that class is not the identity
 ways `TauCeti/Algebra/BrauerGroup/BaseChange.lean` offers, so the kernel of base change to `ℂ` is
 strictly larger than the trivial subgroup.
 
-What is *not* proved here is that `[ℍ[ℝ]]` **generates** `BrauerGroup ℝ`, that is, that
-`BrauerGroup ℝ ≃ ℤ/2`. That needs the classification of the finite-dimensional real division
-algebras with centre `ℝ` -- only `ℝ` and `ℍ[ℝ]` occur -- which is a separate long-term target.
+That `[ℍ[ℝ]]` **generates** `BrauerGroup ℝ`, that is, that `BrauerGroup ℝ ≃ ℤ/2`, needs the
+classification of the finite-dimensional real division algebras with centre `ℝ` -- only `ℝ` and
+`ℍ[ℝ]` occur -- and is proved in `TauCeti/Algebra/BrauerGroup/Real.lean`
+(`TauCeti.Quaternion.brauerGroupMulEquiv`) on top of the order computation here.
 
 ## Main results
 

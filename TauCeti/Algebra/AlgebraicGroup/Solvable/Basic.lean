@@ -10,6 +10,7 @@ public import Mathlib.GroupTheory.Solvable
 public import Mathlib.RingTheory.HopfAlgebra.TensorProduct
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Points.Basic
 public import TauCeti.Algebra.AlgebraicGroup.Product
+public import TauCeti.GroupTheory.Solvable
 
 /-!
 # Geometric solvability of affine groups
@@ -29,6 +30,8 @@ Lie--Kolchin theory and the construction of the solvable radical.
 
 * `TauCeti.geometricallySolvablePointsCommHopfAlgProperty`: solvability of the geometric point
   group.
+* `TauCeti.geometricallySolvablePointsCommHopfAlgProperty_of_isCocomm`: commutative affine
+  groups have solvable geometric points.
 * `TauCeti.geometricallySolvablePointsCommHopfAlgProperty_of_surjective`: closure under closed
   subgroups.
 * `TauCeti.geometricallySolvablePointsCommHopfAlgProperty_tensorProduct_iff`: solvability of a
@@ -69,6 +72,17 @@ theorem geometricallySolvablePointsCommHopfAlgProperty_iff
     geometricallySolvablePointsCommHopfAlgProperty k H ↔
       Group.IsSolvable (WithConv (H →ₐ[k] AlgebraicClosure k)) :=
   Iff.rfl
+
+/-- A cocommutative coordinate Hopf algebra has solvable geometric points.
+
+Cocommutativity makes the convolution group of points commutative over every commutative value
+algebra, so in particular its algebraic-closure-valued point group is solvable. -/
+theorem geometricallySolvablePointsCommHopfAlgProperty_of_isCocomm
+    (k : Type u) [Field k] (H : CommHopfAlgCat.{v} k)
+    [Coalgebra.IsCocomm k H] :
+    geometricallySolvablePointsCommHopfAlgProperty k H := by
+  rw [geometricallySolvablePointsCommHopfAlgProperty_iff]
+  exact Group.isSolvable_of_comm mul_comm
 
 /-- Geometric-points solvability is invariant under isomorphisms of commutative Hopf algebras. -/
 instance (k : Type u) [Field k] :
@@ -147,20 +161,7 @@ theorem geometricallySolvablePointsCommHopfAlgProperty_tensorProduct_iff
           WithConv (K →ₐ[k] AlgebraicClosure k))
         (G' := WithConv (((H : Type v) ⊗[k] (K : Type v)) →ₐ[k] AlgebraicClosure k))
         (f := finv) hfinv_injective
-    let _ : Group.IsSolvable
-        (WithConv (H →ₐ[k] AlgebraicClosure k) ×
-          WithConv (K →ₐ[k] AlgebraicClosure k)) := hprod
-    constructor
-    · exact Group.isSolvable_of_surjective
-        (G := WithConv (H →ₐ[k] AlgebraicClosure k) ×
-          WithConv (K →ₐ[k] AlgebraicClosure k))
-        (G' := WithConv (H →ₐ[k] AlgebraicClosure k))
-        (f := MonoidHom.fst _ _) (fun x ↦ ⟨(x, 1), rfl⟩)
-    · exact Group.isSolvable_of_surjective
-        (G := WithConv (H →ₐ[k] AlgebraicClosure k) ×
-          WithConv (K →ₐ[k] AlgebraicClosure k))
-        (G' := WithConv (K →ₐ[k] AlgebraicClosure k))
-        (f := MonoidHom.snd _ _) (fun x ↦ ⟨(1, x), rfl⟩)
+    exact isSolvable_prod_iff.mp hprod
   · rintro ⟨hH, hK⟩
     let _ : Group.IsSolvable (WithConv (H →ₐ[k] AlgebraicClosure k)) := hH
     let _ : Group.IsSolvable (WithConv (K →ₐ[k] AlgebraicClosure k)) := hK

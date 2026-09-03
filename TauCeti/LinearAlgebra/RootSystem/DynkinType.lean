@@ -9,8 +9,6 @@ public import Mathlib.LinearAlgebra.Matrix.Cartan
 public import Mathlib.LinearAlgebra.RootSystem.CartanMatrix
 import Mathlib.Logic.Equiv.Pairwise
 
-public section
-
 /-!
 # Dynkin types
 
@@ -60,6 +58,8 @@ same root system; `Valid` keeps only `B 2` of those two names.
   and nonpositive off-diagonal entries.
 * `TauCeti.DynkinType.cartanMatrix_apply_eq_zero_iff_symm`: their zero pattern is symmetric, so each
   is a generalized Cartan matrix.
+* `TauCeti.DynkinType.cartanMatrix_C_two_apply_eq_cartanMatrix_B_two`: the matrices of `B 2` and
+  `C 2` are exchanged by the swap of the two Bourbaki nodes.
 * `TauCeti.DynkinType.isSimplyLaced_cartanMatrix_iff`: the standard Cartan matrix of a type is
   simply laced exactly when the type is or has rank at most one; rank at most one also holds of
   `A 0`, `A 1`, `D 0` and `D 1`, but the types the second alternative *adds* to the first are
@@ -81,6 +81,8 @@ This file implements the `DynkinType` enumeration of Layer 5 of
 Algebras, Chapters 4-6*, plates I-IX, and Humphreys, *Introduction to Lie Algebras and
 Representation Theory*, Chapter 11, for the standard Cartan matrices.
 -/
+
+public section
 
 namespace TauCeti
 
@@ -240,6 +242,17 @@ def cartanMatrix : (t : DynkinType) → Matrix (Fin t.rank) (Fin t.rank) ℤ
 @[simp] lemma cartanMatrix_E8 : E8.cartanMatrix = CartanMatrix.E 8 := (rfl)
 @[simp] lemma cartanMatrix_F4 : F4.cartanMatrix = CartanMatrix.F₄ := (rfl)
 @[simp] lemma cartanMatrix_G2 : G2.cartanMatrix = CartanMatrix.G₂ᵀ := (rfl)
+
+/-- **The two rank-two standard Cartan matrices differ only by the node numbering**: exchanging
+Bourbaki nodes `1` and `2` carries the matrix of `B 2` to the matrix of `C 2`. This is the
+low-rank coincidence that `TauCeti.DynkinType.Valid` records by keeping only the name `B 2` of the
+two. From rank three on there is no such relabelling, `Bₙ` and `Cₙ` being different root systems
+whose matrices are transposes; at rank two transposition is itself a relabelling because both
+diagonal entries are `2`. -/
+theorem cartanMatrix_C_two_apply_eq_cartanMatrix_B_two (i j : Fin 2) :
+    (C 2).cartanMatrix i j =
+      (B 2).cartanMatrix (Equiv.swap (0 : Fin 2) 1 i) (Equiv.swap (0 : Fin 2) 1 j) := by
+  fin_cases i <;> fin_cases j <;> decide
 
 /-- Every diagonal entry of a standard Cartan matrix is `2`. -/
 @[simp] lemma cartanMatrix_apply_same (t : DynkinType) (i : Fin t.rank) :

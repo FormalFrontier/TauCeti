@@ -8,8 +8,6 @@ module
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.Basic
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.C.Model
 
-public section
-
 /-!
 # The simply connected root datum of type `Cₙ`
 
@@ -73,6 +71,8 @@ The coordinates and the node numbering follow Bourbaki, *Lie Groups and Lie Alge
 12.1. This is the `Cₙ` branch of the target "a named datum per valid type" in Layer 6 of
 `TauCetiRoadmap/RepresentationTheory/RootSystems/README.md`.
 -/
+
+public section
 
 namespace TauCeti
 
@@ -423,17 +423,19 @@ theorem coroot_typeCIndexEquiv_diag (a : Fin n) (s : Bool) :
 
 /-! ## The simple roots and coroots -/
 
+/-- There is room for the first `n` indices in the type `Cₙ` enumeration of `2 * n ^ 2` roots. -/
+private lemma typeC_le_two_mul_sq (n : ℕ) : n ≤ 2 * n ^ 2 :=
+  le_trans (Nat.le_self_pow (by norm_num) n) (Nat.le_mul_of_pos_left (n ^ 2) (by norm_num))
+
 /-- The `i`-th simple root of type `Cₙ` sits at root index `i`, the Bourbaki node `i + 1`. -/
 def typeCSimpleIndex (n : ℕ) (i : Fin n) : Fin (2 * n ^ 2) :=
-  ⟨i, lt_of_lt_of_le i.isLt (by nlinarith [i.isLt, Nat.zero_le (i : ℕ)])⟩
+  Fin.castLE (typeC_le_two_mul_sq n) i
 
-@[simp] lemma typeCSimpleIndex_val (i : Fin n) : (typeCSimpleIndex n i : ℕ) = i := (rfl)
+@[simp] lemma typeCSimpleIndex_val (i : Fin n) : (typeCSimpleIndex n i : ℕ) = i := by
+  simp [typeCSimpleIndex]
 
-lemma typeCSimpleIndex_injective : Injective (typeCSimpleIndex n) := by
-  intro i j h
-  have := congrArg Fin.val h
-  simp only [typeCSimpleIndex_val] at this
-  exact Fin.ext this
+lemma typeCSimpleIndex_injective : Injective (typeCSimpleIndex n) :=
+  Fin.castLE_injective (typeC_le_two_mul_sq n)
 
 private lemma typeCIndexEquiv_symm_typeCSimpleIndex (i : Fin n) :
     (typeCIndexEquiv n).symm (typeCSimpleIndex n i) = (i, typeCSucc i, false) := by
