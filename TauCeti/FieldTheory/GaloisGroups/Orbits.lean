@@ -73,6 +73,7 @@ private theorem minpoly_rootsEquivRootsAux_symm (x : p.rootSet E) :
 
 /-- The minimal polynomial of a root of `p` does not depend on the splitting extension in which
 the root is read: it is preserved by the Galois-equivariant comparison of two root sets. -/
+@[simp]
 theorem minpoly_rootsEquivRoots (E' : Type w) [Field E'] [Algebra F E']
     [Fact ((p.map (algebraMap F E')).Splits)] (x : p.rootSet E) :
     minpoly F ((Gal.rootsEquivRoots p E E' x : p.rootSet E') : E') = minpoly F (x : E) :=
@@ -80,6 +81,7 @@ theorem minpoly_rootsEquivRoots (E' : Type w) [Field E'] [Algebra F E']
 
 /-- Two roots of `p` lie in the same Galois orbit exactly when their minimal polynomials over the
 base field agree. -/
+@[simp]
 theorem mem_orbit_iff_minpoly_eq {x y : p.rootSet E} :
     x ∈ MulAction.orbit p.Gal y ↔ minpoly F (x : E) = minpoly F (y : E) := by
   constructor
@@ -109,6 +111,7 @@ theorem orbit_eq_preimage_rootSet_minpoly (x : p.rootSet E) :
 
 /-- Read inside the ambient field, the orbit of a root of `p` is exactly the root set of its
 minimal polynomial. -/
+@[simp]
 theorem image_val_orbit_eq_rootSet_minpoly (x : p.rootSet E) :
     Subtype.val '' MulAction.orbit p.Gal x = (minpoly F (x : E)).rootSet E := by
   have hdvd : minpoly F (x : E) ∣ p := minpoly.dvd F _ (aeval_eq_zero_of_mem_rootSet x.2)
