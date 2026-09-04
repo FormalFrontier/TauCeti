@@ -21,7 +21,7 @@ The quotient of the ambient general-linear coordinate Hopf algebra by the carrie
 ideal represents the resulting group-valued functor. Thus field endomorphisms, in particular
 Frobenius maps in positive characteristic, act canonically on the named matrix-valued points.
 
-This is carrier-level infrastructure for the later Layer 9 identifications: it neither assumes
+This is carrier-level infrastructure for later structural identifications: it neither assumes
 nor proves that the carrier is reductive, that its weight torus is maximal, or that its root datum
 and pinning are the simply connected type-`B` ones. Those subsequent proofs can consume the point
 maps and their compatibility with the distinguished root-subgroup and torus families established
