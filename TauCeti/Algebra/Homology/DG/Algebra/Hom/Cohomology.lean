@@ -62,13 +62,12 @@ variable {hA : IsDGAlgebra 𝒜 dA} {hB : IsDGAlgebra ℬ dB}
 
 /-- A DG algebra morphism restricts to a graded algebra homomorphism on cycles. -/
 def cyclesMap (f : DGAlgHom hA hB) : hA.cyclesDeg →ₐᵍ[R] hB.cyclesDeg where
-  toFun z := ⟨f (z : A), by
-    rw [hB.mem_cycles, f.map_d, hA.mem_cycles.mp z.2, map_zero]⟩
-  map_one' := Subtype.ext (map_one f.toGradedAlgHom)
-  map_mul' x y := Subtype.ext (map_mul f.toGradedAlgHom (x : A) (y : A))
-  map_zero' := Subtype.ext (map_zero f.toGradedAlgHom)
-  map_add' x y := Subtype.ext (map_add f.toGradedAlgHom (x : A) (y : A))
-  commutes' r := Subtype.ext (f.toGradedAlgHom.commutes r)
+  __ := (f.toGradedAlgHom.toAlgHom.comp hA.cycles.val).codRestrict hB.cycles fun z => by
+    rw [hB.mem_cycles]
+    calc
+      dB ((f.toGradedAlgHom.toAlgHom.comp hA.cycles.val) z) =
+          f (dA (z : A)) := f.map_d (z : A)
+      _ = 0 := by rw [hA.mem_cycles.mp z.2, map_zero]
   map_mem hz :=
     hB.mem_cyclesDeg.mpr (f.toGradedAlgHom.map_mem (hA.mem_cyclesDeg.mp hz))
 
@@ -99,8 +98,15 @@ theorem cyclesMap_mem_boundaries (f : DGAlgHom hA hB) {z : hA.cycles}
     (hz : z ∈ hA.boundaries) : f.cyclesMap z ∈ hB.boundaries := by
   rw [hA.mem_boundaries] at hz
   obtain ⟨a, ha⟩ := hz
-  refine hB.mem_boundaries.mpr ⟨f a, ?_⟩
-  rw [cyclesMap_apply_coe, ← ha, f.map_d]
+  have himage : f.cyclesMap z =
+      (⟨dB (f a), hB.map_mem_cycles (f a)⟩ : hB.cycles) := by
+    apply Subtype.ext
+    calc
+      (f.cyclesMap z : B) = f (z : A) := cyclesMap_apply_coe f z
+      _ = f (dA a) := congrArg f ha.symm
+      _ = dB (f a) := (f.map_d a).symm
+  rw [himage]
+  exact hB.map_mem_boundaries (f a)
 
 /-- The boundary ideal of the source lands in the boundary ideal of the target: the hypothesis
 under which the map on cycles descends to the quotients. -/
