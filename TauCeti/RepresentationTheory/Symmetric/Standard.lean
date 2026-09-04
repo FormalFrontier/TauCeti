@@ -129,6 +129,7 @@ noncomputable def standardRepresentation :
 
 /-- The standard representation is the action carried by the augmentation subrepresentation, which
 is how a splitting of `k[α]` into subrepresentations names it. -/
+@[simp]
 theorem toRepresentation_augmentationSubrepresentation :
     (augmentationSubrepresentation k (Equiv.Perm α) α).toRepresentation =
       standardRepresentation k α :=
