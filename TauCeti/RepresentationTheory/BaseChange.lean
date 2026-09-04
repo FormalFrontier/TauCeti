@@ -25,9 +25,10 @@ the trace of a base-changed endomorphism is the image of the trace
 (`LinearMap.trace_baseChange`), so the character of `L ⊗[K] V` is the character of `V` read in `L`.
 The **dimension of an intertwiner space** between two finite-dimensional representations of a
 finite group in characteristic zero is a character integral
-(`Representation.card_inv_mul_sum_char_mul_char_eq_finrank`), so it too is unchanged: extending the
-scalars neither merges nor splits the constituents, and this is the mechanism by which an
-absolutely irreducible representation stays irreducible over any extension.
+(`Representation.card_inv_mul_sum_char_mul_char_eq_finrank`), so it too is unchanged. Applied to a
+representation whose endomorphism algebra is one-dimensional, that equality says the endomorphism
+algebra after the extension is one-dimensional again, which is the mechanism by which an absolutely
+irreducible representation stays irreducible over any extension.
 
 ## Main declarations
 
@@ -153,6 +154,7 @@ variable {V : Type*} [AddCommGroup V] [Module K V] [FiniteDimensional K V]
 /-- **The character is unchanged by base change**, read through the structure map: the character of
 `L ⊗[K] V` at `g` is the image in `L` of the character of `V` at `g`, because the trace of a
 base-changed endomorphism is the image of its trace. -/
+@[simp]
 theorem _root_.Representation.character_baseChange {G : Type*} [Monoid G]
     (ρ : _root_.Representation K G V) (g : G) :
     (_root_.Representation.baseChange L ρ).character g = algebraMap K L (ρ.character g) := by

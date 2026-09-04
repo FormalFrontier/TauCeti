@@ -71,8 +71,7 @@ the `FDRep` object no longer being recognizable as a tensor product.
 * [G. D. James, *The Representation Theory of the Symmetric Groups*][james1978], Chapter 4.
 * B. E. Sagan, *The Symmetric Group*, 2nd ed. (2001), Section 2.4.
 * [Schur--Weyl roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/SchurWeyl/README.md),
-  Layer 4, "Absolute irreducibility" and "Distinctness and completeness" (the `ℂ`-corollary), whose
-  `Suggested.lean` pins the object built here as `spechtModuleℂ`.
+  "Absolute irreducibility" and "Distinctness and completeness" (the `ℂ`-corollary).
 -/
 
 public section
@@ -182,6 +181,7 @@ instance instSimpleSpechtModuleℂ (μ : n.Partition) : Simple (spechtModuleℂ 
   simp
 
 /-- **Complex Specht modules of distinct shapes are non-isomorphic.** -/
+@[simp]
 theorem spechtModuleℂ_iso_iff (μ ν : n.Partition) :
     Nonempty (spechtModuleℂ μ ≅ spechtModuleℂ ν) ↔ μ = ν := by
   refine ⟨fun hiso => ?_, by rintro rfl; exact ⟨Iso.refl _⟩⟩
@@ -192,8 +192,10 @@ theorem spechtModuleℂ_iso_iff (μ ν : n.Partition) :
   simp [hiso] at h
 
 /-- **A complex Specht module is determined by its character.** -/
-theorem spechtModuleℂ_character_inj {μ ν : n.Partition}
-    (h : (spechtModuleℂ μ).character = (spechtModuleℂ ν).character) : μ = ν := by
+theorem spechtModuleℂ_character_injective :
+    Function.Injective fun μ : n.Partition => (spechtModuleℂ μ).character := by
+  intro μ ν h
+  have hchar : (spechtModuleℂ μ).character = (spechtModuleℂ ν).character := h
   refine (spechtModuleℂ_iso_iff μ ν).mp ?_
   by_contra hc
   have hs : ((Nat.card (Equiv.Perm (Fin n)) : ℂ))⁻¹ *
@@ -202,7 +204,7 @@ theorem spechtModuleℂ_character_inj {μ ν : n.Partition}
     simpa [Nonempty.intro (Iso.refl (spechtModuleℂ μ))] using
       FDRep.char_orthonormal (spechtModuleℂ μ) (spechtModuleℂ μ)
   have hd := FDRep.char_orthonormal (spechtModuleℂ μ) (spechtModuleℂ ν)
-  rw [← h, hs] at hd
+  rw [← hchar, hs] at hd
   simp [hc] at hd
 
 /-! ### The classification -/
@@ -255,6 +257,15 @@ theorem partitionEquivSimpleFDRepClassesℂ_apply (μ : n.Partition) :
     partitionEquivSimpleFDRepClassesℂ n μ = spechtModuleℂFDRepClass μ :=
   (rfl)
 
+/-- The partition a complex Specht module's class names is the partition it was built from: the
+`symm` companion of `TauCeti.partitionEquivSimpleFDRepClassesℂ_apply`. -/
+@[simp]
+theorem partitionEquivSimpleFDRepClassesℂ_symm_mk_spechtModuleℂ (μ : n.Partition) :
+    (partitionEquivSimpleFDRepClassesℂ n).symm
+      (SimpleFDRepClasses.mk (spechtModuleℂ μ)) = μ := by
+  rw [← spechtModuleℂFDRepClass_def, ← partitionEquivSimpleFDRepClassesℂ_apply,
+    Equiv.symm_apply_apply]
+
 /-- **Every simple object of `FDRep ℂ Sₙ` is a complex Specht module for exactly one
 partition.** -/
 theorem existsUnique_nonempty_iso_spechtModuleℂ (X : FDRep ℂ (Equiv.Perm (Fin n))) [Simple X] :
@@ -276,8 +287,10 @@ theorem existsUnique_character_eq_spechtChar (X : FDRep ℂ (Equiv.Perm (Fin n))
     rw [FDRep.char_iso e]
     exact funext (character_spechtModuleℂ_intCast μ)
   refine ⟨μ, hμ, fun ν hν => ?_⟩
-  refine spechtModuleℂ_character_inj (funext fun σ => ?_)
-  rw [character_spechtModuleℂ_intCast, character_spechtModuleℂ_intCast]
-  exact congrFun (hν.symm.trans hμ) σ
+  have hchar : (spechtModuleℂ ν).character = (spechtModuleℂ μ).character := by
+    funext σ
+    rw [character_spechtModuleℂ_intCast, character_spechtModuleℂ_intCast]
+    exact congrFun (hν.symm.trans hμ) σ
+  exact spechtModuleℂ_character_injective hchar
 
 end TauCeti
