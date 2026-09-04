@@ -516,7 +516,10 @@ section Bridge
 
 variable [EDist X]
 
-private theorem eLpNorm_rpow_eq_lintegral {α : Type*} [MeasurableSpace α]
+/-- For a finite nonzero exponent, the `p`-th power of the `L^p` seminorm of an `ℝ≥0∞`-valued
+function is the integral of the `p`-th power of that function: with the identity enorm of
+`ℝ≥0∞`, the root and the power in `MeasureTheory.eLpNorm` cancel. -/
+theorem eLpNorm_rpow_eq_lintegral {α : Type*} [MeasurableSpace α]
     (hp0 : p ≠ 0) (hp : p ≠ ∞) (f : α → ℝ≥0∞) (μ : Measure α) :
     eLpNorm f p μ ^ p.toReal = ∫⁻ a, f a ^ p.toReal ∂μ := by
   rw [eLpNorm_eq_eLpNorm' hp0 hp,
