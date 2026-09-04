@@ -146,8 +146,10 @@ carries a conjugate-linear `J` with `J (J v) = -v` commuting with the action.
 
 The invariant-form criterion supplies a nondegenerate invariant alternating form, and the inner
 product of the unitary representation supplies the positive definite invariant Hermitian form that
-turns one datum into the other.  Unlike the real case there is no realizability reading: a
-quaternionic structure has no nonzero fixed vector, so it cuts out no real form. -/
+turns one datum into the other.  A quaternionic structure is the standard quaternionic
+realizability datum -- `J` together with the complex scalars makes `V` a module over the
+quaternions -- but, unlike the real case, it supports no realizability-over-`ℝ` reading: it has no
+nonzero fixed vector, so it cuts out no real form, and this file draws no such conclusion. -/
 theorem frobeniusSchurIndicator_eq_neg_one_iff_exists_isQuaternionicStructure
     (hunitary : IsUnitary π) (hirr : Representation.IsIrreducible π.toRepresentation) :
     frobeniusSchurIndicator π hπ = -1 ↔
