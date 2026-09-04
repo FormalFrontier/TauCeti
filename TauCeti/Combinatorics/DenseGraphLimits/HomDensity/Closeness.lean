@@ -35,6 +35,8 @@ homomorphism density under random sampling.
 
 ## References
 
+* `TauCetiRoadmap/DenseGraphLimits/Suggested.lean`, Layer 9a declaration
+  `homDensityFin_sub_injHomDensity_le`.
 * L. Lovász, *Large Networks and Graph Limits*, §5.2.
 -/
 
