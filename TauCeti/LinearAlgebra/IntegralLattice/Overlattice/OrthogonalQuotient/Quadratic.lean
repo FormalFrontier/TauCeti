@@ -6,8 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.LinearAlgebra.FiniteBilinearModule.Quadratic
-public import TauCeti.LinearAlgebra.IntegralLattice.Overlattice.Dual
-public import TauCeti.LinearAlgebra.IntegralLattice.Unimodular
+public import TauCeti.LinearAlgebra.IntegralLattice.Overlattice.OrthogonalQuotient.Bilinear
 
 /-!
 # The discriminant form of an even overlattice
@@ -47,9 +46,9 @@ also restricts to an isometry of the overlattices themselves; the discriminant s
 orthogonal complements correspond under the induced isometry of discriminant modules, and the
 square built from the two comparison isometries commutes.
 
-One thing is deliberately left out: the bilinear analogue for a merely integral overlattice of an
-odd lattice needs the orthogonal quotient of a finite *bilinear* module, which the library does
-not yet have.
+The bilinear analogue, for a merely integral overlattice of a lattice that need not be even, is
+`TauCeti.LinearAlgebra.IntegralLattice.Overlattice.OrthogonalQuotient.Bilinear`; the discriminant
+class of a dual vector of `M`, which both comparisons are built from, is defined there.
 
 ## Main declarations
 
@@ -86,26 +85,6 @@ variable {V : Type u} [AddCommGroup V] [Module ℚ V]
 variable {L : IntegralLattice V} [L.IsNondegenerate] {M : L.IntermediateCarrier}
 
 namespace IntermediateCarrier
-
-/-- The discriminant class in `A_L` of a vector of `Mᵛ`. -/
-noncomputable def IsIntegral.dualClassHom (hM : IsIntegral M) :
-    hM.toIntegralLattice.dualCarrier →ₗ[ℤ] L.DiscriminantGroup :=
-  L.carrierInDual.mkQ.comp (Submodule.inclusion hM.dualCarrier_le)
-
-@[simp]
-theorem IsIntegral.dualClassHom_apply (hM : IsIntegral M)
-    (y : hM.toIntegralLattice.dualCarrier) :
-    hM.dualClassHom y = Submodule.Quotient.mk ⟨(y : V), hM.dualCarrier_le y.2⟩ := (rfl)
-
-/-- The discriminant class of a vector of `Mᵛ` is orthogonal to `H = M / L`, because the dual
-of an intermediate carrier corresponds to the orthogonal complement of its subgroup. -/
-theorem IsIntegral.dualClassHom_mem_orthogonalComplement (hM : IsIntegral M)
-    (y : hM.toIntegralLattice.dualCarrier) :
-    hM.dualClassHom y ∈
-      L.discriminantBilinearModule.orthogonalComplement (L.discriminantSubgroup M) := by
-  rw [← discriminantSubgroup_dual, hM.dualClassHom_apply]
-  exact (L.mk_mem_discriminantSubgroup_iff (dual M) _).mpr
-    (by rw [← hM.toIntegralLattice_dualCarrier]; exact y.2)
 
 /-! ## The comparison isometry -/
 

@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.LinearAlgebra.IntegralLattice.Overlattice.OrthogonalQuotient
+public import TauCeti.LinearAlgebra.IntegralLattice.Overlattice.OrthogonalQuotient.Quadratic
 public import TauCeti.LinearAlgebra.IntegralLattice.RootLattice.D8Plus.Basic
 public import TauCeti.LinearAlgebra.IntegralLattice.RootLattice.TypeE
 public import TauCeti.LinearAlgebra.RootSystem.E8Coordinates
