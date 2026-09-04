@@ -56,6 +56,11 @@ module — which is what removes every finiteness hypothesis, and is why a semip
 *all* modules and not only the finitely generated ones a semiperfect ring covers — and once to make
 the kernel of the reduction map nil, which is what lets the idempotent lift.
 
+Semiperfectness itself is `TauCeti.IsSemiperfectRing`, in
+`TauCeti/RingTheory/Jacobson/Semiperfect.lean`: the second use of nilpotence above, made at the
+level of the ring rather than of `End N`, is exactly the statement that a semiprimary ring is
+semiperfect.
+
 ## Main statements
 
 * `TauCeti.exists_isProjectiveCover_comp_subtype`: over a semiprimary ring, a surjection onto `M`
