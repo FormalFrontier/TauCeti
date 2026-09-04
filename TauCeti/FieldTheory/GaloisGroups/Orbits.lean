@@ -7,7 +7,6 @@ module
 
 public import Mathlib.FieldTheory.PolynomialGaloisGroup
 public import TauCeti.RingTheory.Polynomial.Factors
-import Mathlib.RingTheory.Algebraic.Integral
 
 /-!
 # Galois orbits on the roots of a polynomial
@@ -37,7 +36,7 @@ separable polynomial of positive degree.
   of the root action is equivalent to irreducibility of `p`.
 * `TauCeti.orbitQuotientEquivFactors`: the orbit quotient is in bijection with the
   monic irreducible factors of `p`, the orbit of a root going to its minimal polynomial.
-* `TauCeti.natCard_orbit_of_orbitQuotient_eq_natDegree`: along that bijection, a separable
+* `TauCeti.natCard_orbit_eq_natDegree_factor`: along that bijection, a separable
   factor has as many roots in the matching orbit as its degree.
 -/
 
@@ -201,14 +200,23 @@ noncomputable def orbitQuotientEquivFactors (hp : p ≠ 0) :
 
 /-- The orbit-factor equivalence sends the orbit represented by `x` to `minpoly F x`. -/
 @[simp]
-theorem orbitQuotientEquivFactors_mk (hp : p ≠ 0) (x : p.rootSet E) :
+theorem orbitQuotientEquivFactors_apply_mk (hp : p ≠ 0) (x : p.rootSet E) :
     ((orbitQuotientEquivFactors p E hp (Quotient.mk _ x) : p.Factors) : F[X])
       = minpoly F (x : E) :=
   (rfl)
 
+/-- A factor corresponds to the orbit represented by `x` exactly when its underlying polynomial
+is the minimal polynomial of `x`. -/
+@[simp]
+theorem orbitQuotientEquivFactors_symm_apply_eq_mk_iff (hp : p ≠ 0) (q : p.Factors)
+    (x : p.rootSet E) :
+    (orbitQuotientEquivFactors p E hp).symm q = Quotient.mk _ x ↔
+      (q : F[X]) = minpoly F (x : E) := by
+  rw [Equiv.symm_apply_eq, Subtype.ext_iff, orbitQuotientEquivFactors_apply_mk]
+
 /-- Along `TauCeti.orbitQuotientEquivFactors`, the degree of a separable monic irreducible factor
 is the number of roots in the matching Galois orbit. -/
-theorem natCard_orbit_of_orbitQuotient_eq_natDegree (hp : p ≠ 0)
+theorem natCard_orbit_eq_natDegree_factor (hp : p ≠ 0)
     (ω : MulAction.orbitRel.Quotient p.Gal (p.rootSet E))
     (hsep : ((orbitQuotientEquivFactors p E hp ω : p.Factors) : F[X]).Separable) :
     Nat.card (MulAction.orbitRel.Quotient.orbit ω)
