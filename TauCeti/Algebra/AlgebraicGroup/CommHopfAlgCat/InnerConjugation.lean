@@ -190,20 +190,6 @@ private theorem innerConjugationIso_inv_def
     (innerConjugationIso H g).inv = homOfPointsMap (innerConjugationPointNatIso H g).inv :=
   (rfl)
 
-/-- The forward coordinate map underlying `innerConjugationIso`. -/
-@[simp]
-theorem innerConjugationIso_hom
-    (g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R)) :
-    (innerConjugationIso H g).hom = homOfPointsMap (innerConjugationPointNatIso H g).hom :=
-  innerConjugationIso_hom_def H g
-
-/-- The inverse coordinate map underlying `innerConjugationIso`. -/
-@[simp]
-theorem innerConjugationIso_inv
-    (g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R)) :
-    (innerConjugationIso H g).inv = homOfPointsMap (innerConjugationPointNatIso H g).inv :=
-  innerConjugationIso_inv_def H g
-
 /-- Conjugation by the identity point is the identity coordinate Hopf-algebra automorphism. -/
 @[simp]
 theorem innerConjugationIso_one :
@@ -211,7 +197,7 @@ theorem innerConjugationIso_one :
         (1 : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R)) =
       Iso.refl H := by
   apply Iso.ext
-  rw [innerConjugationIso_hom]
+  rw [innerConjugationIso_hom_def]
   rw [innerConjugationPointNatIso_one]
   exact homOfPointsMap_id H
 
@@ -223,8 +209,8 @@ theorem innerConjugationIso_mul
     innerConjugationIso H (g * h) =
       (innerConjugationIso H g).trans (innerConjugationIso H h) := by
   apply Iso.ext
-  rw [innerConjugationIso_hom, Iso.trans_hom, innerConjugationIso_hom,
-    innerConjugationIso_hom]
+  rw [innerConjugationIso_hom_def, Iso.trans_hom, innerConjugationIso_hom_def,
+    innerConjugationIso_hom_def]
   have hmul := congrArg Iso.hom (innerConjugationPointNatIso_mul H g h)
   simp only [Iso.trans_hom] at hmul
   rw [hmul, homOfPointsMap_comp]
@@ -236,7 +222,7 @@ theorem innerConjugationIso_inv_point
     (g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R)) :
     innerConjugationIso H g⁻¹ = (innerConjugationIso H g).symm := by
   apply Iso.ext
-  rw [innerConjugationIso_hom, Iso.symm_hom, innerConjugationIso_inv,
+  rw [innerConjugationIso_hom_def, Iso.symm_hom, innerConjugationIso_inv_def,
     innerConjugationPointNatIso_inv_point, Iso.symm_hom]
 
 /-- The coordinate algebra map of inner conjugation is obtained from the universal conjugation
@@ -254,7 +240,7 @@ theorem innerConjugationIso_hom_toAlgHom
           (toConv (AlgHom.id R H)) =
         extendPoint H (CommAlgCat.of R H) g * toConv (AlgHom.id R H) *
           (extendPoint H (CommAlgCat.of R H) g)⁻¹ := by
-    rw [innerConjugationIso_hom, mapPointsFunctor_homOfPointsMap]
+    rw [innerConjugationIso_hom_def, mapPointsFunctor_homOfPointsMap]
     exact innerConjugationPointIso_hom_apply H g _ _
   have hx := congrArg (fun p : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R H) ↦
     p.ofConv x) hpoint
