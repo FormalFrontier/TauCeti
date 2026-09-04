@@ -104,4 +104,11 @@ noncomputable def extLinearEquivOfEquivalence (R : Type t) [Ring R] [Linear R C]
   __ := extAddEquivOfEquivalence e X Y n
   map_smul' r α := by simp
 
+@[simp]
+theorem extLinearEquivOfEquivalence_apply (R : Type t) [Ring R] [Linear R C] [Linear R D]
+    (e : C ≌ D) [e.functor.Additive] [e.functor.Linear R] {X Y : C} {n : ℕ}
+    (α : Ext.{w} X Y n) :
+    extLinearEquivOfEquivalence R e X Y n α = α.mapExactFunctor e.functor :=
+  (rfl)
+
 end TauCeti

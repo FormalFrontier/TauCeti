@@ -29,19 +29,25 @@ dimension by `q`; shifting the source instead identifies `Ext^{n,j}(X{1}, Y)` wi
 `Ext^{n,j-1}(X, Y)` and multiplies it by `q⁻¹`.  The source identity uses that `Ext` is invariant
 under the equivalence `e`, so it needs `e` to be `k`-linear and not merely additive: an additive
 isomorphism of `k`-vector spaces need not preserve dimension.  The comparison of `e ^ (j + 1)`
-with the composites `e ^ j ∘ e` and `e ∘ e ^ j` is `TauCeti.equivPowSuccIso` and
-`TauCeti.equivPowSuccRightIso`.
+with the composites `e ^ j ∘ e` and `e ∘ e ^ j` is
+`CategoryTheory.Equivalence.powSuccIso` and `CategoryTheory.Equivalence.powSuccRightIso`.
+
+Every identity below takes a single admissibility witness, for the unshifted pair: the shifted
+witness it needs is the one this file constructs from it.
 
 ## Main definitions
 
 * `TauCeti.gradedExtShiftTargetEquiv`: `Ext^{n,j}(X, Y{1}) ≃ₗ[k] Ext^{n,j+1}(X, Y)`.
+* `TauCeti.gradedExtShiftTargetInverseEquiv`: `Ext^{n,j}(X, Y{-1}) ≃ₗ[k] Ext^{n,j-1}(X, Y)`.
 * `TauCeti.gradedExtShiftSourceEquiv`: `Ext^{n,j}(X{1}, Y) ≃ₗ[k] Ext^{n,j-1}(X, Y)`.
+* `TauCeti.gradedExtShiftSourceInverseEquiv`: `Ext^{n,j}(X{-1}, Y) ≃ₗ[k] Ext^{n,j+1}(X, Y)`.
 
 ## Main results
 
 * `TauCeti.IsGradedEulerAdmissible.shiftTarget` and
   `TauCeti.IsGradedEulerAdmissible.shiftSource`: graded Euler-admissibility is preserved by the
-  grading shift in either variable.
+  grading shift in either variable; `TauCeti.IsGradedEulerAdmissible.shiftTargetInverse` and
+  `TauCeti.IsGradedEulerAdmissible.shiftSourceInverse` are the same for the inverse shift.
 * `TauCeti.gradedExtEuler_shiftTarget`: `χ_q(X, Y{1}) = q · χ_q(X, Y)`.
 * `TauCeti.gradedExtEuler_shiftSource`: `χ_q(X{1}, Y) = q⁻¹ · χ_q(X, Y)`.
 * `TauCeti.gradedExtEuler_shiftTarget_inverse` and
@@ -52,7 +58,6 @@ with the composites `e ^ j ∘ e` and `e ∘ e ^ j` is `TauCeti.equivPowSuccIso`
 * Zsuzsanna Dancso and Anthony Licata, "Koszul algebras and flow lattices", *Journal of
   Combinatorial Theory, Series A* 185 (2022), Sections 1.2 and 2.2, for the q-antilinear/q-linear
   convention of the q-Euler form.
-* `TauCetiRoadmap/GrothendieckEulerForms/README.md`, Layer 6, "q-Euler form".
 -/
 
 public section
@@ -75,40 +80,80 @@ isomorphism of objects. -/
 `Ext^{n,j}(X, Y{1}) ≅ Ext^{n,j+1}(X, Y)`. -/
 noncomputable def gradedExtShiftTargetEquiv (X Y : C) (n : ℕ) (j : ℤ) :
     GradedExt.{w} e X (e.functor.obj Y) n j ≃ₗ[k] GradedExt.{w} e X Y n (j + 1) :=
-  extLinearEquivOfIso k (Iso.refl X) ((equivPowSuccIso e j).app Y).symm n
+  extLinearEquivOfIso k (Iso.refl X) ((e.powSuccIso j).app Y).symm n
+
+/-- Shifting the target by the inverse shift lowers the internal degree by one:
+`Ext^{n,j}(X, Y{-1}) ≅ Ext^{n,j-1}(X, Y)`. -/
+noncomputable def gradedExtShiftTargetInverseEquiv (X Y : C) (n : ℕ) (j : ℤ) :
+    GradedExt.{w} e X (e.inverse.obj Y) n j ≃ₗ[k] GradedExt.{w} e X Y n (j - 1) :=
+  extLinearEquivOfIso k (Iso.refl X) ((e.powPredIso j).app Y) n
 
 variable {k e}
 variable {X Y : C}
+
+/-- Finite Laurent support in one cohomological degree is preserved by shifting the target. -/
+theorem HasFiniteLaurentSupport.gradedExtShiftTarget {n : ℕ}
+    (h : HasFiniteLaurentSupport k (GradedExt.{w} e X Y n)) :
+    HasFiniteLaurentSupport k (GradedExt.{w} e X (e.functor.obj Y) n) :=
+  (h.reindex_add 1).of_equiv fun j => (gradedExtShiftTargetEquiv k e X Y n j).symm
+
+/-- Finite Laurent support in one cohomological degree is preserved by the inverse shift of the
+target. -/
+theorem HasFiniteLaurentSupport.gradedExtShiftTargetInverse {n : ℕ}
+    (h : HasFiniteLaurentSupport k (GradedExt.{w} e X Y n)) :
+    HasFiniteLaurentSupport k (GradedExt.{w} e X (e.inverse.obj Y) n) :=
+  (h.reindex_add (-1)).of_equiv fun j => (gradedExtShiftTargetInverseEquiv k e X Y n j).symm
 
 /-- Finite internal support of bigraded `Ext` is preserved by shifting the target. -/
 theorem IsGradedExtInternallyFinite.shiftTarget
     (h : IsGradedExtInternallyFinite.{w} k e X Y) :
     IsGradedExtInternallyFinite.{w} k e X (e.functor.obj Y) :=
-  ⟨fun n => ((h.finiteLaurentSupport n).reindex_add 1).of_equiv fun j =>
-    (gradedExtShiftTargetEquiv k e X Y n j).symm⟩
+  ⟨fun n => (h.finiteLaurentSupport n).gradedExtShiftTarget⟩
+
+/-- Finite internal support of bigraded `Ext` is preserved by the inverse shift of the target. -/
+theorem IsGradedExtInternallyFinite.shiftTargetInverse
+    (h : IsGradedExtInternallyFinite.{w} k e X Y) :
+    IsGradedExtInternallyFinite.{w} k e X (e.inverse.obj Y) :=
+  ⟨fun n => (h.finiteLaurentSupport n).gradedExtShiftTargetInverse⟩
 
 /-- A cohomological vanishing bound is preserved by shifting the target. -/
 theorem IsGradedExtBoundedBy.shiftTarget {N : ℕ} (h : IsGradedExtBoundedBy.{w} e X Y N) :
     IsGradedExtBoundedBy.{w} e X (e.functor.obj Y) N :=
   ⟨fun n hn j => have := h.subsingleton hn (j + 1)
-    (extAddEquivOfIso (Iso.refl X) ((equivPowSuccIso e j).app Y).symm n).toEquiv.subsingleton⟩
+    (extAddEquivOfIso (Iso.refl X) ((e.powSuccIso j).app Y).symm n).toEquiv.subsingleton⟩
+
+/-- A cohomological vanishing bound is preserved by the inverse shift of the target. -/
+theorem IsGradedExtBoundedBy.shiftTargetInverse {N : ℕ} (h : IsGradedExtBoundedBy.{w} e X Y N) :
+    IsGradedExtBoundedBy.{w} e X (e.inverse.obj Y) N :=
+  ⟨fun n hn j => have := h.subsingleton hn (j - 1)
+    (extAddEquivOfIso (Iso.refl X) ((e.powPredIso j).app Y) n).toEquiv.subsingleton⟩
 
 /-- Eventual cohomological vanishing of bigraded `Ext` is preserved by shifting the target. -/
 theorem IsGradedExtBounded.shiftTarget (h : IsGradedExtBounded.{w} e X Y) :
     IsGradedExtBounded.{w} e X (e.functor.obj Y) :=
   ⟨h.exists_bound.choose, h.exists_bound.choose_spec.shiftTarget⟩
 
+/-- Eventual cohomological vanishing of bigraded `Ext` is preserved by the inverse shift of the
+target. -/
+theorem IsGradedExtBounded.shiftTargetInverse (h : IsGradedExtBounded.{w} e X Y) :
+    IsGradedExtBounded.{w} e X (e.inverse.obj Y) :=
+  ⟨h.exists_bound.choose, h.exists_bound.choose_spec.shiftTargetInverse⟩
+
 /-- **Graded Euler-admissibility is preserved by shifting the target.** -/
 theorem IsGradedEulerAdmissible.shiftTarget (h : IsGradedEulerAdmissible.{w} k e X Y) :
     IsGradedEulerAdmissible.{w} k e X (e.functor.obj Y) :=
   ⟨h.internallyFinite.shiftTarget, h.bounded.shiftTarget⟩
 
+/-- **Graded Euler-admissibility is preserved by the inverse shift of the target.** -/
+theorem IsGradedEulerAdmissible.shiftTargetInverse (h : IsGradedEulerAdmissible.{w} k e X Y) :
+    IsGradedEulerAdmissible.{w} k e X (e.inverse.obj Y) :=
+  ⟨h.internallyFinite.shiftTargetInverse, h.bounded.shiftTargetInverse⟩
+
 /-- Shifting the target multiplies the graded `Ext` dimension in one cohomological degree by
 `q`. -/
 theorem gradedExtDimension_shiftTarget {n : ℕ}
-    (h : HasFiniteLaurentSupport k (GradedExt.{w} e X Y n))
-    (h' : HasFiniteLaurentSupport k (GradedExt.{w} e X (e.functor.obj Y) n)) :
-    gradedExtDimension k e h' = T 1 * gradedExtDimension k e h := by
+    (h : HasFiniteLaurentSupport k (GradedExt.{w} e X Y n)) :
+    gradedExtDimension k e h.gradedExtShiftTarget = T 1 * gradedExtDimension k e h := by
   ext j
   simp only [T, coeff_gradedExtDimension, AddMonoidAlgebra.coeff_single_mul_apply, one_mul]
   rw [(gradedExtShiftTargetEquiv k e X Y n (-j)).finrank_eq]
@@ -116,32 +161,29 @@ theorem gradedExtDimension_shiftTarget {n : ℕ}
   rw [hj]
 
 /-- Shifting the target multiplies every truncation of the q-Euler sum by `q`. -/
-theorem truncatedGradedExtEuler_shiftTarget (h : IsGradedExtInternallyFinite.{w} k e X Y)
-    (h' : IsGradedExtInternallyFinite.{w} k e X (e.functor.obj Y)) (N : ℕ) :
-    truncatedGradedExtEuler k e h' N = T 1 * truncatedGradedExtEuler k e h N := by
+theorem truncatedGradedExtEuler_shiftTarget (h : IsGradedExtInternallyFinite.{w} k e X Y) (N : ℕ) :
+    truncatedGradedExtEuler k e h.shiftTarget N = T 1 * truncatedGradedExtEuler k e h N := by
   induction N with
   | zero => simp
   | succ N ih =>
       rw [truncatedGradedExtEuler_succ, truncatedGradedExtEuler_succ, ih, mul_add,
-        gradedExtDimension_shiftTarget (h.finiteLaurentSupport N) (h'.finiteLaurentSupport N),
-        mul_smul_comm]
+        gradedExtDimension_shiftTarget (h.finiteLaurentSupport N), mul_smul_comm]
 
 /-- **`χ_q(X, Y{1}) = q · χ_q(X, Y)`**: the q-Euler characteristic is q-linear in its second
 argument. -/
-theorem gradedExtEuler_shiftTarget (h : IsGradedEulerAdmissible.{w} k e X Y)
-    (h' : IsGradedEulerAdmissible.{w} k e X (e.functor.obj Y)) :
-    gradedExtEuler k e h' = T 1 * gradedExtEuler k e h := by
+theorem gradedExtEuler_shiftTarget (h : IsGradedEulerAdmissible.{w} k e X Y) :
+    gradedExtEuler k e h.shiftTarget = T 1 * gradedExtEuler k e h := by
   obtain ⟨N, hN⟩ := h.bounded.exists_bound
-  rw [gradedExtEuler_eq k e h hN, gradedExtEuler_eq k e h' hN.shiftTarget]
-  exact truncatedGradedExtEuler_shiftTarget h.internallyFinite h'.internallyFinite N
+  rw [gradedExtEuler_eq k e h hN, gradedExtEuler_eq k e h.shiftTarget hN.shiftTarget]
+  exact truncatedGradedExtEuler_shiftTarget h.internallyFinite N
 
 /-- **`χ_q(X, Y{-1}) = q⁻¹ · χ_q(X, Y)`**: the inverse shift of the second argument. -/
-theorem gradedExtEuler_shiftTarget_inverse (h : IsGradedEulerAdmissible.{w} k e X Y)
-    (h' : IsGradedEulerAdmissible.{w} k e X (e.inverse.obj Y)) :
-    gradedExtEuler k e h' = T (-1) * gradedExtEuler k e h := by
-  have hcounit : gradedExtEuler k e h = gradedExtEuler k e h'.shiftTarget :=
-    gradedExtEuler_of_iso k h h'.shiftTarget (Iso.refl X) (e.counitIso.app Y).symm
-  rw [hcounit, gradedExtEuler_shiftTarget h' h'.shiftTarget, ← mul_assoc, ← T_add]
+theorem gradedExtEuler_shiftTarget_inverse (h : IsGradedEulerAdmissible.{w} k e X Y) :
+    gradedExtEuler k e h.shiftTargetInverse = T (-1) * gradedExtEuler k e h := by
+  have hcounit : gradedExtEuler k e h = gradedExtEuler k e h.shiftTargetInverse.shiftTarget :=
+    gradedExtEuler_of_iso k h h.shiftTargetInverse.shiftTarget (Iso.refl X)
+      (e.counitIso.app Y).symm
+  rw [hcounit, gradedExtEuler_shiftTarget h.shiftTargetInverse, ← mul_assoc, ← T_add]
   simp
 
 /-! ### Shifting the source
@@ -155,8 +197,8 @@ variable [e.functor.Additive] [e.functor.Linear k]
 /-- The comparison `(Y{j-1}){1} ≅ Y{j}`, which moves a source shift into the internal degree. -/
 private noncomputable def shiftSourceObjIso (Y : C) (j : ℤ) :
     e.functor.obj ((e ^ (j - 1)).functor.obj Y) ≅ (e ^ j).functor.obj Y :=
-  ((equivPowSuccRightIso e (j - 1)).app Y).symm ≪≫
-    (equivPowCongrIso e (by ring : j - 1 + 1 = j)).app Y
+  ((e.powSuccRightIso (j - 1)).app Y).symm ≪≫
+    (e.powCongrIso (by ring : j - 1 + 1 = j)).app Y
 
 /-- Shifting the source of a bigraded `Ext` group lowers its internal degree by one:
 `Ext^{n,j}(X{1}, Y) ≅ Ext^{n,j-1}(X, Y)`. -/
@@ -165,15 +207,40 @@ noncomputable def gradedExtShiftSourceEquiv (X Y : C) (n : ℕ) (j : ℤ) :
   ((extLinearEquivOfEquivalence k e X ((e ^ (j - 1)).functor.obj Y) n).trans
     (extLinearEquivOfIso k (Iso.refl (e.functor.obj X)) (shiftSourceObjIso e Y j) n)).symm
 
+/-- Shifting the source by the inverse shift raises the internal degree by one:
+`Ext^{n,j}(X{-1}, Y) ≅ Ext^{n,j+1}(X, Y)`. -/
+noncomputable def gradedExtShiftSourceInverseEquiv (X Y : C) (n : ℕ) (j : ℤ) :
+    GradedExt.{w} e (e.inverse.obj X) Y n j ≃ₗ[k] GradedExt.{w} e X Y n (j + 1) :=
+  (extLinearEquivOfEquivalence k e (e.inverse.obj X) ((e ^ j).functor.obj Y) n).trans
+    (extLinearEquivOfIso k (e.counitIso.app X) ((e.powSuccRightIso j).app Y).symm n)
+
 variable {k e}
 variable {X Y : C}
+
+/-- Finite Laurent support in one cohomological degree is preserved by shifting the source. -/
+theorem HasFiniteLaurentSupport.gradedExtShiftSource {n : ℕ}
+    (h : HasFiniteLaurentSupport k (GradedExt.{w} e X Y n)) :
+    HasFiniteLaurentSupport k (GradedExt.{w} e (e.functor.obj X) Y n) :=
+  (h.reindex_add (-1)).of_equiv fun j => (gradedExtShiftSourceEquiv k e X Y n j).symm
+
+/-- Finite Laurent support in one cohomological degree is preserved by the inverse shift of the
+source. -/
+theorem HasFiniteLaurentSupport.gradedExtShiftSourceInverse {n : ℕ}
+    (h : HasFiniteLaurentSupport k (GradedExt.{w} e X Y n)) :
+    HasFiniteLaurentSupport k (GradedExt.{w} e (e.inverse.obj X) Y n) :=
+  (h.reindex_add 1).of_equiv fun j => (gradedExtShiftSourceInverseEquiv k e X Y n j).symm
 
 /-- Finite internal support of bigraded `Ext` is preserved by shifting the source. -/
 theorem IsGradedExtInternallyFinite.shiftSource
     (h : IsGradedExtInternallyFinite.{w} k e X Y) :
     IsGradedExtInternallyFinite.{w} k e (e.functor.obj X) Y :=
-  ⟨fun n => ((h.finiteLaurentSupport n).reindex_add (-1)).of_equiv fun j =>
-    (gradedExtShiftSourceEquiv k e X Y n j).symm⟩
+  ⟨fun n => (h.finiteLaurentSupport n).gradedExtShiftSource⟩
+
+/-- Finite internal support of bigraded `Ext` is preserved by the inverse shift of the source. -/
+theorem IsGradedExtInternallyFinite.shiftSourceInverse
+    (h : IsGradedExtInternallyFinite.{w} k e X Y) :
+    IsGradedExtInternallyFinite.{w} k e (e.inverse.obj X) Y :=
+  ⟨fun n => (h.finiteLaurentSupport n).gradedExtShiftSourceInverse⟩
 
 omit [Functor.Linear k e.functor] in
 /-- A cohomological vanishing bound is preserved by shifting the source. -/
@@ -185,22 +252,44 @@ theorem IsGradedExtBoundedBy.shiftSource {N : ℕ} (h : IsGradedExtBoundedBy.{w}
         (shiftSourceObjIso e Y j) n)).symm).toEquiv.subsingleton⟩
 
 omit [Functor.Linear k e.functor] in
+/-- A cohomological vanishing bound is preserved by the inverse shift of the source. -/
+theorem IsGradedExtBoundedBy.shiftSourceInverse {N : ℕ} (h : IsGradedExtBoundedBy.{w} e X Y N) :
+    IsGradedExtBoundedBy.{w} e (e.inverse.obj X) Y N :=
+  ⟨fun n hn j =>
+    have := h.subsingleton hn (j + 1)
+    have equiv : GradedExt.{w} e (e.inverse.obj X) Y n j ≃+ GradedExt.{w} e X Y n (j + 1) :=
+      (extAddEquivOfEquivalence e (e.inverse.obj X) ((e ^ j).functor.obj Y) n).trans
+        (extAddEquivOfIso (e.counitIso.app X) ((e.powSuccRightIso j).app Y).symm n)
+    equiv.toEquiv.subsingleton⟩
+
+omit [Functor.Linear k e.functor] in
 /-- Eventual cohomological vanishing of bigraded `Ext` is preserved by shifting the source. -/
 theorem IsGradedExtBounded.shiftSource (h : IsGradedExtBounded.{w} e X Y) :
     IsGradedExtBounded.{w} e (e.functor.obj X) Y :=
   ⟨h.exists_bound.choose, h.exists_bound.choose_spec.shiftSource⟩
+
+omit [Functor.Linear k e.functor] in
+/-- Eventual cohomological vanishing of bigraded `Ext` is preserved by the inverse shift of the
+source. -/
+theorem IsGradedExtBounded.shiftSourceInverse (h : IsGradedExtBounded.{w} e X Y) :
+    IsGradedExtBounded.{w} e (e.inverse.obj X) Y :=
+  ⟨h.exists_bound.choose, h.exists_bound.choose_spec.shiftSourceInverse⟩
 
 /-- **Graded Euler-admissibility is preserved by shifting the source.** -/
 theorem IsGradedEulerAdmissible.shiftSource (h : IsGradedEulerAdmissible.{w} k e X Y) :
     IsGradedEulerAdmissible.{w} k e (e.functor.obj X) Y :=
   ⟨h.internallyFinite.shiftSource, h.bounded.shiftSource⟩
 
+/-- **Graded Euler-admissibility is preserved by the inverse shift of the source.** -/
+theorem IsGradedEulerAdmissible.shiftSourceInverse (h : IsGradedEulerAdmissible.{w} k e X Y) :
+    IsGradedEulerAdmissible.{w} k e (e.inverse.obj X) Y :=
+  ⟨h.internallyFinite.shiftSourceInverse, h.bounded.shiftSourceInverse⟩
+
 /-- Shifting the source multiplies the graded `Ext` dimension in one cohomological degree by
 `q⁻¹`. -/
 theorem gradedExtDimension_shiftSource {n : ℕ}
-    (h : HasFiniteLaurentSupport k (GradedExt.{w} e X Y n))
-    (h' : HasFiniteLaurentSupport k (GradedExt.{w} e (e.functor.obj X) Y n)) :
-    gradedExtDimension k e h' = T (-1) * gradedExtDimension k e h := by
+    (h : HasFiniteLaurentSupport k (GradedExt.{w} e X Y n)) :
+    gradedExtDimension k e h.gradedExtShiftSource = T (-1) * gradedExtDimension k e h := by
   ext j
   simp only [T, coeff_gradedExtDimension, AddMonoidAlgebra.coeff_single_mul_apply, one_mul]
   rw [(gradedExtShiftSourceEquiv k e X Y n (-j)).finrank_eq]
@@ -208,32 +297,29 @@ theorem gradedExtDimension_shiftSource {n : ℕ}
   rw [hj]
 
 /-- Shifting the source multiplies every truncation of the q-Euler sum by `q⁻¹`. -/
-theorem truncatedGradedExtEuler_shiftSource (h : IsGradedExtInternallyFinite.{w} k e X Y)
-    (h' : IsGradedExtInternallyFinite.{w} k e (e.functor.obj X) Y) (N : ℕ) :
-    truncatedGradedExtEuler k e h' N = T (-1) * truncatedGradedExtEuler k e h N := by
+theorem truncatedGradedExtEuler_shiftSource (h : IsGradedExtInternallyFinite.{w} k e X Y) (N : ℕ) :
+    truncatedGradedExtEuler k e h.shiftSource N = T (-1) * truncatedGradedExtEuler k e h N := by
   induction N with
   | zero => simp
   | succ N ih =>
       rw [truncatedGradedExtEuler_succ, truncatedGradedExtEuler_succ, ih, mul_add,
-        gradedExtDimension_shiftSource (h.finiteLaurentSupport N) (h'.finiteLaurentSupport N),
-        mul_smul_comm]
+        gradedExtDimension_shiftSource (h.finiteLaurentSupport N), mul_smul_comm]
 
 /-- **`χ_q(X{1}, Y) = q⁻¹ · χ_q(X, Y)`**: the q-Euler characteristic is q-antilinear in its first
 argument. -/
-theorem gradedExtEuler_shiftSource (h : IsGradedEulerAdmissible.{w} k e X Y)
-    (h' : IsGradedEulerAdmissible.{w} k e (e.functor.obj X) Y) :
-    gradedExtEuler k e h' = T (-1) * gradedExtEuler k e h := by
+theorem gradedExtEuler_shiftSource (h : IsGradedEulerAdmissible.{w} k e X Y) :
+    gradedExtEuler k e h.shiftSource = T (-1) * gradedExtEuler k e h := by
   obtain ⟨N, hN⟩ := h.bounded.exists_bound
-  rw [gradedExtEuler_eq k e h hN, gradedExtEuler_eq k e h' hN.shiftSource]
-  exact truncatedGradedExtEuler_shiftSource h.internallyFinite h'.internallyFinite N
+  rw [gradedExtEuler_eq k e h hN, gradedExtEuler_eq k e h.shiftSource hN.shiftSource]
+  exact truncatedGradedExtEuler_shiftSource h.internallyFinite N
 
 /-- **`χ_q(X{-1}, Y) = q · χ_q(X, Y)`**: the inverse shift of the first argument. -/
-theorem gradedExtEuler_shiftSource_inverse (h : IsGradedEulerAdmissible.{w} k e X Y)
-    (h' : IsGradedEulerAdmissible.{w} k e (e.inverse.obj X) Y) :
-    gradedExtEuler k e h' = T 1 * gradedExtEuler k e h := by
-  have hcounit : gradedExtEuler k e h = gradedExtEuler k e h'.shiftSource :=
-    gradedExtEuler_of_iso k h h'.shiftSource (e.counitIso.app X).symm (Iso.refl Y)
-  rw [hcounit, gradedExtEuler_shiftSource h' h'.shiftSource, ← mul_assoc, ← T_add]
+theorem gradedExtEuler_shiftSource_inverse (h : IsGradedEulerAdmissible.{w} k e X Y) :
+    gradedExtEuler k e h.shiftSourceInverse = T 1 * gradedExtEuler k e h := by
+  have hcounit : gradedExtEuler k e h = gradedExtEuler k e h.shiftSourceInverse.shiftSource :=
+    gradedExtEuler_of_iso k h h.shiftSourceInverse.shiftSource (e.counitIso.app X).symm
+      (Iso.refl Y)
+  rw [hcounit, gradedExtEuler_shiftSource h.shiftSourceInverse, ← mul_assoc, ← T_add]
   simp
 
 end TauCeti
