@@ -131,15 +131,6 @@ theorem isCofinalElement_iff_subset_closure {H : Subgroup Γ} {γ : Γ} (hγ1 : 
         _ = γ ^ n := one_mul _
     exact ⟨n + 1, hstep.trans_le hle⟩
 
-/-- A strictly smaller convex subgroup admits a member of the larger one above it. -/
-private theorem exists_one_lt_of_lt {Γ' Δ : ConvexSubgroup Γ} (hlt : Δ < Γ') :
-    ∃ z, z ∈ Γ' ∧ z ∉ Δ ∧ 1 < z := by
-  obtain ⟨x, hxQ, hxD⟩ := SetLike.exists_of_lt hlt
-  rcases lt_trichotomy x 1 with hl | he | hg
-  · exact ⟨x⁻¹, inv_mem hxQ, fun e ↦ hxD (by simpa using inv_mem e), one_lt_inv'.mpr hl⟩
-  · exact absurd (he ▸ one_mem Δ) hxD
-  · exact ⟨x, hxQ, hxD, hg⟩
-
 /-- **Wedhorn Proposition 1.20.** If `γ` is cofinal for the convex subgroup `Γ'` and
 `Δ < Γ'` is a strictly smaller convex subgroup, then `δ * γ` is cofinal for `Γ'` for
 every `δ ∈ Δ`. -/
@@ -147,7 +138,7 @@ theorem IsCofinalElement.mul_of_lt_of_mem {Γ' Δ : ConvexSubgroup Γ}
     {γ : Γ} (hγ : IsCofinalElement Γ'.toSubgroup γ) (hlt : Δ < Γ') {δ : Γ}
     (hδ : δ ∈ Δ) : IsCofinalElement Γ'.toSubgroup (δ * γ) := by
   intro h hh
-  obtain ⟨z, hzQ, hzD, hz_gt⟩ := exists_one_lt_of_lt hlt
+  obtain ⟨z, hzQ, hzD, hz_gt⟩ := Subgroup.exists_one_lt_of_lt (ConvexSubgroup.toSubgroup_lt.mpr hlt)
   obtain ⟨n, hn⟩ := hγ z⁻¹ (inv_mem hzQ)
   have hzi_lt : z⁻¹ < 1 := inv_lt_one'.mpr hz_gt
   have hγ_lt : γ < 1 := hγ.lt_one
@@ -229,7 +220,8 @@ vertical generization `v / H` of a continuous valuation is again continuous. -/
 theorem IsCofinalElement.quotientMk {Δ : ConvexSubgroup Γ} (hΔ : Δ ≠ ⊤) {γ : Γ}
     (hγ : IsCofinalElement (⊤ : Subgroup Γ) γ) :
     IsCofinalElement (⊤ : Subgroup (Γ ⧸ Δ.toSubgroup)) (QuotientGroup.mk' Δ.toSubgroup γ) := by
-  obtain ⟨d, -, hdΔ, hd1⟩ := exists_one_lt_of_lt (lt_top_iff_ne_top.mpr hΔ)
+  obtain ⟨d, -, hdΔ, hd1⟩ := Subgroup.exists_one_lt_of_lt
+    (by simpa using ConvexSubgroup.toSubgroup_lt.mpr (lt_top_iff_ne_top.mpr hΔ))
   intro q _
   induction q using Quotient.inductionOn with | _ h =>
   obtain ⟨n, hn⟩ := hγ (d⁻¹ * h) trivial

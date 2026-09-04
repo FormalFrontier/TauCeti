@@ -92,11 +92,9 @@ theorem fg_point (R : Type*) [CommRing R] [IsDedekindDomain R] [Algebra R F]
     [(p : W.f.Factors) → Finite (ClassGroup (W.ringOfIntegersFactor R p))]
     [(p : W.f.Factors) → Monoid.FG (W.ringOfIntegersFactor R p)ˣ] :
     AddGroup.FG W.Point := by
-  have H₂ (P : W.Point) : 0 ≤ P.naiveHeight := by
-    rw [Point.naiveHeight_eq_logHeight P]
-    positivity
   obtain ⟨C, hC⟩ := approx_parallelogram_law W
-  exact AddCommGroup.fg_of_descent' (W.finiteIndex_range_nsmulAddMonoidHom_two R) H₂ hC
+  exact AddCommGroup.fg_of_descent' (W.finiteIndex_range_nsmulAddMonoidHom_two R)
+    Point.naiveHeight_nonneg hC
 
 /-- **The Mordell–Weil theorem** for an arbitrary Weierstrass curve: `E(K)` is finitely generated,
 given an admissible change of variables `C` bringing `E` into the normal form `y² = f(x)`,

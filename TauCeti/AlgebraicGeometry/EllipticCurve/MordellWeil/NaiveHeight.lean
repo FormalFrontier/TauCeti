@@ -106,6 +106,11 @@ lemma Point.naiveHeight_eq_logHeight₁ {P : W.Point} :
   | 0 => simp [naiveHeight, xRep]
   | some .. => simpa [naiveHeight] using (logHeight₁_eq_logHeight _).symm
 
+/-- **The naïve height is non-negative**, being a logarithmic height. -/
+lemma Point.naiveHeight_nonneg (P : W.Point) : 0 ≤ P.naiveHeight := by
+  rw [naiveHeight_eq_logHeight]
+  positivity
+
 /-- The point at infinity has height zero: its representative is `![1, 0]`. -/
 @[simp]
 lemma Point.naiveHeight_zero : (0 : W.Point).naiveHeight = 0 := by

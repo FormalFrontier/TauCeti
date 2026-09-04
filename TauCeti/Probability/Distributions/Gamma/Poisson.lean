@@ -21,10 +21,15 @@ The proof compares singleton masses. The Poisson mass contributes `exp (-x) * x 
 the Gamma density, changing its rate from `p / (1 - p)` to `1 / (1 - p)` and its shape from `r`
 to `r + k`. Euler's Gamma integral then gives exactly the negative-binomial mass.
 
-## Main result
+## Main results
 
 * `TauCeti.Probability.bind_gammaMeasure_poissonMeasure` — a Gamma mixture of Poisson laws is
   negative-binomial.
+* `Real.gammaKernel_mul_exp_mul_pow_div_factorial` — the pointwise algebra it runs on: at a
+  nonzero point, `c ^ r / Γ r * x ^ (r - 1) * exp (-(c * x))` times `exp (-x) * x ^ k / k !`
+  collects into `c ^ r / (Γ r * k !) * (x ^ (r + k - 1) * exp (-((c + 1) * x)))`. The identity is
+  algebraic — it carries no positivity hypotheses — and the mixture below supplies the
+  probabilistic reading of its two sides.
 
 ## References
 
@@ -43,6 +48,42 @@ namespace TauCeti
 
 namespace Probability
 
+
+/-- Collecting `c ^ r / Γ r * x ^ (r - 1) * exp (-(c * x))` against `exp (-x) * x ^ k / k !` at a
+nonzero point: the two powers of `x` and the two exponentials each combine, leaving
+`x ^ (r + k - 1) * exp (-((c + 1) * x))` under the constant `c ^ r / (Γ r * k !)`.
+
+The identity is algebraic. Nothing here is assumed positive except that `x` is nonzero, so neither
+side need be a probability density, and the surviving constant is `c ^ r / (Γ r * k !)` rather than
+the `(c + 1) ^ (r + k) / Γ (r + k)` that would normalise the `x`-dependent factor into a gamma
+kernel of shape `r + k` and rate `c + 1`. The gamma--Poisson mixture below instantiates the
+identity pointwise at whatever rate its gamma law carries, and it is there that the two factors
+are the densities their shapes suggest. -/
+-- The factors are written out rather than as `gammaPDFReal` and `poissonPMFReal`: the former
+-- carries an `if 0 ≤ x` guard that is not definitional at a bound variable, and the latter is
+-- indexed by `ℝ≥0`, so either would cost the consumer a congruence step under its integral.
+theorem _root_.Real.gammaKernel_mul_exp_mul_pow_div_factorial (c r : ℝ) (k : ℕ) {x : ℝ}
+    (hx : x ≠ 0) :
+    c ^ r / Real.Gamma r * x ^ (r - 1) * Real.exp (-(c * x)) *
+        (Real.exp (-x) * x ^ k / k.factorial) =
+      c ^ r / (Real.Gamma r * k.factorial) *
+        (x ^ (r + (k : ℝ) - 1) * Real.exp (-((c + 1) * x))) := by
+  have hxpow : x ^ (r - 1) * x ^ k = x ^ (r + (k : ℝ) - 1) := by
+    -- `Real.rpow_add_natCast` fires only on an exponent already in the shape `y + (n : ℕ)`,
+    -- so reassociate `r + k - 1` into `(r - 1) + k` before rewriting.
+    rw [show r + (k : ℝ) - 1 = r - 1 + (k : ℕ) by ring,
+      Real.rpow_add_natCast hx]
+  have hexp : Real.exp (-(c * x)) * Real.exp (-x) = Real.exp (-((c + 1) * x)) := by
+    rw [← Real.exp_add]
+    congr 1
+    ring
+  calc
+    c ^ r / Real.Gamma r * x ^ (r - 1) * Real.exp (-(c * x)) *
+        (Real.exp (-x) * x ^ k / k.factorial) =
+        c ^ r / (Real.Gamma r * k.factorial) *
+          ((x ^ (r - 1) * x ^ k) * (Real.exp (-(c * x)) * Real.exp (-x))) := by ring
+    _ = _ := by rw [hxpow, hexp]
+
 private lemma integral_poissonMass_gammaMeasure {r p : ℝ} (hr : 0 < r) (hp : 0 < p)
     (hp1 : p < 1) (k : ℕ) :
     ∫ x, Real.exp (-x) * x ^ k / k.factorial ∂gammaMeasure r (p / (1 - p)) =
@@ -60,30 +101,8 @@ private lemma integral_poissonMass_gammaMeasure {r p : ℝ} (hr : 0 < r) (hp : 0
     ((p / (1 - p)) ^ r / Real.Gamma r * x ^ (r - 1) *
       Real.exp (-(p / (1 - p) * x))) *
         (Real.exp (-x) * x ^ k / k.factorial)) = _
-  have hcongr : ∀ x ∈ Ioi (0 : ℝ),
-      (p / (1 - p)) ^ r / Real.Gamma r * x ^ (r - 1) *
-          Real.exp (-(p / (1 - p) * x)) * (Real.exp (-x) * x ^ k / k.factorial) =
-        ((p / (1 - p)) ^ r / (Real.Gamma r * k.factorial)) *
-          (x ^ (r + (k : ℝ) - 1) *
-            Real.exp (-((p / (1 - p) + 1) * x))) := by
-    intro x hx
-    have hxpow : x ^ (r - 1) * x ^ k = x ^ (r + (k : ℝ) - 1) := by
-      rw [← Real.rpow_natCast x k, ← Real.rpow_add hx]
-      congr 1
-      ring
-    have hexp : Real.exp (-(p / (1 - p) * x)) * Real.exp (-x) =
-        Real.exp (-((p / (1 - p) + 1) * x)) := by
-      rw [← Real.exp_add]
-      congr 1
-      ring
-    calc
-      (p / (1 - p)) ^ r / Real.Gamma r * x ^ (r - 1) *
-            Real.exp (-(p / (1 - p) * x)) *
-          (Real.exp (-x) * x ^ k / k.factorial) =
-          ((p / (1 - p)) ^ r / (Real.Gamma r * k.factorial)) *
-            ((x ^ (r - 1) * x ^ k) *
-              (Real.exp (-(p / (1 - p) * x)) * Real.exp (-x))) := by ring
-      _ = _ := by rw [hxpow, hexp]
+  have hcongr := fun x (hx : x ∈ Ioi (0 : ℝ)) =>
+    Real.gammaKernel_mul_exp_mul_pow_div_factorial (p / (1 - p)) r k hx.ne'
   -- Euler's Gamma integral evaluates the kernel with shifted shape `r + k`.
   rw [setIntegral_congr_fun measurableSet_Ioi hcongr, integral_const_mul,
     Real.integral_rpow_mul_exp_neg_mul_Ioi hshape (by positivity : 0 < p / (1 - p) + 1),

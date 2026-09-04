@@ -54,7 +54,7 @@ the inverse-moment threshold `n < a`.
   there, the real logarithm of the previous formula;
 * `TauCeti.gammaMeasure_conv_gammaMeasure` — convolution at a common rate adds the shape
   parameters;
-* `TauCeti.gammaMeasure_map_const_mul` — scaling by `c > 0` sends the rate `r` to `r / c`.
+* `TauCeti.gammaMeasure_map_const_mul` — scaling by `c > 0` sends the rate `r` to `r / c`;
 
 The cumulative distribution function is computed in
 `TauCeti/Probability/Distributions/Gamma/Cdf.lean`.
