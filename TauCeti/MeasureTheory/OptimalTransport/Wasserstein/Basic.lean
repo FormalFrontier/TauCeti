@@ -8,6 +8,7 @@ module
 public import Mathlib.MeasureTheory.Function.LpSeminorm.CompareExp
 public import Mathlib.MeasureTheory.Function.LpSeminorm.Count
 public import Mathlib.MeasureTheory.Function.LpSeminorm.TriangleInequality
+public import TauCeti.MeasureTheory.Function.Lp.LIntegralRpow
 public import TauCeti.MeasureTheory.OptimalTransport.Existence
 public import TauCeti.MeasureTheory.OptimalTransport.GraphPlan
 public import TauCeti.MeasureTheory.OptimalTransport.Gluing
@@ -549,12 +550,8 @@ theorem wassersteinEDist_rpow_eq_transportCost (hp0 : p ≠ 0) (hp : p ≠ ∞) 
     wassersteinEDist p μ ν ^ p.toReal
       = transportCost (fun z : X × X ↦ edist z.1 z.2 ^ p.toReal) μ ν := by
   have hr : 0 < p.toReal := ENNReal.toReal_pos hp0 hp
-  have key (π : Measure (X × X)) :
-      eLpNorm (fun z : X × X ↦ edist z.1 z.2) p π ^ p.toReal =
-        ∫⁻ z, edist z.1 z.2 ^ p.toReal ∂π := by
-    rw [eLpNorm_eq_eLpNorm' hp0 hp,
-      ← lintegral_rpow_enorm_eq_rpow_eLpNorm' hr]
-    simp only [enorm_eq_self]
+  have key (π : Measure (X × X)) := eLpNorm_rpow_eq_lintegral hp0 hp
+    (fun z : X × X ↦ edist z.1 z.2) π
   refine le_antisymm (le_transportCost fun π hπ ↦ ?_) ?_
   · rw [← key π]
     exact ENNReal.rpow_le_rpow (wassersteinEDist_le hπ p) hr.le
@@ -581,24 +578,18 @@ theorem isOptimalCoupling_edist_rpow_iff (hp0 : p ≠ 0) (hp : p ≠ ∞) :
     IsOptimalCoupling (fun z : X × X ↦ edist z.1 z.2 ^ p.toReal) π μ ν ↔
       IsCoupling π μ ν ∧
         eLpNorm (fun z : X × X ↦ edist z.1 z.2) p π = wassersteinEDist p μ ν := by
-  have hp_pos : 0 < p.toReal := ENNReal.toReal_pos hp0 hp
-  have hr : p.toReal ≠ 0 := hp_pos.ne'
-  have hnorm : eLpNorm (fun z : X × X ↦ edist z.1 z.2) p π ^ p.toReal =
-      ∫⁻ z, edist z.1 z.2 ^ p.toReal ∂π := by
-    rw [eLpNorm_eq_eLpNorm' hp0 hp,
-      ← lintegral_rpow_enorm_eq_rpow_eLpNorm' hp_pos]
-    simp only [enorm_eq_self]
+  have hr : p.toReal ≠ 0 := (ENNReal.toReal_pos hp0 hp).ne'
   constructor
   · intro hπ
     refine ⟨hπ.toIsCoupling, ENNReal.rpow_left_injective hr ?_⟩
     have hpow : eLpNorm (fun z : X × X ↦ edist z.1 z.2) p π ^ p.toReal =
         wassersteinEDist p μ ν ^ p.toReal := by
-      rw [hnorm, hπ.lintegral_eq,
+      rw [eLpNorm_rpow_eq_lintegral hp0 hp, hπ.lintegral_eq,
         wassersteinEDist_rpow_eq_transportCost hp0 hp]
     exact hpow
   · rintro ⟨hπ, hval⟩
     refine ⟨hπ, ?_⟩
-    rw [← hnorm, hval,
+    rw [← eLpNorm_rpow_eq_lintegral hp0 hp, hval,
       wassersteinEDist_rpow_eq_transportCost hp0 hp]
 
 /-- The root form of `TauCeti.wassersteinEDist_rpow_eq_transportCost`: for a finite nonzero

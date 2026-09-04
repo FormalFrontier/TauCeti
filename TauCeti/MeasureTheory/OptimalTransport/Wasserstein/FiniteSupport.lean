@@ -180,9 +180,7 @@ theorem exists_map_wassersteinEDist_le (hp : 1 ≤ p) (hp_top : p ≠ ∞) [IsPr
       exact self_le_add_left _ _
   have hind : eLpNorm ((A n).indicator f) p μ ≤ c := by
     refine (ENNReal.rpow_le_rpow_iff ht).1 ?_
-    rw [eLpNorm_eq_eLpNorm' hp0 hp_top,
-      ← lintegral_rpow_enorm_eq_rpow_eLpNorm' ht]
-    simp only [enorm_eq_self]
+    rw [eLpNorm_rpow_eq_lintegral hp0 hp_top]
     refine le_trans (le_of_eq (lintegral_congr fun y ↦ ?_)) hn
     by_cases hy : y ∈ A n
     · simp [Set.indicator_of_mem hy]
