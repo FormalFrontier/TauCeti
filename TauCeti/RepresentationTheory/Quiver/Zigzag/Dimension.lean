@@ -6,6 +6,8 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Combinatorics.SimpleGraph.Connectivity.Finite
+public import Mathlib.LinearAlgebra.Basis.Prod
+public import Mathlib.RingTheory.Finiteness.Prod
 public import TauCeti.RepresentationTheory.Quiver.Zigzag.Basis
 public import TauCeti.RepresentationTheory.Quiver.Zigzag.Componentwise
 
@@ -53,7 +55,42 @@ variable (k : Type w) {V : Type u} (G : SimpleGraph V)
 
 section Component
 
-variable [CommRing k] [Nontrivial k] [Finite V]
+variable [CommRing k] [Finite V]
+
+/-- Each component factor of a finite graph's zigzag algebra is free over the coefficient ring. -/
+noncomputable instance instFreeZigzagComponentAlgebra (C : G.ConnectedComponent) :
+    Module.Free k (zigzagComponentAlgebra k G C) := by
+  classical
+  by_cases hC : Nontrivial C
+  · let _ : Nontrivial C := hC
+    rw [zigzagComponentAlgebra_eq_nonisolated]
+    exact Module.Free.of_basis <| zigzagBasis k C.toSimpleGraph fun i =>
+      exists_adj_iff_not_isIsolated.mpr
+        (C.connected_toSimpleGraph.preconnected.not_isIsolated i)
+  · let _ : Subsingleton C := not_nontrivial_iff_subsingleton.mp hC
+    rw [zigzagComponentAlgebra_eq_uliftDualNumber]
+    change Module.Free k (ULift (k × k))
+    infer_instance
+
+/-- Each component factor of a finite graph's zigzag algebra is finite over the coefficient ring. -/
+noncomputable instance instFiniteZigzagComponentAlgebra (C : G.ConnectedComponent) :
+    Module.Finite k (zigzagComponentAlgebra k G C) := by
+  classical
+  by_cases hC : Nontrivial C
+  · let _ : Nontrivial C := hC
+    rw [zigzagComponentAlgebra_eq_nonisolated]
+    let _ : Fintype C := Fintype.ofFinite C
+    let _ : DecidableRel C.toSimpleGraph.Adj := Classical.decRel _
+    let _ : Fintype C.toSimpleGraph.Dart := Dart.fintype
+    exact Module.Finite.of_basis <| zigzagBasis k C.toSimpleGraph fun i =>
+      exists_adj_iff_not_isIsolated.mpr
+        (C.connected_toSimpleGraph.preconnected.not_isIsolated i)
+  · let _ : Subsingleton C := not_nontrivial_iff_subsingleton.mp hC
+    rw [zigzagComponentAlgebra_eq_uliftDualNumber]
+    change Module.Finite k (ULift (k × k))
+    infer_instance
+
+variable [Nontrivial k]
 
 /-- The component factor of a zigzag algebra has dimension twice its number of vertices plus its
 number of darts, equivalently twice its number of edges.  On a nontrivial component this is the
@@ -90,7 +127,28 @@ end Component
 
 section FiniteGraph
 
-variable [Field k] [Fintype V] [DecidableRel G.Adj]
+variable [CommRing k] [Finite V]
+
+private noncomputable def zigzagAlgebraLinearEquiv :
+    (zigzagAlgebra k G).carrier ≃ₗ[k]
+      (∀ C : G.ConnectedComponent, zigzagComponentAlgebra k G C) :=
+  { toFun := fun x C => zigzagComponentProjection k G C x
+    invFun := zigzagAlgebraMk k G
+    left_inv := zigzagAlgebra.mk_projections k G
+    right_inv := fun _ => funext fun _ => zigzagComponentProjection_zigzagAlgebraMk k G _ _
+    map_add' := fun x y => funext fun C => (zigzagComponentProjection k G C).map_add x y
+    map_smul' := fun r x => funext fun C =>
+      (zigzagComponentProjection k G C).toLinearMap.map_smul r x }
+
+/-- The zigzag algebra of a finite graph is free over the coefficient ring. -/
+noncomputable instance instFreeZigzagAlgebra : Module.Free k (zigzagAlgebra k G) :=
+  Module.Free.of_equiv (zigzagAlgebraLinearEquiv k G).symm
+
+/-- The zigzag algebra of a finite graph is finite over the coefficient ring. -/
+noncomputable instance instFiniteZigzagAlgebra : Module.Finite k (zigzagAlgebra k G) :=
+  Module.Finite.equiv (zigzagAlgebraLinearEquiv k G).symm
+
+variable [Nontrivial k] [Fintype V] [DecidableRel G.Adj]
 
 /-- **Dimension of the public zigzag algebra.**  For every finite simple graph, including graphs
 with isolated vertices, `dim Z(G) = 2|V| + 2|E|`.  Every vertex contributes an idempotent and a
@@ -125,25 +183,10 @@ theorem finrank_zigzagAlgebra :
       Finite.of_equiv {d : G.Dart // G.connectedComponentMk d.fst = C} (fiberEquiv C).symm
     rw [← Nat.card_sigma]
     exact Nat.card_congr e
-  let _ (C : G.ConnectedComponent) : Nonempty C := Set.nonempty_coe_sort.mpr C.nonempty_supp
-  let _ (C : G.ConnectedComponent) : Module.Finite k (zigzagComponentAlgebra k G C) :=
-    Module.finite_of_finrank_pos <| by
-      rw [finrank_zigzagComponentAlgebra k G]
-      have hc : 0 < Nat.card C := Nat.card_pos
-      omega
   -- `zigzagAlgebra` is opaque across the public import, so use its public projections and
   -- reconstruction map to expose the dependent product to the standard finrank theorem.
   change Module.finrank k (zigzagAlgebra k G).carrier = _
-  let e : (zigzagAlgebra k G).carrier ≃ₗ[k]
-      (∀ C : G.ConnectedComponent, zigzagComponentAlgebra k G C) :=
-    { toFun := fun x C => zigzagComponentProjection k G C x
-      invFun := zigzagAlgebraMk k G
-      left_inv := zigzagAlgebra.mk_projections k G
-      right_inv := fun _ => funext fun _ => zigzagComponentProjection_zigzagAlgebraMk k G _ _
-      map_add' := fun x y => funext fun C => (zigzagComponentProjection k G C).map_add x y
-      map_smul' := fun r x => funext fun C =>
-        (zigzagComponentProjection k G C).toLinearMap.map_smul r x }
-  rw [e.finrank_eq, Module.finrank_pi_fintype]
+  rw [(zigzagAlgebraLinearEquiv k G).finrank_eq, Module.finrank_pi_fintype]
   simp_rw [finrank_zigzagComponentAlgebra k G]
   rw [Finset.sum_add_distrib, ← Finset.mul_sum, hvertex, hdart, Nat.card_eq_fintype_card,
     Nat.card_eq_fintype_card, G.dart_card_eq_twice_card_edges]
