@@ -92,6 +92,11 @@ def H0π (M : Rep R G) : ModuleCat.of R M.ρ.invariants ⟶ tateCohomology M 0 :
   ModuleCat.ofHom (Submodule.mkQ ((range M.ρ.norm).submoduleOf M.ρ.invariants)) ≫
     (H0IsoNormQuotient M).inv
 
+instance (M : Rep R G) : Epi (H0π M) :=
+  have : Epi (ModuleCat.ofHom (Submodule.mkQ ((range M.ρ.norm).submoduleOf M.ρ.invariants))) :=
+    (ModuleCat.epi_iff_surjective _).2 (Submodule.mkQ_surjective _)
+  inferInstanceAs <| Epi (_ ≫ _)
+
 /-- Passing an invariant representative to degree-zero Tate cohomology and then applying the
 low-degree identification is the quotient map by the norm image. -/
 @[reassoc (attr := simp), elementwise (attr := simp)]
@@ -99,6 +104,15 @@ theorem H0π_comp_H0IsoNormQuotient_hom (M : Rep R G) :
     H0π M ≫ (H0IsoNormQuotient M).hom =
       ModuleCat.ofHom (Submodule.mkQ ((range M.ρ.norm).submoduleOf M.ρ.invariants)) := by
   simp [H0π]
+
+/-- Every degree-zero Tate cohomology class is represented by an invariant, so a property of all
+classes follows from the property of the classes of invariants. -/
+@[elab_as_elim]
+theorem H0_induction_on {M : Rep R G} {C : tateCohomology M 0 → Prop} (x : tateCohomology M 0)
+    (h : ∀ y : M.ρ.invariants, C (H0π M y)) : C x := by
+  obtain ⟨y, hy⟩ := Submodule.mkQ_surjective ((range M.ρ.norm).submoduleOf M.ρ.invariants)
+    ((H0IsoNormQuotient M).hom x)
+  simpa [H0π, hy] using h y
 
 variable (A : Rep R G) [A.IsTrivial]
 
