@@ -91,7 +91,7 @@ section Inertia
 
 open scoped Pointwise
 
-variable {S : Type*} [Ring S] {G : Type*} [Group G] [MulSemiringAction G S]
+variable {S : Type*} [CommRing S] {G : Type*} [Group G] [MulSemiringAction G S]
 
 /-- **Inertia is conjugated by the Galois action.** An element `τ` lies in the inertia subgroup of
 the translated ideal `σ • P` exactly when its conjugate `σ⁻¹ τ σ` lies in the inertia subgroup
