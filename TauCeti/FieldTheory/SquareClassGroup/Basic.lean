@@ -52,6 +52,11 @@ instance : Module (ZMod 2) (SquareClassGroup K) :=
 def squareClass (u : Kˣ) : SquareClassGroup K :=
   QuotientAddGroup.mk (Additive.ofMul u)
 
+/-- The square class of a unit is its image under the additive quotient map. -/
+theorem squareClass_def (u : Kˣ) :
+    squareClass u = QuotientAddGroup.mk (Additive.ofMul u) :=
+  (rfl)
+
 /-- The square-class quotient map, written multiplicatively between the unit group and the
 multiplicative form of the additive square-class group. -/
 def squareClassHom : Kˣ →* Multiplicative (SquareClassGroup K) :=

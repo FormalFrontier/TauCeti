@@ -21,7 +21,7 @@ of order dividing `2`, so it is a vector space over `𝔽₂ = ZMod 2`. When `G`
 is the **2-rank** of `G`. This file develops that construction at the level of an arbitrary
 commutative group; the genus-theory specialization to a class group lives in
 `TauCeti.NumberTheory.ClassGroup.ElementaryTwoQuotient`, and the square-class group `Kˣ ⧸ (Kˣ)²` of
-`TauCeti.FieldTheory.SquareClassGroup` is the same construction for `G = Kˣ`.
+`TauCeti.FieldTheory.SquareClassGroup.Basic` is the same construction for `G = Kˣ`.
 
 ⚠ This quotient is the **maximal elementary-2 quotient** of `G`, *not* its 2-torsion subgroup
 `{g | g² = 1}`. The two are different objects — a quotient and a subgroup — but for a finite group
@@ -325,6 +325,14 @@ noncomputable def elementaryTwoQuotientEquivSquareQuotient :
     ElementaryTwoQuotient G ≃+ Additive G ⧸ (Subgroup.square G).toAddSubgroup :=
   QuotientAddGroup.congr _ _ (AddEquiv.refl (Additive G)) <| by
     simpa using range_lsmul_two_toAddSubgroup_eq_square_toAddSubgroup G
+
+/-- The comparison with the direct quotient by squares sends the `ModN` class of an element to
+its direct quotient class. -/
+@[simp] theorem elementaryTwoQuotientEquivSquareQuotient_mk (g : G) :
+    elementaryTwoQuotientEquivSquareQuotient G (elementaryTwoQuotientMk g) =
+      QuotientAddGroup.mk (Additive.ofMul g) := by
+  rw [elementaryTwoQuotientMk_eq_mkQ, elementaryTwoQuotientEquivSquareQuotient]
+  rfl
 
 /-- The cardinality of `G/G²` is the index of the subgroup of squares. -/
 theorem card_elementaryTwoQuotient_eq_index_square :
