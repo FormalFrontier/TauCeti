@@ -19,17 +19,22 @@ the parts on which it is finite and hence defines an ordinary pseudometric:
 * `TauCeti.WassersteinSpace p X` consists of the probability measures on `X` with finite
   `p`-moment.
 
-On a standard Borel extended pseudometric space with measurable ground distance, every anchored
-component carries the Wasserstein pseudometric. On an ordinary pseudometric space, finite moment
-about one point is equivalent to finite Wasserstein distance from the Dirac mass at any point.
+Every pseudoemetric and pseudometric structure below needs `1 ≤ p`, since that is the range in
+which the Wasserstein triangle inequality holds; the abstract constructors take it as an explicit
+hypothesis and the instances read it off `Fact (1 ≤ p)`. For such `p`, on a standard Borel extended
+pseudometric space with measurable ground distance, every anchored component carries the
+Wasserstein pseudoemetric, and hence the real-valued Wasserstein pseudometric, because distances
+inside a single component are finite. On an ordinary pseudometric space, finite moment about one
+point is equivalent to finite Wasserstein distance from the Dirac mass at any point.
 Consequently `WassersteinSpace p X` is canonically equivalent, after choosing a point `x₀`, to
 the component anchored at `δ_[x₀]`, and it carries the same Wasserstein pseudometric without a
 basepoint appearing in its definition.
 
-When the ground space is Polish and its distance separates points, both pseudometrics are metrics.
-The measurable structures are the subtype structures inherited from `ProbabilityMeasure`; no
-second measurable-space instance is introduced. Identifying these measurable structures with the
-Borel sigma algebras of the Wasserstein metrics is a separate topological result.
+When moreover the ground space is Polish and its distance separates points, both pseudometrics
+are metrics. The measurable structures are the subtype structures inherited from
+`ProbabilityMeasure`; no second measurable-space instance is introduced. Identifying these
+measurable structures with the Borel sigma algebras of the Wasserstein metrics is a separate
+topological result.
 
 Neither carrier exposes its subtype body: elements are built with `TauCeti.WassersteinComponent.mk`
 and `TauCeti.WassersteinSpace.mk`, and taken apart with `toProbabilityMeasure` together with
@@ -47,9 +52,6 @@ pseudometrics and is measurable in both directions.
 ## References
 
 * C. Villani, *Optimal Transport: Old and New*, Grundlehren 338, Springer 2009, Chapter 6.
-* The Tau Ceti optimal-transport roadmap, Layer 3 ("Wasserstein distances and topology"), item 2,
-  which specifies the anchored component, the finite-moment space `P_p (X)` and their
-  identification at a Dirac law.
 -/
 
 public section
@@ -415,6 +417,12 @@ theorem edist_equivComponent (x₀ : X) (μ ν : WassersteinSpace p X) :
 component anchored at the Dirac law of that basepoint. -/
 theorem isometry_equivComponent (x₀ : X) : Isometry (equivComponent (p := p) x₀) :=
   edist_equivComponent x₀
+
+/-- The identification with a Dirac-anchored component preserves the real-valued Wasserstein
+distance. -/
+theorem dist_equivComponent (x₀ : X) (μ ν : WassersteinSpace p X) :
+    dist (equivComponent x₀ μ) (equivComponent x₀ ν) = dist μ ν :=
+  (isometry_equivComponent x₀).dist_eq μ ν
 
 end EquivMetric
 
