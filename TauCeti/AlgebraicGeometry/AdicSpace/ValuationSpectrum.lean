@@ -463,7 +463,9 @@ lemma localization_comap_injective : Function.Injective (comap (algebraMap A B))
     simpa only [comap_vle] using
       (congrArg (fun v ↦ v.toValuativeRel.vle (a₁ * s₂) (a₂ * s₁)) h))
 
-private lemma not_vle_algebraMap_mul_den_zero_iff (v : Spv B) (a : A) (s t : S) :
+/-- Multiplying a numerator by an element of the localized submonoid or placing it over any
+denominator does not change whether its value is nonzero. -/
+lemma not_vle_algebraMap_mul_den_zero_iff (v : Spv B) (a : A) (s t : S) :
     ¬ v.toValuativeRel.vle (algebraMap A B (a * s)) 0 ↔
       ¬ v.toValuativeRel.vle (IsLocalization.mk' B a t) 0 := by
   have hs : ¬ v.toValuativeRel.vle (algebraMap A B s) 0 :=
@@ -477,7 +479,9 @@ private lemma not_vle_algebraMap_mul_den_zero_iff (v : Spv B) (a : A) (s t : S) 
   simp only [Submonoid.coe_one, mul_one, zero_mul, map_zero, IsLocalization.mk'_zero] at hmk
   exact not_congr (hmap.trans hmk.symm)
 
-private lemma comap_preimage_basicOpen_mk' (a₁ a₂ : A) (s₁ s₂ : S) :
+/-- The preimage under localization pullback of the basic open obtained by clearing denominators
+is the basic open defined by the original fractions. -/
+lemma comap_preimage_basicOpen_mk' (a₁ a₂ : A) (s₁ s₂ : S) :
     comap (algebraMap A B) ⁻¹' basicOpen (a₁ * s₂) (a₂ * s₁) =
       basicOpen (IsLocalization.mk' B a₁ s₁) (IsLocalization.mk' B a₂ s₂) := by
   ext v

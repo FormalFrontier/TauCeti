@@ -147,19 +147,17 @@ theorem image_comap_algebraMap_spa_subset_rationalSubset (P : PairOfDefinition A
         (Set.range fun t : T ↦ (divBy (t : A) s : S))) S).toSubring ⊆
       rationalSubset Aplus T s := by
   let _ := locTopology P T s S hden
-  -- Every element of the generating subalgebra is integral over it, hence in the plus ring.
-  have hmem : ∀ x ∈ Algebra.adjoin Aplus (Set.range fun t : T ↦ (divBy (t : A) s : S)),
-      x ∈ (integralClosure ↥(Algebra.adjoin Aplus
-        (Set.range fun t : T ↦ (divBy (t : A) s : S))) S).toSubring := fun x hx ↦
-    isIntegral_algebraMap (x := (⟨x, hx⟩ :
-      ↥(Algebra.adjoin Aplus (Set.range fun t : T ↦ (divBy (t : A) s : S)))))
   rintro _ ⟨w, hw, rfl⟩
   exact comap_mem_rationalSubset (continuous_algebraMap_locTopology P T s S hden)
-    (fun a ha ↦ hmem _ (Subalgebra.algebraMap_mem _ (⟨a, ha⟩ : Aplus))) T s
+    (fun a ha ↦ Subalgebra.algebraMap_mem (integralClosure _ S)
+      (⟨_, Subalgebra.algebraMap_mem _ (⟨a, ha⟩ : Aplus)⟩ :
+        ↥(Algebra.adjoin Aplus (Set.range fun t : T ↦ (divBy (t : A) s : S))))) T s
     (IsLocalization.Away.mul_invSelf s)
     (fun t ht ↦ by
       rw [algebraMap_mul_invSelf]
-      exact hmem _ (Algebra.subset_adjoin ⟨⟨t, ht⟩, rfl⟩)) hw
+      exact Subalgebra.algebraMap_mem (integralClosure _ S)
+        (⟨_, Algebra.subset_adjoin ⟨⟨t, ht⟩, rfl⟩⟩ :
+          ↥(Algebra.adjoin Aplus (Set.range fun t : T ↦ (divBy (t : A) s : S))))) hw
 
 /-- **The image of the adic spectrum of the rational localisation is exactly `R(T/s)`.** The
 inclusion `⊆` is `image_comap_algebraMap_spa_subset_rationalSubset`; the inclusion `⊇` is

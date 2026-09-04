@@ -70,11 +70,10 @@ noncomputable def spaLocalizationToRationalSubset (P : PairOfDefinition A) (Aplu
   have _ := isTopologicalRing_locTopology P T s S hden
   let Bplus := (integralClosure ↥(Algebra.adjoin Aplus
     (Set.range fun t : T ↦ (divBy (t : A) s : S))) S).toSubring
-  have hmem : ∀ x ∈ Algebra.adjoin Aplus (Set.range fun t : T ↦ (divBy (t : A) s : S)),
-      x ∈ Bplus := fun x hx ↦ isIntegral_algebraMap (x := (⟨x, hx⟩ :
-        ↥(Algebra.adjoin Aplus (Set.range fun t : T ↦ (divBy (t : A) s : S)))))
   have hplus : ∀ a ∈ Aplus, algebraMap A S a ∈ Bplus := fun a ha ↦
-    hmem _ (Subalgebra.algebraMap_mem _ (⟨a, ha⟩ : Aplus))
+    Subalgebra.algebraMap_mem (integralClosure _ S)
+      (⟨_, Subalgebra.algebraMap_mem _ (⟨a, ha⟩ : Aplus)⟩ :
+        ↥(Algebra.adjoin Aplus (Set.range fun t : T ↦ (divBy (t : A) s : S))))
   let f : spa Bplus → spa Aplus :=
     spaComap (algebraMap A S) (continuous_algebraMap_locTopology P T s S hden)
       Aplus Bplus hplus
