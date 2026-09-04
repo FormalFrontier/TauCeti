@@ -116,7 +116,7 @@ private theorem realOperator_comp_realOperator_of_le
     (S.realOperator a).comp (T.realOperator b) = S.realOperator (a - b) := by
   have hsplit : S.realOperator a = (S.realOperator (a - b)).comp (S.realOperator b) := by
     have h := S.realOperator_add (a - b) b (sub_nonneg.mpr hab) hb
-    rwa [show a - b + b = a by ring] at h
+    rwa [sub_add_cancel] at h
   ext x
   rw [ContinuousLinearMap.comp_apply, hsplit, ContinuousLinearMap.comp_apply,
     realOperator_apply_realOperator_of_inverse S T hST b]
@@ -131,7 +131,7 @@ private theorem realOperator_comp_realOperator_of_ge
     (S.realOperator a).comp (T.realOperator b) = T.realOperator (b - a) := by
   have hsplit : T.realOperator b = (T.realOperator (b - a)).comp (T.realOperator a) := by
     have h := T.realOperator_add (b - a) a (sub_nonneg.mpr hab) ha
-    rwa [show b - a + a = b by ring] at h
+    rwa [sub_add_cancel] at h
   ext x
   rw [ContinuousLinearMap.comp_apply, hsplit, ContinuousLinearMap.comp_apply,
     ← ContinuousLinearMap.comp_apply,
@@ -160,28 +160,27 @@ private theorem inverseGluingFun_map_add
       by_cases hst : 0 ≤ s + t
       · rw [inverseGluingFun_of_nonneg S T hst,
           realOperator_comp_realOperator_of_le S T hST (neg_nonneg.mpr ht') (by linarith),
-          show s - -t = s + t by ring]
+          sub_neg_eq_add]
       · have hst' : s + t ≤ 0 := le_of_lt (not_le.mp hst)
+        have htime : -t - s = -(s + t) := by ring
         rw [inverseGluingFun_of_nonpos S T hst',
-          realOperator_comp_realOperator_of_ge S T hST hTS hs (by linarith),
-          show -t - s = -(s + t) by ring]
+          realOperator_comp_realOperator_of_ge S T hST hTS hs (by linarith), htime]
   · have hs' : s ≤ 0 := le_of_lt (not_le.mp hs)
     by_cases ht : 0 ≤ t
     · rw [inverseGluingFun_of_nonpos S T hs', inverseGluingFun_of_nonneg S T ht,
         ← realOperator_comp_comm_of_inverse S T hST hTS t (-s)]
       by_cases hst : 0 ≤ s + t
-      · rw [inverseGluingFun_of_nonneg S T hst,
-          realOperator_comp_realOperator_of_le S T hST (neg_nonneg.mpr hs') (by linarith),
-          show t - -s = s + t by ring]
+      · have htime : t - -s = s + t := by ring
+        rw [inverseGluingFun_of_nonneg S T hst,
+          realOperator_comp_realOperator_of_le S T hST (neg_nonneg.mpr hs') (by linarith), htime]
       · have hst' : s + t ≤ 0 := le_of_lt (not_le.mp hst)
+        have htime : -s - t = -(s + t) := by ring
         rw [inverseGluingFun_of_nonpos S T hst',
-          realOperator_comp_realOperator_of_ge S T hST hTS ht (by linarith),
-          show -s - t = -(s + t) by ring]
+          realOperator_comp_realOperator_of_ge S T hST hTS ht (by linarith), htime]
     · have ht' : t ≤ 0 := le_of_lt (not_le.mp ht)
       rw [inverseGluingFun_of_nonpos S T hs',
         inverseGluingFun_of_nonpos S T ht',
-        inverseGluingFun_of_nonpos S T (add_nonpos hs' ht'),
-        show -(s + t) = -s + -t by ring,
+        inverseGluingFun_of_nonpos S T (add_nonpos hs' ht'), neg_add,
         T.realOperator_add (-s) (-t) (neg_nonneg.mpr hs') (neg_nonneg.mpr ht')]
 
 omit [CompleteSpace X] in
@@ -297,23 +296,25 @@ reflected forward semigroup is `T` is the group glued from `S` and `T`. Together
 `toGroupOfInverse_toSemigroup` and `toGroupOfInverse_reflect_toSemigroup`, this identifies the
 gluing construction as the two-sided inverse of splitting a C₀-group into its two halves, so a
 group can be recognized as a glued group without repeating a sign split. -/
-theorem eq_toGroupOfInverse (S T : StronglyContinuousSemigroup X)
-    (hST : ∀ t, (S t).comp (T t) = ContinuousLinearMap.id ℝ X)
-    (hTS : ∀ t, (T t).comp (S t) = ContinuousLinearMap.id ℝ X)
+theorem eq_toGroupOfInverse {S T : StronglyContinuousSemigroup X}
     (hS : U.toSemigroup = S) (hT : U.reflect.toSemigroup = T) :
-    U = S.toGroupOfInverse T hST hTS := by
+    U = S.toGroupOfInverse T (hS ▸ hT ▸ U.toSemigroup_comp_reflect_toSemigroup)
+      (hS ▸ hT ▸ U.reflect_toSemigroup_comp_toSemigroup) := by
+  subst hS
+  subst hT
   ext t
   rcases le_or_gt 0 t with ht | ht
-  · rw [StronglyContinuousSemigroup.toGroupOfInverse_apply_of_nonneg S T hST hTS ht, ← hS,
+  · rw [StronglyContinuousSemigroup.toGroupOfInverse_apply_of_nonneg _ _ _ _ ht,
       U.toSemigroup_realOperator_of_nonneg ht]
-  · rw [StronglyContinuousSemigroup.toGroupOfInverse_apply_of_nonpos S T hST hTS ht.le, ← hT,
+  · rw [StronglyContinuousSemigroup.toGroupOfInverse_apply_of_nonpos _ _ _ _ ht.le,
       U.reflect_toSemigroup_realOperator_of_nonneg (neg_nonneg.mpr ht.le), neg_neg]
 
 /-- Gluing the two halves of a C₀-group recovers the group. -/
+@[simp]
 theorem toGroupOfInverse_toSemigroup_reflect_toSemigroup :
     U.toSemigroup.toGroupOfInverse U.reflect.toSemigroup U.toSemigroup_comp_reflect_toSemigroup
       U.reflect_toSemigroup_comp_toSemigroup = U :=
-  (U.eq_toGroupOfInverse _ _ _ _ rfl rfl).symm
+  (U.eq_toGroupOfInverse rfl rfl).symm
 
 end StronglyContinuousGroup
 
