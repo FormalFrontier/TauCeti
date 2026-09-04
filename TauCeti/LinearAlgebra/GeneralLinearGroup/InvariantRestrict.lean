@@ -32,21 +32,6 @@ public section
 
 open CategoryTheory TensorProduct
 
-namespace AddEquiv
-
-universe u
-
-variable {V : Type u} [AddCommGroup V]
-
-/-- Viewing an additive automorphism as an integral linear automorphism preserves the action of
-all its iterates. -/
-theorem toIntLinearEquiv_pow_apply (θ : V ≃+ V) (n : ℕ) (v : V) :
-    (θ.toIntLinearEquiv ^ n) v = (θ : V → V)^[n] v := by
-  simpa only [AddEquiv.coe_toIntLinearEquiv] using
-    LinearEquiv.pow_apply θ.toIntLinearEquiv n v
-
-end AddEquiv
-
 namespace LinearEquiv
 
 universe u v
@@ -58,9 +43,10 @@ variable {V : Type v} [AddCommGroup V] [Module R V]
 automorphism preserves the action of all its powers. -/
 theorem toAddEquiv_toIntLinearEquiv_pow_apply (θ : V ≃ₗ[R] V) (n : ℕ) (v : V) :
     (θ.toAddEquiv.toIntLinearEquiv ^ n) v = (θ ^ n) v := by
-  rw [AddEquiv.toIntLinearEquiv_pow_apply]
-  exact congrFun (hom_coe_pow (fun e : V ≃ₗ[R] V => (e : V → V))
-    LinearEquiv.coe_one (fun _ _ => rfl) θ n).symm v
+  rw [LinearEquiv.pow_apply θ.toAddEquiv.toIntLinearEquiv n v, LinearEquiv.pow_apply θ n v]
+  -- both sides now iterate coercions of the same underlying function
+  simp only [AddEquiv.coe_toIntLinearEquiv]
+  rfl
 
 end LinearEquiv
 
