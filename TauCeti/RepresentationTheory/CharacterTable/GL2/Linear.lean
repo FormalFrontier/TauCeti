@@ -24,8 +24,9 @@ character and the untwisted Steinberg character, so the four values are
 `q α(a²)`, `α(ab)`, `0`, and `-α(N_{E/F}(x))`
 
 on scalar, split semisimple, non-semisimple, and elliptic representatives. These are the two
-expected boundary rows of the principal series `Ind_B^{GL₂}(α ⊗ α)`; this file does not prove the
-representation-level splitting of that principal series.
+boundary rows of the principal series `Ind_B^{GL₂}(α ⊗ α)`; their representation-level splitting
+is `TauCeti.nonempty_iso_GL2PrincipalSeries_self` in
+`TauCeti/RepresentationTheory/CharacterTable/GL2/Boundary.lean`.
 
 ## Main definitions
 
@@ -196,9 +197,9 @@ section FiniteField
 
 variable [Fintype F]
 
-/-- **The Steinberg representation twisted by `α ∘ det`.** These are the expected degree-`q`
-boundary constituents of the principal series; that constituent relation is not proved here, only
-the dimension and the character values below. -/
+/-- **The Steinberg representation twisted by `α ∘ det`.** These are the degree-`q` boundary
+constituents of the principal series. Their dimension and character values are proved below;
+`TauCeti.nonempty_iso_GL2PrincipalSeries_self` identifies them as constituents. -/
 noncomputable def GL2SteinbergTwist (F : Type u) [Field F] [Fintype F] (α : Fˣ →* ℂˣ) :
     FDRep ℂ (GL (Fin 2) F) :=
   GL2Linear F α ⊗ GL2Steinberg F
