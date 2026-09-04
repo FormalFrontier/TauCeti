@@ -47,6 +47,8 @@ hold there. Compactness of `G` is assumed exactly where it is used.
 ## Main results
 
 * `TauCeti.isClosed_proPKernel`: the pro-`p` kernel is closed, so `G(p)` is profinite again.
+* `TauCeti.proPKernel_eq_top_iff`: the pro-`p` kernel is the whole group exactly when every
+  relevant `p`-group quotient is trivial.
 * `TauCeti.exists_openNormalSubgroup_isPGroup_le`: an open subgroup containing the pro-`p`
   kernel contains a member of the defining family.
 * `TauCeti.isProP_maximalProPQuotient`: `G(p)` is pro-`p`.
@@ -128,6 +130,39 @@ instance isClosed_proPKernel [IsTopologicalGroup G] :
     IsClosed ((proPKernel p G : Subgroup G) : Set G) := by
   rw [proPKernel, Subgroup.coe_iInf]
   exact isClosed_iInter fun U ↦ U.1.toOpenSubgroup.isClosed
+
+/-! ### Trivial maximal quotients -/
+
+/-- The pro-`p` kernel is the whole group exactly when every open normal subgroup with
+`p`-group quotient is the whole group. Equivalently, `G` has no nontrivial continuous
+`p`-group quotient. -/
+theorem proPKernel_eq_top_iff : proPKernel p G = ⊤ ↔
+    ∀ U : OpenNormalSubgroup G, IsPGroup p (G ⧸ U.toSubgroup) → U.toSubgroup = ⊤ := by
+  rw [proPKernel, iInf_eq_top]
+  exact ⟨fun h U hU ↦ h ⟨U, hU⟩, fun h U ↦ h U.1 U.2⟩
+
+/-- The maximal pro-`p` quotient is trivial exactly when the pro-`p` kernel is the whole
+group. -/
+theorem maximalProPQuotient.subsingleton_iff :
+    Subsingleton (maximalProPQuotient p G) ↔ proPKernel p G = ⊤ :=
+  QuotientGroup.subsingleton_iff
+
+/-- If `p` does not divide the cardinality of `G`, then its pro-`p` kernel is the whole group.
+For prime `p` this hypothesis forces `G` to be finite. -/
+theorem proPKernel_eq_top_of_not_dvd_card [Fact p.Prime]
+    (hcard : ¬ p ∣ Nat.card G) : proPKernel p G = ⊤ := by
+  rw [proPKernel_eq_top_iff]
+  intro U hU
+  rw [← QuotientGroup.subsingleton_iff]
+  apply (Nat.card_eq_one_iff_unique.mp ?_).1
+  exact hU.card_eq_or_dvd.resolve_right fun hp ↦
+    hcard (hp.trans (Subgroup.card_quotient_dvd_card U.toSubgroup))
+
+/-- If `p` does not divide the cardinality of `G`, then its maximal pro-`p` quotient is
+trivial. For prime `p` this hypothesis forces `G` to be finite. -/
+theorem maximalProPQuotient.subsingleton_of_not_dvd_card [Fact p.Prime]
+    (hcard : ¬ p ∣ Nat.card G) : Subsingleton (maximalProPQuotient p G) :=
+  maximalProPQuotient.subsingleton_iff.mpr (proPKernel_eq_top_of_not_dvd_card hcard)
 
 /-! ### Functoriality -/
 
