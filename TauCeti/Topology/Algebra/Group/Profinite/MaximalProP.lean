@@ -160,7 +160,7 @@ def maximalProPQuotient.map (f : G →* H) (hf : Continuous f) :
 /-- The induced map on maximal pro-`p` quotients is computed on classes by `f`. -/
 @[simp]
 theorem maximalProPQuotient.map_mk (f : G →* H) (hf : Continuous f) (x : G) :
-    maximalProPQuotient.map (p := p) f hf (maximalProPQuotient.mk p G x) =
+    maximalProPQuotient.map (p := p) f hf (x : maximalProPQuotient p G) =
       maximalProPQuotient.mk p H (f x) := by
   rfl
 
@@ -335,7 +335,7 @@ abbrev maximalProPQuotient.equivOfIsProP (hG : IsProP p G) :
 to its representative. -/
 @[simp]
 theorem maximalProPQuotient.equivOfIsProP_mk (hG : IsProP p G) (x : G) :
-    maximalProPQuotient.equivOfIsProP hG (maximalProPQuotient.mk p G x) = x :=
+    maximalProPQuotient.equivOfIsProP hG (x : maximalProPQuotient p G) = x :=
   rfl
 
 /-- **Idempotence.** The pro-`p` kernel of a maximal pro-`p` quotient is trivial. -/
