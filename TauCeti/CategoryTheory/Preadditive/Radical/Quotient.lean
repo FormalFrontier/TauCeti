@@ -6,21 +6,23 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.CategoryTheory.Preadditive.Radical.Basic
-public import Mathlib.LinearAlgebra.Quotient.Basic
 -- Finite-dimensionality of the quotient, for the local finiteness of the Auslander-Reiten quiver.
 public import Mathlib.LinearAlgebra.FiniteDimensional.Defs
--- The dimension bound on the quotient, for the local finiteness of that quiver.
-public import Mathlib.LinearAlgebra.Dimension.Constructions
+-- Non-public: Mathlib's quotient operations occur only inside the declarations below, the API
+-- here standing in for them, and the dimension bound only inside proofs.
+import Mathlib.LinearAlgebra.Quotient.Basic
+import Mathlib.LinearAlgebra.Dimension.Constructions
 
 /-!
 # The space of irreducible morphisms of a linear category
 
-Between two objects `X` and `Y` of a `k`-linear category with local endomorphism rings, the
-morphisms lying in the radical but not in its square are exactly the irreducible ones
-(`TauCeti.isIrreducibleMorphism_iff_mem_jacobsonRadical_and_notMem_jacobsonRadicalSq`).  The
-quotient `rad(X, Y) / rad²(X, Y)` is therefore the `k`-module whose nonzero classes are the
-irreducible morphisms `X ⟶ Y`, and it is the space the arrows `X → Y` of the Auslander-Reiten
-quiver are read off from.  This file builds that quotient,
+Between two objects `X` and `Y` of a `k`-linear category with binary biproducts and local
+endomorphism rings, the morphisms lying in the radical but not in its square are exactly the
+irreducible ones
+(`TauCeti.isIrreducibleMorphism_iff_mem_jacobsonRadical_and_notMem_jacobsonRadicalSq`).  Under
+those hypotheses the quotient `rad(X, Y) / rad²(X, Y)` is therefore the `k`-module whose nonzero
+classes are the irreducible morphisms `X ⟶ Y`, and it is the space the arrows `X → Y` of the
+Auslander-Reiten quiver are read off from.  This file builds that quotient,
 `TauCeti.irreducibleMorphismSpace k X Y`, on top of the two submodules supplied by
 `TauCeti.CategoryTheory.Preadditive.Radical.Basic`.
 
@@ -38,7 +40,7 @@ The detection statement is the only one that constrains the objects: it needs th
 rings to be local (the indecomposables of a Krull-Schmidt category) and the category to have binary
 biproducts, exactly as its input in `Radical.Basic` does.  The construction of the quotient and its
 linear structure need none of that, so they are stated for an arbitrary `k`-linear category over a
-ring `k`, and the conjugation statements that do not form the quotient over a semiring `k`.
+ring `k`.
 
 What is *not* built here is the bimodule structure of `Irr(X, Y)` over the residue division rings
 `End X / rad(End X)` and `End Y / rad(End Y)`.  It is the dimensions over *those* rings, not the
@@ -70,9 +72,6 @@ bound by `finrank k (X ⟶ Y)`, and its positivity exactly when an irreducible m
 * `TauCeti.nontrivial_irreducibleMorphismSpace_iff` and
   `TauCeti.subsingleton_irreducibleMorphismSpace_iff`: the space is nontrivial exactly when an
   irreducible morphism exists, and vanishes exactly when none does.
-* `TauCeti.jacobsonRadicalSubmodule_map_homCongr` and
-  `TauCeti.jacobsonRadicalSqSubmodule_map_homCongr`: conjugation by isomorphisms carries the
-  radical onto the radical and its square onto its square.
 * `TauCeti.irreducibleMorphismSpaceCongr_refl`, `TauCeti.irreducibleMorphismSpaceCongr_trans` and
   `TauCeti.irreducibleMorphismSpaceCongr_symm`: the invariance is functorial in the two
   isomorphisms.
@@ -100,10 +99,10 @@ for Mathlib's quotient operations, with `TauCeti.irreducibleMorphismMk` for
 `Submodule.Quotient.mk`, `TauCeti.irreducibleMorphismMk_surjective` for quotient induction, and
 `TauCeti.irreducibleMorphismLift` for `Submodule.liftQ`.
 
-Conjugation by a pair of isomorphisms is Mathlib's `CategoryTheory.Linear.homCongr`, so that the
-two `map` lemmas are statements about a `k`-linear equivalence of morphism spaces that is already
-available; the induced equivalence of radicals is `LinearEquiv.ofSubmodules` applied to them, and
-the induced equivalence of quotients is `Submodule.Quotient.equiv`.
+Conjugation by a pair of isomorphisms needs no quotient theory, so the equivalence of radicals it
+induces, `TauCeti.jacobsonRadicalSubmoduleCongr`, lives with the radical itself in
+`TauCeti.CategoryTheory.Preadditive.Radical.Basic`; the induced equivalence of quotients built here
+is Mathlib's `Submodule.Quotient.equiv` applied to it.
 
 ## References
 
@@ -141,9 +140,9 @@ private def jacobsonRadicalSqSubmoduleIn : Submodule k (jacobsonRadicalSubmodule
 
 /-- **The space of irreducible morphisms** `X ⟶ Y`, the quotient `rad(X, Y) / rad²(X, Y)`.
 
-Between objects with local endomorphism rings its nonzero classes are exactly the irreducible
-morphisms (`TauCeti.irreducibleMorphismMk_ne_zero_iff`); it is the space the arrows `X → Y` of the
-Auslander-Reiten quiver are read off from. -/
+In a category with binary biproducts, between objects with local endomorphism rings, its nonzero
+classes are exactly the irreducible morphisms (`TauCeti.irreducibleMorphismMk_ne_zero_iff`); it is
+the space the arrows `X → Y` of the Auslander-Reiten quiver are read off from. -/
 def irreducibleMorphismSpace : Type v :=
   jacobsonRadicalSubmodule k X Y ⧸ jacobsonRadicalSqSubmoduleIn k X Y
 
@@ -212,7 +211,8 @@ theorem irreducibleMorphismLift_irreducibleMorphismMk {M : Type*} [AddCommGroup 
     (hg : ∀ f : jacobsonRadicalSubmodule k X Y, (f : X ⟶ Y) ∈ jacobsonRadicalSq X Y → g f = 0)
     (f : jacobsonRadicalSubmodule k X Y) :
     irreducibleMorphismLift g hg (irreducibleMorphismMk k X Y f) = g f :=
-  (rfl)
+  LinearMap.congr_fun ((jacobsonRadicalSqSubmoduleIn k X Y).liftQ_mkQ g
+    fun x hx => hg x (mem_jacobsonRadicalSqSubmoduleIn.1 hx)) f
 
 end Defs
 
@@ -223,8 +223,9 @@ section Local
 variable {k : Type*} [Ring k] [Linear k C] [Limits.HasBinaryBiproducts C]
 variable {X Y : C} [IsLocalRing (End X)] [IsLocalRing (End Y)]
 
-/-- **The nonzero classes are the irreducible morphisms.**  Between objects with local endomorphism
-rings a radical morphism is irreducible exactly when it is not a composite of two radical morphisms
+/-- **The nonzero classes are the irreducible morphisms.**  In a category with binary biproducts,
+between objects with local endomorphism rings, a radical morphism is irreducible exactly when it is
+not a composite of two radical morphisms
 (`TauCeti.isIrreducibleMorphism_iff_mem_jacobsonRadical_and_notMem_jacobsonRadicalSq`), which is
 exactly the nonvanishing of its class.  This is the sense in which
 `TauCeti.irreducibleMorphismSpace` is the space of irreducible morphisms. -/
@@ -235,7 +236,8 @@ theorem irreducibleMorphismMk_ne_zero_iff {f : jacobsonRadicalSubmodule k X Y} :
   exact (and_iff_right (mem_jacobsonRadicalSubmodule.1 f.2)).symm
 
 /-- **The space of irreducible morphisms is nontrivial exactly when an irreducible morphism
-exists.**  This is what makes "there is an arrow `X → Y` in the Auslander-Reiten quiver" and "there
+exists**, in a category with binary biproducts and between objects with local endomorphism rings.
+This is what makes "there is an arrow `X → Y` in the Auslander-Reiten quiver" and "there
 is an irreducible morphism `X ⟶ Y`" the same statement. -/
 theorem nontrivial_irreducibleMorphismSpace_iff :
     Nontrivial (irreducibleMorphismSpace k X Y) ↔ ∃ f : X ⟶ Y, IsIrreducibleMorphism f := by
@@ -249,7 +251,8 @@ theorem nontrivial_irreducibleMorphismSpace_iff :
       ⟨f, mem_jacobsonRadicalSubmodule.2 hf.mem_jacobsonRadical⟩) 0 ?_
     exact irreducibleMorphismMk_ne_zero_iff.2 hf
 
-/-- **Every nonzero class is represented by an irreducible morphism.**  Together with
+/-- **Every nonzero class is represented by an irreducible morphism**, in a category with binary
+biproducts and between objects with local endomorphism rings.  Together with
 `TauCeti.irreducibleMorphismMk_surjective` this says that the irreducible morphisms `X ⟶ Y`
 exhaust the nonzero elements of `TauCeti.irreducibleMorphismSpace k X Y`. -/
 theorem exists_isIrreducibleMorphism_irreducibleMorphismMk_eq
@@ -259,79 +262,15 @@ theorem exists_isIrreducibleMorphism_irreducibleMorphismMk_eq
   obtain ⟨f, rfl⟩ := irreducibleMorphismMk_surjective x
   exact ⟨f, irreducibleMorphismMk_ne_zero_iff.1 hx, rfl⟩
 
-/-- **The space of irreducible morphisms vanishes exactly when there is no irreducible
-morphism**, the contrapositive form of `TauCeti.nontrivial_irreducibleMorphismSpace_iff`. -/
+/-- **The space of irreducible morphisms vanishes exactly when there is no irreducible morphism**,
+under the same hypotheses of binary biproducts and local endomorphism rings: the contrapositive
+form of `TauCeti.nontrivial_irreducibleMorphismSpace_iff`. -/
 theorem subsingleton_irreducibleMorphismSpace_iff :
     Subsingleton (irreducibleMorphismSpace k X Y) ↔ ∀ f : X ⟶ Y, ¬ IsIrreducibleMorphism f := by
   rw [← not_nontrivial_iff_subsingleton, nontrivial_irreducibleMorphismSpace_iff]
   exact not_exists
 
 end Local
-
-/-! ### Conjugation of the radical by a pair of isomorphisms -/
-
-section CongrSubmodule
-
-variable (k : Type*) [Semiring k] [Linear k C] {X X' Y Y' : C}
-
-/-- **Conjugation by isomorphisms carries the radical onto the radical.**  Both containments are
-the radical being a two-sided ideal of the category: `e.inv ≫ f ≫ e'.hom` is radical whenever `f`
-is, and the reverse containment is the same statement for the inverse conjugation
-`e.hom ≫ g ≫ e'.inv`. -/
-theorem jacobsonRadicalSubmodule_map_homCongr (e : X ≅ X') (e' : Y ≅ Y') :
-    (jacobsonRadicalSubmodule k X Y).map (Linear.homCongr k e e').toLinearMap =
-      jacobsonRadicalSubmodule k X' Y' := by
-  refine le_antisymm ?_ fun g hg => ?_
-  · rw [Submodule.map_le_iff_le_comap]
-    intro f hf
-    simp only [Submodule.mem_comap, LinearEquiv.coe_coe, Linear.homCongr_apply,
-      mem_jacobsonRadicalSubmodule] at hf ⊢
-    exact comp_mem_jacobsonRadical_right (comp_mem_jacobsonRadical_left e.inv hf) e'.hom
-  · refine ⟨(Linear.homCongr k e e').symm g, ?_, by simp⟩
-    rw [SetLike.mem_coe, Linear.homCongr_symm_apply, mem_jacobsonRadicalSubmodule]
-    exact comp_mem_jacobsonRadical_left e.hom
-      (comp_mem_jacobsonRadical_right (mem_jacobsonRadicalSubmodule.1 hg) e'.inv)
-
-/-- **Conjugation by isomorphisms carries the square of the radical onto the square of the
-radical**, the square being a two-sided ideal of the category just as the radical is. -/
-theorem jacobsonRadicalSqSubmodule_map_homCongr (e : X ≅ X') (e' : Y ≅ Y') :
-    (jacobsonRadicalSqSubmodule k X Y).map (Linear.homCongr k e e').toLinearMap =
-      jacobsonRadicalSqSubmodule k X' Y' := by
-  refine le_antisymm ?_ fun g hg => ?_
-  · rw [Submodule.map_le_iff_le_comap]
-    intro f hf
-    simp only [Submodule.mem_comap, LinearEquiv.coe_coe, Linear.homCongr_apply,
-      mem_jacobsonRadicalSqSubmodule] at hf ⊢
-    exact comp_mem_jacobsonRadicalSq_right (comp_mem_jacobsonRadicalSq_left e.inv hf) e'.hom
-  · refine ⟨(Linear.homCongr k e e').symm g, ?_, by simp⟩
-    rw [SetLike.mem_coe, Linear.homCongr_symm_apply, mem_jacobsonRadicalSqSubmodule]
-    exact comp_mem_jacobsonRadicalSq_left e.hom
-      (comp_mem_jacobsonRadicalSq_right (mem_jacobsonRadicalSqSubmodule.1 hg) e'.inv)
-
-/-- **Conjugation by isomorphisms, as an equivalence of radicals.** -/
-noncomputable def jacobsonRadicalSubmoduleCongr (e : X ≅ X') (e' : Y ≅ Y') :
-    jacobsonRadicalSubmodule k X Y ≃ₗ[k] jacobsonRadicalSubmodule k X' Y' :=
-  (Linear.homCongr k e e').ofSubmodules _ _ (jacobsonRadicalSubmodule_map_homCongr k e e')
-
-/-- **Conjugation acts on radical morphisms by conjugation**: the morphism underlying the image of
-`f` is `e.inv ≫ f ≫ e'.hom`. -/
-@[simp]
-theorem coe_jacobsonRadicalSubmoduleCongr_apply (e : X ≅ X') (e' : Y ≅ Y')
-    (f : jacobsonRadicalSubmodule k X Y) :
-    (jacobsonRadicalSubmoduleCongr k e e' f : X' ⟶ Y') = (e.inv ≫ (f : X ⟶ Y)) ≫ e'.hom :=
-  (Linear.homCongr k e e').ofSubmodules_apply (jacobsonRadicalSubmodule_map_homCongr k e e') f
-
-/-- **The inverse conjugation acts by the inverse conjugation**: the morphism underlying the
-preimage of `g` is `e.hom ≫ g ≫ e'.inv`. -/
-@[simp]
-theorem coe_jacobsonRadicalSubmoduleCongr_symm_apply (e : X ≅ X') (e' : Y ≅ Y')
-    (g : jacobsonRadicalSubmodule k X' Y') :
-    ((jacobsonRadicalSubmoduleCongr k e e').symm g : X ⟶ Y) =
-      e.hom ≫ (g : X' ⟶ Y') ≫ e'.inv :=
-  (Linear.homCongr k e e').ofSubmodules_symm_apply
-    (jacobsonRadicalSubmodule_map_homCongr k e e') g
-
-end CongrSubmodule
 
 /-! ### Invariance of the quotient under isomorphism -/
 
@@ -365,7 +304,8 @@ theorem irreducibleMorphismSpaceCongr_mk (e : X ≅ X') (e' : Y ≅ Y')
     (f : jacobsonRadicalSubmodule k X Y) :
     irreducibleMorphismSpaceCongr k e e' (irreducibleMorphismMk k X Y f) =
       irreducibleMorphismMk k X' Y' (jacobsonRadicalSubmoduleCongr k e e' f) :=
-  (rfl)
+  (Submodule.Quotient.equiv_apply _ _ (jacobsonRadicalSubmoduleCongr k e e') _ _).trans
+    (Submodule.mapQ_apply _ _ _ f)
 
 /-- Conjugating by the identity isomorphisms does nothing. -/
 @[simp]
@@ -423,9 +363,12 @@ theorem finrank_irreducibleMorphismSpace_le [FiniteDimensional k (X ⟶ Y)] :
   (Submodule.finrank_quotient_le _).trans (Submodule.finrank_le _)
 
 /-- **The dimension of the space of irreducible morphisms is positive exactly when there is an
-irreducible morphism `X ⟶ Y`**: the dimension count of
-`TauCeti.nontrivial_irreducibleMorphismSpace_iff`. -/
-theorem finrank_irreducibleMorphismSpace_pos_iff [FiniteDimensional k (X ⟶ Y)]
+irreducible morphism `X ⟶ Y`**, in a category with binary biproducts and between objects with local
+endomorphism rings: the dimension count of `TauCeti.nontrivial_irreducibleMorphismSpace_iff`.  Only
+the quotient itself has to be finite-dimensional here, which the instance above supplies whenever
+`X ⟶ Y` is. -/
+theorem finrank_irreducibleMorphismSpace_pos_iff
+    [FiniteDimensional k (irreducibleMorphismSpace k X Y)]
     [Limits.HasBinaryBiproducts C] [IsLocalRing (End X)] [IsLocalRing (End Y)] :
     0 < Module.finrank k (irreducibleMorphismSpace k X Y) ↔
       ∃ f : X ⟶ Y, IsIrreducibleMorphism f := by

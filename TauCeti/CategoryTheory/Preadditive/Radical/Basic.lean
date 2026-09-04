@@ -50,10 +50,13 @@ composites `X ⟶ Z ⟶ Y` of two radical morphisms. It is again a two-sided ide
 radical. Between objects with local endomorphism rings the morphisms lying in the radical but not
 in its square are exactly the irreducible ones
 (`TauCeti.isIrreducibleMorphism_iff_mem_jacobsonRadical_and_notMem_jacobsonRadicalSq`), which is
-the sense in which the quotient `rad(X, Y) / rad²(X, Y)` is the space of irreducible morphisms an
-arrow of the Auslander-Reiten quiver is a basis vector of; this file supplies the two subgroups,
-their ideal properties and, over a linear category, their submodule views, and
-`TauCeti.CategoryTheory.Preadditive.Radical.Quotient` forms that quotient on top of them.
+the sense in which the quotient `rad(X, Y) / rad²(X, Y)` is the space of irreducible morphisms.
+An arrow of the Auslander-Reiten quiver is a basis vector of that quotient over the residue
+division rings `End X / rad(End X)` and `End Y / rad(End Y)`, a bimodule structure that is not
+built here; this file supplies the two subgroups, their ideal properties and, over a linear
+category, their submodule views, and
+`TauCeti.CategoryTheory.Preadditive.Radical.Quotient` forms the underlying quotient on top of
+them.
 
 The engine of the whole development is **Jacobson's lemma** in its categorical form
 (`TauCeti.isIso_id_sub_comp_comm`): for `a : X ⟶ Y` and `b : Y ⟶ X`, the endomorphism
@@ -68,6 +71,8 @@ addition, exactly as in the ring case.
 * `TauCeti.jacobsonRadicalSq X Y`: its square `rad²(X, Y)`.
 * `TauCeti.jacobsonRadicalSubmodule k X Y` and `TauCeti.jacobsonRadicalSqSubmodule k X Y`: the
   two of them over a `k`-linear category, as `Submodule k (X ⟶ Y)`.
+* `TauCeti.jacobsonRadicalSubmoduleCongr`: conjugation by a pair of isomorphisms of the source and
+  the target, as a `k`-linear equivalence of radicals.
 
 ## Main results
 
@@ -100,6 +105,9 @@ addition, exactly as in the ring case.
   irreducible exactly when it lies in the radical but not in its square**.
 * `TauCeti.smul_mem_jacobsonRadical` and `TauCeti.smul_mem_jacobsonRadicalSq`: over a linear
   category both are stable under the scalar action, which is what the submodule views record.
+* `TauCeti.jacobsonRadicalSubmodule_map_homCongr` and
+  `TauCeti.jacobsonRadicalSqSubmodule_map_homCongr`: conjugation by isomorphisms of the source and
+  the target carries the radical onto the radical and its square onto its square.
 
 ## Implementation notes
 
@@ -590,5 +598,72 @@ theorem jacobsonRadicalSqSubmodule_le_jacobsonRadicalSubmodule (X Y : C) :
   fun _ hf => jacobsonRadicalSq_le_jacobsonRadical X Y hf
 
 end Linear
+
+/-! ### Conjugation of the radical by a pair of isomorphisms -/
+
+section Congr
+
+variable (k : Type*) [Semiring k] [Linear k C] {X X' Y Y' : C}
+
+/-- **Conjugation by isomorphisms carries the radical onto the radical.**  Both containments are
+the radical being a two-sided ideal of the category: `e.inv ≫ f ≫ e'.hom` is radical whenever `f`
+is, and the reverse containment is the same statement for the inverse conjugation
+`e.hom ≫ g ≫ e'.inv`. -/
+@[simp]
+theorem jacobsonRadicalSubmodule_map_homCongr (e : X ≅ X') (e' : Y ≅ Y') :
+    (jacobsonRadicalSubmodule k X Y).map (Linear.homCongr k e e').toLinearMap =
+      jacobsonRadicalSubmodule k X' Y' := by
+  refine le_antisymm ?_ fun g hg => ?_
+  · rw [Submodule.map_le_iff_le_comap]
+    intro f hf
+    simp only [Submodule.mem_comap, LinearEquiv.coe_coe, Linear.homCongr_apply,
+      mem_jacobsonRadicalSubmodule] at hf ⊢
+    exact comp_mem_jacobsonRadical_right (comp_mem_jacobsonRadical_left e.inv hf) e'.hom
+  · refine ⟨(Linear.homCongr k e e').symm g, ?_, by simp⟩
+    rw [SetLike.mem_coe, Linear.homCongr_symm_apply, mem_jacobsonRadicalSubmodule]
+    exact comp_mem_jacobsonRadical_left e.hom
+      (comp_mem_jacobsonRadical_right (mem_jacobsonRadicalSubmodule.1 hg) e'.inv)
+
+/-- **Conjugation by isomorphisms carries the square of the radical onto the square of the
+radical**, the square being a two-sided ideal of the category just as the radical is. -/
+@[simp]
+theorem jacobsonRadicalSqSubmodule_map_homCongr (e : X ≅ X') (e' : Y ≅ Y') :
+    (jacobsonRadicalSqSubmodule k X Y).map (Linear.homCongr k e e').toLinearMap =
+      jacobsonRadicalSqSubmodule k X' Y' := by
+  refine le_antisymm ?_ fun g hg => ?_
+  · rw [Submodule.map_le_iff_le_comap]
+    intro f hf
+    simp only [Submodule.mem_comap, LinearEquiv.coe_coe, Linear.homCongr_apply,
+      mem_jacobsonRadicalSqSubmodule] at hf ⊢
+    exact comp_mem_jacobsonRadicalSq_right (comp_mem_jacobsonRadicalSq_left e.inv hf) e'.hom
+  · refine ⟨(Linear.homCongr k e e').symm g, ?_, by simp⟩
+    rw [SetLike.mem_coe, Linear.homCongr_symm_apply, mem_jacobsonRadicalSqSubmodule]
+    exact comp_mem_jacobsonRadicalSq_left e.hom
+      (comp_mem_jacobsonRadicalSq_right (mem_jacobsonRadicalSqSubmodule.1 hg) e'.inv)
+
+/-- **Conjugation by isomorphisms, as an equivalence of radicals.** -/
+noncomputable def jacobsonRadicalSubmoduleCongr (e : X ≅ X') (e' : Y ≅ Y') :
+    jacobsonRadicalSubmodule k X Y ≃ₗ[k] jacobsonRadicalSubmodule k X' Y' :=
+  (Linear.homCongr k e e').ofSubmodules _ _ (jacobsonRadicalSubmodule_map_homCongr k e e')
+
+/-- **Conjugation acts on radical morphisms by conjugation**: the morphism underlying the image of
+`f` is `e.inv ≫ f ≫ e'.hom`. -/
+@[simp]
+theorem coe_jacobsonRadicalSubmoduleCongr_apply (e : X ≅ X') (e' : Y ≅ Y')
+    (f : jacobsonRadicalSubmodule k X Y) :
+    (jacobsonRadicalSubmoduleCongr k e e' f : X' ⟶ Y') = (e.inv ≫ (f : X ⟶ Y)) ≫ e'.hom :=
+  (Linear.homCongr k e e').ofSubmodules_apply (jacobsonRadicalSubmodule_map_homCongr k e e') f
+
+/-- **The inverse conjugation acts by the inverse conjugation**: the morphism underlying the
+preimage of `g` is `e.hom ≫ g ≫ e'.inv`. -/
+@[simp]
+theorem coe_jacobsonRadicalSubmoduleCongr_symm_apply (e : X ≅ X') (e' : Y ≅ Y')
+    (g : jacobsonRadicalSubmodule k X' Y') :
+    ((jacobsonRadicalSubmoduleCongr k e e').symm g : X ⟶ Y) =
+      e.hom ≫ (g : X' ⟶ Y') ≫ e'.inv :=
+  (Linear.homCongr k e e').ofSubmodules_symm_apply
+    (jacobsonRadicalSubmodule_map_homCongr k e e') g
+
+end Congr
 
 end TauCeti
