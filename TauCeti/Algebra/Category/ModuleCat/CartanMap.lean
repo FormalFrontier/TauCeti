@@ -89,7 +89,6 @@ Krull--Schmidt hypotheses of a finite-dimensional algebra.
 * Ibrahim Assem, Daniel Simson, and Andrzej Skowroński, *Elements of the Representation Theory of
   Associative Algebras I*, Chapter III, Section 3, for the Cartan map of a finite-dimensional
   algebra.
-* [The Tau Ceti Grothendieck groups, Cartan maps, and Euler forms roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/GrothendieckEulerForms/README.md).
 -/
 
 public section
@@ -318,12 +317,13 @@ noncomputable def moduleEulerClassOf {M : ModuleCat.{u} R}
     (ExactStructure.isExtensionClosed_of_le_isProjective
       (finiteProjectiveModules_le_isProjective R)) hM
 
-/-- The alternating class of a particular finite resolution by finitely generated projectives.
-This is `TauCeti.ExactStructure.FiniteResolution.eulerClassFullSubcategory` at the exact structure
-`TauCeti.finiteProjectiveModulesExactStructure`, which the generic declaration cannot be stated
-against directly: its type is the exact `K₀` of the induced structure, and the two agree only up to
-the definition of `finiteProjectiveModulesExactStructure`. The two equations below evaluate it on
-both constructors of a resolution. -/
+-- `ExactStructure.FiniteResolution.eulerClassFullSubcategory` cannot be used in place of this
+-- definition: its type is the exact `K₀` of `ExactStructure.fullSubcategory`, which agrees with
+-- `ExactK0 (finiteProjectiveModulesExactStructure R)` only through the unexposed body of
+-- `finiteProjectiveModulesExactStructure`.
+/-- The alternating class of a particular finite resolution by finitely generated projectives, as
+an element of `K₀(proj R)`. It is evaluated on both constructors of a resolution by
+`TauCeti.moduleEulerClass_base` and `TauCeti.moduleEulerClass_step`. -/
 noncomputable def moduleEulerClass {M : ModuleCat.{u} R}
     (r : (ExactStructure.abelian (ModuleCat.{u} R)).FiniteResolution
       (finiteProjectiveModules R) M) :
