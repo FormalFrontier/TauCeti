@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Analysis.Calculus.MetricVariation
+public import TauCeti.Geometry.Manifold.ContMDiff.Subtype
 public import TauCeti.Geometry.Manifold.Riemannian.Restriction
 public import TauCeti.Geometry.Manifold.Riemannian.EVariationComparison
 
@@ -26,6 +27,8 @@ paths in any open submanifold of an inner-product space.
   length for a `C¹` path in any open submanifold of an inner-product space.
 * `TauCeti.Manifold.pathELength_le_liminf_open`: path length is lower semicontinuous under
   pointwise convergence of `C¹` paths in that submanifold.
+* `TauCeti.Manifold.pathELength_le_liminf_open_of_tendstoUniformlyOn`: the same lower
+  semicontinuity result under uniform convergence on the interval.
 
 ## References
 
@@ -50,13 +53,6 @@ private theorem eVariationOn_subtypeVal_comp {γ : ℝ → U} {s : Set ℝ} :
     eVariationOn γ s = eVariationOn ((Subtype.val : U → F) ∘ γ) s := by
   rfl
 
-omit [CompleteSpace F] in
-private theorem contDiffOn_subtypeVal_comp {γ : ℝ → U}
-    (hγ : CMDiff[Icc a b] 1 γ) :
-    ContDiffOn ℝ 1 ((Subtype.val : U → F) ∘ γ) (Icc a b) := by
-  rw [← contMDiffOn_iff_contDiffOn]
-  exact contMDiff_subtype_val.comp_contMDiffOn hγ
-
 /-- **Metric variation equals Riemannian path length on an open submanifold.** If `U` is an open
 subset of an inner-product space and `γ` is `C¹` on `[a, b]`, then the total variation of `γ` for
 the restricted metric is its Riemannian path length. -/
@@ -64,7 +60,8 @@ theorem eVariationOn_eq_pathELength_open
     (hγ : CMDiff[Icc a b] 1 γ) :
     eVariationOn γ (Icc a b) = Manifold.pathELength 𝓘(ℝ, F) γ a b := by
   rw [eVariationOn_subtypeVal_comp, eVariationOn_eq_lintegral_enorm_derivWithin
-    (contDiffOn_subtypeVal_comp hγ)]
+    (contMDiffOn_iff_contDiffOn.mp
+      ((ContMDiffOn.subtypeVal_comp_iff U γ (Icc a b)).mpr hγ))]
   rw [Manifold.pathELength_subtypeVal_comp hγ,
     Manifold.pathELength_eq_lintegral_mfderivWithin_Icc]
   simp only [mfderivWithin_eq_fderivWithin, enorm_tangentSpace_vectorSpace]
@@ -99,11 +96,24 @@ theorem pathELength_le_liminf_open
       eVariationOn_le_liminf_pathELength
         (I := 𝓘(ℝ, F)) (M := F)
         (hγi.mono fun i hi ↦
-          contMDiffOn_iff_contDiffOn.mpr (contDiffOn_subtypeVal_comp (γ := γi i) hi))
+          (ContMDiffOn.subtypeVal_comp_iff U (γi i) (Icc a b)).mpr hi)
         hconv'
     _ = liminf (fun i ↦ Manifold.pathELength 𝓘(ℝ, F) (γi i) a b) l :=
       liminf_congr (hγi.mono fun i hi ↦
         (Manifold.pathELength_subtypeVal_comp (γ := γi i) hi).symm)
+
+/-- **Lower semicontinuity under uniform convergence on an open submanifold.** Let `γᵢ` be
+eventually `C¹` on a fixed compact interval, converge uniformly there to a `C¹` path `γ`, and
+use the restricted Riemannian metric on an open subset. Then the length of `γ` is at most the
+`liminf` of the lengths of `γᵢ`. -/
+theorem pathELength_le_liminf_open_of_tendstoUniformlyOn
+    {ι : Type*} {l : Filter ι} {γi : ι → ℝ → U}
+    (hγi : ∀ᶠ i in l, CMDiff[Icc a b] 1 (γi i))
+    (hγ : CMDiff[Icc a b] 1 γ)
+    (hconv : TendstoUniformlyOn γi γ l (Icc a b)) :
+    Manifold.pathELength 𝓘(ℝ, F) γ a b ≤
+      liminf (fun i ↦ Manifold.pathELength 𝓘(ℝ, F) (γi i) a b) l :=
+  pathELength_le_liminf_open hγi hγ fun _ ht ↦ hconv.tendsto_at ht
 
 end TauCeti.Manifold
 
