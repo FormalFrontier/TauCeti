@@ -172,9 +172,7 @@ variable {W : Type*} [NormedAddCommGroup W] [NormedSpace 𝕜 W] [NormedSpace �
   (rho : ContRepresentation 𝕜 G W) (hrho : Continuous rho)
 
 /-- **Integrated operators are natural in the representation.** A continuous intertwiner commutes
-with the operators obtained by integrating the same scalar function on its source and target.
-This is the integral form of equivariance: move the intertwiner through the Bochner integral, then
-use its pointwise intertwining identity. -/
+with the operators obtained by integrating the same scalar function on its source and target. -/
 theorem _root_.ContRepresentation.comp_integratedOperator
     (T : ContIntertwiningMap π rho) (f : C(G, 𝕜)) :
     T.toContinuousLinearMap.comp (integratedOperator π hπ f) =
