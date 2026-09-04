@@ -23,8 +23,8 @@ spaces.
 
 ## Main statements
 
-* `TauCeti.wassersteinEDist_map_le_eLpNorm` bounds the Wasserstein distance of two pushforwards by
-  the Lipschitz constant times the objective of a specified source coupling.
+* `TauCeti.wassersteinEDist_map_le_mul_eLpNorm` bounds the Wasserstein distance of two
+  pushforwards by the Lipschitz constant times the objective of a specified source coupling.
 * `TauCeti.wassersteinEDist_map_le_of_ne_zero` gives the pushforward estimate for arbitrary
   measures and a nonzero Lipschitz constant.
 * `TauCeti.wassersteinEDist_map_le_of_exists_isCoupling` gives the pushforward estimate for any two
@@ -56,7 +56,7 @@ variable {X : Type u} {Y : Type v} [MeasurableSpace X] [MeasurableSpace Y]
 
 /-- The image of a specified coupling under a Lipschitz map bounds the Wasserstein distance of the
 pushforward measures. This is the coupling-level estimate from which functoriality follows. -/
-theorem wassersteinEDist_map_le_eLpNorm
+theorem wassersteinEDist_map_le_mul_eLpNorm
     (hdY : Measurable fun z : Y × Y ↦ edist z.1 z.2) (hf : Measurable f)
     (hLip : LipschitzWith K f) (hπ : IsCoupling π μ ν) :
     wassersteinEDist p (μ.map f) (ν.map f) ≤
@@ -92,7 +92,7 @@ theorem wassersteinEDist_map_le_of_ne_zero
       (Or.inl ENNReal.coe_ne_top)).2
     simpa only [mul_comm] using hlt
   obtain ⟨π, hπ, hπlt⟩ := wassersteinEDist_lt_iff.1 hsource
-  have hmap := wassersteinEDist_map_le_eLpNorm (p := p) hdY hf hLip hπ
+  have hmap := wassersteinEDist_map_le_mul_eLpNorm (p := p) hdY hf hLip hπ
   have hobj : K * eLpNorm (fun z : X × X ↦ edist z.1 z.2) p π <
       wassersteinEDist p (μ.map f) (ν.map f) := by
     simpa only [mul_comm] using ENNReal.mul_lt_of_lt_div hπlt
@@ -108,7 +108,7 @@ theorem wassersteinEDist_map_le_of_exists_isCoupling
     wassersteinEDist p (μ.map f) (ν.map f) ≤ K * wassersteinEDist p μ ν := by
   by_cases hK : K = 0
   · obtain ⟨π, hπ⟩ := hμν
-    refine (wassersteinEDist_map_le_eLpNorm hdY hf hLip hπ).trans_eq ?_
+    refine (wassersteinEDist_map_le_mul_eLpNorm hdY hf hLip hπ).trans_eq ?_
     simp only [hK, ENNReal.coe_zero, zero_mul]
   · exact wassersteinEDist_map_le_of_ne_zero hdY hf hLip hK μ ν
 
