@@ -173,12 +173,12 @@ theorem isUnitAtSupport_zero (f : Fˣ) : IsUnitAtSupport (0 : Divisor k F) f := 
 /-- Admissibility is closed under sums of divisors: `(D + E).support ⊆ D.support ∪ E.support`. -/
 theorem IsUnitAtSupport.add {D E : Divisor k F} {f : Fˣ} (hD : IsUnitAtSupport D f)
     (hE : IsUnitAtSupport E f) : IsUnitAtSupport (D + E) f := fun P hP ↦ by
-  -- `(D + E) P ≠ 0` forces `D P ≠ 0` or `E P ≠ 0`. Argued pointwise rather than through
-  -- `Finsupp.support_add`, whose union needs `DecidableEq (Place k F)`.
-  rw [Finsupp.mem_support_iff, Finsupp.add_apply] at hP
-  by_cases h : D P = 0
-  · exact hE P (Finsupp.mem_support_iff.2 fun h' ↦ hP (by rw [h, h', add_zero]))
-  · exact hD P (Finsupp.mem_support_iff.2 h)
+  -- `classical` only supplies the `DecidableEq (Place k F)` that `Finsupp.support_add`'s union
+  -- mentions; the statement above is unaffected by it.
+  classical
+  rcases Finset.mem_union.1 (Finsupp.support_add hP) with h | h
+  · exact hD P h
+  · exact hE P h
 
 /-- Admissibility is *invariant* under negating the divisor, not merely closed under it:
 `(-D).support = D.support`. -/
