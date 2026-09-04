@@ -182,8 +182,9 @@ section Pairing
 variable [DecidableEq F]
 
 /-- **The Steinberg character has norm `1`.** This is the character-theoretic form of the
-irreducibility of the Steinberg representation; see the implementation notes for what turning it
-into `CategoryTheory.Simple` would still need. -/
+irreducibility of the Steinberg representation; `TauCeti.simple_GL2Steinberg` in
+`TauCeti/RepresentationTheory/CharacterTable/GL2/Boundary.lean` packages it as
+`CategoryTheory.Simple`. -/
 @[simp]
 theorem characterPairing_GL2Steinberg_self :
     characterPairing (ofFDRep (GL2Steinberg F)) (ofFDRep (GL2Steinberg F)) = 1 := by
