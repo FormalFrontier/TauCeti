@@ -14,9 +14,7 @@ public import TauCeti.CategoryTheory.Sites.CoversTop
 # Tensor products of invertible sheaves
 
 The tensor product of two locally free rank-one sheaves is again locally free of rank one. The
-proof refines local trivialization atlases for the two factors to a common cover. On each member
-of that cover, both factors are the standard free rank-one sheaf, so the tensor product is
-trivial by the tensor-unit isomorphisms.
+result gives closure of invertible sheaves under tensor product.
 
 ## Main declarations
 
@@ -53,7 +51,6 @@ variable {C : Type u₁} [Category.{v₁} C] {J : GrothendieckTopology C}
 namespace LocalTrivializations
 
 /-- A common refinement of two local trivialization atlases trivializes their tensor product. -/
-@[expose]
 def tensorProduct (tM : LocalTrivializations.{u, v₁, u₁} M)
     (tN : LocalTrivializations.{u, v₁, u₁} N) :
     LocalTrivializations.{u, v₁, u₁} (SheafOfModules.tensorProduct R M N) := by
@@ -82,16 +79,16 @@ lemma tensorProduct_I (tM : LocalTrivializations.{u, v₁, u₁} M)
     (tensorProduct tM tN).I =
       (CategoryTheory.GrothendieckTopology.CoversTop.commonRefinement
         tM.coversTop tN.coversTop).I :=
-  rfl
+  (rfl)
 
 /-- The tensor-product atlas uses the objects of the common refinement. -/
 @[simp]
 lemma tensorProduct_X (tM : LocalTrivializations.{u, v₁, u₁} M)
     (tN : LocalTrivializations.{u, v₁, u₁} N) :
     (tensorProduct tM tN).X =
-      (CategoryTheory.GrothendieckTopology.CoversTop.commonRefinement
-        tM.coversTop tN.coversTop).X :=
-  rfl
+      fun i ↦ (CategoryTheory.GrothendieckTopology.CoversTop.commonRefinement
+        tM.coversTop tN.coversTop).X ((tensorProduct_I tM tN).mp i) :=
+  (rfl)
 
 /-- The tensor-product atlas trivializes through the corresponding restricted factors. -/
 @[simp]
@@ -100,20 +97,22 @@ lemma tensorProduct_iso (tM : LocalTrivializations.{u, v₁, u₁} M)
     (tensorProduct tM tN).iso i =
       let r := CategoryTheory.GrothendieckTopology.CoversTop.commonRefinement
         tM.coversTop tN.coversTop
-      let F : SheafOfModules.{u, v₁, max u₁ v₁} (ringCatSheaf (R.over (r.X i))) :=
-        _root_.SheafOfModules.free (R := ringCatSheaf (R.over (r.X i))) (PUnit.{u + 1})
+      let j := (tensorProduct_I tM tN).mp i
+      let F : SheafOfModules.{u, v₁, max u₁ v₁} (ringCatSheaf (R.over (r.X j))) :=
+        _root_.SheafOfModules.free (R := ringCatSheaf (R.over (r.X j))) (PUnit.{u + 1})
       cast (by
         dsimp only [r]
+        dsimp only [j]
         dsimp only [F]
         rw [tensorProduct_X]
         rfl)
-        ((SheafOfModules.tensorProductFreePUnitIsoLeft (R.over (r.X i)) F).symm ≪≫
-          SheafOfModules.tensorProductCongrLeft (R.over (r.X i))
-            (tM.isoOver (r.leftIndex i) (r.left i)) ≪≫
-          SheafOfModules.tensorProductCongrRight (R.over (r.X i))
-            (tN.isoOver (r.rightIndex i) (r.right i)) ≪≫
-          (SheafOfModules.overTensorProductIso R M N (r.X i)).symm) :=
-  rfl
+        ((SheafOfModules.tensorProductFreePUnitIsoLeft (R.over (r.X j)) F).symm ≪≫
+          SheafOfModules.tensorProductCongrLeft (R.over (r.X j))
+            (tM.isoOver (r.leftIndex j) (r.left j)) ≪≫
+          SheafOfModules.tensorProductCongrRight (R.over (r.X j))
+            (tN.isoOver (r.rightIndex j) (r.right j)) ≪≫
+          (SheafOfModules.overTensorProductIso R M N (r.X j)).symm) :=
+  (rfl)
 
 end LocalTrivializations
 
