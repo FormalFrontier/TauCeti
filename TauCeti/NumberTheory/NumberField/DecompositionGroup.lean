@@ -91,6 +91,7 @@ theorem isUnramifiedAt_iff_inertia_eq_bot (Q : Ideal (𝓞 L)) [Q.IsPrime] :
     ← Ideal.card_inertia_eq_ramificationIdx (𝓞 K) (L ≃ₐ[K] L) Q]
   exact ⟨Subgroup.eq_bot_of_card_eq _, fun h ↦ by rw [h]; simp⟩
 
+omit [IsGalois K L] in
 /-- **Unramifiedness is invariant along the fibre.** The primes `Q` and `τ • Q` of `𝓞 L` lie over
 the same prime of `𝓞 K`, and `L / K` is unramified at one exactly when it is unramified at the
 other.
@@ -155,6 +156,7 @@ theorem stabilizerHom_stabilizerEquivResidueAut_symm_apply (Q : Ideal (𝓞 L)) 
 
 attribute [local instance] Ideal.Quotient.field
 
+omit [IsGalois K L] in
 /-- **A Frobenius element induces the residue Frobenius.** The action of an arithmetic Frobenius
 `σ` at `Q` on the residue field `𝓞 L ⧸ Q` is the `#(𝓞 K ⧸ 𝔭)`-power map, that is
 `FiniteField.frobeniusAlgEquivOfAlgebraic` of the residue extension.
