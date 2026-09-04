@@ -35,10 +35,12 @@ construction is copied.
 
 ## Main definitions
 
-* `TauCeti.TateCohomology.positiveEvenIso`: the common explicit model for positive even degrees.
-* `TauCeti.TateCohomology.positiveOddIso`: the common explicit model for positive odd degrees.
-* `TauCeti.TateCohomology.positivePeriodicIso`: the two-periodicity isomorphism between positive
-  degrees of the same parity.
+* `TauCeti.Rep.FiniteCyclicGroup.positiveEvenIso`: the common explicit model for positive even
+  degrees.
+* `TauCeti.Rep.FiniteCyclicGroup.positiveOddIso`: the common explicit model for positive odd
+  degrees.
+* `TauCeti.Rep.FiniteCyclicGroup.positivePeriodicIso`: the two-periodicity isomorphism between
+  positive degrees of the same parity.
 
 ## References
 
@@ -52,9 +54,9 @@ universe u
 
 open CategoryTheory
 
-namespace TauCeti.TateCohomology
+namespace TauCeti.Rep.FiniteCyclicGroup
 
-variable {R G : Type u} [CommRing R] [CommGroup G] [Fintype G]
+variable {R G : Type u} [CommRing R] [Group G] [Fintype G]
 
 /-- In a positive even degree, Tate cohomology of a finite cyclic group is the homology of
 `M --N--> M --(g - 1)--> M` for a chosen generator `g`.
@@ -63,9 +65,15 @@ The isomorphism is the composite of Mathlib's Tate-to-ordinary-cohomology compar
 calculation from the standard periodic resolution. -/
 def positiveEvenIso (M : Rep R G) (g : G) (hg : ∀ x, x ∈ Subgroup.zpowers g)
     (n : ℕ) [NeZero n] (hn : Even n) :
-    tateCohomology M n ≅ (Rep.FiniteCyclicGroup.normHomCompSub M g).homology := by
+    let _ : IsCyclic G := isCyclic_iff_exists_zpowers_eq_top.mpr
+      ⟨g, (Subgroup.zpowers g).eq_top_iff'.mpr hg⟩
+    let _ : CommGroup G := IsCyclic.commGroup
+    tateCohomology M n ≅ (_root_.Rep.FiniteCyclicGroup.normHomCompSub M g).homology := by
+  letI : IsCyclic G := isCyclic_iff_exists_zpowers_eq_top.mpr
+    ⟨g, (Subgroup.zpowers g).eq_top_iff'.mpr hg⟩
+  letI : CommGroup G := IsCyclic.commGroup
   exact (_root_.TateCohomology.isoGroupCohomology n).app M ≪≫
-    Rep.FiniteCyclicGroup.groupCohomologyIsoEven M g hg n hn
+    _root_.Rep.FiniteCyclicGroup.groupCohomologyIsoEven M g hg n hn
 
 /-- In a positive odd degree, Tate cohomology of a finite cyclic group is the homology of
 `M --(g - 1)--> M --N--> M` for a chosen generator `g`.
@@ -74,10 +82,16 @@ The isomorphism is the composite of Mathlib's Tate-to-ordinary-cohomology compar
 calculation from the standard periodic resolution. -/
 def positiveOddIso (M : Rep R G) (g : G) (hg : ∀ x, x ∈ Subgroup.zpowers g)
     (n : ℕ) (hn : Odd n) :
-    tateCohomology M n ≅ (Rep.FiniteCyclicGroup.subCompNormHom M g).homology := by
+    let _ : IsCyclic G := isCyclic_iff_exists_zpowers_eq_top.mpr
+      ⟨g, (Subgroup.zpowers g).eq_top_iff'.mpr hg⟩
+    let _ : CommGroup G := IsCyclic.commGroup
+    tateCohomology M n ≅ (_root_.Rep.FiniteCyclicGroup.subCompNormHom M g).homology := by
+  letI : IsCyclic G := isCyclic_iff_exists_zpowers_eq_top.mpr
+    ⟨g, (Subgroup.zpowers g).eq_top_iff'.mpr hg⟩
+  letI : CommGroup G := IsCyclic.commGroup
   haveI : NeZero n := ⟨hn.pos.ne'⟩
   exact (_root_.TateCohomology.isoGroupCohomology n).app M ≪≫
-    Rep.FiniteCyclicGroup.groupCohomologyIsoOdd M g hg n hn
+    _root_.Rep.FiniteCyclicGroup.groupCohomologyIsoOdd M g hg n hn
 
 /-- **Positive-degree two-periodicity for Tate cohomology of a finite cyclic group.** Positive
 Tate degrees congruent modulo two are isomorphic. The construction compares both degrees with the
@@ -132,4 +146,4 @@ theorem natCard_tateCohomology_eq_of_pos_of_modEq
     Nat.card (tateCohomology M m) = Nat.card (tateCohomology M n) :=
   Nat.card_congr (positivePeriodicIso M g hg m n hmn).toLinearEquiv.toEquiv
 
-end TauCeti.TateCohomology
+end TauCeti.Rep.FiniteCyclicGroup
