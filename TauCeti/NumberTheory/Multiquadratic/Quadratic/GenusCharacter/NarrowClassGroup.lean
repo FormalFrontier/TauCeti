@@ -41,13 +41,13 @@ open NumberField
 variable {K : Type*} [Field K] [NumberField K]
 
 /-- The map from ideals coprime to a modulus to their narrow ideal classes. -/
-noncomputable def genusCharFunCoprimeIdealClassMap (t : Finset ℤ) :
+private noncomputable def genusCharFunCoprimeIdealClassMap (t : Finset ℤ) :
     genusCharFunCoprimeIdealSubmonoid (K := K) t →* NumberField.NarrowClassGroup K :=
   (NumberField.NarrowClassGroup.mk0 (K := K)).comp
     (genusCharFunCoprimeIdealSubmonoid (K := K) t).subtype
 
 /-- Every narrow class has a representative in the coprime-ideal submonoid. -/
-theorem genusCharFunCoprimeIdealClassMap_surjective {t : Finset ℤ}
+private theorem genusCharFunCoprimeIdealClassMap_surjective {t : Finset ℤ}
     (hm : (∏ P ∈ t, P) ≠ 0) :
     Function.Surjective
       (genusCharFunCoprimeIdealClassMap (K := K) t) := by
@@ -60,11 +60,9 @@ variable {θ : 𝓞 K} {d : ℤ}
 
 /-- **Coprime genus characters are constant on narrow-class fibres.**
 
-Let `I` and `J` be coprime integral ideals with the same narrow class. Choose a third coprime ideal
-representing the inverse class. The products with that ideal are narrow-principal, so the preceding
-principal-ideal calculation makes both character values become the inverse of the third value.
-This avoids imposing an artificial coprimality condition on a particular fractional principal
-ratio witnessing `I` and `J`.
+The character has the same value on any two coprime integral ideals with the same narrow ideal
+class. This fibre invariance is what allows the character to descend from coprime ideals to the
+full narrow class group.
 -/
 theorem genusCharFunCoprimeIdealHom_eq_of_mk0_eq
     {s t : Finset ℤ} (hs : ∀ P ∈ s, IsPrimeDiscriminant P)
