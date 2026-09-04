@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Analysis.InnerProductSpace.Spectrum
-public import TauCeti.Analysis.InnerProductSpace.HilbertBasis
+public import TauCeti.Analysis.InnerProductSpace.HilbertBasis.Basic
 
 /-!
 # An orthonormal basis of eigenvectors for a compact self-adjoint operator
@@ -32,10 +32,12 @@ nonzero eigenvalue, which is the form the eigenvalue problem of an elliptic oper
 
 ## Main declarations
 
-* `ContinuousLinearMap.exists_hilbertBasis_hasEigenvector`: a compact symmetric operator admits a
-  Hilbert basis of eigenvectors, with the eigenvalues given as a function on the basis.
-* `ContinuousLinearMap.exists_hilbertBasis_hasEigenvector_ne_zero`: for an injective such
-  operator, every vector of that basis has a nonzero eigenvalue.
+* `ContinuousLinearMap.exists_hilbertBasis_forall_hasEigenvector_of_dense_eigenspaces`:
+  a symmetric operator whose eigenspaces have dense span admits a Hilbert basis of eigenvectors.
+* `ContinuousLinearMap.exists_hilbertBasis_forall_hasEigenvector`: the compact symmetric
+  specialization of the preceding result.
+* `ContinuousLinearMap.exists_hilbertBasis_forall_hasEigenvector_ne_zero`: for an injective compact
+  symmetric operator, every vector of that basis has a nonzero eigenvalue.
 * `ContinuousLinearMap.hasSum_smul_repr_of_apply_eq_smul`: an operator diagonal in a Hilbert
   basis is the sum of its eigencomponents, the spectral expansion such a basis is for.
 
@@ -57,11 +59,12 @@ namespace ContinuousLinearMap
 
 variable [CompleteSpace E] {T : E →L[𝕜] E}
 
-/-- **A compact self-adjoint operator has an orthonormal basis of eigenvectors.**  The basis is
-indexed by a set of vectors of `E`, as in `exists_hilbertBasis`, and no separability is
-assumed. -/
-theorem exists_hilbertBasis_hasEigenvector (hT : IsCompactOperator T)
-    (hT' : (T : E →ₗ[𝕜] E).IsSymmetric) :
+/-- **A symmetric operator whose eigenspaces have dense span has an orthonormal basis of
+eigenvectors.**  The basis is indexed by a set of vectors of `E`, as in `exists_hilbertBasis`,
+and no separability is assumed. -/
+theorem exists_hilbertBasis_forall_hasEigenvector_of_dense_eigenspaces
+    (hT' : (T : E →ₗ[𝕜] E).IsSymmetric)
+    (hspan : (⨆ mu, eigenspace (T : Module.End 𝕜 E) mu)ᗮ = ⊥) :
     ∃ (s : Set E) (b : HilbertBasis s 𝕜 E) (nu : s → 𝕜), ⇑b = ((↑) : s → E) ∧
       ∀ x : s, HasEigenvector (T : Module.End 𝕜 E) (nu x) (x : E) := by
   classical
@@ -79,10 +82,9 @@ theorem exists_hilbertBasis_hasEigenvector (hT : IsCompactOperator T)
     hT'.orthogonalFamily_eigenspaces.orthonormal_sigma_orthonormal fun mu => (bw mu).orthonormal
   have hinj : Function.Injective v := hv.linearIndependent.injective
   have hmem : ∀ p, v p ∈ eigenspace (T : Module.End 𝕜 E) p.1 := fun p => (bw p.1 p.2).2
-  have hspan : (Submodule.span 𝕜 (Set.range v))ᗮ = ⊥ := by
+  have hvspan : (Submodule.span 𝕜 (Set.range v))ᗮ = ⊥ := by
     refine le_antisymm ?_ bot_le
-    rw [← ContinuousLinearMap.orthogonalComplement_iSup_eigenspaces_eq_bot hT hT',
-      ← Submodule.iInf_orthogonal]
+    rw [← hspan, ← Submodule.iInf_orthogonal]
     intro x hx
     have hx' : ∀ p, ⟪x, v p⟫_𝕜 = 0 := fun p =>
       (Submodule.mem_orthogonal' _ x).mp hx _ (Submodule.subset_span ⟨p, rfl⟩)
@@ -102,14 +104,24 @@ theorem exists_hilbertBasis_hasEigenvector (hT : IsCompactOperator T)
   exact ⟨Set.range v, HilbertBasis.mkOfOrthogonalEqBot ((orthonormal_subtype_range hinj).2 hv)
     (by rwa [Subtype.range_coe]), nu, HilbertBasis.coe_mkOfOrthogonalEqBot _ _, hnu⟩
 
-/-- **An injective compact self-adjoint operator has an orthonormal basis of eigenvectors with
-nonzero eigenvalues.**  Injectivity is exactly the vanishing of the eigenspace at `0`, the one
-eigenspace that a compact operator may have of infinite dimension. -/
-theorem exists_hilbertBasis_hasEigenvector_ne_zero (hT : IsCompactOperator T)
-    (hT' : (T : E →ₗ[𝕜] E).IsSymmetric) (hker : LinearMap.ker (T : E →ₗ[𝕜] E) = ⊥) :
+/-- **A compact self-adjoint operator has an orthonormal basis of eigenvectors.** -/
+theorem exists_hilbertBasis_forall_hasEigenvector (hT : IsCompactOperator T)
+    (hT' : (T : E →ₗ[𝕜] E).IsSymmetric) :
+    ∃ (s : Set E) (b : HilbertBasis s 𝕜 E) (nu : s → 𝕜), ⇑b = ((↑) : s → E) ∧
+      ∀ x : s, HasEigenvector (T : Module.End 𝕜 E) (nu x) (x : E) :=
+  exists_hilbertBasis_forall_hasEigenvector_of_dense_eigenspaces hT'
+    (ContinuousLinearMap.orthogonalComplement_iSup_eigenspaces_eq_bot hT hT')
+
+/-- **An injective symmetric operator whose eigenspaces have dense span has an orthonormal basis
+of eigenvectors with nonzero eigenvalues.** -/
+theorem exists_hilbertBasis_forall_hasEigenvector_ne_zero_of_dense_eigenspaces
+    (hT' : (T : E →ₗ[𝕜] E).IsSymmetric)
+    (hspan : (⨆ mu, eigenspace (T : Module.End 𝕜 E) mu)ᗮ = ⊥)
+    (hker : LinearMap.ker (T : E →ₗ[𝕜] E) = ⊥) :
     ∃ (s : Set E) (b : HilbertBasis s 𝕜 E) (nu : s → 𝕜), ⇑b = ((↑) : s → E) ∧
       (∀ x : s, nu x ≠ 0) ∧ ∀ x : s, HasEigenvector (T : Module.End 𝕜 E) (nu x) (x : E) := by
-  obtain ⟨s, b, nu, hb, hev⟩ := exists_hilbertBasis_hasEigenvector hT hT'
+  obtain ⟨s, b, nu, hb, hev⟩ :=
+    exists_hilbertBasis_forall_hasEigenvector_of_dense_eigenspaces hT' hspan
   refine ⟨s, b, nu, hb, fun x hx => ?_, hev⟩
   have hx0 : (x : E) ∈ LinearMap.ker (T : E →ₗ[𝕜] E) := by
     rw [← eigenspace_zero, ← hx]
@@ -117,10 +129,19 @@ theorem exists_hilbertBasis_hasEigenvector_ne_zero (hT : IsCompactOperator T)
   rw [hker, Submodule.mem_bot] at hx0
   exact (hev x).2 hx0
 
+/-- **An injective compact self-adjoint operator has an orthonormal basis of eigenvectors with
+nonzero eigenvalues.**  Injectivity excludes the eigenvalue `0`. -/
+theorem exists_hilbertBasis_forall_hasEigenvector_ne_zero (hT : IsCompactOperator T)
+    (hT' : (T : E →ₗ[𝕜] E).IsSymmetric) (hker : LinearMap.ker (T : E →ₗ[𝕜] E) = ⊥) :
+    ∃ (s : Set E) (b : HilbertBasis s 𝕜 E) (nu : s → 𝕜), ⇑b = ((↑) : s → E) ∧
+      (∀ x : s, nu x ≠ 0) ∧ ∀ x : s, HasEigenvector (T : Module.End 𝕜 E) (nu x) (x : E) :=
+  exists_hilbertBasis_forall_hasEigenvector_ne_zero_of_dense_eigenspaces
+    hT' (ContinuousLinearMap.orthogonalComplement_iSup_eigenspaces_eq_bot hT hT') hker
+
 omit [CompleteSpace E] in
 /-- **The spectral expansion of an operator diagonal in a Hilbert basis.**  Applying `T` term by
 term to the expansion of `y` writes `T y` as the sum of its eigencomponents; combined with
-`ContinuousLinearMap.exists_hilbertBasis_hasEigenvector` this diagonalizes a compact
+`ContinuousLinearMap.exists_hilbertBasis_forall_hasEigenvector` this diagonalizes a compact
 self-adjoint operator. -/
 theorem hasSum_smul_repr_of_apply_eq_smul (T : E →L[𝕜] E) {iota : Type*}
     (b : HilbertBasis iota 𝕜 E)

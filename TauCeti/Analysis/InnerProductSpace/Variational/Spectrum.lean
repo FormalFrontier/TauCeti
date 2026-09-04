@@ -385,7 +385,8 @@ theorem exists_hilbertBasis_forall_apply_eq_smul_inner (hB : IsCoercive B) {J : 
   have hker : LinearMap.ker (hB.formSolutionOperator J : H →ₗ[ℝ] H) = ⊥ := by
     rw [← eigenspace_zero]
     exact hB.eigenspace_formSolutionOperator_zero_eq_bot hJdense
-  obtain ⟨s, b, nu, hb, hnu, hev⟩ := ContinuousLinearMap.exists_hilbertBasis_hasEigenvector_ne_zero
+  obtain ⟨s, b, nu, hb, hnu, hev⟩ :=
+    ContinuousLinearMap.exists_hilbertBasis_forall_hasEigenvector_ne_zero
     (hB.isCompactOperator_formSolutionOperator hJ)
     (hB.isSymmetric_formSolutionOperator J hsymm) hker
   have hdiag : ∀ x : s, hB.formSolutionOperator J (b x) = nu x • b x := by
