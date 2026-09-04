@@ -85,6 +85,8 @@ theorem exists_strictMono_nat_extending_fin {m : ℕ} {k : Fin m → ℕ} (hk : 
   let ⟨φ, _, hφ, hφ_eq, _⟩ := exists_strictMono_nat_extending_fin_eventually_add hk
   ⟨φ, hφ, hφ_eq⟩
 
+namespace Finset
+
 /-- A permutation of `ℕ` that fixes a finite set `I` pointwise and carries a finite set `J`,
 disjoint from `I`, past `n`. -/
 theorem exists_perm_fixOn_le_apply (I J : Finset ℕ) (hIJ : Disjoint I J) (n : ℕ) :
@@ -113,6 +115,8 @@ theorem exists_perm_fixOn_le_apply (I J : Finset ℕ) (hIJ : Disjoint I J) (n : 
     have := hρ ⟨j, Finset.mem_union_right _ hj⟩
     simp only [g, hjI, ite_false] at this
     rw [this]; omega
+
+end Finset
 
 end Probability
 
