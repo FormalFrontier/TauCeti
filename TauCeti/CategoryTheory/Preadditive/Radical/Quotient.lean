@@ -187,6 +187,7 @@ theorem irreducibleMorphismMk_eq_zero_iff {f : jacobsonRadicalSubmodule k X Y} :
 
 /-- **Two radical morphisms have the same class exactly when they differ by an element of the
 square of the radical.** -/
+@[simp]
 theorem irreducibleMorphismMk_eq_iff {f g : jacobsonRadicalSubmodule k X Y} :
     irreducibleMorphismMk k X Y f = irreducibleMorphismMk k X Y g ↔
       (f : X ⟶ Y) - (g : X ⟶ Y) ∈ jacobsonRadicalSq X Y := by
@@ -318,6 +319,7 @@ theorem irreducibleMorphismSpaceCongr_refl (X Y : C) :
   exact congrArg _ (Subtype.ext (by simp))
 
 /-- Conjugating by a composite of isomorphisms is conjugating twice. -/
+@[simp]
 theorem irreducibleMorphismSpaceCongr_trans {X'' Y'' : C} (e : X ≅ X') (e' : Y ≅ Y')
     (d : X' ≅ X'') (d' : Y' ≅ Y'') :
     (irreducibleMorphismSpaceCongr k e e').trans (irreducibleMorphismSpaceCongr k d d') =
