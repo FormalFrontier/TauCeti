@@ -170,19 +170,28 @@ theorem card_hom_eq_card_adjPreservingMaps :
     Nat.card (F →g G) = Nat.card {ψ : V → W // ∀ a b, F.Adj a b → G.Adj (ψ a) (ψ b)} :=
   Nat.card_congr (relHomEquivPreservingMaps F.Adj G.Adj)
 
-/-! ### Both densities lie in `[0, 1]` -/
+end DenseGraphLimits
 
-/-- The number of homomorphisms is bounded by the number of vertex maps. -/
-theorem card_hom_le : Nat.card (F →g G) ≤ Fintype.card W ^ Fintype.card V := by
+end TauCeti
+
+namespace SimpleGraph
+
+variable {V W : Type*} [Fintype V] [Fintype W]
+
+/-! ### Cardinality bounds for homomorphisms -/
+
+/-- The number of homomorphisms from `F` to `G` is bounded by the number of vertex maps. -/
+theorem card_hom_le (F : SimpleGraph V) (G : SimpleGraph W) :
+    Nat.card (F →g G) ≤ Fintype.card W ^ Fintype.card V := by
   classical
   calc Nat.card (F →g G) ≤ Nat.card (V → W) :=
         Nat.card_le_card_of_injective (fun φ => (φ : V → W))
           (fun a b h => by ext x; exact congrFun h x)
     _ = Fintype.card W ^ Fintype.card V := by rw [Nat.card_eq_fintype_card, Fintype.card_fun]
 
-/-- The number of injective homomorphisms is bounded by the number of embeddings of the vertex
-types. -/
-theorem card_injective_hom_le :
+/-- The number of injective homomorphisms from `F` to `G` is bounded by the number of embeddings
+of the vertex types. -/
+theorem card_injective_hom_le (F : SimpleGraph V) (G : SimpleGraph W) :
     Nat.card {φ : F →g G // Function.Injective φ}
       ≤ (Fintype.card W).descFactorial (Fintype.card V) := by
   classical
@@ -192,6 +201,17 @@ theorem card_injective_hom_le :
             ext x; exact congrFun (congrArg (fun e : V ↪ W => (e : V → W)) h) x)
     _ = (Fintype.card W).descFactorial (Fintype.card V) := by
         rw [Nat.card_eq_fintype_card, Fintype.card_embedding_eq]
+
+end SimpleGraph
+
+namespace TauCeti
+
+namespace DenseGraphLimits
+
+variable {V W : Type*} [Fintype V] [Fintype W]
+variable (F : SimpleGraph V) (G : SimpleGraph W)
+
+/-! ### Both densities lie in `[0, 1]` -/
 
 /-- The homomorphism density is nonnegative. -/
 theorem homDensityFin_nonneg : 0 ≤ homDensityFin F G :=
@@ -204,7 +224,7 @@ No hypothesis is needed. When the host is empty and the pattern is not, numerato
 both vanish and `x / 0 = 0` gives `0`. -/
 theorem homDensityFin_le_one : homDensityFin F G ≤ 1 := by
   refine div_le_one_of_le₀ ?_ (pow_nonneg (Nat.cast_nonneg _) _)
-  exact_mod_cast card_hom_le F G
+  exact_mod_cast F.card_hom_le G
 
 /-- The injective homomorphism density is nonnegative. -/
 theorem injHomDensity_nonneg : 0 ≤ injHomDensity F G :=
@@ -216,7 +236,7 @@ particular an embedding `V(F) ↪ V(G)`, and those are counted by the falling fa
 No hypothesis is needed; the degenerate cases behave as for `homDensityFin_le_one`. -/
 theorem injHomDensity_le_one : injHomDensity F G ≤ 1 := by
   refine div_le_one_of_le₀ ?_ (Nat.cast_nonneg _)
-  exact_mod_cast card_injective_hom_le F G
+  exact_mod_cast F.card_injective_hom_le G
 
 end DenseGraphLimits
 

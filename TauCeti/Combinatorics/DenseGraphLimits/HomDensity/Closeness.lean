@@ -46,11 +46,9 @@ namespace DenseGraphLimits
 
 variable {V W : Type*} [Fintype V] [Fintype W]
 
-/-- **Layer 9a (hom-versus-injective closeness).** The homomorphism density and the injective
-homomorphism density differ by at most
+/-- The homomorphism density and the injective homomorphism density differ by at most
 `C(k,2) / n`, where `k` is the number of vertices of the pattern and `n` the number of
-vertices of the host. This is the finite-host generalization of
-`TauCetiRoadmap/DenseGraphLimits/Suggested.lean`, Layer 9a.
+vertices of the host, for every finite pattern and host graph.
 -/
 theorem homDensityFin_sub_injHomDensity_le (F : SimpleGraph V) (G : SimpleGraph W) :
     |homDensityFin F G - injHomDensity F G|
@@ -73,13 +71,13 @@ theorem homDensityFin_sub_injHomDensity_le (F : SimpleGraph V) (G : SimpleGraph 
     · have hhom0 : Nat.card (F →g G) = 0 := by
         apply Nat.eq_zero_of_le_zero
         calc Nat.card (F →g G) ≤ Fintype.card W ^ Fintype.card V :=
-              card_hom_le F G
+              F.card_hom_le G
           _ = 0 := by rw [hW0]; exact zero_pow hk0
       have hinj0 : Nat.card {φ : F →g G // Function.Injective ⇑φ} = 0 := by
         apply Nat.eq_zero_of_le_zero
         calc Nat.card {φ : F →g G // Function.Injective ⇑φ} ≤
                 (Fintype.card W).descFactorial (Fintype.card V) :=
-              card_injective_hom_le F G
+              F.card_injective_hom_le G
           _ = 0 := by
             rw [hW0]
             exact Nat.descFactorial_eq_zero_iff_lt.mpr (by omega)
