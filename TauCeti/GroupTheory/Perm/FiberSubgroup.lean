@@ -91,10 +91,11 @@ theorem fiberSubgroup_inf (f : α → ι) (g : α → κ) :
   ext σ
   simp [Subgroup.mem_inf, Prod.ext_iff, forall_and]
 
-/-- **Two fibers, one of them a singleton, make the fiber subgroup a point stabilizer.**  If `f`
-separates `a` from every other point and identifies all the others with one another, then a
-permutation preserves the fibers of `f` exactly when it fixes `a`: the fiber `{a}` can only be
-mapped to itself, and the complementary fiber then takes care of itself. -/
+/-- **A map whose fibers are `{a}` and at most one other makes the fiber subgroup a point
+stabilizer.**  If `f` separates `a` from every other point and identifies all the others with one
+another, then a permutation preserves the fibers of `f` exactly when it fixes `a`: the fiber `{a}`
+can only be mapped to itself, and its complement -- a second fiber when it is nonempty, and empty
+when `α = {a}` -- then takes care of itself. -/
 theorem fiberSubgroup_eq_stabilizer {f : α → ι} {a : α} (hsep : ∀ x, x ≠ a → f x ≠ f a)
     (hrest : ∀ x y, x ≠ a → y ≠ a → f x = f y) :
     fiberSubgroup f = MulAction.stabilizer (Equiv.Perm α) a := by

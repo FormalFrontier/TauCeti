@@ -52,18 +52,16 @@ theorem prod_map_factorial_indiscrete (n : ℕ) :
 
 This is the shape usually written `(n-1, 1)` at `n`; writing it at `n+2` keeps both parts positive
 with no hypothesis on `n`.  It is the unique shape with two rows whose second row is a single box,
-and the coarsest shape other than `Nat.Partition.indiscrete`. -/
-def singletonSecondRow (n : ℕ) : (n + 2).Partition where
-  parts := {n + 1, 1}
-  parts_pos := by
-    intro i hi
-    simp only [Multiset.insert_eq_cons, Multiset.mem_cons, Multiset.mem_singleton] at hi
-    rcases hi with rfl | rfl <;> omega
-  parts_sum := by simp
+and the coarsest shape other than `Nat.Partition.indiscrete`.
+
+The parts are exposed only through `Nat.Partition.singletonSecondRow_parts`. -/
+def singletonSecondRow (n : ℕ) : (n + 2).Partition :=
+  _root_.Nat.Partition.ofSums (n + 2) {n + 1, 1} (by simp)
 
 /-- The parts of `(n+1, 1)`. -/
 @[simp]
-theorem singletonSecondRow_parts (n : ℕ) : (singletonSecondRow n).parts = {n + 1, 1} := (rfl)
+theorem singletonSecondRow_parts (n : ℕ) : (singletonSecondRow n).parts = {n + 1, 1} := by
+  simp [singletonSecondRow, Multiset.filter_eq_self]
 
 /-- The decreasingly sorted parts of `(n+1, 1)`. -/
 theorem sort_parts_singletonSecondRow (n : ℕ) :
