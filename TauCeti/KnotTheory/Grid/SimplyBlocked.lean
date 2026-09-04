@@ -106,13 +106,6 @@ namespace GridDiagram
 variable {n : ℕ} (G : GridDiagram n)
 variable (R : Type*) [CommSemiring R]
 
--- The product expansion of `OMonomial` is not available across the module boundary, so it is
--- recovered here from the exported monomial form.
-private theorem OMonomial_eq_prod (r : GridRectangle n) :
-    G.OMonomial R r = ∏ c ∈ G.OColumns r, MvPolynomial.X c := by
-  rw [G.OMonomial_eq_monomial R, MvPolynomial.monomial_sum_one]
-  exact Finset.prod_congr rfl fun c _ => by rw [← MvPolynomial.X_pow_eq_monomial, pow_one]
-
 /-- A rectangle covering the blocked `O`-marking has weight zero after specialization. -/
 @[simp]
 theorem killCompl_OMonomial_eq_zero_of_mem {i : Fin n} {r : GridRectangle n}
@@ -121,15 +114,13 @@ theorem killCompl_OMonomial_eq_zero_of_mem {i : Fin n} {r : GridRectangle n}
       (Subtype.val_injective : Function.Injective
         (Subtype.val : {c : Fin n // c ≠ i} → Fin n))
       (G.OMonomial R r) = 0 := by
-  rw [G.OMonomial_eq_prod R, map_prod]
-  refine Finset.prod_eq_zero hi ?_
-  have hX : (MvPolynomial.X i : MvPolynomial (Fin n) R) =
-      MvPolynomial.monomial (Finsupp.single i 1) 1 := by
-    rw [← MvPolynomial.X_pow_eq_monomial, pow_one]
-  rw [hX]
-  refine MvPolynomial.killCompl_monomial_eq_zero_of_notMem_range _ 1 (a := i) (by simp) ?_
-  rintro ⟨⟨c, hc⟩, hci⟩
-  exact hc hci
+  rw [G.OMonomial_eq_monomial R]
+  refine MvPolynomial.killCompl_monomial_eq_zero_of_notMem_range _ 1
+    (a := i) ?_ ?_
+  · rw [Finsupp.support_sum_eq_biUnion _ (by simp)]
+    simpa using hi
+  · rintro ⟨⟨c, hc⟩, hci⟩
+    exact hc hci
 
 /-- A rectangle avoiding the blocked `O`-marking keeps as its weight the product of the variables
 of the other `O`-markings it covers. -/
@@ -140,14 +131,28 @@ theorem killCompl_OMonomial_eq_prod_of_notMem {i : Fin n} {r : GridRectangle n}
       (Subtype.val_injective : Function.Injective
         (Subtype.val : {c : Fin n // c ≠ i} → Fin n)) (G.OMonomial R r) =
       ∏ c ∈ (G.OColumns r).subtype (· ≠ i), MvPolynomial.X c := by
-  have hrename :
-      MvPolynomial.rename (Subtype.val : {c : Fin n // c ≠ i} → Fin n)
-          (∏ c ∈ (G.OColumns r).subtype (· ≠ i), MvPolynomial.X (R := R) c) =
-        G.OMonomial R r := by
-    rw [map_prod, G.OMonomial_eq_prod R]
-    simp only [MvPolynomial.rename_X]
-    exact Finset.prod_subtype_of_mem _ fun c hc hci => hi (hci ▸ hc)
-  rw [← hrename, MvPolynomial.killCompl_rename_app]
+  rw [G.OMonomial_eq_monomial R]
+  rw [MvPolynomial.killCompl_monomial_eq_monomial_comapDomain_of_subset]
+  · have hexp :
+        (∑ c ∈ G.OColumns r, Finsupp.single c 1).comapDomain Subtype.val
+            Subtype.val_injective.injOn =
+          ∑ c ∈ (G.OColumns r).subtype (· ≠ i), Finsupp.single c 1 := by
+      ext c
+      simp only [Finsupp.comapDomain_apply, Finsupp.finsetSum_apply]
+      rw [← Finset.sum_subtype_of_mem (p := fun d : Fin n => d ≠ i)
+        (fun d : Fin n => (Finsupp.single d 1) c.val)
+        (fun d hd (hdi : d = i) => hi (hdi ▸ hd))]
+      simp [Finsupp.single_apply, Subtype.ext_iff]
+    rw [hexp, MvPolynomial.monomial_sum_one]
+    refine Finset.prod_congr rfl fun c _ => ?_
+    rw [← MvPolynomial.X_pow_eq_monomial, pow_one]
+  · have hsupport :
+        (∑ c ∈ G.OColumns r, Finsupp.single c 1).support = G.OColumns r := by
+      rw [Finsupp.support_sum_eq_biUnion _ (by simp)]
+      simp
+    rw [hsupport]
+    rintro c hc
+    exact ⟨⟨c, fun (hci : c = i) => hi (hci ▸ hc)⟩, rfl⟩
 
 /-- The rectangles counted after blocking column `i`: unblocked rectangles which do not cover
 the `O`-marking in column `i`. -/
@@ -185,12 +190,6 @@ noncomputable def simplyBlockedCoefficient (i : Fin n) (x y : GridState n) :
   MvPolynomial.killCompl (f := Subtype.val) Subtype.val_injective
     (G.unblockedCoefficient R x y)
 
-/-- The simply blocked coefficient is the specialization of the unblocked one. -/
-theorem simplyBlockedCoefficient_def (i : Fin n) (x y : GridState n) :
-    G.simplyBlockedCoefficient R i x y =
-      MvPolynomial.killCompl (f := Subtype.val) Subtype.val_injective
-        (G.unblockedCoefficient R x y) := (rfl)
-
 /-- The simply blocked coefficient is the finite sum over the contributing rectangles.  Terms
 covering the blocked marking disappear; each of the other terms is the product of the variables of
 the remaining `O`-markings the rectangle covers. -/
@@ -199,7 +198,7 @@ theorem simplyBlockedCoefficient_eq_sum (i : Fin n) (x y : GridState n) :
       ∑ r ∈ G.simplyBlockedRectangles i x y,
         ∏ c ∈ (G.OColumns r.toGridRectangle).subtype (· ≠ i), MvPolynomial.X c := by
   classical
-  rw [simplyBlockedCoefficient_def, G.unblockedCoefficient_def R, map_sum,
+  rw [simplyBlockedCoefficient, G.unblockedCoefficient_def R, map_sum,
     ← Finset.sum_subset (G.simplyBlockedRectangles_subset_unblockedRectangles i x y)]
   · refine Finset.sum_congr rfl fun r hr => ?_
     refine G.killCompl_OMonomial_eq_prod_of_notMem R ?_
@@ -215,7 +214,7 @@ theorem simplyBlockedCoefficient_eq_sum (i : Fin n) (x y : GridState n) :
 @[simp]
 theorem simplyBlockedCoefficient_self (i : Fin n) (x : GridState n) :
     G.simplyBlockedCoefficient R i x x = 0 := by
-  simp [simplyBlockedCoefficient_def]
+  simp [simplyBlockedCoefficient]
 
 /-- The value of the simply blocked map on one grid-state generator. -/
 noncomputable def simplyBlockedDifferentialOnGenerator (i : Fin n) (x : GridState n) :
@@ -236,7 +235,7 @@ theorem simplyBlockedDifferentialOnGenerator_support_subset (i : Fin n) (x : Gri
   apply G.unblockedDifferentialOnGenerator_support_subset R x
   rw [Finsupp.mem_support_iff, G.unblockedDifferentialOnGenerator_apply R]
   intro hzero
-  rw [simplyBlockedCoefficient_def, hzero, map_zero] at hy
+  rw [simplyBlockedCoefficient, hzero, map_zero] at hy
   exact hy rfl
 
 /-- Specializing the unblocked differential of a generator gives its simply blocked row. -/
@@ -249,7 +248,7 @@ theorem simplyBlockedSpecialization_unblockedDifferentialOnGenerator (i : Fin n)
   intro y
   rw [simplyBlockedSpecialization_apply,
     G.simplyBlockedDifferentialOnGenerator_apply R i x y,
-    G.unblockedDifferentialOnGenerator_apply R x y, simplyBlockedCoefficient_def]
+    G.unblockedDifferentialOnGenerator_apply R x y, simplyBlockedCoefficient]
 
 /-- The linear map obtained from the `GC⁻` differential by setting `V_i = 0`.  For a knot grid
 over a coefficient semiring of characteristic two it is the simply blocked differential;
