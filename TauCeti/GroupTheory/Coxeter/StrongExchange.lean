@@ -168,8 +168,9 @@ private theorem leftInvSeq_alternatingWord_two_mul (i i' : B) {m : ℕ}
   rcases lt_or_ge k m with hk | hk
   · rw [List.getElem_append_left (by simpa using hk)]
     simp
-  · have hpow : (cs.simple i * cs.simple i') ^ (k - m) = (cs.simple i * cs.simple i') ^ k := by
-      conv_rhs => rw [show k = (k - m) + m by omega]
+  · have hk' : k = (k - m) + m := by omega
+    have hpow : (cs.simple i * cs.simple i') ^ (k - m) = (cs.simple i * cs.simple i') ^ k := by
+      conv_rhs => rw [hk']
       rw [pow_add, hm, mul_one]
     rw [List.getElem_append_right (by simpa using hk)]
     simp only [List.length_map, List.length_range, List.getElem_map, List.getElem_range]
@@ -300,13 +301,14 @@ cocycle identity together with the corresponding statement for a simple reflecti
 private theorem reflectionParity_self_of_isReflection {t : W} (ht : cs.IsReflection t) :
     reflectionParity cs t t = 1 := by
   obtain ⟨v, i, rfl⟩ := ht
+  have hsplit : v * (cs.simple i * v⁻¹) = v * cs.simple i * v⁻¹ := by group
+  have hconj : cs.simple i * v⁻¹ * (v * cs.simple i * v⁻¹) * (cs.simple i * v⁻¹)⁻¹
+      = cs.simple i := by group
+  have hconj' : v⁻¹ * (v * cs.simple i * v⁻¹) * v⁻¹⁻¹ = cs.simple i := by group
   have key1 := reflectionParity_mul cs v (cs.simple i * v⁻¹) (v * cs.simple i * v⁻¹)
-  rw [show v * (cs.simple i * v⁻¹) = v * cs.simple i * v⁻¹ from by group,
-    show (cs.simple i * v⁻¹) * (v * cs.simple i * v⁻¹) * (cs.simple i * v⁻¹)⁻¹ = cs.simple i from
-      by group] at key1
+  rw [hsplit, hconj] at key1
   have key2 := reflectionParity_mul cs (cs.simple i) v⁻¹ (v * cs.simple i * v⁻¹)
-  rw [show v⁻¹ * (v * cs.simple i * v⁻¹) * v⁻¹⁻¹ = cs.simple i from by group,
-    reflectionParity_simple_self, reflectionParity_inv] at key2
+  rw [hconj', reflectionParity_simple_self, reflectionParity_inv] at key2
   rw [key1, key2]
   generalize reflectionParity cs v (cs.simple i) = x
   revert x
@@ -368,12 +370,14 @@ theorem mem_leftInvSeq_of_isLeftInversion (ω : List B) {t : W}
 /-- **The right inversion sequence of a reduced word lists exactly the right inversions** of the
 element it spells. The forward implication is
 `CoxeterSystem.isRightInversion_of_mem_rightInvSeq`; the converse holds for any word. -/
+@[simp]
 theorem mem_rightInvSeq_iff_isRightInversion {ω : List B} (hω : cs.IsReduced ω) {t : W} :
     t ∈ ris ω ↔ cs.IsRightInversion (π ω) t :=
   ⟨cs.isRightInversion_of_mem_rightInvSeq hω, mem_rightInvSeq_of_isRightInversion cs ω⟩
 
 /-- **The left inversion sequence of a reduced word lists exactly the left inversions** of the
 element it spells. -/
+@[simp]
 theorem mem_leftInvSeq_iff_isLeftInversion {ω : List B} (hω : cs.IsReduced ω) {t : W} :
     t ∈ lis ω ↔ cs.IsLeftInversion (π ω) t :=
   ⟨cs.isLeftInversion_of_mem_leftInvSeq hω, mem_leftInvSeq_of_isLeftInversion cs ω⟩
@@ -445,7 +449,8 @@ theorem deletionCondition {ω : List B} (hω : ¬ cs.IsReduced ω) :
     · rw [h0]
       simp [CoxeterSystem.IsReduced]
     · have h := Nat.find_min hex (m := k - 1) (by omega)
-      rw [not_not, show k - 1 + 1 = k from by omega] at h
+      have hk1 : k - 1 + 1 = k := by omega
+      rw [not_not, hk1] at h
       exact h
   have hklt : k < ω.length := by
     by_contra hcon
