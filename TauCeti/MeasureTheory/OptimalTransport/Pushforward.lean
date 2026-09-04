@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.MeasureTheory.OptimalTransport.Wasserstein
+public import TauCeti.MeasureTheory.OptimalTransport.Wasserstein.Basic
 
 /-!
 # Wasserstein distance under pushforward
