@@ -35,9 +35,14 @@ field norm.
   the additive group of divisors to `kˣ`, unconditionally.
 * `TauCeti.Divisor.eval_eq_prod_normResidue`: on an admissible divisor, the textbook product
   formula.
-* `TauCeti.Divisor.eval_mul`: `f(-)` is also multiplicative in the *function*, on a divisor
-  admissible for both factors. `evalHom` supplies the divisor variable; this supplies the other
-  one, and the two together are the bilinearity Weil reciprocity is stated against.
+* `TauCeti.Divisor.eval_one`, `eval_inv`, `eval_mul` and `eval_div`: the group laws in the
+  *function* variable. `evalHom` supplies the divisor variable; these supply the other one, and
+  the two together are the bilinearity Weil reciprocity is stated against. Note the asymmetry:
+  `eval_one` and `eval_inv` need no hypothesis, while `eval_mul` and `eval_div` need admissibility
+  for both arguments.
+* `TauCeti.Divisor.isUnitAtSupport_one`, `IsUnitAtSupport.mul`, `isUnitAtSupport_inv_iff` and
+  `IsUnitAtSupport.div`: admissibility is a subgroup condition on the function, which is what makes
+  those laws usable together.
 
 ## Implementation notes
 
@@ -150,6 +155,32 @@ theorem eval_eq_prod_normResidue {D : Divisor k F} {f : Fˣ} (h : IsUnitAtSuppor
         Finset.prod_congr rfl fun P _ ↦ by
           rw [Place.normResidueOrOne_of_ord_eq_zero (isUnitAtSupport_iff.1 h P.1 P.2)]
 
+/-- `1` is admissible for every divisor.
+
+Neither this nor `isUnitAtSupport_inv_iff` is `@[simp]`, and that is checked rather than assumed:
+with `isUnitAtSupport_iff` tagged, `simp` proves both outright, and the environment linter reports
+them as redundant simp lemmas if they carry the attribute. They are kept as named lemmas because
+they are the closure facts a term-mode proof reaches for. -/
+theorem isUnitAtSupport_one (D : Divisor k F) : IsUnitAtSupport D (1 : Fˣ) :=
+  fun P _ ↦ P.ord_one_units
+
+/-- Admissibility is closed under products of functions. -/
+theorem IsUnitAtSupport.mul {D : Divisor k F} {f g : Fˣ} (hf : IsUnitAtSupport D f)
+    (hg : IsUnitAtSupport D g) : IsUnitAtSupport D (f * g) :=
+  fun P hP ↦ Place.ord_mul_eq_zero (hf P hP) (hg P hP)
+
+/-- Admissibility is *invariant* under inversion, not merely closed under it: `ord_P f⁻¹` vanishes
+exactly when `ord_P f` does. Not `@[simp]`, for the reason given on `isUnitAtSupport_one`. -/
+theorem isUnitAtSupport_inv_iff {D : Divisor k F} {f : Fˣ} :
+    IsUnitAtSupport D f⁻¹ ↔ IsUnitAtSupport D f := by
+  simp only [isUnitAtSupport_iff, Units.val_inv_eq_inv_val, Place.ord_inv, neg_eq_zero]
+
+/-- Admissibility is closed under quotients of functions. -/
+theorem IsUnitAtSupport.div {D : Divisor k F} {f g : Fˣ} (hf : IsUnitAtSupport D f)
+    (hg : IsUnitAtSupport D g) : IsUnitAtSupport D (f / g) := by
+  rw [div_eq_mul_inv]
+  exact hf.mul (isUnitAtSupport_inv_iff.2 hg)
+
 /-- **`f(D)` is multiplicative in the function**, on a divisor admissible for both factors:
 `(f g)(D) = f(D) · g(D)`. This is the half of the divisor/function bilinearity that the
 homomorphism `evalHom` does not give for free — `evalHom` is a homomorphism in `D`, and this is
@@ -163,6 +194,25 @@ theorem eval_mul {D : Divisor k F} {f g : Fˣ} (hf : IsUnitAtSupport D f)
   simp only [eval_eq_finsuppProd, Finsupp.prod, ← Finset.prod_mul_distrib]
   refine Finset.prod_congr rfl fun P hP ↦ ?_
   rw [Place.normResidueOrOne_mul (hf P hP) (hg P hP), mul_zpow]
+
+/-- `f(D)` at the constant function `1`, needing no hypothesis. -/
+@[simp]
+theorem eval_one (D : Divisor k F) : eval D (1 : Fˣ) = 1 := by
+  simp [eval_eq_finsuppProd]
+
+/-- **`f(D)` inverts with no hypothesis**, unlike `eval_mul`: admissibility is invariant under
+inversion (`isUnitAtSupport_inv_iff`), and off the admissible places both sides are `1`. -/
+@[simp]
+theorem eval_inv (D : Divisor k F) (f : Fˣ) : eval D f⁻¹ = (eval D f)⁻¹ := by
+  simp only [eval_eq_finsuppProd, Finsupp.prod, Place.normResidueOrOne_inv, inv_zpow,
+    Finset.prod_inv_distrib]
+
+/-- **`f(D)` respects quotients of functions**, on a divisor admissible for both. Like `eval_mul`
+and unlike `eval_inv`, this needs both hypotheses: `f / g` can be admissible where neither `f` nor
+`g` is. -/
+theorem eval_div {D : Divisor k F} {f g : Fˣ} (hf : IsUnitAtSupport D f)
+    (hg : IsUnitAtSupport D g) : eval D (f / g) = eval D f / eval D g := by
+  rw [div_eq_mul_inv, eval_mul hf (isUnitAtSupport_inv_iff.2 hg), eval_inv, div_eq_mul_inv]
 
 /-- **Admissibility is disjointness from the divisor of `f`.** This is the form the Weil-reciprocity
 statement uses, where the two divisors are the principal divisors of the two functions. -/

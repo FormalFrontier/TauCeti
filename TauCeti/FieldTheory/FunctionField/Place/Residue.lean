@@ -145,4 +145,42 @@ theorem normResidueOrOne_mul {P : Place k F} {f g : Fˣ} (hf : P.ord (f : F) = 0
     normResidueOrOne_of_ord_eq_zero hf, normResidueOrOne_of_ord_eq_zero hg,
     normResidue_mul hf hg]
 
+/-- The order of the constant `1` is zero at every place, so `1` is admissible everywhere. -/
+theorem ord_one_units (P : Place k F) : P.ord ((1 : Fˣ) : F) = 0 := by
+  rw [Units.val_one, P.ord_one]
+
+/-- The constant `1` has local factor `1`. Read off multiplicativity at `f = g = 1` rather than
+from the residue: `a = a * a` in a group forces `a = 1`.
+
+Not `@[simp]`: since `normResidueOrOne_of_ord_eq_zero` is `@[simp]` and `simp` can discharge
+`ord_P 1 = 0` on its own, the total form is rewritten to `normResidue` before this could fire.
+`normResidue_one` below is the `@[simp]` rule for that normal form. -/
+theorem normResidueOrOne_one (P : Place k F) : P.normResidueOrOne (1 : Fˣ) = 1 := by
+  have h := normResidueOrOne_mul (P := P) (f := 1) (g := 1) P.ord_one_units P.ord_one_units
+  rw [one_mul] at h
+  exact right_eq_mul.1 h
+
+/-- The residue of the constant `1` has norm `1`. -/
+@[simp]
+theorem normResidue_one (P : Place k F) (hf : P.ord ((1 : Fˣ) : F) = 0) :
+    P.normResidue 1 hf = 1 := by
+  rw [← normResidueOrOne_of_ord_eq_zero hf, normResidueOrOne_one]
+
+/-- **Inversion needs no admissibility hypothesis.** `ord_P f⁻¹ = -ord_P f` vanishes exactly when
+`ord_P f` does, so the two places of `normResidueOrOne`'s case split correspond under inversion
+and both branches invert. Contrast `normResidueOrOne_mul`, where the hypotheses cannot be
+dropped: a product can leave the subgroup `{ord_P = 0}` open on neither factor. -/
+@[simp]
+theorem normResidueOrOne_inv (P : Place k F) (f : Fˣ) :
+    P.normResidueOrOne f⁻¹ = (P.normResidueOrOne f)⁻¹ := by
+  by_cases hf : P.ord (f : F) = 0
+  · have h : P.ord ((f⁻¹ : Fˣ) : F) = 0 := by
+      rw [Units.val_inv_eq_inv_val, P.ord_inv, hf, neg_zero]
+    refine eq_inv_of_mul_eq_one_left ?_
+    rw [← normResidueOrOne_mul h hf, inv_mul_cancel, normResidueOrOne_one]
+  · have h : P.ord ((f⁻¹ : Fˣ) : F) ≠ 0 := by
+      rw [Units.val_inv_eq_inv_val, P.ord_inv]
+      simpa using hf
+    rw [normResidueOrOne_of_ord_ne_zero h, normResidueOrOne_of_ord_ne_zero hf, inv_one]
+
 end TauCeti.Place
