@@ -41,6 +41,8 @@ hold there. Compactness of `G` is assumed exactly where it is used.
 * `TauCeti.maximalProPQuotient`: the quotient `G ⧸ proPKernel p G`, written `G(p)` in prose.
 * `TauCeti.maximalProPQuotient.mk`: the canonical quotient homomorphism.
 * `TauCeti.maximalProPQuotient.map`: the functorial action on continuous homomorphisms.
+* `TauCeti.maximalProPQuotient.lift`: the canonical factorisation of a continuous homomorphism
+  to a profinite pro-`p` group.
 
 ## Main results
 
@@ -50,6 +52,8 @@ hold there. Compactness of `G` is assumed exactly where it is used.
 * `TauCeti.isProP_maximalProPQuotient`: `G(p)` is pro-`p`.
 * `TauCeti.existsUnique_continuousMonoidHom_maximalProPQuotient`: a continuous homomorphism
   from `G` to a profinite pro-`p` group factors uniquely and continuously through `G(p)`.
+* `TauCeti.maximalProPQuotient.lift_comp_map` and `TauCeti.maximalProPQuotient.comp_lift`: that
+  factorisation is natural in the source and in the target.
 * `TauCeti.proPKernel_eq_bot_iff`: `G` is pro-`p` if and only if its pro-`p` kernel is trivial;
   with `TauCeti.proPKernel_maximalProPQuotient_eq_bot` this is idempotence of `G ↦ G(p)`.
 * `TauCeti.map_proPKernel_eq`: continuous multiplicative equivalences preserve the pro-`p`
@@ -288,18 +292,66 @@ theorem proPKernel_le_ker (hP : IsProP p P) (f : G →* P) (hf : Continuous f) :
   exact mem_proPKernel_iff.mp hx ⟨V.toOpenSubgroup.comap f hf, V.isNormal'.comap f⟩
     ((isProP_iff.mp hP V).quotient_comap f)
 
+/-- The canonical factorisation of a continuous homomorphism to a profinite pro-`p` group
+through the maximal pro-`p` quotient. -/
+def maximalProPQuotient.lift (hP : IsProP p P) (f : G →* P) (hf : Continuous f) :
+    maximalProPQuotient p G →* P :=
+  QuotientGroup.lift (proPKernel p G) f fun _ hx ↦ proPKernel_le_ker hP f hf hx
+
+/-- The factorisation through the maximal pro-`p` quotient computes as `f` on classes. -/
+@[simp]
+theorem maximalProPQuotient.lift_mk (hP : IsProP p P) (f : G →* P) (hf : Continuous f) (x : G) :
+    maximalProPQuotient.lift hP f hf (x : maximalProPQuotient p G) = f x := by
+  rfl
+
+/-- The factorisation through the maximal pro-`p` quotient recovers `f`. -/
+@[simp]
+theorem maximalProPQuotient.lift_comp_mk (hP : IsProP p P) (f : G →* P) (hf : Continuous f) :
+    (maximalProPQuotient.lift hP f hf).comp (maximalProPQuotient.mk p G) = f := by
+  ext x
+  rfl
+
+/-- The factorisation through the maximal pro-`p` quotient is continuous. -/
+theorem maximalProPQuotient.continuous_lift (hP : IsProP p P) (f : G →* P) (hf : Continuous f) :
+    Continuous (maximalProPQuotient.lift hP f hf) :=
+  (QuotientGroup.isQuotientMap_mk (proPKernel p G)).continuous_iff.mpr hf
+
+/-- The factorisation through the maximal pro-`p` quotient is the only homomorphism restricting
+to `f` along the quotient map. -/
+theorem maximalProPQuotient.lift_unique (hP : IsProP p P) (f : G →* P) (hf : Continuous f)
+    {g : maximalProPQuotient p G →* P} (hg : ∀ x : G, g (maximalProPQuotient.mk p G x) = f x) :
+    g = maximalProPQuotient.lift hP f hf := by
+  ext x
+  exact hg x
+
+/-- Naturality in the source: the factorisation of `f ∘ u` is the factorisation of `f`
+precomposed with the map induced by `u`. -/
+theorem maximalProPQuotient.lift_comp_map {G' : Type w} [Group G'] [TopologicalSpace G']
+    (hP : IsProP p P) (f : G →* P) (hf : Continuous f) (u : G' →* G) (hu : Continuous u) :
+    (maximalProPQuotient.lift hP f hf).comp (maximalProPQuotient.map (p := p) u hu) =
+      maximalProPQuotient.lift hP (f.comp u) (hf.comp hu) := by
+  ext x
+  rfl
+
+/-- Naturality in the target: postcomposing the factorisation of `f` with a continuous
+homomorphism of profinite pro-`p` groups gives the factorisation of the composite. -/
+theorem maximalProPQuotient.comp_lift {Q : Type w} [Group Q] [TopologicalSpace Q]
+    [IsTopologicalGroup Q] [CompactSpace Q] [TotallyDisconnectedSpace Q] (hP : IsProP p P)
+    (hQ : IsProP p Q) (f : G →* P) (hf : Continuous f) (v : P →* Q) (hv : Continuous v) :
+    v.comp (maximalProPQuotient.lift hP f hf) =
+      maximalProPQuotient.lift hQ (v.comp f) (hv.comp hf) := by
+  ext x
+  rfl
+
 /-- **The universal property of the maximal pro-`p` quotient.** A continuous homomorphism to a
 profinite pro-`p` group factors uniquely and continuously through the canonical quotient map. -/
 theorem existsUnique_continuousMonoidHom_maximalProPQuotient (hP : IsProP p P) (f : G →* P)
     (hf : Continuous f) :
     ∃! g : maximalProPQuotient p G →* P,
-      Continuous g ∧ ∀ x : G, g (maximalProPQuotient.mk p G x) = f x := by
-  refine ⟨QuotientGroup.lift (proPKernel p G) f fun x hx ↦ proPKernel_le_ker hP f hf hx,
-    ⟨?_, fun _ ↦ rfl⟩, ?_⟩
-  · exact (QuotientGroup.isQuotientMap_mk (proPKernel p G)).continuous_iff.mpr hf
-  · rintro g ⟨-, hg⟩
-    ext y
-    exact hg y
+      Continuous g ∧ ∀ x : G, g (maximalProPQuotient.mk p G x) = f x :=
+  ⟨maximalProPQuotient.lift hP f hf,
+    ⟨maximalProPQuotient.continuous_lift hP f hf, maximalProPQuotient.lift_mk hP f hf⟩,
+    fun _ hg ↦ maximalProPQuotient.lift_unique hP f hf hg.2⟩
 
 end UniversalProperty
 
