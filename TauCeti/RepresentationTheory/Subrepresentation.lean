@@ -15,7 +15,7 @@ Mathlib's `Subrepresentation` API records how `toSubmodule` interacts with the l
 operations — `Subrepresentation.toSubmodule_sup` and `Subrepresentation.toSubmodule_inf`, both
 `@[simp]` and both true by `rfl` — but not how it interacts with the bounded-lattice structure,
 nor how it interacts with the order relations themselves, nor how it interacts with membership.
-This file adds the five missing counterparts, in the same shape. It also records that the
+This file adds the six missing counterparts, in the same shape. It also records that the
 representation action on a subrepresentation is the restriction of the original action, when an
 intertwining map is zero and when it is surjective in terms of the subrepresentation its range is,
 the inclusion of a subrepresentation as an intertwining map, that the group-algebra action on a
@@ -43,7 +43,7 @@ the coefficients to be a commutative ring, as `Subrepresentation.asSubmodule` an
 `IsSimpleModule` between them do.  `Subrepresentation.isCompl_toSubmodule` is one more entry in
 the lattice dictionary, moving `IsCompl` across it, and stated with the rest of that dictionary at
 the typeclasses `Subrepresentation` itself asks for.  Finally,
-`Subrepresentation.prodEquivOfIsCompl` upgrades a complement to an equivalence of representations
+`Subrepresentation.equivProdOfIsCompl` upgrades a complement to an equivalence of representations
 `ρ ≃ ρ₁ × ρ₂`: `Submodule.prodEquivOfIsCompl` supplies the linear isomorphism and each `ρ g`,
 being additive and preserving both summands, supplies the equivariance.  Being about
 `Submodule.prodEquivOfIsCompl`, it asks for the coefficients to be a ring and the module to be a
@@ -71,7 +71,7 @@ group, as that construction does.
 * `Subrepresentation.coe_toRepresentation_asAlgebraHom_apply`
 * `Subrepresentation.asModuleEquivAsSubmodule`
 * `Subrepresentation.isSimpleModule_asSubmodule_iff`
-* `Subrepresentation.prodEquivOfIsCompl`
+* `Subrepresentation.equivProdOfIsCompl`
 -/
 
 public section
@@ -276,7 +276,7 @@ vector of `ρ₁` to one of `ρ₂` is a linear isomorphism `ρ₁ × ρ₂ ≃ 
 preserves each summand; so `ρ` is the product of the two representations the summands carry.
 This is the representation-theoretic content of a complement, of which
 `Submodule.prodEquivOfIsCompl` records only the linear part. -/
-noncomputable def prodEquivOfIsCompl {ρ₁ ρ₂ : Subrepresentation ρ} (h : IsCompl ρ₁ ρ₂) :
+noncomputable def equivProdOfIsCompl {ρ₁ ρ₂ : Subrepresentation ρ} (h : IsCompl ρ₁ ρ₂) :
     ρ.Equiv (ρ₁.toRepresentation.prod ρ₂.toRepresentation) :=
   (Representation.Equiv.mk
     (Submodule.prodEquivOfIsCompl ρ₁.toSubmodule ρ₂.toSubmodule (isCompl_toSubmodule.mpr h))
@@ -286,20 +286,20 @@ noncomputable def prodEquivOfIsCompl {ρ₁ ρ₂ : Subrepresentation ρ} (h : I
 /-- The splitting is the linear splitting `Submodule.prodEquivOfIsCompl` of the two carriers, read
 backwards: it sends a vector to the pair of its components along the complementary submodules. -/
 @[simp]
-theorem prodEquivOfIsCompl_apply {ρ₁ ρ₂ : Subrepresentation ρ} (h : IsCompl ρ₁ ρ₂) (v : W) :
-    prodEquivOfIsCompl h v =
+theorem equivProdOfIsCompl_apply {ρ₁ ρ₂ : Subrepresentation ρ} (h : IsCompl ρ₁ ρ₂) (v : W) :
+    equivProdOfIsCompl h v =
       (Submodule.prodEquivOfIsCompl ρ₁.toSubmodule ρ₂.toSubmodule
         (isCompl_toSubmodule.mpr h)).symm v :=
-  -- `(rfl)`, not `rfl`: the body of `prodEquivOfIsCompl` is not `@[expose]`d, so this must not be
+  -- `(rfl)`, not `rfl`: the body of `equivProdOfIsCompl` is not `@[expose]`d, so this must not be
   -- inferred `@[defeq]`.
   (rfl)
 
 /-- The inverse of the splitting adds the two components back together. -/
 @[simp]
-theorem prodEquivOfIsCompl_symm_apply {ρ₁ ρ₂ : Subrepresentation ρ} (h : IsCompl ρ₁ ρ₂)
+theorem equivProdOfIsCompl_symm_apply {ρ₁ ρ₂ : Subrepresentation ρ} (h : IsCompl ρ₁ ρ₂)
     (v : ρ₁.toSubmodule × ρ₂.toSubmodule) :
-    (prodEquivOfIsCompl h).symm v = (v.1 : W) + (v.2 : W) :=
-  -- `(rfl)`, not `rfl`: the body of `prodEquivOfIsCompl` is not `@[expose]`d, so this must not be
+    (equivProdOfIsCompl h).symm v = (v.1 : W) + (v.2 : W) :=
+  -- `(rfl)`, not `rfl`: the body of `equivProdOfIsCompl` is not `@[expose]`d, so this must not be
   -- inferred `@[defeq]`.
   (rfl)
 

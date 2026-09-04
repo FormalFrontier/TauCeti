@@ -69,12 +69,6 @@ theorem sort_parts_singletonSecondRow (n : ℕ) :
   rw [singletonSecondRow_parts, Multiset.insert_eq_cons,
     Multiset.sort_cons _ _ _ (by simp), Multiset.sort_singleton]
 
-/-- The shape `(n+1, 1)` has two parts. -/
-theorem length_sort_parts_singletonSecondRow (n : ℕ) :
-    ((singletonSecondRow n).parts.sort (· ≥ ·)).length = 2 := by
-  rw [sort_parts_singletonSecondRow]
-  rfl
-
 end Nat.Partition
 
 end TauCeti

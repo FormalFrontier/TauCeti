@@ -46,7 +46,9 @@ point-stabilizer identity
 * `TauCeti.permutationModuleSingletonSecondRowIso`: hence `M^{(n+1,1)}` is `ℚ[Fin (n+2)]`.
 * `TauCeti.permutationModuleSingletonSecondRowEquivProd`: **`M^{(n-1,1)} = triv ⊕ standard`**, an
   equivalence of representations onto the product of the trivial representation on `ℚ` and the
-  standard representation.
+  standard representation, computed by
+  `TauCeti.permutationModuleSingletonSecondRowEquivProd_apply` as the splitting of `ℚ[Fin (n+2)]`
+  at the transported vector.
 
 ## Main results
 
@@ -86,6 +88,7 @@ theorem singletonSecondRowTabloidEquiv_mk (n : ℕ) (g : Equiv.Perm (Fin (n + 2)
     quotientStabilizerEquiv_mk, Equiv.Perm.smul_def]
 
 /-- The identification of the `(n+1, 1)`-tabloids with the points is equivariant. -/
+@[simp]
 theorem singletonSecondRowTabloidEquiv_smul (n : ℕ) (σ : Equiv.Perm (Fin (n + 2)))
     (q : Equiv.Perm (Fin (n + 2)) ⧸ youngSubgroup (Nat.Partition.singletonSecondRow n)) :
     singletonSecondRowTabloidEquiv n (σ • q) = σ • singletonSecondRowTabloidEquiv n q := by
@@ -154,9 +157,27 @@ noncomputable def permutationModuleSingletonSecondRowEquivProd (n : ℕ) :
       ((Representation.trivial ℚ (Equiv.Perm (Fin (n + 2))) ℚ).prod
         (standardRepresentation ℚ (Fin (n + 2)))) :=
   (Representation.equivOfIso (permutationModuleSingletonSecondRowIso n)).trans
-    (toRepresentation_augmentationSubrepresentation ℚ (Fin (n + 2)) ▸
-      ofMulActionEquivProdAugmentation ℚ (Equiv.Perm (Fin (n + 2))) (Fin (n + 2))
-        (by rw [Fintype.card_fin]; positivity))
+    ((ofMulActionEquivProdAugmentation ℚ (Equiv.Perm (Fin (n + 2))) (Fin (n + 2))
+        (by rw [Fintype.card_fin]; positivity)).trans
+      (Representation.Equiv.mk (LinearEquiv.refl ℚ _) fun g => by
+        rw [toRepresentation_augmentationSubrepresentation]
+        simp))
+
+/-- **The decomposition is the splitting of `ℚ[Fin (n+2)]`, read through the identification of the
+tabloids with the labels.**  The two components of a vector are therefore computed by
+`TauCeti.ofMulActionEquivProdAugmentation_apply_fst` and
+`TauCeti.coe_ofMulActionEquivProdAugmentation_apply_snd` at the vector of `ℚ[Fin (n+2)]` that
+`TauCeti.permutationModuleSingletonSecondRowIso` transports it to, which for the tabloid named by
+`g` is the standard basis vector of `g (Fin.last (n+1))`. -/
+theorem permutationModuleSingletonSecondRowEquivProd_apply (n : ℕ)
+    (h : (Fintype.card (Fin (n + 2)) : ℚ) ≠ 0)
+    (v : (permutationModule (Nat.Partition.singletonSecondRow n)).V) :
+    permutationModuleSingletonSecondRowEquivProd n v =
+      ofMulActionEquivProdAugmentation ℚ (Equiv.Perm (Fin (n + 2))) (Fin (n + 2)) h
+        ((permutationModuleSingletonSecondRowIso n).hom.hom v) :=
+  -- `(rfl)`, not `rfl`: the body of `permutationModuleSingletonSecondRowEquivProd` is not
+  -- `@[expose]`d, so this must not be inferred `@[defeq]`.
+  (rfl)
 
 /-- **The character of `M^{(n+1,1)}` is `1` plus the character of the standard representation.**
 This is the character-level form of the decomposition

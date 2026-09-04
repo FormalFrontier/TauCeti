@@ -313,7 +313,9 @@ consecutive with sizes `n+1` and `1`, so the block-coordinate equivalence sends 
 coordinate of the second block to `Fin.last (n+1)`. -/
 theorem youngBlock_singletonSecondRow_last (n : ℕ) :
     ((youngBlock (Nat.Partition.singletonSecondRow n) (Fin.last (n + 1))) : ℕ) = 1 := by
-  have hlen := Nat.Partition.length_sort_parts_singletonSecondRow n
+  have hlen : ((Nat.Partition.singletonSecondRow n).parts.sort (· ≥ ·)).length = 2 := by
+    rw [Nat.Partition.sort_parts_singletonSecondRow]
+    rfl
   have h1 : (1 : ℕ) < ((Nat.Partition.singletonSecondRow n).parts.sort (· ≥ ·)).length := by omega
   have h0 : (0 : ℕ) < ((Nat.Partition.singletonSecondRow n).parts.sort (· ≥ ·)).get ⟨1, h1⟩ := by
     rw [List.get_eq_getElem, getElem_sort_parts_singletonSecondRow]
