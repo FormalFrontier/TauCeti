@@ -35,11 +35,11 @@ construction is copied.
 
 ## Main definitions
 
-* `TauCeti.Rep.FiniteCyclicGroup.positiveEvenIso`: the common explicit model for positive even
+* `Rep.FiniteCyclicGroup.positiveEvenIso`: the common explicit model for positive even
   degrees.
-* `TauCeti.Rep.FiniteCyclicGroup.positiveOddIso`: the common explicit model for positive odd
+* `Rep.FiniteCyclicGroup.positiveOddIso`: the common explicit model for positive odd
   degrees.
-* `TauCeti.Rep.FiniteCyclicGroup.positivePeriodicIso`: the two-periodicity isomorphism between
+* `Rep.FiniteCyclicGroup.positivePeriodicIso`: the two-periodicity isomorphism between
   positive degrees of the same parity.
 
 ## References
@@ -54,7 +54,7 @@ universe u
 
 open CategoryTheory
 
-namespace TauCeti.Rep.FiniteCyclicGroup
+namespace Rep.FiniteCyclicGroup
 
 variable {R G : Type u} [CommRing R] [Group G] [Fintype G]
 
@@ -146,4 +146,4 @@ theorem natCard_tateCohomology_eq_of_pos_of_modEq
     Nat.card (tateCohomology M m) = Nat.card (tateCohomology M n) :=
   Nat.card_congr (positivePeriodicIso M g hg m n hmn).toLinearEquiv.toEquiv
 
-end TauCeti.Rep.FiniteCyclicGroup
+end Rep.FiniteCyclicGroup
