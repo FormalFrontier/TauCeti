@@ -26,6 +26,7 @@ file will prove that the descended map is a covering map.
   fundamental group.
 * `TauCeti.UniversalCover.SubgroupQuotient.basepoint`: the class of the constant based path.
 * `TauCeti.UniversalCover.subgroupQuotientMap`: the quotient map.
+* `TauCeti.UniversalCover.subgroupQuotientMap_surjective`: the quotient map is surjective.
 * `TauCeti.UniversalCover.isQuotientCoveringMap_subgroupQuotientMap`: the quotient map is a
   quotient covering map, and hence a covering map.
 * `TauCeti.UniversalCover.subgroupQuotientProj`: the endpoint projection descended to the
@@ -89,6 +90,13 @@ theorem subgroupQuotientMap_eq_iff (H : Subgroup (FundamentalGroup X x₀))
       e₁ ∈ MulAction.orbit H e₂ := by
   rw [subgroupQuotientMap_apply, subgroupQuotientMap_apply, Quotient.eq'',
     MulAction.orbitRel_apply]
+
+/-- Every point of the subgroup quotient is the class of a point of the universal cover. -/
+theorem subgroupQuotientMap_surjective (H : Subgroup (FundamentalGroup X x₀)) :
+    Function.Surjective (subgroupQuotientMap x₀ H) := by
+  intro a
+  induction a using Quotient.inductionOn' with
+  | h e => exact ⟨e, subgroupQuotientMap_apply x₀ H e⟩
 
 /-- The fundamental-group action is locally disjoint without a global connectedness assumption. -/
 private theorem fundamentalGroup_disjoint [LocallyPathConnectedSpace X]
