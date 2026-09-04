@@ -135,9 +135,9 @@ theorem frobenius_eq_self_iff (g : points n A) :
     _root_.Matrix.GeneralLinearGroup.map_iterateFrobenius_eq_self_iff]
 
 /-- **The Frobenius-fixed points of the full-weight type-`Bₙ₊₁` spin carrier are its points
-over the Frobenius-fixed subring.** For `p` prime, `0 < k`, `A` an algebraic closure of
-`ZMod p`, and `q = p ^ k`, this reads the fixed group of the `Bₙ₊₁(q)` Frobenius as the
-carrier's `𝔽_q`-points; no finiteness of either side is asserted. -/
+over the Frobenius-fixed subring.** Interpreting this as a statement about a finite group of
+type `Bₙ₊₁` will require the future identification of this carrier with the corresponding
+spin group scheme. -/
 theorem map_subtype_fixedSubgroup_frobenius_eq :
     (fixedSubgroup (frobenius n p k A)).map (points n A).subtype =
       (points n ↥(frobeniusFixedSubring A p k)).map
