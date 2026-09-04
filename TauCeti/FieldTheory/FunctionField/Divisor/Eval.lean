@@ -22,6 +22,15 @@ The norm is not decoration. `f(P)` lives in the residue field `F_P`, which varie
 without pushing each value down to `k` the factors would live in different fields and the product
 would not typecheck, let alone mean anything.
 
+**The norm is the classical field norm exactly when `F_P` is finite over `k`.** `Algebra.norm` is
+`LinearMap.det` of multiplication, so on a residue field that is *not* module-finite over `k` it
+takes Mathlib's junk value `1` (`Algebra.norm_eq_one_of_not_module_finite`), and then so does
+`normResidue`. That regime never arises where this API is meant to be used: over a function field
+every place has finite residue degree, by `TauCeti.Place.finiteDimensional_residueField`. The
+definitions below are stated without a finiteness hypothesis for the reason `TauCeti.Place.degree`
+is — the hypothesis would be unused in the term, since `Algebra.norm` does not take one — so the
+guarantee is recorded here and in `normResidue`'s own docstring rather than in its signature.
+
 ## Main definitions
 
 * `TauCeti.Place.normResidue`: for `f` a unit at `P`, the norm to `k` of the residue `f(P)`, as a
@@ -94,9 +103,25 @@ noncomputable def residueUnit (P : Place k F) (f : Fˣ) (hf : P.ord (f : F) = 0)
 
 /-- **The norm to `k` of the residue of a function that is a unit at `P`.** The residue field
 varies with `P`; the norm is what puts the value in `k`, the one field all the local factors of
-`Divisor.eval` have to share. -/
+`Divisor.eval` have to share.
+
+This is the classical field norm precisely when `Module.Finite k P.ResidueField` — which
+`TauCeti.Place.finiteDimensional_residueField` supplies for every place of a function field. Absent
+that, `Algebra.norm` is the junk value `1`
+(`Algebra.norm_eq_one_of_not_module_finite`), exactly as `TauCeti.Place.degree` is junk `0` absent
+the same hypothesis. The hypothesis is not in the signature because `Algebra.norm` does not consume
+one, so requiring it here would leave it unused. -/
 noncomputable def normResidue (P : Place k F) (f : Fˣ) (hf : P.ord (f : F) = 0) : kˣ :=
   Units.map (Algebra.norm k) (P.residueUnit f hf)
+
+/-- Where the residue field is not finite over `k`, `normResidue` is `1` — the junk value of
+`Algebra.norm`, not a field norm. Stated so that the boundary of the classical reading is a
+theorem rather than a remark; `Place.finiteDimensional_residueField` rules this case out over a
+function field. -/
+theorem normResidue_eq_one_of_not_finite {P : Place k F} {f : Fˣ} (hf : P.ord (f : F) = 0)
+    (h : ¬Module.Finite k P.ResidueField) : P.normResidue f hf = 1 := by
+  ext
+  exact Algebra.norm_eq_one_of_not_module_finite h _
 
 /-- `normResidue` extended by `1` where `f` is not a unit, making it a total function of the place.
 `1` is the only workable neutral value: see the implementation notes. -/
@@ -126,8 +151,13 @@ noncomputable def evalHom (f : Fˣ) : Multiplicative (Divisor k F) →* kˣ :=
 noncomputable def eval (D : Divisor k F) (f : Fˣ) : kˣ :=
   evalHom f (Multiplicative.ofAdd D)
 
-/-- `f(D)` is the product over the support of the local factors, each raised to its coefficient. -/
-@[simp]
+/-- `f(D)` is the product over the support of the local factors, each raised to its coefficient.
+
+Deliberately **not** `@[simp]`, for the reason recorded on
+`WeierstrassCurve.Affine.Point.naiveHeight_eq_logHeight`: tagging a defining equation makes
+`eval` disappear on sight, which puts `eval_zero`, `eval_neg` and `eval_single` out of
+simp-normal form and makes them redundant. The `#lint` environment linter reports exactly those
+three if this carries `@[simp]`. -/
 theorem eval_eq_finsuppProd (D : Divisor k F) (f : Fˣ) :
     eval D f = D.prod fun P n ↦ P.normResidueOrOne f ^ n := by
   simp [eval, evalHom]
