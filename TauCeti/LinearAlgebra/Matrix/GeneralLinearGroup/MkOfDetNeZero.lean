@@ -16,12 +16,12 @@ multiplication, existing general-linear elements, and transvections.
 
 ## Main results
 
-* `TauCeti.mkOfDetNeZero_mul`: packaging a matrix product agrees with
+* `TauCeti.Matrix.GeneralLinearGroup.mkOfDetNeZero_mul`: packaging a matrix product agrees with
   multiplication in `GL`.
-* `TauCeti.mkOfDetNeZero_coe`: repackaging the matrix of an element of `GL`
-  recovers that element.
-* `TauCeti.mkOfDetNeZero_transvection`: packaging a transvection recovers its
-  canonical element of `GL`.
+* `TauCeti.Matrix.GeneralLinearGroup.mkOfDetNeZero_coe`: repackaging the matrix of an element
+  of `GL` recovers that element.
+* `TauCeti.Matrix.GeneralLinearGroup.mkOfDetNeZero_transvection`: packaging a transvection
+  recovers its canonical element of `GL`.
 -/
 
 public section
@@ -29,6 +29,8 @@ public section
 open Matrix
 
 namespace TauCeti
+
+namespace Matrix.GeneralLinearGroup
 
 universe u v
 
@@ -38,12 +40,12 @@ variable {K : Type v} [Field K]
 /-- Packaging a product by `mkOfDetNeZero` agrees with multiplication in `GL`. -/
 @[simp]
 theorem mkOfDetNeZero_mul (M N : Matrix n n K) (hM : M.det ≠ 0) (hN : N.det ≠ 0) :
-    Matrix.GeneralLinearGroup.mkOfDetNeZero (M * N) (by
+    _root_.Matrix.GeneralLinearGroup.mkOfDetNeZero (M * N) (by
         rw [Matrix.det_mul]
         exact mul_ne_zero hM hN) =
-      Matrix.GeneralLinearGroup.mkOfDetNeZero M hM *
-        Matrix.GeneralLinearGroup.mkOfDetNeZero N hN := by
-  apply Matrix.GeneralLinearGroup.ext
+      _root_.Matrix.GeneralLinearGroup.mkOfDetNeZero M hM *
+        _root_.Matrix.GeneralLinearGroup.mkOfDetNeZero N hN := by
+  apply _root_.Matrix.GeneralLinearGroup.ext
   intro i j
   simp
 
@@ -51,9 +53,9 @@ theorem mkOfDetNeZero_mul (M N : Matrix n n K) (hM : M.det ≠ 0) (hN : N.det �
 element. -/
 @[simp]
 theorem mkOfDetNeZero_coe (A : GL n K) :
-    Matrix.GeneralLinearGroup.mkOfDetNeZero
+    _root_.Matrix.GeneralLinearGroup.mkOfDetNeZero
       (A : Matrix n n K) A.det_ne_zero = A := by
-  apply Matrix.GeneralLinearGroup.ext
+  apply _root_.Matrix.GeneralLinearGroup.ext
   intro i j
   simp
 
@@ -61,15 +63,17 @@ theorem mkOfDetNeZero_coe (A : GL n K) :
 `GL`. -/
 @[simp]
 theorem mkOfDetNeZero_transvection {i j : n} (hij : i ≠ j) (c : K) :
-    Matrix.GeneralLinearGroup.mkOfDetNeZero
+    _root_.Matrix.GeneralLinearGroup.mkOfDetNeZero
         (Matrix.transvection i j c) (by
           rw [Matrix.det_transvection_of_ne i j hij c]
           exact one_ne_zero) =
       (Matrix.SpecialLinearGroup.transvection hij c).toGL := by
   rw [toGL_transvection_eq_transvectionUnit]
-  apply Matrix.GeneralLinearGroup.ext
+  apply _root_.Matrix.GeneralLinearGroup.ext
   intro a b
   simp only [coe_transvectionUnit]
   simp
+
+end Matrix.GeneralLinearGroup
 
 end TauCeti
