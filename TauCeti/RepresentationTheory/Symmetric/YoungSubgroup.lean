@@ -353,6 +353,7 @@ theorem youngBlock_singletonSecondRow_eq_zero (n : ℕ) {x : Fin (n + 2)}
 /-- **The Young subgroup of the shape `(n+1, 1)` is a point stabilizer.**  Its blocks are the last
 label alone and all the others, so a permutation preserves them exactly when it fixes the last
 label. -/
+@[simp]
 theorem youngSubgroup_singletonSecondRow (n : ℕ) :
     youngSubgroup (Nat.Partition.singletonSecondRow n) =
       MulAction.stabilizer (Equiv.Perm (Fin (n + 2))) (Fin.last (n + 1)) := by
