@@ -9,6 +9,7 @@ public import Mathlib.NumberTheory.RamificationInertia.Galois
 public import Mathlib.RingTheory.Frobenius
 public import TauCeti.NumberTheory.NumberField.Frobenius.Restriction
 public import TauCeti.NumberTheory.NumberField.UnramifiedTower
+import TauCeti.Algebra.Group.Conj
 
 /-!
 # The Artin symbol of an unramified prime
@@ -118,12 +119,9 @@ theorem artinSymbol_map_restrictNormalHom {M L : Type*} [Field M] [NumberField M
       (isUnramifiedAt_of_intermediateExtension (M := M) (L := L) 𝔭 hur)
       (Q.1.under (𝓞 M))
       (σ.restrictNormal M) hσ.restrictNormal]
-  -- Mathlib has no `map_mk` computation lemma for `ConjClasses.map`, which is a `Quotient.lift`
-  -- and so computes on representatives; isolate that single reduction here.
-  have hmap : ∀ τ : L ≃ₐ[K] L,
-      ConjClasses.map (AlgEquiv.restrictNormalHom (F := K) (K₁ := L) M) (ConjClasses.mk τ) =
-        ConjClasses.mk (τ.restrictNormal M) := fun _ ↦ rfl
-  rw [hmap]
+  -- `AlgEquiv.restrictNormalHom M σ` is `σ.restrictNormal M`, so this is exactly the computation
+  -- rule for `ConjClasses.map` on representatives.
+  exact ConjClasses.map_mk _ σ
 
 /-- Every representative of `artinSymbol 𝔭 hur` is an arithmetic Frobenius at some prime above
 `𝔭`. -/
