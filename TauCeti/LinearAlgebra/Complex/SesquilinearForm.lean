@@ -23,8 +23,8 @@ the outer conjugation restores the shape -- and it satisfies
 `balance H K (K x) (K y) = conj (balance H K x y)`
 
 as soon as `K ∘ K` is a scalar of modulus one, which an arbitrary `H` need not.  That is the
-only property balancing adds: being Hermitian and definite off the origin both pass from `H` to
-`balance H K` unchanged.
+only property balancing adds: being Hermitian, nonnegative, and definite off the origin all pass
+from `H` to `balance H K` unchanged.
 
 ## Main definitions
 
@@ -35,8 +35,9 @@ only property balancing adds: being Hermitian and definite off the origin both p
 * `LinearMap.balance_apply`: the defining formula of the balanced form.
 * `LinearMap.balance_map_map`: the balanced form is compatible with the map it was balanced
   against, once that map squares to a scalar of modulus one.
-* `LinearMap.isSymm_balance` and `LinearMap.balance_apply_self_ne_zero`: balancing preserves
-  Hermitian symmetry and definiteness off the origin.
+* `LinearMap.isSymm_balance`, `LinearMap.isNonneg_balance` and
+  `LinearMap.balance_apply_self_ne_zero`: balancing preserves Hermitian symmetry, nonnegativity,
+  and definiteness off the origin.
 -/
 
 public section
@@ -101,6 +102,14 @@ theorem isSymm_balance {H : V →ₗ⋆[ℂ] V →ₗ[ℂ] ℂ} (hH : H.IsSymm)
 /-- A nonnegative complex number has vanishing imaginary part, so conjugation fixes it. -/
 private theorem conj_eq_self_of_nonneg {z : ℂ} (hz : 0 ≤ z) : (starRingEnd ℂ) z = z :=
   Complex.conj_eq_iff_im.mpr (Complex.nonneg_iff.mp hz).2.symm
+
+/-- The balanced form is nonnegative if `H` is: both summands are, the second because conjugation
+fixes a nonnegative complex number. -/
+theorem isNonneg_balance {H : V →ₗ⋆[ℂ] V →ₗ[ℂ] ℂ} (hH : H.IsNonneg)
+    (K : V →ₛₗ[starRingEnd ℂ] V) : (balance H K).IsNonneg where
+  nonneg x := by
+    rw [balance_apply, conj_eq_self_of_nonneg (hH.nonneg (K x))]
+    exact add_nonneg (hH.nonneg x) (hH.nonneg (K x))
 
 /-- The balanced form is definite off the origin if `H` is: the first summand is already nonzero
 and the second is nonnegative. -/
