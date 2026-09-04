@@ -8,7 +8,6 @@ module
 public import TauCeti.Probability.Density
 public import TauCeti.Probability.Distributions.Beta.Cdf
 import TauCeti.Analysis.Calculus.RealCharts
-import TauCeti.Analysis.SpecialFunctions.Beta
 
 /-!
 # Fisher's F distribution
