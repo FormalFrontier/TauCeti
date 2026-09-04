@@ -50,8 +50,8 @@ witness it needs is the one this file constructs from it.
   `TauCeti.IsGradedEulerAdmissible.shiftSourceInverse` are the same for the inverse shift.
 * `TauCeti.gradedExtEuler_shiftTarget`: `χ_q(X, Y{1}) = q · χ_q(X, Y)`.
 * `TauCeti.gradedExtEuler_shiftSource`: `χ_q(X{1}, Y) = q⁻¹ · χ_q(X, Y)`.
-* `TauCeti.gradedExtEuler_shiftTarget_inverse` and
-  `TauCeti.gradedExtEuler_shiftSource_inverse`: the two identities for the inverse shift `{-1}`.
+* `TauCeti.gradedExtEuler_shiftTargetInverse` and
+  `TauCeti.gradedExtEuler_shiftSourceInverse`: the two identities for the inverse shift `{-1}`.
 
 ## References
 
@@ -178,7 +178,7 @@ theorem gradedExtEuler_shiftTarget (h : IsGradedEulerAdmissible.{w} k e X Y) :
   exact truncatedGradedExtEuler_shiftTarget h.internallyFinite N
 
 /-- **`χ_q(X, Y{-1}) = q⁻¹ · χ_q(X, Y)`**: the inverse shift of the second argument. -/
-theorem gradedExtEuler_shiftTarget_inverse (h : IsGradedEulerAdmissible.{w} k e X Y) :
+theorem gradedExtEuler_shiftTargetInverse (h : IsGradedEulerAdmissible.{w} k e X Y) :
     gradedExtEuler k e h.shiftTargetInverse = T (-1) * gradedExtEuler k e h := by
   have hcounit : gradedExtEuler k e h = gradedExtEuler k e h.shiftTargetInverse.shiftTarget :=
     gradedExtEuler_of_iso k h h.shiftTargetInverse.shiftTarget (Iso.refl X)
@@ -247,7 +247,7 @@ omit [Functor.Linear k e.functor] in
 theorem IsGradedExtBoundedBy.shiftSource {N : ℕ} (h : IsGradedExtBoundedBy.{w} e X Y N) :
     IsGradedExtBoundedBy.{w} e (e.functor.obj X) Y N :=
   ⟨fun n hn j => have := h.subsingleton hn (j - 1)
-    (((extAddEquivOfEquivalence e X ((e ^ (j - 1)).functor.obj Y) n).trans
+    (((e.extAddEquiv X ((e ^ (j - 1)).functor.obj Y) n).trans
       (extAddEquivOfIso (Iso.refl (e.functor.obj X))
         (shiftSourceObjIso e Y j) n)).symm).toEquiv.subsingleton⟩
 
@@ -258,7 +258,7 @@ theorem IsGradedExtBoundedBy.shiftSourceInverse {N : ℕ} (h : IsGradedExtBounde
   ⟨fun n hn j =>
     have := h.subsingleton hn (j + 1)
     have equiv : GradedExt.{w} e (e.inverse.obj X) Y n j ≃+ GradedExt.{w} e X Y n (j + 1) :=
-      (extAddEquivOfEquivalence e (e.inverse.obj X) ((e ^ j).functor.obj Y) n).trans
+      (e.extAddEquiv (e.inverse.obj X) ((e ^ j).functor.obj Y) n).trans
         (extAddEquivOfIso (e.counitIso.app X) ((e.powSuccRightIso j).app Y).symm n)
     equiv.toEquiv.subsingleton⟩
 
@@ -314,7 +314,7 @@ theorem gradedExtEuler_shiftSource (h : IsGradedEulerAdmissible.{w} k e X Y) :
   exact truncatedGradedExtEuler_shiftSource h.internallyFinite N
 
 /-- **`χ_q(X{-1}, Y) = q · χ_q(X, Y)`**: the inverse shift of the first argument. -/
-theorem gradedExtEuler_shiftSource_inverse (h : IsGradedEulerAdmissible.{w} k e X Y) :
+theorem gradedExtEuler_shiftSourceInverse (h : IsGradedEulerAdmissible.{w} k e X Y) :
     gradedExtEuler k e h.shiftSourceInverse = T 1 * gradedExtEuler k e h := by
   have hcounit : gradedExtEuler k e h = gradedExtEuler k e h.shiftSourceInverse.shiftSource :=
     gradedExtEuler_of_iso k h h.shiftSourceInverse.shiftSource (e.counitIso.app X).symm

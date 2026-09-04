@@ -19,8 +19,8 @@ inverse equivalence supplies the inverse map, up to the transport along the unit
 
 ## Main definitions
 
-* `TauCeti.extAddEquivOfEquivalence`: `Extⁿ(X, Y) ≃+ Extⁿ(e X, e Y)` for an additive equivalence
-  `e`.
+* `CategoryTheory.Equivalence.extAddEquiv`: `Extⁿ(X, Y) ≃+ Extⁿ(e X, e Y)` for an additive
+  equivalence `e`.
 * `TauCeti.extLinearEquivOfEquivalence`: its `R`-linear refinement for an `R`-linear equivalence
   of `R`-linear abelian categories.  `R`-linearity of `e` is genuinely needed for the linear
   statement: an additive isomorphism of `k`-vector spaces need not preserve dimension.
@@ -74,7 +74,8 @@ private theorem mapExactFunctor_inverse_injective (e : C ≌ D) [e.functor.Addit
 /-- **`Ext` groups are invariant under an additive equivalence.**  The equivalence `e` carries
 `Extⁿ(X, Y)` isomorphically onto `Extⁿ(e X, e Y)`, with the inverse supplied by the inverse
 equivalence and the unit isomorphism. -/
-noncomputable def extAddEquivOfEquivalence (e : C ≌ D) [e.functor.Additive] (X Y : C) (n : ℕ) :
+noncomputable def _root_.CategoryTheory.Equivalence.extAddEquiv
+    (e : C ≌ D) [e.functor.Additive] (X Y : C) (n : ℕ) :
     Ext.{w} X Y n ≃+ Ext.{w} (e.functor.obj X) (e.functor.obj Y) n where
   toFun α := α.mapExactFunctor e.functor
   invFun β := (extAddEquivOfIso (e.unitIso.app X) (e.unitIso.app Y) n).symm
@@ -90,18 +91,19 @@ noncomputable def extAddEquivOfEquivalence (e : C ≌ D) [e.functor.Additive] (X
     exact hinj (symm_extAddEquivOfIso_mapExactFunctor e X Y n _)
 
 @[simp]
-theorem extAddEquivOfEquivalence_apply (e : C ≌ D) [e.functor.Additive] {X Y : C} {n : ℕ}
+theorem _root_.CategoryTheory.Equivalence.extAddEquiv_apply
+    (e : C ≌ D) [e.functor.Additive] {X Y : C} {n : ℕ}
     (α : Ext.{w} X Y n) :
-    extAddEquivOfEquivalence e X Y n α = α.mapExactFunctor e.functor :=
+    e.extAddEquiv X Y n α = α.mapExactFunctor e.functor :=
   (rfl)
 
-/-- **The `R`-linear refinement of `TauCeti.extAddEquivOfEquivalence`.**  For an `R`-linear
+/-- **The `R`-linear refinement of `CategoryTheory.Equivalence.extAddEquiv`.**  For an `R`-linear
 equivalence of `R`-linear abelian categories, `Extⁿ(X, Y)` and `Extⁿ(e X, e Y)` are isomorphic as
 `R`-modules. -/
 noncomputable def extLinearEquivOfEquivalence (R : Type t) [Ring R] [Linear R C] [Linear R D]
     (e : C ≌ D) [e.functor.Additive] [e.functor.Linear R] (X Y : C) (n : ℕ) :
     Ext.{w} X Y n ≃ₗ[R] Ext.{w} (e.functor.obj X) (e.functor.obj Y) n where
-  __ := extAddEquivOfEquivalence e X Y n
+  __ := e.extAddEquiv X Y n
   map_smul' r α := by simp
 
 @[simp]
