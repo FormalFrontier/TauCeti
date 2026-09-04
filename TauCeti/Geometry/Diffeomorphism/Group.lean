@@ -41,12 +41,6 @@ construction works for every smoothness exponent `n`, with `n = ∞` the case na
 
 * `Diffeomorph.mul_apply` / `one_apply` / `inv_apply` and the `coe_*` companions: the group
   operations act by composition, the identity, and the inverse diffeomorphism.
-
-## Implementation notes
-
-Declarations extending Mathlib's `Diffeomorph` API live in its root namespace for uniform canonical
-placement and to enable receiver notation where applicable. The project abbreviation `Diff` remains
-in `TauCeti`.
 -/
 
 public section
@@ -138,11 +132,15 @@ theorem toEquiv_inv (f : M ≃ₘ^n⟮I, I⟯ M) : (f⁻¹).toEquiv = f.toEquiv�
 
 /-- The forgetful group homomorphism from the self-diffeomorphism group to the permutation group of
 the underlying set, sending a diffeomorphism to its underlying equivalence. -/
-@[expose, simps]
 def toPerm : (M ≃ₘ^n⟮I, I⟯ M) →* Equiv.Perm M where
   toFun f := f.toEquiv
   map_one' := rfl
   map_mul' _ _ := rfl
+
+/-- The forgetful homomorphism to permutations sends a diffeomorphism to its underlying
+equivalence. -/
+@[simp]
+theorem toPerm_apply (f : M ≃ₘ^n⟮I, I⟯ M) : toPerm f = f.toEquiv := (rfl)
 
 /-- The forgetful homomorphism to permutations is injective. -/
 theorem toPerm_injective : Function.Injective (toPerm : (M ≃ₘ^n⟮I, I⟯ M) → Equiv.Perm M) :=

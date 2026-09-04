@@ -62,7 +62,8 @@ to permutations. -/
 theorem toPermHom_eq_toPerm :
     MulAction.toPermHom (M ≃ₘ^n⟮I, I⟯ M) M = toPerm := by
   ext f x
-  rfl
+  simp only [MulAction.toPermHom_apply, MulAction.toPerm_apply, smul_def, toPerm_apply,
+    coe_toEquiv]
 
 /-- The tautological action of `M ≃ₘ^n⟮I, I⟯ M` on `M` is faithful. -/
 instance applyFaithfulSMul : FaithfulSMul (M ≃ₘ^n⟮I, I⟯ M) M :=

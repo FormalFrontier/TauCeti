@@ -42,12 +42,6 @@ relative subgroup is closed are deliberately left to the later `C^∞`-topology 
   setwise.
 * `Diffeomorph.toHomeomorph_mem_fixingSubgroup`: forgetting smoothness sends a relative
   diffeomorphism to the corresponding relative homeomorphism.
-
-## Implementation notes
-
-The API extending Mathlib's `Diffeomorph` type lives in its root namespace for uniform canonical
-placement and to enable receiver notation where applicable. The project type abbreviation
-`RelativeDiff` and its namespace remain in `TauCeti`.
 -/
 
 public section

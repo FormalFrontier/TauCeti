@@ -82,7 +82,7 @@ namespace Diffeomorph
 self-diffeomorphism groups: `diffCongr e φ = e ∘ φ ∘ e⁻¹`. This is the diffeomorphism analogue of
 `Equiv.permCongr` and expresses that diffeomorphic manifolds have isomorphic self-diffeomorphism
 groups. -/
-@[expose] def diffCongr (e : M ≃ₘ^n⟮I, J⟯ N) : (M ≃ₘ^n⟮I, I⟯ M) ≃* (N ≃ₘ^n⟮J, J⟯ N) where
+def diffCongr (e : M ≃ₘ^n⟮I, J⟯ N) : (M ≃ₘ^n⟮I, I⟯ M) ≃* (N ≃ₘ^n⟮J, J⟯ N) where
   toFun φ := (e.symm.trans φ).trans e
   invFun ψ := (e.trans ψ).trans e.symm
   left_inv φ := by
@@ -98,11 +98,11 @@ groups. -/
 /-- The conjugating isomorphism acts pointwise by `diffCongr e φ x = e (φ (e.symm x))`. -/
 @[simp, grind =]
 theorem diffCongr_apply_apply (e : M ≃ₘ^n⟮I, J⟯ N) (φ : M ≃ₘ^n⟮I, I⟯ M) (x : N) :
-    diffCongr e φ x = e (φ (e.symm x)) := rfl
+    diffCongr e φ x = e (φ (e.symm x)) := (rfl)
 
 /-- The underlying diffeomorphism of `diffCongr e φ` is `e ∘ φ ∘ e⁻¹`. -/
 theorem diffCongr_apply (e : M ≃ₘ^n⟮I, J⟯ N) (φ : M ≃ₘ^n⟮I, I⟯ M) :
-    diffCongr e φ = (e.symm.trans φ).trans e := rfl
+    diffCongr e φ = (e.symm.trans φ).trans e := (rfl)
 
 /-- The inverse of `diffCongr e φ` is `diffCongr e φ⁻¹`, since conjugation is a homomorphism. -/
 theorem diffCongr_inv (e : M ≃ₘ^n⟮I, J⟯ N) (φ : M ≃ₘ^n⟮I, I⟯ M) :

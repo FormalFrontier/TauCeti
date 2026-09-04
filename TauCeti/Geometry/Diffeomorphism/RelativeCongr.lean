@@ -173,8 +173,9 @@ conjugation by `e.symm`. -/
 theorem relativeDiffCongrOfImageEq_symm_apply (e : M ≃ₘ^n⟮I, J⟯ N) {s : Set M} {t : Set N}
     (hst : e '' s = t) (ψ : fixingSubgroup (I := J) (n := n) t) :
     ((relativeDiffCongrOfImageEq e hst).symm ψ : M ≃ₘ^n⟮I, I⟯ M) = diffCongr e.symm ψ := by
-  ext x
-  rfl
+  have h := relativeDiffCongrOfImageEq_apply e hst ((relativeDiffCongrOfImageEq e hst).symm ψ)
+  rw [MulEquiv.apply_symm_apply] at h
+  rw [h, ← diffCongr_symm, MulEquiv.symm_apply_apply]
 
 /-- Applying the inverse of `relativeDiffCongr` and then forgetting the subgroup is conjugation by
 `e.symm`. -/
