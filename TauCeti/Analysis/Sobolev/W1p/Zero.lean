@@ -45,7 +45,8 @@ subspace under a suitable geometric hypothesis but not on all of `W^{1,p}(Ω)`.
   norm.
 * `TauCeti.W1p0.valueL`: the canonical continuous value map into `Lᵖ(Ω)`.
 * `TauCeti.W1p0.denseRange_valueL_two`: test functions make the value map from
-  `W^{1,2}_0(Ω)` dense in `L²(Ω)`.
+  `W^{1,2}_0(Ω)` dense in `L²(Ω)`, and `TauCeti.W1p0.valueL_ne_zero`: on a nonempty `Ω` that map
+  is nonzero.
 * `TauCeti.w1p0Submodule_subset_of_isClosed`: a closed set containing every test-function jet
   contains `W^{1,p}_0(Ω)`, which is how a property is extended from test functions to the whole
   space.
@@ -233,6 +234,13 @@ theorem W1p0.exists_value_ne_zero (hOmega : (Omega : Set E).Nonempty) :
     have := congrArg (fun q : 𝓓(Omega, ℝ) => q x) hphi
     simpa [phi] using this
   linarith
+
+/-- On a nonempty open set the value map `W^{1,2}_0(Ω) → L²(Ω)` is nonzero: it does not kill the
+test function of `TauCeti.W1p0.exists_value_ne_zero`. -/
+theorem W1p0.valueL_ne_zero (hOmega : (Omega : Set E).Nonempty) :
+    (W1p0.valueL (mu := mu) (Omega := Omega) (p := 2)) ≠ 0 := by
+  obtain ⟨w, hw⟩ := W1p0.exists_value_ne_zero (mu := mu) (Omega := Omega) hOmega
+  exact fun hzero => hw (by rw [← W1p0.valueL_apply, hzero, zero_apply])
 
 /-- `W^{1,p}_0(Ω)` is complete: it is a closed subspace of the complete space `W^{1,p}(Ω)`. -/
 instance : CompleteSpace (W1p0 mu Omega p) :=

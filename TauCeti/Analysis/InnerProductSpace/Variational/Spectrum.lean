@@ -254,6 +254,20 @@ theorem le_of_forall_apply_eq_smul_inner (hB : IsCoercive B) {J : V →L[ℝ] H}
   have hsq : 0 < ‖u‖ ^ 2 := by positivity
   exact le_of_mul_le_mul_right (by linarith [hlower u]) hsq
 
+omit [CompleteSpace V] [CompleteSpace H] in
+/-- **A variational eigenfunction has nonzero image in `H`.**  If `J u` vanished, the
+eigenvalue equation would make the energy of `u` vanish too, which coercivity forbids for
+`u ≠ 0`. -/
+theorem apply_ne_zero_of_forall_apply_eq_smul_inner (hB : IsCoercive B) (J : V →L[ℝ] H)
+    {kappa : ℝ} {u : V} (hu : u ≠ 0) (heq : ∀ v : V, B u v = kappa * ⟪J u, J v⟫_ℝ) :
+    J u ≠ 0 := by
+  intro hzero
+  obtain ⟨C, hC, hle⟩ := id hB
+  have hpos : 0 < ‖u‖ := norm_pos_iff.mpr hu
+  have hself : B u u = 0 := by rw [heq u, hzero, inner_zero_left, mul_zero]
+  have h2 : 0 < C * ‖u‖ * ‖u‖ := mul_pos (mul_pos hC hpos) hpos
+  linarith [hle u]
+
 /-- A variational eigenfunction for `κ ≠ 0` produces an eigenvector of the solution operator
 with eigenvalue `κ⁻¹`. -/
 theorem hasEigenvector_formSolutionOperator (hB : IsCoercive B) (J : V →L[ℝ] H) {kappa : ℝ}
@@ -261,14 +275,8 @@ theorem hasEigenvector_formSolutionOperator (hB : IsCoercive B) (J : V →L[ℝ]
     HasEigenvector (hB.formSolutionOperator J : H →ₗ[ℝ] H) kappa⁻¹ (kappa • J u) := by
   have hsol : u = hB.formSolutionMap J (kappa • J u) :=
     eq_formSolutionMap hB J fun v => by rw [heq v, real_inner_smul_left]
-  have hJu : J u ≠ 0 := by
-    intro hzero
-    obtain ⟨C, hC, hle⟩ := id hB
-    have hpos : 0 < ‖u‖ := norm_pos_iff.mpr hu
-    have hself : B u u = 0 := by rw [heq u, hzero, inner_zero_left, mul_zero]
-    have h2 : 0 < C * ‖u‖ * ‖u‖ := mul_pos (mul_pos hC hpos) hpos
-    linarith [hle u]
-  refine ⟨mem_eigenspace_iff.mpr ?_, smul_ne_zero hkappa hJu⟩
+  refine ⟨mem_eigenspace_iff.mpr ?_,
+    smul_ne_zero hkappa (hB.apply_ne_zero_of_forall_apply_eq_smul_inner J hu heq)⟩
   rw [ContinuousLinearMap.coe_coe, formSolutionOperator_apply, ← hsol, smul_smul,
     inv_mul_cancel₀ hkappa, one_smul]
 
