@@ -375,7 +375,7 @@ theorem IsProP.proPKernel_eq_bot (hG : IsProP p G) : proPKernel p G = ⊥ :=
 
 /-- The canonical continuous multiplicative equivalence from the maximal pro-`p` quotient of a
 profinite pro-`p` group to the group itself. -/
-abbrev maximalProPQuotient.equivOfIsProP (hG : IsProP p G) :
+def maximalProPQuotient.equivOfIsProP (hG : IsProP p G) :
     maximalProPQuotient p G ≃ₜ* G :=
   ContinuousMulEquiv.mk
     ((QuotientGroup.quotientMulEquivOfEq hG.proPKernel_eq_bot).trans
@@ -388,7 +388,7 @@ to its representative. -/
 @[simp]
 theorem maximalProPQuotient.equivOfIsProP_mk (hG : IsProP p G) (x : G) :
     maximalProPQuotient.equivOfIsProP hG (x : maximalProPQuotient p G) = x :=
-  rfl
+  (rfl)
 
 /-- **Idempotence.** The pro-`p` kernel of a maximal pro-`p` quotient is trivial. -/
 theorem proPKernel_maximalProPQuotient_eq_bot :
@@ -400,6 +400,13 @@ canonically continuously equivalent to applying it once. -/
 def maximalProPQuotient.idempotentEquiv :
     maximalProPQuotient p (maximalProPQuotient p G) ≃ₜ* maximalProPQuotient p G :=
   maximalProPQuotient.equivOfIsProP isProP_maximalProPQuotient
+
+/-- The idempotence equivalence sends each class to its representative. -/
+@[simp]
+theorem maximalProPQuotient.idempotentEquiv_mk (x : maximalProPQuotient p G) :
+    maximalProPQuotient.idempotentEquiv
+      (x : maximalProPQuotient p (maximalProPQuotient p G)) = x :=
+  (rfl)
 
 end Idempotence
 
