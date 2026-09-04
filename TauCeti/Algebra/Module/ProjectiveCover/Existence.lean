@@ -61,7 +61,7 @@ the kernel of the reduction map nil, which is what lets the idempotent lift.
 * `TauCeti.exists_isProjectiveCover_comp_subtype`: over a semiprimary ring, a surjection onto `M`
   from a projective module restricts to a projective cover of `M` on a submodule of its source.
 * `TauCeti.exists_isProjectiveCover`: **every module over a semiprimary ring has a projective
-  cover**, realized as a direct summand of a free module.
+  cover**, carried by a submodule of the free module on its underlying set.
 * `TauCeti.exists_isProjectiveCover_of_finiteDimensional`: the same statement for a module over a
   finite-dimensional algebra, which is a semiprimary ring.
 
@@ -84,8 +84,8 @@ variable {R : Type u} [Ring R] {M : Type v} [AddCommGroup M] [Module R M]
 
 /-- **A projective cover is cut out of any projective presentation by an idempotent.** Over a
 semiprimary ring, a surjection `p : N ↠ M` from a projective module restricts to a projective cover
-of `M` on a suitable submodule `P` of `N` — a direct summand, the image of an idempotent lifted
-from the radical quotient. See the module docstring for the argument. -/
+of `M` on a suitable submodule `P` of `N`; that cover property is all the statement records about
+`P`. See the module docstring for how `P` is produced. -/
 theorem exists_isProjectiveCover_comp_subtype [IsSemiprimaryRing R] {N : Type w} [AddCommGroup N]
     [Module R N] [Module.Projective R N] (p : N →ₗ[R] M) (hp : Function.Surjective p) :
     ∃ P : Submodule R N, IsProjectiveCover (p ∘ₗ P.subtype) := by
@@ -171,8 +171,8 @@ variable (R M)
 
 /-- **Every module over a semiprimary ring has a projective cover.**
 
-The cover is a direct summand of the free module on the underlying set of `M`. No finiteness is
-assumed of `M`: a semiprimary ring is left perfect, so it covers every module, not only the
+The covering module is a submodule of the free module on the underlying set of `M`. No finiteness
+is assumed of `M`: a semiprimary ring is left perfect, so it covers every module, not only the
 finitely generated ones. -/
 theorem exists_isProjectiveCover [IsSemiprimaryRing R] :
     ∃ P : Submodule R (M →₀ R),

@@ -16,8 +16,8 @@ public import TauCeti.CategoryTheory.Projective.Cover
 with superfluous kernel — and `TauCeti.IsEssentialEpi` is its categorical counterpart, an
 epimorphism `π` such that every morphism `g` into its source with `g ≫ π` an epimorphism is itself
 one. This file is the bridge between the two over `ModuleCat`: a linear map that is a projective
-cover is an essential epimorphism of `ModuleCat` from a projective object
-(`TauCeti.IsProjectiveCover.isEssentialEpi`), and consequently the existence theorem of
+cover is an essential epimorphism of `ModuleCat` from a projective object, and conversely
+(`TauCeti.isProjectiveCover_iff_projective_and_isEssentialEpi`), so the existence theorem of
 `TauCeti/Algebra/Module/ProjectiveCover/Existence.lean` reads as a statement about objects of
 `ModuleCat`.
 
@@ -34,6 +34,9 @@ fix a single universe for the ring and the category.
 
 * `TauCeti.IsProjectiveCover.isEssentialEpi`: a module-level projective cover is an essential
   epimorphism of `ModuleCat`.
+* `TauCeti.isProjectiveCover_iff_projective_and_isEssentialEpi`: the two readings agree — a
+  morphism of `ModuleCat` is a projective cover of modules exactly when its source is a projective
+  object and it is an essential epimorphism.
 * `TauCeti.exists_essentialEpi_projective`: **every object of `ModuleCat R` over a semiprimary ring
   receives an essential epimorphism from a projective object.**
 * `TauCeti.exists_projectiveCover`: the same for a module over a finite-dimensional algebra.
@@ -73,6 +76,29 @@ theorem IsProjectiveCover.projective_obj {π : P ⟶ M} (h : IsProjectiveCover �
     Projective P :=
   have : Module.Projective R P := h.projective
   inferInstance
+
+/-- **The two readings of a projective cover agree.** A morphism of `ModuleCat` is a projective
+cover of modules exactly when its source is a projective object and it is an essential
+epimorphism. The backward direction recovers the module-level API — surjectivity and a superfluous
+kernel — from the categorical data: a map into the source is tested through its range, a submodule
+of the source and so again an object of `ModuleCat`. -/
+theorem isProjectiveCover_iff_projective_and_isEssentialEpi [Small.{v} R] {π : P ⟶ M} :
+    IsProjectiveCover π.hom ↔ Projective P ∧ IsEssentialEpi π := by
+  refine ⟨fun h => ⟨h.projective_obj, h.isEssentialEpi⟩, fun ⟨hP, hπ⟩ => ?_⟩
+  have hmod : Module.Projective R P := (IsProjective.iff_projective (R := R) ↥P).mpr hP
+  have hsurj : Function.Surjective π.hom := (ModuleCat.epi_iff_surjective π).mp hπ.epi
+  refine (isProjectiveCover_iff_forall_surjective hsurj).mpr fun {P'} _ _ h hcomp => ?_
+  -- The range of `h` is a submodule of `P`, so essentiality applies to its inclusion.
+  have hrange : Function.Surjective (π.hom ∘ₗ (LinearMap.range h).subtype) := fun y => by
+    obtain ⟨x, hx⟩ := hcomp y
+    exact ⟨⟨h x, LinearMap.mem_range_self h x⟩, hx⟩
+  have hepi : Epi (ModuleCat.ofHom (LinearMap.range h).subtype ≫ π) := by
+    rw [ModuleCat.epi_iff_surjective]
+    simpa [ModuleCat.hom_comp] using hrange
+  have hsub : Function.Surjective (LinearMap.range h).subtype :=
+    (ModuleCat.epi_iff_surjective _).mp (hπ.epi_of_epi_comp _ hepi)
+  rw [← LinearMap.range_eq_top]
+  exact (Submodule.range_subtype _).symm.trans (LinearMap.range_eq_top.mpr hsub)
 
 end Bridge
 
