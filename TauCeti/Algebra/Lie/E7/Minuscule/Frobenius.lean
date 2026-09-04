@@ -7,6 +7,9 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.Frobenius.GeneralLinear
 public import TauCeti.Algebra.Lie.E7.Minuscule.PointsFunctor
+-- The toral-closure Frobenius is used only inside the proof of `frobenius_weightTorusPoints`, so
+-- it is imported privately rather than re-exported to consumers of this module.
+import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Frobenius
 
 /-!
 # The Frobenius of the full-weight type-E7 minuscule carrier
@@ -32,9 +35,10 @@ powers in the endomorphism monoid, and the fixed points are the points of the sa
 the Frobenius-fixed subring of `A`.
 
 The `E₇` diagram has no nontrivial symmetry, so `E₇(q)` is the only classification-list family
-built on this carrier and this Frobenius is its whole Steinberg map, with no graph automorphism to
-compose. Nothing here asserts reductivity, maximality of the weight torus, an identification of
-the carrier's root datum, or any finiteness or simplicity statement.
+built on this carrier: once that carrier is identified with the pinned simply connected
+Chevalley--Demazure group, this Frobenius will be its whole Steinberg map, with no graph
+automorphism to compose. Nothing here asserts reductivity, maximality of the weight torus, an
+identification of the carrier's root datum, or any finiteness or simplicity statement.
 
 ## Main declarations
 
@@ -57,9 +61,13 @@ the carrier's root datum, or any finiteness or simplicity statement.
   `TauCeti.Algebra.Lie.E6.Minuscule.Frobenius`,
   `TauCeti.Algebra.Lie.E6.DoubledMinuscule.Frobenius`,
   `TauCeti.Algebra.Lie.SpecialLinear.StandardCarrier.Frobenius` and
-  `TauCeti.Algebra.Lie.Symplectic.StandardCarrier.Frobenius`, and consumes the carrier's
-  functorial points API together with the facts about entrywise Frobenius on the points cut out
-  by a Hopf ideal from `TauCeti.Algebra.AlgebraicGroup.Frobenius.GeneralLinear`.
+  `TauCeti.Algebra.Lie.Symplectic.StandardCarrier.Frobenius`. Every general fact used about
+  entrywise Frobenius is consumed rather than reproved: the carrier's functorial points API, the
+  facts about the points cut out by a Hopf ideal from
+  `TauCeti.Algebra.AlgebraicGroup.Frobenius.GeneralLinear`, the entrywise Frobenius of a
+  weight-torus matrix from
+  `TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Frobenius`,
+  and the power law of an additive character from Mathlib's `AddChar.map_nsmul_eq_pow`.
 
 ## Roadmap
 
@@ -125,13 +133,10 @@ theorem frobenius_rootSubgroupPoints (i : Fin 7 ⊕ Fin 7) (u : Multiplicative A
 power.** -/
 @[simp]
 theorem frobenius_weightTorusPoints (s : Fin 7 → Aˣ) :
-    frobenius p k A (weightTorusPoints A s) = weightTorusPoints A (s ^ p ^ k) := by
-  have hs : (fun j => Units.map (iterateFrobenius A p k : A →* A) (s j)) = s ^ p ^ k := by
-    funext j
-    exact Units.ext (by
-      rw [Units.coe_map, MonoidHom.coe_coe, iterateFrobenius_def, Pi.pow_apply,
-        Units.val_pow_eq_pow_val])
-  rw [frobenius, pointsMap_weightTorusPoints, hs]
+    frobenius p k A (weightTorusPoints A s) = weightTorusPoints A (s ^ p ^ k) :=
+  Subtype.ext (by
+    rw [coe_frobenius, coe_weightTorusPoints,
+      UniversalEnvelopingAlgebra.map_iterateFrobenius_kostantTorusMatrix, coe_weightTorusPoints])
 
 /-- The zeroth Frobenius iterate is the identity on the type-`E₇` minuscule carrier's point
 group. -/
@@ -148,13 +153,19 @@ theorem frobenius_add (m : ℕ) :
 Frobenius of the type-`E₇` minuscule carrier, in the endomorphism monoid of its points, is its
 `p ^ (k * m)`-power Frobenius. -/
 -- `Monoid.End` is definitionally a bundled `MonoidHom`; the `show` picks its composition monoid
--- structure before the power is elaborated, and the two closing `rfl`s identify its unit and
--- multiplication with `MonoidHom.id` and `MonoidHom.comp`.
+-- structure before the power is elaborated, and the closing `rfl` identifies the character's value
+-- with the endomorphism again. `frobenius_zero` and `frobenius_add` say exactly that the iterates
+-- form an additive character of `ℕ` in that monoid, so the law is Mathlib's
+-- `AddChar.map_nsmul_eq_pow` rather than a fresh induction.
 theorem frobenius_pow (m : ℕ) :
     (show Monoid.End _ from frobenius p k A) ^ m = frobenius p (k * m) A := by
-  induction m with
-  | zero => rw [pow_zero, Nat.mul_zero, frobenius_zero]; rfl
-  | succ m ih => rw [pow_succ, ih, Nat.mul_succ, frobenius_add p (k * m) A k]; rfl
+  let ψ : AddChar ℕ (Monoid.End (points A)) :=
+    { toFun := fun k => frobenius p k A
+      map_zero_eq_one' := frobenius_zero p A
+      map_add_eq_mul' := fun i j => frobenius_add p i A j }
+  rw [show (show Monoid.End _ from frobenius p k A) = ψ k from rfl,
+    ← ψ.map_nsmul_eq_pow m k, smul_eq_mul, Nat.mul_comm]
+  rfl
 
 /-- A type-`E₇` minuscule carrier point is fixed by Frobenius exactly when all of its matrix
 entries lie in the Frobenius-fixed subring. -/
@@ -168,8 +179,9 @@ theorem frobenius_eq_self_iff (g : points A) :
 
 /-- **The Frobenius-fixed points of the full-weight type-`E₇` minuscule carrier are its points
 over the Frobenius-fixed subring.** For `p` prime, `0 < k`, `A` an algebraic closure of `ZMod p`
-and `q = p ^ k` this reads the fixed group of the `E₇(q)` Steinberg map as the carrier's
-`𝔽_q`-points; no finiteness of either side is asserted. -/
+and `q = p ^ k`, this will read the fixed group of the `E₇(q)` Steinberg map as the carrier's
+`𝔽_q`-points once that carrier is identified with the pinned simply connected group; no finiteness
+of either side is asserted. -/
 theorem map_subtype_fixedSubgroup_frobenius_eq :
     (fixedSubgroup (frobenius p k A)).map (points A).subtype =
       (points ↥(frobeniusFixedSubring A p k)).map
