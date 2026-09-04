@@ -11,56 +11,86 @@ public import TauCeti.RepresentationTheory.InvariantForm.Hermitian
 public import TauCeti.RepresentationTheory.RealForm
 
 /-!
-# Real structures and invariant symmetric forms, against a fixed invariant Hermitian form
+# Structure maps and invariant bilinear forms, against a fixed invariant Hermitian form
 
-An invariant *symmetric bilinear* form `B` on an irreducible complex representation is strictly
-weaker than a real form.  Together with a positive definite invariant *Hermitian* form `H`,
-however, it produces one: this file builds a `Representation.IsRealStructure` -- a conjugate-linear
-involution of `V` commuting with the action -- out of the two forms, and goes back again, so that
-against a fixed `H` the two data are interchangeable.
+An invariant *bilinear* form on an irreducible complex representation is strictly weaker than a
+structure map.  Together with a positive definite invariant *Hermitian* form `H`, however, it
+produces one: this file builds a conjugate-linear equivariant map of `V` out of the two forms, and
+goes back again, so that against a fixed `H` the two data are interchangeable.
+
+Which structure map comes out is decided by the **flip rule** of the bilinear form.  Writing
+`B x y = ε * B y x` -- with `ε = 1` for a symmetric form and `ε = -1` for an alternating one -- the
+map `J` produced squares to `ε`:
+
+* a symmetric `B` gives a conjugate-linear involution, a `TauCeti.Representation.IsRealStructure`,
+  whose real points are a real form;
+* an alternating `B` gives a conjugate-linear `J` with `J (J x) = -x`, a
+  `TauCeti.Representation.IsQuaternionicStructure`, whose fixed points are only `0`.
+
+Both cases are proved once here, for a real sign `ε` with `ε * ε = 1`, and specialized twice.
 
 Comparing the two forms produces a conjugate-linear map `J` of `V` determined by
 `H (J x) y = B x y`.  It exists because `H`, read as a map `V → V*`, is injective by definiteness
 and hence bijective -- as an `ℝ`-linear map between two spaces of the same finite real dimension --
 so it can be inverted on the `ℂ`-linear map `x ↦ B x`.  Invariance of both forms makes `J` commute
 with the action, so `J ∘ J` is a `ℂ`-linear self-intertwiner, and Schur's lemma over the
-algebraically closed `ℂ` forces `J ∘ J = c • id`.  Symmetry of `B` and the Hermitian symmetry of
-`H` then evaluate `c`:
+algebraically closed `ℂ` forces `J ∘ J = c • id`.  The flip rule of `B` and the Hermitian symmetry
+of `H` then evaluate `c`:
 
-`H (J x) (J x) = B x (J x) = B (J x) x = H (J (J x)) x = conj c * H x x`,
+`H (J x) (J x) = B x (J x) = ε * B (J x) x = ε * H (J (J x)) x = ε * conj c * H x x`,
 
-so `c` is the ratio of two positive reals.  Rescaling `J` by the inverse square root of `c` -- a
-*real* scalar, so conjugate-linearity survives -- turns it into an involution, that is, into a real
-structure, whose real points are a real form.
+so `ε * c` is the ratio of two positive reals.  Rescaling `J` by the inverse square root of that
+ratio -- a *real* scalar, so conjugate-linearity survives -- makes `J ∘ J` equal to `ε`: a real
+structure when `ε = 1`, a quaternionic one when `ε = -1`.
 
 Only the two forms are needed, so nothing here asks for a finite group; producing the invariant
 Hermitian form is where finiteness enters, in
-`TauCeti/RepresentationTheory/InvariantForm/Hermitian.lean`, and the Frobenius-Schur criterion this
-feeds is in `TauCeti/RepresentationTheory/CharacterTable/FrobeniusSchur/Realizability.lean`.
+`TauCeti/RepresentationTheory/InvariantForm/Hermitian.lean`, and the Frobenius-Schur criteria this
+feeds are in `TauCeti/RepresentationTheory/CharacterTable/FrobeniusSchur/Realizability.lean` and
+`TauCeti/RepresentationTheory/Compact/FrobeniusSchur/StructureMap.lean`.
 
-The **converse** passage, from a real structure `K` back to an invariant symmetric form, is the
+The **converse** passage, from a structure map `K` back to an invariant bilinear form, is the
 second half of the file, and it needs neither irreducibility nor finite dimensionality.  The naive
-guess `B x y = H (K x) y` is bilinear, invariant and nondegenerate for free, but it is symmetric
-only if `H` is compatible with `K` in the sense `H (K x) (K y) = conj (H x y)`, which an arbitrary
-invariant `H` need not be.  Replacing `H` by the **balanced** form
+guess `B x y = H (K x) y` is bilinear, invariant and nondegenerate for free, but it obeys a flip
+rule only if `H` is compatible with `K` in the sense `H (K x) (K y) = conj (H x y)`, which an
+arbitrary invariant `H` need not be.  Replacing `H` by the **balanced** form
 `H x y + conj (H (K x) (K y))` -- still invariant, Hermitian and positive definite, since `K` is
-bijective -- makes it compatible, and then `B x y = H (K x) y` is symmetric.  Against a fixed `H`
-the two directions assemble into `Representation.exists_isRealStructure_iff`, which is what turns
-the Frobenius-Schur value `1` into realizability over `ℝ` whenever a positive definite invariant
-Hermitian form is available -- by Haar averaging for a compact group as much as by summation for a
-finite one.
+bijective -- makes it compatible, and then `B x y = H (K x) y` flips by the sign that `K ∘ K`
+carries: symmetric for a real structure, alternating for a quaternionic one.  Against a fixed `H`
+the two directions assemble into `Representation.exists_isRealStructure_iff` and
+`Representation.exists_isQuaternionicStructure_iff`, which is what turns the Frobenius-Schur values
+`1` and `-1` into structure maps whenever a positive definite invariant Hermitian form is
+available -- by Haar averaging for a compact group as much as by summation for a finite one.
+
+## Main definitions
+
+* `Representation.IsQuaternionicStructure`: a **quaternionic structure** on a complex
+  representation, a conjugate-linear `J` with `J (J v) = -v` commuting with the action.
 
 ## Main results
 
 * `Representation.exists_isRealStructure_of_isInvariantForm_of_isInvariantSesqForm`: **an
   irreducible representation carrying a nondegenerate invariant symmetric form and a nonnegative
   invariant Hermitian form that is definite off the origin has a real structure.**
+* `Representation.exists_isQuaternionicStructure_of_isInvariantForm_of_isInvariantSesqForm`: **the
+  same with an alternating form in place of a symmetric one produces a quaternionic structure.**
 * `Representation.exists_isInvariantForm_isSymm_nondegenerate_of_isRealStructure`: **a real
   structure, together with a positive definite invariant Hermitian form, produces a nondegenerate
   invariant symmetric form.**
-* `Representation.exists_isRealStructure_iff`: against a positive definite invariant Hermitian
-  form, an irreducible finite-dimensional representation has a real structure exactly when it
-  carries a nondegenerate invariant symmetric form.
+* `Representation.exists_isInvariantForm_isAlt_nondegenerate_of_isQuaternionicStructure`: **a
+  quaternionic structure produces a nondegenerate invariant alternating form the same way.**
+* `Representation.exists_isRealStructure_iff` and
+  `Representation.exists_isQuaternionicStructure_iff`: against a positive definite invariant
+  Hermitian form, an irreducible finite-dimensional representation has a real, respectively a
+  quaternionic, structure exactly when it carries a nondegenerate invariant symmetric,
+  respectively alternating, form.
+
+## Implementation notes
+
+`Representation.IsRealStructure` is defined in `TauCeti/RepresentationTheory/RealForm.lean`, beside
+the real-form theory that consumes it.  Its quaternionic counterpart is defined here instead:
+nothing of that theory attaches to it -- the fixed points of a `J` with `J (J v) = -v` are `0`, so
+there is no real form to take -- and this file is where it is produced and consumed.
 
 ## References
 
@@ -68,8 +98,8 @@ finite one.
   Layer 7: the passage from a "compatible Hermitian form" to the real structure that the
   realizability target `frobeniusSchurIndicatorRep_eq_one_realizable` is read off from.
 * [Compact-groups roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CompactGroups/README.md),
-  Layer 6b: the structure-map reading of the Frobenius-Schur value `1`, which consumes the
-  equivalence below.
+  Layer 6b: the structure-map reading of the Frobenius-Schur values `1` and `-1`, in both of which
+  the equivalences below are consumed.
 * J.-P. Serre, *Linear Representations of Finite Groups*, GTM 42 (1977), §13.2.
 * T. Bröcker, T. tom Dieck, *Representations of Compact Lie Groups*, Springer GTM 98 (1985),
   Chapter II, §6.
@@ -88,6 +118,55 @@ open TauCeti
 namespace Representation
 
 open TauCeti.Representation
+
+/-! ### Quaternionic structures -/
+
+section Quaternionic
+
+variable {G V : Type*} [Monoid G] [AddCommGroup V] [Module ℂ V] {ρ : Representation ℂ G V}
+
+variable (ρ) in
+/-- A **quaternionic structure** on a complex representation: a conjugate-linear map `J` of the
+underlying space that squares to `-1` and commutes with the action.  It is the `-1` half of the
+Frobenius-Schur reality dichotomy, `TauCeti.Representation.IsRealStructure` being the `1` half.
+
+The two predicates differ only in the sign of the square, and the constructions below treat them
+together; what separates them is that a quaternionic structure has no nonzero fixed vector
+(`TauCeti.Representation.IsQuaternionicStructure.eq_zero_of_apply_eq`), so no real form attaches to
+it.  The map is carried unbundled, matching `TauCeti.Representation.IsRealStructure` and
+`TauCeti.Representation.IsInvariantForm`. -/
+structure IsQuaternionicStructure (J : V →ₛₗ[starRingEnd ℂ] V) : Prop where
+  /-- The map squares to `-1`. -/
+  sq_eq_neg (v : V) : J (J v) = -v
+  /-- The map intertwines the action with itself. -/
+  isIntertwining (g : G) (v : V) : J (ρ g v) = ρ g (J v)
+
+namespace IsQuaternionicStructure
+
+variable {J : V →ₛₗ[starRingEnd ℂ] V} (h : IsQuaternionicStructure ρ J)
+
+include h
+
+/-- **A quaternionic structure is bijective**, with `-J` as its two-sided inverse -- the analogue
+of the bijectivity a real structure has as an involution. -/
+theorem bijective : Function.Bijective ⇑J :=
+  Function.bijective_iff_has_inverse.mpr
+    ⟨fun v => -J v, fun v => by simp [h.sq_eq_neg], fun v => by simp [map_neg, h.sq_eq_neg]⟩
+
+/-- **A quaternionic structure has no nonzero fixed vector**: a fixed vector satisfies `v = -v`.
+So, unlike a real structure, it cuts out no real form; its fixed points are `0`. -/
+theorem eq_zero_of_apply_eq {v : V} (hv : J v = v) : v = 0 := by
+  have hneg : v = -v := by
+    have hsq := h.sq_eq_neg v
+    rwa [hv, hv] at hsq
+  have h2 : (2 : ℂ) • v = 0 := by
+    rw [two_smul]
+    exact add_eq_zero_iff_eq_neg.mpr hneg
+  exact (smul_eq_zero.mp h2).resolve_left two_ne_zero
+
+end IsQuaternionicStructure
+
+end Quaternionic
 
 /-! ### Inverting a definite Hermitian form -/
 
@@ -239,31 +318,38 @@ private theorem exists_compareFormsSq_eq_smul (hBinv : IsInvariantForm ρ B)
   refine ⟨c, fun x => ?_⟩
   simpa using (congrArg (fun f : Representation.IntertwiningMap ρ ρ => f x) hc).symm
 
-/-- **The Schur scalar of the squared comparison map is a positive real.**  Symmetry of `B` and
-Hermitian symmetry of `H` turn `H (J x) (J x)` into `conj c` times `H x x`, and both self-pairings
-are positive because `H` is nonnegative and definite off the origin and `J` is injective. -/
-private theorem exists_compareFormsSq_eq_real_smul (hBinv : IsInvariantForm ρ B) (hBsymm : B.IsSymm)
+/-- **The Schur scalar of the squared comparison map is the flip sign times a positive real.**
+The flip rule `B x y = ε * B y x` and Hermitian symmetry of `H` turn `H (J x) (J x)` into
+`ε * conj c` times `H x x`, and both self-pairings are positive because `H` is nonnegative and
+definite off the origin and `J` is injective; `ε * ε = 1` then reads `c` off as `ε` times their
+ratio.
+
+The two cases used below are a symmetric `B`, where `ε = 1`, and an alternating one, where
+`ε = -1`. -/
+private theorem exists_compareFormsSq_eq_sign_smul {ε : ℝ} (hε : ε * ε = 1)
+    (hBinv : IsInvariantForm ρ B) (hflip : ∀ x y : V, B x y = (ε : ℂ) * B y x)
     (hBnd : B.Nondegenerate) (hHinv : IsInvariantSesqForm ρ H) (hHnonneg : H.IsNonneg)
     (hdef : ∀ x : V, x ≠ 0 → H x x ≠ 0) :
-    ∃ t : ℝ, 0 < t ∧ ∀ x : V, compareFormsSq B H hdef x = (t : ℂ) • x := by
+    ∃ t : ℝ, 0 < t ∧ ∀ x : V, compareFormsSq B H hdef x = ((ε * t : ℝ) : ℂ) • x := by
   have : Nontrivial V := IsIrreducible.nontrivial ‹ρ.IsIrreducible›
+  have hεC : (ε : ℂ) * (ε : ℂ) = 1 := by exact_mod_cast hε
   obtain ⟨c, hc⟩ := exists_compareFormsSq_eq_smul hBinv hHinv hdef
   obtain ⟨x, hx⟩ := exists_ne (0 : V)
   have hpos : ∀ y : V, y ≠ 0 → 0 < H y y := fun y hy =>
     lt_of_le_of_ne (hHnonneg.nonneg y) (Ne.symm (hdef y hy))
   have hJx : compareForms B H hdef x ≠ 0 := compareForms_ne_zero hBnd hdef hx
-  -- `H (J x) (J x) = conj c * H x x`, by symmetry of `B` and Hermitian symmetry of `H`.
+  -- `H (J x) (J x) = ε * (conj c * H x x)`, by the flip rule of `B` and Hermitian symmetry of `H`.
   have hkey : H (compareForms B H hdef x) (compareForms B H hdef x)
-      = (starRingEnd ℂ) c * H x x := by
+      = (ε : ℂ) * ((starRingEnd ℂ) c * H x x) := by
     calc H (compareForms B H hdef x) (compareForms B H hdef x)
         = B x (compareForms B H hdef x) :=
           sesq_compareForms B H hdef x (compareForms B H hdef x)
-      _ = B (compareForms B H hdef x) x := hBsymm.eq x (compareForms B H hdef x)
-      _ = H (compareForms B H hdef (compareForms B H hdef x)) x :=
-          (sesq_compareForms B H hdef (compareForms B H hdef x) x).symm
-      _ = H (c • x) x := by rw [← compareFormsSq_apply, hc]
-      _ = (starRingEnd ℂ) c * H x x := by simp
-  -- Both self-pairings are positive reals, so `conj c`, hence `c`, is a positive real.
+      _ = (ε : ℂ) * B (compareForms B H hdef x) x := hflip x (compareForms B H hdef x)
+      _ = (ε : ℂ) * H (compareForms B H hdef (compareForms B H hdef x)) x := by
+          rw [sesq_compareForms B H hdef (compareForms B H hdef x) x]
+      _ = (ε : ℂ) * H (c • x) x := by rw [← compareFormsSq_apply, hc]
+      _ = (ε : ℂ) * ((starRingEnd ℂ) c * H x x) := by simp
+  -- Both self-pairings are positive reals, so `ε * conj c`, hence `c`, is `ε` times a positive one.
   have hrC : H x x = ((H x x).re : ℂ) := by
     refine Complex.ext rfl ?_
     simpa using ((Complex.lt_def.mp (hpos x hx)).2).symm
@@ -276,44 +362,79 @@ private theorem exists_compareFormsSq_eq_real_smul (hBinv : IsInvariantForm ρ B
     (Complex.lt_def.mp (hpos _ hJx)).1
   have hrne : ((H x x).re : ℂ) ≠ 0 := Complex.ofReal_ne_zero.mpr hrpos.ne'
   have hconj : (starRingEnd ℂ) c
-      = (((H (compareForms B H hdef x) (compareForms B H hdef x)).re / (H x x).re : ℝ) : ℂ) := by
-    rw [Complex.ofReal_div, eq_div_iff hrne, ← hrC, ← hsC, hkey]
+      = ((ε * ((H (compareForms B H hdef x) (compareForms B H hdef x)).re / (H x x).re) : ℝ)
+          : ℂ) := by
+    rw [Complex.ofReal_mul, Complex.ofReal_div, ← mul_div_assoc, eq_div_iff hrne, ← hrC, ← hsC,
+      hkey, ← mul_assoc, hεC, one_mul]
   refine ⟨_, div_pos hspos hrpos, fun y => ?_⟩
   rw [hc y, ← Complex.conj_conj c, hconj, Complex.conj_ofReal]
 
 end Equivariance
 
-/-! ### The real structure -/
+/-! ### The structure maps -/
 
-section RealStructure
+section StructureMap
 
 variable {G V : Type*} [Group G] [AddCommGroup V] [Module ℂ V] {ρ : Representation ℂ G V}
   [FiniteDimensional ℂ V] [ρ.IsIrreducible]
 
-/-- **An invariant symmetric form and an invariant Hermitian form produce a real structure.**  The
-conjugate-linear comparison map `J` of the two forms commutes with the action, and its square is a
-positive real scalar by Schur's lemma; rescaling `J` by the inverse square root of that scalar --
-a real scalar, so conjugate-linearity is untouched -- makes it an involution. -/
+/-- **An invariant bilinear form obeying a flip rule, together with an invariant Hermitian form,
+produces a conjugate-linear equivariant map squaring to the flip sign.**  The comparison map `J` of
+the two forms commutes with the action, and its square is `ε` times a positive real scalar by
+Schur's lemma; rescaling `J` by the inverse square root of that scalar -- a real scalar, so
+conjugate-linearity is untouched -- leaves the square equal to `ε`. -/
+private theorem exists_conjLinear_sq_eq_sign_smul {B : BilinForm ℂ V} {H : V →ₗ⋆[ℂ] V →ₗ[ℂ] ℂ}
+    {ε : ℝ} (hε : ε * ε = 1) (hBinv : IsInvariantForm ρ B)
+    (hflip : ∀ x y : V, B x y = (ε : ℂ) * B y x) (hBnd : B.Nondegenerate)
+    (hHinv : IsInvariantSesqForm ρ H) (hHnonneg : H.IsNonneg)
+    (hdef : ∀ x : V, x ≠ 0 → H x x ≠ 0) :
+    ∃ J : V →ₛₗ[starRingEnd ℂ] V, (∀ x : V, J (J x) = (ε : ℂ) • x) ∧
+      ∀ (g : G) (x : V), J (ρ g x) = ρ g (J x) := by
+  obtain ⟨t, htpos, ht⟩ :=
+    exists_compareFormsSq_eq_sign_smul hε hBinv hflip hBnd hHinv hHnonneg hdef
+  -- The scaling factor, stated once over `ℂ`: this is the only place the proof crosses the
+  -- `ℝ`-to-`ℂ` coercion, so the map equality below stays a plain scalar computation.
+  have hsq : (((Real.sqrt t)⁻¹ : ℝ) : ℂ) * (((Real.sqrt t)⁻¹ : ℝ) : ℂ) * ((ε * t : ℝ) : ℂ)
+      = (ε : ℂ) := by
+    have hreal : (Real.sqrt t)⁻¹ * (Real.sqrt t)⁻¹ * (ε * t) = ε := by
+      rw [← mul_inv, Real.mul_self_sqrt htpos.le, mul_comm ε t, ← mul_assoc,
+        inv_mul_cancel₀ htpos.ne', one_mul]
+    exact_mod_cast hreal
+  refine ⟨(((Real.sqrt t)⁻¹ : ℝ) : ℂ) • compareForms B H hdef, fun x => ?_, fun g v => ?_⟩
+  · simp only [LinearMap.smul_apply, map_smulₛₗ, Complex.conj_ofReal, smul_smul,
+      ← compareFormsSq_apply]
+    rw [ht x, smul_smul, hsq]
+  · simp only [LinearMap.smul_apply, compareForms_apply_rep hBinv hHinv hdef, map_smul]
+
+/-- **An invariant symmetric form and an invariant Hermitian form produce a real structure.**  This
+is the flip sign `ε = 1` of the construction: the rescaled comparison map of the two forms is a
+conjugate-linear involution commuting with the action. -/
 theorem exists_isRealStructure_of_isInvariantForm_of_isInvariantSesqForm {B : BilinForm ℂ V}
     {H : V →ₗ⋆[ℂ] V →ₗ[ℂ] ℂ} (hBinv : IsInvariantForm ρ B) (hBsymm : B.IsSymm)
     (hBnd : B.Nondegenerate) (hHinv : IsInvariantSesqForm ρ H) (hHnonneg : H.IsNonneg)
     (hdef : ∀ x : V, x ≠ 0 → H x x ≠ 0) :
     ∃ K : V →ₛₗ[starRingEnd ℂ] V, IsRealStructure ρ K := by
-  obtain ⟨t, htpos, ht⟩ :=
-    exists_compareFormsSq_eq_real_smul hBinv hBsymm hBnd hHinv hHnonneg hdef
-  -- The scaling factor, stated once over `ℂ`: this is the only place the proof crosses the
-  -- `ℝ`-to-`ℂ` coercion, so the map equality below stays a plain scalar computation.
-  have hsq : (((Real.sqrt t)⁻¹ : ℝ) : ℂ) * (((Real.sqrt t)⁻¹ : ℝ) : ℂ) * (t : ℂ) = 1 := by
-    have hreal : (Real.sqrt t)⁻¹ * (Real.sqrt t)⁻¹ * t = 1 := by
-      rw [← mul_inv, Real.mul_self_sqrt htpos.le, inv_mul_cancel₀ htpos.ne']
-    exact_mod_cast hreal
-  refine ⟨(((Real.sqrt t)⁻¹ : ℝ) : ℂ) • compareForms B H hdef, fun x => ?_, fun g v => ?_⟩
-  · simp only [LinearMap.smul_apply, map_smulₛₗ, Complex.conj_ofReal, smul_smul,
-      ← compareFormsSq_apply]
-    rw [ht x, smul_smul, hsq, one_smul]
-  · simp only [LinearMap.smul_apply, compareForms_apply_rep hBinv hHinv hdef, map_smul]
+  obtain ⟨K, hKsq, hKint⟩ := exists_conjLinear_sq_eq_sign_smul (ε := 1) (one_mul 1) hBinv
+    (fun x y => by rw [Complex.ofReal_one, one_mul]; exact hBsymm.eq x y) hBnd hHinv hHnonneg hdef
+  exact ⟨K, fun x => by simpa using hKsq x, hKint⟩
 
-end RealStructure
+/-- **An invariant alternating form and an invariant Hermitian form produce a quaternionic
+structure.**  This is the flip sign `ε = -1` of the same construction, the only change being that
+the Schur scalar of the squared comparison map comes out negative, so that rescaling leaves a
+conjugate-linear `J` with `J (J x) = -x` rather than an involution. -/
+theorem exists_isQuaternionicStructure_of_isInvariantForm_of_isInvariantSesqForm
+    {B : BilinForm ℂ V} {H : V →ₗ⋆[ℂ] V →ₗ[ℂ] ℂ} (hBinv : IsInvariantForm ρ B) (hBalt : B.IsAlt)
+    (hBnd : B.Nondegenerate) (hHinv : IsInvariantSesqForm ρ H) (hHnonneg : H.IsNonneg)
+    (hdef : ∀ x : V, x ≠ 0 → H x x ≠ 0) :
+    ∃ J : V →ₛₗ[starRingEnd ℂ] V, IsQuaternionicStructure ρ J := by
+  obtain ⟨J, hJsq, hJint⟩ := exists_conjLinear_sq_eq_sign_smul (ε := -1) (by norm_num) hBinv
+    (fun x y => by
+      rw [Complex.ofReal_neg, Complex.ofReal_one, neg_one_mul]
+      exact (hBalt.neg_eq y x).symm)
+    hBnd hHinv hHnonneg hdef
+  exact ⟨J, fun x => by simpa using hJsq x, hJint⟩
+
+end StructureMap
 
 /-! ### The balanced Hermitian form of a conjugate-linear map -/
 
@@ -325,7 +446,8 @@ variable {V : Type*} [AddCommGroup V] [Module ℂ V]
 `x, y ↦ H x y + conj (H (K x) (K y))`.  Each argument of the second summand picks up a conjugation
 from `K`, and the outer conjugation restores the shape of a sesquilinear form, conjugate-linear in
 the first argument and linear in the second.  Adding it to `H` is what forces the compatibility
-`balance H K (K x) (K y) = conj (balance H K x y)` when `K` is an involution. -/
+`balance H K (K x) (K y) = conj (balance H K x y)` whenever `K ∘ K` is a real scalar of square
+one. -/
 private noncomputable def balance (H : V →ₗ⋆[ℂ] V →ₗ[ℂ] ℂ) (K : V →ₛₗ[starRingEnd ℂ] V) :
     V →ₗ⋆[ℂ] V →ₗ[ℂ] ℂ where
   toFun x :=
@@ -347,13 +469,19 @@ private noncomputable def balance (H : V →ₗ⋆[ℂ] V →ₗ[ℂ] ℂ) (K : 
 private theorem balance_apply (H : V →ₗ⋆[ℂ] V →ₗ[ℂ] ℂ) (K : V →ₛₗ[starRingEnd ℂ] V) (x y : V) :
     balance H K x y = H x y + (starRingEnd ℂ) (H (K x) (K y)) := (rfl)
 
-/-- **The balanced form is compatible with the involution it was balanced against**: replacing both
-arguments by their `K`-images conjugates the value.  This is the only property of `balance` that
+/-- **The balanced form is compatible with the map it was balanced against**: replacing both
+arguments by their `K`-images conjugates the value, as soon as `K ∘ K` is a real scalar of square
+one -- an involution, or a quaternionic structure.  This is the only property of `balance` that
 `H` alone does not already have, and the whole point of the construction. -/
-private theorem balance_map_map {H : V →ₗ⋆[ℂ] V →ₗ[ℂ] ℂ} {K : V →ₛₗ[starRingEnd ℂ] V}
-    (hK : Function.Involutive ⇑K) (x y : V) :
+private theorem balance_map_map {H : V →ₗ⋆[ℂ] V →ₗ[ℂ] ℂ} {K : V →ₛₗ[starRingEnd ℂ] V} {ε : ℝ}
+    (hε : ε * ε = 1) (hK : ∀ x : V, K (K x) = (ε : ℂ) • x) (x y : V) :
     balance H K (K x) (K y) = (starRingEnd ℂ) (balance H K x y) := by
-  rw [balance_apply, balance_apply, hK x, hK y, map_add, Complex.conj_conj, add_comm]
+  have hεC : (ε : ℂ) * (ε : ℂ) = 1 := by exact_mod_cast hε
+  have hH : H ((ε : ℂ) • x) ((ε : ℂ) • y) = H x y := by
+    simp only [map_smulₛₗ, LinearMap.smul_apply, Complex.conj_ofReal, smul_eq_mul,
+      RingHom.id_apply]
+    linear_combination (H x y) * hεC
+  rw [balance_apply, balance_apply, hK x, hK y, hH, map_add, Complex.conj_conj, add_comm]
 
 /-- The balanced form is Hermitian if `H` is. -/
 private theorem isSymm_balance {H : V →ₗ⋆[ℂ] V →ₗ[ℂ] ℂ} (hH : H.IsSymm)
@@ -385,9 +513,9 @@ private theorem balance_apply_self_ne_zero {H : V →ₗ⋆[ℂ] V →ₗ[ℂ] �
 
 end Balanced
 
-/-! ### An invariant symmetric form out of a real structure -/
+/-! ### An invariant bilinear form out of a structure map -/
 
-section OfRealStructure
+section OfStructureMap
 
 variable {G V : Type*} [Group G] [AddCommGroup V] [Module ℂ V] {ρ : Representation ℂ G V}
 
@@ -398,45 +526,92 @@ private theorem isInvariantSesqForm_balance {H : V →ₗ⋆[ℂ] V →ₗ[ℂ] 
   isInvariantSesqForm_iff.mpr fun g x y => by
     rw [balance_apply, balance_apply, hHinv.apply g x y, hK g x, hK g y, hHinv.apply g (K x) (K y)]
 
-/-- **A real structure produces a nondegenerate invariant symmetric form.**  Balancing the given
-invariant Hermitian form `H` against the real structure `K` makes it satisfy
-`H (K x) (K y) = conj (H x y)`, and then `B x y = H (K x) y` is a bilinear form -- the two
+/-- **A structure map produces a nondegenerate invariant bilinear form flipping by the sign of its
+square.**  Balancing the given invariant Hermitian form `H` against the structure map `K` makes it
+satisfy `H (K x) (K y) = conj (H x y)`, and then `B x y = H (K x) y` is a bilinear form -- the two
 conjugations, one from `K` and one from the first argument of `H`, cancel -- which is invariant
-because both `H` and `K` are, symmetric by the compatibility, and nondegenerate because `H` is
-definite and `K` is bijective.
+because both `H` and `K` are, obeys the flip rule `B x y = ε * B y x` by that compatibility, and is
+nondegenerate because `H` is definite and `K` is injective.
 
 Neither irreducibility nor finite dimensionality is used: this is the elementary direction of the
-correspondence, the other being
-`Representation.exists_isRealStructure_of_isInvariantForm_of_isInvariantSesqForm`. -/
-theorem exists_isInvariantForm_isSymm_nondegenerate_of_isRealStructure
-    {H : V →ₗ⋆[ℂ] V →ₗ[ℂ] ℂ} {K : V →ₛₗ[starRingEnd ℂ] V} (hK : IsRealStructure ρ K)
-    (hHinv : IsInvariantSesqForm ρ H) (hHsymm : H.IsSymm) (hHnonneg : H.IsNonneg)
-    (hdef : ∀ x : V, x ≠ 0 → H x x ≠ 0) :
-    ∃ B : BilinForm ℂ V, IsInvariantForm ρ B ∧ B.IsSymm ∧ B.Nondegenerate := by
+correspondence. -/
+private theorem exists_isInvariantForm_flip_of_sq_eq_smul {H : V →ₗ⋆[ℂ] V →ₗ[ℂ] ℂ}
+    {K : V →ₛₗ[starRingEnd ℂ] V} {ε : ℝ} (hε : ε * ε = 1)
+    (hKsq : ∀ x : V, K (K x) = (ε : ℂ) • x)
+    (hKint : ∀ (g : G) (v : V), K (ρ g v) = ρ g (K v)) (hHinv : IsInvariantSesqForm ρ H)
+    (hHsymm : H.IsSymm) (hHnonneg : H.IsNonneg) (hdef : ∀ x : V, x ≠ 0 → H x x ≠ 0) :
+    ∃ B : BilinForm ℂ V, IsInvariantForm ρ B ∧ (∀ x y : V, B x y = (ε : ℂ) * B y x) ∧
+      B.Nondegenerate := by
+  have hεC : (ε : ℂ) * (ε : ℂ) = 1 := by exact_mod_cast hε
+  have hεne : (ε : ℂ) ≠ 0 := by
+    intro h0
+    rw [h0, mul_zero] at hεC
+    exact zero_ne_one hεC
+  have hKne : ∀ {x : V}, x ≠ 0 → K x ≠ 0 := by
+    intro x hx h0
+    refine hx ?_
+    have hsq := hKsq x
+    rw [h0, map_zero] at hsq
+    exact (smul_eq_zero.mp hsq.symm).resolve_left hεne
   -- The candidate form, `B x y = balance H K (K x) y`; the composite is honestly `ℂ`-bilinear,
   -- the conjugation `K` carries cancelling the one the first argument of a sesquilinear form does.
   refine ⟨(balance H K).comp K, ?_, ?_, ?_, ?_⟩
   · exact isInvariantForm_iff.mpr fun g x y => by
-      rw [LinearMap.comp_apply, LinearMap.comp_apply, hK.isIntertwining g x,
-        (isInvariantSesqForm_balance hHinv hK.isIntertwining).apply g (K x) y]
-  · -- Symmetry: move `K` from one argument to the other with `hK.involutive` and the
-    -- compatibility, then read off the Hermitian symmetry of the balanced form.
-    refine ⟨fun x y => ?_⟩
-    rw [LinearMap.comp_apply, LinearMap.comp_apply, ← hK.involutive y,
-      balance_map_map hK.involutive x (K y), ← (isSymm_balance hHsymm K).eq (K y) x,
-      Complex.conj_conj, hK.involutive y]
+      rw [LinearMap.comp_apply, LinearMap.comp_apply, hKint g x,
+        (isInvariantSesqForm_balance hHinv hKint).apply g (K x) y]
+  · -- The flip rule: move `K` from one argument to the other with `hKsq` and the compatibility,
+    -- reading the Hermitian symmetry of the balanced form off in between.
+    intro x y
+    rw [LinearMap.comp_apply, LinearMap.comp_apply]
+    calc balance H K (K x) y
+        = (starRingEnd ℂ) (balance H K y (K x)) := ((isSymm_balance hHsymm K).eq y (K x)).symm
+      _ = (starRingEnd ℂ) (balance H K ((ε : ℂ) • K (K y)) (K x)) := by
+            rw [hKsq y, smul_smul, hεC, one_smul]
+      _ = (starRingEnd ℂ) ((ε : ℂ) * (starRingEnd ℂ) (balance H K (K y) x)) := by
+            rw [map_smulₛₗ, LinearMap.smul_apply, smul_eq_mul, Complex.conj_ofReal,
+              balance_map_map hε hKsq (K y) x]
+      _ = (ε : ℂ) * balance H K (K y) x := by
+            rw [map_mul, Complex.conj_ofReal, Complex.conj_conj]
   · -- Left separation: a vector killed by `B` has `balance H K (K x) (K x) = 0`.
     intro x hx
     by_contra hx0
-    have hKx : K x ≠ 0 := fun h =>
-      hx0 (hK.involutive.injective (h.trans (map_zero K).symm))
-    exact balance_apply_self_ne_zero hHnonneg hdef K hKx (by simpa using hx (K x))
+    exact balance_apply_self_ne_zero hHnonneg hdef K (hKne hx0) (by simpa using hx (K x))
   · -- Right separation: pairing against `K y` gives `balance H K y y = 0`.
     intro y hy
     by_contra hy0
     refine balance_apply_self_ne_zero hHnonneg hdef K hy0 ?_
     have h := hy (K y)
-    rwa [LinearMap.comp_apply, hK.involutive y] at h
+    rw [LinearMap.comp_apply, hKsq y, map_smulₛₗ, LinearMap.smul_apply, Complex.conj_ofReal,
+      smul_eq_mul, mul_eq_zero] at h
+    exact h.resolve_left hεne
+
+/-- **A real structure produces a nondegenerate invariant symmetric form.**  This is the flip sign
+`ε = 1` of the construction: the balanced form of `H` against the involution `K` is compatible with
+it, and `B x y = H (K x) y` is then symmetric. -/
+theorem exists_isInvariantForm_isSymm_nondegenerate_of_isRealStructure
+    {H : V →ₗ⋆[ℂ] V →ₗ[ℂ] ℂ} {K : V →ₛₗ[starRingEnd ℂ] V} (hK : IsRealStructure ρ K)
+    (hHinv : IsInvariantSesqForm ρ H) (hHsymm : H.IsSymm) (hHnonneg : H.IsNonneg)
+    (hdef : ∀ x : V, x ≠ 0 → H x x ≠ 0) :
+    ∃ B : BilinForm ℂ V, IsInvariantForm ρ B ∧ B.IsSymm ∧ B.Nondegenerate := by
+  obtain ⟨B, hBinv, hflip, hBnd⟩ := exists_isInvariantForm_flip_of_sq_eq_smul (ε := 1) (one_mul 1)
+    (fun x => by simpa using hK.involutive x) hK.isIntertwining hHinv hHsymm hHnonneg hdef
+  exact ⟨B, hBinv, ⟨fun x y => by simpa using hflip x y⟩, hBnd⟩
+
+/-- **A quaternionic structure produces a nondegenerate invariant alternating form.**  This is the
+flip sign `ε = -1` of the same construction: the form built from `J` obeys `B x y = -B y x`, which
+over `ℂ` is alternation. -/
+theorem exists_isInvariantForm_isAlt_nondegenerate_of_isQuaternionicStructure
+    {H : V →ₗ⋆[ℂ] V →ₗ[ℂ] ℂ} {J : V →ₛₗ[starRingEnd ℂ] V} (hJ : IsQuaternionicStructure ρ J)
+    (hHinv : IsInvariantSesqForm ρ H) (hHsymm : H.IsSymm) (hHnonneg : H.IsNonneg)
+    (hdef : ∀ x : V, x ≠ 0 → H x x ≠ 0) :
+    ∃ B : BilinForm ℂ V, IsInvariantForm ρ B ∧ B.IsAlt ∧ B.Nondegenerate := by
+  obtain ⟨B, hBinv, hflip, hBnd⟩ :=
+    exists_isInvariantForm_flip_of_sq_eq_smul (ε := -1) (by norm_num)
+      (fun x => by simpa using hJ.sq_eq_neg x) hJ.isIntertwining hHinv hHsymm hHnonneg hdef
+  refine ⟨B, hBinv, ?_, hBnd⟩
+  intro x
+  have h : B x x = -B x x := by simpa using hflip x x
+  linear_combination h / 2
 
 variable [FiniteDimensional ℂ V] [ρ.IsIrreducible]
 
@@ -454,6 +629,22 @@ theorem exists_isRealStructure_iff {H : V →ₗ⋆[ℂ] V →ₗ[ℂ] ℂ} (hHi
       exists_isRealStructure_of_isInvariantForm_of_isInvariantSesqForm hBinv hBsymm hBnd hHinv
         hHnonneg hdef⟩
 
-end OfRealStructure
+/-- **Against a positive definite invariant Hermitian form, a quaternionic structure is the same
+datum as a nondegenerate invariant alternating form.**  This is the `-1` half of the
+Frobenius-Schur dichotomy, `TauCeti.Representation.exists_isRealStructure_iff` being the `1`
+half. -/
+theorem exists_isQuaternionicStructure_iff {H : V →ₗ⋆[ℂ] V →ₗ[ℂ] ℂ}
+    (hHinv : IsInvariantSesqForm ρ H) (hHsymm : H.IsSymm) (hHnonneg : H.IsNonneg)
+    (hdef : ∀ x : V, x ≠ 0 → H x x ≠ 0) :
+    (∃ J : V →ₛₗ[starRingEnd ℂ] V, IsQuaternionicStructure ρ J) ↔
+      ∃ B : BilinForm ℂ V, IsInvariantForm ρ B ∧ B.IsAlt ∧ B.Nondegenerate :=
+  ⟨fun ⟨_, hJ⟩ =>
+      exists_isInvariantForm_isAlt_nondegenerate_of_isQuaternionicStructure hJ hHinv hHsymm
+        hHnonneg hdef,
+    fun ⟨_, hBinv, hBalt, hBnd⟩ =>
+      exists_isQuaternionicStructure_of_isInvariantForm_of_isInvariantSesqForm hBinv hBalt hBnd
+        hHinv hHnonneg hdef⟩
+
+end OfStructureMap
 
 end Representation

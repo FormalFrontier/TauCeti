@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.RepresentationTheory.CharacterTable.FrobeniusSchur.RealForm
-public import TauCeti.RepresentationTheory.InvariantForm.RealStructure
+public import TauCeti.RepresentationTheory.InvariantForm.StructureMap
 
 /-!
 # Frobenius-Schur indicator `1` means realizable over the reals
@@ -22,7 +22,7 @@ real form.  The missing ingredient is a positive definite invariant *Hermitian* 
 (`Representation.exists_isInvariantSesqForm_isPosSemidef_apply_self_ne_zero`), which is where
 finiteness of the group is used; comparing the two forms then produces a real structure
 (`Representation.exists_isRealStructure_of_isInvariantForm_of_isInvariantSesqForm`, in
-`TauCeti/RepresentationTheory/InvariantForm/RealStructure.lean`), whose real points are a real
+`TauCeti/RepresentationTheory/InvariantForm/StructureMap.lean`), whose real points are a real
 form.  All that is left here is to assemble the three steps, and to record the criterion in its
 `↔` form.
 

@@ -6,31 +6,36 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.RepresentationTheory.Compact.FrobeniusSchur.InvariantForm
-public import TauCeti.RepresentationTheory.InvariantForm.RealStructure
+public import TauCeti.RepresentationTheory.InvariantForm.StructureMap
 
 /-!
-# Frobenius-Schur indicator `1` is a real structure, for a compact group
+# The Frobenius-Schur indicator as a structure map, for a compact group
 
 `TauCeti/RepresentationTheory/Compact/FrobeniusSchur/InvariantForm.lean` reads the three values of
 the Frobenius-Schur indicator of an irreducible unitary representation of a compact group off
 invariant bilinear forms, and stops there: an invariant *symmetric* form is strictly weaker than a
-real form, and none of its statements mentions a structure map.  This file supplies the missing
-step, in the operational shape the reality applications ask for:
+real form, an invariant *alternating* one than a quaternionic structure, and none of its statements
+mentions a structure map.  This file supplies the missing step, in the operational shape the
+reality applications ask for:
 
-`ν₂(π) = 1` iff `π` carries a **structure map** -- a conjugate-linear involution `K` of `V`
+`ν₂(π) = 1` iff `π` carries a **real structure** -- a conjugate-linear involution `K` of `V`
 commuting with the action, `TauCeti.Representation.IsRealStructure` -- equivalently iff `π` is
-**realizable over `ℝ`**, that is, is the complexification of a real representation.
+**realizable over `ℝ`**, that is, is the complexification of a real representation; and
+`ν₂(π) = -1` iff `π` carries a **quaternionic structure**, a conjugate-linear `J` with
+`J (J v) = -v` commuting with the action,
+`TauCeti.Representation.IsQuaternionicStructure`.
 
 Nothing new has to be integrated over the group.  The unitarity hypothesis the whole
 Frobenius-Schur layer already carries *is* a positive definite invariant Hermitian form, namely the
-inner product of `V` itself, and against a fixed such form a real structure and a nondegenerate
-invariant symmetric form are interchangeable data
-(`Representation.exists_isRealStructure_iff`, in
-`TauCeti/RepresentationTheory/InvariantForm/RealStructure.lean`).  So the compact-group criterion is
+inner product of `V` itself, and against a fixed such form a structure map and a nondegenerate
+invariant bilinear form of the matching kind are interchangeable data
+(`Representation.exists_isRealStructure_iff` and
+`Representation.exists_isQuaternionicStructure_iff`, in
+`TauCeti/RepresentationTheory/InvariantForm/StructureMap.lean`).  So the compact-group criterion is
 the finite-group one of
 `TauCeti/RepresentationTheory/CharacterTable/FrobeniusSchur/Realizability.lean` with the summed
 invariant Hermitian form replaced by the inner product a unitary representation comes with; the
-Haar integral enters only through the invariant-form criterion this file rewrites.
+Haar integral enters only through the invariant-form criteria this file rewrites.
 
 ## Main statements
 
@@ -38,19 +43,23 @@ Haar integral enters only through the invariant-form criterion this file rewrite
   is `1` exactly when the representation carries a real structure.**
 * `ContRepresentation.frobeniusSchurIndicator_eq_one_iff_isRealizableOverReal`: **the indicator is
   `1` exactly when the representation is realizable over `ℝ`.**
+* `ContRepresentation.frobeniusSchurIndicator_eq_neg_one_iff_exists_isQuaternionicStructure`: **the
+  indicator is `-1` exactly when the representation carries a quaternionic structure.**
 
 ## Implementation notes
 
-The roadmap phrases the criterion with an unbundled structure map, a conjugate-linear
-`J : V →ₗ⋆[ℂ] V` with `J (J v) = v` commuting with the action.  That is exactly
-`TauCeti.Representation.IsRealStructure`, which
+The roadmap phrases the criteria with an unbundled structure map, a conjugate-linear
+`J : V →ₗ⋆[ℂ] V` with `J (J v) = v`, respectively `J (J v) = -v`, commuting with the action.  Those
+are exactly `TauCeti.Representation.IsRealStructure`, which
 `TauCeti/RepresentationTheory/RealForm.lean` already defines and equips with the passage to a real
-form, so the statements below are given in terms of the named predicate rather than its unfolding.
+form, and `TauCeti.Representation.IsQuaternionicStructure`, so the statements below are given in
+terms of the named predicates rather than their unfoldings.
 
 ## References
 
 This discharges the `frobeniusSchurIndicator_eq_one_iff_exists_structureMap` target of Layer 6b of
 the [compact-groups roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CompactGroups/README.md),
+in both the real case that target states and the quaternionic case `J² = -1` its docstring names,
 whose invariant-form companions are proved in
 `TauCeti/RepresentationTheory/Compact/FrobeniusSchur/InvariantForm.lean`.
 
@@ -136,6 +145,24 @@ theorem frobeniusSchurIndicator_eq_one_iff_isRealizableOverReal (hunitary : IsUn
       Representation.IsRealizableOverReal π.toRepresentation := by
   rw [frobeniusSchurIndicator_eq_one_iff_exists_isRealStructure π hπ hunitary hirr,
     Representation.isRealizableOverReal_iff_exists_isRealStructure]
+
+/-- **The indicator is `-1` exactly when there is a quaternionic structure**: an irreducible
+unitary representation of a compact group has Frobenius-Schur indicator `-1` exactly when it
+carries a conjugate-linear `J` with `J (J v) = -v` commuting with the action.
+
+The invariant-form criterion supplies a nondegenerate invariant alternating form, and the inner
+product of the unitary representation supplies the positive definite invariant Hermitian form that
+turns one datum into the other.  Unlike the real case there is no realizability reading: a
+quaternionic structure has no nonzero fixed vector, so it cuts out no real form. -/
+theorem frobeniusSchurIndicator_eq_neg_one_iff_exists_isQuaternionicStructure
+    (hunitary : IsUnitary π) (hirr : Representation.IsIrreducible π.toRepresentation) :
+    frobeniusSchurIndicator π hπ = -1 ↔
+      ∃ J : V →ₛₗ[starRingEnd ℂ] V,
+        Representation.IsQuaternionicStructure π.toRepresentation J := by
+  have := hirr
+  rw [frobeniusSchurIndicator_eq_neg_one_iff π hπ hunitary hirr]
+  exact (Representation.exists_isQuaternionicStructure_iff (isInvariantSesqForm_innerₛₗ hunitary)
+    isSymm_innerₛₗ isNonneg_innerₛₗ fun _ hx => innerₛₗ_apply_self_ne_zero hx).symm
 
 end CompactGroup
 

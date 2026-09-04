@@ -39,7 +39,7 @@ The positivity half is stated over `ℂ` rather than over an `RCLike` field.  Th
 `LinearMap.IsPosSemidef` needs is the one `Complex.partialOrder` supplies in the `ComplexOrder`
 scope, and `RCLike` supplies a second, lower-priority partial order in the same scope; stating the
 positivity results over `RCLike` would fix the wrong one of the two for the `ℂ`-only consumer,
-`TauCeti/RepresentationTheory/InvariantForm/RealStructure.lean`.
+`TauCeti/RepresentationTheory/InvariantForm/StructureMap.lean`.
 
 ## Main definitions
 
