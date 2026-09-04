@@ -227,6 +227,7 @@ theorem singleBlockedDifferentialOnGenerator_support_subset (i : Fin n) (x : Gri
   exact hy rfl
 
 /-- Specializing the unblocked differential of a generator gives its single-blocked row. -/
+@[simp]
 theorem singleBlockedSpecialization_unblockedDifferentialOnGenerator (i : Fin n)
     (x : GridState n) :
     singleBlockedSpecialization R i (G.unblockedDifferentialOnGenerator R x) =
@@ -272,7 +273,27 @@ theorem singleBlockedDifferential_apply_apply (i : Fin n)
   rw [G.singleBlockedDifferential_apply R i c]
   simp [Finsupp.sum_apply]
 
+private theorem singleBlockedSpecialization_unblockedDifferential_single (i : Fin n)
+    (x : GridState n) (a : MvPolynomial (Fin n) R) :
+    singleBlockedSpecialization R i
+        (G.unblockedDifferential R (Finsupp.single x a)) =
+      G.singleBlockedDifferential R i
+        (singleBlockedSpecialization R i (Finsupp.single x a)) := by
+  rw [singleBlockedSpecialization_single]
+  nth_rewrite 1 [← Finsupp.smul_single_one x a]
+  rw [map_smul, map_smulₛₗ,
+    G.unblockedDifferential_single R x,
+    G.singleBlockedSpecialization_unblockedDifferentialOnGenerator R i x,
+    ← Finsupp.smul_single_one x
+      (MvPolynomial.killCompl (f := Subtype.val) Subtype.val_injective a),
+    map_smul, G.singleBlockedDifferential_single R i x]
+  exact congrArg (fun b => b • G.singleBlockedDifferentialOnGenerator R i x)
+    (congrFun
+      (AlgHom.coe_toRingHom
+        (MvPolynomial.killCompl (R := R) (f := Subtype.val) Subtype.val_injective)) a)
+
 /-- Coefficientwise specialization intertwines the unblocked and single-blocked maps. -/
+@[simp]
 theorem singleBlockedSpecialization_unblockedDifferential (i : Fin n)
     (c : GridChainMinus R n) :
     singleBlockedSpecialization R i (G.unblockedDifferential R c) =
@@ -285,20 +306,8 @@ theorem singleBlockedSpecialization_unblockedDifferential (i : Fin n)
   | single_add x a c _ _ ih =>
       rw [(G.unblockedDifferential R).map_add, (singleBlockedSpecialization R i).map_add,
         (singleBlockedSpecialization R i).map_add,
-        (G.singleBlockedDifferential R i).map_add, ih]
-      congr 1
-      rw [singleBlockedSpecialization_single]
-      nth_rewrite 1 [← Finsupp.smul_single_one x a]
-      rw [map_smul, map_smulₛₗ,
-        G.unblockedDifferential_single R x,
-        G.singleBlockedSpecialization_unblockedDifferentialOnGenerator R i x,
-        ← Finsupp.smul_single_one x
-          (MvPolynomial.killCompl (f := Subtype.val) Subtype.val_injective a),
-        map_smul, G.singleBlockedDifferential_single R i x]
-      exact congrArg (fun b => b • G.singleBlockedDifferentialOnGenerator R i x)
-        (congrFun
-          (AlgHom.coe_toRingHom
-            (MvPolynomial.killCompl (R := R) (f := Subtype.val) Subtype.val_injective)) a)
+        (G.singleBlockedDifferential R i).map_add, ih,
+        G.singleBlockedSpecialization_unblockedDifferential_single R i x a]
 
 end GridDiagram
 
