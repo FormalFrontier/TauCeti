@@ -72,12 +72,15 @@ theorem integrableExpSet_id_map_cast_negativeBinomialMeasure
   ext t
   exact integrable_exp_mul_id_map_cast_negativeBinomialMeasure_iff hr hp hp1 t
 
-/-- The moment-generating function of the real cast of a positive-shape negative-binomial law. -/
+/-- The moment-generating function of the real cast of a valid negative-binomial law. -/
 theorem mgf_id_map_cast_negativeBinomialMeasure
-    {r p : ℝ} (hr : 0 < r) (hp : 0 < p) (hp1 : p ≤ 1)
+    {r p : ℝ} (hr : 0 ≤ r) (hp : 0 < p) (hp1 : p ≤ 1)
     {t : ℝ} (ht : (1 - p) * exp t < 1) :
     mgf id ((negativeBinomialMeasure r p).map (Nat.cast : ℕ → ℝ)) t =
       Real.rpow (p / (1 - (1 - p) * exp t)) r := by
+  rcases hr.eq_or_lt with rfl | hr
+  · rw [negativeBinomialMeasure_zero hp hp1, Measure.map_dirac' (by fun_prop)]
+    simp [mgf_dirac']
   have habs : |(1 - p) * exp t| < 1 := by
     rwa [abs_of_nonneg (mul_nonneg (sub_nonneg.mpr hp1) (exp_nonneg t))]
   have hpgf := pgf_exp (id : ℕ → ℕ) (negativeBinomialMeasure r p) t
@@ -86,10 +89,9 @@ theorem mgf_id_map_cast_negativeBinomialMeasure
     AEMeasurable (Nat.cast : ℕ → ℝ) (negativeBinomialMeasure r p))]
   exact hpgf.symm
 
-/-- The cumulant-generating function of the real cast of a positive-shape negative-binomial
-law. -/
+/-- The cumulant-generating function of the real cast of a valid negative-binomial law. -/
 theorem cgf_id_map_cast_negativeBinomialMeasure
-    {r p : ℝ} (hr : 0 < r) (hp : 0 < p) (hp1 : p ≤ 1)
+    {r p : ℝ} (hr : 0 ≤ r) (hp : 0 < p) (hp1 : p ≤ 1)
     {t : ℝ} (ht : (1 - p) * exp t < 1) :
     cgf id ((negativeBinomialMeasure r p).map (Nat.cast : ℕ → ℝ)) t =
       log (Real.rpow (p / (1 - (1 - p) * exp t)) r) := by
@@ -111,7 +113,7 @@ private lemma cgf_eventuallyEq {r p : ℝ} (hr : 0 < r) (hp : 0 < p) (hp1 : p �
     (isOpen_lt (by fun_prop : Continuous fun t : ℝ ↦ (1 - p) * exp t)
       continuous_const).mem_nhds (by simpa using hp)
   filter_upwards [hdom] with t ht
-  rw [cgf_id_map_cast_negativeBinomialMeasure hr hp hp1 ht]
+  rw [cgf_id_map_cast_negativeBinomialMeasure hr.le hp hp1 ht]
   -- Expose real-power notation so the logarithm API can normalize the local formula.
   change log ((p / (1 - (1 - p) * exp t)) ^ r) = _
   rw [Real.log_rpow (div_pos hp (sub_pos.mpr ht)),
@@ -213,12 +215,15 @@ theorem variance_id_map_cast_negativeBinomialMeasure
     norm_num
   · exact variance_id_map_cast_negativeBinomialMeasure_of_pos hr hp hp1
 
-/-- The characteristic function of the real cast of a positive-shape negative-binomial law. -/
+/-- The characteristic function of the real cast of a valid negative-binomial law. -/
 theorem charFun_map_cast_negativeBinomialMeasure
-    {r p : ℝ} (hr : 0 < r) (hp : 0 < p) (hp1 : p ≤ 1) (t : ℝ) :
+    {r p : ℝ} (hr : 0 ≤ r) (hp : 0 < p) (hp1 : p ≤ 1) (t : ℝ) :
     charFun ((negativeBinomialMeasure r p).map (Nat.cast : ℕ → ℝ)) t =
       ((p : ℂ) /
         (1 - (1 - (p : ℂ)) * Complex.exp (Complex.I * t))) ^ (r : ℂ) := by
+  rcases hr.eq_or_lt with rfl | hr
+  · rw [negativeBinomialMeasure_zero hp hp1, Measure.map_dirac' (by fun_prop)]
+    simp
   let _ := isProbabilityMeasure_negativeBinomialMeasure hr.le hp hp1
   -- The binomial-series argument lies in the open unit disk, including at `p = 1`.
   let q : ℂ := (1 - (p : ℂ)) * Complex.exp (Complex.I * t)
@@ -231,8 +236,12 @@ theorem charFun_map_cast_negativeBinomialMeasure
     simpa only [← Complex.ofReal_one, ← Complex.ofReal_sub, Complex.norm_real,
       Real.norm_eq_abs, abs_of_nonneg (by linarith : 0 ≤ 1 - p)] using sub_lt_self 1 hp
   have hsum :=
-    (hasSum_multichoose_mul_geometric_complex_of_norm_lt_one (r := r) hq_norm).mul_right
+    (hasSum_multichoose_mul_geometric_complex_of_norm_lt_one (r := (r : ℂ)) hq_norm).mul_right
       (Real.rpow p r : ℂ)
+  have hmultichoose (n : ℕ) :
+      Ring.multichoose (r : ℂ) n = ((Ring.multichoose r n : ℝ) : ℂ) :=
+    (Ring.map_multichoose Complex.ofRealHom r n).symm
+  simp_rw [hmultichoose] at hsum
   -- The denominator lies in the right half-plane, so its principal logarithm avoids the cut.
   have hw_re : 0 < (1 - q).re := by
     have hq_re : q.re ≤ ‖q‖ := Complex.re_le_norm q
