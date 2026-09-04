@@ -42,6 +42,8 @@ compatible with: the total-degree grading of the underlying tensor product of gr
   product and for maps out of it.  These three are the tools with which a statement about the
   graded tensor product is reduced to pure tensors of homogeneous elements, which is where the
   Koszul sign is available.
+* `TauCeti.gradedTensorAlgHom_ext`: graded algebra maps out of the tensor product are determined by
+  their restrictions to the two factors.
 
 The grading of the underlying module is `TauCeti.InternalGrading.tensorProduct` and the Koszul
 multiplication is Mathlib's `GradedTensorProduct`; only their compatibility is proved here.
@@ -162,7 +164,7 @@ private theorem gradedTensorLift_map_mem (F : (𝒜 ᵍ⊗[R] ℬ) →ₐ[R] C)
 
 /-- The graded algebra map out of a graded tensor product induced by two graded algebra maps whose
 images satisfy the Koszul commutation rule. -/
-@[expose] noncomputable def gradedTensorLift (f : 𝒜 →ₐᵍ[R] 𝒞) (g : ℬ →ₐᵍ[R] 𝒞)
+noncomputable def gradedTensorLift (f : 𝒜 →ₐᵍ[R] 𝒞) (g : ℬ →ₐᵍ[R] 𝒞)
     (h : ∀ ⦃i j⦄ (a : 𝒜 i) (b : ℬ j),
       f a * g b = (-1 : ℤˣ) ^ (j * i) • (g b * f a)) :
     gradedTensorGrading 𝒜 ℬ →ₐᵍ[R] 𝒞 := by
@@ -191,8 +193,10 @@ images satisfy the Koszul commutation rule. -/
 theorem gradedTensorLift_tmul (f : 𝒜 →ₐᵍ[R] 𝒞) (g : ℬ →ₐᵍ[R] 𝒞)
     (h : ∀ ⦃i j⦄ (a : 𝒜 i) (b : ℬ j),
       f a * g b = (-1 : ℤˣ) ^ (j * i) • (g b * f a)) (a : A) (b : B) :
-    gradedTensorLift 𝒜 ℬ 𝒞 f g h (a ᵍ⊗ₜ[R] b) = f a * g b :=
-  rfl
+    gradedTensorLift 𝒜 ℬ 𝒞 f g h (a ᵍ⊗ₜ[R] b) = f a * g b := by
+  apply GradedTensorProduct.lift_tmul 𝒜 ℬ f.toAlgHom g.toAlgHom
+  intro i j a b
+  simpa only [GradedAlgHom.coe_toAlgHom] using h a b
 
 end Lift
 
@@ -269,5 +273,21 @@ noncomputable def gradedTensorIncludeRight : ℬ →ₐᵍ[R] gradedTensorGradin
 @[simp]
 theorem gradedTensorIncludeRight_apply (b : B) :
     gradedTensorIncludeRight 𝒜 ℬ b = (1 : A) ᵍ⊗ₜ[R] b := (rfl)
+
+/-- Two graded algebra morphisms from the graded tensor product agree if their compositions with
+the left and right factor inclusions agree. -/
+@[ext]
+theorem gradedTensorAlgHom_ext {C : Type uC} [Ring C] [Algebra R C]
+    (𝒞 : ℤ → Submodule R C) [GradedAlgebra 𝒞]
+    ⦃f g : gradedTensorGrading 𝒜 ℬ →ₐᵍ[R] 𝒞⦄
+    (ha : f.comp (gradedTensorIncludeLeft 𝒜 ℬ) = g.comp (gradedTensorIncludeLeft 𝒜 ℬ))
+    (hb : f.comp (gradedTensorIncludeRight 𝒜 ℬ) = g.comp (gradedTensorIncludeRight 𝒜 ℬ)) :
+    f = g := by
+  apply GradedAlgHom.coe_toAlgHom_injective
+  apply GradedTensorProduct.algHom_ext
+  · simpa only [GradedAlgHom.comp_toAlgHom, gradedTensorIncludeLeft] using
+      congrArg GradedAlgHom.toAlgHom ha
+  · simpa only [GradedAlgHom.comp_toAlgHom, gradedTensorIncludeRight] using
+      congrArg GradedAlgHom.toAlgHom hb
 
 end TauCeti
