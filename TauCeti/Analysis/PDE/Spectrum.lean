@@ -26,8 +26,9 @@ where `a` is the energy form of `L`.  This file develops that eigenvalue problem
 carries the spectral theory: it is compact for a bounded `Ω` because the inclusion
 `H¹₀(Ω) → L²(Ω)` is (Rellich--Kondrachov), it is symmetric when the energy form is, and its
 nonzero eigenvalues are exactly the reciprocals of the Dirichlet eigenvalues.  Mathlib's
-spectral theorem for compact self-adjoint operators then applies, giving finite-dimensional
-eigenspaces and eigenvectors with dense span in `L²(Ω)`.
+spectral theorem for compact self-adjoint operators then applies, giving eigenvectors with dense
+span in `L²(Ω)` and finite-dimensional eigenspaces at the nonzero eigenvalues; the eigenvalue `0`
+is absent because the value map `H¹₀(Ω) → L²(Ω)` has dense range.
 
 ## Hypotheses, and what each result needs
 
@@ -214,19 +215,16 @@ theorem isDirichletEigenvalue_iff_setIntegral (kappa : ℝ) :
             W1p.value (v : W1p mu Omega 2) x ∂mu := by
   simp only [IsDirichletEigenvalue, W1p.inner_value_eq_setIntegral]
 
-/-- The forcing integral of the zero right-hand side vanishes. -/
-private theorem setIntegral_zero_mul_value (v : W1p0 mu Omega 2) :
-    (∫ x in Omega, (0 : Lp ℝ 2 (mu.restrict Omega)) x *
-        W1p.value (v : W1p mu Omega 2) x ∂mu) = 0 := by
-  rw [← dirichletForcing_apply_eq_setIntegral, dirichletForcing_apply, inner_zero_left]
-
 /-- A Dirichlet eigenvalue is exactly a scalar mass shift with a nonzero homogeneous weak
 solution. -/
 theorem isDirichletEigenvalue_iff_exists_isWeakSolutionDirichletMassShift (kappa : ℝ) :
     IsDirichletEigenvalue mu Omega a b c kappa ↔
       ∃ u : W1p0 mu Omega 2, u ≠ 0 ∧ IsWeakSolutionDirichletMassShift a b c kappa 0 u := by
-  simp only [IsDirichletEigenvalue, isWeakSolutionDirichletMassShift_iff,
-    setIntegral_zero_mul_value, sub_eq_zero]
+  have hzero : ∀ v : W1p0 mu Omega 2,
+      (∫ x in Omega, (0 : Lp ℝ 2 (mu.restrict Omega)) x *
+        W1p.value (v : W1p mu Omega 2) x ∂mu) = 0 := fun v => by
+    rw [← dirichletForcing_apply_eq_setIntegral, dirichletForcing_apply, inner_zero_left]
+  simp only [IsDirichletEigenvalue, isWeakSolutionDirichletMassShift_iff, hzero, sub_eq_zero]
 
 /-- **Every Dirichlet eigenvalue of a coercive form is positive.**  Coercivity of the energy
 form on `H¹₀(Ω)` is the only hypothesis: neither boundedness nor any regularity of `Ω` is
@@ -291,9 +289,11 @@ theorem exists_isDirichletEigenvalue
     (hOmega_nonempty : (Omega : Set (EuclideanSpace ℝ ι)).Nonempty) :
     ∃ kappa : ℝ, IsDirichletEigenvalue mu Omega a b c kappa := by
   obtain ⟨w, hw⟩ := W1p0.exists_value_ne_zero (mu := mu) (Omega := Omega) hOmega_nonempty
+  have hvalueL_ne : (W1p0.valueL (mu := mu) (Omega := Omega) (p := 2)) ≠ 0 := fun hzero =>
+    hw (by rw [← W1p0.valueL_apply, hzero, zero_apply])
   obtain ⟨kappa, -, u, hu, heq⟩ := hcoercive.exists_ne_zero_forall_apply_eq_smul_inner
     (W1p0.isCompactOperator_valueL (by simp) hOmega) (energyFormH1L0_comm hcoeff hsymm)
-    (w := w) (by rwa [W1p0.valueL_apply])
+    hvalueL_ne
   refine ⟨kappa, u, hu, fun v => ?_⟩
   have hv := heq v
   rwa [energyFormH1L0_apply, W1p0.valueL_apply, W1p0.valueL_apply] at hv
@@ -455,7 +455,7 @@ theorem orthogonalComplement_iSup_eigenspaces_ne_zero_dirichletSolutionOperator_
     (⨆ nu : ℝ, ⨆ _ : nu ≠ 0, eigenspace (dirichletSolutionOperator hcoeff hcoercive :
       Lp ℝ 2 (mu.restrict Omega) →ₗ[ℝ] Lp ℝ 2 (mu.restrict Omega)) nu)ᗮ = ⊥ := by
   rw [dirichletSolutionOperator]
-  exact hcoercive.orthogonalComplement_iSup_eigenspaces_ne_zero_eq_bot
+  exact hcoercive.orthogonalComplement_iSup_eigenspaces_ne_zero_formSolutionOperator_eq_bot
     (W1p0.isCompactOperator_valueL (by simp) hOmega) W1p0.denseRange_valueL_two
     (energyFormH1L0_comm hcoeff hsymm)
 

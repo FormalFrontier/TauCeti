@@ -26,7 +26,9 @@ Lax--Milgram produces the unique `u : V` with `B u v = ⟪h, J v⟫` for all `v`
 soon as `B` is, and its nonzero eigenvalues are exactly the reciprocals of the variational
 eigenvalues: `S` has eigenvalue `κ⁻¹` at `κ • J u` precisely when `u` solves the variational
 eigenvalue problem for `κ`.  Mathlib's spectral theorem for compact symmetric operators then
-applies verbatim, giving finite-dimensional eigenspaces and eigenvectors with dense span.
+applies verbatim, giving eigenvectors with dense span and finite-dimensional eigenspaces at the
+*nonzero* eigenvalues.  The eigenspace at `0` is the kernel of `S`, which is `(range J)ᗮ` and so
+can be infinite dimensional; it vanishes exactly when `J` has dense range.
 
 Coercivity forces every variational eigenvalue to be positive, and quantitatively to be at
 least the coercivity constant whenever `J` is a contraction; this is the abstract form of the
@@ -55,8 +57,9 @@ eigenfunction.
   `IsCoercive.le_of_forall_apply_eq_smul_inner`: positivity of a variational eigenvalue, and
   the lower bound by the coercivity constant.
 * `IsCoercive.orthogonalComplement_iSup_eigenspaces_formSolutionOperator_eq_bot` and
-  `IsCoercive.orthogonalComplement_iSup_eigenspaces_ne_zero_eq_bot`: the eigenvectors of `S`
-  span a dense subspace, and only the nonzero eigenvalues are needed when `J` has dense range.
+  `IsCoercive.orthogonalComplement_iSup_eigenspaces_ne_zero_formSolutionOperator_eq_bot`: the
+  eigenvectors of `S` span a dense subspace, and only the nonzero eigenvalues are needed when
+  `J` has dense range.
 
 ## References
 
@@ -212,12 +215,7 @@ theorem eigenspace_formSolutionOperator_zero_eq_bot (hB : IsCoercive B) {J : V �
   refine le_antisymm (fun h hh => ?_) bot_le
   rw [LinearMap.mem_ker, ContinuousLinearMap.coe_coe,
     formSolutionOperator_apply_eq_zero_iff hB J h] at hh
-  have hcont : Continuous fun y : H => ⟪h, y⟫_ℝ := (innerSL ℝ h).continuous
-  have hEqOn : Set.EqOn (fun y : H => ⟪h, y⟫_ℝ) (fun _ => (0 : ℝ)) (Set.range J) := by
-    rintro _ ⟨v, rfl⟩
-    exact hh v
-  have hall := Continuous.ext_on hJ hcont continuous_const hEqOn
-  exact (Submodule.mem_bot ℝ).mpr (inner_self_eq_zero.mp (congrFun hall h))
+  exact (Submodule.mem_bot ℝ).mpr (hJ.eq_zero_of_inner_left ℝ hh)
 
 /-! ### Variational eigenvalues -/
 
@@ -292,12 +290,13 @@ theorem exists_forall_apply_eq_smul_inner (hB : IsCoercive B) (J : V →L[ℝ] H
   · rw [apply_formSolutionMap, hSw, real_inner_smul_left, ← mul_assoc, inv_mul_cancel₀ hmu,
       one_mul]
 
-/-- **Existence of a variational eigenvalue.**  For a symmetric form and a compact `J` that
-does not kill every vector, the variational eigenvalue problem has a nonzero eigenvalue with an
-eigenfunction. -/
+/-- **Existence of a variational eigenvalue.**  For a symmetric form and a nonzero compact `J`,
+the variational eigenvalue problem has a nonzero eigenvalue with an eigenfunction. -/
 theorem exists_ne_zero_forall_apply_eq_smul_inner (hB : IsCoercive B) {J : V →L[ℝ] H}
-    (hJ : IsCompactOperator J) (hsymm : ∀ u v : V, B u v = B v u) {w : V} (hw : J w ≠ 0) :
+    (hJ : IsCompactOperator J) (hsymm : ∀ u v : V, B u v = B v u) (hJne : J ≠ 0) :
     ∃ kappa : ℝ, kappa ≠ 0 ∧ ∃ u : V, u ≠ 0 ∧ ∀ v : V, B u v = kappa * ⟪J u, J v⟫_ℝ := by
+  obtain ⟨w, hw⟩ : ∃ w : V, J w ≠ 0 := by
+    simpa only [zero_apply] using DFunLike.ne_iff.mp hJne
   have hSne : hB.formSolutionOperator J ≠ 0 := by
     intro hzero
     have hJw : hB.formSolutionOperator J (J w) = 0 := by
@@ -350,7 +349,8 @@ theorem orthogonalComplement_iSup_eigenspaces_formSolutionOperator_eq_bot (hB : 
 /-- **The eigenfunctions of the variational eigenvalue problem span a dense subspace of `H`**:
 when `J` is compact with dense range and the form is symmetric, the eigenspaces of the solution
 operator at its nonzero eigenvalues already have trivial orthogonal complement. -/
-theorem orthogonalComplement_iSup_eigenspaces_ne_zero_eq_bot (hB : IsCoercive B)
+theorem orthogonalComplement_iSup_eigenspaces_ne_zero_formSolutionOperator_eq_bot
+    (hB : IsCoercive B)
     {J : V →L[ℝ] H} (hJ : IsCompactOperator J) (hJdense : DenseRange J)
     (hsymm : ∀ u v : V, B u v = B v u) :
     (⨆ mu : ℝ, ⨆ _ : mu ≠ 0,
