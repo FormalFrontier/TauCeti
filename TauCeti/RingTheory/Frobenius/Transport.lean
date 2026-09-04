@@ -18,15 +18,13 @@ an ideal is invariant under this transport:
 * the contraction to `R` of an ideal is unchanged by mapping it along `e`
   (`Ideal.under_mapAlgEquiv`), and mapping along `e` and back along `e.symm` recovers the ideal
   (`Ideal.map_of_equiv`);
-* unramifiedness at a prime is preserved, and is an equivalence
-  (`Algebra.IsUnramifiedAt.mapAlgEquiv`, `Algebra.IsUnramifiedAt.mapAlgEquiv_iff`);
 * an arithmetic Frobenius `φ : S →ₐ[R] S` conjugates to an arithmetic Frobenius at the mapped
   ideal, and the property is an equivalence (`AlgHom.IsArithFrobAt.mapAlgEquiv`,
   `AlgHom.IsArithFrobAt.mapAlgEquiv_iff`).
 
-These are the generic commutative-algebra forms of the number-field transport facts in
-`TauCeti/NumberTheory/NumberField/Frobenius/Transport.lean`, which specialize them along the
-ring-of-integers equivalence `NumberField.RingOfIntegers.mapAlgEquiv`.
+The arithmetic Frobenius results can be combined with the number-field compatibility of
+automorphism actions on rings of integers in
+`TauCeti/NumberTheory/NumberField/AutomorphismAction.lean`.
 
 -/
 
@@ -55,31 +53,6 @@ theorem under_mapAlgEquiv (e : S ≃ₐ[R] T) (Q : Ideal S) :
   simp
 
 end Ideal
-
-namespace Algebra.IsUnramifiedAt
-
-variable {R S T : Type*} [CommRing R] [CommRing S] [CommRing T] [Algebra R S] [Algebra R T]
-
-/-- **Unramifiedness is preserved by an algebra equivalence.**  If `S` is unramified over `R` at
-the prime `Q` and `e : S ≃ₐ[R] T`, then `T` is unramified over `R` at the mapped prime. -/
-theorem mapAlgEquiv (e : S ≃ₐ[R] T) (Q : Ideal S) [Q.IsPrime]
-    (hQ : IsUnramifiedAt R Q) : IsUnramifiedAt R (Q.map e) := by
-  exact e.symm.isUnramifiedAt_of_eq_comap (Ideal.map_comap_of_equiv e.toRingEquiv)
-
-/-- **Unramifiedness is invariant under an algebra equivalence.** -/
-@[simp]
-theorem mapAlgEquiv_iff (e : S ≃ₐ[R] T) (Q : Ideal S) [Q.IsPrime] :
-    IsUnramifiedAt R (Q.map e) ↔ IsUnramifiedAt R Q := by
-  constructor
-  · intro h
-    have _hp : ((Q.map e : Ideal T)).IsPrime := Ideal.map_isPrime_of_equiv e
-    have hQ := mapAlgEquiv e.symm (Q.map e) h
-    have hmap : (Q.map e).map e.symm = Q := Ideal.map_of_equiv e.toRingEquiv
-    simp only [hmap] at hQ
-    exact hQ
-  · exact mapAlgEquiv e Q
-
-end Algebra.IsUnramifiedAt
 
 namespace AlgHom.IsArithFrobAt
 

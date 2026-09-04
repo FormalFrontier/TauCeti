@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.NumberTheory.NumberField.Basic
+public import TauCeti.NumberTheory.NumberField.RingOfIntegers.Equiv
 
 /-!
 # Automorphisms acting on the ring of integers
@@ -41,6 +42,8 @@ recorded once here rather than reconstructed at each use site.
   `𝓞 K`-action.
 * `AlgEquiv.mapAlgEquiv_symm_autCongr_smul`: restriction to rings of integers intertwines
   conjugation of automorphisms along an algebra equivalence.
+* `AlgEquiv.toAlgHom_autCongr`: conjugation of automorphisms restricts to conjugation of their
+  actions on the ring of integers.
 -/
 
 public section
@@ -107,6 +110,19 @@ end NumberField
 namespace AlgEquiv
 
 variable {R K L : Type*} [Field R] [Field K] [Field L] [Algebra R K] [Algebra R L]
+
+/-- **Conjugation restricts to the ring of integers.**  The action on `𝓞 L` of the conjugate
+automorphism `e.autCongr τ`, stated in its defining normal form `e.symm.trans (τ.trans e)`, is
+the conjugation of the action of `τ` on `𝓞 K` by the induced equivalence
+`NumberField.RingOfIntegers.mapAlgEquiv e`. -/
+theorem toAlgHom_autCongr (e : K ≃ₐ[R] L) (τ : K ≃ₐ[R] K) :
+    MulSemiringAction.toAlgHom (𝓞 R) (𝓞 L) (e.symm.trans (τ.trans e)) =
+      (NumberField.RingOfIntegers.mapAlgEquiv e : 𝓞 K →ₐ[𝓞 R] 𝓞 L).comp
+        ((MulSemiringAction.toAlgHom (𝓞 R) (𝓞 K) τ).comp
+          (NumberField.RingOfIntegers.mapAlgEquiv e).symm.toAlgHom) := by
+  ext x
+  simp [MulSemiringAction.toAlgHom_apply, NumberField.algebraMap_smul_eq_apply,
+    AlgEquiv.trans_apply, NumberField.RingOfIntegers.mapAlgEquiv_apply]
 
 /-- Restriction to rings of integers intertwines conjugation of automorphisms along an algebra
 equivalence. -/
