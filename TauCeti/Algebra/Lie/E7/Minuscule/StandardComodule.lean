@@ -29,7 +29,10 @@ simple-root elements then move a coordinate vector across the connected minuscul
 * `TauCeti.E7Minuscule.coordinateHopfAlgebra`: the specialized carrier coordinate Hopf algebra.
 * `TauCeti.E7Minuscule.standardComodule`: its standard comodule on `R⁵⁶`.
 * `TauCeti.E7Minuscule.isFaithful_standardComodule`: faithfulness of the standard comodule.
-* `TauCeti.E7Minuscule.mulVec_mem`: invariant submodules are stable under carrier-valued points.
+* `TauCeti.E7Minuscule.specializedPointsMulEquiv`: specialized coordinate-algebra points are
+  identified with concrete carrier points.
+* `TauCeti.E7Minuscule.points_mulVec_mem`: invariant submodules are stable under concrete carrier
+  points.
 * `TauCeti.E7Minuscule.instIsSimpleOrderSubcomodule`: simplicity over a field.
 
 ## References
@@ -55,18 +58,6 @@ universe u
 
 variable (R : Type u) [CommRing R]
 
-/-- The coordinate Hopf algebra of the full-weight type-`E₇` minuscule carrier after base
-change to `R`. -/
-noncomputable abbrev coordinateHopfAlgebra :=
-  CommHopfAlgCat.quotient (GeneralLinear.coordinateHopfAlgebra R 56)
-    (baseChangeDefiningIdeal R)
-
-/-- The quotient coordinate morphism `O(GL₅₆) ⟶ O(carrier)`, representing the closed immersion
-of the specialized minuscule carrier into `GL₅₆`. -/
-noncomputable abbrev coordinateMap :
-    GeneralLinear.coordinateHopfAlgebra R 56 ⟶ coordinateHopfAlgebra R :=
-  CommHopfAlgCat.mkQuotient _ _
-
 /-- The standard right comodule of the specialized type-`E₇` minuscule carrier. -/
 @[instance_reducible]
 noncomputable def standardComodule :
@@ -78,6 +69,7 @@ attribute [local instance] GeneralLinear.standardComodule standardComodule
 
 /-- The standard carrier coaction is the standard general-linear coaction followed by the
 quotient coordinate morphism. -/
+@[simp]
 theorem standardComodule_coact :
     (standardComodule R).coact =
       TensorProduct.map LinearMap.id
@@ -146,81 +138,6 @@ theorem mulVec_mem
   rw [hpoint] at h
   exact h
 
-/-! ## Root matrices -/
-
-private theorem nilpotencyClass_rep_rootGenerator_le_two (i : Fin 7 ⊕ Fin 7) :
-    nilpotencyClass
-      (rep (_root_.UniversalEnvelopingAlgebra.ι ℚ
-        (TauCeti.serreRootGenerator (CartanMatrix.E 7) i))) ≤ 2 := by
-  rw [nilpotencyClass]
-  exact Nat.sInf_le (pow_two_rep_serreRootGenerator_eq_zero i)
-
-private theorem rep_positiveRootGenerator_latticeBasis_eq_sum (i : Fin 7) (s : Fin 56) :
-    rep (_root_.UniversalEnvelopingAlgebra.ι ℚ
-        (TauCeti.serreRootGenerator (CartanMatrix.E 7) (.inl i)))
-        ((latticeBasis s : lattice) : Fin 56 → ℚ) =
-      ∑ r, raisingMatrix i r s •
-          ((latticeBasis r : lattice) : Fin 56 → ℚ) := by
-  rw [rep_ι_apply]
-  rw [TauCeti.serreRootGenerator_inl, rationalSerreRepresentation_serreE]
-  rw [coe_latticeBasis, Matrix.mulVec_single_one]
-  ext a
-  simp only [Matrix.col_apply, Finset.sum_apply, Pi.smul_apply, coe_latticeBasis,
-    Pi.single_apply]
-  rw [Finset.sum_eq_single a]
-  · simp [raisingMatrixRat_apply, raisingMatrix_apply]
-  · intro b _ hba
-    simp [Ne.symm hba]
-  · simp
-
-private theorem rep_negativeRootGenerator_latticeBasis_eq_sum (i : Fin 7) (s : Fin 56) :
-    rep (_root_.UniversalEnvelopingAlgebra.ι ℚ
-        (TauCeti.serreRootGenerator (CartanMatrix.E 7) (.inr i)))
-        ((latticeBasis s : lattice) : Fin 56 → ℚ) =
-      ∑ r, loweringMatrix i r s •
-          ((latticeBasis r : lattice) : Fin 56 → ℚ) := by
-  rw [rep_ι_apply]
-  rw [TauCeti.serreRootGenerator_inr, rationalSerreRepresentation_serreF]
-  rw [coe_latticeBasis, Matrix.mulVec_single_one]
-  ext a
-  simp only [Matrix.col_apply, Finset.sum_apply, Pi.smul_apply, coe_latticeBasis,
-    Pi.single_apply]
-  rw [Finset.sum_eq_single a]
-  · simp [loweringMatrixRat_apply, loweringMatrix_apply]
-  · intro b _ hba
-    simp [Ne.symm hba]
-  · simp
-
-/-- A positive simple-root point has matrix `1 + uEᵢ` in the minuscule basis. -/
-theorem coe_rootSubgroupPoints_inl (i : Fin 7) (u : Multiplicative R) :
-    ((rootSubgroupPoints (.inl i) R u : Matrix.GeneralLinearGroup (Fin 56) R) :
-        Matrix (Fin 56) (Fin 56) R) =
-      1 + Multiplicative.toAdd u • (raisingMatrix i).map (Int.cast : ℤ → R) := by
-  rw [coe_rootSubgroupPoints]
-  simpa using
-    (TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupMatrix_eq_one_add_smul
-      (TauCeti.serreRootGenerator (CartanMatrix.E 7))
-      (TauCeti.serreH ℚ (CartanMatrix.E 7)) rep lattice.toAddSubgroup
-      rep_kostantForm_mem_lattice (.inl i) (isNilpotent_rep_serreRootGenerator (.inl i))
-      latticeBasis (raisingMatrix i) (nilpotencyClass_rep_rootGenerator_le_two (.inl i))
-      (rep_positiveRootGenerator_latticeBasis_eq_sum i)
-      ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := R)).symm u))
-
-/-- A negative simple-root point has matrix `1 + uFᵢ` in the minuscule basis. -/
-theorem coe_rootSubgroupPoints_inr (i : Fin 7) (u : Multiplicative R) :
-    ((rootSubgroupPoints (.inr i) R u : Matrix.GeneralLinearGroup (Fin 56) R) :
-        Matrix (Fin 56) (Fin 56) R) =
-      1 + Multiplicative.toAdd u • (loweringMatrix i).map (Int.cast : ℤ → R) := by
-  rw [coe_rootSubgroupPoints]
-  simpa using
-    (TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupMatrix_eq_one_add_smul
-      (TauCeti.serreRootGenerator (CartanMatrix.E 7))
-      (TauCeti.serreH ℚ (CartanMatrix.E 7)) rep lattice.toAddSubgroup
-      rep_kostantForm_mem_lattice (.inr i) (isNilpotent_rep_serreRootGenerator (.inr i))
-      latticeBasis (loweringMatrix i) (nilpotencyClass_rep_rootGenerator_le_two (.inr i))
-      (rep_negativeRootGenerator_latticeBasis_eq_sum i)
-      ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := R)).symm u))
-
 /-! ## Simplicity over a field -/
 
 section Simple
@@ -229,7 +146,7 @@ variable (k : Type u) [Field k]
 
 /-- Base-valued points of the specialized coordinate algebra, identified with points of the
 integral minuscule carrier after base change. -/
-private noncomputable def specializedPointsMulEquiv :
+noncomputable def specializedPointsMulEquiv :
     HopfAlgebra.points (R := k) (H := coordinateHopfAlgebra k) (CommAlgCat.of k k) ≃*
       points k :=
   (CommHopfAlgCat.baseChangeIsoPointsMulEquiv (baseChangeCoordinateIso k)
@@ -237,7 +154,9 @@ private noncomputable def specializedPointsMulEquiv :
     (pointsMulEquiv
       (TauCeti.CommAlgCat.restrictScalarsObj (algebraMap ℤ k) (CommAlgCat.of k k)))
 
-private theorem quotientPointsHom_specializedPointsMulEquiv_symm (g : points k) :
+/-- Under the specialized point equivalence, the quotient point is represented by the carrier
+point's ambient general-linear matrix. -/
+theorem quotientPointsHom_specializedPointsMulEquiv_symm (g : points k) :
     CommHopfAlgCat.quotientPointsHom
         (GeneralLinear.coordinateHopfAlgebra k 56) (baseChangeDefiningIdeal k)
         (CommAlgCat.of k k) ((specializedPointsMulEquiv k).symm g) =
@@ -257,18 +176,23 @@ private theorem quotientPointsHom_specializedPointsMulEquiv_symm (g : points k) 
   rw [MulEquiv.apply_symm_apply] at h
   rw [h, MulEquiv.symm_apply_apply]
 
+/-- A subcomodule of the standard carrier comodule is stable under every concrete carrier
+point. -/
+theorem points_mulVec_mem
+    (N : Subcomodule k (coordinateHopfAlgebra k) (Fin 56 → k))
+    (g : points k) {w : Fin 56 → k} (hw : w ∈ N) :
+    ((g : Matrix.GeneralLinearGroup (Fin 56) k) : Matrix (Fin 56) (Fin 56) k) *ᵥ w ∈ N := by
+  have h := mulVec_mem k N ((specializedPointsMulEquiv k).symm g) hw
+  rw [quotientPointsHom_specializedPointsMulEquiv_symm,
+    ← GeneralLinear.pointsMulEquiv_apply, MulEquiv.apply_symm_apply] at h
+  exact h
+
 private theorem rootSubgroupPoints_mulVec_mem
     (N : Subcomodule k (coordinateHopfAlgebra k) (Fin 56 → k))
     (i : Fin 7 ⊕ Fin 7) {w : Fin 56 → k} (hw : w ∈ N) :
     ((rootSubgroupPoints i k (Multiplicative.ofAdd 1) :
         Matrix.GeneralLinearGroup (Fin 56) k) : Matrix (Fin 56) (Fin 56) k) *ᵥ w ∈ N := by
-  let g := (specializedPointsMulEquiv k).symm
-    (rootSubgroupPoints i k (Multiplicative.ofAdd 1))
-  have h := mulVec_mem k N g hw
-  rw [quotientPointsHom_specializedPointsMulEquiv_symm] at h
-  rw [← GeneralLinear.pointsMulEquiv_apply,
-    MulEquiv.apply_symm_apply] at h
-  exact h
+  exact points_mulVec_mem k N (rootSubgroupPoints i k (Multiplicative.ofAdd 1)) hw
 
 /-- The character of the weight torus corresponding to a minuscule-basis index. -/
 private noncomputable abbrev minusculeCharacter (a : Fin 56) :
@@ -482,11 +406,11 @@ private theorem single_one_mem_of_ne_bot
         simp [hb0]
       · simp [hcb]
     rwa [heq] at hscaled
-  obtain ⟨l, hl⟩ := DynkinType.exists_foldl_e7MinusculeReflection_eq b
+  obtain ⟨l, hl⟩ := DynkinType.exists_e7MinusculeReflections_eq b
   have hzero : Pi.single (0 : Fin 56) 1 ∈ N := by
     apply single_mem_of_foldl_mem k N l 0
     rwa [hl]
-  obtain ⟨m, hm⟩ := DynkinType.exists_foldl_e7MinusculeReflection_eq a
+  obtain ⟨m, hm⟩ := DynkinType.exists_e7MinusculeReflections_eq a
   have := single_foldl_mem k N m 0 hzero
   rwa [hm] at this
 

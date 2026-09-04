@@ -29,7 +29,7 @@ only the index-two root lattice of the adjoint representation.
 * `TauCeti.DynkinType.e7MinusculeWeight`: the fifty-six weights in fundamental coordinates.
 * `TauCeti.DynkinType.e7MinusculeReflection`: the permutation induced by a simple reflection.
 * `TauCeti.DynkinType.e7MinusculeWeight_reflection`: the simple-reflection equation.
-* `TauCeti.DynkinType.exists_foldl_e7MinusculeReflection_eq`: every table index is reached from
+* `TauCeti.DynkinType.exists_e7MinusculeReflections_eq`: every table index is reached from
   the highest weight by simple reflections.
 * `TauCeti.DynkinType.range_e7MinusculeWeight`: the table is exactly the Weyl orbit of `ϖ₇`.
 * `TauCeti.DynkinType.span_range_e7MinusculeWeight_eq_top`: the weights span the character
@@ -245,7 +245,7 @@ private theorem e7MinusculeWeight_succ_eq_reflection_parent (a : Fin 55) :
 
 /-- Every index in the minuscule weight table is reached from the highest-weight index by a
 finite sequence of simple reflections. -/
-theorem exists_foldl_e7MinusculeReflection_eq (a : Fin 56) :
+theorem exists_e7MinusculeReflections_eq (a : Fin 56) :
     ∃ l : List (Fin 7), l.foldl (fun b i ↦ e7MinusculeReflection i b) 0 = a := by
   have aux : ∀ n, ∀ hn : n < 56,
       ∃ l : List (Fin 7), l.foldl (fun b i ↦ e7MinusculeReflection i b) 0 =
@@ -280,7 +280,7 @@ private theorem e7MinusculeWeight_mem_orbit (a : Fin 56) :
     e7MinusculeWeight a ∈
       MulAction.orbit e7SimplyConnectedRootDatum.weylGroup
         (Pi.single 6 1 : Fin 7 → ℤ) := by
-  obtain ⟨l, hl⟩ := exists_foldl_e7MinusculeReflection_eq a
+  obtain ⟨l, hl⟩ := exists_e7MinusculeReflections_eq a
   rw [← hl]
   clear a hl
   induction l using List.reverseRecOn with

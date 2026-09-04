@@ -42,6 +42,9 @@ roadmap before milestone L0 of the CFSGStatement roadmap can use this carrier.
   copy of the additive group.
 * `TauCeti.E7Minuscule.isClosedImmersion_weightTorus`: the minuscule weights make the split torus
   a closed subgroup of the carrier.
+* `TauCeti.E7Minuscule.coe_rootSubgroupPoints_inl` and
+  `TauCeti.E7Minuscule.coe_rootSubgroupPoints_inr`: the positive and negative simple-root
+  matrices in the minuscule basis.
 * `TauCeti.E7Minuscule.weightTorus_conj_rootSubgroup`: the scheme-level pinning equation.
 
 ## References
@@ -337,6 +340,81 @@ theorem coe_rootSubgroupPoints (k : Fin 7 ⊕ Fin 7) (A : Type v) [CommRing A]
         lattice.toAddSubgroup rep_kostantForm_mem_lattice k
         (isNilpotent_rep_serreRootGenerator k) latticeBasis
         ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm u) := (rfl)
+
+private theorem nilpotencyClass_rep_rootGenerator_le_two (i : Fin 7 ⊕ Fin 7) :
+    nilpotencyClass
+      (rep (_root_.UniversalEnvelopingAlgebra.ι ℚ
+        (TauCeti.serreRootGenerator (CartanMatrix.E 7) i))) ≤ 2 := by
+  rw [nilpotencyClass]
+  exact Nat.sInf_le (pow_two_rep_serreRootGenerator_eq_zero i)
+
+private theorem rep_positiveRootGenerator_latticeBasis_eq_sum (i : Fin 7) (s : Fin 56) :
+    rep (_root_.UniversalEnvelopingAlgebra.ι ℚ
+        (TauCeti.serreRootGenerator (CartanMatrix.E 7) (.inl i)))
+        ((latticeBasis s : lattice) : Fin 56 → ℚ) =
+      ∑ r, raisingMatrix i r s •
+          ((latticeBasis r : lattice) : Fin 56 → ℚ) := by
+  rw [rep_ι_apply]
+  rw [TauCeti.serreRootGenerator_inl, rationalSerreRepresentation_serreE]
+  rw [coe_latticeBasis, Matrix.mulVec_single_one]
+  ext a
+  simp only [Matrix.col_apply, Finset.sum_apply, Pi.smul_apply, coe_latticeBasis,
+    Pi.single_apply]
+  rw [Finset.sum_eq_single a]
+  · simp [raisingMatrixRat_apply, raisingMatrix_apply]
+  · intro b _ hba
+    simp [Ne.symm hba]
+  · simp
+
+private theorem rep_negativeRootGenerator_latticeBasis_eq_sum (i : Fin 7) (s : Fin 56) :
+    rep (_root_.UniversalEnvelopingAlgebra.ι ℚ
+        (TauCeti.serreRootGenerator (CartanMatrix.E 7) (.inr i)))
+        ((latticeBasis s : lattice) : Fin 56 → ℚ) =
+      ∑ r, loweringMatrix i r s •
+          ((latticeBasis r : lattice) : Fin 56 → ℚ) := by
+  rw [rep_ι_apply]
+  rw [TauCeti.serreRootGenerator_inr, rationalSerreRepresentation_serreF]
+  rw [coe_latticeBasis, Matrix.mulVec_single_one]
+  ext a
+  simp only [Matrix.col_apply, Finset.sum_apply, Pi.smul_apply, coe_latticeBasis,
+    Pi.single_apply]
+  rw [Finset.sum_eq_single a]
+  · simp [loweringMatrixRat_apply, loweringMatrix_apply]
+  · intro b _ hba
+    simp [Ne.symm hba]
+  · simp
+
+/-- A positive simple-root point has matrix `1 + uEᵢ` in the minuscule basis. -/
+theorem coe_rootSubgroupPoints_inl (i : Fin 7) (A : Type v) [CommRing A]
+    (u : Multiplicative A) :
+    ((rootSubgroupPoints (.inl i) A u : Matrix.GeneralLinearGroup (Fin 56) A) :
+        Matrix (Fin 56) (Fin 56) A) =
+      1 + Multiplicative.toAdd u • (raisingMatrix i).map (Int.cast : ℤ → A) := by
+  rw [coe_rootSubgroupPoints]
+  simpa only [MulEquiv.apply_symm_apply] using
+    (TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupMatrix_eq_one_add_smul
+      (TauCeti.serreRootGenerator (CartanMatrix.E 7))
+      (TauCeti.serreH ℚ (CartanMatrix.E 7)) rep lattice.toAddSubgroup
+      rep_kostantForm_mem_lattice (.inl i) (isNilpotent_rep_serreRootGenerator (.inl i))
+      latticeBasis (raisingMatrix i) (nilpotencyClass_rep_rootGenerator_le_two (.inl i))
+      (rep_positiveRootGenerator_latticeBasis_eq_sum i)
+      ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm u))
+
+/-- A negative simple-root point has matrix `1 + uFᵢ` in the minuscule basis. -/
+theorem coe_rootSubgroupPoints_inr (i : Fin 7) (A : Type v) [CommRing A]
+    (u : Multiplicative A) :
+    ((rootSubgroupPoints (.inr i) A u : Matrix.GeneralLinearGroup (Fin 56) A) :
+        Matrix (Fin 56) (Fin 56) A) =
+      1 + Multiplicative.toAdd u • (loweringMatrix i).map (Int.cast : ℤ → A) := by
+  rw [coe_rootSubgroupPoints]
+  simpa only [MulEquiv.apply_symm_apply] using
+    (TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupMatrix_eq_one_add_smul
+      (TauCeti.serreRootGenerator (CartanMatrix.E 7))
+      (TauCeti.serreH ℚ (CartanMatrix.E 7)) rep lattice.toAddSubgroup
+      rep_kostantForm_mem_lattice (.inr i) (isNilpotent_rep_serreRootGenerator (.inr i))
+      latticeBasis (loweringMatrix i) (nilpotencyClass_rep_rootGenerator_le_two (.inr i))
+      (rep_negativeRootGenerator_latticeBasis_eq_sum i)
+      ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm u))
 
 /-- The split weight torus inside the type-`E₇` minuscule carrier points. -/
 noncomputable def weightTorusPoints (A : Type v) [CommRing A] :
