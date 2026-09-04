@@ -16,6 +16,8 @@ This file defines the finite permutation data underlying a three-point cover.  A
 triple records the monodromies around `0`, `1`, and `∞`; the product relation fixes the convention
 that their ordered product is trivial.  The two-component constructor and the finite carrier
 equivalence make the data convenient for both structural arguments and enumeration.
+
+The formal prototype for this module is `TauCetiRoadmap/BelyiMaps/Suggested.lean`.
 -/
 
 public section
