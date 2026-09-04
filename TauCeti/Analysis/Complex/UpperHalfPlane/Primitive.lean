@@ -22,12 +22,19 @@ Mathlib's primitive on a ball, so it has derivative `f` throughout the half-plan
 
 ## Main results
 
-* `TauCeti.IsConservativeOn.wedgeIntegral_sub_wedgeIntegral_eq_of_mem_upperHalfPlane` -- wedge
+* `Complex.IsConservativeOn.wedgeIntegral_sub_wedgeIntegral_eq_of_mem_upperHalfPlane` -- wedge
   integrals based at an upper-half-plane point are additive.
 * `TauCeti.hasDerivAt_wedgeIntegral_upperHalfPlane` -- the explicit wedge integral
   has derivative equal to its integrand.
-* `TauCeti.isExactOn_upperHalfPlane` -- a holomorphic function on the upper
-  half-plane has a primitive.
+
+## Implementation notes
+
+The additivity proof is adapted from Mathlib's ball-based
+`Complex.IsConservativeOn.eventually_nhds_wedgeIntegral_sub_wedgeIntegral` in
+`Mathlib.Analysis.Complex.HasPrimitives`: the eight partial integrals and the closing
+`grind [wedgeIntegral]` step are taken from there, while the ball is replaced by the upper
+half-plane, so the integrability side conditions and the rectangle containment come from
+positivity of the imaginary parts and convexity of the half-plane instead.
 -/
 
 public section
@@ -43,13 +50,11 @@ variable {f : ℂ → E}
 
 namespace TauCeti
 
-namespace IsConservativeOn
-
 omit [CompleteSpace E] in
 /-- Wedge integrals based at a point of the upper half-plane are additive along any intermediate
 point there.  Equivalently, the integral around the rectangle left between the three wedge paths
 vanishes. -/
-theorem wedgeIntegral_sub_wedgeIntegral_eq_of_mem_upperHalfPlane
+theorem _root_.Complex.IsConservativeOn.wedgeIntegral_sub_wedgeIntegral_eq_of_mem_upperHalfPlane
     (hf : IsConservativeOn f upperHalfPlaneSet) (hcont : ContinuousOn f upperHalfPlaneSet)
     {b z w : ℂ} (hb : b ∈ upperHalfPlaneSet) (hz : z ∈ upperHalfPlaneSet)
     (hw : w ∈ upperHalfPlaneSet) :
@@ -95,8 +100,6 @@ theorem wedgeIntegral_sub_wedgeIntegral_eq_of_mem_upperHalfPlane
       hf (z.re + b.im * Complex.I) (w.re + z.im * Complex.I) hrect
   grind [wedgeIntegral]
 
-end IsConservativeOn
-
 /-- The wedge integral of a holomorphic function from an upper-half-plane base point has derivative
 equal to the function at every point of the upper half-plane. -/
 theorem hasDerivAt_wedgeIntegral_upperHalfPlane
@@ -109,14 +112,8 @@ theorem hasDerivAt_wedgeIntegral_upperHalfPlane
       (hf.continuousOn.mono hball) (Metric.mem_ball_self hr)
   refine (hlocal.const_add (wedgeIntegral (b : ℂ) z f)).congr_of_eventuallyEq ?_
   filter_upwards [isOpen_upperHalfPlaneSet.mem_nhds hz] with w hw
-  have hadd := IsConservativeOn.wedgeIntegral_sub_wedgeIntegral_eq_of_mem_upperHalfPlane
-    hf.isConservativeOn hf.continuousOn b.coe_im_pos hz hw
+  have hadd := hf.isConservativeOn.wedgeIntegral_sub_wedgeIntegral_eq_of_mem_upperHalfPlane
+    hf.continuousOn b.coe_im_pos hz hw
   grind
-
-/-- Every holomorphic function on the upper half-plane has a global primitive. -/
-theorem isExactOn_upperHalfPlane
-    (hf : DifferentiableOn ℂ f upperHalfPlaneSet) : IsExactOn f upperHalfPlaneSet := by
-  refine ⟨fun z ↦ wedgeIntegral (UpperHalfPlane.I : ℂ) z f, fun z hz ↦ ?_⟩
-  simpa using hasDerivAt_wedgeIntegral_upperHalfPlane hf UpperHalfPlane.I hz
 
 end TauCeti
