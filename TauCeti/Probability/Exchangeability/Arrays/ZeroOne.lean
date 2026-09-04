@@ -246,7 +246,7 @@ private theorem measure_inter_eq_mul_of_cylinders [IsProbabilityMeasure μ]
     intro i hi hj
     exact Set.disjoint_left.mp hd (hI_e i hi) (hJ_e' i hj)
   -- for each `n`, a permutation fixing `I` and pushing `J` past `n`
-  choose ρ hρI hρJ using fun n => Finset.exists_perm_fixOn_le_apply I J hIJ n
+  choose ρ hρI hρJ using fun n => I.exists_perm_fixOn_le_apply J hIJ n
   have hρ_fixA : ∀ n, ∀ p ∈ tA, (ρ n p.1, ρ n p.2) = p := by
     intro n p hp
     have h1 : p.1 ∈ I := Finset.mem_union_left _ (Finset.mem_image_of_mem _ hp)
