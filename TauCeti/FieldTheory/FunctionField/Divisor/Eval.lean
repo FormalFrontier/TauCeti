@@ -35,6 +35,9 @@ field norm.
   the additive group of divisors to `kˣ`, unconditionally.
 * `TauCeti.Divisor.eval_eq_prod_normResidue`: on an admissible divisor, the textbook product
   formula.
+* `TauCeti.Divisor.eval_mul`: `f(-)` is also multiplicative in the *function*, on a divisor
+  admissible for both factors. `evalHom` supplies the divisor variable; this supplies the other
+  one, and the two together are the bilinearity Weil reciprocity is stated against.
 
 ## Implementation notes
 
@@ -126,6 +129,7 @@ def IsUnitAtSupport (D : Divisor k F) (f : Fˣ) : Prop :=
 
 /-- The interface to `IsUnitAtSupport`: it is exactly the pointwise condition. This is both the
 introduction and the elimination rule, so the body of the definition is not exposed. -/
+@[simp]
 theorem isUnitAtSupport_iff {D : Divisor k F} {f : Fˣ} :
     IsUnitAtSupport D f ↔ ∀ P ∈ D.support, P.ord (f : F) = 0 := Iff.rfl
 
@@ -145,6 +149,20 @@ theorem eval_eq_prod_normResidue {D : Divisor k F} {f : Fˣ} (h : IsUnitAtSuppor
           ^ WeilDivisor.coeff D P.1 :=
         Finset.prod_congr rfl fun P _ ↦ by
           rw [Place.normResidueOrOne_of_ord_eq_zero (isUnitAtSupport_iff.1 h P.1 P.2)]
+
+/-- **`f(D)` is multiplicative in the function**, on a divisor admissible for both factors:
+`(f g)(D) = f(D) · g(D)`. This is the half of the divisor/function bilinearity that the
+homomorphism `evalHom` does not give for free — `evalHom` is a homomorphism in `D`, and this is
+the statement in `f`.
+
+Both hypotheses are needed. At a place where `f` and `g` have opposite nonzero orders their
+product is a unit while neither factor is, so the left side sees a genuine norm there and the
+right side sees `1` twice. -/
+theorem eval_mul {D : Divisor k F} {f g : Fˣ} (hf : IsUnitAtSupport D f)
+    (hg : IsUnitAtSupport D g) : eval D (f * g) = eval D f * eval D g := by
+  simp only [eval_eq_finsuppProd, Finsupp.prod, ← Finset.prod_mul_distrib]
+  refine Finset.prod_congr rfl fun P hP ↦ ?_
+  rw [Place.normResidueOrOne_mul (hf P hP) (hg P hP), mul_zpow]
 
 /-- **Admissibility is disjointness from the divisor of `f`.** This is the form the Weil-reciprocity
 statement uses, where the two divisors are the principal divisors of the two functions. -/

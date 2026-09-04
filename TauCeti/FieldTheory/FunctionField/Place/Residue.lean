@@ -110,4 +110,39 @@ theorem normResidueOrOne_of_ord_ne_zero {P : Place k F} {f : Fˣ} (hf : P.ord (f
     P.normResidueOrOne f = 1 := by
   simp [normResidueOrOne, hf]
 
+/-- The places where `f` is a unit are closed under multiplication of functions: `ord` is
+additive on nonzero elements. -/
+theorem ord_mul_eq_zero {P : Place k F} {f g : Fˣ} (hf : P.ord (f : F) = 0)
+    (hg : P.ord (g : F) = 0) : P.ord ((f * g : Fˣ) : F) = 0 := by
+  rw [Units.val_mul, P.ord_mul (Units.ne_zero f) (Units.ne_zero g), hf, hg, add_zero]
+
+/-- **The residue is multiplicative in the function**, at a place where both factors are units:
+`IsLocalRing.residue` is a ring homomorphism. -/
+theorem residueUnit_mul {P : Place k F} {f g : Fˣ} (hf : P.ord (f : F) = 0)
+    (hg : P.ord (g : F) = 0) :
+    P.residueUnit (f * g) (ord_mul_eq_zero hf hg)
+      = P.residueUnit f hf * P.residueUnit g hg := by
+  ext
+  rw [Units.val_mul, val_residueUnit, val_residueUnit, val_residueUnit, ← map_mul]
+  rfl
+
+/-- **The norm of the residue is multiplicative in the function**, at a place where both factors
+are units. -/
+theorem normResidue_mul {P : Place k F} {f g : Fˣ} (hf : P.ord (f : F) = 0)
+    (hg : P.ord (g : F) = 0) :
+    P.normResidue (f * g) (ord_mul_eq_zero hf hg)
+      = P.normResidue f hf * P.normResidue g hg := by
+  rw [normResidue, normResidue, normResidue, residueUnit_mul hf hg, map_mul]
+
+/-- **The total local factor is multiplicative in the function**, at a place where both factors
+are units. The hypotheses cannot be dropped: at a place where `f` and `g` have opposite nonzero
+orders, `f * g` is a unit while neither factor is, so the left side is a genuine norm and the
+right side is `1`. -/
+theorem normResidueOrOne_mul {P : Place k F} {f g : Fˣ} (hf : P.ord (f : F) = 0)
+    (hg : P.ord (g : F) = 0) :
+    P.normResidueOrOne (f * g) = P.normResidueOrOne f * P.normResidueOrOne g := by
+  rw [normResidueOrOne_of_ord_eq_zero (ord_mul_eq_zero hf hg),
+    normResidueOrOne_of_ord_eq_zero hf, normResidueOrOne_of_ord_eq_zero hg,
+    normResidue_mul hf hg]
+
 end TauCeti.Place
