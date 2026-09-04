@@ -30,7 +30,7 @@ public section
 
 namespace TauCeti
 
-open AlgebraicGeometry
+open AlgebraicGeometry CategoryTheory
 
 universe v
 
@@ -44,6 +44,18 @@ structure sheaf of `X`. -/
 noncomputable abbrev _root_.AlgebraicGeometry.Scheme.Modules.tensorProduct
     (M N : X.Modules) : X.Modules :=
   SheafOfModules.tensorProduct X.sheaf M N
+
+/-- Convert an isomorphism of sheaves of modules into an isomorphism of `𝒪_X`-modules. -/
+def _root_.AlgebraicGeometry.Scheme.Modules.isoOfSheafIso {M N : X.Modules}
+    (e : @Iso (SheafOfModules X.ringCatSheaf) _ M N) : M ≅ N :=
+  { hom := ⟨e.hom.val⟩
+    inv := ⟨e.inv.val⟩
+    hom_inv_id := by
+      apply SheafOfModules.Hom.ext
+      exact congrArg SheafOfModules.Hom.val e.hom_inv_id
+    inv_hom_id := by
+      apply SheafOfModules.Hom.ext
+      exact congrArg SheafOfModules.Hom.val e.inv_hom_id }
 
 end
 
