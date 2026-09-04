@@ -7,7 +7,6 @@ module
 
 public import Mathlib.Analysis.InnerProductSpace.Spectrum
 public import Mathlib.Analysis.InnerProductSpace.l2Space
-public import Mathlib.LinearAlgebra.Eigenspace.ContinuousLinearMap
 
 /-!
 # An orthonormal basis of eigenvectors for a compact self-adjoint operator
@@ -52,16 +51,12 @@ public section
 open Module.End
 open scoped InnerProductSpace
 
-namespace ContinuousLinearMap
-
 variable {𝕜 E : Type*} [RCLike 𝕜] [NormedAddCommGroup E] [InnerProductSpace 𝕜 E]
-  [CompleteSpace E] {T : E →L[𝕜] E}
 
-omit [CompleteSpace E] in
 /-- A vector orthogonal to every member of a Hilbert basis of a subspace is orthogonal to the
 whole subspace: expand the subspace vector in that basis and use continuity of the inner
 product. -/
-private theorem inner_eq_zero_of_forall_inner_hilbertBasis_eq_zero {K : Submodule 𝕜 E}
+theorem HilbertBasis.inner_eq_zero_of_forall_inner_eq_zero {K : Submodule 𝕜 E}
     {iota : Type*} (bK : HilbertBasis iota 𝕜 K) {x : E}
     (hx : ∀ i, ⟪x, (bK i : E)⟫_𝕜 = 0) {y : E} (hy : y ∈ K) : ⟪x, y⟫_𝕜 = 0 := by
   have hsum := ((innerSL 𝕜 x).comp K.subtypeL).hasSum (bK.hasSum_repr ⟨y, hy⟩)
@@ -69,6 +64,10 @@ private theorem inner_eq_zero_of_forall_inner_hilbertBasis_eq_zero {K : Submodul
     simpa only [ContinuousLinearMap.comp_apply, Submodule.coe_subtypeL, Submodule.subtype_apply,
       innerSL_apply_apply, map_smul, hx, smul_zero] using hsum
   exact hzero.unique hasSum_zero
+
+namespace ContinuousLinearMap
+
+variable [CompleteSpace E] {T : E →L[𝕜] E}
 
 /-- **A compact self-adjoint operator has an orthonormal basis of eigenvectors.**  The basis is
 indexed by a set of vectors of `E`, as in `exists_hilbertBasis`, and no separability is
@@ -103,7 +102,7 @@ theorem exists_hilbertBasis_hasEigenvector (hT : IsCompactOperator T)
     intro mu
     rw [Submodule.mem_orthogonal']
     exact fun y hy =>
-      inner_eq_zero_of_forall_inner_hilbertBasis_eq_zero (bw mu) (fun i => hx' ⟨mu, i⟩) hy
+      (bw mu).inner_eq_zero_of_forall_inner_eq_zero (fun i => hx' ⟨mu, i⟩) hy
   have key : ∀ x : Set.range v, ∃ mu : 𝕜, HasEigenvector (T : Module.End 𝕜 E) mu (x : E) := by
     rintro ⟨-, p, rfl⟩
     refine ⟨p.1, hmem p, fun hzero => ?_⟩
@@ -135,7 +134,8 @@ omit [CompleteSpace E] in
 term to the expansion of `y` writes `T y` as the sum of its eigencomponents; combined with
 `ContinuousLinearMap.exists_hilbertBasis_hasEigenvector` this diagonalizes a compact
 self-adjoint operator. -/
-theorem hasSum_smul_repr_of_apply_eq_smul {iota : Type*} (b : HilbertBasis iota 𝕜 E)
+theorem hasSum_smul_repr_of_apply_eq_smul (T : E →L[𝕜] E) {iota : Type*}
+    (b : HilbertBasis iota 𝕜 E)
     (nu : iota → 𝕜) (hb : ∀ i, T (b i) = nu i • b i) (y : E) :
     HasSum (fun i => nu i • b.repr y i • b i) (T y) := by
   have key : ∀ i, T (b.repr y i • b i) = nu i • b.repr y i • b i := fun i => by

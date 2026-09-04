@@ -369,10 +369,11 @@ theorem orthogonalComplement_iSup_eigenspaces_ne_zero_formSolutionOperator_eq_bo
 /-- **The variational eigenfunctions form an orthonormal basis of `H`.**  For a symmetric form
 and a compact `J` of dense range, `H` has an orthonormal basis `b` each of whose vectors is `J u`
 for an eigenfunction `u` of the variational problem at a positive eigenvalue `κ`, and the
-solution operator is diagonal in that basis: the solution of `B u v = ⟪h, J v⟫` is the
-eigenfunction expansion `∑ κ⁻¹ ⟪b i, h⟫ b i`.  This is the abstract form of the eigenfunction
-expansion of a symmetric elliptic operator; `H` is not assumed separable, so the basis is indexed
-by a set of vectors of `H` as in `exists_hilbertBasis`. -/
+solution operator is diagonal in that basis: its value, equivalently the `J`-image of the
+solution of `B u v = ⟪h, J v⟫`, is the eigenfunction expansion `∑ κ⁻¹ ⟪b i, h⟫ b i`.
+This is the abstract form of the eigenfunction expansion of a symmetric elliptic operator; `H`
+is not assumed separable, so the basis is indexed by a set of vectors of `H` as in
+`exists_hilbertBasis`. -/
 theorem exists_hilbertBasis_forall_apply_eq_smul_inner (hB : IsCoercive B) {J : V →L[ℝ] H}
     (hJ : IsCompactOperator J) (hJdense : DenseRange J) (hsymm : ∀ u v : V, B u v = B v u) :
     ∃ (s : Set H) (b : HilbertBasis s ℝ H) (kappa : s → ℝ) (u : s → V),
@@ -408,6 +409,6 @@ theorem exists_hilbertBasis_forall_apply_eq_smul_inner (hB : IsCoercive B) {J : 
   refine ⟨s, b, fun x => (nu x)⁻¹, fun x => (nu x)⁻¹ • hB.formSolutionMap J (x : H), hb,
     fun x => hB.pos_of_forall_apply_eq_smul_inner J (hune x) (heq x), hune, hJu, heq, fun h => ?_⟩
   simpa only [inv_inv] using
-    ContinuousLinearMap.hasSum_smul_repr_of_apply_eq_smul b nu hdiag h
+    (hB.formSolutionOperator J).hasSum_smul_repr_of_apply_eq_smul b nu hdiag h
 
 end IsCoercive

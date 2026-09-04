@@ -467,9 +467,9 @@ theorem orthogonalComplement_iSup_eigenspaces_ne_zero_dirichletSolutionOperator_
 /-- **The Dirichlet eigenfunctions form an orthonormal basis of `L²(Ω)`.**  On a bounded domain
 and for a symmetric energy form, `L²(Ω)` has an orthonormal basis whose vectors are the values of
 weak solutions `u ∈ H¹₀(Ω)` of `L u = κ u` at positive Dirichlet eigenvalues `κ`, and the
-Dirichlet problem is solved in that basis by the eigenfunction expansion
-`u = ∑ κ⁻¹ ⟪eₖ, f⟫ eₖ`.  No regularity of `∂Ω` enters, and `L²(Ω)` is not assumed separable, so
-the basis is indexed by a set of functions as in `exists_hilbertBasis`. -/
+`L²(Ω)` value of the weak solution to the Dirichlet problem has the eigenfunction expansion
+`W1p.value u = ∑ κ⁻¹ ⟪eₖ, f⟫ eₖ`.  No regularity of `∂Ω` enters, and `L²(Ω)` is not assumed
+separable, so the basis is indexed by a set of functions as in `exists_hilbertBasis`. -/
 theorem exists_hilbertBasis_forall_isDirichletEigenvalue
     (hcoeff : MemLp (fun x => energyIntegrand (a x) (b x) (c x)) ⊤ (mu.restrict Omega))
     (hcoercive : IsCoercive (energyFormH1L0 hcoeff))
