@@ -11,11 +11,7 @@ public import TauCeti.RingTheory.Huber.LocalizationTopology.Valuation
 /-!
 # The adic spectrum of a rational localisation covers the rational subset
 
-Roadmap Layer 3.1 asks, for a rational subset `U = R(T/s)` of `X = Spa(A, A⁺)`, for a natural
-homeomorphism between `U` and the adic spectrum of the rational localisation. `Localization.Basic`
-supplies the map and shows it lands in `U`, and closes by saying that the map back — extending a
-point of `U` to the coordinate ring — is "the remaining half of the roadmap's homeomorphism".
-This file supplies that half **before completion**: it shows that the continuous map
+For a rational subset `R(T/s)` of `Spa(A, A⁺)`, this file shows that the continuous map
 
 ```text
 Spa (Aₛ, Aₛ⁺) → Spa (A, A⁺)
@@ -43,11 +39,8 @@ structure map.
 
 ## Scope: the uncompleted localisation
 
-Every statement below is about `Aₛ` carrying `locTopology`, never about the completed localisation
-`A⟨T/s⟩`: identifying the two adic spectra is a separate theorem about extending continuous
-valuations along a completion, and it is neither used nor assumed here. Injectivity, and with it
-the homeomorphism `Spa (Aₛ, Aₛ⁺) ≃ₜ R(T/s)` for the uncompleted localisation, is supplied in
-`Localization.Homeomorph`, which upgrades the set-level image computation below.
+Every statement below is about `Aₛ` carrying `locTopology`, not the completed localisation
+`A⟨T/s⟩`.
 
 ## The hypothesis `P.ringOfDefinition ≤ A⁺`
 
@@ -99,8 +92,7 @@ the denominator, and is `≤ 1` on `A⁺`; extending it along `A → Aₛ` there
 valuation on `Aₛ` that is `≤ 1` on the integral closure of `A⁺[T/s]`, and restricting it back
 along the structure map returns the point.
 
-Here `Aₛ` carries `locTopology`, not the topology of the completion; see the module docstring for
-what that leaves open. -/
+Here `Aₛ` carries `locTopology`, not the topology of the completion. -/
 theorem exists_mem_spa_comap_algebraMap_eq (P : PairOfDefinition A) (Aplus : Subring A)
     (hP : P.ringOfDefinition ≤ Aplus) (T : Finset A) (s : A)
     (S : Type*) [CommRing S] [Algebra A S] [IsLocalization.Away s S]
@@ -157,11 +149,7 @@ theorem image_comap_algebraMap_spa_subset_rationalSubset (P : PairOfDefinition A
 
 /-- **The image of the adic spectrum of the rational localisation is exactly `R(T/s)`.** The
 inclusion `⊆` is `image_comap_algebraMap_spa_subset_rationalSubset`; the inclusion `⊇` is
-`exists_mem_spa_comap_algebraMap_eq`.
-
-This is the roadmap's homeomorphism `Spa (A_U, A_U⁺) ≃ U` at the level of underlying sets and
-before completion; injectivity and the topological comparison are added in
-`Localization.Homeomorph`, and the passage from `Aₛ` to `A⟨T/s⟩` is not part of the statement. -/
+`exists_mem_spa_comap_algebraMap_eq`. -/
 theorem image_comap_algebraMap_spa_eq_rationalSubset (P : PairOfDefinition A) (Aplus : Subring A)
     (hP : P.ringOfDefinition ≤ Aplus) (T : Finset A) (s : A)
     (S : Type*) [CommRing S] [Algebra A S] [IsLocalization.Away s S]
