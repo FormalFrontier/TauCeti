@@ -40,10 +40,13 @@ linear representations have dimension `1`, while their Steinberg twists have dim
 
 ## Main results
 
+* `TauCeti.character_GL2PrincipalSeries_mul_eq_mul`: twisting both principal-series parameters by
+  `γ` multiplies the character by the determinant character of `γ`.
 * `TauCeti.character_GL2PrincipalSeries_self_eq_mul`: the repeated-parameter principal-series
   character is the determinant character times the untwisted boundary character.
 * `TauCeti.character_GL2PrincipalSeries_self_eq_add`: its two character constituents are the
   linear and Steinberg-twist characters.
+* `TauCeti.simple_GL2Linear`: the linear constituent is irreducible.
 * `TauCeti.simple_GL2Steinberg` and `TauCeti.simple_GL2SteinbergTwist`: the two Steinberg
   families are irreducible (for universe-small finite fields).
 * `TauCeti.nonempty_iso_GL2PrincipalSeries_self`: the boundary principal series is the biproduct
@@ -52,7 +55,9 @@ linear representations have dimension `1`, while their Steinberg twists have dim
 ## References
 
 * W. Fulton and J. Harris, *Representation Theory: A First Course*, GTM 129, §5.2.
-* J.-P. Serre, *Linear Representations of Finite Groups*, GTM 42, §7.3.
+* J.-P. Serre, *Linear Representations of Finite Groups*, GTM 42, Chapter 7 — cited only for the
+  projection formula for induced characters, not for the `GL₂` decomposition itself, which is
+  Fulton–Harris above.
 -/
 
 public section
@@ -65,27 +70,42 @@ universe u
 
 variable (F : Type u) [Field F] [Fintype F]
 
-/-- **The boundary principal-series character is a determinant twist of the untwisted one.**
-For `α : Fˣ → ℂˣ`, the equality
-`χ(Ind_B^GL₂(α ⊗ α)) = (α ∘ det) · χ(Ind_B^GL₂(1 ⊗ 1))`
-is the class-function projection formula, because `α ⊗ α` is the restriction of `α ∘ det` to
-the Borel subgroup. -/
-theorem character_GL2PrincipalSeries_self_eq_mul (α : Fˣ →* ℂˣ) :
-    (GL2PrincipalSeries F α α).character =
-      (GL2Linear F α).character * (GL2PrincipalSeries F 1 1).character := by
+/-- **Twisting both principal-series parameters multiplies the character by a determinant
+character.** For `γ α β : Fˣ → ℂˣ`, the equality
+`χ(Ind_B^GL₂(γα ⊗ γβ)) = (γ ∘ det) · χ(Ind_B^GL₂(α ⊗ β))`
+is the class-function projection formula, because `γα ⊗ γβ` is the pointwise product of `α ⊗ β`
+with the restriction of `γ ∘ det` to the Borel subgroup. -/
+theorem character_GL2PrincipalSeries_mul_eq_mul (γ α β : Fˣ →* ℂˣ) :
+    (GL2PrincipalSeries F (γ * α) (γ * β)).character =
+      (GL2Linear F γ).character * (GL2PrincipalSeries F α β).character := by
   rw [GL2PrincipalSeries_def, ← indClassFun_ofFDRep_character,
     GL2PrincipalSeries_def, ← indClassFun_ofFDRep_character]
   rw [← indClassFun_comp_subtype_mul
-    (ClassFunction.mem_iff.mpr fun g x => (GL2Linear F α).char_conj g x)]
+    (ClassFunction.mem_iff.mpr fun g x => (GL2Linear F γ).char_conj g x)]
   congr 1
   funext b
-  rw [Pi.mul_apply, character_GL2BorelRep, character_GL2BorelRep,
-    GL2Borel.linearChar_self, character_GL2Linear]
-  simp
+  rw [Pi.mul_apply, character_GL2BorelRep, character_GL2BorelRep, character_GL2Linear,
+    GL2Borel.det_diag, map_mul]
+  simp [mul_mul_mul_comm]
+
+/-- **The boundary principal-series character is a determinant twist of the untwisted one.**
+For `α : Fˣ → ℂˣ`, the equality
+`χ(Ind_B^GL₂(α ⊗ α)) = (α ∘ det) · χ(Ind_B^GL₂(1 ⊗ 1))`
+is `TauCeti.character_GL2PrincipalSeries_mul_eq_mul` at the trivial pair of parameters, where
+`α ⊗ α` is the restriction of `α ∘ det` to the Borel subgroup. -/
+theorem character_GL2PrincipalSeries_self_eq_mul (α : Fˣ →* ℂˣ) :
+    (GL2PrincipalSeries F α α).character =
+      (GL2Linear F α).character * (GL2PrincipalSeries F 1 1).character := by
+  have h := character_GL2PrincipalSeries_mul_eq_mul F α 1 1
+  -- `simp` and `rw [mul_one]` both miss this occurrence: the `Mul` on `Fˣ →* ℂˣ` is
+  -- `MonoidHom.mul`, not the one `mul_one` matches on, so the rewrite is named explicitly.
+  have hα : α * 1 = α := mul_one α
+  rwa [hα] at h
 
 /-- **The repeated-parameter principal series has the sum of the linear and Steinberg-twist
 characters.** This is the character-theoretic two-constituent decomposition at the boundary of
 the principal series. -/
+@[simp]
 theorem character_GL2PrincipalSeries_self_eq_add (α : Fˣ →* ℂˣ) :
     (GL2PrincipalSeries F α α).character =
       (GL2Linear F α).character + (GL2SteinbergTwist F α).character := by
@@ -96,12 +116,20 @@ theorem character_GL2PrincipalSeries_self_eq_add (α : Fˣ →* ℂˣ) :
     character_GL2SteinbergTwist]
   ring
 
-/-! ### Irreducibility of the Steinberg constituents
+/-! ### Irreducibility of the constituents
 
 Mathlib's character-norm criterion currently requires the coefficient field and the group in the
-same universe. Accordingly these two packaging results use `F : Type`, as does the existing
-irreducibility theorem for the non-boundary principal series. The representations and their
-splitting above remain universe-polymorphic. -/
+same universe. Accordingly the two Steinberg packaging results below use `F : Type`, as does the
+existing irreducibility theorem for the non-boundary principal series. The representations, their
+splitting, and the irreducibility of the linear constituent all remain universe-polymorphic. -/
+
+omit [Fintype F] in
+/-- **The linear constituent of the boundary principal series is irreducible.** It is a line, so
+it has no proper nonzero subrepresentation. -/
+theorem simple_GL2Linear (α : Fˣ →* ℂˣ) : Simple (GL2Linear F α) :=
+  have : Representation.IsIrreducible (GL2Linear F α).ρ :=
+    Representation.isIrreducible_of_finrank_eq_one _ (finrank_GL2Linear (F := F) α)
+  FDRep.simple_of_isIrreducible _
 
 section SmallUniverse
 
