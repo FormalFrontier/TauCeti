@@ -115,7 +115,7 @@ elementary tensor `⟦g⟧ ⊗ₜ a`. -/
 @[simp]
 theorem HNegTwoAddEquivTensorOfIsTrivial_single (g : G) (a : A) :
     HNegTwoAddEquivTensorOfIsTrivial A
-      (((TateCohomology.isoGroupHomology (-2) 1 (Eq.refl (-2))).app A).inv
+      ((TateCohomology.isoGroupHomology (-2) 1 (Eq.refl (-2))).inv.app A
         (H1π A ((cycles₁IsoOfIsTrivial A).inv (Finsupp.single g a)))) =
       Additive.ofMul (Abelianization.of g) ⊗ₜ[ℤ] a := by
   let e : tateCohomology A (-2) ≅ groupHomology.H1 A :=
@@ -132,7 +132,7 @@ homology class. -/
 theorem HNegTwoAddEquivTensorOfIsTrivial_symm_tmul (g : G) (a : A) :
     (HNegTwoAddEquivTensorOfIsTrivial A).symm
         (Additive.ofMul (Abelianization.of g) ⊗ₜ[ℤ] a) =
-      ((TateCohomology.isoGroupHomology (-2) 1 (Eq.refl (-2))).app A).inv
+      (TateCohomology.isoGroupHomology (-2) 1 (Eq.refl (-2))).inv.app A
         (H1π A ((cycles₁IsoOfIsTrivial A).inv (Finsupp.single g a))) := by
   apply (HNegTwoAddEquivTensorOfIsTrivial A).injective
   rw [AddEquiv.apply_symm_apply, HNegTwoAddEquivTensorOfIsTrivial_single]
@@ -151,8 +151,8 @@ of `g` in the additive abelianization. -/
 @[simp]
 theorem HNegTwoAddEquivAbelianization_single_one (g : G) :
     HNegTwoAddEquivAbelianization
-      (((TateCohomology.isoGroupHomology (-2) 1 (Eq.refl (-2))).app
-        (Rep.trivial ℤ G ℤ)).inv
+      ((TateCohomology.isoGroupHomology (-2) 1 (Eq.refl (-2))).inv.app
+        (Rep.trivial ℤ G ℤ)
         (H1π (Rep.trivial ℤ G ℤ)
           ((cycles₁IsoOfIsTrivial (Rep.trivial ℤ G ℤ)).inv (Finsupp.single g 1)))) =
       Additive.ofMul (Abelianization.of g) := by
@@ -165,8 +165,8 @@ class represented by `(g, 1)`. -/
 @[simp]
 theorem HNegTwoAddEquivAbelianization_symm_of (g : G) :
     HNegTwoAddEquivAbelianization.symm (Additive.ofMul (Abelianization.of g)) =
-      ((TateCohomology.isoGroupHomology (-2) 1 (Eq.refl (-2))).app
-        (Rep.trivial ℤ G ℤ)).inv
+      (TateCohomology.isoGroupHomology (-2) 1 (Eq.refl (-2))).inv.app
+        (Rep.trivial ℤ G ℤ)
         (H1π (Rep.trivial ℤ G ℤ)
           ((cycles₁IsoOfIsTrivial (Rep.trivial ℤ G ℤ)).inv (Finsupp.single g 1))) := by
   apply HNegTwoAddEquivAbelianization.injective
