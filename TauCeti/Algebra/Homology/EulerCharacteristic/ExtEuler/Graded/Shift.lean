@@ -68,13 +68,18 @@ open CategoryTheory CategoryTheory.Abelian LaurentPolynomial
 
 universe w v u t
 
-variable {C : Type u} [Category.{v} C] [Abelian C]
-  (k : Type t) [Field k] [Linear k C] [HasExt.{w} C] (e : C ≌ C)
+variable {C : Type u} [Category.{v} C] [Abelian C] [HasExt.{w} C]
+  (k : Type t) (e : C ≌ C)
 
 /-! ### Shifting the target
 
 Nothing in this section needs the shift to be additive or linear: the reindexing is induced by an
-isomorphism of objects. -/
+isomorphism of objects.  The two reindexing equivalences need only a commutative ring of scalars;
+`k` is a field only from the point where dimensions are taken. -/
+
+section CommRing
+
+variable [CommRing k] [Linear k C]
 
 /-- Shifting the target of a bigraded `Ext` group raises its internal degree by one:
 `Ext^{n,j}(X, Y{1}) ≅ Ext^{n,j+1}(X, Y)`. -/
@@ -88,6 +93,11 @@ noncomputable def gradedExtShiftTargetInverseEquiv (X Y : C) (n : ℕ) (j : ℤ)
     GradedExt.{w} e X (e.inverse.obj Y) n j ≃ₗ[k] GradedExt.{w} e X Y n (j - 1) :=
   extLinearEquivOfIso k (Iso.refl X) ((e.powPredIso j).app Y) n
 
+end CommRing
+
+section Field
+
+variable [Field k] [Linear k C]
 variable {k e}
 variable {X Y : C}
 
@@ -154,11 +164,10 @@ theorem IsGradedEulerAdmissible.shiftTargetInverse (h : IsGradedEulerAdmissible.
 theorem gradedExtDimension_shiftTarget {n : ℕ}
     (h : HasFiniteLaurentSupport k (GradedExt.{w} e X Y n)) :
     gradedExtDimension k e h.gradedExtShiftTarget = T 1 * gradedExtDimension k e h := by
-  ext j
-  simp only [T, coeff_gradedExtDimension, AddMonoidAlgebra.coeff_single_mul_apply, one_mul]
-  rw [(gradedExtShiftTargetEquiv k e X Y n (-j)).finrank_eq]
-  have hj : -j + 1 = -(-1 + j) := by omega
-  rw [hj]
+  simp only [gradedExtDimension_eq_targetShiftGradedDimension,
+    ← targetShiftGradedDimension_reindex_add h 1]
+  exact (targetShiftGradedDimension_equiv (h.reindex_add 1) fun j =>
+    (gradedExtShiftTargetEquiv k e X Y n j).symm).symm
 
 /-- Shifting the target multiplies every truncation of the q-Euler sum by `q`. -/
 theorem truncatedGradedExtEuler_shiftTarget (h : IsGradedExtInternallyFinite.{w} k e X Y) (N : ℕ) :
@@ -186,19 +195,23 @@ theorem gradedExtEuler_shiftTargetInverse (h : IsGradedEulerAdmissible.{w} k e X
   rw [hcounit, gradedExtEuler_shiftTarget h.shiftTargetInverse, ← mul_assoc, ← T_add]
   simp
 
+end Field
+
 /-! ### Shifting the source
 
 The source identity uses that `Ext` is invariant under `e`, so `e` must be `k`-linear and not
-merely additive. -/
-
-variable (k e)
-variable [e.functor.Additive] [e.functor.Linear k]
+merely additive.  As for the target, the two reindexing equivalences need only a commutative ring
+of scalars. -/
 
 /-- The comparison `(Y{j-1}){1} ≅ Y{j}`, which moves a source shift into the internal degree. -/
 private noncomputable def shiftSourceObjIso (Y : C) (j : ℤ) :
     e.functor.obj ((e ^ (j - 1)).functor.obj Y) ≅ (e ^ j).functor.obj Y :=
   ((e.powSuccRightIso (j - 1)).app Y).symm ≪≫
-    (e.powCongrIso (by ring : j - 1 + 1 = j)).app Y
+    eqToIso (congrArg (fun i : ℤ => (e ^ i).functor.obj Y) (by ring : j - 1 + 1 = j))
+
+section CommRingSource
+
+variable [CommRing k] [Linear k C] [e.functor.Additive] [e.functor.Linear k]
 
 /-- Shifting the source of a bigraded `Ext` group lowers its internal degree by one:
 `Ext^{n,j}(X{1}, Y) ≅ Ext^{n,j-1}(X, Y)`. -/
@@ -214,6 +227,11 @@ noncomputable def gradedExtShiftSourceInverseEquiv (X Y : C) (n : ℕ) (j : ℤ)
   (extLinearEquivOfEquivalence k e (e.inverse.obj X) ((e ^ j).functor.obj Y) n).trans
     (extLinearEquivOfIso k (e.counitIso.app X) ((e.powSuccRightIso j).app Y).symm n)
 
+end CommRingSource
+
+section FieldSource
+
+variable [Field k] [Linear k C] [e.functor.Additive] [e.functor.Linear k]
 variable {k e}
 variable {X Y : C}
 
@@ -290,11 +308,10 @@ theorem IsGradedEulerAdmissible.shiftSourceInverse (h : IsGradedEulerAdmissible.
 theorem gradedExtDimension_shiftSource {n : ℕ}
     (h : HasFiniteLaurentSupport k (GradedExt.{w} e X Y n)) :
     gradedExtDimension k e h.gradedExtShiftSource = T (-1) * gradedExtDimension k e h := by
-  ext j
-  simp only [T, coeff_gradedExtDimension, AddMonoidAlgebra.coeff_single_mul_apply, one_mul]
-  rw [(gradedExtShiftSourceEquiv k e X Y n (-j)).finrank_eq]
-  have hj : -j - 1 = -(- -1 + j) := by omega
-  rw [hj]
+  simp only [gradedExtDimension_eq_targetShiftGradedDimension,
+    ← targetShiftGradedDimension_reindex_add h (-1)]
+  exact (targetShiftGradedDimension_equiv (h.reindex_add (-1)) fun j =>
+    (gradedExtShiftSourceEquiv k e X Y n j).symm).symm
 
 /-- Shifting the source multiplies every truncation of the q-Euler sum by `q⁻¹`. -/
 theorem truncatedGradedExtEuler_shiftSource (h : IsGradedExtInternallyFinite.{w} k e X Y) (N : ℕ) :
@@ -321,5 +338,7 @@ theorem gradedExtEuler_shiftSourceInverse (h : IsGradedEulerAdmissible.{w} k e X
       (Iso.refl Y)
   rw [hcounit, gradedExtEuler_shiftSource h.shiftSourceInverse, ← mul_assoc, ← T_add]
   simp
+
+end FieldSource
 
 end TauCeti

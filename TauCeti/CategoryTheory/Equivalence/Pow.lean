@@ -41,11 +41,6 @@ universe v u
 
 variable {C : Type u} [Category.{v} C]
 
-/-- Equal integer exponents give the same power functor. -/
-def _root_.CategoryTheory.Equivalence.powCongrIso (e : C ≌ C) {a b : ℤ} (h : a = b) :
-    (e ^ a).functor ≅ (e ^ b).functor :=
-  eqToIso (by rw [h])
-
 /-- **The successor isomorphism `e ^ (j + 1) ≅ e ⋙ e ^ j`.**  Mathlib's power is built by
 prepending a copy of `e`, so this is the identity except at the two exponents where the recursion
 bottoms out. -/
@@ -63,7 +58,8 @@ def _root_.CategoryTheory.Equivalence.powSuccIso (e : C ≌ C) : ∀ j : ℤ,
 def _root_.CategoryTheory.Equivalence.powPredIso (e : C ≌ C) (j : ℤ) :
     e.inverse ⋙ (e ^ j).functor ≅ (e ^ (j - 1)).functor :=
   Functor.isoWhiskerLeft e.inverse
-      (e.powCongrIso (by ring : j = j - 1 + 1) ≪≫ e.powSuccIso (j - 1)) ≪≫
+      (eqToIso (congrArg (fun i : ℤ => (e ^ i).functor) (by ring : j = j - 1 + 1)) ≪≫
+        e.powSuccIso (j - 1)) ≪≫
     e.invFunIdAssoc _
 
 /-- The inductive step of `CategoryTheory.Equivalence.powAddIso` which raises the first exponent
@@ -72,11 +68,12 @@ private def _root_.CategoryTheory.Equivalence.powAddIsoOfSucc (e : C ≌ C) (b a
     (h : a' = a + 1)
     (ih : (e ^ (a + b)).functor ≅ (e ^ a).functor ⋙ (e ^ b).functor) :
     (e ^ (a' + b)).functor ≅ (e ^ a').functor ⋙ (e ^ b).functor :=
-  e.powCongrIso (by rw [h]; ring : a' + b = a + b + 1) ≪≫
+  eqToIso (congrArg (fun i : ℤ => (e ^ i).functor) (by rw [h]; ring : a' + b = a + b + 1)) ≪≫
     e.powSuccIso (a + b) ≪≫ Functor.isoWhiskerLeft e.functor ih ≪≫
       (Functor.associator _ _ _).symm ≪≫
         Functor.isoWhiskerRight
-          ((e.powSuccIso a).symm ≪≫ e.powCongrIso (by rw [h] : a + 1 = a')) _
+          ((e.powSuccIso a).symm ≪≫
+            eqToIso (congrArg (fun i : ℤ => (e ^ i).functor) (by rw [h] : a + 1 = a'))) _
 
 /-- The inductive step of `CategoryTheory.Equivalence.powAddIso` which lowers the first exponent
 by one. -/
@@ -87,16 +84,19 @@ private def _root_.CategoryTheory.Equivalence.powAddIsoOfPred (e : C ≌ C) (b a
   (e.invFunIdAssoc _).symm ≪≫
     Functor.isoWhiskerLeft e.inverse
         ((e.powSuccIso (a' + b)).symm ≪≫
-          e.powCongrIso (by rw [h]; ring : a' + b + 1 = a + b) ≪≫ ih) ≪≫
+          eqToIso (congrArg (fun i : ℤ => (e ^ i).functor)
+            (by rw [h]; ring : a' + b + 1 = a + b)) ≪≫ ih) ≪≫
       (Functor.associator _ _ _).symm ≪≫
         Functor.isoWhiskerRight
-          (e.powPredIso a ≪≫ e.powCongrIso (by rw [h] : a - 1 = a')) _
+          (e.powPredIso a ≪≫
+            eqToIso (congrArg (fun i : ℤ => (e ^ i).functor) (by rw [h] : a - 1 = a'))) _
 
 /-- Additivity of the integer powers at a nonnegative first exponent. -/
 private def _root_.CategoryTheory.Equivalence.powAddNatIso (e : C ≌ C) (b : ℤ) : ∀ n : ℕ,
     (e ^ ((n : ℤ) + b)).functor ≅ (e ^ (n : ℤ)).functor ⋙ (e ^ b).functor
   | 0 =>
-      e.powCongrIso (by push_cast; ring : ((0 : ℕ) : ℤ) + b = b) ≪≫
+      eqToIso (congrArg (fun i : ℤ => (e ^ i).functor)
+          (by push_cast; ring : ((0 : ℕ) : ℤ) + b = b)) ≪≫
         (Functor.leftUnitor _).symm
   | n + 1 =>
       e.powAddIsoOfSucc b (n : ℤ) (((n + 1 : ℕ) : ℤ)) (by push_cast; ring)
@@ -106,7 +106,8 @@ private def _root_.CategoryTheory.Equivalence.powAddNatIso (e : C ≌ C) (b : �
 private def _root_.CategoryTheory.Equivalence.powSubNatIso (e : C ≌ C) (b : ℤ) : ∀ n : ℕ,
     (e ^ (-(n : ℤ) + b)).functor ≅ (e ^ (-(n : ℤ))).functor ⋙ (e ^ b).functor
   | 0 =>
-      e.powCongrIso (by push_cast; ring : -((0 : ℕ) : ℤ) + b = b) ≪≫
+      eqToIso (congrArg (fun i : ℤ => (e ^ i).functor)
+          (by push_cast; ring : -((0 : ℕ) : ℤ) + b = b)) ≪≫
         (Functor.leftUnitor _).symm
   | n + 1 =>
       e.powAddIsoOfPred b (-(n : ℤ)) (-((n + 1 : ℕ) : ℤ)) (by push_cast; ring)
