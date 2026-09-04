@@ -57,12 +57,6 @@ equips with the passage to a real form -- and `Representation.IsQuaternionicStru
 
 ## References
 
-This discharges the `frobeniusSchurIndicator_eq_one_iff_exists_structureMap` target of Layer 6b of
-the [compact-groups roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CompactGroups/README.md),
-in both the real case that target states and the quaternionic case `J² = -1` its docstring names,
-whose invariant-form companions are proved in
-`TauCeti/RepresentationTheory/Compact/FrobeniusSchur/InvariantForm.lean`.
-
 * T. Bröcker, T. tom Dieck, *Representations of Compact Lie Groups*, Springer GTM 98 (1985),
   Chapter II, §6.
 * Daniel Bump, *Lie Groups*, second edition, Chapter 2.
