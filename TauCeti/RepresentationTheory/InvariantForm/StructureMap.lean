@@ -95,12 +95,6 @@ theory attaches to it, since the fixed points of a `J` with `J (J v) = -v` are `
 
 ## References
 
-* [Character theory roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CharacterTheory/README.md),
-  Layer 7: the passage from a "compatible Hermitian form" to the real structure that the
-  realizability target `frobeniusSchurIndicatorRep_eq_one_realizable` is read off from.
-* [Compact-groups roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CompactGroups/README.md),
-  Layer 6b: the structure-map reading of the Frobenius-Schur values `1` and `-1`, in both of which
-  the equivalences below are consumed.
 * J.-P. Serre, *Linear Representations of Finite Groups*, GTM 42 (1977), §13.2.
 * T. Bröcker, T. tom Dieck, *Representations of Compact Lie Groups*, Springer GTM 98 (1985),
   Chapter II, §6.
