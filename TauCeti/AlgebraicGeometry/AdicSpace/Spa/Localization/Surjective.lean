@@ -43,10 +43,10 @@ structure map.
 
 ## What remains for the roadmap's homeomorphism
 
-Three things, none of them claimed here.
+Injectivity, and with it the homeomorphism `Spa (Aₛ, Aₛ⁺) ≃ₜ R(T/s)` for the uncompleted
+localisation, is supplied downstream in `Localization.Homeomorph`, which upgrades the set-level
+image computation below to a homeomorphism. Two things remain, neither of them claimed here.
 
-* **Injectivity**, and then that the resulting continuous bijection onto `R(T/s)` is a
-  homeomorphism.
 * **The passage to the completion.** The roadmap's `A_U` is the *completed* localisation
   `A⟨T/s⟩`, and every statement below is about `Aₛ` with `locTopology`. Identifying the two adic
   spectra is a separate theorem about extending continuous valuations along a completion, and it
@@ -164,8 +164,8 @@ inclusion `⊆` is `image_comap_algebraMap_spa_subset_rationalSubset`; the inclu
 `exists_mem_spa_comap_algebraMap_eq`.
 
 This is the roadmap's homeomorphism `Spa (A_U, A_U⁺) ≃ U` at the level of underlying sets and
-before completion; injectivity, the topological comparison and the passage from `Aₛ` to `A⟨T/s⟩`
-are not part of the statement. -/
+before completion; injectivity and the topological comparison are added in
+`Localization.Homeomorph`, and the passage from `Aₛ` to `A⟨T/s⟩` is not part of the statement. -/
 theorem image_comap_algebraMap_spa_eq_rationalSubset (P : PairOfDefinition A) (Aplus : Subring A)
     (hP : P.ringOfDefinition ≤ Aplus) (T : Finset A) (s : A)
     (S : Type*) [CommRing S] [Algebra A S] [IsLocalization.Away s S]
