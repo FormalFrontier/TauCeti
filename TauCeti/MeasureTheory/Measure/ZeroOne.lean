@@ -6,8 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.MeasureTheory.Measure.Typeclasses.ZeroOne
--- Non-public: used to turn symmetric-difference estimates into a zero-one conclusion.
-import Mathlib.MeasureTheory.Measure.MeasuredSets
 import Mathlib.MeasureTheory.Measure.Real
 
 /-!
