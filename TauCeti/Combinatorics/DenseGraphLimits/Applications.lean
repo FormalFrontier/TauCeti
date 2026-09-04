@@ -7,7 +7,7 @@ module
 
 public import TauCeti.Combinatorics.DenseGraphLimits.HomDensity.SmallGraphs
 public import Mathlib.Combinatorics.SimpleGraph.CycleGraph
-import Mathlib.Probability.Moments.Variance
+import TauCeti.MeasureTheory.Integral.Bochner.Basic
 
 /-!
 # Extremal inequalities for graphons
@@ -87,14 +87,9 @@ private theorem integrable_graphonDegree_sq (W : Graphon Ω μ) :
 
 private theorem integral_graphonDegree_sq_ge (W : Graphon Ω μ) :
     (∫ x, graphonDegree W x ∂μ) ^ 2 ≤ ∫ x, graphonDegree W x ^ 2 ∂μ := by
-  -- Nonnegativity of the variance, in the form `E[d]² ≤ E[d²]`.
-  have hLp : MemLp (graphonDegree W) 2 μ :=
-    (memLp_two_iff_integrable_sq
-      (integrable_graphonDegree W).aestronglyMeasurable).2 (integrable_graphonDegree_sq W)
-  have h := ProbabilityTheory.variance_nonneg (graphonDegree W) μ
-  rw [ProbabilityTheory.variance_eq_sub hLp] at h
-  simp only [Pi.pow_apply] at h
-  linarith
+  exact TauCeti.MeasureTheory.integral_sq_ge_sq_integral (graphonDegree W)
+    (integrable_graphonDegree W)
+    (integrable_graphonDegree_sq W)
 
 private theorem integrable_triple_graphon_product (W : Graphon Ω μ) :
     Integrable (fun p : Ω × Ω × Ω =>
@@ -465,6 +460,13 @@ private theorem integrable_twoStep_sq (W : Graphon Ω μ) :
     (twoStep_le_one W p.1 p.2)
   simpa [pow_two] using hsq
 
+private theorem prodAssoc_prodComm_apply (p : (Ω × Ω) × Ω) :
+    ((MeasurableEquiv.prodAssoc : ((Ω × Ω) × Ω) ≃ᵐ Ω × Ω × Ω).trans
+      ((MeasurableEquiv.refl Ω).prodCongr
+        (MeasurableEquiv.prodComm : (Ω × Ω) ≃ᵐ Ω × Ω))) p =
+      (p.1.1, p.2, p.1.2) := by
+  rfl
+
 private theorem integral_twoStep_eq_degree_sq (W : Graphon Ω μ) :
     (∫ p : Ω × Ω, twoStepIntegral W p.1 p.2 ∂(μ.prod μ)) =
       ∫ x, graphonDegree W x ^ 2 ∂μ := by
@@ -487,19 +489,8 @@ private theorem integral_twoStep_eq_degree_sq (W : Graphon Ω μ) :
         ((MeasurableEquiv.prodAssoc : ((Ω × Ω) × Ω) ≃ᵐ Ω × Ω × Ω).trans
           ((MeasurableEquiv.refl Ω).prodCongr
             (MeasurableEquiv.prodComm : (Ω × Ω) ≃ᵐ Ω × Ω))).measurableEmbedding]
-      rfl
+      simp only [prodAssoc_prodComm_apply]
     _ = ∫ x, graphonDegree W x ^ 2 ∂μ := integral_triple_graphon_two_edges_right W
-
-private theorem integral_sq_ge_sq_integral {α : Type*} [MeasurableSpace α]
-    {ν : Measure α} [IsProbabilityMeasure ν] (f : α → ℝ) (hf : Integrable f ν)
-    (hfsq : Integrable (fun x => f x ^ 2) ν) :
-    (∫ x, f x ∂ν) ^ 2 ≤ ∫ x, f x ^ 2 ∂ν := by
-  have hLp : MemLp f 2 ν :=
-    (memLp_two_iff_integrable_sq hf.aestronglyMeasurable).2 hfsq
-  have h := ProbabilityTheory.variance_nonneg f ν
-  rw [ProbabilityTheory.variance_eq_sub hLp] at h
-  simp only [Pi.pow_apply] at h
-  linarith
 
 private theorem homDensity_cycle_four_eq_twoStep_sq (W : Graphon Ω μ) :
     homDensity (SimpleGraph.cycleGraph 4) W =
@@ -582,7 +573,7 @@ fourth power of the edge density, on every probability carrier. -/
 theorem sidorenko_cycle_four (W : Graphon Ω μ) :
     homDensity (SimpleGraph.cycleGraph 4) W ≥
       homDensity (⊤ : SimpleGraph (Fin 2)) W ^ 4 := by
-  have hmean := integral_sq_ge_sq_integral
+  have hmean := TauCeti.MeasureTheory.integral_sq_ge_sq_integral
     (fun p : Ω × Ω => twoStepIntegral W p.1 p.2)
     (integrable_twoStep W) (integrable_twoStep_sq W)
   rw [integral_twoStep_eq_degree_sq W] at hmean
