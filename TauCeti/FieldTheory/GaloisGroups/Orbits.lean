@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.FieldTheory.PolynomialGaloisGroup
-public import Mathlib.RingTheory.UniqueFactorizationDomain.NormalizedFactors
+public import TauCeti.RingTheory.Polynomial.Factors
 import Mathlib.RingTheory.Algebraic.Integral
 
 /-!
@@ -18,13 +18,12 @@ that action with the monic irreducible factors of `p`.
 
 The invariant that separates the orbits is the minimal polynomial: two roots lie in the same
 orbit exactly when they have the same minimal polynomial over `F`, so the orbit of a root is the
-whole root set of its minimal polynomial. Passing to the orbit quotient turns this into a
-bijection with the distinct monic irreducible factors of `p`, that is, with the members of
-`UniqueFactorizationMonoid.normalizedFactors p`.
+whole root set of its minimal polynomial. When `p` is nonzero, passing to the orbit quotient
+turns this into a bijection with the distinct monic irreducible factors of `p`, that is, with
+the members of `Polynomial.Factors p`.
 
-The dictionary has an immediate consequence that later work leans on constantly, because the
-polynomials it must handle are usually reducible: for a separable polynomial of positive degree
-the root action is transitive if and only if the polynomial is irreducible.
+The dictionary also identifies transitivity of the root action with irreducibility for a
+separable polynomial of positive degree.
 
 ## Main results
 
@@ -32,34 +31,21 @@ the root action is transitive if and only if the polynomial is irreducible.
   their minimal polynomials agree.
 * `TauCeti.image_val_orbit_eq_rootSet_minpoly`: read inside `E`, the orbit of a root is the root
   set of its minimal polynomial.
-* `TauCeti.natCard_orbit_eq_natDegree_minpoly`: for separable `p`, an orbit has as many elements
-  as the degree of the corresponding factor.
+* `TauCeti.natCard_orbit_eq_natDegree_minpoly`: when the corresponding minimal polynomial is
+  separable, an orbit has as many elements as its degree.
 * `TauCeti.isPretransitive_iff_irreducible`: for separable `p` of positive degree, transitivity
   of the root action is equivalent to irreducibility of `p`.
-* `TauCeti.orbitQuotientEquivNormalizedFactors`: the orbit quotient is in bijection with the
+* `TauCeti.orbitQuotientEquivFactors`: the orbit quotient is in bijection with the
   monic irreducible factors of `p`, the orbit of a root going to its minimal polynomial.
-* `TauCeti.natCard_quotientOrbit_eq_natDegree`: along that bijection, and for separable `p`, the
-  degree of a factor is the number of roots in the matching orbit.
-
-## Implementation notes
-
-Everything is stated over an arbitrary splitting extension `E`, not only over
-`p.SplittingField`, since the polynomials met in practice are handed to us inside a fixed
-extension such as `ℂ`. The action on `p.rootSet E` is transported from the one on
-`p.rootSet p.SplittingField` along `Polynomial.Gal.rootsEquivRootsAux`, so the proofs first move
-the minimal polynomial across that bijection and then apply Mathlib's
-`Normal.minpoly_eq_iff_mem_orbit` in the splitting field, where the extension is normal.
-
-Writing `UniqueFactorizationMonoid.normalizedFactors p` requires the `NormalizationMonoid F[X]`
-instance, which is built from `DecidableEq F`; the statements about factors therefore carry that
-instance, exactly as Mathlib's `Polynomial.mem_normalizedFactors_iff` does.
+* `TauCeti.natCard_orbit_of_orbitQuotient_eq_natDegree`: along that bijection, a separable
+  factor has as many roots in the matching orbit as its degree.
 -/
 
 public section
 
 namespace TauCeti
 
-open Polynomial UniqueFactorizationMonoid
+open Polynomial
 
 universe u v w
 
@@ -68,16 +54,18 @@ variable {F : Type u} [Field F] {p : F[X]} (E : Type v) [Field E] [Algebra F E]
 
 /-! ## The minimal polynomial as an invariant of a root -/
 
-/-- The minimal polynomial of a root is unchanged by Mathlib's comparison map from the roots in
-the splitting field to the roots in an arbitrary splitting extension. -/
-theorem minpoly_rootsEquivRootsAux (z : p.rootSet p.SplittingField) :
+/- The comparison proofs transport roots using Mathlib's `Polynomial.Gal.rootsEquivRootsAux`
+and apply `Normal.minpoly_eq_iff_mem_orbit` in the splitting field. -/
+
+-- The minimal polynomial is unchanged by the comparison map from the splitting field.
+private theorem minpoly_rootsEquivRootsAux (z : p.rootSet p.SplittingField) :
     minpoly F ((Gal.rootsEquivRootsAux p E z : p.rootSet E) : E)
       = minpoly F (z : p.SplittingField) :=
   minpoly.algHom_eq (IsScalarTower.toAlgHom F p.SplittingField E)
     (algebraMap p.SplittingField E).injective _
 
-/-- The inverse form of `TauCeti.minpoly_rootsEquivRootsAux`. -/
-theorem minpoly_rootsEquivRootsAux_symm (x : p.rootSet E) :
+-- The inverse form of `minpoly_rootsEquivRootsAux`.
+private theorem minpoly_rootsEquivRootsAux_symm (x : p.rootSet E) :
     minpoly F (((Gal.rootsEquivRootsAux p E).symm x : p.rootSet p.SplittingField) :
       p.SplittingField) = minpoly F (x : E) := by
   conv_rhs => rw [← Equiv.apply_symm_apply (Gal.rootsEquivRootsAux p E) x]
@@ -131,9 +119,10 @@ theorem image_val_orbit_eq_rootSet_minpoly (x : p.rootSet E) :
       aeval_eq_zero_of_dvd_aeval_eq_zero hdvd (aeval_eq_zero_of_mem_rootSet hz)⟩
     exact ⟨⟨z, hzp⟩, (orbit_eq_preimage_rootSet_minpoly E x).ge hz, rfl⟩
 
-/-- For a separable polynomial, the orbit of a root has as many elements as the degree of its
-minimal polynomial. -/
-theorem natCard_orbit_eq_natDegree_minpoly (hsep : p.Separable) (x : p.rootSet E) :
+/-- When the minimal polynomial of a root is separable, its orbit has as many elements as the
+degree of that minimal polynomial. -/
+theorem natCard_orbit_eq_natDegree_minpoly (x : p.rootSet E)
+    (hsep : (minpoly F (x : E)).Separable) :
     Nat.card (MulAction.orbit p.Gal x) = (minpoly F (x : E)).natDegree := by
   have hdvd : minpoly F (x : E) ∣ p := minpoly.dvd F _ (aeval_eq_zero_of_mem_rootSet x.2)
   have hsplits : ((minpoly F (x : E)).map (algebraMap F E)).Splits :=
@@ -141,7 +130,7 @@ theorem natCard_orbit_eq_natDegree_minpoly (hsep : p.Separable) (x : p.rootSet E
       (by simpa using ne_zero_of_mem_rootSet x.2) (Polynomial.map_dvd _ hdvd)
   rw [Nat.card_congr (Equiv.Set.image _ _ Subtype.val_injective),
     image_val_orbit_eq_rootSet_minpoly, Nat.card_eq_fintype_card,
-    card_rootSet_eq_natDegree (hsep.of_dvd hdvd) hsplits]
+    card_rootSet_eq_natDegree hsep hsplits]
 
 /-! ## Transitivity and irreducibility -/
 
@@ -160,7 +149,7 @@ theorem isPretransitive_iff_irreducible (hsep : p.Separable) (hdeg : 0 < p.natDe
   have hint : IsIntegral F (x : E) := (isAlgebraic_of_mem_rootSet x.2).isIntegral
   have hdvd : minpoly F (x : E) ∣ p := minpoly.dvd F _ (aeval_eq_zero_of_mem_rootSet x.2)
   have hdegle : p.natDegree ≤ (minpoly F (x : E)).natDegree := by
-    rw [← natCard_orbit_eq_natDegree_minpoly E hsep x, MulAction.orbit_eq_univ]
+    rw [← natCard_orbit_eq_natDegree_minpoly E x (hsep.of_dvd hdvd), MulAction.orbit_eq_univ]
     simp [Nat.card_eq_fintype_card, hcard]
   have hunit : IsUnit (C p.leadingCoeff) :=
     isUnit_C.mpr (isUnit_iff_ne_zero.mpr (leadingCoeff_ne_zero.mpr hp0))
@@ -170,75 +159,66 @@ theorem isPretransitive_iff_irreducible (hsep : p.Separable) (hdeg : 0 < p.natDe
 
 /-! ## Orbits and monic irreducible factors -/
 
-variable [DecidableEq F]
-
-omit [Fact ((p.map (algebraMap F E)).Splits)] in
-/-- The minimal polynomial of a root of `p` is one of the monic irreducible factors of `p`. -/
-theorem minpoly_mem_normalizedFactors (x : p.rootSet E) :
-    minpoly F (x : E) ∈ normalizedFactors p := by
-  have hint : IsIntegral F (x : E) := (isAlgebraic_of_mem_rootSet x.2).isIntegral
-  exact (Polynomial.mem_normalizedFactors_iff (ne_zero_of_mem_rootSet x.2)).mpr
-    ⟨minpoly.irreducible hint, minpoly.monic hint,
-      minpoly.dvd F _ (aeval_eq_zero_of_mem_rootSet x.2)⟩
-
-/-- Every monic irreducible factor of `p` is the minimal polynomial of a root of `p` in a
-splitting extension. -/
-theorem exists_mem_rootSet_minpoly_eq {q : F[X]} (hq : q ∈ normalizedFactors p) :
+/-- Every monic irreducible factor of a nonzero `p` is the minimal polynomial of a root of `p`
+in a splitting extension. -/
+theorem exists_mem_rootSet_minpoly_eq (hp : p ≠ 0) (q : p.Factors) :
     ∃ x : p.rootSet E, minpoly F (x : E) = q := by
-  have hp : p ≠ 0 := by rintro rfl; simp at hq
-  obtain ⟨hirr, hmonic, hdvd⟩ := (Polynomial.mem_normalizedFactors_iff hp).mp hq
-  have hsplits : (q.map (algebraMap F E)).Splits :=
+  have hsplits : ((q : F[X]).map (algebraMap F E)).Splits :=
     (Fact.out (p := ((p.map (algebraMap F E)).Splits))).of_dvd
-      (by simpa using hp) (Polynomial.map_dvd _ hdvd)
-  have hdeg : (q.map (algebraMap F E)).natDegree ≠ 0 := by
+      (by simpa using hp) (Polynomial.map_dvd _ q.dvd)
+  have hdeg : ((q : F[X]).map (algebraMap F E)).natDegree ≠ 0 := by
     rw [natDegree_map]
-    exact hirr.natDegree_pos.ne'
+    exact q.irreducible.natDegree_pos.ne'
   obtain ⟨z, hz⟩ := Multiset.exists_mem_of_ne_zero (hsplits.roots_ne_zero hdeg)
-  have hzq : aeval z q = 0 := by
+  have hzq : aeval z (q : F[X]) = 0 := by
     rw [aeval_def, ← eval_map]
-    exact (mem_roots (hmonic.map (algebraMap F E)).ne_zero).mp hz
-  refine ⟨⟨z, mem_rootSet.mpr ⟨hp, aeval_eq_zero_of_dvd_aeval_eq_zero hdvd hzq⟩⟩, ?_⟩
-  exact (minpoly.eq_of_irreducible_of_monic hirr hzq hmonic).symm
+    exact (mem_roots (q.monic.map (algebraMap F E)).ne_zero).mp hz
+  refine ⟨⟨z, mem_rootSet.mpr ⟨hp, aeval_eq_zero_of_dvd_aeval_eq_zero q.dvd hzq⟩⟩, ?_⟩
+  exact (minpoly.eq_of_irreducible_of_monic q.irreducible hzq q.monic).symm
 
 variable (p) in
-/-- The Galois orbits on the roots of `p` in a splitting extension are in bijection with the
-monic irreducible factors of `p`; the orbit of a root goes to its minimal polynomial. -/
-noncomputable def orbitQuotientEquivNormalizedFactors :
-    MulAction.orbitRel.Quotient p.Gal (p.rootSet E) ≃ {q : F[X] // q ∈ normalizedFactors p} :=
+/-- The Galois orbits on the roots of a nonzero `p` in a splitting extension are in bijection
+with its monic irreducible factors; the orbit of a root goes to its minimal polynomial. -/
+noncomputable def orbitQuotientEquivFactors (hp : p ≠ 0) :
+    MulAction.orbitRel.Quotient p.Gal (p.rootSet E) ≃ p.Factors :=
   Equiv.ofBijective
     (Quotient.lift
       (fun x : p.rootSet E =>
-        (⟨minpoly F (x : E), minpoly_mem_normalizedFactors E x⟩ :
-          {q : F[X] // q ∈ normalizedFactors p}))
+        (⟨minpoly F (x : E), by
+          have hint : IsIntegral F (x : E) := (isAlgebraic_of_mem_rootSet x.2).isIntegral
+          exact ⟨minpoly.irreducible hint, minpoly.monic hint,
+            minpoly.dvd F _ (aeval_eq_zero_of_mem_rootSet x.2)⟩⟩ : p.Factors))
       fun _ _ hxy => Subtype.ext ((mem_orbit_iff_minpoly_eq E).mp hxy))
     ⟨by
       refine fun a b => Quotient.inductionOn₂ a b fun x y hxy => ?_
       exact Quotient.sound ((mem_orbit_iff_minpoly_eq E).mpr (Subtype.ext_iff.mp hxy)), by
-      rintro ⟨q, hq⟩
-      obtain ⟨x, hx⟩ := exists_mem_rootSet_minpoly_eq E hq
+      intro q
+      obtain ⟨x, hx⟩ := exists_mem_rootSet_minpoly_eq E hp q
       exact ⟨Quotient.mk _ x, Subtype.ext hx⟩⟩
 
+/-- The orbit-factor equivalence sends the orbit represented by `x` to `minpoly F x`. -/
 @[simp]
-theorem orbitQuotientEquivNormalizedFactors_mk (x : p.rootSet E) :
-    orbitQuotientEquivNormalizedFactors p E (Quotient.mk _ x)
-      = ⟨minpoly F (x : E), minpoly_mem_normalizedFactors E x⟩ :=
+theorem orbitQuotientEquivFactors_mk (hp : p ≠ 0) (x : p.rootSet E) :
+    ((orbitQuotientEquivFactors p E hp (Quotient.mk _ x) : p.Factors) : F[X])
+      = minpoly F (x : E) :=
   (rfl)
 
-/-- Along the bijection of `TauCeti.orbitQuotientEquivNormalizedFactors`, the degree of a monic
-irreducible factor of a separable `p` is the number of roots in the matching Galois orbit. -/
-theorem natCard_quotientOrbit_eq_natDegree (hsep : p.Separable)
-    (ω : MulAction.orbitRel.Quotient p.Gal (p.rootSet E)) :
+/-- Along `TauCeti.orbitQuotientEquivFactors`, the degree of a separable monic irreducible factor
+is the number of roots in the matching Galois orbit. -/
+theorem natCard_orbit_of_orbitQuotient_eq_natDegree (hp : p ≠ 0)
+    (ω : MulAction.orbitRel.Quotient p.Gal (p.rootSet E))
+    (hsep : ((orbitQuotientEquivFactors p E hp ω : p.Factors) : F[X]).Separable) :
     Nat.card (MulAction.orbitRel.Quotient.orbit ω)
-      = (orbitQuotientEquivNormalizedFactors p E ω : F[X]).natDegree := by
+      = ((orbitQuotientEquivFactors p E hp ω : p.Factors) : F[X]).natDegree := by
   induction ω using Quotient.inductionOn with
-  | h x => exact natCard_orbit_eq_natDegree_minpoly E hsep x
+  | h x => exact natCard_orbit_eq_natDegree_minpoly E x (by simpa using hsep)
 
 variable (p) in
-/-- The number of Galois orbits on the roots of `p` is the number of its monic irreducible
-factors. -/
-theorem natCard_orbitQuotient :
+/-- For nonzero `p`, the number of Galois orbits on its roots is the number of its monic
+irreducible factors. -/
+theorem natCard_orbitQuotient (hp : p ≠ 0) :
     Nat.card (MulAction.orbitRel.Quotient p.Gal (p.rootSet E))
-      = Nat.card {q : F[X] // q ∈ normalizedFactors p} :=
-  Nat.card_congr (orbitQuotientEquivNormalizedFactors p E)
+      = Nat.card p.Factors :=
+  Nat.card_congr (orbitQuotientEquivFactors p E hp)
 
 end TauCeti
