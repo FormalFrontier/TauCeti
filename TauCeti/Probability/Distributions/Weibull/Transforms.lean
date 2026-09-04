@@ -268,9 +268,8 @@ theorem integrableExpSet_id_weibullMeasure_of_lt_one (hk : 0 < k) (hk' : k < 1)
   simpa [integrableExpSet, id_eq] using
     integrable_exp_mul_id_weibullMeasure_iff_of_lt_one hk hk' hlam t
 
-/-- At shape one, the exponential integrand is integrable exactly below the reciprocal scale.
-Not a `simp` lemma: `weibullMeasure_one_eq_expMeasure` already normalises the measure, after
-which `integrable_exp_mul_expMeasure_iff` applies. -/
+/-- For a shape-one Weibull law with positive scale, the exponential integrand is integrable
+exactly below the reciprocal scale. -/
 theorem integrable_exp_mul_id_weibullMeasure_one_iff (hlam : 0 < lam) (t : ℝ) :
     Integrable (fun x : ℝ => Real.exp (t * x)) (weibullMeasure 1 lam) ↔ t < lam⁻¹ := by
   rw [weibullMeasure_one_eq_expMeasure]
@@ -297,17 +296,16 @@ theorem integrableExpSet_id_weibullMeasure (hk : 0 < k) (hlam : 0 < lam) :
   · have hone : 1 < k := lt_of_le_of_ne (not_lt.mp hklt) (Ne.symm hkone)
     simpa [hklt, hkone] using integrableExpSet_id_weibullMeasure_of_one_lt (lam := lam) hone
 
-/-- The moment-generating function of a shape-one Weibull law. Not a `simp` lemma: simp
-normalises the measure through `weibullMeasure_one_eq_expMeasure` and then rewrites with
-`mgf_id_expMeasure`; this states the classical closed form in the scale `lam`. -/
+/-- The moment-generating function of a shape-one Weibull law with positive scale, evaluated
+below the reciprocal scale. -/
 theorem mgf_id_weibullMeasure_one (hlam : 0 < lam) (ht : t < lam⁻¹) :
     mgf id (weibullMeasure 1 lam) t = (1 - lam * t)⁻¹ := by
   rw [weibullMeasure_one_eq_expMeasure, mgf_id_expMeasure (inv_pos.mpr hlam) ht]
   have hlam0 : lam ≠ 0 := hlam.ne'
   field_simp
 
-/-- The cumulant-generating function of a shape-one Weibull law. Not a `simp` lemma, for the
-same reason as `mgf_id_weibullMeasure_one`. -/
+/-- The cumulant-generating function of a shape-one Weibull law with positive scale, evaluated
+below the reciprocal scale. -/
 theorem cgf_id_weibullMeasure_one (hlam : 0 < lam) (ht : t < lam⁻¹) :
     cgf id (weibullMeasure 1 lam) t = -Real.log (1 - lam * t) := by
   rw [cgf, mgf_id_weibullMeasure_one hlam ht, Real.log_inv]
