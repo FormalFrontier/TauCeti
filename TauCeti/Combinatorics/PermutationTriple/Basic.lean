@@ -16,6 +16,10 @@ triple records the monodromies around `0`, `1`, and `∞`; the product relation 
 that their ordered product is trivial.  The two-component constructor and the finite carrier
 equivalence make the data convenient for both structural arguments and enumeration.
 
+The product convention and the degree-indexed carrier follow the pinned mathematical
+specification in `TauCetiRoadmap/BelyiMaps/README.md` (§Pinned conventions) and its formal
+signatures in `TauCetiRoadmap/BelyiMaps/Suggested.lean`.
+
 -/
 
 public section
