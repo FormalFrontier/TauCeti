@@ -6,7 +6,12 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.RepresentationTheory.Basic
+public import Mathlib.RepresentationTheory.Character
 public import TauCeti.LinearAlgebra.TensorProduct.Basis
+-- Non-public: `charZero_of_injective_algebraMap` transports characteristic zero along the
+-- structure map of the extension, and is used only inside the proof of
+-- `Representation.finrank_intertwiningMap_baseChange`.
+import Mathlib.Algebra.CharP.Algebra
 
 /-!
 # Base change of representations
@@ -15,11 +20,24 @@ This file extends a representation's scalars by base-changing each linear endomo
 records the descent step needed for fixed vectors: a nonzero common fixed vector after a field
 extension yields a nonzero common fixed vector over the base field.
 
+Two invariants survive the extension unchanged. The **character** is the trace of a linear map, and
+the trace of a base-changed endomorphism is the image of the trace
+(`LinearMap.trace_baseChange`), so the character of `L ⊗[K] V` is the character of `V` read in `L`.
+The **dimension of an intertwiner space** between two finite-dimensional representations of a
+finite group in characteristic zero is a character integral
+(`Representation.card_inv_mul_sum_char_mul_char_eq_finrank`), so it too is unchanged: extending the
+scalars neither merges nor splits the constituents, and this is the mechanism by which an
+absolutely irreducible representation stays irreducible over any extension.
+
 ## Main declarations
 
 * `Representation.baseChange`: scalar extension of a representation.
 * `Representation.exists_common_fixed_vector_of_baseChange`: descent of a nonzero common
   fixed vector.
+* `Representation.character_baseChange`: the character of a base-changed representation is the
+  image of the character.
+* `Representation.finrank_intertwiningMap_baseChange`: base change preserves the dimension of an
+  intertwiner space, over a base field of characteristic zero.
 -/
 
 public section
@@ -124,5 +142,55 @@ theorem _root_.Representation.exists_common_fixed_vector_of_baseChange
     exact congrArg descend (hfixed g)
 
 end
+
+section Character
+
+open TensorProduct
+
+variable {K : Type*} {L : Type*} [Field K] [Field L] [Algebra K L]
+variable {V : Type*} [AddCommGroup V] [Module K V] [FiniteDimensional K V]
+
+/-- **The character is unchanged by base change**, read through the structure map: the character of
+`L ⊗[K] V` at `g` is the image in `L` of the character of `V` at `g`, because the trace of a
+base-changed endomorphism is the image of its trace. -/
+theorem _root_.Representation.character_baseChange {G : Type*} [Monoid G]
+    (ρ : _root_.Representation K G V) (g : G) :
+    (_root_.Representation.baseChange L ρ).character g = algebraMap K L (ρ.character g) := by
+  simp [_root_.Representation.character, _root_.Representation.baseChange_apply,
+    LinearMap.trace_baseChange]
+
+variable {W : Type*} [AddCommGroup W] [Module K W] [FiniteDimensional K W]
+
+/-- **Base change preserves the dimension of an intertwiner space.** For finite-dimensional
+representations of a finite group over a field of characteristic zero, the dimension of the space
+of intertwiners is the character integral
+`|G|⁻¹ ∑ g, χ_σ g * χ_ρ g⁻¹` (`Representation.card_inv_mul_sum_char_mul_char_eq_finrank`), and both
+the group order and the two characters are carried to their images by the structure map of the
+extension.  So the extension can neither create nor destroy intertwiners, which is what makes an
+absolutely irreducible representation stay irreducible after extending the scalars. -/
+theorem _root_.Representation.finrank_intertwiningMap_baseChange [CharZero K]
+    {G : Type*} [Group G] [Finite G]
+    (ρ : _root_.Representation K G V) (σ : _root_.Representation K G W) :
+    Module.finrank L (_root_.Representation.IntertwiningMap
+        (_root_.Representation.baseChange L ρ) (_root_.Representation.baseChange L σ))
+      = Module.finrank K (_root_.Representation.IntertwiningMap ρ σ) := by
+  let _ := Fintype.ofFinite G
+  have : CharZero L := charZero_of_injective_algebraMap (algebraMap K L).injective
+  have _ : Invertible ((Nat.card G : K)) :=
+    invertibleOfNonzero (Nat.cast_ne_zero.mpr Nat.card_pos.ne')
+  have _ : Invertible ((Nat.card G : L)) :=
+    invertibleOfNonzero (Nat.cast_ne_zero.mpr Nat.card_pos.ne')
+  have key : algebraMap K L ((Nat.card G : K)⁻¹ * ∑ g : G, σ.character g * ρ.character g⁻¹)
+      = (Nat.card G : L)⁻¹ * ∑ g : G,
+          (_root_.Representation.baseChange L σ).character g *
+            (_root_.Representation.baseChange L ρ).character g⁻¹ := by
+    simp [_root_.Representation.character_baseChange, map_sum, map_mul, map_inv₀]
+  rw [_root_.Representation.card_inv_mul_sum_char_mul_char_eq_finrank ρ σ,
+    _root_.Representation.card_inv_mul_sum_char_mul_char_eq_finrank
+      (_root_.Representation.baseChange L ρ) (_root_.Representation.baseChange L σ),
+    map_natCast] at key
+  exact_mod_cast key.symm
+
+end Character
 
 end TauCeti.Representation
