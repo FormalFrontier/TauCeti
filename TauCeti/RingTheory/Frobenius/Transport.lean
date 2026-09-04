@@ -7,6 +7,7 @@ module
 
 public import Mathlib.RingTheory.Frobenius
 public import Mathlib.RingTheory.Localization.AtPrime.Basic
+public import TauCeti.RingTheory.Unramified.AlgEquiv
 
 /-!
 # Transporting unramifiedness and Frobenius data along an algebra equivalence
@@ -64,12 +65,7 @@ variable {R S T : Type*} [CommRing R] [CommRing S] [CommRing T] [Algebra R S] [A
 the prime `Q` and `e : S ≃ₐ[R] T`, then `T` is unramified over `R` at the mapped prime. -/
 theorem mapAlgEquiv (e : S ≃ₐ[R] T) (Q : Ideal S) [Q.IsPrime]
     (hQ : IsUnramifiedAt R Q) : IsUnramifiedAt R (Q.map e) := by
-  have hcomap : Q = (Q.map e).comap e :=
-    (Q.comap_map_of_bijective _ e.bijective).symm
-  let eLocal : Localization.AtPrime Q ≃ₐ[R] Localization.AtPrime (Q.map e) :=
-    Localization.localAlgEquiv Q _ e hcomap
-  let _ : Algebra.FormallyUnramified R (Localization.AtPrime Q) := hQ
-  exact Algebra.FormallyUnramified.of_equiv eLocal
+  exact e.symm.isUnramifiedAt_of_eq_comap (Ideal.map_comap_of_equiv e.toRingEquiv)
 
 /-- **Unramifiedness is invariant under an algebra equivalence.** -/
 @[simp]
