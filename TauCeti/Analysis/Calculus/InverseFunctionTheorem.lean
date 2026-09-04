@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Analysis.Calculus.InverseFunctionTheorem.ContDiff
-import Mathlib.Analysis.Normed.Operator.Banach
+public import TauCeti.Analysis.Calculus.ContinuousLinearMapInverse
 
 /-!
 # The inverse function theorem with a `C^n` inverse on a whole open set
@@ -22,8 +22,8 @@ The invertibility does in fact persist. Mathlib's construction goes through
 `ApproximatesLinearOn`: the source of the homeomorphism is an open set on which the map
 approximates its derivative `L` at the base point with a constant `c` strictly below `‖L⁻¹‖⁻¹`.
 On such a set every Fréchet derivative of the map is within `c` of `L` in norm, hence is still
-invertible. This file extracts that estimate and runs Mathlib's smooth inverse function theorem at
-every point of the target.
+invertible by `ContinuousLinearMap.isInvertible_of_norm_sub_le_half`. This file extracts that
+estimate and runs Mathlib's smooth inverse function theorem at every point of the target.
 
 Two forms are given. The first is about Mathlib's own homeomorphism, over an arbitrary
 nontrivially normed field and from strict differentiability alone; it is the form a consumer that
@@ -36,8 +36,6 @@ a point of an open set `s` restricts to an `OpenPartialHomeomorph` inside `s` wh
 
 * `ApproximatesLinearOn.norm_sub_le_of_hasFDerivAt`: on a set where `f` approximates `L` with
   constant `c`, every derivative of `f` at an interior point is within `c` of `L`.
-* `ContinuousLinearMap.isInvertible_of_norm_sub_lt`: a continuous linear map closer to an
-  invertible one than the reciprocal norm of its inverse is itself invertible.
 * `HasStrictFDerivAt.approximatesLinearOn_toOpenPartialHomeomorph_source`: the source of the
   inverse function theorem's homeomorphism carries the approximation estimate its construction
   chose.
@@ -77,52 +75,6 @@ theorem ApproximatesLinearOn.norm_sub_le_of_hasFDerivAt {f : E → F} {L A : E �
     {c : ℝ≥0} (hf : ApproximatesLinearOn f L s c) {x : E} (hs : s ∈ 𝓝 x)
     (hA : HasFDerivAt f A x) : ‖A - L‖ ≤ c := by
   exact (hA.sub L.hasFDerivAt).le_of_lipschitzOn hs hf.lipschitzOnWith
-
-/-- A continuous linear map that differs from a continuous linear equivalence `L` by less than
-`‖L⁻¹‖⁻¹` in operator norm is itself invertible: `L⁻¹A` is close enough to `1` to be a unit of the
-Banach algebra of endomorphisms of `E`. -/
-theorem ContinuousLinearMap.isInvertible_of_norm_sub_lt [CompleteSpace E]
-    (L : E ≃L[𝕜] F) {A : E →L[𝕜] F}
-    (h : ‖A - (L : E →L[𝕜] F)‖₊ < ‖(L.symm : F →L[𝕜] E)‖₊⁻¹) : A.IsInvertible := by
-  have hsymm : ‖(L.symm : F →L[𝕜] E)‖₊ ≠ 0 := by
-    rintro h0
-    rw [h0, inv_zero] at h
-    simp at h
-  have hpos : 0 < ‖(L.symm : F →L[𝕜] E)‖ := by
-    simpa using pos_iff_ne_zero.2 hsymm
-  have hreal : ‖A - (L : E →L[𝕜] F)‖ < ‖(L.symm : F →L[𝕜] E)‖⁻¹ := by
-    rw [← NNReal.coe_lt_coe] at h
-    simpa using h
-  have hnorm : ‖(L.symm : F →L[𝕜] E).comp A - 1‖ < 1 :=
-    calc
-      ‖(L.symm : F →L[𝕜] E).comp A - 1‖ =
-          ‖(L.symm : F →L[𝕜] E).comp (A - (L : E →L[𝕜] F))‖ := by
-        congr 1
-        ext x
-        simp
-      _ ≤ ‖(L.symm : F →L[𝕜] E)‖ * ‖A - (L : E →L[𝕜] F)‖ :=
-          ContinuousLinearMap.opNorm_comp_le _ _
-      _ < ‖(L.symm : F →L[𝕜] E)‖ * ‖(L.symm : F →L[𝕜] E)‖⁻¹ :=
-          mul_lt_mul_of_pos_left hreal hpos
-      _ = 1 := mul_inv_cancel₀ hpos.ne'
-  let _ : Nontrivial E := not_subsingleton_iff_nontrivial.mp (by
-    intro hE
-    let _ := hE
-    exact hpos.ne' (norm_of_subsingleton _))
-  let u : (E →L[𝕜] E)ˣ := Units.ofNearby 1 ((L.symm : F →L[𝕜] E).comp A) (by simpa using hnorm)
-  refine ⟨(ContinuousLinearEquiv.unitsEquiv 𝕜 E u).trans L, ?_⟩
-  ext x
-  simp [u, ContinuousLinearEquiv.unitsEquiv_apply]
-
-/-- A continuous linear map within `‖L⁻¹‖⁻¹ / 2` of a continuous linear equivalence `L` is
-invertible. This is the shape in which Mathlib's inverse function theorem supplies the estimate. -/
-theorem ContinuousLinearMap.isInvertible_of_norm_sub_le_half [CompleteSpace E]
-    (L : E ≃L[𝕜] F) {A : E →L[𝕜] F}
-    (h : ‖A - (L : E →L[𝕜] F)‖₊ ≤ ‖(L.symm : F →L[𝕜] E)‖₊⁻¹ / 2) : A.IsInvertible := by
-  rcases eq_or_ne (‖(L.symm : F →L[𝕜] E)‖₊)⁻¹ 0 with h0 | h0
-  · rw [h0, zero_div, le_zero_iff, nnnorm_eq_zero, sub_eq_zero] at h
-    exact h ▸ ContinuousLinearMap.isInvertible_equiv
-  · exact ContinuousLinearMap.isInvertible_of_norm_sub_lt L (h.trans_lt (NNReal.half_lt_self h0))
 
 namespace HasStrictFDerivAt
 
