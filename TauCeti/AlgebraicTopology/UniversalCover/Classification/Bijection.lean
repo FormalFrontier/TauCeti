@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.GroupAction.OrbitRelQuotient
+import TauCeti.Algebra.GroupAction.OrbitRelQuotient
 public import TauCeti.AlgebraicTopology.UniversalCover.Classification.Existence
 public import TauCeti.AlgebraicTopology.UniversalCover.Classification.RecoveredSubgroup
 public import TauCeti.AlgebraicTopology.UniversalCover.Classification.Regular
@@ -59,7 +59,7 @@ subgroup quotients are built from.
   of `π₁(X, x₀)` parametrise pointed connected covers bijectively.
 * `TauCeti.UniversalCover.exists_homeomorph_subgroupQuotient_comp_eq_iff_eq`: two subgroup
   quotients are isomorphic as *pointed* covers exactly when the subgroups are equal.
-* `TauCeti.UniversalCover.exists_homeomorph_subgroupQuotient_comp_eq_iff_exists_map_conj`: they
+* `TauCeti.UniversalCover.exists_homeomorph_subgroupQuotient_comp_eq_iff_exists_eq_map_conj`: they
   are isomorphic as *unpointed* covers exactly when the subgroups are conjugate.
 * `TauCeti.UniversalCover.isRegular_subgroupQuotientProj_iff_normal`: the cover attached to `H`
   is regular exactly when `H` is normal.
@@ -90,9 +90,7 @@ recovers.** If a covering map `p` with path-connected, locally path-connected to
 lift `e₀` of `x₀` recover `H ≤ π₁(X, x₀)`, then `E` is homeomorphic to `UniversalCover x₀ / H`
 over `X`, by a homeomorphism carrying `e₀` to the distinguished point.
 
-This is the surjectivity of the subgroup parametrisation; the comparison theorem
-`TauCeti.IsCoveringMap.exists_homeomorph_comp_eq_of_range_eq` supplies the homeomorphism once
-the cover attached to `H` is known to recover `H`. -/
+This is the surjectivity of the subgroup parametrisation. -/
 theorem exists_homeomorph_subgroupQuotient_of_range_eq {E : Type*} [TopologicalSpace E]
     [PathConnectedSpace E] [LocallyPathConnectedSpace E] {p : E → X} (hp : IsCoveringMap p)
     {e₀ : E} (hpe : p e₀ = x₀) (H : Subgroup (FundamentalGroup X x₀))
@@ -106,11 +104,7 @@ theorem exists_homeomorph_subgroupQuotient_of_range_eq {E : Type*} [TopologicalS
 
 /-- **Every pointed connected cover of `(X, x₀)` is realised by exactly one subgroup of
 `π₁(X, x₀)`.** The subgroups of `π₁(X, x₀)` therefore parametrise the pointed connected covers
-of `(X, x₀)` bijectively, up to isomorphism over `X` respecting the chosen lifts.
-
-Existence is `exists_homeomorph_subgroupQuotient_of_range_eq` at the recovered subgroup;
-uniqueness is the pointed comparison theorem, which forces any realising subgroup to be the
-recovered one. -/
+of `(X, x₀)` bijectively, up to isomorphism over `X` respecting the chosen lifts. -/
 theorem existsUnique_subgroup_homeomorph_subgroupQuotient {E : Type*} [TopologicalSpace E]
     [PathConnectedSpace E] [LocallyPathConnectedSpace E] {p : E → X} (hp : IsCoveringMap p)
     {e₀ : E} (hpe : p e₀ = x₀) :
@@ -141,7 +135,7 @@ theorem exists_homeomorph_subgroupQuotient_comp_eq_iff_eq
 subgroups are conjugate.** Forgetting the distinguished points therefore turns the subgroup
 parametrisation into a bijection between conjugacy classes of subgroups of `π₁(X, x₀)` and
 isomorphism classes of connected covers of `X`. -/
-theorem exists_homeomorph_subgroupQuotient_comp_eq_iff_exists_map_conj
+theorem exists_homeomorph_subgroupQuotient_comp_eq_iff_exists_eq_map_conj
     (H K : Subgroup (FundamentalGroup X x₀)) :
     (∃ h : SubgroupQuotient x₀ H ≃ₜ SubgroupQuotient x₀ K,
         subgroupQuotientProj x₀ K ∘ h = subgroupQuotientProj x₀ H) ↔
@@ -153,9 +147,7 @@ theorem exists_homeomorph_subgroupQuotient_comp_eq_iff_exists_map_conj
     (subgroupQuotientProj_basepoint x₀ H) (subgroupQuotientProj_basepoint x₀ K)]
   simp only [range_mapOfEq_subgroupQuotientProj]
 
-/-- **The cover attached to `H` is a regular cover exactly when `H` is normal.** This is the
-regular-cover criterion `TauCeti.IsCoveringMap.isRegular_iff_normal_range` read at the
-distinguished point of the cover attached to `H`, where the recovered subgroup is `H`. -/
+/-- **The cover attached to `H` is a regular cover exactly when `H` is normal.** -/
 theorem isRegular_subgroupQuotientProj_iff_normal (H : Subgroup (FundamentalGroup X x₀)) :
     Deck.IsRegular (subgroupQuotientProj x₀ H) ↔ H.Normal := by
   have := locallyPathConnectedSpace_subgroupQuotient x₀ H
@@ -167,10 +159,9 @@ theorem isRegular_subgroupQuotientProj_iff_normal (H : Subgroup (FundamentalGrou
 
 /-! ### The two ends of the correspondence -/
 
-/-- **The cover attached to the trivial subgroup is the universal cover.** The comparison is the
-quotient map itself, which `subgroupQuotientProj_comp_subgroupQuotientMap` already records as a
-map over `X`; the underlying bijection is the generic bottom-orbit quotient equivalence
-`TauCeti.MulAction.orbitRelQuotientBotEquiv`. -/
+omit [PathConnectedSpace X] in
+/-- **The cover attached to the trivial subgroup is the universal cover.** The underlying map is
+the quotient map `subgroupQuotientMap x₀ ⊥`, so the identification is one over `X`. -/
 noncomputable def subgroupQuotientBotHomeomorph :
     UniversalCover x₀ ≃ₜ SubgroupQuotient x₀ (⊥ : Subgroup (FundamentalGroup X x₀)) :=
   Equiv.toHomeomorphOfContinuousOpen
@@ -192,21 +183,6 @@ theorem coe_subgroupQuotientBotHomeomorph :
     ⇑(subgroupQuotientBotHomeomorph x₀) =
       subgroupQuotientMap x₀ (⊥ : Subgroup (FundamentalGroup X x₀)) :=
   (rfl)
-
-omit [PathConnectedSpace X] [LocallyPathConnectedSpace X] [SemilocallySimplyConnectedSpace X] in
-/-- The descended endpoint projection is injective on the orbit quotient by the whole fundamental
-group, because the orbits of that action are exactly the fibres of the endpoint projection. -/
-theorem subgroupQuotientProj_top_injective :
-    Function.Injective (subgroupQuotientProj x₀ (⊤ : Subgroup (FundamentalGroup X x₀))) := by
-  intro a b hab
-  induction a using Quotient.inductionOn' with
-  | h e₁ =>
-    induction b using Quotient.inductionOn' with
-    | h e₂ =>
-      rw [subgroupQuotientProj_mk, subgroupQuotientProj_mk] at hab
-      obtain ⟨g, hg⟩ := proj_eq_iff_mem_orbit.mp hab
-      rw [← subgroupQuotientMap_apply x₀ ⊤ e₁, ← subgroupQuotientMap_apply x₀ ⊤ e₂]
-      exact (subgroupQuotientMap_eq_iff x₀ ⊤).mpr ⟨⟨g, Subgroup.mem_top g⟩, hg⟩
 
 /-- **The cover attached to the whole fundamental group is `X` itself.** The comparison is the
 descended endpoint projection, so the cover attached to `⊤` is the trivial one-sheeted cover. -/

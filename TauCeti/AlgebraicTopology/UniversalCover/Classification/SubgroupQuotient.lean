@@ -184,4 +184,18 @@ theorem subgroupQuotientProj_surjective [PathConnectedSpace X]
   unfold subgroupQuotientProj
   exact Quotient.lift_surjective proj _ (proj_surjective (x₀ := x₀))
 
+/-- The descended endpoint projection is injective on the orbit quotient by the whole fundamental
+group, because the orbits of that action are exactly the fibres of the endpoint projection. -/
+theorem subgroupQuotientProj_top_injective :
+    Function.Injective (subgroupQuotientProj x₀ (⊤ : Subgroup (FundamentalGroup X x₀))) := by
+  intro a b hab
+  induction a using Quotient.inductionOn' with
+  | h e₁ =>
+    induction b using Quotient.inductionOn' with
+    | h e₂ =>
+      rw [subgroupQuotientProj_mk, subgroupQuotientProj_mk] at hab
+      obtain ⟨g, hg⟩ := proj_eq_iff_mem_orbit.mp hab
+      rw [← subgroupQuotientMap_apply x₀ ⊤ e₁, ← subgroupQuotientMap_apply x₀ ⊤ e₂]
+      exact (subgroupQuotientMap_eq_iff x₀ ⊤).mpr ⟨⟨g, Subgroup.mem_top g⟩, hg⟩
+
 end TauCeti.UniversalCover
