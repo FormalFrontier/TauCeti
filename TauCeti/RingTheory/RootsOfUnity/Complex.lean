@@ -32,8 +32,8 @@ roots of unity of absolute value `√2`.
 * `TauCeti.sum_eq_zero_or_norm_sum_eq_card_of_isIntegral`: a multiset of `n`-th roots of unity
   whose average is integral over `ℤ` has sum `0`, or a sum whose absolute value is its
   cardinality.
-* `TauCeti.mem_adjoin_of_pow_eq_one`: an `n`-th root of unity lies in the field generated over `ℚ`
-  by a primitive `n`-th root of unity.
+* `IsPrimitiveRoot.mem_adjoin_of_pow_eq_one`: an `n`-th root of unity lies in the field generated
+  over `ℚ` by a primitive `n`-th root of unity.
 * `TauCeti.norm_map_multiset_sum_le_card`: the image in `ℂ` of a sum of `n`-th roots of unity has
   absolute value at most the number of summands, under any ring homomorphism.
 
@@ -52,8 +52,9 @@ namespace TauCeti
 
 /-- Every `n`-th root of unity of `ℂ` lies in the subfield of `ℂ` generated over `ℚ` by a
 primitive `n`-th root of unity, being one of its powers. -/
-theorem mem_adjoin_of_pow_eq_one {n : ℕ} [NeZero n] {ζ : ℂ} (hζ : IsPrimitiveRoot ζ n)
-    {μ : ℂ} (hμ : μ ^ n = 1) : μ ∈ IntermediateField.adjoin ℚ ({ζ} : Set ℂ) := by
+theorem _root_.IsPrimitiveRoot.mem_adjoin_of_pow_eq_one {n : ℕ} [NeZero n] {ζ : ℂ}
+    (hζ : IsPrimitiveRoot ζ n) {μ : ℂ} (hμ : μ ^ n = 1) :
+    μ ∈ IntermediateField.adjoin ℚ ({ζ} : Set ℂ) := by
   obtain ⟨i, -, rfl⟩ := hζ.eq_pow_of_pow_eq_one hμ
   exact pow_mem (IntermediateField.subset_adjoin ℚ _ (Set.mem_singleton ζ)) i
 
@@ -93,7 +94,7 @@ theorem sum_eq_zero_or_norm_sum_eq_card_of_isIntegral {n : ℕ} (hn : n ≠ 0) {
   have : NumberField K := ⟨⟩
   -- `s`, read inside `K`
   set t : Multiset K :=
-    s.attach.map fun p => (⟨p.1, mem_adjoin_of_pow_eq_one hζ (hs p.1 p.2)⟩ : K) with htdef
+    s.attach.map fun p => (⟨p.1, hζ.mem_adjoin_of_pow_eq_one (hs p.1 p.2)⟩ : K) with htdef
   have hcoe : t.map (algebraMap K ℂ) = s := by
     rw [htdef, Multiset.map_map]
     exact Multiset.attach_map_val s
