@@ -223,7 +223,7 @@ end Approximation
 namespace WassersteinSpace
 
 variable [PseudoMetricSpace X] [StandardBorelSpace X] [BorelSpace X]
-  [SecondCountableTopology X] [MeasurableSingletonClass X] [Fact (1 ≤ p)]
+  [SecondCountableTopology X] [Fact (1 ≤ p)]
 
 /-- **The finitely supported laws are dense in `P_p (X)`.** On a separable pseudometric ground
 space with a standard Borel measurable structure, and for a finite exponent `1 ≤ p < ∞`, every
