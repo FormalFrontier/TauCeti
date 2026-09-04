@@ -51,8 +51,11 @@ not consume one — so the guarantee is recorded here rather than in the signatu
   their `normResidue` counterparts, together with `normResidueOrOne_one`, `normResidueOrOne_mul`
   and `normResidueOrOne_inv` for the total form. Because `residueUnit` is the image of a
   `MonoidHom`, the first three are `map_one`, `map_mul` and `map_inv`; the `normResidue` ones
-  compose that with `Algebra.normUnits`, itself a `MonoidHom`. Only the *total* form needs work,
-  and only for the product: `normResidueOrOne_mul` needs both factors admissible, while
+  compose that with `Algebra.normUnits`, itself a `MonoidHom`. Each of those takes the order
+  hypothesis of the *combined* function as an argument of its own, because that proof is what
+  indexes the left-hand side; the total form takes no such argument, which is what makes it the
+  form `TauCeti.Divisor.eval` is built on. Only the *total* form needs work, and only for the
+  product: `normResidueOrOne_mul` needs both factors admissible, while
   `normResidueOrOne_inv` needs nothing, since `ord_P f⁻¹ = -ord_P f` vanishes exactly when
   `ord_P f` does.
 
@@ -140,52 +143,40 @@ theorem normResidueOrOne_of_ord_ne_zero {P : Place k F} {f : Fˣ} (hf : P.ord (f
     P.normResidueOrOne f = 1 := by
   simp [normResidueOrOne, hf]
 
-/-- The places where `f` is a unit are closed under multiplication of functions: `ord` is
-additive on nonzero elements. -/
-theorem ord_mul_eq_zero {P : Place k F} {f g : Fˣ} (hf : P.ord (f : F) = 0)
-    (hg : P.ord (g : F) = 0) : P.ord ((f * g : Fˣ) : F) = 0 := by
-  rw [Units.val_mul, P.ord_mul (Units.ne_zero f) (Units.ne_zero g), hf, hg, add_zero]
-
 /-- **The residue is multiplicative in the function**, at a place where both factors are units:
-`IsLocalRing.residue` is a ring homomorphism. -/
+`(f g)(P) = f(P) · g(P)`. -/
 theorem residueUnit_mul {P : Place k F} {f g : Fˣ} (hf : P.ord (f : F) = 0)
-    (hg : P.ord (g : F) = 0) :
-    P.residueUnit (f * g) (ord_mul_eq_zero hf hg)
-      = P.residueUnit f hf * P.residueUnit g hg := by
+    (hg : P.ord (g : F) = 0) (hfg : P.ord ((f * g : Fˣ) : F) = 0) :
+    P.residueUnit (f * g) hfg = P.residueUnit f hf * P.residueUnit g hg := by
   rw [residueUnit, residueUnit, residueUnit, ← map_mul]
   rfl
 
 /-- **The norm of the residue is multiplicative in the function**, at a place where both factors
 are units. -/
 theorem normResidue_mul {P : Place k F} {f g : Fˣ} (hf : P.ord (f : F) = 0)
-    (hg : P.ord (g : F) = 0) :
-    P.normResidue (f * g) (ord_mul_eq_zero hf hg)
-      = P.normResidue f hf * P.normResidue g hg := by
-  rw [normResidue, normResidue, normResidue, residueUnit_mul hf hg, map_mul]
+    (hg : P.ord (g : F) = 0) (hfg : P.ord ((f * g : Fˣ) : F) = 0) :
+    P.normResidue (f * g) hfg = P.normResidue f hf * P.normResidue g hg := by
+  rw [normResidue, normResidue, normResidue, residueUnit_mul hf hg hfg, map_mul]
 
-/-- `ord_P f⁻¹ = -ord_P f`, so admissibility is invariant under inversion. -/
-theorem ord_inv_eq_zero {P : Place k F} {f : Fˣ} (hf : P.ord (f : F) = 0) :
-    P.ord ((f⁻¹ : Fˣ) : F) = 0 := by
-  rw [Units.val_inv_eq_inv_val, P.ord_inv, hf, neg_zero]
-
-/-- **The residue of the constant `1` is `1`**: `map_one` for the unit-group homomorphism. -/
+/-- **The residue of the constant `1` is `1`.** -/
 @[simp]
 theorem residueUnit_one (P : Place k F) (hf : P.ord ((1 : Fˣ) : F) = 0) :
     P.residueUnit 1 hf = 1 := by
   rw [residueUnit, ← map_one P.integers.unitGroupToResidueFieldUnits]
   rfl
 
-/-- **The residue inverts with the function**: `map_inv` for the unit-group homomorphism. -/
-theorem residueUnit_inv {P : Place k F} {f : Fˣ} (hf : P.ord (f : F) = 0) :
-    P.residueUnit f⁻¹ (ord_inv_eq_zero hf) = (P.residueUnit f hf)⁻¹ := by
+/-- **The residue inverts with the function**: `f⁻¹(P) = f(P)⁻¹`. -/
+theorem residueUnit_inv {P : Place k F} {f : Fˣ} (hf : P.ord (f : F) = 0)
+    (hfinv : P.ord ((f⁻¹ : Fˣ) : F) = 0) :
+    P.residueUnit f⁻¹ hfinv = (P.residueUnit f hf)⁻¹ := by
   rw [residueUnit, residueUnit, ← map_inv]
   rfl
 
-/-- **The norm of the residue inverts with the function**, since `Algebra.normUnits` is a
-homomorphism. -/
-theorem normResidue_inv {P : Place k F} {f : Fˣ} (hf : P.ord (f : F) = 0) :
-    P.normResidue f⁻¹ (ord_inv_eq_zero hf) = (P.normResidue f hf)⁻¹ := by
-  rw [normResidue, normResidue, residueUnit_inv hf, map_inv]
+/-- **The norm of the residue inverts with the function**: `N(f⁻¹(P)) = N(f(P))⁻¹`. -/
+theorem normResidue_inv {P : Place k F} {f : Fˣ} (hf : P.ord (f : F) = 0)
+    (hfinv : P.ord ((f⁻¹ : Fˣ) : F) = 0) :
+    P.normResidue f⁻¹ hfinv = (P.normResidue f hf)⁻¹ := by
+  rw [normResidue, normResidue, residueUnit_inv hf hfinv, map_inv]
 
 /-- **The total local factor is multiplicative in the function**, at a place where both factors
 are units. The hypotheses cannot be dropped: at a place where `f` and `g` have opposite nonzero
@@ -194,9 +185,10 @@ right side is `1`. -/
 theorem normResidueOrOne_mul {P : Place k F} {f g : Fˣ} (hf : P.ord (f : F) = 0)
     (hg : P.ord (g : F) = 0) :
     P.normResidueOrOne (f * g) = P.normResidueOrOne f * P.normResidueOrOne g := by
-  rw [normResidueOrOne_of_ord_eq_zero (ord_mul_eq_zero hf hg),
-    normResidueOrOne_of_ord_eq_zero hf, normResidueOrOne_of_ord_eq_zero hg,
-    normResidue_mul hf hg]
+  have hfg : P.ord ((f * g : Fˣ) : F) = 0 := by
+    rw [Units.val_mul, P.ord_mul (Units.ne_zero f) (Units.ne_zero g), hf, hg, add_zero]
+  rw [normResidueOrOne_of_ord_eq_zero hfg, normResidueOrOne_of_ord_eq_zero hf,
+    normResidueOrOne_of_ord_eq_zero hg, normResidue_mul hf hg hfg]
 
 -- Not `@[simp]`: since `normResidueOrOne_of_ord_eq_zero` is `@[simp]` and `simp` can discharge
 -- `ord_P 1 = 0` on its own, the total form is rewritten to `normResidue` before this could fire.
@@ -225,10 +217,12 @@ theorem normResidueOrOne_inv (P : Place k F) (f : Fˣ) :
     P.normResidueOrOne f⁻¹ = (P.normResidueOrOne f)⁻¹ := by
   by_cases hf : P.ord (f : F) = 0
   · refine eq_inv_of_mul_eq_one_left ?_
-    rw [← normResidueOrOne_mul (ord_inv_eq_zero hf) hf, inv_mul_cancel, normResidueOrOne_one]
-  · have h : P.ord ((f⁻¹ : Fˣ) : F) ≠ 0 := by
+    have hfinv : P.ord ((f⁻¹ : Fˣ) : F) = 0 := by
+      rw [Units.val_inv_eq_inv_val, P.ord_inv, hf, neg_zero]
+    rw [← normResidueOrOne_mul hfinv hf, inv_mul_cancel, normResidueOrOne_one]
+  · have hfinv : P.ord ((f⁻¹ : Fˣ) : F) ≠ 0 := by
       rw [Units.val_inv_eq_inv_val, P.ord_inv]
       simpa using hf
-    rw [normResidueOrOne_of_ord_ne_zero h, normResidueOrOne_of_ord_ne_zero hf, inv_one]
+    rw [normResidueOrOne_of_ord_ne_zero hfinv, normResidueOrOne_of_ord_ne_zero hf, inv_one]
 
 end TauCeti.Place

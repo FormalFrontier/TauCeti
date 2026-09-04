@@ -25,6 +25,8 @@ field norm.
 ## Main definitions
 
 * `TauCeti.Divisor.eval`: `f(D)`, as a unit of `k`.
+* `TauCeti.Divisor.evalHom`: the same as a bundled homomorphism in the divisor variable, which is
+  what makes the divisor laws below hypothesis-free and what a consumer composes or transports.
 * `TauCeti.Divisor.IsUnitAtSupport`: the admissibility condition — `f` is a unit at every place of
   `D`. This is exactly disjointness of `D` from the divisor of `f`
   (`isUnitAtSupport_iff_disjoint`).
@@ -92,12 +94,23 @@ namespace Divisor
 /-- **Evaluation of a function on divisors**, as a homomorphism from the divisor group written
 multiplicatively. Being a homomorphism outright is what makes `eval_zero`, `eval_add`, `eval_neg`
 and `eval_sub` hypothesis-free. -/
-private noncomputable def evalHom (f : Fˣ) : Multiplicative (Divisor k F) →* kˣ :=
+noncomputable def evalHom (f : Fˣ) : Multiplicative (Divisor k F) →* kˣ :=
   (freeAbelianCharEquiv (σ := Place k F) (M := kˣ)).symm fun P ↦ P.normResidueOrOne f
 
 /-- **The value `f(D)` of a function on a divisor.** -/
 noncomputable def eval (D : Divisor k F) (f : Fˣ) : kˣ :=
   evalHom f (Multiplicative.ofAdd D)
+
+/-- `eval` is `evalHom` on the multiplicative copy of the divisor group. -/
+@[simp]
+theorem evalHom_ofAdd (D : Divisor k F) (f : Fˣ) :
+    evalHom f (Multiplicative.ofAdd D) = eval D f := by
+  rw [eval]
+
+/-- `evalHom` is `eval` on the additive copy of the divisor group. -/
+theorem evalHom_apply (D : Multiplicative (Divisor k F)) (f : Fˣ) :
+    evalHom f D = eval (Multiplicative.toAdd D) f := by
+  rw [← evalHom_ofAdd, ofAdd_toAdd]
 
 -- Deliberately **not** `@[simp]`, for the reason recorded on
 -- `WeierstrassCurve.Affine.Point.naiveHeight_eq_logHeight`: tagging a defining equation makes
@@ -107,7 +120,7 @@ noncomputable def eval (D : Divisor k F) (f : Fˣ) : kˣ :=
 /-- `f(D)` is the product over the support of the local factors, each raised to its coefficient. -/
 theorem eval_eq_finsuppProd (D : Divisor k F) (f : Fˣ) :
     eval D f = D.prod fun P n ↦ P.normResidueOrOne f ^ n := by
-  simp [eval, evalHom]
+  simp only [eval, evalHom, freeAbelianCharEquiv_symm_apply_ofAdd]
 
 /-- `f(0) = 1`: the empty product. -/
 @[simp]
@@ -133,7 +146,7 @@ theorem eval_sub (D E : Divisor k F) (f : Fˣ) : eval (D - E) f = eval D f / eva
 @[simp]
 theorem eval_single (P : Place k F) (n : ℤ) (f : Fˣ) :
     eval (Finsupp.single P n : Divisor k F) f = P.normResidueOrOne f ^ n := by
-  simp [eval, evalHom]
+  simp [eval_eq_finsuppProd]
 
 /-- **`f` is a unit at every place of `D`** — the condition under which `f(D)` is the classical
 product and Weil reciprocity is stated. -/
@@ -200,8 +213,8 @@ theorem isUnitAtSupport_one (D : Divisor k F) : IsUnitAtSupport D (1 : Fˣ) :=
 
 /-- Admissibility is closed under products of functions. -/
 theorem IsUnitAtSupport.mul {D : Divisor k F} {f g : Fˣ} (hf : IsUnitAtSupport D f)
-    (hg : IsUnitAtSupport D g) : IsUnitAtSupport D (f * g) :=
-  fun P hP ↦ Place.ord_mul_eq_zero (hf P hP) (hg P hP)
+    (hg : IsUnitAtSupport D g) : IsUnitAtSupport D (f * g) := fun P hP ↦ by
+  rw [Units.val_mul, P.ord_mul (Units.ne_zero f) (Units.ne_zero g), hf P hP, hg P hP, add_zero]
 
 -- Not `@[simp]`, for the reason recorded above `isUnitAtSupport_one`.
 /-- Admissibility is *invariant* under inversion, not merely closed under it: `ord_P f⁻¹` vanishes
