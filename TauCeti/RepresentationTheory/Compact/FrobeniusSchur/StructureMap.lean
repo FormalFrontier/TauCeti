@@ -48,12 +48,12 @@ Haar integral enters only through the invariant-form criteria this file rewrites
 
 ## Implementation notes
 
-The roadmap phrases the criteria with an unbundled structure map, a conjugate-linear
-`J : V →ₗ⋆[ℂ] V` with `J (J v) = v`, respectively `J (J v) = -v`, commuting with the action.  Those
-are exactly `TauCeti.Representation.IsRealStructure`, which
-`TauCeti/RepresentationTheory/RealForm.lean` already defines and equips with the passage to a real
-form, and `TauCeti.Representation.IsQuaternionicStructure`, so the statements below are given in
-terms of the named predicates rather than their unfoldings.
+Both criteria are stated with the named structure-map predicates rather than with their unfoldings.
+A structure map is an unbundled conjugate-linear `J : V →ₗ⋆[ℂ] V` with `J (J v) = v`, respectively
+`J (J v) = -v`, commuting with the action, and those are exactly
+`Representation.IsRealStructure` -- which `TauCeti/RepresentationTheory/RealForm.lean` defines and
+equips with the passage to a real form -- and `Representation.IsQuaternionicStructure`, of
+`TauCeti/RepresentationTheory/QuaternionicStructure.lean`.
 
 ## References
 

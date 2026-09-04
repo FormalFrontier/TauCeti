@@ -8,6 +8,7 @@ module
 public import Mathlib.Analysis.Complex.Polynomial.Basic
 public import Mathlib.LinearAlgebra.Complex.FiniteDimensional
 public import TauCeti.RepresentationTheory.InvariantForm.Hermitian
+public import TauCeti.RepresentationTheory.QuaternionicStructure
 public import TauCeti.RepresentationTheory.RealForm
 
 /-!
@@ -62,11 +63,6 @@ the two directions assemble into `Representation.exists_isRealStructure_iff` and
 `1` and `-1` into structure maps whenever a positive definite invariant Hermitian form is
 available -- by Haar averaging for a compact group as much as by summation for a finite one.
 
-## Main definitions
-
-* `Representation.IsQuaternionicStructure`: a **quaternionic structure** on a complex
-  representation, a conjugate-linear `J` with `J (J v) = -v` commuting with the action.
-
 ## Main results
 
 * `Representation.exists_isRealStructure_of_isInvariantForm_of_isInvariantSesqForm`: **an
@@ -87,10 +83,12 @@ available -- by Haar averaging for a compact group as much as by summation for a
 
 ## Implementation notes
 
-`Representation.IsRealStructure` is defined in `TauCeti/RepresentationTheory/RealForm.lean`, beside
-the real-form theory that consumes it.  Its quaternionic counterpart is defined here instead:
-nothing of that theory attaches to it -- the fixed points of a `J` with `J (J v) = -v` are `0`, so
-there is no real form to take -- and this file is where it is produced and consumed.
+The two structure-map predicates are defined away from this file, so that stating one costs none of
+the machinery used to produce it: `Representation.IsRealStructure` in
+`TauCeti/RepresentationTheory/RealForm.lean`, beside the real-form theory that consumes it, and
+`Representation.IsQuaternionicStructure` in
+`TauCeti/RepresentationTheory/QuaternionicStructure.lean`, on its own -- nothing of that real-form
+theory attaches to it, since the fixed points of a `J` with `J (J v) = -v` are `0`.
 
 ## References
 
@@ -118,55 +116,6 @@ open TauCeti
 namespace Representation
 
 open TauCeti.Representation
-
-/-! ### Quaternionic structures -/
-
-section Quaternionic
-
-variable {G V : Type*} [Monoid G] [AddCommGroup V] [Module ℂ V] {ρ : Representation ℂ G V}
-
-variable (ρ) in
-/-- A **quaternionic structure** on a complex representation: a conjugate-linear map `J` of the
-underlying space that squares to `-1` and commutes with the action.  It is the `-1` half of the
-Frobenius-Schur reality dichotomy, `TauCeti.Representation.IsRealStructure` being the `1` half.
-
-The two predicates differ only in the sign of the square, and the constructions below treat them
-together; what separates them is that a quaternionic structure has no nonzero fixed vector
-(`TauCeti.Representation.IsQuaternionicStructure.eq_zero_of_apply_eq`), so no real form attaches to
-it.  The map is carried unbundled, matching `TauCeti.Representation.IsRealStructure` and
-`TauCeti.Representation.IsInvariantForm`. -/
-structure IsQuaternionicStructure (J : V →ₛₗ[starRingEnd ℂ] V) : Prop where
-  /-- The map squares to `-1`. -/
-  sq_eq_neg (v : V) : J (J v) = -v
-  /-- The map intertwines the action with itself. -/
-  isIntertwining (g : G) (v : V) : J (ρ g v) = ρ g (J v)
-
-namespace IsQuaternionicStructure
-
-variable {J : V →ₛₗ[starRingEnd ℂ] V} (h : IsQuaternionicStructure ρ J)
-
-include h
-
-/-- **A quaternionic structure is bijective**, with `-J` as its two-sided inverse -- the analogue
-of the bijectivity a real structure has as an involution. -/
-theorem bijective : Function.Bijective ⇑J :=
-  Function.bijective_iff_has_inverse.mpr
-    ⟨fun v => -J v, fun v => by simp [h.sq_eq_neg], fun v => by simp [map_neg, h.sq_eq_neg]⟩
-
-/-- **A quaternionic structure has no nonzero fixed vector**: a fixed vector satisfies `v = -v`.
-So, unlike a real structure, it cuts out no real form; its fixed points are `0`. -/
-theorem eq_zero_of_apply_eq {v : V} (hv : J v = v) : v = 0 := by
-  have hneg : v = -v := by
-    have hsq := h.sq_eq_neg v
-    rwa [hv, hv] at hsq
-  have h2 : (2 : ℂ) • v = 0 := by
-    rw [two_smul]
-    exact add_eq_zero_iff_eq_neg.mpr hneg
-  exact (smul_eq_zero.mp h2).resolve_left two_ne_zero
-
-end IsQuaternionicStructure
-
-end Quaternionic
 
 /-! ### Inverting a definite Hermitian form -/
 
@@ -517,7 +466,7 @@ end Balanced
 
 section OfStructureMap
 
-variable {G V : Type*} [Group G] [AddCommGroup V] [Module ℂ V] {ρ : Representation ℂ G V}
+variable {G V : Type*} [Monoid G] [AddCommGroup V] [Module ℂ V] {ρ : Representation ℂ G V}
 
 /-- The balanced form of an invariant form against an equivariant map is invariant. -/
 private theorem isInvariantSesqForm_balance {H : V →ₗ⋆[ℂ] V →ₗ[ℂ] ℂ}
@@ -613,7 +562,14 @@ theorem exists_isInvariantForm_isAlt_nondegenerate_of_isQuaternionicStructure
   have h : B x x = -B x x := by simpa using hflip x x
   linear_combination h / 2
 
-variable [FiniteDimensional ℂ V] [ρ.IsIrreducible]
+end OfStructureMap
+
+/-! ### The two data are interchangeable -/
+
+section Equivalence
+
+variable {G V : Type*} [Group G] [AddCommGroup V] [Module ℂ V] {ρ : Representation ℂ G V}
+  [FiniteDimensional ℂ V] [ρ.IsIrreducible]
 
 /-- **Against a positive definite invariant Hermitian form, a real structure is the same datum as a
 nondegenerate invariant symmetric form.**  Both directions are proved above; the Hermitian form is
@@ -630,9 +586,9 @@ theorem exists_isRealStructure_iff {H : V →ₗ⋆[ℂ] V →ₗ[ℂ] ℂ} (hHi
         hHnonneg hdef⟩
 
 /-- **Against a positive definite invariant Hermitian form, a quaternionic structure is the same
-datum as a nondegenerate invariant alternating form.**  This is the `-1` half of the
-Frobenius-Schur dichotomy, `TauCeti.Representation.exists_isRealStructure_iff` being the `1`
-half. -/
+datum as a nondegenerate invariant alternating form.**  This is the value `-1` of the
+Frobenius-Schur trichotomy, `Representation.exists_isRealStructure_iff` being the value `1`; the
+remaining value `0` is the case where no invariant bilinear form of either kind exists. -/
 theorem exists_isQuaternionicStructure_iff {H : V →ₗ⋆[ℂ] V →ₗ[ℂ] ℂ}
     (hHinv : IsInvariantSesqForm ρ H) (hHsymm : H.IsSymm) (hHnonneg : H.IsNonneg)
     (hdef : ∀ x : V, x ≠ 0 → H x x ≠ 0) :
@@ -645,6 +601,6 @@ theorem exists_isQuaternionicStructure_iff {H : V →ₗ⋆[ℂ] V →ₗ[ℂ] �
       exists_isQuaternionicStructure_of_isInvariantForm_of_isInvariantSesqForm hBinv hBalt hBnd
         hHinv hHnonneg hdef⟩
 
-end OfStructureMap
+end Equivalence
 
 end Representation
