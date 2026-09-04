@@ -16,10 +16,6 @@ triple records the monodromies around `0`, `1`, and `∞`; the product relation 
 that their ordered product is trivial.  The two-component constructor and the finite carrier
 equivalence make the data convenient for both structural arguments and enumeration.
 
-The product convention and the degree-indexed carrier follow the pinned mathematical
-specification in `TauCetiRoadmap/BelyiMaps/README.md` (§Pinned conventions) and its formal
-signatures in `TauCetiRoadmap/BelyiMaps/Suggested.lean`.
-
 -/
 
 public section
@@ -62,6 +58,11 @@ def ofTwo (σ0 σ1 : Equiv.Perm (Fin n)) : PermutationTriple n where
 theorem σinf_eq (t : PermutationTriple n) : t.σinf = (t.σ1 * t.σ0)⁻¹ := by
   apply eq_inv_of_mul_eq_one_left
   simpa [mul_assoc] using t.product_eq_one
+
+@[simp] theorem σ1_mul_σ0_eq_σinf_inv (t : PermutationTriple n) :
+    t.σ1 * t.σ0 = t.σinf⁻¹ := by
+  rw [t.σinf_eq]
+  simp only [inv_inv]
 
 /-- Equality of triples is determined by equality of their first two monodromies. -/
 theorem ext_of_two {t t' : PermutationTriple n} (h0 : t.σ0 = t'.σ0)
@@ -154,15 +155,22 @@ instance : Subsingleton (PermutationTriple 0) where
   allEq _ _ := by
     apply ext_of_two <;> apply Subsingleton.elim
 
+/-- There is only one permutation triple of degree one. -/
+instance : Subsingleton (PermutationTriple 1) where
+  allEq _ _ := by
+    apply ext_of_two <;> apply Subsingleton.elim
+
 /-- The cyclically rotated form of the product relation. -/
 theorem σ0_mul_σinf_mul_σ1_eq_one (t : PermutationTriple n) :
     t.σ0 * t.σinf * t.σ1 = 1 := by
-  simp [t.σinf_eq, mul_inv_rev]
+  rw [t.σinf_eq, mul_inv_rev]
+  simp only [mul_assoc, inv_mul_cancel, mul_one, mul_inv_cancel]
 
 /-- The other cyclically rotated form of the product relation. -/
 theorem σ1_mul_σ0_mul_σinf_eq_one (t : PermutationTriple n) :
     t.σ1 * t.σ0 * t.σinf = 1 := by
-  simp [t.σinf_eq, mul_assoc]
+  rw [σ1_mul_σ0_eq_σinf_inv t]
+  simp
 
 /-- The reverse convention for permutation triples uses the opposite multiplication order. -/
 @[ext]
@@ -198,14 +206,14 @@ def invComponents : PermutationTriple n ≃ ReversePermutationTriple n where
       σinf := t.σinf⁻¹
       product_eq_one := by
         have h := congrArg Inv.inv t.product_eq_one
-        simpa [mul_inv_rev, mul_assoc] using h }
+        simpa only [mul_inv_rev, inv_inv, inv_one, mul_assoc] using h }
   invFun t :=
     { σ0 := t.σ0⁻¹
       σ1 := t.σ1⁻¹
       σinf := t.σinf⁻¹
       product_eq_one := by
         have h := congrArg Inv.inv t.product_eq_one
-        simpa [mul_inv_rev, mul_assoc] using h }
+        simpa only [mul_inv_rev, inv_inv, inv_one, mul_assoc] using h }
   left_inv t := by cases t; simp
   right_inv t := by cases t; simp
 
