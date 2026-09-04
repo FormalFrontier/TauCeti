@@ -28,18 +28,6 @@ in terms of `Sheaf.H'`, so the comparison is what lets a covering of the whole s
   `Hⁿ(T, F) ≅ Hⁿ(F)` at a terminal object `T`, as an isomorphism of abelian groups;
 * `TauCeti.CategoryTheory.Sheaf.cohomologyPresheafEvaluationIsoFunctorH`: the same comparison as a
   natural isomorphism in the coefficient sheaf.
-
-This settles the first item of the `## TODO` list of
-`Mathlib/CategoryTheory/Sites/SheafCohomology/Basic.lean`. It is used in
-`TauCeti/AlgebraicGeometry/Cohomology/MayerVietoris.lean` to obtain the Mayer-Vietoris sequence
-for the cohomology of a scheme, which is Layer B infrastructure for
-`TauCetiRoadmap/JacobianChallenge/README.md`. No formalization is vendored: the ingredients are
-Mathlib's `CategoryTheory.Limits.IsTerminal.isTerminalObj`, `FreeAbelianGroup.uniqueEquiv`,
-`CategoryTheory.Functor.constComp` and `CategoryTheory.Abelian.extFunctor`.
-
-The object-level comparison extends Mathlib's root-level `CategoryTheory.Sheaf` API. The
-functor-level construction remains in `TauCeti.CategoryTheory.Sheaf`: it takes no explicit sheaf
-argument, so moving it would not enable dot notation.
 -/
 
 public section
