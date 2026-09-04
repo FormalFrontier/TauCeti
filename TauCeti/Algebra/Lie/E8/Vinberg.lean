@@ -32,20 +32,13 @@ summands is spelled as an iterated product, the form `Module.finrank_prod` compu
 Jacobi identity for it, Killing-simplicity of type `E₈`, and the comparison with Mathlib's
 Serre-construction `LieAlgebra.e₈` are all separate statements and none of them is proved here. A
 `248`-dimensional module is of course not by itself `E₈`; the point of the count is that it is the
-arithmetic obstruction the construction must clear, and the roadmap asks for it as a named check.
+arithmetic obstruction the construction must clear.
 
 ## Main results
 
 * `TauCeti.finrank_exteriorPower_three_nine`: `⋀³(K⁹)` is `84`-dimensional.
 * `TauCeti.finrank_sl_fin_nine`: `𝔰𝔩₉` is `80`-dimensional.
 * `TauCeti.finrank_prod_sl_exteriorPower_dual`: `𝔰𝔩₉ ⊕ ⋀³(K⁹) ⊕ ⋀³(K⁹)^*` is `248`-dimensional.
-
-## Roadmap context
-
-This is the dimension check `finrank (𝔰𝔩₉ ⊕ ⋀³(K⁹) ⊕ ⋀³(K⁹)^*) = 248 = 80 + 84 + 84` asked for in
-Layer 8 of the
-[highest-weight roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/LieHighestWeight/README.md),
-whose `finrank_exteriorPower_three_nine` is the `⋀³(K⁹)` summand below.
 
 ## References
 
