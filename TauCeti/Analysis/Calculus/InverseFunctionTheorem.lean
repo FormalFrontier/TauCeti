@@ -76,14 +76,7 @@ Fréchet derivative of `f` at an interior point is within `c` of `L` in operator
 theorem ApproximatesLinearOn.norm_sub_le_of_hasFDerivAt {f : E → F} {L A : E →L[𝕜] F} {s : Set E}
     {c : ℝ≥0} (hf : ApproximatesLinearOn f L s c) {x : E} (hs : s ∈ 𝓝 x)
     (hA : HasFDerivAt f A x) : ‖A - L‖ ≤ c := by
-  have hx : x ∈ s := mem_of_mem_nhds hs
-  have hg : HasFDerivAt (fun y ↦ f y - L y) (A - L) x := hA.sub L.hasFDerivAt
-  refine hg.le_of_lip' c.coe_nonneg ?_
-  filter_upwards [hs] with y hy
-  have hsub : f y - L y - (f x - L x) = f y - f x - L (y - x) := by
-    rw [map_sub]; abel
-  rw [hsub]
-  exact hf y hy x hx
+  exact (hA.sub L.hasFDerivAt).le_of_lipschitzOn hs hf.lipschitzOnWith
 
 /-- A continuous linear map that differs from a continuous linear equivalence `L` by less than
 `‖L⁻¹‖⁻¹` in operator norm is itself invertible: `L⁻¹A` is close enough to `1` to be a unit of the
