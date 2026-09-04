@@ -377,7 +377,7 @@ theorem indicator_Ioi_fisherSnedecorPDF (m n : ℝ) :
   · simp [hx]
 
 /-- The classical Fisher density in the scaled beta-prime form used by its change of variables. -/
-private theorem fisherSnedecorPDFReal_eq_scaled_beta (hm : 0 < m) (hn : 0 < n) (hx : 0 < x) :
+theorem fisherSnedecorPDFReal_eq_scaled_beta (hm : 0 < m) (hn : 0 < n) (hx : 0 < x) :
     fisherSnedecorPDFReal m n x =
       (m / n) * (1 / beta (m / 2) (n / 2)) * (m * x / n) ^ (m / 2 - 1) *
         (1 + m * x / n) ^ (-((m + n) / 2)) := by
