@@ -5,8 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.RingTheory.Norm.Defs
 public import TauCeti.FieldTheory.FunctionField.Place.Basic
+public import TauCeti.RingTheory.Norm.Units
 
 /-!
 # The residue of a function at a place, and its norm to the constants
@@ -41,9 +41,9 @@ not consume one — so the guarantee is recorded here rather than in the signatu
 ## Main results
 
 * `TauCeti.Place.val_residueUnit` and `TauCeti.Place.val_normResidue`: the underlying field values
-  of the two units, as `@[simp]` normal forms. Both are `rfl`, and they are the whole reason a
-  consumer never has to unfold either definition: they name the `IsLocalRing.residue` and
-  `Algebra.norm` the units are built from.
+  of the two units, as `@[simp]` normal forms. They are the whole reason a consumer never has to
+  unfold either definition: they name the `IsLocalRing.residue` and `Algebra.norm` the units are
+  built from.
 * `TauCeti.Place.normResidueOrOne_of_ord_eq_zero` and
   `TauCeti.Place.normResidueOrOne_of_ord_ne_zero`: the two branches of the total extension.
 
@@ -84,9 +84,11 @@ This is the classical field norm precisely when `Module.Finite k P.ResidueField`
 Absent that, `Algebra.norm` is the junk value `1`
 (`Algebra.norm_eq_one_of_not_module_finite`), exactly as `TauCeti.Place.degree` is junk `0`
 absent the same hypothesis. The hypothesis is not in the signature because `Algebra.norm` does
-not consume one, so requiring it here would leave it unused. -/
+not consume one, so requiring it here would leave it unused — the policy
+`TauCeti.Algebra.normUnits` states for itself, and this is that homomorphism applied to the
+residue. -/
 noncomputable def normResidue (P : Place k F) (f : Fˣ) (hf : P.ord (f : F) = 0) : kˣ :=
-  Units.map (Algebra.norm k) (P.residueUnit f hf)
+  Algebra.normUnits k (P.residueUnit f hf)
 
 @[simp]
 theorem val_normResidue (P : Place k F) (f : Fˣ) (hf : P.ord (f : F) = 0) :
@@ -149,13 +151,13 @@ theorem normResidueOrOne_mul {P : Place k F} {f g : Fˣ} (hf : P.ord (f : F) = 0
 theorem ord_one_units (P : Place k F) : P.ord ((1 : Fˣ) : F) = 0 := by
   rw [Units.val_one, P.ord_one]
 
-/-- The constant `1` has local factor `1`. Read off multiplicativity at `f = g = 1` rather than
-from the residue: `a = a * a` in a group forces `a = 1`.
-
-Not `@[simp]`: since `normResidueOrOne_of_ord_eq_zero` is `@[simp]` and `simp` can discharge
-`ord_P 1 = 0` on its own, the total form is rewritten to `normResidue` before this could fire.
-`normResidue_one` below is the `@[simp]` rule for that normal form. -/
+-- Not `@[simp]`: since `normResidueOrOne_of_ord_eq_zero` is `@[simp]` and `simp` can discharge
+-- `ord_P 1 = 0` on its own, the total form is rewritten to `normResidue` before this could fire.
+-- `normResidue_one` below is the `@[simp]` rule for that normal form.
+/-- The constant `1` has local factor `1`. -/
 theorem normResidueOrOne_one (P : Place k F) : P.normResidueOrOne (1 : Fˣ) = 1 := by
+  -- read off multiplicativity at `f = g = 1` rather than from the residue: `a = a * a` in a
+  -- group forces `a = 1`, which avoids all of the subtype-coercion work
   have h := normResidueOrOne_mul (P := P) (f := 1) (g := 1) P.ord_one_units P.ord_one_units
   rw [one_mul] at h
   exact right_eq_mul.1 h

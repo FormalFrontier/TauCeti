@@ -183,13 +183,12 @@ theorem IsUnitAtSupport.sub {D E : Divisor k F} {f : Fˣ} (hD : IsUnitAtSupport 
   rw [sub_eq_add_neg]
   exact hD.add (isUnitAtSupport_neg_iff.2 hE)
 
-/-- `1` is admissible for every divisor.
-
-None of the four "invariance" closure lemmas — this one, `isUnitAtSupport_inv_iff`,
-`isUnitAtSupport_zero` and `isUnitAtSupport_neg_iff` — is `@[simp]`, and that is checked rather
-than assumed: with `isUnitAtSupport_iff` tagged, `simp` proves them outright, and the environment
-linter reports them as redundant simp lemmas if they carry the attribute. They are kept as named
-lemmas because they are the closure facts a term-mode proof reaches for. -/
+-- None of the four "invariance" closure lemmas — this one, `isUnitAtSupport_inv_iff`,
+-- `isUnitAtSupport_zero` and `isUnitAtSupport_neg_iff` — is `@[simp]`, and that is checked rather
+-- than assumed: with `isUnitAtSupport_iff` tagged, `simp` proves them outright, and the
+-- environment linter reports them as redundant simp lemmas if they carry the attribute. They are
+-- kept as named lemmas because they are the closure facts a term-mode proof reaches for.
+/-- `1` is admissible for every divisor. -/
 theorem isUnitAtSupport_one (D : Divisor k F) : IsUnitAtSupport D (1 : Fˣ) :=
   fun P _ ↦ P.ord_one_units
 
@@ -198,8 +197,9 @@ theorem IsUnitAtSupport.mul {D : Divisor k F} {f g : Fˣ} (hf : IsUnitAtSupport 
     (hg : IsUnitAtSupport D g) : IsUnitAtSupport D (f * g) :=
   fun P hP ↦ Place.ord_mul_eq_zero (hf P hP) (hg P hP)
 
+-- Not `@[simp]`, for the reason recorded above `isUnitAtSupport_one`.
 /-- Admissibility is *invariant* under inversion, not merely closed under it: `ord_P f⁻¹` vanishes
-exactly when `ord_P f` does. Not `@[simp]`, for the reason given on `isUnitAtSupport_one`. -/
+exactly when `ord_P f` does. -/
 theorem isUnitAtSupport_inv_iff {D : Divisor k F} {f : Fˣ} :
     IsUnitAtSupport D f⁻¹ ↔ IsUnitAtSupport D f := by
   simp only [isUnitAtSupport_iff, Units.val_inv_eq_inv_val, Place.ord_inv, neg_eq_zero]
