@@ -56,6 +56,10 @@ fields, and nothing needs `k` perfect.
 * `TauCeti.Place.differentExponent_eq_zero_iff`: the different exponent vanishes exactly at the
   places where the local model is unramified, in Mathlib's `Algebra.IsUnramifiedAt` sense, which
   asks for a separable residue extension as well as `e(P' ∣ P) = 1`.
+* `TauCeti.Place.differentIdeal_eq_top_of_ord_discr_eq_zero` and
+  `TauCeti.Place.differentExponent_eq_zero_of_ord_discr_eq_zero`: the different ideal of the local
+  model, and hence the different exponent above `P`, is trivial as soon as some `F`-basis of `F'`
+  is integral at `P` with unit discriminant there.
 
 ## References
 
@@ -65,7 +69,7 @@ fields, and nothing needs `k` perfect.
 
 public section
 
-open IsDedekindDomain
+open IsDedekindDomain Module
 
 open scoped nonZeroDivisors
 
@@ -80,6 +84,69 @@ universe u u' v v'
 variable {k : Type u} {k' : Type u'} {F : Type v} {F' : Type v'}
 variable [Field k] [Field F] [Field F']
 variable [Algebra k F] [Algebra F F']
+
+section LocalModel
+
+variable [FiniteDimensional F F'] [Algebra.IsSeparable F F']
+
+variable (F') (P : Place k F)
+
+attribute [local instance 10] algebraIntegersExtension isScalarTowerIntegersExtension
+
+/-- **A basis integral at `P` with unit discriminant makes the local model self-dual**: if some
+`F`-basis of `F'` has vectors integral over `𝒪_P` and discriminant a unit at `P`, then the trace
+dual of `𝒪'_P` is `𝒪'_P` itself. -/
+theorem traceDual_one_eq_one_of_ord_discr_eq_zero {ι : Type*} [Fintype ι] [DecidableEq ι]
+    {b : Basis ι F F'} (hb : ∀ i, IsIntegral P.integers (b i))
+    (hd : P.ord (Algebra.discr F b) = 0) :
+    Submodule.traceDual (P.integers) F (1 : Submodule (integralClosure (P.integers) F') F')
+      = 1 := by
+  refine le_antisymm (fun x hx ↦ ?_) Submodule.one_le_traceDual_one
+  have hd0 : Algebra.discr F b ≠ 0 := Algebra.discr_not_zero_of_basis F b
+  have hminv : (Algebra.discr F b)⁻¹ ∈ P.integers :=
+    P.mem_integers_iff_ord_nonneg.mpr (by rw [P.ord_inv, hd, neg_zero])
+  have hInt : IsIntegral (P.integers) (Algebra.discr F b • x) := by
+    have h := isIntegral_discr_mul_of_mem_traceDual
+      (1 : Submodule (integralClosure (P.integers) F') F') hb
+      (Submodule.mem_one.mpr ⟨1, map_one _⟩) hx
+    rwa [smul_mul_assoc, one_mul] at h
+  have hx' : algebraMap (P.integers) F' ⟨(Algebra.discr F b)⁻¹, hminv⟩
+      * (Algebra.discr F b • x) = x := by
+    rw [Algebra.smul_def, ← mul_assoc, IsScalarTower.algebraMap_apply (P.integers) F F',
+      ← map_mul]
+    simp [inv_mul_cancel₀ hd0]
+  have hxInt : IsIntegral (P.integers) x := hx' ▸ (isIntegral_algebraMap.mul hInt)
+  exact Submodule.mem_one.mpr ⟨⟨x, hxInt⟩, rfl⟩
+
+/-- **The different ideal of the local model is trivial away from the discriminant**: if some
+`F`-basis of `F'` has integral vectors and unit discriminant at `P`, then the local model
+`𝒪_P ⊆ 𝒪'_P` has unit different ideal. -/
+theorem differentIdeal_eq_top_of_ord_discr_eq_zero {ι : Type*} [Fintype ι] [DecidableEq ι]
+    {b : Basis ι F F'} (hb : ∀ i, IsIntegral P.integers (b i))
+    (hd : P.ord (Algebra.discr F b) = 0) :
+    differentIdeal (P.integers) (integralClosure (P.integers) F') = ⊤ := by
+  -- the dual fractional ideal of `𝒪'_P` is the trace dual of its underlying submodule
+  have hcoeDual : ((FractionalIdeal.dual (P.integers) F
+        (1 : FractionalIdeal (integralClosure (P.integers) F')⁰ F') :
+        FractionalIdeal (integralClosure (P.integers) F')⁰ F') :
+        Submodule (integralClosure (P.integers) F') F')
+      = ((1 : FractionalIdeal (integralClosure (P.integers) F')⁰ F') :
+        Submodule (integralClosure (P.integers) F') F') := by
+    rw [FractionalIdeal.coe_dual_one, FractionalIdeal.coe_one]
+    exact traceDual_one_eq_one_of_ord_discr_eq_zero F' P hb hd
+  have hdual : FractionalIdeal.dual (P.integers) F
+      (1 : FractionalIdeal (integralClosure (P.integers) F')⁰ F') = 1 :=
+    FractionalIdeal.coeToSubmodule_injective hcoeDual
+  have hcoe : ((differentIdeal (P.integers) (integralClosure (P.integers) F') :
+        Ideal (integralClosure (P.integers) F')) :
+        FractionalIdeal (integralClosure (P.integers) F')⁰ F')
+      = ((⊤ : Ideal (integralClosure (P.integers) F')) :
+        FractionalIdeal (integralClosure (P.integers) F')⁰ F') := by
+    rw [coeIdeal_differentIdeal (A := P.integers) (K := F) (L := F'), hdual, inv_one,
+      FractionalIdeal.coeIdeal_top]
+  exact FractionalIdeal.coeIdeal_injective hcoe
+
+end LocalModel
 
 section DifferentExponent
 
@@ -187,6 +254,19 @@ theorem differentExponent_eq_zero_iff :
   rw [pow_one] at h
   rw [← not_dvd_differentIdeal_iff, h]
   omega
+
+/-- **The different exponent vanishes away from the discriminant**: if some `F`-basis of `F'` has
+integral vectors and unit discriminant at the place `P = P'.restrict k F` below `P'`, then
+`d(P' ∣ P) = 0`. -/
+theorem differentExponent_eq_zero_of_ord_discr_eq_zero {ι : Type*} [Fintype ι] [DecidableEq ι]
+    {b : Basis ι F F'} (hb : ∀ i, IsIntegral (P'.restrict k F).integers (b i))
+    (hd : (P'.restrict k F).ord (Algebra.discr F b) = 0) :
+    differentExponent k F P' = 0 := by
+  by_contra h
+  have hdvd := (pow_dvd_differentIdeal_iff_le_differentExponent k F P' (n := 1)).mpr
+    (Nat.one_le_iff_ne_zero.mpr h)
+  rw [pow_one, differentIdeal_eq_top_of_ord_discr_eq_zero F' (P'.restrict k F) hb hd] at hdvd
+  exact (centerIntegralClosure k F P').isPrime.ne_top (top_le_iff.mp (Ideal.dvd_iff_le.mp hdvd))
 
 end DifferentExponent
 

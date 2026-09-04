@@ -39,11 +39,10 @@ nonzero element of `F` and so has finitely many zeros and poles
 (`TauCeti.Place.finite_setOf_ord_ne_zero`).  Each of the finitely many exceptional places carries
 finitely many places of `F'` (`TauCeti.Place.finite_setOf_restrict_eq`), which bounds the support.
 
-This is the finiteness the module docstring of
-`TauCeti/FieldTheory/FunctionField/Place/Extension/IntegralBasis/AlmostEverywhere.lean`
-announces: *"a single basis can be used to compute the complementary module away from finitely
-many places."*  Only integrality of the basis vectors is used, not the full local integral basis
-property, because Mathlib's discriminant estimate asks for no more.
+No local integral basis is needed for this, only integrality of the vectors of one fixed global
+basis: the discriminant estimate bounds the trace dual of `𝒪'_P` by `disc(b)⁻¹ · 𝒪'_P` for any
+integral spanning family, and once `disc(b)` is a unit at `P` that bound already forces equality,
+whether or not `b` happens to be an `𝒪_P`-basis of `𝒪'_P`.
 
 ## Main definitions
 
@@ -51,9 +50,6 @@ property, because Mathlib's discriminant estimate asks for no more.
 
 ## Main results
 
-* `TauCeti.Place.differentIdeal_eq_top_of_ord_discr_eq_zero`: the different ideal of the local
-  model at `P` is the unit ideal as soon as some `F`-basis of `F'` is integral at `P` with unit
-  discriminant.
 * `TauCeti.Place.finite_setOf_differentExponent_ne_zero` and
   `TauCeti.Place.finite_setOf_exists_differentExponent_ne_zero`: the different exponent vanishes
   at all but finitely many places of `F'`, and only finitely many places of `F` ramify.
@@ -90,81 +86,13 @@ namespace Place
 
 attribute [local instance 10] algebraIntegersExtension isScalarTowerIntegersExtension
 
-section LocalModel
+section Finiteness
 
-variable (F') (P : Place k F)
+variable (k F)
 
-omit [Algebra k F'] [IsScalarTower k F F']
-
-/-- **A basis integral at `P` with unit discriminant makes the local model self-dual**: the trace
-dual of `𝒪'_P` is `𝒪'_P`.  Mathlib's `isIntegral_discr_mul_of_mem_traceDual` makes
-`disc(b) · x` integral over `𝒪_P` for every `x` of the trace dual, and `disc(b)` is invertible in
-`𝒪_P`. -/
-theorem traceDual_one_eq_one_of_ord_discr_eq_zero {ι : Type*} [Fintype ι] [DecidableEq ι]
-    {b : Basis ι F F'} (hb : ∀ i, IsIntegral P.integers (b i))
-    (hd : P.ord (Algebra.discr F b) = 0) :
-    Submodule.traceDual (P.integers) F (1 : Submodule (integralClosure (P.integers) F') F')
-      = 1 := by
-  refine le_antisymm (fun x hx ↦ ?_) Submodule.one_le_traceDual_one
-  have hd0 : Algebra.discr F b ≠ 0 := Algebra.discr_not_zero_of_basis F b
-  have hminv : (Algebra.discr F b)⁻¹ ∈ P.integers :=
-    P.mem_integers_iff_ord_nonneg.mpr (by rw [P.ord_inv, hd, neg_zero])
-  have hInt : IsIntegral (P.integers) (Algebra.discr F b • x) := by
-    have h := isIntegral_discr_mul_of_mem_traceDual
-      (1 : Submodule (integralClosure (P.integers) F') F') hb
-      (Submodule.mem_one.mpr ⟨1, map_one _⟩) hx
-    rwa [smul_mul_assoc, one_mul] at h
-  have hx' : algebraMap (P.integers) F' ⟨(Algebra.discr F b)⁻¹, hminv⟩
-      * (Algebra.discr F b • x) = x := by
-    rw [Algebra.smul_def, ← mul_assoc, IsScalarTower.algebraMap_apply (P.integers) F F',
-      ← map_mul]
-    simp [inv_mul_cancel₀ hd0]
-  have hxInt : IsIntegral (P.integers) x := hx' ▸ (isIntegral_algebraMap.mul hInt)
-  exact Submodule.mem_one.mpr ⟨⟨x, hxInt⟩, rfl⟩
-
-/-- **The different ideal of the local model is trivial away from the discriminant**: if some
-`F`-basis of `F'` has integral vectors and unit discriminant at `P`, then the local model
-`𝒪_P ⊆ 𝒪'_P` has unit different ideal. -/
-theorem differentIdeal_eq_top_of_ord_discr_eq_zero {ι : Type*} [Fintype ι] [DecidableEq ι]
-    {b : Basis ι F F'} (hb : ∀ i, IsIntegral P.integers (b i))
-    (hd : P.ord (Algebra.discr F b) = 0) :
-    differentIdeal (P.integers) (integralClosure (P.integers) F') = ⊤ := by
-  have hdual : FractionalIdeal.dual (P.integers) F
-      (1 : FractionalIdeal (integralClosure (P.integers) F')⁰ F') = 1 :=
-    FractionalIdeal.coeToSubmodule_injective (by
-      simpa using traceDual_one_eq_one_of_ord_discr_eq_zero F' P hb hd)
-  have hcoe : ((differentIdeal (P.integers) (integralClosure (P.integers) F') :
-        Ideal (integralClosure (P.integers) F')) :
-        FractionalIdeal (integralClosure (P.integers) F')⁰ F')
-      = ((⊤ : Ideal (integralClosure (P.integers) F')) :
-        FractionalIdeal (integralClosure (P.integers) F')⁰ F') := by
-    rw [coeIdeal_differentIdeal (A := P.integers) (K := F) (L := F'), hdual, inv_one,
-      FractionalIdeal.coeIdeal_top]
-  exact FractionalIdeal.coeIdeal_injective hcoe
-
-end LocalModel
-
-section DifferentExponent
-
-variable (k F) (P' : Place k' F')
-
-/-- **The different exponent vanishes away from the discriminant**: if some `F`-basis of `F'` has
-integral vectors and unit discriminant at the place below `P'`, then `d(P' ∣ P) = 0`. -/
-theorem differentExponent_eq_zero_of_ord_discr_eq_zero {ι : Type*} [Fintype ι] [DecidableEq ι]
-    {b : Basis ι F F'} (hb : ∀ i, IsIntegral (P'.restrict k F).integers (b i))
-    (hd : (P'.restrict k F).ord (Algebra.discr F b) = 0) :
-    differentExponent k F P' = 0 := by
-  by_contra h
-  have hdvd := (pow_dvd_differentIdeal_iff_le_differentExponent k F P' (n := 1)).mpr
-    (Nat.one_le_iff_ne_zero.mpr h)
-  rw [pow_one, differentIdeal_eq_top_of_ord_discr_eq_zero F' (P'.restrict k F) hb hd] at hdvd
-  exact (centerIntegralClosure k F P').isPrime.ne_top (top_le_iff.mp (Ideal.dvd_iff_le.mp hdvd))
-
-variable {P'}
-
-/-- **The different exponent vanishes at all but finitely many places** (Stichtenoth,
-Proposition 3.4.2 and Definition 3.4.3): a fixed `F`-basis of `F'` is integral at almost every
-place, and its discriminant, a nonzero element of `F`, has only finitely many zeros and poles. -/
+/-- **The different exponent vanishes at all but finitely many places** of `F' / k'`
+(Stichtenoth, Proposition 3.4.2 and Definition 3.4.3).  This is what makes the different divisor
+a divisor. -/
 theorem finite_setOf_differentExponent_ne_zero (hF : IsFunctionField k F) :
     {P' : Place k' F' | differentExponent k F P' ≠ 0}.Finite := by
   classical
@@ -198,7 +126,7 @@ theorem finite_setOf_exists_differentExponent_ne_zero (hF : IsFunctionField k F)
     exact ⟨P', hne, hres⟩
   exact himg.subset hsub
 
-end DifferentExponent
+end Finiteness
 
 end Place
 
