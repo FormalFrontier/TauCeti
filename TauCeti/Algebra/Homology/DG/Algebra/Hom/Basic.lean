@@ -99,6 +99,10 @@ protected def id (hA : IsDGAlgebra 𝒜 dA) : DGAlgHom hA hA where
   map_d' _ := rfl
 
 @[simp]
+theorem id_toGradedAlgHom (hA : IsDGAlgebra 𝒜 dA) :
+    (DGAlgHom.id hA).toGradedAlgHom = GradedAlgHom.id R 𝒜 := (rfl)
+
+@[simp]
 theorem coe_id (hA : IsDGAlgebra 𝒜 dA) : ⇑(DGAlgHom.id hA) = _root_.id := (rfl)
 
 @[simp]
@@ -110,6 +114,10 @@ def comp (g : DGAlgHom hB hC) (f : DGAlgHom hA hB) : DGAlgHom hA hC where
   toGradedAlgHom := g.toGradedAlgHom.comp f.toGradedAlgHom
   map_d' a := by
     rw [GradedAlgHom.comp_apply, GradedAlgHom.comp_apply, g.map_d', f.map_d']
+
+@[simp]
+theorem comp_toGradedAlgHom (g : DGAlgHom hB hC) (f : DGAlgHom hA hB) :
+    (g.comp f).toGradedAlgHom = g.toGradedAlgHom.comp f.toGradedAlgHom := (rfl)
 
 @[simp]
 theorem coe_comp (g : DGAlgHom hB hC) (f : DGAlgHom hA hB) : ⇑(g.comp f) = g ∘ f := (rfl)
