@@ -27,22 +27,22 @@ tail set of points whose least index is at least `n`, and those tail sets decrea
 set, so the finite `p`-moment about `u 0` makes their contribution vanish by dominated
 convergence.
 
-Two hypotheses are genuinely needed and are visible in the statements. The exponent must be
-finite: at `p = ∞` a displacement that is small off a set of small measure is not small in
-`L^∞`, and indeed finitely supported laws are *not* `W_∞`-dense. The ground space must be
-separable, which is where the dense sequence comes from.
+The construction uses a finite exponent: at `p = ∞` a displacement that is small off a set of
+small measure is not small in `L^∞`, and finitely supported laws need not be `W_∞`-dense on a
+general separable metric space (for example, on a countably infinite discrete metric space).
+The ground space is separable, which is where the dense sequence comes from.
 
 ## Support conventions
 
 A quantizer statement — the map `T` takes finitely many values — is available on a pseudometric
 ground space, whereas the assertion that a measure gives mass `0` to the complement of a finite
-set is not: in a pseudometric space that complement need not be measurable, and on the two-point
-space with `dist = 0` and its Borel structure it is not, so no probability measure vanishes on it.
-The measure-level statements therefore ask for measurable singletons, which a metric ground space
-with its Borel structure supplies for free. For the same reason the finite carrier is recorded as
-a `Finset X` whose complement is null, rather than through `MeasureTheory.Measure.support`: on a
-pseudometric space the topological support of a Dirac law is the whole ball of radius `0` around
-its atom, so it is not finite.
+set is not: in a pseudometric space that complement need not be measurable. On an infinite type
+with the zero pseudometric and its Borel structure, no probability measure vanishes on the
+complement of a finite set. The measure-level statements therefore ask for measurable singletons,
+which a metric ground space with its Borel structure supplies for free. For the same reason the
+finite carrier is recorded as a `Finset X` whose complement is null, rather than through
+`MeasureTheory.Measure.support`: on a pseudometric space the topological support of a Dirac law is
+the whole ball of radius `0` around its atom, so it is not finite.
 
 ## Main statements
 
@@ -54,8 +54,8 @@ its atom, so it is not finite.
   measurable map with finitely many values pushes `μ` to within `ε` of itself;
 * `TauCeti.exists_ae_mem_finset_wassersteinEDist_le` — its measure form, with the approximating
   law carried by a finite set and again of finite `p`-moment;
-* `TauCeti.WassersteinSpace.dense_setOfPred_ae_mem_finset` — the finitely supported laws are
-  dense in `P_p (X)` for a Polish metric ground space;
+* `TauCeti.WassersteinSpace.dense_setOfPred_ae_mem_finset` — the finitely supported laws are dense
+  in `P_p (X)` on a separable pseudometric ground space with a standard Borel structure;
 * `TauCeti.wassersteinQuantizationError` and `TauCeti.tendsto_wassersteinQuantizationError` — the
   `N`-point quantization error and its convergence to `0`.
 
@@ -93,22 +93,6 @@ namespace TauCeti
 universe u
 
 variable {X : Type u} [MeasurableSpace X] {p : ℝ≥0∞}
-
-section FiniteCarrier
-
-variable [PseudoMetricSpace X] [OpensMeasurableSpace X] {ν : Measure X} {s : Finset X}
-
-/-- A law carried by a finite set has finite `p`-moment, for every exponent: the ground distance
-to a basepoint is bounded on a finite set. -/
-theorem hasFiniteMoment_of_ae_mem_finset [IsFiniteMeasure ν] (x₀ : X)
-    (hs : ∀ᵐ y ∂ν, y ∈ s) : HasFiniteMoment p ν := by
-  refine hasFiniteMoment_def.2 ⟨x₀, MemLp.of_enorm_bound (C := s.sup fun z ↦ edist x₀ z)
-    measurable_edist_right.aestronglyMeasurable ?_ ?_⟩
-  · exact ((Finset.sup_lt_iff (by simp)).2 fun z _ ↦ edist_lt_top x₀ z).ne
-  · filter_upwards [hs] with y hy
-    simpa only [enorm_eq_self] using Finset.le_sup (f := fun z ↦ edist x₀ z) hy
-
-end FiniteCarrier
 
 section Approximation
 
@@ -194,7 +178,9 @@ theorem exists_map_wassersteinEDist_le (hp : 1 ≤ p) (hp_top : p ≠ ∞) [IsPr
       exact self_le_add_left _ _
   have hind : eLpNorm ((A n).indicator f) p μ ≤ c := by
     refine (ENNReal.rpow_le_rpow_iff ht).1 ?_
-    rw [eLpNorm_rpow_eq_lintegral hp0 hp_top]
+    rw [eLpNorm_eq_eLpNorm' hp0 hp_top,
+      ← lintegral_rpow_enorm_eq_rpow_eLpNorm' ht]
+    simp only [enorm_eq_self]
     refine le_trans (le_of_eq (lintegral_congr fun y ↦ ?_)) hn
     by_cases hy : y ∈ A n
     · simp [Set.indicator_of_mem hy]
@@ -236,12 +222,12 @@ end Approximation
 
 namespace WassersteinSpace
 
-variable [MetricSpace X] [BorelSpace X] [SecondCountableTopology X] [CompleteSpace X]
-  [Fact (1 ≤ p)]
+variable [PseudoMetricSpace X] [StandardBorelSpace X] [BorelSpace X]
+  [SecondCountableTopology X] [MeasurableSingletonClass X] [Fact (1 ≤ p)]
 
-/-- **The finitely supported laws are dense in `P_p (X)`.** On a Polish metric ground space and
-for a finite exponent `1 ≤ p < ∞`, every finite-moment law is a Wasserstein limit of laws carried
-by finite sets. -/
+/-- **The finitely supported laws are dense in `P_p (X)`.** On a separable pseudometric ground
+space with a standard Borel measurable structure, and for a finite exponent `1 ≤ p < ∞`, every
+finite-moment law is a Wasserstein limit of laws carried by finite sets. -/
 theorem dense_setOfPred_ae_mem_finset (hp_top : p ≠ ∞) :
     Dense {μ : WassersteinSpace p X |
       ∃ s : Finset X, ((μ : ProbabilityMeasure X) : Measure X) ((s : Set X)ᶜ) = 0} := by
@@ -287,6 +273,15 @@ theorem le_wassersteinQuantizationError {a : ℝ≥0∞}
         a ≤ wassersteinEDist p μ ν) :
     a ≤ wassersteinQuantizationError p N μ :=
   le_iInf₂ fun ν hν ↦ le_iInf fun hs ↦ h ν hν hs
+
+/-- The quantization error is below a strict threshold exactly when an admissible competitor is
+below that threshold. -/
+theorem wassersteinQuantizationError_lt_iff {a : ℝ≥0∞} :
+    wassersteinQuantizationError p N μ < a ↔
+      ∃ ν : Measure X, IsProbabilityMeasure ν ∧
+        (∃ s : Finset X, s.card ≤ N ∧ ν ((s : Set X)ᶜ) = 0) ∧
+          wassersteinEDist p μ ν < a := by
+  simp only [wassersteinQuantizationError, iInf_lt_iff, exists_prop]
 
 /-- The quantization error decreases as more points are allowed. -/
 theorem antitone_wassersteinQuantizationError :

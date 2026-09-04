@@ -8,7 +8,6 @@ module
 public import Mathlib.MeasureTheory.Function.LpSeminorm.CompareExp
 public import Mathlib.MeasureTheory.Function.LpSeminorm.Count
 public import Mathlib.MeasureTheory.Function.LpSeminorm.TriangleInequality
-public import TauCeti.MeasureTheory.Function.Lp.LIntegralRpow
 public import TauCeti.MeasureTheory.OptimalTransport.Existence
 public import TauCeti.MeasureTheory.OptimalTransport.GraphPlan
 public import TauCeti.MeasureTheory.OptimalTransport.Gluing
@@ -47,7 +46,8 @@ what the gluing lemma consumes.
 
 * `TauCeti.wassersteinEDist p μ ν` — the infimum of `eLpNorm (fun z ↦ edist z.1 z.2) p π` over the
   couplings `π` of `μ` and `ν`.
-* `TauCeti.HasFiniteMoment p μ` — the `MemLp` finite-moment condition about some basepoint.
+* `TauCeti.HasFiniteMoment p μ` — the `MemLp` finite-moment condition about some basepoint, with
+  `TauCeti.hasFiniteMoment_of_ae_mem_finset` supplying finite moments for finite carriers.
 
 ## Main statements
 
@@ -166,8 +166,7 @@ theorem wassersteinEDist_map_le {T : X → X}
   rw [graphPlan_def,
     eLpNorm_map_measure hd.aestronglyMeasurable (aemeasurable_prodMk_self hT)]
   exact eLpNorm_congr_ae (.of_forall fun x ↦ by
-    change edist x (T x) = edist x (T x)
-    rfl)
+    simp only [Function.comp_apply])
 
 /-- A bound valid on every coupling bounds the Wasserstein distance from below. -/
 theorem le_wassersteinEDist
@@ -509,6 +508,17 @@ theorem HasFiniteMoment.memLp
   obtain ⟨x₀, hx₀⟩ := h
   exact (memLp_edist_iff_of_edist_ne_top hx₀.1 hd (edist_ne_top x x₀)).1 hx₀
 
+/-- A finite measure carried by a finite set has finite `p`-moment for every exponent: the ground
+distance to a basepoint is bounded on that finite set. -/
+theorem hasFiniteMoment_of_ae_mem_finset [OpensMeasurableSpace X] {ν : Measure X}
+    {s : Finset X} [IsFiniteMeasure ν] (x₀ : X) (hs : ∀ᵐ y ∂ν, y ∈ s) :
+    HasFiniteMoment p ν := by
+  refine hasFiniteMoment_def.2 ⟨x₀, MemLp.of_enorm_bound (C := s.sup fun z ↦ edist x₀ z)
+    measurable_edist_right.aestronglyMeasurable ?_ ?_⟩
+  · exact ((Finset.sup_lt_iff (by simp)).2 fun z _ ↦ edist_lt_top x₀ z).ne
+  · filter_upwards [hs] with y hy
+    simpa only [enorm_eq_self] using Finset.le_sup (f := fun z ↦ edist x₀ z) hy
+
 /-- On an ordinary pseudometric space, the finite-moment condition can be tested at any prescribed
 basepoint whose distance section is almost-everywhere strongly measurable. -/
 theorem hasFiniteMoment_iff_memLp_edist {x : X} {ν : Measure X}
@@ -539,8 +549,12 @@ theorem wassersteinEDist_rpow_eq_transportCost (hp0 : p ≠ 0) (hp : p ≠ ∞) 
     wassersteinEDist p μ ν ^ p.toReal
       = transportCost (fun z : X × X ↦ edist z.1 z.2 ^ p.toReal) μ ν := by
   have hr : 0 < p.toReal := ENNReal.toReal_pos hp0 hp
-  have key (π : Measure (X × X)) := eLpNorm_rpow_eq_lintegral hp0 hp
-    (fun z : X × X ↦ edist z.1 z.2) π
+  have key (π : Measure (X × X)) :
+      eLpNorm (fun z : X × X ↦ edist z.1 z.2) p π ^ p.toReal =
+        ∫⁻ z, edist z.1 z.2 ^ p.toReal ∂π := by
+    rw [eLpNorm_eq_eLpNorm' hp0 hp,
+      ← lintegral_rpow_enorm_eq_rpow_eLpNorm' hr]
+    simp only [enorm_eq_self]
   refine le_antisymm (le_transportCost fun π hπ ↦ ?_) ?_
   · rw [← key π]
     exact ENNReal.rpow_le_rpow (wassersteinEDist_le hπ p) hr.le
@@ -567,18 +581,24 @@ theorem isOptimalCoupling_edist_rpow_iff (hp0 : p ≠ 0) (hp : p ≠ ∞) :
     IsOptimalCoupling (fun z : X × X ↦ edist z.1 z.2 ^ p.toReal) π μ ν ↔
       IsCoupling π μ ν ∧
         eLpNorm (fun z : X × X ↦ edist z.1 z.2) p π = wassersteinEDist p μ ν := by
-  have hr : p.toReal ≠ 0 := (ENNReal.toReal_pos hp0 hp).ne'
+  have hp_pos : 0 < p.toReal := ENNReal.toReal_pos hp0 hp
+  have hr : p.toReal ≠ 0 := hp_pos.ne'
+  have hnorm : eLpNorm (fun z : X × X ↦ edist z.1 z.2) p π ^ p.toReal =
+      ∫⁻ z, edist z.1 z.2 ^ p.toReal ∂π := by
+    rw [eLpNorm_eq_eLpNorm' hp0 hp,
+      ← lintegral_rpow_enorm_eq_rpow_eLpNorm' hp_pos]
+    simp only [enorm_eq_self]
   constructor
   · intro hπ
     refine ⟨hπ.toIsCoupling, ENNReal.rpow_left_injective hr ?_⟩
     have hpow : eLpNorm (fun z : X × X ↦ edist z.1 z.2) p π ^ p.toReal =
         wassersteinEDist p μ ν ^ p.toReal := by
-      rw [eLpNorm_rpow_eq_lintegral hp0 hp, hπ.lintegral_eq,
+      rw [hnorm, hπ.lintegral_eq,
         wassersteinEDist_rpow_eq_transportCost hp0 hp]
     exact hpow
   · rintro ⟨hπ, hval⟩
     refine ⟨hπ, ?_⟩
-    rw [← eLpNorm_rpow_eq_lintegral hp0 hp, hval,
+    rw [← hnorm, hval,
       wassersteinEDist_rpow_eq_transportCost hp0 hp]
 
 /-- The root form of `TauCeti.wassersteinEDist_rpow_eq_transportCost`: for a finite nonzero
