@@ -23,10 +23,10 @@ the finite-type commutative Hopf algebra smoothness criterion.
 ## References
 
 * J. S. Milne, *Algebraic Groups* (2017), Proposition 1.26.
-
-The proof is adapted from the private algebraically-closed-field lemma underlying
-`AlgebraicGeometry.smooth_of_grpObj` in Mathlib.
 -/
+
+-- The proof is adapted from the private algebraically-closed-field lemma underlying
+-- `AlgebraicGeometry.smooth_of_grpObj` in Mathlib.
 
 public section
 

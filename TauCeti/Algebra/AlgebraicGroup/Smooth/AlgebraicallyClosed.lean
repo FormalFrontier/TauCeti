@@ -39,10 +39,10 @@ schemes are compared after base change.
 ## References
 
 * J. S. Milne, *Algebraic Groups* (2017), Proposition 1.26 and Corollary 1.27.
-
-The group-scheme argument is adapted from the private algebraically-closed-field lemma underlying
-`AlgebraicGeometry.smooth_of_grpObj` in Mathlib.
 -/
+
+-- The group-scheme argument is adapted from the private algebraically-closed-field lemma underlying
+-- `AlgebraicGeometry.smooth_of_grpObj` in Mathlib.
 
 public section
 
