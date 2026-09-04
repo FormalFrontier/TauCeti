@@ -23,7 +23,8 @@ order exactly.
 
 ## Main results
 
-* `profiniteOrder`: the supernatural order, defined from the finite continuous quotients.
+* `profiniteOrder`: the supernatural order, defined from the `Nat.card` of quotients by open
+  normal subgroups.
 * `profiniteOrder_eq_iSup_ofNat`: its description as the supremum of the embedded quotient
   orders.
 * `profiniteOrder_le_of_surjective`: continuous surjections do not increase supernatural
@@ -42,15 +43,15 @@ namespace TauCeti
 
 universe u v
 
-/-- The **order of a profinite group** as a supernatural number.  Its exponent at a prime is
-the supremum of the corresponding valuations of the orders of all quotients by open normal
-subgroups. -/
+/-- The supernatural number whose exponent at a prime is the supremum of the corresponding
+valuations of the `Nat.card` of all quotients by open normal subgroups.  For a profinite group,
+this is its order. -/
 noncomputable def profiniteOrder (G : Type u) [Group G] [TopologicalSpace G] : Supernatural :=
   Supernatural.ofFun fun p ↦
     ⨆ U : OpenNormalSubgroup G, (padicValNat p (Nat.card (G ⧸ U.toSubgroup)) : ℕ∞)
 
-/-- The exponent of a prime in the supernatural order is the supremum of its valuations in
-the finite continuous quotients. -/
+/-- The exponent of a prime in `profiniteOrder` is the supremum of the valuations of the
+`Nat.card` of the quotients by open normal subgroups. -/
 @[simp]
 theorem profiniteOrder_apply (G : Type u) [Group G] [TopologicalSpace G] (p : Nat.Primes) :
     profiniteOrder G p =
@@ -62,17 +63,15 @@ section Functoriality
 variable {G : Type u} {H : Type v} [Group G] [TopologicalSpace G] [Group H]
   [TopologicalSpace H]
 
-/-- A continuous surjection of topological groups cannot increase supernatural order.  Every
-finite continuous quotient of the target pulls back to an isomorphic finite continuous quotient
-of the source. -/
+/-- A continuous surjective homomorphism cannot increase `profiniteOrder`.  Every quotient of the
+target by an open normal subgroup pulls back to a quotient of the source with the same `Nat.card`.
+-/
 theorem profiniteOrder_le_of_surjective (f : G →* H) (hf : Continuous f)
     (hsurj : Function.Surjective f) : profiniteOrder H ≤ profiniteOrder G := by
   refine Supernatural.le_iff.mpr fun p ↦ ?_
   rw [profiniteOrder_apply]
   refine iSup_le fun U ↦ ?_
-  let V : OpenNormalSubgroup G :=
-    { toOpenSubgroup := U.toOpenSubgroup.comap f hf
-      isNormal' := U.isNormal'.comap f }
+  let V := OpenNormalSubgroup.comap U f hf
   let q : G →* H ⧸ U.toSubgroup := (QuotientGroup.mk' U.toSubgroup).comp f
   have hqsurj : Function.Surjective q :=
     (QuotientGroup.mk'_surjective U.toSubgroup).comp hsurj
@@ -97,7 +96,7 @@ theorem profiniteOrder_congr (e : G ≃ₜ* H) : profiniteOrder G = profiniteOrd
   · exact profiniteOrder_le_of_surjective e.toMulEquiv.toMonoidHom
       e.continuous e.surjective
 
-/-- Passing to a topological group quotient cannot increase supernatural order. -/
+/-- Passing to a quotient cannot increase `profiniteOrder`. -/
 theorem profiniteOrder_quotient_le (N : Subgroup G) [N.Normal] :
     profiniteOrder (G ⧸ N) ≤ profiniteOrder G :=
   profiniteOrder_le_of_surjective (QuotientGroup.mk' N) QuotientGroup.continuous_mk
@@ -107,7 +106,8 @@ end Functoriality
 
 section Profinite
 
-variable (G : Type u) [Group G] [TopologicalSpace G] [IsTopologicalGroup G] [CompactSpace G]
+variable (G : Type u) [Group G] [TopologicalSpace G] [SeparatelyContinuousMul G]
+  [CompactSpace G]
 
 /-- The supernatural order is the supremum of the ordinary orders of the finite continuous
 quotients, embedded into the supernatural numbers. -/
@@ -126,6 +126,7 @@ theorem profiniteOrder_eq_iSup_ofNat :
 
 /-- The supernatural order is bounded by `n` exactly when the order of every finite continuous
 quotient is bounded by `n`. -/
+@[simp]
 theorem profiniteOrder_le_iff {n : Supernatural} :
     profiniteOrder G ≤ n ↔
       ∀ U : OpenNormalSubgroup G,
@@ -134,8 +135,7 @@ theorem profiniteOrder_le_iff {n : Supernatural} :
   rw [profiniteOrder_eq_iSup_ofNat]
   exact iSup_le_iff
 
-/-- The ordinary order of each finite continuous quotient divides the supernatural order of
-the profinite group. -/
+/-- The ordinary order of each finite continuous quotient divides `profiniteOrder G`. -/
 theorem ofNat_card_quotient_le_profiniteOrder (U : OpenNormalSubgroup G) :
     Supernatural.ofNat (⟨Nat.card (G ⧸ U.toSubgroup), Nat.card_pos⟩ : ℕ+) ≤
       profiniteOrder G := by
@@ -161,9 +161,7 @@ theorem profiniteOrder_eq_of_finite :
     apply PNat.dvd_iff.mpr
     simpa only [PNat.mk_coe, U.toSubgroup.index_eq_card] using
       U.toSubgroup.index_dvd_card
-  · let U : OpenNormalSubgroup G :=
-      { toOpenSubgroup := ⟨⊥, isOpen_discrete _⟩
-        isNormal' := inferInstance }
+  · let U := OpenNormalSubgroup.bot G
     refine le_iSup_of_le U ?_
     have hcard : Nat.card (G ⧸ U.toSubgroup) = Nat.card G := by
       simpa [U] using Nat.card_congr QuotientGroup.quotientBot.toEquiv

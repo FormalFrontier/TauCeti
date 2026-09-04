@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.GroupTheory.PGroup
-public import Mathlib.Topology.Algebra.OpenSubgroup
+public import TauCeti.Topology.Algebra.Group.Profinite.Basic
 
 /-!
 # Pro-p groups
@@ -68,10 +68,7 @@ variable {G : Type u} [Group G] [TopologicalSpace G] [DiscreteTopology G]
 @[simp]
 theorem isProP_iff_isPGroup : IsProP p G ↔ IsPGroup p G := by
   refine ⟨fun hG ↦ ?_, IsPGroup.isProP⟩
-  let U : OpenNormalSubgroup G :=
-    { toOpenSubgroup := ⟨⊥, isOpen_discrete _⟩
-      isNormal' := inferInstance }
-  exact (hG U).of_equiv QuotientGroup.quotientBot
+  exact (hG (OpenNormalSubgroup.bot G)).of_equiv QuotientGroup.quotientBot
 
 end Discrete
 
@@ -84,15 +81,14 @@ variable {H : Type v} [Group H] [TopologicalSpace H]
 theorem of_surjective (hG : IsProP p G) (f : G →* H) (hf : Continuous f)
     (hsurj : Function.Surjective f) : IsProP p H := by
   intro U
-  let V : OpenNormalSubgroup G :=
-    { toOpenSubgroup := U.toOpenSubgroup.comap f hf
-      isNormal' := U.isNormal'.comap f }
+  let V := OpenNormalSubgroup.comap U f hf
   let _ : V.toSubgroup.Normal := V.isNormal'
+  have hVU : V.toSubgroup ≤ U.toSubgroup.comap f := by simp [V]
   let q : G ⧸ V.toSubgroup →* H ⧸ U.toSubgroup :=
-    QuotientGroup.map V.toSubgroup U.toSubgroup f le_rfl
+    QuotientGroup.map V.toSubgroup U.toSubgroup f hVU
   apply (hG V).of_surjective q
   exact QuotientGroup.map_surjective_of_surjective V.toSubgroup U.toSubgroup f
-    ((QuotientGroup.mk'_surjective U.toSubgroup).comp hsurj) le_rfl
+    ((QuotientGroup.mk'_surjective U.toSubgroup).comp hsurj) hVU
 
 /-- A quotient of a pro-`p` group by a normal subgroup is pro-`p`.
 

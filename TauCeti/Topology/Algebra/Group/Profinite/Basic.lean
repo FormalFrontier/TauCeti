@@ -47,6 +47,38 @@ public section
 
 namespace TauCeti
 
+namespace OpenNormalSubgroup
+
+variable {G H : Type*} [Group G] [TopologicalSpace G] [Group H] [TopologicalSpace H]
+
+/-- The preimage of an open normal subgroup under a continuous group homomorphism. -/
+@[expose]
+def comap (U : _root_.OpenNormalSubgroup H) (f : G →* H) (hf : Continuous f) :
+    _root_.OpenNormalSubgroup G where
+  toOpenSubgroup := U.toOpenSubgroup.comap f hf
+  isNormal' := U.isNormal'.comap f
+
+/-- The underlying subgroup of the preimage of an open normal subgroup. -/
+@[simp]
+theorem toSubgroup_comap (U : _root_.OpenNormalSubgroup H) (f : G →* H)
+    (hf : Continuous f) : (comap U f hf).toSubgroup = U.toSubgroup.comap f :=
+  rfl
+
+/-- The trivial open normal subgroup of a discrete group. -/
+@[expose]
+def bot (G : Type*) [Group G] [TopologicalSpace G] [DiscreteTopology G] :
+    _root_.OpenNormalSubgroup G where
+  toOpenSubgroup := ⟨⊥, isOpen_discrete _⟩
+  isNormal' := inferInstance
+
+/-- The underlying subgroup of the trivial open normal subgroup of a discrete group. -/
+@[simp]
+theorem toSubgroup_bot (G : Type*) [Group G] [TopologicalSpace G] [DiscreteTopology G] :
+    (bot G).toSubgroup = ⊥ :=
+  rfl
+
+end OpenNormalSubgroup
+
 variable {G : Type*} [Group G] [TopologicalSpace G] [IsTopologicalGroup G] [CompactSpace G]
   [TotallyDisconnectedSpace G]
 
