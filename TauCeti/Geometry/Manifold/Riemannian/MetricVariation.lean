@@ -33,6 +33,12 @@ paths in any open submanifold of an inner-product space.
 ## References
 
 * M. P. do Carmo, *Riemannian Geometry*, Chapter 7, Section 2.
+
+## Roadmap alignment
+
+This module advances the `Regular reparametrization and limits` target under `Layer 0: the
+reconciled Riemannian distance` in `roadmap/HopfRinow/README.md`. It supplies the open-submanifold
+lower-semicontinuity form of that target.
 -/
 
 public section
@@ -48,30 +54,32 @@ variable {F : Type*} [NormedAddCommGroup F] [InnerProductSpace ℝ F]
   [CompleteSpace F]
   {U : Opens F} {γ : ℝ → U} {a b : ℝ}
 
-omit [InnerProductSpace ℝ F] [CompleteSpace F] in
-private theorem eVariationOn_subtypeVal_comp {γ : ℝ → U} {s : Set ℝ} :
-    eVariationOn γ s = eVariationOn ((Subtype.val : U → F) ∘ γ) s := by
-  rfl
-
 /-- **Metric variation equals Riemannian path length on an open submanifold.** If `U` is an open
 subset of an inner-product space and `γ` is `C¹` on `[a, b]`, then the total variation of `γ` for
 the restricted metric is its Riemannian path length. -/
 theorem eVariationOn_eq_pathELength_open
     (hγ : CMDiff[Icc a b] 1 γ) :
     eVariationOn γ (Icc a b) = Manifold.pathELength 𝓘(ℝ, F) γ a b := by
-  rw [eVariationOn_subtypeVal_comp, eVariationOn_eq_lintegral_enorm_derivWithin
-    (contMDiffOn_iff_contDiffOn.mp
-      ((ContMDiffOn.subtypeVal_comp_iff U γ (Icc a b)).mpr hγ))]
-  rw [Manifold.pathELength_subtypeVal_comp hγ,
-    Manifold.pathELength_eq_lintegral_mfderivWithin_Icc]
-  simp only [mfderivWithin_eq_fderivWithin, enorm_tangentSpace_vectorSpace]
-  apply setLIntegral_congr_fun measurableSet_Icc
-  intro t ht
-  -- The scalar tangent space is definitionally the model field, but its bundled instances hide
-  -- this from rewriting until the two one-dimensional continuous linear maps are exposed.
-  change ‖derivWithin (Subtype.val ∘ γ) (Icc a b) t‖ₑ =
-    ‖(fderivWithin ℝ (Subtype.val ∘ γ) (Icc a b) t : ℝ → F) 1‖ₑ
-  rw [fderivWithin_derivWithin]
+  calc
+    eVariationOn γ (Icc a b) =
+        eVariationOn ((Subtype.val : U → F) ∘ γ) (Icc a b) :=
+      TauCeti.eVariationOn_subtypeVal_comp
+    _ = ∫⁻ t in Icc a b, ‖derivWithin ((Subtype.val : U → F) ∘ γ) (Icc a b) t‖ₑ :=
+      eVariationOn_eq_lintegral_enorm_derivWithin
+        (contMDiffOn_iff_contDiffOn.mp
+          ((ContMDiffOn.subtypeVal_comp_iff U γ (Icc a b)).mpr hγ))
+    _ = Manifold.pathELength 𝓘(ℝ, F) ((Subtype.val : U → F) ∘ γ) a b := by
+      rw [Manifold.pathELength_eq_lintegral_mfderivWithin_Icc]
+      simp only [mfderivWithin_eq_fderivWithin, enorm_tangentSpace_vectorSpace]
+      apply setLIntegral_congr_fun measurableSet_Icc
+      intro t ht
+      -- The scalar tangent space is definitionally the model field, but its bundled instances hide
+      -- this from rewriting until the two one-dimensional continuous linear maps are exposed.
+      change ‖derivWithin (Subtype.val ∘ γ) (Icc a b) t‖ₑ =
+        ‖(fderivWithin ℝ (Subtype.val ∘ γ) (Icc a b) t : ℝ → F) 1‖ₑ
+      rw [fderivWithin_derivWithin]
+    _ = Manifold.pathELength 𝓘(ℝ, F) γ a b :=
+      (Manifold.pathELength_subtypeVal_comp hγ).symm
 
 /-- **Lower semicontinuity on an open submanifold.** Let `γᵢ` be eventually `C¹` on a fixed compact
 interval and converge pointwise there to a `C¹` path `γ`. For the restricted Riemannian metric on
@@ -90,7 +98,7 @@ theorem pathELength_le_liminf_open
   calc
     eVariationOn γ (Icc a b) =
         eVariationOn ((Subtype.val : U → F) ∘ γ) (Icc a b) :=
-      eVariationOn_subtypeVal_comp.symm
+      TauCeti.eVariationOn_subtypeVal_comp (f := γ)
     _ ≤ liminf (fun i ↦
         Manifold.pathELength 𝓘(ℝ, F) ((Subtype.val : U → F) ∘ γi i) a b) l :=
       eVariationOn_le_liminf_pathELength
