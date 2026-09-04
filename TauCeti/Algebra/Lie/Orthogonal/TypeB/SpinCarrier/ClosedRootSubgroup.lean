@@ -19,12 +19,12 @@ The spin representation makes the required unit matrix coefficient explicit. At 
 node, the raising and lowering operators move an exterior singleton between two adjacent
 coordinates. At the terminal short node, they create or annihilate the final coordinate, with the
 distinguished remainder vector acting by exterior parity. The generic Kostant root-subgroup
-criterion then makes the coordinate map surjective.
+criterion then makes the coordinate-ring homomorphism surjective.
 
 ## Main declarations
 
 * `TauCeti.TypeBSpinCarrier.rootSubgroupCoordinateMap_surjective`: every numbered root-subgroup
-  coordinate map is surjective.
+  coordinate-ring homomorphism is surjective.
 * `TauCeti.TypeBSpinCarrier.isClosedImmersion_rootSubgroup`: every numbered root subgroup is a
   closed immersion.
 * `TauCeti.TypeBSpinCarrier.rootSubgroupClosedSubgroup`: the corresponding closed subgroup scheme.
@@ -37,7 +37,7 @@ criterion then makes the coordinate map surjective.
 * J. E. Humphreys, *Linear Algebraic Groups*, Section 26.
 * R. W. Carter, *Simple Groups of Lie Type*, Sections 4.4 and 7.1.
 * `TauCeti.Algebra.Lie.Orthogonal.TypeD.SpinCarrier.ClosedRootSubgroup`, for the corresponding
-  type-`D` proof organization.
+  type-`D` closed-root-subgroup construction.
 -/
 
 public section
@@ -126,7 +126,8 @@ private theorem rep_rootGenerator_sq_apply_latticeBasis
 
 /-! ## Closed root-subgroup morphisms -/
 
-/-- The coordinate morphism of every numbered type-`Bₙ₊₁` spin root subgroup is surjective. -/
+/-- The coordinate-ring homomorphism of every numbered type-`Bₙ₊₁` spin root subgroup is
+surjective. -/
 theorem rootSubgroupCoordinateMap_surjective
     (k : Fin (n + 1) ⊕ Fin (n + 1)) :
     Function.Surjective
