@@ -35,10 +35,28 @@ def comap (U : OpenNormalSubgroup H) (f : G →* H) (hf : Continuous f) :
   toOpenSubgroup := U.toOpenSubgroup.comap f hf
   isNormal' := U.isNormal'.comap f
 
+/-- The preimage of an open normal subgroup as a set. -/
+@[simp, norm_cast]
+theorem coe_comap (U : OpenNormalSubgroup H) (f : G →* H) (hf : Continuous f) :
+    (comap U f hf : Set G) = f ⁻¹' U :=
+  (rfl)
+
 /-- The underlying subgroup of the preimage of an open normal subgroup. -/
 @[simp]
 theorem toSubgroup_comap (U : OpenNormalSubgroup H) (f : G →* H)
     (hf : Continuous f) : (comap U f hf).toSubgroup = U.toSubgroup.comap f :=
+  (rfl)
+
+/-- Membership in the preimage of an open normal subgroup. -/
+@[simp]
+theorem mem_comap {U : OpenNormalSubgroup H} {f : G →* H} {hf : Continuous f} {g : G} :
+    g ∈ comap U f hf ↔ f g ∈ U :=
+  Iff.rfl
+
+/-- Taking the preimage of an open normal subgroup twice is the preimage under the composite. -/
+theorem comap_comap {K : Type*} [Group K] [TopologicalSpace K] (U : OpenNormalSubgroup K)
+    (f₂ : H →* K) (hf₂ : Continuous f₂) (f₁ : G →* H) (hf₁ : Continuous f₁) :
+    comap (comap U f₂ hf₂) f₁ hf₁ = comap U (f₂.comp f₁) (hf₂.comp hf₁) :=
   (rfl)
 
 end OpenNormalSubgroup
