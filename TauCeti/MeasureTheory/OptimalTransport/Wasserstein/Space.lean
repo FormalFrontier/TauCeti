@@ -341,17 +341,14 @@ theorem wassersteinEDist_ne_top
     (μ ν : WassersteinSpace p X) :
     wassersteinEDist p
       ((μ : ProbabilityMeasure X) : Measure X) ((ν : ProbabilityMeasure X) : Measure X) ≠ ∞ := by
-  obtain ⟨x₀, hμ⟩ := hasFiniteMoment_def.1 μ.2
-  have hν : MemLp (fun x ↦ edist x₀ x) p ((ν : ProbabilityMeasure X) : Measure X) :=
-    ν.2.memLp (hd.comp (measurable_const.prodMk measurable_id)).aestronglyMeasurable
+  obtain ⟨x₀, _⟩ := hasFiniteMoment_def.1 μ.2
   have hleft : wassersteinEDist p
       ((μ : ProbabilityMeasure X) : Measure X) (Measure.dirac x₀) ≠ ∞ := by
-    rw [wassersteinEDist_comm hd, wassersteinEDist_dirac_left hd]
-    exact hμ.eLpNorm_ne_top
+    rw [wassersteinEDist_comm hd]
+    exact (hasFiniteMoment_iff_wassersteinEDist_dirac_ne_top hd x₀ _).1 μ.2
   have hright : wassersteinEDist p
       (Measure.dirac x₀) ((ν : ProbabilityMeasure X) : Measure X) ≠ ∞ := by
-    rw [wassersteinEDist_dirac_left hd]
-    exact hν.eLpNorm_ne_top
+    exact (hasFiniteMoment_iff_wassersteinEDist_dirac_ne_top hd x₀ _).1 ν.2
   apply ne_top_of_le_ne_top (ENNReal.add_ne_top.mpr ⟨hleft, hright⟩)
   exact wassersteinEDist_triangle hd hp
     ((μ : ProbabilityMeasure X) : Measure X) (Measure.dirac x₀)
