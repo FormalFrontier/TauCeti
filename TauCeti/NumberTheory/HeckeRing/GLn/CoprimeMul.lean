@@ -9,7 +9,6 @@ public import TauCeti.NumberTheory.HeckeRing.GLn.DiagonalCosets
 
 import Mathlib.LinearAlgebra.Matrix.Integer
 import TauCeti.LinearAlgebra.Matrix.SpecialLinearGroup.CongruenceSplit
-import TauCeti.NumberTheory.HeckeRing.Multiplicity.Support
 
 /-!
 # Coprime multiplication in the `GL_n` Hecke ring

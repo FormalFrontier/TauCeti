@@ -87,13 +87,6 @@ private theorem pullbackSpecBaseChangeIso_inv_snd (H : CommHopfAlgCat.{u} R) :
         (Algebra.TensorProduct.includeLeftRingHom : S →+* S ⊗[R] H)) := by
   simp [pullbackSpecBaseChangeIso]
 
-private theorem hopfSpec_map_left {T : Type u} [CommRing T]
-    {H K : CommHopfAlgCat.{u} T} (f : H ⟶ K) :
-    ((hopfSpec (CommRingCat.of T)).map f.op).hom.hom.left =
-      Spec.map (CommRingCat.ofHom f.hom.toAlgHom.toRingHom) := by
-  -- `hopfSpec.map` is built by lifting this `Spec.map`; no separate projection lemma is exposed.
-  rfl
-
 private theorem pullbackSpecIso'_natural {H K : CommHopfAlgCat.{u} R}
     (f : H ⟶ K) :
     (pullbackSpecBaseChangeIso (R := R) (S := S) K).inv ≫
