@@ -386,6 +386,7 @@ theorem isOpen_levelSetImplicitCoordSource
 omit [CompleteSpace 𝕜] in
 /-- Membership in `TauCeti.levelSetImplicitCoordSource` is membership of the ambient point in
 `HasStrictFDerivAt.implicitCoordSource`. -/
+@[simp]
 theorem mem_levelSetImplicitCoordSource_iff
     (hf : ∀ x ∈ {x | f x = c}, HasStrictFDerivAt f (D x) x)
     (hsurj : ∀ x ∈ {x | f x = c}, Function.Surjective (D x))

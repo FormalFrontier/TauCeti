@@ -86,8 +86,8 @@ theorem ApproximatesLinearOn.norm_sub_le_of_hasFDerivAt {f : E → F} {L A : E �
   exact hf y hy x hx
 
 /-- A continuous linear map that differs from a continuous linear equivalence `L` by less than
-`‖L⁻¹‖⁻¹` in operator norm is itself invertible: `L⁻¹A` is then `1` minus a contraction, hence a
-unit of the Banach algebra of endomorphisms of `E`. -/
+`‖L⁻¹‖⁻¹` in operator norm is itself invertible: `L⁻¹A` is close enough to `1` to be a unit of the
+Banach algebra of endomorphisms of `E`. -/
 theorem ContinuousLinearMap.isInvertible_of_norm_sub_lt [CompleteSpace E]
     (L : E ≃L[𝕜] F) {A : E →L[𝕜] F}
     (h : ‖A - (L : E →L[𝕜] F)‖₊ < ‖(L.symm : F →L[𝕜] E)‖₊⁻¹) : A.IsInvertible := by
@@ -100,18 +100,26 @@ theorem ContinuousLinearMap.isInvertible_of_norm_sub_lt [CompleteSpace E]
   have hreal : ‖A - (L : E →L[𝕜] F)‖ < ‖(L.symm : F →L[𝕜] E)‖⁻¹ := by
     rw [← NNReal.coe_lt_coe] at h
     simpa using h
-  set t : E →L[𝕜] E := (L.symm : F →L[𝕜] E).comp ((L : E →L[𝕜] F) - A) with ht
-  have hnorm : ‖t‖ < 1 :=
-    calc ‖t‖ ≤ ‖(L.symm : F →L[𝕜] E)‖ * ‖(L : E →L[𝕜] F) - A‖ :=
+  have hnorm : ‖(L.symm : F →L[𝕜] E).comp A - 1‖ < 1 :=
+    calc
+      ‖(L.symm : F →L[𝕜] E).comp A - 1‖ =
+          ‖(L.symm : F →L[𝕜] E).comp (A - (L : E →L[𝕜] F))‖ := by
+        congr 1
+        ext x
+        simp
+      _ ≤ ‖(L.symm : F →L[𝕜] E)‖ * ‖A - (L : E →L[𝕜] F)‖ :=
           ContinuousLinearMap.opNorm_comp_le _ _
-      _ = ‖(L.symm : F →L[𝕜] E)‖ * ‖A - (L : E →L[𝕜] F)‖ := by rw [norm_sub_rev]
       _ < ‖(L.symm : F →L[𝕜] E)‖ * ‖(L.symm : F →L[𝕜] E)‖⁻¹ :=
           mul_lt_mul_of_pos_left hreal hpos
       _ = 1 := mul_inv_cancel₀ hpos.ne'
-  refine ⟨(ContinuousLinearEquiv.unitsEquiv 𝕜 E (Units.oneSub t hnorm)).trans L, ?_⟩
+  let _ : Nontrivial E := not_subsingleton_iff_nontrivial.mp (by
+    intro hE
+    let _ := hE
+    exact hpos.ne' (norm_of_subsingleton _))
+  let u : (E →L[𝕜] E)ˣ := Units.ofNearby 1 ((L.symm : F →L[𝕜] E).comp A) (by simpa using hnorm)
+  refine ⟨(ContinuousLinearEquiv.unitsEquiv 𝕜 E u).trans L, ?_⟩
   ext x
-  have hx : L (t x) = L x - A x := by simp [ht]
-  simp [ContinuousLinearEquiv.unitsEquiv_apply, hx]
+  simp [u, ContinuousLinearEquiv.unitsEquiv_apply]
 
 /-- A continuous linear map within `‖L⁻¹‖⁻¹ / 2` of a continuous linear equivalence `L` is
 invertible. This is the shape in which Mathlib's inverse function theorem supplies the estimate. -/
@@ -150,9 +158,9 @@ theorem isInvertible_of_mem_toOpenPartialHomeomorph_source
   rwa [← NNReal.coe_le_coe, coe_nnnorm]
 
 /-- **The local inverse of the inverse function theorem is `C^n` at every point of its target.**
-Mathlib's `OpenPartialHomeomorph.contDiffAt_symm` gives this at the image of the base point only,
-because that is where invertibility of the derivative is assumed; it holds everywhere on the
-target because the derivative stays invertible on the source. -/
+The original inverse-function hypotheses provide an invertible derivative only at the base point.
+Here we prove the missing invertibility throughout the constructed source, then apply Mathlib's
+`OpenPartialHomeomorph.contDiffAt_symm` pointwise on the target. -/
 theorem contDiffAt_toOpenPartialHomeomorph_symm {n : ℕ∞ω}
     (hf : HasStrictFDerivAt f (L : E →L[𝕜] F) a) {y : F}
     (hy : y ∈ (hf.toOpenPartialHomeomorph f).target)
