@@ -7,6 +7,9 @@ module
 
 -- The three representations in the boundary splitting are defined here.
 public import TauCeti.RepresentationTheory.CharacterTable.GL2.Linear
+-- Non-public: the determinant twist of a principal-series character is the character identity the
+-- splitting below is read off from, inside a proof only.
+import TauCeti.RepresentationTheory.CharacterTable.GL2.PrincipalSeries.Twist
 -- Equal characters determine isomorphic finite-group representations in characteristic zero.
 import TauCeti.RepresentationTheory.CharacterTable.Determined
 -- The fundamental theorem of algebra supplies the `IsAlgClosed ℂ` instance used both to promote

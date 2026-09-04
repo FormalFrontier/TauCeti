@@ -28,10 +28,6 @@ boundary rows of the principal series `Ind_B^{GL₂}(α ⊗ α)`; their represen
 is `TauCeti.nonempty_iso_GL2PrincipalSeries_self` in
 `TauCeti/RepresentationTheory/CharacterTable/GL2/Boundary.lean`.
 
-The determinant character also acts on the principal series itself: twisting both parameters by
-`γ` multiplies the induced character by `γ ∘ det`, by the projection formula for induction. That
-identity is proved here because it is a statement about the determinant characters of this file.
-
 ## Main definitions
 
 * `TauCeti.GL2LinearChar`: the character `α ∘ det` as a homomorphism to `ℂˣ`.
@@ -46,8 +42,6 @@ identity is proved here because it is a statement about the determinant characte
 * `TauCeti.GL2LinearChar_comp_gl2BorelSubtype`: restriction to the Borel subgroup is the boundary
   character `α ⊗ α`.
 * `TauCeti.GL2Linear_character_injective`: distinct multiplicative characters give distinct rows.
-* `TauCeti.character_GL2PrincipalSeries_mul_eq_mul`: twisting both principal-series parameters by
-  `γ` multiplies the induced character by the determinant character of `γ`.
 * The `_scalar`, `_diagGL`, `_jordanGL`, and `_gl2NonSplitTorusHom` theorems compute both families
   on the four class representatives.
 
@@ -294,31 +288,5 @@ end Elliptic
 end FiniteField
 
 end Field
-
-/-! ### Twisting the principal series -/
-
-section PrincipalSeries
-
-variable (F : Type u) [Field F] [Fintype F]
-
-/-- **Twisting both principal-series parameters multiplies the character by a determinant
-character.** For `γ α β : Fˣ → ℂˣ`, the equality
-`χ(Ind_B^GL₂(γα ⊗ γβ)) = (γ ∘ det) · χ(Ind_B^GL₂(α ⊗ β))`
-is the class-function projection formula, because `γα ⊗ γβ` is the pointwise product of `α ⊗ β`
-with the restriction of `γ ∘ det` to the Borel subgroup. -/
-theorem character_GL2PrincipalSeries_mul_eq_mul (γ α β : Fˣ →* ℂˣ) :
-    (GL2PrincipalSeries F (γ * α) (γ * β)).character =
-      (GL2Linear F γ).character * (GL2PrincipalSeries F α β).character := by
-  rw [GL2PrincipalSeries_def, ← indClassFun_ofFDRep_character,
-    GL2PrincipalSeries_def, ← indClassFun_ofFDRep_character]
-  rw [← indClassFun_comp_subtype_mul
-    (ClassFunction.mem_iff.mpr fun g x => (GL2Linear F γ).char_conj g x)]
-  congr 1
-  funext b
-  rw [Pi.mul_apply, character_GL2BorelRep, character_GL2BorelRep, character_GL2Linear,
-    GL2Borel.det_diag, map_mul]
-  simp [mul_mul_mul_comm]
-
-end PrincipalSeries
 
 end TauCeti
