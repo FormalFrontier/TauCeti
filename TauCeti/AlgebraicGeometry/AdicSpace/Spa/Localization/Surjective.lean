@@ -41,17 +41,13 @@ structure map.
 * `TauCeti.ValuationSpectrum.image_comap_algebraMap_spa_eq_rationalSubset`: the image of
   `Spa (Aₛ, Aₛ⁺)` in `Spa (A, A⁺)` **is** `R(T/s)`.
 
-## What remains for the roadmap's homeomorphism
+## Scope: the uncompleted localisation
 
-Injectivity, and with it the homeomorphism `Spa (Aₛ, Aₛ⁺) ≃ₜ R(T/s)` for the uncompleted
-localisation, is supplied downstream in `Localization.Homeomorph`, which upgrades the set-level
-image computation below to a homeomorphism. Two things remain, neither of them claimed here.
-
-* **The passage to the completion.** The roadmap's `A_U` is the *completed* localisation
-  `A⟨T/s⟩`, and every statement below is about `Aₛ` with `locTopology`. Identifying the two adic
-  spectra is a separate theorem about extending continuous valuations along a completion, and it
-  is neither used nor assumed here.
-* **Identification of the rational subsets** on the two sides.
+Every statement below is about `Aₛ` carrying `locTopology`, never about the completed localisation
+`A⟨T/s⟩`: identifying the two adic spectra is a separate theorem about extending continuous
+valuations along a completion, and it is neither used nor assumed here. Injectivity, and with it
+the homeomorphism `Spa (Aₛ, Aₛ⁺) ≃ₜ R(T/s)` for the uncompleted localisation, is supplied in
+`Localization.Homeomorph`, which upgrades the set-level image computation below.
 
 ## The hypothesis `P.ringOfDefinition ≤ A⁺`
 
