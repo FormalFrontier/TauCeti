@@ -304,16 +304,16 @@ theorem leviHom_mem_of_difference_of_diagonal {K : Type*} [Field K]
       exact (diagGL_coe d).symm
     · rintro ⟨i, j, hij, c⟩ _
       simp only [Matrix.TransvectionStruct.toMatrix_mk]
-      rw [TauCeti.Matrix.GeneralLinearGroup.mkOfDetNeZero_transvection hij c]
+      rw [Matrix.GeneralLinearGroup.mkOfDetNeZero_transvection hij c]
       rw [leviHom_transvection]
       exact hdifference hij c
     · intro M N hM hN ihM ihN _
-      rw [TauCeti.Matrix.GeneralLinearGroup.mkOfDetNeZero_mul M N hM hN, map_mul]
+      rw [Matrix.GeneralLinearGroup.mkOfDetNeZero_mul M N hM hN, map_mul]
       exact H.mul_mem (ihM hM) (ihN hN)
   have hA' := hA A.det_ne_zero
   convert hA' using 1
   apply congrArg leviHom
-  exact (TauCeti.Matrix.GeneralLinearGroup.mkOfDetNeZero_coe A).symm
+  exact (Matrix.GeneralLinearGroup.mkOfDetNeZero_coe A).symm
 
 end GLSymplecticFin
 
