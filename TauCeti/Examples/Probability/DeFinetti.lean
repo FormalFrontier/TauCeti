@@ -27,11 +27,11 @@ construction in `Exchangeability/ConditionallyIID/CoinFlips.lean`, the constant-
 characterisation of i.i.d. in `ConditionallyIID/Const.lean`, and the stationary but
 non-exchangeable 3-cycle in `Exchangeability/ThreeCycle.lean`.
 
-Because the file imports only the facade, the bare-reference index checks that its principal
-declarations remain available from the public entry point. A failure in that index means an export
-went missing, not that a proof broke. The import is not public, so this file adds no second route to
-the API. The mixed-i.i.d. implication is stated only in receiver style as
-`MixedIID.exchangeable`; no `exchangeable_of_mixedIID` alias is introduced.
+The canonical mixing-law example rests on the uniqueness statement
+`eq_deFinettiMeasure_of_pathLaw_eq_bind_infinitePi` together with the barycentre computation
+`deFinettiBarycenter_dirac`; the affine examples rest on `deFinettiEquiv` and its values on Dirac
+mixing laws and on convex combinations, in both directions. A reader adapting these calculations to
+another exchangeable law should start from those results.
 -/
 
 open MeasureTheory
