@@ -47,7 +47,7 @@ isotypic projector is in
 
 * `TauCeti.ContRepresentation.trace_integratedOperator`: the trace of the integrated operator is
   `∫ g, f g · χ_π g`.
-* `TauCeti.ContRepresentation.comp_integratedOperator`: integrated operators are natural with
+* `ContRepresentation.comp_integratedOperator`: integrated operators are natural with
   respect to continuous intertwiners.
 * `TauCeti.ContRepresentation.integratedOperator_comp`: a class function acts by an intertwiner.
 * `TauCeti.ContRepresentation.integratedOperator_eq_smul_id`: **a class function acts on a
@@ -175,7 +175,8 @@ variable {W : Type*} [NormedAddCommGroup W] [NormedSpace 𝕜 W] [NormedSpace �
 with the operators obtained by integrating the same scalar function on its source and target.
 This is the integral form of equivariance: move the intertwiner through the Bochner integral, then
 use its pointwise intertwining identity. -/
-theorem comp_integratedOperator (T : ContIntertwiningMap π rho) (f : C(G, 𝕜)) :
+theorem _root_.ContRepresentation.comp_integratedOperator
+    (T : ContIntertwiningMap π rho) (f : C(G, 𝕜)) :
     T.toContinuousLinearMap.comp (integratedOperator π hπ f) =
       (integratedOperator rho hrho f).comp T.toContinuousLinearMap := by
   ext v

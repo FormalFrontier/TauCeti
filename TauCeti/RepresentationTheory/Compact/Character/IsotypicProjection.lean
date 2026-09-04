@@ -27,19 +27,19 @@ subrepresentation. Complete reducibility then identifies its range with Mathlib'
 
 ## Main definitions
 
-* `TauCeti.ContRepresentation.isotypicKernel`: the normalized conjugate-character kernel.
-* `TauCeti.ContRepresentation.isotypicProjector`: its integrated action on the ambient
+* `ContRepresentation.isotypicKernel`: the normalized conjugate-character kernel.
+* `ContRepresentation.isotypicProjector`: its integrated action on the ambient
   representation, packaged as a continuous self-intertwiner.
 
 ## Main results
 
-* `TauCeti.ContRepresentation.isotypicProjector_apply_subtype_of_equiv`: the projector is the
+* `ContRepresentation.isotypicProjector_apply_subtype_of_equiv`: the projector is the
   identity on an irreducible subrepresentation of the selected isomorphism type.
-* `TauCeti.ContRepresentation.isotypicProjector_apply_subtype_of_not_equiv`: it vanishes on an
+* `ContRepresentation.isotypicProjector_apply_subtype_of_not_equiv`: it vanishes on an
   irreducible subrepresentation of every other isomorphism type.
-* `TauCeti.ContRepresentation.range_isotypicProjector`: the range of the projector is precisely
+* `ContRepresentation.range_isotypicProjector`: the range of the projector is precisely
   Mathlib's `isotypicComponent`.
-* `TauCeti.ContRepresentation.isotypicProjector_idempotent`: the projector is idempotent.
+* `ContRepresentation.isotypicProjector_idempotent`: the projector is idempotent.
 
 ## Implementation notes
 
@@ -49,9 +49,14 @@ is nevertheless the only datum visible in the answer: the range is Mathlib's sum
 submodules linearly equivalent to `sigma.asSubmodule`.
 
 The bridge from the blockwise character identities to the ambient representation is
-`TauCeti.ContRepresentation.comp_integratedOperator`: integration is natural with respect to the
+`ContRepresentation.comp_integratedOperator`: integration is natural with respect to the
 inclusion of an invariant subspace. Complete reducibility is supplied by the invariant orthogonal
 complement of a unitary representation.
+
+All declarations sit in the root `ContRepresentation` namespace, so that `rho.isotypicProjector`
+and `rho.isotypicKernel` elaborate: `ContRepresentation` is Mathlib's type, and
+`scripts/lint-dot-notation.py` asks that new declarations about it not recreate its namespace
+inside `TauCeti`.
 
 ## References
 
@@ -64,10 +69,8 @@ follows Daniel Bump, *Lie Groups*, second edition, Chapter 2, and T. Bröcker an
 
 public section
 
-open MeasureTheory
+open MeasureTheory TauCeti TauCeti.ContRepresentation
 open scoped InnerProductSpace MonoidAlgebra
-
-namespace TauCeti
 
 namespace ContRepresentation
 
@@ -427,5 +430,3 @@ theorem isotypicProjector_idempotent (hunitary : IsUnitary rho)
 end IsotypicProjection
 
 end ContRepresentation
-
-end TauCeti
