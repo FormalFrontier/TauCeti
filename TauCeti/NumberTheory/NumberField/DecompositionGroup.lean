@@ -1,0 +1,245 @@
+/-
+Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: The Tau Ceti contributors
+-/
+module
+
+public import Mathlib.FieldTheory.Finite.Basic
+public import Mathlib.RingTheory.RamificationInertia.Ramification
+public import TauCeti.NumberTheory.NumberField.Frobenius
+public import TauCeti.NumberTheory.RamificationInertia.Galois
+
+/-!
+# The Frobenius and the decomposition group at an unramified prime
+
+Let `L / K` be a finite Galois extension of number fields with Galois group `G = Gal(L/K)`, and
+let `Q` be a nonzero prime of `𝓞 L` lying over `𝔭 = Q ∩ 𝓞 K`. Mathlib's `IsArithFrobAt`
+supplies an element `σ ∈ G` with `σ x ≡ x ^ #(𝓞 K ⧸ 𝔭) (mod Q)`, unique when `L / K` is
+unramified at `Q`. This file identifies what that element is: a generator of the decomposition
+group of `Q`, mapping to the Frobenius automorphism of the residue extension.
+
+The link is Mathlib's `Ideal.Quotient.stabilizerHom`, the action of the decomposition group
+`MulAction.stabilizer G Q` on the residue extension `(𝓞 L ⧸ Q) / (𝓞 K ⧸ 𝔭)`. Its kernel is the
+inertia subgroup, which is trivial exactly when `Q` is unramified, because the cardinality of the
+inertia subgroup is the ramification index (`Ideal.card_inertia_eq_ramificationIdx`). So at an
+unramified prime the decomposition group embeds in the residue Galois group, and a Frobenius
+element is precisely a preimage of the residue Frobenius `x ↦ x ^ #(𝓞 K ⧸ 𝔭)`. Counting through
+that embedding turns the classical facts about finite fields into facts about `G`:
+
+* the order of a Frobenius element is the inertia degree `f(Q/𝔭)`;
+* the decomposition group has cardinality `f(Q/𝔭)` as well, so the embedding is an isomorphism;
+* consequently the decomposition group is `⟨σ⟩`, and it is cyclic.
+
+The last section transports these statements along the action of `G` on the primes above `𝔭`.
+Unramifiedness is invariant under that action, and the Frobenius at `τ • Q` is the conjugate
+`τ σ τ⁻¹`: Mathlib's `IsArithFrobAt.conj` gives one inclusion and uniqueness at the unramified
+prime `τ • Q` gives the other.
+
+## Main results
+
+* `NumberField.isUnramifiedAt_iff_inertia_eq_bot`: unramifiedness at `Q` is triviality of the
+  inertia subgroup of `Q` in `Gal(L/K)`.
+* `NumberField.stabilizerHom_eq_frobeniusAlgEquivOfAlgebraic`: a Frobenius element at `Q` acts on
+  the residue field `𝓞 L ⧸ Q` as the residue Frobenius.
+* `NumberField.orderOf_eq_inertiaDeg_of_isArithFrobAt`: a Frobenius element at an unramified `Q`
+  has order the inertia degree of `Q` over `𝓞 K`.
+* `NumberField.card_stabilizer_eq_inertiaDeg_of_isUnramifiedAt`: the decomposition group of an
+  unramified `Q` has `f(Q/𝔭)` elements.
+* `NumberField.zpowers_eq_stabilizer_of_isArithFrobAt`: a Frobenius element at an unramified `Q`
+  generates the decomposition group of `Q`.
+* `NumberField.stabilizerEquivResidueAut`: the decomposition group of an unramified prime is
+  isomorphic to the automorphism group of the residue extension.
+* `NumberField.isCyclic_stabilizer_of_isUnramifiedAt`: the decomposition group of an unramified
+  prime is cyclic.
+* `NumberField.isArithFrobAt_pointwise_smul_iff`: the Frobenius elements at `τ • Q` are exactly
+  the conjugates `τ σ τ⁻¹` of the Frobenius elements `σ` at an unramified `Q`.
+
+## Implementation notes
+
+`FiniteField.frobeniusAlgEquivOfAlgebraic` is stated for a `Fintype` base field, so the residue
+identification carries `[Fintype (𝓞 K ⧸ Q.under (𝓞 K))]` as a hypothesis even though that ring
+is unconditionally finite; the derived statements about orders and cardinalities do not mention
+it and supply it internally through `Fintype.ofFinite`. Residue rings are made into fields by the
+local instance `Ideal.Quotient.field`, following Mathlib's own ramification files.
+
+## References
+
+* [J. Neukirch, *Algebraic Number Theory*][Neukirch1992], Chapter I, §9.
+-/
+
+public section
+
+open Ideal Module
+
+open scoped NumberField Pointwise
+
+namespace NumberField
+
+variable {K L : Type*} [Field K] [NumberField K] [Field L] [NumberField L]
+  [Algebra K L] [IsGalois K L]
+
+/-! ### Unramifiedness and the inertia subgroup -/
+
+/-- **Unramified means trivial inertia.** For a finite Galois extension `L / K` of number fields,
+`L / K` is unramified at a prime `Q` of `𝓞 L` exactly when the inertia subgroup of `Q` in
+`Gal(L/K)` is trivial.
+
+This is the group-theoretic reading of `Ideal.card_inertia_eq_ramificationIdx`: the inertia
+subgroup has as many elements as the ramification index of `Q` over `𝓞 K`. -/
+theorem isUnramifiedAt_iff_inertia_eq_bot (Q : Ideal (𝓞 L)) [Q.IsPrime] :
+    Algebra.IsUnramifiedAt (𝓞 K) Q ↔ Q.inertia (L ≃ₐ[K] L) = ⊥ := by
+  rw [← Ideal.ramificationIdx_eq_one_iff (R := 𝓞 K) (q := Q),
+    ← Ideal.card_inertia_eq_ramificationIdx (𝓞 K) (L ≃ₐ[K] L) Q]
+  exact ⟨Subgroup.eq_bot_of_card_eq _, fun h ↦ by rw [h]; simp⟩
+
+/-- **Unramifiedness is invariant along the fibre.** The primes `Q` and `τ • Q` of `𝓞 L` lie over
+the same prime of `𝓞 K`, and `L / K` is unramified at one exactly when it is unramified at the
+other.
+
+Translating a prime by `τ` conjugates its inertia subgroup, so it preserves triviality of that
+subgroup (`Ideal.inertia_pointwise_smul_eq_bot_iff`). -/
+theorem isUnramifiedAt_pointwise_smul_iff (τ : L ≃ₐ[K] L) (Q : Ideal (𝓞 L)) [Q.IsPrime] :
+    Algebra.IsUnramifiedAt (𝓞 K) (τ • Q) ↔ Algebra.IsUnramifiedAt (𝓞 K) Q := by
+  rw [isUnramifiedAt_iff_inertia_eq_bot, isUnramifiedAt_iff_inertia_eq_bot,
+    Ideal.inertia_pointwise_smul_eq_bot_iff]
+
+/-! ### The decomposition group at an unramified prime -/
+
+/-- **The decomposition group of an unramified prime embeds in the residue Galois group.**
+Mathlib's `Ideal.Quotient.stabilizerHom` has the inertia subgroup as its kernel, and that
+subgroup is trivial at an unramified prime. -/
+theorem injective_stabilizerHom_of_isUnramifiedAt (Q : Ideal (𝓞 L)) [Q.IsPrime]
+    [Algebra.IsUnramifiedAt (𝓞 K) Q] :
+    Function.Injective (Ideal.Quotient.stabilizerHom Q (Q.under (𝓞 K)) (L ≃ₐ[K] L)) := by
+  rw [← MonoidHom.ker_eq_bot_iff, Ideal.Quotient.ker_stabilizerHom, eq_bot_iff]
+  intro σ hσ
+  have hσ' : (σ : L ≃ₐ[K] L) ∈ Q.inertia (L ≃ₐ[K] L) := Ideal.coe_mem_inertia.mpr hσ
+  rw [(isUnramifiedAt_iff_inertia_eq_bot Q).mp ‹_›, Subgroup.mem_bot] at hσ'
+  exact Subgroup.mem_bot.mpr (Subtype.ext hσ')
+
+/-- **The decomposition group of an unramified prime is the residue Galois group.** Mathlib's
+`Ideal.Quotient.stabilizerHom` is always surjective for an invariant extension, and at an
+unramified prime it is also injective, so it is an isomorphism from the decomposition group of
+`Q` onto the automorphism group of the residue extension `(𝓞 L ⧸ Q) / (𝓞 K ⧸ 𝔭)`.
+
+This is the unramified case of Mathlib's `Ideal.Quotient.stabilizerQuotientInertiaEquiv`, where
+the inertia subgroup one quotients by is trivial; the point of stating it separately is that the
+source is the decomposition group itself, so an element of `Gal(L/K)` can be compared with a
+residue automorphism without passing through a quotient. Under it, an arithmetic Frobenius at `Q`
+corresponds to the residue Frobenius, by
+`NumberField.stabilizerHom_eq_frobeniusAlgEquivOfAlgebraic`. -/
+noncomputable def stabilizerEquivResidueAut (Q : Ideal (𝓞 L)) [Q.IsPrime]
+    [Algebra.IsUnramifiedAt (𝓞 K) Q] :
+    MulAction.stabilizer (L ≃ₐ[K] L) Q ≃*
+      ((𝓞 L ⧸ Q) ≃ₐ[𝓞 K ⧸ Q.under (𝓞 K)] (𝓞 L ⧸ Q)) :=
+  MulEquiv.ofBijective (Ideal.Quotient.stabilizerHom Q (Q.under (𝓞 K)) (L ≃ₐ[K] L))
+    ⟨injective_stabilizerHom_of_isUnramifiedAt Q,
+      Ideal.Quotient.stabilizerHom_surjective (L ≃ₐ[K] L) (Q.under (𝓞 K)) Q⟩
+
+@[simp]
+theorem stabilizerEquivResidueAut_apply (Q : Ideal (𝓞 L)) [Q.IsPrime]
+    [Algebra.IsUnramifiedAt (𝓞 K) Q] (σ : MulAction.stabilizer (L ≃ₐ[K] L) Q) :
+    stabilizerEquivResidueAut Q σ =
+      Ideal.Quotient.stabilizerHom Q (Q.under (𝓞 K)) (L ≃ₐ[K] L) σ :=
+  (rfl)
+
+attribute [local instance] Ideal.Quotient.field
+
+/-- **A Frobenius element induces the residue Frobenius.** The action of an arithmetic Frobenius
+`σ` at `Q` on the residue field `𝓞 L ⧸ Q` is the `#(𝓞 K ⧸ 𝔭)`-power map, that is
+`FiniteField.frobeniusAlgEquivOfAlgebraic` of the residue extension.
+
+This is the defining congruence `σ x ≡ x ^ #(𝓞 K ⧸ 𝔭) (mod Q)` read as an equality of
+automorphisms of `𝓞 L ⧸ Q`; no unramifiedness is needed. -/
+theorem stabilizerHom_eq_frobeniusAlgEquivOfAlgebraic (Q : Ideal (𝓞 L)) [Q.IsMaximal]
+    [Fintype (𝓞 K ⧸ Q.under (𝓞 K))] {σ : L ≃ₐ[K] L} (hσ : IsArithFrobAt (𝓞 K) σ Q) :
+    Ideal.Quotient.stabilizerHom Q (Q.under (𝓞 K)) (L ≃ₐ[K] L) ⟨σ, hσ.mem_stabilizer⟩ =
+      FiniteField.frobeniusAlgEquivOfAlgebraic (𝓞 K ⧸ Q.under (𝓞 K)) (𝓞 L ⧸ Q) := by
+  ext x
+  obtain ⟨x, rfl⟩ := Ideal.Quotient.mk_surjective x
+  rw [Ideal.Quotient.stabilizerHom_apply, FiniteField.coe_frobeniusAlgEquivOfAlgebraic]
+  simpa [MulAction.subgroup_smul_def, Nat.card_eq_fintype_card,
+    MulSemiringAction.toAlgHom_apply] using hσ.mk_apply x
+
+/-- **The order of a Frobenius element is the inertia degree.** For `Q` unramified over `𝓞 K`, an
+arithmetic Frobenius `σ` at `Q` has `orderOf σ = f(Q / 𝔭)`.
+
+The decomposition group injects into the residue Galois group, where the image of `σ` is the
+residue Frobenius; that automorphism has order the degree of the residue extension, which is the
+inertia degree. -/
+theorem orderOf_eq_inertiaDeg_of_isArithFrobAt (Q : Ideal (𝓞 L)) [Q.IsMaximal]
+    [Algebra.IsUnramifiedAt (𝓞 K) Q] {σ : L ≃ₐ[K] L} (hσ : IsArithFrobAt (𝓞 K) σ Q) :
+    orderOf σ = Q.inertiaDeg (𝓞 K) := by
+  have : Fintype (𝓞 K ⧸ Q.under (𝓞 K)) := Fintype.ofFinite _
+  have key : orderOf (⟨σ, hσ.mem_stabilizer⟩ : MulAction.stabilizer (L ≃ₐ[K] L) Q) =
+      Q.inertiaDeg (𝓞 K) := by
+    rw [← orderOf_injective _ (injective_stabilizerHom_of_isUnramifiedAt Q),
+      stabilizerHom_eq_frobeniusAlgEquivOfAlgebraic Q hσ,
+      FiniteField.orderOf_frobeniusAlgEquivOfAlgebraic,
+      Ideal.inertiaDeg_eq_of_isMaximal (Q.under (𝓞 K)) Q]
+  exact (Subgroup.orderOf_coe (⟨σ, hσ.mem_stabilizer⟩ :
+    MulAction.stabilizer (L ≃ₐ[K] L) Q)).trans key
+
+/-- **A Frobenius element is trivial exactly when the inertia degree is one.** Together with
+`e(Q / 𝔭) = 1`, this is the statement that `𝔭` splits completely in `L` precisely when its
+Frobenius elements are trivial. -/
+theorem eq_one_iff_inertiaDeg_eq_one_of_isArithFrobAt (Q : Ideal (𝓞 L)) [Q.IsMaximal]
+    [Algebra.IsUnramifiedAt (𝓞 K) Q] {σ : L ≃ₐ[K] L} (hσ : IsArithFrobAt (𝓞 K) σ Q) :
+    σ = 1 ↔ Q.inertiaDeg (𝓞 K) = 1 := by
+  rw [← orderOf_eq_inertiaDeg_of_isArithFrobAt Q hσ, orderOf_eq_one_iff]
+
+/-- **The decomposition group of an unramified prime has order the inertia degree.** With trivial
+inertia, Mathlib's `Nat.card D = |I| · f` collapses to `Nat.card D = f`. -/
+theorem card_stabilizer_eq_inertiaDeg_of_isUnramifiedAt (Q : Ideal (𝓞 L)) [Q.IsMaximal]
+    [Algebra.IsUnramifiedAt (𝓞 K) Q] :
+    Nat.card (MulAction.stabilizer (L ≃ₐ[K] L) Q) = Q.inertiaDeg (𝓞 K) := by
+  rw [Ideal.card_stabilizer_eq_card_inertia_mul_finrank (Q.under (𝓞 K)) Q,
+    (isUnramifiedAt_iff_inertia_eq_bot Q).mp ‹_›]
+  simp
+
+/-- **A Frobenius element generates the decomposition group.** At an unramified prime `Q` the
+cyclic subgroup generated by an arithmetic Frobenius at `Q` is the whole decomposition group,
+both having `f(Q / 𝔭)` elements. -/
+theorem zpowers_eq_stabilizer_of_isArithFrobAt (Q : Ideal (𝓞 L)) [Q.IsMaximal]
+    [Algebra.IsUnramifiedAt (𝓞 K) Q] {σ : L ≃ₐ[K] L} (hσ : IsArithFrobAt (𝓞 K) σ Q) :
+    Subgroup.zpowers σ = MulAction.stabilizer (L ≃ₐ[K] L) Q := by
+  have hle : Subgroup.zpowers σ ≤ MulAction.stabilizer (L ≃ₐ[K] L) Q :=
+    Subgroup.zpowers_le.mpr hσ.mem_stabilizer
+  refine le_antisymm hle ?_
+  rw [← Subgroup.subgroupOf_eq_top]
+  apply Subgroup.eq_top_of_card_eq
+  rw [Nat.card_congr (Subgroup.subgroupOfEquivOfLe hle).toEquiv, Nat.card_zpowers,
+    orderOf_eq_inertiaDeg_of_isArithFrobAt Q hσ, card_stabilizer_eq_inertiaDeg_of_isUnramifiedAt Q]
+
+/-- **The decomposition group of an unramified prime is cyclic.** A Frobenius element exists at
+every nonzero prime of `𝓞 L`, and at an unramified prime it generates the decomposition group. -/
+theorem isCyclic_stabilizer_of_isUnramifiedAt (Q : Ideal (𝓞 L)) [Q.IsMaximal]
+    [Algebra.IsUnramifiedAt (𝓞 K) Q] : IsCyclic (MulAction.stabilizer (L ≃ₐ[K] L) Q) := by
+  obtain ⟨σ, hσ⟩ := exists_isArithFrobAt K Q
+    (Q.bot_lt_of_maximal (RingOfIntegers.not_isField L)).ne'
+  refine ⟨⟨⟨σ, hσ.mem_stabilizer⟩, fun x ↦ ?_⟩⟩
+  have hx : (x : L ≃ₐ[K] L) ∈ Subgroup.zpowers σ := by
+    rw [zpowers_eq_stabilizer_of_isArithFrobAt Q hσ]
+    exact x.2
+  obtain ⟨n, hn⟩ := hx
+  exact ⟨n, Subtype.ext (by simpa using hn)⟩
+
+/-! ### Conjugation along the fibre -/
+
+/-- **Frobenius elements are conjugated by the Galois action on primes.** At an unramified prime
+`Q` with arithmetic Frobenius `σ`, an element of `Gal(L/K)` is an arithmetic Frobenius at the
+translated prime `τ • Q` exactly when it is the conjugate `τ σ τ⁻¹`.
+
+Mathlib's `IsArithFrobAt.conj` gives that `τ σ τ⁻¹` is one; uniqueness at `τ • Q`, which is
+unramified by `isUnramifiedAt_pointwise_smul_iff`, gives that it is the only one. -/
+theorem isArithFrobAt_pointwise_smul_iff (Q : Ideal (𝓞 L)) [Q.IsPrime]
+    [Algebra.IsUnramifiedAt (𝓞 K) Q] {σ : L ≃ₐ[K] L} (hσ : IsArithFrobAt (𝓞 K) σ Q)
+    (τ ρ : L ≃ₐ[K] L) :
+    IsArithFrobAt (𝓞 K) ρ (τ • Q) ↔ ρ = τ * σ * τ⁻¹ := by
+  have : Algebra.IsUnramifiedAt (𝓞 K) (τ • Q) :=
+    (isUnramifiedAt_pointwise_smul_iff τ Q).mpr ‹_›
+  exact ⟨fun hρ ↦ isArithFrobAt_eq_of_isUnramifiedAt hρ (hσ.conj τ),
+    fun h ↦ h ▸ hσ.conj τ⟩
+
+end NumberField
