@@ -36,7 +36,8 @@ field norm.
 * `TauCeti.Divisor.eval_eq_prod_normResidue`: on an admissible divisor, the textbook product
   formula.
 * `TauCeti.Divisor.eval_one`, `eval_inv`, `eval_mul` and `eval_div`: the group laws in the
-  *function* variable. `evalHom` supplies the divisor variable; these supply the other one, and
+  *function* variable. The bundled homomorphism supplies the divisor variable; these supply the
+  other one, and
   the two together are the bilinearity Weil reciprocity is stated against. Note the asymmetry:
   `eval_one` and `eval_inv` need no hypothesis, while `eval_mul` and `eval_div` need admissibility
   for both arguments.
@@ -89,9 +90,12 @@ variable {k F : Type*} [Field k] [Field F] [Algebra k F]
 namespace Divisor
 
 /-- **Evaluation of a function on divisors**, as a homomorphism from the divisor group written
-multiplicatively. Being a homomorphism outright is what makes `eval_add` and `eval_neg`
-hypothesis-free. -/
-noncomputable def evalHom (f : Fˣ) : Multiplicative (Divisor k F) →* kˣ :=
+multiplicatively. Being a homomorphism outright is what makes `eval_zero`, `eval_add`, `eval_neg`
+and `eval_sub` hypothesis-free.
+
+`private`: those four theorems are the whole of what it buys a consumer, and nothing outside this
+module needs the bundled map itself. It can be made public when something does. -/
+private noncomputable def evalHom (f : Fˣ) : Multiplicative (Divisor k F) →* kˣ :=
   (freeAbelianCharEquiv (σ := Place k F) (M := kˣ)).symm fun P ↦ P.normResidueOrOne f
 
 /-- **The value `f(D)` of a function on a divisor.** -/
@@ -217,8 +221,8 @@ theorem IsUnitAtSupport.div {D : Divisor k F} {f g : Fˣ} (hf : IsUnitAtSupport 
 
 /-- **`f(D)` is multiplicative in the function**, on a divisor admissible for both factors:
 `(f g)(D) = f(D) · g(D)`. This is the half of the divisor/function bilinearity that the
-homomorphism `evalHom` does not give for free — `evalHom` is a homomorphism in `D`, and this is
-the statement in `f`.
+bundled homomorphism behind `eval` does not give for free: it is a homomorphism in `D`, and this
+is the statement in `f`.
 
 Both hypotheses are needed. At a place where `f` and `g` have opposite nonzero orders their
 product is a unit while neither factor is, so the left side sees a genuine norm there and the
