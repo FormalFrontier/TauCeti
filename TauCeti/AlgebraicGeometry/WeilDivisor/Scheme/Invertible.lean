@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.AlgebraicGeometry.LineBundle.Basic
-public import TauCeti.AlgebraicGeometry.WeilDivisor.Scheme.Regular
+public import TauCeti.AlgebraicGeometry.Scheme.Regular
 public import TauCeti.AlgebraicGeometry.WeilDivisor.Scheme.Sheaf
 
 /-!
@@ -131,6 +131,14 @@ lemma unitIsoSheafZero_hom (hX : ∀ y : X, coheight y ≤ 1) :
       unitToSheaf (D := (0 : SchemeWeilDivisor X)) WeilDivisor.isEffective_zero :=
   (rfl)
 
+/-- The inverse of `SchemeWeilDivisor.unitIsoSheafZero`, included into `𝒦_X`, is the
+canonical inclusion of `𝒪_X(0)`. -/
+@[simp, reassoc]
+lemma unitIsoSheafZero_inv_toRationalFunctions (hX : ∀ y : X, coheight y ≤ 1) :
+    (unitIsoSheafZero hX).inv ≫ Scheme.toRationalFunctions X =
+      sheafι (0 : SchemeWeilDivisor X) :=
+  (Iso.inv_comp_eq (unitIsoSheafZero hX)).mpr (by rw [unitIsoSheafZero_hom, unitToSheaf_ι])
+
 /-- The sheaf of the zero divisor is an invertible sheaf. -/
 theorem isInvertible_sheaf_zero (hX : ∀ y : X, coheight y ≤ 1) :
     SheafOfModules.isInvertible X (sheaf (0 : SchemeWeilDivisor X)) :=
@@ -161,15 +169,31 @@ lemma sheafPrincipalDivisorIsoUnit_hom_toRationalFunctions (hX : ∀ y : X, cohe
       sheafι ((WeilDivisor.OrderSystem.ofScheme X).principalDivisor g) ≫
         Scheme.rationalFunctionsMul X
           ((Additive.toMul g : X.functionFieldˣ) : X.functionField) := by
-  have hunit : (unitIsoSheafZero hX).inv ≫ Scheme.toRationalFunctions X =
-      sheafι (0 : SchemeWeilDivisor X) :=
-    (Iso.inv_comp_eq (unitIsoSheafZero hX)).mpr (by rw [unitIsoSheafZero_hom, unitToSheaf_ι])
   -- The trivialization is a composite of three isomorphisms, so its forward map is the composite
   -- of their forward maps by definition; naming that composite avoids rewriting under `≪≫`.
   have hhom : (sheafPrincipalDivisorIsoUnit hX g).hom ≫ Scheme.toRationalFunctions X =
       (sheafMulIso g _).hom ≫ eqToHom (congrArg sheaf (sub_self _)) ≫
         (unitIsoSheafZero hX).inv ≫ Scheme.toRationalFunctions X := (rfl)
-  rw [hhom, sheafMulIso_hom, hunit, eqToHom_sheafι (sub_self _), sheafMul_ι]
+  rw [hhom, sheafMulIso_hom, unitIsoSheafZero_inv_toRationalFunctions,
+    eqToHom_sheafι (sub_self _), sheafMul_ι]
+
+/-- The inverse principal-divisor trivialization, included into `𝒦_X`, is multiplication by
+`g⁻¹` after including a regular function into the rational functions. -/
+@[simp, reassoc]
+lemma sheafPrincipalDivisorIsoUnit_inv_sheafι (hX : ∀ y : X, coheight y ≤ 1)
+    (g : Additive X.functionFieldˣ) :
+    (sheafPrincipalDivisorIsoUnit hX g).inv ≫
+        sheafι ((WeilDivisor.OrderSystem.ofScheme X).principalDivisor g) =
+      Scheme.toRationalFunctions X ≫
+        Scheme.rationalFunctionsMul X
+          ((Additive.toMul (-g) : X.functionFieldˣ) : X.functionField) := by
+  apply (Iso.inv_comp_eq (sheafPrincipalDivisorIsoUnit hX g)).mpr
+  have h := congrArg
+    (fun φ ↦ φ ≫ Scheme.rationalFunctionsMul X
+      ((Additive.toMul (-g) : X.functionFieldˣ) : X.functionField))
+    (sheafPrincipalDivisorIsoUnit_hom_toRationalFunctions hX g).symm
+  simp only [Category.assoc, rationalFunctionsMul_comp_neg, Category.comp_id] at h
+  exact h.trans (Category.assoc _ _ _)
 
 /-- **The sheaf of a principal Weil divisor is a line bundle.** This is the case of the
 divisor-to-line-bundle dictionary in which the divisor is globally the divisor of a rational
