@@ -36,6 +36,8 @@ structure map.
 
 * `TauCeti.ValuationSpectrum.exists_mem_spa_comap_algebraMap_eq`: **every point of `R(T/s)` is
   the pullback of a point of `Spa (Aₛ, Aₛ⁺)`.**
+* `TauCeti.ValuationSpectrum.image_comap_algebraMap_spa_subset_rationalSubset`: pullback sends
+  every point of `Spa (Aₛ, Aₛ⁺)` into `R(T/s)`.
 * `TauCeti.ValuationSpectrum.image_comap_algebraMap_spa_eq_rationalSubset`: the image of
   `Spa (Aₛ, Aₛ⁺)` in `Spa (A, A⁺)` **is** `R(T/s)`.
 
@@ -134,9 +136,34 @@ theorem exists_mem_spa_comap_algebraMap_eq (P : PairOfDefinition A) (Aplus : Sub
     exact Valuation.extendToLocalization_apply_map_apply _
       (Valuation.powers_le_supp_primeCompl hs) S a
 
+/-- Pullback from the adic spectrum of the rational localisation lands in `R(T/s)`. The structure
+map inverts `s` and sends each `t/s` into the plus ring of the localisation. -/
+theorem image_comap_algebraMap_spa_subset_rationalSubset (P : PairOfDefinition A)
+    (Aplus : Subring A) (T : Finset A) (s : A)
+    (S : Type*) [CommRing S] [Algebra A S] [IsLocalization.Away s S]
+    (hden : HasDenominatorPower P T s S) :
+    letI := locTopology P T s S hden
+    comap (algebraMap A S) '' spa (integralClosure ↥(Algebra.adjoin Aplus
+        (Set.range fun t : T ↦ (divBy (t : A) s : S))) S).toSubring ⊆
+      rationalSubset Aplus T s := by
+  let _ := locTopology P T s S hden
+  -- Every element of the generating subalgebra is integral over it, hence in the plus ring.
+  have hmem : ∀ x ∈ Algebra.adjoin Aplus (Set.range fun t : T ↦ (divBy (t : A) s : S)),
+      x ∈ (integralClosure ↥(Algebra.adjoin Aplus
+        (Set.range fun t : T ↦ (divBy (t : A) s : S))) S).toSubring := fun x hx ↦
+    isIntegral_algebraMap (x := (⟨x, hx⟩ :
+      ↥(Algebra.adjoin Aplus (Set.range fun t : T ↦ (divBy (t : A) s : S)))))
+  rintro _ ⟨w, hw, rfl⟩
+  exact comap_mem_rationalSubset (continuous_algebraMap_locTopology P T s S hden)
+    (fun a ha ↦ hmem _ (Subalgebra.algebraMap_mem _ (⟨a, ha⟩ : Aplus))) T s
+    (IsLocalization.Away.mul_invSelf s)
+    (fun t ht ↦ by
+      rw [algebraMap_mul_invSelf]
+      exact hmem _ (Algebra.subset_adjoin ⟨⟨t, ht⟩, rfl⟩)) hw
+
 /-- **The image of the adic spectrum of the rational localisation is exactly `R(T/s)`.** The
-inclusion `⊆` holds because the structure map inverts `s` and sends each `t/s` into the plus ring
-of `Aₛ`; the inclusion `⊇` is `exists_mem_spa_comap_algebraMap_eq`.
+inclusion `⊆` is `image_comap_algebraMap_spa_subset_rationalSubset`; the inclusion `⊇` is
+`exists_mem_spa_comap_algebraMap_eq`.
 
 This is the roadmap's homeomorphism `Spa (A_U, A_U⁺) ≃ U` at the level of underlying sets and
 before completion; injectivity, the topological comparison and the passage from `Aₛ` to `A⟨T/s⟩`
@@ -150,22 +177,10 @@ theorem image_comap_algebraMap_spa_eq_rationalSubset (P : PairOfDefinition A) (A
         (Set.range fun t : T ↦ (divBy (t : A) s : S))) S).toSubring =
       rationalSubset Aplus T s := by
   let _ := locTopology P T s S hden
-  -- Every element of the generating subalgebra is integral over it, hence in the plus ring.
-  have hmem : ∀ x ∈ Algebra.adjoin Aplus (Set.range fun t : T ↦ (divBy (t : A) s : S)),
-      x ∈ (integralClosure ↥(Algebra.adjoin Aplus
-        (Set.range fun t : T ↦ (divBy (t : A) s : S))) S).toSubring := fun x hx ↦
-    isIntegral_algebraMap (x := (⟨x, hx⟩ :
-      ↥(Algebra.adjoin Aplus (Set.range fun t : T ↦ (divBy (t : A) s : S)))))
-  refine Set.Subset.antisymm ?_ fun v hv ↦ ?_
-  · rintro _ ⟨w, hw, rfl⟩
-    exact comap_mem_rationalSubset (continuous_algebraMap_locTopology P T s S hden)
-      (fun a ha ↦ hmem _ (Subalgebra.algebraMap_mem _ (⟨a, ha⟩ : Aplus))) T s
-      (IsLocalization.Away.mul_invSelf s)
-      (fun t ht ↦ by
-        rw [algebraMap_mul_invSelf]
-        exact hmem _ (Algebra.subset_adjoin ⟨⟨t, ht⟩, rfl⟩)) hw
-  · obtain ⟨w, hw, rfl⟩ := exists_mem_spa_comap_algebraMap_eq P Aplus hP T s S hden hv
-    exact ⟨w, hw, rfl⟩
+  refine Set.Subset.antisymm
+    (image_comap_algebraMap_spa_subset_rationalSubset P Aplus T s S hden) fun v hv ↦ ?_
+  obtain ⟨w, hw, rfl⟩ := exists_mem_spa_comap_algebraMap_eq P Aplus hP T s S hden hv
+  exact ⟨w, hw, rfl⟩
 
 end TauCeti.ValuationSpectrum
 

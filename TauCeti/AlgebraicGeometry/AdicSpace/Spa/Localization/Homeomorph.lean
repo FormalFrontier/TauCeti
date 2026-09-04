@@ -28,7 +28,7 @@ completion map and is intentionally not identified here.
 
 * `TauCeti.ValuationSpectrum.spaLocalizationToRationalSubset`: pullback from the adic spectrum of
   `A(T/s)` to `R(T/s)`.
-* `TauCeti.ValuationSpectrum.spaLocalizationHomeomorph`: the resulting natural homeomorphism.
+* `TauCeti.ValuationSpectrum.spaLocalizationHomeomorph`: the resulting canonical homeomorphism.
 
 ## Main results
 
@@ -79,12 +79,8 @@ noncomputable def spaLocalizationToRationalSubset (P : PairOfDefinition A) (Aplu
     spaComap (algebraMap A S) (continuous_algebraMap_locTopology P T s S hden)
       Aplus Bplus hplus
   exact Set.codRestrict f _ fun v ↦ by
-    have hv := comap_mem_rationalSubset
-      (continuous_algebraMap_locTopology P T s S hden) hplus T s
-      (IsLocalization.Away.mul_invSelf s)
-      (fun t ht ↦ by
-        rw [algebraMap_mul_invSelf]
-        exact hmem _ (Algebra.subset_adjoin ⟨⟨t, ht⟩, rfl⟩)) v.2
+    have hv := image_comap_algebraMap_spa_subset_rationalSubset P Aplus T s S hden
+      ⟨v.1, v.2, rfl⟩
     simpa only [Set.mem_preimage, f, spaComap_val] using hv
 
 /-- The map to the rational subset is pullback along `A → A(T/s)` on underlying valuations. -/
@@ -114,6 +110,7 @@ theorem isEmbedding_spaLocalizationToRationalSubset (P : PairOfDefinition A)
     Topology.IsEmbedding (spaLocalizationToRationalSubset P Aplus T s S hden) := by
   let _ := locTopology P T s S hden
   have _ := isTopologicalRing_locTopology P T s S hden
+  unfold spaLocalizationToRationalSubset
   apply (isEmbedding_spaComap _ _ _ _ _
     (localization_comap_isEmbedding (Submonoid.powers s) S)).codRestrict
 
@@ -134,7 +131,7 @@ theorem surjective_spaLocalizationToRationalSubset (P : PairOfDefinition A)
   exact Subtype.ext (by rw [spaLocalizationToRationalSubset_apply_val]; exact hcomp)
 
 /-- The adic spectrum of the topological localization `A(T/s)`, with plus ring the integral
-closure of `A⁺[T/s]`, is naturally homeomorphic to the rational subset `R(T/s)`.
+closure of `A⁺[T/s]`, is canonically homeomorphic to the rational subset `R(T/s)`.
 
 The hypothesis `A₀ ≤ A⁺` ensures that extending a continuous valuation to the localization is
 continuous; a pair of definition satisfying it exists for every ring of integral elements. -/
@@ -165,6 +162,7 @@ theorem spaLocalizationHomeomorph_apply_val (P : PairOfDefinition A) (Aplus : Su
   let _ := locTopology P T s S hden
   have _ := isTopologicalRing_locTopology P T s S hden
   intro v
+  rw [spaLocalizationHomeomorph, Topology.IsEmbedding.toHomeomorphOfSurjective_apply]
   exact spaLocalizationToRationalSubset_apply_val P Aplus T s S hden v
 
 /-- Pulling the valuation supplied by the inverse homeomorphism back to `A` recovers the

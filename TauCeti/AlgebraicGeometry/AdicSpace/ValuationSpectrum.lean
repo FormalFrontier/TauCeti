@@ -34,6 +34,8 @@ We define the valuation spectrum `Spv A` following Wedhorn, *Adic Spaces*
   `𝔞 ≤ supp v` to `Spv (A ⧸ 𝔞)`.
 * `TauCeti.ValuationSpectrum.localizationComapSection S B v hS` : Lift `v` to a localization
   `Spv B`.
+* `TauCeti.ValuationSpectrum.vle_mk'_iff` : clear the denominators in a comparison between two
+  localization fractions.
 * `TauCeti.ValuationSpectrum.localization_comap_isEmbedding` : pullback from the valuation
   spectrum of a localization is a topological embedding.
 * `TauCeti.ValuationSpectrum.suppFun` : The continuous support map `Spv A → Spec A`.
@@ -418,7 +420,9 @@ lemma localization_comap_range :
   simpa using ⟨fun ⟨w, hw⟩ ↦ hw ▸ submonoid_le_supp_primeCompl_comap_algebraMap S B w,
     fun h ↦ ⟨localizationComapSection S B v h, comap_localizationComapSection S B v h⟩⟩
 
-private lemma vle_mk'_iff (v : Spv B) (a₁ a₂ : A) (s₁ s₂ : S) :
+/-- A comparison between two fractions in a localization is equivalent to the comparison obtained
+by clearing their denominators. -/
+lemma vle_mk'_iff (v : Spv B) (a₁ a₂ : A) (s₁ s₂ : S) :
     v.toValuativeRel.vle (IsLocalization.mk' B a₁ s₁) (IsLocalization.mk' B a₂ s₂) ↔
       v.toValuativeRel.vle (algebraMap A B (a₁ * s₂)) (algebraMap A B (a₂ * s₁)) := by
   have hs₁ : ¬ v.toValuativeRel.vle (algebraMap A B s₁) 0 :=
