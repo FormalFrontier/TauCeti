@@ -172,14 +172,17 @@ theorem card_hom_eq_card_adjPreservingMaps :
 
 /-! ### Both densities lie in `[0, 1]` -/
 
-private theorem card_hom_le : Nat.card (F →g G) ≤ Fintype.card W ^ Fintype.card V := by
+/-- The number of homomorphisms is bounded by the number of vertex maps. -/
+theorem card_hom_le : Nat.card (F →g G) ≤ Fintype.card W ^ Fintype.card V := by
   classical
   calc Nat.card (F →g G) ≤ Nat.card (V → W) :=
         Nat.card_le_card_of_injective (fun φ => (φ : V → W))
           (fun a b h => by ext x; exact congrFun h x)
     _ = Fintype.card W ^ Fintype.card V := by rw [Nat.card_eq_fintype_card, Fintype.card_fun]
 
-private theorem card_injective_hom_le :
+/-- The number of injective homomorphisms is bounded by the number of embeddings of the vertex
+types. -/
+theorem card_injective_hom_le :
     Nat.card {φ : F →g G // Function.Injective φ}
       ≤ (Fintype.card W).descFactorial (Fintype.card V) := by
   classical
