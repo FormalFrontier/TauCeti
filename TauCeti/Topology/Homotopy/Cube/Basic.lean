@@ -26,6 +26,9 @@ This file supplies that missing input:
   `TauCeti.isPathConnected_cubeBoundary_fin` for `2 ≤ n`, plus the `IsConnected` and
   `IsPreconnected` corollaries.
 
+The resulting path-connectedness declarations expose `JoinedIn` witnesses through their
+`.joinedIn` methods, so callers can use the generic connectedness API directly.
+
 The paths are elementary: a coordinate is dragged to `0` along the straight line
 `pathTowardZero`, and any boundary point is joined to the corner `0` in two phases that each
 keep one coordinate pinned at an endpoint, so the whole journey stays inside the boundary.
