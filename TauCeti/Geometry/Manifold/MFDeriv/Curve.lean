@@ -229,6 +229,10 @@ theorem curveVelocityLiftWithin_apply (γ : 𝕜 → M) (s : Set 𝕜) (t : 𝕜
     curveVelocityLiftWithin I γ s t =
       TotalSpace.mk' E (γ t) (curveVelocityWithin I γ s t) := (rfl)
 
+/-- The defining formula for the unrestricted velocity lift. -/
+theorem curveVelocityLift_apply (γ : 𝕜 → M) (t : 𝕜) :
+    curveVelocityLift I γ t = TotalSpace.mk' E (γ t) (curveVelocity I γ t) := (rfl)
+
 /-- The velocity lift taken within the whole parameter space is the unrestricted lift. -/
 @[simp]
 theorem curveVelocityLiftWithin_univ (γ : 𝕜 → M) :
@@ -243,6 +247,16 @@ theorem curveVelocityLiftWithin_proj (γ : 𝕜 → M) (s : Set 𝕜) (t : 𝕜)
 @[simp]
 theorem curveVelocityLiftWithin_snd (γ : 𝕜 → M) (s : Set 𝕜) (t : 𝕜) :
     (curveVelocityLiftWithin I γ s t).2 = curveVelocityWithin I γ s t := (rfl)
+
+/-- The unrestricted velocity lift lies over the curve. -/
+@[simp]
+theorem curveVelocityLift_proj (γ : 𝕜 → M) (t : 𝕜) :
+    (curveVelocityLift I γ t).proj = γ t := (rfl)
+
+/-- The fibre component of the unrestricted velocity lift is the velocity of the curve. -/
+@[simp]
+theorem curveVelocityLift_snd (γ : 𝕜 → M) (t : 𝕜) :
+    (curveVelocityLift I γ t).2 = curveVelocity I γ t := (rfl)
 
 variable [IsManifold I 1 M]
 
