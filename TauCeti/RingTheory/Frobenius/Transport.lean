@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.RingTheory.Frobenius
-public import Mathlib.RingTheory.Localization.AtPrime.Basic
 public import TauCeti.RingTheory.Unramified.AlgEquiv
 
 /-!
