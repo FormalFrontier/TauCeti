@@ -39,6 +39,8 @@ the carrier is reductive.
 
 ## References
 
+* The proof of the normal-unipotent obstruction is adapted from
+  `TauCeti/Algebra/AlgebraicGroup/SpecialLinear/Reductive.lean`.
 * J. E. Humphreys, *Linear Algebraic Groups*, §§19 and 26.
 * J. C. Jantzen, *Representations of Algebraic Groups*, I.2 and II.2.
 -/
@@ -99,10 +101,8 @@ theorem unipotentRadicalDefiningIdeal_eq_augmentation
     FiniteTypeCommHopfAlgCat.unipotentRadicalDefiningIdeal
         (finiteTypeCoordinateHopfAlgebra k) =
       HopfIdeal.augmentation k (coordinateHopfAlgebra k) := by
-  let I := FiniteTypeCommHopfAlgCat.unipotentRadicalDefiningIdeal
-    (finiteTypeCoordinateHopfAlgebra k)
-  have hI := FiniteTypeCommHopfAlgCat.isUnipotentRadicalCandidate_unipotentRadicalDefiningIdeal
-    (finiteTypeCoordinateHopfAlgebra k)
+  rw [FiniteTypeCommHopfAlgCat.unipotentRadicalDefiningIdeal_eq_augmentation_iff]
+  intro I hI
   exact eq_augmentation_of_isNormal_of_smoothUnipotent k I hI.isNormal hI.smoothUnipotent
 
 end
