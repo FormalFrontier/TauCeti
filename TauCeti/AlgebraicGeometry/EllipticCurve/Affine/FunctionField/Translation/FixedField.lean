@@ -27,12 +27,15 @@ fixed fields. Read in the other direction, an intermediate field of finite degre
 finitely many translations, at most its degree; a subgroup of points whose fixed field has finite
 degree is therefore finite, of exactly that order.
 
-This is the field-theoretic half of the construction of the dual isogeny. A separable isogeny
-`φ : W₁ → W₂` of degree `n` has a kernel `Φ` of `n` points, `F(W₁)` is Galois over the pulled-back
-copy `φ^*F(W₂)` with the kernel acting by translations, and identifying `φ^*F(W₂)` as the fixed
-field of `Φ` is what factors `[n]` through `φ`. The degree count and the correspondence below are
-what such an identification is read off; they are stated for an arbitrary finite subgroup of
-points, no isogeny being needed to state or prove them.
+This is the field-theoretic half of the construction of the dual isogeny. That construction reads
+a separable isogeny `φ : W₁ → W₂` of degree `n` after base change to a separable closure `Fˢᵉᵖ`,
+over which its kernel is a subgroup `Φ` of `n` points of `W₁(Fˢᵉᵖ)`: there `Fˢᵉᵖ(W₁)` is Galois
+over the pulled-back copy `φ^*Fˢᵉᵖ(W₂)` with `Φ` acting by translations, and identifying
+`φ^*Fˢᵉᵖ(W₂)` as the fixed field of `Φ` is what factors `[n]` through `φ`. Over a base field that
+is not separably closed the kernel of `φ` need not be `F`-rational, so the subgroup of points of
+`W(F)` used below is in general smaller than that geometric kernel. The degree count and the
+correspondence below are what such an identification is read off from; they are stated for an
+arbitrary finite subgroup of points, no isogeny being needed to state or prove them.
 
 ## Main definitions
 
@@ -103,34 +106,18 @@ theorem translationSubgroup_mono : Monotone (translationSubgroup W) := fun _ _ h
   obtain ⟨P, hP, rfl⟩ := (mem_translationSubgroup_iff W _).mp hσ
   exact translation_mem_translationSubgroup W _ (h hP)
 
-/-- Translation by the points of `Φ`, packaged as a homomorphism onto its image. -/
-private noncomputable def translationSubgroupHom :
-    Multiplicative Φ →* translationSubgroup W Φ where
-  toFun P := ⟨translation W ((Multiplicative.toAdd P : Φ) : (W⁄F).toAffine.Point),
-    translation_mem_translationSubgroup W Φ (Multiplicative.toAdd P).2⟩
-  map_one' := Subtype.ext (translation_zero W)
-  map_mul' P Q := Subtype.ext <| by
-    refine (congrArg (translation W) (AddSubgroup.coe_add Φ _ _)).trans ?_
-    rw [add_comm, translation_add]
-    rfl
-
 /-- **Translation identifies a subgroup of points with its group of translations.** The action is
-faithful, so the two groups are isomorphic; the point group is written multiplicatively because
-the automorphism group is. -/
+faithful, so `Φ` maps isomorphically onto its image; the point group is written multiplicatively
+because the automorphism group is. -/
 noncomputable def translationMulEquiv : Multiplicative Φ ≃* translationSubgroup W Φ :=
-  MulEquiv.ofBijective (translationSubgroupHom W Φ)
-    ⟨fun P Q h ↦ Multiplicative.toAdd.injective
-      (Subtype.ext (translation_injective W (Subtype.ext_iff.mp h))),
-      fun σ ↦ by
-        obtain ⟨P, hP, hPσ⟩ := (mem_translationSubgroup_iff W Φ).mp σ.2
-        exact ⟨Multiplicative.ofAdd ⟨P, hP⟩, Subtype.ext hPσ⟩⟩
+  Φ.toSubgroup.equivMapOfInjective (translationHom W) (translationHom_injective W)
 
 /-- The isomorphism of a subgroup of points with its translations is translation. -/
 @[simp]
 theorem translationMulEquiv_apply (P : Multiplicative Φ) :
     (translationMulEquiv W Φ P : W.FunctionField ≃ₐ[F] W.FunctionField) =
-      translation W ((Multiplicative.toAdd P : Φ) : (W⁄F).toAffine.Point) := by
-  simp [translationMulEquiv, translationSubgroupHom]
+      translation W ((Multiplicative.toAdd P : Φ) : (W⁄F).toAffine.Point) :=
+  (Subgroup.coe_equivMapOfInjective_apply _ _ _ _).trans (translationHom_apply W _)
 
 instance finite_translationSubgroup [Finite Φ] : Finite (translationSubgroup W Φ) :=
   .of_equiv _ (translationMulEquiv W Φ).toEquiv
@@ -231,12 +218,6 @@ theorem translationFixingSubgroup_translationFixedField [Finite Φ] :
     fixingSubgroup_translationFixedField, mem_translationSubgroup_iff]
   exact ⟨fun ⟨Q, hQ, hQP⟩ ↦ translation_injective W hQP ▸ hQ, fun hP ↦ ⟨P, hP, rfl⟩⟩
 
-/-- **Distinct finite subgroups of points have distinct fixed fields.** -/
-theorem eq_of_translationFixedField_eq [Finite Φ] [Finite Ψ]
-    (h : translationFixedField W Φ = translationFixedField W Ψ) : Φ = Ψ := by
-  rw [← translationFixingSubgroup_translationFixedField W Φ, h,
-    translationFixingSubgroup_translationFixedField W Ψ]
-
 /-- Translation, as a map from the points fixing an intermediate field to its fixing subgroup. -/
 private noncomputable def toFixingSubgroup (L : IntermediateField F W.FunctionField)
     (P : translationFixingSubgroup W L) : L.fixingSubgroup :=
@@ -270,5 +251,16 @@ theorem finite_of_finiteDimensional_translationFixedField
   .of_injective (fun P : Φ ↦ (⟨(P : (W⁄F).toAffine.Point), hΦ P.2⟩ :
       translationFixingSubgroup W (translationFixedField W Φ)))
     fun _ _ h ↦ Subtype.ext (by simpa only [Subtype.mk.injEq] using h)
+
+/-- **Distinct finite subgroups of points have distinct fixed fields.** Only `Φ` need be assumed
+finite: a subgroup with the same fixed field as a finite one is finite by
+`WeierstrassCurve.Affine.finite_of_finiteDimensional_translationFixedField`. -/
+theorem eq_of_translationFixedField_eq [Finite Φ]
+    (h : translationFixedField W Φ = translationFixedField W Ψ) : Φ = Ψ := by
+  have : FiniteDimensional (translationFixedField W Ψ) W.FunctionField := by
+    rw [← h]; infer_instance
+  have : Finite Ψ := finite_of_finiteDimensional_translationFixedField W Ψ
+  rw [← translationFixingSubgroup_translationFixedField W Φ, h,
+    translationFixingSubgroup_translationFixedField W Ψ]
 
 end WeierstrassCurve.Affine
