@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.GroupTheory.PGroup
-public import TauCeti.Topology.Algebra.Group.Profinite.Basic
+public import TauCeti.Topology.Algebra.Group.OpenNormalSubgroup
 
 /-!
 # Pro-p groups
@@ -68,7 +68,11 @@ variable {G : Type u} [Group G] [TopologicalSpace G] [DiscreteTopology G]
 @[simp]
 theorem isProP_iff_isPGroup : IsProP p G ↔ IsPGroup p G := by
   refine ⟨fun hG ↦ ?_, IsPGroup.isProP⟩
-  exact (hG (OpenNormalSubgroup.bot G)).of_equiv QuotientGroup.quotientBot
+  -- The trivial open normal subgroup is `⊥` only through its characterization lemma, so
+  -- reach `G ⧸ ⊥` by rewriting the subgroup rather than by definitional unfolding.
+  exact (hG (openNormalSubgroupBot G)).of_equiv
+    ((QuotientGroup.quotientMulEquivOfEq (openNormalSubgroupBot_toSubgroup G)).trans
+      QuotientGroup.quotientBot)
 
 end Discrete
 

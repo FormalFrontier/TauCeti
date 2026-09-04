@@ -5,8 +5,9 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.GroupTheory.Index
 public import TauCeti.NumberTheory.Supernatural
-public import TauCeti.Topology.Algebra.Group.Profinite.Basic
+public import TauCeti.Topology.Algebra.Group.OpenNormalSubgroup
 
 /-!
 # The supernatural order of a profinite group
@@ -63,9 +64,7 @@ section Functoriality
 variable {G : Type u} {H : Type v} [Group G] [TopologicalSpace G] [Group H]
   [TopologicalSpace H]
 
-/-- A continuous surjective homomorphism cannot increase `profiniteOrder`.  Every quotient of the
-target by an open normal subgroup pulls back to a quotient of the source with the same `Nat.card`.
--/
+/-- A continuous surjective homomorphism cannot increase `profiniteOrder`. -/
 theorem profiniteOrder_le_of_surjective (f : G →* H) (hf : Continuous f)
     (hsurj : Function.Surjective f) : profiniteOrder H ≤ profiniteOrder G := by
   refine Supernatural.le_iff.mpr fun p ↦ ?_
@@ -161,7 +160,7 @@ theorem profiniteOrder_eq_of_finite :
     apply PNat.dvd_iff.mpr
     simpa only [PNat.mk_coe, U.toSubgroup.index_eq_card] using
       U.toSubgroup.index_dvd_card
-  · let U := OpenNormalSubgroup.bot G
+  · let U := openNormalSubgroupBot G
     refine le_iSup_of_le U ?_
     have hcard : Nat.card (G ⧸ U.toSubgroup) = Nat.card G := by
       simpa [U] using Nat.card_congr QuotientGroup.quotientBot.toEquiv
