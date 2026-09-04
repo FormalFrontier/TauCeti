@@ -271,7 +271,6 @@ theorem integrable_id_fisherSnedecorMeasure_iff (hm : 0 < m) (hn : 0 < n) :
 
 /-- Squaring is integrable under a valid Fisher--Snedecor law exactly above four denominator
 degrees of freedom. -/
-@[simp]
 theorem integrable_sq_fisherSnedecorMeasure_iff (hm : 0 < m) (hn : 0 < n) :
     Integrable (fun x : ℝ ↦ x ^ 2) (fisherSnedecorMeasure m n) ↔ 4 < n := by
   have h := integrable_pow_fisherSnedecorMeasure_iff hm hn 2
