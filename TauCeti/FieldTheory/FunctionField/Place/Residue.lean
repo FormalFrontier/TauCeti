@@ -46,6 +46,14 @@ not consume one — so the guarantee is recorded here rather than in the signatu
   built from.
 * `TauCeti.Place.normResidueOrOne_of_ord_eq_zero` and
   `TauCeti.Place.normResidueOrOne_of_ord_ne_zero`: the two branches of the total extension.
+* The group laws in the function: `residueUnit_one`, `residueUnit_mul`, `residueUnit_inv` and
+  their `normResidue` counterparts, together with `normResidueOrOne_one`, `normResidueOrOne_mul`
+  and `normResidueOrOne_inv` for the total form. Because `residueUnit` is the image of a
+  `MonoidHom`, the first three are `map_one`, `map_mul` and `map_inv`; the `normResidue` ones
+  compose that with `Algebra.normUnits`, itself a `MonoidHom`. Only the *total* form needs work,
+  and only for the product: `normResidueOrOne_mul` needs both factors admissible, while
+  `normResidueOrOne_inv` needs nothing, since `ord_P f⁻¹ = -ord_P f` vanishes exactly when
+  `ord_P f` does.
 
 ## References
 
@@ -59,21 +67,36 @@ namespace TauCeti.Place
 
 variable {k F : Type*} [Field k] [Field F] [Algebra k F]
 
+/-- A function of order zero at `P` lies in the unit group of `𝒪_P`: order zero is valuation one,
+which is exactly `ValuationSubring.mem_unitGroup_iff`. -/
+theorem mem_unitGroup_of_ord_eq_zero (P : Place k F) {f : Fˣ} (hf : P.ord (f : F) = 0) :
+    f ∈ P.integers.unitGroup :=
+  -- Routed through `IsUnit` rather than through `Valuation.mem_unitGroup_iff`, which would ask
+  -- unification to see `P.integers` as `P.valuation.valuationSubring`: `Place.integers` is not
+  -- an exposed definition, so that unfolding is unavailable here and the attempt exhausts the
+  -- heartbeat budget at `whnf`. Both lemmas used below are generic in the valuation subring.
+  (ValuationSubring.mem_unitGroup_iff _ f).2 <|
+    (ValuationSubring.valuation_eq_one_iff _ _).1
+      ((P.isUnit_iff_ord_eq_zero (x := ⟨(f : F), P.mem_integers_iff_ord_nonneg.2 hf.ge⟩)
+        (Units.ne_zero f)).2 hf)
+
 /-- **The residue `f(P)` of a function that is a unit at `P`**, as a unit of the residue field.
 Being a unit is what makes the residue nonzero, which is what lets it be raised to a negative
-power in `TauCeti.Divisor.eval`. -/
+power in `TauCeti.Divisor.eval`.
+
+This is Mathlib's `ValuationSubring.unitGroupToResidueFieldUnits` at the unit-group element `f`
+names, rather than a residue paired with a separate proof that it is nonzero. Being the image of
+a `MonoidHom` is what makes the group laws below `map_one`, `map_mul` and `map_inv`. -/
 noncomputable def residueUnit (P : Place k F) (f : Fˣ) (hf : P.ord (f : F) = 0) :
     P.ResidueFieldˣ :=
-  -- `f` lies in `𝒪_P` because `0 ≤ ord_P f`, and the coercion back to `F` of the element of
-  -- `𝒪_P` so named is `rfl`, which is why `hf` and `Units.ne_zero f` apply to it verbatim.
-  Units.mk0 (IsLocalRing.residue P.integers ⟨(f : F), P.mem_integers_iff_ord_nonneg.2 hf.ge⟩)
-    (by rw [Ne, P.residue_eq_zero_iff_ord_pos (Units.ne_zero f), hf]; omega)
+  P.integers.unitGroupToResidueFieldUnits ⟨f, P.mem_unitGroup_of_ord_eq_zero hf⟩
 
 @[simp]
 theorem val_residueUnit (P : Place k F) (f : Fˣ) (hf : P.ord (f : F) = 0) :
     (P.residueUnit f hf : P.ResidueField)
       = IsLocalRing.residue P.integers ⟨(f : F), P.mem_integers_iff_ord_nonneg.2 hf.ge⟩ := by
-  simp [residueUnit]
+  rw [residueUnit, ValuationSubring.coe_unitGroupToResidueFieldUnits_apply]
+  rfl
 
 /-- **The norm to `k` of the residue of a function that is a unit at `P`.** The residue field
 varies with `P`; the norm is what puts the value in `k`, the one field all the local factors of
@@ -124,8 +147,7 @@ theorem residueUnit_mul {P : Place k F} {f g : Fˣ} (hf : P.ord (f : F) = 0)
     (hg : P.ord (g : F) = 0) :
     P.residueUnit (f * g) (ord_mul_eq_zero hf hg)
       = P.residueUnit f hf * P.residueUnit g hg := by
-  ext
-  rw [Units.val_mul, val_residueUnit, val_residueUnit, val_residueUnit, ← map_mul]
+  rw [residueUnit, residueUnit, residueUnit, ← map_mul]
   rfl
 
 /-- **The norm of the residue is multiplicative in the function**, at a place where both factors
@@ -135,6 +157,34 @@ theorem normResidue_mul {P : Place k F} {f g : Fˣ} (hf : P.ord (f : F) = 0)
     P.normResidue (f * g) (ord_mul_eq_zero hf hg)
       = P.normResidue f hf * P.normResidue g hg := by
   rw [normResidue, normResidue, normResidue, residueUnit_mul hf hg, map_mul]
+
+/-- The order of the constant `1` is zero at every place, so `1` is admissible everywhere. -/
+theorem ord_one_units (P : Place k F) : P.ord ((1 : Fˣ) : F) = 0 := by
+  rw [Units.val_one, P.ord_one]
+
+/-- `ord_P f⁻¹ = -ord_P f`, so admissibility is invariant under inversion. -/
+theorem ord_inv_eq_zero {P : Place k F} {f : Fˣ} (hf : P.ord (f : F) = 0) :
+    P.ord ((f⁻¹ : Fˣ) : F) = 0 := by
+  rw [Units.val_inv_eq_inv_val, P.ord_inv, hf, neg_zero]
+
+/-- **The residue of the constant `1` is `1`**: `map_one` for the unit-group homomorphism. -/
+@[simp]
+theorem residueUnit_one (P : Place k F) (hf : P.ord ((1 : Fˣ) : F) = 0) :
+    P.residueUnit 1 hf = 1 := by
+  rw [residueUnit, ← map_one P.integers.unitGroupToResidueFieldUnits]
+  rfl
+
+/-- **The residue inverts with the function**: `map_inv` for the unit-group homomorphism. -/
+theorem residueUnit_inv {P : Place k F} {f : Fˣ} (hf : P.ord (f : F) = 0) :
+    P.residueUnit f⁻¹ (ord_inv_eq_zero hf) = (P.residueUnit f hf)⁻¹ := by
+  rw [residueUnit, residueUnit, ← map_inv]
+  rfl
+
+/-- **The norm of the residue inverts with the function**, since `Algebra.normUnits` is a
+homomorphism. -/
+theorem normResidue_inv {P : Place k F} {f : Fˣ} (hf : P.ord (f : F) = 0) :
+    P.normResidue f⁻¹ (ord_inv_eq_zero hf) = (P.normResidue f hf)⁻¹ := by
+  rw [normResidue, normResidue, residueUnit_inv hf, map_inv]
 
 /-- **The total local factor is multiplicative in the function**, at a place where both factors
 are units. The hypotheses cannot be dropped: at a place where `f` and `g` have opposite nonzero
@@ -146,10 +196,6 @@ theorem normResidueOrOne_mul {P : Place k F} {f g : Fˣ} (hf : P.ord (f : F) = 0
   rw [normResidueOrOne_of_ord_eq_zero (ord_mul_eq_zero hf hg),
     normResidueOrOne_of_ord_eq_zero hf, normResidueOrOne_of_ord_eq_zero hg,
     normResidue_mul hf hg]
-
-/-- The order of the constant `1` is zero at every place, so `1` is admissible everywhere. -/
-theorem ord_one_units (P : Place k F) : P.ord ((1 : Fˣ) : F) = 0 := by
-  rw [Units.val_one, P.ord_one]
 
 -- Not `@[simp]`: since `normResidueOrOne_of_ord_eq_zero` is `@[simp]` and `simp` can discharge
 -- `ord_P 1 = 0` on its own, the total form is rewritten to `normResidue` before this could fire.
@@ -176,10 +222,8 @@ dropped: a product can leave the subgroup `{ord_P = 0}` open on neither factor. 
 theorem normResidueOrOne_inv (P : Place k F) (f : Fˣ) :
     P.normResidueOrOne f⁻¹ = (P.normResidueOrOne f)⁻¹ := by
   by_cases hf : P.ord (f : F) = 0
-  · have h : P.ord ((f⁻¹ : Fˣ) : F) = 0 := by
-      rw [Units.val_inv_eq_inv_val, P.ord_inv, hf, neg_zero]
-    refine eq_inv_of_mul_eq_one_left ?_
-    rw [← normResidueOrOne_mul h hf, inv_mul_cancel, normResidueOrOne_one]
+  · refine eq_inv_of_mul_eq_one_left ?_
+    rw [← normResidueOrOne_mul (ord_inv_eq_zero hf) hf, inv_mul_cancel, normResidueOrOne_one]
   · have h : P.ord ((f⁻¹ : Fˣ) : F) ≠ 0 := by
       rw [Units.val_inv_eq_inv_val, P.ord_inv]
       simpa using hf
