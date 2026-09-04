@@ -281,6 +281,17 @@ noncomputable def rootSubgroupIntegralCoordinateMap (k : Fin (n + 1) ⊕ Fin (n 
     (rep_kostantForm_mem_lattice n) (isNilpotent_rep_rootGenerator n)
     (latticeBasis n) (basisWeight n) (definingIdeal_def n) k
 
+/-- The integral root-subgroup coordinate map is the generic Kostant one, read through the named
+type-`Bₙ₊₁` defining ideal. -/
+theorem rootSubgroupIntegralCoordinateMap_def (k : Fin (n + 1) ⊕ Fin (n + 1)) :
+    rootSubgroupIntegralCoordinateMap n k =
+      kostantRootSubgroupToralCoordinateMapOfEq
+        (TauCeti.typeBSimpleRootGeneratorFamily (K := ℚ))
+        (TauCeti.typeBSimpleCorootGenerator (K := ℚ)) (rep n) (lattice n).toAddSubgroup
+        (rep_kostantForm_mem_lattice n) (isNilpotent_rep_rootGenerator n)
+        (latticeBasis n) (basisWeight n) (definingIdeal_def n) k := by
+  rw [rootSubgroupIntegralCoordinateMap]
+
 /-- The integral factored root-subgroup map recovers the represented `k`th root-subgroup
 coordinate map inside the ambient general linear group. -/
 @[simp]
@@ -508,6 +519,17 @@ noncomputable def weightTorusIntegralCoordinateMap :
     (TauCeti.typeBSimpleCorootGenerator (K := ℚ)) (rep n) (lattice n).toAddSubgroup
     (rep_kostantForm_mem_lattice n) (isNilpotent_rep_rootGenerator n)
     (latticeBasis n) (basisWeight n) (definingIdeal_def n)
+
+/-- The integral weight-torus coordinate map is the generic Kostant one, read through the named
+type-`Bₙ₊₁` defining ideal. -/
+theorem weightTorusIntegralCoordinateMap_def :
+    weightTorusIntegralCoordinateMap n =
+      kostantWeightTorusToralCoordinateMapOfEq
+        (TauCeti.typeBSimpleRootGeneratorFamily (K := ℚ))
+        (TauCeti.typeBSimpleCorootGenerator (K := ℚ)) (rep n) (lattice n).toAddSubgroup
+        (rep_kostantForm_mem_lattice n) (isNilpotent_rep_rootGenerator n)
+        (latticeBasis n) (basisWeight n) (definingIdeal_def n) := by
+  rw [weightTorusIntegralCoordinateMap]
 
 /-- The integral factored weight-torus map recovers the represented weight-torus coordinate map
 inside the ambient general linear group. -/
