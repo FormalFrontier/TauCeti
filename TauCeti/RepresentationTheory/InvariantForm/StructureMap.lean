@@ -18,7 +18,7 @@ public import TauCeti.RepresentationTheory.RealForm
 An invariant *bilinear* form on an irreducible complex representation is strictly weaker than a
 structure map.  Together with a positive definite invariant *Hermitian* form `H`, however, it
 produces one: this file builds a conjugate-linear equivariant map of `V` out of the two forms, and
-goes back again, so that against a fixed `H` the two data are interchangeable.
+goes back again, so that against a fixed `H` one exists exactly when the other does.
 
 Which structure map comes out is decided by the **flip rule** of the bilinear form.  Writing
 `B x y = ε * B y x` -- with `ε = 1` for a symmetric form and `ε = -1` for an alternating one -- the
@@ -60,8 +60,9 @@ arbitrary invariant `H` need not be.  Replacing `H` by the **balanced** form
 `TauCeti/LinearAlgebra/Complex/SesquilinearForm.lean` -- still invariant, Hermitian and positive
 definite, since `K` is bijective -- makes it compatible, and then `B x y = H (K x) y` flips by the
 sign that `K ∘ K` carries: symmetric for a real structure, alternating for a quaternionic one.
-Against a fixed `H` the two directions assemble into `Representation.exists_isRealStructure_iff` and
-`Representation.exists_isQuaternionicStructure_iff`, which is what turns the Frobenius-Schur values
+Against a fixed `H` the two directions assemble into the existence criteria
+`Representation.exists_isRealStructure_iff` and
+`Representation.exists_isQuaternionicStructure_iff`, which are what turn the Frobenius-Schur values
 `1` and `-1` into structure maps whenever a positive definite invariant Hermitian form is
 available -- by Haar averaging for a compact group as much as by summation for a finite one.
 
@@ -94,6 +95,12 @@ theory attaches to it, since the fixed points of a `J` with `J (J v) = -v` are `
 
 ## References
 
+* [Character theory roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CharacterTheory/README.md),
+  Layer 7: the passage from a "compatible Hermitian form" to the real structure that the
+  realizability target `frobeniusSchurIndicatorRep_eq_one_realizable` is read off from.
+* [Compact-groups roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CompactGroups/README.md),
+  Layer 6b: the structure-map reading of the Frobenius-Schur values `1` and `-1`, in both of which
+  the equivalences below are consumed.
 * J.-P. Serre, *Linear Representations of Finite Groups*, GTM 42 (1977), §13.2.
 * T. Bröcker, T. tom Dieck, *Representations of Compact Lie Groups*, Springer GTM 98 (1985),
   Chapter II, §6.
@@ -412,6 +419,9 @@ private theorem exists_isInvariantForm_flip_of_sq_eq_smul {H : V →ₗ⋆[ℂ] 
     ∃ B : BilinForm ℂ V, IsInvariantForm ρ B ∧ (∀ x y : V, B x y = (ε : ℂ) * B y x) ∧
       B.Nondegenerate := by
   have hεC : (ε : ℂ) * (ε : ℂ) = 1 := by exact_mod_cast hε
+  have hεstar : star ((ε : ℂ)) * (ε : ℂ) = 1 := by
+    rw [← starRingEnd_apply, Complex.conj_ofReal]
+    exact hεC
   have hεne : (ε : ℂ) ≠ 0 := by
     intro h0
     rw [h0, mul_zero] at hεC
@@ -438,7 +448,7 @@ private theorem exists_isInvariantForm_flip_of_sq_eq_smul {H : V →ₗ⋆[ℂ] 
             rw [hKsq y, smul_smul, hεC, one_smul]
       _ = (starRingEnd ℂ) ((ε : ℂ) * (starRingEnd ℂ) (balance H K (K y) x)) := by
             rw [map_smulₛₗ, LinearMap.smul_apply, smul_eq_mul, Complex.conj_ofReal,
-              balance_map_map hε hKsq (K y) x]
+              balance_map_map hεstar hKsq (K y) x]
       _ = (ε : ℂ) * balance H K (K y) x := by
             rw [map_mul, Complex.conj_ofReal, Complex.conj_conj]
   · -- Left separation: a vector killed by `B` has `balance H K (K x) (K x) = 0`.
@@ -484,17 +494,19 @@ theorem exists_isInvariantForm_isAlt_nondegenerate_of_isQuaternionicStructure
 
 end OfStructureMap
 
-/-! ### The two data are interchangeable -/
+/-! ### Each datum exists exactly when the other does -/
 
 section Equivalence
 
 variable {G V : Type*} [Group G] [AddCommGroup V] [Module ℂ V] {ρ : Representation ℂ G V}
   [FiniteDimensional ℂ V] [ρ.IsIrreducible]
 
-/-- **Against a positive definite invariant Hermitian form, a real structure is the same datum as a
-nondegenerate invariant symmetric form.**  Both directions are proved above; the Hermitian form is
-the fixed background datum, supplied by summation over a finite group or by Haar averaging over a
-compact one. -/
+/-- **Against a positive definite invariant Hermitian form, a real structure exists exactly when a
+nondegenerate invariant symmetric form does.**  Both directions are proved above; the Hermitian
+form is the fixed background datum, supplied by summation over a finite group or by Haar averaging
+over a compact one.  This is an equivalence of the two existence statements, not of the two data:
+each direction produces *some* witness from a given one, and no inverse pair of constructions is
+claimed. -/
 theorem exists_isRealStructure_iff {H : V →ₗ⋆[ℂ] V →ₗ[ℂ] ℂ} (hHinv : IsInvariantSesqForm ρ H)
     (hHsymm : H.IsSymm) (hHnonneg : H.IsNonneg) (hdef : ∀ x : V, x ≠ 0 → H x x ≠ 0) :
     (∃ K : V →ₛₗ[starRingEnd ℂ] V, IsRealStructure ρ K) ↔
@@ -505,8 +517,8 @@ theorem exists_isRealStructure_iff {H : V →ₗ⋆[ℂ] V →ₗ[ℂ] ℂ} (hHi
       exists_isRealStructure_of_isInvariantForm_of_isInvariantSesqForm hBinv hBsymm hBnd hHinv
         hHnonneg hdef⟩
 
-/-- **Against a positive definite invariant Hermitian form, a quaternionic structure is the same
-datum as a nondegenerate invariant alternating form.**  This is the value `-1` of the
+/-- **Against a positive definite invariant Hermitian form, a quaternionic structure exists exactly
+when a nondegenerate invariant alternating form does.**  This is the value `-1` of the
 Frobenius-Schur trichotomy, `Representation.exists_isRealStructure_iff` being the value `1`; the
 remaining value `0` is the case where no invariant bilinear form of either kind exists. -/
 theorem exists_isQuaternionicStructure_iff {H : V →ₗ⋆[ℂ] V →ₗ[ℂ] ℂ}

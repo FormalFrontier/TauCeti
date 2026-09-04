@@ -22,7 +22,7 @@ the outer conjugation restores the shape -- and it satisfies
 
 `balance H K (K x) (K y) = conj (balance H K x y)`
 
-as soon as `K ∘ K` is a real scalar of square one, which an arbitrary `H` need not.  That is the
+as soon as `K ∘ K` is a scalar of modulus one, which an arbitrary `H` need not.  That is the
 only property balancing adds: being Hermitian, nonnegative, and definite off the origin all pass
 from `H` to `balance H K` unchanged.
 
@@ -34,7 +34,7 @@ from `H` to `balance H K` unchanged.
 
 * `LinearMap.balance_apply`: the defining formula of the balanced form.
 * `LinearMap.balance_map_map`: the balanced form is compatible with the map it was balanced
-  against, once that map squares to a real scalar of square one.
+  against, once that map squares to a scalar of modulus one.
 * `LinearMap.isSymm_balance`, `LinearMap.isNonneg_balance` and
   `LinearMap.balance_apply_self_ne_zero`: balancing preserves Hermitian symmetry, nonnegativity,
   and definiteness off the origin.
@@ -52,7 +52,7 @@ variable {V : Type*} [AddCommGroup V] [Module ℂ V]
 `x, y ↦ H x y + conj (H (K x) (K y))`.  Each argument of the second summand picks up a conjugation
 from `K`, and the outer conjugation restores the shape of a sesquilinear form, conjugate-linear in
 the first argument and linear in the second.  Adding it to `H` is what forces the compatibility
-`balance H K (K x) (K y) = conj (balance H K x y)` whenever `K ∘ K` is a real scalar of square
+`balance H K (K x) (K y) = conj (balance H K x y)` whenever `K ∘ K` is a scalar of modulus
 one. -/
 noncomputable def balance (H : V →ₗ⋆[ℂ] V →ₗ[ℂ] ℂ) (K : V →ₛₗ[starRingEnd ℂ] V) :
     V →ₗ⋆[ℂ] V →ₗ[ℂ] ℂ where
@@ -78,16 +78,17 @@ theorem balance_apply (H : V →ₗ⋆[ℂ] V →ₗ[ℂ] ℂ) (K : V →ₛₗ[
     balance H K x y = H x y + (starRingEnd ℂ) (H (K x) (K y)) := (rfl)
 
 /-- **The balanced form is compatible with the map it was balanced against**: replacing both
-arguments by their `K`-images conjugates the value, as soon as `K ∘ K` is a real scalar of square
-one -- an involution, or a quaternionic structure.  This is the only property of `balance` that
-`H` alone does not already have, and the whole point of the construction. -/
-theorem balance_map_map {H : V →ₗ⋆[ℂ] V →ₗ[ℂ] ℂ} {K : V →ₛₗ[starRingEnd ℂ] V} {ε : ℝ}
-    (hε : ε * ε = 1) (hK : ∀ x : V, K (K x) = (ε : ℂ) • x) (x y : V) :
+arguments by their `K`-images conjugates the value, as soon as `K ∘ K` is a scalar `ε` of modulus
+one.  The conjugation of the first argument of `H` turns the two `ε`-factors into `conj ε * ε`, so
+no more than `star ε * ε = 1` is used; the real signs `ε = 1` and `ε = -1` -- an involution, or a
+quaternionic structure -- are the cases the representation theory needs.  This is the only property
+of `balance` that `H` alone does not already have, and the whole point of the construction. -/
+theorem balance_map_map {H : V →ₗ⋆[ℂ] V →ₗ[ℂ] ℂ} {K : V →ₛₗ[starRingEnd ℂ] V} {ε : ℂ}
+    (hε : star ε * ε = 1) (hK : ∀ x : V, K (K x) = ε • x) (x y : V) :
     balance H K (K x) (K y) = (starRingEnd ℂ) (balance H K x y) := by
-  have hεC : (ε : ℂ) * (ε : ℂ) = 1 := by exact_mod_cast hε
-  have hH : H ((ε : ℂ) • x) ((ε : ℂ) • y) = H x y := by
-    simp only [map_smulₛₗ, LinearMap.smul_apply, Complex.conj_ofReal, smul_eq_mul,
-      RingHom.id_apply]
+  have hεC : (starRingEnd ℂ) ε * ε = 1 := by rwa [starRingEnd_apply]
+  have hH : H (ε • x) (ε • y) = H x y := by
+    simp only [map_smulₛₗ, LinearMap.smul_apply, smul_eq_mul, RingHom.id_apply]
     linear_combination (H x y) * hεC
   rw [balance_apply, balance_apply, hK x, hK y, hH, map_add, Complex.conj_conj, add_comm]
 

@@ -27,8 +27,8 @@ commuting with the action, `TauCeti.Representation.IsRealStructure` -- equivalen
 
 Nothing new has to be integrated over the group.  The unitarity hypothesis the whole
 Frobenius-Schur layer already carries *is* a positive definite invariant Hermitian form, namely the
-inner product of `V` itself, and against a fixed such form a structure map and a nondegenerate
-invariant bilinear form of the matching kind are interchangeable data
+inner product of `V` itself, and against a fixed such form a structure map exists exactly when a
+nondegenerate invariant bilinear form of the matching kind does
 (`Representation.exists_isRealStructure_iff` and
 `Representation.exists_isQuaternionicStructure_iff`, in
 `TauCeti/RepresentationTheory/InvariantForm/StructureMap.lean`).  So the compact-group criterion is
@@ -56,6 +56,12 @@ equips with the passage to a real form -- and `Representation.IsQuaternionicStru
 `TauCeti/RepresentationTheory/QuaternionicStructure.lean`.
 
 ## References
+
+This discharges the `frobeniusSchurIndicator_eq_one_iff_exists_structureMap` target of Layer 6b of
+the [compact-groups roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CompactGroups/README.md),
+in both the real case that target states and the quaternionic case `J² = -1` its
+[`Suggested.lean`](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/CompactGroups/Suggested.lean)
+docstring names.  The mathematical development follows:
 
 * T. Bröcker, T. tom Dieck, *Representations of Compact Lie Groups*, Springer GTM 98 (1985),
   Chapter II, §6.
@@ -118,8 +124,8 @@ representation of a compact group has Frobenius-Schur indicator `1` exactly when
 conjugate-linear involution of `V` commuting with the action.
 
 The invariant-form criterion supplies a nondegenerate invariant symmetric form, and the inner
-product of the unitary representation supplies the positive definite invariant Hermitian form that
-turns one datum into the other. -/
+product of the unitary representation supplies the positive definite invariant Hermitian form
+against which the existence of one is equivalent to the existence of the other. -/
 theorem frobeniusSchurIndicator_eq_one_iff_exists_isRealStructure (hunitary : IsUnitary π)
     (hirr : Representation.IsIrreducible π.toRepresentation) :
     frobeniusSchurIndicator π hπ = 1 ↔
@@ -145,8 +151,9 @@ unitary representation of a compact group has Frobenius-Schur indicator `-1` exa
 carries a conjugate-linear `J` with `J (J v) = -v` commuting with the action.
 
 The invariant-form criterion supplies a nondegenerate invariant alternating form, and the inner
-product of the unitary representation supplies the positive definite invariant Hermitian form that
-turns one datum into the other.  A quaternionic structure is the standard quaternionic
+product of the unitary representation supplies the positive definite invariant Hermitian form
+against which the existence of one is equivalent to the existence of the other.  A quaternionic
+structure is the standard quaternionic
 realizability datum -- `J` together with the complex scalars makes `V` a module over the
 quaternions -- but, unlike the real case, it supports no realizability-over-`ℝ` reading: it has no
 nonzero fixed vector, so it cuts out no real form, and this file draws no such conclusion. -/

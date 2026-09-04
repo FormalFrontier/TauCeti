@@ -20,9 +20,9 @@ conjugate-linear *involution* commuting with the action, `Representation.IsRealS
 The two predicates differ only in the sign of the square, and the constructions in
 `TauCeti/RepresentationTheory/InvariantForm/StructureMap.lean` treat them together.  What separates
 them is that a quaternionic structure has no nonzero fixed vector
-(`Representation.IsQuaternionicStructure.eq_zero_of_apply_eq`), so, unlike a real structure, it cuts
-out no real form; that is why the real-form theory lives beside `Representation.IsRealStructure`
-while this predicate stands on its own.
+(`Representation.IsQuaternionicStructure.eq_zero_of_apply_eq_self`), so, unlike a real structure,
+it cuts out no real form; that is why the real-form theory lives beside
+`Representation.IsRealStructure` while this predicate stands on its own.
 
 Only the predicate and the two facts that follow from its definition alone are here, so that
 stating a quaternionic structure costs no invariant-form or finite-dimensional machinery.  Its
@@ -39,7 +39,7 @@ value `-1` off it, are in
 ## Main results
 
 * `Representation.IsQuaternionicStructure.bijective`: a quaternionic structure is bijective.
-* `Representation.IsQuaternionicStructure.eq_zero_of_apply_eq`: a quaternionic structure has no
+* `Representation.IsQuaternionicStructure.eq_zero_of_apply_eq_self`: a quaternionic structure has no
   nonzero fixed vector.
 
 ## References
@@ -62,7 +62,7 @@ Frobenius-Schur reality trichotomy, `Representation.IsRealStructure` being the `
 The two predicates differ only in the sign of the square, and the constructions of
 `TauCeti/RepresentationTheory/InvariantForm/StructureMap.lean` treat them together; what separates
 them is that a quaternionic structure has no nonzero fixed vector
-(`Representation.IsQuaternionicStructure.eq_zero_of_apply_eq`), so no real form attaches to it.
+(`Representation.IsQuaternionicStructure.eq_zero_of_apply_eq_self`), so no real form attaches to it.
 The map is carried unbundled, matching `Representation.IsRealStructure` and
 `TauCeti.Representation.IsInvariantForm`. -/
 structure IsQuaternionicStructure (J : V →ₛₗ[starRingEnd ℂ] V) : Prop where
@@ -85,7 +85,7 @@ theorem bijective : Function.Bijective ⇑J :=
 
 /-- **A quaternionic structure has no nonzero fixed vector**: a fixed vector satisfies `v = -v`.
 So, unlike a real structure, it cuts out no real form; its fixed points are `0`. -/
-theorem eq_zero_of_apply_eq {v : V} (hv : J v = v) : v = 0 := by
+theorem eq_zero_of_apply_eq_self {v : V} (hv : J v = v) : v = 0 := by
   have hneg : v = -v := by
     have hsq := h.sq_eq_neg v
     rwa [hv, hv] at hsq
