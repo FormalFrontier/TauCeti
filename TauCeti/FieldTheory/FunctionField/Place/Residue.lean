@@ -40,10 +40,11 @@ not consume one — so the guarantee is recorded here rather than in the signatu
 
 ## Main results
 
-* `TauCeti.Place.val_residueUnit` and `TauCeti.Place.val_normResidue`: the underlying field values
-  of the two units, as `@[simp]` normal forms. They are the whole reason a consumer never has to
-  unfold either definition: they name the `IsLocalRing.residue` and `Algebra.norm` the units are
-  built from.
+* `TauCeti.Place.coe_residueUnit` and `TauCeti.Place.coe_normResidue`: the underlying field values
+  of the two units, as `@[simp]` normal forms, named after `TauCeti.Algebra.coe_normUnits` — the
+  adjacent lemma of exactly this shape. They are the whole reason a consumer never has to unfold
+  either definition: they name the `IsLocalRing.residue` and `Algebra.norm` the units are built
+  from.
 * `TauCeti.Place.normResidueOrOne_of_ord_eq_zero` and
   `TauCeti.Place.normResidueOrOne_of_ord_ne_zero`: the two branches of the total extension.
 * The group laws in the function: `residueUnit_one`, `residueUnit_mul`, `residueUnit_inv` and
@@ -92,7 +93,7 @@ noncomputable def residueUnit (P : Place k F) (f : Fˣ) (hf : P.ord (f : F) = 0)
   P.integers.unitGroupToResidueFieldUnits ⟨f, P.mem_unitGroup_of_ord_eq_zero hf⟩
 
 @[simp]
-theorem val_residueUnit (P : Place k F) (f : Fˣ) (hf : P.ord (f : F) = 0) :
+theorem coe_residueUnit (P : Place k F) (f : Fˣ) (hf : P.ord (f : F) = 0) :
     (P.residueUnit f hf : P.ResidueField)
       = IsLocalRing.residue P.integers ⟨(f : F), P.mem_integers_iff_ord_nonneg.2 hf.ge⟩ := by
   rw [residueUnit, ValuationSubring.coe_unitGroupToResidueFieldUnits_apply]
@@ -114,7 +115,7 @@ noncomputable def normResidue (P : Place k F) (f : Fˣ) (hf : P.ord (f : F) = 0)
   Algebra.normUnits k (P.residueUnit f hf)
 
 @[simp]
-theorem val_normResidue (P : Place k F) (f : Fˣ) (hf : P.ord (f : F) = 0) :
+theorem coe_normResidue (P : Place k F) (f : Fˣ) (hf : P.ord (f : F) = 0) :
     (P.normResidue f hf : k) = Algebra.norm k (P.residueUnit f hf : P.ResidueField) := by
   simp [normResidue]
 
