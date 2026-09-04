@@ -30,8 +30,6 @@ upstairs.
   the domain/flat Galois counting criterion.
 * `Ideal.card_inertia_eq_ramificationIdx`: the un-`In` form of the inertia count.
 * `Ideal.mem_inertia_pointwise_smul_iff`: translation conjugates inertia subgroups.
-* `Ideal.inertia_pointwise_smul_eq_bot_iff`: translation preserves triviality of the inertia
-  subgroup.
 * `Ideal.inertia_pointwise_smul`: for a commutative Galois group, translation leaves the inertia
   subgroup unchanged.
 * `Ideal.inertia_eq_of_liesOver`: for a commutative Galois group, all the primes above a fixed
@@ -109,15 +107,6 @@ theorem mem_inertia_pointwise_smul_iff {σ τ : G} {P : Ideal S} :
   · intro h x
     rw [mem_pointwise_smul_iff_inv_smul_mem, smul_sub]
     simpa only [mul_smul, smul_inv_smul] using h (σ⁻¹ • x)
-
-/-- **Translation preserves triviality of the inertia subgroup.** Because translating a prime by
-`σ` conjugates its inertia subgroup, the inertia subgroup of `σ • P` is trivial exactly when that
-of `P` is. This is the invariance an unramifiedness statement needs along a fibre, and unlike
-`Ideal.inertia_pointwise_smul` it needs no commutativity. -/
-theorem inertia_pointwise_smul_eq_bot_iff (σ : G) (P : Ideal S) :
-    (σ • P).inertia G = ⊥ ↔ P.inertia G = ⊥ := by
-  rw [Ideal.inertia_smul]
-  exact Subgroup.map_eq_bot_iff_of_injective _ (MulAut.conj σ).injective
 
 variable (σ : G) (P : Ideal S)
 

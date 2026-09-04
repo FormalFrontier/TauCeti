@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.FieldTheory.Finite.Basic
-public import Mathlib.RingTheory.RamificationInertia.Ramification
 public import TauCeti.NumberTheory.NumberField.Frobenius
 public import TauCeti.NumberTheory.RamificationInertia.Galois
 
@@ -96,12 +95,12 @@ theorem isUnramifiedAt_iff_inertia_eq_bot (Q : Ideal (𝓞 L)) [Q.IsPrime] :
 the same prime of `𝓞 K`, and `L / K` is unramified at one exactly when it is unramified at the
 other.
 
-Translating a prime by `τ` conjugates its inertia subgroup, so it preserves triviality of that
-subgroup (`Ideal.inertia_pointwise_smul_eq_bot_iff`). -/
+Translating a prime by `τ` leaves its ramification index unchanged
+(`Ideal.ramificationIdx_smul`). -/
 theorem isUnramifiedAt_pointwise_smul_iff (τ : L ≃ₐ[K] L) (Q : Ideal (𝓞 L)) [Q.IsPrime] :
     Algebra.IsUnramifiedAt (𝓞 K) (τ • Q) ↔ Algebra.IsUnramifiedAt (𝓞 K) Q := by
-  rw [isUnramifiedAt_iff_inertia_eq_bot, isUnramifiedAt_iff_inertia_eq_bot,
-    Ideal.inertia_pointwise_smul_eq_bot_iff]
+  rw [← Ideal.ramificationIdx_eq_one_iff, ← Ideal.ramificationIdx_eq_one_iff,
+    Ideal.ramificationIdx_smul]
 
 /-! ### The decomposition group at an unramified prime -/
 
@@ -181,14 +180,6 @@ theorem orderOf_eq_inertiaDeg_of_isArithFrobAt (Q : Ideal (𝓞 L)) [Q.IsMaximal
   exact (Subgroup.orderOf_coe (⟨σ, hσ.mem_stabilizer⟩ :
     MulAction.stabilizer (L ≃ₐ[K] L) Q)).trans key
 
-/-- **A Frobenius element is trivial exactly when the inertia degree is one.** Together with
-`e(Q / 𝔭) = 1`, this is the statement that `𝔭` splits completely in `L` precisely when its
-Frobenius elements are trivial. -/
-theorem eq_one_iff_inertiaDeg_eq_one_of_isArithFrobAt (Q : Ideal (𝓞 L)) [Q.IsMaximal]
-    [Algebra.IsUnramifiedAt (𝓞 K) Q] {σ : L ≃ₐ[K] L} (hσ : IsArithFrobAt (𝓞 K) σ Q) :
-    σ = 1 ↔ Q.inertiaDeg (𝓞 K) = 1 := by
-  rw [← orderOf_eq_inertiaDeg_of_isArithFrobAt Q hσ, orderOf_eq_one_iff]
-
 /-- **The decomposition group of an unramified prime has order the inertia degree.** With trivial
 inertia, Mathlib's `Nat.card D = |I| · f` collapses to `Nat.card D = f`. -/
 theorem card_stabilizer_eq_inertiaDeg_of_isUnramifiedAt (Q : Ideal (𝓞 L)) [Q.IsMaximal]
@@ -218,12 +209,8 @@ theorem isCyclic_stabilizer_of_isUnramifiedAt (Q : Ideal (𝓞 L)) [Q.IsMaximal]
     [Algebra.IsUnramifiedAt (𝓞 K) Q] : IsCyclic (MulAction.stabilizer (L ≃ₐ[K] L) Q) := by
   obtain ⟨σ, hσ⟩ := exists_isArithFrobAt K Q
     (Q.bot_lt_of_maximal (RingOfIntegers.not_isField L)).ne'
-  refine ⟨⟨⟨σ, hσ.mem_stabilizer⟩, fun x ↦ ?_⟩⟩
-  have hx : (x : L ≃ₐ[K] L) ∈ Subgroup.zpowers σ := by
-    rw [zpowers_eq_stabilizer_of_isArithFrobAt Q hσ]
-    exact x.2
-  obtain ⟨n, hn⟩ := hx
-  exact ⟨n, Subtype.ext (by simpa using hn)⟩
+  exact (Subgroup.isCyclic_iff_exists_zpowers_eq_top _).mpr
+    ⟨σ, zpowers_eq_stabilizer_of_isArithFrobAt Q hσ⟩
 
 /-! ### Conjugation along the fibre -/
 
