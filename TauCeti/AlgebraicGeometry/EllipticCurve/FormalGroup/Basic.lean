@@ -19,8 +19,8 @@ from the named sum `Unit ⊕ Unit` to `Fin 2`, and the previously established co
 associativity identities supply the structure fields.
 
 The resulting formal group is commutative because the chord addition series is symmetric. Thus
-Mathlib's `FormalGroup.Point` construction gives an additive commutative monoid of nilpotent
-parameters in every multivariate power-series ring.
+Mathlib's `FormalGroup.Point` construction gives an additive commutative monoid of
+power-series-valued points whose constant coefficient is nilpotent.
 
 ## Main definitions
 
@@ -77,8 +77,9 @@ theorem map_formalGroup {S : Type*} [CommRing S] (W : WeierstrassCurve R) (φ : 
   apply FormalGroup.ext
   simp [formalGroup, MvPowerSeries.rename_map]
 
-/-- The formal group law of a Weierstrass curve is commutative. This makes its nilpotent
-power-series-valued points an additive commutative monoid through Mathlib's standard instance. -/
+/-- The formal group law of a Weierstrass curve is commutative. This makes its power-series-valued
+points whose constant coefficient is nilpotent an additive commutative monoid through Mathlib's
+standard instance. -/
 noncomputable instance isComm_formalGroup (W : WeierstrassCurve R) :
     (formalGroup W).IsComm where
   comm := by
