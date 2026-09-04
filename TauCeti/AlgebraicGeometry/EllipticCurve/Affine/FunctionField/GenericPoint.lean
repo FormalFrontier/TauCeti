@@ -55,8 +55,8 @@ consumer may rely on that.
 `TauCetiRoadmap/EllipticCurves/README.md`, **Layer 0.5**, whose third milestone asks for the
 "function-field pullbacks of the translations `τ_P`, with the action and composition laws". Those
 pullbacks are evaluation at the translates of the generic point, built in
-`TauCeti/AlgebraicGeometry/EllipticCurve/Affine/FunctionField/Translation.lean`; this file is the
-point they translate.
+`TauCeti/AlgebraicGeometry/EllipticCurve/Affine/FunctionField/Translation/Basic.lean`; this file is
+the point they translate.
 
 ## References
 

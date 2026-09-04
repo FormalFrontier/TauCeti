@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.FieldTheory.Galois.Basic
-public import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.FunctionField.Translation
+public import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.FunctionField.Translation.Basic
 -- Proof-only: the Galois correspondence for a finite group of automorphisms, with no finiteness
 -- hypothesis on the ambient extension.
 import TauCeti.FieldTheory.Galois.FixedField
@@ -246,11 +246,13 @@ then that degree, by `WeierstrassCurve.Affine.finrank_translationFixedField`: a 
 translations is no larger than the extension it cuts out. -/
 theorem finite_of_finiteDimensional_translationFixedField
     [FiniteDimensional (translationFixedField W Φ) W.FunctionField] : Finite Φ :=
-  have hΦ : Φ ≤ translationFixingSubgroup W (translationFixedField W Φ) :=
-    (le_translationFixingSubgroup_iff_le_translationFixedField W Φ _).mpr le_rfl
-  .of_injective (fun P : Φ ↦ (⟨(P : (W⁄F).toAffine.Point), hΦ P.2⟩ :
-      translationFixingSubgroup W (translationFixedField W Φ)))
-    fun _ _ h ↦ Subtype.ext (by simpa only [Subtype.mk.injEq] using h)
+  letI : FiniteDimensional (IntermediateField.fixedField (translationSubgroup W Φ))
+      W.FunctionField := by
+    rw [← translationFixedField]
+    infer_instance
+  have : Finite (translationSubgroup W Φ) :=
+    IntermediateField.finite_of_finiteDimensional_fixedField (translationSubgroup W Φ)
+  .of_equiv _ (translationMulEquiv W Φ).symm.toEquiv
 
 /-- **Distinct finite subgroups of points have distinct fixed fields.** Only `Φ` need be assumed
 finite: a subgroup with the same fixed field as a finite one is finite by

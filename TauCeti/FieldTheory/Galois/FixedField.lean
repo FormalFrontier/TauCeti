@@ -25,6 +25,7 @@ out; the fixing subgroup of a subfield of finite degree is finite for the same r
 
 * `Subgroup.fixedField_sup_eq_top_iff`
 * `IntermediateField.fixingSubgroup_fixedField_of_finite`
+* `IntermediateField.finite_of_finiteDimensional_fixedField`
 * `IntermediateField.card_fixingSubgroup_le`
 -/
 
@@ -86,6 +87,14 @@ automorphism group of a finite extension. -/
 instance finite_fixingSubgroup (E : IntermediateField K M) [FiniteDimensional E M] :
     Finite (fixingSubgroup E) :=
   .of_equiv _ (fixingSubgroupEquiv E).symm.toEquiv
+
+/-- **A group of automorphisms whose fixed field has finite degree is finite.** Thus a subgroup of
+`K`-automorphisms cannot be infinite when its fixed field has finite degree in `M`. -/
+theorem finite_of_finiteDimensional_fixedField (H : Subgroup (M ≃ₐ[K] M))
+    [FiniteDimensional (fixedField H) M] : Finite H :=
+  letI := finite_fixingSubgroup (fixedField H)
+  have hH : H ≤ fixingSubgroup (fixedField H) := (le_iff_le _ _).mp le_rfl
+  .of_injective (Set.inclusion hH) (Set.inclusion_injective hH)
 
 /-- **The fixing subgroup of an intermediate field of finite degree is no larger than that
 degree**, the bound on the automorphisms of a finite extension. -/
