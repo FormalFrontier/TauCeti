@@ -261,6 +261,9 @@ lemma baseChangeIsoPointsMulEquiv_mapPointsFunctor
   rw [baseChangePointsMulEquiv_apply_apply]
   simp only [AlgHom.comp_apply]
   rw [← hcompat, _root_.CommHopfAlgCat.hom_comp, _root_.CommHopfAlgCat.hom_comp]
+  -- Category composition is stored as nested `BialgHom.comp`, while the isomorphism cancellation
+  -- and pure-tensor rules are stated for applications. This conversion exposes exactly those two
+  -- public interfaces and keeps downstream proofs independent of categorical wrappers.
   change q.ofConv (gG.hom ((baseChangeMap f).hom
       (e.hom.hom (e.inv (1 ⊗ₜ[k] x))))) =
     q.ofConv (gG.hom (1 ⊗ₜ[k] f.hom x))
