@@ -54,9 +54,8 @@ The unpacking of a curve into `TM` into its base curve and its fibre coordinate 
 
 * `TauCeti.Manifold.geodesicSpray`: **the geodesic spray** of the ambient Riemannian bundle
   instance, a vector field on the tangent bundle, with `TauCeti.Manifold.geodesicSpray_apply` its
-  preferred-chart formula, `TauCeti.Manifold.tangentCoordChange_geodesicSpray` its formula in every
-  overlapping tangent-bundle chart, and
-  `TauCeti.Manifold.isMIntegralCurveOn_curveVelocityLiftWithin_const` the constant-curve check.
+  preferred-chart formula and `TauCeti.Manifold.tangentCoordChange_geodesicSpray` its formula in
+  every overlapping tangent-bundle chart.
 * `TauCeti.Manifold.hasMFDerivWithinAt_curveVelocityLiftWithin_iff`: at one parameter, the
   velocity lift of a `C²` curve solves the spray equation exactly when the covariant derivative of
   the velocity along the curve vanishes.
@@ -264,13 +263,6 @@ theorem isMIntegralCurveOn_curveVelocityLiftWithin_iff
       (hasMFDerivWithinAt_curveVelocityLiftWithin_iff hs hγ hr).1 (h r hr)⟩, fun h r hr ↦ ?_⟩
   exact (hasMFDerivWithinAt_curveVelocityLiftWithin_iff hs hγ hr).2
     (h.alongCurveWithin_curveVelocityWithin_eq_zero r hr)
-
-/-- A point at rest stays at rest: the velocity lift of a constant curve is an integral curve of
-the geodesic spray. -/
-theorem isMIntegralCurveOn_curveVelocityLiftWithin_const (hs : UniqueDiffOn ℝ s) (x : M) :
-    IsMIntegralCurveOn (curveVelocityLiftWithin I (fun _ : ℝ ↦ x) s) (geodesicSpray I M) s :=
-  (isMIntegralCurveOn_curveVelocityLiftWithin_iff hs contMDiffOn_const).2
-    (isGeodesicCurveOn_const hs x)
 
 /-- **An integral curve of the spray is a velocity lift.**  On a parameter set with unique
 derivatives, an integral curve of the geodesic spray is the velocity lift of the curve it lies
