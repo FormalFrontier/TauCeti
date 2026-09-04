@@ -26,8 +26,8 @@ The proof has two halves.
 with `ωᵪ` the central character and `K_C` the class sum. Both `ωᵪ(K_C)` and `χ(g)` are algebraic
 integers (`TauCeti.Representation.isIntegral_centralCharacter_classSumCenter` and
 `TauCeti.Representation.isIntegral_char`), so the average `χ(g) / χ(1)` is one too. That is
-`TauCeti.Representation.isIntegral_char_div_finrank`, proved over any algebraically closed field of
-characteristic zero. This first half is where the coprimality is spent.
+`Representation.isIntegral_char_div_finrank`, proved over any algebraically closed field. This
+first half is where the coprimality is spent.
 
 *Kronecker's theorem.* Over `ℂ` the value `χ(g)` is a sum of `χ(1)` roots of unity, so once the
 average is known to be an algebraic integer the dichotomy follows, with no arithmetic hypothesis of
@@ -40,8 +40,9 @@ of unity — is a separate step and is not proved here.
 
 ## Main statements
 
-* `Representation.isIntegral_char_div_finrank`: when the class size and the degree are coprime, the
-  average `χ(g) / χ(1)` is an algebraic integer.
+* `Representation.isIntegral_char_div_finrank` and its bundled form
+  `FDRep.isIntegral_char_div_finrank`: when the class size and the degree are coprime, the average
+  `χ(g) / χ(1)` is an algebraic integer.
 * `Representation.char_eq_zero_or_norm_char_eq_finrank` and its bundled form
   `FDRep.char_eq_zero_or_norm_char_eq_finrank`: **Burnside's vanishing theorem**, the dichotomy
   `χ(g) = 0 ∨ ‖χ(g)‖ = χ(1)`.
@@ -59,22 +60,25 @@ open Module (finrank)
 
 section Integrality
 
-variable {k G V : Type*} [Field k] [IsAlgClosed k] [CharZero k] [Group G] [Finite G]
+variable {k G V : Type*} [Field k] [IsAlgClosed k] [Group G] [Finite G]
   [AddCommGroup V] [Module k V] [FiniteDimensional k V]
 
 /-- **The average of an irreducible character over its degree is an algebraic integer**, whenever
 the size of the conjugacy class of `g` is coprime to the degree.
 
 Bézout splits `χ(g) / χ(1)` as an integer combination of the central-character value
-`ωᵪ(K_C) = |C| χ(g) / χ(1)` and of `χ(g)`, both of which are algebraic integers. -/
+`ωᵪ(K_C) = |C| χ(g) / χ(1)` and of `χ(g)`, both of which are algebraic integers. No hypothesis on
+the characteristic is needed: if the degree happens to vanish in `k` the quotient is `0`, which is
+an algebraic integer for the trivial reason. -/
 theorem _root_.Representation.isIntegral_char_div_finrank (ρ : Representation k G V)
     [ρ.IsIrreducible] {g : G}
     (h : (Nat.card (ConjClasses.mk g).carrier).Coprime (finrank k V)) :
     IsIntegral ℤ (ρ.character g / (finrank k V : k)) := by
   classical
   let _ : Fintype G := Fintype.ofFinite G
-  have hd : (finrank k V : k) ≠ 0 :=
-    Representation.IsIrreducible.natCast_finrank_ne_zero ‹ρ.IsIrreducible›
+  rcases eq_or_ne (finrank k V : k) 0 with hd | hd
+  · rw [hd, div_zero]
+    exact isIntegral_zero
   obtain ⟨a, b, hab⟩ := Nat.isCoprime_iff_coprime.2 h
   have habk : (a : k) * (Nat.card (ConjClasses.mk g).carrier : k) + (b : k) * (finrank k V : k)
       = 1 := by
@@ -141,6 +145,14 @@ end Complex
 section Bundled
 
 variable {G : Type*} [Group G] [Finite G]
+
+/-- **The average of an irreducible character over its degree is an algebraic integer**, for a
+bundled finite-dimensional representation over an algebraically closed field. -/
+theorem _root_.FDRep.isIntegral_char_div_finrank {k : Type*} [Field k] [IsAlgClosed k]
+    (X : FDRep k G) [_root_.Representation.IsIrreducible X.ρ] {g : G}
+    (h : (Nat.card (ConjClasses.mk g).carrier).Coprime (finrank k X)) :
+    IsIntegral ℤ (X.character g / (finrank k X : k)) :=
+  Representation.isIntegral_char_div_finrank X.ρ h
 
 /-- **Burnside's vanishing theorem**, for a bundled finite-dimensional complex representation. -/
 theorem _root_.FDRep.char_eq_zero_or_norm_char_eq_finrank (X : FDRep ℂ G)
