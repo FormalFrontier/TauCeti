@@ -27,8 +27,8 @@ they classify the rational ones (`TauCeti.partitionEquivSimpleFDRepClasses`).
 Simplicity is where the rational theory could fail and does not, and the reason is **absolute
 irreducibility**: irreducibility over `ℚ` alone says nothing about `ℂ ⊗_ℚ S^μ`, but
 `TauCeti.spechtModuleIntertwiningEndAlgEquiv` says the intertwiner algebra of `S^μ` is `ℚ` itself,
-one-dimensional, and the dimension of an intertwiner space is a character integral
-(`Representation.finrank_intertwiningMap_baseChange`) and so is unchanged by extending the scalars.
+one-dimensional, and the intertwiner space is the kernel of a linear map, so its dimension is
+unchanged by the flat extension `ℚ → ℂ` (`Representation.finrank_intertwiningMap_baseChange`).
 So the complex endomorphism algebra is one-dimensional too, which over `ℂ` is simplicity
 (`FDRep.simple_iff_char_is_norm_one`). The same dimension count with two different partitions is
 `0` on the rational side by Schur's lemma, hence `0` on the complex side, which is distinctness; and
@@ -59,19 +59,10 @@ complex characters of `Sₙ` are exactly the `χ^μ`.
 * `TauCeti.existsUnique_character_eq_spechtChar`: **the ℂ-corollary** — the irreducible complex
   characters of `Sₙ` are exactly the integer characters `χ^μ`, one for each partition of `n`.
 
-## Implementation notes
-
-`TauCeti.spechtModuleℂ` carries `@[expose]` because its body determines the carrier type
-`ℂ ⊗_ℚ S^μ`: without exposure the statement of `TauCeti.spechtModuleℂ_ρ`, and with it every
-base-change lemma routed through that identification, fails to elaborate, the underlying module of
-the `FDRep` object no longer being recognizable as a tensor product.
-
 ## References
 
 * [G. D. James, *The Representation Theory of the Symmetric Groups*][james1978], Chapter 4.
 * B. E. Sagan, *The Symmetric Group*, 2nd ed. (2001), Section 2.4.
-* [Schur--Weyl roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/RepresentationTheory/SchurWeyl/README.md),
-  "Absolute irreducibility" and "Distinctness and completeness" (the `ℂ`-corollary).
 -/
 
 public section
@@ -94,19 +85,18 @@ private noncomputable instance : Invertible ((Nat.card (Equiv.Perm (Fin n)) : �
 `TauCeti.spechtModule` to `ℂ`. It is simple (`TauCeti.instSimpleSpechtModuleℂ`), and as `μ` ranges
 over the partitions of `n` these exhaust the simple objects of `FDRep ℂ Sₙ` without repetition
 (`TauCeti.partitionEquivSimpleFDRepClassesℂ`). -/
-@[expose]
 noncomputable def spechtModuleℂ (μ : n.Partition) : FDRep ℂ (Equiv.Perm (Fin n)) :=
   FDRep.of (Representation.baseChange ℂ (spechtModule μ).ρ)
 
-/-- The representation carried by the complex Specht module is the base change of the rational
-one. -/
-theorem spechtModuleℂ_ρ (μ : n.Partition) :
-    (spechtModuleℂ μ).ρ = Representation.baseChange ℂ (spechtModule μ).ρ := (rfl)
+/-- The complex Specht module is the object of `FDRep ℂ Sₙ` carrying the base change of the
+rational Specht representation. -/
+theorem spechtModuleℂ_def (μ : n.Partition) :
+    spechtModuleℂ μ = FDRep.of (Representation.baseChange ℂ (spechtModule μ).ρ) := (rfl)
 
 /-- **The complex character is the rational character read in `ℂ`.** -/
 theorem character_spechtModuleℂ (μ : n.Partition) (σ : Equiv.Perm (Fin n)) :
     (spechtModuleℂ μ).character σ = algebraMap ℚ ℂ ((spechtModule μ).character σ) := by
-  rw [FDRep.character, spechtModuleℂ_ρ]
+  rw [spechtModuleℂ_def, FDRep.character, FDRep.of_ρ']
   exact Representation.character_baseChange _ σ
 
 /-- **The complex character is the integer character `χ^μ` read in `ℂ`.** Combined with
@@ -118,8 +108,9 @@ theorem character_spechtModuleℂ_intCast (μ : n.Partition) (σ : Equiv.Perm (F
 
 /-- **Extending the scalars does not change the dimension.** -/
 theorem finrank_spechtModuleℂ (μ : n.Partition) :
-    finrank ℂ (spechtModuleℂ μ) = finrank ℚ (spechtModule μ) :=
-  Module.finrank_baseChange
+    finrank ℂ (spechtModuleℂ μ) = finrank ℚ (spechtModule μ) := by
+  rw [spechtModuleℂ_def]
+  exact Module.finrank_baseChange
 
 /-- **The dimension of an intertwiner space is unchanged by complexification.** This is the whole
 mechanism of the file: the rational intertwiner dimensions, `1` on the diagonal and `0` off it,
@@ -127,7 +118,7 @@ are inherited verbatim by the complex Specht modules. -/
 theorem finrank_intertwiningMap_spechtModuleℂ (μ ν : n.Partition) :
     finrank ℂ (Representation.IntertwiningMap (spechtModuleℂ μ).ρ (spechtModuleℂ ν).ρ)
       = finrank ℚ (Representation.IntertwiningMap (spechtModule μ).ρ (spechtModule ν).ρ) := by
-  rw [spechtModuleℂ_ρ, spechtModuleℂ_ρ]
+  rw [spechtModuleℂ_def, spechtModuleℂ_def, FDRep.of_ρ', FDRep.of_ρ']
   exact Representation.finrank_intertwiningMap_baseChange _ _
 
 /-! ### Simplicity and distinctness -/

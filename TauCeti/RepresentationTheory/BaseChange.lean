@@ -8,10 +8,13 @@ module
 public import Mathlib.RepresentationTheory.Basic
 public import Mathlib.RepresentationTheory.Character
 public import TauCeti.LinearAlgebra.TensorProduct.Basis
--- Non-public: `charZero_of_injective_algebraMap` transports characteristic zero along the
--- structure map of the extension, and is used only inside the proof of
+-- Non-public: the flat base change of a kernel (`LinearMap.tensorKerEquiv`), the scalar extension
+-- of a space of linear maps (`IsBaseChange.linearMapLeftRight`) and of a finite product
+-- (`TensorProduct.piRight`) are used only inside the proof of
 -- `Representation.finrank_intertwiningMap_baseChange`.
-import Mathlib.Algebra.CharP.Algebra
+import Mathlib.RingTheory.Flat.Equalizer
+import Mathlib.RingTheory.TensorProduct.IsBaseChangeHom
+import Mathlib.LinearAlgebra.TensorProduct.Pi
 
 /-!
 # Base change of representations
@@ -23,12 +26,14 @@ extension yields a nonzero common fixed vector over the base field.
 Two invariants survive the extension unchanged. The **character** is the trace of a linear map, and
 the trace of a base-changed endomorphism is the image of the trace
 (`LinearMap.trace_baseChange`), so the character of `L ⊗[K] V` is the character of `V` read in `L`.
-The **dimension of an intertwiner space** between two finite-dimensional representations of a
-finite group in characteristic zero is a character integral
-(`Representation.card_inv_mul_sum_char_mul_char_eq_finrank`), so it too is unchanged. Applied to a
-representation whose endomorphism algebra is one-dimensional, that equality says the endomorphism
-algebra after the extension is one-dimensional again, which is the mechanism by which an absolutely
-irreducible representation stays irreducible over any extension.
+The **dimension of an intertwiner space** between two representations of a finite monoid, the
+source finite-dimensional, is unchanged as well: an intertwiner is a linear map killed by the
+finite family of conditions `σ g ∘ₗ f = f ∘ₗ ρ g`, so the intertwiner space is the kernel of a
+single linear map, and the extension is flat, so it commutes with that kernel
+(`LinearMap.tensorKerEquiv`). Applied to a representation whose endomorphism algebra is
+one-dimensional, that equality says the endomorphism algebra after the extension is one-dimensional
+again, which is the mechanism by which an absolutely irreducible representation stays irreducible
+over any extension.
 
 ## Main declarations
 
@@ -38,7 +43,7 @@ irreducible representation stays irreducible over any extension.
 * `Representation.character_baseChange`: the character of a base-changed representation is the
   image of the character.
 * `Representation.finrank_intertwiningMap_baseChange`: base change preserves the dimension of an
-  intertwiner space, over a base field of characteristic zero.
+  intertwiner space.
 -/
 
 public section
@@ -161,38 +166,132 @@ theorem _root_.Representation.character_baseChange {G : Type*} [Monoid G]
   simp [_root_.Representation.character, _root_.Representation.baseChange_apply,
     LinearMap.trace_baseChange]
 
-variable {W : Type*} [AddCommGroup W] [Module K W] [FiniteDimensional K W]
+end Character
 
-/-- **Base change preserves the dimension of an intertwiner space.** For finite-dimensional
-representations of a finite group over a field of characteristic zero, the dimension of the space
-of intertwiners is the character integral
-`|G|⁻¹ ∑ g, χ_σ g * χ_ρ g⁻¹` (`Representation.card_inv_mul_sum_char_mul_char_eq_finrank`), and both
-the group order and the two characters are carried to their images by the structure map of the
-extension.  So the extension can neither create nor destroy intertwiners, which is what makes an
-absolutely irreducible representation stay irreducible after extending the scalars. -/
-theorem _root_.Representation.finrank_intertwiningMap_baseChange [CharZero K]
-    {G : Type*} [Group G] [Finite G]
+end TauCeti.Representation
+
+-- The intertwiner argument is staged through private helpers taking explicit `Representation`
+-- arguments. A Mathlib namespace nested under `TauCeti` gives no dot notation on the Mathlib type,
+-- so those helpers sit directly under `TauCeti` rather than under `TauCeti.Representation`.
+namespace TauCeti
+
+section Intertwiner
+
+open TensorProduct
+
+variable {K : Type*} {L : Type*} [Field K] [Field L] [Algebra K L]
+variable {G : Type*} [Monoid G]
+variable {V : Type*} [AddCommGroup V] [Module K V]
+variable {W : Type*} [AddCommGroup W] [Module K W]
+
+/-- The **intertwining defect** of a linear map `f : V →ₗ[K] W`: the family
+`g ↦ σ g ∘ₗ f - f ∘ₗ ρ g`, whose vanishing is exactly the intertwining condition. Writing the
+intertwiner space as the kernel of a single linear map is what makes it visibly compatible with
+base change, `L` being flat over `K`. -/
+private def intertwiningDefect (ρ : _root_.Representation K G V) (σ : _root_.Representation K G W) :
+    (V →ₗ[K] W) →ₗ[K] (G → (V →ₗ[K] W)) :=
+  LinearMap.pi fun g => LinearMap.llcomp K V W W (σ g) - LinearMap.lcomp K W (ρ g)
+
+private theorem intertwiningDefect_apply (ρ : _root_.Representation K G V)
+    (σ : _root_.Representation K G W) (f : V →ₗ[K] W) (g : G) :
+    intertwiningDefect ρ σ f g = σ g ∘ₗ f - f ∘ₗ ρ g :=
+  rfl
+
+private theorem mem_ker_intertwiningDefect {ρ : _root_.Representation K G V}
+    {σ : _root_.Representation K G W} {f : V →ₗ[K] W} :
+    f ∈ LinearMap.ker (intertwiningDefect ρ σ) ↔ ∀ g, f ∘ₗ ρ g = σ g ∘ₗ f := by
+  have h : f ∈ LinearMap.ker (intertwiningDefect ρ σ) ↔ ∀ g, σ g ∘ₗ f = f ∘ₗ ρ g := by
+    simp [LinearMap.mem_ker, intertwiningDefect, funext_iff, sub_eq_zero,
+      LinearMap.llcomp_apply', LinearMap.lcomp_apply']
+  exact h.trans ⟨fun H g => (H g).symm, fun H g => (H g).symm⟩
+
+/-- The intertwiner space is the kernel of the intertwining defect. -/
+private def intertwiningMapEquivKerDefect (ρ : _root_.Representation K G V)
+    (σ : _root_.Representation K G W) :
+    _root_.Representation.IntertwiningMap ρ σ ≃ₗ[K] LinearMap.ker (intertwiningDefect ρ σ) where
+  toFun f := ⟨f.toLinearMap, mem_ker_intertwiningDefect.mpr f.isIntertwining'⟩
+  map_add' _ _ := rfl
+  map_smul' _ _ := rfl
+  invFun f := ⟨f.1, mem_ker_intertwiningDefect.mp f.2⟩
+  left_inv _ := rfl
+  right_inv _ := rfl
+
+variable [FiniteDimensional K V]
+
+variable (K L V W) in
+/-- Scalar extension of linear maps out of a finite-dimensional space: `L ⊗[K] (V →ₗ[K] W)` is the
+space of `L`-linear maps `L ⊗[K] V →ₗ[L] L ⊗[K] W`. -/
+private noncomputable def homBaseChangeEquiv :
+    L ⊗[K] (V →ₗ[K] W) ≃ₗ[L] ((L ⊗[K] V) →ₗ[L] (L ⊗[K] W)) :=
+  ((TensorProduct.isBaseChange K V L).linearMapLeftRight
+    (TensorProduct.isBaseChange K W L)).equiv
+
+private theorem homBaseChangeEquiv_tmul (a : L) (f : V →ₗ[K] W) :
+    homBaseChangeEquiv K L V W (a ⊗ₜ f) = a • f.baseChange L := by
+  rw [homBaseChangeEquiv, IsBaseChange.equiv_tmul]
+  congr 1
+  ext v
+  exact IsBaseChange.linearMapLeftRightHom_comp_apply (TensorProduct.isBaseChange K V L)
+    ((TensorProduct.mk K L W) 1) f v
+
+variable (K L V W) in
+/-- Scalar extension of a finite family of linear maps, componentwise. -/
+private noncomputable def piBaseChangeEquiv (G : Type*) [Fintype G] [DecidableEq G] :
+    L ⊗[K] (G → (V →ₗ[K] W)) ≃ₗ[L] (G → ((L ⊗[K] V) →ₗ[L] (L ⊗[K] W))) :=
+  (TensorProduct.piRight K L L _).trans
+    (LinearEquiv.piCongrRight fun _ => homBaseChangeEquiv K L V W)
+
+/-- The intertwining defect commutes with scalar extension. -/
+private theorem intertwiningDefect_homBaseChangeEquiv [Fintype G] [DecidableEq G]
+    (ρ : _root_.Representation K G V) (σ : _root_.Representation K G W)
+    (x : L ⊗[K] (V →ₗ[K] W)) :
+    intertwiningDefect (_root_.Representation.baseChange L ρ)
+        (_root_.Representation.baseChange L σ) (homBaseChangeEquiv K L V W x)
+      = piBaseChangeEquiv K L V W G
+          (TensorProduct.AlgebraTensorModule.lTensor L L (intertwiningDefect ρ σ) x) := by
+  induction x with
+  | zero => simp
+  | add x y hx hy => simp [hx, hy]
+  | tmul a f =>
+    funext g
+    simp [intertwiningDefect_apply, homBaseChangeEquiv_tmul, piBaseChangeEquiv,
+      LinearMap.baseChange_sub, LinearMap.baseChange_comp, LinearMap.smul_comp,
+      LinearMap.comp_smul]
+    module
+
+/-- **Base change preserves the dimension of an intertwiner space.** An intertwiner is a linear
+map annihilated by the finite family of linear conditions `σ g ∘ₗ f = f ∘ₗ ρ g`, so the intertwiner
+space is the kernel of a single linear map; `L` is flat over `K`, so extending the scalars commutes
+with taking that kernel (`LinearMap.tensorKerEquiv`). So the extension can neither create nor
+destroy intertwiners, which is what makes an absolutely irreducible representation stay irreducible
+after extending the scalars. -/
+theorem _root_.Representation.finrank_intertwiningMap_baseChange [Finite G]
     (ρ : _root_.Representation K G V) (σ : _root_.Representation K G W) :
     Module.finrank L (_root_.Representation.IntertwiningMap
         (_root_.Representation.baseChange L ρ) (_root_.Representation.baseChange L σ))
       = Module.finrank K (_root_.Representation.IntertwiningMap ρ σ) := by
+  classical
   let _ := Fintype.ofFinite G
-  have : CharZero L := charZero_of_injective_algebraMap (algebraMap K L).injective
-  have _ : Invertible ((Nat.card G : K)) :=
-    invertibleOfNonzero (Nat.cast_ne_zero.mpr Nat.card_pos.ne')
-  have _ : Invertible ((Nat.card G : L)) :=
-    invertibleOfNonzero (Nat.cast_ne_zero.mpr Nat.card_pos.ne')
-  have key : algebraMap K L ((Nat.card G : K)⁻¹ * ∑ g : G, σ.character g * ρ.character g⁻¹)
-      = (Nat.card G : L)⁻¹ * ∑ g : G,
-          (_root_.Representation.baseChange L σ).character g *
-            (_root_.Representation.baseChange L ρ).character g⁻¹ := by
-    simp [_root_.Representation.character_baseChange, map_sum, map_mul, map_inv₀]
-  rw [_root_.Representation.card_inv_mul_sum_char_mul_char_eq_finrank ρ σ,
-    _root_.Representation.card_inv_mul_sum_char_mul_char_eq_finrank
-      (_root_.Representation.baseChange L ρ) (_root_.Representation.baseChange L σ),
-    map_natCast] at key
-  exact_mod_cast key.symm
+  -- the intertwiners of the base-changed representations are the scalar extension of the
+  -- intertwiners, `L` being flat over `K`
+  have hcomap : Submodule.comap (homBaseChangeEquiv K L V W : L ⊗[K] (V →ₗ[K] W) →ₗ[L] _)
+      (LinearMap.ker (intertwiningDefect (_root_.Representation.baseChange L ρ)
+        (_root_.Representation.baseChange L σ)))
+      = LinearMap.ker (TensorProduct.AlgebraTensorModule.lTensor L L
+          (intertwiningDefect ρ σ)) := by
+    ext x
+    simp [LinearMap.mem_ker, intertwiningDefect_homBaseChangeEquiv,
+      (piBaseChangeEquiv K L V W G).map_eq_zero_iff]
+  rw [(intertwiningMapEquivKerDefect ρ σ).finrank_eq,
+    (intertwiningMapEquivKerDefect (_root_.Representation.baseChange L ρ)
+      (_root_.Representation.baseChange L σ)).finrank_eq,
+    ← (LinearEquiv.ofSubmodule' (homBaseChangeEquiv K L V W)
+        (LinearMap.ker (intertwiningDefect (_root_.Representation.baseChange L ρ)
+          (_root_.Representation.baseChange L σ)))).finrank_eq,
+    hcomap,
+    ← (LinearMap.tensorKerEquiv L L (intertwiningDefect ρ σ)).finrank_eq]
+  exact Module.finrank_baseChange
 
-end Character
+end Intertwiner
 
-end TauCeti.Representation
+end TauCeti
