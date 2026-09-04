@@ -144,54 +144,54 @@ theorem mulVec_mem
   rw [hpoint] at h
   exact h
 
-/-! ## Simplicity over a field -/
-
-section Simple
-
-variable (k : Type u) [Field k]
-
 /-- Base-valued points of the specialized coordinate algebra, identified with points of the
 integral minuscule carrier after base change. -/
 noncomputable def specializedPointsMulEquiv :
-    HopfAlgebra.points (R := k) (H := coordinateHopfAlgebra k) (CommAlgCat.of k k) ≃*
-      points k :=
-  (CommHopfAlgCat.baseChangeIsoPointsMulEquiv (baseChangeCoordinateIso k)
-      (CommAlgCat.of k k)).trans
+    HopfAlgebra.points (R := R) (H := coordinateHopfAlgebra R) (CommAlgCat.of R R) ≃*
+      points R :=
+  (CommHopfAlgCat.baseChangeIsoPointsMulEquiv (baseChangeCoordinateIso R)
+      (CommAlgCat.of R R)).trans
     (pointsMulEquiv
-      (TauCeti.CommAlgCat.restrictScalarsObj (algebraMap ℤ k) (CommAlgCat.of k k)))
+      (TauCeti.CommAlgCat.restrictScalarsObj (algebraMap ℤ R) (CommAlgCat.of R R)))
 
 /-- Under the specialized point equivalence, the quotient point is represented by the carrier
 point's ambient general-linear matrix. -/
-theorem quotientPointsHom_specializedPointsMulEquiv_symm (g : points k) :
+theorem quotientPointsHom_specializedPointsMulEquiv_symm (g : points R) :
     CommHopfAlgCat.quotientPointsHom
-        (GeneralLinear.coordinateHopfAlgebra k 56) (baseChangeDefiningIdeal k)
-        (CommAlgCat.of k k) ((specializedPointsMulEquiv k).symm g) =
-      (GeneralLinear.pointsMulEquiv (R := k) 56).symm
-        (g : Matrix.GeneralLinearGroup (Fin 56) k) := by
+        (GeneralLinear.coordinateHopfAlgebra R 56) (baseChangeDefiningIdeal R)
+        (CommAlgCat.of R R) ((specializedPointsMulEquiv R).symm g) =
+      (GeneralLinear.pointsMulEquiv (R := R) 56).symm
+        (g : Matrix.GeneralLinearGroup (Fin 56) R) := by
   have h :
-      ((specializedPointsMulEquiv k)
-          ((specializedPointsMulEquiv k).symm g) : Matrix.GeneralLinearGroup (Fin 56) k) =
+      ((specializedPointsMulEquiv R)
+          ((specializedPointsMulEquiv R).symm g) : Matrix.GeneralLinearGroup (Fin 56) R) =
         GeneralLinear.pointsMulEquiv 56
           (CommHopfAlgCat.quotientPointsHom
-            (GeneralLinear.coordinateHopfAlgebra k 56) (baseChangeDefiningIdeal k)
-            (CommAlgCat.of k k) ((specializedPointsMulEquiv k).symm g)) := by
+            (GeneralLinear.coordinateHopfAlgebra R 56) (baseChangeDefiningIdeal R)
+            (CommAlgCat.of R R) ((specializedPointsMulEquiv R).symm g)) := by
     rw [specializedPointsMulEquiv, MulEquiv.trans_apply, coe_pointsMulEquiv_apply]
     exact GeneralLinear.pointsMulEquiv_quotientPointsHom_baseChangeIsoPointsMulEquiv
-      56 definingIdeal (baseChangeDefiningIdeal k) (baseChangeCoordinateIso k)
-      (mkQuotient_comp_baseChangeCoordinateIso_hom k) (CommAlgCat.of k k) _
+      56 definingIdeal (baseChangeDefiningIdeal R) (baseChangeCoordinateIso R)
+      (mkQuotient_comp_baseChangeCoordinateIso_hom R) (CommAlgCat.of R R) _
   rw [MulEquiv.apply_symm_apply] at h
   rw [h, MulEquiv.symm_apply_apply]
 
 /-- A subcomodule of the standard carrier comodule is stable under every concrete carrier
 point. -/
 theorem points_mulVec_mem
-    (N : Subcomodule k (coordinateHopfAlgebra k) (Fin 56 → k))
-    (g : points k) {w : Fin 56 → k} (hw : w ∈ N) :
-    ((g : Matrix.GeneralLinearGroup (Fin 56) k) : Matrix (Fin 56) (Fin 56) k) *ᵥ w ∈ N := by
-  have h := mulVec_mem k N ((specializedPointsMulEquiv k).symm g) hw
+    (N : Subcomodule R (coordinateHopfAlgebra R) (Fin 56 → R))
+    (g : points R) {w : Fin 56 → R} (hw : w ∈ N) :
+    ((g : Matrix.GeneralLinearGroup (Fin 56) R) : Matrix (Fin 56) (Fin 56) R) *ᵥ w ∈ N := by
+  have h := mulVec_mem R N ((specializedPointsMulEquiv R).symm g) hw
   rw [quotientPointsHom_specializedPointsMulEquiv_symm,
     ← GeneralLinear.pointsMulEquiv_apply, MulEquiv.apply_symm_apply] at h
   exact h
+
+/-! ## Simplicity over a field -/
+
+section Simple
+
+variable (k : Type u) [Field k]
 
 private theorem rootSubgroupPoints_mulVec_mem
     (N : Subcomodule k (coordinateHopfAlgebra k) (Fin 56 → k))
