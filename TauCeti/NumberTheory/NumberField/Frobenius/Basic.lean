@@ -8,8 +8,8 @@ module
 public import Mathlib.NumberTheory.NumberField.Ideal.Basic
 public import TauCeti.RingTheory.Frobenius
 public import TauCeti.NumberTheory.LegendreSymbol.Frobenius
+public import TauCeti.NumberTheory.NumberField.AutomorphismAction
 public import TauCeti.NumberTheory.NumberField.IntegralSqrt
-import TauCeti.NumberTheory.NumberField.AutomorphismAction
 import Mathlib.Algebra.CharP.Basic
 
 /-!
@@ -48,6 +48,8 @@ multiquadratic roadmap).
   `𝓞 L` in a finite Galois extension `L/K` of number fields.
 * `NumberField.exists_isArithFrobAt_int_of_liesOver`: a `ℤ`-carrier Frobenius exists at every
   prime over a rational prime.
+* `AlgEquiv.isArithFrobAt_autCongr`: an isomorphism of extensions transports the Frobenius
+  condition.
 * `NumberField.isArithFrobAt_eq_of_isUnramifiedAt`: for a finite Galois extension `L/K` of
   number fields, two Frobenius elements of `Gal(L/K)` at an unramified prime `Q` of `𝓞 L` are
   equal.
@@ -95,6 +97,33 @@ theorem exists_isArithFrobAt_int_of_liesOver [IsGalois ℚ K] {p : ℕ} [Fact p.
     rw [Ne, Ideal.span_singleton_eq_bot]; exact_mod_cast (Fact.out : p.Prime).ne_zero
   exact exists_isArithFrobAt_aux ℤ (K ≃ₐ[ℚ] K) Q
     (Ideal.ne_bot_of_liesOver_of_ne_bot hp Q)
+
+end NumberField
+
+namespace AlgEquiv
+
+variable {K L L' : Type*} [Field K] [Field L] [Algebra K L] [Field L'] [Algebra K L']
+
+/-- **A Frobenius travels along an isomorphism of extensions.** If `σ` is an arithmetic Frobenius
+at `Q`, then `AlgEquiv.autCongr e σ` is one at the prime of `𝓞 L'` matching `Q`. -/
+theorem isArithFrobAt_autCongr (e : L ≃ₐ[K] L') {Q : Ideal (𝓞 L)} {σ : L ≃ₐ[K] L}
+    (hσ : IsArithFrobAt (𝓞 K) σ Q) :
+    IsArithFrobAt (𝓞 K) (autCongr e σ)
+      (Q.comap (NumberField.RingOfIntegers.mapAlgEquiv e).symm) := by
+  have hunder : (Q.comap (NumberField.RingOfIntegers.mapAlgEquiv e).symm).under (𝓞 K) =
+      Q.under (𝓞 K) :=
+    (Ideal.LiesOver.over (p := Q.under (𝓞 K))
+      (P := Q.comap (NumberField.RingOfIntegers.mapAlgEquiv e).symm)).symm
+  intro x
+  rw [MulSemiringAction.toAlgHom_apply, Ideal.mem_comap, hunder, map_sub, map_pow,
+    e.mapAlgEquiv_symm_autCongr_smul, ← MulSemiringAction.toAlgHom_apply (𝓞 K)]
+  exact hσ _
+
+end AlgEquiv
+
+namespace NumberField
+
+variable {K : Type*} [Field K] [NumberField K] {p : ℕ} [Fact p.Prime]
 
 /-! ### Uniqueness at unramified primes
 

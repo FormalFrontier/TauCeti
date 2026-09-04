@@ -34,6 +34,12 @@ directions before taking products.
 * `TauCeti.Grid.mem_cIoo_or_mem_cIoo_swap_iff`: a point lies in one opposite arc exactly when
   it is not an endpoint.
 * `TauCeti.Grid.cIoo_union_swap`: the two opposite arcs cover the endpoint complement.
+* `TauCeti.Grid.mem_cIoo_swap_of_notMem`: a point off both endpoints that misses one arc lies on
+  the opposite arc.
+* `TauCeti.Grid.mem_cIoo_of_mem_cIoo_of_mem_cIoo_swap`: if `a` and `b` lie on opposite arcs from
+  `c` to `d`, then `d` lies on the clockwise arc from `a` to `b`.
+* `TauCeti.Grid.mem_cIoo_and_mem_cIoo_swap_of_notMem`: cyclic separation is symmetric, so `c` and
+  `d` then lie on the two opposite arcs between `a` and `b`.
 * `TauCeti.Grid.card_cIoo_add_card_cIoo_swap`: the two arc lengths add to `n - 2`.
 * `TauCeti.Grid.cIoo_image_rev`: reversing a clockwise open arc by `Fin.rev` gives the clockwise
   open arc with reversed, exchanged endpoints.
@@ -455,6 +461,31 @@ theorem not_mem_cIoo_iff {a b x : Fin n} (h : a ≠ b) :
       exact right_notMem_cIoo a b
     · intro hxab
       exact not_mem_cIoo_and_cIoo_swap a b x ⟨hxab, hx⟩
+
+/-- A point off both endpoints and outside one cyclic arc lies on the opposite arc. -/
+theorem mem_cIoo_swap_of_notMem {a b u : Fin n} (hab : a ≠ b)
+    (hua : u ≠ a) (hub : u ≠ b) (hout : u ∉ cIoo a b) : u ∈ cIoo b a :=
+  ((mem_cIoo_or_mem_cIoo_swap_iff hab).mpr ⟨hua, hub⟩).resolve_left hout
+
+/-- If `a` and `b` lie on opposite arcs from `c` to `d`, then `d` lies on the clockwise arc from
+`a` to `b`.
+
+If `a` lies on the clockwise arc from `c` to `d` while `b` lies on the opposite arc, then the four
+points occur in the cyclic order `c`, `a`, `d`, `b`, so `d` lies on the clockwise arc from `a` to
+`b`. -/
+theorem mem_cIoo_of_mem_cIoo_of_mem_cIoo_swap {a b c d : Fin n} (ha : a ∈ cIoo c d)
+    (hb : b ∈ cIoo d c) : d ∈ cIoo a b := by
+  simp only [cIoo, Set.Finite.mem_toFinset, Set.mem_cIoo] at ha hb ⊢
+  exact sbtw_cyclic_left (sbtw_trans_left (sbtw_cyclic_left hb) ha)
+
+/-- Cyclic separation is symmetric: if `a` lies on the clockwise arc from `c` to `d` while `b`,
+distinct from both endpoints, lies off it, then `c` and `d` lie on the two opposite arcs between
+`a` and `b`. -/
+theorem mem_cIoo_and_mem_cIoo_swap_of_notMem {a b c d : Fin n} (hbc : b ≠ c) (hbd : b ≠ d)
+    (hbout : b ∉ cIoo c d) (ha : a ∈ cIoo c d) :
+    d ∈ cIoo a b ∧ c ∈ cIoo b a :=
+  have hb := mem_cIoo_swap_of_notMem ((mem_cIoo c d a).mp ha).1 hbc hbd hbout
+  ⟨mem_cIoo_of_mem_cIoo_of_mem_cIoo_swap ha hb, mem_cIoo_of_mem_cIoo_of_mem_cIoo_swap hb ha⟩
 
 /-- The two opposite cyclic intervals cover exactly the complement of their endpoints. -/
 @[simp]

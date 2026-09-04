@@ -7,7 +7,7 @@ module
 
 public import TauCeti.Analysis.Complex.Conformal.Koebe
 public import Mathlib.Analysis.Calculus.Deriv.Basic
-import TauCeti.Analysis.Complex.Conformal.InverseFunction
+import TauCeti.Analysis.Complex.Conformal.Inverse.Function
 
 /-!
 # The Riemann mapping theorem

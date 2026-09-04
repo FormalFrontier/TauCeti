@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Analysis.SpecialFunctions.Beta
+import TauCeti.Analysis.Calculus.RealCharts
 
 /-!
 # The regularized incomplete beta function
@@ -44,6 +45,9 @@ The real-variable theory of Euler's beta integral that the construction rests on
   the range `[0, 1]`, for every choice of parameters;
 * `TauCeti.continuous_regularizedIncompleteBeta` — continuity on all of `ℝ`;
 * `TauCeti.hasDerivAt_regularizedIncompleteBeta` — the derivative on `(0, 1)`;
+* `TauCeti.integral_Ioi_rpow_one_add_rpow_eq_interval_tail` and
+  `TauCeti.integral_Ioi_rpow_one_add_rpow_tail_eq` — the second-beta-integral upper tail,
+  rewritten through the incomplete beta function;
 * `TauCeti.regularizedIncompleteBeta_symm` — the reflection formula
   `I_x(a, b) = 1 - I_{1-x}(b, a)`;
 * `TauCeti.regularizedIncompleteBeta_one_right` and
@@ -273,6 +277,89 @@ theorem hasDerivAt_regularizedIncompleteBeta (ha : 0 < a) (hb : 0 < b)
   refine hderiv.congr_of_eventuallyEq ?_
   filter_upwards [Ioo_mem_nhds hx0 hx1] with y hy
   exact regularizedIncompleteBeta_def_of_mem_Icc ha hb ⟨hy.1.le, hy.2.le⟩
+
+/-! ## Tails -/
+
+/-- The upper tail of Euler's second beta integral, rewritten through the chart
+`u ↦ u / (1 - u)`. -/
+theorem integral_Ioi_rpow_one_add_rpow_eq_interval_tail {a b u0 : ℝ}
+    (hu00 : 0 ≤ u0) (hu01 : u0 < 1) :
+    ∫ w in Ioi (u0 / (1 - u0)), w ^ (a - 1) * (1 + w) ^ (-(a + b)) =
+      ∫ u in Ioo u0 1, u ^ (a - 1) * (1 - u) ^ (b - 1) := by
+  have hderiv : ∀ u ∈ Ioo u0 1,
+      HasDerivWithinAt (fun u : ℝ => u / (1 - u)) ((1 - u) ^ 2)⁻¹ (Ioo u0 1) u :=
+    fun u hu => (hasDerivAt_div_one_sub (ne_of_lt hu.2)).hasDerivWithinAt
+  let k0 : ℝ → ℝ := fun w => w ^ (a - 1) * (1 + w) ^ (-(a + b))
+  let k : ℝ → ℝ := fun u => u ^ (a - 1) * (1 - u) ^ (b - 1)
+  have hsub : Ioo u0 1 ⊆ Ioo (0 : ℝ) 1 := fun u hu =>
+    ⟨lt_of_le_of_lt hu00 hu.1, hu.2⟩
+  have hcov : ∀ u ∈ Ioo u0 1, |((1 - u) ^ 2)⁻¹| • k0 (u / (1 - u)) = k u := by
+    intro u hu
+    simpa [k0, k] using abs_deriv_smul_one_add_rpow a b (hsub hu)
+  have himg :
+      (fun u : ℝ => u / (1 - u)) '' Ioo u0 1 = Ioi (u0 / (1 - u0)) := by
+    rw [image_div_one_sub_Ioo hu01]
+  have h21 : ∫ u in Ioo u0 1, |((1 - u) ^ 2)⁻¹| • k0 (u / (1 - u)) =
+      ∫ w in Ioi (u0 / (1 - u0)), k0 w := by
+    rw [← integral_image_eq_integral_abs_deriv_smul measurableSet_Ioo hderiv
+        (injOn_div_one_sub_Ioo (u0 := u0)) k0, himg]
+  have h2 : ∫ w in Ioi (u0 / (1 - u0)), k0 w = ∫ u in Ioo u0 1, k u := by
+    rw [← h21, setIntegral_congr_fun measurableSet_Ioo hcov]
+  simpa [k0, k] using h2
+
+/-- The upper tail of the first beta-integral kernel is the total beta mass minus the normalized
+lower incomplete beta mass. -/
+theorem integral_Ioo_rpow_one_sub_rpow_tail_eq {a b u0 : ℝ} (ha : 0 < a) (hb : 0 < b)
+    (hu00 : 0 ≤ u0) (hu01 : u0 < 1) :
+    ∫ u in Ioo u0 1, u ^ (a - 1) * (1 - u) ^ (b - 1) =
+      beta a b * (1 - regularizedIncompleteBeta a b u0) := by
+  let k : ℝ → ℝ := fun u => u ^ (a - 1) * (1 - u) ^ (b - 1)
+  have hmem01 : (0 : ℝ) ∈ Icc (0 : ℝ) 1 := ⟨le_rfl, zero_le_one⟩
+  have hmem11 : (1 : ℝ) ∈ Icc (0 : ℝ) 1 := ⟨zero_le_one, le_rfl⟩
+  have hmemu0 : u0 ∈ Icc (0 : ℝ) 1 := ⟨hu00, by linarith⟩
+  have hII : IntervalIntegrable k volume 0 1 :=
+    intervalIntegrable_rpow_mul_one_sub_rpow ha hb hmem01 hmem11
+  have hIIu : IntervalIntegrable k volume 0 u0 :=
+    intervalIntegrable_rpow_mul_one_sub_rpow ha hb hmem01 hmemu0
+  have hmemu0' : u0 ∈ Set.uIcc (0 : ℝ) 1 := by
+    rw [Set.uIcc_of_le (zero_le_one : (0 : ℝ) ≤ 1)]
+    exact hmemu0
+  have hmem11' : (1 : ℝ) ∈ Set.uIcc (0 : ℝ) 1 := by
+    rw [Set.uIcc_of_le (zero_le_one : (0 : ℝ) ≤ 1)]
+    exact hmem11
+  have hII1 : IntervalIntegrable k volume u0 1 :=
+    hII.mono_set (Set.uIcc_subset_uIcc hmemu0' hmem11')
+  have h41 : Ioo u0 1 =ᵐ[volume] Ioc u0 1 :=
+    Ioo_ae_eq_Ioc' Real.volume_singleton
+  have h4 : ∫ u in Ioo u0 1, k u = ∫ u in u0..(1 : ℝ), k u := by
+    rw [setIntegral_congr_set h41, intervalIntegral.integral_of_le (by linarith : u0 ≤ 1)]
+  have h5 := intervalIntegral.integral_add_adjacent_intervals hIIu hII1
+  have h6 : ∫ t in (0 : ℝ)..(1 : ℝ), k t = beta a b :=
+    integral_rpow_mul_one_sub_rpow ha hb
+  have h3 : ∫ u in Ioo u0 1, k u = beta a b - ∫ u in (0 : ℝ)..u0, k u := by
+    rw [h4]
+    linarith [h5, h6]
+  have h71 : regularizedIncompleteBeta a b u0 =
+      (∫ t in (0 : ℝ)..u0, k t) / beta a b :=
+    regularizedIncompleteBeta_def_of_mem_Icc ha hb hmemu0
+  have hbetane : beta a b ≠ 0 := (beta_pos ha hb).ne'
+  have h7 : ∫ t in (0 : ℝ)..u0, k t = beta a b * regularizedIncompleteBeta a b u0 := by
+    have : regularizedIncompleteBeta a b u0 =
+        (∫ t in (0 : ℝ)..u0, k t) / beta a b := h71
+    rw [this]
+    field_simp [hbetane]
+  have htailval : beta a b - beta a b * regularizedIncompleteBeta a b u0 =
+      beta a b * (1 - regularizedIncompleteBeta a b u0) := by ring
+  rw [h3, h7, htailval]
+
+/-- The upper tail of Euler's second beta integral, expressed by the regularized incomplete beta
+function. -/
+theorem integral_Ioi_rpow_one_add_rpow_tail_eq {a b u0 : ℝ} (ha : 0 < a) (hb : 0 < b)
+    (hu00 : 0 ≤ u0) (hu01 : u0 < 1) :
+    ∫ w in Ioi (u0 / (1 - u0)), w ^ (a - 1) * (1 + w) ^ (-(a + b)) =
+      beta a b * (1 - regularizedIncompleteBeta a b u0) := by
+  rw [integral_Ioi_rpow_one_add_rpow_eq_interval_tail hu00 hu01,
+    integral_Ioo_rpow_one_sub_rpow_tail_eq ha hb hu00 hu01]
 
 /-- The reflection formula `I_x(a, b) = 1 - I_{1-x}(b, a)`, valid at every real argument: the
 clamping convention makes both sides constant outside `[0, 1]`, so no restriction on `x` is

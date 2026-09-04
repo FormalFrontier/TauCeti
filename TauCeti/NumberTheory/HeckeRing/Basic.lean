@@ -97,6 +97,9 @@ def toSet (D : HeckeCoset Δ H₁ H₂) : Set G :=
 /-- A representative `g : Δ` of a double coset (via `Quotient.out`). -/
 noncomputable def rep (D : HeckeCoset Δ H₁ H₂) : Δ := Quotient.out D
 
+/-- The chosen representative of a double coset is its `Quotient.out` representative. -/
+theorem rep_def (D : HeckeCoset Δ H₁ H₂) : D.rep = Quotient.out D := (rfl)
+
 @[simp] lemma mk_rep (D : HeckeCoset Δ H₁ H₂) : mk H₁ H₂ D.rep = D := Quotient.out_eq' D
 
 /-- Two elements of `Δ` define the same `HeckeCoset` iff their double cosets coincide. -/

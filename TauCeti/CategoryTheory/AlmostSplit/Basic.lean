@@ -5,7 +5,8 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Algebra.Homology.ShortComplex.Exact
+public import Mathlib.CategoryTheory.Preadditive.Injective.Basic
+public import Mathlib.CategoryTheory.Preadditive.Projective.Basic
 public import TauCeti.CategoryTheory.IrreducibleMorphism
 
 /-!
@@ -21,13 +22,13 @@ absorbs all the inessential maps out of `X`.
 These are the two lifting properties an **almost-split (Auslander-Reiten) sequence**
 `0 → τM → E → M → 0` carries: `E ⟶ M` is right almost split and `τM ⟶ E` is left almost split.
 This file builds them as conditions on a single morphism of an arbitrary category, so that the
-sequence-level notion can be assembled from them, and proves the two facts that make the
-indecomposability clauses in the definition of an almost-split sequence redundant: **the target of
-a right almost split morphism is indecomposable**, and dually **the source of a left almost split
-morphism is indecomposable**. Neither end of an almost-split sequence has to be *assumed*
-indecomposable — the lifting properties already force it — and a short complex whose `g` is right
-almost split admits no splitting, so non-splitness is likewise a consequence rather than a
-hypothesis.
+sequence-level notion can be assembled from them — it is, as
+`CategoryTheory.ShortComplex.IsAlmostSplit` in `TauCeti/CategoryTheory/AlmostSplit/Sequence.lean` —
+and proves the two facts that make the indecomposability clauses in the definition of an
+almost-split sequence redundant: **the target of a right almost split morphism is indecomposable**,
+and dually **the source of a left almost split morphism is indecomposable**. Neither end of an
+almost-split sequence has to be *assumed* indecomposable — the lifting properties already force
+it.
 
 The connection to `TauCeti.IsIrreducibleMorphism` is the sharpened factorization
 `TauCeti.IsRightAlmostSplit.exists_isSplitMono_of_isIrreducibleMorphism`: an irreducible morphism
@@ -47,14 +48,17 @@ what ties the sequence to the arrows of the Auslander-Reiten quiver.
 * `TauCeti.IsRightAlmostSplit.indecomposable`: **the target of a right almost split morphism is
   indecomposable**, and `TauCeti.IsLeftAlmostSplit.indecomposable`: the source of a left almost
   split morphism is indecomposable.
-* `TauCeti.isEmpty_splitting_of_isRightAlmostSplit` and
-  `TauCeti.isEmpty_splitting_of_isLeftAlmostSplit`: a short complex one of whose maps is almost
-  split on the corresponding side has no splitting.
 * `TauCeti.IsRightAlmostSplit.exists_isSplitMono_of_isIrreducibleMorphism` and
   `TauCeti.IsLeftAlmostSplit.exists_isSplitEpi_of_isIrreducibleMorphism`: **an irreducible
   morphism factors through an almost split morphism by a split mono, resp. a split epi.**
 * `TauCeti.IsRightAlmostSplit.epi_of_epi` and `TauCeti.IsLeftAlmostSplit.mono_of_mono`: a right
   almost split morphism is an epimorphism as soon as *some* non-split-epi into its target is one.
+* `TauCeti.IsRightAlmostSplit.not_projective` and `TauCeti.IsLeftAlmostSplit.not_injective`: **the
+  target of an epimorphic right almost split morphism is not projective**, and dually the source of
+  a monomorphic left almost split morphism is not injective.
+* `TauCeti.IsRightAlmostSplit.not_isSplitMono`, `.not_mono` and `.ne_zero` and their left-hand
+  duals: **an epimorphic right almost split morphism is neither a split monomorphism nor — in a
+  balanced category — a monomorphism, and it is nonzero.**
 * Invariance under isomorphisms of the source and the target,
   `TauCeti.isRightAlmostSplit_comp_iso_iff`, `TauCeti.isRightAlmostSplit_iso_comp_iff` and their
   left-hand analogues, so the notions descend to a skeleton.
@@ -78,9 +82,11 @@ representations of the Kronecker quiver that end no almost-split sequence). Inst
 the finite-dimensional subcategory is what recovers the intended notion.
 
 A right almost split morphism may well be zero: over a field, the map `0 ⟶ k` is right almost
-split, every non-split-epi into the simple projective `k` being zero. So there is no analogue here
-of `TauCeti.IsIrreducibleMorphism.ne_zero`, and this is not an oversight — it is the boundary case
-of a projective target, where the almost split morphism is the inclusion of the radical.
+split, every non-split-epi into the simple projective `k` being zero. So there is no unconditional
+analogue here of `TauCeti.IsIrreducibleMorphism.ne_zero`, and this is not an oversight — it is the
+boundary case of a projective target, where the almost split morphism is the inclusion of the
+radical. `TauCeti.IsRightAlmostSplit.ne_zero` therefore assumes `[Epi f]`, which is exactly what
+that boundary case fails.
 
 Indecomposability of the target is proved directly from the definition rather than through
 endomorphism rings, so it needs no additivity, no finiteness and no field: given `Y ≅ A ⊞ B` with
@@ -90,11 +96,6 @@ structure maps then compose to `0`, collapsing the other summand), so both facto
 `CategoryTheory.Limits.biprod.desc` assembles the two factorizations into a section of `f`.
 
 ## References
-
-This builds the right and left almost split conditions named in Layer 6 (Auslander-Reiten theory)
-of `TauCetiRoadmap/RepresentationTheory/QuiverRepresentations/README.md` as the two lifting
-clauses of an almost-split sequence, together with the indecomposability of its ends and its
-non-splitness, which that layer lists as separate requirements on the sequence.
 
 * M. Auslander, I. Reiten, S. Smalø, *Representation Theory of Artin Algebras*, CUP (1995), V.1.
 * I. Assem, D. Simson, A. Skowroński, *Elements of the Representation Theory of Associative
@@ -315,6 +316,40 @@ theorem IsLeftAlmostSplit.mono_of_mono (hf : IsLeftAlmostSplit f) {Z : C} (g : X
   have : Mono (f ≫ h) := hh ▸ ‹Mono g›
   exact _root_.CategoryTheory.mono_of_mono f h
 
+/-- **An epimorphic right almost split morphism is not a split monomorphism**: a splitting on that
+side would make it an isomorphism. -/
+theorem IsRightAlmostSplit.not_isSplitMono (hf : IsRightAlmostSplit f) [Epi f] :
+    ¬ IsSplitMono f := fun _ => hf.not_isIso (isIso_of_epi_of_isSplitMono f)
+
+/-- **A monomorphic left almost split morphism is not a split epimorphism**, dually to
+`TauCeti.IsRightAlmostSplit.not_isSplitMono`. -/
+theorem IsLeftAlmostSplit.not_isSplitEpi (hf : IsLeftAlmostSplit f) [Mono f] :
+    ¬ IsSplitEpi f := fun _ => hf.not_isIso (isIso_of_mono_of_isSplitEpi f)
+
+/-- In a balanced category an epimorphic right almost split morphism is not a monomorphism: it
+would otherwise be an isomorphism. -/
+theorem IsRightAlmostSplit.not_mono [Balanced C] (hf : IsRightAlmostSplit f) [Epi f] :
+    ¬ Mono f := fun _ => hf.not_isIso (isIso_of_mono_of_epi f)
+
+/-- In a balanced category a monomorphic left almost split morphism is not an epimorphism, dually
+to `TauCeti.IsRightAlmostSplit.not_mono`. -/
+theorem IsLeftAlmostSplit.not_epi [Balanced C] (hf : IsLeftAlmostSplit f) [Mono f] :
+    ¬ Epi f := fun _ => hf.not_isIso (isIso_of_mono_of_epi f)
+
+/-- **An epimorphic right almost split morphism is nonzero.** A zero epimorphism forces its target
+to be a zero object, and the zero morphism into a zero object is a split epimorphism. -/
+theorem IsRightAlmostSplit.ne_zero [HasZeroMorphisms C] (hf : IsRightAlmostSplit f) [Epi f] :
+    f ≠ 0 := fun h => by
+  have hid : 𝟙 Y = 0 := (cancel_epi f).mp (by simp [h])
+  exact hf.not_isSplitEpi (IsSplitEpi.mk' ⟨0, by simp [hid]⟩)
+
+/-- **A monomorphic left almost split morphism is nonzero**, dually to
+`TauCeti.IsRightAlmostSplit.ne_zero`. -/
+theorem IsLeftAlmostSplit.ne_zero [HasZeroMorphisms C] (hf : IsLeftAlmostSplit f) [Mono f] :
+    f ≠ 0 := fun h => by
+  have hid : 𝟙 X = 0 := (cancel_mono f).mp (by simp [h])
+  exact hf.not_isSplitMono (IsSplitMono.mk' ⟨0, by simp [hid]⟩)
+
 /-- **An irreducible morphism into the target of a right almost split morphism factors through it
 by a split monomorphism**, so its source is a retract of the source of the almost split morphism.
 
@@ -334,6 +369,22 @@ theorem IsLeftAlmostSplit.exists_isSplitEpi_of_isIrreducibleMorphism (hf : IsLef
     ∃ h : Y ⟶ Z, IsSplitEpi h ∧ f ≫ h = g := by
   obtain ⟨h, hh⟩ := hf.factors Z g hg.not_isSplitMono
   exact ⟨h, hg.isSplitEpi_of_not_isSplitMono hh hf.not_isSplitMono, hh⟩
+
+/-! ### Projectivity and injectivity of the almost split end -/
+
+/-- **The target of an epimorphic right almost split morphism is not projective.** Were it
+projective, its identity would factor through the epimorphism `f`, which is exactly a section of
+`f`, and `f` is not a split epimorphism. -/
+theorem IsRightAlmostSplit.not_projective (hf : IsRightAlmostSplit f) [Epi f] : ¬ Projective Y :=
+  fun _ => hf.not_isSplitEpi
+    (IsSplitEpi.mk' ⟨Projective.factorThru (𝟙 Y) f, Projective.factorThru_comp _ _⟩)
+
+/-- **The source of a monomorphic left almost split morphism is not injective**, dually to
+`TauCeti.IsRightAlmostSplit.not_projective`: its identity would factor through the monomorphism
+`f`, retracting it. -/
+theorem IsLeftAlmostSplit.not_injective (hf : IsLeftAlmostSplit f) [Mono f] : ¬ Injective X :=
+  fun _ => hf.not_isSplitMono
+    (IsSplitMono.mk' ⟨Injective.factorThru (𝟙 X) f, Injective.comp_factorThru _ _⟩)
 
 /-! ### Indecomposability of the almost split end -/
 
@@ -415,25 +466,5 @@ theorem IsLeftAlmostSplit.indecomposable (hf : IsLeftAlmostSplit f) : Indecompos
   rw [← Category.assoc, key, e.hom_inv_id]
 
 end Indecomposable
-
-/-! ### Almost split maps in a short complex -/
-
-section ShortComplex
-
-variable [Preadditive C] {S : ShortComplex C}
-
-/-- **A short complex whose second map is right almost split does not split.** The `not_split`
-clause in the definition of an almost-split sequence is therefore redundant: it is implied by the
-right almost split clause alone. -/
-theorem isEmpty_splitting_of_isRightAlmostSplit (hg : IsRightAlmostSplit S.g) :
-    IsEmpty S.Splitting :=
-  ⟨fun s => hg.not_isSplitEpi s.isSplitEpi_g⟩
-
-/-- **A short complex whose first map is left almost split does not split.** -/
-theorem isEmpty_splitting_of_isLeftAlmostSplit (hf : IsLeftAlmostSplit S.f) :
-    IsEmpty S.Splitting :=
-  ⟨fun s => hf.not_isSplitMono s.isSplitMono_f⟩
-
-end ShortComplex
 
 end TauCeti

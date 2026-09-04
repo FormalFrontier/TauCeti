@@ -208,7 +208,6 @@ private theorem exists_mem_cuspFormCharSpace_qExpansion_coeff_eq_ite_coprime_pro
     have hq : q.Prime := Nat.prime_of_mem_primeFactors hqM
     have : NeZero q := ⟨hq.ne_zero⟩
     have hMqM : M ∣ q * M := Nat.dvd_mul_left M q
-    have : NeZero (q * M) := ⟨Nat.mul_ne_zero (NeZero.ne q) (NeZero.ne M)⟩
     obtain ⟨g₁, hg₁, hg₁q⟩ :=
       exists_mem_cuspFormCharSpace_qExpansion_coeff_eq_ite_dvd χ hg
         (Nat.primeFactors_mono (Nat.dvd_of_mem_primeFactors hqM) (NeZero.ne M))

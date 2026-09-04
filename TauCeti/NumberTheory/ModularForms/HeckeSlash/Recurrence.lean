@@ -87,6 +87,9 @@ variable {N p : ℕ} (k : ℤ)
 
 variable [NeZero N]
 
+-- `NeZero N` is not needed here: the level-raise coefficient identity this closes with
+-- (`ModularForm.qExpansion_slash_natDiagGL_d_one_coeff_Gamma1`) asks only for `NeZero p`.
+omit [NeZero N] in
 private theorem qExpansion_coeff_add_slash_scaleRep [NeZero p]
     {F : Type*} [FunLike F ℍ ℂ]
     [ModularFormClass F ((Gamma1 N).map (mapGL ℝ)) k]

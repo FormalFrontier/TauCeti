@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.Rigidity
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.ToralClosure.Basic
+import TauCeti.AlgebraicGeometry.AffineGroupScheme.HopfSpec
 
 /-!
 # Rigidity of the toral Kostant carrier
@@ -152,44 +153,16 @@ theorem kostantToralGroupScheme_hom_ext {Y : _root_.CommHopfAlgCat.{0} ℤ}
     (htorus : kostantWeightTorusToToral e h ρ M hM hnil b wt ≫ φ =
       kostantWeightTorusToToral e h ρ M hM hnil b wt ≫ ψ) :
     φ = ψ := by
-  have hff := AlgebraicGeometry.hopfSpec.fullyFaithful (R := CommRingCat.of ℤ)
-  have hroot' : ∀ i, (hff.preimage φ).unop ≫
-      kostantRootSubgroupToralCoordinateMap e h ρ M hM hnil b wt i =
-      (hff.preimage ψ).unop ≫
-        kostantRootSubgroupToralCoordinateMap e h ρ M hM hnil b wt i := by
-    intro i
-    have hmap : (hopfSpec (CommRingCat.of ℤ)).map
-          ((kostantRootSubgroupToralCoordinateMap e h ρ M hM hnil b wt i).op ≫
-            hff.preimage φ) =
-        (hopfSpec (CommRingCat.of ℤ)).map
-          ((kostantRootSubgroupToralCoordinateMap e h ρ M hM hnil b wt i).op ≫
-            hff.preimage ψ) := by
-      rw [Functor.map_comp, Functor.map_comp, hff.map_preimage, hff.map_preimage]
-      have hi := hroot i
-      rw [kostantRootSubgroupToToral_def, Category.assoc, Category.assoc] at hi
-      exact (cancel_epi (eqToHom (AdditiveGroup.groupScheme_def ℤ))).1 hi
-    have hop := hff.map_injective hmap
-    simpa using congrArg Quiver.Hom.unop hop
-  have htorus' : (hff.preimage φ).unop ≫
-      kostantWeightTorusToralCoordinateMap e h ρ M hM hnil b wt =
-      (hff.preimage ψ).unop ≫
-        kostantWeightTorusToralCoordinateMap e h ρ M hM hnil b wt := by
-    have hmap : (hopfSpec (CommRingCat.of ℤ)).map
-          ((kostantWeightTorusToralCoordinateMap e h ρ M hM hnil b wt).op ≫
-            hff.preimage φ) =
-        (hopfSpec (CommRingCat.of ℤ)).map
-          ((kostantWeightTorusToralCoordinateMap e h ρ M hM hnil b wt).op ≫
-            hff.preimage ψ) := by
-      rw [Functor.map_comp, Functor.map_comp, hff.map_preimage, hff.map_preimage]
-      rw [kostantWeightTorusToToral_def, Category.assoc, Category.assoc] at htorus
-      exact (cancel_epi (eqToHom
-        (DiagonalizableGroup.groupScheme_def ℤ (SplitTorus.characterGroup κ)))).1 htorus
-    have hop := hff.map_injective hmap
-    simpa using congrArg Quiver.Hom.unop hop
-  have hpre := kostantToralCoordinate_hom_ext e h ρ M hM hnil b wt
-    (hff.preimage φ).unop (hff.preimage ψ).unop hroot' htorus'
-  have hopeq : hff.preimage φ = hff.preimage ψ := Quiver.Hom.unop_inj hpre
-  rw [← hff.map_preimage φ, ← hff.map_preimage ψ, hopeq]
+  refine CommHopfAlgCat.hom_ext_of_preimage_unop_eq φ ψ
+    (kostantToralCoordinate_hom_ext e h ρ M hM hnil b wt _ _ (fun i => ?_) ?_)
+  · refine CommHopfAlgCat.preimage_unop_comp_eq_of_hopfSpec_map_comp_eq _ φ ψ ?_
+    have hi := hroot i
+    rw [kostantRootSubgroupToToral_def, Category.assoc, Category.assoc] at hi
+    exact (cancel_epi (eqToHom (AdditiveGroup.groupScheme_def ℤ))).1 hi
+  · refine CommHopfAlgCat.preimage_unop_comp_eq_of_hopfSpec_map_comp_eq _ φ ψ ?_
+    rw [kostantWeightTorusToToral_def, Category.assoc, Category.assoc] at htorus
+    exact (cancel_epi (eqToHom
+      (DiagonalizableGroup.groupScheme_def ℤ (SplitTorus.characterGroup κ)))).1 htorus
 
 /-- It is enough to compare homomorphisms out of the toral carrier on the root-generated closed
 subgroup scheme and on the weight torus. This packages all root-subgroup hypotheses of

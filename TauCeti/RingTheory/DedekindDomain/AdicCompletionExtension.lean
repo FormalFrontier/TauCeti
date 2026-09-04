@@ -7,6 +7,7 @@ module
 
 public import Mathlib.NumberTheory.NumberField.Completion.FinitePlace
 public import TauCeti.RingTheory.DedekindDomain.AdicValuation.Completion
+public import TauCeti.RingTheory.AdjoinRoot.Factors
 public import TauCeti.RingTheory.DedekindDomain.Ideal
 public import TauCeti.RingTheory.DedekindDomain.ValuationOfNeZero
 
@@ -512,5 +513,31 @@ lemma comap_maximalIdeal_adicCompletionIntegersExtension :
 end Extension
 
 end IsDedekindDomain.HeightOneSpectrum
+
+open Polynomial
+
+namespace AdjoinRoot
+
+/-- The base-change map `K[X] ⧸ (p) →+* K_v[X] ⧸ (q)` of `AdjoinRoot`s at a completion is
+compatible with the algebra maps from the underlying Dedekind domain `R` and from the ring of
+integers of the completion. -/
+-- Lives here rather than beside `AdjoinRoot.map` in `TauCeti.RingTheory.AdjoinRoot.Factors`
+-- because it is not a fact about `AdjoinRoot` alone: it names `adicCompletion` and
+-- `adicCompletionIntegers`, and this module is where those two developments first meet.
+lemma map_comp_algebraMap {R : Type*} [CommRing R] [IsDedekindDomain R] {K : Type*}
+    [Field K] [Algebra R K] [IsFractionRing R K] (v : HeightOneSpectrum R) {p : K[X]}
+    {q : (v.adicCompletion K)[X]} (hq : q ∣ p.map (algebraMap K (v.adicCompletion K))) :
+    (AdjoinRoot.map (algebraMap K (v.adicCompletion K)) p q hq).comp
+        (algebraMap R (AdjoinRoot p)) =
+      (algebraMap (v.adicCompletionIntegers K) (AdjoinRoot q)).comp
+        (algebraMap R (v.adicCompletionIntegers K)) := by
+  ext c
+  simp only [RingHom.comp_apply]
+  rw [IsScalarTower.algebraMap_apply R K (AdjoinRoot p), AdjoinRoot.algebraMap_eq, map_of,
+    IsScalarTower.algebraMap_apply (v.adicCompletionIntegers K) (v.adicCompletion K)
+      (AdjoinRoot q), AdjoinRoot.algebraMap_eq]
+  rfl
+
+end AdjoinRoot
 
 end

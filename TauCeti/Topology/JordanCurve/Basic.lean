@@ -74,7 +74,7 @@ This is the vocabulary layer **L5** of the conformal-mapping roadmap
 boundary correspondence, is about the Riemann map of a *Jordan domain*, and the roadmap records
 that the pinned Mathlib has no Jordan-curve vocabulary to state it against. The complex-analytic
 half — Jordan domains, the discs among them, and the boundary of a domain that a conformal map
-carries onto a disc — is in `TauCeti/Analysis/Complex/Conformal/JordanDomain.lean`.
+carries onto a disc — is in `TauCeti/Analysis/Complex/Conformal/Jordan/Domain.lean`.
 
 Local connectedness of a Jordan curve is what that milestone needs of the *hypothesis* side: the
 route to the extension theorem for a Jordan domain `Ω` runs through Carathéodory's continuity
