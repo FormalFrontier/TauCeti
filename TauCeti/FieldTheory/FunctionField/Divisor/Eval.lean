@@ -19,8 +19,14 @@ classical quantity
 
 is what Weil reciprocity `f(div g) = g(div f)` compares. This file defines it. The local factors
 `N_{F_P/k}(f(P))` are `TauCeti.Place.normResidueOrOne`, built in
-`FieldTheory/FunctionField/Place/Residue.lean`, which also records when the norm is the classical
-field norm.
+`FieldTheory/FunctionField/Place/Residue.lean`.
+
+The construction is total in `F`, and classical exactly where the local norms are: at a place
+whose residue field is module-finite over `k`. `TauCeti.Place.finiteDimensional_residueField`
+supplies that at every place of an algebraic function field; absent it, `Algebra.norm` is the junk
+value `1` and the factor drops out silently, which is the convention `TauCeti.Place.degree`
+already follows (junk `0` under the same hypothesis). No result below is stated only in the
+classical regime — the divisor and function laws are formal and hold for every `F`.
 
 ## Main definitions
 
@@ -93,11 +99,19 @@ namespace Divisor
 
 /-- **Evaluation of a function on divisors**, as a homomorphism from the divisor group written
 multiplicatively. Being a homomorphism outright is what makes `eval_zero`, `eval_add`, `eval_neg`
-and `eval_sub` hypothesis-free. -/
+and `eval_sub` hypothesis-free. The classical-regime caveat on `TauCeti.Divisor.eval` applies here
+unchanged. -/
 noncomputable def evalHom (f : Fˣ) : Multiplicative (Divisor k F) →* kˣ :=
   (freeAbelianCharEquiv (σ := Place k F) (M := kˣ)).symm fun P ↦ P.normResidueOrOne f
 
-/-- **The value `f(D)` of a function on a divisor.** -/
+/-- **The value `f(D)` of a function on a divisor.**
+
+This is the classical quantity exactly where the local factors are: at every place whose residue
+field is module-finite over `k`, which `TauCeti.Place.finiteDimensional_residueField` supplies for
+every place of an algebraic function field. Absent that, `Algebra.norm` degenerates to `1`
+(`Algebra.norm_eq_one_of_not_module_finite`) and the corresponding factor drops out silently. See
+`TauCeti.Place.normResidue` for the full statement of the convention, which is the one
+`TauCeti.Place.degree` already follows. -/
 noncomputable def eval (D : Divisor k F) (f : Fˣ) : kˣ :=
   evalHom f (Multiplicative.ofAdd D)
 
