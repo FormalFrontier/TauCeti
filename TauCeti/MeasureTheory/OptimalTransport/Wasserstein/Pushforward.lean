@@ -143,11 +143,14 @@ variable {e : X ≃ᵐ Y}
 
 /-- A measurable isometric equivalence preserves Wasserstein distance. -/
 theorem wassersteinEDist_map_eq
-    (hdX : Measurable fun z : X × X ↦ edist z.1 z.2)
     (hdY : Measurable fun z : Y × Y ↦ edist z.1 z.2) (he : Isometry e)
     (μ ν : Measure X) :
     wassersteinEDist p (μ.map e) (ν.map e) = wassersteinEDist p μ ν := by
   let ei : X ≃ᵢ Y := { e.toEquiv with isometry_toFun := he }
+  have hdX : Measurable fun z : X × X ↦ edist z.1 z.2 := by
+    rw [← show (fun z : Y × Y ↦ edist z.1 z.2) ∘ Prod.map e e =
+      (fun z : X × X ↦ edist z.1 z.2) by funext z; exact he.edist_eq z.1 z.2]
+    exact hdY.comp (e.measurable.prodMap e.measurable)
   have hforward : wassersteinEDist p (μ.map e) (ν.map e) ≤ wassersteinEDist p μ ν := by
     have h := wassersteinEDist_map_le_mul_of_ne_zero (p := p) hdY e.measurable
       ei.isometry.lipschitzWith one_ne_zero μ ν
@@ -166,10 +169,13 @@ theorem wassersteinEDist_map_eq
 
 /-- A measurable isometric equivalence preserves the finite-moment condition. -/
 theorem hasFiniteMoment_map_iff
-    (hdX : Measurable fun z : X × X ↦ edist z.1 z.2)
     (hdY : Measurable fun z : Y × Y ↦ edist z.1 z.2) (he : Isometry e) :
     HasFiniteMoment p (μ.map e) ↔ HasFiniteMoment p μ := by
   let ei : X ≃ᵢ Y := { e.toEquiv with isometry_toFun := he }
+  have hdX : Measurable fun z : X × X ↦ edist z.1 z.2 := by
+    rw [← show (fun z : Y × Y ↦ edist z.1 z.2) ∘ Prod.map e e =
+      (fun z : X × X ↦ edist z.1 z.2) by funext z; exact he.edist_eq z.1 z.2]
+    exact hdY.comp (e.measurable.prodMap e.measurable)
   refine ⟨fun h ↦ ?_, fun h ↦ h.map hdY e.measurable ei.isometry.lipschitzWith⟩
   have hm : (μ.map e).map e.symm = μ := e.map_symm_map
   rw [← hm]
