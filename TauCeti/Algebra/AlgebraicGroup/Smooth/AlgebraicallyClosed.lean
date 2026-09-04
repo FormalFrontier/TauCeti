@@ -19,11 +19,10 @@ criterion
 smooth over an algebraically closed field ↔ reduced coordinate ring.
 ```
 
-The reverse implication does not require the coordinate ring to be geometrically reduced in
-advance. Smoothness is first proved directly on the group scheme by translating one smooth
-closed point to every other closed point. The existing equivalence between smoothness and
-geometric reducedness then shows that reducedness over an algebraically closed field already
-persists after every field extension.
+These criteria let downstream constructions establish the ring-theoretic condition of ordinary
+reducedness instead of proving smoothness directly. The geometric-reducedness criterion also
+supplies the resulting stability under field extension when affine groups and their subgroup
+schemes are compared after base change.
 
 ## Main declarations
 
