@@ -30,10 +30,6 @@ a tangent bundle is unpacked into an equation on its base curve and one on its v
   both taken at the current point of the curve.
 * `TauCeti.Manifold.hasMFDerivAt_totalSpace_curve_iff`: its unrestricted case.
 
-## References
-
-* [Geodesics, the exponential map, and the Hopf--Rinow theorem roadmap](https://github.com/TauCetiProject/TauCetiRoadmap/blob/main/TauCetiRoadmap/HopfRinow/README.md),
-  Layer 1, "The geodesic spray".
 -/
 
 public section
@@ -89,6 +85,9 @@ theorem hasMFDerivWithinAt_totalSpace_curve_iff_of_continuousWithinAt
   have key : HasMFDerivWithinAt 𝓘(𝕜, 𝕜) (IB.prod 𝓘(𝕜, F)) z s t
         ((1 : 𝕜 →L[𝕜] 𝕜).smulRight (a, b)) ↔
       HasDerivWithinAt (fun r ↦ (extChartAt IB x₀ (z r).proj, (e (z r)).2)) (a, b) s t := by
+    -- There is no general characterization theorem for `HasMFDerivWithinAt` with a manifold
+    -- target, so expose its defining continuity-and-chart-derivative pair before simplifying the
+    -- model spaces and replacing the written chart map by `hfun`.
     change (ContinuousWithinAt z s t ∧ _) ↔ _
     rw [extChartAt_model_space_eq_id]
     simp only [PartialEquiv.refl_symm, PartialEquiv.refl_coe, preimage_id_eq, id_eq,
