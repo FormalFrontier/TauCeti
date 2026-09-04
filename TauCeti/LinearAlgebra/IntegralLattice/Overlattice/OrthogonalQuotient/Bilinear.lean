@@ -46,8 +46,7 @@ This is the elementary intermediate-lattice analogue of the even-overlattice com
 `TauCeti.LinearAlgebra.IntegralLattice.Overlattice.OrthogonalQuotient.Quadratic`, and must not be
 read as a statement about the quadratic discriminant form, which an odd lattice does not carry.
 The two comparisons descend the same map, the discriminant class `IsIntegral.dualClassHom` of a
-dual vector of `M` defined below, along the bilinear and the quadratic orthogonal quotient of
-`A_L` respectively.
+dual vector of `M`, along the bilinear and the quadratic orthogonal quotient of `A_L` respectively.
 
 ## Main declarations
 
@@ -85,29 +84,6 @@ variable {L : IntegralLattice V} [L.IsNondegenerate] {M : L.IntermediateCarrier}
 
 namespace IntermediateCarrier
 
-/-- The discriminant class in `A_L` of a vector of `Mᵛ`.
-
-Exposed so that its value reduces to a quotient class, which is what the representative formulas
-downstream compare against. -/
-@[expose] noncomputable def IsIntegral.dualClassHom (hM : IsIntegral M) :
-    hM.toIntegralLattice.dualCarrier →ₗ[ℤ] L.DiscriminantGroup :=
-  L.carrierInDual.mkQ.comp (Submodule.inclusion hM.dualCarrier_le)
-
-@[simp]
-theorem IsIntegral.dualClassHom_apply (hM : IsIntegral M)
-    (y : hM.toIntegralLattice.dualCarrier) :
-    hM.dualClassHom y = Submodule.Quotient.mk ⟨(y : V), hM.dualCarrier_le y.2⟩ := (rfl)
-
-/-- The discriminant class of a vector of `Mᵛ` is orthogonal to `H = M / L`, because the dual
-of an intermediate carrier corresponds to the orthogonal complement of its subgroup. -/
-theorem IsIntegral.dualClassHom_mem_orthogonalComplement (hM : IsIntegral M)
-    (y : hM.toIntegralLattice.dualCarrier) :
-    hM.dualClassHom y ∈
-      L.discriminantBilinearModule.orthogonalComplement (L.discriminantSubgroup M) := by
-  rw [← discriminantSubgroup_dual, hM.dualClassHom_apply]
-  exact (L.mk_mem_discriminantSubgroup_iff (dual M) _).mpr
-    (by rw [← hM.toIntegralLattice_dualCarrier]; exact y.2)
-
 /-! ## The comparison isometry -/
 
 variable (hM : IsIntegral M)
@@ -133,9 +109,12 @@ private theorem dualCarrierToBilinearOrthogonalQuotient_apply
 private theorem dualCarrierToBilinearOrthogonalQuotient_eq_zero_iff
     (y : hM.toIntegralLattice.dualCarrier) :
     dualCarrierToBilinearOrthogonalQuotient hM y = 0 ↔ (y : V) ∈ M.1 :=
-  (L.discriminantBilinearModule.orthogonalQuotientMk_eq_zero_iff (L.discriminantSubgroup M)
-      ⟨hM.dualClassHom y, hM.dualClassHom_mem_orthogonalComplement y⟩).trans
-    (L.mk_mem_discriminantSubgroup_iff M _)
+  (L.discriminantBilinearModule.orthogonalQuotientMk_eq_zero_iff
+      (L.discriminantSubgroup M)
+      ⟨hM.dualClassHom y, hM.dualClassHom_mem_orthogonalComplement y⟩).trans (by
+    change hM.dualClassHom y ∈ L.discriminantSubgroup M ↔ (y : V) ∈ M.1
+    rw [hM.dualClassHom_apply]
+    exact L.mk_mem_discriminantSubgroup_iff M _)
 
 /-- The induced homomorphism `A_M → H⊥ / H` on the discriminant group of the overlattice. -/
 private noncomputable def discriminantBilinearOrthogonalQuotientHom :
@@ -182,10 +161,13 @@ private theorem discriminantBilinearOrthogonalQuotientHom_surjective :
   have hy : (x : V) ∈ hM.toIntegralLattice.dualCarrier := by
     rw [hM.toIntegralLattice_dualCarrier]
     exact hxdual
+  have hclass : hM.dualClassHom ⟨(x : V), hy⟩ = z.1 := by
+    rw [hM.dualClassHom_apply]
+    exact hx
   refine ⟨Submodule.Quotient.mk ⟨(x : V), hy⟩, ?_⟩
   rw [discriminantBilinearOrthogonalQuotientHom_mk,
     dualCarrierToBilinearOrthogonalQuotient_apply]
-  exact congrArg _ (Subtype.ext hx)
+  exact congrArg _ (Subtype.ext hclass)
 
 /-- The pairing in `H⊥ / H` of the classes of two dual vectors of `M` is the ambient form
 modulo `ℤ`. -/
@@ -194,13 +176,14 @@ private theorem pairing_dualCarrierToBilinearOrthogonalQuotient
     (L.discriminantBilinearModule.orthogonalQuotient (L.discriminantSubgroup M)).pairing
         (dualCarrierToBilinearOrthogonalQuotient hM y)
         (dualCarrierToBilinearOrthogonalQuotient hM z) =
-      ((L.form y z : ℚ) : AddCircle (1 : ℚ)) :=
-  (L.discriminantBilinearModule.orthogonalQuotient_pairing_mk (L.discriminantSubgroup M)
-      ⟨hM.dualClassHom y, hM.dualClassHom_mem_orthogonalComplement y⟩
-      ⟨hM.dualClassHom z, hM.dualClassHom_mem_orthogonalComplement z⟩).trans
-    ((L.discriminantBilinearModule_pairing _ _).trans
-      (L.discriminantPairing_mk ⟨(y : V), hM.dualCarrier_le y.2⟩
-        ⟨(z : V), hM.dualCarrier_le z.2⟩))
+      ((L.form y z : ℚ) : AddCircle (1 : ℚ)) := by
+  refine (L.discriminantBilinearModule.orthogonalQuotient_pairing_mk
+    (L.discriminantSubgroup M) _ _).trans ?_
+  refine (L.discriminantBilinearModule_pairing _ _).trans ?_
+  change L.discriminantPairing (hM.dualClassHom y) (hM.dualClassHom z) = _
+  rw [hM.dualClassHom_apply, hM.dualClassHom_apply]
+  exact L.discriminantPairing_mk ⟨(y : V), hM.dualCarrier_le y.2⟩
+    ⟨(z : V), hM.dualCarrier_le z.2⟩
 
 /-- The pairing in `A_M` of the classes of two dual vectors of `M` is the ambient form
 modulo `ℤ`. -/
