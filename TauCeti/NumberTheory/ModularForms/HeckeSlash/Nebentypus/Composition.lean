@@ -27,9 +27,12 @@ Hecke ring and on all of `ℍ → ℂ`; this file proves only the single-double-
 `functionCharSpace k χ`, and only under the per-triple hypotheses `hD₃` and `hinj₃`. That map is
 untouched here and remains merely `ℤ`-linear. As in the untwisted file, the general
 multiplicity-weighted composite `∑_D m(D₁, D₂; D) · T_D` — and with it the ring homomorphism
-`𝕋 → Module.End` — is not proved here; it needs the count that each right coset of a fixed `D` is
-hit by the same number of pairs, together with the left/right handedness reconciliation that
-`DoubleCoset.multiplicity` requires.
+`𝕋 → Module.End` — is not proved here. Its two counting ingredients are now available:
+`DoubleCoset.card_pairs_mem_rightCoset_eq_multiplicity` is the left/right handedness
+reconciliation that `DoubleCoset.multiplicity` requires, and
+`DoubleCoset.card_pairs_mem_rightCoset_congr` the count that each right coset of a fixed `D` is
+hit by the same number of pairs. What is missing is the assembly, together with the twisted
+weights it has to carry.
 
 ## Why the weights multiply, and why that is the whole point
 

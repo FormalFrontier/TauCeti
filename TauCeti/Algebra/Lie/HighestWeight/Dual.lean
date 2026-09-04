@@ -12,8 +12,6 @@ public import TauCeti.Algebra.Lie.HighestWeight.LowestWeight
 public import TauCeti.Algebra.Lie.HighestWeight.Verma
 public import TauCeti.Algebra.Lie.Weights.Diagonalizable
 
-public section
-
 /-!
 # Self-duality of a finite-dimensional irreducible highest weight module
 
@@ -76,6 +74,8 @@ work. The conditional named-carrier specialization below makes that missing inpu
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §21.6.
 * N. Bourbaki, *Groupes et algèbres de Lie*, Chapitre VIII, §7.5.
 -/
+
+public section
 
 namespace TauCeti
 

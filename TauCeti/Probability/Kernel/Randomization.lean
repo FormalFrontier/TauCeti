@@ -123,7 +123,7 @@ theorem map_volume_unitIntervalCoding (P : ProbabilityMeasure α) :
 /-- The coordinatewise coding of an `ι`-indexed uniform family is measurable. -/
 theorem measurable_pi_unitIntervalCoding {ι : Type*} (P : ProbabilityMeasure α) :
     Measurable fun u : ι → I => fun i => unitIntervalCoding α P (u i) :=
-  measurable_pi_lambda _ fun i =>
+  Measurable.of_eval fun i =>
     (measurable_unitIntervalCoding P).comp (measurable_pi_apply i)
 
 /-- **Coding a product law by i.i.d. uniform noise.** Applying the coding map coordinatewise to an
@@ -192,7 +192,7 @@ theorem exists_measurable_map_map_prod_volume_eq_map_prodMk
   refine ⟨f, hf, hcode.trans ?_⟩
   ext s hs
   rw [Measure.map_apply_of_aemeasurable (hX.prodMk hY) hs,
-    compProd_map_condDistrib hY, Measure.map_apply_of_aemeasurable (hX.prodMk hY) hs]
+    compProd_map_condDistrib hX hY, Measure.map_apply_of_aemeasurable (hX.prodMk hY) hs]
 
 /-- **Functional representation with fresh independent noise.** A pair `(X, Y)` on a finite
 measure space has the same law as `(X, f(X, U))`, where `U` is an independent uniform variable

@@ -8,8 +8,6 @@ module
 public import TauCeti.LinearAlgebra.RootSystem.RootLength
 public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.B.Datum
 
-public section
-
 /-!
 # The rank-two type `B` root datum in explicit coordinates
 
@@ -70,6 +68,8 @@ characteristics two and three" bullet of Layer 9 of
 `TauCetiRoadmap/ReductiveGroups/README.md`, whose `B₂` case is the one the pinned type `B` datum
 could not be computed against.
 -/
+
+public section
 
 namespace TauCeti.DynkinType
 

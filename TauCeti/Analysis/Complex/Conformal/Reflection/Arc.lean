@@ -7,7 +7,7 @@ module
 
 public import Mathlib.Topology.OpenPartialHomeomorph.Basic
 public import TauCeti.Analysis.Complex.Conformal.Reflection.Principle
-import TauCeti.Analysis.Complex.Conformal.InverseFunction
+import TauCeti.Analysis.Complex.Conformal.Inverse.Function
 
 /-!
 # The Schwarz reflection principle across an analytic arc

@@ -9,8 +9,6 @@ public import Mathlib.LinearAlgebra.Matrix.Cartan
 public import Mathlib.LinearAlgebra.RootSystem.CartanMatrix
 import Mathlib.Logic.Equiv.Pairwise
 
-public section
-
 /-!
 # Dynkin types
 
@@ -83,6 +81,8 @@ This file implements the `DynkinType` enumeration of Layer 5 of
 Algebras, Chapters 4-6*, plates I-IX, and Humphreys, *Introduction to Lie Algebras and
 Representation Theory*, Chapter 11, for the standard Cartan matrices.
 -/
+
+public section
 
 namespace TauCeti
 

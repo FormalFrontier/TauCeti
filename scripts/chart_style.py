@@ -7,7 +7,28 @@ GRID = "rgba(255,255,255,0.08)"
 AXIS = "rgba(255,255,255,0.18)"
 TEXT = "#eef2fb"
 MUTED = "#9aa6c9"
-FONT_FAMILY = "ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif"
+# Deliberately concrete, and deliberately not `system-ui`/`ui-sans-serif`. These
+# charts are served as `<img src="...svg">`, so each SVG is an isolated document
+# with no page CSS and no webfont: the family is whatever the host OS resolves.
+# One Mac viewing the statistics page rendered every chart title as overlapping
+# accented-Latin nonsense while the subtitle and axis labels in the same file
+# stayed clean, a split that follows a size boundary near 20px. Two factors set
+# the rendered size: css_px below turns a 19-unit title into 19 * viewBox_width
+# / 980 user units, and fitting that viewBox to the page column multiplies by
+# column_width / viewBox_width. The statistics column is at most --max (1100px),
+# so titles land just above 20 CSS px there, barely clearing the boundary,
+# whatever a card's viewBox width, while the 13-unit subtitle and 12-unit ticks
+# stay in the mid-teens. A few figures sit well above it (participation's
+# 42-unit total, the rolling-history card's 24-unit latest values); on the front
+# page, where the growth chart is capped at 760px, nothing reaches it. That
+# boundary is where macOS has historically switched between optical variants of
+# its system font whose glyph IDs disagree, so text shaped against one and drawn
+# with the other comes out scrambled; Chromium documents the failure and its
+# own fix for it in
+# https://web.dev/blog/more-variable-font-options-in-chromium-83 . Whether a
+# current macOS and browser still reach that path is not something this
+# repository can establish, and naming real faces avoids the question.
+FONT_FAMILY = "'Helvetica Neue',Helvetica,Arial,'Liberation Sans',sans-serif"
 
 # The participation card established the site's chart typography at this native width.
 # Scale design-space font sizes with each SVG's viewBox so all cards have the same

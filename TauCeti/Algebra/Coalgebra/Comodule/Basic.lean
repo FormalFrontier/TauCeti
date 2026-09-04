@@ -261,6 +261,13 @@ theorem coe_mk {f : M →ₗ[R] N} (h) : ((⟨f, h⟩ : Hom R C M N) : M → N) 
 theorem coe_toLinearMap (f : Hom R C M N) : ⇑f.toLinearMap = f :=
   rfl
 
+/-- A comodule morphism is determined by its underlying linear map. -/
+theorem toLinearMap_injective :
+    Function.Injective (Hom.toLinearMap : Hom R C M N → M →ₗ[R] N) := by
+  intro f g h
+  apply DFunLike.coe_injective
+  rw [← coe_toLinearMap f, ← coe_toLinearMap g, h]
+
 /-- Two comodule morphisms are equal when their underlying functions are equal. -/
 @[ext]
 theorem ext {f g : Hom R C M N} (h : ∀ m, f m = g m) : f = g := by

@@ -9,8 +9,6 @@ public import Mathlib.Algebra.Lie.InvariantForm
 public import Mathlib.LinearAlgebra.Dual.Lemmas
 public import TauCeti.Algebra.Lie.Schur
 
-public section
-
 /-!
 # The dual of a finite-dimensional irreducible Lie module
 
@@ -52,6 +50,8 @@ mentions weights, so it is stated for an arbitrary Lie algebra.
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §6.1.
 * N. Bourbaki, *Groupes et algèbres de Lie*, Chapitre I, §3.3.
 -/
+
+public section
 
 namespace TauCeti.LieModule
 

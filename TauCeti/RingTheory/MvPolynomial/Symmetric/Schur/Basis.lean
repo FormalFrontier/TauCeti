@@ -116,7 +116,7 @@ coefficient at a monomial of total degree `n` is its coefficient at the sorted m
 partition of those exponents.  This is what makes the coordinates below complete. -/
 theorem coeff_eq_coeff_partWeight [DecidableEq σ] {p : MvPolynomial σ R} (hp : p.IsSymmetric)
     {d : σ →₀ ℕ} (hd : d.degree = n) :
-    coeff d p = coeff (partWeight σ (weightPartition d hd)) p := by
+    p.coeff d = p.coeff (partWeight σ (weightPartition d hd)) := by
   obtain ⟨e, he⟩ := exists_perm_mapDomain_eq_partWeight d hd
   conv_rhs => rw [← he, ← hp e]
   exact (coeff_rename_mapDomain _ e.injective _ _).symm
@@ -138,7 +138,7 @@ The body of `TauCeti.partWeightCoeff` is not exposed, so this is what a consumer
 @[simp]
 theorem partWeightCoeff_apply (p : symmetricHomogeneousSubmodule σ R n)
     (ν : {ν : n.Partition // ν.parts.card ≤ Fintype.card σ}) :
-    partWeightCoeff σ R n p ν = coeff (partWeight σ ν.1) (p : MvPolynomial σ R) := by
+    partWeightCoeff σ R n p ν = (p : MvPolynomial σ R).coeff (partWeight σ ν.1) := by
   simp [partWeightCoeff]
 
 /-- **A symmetric homogeneous polynomial is determined by its coefficients at the sorted
@@ -193,7 +193,7 @@ the normal form of a monomial-basis coordinate, and the elimination rule matchin
 @[simp]
 theorem msymmBasis_repr_apply (p : symmetricHomogeneousSubmodule σ R n)
     (ν : {ν : n.Partition // ν.parts.card ≤ Fintype.card σ}) :
-    (msymmBasis σ R n).repr p ν = coeff (partWeight σ ν.1) (p : MvPolynomial σ R) := by
+    (msymmBasis σ R n).repr p ν = (p : MvPolynomial σ R).coeff (partWeight σ ν.1) := by
   -- The coordinate map of `TauCeti.msymmBasis` is the map it was built from.
   have h : (msymmBasis σ R n).repr p = partWeightCoeff σ R n p :=
     LinearEquiv.ofBijective_apply (f := partWeightCoeff σ R n)

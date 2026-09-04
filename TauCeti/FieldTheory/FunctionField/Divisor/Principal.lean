@@ -57,10 +57,10 @@ the places themselves.
 
 ## Implementation notes
 
-`div` is defined on `Fˣ`, not on `F` with a nonzero hypothesis: the roadmap pins it as a group
-homomorphism, and `Additive Fˣ →+ Divisor k F` is that statement.  For a nonzero `f : F` the
-divisor is `div (Units.mk0 f hf)`, and `TauCeti.Divisor.coeff_principal` reads its coefficients
-back as orders of the underlying function.
+`div` is defined on `Fˣ`, not on `F` with a nonzero hypothesis, so its multiplicativity is packaged
+as the group homomorphism `Additive Fˣ →+ Divisor k F`.  For a nonzero `f : F` the divisor is
+`div (Units.mk0 f hf)`, and `TauCeti.Divisor.coeff_principal` reads its coefficients back as orders
+of the underlying function.
 
 The function-field hypothesis `IsFunctionField k F` is an explicit argument rather than a
 typeclass, following the rest of this directory; it is what makes the support finite, so it

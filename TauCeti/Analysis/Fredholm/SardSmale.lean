@@ -72,9 +72,9 @@ The regularity threshold is inherited unchanged from the finite-dimensional theo
 
 ## Main results
 
-* `TauCeti.exists_mem_nhds_isClosed_isNowhereDense_image_criticalPoints`: the local form -- near a
-  point with Fredholm derivative there is a neighbourhood whose critical values are closed and
-  nowhere dense.
+* `TauCeti.exists_mem_nhds_isClosed_isNowhereDense_image_criticalPoints`: the local form -- inside
+  any neighbourhood of a point with Fredholm derivative there is a neighbourhood whose critical
+  values are closed and nowhere dense.
 * `TauCeti.isMeagre_image_criticalPoints_of_isFredholm`: **the Sard--Smale theorem**.
 * `TauCeti.dense_compl_image_criticalPoints_of_isFredholm`: the regular values of a Fredholm map
   are dense, the form transversality arguments consume.
@@ -234,6 +234,8 @@ private theorem surjective_fderiv_iff_slice (pkg : ContinuousLinearMap.FredholmP
 
 /-- **Sard--Smale, locally.** Near a point where a sufficiently smooth map has Fredholm
 derivative there is a neighbourhood on which the critical values form a closed nowhere dense set.
+The neighbourhood can be taken inside any prescribed neighbourhood `U` of the point, so the
+conclusion can be confined to a region on which `f` is known to be the map of interest.
 
 Completeness of the target enters through Smale's local properness lemma, which supplies the
 compactness used to prove that the local critical-value image is closed.
@@ -242,10 +244,11 @@ The regularity threshold `(dim ker)² + 1` is the one inherited from the finite-
 Morse--Sard theorem `TauCeti.interior_image_criticalPoints_eq_empty`, which the fibrewise step
 applies to the obstruction slice, a map out of `ker (fderiv ℝ f a)`. -/
 theorem exists_mem_nhds_isClosed_isNowhereDense_image_criticalPoints
-    {f : E → F} {a : E} {n : ℕ∞ω} (hf : ContDiffAt ℝ n f a)
+    {f : E → F} {a : E} {U : Set E} {n : ℕ∞ω} (hf : ContDiffAt ℝ n f a)
     (hFred : (fderiv ℝ f a).IsFredholm)
-    (hn : ((finrank ℝ (fderiv ℝ f a).ker * finrank ℝ (fderiv ℝ f a).ker + 1 : ℕ) : ℕ∞ω) ≤ n) :
-    ∃ N ∈ 𝓝 a, IsClosed (f '' (N ∩ {x | ¬ Surjective (fderiv ℝ f x)})) ∧
+    (hn : ((finrank ℝ (fderiv ℝ f a).ker * finrank ℝ (fderiv ℝ f a).ker + 1 : ℕ) : ℕ∞ω) ≤ n)
+    (hU : U ∈ 𝓝 a) :
+    ∃ N ∈ 𝓝 a, N ⊆ U ∧ IsClosed (f '' (N ∩ {x | ¬ Surjective (fderiv ℝ f x)})) ∧
       IsNowhereDense (f '' (N ∩ {x | ¬ Surjective (fderiv ℝ f x)})) := by
   set T := fderiv ℝ f a with hTdef
   set k : ℕ := finrank ℝ T.ker * finrank ℝ T.ker + 1 with hkdef
@@ -404,9 +407,12 @@ theorem exists_mem_nhds_isClosed_isNowhereDense_image_criticalPoints
   -- Smale's local properness, on a closed ball inside `N`.
   obtain ⟨N₂, hN₂, hprop⟩ := hT.exists_mem_nhds_forall_isCompact_inter_preimage
     hFred.isClosed_range hFred.finite_ker hFred.closedComplemented_ker
-  obtain ⟨r, hr, hball⟩ := Metric.mem_nhds_iff.1 (Filter.inter_mem (hNopen.mem_nhds haN) hN₂)
+  obtain ⟨r, hr, hball⟩ := Metric.mem_nhds_iff.1
+    (Filter.inter_mem (Filter.inter_mem (hNopen.mem_nhds haN) hN₂) hU)
   set N' : Set E := Metric.closedBall a (r / 2) with hN'def
-  have hN'ball : N' ⊆ N ∩ N₂ := (Metric.closedBall_subset_ball (by linarith)).trans hball
+  have hN'sub : N' ⊆ N ∩ N₂ ∩ U := (Metric.closedBall_subset_ball (by linarith)).trans hball
+  have hN'ball : N' ⊆ N ∩ N₂ := fun z hz ↦ (hN'sub hz).1
+  have hN'U : N' ⊆ U := fun z hz ↦ (hN'sub hz).2
   have hN'nhds : N' ∈ 𝓝 a := Metric.closedBall_mem_nhds a (by linarith)
   have hcritclosed : IsClosed (N' ∩ {x | ¬ Surjective (fderiv ℝ f x)}) := by
     have heq : N' ∩ {x | ¬ Surjective (fderiv ℝ f x)} =
@@ -437,7 +443,7 @@ theorem exists_mem_nhds_isClosed_isNowhereDense_image_criticalPoints
     have himgclosed := (isProperMap_iff_isCompact_preimage.2
       ⟨hcontOn.domRestrict, fun K hK ↦ hpre K hK⟩).isClosedMap _ isClosed_univ
     rwa [Set.image_univ, Set.range_domRestrict] at himgclosed
-  refine ⟨N', hN'nhds, hclosedimg, ?_⟩
+  refine ⟨N', hN'nhds, hN'U, hclosedimg, ?_⟩
   rw [hclosedimg.isNowhereDense_iff]
   refine Set.eq_empty_of_subset_empty ?_
   rw [← hNint]
@@ -469,10 +475,9 @@ theorem isMeagre_image_criticalPoints_of_isFredholm {n : ℕ∞ω} (hU : IsOpen 
   have hloc : ∀ x ∈ U, ∃ N ⊆ U, N ∈ 𝓝 x ∧
       IsNowhereDense (f '' (N ∩ {x | ¬ Surjective (fderiv ℝ f x)})) := by
     intro x hx
-    obtain ⟨N, hN, -, hNnd⟩ := exists_mem_nhds_isClosed_isNowhereDense_image_criticalPoints
-      (hf x hx) (hFred x hx) (hn x hx)
-    refine ⟨N ∩ U, Set.inter_subset_right, Filter.inter_mem hN (hU.mem_nhds hx), ?_⟩
-    exact hNnd.mono (Set.image_mono (Set.inter_subset_inter Set.inter_subset_left le_rfl))
+    obtain ⟨N, hN, hNU, -, hNnd⟩ := exists_mem_nhds_isClosed_isNowhereDense_image_criticalPoints
+      (hf x hx) (hFred x hx) (hn x hx) (hU.mem_nhds hx)
+    exact ⟨N, hNU, hN, hNnd⟩
   choose! N hNU hNnhds hNnd using hloc
   obtain ⟨t, htU, htc, htcover⟩ := TopologicalSpace.countable_cover_nhdsWithin
     (f := N) (s := U) fun x hx ↦ nhdsWithin_le_nhds (hNnhds x hx)

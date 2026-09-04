@@ -7,8 +7,6 @@ module
 
 public import Mathlib.LinearAlgebra.RootSystem.Base
 
-public section
-
 /-!
 # Lowering positive roots by simple reflections
 
@@ -37,6 +35,8 @@ Mathlib already carries out this height computation and lowering step inside the
 principle rather than exposed. The declarations below state that computation and the resulting
 existence results in their own right.
 -/
+
+public section
 
 namespace TauCeti
 

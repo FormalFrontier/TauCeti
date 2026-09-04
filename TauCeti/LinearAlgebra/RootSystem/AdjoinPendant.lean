@@ -8,8 +8,6 @@ module
 public import Mathlib.Data.Matrix.Basic
 import Mathlib.Tactic.NormNum
 
-public section
-
 /-!
 # Adjoining a pendant vertex to a matrix
 
@@ -28,6 +26,8 @@ assemble Cartan matrices of diagrams with a pendant vertex.
 * `TauCeti.adjoinPendant_diag` and `TauCeti.adjoinPendant_apply_le_zero_of_ne`: adjoining a pendant
   vertex preserves the diagonal and off-diagonal sign conditions of a generalized Cartan matrix.
 -/
+
+public section
 
 open scoped Matrix
 

@@ -8,8 +8,6 @@ module
 public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Basic
 public import TauCeti.LinearAlgebra.RootSystem.Chain
 
-public section
-
 /-!
 # Affine type D̃ₘ for m ≥ 5 is not of finite type
 
@@ -55,6 +53,8 @@ This is the affine-`D` obstruction needed by the “chain/fork length constraint
 *Introduction to Lie Algebras and Representation Theory*, §11.4, and Bourbaki, *Lie Groups and
 Lie Algebras, Chapters 4--6*, Ch. VI, §4.
 -/
+
+public section
 
 namespace TauCeti
 

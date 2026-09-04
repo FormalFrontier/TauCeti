@@ -145,9 +145,9 @@ theorem hasCentralKernel_hopfSpec_map_iff {H K : CommHopfAlgCat.{u} R} (f : H �
   ⟨isCentral_kernelHopfIdeal_of_hasCentralKernel_hopfSpec_map f,
     hasCentralKernel_hopfSpec_map_of_isCentral_kernelHopfIdeal f⟩
 
-section Field
+section Ring
 
-variable {k : Type u} [Field k] {H K : CommHopfAlgCat.{u} k}
+variable {k : Type u} [CommRing k] {H K : CommHopfAlgCat.{u} k}
 
 /-- **Coordinate criterion for a central isogeny.** A Hopf-spectrum morphism is a central
 isogeny exactly when it is an isogeny and its represented kernel Hopf ideal is central. -/
@@ -158,6 +158,6 @@ theorem isCentralIsogeny_hopfSpec_map_iff (f : H ⟶ K) :
   rw [isCentralIsogeny_iff, isIsogeny_iff]
   simp only [and_assoc, hasCentralKernel_hopfSpec_map_iff]
 
-end Field
+end Ring
 
 end TauCeti.GroupScheme

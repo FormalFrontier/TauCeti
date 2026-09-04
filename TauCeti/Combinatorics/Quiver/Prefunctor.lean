@@ -7,8 +7,6 @@ module
 
 public import Mathlib.Combinatorics.Quiver.Path
 
-public section
-
 /-!
 # Prefunctors on paths and on vertices
 
@@ -32,6 +30,8 @@ bijectivity on vertices, and the transport of the zigzag relations in
 `TauCeti/RepresentationTheory/Quiver/Zigzag/Isomorphism.lean`, which is stated in terms of path
 lengths.
 -/
+
+public section
 
 namespace TauCeti
 

@@ -105,12 +105,11 @@ theorem lie_serreH_rootGenerator (k : Fin 6 ⊕ Fin 6) (j : Fin 6) :
         TauCeti.serreRootGenerator (CartanMatrix.E 6)ᵀ k := by
   cases k with
   | inl i =>
-      rw [TauCeti.serreRootGenerator_inl, TauCeti.lie_serreH_serreE]
-      simp only [Matrix.transpose_apply, rootGeneratorWeight_inl, Int.cast_smul_eq_zsmul]
+      rw [TauCeti.lie_serreH_serreRootGenerator_inl, Matrix.transpose_apply,
+        rootGeneratorWeight_inl]
   | inr i =>
-      rw [TauCeti.serreRootGenerator_inr, TauCeti.lie_serreH_serreF]
-      simp only [Matrix.transpose_apply, rootGeneratorWeight_inr, Int.cast_neg,
-        neg_smul, Int.cast_smul_eq_zsmul]
+      rw [TauCeti.lie_serreH_serreRootGenerator_inr, Matrix.transpose_apply,
+        rootGeneratorWeight_inr]
 
 /-! ## The pinned carrier -/
 
@@ -304,20 +303,12 @@ theorem mem_points_iff (A : Type v) [CommRing A]
 /-- The parametrized numbered root subgroup inside the type-`E₆` minuscule carrier points. -/
 noncomputable def rootSubgroupPoints (k : Fin 6 ⊕ Fin 6) (A : Type v) [CommRing A] :
     Multiplicative A →* points A :=
-  MonoidHom.codRestrict
-    ((TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupMatrix
+  TauCeti.UniversalEnvelopingAlgebra.kostantToralRootSubgroupPoints
       (TauCeti.serreRootGenerator (CartanMatrix.E 6)ᵀ)
       (TauCeti.serreH ℚ (CartanMatrix.E 6)ᵀ) rep lattice.toAddSubgroup
       (fun _ hu _ hv ↦ rep_serreKostantForm_mem_lattice (by
         rw [TauCeti.serreKostantForm_def]
-        exact hu) hv) k (isNilpotent_rep_serreRootGenerator k) latticeBasis).comp
-        (AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm.toMonoidHom)
-    (points A) fun u ↦ by
-      rw [points]
-      exact TauCeti.UniversalEnvelopingAlgebra.kostantGeneratedPointsSubgroup_le_toralPoints
-        _ _ _ _ _ _ _ _ A
-        (TauCeti.UniversalEnvelopingAlgebra.kostantRootSubgroupMatrix_mem_generatedPoints
-          _ _ _ _ _ _ _ A k _)
+        exact hu) hv) isNilpotent_rep_serreRootGenerator latticeBasis e6MinusculeWeight k A
 
 /-- A numbered root-subgroup point is its represented divided-power exponential matrix. -/
 @[simp]
@@ -331,19 +322,18 @@ theorem coe_rootSubgroupPoints (k : Fin 6 ⊕ Fin 6) (A : Type v) [CommRing A]
           rw [TauCeti.serreKostantForm_def]
           exact hu) hv) k (isNilpotent_rep_serreRootGenerator k) latticeBasis
         ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm u) := by
-  rw [rootSubgroupPoints]
-  rfl
+  exact TauCeti.UniversalEnvelopingAlgebra.coe_kostantToralRootSubgroupPoints
+    _ _ _ _ _ _ _ _ k A u
 
 /-- The split weight torus on matrix-valued points of the type-`E₆` carrier. -/
 noncomputable def weightTorusPoints (A : Type v) [CommRing A] :
     (Fin 6 → Aˣ) →* points A :=
-  MonoidHom.codRestrict
-    (TauCeti.UniversalEnvelopingAlgebra.kostantTorusMatrix
-      lattice.toAddSubgroup latticeBasis e6MinusculeWeight)
-    (points A) fun s ↦ by
-      rw [points]
-      exact TauCeti.UniversalEnvelopingAlgebra.kostantTorusMatrix_mem_toralPoints
-        _ _ _ _ _ _ _ _ A s
+  TauCeti.UniversalEnvelopingAlgebra.kostantToralWeightTorusPoints
+    (TauCeti.serreRootGenerator (CartanMatrix.E 6)ᵀ)
+    (TauCeti.serreH ℚ (CartanMatrix.E 6)ᵀ) rep lattice.toAddSubgroup
+    (fun _ hu _ hv ↦ rep_serreKostantForm_mem_lattice (by
+      rw [TauCeti.serreKostantForm_def]
+      exact hu) hv) isNilpotent_rep_serreRootGenerator latticeBasis e6MinusculeWeight A
 
 /-- A minuscule weight-torus point is the diagonal matrix obtained by evaluating each weight. -/
 @[simp]
@@ -351,8 +341,8 @@ theorem coe_weightTorusPoints (A : Type v) [CommRing A] (s : Fin 6 → Aˣ) :
     (weightTorusPoints A s : _root_.Matrix.GeneralLinearGroup (Fin 27) A) =
       TauCeti.UniversalEnvelopingAlgebra.kostantTorusMatrix
         lattice.toAddSubgroup latticeBasis e6MinusculeWeight s := by
-  rw [weightTorusPoints]
-  rfl
+  exact TauCeti.UniversalEnvelopingAlgebra.coe_kostantToralWeightTorusPoints
+    _ _ _ _ _ _ _ _ A s
 
 /-! ## The pinning equation -/
 

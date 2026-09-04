@@ -161,6 +161,18 @@ theorem isSerreSystem :
 def reflection (i : Fin 6) : Equiv.Perm (Fin 27 ⊕ Fin 27) :=
   Equiv.sumCongr (e6MinusculeReflection i) (e6MinusculeReflection i)
 
+/-- A simple reflection acts on the `V(ϖ₁)` block by the minuscule reflection. -/
+@[simp]
+theorem reflection_inl (i : Fin 6) (a : Fin 27) :
+    reflection i (.inl a) = .inl (e6MinusculeReflection i a) :=
+  (rfl)
+
+/-- A simple reflection acts on the `V(ϖ₆)` block by the minuscule reflection. -/
+@[simp]
+theorem reflection_inr (i : Fin 6) (a : Fin 27) :
+    reflection i (.inr a) = .inr (e6MinusculeReflection i a) :=
+  (rfl)
+
 /-- A simple reflection negates the corresponding simple-coroot coordinate of every doubled
 minuscule weight. -/
 @[simp]
@@ -181,6 +193,14 @@ has the negative structure constants. -/
 def summandSign : Fin 27 ⊕ Fin 27 → ℤ
   | .inl _ => 1
   | .inr _ => -1
+
+/-- The structure constants of the `V(ϖ₁)` block are those of the minuscule representation. -/
+@[simp]
+theorem summandSign_inl (a : Fin 27) : summandSign (.inl a) = 1 := (rfl)
+
+/-- The structure constants of the `V(ϖ₆)` block are the negatives of the minuscule ones. -/
+@[simp]
+theorem summandSign_inr (a : Fin 27) : summandSign (.inr a) = -1 := (rfl)
 
 /-- The Cartan generators are diagonal with the doubled minuscule weights on the diagonal. -/
 @[simp]

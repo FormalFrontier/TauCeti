@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Equalizer
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.RootSubgroup.Scheme.Generated.Basic
+import TauCeti.AlgebraicGeometry.AffineGroupScheme.HopfSpec
 
 /-!
 # Homomorphisms out of the generated Chevalley carrier are determined by the root subgroups
@@ -94,27 +95,11 @@ theorem kostantGeneratedGroupScheme_hom_ext {Y : _root_.CommHopfAlgCat.{0} ℤ}
     (hφψ : ∀ i, kostantRootSubgroupToGenerated e h ρ M hM hnil b i ≫ φ =
       kostantRootSubgroupToGenerated e h ρ M hM hnil b i ≫ ψ) :
     φ = ψ := by
-  have hff := AlgebraicGeometry.hopfSpec.fullyFaithful (R := CommRingCat.of ℤ)
-  have key : ∀ i, (hff.preimage φ).unop ≫
-      kostantRootSubgroupGeneratedCoordinateMap e h ρ M hM hnil b i =
-      (hff.preimage ψ).unop ≫
-        kostantRootSubgroupGeneratedCoordinateMap e h ρ M hM hnil b i := by
-    intro i
-    have hmap : (hopfSpec (CommRingCat.of ℤ)).map
-          ((kostantRootSubgroupGeneratedCoordinateMap e h ρ M hM hnil b i).op ≫
-            hff.preimage φ) =
-        (hopfSpec (CommRingCat.of ℤ)).map
-          ((kostantRootSubgroupGeneratedCoordinateMap e h ρ M hM hnil b i).op ≫
-            hff.preimage ψ) := by
-      rw [Functor.map_comp, Functor.map_comp, hff.map_preimage, hff.map_preimage]
-      have hi := hφψ i
-      rw [kostantRootSubgroupToGenerated_def, Category.assoc, Category.assoc] at hi
-      exact (cancel_epi (eqToHom (AdditiveGroup.groupScheme_def ℤ))).1 hi
-    have hop := hff.map_injective hmap
-    simpa using congrArg Quiver.Hom.unop hop
-  have hpre := kostantGeneratedCoordinate_hom_ext e h ρ M hM hnil b
-    (hff.preimage φ).unop (hff.preimage ψ).unop key
-  have hopeq : hff.preimage φ = hff.preimage ψ := Quiver.Hom.unop_inj hpre
-  rw [← hff.map_preimage φ, ← hff.map_preimage ψ, hopeq]
+  refine CommHopfAlgCat.hom_ext_of_preimage_unop_eq φ ψ
+    (kostantGeneratedCoordinate_hom_ext e h ρ M hM hnil b _ _ fun i => ?_)
+  refine CommHopfAlgCat.preimage_unop_comp_eq_of_hopfSpec_map_comp_eq _ φ ψ ?_
+  have hi := hφψ i
+  rw [kostantRootSubgroupToGenerated_def, Category.assoc, Category.assoc] at hi
+  exact (cancel_epi (eqToHom (AdditiveGroup.groupScheme_def ℤ))).1 hi
 
 end TauCeti.UniversalEnvelopingAlgebra

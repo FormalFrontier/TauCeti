@@ -97,6 +97,9 @@ def toSet (D : HeckeCoset Δ H₁ H₂) : Set G :=
 /-- A representative `g : Δ` of a double coset (via `Quotient.out`). -/
 noncomputable def rep (D : HeckeCoset Δ H₁ H₂) : Δ := Quotient.out D
 
+/-- The chosen representative of a double coset is its `Quotient.out` representative. -/
+theorem rep_def (D : HeckeCoset Δ H₁ H₂) : D.rep = Quotient.out D := (rfl)
+
 @[simp] lemma mk_rep (D : HeckeCoset Δ H₁ H₂) : mk H₁ H₂ D.rep = D := Quotient.out_eq' D
 
 /-- Two elements of `Δ` define the same `HeckeCoset` iff their double cosets coincide. -/
@@ -337,7 +340,8 @@ theorem mem_of_mem_doubleCoset {Δ : Submonoid G} {H₁ H₂ : Subgroup G} [IsHe
 commensurates `H₂`, which is commensurable with `H₁`. -/
 noncomputable instance {Δ : Submonoid G} {H₁ H₂ : Subgroup G} [IsHeckeTriple Δ H₁ H₂]
     (g : Δ) : Fintype (DecompQuotient H₁ H₂ (g : G)) :=
-  Subgroup.fintypeOfIndexNeZero (IsHeckeTriple.commensurable_conjAct_right g).1
+  Subgroup.fintypeOfIndexNeZero
+    (IsHeckeTriple.commensurable_conjAct_right g).1.relIndex_ne_zero
 
 /-- Conjugating the *left* subgroup by the inverse of an element of `Δ` gives a subgroup
 commensurable with the right one. This is `commensurable_conjAct_right` on the other flank:
@@ -361,7 +365,8 @@ compete with the one above. -/
 instance {Δ : Submonoid G} {H₁ H₂ : Subgroup G} [IsHeckeTriple Δ H₁ H₂] (g : Δ) :
     Finite (DecompQuotient H₂ H₁ (g : G)⁻¹) :=
   @Finite.of_fintype _
-    (Subgroup.fintypeOfIndexNeZero (IsHeckeTriple.commensurable_conjAct_inv_left g).1)
+    (Subgroup.fintypeOfIndexNeZero
+      (IsHeckeTriple.commensurable_conjAct_inv_left g).1.relIndex_ne_zero)
 
 end IsHeckeTriple
 

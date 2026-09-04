@@ -7,8 +7,6 @@ module
 
 public import TauCeti.LinearAlgebra.RootSystem.Coxeter.Matrix
 
-public section
-
 /-!
 # The order of a product of two simple reflections
 
@@ -73,6 +71,8 @@ braid relations of `weylCoxeterSystem`. The rank-two computation is Bourbaki, *L
 Algebras*, Chapters 4--6, Ch. VI, §1.3, and Humphreys, *Introduction to Lie Algebras and
 Representation Theory*, §9.
 -/
+
+public section
 
 namespace TauCeti
 

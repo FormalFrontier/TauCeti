@@ -5,7 +5,14 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.Algebra.AlgebraicGroup.Borel.Basic
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.UpperTriangular.Basic
+public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.UpperTriangular.SmoothConnected
+public import TauCeti.Algebra.AlgebraicGroup.Solvable.UpperTriangular
+import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.Coordinate.BaseChange
+import TauCeti.Algebra.AlgebraicGroup.HopfIdeal.Points.Separation
+import TauCeti.Algebra.AlgebraicGroup.Smooth.GeometricallyReduced
+import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Bruhat
 
 /-!
 # The upper-triangular Borel subgroup scheme of `GL₂`
@@ -35,6 +42,8 @@ arbitrary commutative base ring.
 * `TauCeti.GeneralLinear.Borel.coordinateHopfAlgebra`: the quotient coordinate Hopf algebra.
 * `TauCeti.GeneralLinear.Borel.groupScheme`: the resulting closed subgroup scheme of `GL₂`.
 * `TauCeti.GeneralLinear.Borel.inclusion`: its closed immersion into the named `GL₂` group scheme.
+* `TauCeti.GeneralLinear.Borel.isBorel_definingHopfIdeal`: the upper-triangular subgroup is a
+  Borel subgroup over every field.
 
 ## References
 
@@ -167,5 +176,150 @@ theorem finiteTypeCoordinateHopfAlgebra_obj :
 /-- The structural morphism of the Borel subgroup scheme is locally of finite type. -/
 instance locallyOfFiniteType_groupScheme :
     AlgebraicGeometry.LocallyOfFiniteType (groupScheme R).X.hom := by infer_instance
+
+/-- The general-linear base-change isomorphism carries the scalar extension of the
+upper-triangular defining ideal to the upper-triangular defining ideal over the new field. -/
+private theorem map_baseChangeHopfIdeal_definingHopfIdeal
+    (k K : Type u) [Field k] [Field K] [Algebra k K] :
+    (CommHopfAlgCat.baseChangeHopfIdeal (K := K) (definingHopfIdeal k)).map
+        (GeneralLinear.coordinateHopfAlgebraBaseChangeIso k K 2).hom.hom =
+      definingHopfIdeal K := by
+  refine CommHopfAlgCat.map_baseChangeHopfIdeal_of_toIdeal_eq_span
+    (definingHopfIdeal k) (definingHopfIdeal K)
+    (GeneralLinear.coordinateHopfAlgebraBaseChangeIso k K 2)
+    (definingHopfIdeal_toIdeal k) (definingHopfIdeal_toIdeal K) ?_
+  simp only [Set.image_singleton]
+  congr 1
+  rw [lowerLeftCoordinate_def, lowerLeftCoordinate_def]
+  simpa using GeneralLinear.coordinateHopfAlgebraBaseChangeIso_hom_apply.{u, u}
+    k K 2 1 (MvPolynomial.X ((1 : Fin 2), (0 : Fin 2)))
+
+section Field
+
+variable {k : Type u} [Field k]
+
+/-- The smooth, geometrically connected, geometrically solvable maximality condition over one
+field. This local predicate is used to transport the geometric Borel condition across the
+canonical base-change isomorphism for `GL₂`. -/
+private def isBorelOverField (F : Type u) [Field F]
+    (H : FiniteTypeCommHopfAlgCat.{u, u} F) (I : HopfIdeal F H.obj) : Prop :=
+  Minimal (fun J : HopfIdeal F H.obj ↦
+    smoothCommHopfAlgProperty F (FiniteTypeCommHopfAlgCat.quotient H J).obj ∧
+      geometricallyConnectedCommHopfAlgProperty F
+        (FiniteTypeCommHopfAlgCat.quotient H J).obj ∧
+      geometricallySolvablePointsCommHopfAlgProperty F
+        (FiniteTypeCommHopfAlgCat.quotient H J).obj) I
+
+private theorem isBorelOverField_iff (F : Type u) [Field F]
+    (H : FiniteTypeCommHopfAlgCat.{u, u} F) (I : HopfIdeal F H.obj) :
+    isBorelOverField F H I ↔
+      smoothCommHopfAlgProperty F (FiniteTypeCommHopfAlgCat.quotient H I).obj ∧
+        geometricallyConnectedCommHopfAlgProperty F
+          (FiniteTypeCommHopfAlgCat.quotient H I).obj ∧
+        geometricallySolvablePointsCommHopfAlgProperty F
+          (FiniteTypeCommHopfAlgCat.quotient H I).obj ∧
+        ∀ J : HopfIdeal F H.obj,
+          smoothCommHopfAlgProperty F (FiniteTypeCommHopfAlgCat.quotient H J).obj →
+            geometricallyConnectedCommHopfAlgProperty F
+              (FiniteTypeCommHopfAlgCat.quotient H J).obj →
+            geometricallySolvablePointsCommHopfAlgProperty F
+              (FiniteTypeCommHopfAlgCat.quotient H J).obj →
+            J ≤ I → I ≤ J := by
+  constructor
+  · rintro ⟨⟨hsmooth, hconnected, hsolvable⟩, hmax⟩
+    exact ⟨hsmooth, hconnected, hsolvable,
+      fun J hJsmooth hJconnected hJsolvable hJI ↦
+        hmax ⟨hJsmooth, hJconnected, hJsolvable⟩ hJI⟩
+  · rintro ⟨hsmooth, hconnected, hsolvable, hmax⟩
+    exact ⟨⟨hsmooth, hconnected, hsolvable⟩,
+      fun J hJ hJI ↦ hmax J hJ.1 hJ.2.1 hJ.2.2 hJI⟩
+
+/-- Over a field, the upper-triangular subgroup of `GL₂` is maximal among smooth geometrically
+connected solvable closed subgroups. -/
+private theorem isBorelOverField_definingHopfIdeal :
+    isBorelOverField k
+      ⟨GeneralLinear.coordinateHopfAlgebra k 2,
+        (finiteTypeCommHopfAlgProperty_iff _).2 inferInstance⟩
+      (definingHopfIdeal k) := by
+  rw [isBorelOverField_iff]
+  refine ⟨UpperTriangular.smoothCommHopfAlgProperty_coordinateHopfAlgebra 2 k,
+    UpperTriangular.geometricallyConnectedCommHopfAlgProperty_coordinateHopfAlgebra 2 k,
+    UpperTriangular.geometricallySolvablePointsCommHopfAlgProperty_coordinateHopfAlgebra k 2,
+    ?_⟩
+  intro I hIsmooth _ hIsolvable hIB
+  let H := GeneralLinear.coordinateHopfAlgebra k 2
+  let K := AlgebraicClosure k
+  let P := GeneralLinear.hopfIdealPointsSubgroup 2 I K
+  have hBP : GL2Borel K ≤ P := by
+    -- `GL2Borel` abbreviates this upper-triangular subgroup; no propositional equality lemma is
+    -- retained solely to restate that definitional equality.
+    change upperTriangularGroup (Fin 2) K ≤ P
+    rw [← UpperTriangular.hopfIdealPointsSubgroup_eq k 2]
+    exact GeneralLinear.hopfIdealPointsSubgroup_le_of_le 2 hIB K
+  let e := GeneralLinear.hopfIdealPointsSubgroupMulEquiv 2 I (CommAlgCat.of k K)
+  rw [geometricallySolvablePointsCommHopfAlgProperty_iff] at hIsolvable
+  let _ : Group.IsSolvable
+      (HopfAlgebra.points (R := k) (H := CommHopfAlgCat.quotient H I)
+        (CommAlgCat.of k K)) := hIsolvable
+  let _ : Group.IsSolvable P :=
+    Group.isSolvable_of_isSolvable_injective (f := e.symm.toMonoidHom) e.symm.injective
+  have hPB : P ≤ GL2Borel K := GL2Borel.le_of_isSolvable K P hBP
+  let _ : IsReduced (CommHopfAlgCat.quotient H I) :=
+    ((smoothCommHopfAlgProperty_iff_geometricallyReduced k
+      (CommHopfAlgCat.quotient H I)).mp hIsmooth).isReduced
+  apply HopfIdeal.le_of_quotientPointsSubgroup_le (K := K)
+  intro q hq
+  have hqP : GeneralLinear.pointsMulEquiv 2 q ∈ P :=
+    GeneralLinear.pointsMulEquiv_mem_hopfIdealPointsSubgroup 2 I K q hq
+  have hqB : GeneralLinear.pointsMulEquiv 2 q ∈
+      GeneralLinear.hopfIdealPointsSubgroup 2 (definingHopfIdeal k) K := by
+    rw [UpperTriangular.hopfIdealPointsSubgroup_eq k 2]
+    exact hPB hqP
+  rw [GeneralLinear.mem_hopfIdealPointsSubgroup_iff] at hqB
+  rw [CommHopfAlgCat.mem_quotientPointsSubgroup_iff]
+  simpa only [MulEquiv.symm_apply_apply] using hqB
+
+/-- **The upper-triangular subgroup scheme of `GL₂` is a Borel subgroup over every field.**
+Its base change to an algebraic closure is smooth, connected, solvable, and maximal among closed
+subgroups with those properties. -/
+theorem isBorel_definingHopfIdeal :
+    HopfIdeal.IsBorel k (GeneralLinear.coordinateHopfAlgebra k 2) (definingHopfIdeal k) := by
+  simp only [HopfIdeal.isBorel_iff]
+  let K := AlgebraicClosure k
+  let H : FiniteTypeCommHopfAlgCat.{u, u} k :=
+    ⟨GeneralLinear.coordinateHopfAlgebra k 2,
+      (finiteTypeCommHopfAlgProperty_iff _).2 inferInstance⟩
+  let H' := FiniteTypeCommHopfAlgCat.baseChange (K := K) H
+  let L : FiniteTypeCommHopfAlgCat.{u, u} K :=
+    ⟨GeneralLinear.coordinateHopfAlgebra K 2,
+      (finiteTypeCommHopfAlgProperty_iff _).2 inferInstance⟩
+  let e : H' ≅ L := ObjectProperty.isoMk _
+    (GeneralLinear.coordinateHopfAlgebraBaseChangeIso k K 2)
+  let I' := CommHopfAlgCat.baseChangeHopfIdeal (K := K) (definingHopfIdeal k)
+  rw [← isBorelOverField_iff K H' I']
+  have htarget : isBorelOverField K L (definingHopfIdeal K) := by
+    simpa only [L] using (isBorelOverField_definingHopfIdeal (k := K))
+  have hpull : isBorelOverField K H'
+      ((definingHopfIdeal K).comapOfSurjective
+        (FiniteTypeCommHopfAlgCat.toBialgHom e.hom)
+        (ConcreteCategory.bijective_of_isIso e.hom).2) :=
+    FiniteTypeCommHopfAlgCat.minimal_quotientProperty_comapOfIso
+      (H := H') (K := L)
+      ((smoothCommHopfAlgProperty K ⊓
+        (geometricallyConnectedCommHopfAlgProperty K ⊓
+          geometricallySolvablePointsCommHopfAlgProperty K)).inverseImage
+        (forget₂ (FiniteTypeCommHopfAlgCat.{u, u} K)
+          (_root_.CommHopfAlgCat.{u} K))) (definingHopfIdeal K) htarget e
+  let f := FiniteTypeCommHopfAlgCat.toBialgHom e.hom
+  have hf : Function.Bijective f := ConcreteCategory.bijective_of_isIso e.hom
+  have hmap : I'.map f = definingHopfIdeal K := by
+    exact map_baseChangeHopfIdeal_definingHopfIdeal k K
+  have hcomap :
+      (definingHopfIdeal K).comapOfSurjective f hf.2 = I' := by
+    rw [← hmap]
+    exact HopfIdeal.comapOfSurjective_map_of_bijective I' f hf
+  rwa [hcomap] at hpull
+
+end Field
 
 end TauCeti.GeneralLinear.Borel

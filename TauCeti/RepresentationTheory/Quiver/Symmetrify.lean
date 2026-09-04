@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Combinatorics.Quiver.Symmetric
-public import Mathlib.Data.Finite.Defs
+public import Mathlib.Basic.Finite.Defs
 
 /-!
 # Symmetrified quivers

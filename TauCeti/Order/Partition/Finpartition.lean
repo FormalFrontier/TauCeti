@@ -10,12 +10,46 @@ public import Mathlib.Order.Partition.Finpartition
 /-!
 # Finite partition helpers
 
-This file contains general-purpose facts about refinements of finite partitions.
+This file contains general-purpose constructions and facts about finite partitions: the partition
+of the top element into an element and its complement, cardinality bounds for common refinements,
+and the behavior of intersections of parts under refinement.
 -/
 
 public section
 
 namespace Finpartition
+
+/-- The finite partition of the top element into an element and its complement, omitting either
+part when it is bottom. -/
+noncomputable def bipartition {α : Type*} [BooleanAlgebra α] [DecidableEq α] (s : α) :
+    Finpartition (⊤ : α) :=
+  (Finpartition.ofPairwiseDisjoint {s, sᶜ} (by
+    simp [Set.pairwiseDisjoint_insert, disjoint_compl_right])).copy (by simp)
+
+@[simp]
+theorem parts_bipartition {α : Type*} [BooleanAlgebra α] [DecidableEq α] (s : α) :
+    (bipartition s).parts = ({s, sᶜ} : Finset α).erase ⊥ :=
+  by simp [bipartition]
+
+/-- A bipartition has at most two parts. -/
+theorem card_parts_bipartition_le {α : Type*} [BooleanAlgebra α] [DecidableEq α] (s : α) :
+    (bipartition s).parts.card ≤ 2 := by
+  rw [parts_bipartition]
+  exact Finset.card_erase_le.trans (Finset.card_insert_le _ _ |>.trans_eq (by simp))
+
+/-- A non-bottom element is a part of its bipartition. -/
+theorem mem_bipartition_of_ne_bot {α : Type*} [BooleanAlgebra α] [DecidableEq α] {s : α}
+    (hs : s ≠ ⊥) :
+    s ∈ (bipartition s).parts := by
+  simp [parts_bipartition, hs]
+
+/-- The number of parts in a common refinement is at most the product of the two part counts. -/
+theorem card_parts_inf_le_mul {α : Type*} [DistribLattice α] [OrderBot α] [DecidableEq α]
+    {a : α} (P Q : Finpartition a) :
+    (P ⊓ Q).parts.card ≤ P.parts.card * Q.parts.card := by
+  rw [Finpartition.parts_inf]
+  exact Finset.card_erase_le.trans
+    (Finset.card_image_le.trans_eq (Finset.card_product _ _))
 
 variable {Ω : Type*} {u : Set Ω}
 

@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.AlgebraicGeometry.EllipticCurve.Affine.Point
+public import TauCeti.AlgebraicGeometry.EllipticCurve.Affine.CoordinateRingMap
 public import Mathlib.Algebra.CharP.Algebra
 public import Mathlib.Algebra.Polynomial.Expand
 
@@ -108,15 +108,6 @@ theorem relativeFrobenius_root :
       AdjoinRoot.root W.polynomial ^ p :=
   AdjoinRoot.lift_root (eval₂_relativeFrobenius_eq_zero p W)
 
-/-- Mathlib's base-change map on a coordinate ring is `AdjoinRoot.map` along the coefficientwise
-map of bivariate polynomials, so `AdjoinRoot.map_of` and `AdjoinRoot.map_root` describe it on the
-two coordinates. -/
-private theorem map_eq_adjoinRootMap {S : Type*} [CommRing S] (f : R →+* S) :
-    _root_.WeierstrassCurve.Affine.CoordinateRing.map W f =
-      AdjoinRoot.map (mapRingHom f) W.polynomial (W.map f).polynomial
-        (dvd_of_eq (_root_.WeierstrassCurve.Affine.map_polynomial W f)) :=
-  rfl
-
 /-- **The absolute Frobenius factors through the twist.** Mathlib's base-change map
 `W.CoordinateRing →+* (W.map (frobenius R p)).CoordinateRing` is semilinear over the coefficient
 Frobenius; composing the relative Frobenius with it recovers the `p`-power map of
@@ -125,13 +116,16 @@ theorem relativeFrobenius_comp_map :
     (relativeFrobenius p W).toRingHom.comp
         (_root_.WeierstrassCurve.Affine.CoordinateRing.map W (frobenius R p)) =
       frobenius W.CoordinateRing p := by
-  rw [map_eq_adjoinRootMap]
   refine AdjoinRoot.ringHom_ext ?_ ?_
-  · apply RingHom.ext
-    intro g
-    simp only [AlgHom.toRingHom_eq_coe, RingHom.comp_apply, AdjoinRoot.map_of,
-      Polynomial.coe_mapRingHom, AlgHom.coe_toRingHom, frobenius_def, relativeFrobenius_of,
-      expand_map_frobenius, map_pow]
+  · apply Polynomial.ringHom_ext
+    · intro r
+      -- Unfold composition at `C r`, identify its class with `algebraMap r`, and unfold Frobenius.
+      change relativeFrobenius p W
+          (map W (frobenius R p) (algebraMap R W.CoordinateRing r)) =
+        algebraMap R W.CoordinateRing r ^ p
+      rw [map_algebraMap]
+      simp [frobenius_def]
+    · simp [frobenius_def]
   · simp [frobenius_def]
 
 /-- The pointwise form of `relativeFrobenius_comp_map`. -/
@@ -210,13 +204,16 @@ theorem iterateRelativeFrobenius_comp_map (n : ℕ) :
         (_root_.WeierstrassCurve.Affine.CoordinateRing.map W
           (iterateFrobenius R p n)) =
       iterateFrobenius W.CoordinateRing p n := by
-  rw [map_eq_adjoinRootMap]
   refine AdjoinRoot.ringHom_ext ?_ ?_
-  · apply RingHom.ext
-    intro g
-    simp only [AlgHom.toRingHom_eq_coe, RingHom.comp_apply, AdjoinRoot.map_of,
-      Polynomial.coe_mapRingHom, AlgHom.coe_toRingHom, iterateFrobenius_def,
-      iterateRelativeFrobenius_of, expand_map_iterateFrobenius, map_pow]
+  · apply Polynomial.ringHom_ext
+    · intro r
+      -- Unfold composition at `C r`, identify its class with `algebraMap r`, and unfold Frobenius.
+      change iterateRelativeFrobenius p W n
+          (map W (iterateFrobenius R p n) (algebraMap R W.CoordinateRing r)) =
+        algebraMap R W.CoordinateRing r ^ p ^ n
+      rw [map_algebraMap]
+      simp [iterateFrobenius_def]
+    · simp [iterateFrobenius_def]
   · simp [iterateFrobenius_def]
 
 /-- Pointwise form of `iterateRelativeFrobenius_comp_map`. -/

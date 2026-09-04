@@ -68,9 +68,9 @@ private instance instEpiPointwiseQuotientPresheafProjectionApp
   intro y
   obtain ⟨z, rfl⟩ := (ConcreteCategory.bijective_of_isIso
     (eqToHom (pointwiseQuotientFunctor_obj H I hI
-      ((opOpEquivalence (CommAlgCat.{u} R)).functor.obj A)).symm)).surjective y
+      ((unopUnop (CommAlgCat.{u} R)).obj A)).symm)).surjective y
   obtain ⟨x, rfl⟩ := pointwiseQuotientMk_surjective H I hI
-    ((opOpEquivalence (CommAlgCat.{u} R)).functor.obj A) z
+    ((unopUnop (CommAlgCat.{u} R)).obj A) z
   exact ⟨x, rfl⟩
 
 private instance instEpiPointwiseQuotientPresheafProjection

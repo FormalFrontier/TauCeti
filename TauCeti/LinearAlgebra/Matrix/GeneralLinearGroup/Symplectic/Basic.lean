@@ -496,6 +496,40 @@ theorem negativeLongRootTransvectionHom_apply (i : Fin m) (c : Multiplicative R)
       negativeLongRootTransvectionUnit i (Multiplicative.toAdd c) :=
   (rfl)
 
+/-- Adding parameters multiplies positive long-root transvections. -/
+@[simp]
+theorem positiveLongRootTransvectionUnit_add (i : Fin m) (c d : R) :
+    positiveLongRootTransvectionUnit i (c + d) =
+      positiveLongRootTransvectionUnit i c * positiveLongRootTransvectionUnit i d := by
+  simpa only [positiveLongRootTransvectionHom_apply, toAdd_ofAdd, toAdd_mul] using
+    ((positiveLongRootTransvectionHom (R := R) i).map_mul
+      (Multiplicative.ofAdd c) (Multiplicative.ofAdd d))
+
+/-- Inverting a positive long-root transvection negates its parameter. -/
+@[simp]
+theorem positiveLongRootTransvectionUnit_inv (i : Fin m) (c : R) :
+    (positiveLongRootTransvectionUnit i c)⁻¹ =
+      positiveLongRootTransvectionUnit i (-c) := by
+  simpa only [positiveLongRootTransvectionHom_apply, toAdd_ofAdd, toAdd_inv] using
+    (map_inv (positiveLongRootTransvectionHom (R := R) i) (Multiplicative.ofAdd c)).symm
+
+/-- Adding parameters multiplies negative long-root transvections. -/
+@[simp]
+theorem negativeLongRootTransvectionUnit_add (i : Fin m) (c d : R) :
+    negativeLongRootTransvectionUnit i (c + d) =
+      negativeLongRootTransvectionUnit i c * negativeLongRootTransvectionUnit i d := by
+  simpa only [negativeLongRootTransvectionHom_apply, toAdd_ofAdd, toAdd_mul] using
+    ((negativeLongRootTransvectionHom (R := R) i).map_mul
+      (Multiplicative.ofAdd c) (Multiplicative.ofAdd d))
+
+/-- Inverting a negative long-root transvection negates its parameter. -/
+@[simp]
+theorem negativeLongRootTransvectionUnit_inv (i : Fin m) (c : R) :
+    (negativeLongRootTransvectionUnit i c)⁻¹ =
+      negativeLongRootTransvectionUnit i (-c) := by
+  simpa only [negativeLongRootTransvectionHom_apply, toAdd_ofAdd, toAdd_inv] using
+    (map_inv (negativeLongRootTransvectionHom (R := R) i) (Multiplicative.ofAdd c)).symm
+
 /-- Positive long-root transvections are natural in the coefficient ring. -/
 @[simp]
 theorem map_positiveLongRootTransvectionUnit {S : Type*} [CommRing S]
@@ -1026,6 +1060,26 @@ theorem hom_positiveLong (i : Fin m) :
 @[simp]
 theorem hom_negativeLong (i : Fin m) :
     (RootSubgroupIndex.negativeLong i).hom (R := R) = negativeLongRootTransvectionHom i := by
+  rw [hom]
+
+/-- The difference-root constructor selects the corresponding difference-root homomorphism. -/
+@[simp]
+theorem hom_difference (i j : Fin m) (hij : i ≠ j) :
+    (RootSubgroupIndex.difference i j hij).hom (R := R) = differenceShortRootHom hij := by
+  rw [hom]
+
+/-- The positive-sum constructor selects the corresponding positive-sum homomorphism. -/
+@[simp]
+theorem hom_positiveSum (i j : Fin m) (hij : i < j) :
+    (RootSubgroupIndex.positiveSum i j hij).hom (R := R) =
+      positiveSumShortRootHom hij.ne := by
+  rw [hom]
+
+/-- The negative-sum constructor selects the corresponding negative-sum homomorphism. -/
+@[simp]
+theorem hom_negativeSum (i j : Fin m) (hij : i < j) :
+    (RootSubgroupIndex.negativeSum i j hij).hom (R := R) =
+      negativeSumShortRootHom hij.ne := by
   rw [hom]
 
 /-- The short constructor selects its family's short-root homomorphism. -/

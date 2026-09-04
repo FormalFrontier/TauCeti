@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Analysis.Complex.Conformal.Crosscut.Inside
 public import TauCeti.Analysis.Complex.Conformal.Crosscut.SmallJordanCurve
+import TauCeti.Topology.JordanCurve.Separation
 public import TauCeti.Analysis.Complex.Conformal.RiemannMapping.Existence
 public import TauCeti.Topology.ClusterSet
 import TauCeti.Analysis.Complex.Conformal.Crosscut.Basic
@@ -14,23 +15,10 @@ import TauCeti.Analysis.Normed.Module.Ball.Cut
 import TauCeti.Topology.MetricSpace.Cut
 
 /-!
-# Carathéodory's continuity theorem, on plane separation
+# Carathéodory's continuity theorem
 
 A conformal map of a disc onto a bounded region whose boundary is a Jordan curve extends
-continuously to the closed disc. This file proves that statement from one unproved input, the
-**plane separation** statement of the roadmap section of `TauCeti/Topology/FilledHull.lean`,
-
-> every point of a Jordan curve is a limit of points inside it, `J ⊆ closure (filledHull J \ J)`,
-
-carried through every theorem below as the explicit hypothesis
-
-> `hsep : ∀ J : Set ℂ, IsJordanCurve J → J ⊆ closure (filledHull J \ J)`.
-
-Nothing else is assumed: `hsep` is the *only* hypothesis here that the repository does not
-discharge, and no theorem below is stated in a shape that presumes anything further. What the file
-therefore establishes is that plane separation is the last gate on the continuity half of layer
-**L5**, and that the gate is a statement about Jordan curves alone — no longer one about conformal
-maps, crosscuts or boundary behaviour.
+continuously to the closed disc.
 
 ## The argument
 
@@ -52,13 +40,15 @@ length–area method:
   two discs, hence convex (`TauCeti.isConnected_ball_inter_ball`); the far side
   `ball c r \ closedBall ζ ρ` is connected by the Möbius reduction
   `TauCeti.isConnected_ball_diff_closedBall`;
-* **the curve has a point of its inside on the image crosscut.** The circular crosscut
-  `ball c r ∩ sphere ζ ρ` is nonempty (`TauCeti.nonempty_ball_inter_sphere`), its image lies on `J`,
-  and it lies in the image of the disc; `hsep` is read at that one point, and only there.
+* **a Jordan curve minus a point is preconnected.** At a point of the circular crosscut, the curve
+  `J` minus that point is path-connected by
+  `TauCeti.IsJordanCurve.isPathConnected_sdiff_singleton`, so the winding-number two-sidedness
+  theorem applies directly. No plane-separation hypothesis is needed.
 
-`TauCeti.image_inter_ball_subset_filledHull_of_diam_lt` then puts the *near* side inside
-`filledHull J` — the far side cannot be the enclosed one, being wider than `J` — and
-`TauCeti.diam_le_diam_of_subset_filledHull` reads that enclosure as the width bound
+`TauCeti.image_inter_ball_subset_filledHull_of_diam_lt_of_isPreconnected_sdiff_singleton`
+then puts the *near* side inside `filledHull J` — the far side cannot be the enclosed one, being
+wider than `J` —
+and `TauCeti.diam_le_diam_of_subset_filledHull` reads that enclosure as the width bound
 `diam (f '' (ball c r ∩ ball ζ ρ)) ≤ diam J ≤ ε`. Since this holds at every boundary point, the
 extension theorem `TauCeti.exists_continuousOn_closure_eqOn_of_isBounded` assembles the continuous
 extension on `closedBall c r`.
@@ -81,10 +71,7 @@ which arc of the image boundary the near side clings to.
 ## Roadmap role
 
 This is layer **L5** of `TauCetiRoadmap/ConformalMapping/README.md`, the Jordan-domain case of the
-Carathéodory boundary correspondence, reduced to its one open frontier item. `ConformalMapping`'s
-status record names plane separation for Jordan curves as that item and asks that *how much of it
-the boundary work needs* be settled first; the answer this file gives is `hsep`, at a single point
-of a single curve at each radius.
+Carathéodory boundary correspondence.
 
 Layer L5 is absent from
 [mathlib4#33505](https://github.com/leanprover-community/mathlib4/pull/33505), the in-progress
@@ -125,21 +112,18 @@ variable {f : ℂ → ℂ} {c ζ : ℂ} {r : ℝ}
 
 /-- **The image of a crosscut neighbourhood can be made arbitrarily small.** Let `f` be holomorphic
 and injective on `ball c r`, with bounded image whose boundary is a Jordan curve, and let `ζ` lie on
-the bounding circle. Assuming the plane-separation statement `hsep`, for every `ε > 0` there is a
-crosscut radius `ρ > 0` with
+the bounding circle. For every `ε > 0` there is a crosscut radius `ρ > 0` with
 
 > `Metric.diam (f '' (ball c r ∩ ball ζ ρ)) ≤ ε`.
 
-This is the quantitative heart of the file, and the only place `hsep` is used: it is read once, at
-the image of a point of the circular crosscut `ball c r ∩ sphere ζ ρ`, which lies both on the small
-curve `J` and in the image of the disc. The inputs the enclosure theorem
-`TauCeti.image_inter_ball_subset_filledHull_of_diam_lt` isolates — connectedness of each of the two
-sides of the cut, nonemptiness of the crosscut, and a far side wider than `J` — are all discharged
-here. -/
+The preconnectedness hypothesis on the curve `J` minus a point, needed by the enclosure theorem
+`TauCeti.image_inter_ball_subset_filledHull_of_diam_lt_of_isPreconnected_sdiff_singleton`, is
+supplied by `TauCeti.IsJordanCurve.isPathConnected_sdiff_singleton`. Connectedness of both cut
+sides and a far
+side wider than `J` are discharged here. -/
 theorem exists_diam_image_ball_inter_ball_le_of_isJordanCurve_frontier
     (hr : 0 < r) (hf : DifferentiableOn ℂ f (ball c r)) (hinj : InjOn f (ball c r))
     (hb : IsBounded (f '' ball c r)) (hJf : IsJordanCurve (frontier (f '' ball c r)))
-    (hsep : ∀ J : Set ℂ, IsJordanCurve J → J ⊆ closure (filledHull J \ J))
     (hζ : dist ζ c = r) {ε : ℝ} (hε : 0 < ε) :
     ∃ ρ > 0, diam (f '' (ball c r ∩ ball ζ ρ)) ≤ ε := by
   -- the image of the disc has two distinct points, so the far side does not degenerate
@@ -166,19 +150,18 @@ theorem exists_diam_image_ball_inter_ball_le_of_isJordanCurve_frontier
     have h₁ : diam J ≤ d / 2 := hdiamJ.trans (min_le_right _ _)
     have h₂ := hfar ρ hρmem.2.le
     linarith
-  -- the separation hypothesis, read at the image of one point of the circular crosscut
   obtain ⟨z, hz⟩ := nonempty_ball_inter_sphere hζ hρmem.1 hρr
-  have hp : f z ∈ f '' ball c r := mem_image_of_mem f hz.1
-  have hin : f z ∈ closure (filledHull J \ J) := hsep J hJ (hγ (mem_image_of_mem f hz))
   have hAc : IsPreconnected (ball c r ∩ ball ζ ρ) :=
     (isConnected_ball_inter_ball hr hρmem.1
       (by rw [dist_comm, hζ]; linarith [hρmem.1])).isPreconnected
   have hBc : IsPreconnected (ball c r \ closedBall ζ ρ) :=
     (isConnected_ball_diff_closedBall hζ hρmem.1 hρr).isPreconnected
+  have hKp : IsPreconnected (J \ {f z}) :=
+    (hJ.isPathConnected_sdiff_singleton (f z)).isConnected.isPreconnected
   calc diam (f '' (ball c r ∩ ball ζ ρ))
       ≤ diam J := diam_le_diam_of_subset_filledHull hJb
-        (image_inter_ball_subset_filledHull_of_diam_lt isOpen_ball hf hinj hAc hBc hJb hγ
-          hJsub hlt hp hin)
+        (image_inter_ball_subset_filledHull_of_diam_lt_of_isPreconnected_sdiff_singleton
+          isOpen_ball hρmem.1 hf hinj hAc hBc hJ.isCompact.isClosed hJb hγ hJsub hz hKp hlt)
     _ ≤ ε := hdiamJ.trans (min_le_left _ _)
 
 /-! ## The boundary limit -/
@@ -190,12 +173,11 @@ neighbourhood have images within its diameter of each other by `Metric.dist_le_d
 theorem subsingleton_clusterSetOn_of_isJordanCurve_frontier
     (hr : 0 < r) (hf : DifferentiableOn ℂ f (ball c r)) (hinj : InjOn f (ball c r))
     (hb : IsBounded (f '' ball c r)) (hJf : IsJordanCurve (frontier (f '' ball c r)))
-    (hsep : ∀ J : Set ℂ, IsJordanCurve J → J ⊆ closure (filledHull J \ J))
     (hζ : dist ζ c = r) :
     (clusterSetOn f (ball c r) ζ).Subsingleton := by
   refine subsingleton_clusterSetOn_of_forall_exists fun ε hε => ?_
   obtain ⟨ρ, hρ, hdiam⟩ :=
-    exists_diam_image_ball_inter_ball_le_of_isJordanCurve_frontier hr hf hinj hb hJf hsep hζ hε
+    exists_diam_image_ball_inter_ball_le_of_isJordanCurve_frontier hr hf hinj hb hJf hζ hε
   exact ⟨ρ, hρ, fun _ hx _ hy => (dist_le_diam_of_mem
     (hb.subset (image_mono inter_subset_left))
     (mem_image_of_mem f hx) (mem_image_of_mem f hy)).trans hdiam⟩
@@ -212,17 +194,15 @@ closure of the disc. This is the pointwise form of
 theorem exists_tendsto_nhdsWithin_of_isJordanCurve_frontier
     (hr : 0 < r) (hf : DifferentiableOn ℂ f (ball c r)) (hinj : InjOn f (ball c r))
     (hb : IsBounded (f '' ball c r)) (hJf : IsJordanCurve (frontier (f '' ball c r)))
-    (hsep : ∀ J : Set ℂ, IsJordanCurve J → J ⊆ closure (filledHull J \ J))
     (hζ : dist ζ c = r) :
     ∃ v, Tendsto f (𝓝[ball c r] ζ) (𝓝 v) :=
   exists_tendsto_of_clusterSetOn_subsingleton hb.isCompact_closure
     (fun w hw => subset_closure ⟨w, hw, rfl⟩)
     (by rw [closure_ball c hr.ne']; exact mem_closedBall.mpr hζ.le)
-    (subsingleton_clusterSetOn_of_isJordanCurve_frontier hr hf hinj hb hJf hsep hζ)
+    (subsingleton_clusterSetOn_of_isJordanCurve_frontier hr hf hinj hb hJf hζ)
 
-/-- **Carathéodory's continuity theorem, on plane separation.** A holomorphic injection of a disc
-onto a bounded region whose boundary is a Jordan curve extends continuously to the closed disc,
-granted the plane-separation statement `hsep`.
+/-- **Carathéodory's continuity theorem.** A holomorphic injection of a disc
+onto a bounded region whose boundary is a Jordan curve extends continuously to the closed disc.
 
 Every boundary cluster set is a subsingleton by
 `TauCeti.subsingleton_clusterSetOn_of_isJordanCurve_frontier`, which is exactly what the extension
@@ -233,18 +213,17 @@ with bounded image; `Metric.frontier_ball` and `Metric.closure_ball` turn its `f
 No injectivity is claimed for the extension on the circle, and none is needed for continuity. -/
 theorem exists_continuousOn_closedBall_eqOn_of_isJordanCurve_frontier
     (hr : 0 < r) (hf : DifferentiableOn ℂ f (ball c r)) (hinj : InjOn f (ball c r))
-    (hb : IsBounded (f '' ball c r)) (hJf : IsJordanCurve (frontier (f '' ball c r)))
-    (hsep : ∀ J : Set ℂ, IsJordanCurve J → J ⊆ closure (filledHull J \ J)) :
+    (hb : IsBounded (f '' ball c r)) (hJf : IsJordanCurve (frontier (f '' ball c r))) :
     ∃ F : ℂ → ℂ, ContinuousOn F (closedBall c r) ∧ EqOn F f (ball c r) := by
   have h := exists_continuousOn_closure_eqOn_of_isBounded isOpen_ball hf.continuousOn hb
-    fun w hw => subsingleton_clusterSetOn_of_isJordanCurve_frontier hr hf hinj hb hJf hsep
+    fun w hw => subsingleton_clusterSetOn_of_isJordanCurve_frontier hr hf hinj hb hJf
       (mem_sphere.mp (by rwa [frontier_ball c hr.ne'] at hw))
   rwa [closure_ball c hr.ne'] at h
 
 /-! ## The Jordan-domain form -/
 
 /-- **A bounded Jordan domain is the image of the disc under a holomorphic bijection continuous up
-to the closed disc**, granted the plane-separation statement `hsep`. This is the form layer **L5**
+to the closed disc.** This is the form layer **L5**
 of `TauCetiRoadmap/ConformalMapping/README.md` states its milestone in, minus the injectivity of the
 boundary values.
 
@@ -259,8 +238,7 @@ The extension is named as the map itself rather than beside it: replacing the in
 its extension changes neither its holomorphy on the open disc nor its bijectivity onto `Ω`. -/
 theorem exists_continuousOn_closedBall_bijOn_ball_of_isJordanCurve_frontier {Ω : Set ℂ}
     (hΩo : IsOpen Ω) (hΩc : IsSimplyConnected Ω) (hΩb : IsBounded Ω)
-    (hΩJ : IsJordanCurve (frontier Ω))
-    (hsep : ∀ J : Set ℂ, IsJordanCurve J → J ⊆ closure (filledHull J \ J)) :
+    (hΩJ : IsJordanCurve (frontier Ω)) :
     ∃ g : ℂ → ℂ, ContinuousOn g (closedBall 0 1) ∧ DifferentiableOn ℂ g (ball 0 1) ∧
       BijOn g (ball 0 1) Ω := by
   have hΩne : Ω ≠ univ := by
@@ -277,7 +255,6 @@ theorem exists_continuousOn_closedBall_bijOn_ball_of_isJordanCurve_frontier {Ω 
     rw [himg]; exact hΩJ
   obtain ⟨G, hGc, hGeq⟩ :=
     exists_continuousOn_closedBall_eqOn_of_isJordanCurve_frontier one_pos hgd hgbij.injOn hb hJ
-      hsep
   exact ⟨G, hGc, hgd.congr fun _ hz => hGeq hz, hgbij.congr fun _ hz => (hGeq hz).symm⟩
 
 end TauCeti

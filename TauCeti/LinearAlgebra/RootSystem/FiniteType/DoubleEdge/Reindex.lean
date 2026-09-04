@@ -10,8 +10,6 @@ public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Diagram
 public import TauCeti.LinearAlgebra.RootSystem.FiniteType.DoubleEdge.Basic
 import TauCeti.LinearAlgebra.RootSystem.FiniteType.TwoDoubleEdges
 
-public section
-
 /-!
 # Reindexing path-shaped diagrams with a double edge
 
@@ -40,6 +38,8 @@ remaining global assembly must prove that a connected diagram containing a doubl
 branch vertex. See J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*,
 section 11.4, and Bourbaki, *Lie Groups and Lie Algebras, Chapters 4--6*, Chapter VI, section 4.
 -/
+
+public section
 
 namespace TauCeti
 

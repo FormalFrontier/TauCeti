@@ -10,8 +10,6 @@ public import Mathlib.Algebra.Lie.Killing
 import Mathlib.LinearAlgebra.BilinearForm.Properties
 import Mathlib.LinearAlgebra.Dual.Lemmas
 
-public section
-
 /-!
 # A Lie algebra with nondegenerate Killing form is perfect
 
@@ -40,6 +38,8 @@ module `M` with `⁅L, M⁆ ⊆ N` and `N` acted on trivially would otherwise es
   perfectness is deduced from the decomposition of a semisimple Lie algebra into simple ideals;
   the argument here uses only the nondegeneracy and the invariance of the Killing form.
 -/
+
+public section
 
 namespace TauCeti
 

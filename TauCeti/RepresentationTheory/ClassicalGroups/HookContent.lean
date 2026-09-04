@@ -8,8 +8,6 @@ module
 public import TauCeti.Combinatorics.Young.HookLength.BetaNumbers
 public import TauCeti.RepresentationTheory.ClassicalGroups.WeylDimension
 
-public section
-
 /-!
 # The hook-content formula
 
@@ -67,6 +65,8 @@ leaves the formula.
 * [I. G. Macdonald, *Symmetric Functions and Hall Polynomials*][macdonald1995], Chapter I,
   Section 3, Example 4.
 -/
+
+public section
 
 namespace TauCeti
 

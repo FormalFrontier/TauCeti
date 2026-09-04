@@ -48,8 +48,8 @@ theorem ExchangeableLaw.smul_add_smul {ρ₁ ρ₂ : Measure (ℕ → α)} (h₁
     (h₂ : ExchangeableLaw ρ₂) (a b : ℝ≥0∞) : ExchangeableLaw (a • ρ₁ + b • ρ₂) :=
   .intro fun π => by
     have hmeas : Measurable (permReindex (α := α) π) := measurable_reindex π
-    rw [Measure.map_add _ _ hmeas, Measure.map_smul, Measure.map_smul,
-      h₁.map_permReindex π, h₂.map_permReindex π]
+    rw [Measure.map_add _ _ hmeas, Measure.map_smul _ hmeas.aemeasurable,
+      Measure.map_smul _ hmeas.aemeasurable, h₁.map_permReindex π, h₂.map_permReindex π]
 
 /-- The **convex combination of two exchangeable path laws**, in the subtype of exchangeable
 probability measures on `ℕ → α`. Exchangeability is preserved because the defining permutation

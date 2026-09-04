@@ -21,6 +21,8 @@ additional structures such as filtrations, bialgebras, or antipodes.
   generators that the previous statement supplies.
 * `TauCeti.UniversalEnvelopingAlgebra.representation`: the algebra homomorphism `U(L) → End M`
   attached to a Lie module `M`, in particular the adjoint action of `U(L)` on `L` at `M = L`.
+* `TauCeti.UniversalEnvelopingAlgebra.representation_lie_of_mem_center`: a central element of
+  `U(L)` acts on a Lie module by a map commuting with the Lie action.
 * `TauCeti.UniversalEnvelopingAlgebra.lie_map_ι`: an algebra representation maps the bracket of
   canonical Lie generators to the bracket of their images.
 * `TauCeti.UniversalEnvelopingAlgebra.lie_map_ι_eq_smul`: a Lie-bracket eigenvector remains one
@@ -117,6 +119,18 @@ acts by the Lie bracket. -/
 theorem representation_ι_apply (x : L) (m : M) :
     representation R L M (_root_.UniversalEnvelopingAlgebra.ι R x) m = ⁅x, m⁆ := by
   rw [representation_ι, LieModule.toEnd_apply_apply]
+
+/-- **A central element of `U(L)` acts on a Lie module by a map commuting with the Lie action.**
+Equivalently, `TauCeti.UniversalEnvelopingAlgebra.representation R L M u` is `L`-equivariant, that
+is, a homomorphism of Lie modules. Centrality is used only against the canonical Lie generators,
+which is what the Lie action is read off. -/
+theorem representation_lie_of_mem_center {u : U} (hu : u ∈ Subalgebra.center R U) (x : L) (m : M) :
+    representation R L M u ⁅x, m⁆ = ⁅x, representation R L M u m⁆ := by
+  have h := congrArg (representation R L M)
+    (Subalgebra.mem_center_iff.mp hu (_root_.UniversalEnvelopingAlgebra.ι R x))
+  rw [map_mul, map_mul, representation_ι] at h
+  have h₁ := congrArg (fun g : Module.End R M ↦ g m) h
+  simpa only [Module.End.mul_apply, LieModule.toEnd_apply_apply] using h₁.symm
 
 variable {R L}
 variable {B : Type w} [Ring B] [Algebra R B]

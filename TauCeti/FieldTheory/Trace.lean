@@ -8,6 +8,7 @@ module
 public import Mathlib.NumberTheory.NumberField.Basic
 public import Mathlib.RingTheory.Discriminant
 public import Mathlib.RingTheory.Trace.Basic
+import TauCeti.FieldTheory.Minpoly
 
 /-!
 # Trace lemmas for field extensions
@@ -46,7 +47,6 @@ theorem trace_eq_zero_of_sq_algebraMap_of_not_mem_range {F L : Type*} [Field F] 
     [Algebra F L] [FiniteDimensional F L] {x : L} {r : F}
     (hx2 : x ^ 2 = algebraMap F L r) (hx : x ∉ (algebraMap F L).range) :
     Algebra.trace F L x = 0 := by
-  have hmonic : (X ^ 2 - C r).Monic := Polynomial.monic_X_pow_sub_C r (by norm_num)
   have haeval : aeval x (X ^ 2 - C r : F[X]) = 0 := by simp [hx2]
   have hdvd : minpoly F x ∣ (X ^ 2 - C r) := minpoly.dvd F x haeval
   have hint : IsIntegral F x := Algebra.IsIntegral.isIntegral x
@@ -63,8 +63,7 @@ theorem trace_eq_zero_of_sq_algebraMap_of_not_mem_range {F L : Type*} [Field F] 
       · exact hx (minpoly.natDegree_eq_one_iff.mp hh)
     omega
   have heq : minpoly F x = X ^ 2 - C r :=
-    (Polynomial.eq_of_monic_of_dvd_of_natDegree_le (minpoly.monic hint) hmonic hdvd
-      (by rw [hdeg2, Polynomial.natDegree_X_pow_sub_C])).symm
+    minpoly_eq_X_sq_sub_C_of_sq_eq_of_natDegree_eq_two hx2 hdeg2
   rw [trace_eq_finrank_mul_minpoly_nextCoeff, heq]
   have hnc : (X ^ 2 - C r : F[X]).nextCoeff = 0 := by
     rw [Polynomial.nextCoeff_of_natDegree_pos

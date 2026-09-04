@@ -8,8 +8,6 @@ module
 public import TauCeti.Algebra.Lie.UniversalEnveloping.Subalgebra
 public import TauCeti.Algebra.Lie.Weights.Borel
 
-public section
-
 /-!
 # The triangular decomposition of the enveloping algebra of a semisimple Lie algebra
 
@@ -59,6 +57,8 @@ Layer 3 of `TauCetiRoadmap/RepresentationTheory/LieHighestWeight/README.md`.
 
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §17.3.
 -/
+
+public section
 
 namespace TauCeti.UniversalEnvelopingAlgebra
 

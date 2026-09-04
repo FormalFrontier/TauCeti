@@ -7,8 +7,6 @@ module
 
 public import TauCeti.LinearAlgebra.RootSystem.Inversions.Basic
 
-public section
-
 /-!
 # The root-level exchange step
 
@@ -35,6 +33,8 @@ This file implements the exchange target in Layer 1 of
 `TauCetiRoadmap/RepresentationTheory/RootSystems/README.md`. The mathematical convention follows
 Bourbaki, *Lie Groups and Lie Algebras*, Chapters 4--6.
 -/
+
+public section
 
 namespace TauCeti
 

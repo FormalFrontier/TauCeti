@@ -109,11 +109,7 @@ generators and the right summand the lowering generators of the pinned Bourbaki 
 `geckRootSubgroup d (.inl i)` is the simple root subgroup `x_{α_i}`. -/
 def geckRootSubgroup (i : Fin d.dynkinType.rank ⊕ Fin d.dynkinType.rank) :
     Multiplicative d.Closure →* GeckGroup d :=
-  MonoidHom.codRestrict
-    ((d.dynkinType.geckRootSubgroupMatrix d.dynkinType_valid i).comp
-      (AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := d.Closure)).symm.toMonoidHom)
-    d.geckPoints fun _ =>
-      d.dynkinType.geckRootSubgroupMatrix_mem_geckPoints d.dynkinType_valid d.Closure i _
+  d.dynkinType.geckRootSubgroupPoints d.dynkinType_valid i d.Closure
 
 /-- The general linear matrix underlying a root-subgroup point is the represented Geck
 root-subgroup matrix of the same parameter. -/
@@ -123,9 +119,8 @@ theorem coe_geckRootSubgroup (i : Fin d.dynkinType.rank ⊕ Fin d.dynkinType.ran
     (d.geckRootSubgroup i u : Matrix.GeneralLinearGroup
         (Fin (d.dynkinType.geckDim d.dynkinType_valid)) d.Closure) =
       d.dynkinType.geckRootSubgroupMatrix d.dynkinType_valid i
-        ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := d.Closure)).symm u) := by
-  rw [geckRootSubgroup]
-  rfl
+        ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := d.Closure)).symm u) :=
+  d.dynkinType.coe_geckRootSubgroupPoints d.dynkinType_valid i d.Closure u
 
 /-! ## The Frobenius endomorphism -/
 
@@ -167,7 +162,7 @@ theorem geckFrobenius_geckRootSubgroup (i : Fin d.dynkinType.rank ⊕ Fin d.dynk
     d.geckFrobenius (d.geckRootSubgroup i u) =
       d.geckRootSubgroup i (Multiplicative.ofAdd (Multiplicative.toAdd u ^ d.fieldOrder)) := by
   rw [d.fieldOrder_eq_characteristic_pow]
-  exact d.dynkinType.geckFrobenius_geckRootSubgroupMatrix d.dynkinType_valid
+  exact d.dynkinType.geckFrobenius_geckRootSubgroupPoints d.dynkinType_valid
     d.characteristic d.fieldExponent d.Closure i u
 
 /-- **A point of the Geck point group is fixed by the Frobenius exactly when all of its matrix

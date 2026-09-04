@@ -9,8 +9,6 @@ public import Mathlib.Algebra.Lie.Weights.RootSystem
 public import TauCeti.Algebra.Lie.Sl2.Spectrum
 public import TauCeti.LinearAlgebra.Eigenspace.Semisimple
 
-public section
-
 /-!
 # The Cartan subalgebra acts diagonalizably, and weight spaces are honest
 
@@ -63,6 +61,8 @@ This is the "honest weight spaces (the diagonalizability theorem)" item of Layer
 
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §6.4 and §20.1.
 -/
+
+public section
 
 namespace TauCeti
 

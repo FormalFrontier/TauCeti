@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import Mathlib.Algebra.CharZero.Infinite
 public import Mathlib.Analysis.Real.Pi.Bounds
 public import Mathlib.Data.Pi.Interval
 public import Mathlib.NumberTheory.NumberField.Basic

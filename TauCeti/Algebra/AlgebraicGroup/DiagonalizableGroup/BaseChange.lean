@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.BaseChange.Basic
-public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.Functoriality
 public import TauCeti.Algebra.AlgebraicGroup.DiagonalizableGroup.FiniteType
 public import TauCeti.Algebra.AlgebraicGroup.FiniteType.BaseChange
 public import TauCeti.Algebra.Bialgebra.MonoidAlgebra.BaseChange

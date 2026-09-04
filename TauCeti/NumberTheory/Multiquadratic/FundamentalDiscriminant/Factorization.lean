@@ -28,9 +28,9 @@ x² + ny²*, §3.B and §6.A, and F. Lemmermeyer, *Reciprocity Laws: From Euler 
 This is a prerequisite for the genus-field layer, which attaches a *family* of prime discriminants
 to a quadratic field `ℚ(√d)`: the square-class independence and degree theorems of
 `Multiquadratic/Prime/Discriminant/Independence.lean` apply to such a family, giving a
-degree-`2ᵗ` multiquadratic compositum. Turning that compositum into the genus field — defining the
-genus field and identifying it with this compositum — is later work; this file only supplies the
-factorization the family comes from.
+degree-`2ᵗ` multiquadratic compositum. For negative radicands,
+`isGenusField_candidateGenusField` identifies that compositum with the genus field; the real case
+remains future work. This file only supplies the factorization the family comes from.
 
 The engine is `prod_oddPrimeDiscriminant_primeFactors_eq`: for an odd squarefree `x ≡ 1 (mod 4)`,
 the product of the odd prime discriminants `p*` over the prime factors `p` of `x` is `x` itself.

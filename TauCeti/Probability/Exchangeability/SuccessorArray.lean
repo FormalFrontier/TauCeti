@@ -204,8 +204,8 @@ variable [MeasurableSingletonClass α]
 /-- **The successor array of a path is a measurable function of the path.** -/
 theorem measurable_successorArray :
     Measurable fun x : ℕ → α => successorArray x :=
-  measurable_pi_lambda _ fun a =>
-    measurable_pi_lambda _ fun k => measurable_successorArray_apply a k (measurableSet_singleton a)
+  Measurable.of_eval fun a =>
+    Measurable.of_eval fun k => measurable_successorArray_apply a k (measurableSet_singleton a)
 
 section SuccessorProcess
 
@@ -229,7 +229,7 @@ everywhere measurable. -/
 theorem aemeasurable_successorProcess {μ : Measure Ω} {X : ℕ → Ω → α}
     (hX : ∀ i, AEMeasurable (X i) μ) (p : α × ℕ) : AEMeasurable (successorProcess X p) μ :=
   (measurable_successorArray_apply p.1 p.2 (measurableSet_singleton p.1)).comp_aemeasurable
-    (aemeasurable_pi_lambda _ hX)
+    (AEMeasurable.of_eval hX)
 
 end SuccessorProcess
 
@@ -253,7 +253,7 @@ private theorem measurable_pathOfSuccessors_apply (n : ℕ) :
           pathOfSuccessors q.1 q.2 n := ih n (Nat.lt_succ_self n)
       have hcounts : Measurable fun q : α × (α → ℕ → α) =>
           fun a => visitCount (pathOfSuccessors q.1 q.2) a n :=
-        measurable_pi_lambda _ fun a =>
+        Measurable.of_eval fun a =>
           measurable_visitCount_comp a n (measurableSet_singleton a) fun i hi =>
             ih i (hi.trans (Nat.lt_succ_self n))
       have hstate : Measurable fun q : α × (α → ℕ → α) =>
@@ -304,7 +304,7 @@ theorem pathLaw_eq_map_pathOfSuccessors {μ : Measure Ω} {X : ℕ → Ω → α
     pathLaw μ X =
       ((μ.map fun ω => (X 0 ω, successorArray fun n => X n ω)).map
         fun q => pathOfSuccessors q.1 q.2) := by
-  have hY : AEMeasurable (fun ω i => X i ω) μ := aemeasurable_pi_lambda _ hX
+  have hY : AEMeasurable (fun ω i => X i ω) μ := AEMeasurable.of_eval hX
   have hmap : (μ.map fun ω => (X 0 ω, successorArray fun n => X n ω)) =
       (pathLaw μ X).map fun x => (x 0, successorArray x) := by
     rw [pathLaw_def, AEMeasurable.map_map_of_aemeasurable

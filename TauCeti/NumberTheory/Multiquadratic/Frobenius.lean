@@ -90,7 +90,7 @@ theorem exists_isArithFrobAt_multiquadratic [IsGalois ℚ K] (d : ι → ℤ) (r
     (Q : Ideal (𝓞 K)) [Q.IsPrime] [Q.LiesOver (span {(p : ℤ)})] :
     ∃ σ : K ≃ₐ[ℚ] K, IsArithFrobAt ℤ σ Q ∧
       ∀ i, σ (r i) = legendreSym p (d i) • r i := by
-  obtain ⟨σ, hσ⟩ := exists_isArithFrobAt_of_liesOver (p := p) Q
+  obtain ⟨σ, hσ⟩ := exists_isArithFrobAt_int_of_liesOver (p := p) Q
   exact ⟨σ, hσ, fun i => isArithFrobAt_apply_sqrt hodd (hcop i) (hr i) Q hσ⟩
 
 /-! ### The Frobenius as a sign vector under `Gal ≅ (ℤ/2)ⁿ`

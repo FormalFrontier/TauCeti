@@ -47,7 +47,8 @@ coordinatewise a.e. equal `Y`: the block laws the definition constrains are unch
 theorem MixedIIDWith.congr_process {μ : Measure Ω} {X Y : ι → Ω → α}
     {ν : Ω → ProbabilityMeasure α} (h : MixedIIDWith μ X ν) (hXY : ∀ i, X i =ᵐ[μ] Y i) :
     MixedIIDWith μ Y ν :=
-  MixedIIDWith.intro h.measurable_mixingRepresentative fun m k hk => by
+  MixedIIDWith.intro (fun i => (h.aemeasurable i).congr (hXY i))
+    h.measurable_mixingRepresentative fun m k hk => by
     rw [← blockLaw_congr hXY k]
     exact h.blockLaw_eq_mixture k hk
 
@@ -64,7 +65,7 @@ part of the predicate and is not an a.e. notion. -/
 theorem MixedIIDWith.congr_mixingRepresentative {μ : Measure Ω} {X : ι → Ω → α}
     {ν ν' : Ω → ProbabilityMeasure α} (h : MixedIIDWith μ X ν) (hν' : Measurable ν')
     (hνν' : ν =ᵐ[μ] ν') : MixedIIDWith μ X ν' :=
-  MixedIIDWith.intro hν' fun m k hk => by
+  MixedIIDWith.intro h.aemeasurable hν' fun m k hk => by
     rw [h.blockLaw_eq_mixture k hk]
     exact Measure.bind_congr_right (by filter_upwards [hνν'] with ω hω using by rw [hω])
 

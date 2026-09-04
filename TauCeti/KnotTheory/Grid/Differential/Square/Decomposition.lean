@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+import Mathlib.Algebra.BigOperators.Group.Finset.Sigma
 public import TauCeti.KnotTheory.Grid.Differential.Square.Support
 public import TauCeti.KnotTheory.Grid.Rectangle.Swap
 
@@ -23,18 +24,24 @@ between two given states is determined by its side columns.
 ## Main definitions
 
 * `TauCeti.GridRectangleDecomposition`: two composable oriented grid rectangles.
+* `TauCeti.GridRectangleDecomposition.decompositionsOf`: composable pairs drawn from any family
+  of finite rectangle sets.
 
 ## Main results
 
 * `TauCeti.GridRectangleDecomposition.ext`: a decomposition is determined by the ordered side
   columns of its two rectangles.
+* `TauCeti.GridRectangleDecomposition.sides_injective`: the same statement as
+  injectivity of the ordered quadruple of side columns.
+* `TauCeti.GridRectangleDecomposition.target_apply_of_notMem_sideColumns`: away from the four
+  side columns the target of a decomposition agrees with its source.
+* `TauCeti.GridRectangleDecomposition.transpose`: diagonal reflection of both constituent
+  rectangles gives a decomposition between the transposed endpoint states.
 * `TauCeti.GridRectangleDecomposition.target_mem_twoStepColumnSwapNeighbors`: the target of a
   decomposition is reached from its source by two nontrivial column transpositions.
 
 ## References
 
-This supplies the shared two-step bookkeeping for
-`TauCetiRoadmap/CombinatorialHeegaardFloer/README.md`, Lane G.3, "The complexes and `∂² = 0`".
 The decomposition pairing follows Ozsváth--Stipsicz--Szabó, *Grid Homology for Knots and Links*,
 Chapter 4.6.
 -/
@@ -82,6 +89,149 @@ theorem ext {D E : GridRectangleDecomposition x z}
           subst Esecond
           rfl
 
+/-- A two-step rectangle decomposition is determined by the ordered quadruple of side columns of
+its two rectangles. -/
+theorem sides_injective (x z : GridState n) :
+    Function.Injective fun D : GridRectangleDecomposition x z =>
+      (D.first.left, D.first.right, D.second.left, D.second.right) := by
+  intro D E h
+  simp only [Prod.mk.injEq] at h
+  exact ext h.1 h.2.1 h.2.2.1 h.2.2.2
+
+/-- Two-step rectangle decompositions between fixed states have decidable equality: such a
+decomposition is determined by its four side columns. -/
+instance : DecidableEq (GridRectangleDecomposition x z) :=
+  (sides_injective x z).decidableEq
+
+/-- Away from the four side columns of a two-step decomposition, its target state agrees with its
+source state: neither rectangle moves such a column. -/
+theorem target_apply_of_notMem_sideColumns (D : GridRectangleDecomposition x z) {c : Fin n}
+    (h₁ : c ∉ D.first.sideColumns) (h₂ : c ∉ D.second.sideColumns) : z c = x c := by
+  rw [D.first.mem_sideColumns] at h₁
+  rw [D.second.mem_sideColumns] at h₂
+  rw [not_or] at h₁ h₂
+  rw [D.second.map_of_ne c h₂.1 h₂.2, D.first.map_of_ne c h₁.1 h₁.2]
+
+/-- The diagonal reflection of a two-step rectangle decomposition. It reflects both constituent
+rectangles and the intermediate state, and hence gives a decomposition between the transposed
+endpoint states. -/
+def transpose (D : GridRectangleDecomposition x z) :
+    GridRectangleDecomposition x.transpose z.transpose where
+  middle := D.middle.transpose
+  first := D.first.transpose
+  second := D.second.transpose
+
+/-- The intermediate state of a transposed decomposition is the transposed intermediate state. -/
+@[simp]
+theorem transpose_middle (D : GridRectangleDecomposition x z) :
+    D.transpose.middle = D.middle.transpose := by
+  rw [transpose]
+
+/-- The intermediate state and first rectangle of a transposed decomposition are the transposes
+of the original intermediate state and first rectangle. They are paired because the rectangle's
+target is indexed by the intermediate state. -/
+@[simp]
+theorem transpose_first (D : GridRectangleDecomposition x z) :
+    (⟨D.transpose.middle, D.transpose.first⟩ :
+      Σ middle, GridRectangleBetween x.transpose middle) =
+      ⟨D.middle.transpose, D.first.transpose⟩ := by
+  rw [transpose]
+
+/-- The intermediate state and second rectangle of a transposed decomposition are the transposes
+of the original intermediate state and second rectangle. They are paired because the rectangle's
+source is indexed by the intermediate state. -/
+@[simp]
+theorem transpose_second (D : GridRectangleDecomposition x z) :
+    (⟨D.transpose.middle, D.transpose.second⟩ :
+      Σ middle, GridRectangleBetween middle z.transpose) =
+      ⟨D.middle.transpose, D.second.transpose⟩ := by
+  rw [transpose]
+
+/-- The first rectangle of a transposed decomposition has the original initial corner row as its
+initial side column. -/
+@[simp]
+theorem transpose_first_left (D : GridRectangleDecomposition x z) :
+    D.transpose.first.left = D.first.bottom := by
+  simpa only [GridRectangleBetween.transpose_left] using
+    congrArg (fun p => p.2.left) D.transpose_first
+
+/-- The first rectangle of a transposed decomposition has the original terminal corner row as its
+terminal side column. -/
+@[simp]
+theorem transpose_first_right (D : GridRectangleDecomposition x z) :
+    D.transpose.first.right = D.first.top := by
+  simpa only [GridRectangleBetween.transpose_right] using
+    congrArg (fun p => p.2.right) D.transpose_first
+
+/-- The first rectangle of a transposed decomposition has the original initial side column as its
+initial corner row. -/
+@[simp]
+theorem transpose_first_bottom (D : GridRectangleDecomposition x z) :
+    D.transpose.first.bottom = D.first.left := by
+  simpa only [GridRectangleBetween.transpose_bottom] using
+    congrArg (fun p => p.2.bottom) D.transpose_first
+
+/-- The first rectangle of a transposed decomposition has the original terminal side column as its
+terminal corner row. -/
+@[simp]
+theorem transpose_first_top (D : GridRectangleDecomposition x z) :
+    D.transpose.first.top = D.first.right := by
+  simpa only [GridRectangleBetween.transpose_top] using
+    congrArg (fun p => p.2.top) D.transpose_first
+
+/-- The second rectangle of a transposed decomposition has the original initial corner row as its
+initial side column. -/
+@[simp]
+theorem transpose_second_left (D : GridRectangleDecomposition x z) :
+    D.transpose.second.left = D.second.bottom := by
+  simpa only [GridRectangleBetween.transpose_left] using
+    congrArg (fun p => p.2.left) D.transpose_second
+
+/-- The second rectangle of a transposed decomposition has the original terminal corner row as its
+terminal side column. -/
+@[simp]
+theorem transpose_second_right (D : GridRectangleDecomposition x z) :
+    D.transpose.second.right = D.second.top := by
+  simpa only [GridRectangleBetween.transpose_right] using
+    congrArg (fun p => p.2.right) D.transpose_second
+
+/-- The second rectangle of a transposed decomposition has the original initial side column as its
+initial corner row. -/
+@[simp]
+theorem transpose_second_bottom (D : GridRectangleDecomposition x z) :
+    D.transpose.second.bottom = D.second.left := by
+  simpa only [GridRectangleBetween.transpose_bottom] using
+    congrArg (fun p => p.2.bottom) D.transpose_second
+
+/-- The second rectangle of a transposed decomposition has the original terminal side column as
+its terminal corner row. -/
+@[simp]
+theorem transpose_second_top (D : GridRectangleDecomposition x z) :
+    D.transpose.second.top = D.second.right := by
+  simpa only [GridRectangleBetween.transpose_top] using
+    congrArg (fun p => p.2.top) D.transpose_second
+
+/-- The first rectangle of a transposed decomposition is empty exactly when the original first
+rectangle is. -/
+@[simp]
+theorem isEmpty_transpose_first (D : GridRectangleDecomposition x z) :
+    D.transpose.first.IsEmpty ↔ D.first.IsEmpty := by
+  exact (congrArg (fun p => p.2.IsEmpty) D.transpose_first).to_iff.trans
+    D.first.isEmpty_transpose
+
+/-- The second rectangle of a transposed decomposition is empty exactly when the original second
+rectangle is. -/
+@[simp]
+theorem isEmpty_transpose_second (D : GridRectangleDecomposition x z) :
+    D.transpose.second.IsEmpty ↔ D.second.IsEmpty := by
+  exact (congrArg (fun p => p.2.IsEmpty) D.transpose_second).to_iff.trans
+    D.second.isEmpty_transpose
+
+/-- Reflecting a two-step rectangle decomposition twice recovers the original decomposition. -/
+@[simp]
+theorem transpose_transpose (D : GridRectangleDecomposition x z) : D.transpose.transpose = D := by
+  ext <;> simp
+
 /-- The target of a two-step rectangle decomposition is a two-step column-swap neighbour of its
 source: each of the two rectangles transposes its pair of distinct side columns. -/
 theorem target_mem_twoStepColumnSwapNeighbors (D : GridRectangleDecomposition x z) :
@@ -92,6 +242,55 @@ theorem target_mem_twoStepColumnSwapNeighbors (D : GridRectangleDecomposition x 
         ⟨D.first.left, D.first.right, D.first.left_ne_right, D.first.target_eq_swapColumns⟩,
       GridState.mem_columnSwapNeighbors.mpr
         ⟨D.second.left, D.second.right, D.second.left_ne_right, D.second.target_eq_swapColumns⟩⟩
+
+private def decompositionSigmaEquiv (x z : GridState n) :
+    GridRectangleDecomposition x z ≃
+      (Σ y : GridState n,
+        Σ _first : GridRectangleBetween x y, GridRectangleBetween y z) where
+  toFun D := ⟨D.middle, D.first, D.second⟩
+  invFun D := ⟨D.1, D.2.1, D.2.2⟩
+  left_inv _ := rfl
+  right_inv _ := rfl
+
+/-- The finite set of two-step decompositions whose two rectangles belong to a prescribed family
+of finite rectangle sets. -/
+noncomputable def decompositionsOf
+    (S : ∀ u v : GridState n, Finset (GridRectangleBetween u v))
+    (x z : GridState n) : Finset (GridRectangleDecomposition x z) :=
+  (((Finset.univ : Finset (GridState n)).sigma fun y =>
+      (S x y).sigma fun _first => S y z).map
+    (decompositionSigmaEquiv x z).symm.toEmbedding)
+
+/-- A decomposition belongs to `decompositionsOf S` exactly when each rectangle belongs to the
+corresponding set in `S`. -/
+@[simp]
+theorem mem_decompositionsOf
+    (S : ∀ u v : GridState n, Finset (GridRectangleBetween u v))
+    (x z : GridState n) (D : GridRectangleDecomposition x z) :
+    D ∈ decompositionsOf S x z ↔
+      D.first ∈ S x D.middle ∧ D.second ∈ S D.middle z := by
+  classical
+  simp [decompositionsOf, decompositionSigmaEquiv]
+
+/-- The cardinality of `decompositionsOf S x z` is the sum, over intermediate states, of the
+product of the two rectangle-set cardinalities. -/
+theorem card_decompositionsOf
+    (S : ∀ u v : GridState n, Finset (GridRectangleBetween u v))
+    (x z : GridState n) :
+    (decompositionsOf S x z).card = ∑ y, (S x y).card * (S y z).card := by
+  classical
+  simp [decompositionsOf, Finset.card_sigma]
+
+/-- Summing over `decompositionsOf` is the corresponding iterated sum over the intermediate state
+and the two selected rectangles. -/
+theorem sum_decompositionsOf {M : Type*} [AddCommMonoid M]
+    (S : ∀ u v : GridState n, Finset (GridRectangleBetween u v))
+    (x z : GridState n)
+    (w : ∀ y, GridRectangleBetween x y → GridRectangleBetween y z → M) :
+    ∑ D ∈ decompositionsOf S x z, w D.middle D.first D.second =
+      ∑ y, ∑ r₁ ∈ S x y, ∑ r₂ ∈ S y z, w y r₁ r₂ := by
+  classical
+  simp [decompositionsOf, decompositionSigmaEquiv, Finset.sum_sigma']
 
 end GridRectangleDecomposition
 

@@ -7,8 +7,6 @@ module
 
 public import Mathlib.Algebra.Lie.Weights.Cartan
 
-public section
-
 /-!
 # Spans of generalized weight spaces
 
@@ -50,6 +48,8 @@ of Layer 3 of `TauCetiRoadmap/RepresentationTheory/LieHighestWeight/README.md` a
 weight modules above it are built from: `TauCeti.rootSpaceSpan`, hence the two nilradicals, is its
 instance at `M = L`.
 -/
+
+public section
 
 namespace TauCeti
 

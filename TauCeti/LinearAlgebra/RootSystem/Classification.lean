@@ -7,8 +7,6 @@ module
 
 public import TauCeti.LinearAlgebra.RootSystem.DynkinType
 
-public section
-
 /-!
 # A base has at most one valid Dynkin type
 
@@ -63,6 +61,8 @@ This is the uniqueness half of `existsUnique_dynkinType`, the classification tar
 valid type in the first place, is independent of it. The coincidences outside the valid ranges are
 those of Bourbaki, *Lie Groups and Lie Algebras, Chapters 4-6*, Ch. VI, §4.
 -/
+
+public section
 
 namespace TauCeti
 

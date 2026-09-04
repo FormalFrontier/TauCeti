@@ -267,7 +267,7 @@ private theorem isBounded_intervalIntegrable_cauchyPV_of_interior_crossings
   -- The window value: the explicit log-norm-plus-argument limit at each crossing.
   choose! R hR_pos L_R L_L _ _ _ _ h_spec using
     fun t₀ (ht₀ : t₀ ∈ T) =>
-      exists_radius_perWindow_tendsto_log_norm_add_arg h_imm hab (h_Ioo t₀ ht₀)
+      exists_radius_perWindow_tendsto_log_norm_add_arg h_imm (h_Ioo t₀ ht₀)
         (hT_mem.mp ht₀).2
   -- The crossing regularity: a one-sided Lipschitz-derivative window on each side of each
   -- crossing (possibly a corner, so the two sides may disagree).

@@ -7,8 +7,6 @@ module
 
 public import TauCeti.LinearAlgebra.RootSystem.DynkinType
 
-public section
-
 /-!
 # The Bourbaki coordinate model of type `E₈`
 
@@ -41,6 +39,8 @@ The coordinates and the node numbering are Bourbaki, *Lie Groups and Lie Algebra
 Plate VII. See also Humphreys, *Introduction to Lie Algebras and Representation Theory*,
 Chapter 11.
 -/
+
+public section
 
 namespace TauCeti
 

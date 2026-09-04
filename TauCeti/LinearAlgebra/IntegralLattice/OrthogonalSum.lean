@@ -361,7 +361,7 @@ theorem sigPos_orthogonalSum (L : IntegralLattice V) (M : IntegralLattice W) :
   let _ := L.finiteDimensional
   let _ := M.finiteDimensional
   rw [sigPos, orthogonalSum_form, orthogonalSumForm_toQuadraticMap,
-    TauCeti.QuadraticForm.sigPos_prod]
+    QuadraticForm.sigPos_prod]
 
 /-- The negative index of an orthogonal sum is the sum of the negative indices. -/
 @[simp]
@@ -370,7 +370,7 @@ theorem sigNeg_orthogonalSum (L : IntegralLattice V) (M : IntegralLattice W) :
   let _ := L.finiteDimensional
   let _ := M.finiteDimensional
   rw [sigNeg, orthogonalSum_form, orthogonalSumForm_toQuadraticMap,
-    TauCeti.QuadraticForm.sigNeg_prod]
+    QuadraticForm.sigNeg_prod]
 
 /-- The null index of an orthogonal sum is the sum of the null indices. -/
 @[simp]

@@ -81,6 +81,10 @@ namespace IsUnitary
 
 variable {U : StronglyContinuousGroup H}
 
+/-- Construct a unitary group from inner-product preservation by each of its operators. -/
+theorem intro (hU : ∀ t x y, ⟪U t x, U t y⟫_ℂ = ⟪x, y⟫_ℂ) : U.IsUnitary :=
+  hU
+
 /-- Every operator of a unitary strongly continuous group preserves the complex inner product. -/
 @[simp]
 theorem inner_map_map (hU : U.IsUnitary) (t : ℝ) (x y : H) :

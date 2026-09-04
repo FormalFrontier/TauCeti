@@ -9,8 +9,6 @@ public import TauCeti.LinearAlgebra.RootSystem.Coxeter.Matrix
 public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Classical
 public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Dynkin
 
-public section
-
 /-!
 # The Coxeter matrix of a Dynkin type
 
@@ -70,6 +68,8 @@ Layer 2 and the `DynkinType` enumeration of Layer 5. The translation of a Cartan
 Coxeter order is Bourbaki, *Lie Groups and Lie Algebras, Chapters 4-6*, Ch. VI, §1.3, and
 Humphreys, *Introduction to Lie Algebras and Representation Theory*, §9.4 and §11.4.
 -/
+
+public section
 
 open scoped Matrix
 

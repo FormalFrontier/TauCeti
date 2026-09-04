@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.Module.Submodule.Map
-public import Mathlib.Data.Complex.Basic
+public import Mathlib.Basic.Complex.Basic
 public import Mathlib.LinearAlgebra.Dual.Lemmas
 public import Mathlib.LinearAlgebra.Quotient.Basic
 public import Mathlib.LinearAlgebra.TensorProduct.Map
@@ -25,6 +25,8 @@ complexification models.
 ## Main declarations
 
 * `TauCeti.Hodge.Conjugation`: a conjugate-linear involution of a complex vector space.
+* `TauCeti.Hodge.Conjugation.tensorProduct`: the tensor product of two conjugations.
+* `TauCeti.Hodge.Conjugation.tensorProduct_toEquiv_tmul`: its action on pure tensors.
 * `TauCeti.Hodge.Conjugation.conjFiltration`: the conjugate of a complex filtration.
 * `TauCeti.Hodge.concreteLatticeConj`: conjugation on the tensor model `ℂ ⊗[ℤ] V`.
 * `TauCeti.Hodge.latticeConj`: conjugation on an abstract complex base-change model.
@@ -81,6 +83,51 @@ theorem toEquiv_symm (ω : Conjugation W) : ω.toEquiv.symm = ω.toEquiv := by
 @[simp]
 theorem apply_apply (ω : Conjugation W) (x : W) : ω.toEquiv (ω.toEquiv x) = x :=
   ω.involutive x
+
+section TensorProduct
+
+variable {W₁ : Type u} {W₂ : Type v} [AddCommGroup W₁] [Module ℂ W₁]
+  [AddCommGroup W₂] [Module ℂ W₂]
+
+private def tensorMap (ω₁ : Conjugation W₁) (ω₂ : Conjugation W₂) :
+    W₁ ⊗[ℂ] W₂ →ₛₗ[starRingEnd ℂ] W₁ ⊗[ℂ] W₂ :=
+  TensorProduct.map ω₁.toEquiv ω₂.toEquiv
+
+private theorem tensorMap_involutive (ω₁ : Conjugation W₁) (ω₂ : Conjugation W₂) :
+    Function.Involutive (tensorMap ω₁ ω₂) := by
+  intro x
+  simp only [tensorMap, TensorProduct.map_map]
+  rw [show ω₁.toEquiv.toLinearMap ∘ₛₗ ω₁.toEquiv.toLinearMap = LinearMap.id by
+    ext y
+    simp [Conjugation.apply_apply]]
+  rw [show ω₂.toEquiv.toLinearMap ∘ₛₗ ω₂.toEquiv.toLinearMap = LinearMap.id by
+    ext y
+    simp [Conjugation.apply_apply], TensorProduct.map_id]
+  rfl
+
+/-- The tensor product of two conjugate-linear involutions. -/
+def tensorProduct (ω₁ : Conjugation W₁) (ω₂ : Conjugation W₂) :
+    Conjugation (W₁ ⊗[ℂ] W₂) where
+  toEquiv :=
+    { toFun := tensorMap ω₁ ω₂
+      invFun := tensorMap ω₁ ω₂
+      left_inv := tensorMap_involutive ω₁ ω₂
+      right_inv := tensorMap_involutive ω₁ ω₂
+      map_add' := by simp [tensorMap]
+      map_smul' := by simp [tensorMap] }
+  involutive := tensorMap_involutive ω₁ ω₂
+
+/-- Tensor-product conjugation acts componentwise on pure tensors. -/
+@[simp]
+theorem tensorProduct_toEquiv_tmul (ω₁ : Conjugation W₁) (ω₂ : Conjugation W₂)
+    (x : W₁) (y : W₂) :
+    (ω₁.tensorProduct ω₂).toEquiv (x ⊗ₜ[ℂ] y) = ω₁.toEquiv x ⊗ₜ[ℂ] ω₂.toEquiv y :=
+  by
+    -- Expose the private map so Mathlib's pure-tensor computation lemma can fire.
+    change tensorMap ω₁ ω₂ (x ⊗ₜ[ℂ] y) = _
+    simp [tensorMap]
+
+end TensorProduct
 
 /-- Mapping a complex subspace twice by a conjugation returns the original subspace. -/
 @[simp]

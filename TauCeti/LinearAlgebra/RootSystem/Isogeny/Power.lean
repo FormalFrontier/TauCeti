@@ -32,7 +32,7 @@ not to this identity.
 
 All three of the weight map, the coweight map and the index bijection are monoid homomorphisms out
 of this monoid, the coweight map into the opposite endomorphism monoid because `comp` reverses on
-that component. This is the same shape as `RootPairing.Hom.weightHom`,
+that component. These declarations adapt the Mathlib API `RootPairing.Hom.weightHom`,
 `RootPairing.Hom.coweightHom` and `RootPairing.Hom.indexHom` for the endomorphism monoid of a root
 pairing, and the powers of all three components are `map_pow`.
 
@@ -70,6 +70,8 @@ come from.
 * `TauCeti.RootPairingIsogeny.pow_two_mul_eq_smulId` and
   `TauCeti.RootPairingIsogeny.pow_two_mul_add_one_eq_smulId_mul`: such an isogeny has scalings for
   its even powers, and a scaling times itself for its odd ones.
+* `TauCeti.RootPairingIsogeny.exponent_pow`: the exponent of an iterate is the product along the
+  corresponding orbit of indices.
 * `TauCeti.RootPairingIsogeny.indexEquiv_pow_two_mul_add_one`,
   `TauCeti.RootPairingIsogeny.exponent_pow_two_mul_add_one`,
   `TauCeti.RootPairingIsogeny.weightMap_pow_two_mul_add_one` and
@@ -78,6 +80,8 @@ come from.
 
 ## References
 
+* Scott Carnahan, `Mathlib/LinearAlgebra/RootSystem/Hom.lean`, for the `RootPairing.Hom`
+  endomorphism monoid API adapted here.
 * Schémas en groupes (SGA 3), Exposé XXI, 6.8.
 * R. Steinberg, *Endomorphisms of linear algebraic groups*, Memoirs AMS 80 (1968), §11.
 
@@ -210,6 +214,16 @@ bijection. -/
 theorem exponent_pow_succ (f : RootPairingIsogeny P P) (n : ℕ) (i : ι) :
     (f ^ (n + 1)).exponent i = f.exponent i * (f ^ n).exponent (f.indexEquiv i) := by
   rw [pow_succ, exponent_mul]
+
+/-- **The exponent of an iterate accumulates along the forward orbit of the index bijection.**
+Unlike the other three fields the exponent is not multiplicative: the exponent of a composite at
+an index is the product of the exponents met at the successive images of that index. -/
+@[simp] theorem exponent_pow (f : RootPairingIsogeny P P) (k : ℕ) (i : ι) :
+    (f ^ k).exponent i = ∏ j ∈ Finset.range k, f.exponent ((f.indexEquiv ^ j) i) := by
+  induction k with
+  | zero => simp
+  | succ k ih =>
+    rw [pow_succ', exponent_mul, ih, indexEquiv_pow, Finset.prod_range_succ]
 
 /-! ## The scalings -/
 

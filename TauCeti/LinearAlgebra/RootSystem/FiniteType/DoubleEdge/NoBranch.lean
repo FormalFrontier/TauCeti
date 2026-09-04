@@ -9,8 +9,6 @@ public import TauCeti.LinearAlgebra.RootSystem.FiniteType.DoubleEdge.Branchless
 import TauCeti.LinearAlgebra.RootSystem.FiniteType.ForkedDoubleEdge
 import TauCeti.LinearAlgebra.RootSystem.FiniteType.TwoDoubleEdges
 
-public section
-
 /-!
 # A finite-type component with a double edge has no branch vertex
 
@@ -44,6 +42,8 @@ This is the multiple-edge extraction step in Layer 5 of
 argument in J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, Section
 11.4, and N. Bourbaki, *Lie Groups and Lie Algebras, Chapters 4--6*, Chapter VI, Section 4.
 -/
+
+public section
 
 namespace TauCeti
 

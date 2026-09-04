@@ -8,8 +8,6 @@ module
 public import TauCeti.Combinatorics.SimpleGraph.Acyclic
 public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Basic
 
-public section
-
 /-!
 # The diagram of a finite-type Cartan matrix is a forest
 
@@ -61,6 +59,8 @@ J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, §11.
 an admissible diagram is deduced from exactly these two facts, and Bourbaki, *Lie Groups and Lie
 Algebras, Chapters 4-6*, Ch. VI §4.
 -/
+
+public section
 
 namespace TauCeti
 

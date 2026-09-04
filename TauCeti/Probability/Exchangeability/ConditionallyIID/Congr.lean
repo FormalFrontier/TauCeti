@@ -51,7 +51,8 @@ coordinatewise a.e. equal `Y`: the joint law of `(ν, block)` is unchanged. -/
 theorem ConditionallyIIDWith.congr_process {μ : Measure Ω} {X Y : ι → Ω → α}
     {ν : Ω → ProbabilityMeasure α} (h : ConditionallyIIDWith μ X ν) (hXY : ∀ i, X i =ᵐ[μ] Y i) :
     ConditionallyIIDWith μ Y ν :=
-  ConditionallyIIDWith.intro h.measurable_directing fun m k hk => by
+  ConditionallyIIDWith.intro (fun i => (h.aemeasurable i).congr (hXY i))
+    h.measurable_directing fun m k hk => by
     rw [← h.jointLaw_eq_disintegration k hk]
     refine Measure.map_congr ?_
     filter_upwards [ae_all_iff.2 fun i : Fin m => (hXY (k i)).symm] with ω hω
@@ -70,7 +71,7 @@ together: the joint law changes only in its first coordinate, and the disintegra
 theorem ConditionallyIIDWith.congr_directing {μ : Measure Ω} {X : ι → Ω → α}
     {ν ν' : Ω → ProbabilityMeasure α} (h : ConditionallyIIDWith μ X ν) (hν' : Measurable ν')
     (hνν' : ν =ᵐ[μ] ν') : ConditionallyIIDWith μ X ν' :=
-  ConditionallyIIDWith.intro hν' fun m k hk =>
+  ConditionallyIIDWith.intro h.aemeasurable hν' fun m k hk =>
     calc μ.map (fun ω => (ν' ω, fun i : Fin m => X (k i) ω))
         = μ.map (fun ω => (ν ω, fun i : Fin m => X (k i) ω)) :=
           Measure.map_congr (by filter_upwards [hνν'] with ω hω using Prod.ext hω.symm rfl)

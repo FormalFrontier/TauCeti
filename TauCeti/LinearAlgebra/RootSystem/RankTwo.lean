@@ -10,8 +10,6 @@ public import TauCeti.LinearAlgebra.RootSystem.Classification
 public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Basic
 public import TauCeti.LinearAlgebra.RootSystem.Weyl.Orbit
 
-public section
-
 /-!
 # The Cartan-Killing classification in rank at most two
 
@@ -68,6 +66,8 @@ statement `existsUnique_dynkinType` these theorems specialize. See Bourbaki, *Li
 Algebras, Chapters 4-6*, Ch. VI §4, and Humphreys, *Introduction to Lie Algebras and Representation
 Theory*, §11.1, where the rank-two diagrams are enumerated first for exactly this reason.
 -/
+
+public section
 
 open scoped Matrix
 

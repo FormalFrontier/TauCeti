@@ -8,6 +8,8 @@ module
 public import TauCeti.Algebra.AlgebraicGroup.Product
 public import TauCeti.Algebra.Coalgebra.Convolution
 
+import Mathlib.Algebra.Group.End
+
 /-!
 # Conjugation in Hopf-algebra coordinates
 
@@ -305,10 +307,9 @@ theorem conjugationAlgHom_coassoc :
     rw [comp_conjugationAlgHom mulFirst, comp_conjugationAlgHom actSecond,
       hmulFirstLeft, hmulFirstRight, hactSecondLeft, hactSecondRight]
     apply congrArg WithConv.ofConv
-    exact
-      mul_inv_eq_iff_eq_mul.2
-        ((SemiconjBy.conj_mk g₁ (g₂ * x * g₂⁻¹)).mul_left
-          (SemiconjBy.conj_mk g₂ x)).eq
+    simpa only [MulAut.conj_apply, MulAut.mul_apply] using
+      congrArg (fun f : MulAut _ => f x)
+        ((MulAut.conj : _ →* MulAut _).map_mul g₁ g₂)
   simpa only [mulFirst, actSecond, assoc, c, AlgHom.comp_assoc] using hcoassoc
 
 end HopfAlgebra

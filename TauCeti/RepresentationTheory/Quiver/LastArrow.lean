@@ -6,8 +6,8 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Combinatorics.Quiver.Path
-public import Mathlib.Data.Finite.Prod
-public import Mathlib.Data.Finite.Sigma
+public import Mathlib.Basic.Finite.Prod
+public import Mathlib.Basic.Finite.Sigma
 public import Mathlib.SetTheory.Cardinal.Finite
 
 /-!

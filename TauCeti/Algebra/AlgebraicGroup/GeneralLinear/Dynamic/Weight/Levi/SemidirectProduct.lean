@@ -418,14 +418,10 @@ noncomputable instance isIso_weightParabolicSemidirectProductCoordinateMap
     (w : Fin N → ℤ) :
     IsIso (weightParabolicSemidirectProductCoordinateMap R w) := by
   let f := weightParabolicSemidirectProductCoordinateMap R w
-  let _ : IsIso ((CommHopfAlgCat.pointsFunctor.{u, u, u} (R := R)).map f.op) := by
-    rw [CommHopfAlgCat.pointsFunctor_map, Quiver.Hom.unop_op]
+  let _ : IsIso (CommHopfAlgCat.mapPointsFunctor.{u, u, u} f) := by
     dsimp only [f]
     exact isIso_mapPointsFunctor_weightParabolicSemidirectProductCoordinateMap R w
-  let _ : IsIso f.op :=
-    (Functor.FullyFaithful.ofFullyFaithful
-      (CommHopfAlgCat.pointsFunctor.{u, u, u} (R := R))).isIso_of_isIso_map f.op
-  exact isIso_of_op f
+  exact CommHopfAlgCat.isIso_of_isIso_mapPointsFunctor f
 
 /-- Multiplication identifies the coordinate Hopf algebra of the weight parabolic with the
 coordinate Hopf algebra of its represented unipotent-by-Levi semidirect product. -/

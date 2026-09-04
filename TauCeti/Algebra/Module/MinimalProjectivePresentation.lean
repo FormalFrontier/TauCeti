@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.Algebra.Exact.Basic
-public import TauCeti.Algebra.Module.ProjectiveCover
+public import TauCeti.Algebra.Module.ProjectiveCover.Basic
 
 /-!
 # Minimal projective presentations
@@ -44,12 +44,13 @@ is conditional on a presentation being given, and
 one presentation.
 
 The file is layered by the coefficients each part needs, as
-`TauCeti/Algebra/Module/ProjectiveCover.lean` is. The predicate itself and the two cover-form
+`TauCeti/Algebra/Module/ProjectiveCover/Basic.lean` is. The predicate itself and the two cover-form
 readings of it need only a semiring and additive monoids. The degeneration over a projective
 module needs the presented module to be an additive group, that being what uniqueness of covers
 needs. The comparison and uniqueness theorems need a ring, which the syzygy forces rather than the
-proofs choosing it: they apply the cover statements of `TauCeti/Algebra/Module/ProjectiveCover.lean`
-to the syzygy `ker p₀` as the *covered* module, and those are stated for a covered module that is
+proofs choosing it: they apply the cover statements of
+`TauCeti/Algebra/Module/ProjectiveCover/Basic.lean` to the syzygy `ker p₀` as the *covered* module,
+and those are stated for a covered module that is
 an additive group. A submodule of an additive group is itself an additive group only once the
 scalars form a ring — `Submodule.addCommGroup` is a `[Ring R]` instance, and over a semiring a
 submodule need not be closed under negation, as `ℕ ⊆ ℤ` shows — so over a semiring
@@ -91,7 +92,7 @@ of Layer 6 of
 the prerequisite it names for the transpose `Tr` and the Auslander-Reiten translate `τ = D Tr`
 ("it is well-defined only up to projectives, through minimal presentations and duality on
 finite-dimensional modules"). The injective co-presentation is the remaining half, as the injective
-envelope is the remaining half of `TauCeti/Algebra/Module/ProjectiveCover.lean`.
+envelope is the remaining half of `TauCeti/Algebra/Module/ProjectiveCover/Basic.lean`.
 
 * M. Auslander, I. Reiten, S. O. Smalø, *Representation Theory of Artin Algebras*, Cambridge
   University Press (1995), Section I.2 and Section IV.1.

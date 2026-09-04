@@ -7,6 +7,7 @@ module
 
 public import TauCeti.Algebra.Lie.Orthogonal.TypeD.DiagonalCartan
 public import TauCeti.LinearAlgebra.RootSystem.ClassicalTypeD
+public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.Assembly
 
 /-!
 # The numbered simple-root generators of the split type-D Lie algebra
@@ -48,6 +49,10 @@ spin lattice, are deliberately left to the next carrier step.
   algebra.
 * `TauCeti.TypeDStd.cartanGenerator`: the zero-based Bourbaki-numbered diagonal Cartan generators.
 * `TauCeti.TypeDStd.rootGeneratorWeight`: the integral Cartan weights of the generators.
+* `TauCeti.TypeDStd.rootGeneratorWeight_inl_eq_root_simpleIndex` and
+  `TauCeti.TypeDStd.rootGeneratorWeight_inr_eq_neg_root_simpleIndex`: that weight is the
+  correspondingly numbered simple root of `TauCeti.DynkinType.simplyConnectedRootDatum` at
+  `TauCeti.DynkinType.D n`, respectively its negative.
 * `TauCeti.TypeDStd.lie_cartanGenerator_rootGenerator`: the Cartan action on the generators.
 * `TauCeti.TypeDStd.lie_rootGenerator_inl_inr`: the raising--lowering bracket relations.
 * `TauCeti.TypeDStd.lie_rootGenerator_inl_inl_of_cartan_eq_zero`: nonadjacent same-sign
@@ -65,6 +70,9 @@ spin lattice, are deliberately left to the next carrier step.
 * The combined-generator interface adapts `LieAlgebra.Basis.rootGenerator`,
   `LieAlgebra.Basis.rootGeneratorWeight`, and `LieAlgebra.Basis.lie_h_rootGenerator` from
   `TauCeti.Algebra.Lie.UniversalEnveloping.Kostant.Basis`.
+* The two named-root identifications follow the formal template of
+  `TauCeti.SpStd.rootGeneratorWeight_inl_eq_root_simpleIndex` and its lowering counterpart in
+  `TauCeti.Algebra.Lie.Symplectic.StandardCarrier.RootDatum`, specialized to type `D`.
 
 This advances the explicit Chevalley--Demazure construction in Layer 9 of
 `TauCetiRoadmap/ReductiveGroups/README.md`. Its consumer is milestone L0, pinned ambient groups,
@@ -262,6 +270,40 @@ theorem rootGeneratorWeight_inl (i j : Fin n) :
 theorem rootGeneratorWeight_inr (i j : Fin n) :
     rootGeneratorWeight n (.inr i) j = -CartanMatrix.D n i j := by
   simp [rootGeneratorWeight]
+
+/-! ### The numbered generators sit at the named simple roots
+
+Neither identification below is a `simp` lemma. Their left-hand sides are already `simp`-normal:
+`rootGeneratorWeight_inl` and `rootGeneratorWeight_inr` rewrite an applied weight to an entry of
+`CartanMatrix.D n`, and orienting these identifications towards the datum would undo that. -/
+
+/-- **The weight of the `i`-th raising generator is the `i`-th simple root of the uniform pinned
+type-`Dₙ` datum.** This is the dispatcher form consumed by a construction indexed by a Dynkin
+type rather than by an explicit orthogonal Lie algebra. -/
+theorem rootGeneratorWeight_inl_eq_root_simpleIndex (i : Fin n) :
+    rootGeneratorWeight n (.inl i) =
+      ((DynkinType.D n).simplyConnectedRootDatum (DynkinType.valid_D.mpr hn)).root
+        ((DynkinType.D n).simpleIndex (DynkinType.valid_D.mpr hn) i) := by
+  -- The rank of `D n` is definitionally `n`, but the dependent root index prevents rewriting the
+  -- dispatcher equation directly. Both sides are instead identified with the Cartan-matrix row.
+  refine Eq.trans ?_
+    (DynkinType.root_simpleIndex (DynkinType.D n) (DynkinType.valid_D.mpr hn) i).symm
+  rw [DynkinType.cartanMatrix_D]
+  funext j
+  rw [rootGeneratorWeight_inl]
+
+/-- **The weight of the `i`-th lowering generator is the negative of the `i`-th simple root of the
+uniform pinned type-`Dₙ` datum.** -/
+theorem rootGeneratorWeight_inr_eq_neg_root_simpleIndex (i : Fin n) :
+    rootGeneratorWeight n (.inr i) =
+      -((DynkinType.D n).simplyConnectedRootDatum (DynkinType.valid_D.mpr hn)).root
+        ((DynkinType.D n).simpleIndex (DynkinType.valid_D.mpr hn) i) := by
+  -- Relating the two signs first keeps that step indexed by `Fin n`, rather than by the
+  -- definitionally equal but differently spelled rank of `D n` that the root datum carries.
+  have hneg : rootGeneratorWeight n (.inr i) = -rootGeneratorWeight n (.inl i) := by
+    funext j
+    simp only [rootGeneratorWeight_inr, Pi.neg_apply, rootGeneratorWeight_inl]
+  exact hneg.trans (congrArg Neg.neg (rootGeneratorWeight_inl_eq_root_simpleIndex n hn i))
 
 private theorem chainCartanCoeff (i j : Fin n) (hi : (i : ℕ) + 1 < n) :
     DynkinType.typeDSimpleRoot n hn j i -

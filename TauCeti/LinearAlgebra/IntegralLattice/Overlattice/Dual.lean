@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.LinearAlgebra.FiniteBilinearModule.OrthogonalComplement
+public import TauCeti.LinearAlgebra.FiniteBilinearModule.Orthogonal.Complement
 public import TauCeti.LinearAlgebra.IntegralLattice.Overlattice.Naturality
 
 /-!
@@ -167,6 +167,27 @@ theorem discriminantSubgroup_dual (M : L.IntermediateCarrier) :
       fun b hb ↦ (L.discriminantBilinearModule_pairing a b).trans (h b hb), fun h b hb ↦ ?_⟩
   exact (L.discriminantBilinearModule_pairing a b).symm.trans
     ((L.discriminantBilinearModule.mem_orthogonalComplement_iff _ a).mp h b hb)
+
+/-- The discriminant class in `A_L` of a vector of the dual carrier of an integral intermediate
+carrier. -/
+noncomputable def IsIntegral.dualClassHom {M : L.IntermediateCarrier} (hM : IsIntegral M) :
+    hM.toIntegralLattice.dualCarrier →ₗ[ℤ] L.DiscriminantGroup :=
+  L.carrierInDual.mkQ.comp (Submodule.inclusion hM.dualCarrier_le)
+
+@[simp]
+theorem IsIntegral.dualClassHom_apply {M : L.IntermediateCarrier} (hM : IsIntegral M)
+    (y : hM.toIntegralLattice.dualCarrier) :
+    hM.dualClassHom y = Submodule.Quotient.mk ⟨(y : V), hM.dualCarrier_le y.2⟩ := (rfl)
+
+/-- The discriminant class of a vector of `Mᵛ` is orthogonal to `H = M / L`, because the dual
+of an intermediate carrier corresponds to the orthogonal complement of its subgroup. -/
+theorem IsIntegral.dualClassHom_mem_orthogonalComplement {M : L.IntermediateCarrier}
+    (hM : IsIntegral M) (y : hM.toIntegralLattice.dualCarrier) :
+    hM.dualClassHom y ∈
+      L.discriminantBilinearModule.orthogonalComplement (L.discriminantSubgroup M) := by
+  rw [← discriminantSubgroup_dual, hM.dualClassHom_apply]
+  exact (L.mk_mem_discriminantSubgroup_iff (dual M) _).mpr
+    (by rw [← hM.toIntegralLattice_dualCarrier]; exact y.2)
 
 /-- **Double duality for intermediate carriers.** -/
 @[simp]

@@ -10,6 +10,7 @@ public import TauCeti.Algebra.AlgebraicGroup.Hopf.Map
 public import TauCeti.Algebra.AlgebraicGroup.PointsFunctor
 public import TauCeti.Algebra.Coalgebra.Comodule.Finite.Corestrict
 public import TauCeti.Algebra.Coalgebra.Comodule.PointAction
+public import TauCeti.Algebra.Coalgebra.Subcomodule.Basic
 public import Mathlib.LinearAlgebra.GeneralLinearGroup.Basic
 
 /-!
@@ -100,6 +101,14 @@ theorem basePointsRepresentation_apply (g : WithConv (H →ₐ[R] R)) (m : M) :
     (pointsRepresentation (R := R) (H := H) (A := R) M g) m = _
   rw [LinearEquiv.conj_apply_apply, pointsRepresentation_apply]
   simp
+
+/-- Every subcomodule is stable under the action of base-valued points. -/
+theorem basePointsRepresentation_mem (N : Subcomodule R H M)
+    (g : WithConv (H →ₐ[R] R)) {m : M} (hm : m ∈ N) :
+    basePointsRepresentation (H := H) M g m ∈ N := by
+  rw [basePointsRepresentation_apply, endOfPoint_tmul, one_smul,
+    TensorProduct.lid_comm]
+  exact N.rid_lTensor_coact_mem g.ofConv.toLinearMap hm
 
 /-- The scalar-extension action of a base-valued point is the pure tensor of its action on the
 original comodule. -/

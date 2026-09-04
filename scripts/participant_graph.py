@@ -237,7 +237,6 @@ def render(people: dict[str, set[str]], title: str, out: str, as_of: str) -> int
         for repo, label, _ in REPOSITORIES
     )
     svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}"
-     font-family="ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,sans-serif"
      role="img" aria-labelledby="participation-title participation-description">
   <title id="participation-title">{html.escape(title)}: {html.escape(subtitle)}</title>
   <desc id="participation-description">{html.escape(breakdown)}. People active in several repositories are counted in each bar.</desc>

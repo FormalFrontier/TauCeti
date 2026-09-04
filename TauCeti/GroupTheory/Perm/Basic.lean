@@ -5,20 +5,31 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Algebra.Group.End
+public import Mathlib.GroupTheory.Perm.Support
 import Mathlib.GroupTheory.Perm.ViaEmbedding
 
 /-!
 # Elementary facts about permutations
 
 This file records general-purpose facts about permutations: an identity between transpositions,
-a permutation transported along an injection, and the combination of two permutations transported
-along injections with disjoint ranges.
+a characterization of permutations with a unique fixed point, a permutation transported along an
+injection, and the combination of two permutations transported along injections with disjoint
+ranges.
 -/
 
 public section
 
 namespace TauCeti
+
+variable {α : Type*} [Fintype α] [DecidableEq α]
+
+/-- A permutation moves all but one point exactly when it has a unique fixed point. -/
+theorem card_support_add_one_eq_card_iff_existsUnique_fixedPoint (σ : Equiv.Perm α) :
+    σ.support.card + 1 = Fintype.card α ↔ ∃! x : α, σ x = x := by
+  have hfixed : (∃! x : α, x ∈ σ.supportᶜ) ↔ ∃! x : α, σ x = x := by
+    simp only [Finset.mem_compl, Equiv.Perm.notMem_support]
+  rw [← hfixed, ← Finset.card_eq_one_iff_existsUnique, Finset.card_compl]
+  omega
 
 /-- Whenever `a` and `c` are both distinct from `b`, the transpositions `(a b)` and `(b c)`
 satisfy the braid relation. The two points `a` and `c` need not be distinct: for `a = c` both

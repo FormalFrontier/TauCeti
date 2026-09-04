@@ -1,11 +1,12 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Claude
+Authors: Claude, Codex
 -/
 module
 
-public import TauCeti.Combinatorics.DenseGraphLimits.Kernel.Basic
+public import TauCeti.Combinatorics.DenseGraphLimits.Kernel.Integral
+import TauCeti.MeasureTheory.Integral.Bochner.Basic
 
 /-!
 # The `L²` pairing of symmetric kernels
@@ -36,6 +37,8 @@ the expansion `l2sq_sub` needs no additional side conditions.
 * `TauCeti.DenseGraphLimits.SymmKernel.integrable_mul` is the integrability behind both;
 * `TauCeti.DenseGraphLimits.l2sq_sub` expands the squared seminorm of a difference — the identity
   the Pythagoras energy increment is read off from;
+* `TauCeti.DenseGraphLimits.sq_rectIntegral_le_measureReal_mul_l2sq` is the finite-measure
+  rectangle Cauchy--Schwarz bound, and `sq_rectIntegral_le_l2sq` is its probability specialization;
 * `TauCeti.DenseGraphLimits.l2sq_le_one_of_abs_le_one` bounds the squared seminorm of a kernel
   with values in `[-1, 1]` over a probability carrier.
 
@@ -46,6 +49,9 @@ the expansion `l2sq_sub` needs no additional side conditions.
   stack.  The `l2sq` signature and the `l2sq_nonneg` proof are taken from
   `TauCetiRoadmap/DenseGraphLimits/Suggested.lean` (Layer 1/2); the pairing `l2inner` and its
   bilinear API are developed here.
+* The set-integral Cauchy--Schwarz argument follows `Graphon/Regularity.lean` in
+  `cameronfreer/graphon` (Apache 2.0) at commit
+  `6eccca5bbe5c9df46d7129bf59575b8b9b1d6699`.
 -/
 
 public section
@@ -191,6 +197,36 @@ theorem l2sq_sub (K L : SymmKernel Ω μ) :
   simp only [l2sq_eq_l2inner_self, l2inner_sub_left, l2inner_sub_right]
   rw [l2inner_comm μ L K]
   ring
+
+/-- The square of a kernel's integral over a rectangle is at most the rectangle's measure times
+the kernel's squared `L²` seminorm. -/
+theorem sq_rectIntegral_le_measureReal_mul_l2sq (K : SymmKernel Ω μ) (S T : Set Ω) :
+    (K.rectIntegral μ S T) ^ 2 ≤ (μ.prod μ).real (S ×ˢ T) * l2sq μ K := by
+  rw [SymmKernel.rectIntegral_def, l2sq_def]
+  calc
+    (∫ p in S ×ˢ T, K p.1 p.2 ∂(μ.prod μ)) ^ 2
+        ≤ (μ.prod μ).real (S ×ˢ T) *
+            ∫ p in S ×ˢ T, K p.1 p.2 ^ 2 ∂(μ.prod μ) :=
+      MeasureTheory.sq_setIntegral_le_measureReal_mul_setIntegral_sq _ _
+        (measure_ne_top _ _)
+        (K.integrable_uncurry μ).integrableOn (K.integrable_sq μ).integrableOn
+    _ ≤ (μ.prod μ).real (S ×ˢ T) * ∫ p, K p.1 p.2 ^ 2 ∂(μ.prod μ) := by
+      exact mul_le_mul_of_nonneg_left
+        (setIntegral_le_integral (K.integrable_sq μ) (ae_of_all _ fun _ => sq_nonneg _))
+        measureReal_nonneg
+
+omit [IsFiniteMeasure μ] in
+/-- The square of a kernel's integral over any rectangle is at most its squared `L²` seminorm
+on a probability carrier. -/
+theorem sq_rectIntegral_le_l2sq [IsProbabilityMeasure μ] (K : SymmKernel Ω μ) (S T : Set Ω) :
+    (K.rectIntegral μ S T) ^ 2 ≤ l2sq μ K := by
+  calc
+    (K.rectIntegral μ S T) ^ 2
+        ≤ (μ.prod μ).real (S ×ˢ T) * l2sq μ K :=
+      sq_rectIntegral_le_measureReal_mul_l2sq μ K S T
+    _ ≤ 1 * l2sq μ K :=
+      mul_le_mul_of_nonneg_right measureReal_le_one (l2sq_nonneg μ K)
+    _ = l2sq μ K := one_mul _
 
 omit [IsFiniteMeasure μ] in
 /-- A kernel with values in `[-1, 1]` has squared `L²` seminorm at most `1` over a probability

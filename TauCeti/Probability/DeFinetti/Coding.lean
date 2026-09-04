@@ -228,8 +228,9 @@ theorem exists_pathLaw_eq_map_unitIntervalCoding {μ : Measure Ω} [IsProbabilit
       pathLaw μ X = ((π : Measure (ProbabilityMeasure α)).prod
           (Measure.infinitePi fun _ : ℕ => (volume : Measure I))).map
         fun p i => unitIntervalCoding α p.1 (p.2 i) := by
-  have : IsProbabilityMeasure (pathLaw μ X) :=
-    Measure.isProbabilityMeasure_map (aemeasurable_pi_lambda _ hX_meas)
+  have : IsProbabilityMeasure (pathLaw μ X) := by
+    rw [pathLaw_def]
+    infer_instance
   exact ((exchangeable_iff_exchangeableLaw_pathLaw hX_meas).mp hX).exists_eq_map_unitIntervalCoding
 
 end Coding

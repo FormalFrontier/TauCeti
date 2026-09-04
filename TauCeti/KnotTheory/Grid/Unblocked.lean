@@ -65,8 +65,12 @@ assignment, a later stage of the roadmap.
   `O`-markings among the covered squares.
 * `TauCeti.GridDiagram.totalDegree_OMonomial`: the weight of a rectangle is a squarefree monomial
   whose degree is the number of `O`-markings the rectangle covers.
+* `TauCeti.GridDiagram.OMonomial_eq_prod_coveredSquares`: the weight of a rectangle as a product
+  over the squares it covers.
 * `TauCeti.GridDiagram.unblockedDifferentialOnGenerator_support_subset`: the differential of a
   generator is supported on the column transpositions of that generator.
+* `TauCeti.GridDiagram.unblockedDifferential_sq_single_apply`: the matrix of `∂⁻ ∘ ∂⁻` is a
+  sum over intermediate states of products of matrix coefficients.
 * `TauCeti.GridDiagram.maslovO_sub_two_mul_card_OColumns_eq_maslovO_sub_one`,
   `TauCeti.GridDiagram.alexander_sub_card_OColumns_eq_alexander`: the differential is homogeneous
   of bidegree `(-1, 0)` once `V_c` is given bidegree `(-2, -1)`.
@@ -169,6 +173,20 @@ theorem OMonomial_eq_monomial (r : GridRectangle n) :
 theorem OMonomial_ne_zero [Nontrivial R] (r : GridRectangle n) : G.OMonomial R r ≠ 0 := by
   rw [OMonomial_eq_monomial]
   simp
+
+/-- The weight of a rectangle is the product, over the squares it covers, of the variable of the
+square's column at the `O`-marked squares and of `1` elsewhere.
+
+Written this way the weight is a multiplicative function of the covered-square domain alone, so
+any repartition of a union of covered squares into rectangles preserves the product of the
+weights. That is what the recutting arguments for `∂⁻ ∘ ∂⁻ = 0` need. -/
+theorem OMonomial_eq_prod_coveredSquares (r : GridRectangle n) :
+    G.OMonomial R r =
+      ∏ p ∈ r.coveredSquares,
+        if p ∈ G.OSet then MvPolynomial.X p.1 else (1 : MvPolynomial (Fin n) R) := by
+  classical
+  rw [OMonomial, Finset.prod_ite_mem, Finset.inter_comm, G.OSet_inter_coveredSquares r,
+    Finset.prod_image fun _ _ _ _ hab => congrArg Prod.fst hab]
 
 /-- The weight of a rectangle has total degree the number of `O`-markings the rectangle covers.
 
@@ -359,6 +377,16 @@ theorem unblockedDifferential_apply_apply (c : GridChainMinus R n) (y : GridStat
     G.unblockedDifferential R c y = c.sum fun x a => a * G.unblockedCoefficient R x y := by
   rw [unblockedDifferential_apply]
   simp [Finsupp.sum_apply]
+
+/-- The matrix of the square of the unblocked differential: its `(x, z)` entry is the sum over
+intermediate grid states of the products of the two matrix coefficients. -/
+theorem unblockedDifferential_sq_single_apply (x z : GridState n) :
+    G.unblockedDifferential R (G.unblockedDifferential R (Finsupp.single x 1)) z =
+      ∑ y : GridState n, G.unblockedCoefficient R x y * G.unblockedCoefficient R y z := by
+  rw [unblockedDifferential_single, unblockedDifferential_apply_apply,
+    Finsupp.sum_fintype _ _ fun _ => zero_mul _]
+  exact Finset.sum_congr rfl fun y _ => by
+    rw [unblockedDifferentialOnGenerator_apply]
 
 /-! ### The bidegree of the unblocked differential -/
 

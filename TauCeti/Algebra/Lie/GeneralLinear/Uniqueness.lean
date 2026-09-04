@@ -13,8 +13,6 @@ public import Mathlib.Data.Fintype.Sort
 public import Mathlib.LinearAlgebra.Eigenspace.Basic
 public import Mathlib.LinearAlgebra.FiniteDimensional.Defs
 
-public section
-
 /-!
 # The highest weight of a `gl n`-module determines it
 
@@ -88,6 +86,8 @@ Layer 9 of `TauCetiRoadmap/RepresentationTheory/LieHighestWeight/README.md`.
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §20.3, for the
   Killing-semisimple original of the argument.
 -/
+
+public section
 
 namespace TauCeti
 

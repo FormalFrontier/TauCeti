@@ -137,7 +137,9 @@ theorem conditionallyIIDWith_iidMixtureLaw (hP : Measurable P) :
   -- Both sides of the disintegration collapse to the same `π`-mixture of
   -- `δ_{P t} ⊗ (P t)^{⊗ Fin m}`.
   have hker := TauCeti.MeasureTheory.measurable_dirac_prod_infinitePi_const (ι' := ℕ) P hP
-  refine ConditionallyIIDWith.intro (hP.comp measurable_fst) fun m k hk => ?_
+  refine ConditionallyIIDWith.intro
+    (fun n => ((measurable_pi_apply n).comp measurable_snd).aemeasurable)
+    (hP.comp measurable_fst) fun m k hk => ?_
   -- the joint kernel `Q ↦ δ_Q ⊗ Q^{⊗ Fin m}`, through which both sides factor
   set g : ProbabilityMeasure α → Measure (ProbabilityMeasure α × (Fin m → α)) := fun Q =>
     (Measure.dirac Q).prod (ProbabilityMeasure.pi fun _ : Fin m => Q).toMeasure with hg
@@ -146,7 +148,7 @@ theorem conditionallyIIDWith_iidMixtureLaw (hP : Measurable P) :
       (fun Q : ProbabilityMeasure α => Q) measurable_id
   have hsel : Measurable fun ω : T × (ℕ → α) => (P ω.1, fun i : Fin m => ω.2 (k i)) :=
     (hP.comp measurable_fst).prodMk
-      (measurable_pi_lambda _ fun i => (measurable_pi_apply (k i)).comp measurable_snd)
+      (Measurable.of_eval fun i => (measurable_pi_apply (k i)).comp measurable_snd)
   -- Each fibre of the mixture selects its block out of a countable power: `Measure.dirac_prod`
   -- turns the fibre into a pushforward of `(P t)^{⊗ℕ}`, on which the block-selection lemma applies.
   have hfib : ∀ t : T,
@@ -221,7 +223,7 @@ theorem exists_map_eq_dirac_of_iIndepFun_iidMixtureLaw [IsProbabilityMeasure π]
     fun i => (contractable_iidMixtureLaw hP).identDistrib_coord (hX i) (hX 0)
   let Q : ProbabilityMeasure α :=
     ⟨(iidMixtureLaw π P).map fun ω => ω.2 0,
-      Measure.isProbabilityMeasure_map (hX 0)⟩
+      inferInstance⟩
   refine ⟨Q, ?_⟩
   -- uniqueness of the mixing law then identifies `π.map P` with that constant's law
   rw [← iidMixtureLaw_map_directing hP,

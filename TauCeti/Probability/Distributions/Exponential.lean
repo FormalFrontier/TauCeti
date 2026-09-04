@@ -350,8 +350,6 @@ theorem hasLaw_min_expMeasure_of_indepFun {Ω : Type*} {mΩ : MeasurableSpace Ω
     hX.aemeasurable.min hY.aemeasurable
   have _ : IsProbabilityMeasure (expMeasure r) := isProbabilityMeasure_expMeasure hr
   have _ : IsProbabilityMeasure P := hX.isProbabilityMeasure
-  have _ : IsProbabilityMeasure (P.map fun ω => min (X ω) (Y ω)) :=
-    Measure.isProbabilityMeasure_map hmin
   have _ : IsProbabilityMeasure (expMeasure (r + s)) :=
     isProbabilityMeasure_expMeasure (add_pos hr hs)
   refine ⟨hmin, ?_⟩

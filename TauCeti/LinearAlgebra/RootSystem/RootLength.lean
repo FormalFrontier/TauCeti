@@ -7,8 +7,6 @@ module
 
 public import TauCeti.LinearAlgebra.RootSystem.DynkinType
 
-public section
-
 /-!
 # Long and short simple roots of a Dynkin type
 
@@ -99,6 +97,8 @@ This file implements the "pin the node numbering" item of Layer 6 of
 Algebras, Chapters 4-6*, plates I-IX, for the numbering and the root lengths, and Kac, *Infinite
 Dimensional Lie Algebras*, Chapter 2, for symmetrisable Cartan matrices.
 -/
+
+public section
 
 namespace TauCeti
 

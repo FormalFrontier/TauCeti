@@ -46,12 +46,6 @@ namespace UpperTriangular
 
 variable (n : ℕ)
 
-private theorem weights_injective : Function.Injective (weights n) := by
-  intro i j hij
-  apply Fin.ext
-  rw [weights_apply, weights_apply] at hij
-  omega
-
 /-- **The standard upper-triangular subgroup of `GL_n` is smooth over every field.** -/
 theorem smoothCommHopfAlgProperty_coordinateHopfAlgebra
     (k : Type u) [Field k] :

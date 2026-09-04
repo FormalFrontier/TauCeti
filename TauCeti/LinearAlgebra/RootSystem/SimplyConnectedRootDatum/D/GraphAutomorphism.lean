@@ -5,8 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.LinearAlgebra.RootSystem.DiagramPermutations
-public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.D.Basic
+public import TauCeti.LinearAlgebra.RootSystem.SimplyConnectedRootDatum.D.SpinWeight
 
 /-!
 # The graph automorphism of the pinned type `Dₙ` root datum
@@ -29,6 +28,8 @@ permutation `TauCeti.graphPermD` used by the graph-twisted finite groups of Lie 
 * `TauCeti.DynkinType.typeDGraphAut`: the resulting automorphism of the pinned simply connected
   root datum.
 * `TauCeti.DynkinType.typeDGraphAut_sq`: the automorphism has square one.
+* `TauCeti.DynkinType.typeDGraphAut_weightMap_typeDSpinWeight`: its weight map toggles the final
+  sign in the spin-weight indexing.
 * `TauCeti.DynkinType.image_typeDGraphAut_indexEquiv_typeDSimplyConnectedBase_support`: the
   pinned base support is preserved.
 
@@ -320,6 +321,17 @@ node coordinates. -/
 @[simp] theorem coweightMap_typeDGraphAut_apply (hn : 4 ≤ n) (x : Fin n → ℤ) (i : Fin n) :
     (typeDGraphAut n hn).coweightMap x i = x (graphPermD n (by omega) i) :=
   typeDGraphLatticeEquiv_apply hn x i
+
+/-- **The type-`D` root-datum graph automorphism permutes the full spin-weight family** by
+toggling the final sign. This is the weight-basis compatibility needed to lift the symmetry to the
+full-weight spin carrier. -/
+@[simp]
+theorem typeDGraphAut_weightMap_typeDSpinWeight (hn : 4 ≤ n) (s : Finset (Fin n)) :
+    (typeDGraphAut n hn).weightMap (typeDSpinWeight s) =
+      typeDSpinWeight (typeDSpinGraphPerm n (by omega) s) := by
+  funext i
+  rw [weightMap_typeDGraphAut_apply]
+  exact (typeDSpinWeight_typeDSpinGraphPerm_apply (by omega) s i).symm
 
 /-- The root-index action of the type-`D` graph automorphism restricts to the fork swap on the
 pinned simple roots. -/

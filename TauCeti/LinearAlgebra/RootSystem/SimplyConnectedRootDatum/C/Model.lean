@@ -9,8 +9,6 @@ public import TauCeti.Data.Fin.Basic
 public import Mathlib.LinearAlgebra.Matrix.Dual
 public import Mathlib.LinearAlgebra.Reflection
 
-public section
-
 /-!
 # The classical model of type `Cₙ` in the pinned coordinates
 
@@ -81,6 +79,8 @@ The coordinates and the node numbering follow Bourbaki, *Lie Groups and Lie Alge
 12.1. This supports the `Cₙ` branch of the target "a named datum per valid type" in Layer 6 of
 `TauCetiRoadmap/RepresentationTheory/RootSystems/README.md`.
 -/
+
+public section
 
 namespace TauCeti
 

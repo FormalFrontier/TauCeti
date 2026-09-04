@@ -107,7 +107,7 @@ instance hasCentralKernel_respectsIso : (hasCentralKernel X).RespectsIso := by
 
 section Isogeny
 
-variable {k : Type u} [Field k]
+variable {k : Type u} [CommRing k]
 variable {G H : Grp (Over (Spec (CommRingCat.of k)))}
 
 namespace IsIsogeny

@@ -29,9 +29,8 @@ extension as a hypothesis rather than building one, so it does not use this lemm
 
 ## Provenance
 
-Roadmap: EllipticCurves, the Layers 0-1 target *Function-field foundations and isogenies*
-(`TauCetiRoadmap/EllipticCurves/README.md:1096`), through the support module
-`RingTheory/IntegralClosure/NormalizationFinite`.
+The construction is the finite root-adjoining step appearing in Stacks, Lemma 10.161.13
+(tag 032O), in the normalization-finiteness argument described above.
 -/
 
 public section

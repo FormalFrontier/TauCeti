@@ -50,6 +50,14 @@ concurrency:
   # from-source build but before the report wastes the expensive part.
   cancel-in-progress: false
 
+env:
+  # Temporary escape hatch for `lake exe cache get`, kept only for an easy rollback
+  # during the transition to the cache tool's new default read endpoint. Set the
+  # variable to `1` to send cache reads back to the legacy storage endpoint. Clear it to
+  # return reads to the default endpoint on the next run: the cache tool treats unset,
+  # empty, `0`, and `false` alike as off.
+  MATHLIB_CACHE_DEBUG_USE_LEGACY: ${{ vars.MATHLIB_CACHE_DEBUG_USE_LEGACY }}
+
 jobs:
   # No secrets reach this job. It builds and executes repository code, including a build restored
   # from the public cache, so anything it can read is code-reachable. Reporting lives in a separate

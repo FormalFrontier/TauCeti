@@ -8,8 +8,6 @@ module
 public import TauCeti.Combinatorics.Quiver.Prefunctor
 public import TauCeti.RepresentationTheory.Quiver.PathAlgebra.Basic
 
-public section
-
 /-!
 # Path algebras are functorial in the quiver
 
@@ -51,6 +49,8 @@ This is the "functoriality under graph/quiver isomorphism" clause of Layer 0 of
 relation quotients are carried along it in
 `TauCeti/RepresentationTheory/Quiver/Zigzag/Isomorphism.lean`.
 -/
+
+public section
 
 namespace TauCeti
 

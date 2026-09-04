@@ -36,6 +36,15 @@ The reconstruction is total: entries after the last genuine visit use the junk v
   times are genuine and strictly increasing when the value occurs infinitely often.
 * `TauCeti.apply_visitTime_of_le` and `TauCeti.visitTime_lt_visitTime_of_le`: the same two facts
   below a visit that is known to exist.
+* `TauCeti.visitTime_lt_of_lt_visitCount`: a visit indexed below a visit count is realised before
+  the horizon.
+* `TauCeti.apply_visitTime_of_lt_visitCount`: such an index names a genuine visit.
+* `TauCeti.visitCount_visitTime_of_lt_visitCount`: exactly the indexed number of visits precede
+  that visit.
+* `TauCeti.occCount_succ_add_zero_eq_visitCount_add_last`: the arrival/departure balance of a
+  finite prefix.
+* `TauCeti.successorArray_pathOfSuccessors_of_lt_visitCount`: a reconstruction consumes exactly the
+  successor entries it was prescribed.
 * `TauCeti.eq_pathOfSuccessors`: the uniqueness principle for the reconstruction.
 * `TauCeti.pathOfSuccessors_successorArray`: reconstruction inverts the successor decomposition.
 * `TauCeti.visitCell_injective`: distinct times use distinct cells.
@@ -185,10 +194,48 @@ theorem visitCount_add (x : ℕ → α) (a : α) (m n : ℕ) :
   classical
   simpa only [visitCount_eq_count] using Nat.count_add (p := fun i => x i = a) m n
 
+/-- **The arrival/departure balance of a finite prefix.** Reading the first `t` successors of `z`
+as a word, its occurrences of `b` together with a possible occurrence of `b` at time `0` match the
+visits of `z` to `b` before `t` together with a possible visit at time `t`. -/
+theorem occCount_succ_add_zero_eq_visitCount_add_last (z : ℕ → α) (b : α) (t : ℕ) :
+    occCount (fun i : Fin t => z (i.val + 1)) b + (if z 0 = b then 1 else 0) =
+      visitCount z b t + (if z t = b then 1 else 0) := by
+  classical
+  have h := occCount_comp_succ_add_zero (fun i : Fin (t + 1) => z i.val) b
+  -- Normalize the two endpoints of the word `fun i : Fin (t + 1) => z i`, keeping `occCount`
+  -- opaque.
+  have hzero : ((0 : Fin (t + 1)) : ℕ) = 0 := Fin.val_zero (n := t + 1)
+  have hcomp : (fun i : Fin (t + 1) => z i.val) ∘ Fin.succ =
+      fun i : Fin t => z (i.val + 1) := by
+    funext i
+    simp only [Function.comp_apply, Fin.val_succ]
+  rw [hzero, hcomp, ← visitCount_def z b (t + 1), visitCount_succ] at h
+  by_cases hzt : z t = b
+  · rw [ite_eq_left hzt] at h ⊢
+    exact h
+  · rw [ite_eq_right hzt] at h ⊢
+    rw [Nat.add_zero]
+    exact h
+
 /-- A stretch of a sequence that avoids `a` contributes nothing to its visit count. -/
 theorem visitCount_eq_zero_of_forall_ne (h : ∀ i < n, x i ≠ a) : visitCount x a n = 0 := by
   classical
   simpa only [visitCount_eq_count] using Nat.count_iff_forall_not.2 h
+
+/-- If time `r` is a visit and the sequence does not return to `x r` before `m`, its visit count
+at `m` is its visit count at `r` plus that final visit. -/
+theorem visitCount_eq_succ_of_forall_ne (x : ℕ → α) {r m : ℕ} (hr : r < m)
+    (hne : ∀ j, r < j → j < m → x j ≠ x r) :
+    visitCount x (x r) m = visitCount x (x r) r + 1 := by
+  have hzero : visitCount (fun j => x (r + 1 + j)) (x r) (m - (r + 1)) = 0 := by
+    apply visitCount_eq_zero_of_forall_ne
+    intro j hj
+    exact hne (r + 1 + j) (by omega) (by omega)
+  calc visitCount x (x r) m = visitCount x (x r) (r + 1 + (m - (r + 1))) := by
+        rw [Nat.add_sub_of_le hr]
+    _ = visitCount x (x r) (r + 1) + visitCount (fun j => x (r + 1 + j)) (x r)
+          (m - (r + 1)) := visitCount_add x (x r) (r + 1) (m - (r + 1))
+    _ = visitCount x (x r) r + 1 := by rw [hzero, Nat.add_zero, visitCount_succ_of_eq rfl]
 
 /-- A time at which `x` has value `a` is the visit indexed by the number of earlier visits. -/
 @[simp]
@@ -236,41 +283,63 @@ theorem visitTime_strictMono_of_infinite (h : {n | x n = a}.Infinite) :
 theorem visitTime_zero_of_eq (h : x 0 = a) : visitTime x a 0 = 0 := by
   rw [visitTime_def, Nat.nth_zero_of_zero h]
 
+-- The single counting step behind the `*_of_lt_visitCount` family: below the visit count at some
+-- horizon there are at least that many visits in total.
+private theorem lt_card_of_lt_visitCount (h : k < visitCount x a n) :
+    ∀ hf : {i | x i = a}.Finite, k < hf.toFinset.card := fun hf =>
+  h.trans_le (by rw [visitCount_eq_count]; exact Nat.count_le_card hf n)
+
 /-- If `x` visits `a` only finitely often, the number of visits before a genuine visit is smaller
 than the total number of visits. -/
 theorem visitCount_lt_card (hf : {n | x n = a}.Finite) (hn : x n = a) :
-    visitCount x a n < hf.toFinset.card := by
-  rw [visitCount_eq_count]
-  exact Nat.count_lt_card hf hn
+    visitCount x a n < hf.toFinset.card :=
+  lt_card_of_lt_visitCount (n := n + 1) (by rw [visitCount_succ_of_eq hn]; omega) hf
+
+/-- A visit index below the visit count at time `n` is realised strictly before `n`. -/
+theorem visitTime_lt_of_lt_visitCount (h : k < visitCount x a n) : visitTime x a k < n := by
+  rw [visitTime_def]
+  apply Nat.nth_lt_of_lt_count
+  simpa only [visitCount_eq_count] using h
+
+/-- A visit index below the visit count at time `n` names a genuine visit. -/
+theorem apply_visitTime_of_lt_visitCount (h : k < visitCount x a n) :
+    x (visitTime x a k) = a := by
+  simpa only [visitTime_def] using Nat.nth_mem k (lt_card_of_lt_visitCount h)
+
+/-- Before a realised visit indexed by `k`, there are exactly `k` earlier visits. -/
+theorem visitCount_visitTime_of_lt_visitCount (h : k < visitCount x a n) :
+    visitCount x a (visitTime x a k) = k := by
+  simpa only [visitCount_eq_count, visitTime_def] using Nat.count_nth (lt_card_of_lt_visitCount h)
+
+-- A witness for the `m`-th visit turns the `k ≤ m` hypothesis form into the `k < visitCount` one.
+private theorem lt_visitCount_succ_of_le (hn : x n = a) (hcount : visitCount x a n = m)
+    (hk : k ≤ m) : k < visitCount x a (n + 1) := by
+  rw [visitCount_succ_of_eq hn, hcount]
+  omega
 
 /-- If some time is the `m`-th visit of `x` to `a`, then every earlier visit is realised too: for
 `k ≤ m` some time is the `k`-th visit. -/
 theorem exists_visitCount_of_le (h : ∃ n, x n = a ∧ visitCount x a n = m) (hk : k ≤ m) :
     ∃ n, x n = a ∧ visitCount x a n = k := by
   obtain ⟨n, hn, hcount⟩ := h
-  have hcard : ∀ hf : {n | x n = a}.Finite, k < hf.toFinset.card := fun hf =>
-    hk.trans_lt (hcount ▸ visitCount_lt_card hf hn)
-  refine ⟨visitTime x a k, ?_, ?_⟩
-  · simpa only [visitTime_def] using Nat.nth_mem k hcard
-  · rw [visitCount_eq_count, visitTime_def]
-    exact Nat.count_nth hcard
+  have hlt := lt_visitCount_succ_of_le hn hcount hk
+  exact ⟨visitTime x a k, apply_visitTime_of_lt_visitCount hlt,
+    visitCount_visitTime_of_lt_visitCount hlt⟩
 
 /-- If some time is the `m`-th visit of `x` to `a`, then the `k`-th visit time is a genuine visit
 for every `k ≤ m`. -/
 theorem apply_visitTime_of_le (h : ∃ n, x n = a ∧ visitCount x a n = m) (hk : k ≤ m) :
     x (visitTime x a k) = a := by
-  obtain ⟨n, hn, hcount⟩ := exists_visitCount_of_le h hk
-  rw [← hcount, visitTime_visitCount hn]
-  exact hn
+  obtain ⟨n, hn, hcount⟩ := h
+  exact apply_visitTime_of_lt_visitCount (lt_visitCount_succ_of_le hn hcount hk)
 
 /-- If some time is the `m`-th visit of `x` to `a`, the visit times up to `m` are strictly
 increasing. -/
 theorem visitTime_lt_visitTime_of_le (h : ∃ n, x n = a ∧ visitCount x a n = m) (hkj : k < j)
     (hj : j ≤ m) : visitTime x a k < visitTime x a j := by
   obtain ⟨n, hn, hcount⟩ := h
-  have hcard : ∀ hf : {n | x n = a}.Finite, j < hf.toFinset.card := fun hf =>
-    hj.trans_lt (hcount ▸ visitCount_lt_card hf hn)
-  simpa only [visitTime_def] using Nat.nth_lt_nth' hkj hcard
+  simpa only [visitTime_def] using
+    Nat.nth_lt_nth' hkj (lt_card_of_lt_visitCount (lt_visitCount_succ_of_le hn hcount hj))
 
 /-- If `x` visits `a` infinitely often, every visit count is realised. -/
 theorem exists_visitCount_of_infinite (h : {n | x n = a}.Infinite) (m : ℕ) :
@@ -349,6 +418,19 @@ theorem eq_pathOfSuccessors (h₀ : y 0 = a₀)
         ih i (Nat.lt_succ_of_le hi)
       rw [hstep, pathOfSuccessors_succ, hle n (le_refl n),
         visitCount_congr fun i hi => hle i hi.le]
+
+/-- **Every entry a rebuilt sequence has already consumed is the prescribed one.** Below the visit
+count of `a` at any horizon, the successor array of the reconstruction agrees with the successor
+array it was built from, even though the two may differ on unused entries. -/
+theorem successorArray_pathOfSuccessors_of_lt_visitCount {k : ℕ}
+    (hk : k < visitCount (pathOfSuccessors a₀ s) a n) :
+    successorArray (pathOfSuccessors a₀ s) a k = s a k := by
+  have hvisit : pathOfSuccessors a₀ s (visitTime (pathOfSuccessors a₀ s) a k) = a :=
+    apply_visitTime_of_lt_visitCount hk
+  have hcount : visitCount (pathOfSuccessors a₀ s) a
+      (visitTime (pathOfSuccessors a₀ s) a k) = k :=
+    visitCount_visitTime_of_lt_visitCount hk
+  rw [successorArray_def, pathOfSuccessors_succ, hvisit, hcount]
 
 /-- Rebuilding from a sequence's initial value and successor array recovers the sequence. -/
 @[simp]

@@ -243,7 +243,7 @@ theorem ContractableLaw.setIntegral_comp_coord_eq_comp_zero_of_measurableSet_inv
     (k := fun _ : Fin 1 => 0) (Subsingleton.strictMono _) hA
   have hg : Measurable fun y : Fin 1 → α => f (y 0) := hf.comp (measurable_pi_apply 0)
   have hcoord : ∀ (s : ℕ), Measurable fun x : ℕ → α => fun _ : Fin 1 => x s :=
-    fun s => measurable_pi_lambda _ fun _ => measurable_pi_apply s
+    fun s => Measurable.of_eval fun _ => measurable_pi_apply s
   have key : ∀ s : ℕ, StrictMono (fun _ : Fin 1 => s) → ∫ x in A, f (x s) ∂ρ
       = ∫ y, f (y 0) ∂((ρ.restrict A).map (prefixProj α 1)) := by
     intro s hs

@@ -1,13 +1,14 @@
 /-
 Copyright (c) 2026 The Tau Ceti contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Claude
+Authors: Claude, Codex
 -/
 module
 
 public import TauCeti.Combinatorics.DenseGraphLimits.Kernel.L2
 public import TauCeti.Combinatorics.DenseGraphLimits.StepGraphon.Average
 public import TauCeti.MeasureTheory.Integral.Finpartition
+import TauCeti.MeasureTheory.MeasurableSpace.Finpartition
 
 /-!
 # The graphon partition energy
@@ -29,7 +30,7 @@ This file builds that potential.
 
 Both rest on the same block computation: the energy is a finite sum of block contributions
 (`graphonPartitionEnergy_eq_sum`), and a block average over a *refinement* still reproduces the
-coarse block integrals (`stepGraphonAvg_rectIntegral_of_le`).  That last identity needs no
+coarse block integrals (`stepGraphonAvg_rectIntegral_of_le_of_le`).  That last identity needs no
 hypothesis excluding null parts: a null part of the finer partition cuts out a null rectangle,
 which contributes zero to both sides whatever value the step graphon takes there.  The null-cell
 convention of `stepGraphonAvg` is what makes it a well-defined strict `[0, 1]`-valued
@@ -47,8 +48,9 @@ graph.
 
 ## Main results
 
-* `TauCeti.DenseGraphLimits.stepGraphonAvg_rectIntegral_of_le`: block averaging over a refinement
-  preserves the coarse block integrals;
+* `TauCeti.DenseGraphLimits.stepGraphonAvg_rectIntegral_of_le_of_le`: block averaging over a
+  refinement preserves rectangle integrals whose sides come from possibly different coarser
+  partitions;
 * `TauCeti.DenseGraphLimits.l2inner_stepGraphonAvg_eq_sum`: the block computation everything else
   is read off from — pairing any kernel against a block-average step graphon;
 * `TauCeti.DenseGraphLimits.graphonPartitionEnergy_eq_sum`: the energy as a finite block sum;
@@ -76,7 +78,7 @@ graph.
   `_mono` and `_nonneg` proofs, follow `TauCetiRoadmap/DenseGraphLimits/Suggested.lean` (Layer 2);
   the block computation, the projection moment identity and the defect identity are developed here.
 * The roadmap lists the null-cell `Finpartition` convention — including unchanged weighted energy,
-  the scope of `stepGraphonAvg_rectIntegral_of_le` and of the increment — under its
+  the scope of `stepGraphonAvg_rectIntegral_of_le_of_le` and of the increment — under its
   migration-backed routes, with an independent development in `Graphon/RegularityFinpartition.lean`
   in `cameronfreer/graphon` (Apache 2.0) at commit
   `dfd7ecc9b197d8211842935204bcec6051d57863`.  No material is adapted from that source; the proofs
@@ -98,22 +100,27 @@ variable {Ω : Type*} [MeasurableSpace Ω] (μ : Measure Ω) [IsProbabilityMeasu
 section Decomposition
 
 /-- Two kernels with the same integral over every rectangle of a partition `Q` have the same
-integral over every rectangle of any coarser partition `P`. -/
-private theorem rectIntegral_eq_of_le {P Q : Finpartition (Set.univ : Set Ω)}
-    (hP : ∀ p ∈ P.parts, MeasurableSet p) (hQ : ∀ r ∈ Q.parts, MeasurableSet r) (href : Q ≤ P)
+integral over a rectangle whose sides are parts of two partitions coarser than `Q`. -/
+private theorem rectIntegral_eq_of_le_left_right {P R Q : Finpartition (Set.univ : Set Ω)}
+    (p : P.parts) (r : R.parts) (hQ : ∀ q ∈ Q.parts, MeasurableSet q)
+    (hQP : Q ≤ P) (hQR : Q ≤ R)
     {K L : SymmKernel Ω μ}
     (h : ∀ r s : Q.parts, K.rectIntegral μ (r : Set Ω) (s : Set Ω)
-      = L.rectIntegral μ (r : Set Ω) (s : Set Ω)) (p q : P.parts) :
-    K.rectIntegral μ (p : Set Ω) (q : Set Ω) = L.rectIntegral μ (p : Set Ω) (q : Set Ω) := by
+      = L.rectIntegral μ (r : Set Ω) (s : Set Ω)) :
+    K.rectIntegral μ (p : Set Ω) (r : Set Ω) = L.rectIntegral μ (p : Set Ω) (r : Set Ω) := by
+  have hp : MeasurableSet (p : Set Ω) :=
+    Finpartition.measurableSet_of_mem_of_le hQ hQP p.property
+  have hr : MeasurableSet (r : Set Ω) :=
+    Finpartition.measurableSet_of_mem_of_le hQ hQR r.property
   rw [SymmKernel.rectIntegral_def, SymmKernel.rectIntegral_def,
-    Finpartition.setIntegral_prod_eq_sum_parts μ Q hQ (hP _ p.property) (hP _ q.property)
+    Finpartition.setIntegral_prod_eq_sum_parts μ Q hQ hp hr
       (SymmKernel.integrable_uncurry μ K).integrableOn,
-    Finpartition.setIntegral_prod_eq_sum_parts μ Q hQ (hP _ p.property) (hP _ q.property)
+    Finpartition.setIntegral_prod_eq_sum_parts μ Q hQ hp hr
       (SymmKernel.integrable_uncurry μ L).integrableOn]
   refine Finset.sum_congr rfl fun rs _ => ?_
-  rcases Finpartition.inter_part_eq_self_or_eq_empty_of_le href rs.1.property p.property with
+  rcases Finpartition.inter_part_eq_self_or_eq_empty_of_le hQP rs.1.property p.property with
     h1 | h1
-  · rcases Finpartition.inter_part_eq_self_or_eq_empty_of_le href rs.2.property q.property with
+  · rcases Finpartition.inter_part_eq_self_or_eq_empty_of_le hQR rs.2.property r.property with
       h2 | h2
     · rw [h1, h2]
       simpa only [SymmKernel.rectIntegral_def] using h rs.1 rs.2
@@ -124,17 +131,19 @@ private theorem rectIntegral_eq_of_le {P Q : Finpartition (Set.univ : Set Ω)}
 
 end Decomposition
 
-variable (P Q : Finpartition (Set.univ : Set Ω))
+/-- Block averaging over `Q` reproduces the integral over any rectangle whose two sides are parts
+of (possibly different) measurable partitions coarser than `Q`. -/
+@[simp]
+theorem stepGraphonAvg_rectIntegral_of_le_of_le {P R Q : Finpartition (Set.univ : Set Ω)}
+    (p : P.parts) (r : R.parts) (hQ : ∀ q ∈ Q.parts, MeasurableSet q)
+    (hQP : Q ≤ P) (hQR : Q ≤ R)
+    (W : Graphon Ω μ) :
+    (stepGraphonAvg (μ := μ) Q hQ W).toSymmKernel.rectIntegral μ (p : Set Ω) (r : Set Ω)
+      = W.toSymmKernel.rectIntegral μ (p : Set Ω) (r : Set Ω) :=
+  rectIntegral_eq_of_le_left_right μ p r hQ hQP hQR
+    (fun q q' => stepGraphonAvg_rectIntegral Q hQ W q q')
 
-/-- Block averaging over a refinement still reproduces the block integrals of the coarser
-partition.  No hypothesis excluding null parts is needed: a null part of the finer partition cuts
-out a null rectangle, which contributes zero to both sides whatever value the step graphon takes
-there. -/
-theorem stepGraphonAvg_rectIntegral_of_le (hP : ∀ p ∈ P.parts, MeasurableSet p)
-    (hQ : ∀ r ∈ Q.parts, MeasurableSet r) (href : Q ≤ P) (W : Graphon Ω μ) (p q : P.parts) :
-    (stepGraphonAvg (μ := μ) Q hQ W).toSymmKernel.rectIntegral μ (p : Set Ω) (q : Set Ω)
-      = W.toSymmKernel.rectIntegral μ (p : Set Ω) (q : Set Ω) :=
-  rectIntegral_eq_of_le μ hP hQ href (fun r s => stepGraphonAvg_rectIntegral Q hQ W r s) p q
+variable (P Q : Finpartition (Set.univ : Set Ω))
 
 /-- On a single block, pairing any kernel against the block-average step graphon multiplies the
 block integral of the kernel by the block average of `W`. -/
@@ -217,7 +226,7 @@ theorem l2inner_stepGraphonAvg_of_le (hP : ∀ p ∈ P.parts, MeasurableSet p)
       = graphonPartitionEnergy μ P hP W := by
   rw [l2inner_stepGraphonAvg_eq_sum, graphonPartitionEnergy_eq_sum]
   exact Finset.sum_congr rfl fun pq _ => by
-    rw [stepGraphonAvg_rectIntegral_of_le μ P Q hP hQ href W pq.1 pq.2]
+    rw [stepGraphonAvg_rectIntegral_of_le_of_le μ pq.1 pq.2 hQ href href W]
 
 /-- **The `L²`-Pythagoras energy increment.**  Refining a partition raises the energy by exactly the
 `L²` norm squared of the change in the block-average step graphon.  This is the quantitative driver

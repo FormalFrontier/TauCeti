@@ -7,8 +7,11 @@ module
 
 public import TauCeti.Probability.DeFinetti.Theorem
 public import TauCeti.Probability.Exchangeability.FullyExchangeable
+public import TauCeti.Algebra.GroupAction.FiniteSupportPerm
 -- Non-public: evaluating a random probability measure at a fixed measurable set is measurable.
 import TauCeti.MeasureTheory.Measure.ProbabilityMeasure.Ext
+-- Non-public: equality of process laws is reduced to their finite-dimensional laws.
+import Mathlib.Probability.Process.FiniteDimensionalLaws
 
 /-!
 # Row exchangeable arrays and the factorization of their directing measure
@@ -43,6 +46,8 @@ representation of Markov exchangeable processes consumes.
 * `TauCeti.Probability.RowExchangeable.fullyExchangeable_row` and
   `TauCeti.Probability.RowExchangeable.fullyExchangeable_arrayColumn`: each row, and the column
   process, is fully exchangeable;
+* `TauCeti.Probability.rowExchangeable_iff_forall_prodCongrRight_mem_finitary`: it suffices to
+  check families of row permutations that move only finitely many cells altogether;
 * `TauCeti.Probability.RowExchangeable.map_values`: closure under coordinatewise pushforward;
 * `TauCeti.Probability.RowExchangeable.measure_setOf_forall_pair_eq`: the combinatorial core —
   the probability that each row of a finite set lands in its own target set at two prescribed
@@ -135,10 +140,48 @@ theorem rowExchangeable_def :
         μ.map fun ω (p : ι × ℕ) => Y p ω :=
   Iff.rfl
 
+omit [Countable ι] in
+/-- **It suffices to check row exchangeability for permutation families of finite total support.**
+For a finite base measure and an a.e.-measurable array, invariance under every family `π` that
+moves only finitely many cells `(a, k)` implies invariance under arbitrary row-wise permutations. -/
+theorem rowExchangeable_iff_forall_prodCongrRight_mem_finitary [IsFiniteMeasure μ]
+    (hY : AEMeasurable (fun ω => fun p : ι × ℕ => Y p ω) μ) :
+    RowExchangeable μ Y ↔
+      ∀ π : ι → Equiv.Perm ℕ,
+        Equiv.prodCongrRight π ∈ Equiv.Perm.finitary (ι × ℕ) →
+        (μ.map fun ω (p : ι × ℕ) => Y (p.1, π p.1 p.2) ω) =
+          μ.map fun ω (p : ι × ℕ) => Y p ω := by
+  constructor
+  · intro h π _
+    exact rowExchangeable_def.mp h π
+  · intro h
+    rw [rowExchangeable_def]
+    intro π
+    have hshift : ∀ ρ : ι → Equiv.Perm ℕ,
+        AEMeasurable (fun ω => fun p : ι × ℕ => Y (p.1, ρ p.1 p.2) ω) μ := by
+      intro ρ
+      have hρ : Measurable (fun y : ι × ℕ → α =>
+          fun p : ι × ℕ => y (p.1, ρ p.1 p.2)) :=
+        Measurable.of_eval fun p => measurable_pi_apply (p.1, ρ p.1 p.2)
+      exact hρ.comp_aemeasurable hY
+    rw [ProbabilityTheory.map_eq_iff_forall_finset_map_restrict_eq (hshift π) hY]
+    intro F
+    obtain ⟨τ, hτfin, hτ⟩ :=
+      Equiv.Perm.exists_prodCongrRight_mem_finitary_apply_eq_on_finset π F
+    have hτmap := (ProbabilityTheory.map_eq_iff_forall_finset_map_restrict_eq
+      (hshift τ) hY).mp (h τ hτfin) F
+    have heq : (fun ω => F.restrict fun p : ι × ℕ => Y (p.1, τ p.1 p.2) ω) =
+        fun ω => F.restrict fun p : ι × ℕ => Y (p.1, π p.1 p.2) ω := by
+      funext ω p
+      obtain ⟨q, hq⟩ := p
+      simpa only [Finset.restrict_def] using
+        congrArg (fun k => Y (q.1, k) ω) (hτ q hq)
+    rwa [heq] at hτmap
+
 /-- Every column of an array with a.e. measurable entries is a.e. measurable. -/
 theorem aemeasurable_arrayColumn (hY : ∀ p, AEMeasurable (Y p) μ) (k : ℕ) :
     AEMeasurable (arrayColumn Y k) μ :=
-  aemeasurable_pi_lambda _ fun a => hY (a, k)
+  AEMeasurable.of_eval fun a => hY (a, k)
 
 /-- **Each row of a row exchangeable array is fully exchangeable.** -/
 theorem RowExchangeable.fullyExchangeable_row (h : RowExchangeable μ Y)
@@ -148,13 +191,13 @@ theorem RowExchangeable.fullyExchangeable_row (h : RowExchangeable μ Y)
   intro σ
   set π : ι → Equiv.Perm ℕ := fun b => if b = a then σ else 1 with hπ
   have hrow : Measurable fun y : ι × ℕ → α => fun k => y (a, k) :=
-    measurable_pi_lambda _ fun k => measurable_pi_apply (a, k)
+    Measurable.of_eval fun k => measurable_pi_apply (a, k)
   have hmap := congrArg (fun ρ : Measure (ι × ℕ → α) => ρ.map fun y => fun k => y (a, k))
     (rowExchangeable_def.mp h π)
   rw [AEMeasurable.map_map_of_aemeasurable hrow.aemeasurable
-      (aemeasurable_pi_lambda _ fun p => hY (p.1, π p.1 p.2)),
+      (AEMeasurable.of_eval fun p => hY (p.1, π p.1 p.2)),
     AEMeasurable.map_map_of_aemeasurable hrow.aemeasurable
-      (aemeasurable_pi_lambda _ fun p => hY p)] at hmap
+      (AEMeasurable.of_eval fun p => hY p)] at hmap
   have hπa : π a = σ := by simp [hπ]
   simpa [Function.comp_def, pathLaw, hπa] using hmap
 
@@ -165,15 +208,15 @@ theorem RowExchangeable.fullyExchangeable_arrayColumn (h : RowExchangeable μ Y)
     FullyExchangeable μ (arrayColumn Y) := by
   intro σ
   have hcol : Measurable fun y : ι × ℕ → α => fun (k : ℕ) (a : ι) => y (a, k) :=
-    measurable_pi_lambda _ fun k => measurable_pi_lambda _ fun a => measurable_pi_apply (a, k)
+    Measurable.of_eval fun k => Measurable.of_eval fun a => measurable_pi_apply (a, k)
   have hmap := congrArg
     (fun ρ : Measure (ι × ℕ → α) =>
       ρ.map fun y => fun (k : ℕ) (a : ι) => y (a, k))
     (rowExchangeable_def.mp h fun _ => σ)
   rw [AEMeasurable.map_map_of_aemeasurable hcol.aemeasurable
-      (aemeasurable_pi_lambda _ fun p => hY (p.1, σ p.2)),
+      (AEMeasurable.of_eval fun p => hY (p.1, σ p.2)),
     AEMeasurable.map_map_of_aemeasurable hcol.aemeasurable
-      (aemeasurable_pi_lambda _ fun p => hY p)] at hmap
+      (AEMeasurable.of_eval fun p => hY p)] at hmap
   have hleft : (fun ω (i : ℕ) => arrayColumn Y (σ i) ω) =
       fun (x : Ω) (k : ℕ) (a : ι) => Y (a, σ k) x := by
     funext ω k a
@@ -193,13 +236,13 @@ theorem RowExchangeable.map_values {β : Type*} [MeasurableSpace β] (h : RowExc
   rw [rowExchangeable_def] at h ⊢
   intro π
   have hpush : Measurable fun y : ι × ℕ → α => fun p : ι × ℕ => f p.1 (y p) :=
-    measurable_pi_lambda _ fun p => (hf p.1).comp (measurable_pi_apply p)
+    Measurable.of_eval fun p => (hf p.1).comp (measurable_pi_apply p)
   have hmap := congrArg
     (fun ρ : Measure (ι × ℕ → α) => ρ.map fun y => fun p : ι × ℕ => f p.1 (y p)) (h π)
   rw [AEMeasurable.map_map_of_aemeasurable hpush.aemeasurable
-      (aemeasurable_pi_lambda _ fun p => hY (p.1, π p.1 p.2)),
+      (AEMeasurable.of_eval fun p => hY (p.1, π p.1 p.2)),
     AEMeasurable.map_map_of_aemeasurable hpush.aemeasurable
-      (aemeasurable_pi_lambda _ fun p => hY p)] at hmap
+      (AEMeasurable.of_eval fun p => hY p)] at hmap
   simpa [Function.comp_def] using hmap
 
 /-- **The exchangeability of the columns.** -/
@@ -257,7 +300,7 @@ theorem RowExchangeable.measure_setOf_forall_pair_eq (h : RowExchangeable μ Y)
   have hLHS : (μ.map fun ω (p : ι × ℕ) => Y (p.1, π p.1 p.2) ω) A =
       μ {ω | ∀ a ∈ F, Y (a, c a) ω ∈ B₀ a ∧ Y (a, d a) ω ∈ B₁ a} := by
     rw [Measure.map_apply_of_aemeasurable
-      (aemeasurable_pi_lambda _ fun p => hY (p.1, π p.1 p.2)) hAmeas]
+      (AEMeasurable.of_eval fun p => hY (p.1, π p.1 p.2)) hAmeas]
     congr 1
     ext ω
     simp only [hA, Set.mem_preimage, Set.mem_ofPred_eq]
@@ -265,7 +308,7 @@ theorem RowExchangeable.measure_setOf_forall_pair_eq (h : RowExchangeable μ Y)
     rw [(hπ a ha).1, (hπ a ha).2]
   have hRHS : (μ.map fun ω (p : ι × ℕ) => Y p ω) A =
       μ {ω | ∀ a ∈ F, Y (a, 0) ω ∈ B₀ a ∧ Y (a, 1) ω ∈ B₁ a} := by
-    rw [Measure.map_apply_of_aemeasurable (aemeasurable_pi_lambda _ fun p => hY p) hAmeas]
+    rw [Measure.map_apply_of_aemeasurable (AEMeasurable.of_eval fun p => hY p) hAmeas]
     rfl
   rw [← hLHS, ← hRHS, rowExchangeable_def.mp h π]
 

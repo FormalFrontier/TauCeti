@@ -9,8 +9,6 @@ public import Mathlib.Combinatorics.SimpleGraph.Acyclic
 public import Mathlib.Combinatorics.SimpleGraph.Hamiltonian
 public import Mathlib.Combinatorics.SimpleGraph.Hasse
 
-public section
-
 /-!
 # A finite tree of maximum degree two is a path graph
 
@@ -43,6 +41,8 @@ of `p`. The subgraph spanned by `p` is therefore all of `G`, and Mathlib's
 The argument is the standard one; see R. Diestel, *Graph Theory*, 5th ed., Ch. 1.5, for trees and
 their edge count.
 -/
+
+public section
 
 namespace TauCeti
 

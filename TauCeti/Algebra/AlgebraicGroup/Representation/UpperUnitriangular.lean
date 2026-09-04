@@ -5,7 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Algebra.AlgebraicGroup.Representation.Faithful
+public import TauCeti.Algebra.AlgebraicGroup.Representation.Faithful.Basic
 public import TauCeti.Algebra.AlgebraicGroup.UpperUnitriangular.Scheme
 
 /-!

@@ -8,8 +8,6 @@ module
 public import TauCeti.Algebra.Lie.HighestWeight.Reflection
 public import TauCeti.LinearAlgebra.RootSystem.Opposition
 
-public section
-
 /-!
 # The lowest weight of an irreducible highest weight module
 
@@ -47,6 +45,8 @@ This is the lowest-weight input to the "self-duality of `L(λ)`" coverage target
 
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §21.6.
 -/
+
+public section
 
 namespace TauCeti
 

@@ -37,6 +37,8 @@ disjoint rectangles or rectangles sharing exactly one side column.
   common exactly for a diagonal two-step path.
 * `TauCeti.GridRectangleDecomposition.hasDisjointSides_or_hasOneCommonSide_or_eq`: every
   decomposition belongs to one of the three cases.
+* `TauCeti.GridRectangleDecomposition.hasDisjointSides_of_disjoint`: a decomposition whose target
+  applies two disjoint column transpositions has disjoint side pairs.
 * `TauCeti.GridRectangleDecomposition.target_ne_source_iff`: a decomposition is nondiagonal
   exactly when its sides are disjoint or have exactly one column in common.
 
@@ -189,6 +191,63 @@ theorem hasDisjointSides_or_hasOneCommonSide_or_eq
   by_cases hone : D.commonSideColumns.card = 1
   · exact Or.inr (Or.inl hone)
   · exact Or.inr (Or.inr (D.card_commonSideColumns_eq_two_iff.mp (by omega)))
+
+/-- Two disjoint column transpositions move four columns, so no two-step rectangle decomposition
+of the resulting state can share a side column.
+
+This is the entry point that puts a two-step term over such a target in the disjoint-side case of
+`hasDisjointSides_or_hasOneCommonSide_or_eq`. -/
+theorem hasDisjointSides_of_disjoint (x : GridState n) {a b c d : Fin n} (hab : a ≠ b)
+    (hcd : c ≠ d) (hdisjoint : Disjoint ({a, b} : Finset (Fin n)) {c, d})
+    (D : GridRectangleDecomposition x ((x.swapColumns a b).swapColumns c d)) :
+    D.HasDisjointSides := by
+  -- The two rectangles of a decomposition fix every column outside their four side columns.
+  -- Sharing a side column would leave only three such columns, and sharing both would return to
+  -- the source.
+  obtain ⟨hac, had⟩ : a ≠ c ∧ a ≠ d := by
+    simpa only [Finset.mem_insert, Finset.mem_singleton, not_or] using
+      Finset.disjoint_left.mp hdisjoint (by simp : a ∈ ({a, b} : Finset (Fin n)))
+  obtain ⟨hbc, hbd⟩ : b ≠ c ∧ b ≠ d := by
+    simpa only [Finset.mem_insert, Finset.mem_singleton, not_or] using
+      Finset.disjoint_left.mp hdisjoint (by simp : b ∈ ({a, b} : Finset (Fin n)))
+  -- the four columns the two transpositions move, and their images
+  have hza : (x.swapColumns a b).swapColumns c d a = x b := by
+    simp [GridState.swapColumns_apply, Equiv.swap_apply_of_ne_of_ne hac had]
+  have hzb : (x.swapColumns a b).swapColumns c d b = x a := by
+    simp [GridState.swapColumns_apply, Equiv.swap_apply_of_ne_of_ne hbc hbd]
+  have hzc : (x.swapColumns a b).swapColumns c d c = x d := by
+    simp [GridState.swapColumns_apply, Equiv.swap_apply_of_ne_of_ne had.symm hbd.symm]
+  have hzd : (x.swapColumns a b).swapColumns c d d = x c := by
+    simp [GridState.swapColumns_apply, Equiv.swap_apply_of_ne_of_ne hac.symm hbc.symm]
+  have hmoved : ∀ e ∈ ({a, b, c, d} : Finset (Fin n)),
+      e ∈ D.first.sideColumns ∪ D.second.sideColumns := by
+    intro e he
+    by_contra hnot
+    rw [Finset.mem_union, not_or] at hnot
+    have hfix := D.target_apply_of_notMem_sideColumns hnot.1 hnot.2
+    simp only [Finset.mem_insert, Finset.mem_singleton] at he
+    rcases he with rfl | rfl | rfl | rfl
+    · exact hab (x.toPerm.injective (hza ▸ hfix).symm)
+    · exact hab (x.toPerm.injective (hzb ▸ hfix))
+    · exact hcd (x.toPerm.injective (hzc ▸ hfix).symm)
+    · exact hcd (x.toPerm.injective (hzd ▸ hfix))
+  rcases D.hasDisjointSides_or_hasOneCommonSide_or_eq with hcase | hcase | hcase
+  · exact hcase
+  · exfalso
+    have hinter : D.commonSideColumns = D.first.sideColumns ∩ D.second.sideColumns := rfl
+    have hcard : D.commonSideColumns.card = 1 := hcase
+    have hsum := Finset.card_union_add_card_inter D.first.sideColumns D.second.sideColumns
+    rw [D.first.card_sideColumns, D.second.card_sideColumns, ← hinter, hcard] at hsum
+    have hfour : ({a, b, c, d} : Finset (Fin n)).card = 4 := by
+      rw [Finset.card_insert_of_notMem (by simp [hab, hac, had]),
+        Finset.card_insert_of_notMem (by simp [hbc, hbd]),
+        Finset.card_insert_of_notMem (by simp [hcd]), Finset.card_singleton]
+    have hle := Finset.card_le_card hmoved
+    rw [hfour] at hle
+    omega
+  · exfalso
+    have hxa : x a = x b := by rw [← hza, hcase]
+    exact hab (x.toPerm.injective hxa)
 
 /-- In a nondiagonal two-step rectangle decomposition, the side pairs are disjoint or share
 exactly one column. This is the two-case split used by the nondiagonal juxtaposition pairing. -/

@@ -7,7 +7,7 @@ module
 
 public import TauCeti.Probability.DeFinetti.Theorem
 public import TauCeti.Probability.Exchangeability.Family
-import Mathlib.Logic.Denumerable
+import Mathlib.Basic.Denumerable
 
 /-!
 # De Finetti's theorem for countable index types

@@ -9,8 +9,6 @@ public import Mathlib.Algebra.Lie.Semisimple.Defs
 public import Mathlib.Algebra.Lie.Weights.Basic
 public import Mathlib.RingTheory.Finiteness.Bilinear
 
-public section
-
 /-!
 # Locally nilpotent and locally finite vectors of a Lie module
 
@@ -65,6 +63,8 @@ ever uses.
 * J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, GTM 9, §21.2.
 * V. G. Kac, *Infinite Dimensional Lie Algebras*, 3rd ed., §3.6.
 -/
+
+public section
 
 namespace TauCeti
 

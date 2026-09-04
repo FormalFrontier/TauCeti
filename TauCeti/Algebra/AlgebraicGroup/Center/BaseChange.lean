@@ -28,6 +28,8 @@ point of `H`, so it kills every equation of the original center.
 
 * `TauCeti.CommHopfAlgCat.baseChangeHopfIdeal_centerDefiningIdeal`: the defining ideal of the
   center commutes with extension of the ground field.
+* `TauCeti.CommHopfAlgCat.centerDefiningIdeal_baseChange_eq_augmentation_iff`: a field extension
+  preserves and reflects triviality of the center.
 
 ## References
 
@@ -80,5 +82,19 @@ theorem baseChangeHopfIdeal_centerDefiningIdeal
             (K := K) A (centerDefiningIdeal H) q).mpr hrestrictMem) y hy))
   · exact (centerDefiningIdeal_le_iff _ _).mpr
       (isCentral_baseChangeHopfIdeal (isCentral_centerDefiningIdeal H))
+
+/-- A field extension preserves and reflects triviality of the scheme-theoretic center.
+
+The statement uses the augmentation ideal, which cuts out the identity subgroup. Thus it detects
+the full center scheme, including infinitesimal structure invisible on field-valued points. -/
+@[simp]
+theorem centerDefiningIdeal_baseChange_eq_augmentation_iff
+    (H : _root_.CommHopfAlgCat.{v} k) :
+    centerDefiningIdeal (baseChange (K := K) H) =
+        HopfIdeal.augmentation K (baseChange (K := K) H) ↔
+      centerDefiningIdeal H = HopfIdeal.augmentation k H := by
+  rw [← baseChangeHopfIdeal_centerDefiningIdeal,
+    ← baseChangeHopfIdeal_augmentation]
+  exact baseChangeHopfIdeal_injective.eq_iff
 
 end TauCeti.CommHopfAlgCat

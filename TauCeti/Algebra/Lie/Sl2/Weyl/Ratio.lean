@@ -9,8 +9,6 @@ public import Mathlib.Algebra.Ring.Action.ConjAct
 public import TauCeti.Algebra.Lie.Sl2.Basic
 public import TauCeti.Algebra.Lie.Sl2.Weyl.Automorphism
 
-public section
-
 /-!
 # The scaled Weyl elements and their Weyl ratios
 
@@ -98,6 +96,8 @@ the root subgroups, which are part of the pinning data asked for by Layer 9 of
 `TauCetiRoadmap/ReductiveGroups/README.md`, consumed by milestone L0 of the `CFSGStatement`
 roadmap.
 -/
+
+public section
 
 namespace TauCeti
 

@@ -97,8 +97,11 @@ property of the curve on its own: `clusterSetOn f U w` depends on the map, the d
 boundary point, and what is asked of it is *relative nowhere density* — each of those cluster sets,
 one for every `w ∈ frontier U`, is to be nowhere dense in the curve. What the criterion does is
 trade the analytic content of the milestone for that purely topological condition on where the
-cluster sets sit; what it does not do is *verify* the condition for a Riemann map, which is the step
-still separating L5 from its milestone and which the crosscut and length–area files are aimed at.
+cluster sets sit; what it does not do is *verify* the condition for a Riemann map, which the
+crosscut and length–area files are aimed at. For Jordan domains,
+`Conformal/Jordan/Approach.lean` reaches boundary injectivity by a different route, through
+preconnected approach regions (`IsJordanDomain.isPreconnectedApproachAt`) and the inverse
+cluster set, without verifying this condition.
 
 In accordance with the generality bar of `ConformalMapping/README.md`, which fixes scalar `ℂ` for
 every theorem added in layers L0–L6, the results below are stated for maps of `ℂ`, as in

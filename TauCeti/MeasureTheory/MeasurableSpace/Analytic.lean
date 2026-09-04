@@ -10,7 +10,7 @@ public import Mathlib.MeasureTheory.Measure.NullMeasurable
 public import Mathlib.MeasureTheory.Measure.Typeclasses.SFinite
 
 import Mathlib.Analysis.SpecificLimits.Basic
-import Mathlib.Data.ENNReal.Inv
+import Mathlib.Basic.ENNReal.Inv
 import Mathlib.Tactic.Finiteness
 import Mathlib.Tactic.GCongr
 import Mathlib.Tactic.Linarith

@@ -90,11 +90,6 @@ namespace HeckeRing.GL2
 
 variable {N p : ℕ} [NeZero N] (k : ℤ)
 
-/-- A divisor of a nonzero level is positive: the side condition the coset decomposition asks
-for, which `p ∣ N` and `NeZero N` already supply. -/
-private lemma pos_of_dvd (hpN : p ∣ N) : 0 < p :=
-  Nat.pos_of_ne_zero fun h ↦ NeZero.ne N (Nat.eq_zero_of_zero_dvd (h ▸ hpN))
-
 /-- The prime factors of a divisor of a nonzero level are prime factors of the level: the
 hypothesis the coset decomposition asks for, in the form `p ∣ N` supplies. -/
 private lemma primeFactors_subset_of_dvd (hpN : p ∣ N) : p.primeFactors ⊆ N.primeFactors :=
@@ -121,7 +116,8 @@ theorem heckeSlashGamma1ModularFormEnd_diagCosetGamma1 (hpN : p ∣ N) :
       heckeSlashUpperTriModularFormEnd k hpN :=
   LinearMap.ext fun f ↦ DFunLike.ext' <| by
     rw [coe_heckeSlashGamma1ModularFormEnd, coe_heckeSlashUpperTriModularFormEnd,
-      heckeSlashSum_diagCosetGamma1 k (pos_of_dvd hpN) (primeFactors_subset_of_dvd hpN) f]
+      heckeSlashSum_diagCosetGamma1 k (Nat.pos_of_dvd_of_pos hpN (NeZero.pos N))
+        (primeFactors_subset_of_dvd hpN) f]
 
 /-- **The normalisation lemma on `S_k(Γ₁(N))`.** -/
 @[simp]
@@ -129,7 +125,8 @@ theorem heckeSlashGamma1CuspFormEnd_diagCosetGamma1 (hpN : p ∣ N) :
     heckeSlashGamma1CuspFormEnd k (diagCosetGamma1 N p) = heckeSlashUpperTriCuspFormEnd k hpN :=
   LinearMap.ext fun f ↦ DFunLike.ext' <| by
     rw [coe_heckeSlashGamma1CuspFormEnd, coe_heckeSlashUpperTriCuspFormEnd,
-      heckeSlashSum_diagCosetGamma1 k (pos_of_dvd hpN) (primeFactors_subset_of_dvd hpN) f]
+      heckeSlashSum_diagCosetGamma1 k (Nat.pos_of_dvd_of_pos hpN (NeZero.pos N))
+        (primeFactors_subset_of_dvd hpN) f]
 
 end HeckeRing.GL2
 

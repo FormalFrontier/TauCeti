@@ -17,8 +17,6 @@ import TauCeti.Algebra.Lie.HighestWeight.Trivial
 import TauCeti.Algebra.Lie.Killing.Perfect
 import TauCeti.Algebra.Lie.Submodule.Decomposition
 
-public section
-
 /-!
 # Weyl's complete reducibility theorem
 
@@ -84,6 +82,8 @@ This is the summit of Layer 5, "complete reducibility (Weyl's theorem)", of
   Casimir proof of Weyl's theorem; the reduction to the case of a codimension-one submodule is the
   formal part carried out in `TauCeti/Algebra/Lie/CompleteReducibility.lean`.
 -/
+
+public section
 
 namespace TauCeti
 

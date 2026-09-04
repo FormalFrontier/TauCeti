@@ -7,8 +7,6 @@ module
 
 public import Mathlib.Combinatorics.SimpleGraph.Connectivity.Connected
 
-public section
-
 /-!
 # Connectedness of a graph numbered so that neighbours descend
 
@@ -22,6 +20,8 @@ affine alike, a two-line check, and this file states the induction once for all 
 * `TauCeti.SimpleGraph.connected_fin_of_exists_adj_lt`: a graph on `Fin n` in which every nonzero
   vertex has an adjacent vertex with a smaller number is connected.
 -/
+
+public section
 
 namespace TauCeti
 

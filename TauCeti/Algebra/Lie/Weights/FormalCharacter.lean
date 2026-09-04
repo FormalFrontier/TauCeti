@@ -13,8 +13,9 @@ public import TauCeti.Algebra.Lie.Weights.TensorProduct
 public import TauCeti.Algebra.Lie.Weights.WeylInvariance
 public import TauCeti.LinearAlgebra.Dimension.DirectSum
 public import TauCeti.LinearAlgebra.TensorProduct.Decomposition
-
-public section
+-- Non-public: this supplies the inputs of the direct-sum additivity proof, never the vocabulary of
+-- a statement.
+import TauCeti.Algebra.Lie.Submodule.DirectSum
 
 /-!
 # The formal character of a finite-dimensional Lie module
@@ -59,6 +60,9 @@ multiplicativity on tensor products expressible.
   `TauCeti.genWeightSpace_prod_eq_bot_iff` and
   `TauCeti.instLinearWeightsProd` the consequences a product of modules needs to have a character
   at all.
+* `TauCeti.formalCharacter_eq_sum_of_isInternal`: **additivity over an internal decomposition.**
+  The character of a module decomposed internally by finitely many Lie submodules is the sum of
+  their characters, the character being read on a nilpotent Lie subalgebra of the acting algebra.
 * `TauCeti.formalCharacter_eq_add_of_exact`: **additivity on short exact sequences.** The
   character of the middle module is the sum of the characters of the submodule and quotient.
 * `TauCeti.finrank_genWeightSpace_tensorProduct`: the multiplicity of a tensor-product weight is
@@ -94,9 +98,12 @@ Layer 2 Weyl invariance proved directly from `sl₂`; both are consumed here.
 * N. Bourbaki, *Groupes et algèbres de Lie*, Chapitre VIII, §7.
 -/
 
+public section
+
 namespace TauCeti
 
-open LieAlgebra LieModule Module
+-- `TauCeti.LieModule` exists in the imports, so the root namespace is named explicitly.
+open LieAlgebra _root_.LieModule Module
 
 universe u v w w₁
 
@@ -284,6 +291,101 @@ theorem formalCharacter_prod :
   simp
 
 end Prod
+
+/-! ### Additivity over an internal decomposition
+
+An `L`-module `M` decomposed internally by Lie submodules has, at every linear form on a nilpotent
+Lie subalgebra `H` of `L`, a weight space that is the direct sum of the weight spaces of the
+summands, so the weight multiplicities add. This is the two-algebra statement the highest weight
+theory calls for: the decomposition is by submodules for the whole of `L`, while the character is
+read on a Cartan subalgebra `H`.
+-/
+
+section InternalDirectSum
+
+open scoped DirectSum
+
+variable {K : Type u} {L : Type v} [Field K] [LieRing L] [LieAlgebra K L]
+  {H : LieSubalgebra K L} [LieRing.IsNilpotent H]
+  {M : Type w} [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M]
+  {ι : Type w₁} {N : ι → LieSubmodule K L M}
+
+omit [LieRing.IsNilpotent H] [LieModule K L M] in
+/-- The inclusion of a summand, restricted to a Lie subalgebra, is injective. -/
+private theorem injective_incl_restrictLie (i : ι) :
+    Function.Injective ((N i).incl.restrictLie H) :=
+  fun _ _ hxy ↦ LieSubmodule.injective_incl (N i) hxy
+
+/-- The image in `M` of the `chi`-weight space of a summand is the part of the `chi`-weight space
+of `M` that the summand carries: the inclusion of the summand is injective, and its range is the
+summand itself. -/
+private theorem toSubmodule_map_genWeightSpace_incl (i : ι) (chi : H → K) :
+    ((genWeightSpace (N i : Type w) chi).map ((N i).incl.restrictLie H)).toSubmodule
+      = (genWeightSpace M chi).toSubmodule ⊓ (N i).toSubmodule := by
+  rw [map_genWeightSpace_eq_of_injective (injective_incl_restrictLie i),
+    LieSubmodule.inf_toSubmodule]
+  congr 1
+  ext x
+  simp
+
+/-- Each summand of an internal decomposition contributes its own `chi`-weight space to the
+`chi`-weight space of the ambient module, with the same dimension. -/
+private theorem finrank_inf_genWeightSpace (i : ι) (chi : H → K) :
+    finrank K ((genWeightSpace M chi).toSubmodule ⊓ (N i).toSubmodule : Submodule K M)
+      = finrank K (genWeightSpace (N i : Type w) chi) := by
+  have hequiv := (LieSubmodule.equivMapOfInjective
+    (genWeightSpace (N i : Type w) chi) (injective_incl_restrictLie i)).toLinearEquiv.finrank_eq
+  rw [← toSubmodule_map_genWeightSpace_incl i chi, finrank_toSubmodule, ← hequiv]
+
+/-- **The weight spaces of the summands span the weight space of the ambient module.** The
+projections onto the summands are morphisms of Lie modules, so they carry the `chi`-weight space of
+`M` into the `chi`-weight spaces of the summands; a vector of the `chi`-weight space is therefore
+the sum of its components, each of which lies in the weight space of a summand. -/
+private theorem iSup_inf_genWeightSpace_eq [Finite ι] [DecidableEq ι]
+    (h : DirectSum.IsInternal fun i ↦ (N i).toSubmodule) (chi : H → K) :
+    ⨆ i, ((genWeightSpace M chi).toSubmodule ⊓ (N i).toSubmodule)
+      = (genWeightSpace M chi).toSubmodule := by
+  classical
+  have _ := Fintype.ofFinite ι
+  refine le_antisymm (iSup_le fun i ↦ inf_le_left) fun m hm ↦ ?_
+  set e := DirectSum.lieModuleEquivOfIsInternal N h with he
+  have hcomp : ∀ i, (e.symm m i : (N i : Type w)) ∈ genWeightSpace (N i : Type w) chi := fun i ↦
+    map_genWeightSpace_le (χ := chi)
+      ((((DirectSum.lieModuleComponent K ι L fun j ↦ (N j : Type w)) i).comp
+        (e.symm : M →ₗ⁅K,L⁆ ⨁ j, (N j : Type w))).restrictLie H) ⟨m, hm, rfl⟩
+  have hmem : ∀ i, ((e.symm m i : (N i : Type w)) : M)
+      ∈ (genWeightSpace M chi).toSubmodule ⊓ (N i).toSubmodule := fun i ↦
+    ⟨map_genWeightSpace_le (χ := chi) ((N i).incl.restrictLie H) ⟨_, hcomp i, rfl⟩,
+      (e.symm m i).2⟩
+  have hsum : m = ∑ i, ((e.symm m i : (N i : Type w)) : M) := by
+    conv_lhs => rw [← e.apply_symm_apply m, ← DirectSum.sum_univ_of (e.symm m)]
+    rw [map_sum]
+    exact Finset.sum_congr rfl fun i _ ↦ by simp [he]
+  rw [hsum]
+  exact Submodule.sum_mem _ fun i _ ↦ Submodule.mem_iSup_of_mem i (hmem i)
+
+variable [FiniteDimensional K M] [LinearWeights K H M] [∀ i, LinearWeights K H (N i : Type w)]
+  [Fintype ι] [DecidableEq ι]
+
+/-- **Formal characters are additive over an internal decomposition into Lie submodules.** The
+`chi`-weight space of the ambient module is the direct sum of the `chi`-weight spaces of the
+summands, so the weight multiplicities add. -/
+theorem formalCharacter_eq_sum_of_isInternal
+    (h : DirectSum.IsInternal fun i ↦ (N i).toSubmodule) :
+    formalCharacter K H M = ∑ i, formalCharacter K H (N i : Type w) := by
+  refine AddMonoidAlgebra.ext (Finsupp.ext fun chi ↦ ?_)
+  rw [AddMonoidAlgebra.coeff_sum, Finsupp.finsetSum_apply]
+  simp only [formalCharacter_coeff]
+  rw [← Nat.cast_sum]
+  refine congrArg _ ?_
+  have hindep : iSupIndep fun i ↦
+      ((genWeightSpace M (chi : H → K)).toSubmodule ⊓ (N i).toSubmodule) :=
+    h.submodule_iSupIndep.mono fun i ↦ inf_le_right
+  rw [← finrank_toSubmodule, ← iSup_inf_genWeightSpace_eq h (chi : H → K),
+    finrank_iSup_eq_sum_finrank_of_iSupIndep hindep]
+  exact Finset.sum_congr rfl fun i _ ↦ finrank_inf_genWeightSpace i (chi : H → K)
+
+end InternalDirectSum
 
 /-! ### Additivity on short exact sequences -/
 

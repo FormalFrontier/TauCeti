@@ -12,8 +12,6 @@ public import TauCeti.LinearAlgebra.RootSystem.Weyl.Vector
 
 import TauCeti.Algebra.Lie.UniversalEnveloping.Module
 
-public section
-
 /-!
 # The Casimir eigenvalue on a highest weight module
 
@@ -85,6 +83,8 @@ cyclicity hypothesis its name records.
   the Casimir element is shown to act on a standard cyclic module of highest weight `λ` by the
   scalar `⟨λ, λ + 2ρ⟩`; the Casimir element itself is §6.2.
 -/
+
+public section
 
 namespace TauCeti
 

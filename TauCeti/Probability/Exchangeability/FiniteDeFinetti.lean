@@ -151,7 +151,7 @@ theorem sampleWithReplacement_eq_map_prod (ρ : Measure (κ → α)) [SFinite ρ
   rw [← Measure.map_apply
       (μ := uniformOn (Set.univ : Set (ι → κ)))
       (f := fun k i => x (k i))
-      (measurable_pi_lambda _ fun i =>
+      (Measurable.of_eval fun i =>
         (measurable_of_countable x).comp (measurable_pi_apply i)) hA,
     ← pi_empiricalMeasureOfFintype_eq_map_uniformOn]
 
@@ -239,7 +239,7 @@ theorem ExchangeableAt.finiteDeFinetti
         m.choose 2 / n := by
   let _ : IsProbabilityMeasure (prefixLaw μ X n) := by
     rw [prefixLaw_def, blockLaw_def]
-    exact Measure.isProbabilityMeasure_map (aemeasurable_pi_lambda _ hX)
+    infer_instance
   rw [← h.sampleWithoutReplacement_eq_prefixLaw hmn hX]
   constructor
   · simpa using sampleWithoutReplacement_le_sampleWithReplacement_add

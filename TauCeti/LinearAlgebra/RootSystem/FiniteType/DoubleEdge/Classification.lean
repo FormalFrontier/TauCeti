@@ -9,8 +9,6 @@ public import TauCeti.LinearAlgebra.RootSystem.Classification
 public import TauCeti.LinearAlgebra.RootSystem.FiniteType.DoubleEdge.NoBranch
 import TauCeti.LinearAlgebra.RootSystem.FiniteType.Dynkin
 
-public section
-
 /-!
 # Classification of finite double-edge chains
 
@@ -49,6 +47,8 @@ target of Layer 5 of `TauCetiRoadmap/RepresentationTheory/RootSystems/README.md`
 `F₄` is Bourbaki's; see Bourbaki, *Lie Groups and Lie Algebras, Chapters 4--6*, Ch. VI, §4 and
 plate VIII, or J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, §11.4.
 -/
+
+public section
 
 open scoped Matrix
 

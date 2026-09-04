@@ -30,6 +30,8 @@ Lie--Kolchin theory and the construction of the solvable radical.
 
 * `TauCeti.geometricallySolvablePointsCommHopfAlgProperty`: solvability of the geometric point
   group.
+* `TauCeti.geometricallySolvablePointsCommHopfAlgProperty_of_isCocomm`: commutative affine
+  groups have solvable geometric points.
 * `TauCeti.geometricallySolvablePointsCommHopfAlgProperty_of_surjective`: closure under closed
   subgroups.
 * `TauCeti.geometricallySolvablePointsCommHopfAlgProperty_tensorProduct_iff`: solvability of a
@@ -70,6 +72,17 @@ theorem geometricallySolvablePointsCommHopfAlgProperty_iff
     geometricallySolvablePointsCommHopfAlgProperty k H ↔
       Group.IsSolvable (WithConv (H →ₐ[k] AlgebraicClosure k)) :=
   Iff.rfl
+
+/-- A cocommutative coordinate Hopf algebra has solvable geometric points.
+
+Cocommutativity makes the convolution group of points commutative over every commutative value
+algebra, so in particular its algebraic-closure-valued point group is solvable. -/
+theorem geometricallySolvablePointsCommHopfAlgProperty_of_isCocomm
+    (k : Type u) [Field k] (H : CommHopfAlgCat.{v} k)
+    [Coalgebra.IsCocomm k H] :
+    geometricallySolvablePointsCommHopfAlgProperty k H := by
+  rw [geometricallySolvablePointsCommHopfAlgProperty_iff]
+  exact Group.isSolvable_of_comm mul_comm
 
 /-- Geometric-points solvability is invariant under isomorphisms of commutative Hopf algebras. -/
 instance (k : Type u) [Field k] :

@@ -77,7 +77,7 @@ noncomputable def exteriorPowerZeroEquiv (ρ : Representation R G M) :
     (ρ.exteriorPower 0).Equiv (trivial R G R) :=
   .mk (_root_.exteriorPower.zeroEquiv R M) fun g => by
     rw [exteriorPower_apply, _root_.exteriorPower.zeroEquiv_naturality]
-    simp
+    rfl
 
 /-- The underlying linear equivalence is Mathlib's identification of the zeroth exterior power
 with the scalars. -/

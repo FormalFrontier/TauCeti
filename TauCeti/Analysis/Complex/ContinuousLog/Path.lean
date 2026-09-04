@@ -29,13 +29,14 @@ into a Hausdorff space being a closed embedding. No formalization is vendored.
 
 ## Roadmap role
 
-Plane separation for Jordan curves is the open frontier item of layer **L5** of
-`TauCetiRoadmap/ConformalMapping/README.md`, the Carathéodory boundary correspondence. The
-classical route goes through two inputs: Borsuk's criterion, which turns a logarithm of
-`z ↦ (z - a) / (z - b)` on a compact set into nonseparation of `a` and `b`, and the fact that an
-arc does not separate the plane. The former is in flight in Tau Ceti PR #4701. This file supplies
-the logarithm construction needed for the latter: once that criterion is available, applying
-`TauCeti.hasContinuousLogOn_sub_div_sub_range_of_injective_path` shows immediately that any two
+The Carathéodory enclosure step (layer **L5** of
+`TauCetiRoadmap/ConformalMapping/README.md`) is now unconditional: the
+preconnectedness/winding-number route in
+`TauCeti/Analysis/Complex/Conformal/Crosscut/Inside.lean` discharges it without plane
+separation. The classical separation route — Borsuk's criterion (PR #4701) plus arc
+nonseparation — remains relevant for future work. This file supplies the logarithm
+construction needed for that
+route: applying `TauCeti.hasContinuousLogOn_sub_div_sub_range_of_injective_path` shows that any two
 points off a simple arc lie in the same component of its complement.
 
 This is deliberately stated for paths in an arbitrary topological space, since neither the lifting

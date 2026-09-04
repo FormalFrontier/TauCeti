@@ -10,7 +10,7 @@ public import TauCeti.Probability.Exchangeability.ConditionallyIID.Const
 public import TauCeti.Probability.Exchangeability.Recurrence.Excursion
 public import TauCeti.Probability.Process.MarkovChain
 -- Non-public: the reconstruction of a path from its excursions is used only inside a proof.
-import TauCeti.Probability.Exchangeability.Recurrence.Representation
+import TauCeti.Probability.Exchangeability.Recurrence.Reconstruction
 
 /-!
 # The excursions of a recurrent Markov chain are i.i.d.
@@ -199,8 +199,9 @@ def excursionLaw (κ : Kernel α α) [IsMarkovKernel κ] (a₀ : α) : Measure (
   (markovChainLaw (Measure.dirac a₀) κ).map fun x => excursion x a₀ 0
 
 /-- The excursion law is a probability measure, being the law of a random word. -/
-instance isProbabilityMeasure_excursionLaw : IsProbabilityMeasure (excursionLaw κ a₀) :=
-  Measure.isProbabilityMeasure_map (measurable_excursion a₀ 0).aemeasurable
+instance isProbabilityMeasure_excursionLaw : IsProbabilityMeasure (excursionLaw κ a₀) := by
+  rw [excursionLaw]
+  infer_instance
 
 /-- The excursion law evaluated on a set of words. Every set of words is measurable, the state
 space being countable and discrete. -/
@@ -257,7 +258,7 @@ omit [Countable α] [IsMarkovKernel κ] in
 private theorem aemeasurable_excursionProcess_pi (μ : Measure (ℕ → α)) (a₀ : α) :
     AEMeasurable
       (fun (x : ℕ → α) => fun k => excursionProcess (fun n (y : ℕ → α) => y n) a₀ k x) μ :=
-  aemeasurable_pi_lambda _ fun k => aemeasurable_excursionProcess_eval μ a₀ k
+  AEMeasurable.of_eval fun k => aemeasurable_excursionProcess_eval μ a₀ k
 
 omit [MeasurableSpace α] [Countable α] [MeasurableSingletonClass α] in
 /-- Prescribing the first `m` excursions of a path is prescribing them coordinatewise. -/
@@ -369,7 +370,7 @@ theorem map_excursionProcess_eq_excursionLaw (k : ℕ)
     (prefixLaw_excursionProcess_eq_pi (k + 1) hvisit)
   rw [prefixLaw_def, blockLaw_def,
     (measurable_pi_apply i).aemeasurable.map_map_of_aemeasurable
-      (aemeasurable_pi_lambda _ fun j => aemeasurable_excursionProcess_eval _ a₀ j.val),
+      (AEMeasurable.of_eval fun j => aemeasurable_excursionProcess_eval _ a₀ j.val),
     hcoord, Measure.pi_map_eval] at h
   simpa using h
 
@@ -395,8 +396,9 @@ theorem conditionallyIIDWith_excursionProcess
       (excursionProcess (fun n (x : ℕ → α) => x n) a₀)
       (fun _ => ⟨excursionLaw κ a₀, isProbabilityMeasure_excursionLaw⟩) :=
   conditionallyIIDWith_const_iff_iIndepFun_and_map_eq.2
-    ⟨iIndepFun_excursionProcess hret, fun k => map_excursionProcess_eq_excursionLaw k
-      (hret.mono fun _ hx => exists_visitCount_of_infinite hx (k + 1))⟩
+    ⟨aemeasurable_excursionProcess_eval _ a₀, iIndepFun_excursionProcess hret,
+      fun k => map_excursionProcess_eq_excursionLaw k
+        (hret.mono fun _ hx => exists_visitCount_of_infinite hx (k + 1))⟩
 
 /-- **A recurrent Markov chain is the concatenation of i.i.d. excursions.** Drawing excursions
 independently from the excursion law and concatenating them reproduces the chain: the chain is

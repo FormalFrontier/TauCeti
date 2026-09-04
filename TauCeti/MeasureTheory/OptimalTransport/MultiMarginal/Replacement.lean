@@ -58,8 +58,7 @@ def replaceMarginal (π : ProbabilityMeasure (∀ j, X j)) (i : ι)
   let γ : Measure ((∀ j, X j) × X i × X i) := glue ρ σ.toMeasure.condKernel
   letI : IsProbabilityMeasure ρ := by
     dsimp only [ρ]
-    exact Measure.isProbabilityMeasure_map
-      (measurable_id.prodMk (measurable_pi_apply i)).aemeasurable
+    infer_instance
   letI : IsProbabilityMeasure γ := by
     dsimp only [γ]
     infer_instance
@@ -69,7 +68,7 @@ def replaceMarginal (π : ProbabilityMeasure (∀ j, X j)) (i : ι)
     (measurable_update'.comp
       (measurable_fst.prodMk (measurable_snd.comp measurable_snd))).aemeasurable
   exact (⟨γ.map (fun q ↦ Function.update q.1 i q.2.2),
-    Measure.isProbabilityMeasure_map hu⟩ : ProbabilityMeasure (∀ j, X j))
+    inferInstance⟩ : ProbabilityMeasure (∀ j, X j))
 
 private theorem toMeasure_replaceMarginal (π : ProbabilityMeasure (∀ j, X j)) (i : ι)
     [StandardBorelSpace (X i)] [Nonempty (X i)]
@@ -92,10 +91,8 @@ theorem map_eval_replaceMarginal_same (π : ProbabilityMeasure (∀ j, X j)) (i 
   let _ : Nonempty (X i) := σ.nonempty.map Prod.fst
   let ρ : Measure ((∀ j, X j) × X i) :=
     π.toMeasure.map fun x ↦ (x, x i)
-  have hρσ : ρ.snd = σ.toMeasure.fst := by
-    dsimp only [ρ]
-    rw [Measure.snd_map_prodMk, ← hσ]
-    exact measurable_id
+  have hρσ : ρ.snd = σ.toMeasure.fst :=
+    (Measure.snd_map_prodMk measurable_id (measurable_pi_apply i)).trans hσ.symm
   rw [toMeasure_replaceMarginal]
   have hcomp : (Function.eval i) ∘ (fun q : (∀ j, X j) × X i × X i ↦
       Function.update q.1 i q.2.2) = Prod.snd ∘ Prod.snd := by
@@ -119,10 +116,11 @@ theorem map_replaceMarginal_eq_of_update_eq {Y : Type w} [MeasurableSpace Y]
       Function.update q.1 i q.2.2) = f ∘ Prod.fst := by
     funext q
     exact hfi q.1 q.2.2
+  have hfst : (π.toMeasure.map fun x ↦ (x, x i)).fst = π.toMeasure :=
+    (Measure.fst_map_prodMk measurable_id (measurable_pi_apply i)).trans Measure.map_id
   rw [Measure.map_map hf (by fun_prop), hcomp,
     ← Measure.map_map hf measurable_fst, ← Measure.fst,
-    fst_glue, Measure.fst_map_prodMk (measurable_pi_apply i)]
-  rw [Measure.map_id']
+    fst_glue, hfst]
 
 /-- Replacing coordinate `i` leaves the marginal at every different coordinate `j` unchanged. -/
 @[simp]
@@ -145,7 +143,7 @@ theorem map_project_replaceMarginal_of_forall_ne {κ : Type w}
       π.toMeasure.map (fun x k ↦ x (e k)) := by
   classical
   apply map_replaceMarginal_eq_of_update_eq π i σ (fun x k ↦ x (e k))
-    (measurable_pi_lambda _ fun k ↦ measurable_pi_apply (e k))
+    (Measurable.of_eval fun k ↦ measurable_pi_apply (e k))
   intro x y
   funext k
   simp [he k]
@@ -165,7 +163,7 @@ def replaceMarginal (π : MultiCoupling μ) (i : ι) [StandardBorelSpace (X i)]
     (σ : ProbabilityMeasure (X i × X i))
     (hσ : σ.toMeasure.fst = (μ i).toMeasure) :
     MultiCoupling (@Function.update ι (fun j ↦ ProbabilityMeasure (X j))
-      (Classical.decEq ι) μ i (σ.map measurable_snd.aemeasurable)) := by
+      (Classical.decEq ι) μ i (σ.map Prod.snd)) := by
   refine ⟨Measure.replaceMarginal π.1 i σ, ?_⟩
   constructor
   intro j
@@ -178,7 +176,7 @@ def replaceMarginal (π : MultiCoupling μ) (i : ι) [StandardBorelSpace (X i)]
       exact (π.2.marginal_eq i).symm
   · rw [Measure.map_eval_replaceMarginal_of_ne π.1 i σ hji, π.2.marginal_eq,
       @Function.update_of_ne ι (fun j ↦ ProbabilityMeasure (X j)) (Classical.decEq ι)
-        j i hji (σ.map measurable_snd.aemeasurable) μ]
+        j i hji (σ.map Prod.snd) μ]
 
 /-- The underlying probability measure of a bundled marginal replacement is the raw
 gluing-and-update construction. -/
@@ -196,7 +194,7 @@ theorem coe_replaceMarginal (π : MultiCoupling μ) (i : ι) [StandardBorelSpace
 theorem marginal_replaceMarginal_same (π : MultiCoupling μ) (i : ι)
     [StandardBorelSpace (X i)] (σ : ProbabilityMeasure (X i × X i))
     (hσ : σ.toMeasure.fst = (μ i).toMeasure) :
-    (π.replaceMarginal i σ hσ).marginal i = σ.map measurable_snd.aemeasurable := by
+    (π.replaceMarginal i σ hσ).marginal i = σ.map Prod.snd := by
   simp
 
 /-- Every coordinate different from the replaced one keeps its original marginal. -/

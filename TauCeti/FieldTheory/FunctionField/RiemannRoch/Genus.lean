@@ -60,10 +60,10 @@ beyond `IsFunctionField k F`.
 ## Provenance
 
 The mathematics is Stichtenoth's and the Lean development is independent, as in
-`TauCeti.FieldTheory.FunctionField.Place.Zeros`.  The roadmap's coordination section records
-that `vaca22/riemann-roch-function-fields` (Guanghao Li, Apache-2.0) carries a complete
-function-field Riemann–Roch by the same Stichtenoth route, and that this roadmap specifies the
-mathematics rather than that code; no code is copied or adapted from it here.
+`TauCeti.FieldTheory.FunctionField.Place.Zeros`. The separate
+`vaca22/riemann-roch-function-fields` project (Guanghao Li, Apache-2.0) carries a complete
+function-field Riemann–Roch development by the same Stichtenoth route; no code is copied or
+adapted from it here.
 
 ## References
 

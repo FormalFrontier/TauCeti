@@ -7,8 +7,6 @@ module
 
 public import Mathlib.LinearAlgebra.Eigenspace.Basic
 
-public section
-
 /-!
 # Separating eigenspace summands
 
@@ -24,6 +22,8 @@ a single operator once a decomposition separating the weights is available.
 * `TauCeti.biSup_inf_eigenspace_eq_self`: a summand whose scalar is attained only by itself is cut
   out by the corresponding eigenspace.
 -/
+
+public section
 
 namespace TauCeti
 

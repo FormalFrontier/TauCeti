@@ -116,7 +116,7 @@ if each `ν i : Ω → ProbabilityMeasure (α i)` is measurable, then
 theorem measurable_probabilityMeasure_pi_toMeasure
     (ν : ∀ i, Ω → ProbabilityMeasure (α i)) (hν : ∀ i, Measurable (ν i)) :
     Measurable fun ω => (ProbabilityMeasure.pi fun i => ν i ω).toMeasure :=
-  (measurable_subtype_coe.comp measurable_probabilityMeasure_pi).comp (measurable_pi_lambda _ hν)
+  (measurable_subtype_coe.comp measurable_probabilityMeasure_pi).comp (Measurable.of_eval hν)
 
 /-- A finite product of a.e.-measurable probability-measure kernels is an a.e.-measurable
 measure-valued map: if each `ν i : Ω → ProbabilityMeasure (α i)` is `AEMeasurable`, then so is
@@ -126,7 +126,7 @@ theorem aemeasurable_probabilityMeasure_pi_toMeasure
     (ν : ∀ i, Ω → ProbabilityMeasure (α i)) (hν : ∀ i, AEMeasurable (ν i) μ) :
     AEMeasurable (fun ω => (ProbabilityMeasure.pi fun i => ν i ω).toMeasure) μ :=
   (measurable_subtype_coe.comp measurable_probabilityMeasure_pi).comp_aemeasurable
-    (aemeasurable_pi_lambda _ hν)
+    (AEMeasurable.of_eval hν)
 
 /-- Measurable-input corollary of `aemeasurable_probabilityMeasure_pi_toMeasure`. -/
 theorem aemeasurable_probabilityMeasure_pi_toMeasure_of_measurable
@@ -170,7 +170,7 @@ theorem measurable_dirac_prod_probabilityMeasure_pi_const_toMeasure {α : Type*}
       (⟨Measure.dirac (ν ω), inferInstance⟩ : ProbabilityMeasure (ProbabilityMeasure α)) :=
     (Measure.measurable_dirac.comp hν).subtype_mk
   have hpi : Measurable fun ω => ProbabilityMeasure.pi fun _ : Fin m => ν ω :=
-    measurable_probabilityMeasure_pi.comp (measurable_pi_lambda _ fun _ => hν)
+    measurable_probabilityMeasure_pi.comp (Measurable.of_eval fun _ => hν)
   exact ProbabilityMeasure.measurable_fun_prod.comp (hdirac.prodMk hpi)
 
 /-- **Product measurability in the measure argument.** For an arbitrary index type and a dependent
@@ -208,7 +208,7 @@ theorem measurable_infinitePi {ι' : Type*} {β : ι' → Type*} [∀ i, Measura
 theorem measurable_infinitePi_const {α : Type*} [MeasurableSpace α] :
     Measurable fun p : ProbabilityMeasure α =>
       Measure.infinitePi (fun _ : ℕ => (p : Measure α)) :=
-  measurable_infinitePi.comp (measurable_pi_lambda _ fun _ => measurable_id)
+  measurable_infinitePi.comp (Measurable.of_eval fun _ => measurable_id)
 
 /-- **Parameter-tagged product kernel.** For a measurable family of probability measures
 `P : T → ProbabilityMeasure α`, the random measure `t ↦ δ_t ⊗ (P t)^{⊗ι}` on `T × (ι → α)` is
@@ -228,7 +228,7 @@ theorem measurable_dirac_prod_infinitePi_const {T α ι' : Type*} [MeasurableSpa
   have hpow : Measurable fun t =>
       (⟨Measure.infinitePi fun _ : ι' => (P t : Measure α), inferInstance⟩ :
         ProbabilityMeasure (ι' → α)) :=
-    (measurable_infinitePi.comp (measurable_pi_lambda _ fun _ => hP)).subtype_mk
+    (measurable_infinitePi.comp (Measurable.of_eval fun _ => hP)).subtype_mk
   exact ProbabilityMeasure.measurable_fun_prod.comp (hdirac.prodMk hpow)
 
 /-- **Finite-prefix marginal of a countable product.** Restricting `⊗ⱼ p j` to its first `n`
@@ -268,7 +268,7 @@ theorem map_infinitePi_pair_block {T α : Type*} [MeasurableSpace T] [Measurable
         (fun x : ℕ → α => (t, fun i : Fin m => x (k i)))
       = (Measure.dirac t).prod (ProbabilityMeasure.pi fun _ : Fin m => Q).toMeasure := by
   have hblk : Measurable fun x : ℕ → α => fun i : Fin m => x (k i) :=
-    measurable_pi_lambda _ fun i => measurable_pi_apply (k i)
+    Measurable.of_eval fun i => measurable_pi_apply (k i)
   calc (Measure.infinitePi fun _ : ℕ => (Q : Measure α)).map
         (fun x : ℕ → α => (t, fun i : Fin m => x (k i)))
       = ((Measure.infinitePi fun _ : ℕ => (Q : Measure α)).map
@@ -329,7 +329,7 @@ theorem map_prefixProj_bind_infinitePi_pi {α : Type*} [MeasurableSpace α]
         (fun x : ℕ → α => fun i : Fin n => x i)) (Set.univ.pi B)
       = ∫⁻ P, ∏ i, (P : Measure α) (B i) ∂π := by
   have hproj : Measurable (fun x : ℕ → α => fun i : Fin n => x i) :=
-    measurable_pi_lambda _ fun i => measurable_pi_apply _
+    Measurable.of_eval fun i => measurable_pi_apply _
   have hmeas : AEMeasurable (fun P : ProbabilityMeasure α =>
       (Measure.infinitePi fun _ : ℕ => (P : Measure α)).map
         fun x : ℕ → α => fun i : Fin n => x i) π :=

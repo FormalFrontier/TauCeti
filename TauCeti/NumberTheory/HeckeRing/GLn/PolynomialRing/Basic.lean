@@ -9,8 +9,6 @@ public import Mathlib.RingTheory.MvPolynomial.Basic
 public import TauCeti.NumberTheory.HeckeRing.GL2.Recurrence
 public import TauCeti.NumberTheory.HeckeRing.GLn.PrimeDecomposition
 
-public section
-
 /-!
 # Generators of the `p`-local Hecke ring
 
@@ -60,6 +58,8 @@ Chris Birkbeck), first three sections.
 * [G. Shimura, *Introduction to the arithmetic theory of automorphic functions*][shimura1971],
   §3.2, Theorem 3.20.
 -/
+
+public section
 
 open Matrix Subgroup.Commensurable Pointwise HeckeRing DoubleCoset Matrix.SpecialLinearGroup
 

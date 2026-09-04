@@ -9,8 +9,6 @@ public import Mathlib.Algebra.Lie.Semisimple.Basic
 public import Mathlib.LinearAlgebra.Dual.Defs
 public import Mathlib.LinearAlgebra.Eigenspace.Triangularizable
 
-public section
-
 /-!
 # The central weight of an irreducible Lie module
 
@@ -50,6 +48,10 @@ describes its action.
   companion `TauCeti.eq_of_forall_lie_eq_smul` says that the scalar describing the action of a
   single element of `L` on a nontrivial module is unique, which is what makes `centralWeight`
   well defined and linear.
+* `TauCeti.forall_apply_eq_smul_of_apply_eq_smul` and its central-element form
+  `TauCeti.forall_lie_eq_smul_of_lie_eq_smul` are the half of Schur's lemma that needs neither
+  algebraic closedness nor finite-dimensionality: a scalar already known on one nonzero vector of
+  an irreducible module describes the whole action.
 * `TauCeti.exists_centralWeight_of_isIrreducible` is the existential form the roadmap pins.
 * `TauCeti.lie_eq_centralWeight_smul` and `TauCeti.toEnd_eq_centralWeight_smul` are the defining
   property of the central weight, and `TauCeti.centralWeight_eq_of_forall_lie_eq_smul` its
@@ -58,7 +60,9 @@ describes its action.
 * `TauCeti.isIrreducible_of_sup_center_eq_top`: a Lie subalgebra whose sum with the centre is all of
   `L` already acts irreducibly. This is the mechanism by which a reductive Lie algebra hands its
   irreducibles down to its derived ideal, the centre contributing only the scalars recorded by
-  `centralWeight`.
+  `centralWeight`. Its generalization
+  `TauCeti.isIrreducible_of_sup_center_eq_top_of_forall_exists_lie_eq_smul` takes those scalars as
+  a hypothesis instead, and so applies over any commutative ring.
 
 ## Implementation notes
 
@@ -80,6 +84,8 @@ centre with **no integrality constraint**"*, the target named there
 `exists_centralWeight_of_isIrreducible`, together with the API that makes the functional a named
 object rather than an existential.
 -/
+
+public section
 
 namespace TauCeti
 
@@ -108,11 +114,37 @@ end Uniqueness
 
 /-! ### Schur's lemma for Lie modules -/
 
+section ScalarPropagation
+
+variable (K : Type u) [CommRing K] (L : Type v) [LieRing L] [LieAlgebra K L]
+variable (M : Type w) [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M]
+variable [LieModule.IsIrreducible K L M]
+
+/-- **A morphism of an irreducible module that scales one nonzero vector scales every vector.** The
+vectors `f` scales by `c` are the kernel of `f - c • id`, a Lie submodule, nonzero by hypothesis
+and therefore everything. Neither finite-dimensionality nor algebraic closedness enters: those are
+what `TauCeti.exists_forall_apply_eq_smul` needs to produce the scalar in the first place. -/
+theorem forall_apply_eq_smul_of_apply_eq_smul (f : M →ₗ⁅K,L⁆ M) {c : K} {m₀ : M} (hm₀ : m₀ ≠ 0)
+    (h : f m₀ = c • m₀) (m : M) : f m = c • m := by
+  have hmem : ∀ y : M, y ∈ (f - c • (LieModuleHom.id : M →ₗ⁅K,L⁆ M)).ker ↔ f y = c • y := by
+    intro y
+    rw [LieModuleHom.mem_ker, LieModuleHom.sub_apply, LieModuleHom.smul_apply,
+      LieModuleHom.id_apply, sub_eq_zero]
+  have htop : (f - c • (LieModuleHom.id : M →ₗ⁅K,L⁆ M)).ker = ⊤ := by
+    refine (IsSimpleOrder.eq_bot_or_eq_top _).resolve_left fun hbot ↦ hm₀ ?_
+    have hm₀' := (hmem m₀).2 h
+    rwa [hbot, LieSubmodule.mem_bot] at hm₀'
+  exact (hmem m).1 (htop ▸ LieSubmodule.mem_top m)
+
+end ScalarPropagation
+
 section Schur
 
-variable (K : Type u) [Field K] [IsAlgClosed K] (L : Type v) [LieRing L] [LieAlgebra K L]
+variable (K : Type u) [Field K] (L : Type v) [LieRing L] [LieAlgebra K L]
 variable (M : Type w) [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M]
-variable [FiniteDimensional K M] [LieModule.IsIrreducible K L M]
+variable [LieModule.IsIrreducible K L M]
+
+variable [IsAlgClosed K] [FiniteDimensional K M]
 
 /-- **Schur's lemma for Lie modules.** Over an algebraically closed field, a morphism of a
 finite-dimensional irreducible `L`-module to itself is multiplication by a scalar: an eigenvalue
@@ -121,16 +153,8 @@ theorem exists_forall_apply_eq_smul (f : M →ₗ⁅K,L⁆ M) : ∃ c : K, ∀ m
   have _i : Nontrivial M := LieModule.nontrivial_of_isIrreducible K L M
   obtain ⟨c, hc⟩ := Module.End.exists_eigenvalue (f : M →ₗ[K] M)
   obtain ⟨m₀, hm₀mem, hm₀⟩ := hc.exists_hasEigenvector
-  refine ⟨c, fun m ↦ ?_⟩
-  have hmem : ∀ y : M, y ∈ (f - c • (LieModuleHom.id : M →ₗ⁅K,L⁆ M)).ker ↔ f y = c • y := by
-    intro y
-    rw [LieModuleHom.mem_ker, LieModuleHom.sub_apply, LieModuleHom.smul_apply,
-      LieModuleHom.id_apply, sub_eq_zero]
-  have htop : (f - c • (LieModuleHom.id : M →ₗ⁅K,L⁆ M)).ker = ⊤ := by
-    refine (IsSimpleOrder.eq_bot_or_eq_top _).resolve_left fun hbot ↦ hm₀ ?_
-    have hm₀' := (hmem m₀).2 (Module.End.mem_eigenspace_iff.1 hm₀mem)
-    rwa [hbot, LieSubmodule.mem_bot] at hm₀'
-  exact (hmem m).1 (htop ▸ LieSubmodule.mem_top m)
+  exact ⟨c, forall_apply_eq_smul_of_apply_eq_smul K L M f hm₀
+    (Module.End.mem_eigenspace_iff.1 hm₀mem)⟩
 
 end Schur
 
@@ -138,7 +162,7 @@ end Schur
 
 section CentralEnd
 
-variable (K : Type u) [Field K] (L : Type v) [LieRing L] [LieAlgebra K L]
+variable (K : Type u) [CommRing K] (L : Type v) [LieRing L] [LieAlgebra K L]
 variable (M : Type w) [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M]
 
 /-- **The action of a central element, as a morphism of `L`-modules.** The Leibniz rule
@@ -158,6 +182,22 @@ theorem centralEnd_apply (z : LieAlgebra.center K L) (m : M) :
   (rfl)
 
 end CentralEnd
+
+section CentralScalar
+
+variable (K : Type u) [CommRing K] (L : Type v) [LieRing L] [LieAlgebra K L]
+variable (M : Type w) [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M]
+variable [LieModule.IsIrreducible K L M]
+
+/-- **A central element scaling one nonzero vector of an irreducible module scales every vector**:
+`TauCeti.forall_apply_eq_smul_of_apply_eq_smul` applied to `TauCeti.centralEnd`. Where the scalar
+is known in advance — read off a highest weight vector, say — this replaces the appeal to Schur's
+lemma, and with it the hypotheses of algebraic closedness and finite-dimensionality. -/
+theorem forall_lie_eq_smul_of_lie_eq_smul (z : LieAlgebra.center K L) {c : K} {m₀ : M}
+    (hm₀ : m₀ ≠ 0) (h : ⁅(z : L), m₀⁆ = c • m₀) (m : M) : ⁅(z : L), m⁆ = c • m :=
+  forall_apply_eq_smul_of_apply_eq_smul K L M (centralEnd K L M z) hm₀ h m
+
+end CentralScalar
 
 /-! ### The central weight -/
 
@@ -269,18 +309,20 @@ end Transfer
 
 section Descent
 
-variable (K : Type u) [Field K] [IsAlgClosed K] (L : Type v) [LieRing L] [LieAlgebra K L]
+variable (K : Type u) [CommRing K] (L : Type v) [LieRing L] [LieAlgebra K L]
 variable (M : Type w) [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M]
-variable [FiniteDimensional K M] [LieModule.IsIrreducible K L M]
+variable [LieModule.IsIrreducible K L M]
 
-/-- **Irreducibility descends to a subalgebra complementing the centre.** If `L' ⊔ center K L` is
-all of `L` as a subspace, then a submodule for `L'` is already a submodule for `L`, because the
-missing central directions act by scalars (`TauCeti.lie_mem_of_mem_center`). Applied to the derived
-ideal of a reductive Lie algebra, this is the statement that an irreducible module over a reductive
-algebra stays irreducible over its semisimple part, the centre contributing only the scalars
-recorded by `TauCeti.centralWeight`. -/
-theorem isIrreducible_of_sup_center_eq_top (L' : LieSubalgebra K L)
-    (h : L'.toSubmodule ⊔ (LieAlgebra.center K L).toSubmodule = ⊤) :
+omit [LieModule K L M] in
+/-- **Irreducibility descends to a subalgebra complementing a centre that acts by scalars.** If
+`L' ⊔ center K L` is all of `L` as a subspace and every central element acts by a scalar, then a
+submodule for `L'` is already a submodule for `L`, since the missing central directions only
+rescale. The scalars are a hypothesis rather than a conclusion here, so neither algebraic
+closedness nor finite-dimensionality is needed;
+`TauCeti.isIrreducible_of_sup_center_eq_top` is the case where Schur's lemma supplies them. -/
+theorem isIrreducible_of_sup_center_eq_top_of_forall_exists_lie_eq_smul (L' : LieSubalgebra K L)
+    (h : L'.toSubmodule ⊔ (LieAlgebra.center K L).toSubmodule = ⊤)
+    (hc : ∀ z : LieAlgebra.center K L, ∃ c : K, ∀ m : M, ⁅(z : L), m⁆ = c • m) :
     LieModule.IsIrreducible K L' M := by
   have _i : Nontrivial M := LieModule.nontrivial_of_isIrreducible K L M
   refine LieModule.IsIrreducible.mk fun P hP ↦ ?_
@@ -290,13 +332,40 @@ theorem isIrreducible_of_sup_center_eq_top (L' : LieSubalgebra K L)
     { __ := P.toSubmodule
       lie_mem := fun {x m} hm ↦ by
         obtain ⟨y, hy, z, hz, rfl⟩ := hx x
+        -- `hc` speaks of `⟨z, hz⟩ : center K L`, whose coercion back to `L` is `z` only up to
+        -- unfolding; ascribing the type at the destructuring puts the hypothesis in terms of `z`.
+        obtain ⟨c, hcz⟩ : ∃ c : K, ∀ m : M, ⁅z, m⁆ = c • m := hc ⟨z, hz⟩
         rw [add_lie]
-        refine P.toSubmodule.add_mem ?_ (lie_mem_of_mem_center K L M ⟨z, hz⟩ hm)
-        simpa using P.lie_mem (x := (⟨y, hy⟩ : L')) hm }
+        refine P.toSubmodule.add_mem ?_ ?_
+        · simpa using P.lie_mem (x := (⟨y, hy⟩ : L')) hm
+        · rw [hcz m]
+          exact P.toSubmodule.smul_mem c hm }
   refine (LieSubmodule.toSubmodule_eq_top P).1 ?_
   rcases IsSimpleOrder.eq_bot_or_eq_top P' with hbot | htop
   · exact absurd ((LieSubmodule.toSubmodule_eq_bot P).1 (congrArg LieSubmodule.toSubmodule hbot)) hP
   · exact congrArg LieSubmodule.toSubmodule htop
+
+end Descent
+
+section Descent
+
+variable (K : Type u) [Field K] (L : Type v) [LieRing L] [LieAlgebra K L]
+variable (M : Type w) [AddCommGroup M] [Module K M] [LieRingModule L M] [LieModule K L M]
+variable [LieModule.IsIrreducible K L M]
+
+variable [IsAlgClosed K] [FiniteDimensional K M]
+
+/-- **Irreducibility descends to a subalgebra complementing the centre.** If `L' ⊔ center K L` is
+all of `L` as a subspace, then a submodule for `L'` is already a submodule for `L`, because the
+missing central directions act by scalars (`TauCeti.exists_forall_lie_eq_smul`). Applied to the
+derived ideal of a reductive Lie algebra, this is the statement that an irreducible module over a
+reductive algebra stays irreducible over its semisimple part, the centre contributing only the
+scalars recorded by `TauCeti.centralWeight`. -/
+theorem isIrreducible_of_sup_center_eq_top (L' : LieSubalgebra K L)
+    (h : L'.toSubmodule ⊔ (LieAlgebra.center K L).toSubmodule = ⊤) :
+    LieModule.IsIrreducible K L' M :=
+  isIrreducible_of_sup_center_eq_top_of_forall_exists_lie_eq_smul K L M L' h
+    (exists_forall_lie_eq_smul K L M)
 
 end Descent
 

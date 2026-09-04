@@ -7,7 +7,7 @@ module
 
 public import TauCeti.NumberTheory.Multiquadratic.Galois.Group
 public import TauCeti.NumberTheory.Multiquadratic.Prime.Discriminant.Independence
-public import Mathlib.Data.Complex.Basic
+public import Mathlib.Basic.Complex.Basic
 public import Mathlib.Analysis.Real.Sqrt
 
 /-!

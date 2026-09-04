@@ -6,10 +6,10 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.MeasureTheory.MeasurableSpace.List
-public import TauCeti.Probability.DeFinetti.Theorem
 public import TauCeti.Probability.Exchangeability.Excursion
 import TauCeti.Probability.Exchangeability.SuccessorArray
 public import TauCeti.Probability.Recurrent
+import Mathlib.MeasureTheory.Measure.Dirac.Basic
 
 /-!
 # The excursion process of a recurrent Markov exchangeable process
@@ -20,8 +20,9 @@ into an infinite sequence of excursions away from `a₀`. This file assembles th
 proves the theorem the Diaconis–Freedman representation rests on: for a **Markov exchangeable**
 process the excursion process is **exchangeable**
 (`TauCeti.Probability.MarkovExchangeable.exchangeable_excursionProcess`). De Finetti's theorem then
-applies to it, making the excursions conditionally i.i.d.
-(`TauCeti.Probability.MarkovExchangeable.conditionallyIID_excursionProcess`).
+applies to it, making the excursions conditionally i.i.d. — that step is drawn in
+`Recurrence.Representation`, which is where this subtree meets the representation theory, so the
+excursion mechanics here stay independent of it.
 
 ## How the two symmetries meet
 
@@ -60,8 +61,6 @@ countability Markov exchangeability already carries.
   excursions.
 * `TauCeti.Probability.MarkovExchangeable.exchangeable_excursionProcess`: **the excursion process
   of a recurrent Markov exchangeable process is exchangeable**.
-* `TauCeti.Probability.MarkovExchangeable.conditionallyIID_excursionProcess`: de Finetti's theorem
-  applied to it.
 
 ## References
 
@@ -156,7 +155,7 @@ theorem measurable_excursion (a₀ : α) (k : ℕ) :
 theorem aemeasurable_excursionProcess {μ : Measure Ω} {X : ℕ → Ω → α}
     (hX : ∀ i, AEMeasurable (X i) μ) (a₀ : α) (k : ℕ) :
     AEMeasurable (excursionProcess X a₀ k) μ :=
-  (measurable_excursion a₀ k).comp_aemeasurable (aemeasurable_pi_lambda _ hX)
+  (measurable_excursion a₀ k).comp_aemeasurable (AEMeasurable.of_eval hX)
 
 end Measurability
 
@@ -176,7 +175,7 @@ theorem measure_setOf_excursionPrefix_eq {bs : List (List α)}
     (h0 : ∀ᵐ ω ∂μ, X 0 ω = a₀) (havoid : ∀ e ∈ bs, a₀ ∉ e) :
     μ {ω | excursionPrefix (fun n => X n ω) a₀ bs.length = bs} =
       μ {ω | ∀ i ≤ loopSteps bs, X i ω = loopPathAt a₀ bs i} := by
-  refine (measure_congr (Filter.eventuallyEq_set.2 ?_)).symm
+  refine (measure_congr (Filter.eventuallyEqSet_iff.2 ?_)).symm
   filter_upwards [h0, hvisit] with ω hω0 hω
   exact eqOn_loopPathAt_iff_excursionPrefix_eq havoid hω hω0
 
@@ -265,19 +264,6 @@ theorem MarkovExchangeable.exchangeable_excursionProcess (h : MarkovExchangeable
   rw [hleft, hright, setOf_forall_excursion_eq, setOf_forall_excursion_eq]
   exact h.measure_setOf_excursionPrefix_eq_of_perm hrec h0
     (Equiv.Perm.ofFn_comp_perm σ.symm v)
-
-/-- **De Finetti for the excursions of a recurrent Markov exchangeable process.** The excursions
-away from the initial state are conditionally i.i.d. finite words.
-
-The value space needs no hypothesis: over a countable state space the finite words form a countable
-discrete space, which is standard Borel and nonempty. -/
-theorem MarkovExchangeable.conditionallyIID_excursionProcess [IsFiniteMeasure μ]
-    (h : MarkovExchangeable μ X) (hrec : Recurrent μ X) (h0 : ∀ᵐ ω ∂μ, X 0 ω = a₀) :
-    ConditionallyIID μ (excursionProcess X a₀) :=
-  let _ : Countable α := h.countable
-  have : MeasurableSingletonClass α := h.measurableSingletonClass
-  conditionallyIID_of_exchangeable (h.exchangeable_excursionProcess hrec h0)
-    (aemeasurable_excursionProcess h.aemeasurable a₀)
 
 end Exchangeable
 

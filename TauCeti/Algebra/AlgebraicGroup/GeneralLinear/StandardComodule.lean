@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.AlgebraicGroup.GeneralLinear.FunctorOfPoints
-public import TauCeti.Algebra.AlgebraicGroup.Representation.Faithful
+public import TauCeti.Algebra.AlgebraicGroup.Representation.Faithful.Basic
 import Mathlib.LinearAlgebra.FiniteDimensional.Basic
 
 /-!
@@ -169,25 +169,32 @@ theorem rid_lTensor_comp_standardCoact (f : coordinateHopfAlgebra R n →ₗ[R] 
   ext i
   simp [Matrix.mulVec, dotProduct, Pi.single_apply, Finset.sum_ite_eq']
 
+/-- A base-valued point acts on the standard comodule by multiplication with its matrix. -/
+@[simp]
+theorem basePointsRepresentation_eq_mulVec
+    (g : WithConv (coordinateHopfAlgebra R n →ₐ[R] R)) (w : Fin n → R) :
+    Comodule.basePointsRepresentation (H := coordinateHopfAlgebra R n) (Fin n → R) g w =
+      (pointToGeneralLinear n g : Matrix (Fin n) (Fin n) R) *ᵥ w := by
+  rw [Comodule.basePointsRepresentation_apply, Comodule.endOfPoint_tmul, one_smul,
+    TensorProduct.lid_comm]
+  rw [standardComodule_coact R n]
+  have h := DFunLike.congr_fun
+    (rid_lTensor_comp_standardCoact R n g.ofConv.toLinearMap) w
+  simp only [LinearMap.coe_comp, Function.comp_apply, LinearEquiv.coe_coe] at h
+  rw [h, Matrix.mulVecLin_apply]
+  congr 1
+  ext i j
+  simp [pointToGeneralLinear_apply]
+
 /-- **A subcomodule of the standard comodule of `GLₙ` is stable under every invertible
 matrix.** -/
 theorem mulVec_mem (N : Subcomodule R (coordinateHopfAlgebra R n) (Fin n → R))
     (g : Matrix.GeneralLinearGroup (Fin n) R) {w : Fin n → R} (hw : w ∈ N) :
     (g : Matrix (Fin n) (Fin n) R) *ᵥ w ∈ N := by
-  have h := N.rid_lTensor_coact_mem
-    (generalLinearToPoint (R := R) n g).ofConv.toLinearMap hw
-  rw [standardComodule_coact R n] at h
-  have hf := DFunLike.congr_fun
-    (rid_lTensor_comp_standardCoact R n (generalLinearToPoint (R := R) n g).ofConv.toLinearMap) w
-  simp only [LinearMap.coe_comp, Function.comp_apply, LinearEquiv.coe_coe] at hf
-  have hmat : (Matrix.of fun i j ↦ (generalLinearToPoint (R := R) n g).ofConv.toLinearMap
-        (coordinateHopfAlgebraAlgEquiv R n
-          (coordinateRingMap R n (MvPolynomial.X (i, j))))) =
-      (g : Matrix (Fin n) (Fin n) R) := by
-    ext i j
-    simp
-  rw [hf, hmat, Matrix.mulVecLin_apply] at h
-  exact h
+  have h := Comodule.basePointsRepresentation_mem N
+    (generalLinearToPoint (R := R) n g) hw
+  simpa only [basePointsRepresentation_eq_mulVec, pointToGeneralLinear_generalLinearToPoint]
+    using h
 
 section PointAction
 

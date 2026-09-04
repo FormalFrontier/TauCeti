@@ -30,7 +30,8 @@ stack merges.
 * `DoubleCoset.multiplicity_eq_card_filter`: `m(g, h; d)` counts the `σᵢ` with
   `(σᵢg)⁻¹d ∈ Γ₂hΓ₃`.
 * `DoubleCoset.multiplicity_doubleCoset_congr`: `m(g, h; d)` depends on `d` only through the
-  double coset `Γ₁dΓ₃`.
+  double coset `Γ₁dΓ₃`. This and the two translation invariances it is built from need no
+  finiteness: they match the fibres by an explicit bijection rather than by counting.
 * `HeckeCosetModule.mul_assoc`: associativity of the convolution product at mixed levels.
 * the `Semiring (𝕋 Δ H R)` instance, and the `Ring (𝕋 Δ H R)` instance over a ring of
   coefficients.
@@ -122,32 +123,50 @@ theorem multiplicity_eq_card_filter (g h d : G) [Finite (DecompQuotient Γ₁ Γ
   refine Finset.sum_congr rfl fun i _ ↦ ?_
   rw [nat_card_fiber Γ₂ Γ₃ h ((i.out : G) * g) d]
 
-/-- Shimura's multiplicity is invariant under left translation of the target by `Γ₁`. -/
-theorem multiplicity_mul_left {γ : G} (hγ : γ ∈ Γ₁) (g h d : G)
-    [Finite (DecompQuotient Γ₁ Γ₂ g)] [Finite (DecompQuotient Γ₂ Γ₃ h)] :
-    multiplicity Γ₁ Γ₂ Γ₃ g h (γ * d) = multiplicity Γ₁ Γ₂ Γ₃ g h d := by
-  rw [multiplicity_eq_card_filter, multiplicity_eq_card_filter]
-  set γ' : Γ₁ := ⟨γ, hγ⟩ with hγ'def
-  refine Nat.card_congr (Equiv.subtypeEquiv (MulAction.toPerm γ'⁻¹) fun i ↦ ?_)
-  simp only [Set.mem_ofPred_eq, MulAction.toPerm_apply]
-  have h1 : QuotientGroup.mk (γ'⁻¹ * i.out) = γ'⁻¹ • i := by
+/-- Acting on a decomposition quotient moves the chosen representative by an element of `H₁`
+that conjugates into `H₂`: `(u • i).out = u * i.out * c` with `k⁻¹ c k ∈ H₂`.
+
+This is the one fact about `DecompQuotient` that the translation invariances below need, and
+isolating it is what lets them avoid any finiteness assumption: the correction `c` is produced
+for each `i` separately rather than summed over a finite index. -/
+private lemma exists_out_smul_eq {H₁ H₂ : Subgroup G} (k : G) (u : H₁)
+    (i : DecompQuotient H₁ H₂ k) :
+    ∃ c : H₁, ((u • i).out : G) = (u : G) * (i.out : G) * (c : G) ∧ k⁻¹ * (c : G) * k ∈ H₂ := by
+  refine ⟨(u * i.out)⁻¹ * (u • i).out, ?_, conj_mem_of_mk_eq k ?_⟩
+  · rw [← Subgroup.coe_mul, ← Subgroup.coe_mul, mul_inv_cancel_left]
+  · refine Eq.trans ?_ (QuotientGroup.out_eq' _).symm
     rw [← smul_eq_mul]
-    exact MulAction.Quotient.mk_smul_out _ γ'⁻¹ i
-  have hβ : g⁻¹ * ((((γ'⁻¹ * i.out)⁻¹ * (γ'⁻¹ • i).out : Γ₁) : G)) * g ∈ Γ₂ :=
-    conj_mem_of_mk_eq g (h1.trans (QuotientGroup.out_eq' _).symm)
-  have hy : ((γ'⁻¹ • i).out : G) =
-      γ⁻¹ * (i.out : G) * (((γ'⁻¹ * i.out)⁻¹ * (γ'⁻¹ • i).out : Γ₁) : G) := by
-    -- `γ' = ⟨γ, hγ⟩` by the `set` above, so the two sides of the `show` are definitionally
-    -- equal, but no rewriting lemma reassociates the bare product into the `Γ₁`-coercion;
-    -- the `show` exposes the coercion form so that `Subgroup.coe_mul` can fire.
-    rw [show γ⁻¹ * (i.out : G) = ((γ'⁻¹ * i.out : Γ₁) : G) from rfl, ← Subgroup.coe_mul,
+    exact MulAction.Quotient.mk_smul_out _ u i
+
+/-- Shimura's multiplicity is invariant under left translation of the target by `Γ₁`.
+
+No finiteness is assumed: the fibres over `γ * d` and over `d` are matched by an explicit
+bijection of pairs, not by a count. Translating the first component by `γ⁻¹` displaces it by a
+`Γ₂`-element (`exists_out_smul_eq`), and that displacement is absorbed by translating the second
+component — a shear rather than a product map, which is why the second factor cannot be left
+alone. -/
+theorem multiplicity_mul_left {γ : G} (hγ : γ ∈ Γ₁) (g h d : G) :
+    multiplicity Γ₁ Γ₂ Γ₃ g h (γ * d) = multiplicity Γ₁ Γ₂ Γ₃ g h d := by
+  rw [multiplicity_def, multiplicity_def]
+  set γ' : Γ₁ := ⟨γ, hγ⟩ with hγ'def
+  choose c hc hcmem using fun i : DecompQuotient Γ₁ Γ₂ g ↦ exists_out_smul_eq g γ'⁻¹ i
+  refine Nat.card_congr (Equiv.subtypeEquiv (Equiv.prodShear (MulAction.toPerm γ'⁻¹)
+    fun i ↦ MulAction.toPerm (⟨_, hcmem i⟩ : Γ₂)⁻¹) fun p ↦ ?_)
+  obtain ⟨i, j⟩ := p
+  obtain ⟨e, he, hemem⟩ := exists_out_smul_eq h (⟨_, hcmem i⟩ : Γ₂)⁻¹ j
+  simp only [Set.mem_ofPred_eq, Equiv.prodShear_apply, MulAction.toPerm_apply]
+  rw [he, hc i]
+  -- the displacement `c i` introduced on the left is cancelled by the one introduced on the
+  -- right, leaving `γ⁻¹` in front and a `Γ₃`-element `h⁻¹ e h` behind, which the quotient eats
+  have hY : ((γ'⁻¹ : Γ₁) : G) * ((i.out : Γ₁) : G) * ((c i : Γ₁) : G) * g *
+      ((((⟨g⁻¹ * ((c i : Γ₁) : G) * g, hcmem i⟩ : Γ₂)⁻¹ : Γ₂) : G) * ((j.out : Γ₂) : G) *
+        ((e : Γ₂) : G) * h)
+      = γ⁻¹ * (((i.out : Γ₁) : G) * g * (((j.out : Γ₂) : G) * h)) * (h⁻¹ * ((e : Γ₂) : G) * h) := by
+    simp only [InvMemClass.coe_inv, hγ'def, mul_assoc, mul_inv_rev, inv_inv,
       mul_inv_cancel_left]
-  have hcalc : (((γ'⁻¹ • i).out : G) * g)⁻¹ * d =
-      (g⁻¹ * ((((γ'⁻¹ * i.out)⁻¹ * (γ'⁻¹ • i).out : Γ₁) : G)) * g)⁻¹ *
-        (((i.out : G) * g)⁻¹ * (γ * d)) := by
-    rw [hy]
-    simp only [mul_inv_rev, inv_inv, mul_assoc, mul_inv_cancel_left]
-  rw [hcalc, mul_mem_doubleCoset_iff (Γ₂.inv_mem hβ)]
+  rw [hY, QuotientGroup.mk_mul_of_mem _ hemem, QuotientGroup.eq, QuotientGroup.eq]
+  simp only [mul_inv_rev, inv_inv, mul_assoc]
+
 
 /-- Shimura's multiplicity is invariant under right translation of the target by `Γ₃`. -/
 theorem multiplicity_mul_right {γ : G} (hγ : γ ∈ Γ₃) (g h d : G) :
@@ -156,8 +175,7 @@ theorem multiplicity_mul_right {γ : G} (hγ : γ ∈ Γ₃) (g h d : G) :
 
 /-- Shimura's multiplicity depends on the target only through its double coset. -/
 theorem multiplicity_doubleCoset_congr (g h : G) {d d' : G}
-    (hd : d' ∈ doubleCoset d Γ₁ Γ₃) [Finite (DecompQuotient Γ₁ Γ₂ g)]
-    [Finite (DecompQuotient Γ₂ Γ₃ h)] :
+    (hd : d' ∈ doubleCoset d Γ₁ Γ₃) :
     multiplicity Γ₁ Γ₂ Γ₃ g h d' = multiplicity Γ₁ Γ₂ Γ₃ g h d := by
   obtain ⟨x, hx, y, hy, rfl⟩ := mem_doubleCoset.mp hd
   rw [mul_assoc, multiplicity_mul_left hx, multiplicity_mul_right hy]
@@ -251,7 +269,7 @@ private lemma sum_multiplicity_eq_card [IsHeckeTriple Δ H₁ H₂] [IsHeckeTrip
   rw [step]
   refine Finset.sum_congr rfl fun i _ ↦ ?_
   rw [multiplicity_eq_card_filter (Γ₁ := H₂) (g₂ : G) (g₃ : G) (((i.out : G) * g₁)⁻¹ * d)]
-  exact Nat.card_congr (Equiv.setCongr (by
+  exact Nat.card_congr (Set.equivOfEq (by
     ext j
     simp only [Set.mem_ofPred_eq, mul_inv_rev, mul_assoc]))
 

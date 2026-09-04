@@ -8,8 +8,6 @@ module
 public import TauCeti.RepresentationTheory.Quiver.PathAlgebra.Map
 public import TauCeti.RepresentationTheory.Quiver.Zigzag.Relations
 
-public section
-
 /-!
 # The nonisolated zigzag quotient is an invariant of the graph
 
@@ -57,6 +55,8 @@ skew-parameter statements of that clause — extension along a field homomorphis
 scalar-extension comparison, and injectivity on units — are untouched. See Huerfano--Khovanov,
 *A category for the adjoint representation*, Section 3.
 -/
+
+public section
 
 namespace TauCeti
 

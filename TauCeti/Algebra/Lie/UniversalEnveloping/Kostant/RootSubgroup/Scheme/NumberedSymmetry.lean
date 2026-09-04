@@ -28,11 +28,13 @@ in order to inherit it:
 ```
 
 The first says that conjugation permutes the represented Kostant root subgroups without touching
-their additive parameters. The second says that when `θ` permutes the chosen lattice basis by `π`,
-conjugation carries the represented weight torus of a weight family to the weight torus of the
-relabelled family. Preserving a subgroup scheme cut out by both families additionally requires
-weight equivariance identifying that family with the original one, through a permutation of the
-torus index and `GeneralLinear.weightTorusCoordinateMap_reindex`.
+their additive parameters. The second says that when `θ` acts monomially on the chosen lattice
+basis, with coordinate permutation `π` and integral scaling coefficients, conjugation carries the
+represented weight torus of a weight family to the weight torus of the relabelled family. The
+scaling coefficients cancel from diagonal conjugation. Preserving a subgroup scheme cut out by
+both families additionally requires weight equivariance identifying that family with the original
+one, through a permutation of the torus index and
+`GeneralLinear.weightTorusCoordinateMap_reindex`.
 
 Neither identity is available from the construction of the coordinate automorphism, which goes
 through the functor of points: full faithfulness of the functor of points on commutative Hopf
@@ -58,7 +60,7 @@ weights are the weights of an admissible lattice: all of that is supplied by the
   algebra along the naturality of the matrix.
 * `kostantNumberedSymmetryCoordinateIso_hom_comp_rootSubgroupCoordinateMap`: the pinning equation
   `γ ≫ xᵢ = x_{σ i}` on coordinate algebras.
-* `kostantNumberedSymmetryCoordinateIso_hom_comp_weightTorusCoordinateMap`: a basis-permuting
+* `kostantNumberedSymmetryCoordinateIso_hom_comp_weightTorusCoordinateMap`: a monomial-basis
   symmetry carries the represented weight torus to the relabelled weight torus.
 
 All of these live in the `TauCeti.UniversalEnvelopingAlgebra` namespace.
@@ -426,48 +428,101 @@ theorem coe_kostantNumberedSymmetryMatrix_apply (A : Type v) [CommRing A] (i j :
   rw [kostantNumberedSymmetryMatrix, Units.coe_map]
   exact LinearMap.toMatrixAlgEquiv_apply (b.baseChange A) _ i j
 
-/-- **A symmetry permuting the chosen lattice basis has a permutation matrix.** This is the
-hypothesis under which conjugation normalizes the diagonal torus of `GLₙ`, and it holds for the
-coordinate permutation a Dynkin-diagram symmetry induces on Geck's lattice. -/
-theorem coe_kostantNumberedSymmetryMatrix_of_perm (basisPerm : Equiv.Perm (Fin n))
-    (hbasis : ∀ i, θ ((b i : M) : V) = ((b (basisPerm i) : M) : V))
-    (A : Type v) [CommRing A] :
-    (kostantNumberedSymmetryMatrix M b θ hθM A : Matrix (Fin n) (Fin n) A) =
-      (basisPerm⁻¹).permMatrix A := by
-  ext i j
+/-- **The matrix of a symmetry acting monomially on the chosen lattice basis.** Its `j`th column
+has the integral scaling coefficient at row `basisPerm j` and is zero elsewhere. This is the
+hypothesis under which conjugation normalizes the diagonal torus of `GLₙ`; allowing the coefficient
+is necessary for graph symmetries whose pinned lift is a signed coordinate permutation. -/
+theorem coe_kostantNumberedSymmetryMatrix_apply_of_monomial
+    (basisPerm : Equiv.Perm (Fin n)) (basisScale : Fin n → ℤ)
+    (hbasis : ∀ i, θ ((b i : M) : V) =
+      (((basisScale i) • b (basisPerm i) : M) : V))
+    (A : Type v) [CommRing A] (i j : Fin n) :
+    (kostantNumberedSymmetryMatrix M b θ hθM A : Matrix (Fin n) (Fin n) A) i j =
+      if i = basisPerm j then algebraMap ℤ A (basisScale j) else 0 := by
   rw [coe_kostantNumberedSymmetryMatrix_apply, Module.Basis.baseChange_apply]
-  have hval : (AddEquiv.baseChangeInvariantRestrictUnit
-      (R := A) θ.toAddEquiv M hθM).val ((1 : A) ⊗ₜ[ℤ] b j) = (1 : A) ⊗ₜ[ℤ] b (basisPerm j) := by
-    rw [AddEquiv.val_baseChangeInvariantRestrictUnit_tmul]
-    congr 1
-    refine Subtype.ext ?_
+  rw [AddEquiv.val_baseChangeInvariantRestrictUnit_tmul]
+  have hsub : θ.toAddEquiv.invariantRestrict M hθM (b j) =
+      (basisScale j) • b (basisPerm j) := by
+    apply Subtype.ext
     rw [AddEquiv.coe_invariantRestrict_apply]
     exact hbasis j
-  rw [hval, Module.Basis.baseChange_repr_tmul, b.repr_self, Finsupp.single_apply]
-  simp [Equiv.Perm.permMatrix, PEquiv.toMatrix_apply, Equiv.eq_symm_apply, eq_comm]
+  rw [hsub, Module.Basis.baseChange_repr_tmul]
+  simp [Finsupp.single_apply, eq_comm]
 
-/-- **Conjugating a diagonal matrix by a basis-permuting symmetry relabels its entries by the
-inverse permutation.** In particular the diagonal torus of `GLₙ` is normalized. -/
+/-- **Conjugating a diagonal matrix by a monomial basis symmetry relabels its entries by the
+inverse permutation.** The integral scaling coefficients cancel from the conjugation, so in
+particular every signed permutation normalizes the diagonal torus of `GLₙ`. -/
 theorem kostantNumberedSymmetryMatrix_conj_diagGL (basisPerm : Equiv.Perm (Fin n))
-    (hbasis : ∀ i, θ ((b i : M) : V) = ((b (basisPerm i) : M) : V))
+    (basisScale : Fin n → ℤ)
+    (hbasis : ∀ i, θ ((b i : M) : V) =
+      (((basisScale i) • b (basisPerm i) : M) : V))
     (A : Type v) [CommRing A] (d : Fin n → Aˣ) :
     kostantNumberedSymmetryMatrix M b θ hθM A * diagGL d *
         (kostantNumberedSymmetryMatrix M b θ hθM A)⁻¹ =
       diagGL (fun i => d (basisPerm⁻¹ i)) := by
-  rw [mul_diagGL_of_coe_eq_permMatrix
-      (kostantNumberedSymmetryMatrix M b θ hθM A) basisPerm⁻¹
-      (coe_kostantNumberedSymmetryMatrix_of_perm M b θ hθM basisPerm hbasis A) d,
-    mul_assoc, mul_inv_cancel, mul_one]
-  rfl
+  let Θ : (A ⊗[ℤ] M) ≃ₗ[A] (A ⊗[ℤ] M) :=
+    (AddEquiv.invariantRestrict θ.toAddEquiv M hθM).baseChange ℤ A M M
+  have hbasis' : ∀ i, AddEquiv.invariantRestrict θ.toAddEquiv M hθM (b i) =
+      basisScale i • b (basisPerm i) := by
+    intro i
+    apply Subtype.ext
+    rw [AddEquiv.coe_invariantRestrict_apply]
+    exact hbasis i
+  have hbase : ∀ i, Θ ((b.baseChange A) i) =
+      algebraMap ℤ A (basisScale i) • (b.baseChange A) (basisPerm i) :=
+    AddEquiv.baseChange_invariantRestrict_map_baseChange_basis
+      M b θ.toAddEquiv hθM basisPerm basisScale hbasis'
+  have hconj : Θ * basisDiagonal (b.baseChange A) d * Θ⁻¹ =
+      basisDiagonal (b.baseChange A) (fun i => d (basisPerm⁻¹ i)) :=
+    conj_basisDiagonal_of_map_basis (b.baseChange A) d
+      (fun i => d (basisPerm⁻¹ i)) (fun i => algebraMap ℤ A (basisScale i))
+      basisPerm Θ hbase (fun i => by simp)
+  have hmatrix := congrArg
+    (fun ψ : (A ⊗[ℤ] M) ≃ₗ[A] (A ⊗[ℤ] M) =>
+      Units.map (LinearMap.toMatrixAlgEquiv (b.baseChange A)).toMonoidHom
+        (LinearMap.GeneralLinearGroup.ofLinearEquiv ψ)) hconj
+  have hdiag (w : Fin n → Aˣ) :
+      Units.map (LinearMap.toMatrixAlgEquiv (b.baseChange A)).toMonoidHom
+          (LinearMap.GeneralLinearGroup.ofLinearEquiv
+            (basisDiagonal (b.baseChange A) w)) = diagGL w := by
+    apply Units.ext
+    rw [Units.coe_map]
+    -- The multiplicative-equivalence coercion remains folded after `Units.coe_map`; expose its
+    -- underlying `toMatrix` expression so the basis-diagonal matrix theorem applies.
+    change LinearMap.toMatrix (b.baseChange A) (b.baseChange A)
+        (basisDiagonal (b.baseChange A) w).toLinearMap = _
+    rw [toMatrix_basisDiagonal, diagGL_coe]
+  have hΘ :
+      Units.map (LinearMap.toMatrixAlgEquiv (b.baseChange A)).toMonoidHom
+          (LinearMap.GeneralLinearGroup.ofLinearEquiv Θ) =
+        kostantNumberedSymmetryMatrix M b θ hθM A := by
+    rw [kostantNumberedSymmetryMatrix]
+    apply Units.ext
+    simp only [Units.coe_map]
+    have hval :
+        (LinearMap.GeneralLinearGroup.ofLinearEquiv Θ : Module.End A (A ⊗[ℤ] M)) =
+          (AddEquiv.baseChangeInvariantRestrictUnit
+            (R := A) θ.toAddEquiv M hθM : Module.End A (A ⊗[ℤ] M)) := by
+      apply LinearMap.ext
+      intro z
+      rw [LinearMap.GeneralLinearGroup.coe_ofLinearEquiv,
+        AddEquiv.val_baseChangeInvariantRestrictUnit_apply]
+    exact congrArg (LinearMap.toMatrixAlgEquiv (b.baseChange A)) hval
+  simp only [LinearMap.GeneralLinearGroup.ofLinearEquiv_mul,
+    LinearMap.GeneralLinearGroup.ofLinearEquiv_inv, map_mul, map_inv] at hmatrix
+  rwa [hΘ, hdiag d, hdiag (fun i => d (basisPerm⁻¹ i))] at hmatrix
 
-/-- **A basis-permuting numbered symmetry carries the represented weight torus of a weight family
-to the weight torus of the relabelled family.** Stability of a closed subgroup scheme cut out by
-the root subgroups and a weight torus additionally requires identifying this relabelled family
-with the original one, via weight equivariance and
+/-- **A monomial-basis numbered symmetry carries the represented weight torus of a weight family
+to the weight torus of the relabelled family.** The scalar coefficients do not affect diagonal
+conjugation. Stability of a closed subgroup scheme cut out by the root subgroups and a weight torus
+additionally requires identifying this relabelled family with the original one, via weight
+equivariance and
 `GeneralLinear.weightTorusCoordinateMap_reindex`. -/
 theorem kostantNumberedSymmetryCoordinateIso_hom_comp_weightTorusCoordinateMap
     {ι : Type} [Finite ι] (wt : Fin n → ι → ℤ) (basisPerm : Equiv.Perm (Fin n))
-    (hbasis : ∀ i, θ ((b i : M) : V) = ((b (basisPerm i) : M) : V)) :
+    (basisScale : Fin n → ℤ)
+    (hbasis : ∀ i, θ ((b i : M) : V) =
+      (((basisScale i) • b (basisPerm i) : M) : V)) :
     (kostantNumberedSymmetryCoordinateIso M b θ hθM).hom ≫
         GeneralLinear.weightTorusCoordinateMap (R := ℤ) wt =
       GeneralLinear.weightTorusCoordinateMap (R := ℤ) (fun i => wt (basisPerm⁻¹ i)) := by
@@ -506,7 +561,8 @@ theorem kostantNumberedSymmetryCoordinateIso_hom_comp_weightTorusCoordinateMap
   have hp : toConv (f.ofConv.comp c.hom.toAlgHom) = g := by
     apply (GeneralLinear.pointsMulEquiv (R := ℤ) (A := CommAlgCat.of ℤ T) n).injective
     rw [pointsMulEquiv_comp_kostantNumberedSymmetryCoordinateIso, htorus_r, htorus_s,
-      kostantNumberedSymmetryMatrix_conj_diagGL M b θ hθM basisPerm hbasis]
+      kostantNumberedSymmetryMatrix_conj_diagGL
+        M b θ hθM basisPerm basisScale hbasis]
   have hx := congrArg (fun p => p.ofConv x) hp
   simp only [f, g, q, AlgHom.id_apply, AlgHom.comp_apply] at hx
   rw [_root_.CommHopfAlgCat.comp_apply]

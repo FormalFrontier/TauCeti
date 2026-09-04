@@ -55,6 +55,9 @@ statement is asserted.
 * `TauCeti.DynkinType.geckRootSubgroup` and `TauCeti.DynkinType.geckWeightTorus`: the root subgroup
   and weight-torus morphisms into the carrier.
 * `TauCeti.DynkinType.geckPoints`: the `A`-valued points of the carrier, as matrices.
+* `TauCeti.DynkinType.geckRootSubgroupPoints` and
+  `TauCeti.DynkinType.geckWeightTorusPoints`: the numbered root subgroups and represented weight
+  torus inside the point group.
 
 ## Main results
 
@@ -70,6 +73,8 @@ statement is asserted.
 * `TauCeti.DynkinType.geckTorusPoints_conj_geckRootSubgroupParam`: the pinning equation, with the
   root of a raising generator the corresponding pinned Cartan-matrix row and that of a lowering
   generator its negative.
+* `TauCeti.DynkinType.geckWeightTorusPoints_conj_geckRootSubgroupPoints`: the same pinning equation
+  inside the points of the carrier.
 * `TauCeti.DynkinType.map_geckElementarySubgroup_conj_geckTorusPoints`: the torus normalizes the
   elementary group.
 * `TauCeti.DynkinType.map_geckTorusSubsystemSubgroup_le_geckPoints`: the pointwise group generated
@@ -475,6 +480,77 @@ theorem geckTorusMatrix_mem_geckPoints (A : Type v) [CommRing A] (s : Fin t.rank
     t.geckTorusMatrix ht s ∈ t.geckPoints ht A :=
   TauCeti.UniversalEnvelopingAlgebra.kostantTorusMatrix_mem_toralPoints
     _ _ _ _ _ _ _ _ A s
+
+/-- **The parametrized numbered root subgroup inside the Geck carrier points.** The parameter is
+read through the canonical multiplicative copy of the additive group of `A`. -/
+noncomputable def geckRootSubgroupPoints (i : Fin t.rank ⊕ Fin t.rank)
+    (A : Type v) [CommRing A] : Multiplicative A →* t.geckPoints ht A :=
+  TauCeti.UniversalEnvelopingAlgebra.kostantToralRootSubgroupPoints
+    (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
+    (t.geckCoordinateLattice ht).toAddSubgroup
+    (t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht)
+    (t.isNilpotent_geckRepresentation_rootGenerator ht)
+    (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht) i A
+
+/-- A parametrized Geck root-subgroup point has the represented root-subgroup matrix as its
+underlying general-linear element. -/
+@[simp]
+theorem coe_geckRootSubgroupPoints (i : Fin t.rank ⊕ Fin t.rank)
+    (A : Type v) [CommRing A] (u : Multiplicative A) :
+    (t.geckRootSubgroupPoints ht i A u :
+        Matrix.GeneralLinearGroup (Fin (t.geckDim ht)) A) =
+      t.geckRootSubgroupMatrix ht i
+        ((AdditiveGroup.gaPointsMulEquiv (R := ℤ) (A := A)).symm u) :=
+  TauCeti.UniversalEnvelopingAlgebra.coe_kostantToralRootSubgroupPoints
+    (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
+    (t.geckCoordinateLattice ht).toAddSubgroup
+    (t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht)
+    (t.isNilpotent_geckRepresentation_rootGenerator ht)
+    (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht) i A u
+
+/-- **The represented weight torus inside the Geck carrier points.** -/
+noncomputable def geckWeightTorusPoints (A : Type v) [CommRing A] :
+    (Fin t.rank → Aˣ) →* t.geckPoints ht A :=
+  TauCeti.UniversalEnvelopingAlgebra.kostantToralWeightTorusPoints
+    (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
+    (t.geckCoordinateLattice ht).toAddSubgroup
+    (t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht)
+    (t.isNilpotent_geckRepresentation_rootGenerator ht)
+    (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht) A
+
+/-- A represented Geck weight-torus point has the weight-torus matrix as its underlying
+general-linear element. -/
+@[simp]
+theorem coe_geckWeightTorusPoints (A : Type v) [CommRing A] (s : Fin t.rank → Aˣ) :
+    (t.geckWeightTorusPoints ht A s :
+        Matrix.GeneralLinearGroup (Fin (t.geckDim ht)) A) = t.geckTorusMatrix ht s :=
+  TauCeti.UniversalEnvelopingAlgebra.coe_kostantToralWeightTorusPoints
+    (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
+    (t.geckCoordinateLattice ht).toAddSubgroup
+    (t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht)
+    (t.isNilpotent_geckRepresentation_rootGenerator ht)
+    (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht) A s
+
+/-- **The pinning equation inside the points of the Geck carrier.** Conjugation by a represented
+weight-torus point rescales a numbered root-subgroup parameter by the corresponding root
+character. -/
+@[simp]
+theorem geckWeightTorusPoints_conj_geckRootSubgroupPoints
+    (i : Fin t.rank ⊕ Fin t.rank) (A : Type v) [CommRing A]
+    (s : Fin t.rank → Aˣ) (u : Multiplicative A) :
+    t.geckWeightTorusPoints ht A s * t.geckRootSubgroupPoints ht i A u *
+        (t.geckWeightTorusPoints ht A s)⁻¹ =
+      t.geckRootSubgroupPoints ht i A
+        (Multiplicative.ofAdd
+          ((torusCharacter s (t.rootGeneratorWeight ht i) : A) * Multiplicative.toAdd u)) :=
+  TauCeti.UniversalEnvelopingAlgebra.kostantToralWeightTorusPoints_conj_rootSubgroupPoints
+    (t.lieBasis ht).rootGenerator (t.lieBasis ht).h (t.geckRepresentation ht)
+    (t.geckCoordinateLattice ht).toAddSubgroup
+    (t.geckRepresentation_kostantForm_mem_geckCoordinateLattice ht)
+    (t.isNilpotent_geckRepresentation_rootGenerator ht)
+    (t.geckCoordinateBasisFin ht) (t.geckWeightFin ht)
+    (t.isCartanWeightVector_geckCoordinateBasisFin ht)
+    (fun j => t.lie_lieBasis_h_rootGenerator ht i j) A s u
 
 /-- **The two representations of a weight-torus point of the carrier agree**: writing the point
 through `TauCeti.DynkinType.geckTorusMatrix` and writing it as the diagonal matrix of the weight

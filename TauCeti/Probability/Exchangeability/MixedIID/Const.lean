@@ -18,10 +18,10 @@ plain independence with common marginal law.
 * `MixedIIDWith.blockLaw_eq_pi_of_const`,
   `MixedIIDWith.map_eq_of_const` — what a constant mixing representative says: every injective
   block law is the `m`-fold product of `p`, and every coordinate has law `p`.  Coordinate a.e.
-  measurability is not special to a constant representative; it comes from the general
-  `MixedIIDWith.aemeasurable` in `MixedIID/Basic.lean`.
+  measurability is not special to a constant representative; `MixedIIDWith` carries it by
+  definition.
 * `mixedIIDWith_const_iff_iIndepFun_and_map_eq` — a constant `p` is a mixing representative exactly
-  when the coordinates are independent with common law `p`.
+  when the coordinates are a.e. measurable and independent with common law `p`.
 -/
 
 public section
@@ -50,7 +50,7 @@ theorem MixedIIDWith.map_eq_of_const {μ : Measure Ω} [IsProbabilityMeasure μ]
     {p : ProbabilityMeasure α} (h : MixedIIDWith μ X fun _ => p) (i : ι) :
     μ.map (X i) = (p : Measure α) := by
   have hone : AEMeasurable (fun ω (_ : Fin 1) => X i ω) μ :=
-    aemeasurable_pi_lambda _ fun _ => h.aemeasurable i
+    AEMeasurable.of_eval fun _ => h.aemeasurable i
   have hblock :=
     h.blockLaw_eq_pi_of_const (fun _ : Fin 1 => i) fun a b _ => Subsingleton.elim a b
   calc μ.map (X i)
@@ -84,11 +84,11 @@ theorem MixedIIDWith.iIndepFun_of_const {μ : Measure Ω} [IsProbabilityMeasure 
     funext ω j
     simp [e.apply_symm_apply j]
   have hae : AEMeasurable (fun ω (i : Fin s.card) => X ((e i : s) : ι) ω) μ :=
-    aemeasurable_pi_lambda _ fun i => hX _
+    AEMeasurable.of_eval fun i => hX _
   calc μ.map (fun ω (j : s) => X (j : ι) ω)
       = (μ.map fun ω (i : Fin s.card) => X ((e i : s) : ι) ω).map
           (fun g (j : s) => g (e.symm j)) := by
-        rw [(measurable_pi_lambda _ fun j => measurable_pi_apply
+        rw [(Measurable.of_eval fun j => measurable_pi_apply
           (e.symm j)).aemeasurable.map_map_of_aemeasurable hae, hcomp]
     _ = (Measure.pi fun _ : Fin s.card => (p : Measure α)).map fun g (j : s) => g (e.symm j) := by
         rw [← blockLaw_def, hblock]
@@ -108,9 +108,10 @@ theorem MixedIIDWith.iIndepFun_of_const {μ : Measure Ω} [IsProbabilityMeasure 
 exactly when the coordinates are independent and each has law `p`. -/
 theorem mixedIIDWith_const_iff_iIndepFun_and_map_eq {μ : Measure Ω} [IsProbabilityMeasure μ]
     {X : ι → Ω → α} {p : ProbabilityMeasure α} :
-    (MixedIIDWith μ X fun _ => p) ↔ iIndepFun X μ ∧ ∀ i, μ.map (X i) = (p : Measure α) :=
-  ⟨fun h => ⟨h.iIndepFun_of_const, h.map_eq_of_const⟩,
-    fun ⟨hindep, hlaw⟩ => MixedIIDWith.of_iIndepFun_map_eq hindep hlaw⟩
+    (MixedIIDWith μ X fun _ => p) ↔
+      (∀ i, AEMeasurable (X i) μ) ∧ iIndepFun X μ ∧ ∀ i, μ.map (X i) = (p : Measure α) :=
+  ⟨fun h => ⟨h.aemeasurable, h.iIndepFun_of_const, h.map_eq_of_const⟩,
+    fun ⟨hX, hindep, hlaw⟩ => MixedIIDWith.of_iIndepFun_map_eq hindep hX hlaw⟩
 
 end Probability
 

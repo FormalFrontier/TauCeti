@@ -28,6 +28,8 @@ series evaluated at arguments of `I ^ n` is confined to `I ^ n`, in
 * `IsAdic.isOpen_pow` : in a ring whose topology is `I`-adic, every power of `I` is open.
 * `IsAdic.isClosed_pow` : in a ring whose topology is `I`-adic, every power of `I` is closed —
   an open additive subgroup of a topological group being closed.
+* `IsAdic.tendsto_zero_of_mem_pow` : a family whose members lie in growing powers of `I` tends to
+  zero, provided the exponents tend to infinity.
 * `IsAdic.isTopologicallyNilpotent_of_mem` : in a ring whose topology is `I`-adic, every element
   of `I` is topologically nilpotent.
 
@@ -48,32 +50,33 @@ namespace IsAdic
 variable {R : Type*} [CommRing R] [TopologicalSpace R] {I : Ideal R}
 
 /-- In a ring whose topology is the `I`-adic one, every power of `I` is open. -/
-theorem isOpen_pow (hI : IsAdic I) (n : ℕ) : IsOpen ((I ^ n : Ideal R) : Set R) := by
-  simp only [IsAdic] at hI
-  subst hI
-  let : TopologicalSpace R := I.adicTopology
-  exact (I.openAddSubgroup n).isOpen'
+theorem isOpen_pow (hI : IsAdic I) (n : ℕ) : IsOpen ((I ^ n : Ideal R) : Set R) :=
+  letI := I.adicTopology
+  hI ▸ (I.openAddSubgroup n).isOpen
 
 /-- In a ring whose topology is the `I`-adic one, every power of `I` is closed: it is an open
 additive subgroup, and an open subgroup of a topological group is closed. -/
-theorem isClosed_pow (hI : IsAdic I) (n : ℕ) : IsClosed ((I ^ n : Ideal R) : Set R) := by
-  have hopen := hI.isOpen_pow n
-  simp only [IsAdic] at hI
-  subst hI
-  let : TopologicalSpace R := I.adicTopology
-  have : NonarchimedeanRing R := I.nonarchimedean
-  exact AddSubgroup.isClosed_of_isOpen (I ^ n).toAddSubgroup hopen
+theorem isClosed_pow (hI : IsAdic I) (n : ℕ) : IsClosed ((I ^ n : Ideal R) : Set R) :=
+  have : NonarchimedeanRing R := hI ▸ I.nonarchimedean
+  AddSubgroup.isClosed_of_isOpen (I ^ n).toAddSubgroup (hI.isOpen_pow n)
+
+open Filter Topology in
+/-- In a ring whose topology is the `I`-adic one, a family whose members lie in growing powers of
+`I` tends to zero, provided the exponents tend to infinity. Only eventual membership is needed,
+since convergence along `l` cannot see failures outside an `l`-large set; a pointwise caller
+supplies `Filter.Eventually.of_forall`. The index filter is arbitrary: `atTop` for a sequence,
+`cofinite` for the decay condition of `MvPowerSeries.HasEval`. For the powers of a single element
+of `I` use `IsAdic.isTopologicallyNilpotent_of_mem` instead. -/
+theorem tendsto_zero_of_mem_pow (hI : IsAdic I) {γ : Type*} {l : Filter γ} {g : γ → R} {e : γ → ℕ}
+    (hg : ∀ᶠ i in l, g i ∈ I ^ e i) (he : Tendsto e l atTop) : Tendsto g l (𝓝 0) :=
+  hI.hasBasis_nhds_zero.tendsto_right_iff.2 fun k _ ↦ by
+    filter_upwards [hg, he.eventually_ge_atTop k] with i hi hik
+    exact Ideal.pow_le_pow_right hik hi
 
 /-- In a ring whose topology is the `I`-adic one, every element of `I` is topologically
 nilpotent. -/
--- Mathlib proves this for its `WithIdeal` class, whose topology is adic by construction. A ring
--- that merely satisfies `IsAdic I` already carries a topology of its own, so it cannot take that
--- instance without a second one; the argument is therefore run against
--- `IsAdic.hasBasis_nhds_zero`.
 theorem isTopologicallyNilpotent_of_mem (hI : IsAdic I) {a : R} (ha : a ∈ I) :
-    IsTopologicallyNilpotent a := by
-  suffices ∀ m : ℕ, ∃ n₀, ∀ n, n₀ ≤ n → a ^ n ∈ I ^ m by
-    simpa [IsTopologicallyNilpotent, hI.hasBasis_nhds_zero.tendsto_right_iff]
-  exact fun m ↦ ⟨m, fun n hn ↦ Ideal.pow_le_pow_right hn (Ideal.pow_mem_pow ha _)⟩
+    IsTopologicallyNilpotent a :=
+  hI.tendsto_zero_of_mem_pow (.of_forall (Ideal.pow_mem_pow ha)) Filter.tendsto_id
 
 end IsAdic

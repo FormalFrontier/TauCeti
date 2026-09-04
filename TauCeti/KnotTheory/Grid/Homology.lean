@@ -74,6 +74,15 @@ namespace GridDiagram
 
 variable {n : ℕ} (G : GridDiagram n)
 
+/-- Shortcut instance. The subquotient `fullyBlockedHomology` below needs the elaborator to
+identify the module structure on `fullyBlockedCycles` that appears in a `Submodule` argument with
+the one produced by instance search; a direct head match makes that identification syntactic
+instead of relying on unfolding a `ZMod 2` instance diamond, which fails. -/
+noncomputable instance : AddCommGroup G.fullyBlockedCycles := inferInstance
+
+/-- Shortcut instance, paired with the `AddCommGroup` one above. -/
+noncomputable instance : Module (ZMod 2) G.fullyBlockedCycles := inferInstance
+
 /-- The fully blocked boundaries, viewed as a submodule of the fully blocked cycles: the cycles
 that are hit by the differential. This is `B ⊓ Z` sitting inside `Z`, and equals `B` itself once
 the differential squares to zero (`fullyBlockedBoundaries_le_cycles`). -/

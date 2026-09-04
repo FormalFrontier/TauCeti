@@ -16,9 +16,9 @@ no eigenvalues other than one.
 
 ## Main declarations
 
-* `TauCeti.GeneralLinearGroup.IsUnipotent.maxGenEigenspace_one_eq_top`: the maximal generalized
+* `LinearMap.GeneralLinearGroup.IsUnipotent.maxGenEigenspace_one_eq_top`: the maximal generalized
   `1`-eigenspace of a unipotent automorphism is the whole space.
-* `TauCeti.GeneralLinearGroup.IsUnipotent.eigenvalue_eq_one`: every eigenvalue of a unipotent
+* `LinearMap.GeneralLinearGroup.IsUnipotent.eigenvalue_eq_one`: every eigenvalue of a unipotent
   automorphism is one.
 
 ## References
@@ -28,15 +28,13 @@ no eigenvalues other than one.
 
 public section
 
-namespace TauCeti
-
 open LinearMap
 
 universe u v
 
 noncomputable section
 
-namespace GeneralLinearGroup
+namespace LinearMap.GeneralLinearGroup
 
 variable {K : Type u} {V : Type v}
 
@@ -83,8 +81,7 @@ theorem IsUnipotent.eigenvalue_eq_one {g : GeneralLinearGroup K V}
 
 end IsDomain
 
-end GeneralLinearGroup
+end LinearMap.GeneralLinearGroup
 
 end
 
-end TauCeti

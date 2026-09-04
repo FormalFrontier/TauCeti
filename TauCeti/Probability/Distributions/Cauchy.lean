@@ -7,6 +7,7 @@ module
 
 import Mathlib.Analysis.Fourier.Inversion
 import Mathlib.MeasureTheory.Function.JacobianOneDim
+import TauCeti.MeasureTheory.Integral.Bochner.Basic
 public import Mathlib.Analysis.SpecialFunctions.ImproperIntegrals
 public import Mathlib.Probability.Distributions.Cauchy
 public import Mathlib.Probability.HasLaw
@@ -76,10 +77,10 @@ parent law.
 
 public section
 
-namespace TauCeti
-
 open Filter MeasureTheory ProbabilityTheory Set
 open scoped ENNReal NNReal ProbabilityTheory
+
+namespace TauCeti
 
 /-- The scaled arctangent has the Cauchy density as its derivative. -/
 theorem hasDerivAt_arctan_div_pi (x₀ : ℝ) (γ : ℝ≥0) (y : ℝ) :
@@ -199,7 +200,6 @@ private lemma eventually_cauchyPDFReal_ge (x₀ : ℝ) (hγ : γ ≠ 0) :
 private theorem not_integrable_exp_mul_cauchyPDFReal_of_pos (x₀ : ℝ) (hγ : γ ≠ 0)
     {t : ℝ} (ht : 0 < t) :
     ¬ Integrable (fun x : ℝ ↦ Real.exp (t * x) * cauchyPDFReal x₀ γ x) volume := by
-  intro hint
   let c : ℝ := Real.pi⁻¹ * (γ : ℝ)
   have hc : 0 < c := by
     dsimp [c]
@@ -220,13 +220,7 @@ private theorem not_integrable_exp_mul_cauchyPDFReal_of_pos (x₀ : ℝ) (hγ : 
         field_simp
       _ ≤ Real.exp (t * x) * cauchyPDFReal x₀ γ x :=
         mul_le_mul_of_nonneg_left hpdf (Real.exp_pos _).le
-  obtain ⟨a, ha⟩ := eventually_atTop.mp hbound
-  have hone : IntegrableOn (fun _ : ℝ ↦ (1 : ℝ)) (Ioi a) volume := by
-    refine Integrable.mono' hint.integrableOn (by fun_prop) ?_
-    filter_upwards [ae_restrict_mem measurableSet_Ioi] with x hx
-    simpa only [norm_one] using ha x hx.le
-  rw [integrableOn_const_iff] at hone
-  simp [Real.volume_Ioi] at hone
+  exact MeasureTheory.not_integrable_of_eventually_le_atTop one_pos hbound
 
 /-- A nondegenerate Cauchy law has no first absolute moment. -/
 theorem not_integrable_id_cauchyMeasure (x₀ : ℝ) (hγ : γ ≠ 0) :

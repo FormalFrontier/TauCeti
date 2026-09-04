@@ -10,8 +10,6 @@ public import TauCeti.LinearAlgebra.RootSystem.Weyl.Group
 import Mathlib.Algebra.Group.Submonoid.Membership
 import Mathlib.GroupTheory.OrderOfElement
 
-public section
-
 /-!
 # Generation of the Weyl group by simple reflections
 
@@ -40,6 +38,8 @@ This file implements “Simple reflections generate” in Layer 2 of
 `TauCetiRoadmap/RepresentationTheory/RootSystems/README.md`. The argument follows the standard
 positive-root induction described there.
 -/
+
+public section
 
 namespace TauCeti
 

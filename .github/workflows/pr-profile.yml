@@ -45,6 +45,14 @@ concurrency:
     }}
   cancel-in-progress: true
 
+env:
+  # Temporary escape hatch for `lake exe cache get`, kept only for an easy rollback
+  # during the transition to the cache tool's new default read endpoint. Set the
+  # variable to `1` to send cache reads back to the legacy storage endpoint. Clear it to
+  # return reads to the default endpoint on the next run: the cache tool treats unset,
+  # empty, `0`, and `false` alike as off.
+  MATHLIB_CACHE_DEBUG_USE_LEGACY: ${{ vars.MATHLIB_CACHE_DEBUG_USE_LEGACY }}
+
 jobs:
   # Deliberately not named `perf`: the authoritative required context is the
   # commit status posted at the end, not this workflow's automatic check-run.
@@ -330,7 +338,9 @@ jobs:
         env:
           PUBLIC_ARTIFACT_ENDPOINT: ${{ vars.LAKE_CACHE_ARTIFACT_ENDPOINT_PUBLIC }}
           PUBLIC_REVISION_ENDPOINT: ${{ vars.LAKE_CACHE_REVISION_ENDPOINT_PUBLIC }}
-          LAKE_CACHE_MAX_REVS: "0"
+          # The same limit as pr-build, for the same shared script. This step reads the
+          # comparison base, which main publishes, so the search stops at the first lookup.
+          LAKE_CACHE_MAX_REVS: "100"
         run: |
           set -euo pipefail
           if [ -z "$PUBLIC_ARTIFACT_ENDPOINT" ] || [ -z "$PUBLIC_REVISION_ENDPOINT" ]; then

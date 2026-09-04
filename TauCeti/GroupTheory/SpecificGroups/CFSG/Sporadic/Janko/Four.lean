@@ -44,6 +44,30 @@ This computation is provenance rather than a Lean theorem: the file asserts no o
 simplicity, or identification result. The independent `FiniteSimpleGroups` development named by
 the roadmap does not cover `J₄`, so no cross-check against that development is available.
 
+## Independent source-to-Lean read-through
+
+An independent read-through used the bytes of the ATLAS Magma source `J4G2-P1.M` whose SHA-256
+digest is `0ed9ed620f24b22490d2cb32f202ecbeb422ff665b4614b9ad8c6a6d7b118135`. Its constructor
+`G<x,y,t>` fixes exactly the three-generator order published by `j4Presentation_generatorNames`.
+
+The first seven constructor entries are, one for one, the seven active `M₂₄`-presentation words
+on `x,y` displayed above. The remaining five entries extend them in this source order:
+
+```text
+t²,
+[t,x],
+[t, yxy (xy⁻¹)² (xy)³],
+(y t^(yxy⁻¹xyxy⁻¹x))³,
+((yxyxyxy)³ t t^((xy)³y(xy)⁶y))².
+```
+
+They agree with entries eight through twelve of `j4Presentation_transcribed`. In the last two,
+expanding each source conjugate `t^s` as `s⁻¹ts` gives precisely `sourceConj t firstConjugator`
+and `sourceConj t secondConjugator`; the two conjugating words agree letter for letter with the
+Magma file. None of the twelve constructor entries is commented out or marked redundant. This
+checks every source relator, inverse, exponent, conjugating word, and source-order position
+independently of the original transcription and closes this row's S1 source-to-Lean read-through.
+
 The row is a sealed definition, so it publishes an equation for each of its fields: the transcribed
 relator expressions with their generator indices written out, and the provenance a manifest row
 exists to record. Together with `TauCeti.GroupPresentation.relators_def` and

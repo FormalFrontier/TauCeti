@@ -9,8 +9,6 @@ public import TauCeti.LinearAlgebra.RootSystem.FiniteType.Basic
 public import TauCeti.LinearAlgebra.RootSystem.Chain
 public import TauCeti.LinearAlgebra.RootSystem.AdjoinPendant
 
-public section
-
 /-!
 # The affine diagrams `B̃ₗ` and `A⁽²⁾₂ₗ₋₁` are not of finite type
 
@@ -75,6 +73,8 @@ Ch. 4 and Table Aff 1. Kac writes `aᵢⱼ = ⟨αⱼ, αᵢ^∨⟩`, the transp
 also J. E. Humphreys, *Introduction to Lie Algebras and Representation Theory*, §11.4, where the
 same configuration is excluded.
 -/
+
+public section
 
 open scoped Matrix
 

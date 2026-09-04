@@ -9,8 +9,6 @@ public import TauCeti.LinearAlgebra.Matrix.Dual
 public import TauCeti.LinearAlgebra.RootSystem.DynkinType
 public import Mathlib.LinearAlgebra.RootSystem.Base
 
-public section
-
 /-!
 # Scaffolding shared by the pinned simply connected root data
 
@@ -46,6 +44,8 @@ and reflection preservation of the quadratic form carried by the Cartan matrix a
 `TauCeti.vecMul_dotProduct_comm` and `TauCeti.reflect_vecMul_dotProduct_self` in
 `TauCeti/LinearAlgebra/Matrix/Gram.lean`.
 -/
+
+public section
 
 namespace TauCeti
 

@@ -8,8 +8,6 @@ module
 public import Mathlib.Algebra.Lie.Basic
 public import Mathlib.LinearAlgebra.Prod
 
-public section
-
 /-!
 # Products of Lie modules
 
@@ -34,6 +32,8 @@ product.
 * `TauCeti.LieModuleEquiv.prodComm`: swapping the factors is an equivalence.
 * `TauCeti.lie_prod_apply`: the componentwise bracket on a product.
 -/
+
+public section
 
 namespace TauCeti
 

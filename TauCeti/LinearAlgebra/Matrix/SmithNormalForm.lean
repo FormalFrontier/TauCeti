@@ -11,7 +11,7 @@ import Mathlib.Algebra.EuclideanDomain.Int
 -- `dvd_mul_mul_apply` and `dvd_diag_of_dvd_entries`, used only inside proofs below.
 import TauCeti.LinearAlgebra.Matrix.Divisibility
 import Mathlib.Data.Int.GCD
-import Mathlib.Data.Sign.Basic
+import Mathlib.Basic.Sign.Basic
 import Mathlib.LinearAlgebra.Determinant
 import Mathlib.LinearAlgebra.FreeModule.PID
 import Mathlib.LinearAlgebra.Matrix.Basis

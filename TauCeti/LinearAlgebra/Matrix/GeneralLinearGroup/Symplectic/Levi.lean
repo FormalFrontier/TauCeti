@@ -6,6 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.GraphAutomorphism
+public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.MkOfDetNeZero
 public import TauCeti.LinearAlgebra.Matrix.GeneralLinearGroup.Symplectic.Basic
 public import TauCeti.LinearAlgebra.Matrix.SpecialLinearGroup.Transvection
 
@@ -24,14 +25,12 @@ levi(A)  =   [              ].
 This file packages that construction as the injective homomorphism
 `TauCeti.GLSymplectic.leviHom : GL l R →* GLSymplectic l R`, transports it to the
 `Fin (m + m)` coordinates used by the symplectic group scheme, and identifies the images of
-elementary transvections with the difference-root subgroups.  It follows that over a field the
+elementary transvections with the difference-root subgroups. It follows that over a field the
 image of `SL_m` under the Levi embedding belongs to every subgroup containing all difference-root
-elements.
+elements, and that the full Levi image belongs once the diagonal Levi subgroup is also included.
 
-The last statement is the diagonal-block input to symplectic Gaussian generation.  Together with
-the upper- and lower-unipotent generation steps, it will identify the field-valued points of the
-full-weight type-`C` Chevalley carrier with the standard symplectic group.  No claim about the
-whole symplectic group is made here.
+The full-Levi result supplies the diagonal-block factor in symplectic Gaussian decomposition,
+alongside the upper- and lower-unipotent factors.
 
 ## Main definitions
 
@@ -46,6 +45,8 @@ whole symplectic group is made here.
   corresponding difference-root element.
 * `TauCeti.GLSymplecticFin.leviHom_toGL_mem_of_difference`: over a field, every element of the
   determinant-one Levi subgroup lies in any subgroup containing the difference-root elements.
+* `TauCeti.GLSymplecticFin.leviHom_mem_of_difference_of_diagonal`: adding the diagonal Levi
+  subgroup gives every general-linear Levi element.
 
 ## References
 
@@ -277,6 +278,42 @@ theorem leviHom_toGL_mem_of_difference {K : Type*} [Field K]
     rw [htop]
     exact Subgroup.mem_top A
   exact Subgroup.mem_comap.mp hA
+
+/-- Every general-linear Levi element belongs to a subgroup containing all difference-root
+elements and every diagonal Levi element. -/
+theorem leviHom_mem_of_difference_of_diagonal {K : Type*} [Field K]
+    (H : Subgroup (GLSymplecticFin m K))
+    (hdifference : ∀ {i j : Fin m} (hij : i ≠ j) (c : K),
+      differenceShortRootUnit hij c ∈ H)
+    (hdiagonal : ∀ s : Fin m → Kˣ, leviHom (diagGL s) ∈ H)
+    (A : GL (Fin m) K) : leviHom A ∈ H := by
+  let P : Matrix (Fin m) (Fin m) K → Prop := fun M ↦
+    ∀ hM : M.det ≠ 0, leviHom (Matrix.GeneralLinearGroup.mkOfDetNeZero M hM) ∈ H
+  have hA : P (A : Matrix (Fin m) (Fin m) K) := by
+    apply Matrix.diagonal_transvection_induction_of_det_ne_zero P _ A.det_ne_zero
+    · intro D hD _
+      have hentry (i : Fin m) : D i ≠ 0 := by
+        intro hi
+        apply hD
+        rw [Matrix.det_diagonal]
+        exact Finset.prod_eq_zero (Finset.mem_univ i) hi
+      let d : Fin m → Kˣ := fun i ↦ Units.mk0 (D i) (hentry i)
+      convert hdiagonal d using 1
+      apply congrArg leviHom
+      apply Units.ext
+      exact (diagGL_coe d).symm
+    · rintro ⟨i, j, hij, c⟩ _
+      simp only [Matrix.TransvectionStruct.toMatrix_mk]
+      rw [Matrix.GeneralLinearGroup.mkOfDetNeZero_transvection hij c]
+      rw [leviHom_transvection]
+      exact hdifference hij c
+    · intro M N hM hN ihM ihN _
+      rw [Matrix.GeneralLinearGroup.mkOfDetNeZero_mul M N hM hN, map_mul]
+      exact H.mul_mem (ihM hM) (ihN hN)
+  have hA' := hA A.det_ne_zero
+  convert hA' using 1
+  apply congrArg leviHom
+  exact (Matrix.GeneralLinearGroup.mkOfDetNeZero_coe A).symm
 
 end GLSymplecticFin
 

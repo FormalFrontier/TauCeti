@@ -6,7 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Analysis.PositiveDefinite.SemigroupGroup.Basic
-public import Mathlib.Data.NNReal.Star
+public import Mathlib.Basic.NNReal.Star
 public import Mathlib.Topology.Constructions.SumProd
 
 /-!
