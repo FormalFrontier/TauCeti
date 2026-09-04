@@ -70,12 +70,6 @@ noncomputable section
 
 variable {F : Type*} [NormedAddCommGroup F] [NormedSpace ℝ F]
 
-/-- The metric variation of a path in a subtype is unchanged by applying its coercion. -/
-theorem eVariationOn_subtypeVal_comp {α E : Type*} [LinearOrder α] [PseudoEMetricSpace E]
-    {s : Set E} {f : α → s} {t : Set α} :
-    eVariationOn f t = eVariationOn ((Subtype.val : s → E) ∘ f) t := by
-  rfl
-
 /-- For a `C¹` curve in a real normed space, metric total variation is bounded
 by the integral of the norm of its derivative. -/
 theorem eVariationOn_le_lintegral_enorm_derivWithin {f : ℝ → F} {a b : ℝ}
