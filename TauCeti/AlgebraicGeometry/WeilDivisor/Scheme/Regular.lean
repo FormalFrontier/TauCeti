@@ -29,17 +29,13 @@ regular function on `U`.
   point of a section of `𝒪_X` over `U`.
 
 The last statement is the one-dimensional case of algebraic Hartogs' principle, and it is the
-input that identifies the sheaf `𝒪_X(0)` of the zero divisor with the structure sheaf. It
-advances `TauCetiRoadmap/JacobianChallenge/README.md`, Layer A, "Divisors on a curve: Weil
-divisors `⊕_x ℤ` and Cartier divisors; the dictionaries `Cartier ≃ line bundles` and (smooth
-curve) `Weil ≃ Cartier`; principal divisors; `Cl(X) ≅ Pic X`".
+input that identifies the sheaf `𝒪_X(0)` of the zero divisor with the structure sheaf.
 
 The argument follows Hartshorne, *Algebraic Geometry*, II.6.3A and Proposition II.6.11, in the
 dimension-one case where the intersection of the local rings can be taken over the points of `U`
-themselves. No formalization is vendored: the local step is Mathlib's
-`IsDiscreteValuationRing.exists_lift_of_le_one` together with
-`Ring.ordFrac_eq_valuation_inv`, and the global step is Mathlib's unique gluing for sheaves on a
-topological space.
+themselves. The local step is Mathlib's `IsDiscreteValuationRing.exists_lift_of_le_one` together
+with `Ring.ordFrac_eq_valuation_inv`, and the global step is Mathlib's unique gluing for sheaves
+on a topological space.
 -/
 
 public section
@@ -71,8 +67,7 @@ theorem exists_algebraMap_stalk_eq_of_ord_nonneg {x : X}
   refine IsDiscreteValuationRing.exists_lift_of_le_one ?_
   have h1 : (1 : ℤᵐ⁰) ≤ X.ordHom x hx f := by
     simpa using (X.le_ord_iff hx hf0 (n := 0)).mp (by simpa using hf)
-  rw [show X.ordHom x hx = Ring.ordFrac (X.presheaf.stalk x) from rfl,
-    Ring.ordFrac_eq_valuation_inv] at h1
+  simp only [_root_.AlgebraicGeometry.Scheme.ordHom, Ring.ordFrac_eq_valuation_inv] at h1
   exact (one_le_inv_iff₀.mp h1).2
 
 omit [IsLocallyNoetherian X] in
@@ -85,15 +80,7 @@ theorem exists_algebraMap_stalk_eq_of_coheight_eq_zero {x : X} (hx : coheight x 
   have hdim : Ring.KrullDimLE 0 (X.presheaf.stalk x) := krullDimLE_of_coheight_le hx.le
   have hfield : IsField (X.presheaf.stalk x) :=
     Ring.isField_iff_maximal_bot.mpr (Ring.krullDimLE_zero_iff.mp hdim ⊥ Ideal.isPrime_bot)
-  obtain ⟨a, b, hb, rfl⟩ := IsFractionRing.div_surjective (A := X.presheaf.stalk x) f
-  obtain ⟨c, hc⟩ := hfield.mul_inv_cancel (nonZeroDivisors.ne_zero hb)
-  have hbc : algebraMap (X.presheaf.stalk x) X.functionField c *
-      algebraMap (X.presheaf.stalk x) X.functionField b = 1 := by
-    rw [← map_mul, mul_comm, hc, map_one]
-  have hb0 : algebraMap (X.presheaf.stalk x) X.functionField b ≠ 0 := fun h ↦ by
-    simp [h] at hbc
-  refine ⟨a * c, ?_⟩
-  rw [map_mul, eq_div_iff hb0, mul_assoc, hbc, mul_one]
+  exact IsFractionRing.surjective_iff_isField.mpr hfield f
 
 /-- **A rational function without poles is regular.** On a locally Noetherian integral scheme of
 dimension at most one whose codimension-one local rings are discrete valuation rings, a rational
@@ -149,7 +136,10 @@ theorem exists_germToFunctionField_eq_of_ord_nonneg
     (fun y hy ↦ Opens.mem_iSup.mpr ⟨⟨y, hy⟩, hyV ⟨y, hy⟩⟩) s hcompat
   obtain ⟨y⟩ := ‹Nonempty U›
   refine ⟨a, ?_⟩
-  rw [← hs y, ← show X.presheaf.map (homOfLE (hVU y)).op a = s y from ha y,
+  -- `ha` is phrased through `X.sheaf`, whose underlying presheaf is `X.presheaf`; naming the
+  -- restriction identity with its `X.presheaf` type keeps the rewrites below type-correct.
+  have hres : X.presheaf.map (homOfLE (hVU y)).op a = s y := ha y
+  rw [← hs y, ← hres,
     X.presheaf.germ_res_apply (homOfLE (hVU y)) (genericPoint X) (hgen _ (hne y)) a]
 
 end Scheme
