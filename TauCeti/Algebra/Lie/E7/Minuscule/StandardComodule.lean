@@ -61,13 +61,14 @@ noncomputable abbrev coordinateHopfAlgebra :=
   CommHopfAlgCat.quotient (GeneralLinear.coordinateHopfAlgebra R 56)
     (baseChangeDefiningIdeal R)
 
-/-- The quotient coordinate morphism from `GL₅₆` to the specialized minuscule carrier. -/
+/-- The quotient coordinate morphism `O(GL₅₆) ⟶ O(carrier)`, representing the closed immersion
+of the specialized minuscule carrier into `GL₅₆`. -/
 noncomputable abbrev coordinateMap :
     GeneralLinear.coordinateHopfAlgebra R 56 ⟶ coordinateHopfAlgebra R :=
   CommHopfAlgCat.mkQuotient _ _
 
 /-- The standard right comodule of the specialized type-`E₇` minuscule carrier. -/
-@[expose, instance_reducible]
+@[instance_reducible]
 noncomputable def standardComodule :
     Comodule R (coordinateHopfAlgebra R) (Fin 56 → R) :=
   let _ := GeneralLinear.standardComodule R 56
