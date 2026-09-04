@@ -208,17 +208,31 @@ private theorem inverseGluingFun_map_add
       have hsum : -(s + t) = -s + -t := by ring
       rw [hsum, T.realOperator_add (-s) (-t) hsneg htneg]
 
-private theorem continuous_inverseGluingFun_apply (x : X) :
-    Continuous fun t : ℝ => inverseGluingFun S T t x := by
-  have h := continuous_if_le (f := fun _ : ℝ => (0 : ℝ)) (g := id)
-    (f' := fun t : ℝ => S.realOperator t x)
-    (g' := fun t : ℝ => T.realOperator (-t) x)
-    continuous_const continuous_id (S.realOperator_continuousOn_Ici x)
-    ((T.realOperator_continuousOn_Ici x).comp continuous_neg.continuousOn fun t ht => by
-      simpa only [Set.mem_Ici] using neg_nonneg.mpr ht)
-    (fun t ht => by simp only [id_eq] at ht; subst t; simp)
-  simpa only [inverseGluingFun, id_eq, DFunLike.ite_apply] using h
+omit [CompleteSpace X] in
+private theorem continuousAt_inverseGluingFun_apply (x : X) :
+    ContinuousAt (fun t : ℝ => inverseGluingFun S T t x) 0 := by
+  rw [continuousAt_iff_continuous_left_right]
+  constructor
+  · have hneg : ContinuousWithinAt (fun t : ℝ => -t) (Set.Iic 0) 0 :=
+      continuousAt_neg.continuousWithinAt
+    have hT := ContinuousWithinAt.comp_of_eq (f := fun t : ℝ => -t)
+      (g := fun t : ℝ => T.realOperator t x) (s := Set.Iic 0) (t := Set.Ici 0)
+      (x := 0) (y := 0) (T.realOperator_continuousWithinAt_zero x) hneg
+      (fun t ht => by
+        simp only [Set.mem_Iic] at ht
+        simpa only [Set.mem_Ici] using neg_nonneg.mpr ht)
+      neg_zero
+    apply hT.congr
+    · intro t ht
+      rw [inverseGluingFun_of_nonpos S T ht]
+      rfl
+    · simp [inverseGluingFun]
+  · apply (S.realOperator_continuousWithinAt_zero x).congr
+    · intro t ht
+      rw [inverseGluingFun_of_nonneg S T ht]
+    · simp [inverseGluingFun]
 
+omit [CompleteSpace X] in
 /-- Glue two strongly continuous semigroups whose equal-time operators are mutual inverses into a
 strongly continuous group. The first semigroup supplies nonnegative times and the second supplies
 negative times, with time reflected at zero. -/
@@ -229,8 +243,9 @@ def toGroupOfInverse
   toFun := inverseGluingFun S T
   map_zero' := by simp [inverseGluingFun]
   map_add' := inverseGluingFun_map_add S T hST hTS
-  continuousAt_zero' x := (continuous_inverseGluingFun_apply S T x).continuousAt
+  continuousAt_zero' x := continuousAt_inverseGluingFun_apply S T x
 
+omit [CompleteSpace X] in
 /-- At nonnegative time, the group obtained by gluing inverse semigroups is the first semigroup. -/
 @[simp]
 theorem toGroupOfInverse_apply_of_nonneg
@@ -240,6 +255,7 @@ theorem toGroupOfInverse_apply_of_nonneg
     S.toGroupOfInverse T hST hTS t = S.realOperator t :=
   inverseGluingFun_of_nonneg S T ht
 
+omit [CompleteSpace X] in
 /-- At nonpositive time, the group obtained by gluing inverse semigroups is the second semigroup
 at the reflected time. -/
 @[simp]
@@ -250,6 +266,7 @@ theorem toGroupOfInverse_apply_of_nonpos
     S.toGroupOfInverse T hST hTS t = T.realOperator (-t) :=
   inverseGluingFun_of_nonpos S T ht
 
+omit [CompleteSpace X] in
 /-- The forward semigroup of the group obtained by gluing inverse semigroups is the first
 semigroup. -/
 @[simp]
@@ -262,6 +279,7 @@ theorem toGroupOfInverse_toSemigroup
     toGroupOfInverse_apply_of_nonneg S T hST hTS t.coe_nonneg,
     S.realOperator_coe]
 
+omit [CompleteSpace X] in
 /-- The forward semigroup of the reflected group obtained by gluing inverse semigroups is the
 second semigroup. -/
 @[simp]
