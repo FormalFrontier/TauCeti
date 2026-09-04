@@ -124,16 +124,16 @@ theorem wassersteinEDist_map_le_mul
 /-- A Lipschitz measurable map sends a measure with finite `p`-moment to another measure with
 finite `p`-moment. -/
 theorem HasFiniteMoment.map (hμ : HasFiniteMoment p μ)
-    (hdY : Measurable fun z : Y × Y ↦ edist z.1 z.2) (hf : Measurable f)
+    (hdY : ∀ y : Y, Measurable fun z : Y ↦ edist y z) (hf : Measurable f)
     (hLip : LipschitzWith K f) : HasFiniteMoment p (μ.map f) := by
   rw [hasFiniteMoment_def] at hμ ⊢
   obtain ⟨x, hx⟩ := hμ
   refine ⟨f x, ?_⟩
   have hdist : AEStronglyMeasurable (fun y : Y ↦ edist (f x) y) (μ.map f) :=
-    (hdY.comp (measurable_const.prodMk measurable_id)).aestronglyMeasurable
+    (hdY (f x)).aestronglyMeasurable
   rw [memLp_map_measure_iff hdist hf.aemeasurable]
   apply hx.of_enorm_le_mul
-  · exact (hdY.comp (measurable_const.prodMk hf)).aestronglyMeasurable
+  · exact ((hdY (f x)).comp hf).aestronglyMeasurable
   · exact .of_forall fun y ↦ by
       simpa only [Function.comp_apply, enorm_eq_self] using hLip.edist_le_mul x y
 
@@ -169,13 +169,13 @@ theorem wassersteinEDist_map_eq
 
 /-- A measurable isometric equivalence preserves the finite-moment condition. -/
 theorem hasFiniteMoment_map_iff
-    (hdY : Measurable fun z : Y × Y ↦ edist z.1 z.2) (he : Isometry e) :
+    (hdY : ∀ y : Y, Measurable fun z : Y ↦ edist y z) (he : Isometry e) :
     HasFiniteMoment p (μ.map e) ↔ HasFiniteMoment p μ := by
   let ei : X ≃ᵢ Y := { e.toEquiv with isometry_toFun := he }
-  have hdX : Measurable fun z : X × X ↦ edist z.1 z.2 := by
-    rw [← show (fun z : Y × Y ↦ edist z.1 z.2) ∘ Prod.map e e =
-      (fun z : X × X ↦ edist z.1 z.2) by funext z; exact he.edist_eq z.1 z.2]
-    exact hdY.comp (e.measurable.prodMap e.measurable)
+  have hdX : ∀ x : X, Measurable fun z : X ↦ edist x z := fun x ↦ by
+    rw [← show (fun y : Y ↦ edist (e x) y) ∘ e =
+      (fun z : X ↦ edist x z) by funext z; exact he.edist_eq x z]
+    exact (hdY (e x)).comp e.measurable
   refine ⟨fun h ↦ ?_, fun h ↦ h.map hdY e.measurable ei.isometry.lipschitzWith⟩
   have hm : (μ.map e).map e.symm = μ := e.map_symm_map
   rw [← hm]
