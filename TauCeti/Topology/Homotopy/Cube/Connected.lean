@@ -11,10 +11,10 @@ public import TauCeti.Topology.Homotopy.Cube.Basic
 # Connectedness consequences for cubes
 
 `TauCeti.Topology.Homotopy.Cube.Basic` constructs paths in a cube and in its boundary.  This
-module records the connected and preconnected forms, together with the `Fin`-indexed versions
-and direct `JoinedIn` elimination lemmas.  Keeping these consequences named is useful when an
-argument needs only connectedness (for example, to apply a covering-space or homotopy extension
-lemma) and avoids rebuilding the path-connected witness at each use site.
+module records the `Fin`-indexed path-connectedness form and direct `JoinedIn` elimination lemmas.
+Keeping these consequences named is useful when an argument needs a direct path witness (for
+example, to apply a covering-space or homotopy extension lemma) without rebuilding it at each use
+site.
 
 The boundary statements require a nontrivial index type: the boundary of a one-dimensional cube
 is disconnected, while the boundary of a cube with at least two coordinates is path connected.
@@ -31,14 +31,6 @@ open unitInterval
 
 variable {N : Type*}
 
-/-- The whole cube is connected. -/
-theorem isConnected_cube : IsConnected (Set.univ : Set (I^N)) :=
-  isPathConnected_cube.isConnected
-
-/-- The whole cube is preconnected. -/
-theorem isPreconnected_cube : IsPreconnected (Set.univ : Set (I^N)) :=
-  isConnected_cube.isPreconnected
-
 /-- Any two points of a cube can be joined by a path lying in the cube. -/
 theorem joinedIn_cube (x y : I^N) : JoinedIn (Set.univ : Set (I^N)) x y :=
   isPathConnected_cube.joinedIn x (Set.mem_univ x) y (Set.mem_univ y)
@@ -50,14 +42,6 @@ variable (n : ℕ)
 /-- The `n`-cube is path connected, in the finite-index form used by `π_ n`. -/
 theorem isPathConnected_cube_fin : IsPathConnected (Set.univ : Set (I^(Fin n))) :=
   isPathConnected_cube
-
-/-- The `n`-cube is connected. -/
-theorem isConnected_cube_fin : IsConnected (Set.univ : Set (I^(Fin n))) :=
-  isConnected_cube
-
-/-- The `n`-cube is preconnected. -/
-theorem isPreconnected_cube_fin : IsPreconnected (Set.univ : Set (I^(Fin n))) :=
-  isPreconnected_cube
 
 end Fin
 
