@@ -54,10 +54,6 @@ separable.
   so that `Cubic.discr` and `Polynomial.discr` may be used interchangeably in degree three.
 * `Algebra.discr_powerBasis_eq_minpoly_discr`: the algebra discriminant of a power basis agrees
   with the polynomial discriminant of the minimal polynomial of its generator.
-* `Polynomial.discr_X_pow_three_sub_three_mul_X_sub_one`, `Polynomial.discr_X_pow_three_sub_two`
-  and `Polynomial.not_isSquare_discr_X_pow_three_sub_two`: the two worked cubics, of discriminant
-  `81`, a square, and `-108`, a nonsquare.
-
 ## Implementation notes
 
 The root-product formula is a universal polynomial identity, so it is stated over an arbitrary
@@ -281,9 +277,8 @@ theorem _root_.Polynomial.Monic.discr_mul {f g : R[X]} (hf : f.Monic) (hg : g.Mo
 /-! ### The root-product formula -/
 
 /-- For a monic polynomial that splits, the product of the derivative over the root multiset is
-the discriminant, up to the sign `(-1) ^ (n * (n - 1) / 2)`. Over a number field this is the
-statement that the discriminant of a minimal polynomial is, up to that sign, the norm of the
-derivative at the generator. -/
+the discriminant, up to the sign `(-1) ^ (n * (n - 1) / 2)`. After base change and identification
+of the roots with conjugates, this yields the corresponding norm formula. -/
 theorem _root_.Polynomial.Monic.prod_roots_eval_derivative [IsDomain R] {f : R[X]} (hf : f.Monic)
     (hs : f.Splits) : (f.roots.map fun a ↦ eval a f.derivative).prod =
       (-1) ^ (f.natDegree * (f.natDegree - 1) / 2) * f.discr := by
@@ -508,26 +503,6 @@ theorem _root_.Polynomial.not_separable_X_pow_two_sub_one : ¬ (X ^ 2 - 1 : ℤ[
   have := congrArg (eval 1) hab
   simp at this
   omega
-
-/-! ### Worked instances -/
-
-/-- The discriminant of `x³ - 3x - 1` over `ℤ` is `81`, a square. -/
-theorem _root_.Polynomial.discr_X_pow_three_sub_three_mul_X_sub_one :
-    (X ^ 3 - 3 * X - 1 : ℤ[X]).discr = 81 := by
-  rw [discr_of_degree_eq_three (by compute_degree!)]
-  simp [coeff_X, coeff_one]
-
-/-- The discriminant of `x³ - 2` over `ℤ` is `-108`. -/
-theorem _root_.Polynomial.discr_X_pow_three_sub_two : (X ^ 3 - 2 : ℤ[X]).discr = -108 := by
-  rw [discr_of_degree_eq_three (by compute_degree!)]
-  simp
-
-/-- The discriminant of `x³ - 2` over `ℤ` is not a square, being negative. -/
-theorem _root_.Polynomial.not_isSquare_discr_X_pow_three_sub_two :
-    ¬ IsSquare (X ^ 3 - 2 : ℤ[X]).discr := by
-  rw [Polynomial.discr_X_pow_three_sub_two]
-  rintro ⟨r, hr⟩
-  nlinarith [mul_self_nonneg r]
 
 /-! ### Comparison with the discriminant of a cubic -/
 
