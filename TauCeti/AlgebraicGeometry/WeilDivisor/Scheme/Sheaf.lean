@@ -31,7 +31,8 @@ submodule.
 * `TauCeti.AlgebraicGeometry.SchemeWeilDivisor.submodule D`, the same data as a submodule of the
   *sheaf* `𝒦_X` — the membership condition is local — and
   `TauCeti.AlgebraicGeometry.SchemeWeilDivisor.sheaf D`, the resulting sheaf `𝒪_X(D)` of
-  `𝒪_X`-modules, together with its monomorphism `sheafι D : 𝒪_X(D) ⟶ 𝒦_X`;
+  `𝒪_X`-modules, together with its monomorphism `sheafι D : 𝒪_X(D) ⟶ 𝒦_X`, which is described on
+  sections by `sheafι_app_injective` and `sheafι_app_mem`;
 * `TauCeti.AlgebraicGeometry.SchemeWeilDivisor.sheafHomOfLE`, the inclusion
   `𝒪_X(D) ⟶ 𝒪_X(E)` for `D ≤ E`, and
   `TauCeti.AlgebraicGeometry.SchemeWeilDivisor.unitToSheaf`, the factorization of `𝒪_X ⟶ 𝒦_X`
@@ -193,12 +194,23 @@ def sheaf (D : SchemeWeilDivisor X) : X.Modules :=
 def sheafι (D : SchemeWeilDivisor X) : sheaf D ⟶ Scheme.rationalFunctions X :=
   (submodule D).ι
 
+/-- The inclusion `𝒪_X(D) ⟶ 𝒦_X` is injective on sections over every open subset. -/
+lemma sheafι_app_injective (D : SchemeWeilDivisor X) (U : X.Opens) :
+    Function.Injective (Scheme.Modules.Hom.app (sheafι D) U) :=
+  Subtype.val_injective
+
+/-- A section of `𝒪_X(D)` over `U`, viewed as a rational function, satisfies the order bound
+imposed by `D`. -/
+lemma sheafι_app_mem (D : SchemeWeilDivisor X) (U : X.Opens) (t : Γ(sheaf D, U)) :
+    Scheme.Modules.Hom.app (sheafι D) U t ∈ sections D U :=
+  TauCeti.SheafOfModules.ι_val_app_mem (submodule D) (op U) t
+
 /-- The canonical inclusion `𝒪_X(D) ⟶ 𝒦_X` is a monomorphism: over every open subset it is the
 inclusion of a submodule, hence injective. -/
 instance (D : SchemeWeilDivisor X) : Mono (sheafι D) := by
   have : ∀ U : (Opens X)ᵒᵖ,
-      Mono (((Scheme.Modules.toPresheaf X).map (sheafι D)).app U) := fun _ ↦
-    ConcreteCategory.mono_of_injective _ Subtype.val_injective
+      Mono (((Scheme.Modules.toPresheaf X).map (sheafι D)).app U) := fun U ↦
+    ConcreteCategory.mono_of_injective _ (sheafι_app_injective D U.unop)
   exact (Scheme.Modules.toPresheaf X).mono_of_mono_map (NatTrans.mono_of_mono_app _)
 
 /-- A larger divisor allows more sections. -/
@@ -247,7 +259,7 @@ lemma toRationalFunctions_app_mem_sections {D : SchemeWeilDivisor X}
 
 /-- For an effective divisor `D`, the inclusion `𝒪_X ⟶ 𝒦_X` factors through `𝒪_X(D)`. -/
 def unitToSheaf {D : SchemeWeilDivisor X} (hD : WeilDivisor.IsEffective D) :
-    SheafOfModules.unit X.ringCatSheaf ⟶ sheaf D :=
+    @Quiver.Hom X.Modules _ (SheafOfModules.unit X.ringCatSheaf) (sheaf D) :=
   TauCeti.SheafOfModules.liftToSubmodule (submodule D) (Scheme.toRationalFunctions X)
     fun U a ↦ toRationalFunctions_app_mem_sections hD U.unop a
 
