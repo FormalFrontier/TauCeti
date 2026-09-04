@@ -71,14 +71,20 @@ attribute [local instance] GeneralLinear.standardComodule standardComodule
 quotient coordinate morphism. -/
 @[simp]
 theorem standardComodule_coact :
-    (standardComodule R).coact =
+    let _ := GeneralLinear.standardComodule R 56
+    Comodule.corestrictCoact
+        (R := R) (C := GeneralLinear.coordinateHopfAlgebra R 56)
+        (D := coordinateHopfAlgebra R) (M := Fin 56 → R)
+        (Bialgebra.Quotient.mkBialgHom (R := R)
+          (baseChangeDefiningIdeal R).toIdeal).toCoalgHom =
       TensorProduct.map LinearMap.id
-          (coordinateMap R).hom.toCoalgHom.toLinearMap ∘ₗ
+          (Bialgebra.Quotient.mkBialgHom (R := R)
+            (baseChangeDefiningIdeal R).toIdeal).toLinearMap ∘ₗ
         GeneralLinear.standardCoact R 56 := by
   apply LinearMap.ext
   intro v
-  rw [Comodule.corestrict_coact_apply, GeneralLinear.standardComodule_coact,
-    LinearMap.comp_apply]
+  rw [Comodule.corestrictCoact_apply, LinearMap.comp_apply,
+    GeneralLinear.standardComodule_coact]
 
 /-- **The standard comodule of the specialized type-`E₇` minuscule carrier is faithful.** -/
 theorem isFaithful_standardComodule :
@@ -229,6 +235,8 @@ private theorem torusCorestrict_eq_ofWeights :
   rw [Pi.basisFun_apply]
   rw [Comodule.corestrict_coact_apply
     (weightTorusToBaseChangeCoordinateMap k).hom.toCoalgHom]
+  rw [Comodule.corestrict_coact]
+  simp only [coordinateMap, CategoryTheory.ConcreteCategory.hom_ofHom]
   rw [standardComodule_coact, LinearMap.comp_apply,
     GeneralLinear.standardCoact_apply_basisFun, map_sum]
   simp only [TensorProduct.map_tmul, LinearMap.id_coe, id_eq]
@@ -238,10 +246,13 @@ private theorem torusCorestrict_eq_ofWeights :
     (_root_.BialgHom.toAlgHom_toLinearMap
       (weightTorusToBaseChangeCoordinateMap k).hom).symm
   have hcoordinateLinear :
-      (coordinateMap k).hom.toCoalgHom.toLinearMap =
-        (coordinateMap k).hom.toAlgHom.toLinearMap :=
+      (Bialgebra.Quotient.mkBialgHom (R := k)
+          (baseChangeDefiningIdeal k).toIdeal).toLinearMap =
+        (Bialgebra.Quotient.mkBialgHom (R := k)
+          (baseChangeDefiningIdeal k).toIdeal).toAlgHom.toLinearMap :=
     (_root_.BialgHom.toAlgHom_toLinearMap
-      (coordinateMap k).hom).symm
+      (Bialgebra.Quotient.mkBialgHom (R := k)
+        (baseChangeDefiningIdeal k).toIdeal)).symm
   rw [hweightLinear, hcoordinateLinear]
   simp only [map_sum, TensorProduct.map_tmul, LinearMap.id_coe, id_eq,
     AlgHom.toLinearMap_apply]
