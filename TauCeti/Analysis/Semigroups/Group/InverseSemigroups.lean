@@ -29,6 +29,8 @@ negative separately, prove that their operators are inverse, and then apply
   of the glued group is the first semigroup.
 * `TauCeti.Semigroups.StronglyContinuousSemigroup.toGroupOfInverse_reflect_toSemigroup`: the
   positive half of the reflected group is the second semigroup.
+* `TauCeti.Semigroups.StronglyContinuousGroup.eq_toGroupOfInverse`: conversely, a C₀-group is the
+  group glued from its own two halves, so gluing is inverse to splitting.
 
 ## References
 
@@ -88,15 +90,65 @@ private theorem inverseGluingFun_of_nonpos {t : ℝ} (ht : t ≤ 0) :
   · simp [inverseGluingFun, not_le.mpr ht]
 
 omit [CompleteSpace X] in
+/-- The real-time, pointwise form of the inverse hypothesis. Negative times are covered too, both
+operators then being the identity. -/
+private theorem realOperator_apply_realOperator_of_inverse
+    (hST : ∀ t, (S t).comp (T t) = ContinuousLinearMap.id ℝ X) (a : ℝ) (x : X) :
+    S.realOperator a (T.realOperator a x) = x := by
+  have h := congrArg (fun A : X →L[ℝ] X => A x) (hST a.toNNReal)
+  simpa [S.realOperator_def, T.realOperator_def] using h
+
+omit [CompleteSpace X] in
+/-- The real-time form of `comp_comm_of_inverse`. -/
+private theorem realOperator_comp_comm_of_inverse
+    (hST : ∀ t, (S t).comp (T t) = ContinuousLinearMap.id ℝ X)
+    (hTS : ∀ t, (T t).comp (S t) = ContinuousLinearMap.id ℝ X) (a b : ℝ) :
+    (S.realOperator a).comp (T.realOperator b) = (T.realOperator b).comp (S.realOperator a) := by
+  rw [S.realOperator_def, T.realOperator_def]
+  exact S.comp_comm_of_inverse T hST hTS a.toNNReal b.toNNReal
+
+omit [CompleteSpace X] in
+/-- Mixed-sign cancellation when the forward time is the longer one: the backward operator eats
+part of the forward one and leaves the forward operator at the difference. -/
+private theorem realOperator_comp_realOperator_of_le
+    (hST : ∀ t, (S t).comp (T t) = ContinuousLinearMap.id ℝ X)
+    {a b : ℝ} (hb : 0 ≤ b) (hab : b ≤ a) :
+    (S.realOperator a).comp (T.realOperator b) = S.realOperator (a - b) := by
+  have hsplit : S.realOperator a = (S.realOperator (a - b)).comp (S.realOperator b) := by
+    have h := S.realOperator_add (a - b) b (sub_nonneg.mpr hab) hb
+    rwa [show a - b + b = a by ring] at h
+  ext x
+  rw [ContinuousLinearMap.comp_apply, hsplit, ContinuousLinearMap.comp_apply,
+    realOperator_apply_realOperator_of_inverse S T hST b]
+
+omit [CompleteSpace X] in
+/-- Mixed-sign cancellation when the backward time is the longer one: the forward operator is
+absorbed and leaves the backward operator at the difference. -/
+private theorem realOperator_comp_realOperator_of_ge
+    (hST : ∀ t, (S t).comp (T t) = ContinuousLinearMap.id ℝ X)
+    (hTS : ∀ t, (T t).comp (S t) = ContinuousLinearMap.id ℝ X)
+    {a b : ℝ} (ha : 0 ≤ a) (hab : a ≤ b) :
+    (S.realOperator a).comp (T.realOperator b) = T.realOperator (b - a) := by
+  have hsplit : T.realOperator b = (T.realOperator (b - a)).comp (T.realOperator a) := by
+    have h := T.realOperator_add (b - a) a (sub_nonneg.mpr hab) ha
+    rwa [show b - a + a = b by ring] at h
+  ext x
+  rw [ContinuousLinearMap.comp_apply, hsplit, ContinuousLinearMap.comp_apply,
+    ← ContinuousLinearMap.comp_apply,
+    realOperator_comp_comm_of_inverse S T hST hTS a (b - a),
+    ContinuousLinearMap.comp_apply,
+    realOperator_apply_realOperator_of_inverse S T hST a]
+
+omit [CompleteSpace X] in
 private theorem inverseGluingFun_map_add
     (hST : ∀ t, (S t).comp (T t) = ContinuousLinearMap.id ℝ X)
     (hTS : ∀ t, (T t).comp (S t) = ContinuousLinearMap.id ℝ X)
     (s t : ℝ) :
     inverseGluingFun S T (s + t) =
       (inverseGluingFun S T s).comp (inverseGluingFun S T t) := by
-  -- For equal signs this is one of the original semigroup laws. For mixed signs, split
-  -- according to the sign of the sum, factor the longer-time operator, and cancel the inverse
-  -- pair. The two mixed orders differ only by cross-commutation.
+  -- For equal signs this is one of the original semigroup laws. For mixed signs, put the two
+  -- operators in the order `S ∘ T` and cancel the shorter time against the longer one; which of
+  -- the two survives is decided by the sign of the sum.
   by_cases hs : 0 ≤ s
   · by_cases ht : 0 ≤ t
     · rw [inverseGluingFun_of_nonneg S T hs,
@@ -104,109 +156,33 @@ private theorem inverseGluingFun_map_add
           inverseGluingFun_of_nonneg S T (add_nonneg hs ht)]
       exact S.realOperator_add s t hs ht
     · have ht' : t ≤ 0 := le_of_lt (not_le.mp ht)
+      rw [inverseGluingFun_of_nonneg S T hs, inverseGluingFun_of_nonpos S T ht']
       by_cases hst : 0 ≤ s + t
-      · rw [inverseGluingFun_of_nonneg S T hs,
-            inverseGluingFun_of_nonpos S T ht',
-            inverseGluingFun_of_nonneg S T hst]
-        ext x
-        have hneg : 0 ≤ -t := neg_nonneg.mpr ht'
-        have hmap : S.realOperator s =
-            (S.realOperator (s + t)).comp (S.realOperator (-t)) := by
-          have h := S.realOperator_add (s + t) (-t) hst hneg
-          rw [show s + t + -t = s by ring] at h
-          exact h
-        rw [hmap, ContinuousLinearMap.comp_apply, ContinuousLinearMap.comp_apply]
-        have hinv : (S.realOperator (-t)).comp (T.realOperator (-t)) =
-            ContinuousLinearMap.id ℝ X := by
-          simpa only [S.realOperator_def, T.realOperator_def,
-            Real.toNNReal_of_nonneg hneg] using hST (-t).toNNReal
-        have hinvApply := congrArg (fun A : X →L[ℝ] X => A x) hinv
-        rw [ContinuousLinearMap.comp_apply] at hinvApply
-        simpa using (congrArg (S.realOperator (s + t)) hinvApply).symm
+      · rw [inverseGluingFun_of_nonneg S T hst,
+          realOperator_comp_realOperator_of_le S T hST (neg_nonneg.mpr ht') (by linarith),
+          show s - -t = s + t by ring]
       · have hst' : s + t ≤ 0 := le_of_lt (not_le.mp hst)
-        rw [inverseGluingFun_of_nonneg S T hs,
-          inverseGluingFun_of_nonpos S T ht',
-          inverseGluingFun_of_nonpos S T hst']
-        ext x
-        have hnegSum : 0 ≤ -(s + t) := neg_nonneg.mpr hst'
-        have hmap : T.realOperator (-t) =
-            (T.realOperator (-(s + t))).comp (T.realOperator s) := by
-          have h := T.realOperator_add (-(s + t)) s hnegSum hs
-          rw [show -(s + t) + s = -t by ring] at h
-          exact h
-        rw [hmap, ContinuousLinearMap.comp_apply, ContinuousLinearMap.comp_apply]
-        have hcomm : (S.realOperator s).comp (T.realOperator (-(s + t))) =
-            (T.realOperator (-(s + t))).comp (S.realOperator s) := by
-          simpa only [S.realOperator_def, T.realOperator_def, Real.toNNReal_of_nonneg hs,
-            Real.toNNReal_of_nonneg hnegSum] using
-            S.comp_comm_of_inverse T hST hTS s.toNNReal (-(s + t)).toNNReal
-        have hcommApply := congrArg
-          (fun A : X →L[ℝ] X => A (T.realOperator s x)) hcomm
-        rw [ContinuousLinearMap.comp_apply, ContinuousLinearMap.comp_apply] at hcommApply
-        rw [hcommApply]
-        have hinv : (S.realOperator s).comp (T.realOperator s) =
-            ContinuousLinearMap.id ℝ X := by
-          simpa only [S.realOperator_def, T.realOperator_def,
-            Real.toNNReal_of_nonneg hs] using hST s.toNNReal
-        have hinvApply := congrArg (fun A : X →L[ℝ] X => A x) hinv
-        rw [ContinuousLinearMap.comp_apply] at hinvApply
-        simpa using (congrArg (T.realOperator (-(s + t))) hinvApply).symm
+        rw [inverseGluingFun_of_nonpos S T hst',
+          realOperator_comp_realOperator_of_ge S T hST hTS hs (by linarith),
+          show -t - s = -(s + t) by ring]
   · have hs' : s ≤ 0 := le_of_lt (not_le.mp hs)
     by_cases ht : 0 ≤ t
-    · by_cases hst : 0 ≤ s + t
-      · rw [inverseGluingFun_of_nonpos S T hs',
-          inverseGluingFun_of_nonneg S T ht,
-          inverseGluingFun_of_nonneg S T hst]
-        ext x
-        have hsneg : 0 ≤ -s := neg_nonneg.mpr hs'
-        have hmap : S.realOperator t =
-            (S.realOperator (s + t)).comp (S.realOperator (-s)) := by
-          have h := S.realOperator_add (s + t) (-s) hst hsneg
-          rw [show s + t + -s = t by ring] at h
-          exact h
-        have hcomm : (S.realOperator t).comp (T.realOperator (-s)) =
-            (T.realOperator (-s)).comp (S.realOperator t) := by
-          simpa only [S.realOperator_def, T.realOperator_def,
-            Real.toNNReal_of_nonneg ht, Real.toNNReal_of_nonneg hsneg] using
-            S.comp_comm_of_inverse T hST hTS t.toNNReal (-s).toNNReal
-        rw [← hcomm, hmap, ContinuousLinearMap.comp_apply,
-          ContinuousLinearMap.comp_apply]
-        have hinv : (S.realOperator (-s)).comp (T.realOperator (-s)) =
-            ContinuousLinearMap.id ℝ X := by
-          simpa only [S.realOperator_def, T.realOperator_def,
-            Real.toNNReal_of_nonneg hsneg] using hST (-s).toNNReal
-        have hinvApply := congrArg (fun A : X →L[ℝ] X => A x) hinv
-        rw [ContinuousLinearMap.comp_apply] at hinvApply
-        simpa using (congrArg (S.realOperator (s + t)) hinvApply).symm
+    · rw [inverseGluingFun_of_nonpos S T hs', inverseGluingFun_of_nonneg S T ht,
+        ← realOperator_comp_comm_of_inverse S T hST hTS t (-s)]
+      by_cases hst : 0 ≤ s + t
+      · rw [inverseGluingFun_of_nonneg S T hst,
+          realOperator_comp_realOperator_of_le S T hST (neg_nonneg.mpr hs') (by linarith),
+          show t - -s = s + t by ring]
       · have hst' : s + t ≤ 0 := le_of_lt (not_le.mp hst)
-        rw [inverseGluingFun_of_nonpos S T hs',
-          inverseGluingFun_of_nonneg S T ht,
-          inverseGluingFun_of_nonpos S T hst']
-        ext x
-        have hnegSum : 0 ≤ -(s + t) := neg_nonneg.mpr hst'
-        have hsneg : 0 ≤ -s := neg_nonneg.mpr hs'
-        have hmap : T.realOperator (-s) =
-            (T.realOperator (-(s + t))).comp (T.realOperator t) := by
-          have h := T.realOperator_add (-(s + t)) t hnegSum ht
-          rw [show -(s + t) + t = -s by ring] at h
-          exact h
-        rw [hmap, ContinuousLinearMap.comp_apply, ContinuousLinearMap.comp_apply]
-        have hinv : (T.realOperator t).comp (S.realOperator t) =
-            ContinuousLinearMap.id ℝ X := by
-          simpa only [S.realOperator_def, T.realOperator_def,
-            Real.toNNReal_of_nonneg ht] using hTS t.toNNReal
-        have hinvApply := congrArg (fun A : X →L[ℝ] X => A x) hinv
-        rw [ContinuousLinearMap.comp_apply] at hinvApply
-        simpa using (congrArg (T.realOperator (-(s + t))) hinvApply).symm
+        rw [inverseGluingFun_of_nonpos S T hst',
+          realOperator_comp_realOperator_of_ge S T hST hTS ht (by linarith),
+          show -s - t = -(s + t) by ring]
     · have ht' : t ≤ 0 := le_of_lt (not_le.mp ht)
-      have hst : s + t ≤ 0 := add_nonpos hs' ht'
       rw [inverseGluingFun_of_nonpos S T hs',
         inverseGluingFun_of_nonpos S T ht',
-        inverseGluingFun_of_nonpos S T hst]
-      have hsneg : 0 ≤ -s := neg_nonneg.mpr hs'
-      have htneg : 0 ≤ -t := neg_nonneg.mpr ht'
-      have hsum : -(s + t) = -s + -t := by ring
-      rw [hsum, T.realOperator_add (-s) (-t) hsneg htneg]
+        inverseGluingFun_of_nonpos S T (add_nonpos hs' ht'),
+        show -(s + t) = -s + -t by ring,
+        T.realOperator_add (-s) (-t) (neg_nonneg.mpr hs') (neg_nonneg.mpr ht')]
 
 omit [CompleteSpace X] in
 private theorem continuousAt_inverseGluingFun_apply (x : X) :
@@ -293,6 +269,53 @@ theorem toGroupOfInverse_reflect_toSemigroup
     T.realOperator_coe]
 
 end StronglyContinuousSemigroup
+
+namespace StronglyContinuousGroup
+
+variable {X : Type*} [NormedAddCommGroup X] [NormedSpace ℝ X]
+
+variable (U : StronglyContinuousGroup X)
+
+/-- The forward semigroup of a C₀-group and the forward semigroup of its reflection satisfy the
+first inverse hypothesis of
+`TauCeti.Semigroups.StronglyContinuousSemigroup.toGroupOfInverse`. -/
+theorem toSemigroup_comp_reflect_toSemigroup (t : ℝ≥0) :
+    (U.toSemigroup t).comp (U.reflect.toSemigroup t) = ContinuousLinearMap.id ℝ X := by
+  ext x
+  simp
+
+/-- The forward semigroup of a C₀-group and the forward semigroup of its reflection satisfy the
+second inverse hypothesis of
+`TauCeti.Semigroups.StronglyContinuousSemigroup.toGroupOfInverse`. -/
+theorem reflect_toSemigroup_comp_toSemigroup (t : ℝ≥0) :
+    (U.reflect.toSemigroup t).comp (U.toSemigroup t) = ContinuousLinearMap.id ℝ X := by
+  ext x
+  simp
+
+/-- **Gluing is inverse to splitting.** A C₀-group whose forward semigroup is `S` and whose
+reflected forward semigroup is `T` is the group glued from `S` and `T`. Together with
+`toGroupOfInverse_toSemigroup` and `toGroupOfInverse_reflect_toSemigroup`, this identifies the
+gluing construction as the two-sided inverse of splitting a C₀-group into its two halves, so a
+group can be recognized as a glued group without repeating a sign split. -/
+theorem eq_toGroupOfInverse (S T : StronglyContinuousSemigroup X)
+    (hST : ∀ t, (S t).comp (T t) = ContinuousLinearMap.id ℝ X)
+    (hTS : ∀ t, (T t).comp (S t) = ContinuousLinearMap.id ℝ X)
+    (hS : U.toSemigroup = S) (hT : U.reflect.toSemigroup = T) :
+    U = S.toGroupOfInverse T hST hTS := by
+  ext t
+  rcases le_or_gt 0 t with ht | ht
+  · rw [StronglyContinuousSemigroup.toGroupOfInverse_apply_of_nonneg S T hST hTS ht, ← hS,
+      U.toSemigroup_realOperator_of_nonneg ht]
+  · rw [StronglyContinuousSemigroup.toGroupOfInverse_apply_of_nonpos S T hST hTS ht.le, ← hT,
+      U.reflect_toSemigroup_realOperator_of_nonneg (neg_nonneg.mpr ht.le), neg_neg]
+
+/-- Gluing the two halves of a C₀-group recovers the group. -/
+theorem toGroupOfInverse_toSemigroup_reflect_toSemigroup :
+    U.toSemigroup.toGroupOfInverse U.reflect.toSemigroup U.toSemigroup_comp_reflect_toSemigroup
+      U.reflect_toSemigroup_comp_toSemigroup = U :=
+  (U.eq_toGroupOfInverse _ _ _ _ rfl rfl).symm
+
+end StronglyContinuousGroup
 
 end TauCeti.Semigroups
 
