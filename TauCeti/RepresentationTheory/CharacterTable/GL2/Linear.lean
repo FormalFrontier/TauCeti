@@ -182,10 +182,9 @@ variable {F : Type u} [Field F]
 
 /-- **Every linear representation of `GL₂` is irreducible.** It is a line, so it has no proper
 nonzero subrepresentation. -/
-theorem simple_GL2Linear (α : Fˣ →* ℂˣ) : CategoryTheory.Simple (GL2Linear F α) :=
-  have : Representation.IsIrreducible (GL2Linear F α).ρ :=
-    Representation.isIrreducible_of_finrank_eq_one _ (finrank_GL2Linear (F := F) α)
-  FDRep.simple_of_isIrreducible _
+theorem simple_GL2Linear (α : Fˣ →* ℂˣ) : CategoryTheory.Simple (GL2Linear F α) := by
+  rw [GL2Linear_def, GL2LinearRep_def, ← FDRep.ofLinearCharacter_def]
+  infer_instance
 
 section Elliptic
 

@@ -9,13 +9,11 @@ module
 public import TauCeti.RepresentationTheory.CharacterTable.GL2.Linear
 -- Equal characters determine isomorphic finite-group representations in characteristic zero.
 import TauCeti.RepresentationTheory.CharacterTable.Determined
--- The fundamental theorem of algebra supplies the `IsAlgClosed ℂ` instance used only to promote
--- the character identity to an isomorphism.
+-- The fundamental theorem of algebra supplies the `IsAlgClosed ℂ` instance used both to promote
+-- equal characters to an isomorphism and in the character-norm simplicity criterion.
 import Mathlib.Analysis.Complex.Polynomial.Basic
 -- Mathlib's character-norm criterion packages the irreducibility of the two constituents.
 import Mathlib.RepresentationTheory.FinGroupCharZero
--- The class-function projection formula identifies the character of the determinant twist.
-import TauCeti.RepresentationTheory.Induction.Character
 
 /-!
 # The boundary principal series of `GL₂` splits
@@ -42,8 +40,6 @@ linear representations have dimension `1`, while their Steinberg twists have dim
 
 * `TauCeti.character_GL2PrincipalSeries_mul_eq_mul`: twisting both principal-series parameters by
   `γ` multiplies the character by the determinant character of `γ`.
-* `TauCeti.character_GL2PrincipalSeries_self_eq_mul`: the repeated-parameter principal-series
-  character is the determinant character times the untwisted boundary character.
 * `TauCeti.character_GL2PrincipalSeries_self_eq_add`: its two character constituents are the
   linear and Steinberg-twist characters.
 * `TauCeti.simple_GL2Steinberg` and `TauCeti.simple_GL2SteinbergTwist`: the two Steinberg
@@ -87,20 +83,6 @@ theorem character_GL2PrincipalSeries_mul_eq_mul (γ α β : Fˣ →* ℂˣ) :
     GL2Borel.det_diag, map_mul]
   simp [mul_mul_mul_comm]
 
-/-- **The boundary principal-series character is a determinant twist of the untwisted one.**
-For `α : Fˣ → ℂˣ`, the equality
-`χ(Ind_B^GL₂(α ⊗ α)) = (α ∘ det) · χ(Ind_B^GL₂(1 ⊗ 1))`
-is `TauCeti.character_GL2PrincipalSeries_mul_eq_mul` at the trivial pair of parameters, where
-`α ⊗ α` is the restriction of `α ∘ det` to the Borel subgroup. -/
-theorem character_GL2PrincipalSeries_self_eq_mul (α : Fˣ →* ℂˣ) :
-    (GL2PrincipalSeries F α α).character =
-      (GL2Linear F α).character * (GL2PrincipalSeries F 1 1).character := by
-  have h := character_GL2PrincipalSeries_mul_eq_mul F α 1 1
-  -- `simp` and `rw [mul_one]` both miss this occurrence: the `Mul` on `Fˣ →* ℂˣ` is
-  -- `MonoidHom.mul`, not the one `mul_one` matches on, so the rewrite is named explicitly.
-  have hα : α * 1 = α := mul_one α
-  rwa [hα] at h
-
 /-- **The repeated-parameter principal series has the sum of the linear and Steinberg-twist
 characters.** This is the character-theoretic two-constituent decomposition at the boundary of
 the principal series. -/
@@ -108,7 +90,10 @@ the principal series. -/
 theorem character_GL2PrincipalSeries_self_eq_add (α : Fˣ →* ℂˣ) :
     (GL2PrincipalSeries F α α).character =
       (GL2Linear F α).character + (GL2SteinbergTwist F α).character := by
-  rw [character_GL2PrincipalSeries_self_eq_mul]
+  have h := character_GL2PrincipalSeries_mul_eq_mul F α 1 1
+  have hα : α * 1 = α := mul_one α
+  rw [hα] at h
+  rw [h]
   ext g
   rw [Pi.mul_apply, character_GL2PrincipalSeries_one_one_eq_one_add]
   simp only [Pi.add_apply, character_GL2Linear,
