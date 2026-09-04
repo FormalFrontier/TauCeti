@@ -5,6 +5,7 @@ Authors: The Tau Ceti contributors
 -/
 module
 
+public import TauCeti.Algebra.GroupAction.OrbitRelQuotient
 public import TauCeti.AlgebraicTopology.UniversalCover.Classification.Existence
 public import TauCeti.AlgebraicTopology.UniversalCover.Classification.RecoveredSubgroup
 public import TauCeti.AlgebraicTopology.UniversalCover.Classification.Regular
@@ -166,27 +167,24 @@ theorem isRegular_subgroupQuotientProj_iff_normal (H : Subgroup (FundamentalGrou
 
 /-! ### The two ends of the correspondence -/
 
-omit [PathConnectedSpace X] [LocallyPathConnectedSpace X] [SemilocallySimplyConnectedSpace X] in
-/-- The quotient map to the orbit quotient by the trivial subgroup is injective, since the
-orbits of the trivial subgroup are singletons. -/
-theorem subgroupQuotientMap_bot_injective :
-    Function.Injective (subgroupQuotientMap x₀ (⊥ : Subgroup (FundamentalGroup X x₀))) := by
-  intro e₁ e₂ h
-  obtain ⟨g, hg⟩ := (subgroupQuotientMap_eq_iff x₀ ⊥).mp h
-  rw [← hg, Subsingleton.elim g 1]
-  exact one_smul _ e₂
-
 /-- **The cover attached to the trivial subgroup is the universal cover.** The comparison is the
 quotient map itself, which `subgroupQuotientProj_comp_subgroupQuotientMap` already records as a
-map over `X`. -/
+map over `X`; the underlying bijection is the generic bottom-orbit quotient equivalence
+`TauCeti.MulAction.orbitRelQuotientBotEquiv`. -/
 noncomputable def subgroupQuotientBotHomeomorph :
     UniversalCover x₀ ≃ₜ SubgroupQuotient x₀ (⊥ : Subgroup (FundamentalGroup X x₀)) :=
-  (Equiv.ofBijective (subgroupQuotientMap x₀ ⊥)
-    ⟨subgroupQuotientMap_bot_injective x₀,
-      subgroupQuotientMap_surjective x₀ ⊥⟩).toHomeomorphOfContinuousOpen
-      (isQuotientCoveringMap_subgroupQuotientMap x₀ ⊥).isCoveringMap.continuous
-      (isQuotientCoveringMap_subgroupQuotientMap x₀
-        ⊥).isCoveringMap.isLocalHomeomorph.isOpenMap
+  Equiv.toHomeomorphOfContinuousOpen
+    (Equiv.ofBijective (subgroupQuotientMap x₀ ⊥) (by
+      have h : subgroupQuotientMap x₀ (⊥ : Subgroup (FundamentalGroup X x₀)) =
+          ⇑(TauCeti.MulAction.orbitRelQuotientBotEquiv
+            (G := FundamentalGroup X x₀) (X := UniversalCover x₀)).symm := by
+        funext e
+        simp
+      rw [h]
+      exact (TauCeti.MulAction.orbitRelQuotientBotEquiv
+        (G := FundamentalGroup X x₀) (X := UniversalCover x₀)).symm.bijective))
+    (isQuotientCoveringMap_subgroupQuotientMap x₀ ⊥).isCoveringMap.continuous
+    (isQuotientCoveringMap_subgroupQuotientMap x₀ ⊥).isCoveringMap.isLocalHomeomorph.isOpenMap
 
 omit [PathConnectedSpace X] in
 @[simp]
