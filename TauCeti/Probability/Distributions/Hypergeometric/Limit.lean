@@ -17,9 +17,8 @@ marked proportion `K N / N` converges to `p`. Then, for every fixed `k`, the pro
 sample without replacement contains `k` marked elements converges to the corresponding binomial
 probability for `n` independent trials with success probability `p`.
 
-The result includes the boundary proportions `p = 0` and `p = 1`. Its proof normalizes the three
-binomial coefficients in the hypergeometric mass formula by powers of `N`; this avoids requiring
-either `K N` or `N - K N` to tend to infinity at the boundary.
+The result includes the boundary proportions `p = 0` and `p = 1`. At these boundary values, no
+divergence assumption is needed for either the marked or unmarked population.
 
 ## Main result
 
@@ -45,7 +44,7 @@ namespace Probability
 /-- If the marked proportion in a growing finite population tends to `p`, then each fixed
 hypergeometric mass tends to the corresponding binomial mass. -/
 theorem tendsto_hypergeometricMeasure_real_singleton (p : unitInterval) (K : ℕ → ℕ)
-    (hK : ∀ N, K N ≤ N)
+    (hK : ∀ᶠ N in atTop, K N ≤ N)
     (hKp : Tendsto (fun N ↦ (K N : ℝ) / N) atTop (nhds (p : ℝ))) (n k : ℕ) :
     Tendsto (fun N ↦ (hypergeometricMeasure N (K N) n).real {k}) atTop
       (nhds ((binomial n p).real {k})) := by
@@ -57,14 +56,16 @@ theorem tendsto_hypergeometricMeasure_real_singleton (p : unitInterval) (K : ℕ
         Tendsto (fun N ↦ ((N - K N : ℕ) : ℝ) / N) atTop
           (nhds (1 - (p : ℝ))) := by
       refine Tendsto.congr' ?_ (tendsto_const_nhds.sub hKp)
-      filter_upwards [eventually_ge_atTop 1] with N hN
-      rw [Nat.cast_sub (hK N), sub_div, div_self]
-      exact_mod_cast (show N ≠ 0 by omega)
+      filter_upwards [eventually_ge_atTop 1, hK] with N hN hKN
+      have hN0 : N ≠ 0 := by omega
+      have hN0' : (N : ℝ) ≠ 0 := by exact_mod_cast hN0
+      rw [Nat.cast_sub hKN, sub_div, div_self hN0']
     have htotal : Tendsto (fun N : ℕ ↦ (N : ℝ) / N) atTop (nhds 1) := by
       refine Tendsto.congr' ?_ tendsto_const_nhds
       filter_upwards [eventually_ge_atTop 1] with N hN
-      rw [div_self]
-      exact_mod_cast (show N ≠ 0 by omega)
+      have hN0 : N ≠ 0 := by omega
+      have hN0' : (N : ℝ) ≠ 0 := by exact_mod_cast hN0
+      rw [div_self hN0']
     have hmarked := tendsto_choose_div_pow_of_tendsto_div
       (a := K) (b := fun N : ℕ ↦ (N : ℝ)) hKp hinv k
     have hunmarked :=
@@ -89,10 +90,10 @@ theorem tendsto_hypergeometricMeasure_real_singleton (p : unitInterval) (K : ℕ
       ring
     rw [hlimit] at hnormalized
     refine Tendsto.congr' ?_ hnormalized
-    filter_upwards [eventually_ge_atTop (max n 1)] with N hN
+    filter_upwards [eventually_ge_atTop (max n 1), hK] with N hN hKN
     have hnN : n ≤ N := le_trans (le_max_left n 1) hN
     have hNpos : 0 < N := lt_of_lt_of_le (by omega) hN
-    rw [hypergeometricMeasure_real_singleton (hK N) hnN k, ite_eq_left hkn]
+    rw [hypergeometricMeasure_real_singleton hKN hnN k, ite_eq_left hkn]
     have hNne : (N : ℝ) ≠ 0 := by exact_mod_cast hNpos.ne'
     have hchooseN : (N.choose n : ℝ) ≠ 0 := by
       exact_mod_cast Nat.choose_ne_zero hnN
@@ -108,8 +109,8 @@ theorem tendsto_hypergeometricMeasure_real_singleton (p : unitInterval) (K : ℕ
     rw [binomial_real_singleton, Nat.choose_eq_zero_of_lt (lt_of_not_ge hkn)]
     simp only [Nat.cast_zero, zero_mul]
     refine Tendsto.congr' ?_ tendsto_const_nhds
-    filter_upwards [eventually_ge_atTop n] with N hnN
-    rw [hypergeometricMeasure_real_singleton (hK N) hnN k, ite_eq_right hkn]
+    filter_upwards [eventually_ge_atTop n, hK] with N hnN hKN
+    rw [hypergeometricMeasure_real_singleton hKN hnN k, ite_eq_right hkn]
 
 end Probability
 
