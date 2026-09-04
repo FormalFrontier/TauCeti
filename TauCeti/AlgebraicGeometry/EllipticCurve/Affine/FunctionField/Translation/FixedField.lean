@@ -63,12 +63,6 @@ arbitrary finite subgroup of points, no isogeny being needed to state or prove t
 ## References
 
 * [J. Silverman, *The Arithmetic of Elliptic Curves*][silverman2009], III.4.
-
-## Provenance
-
-Not a port: none of the pinned sources develops the Galois theory of the translation action. The
-finite-group input is Mathlib's `FixedPoints`, used through
-`IntermediateField.fixingSubgroup_fixedField_of_finite`.
 -/
 
 public section

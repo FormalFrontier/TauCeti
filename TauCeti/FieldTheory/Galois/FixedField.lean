@@ -70,9 +70,7 @@ variable {K M : Type*} [Field K] [Field M] [Algebra K M]
 Mathlib's `IntermediateField.fixingSubgroup_fixedField` is the same conclusion under
 `[FiniteDimensional K M]`, which is the stronger hypothesis: a finite-dimensional `M / K` has a
 finite automorphism group, so every subgroup of it is finite. Finiteness of `H` is what an
-infinite extension `M / K` can still supply. The input is Artin's theorem, in the form
-`FixedPoints.toAlgAut_surjective`: over the fixed field of a finite group of automorphisms there
-are no automorphisms beyond that group. -/
+infinite extension `M / K` can still supply. -/
 theorem fixingSubgroup_fixedField_of_finite (H : Subgroup (M ≃ₐ[K] M)) [Finite H] :
     fixingSubgroup (fixedField H) = H := by
   refine le_antisymm (fun σ hσ ↦ ?_) ((le_iff_le _ _).mp le_rfl)
