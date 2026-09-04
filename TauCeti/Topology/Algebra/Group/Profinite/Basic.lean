@@ -45,8 +45,6 @@ carry the hypothesis, while the clopen-image statement is valid for an arbitrary
 
 public section
 
-namespace TauCeti
-
 namespace OpenNormalSubgroup
 
 variable {G H : Type*} [Group G] [TopologicalSpace G] [Group H] [TopologicalSpace H]
@@ -78,6 +76,8 @@ theorem toSubgroup_bot (G : Type*) [Group G] [TopologicalSpace G] [DiscreteTopol
   rfl
 
 end OpenNormalSubgroup
+
+namespace TauCeti
 
 variable {G : Type*} [Group G] [TopologicalSpace G] [IsTopologicalGroup G] [CompactSpace G]
   [TotallyDisconnectedSpace G]
