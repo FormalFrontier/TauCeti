@@ -12,7 +12,7 @@ public import TauCeti.NumberTheory.NumberField.RingOfIntegers.Equiv
 /-!
 # Transporting relative Frobenius data across an isomorphism
 
-An algebra isomorphism between two finite extensions of the same number field restricts to an
+An algebra isomorphism between two field extensions of a common base field restricts to an
 isomorphism between their rings of integers (`NumberField.RingOfIntegers.mapAlgEquiv`).  This
 file records the local fact needed when a construction indexed by relative Frobenius classes
 is transported along that isomorphism: an arithmetic Frobenius is carried to its conjugate.
