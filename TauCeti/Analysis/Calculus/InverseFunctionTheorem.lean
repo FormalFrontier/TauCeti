@@ -34,8 +34,8 @@ a point of an open set `s` restricts to an `OpenPartialHomeomorph` inside `s` wh
 
 ## Main results
 
-* `ApproximatesLinearOn.norm_sub_le_of_hasFDerivAt`: on an open set where `f` approximates `L`
-  with constant `c`, every derivative of `f` is within `c` of `L`.
+* `ApproximatesLinearOn.norm_sub_le_of_hasFDerivAt`: on a set where `f` approximates `L` with
+  constant `c`, every derivative of `f` at an interior point is within `c` of `L`.
 * `ContinuousLinearMap.isInvertible_of_norm_sub_lt`: a continuous linear map closer to an
   invertible one than the reciprocal norm of its inverse is itself invertible.
 * `HasStrictFDerivAt.approximatesLinearOn_toOpenPartialHomeomorph_source`: the source of the
@@ -71,14 +71,15 @@ variable {𝕜 E F : Type*} [NontriviallyNormedField 𝕜]
 variable [NormedAddCommGroup E] [NormedSpace 𝕜 E]
 variable [NormedAddCommGroup F] [NormedSpace 𝕜 F]
 
-/-- On an open set on which `f` approximates the continuous linear map `L` with constant `c`,
-every Fréchet derivative of `f` is within `c` of `L` in operator norm. -/
+/-- On a set on which `f` approximates the continuous linear map `L` with constant `c`, every
+Fréchet derivative of `f` at an interior point is within `c` of `L` in operator norm. -/
 theorem ApproximatesLinearOn.norm_sub_le_of_hasFDerivAt {f : E → F} {L A : E →L[𝕜] F} {s : Set E}
-    {c : ℝ≥0} (hf : ApproximatesLinearOn f L s c) (hs : IsOpen s) {x : E} (hx : x ∈ s)
+    {c : ℝ≥0} (hf : ApproximatesLinearOn f L s c) {x : E} (hs : s ∈ 𝓝 x)
     (hA : HasFDerivAt f A x) : ‖A - L‖ ≤ c := by
+  have hx : x ∈ s := mem_of_mem_nhds hs
   have hg : HasFDerivAt (fun y ↦ f y - L y) (A - L) x := hA.sub L.hasFDerivAt
   refine hg.le_of_lip' c.coe_nonneg ?_
-  filter_upwards [hs.mem_nhds hx] with y hy
+  filter_upwards [hs] with y hy
   have hsub : f y - L y - (f x - L x) = f y - f x - L (y - x) := by
     rw [map_sub]; abel
   rw [hsub]
@@ -145,7 +146,7 @@ theorem isInvertible_of_mem_toOpenPartialHomeomorph_source
     A.IsInvertible := by
   refine ContinuousLinearMap.isInvertible_of_norm_sub_le_half L ?_
   have hbound := hf.approximatesLinearOn_toOpenPartialHomeomorph_source.norm_sub_le_of_hasFDerivAt
-    (hf.toOpenPartialHomeomorph f).open_source hx hA
+    ((hf.toOpenPartialHomeomorph f).open_source.mem_nhds hx) hA
   rwa [← NNReal.coe_le_coe, coe_nnnorm]
 
 /-- **The local inverse of the inverse function theorem is `C^n` at every point of its target.**
@@ -155,8 +156,11 @@ target because the derivative stays invertible on the source. -/
 theorem contDiffAt_toOpenPartialHomeomorph_symm {n : ℕ∞ω}
     (hf : HasStrictFDerivAt f (L : E →L[𝕜] F) a) {y : F}
     (hy : y ∈ (hf.toOpenPartialHomeomorph f).target)
-    (hcont : ContDiffAt 𝕜 n f ((hf.toOpenPartialHomeomorph f).symm y)) (hn : n ≠ 0) :
+    (hcont : ContDiffAt 𝕜 n f ((hf.toOpenPartialHomeomorph f).symm y)) :
     ContDiffAt 𝕜 n (hf.toOpenPartialHomeomorph f).symm y := by
+  rcases eq_or_ne n 0 with rfl | hn
+  · exact contDiffAt_zero.2 ⟨_, (hf.toOpenPartialHomeomorph f).open_target.mem_nhds hy,
+      (hf.toOpenPartialHomeomorph f).continuousOn_symm⟩
   set x := (hf.toOpenPartialHomeomorph f).symm y with hx
   have hxs : x ∈ (hf.toOpenPartialHomeomorph f).source :=
     (hf.toOpenPartialHomeomorph f).map_target hy
@@ -170,10 +174,10 @@ theorem contDiffAt_toOpenPartialHomeomorph_symm {n : ℕ∞ω}
 homeomorphism built by the inverse function theorem, then the inverse is `C^n` on the target. -/
 theorem contDiffOn_toOpenPartialHomeomorph_symm {n : ℕ∞ω}
     (hf : HasStrictFDerivAt f (L : E →L[𝕜] F) a)
-    (hcont : ContDiffOn 𝕜 n f (hf.toOpenPartialHomeomorph f).source) (hn : n ≠ 0) :
+    (hcont : ContDiffOn 𝕜 n f (hf.toOpenPartialHomeomorph f).source) :
     ContDiffOn 𝕜 n (hf.toOpenPartialHomeomorph f).symm (hf.toOpenPartialHomeomorph f).target := by
   intro y hy
-  refine (hf.contDiffAt_toOpenPartialHomeomorph_symm hy ?_ hn).contDiffWithinAt
+  refine (hf.contDiffAt_toOpenPartialHomeomorph_symm hy ?_).contDiffWithinAt
   exact hcont.contDiffAt ((hf.toOpenPartialHomeomorph f).open_source.mem_nhds
     ((hf.toOpenPartialHomeomorph f).map_target hy))
 
@@ -205,7 +209,7 @@ theorem ContDiffOn.exists_openPartialHomeomorph
   refine ⟨((hgAt a ha).toOpenPartialHomeomorph g he₀ hn0).restrOpen s hs, rfl,
     ⟨(hgAt a ha).mem_toOpenPartialHomeomorph_source he₀ hn0, ha⟩, fun y hy => hy.2, ?_⟩
   intro w hw
-  exact (hstrict.contDiffAt_toOpenPartialHomeomorph_symm hw.1 (hgAt _ hw.2) hn0).contDiffWithinAt
+  exact (hstrict.contDiffAt_toOpenPartialHomeomorph_symm hw.1 (hgAt _ hw.2)).contDiffWithinAt
 
 end TauCeti
 

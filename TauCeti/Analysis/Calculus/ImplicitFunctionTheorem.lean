@@ -28,7 +28,7 @@ homeomorphism at `(f a, 0)`.
 Smoothness of the inverse at a point of the target needs the derivative of the coordinate map to
 be invertible there. At the base point that is the hypothesis of the theorem; away from it, it is
 supplied by `TauCeti.Analysis.Calculus.InverseFunctionTheorem`, on the open neighbourhood
-`HasStrictFDerivAt.implicitRegularSet` of the base point that the inverse function theorem itself
+`HasStrictFDerivAt.implicitCoordSource` of the base point that the inverse function theorem itself
 produced. So the implicit function is `C^n` on a whole neighbourhood of the origin of the slice,
 not only at the origin: enough to compare two implicit-function charts smoothly, which is what a
 manifold structure on a level set asks for.
@@ -53,7 +53,7 @@ Mathlib's lemma.
   spellings of the implicit function agree.
 * `ContinuousLinearMap.implicitCoordEquiv`: the derivative `x ↦ (f' x, P x)` of the coordinate
   map, as a continuous linear equivalence.
-* `HasStrictFDerivAt.implicitRegularSet`: an open neighbourhood of the base point on which the
+* `HasStrictFDerivAt.implicitCoordSource`: an open neighbourhood of the base point on which the
   derivative of the coordinate map stays invertible.
 * `HasStrictFDerivAt.contDiffAt_implicitToOpenPartialHomeomorphOfComplemented_symm_of_mem`: the
   inverse homeomorphism is `C^n` at every point of the target coming from that neighbourhood.
@@ -167,32 +167,32 @@ theorem contDiffAt_implicitToOpenPartialHomeomorphOfComplemented_symm {n : ℕ�
   · exact ⟨f'.implicitCoordEquiv hf' hker, ContinuousLinearMap.coe_implicitCoordEquiv ..⟩
   · rw [hbase]; exact hcont
 
-/-! ### The neighbourhood on which the coordinate map stays regular -/
+/-! ### The neighbourhood on which the coordinate map stays invertible -/
 
 /-- An open neighbourhood of the base point on which the derivative of the implicit-function
 coordinate map `x ↦ (f x, P (x - a))` is still invertible: the source of the homeomorphism that
 the inverse function theorem builds from that map. Like Mathlib's implicit-function homeomorphism
 itself, it is a choice, and is described only through the lemmas below. -/
-noncomputable def implicitRegularSet (hf : HasStrictFDerivAt f f' a) (hf' : f'.range = ⊤)
+noncomputable def implicitCoordSource (hf : HasStrictFDerivAt f f' a) (hf' : f'.range = ⊤)
     (hker : f'.ker.ClosedComplemented) : Set E :=
   ((hf.hasStrictFDerivAt_implicitCoord hf' hker).toOpenPartialHomeomorph
     fun x ↦ (f x, Classical.choose hker (x - a))).source
 
-theorem isOpen_implicitRegularSet (hf : HasStrictFDerivAt f f' a) (hf' : f'.range = ⊤)
-    (hker : f'.ker.ClosedComplemented) : IsOpen (hf.implicitRegularSet hf' hker) :=
+theorem isOpen_implicitCoordSource (hf : HasStrictFDerivAt f f' a) (hf' : f'.range = ⊤)
+    (hker : f'.ker.ClosedComplemented) : IsOpen (hf.implicitCoordSource hf' hker) :=
   OpenPartialHomeomorph.open_source _
 
-theorem mem_implicitRegularSet (hf : HasStrictFDerivAt f f' a) (hf' : f'.range = ⊤)
-    (hker : f'.ker.ClosedComplemented) : a ∈ hf.implicitRegularSet hf' hker :=
+theorem mem_implicitCoordSource (hf : HasStrictFDerivAt f f' a) (hf' : f'.range = ⊤)
+    (hker : f'.ker.ClosedComplemented) : a ∈ hf.implicitCoordSource hf' hker :=
   HasStrictFDerivAt.mem_toOpenPartialHomeomorph_source _
 
 /-- **The derivative of the coordinate map stays invertible on
-`HasStrictFDerivAt.implicitRegularSet`.** If `f` has derivative `A` at a point of that
+`HasStrictFDerivAt.implicitCoordSource`.** If `f` has derivative `A` at a point of that
 neighbourhood, then `(A, P)` is a continuous linear equivalence, exactly as `(f', P)` is at the
 base point. -/
-theorem isInvertible_prod_of_mem_implicitRegularSet (hf : HasStrictFDerivAt f f' a)
+theorem isInvertible_prod_of_mem_implicitCoordSource (hf : HasStrictFDerivAt f f' a)
     (hf' : f'.range = ⊤) (hker : f'.ker.ClosedComplemented) {x : E}
-    (hx : x ∈ hf.implicitRegularSet hf' hker) {A : E →L[K] F} (hA : HasFDerivAt f A x) :
+    (hx : x ∈ hf.implicitCoordSource hf' hker) {A : E →L[K] F} (hA : HasFDerivAt f A x) :
     (A.prod (Classical.choose hker)).IsInvertible := by
   have : CompleteSpace f'.ker := hker.isClosed.completeSpace_coe
   exact (hf.hasStrictFDerivAt_implicitCoord hf'
@@ -201,20 +201,20 @@ theorem isInvertible_prod_of_mem_implicitRegularSet (hf : HasStrictFDerivAt f f'
 
 /-- **The implicit function is `C^n` on a whole neighbourhood of the origin of the slice.** The
 inverse of the implicit-function homeomorphism is `C^n` at every point of its target whose
-preimage lies in `HasStrictFDerivAt.implicitRegularSet`. -/
+preimage lies in `HasStrictFDerivAt.implicitCoordSource`. -/
 theorem contDiffAt_implicitToOpenPartialHomeomorphOfComplemented_symm_of_mem {n : ℕ∞ω}
     (hf : HasStrictFDerivAt f f' a) (hf' : f'.range = ⊤) (hker : f'.ker.ClosedComplemented)
     {y : F × f'.ker}
     (hy : y ∈ (hf.implicitToOpenPartialHomeomorphOfComplemented f f' hf' hker).target)
     (hmem : (hf.implicitToOpenPartialHomeomorphOfComplemented f f' hf' hker).symm y ∈
-      hf.implicitRegularSet hf' hker)
+      hf.implicitCoordSource hf' hker)
     {A : E →L[K] F}
     (hA : HasFDerivAt f A ((hf.implicitToOpenPartialHomeomorphOfComplemented f f' hf' hker).symm y))
     (hcont : ContDiffAt K n f
       ((hf.implicitToOpenPartialHomeomorphOfComplemented f f' hf' hker).symm y)) :
     ContDiffAt K n (hf.implicitToOpenPartialHomeomorphOfComplemented f f' hf' hker).symm y :=
   hf.contDiffAt_implicitToOpenPartialHomeomorphOfComplemented_symm_of_isInvertible hf' hker hy hA
-    (hf.isInvertible_prod_of_mem_implicitRegularSet hf' hker hmem hA) hcont
+    (hf.isInvertible_prod_of_mem_implicitCoordSource hf' hker hmem hA) hcont
 
 /- Mathlib names the complemented-kernel implicit function twice, once as
 `HasStrictFDerivAt.implicitFunctionOfComplemented` and once as the inverse of

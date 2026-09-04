@@ -24,14 +24,14 @@ The transition from the chart at `z` to the chart at `w` is
 projection onto `ker (D w)`. So everything reduces to smoothness of the inverse chart as a map
 into `E`, which is `TauCeti.contDiffAt_coe_levelSetChart_symm_of_mem`: the inverse chart is smooth
 at every point of its target, because `TauCeti.levelSetChartAt` was cut down to the neighbourhood
-`TauCeti.levelSetRegularSet` on which the coordinate map of the implicit function theorem keeps an
-invertible derivative.
+`TauCeti.levelSetImplicitCoordSource` on which the coordinate map of the implicit function theorem
+keeps an invertible derivative.
 
-This completes the local half of the "a moduli space is the zero set of a Fredholm section, and at
-a regular point it is a manifold of dimension the index" package of Lane F0 of the analytic
-Heegaard Floer roadmap. As with the charted-space structure it refines, no global hypothesis such
-as second countability is assumed, so `IsManifold` here is the smooth-atlas statement and not the
-assertion that the level set is a topological manifold in the classical sense.
+This is the smooth half of the statement that the zero set of a Fredholm section is, at a regular
+point, a manifold of dimension the index. As with the charted-space structure it refines, no
+global hypothesis such as second countability is assumed, so `IsManifold` here is the smooth-atlas
+statement and not the assertion that the level set is a topological manifold in the classical
+sense.
 
 ## Main results
 
@@ -89,7 +89,7 @@ theorem contDiffOn_coe_levelSetChartAt_symm
     refine contDiffAt_coe_levelSetChart_symm_of_mem _ _ _ _ hk.1 ?_ (A := D u.1)
       ((hf u.1 u.2).hasFDerivAt) (hsmooth u.1 u.2)
     have hmem := hk.2
-    rw [Set.mem_preimage, mem_levelSetRegularSet_iff, hpt k] at hmem
+    rw [Set.mem_preimage, mem_levelSetImplicitCoordSource_iff, hpt k] at hmem
     exact hmem
   exact (hinner.comp k
     ((K.symm : (Fin n → 𝕜) →L[𝕜] ↥(D z.1).ker).contDiff.contDiffAt)).contDiffWithinAt

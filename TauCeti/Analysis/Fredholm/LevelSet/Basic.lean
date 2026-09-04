@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.Analysis.Calculus.Implicit
 public import Mathlib.Analysis.Calculus.FDeriv.Equiv
 public import Mathlib.Geometry.Manifold.ChartedSpace
 public import Mathlib.Topology.DiscreteSubset
@@ -51,7 +50,7 @@ topological manifold in the usual sense, which would additionally need global hy
 second countability, and none are assumed here. Smooth compatibility of the charts, under a
 `ContDiff` hypothesis on `f`, is `TauCeti.isManifold_levelSet` in
 `TauCeti/Analysis/Fredholm/LevelSet/Manifold.lean`; the preferred charts installed below are
-already cut down to `TauCeti.levelSetRegularSet` so that they can be compared smoothly.
+already cut down to `TauCeti.levelSetImplicitCoordSource` so that they can be compared smoothly.
 
 ## Main declarations
 
@@ -60,7 +59,7 @@ already cut down to `TauCeti.levelSetRegularSet` so that they can be compared sm
 * `ContinuousLinearMap.kerModelEquiv`: the identification of `ker f'` with the model space
   `Fin n → 𝕜`, when `ker f'` is finite-dimensional of dimension `n`.
 * `TauCeti.levelSetChartModel`: the chart read through that identification.
-* `TauCeti.levelSetRegularSet`: the neighbourhood of a point of the level set to which the
+* `TauCeti.levelSetImplicitCoordSource`: the neighbourhood of a point of the level set to which the
   preferred chart there is cut down.
 * `TauCeti.levelSetChartedSpace`: a regular level set on which the index is constantly `n` is a
   charted space modelled on `Fin n → 𝕜`; by
@@ -367,51 +366,51 @@ theorem finrank_ker_eq_of_mem_levelSet
 
 /-- The neighbourhood of a point `z` of a regular level set to which the preferred chart at `z` is
 cut down: the set on which the coordinate map of the implicit function theorem keeps an invertible
-derivative, `HasStrictFDerivAt.implicitRegularSet`, read inside the level set. -/
-noncomputable def levelSetRegularSet
+derivative, `HasStrictFDerivAt.implicitCoordSource`, read inside the level set. -/
+noncomputable def levelSetImplicitCoordSource
     (hf : ∀ x ∈ {x | f x = c}, HasStrictFDerivAt f (D x) x)
     (hsurj : ∀ x ∈ {x | f x = c}, Function.Surjective (D x))
     (hker : ∀ x ∈ {x | f x = c}, (D x).ker.ClosedComplemented)
     (z : ↥{x | f x = c}) : Set ↥{x | f x = c} :=
-  Subtype.val ⁻¹' (hf z.1 z.2).implicitRegularSet (LinearMap.range_eq_top.2 (hsurj z.1 z.2))
+  Subtype.val ⁻¹' (hf z.1 z.2).implicitCoordSource (LinearMap.range_eq_top.2 (hsurj z.1 z.2))
     (hker z.1 z.2)
 
 omit [CompleteSpace 𝕜] in
-theorem isOpen_levelSetRegularSet
+theorem isOpen_levelSetImplicitCoordSource
     (hf : ∀ x ∈ {x | f x = c}, HasStrictFDerivAt f (D x) x)
     (hsurj : ∀ x ∈ {x | f x = c}, Function.Surjective (D x))
     (hker : ∀ x ∈ {x | f x = c}, (D x).ker.ClosedComplemented)
-    (z : ↥{x | f x = c}) : IsOpen (levelSetRegularSet hf hsurj hker z) :=
-  ((hf z.1 z.2).isOpen_implicitRegularSet _ _).preimage continuous_subtype_val
+    (z : ↥{x | f x = c}) : IsOpen (levelSetImplicitCoordSource hf hsurj hker z) :=
+  ((hf z.1 z.2).isOpen_implicitCoordSource _ _).preimage continuous_subtype_val
 
 omit [CompleteSpace 𝕜] in
-/-- Membership in `TauCeti.levelSetRegularSet` is membership of the ambient point in
-`HasStrictFDerivAt.implicitRegularSet`. -/
-theorem mem_levelSetRegularSet_iff
+/-- Membership in `TauCeti.levelSetImplicitCoordSource` is membership of the ambient point in
+`HasStrictFDerivAt.implicitCoordSource`. -/
+theorem mem_levelSetImplicitCoordSource_iff
     (hf : ∀ x ∈ {x | f x = c}, HasStrictFDerivAt f (D x) x)
     (hsurj : ∀ x ∈ {x | f x = c}, Function.Surjective (D x))
     (hker : ∀ x ∈ {x | f x = c}, (D x).ker.ClosedComplemented)
     (z u : ↥{x | f x = c}) :
-    u ∈ levelSetRegularSet hf hsurj hker z ↔
-      (u : E) ∈ (hf z.1 z.2).implicitRegularSet (LinearMap.range_eq_top.2 (hsurj z.1 z.2))
+    u ∈ levelSetImplicitCoordSource hf hsurj hker z ↔
+      (u : E) ∈ (hf z.1 z.2).implicitCoordSource (LinearMap.range_eq_top.2 (hsurj z.1 z.2))
         (hker z.1 z.2) :=
   Iff.rfl
 
 omit [CompleteSpace 𝕜] in
-theorem mem_levelSetRegularSet
+theorem mem_levelSetImplicitCoordSource
     (hf : ∀ x ∈ {x | f x = c}, HasStrictFDerivAt f (D x) x)
     (hsurj : ∀ x ∈ {x | f x = c}, Function.Surjective (D x))
     (hker : ∀ x ∈ {x | f x = c}, (D x).ker.ClosedComplemented)
-    (z : ↥{x | f x = c}) : z ∈ levelSetRegularSet hf hsurj hker z :=
-  (hf z.1 z.2).mem_implicitRegularSet _ _
+    (z : ↥{x | f x = c}) : z ∈ levelSetImplicitCoordSource hf hsurj hker z :=
+  (hf z.1 z.2).mem_implicitCoordSource _ _
 
 /-- The preferred chart at a point of a regular level set along which the Fredholm index is
 constantly `n`.
 
 It is the implicit-function chart `TauCeti.levelSetChartModel`, cut down to
-`TauCeti.levelSetRegularSet`. That restriction costs nothing — the set is an open neighbourhood of
-the base point — and it buys the smoothness that the inverse chart lacks away from its own centre,
-so that two of these charts can be smoothly compatible. -/
+`TauCeti.levelSetImplicitCoordSource`. That restriction costs nothing — the set is an open
+neighbourhood of the base point — and it buys the smoothness that the inverse chart lacks away from
+its own centre, so that two of these charts can be smoothly compatible. -/
 noncomputable def levelSetChartAt
     (hf : ∀ x ∈ {x | f x = c}, HasStrictFDerivAt f (D x) x)
     (hFred : ∀ x ∈ {x | f x = c}, ContinuousLinearMap.IsFredholm (D x))
@@ -421,11 +420,12 @@ noncomputable def levelSetChartAt
   (levelSetChartModel (hf z.1 z.2) (LinearMap.range_eq_top.2 (hsurj z.1 z.2))
     (hFred z.1 z.2).closedComplemented_ker (hFred z.1 z.2).finite_ker
     (finrank_ker_eq_of_mem_levelSet hsurj hindex z.2) z.2).restrOpen
-      (levelSetRegularSet hf hsurj (fun x hx => (hFred x hx).closedComplemented_ker) z)
-      (isOpen_levelSetRegularSet hf hsurj (fun x hx => (hFred x hx).closedComplemented_ker) z)
+      (levelSetImplicitCoordSource hf hsurj (fun x hx => (hFred x hx).closedComplemented_ker) z)
+      (isOpen_levelSetImplicitCoordSource hf hsurj
+        (fun x hx => (hFred x hx).closedComplemented_ker) z)
 
 /-- The source of the preferred chart at `z` is the source of the chart of the level set at `z`,
-cut down to `TauCeti.levelSetRegularSet`. -/
+cut down to `TauCeti.levelSetImplicitCoordSource`. -/
 @[simp]
 theorem levelSetChartAt_source
     (hf : ∀ x ∈ {x | f x = c}, HasStrictFDerivAt f (D x) x)
@@ -436,12 +436,13 @@ theorem levelSetChartAt_source
     (levelSetChartAt hf hFred hsurj hindex z).source =
       (levelSetChart (hf z.1 z.2) (LinearMap.range_eq_top.2 (hsurj z.1 z.2))
         (hFred z.1 z.2).closedComplemented_ker z.2).source ∩
-        levelSetRegularSet hf hsurj (fun x hx => (hFred x hx).closedComplemented_ker) z := by
+        levelSetImplicitCoordSource hf hsurj
+          (fun x hx => (hFred x hx).closedComplemented_ker) z := by
   rw [levelSetChartAt, OpenPartialHomeomorph.restrOpen_source, levelSetChartModel_source]
 
 /-- The target of the preferred chart at `z` is the target of the chart of the level set at `z`,
 pulled back along `ContinuousLinearMap.kerModelEquiv`, cut down to the part of
-`TauCeti.levelSetRegularSet` that the chart sees. -/
+`TauCeti.levelSetImplicitCoordSource` that the chart sees. -/
 @[simp]
 theorem levelSetChartAt_target
     (hf : ∀ x ∈ {x | f x = c}, HasStrictFDerivAt f (D x) x)
@@ -455,7 +456,8 @@ theorem levelSetChartAt_target
         (levelSetChart (hf z.1 z.2) (LinearMap.range_eq_top.2 (hsurj z.1 z.2))
           (hFred z.1 z.2).closedComplemented_ker z.2).target ∩
         (levelSetChartAt hf hFred hsurj hindex z).symm ⁻¹'
-          levelSetRegularSet hf hsurj (fun x hx => (hFred x hx).closedComplemented_ker) z := by
+          levelSetImplicitCoordSource hf hsurj
+            (fun x hx => (hFred x hx).closedComplemented_ker) z := by
   rw [levelSetChartAt, OpenPartialHomeomorph.restrOpen_toPartialEquiv,
     PartialEquiv.restr_target, levelSetChartModel_target]
   rfl
@@ -524,7 +526,7 @@ theorem mem_levelSetChartAt_source
     (hindex : ∀ x ∈ {x | f x = c}, ContinuousLinearMap.index (D x) = n)
     (z : ↥{x | f x = c}) : z ∈ (levelSetChartAt hf hFred hsurj hindex z).source := by
   rw [levelSetChartAt_source]
-  exact ⟨mem_levelSetChart_source _ _ _ z.2, mem_levelSetRegularSet _ _ _ z⟩
+  exact ⟨mem_levelSetChart_source _ _ _ z.2, mem_levelSetImplicitCoordSource _ _ _ z⟩
 
 /-- The origin of `Fin n → 𝕜`, the value of the preferred chart at its base point, lies in its
 target. -/
@@ -539,7 +541,7 @@ theorem mem_levelSetChartAt_target
   · rw [Set.mem_preimage, map_zero]
     exact mem_levelSetChart_target _ _ _ z.2
   · rw [Set.mem_preimage, levelSetChartAt_symm_zero]
-    exact mem_levelSetRegularSet _ _ _ z
+    exact mem_levelSetImplicitCoordSource _ _ _ z
 
 /-- **A regular level set of a Fredholm map is locally modelled on `Fin n → 𝕜`, `n` its index.**
 If `f` is strictly differentiable at every point of the level set `{x | f x = c}` with surjective

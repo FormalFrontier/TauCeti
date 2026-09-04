@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import TauCeti.Analysis.Calculus.ImplicitFunctionTheorem
 public import TauCeti.Analysis.Fredholm.LevelSet.Basic
 import Mathlib.Analysis.Calculus.ContDiff.Operations
 
@@ -27,12 +26,11 @@ geometric organization follows McDuff--Salamon, *J-holomorphic Curves and Symple
 Together with `ContinuousLinearMap.IsFredholm.closedComplemented_ker_coprod`, which supplies the
 complemented kernel of a surjective linearization whose fixed-parameter part is Fredholm, these
 are the pointwise smoothness and derivative computation from which the smooth local input to the
-parameter projection and Sard--Smale arguments in the analytic Heegaard Floer roadmap is
-assembled.
+parameter projection and Sard--Smale arguments is assembled.
 
 Smoothness at the origin alone does not let two charts of the same level set be compared; the
 final theorem removes that restriction. It is `C^n` at every point of the chart target whose
-image lies in `HasStrictFDerivAt.implicitRegularSet`, the neighbourhood of the base point on which
+image lies in `HasStrictFDerivAt.implicitCoordSource`, the neighbourhood of the base point on which
 the coordinate map of the implicit function theorem keeps an invertible derivative. Since that
 neighbourhood is open and contains the base point, the inverse chart is smooth on a whole
 neighbourhood of its origin, which is what smooth compatibility of charts needs.
@@ -44,7 +42,7 @@ neighbourhood of its origin, which is what smooth compatibility of charts needs.
 * `TauCeti.hasStrictFDerivAt_coe_levelSetChart_symm`: its derivative there is the inclusion of the
   derivative's kernel.
 * `TauCeti.contDiffAt_coe_levelSetChart_symm_of_mem`: it is smooth at every point of the chart
-  target that the coordinate map's regular neighbourhood covers.
+  target that the coordinate map's invertibility neighbourhood covers.
 -/
 
 public section
@@ -96,7 +94,7 @@ theorem hasStrictFDerivAt_coe_levelSetChart_symm (hf : HasStrictFDerivAt f f' a)
 
 /-- **The inverse regular-level-set chart is smooth away from its centre as well.** At a point `k`
 of the chart target whose image lies in the neighbourhood
-`HasStrictFDerivAt.implicitRegularSet` on which the implicit-function coordinate map keeps an
+`HasStrictFDerivAt.implicitCoordSource` on which the implicit-function coordinate map keeps an
 invertible derivative, the inverse chart is as smooth as the equation is there.
 
 `TauCeti.contDiffAt_coe_levelSetChart_symm` is the case `k = 0`, where the hypotheses hold
@@ -105,7 +103,7 @@ theorem contDiffAt_coe_levelSetChart_symm_of_mem {n : ℕ∞ω} (hf : HasStrictF
     (hf' : f'.range = ⊤) (hker : f'.ker.ClosedComplemented) (ha : f a = c) {k : ↥f'.ker}
     (hk : k ∈ (levelSetChart hf hf' hker ha).target)
     (hmem : (((levelSetChart hf hf' hker ha).symm k : ↥{x | f x = c}) : E) ∈
-      hf.implicitRegularSet hf' hker)
+      hf.implicitCoordSource hf' hker)
     {A : E →L[K] F}
     (hA : HasFDerivAt f A (((levelSetChart hf hf' hker ha).symm k : ↥{x | f x = c}) : E))
     (hcont : ContDiffAt K n f (((levelSetChart hf hf' hker ha).symm k : ↥{x | f x = c}) : E)) :
