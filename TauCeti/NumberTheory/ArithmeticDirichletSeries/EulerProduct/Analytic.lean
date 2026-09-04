@@ -9,7 +9,6 @@ public import Mathlib.Analysis.Normed.Group.Tannery
 public import Mathlib.NumberTheory.LSeries.Convolution
 public import TauCeti.NumberTheory.ArithmeticDirichletSeries.Estimates
 public import TauCeti.NumberTheory.ArithmeticDirichletSeries.EulerProduct.Data
-public import TauCeti.NumberTheory.ArithmeticDirichletSeries.Regroup
 
 /-!
 # The analytic Euler product of an ideal arithmetic function
@@ -80,7 +79,7 @@ theorem eulerFactor_def (D : EulerProductData K) (P : HeightOneSpectrum (𝓞 K)
 theorem eulerFactor_eq_tsum (D : EulerProductData K) (P : HeightOneSpectrum (𝓞 K)) (s : ℂ) :
     D.eulerFactor P s =
       ∑' e : ℕ, idealTerm K D.toIdealArithmeticFunction s
-        (primeIdealPow P e) := by
+        (P.primeIdealPow e) := by
   have hsupp : Function.support
       (fun n : ℕ ↦ (D.localArithmeticFactor P n : ℂ) / (n : ℂ) ^ s) ⊆
       Set.range fun e : ℕ ↦ Ideal.absNorm P.asIdeal ^ e := by
@@ -93,7 +92,7 @@ theorem eulerFactor_eq_tsum (D : EulerProductData K) (P : HeightOneSpectrum (�
       (NumberField.HeightOneSpectrum.one_lt_absNorm P)).tsum_eq hsupp]
   refine tsum_congr fun e ↦ ?_
   rw [localArithmeticFactor_apply_pow, idealTerm_def,
-    absNorm_primeIdealPow]
+    P.absNorm_primeIdealPow]
 
 end EulerProductData
 
@@ -232,10 +231,10 @@ geometric progression. -/
 @[simp]
 theorem idealTerm_toIdealArithmeticFunction_primeIdealPow (P : HeightOneSpectrum (𝓞 K)) (e : ℕ)
     (s : ℂ) :
-    idealTerm K χ.toIdealArithmeticFunction s (primeIdealPow P e) =
+    idealTerm K χ.toIdealArithmeticFunction s (P.primeIdealPow e) =
       (χ P.asIdeal / (Ideal.absNorm P.asIdeal : ℂ) ^ s) ^ e := by
   rw [idealTerm_def, toIdealArithmeticFunction_apply,
-    absNorm_primeIdealPow, coe_primeIdealPow,
+    P.absNorm_primeIdealPow, P.coe_primeIdealPow,
     map_pow, Nat.cast_pow, ← Complex.natCast_cpow_natCast_mul,
     Complex.cpow_nat_mul, div_pow]
 
@@ -247,7 +246,7 @@ theorem norm_div_lt_one_of_summable_idealTerm
     (P : HeightOneSpectrum (𝓞 K)) :
     ‖χ P.asIdeal / (Ideal.absNorm P.asIdeal : ℂ) ^ s‖ < 1 := by
   rw [← summable_geometric_iff_norm_lt_one]
-  exact (hs.comp_injective (primeIdealPow_injective P)).congr fun e ↦
+  exact (hs.comp_injective P.primeIdealPow_injective).congr fun e ↦
     idealTerm_toIdealArithmeticFunction_primeIdealPow χ P e s
 
 /-- The local Euler factor of a completely multiplicative weight is the geometric closed form

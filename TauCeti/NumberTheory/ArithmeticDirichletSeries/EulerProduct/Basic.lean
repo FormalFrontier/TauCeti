@@ -81,10 +81,10 @@ this identity holds for any multiplicative `f` with no further data.
 
 public section
 
-namespace TauCeti
-
 open scoped nonZeroDivisors NumberField
 open IsDedekindDomain (HeightOneSpectrum)
+
+namespace IsDedekindDomain.HeightOneSpectrum
 
 variable {K : Type*} [Field K]
 
@@ -111,6 +111,10 @@ theorem primeIdealPow_injective (P : HeightOneSpectrum (𝓞 K)) :
   Nat.pow_right_injective (NumberField.HeightOneSpectrum.one_lt_absNorm P)
     (by simpa only [absNorm_primeIdealPow] using
       congrArg (fun I : (Ideal (𝓞 K))⁰ ↦ Ideal.absNorm (I : Ideal (𝓞 K))) h)
+
+end IsDedekindDomain.HeightOneSpectrum
+
+namespace TauCeti
 
 /-- **Every nonzero ideal is eventually supported.** A finite set of height-one primes that
 contains all primes of norm at most `Ideal.absNorm A` already contains every prime divisor of `A`,
@@ -152,9 +156,9 @@ omit [NumberField K] in
 theorem coeff_localPowerSeries (f : IdealArithmeticFunction K)
     (P : HeightOneSpectrum (𝓞 K)) (n : ℕ) :
     PowerSeries.coeff n (localPowerSeries f P) =
-      f (primeIdealPow P n) := by
+      f (P.primeIdealPow n) := by
   simp only [localPowerSeries, PowerSeries.coeff_mk]
-  exact congrArg f (Subtype.ext (coe_primeIdealPow P n).symm)
+  exact congrArg f (Subtype.ext (P.coe_primeIdealPow n).symm)
 
 omit [NumberField K] in
 /-- The constant coefficient of the canonical local power series is `f 1`. -/
@@ -185,7 +189,7 @@ theorem localArithmeticFactor_def (f : IdealArithmeticFunction K)
 theorem localArithmeticFactor_apply_pow (f : IdealArithmeticFunction K)
     (P : HeightOneSpectrum (𝓞 K)) (n : ℕ) :
     localArithmeticFactor f P (Ideal.absNorm P.asIdeal ^ n) =
-      f (primeIdealPow P n) := by
+      f (P.primeIdealPow n) := by
   rw [localArithmeticFactor, ArithmeticFunction.ofPowerSeries_apply_pow
     (NumberField.HeightOneSpectrum.one_lt_absNorm P)]
   exact coeff_localPowerSeries f P n

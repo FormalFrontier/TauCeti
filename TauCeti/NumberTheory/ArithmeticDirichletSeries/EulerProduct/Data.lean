@@ -86,7 +86,7 @@ noncomputable def localPowerSeries (D : EulerProductData K)
 theorem coeff_localPowerSeries (D : EulerProductData K)
     (P : HeightOneSpectrum (𝓞 K)) (n : ℕ) :
     PowerSeries.coeff n (D.localPowerSeries P) =
-      D (primeIdealPow P n) :=
+      D (P.primeIdealPow n) :=
   IdealArithmeticFunction.coeff_localPowerSeries D.toIdealArithmeticFunction P n
 
 /-- The canonical local arithmetic factor of bundled Euler-product data at a height-one prime. -/
@@ -114,7 +114,7 @@ coefficient. -/
 theorem localArithmeticFactor_apply_pow (D : EulerProductData K)
     (P : HeightOneSpectrum (𝓞 K)) (n : ℕ) :
     D.localArithmeticFactor P (Ideal.absNorm P.asIdeal ^ n) =
-      D (primeIdealPow P n) :=
+      D (P.primeIdealPow n) :=
   IdealArithmeticFunction.localArithmeticFactor_apply_pow D.toIdealArithmeticFunction P n
 
 /-- Away from the powers of `N(P)`, the bundled local arithmetic factor vanishes. Together with
