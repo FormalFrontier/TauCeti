@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import Mathlib.GroupTheory.PGroup
-public import Mathlib.GroupTheory.QuotientGroup.Defs
 
 /-!
 # Normal subgroups with `p`-group quotient
