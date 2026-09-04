@@ -7,7 +7,7 @@ module
 
 public import Mathlib.RingTheory.ClassGroup.Basic
 public import Mathlib.NumberTheory.NumberField.Basic
-public import Mathlib.RingTheory.DedekindDomain.Factorization
+public import TauCeti.RingTheory.DedekindDomain.Factorization
 public import TauCeti.RingTheory.DedekindDomain.Ideal
 
 /-!
@@ -35,7 +35,7 @@ The generation proof transports Mathlib's unique factorization of a nonzero frac
 ## References
 
 The shared lift of fractional-ideal factorization to units,
-`TauCeti.finprod_unitOfPrime_zpow_count`, is also used by
+`FractionalIdeal.finprod_unitOfPrime_zpow_count`, is also used by
 `TauCeti.RingTheory.ClassGroup.HeightOneSpectrum`. It is adapted from Michael Stoll's
 `EllipticCurves/Mathlib/FractionalIdeal.lean` at commit `66889eada51a` of the
 `MichaelStollBayreuth/EllipticCurves` repository (Apache 2.0).
@@ -102,11 +102,11 @@ theorem idealsAway_eq_closure_primes (S : Finset (HeightOneSpectrum (𝓞 K))) :
   apply le_antisymm
   · intro I hI
     classical
-    have hfin := TauCeti.finite_mulSupport_unitOfPrime_zpow (K := K) I
-    rw [TauCeti.finprod_unitOfPrime_zpow_count I,
+    have hfin := FractionalIdeal.finite_mulSupport_unitOfPrime_zpow (K := K) I
+    rw [FractionalIdeal.finprod_unitOfPrime_zpow_count I,
       finprod_eq_prod_of_mulSupport_toFinset_subset _ hfin (Finset.Subset.refl _)]
     refine Subgroup.prod_mem _ fun v hv ↦ Subgroup.zpow_mem _ (Subgroup.subset_closure ?_) _
-    refine ⟨v, ?_, rfl⟩
+    refine ⟨v, ?_, v.coe_unitOfPrime K⟩
     intro hvS
     exact (hfin.mem_toFinset.mp hv) (by simp only [hI v hvS, zpow_zero])
   · refine (Subgroup.closure_le _).mpr ?_

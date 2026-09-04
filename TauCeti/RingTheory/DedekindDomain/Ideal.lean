@@ -7,7 +7,7 @@ module
 
 public import Mathlib.RingTheory.Valuation.Discrete.IsDiscreteValuationRing
 public import Mathlib.RingTheory.DedekindDomain.Ideal.Lemmas
-public import Mathlib.RingTheory.DedekindDomain.Factorization
+import Mathlib.RingTheory.DedekindDomain.Factorization
 
 /-!
 # Complements on ideals of a Dedekind domain
@@ -75,58 +75,9 @@ discharges that nonvanishing hypothesis when a prime is contracted through an in
 It is stated here in the general form — an arbitrary ideal and an injective ring homomorphism,
 with the map producing the ideal dropped, since it plays no role — and proved from Mathlib's
 `Ideal.comap_bot_of_injective`.
-
-The unit-level prime factorization `TauCeti.finprod_unitOfPrime_zpow_count` transports Mathlib's
-factorization of fractional ideals along `Units.coeHom`. It is adapted from Michael Stoll's
-`EllipticCurves/Mathlib/FractionalIdeal.lean` at commit `66889eada51a` of the
-`MichaelStollBayreuth/EllipticCurves` repository (Apache 2.0).
 -/
 
 public section
-
-namespace TauCeti
-
-open IsDedekindDomain IsDedekindDomain.HeightOneSpectrum
-open scoped nonZeroDivisors
-
-variable {R : Type*} [CommRing R] [IsDedekindDomain R]
-
-/-- A height-one prime, regarded as an invertible fractional ideal. -/
-@[expose]
-noncomputable def unitOfPrime (K : Type*) [Field K] [Algebra R K] [IsFractionRing R K]
-    (v : HeightOneSpectrum R) : (FractionalIdeal R⁰ K)ˣ :=
-  Units.mk0 (v.asIdeal : FractionalIdeal R⁰ K) (FractionalIdeal.coeIdeal_ne_zero.mpr v.ne_bot)
-
-variable {K : Type*} [Field K] [Algebra R K] [IsFractionRing R K]
-
-/-- Only finitely many factors in the unit-level prime factorization are nontrivial. -/
-lemma finite_mulSupport_unitOfPrime_zpow (I : (FractionalIdeal R⁰ K)ˣ) :
-    (Function.mulSupport fun v : HeightOneSpectrum R ↦
-      unitOfPrime K v ^ FractionalIdeal.count K v (I : FractionalIdeal R⁰ K)).Finite := by
-  refine (Filter.eventually_cofinite.mp
-    (FractionalIdeal.finite_factors (I : FractionalIdeal R⁰ K))).subset fun v hv hc ↦ ?_
-  exact hv (by simp only [hc, zpow_zero])
-
-/-- Unique factorization of an invertible fractional ideal as a product of prime powers. -/
-lemma finprod_unitOfPrime_zpow_count (I : (FractionalIdeal R⁰ K)ˣ) :
-    I = ∏ᶠ v : HeightOneSpectrum R,
-      unitOfPrime K v ^ FractionalIdeal.count K v (I : FractionalIdeal R⁰ K) := by
-  -- State the map equation separately: rewriting would also affect the coercion inside `count`.
-  have hmap : ((∏ᶠ v : HeightOneSpectrum R,
-        unitOfPrime K v ^ FractionalIdeal.count K v (I : FractionalIdeal R⁰ K)) :
-        (FractionalIdeal R⁰ K)ˣ) =
-      ∏ᶠ v : HeightOneSpectrum R,
-        ((unitOfPrime K v ^ FractionalIdeal.count K v (I : FractionalIdeal R⁰ K) :
-          (FractionalIdeal R⁰ K)ˣ) : FractionalIdeal R⁰ K) :=
-    MonoidHom.map_finprod (Units.coeHom (FractionalIdeal R⁰ K))
-      (finite_mulSupport_unitOfPrime_zpow I)
-  refine Units.ext ?_
-  rw [hmap]
-  simp only [unitOfPrime, Units.val_zpow_eq_zpow_val, Units.val_mk0]
-  exact (FractionalIdeal.finprod_heightOneSpectrum_factorization' (K := K)
-    (I := (I : FractionalIdeal R⁰ K)) (Units.ne_zero I)).symm
-
-end TauCeti
 
 namespace Ideal
 
