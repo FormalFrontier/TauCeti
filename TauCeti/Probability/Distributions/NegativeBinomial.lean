@@ -242,6 +242,7 @@ theorem negativeBinomialMeasure_real_singleton {r p : ℝ} (hr : 0 ≤ r) (hp : 
 
 Thus the shape-zero and success-probability-one laws are supported only at zero, while positive
 shape and success probability strictly below one give positive mass to every natural number. -/
+@[simp]
 theorem negativeBinomialWeightReal_pos_iff {r p : ℝ} (hr : 0 ≤ r) (hp : 0 < p)
     (hp1 : p ≤ 1) (k : ℕ) :
     0 < negativeBinomialWeightReal r p k ↔ k = 0 ∨ (0 < r ∧ p < 1) := by
@@ -367,7 +368,8 @@ theorem negativeBinomialMeasure_conv_negativeBinomialMeasure {r s p : ℝ}
     have hbase : 0 < p / (1 - (1 - p) * t) := by
       apply div_pos hp
       exact sub_pos.mpr (lt_of_le_of_lt (le_abs_self _) hdom)
-    rw [Measure.pgf_conv _ _ ht_abs.le, pgf_negativeBinomialMeasure hr hp hp1 hdom,
+    rw [Measure.pgf_conv_of_abs_le_one _ _ ht_abs.le,
+      pgf_negativeBinomialMeasure hr hp hp1 hdom,
       pgf_negativeBinomialMeasure hs hp hp1 hdom,
       pgf_negativeBinomialMeasure (add_pos hr hs) hp hp1 hdom]
     exact (Real.rpow_add hbase r s).symm
