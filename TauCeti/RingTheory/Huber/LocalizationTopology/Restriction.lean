@@ -357,6 +357,160 @@ theorem restrictionRingHom_comp_restrictionRingHom (T''' : Finset A) (s''' : A) 
   rw [RingHom.comp_assoc, restrictionRingHom_comp_toCompletionLoc,
     restrictionRingHom_comp_toCompletionLoc]
 
+/-! ### Refining by enlarging the numerators -/
+
+section Subset
+
+variable (T' : Finset A) (S' : Type*) [CommRing S'] [Algebra A S'] [IsLocalization.Away s S']
+  (hden' : HasDenominatorPower P T' s S') (hTT' : ∀ u ∈ T, u ∈ T')
+
+/-- **The restriction map of a numerator enlargement.** A presentation `(T', s)` whose numerators
+contain those of `(T, s)` refines it with cofactor `1`, so
+`TauCeti.Huber.PairOfDefinition.restrictionRingHom` applies; this names the resulting map and
+discharges its side conditions. Adjoining a single numerator, `T' = insert t T`, is the case
+Wedhorn's Remark 7.55 chains; keeping `T'` abstract keeps `DecidableEq A` out of the API. -/
+noncomputable def restrictionRingHomOfSubset :
+    letI := locUniformSpace P T s S hden
+    letI := isUniformAddGroup_locUniformSpace P T s S hden
+    letI := isTopologicalRing_locUniformSpace P T s S hden
+    letI := locUniformSpace P T' s S' hden'
+    letI := isUniformAddGroup_locUniformSpace P T' s S' hden'
+    letI := isTopologicalRing_locUniformSpace P T' s S' hden'
+    UniformSpace.Completion S →+* UniformSpace.Completion S' :=
+  restrictionRingHom P T s S hden T' s S' hden' 1 (mul_one s).symm
+    fun u hu ↦ by simpa using hTT' u hu
+
+/-- The enlargement restriction map is continuous. -/
+theorem continuous_restrictionRingHomOfSubset :
+    letI := locUniformSpace P T s S hden
+    letI := isUniformAddGroup_locUniformSpace P T s S hden
+    letI := isTopologicalRing_locUniformSpace P T s S hden
+    letI := locUniformSpace P T' s S' hden'
+    letI := isUniformAddGroup_locUniformSpace P T' s S' hden'
+    letI := isTopologicalRing_locUniformSpace P T' s S' hden'
+    Continuous (restrictionRingHomOfSubset P T s S hden T' S' hden' hTT') :=
+  continuous_restrictionRingHom P T s S hden T' s S' hden' 1 (mul_one s).symm
+    fun u hu ↦ by simpa using hTT' u hu
+
+/-- **The enlargement restriction map commutes with the structure maps from `A`.** -/
+@[simp]
+theorem restrictionRingHomOfSubset_comp_toCompletionLoc :
+    letI := locUniformSpace P T s S hden
+    letI := isUniformAddGroup_locUniformSpace P T s S hden
+    letI := isTopologicalRing_locUniformSpace P T s S hden
+    letI := locUniformSpace P T' s S' hden'
+    letI := isUniformAddGroup_locUniformSpace P T' s S' hden'
+    letI := isTopologicalRing_locUniformSpace P T' s S' hden'
+    (restrictionRingHomOfSubset P T s S hden T' S' hden' hTT').comp (toCompletionLoc P T s S hden)
+      = toCompletionLoc P T' s S' hden' :=
+  restrictionRingHom_comp_toCompletionLoc P T s S hden T' s S' hden' 1 (mul_one s).symm
+    fun u hu ↦ by simpa using hTT' u hu
+
+/-- **The two properties determine the enlargement restriction map**, the specialisation of
+`TauCeti.Huber.PairOfDefinition.eq_restrictionRingHom`. -/
+theorem eq_restrictionRingHomOfSubset :
+    letI := locUniformSpace P T s S hden
+    letI := isUniformAddGroup_locUniformSpace P T s S hden
+    letI := isTopologicalRing_locUniformSpace P T s S hden
+    letI := locUniformSpace P T' s S' hden'
+    letI := isUniformAddGroup_locUniformSpace P T' s S' hden'
+    letI := isTopologicalRing_locUniformSpace P T' s S' hden'
+    ∀ g : UniformSpace.Completion S →+* UniformSpace.Completion S', Continuous g →
+      g.comp (toCompletionLoc P T s S hden) = toCompletionLoc P T' s S' hden' →
+      g = restrictionRingHomOfSubset P T s S hden T' S' hden' hTT' :=
+  eq_restrictionRingHom P T s S hden T' s S' hden' 1 (mul_one s).symm
+    fun u hu ↦ by simpa using hTT' u hu
+
+/-- **The restriction map carries `t/s` to `t/s`**, for every `t`. This is the fact the Laurent
+presentation of a refinement rests on; the numerator condition `t ∈ T'` is not needed here, only
+where power-boundedness of `t/s` is.
+
+Both structure maps from `A` commute with restriction, so `t` goes to `t` and `s` goes to `s`. The
+image of `s⁻¹` is then forced: `Units.map` carries the unit upstairs to the unit downstairs, and a
+unit determines its inverse. -/
+@[simp]
+theorem restrictionRingHomOfSubset_coe_divBy (t : A) :
+    letI := locUniformSpace P T s S hden
+    letI := isUniformAddGroup_locUniformSpace P T s S hden
+    letI := isTopologicalRing_locUniformSpace P T s S hden
+    letI := locUniformSpace P T' s S' hden'
+    letI := isUniformAddGroup_locUniformSpace P T' s S' hden'
+    letI := isTopologicalRing_locUniformSpace P T' s S' hden'
+    restrictionRingHomOfSubset P T s S hden T' S' hden' hTT'
+        ((divBy t s : S) : UniformSpace.Completion S)
+      = ((divBy t s : S') : UniformSpace.Completion S') := by
+  let _ := locUniformSpace P T s S hden
+  have _ := isUniformAddGroup_locUniformSpace P T s S hden
+  have _ := isTopologicalRing_locUniformSpace P T s S hden
+  let _ := locUniformSpace P T' s S' hden'
+  have _ := isUniformAddGroup_locUniformSpace P T' s S' hden'
+  have _ := isTopologicalRing_locUniformSpace P T' s S' hden'
+  have hu : IsUnit (toCompletionLoc P T s S hden s) :=
+    isUnit_toCompletionLoc_of_dvd P T s S hden dvd_rfl
+  have hu' : IsUnit (toCompletionLoc P T' s S' hden' s) :=
+    isUnit_toCompletionLoc_of_dvd P T' s S' hden' dvd_rfl
+  set φ := restrictionRingHomOfSubset P T s S hden T' S' hden' hTT' with hφdef
+  have hcomp : ∀ a, φ (toCompletionLoc P T s S hden a) = toCompletionLoc P T' s S' hden' a :=
+    fun a ↦ by
+      rw [hφdef, ← RingHom.comp_apply, restrictionRingHomOfSubset_comp_toCompletionLoc]
+  -- `Units.map φ` carries the unit upstairs to the unit downstairs, hence their inverses too
+  have hunit : Units.map (φ : _ →* _) hu.unit = hu'.unit :=
+    Units.ext (by simp only [Units.coe_map, MonoidHom.coe_coe, IsUnit.unit_spec, hcomp s])
+  have hinv : φ (↑hu.unit⁻¹) = ↑hu'.unit⁻¹ := by
+    rw [← hunit]
+    exact (Units.coe_map_inv _ _).symm
+  rw [← toCompletionLoc_mul_unit_inv_eq_divBy P T s S hden t hu,
+    ← toCompletionLoc_mul_unit_inv_eq_divBy P T' s S' hden' t hu',
+    map_mul, hcomp t, hinv]
+
+/-- **The identity law.** A presentation enlarges itself, and the map that gives is the identity. -/
+@[simp]
+theorem restrictionRingHomOfSubset_self :
+    letI := locUniformSpace P T s S hden
+    letI := isUniformAddGroup_locUniformSpace P T s S hden
+    letI := isTopologicalRing_locUniformSpace P T s S hden
+    restrictionRingHomOfSubset P T s S hden T S hden (fun _ hu ↦ hu)
+      = RingHom.id (UniformSpace.Completion S) :=
+  restrictionRingHom_self P T s S hden
+
+/-- **The composition law.** Enlargements compose, and the map of the composite is the composite of
+the maps. With `TauCeti.Huber.PairOfDefinition.restrictionRingHomOfSubset_self` this makes the
+assignment functorial along a chain of enlargements — the shape Wedhorn's Remark 7.55 produces. -/
+@[simp]
+theorem restrictionRingHomOfSubset_comp_restrictionRingHomOfSubset (T'' : Finset A) (S'' : Type*)
+    [CommRing S''] [Algebra A S''] [IsLocalization.Away s S'']
+    (hden'' : HasDenominatorPower P T'' s S'') (hT'T'' : ∀ u ∈ T', u ∈ T'') :
+    letI := locUniformSpace P T s S hden
+    letI := isUniformAddGroup_locUniformSpace P T s S hden
+    letI := isTopologicalRing_locUniformSpace P T s S hden
+    letI := locUniformSpace P T' s S' hden'
+    letI := isUniformAddGroup_locUniformSpace P T' s S' hden'
+    letI := isTopologicalRing_locUniformSpace P T' s S' hden'
+    letI := locUniformSpace P T'' s S'' hden''
+    letI := isUniformAddGroup_locUniformSpace P T'' s S'' hden''
+    letI := isTopologicalRing_locUniformSpace P T'' s S'' hden''
+    (restrictionRingHomOfSubset P T' s S' hden' T'' S'' hden'' hT'T'').comp
+        (restrictionRingHomOfSubset P T s S hden T' S' hden' hTT')
+      = restrictionRingHomOfSubset P T s S hden T'' S'' hden'' fun u hu ↦ hT'T'' u (hTT' u hu) := by
+  let _ := locUniformSpace P T s S hden
+  have _ := isUniformAddGroup_locUniformSpace P T s S hden
+  have _ := isTopologicalRing_locUniformSpace P T s S hden
+  let _ := locUniformSpace P T' s S' hden'
+  have _ := isUniformAddGroup_locUniformSpace P T' s S' hden'
+  have _ := isTopologicalRing_locUniformSpace P T' s S' hden'
+  let _ := locUniformSpace P T'' s S'' hden''
+  have _ := isUniformAddGroup_locUniformSpace P T'' s S'' hden''
+  have _ := isTopologicalRing_locUniformSpace P T'' s S'' hden''
+  -- the composite is continuous and agrees with the structure map, so uniqueness identifies it
+  refine eq_restrictionRingHomOfSubset P T s S hden T'' S'' hden''
+    (fun u hu ↦ hT'T'' u (hTT' u hu)) _ ?_ ?_
+  · exact (continuous_restrictionRingHomOfSubset P T' s S' hden' T'' S'' hden'' hT'T'').comp
+      (continuous_restrictionRingHomOfSubset P T s S hden T' S' hden' hTT')
+  · rw [RingHom.comp_assoc, restrictionRingHomOfSubset_comp_toCompletionLoc,
+      restrictionRingHomOfSubset_comp_toCompletionLoc]
+
+end Subset
+
 end PairOfDefinition
 
 end
