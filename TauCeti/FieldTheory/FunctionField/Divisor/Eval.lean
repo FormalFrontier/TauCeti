@@ -76,10 +76,6 @@ transported through every rewrite of `D` or `f`, and would block packaging `f(-)
 at all. Instead `Place.normResidueOrOne` is total, `eval` is a homomorphism outright, and
 `eval_eq_prod_normResidue` recovers the textbook formula where the hypothesis holds.
 
-Multiplicativity comes from `TauCeti.freeAbelianCharEquiv`: a divisor is a finitely supported
-integer combination of places, so a homomorphism out of it to a commutative group is exactly a
-choice of value at each place.
-
 ## References
 
 * [J. Silverman, *The Arithmetic of Elliptic Curves*][silverman2009], III.8 — evaluation of a
@@ -97,6 +93,9 @@ variable {k F : Type*} [Field k] [Field F] [Algebra k F]
 
 namespace Divisor
 
+-- Multiplicativity comes from `TauCeti.freeAbelianCharEquiv`: a divisor is a finitely supported
+-- integer combination of places, so a homomorphism out of it into a commutative group is exactly
+-- a choice of value at each place.
 /-- **Evaluation of a function on divisors**, as a homomorphism from the divisor group written
 multiplicatively. Being a homomorphism outright is what makes `eval_zero`, `eval_add`, `eval_neg`
 and `eval_sub` hypothesis-free. The classical-regime caveat on `TauCeti.Divisor.eval` applies here

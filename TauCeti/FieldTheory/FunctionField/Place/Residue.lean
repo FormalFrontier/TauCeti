@@ -49,15 +49,12 @@ not consume one — so the guarantee is recorded here rather than in the signatu
   `TauCeti.Place.normResidueOrOne_of_ord_ne_zero`: the two branches of the total extension.
 * The group laws in the function: `residueUnit_one`, `residueUnit_mul`, `residueUnit_inv` and
   their `normResidue` counterparts, together with `normResidueOrOne_one`, `normResidueOrOne_mul`
-  and `normResidueOrOne_inv` for the total form. Because `residueUnit` is the image of a
-  `MonoidHom`, the first three are `map_one`, `map_mul` and `map_inv`; the `normResidue` ones
-  compose that with `Algebra.normUnits`, itself a `MonoidHom`. Each of those takes the order
-  hypothesis of the *combined* function as an argument of its own, because that proof is what
+  and `normResidueOrOne_inv` for the total form. Each of the partial ones takes the order
+  hypothesis of the *combined* function as an argument of its own, since that proof is what
   indexes the left-hand side; the total form takes no such argument, which is what makes it the
-  form `TauCeti.Divisor.eval` is built on. Only the *total* form needs work, and only for the
-  product: `normResidueOrOne_mul` needs both factors admissible, while
-  `normResidueOrOne_inv` needs nothing, since `ord_P f⁻¹ = -ord_P f` vanishes exactly when
-  `ord_P f` does.
+  form `TauCeti.Divisor.eval` is built on. The total form is asymmetric:
+  `normResidueOrOne_mul` needs both factors admissible, while `normResidueOrOne_inv` needs
+  nothing, since `ord_P f⁻¹ = -ord_P f` vanishes exactly when `ord_P f` does.
 
 ## References
 
@@ -89,8 +86,10 @@ Being a unit is what makes the residue nonzero, which is what lets it be raised 
 power in `TauCeti.Divisor.eval`.
 
 This is Mathlib's `ValuationSubring.unitGroupToResidueFieldUnits` at the unit-group element `f`
-names, rather than a residue paired with a separate proof that it is nonzero. Being the image of
-a `MonoidHom` is what makes the group laws below `map_one`, `map_mul` and `map_inv`. -/
+names, rather than a residue paired with a separate proof that it is nonzero. -/
+-- Being the image of a `MonoidHom` is what makes the group laws below `map_one`, `map_mul` and
+-- `map_inv`, and the `normResidue` ones those composed with `Algebra.normUnits`, itself a
+-- `MonoidHom`.
 noncomputable def residueUnit (P : Place k F) (f : Fˣ) (hf : P.ord (f : F) = 0) :
     P.ResidueFieldˣ :=
   P.integers.unitGroupToResidueFieldUnits ⟨f, P.mem_unitGroup_of_ord_eq_zero hf⟩
