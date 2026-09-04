@@ -8,7 +8,7 @@ module
 public import Mathlib.Combinatorics.SimpleGraph.Copy
 public import Mathlib.SetTheory.Cardinal.Finite
 public import Mathlib.Basic.Real.Basic
-import Mathlib.Data.Fintype.CardEmbedding
+public import TauCeti.Combinatorics.SimpleGraph.Counting
 
 /-!
 # Homomorphism densities in a finite graph
@@ -170,45 +170,6 @@ theorem card_hom_eq_card_adjPreservingMaps :
     Nat.card (F →g G) = Nat.card {ψ : V → W // ∀ a b, F.Adj a b → G.Adj (ψ a) (ψ b)} :=
   Nat.card_congr (relHomEquivPreservingMaps F.Adj G.Adj)
 
-end DenseGraphLimits
-
-end TauCeti
-
-namespace SimpleGraph
-
-variable {V W : Type*} [Fintype V] [Fintype W]
-
-/-! ### Cardinality bounds for homomorphisms -/
-
-/-- The number of homomorphisms from `F` to `G` is bounded by the number of vertex maps. -/
-theorem card_hom_le (F : SimpleGraph V) (G : SimpleGraph W) :
-    Nat.card (F →g G) ≤ Fintype.card W ^ Fintype.card V := by
-  classical
-  calc Nat.card (F →g G) ≤ Nat.card (V → W) :=
-        Nat.card_le_card_of_injective (fun φ => (φ : V → W))
-          (fun a b h => by ext x; exact congrFun h x)
-    _ = Fintype.card W ^ Fintype.card V := by rw [Nat.card_eq_fintype_card, Fintype.card_fun]
-
-/-- The number of injective homomorphisms from `F` to `G` is bounded by the number of embeddings
-of the vertex types. -/
-theorem card_injective_hom_le (F : SimpleGraph V) (G : SimpleGraph W) :
-    Nat.card {φ : F →g G // Function.Injective φ}
-      ≤ (Fintype.card W).descFactorial (Fintype.card V) := by
-  classical
-  calc Nat.card {φ : F →g G // Function.Injective φ} ≤ Nat.card (V ↪ W) :=
-        Nat.card_le_card_of_injective (fun φ => ⟨(φ.1 : V → W), φ.2⟩)
-          (fun a b h => by
-            ext x; exact congrFun (congrArg (fun e : V ↪ W => (e : V → W)) h) x)
-    _ = (Fintype.card W).descFactorial (Fintype.card V) := by
-        rw [Nat.card_eq_fintype_card, Fintype.card_embedding_eq]
-
-end SimpleGraph
-
-namespace TauCeti
-
-namespace DenseGraphLimits
-
-variable {V W : Type*} [Fintype V] [Fintype W]
 variable (F : SimpleGraph V) (G : SimpleGraph W)
 
 /-! ### Both densities lie in `[0, 1]` -/
