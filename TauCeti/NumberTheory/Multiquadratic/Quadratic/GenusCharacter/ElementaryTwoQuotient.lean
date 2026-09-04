@@ -31,13 +31,11 @@ The construction follows the genus-character treatment in Cox, *Primes of the Fo
 
 ## Main results
 
-* `genusCharFunNarrowClassGroupHom_eq_prod_singleton`: a subset-indexed narrow genus character is
-  the product of its singleton characters.
 * `genusCharFunElementaryTwoQuotientLinearMap`: the genus character as a linear functional on
   `Cl⁺(K) / Cl⁺(K)²`.
 * `genusCharFunElementaryTwoQuotientFamilyLinearMap`: the linear map collecting all singleton
   genus characters.
-* `genusCharFunElementaryTwoQuotientLinearMap_apply_eq_sum_singleton`: a subset character is the
+* `genusCharFunElementaryTwoQuotientLinearMap_eq_sum_singleton`: a subset character is the
   sum of its singleton linear functionals.
 -/
 
@@ -51,54 +49,6 @@ namespace TauCeti.Multiquadratic
 open NumberField
 
 variable {K : Type*} [Field K] [NumberField K] {θ : 𝓞 K} {d : ℤ}
-
-/-- A genus character indexed by a set `t` of prime discriminants is the product of the
-characters indexed by the singletons in `t`.
-
-Although this is immediate for the arithmetic function `genusCharFun`, the narrow-class-group
-characters are defined using coprime representatives. The statement records that their descent
-preserves the same product decomposition. -/
-theorem genusCharFunNarrowClassGroupHom_eq_prod_singleton
-    {s t : Finset ℤ} (hs : ∀ P ∈ s, IsPrimeDiscriminant P)
-    (heven : ∀ P ∈ s, ∀ P' ∈ s,
-      IsEvenPrimeDiscriminant P → IsEvenPrimeDiscriminant P' → P = P')
-    (hprod : ∏ P ∈ s, P = fundamentalDiscriminant d)
-    (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
-    (hsf : Squarefree d) (hts : t ⊆ s) (A : NumberField.NarrowClassGroup K) :
-    genusCharFunNarrowClassGroupHom hs heven hprod hmin hgen hsf hts A =
-      ∏ P : ↥t, genusCharFunNarrowClassGroupHom hs heven hprod hmin hgen hsf
-        (Finset.singleton_subset_iff.mpr (hts P.2)) A := by
-  have hm : (∏ P ∈ t, P) ≠ 0 := by
-    rw [Finset.prod_ne_zero_iff]
-    intro P hP
-    exact (hs P (hts hP)).isFundamentalDiscriminant.ne_zero
-  obtain ⟨I, hIA, hIcop⟩ :=
-    NumberField.NarrowClassGroup.exists_mk0_eq_and_isCoprime_absNorm A hm
-  let It : genusCharFunCoprimeIdealSubmonoid (K := K) t := ⟨I, by
-    simpa only [mem_genusCharFunCoprimeIdealSubmonoid_iff] using hIcop⟩
-  rw [← hIA]
-  -- `It` and `I` carry the same ideal; expose that equality to use the quotient computation rule.
-  rw [← show NumberField.NarrowClassGroup.mk0 It.1 =
-      NumberField.NarrowClassGroup.mk0 I from rfl,
-    genusCharFunNarrowClassGroupHom_mk0]
-  apply Units.ext
-  rw [genusCharFunCoprimeIdealHom_apply, genusCharFun_def, Units.coe_prod]
-  -- Coercing the product of unit-valued characters leaves a product of their integer values.
-  change _ = ∏ P : ↥t,
-    ((genusCharFunNarrowClassGroupHom hs heven hprod hmin hgen hsf
-      (Finset.singleton_subset_iff.mpr (hts P.2))
-      (NumberField.NarrowClassGroup.mk0 It.1) : ℤˣ) : ℤ)
-  rw [Finset.prod_subtype t (fun _ => Iff.rfl)]
-  apply Finset.prod_congr rfl
-  intro P _
-  let IP : genusCharFunCoprimeIdealSubmonoid (K := K) {P.1} := ⟨I, by
-    rw [mem_genusCharFunCoprimeIdealSubmonoid_iff]
-    simpa using (IsCoprime.prod_right_iff.mp hIcop) P P.2⟩
-  -- `IP` only equips the same ideal with the weaker singleton coprimality property.
-  rw [show NumberField.NarrowClassGroup.mk0 I =
-      NumberField.NarrowClassGroup.mk0 IP.1 from rfl,
-    genusCharFunNarrowClassGroupHom_mk0, genusCharFunCoprimeIdealHom_apply,
-    genusCharFun_singleton]
 
 /-- The genus character as a `ZMod 2`-linear functional on the maximal elementary-2 quotient
 `Cl⁺(K) / Cl⁺(K)²` of the narrow class group.
@@ -167,21 +117,23 @@ singleton prime discriminant. -/
 
 /-- The linear functional of a subset-indexed genus character is the sum of the singleton
 functionals indexed by that subset. -/
-theorem genusCharFunElementaryTwoQuotientLinearMap_apply_eq_sum_singleton
+theorem genusCharFunElementaryTwoQuotientLinearMap_eq_sum_singleton
     {s t : Finset ℤ} (hs : ∀ P ∈ s, IsPrimeDiscriminant P)
     (heven : ∀ P ∈ s, ∀ P' ∈ s,
       IsEvenPrimeDiscriminant P → IsEvenPrimeDiscriminant P' → P = P')
     (hprod : ∏ P ∈ s, P = fundamentalDiscriminant d)
     (hmin : minpoly ℤ θ = X ^ 2 - C d) (hgen : Algebra.adjoin ℚ {(θ : K)} = ⊤)
-    (hsf : Squarefree d) (hts : t ⊆ s)
-    (x : NumberField.NarrowClassGroup.ElementaryTwoQuotient K) :
-    genusCharFunElementaryTwoQuotientLinearMap hs heven hprod hmin hgen hsf hts x =
+    (hsf : Squarefree d) (hts : t ⊆ s) :
+    genusCharFunElementaryTwoQuotientLinearMap hs heven hprod hmin hgen hsf hts =
       ∑ P : ↥t, genusCharFunElementaryTwoQuotientLinearMap
-        hs heven hprod hmin hgen hsf (Finset.singleton_subset_iff.mpr (hts P.2)) x := by
+        hs heven hprod hmin hgen hsf (Finset.singleton_subset_iff.mpr (hts P.2)) := by
+  apply LinearMap.ext
+  intro x
   obtain ⟨A, rfl⟩ := TauCeti.elementaryTwoQuotientMk_surjective
     (G := NumberField.NarrowClassGroup K) x
   apply Additive.toMul.injective
-  simpa using genusCharFunNarrowClassGroupHom_eq_prod_singleton
-    hs heven hprod hmin hgen hsf hts A
+  simpa using DFunLike.congr_fun
+    (genusCharFunNarrowClassGroupHom_eq_prod_singleton
+      hs heven hprod hmin hgen hsf hts) A
 
 end TauCeti.Multiquadratic
