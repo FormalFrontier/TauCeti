@@ -92,12 +92,9 @@ theorem singleBlockedSpecialization_single {n : ℕ} (R : Type*) [CommSemiring R
       Finsupp.single x
         (MvPolynomial.killCompl (f := Subtype.val) Subtype.val_injective a) := by
   classical
-  apply Finsupp.ext
-  intro y
-  rw [singleBlockedSpecialization_apply, Finsupp.single_apply, Finsupp.single_apply]
-  split
-  · rfl
-  · exact map_zero _
+  rw [singleBlockedSpecialization, Finsupp.mapRange.linearMap_apply,
+    Finsupp.mapRange_single, RingHom.coe_toSemilinearMap]
+  congr 1
 
 namespace GridDiagram
 
