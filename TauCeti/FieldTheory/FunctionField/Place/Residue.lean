@@ -159,10 +159,6 @@ theorem normResidue_mul {P : Place k F} {f g : Fˣ} (hf : P.ord (f : F) = 0)
       = P.normResidue f hf * P.normResidue g hg := by
   rw [normResidue, normResidue, normResidue, residueUnit_mul hf hg, map_mul]
 
-/-- The order of the constant `1` is zero at every place, so `1` is admissible everywhere. -/
-theorem ord_one_units (P : Place k F) : P.ord ((1 : Fˣ) : F) = 0 := by
-  rw [Units.val_one, P.ord_one]
-
 /-- `ord_P f⁻¹ = -ord_P f`, so admissibility is invariant under inversion. -/
 theorem ord_inv_eq_zero {P : Place k F} {f : Fˣ} (hf : P.ord (f : F) = 0) :
     P.ord ((f⁻¹ : Fˣ) : F) = 0 := by
@@ -205,7 +201,8 @@ theorem normResidueOrOne_mul {P : Place k F} {f g : Fˣ} (hf : P.ord (f : F) = 0
 theorem normResidueOrOne_one (P : Place k F) : P.normResidueOrOne (1 : Fˣ) = 1 := by
   -- read off multiplicativity at `f = g = 1` rather than from the residue: `a = a * a` in a
   -- group forces `a = 1`, which avoids all of the subtype-coercion work
-  have h := normResidueOrOne_mul (P := P) (f := 1) (g := 1) P.ord_one_units P.ord_one_units
+  have h1 : P.ord ((1 : Fˣ) : F) = 0 := by simp
+  have h := normResidueOrOne_mul (P := P) (f := 1) (g := 1) h1 h1
   rw [one_mul] at h
   exact right_eq_mul.1 h
 

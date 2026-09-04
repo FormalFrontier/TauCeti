@@ -190,7 +190,7 @@ theorem IsUnitAtSupport.sub {D E : Divisor k F} {f : Fˣ} (hD : IsUnitAtSupport 
 -- kept as named lemmas because they are the closure facts a term-mode proof reaches for.
 /-- `1` is admissible for every divisor. -/
 theorem isUnitAtSupport_one (D : Divisor k F) : IsUnitAtSupport D (1 : Fˣ) :=
-  fun P _ ↦ P.ord_one_units
+  fun _ _ ↦ by simp
 
 /-- Admissibility is closed under products of functions. -/
 theorem IsUnitAtSupport.mul {D : Divisor k F} {f g : Fˣ} (hf : IsUnitAtSupport D f)
