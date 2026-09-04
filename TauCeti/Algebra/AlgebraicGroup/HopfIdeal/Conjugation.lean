@@ -156,6 +156,14 @@ theorem conjugateOrderIso_symm_apply
   apply (conjugateOrderIso g).injective
   rw [OrderIso.apply_symm_apply, conjugateOrderIso_apply, conjugate_inv_conjugate]
 
+/-- Conjugation by a rational point reflects inclusion of defining Hopf ideals. -/
+@[simp]
+theorem conjugate_le_conjugate_iff (I J : HopfIdeal R H)
+    (g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R)) :
+    I.conjugate g ≤ J.conjugate g ↔ I ≤ J := by
+  simpa only [conjugateOrderIso_apply] using
+    (conjugateOrderIso g).le_iff_le (x := I) (y := J)
+
 end HopfIdeal
 
 end TauCeti

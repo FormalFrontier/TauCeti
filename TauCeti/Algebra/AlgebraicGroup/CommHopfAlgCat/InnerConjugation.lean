@@ -66,7 +66,8 @@ theorem innerConjugationPointIso_hom_apply
     (A : CommAlgCat.{v} R) (x : HopfAlgebra.points (R := R) (H := H) A) :
     (innerConjugationPointIso H g A).hom x =
       extendPoint H A g * x * (extendPoint H A g)⁻¹ := by
-  rfl
+  change MulAut.conj (extendPoint H A g) x = _
+  exact MulAut.conj_apply (extendPoint H A g) x
 
 /-- The inverse inner-conjugation map is conjugation by the inverse of the extended point. -/
 @[simp]
@@ -75,7 +76,8 @@ theorem innerConjugationPointIso_inv_apply
     (A : CommAlgCat.{v} R) (x : HopfAlgebra.points (R := R) (H := H) A) :
     (innerConjugationPointIso H g A).inv x =
       (extendPoint H A g)⁻¹ * x * extendPoint H A g := by
-  rfl
+  change (MulAut.conj (extendPoint H A g)).symm x = _
+  exact MulAut.conj_symm_apply (extendPoint H A g) x
 
 /-- Conjugation by a rational point, naturally on the full functor of points. -/
 noncomputable def innerConjugationPointNatIso
@@ -136,7 +138,9 @@ theorem innerConjugationPointNatIso_one :
   intro A x
   rw [innerConjugationPointNatIso_hom_app_apply]
   simp only [map_one, inv_one, one_mul, mul_one]
-  exact Eq.refl _
+  -- The component of the identity natural isomorphism is the identity `GrpCat` morphism.
+  change x = (𝟙 (HopfAlgebra.points (R := R) (H := H) A)) x
+  exact (GrpCat.id_apply _ x).symm
 
 /-- Conjugation by a product is successive conjugation, first by the second point and then by the
 first. -/
@@ -159,7 +163,7 @@ theorem innerConjugationPointNatIso_mul
 
 /-- Conjugation by an inverse point is inverse to conjugation by the original point. -/
 @[simp]
-theorem innerConjugationPointNatIso_inv_point
+theorem innerConjugationPointNatIso_inv
     (g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R)) :
     innerConjugationPointNatIso H g⁻¹ = (innerConjugationPointNatIso H g).symm := by
   apply pointNatIso_ext
@@ -218,12 +222,12 @@ theorem innerConjugationIso_mul
 /-- The coordinate automorphism for conjugation by an inverse point is the inverse coordinate
 automorphism. -/
 @[simp]
-theorem innerConjugationIso_inv_point
+theorem innerConjugationIso_inv
     (g : HopfAlgebra.points (R := R) (H := H) (CommAlgCat.of R R)) :
     innerConjugationIso H g⁻¹ = (innerConjugationIso H g).symm := by
   apply Iso.ext
   rw [innerConjugationIso_hom_def, Iso.symm_hom, innerConjugationIso_inv_def,
-    innerConjugationPointNatIso_inv_point, Iso.symm_hom]
+    innerConjugationPointNatIso_inv, Iso.symm_hom]
 
 /-- The coordinate algebra map of inner conjugation is obtained from the universal conjugation
 map by evaluating its conjugating variable at the given rational point. -/
@@ -297,7 +301,7 @@ theorem mapPointsFunctor_innerConjugationIso_inv_app_apply
     (A : CommAlgCat.{v} R) (x : HopfAlgebra.points (R := R) (H := H) A) :
     (mapPointsFunctor (innerConjugationIso H g).inv).app A x =
       (extendPoint H A g)⁻¹ * x * extendPoint H A g := by
-  rw [← Iso.symm_hom, ← innerConjugationIso_inv_point,
+  rw [← Iso.symm_hom, ← innerConjugationIso_inv,
     mapPointsFunctor_innerConjugationIso_hom_app_apply, map_inv, inv_inv]
 
 end TauCeti.CommHopfAlgCat
