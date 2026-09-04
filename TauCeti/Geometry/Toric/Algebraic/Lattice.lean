@@ -159,7 +159,7 @@ theorem IsIntegralLattice.finrank_eq (i : N →+ V) (h : IsIntegralLattice i) :
 variable {V₀ : Type w} [NormedAddCommGroup V₀] [NormedSpace ℝ V₀]
 
 /-- Helper with the instances needed by the Mathlib discreteness theorem. -/
-private theorem isDiscrete_range_of_instances [Module.Free ℤ N] [Module.Finite ℤ N]
+private theorem isDiscrete_range_of_instances [Module.Finite ℤ N]
     (i : N →+ V₀) (h : IsIntegralLattice i) :
     IsDiscrete (Set.range i) := by
   let b := IsIntegralLattice.realBasis i h
@@ -172,7 +172,7 @@ private theorem isDiscrete_range_of_instances [Module.Free ℤ N] [Module.Finite
 theorem IsIntegralLattice.isDiscrete_range (i : N →+ V₀)
     (h : IsIntegralLattice i) :
     IsDiscrete (Set.range i) :=
-  @isDiscrete_range_of_instances N _ V₀ _ _ h.free h.finite i h
+  @isDiscrete_range_of_instances N _ V₀ _ _ h.finite i h
 
 /-- A real-linear map carrying one integral lattice into another commutes with their lattice
 vectors, after applying the corresponding integral additive map. -/
