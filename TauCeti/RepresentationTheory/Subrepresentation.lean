@@ -281,6 +281,17 @@ noncomputable def prodEquivOfIsCompl {ρ₁ ρ₂ : Subrepresentation ρ} (h : I
     fun g => LinearMap.ext fun v => by
       simp [toRepresentation_apply]).symm
 
+/-- The splitting is the linear splitting `Submodule.prodEquivOfIsCompl` of the two carriers, read
+backwards: it sends a vector to the pair of its components along the complementary submodules. -/
+@[simp]
+theorem prodEquivOfIsCompl_apply {ρ₁ ρ₂ : Subrepresentation ρ} (h : IsCompl ρ₁ ρ₂) (v : W) :
+    prodEquivOfIsCompl h v =
+      (Submodule.prodEquivOfIsCompl ρ₁.toSubmodule ρ₂.toSubmodule
+        (isCompl_toSubmodule.mpr h)).symm v :=
+  -- `(rfl)`, not `rfl`: the body of `prodEquivOfIsCompl` is not `@[expose]`d, so this must not be
+  -- inferred `@[defeq]`.
+  (rfl)
+
 /-- The inverse of the splitting adds the two components back together. -/
 @[simp]
 theorem prodEquivOfIsCompl_symm_apply {ρ₁ ρ₂ : Subrepresentation ρ} (h : IsCompl ρ₁ ρ₂)

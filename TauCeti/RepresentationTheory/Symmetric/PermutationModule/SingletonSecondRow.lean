@@ -123,6 +123,7 @@ theorem permutationModuleSingletonSecondRowIso_inv_hom_single (n : ℕ) (x : Fin
 
 /-- **The Young permutation module of `(n+1, 1)` has dimension `n+2`**, the number of points,
 rather than the multinomial coefficient `(n+2)! / (n+1)!` in the shape it is presented by. -/
+@[simp]
 theorem finrank_permutationModule_singletonSecondRow (n : ℕ) :
     Module.finrank ℚ (permutationModule (Nat.Partition.singletonSecondRow n)).V = n + 2 := by
   rw [(Representation.equivOfIso
