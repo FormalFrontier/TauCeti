@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-public import Mathlib.GroupTheory.Perm.Basic
 public import Mathlib.Data.Fintype.Perm
 public import Mathlib.Data.Fintype.Prod
 
@@ -17,7 +16,6 @@ triple records the monodromies around `0`, `1`, and `∞`; the product relation 
 that their ordered product is trivial.  The two-component constructor and the finite carrier
 equivalence make the data convenient for both structural arguments and enumeration.
 
-The formal prototype for this module is `TauCetiRoadmap/BelyiMaps/Suggested.lean`.
 -/
 
 public section
@@ -41,18 +39,20 @@ namespace PermutationTriple
 variable {n : ℕ}
 
 /-- Construct a permutation triple from its first two monodromies. -/
-@[expose] def ofTwo (σ0 σ1 : Equiv.Perm (Fin n)) : PermutationTriple n where
+def ofTwo (σ0 σ1 : Equiv.Perm (Fin n)) : PermutationTriple n where
   σ0 := σ0
   σ1 := σ1
   σinf := (σ1 * σ0)⁻¹
   product_eq_one := by simp [mul_assoc]
 
-@[simp] theorem ofTwo_σ0 (σ0 σ1 : Equiv.Perm (Fin n)) : (ofTwo σ0 σ1).σ0 = σ0 := rfl
+@[simp] theorem ofTwo_σ0 (σ0 σ1 : Equiv.Perm (Fin n)) : (ofTwo σ0 σ1).σ0 = σ0 :=
+  (rfl)
 
-@[simp] theorem ofTwo_σ1 (σ0 σ1 : Equiv.Perm (Fin n)) : (ofTwo σ0 σ1).σ1 = σ1 := rfl
+@[simp] theorem ofTwo_σ1 (σ0 σ1 : Equiv.Perm (Fin n)) : (ofTwo σ0 σ1).σ1 = σ1 :=
+  (rfl)
 
 @[simp] theorem ofTwo_σinf (σ0 σ1 : Equiv.Perm (Fin n)) :
-    (ofTwo σ0 σ1).σinf = (σ1 * σ0)⁻¹ := rfl
+    (ofTwo σ0 σ1).σinf = (σ1 * σ0)⁻¹ := (rfl)
 
 /-- The third monodromy is determined by the first two. -/
 theorem σinf_eq (t : PermutationTriple n) : t.σinf = (t.σ1 * t.σ0)⁻¹ := by
@@ -76,7 +76,7 @@ def equivPair (n : ℕ) : PermutationTriple n ≃
   right_inv _ := rfl
 
 /-- Transport a permutation triple along an equivalence of its degree sets. -/
-@[expose] def transport {m : ℕ} (e : Fin n ≃ Fin m) :
+def transport {m : ℕ} (e : Fin n ≃ Fin m) :
     PermutationTriple n ≃ PermutationTriple m where
   toFun t :=
     { σ0 := e.permCongrHom t.σ0
@@ -104,13 +104,24 @@ def equivPair (n : ℕ) : PermutationTriple n ≃
       simp [Equiv.permCongr_def]
 
 @[simp] theorem transport_σ0 {m : ℕ} (e : Fin n ≃ Fin m) (t : PermutationTriple n) :
-    (transport e t).σ0 = e.permCongrHom t.σ0 := rfl
+    (transport e t).σ0 = e.permCongrHom t.σ0 := (rfl)
 
 @[simp] theorem transport_σ1 {m : ℕ} (e : Fin n ≃ Fin m) (t : PermutationTriple n) :
-    (transport e t).σ1 = e.permCongrHom t.σ1 := rfl
+    (transport e t).σ1 = e.permCongrHom t.σ1 := (rfl)
 
 @[simp] theorem transport_σinf {m : ℕ} (e : Fin n ≃ Fin m) (t : PermutationTriple n) :
-    (transport e t).σinf = e.permCongrHom t.σinf := rfl
+    (transport e t).σinf = e.permCongrHom t.σinf := (rfl)
+
+/-- Transporting along the identity equivalence does nothing. -/
+@[simp] theorem transport_refl (t : PermutationTriple n) :
+    transport (Equiv.refl (Fin n)) t = t := by
+  apply ext_of_two <;> ext x <;> simp
+
+/-- Transport is functorial in the equivalence of degree sets. -/
+@[simp] theorem transport_trans {m k : ℕ} (e₁ : Fin n ≃ Fin m) (e₂ : Fin m ≃ Fin k)
+    (t : PermutationTriple n) :
+    transport e₂ (transport e₁ t) = transport (e₁.trans e₂) t := by
+  apply ext_of_two <;> ext x <;> simp [Equiv.permCongr_def]
 
 /-- The triple carrier is finite because its first two components are finite. -/
 instance : Fintype (PermutationTriple n) :=
@@ -150,6 +161,7 @@ theorem σ1_mul_σ0_mul_σinf_eq_one (t : PermutationTriple n) :
   simp [t.σinf_eq, mul_assoc]
 
 /-- The reverse convention for permutation triples uses the opposite multiplication order. -/
+@[ext]
 structure ReversePermutationTriple (n : ℕ) where
   /-- The component labelled `0`. -/
   σ0 : Equiv.Perm (Fin n)
@@ -160,8 +172,22 @@ structure ReversePermutationTriple (n : ℕ) where
   /-- The reverse ordered product is trivial. -/
   product_eq_one : σ0 * σ1 * σinf = 1
 
+/-- The third monodromy of a reverse triple is determined by the first two. -/
+theorem ReversePermutationTriple.σinf_eq (t : ReversePermutationTriple n) :
+    t.σinf = (t.σ0 * t.σ1)⁻¹ := by
+  apply eq_inv_of_mul_eq_one_right
+  simpa [mul_assoc] using t.product_eq_one
+
+/-- Equality of reverse triples is determined by equality of their first two monodromies. -/
+@[ext] theorem ReversePermutationTriple.ext_of_two {t t' : ReversePermutationTriple n}
+    (h0 : t.σ0 = t'.σ0) (h1 : t.σ1 = t'.σ1) : t = t' := by
+  apply ReversePermutationTriple.ext
+  · exact h0
+  · exact h1
+  · rw [t.σinf_eq, t'.σinf_eq, h0, h1]
+
 /-- Inverting all components translates between the two product conventions. -/
-@[expose] def invComponents : PermutationTriple n ≃ ReversePermutationTriple n where
+def invComponents : PermutationTriple n ≃ ReversePermutationTriple n where
   toFun t :=
     { σ0 := t.σ0⁻¹
       σ1 := t.σ1⁻¹
@@ -180,13 +206,22 @@ structure ReversePermutationTriple (n : ℕ) where
   right_inv t := by cases t; simp
 
 @[simp] theorem invComponents_σ0 (t : PermutationTriple n) :
-    (invComponents t).σ0 = t.σ0⁻¹ := rfl
+    (invComponents t).σ0 = t.σ0⁻¹ := (rfl)
 
 @[simp] theorem invComponents_σ1 (t : PermutationTriple n) :
-    (invComponents t).σ1 = t.σ1⁻¹ := rfl
+    (invComponents t).σ1 = t.σ1⁻¹ := (rfl)
 
 @[simp] theorem invComponents_σinf (t : PermutationTriple n) :
-    (invComponents t).σinf = t.σinf⁻¹ := rfl
+    (invComponents t).σinf = t.σinf⁻¹ := (rfl)
+
+@[simp] theorem invComponents_symm_σ0 (t : ReversePermutationTriple n) :
+    (invComponents.symm t).σ0 = t.σ0⁻¹ := (rfl)
+
+@[simp] theorem invComponents_symm_σ1 (t : ReversePermutationTriple n) :
+    (invComponents.symm t).σ1 = t.σ1⁻¹ := (rfl)
+
+@[simp] theorem invComponents_symm_σinf (t : ReversePermutationTriple n) :
+    (invComponents.symm t).σinf = t.σinf⁻¹ := (rfl)
 
 end PermutationTriple
 
