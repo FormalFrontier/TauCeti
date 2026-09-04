@@ -6,8 +6,8 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Geometry.Manifold.Riemannian.Geodesic.Basic
+public import TauCeti.Geometry.Manifold.IntegralCurve.Basic
 public import TauCeti.Geometry.Manifold.VectorBundle.CurveInTotalSpace
-public import Mathlib.Geometry.Manifold.IntegralCurve.Basic
 import TauCeti.Geometry.Manifold.VectorBundle.CovariantDerivative.CoordinateChange
 
 /-!
@@ -461,17 +461,6 @@ theorem isMIntegralCurveOn_curveVelocityLiftWithin_const (hs : UniqueDiffOn ℝ 
   (isMIntegralCurveOn_curveVelocityLiftWithin_iff hs contMDiffOn_const).2
     (isGeodesicCurveOn_const hs x)
 
-/-- Being an integral curve of the geodesic spray on a parameter set only depends on the curve
-along that set. -/
-theorem isMIntegralCurveOn_geodesicSpray_congr {z z' : ℝ → TangentBundle I M}
-    (h : IsMIntegralCurveOn z (geodesicSpray I M) s) (heq : EqOn z' z s) :
-    IsMIntegralCurveOn z' (geodesicSpray I M) s := by
-  intro r hr
-  refine ((h r hr).congr_of_eventuallyEq
-    (Filter.eventuallyEq_of_mem self_mem_nhdsWithin heq) (heq hr)).congr_mfderiv ?_
-  exact congrArg (fun w : E × E ↦ (1 : ℝ →L[ℝ] ℝ).smulRight w)
-    (congrArg (fun w ↦ (geodesicSpray I M w : E × E)) (heq hr).symm)
-
 /-- **An integral curve of the spray is a velocity lift.**  On a parameter set with unique
 derivatives, an integral curve of the geodesic spray is the velocity lift of the curve it lies
 over. -/
@@ -499,7 +488,7 @@ theorem isGeodesicCurveOn_proj_of_isMIntegralCurveOn {z : ℝ → TangentBundle 
     (hz : ContMDiffOn 𝓘(ℝ, ℝ) I 2 (fun r ↦ (z r).proj) s) :
     IsGeodesicCurveOn I (fun r ↦ (z r).proj) s :=
   (isMIntegralCurveOn_curveVelocityLiftWithin_iff hs hz).1
-    (isMIntegralCurveOn_geodesicSpray_congr h fun _r hr ↦
+    (h.congr fun _r hr ↦
       (eq_curveVelocityLiftWithin_of_isMIntegralCurveOn hs h hr).symm)
 
 /-! ### All-time geodesics and the spray -/
