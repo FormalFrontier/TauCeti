@@ -6,7 +6,6 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Category.ModuleCat.Sheaf.Invertible.Restriction
-public import TauCeti.Algebra.Category.ModuleCat.Sheaf.Invertible.TensorProduct
 public import TauCeti.Algebra.Category.ModuleCat.Sheaf.TensorProduct.Restriction
 public import TauCeti.CategoryTheory.Sites.CoversTop
 
@@ -25,10 +24,9 @@ trivial by the tensor-unit isomorphisms.
 * `SheafOfModules.IsInvertible.tensorProduct` proves closure of invertible sheaves under tensor
   product.
 
-This completes the tensor-product closure part of Layer A of the Jacobian challenge. Duals,
-associativity, and the group of isomorphism classes remain subsequent parts of the Picard-group
-construction. No formalization is vendored: the argument uses the common-refinement construction
-and the restriction/tensor-unit isomorphisms already in Tau Ceti.
+The common-refinement construction makes the local trivializations of the two factors compatible
+on one cover, and the tensor-unit isomorphisms then give the local trivializations of the tensor
+product.
 -/
 
 public section
