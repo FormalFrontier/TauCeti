@@ -39,10 +39,13 @@ table asks of an untwisted family and what `TauCeti.TypeB2LieIndex.diagramPerm_t
 checks: the diagram permutation the index carries is trivial, the `B₂` diagram having no symmetry to
 twist by. On the Suzuki branch it is instead `τ ^ (2m+1)` for the special isogeny `τ` of the pinned
 `B₂` group scheme in characteristic two, which milestone L2 consumes from Layer 9 of the
-reductive-groups roadmap and does not build; what this file supplies towards it is the second factor
-of the relation `τ ^ 2 = Frob_p` that identifies `τ`. Either way the map below is the `q`-power
-Frobenius, at the field order the index records, on the very carrier those fixed points will be
-taken in. A Suzuki index reaches all of it through `TauCeti.SuzukiLieIndex.toRankTwoBLieIndex`.
+reductive-groups roadmap and does not build. That `τ` is identified by the relation
+`τ ^ 2 = Frob_p` in the prime characteristic, and `Frob_p` is not the map supplied here: validity
+forces `1 ≤ m`, so the field order `q = 2 ^ (2m+1)` the index records is larger than the prime.
+What this file supplies is `Frob_q`, the map the odd power `τ ^ (2m+1)` squares to. Either way the
+map below is the `q`-power Frobenius at the field order the index records, on this carrier, which
+becomes the carrier those fixed points are taken in only along the Layer 9 identification described
+below. A Suzuki index reaches all of it through `TauCeti.SuzukiLieIndex.toRankTwoBLieIndex`.
 
 Neither branch gets a Steinberg map or a milestone L3 quotient here, and neither gets a candidate
 simple group. Milestone L1 asks for the Steinberg endomorphism of the points of the *pinned* simply
@@ -184,11 +187,11 @@ theorem rootGeneratorWeight_carrierNode_eq_root_simpleIndex (ht : (B 2).Valid)
 /-! ## The Frobenius endomorphism -/
 
 /-- **The `q`-power Frobenius endomorphism of the ambient group of an index on the `B₂` diagram**,
-for `q` the field order the index records. It is the map from which the Steinberg endomorphism of
-either family on this diagram is built once the milestone L0 carrier is available: on the untwisted
-family `B₂(q)` that endomorphism is the `q`-power Frobenius outright, and on the Suzuki family it is
-the odd power `τ ^ (2m+1)` of the special isogeny, whose square is the Frobenius. Neither is formed
-here. -/
+for `q` the field order the index records. The map the Steinberg endomorphism of either family on
+this diagram is built from is its counterpart on the milestone L0 carrier: on the untwisted family
+`B₂(q)` that endomorphism is the `q`-power Frobenius outright, and on the Suzuki family it is the
+odd power `τ ^ (2m+1)` of the special isogeny, the map that odd power squares to being the
+`q`-power Frobenius. Neither is formed here. -/
 def frobenius : d.AmbientGroup →* d.AmbientGroup :=
   SpStd.frobenius 1 d.1.characteristic d.1.fieldExponent d.1.Closure
 
@@ -202,7 +205,11 @@ theorem frobenius_def :
     d.frobenius = SpStd.frobenius 1 d.1.characteristic d.1.fieldExponent d.1.Closure :=
   (rfl)
 
-/-- The Frobenius acts on the ambient group by raising every matrix entry to the `q`-th power. -/
+/-- The Frobenius acts on the ambient group by raising every matrix entry to the `q`-th power.
+
+The index type is written `Fin 4`, which is the carrier's own `Fin ((1 + 1) + (1 + 1))` at `n = 1`
+definitionally but not syntactically. Only the binders of `r` and `c` are affected: the entry
+coercions elaborate at the carrier's index type either way. -/
 @[simp]
 theorem coe_frobenius_apply (g : d.AmbientGroup) (r c : Fin 4) :
     ((d.frobenius g : Matrix.GeneralLinearGroup (Fin 4) d.1.Closure) :
@@ -210,6 +217,8 @@ theorem coe_frobenius_apply (g : d.AmbientGroup) (r c : Fin 4) :
       ((g : Matrix.GeneralLinearGroup (Fin 4) d.1.Closure) :
         Matrix (Fin 4) (Fin 4) d.1.Closure) r c ^ d.1.fieldOrder := by
   rw [frobenius_def, d.1.fieldOrder_eq_characteristic_pow]
+  -- The upstream lemma is instantiated by hand rather than rewritten with: its entry arguments
+  -- live in `Fin ((1 + 1) + (1 + 1))`, which is only definitionally the `Fin 4` stated above.
   exact SpStd.coe_frobenius_apply 1 _ _ _ g r c
 
 /-- **The Frobenius fixes the Bourbaki numbering of a simple-root subgroup and raises its parameter
@@ -225,7 +234,9 @@ theorem frobenius_simpleRootSubgroup (i : Fin d.1.rank) (u : Multiplicative d.1.
 /-- **A point of the ambient group is fixed by the Frobenius exactly when all of its matrix entries
 lie in the field of definition.** Writing `𝔽_q` for `TauCeti.ValidLieTypeIndex.fixedField`, the copy
 of the field of `q` elements inside the algebraic closure, the Frobenius fixed points are the points
-of the rank-two type-`C` carrier whose entries lie in `𝔽_q`.
+of the rank-two type-`C` carrier whose entries lie in `𝔽_q`. As in `coe_frobenius_apply`, the index
+type is written `Fin 4` for the carrier's own `Fin ((1 + 1) + (1 + 1))` at `n = 1`; here the two
+entry binders are elaborated at the carrier's index type as well.
 
 As for `TauCeti.ValidLieTypeIndex.mem_fixedSubgroup_geckFrobenius_iff`, this is not a `simp` lemma:
 `TauCeti.fixedSubgroup` is `MonoidHom.eqLocus` against the identity, so `simp` rewrites its
