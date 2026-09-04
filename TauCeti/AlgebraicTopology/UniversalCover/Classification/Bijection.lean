@@ -5,7 +5,6 @@ Authors: The Tau Ceti contributors
 -/
 module
 
-import TauCeti.Algebra.GroupAction.OrbitRelQuotient
 public import TauCeti.AlgebraicTopology.UniversalCover.Classification.Existence
 public import TauCeti.AlgebraicTopology.UniversalCover.Classification.RecoveredSubgroup
 public import TauCeti.AlgebraicTopology.UniversalCover.Classification.Regular
@@ -37,16 +36,7 @@ Galois correspondence between subgroups of `π₁(X, x₀)` and connected covers
 regular-cover criterion is read off in the same way: the cover attached to `H` is regular
 exactly when `H` is normal.
 
-The two extreme subgroups are pinned as well. The quotient of the universal cover by the trivial
-subgroup is the universal cover itself, and the quotient by the whole fundamental group is `X`,
-because the orbits of the fundamental-group action on the universal cover are exactly the fibres
-of the endpoint projection. Both are recorded as homeomorphisms whose underlying maps are the
-canonical ones rather than as bare existence statements, since the correspondence attaches the
-universal cover to `⊥` and the trivial cover to `⊤` only through these specific maps.
-
-Nothing here is a new covering-space argument: every step is bookkeeping on top of the pointed
-and unpointed comparison theorems and the recovered subgroup of `subgroupQuotientProj`. The
-standing hypotheses are those of the whole construction — `X` path-connected, locally
+The standing hypotheses are those of the whole construction — `X` path-connected, locally
 path-connected and semilocally simply connected — because the universal cover is what the
 subgroup quotients are built from.
 
@@ -63,9 +53,6 @@ subgroup quotients are built from.
   are isomorphic as *unpointed* covers exactly when the subgroups are conjugate.
 * `TauCeti.UniversalCover.isRegular_subgroupQuotientProj_iff_normal`: the cover attached to `H`
   is regular exactly when `H` is normal.
-* `TauCeti.UniversalCover.subgroupQuotientBotHomeomorph`: the cover attached to `⊥` is the
-  universal cover.
-* `TauCeti.UniversalCover.subgroupQuotientTopHomeomorph`: the cover attached to `⊤` is `X`.
 
 ## References
 
@@ -73,7 +60,7 @@ The mathematics is Hatcher, *Algebraic Topology*, Theorem 1.38 and the classific
 that follows it. The construction consumed here is the based-path universal cover adapted from
 Kim Morrison's [mathlib4#38292](https://github.com/leanprover-community/mathlib4/pull/38292),
 and the lifting criterion underlying the comparison theorems is Junyan Xu's, in
-`Mathlib/Topology/Homotopy/Lifting.lean`. No Mathlib proof is vendored here.
+`Mathlib/Topology/Homotopy/Lifting.lean`.
 -/
 
 public section
@@ -156,47 +143,5 @@ theorem isRegular_subgroupQuotientProj_iff_normal (H : Subgroup (FundamentalGrou
     ⟨SubgroupQuotient.basepoint x₀ H,
       Set.mem_singleton_iff.mpr (subgroupQuotientProj_basepoint x₀ H)⟩) ?_
   rw [range_mapOfEq_subgroupQuotientProj]
-
-/-! ### The two ends of the correspondence -/
-
-omit [PathConnectedSpace X] in
-/-- **The cover attached to the trivial subgroup is the universal cover.** The underlying map is
-the quotient map `subgroupQuotientMap x₀ ⊥`, so the identification is one over `X`. -/
-noncomputable def subgroupQuotientBotHomeomorph :
-    UniversalCover x₀ ≃ₜ SubgroupQuotient x₀ (⊥ : Subgroup (FundamentalGroup X x₀)) :=
-  Equiv.toHomeomorphOfContinuousOpen
-    (Equiv.ofBijective (subgroupQuotientMap x₀ ⊥) (by
-      have h : subgroupQuotientMap x₀ (⊥ : Subgroup (FundamentalGroup X x₀)) =
-          ⇑(TauCeti.MulAction.orbitRelQuotientBotEquiv
-            (G := FundamentalGroup X x₀) (X := UniversalCover x₀)).symm := by
-        funext e
-        simp
-      rw [h]
-      exact (TauCeti.MulAction.orbitRelQuotientBotEquiv
-        (G := FundamentalGroup X x₀) (X := UniversalCover x₀)).symm.bijective))
-    (isQuotientCoveringMap_subgroupQuotientMap x₀ ⊥).isCoveringMap.continuous
-    (isQuotientCoveringMap_subgroupQuotientMap x₀ ⊥).isCoveringMap.isLocalHomeomorph.isOpenMap
-
-omit [PathConnectedSpace X] in
-@[simp]
-theorem coe_subgroupQuotientBotHomeomorph :
-    ⇑(subgroupQuotientBotHomeomorph x₀) =
-      subgroupQuotientMap x₀ (⊥ : Subgroup (FundamentalGroup X x₀)) :=
-  (rfl)
-
-/-- **The cover attached to the whole fundamental group is `X` itself.** The comparison is the
-descended endpoint projection, so the cover attached to `⊤` is the trivial one-sheeted cover. -/
-noncomputable def subgroupQuotientTopHomeomorph :
-    SubgroupQuotient x₀ (⊤ : Subgroup (FundamentalGroup X x₀)) ≃ₜ X :=
-  (Equiv.ofBijective (subgroupQuotientProj x₀ ⊤) ⟨subgroupQuotientProj_top_injective x₀,
-    subgroupQuotientProj_surjective x₀ ⊤⟩).toHomeomorphOfContinuousOpen
-      (continuous_subgroupQuotientProj x₀ ⊤)
-      (isCoveringMap_subgroupQuotientProj x₀ ⊤).isLocalHomeomorph.isOpenMap
-
-@[simp]
-theorem coe_subgroupQuotientTopHomeomorph :
-    ⇑(subgroupQuotientTopHomeomorph x₀) =
-      subgroupQuotientProj x₀ (⊤ : Subgroup (FundamentalGroup X x₀)) :=
-  (rfl)
 
 end TauCeti.UniversalCover
