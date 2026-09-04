@@ -48,6 +48,30 @@ namespace Scheme.Modules
 
 variable (X : Scheme.{u})
 
+/-- Convert an isomorphism of sheaves of modules into an isomorphism of `𝒪_X`-modules. -/
+def _root_.AlgebraicGeometry.Scheme.Modules.isoOfSheafIso (X : Scheme.{u})
+    {M N : X.Modules} (e : @Iso (SheafOfModules X.ringCatSheaf) _ M N) : M ≅ N :=
+  { hom := ⟨e.hom.val⟩
+    inv := ⟨e.inv.val⟩
+    hom_inv_id := by
+      apply SheafOfModules.Hom.ext
+      exact congrArg SheafOfModules.Hom.val e.hom_inv_id
+    inv_hom_id := by
+      apply SheafOfModules.Hom.ext
+      exact congrArg SheafOfModules.Hom.val e.inv_hom_id }
+
+@[simp]
+lemma _root_.AlgebraicGeometry.Scheme.Modules.isoOfSheafIso_hom_val (X : Scheme.{u})
+    {M N : X.Modules} (e : @Iso (SheafOfModules X.ringCatSheaf) _ M N) :
+    (_root_.AlgebraicGeometry.Scheme.Modules.isoOfSheafIso X e).hom.val = e.hom.val :=
+  by simp only [_root_.AlgebraicGeometry.Scheme.Modules.isoOfSheafIso]
+
+@[simp]
+lemma _root_.AlgebraicGeometry.Scheme.Modules.isoOfSheafIso_inv_val (X : Scheme.{u})
+    {M N : X.Modules} (e : @Iso (SheafOfModules X.ringCatSheaf) _ M N) :
+    (_root_.AlgebraicGeometry.Scheme.Modules.isoOfSheafIso X e).inv.val = e.inv.val :=
+  by simp only [_root_.AlgebraicGeometry.Scheme.Modules.isoOfSheafIso]
+
 /-- The forgetful functor from `𝒪_X`-modules to sheaves of abelian groups on `X`.
 
 This is `SheafOfModules.toSheaf` for the sheaf of rings `X.ringCatSheaf`, packaged so that the
