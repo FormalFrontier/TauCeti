@@ -54,7 +54,7 @@ private noncomputable instance moduleOfNormedSpace (E : Type w) [NormedAddCommGr
 The displayed equality says that the equivalence sends each pure tensor `1 ⊗ₜ n` to the chosen
 lattice vector `i n`.  The requirement that the scalar extension be an equivalence gives fullness;
 under the finiteness and freeness hypotheses used below, the API also derives discreteness. -/
-def IsIntegralLattice [Module.Free ℤ N] [Module.Finite ℤ N] (i : N →+ V) : Prop :=
+def IsIntegralLattice (i : N →+ V) : Prop :=
   ∃ e : TensorProduct ℤ ℝ N ≃ₗ[ℝ] V,
     ∀ n : N, e ((1 : ℝ) ⊗ₜ[ℤ] n) = i n
 
@@ -62,16 +62,19 @@ section Lattice
 
 variable [Module.Free ℤ N] [Module.Finite ℤ N]
 
+omit [Module.Free ℤ N] [Module.Finite ℤ N] in
 /-- Construct an integral lattice from its scalar-extension equivalence. -/
 theorem IsIntegralLattice.of_equiv (i : N →+ V) (e : TensorProduct ℤ ℝ N ≃ₗ[ℝ] V)
     (he : ∀ n : N, e ((1 : ℝ) ⊗ₜ[ℤ] n) = i n) : IsIntegralLattice i :=
   ⟨e, he⟩
 
+omit [Module.Free ℤ N] [Module.Finite ℤ N] in
 /-- The scalar-extension equivalence witnessing an integral lattice. -/
 noncomputable def IsIntegralLattice.Equiv (i : N →+ V) (h : IsIntegralLattice i) :
     TensorProduct ℤ ℝ N ≃ₗ[ℝ] V :=
   Classical.choose h
 
+omit [Module.Free ℤ N] [Module.Finite ℤ N] in
 /-- The chosen scalar-extension equivalence has the prescribed value on lattice vectors. -/
 lemma IsIntegralLattice.equiv_one_tmul (i : N →+ V) (h : IsIntegralLattice i) (n : N) :
     IsIntegralLattice.Equiv i h ((1 : ℝ) ⊗ₜ[ℤ] n) = i n :=
@@ -79,6 +82,7 @@ lemma IsIntegralLattice.equiv_one_tmul (i : N →+ V) (h : IsIntegralLattice i) 
 
 attribute [simp] IsIntegralLattice.equiv_one_tmul
 
+omit [Module.Finite ℤ N] in
 /-- An integral lattice map is injective. -/
 theorem IsIntegralLattice.injective (i : N →+ V) (h : IsIntegralLattice i) :
     Function.Injective i := by
@@ -93,6 +97,7 @@ noncomputable def IsIntegralLattice.realBasis (i : N →+ V) (h : IsIntegralLatt
     Module.Basis (Module.Free.ChooseBasisIndex ℤ N) ℝ V :=
   (Module.Free.chooseBasis ℤ N).baseChange ℝ |>.map (IsIntegralLattice.Equiv i h)
 
+omit [Module.Finite ℤ N] in
 /-- The induced real basis consists of the images of the chosen integral basis vectors. -/
 @[simp]
 theorem IsIntegralLattice.realBasis_apply (i : N →+ V) (h : IsIntegralLattice i)
@@ -101,6 +106,7 @@ theorem IsIntegralLattice.realBasis_apply (i : N →+ V) (h : IsIntegralLattice 
   simp only [IsIntegralLattice.realBasis, Module.Basis.map_apply, Module.Basis.baseChange_apply]
   exact IsIntegralLattice.equiv_one_tmul i h _
 
+omit [Module.Free ℤ N] [Module.Finite ℤ N] in
 /-- The real span of the image of an integral lattice is the whole ambient space. -/
 theorem IsIntegralLattice.span_range_eq_top (i : N →+ V) (h : IsIntegralLattice i) :
     Submodule.span ℝ (Set.range i) = ⊤ := by
@@ -127,6 +133,7 @@ theorem IsIntegralLattice.span_range_eq_top (i : N →+ V) (h : IsIntegralLattic
       exact e.range.symm
     _ ≤ Submodule.span ℝ (Set.range i) := hmap
 
+omit [Module.Finite ℤ N] in
 /-- The image of an integral lattice is the `ℤ`-span of the induced real basis. -/
 theorem IsIntegralLattice.range_eq_span_realBasis (i : N →+ V) (h : IsIntegralLattice i) :
     Set.range i =
@@ -147,6 +154,7 @@ theorem IsIntegralLattice.range_eq_span_realBasis (i : N →+ V) (h : IsIntegral
         AddMonoidHom.coe_toIntLinearMap]⟩
   exact congrArg (fun p : Submodule ℤ V => (p : Set V)) hrange
 
+omit [Module.Finite ℤ N] in
 /-- The rank of a full integral lattice equals the real dimension of its ambient space. -/
 theorem IsIntegralLattice.finrank_eq (i : N →+ V) (h : IsIntegralLattice i) :
     Module.finrank ℤ N = Module.finrank ℝ V := by
@@ -165,10 +173,11 @@ theorem IsIntegralLattice.isDiscrete_range (i : N →+ V₀)
   rw [IsIntegralLattice.range_eq_span_realBasis i h]
   exact @DiscreteTopology.isDiscrete _ _ _ hd
 
+omit [Module.Free ℤ N] [Module.Finite ℤ N] in
 /-- A real-linear map carrying one integral lattice into another commutes with their lattice
 vectors, after applying the corresponding integral additive map. -/
 theorem IsIntegralLattice.comp_equiv_eq_equiv_comp_baseChange
-    {N' : Type u'} {V' : Type v'} [AddCommGroup N'] [Module.Free ℤ N'] [Module.Finite ℤ N']
+    {N' : Type u'} {V' : Type v'} [AddCommGroup N']
     [AddCommGroup V'] [Module ℝ V']
     {i' : N' →+ V'} (h : IsIntegralLattice i) (h' : IsIntegralLattice i')
     (f : N →+ N') (g : V →ₗ[ℝ] V')
