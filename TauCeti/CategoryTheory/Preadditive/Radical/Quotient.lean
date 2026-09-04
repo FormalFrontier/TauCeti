@@ -43,15 +43,14 @@ ring `k`, and the conjugation statements that do not form the quotient over a se
 What is *not* built here is the bimodule structure of `Irr(X, Y)` over the residue division rings
 `End X / rad(End X)` and `End Y / rad(End Y)`.  It is the dimensions over *those* rings, not the
 `k`-dimension computed below, that count the arrows `X → Y` of the Auslander-Reiten quiver; the two
-counts agree exactly when both residue division rings are `k` itself, as happens for instance over
-an algebraically closed `k` when the two endomorphism algebras are finite-dimensional over it.  So
-no statement below claims to compute an arrow multiplicity: what is proved is the `k`-dimension,
-its bound by `finrank k (X ⟶ Y)`, and its positivity exactly when an irreducible morphism exists.
+counts do agree whenever both residue division rings are `k` itself, as happens for instance over an
+algebraically closed `k` when the two endomorphism algebras are finite-dimensional over it, but that
+is only a sufficient condition — they also agree, vacuously, whenever `Irr(X, Y)` vanishes.  So no
+statement below claims to compute an arrow multiplicity: what is proved is the `k`-dimension, its
+bound by `finrank k (X ⟶ Y)`, and its positivity exactly when an irreducible morphism exists.
 
 ## Main definitions
 
-* `TauCeti.jacobsonRadicalSqSubmoduleIn`: the square of the radical, viewed as a submodule of the
-  radical rather than of the whole morphism space; the submodule that is quotiented out.
 * `TauCeti.irreducibleMorphismSpace k X Y`: the space `rad(X, Y) / rad²(X, Y)` of irreducible
   morphisms, a `k`-module.
 * `TauCeti.irreducibleMorphismMk`: the class of a radical morphism, as a `k`-linear map.
@@ -89,15 +88,15 @@ its bound by `finrank k (X ⟶ Y)`, and its positivity exactly when an irreducib
 The quotient is formed inside the *submodule* `rad(X, Y)`, so its elements are classes of elements
 of the subtype `↥(jacobsonRadicalSubmodule k X Y)`; every statement below is therefore phrased with
 the underlying morphism `(f : X ⟶ Y)` of such an element, so that a caller never has to see the
-subtype's own submodule `TauCeti.jacobsonRadicalSqSubmoduleIn`.  The alternative, quotienting the
-whole morphism space by `rad²`, is a different module — it has the non-radical morphisms in it as
-well — and is not what an arrow of the Auslander-Reiten quiver counts.
+subtype's own submodule, which is private.  The alternative, quotienting the whole morphism space by
+`rad²`, is a different module — it has the non-radical morphisms in it as well — and is not what an
+arrow of the Auslander-Reiten quiver counts.
 
 `TauCeti.irreducibleMorphismSpace` is a plain `def` rather than an abbreviation, with its additive
 and `k`-module structures transported by `inferInstanceAs`, so that the quotient is not unfolded by
-`simp` in goals that mention it.  Its body is not exposed, and neither is that of the submodule it
-divides by, so that no caller depends on the subtype-quotient representation: the API below stands
-in for Mathlib's quotient operations, with `TauCeti.irreducibleMorphismMk` for
+`simp` in goals that mention it.  Its body is not exposed, and the submodule it divides by is
+private, so that no caller depends on the subtype-quotient representation: the API below stands in
+for Mathlib's quotient operations, with `TauCeti.irreducibleMorphismMk` for
 `Submodule.Quotient.mk`, `TauCeti.irreducibleMorphismMk_surjective` for quotient induction, and
 `TauCeti.irreducibleMorphismLift` for `Submodule.liftQ`.
 
@@ -134,8 +133,10 @@ variable (k : Type*) [Ring k] [Linear k C] (X Y : C)
 /-- **The square of the radical, as a submodule of the radical.**  `TauCeti.jacobsonRadicalSq` is a
 subgroup of the whole morphism space `X ⟶ Y`; this is its preimage in the submodule
 `TauCeti.jacobsonRadicalSubmodule`, which is what the quotient `rad(X, Y) / rad²(X, Y)` divides by.
-The two describe the same morphisms, by `TauCeti.mem_jacobsonRadicalSqSubmoduleIn`. -/
-def jacobsonRadicalSqSubmoduleIn : Submodule k (jacobsonRadicalSubmodule k X Y) :=
+The two describe the same morphisms, by `mem_jacobsonRadicalSqSubmoduleIn`.  It is private: the
+constructor, eliminator and equality API below is stated in terms of the underlying morphism, so no
+consumer needs the subtype-quotient representation. -/
+private def jacobsonRadicalSqSubmoduleIn : Submodule k (jacobsonRadicalSubmodule k X Y) :=
   (jacobsonRadicalSqSubmodule k X Y).submoduleOf (jacobsonRadicalSubmodule k X Y)
 
 /-- **The space of irreducible morphisms** `X ⟶ Y`, the quotient `rad(X, Y) / rad²(X, Y)`.
@@ -146,13 +147,15 @@ Auslander-Reiten quiver are read off from. -/
 def irreducibleMorphismSpace : Type v :=
   jacobsonRadicalSubmodule k X Y ⧸ jacobsonRadicalSqSubmoduleIn k X Y
 
+-- Instances are exposed, so they may not name the private `jacobsonRadicalSqSubmoduleIn`; they
+-- transport the quotient's structures along its definition spelled out.
 instance : AddCommGroup (irreducibleMorphismSpace k X Y) :=
-  inferInstanceAs (AddCommGroup
-    (jacobsonRadicalSubmodule k X Y ⧸ jacobsonRadicalSqSubmoduleIn k X Y))
+  inferInstanceAs (AddCommGroup (jacobsonRadicalSubmodule k X Y ⧸
+    (jacobsonRadicalSqSubmodule k X Y).submoduleOf (jacobsonRadicalSubmodule k X Y)))
 
 instance : Module k (irreducibleMorphismSpace k X Y) :=
-  inferInstanceAs (Module k
-    (jacobsonRadicalSubmodule k X Y ⧸ jacobsonRadicalSqSubmoduleIn k X Y))
+  inferInstanceAs (Module k (jacobsonRadicalSubmodule k X Y ⧸
+    (jacobsonRadicalSqSubmodule k X Y).submoduleOf (jacobsonRadicalSubmodule k X Y)))
 
 /-- **The class of a radical morphism** in the space of irreducible morphisms, as a `k`-linear
 map. -/
@@ -162,10 +165,10 @@ def irreducibleMorphismMk :
 
 variable {k X Y}
 
-/-- Membership in `TauCeti.jacobsonRadicalSqSubmoduleIn` is membership of the underlying morphism
-in the square of the radical. -/
+/-- Membership in `jacobsonRadicalSqSubmoduleIn` is membership of the underlying morphism in the
+square of the radical. -/
 @[simp]
-theorem mem_jacobsonRadicalSqSubmoduleIn {f : jacobsonRadicalSubmodule k X Y} :
+private theorem mem_jacobsonRadicalSqSubmoduleIn {f : jacobsonRadicalSubmodule k X Y} :
     f ∈ jacobsonRadicalSqSubmoduleIn k X Y ↔ (f : X ⟶ Y) ∈ jacobsonRadicalSq X Y :=
   mem_jacobsonRadicalSqSubmodule
 
@@ -310,12 +313,16 @@ noncomputable def jacobsonRadicalSubmoduleCongr (e : X ≅ X') (e' : Y ≅ Y') :
     jacobsonRadicalSubmodule k X Y ≃ₗ[k] jacobsonRadicalSubmodule k X' Y' :=
   (Linear.homCongr k e e').ofSubmodules _ _ (jacobsonRadicalSubmodule_map_homCongr k e e')
 
+/-- **Conjugation acts on radical morphisms by conjugation**: the morphism underlying the image of
+`f` is `e.inv ≫ f ≫ e'.hom`. -/
 @[simp]
 theorem coe_jacobsonRadicalSubmoduleCongr_apply (e : X ≅ X') (e' : Y ≅ Y')
     (f : jacobsonRadicalSubmodule k X Y) :
     (jacobsonRadicalSubmoduleCongr k e e' f : X' ⟶ Y') = (e.inv ≫ (f : X ⟶ Y)) ≫ e'.hom :=
   (Linear.homCongr k e e').ofSubmodules_apply (jacobsonRadicalSubmodule_map_homCongr k e e') f
 
+/-- **The inverse conjugation acts by the inverse conjugation**: the morphism underlying the
+preimage of `g` is `e.hom ≫ g ≫ e'.inv`. -/
 @[simp]
 theorem coe_jacobsonRadicalSubmoduleCongr_symm_apply (e : X ≅ X') (e' : Y ≅ Y')
     (g : jacobsonRadicalSubmodule k X' Y') :
@@ -350,6 +357,9 @@ noncomputable def irreducibleMorphismSpaceCongr (e : X ≅ X') (e' : Y ≅ Y') :
         coe_jacobsonRadicalSubmoduleCongr_symm_apply] at hg ⊢
       exact comp_mem_jacobsonRadicalSq_left e.hom (comp_mem_jacobsonRadicalSq_right hg e'.inv)
 
+/-- **Conjugation of the quotient is computed on representatives**: the image of the class of a
+radical morphism `f` is the class of its conjugate
+`TauCeti.jacobsonRadicalSubmoduleCongr k e e' f`. -/
 @[simp]
 theorem irreducibleMorphismSpaceCongr_mk (e : X ≅ X') (e' : Y ≅ Y')
     (f : jacobsonRadicalSubmodule k X Y) :
@@ -400,8 +410,8 @@ variable (k : Type*) [DivisionRing k] [Linear k C] (X Y : C)
 
 instance [FiniteDimensional k (X ⟶ Y)] :
     FiniteDimensional k (irreducibleMorphismSpace k X Y) :=
-  inferInstanceAs (FiniteDimensional k
-    (jacobsonRadicalSubmodule k X Y ⧸ jacobsonRadicalSqSubmoduleIn k X Y))
+  inferInstanceAs (FiniteDimensional k (jacobsonRadicalSubmodule k X Y ⧸
+    (jacobsonRadicalSqSubmodule k X Y).submoduleOf (jacobsonRadicalSubmodule k X Y)))
 
 /-- **The space of irreducible morphisms is no larger than the morphism space it is carved out
 of.**  This is the bound that makes the Auslander-Reiten quiver of a category with
