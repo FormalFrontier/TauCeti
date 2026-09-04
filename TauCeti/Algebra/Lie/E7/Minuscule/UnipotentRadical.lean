@@ -6,11 +6,7 @@ Authors: The Tau Ceti contributors
 module
 
 public import TauCeti.Algebra.Lie.E7.Minuscule.StandardComodule
-public import TauCeti.Algebra.AlgebraicGroup.Unipotent.Radical.Construction
-import TauCeti.Algebra.AlgebraicGroup.Reductive.LinearlyReductive
-import TauCeti.Algebra.AlgebraicGroup.Representation.ClosedSubgroup
-import TauCeti.Algebra.AlgebraicGroup.Unipotent.Embedding
-import TauCeti.RingTheory.Smooth.GeometricallyReduced
+public import TauCeti.Algebra.AlgebraicGroup.Unipotent.Radical.Faithful
 
 /-!
 # The unipotent radical obstruction for the type-E7 minuscule carrier
@@ -21,10 +17,11 @@ unipotent closed subgroup of the carrier is trivial. Consequently its unipotent 
 trivial.
 
 The mathematical input is the carrier's standard 56-dimensional comodule. It is simple, hence
-completely reducible, and faithful. Normality makes the fixed vectors of a smooth unipotent
-closed subgroup into an ambient subcomodule. Kolchin's fixed-vector theorem then forces the
-subgroup to act trivially, and faithfulness identifies its defining ideal with the augmentation
-ideal.
+completely reducible, and faithful. The generic normal-unipotent elimination theorem
+`TauCeti.HopfIdeal.eq_augmentation_of_isNormal_of_smoothUnipotent_of_isFaithful` then applies
+verbatim: normality makes the fixed vectors of a smooth unipotent closed subgroup an ambient
+subcomodule, Kolchin's fixed-vector theorem forces the subgroup to act trivially, and
+faithfulness identifies its defining ideal with the augmentation ideal.
 
 Reducedness is stated explicitly. No smoothness or connectedness of the carrier is asserted here,
 so the result is the normal-unipotent obstruction needed for reductivity rather than a proof that
@@ -39,8 +36,6 @@ the carrier is reductive.
 
 ## References
 
-* The proof of the normal-unipotent obstruction is adapted from
-  `TauCeti/Algebra/AlgebraicGroup/SpecialLinear/Reductive.lean`.
 * J. E. Humphreys, *Linear Algebraic Groups*, §§19 and 26.
 * J. C. Jantzen, *Representations of Algebraic Groups*, I.2 and II.2.
 -/
@@ -55,14 +50,7 @@ universe u
 
 noncomputable section
 
-open HopfIdeal
-
 variable (k : Type u) [Field k] [IsAlgClosed k]
-
-/-- The specialized type-`E₇` minuscule carrier as a finite-type commutative Hopf algebra. -/
-public noncomputable abbrev finiteTypeCoordinateHopfAlgebra :
-    FiniteTypeCommHopfAlgCat.{u, u} k :=
-  FiniteTypeCommHopfAlgCat.of k (coordinateHopfAlgebra k)
 
 attribute [local instance] standardComodule
 
@@ -76,23 +64,10 @@ theorem eq_augmentation_of_isNormal_of_smoothUnipotent
     (I : HopfIdeal k (coordinateHopfAlgebra k)) (hI : I.IsNormal)
     (hU : smoothUnipotentCommHopfAlgProperty k
       (FiniteTypeCommHopfAlgCat.quotient (finiteTypeCoordinateHopfAlgebra k) I)) :
-    I = HopfIdeal.augmentation k (coordinateHopfAlgebra k) := by
-  have hU' := (smoothUnipotentCommHopfAlgProperty_iff k
-    (FiniteTypeCommHopfAlgCat.quotient (finiteTypeCoordinateHopfAlgebra k) I)).mp hU
-  let _ : Algebra.Smooth k
-      (CommHopfAlgCat.quotient (coordinateHopfAlgebra k) I) := hU'.1
-  let _ : IsReduced (CommHopfAlgCat.quotient (coordinateHopfAlgebra k) I) :=
-    isReduced_of_smooth_of_field k _
-  have hu : ∀ g : WithConv
-      (CommHopfAlgCat.quotient (coordinateHopfAlgebra k) I →ₐ[k] k),
-      HopfAlgebra.IsUnipotentPoint g :=
-    geometricallyUnipotentPointsCommHopfAlgProperty.forall_isUnipotentPoint
-      ((geometricallyUnipotentPointsCommHopfAlgProperty_iff k _).mpr hU'.2)
-  have htrivial :=
-    mkQuotient_coact_eq_tmul_one_of_isNormal_of_forall_isUnipotentPoint_of_isCompletelyReducible
-      (M := Fin 56 → k) hI hu Comodule.isCompletelyReducible_of_isSimpleOrder
-  exact Comodule.eq_augmentation_of_isFaithful_of_quotient_coact_eq_tmul_one I
-    (isFaithful_standardComodule k) htrivial
+    I = HopfIdeal.augmentation k (coordinateHopfAlgebra k) :=
+  HopfIdeal.eq_augmentation_of_isNormal_of_smoothUnipotent_of_isFaithful k
+    (finiteTypeCoordinateHopfAlgebra k) (Fin 56 → k)
+    Comodule.isCompletelyReducible_of_isSimpleOrder (isFaithful_standardComodule k) I hI hU
 
 /-- **The unipotent radical of a reduced specialized type-`E₇` minuscule carrier over an
 algebraically closed field is trivial.** -/
@@ -100,10 +75,10 @@ theorem unipotentRadicalDefiningIdeal_eq_augmentation
     [IsReduced (coordinateHopfAlgebra k)] :
     FiniteTypeCommHopfAlgCat.unipotentRadicalDefiningIdeal
         (finiteTypeCoordinateHopfAlgebra k) =
-      HopfIdeal.augmentation k (coordinateHopfAlgebra k) := by
-  rw [FiniteTypeCommHopfAlgCat.unipotentRadicalDefiningIdeal_eq_augmentation_iff]
-  intro I hI
-  exact eq_augmentation_of_isNormal_of_smoothUnipotent k I hI.isNormal hI.smoothUnipotent
+      HopfIdeal.augmentation k (coordinateHopfAlgebra k) :=
+  FiniteTypeCommHopfAlgCat.unipotentRadicalDefiningIdeal_eq_augmentation_of_isFaithful k
+    (finiteTypeCoordinateHopfAlgebra k) (Fin 56 → k)
+    Comodule.isCompletelyReducible_of_isSimpleOrder (isFaithful_standardComodule k)
 
 end
 

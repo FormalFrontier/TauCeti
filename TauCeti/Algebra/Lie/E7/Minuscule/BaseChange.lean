@@ -33,6 +33,8 @@ reductive, that its torus is maximal, or that its root datum has been identified
   `O(GL₅₆/A)`.
 * `TauCeti.E7Minuscule.coordinateHopfAlgebra` and `TauCeti.E7Minuscule.coordinateMap`: the
   specialized carrier coordinate algebra and its ambient quotient map.
+* `TauCeti.E7Minuscule.finiteTypeCoordinateHopfAlgebra`: the same coordinate algebra bundled
+  with its finite-type property.
 * `TauCeti.E7Minuscule.baseChangeCoordinateIso`: its quotient is the scalar extension of the
   integral carrier coordinate Hopf algebra.
 * `TauCeti.E7Minuscule.rootSubgroupToBaseChangeCoordinateMap`: the transported numbered root
@@ -101,6 +103,34 @@ of the specialized minuscule carrier into `GL₅₆`. -/
 public noncomputable abbrev coordinateMap :
     GeneralLinear.coordinateHopfAlgebra A 56 ⟶ coordinateHopfAlgebra A :=
   CommHopfAlgCat.mkQuotient _ _
+
+/-- The specialized carrier coordinate morphism sends an ambient coordinate to its quotient
+class. -/
+theorem coordinateMap_apply (x : GeneralLinear.coordinateHopfAlgebra A 56) :
+    (coordinateMap A).hom x =
+      Ideal.Quotient.mkₐ A (baseChangeDefiningIdeal A).toIdeal x :=
+  CommHopfAlgCat.mkQuotient_apply
+    (GeneralLinear.coordinateHopfAlgebra A 56) (baseChangeDefiningIdeal A) x
+
+/-- The kernel of the specialized carrier coordinate morphism is the transported defining
+ideal. -/
+theorem coordinateMap_ker :
+    RingHom.ker (coordinateMap A).hom.toAlgHom.toRingHom =
+      (baseChangeDefiningIdeal A).toIdeal :=
+  CommHopfAlgCat.mkQuotient_ker
+    (GeneralLinear.coordinateHopfAlgebra A 56) (baseChangeDefiningIdeal A)
+
+/-- The specialized type-`E₇` minuscule carrier as a finite-type commutative Hopf algebra. -/
+public noncomputable abbrev finiteTypeCoordinateHopfAlgebra :
+    FiniteTypeCommHopfAlgCat.{v, v} A :=
+  FiniteTypeCommHopfAlgCat.of A (coordinateHopfAlgebra A)
+
+/-- The finite-type package has the specialized carrier coordinate Hopf algebra as its underlying
+object. -/
+@[simp]
+theorem finiteTypeCoordinateHopfAlgebra_obj :
+    (finiteTypeCoordinateHopfAlgebra A).obj = coordinateHopfAlgebra A :=
+  (rfl)
 
 /-- Membership in the transported defining ideal is membership of the corresponding element in
 the base change of the named integral defining ideal. -/
