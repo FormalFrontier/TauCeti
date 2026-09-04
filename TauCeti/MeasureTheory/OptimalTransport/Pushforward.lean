@@ -25,11 +25,11 @@ spaces.
 
 * `TauCeti.wassersteinEDist_map_le_mul_eLpNorm` bounds the Wasserstein distance of two
   pushforwards by the Lipschitz constant times the objective of a specified source coupling.
-* `TauCeti.wassersteinEDist_map_le_of_ne_zero` gives the pushforward estimate for arbitrary
+* `TauCeti.wassersteinEDist_map_le_mul_of_ne_zero` gives the pushforward estimate for arbitrary
   measures and a nonzero Lipschitz constant.
-* `TauCeti.wassersteinEDist_map_le_of_exists_isCoupling` gives the pushforward estimate for any two
-  measures admitting a coupling.
-* `TauCeti.wassersteinEDist_map_le` is the probability-measure specialization.
+* `TauCeti.wassersteinEDist_map_le_mul_of_exists_isCoupling` gives the pushforward estimate for any
+  two measures admitting a coupling.
+* `TauCeti.wassersteinEDist_map_le_mul` is the probability-measure specialization.
 * `TauCeti.HasFiniteMoment.map` shows that Lipschitz pushforward preserves finite moments.
 * `TauCeti.wassersteinEDist_map_eq` gives invariance under a measurable isometric equivalence.
 
@@ -79,7 +79,7 @@ theorem wassersteinEDist_map_le_mul_eLpNorm
 /-- A Lipschitz map contracts Wasserstein distance up to a nonzero Lipschitz constant, for
 arbitrary measures. Nothing is assumed about `μ` and `ν`: if they admit no coupling their distance
 is `⊤`, and multiplying by a nonzero constant leaves the bound at `⊤`. -/
-theorem wassersteinEDist_map_le_of_ne_zero
+theorem wassersteinEDist_map_le_mul_of_ne_zero
     (hdY : Measurable fun z : Y × Y ↦ edist z.1 z.2) (hf : Measurable f)
     (hLip : LipschitzWith K f) (hK : K ≠ 0) (μ ν : Measure X) :
     wassersteinEDist p (μ.map f) (ν.map f) ≤ K * wassersteinEDist p μ ν := by
@@ -102,7 +102,7 @@ theorem wassersteinEDist_map_le_of_ne_zero
 measures admitting a coupling. The existence hypothesis is needed only when the Lipschitz
 constant is zero: with Mathlib's extended-nonnegative-real convention, `0 * ∞ = 0`, whereas
 measures of unequal mass have no coupling and remain at infinite distance after pushforward. -/
-theorem wassersteinEDist_map_le_of_exists_isCoupling
+theorem wassersteinEDist_map_le_mul_of_exists_isCoupling
     (hdY : Measurable fun z : Y × Y ↦ edist z.1 z.2) (hf : Measurable f)
     (hLip : LipschitzWith K f) (hμν : ∃ π, IsCoupling π μ ν) :
     wassersteinEDist p (μ.map f) (ν.map f) ≤ K * wassersteinEDist p μ ν := by
@@ -110,16 +110,16 @@ theorem wassersteinEDist_map_le_of_exists_isCoupling
   · obtain ⟨π, hπ⟩ := hμν
     refine (wassersteinEDist_map_le_mul_eLpNorm hdY hf hLip hπ).trans_eq ?_
     simp only [hK, ENNReal.coe_zero, zero_mul]
-  · exact wassersteinEDist_map_le_of_ne_zero hdY hf hLip hK μ ν
+  · exact wassersteinEDist_map_le_mul_of_ne_zero hdY hf hLip hK μ ν
 
 /-- Pushforward by a `K`-Lipschitz measurable map is `K`-Lipschitz for the `p`-Wasserstein
 distance between probability measures. The statement includes `K = 0`, `p = 0`, and `p = ∞`. -/
-theorem wassersteinEDist_map_le
+theorem wassersteinEDist_map_le_mul
     (hdY : Measurable fun z : Y × Y ↦ edist z.1 z.2) (hf : Measurable f)
     (hLip : LipschitzWith K f) (μ ν : Measure X) [IsProbabilityMeasure μ]
     [IsProbabilityMeasure ν] :
     wassersteinEDist p (μ.map f) (ν.map f) ≤ K * wassersteinEDist p μ ν :=
-  wassersteinEDist_map_le_of_exists_isCoupling hdY hf hLip ⟨μ.prod ν, isCoupling_prod μ ν⟩
+  wassersteinEDist_map_le_mul_of_exists_isCoupling hdY hf hLip ⟨μ.prod ν, isCoupling_prod μ ν⟩
 
 /-- A Lipschitz measurable map sends a measure with finite `p`-moment to another measure with
 finite `p`-moment. -/
@@ -149,12 +149,12 @@ theorem wassersteinEDist_map_eq
     wassersteinEDist p (μ.map e) (ν.map e) = wassersteinEDist p μ ν := by
   let ei : X ≃ᵢ Y := { e.toEquiv with isometry_toFun := he }
   have hforward : wassersteinEDist p (μ.map e) (ν.map e) ≤ wassersteinEDist p μ ν := by
-    have h := wassersteinEDist_map_le_of_ne_zero (p := p) hdY e.measurable
+    have h := wassersteinEDist_map_le_mul_of_ne_zero (p := p) hdY e.measurable
       ei.isometry.lipschitzWith one_ne_zero μ ν
     simpa only [ENNReal.coe_one, one_mul] using h
   have hbackward : wassersteinEDist p ((μ.map e).map e.symm) ((ν.map e).map e.symm) ≤
       wassersteinEDist p (μ.map e) (ν.map e) := by
-    have h := wassersteinEDist_map_le_of_ne_zero (p := p) hdX e.symm.measurable
+    have h := wassersteinEDist_map_le_mul_of_ne_zero (p := p) hdX e.symm.measurable
       ei.symm.isometry.lipschitzWith one_ne_zero (μ.map e) (ν.map e)
     simpa only [ENNReal.coe_one, one_mul] using h
   refine le_antisymm hforward ?_
