@@ -110,10 +110,10 @@ This is the classical field norm precisely when `Module.Finite k P.ResidueField`
 `TauCeti.Place.finiteDimensional_residueField` supplies for every place of a function field.
 Absent that, `Algebra.norm` is the junk value `1`
 (`Algebra.norm_eq_one_of_not_module_finite`), exactly as `TauCeti.Place.degree` is junk `0`
-absent the same hypothesis. The hypothesis is not in the signature because `Algebra.norm` does
-not consume one, so requiring it here would leave it unused — the policy
-`TauCeti.Algebra.normUnits` states for itself, and this is that homomorphism applied to the
-residue. -/
+absent the same hypothesis. -/
+-- Finiteness is documented rather than assumed: `Algebra.normUnits` consumes no such argument, so
+-- a hypothesis here would be unused, which `unusedArguments` rejects. `TauCeti.Place.degree`
+-- records the same convention for `Module.finrank`.
 noncomputable def normResidue (P : Place k F) (f : Fˣ) (hf : P.ord (f : F) = 0) : kˣ :=
   Algebra.normUnits k (P.residueUnit f hf)
 
