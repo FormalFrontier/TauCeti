@@ -93,7 +93,7 @@ section Inertia
 
 open scoped Pointwise
 
-variable {S : Type*} [CommRing S] {G : Type*} [Group G] [MulSemiringAction G S]
+variable {S : Type*} [Ring S] {G : Type*} [Group G] [MulSemiringAction G S]
 
 /-- **Inertia is conjugated by the Galois action.** An element `τ` lies in the inertia subgroup of
 the translated ideal `σ • P` exactly when its conjugate `σ⁻¹ τ σ` lies in the inertia subgroup
@@ -116,15 +116,8 @@ of `P` is. This is the invariance an unramifiedness statement needs along a fibr
 `Ideal.inertia_pointwise_smul` it needs no commutativity. -/
 theorem inertia_pointwise_smul_eq_bot_iff (σ : G) (P : Ideal S) :
     (σ • P).inertia G = ⊥ ↔ P.inertia G = ⊥ := by
-  constructor <;> intro h <;> rw [eq_bot_iff] <;> intro τ hτ <;> rw [Subgroup.mem_bot]
-  · have h1 : σ * τ * σ⁻¹ ∈ (σ • P).inertia G :=
-      mem_inertia_pointwise_smul_iff.mpr (by rwa [show σ⁻¹ * (σ * τ * σ⁻¹) * σ = τ by group])
-    rw [h, Subgroup.mem_bot] at h1
-    simpa using h1
-  · have h1 := mem_inertia_pointwise_smul_iff.mp hτ
-    rw [h, Subgroup.mem_bot] at h1
-    rw [← show σ * (σ⁻¹ * τ * σ) * σ⁻¹ = τ by group, h1]
-    group
+  rw [Ideal.inertia_smul]
+  exact Subgroup.map_eq_bot_iff_of_injective _ (MulAut.conj σ).injective
 
 variable (σ : G) (P : Ideal S)
 

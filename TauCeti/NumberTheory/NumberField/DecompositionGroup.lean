@@ -58,10 +58,9 @@ prime `τ • Q` gives the other.
 ## Implementation notes
 
 `FiniteField.frobeniusAlgEquivOfAlgebraic` is stated for a `Fintype` base field, so the residue
-identification carries `[Fintype (𝓞 K ⧸ Q.under (𝓞 K))]` as a hypothesis even though that ring
-is unconditionally finite; the derived statements about orders and cardinalities do not mention
-it and supply it internally through `Fintype.ofFinite`. Residue rings are made into fields by the
-local instance `Ideal.Quotient.field`, following Mathlib's own ramification files.
+identification supplies that instance internally through `Fintype.ofFinite`. Residue rings are
+made into fields by the local instance `Ideal.Quotient.field`, following Mathlib's own
+ramification files.
 
 ## References
 
@@ -109,7 +108,7 @@ theorem isUnramifiedAt_pointwise_smul_iff (τ : L ≃ₐ[K] L) (Q : Ideal (𝓞 
 /-- **The decomposition group of an unramified prime embeds in the residue Galois group.**
 Mathlib's `Ideal.Quotient.stabilizerHom` has the inertia subgroup as its kernel, and that
 subgroup is trivial at an unramified prime. -/
-theorem injective_stabilizerHom_of_isUnramifiedAt (Q : Ideal (𝓞 L)) [Q.IsPrime]
+theorem stabilizerHom_injective_of_isUnramifiedAt (Q : Ideal (𝓞 L)) [Q.IsPrime]
     [Algebra.IsUnramifiedAt (𝓞 K) Q] :
     Function.Injective (Ideal.Quotient.stabilizerHom Q (Q.under (𝓞 K)) (L ≃ₐ[K] L)) := by
   rw [← MonoidHom.ker_eq_bot_iff, Ideal.Quotient.ker_stabilizerHom, eq_bot_iff]
@@ -134,7 +133,7 @@ noncomputable def stabilizerEquivResidueAut (Q : Ideal (𝓞 L)) [Q.IsPrime]
     MulAction.stabilizer (L ≃ₐ[K] L) Q ≃*
       ((𝓞 L ⧸ Q) ≃ₐ[𝓞 K ⧸ Q.under (𝓞 K)] (𝓞 L ⧸ Q)) :=
   MulEquiv.ofBijective (Ideal.Quotient.stabilizerHom Q (Q.under (𝓞 K)) (L ≃ₐ[K] L))
-    ⟨injective_stabilizerHom_of_isUnramifiedAt Q,
+    ⟨stabilizerHom_injective_of_isUnramifiedAt Q,
       Ideal.Quotient.stabilizerHom_surjective (L ≃ₐ[K] L) (Q.under (𝓞 K)) Q⟩
 
 @[simp]
@@ -153,14 +152,15 @@ attribute [local instance] Ideal.Quotient.field
 This is the defining congruence `σ x ≡ x ^ #(𝓞 K ⧸ 𝔭) (mod Q)` read as an equality of
 automorphisms of `𝓞 L ⧸ Q`; no unramifiedness is needed. -/
 theorem stabilizerHom_eq_frobeniusAlgEquivOfAlgebraic (Q : Ideal (𝓞 L)) [Q.IsMaximal]
-    [Fintype (𝓞 K ⧸ Q.under (𝓞 K))] {σ : L ≃ₐ[K] L} (hσ : IsArithFrobAt (𝓞 K) σ Q) :
+    {σ : L ≃ₐ[K] L} (hσ : IsArithFrobAt (𝓞 K) σ Q) :
+    letI := Fintype.ofFinite (𝓞 K ⧸ Q.under (𝓞 K))
     Ideal.Quotient.stabilizerHom Q (Q.under (𝓞 K)) (L ≃ₐ[K] L) ⟨σ, hσ.mem_stabilizer⟩ =
       FiniteField.frobeniusAlgEquivOfAlgebraic (𝓞 K ⧸ Q.under (𝓞 K)) (𝓞 L ⧸ Q) := by
   ext x
   obtain ⟨x, rfl⟩ := Ideal.Quotient.mk_surjective x
-  rw [Ideal.Quotient.stabilizerHom_apply, FiniteField.coe_frobeniusAlgEquivOfAlgebraic]
-  simpa [MulAction.subgroup_smul_def, Nat.card_eq_fintype_card,
-    MulSemiringAction.toAlgHom_apply] using hσ.mk_apply x
+  rw [Ideal.Quotient.stabilizerHom_apply, FiniteField.coe_frobeniusAlgEquivOfAlgebraic,
+    ← @Nat.card_eq_fintype_card _ (Fintype.ofFinite _)]
+  simpa [MulAction.subgroup_smul_def, MulSemiringAction.toAlgHom_apply] using hσ.mk_apply x
 
 /-- **The order of a Frobenius element is the inertia degree.** For `Q` unramified over `𝓞 K`, an
 arithmetic Frobenius `σ` at `Q` has `orderOf σ = f(Q / 𝔭)`.
@@ -174,7 +174,7 @@ theorem orderOf_eq_inertiaDeg_of_isArithFrobAt (Q : Ideal (𝓞 L)) [Q.IsMaximal
   have : Fintype (𝓞 K ⧸ Q.under (𝓞 K)) := Fintype.ofFinite _
   have key : orderOf (⟨σ, hσ.mem_stabilizer⟩ : MulAction.stabilizer (L ≃ₐ[K] L) Q) =
       Q.inertiaDeg (𝓞 K) := by
-    rw [← orderOf_injective _ (injective_stabilizerHom_of_isUnramifiedAt Q),
+    rw [← orderOf_injective _ (stabilizerHom_injective_of_isUnramifiedAt Q),
       stabilizerHom_eq_frobeniusAlgEquivOfAlgebraic Q hσ,
       FiniteField.orderOf_frobeniusAlgEquivOfAlgebraic,
       Ideal.inertiaDeg_eq_of_isMaximal (Q.under (𝓞 K)) Q]
