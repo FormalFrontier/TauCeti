@@ -24,12 +24,14 @@ usual choice is `e i = α i / π - 1`.
 This file defines that product using the principal complex power and establishes its analytic
 properties on the upper half-plane.  Each difference `z - a i` lies in
 `Complex.slitPlane` there, so the chosen branch is holomorphic.  The integrand is nowhere zero,
-its norm is the product of the expected real powers, and its logarithmic derivative is the
-sum of the simple fractions `e i / (z - a i)`.
+away from the prevertices its norm is the product of the expected real powers, and its
+logarithmic derivative is the sum of the simple fractions `e i / (z - a i)`.
 
 These facts are the analytic input for constructing the Schwarz--Christoffel map as a primitive
 of the integrand.  Nonvanishing will make that primitive locally conformal, while the real-power
-norm formula controls its behaviour at the prevertices.
+norm formula provides estimates away from the prevertices.  Since complex powers are totalized
+at zero, values of this definition at prevertices do not describe its boundary singularities;
+those must instead be stated using punctured limits.
 
 ## Main definitions
 
@@ -64,7 +66,9 @@ exponents `e i`.
 
 For a polygon with interior angle `α i` at the vertex corresponding to `a i`, the classical
 choice is `e i = α i / π - 1`.  The definition itself does not impose the polygonal angle
-conditions: its analytic properties hold for every finite family of real exponents. -/
+conditions: its analytic properties hold for every finite family of real exponents.  At a
+prevertex, Mathlib's totalized zero-base power determines the value, which should not be
+interpreted as analytic boundary data. -/
 noncomputable def schwarzChristoffelIntegrand (a e : ι → ℝ) (z : ℂ) : ℂ :=
   ∏ i, (z - (a i : ℂ)) ^ (e i : ℂ)
 
@@ -131,10 +135,10 @@ theorem schwarzChristoffelIntegrand_add (a e d : ι → ℝ) {z : ℂ}
     Complex.cpow_add _ _ (slitPlane_ne_zero (sub_ofReal_mem_slitPlane_of_im_pos hz _)),
     Finset.prod_mul_distrib]
 
-/-- The norm of a Schwarz--Christoffel integrand is the product of the corresponding real powers
-of the distances to its prevertices.  This identity is valid everywhere, including at a
-prevertex; no upper-half-plane hypothesis is needed. -/
-theorem norm_schwarzChristoffelIntegrand (a e : ι → ℝ) (z : ℂ) :
+/-- Away from the prevertices, the norm of a Schwarz--Christoffel integrand is the product of the
+corresponding real powers of the distances to its prevertices. -/
+theorem norm_schwarzChristoffelIntegrand (a e : ι → ℝ) (z : ℂ)
+    (_hz : ∀ i, z ≠ (a i : ℂ)) :
     ‖schwarzChristoffelIntegrand a e z‖ = ∏ i, dist z (a i : ℂ) ^ e i := by
   rw [schwarzChristoffelIntegrand_def, norm_prod]
   apply Finset.prod_congr rfl
