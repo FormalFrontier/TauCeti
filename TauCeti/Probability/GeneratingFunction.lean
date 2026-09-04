@@ -51,7 +51,7 @@ corresponding measure-integral formulas directly.
 * `TauCeti.Probability.IndepFun.pgf_add_of_abs_le_one` and
   `TauCeti.Probability.iIndepFun.pgf_sum_of_abs_le_one` — the corresponding formulas on the
   interval `[-1, 1]`, where integrability is automatic.
-* `TauCeti.Probability.pgf_conv` — convolution of finite measures becomes multiplication on
+* `Measure.pgf_conv` — convolution of finite measures becomes multiplication on
   `[-1, 1]`.
 * `TauCeti.Probability.hasSum_pgf` and `TauCeti.Probability.pgf_eq_tsum` — the power-series
   expansion in the singleton masses, valid on `[-1, 1]`.
@@ -170,7 +170,8 @@ theorem IndepFun.pgf_add_of_abs_le_one [IsFiniteMeasure μ] {X Y : Ω → ℕ}
 
 /-- On `[-1, 1]`, the probability-generating function sends convolution of finite measures to
 multiplication. -/
-theorem pgf_conv (μ ν : Measure ℕ) [IsFiniteMeasure μ] [IsFiniteMeasure ν] {t : ℝ}
+theorem _root_.MeasureTheory.Measure.pgf_conv (μ ν : Measure ℕ) [IsFiniteMeasure μ]
+    [IsFiniteMeasure ν] {t : ℝ}
     (ht : |t| ≤ 1) : pgf id (μ ∗ ν) t = pgf id μ t * pgf id ν t := by
   rw [pgf_def, integral_conv (integrable_pow_of_abs_le_one aemeasurable_id ht)]
   simp_rw [id_eq, pow_add, integral_const_mul]

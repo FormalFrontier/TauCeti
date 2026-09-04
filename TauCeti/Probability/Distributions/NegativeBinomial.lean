@@ -367,7 +367,7 @@ theorem negativeBinomialMeasure_conv_negativeBinomialMeasure {r s p : ℝ}
     have hbase : 0 < p / (1 - (1 - p) * t) := by
       apply div_pos hp
       exact sub_pos.mpr (lt_of_le_of_lt (le_abs_self _) hdom)
-    rw [pgf_conv _ _ ht_abs.le, pgf_negativeBinomialMeasure hr hp hp1 hdom,
+    rw [Measure.pgf_conv _ _ ht_abs.le, pgf_negativeBinomialMeasure hr hp hp1 hdom,
       pgf_negativeBinomialMeasure hs hp hp1 hdom,
       pgf_negativeBinomialMeasure (add_pos hr hs) hp hp1 hdom]
     exact (Real.rpow_add hbase r s).symm
