@@ -11,8 +11,10 @@ public import TauCeti.RepresentationTheory.Symmetric.Specht.Character
 public import TauCeti.RepresentationTheory.Symmetric.Specht.Completeness
 public import Mathlib.RepresentationTheory.FinGroupCharZero
 -- Non-public: `Complex.isAlgClosed` is what puts `ℂ` in the scope of the orthogonality relations,
--- and is used only inside the proofs below; no statement here mentions algebraic closedness.
+-- and `FDRep.nonempty_iso_of_character_eq_of_simple` consumes it; both are used only inside the
+-- proofs below, and no statement here mentions algebraic closedness.
 import Mathlib.Analysis.Complex.Polynomial.Basic
+import TauCeti.RepresentationTheory.CharacterTable.Independence
 
 /-!
 # The complex Specht modules classify the irreducible complex representations of `Sₙ`
@@ -182,21 +184,12 @@ theorem spechtModuleℂ_iso_iff (μ ν : n.Partition) :
     finrank_intertwiningMap_spechtModule_eq_zero (Ne.symm hne)] at h
   simp [hiso] at h
 
-/-- **A complex Specht module is determined by its character.** -/
+/-- **A complex Specht module is determined by its character.** A simple object of `FDRep ℂ Sₙ` is
+determined by its character (`FDRep.nonempty_iso_of_character_eq_of_simple`), and complex Specht
+modules of distinct shapes are non-isomorphic. -/
 theorem spechtModuleℂ_character_injective :
-    Function.Injective fun μ : n.Partition => (spechtModuleℂ μ).character := by
-  intro μ ν h
-  have hchar : (spechtModuleℂ μ).character = (spechtModuleℂ ν).character := h
-  refine (spechtModuleℂ_iso_iff μ ν).mp ?_
-  by_contra hc
-  have hs : ((Nat.card (Equiv.Perm (Fin n)) : ℂ))⁻¹ *
-      ∑ σ : Equiv.Perm (Fin n),
-        (spechtModuleℂ μ).character σ * (spechtModuleℂ μ).character σ⁻¹ = 1 := by
-    simpa [Nonempty.intro (Iso.refl (spechtModuleℂ μ))] using
-      FDRep.char_orthonormal (spechtModuleℂ μ) (spechtModuleℂ μ)
-  have hd := FDRep.char_orthonormal (spechtModuleℂ μ) (spechtModuleℂ ν)
-  rw [← hchar, hs] at hd
-  simp [hc] at hd
+    Function.Injective fun μ : n.Partition => (spechtModuleℂ μ).character := fun _ _ h =>
+  (spechtModuleℂ_iso_iff _ _).mp (FDRep.nonempty_iso_of_character_eq_of_simple _ _ h)
 
 /-! ### The classification -/
 
