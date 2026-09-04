@@ -35,8 +35,8 @@ product of the Dedekind zeta function.
   ideal-indexed Dirichlet series converges absolutely at `s`.
 * `TauCeti.MultiplicativeIdealWeight.hasProd_eulerFactor`: the same product, with the local factors
   in the closed geometric form available for a completely multiplicative weight.
-* `TauCeti.hasProd_dedekindZeta`: the **Euler product of the Dedekind zeta function**, valid on
-  `Re s > 1`.
+* `TauCeti.dedekindZeta_eulerProduct_hasProd`: the **Euler product of the Dedekind zeta
+  function**, valid on `Re s > 1`.
 
 No nonvanishing statement is made here. An unconditionally convergent product of nonzero factors
 may still vanish, so nonvanishing requires additional hypotheses such as convergence of the
@@ -139,6 +139,13 @@ theorem LSeriesSummable_localArithmeticFactor (hs : Summable (idealTerm K f s))
   rw [← normCoeff_supportedPart_singleton f P]
   exact LSeriesSummable_normCoeff K (summable_idealTerm_supportedPart hs _)
 
+/-- The norm coefficients of the restriction of `f` to no primes are Mathlib's Kronecker delta. -/
+theorem coe_normCoeff_supportedPart_empty (hf : f 1 = 1) :
+    ⇑(normCoeff K (supportedPart f (∅ : Set (HeightOneSpectrum (𝓞 K))))) = LSeries.delta := by
+  rw [supportedPart_empty hf, normCoeff_delta]
+  funext n
+  simp [ArithmeticFunction.one_apply, LSeries.delta]
+
 end IdealArithmeticFunction
 
 namespace EulerProductData
@@ -147,30 +154,60 @@ open IdealArithmeticFunction
 
 variable (D : EulerProductData K) {s : ℂ}
 
-/-- **The finite Euler product, analytically.** The `LSeries` of the norm coefficients of the
-restriction of `D` to a finite set `S` of primes is the finite product of the local Euler factors
-over `S`. -/
-theorem LSeries_normCoeff_supportedPart
+/-- Absolute convergence of the ideal-indexed Dirichlet series makes every bundled local Euler
+factor an absolutely convergent `LSeries`. -/
+theorem LSeriesSummable_localArithmeticFactor
     (hs : Summable (idealTerm K D.toIdealArithmeticFunction s))
-    (S : Finset (HeightOneSpectrum (𝓞 K))) :
+    (P : HeightOneSpectrum (𝓞 K)) :
+    LSeriesSummable (D.localArithmeticFactor P) s := by
+  rw [D.localArithmeticFactor_eq]
+  exact IdealArithmeticFunction.LSeriesSummable_localArithmeticFactor hs P
+
+/-- **Convergence of the finite Euler product.** Where the local Euler factors over a finite set
+`S` of primes are absolutely convergent `LSeries`, so are the norm coefficients of the restriction
+of `D` to `S`. -/
+theorem LSeriesSummable_normCoeff_supportedPart (S : Finset (HeightOneSpectrum (𝓞 K)))
+    (hS : ∀ P ∈ S, LSeriesSummable (D.localArithmeticFactor P) s) :
+    LSeriesSummable (normCoeff K (supportedPart D.toIdealArithmeticFunction
+      (S : Set (HeightOneSpectrum (𝓞 K))))) s := by
+  classical
+  induction S using Finset.induction_on with
+  | empty =>
+      rw [Finset.coe_empty, coe_normCoeff_supportedPart_empty D.isMultiplicative.map_one]
+      refine summable_of_ne_finset_zero (s := {1}) fun n hn ↦ ?_
+      simp only [Finset.mem_singleton] at hn
+      simp [LSeries.term_delta, hn]
+  | insert P S hPS ih =>
+      rw [Finset.coe_insert, supportedPart_insert D.isMultiplicative (by simpa using hPS),
+        normCoeff_convolution, normCoeff_supportedPart_singleton]
+      refine ArithmeticFunction.LSeriesSummable_mul
+        (ih fun Q hQ ↦ hS Q (Finset.mem_insert_of_mem hQ)) ?_
+      rw [← D.localArithmeticFactor_eq P]
+      exact hS P (Finset.mem_insert_self P S)
+
+/-- **The finite Euler product, analytically.** Where the local Euler factors over a finite set `S`
+of primes are absolutely convergent `LSeries`, the `LSeries` of the norm coefficients of the
+restriction of `D` to `S` is their finite product over `S`. -/
+theorem LSeries_normCoeff_supportedPart (S : Finset (HeightOneSpectrum (𝓞 K)))
+    (hS : ∀ P ∈ S, LSeriesSummable (D.localArithmeticFactor P) s) :
     LSeries (normCoeff K (supportedPart D.toIdealArithmeticFunction
       (S : Set (HeightOneSpectrum (𝓞 K))))) s = ∏ P ∈ S, D.eulerFactor P s := by
   classical
   induction S using Finset.induction_on with
   | empty =>
-      rw [Finset.coe_empty, supportedPart_empty D.isMultiplicative.map_one, normCoeff_delta,
-        Finset.prod_empty]
-      have hone : ⇑(1 : ArithmeticFunction ℂ) = LSeries.delta := by
-        funext n
-        simp [ArithmeticFunction.one_apply, LSeries.delta]
-      rw [hone, LSeries_delta, Pi.one_apply]
+      rw [Finset.coe_empty, coe_normCoeff_supportedPart_empty D.isMultiplicative.map_one,
+        LSeries_delta, Pi.one_apply, Finset.prod_empty]
   | insert P S hPS ih =>
-      have hS := LSeriesSummable_normCoeff K (summable_idealTerm_supportedPart hs
-        (S : Set (HeightOneSpectrum (𝓞 K))))
-      have hP := LSeriesSummable_normCoeff K (summable_idealTerm_supportedPart hs
-        ({P} : Set (HeightOneSpectrum (𝓞 K))))
+      have hSsum := D.LSeriesSummable_normCoeff_supportedPart S
+        fun Q hQ ↦ hS Q (Finset.mem_insert_of_mem hQ)
+      have hPsum : LSeriesSummable
+          (normCoeff K (supportedPart D.toIdealArithmeticFunction
+            ({P} : Set (HeightOneSpectrum (𝓞 K))))) s := by
+        rw [normCoeff_supportedPart_singleton, ← D.localArithmeticFactor_eq P]
+        exact hS P (Finset.mem_insert_self P S)
       rw [Finset.coe_insert, supportedPart_insert D.isMultiplicative (by simpa using hPS),
-        normCoeff_convolution, ArithmeticFunction.LSeries_mul' hS hP, ih,
+        normCoeff_convolution, ArithmeticFunction.LSeries_mul' hSsum hPsum,
+        ih fun Q hQ ↦ hS Q (Finset.mem_insert_of_mem hQ),
         normCoeff_supportedPart_singleton,
         Finset.prod_insert hPS, mul_comm]
       rw [eulerFactor_def, localArithmeticFactor_eq]
@@ -193,7 +230,8 @@ theorem hasProd_eulerFactor (hs : Summable (idealTerm K D.toIdealArithmeticFunct
         ∑' I, idealTerm K (supportedPart D.toIdealArithmeticFunction
           (S : Set (HeightOneSpectrum (𝓞 K)))) s I := by
     intro S
-    rw [← D.LSeries_normCoeff_supportedPart hs S,
+    rw [← D.LSeries_normCoeff_supportedPart S
+        fun P _ ↦ D.LSeriesSummable_localArithmeticFactor hs P,
       LSeries_normCoeff K (summable_idealTerm_supportedPart hs _)]
   rw [HasProd, SummationFilter.unconditional_filter, LSeries_normCoeff K hs]
   simp only [key]
@@ -251,7 +289,7 @@ theorem norm_div_lt_one_of_summable_idealTerm
 
 /-- The local Euler factor of a completely multiplicative weight is the geometric closed form
 `(1 - χ(P) N(P)⁻ˢ)⁻¹`. -/
-theorem eulerFactor_toIdealArithmeticFunction
+theorem eulerFactor_ofMultiplicativeIdealWeight
     (P : HeightOneSpectrum (𝓞 K))
     (hP : ‖χ P.asIdeal / (Ideal.absNorm P.asIdeal : ℂ) ^ s‖ < 1) :
     (EulerProductData.ofMultiplicativeIdealWeight χ).eulerFactor P s =
@@ -269,7 +307,7 @@ theorem hasProd_eulerFactor (hs : Summable (idealTerm K χ.toIdealArithmeticFunc
   have hfun : (fun P : HeightOneSpectrum (𝓞 K) ↦
       (1 - χ P.asIdeal / (Ideal.absNorm P.asIdeal : ℂ) ^ s)⁻¹) =
       fun P ↦ (EulerProductData.ofMultiplicativeIdealWeight χ).eulerFactor P s :=
-    funext fun P ↦ (eulerFactor_toIdealArithmeticFunction χ P
+    funext fun P ↦ (eulerFactor_ofMultiplicativeIdealWeight χ P
       (norm_div_lt_one_of_summable_idealTerm χ hs P)).symm
   rw [hfun]
   have hprod := (EulerProductData.ofMultiplicativeIdealWeight χ).hasProd_eulerFactor
@@ -288,7 +326,7 @@ of `K` is the unrestricted product over the height-one primes of `𝓞 K` of the
 This is the ideal-theoretic counterpart of Mathlib's `riemannZeta_eulerProduct_hasProd`, and it
 is not obtained from it: the product is indexed by the primes of `𝓞 K`, whose norms repeat and
 whose count above a rational prime is the splitting behaviour of `K`. -/
-theorem hasProd_dedekindZeta {s : ℂ} (hs : 1 < s.re) :
+theorem dedekindZeta_eulerProduct_hasProd {s : ℂ} (hs : 1 < s.re) :
     HasProd (fun P : HeightOneSpectrum (𝓞 K) ↦ (1 - (Ideal.absNorm P.asIdeal : ℂ) ^ (-s))⁻¹)
       (NumberField.dedekindZeta K s) := by
   have hsum : Summable (idealTerm K
